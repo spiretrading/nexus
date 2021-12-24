@@ -257,20 +257,18 @@ namespace {
       DecimalBoxProfileProperties(1));
   }
 
-  template<typename T1, typename T2,
-    typename ClosedFilterPanel* (*F)(std::shared_ptr<T2>, QWidget&)>
+  template<typename T,
+    typename ClosedFilterPanel* (*f)(std::shared_ptr<ListModel<T>>, QWidget&)>
   auto setup_closed_filter_panel_profile(UiProfile& profile) {
-    using Type = T1;
-    using ModelType = T2;
     auto& properties = profile.get_properties();
-    auto model = std::make_shared<ArrayListModel<Type>>();
+    auto model = std::make_shared<ArrayListModel<T>>();
     for(auto property : properties) {
       if(get<bool>(property->get_name(), profile.get_properties()).get()) {
-        model->push(*from_string<Type>(property->get_name()));
+        model->push(*from_string<T>(property->get_name()));
       }
     }
     auto button = make_label_button(QString::fromUtf8("Click me"));
-    auto panel = F(std::make_shared<ModelType>(model), *button);
+    auto panel = f(model, *button);
     for(auto i = 0; i < static_cast<int>(properties.size()); ++i) {
       auto& checked = get<bool>(properties[i]->get_name(),
         profile.get_properties());
@@ -295,7 +293,7 @@ namespace {
     auto submit_filter_slot =
       profile.make_event_slot<QString>(QString::fromUtf8("SubmitSignal"));
     panel->connect_submit_signal(
-      [=] (const std::shared_ptr<ListModel<QString>>& submission) {
+      [=] (const std::shared_ptr<AnyListModel>& submission) {
         auto result = QString();
         for(auto i = 0; i < submission->get_size(); ++i) {
           result += displayTextAny(submission->get(i)) + " ";
@@ -645,10 +643,10 @@ UiProfile Spire::make_closed_filter_panel_profile() {
       auto submit_filter_slot =
         profile.make_event_slot<QString>(QString::fromUtf8("SubmitSignal"));
       panel->connect_submit_signal(
-        [=] (const std::shared_ptr<ListModel>& submission) {
+        [=] (const std::shared_ptr<AnyListModel>& submission) {
           auto result = QString();
           for(auto i = 0; i < submission->get_size(); ++i) {
-            result += displayTextAny(submission->at(i)) + " ";
+            result += displayTextAny(submission->get(i)) + " ";
           }
           submit_filter_slot(result);
         });
@@ -1209,7 +1207,7 @@ UiProfile Spire::make_drop_down_box_profile() {
     [] (auto& profile) {
       auto& item_count = get<int>("item_count", profile.get_properties());
       auto& item_text = get<QString>("item_label", profile.get_properties());
-      auto list_model = std::make_shared<ArrayListModel>();
+      auto list_model = std::make_shared<ArrayListModel<QString>>();
       for(auto i = 0; i < item_count.get(); ++i) {
         list_model->push(item_text.get() + QString::fromUtf8("%1").arg(i));
       }
@@ -1238,14 +1236,15 @@ UiProfile Spire::make_drop_down_list_profile() {
       auto& item_text = get<QString>("item_label", profile.get_properties());
       auto button = make_label_button("DropDownList");
       button->connect_clicked_signal([&, button] {
-        auto list_model = std::make_shared<ArrayListModel>();
+        auto list_model = std::make_shared<ArrayListModel<QString>>();
         for(auto i = 0; i < item_count.get(); ++i) {
           list_model->push(item_text.get() + QString::fromUtf8("%1").arg(i));
         }
         auto list_view =
-          new ListView(list_model, [&] (const auto& model, auto index) {
-            return make_label(model->get<QString>(index));
-          });
+          new ListView(list_model,
+            [&] (const std::shared_ptr<ListModel<QString>>& model, auto index) {
+              return make_label(model->get(index));
+            });
         auto drop_down_list = new DropDownList(*list_view, *button);
         drop_down_list->window()->setAttribute(Qt::WA_DeleteOnClose);
         drop_down_list->show();
@@ -1432,7 +1431,7 @@ UiProfile Spire::make_focus_observer_profile() {
           return label_button;
         } else {
           auto item_count = 10;
-          auto list_model = std::make_shared<ArrayListModel>();
+          auto list_model = std::make_shared<ArrayListModel<QString>>();
           for(auto i = 0; i < item_count; ++i) {
             list_model->push(QString::fromUtf8("Item%1").arg(i));
           }
@@ -1805,7 +1804,7 @@ UiProfile Spire::make_list_view_profile() {
       auto& change_item_index =
         get<int>("change_item_index", profile.get_properties());
       auto random_generator = QRandomGenerator(random_height_seed.get());
-      auto list_model = std::make_shared<ArrayListModel>();
+      auto list_model = std::make_shared<ArrayListModel<QString>>();
       for(auto i = 0; i < 66; ++i) {
         if(i == 10) {
           list_model->push(QString::fromUtf8("llama"));
@@ -1834,21 +1833,22 @@ UiProfile Spire::make_list_view_profile() {
           }
         });
       auto list_view =
-        new ListView(list_model, [&] (const auto& model, auto index) {
-          auto label = make_label(model->get<QString>(index));
-          if(random_height_seed.get() == 0) {
-            auto random_size = random_generator.bounded(30, 70);
-            if(direction.get() == Qt::Vertical) {
-              label->setFixedHeight(scale_height(random_size));
-            } else {
-              label->setFixedWidth(scale_height(random_size));
+        new ListView(list_model,
+          [&] (const std::shared_ptr<ListModel<QString>>& model, auto index) {
+            auto label = make_label(model->get(index));
+            if(random_height_seed.get() == 0) {
+              auto random_size = random_generator.bounded(30, 70);
+              if(direction.get() == Qt::Vertical) {
+                label->setFixedHeight(scale_height(random_size));
+              } else {
+                label->setFixedWidth(scale_height(random_size));
+              }
             }
-          }
-          update_style(*label, [&] (auto& style) {
-            style.get(+Any() << Disabled()).set(TextColor(QColor(0xFF0000)));
+            update_style(*label, [&] (auto& style) {
+              style.get(+Any() << Disabled()).set(TextColor(QColor(0xFF0000)));
+            });
+            return label;
           });
-          return label;
-        });
       apply_widget_properties(list_view, profile.get_properties());
       auto& gap = get<int>("gap", profile.get_properties());
       gap.connect_changed_signal([=] (auto value) {
@@ -2123,8 +2123,8 @@ UiProfile Spire::make_order_type_filter_panel_profile() {
   properties.push_back(make_standard_property<bool>("Pegged"));
   properties.push_back(make_standard_property<bool>("Stop"));
   auto profile = UiProfile(QString::fromUtf8("OrderTypeFilterPanel"),
-    properties, std::bind_front(setup_closed_filter_panel_profile<OrderType,
-      OrderTypeListModel, make_order_type_filter_panel>));
+    properties, std::bind_front(setup_closed_filter_panel_profile<
+      OrderType, make_order_type_filter_panel>));
   return profile;
 }
 
@@ -2374,13 +2374,13 @@ UiProfile Spire::make_scrollable_list_box_profile() {
     make_standard_enum_property("overflow", overflow_property));
   auto profile = UiProfile(QString::fromUtf8("ScrollableListBox"), properties,
     [] (auto& profile) {
-      auto list_model = std::make_shared<ArrayListModel>();
+      auto list_model = std::make_shared<ArrayListModel<QString>>();
       for(auto i = 0; i < 15; ++i) {
         list_model->push(QString::fromUtf8("Item%1").arg(i));
       }
       auto list_view = new ListView(list_model,
-        [] (const auto& model, auto index) {
-          return make_label(model->get<QString>(index));
+        [] (const std::shared_ptr<ListModel<QString>>& model, auto index) {
+          return make_label(model->get(index));
         });
       auto scrollable_list_box = new ScrollableListBox(*list_view);
       apply_widget_properties(scrollable_list_box, profile.get_properties());
@@ -2521,8 +2521,8 @@ UiProfile Spire::make_side_filter_panel_profile() {
   properties.push_back(make_standard_property<bool>("Buy"));
   properties.push_back(make_standard_property<bool>("Sell"));
   auto profile = UiProfile(QString::fromUtf8("SideFilterPanel"), properties,
-    std::bind_front(setup_closed_filter_panel_profile<Side, SideListModel,
-      make_side_filter_panel>));
+    std::bind_front(
+      setup_closed_filter_panel_profile<Side, make_side_filter_panel>));
   return profile;
 }
 
@@ -2593,10 +2593,10 @@ UiProfile Spire::make_tag_box_profile() {
   properties.push_back(make_standard_property<QString>("add_tag"));
   auto profile = UiProfile(QString::fromUtf8("TagBox"), properties,
     [] (auto& profile) {
-      auto list_model = std::make_shared<ArrayListModel>();
-      list_model->push(QString("ONE"));
-      list_model->push(QString("TWO"));
-      list_model->push(QString("THREE"));
+      auto list_model = std::make_shared<ArrayListModel<QString>>();
+      list_model->push("ONE");
+      list_model->push("TWO");
+      list_model->push("THREE");
       auto current_model = std::make_shared<LocalTextModel>();
       auto tag_box = new TagBox(list_model, current_model);
       apply_widget_properties(tag_box, profile.get_properties());
@@ -2804,8 +2804,8 @@ UiProfile Spire::make_time_in_force_filter_panel_profile() {
   properties.push_back(make_standard_property<bool>("GTD"));
   properties.push_back(make_standard_property<bool>("MOC"));
   auto profile = UiProfile(QString::fromUtf8("TimeInForceFilterPanel"),
-    properties, std::bind_front(setup_closed_filter_panel_profile<TimeInForce,
-      TimeInForceListModel, make_time_in_force_filter_panel>));
+    properties, std::bind_front(setup_closed_filter_panel_profile<
+      TimeInForce, make_time_in_force_filter_panel>));
   return profile;
 }
 
