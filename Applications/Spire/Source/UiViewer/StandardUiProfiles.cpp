@@ -58,6 +58,7 @@
 #include "Spire/Ui/SecurityListItem.hpp"
 #include "Spire/Ui/SideBox.hpp"
 #include "Spire/Ui/SideFilterPanel.hpp"
+#include "Spire/Ui/TableHeader.hpp"
 #include "Spire/Ui/TableHeaderCell.hpp"
 #include "Spire/Ui/Tag.hpp"
 #include "Spire/Ui/TagBox.hpp"
@@ -2523,6 +2524,32 @@ UiProfile Spire::make_side_filter_panel_profile() {
   auto profile = UiProfile(QString::fromUtf8("SideFilterPanel"), properties,
     std::bind_front(
       setup_closed_filter_panel_profile<Side, make_side_filter_panel>));
+  return profile;
+}
+
+UiProfile Spire::make_table_header_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto profile = UiProfile(QString::fromUtf8("TableHeader"), properties,
+    [] (auto& profile) {
+      auto cells = std::make_shared<ArrayListModel<TableHeaderCell::Model>>();
+      auto cell = TableHeaderCell::Model();
+      cell.m_name = "Security";
+      cell.m_order = TableHeaderCell::Order::ASCENDING;
+      cells->push(cell);
+      cell.m_name = "Quantity";
+      cell.m_order = TableHeaderCell::Order::ASCENDING;
+      cells->push(cell);
+      cell.m_name = "Side";
+      cell.m_order = TableHeaderCell::Order::ASCENDING;
+      cells->push(cell);
+      cell.m_name = "Date";
+      cell.m_order = TableHeaderCell::Order::ASCENDING;
+      cells->push(cell);
+      auto header = new TableHeader(cells);
+      apply_widget_properties(header, profile.get_properties());
+      return header;
+    });
   return profile;
 }
 

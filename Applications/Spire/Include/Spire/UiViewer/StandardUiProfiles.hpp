@@ -155,6 +155,9 @@ namespace Spire {
   /** Returns a UiProfile for the TableHeaderCell. */
   UiProfile make_table_header_cell_profile();
 
+  /** Returns a UiProfile for the TableHeader. */
+  UiProfile make_table_header_profile();
+
   /** Returns a UiProfile for the Tag. */
   UiProfile make_tag_profile();
 
