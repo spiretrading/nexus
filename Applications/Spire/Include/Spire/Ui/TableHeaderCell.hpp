@@ -97,11 +97,9 @@ namespace Spire {
       mutable SortSignal m_sort_signal;
       std::shared_ptr<ValueModel<Model>> m_model;
       Button* m_filter_button;
-      boost::signals2::scoped_connection m_has_filter_connection;
-      boost::signals2::scoped_connection m_order_connection;
+      boost::signals2::scoped_connection m_connection;
 
-      void on_has_filter(bool has_filter);
-      void on_order(Order order);
+      void on_update(const Model& model);
   };
 }
 

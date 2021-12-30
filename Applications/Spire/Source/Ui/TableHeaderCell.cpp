@@ -124,7 +124,7 @@ TableHeaderCell::TableHeaderCell(
   hover_layout->addSpacerItem(
     new QSpacerItem(1, 0, QSizePolicy::Expanding, QSizePolicy::Expanding));
   auto outer_layout = new QVBoxLayout(this);
-  outer_layout->setContentsMargins({});
+  outer_layout->setContentsMargins({scale_width(8), 0, 0, 0});
   outer_layout->addLayout(inner_layout);
   outer_layout->addLayout(hover_layout);
   auto style = StyleSheet();
@@ -137,14 +137,9 @@ TableHeaderCell::TableHeaderCell(
   style.get(Filtered() > FilterButton() / Body() / Body()).
     set(Fill(QColor(0x4B23A0)));
   set_style(*this, std::move(style));
-  auto has_filter_model = make_field_value_model(m_model, &Model::m_has_filter);
-  on_has_filter(has_filter_model->get());
-  m_has_filter_connection = has_filter_model->connect_update_signal(
-    std::bind_front(&TableHeaderCell::on_has_filter, this));
-  auto order_model = make_field_value_model(m_model, &Model::m_order);
-  on_order(order_model->get());
-  m_order_connection = order_model->connect_update_signal(
-    std::bind_front(&TableHeaderCell::on_order, this));
+  m_connection = m_model->connect_update_signal(
+    std::bind_front(&TableHeaderCell::on_update, this));
+  on_update(m_model->get());
 }
 
 const std::shared_ptr<ValueModel<TableHeaderCell::Model>>&
@@ -171,13 +166,10 @@ void TableHeaderCell::mouseReleaseEvent(QMouseEvent* event) {
   }
 }
 
-void TableHeaderCell::on_has_filter(bool has_filter) {
-  m_filter_button->setVisible(has_filter);
-}
-
-void TableHeaderCell::on_order(Order order) {
+void TableHeaderCell::on_update(const Model& model) {
+  m_filter_button->setVisible(model.m_has_filter);
   auto& stylist = find_stylist(*this);
-  if(order != Order::UNORDERED) {
+  if(model.m_order != Order::UNORDERED) {
     if(!stylist.is_match(Sortable())) {
       stylist.match(Sortable());
     }
