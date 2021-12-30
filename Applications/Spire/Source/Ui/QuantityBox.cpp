@@ -1,6 +1,6 @@
 #include "Spire/Ui/QuantityBox.hpp"
+#include "Spire/Spire/UnsignedQuantityModel.hpp"
 #include "Spire/Styles/Selectors.hpp"
-#include "Spire/Ui/UnsignedQuantityModel.hpp"
 
 using namespace Nexus;
 using namespace Spire;
