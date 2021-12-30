@@ -11,15 +11,13 @@ namespace Spire {
   template<typename T> class ArrayListModel;
   class CancelKeySequenceValidationModel;
   template<typename T> class ColumnViewListModel;
-  template<typename T> class CompositeValueModel;
   template<typename T> class ConstantValueModel;
   class Definitions;
-  class FieldPointer;
+  template<typename T> class FieldValueModel;
   class KeySequenceValidationModel;
   template<typename T> class ListIndexValueModel;
   template<typename T> class ListModel;
   template<typename T> class ListValueModel;
-  template<typename T> class LocalCompositeValueModel;
   class LocalRangeInputModel;
   template<typename T> class LocalScalarValueModel;
   class LocalTechnicalsModel;
@@ -32,8 +30,6 @@ namespace Spire {
   class Scalar;
   template<typename T> class ScalarValueModel;
   template<typename T> class ScalarValueModelDecorator;
-  template<typename T> class SharedValueModel;
-  class SharedValueModelBox;
   template<typename T> class SpinBoxModel;
   class SpireController;
   template<typename T> struct SubscriptionResult;
@@ -44,6 +40,7 @@ namespace Spire {
   template<typename T> class ToTextModel;
   template<typename T, typename U, typename F, typename G>
     class TransformValueModel;
+  class UnsignedQuantityModel;
   template<typename T> class ValueModel;
 
   /** Defines the common type of boost signal used throughout Spire. */

@@ -10,8 +10,8 @@
 #include "Nexus/Definitions/SecuritySet.hpp"
 #include "Spire/KeyBindings/OrderFieldInfoTip.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
+#include "Spire/Spire/FieldValueModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Spire/LocalCompositeValueModel.hpp"
 #include "Spire/Spire/LocalScalarValueModel.hpp"
 #include "Spire/Styles/ChainExpression.hpp"
 #include "Spire/Styles/LinearExpression.hpp"
@@ -82,8 +82,8 @@ namespace {
 
   /** Keeps a model synchronized with a property (and vice-versa). */
   template<typename T>
-  void link(const std::shared_ptr<ValueModel<T>>& model,
-      TypedUiProperty<T>& property) {
+  void link(const std::shared_ptr<T>& model,
+      TypedUiProperty<typename T::Type>& property) {
     property.connect_changed_signal([=] (auto value) {
       if(model->get() != value) {
         model->set(value);
@@ -2569,13 +2569,12 @@ UiProfile Spire::make_table_header_cell_profile() {
       cell_model.m_name = "Security";
       cell_model.m_order = TableHeaderCell::Order::ASCENDING;
       auto model =
-        std::make_shared<LocalCompositeValueModel<TableHeaderCell::Model>>(
-          cell_model);
+        std::make_shared<LocalValueModel<TableHeaderCell::Model>>(cell_model);
       auto cell = new TableHeaderCell(model);
       apply_widget_properties(cell, profile.get_properties());
-      link(model->get(&TableHeaderCell::Model::m_order),
+      link(make_field_value_model(model, &TableHeaderCell::Model::m_order),
         get<TableHeaderCell::Order>("order", profile.get_properties()));
-      link(model->get(&TableHeaderCell::Model::m_has_filter),
+      link(make_field_value_model(model, &TableHeaderCell::Model::m_has_filter),
         get<bool>("has_filter", profile.get_properties()));
       cell->connect_sort_signal(profile.make_event_slot<TableHeaderCell::Order>(
         QString::fromUtf8("Sort")));
