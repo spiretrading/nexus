@@ -1,5 +1,5 @@
-#ifndef SPIRE_TABLE_HEADER_CELL_HPP
-#define SPIRE_TABLE_HEADER_CELL_HPP
+#ifndef SPIRE_TABLE_HEADER_ITEM_HPP
+#define SPIRE_TABLE_HEADER_ITEM_HPP
 #include <boost/signals2/connection.hpp>
 #include <QWidget>
 #include "Spire/Spire/Spire.hpp"
@@ -8,8 +8,8 @@
 
 namespace Spire {
 
-  /** Displays a single cell within a TableViewHeader. */
-  class TableHeaderCell : public QWidget {
+  /** Displays a single item within a TableViewHeader. */
+  class TableHeaderItem : public QWidget {
     public:
 
       /** Styles this column when it's sort order is not UNORDERED. */
@@ -43,7 +43,7 @@ namespace Spire {
         DESCENDING
       };
 
-      /** Stores this cell's model. */
+      /** Stores this item's model. */
       struct Model {
 
         /** The name of the column. */
@@ -72,15 +72,21 @@ namespace Spire {
       using FilterSignal = Signal<void ()>;
 
       /**
-       * Constructs a TableHeaderCell.
-       * @param model This cell's model.
+       * Constructs a TableHeaderItem.
+       * @param model This item's model.
        * @param parent The parent widget.
        */
-      explicit TableHeaderCell(std::shared_ptr<ValueModel<Model>> model,
+      explicit TableHeaderItem(std::shared_ptr<ValueModel<Model>> model,
         QWidget* parent = nullptr);
 
-      /** Returns this cell's model. */
+      /** Returns this item's model. */
       const std::shared_ptr<ValueModel<Model>>& get_model() const;
+
+      /** Returns <code>true</code> iff this item is resizeable. */
+      bool is_resizeable() const;
+
+      /** Sets whether this item can be resized. */
+      void set_is_resizeable(bool is_resizeable);
 
       /** Connects a slot to the SortSignal. */
       boost::signals2::connection connect_sort_signal(
@@ -96,7 +102,9 @@ namespace Spire {
     private:
       mutable SortSignal m_sort_signal;
       std::shared_ptr<ValueModel<Model>> m_model;
+      bool m_is_resizeable;
       Button* m_filter_button;
+      QWidget* m_sash;
       boost::signals2::scoped_connection m_connection;
 
       void on_update(const Model& model);

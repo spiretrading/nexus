@@ -59,7 +59,8 @@
 #include "Spire/Ui/SideBox.hpp"
 #include "Spire/Ui/SideFilterPanel.hpp"
 #include "Spire/Ui/TableHeader.hpp"
-#include "Spire/Ui/TableHeaderCell.hpp"
+#include "Spire/Ui/TableHeaderItem.hpp"
+#include "Spire/Ui/TableView.hpp"
 #include "Spire/Ui/Tag.hpp"
 #include "Spire/Ui/TagBox.hpp"
 #include "Spire/Ui/TextAreaBox.hpp"
@@ -2532,55 +2533,82 @@ UiProfile Spire::make_table_header_profile() {
   populate_widget_properties(properties);
   auto profile = UiProfile(QString::fromUtf8("TableHeader"), properties,
     [] (auto& profile) {
-      auto cells = std::make_shared<ArrayListModel<TableHeaderCell::Model>>();
-      auto cell = TableHeaderCell::Model();
-      cell.m_name = "Security";
-      cell.m_order = TableHeaderCell::Order::ASCENDING;
-      cells->push(cell);
-      cell.m_name = "Quantity";
-      cell.m_order = TableHeaderCell::Order::ASCENDING;
-      cells->push(cell);
-      cell.m_name = "Side";
-      cell.m_order = TableHeaderCell::Order::ASCENDING;
-      cells->push(cell);
-      cell.m_name = "Date";
-      cell.m_order = TableHeaderCell::Order::ASCENDING;
-      cells->push(cell);
-      auto header = new TableHeader(cells);
+      auto items = std::make_shared<ArrayListModel<TableHeaderItem::Model>>();
+      auto item = TableHeaderItem::Model();
+      item.m_name = "Security";
+      item.m_order = TableHeaderItem::Order::ASCENDING;
+      items->push(item);
+      item.m_name = "Quantity";
+      item.m_order = TableHeaderItem::Order::ASCENDING;
+      items->push(item);
+      item.m_name = "Side";
+      item.m_order = TableHeaderItem::Order::ASCENDING;
+      items->push(item);
+      item.m_name = "Date";
+      item.m_order = TableHeaderItem::Order::ASCENDING;
+      items->push(item);
+      auto header = new TableHeader(items);
       apply_widget_properties(header, profile.get_properties());
       return header;
     });
   return profile;
 }
 
-UiProfile Spire::make_table_header_cell_profile() {
+UiProfile Spire::make_table_header_item_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
-  auto order_property = define_enum<TableHeaderCell::Order>(
-    {{"NONE", TableHeaderCell::Order::NONE},
-      {"UNORDERED", TableHeaderCell::Order::UNORDERED},
-      {"ASCENDING", TableHeaderCell::Order::ASCENDING},
-      {"DESCENDING", TableHeaderCell::Order::DESCENDING}});
+  auto order_property = define_enum<TableHeaderItem::Order>(
+    {{"NONE", TableHeaderItem::Order::NONE},
+      {"UNORDERED", TableHeaderItem::Order::UNORDERED},
+      {"ASCENDING", TableHeaderItem::Order::ASCENDING},
+      {"DESCENDING", TableHeaderItem::Order::DESCENDING}});
   properties.push_back(make_standard_enum_property("order", order_property));
   properties.push_back(make_standard_property<bool>("has_filter", true));
-  auto profile = UiProfile(QString::fromUtf8("TableHeaderCell"), properties,
+  auto profile = UiProfile(QString::fromUtf8("TableHeaderItem"), properties,
     [] (auto& profile) {
-      auto cell_model = TableHeaderCell::Model();
-      cell_model.m_name = "Security";
-      cell_model.m_order = TableHeaderCell::Order::ASCENDING;
+      auto item_model = TableHeaderItem::Model();
+      item_model.m_name = "Security";
+      item_model.m_order = TableHeaderItem::Order::ASCENDING;
       auto model =
-        std::make_shared<LocalValueModel<TableHeaderCell::Model>>(cell_model);
-      auto cell = new TableHeaderCell(model);
-      apply_widget_properties(cell, profile.get_properties());
-      link(make_field_value_model(model, &TableHeaderCell::Model::m_order),
-        get<TableHeaderCell::Order>("order", profile.get_properties()));
-      link(make_field_value_model(model, &TableHeaderCell::Model::m_has_filter),
+        std::make_shared<LocalValueModel<TableHeaderItem::Model>>(item_model);
+      auto item = new TableHeaderItem(model);
+      apply_widget_properties(item, profile.get_properties());
+      link(make_field_value_model(model, &TableHeaderItem::Model::m_order),
+        get<TableHeaderItem::Order>("order", profile.get_properties()));
+      link(make_field_value_model(model, &TableHeaderItem::Model::m_has_filter),
         get<bool>("has_filter", profile.get_properties()));
-      cell->connect_sort_signal(profile.make_event_slot<TableHeaderCell::Order>(
+      item->connect_sort_signal(profile.make_event_slot<TableHeaderItem::Order>(
         QString::fromUtf8("Sort")));
-      cell->connect_filter_signal(
+      item->connect_filter_signal(
         profile.make_event_slot(QString::fromUtf8("Filter")));
-      return cell;
+      return item;
+    });
+  return profile;
+}
+
+UiProfile Spire::make_table_view_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto profile = UiProfile(QString::fromUtf8("TableView"), properties,
+    [] (auto& profile) {
+      auto model = std::make_shared<ArrayTableModel>();
+      auto header = std::make_shared<ArrayListModel<TableHeaderItem::Model>>();
+      auto item = TableHeaderItem::Model();
+      item.m_name = "Security";
+      item.m_order = TableHeaderItem::Order::ASCENDING;
+      header->push(item);
+      item.m_name = "Quantity";
+      item.m_order = TableHeaderItem::Order::ASCENDING;
+      header->push(item);
+      item.m_name = "Side";
+      item.m_order = TableHeaderItem::Order::ASCENDING;
+      header->push(item);
+      item.m_name = "Date";
+      item.m_order = TableHeaderItem::Order::ASCENDING;
+      header->push(item);
+      auto view = new TableView(model, header);
+      apply_widget_properties(view, profile.get_properties());
+      return view;
     });
   return profile;
 }

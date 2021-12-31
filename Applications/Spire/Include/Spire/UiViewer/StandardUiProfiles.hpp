@@ -152,11 +152,14 @@ namespace Spire {
   /** Returns a UiProfile for the SideFilterPanel. */
   UiProfile make_side_filter_panel_profile();
 
-  /** Returns a UiProfile for the TableHeaderCell. */
-  UiProfile make_table_header_cell_profile();
+  /** Returns a UiProfile for the TableHeaderItem. */
+  UiProfile make_table_header_item_profile();
 
   /** Returns a UiProfile for the TableHeader. */
   UiProfile make_table_header_profile();
+
+  /** Returns a UiProfile for the TableView. */
+  UiProfile make_table_view_profile();
 
   /** Returns a UiProfile for the Tag. */
   UiProfile make_tag_profile();

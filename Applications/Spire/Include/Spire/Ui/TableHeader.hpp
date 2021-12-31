@@ -2,12 +2,12 @@
 #define SPIRE_TABLE_HEADER_HPP
 #include <QWidget>
 #include "Spire/Spire/ListModel.hpp"
-#include "Spire/Ui/TableHeaderCell.hpp"
+#include "Spire/Ui/TableHeaderItem.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 
-  /** Displays a list of TableHeaderCells that make up a TableView's header. */
+  /** Displays a list of TableHeaderItems that make up a TableView's header. */
   class TableHeader : public QWidget {
     public:
 
@@ -17,7 +17,7 @@ namespace Spire {
        * @param order The sort order to update to.
        */
       using SortSignal =
-        Signal<void (int column, TableHeaderCell::Order order)>;
+        Signal<void (int column, TableHeaderItem::Order order)>;
 
       /**
        * Signals an action to change a column's filter.
@@ -27,15 +27,15 @@ namespace Spire {
 
       /**
        * Constructs a TableHeader.
-       * @param cells The list of cells in order from left-to-right.
+       * @param items The list of items in order from left-to-right.
        * @param parent The parent widget.
        */
       explicit TableHeader(
-        std::shared_ptr<ListModel<TableHeaderCell::Model>> cells,
+        std::shared_ptr<ListModel<TableHeaderItem::Model>> items,
         QWidget* parent = nullptr);
 
-      /** Returns the list of cells represented by this header. */
-      const std::shared_ptr<ListModel<TableHeaderCell::Model>>& get_cells()
+      /** Returns the list of items represented by this header. */
+      const std::shared_ptr<ListModel<TableHeaderItem::Model>>& get_items()
         const;
 
       /**
@@ -57,11 +57,11 @@ namespace Spire {
     private:
       mutable SortSignal m_sort_signal;
       mutable FilterSignal m_filter_signal;
-      std::shared_ptr<ListModel<TableHeaderCell::Model>> m_cells;
-      boost::signals2::scoped_connection m_cells_connection;
+      std::shared_ptr<ListModel<TableHeaderItem::Model>> m_items;
+      boost::signals2::scoped_connection m_items_connection;
 
-      void on_cells_update(
-        const ListModel<TableHeaderCell::Model>::Operation& operation);
+      void on_items_update(
+        const ListModel<TableHeaderItem::Model>::Operation& operation);
   };
 }
 

@@ -1,4 +1,4 @@
-#include "Spire/Ui/TableHeaderCell.hpp"
+#include "Spire/Ui/TableHeaderItem.hpp"
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
@@ -28,11 +28,11 @@ namespace {
       return image;
     }
 
-    std::shared_ptr<ValueModel<TableHeaderCell::Order>> m_order;
+    std::shared_ptr<ValueModel<TableHeaderItem::Order>> m_order;
     scoped_connection m_order_connection;
 
     explicit SortIndicator(
-        std::shared_ptr<ValueModel<TableHeaderCell::Order>> order)
+        std::shared_ptr<ValueModel<TableHeaderItem::Order>> order)
         : m_order(std::move(order)) {
       auto layout = new QHBoxLayout(this);
       layout->setContentsMargins({});
@@ -41,17 +41,17 @@ namespace {
         std::bind_front(&SortIndicator::on_order, this));
     }
 
-    void on_order(TableHeaderCell::Order order) {
+    void on_order(TableHeaderItem::Order order) {
       if(auto previous_icon = layout()->takeAt(0)) {
         delete previous_icon->widget();
         delete previous_icon;
       }
       auto icon = [&] () -> QWidget* {
-        if(order == TableHeaderCell::Order::ASCENDING) {
+        if(order == TableHeaderItem::Order::ASCENDING) {
           return new Icon(ASCENDING_IMAGE());
-        } else if(order == TableHeaderCell::Order::DESCENDING) {
+        } else if(order == TableHeaderItem::Order::DESCENDING) {
           return new Icon(DESCENDING_IMAGE());
-        } else if(order == TableHeaderCell::Order::NONE) {
+        } else if(order == TableHeaderItem::Order::NONE) {
           return new Box(nullptr);
         }
         return nullptr;
@@ -70,7 +70,7 @@ namespace {
     static auto icon = imageFromSvg(":/Icons/filter.svg", scale(6, 6));
     auto button = make_icon_button(icon);
     button->setFixedSize(scale(16, 16));
-    match(*button, TableHeaderCell::FilterButton());
+    match(*button, TableHeaderItem::FilterButton());
     update_style(*button, [] (auto& style) {
       style.get(Body()).set(BackgroundColor(Qt::transparent));
       style.get(Body() / Body()).set(Fill(QColor(0xC8C8C8)));
@@ -98,7 +98,7 @@ namespace {
   }
 }
 
-TableHeaderCell::TableHeaderCell(
+TableHeaderItem::TableHeaderItem(
     std::shared_ptr<ValueModel<Model>> model, QWidget* parent)
     : QWidget(parent),
       m_model(std::move(model)) {
@@ -107,6 +107,7 @@ TableHeaderCell::TableHeaderCell(
   auto sort_indicator =
     new SortIndicator(make_field_value_model(m_model, &Model::m_order));
   m_filter_button = make_filter_button();
+  m_sash = make_sash();
   auto inner_layout = new QHBoxLayout();
   inner_layout->setContentsMargins({});
   inner_layout->addWidget(name_label);
@@ -114,7 +115,7 @@ TableHeaderCell::TableHeaderCell(
     new QSpacerItem(1, 0, QSizePolicy::Expanding, QSizePolicy::Expanding));
   inner_layout->addWidget(sort_indicator);
   inner_layout->addWidget(m_filter_button);
-  inner_layout->addWidget(make_sash());
+  inner_layout->addWidget(m_sash);
   auto hover_element = new Box(nullptr);
   hover_element->setFixedSize(scale(18, 2));
   match(*hover_element, HoverElement());
@@ -124,7 +125,7 @@ TableHeaderCell::TableHeaderCell(
   hover_layout->addSpacerItem(
     new QSpacerItem(1, 0, QSizePolicy::Expanding, QSizePolicy::Expanding));
   auto outer_layout = new QVBoxLayout(this);
-  outer_layout->setContentsMargins({scale_width(8), 0, 0, 0});
+  outer_layout->setContentsMargins({scale_width(8), scale_height(8), 0, 0});
   outer_layout->addLayout(inner_layout);
   outer_layout->addLayout(hover_layout);
   auto style = StyleSheet();
@@ -138,26 +139,44 @@ TableHeaderCell::TableHeaderCell(
     set(Fill(QColor(0x4B23A0)));
   set_style(*this, std::move(style));
   m_connection = m_model->connect_update_signal(
-    std::bind_front(&TableHeaderCell::on_update, this));
+    std::bind_front(&TableHeaderItem::on_update, this));
   on_update(m_model->get());
 }
 
-const std::shared_ptr<ValueModel<TableHeaderCell::Model>>&
-    TableHeaderCell::get_model() const {
+const std::shared_ptr<ValueModel<TableHeaderItem::Model>>&
+    TableHeaderItem::get_model() const {
   return m_model;
 }
 
-connection TableHeaderCell::connect_sort_signal(
+bool TableHeaderItem::is_resizeable() const {
+  return m_is_resizeable;
+}
+
+void TableHeaderItem::set_is_resizeable(bool is_resizeable) {
+  if(m_is_resizeable == is_resizeable) {
+    return;
+  }
+  m_is_resizeable = is_resizeable;
+  m_sash->setVisible(m_is_resizeable);
+  if(m_is_resizeable) {
+    layout()->setContentsMargins({scale_width(8), scale_height(8), 0, 0});
+  } else {
+    layout()->setContentsMargins(
+      {scale_width(8), scale_height(8), scale_width(8), 0});
+  }
+}
+
+connection TableHeaderItem::connect_sort_signal(
     const SortSignal::slot_type& slot) const {
   return m_sort_signal.connect(slot);
 }
 
-connection TableHeaderCell::connect_filter_signal(
+connection TableHeaderItem::connect_filter_signal(
     const FilterSignal::slot_type& slot) const {
   return m_filter_button->connect_clicked_signal(slot);
 }
 
-void TableHeaderCell::mouseReleaseEvent(QMouseEvent* event) {
+void TableHeaderItem::mouseReleaseEvent(QMouseEvent* event) {
   auto order = m_model->get().m_order;
   if(order == Order::NONE || order == Order::DESCENDING) {
     m_sort_signal(Order::ASCENDING);
@@ -166,7 +185,7 @@ void TableHeaderCell::mouseReleaseEvent(QMouseEvent* event) {
   }
 }
 
-void TableHeaderCell::on_update(const Model& model) {
+void TableHeaderItem::on_update(const Model& model) {
   m_filter_button->setVisible(model.m_has_filter);
   auto& stylist = find_stylist(*this);
   if(model.m_order != Order::UNORDERED) {
