@@ -38,6 +38,9 @@ namespace Spire {
       const std::shared_ptr<ListModel<TableHeaderItem::Model>>& get_items()
         const;
 
+      /** Returns the list of widths of each item. */
+      const std::shared_ptr<ListModel<int>>& get_widths() const;
+
       /**
        * Connects a slot to the SortSignal.
        * @param slot The slot to connect.
@@ -54,14 +57,25 @@ namespace Spire {
       boost::signals2::connection connect_filter_signal(
         const FilterSignal::slot_type& slot) const;
 
+    protected:
+      void mouseMoveEvent(QMouseEvent* event) override;
+
     private:
       mutable SortSignal m_sort_signal;
       mutable FilterSignal m_filter_signal;
       std::shared_ptr<ListModel<TableHeaderItem::Model>> m_items;
+      std::shared_ptr<ListModel<int>> m_widths;
+      std::vector<TableHeaderItem*> m_item_views;
+      int m_resize_index;
+      QPoint m_resize_position;
       boost::signals2::scoped_connection m_items_connection;
+      boost::signals2::scoped_connection m_widths_connection;
 
-      void on_items_update(
+      void on_items_operation(
         const ListModel<TableHeaderItem::Model>::Operation& operation);
+      void on_widths_operation(const ListModel<int>::Operation& operation);
+      void on_start_resize(int index);
+      void on_end_resize(int index);
   };
 }
 

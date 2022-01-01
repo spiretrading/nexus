@@ -54,6 +54,7 @@ namespace Spire {
   class SecurityStack;
   class SortedTableModel;
   template<typename T> class StagingValueModel;
+  class TableBody;
   class TableHeader;
   class TableHeaderItem;
   class TableModel;

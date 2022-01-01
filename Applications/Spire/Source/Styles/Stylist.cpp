@@ -190,6 +190,15 @@ void Stylist::remove_proxy(QWidget& widget) {
   stylist.apply_proxies();
 }
 
+void Stylist::adopt(Stylist& stylist, const Selector& selector) {
+  m_adoptions.push_back(&stylist);
+  stylist.match(selector);
+}
+
+const std::vector<Stylist*>& Stylist::get_adoptions() const {
+  return m_adoptions;
+}
+
 void Stylist::match(const Selector& selector) {
   if(m_matches.insert(selector).second) {
     auto signal = m_match_signals.find(selector);
@@ -517,6 +526,11 @@ void Spire::Styles::add_pseudo_element(QWidget& source,
 
 void Spire::Styles::proxy_style(QWidget& source, QWidget& destination) {
   find_stylist(source).add_proxy(destination);
+}
+
+void Spire::Styles::adopt(
+    QWidget& source, QWidget& widget, const Selector& selector) {
+  find_stylist(source).adopt(find_stylist(widget), selector);
 }
 
 void Spire::Styles::match(QWidget& widget, const Selector& selector) {

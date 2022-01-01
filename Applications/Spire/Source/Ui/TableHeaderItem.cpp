@@ -1,5 +1,6 @@
 #include "Spire/Ui/TableHeaderItem.hpp"
 #include <QHBoxLayout>
+#include <QMouseEvent>
 #include <QVBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/FieldValueModel.hpp"
@@ -70,7 +71,6 @@ namespace {
     static auto icon = imageFromSvg(":/Icons/filter.svg", scale(6, 6));
     auto button = make_icon_button(icon);
     button->setFixedSize(scale(16, 16));
-    match(*button, TableHeaderItem::FilterButton());
     update_style(*button, [] (auto& style) {
       style.get(Body()).set(BackgroundColor(Qt::transparent));
       style.get(Body() / Body()).set(Fill(QColor(0xC8C8C8)));
@@ -83,7 +83,7 @@ namespace {
   auto make_sash() {
     auto sash = new QWidget();
     sash->setFixedWidth(scale_width(5));
-    sash->setCursor(Qt::SizeHorCursor);
+    sash->setCursor(Qt::SplitHCursor);
     auto resize_handle = new Box(nullptr);
     resize_handle->setFixedWidth(scale_width(1));
     update_style(*resize_handle, [] (auto& style) {
@@ -101,13 +101,14 @@ namespace {
 TableHeaderItem::TableHeaderItem(
     std::shared_ptr<ValueModel<Model>> model, QWidget* parent)
     : QWidget(parent),
-      m_model(std::move(model)) {
+      m_model(std::move(model)),
+      m_is_resizeable(true) {
   auto name_label = make_label(make_field_value_model(m_model, &Model::m_name));
-  match(*name_label, Label());
+  adopt(*this, *name_label, Label());
   auto sort_indicator =
     new SortIndicator(make_field_value_model(m_model, &Model::m_order));
   m_filter_button = make_filter_button();
-  m_sash = make_sash();
+  adopt(*this, *m_filter_button, FilterButton());
   auto inner_layout = new QHBoxLayout();
   inner_layout->setContentsMargins({});
   inner_layout->addWidget(name_label);
@@ -115,19 +116,27 @@ TableHeaderItem::TableHeaderItem(
     new QSpacerItem(1, 0, QSizePolicy::Expanding, QSizePolicy::Expanding));
   inner_layout->addWidget(sort_indicator);
   inner_layout->addWidget(m_filter_button);
-  inner_layout->addWidget(m_sash);
   auto hover_element = new Box(nullptr);
   hover_element->setFixedSize(scale(18, 2));
-  match(*hover_element, HoverElement());
+  adopt(*this, *hover_element, HoverElement());
   auto hover_layout = new QHBoxLayout();
   hover_layout->setContentsMargins({});
   hover_layout->addWidget(hover_element);
   hover_layout->addSpacerItem(
     new QSpacerItem(1, 0, QSizePolicy::Expanding, QSizePolicy::Expanding));
-  auto outer_layout = new QVBoxLayout(this);
-  outer_layout->setContentsMargins({scale_width(8), scale_height(8), 0, 0});
+  auto contents = new QWidget();
+  contents->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+  auto outer_layout = new QVBoxLayout(contents);
+  outer_layout->setContentsMargins({scale_width(8), 0, 0, 0});
   outer_layout->addLayout(inner_layout);
   outer_layout->addLayout(hover_layout);
+  m_sash = make_sash();
+  m_sash->installEventFilter(this);
+  auto layout = new QHBoxLayout(this);
+  layout->setSpacing(0);
+  layout->setContentsMargins({0, scale_height(8), 0, 0});
+  layout->addWidget(contents);
+  layout->addWidget(m_sash);
   auto style = StyleSheet();
   style.get(Any() > Label()).set(TextColor(QColor(0x808080)));
   style.get(Hover() > Label()).set(TextColor(QColor(0x4B23A0)));
@@ -159,11 +168,20 @@ void TableHeaderItem::set_is_resizeable(bool is_resizeable) {
   m_is_resizeable = is_resizeable;
   m_sash->setVisible(m_is_resizeable);
   if(m_is_resizeable) {
-    layout()->setContentsMargins({scale_width(8), scale_height(8), 0, 0});
+    layout()->setContentsMargins({0, scale_height(8), 0, 0});
   } else {
-    layout()->setContentsMargins(
-      {scale_width(8), scale_height(8), scale_width(8), 0});
+    layout()->setContentsMargins({0, scale_height(8), scale_width(8), 0});
   }
+}
+
+connection TableHeaderItem::connect_start_resize_signal(
+    const StartResizeSignal::slot_type& slot) const {
+  return m_start_resize_signal.connect(slot);
+}
+
+connection TableHeaderItem::connect_end_resize_signal(
+    const EndResizeSignal::slot_type& slot) const {
+  return m_end_resize_signal.connect(slot);
 }
 
 connection TableHeaderItem::connect_sort_signal(
@@ -174,6 +192,19 @@ connection TableHeaderItem::connect_sort_signal(
 connection TableHeaderItem::connect_filter_signal(
     const FilterSignal::slot_type& slot) const {
   return m_filter_button->connect_clicked_signal(slot);
+}
+
+bool TableHeaderItem::eventFilter(QObject* watched, QEvent* event) {
+  if(watched == m_sash) {
+    if(event->type() == QEvent::MouseButtonPress) {
+      event->accept();
+      m_start_resize_signal();
+    } else if(event->type() == QEvent::MouseButtonRelease) {
+      event->accept();
+      m_end_resize_signal();
+    }
+  }
+  return QWidget::eventFilter(watched, event);
 }
 
 void TableHeaderItem::mouseReleaseEvent(QMouseEvent* event) {

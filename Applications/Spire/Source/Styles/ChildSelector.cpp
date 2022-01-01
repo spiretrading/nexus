@@ -20,6 +20,9 @@ namespace {
           children.insert(&find_stylist(static_cast<QWidget&>(*child)));
         }
       }
+      for(auto child : stylist.get_adoptions()) {
+        children.insert(child);
+      }
       if(!children.empty()) {
         m_on_update(std::move(children), {});
       }

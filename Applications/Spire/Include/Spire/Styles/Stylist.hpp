@@ -83,6 +83,16 @@ namespace Spire::Styles {
       void remove_proxy(QWidget& widget);
 
       /**
+       * Adopts a Stylist as a child.
+       * @param stylist The stylist to adopt.
+       * @param selector The selector used to identify this child.
+       */
+      void adopt(Stylist& widget, const Selector& selector);
+
+      /** Returns the list of adopted stylists. */
+      const std::vector<Stylist*>& get_adoptions() const;
+
+      /**
        * Directs this Stylist to match a Selector.
        * @param selector The selector to match.
        */
@@ -164,6 +174,7 @@ namespace Spire::Styles {
       mutable boost::optional<Block> m_computed_block;
       std::vector<Stylist*> m_proxies;
       std::vector<Stylist*> m_principals;
+      std::vector<Stylist*> m_adoptions;
       std::unordered_set<Selector, SelectorHash> m_matches;
       mutable std::unordered_map<Selector, MatchSignal, SelectorHash>
         m_match_signals;
@@ -270,6 +281,14 @@ namespace Spire::Styles {
    * @param destination The QWidget receiving the style.
    */
   void proxy_style(QWidget& source, QWidget& destination);
+
+  /**
+   * Adopts a widget as a child.
+   * @param parent The parent adopting.
+   * @param widget The widget to adopt.
+   * @param selector The selector used to identify this child.
+   */
+  void adopt(QWidget& source, QWidget& widget, const Selector& selector);
 
   /**
    * Indicates a widget no longer matches a Selector.

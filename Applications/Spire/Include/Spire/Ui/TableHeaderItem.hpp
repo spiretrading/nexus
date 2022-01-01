@@ -62,6 +62,12 @@ namespace Spire {
         bool m_has_filter;
       };
 
+      /** Signals an action to start a column resize. */
+      using StartResizeSignal = Signal<void ()>;
+
+      /** Signals an action to end a column resize. */
+      using EndResizeSignal = Signal<void ()>;
+
       /**
        * Signals an action to change this column's sort order.
        * @param order The sort order to update this column to.
@@ -88,6 +94,14 @@ namespace Spire {
       /** Sets whether this item can be resized. */
       void set_is_resizeable(bool is_resizeable);
 
+      /** Connects a slot to the start resize signal. */
+      boost::signals2::connection connect_start_resize_signal(
+        const StartResizeSignal::slot_type& slot) const;
+
+      /** Connects a slot to the end resize signal. */
+      boost::signals2::connection connect_end_resize_signal(
+        const EndResizeSignal::slot_type& slot) const;
+
       /** Connects a slot to the SortSignal. */
       boost::signals2::connection connect_sort_signal(
         const SortSignal::slot_type& slot) const;
@@ -97,9 +111,12 @@ namespace Spire {
         const FilterSignal::slot_type& slot) const;
 
     protected:
+      bool eventFilter(QObject* watched, QEvent* event) override;
       void mouseReleaseEvent(QMouseEvent* event) override;
 
     private:
+      mutable StartResizeSignal m_start_resize_signal;
+      mutable EndResizeSignal m_end_resize_signal;
       mutable SortSignal m_sort_signal;
       std::shared_ptr<ValueModel<Model>> m_model;
       bool m_is_resizeable;

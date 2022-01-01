@@ -16,7 +16,7 @@ namespace Spire {
   class FilteredTableModel : public TableModel {
     public:
 
-      /** 
+      /**
        * Constructs a FilteredTableModel from a TableModel and a filter function.
        * @param source The model.
        * @param filter A function that takes a TableModel and the index of a
@@ -24,7 +24,7 @@ namespace Spire {
        *               the model.
        */
       FilteredTableModel(std::shared_ptr<TableModel> source,
-        std::function<bool(const TableModel&, int)> filter);
+        std::function<bool (const TableModel&, int)> filter);
 
       int get_row_size() const override;
 
