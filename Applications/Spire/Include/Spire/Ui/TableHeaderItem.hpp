@@ -43,6 +43,19 @@ namespace Spire {
         DESCENDING
       };
 
+      /** Specifies whether this column has a filter. */
+      enum class Filter {
+
+        /** The column can not be filtered. */
+        NONE,
+
+        /** The column has a filter applied. */
+        FILTERED,
+
+        /** The column does not have a filter applied. */
+        UNFILTERED
+      };
+
       /** Stores this item's model. */
       struct Model {
 
@@ -55,11 +68,8 @@ namespace Spire {
         /** The column's sort order. */
         Order m_order;
 
-        /**
-         * Whether the column can be filtered, this is not the same as whether
-         * the column is currently being filtered.
-         */
-        bool m_has_filter;
+        /** Whether the column is filtered. */
+        Filter m_filter;
       };
 
       /** Signals an action to start a column resize. */

@@ -504,6 +504,14 @@ namespace {
         {"DESCENDING", TableHeaderItem::Order::DESCENDING}});
     return property;
   }
+
+  const auto& get_filter_property() {
+    static auto property = define_enum<TableHeaderItem::Filter>(
+      {{"NONE", TableHeaderItem::Filter::NONE},
+        {"FILTERED", TableHeaderItem::Filter::FILTERED},
+        {"UNFILTERED", TableHeaderItem::Filter::UNFILTERED}});
+    return property;
+  }
 }
 
 UiProfile Spire::make_box_profile() {
@@ -2517,7 +2525,8 @@ UiProfile Spire::make_table_header_item_profile() {
   populate_widget_properties(properties);
   properties.push_back(
     make_standard_enum_property("order", get_order_property()));
-  properties.push_back(make_standard_property<bool>("has_filter", true));
+  properties.push_back(
+    make_standard_enum_property("filter", get_filter_property()));
   properties.push_back(make_standard_property<bool>("is_resizeable", true));
   auto profile = UiProfile("TableHeaderItem", properties, [=] (auto& profile) {
     auto item_model = TableHeaderItem::Model();
@@ -2529,8 +2538,8 @@ UiProfile Spire::make_table_header_item_profile() {
     apply_widget_properties(item, profile.get_properties());
     link(make_field_value_model(model, &TableHeaderItem::Model::m_order),
       get<TableHeaderItem::Order>("order", profile.get_properties()));
-    link(make_field_value_model(model, &TableHeaderItem::Model::m_has_filter),
-      get<bool>("has_filter", profile.get_properties()));
+    link(make_field_value_model(model, &TableHeaderItem::Model::m_filter),
+      get<TableHeaderItem::Filter>("filter", profile.get_properties()));
     link(&TableHeaderItem::is_resizeable, &TableHeaderItem::set_is_resizeable,
       *item, get<bool>("is_resizeable", profile.get_properties()));
     item->connect_sort_signal(profile.make_event_slot<TableHeaderItem::Order>(
