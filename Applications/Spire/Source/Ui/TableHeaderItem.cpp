@@ -199,9 +199,11 @@ bool TableHeaderItem::eventFilter(QObject* watched, QEvent* event) {
     if(event->type() == QEvent::MouseButtonPress) {
       event->accept();
       m_start_resize_signal();
+      return true;
     } else if(event->type() == QEvent::MouseButtonRelease) {
       event->accept();
       m_end_resize_signal();
+      return true;
     }
   }
   return QWidget::eventFilter(watched, event);

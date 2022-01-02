@@ -97,6 +97,20 @@ namespace {
     });
   }
 
+  /** Keeps a getter/setter synchronized with a property. */
+  template<typename G, typename S, typename W, typename T>
+  void link(const G& getter, const S& setter, W& widget,
+      TypedUiProperty<T>& property) {
+    if((widget.*getter)() != property.get()) {
+      property.set((widget.*getter)());
+    }
+    property.connect_changed_signal([=, &widget] (auto value) {
+      if((widget.*getter)() != value) {
+        (widget.*setter)(value);
+      }
+    });
+  }
+
   template<typename E>
   auto to_string_converter(const E& definition) {
     return [=] (auto value) {
@@ -2493,6 +2507,7 @@ UiProfile Spire::make_table_header_item_profile() {
       {"DESCENDING", TableHeaderItem::Order::DESCENDING}});
   properties.push_back(make_standard_enum_property("order", order_property));
   properties.push_back(make_standard_property<bool>("has_filter", true));
+  properties.push_back(make_standard_property<bool>("is_resizeable", true));
   auto profile = UiProfile("TableHeaderItem", properties, [=] (auto& profile) {
     auto item_model = TableHeaderItem::Model();
     item_model.m_name = "Security";
@@ -2505,9 +2520,13 @@ UiProfile Spire::make_table_header_item_profile() {
       get<TableHeaderItem::Order>("order", profile.get_properties()));
     link(make_field_value_model(model, &TableHeaderItem::Model::m_has_filter),
       get<bool>("has_filter", profile.get_properties()));
+    link(&TableHeaderItem::is_resizeable, &TableHeaderItem::set_is_resizeable,
+      *item, get<bool>("is_resizeable", profile.get_properties()));
     item->connect_sort_signal(profile.make_event_slot<TableHeaderItem::Order>(
       "Sort", to_string_converter(order_property)));
     item->connect_filter_signal(profile.make_event_slot("Filter"));
+    item->connect_start_resize_signal(profile.make_event_slot("StartResize"));
+    item->connect_end_resize_signal(profile.make_event_slot("EndResize"));
     return item;
   });
   return profile;
