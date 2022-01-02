@@ -76,6 +76,8 @@ namespace Spire {
       void on_widths_operation(const ListModel<int>::Operation& operation);
       void on_start_resize(int index);
       void on_end_resize(int index);
+      void on_sort(int index, TableHeaderItem::Order order);
+      void on_filter(int index);
   };
 }
 

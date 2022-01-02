@@ -41,6 +41,9 @@ TableHeader::TableHeader(
       std::bind_front(&TableHeader::on_start_resize, this, i));
     item->connect_end_resize_signal(
       std::bind_front(&TableHeader::on_end_resize, this, i));
+    item->connect_sort_signal(std::bind_front(&TableHeader::on_sort, this, i));
+    item->connect_filter_signal(
+      std::bind_front(&TableHeader::on_filter, this, i));
     layout->addWidget(item);
     m_item_views.push_back(item);
   }
@@ -128,4 +131,12 @@ void TableHeader::on_start_resize(int index) {
 
 void TableHeader::on_end_resize(int index) {
   m_resize_index = -1;
+}
+
+void TableHeader::on_sort(int index, TableHeaderItem::Order order) {
+  m_sort_signal(index, order);
+}
+
+void TableHeader::on_filter(int index) {
+  m_filter_signal(index);
 }

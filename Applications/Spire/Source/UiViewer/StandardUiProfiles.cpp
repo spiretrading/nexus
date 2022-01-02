@@ -112,8 +112,10 @@ namespace {
   }
 
   template<typename E>
-  auto to_string_converter(const E& definition) {
-    return [=] (auto value) {
+  auto to_string_converter(
+      const std::vector<std::pair<QString, E>>& definition) requires
+      std::is_enum_v<E> {
+    return [=] (E value) {
       for(auto e : definition) {
         if(e.second == value) {
           return e.first;
@@ -492,6 +494,15 @@ namespace {
       }
     } catch(const std::exception&) {}
     return {};
+  }
+
+  const auto& get_order_property() {
+    static auto property = define_enum<TableHeaderItem::Order>(
+      {{"NONE", TableHeaderItem::Order::NONE},
+        {"UNORDERED", TableHeaderItem::Order::UNORDERED},
+        {"ASCENDING", TableHeaderItem::Order::ASCENDING},
+        {"DESCENDING", TableHeaderItem::Order::DESCENDING}});
+    return property;
   }
 }
 
@@ -2492,6 +2503,10 @@ UiProfile Spire::make_table_header_profile() {
     items->push(item);
     auto header = new TableHeader(items);
     apply_widget_properties(header, profile.get_properties());
+    header->connect_sort_signal(
+      profile.make_event_slot<int, TableHeaderItem::Order>(
+        "Sort", to_string_converter(get_order_property())));
+    header->connect_filter_signal(profile.make_event_slot<int>("Filter"));
     return header;
   });
   return profile;
@@ -2500,12 +2515,8 @@ UiProfile Spire::make_table_header_profile() {
 UiProfile Spire::make_table_header_item_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
-  auto order_property = define_enum<TableHeaderItem::Order>(
-    {{"NONE", TableHeaderItem::Order::NONE},
-      {"UNORDERED", TableHeaderItem::Order::UNORDERED},
-      {"ASCENDING", TableHeaderItem::Order::ASCENDING},
-      {"DESCENDING", TableHeaderItem::Order::DESCENDING}});
-  properties.push_back(make_standard_enum_property("order", order_property));
+  properties.push_back(
+    make_standard_enum_property("order", get_order_property()));
   properties.push_back(make_standard_property<bool>("has_filter", true));
   properties.push_back(make_standard_property<bool>("is_resizeable", true));
   auto profile = UiProfile("TableHeaderItem", properties, [=] (auto& profile) {
@@ -2523,7 +2534,7 @@ UiProfile Spire::make_table_header_item_profile() {
     link(&TableHeaderItem::is_resizeable, &TableHeaderItem::set_is_resizeable,
       *item, get<bool>("is_resizeable", profile.get_properties()));
     item->connect_sort_signal(profile.make_event_slot<TableHeaderItem::Order>(
-      "Sort", to_string_converter(order_property)));
+      "Sort", to_string_converter(get_order_property())));
     item->connect_filter_signal(profile.make_event_slot("Filter"));
     item->connect_start_resize_signal(profile.make_event_slot("StartResize"));
     item->connect_end_resize_signal(profile.make_event_slot("EndResize"));
