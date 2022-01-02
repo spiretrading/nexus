@@ -109,34 +109,34 @@ TableHeaderItem::TableHeaderItem(
     new SortIndicator(make_field_value_model(m_model, &Model::m_order));
   m_filter_button = make_filter_button();
   adopt(*this, *m_filter_button, FilterButton());
-  auto inner_layout = new QHBoxLayout();
-  inner_layout->setContentsMargins({});
-  inner_layout->addWidget(name_label);
-  inner_layout->addSpacerItem(
-    new QSpacerItem(1, 0, QSizePolicy::Expanding, QSizePolicy::Expanding));
-  inner_layout->addWidget(sort_indicator);
-  inner_layout->addWidget(m_filter_button);
+  m_sash = make_sash();
+  m_sash->installEventFilter(this);
   auto hover_element = new Box(nullptr);
   hover_element->setFixedSize(scale(18, 2));
   adopt(*this, *hover_element, HoverElement());
-  auto hover_layout = new QHBoxLayout();
-  hover_layout->setContentsMargins({});
-  hover_layout->addWidget(hover_element);
-  hover_layout->addSpacerItem(
-    new QSpacerItem(1, 0, QSizePolicy::Expanding, QSizePolicy::Expanding));
   auto contents = new QWidget();
   contents->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-  auto outer_layout = new QVBoxLayout(contents);
-  outer_layout->setContentsMargins({scale_width(8), 0, 0, 0});
-  outer_layout->addLayout(inner_layout);
-  outer_layout->addLayout(hover_layout);
-  m_sash = make_sash();
-  m_sash->installEventFilter(this);
-  auto layout = new QHBoxLayout(this);
-  layout->setSpacing(0);
+  auto contents_layout = new QHBoxLayout(contents);
+  contents_layout->setContentsMargins({scale_width(8), 0, 0, 0});
+  contents_layout->addWidget(name_label);
+  contents_layout->addSpacerItem(
+    new QSpacerItem(1, 0, QSizePolicy::Expanding, QSizePolicy::Expanding));
+  contents_layout->addWidget(sort_indicator);
+  contents_layout->addWidget(m_filter_button);
+  auto top_layout = new QHBoxLayout();
+  top_layout->setSpacing(0);
+  top_layout->setContentsMargins({});
+  top_layout->addWidget(contents);
+  top_layout->addWidget(m_sash);
+  auto bottom_layout = new QHBoxLayout();
+  bottom_layout->setContentsMargins({scale_width(8), 0, 0, 0});
+  bottom_layout->addWidget(hover_element);
+  bottom_layout->addSpacerItem(
+    new QSpacerItem(1, 0, QSizePolicy::Expanding, QSizePolicy::Expanding));
+  auto layout = new QVBoxLayout(this);
   layout->setContentsMargins({0, scale_height(8), 0, 0});
-  layout->addWidget(contents);
-  layout->addWidget(m_sash);
+  layout->addLayout(top_layout);
+  layout->addLayout(bottom_layout);
   auto style = StyleSheet();
   style.get(Any() > Label()).set(TextColor(QColor(0x808080)));
   style.get(Hover() > Label()).set(TextColor(QColor(0x4B23A0)));
