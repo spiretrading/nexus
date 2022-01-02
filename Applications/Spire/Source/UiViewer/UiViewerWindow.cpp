@@ -60,7 +60,7 @@ namespace {
     return container;
   }
 
-  auto get_hover_state_name(HoverObserver::State state) {
+  auto to_string(HoverObserver::State state) {
     switch(state) {
       case HoverObserver::State::MOUSE_IN:
         return QString::fromUtf8("MOUSE_IN");
@@ -190,8 +190,8 @@ void UiViewerWindow::update_table(const UiProfile& profile) {
   table->show();
 }
 
-void UiViewerWindow::on_event(const QString& name,
-    const std::vector<std::any>& arguments) {
+void UiViewerWindow::on_event(
+    const QString& name, const std::vector<std::any>& arguments) {
   ++m_line_count;
   auto log = QString();
   log += QString::number(m_line_count) + ": " + name;
@@ -204,11 +204,10 @@ void UiViewerWindow::on_event(const QString& name,
       } else {
         prepend_comma = true;
       }
-      if(argument.type() == typeid(std::nullptr_t)) {
+      if(auto value = std::any_cast<std::nullptr_t>(&argument)) {
         log += QString::fromUtf8("null");
-      } else if(argument.type() == typeid(HoverObserver::State)) {
-        log +=
-          get_hover_state_name(std::any_cast<HoverObserver::State>(argument));
+      } else if(auto value = std::any_cast<HoverObserver::State>(&argument)) {
+        log += to_string(*value);
       } else {
         log += displayTextAny(argument);
       }
