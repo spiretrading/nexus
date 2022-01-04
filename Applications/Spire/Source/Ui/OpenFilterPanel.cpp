@@ -1,9 +1,9 @@
 #include "Spire/Ui/OpenFilterPanel.hpp"
 #include <QHBoxLayout>
 #include <QVBoxLayout>
+#include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/AssociativeValueModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Ui/ArrayListModel.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/Checkbox.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
@@ -35,7 +35,7 @@ namespace {
   auto LIST_ITEM_STYLE(StyleSheet style) {
     style.get((Any() || Hover() || Press() || Focus() || Selected())).
       set(BackgroundColor(QColor(0xFFFFFF))).
-      set(BorderSize(0, 0, 0, 0)).
+      set(border_size(0)).
       set(PaddingRight(scale_width(10)));
     return style;
   }
@@ -50,7 +50,7 @@ class DeletableItem : public QWidget {
       layout->setContentsMargins({});
       layout->setSpacing(0);
       auto label_box = make_label(std::move(label));
-      label_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+      label_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
       update_style(*label_box, [&] (auto& style) {
         style = LABEL_STYLE(style);
       });
@@ -128,12 +128,12 @@ class OpenFilterPanel::FilterModeButtonGroup {
 
 struct OpenFilterQueryModel : OpenFilterPanel::QueryModel {
   std::shared_ptr<OpenFilterPanel::QueryModel> m_source;
-  std::shared_ptr<ListModel> m_filtered;
+  std::shared_ptr<AnyListModel> m_filtered;
   std::unordered_set<QString> m_filtered_set;
   scoped_connection m_filtered_connection;
 
   OpenFilterQueryModel(std::shared_ptr<OpenFilterPanel::QueryModel> source,
-    std::shared_ptr<ListModel> filtered)
+    std::shared_ptr<AnyListModel> filtered)
     : m_source(std::move(source)),
       m_filtered(std::move(filtered)),
       m_filtered_connection(m_filtered->connect_operation_signal(
@@ -170,16 +170,16 @@ struct OpenFilterQueryModel : OpenFilterPanel::QueryModel {
     });
   }
 
-  void on_operation(const ListModel::Operation& operation) {
+  void on_operation(const AnyListModel::Operation& operation) {
     visit(operation,
-      [&] (const ListModel::AddOperation& operation) {
+      [&] (const AnyListModel::AddOperation& operation) {
         m_filtered_set.insert(
-          displayTextAny(m_filtered->at(operation.m_index)));
+          displayTextAny(m_filtered->get(operation.m_index)));
       },
-      [&] (const ListModel::RemoveOperation& operation) {
+      [&] (const AnyListModel::RemoveOperation& operation) {
         m_filtered_set.clear();
         for(auto i = 0; i < m_filtered->get_size(); ++i) {
-          m_filtered_set.insert(displayTextAny(m_filtered->at(i)));
+          m_filtered_set.insert(displayTextAny(m_filtered->get(i)));
         }
       });
   }
@@ -201,7 +201,7 @@ OpenFilterPanel::OpenFilterPanel(std::shared_ptr<QueryModel> query_model,
 
 OpenFilterPanel::OpenFilterPanel(std::shared_ptr<QueryModel> query_model,
     ComboBoxBuilder combo_box_builder, QString title, QWidget& parent)
-    : m_filtered(std::make_shared<ArrayListModel>()),
+    : m_filtered(std::make_shared<ArrayListModel<std::any>>()),
       m_mode_button_group(std::make_unique<FilterModeButtonGroup>(
         std::make_shared<AssociativeValueModel<FilterMode>>())) {
   auto layout = new QVBoxLayout(this);
@@ -269,14 +269,14 @@ bool OpenFilterPanel::event(QEvent* event) {
   return QWidget::event(event);
 }
 
-QWidget* OpenFilterPanel::make_item(const std::shared_ptr<ListModel>& model,
+QWidget* OpenFilterPanel::make_item(const std::shared_ptr<AnyListModel>& model,
     int index) {
-  auto label = displayTextAny(model->at(index));
+  auto label = displayTextAny(model->get(index));
   auto item = new DeletableItem(label);
   item->connect_delete_signal([=] {
     auto remove_index = [&] {
       for(auto i = 0; i < m_filtered->get_size(); ++i) {
-        if(label == displayTextAny(model->at(i))) {
+        if(label == displayTextAny(model->get(i))) {
           return i;
         }
       }
@@ -302,9 +302,9 @@ void OpenFilterPanel::on_mode_current(FilterMode mode) {
   m_submit_signal(m_filtered, mode);
 }
 
-void OpenFilterPanel::on_operation(const ListModel::Operation& operation) {
+void OpenFilterPanel::on_operation(const AnyListModel::Operation& operation) {
   visit(operation,
-    [&] (const ListModel::AddOperation& operation) {
+    [&] (const AnyListModel::AddOperation& operation) {
       auto item =
         m_scrollable_list_box->get_list_view().get_list_item(operation.m_index);
       update_style(*item, [&] (auto& style) {
@@ -314,7 +314,7 @@ void OpenFilterPanel::on_operation(const ListModel::Operation& operation) {
       m_scrollable_list_box->get_list_view().setFocusPolicy(Qt::NoFocus);
       m_submit_signal(m_filtered, m_mode_button_group->get_current()->get());
     },
-    [&] (const ListModel::RemoveOperation& operation) {
+    [&] (const AnyListModel::RemoveOperation& operation) {
       m_submit_signal(m_filtered, m_mode_button_group->get_current()->get());
     });
 }
@@ -325,6 +325,5 @@ void OpenFilterPanel::on_reset() {
     m_filtered->remove(m_filtered->get_size() - 1);
   }
   m_mode_button_group->get_current()->set(FilterMode::INCLUDE);
-  m_combo_box->setFocus();
   m_submit_signal(m_filtered, m_mode_button_group->get_current()->get());
 }

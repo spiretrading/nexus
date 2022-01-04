@@ -1,7 +1,7 @@
 #ifndef SPIRE_OPEN_FILTER_PANEL_HPP
 #define SPIRE_OPEN_FILTER_PANEL_HPP
+#include "Spire/Spire/ListModel.hpp"
 #include "Spire/Ui/ComboBox.hpp"
-#include "Spire/Ui/ListModel.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -20,7 +20,7 @@ namespace Spire {
         EXCLUDE
       };
 
-      /** The type of model using to retreive potential matches to a query. */
+      /** The type of model using to retrieve potential matches to a query. */
       using QueryModel = ComboBox::QueryModel;
 
       /**
@@ -45,7 +45,7 @@ namespace Spire {
        * @param mode The filter mode.
        */
       using SubmitSignal =
-        Signal<void (const std::shared_ptr<ListModel>& submission,
+        Signal<void (const std::shared_ptr<AnyListModel>& submission,
           FilterMode mode)>;
 
       /** The default ComboBox builder which uses an usual ComboBox */
@@ -83,17 +83,17 @@ namespace Spire {
     private:
       class FilterModeButtonGroup;
       mutable SubmitSignal m_submit_signal;
-      std::shared_ptr<ArrayListModel> m_filtered;
+      std::shared_ptr<ArrayListModel<std::any>> m_filtered;
       std::unique_ptr<FilterModeButtonGroup> m_mode_button_group;
       QWidget* m_combo_box;
       ScrollableListBox* m_scrollable_list_box;
       FilterPanel* m_filter_panel;
       boost::signals2::scoped_connection m_filtered_connection;
 
-      QWidget* make_item(const std::shared_ptr<ListModel>& model, int index);
+      QWidget* make_item(const std::shared_ptr<AnyListModel>& model, int index);
       void on_list_view_current(const boost::optional<int>& current);
       void on_mode_current(FilterMode mode);
-      void on_operation(const ListModel::Operation& operation);
+      void on_operation(const AnyListModel::Operation& operation);
       void on_reset();
   };
 }

@@ -2046,7 +2046,7 @@ UiProfile Spire::make_open_filter_panel_profile() {
       auto submit_filter_slot =
         profile.make_event_slot<QString>(QString::fromUtf8("SubmitSignal"));
       panel->connect_submit_signal(
-        [=] (const std::shared_ptr<ListModel>& submission,
+        [=] (const std::shared_ptr<AnyListModel>& submission,
         OpenFilterPanel::FilterMode mode) {
           auto result = QString();
           if(mode == OpenFilterPanel::FilterMode::INCLUDE) {
@@ -2055,7 +2055,7 @@ UiProfile Spire::make_open_filter_panel_profile() {
             result += "Exclude: ";
           }
           for(auto i = 0; i < submission->get_size(); ++i) {
-            result += displayTextAny(submission->at(i)) + " ";
+            result += displayTextAny(submission->get(i)) + " ";
           }
           submit_filter_slot(result);
         });
