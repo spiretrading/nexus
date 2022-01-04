@@ -6,6 +6,7 @@
 #include <QWidget>
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Spire/ValueModel.hpp"
+#include "Spire/Ui/TableModel.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -101,8 +102,10 @@ namespace Spire {
       std::shared_ptr<CurrentModel> m_current;
       std::shared_ptr<ListModel<int>> m_widths;
       ViewBuilder m_view_builder;
+      boost::signals2::scoped_connection m_table_connection;
       boost::signals2::scoped_connection m_widths_connection;
 
+      void on_table_operation(const TableModel::Operation& operation);
       void on_widths_update(const ListModel<int>::Operation& operation);
   };
 }

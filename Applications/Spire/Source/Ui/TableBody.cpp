@@ -58,6 +58,8 @@ TableBody::TableBody(
       layout->addWidget(item, row, column);
     }
   }
+  m_table_connection = m_table->connect_operation_signal(
+    std::bind_front(&TableBody::on_table_operation, this));
   m_widths_connection = m_widths->connect_operation_signal(
     std::bind_front(&TableBody::on_widths_update, this));
 }
@@ -68,6 +70,20 @@ const std::shared_ptr<TableModel>& TableBody::get_table() const {
 
 const std::shared_ptr<TableBody::CurrentModel>& TableBody::get_current() const {
   return m_current;
+}
+
+void TableBody::on_table_operation(const TableModel::Operation& operation) {
+  auto& layout = static_cast<QGridLayout&>(*this->layout());
+  visit(operation,
+    [&] (const TableModel::MoveOperation& operation) {
+      for(auto column = 0; column != m_table->get_column_size(); ++column) {
+        auto source = layout.itemAtPosition(operation.m_source, column);
+        layout.removeItem(source);
+        if(operation.m_source < operation.m_destination) {
+          layout
+        }
+      }
+    });
 }
 
 void TableBody::on_widths_update(const ListModel<int>::Operation& operation) {

@@ -2580,6 +2580,9 @@ UiProfile Spire::make_table_view_profile() {
     header->push(item);
     auto view = new TableView(model, header);
     apply_widget_properties(view, profile.get_properties());
+    view->connect_sort_signal(
+      profile.make_event_slot<int, TableHeaderItem::Order>(
+        "Sort", to_string_converter(get_order_property())));
     return view;
   });
   return profile;

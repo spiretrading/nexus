@@ -1,8 +1,9 @@
 #ifndef SPIRE_TABLE_VIEW_HPP
 #define SPIRE_TABLE_VIEW_HPP
+#include <boost/optional/optional.hpp>
 #include <QWidget>
 #include "Spire/Ui/TableBody.hpp"
-#include "Spire/Ui/TableHeaderItem.hpp"
+#include "Spire/Ui/TableHeader.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -21,6 +22,8 @@ namespace Spire {
       using Index = TableBody::Index;
 
       using CurrentModel = TableBody::CurrentModel;
+
+      using SortSignal = TableHeader::SortSignal;
 
       /**
        * The default view builder which uses a label styled TextBox to display
@@ -80,8 +83,16 @@ namespace Spire {
       /** Returns the current value. */
       const std::shared_ptr<CurrentModel>& get_current() const;
 
+      /** Connects a slot to the sort signal. */
+      boost::signals2::connection connect_sort_signal(
+        const SortSignal::slot_type& slot) const;
+
     private:
+      mutable SortSignal m_sort_signal;
+      std::shared_ptr<HeaderModel> m_header;
       TableBody* m_body;
+
+      void on_order_update(int index, TableHeaderItem::Order order);
   };
 }
 

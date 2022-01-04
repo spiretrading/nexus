@@ -3,9 +3,9 @@
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/TableBody.hpp"
-#include "Spire/Ui/TableHeader.hpp"
 
 using namespace boost;
+using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::Styles;
 
@@ -36,11 +36,12 @@ TableView::TableView(std::shared_ptr<TableModel> table,
 TableView::TableView(std::shared_ptr<TableModel> table,
     std::shared_ptr<HeaderModel> header, std::shared_ptr<CurrentModel> current,
     ViewBuilder view_builder, QWidget* parent)
-    : QWidget(parent) {
+    : QWidget(parent),
+      m_header(std::move(header)) {
   auto box_body = new QWidget();
   auto box_body_layout = new QVBoxLayout(box_body);
   box_body_layout->setContentsMargins({});
-  auto header_view = new TableHeader(header);
+  auto header_view = new TableHeader(m_header);
   box_body_layout->addWidget(header_view);
   auto box = new Box(box_body);
   update_style(*box, [] (auto& style) {
@@ -52,6 +53,8 @@ TableView::TableView(std::shared_ptr<TableModel> table,
   auto layout = new QVBoxLayout(this);
   layout->addWidget(box);
   layout->addWidget(m_body);
+  header_view->connect_sort_signal(
+    std::bind_front(&TableView::on_order_update, this));
 }
 
 const std::shared_ptr<TableModel>& TableView::get_table() const {
@@ -60,4 +63,16 @@ const std::shared_ptr<TableModel>& TableView::get_table() const {
 
 const std::shared_ptr<TableView::CurrentModel>& TableView::get_current() const {
   return m_body->get_current();
+}
+
+connection TableView::connect_sort_signal(
+    const SortSignal::slot_type& slot) const {
+  return m_sort_signal.connect(slot);
+}
+
+void TableView::on_order_update(int index, TableHeaderItem::Order order) {
+  auto header_item = m_header->get(index);
+  header_item.m_order = order;
+  m_header->set(index, header_item);
+  m_sort_signal(index, order);
 }
