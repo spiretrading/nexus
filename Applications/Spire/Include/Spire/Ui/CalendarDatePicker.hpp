@@ -79,6 +79,7 @@ namespace Styles {
       std::shared_ptr<OptionalDateModel> m_current;
       boost::signals2::scoped_connection m_current_connection;
       MonthSpinner* m_month_spinner;
+      std::shared_ptr<ListModel<boost::gregorian::date>> m_calendar_model;
       ListView* m_calendar_view;
       boost::signals2::scoped_connection m_list_current_connection;
 

@@ -2,8 +2,8 @@
 #define SPIRE_TABLE_HEADER_CELL_HPP
 #include <boost/signals2/connection.hpp>
 #include <QWidget>
-#include "Spire/Spire/CompositeValueModel.hpp"
 #include "Spire/Spire/Spire.hpp"
+#include "Spire/Spire/ValueModel.hpp"
 #include "Spire/Styles/StateSelector.hpp"
 
 namespace Spire {
@@ -76,12 +76,11 @@ namespace Spire {
        * @param model This cell's model.
        * @param parent The parent widget.
        */
-      explicit TableHeaderCell(
-        std::shared_ptr<CompositeValueModel<Model>> model,
+      explicit TableHeaderCell(std::shared_ptr<ValueModel<Model>> model,
         QWidget* parent = nullptr);
 
       /** Returns this cell's model. */
-      const std::shared_ptr<CompositeValueModel<Model>>& get_model() const;
+      const std::shared_ptr<ValueModel<Model>>& get_model() const;
 
       /** Connects a slot to the SortSignal. */
       boost::signals2::connection connect_sort_signal(
@@ -96,7 +95,7 @@ namespace Spire {
 
     private:
       mutable SortSignal m_sort_signal;
-      std::shared_ptr<CompositeValueModel<Model>> m_model;
+      std::shared_ptr<ValueModel<Model>> m_model;
       Button* m_filter_button;
       boost::signals2::scoped_connection m_has_filter_connection;
       boost::signals2::scoped_connection m_order_connection;

@@ -19,7 +19,7 @@ namespace Spire {
       using CurrentModel = ValueModel<std::any>;
 
       /** The type of function used to build a QWidget representing a value. */
-      using ViewBuilder = ListView::ViewBuilder;
+      using ViewBuilder = ListView::ViewBuilder<void>;
 
       /**
        * Signals that the value was submitted.
@@ -127,7 +127,7 @@ namespace Spire {
       TextBox* m_input_box;
       ListView* m_list_view;
       FocusObserver m_focus_observer;
-      std::shared_ptr<ArrayListModel> m_matches;
+      std::shared_ptr<ArrayListModel<std::any>> m_matches;
       DropDownList* m_drop_down_list;
       boost::optional<QString> m_user_query;
       std::uint32_t m_completion_tag;

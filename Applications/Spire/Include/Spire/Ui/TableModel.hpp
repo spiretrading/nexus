@@ -1,6 +1,6 @@
 #ifndef SPIRE_TABLE_MODEL_HPP
 #define SPIRE_TABLE_MODEL_HPP
-#include "Spire/Ui/ListModel.hpp"
+#include "Spire/Spire/ListModel.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {

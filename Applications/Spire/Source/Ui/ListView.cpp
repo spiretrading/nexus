@@ -1,7 +1,7 @@
 #include "Spire/Ui/ListView.hpp"
 #include <boost/signals2/shared_connection_block.hpp>
-#include <QKeyEvent>
 #include <QHBoxLayout>
+#include <QKeyEvent>
 #include <QTimer>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
@@ -48,23 +48,23 @@ void ListView::ItemEntry::set(bool is_current) {
 }
 
 QWidget* ListView::default_view_builder(
-    const std::shared_ptr<ListModel>& list, int index) {
-  return make_label(displayTextAny(list->at(index)));
+    const std::shared_ptr<AnyListModel>& list, int index) {
+  return make_label(displayTextAny(list->get(index)));
 }
 
-ListView::ListView(std::shared_ptr<ListModel> list, QWidget* parent)
+ListView::ListView(std::shared_ptr<AnyListModel> list, QWidget* parent)
   : ListView(std::move(list), default_view_builder, parent) {}
 
-ListView::ListView(
-    std::shared_ptr<ListModel> list, ViewBuilder view_builder, QWidget* parent)
+ListView::ListView(std::shared_ptr<AnyListModel> list,
+  ViewBuilder<> view_builder, QWidget* parent)
   : ListView(std::move(list),
       std::make_shared<LocalValueModel<optional<int>>>(),
       std::make_shared<LocalValueModel<optional<int>>>(),
       std::move(view_builder), parent) {}
 
 ListView::ListView(
-    std::shared_ptr<ListModel> list, std::shared_ptr<CurrentModel> current,
-    std::shared_ptr<SelectionModel> selection, ViewBuilder view_builder,
+    std::shared_ptr<AnyListModel> list, std::shared_ptr<CurrentModel> current,
+    std::shared_ptr<SelectionModel> selection, ViewBuilder<> view_builder,
     QWidget* parent)
     : QWidget(parent),
       m_list(std::move(list)),
@@ -121,7 +121,7 @@ ListView::ListView(
     [=] (const auto& selection) { on_selection(selection); });
 }
 
-const std::shared_ptr<ListModel>& ListView::get_list() const {
+const std::shared_ptr<AnyListModel>& ListView::get_list() const {
   return m_list;
 }
 
@@ -219,7 +219,7 @@ void ListView::append_query(const QString& query) {
     auto short_match = optional<int>();
     while(i != start) {
       if(m_items[i]->m_item->isEnabled()) {
-        auto item_text = displayTextAny(m_list->at(i)).toLower();
+        auto item_text = displayTextAny(m_list->get(i)).toLower();
         if(item_text.startsWith(m_query.toLower())) {
           short_match = none;
           set(i);
@@ -551,15 +551,15 @@ void ListView::update_layout() {
   updateGeometry();
 }
 
-void ListView::on_list_operation(const ListModel::Operation& operation) {
+void ListView::on_list_operation(const AnyListModel::Operation& operation) {
   visit(operation,
-    [&] (const ListModel::AddOperation& operation) {
+    [&] (const AnyListModel::AddOperation& operation) {
       add_item(operation.m_index);
     },
-    [&] (const ListModel::RemoveOperation& operation) {
+    [&] (const AnyListModel::RemoveOperation& operation) {
       remove_item(operation.m_index);
     },
-    [&] (const ListModel::MoveOperation& operation) {
+    [&] (const AnyListModel::MoveOperation& operation) {
       move_item(operation.m_source, operation.m_destination);
     });
 }
@@ -604,7 +604,7 @@ void ListView::on_selection(const optional<int>& selected) {
 void ListView::on_item_submitted(ItemEntry& item) {
   m_navigation_box = item.m_item->frameGeometry();
   set(item.m_index);
-  m_submit_signal(m_list->at(item.m_index));
+  m_submit_signal(m_list->get(item.m_index));
 }
 
 void ListView::on_style() {

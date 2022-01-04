@@ -91,7 +91,7 @@ namespace Spire {
 
     private:
       std::shared_ptr<CurrentModel> m_current;
-      std::shared_ptr<ArrayListModel> m_navigation_list;
+      std::shared_ptr<ArrayListModel<std::any>> m_navigation_list;
       ListView* m_navigation_view;
       QStackedWidget* m_stacked_widget;
       AssociativeValueModel<QString> m_associative_model;

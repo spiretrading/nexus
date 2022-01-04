@@ -54,12 +54,12 @@ namespace {
   }
 }
 
-struct TagBox::PartialListModel : public ListModel {
-  std::shared_ptr<ListModel> m_source;
-  ListModelTransactionLog m_transaction;
+struct TagBox::PartialListModel : public AnyListModel {
+  std::shared_ptr<AnyListModel> m_source;
+  ListModelTransactionLog<std::any> m_transaction;
   scoped_connection m_source_connection;
 
-  explicit PartialListModel(std::shared_ptr<ListModel> source)
+  explicit PartialListModel(std::shared_ptr<AnyListModel> source)
     : m_source(std::move(source)),
       m_source_connection(m_source->connect_operation_signal(
         std::bind_front(&PartialListModel::on_operation, this))) {}
@@ -68,12 +68,12 @@ struct TagBox::PartialListModel : public ListModel {
     return m_source->get_size() + 2;
   }
 
-  const std::any& at(int index) const override {
+  std::any at(int index) const override {
     if(index < 0 || index >= get_size()) {
       throw std::out_of_range("The index is out of range.");
     }
     if(index < m_source->get_size()) {
-      return m_source->at(index);
+      return m_source->get(index);
     }
     static auto value = std::any();
     return value;
@@ -96,7 +96,7 @@ struct TagBox::PartialListModel : public ListModel {
   }
 };
 
-TagBox::TagBox(std::shared_ptr<ListModel> list,
+TagBox::TagBox(std::shared_ptr<AnyListModel> list,
     std::shared_ptr<TextModel> current, QWidget* parent)
     : QWidget(parent),
       m_model(std::make_shared<PartialListModel>(std::move(list))),
@@ -144,7 +144,7 @@ TagBox::TagBox(std::shared_ptr<ListModel> list,
     std::bind_front(&TagBox::on_focus, this));
 }
 
-const std::shared_ptr<ListModel>& TagBox::get_list() const {
+const std::shared_ptr<AnyListModel>& TagBox::get_list() const {
   return m_model->m_source;
 }
 
@@ -214,15 +214,16 @@ void TagBox::resizeEvent(QResizeEvent* event) {
   QWidget::resizeEvent(event);
 }
 
-QWidget* TagBox::make_tag(const std::shared_ptr<ListModel>& model, int index) {
+QWidget* TagBox::make_tag(
+    const std::shared_ptr<AnyListModel>& model, int index) {
   if(index < model->get_size() - 2) {
-    auto label = displayTextAny(model->at(index));
+    auto label = displayTextAny(model->get(index));
     auto tag = new Tag(label, this);
     tag->set_read_only(m_is_read_only || !isEnabled());
     tag->connect_delete_signal([=] {
       auto tag_index = [&] {
         for(auto i = 0; i < get_list()->get_size(); ++i) {
-          if(label == displayTextAny(m_model->at(i))) {
+          if(label == displayTextAny(m_model->get(i))) {
             return i;
           }
         }
@@ -254,9 +255,9 @@ void TagBox::on_focus(FocusObserver::State state) {
   }
 }
 
-void TagBox::on_operation(const ListModel::Operation& operation) {
+void TagBox::on_operation(const AnyListModel::Operation& operation) {
   visit(operation,
-    [&] (const ListModel::AddOperation& operation) {
+    [&] (const AnyListModel::AddOperation& operation) {
       auto item = m_list_view->get_list_item(operation.m_index);
       set_style(*item, LIST_ITEM_STYLE());
       item->setFocusPolicy(Qt::NoFocus);
@@ -268,7 +269,7 @@ void TagBox::on_operation(const ListModel::Operation& operation) {
       update_tags_width();
       overflow();
     },
-    [&] (const ListModel::RemoveOperation& operation) {
+    [&] (const AnyListModel::RemoveOperation& operation) {
       m_tags.erase(m_tags.begin() + operation.m_index);
       remove_text_box_width_constraint();
       update_tags_width();

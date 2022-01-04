@@ -1,6 +1,6 @@
 #include "Spire/Ui/SideBox.hpp"
+#include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
-#include "Spire/Ui/ArrayListModel.hpp"
 
 using namespace Nexus;
 using namespace Spire;
@@ -9,9 +9,9 @@ namespace {
   SideBox::Settings setup() {
     static auto settings = [] {
       auto settings = SideBox::Settings();
-      auto cases = std::make_shared<ArrayListModel>();
-      cases->push(Side(Side::BID));
-      cases->push(Side(Side::ASK));
+      auto cases = std::make_shared<ArrayListModel<Side>>();
+      cases->push(Side::BID);
+      cases->push(Side::ASK);
       settings.m_cases = std::move(cases);
       return settings;
     }();

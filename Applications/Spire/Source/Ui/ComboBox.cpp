@@ -3,8 +3,8 @@
 #include <QApplication>
 #include <QHBoxLayout>
 #include <QKeyEvent>
+#include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
-#include "Spire/Ui/ArrayListModel.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DropDownBox.hpp"
 #include "Spire/Ui/DropDownList.hpp"
@@ -35,7 +35,7 @@ ComboBox::ComboBox(std::shared_ptr<QueryModel> query_model,
       m_submission_text(displayTextAny(m_submission)),
       m_is_read_only(false),
       m_focus_observer(*this),
-      m_matches(std::make_shared<ArrayListModel>()),
+      m_matches(std::make_shared<ArrayListModel<std::any>>()),
       m_completion_tag(0),
       m_has_autocomplete_selection(false),
       m_current_connection(m_current->connect_update_signal(
@@ -54,7 +54,8 @@ ComboBox::ComboBox(std::shared_ptr<QueryModel> query_model,
   layout->setContentsMargins({});
   layout->setSpacing(0);
   layout->addWidget(m_input_box);
-  m_list_view = new ListView(m_matches, std::move(view_builder));
+  m_list_view = new ListView(
+    std::static_pointer_cast<AnyListModel>(m_matches), std::move(view_builder));
   m_drop_down_list = new DropDownList(*m_list_view, *this);
   m_drop_down_list->installEventFilter(this);
   m_drop_down_current_connection =
@@ -163,7 +164,7 @@ void ComboBox::update_completion() {
       m_completion.clear();
       return;
     }
-    auto top_match = displayTextAny(m_matches->at(0));
+    auto top_match = displayTextAny(m_matches->get(0));
     if(!top_match.toLower().startsWith(query.toLower())) {
       m_prefix = query;
       m_completion.clear();
@@ -327,7 +328,7 @@ void ComboBox::on_query(
 
 void ComboBox::on_drop_down_current(optional<int> index) {
   if(index) {
-    auto& value = m_drop_down_list->get_list_view().get_list()->at(*index);
+    auto value = m_drop_down_list->get_list_view().get_list()->get(*index);
     auto text = displayTextAny(value);
     {
       auto input_blocker = shared_connection_block(m_input_connection);

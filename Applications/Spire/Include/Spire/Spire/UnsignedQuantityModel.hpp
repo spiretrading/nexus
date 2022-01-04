@@ -2,12 +2,13 @@
 #define SPIRE_UNSIGNED_QUANTITY_MODEL_HPP
 #include "Nexus/Definitions/Quantity.hpp"
 #include "Spire/Spire/ScalarValueModel.hpp"
+#include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
 
   /** Represents a model for unsigned Quantity values. */
-  struct UnsignedQuantityModel :
-      ScalarValueModel<boost::optional<Nexus::Quantity>> {
+  class UnsignedQuantityModel :
+      public ScalarValueModel<boost::optional<Nexus::Quantity>> {
     public:
 
       /**

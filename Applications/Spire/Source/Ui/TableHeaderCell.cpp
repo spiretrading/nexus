@@ -2,6 +2,7 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/FieldValueModel.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/TextBox.hpp"
@@ -98,12 +99,13 @@ namespace {
 }
 
 TableHeaderCell::TableHeaderCell(
-    std::shared_ptr<CompositeValueModel<Model>> model, QWidget* parent)
+    std::shared_ptr<ValueModel<Model>> model, QWidget* parent)
     : QWidget(parent),
       m_model(std::move(model)) {
-  auto name_label = make_label(m_model->get(&Model::m_name));
+  auto name_label = make_label(make_field_value_model(m_model, &Model::m_name));
   match(*name_label, Label());
-  auto sort_indicator = new SortIndicator(m_model->get(&Model::m_order));
+  auto sort_indicator =
+    new SortIndicator(make_field_value_model(m_model, &Model::m_order));
   m_filter_button = make_filter_button();
   auto inner_layout = new QHBoxLayout();
   inner_layout->setContentsMargins({});
@@ -135,17 +137,17 @@ TableHeaderCell::TableHeaderCell(
   style.get(Filtered() > FilterButton() / Body() / Body()).
     set(Fill(QColor(0x4B23A0)));
   set_style(*this, std::move(style));
-  auto has_filter_model = m_model->get(&Model::m_has_filter);
+  auto has_filter_model = make_field_value_model(m_model, &Model::m_has_filter);
   on_has_filter(has_filter_model->get());
   m_has_filter_connection = has_filter_model->connect_update_signal(
     std::bind_front(&TableHeaderCell::on_has_filter, this));
-  auto order_model = m_model->get(&Model::m_order);
+  auto order_model = make_field_value_model(m_model, &Model::m_order);
   on_order(order_model->get());
   m_order_connection = order_model->connect_update_signal(
     std::bind_front(&TableHeaderCell::on_order, this));
 }
 
-const std::shared_ptr<CompositeValueModel<TableHeaderCell::Model>>&
+const std::shared_ptr<ValueModel<TableHeaderCell::Model>>&
     TableHeaderCell::get_model() const {
   return m_model;
 }

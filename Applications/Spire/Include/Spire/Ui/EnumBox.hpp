@@ -1,11 +1,11 @@
 #ifndef SPIRE_ENUM_BOX_HPP
 #define SPIRE_ENUM_BOX_HPP
 #include <QHBoxLayout>
+#include "Spire/Spire/ArrayListModel.hpp"
+#include "Spire/Spire/ListIndexValueModel.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
-#include "Spire/Ui/ArrayListModel.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DropDownBox.hpp"
-#include "Spire/Ui/ListIndexValueModel.hpp"
 #include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -52,7 +52,7 @@ namespace Spire {
       struct Settings {
 
         /** The list of values that can be selected. */
-        std::shared_ptr<ListModel> m_cases;
+        std::shared_ptr<ListModel<Type>> m_cases;
 
         /** The current value's model. */
         std::shared_ptr<CurrentModel> m_current;
@@ -106,18 +106,19 @@ namespace Spire {
   EnumBox<T>::EnumBox(Settings settings, QWidget* parent)
       : m_current(std::move(settings.m_current)) {
     if(!settings.m_cases) {
-      auto model = std::make_shared<ArrayListModel>();
+      auto model = std::make_shared<ArrayListModel<Type>>();
       model->push(m_current->get());
       settings.m_cases = std::move(model);
     } if(!m_current) {
       m_current =
-        std::make_shared<LocalValueModel<Type>>(settings.m_cases->get<Type>(0));
+        std::make_shared<LocalValueModel<Type>>(settings.m_cases->get(0));
     }
     m_drop_down_box = new DropDownBox(settings.m_cases,
       std::make_shared<ListIndexValueModel<Type>>(settings.m_cases, m_current),
       std::make_shared<LocalValueModel<boost::optional<int>>>(),
-      [view_builder = settings.m_view_builder] (const auto& model, auto index) {
-        return view_builder(model->get<Type>(index));
+      [view_builder = settings.m_view_builder] (
+          const std::shared_ptr<ListModel<Type>>& model, auto index) {
+        return view_builder(model->get(index));
       });
     auto layout = new QHBoxLayout(this);
     layout->setContentsMargins({});

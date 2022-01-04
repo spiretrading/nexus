@@ -1,5 +1,5 @@
 #include "Spire/Ui/TimeInForceFilterPanel.hpp"
-#include "Spire/Ui/ArrayListModel.hpp"
+#include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Ui/ArrayTableModel.hpp"
 
 using namespace Nexus;
@@ -27,8 +27,7 @@ namespace {
 TimeInForceFilterPanel* Spire::make_time_in_force_filter_panel(
     QWidget& parent) {
   return make_time_in_force_filter_panel(
-    std::make_shared<TimeInForceListModel>(std::make_shared<ArrayListModel>()),
-      parent);
+    std::make_shared<ArrayListModel<TimeInForce>>(), parent);
 }
 
 TimeInForceFilterPanel* Spire::make_time_in_force_filter_panel(

@@ -10,15 +10,12 @@
 #include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
-  class ArrayListModel;
   class ArrayTableModel;
   class Box;
   class Button;
   class CalendarDatePicker;
-  template<typename T> class CastListModel;
   class CheckBox;
   class ClosedFilterPanel;
-  class ColumnViewListModel;
   class ComboBox;
   class DateBox;
   class DateFilterPanel;
@@ -40,17 +37,13 @@ namespace Spire {
   class InfoTip;
   class KeyInputBox;
   class LayeredWidget;
-  template<typename T> class ListIndexValueModel;
   class ListItem;
-  class ListModel;
-  class ListValueModel;
   class ListView;
   class MoneyBox;
   class NavigationView;
   class OpenFilterPanel;
   class OverlayPanel;
   class RegionListItem;
-  class RowViewListModel;
   template<typename T> class ScalarFilterPanel;
   class ScrollBar;
   class ScrollBox;

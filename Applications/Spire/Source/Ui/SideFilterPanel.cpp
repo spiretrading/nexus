@@ -1,5 +1,5 @@
 #include "Spire/Ui/SideFilterPanel.hpp"
-#include "Spire/Ui/ArrayListModel.hpp"
+#include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Ui/ArrayTableModel.hpp"
 
 using namespace Nexus;
@@ -7,8 +7,7 @@ using namespace Spire;
 
 SideFilterPanel* Spire::make_side_filter_panel(QWidget& parent) {
   return make_side_filter_panel(
-    std::make_shared<SideListModel>(std::make_shared<ArrayListModel>()),
-      parent);
+    std::make_shared<ArrayListModel<Side>>(), parent);
 }
 
 SideFilterPanel* Spire::make_side_filter_panel(
@@ -23,6 +22,6 @@ SideFilterPanel* Spire::make_side_filter_panel(
       model->set(1, 1, true);
     }
   }
-  return new ClosedFilterPanel(std::move(model), QObject::tr("Filter by Side"),
-    parent);
+  return new ClosedFilterPanel(
+    std::move(model), QObject::tr("Filter by Side"), parent);
 }
