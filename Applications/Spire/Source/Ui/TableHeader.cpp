@@ -93,7 +93,11 @@ void TableHeader::mouseMoveEvent(QMouseEvent* event) {
   } else if(delta > 0) {
     auto sibling_width = [&] {
       if(m_resize_index == m_widths->get_size() - 1) {
-        return m_item_views.back()->width();
+        auto w = 0;
+        for(auto i = 0; i != m_widths->get_size(); ++i) {
+          w += m_widths->get(i);
+        }
+        return width() - w;
       }
       return m_widths->get(m_resize_index + 1);
     }();
