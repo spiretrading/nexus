@@ -60,10 +60,13 @@ namespace Spire {
     private:
       mutable SortSignal m_sort_signal;
       std::shared_ptr<TableModel> m_table;
+      std::shared_ptr<FilteredTableModel> m_filtered_table;
+      std::shared_ptr<SortedTableModel> m_sorted_table;
       std::shared_ptr<HeaderModel> m_header;
       std::shared_ptr<TableFilter> m_filter;
       TableBody* m_body;
 
+      bool is_filtered(const TableModel& model, int row);
       void on_order_update(int index, TableHeaderItem::Order order);
       void on_filter(int index);
   };

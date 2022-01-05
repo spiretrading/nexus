@@ -17,8 +17,9 @@ namespace Spire {
     public:
 
       /**
-       * Constructs a FilteredTableModel from a TableModel and a filter function.
-       * @param source The model.
+       * Constructs a FilteredTableModel from a TableModel and a filter
+       * function.
+       * @param source The model to filter.
        * @param filter A function that takes a TableModel and the index of a
        *               row, and returns true if that row should be excluded of
        *               the model.
@@ -32,7 +33,8 @@ namespace Spire {
 
       const std::any& at(int row, int column) const override;
 
-      QValidator::State set(int row, int column, const std::any& value) override;
+      QValidator::State set(
+        int row, int column, const std::any& value) override;
 
       boost::signals2::connection connect_operation_signal(
         const OperationSignal::slot_type& slot) const override;

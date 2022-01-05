@@ -3,6 +3,7 @@
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/EmptyTableFilter.hpp"
+#include "Spire/Ui/FilteredTableModel.hpp"
 #include "Spire/Ui/SortedTableModel.hpp"
 #include "Spire/Ui/StandardTableFilter.hpp"
 #include "Spire/Ui/TableBody.hpp"
@@ -55,8 +56,10 @@ TableView::TableView(
     style.get(Any()).set(BackgroundColor(QColor(0xFFFFFF)));
   });
   proxy_style(*this, *box);
-  auto sorted_table = std::make_shared<SortedTableModel>(m_table);
-  m_body = new TableBody(std::move(sorted_table), std::move(current),
+  m_filtered_table = std::make_shared<FilteredTableModel>(m_table,
+    std::bind_front(&TableView::is_filtered, this));
+  m_sorted_table = std::make_shared<SortedTableModel>(m_filtered_table);
+  m_body = new TableBody(m_sorted_table, std::move(current),
     header_view->get_widths(), std::move(view_builder));
   auto layout = new QVBoxLayout(this);
   layout->addWidget(box);
@@ -80,15 +83,17 @@ connection TableView::connect_sort_signal(
   return m_sort_signal.connect(slot);
 }
 
+bool TableView::is_filtered(const TableModel& model, int row) {
+  return m_filter->is_filtered(model, row);
+}
+
 void TableView::on_order_update(int index, TableHeaderItem::Order order) {
   auto header_item = m_header->get(index);
   header_item.m_order = order;
-  auto sorted_table =
-    std::static_pointer_cast<SortedTableModel>(m_body->get_table());
-  auto column_order = sorted_table->get_column_order();
+  auto column_order = m_sorted_table->get_column_order();
   adjust(
     SortedTableModel::ColumnOrder(index, to_table_order(order)), column_order);
-  sorted_table->set_column_order(column_order);
+  m_sorted_table->set_column_order(column_order);
   for(auto i = 0; i != m_header->get_size(); ++i) {
     if(i == index) {
       m_header->set(i, header_item);

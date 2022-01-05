@@ -5,7 +5,7 @@ using namespace boost::signals2;
 using namespace Spire;
 
 FilteredTableModel::FilteredTableModel(std::shared_ptr<TableModel> source,
-  std::function<bool(const TableModel&, int)> filter)
+    std::function<bool(const TableModel&, int)> filter)
     : m_source(std::move(source)),
       m_filter(std::move(filter)) {
   for(auto i = 0; i != m_source->get_row_size(); ++i) {
