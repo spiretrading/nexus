@@ -1,7 +1,6 @@
 #ifndef SPIRE_BOX_HPP
 #define SPIRE_BOX_HPP
 #include "Spire/Styles/Selectors.hpp"
-#include "Spire/Styles/StyleSheetMap.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -186,19 +185,15 @@ namespace Styles {
           SideProperty<QColor> m_border_color;
           CornerProperty<int> m_border_radius;
 
-          //BoxStyle();
-
-          //void reset();
+          BoxStyle();
       };
       QWidget* m_container;
       QWidget* m_body;
       QRect m_body_geometry;
-      Styles::StyleSheetMap m_styles;
       BoxStyle m_style;
       boost::signals2::scoped_connection m_style_connection;
       mutable boost::optional<QSize> m_size_hint;
 
-      void commit_style();
       void on_style();
   };
 

@@ -37,17 +37,15 @@ Padding Spire::Styles::padding(int size) {
     PaddingLeft(size));
 }
 
-//Spire::Styles::BoxStyle::BoxStyle()
-//  : m_padding(padding(0)),
-//    m_background_color({}),
-//    m_border_size(border_size(0)),
-//    m_border_color(border_color(QColor())),
-//    m_border_radius(border_radius(0)) {}
+Box::BoxStyle::BoxStyle()
+  : m_padding{0, 0, 0, 0},
+    m_background_color(Qt::transparent),
+    m_border_size{0, 0, 0, 0},
+    m_border_radius{0, 0, 0, 0} {}
 
 Box::Box(QWidget* body, QWidget* parent)
     : QWidget(parent),
-      m_body(body),
-      m_styles([=] { commit_style(); }) {
+      m_body(body) {
   setObjectName(QString("0x%1").arg(reinterpret_cast<std::intptr_t>(this)));
   auto box_layout = new QHBoxLayout(this);
   box_layout->setContentsMargins({});
@@ -128,172 +126,157 @@ void Box::paintEvent(QPaintEvent* event) {
 void Box::resizeEvent(QResizeEvent* event) {
   if(m_body) {
     m_body_geometry = QRect(0, 0, width(), height());
-    m_styles.buffer([&] {
-      for(auto& property : get_evaluated_block(*this)) {
-        property.visit(
-          [&] (std::in_place_type_t<BorderTopSize>, int size) {
-            m_body_geometry.setTop(m_body_geometry.top() + size);
-          },
-          [&] (std::in_place_type_t<BorderRightSize>, int size) {
-            m_body_geometry.setRight(m_body_geometry.right() - size);
-          },
-          [&] (std::in_place_type_t<BorderBottomSize>, int size) {
-            m_body_geometry.setBottom(m_body_geometry.bottom() - size);
-          },
-          [&] (std::in_place_type_t<BorderLeftSize>, int size) {
-            m_body_geometry.setLeft(m_body_geometry.left() + size);
-          },
-          [&] (std::in_place_type_t<PaddingTop>, int size) {
-            m_body_geometry.setTop(m_body_geometry.top() + size);
-          },
-          [&] (std::in_place_type_t<PaddingRight>, int size) {
-            m_body_geometry.setRight(m_body_geometry.right() - size);
-          },
-          [&] (std::in_place_type_t<PaddingBottom>, int size) {
-            m_body_geometry.setBottom(m_body_geometry.bottom() - size);
-          },
-          [&] (std::in_place_type_t<PaddingLeft>, int size) {
-            m_body_geometry.setLeft(m_body_geometry.left() + size);
-          });
-      }
-    });
+    for(auto& property : get_evaluated_block(*this)) {
+      property.visit(
+        [&] (std::in_place_type_t<BorderTopSize>, int size) {
+          m_body_geometry.setTop(m_body_geometry.top() + size);
+        },
+        [&] (std::in_place_type_t<BorderRightSize>, int size) {
+          m_body_geometry.setRight(m_body_geometry.right() - size);
+        },
+        [&] (std::in_place_type_t<BorderBottomSize>, int size) {
+          m_body_geometry.setBottom(m_body_geometry.bottom() - size);
+        },
+        [&] (std::in_place_type_t<BorderLeftSize>, int size) {
+          m_body_geometry.setLeft(m_body_geometry.left() + size);
+        },
+        [&] (std::in_place_type_t<PaddingTop>, int size) {
+          m_body_geometry.setTop(m_body_geometry.top() + size);
+        },
+        [&] (std::in_place_type_t<PaddingRight>, int size) {
+          m_body_geometry.setRight(m_body_geometry.right() - size);
+        },
+        [&] (std::in_place_type_t<PaddingBottom>, int size) {
+          m_body_geometry.setBottom(m_body_geometry.bottom() - size);
+        },
+        [&] (std::in_place_type_t<PaddingLeft>, int size) {
+          m_body_geometry.setLeft(m_body_geometry.left() + size);
+        });
+    }
+    m_container->setGeometry(m_body_geometry);
   }
   QWidget::resizeEvent(event);
 }
 
-void Box::commit_style() {
-  auto stylesheet = QString(
-    R"(#0x%1 {
-        border-style: solid;)").arg(reinterpret_cast<std::intptr_t>(this));
-  m_styles.write(stylesheet);
-  if(stylesheet != styleSheet()) {
-    setStyleSheet(stylesheet);
-    if(m_body) {
-      m_size_hint = none;
-      updateGeometry();
-    }
-  }
-  if(m_body) {
-    m_container->setGeometry(m_body_geometry);
-  }
-}
-
 void Box::on_style() {
   m_body_geometry = QRect(0, 0, width(), height());
-  m_styles.clear();
-  m_styles.buffer([&] {
-    auto& stylist = find_stylist(*this);
-    for(auto& property : stylist.get_computed_block()) {
-      property.visit(
-        [&] (const BackgroundColor& color) {
-          stylist.evaluate(color, [=] (auto color) {
-            m_styles.set("background-color", color);
-            m_style.m_background_color = color;
-          });
-        },
-        [&] (const BorderTopSize& size) {
-          stylist.evaluate(size, [=] (auto size) {
-            m_styles.set("border-top-width", size);
-            m_body_geometry.setTop(m_body_geometry.top() + size);
-          });
-        },
-        [&] (const BorderRightSize& size) {
-          stylist.evaluate(size, [=] (auto size) {
-            m_styles.set("border-right-width", size);
-            m_body_geometry.setRight(m_body_geometry.right() - size);
-          });
-        },
-        [&] (const BorderBottomSize& size) {
-          stylist.evaluate(size, [=] (auto size) {
-            m_styles.set("border-bottom-width", size);
-            m_body_geometry.setBottom(m_body_geometry.bottom() - size);
-          });
-        },
-        [&] (const BorderLeftSize& size) {
-          stylist.evaluate(size, [=] (auto size) {
-            m_styles.set("border-left-width", size);
-            m_body_geometry.setLeft(m_body_geometry.left() + size);
-          });
-        },
-        [&] (const BorderTopColor& color) {
-          stylist.evaluate(color, [=] (auto color) {
-            m_styles.set("border-top-color", color);
-          });
-        },
-        [&] (const BorderRightColor& color) {
-          stylist.evaluate(color, [=] (auto color) {
-            m_styles.set("border-right-color", color);
-          });
-        },
-        [&] (const BorderBottomColor& color) {
-          stylist.evaluate(color, [=] (auto color) {
-            m_styles.set("border-bottom-color", color);
-          });
-        },
-        [&] (const BorderLeftColor& color) {
-          stylist.evaluate(color, [=] (auto color) {
-            m_styles.set("border-left-color", color);
-          });
-        },
-        [&] (const BorderTopLeftRadius& radius) {
-          stylist.evaluate(radius, [=] (auto radius) {
-            m_styles.set("border-top-left-radius", radius);
-          });
-        },
-        [&] (const BorderTopRightRadius& radius) {
-          stylist.evaluate(radius, [=] (auto radius) {
-            m_styles.set("border-top-right-radius", radius);
-          });
-        },
-        [&] (const BorderBottomRightRadius& radius) {
-          stylist.evaluate(radius, [=] (auto radius) {
-            m_styles.set("border-bottom-right-radius", radius);
-          });
-        },
-        [&] (const BorderBottomLeftRadius& radius) {
-          stylist.evaluate(radius, [=] (auto radius) {
-            m_styles.set("border-bottom-left-radius", radius);
-          });
-        },
-        [&] (const PaddingTop& size) {
-          stylist.evaluate(size, [=] (auto size) {
-            m_styles.set("padding-top", size);
-            m_body_geometry.setTop(m_body_geometry.top() + size);
-          });
-        },
-        [&] (const PaddingRight& size) {
-          stylist.evaluate(size, [=] (auto size) {
-            m_styles.set("padding-right", size);
-            m_body_geometry.setRight(m_body_geometry.right() - size);
-          });
-        },
-        [&] (const PaddingBottom& size) {
-          stylist.evaluate(size, [=] (auto size) {
-            m_styles.set("padding-bottom", size);
-            m_body_geometry.setBottom(m_body_geometry.bottom() - size);
-          });
-        },
-        [&] (const PaddingLeft& size) {
-          stylist.evaluate(size, [=] (auto size) {
-            m_styles.set("padding-left", size);
-            m_body_geometry.setLeft(m_body_geometry.left() + size);
-          });
-        },
-        [&] (BodyAlign alignment) {
-          stylist.evaluate(alignment, [=] (auto alignment) {
-            if(m_body) {
-              auto current_alignment = m_container->layout()->alignment();
-              if(current_alignment != alignment) {
-                m_container->layout()->setAlignment(alignment);
-                m_container->layout()->update();
-                m_size_hint = none;
-                updateGeometry();
-              }
-            }
-          });
+  m_style = BoxStyle();
+  auto& stylist = find_stylist(*this);
+  for(auto& property : stylist.get_computed_block()) {
+    property.visit(
+      [&] (const BackgroundColor& color) {
+        stylist.evaluate(color, [=] (auto color) {
+          m_style.m_background_color = color;
         });
-    }
-  });
+      },
+      [&] (const BorderTopSize& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          m_style.m_border_size.m_top = size;
+          m_body_geometry.setTop(m_body_geometry.top() + size);
+        });
+      },
+      [&] (const BorderRightSize& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          m_style.m_border_size.m_right = size;
+          m_body_geometry.setRight(m_body_geometry.right() - size);
+        });
+      },
+      [&] (const BorderBottomSize& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          m_style.m_border_size.m_bottom = size;
+          m_body_geometry.setBottom(m_body_geometry.bottom() - size);
+        });
+      },
+      [&] (const BorderLeftSize& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          m_style.m_border_size.m_left = size;
+          m_body_geometry.setLeft(m_body_geometry.left() + size);
+        });
+      },
+      [&] (const BorderTopColor& color) {
+        stylist.evaluate(color, [=] (auto color) {
+          m_style.m_border_color.m_top = color;
+        });
+      },
+      [&] (const BorderRightColor& color) {
+        stylist.evaluate(color, [=] (auto color) {
+          m_style.m_border_color.m_right = color;
+        });
+      },
+      [&] (const BorderBottomColor& color) {
+        stylist.evaluate(color, [=] (auto color) {
+          m_style.m_border_color.m_bottom;
+        });
+      },
+      [&] (const BorderLeftColor& color) {
+        stylist.evaluate(color, [=] (auto color) {
+          m_style.m_border_color.m_left = color;
+        });
+      },
+      [&] (const BorderTopLeftRadius& radius) {
+        stylist.evaluate(radius, [=] (auto radius) {
+          m_style.m_border_radius.m_top_left = radius;
+        });
+      },
+      [&] (const BorderTopRightRadius& radius) {
+        stylist.evaluate(radius, [=] (auto radius) {
+          m_style.m_border_radius.m_top_right = radius;
+        });
+      },
+      [&] (const BorderBottomRightRadius& radius) {
+        stylist.evaluate(radius, [=] (auto radius) {
+          m_style.m_border_radius.m_bottom_right = radius;
+        });
+      },
+      [&] (const BorderBottomLeftRadius& radius) {
+        stylist.evaluate(radius, [=] (auto radius) {
+          m_style.m_border_radius.m_bottom_left = radius;
+        });
+      },
+      [&] (const PaddingTop& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          m_style.m_padding.m_top = size;
+          m_body_geometry.setTop(m_body_geometry.top() + size);
+        });
+      },
+      [&] (const PaddingRight& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          m_style.m_padding.m_right = size;
+          m_body_geometry.setRight(m_body_geometry.right() - size);
+        });
+      },
+      [&] (const PaddingBottom& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          m_style.m_padding.m_bottom = size;
+          m_body_geometry.setBottom(m_body_geometry.bottom() - size);
+        });
+      },
+      [&] (const PaddingLeft& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          m_style.m_padding.m_left = size;
+          m_body_geometry.setLeft(m_body_geometry.left() + size);
+        });
+      },
+      [&] (BodyAlign alignment) {
+        stylist.evaluate(alignment, [=] (auto alignment) {
+          if(m_body) {
+            auto current_alignment = m_container->layout()->alignment();
+            if(current_alignment != alignment) {
+              m_container->layout()->setAlignment(alignment);
+              m_container->layout()->update();
+              m_size_hint = none;
+              updateGeometry();
+            }
+          }
+        });
+      });
+  }
+  if(m_body) {
+    m_size_hint = none;
+    updateGeometry();
+    m_container->setGeometry(m_body_geometry);
+  }
+  update();
 }
 
 Box* Spire::make_input_box(QWidget* body, QWidget* parent) {
