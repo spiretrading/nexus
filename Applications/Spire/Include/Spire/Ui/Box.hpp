@@ -158,13 +158,43 @@ namespace Styles {
 
     protected:
       bool event(QEvent* event) override;
+      void paintEvent(QPaintEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
 
     private:
+      template<typename T>
+      struct SideProperty {
+        T m_top;
+        T m_right;
+        T m_bottom;
+        T m_left;
+      };
+
+      template<typename T>
+      struct CornerProperty {
+        T m_top_left;
+        T m_top_right;
+        T m_bottom_right;
+        T m_bottom_left;
+      };
+
+      struct BoxStyle {
+        public:
+          SideProperty<int> m_padding;
+          QColor m_background_color;
+          SideProperty<int> m_border_size;
+          SideProperty<QColor> m_border_color;
+          CornerProperty<int> m_border_radius;
+
+          //BoxStyle();
+
+          //void reset();
+      };
       QWidget* m_container;
       QWidget* m_body;
       QRect m_body_geometry;
       Styles::StyleSheetMap m_styles;
+      BoxStyle m_style;
       boost::signals2::scoped_connection m_style_connection;
       mutable boost::optional<QSize> m_size_hint;
 

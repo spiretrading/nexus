@@ -1,5 +1,6 @@
 #include "Spire/Ui/Box.hpp"
 #include <QHBoxLayout>
+#include <QPainter>
 #include <QResizeEvent>
 #include "Spire/Spire/Dimensions.hpp"
 
@@ -35,6 +36,13 @@ Padding Spire::Styles::padding(int size) {
   return Padding(PaddingTop(size), PaddingRight(size), PaddingBottom(size),
     PaddingLeft(size));
 }
+
+//Spire::Styles::BoxStyle::BoxStyle()
+//  : m_padding(padding(0)),
+//    m_background_color({}),
+//    m_border_size(border_size(0)),
+//    m_border_color(border_color(QColor())),
+//    m_border_radius(border_radius(0)) {}
 
 Box::Box(QWidget* body, QWidget* parent)
     : QWidget(parent),
@@ -112,6 +120,11 @@ bool Box::event(QEvent* event) {
   return QWidget::event(event);
 }
 
+void Box::paintEvent(QPaintEvent* event) {
+  auto painter = QPainter(this);
+  painter.fillRect(rect(), m_style.m_background_color);
+}
+
 void Box::resizeEvent(QResizeEvent* event) {
   if(m_body) {
     m_body_geometry = QRect(0, 0, width(), height());
@@ -175,6 +188,7 @@ void Box::on_style() {
         [&] (const BackgroundColor& color) {
           stylist.evaluate(color, [=] (auto color) {
             m_styles.set("background-color", color);
+            m_style.m_background_color = color;
           });
         },
         [&] (const BorderTopSize& size) {
