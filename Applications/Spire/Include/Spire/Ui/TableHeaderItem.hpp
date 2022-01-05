@@ -5,6 +5,8 @@
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Spire/ValueModel.hpp"
 #include "Spire/Styles/StateSelector.hpp"
+#include "Spire/Ui/TableFilter.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 
@@ -43,19 +45,6 @@ namespace Spire {
         DESCENDING
       };
 
-      /** Specifies whether this column has a filter. */
-      enum class Filter {
-
-        /** The column can not be filtered. */
-        NONE,
-
-        /** The column has a filter applied. */
-        FILTERED,
-
-        /** The column does not have a filter applied. */
-        UNFILTERED
-      };
-
       /** Stores this item's model. */
       struct Model {
 
@@ -68,8 +57,8 @@ namespace Spire {
         /** The column's sort order. */
         Order m_order;
 
-        /** Whether the column is filtered. */
-        Filter m_filter;
+        /** How this column is filtered. */
+        TableFilter::Filter m_filter;
       };
 
       /** Signals an action to start a column resize. */
@@ -92,8 +81,8 @@ namespace Spire {
        * @param model This item's model.
        * @param parent The parent widget.
        */
-      explicit TableHeaderItem(std::shared_ptr<ValueModel<Model>> model,
-        QWidget* parent = nullptr);
+      explicit TableHeaderItem(
+        std::shared_ptr<ValueModel<Model>> model, QWidget* parent = nullptr);
 
       /** Returns this item's model. */
       const std::shared_ptr<ValueModel<Model>>& get_model() const;

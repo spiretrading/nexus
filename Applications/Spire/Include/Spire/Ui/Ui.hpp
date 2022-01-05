@@ -26,6 +26,7 @@ namespace Spire {
   class DropDownList;
   class DropShadow;
   class DurationBox;
+  class EmptyTableFilter;
   template<typename T> class EnumBox;
   class FilteredTableModel;
   class FilterPanel;
@@ -54,9 +55,11 @@ namespace Spire {
   class SecurityStack;
   class SortedTableModel;
   template<typename T> class StagingValueModel;
+  class StandardTableFilter;
   class TableBody;
   class TableHeader;
   class TableHeaderItem;
+  class TableFilter;
   class TableModel;
   class TableView;
   class Tag;

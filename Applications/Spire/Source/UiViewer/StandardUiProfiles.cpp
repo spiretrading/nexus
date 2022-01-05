@@ -506,10 +506,10 @@ namespace {
   }
 
   const auto& get_filter_property() {
-    static auto property = define_enum<TableHeaderItem::Filter>(
-      {{"NONE", TableHeaderItem::Filter::NONE},
-        {"FILTERED", TableHeaderItem::Filter::FILTERED},
-        {"UNFILTERED", TableHeaderItem::Filter::UNFILTERED}});
+    static auto property = define_enum<TableFilter::Filter>(
+      {{"NONE", TableFilter::Filter::NONE},
+        {"FILTERED", TableFilter::Filter::FILTERED},
+        {"UNFILTERED", TableFilter::Filter::UNFILTERED}});
     return property;
   }
 }
@@ -2539,7 +2539,7 @@ UiProfile Spire::make_table_header_item_profile() {
     link(make_field_value_model(model, &TableHeaderItem::Model::m_order),
       get<TableHeaderItem::Order>("order", profile.get_properties()));
     link(make_field_value_model(model, &TableHeaderItem::Model::m_filter),
-      get<TableHeaderItem::Filter>("filter", profile.get_properties()));
+      get<TableFilter::Filter>("filter", profile.get_properties()));
     link(&TableHeaderItem::is_resizeable, &TableHeaderItem::set_is_resizeable,
       *item, get<bool>("is_resizeable", profile.get_properties()));
     item->connect_sort_signal(profile.make_event_slot<TableHeaderItem::Order>(
@@ -2560,7 +2560,7 @@ UiProfile Spire::make_table_view_profile() {
     for(auto row = 0; row != 5; ++row) {
       auto values = std::vector<std::any>();
       for(auto column = 0; column != 4; ++column) {
-        values.push_back(row * 4 + column);
+        values.push_back(Quantity(row * 4 + column));
       }
       model->push(values);
     }
@@ -2578,7 +2578,10 @@ UiProfile Spire::make_table_view_profile() {
     item = TableHeaderItem::Model();
     item.m_name = "Date";
     header->push(item);
-    auto view = new TableView(model, header);
+    auto view = TableViewBuilder(model).
+      set_header(header).
+      set_standard_filter().
+      make();
     apply_widget_properties(view, profile.get_properties());
     view->connect_sort_signal(
       profile.make_event_slot<int, TableHeaderItem::Order>(

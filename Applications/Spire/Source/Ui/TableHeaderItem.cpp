@@ -219,7 +219,7 @@ void TableHeaderItem::mouseReleaseEvent(QMouseEvent* event) {
 }
 
 void TableHeaderItem::on_update(const Model& model) {
-  m_filter_button->setVisible(model.m_filter != Filter::NONE);
+  m_filter_button->setVisible(model.m_filter != TableFilter::Filter::NONE);
   auto& stylist = find_stylist(*this);
   if(model.m_order != Order::UNORDERED) {
     if(!stylist.is_match(Sortable())) {
@@ -228,7 +228,7 @@ void TableHeaderItem::on_update(const Model& model) {
   } else if(stylist.is_match(Sortable())) {
     stylist.unmatch(Sortable());
   }
-  if(model.m_filter != Filter::UNFILTERED) {
+  if(model.m_filter != TableFilter::Filter::UNFILTERED) {
     if(!stylist.is_match(Filtered())) {
       stylist.match(Filtered());
     }
