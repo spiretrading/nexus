@@ -158,6 +158,10 @@ void Box::resizeEvent(QResizeEvent* event) {
   QWidget::resizeEvent(event);
 }
 
+void Box::reduce_radii() {
+  throw std::exception("not implemented");
+}
+
 void Box::on_style() {
   m_body_geometry = QRect(0, 0, width(), height());
   m_style = BoxStyle();
@@ -271,6 +275,7 @@ void Box::on_style() {
         });
       });
   }
+  reduce_radii();
   if(m_body) {
     m_size_hint = none;
     updateGeometry();

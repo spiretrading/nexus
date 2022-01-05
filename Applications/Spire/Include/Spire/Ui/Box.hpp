@@ -194,6 +194,7 @@ namespace Styles {
       boost::signals2::scoped_connection m_style_connection;
       mutable boost::optional<QSize> m_size_hint;
 
+      void reduce_radii();
       void on_style();
   };
 
