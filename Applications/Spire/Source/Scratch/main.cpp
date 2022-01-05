@@ -17,20 +17,36 @@ class PaintTest : public QWidget {
       auto border_width = 10;
       auto radius = 20;
       auto painter = QPainter(this);
+      painter.setPen(Qt::NoPen);
       // TODO: render onto QImage/QPixmap because otherwise the background of the parent
       //        is blended, too
       //painter.setCompositionMode(QPainter::CompositionMode_Plus);
       //painter.setRenderHint(QPainter::HighQualityAntialiasing);
       auto top = QPainterPath(QPointF(0, radius));
       top.quadTo(0, 0, radius, 0);
+      // TODO: fix off-by-ones with width and height
       top.lineTo(width() - radius, 0);
       top.quadTo(width(), 0, width(), radius);
-      top.quadTo(width() - 10, 10, width() - radius, 10);
+      top.quadTo(width() - border_width, border_width, width() - radius, border_width);
       top.lineTo(radius, border_width);
-      top.quadTo(10, 10, 0, radius);
+      top.quadTo(border_width, border_width, 0, radius);
       //painter.setPen(Qt::red);
-      painter.setPen(Qt::NoPen);
-      painter.setBrush(QBrush(QColor(Qt::red)));
+      painter.setBrush(QColor(Qt::red));
+      painter.drawPath(top);
+
+      painter.rotate(90);
+      painter.translate(0, -width());
+      painter.setBrush(QColor(Qt::green));
+      painter.drawPath(top);
+
+      painter.rotate(90);
+      painter.translate(0, -height());
+      painter.setBrush(QColor(Qt::blue));
+      painter.drawPath(top);
+
+      painter.rotate(90);
+      painter.translate(0, -width());
+      painter.setBrush(QColor(Qt::yellow));
       painter.drawPath(top);
     }
 };
@@ -51,8 +67,8 @@ int main(int argc, char** argv) {
     border: 20px solid red;
     border-radius: 25px;
     border-top-color: red;
-    /*border-right-color: green;*/
-    border-right: none;
+    border-right-color: green;
+    /*border-right: none;*/
     border-bottom-color: blue;
     border-left-color: yellow;
   )"));
