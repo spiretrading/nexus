@@ -474,25 +474,99 @@ namespace {
     } catch(const std::exception&) {}
     return {};
   }
+
+  template<typename T, typename U, typename V>
+  auto connect_style_property_change_signal(
+      TypedUiProperty<T>& property, QWidget* widget) {
+    property.connect_changed_signal([=] (const T& value) {
+      update_style(*widget, [&] (auto& style) {
+        style.get(U()).set(V(value));
+      });
+    });
+  }
 }
 
 UiProfile Spire::make_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
-  properties.push_back(make_standard_property("border-size", 1));
-  properties.push_back(make_standard_property("border-radius", 0));
+  properties.push_back(
+    make_standard_property("background-color", QColor(0xFFFFFF)));
+  properties.push_back(make_standard_property("padding-top", 1));
+  properties.push_back(make_standard_property("padding-right", 1));
+  properties.push_back(make_standard_property("padding-bottom", 1));
+  properties.push_back(make_standard_property("padding-left", 1));
+  properties.push_back(make_standard_property("border-top-size", 1));
+  properties.push_back(make_standard_property("border-right-size", 1));
+  properties.push_back(make_standard_property("border-bottom-size", 1));
+  properties.push_back(make_standard_property("border-left-size", 1));
+  properties.push_back(
+    make_standard_property("border-top-color", QColor(0xC8C8C8)));
+  properties.push_back(
+    make_standard_property("border-right-color", QColor(0xC8C8C8)));
+  properties.push_back(
+    make_standard_property("border-bottom-color", QColor(0xC8C8C8)));
+  properties.push_back(
+    make_standard_property("border-left-color", QColor(0xC8C8C8)));
+  properties.push_back(make_standard_property("top-left-radius", 0));
+  properties.push_back(make_standard_property("top-right-radius", 0));
+  properties.push_back(make_standard_property("bottom-right-radius", 0));
+  properties.push_back(make_standard_property("bottom-left-radius", 0));
   auto profile = UiProfile(QString::fromUtf8("Box"), properties,
     [] (auto& profile) {
       auto box = new Box(nullptr);
       box->setFixedSize(scale(100, 100));
       apply_widget_properties(box, profile.get_properties());
-      auto& border_size = get<int>("border-size", profile.get_properties());
-      auto& border_radius = get<int>("border-radius", profile.get_properties());
+      TypedUiProperty<QColor>& background_color =
+        get<QColor>("background-color", profile.get_properties());
+      auto& padding_top = get<int>("padding-top", profile.get_properties());
+      auto& padding_right =
+        get<int>("padding-right", profile.get_properties());
+      auto& padding_bottom =
+        get<int>("padding-bottom", profile.get_properties());
+      auto& padding_left = get<int>("padding-left", profile.get_properties());
+      auto& border_top_size =
+        get<int>("border-top-size", profile.get_properties());
+      auto& border_right_size =
+        get<int>("border-right-size", profile.get_properties());
+      auto& border_bottom_size =
+        get<int>("border-bottom-size", profile.get_properties());
+      auto& border_left_size =
+        get<int>("border-left-size", profile.get_properties());
+      auto& border_top_color =
+        get<QColor>("border-top-color", profile.get_properties());
+      auto& border_right_color =
+        get<QColor>("border-right-color", profile.get_properties());
+      auto& border_bottom_color =
+        get<QColor>("border-bottom-color", profile.get_properties());
+      auto& border_left_color =
+        get<QColor>("border-left-color", profile.get_properties());
+      auto& top_left_radius =
+        get<int>("top-left-radius", profile.get_properties());
+      auto& top_right_radius =
+        get<int>("top-right-radius", profile.get_properties());
+      auto& bottom_right_radius =
+        get<int>("bottom-right-radius", profile.get_properties());
+      auto& bottom_left_radius =
+        get<int>("bottom-left-radius", profile.get_properties());
       auto style = StyleSheet();
       style.get(Any()).
-        set(BackgroundColor(QColor(0xFFFFFF))).
-        set(border(scale_width(border_size.get()), QColor(0xC8C8C8))).
-        set(Styles::border_radius(scale_width(border_radius.get()))).
+        set(BackgroundColor(background_color.get())).
+        set(PaddingTop(padding_top.get())).
+        set(PaddingRight(padding_right.get())).
+        set(PaddingBottom(padding_bottom.get())).
+        set(PaddingLeft(padding_left.get())).
+        set(BorderTopSize(border_top_size.get())).
+        set(BorderRightSize(border_right_size.get())).
+        set(BorderBottomSize(border_bottom_size.get())).
+        set(BorderLeftSize(border_left_size.get())).
+        set(BorderTopColor(border_top_color.get())).
+        set(BorderRightColor(border_right_color.get())).
+        set(BorderBottomColor(border_bottom_color.get())).
+        set(BorderLeftColor(border_left_color.get())).
+        set(BorderTopLeftRadius(top_left_radius.get())).
+        set(BorderTopRightRadius(top_right_radius.get())).
+        set(BorderBottomRightRadius(bottom_right_radius.get())).
+        set(BorderBottomLeftRadius(bottom_left_radius.get())).
         set(horizontal_padding(scale_width(8)));
       style.get(Hover() || Focus()).
         set(border_color(QColor(0x4B23A0)));
@@ -500,18 +574,40 @@ UiProfile Spire::make_box_profile() {
         set(BackgroundColor(QColor(0xF5F5F5))).
         set(border_color(QColor(0xC8C8C8)));
       set_style(*box, std::move(style));
-      border_size.connect_changed_signal([=, &border_size] (auto size) {
-        update_style(*box, [&] (auto& style) {
-          style.get(Any()).set(
-            Styles::border_size(scale_width(border_size.get())));
-        });
-      });
-      border_radius.connect_changed_signal([=, &border_radius] (auto radius) {
-        update_style(*box, [&] (auto& style) {
-          style.get(Any()).set(
-            Styles::border_radius(scale_width(border_radius.get())));
-        });
-      });
+      connect_style_property_change_signal<QColor, Any, BackgroundColor>(
+        background_color, box);
+      connect_style_property_change_signal<int, Any, PaddingTop>(
+        padding_top, box);
+      connect_style_property_change_signal<int, Any, PaddingRight>(
+        padding_right, box);
+      connect_style_property_change_signal<int, Any, PaddingBottom>(
+        padding_bottom, box);
+      connect_style_property_change_signal<int, Any, PaddingLeft>(
+        padding_left, box);
+      connect_style_property_change_signal<int, Any, BorderTopSize>(
+        border_top_size, box);
+      connect_style_property_change_signal<int, Any, BorderRightSize>(
+        border_right_size, box);
+      connect_style_property_change_signal<int, Any, BorderBottomSize>(
+        border_bottom_size, box);
+      connect_style_property_change_signal<int, Any, BorderLeftSize>(
+        border_left_size, box);
+      connect_style_property_change_signal<QColor, Any, BorderTopColor>(
+        border_top_color, box);
+      connect_style_property_change_signal<QColor, Any, BorderRightColor>(
+        border_right_color, box);
+      connect_style_property_change_signal<QColor, Any, BorderBottomColor>(
+        border_bottom_color, box);
+      connect_style_property_change_signal<QColor, Any, BorderLeftColor>(
+        border_left_color, box);
+      connect_style_property_change_signal<int, Any, BorderTopLeftRadius>(
+        top_left_radius, box);
+      connect_style_property_change_signal<int, Any, BorderTopRightRadius>(
+        top_right_radius, box);
+      connect_style_property_change_signal<int, Any, BorderBottomRightRadius>(
+        bottom_right_radius, box);
+      connect_style_property_change_signal<int, Any, BorderBottomLeftRadius>(
+        bottom_left_radius, box);
       return box;
     });
   return profile;
