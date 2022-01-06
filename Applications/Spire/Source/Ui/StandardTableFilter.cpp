@@ -17,7 +17,7 @@ TableFilter::Filter StandardTableFilter::get_filter(int column) {
 
 QWidget* StandardTableFilter::make_filter_widget(int column, QWidget& parent) {
   if(m_types[column] == typeid(Quantity)) {
-    return new QuantityFilterPanel(none, none, "Filter Quantity", parent);
+    return new QuantityFilterPanel("Filter Quantity", parent);
   }
   return nullptr;
 }

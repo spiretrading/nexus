@@ -15,10 +15,16 @@ namespace {
   };
 }
 
+MoneyBox::MoneyBox(QWidget* parent)
+  : MoneyBox(QHash<Qt::KeyboardModifier, Type>(
+      {{Qt::NoModifier, Money::CENT}, {Qt::AltModifier, 5 * Money::CENT},
+      {Qt::ControlModifier, 10 * Money::CENT},
+      {Qt::ShiftModifier, 20 * Money::CENT}}), parent) {}
+
 MoneyBox::MoneyBox(QHash<Qt::KeyboardModifier, Money> modifiers,
   QWidget* parent)
-  : MoneyBox(std::make_shared<LocalOptionalMoneyModel>(),
-      std::move(modifiers), parent) {}
+  : MoneyBox(std::make_shared<LocalOptionalMoneyModel>(), std::move(modifiers),
+      parent) {}
 
 MoneyBox::MoneyBox(std::shared_ptr<OptionalMoneyModel> model,
     QHash<Qt::KeyboardModifier, Money> modifiers, QWidget* parent)
