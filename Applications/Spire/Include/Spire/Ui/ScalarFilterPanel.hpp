@@ -44,6 +44,8 @@ namespace Spire {
 
         /** The maximum permissible value (inclusive). */
         boost::optional<Type> m_max;
+
+        bool operator ==(const Range&) const = default;
       };
 
       /** The type of model over the permissible range of values. */

@@ -1,5 +1,6 @@
 #ifndef SPIRE_STANDARD_TABLE_FILTER_HPP
 #define SPIRE_STANDARD_TABLE_FILTER_HPP
+#include <memory>
 #include <typeindex>
 #include <vector>
 #include "Spire/Ui/TableFilter.hpp"
@@ -27,7 +28,10 @@ namespace Spire {
       bool is_filtered(const TableModel& model, int row) const override;
 
     private:
-      std::vector<std::type_index> m_types;
+      struct ColumnFilter;
+      struct EmptyColumnFilter;
+      struct QuantityColumnFilter;
+      std::vector<std::unique_ptr<ColumnFilter>> m_column_filters;
   };
 }
 
