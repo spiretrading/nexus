@@ -40,7 +40,7 @@ Padding Spire::Styles::padding(int size) {
 Box::BoxStyle::BoxStyle()
   : m_padding{0, 0, 0, 0},
     m_background_color(Qt::transparent),
-    m_border_size{0, 0, 0, 0},
+    m_border_width{0, 0, 0, 0},
     m_border_radius{0, 0, 0, 0} {}
 
 Box::Box(QWidget* body, QWidget* parent)
@@ -155,11 +155,53 @@ void Box::resizeEvent(QResizeEvent* event) {
     }
     m_container->setGeometry(m_body_geometry);
   }
+  // TODO: since the resizeEvent is called after the size has changed,
+  //        will this radius update still be visible?
+  reduce_radii();
   QWidget::resizeEvent(event);
 }
 
+double Box::radii_reduction_factor(const BoxBorderRadius& radii) const {
+  // TODO: instead of if, just calculate the factor then return if it's less than 1.0:
+  //      if(auto factor = ...; factor < 1.0f) { return factor };
+  //      or use max(..., max(..., max(...))) on each value
+  if(radii.m_top_left + radii.m_top_right > width()) {
+    return static_cast<double>(width()) /
+      static_cast<double>(radii.m_top_left + radii.m_top_right);
+  } else if(radii.m_top_right + radii.m_bottom_right > height()) {
+    return static_cast<double>(height()) /
+      (radii.m_top_right + radii.m_bottom_right);
+  } else if(radii.m_bottom_left + radii.m_bottom_right > width()) {
+    return static_cast<double>(width()) /
+      (radii.m_bottom_left + radii.m_bottom_right);
+  } else if(radii.m_bottom_left + radii.m_top_left > height()) {
+    return static_cast<double>(height()) /
+      (radii.m_bottom_left + radii.m_bottom_right);
+  }
+  return 1.0f;
+}
+
 void Box::reduce_radii() {
-  throw std::exception("not implemented");
+  qDebug() << "before reduction:";
+  qDebug() << "widget size: " << size();
+  qDebug() << "tl: " << m_style.m_border_radius.m_top_left;
+  qDebug() << "tr: " << m_style.m_border_radius.m_top_right;
+  qDebug() << "br: " << m_style.m_border_radius.m_bottom_right;
+  qDebug() << "bl: " << m_style.m_border_radius.m_bottom_left;
+  // TODO: improve
+  auto factor = radii_reduction_factor(m_style.m_border_radius);
+  while(factor < 1.0f) {
+    qDebug() << "while factor value: " << factor;
+    m_style.m_border_radius.m_top_left *= factor;
+    m_style.m_border_radius.m_top_right *= factor;
+    m_style.m_border_radius.m_bottom_right *= factor;
+    m_style.m_border_radius.m_bottom_left *= factor;
+    factor = radii_reduction_factor(m_style.m_border_radius);
+  }
+  qDebug() << "tl: " << m_style.m_border_radius.m_top_left;
+  qDebug() << "tr: " << m_style.m_border_radius.m_top_right;
+  qDebug() << "br: " << m_style.m_border_radius.m_bottom_right;
+  qDebug() << "bl: " << m_style.m_border_radius.m_bottom_left;
 }
 
 void Box::on_style() {
@@ -175,25 +217,25 @@ void Box::on_style() {
       },
       [&] (const BorderTopSize& size) {
         stylist.evaluate(size, [=] (auto size) {
-          m_style.m_border_size.m_top = size;
+          m_style.m_border_width.m_top = size;
           m_body_geometry.setTop(m_body_geometry.top() + size);
         });
       },
       [&] (const BorderRightSize& size) {
         stylist.evaluate(size, [=] (auto size) {
-          m_style.m_border_size.m_right = size;
+          m_style.m_border_width.m_right = size;
           m_body_geometry.setRight(m_body_geometry.right() - size);
         });
       },
       [&] (const BorderBottomSize& size) {
         stylist.evaluate(size, [=] (auto size) {
-          m_style.m_border_size.m_bottom = size;
+          m_style.m_border_width.m_bottom = size;
           m_body_geometry.setBottom(m_body_geometry.bottom() - size);
         });
       },
       [&] (const BorderLeftSize& size) {
         stylist.evaluate(size, [=] (auto size) {
-          m_style.m_border_size.m_left = size;
+          m_style.m_border_width.m_left = size;
           m_body_geometry.setLeft(m_body_geometry.left() + size);
         });
       },
@@ -275,7 +317,6 @@ void Box::on_style() {
         });
       });
   }
-  reduce_radii();
   if(m_body) {
     m_size_hint = none;
     updateGeometry();

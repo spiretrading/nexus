@@ -161,6 +161,8 @@ namespace Styles {
       void resizeEvent(QResizeEvent* event) override;
 
     private:
+      // TODO: these definitions and helper functions may not strictly belong to the Box, maybe
+      //        declare them elsewhere and use free functions for creating borders.
       template<typename T>
       struct SideProperty {
         T m_top;
@@ -168,7 +170,6 @@ namespace Styles {
         T m_bottom;
         T m_left;
       };
-
       template<typename T>
       struct CornerProperty {
         T m_top_left;
@@ -176,14 +177,17 @@ namespace Styles {
         T m_bottom_right;
         T m_bottom_left;
       };
-
+      using BoxPadding = SideProperty<int>;
+      using BoxBorderWidth = SideProperty<int>;
+      using BoxBorderColor = SideProperty<QColor>;
+      using BoxBorderRadius = CornerProperty<int>;
       struct BoxStyle {
         public:
-          SideProperty<int> m_padding;
+          BoxPadding m_padding;
           QColor m_background_color;
-          SideProperty<int> m_border_size;
-          SideProperty<QColor> m_border_color;
-          CornerProperty<int> m_border_radius;
+          BoxBorderWidth m_border_width;
+          BoxBorderColor m_border_color;
+          BoxBorderRadius m_border_radius;
 
           BoxStyle();
       };
@@ -194,6 +198,7 @@ namespace Styles {
       boost::signals2::scoped_connection m_style_connection;
       mutable boost::optional<QSize> m_size_hint;
 
+      double radii_reduction_factor(const BoxBorderRadius& radii) const;
       void reduce_radii();
       void on_style();
   };
