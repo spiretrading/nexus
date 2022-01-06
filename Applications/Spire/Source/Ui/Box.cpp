@@ -120,6 +120,11 @@ bool Box::event(QEvent* event) {
 
 void Box::paintEvent(QPaintEvent* event) {
   auto painter = QPainter(this);
+  // TODO: only calculate border and clip path(s) once on a resize/style change
+  // TODO: use QPainterPathStroker to generate a clip path for the 'see-through'
+  //        portion of background when corners are rounded:
+  //        painter.setClipPath(QPainterPathStroker().createStroke(path));
+
   painter.fillRect(rect(), m_style.m_background_color);
 }
 
@@ -164,10 +169,10 @@ void Box::resizeEvent(QResizeEvent* event) {
 double Box::radii_reduction_factor(const BoxBorderRadius& radii) const {
   // TODO: instead of if, just calculate the factor then return if it's less than 1.0:
   //      if(auto factor = ...; factor < 1.0f) { return factor };
-  //      or use max(..., max(..., max(...))) on each value
+  //      or use min(..., min(..., min(...))) on each value
   if(radii.m_top_left + radii.m_top_right > width()) {
     return static_cast<double>(width()) /
-      static_cast<double>(radii.m_top_left + radii.m_top_right);
+      (radii.m_top_left + radii.m_top_right);
   } else if(radii.m_top_right + radii.m_bottom_right > height()) {
     return static_cast<double>(height()) /
       (radii.m_top_right + radii.m_bottom_right);
@@ -188,6 +193,7 @@ void Box::reduce_radii() {
   qDebug() << "tr: " << m_style.m_border_radius.m_top_right;
   qDebug() << "br: " << m_style.m_border_radius.m_bottom_right;
   qDebug() << "bl: " << m_style.m_border_radius.m_bottom_left;
+  // TODO: double-check this formula is correct
   // TODO: improve
   auto factor = radii_reduction_factor(m_style.m_border_radius);
   while(factor < 1.0f) {
@@ -198,6 +204,7 @@ void Box::reduce_radii() {
     m_style.m_border_radius.m_bottom_left *= factor;
     factor = radii_reduction_factor(m_style.m_border_radius);
   }
+  qDebug() << "after final reduction:";
   qDebug() << "tl: " << m_style.m_border_radius.m_top_left;
   qDebug() << "tr: " << m_style.m_border_radius.m_top_right;
   qDebug() << "br: " << m_style.m_border_radius.m_bottom_right;
@@ -206,6 +213,8 @@ void Box::reduce_radii() {
 
 void Box::on_style() {
   m_body_geometry = QRect(0, 0, width(), height());
+  // TODO: if the border path is updated here, it may be that only the background
+  //        color needs to be stored, because the border style is never referenced again.
   m_style = BoxStyle();
   auto& stylist = find_stylist(*this);
   for(auto& property : stylist.get_computed_block()) {
