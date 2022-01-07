@@ -6,10 +6,39 @@
 #include <QWidget>
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Spire/ValueModel.hpp"
+#include "Spire/Styles/BasicProperty.hpp"
+#include "Spire/Styles/CompositeProperty.hpp"
 #include "Spire/Ui/TableModel.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+namespace Styles {
+
+  /** The horizontal spacing between items. */
+  using HorizontalSpacing = BasicProperty<int, struct HorizontalSpacingTag>;
+
+  /** The vertical spacing between items. */
+  using VerticalSpacing = BasicProperty<int, struct VerticalSpacingTag>;
+
+  /** The spacing, both vertical and horizontal, between items. */
+  using Spacing = CompositeProperty<HorizontalSpacing, VerticalSpacing>;
+
+  /** Sets the spacing between items. */
+  Spacing spacing(int spacing);
+
+  /** The color used to paint the horizontal grid lines. */
+  using HorizontalGridColor =
+    BasicProperty<QColor, struct HorizontalGridColorTag>;
+
+  /** The color used to paint the vertical grid lines. */
+  using VerticalGridColor = BasicProperty<QColor, struct VerticalGridColorTag>;
+
+  /** The color used to paint the grid lines. */
+  using GridColor = CompositeProperty<HorizontalGridColor, VerticalGridColor>;
+
+  /** Sets the color used for the grid lines. */
+  GridColor grid_color(QColor color);
+}
 
   /** Displays the body of a TableView. */
   class TableBody : public QWidget {
@@ -97,14 +126,26 @@ namespace Spire {
       /** Returns the current value. */
       const std::shared_ptr<CurrentModel>& get_current() const;
 
+    protected:
+      void paintEvent(QPaintEvent* event) override;
+
     private:
+      struct Styles {
+        int m_horizontal_spacing;
+        int m_vertical_spacing;
+        QColor m_horizontal_grid_color;
+        QColor m_vertical_grid_color;
+      };
       std::shared_ptr<TableModel> m_table;
       std::shared_ptr<CurrentModel> m_current;
       std::shared_ptr<ListModel<int>> m_widths;
       ViewBuilder m_view_builder;
+      Styles m_styles;
+      boost::signals2::scoped_connection m_style_connection;
       boost::signals2::scoped_connection m_table_connection;
       boost::signals2::scoped_connection m_widths_connection;
 
+      void on_style();
       void on_table_operation(const TableModel::Operation& operation);
       void on_widths_update(const ListModel<int>::Operation& operation);
   };

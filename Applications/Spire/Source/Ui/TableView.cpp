@@ -62,6 +62,7 @@ TableView::TableView(
   m_body = new TableBody(m_sorted_table, std::move(current),
     header_view->get_widths(), std::move(view_builder));
   auto layout = new QVBoxLayout(this);
+  layout->setSpacing(0);
   layout->addWidget(box);
   layout->addWidget(m_body);
   header_view->connect_sort_signal(
