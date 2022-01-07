@@ -112,9 +112,9 @@ namespace {
       }
       // shares border with right side
       auto start = QPointF(width - next_border_width, right_radius);
-      auto end = QPointF(width - left_radius, border_width);
+      auto end = QPointF(width - right_radius, border_width);
       auto point = get_curve_pos(
-        start, QPointF(width - next_border_width, border_width), end,
+        end, QPointF(width - next_border_width, border_width), start,
         get_transition_point(border_width, next_border_width));
       return point;
     }();
@@ -147,7 +147,7 @@ namespace {
       }
       // shares border with left side
       auto start = QPointF(
-        previous_border_width + (left_radius - previous_border_width),
+        previous_border_width + (left_radius - border_width),
         border_width);
       auto end = QPointF(previous_border_width,
         border_width + (left_radius - border_width));
@@ -157,6 +157,21 @@ namespace {
       return point;
     }();
     
+    //loc_start = QPointF(17, 17);
+    //loc_end = QPointF(57, 0);
+    //roc_start = QPointF(144, 0);
+    //roc_end = QPointF(182, 17);
+    //ric_start = QPointF(154, 46);
+    //ric_end = QPointF(140, 40);
+    //lic_start = QPointF(60, 40);
+    //lic_end = QPointF(46, 46);
+
+    //ric_end = {140, 40};
+    //lic_start = {60, 40};
+
+    // TODO: the control points don't account for the corner being split,
+    //        so they're still set as if it was the full radius.
+
     auto path = QPainterPath(loc_start);
     // fixed left outer control point
     path.quadTo(QPointF(0, 0), loc_end);
@@ -192,7 +207,7 @@ class PaintTest : public QWidget {
       // TODO: render onto QImage/QPixmap because otherwise the background of the parent
       //        is blended, too, or find another method
       //painter.setCompositionMode(QPainter::CompositionMode_Plus);
-      //painter.setRenderHint(QPainter::HighQualityAntialiasing);
+      painter.setRenderHint(QPainter::HighQualityAntialiasing);
 
       painter.setBrush(QColor(Qt::red));
       painter.drawPath(create_border_side(tl_radius, tr_radius, top_width,
