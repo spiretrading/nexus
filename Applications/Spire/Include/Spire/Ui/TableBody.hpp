@@ -8,6 +8,7 @@
 #include "Spire/Spire/ValueModel.hpp"
 #include "Spire/Styles/BasicProperty.hpp"
 #include "Spire/Styles/CompositeProperty.hpp"
+#include "Spire/Styles/StateSelector.hpp"
 #include "Spire/Ui/TableModel.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -38,6 +39,9 @@ namespace Styles {
 
   /** Sets the color used for the grid lines. */
   GridColor grid_color(QColor color);
+
+  /** Selects all rows. */
+  using Row = StateSelector<void, struct RowTag>;
 }
 
   /** Displays the body of a TableView. */
@@ -127,6 +131,7 @@ namespace Styles {
       const std::shared_ptr<CurrentModel>& get_current() const;
 
     protected:
+      bool event(QEvent* event) override;
       void paintEvent(QPaintEvent* event) override;
 
     private:
@@ -136,16 +141,23 @@ namespace Styles {
         QColor m_horizontal_grid_color;
         QColor m_vertical_grid_color;
       };
+      struct RowCover;
+      struct BoxStyles {
+        QColor m_background_color;
+      };
       std::shared_ptr<TableModel> m_table;
       std::shared_ptr<CurrentModel> m_current;
       std::shared_ptr<ListModel<int>> m_widths;
+      std::vector<RowCover*> m_row_covers;
       ViewBuilder m_view_builder;
       Styles m_styles;
       boost::signals2::scoped_connection m_style_connection;
+      boost::signals2::scoped_connection m_row_style_connection;
       boost::signals2::scoped_connection m_table_connection;
       boost::signals2::scoped_connection m_widths_connection;
 
       void on_style();
+      void on_row_cover_style(RowCover& row_cover);
       void on_table_operation(const TableModel::Operation& operation);
       void on_widths_update(const ListModel<int>::Operation& operation);
   };
