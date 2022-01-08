@@ -27,164 +27,151 @@ namespace {
     return {(x2 - x1) * percent + x1, (y2 - y1) * percent + y1};
   }
 
-  // TODO: maybe update with and height to be the final size of the path,
-  //        not the size of the widget.
+  struct Curve {
+    QPointF m_start;
+    QPointF m_ctrl;
+    QPointF m_end;
+  };
+
+  Curve make_left_outer(int radius, int border, int previous_border) {
+    auto start = [&] () -> QPointF {
+      if(previous_border <= 0) {
+        return QPointF(0, radius);
+      }
+      auto start = QPointF(0, radius);
+      auto end = QPointF(radius, 0);
+      auto tp = get_transition_point(border, previous_border);
+      auto point = get_curve_pos(start, QPointF(0, 0), end, 1 - tp);
+      return point;
+    }();
+    auto end = [&] () -> QPointF {
+      return QPointF(radius, 0);
+    }();
+    return {start, QPointF(start.x(), end.y()), end};
+  }
+
+  Curve make_right_outer(int radius, int widget_width,
+      int border_width, int next_border_width) {
+    auto start = [&] () -> QPointF {
+      return QPointF(widget_width - radius, 0);
+    }();
+    auto end = [&] () -> QPointF {
+      if(next_border_width <= 0) {
+        return QPointF(widget_width, radius);
+      }
+      // shares border with right side
+      auto start = QPointF(widget_width - radius, 0);
+      auto end = QPointF(widget_width, radius);
+      // TODO: transition points are shared between roc_end and ric_start
+      auto tp = get_transition_point(border_width, next_border_width);
+      auto point = get_curve_pos(start, QPointF(widget_width, 0), end, tp);
+      return point;
+    }();
+    return {start, QPointF(end.x(), start.y()), end};
+  }
+
+  Curve make_right_inner(int radius, int widget_width,
+      int border_width, int next_border_width) {
+    // **** RIC ****
+    // Note: lines get reversed here, and the start is now on the right side of the end
+    auto start = [&] () -> QPointF {
+      if(next_border_width <= 0) {
+        return QPointF(widget_width, radius);
+      }
+      // shares border with right side
+      auto start = QPointF(widget_width - next_border_width, radius);
+      auto end = QPointF(widget_width - radius, border_width);
+      auto tp = get_transition_point(border_width, next_border_width);
+      // TODO: address this 1 - tp calculation by having a way from inferring
+      //        direction in the get_transition_point function.
+      auto point = get_curve_pos(start,
+        QPointF(widget_width - next_border_width, border_width), end, 1 - tp);
+      return point;
+    }();
+    auto ctrl = [&] () -> QPointF {
+      return QPointF(widget_width - next_border_width, border_width);
+    }();
+    auto end = [&] () -> QPointF {
+      if(next_border_width <= 0) {
+        // TODO: may not be right, may need to adjust (radius - width), see docs
+        return QPointF(widget_width - radius, border_width);
+      }
+      return QPointF(
+        widget_width - (next_border_width + radius - next_border_width),
+        border_width);
+    }();
+    return {start, ctrl, end};
+  }
+
+  Curve make_left_inner(
+      int radius, int border_width, int previous_border_width) {
+    auto start = [&] () -> QPointF {
+      if(previous_border_width <= 0) {
+        return QPointF(previous_border_width + radius, border_width);
+      }
+      // TODO: these curves are the same for each start/end of the inner corners,
+      //        so don't duplicate
+      // TODO: potentially constrain these radius - border calculations
+      return QPointF(
+        previous_border_width + radius - previous_border_width,
+        border_width);
+    }();
+    auto ctrl = [&] () -> QPointF {
+      return QPointF(previous_border_width, border_width);
+    }();
+    auto end = [&] () -> QPointF {
+      if(previous_border_width <= 0) {
+        return QPointF(
+          previous_border_width, border_width + (radius - border_width));
+      }
+      auto start = QPointF(
+        previous_border_width + (radius - border_width),
+        border_width);
+      auto end = QPointF(previous_border_width,
+        border_width + (radius - border_width));
+      auto tp = get_transition_point(border_width, previous_border_width);
+      auto point = get_curve_pos(
+        start, QPointF(previous_border_width, border_width), end, tp);
+      return point;
+    }();
+    return Curve{start, ctrl, end};
+  }
+
   // assumes top side, which can be rotated into place
   // builds the path geometry without color
   QPainterPath create_border_side(int left_radius, int right_radius,
       int border_width, int width,
       int height, int previous_border_width, int next_border_width) {
-    // TODO: what if border_width is 0?
+    // TODO: if border_width is 0, still generate some border so the
+    //        clip path works properly for the background.
 
-    // TODO: investigate potential off-by-ones with width and height
-
-    // TODO: investigate if the precense of the left/right borders matter,
+    // TODO: investigate if the presence of the left/right borders matter,
     //        it may be the case that 'sibling-less' borders will function
     //        properly with the same calculation that would be applied
     //        to a border that shares a corner.
 
-    // **** LOC ****
-    auto loc_start = [&] () -> QPointF {
-      if(previous_border_width <= 0) {
-        return QPointF(0, left_radius);
-      }
-      // else, does share a left border
-      auto start = QPointF(0, left_radius);
-      auto end = QPointF(left_radius, 0);
-      auto point = get_curve_pos(start, QPointF(0, 0), end,
-        get_transition_point(border_width, previous_border_width));
-      return point;
-    }();
-    auto loc_end = [&] () -> QPointF {
-      // Note: LOC end is indepdendent of shared border.
-      //if(next_border_width <= 0) {
-        return QPointF(left_radius, 0);
-      //}
-      // else, does share a left border
-      //auto start = QPointF(0, left_radius);
-      //auto end = QPointF();
-      //auto ratio = static_cast<double>(previous_border_width) / border_width;
-      //return get_curve_pos(start, QPointF(0, 0), end, ratio);
-    }();
-    
-    // **** ROC ****
-    auto roc_start = [&] () -> QPointF {
-      // Note: independent of shared border
-      //if(next_border_width <= 0) {
-        return QPointF(width - right_radius, 0);
-      //}
-      // shares border with right side
-      //return QPointF();
-    }();
-    auto roc_end = [&] () -> QPointF {
-      if(next_border_width <= 0) {
-        return QPointF(width, right_radius);
-      }
-      // shares border with right side
-      auto start = QPointF(width - right_radius, 0);
-      auto end = QPointF(width, right_radius);
-      auto tp = get_transition_point(border_width, next_border_width);
-      auto point = get_curve_pos(start, QPointF(width, 0), end, tp);
-      return point;
-    }();
+    // TODO: curves needs an additional ctrl point adjustment to match the
+    //        connecting curve
+    // TODO: ^^ this basically defines one bezier curve out of two,
+    //        maybe write a function instead.
 
-    // **** RIC ****
-    // Note: lines get reversed here, and the start is now on the right side of the end
-    auto ric_start = [&] () -> QPointF {
-      if(next_border_width <= 0) {
-        return QPointF(width, right_radius);
-      }
-      // shares border with right side
-      auto start = QPointF(width - next_border_width, right_radius);
-      auto end = QPointF(width - right_radius, border_width);
-      auto tp = get_transition_point(border_width, next_border_width);
-      auto point = get_curve_pos(
-        start, QPointF(width - next_border_width, border_width), end, tp);
-      return point;
-    }();
-    auto ric_ctrl = [&] () -> QPointF {
-      return QPointF(width - next_border_width, border_width);
-    }();
-    auto ric_end = [&] () -> QPointF {
-      if(next_border_width <= 0) {
-        // TODO: may not be right, may need to adjust (radius - width), see docs
-        return QPointF(width - right_radius, border_width);
-      }
-      // shares border with right side
-      auto start = QPointF(width - next_border_width, right_radius);
-      auto end = QPointF(width - right_radius, border_width);
-      auto point = get_curve_pos(
-        end, QPointF(width - next_border_width, border_width), start,
-        get_transition_point(border_width, next_border_width));
-      return point;
-    }();
-
-    // **** LIC ****
-    auto lic_start = [&] () -> QPointF {
-      if(previous_border_width <= 0) {
-        return QPointF(previous_border_width + left_radius, border_width);
-      }
-      // shares border with left side
-      // TODO: these curves are the same for each start/end of the inner corners,
-      //        so don't duplicate
-      // TODO: constrain these radius - border calculations
-      auto start = QPointF(
-        previous_border_width + (left_radius - previous_border_width),
-        border_width);
-      auto end = QPointF(previous_border_width,
-        border_width + (left_radius - border_width));
-      auto tp = get_transition_point(border_width, next_border_width);
-      auto point = get_curve_pos(
-        start, QPointF(previous_border_width, border_width), end, tp);
-      return point;
-    }();
-    auto lic_ctrl = [&] () -> QPointF {
-      return QPointF(previous_border_width, border_width);
-    }();
-    auto lic_end = [&] () -> QPointF {
-      if(previous_border_width <= 0) {
-        return QPointF(previous_border_width, border_width + (left_radius - border_width));
-      }
-      // shares border with left side
-      auto start = QPointF(
-        previous_border_width + (left_radius - border_width),
-        border_width);
-      auto end = QPointF(previous_border_width,
-        border_width + (left_radius - border_width));
-      auto tp = get_transition_point(border_width, next_border_width);
-      auto point = get_curve_pos(
-        start, QPointF(previous_border_width, border_width), end, tp);
-      return point;
-    }();
-    
-    //loc_start = QPointF(17, 17);
-    //loc_end = QPointF(57, 0);
-    //roc_start = QPointF(144, 0);
-    //roc_end = QPointF(182, 17);
-    //ric_start = QPointF(154, 46);
-    //ric_end = QPointF(140, 40);
-    //lic_start = QPointF(60, 40);
-    //lic_end = QPointF(46, 46);
-
-    //ric_end = {140, 40};
-    //lic_start = {60, 40};
-
-    // TODO: the control points don't account for the corner being split,
-    //        so they're still set as if it was the full radius.
-
-    auto path = QPainterPath(loc_start);
-    // fixed left outer control point
-    path.quadTo(QPointF(0, 0), loc_end);
-    path.lineTo(roc_start);
-    // fixed right outer control point
-    path.quadTo(QPointF(width, 0), roc_end);
-    path.lineTo(ric_start);
-    path.quadTo(ric_ctrl, ric_end);
-    path.lineTo(lic_start);
-    path.quadTo(lic_ctrl, lic_end);
-    // close the path
-    path.lineTo(loc_start);
-
+    auto loc = make_left_outer(
+      left_radius, border_width, previous_border_width);
+    auto roc = make_right_outer(right_radius, width,
+      border_width, next_border_width);
+    auto ric = make_right_inner(right_radius, width,
+      border_width, next_border_width);
+    auto lic = make_left_inner(left_radius,
+      border_width, previous_border_width);
+    auto path = QPainterPath(loc.m_start);
+    path.quadTo(loc.m_ctrl, loc.m_end);
+    path.lineTo(roc.m_start);
+    path.quadTo(roc.m_ctrl, roc.m_end);
+    path.lineTo(ric.m_start);
+    path.quadTo(ric.m_ctrl, ric.m_end);
+    path.lineTo(lic.m_start);
+    path.quadTo(lic.m_ctrl, lic.m_end);
+    path.lineTo(loc.m_start);
     return path;
   }
 }
@@ -192,20 +179,21 @@ namespace {
 class PaintTest : public QWidget {
   protected:
     void paintEvent(QPaintEvent* event) override {
-      auto top_width = 40;
-      auto right_width = 40;
-      auto bottom_width = 40;
-      auto left_width = 40;
+      auto top_width = 20;
+      auto right_width = 20;
+      auto bottom_width = 20;
+      auto left_width = 20;
       // Note: these need to be manually reduced!
-      auto tl_radius = 60;
-      auto tr_radius = 60;
-      auto br_radius = 60;
-      auto bl_radius = 60;
+      auto tl_radius = 80;
+      auto tr_radius = 40;
+      auto br_radius = 80;
+      auto bl_radius = 40;
       auto painter = QPainter(this);
       painter.fillRect(0, 0, width(), height(), QColor(0, 255, 255));
       painter.setPen(Qt::NoPen);
       // TODO: render onto QImage/QPixmap because otherwise the background of the parent
       //        is blended, too, or find another method
+      //        Or, it appears to happen automatically when rendering paths.
       //painter.setCompositionMode(QPainter::CompositionMode_Plus);
       painter.setRenderHint(QPainter::HighQualityAntialiasing);
 
@@ -228,7 +216,7 @@ class PaintTest : public QWidget {
       painter.rotate(90);
       painter.translate(0, -width());
       painter.setBrush(QColor(Qt::yellow));
-      painter.drawPath(create_border_side(bl_radius, tr_radius, left_width,
+      painter.drawPath(create_border_side(bl_radius, tl_radius, left_width,
         height(), width(), bottom_width, top_width));
     }
 };
