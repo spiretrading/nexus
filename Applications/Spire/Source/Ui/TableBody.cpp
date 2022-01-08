@@ -10,7 +10,6 @@
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/TableModel.hpp"
 #include "Spire/Ui/TextBox.hpp"
-#include "Spire/Ui/Button.hpp"
 
 using namespace boost;
 using namespace Spire;
@@ -26,23 +25,19 @@ GridColor Spire::Styles::grid_color(QColor color) {
 
 QWidget* TableBody::default_view_builder(
     const std::shared_ptr<TableModel>& table, int row, int column) {
-  auto q = make_label_button(displayTextAny(table->at(row, column)));
-  q->setFixedHeight(500);
-  update_style(*q, [] (auto& style) {
-    style.get(Hover() && ReadOnly() && Disabled()).
-      set(TextColor(QColor(Qt::blue)));
-  });
-  return q;
+  return make_label(displayTextAny(table->at(row, column)));
 }
 
 struct TableBody::RowCover : QWidget {
   int m_row;
   QWidget* m_hovered;
+  QColor m_background_color;
 
   RowCover(int row, QWidget* parent)
       : QWidget(parent),
         m_row(row),
-        m_hovered(nullptr) {
+        m_hovered(nullptr),
+        m_background_color(Qt::transparent) {
     setMouseTracking(true);
   }
 
@@ -141,7 +136,8 @@ TableBody::TableBody(
       set(HorizontalSpacing(scale_width(1))).
       set(VerticalSpacing(scale_width(1))).
       set(grid_color(QColor(0xE0E0E0)));
-    style.get(Any() > (Row() && Hover())).set(BackgroundColor(QColor(Qt::blue)));
+    style.get(Any() > (Row() && Hover())).
+      set(BackgroundColor(QColor(0xF2F2FF)));
   });
   for(auto row = 0; row != m_table->get_row_size(); ++row) {
     on_table_operation(TableModel::AddOperation(row));
@@ -186,6 +182,13 @@ bool TableBody::event(QEvent* event) {
 
 void TableBody::paintEvent(QPaintEvent* event) {
   auto painter = QPainter(this);
+  for(auto row_cover : m_row_covers) {
+    if(row_cover->m_background_color.alphaF() != 0) {
+      painter.save();
+      painter.fillRect(row_cover->geometry(), row_cover->m_background_color);
+      painter.restore();
+    }
+  }
   if(m_styles.m_vertical_spacing != 0 &&
       m_styles.m_horizontal_grid_color.alphaF() != 0) {
     auto draw_border = [&] (int top) {
@@ -268,7 +271,17 @@ void TableBody::on_style() {
 }
 
 void TableBody::on_row_cover_style(RowCover& row_cover) {
-  qDebug() << row_cover.m_row;
+  auto& stylist = find_stylist(row_cover);
+  row_cover.m_background_color = Qt::transparent;
+  for(auto& property : stylist.get_computed_block()) {
+    property.visit(
+      [&] (const BackgroundColor& color) {
+        stylist.evaluate(color, [=, &row_cover] (auto color) {
+          row_cover.m_background_color = color;
+        });
+      });
+  }
+  update();
 }
 
 void TableBody::on_table_operation(const TableModel::Operation& operation) {
