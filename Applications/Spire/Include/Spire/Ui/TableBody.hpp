@@ -148,8 +148,8 @@ namespace Styles {
       std::shared_ptr<TableModel> m_table;
       std::shared_ptr<CurrentModel> m_current;
       std::shared_ptr<ListModel<int>> m_widths;
-      std::vector<RowCover*> m_row_covers;
       ViewBuilder m_view_builder;
+      std::vector<RowCover*> m_row_covers;
       Styles m_styles;
       boost::signals2::scoped_connection m_style_connection;
       boost::signals2::scoped_connection m_row_style_connection;

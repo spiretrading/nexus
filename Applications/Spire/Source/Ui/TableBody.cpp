@@ -1,5 +1,6 @@
 #include "Spire/Ui/TableBody.hpp"
-#include <QCoreApplication>
+#include <QApplication>
+#include <QEnterEvent>
 #include <QHBoxLayout>
 #include <QMouseEvent>
 #include <QPainter>
@@ -26,6 +27,7 @@ GridColor Spire::Styles::grid_color(QColor color) {
 QWidget* TableBody::default_view_builder(
     const std::shared_ptr<TableModel>& table, int row, int column) {
   auto q = make_label_button(displayTextAny(table->at(row, column)));
+  q->setFixedHeight(500);
   update_style(*q, [] (auto& style) {
     style.get(Hover() && ReadOnly() && Disabled()).
       set(TextColor(QColor(Qt::blue)));
@@ -35,23 +37,68 @@ QWidget* TableBody::default_view_builder(
 
 struct TableBody::RowCover : QWidget {
   int m_row;
+  QWidget* m_hovered;
 
   RowCover(int row, QWidget* parent)
       : QWidget(parent),
-        m_row(row) {
+        m_row(row),
+        m_hovered(nullptr) {
     setMouseTracking(true);
   }
 
-  void mouseMoveEvent(QMouseEvent* event) override {
-    auto& layout = *parentWidget()->layout()->itemAt(m_row)->layout();
-    for(auto column = 0; column != layout.count(); ++column) {
-      auto& widget = *layout.itemAt(column)->widget();
-      auto local_position = widget.mapFromGlobal(event->globalPos());
-      if(widget.geometry().contains(local_position)) {
-        auto translated_event =
-          QEnterEvent(local_position, local_position, event->screenPos());
-        QCoreApplication::sendEvent(&widget, &translated_event);
+  bool event(QEvent* event) override {
+    switch(event->type()) {
+      case QEvent::MouseButtonPress:
+      case QEvent::MouseButtonRelease:
+      case QEvent::MouseButtonDblClick:
+      case QEvent::MouseMove:
+        return mouse_event(*static_cast<QMouseEvent*>(event));
+    }
+    return QWidget::event(event);
+  }
+
+  bool mouse_event(QMouseEvent& event) {
+    setAttribute(Qt::WA_TransparentForMouseEvents);
+    auto hovered_widget = parentWidget()->childAt(mapToParent(event.pos()));
+    if(m_hovered != hovered_widget) {
+      if(m_hovered) {
+        auto leave_event = QEvent(QEvent::Type::Leave);
+        QCoreApplication::sendEvent(m_hovered, &leave_event);
       }
+      if(hovered_widget == parentWidget()) {
+        m_hovered = nullptr;
+      } else {
+        m_hovered = hovered_widget;
+        if(m_hovered) {
+          auto local_position = m_hovered->mapFromGlobal(event.globalPos());
+          auto enter_event =
+            QEnterEvent(local_position, event.windowPos(), event.screenPos());
+          QCoreApplication::sendEvent(m_hovered, &enter_event);
+        }
+      }
+    }
+    auto result = [&] {
+      if(hovered_widget) {
+        auto mouse_event = QMouseEvent(event.type(),
+          hovered_widget->mapFromGlobal(event.globalPos()), event.windowPos(),
+          event.screenPos(), event.button(), event.buttons(), event.modifiers(),
+          event.source());
+        auto result = QCoreApplication::sendEvent(hovered_widget, &mouse_event);
+        event.setAccepted(mouse_event.isAccepted());
+        return result;
+      } else {
+        return false;
+      }
+    }();
+    setAttribute(Qt::WA_TransparentForMouseEvents, false);
+    return result;
+  }
+
+  void leaveEvent(QEvent* event) override {
+    if(m_hovered) {
+      auto leave_event = QEvent(QEvent::Type::Leave);
+      QCoreApplication::sendEvent(m_hovered, &leave_event);
+      m_hovered = nullptr;
     }
   }
 };
@@ -119,8 +166,17 @@ bool TableBody::event(QEvent* event) {
     auto& row_layout = *static_cast<QVBoxLayout*>(layout());
     for(auto row = 0; row != row_layout.count(); ++row) {
       auto geometry = row_layout.itemAt(row)->layout()->geometry();
-      m_row_covers[row]->move(geometry.topLeft() - QPoint(m_styles.m_horizontal_spacing, m_styles.m_vertical_spacing));
-      m_row_covers[row]->setFixedSize(geometry.size());
+      auto& row_cover = *m_row_covers[row];
+      row_cover.move(geometry.topLeft() -
+        QPoint(m_styles.m_horizontal_spacing, m_styles.m_vertical_spacing));
+      auto vertical_spacing = [&] {
+        if(row == row_layout.count() - 1) {
+          return 2 * m_styles.m_vertical_spacing;
+        }
+        return m_styles.m_vertical_spacing;
+      }();
+      row_cover.setFixedSize(geometry.size() +
+        QSize(2 * m_styles.m_horizontal_spacing, vertical_spacing));
     }
     return result;
   } else {
