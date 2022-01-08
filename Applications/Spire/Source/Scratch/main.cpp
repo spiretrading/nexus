@@ -59,10 +59,8 @@ namespace {
       if(next_border_width <= 0) {
         return QPointF(widget_width, radius);
       }
-      // shares border with right side
       auto start = QPointF(widget_width - radius, 0);
       auto end = QPointF(widget_width, radius);
-      // TODO: transition points are shared between roc_end and ric_start
       auto tp = get_transition_point(border_width, next_border_width);
       auto point = get_curve_pos(start, QPointF(widget_width, 0), end, tp);
       return point;
@@ -72,13 +70,10 @@ namespace {
 
   Curve make_right_inner(int radius, int widget_width,
       int border_width, int next_border_width) {
-    // **** RIC ****
-    // Note: lines get reversed here, and the start is now on the right side of the end
     auto start = [&] () -> QPointF {
       if(next_border_width <= 0) {
         return QPointF(widget_width, radius);
       }
-      // shares border with right side
       auto start = QPointF(widget_width - next_border_width, radius);
       auto end = QPointF(widget_width - radius, border_width);
       auto tp = get_transition_point(border_width, next_border_width);
@@ -93,7 +88,6 @@ namespace {
     }();
     auto end = [&] () -> QPointF {
       if(next_border_width <= 0) {
-        // TODO: may not be right, may need to adjust (radius - width), see docs
         return QPointF(widget_width - radius, border_width);
       }
       return QPointF(
@@ -191,10 +185,6 @@ class PaintTest : public QWidget {
       auto painter = QPainter(this);
       painter.fillRect(0, 0, width(), height(), QColor(0, 255, 255));
       painter.setPen(Qt::NoPen);
-      // TODO: render onto QImage/QPixmap because otherwise the background of the parent
-      //        is blended, too, or find another method
-      //        Or, it appears to happen automatically when rendering paths.
-      //painter.setCompositionMode(QPainter::CompositionMode_Plus);
       painter.setRenderHint(QPainter::HighQualityAntialiasing);
 
       painter.setBrush(QColor(Qt::red));
