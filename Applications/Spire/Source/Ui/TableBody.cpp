@@ -29,13 +29,11 @@ QWidget* TableBody::default_view_builder(
 }
 
 struct TableBody::RowCover : QWidget {
-  int m_row;
   QWidget* m_hovered;
   QColor m_background_color;
 
   RowCover(int row, QWidget* parent)
       : QWidget(parent),
-        m_row(row),
         m_hovered(nullptr),
         m_background_color(Qt::transparent) {
     setMouseTracking(true);
@@ -136,6 +134,8 @@ TableBody::TableBody(
       set(HorizontalSpacing(scale_width(1))).
       set(VerticalSpacing(scale_width(1))).
       set(grid_color(QColor(0xE0E0E0)));
+    style.get(Any() > Row()).
+      set(BackgroundColor(QColor(0xFFFFFF)));
     style.get(Any() > (Row() && Hover())).
       set(BackgroundColor(QColor(0xF2F2FF)));
   });
@@ -312,12 +312,8 @@ void TableBody::on_table_operation(const TableModel::Operation& operation) {
       connect_style_signal(*row_cover, std::bind_front(
         &TableBody::on_row_cover_style, this, std::ref(*row_cover)));
       row_cover->show();
-      auto i = m_row_covers.begin() + operation.m_index;
-      i = m_row_covers.insert(i, row_cover) + 1;
-      while(i != m_row_covers.end()) {
-        ++(*i)->m_row;
-        ++i;
-      }
+      on_row_cover_style(*row_cover);
+      m_row_covers.insert(m_row_covers.begin() + operation.m_index, row_cover);
     },
     [&] (const TableModel::RemoveOperation& operation) {
       auto& source_layout = *row_layout.itemAt(operation.m_index);
@@ -327,12 +323,8 @@ void TableBody::on_table_operation(const TableModel::Operation& operation) {
         delete item;
       }
       auto row_cover = m_row_covers[operation.m_index];
-      auto i = m_row_covers.erase(m_row_covers.begin() + operation.m_index);
+      m_row_covers.erase(m_row_covers.begin() + operation.m_index);
       delete row_cover;
-      while(i != m_row_covers.end()) {
-        --(*i)->m_row;
-        ++i;
-      }
     },
     [&] (const TableModel::MoveOperation& operation) {
       auto& source_layout = *row_layout.itemAt(operation.m_source);
