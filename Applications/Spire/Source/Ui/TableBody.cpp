@@ -349,26 +349,23 @@ void TableBody::on_table_operation(const TableModel::Operation& operation) {
       on_cover_style(*row);
     },
     [&] (const TableModel::RemoveOperation& operation) {
-      auto& source_layout = *row_layout.itemAt(operation.m_index);
-      row_layout.removeItem(&source_layout);
-      while(auto item = source_layout.layout()->takeAt(0)) {
-        delete item->widget();
-        delete item;
-      }
       auto cover = m_row_covers[operation.m_index];
       m_row_covers.erase(m_row_covers.begin() + operation.m_index);
-      delete cover;
+      auto row = row_layout.itemAt(operation.m_index);
+      row_layout.removeItem(row);
+      delete row->widget();
+      delete row;
     },
     [&] (const TableModel::MoveOperation& operation) {
-      auto& source_layout = *row_layout.itemAt(operation.m_source);
-      row_layout.removeItem(&source_layout);
+      auto& row = *row_layout.itemAt(operation.m_source);
+      row_layout.removeItem(&row);
       auto destination = [&] {
         if(operation.m_source < operation.m_destination) {
           return operation.m_destination - 1;
         }
         return operation.m_destination;
       }();
-      row_layout.insertItem(destination, &source_layout);
+      row_layout.insertItem(destination, &row);
     });
 }
 
