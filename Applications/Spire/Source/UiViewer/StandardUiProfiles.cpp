@@ -125,6 +125,13 @@ namespace {
     };
   }
 
+  QString to_string(const TableView::CurrentModel::Type index) {
+    if(index) {
+      return QString("(%1, %2)").arg(index->m_row).arg(index->m_column);
+    }
+    return QString("None");
+  }
+
   template<typename T>
   struct DecimalBoxProfileProperties {
     using Type = T;
@@ -2524,6 +2531,11 @@ UiProfile Spire::make_table_view_profile() {
       set_standard_filter().
       make();
     apply_widget_properties(view, profile.get_properties());
+    view->get_current()->connect_update_signal(
+      profile.make_event_slot<TableView::CurrentModel::Type>(
+        "Current", [] (auto index) {
+          return to_string(index);
+        }));
     view->connect_sort_signal(
       profile.make_event_slot<int, TableHeaderItem::Order>(
         "Sort", to_string_converter(get_order_property())));

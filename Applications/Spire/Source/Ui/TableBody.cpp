@@ -8,6 +8,7 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
+#include "Spire/Ui/TableItem.hpp"
 #include "Spire/Ui/TableModel.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
@@ -162,6 +163,8 @@ TableBody::TableBody(
   }
   m_table_connection = m_table->connect_operation_signal(
     std::bind_front(&TableBody::on_table_operation, this));
+  m_current_connection = m_current->connect_update_signal(
+    std::bind_front(&TableBody::on_current, this));
   m_widths_connection = m_widths->connect_operation_signal(
     std::bind_front(&TableBody::on_widths_update, this));
 }
@@ -194,6 +197,39 @@ bool TableBody::event(QEvent* event) {
     return result;
   } else {
     return QWidget::event(event);
+  }
+}
+
+void TableBody::keyPressEvent(QKeyEvent* event) {
+  switch(event->key()) {
+    case Qt::Key_Home:
+      if(event->modifiers() & Qt::KeyboardModifier::ControlModifier) {
+        navigate_home_row();
+      } else {
+        navigate_home_column();
+      }
+      break;
+    case Qt::Key_End:
+      if(event->modifiers() & Qt::KeyboardModifier::ControlModifier) {
+        navigate_end_row();
+      } else {
+        navigate_end_column();
+      }
+      break;
+    case Qt::Key_Up:
+      navigate_previous_row();
+      break;
+    case Qt::Key_Down:
+      navigate_next_row();
+      break;
+    case Qt::Key_Left:
+      navigate_previous_column();
+      break;
+    case Qt::Key_Right:
+      navigate_next_column();
+      break;
+    default:
+      QWidget::keyPressEvent(event);
   }
 }
 
@@ -259,6 +295,106 @@ void TableBody::add_column_cover(int index, const QRect& geometry) {
   cover->show();
   on_cover_style(*cover);
 }
+
+void TableBody::navigate_home() {
+  if(m_table->get_row_size() > 0 &&
+      m_table->get_column_size() > 0 && m_current->get() != Index(0, 0)) {
+    m_current->set(Index(0, 0));
+  }
+}
+
+void TableBody::navigate_home_row() {
+  auto& current = m_current->get();
+  if(!current) {
+    navigate_home();
+  } else if(current->m_row != 0) {
+    m_current->set(Index(0, current->m_column));
+  }
+}
+
+void TableBody::navigate_home_column() {
+  auto& current = m_current->get();
+  if(!current) {
+    navigate_home();
+  } else if(current->m_column != 0) {
+    m_current->set(Index(current->m_row, 0));
+  }
+}
+
+void TableBody::navigate_end() {
+  if(m_table->get_row_size() > 0 &&
+      m_table->get_column_size() > 0 &&
+      m_current->get() !=
+        Index(m_table->get_row_size() - 1, m_table->get_column_size() - 1)) {
+    m_current->set(
+      Index(m_table->get_row_size() - 1, m_table->get_column_size() - 1));
+  }
+}
+
+void TableBody::navigate_end_row() {
+  auto& current = m_current->get();
+  if(!current) {
+    navigate_end();
+  } else if(current->m_row != m_table->get_row_size() - 1) {
+    m_current->set(Index(m_table->get_row_size() - 1, current->m_column));
+  }
+}
+
+void TableBody::navigate_end_column() {
+  auto& current = m_current->get();
+  if(!current) {
+    navigate_end();
+  } else if(current->m_column != m_table->get_column_size() - 1) {
+    m_current->set(Index(current->m_row, m_table->get_column_size() - 1));
+  }
+}
+
+void TableBody::navigate_previous_row() {
+  auto& current = m_current->get();
+  if(!current) {
+    navigate_home();
+  } else if(current->m_row != 0) {
+    m_current->set(Index(current->m_row - 1, current->m_column));
+  }
+}
+
+void TableBody::navigate_next_row() {
+  auto& current = m_current->get();
+  if(!current) {
+    navigate_home();
+  } else if(current->m_row != m_table->get_row_size() - 1) {
+    m_current->set(Index(current->m_row + 1, current->m_column));
+  }
+}
+
+void TableBody::navigate_previous_column() {
+  auto& current = m_current->get();
+  if(!current) {
+    navigate_home();
+  } else if(current->m_column != 0) {
+    m_current->set(Index(current->m_row, current->m_column - 1));
+  }
+}
+
+void TableBody::navigate_next_column() {
+  auto& current = m_current->get();
+  if(!current) {
+    navigate_home();
+  } else if(current->m_column != m_table->get_column_size() - 1) {
+    m_current->set(Index(current->m_row, current->m_column + 1));
+  }
+}
+
+void TableBody::on_item_clicked(TableItem& item) {
+  auto& row_widget = *item.parentWidget();
+  auto row_index = layout()->indexOf(&row_widget);
+  auto column_index = row_widget.layout()->indexOf(&item);
+  if(m_current->get() != Index(row_index, column_index)) {
+    m_current->set(Index(row_index, column_index));
+  }
+}
+
+void TableBody::on_current(const optional<Index>& index) {}
 
 void TableBody::on_style() {
   auto& stylist = find_stylist(*this);
@@ -330,7 +466,8 @@ void TableBody::on_table_operation(const TableModel::Operation& operation) {
       column_layout->setContentsMargins({});
       column_layout->setSpacing(m_styles.m_horizontal_spacing);
       for(auto column = 0; column != m_table->get_column_size(); ++column) {
-        auto item = m_view_builder(m_table, operation.m_index, column);
+        auto item =
+          new TableItem(*m_view_builder(m_table, operation.m_index, column));
         if(column != m_table->get_column_size() - 1) {
           item->setSizePolicy(
             QSizePolicy::Fixed, item->sizePolicy().verticalPolicy());
@@ -341,6 +478,8 @@ void TableBody::on_table_operation(const TableModel::Operation& operation) {
             QSizePolicy::Expanding, item->sizePolicy().verticalPolicy());
         }
         column_layout->addWidget(item);
+        item->connect_clicked_signal(
+          std::bind_front(&TableBody::on_item_clicked, this, std::ref(*item)));
       }
       row_layout.insertWidget(operation.m_index, row);
       m_row_covers.insert(m_row_covers.begin() + operation.m_index, row);

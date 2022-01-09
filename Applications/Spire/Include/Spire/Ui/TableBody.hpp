@@ -70,6 +70,8 @@ namespace Styles {
 
         /** The column being indexed. */
         int m_column;
+
+        bool operator ==(const Index&) const = default;
       };
 
       /** The type of model to the index of the current value. */
@@ -135,6 +137,7 @@ namespace Styles {
 
     protected:
       bool event(QEvent* event) override;
+      void keyPressEvent(QKeyEvent* event) override;
       void paintEvent(QPaintEvent* event) override;
 
     private:
@@ -159,9 +162,22 @@ namespace Styles {
       boost::signals2::scoped_connection m_style_connection;
       boost::signals2::scoped_connection m_row_style_connection;
       boost::signals2::scoped_connection m_table_connection;
+      boost::signals2::scoped_connection m_current_connection;
       boost::signals2::scoped_connection m_widths_connection;
 
       void add_column_cover(int index, const QRect& geometry);
+      void navigate_home();
+      void navigate_home_row();
+      void navigate_home_column();
+      void navigate_end();
+      void navigate_end_row();
+      void navigate_end_column();
+      void navigate_previous_row();
+      void navigate_next_row();
+      void navigate_previous_column();
+      void navigate_next_column();
+      void on_item_clicked(TableItem& item);
+      void on_current(const boost::optional<Index>& index);
       void on_style();
       void on_cover_style(Cover& cover);
       void on_table_operation(const TableModel::Operation& operation);

@@ -60,6 +60,7 @@ namespace Spire {
   class TableHeader;
   class TableHeaderItem;
   class TableFilter;
+  class TableItem;
   class TableModel;
   class TableView;
   class Tag;
