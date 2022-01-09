@@ -42,6 +42,9 @@ namespace Styles {
 
   /** Selects all rows. */
   using Row = StateSelector<void, struct RowTag>;
+
+  /** Selects all columns. */
+  using Column = StateSelector<void, struct ColumnTag>;
 }
 
   /** Displays the body of a TableView. */
@@ -141,7 +144,8 @@ namespace Styles {
         QColor m_horizontal_grid_color;
         QColor m_vertical_grid_color;
       };
-      struct RowCover;
+      struct Cover;
+      struct ColumnCover;
       struct BoxStyles {
         QColor m_background_color;
       };
@@ -149,15 +153,17 @@ namespace Styles {
       std::shared_ptr<CurrentModel> m_current;
       std::shared_ptr<ListModel<int>> m_widths;
       ViewBuilder m_view_builder;
-      std::vector<RowCover*> m_row_covers;
+      std::vector<Cover*> m_row_covers;
+      std::vector<ColumnCover*> m_column_covers;
       Styles m_styles;
       boost::signals2::scoped_connection m_style_connection;
       boost::signals2::scoped_connection m_row_style_connection;
       boost::signals2::scoped_connection m_table_connection;
       boost::signals2::scoped_connection m_widths_connection;
 
+      void add_column_cover(int index, const QRect& geometry);
       void on_style();
-      void on_row_cover_style(RowCover& row_cover);
+      void on_cover_style(Cover& cover);
       void on_table_operation(const TableModel::Operation& operation);
       void on_widths_update(const ListModel<int>::Operation& operation);
   };

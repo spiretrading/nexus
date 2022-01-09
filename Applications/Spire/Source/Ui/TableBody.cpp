@@ -28,14 +28,20 @@ QWidget* TableBody::default_view_builder(
   return make_label(displayTextAny(table->at(row, column)));
 }
 
-struct TableBody::RowCover : QWidget {
-  QWidget* m_hovered;
+struct TableBody::Cover : QWidget {
   QColor m_background_color;
 
-  RowCover(int row, QWidget* parent)
-      : QWidget(parent),
-        m_hovered(nullptr),
-        m_background_color(Qt::transparent) {
+  Cover(QWidget* parent)
+    : QWidget(parent),
+      m_background_color(Qt::transparent) {}
+};
+
+struct TableBody::ColumnCover : Cover {
+  QWidget* m_hovered;
+
+  ColumnCover(QWidget* parent)
+      : Cover(parent),
+        m_hovered(nullptr) {
     setMouseTracking(true);
   }
 
@@ -47,7 +53,7 @@ struct TableBody::RowCover : QWidget {
       case QEvent::MouseMove:
         return mouse_event(*static_cast<QMouseEvent*>(event));
     }
-    return QWidget::event(event);
+    return Cover::event(event);
   }
 
   bool mouse_event(QMouseEvent& event) {
@@ -93,6 +99,7 @@ struct TableBody::RowCover : QWidget {
       QCoreApplication::sendEvent(m_hovered, &leave_event);
       m_hovered = nullptr;
     }
+    Cover::leaveEvent(event);
   }
 };
 
@@ -134,13 +141,24 @@ TableBody::TableBody(
       set(HorizontalSpacing(scale_width(1))).
       set(VerticalSpacing(scale_width(1))).
       set(grid_color(QColor(0xE0E0E0)));
-    style.get(Any() > Row()).
-      set(BackgroundColor(QColor(0xFFFFFF)));
     style.get(Any() > (Row() && Hover())).
+      set(BackgroundColor(QColor(0xF2F2FF)));
+    style.get(Any() > (Column() && Hover())).
       set(BackgroundColor(QColor(0xF2F2FF)));
   });
   for(auto row = 0; row != m_table->get_row_size(); ++row) {
     on_table_operation(TableModel::AddOperation(row));
+  }
+  auto left = 0;
+  for(auto column = 0; column != m_table->get_column_size(); ++column) {
+    auto width = [&] {
+      if(column != m_widths->get_size()) {
+        return m_widths->get(column);
+      }
+      return this->width() - left;
+    }();
+    add_column_cover(column, QRect(QPoint(left, 0), QSize(width, height())));
+    left += width;
   }
   m_table_connection = m_table->connect_operation_signal(
     std::bind_front(&TableBody::on_table_operation, this));
@@ -159,20 +177,19 @@ const std::shared_ptr<TableBody::CurrentModel>& TableBody::get_current() const {
 bool TableBody::event(QEvent* event) {
   if(event->type() == QEvent::LayoutRequest) {
     auto result = QWidget::event(event);
-    auto& row_layout = *static_cast<QVBoxLayout*>(layout());
-    for(auto row = 0; row != row_layout.count(); ++row) {
-      auto geometry = row_layout.itemAt(row)->layout()->geometry();
-      auto& row_cover = *m_row_covers[row];
-      row_cover.move(geometry.topLeft() -
-        QPoint(m_styles.m_horizontal_spacing, m_styles.m_vertical_spacing));
-      auto vertical_spacing = [&] {
-        if(row == row_layout.count() - 1) {
-          return 2 * m_styles.m_vertical_spacing;
+    auto left = 0;
+    for(auto column = 0; column != static_cast<int>(m_column_covers.size());
+        ++column) {
+      auto cover = m_column_covers[column];
+      cover->move(left, 0);
+      auto width = [&] {
+        if(column != m_widths->get_size()) {
+          return m_widths->get(column);
         }
-        return m_styles.m_vertical_spacing;
+        return this->width() - left;
       }();
-      row_cover.setFixedSize(geometry.size() +
-        QSize(2 * m_styles.m_horizontal_spacing, vertical_spacing));
+      cover->setFixedSize(width, height());
+      left += width;
     }
     return result;
   } else {
@@ -182,10 +199,17 @@ bool TableBody::event(QEvent* event) {
 
 void TableBody::paintEvent(QPaintEvent* event) {
   auto painter = QPainter(this);
-  for(auto row_cover : m_row_covers) {
-    if(row_cover->m_background_color.alphaF() != 0) {
+  for(auto cover : m_row_covers) {
+    if(cover->m_background_color.alphaF() != 0) {
       painter.save();
-      painter.fillRect(row_cover->geometry(), row_cover->m_background_color);
+      painter.fillRect(cover->geometry(), cover->m_background_color);
+      painter.restore();
+    }
+  }
+  for(auto cover : m_column_covers) {
+    if(cover->m_background_color.alphaF() != 0) {
+      painter.save();
+      painter.fillRect(cover->geometry(), cover->m_background_color);
       painter.restore();
     }
   }
@@ -222,6 +246,18 @@ void TableBody::paintEvent(QPaintEvent* event) {
     draw_border(width() - m_styles.m_horizontal_spacing);
   }
   QWidget::paintEvent(event);
+}
+
+void TableBody::add_column_cover(int index, const QRect& geometry) {
+  auto cover = new ColumnCover(this);
+  cover->move(geometry.topLeft());
+  cover->setFixedSize(geometry.size());
+  m_column_covers.insert(m_column_covers.begin() + index, cover);
+  match(*cover, Column());
+  connect_style_signal(*cover, std::bind_front(
+    &TableBody::on_cover_style, this, std::ref(*cover)));
+  cover->show();
+  on_cover_style(*cover);
 }
 
 void TableBody::on_style() {
@@ -270,14 +306,14 @@ void TableBody::on_style() {
   update();
 }
 
-void TableBody::on_row_cover_style(RowCover& row_cover) {
-  auto& stylist = find_stylist(row_cover);
-  row_cover.m_background_color = Qt::transparent;
+void TableBody::on_cover_style(Cover& cover) {
+  auto& stylist = find_stylist(cover);
+  cover.m_background_color = Qt::transparent;
   for(auto& property : stylist.get_computed_block()) {
     property.visit(
       [&] (const BackgroundColor& color) {
-        stylist.evaluate(color, [=, &row_cover] (auto color) {
-          row_cover.m_background_color = color;
+        stylist.evaluate(color, [=, &cover] (auto color) {
+          cover.m_background_color = color;
         });
       });
   }
@@ -288,7 +324,9 @@ void TableBody::on_table_operation(const TableModel::Operation& operation) {
   auto& row_layout = *static_cast<QVBoxLayout*>(layout());
   visit(operation,
     [&] (const TableModel::AddOperation& operation) {
-      auto column_layout = new QHBoxLayout();
+      auto row = new Cover(this);
+      match(*row, Row());
+      auto column_layout = new QHBoxLayout(row);
       column_layout->setContentsMargins({});
       column_layout->setSpacing(m_styles.m_horizontal_spacing);
       for(auto column = 0; column != m_table->get_column_size(); ++column) {
@@ -304,16 +342,11 @@ void TableBody::on_table_operation(const TableModel::Operation& operation) {
         }
         column_layout->addWidget(item);
       }
-      row_layout.insertLayout(operation.m_index, column_layout);
-      auto row_cover = new RowCover(operation.m_index, this);
-      row_cover->move(column_layout->geometry().topLeft());
-      row_cover->setFixedSize(column_layout->geometry().size());
-      adopt(*this, *row_cover, Row());
-      connect_style_signal(*row_cover, std::bind_front(
-        &TableBody::on_row_cover_style, this, std::ref(*row_cover)));
-      row_cover->show();
-      on_row_cover_style(*row_cover);
-      m_row_covers.insert(m_row_covers.begin() + operation.m_index, row_cover);
+      row_layout.insertWidget(operation.m_index, row);
+      m_row_covers.insert(m_row_covers.begin() + operation.m_index, row);
+      connect_style_signal(*row, std::bind_front(
+        &TableBody::on_cover_style, this, std::ref(*row)));
+      on_cover_style(*row);
     },
     [&] (const TableModel::RemoveOperation& operation) {
       auto& source_layout = *row_layout.itemAt(operation.m_index);
@@ -322,9 +355,9 @@ void TableBody::on_table_operation(const TableModel::Operation& operation) {
         delete item->widget();
         delete item;
       }
-      auto row_cover = m_row_covers[operation.m_index];
+      auto cover = m_row_covers[operation.m_index];
       m_row_covers.erase(m_row_covers.begin() + operation.m_index);
-      delete row_cover;
+      delete cover;
     },
     [&] (const TableModel::MoveOperation& operation) {
       auto& source_layout = *row_layout.itemAt(operation.m_source);
@@ -343,8 +376,8 @@ void TableBody::on_widths_update(const ListModel<int>::Operation& operation) {
   visit(operation,
     [&] (const ListModel<int>::UpdateOperation& operation) {
       auto& row_layout = *layout();
-      for(auto row = 0; row != row_layout.count(); ++row) {
-        auto& column_layout = *row_layout.itemAt(row)->layout();
+      for(auto i = 0; i != row_layout.count(); ++i) {
+        auto& column_layout = *row_layout.itemAt(i)->widget()->layout();
         auto& item = *column_layout.itemAt(operation.m_index)->widget();
         item.setFixedWidth(
           m_widths->get(operation.m_index) - m_styles.m_horizontal_spacing);
