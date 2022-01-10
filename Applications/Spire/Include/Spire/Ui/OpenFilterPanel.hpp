@@ -145,6 +145,7 @@ namespace Details {
       void on_mode_current(FilterMode mode);
       void on_operation(const AnyListModel::Operation& operation);
       void on_reset();
+      void submit();
   };
 }
 

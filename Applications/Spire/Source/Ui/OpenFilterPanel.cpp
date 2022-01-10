@@ -295,7 +295,7 @@ void OpenFilterPanel::on_list_view_current(const optional<int>& current) {
 }
 
 void OpenFilterPanel::on_mode_current(FilterMode mode) {
-  m_submit_signal(m_filtered, mode);
+  submit();
 }
 
 void OpenFilterPanel::on_operation(const AnyListModel::Operation& operation) {
@@ -308,10 +308,10 @@ void OpenFilterPanel::on_operation(const AnyListModel::Operation& operation) {
       });
       item->setFocusPolicy(Qt::NoFocus);
       m_scrollable_list_box->get_list_view().setFocusPolicy(Qt::NoFocus);
-      m_submit_signal(m_filtered, m_mode_button_group->get_current()->get());
+      submit();
     },
     [&] (const AnyListModel::RemoveOperation& operation) {
-      m_submit_signal(m_filtered, m_mode_button_group->get_current()->get());
+      submit();
     });
 }
 
@@ -324,5 +324,14 @@ void OpenFilterPanel::on_reset() {
   m_mode_button_group->get_current()->set(FilterMode::INCLUDE);
   m_input_box->clear_current();
   m_input_box->get_widget()->setFocus();
-  m_submit_signal(m_filtered, m_mode_button_group->get_current()->get());
+  submit();
+}
+
+
+void OpenFilterPanel::submit() {
+  if(m_filtered->get_size() == 0) {
+    m_submit_signal(m_filtered, FilterMode::EXCLUDE);
+  } else {
+    m_submit_signal(m_filtered, m_mode_button_group->get_current()->get());
+  }
 }
