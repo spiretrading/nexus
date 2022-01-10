@@ -44,8 +44,14 @@ namespace Styles {
   /** Selects all rows. */
   using Row = StateSelector<void, struct RowTag>;
 
+  /** Selects the current row. */
+  using CurrentRow = StateSelector<void, struct CurrentRowTag>;
+
   /** Selects all columns. */
   using Column = StateSelector<void, struct ColumnTag>;
+
+  /** Selects the current column. */
+  using CurrentColumn = StateSelector<void, struct CurrentColumnTag>;
 }
 
   /** Displays the body of a TableView. */
@@ -159,6 +165,7 @@ namespace Styles {
       ViewBuilder m_view_builder;
       std::vector<Cover*> m_row_covers;
       std::vector<ColumnCover*> m_column_covers;
+      boost::optional<Index> m_current_index;
       TableItem* m_current_item;
       Styles m_styles;
       boost::signals2::scoped_connection m_style_connection;

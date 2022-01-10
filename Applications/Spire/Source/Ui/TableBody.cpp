@@ -132,6 +132,7 @@ TableBody::TableBody(
       m_current(std::move(current)),
       m_widths(std::move(widths)),
       m_view_builder(std::move(view_builder)),
+      m_current_index(m_current->get()),
       m_current_item(nullptr) {
   setFocusPolicy(Qt::StrongFocus);
   auto row_layout = new QVBoxLayout(this);
@@ -144,11 +145,13 @@ TableBody::TableBody(
       set(HorizontalSpacing(scale_width(1))).
       set(VerticalSpacing(scale_width(1))).
       set(grid_color(QColor(0xE0E0E0)));
-    style.get(Any() > Current()).set(BackgroundColor(QColor(0xFF0000)));
     style.get(Any() > (Row() && Hover())).
       set(BackgroundColor(QColor(0xF2F2FF)));
     style.get(Any() > (Column() && Hover())).
       set(BackgroundColor(QColor(0xF2F2FF)));
+    style.get(Any() > Current()).set(BackgroundColor(QColor(0xFF0000)));
+    style.get(Any() > CurrentRow()).set(BackgroundColor(QColor(0x00FF00)));
+    style.get(Any() > CurrentColumn()).set(BackgroundColor(QColor(0x0000FF)));
   });
   for(auto row = 0; row != m_table->get_row_size(); ++row) {
     on_table_operation(TableModel::AddOperation(row));
@@ -167,6 +170,8 @@ TableBody::TableBody(
   m_current_item = find_item(m_current->get());
   if(m_current_item) {
     adopt(*this, *m_current_item, Current());
+    match(*m_current_item->parentWidget(), CurrentRow());
+    match(*m_column_covers[m_current_index->m_column], CurrentColumn());
   }
   m_table_connection = m_table->connect_operation_signal(
     std::bind_front(&TableBody::on_table_operation, this));
@@ -242,21 +247,38 @@ void TableBody::keyPressEvent(QKeyEvent* event) {
 
 void TableBody::paintEvent(QPaintEvent* event) {
   auto painter = QPainter(this);
-  for(auto cover : m_row_covers) {
-    if(cover->m_background_color.alphaF() != 0) {
+  for(auto i = 0; i != static_cast<int>(m_column_covers.size()); ++i) {
+    auto cover = m_column_covers[i];
+    if(cover->m_background_color.alphaF() != 0 &&
+        (!m_current_index || m_current_index->m_column != i)) {
       painter.save();
       painter.fillRect(cover->geometry(), cover->m_background_color);
       painter.restore();
     }
   }
-  for(auto cover : m_column_covers) {
-    if(cover->m_background_color.alphaF() != 0) {
+  for(auto i = 0; i != static_cast<int>(m_row_covers.size()); ++i) {
+    auto cover = m_row_covers[i];
+    if(cover->m_background_color.alphaF() != 0 &&
+        (!m_current_index || m_current_index->m_row != i)) {
       painter.save();
       painter.fillRect(cover->geometry(), cover->m_background_color);
       painter.restore();
     }
   }
   if(m_current_item) {
+    auto column_cover = m_column_covers[m_current_index->m_column];
+    if(column_cover->m_background_color.alphaF() != 0) {
+      painter.save();
+      painter.fillRect(
+        column_cover->geometry(), column_cover->m_background_color);
+      painter.restore();
+    }
+    auto row_cover = m_row_covers[m_current_index->m_row];
+    if(row_cover->m_background_color.alphaF() != 0) {
+      painter.save();
+      painter.fillRect(row_cover->geometry(), row_cover->m_background_color);
+      painter.restore();
+    }
     painter.save();
     auto current_position =
       m_current_item->parentWidget()->mapToParent(m_current_item->pos());
@@ -419,12 +441,32 @@ void TableBody::on_item_clicked(TableItem& item) {
 }
 
 void TableBody::on_current(const optional<Index>& index) {
-  if(m_current_item) {
-    forfeit(*this, *m_current_item, Current());
+  if(index == m_current_index) {
+    return;
   }
+  auto previous_index = m_current_index;
+  auto previous_item = m_current_item;
+  m_current_index = index;
   m_current_item = find_item(index);
-  if(m_current_item) {
+  if(previous_index) {
+    if(!m_current_index || m_current_index->m_row != previous_index->m_row) {
+      unmatch(*previous_item->parentWidget(), CurrentRow());
+    }
+    if(!m_current_index ||
+        m_current_index->m_column != previous_index->m_column) {
+      unmatch(*m_column_covers[previous_index->m_column], CurrentColumn());
+    }
+    forfeit(*this, *previous_item, Current());
+  }
+  if(m_current_index) {
     adopt(*this, *m_current_item, Current());
+    if(!previous_index || previous_index->m_row != m_current_index->m_row) {
+      match(*m_current_item->parentWidget(), CurrentRow());
+    }
+    if(!previous_index ||
+        previous_index->m_column != m_current_index->m_column) {
+      match(*m_column_covers[m_current_index->m_column], CurrentColumn());
+    }
   }
 }
 
