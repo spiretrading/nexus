@@ -2,15 +2,15 @@
 #include <boost/signals2/shared_connection_block.hpp>
 #include <QEvent>
 #include <QHBoxLayout>
+#include "Spire/Spire/ArrayListModel.hpp"
+#include "Spire/Spire/ColumnViewListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Ui/ArrayListModel.hpp"
+#include "Spire/Spire/ListValueModel.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/CheckBox.hpp"
-#include "Spire/Ui/ColumnViewListModel.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/FilterPanel.hpp"
 #include "Spire/Ui/ListItem.hpp"
-#include "Spire/Ui/ListValueModel.hpp"
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
@@ -54,47 +54,11 @@ namespace {
   }
 }
 
-class BooleanListValueModel : public BooleanModel {
-  public:
-    using Type = BooleanModel::Type;
-
-    explicit BooleanListValueModel(std::shared_ptr<ListValueModel> source)
-      : m_source(std::move(source)),
-        m_source_connection(m_source->connect_update_signal(
-          std::bind_front(&BooleanListValueModel::on_current, this))) {}
-
-    const Type& get() const override {
-      return std::any_cast<const Type&>(m_source->get());
-    }
-
-    QValidator::State test(const Type& value) const override {
-      return m_source->test(value);
-    }
-
-    QValidator::State set(const Type& value) override {
-      return m_source->set(value);
-    }
-
-    connection connect_update_signal(
-        const typename UpdateSignal::slot_type& slot) const override {
-      return m_update_signal.connect(slot);
-    }
-
-  private:
-    mutable UpdateSignal m_update_signal;
-    std::shared_ptr<ListValueModel> m_source;
-    scoped_connection m_source_connection;
-
-    void on_current(const std::any& current) {
-      m_update_signal(std::any_cast<const Type&>(current));
-    }
-};
-
 ClosedFilterPanel::ClosedFilterPanel(std::shared_ptr<TableModel> table,
     QString title, QWidget& parent)
     : QWidget(&parent),
       m_table(std::move(table)),
-      m_submission(std::make_shared<ArrayListModel>()),
+      m_submission(std::make_shared<ArrayListModel<std::any>>()),
       m_table_connection(m_table->connect_operation_signal(
         std::bind_front(&ClosedFilterPanel::on_table_model_operation, this))) {
   for(auto i = 0; i < m_table->get_row_size(); ++i) {
@@ -102,10 +66,11 @@ ClosedFilterPanel::ClosedFilterPanel(std::shared_ptr<TableModel> table,
       m_submission->push(m_table->at(i, 0));
     }
   }
-  m_list_view = new ListView(std::make_shared<ColumnViewListModel>(m_table, 1),
-    [=] (const auto& table, int index) {
-      auto check_box = new CheckBox(std::make_shared<BooleanListValueModel>(
-        std::make_shared<ListValueModel>(table, index)));
+  m_list_view = new ListView(
+    std::make_shared<ColumnViewListModel<bool>>(m_table, 1),
+    [=] (const std::shared_ptr<ListModel<bool>>& list, int index) {
+      auto check_box =
+        new CheckBox(std::make_shared<ListValueModel<bool>>(list, index));
       check_box->set_label(displayTextAny(m_table->at(index, 0)));
       check_box->setLayoutDirection(Qt::RightToLeft);
       check_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
@@ -164,9 +129,9 @@ bool ClosedFilterPanel::event(QEvent* event) {
 }
 
 void ClosedFilterPanel::on_list_model_operation(
-    const ListModel::Operation& operation) {
+    const AnyListModel::Operation& operation) {
   visit(operation,
-    [&] (const ListModel::AddOperation& operation) {
+    [&] (const AnyListModel::AddOperation& operation) {
       set_style(
         *m_list_view->get_list_item(operation.m_index), LIST_ITEM_STYLE());
       invalidate_descendants(*window());
@@ -174,7 +139,7 @@ void ClosedFilterPanel::on_list_model_operation(
         m_submission->push(m_table->at(operation.m_index, 0));
       }
     },
-    [&] (const ListModel::RemoveOperation& operation) {
+    [&] (const AnyListModel::RemoveOperation& operation) {
       invalidate_descendants(*window());
       auto index = m_submission->get_size();
       while(--index >= 0) {
@@ -195,7 +160,7 @@ void ClosedFilterPanel::on_table_model_operation(
       auto index = [&] {
         auto value = displayTextAny(m_table->at(operation.m_row, 0));
         for(auto i = 0; i < m_submission->get_size(); ++i) {
-          if(value == displayTextAny(m_submission->at(i))) {
+          if(value == displayTextAny(m_submission->get(i))) {
             return i;
           }
         }

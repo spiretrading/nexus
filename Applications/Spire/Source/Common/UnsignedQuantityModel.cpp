@@ -1,4 +1,4 @@
-#include "Spire/Ui/UnsignedQuantityModel.hpp"
+#include "Spire/Spire/UnsignedQuantityModel.hpp"
 
 using namespace boost;
 using namespace boost::signals2;

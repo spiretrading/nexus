@@ -1,9 +1,9 @@
 #include "Spire/Ui/NavigationView.hpp"
 #include <QHBoxLayout>
 #include <QVBoxLayout>
+#include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
-#include "Spire/Ui/ArrayListModel.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/CheckBox.hpp"
 #include "Spire/Ui/LayeredWidget.hpp"
@@ -106,10 +106,11 @@ NavigationView::NavigationView(
   auto navigation_list_layout = new QHBoxLayout();
   navigation_list_layout->setContentsMargins({});
   navigation_list_layout->setSpacing(0);
-  m_navigation_list = std::make_shared<ArrayListModel>();
+  m_navigation_list = std::make_shared<ArrayListModel<std::any>>();
   m_navigation_view = new ListView(m_navigation_list,
     [] (const auto& model, auto index) {
-      return new NavigationTab(model->get<QString>(index));
+      return new NavigationTab(
+        std::any_cast<const QString&>(model->get(index)));
     });
   m_navigation_view->setFixedHeight(scale_height(28));
   navigation_list_layout->addWidget(m_navigation_view);
@@ -194,7 +195,7 @@ QString NavigationView::get_label(int index) const {
   if(index < 0 || index >= get_count()) {
     throw std::out_of_range("The index is out of range.");
   }
-  return m_navigation_list->get<QString>(index);
+  return std::any_cast<QString>(m_navigation_list->get(index));
 }
 
 QWidget& NavigationView::get_page(int index) const {
@@ -254,12 +255,12 @@ void NavigationView::on_current(int index) {
     return;
   }
   m_associative_model.get_association(
-    m_navigation_list->get<QString>(index))->set(true);
+    std::any_cast<const QString&>(m_navigation_list->get(index)))->set(true);
 }
 
 void NavigationView::on_list_submit(const std::any& submission) {
   m_associative_model.get_association(
-    std::any_cast<QString>(submission))->set(true);
+    std::any_cast<const QString&>(submission))->set(true);
 }
 
 void NavigationView::on_list_current(const optional<int>& current) {

@@ -1,6 +1,6 @@
 #include "Spire/Ui/OrderTypeBox.hpp"
+#include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
-#include "Spire/Ui/ArrayListModel.hpp"
 
 using namespace Nexus;
 using namespace Spire;
@@ -9,11 +9,11 @@ namespace {
   OrderTypeBox::Settings setup() {
     static auto settings = [] {
       auto settings = OrderTypeBox::Settings();
-      auto cases = std::make_shared<ArrayListModel>();
-      cases->push(OrderType(OrderType::LIMIT));
-      cases->push(OrderType(OrderType::MARKET));
-      cases->push(OrderType(OrderType::PEGGED));
-      cases->push(OrderType(OrderType::STOP));
+      auto cases = std::make_shared<ArrayListModel<OrderType>>();
+      cases->push(OrderType::LIMIT);
+      cases->push(OrderType::MARKET);
+      cases->push(OrderType::PEGGED);
+      cases->push(OrderType::STOP);
       settings.m_cases = std::move(cases);
       return settings;
     }();

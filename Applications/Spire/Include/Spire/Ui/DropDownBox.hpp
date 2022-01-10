@@ -1,6 +1,5 @@
 #ifndef SPIRE_DROP_DOWN_BOX_HPP
 #define SPIRE_DROP_DOWN_BOX_HPP
-#include <any>
 #include <QWidget>
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/Ui.hpp"
@@ -26,7 +25,8 @@ namespace Styles {
       using SelectionModel = ListView::SelectionModel;
 
       /** The type of function used to build a QWidget representing a value. */
-      using ViewBuilder = ListView::ViewBuilder;
+      template<typename T = void>
+      using ViewBuilder = ListView::ViewBuilder<T>;
 
       /**
        * Signals that the value was submitted.
@@ -41,7 +41,7 @@ namespace Styles {
        * @param parent The parent widget.
        */
       explicit DropDownBox(
-        std::shared_ptr<ListModel> list, QWidget* parent = nullptr);
+        std::shared_ptr<AnyListModel> list, QWidget* parent = nullptr);
 
       /**
        * Constructs a DropDownBox using default local models.
@@ -49,7 +49,17 @@ namespace Styles {
        * @param view_builder The ViewBuilder to use.
        * @param parent The parent widget.
        */
-      DropDownBox(std::shared_ptr<ListModel> list, ViewBuilder view_builder,
+      DropDownBox(std::shared_ptr<AnyListModel> list,
+        ViewBuilder<> view_builder, QWidget* parent = nullptr);
+
+      /**
+       * Constructs a DropDownBox using default local models.
+       * @param list The model of list of values to display.
+       * @param view_builder The ViewBuilder to use.
+       * @param parent The parent widget.
+       */
+      template<std::derived_from<AnyListModel> T>
+      DropDownBox(std::shared_ptr<T> list, ViewBuilder<T> view_builder,
         QWidget* parent = nullptr);
 
       /**
@@ -60,13 +70,27 @@ namespace Styles {
        * @param view_builder The ViewBuilder to use.
        * @param parent The parent widget.
        */
-      DropDownBox(std::shared_ptr<ListModel> list,
+      DropDownBox(std::shared_ptr<AnyListModel> list,
         std::shared_ptr<CurrentModel> current,
-        std::shared_ptr<SelectionModel> selection, ViewBuilder view_builder,
+        std::shared_ptr<SelectionModel> selection, ViewBuilder<> view_builder,
+        QWidget* parent = nullptr);
+
+      /**
+       * Constructs a DropDownBox.
+       * @param list The model of list of values to display.
+       * @param current The current value model.
+       * @param selection The selection model.
+       * @param view_builder The ViewBuilder to use.
+       * @param parent The parent widget.
+       */
+      template<std::derived_from<AnyListModel> T>
+      DropDownBox(std::shared_ptr<T> list,
+        std::shared_ptr<CurrentModel> current,
+        std::shared_ptr<SelectionModel> selection, ViewBuilder<T> view_builder,
         QWidget* parent = nullptr);
 
       /** Returns the model of list of values displayed. */
-      const std::shared_ptr<ListModel>& get_list() const;
+      const std::shared_ptr<AnyListModel>& get_list() const;
 
       /** Returns the current value model. */
       const std::shared_ptr<CurrentModel>& get_current() const;
@@ -107,6 +131,27 @@ namespace Styles {
       void revert_current();
       void submit();
   };
+
+  template<std::derived_from<AnyListModel> T>
+  DropDownBox::DropDownBox(std::shared_ptr<T> list, ViewBuilder<T> view_builder,
+    QWidget* parent)
+    : DropDownBox(std::static_pointer_cast<AnyListModel>(list),
+      [view_builder = std::move(view_builder)] (
+          const std::shared_ptr<AnyListModel>& model, int index) {
+        return view_builder(std::static_pointer_cast<T>(model), index);
+      }, parent) {}
+
+  template<std::derived_from<AnyListModel> T>
+  DropDownBox::DropDownBox(std::shared_ptr<T> list,
+    std::shared_ptr<CurrentModel> current,
+    std::shared_ptr<SelectionModel> selection, ViewBuilder<T> view_builder,
+    QWidget* parent)
+    : DropDownBox(std::static_pointer_cast<AnyListModel>(list),
+        std::move(current), std::move(selection),
+        [view_builder = std::move(view_builder)] (
+            const std::shared_ptr<AnyListModel>& model, int index) {
+          return view_builder(std::static_pointer_cast<T>(model), index);
+        }, parent) {}
 }
 
 #endif

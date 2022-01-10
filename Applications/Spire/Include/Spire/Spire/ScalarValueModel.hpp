@@ -52,7 +52,8 @@ namespace Details {
   template<typename T>
   boost::optional<typename ScalarValueModel<T>::Scalar>
       ScalarValueModel<T>::get_minimum() const {
-    if constexpr(std::numeric_limits<Scalar>::is_specialized) {
+    if constexpr(std::numeric_limits<Scalar>::is_specialized &&
+        std::numeric_limits<Scalar>::is_integer) {
       return std::numeric_limits<Scalar>::lowest();
     }
     return boost::none;
@@ -61,7 +62,8 @@ namespace Details {
   template<typename T>
   boost::optional<typename ScalarValueModel<T>::Scalar>
       ScalarValueModel<T>::get_maximum() const {
-    if constexpr(std::numeric_limits<Scalar>::is_specialized) {
+    if constexpr(std::numeric_limits<Scalar>::is_specialized &&
+        std::numeric_limits<Scalar>::is_integer) {
       return std::numeric_limits<Scalar>::max();
     }
     return boost::none;

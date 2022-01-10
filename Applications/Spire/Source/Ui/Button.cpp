@@ -79,6 +79,7 @@ void Button::mousePressEvent(QMouseEvent* event) {
   if(event->button() == Qt::LeftButton && rect().contains(event->pos())) {
     m_is_down = true;
     match(*this, Press());
+    return;
   }
   QWidget::mousePressEvent(event);
 }
@@ -90,6 +91,7 @@ void Button::mouseReleaseEvent(QMouseEvent* event) {
       if(m_is_down) {
         m_is_down = false;
         m_clicked_signal();
+        return;
       }
     }
   }

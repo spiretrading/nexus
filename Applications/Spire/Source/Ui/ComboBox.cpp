@@ -2,8 +2,8 @@
 #include <boost/signals2/shared_connection_block.hpp>
 #include <QHBoxLayout>
 #include <QKeyEvent>
+#include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
-#include "Spire/Ui/ArrayListModel.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DropDownBox.hpp"
 #include "Spire/Ui/DropDownList.hpp"
@@ -34,9 +34,11 @@ ComboBox::ComboBox(std::shared_ptr<QueryModel> query_model,
       m_submission_text(displayTextAny(m_submission)),
       m_is_read_only(false),
       m_focus_observer(*this),
-      m_matches(std::make_shared<ArrayListModel>()),
+      m_matches(std::make_shared<ArrayListModel<std::any>>()),
       m_completion_tag(0),
-      m_has_autocomplete_selection(false) {
+      m_has_autocomplete_selection(false),
+      m_current_connection(m_current->connect_update_signal(
+        std::bind_front(&ComboBox::on_current, this))) {
   m_input_box = new TextBox();
   setFocusProxy(m_input_box);
   proxy_style(*this, *m_input_box);
@@ -51,10 +53,11 @@ ComboBox::ComboBox(std::shared_ptr<QueryModel> query_model,
   layout->setContentsMargins({});
   layout->setSpacing(0);
   layout->addWidget(m_input_box);
-  m_list_view = new ListView(m_matches, std::move(view_builder));
+  m_list_view = new ListView(
+    std::static_pointer_cast<AnyListModel>(m_matches), std::move(view_builder));
   m_drop_down_list = new DropDownList(*m_list_view, *this);
   m_drop_down_list->installEventFilter(this);
-  m_current_connection =
+  m_drop_down_current_connection =
     m_drop_down_list->get_list_view().get_current()->connect_update_signal(
       std::bind_front(&ComboBox::on_drop_down_current, this));
   m_drop_down_list->get_list_view().connect_submit_signal(
@@ -160,7 +163,7 @@ void ComboBox::update_completion() {
       m_completion.clear();
       return;
     }
-    auto top_match = displayTextAny(m_matches->at(0));
+    auto top_match = displayTextAny(m_matches->get(0));
     if(!top_match.toLower().startsWith(query.toLower())) {
       m_prefix = query;
       m_completion.clear();
@@ -223,6 +226,7 @@ void ComboBox::submit(const QString& query, bool is_passive) {
     auto blocker = shared_connection_block(m_input_connection);
     m_input_box->get_current()->set(query);
     m_has_autocomplete_selection = false;
+    auto current_blocker = shared_connection_block(m_current_connection);
     m_current->set(value);
   }
   m_last_completion = query;
@@ -238,6 +242,13 @@ void ComboBox::submit(const QString& query, bool is_passive) {
   m_submit_signal(value);
 }
 
+void ComboBox::on_current(const std::any& current) {
+  if(!is_equal(current,
+      m_query_model->parse(m_input_box->get_current()->get()))) {
+    m_input_box->get_current()->set(displayTextAny(current));
+  }
+}
+
 void ComboBox::on_input(const QString& query) {
   m_user_query = query;
   m_has_autocomplete_selection = false;
@@ -249,6 +260,7 @@ void ComboBox::on_input(const QString& query) {
       std::bind_front(&ComboBox::on_query, this, ++m_completion_tag, true));
     auto value = m_query_model->parse(query);
     if(value.has_value()) {
+      auto current_blocker = shared_connection_block(m_current_connection);
       m_current->set(value);
     }
   }
@@ -266,6 +278,7 @@ void ComboBox::on_highlight(const Highlight& highlight) {
   }
   m_prefix = query;
   m_completion.clear();
+  auto current_blocker = shared_connection_block(m_current_connection);
   m_current->set(value);
 }
 
@@ -290,7 +303,7 @@ void ComboBox::on_query(
     }
   }();
   {
-    auto blocker = shared_connection_block(m_current_connection);
+    auto blocker = shared_connection_block(m_drop_down_current_connection);
     while(m_matches->get_size() != 0) {
       m_matches->remove(m_matches->get_size() - 1);
     }
@@ -304,7 +317,7 @@ void ComboBox::on_query(
       m_drop_down_list->hide();
     } else if(m_focus_observer.get_state() != FocusObserver::State::NONE &&
         !m_drop_down_list->isVisible()) {
-      auto blocker = shared_connection_block(m_current_connection);
+      auto blocker = shared_connection_block(m_drop_down_current_connection);
       m_drop_down_list->get_list_view().get_current()->set(none);
       m_drop_down_list->get_list_view().get_selection()->set(none);
       m_drop_down_list->show();
@@ -314,7 +327,7 @@ void ComboBox::on_query(
 
 void ComboBox::on_drop_down_current(optional<int> index) {
   if(index) {
-    auto& value = m_drop_down_list->get_list_view().get_list()->at(*index);
+    auto value = m_drop_down_list->get_list_view().get_list()->get(*index);
     auto text = displayTextAny(value);
     {
       auto input_blocker = shared_connection_block(m_input_connection);
@@ -325,6 +338,7 @@ void ComboBox::on_drop_down_current(optional<int> index) {
     m_completion.clear();
     m_prefix.clear();
     m_has_autocomplete_selection = false;
+    auto current_blocker = shared_connection_block(m_current_connection);
     m_current->set(value);
   }
 }

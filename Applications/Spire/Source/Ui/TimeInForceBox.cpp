@@ -1,6 +1,6 @@
 #include "Spire/Ui/TimeInForceBox.hpp"
+#include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
-#include "Spire/Ui/ArrayListModel.hpp"
 
 using namespace Nexus;
 using namespace Spire;
@@ -9,7 +9,7 @@ namespace {
   TimeInForceBox::Settings setup() {
     static auto settings = [] {
       auto settings = TimeInForceBox::Settings();
-      auto cases = std::make_shared<ArrayListModel>();
+      auto cases = std::make_shared<ArrayListModel<TimeInForce>>();
       cases->push(TimeInForce(TimeInForce::Type::DAY));
       cases->push(TimeInForce(TimeInForce::Type::GTC));
       cases->push(TimeInForce(TimeInForce::Type::OPG));
