@@ -133,6 +133,7 @@ TableBody::TableBody(
       m_widths(std::move(widths)),
       m_view_builder(std::move(view_builder)),
       m_current_item(nullptr) {
+  setFocusPolicy(Qt::StrongFocus);
   auto row_layout = new QVBoxLayout(this);
   row_layout->setContentsMargins({});
   row_layout->setSpacing(0);
@@ -165,7 +166,7 @@ TableBody::TableBody(
   }
   m_current_item = find_item(m_current->get());
   if(m_current_item) {
-    match(*m_current_item, Current());
+    adopt(*this, *m_current_item, Current());
   }
   m_table_connection = m_table->connect_operation_signal(
     std::bind_front(&TableBody::on_table_operation, this));
@@ -259,7 +260,9 @@ void TableBody::paintEvent(QPaintEvent* event) {
     painter.save();
     auto current_position =
       m_current_item->parentWidget()->mapToParent(m_current_item->pos());
-    painter.fillRect(QRect(current_position, m_current_item->size()), Qt::blue);
+    auto& styles = m_current_item->get_styles();
+    painter.fillRect(QRect(current_position, m_current_item->size()),
+      styles.m_background_color);
     painter.restore();
   }
   if(m_styles.m_vertical_spacing != 0 &&
@@ -417,13 +420,12 @@ void TableBody::on_item_clicked(TableItem& item) {
 
 void TableBody::on_current(const optional<Index>& index) {
   if(m_current_item) {
-    unmatch(*m_current_item, Current());
+    forfeit(*this, *m_current_item, Current());
   }
   m_current_item = find_item(index);
   if(m_current_item) {
-    unmatch(*m_current_item, Current());
+    adopt(*this, *m_current_item, Current());
   }
-  update();
 }
 
 void TableBody::on_style() {

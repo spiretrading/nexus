@@ -159,7 +159,7 @@ namespace Styles {
       ViewBuilder m_view_builder;
       std::vector<Cover*> m_row_covers;
       std::vector<ColumnCover*> m_column_covers;
-      QWidget* m_current_item;
+      TableItem* m_current_item;
       Styles m_styles;
       boost::signals2::scoped_connection m_style_connection;
       boost::signals2::scoped_connection m_row_style_connection;

@@ -44,6 +44,23 @@ namespace Spire::Styles {
        */
       using MatchSignal = Signal<void (bool is_match)>;
 
+      /**
+       * Signals that a Stylist was adopted.
+       * @param stylist The stylist that was adopted.
+       * @param selector The Selector used to identify the adopted
+       *                 <i>stylist</i>.
+       */
+      using AdoptedSignal =
+        Signal<void (Stylist& stylist, const Selector& selector)>;
+
+      /**
+       * Signals that a previously adopted Stylist was removed.
+       * @param stylist The stylist that was removed.
+       * @param selector The Selector that used to identify the <i>stylist</i>.
+       */
+      using ForfeitSignal =
+        Signal<void (Stylist& stylist, const Selector& selector)>;
+
       ~Stylist();
 
       /** Returns the QWidget being styled. */
@@ -87,7 +104,14 @@ namespace Spire::Styles {
        * @param stylist The stylist to adopt.
        * @param selector The selector used to identify this child.
        */
-      void adopt(Stylist& widget, const Selector& selector);
+      void adopt(Stylist& stylist, const Selector& selector);
+
+      /**
+       * Removes a previously adopted Stylist.
+       * @param stylist The stylist to forfeit.
+       * @param selector The selector used to identify this child.
+       */
+      void forfeit(Stylist& stylist, const Selector& selector);
 
       /** Returns the list of adopted stylists. */
       const std::vector<Stylist*>& get_adoptions() const;
@@ -121,6 +145,14 @@ namespace Spire::Styles {
       /** Connects a slot to the MatchSignal. */
       boost::signals2::connection connect_match_signal(
         const Selector& selector, const MatchSignal::slot_type& slot) const;
+
+      /** Connects a slot to the AdoptedSignal. */
+      boost::signals2::connection connect_adopted_signal(
+        const AdoptedSignal::slot_type& slot) const;
+
+      /** Connects a slot to the ForfeitSignal. */
+      boost::signals2::connection connect_forfeit_signal(
+        const ForfeitSignal::slot_type& slot) const;
 
     private:
       struct StyleEventFilter;
@@ -165,6 +197,8 @@ namespace Spire::Styles {
       friend Evaluator<T> make_evaluator(
         RevertExpression<T> expression, const Stylist& stylist);
       mutable StyleSignal m_style_signal;
+      mutable AdoptedSignal m_adopted_signal;
+      mutable ForfeitSignal m_forfeit_signal;
       QWidget* m_widget;
       boost::optional<PseudoElement> m_pseudo_element;
       StyleSheet m_style;
@@ -286,9 +320,17 @@ namespace Spire::Styles {
    * Adopts a widget as a child.
    * @param parent The parent adopting.
    * @param widget The widget to adopt.
-   * @param selector The selector used to identify this child.
+   * @param selector The selector used to identify the <i>widget</i>.
    */
   void adopt(QWidget& source, QWidget& widget, const Selector& selector);
+
+  /**
+   * Removes a previously adopted a widget.
+   * @param parent The parent that made the adoption.
+   * @param widget The widget that was adopted.
+   * @param selector The selector used to identify the <i>widget</i>.
+   */
+  void forfeit(QWidget& source, QWidget& widget, const Selector& selector);
 
   /**
    * Indicates a widget no longer matches a Selector.
