@@ -142,6 +142,7 @@ TableBody::TableBody(
     connect_style_signal(*this, std::bind_front(&TableBody::on_style, this));
   update_style(*this, [] (auto& style) {
     style.get(Any()).
+      set(BackgroundColor(QColor(0xFFFFFF))).
       set(HorizontalSpacing(scale_width(1))).
       set(VerticalSpacing(scale_width(1))).
       set(grid_color(QColor(0xE0E0E0)));
@@ -247,53 +248,44 @@ void TableBody::keyPressEvent(QKeyEvent* event) {
 
 void TableBody::paintEvent(QPaintEvent* event) {
   auto painter = QPainter(this);
+  if(m_styles.m_background_color.alphaF() != 0) {
+    painter.fillRect(QRect(QPoint(0, 0), size()), m_styles.m_background_color);
+  }
   for(auto i = 0; i != static_cast<int>(m_column_covers.size()); ++i) {
     auto cover = m_column_covers[i];
     if(cover->m_background_color.alphaF() != 0 &&
         (!m_current_index || m_current_index->m_column != i)) {
-      painter.save();
       painter.fillRect(cover->geometry(), cover->m_background_color);
-      painter.restore();
     }
   }
   for(auto i = 0; i != static_cast<int>(m_row_covers.size()); ++i) {
     auto cover = m_row_covers[i];
     if(cover->m_background_color.alphaF() != 0 &&
         (!m_current_index || m_current_index->m_row != i)) {
-      painter.save();
       painter.fillRect(cover->geometry(), cover->m_background_color);
-      painter.restore();
     }
   }
   if(m_current_item) {
     auto column_cover = m_column_covers[m_current_index->m_column];
     if(column_cover->m_background_color.alphaF() != 0) {
-      painter.save();
       painter.fillRect(
         column_cover->geometry(), column_cover->m_background_color);
-      painter.restore();
     }
     auto row_cover = m_row_covers[m_current_index->m_row];
     if(row_cover->m_background_color.alphaF() != 0) {
-      painter.save();
       painter.fillRect(row_cover->geometry(), row_cover->m_background_color);
-      painter.restore();
     }
-    painter.save();
     auto current_position =
       m_current_item->parentWidget()->mapToParent(m_current_item->pos());
     auto& styles = m_current_item->get_styles();
     painter.fillRect(QRect(current_position, m_current_item->size()),
       styles.m_background_color);
-    painter.restore();
   }
   if(m_styles.m_vertical_spacing != 0 &&
       m_styles.m_horizontal_grid_color.alphaF() != 0) {
     auto draw_border = [&] (int top) {
-      painter.save();
       painter.fillRect(QRect(0, top, width(), m_styles.m_vertical_spacing),
         m_styles.m_horizontal_grid_color);
-      painter.restore();
     };
     auto& row_layout = *static_cast<QVBoxLayout*>(layout());
     for(auto row = 0; row != row_layout.count(); ++row) {
@@ -305,10 +297,8 @@ void TableBody::paintEvent(QPaintEvent* event) {
   if(m_styles.m_horizontal_spacing != 0 &&
       m_styles.m_vertical_grid_color.alphaF() != 0) {
     auto draw_border = [&] (int left) {
-      painter.save();
       painter.fillRect(QRect(left, 0, m_styles.m_horizontal_spacing, height()),
         m_styles.m_vertical_grid_color);
-      painter.restore();
     };
     auto left = 0;
     for(auto column = 0; column != m_table->get_column_size(); ++column) {
@@ -473,10 +463,16 @@ void TableBody::on_current(const optional<Index>& index) {
 void TableBody::on_style() {
   auto& stylist = find_stylist(*this);
   m_styles = {};
+  m_styles.m_background_color = Qt::transparent;
   m_styles.m_horizontal_grid_color = Qt::transparent;
   m_styles.m_vertical_grid_color = Qt::transparent;
   for(auto& property : stylist.get_computed_block()) {
     property.visit(
+      [&] (const BackgroundColor& color) {
+        stylist.evaluate(color, [=] (auto color) {
+          m_styles.m_background_color = color;
+        });
+      },
       [&] (const HorizontalSpacing& spacing) {
         stylist.evaluate(spacing, [=] (auto spacing) {
           m_styles.m_horizontal_spacing = spacing;

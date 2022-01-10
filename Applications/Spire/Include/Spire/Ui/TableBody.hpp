@@ -149,6 +149,7 @@ namespace Styles {
 
     private:
       struct Styles {
+        QColor m_background_color;
         int m_horizontal_spacing;
         int m_vertical_spacing;
         QColor m_horizontal_grid_color;
