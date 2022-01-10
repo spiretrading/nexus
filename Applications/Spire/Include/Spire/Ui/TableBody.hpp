@@ -9,6 +9,7 @@
 #include "Spire/Styles/BasicProperty.hpp"
 #include "Spire/Styles/CompositeProperty.hpp"
 #include "Spire/Styles/StateSelector.hpp"
+#include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/TableModel.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -158,6 +159,7 @@ namespace Styles {
       ViewBuilder m_view_builder;
       std::vector<Cover*> m_row_covers;
       std::vector<ColumnCover*> m_column_covers;
+      QWidget* m_current_item;
       Styles m_styles;
       boost::signals2::scoped_connection m_style_connection;
       boost::signals2::scoped_connection m_row_style_connection;
@@ -165,6 +167,7 @@ namespace Styles {
       boost::signals2::scoped_connection m_current_connection;
       boost::signals2::scoped_connection m_widths_connection;
 
+      TableItem* find_item(const boost::optional<Index>& index);
       void add_column_cover(int index, const QRect& geometry);
       void navigate_home();
       void navigate_home_row();

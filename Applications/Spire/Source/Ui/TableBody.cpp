@@ -131,7 +131,8 @@ TableBody::TableBody(
       m_table(std::move(table)),
       m_current(std::move(current)),
       m_widths(std::move(widths)),
-      m_view_builder(std::move(view_builder)) {
+      m_view_builder(std::move(view_builder)),
+      m_current_item(nullptr) {
   auto row_layout = new QVBoxLayout(this);
   row_layout->setContentsMargins({});
   row_layout->setSpacing(0);
@@ -142,6 +143,7 @@ TableBody::TableBody(
       set(HorizontalSpacing(scale_width(1))).
       set(VerticalSpacing(scale_width(1))).
       set(grid_color(QColor(0xE0E0E0)));
+    style.get(Any() > Current()).set(BackgroundColor(QColor(0xFF0000)));
     style.get(Any() > (Row() && Hover())).
       set(BackgroundColor(QColor(0xF2F2FF)));
     style.get(Any() > (Column() && Hover())).
@@ -160,6 +162,10 @@ TableBody::TableBody(
     }();
     add_column_cover(column, QRect(QPoint(left, 0), QSize(width, height())));
     left += width;
+  }
+  m_current_item = find_item(m_current->get());
+  if(m_current_item) {
+    match(*m_current_item, Current());
   }
   m_table_connection = m_table->connect_operation_signal(
     std::bind_front(&TableBody::on_table_operation, this));
@@ -249,6 +255,13 @@ void TableBody::paintEvent(QPaintEvent* event) {
       painter.restore();
     }
   }
+  if(m_current_item) {
+    painter.save();
+    auto current_position =
+      m_current_item->parentWidget()->mapToParent(m_current_item->pos());
+    painter.fillRect(QRect(current_position, m_current_item->size()), Qt::blue);
+    painter.restore();
+  }
   if(m_styles.m_vertical_spacing != 0 &&
       m_styles.m_horizontal_grid_color.alphaF() != 0) {
     auto draw_border = [&] (int top) {
@@ -282,6 +295,14 @@ void TableBody::paintEvent(QPaintEvent* event) {
     draw_border(width() - m_styles.m_horizontal_spacing);
   }
   QWidget::paintEvent(event);
+}
+
+TableItem* TableBody::find_item(const optional<Index>& index) {
+  if(!index) {
+    return nullptr;
+  }
+  return static_cast<TableItem*>(layout()->itemAt(index->m_row)->widget()->
+    layout()->itemAt(index->m_column)->widget());
 }
 
 void TableBody::add_column_cover(int index, const QRect& geometry) {
@@ -394,7 +415,16 @@ void TableBody::on_item_clicked(TableItem& item) {
   }
 }
 
-void TableBody::on_current(const optional<Index>& index) {}
+void TableBody::on_current(const optional<Index>& index) {
+  if(m_current_item) {
+    unmatch(*m_current_item, Current());
+  }
+  m_current_item = find_item(index);
+  if(m_current_item) {
+    unmatch(*m_current_item, Current());
+  }
+  update();
+}
 
 void TableBody::on_style() {
   auto& stylist = find_stylist(*this);
