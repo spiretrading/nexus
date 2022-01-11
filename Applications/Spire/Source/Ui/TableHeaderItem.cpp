@@ -157,6 +157,10 @@ const std::shared_ptr<ValueModel<TableHeaderItem::Model>>&
   return m_model;
 }
 
+Button& TableHeaderItem::get_filter_button() {
+  return *m_filter_button;
+}
+
 bool TableHeaderItem::is_resizeable() const {
   return m_is_resizeable;
 }

@@ -62,6 +62,10 @@ const std::shared_ptr<ListModel<int>>& TableHeader::get_widths() const {
   return m_widths;
 }
 
+Button& TableHeader::get_filter_button(int column) {
+  return m_item_views[column]->get_filter_button();
+}
+
 connection TableHeader::connect_sort_signal(
     const SortSignal::slot_type& slot) const {
   return m_sort_signal.connect(slot);

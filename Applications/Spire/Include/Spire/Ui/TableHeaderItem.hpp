@@ -87,6 +87,9 @@ namespace Spire {
       /** Returns this item's model. */
       const std::shared_ptr<ValueModel<Model>>& get_model() const;
 
+      /** Returns the filter button. */
+      Button& get_filter_button();
+
       /** Returns <code>true</code> iff this item is resizeable. */
       bool is_resizeable() const;
 

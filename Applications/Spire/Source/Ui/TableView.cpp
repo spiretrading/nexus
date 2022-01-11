@@ -49,8 +49,8 @@ TableView::TableView(
       m_header->set(i, revised_item);
     }
   }
-  auto header_view = new TableHeader(m_header);
-  box_body_layout->addWidget(header_view);
+  m_header_view = new TableHeader(m_header);
+  box_body_layout->addWidget(m_header_view);
   auto box = new Box(box_body);
   update_style(*box, [] (auto& style) {
     style.get(Any()).set(BackgroundColor(QColor(0xFFFFFF)));
@@ -60,14 +60,15 @@ TableView::TableView(
     std::bind_front(&TableView::is_filtered, this));
   m_sorted_table = std::make_shared<SortedTableModel>(m_filtered_table);
   m_body = new TableBody(m_sorted_table, std::move(current),
-    header_view->get_widths(), std::move(view_builder));
+    m_header_view->get_widths(), std::move(view_builder));
   auto layout = new QVBoxLayout(this);
+  layout->setContentsMargins({});
   layout->setSpacing(0);
   layout->addWidget(box);
   layout->addWidget(m_body);
-  header_view->connect_sort_signal(
+  m_header_view->connect_sort_signal(
     std::bind_front(&TableView::on_order_update, this));
-  header_view->connect_filter_signal(
+  m_header_view->connect_filter_signal(
     std::bind_front(&TableView::on_filter_clicked, this));
   m_filter_connection = m_filter->connect_filter_signal(
     std::bind_front(&TableView::on_filter, this));
@@ -110,7 +111,8 @@ void TableView::on_order_update(int index, TableHeaderItem::Order order) {
 }
 
 void TableView::on_filter_clicked(int index) {
-  auto widget = m_filter->make_filter_widget(index, *this);
+  auto& filter_button = m_header_view->get_filter_button(index);
+  auto widget = m_filter->make_filter_widget(index, filter_button);
   widget->show();
 }
 

@@ -41,6 +41,9 @@ namespace Spire {
       /** Returns the list of widths of each item. */
       const std::shared_ptr<ListModel<int>>& get_widths() const;
 
+      /** Returns a column's filter button. */
+      Button& get_filter_button(int column);
+
       /**
        * Connects a slot to the SortSignal.
        * @param slot The slot to connect.

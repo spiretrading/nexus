@@ -64,6 +64,7 @@ namespace Spire {
       std::shared_ptr<SortedTableModel> m_sorted_table;
       std::shared_ptr<HeaderModel> m_header;
       std::shared_ptr<TableFilter> m_filter;
+      TableHeader* m_header_view;
       TableBody* m_body;
       boost::signals2::scoped_connection m_filter_connection;
 
