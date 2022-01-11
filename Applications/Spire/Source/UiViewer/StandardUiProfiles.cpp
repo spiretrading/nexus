@@ -587,18 +587,18 @@ UiProfile Spire::make_box_profile() {
         set(PaddingRight(padding_right.get())).
         set(PaddingBottom(padding_bottom.get())).
         set(PaddingLeft(padding_left.get())).
-        set(BorderTopSize(border_top_size.get())).
-        set(BorderRightSize(border_right_size.get())).
-        set(BorderBottomSize(border_bottom_size.get())).
-        set(BorderLeftSize(border_left_size.get())).
+        set(BorderTopSize(scale_height(border_top_size.get()))).
+        set(BorderRightSize(scale_width(border_right_size.get()))).
+        set(BorderBottomSize(scale_height(border_bottom_size.get()))).
+        set(BorderLeftSize(scale_width(border_left_size.get()))).
         set(BorderTopColor(border_top_color.get())).
         set(BorderRightColor(border_right_color.get())).
         set(BorderBottomColor(border_bottom_color.get())).
         set(BorderLeftColor(border_left_color.get())).
-        set(BorderTopLeftRadius(top_left_radius.get())).
-        set(BorderTopRightRadius(top_right_radius.get())).
-        set(BorderBottomRightRadius(bottom_right_radius.get())).
-        set(BorderBottomLeftRadius(bottom_left_radius.get())).
+        set(BorderTopLeftRadius(scale_width(top_left_radius.get()))).
+        set(BorderTopRightRadius(scale_width(top_right_radius.get()))).
+        set(BorderBottomRightRadius(scale_width(bottom_right_radius.get()))).
+        set(BorderBottomLeftRadius(scale_width(bottom_left_radius.get()))).
         set(horizontal_padding(scale_width(8)));
       style.get(Hover() || Focus()).
         set(border_color(QColor(0x4B23A0)));
