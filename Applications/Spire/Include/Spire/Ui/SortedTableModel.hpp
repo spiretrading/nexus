@@ -113,7 +113,7 @@ namespace Spire {
 
     private:
       std::shared_ptr<TableModel> m_source;
-      boost::optional<TranslatedTableModel> m_translation;
+      TranslatedTableModel m_translation;
       std::vector<ColumnOrder> m_order;
       Comparator m_comparator;
       TableModelTransactionLog m_transaction;
@@ -121,7 +121,7 @@ namespace Spire {
 
       bool row_comparator(int lhs, int rhs) const;
       void sort();
-      int find_sorted_index(int row) const;
+      int find_sorted_index(int row, int size) const;
       void on_operation(const Operation& operation);
   };
 

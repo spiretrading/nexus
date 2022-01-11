@@ -581,7 +581,7 @@ void TableBody::on_table_operation(const TableModel::Operation& operation) {
     },
     [&] (const TableModel::MoveOperation& operation) {
       if(adjusted_current) {
-        if(adjusted_current->m_row = operation.m_source) {
+        if(adjusted_current->m_row == operation.m_source) {
           adjusted_current->m_row = operation.m_destination;
         } else if(operation.m_source < adjusted_current->m_row &&
             operation.m_destination >= adjusted_current->m_row) {

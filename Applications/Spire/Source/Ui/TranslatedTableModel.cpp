@@ -35,7 +35,15 @@ void TranslatedTableModel::move(int source, int destination) {
     m_reverse_translation[m_translation[index]] -= direction;
   }
   m_translation[destination] = source_row;
-  m_transaction.push(MoveOperation{source, destination});
+  m_transaction.push(MoveOperation(source, destination));
+}
+
+int TranslatedTableModel::get_source_to_translation(int row) const {
+  return m_reverse_translation[row];
+}
+
+int TranslatedTableModel::get_translation_to_source(int row) const {
+  return m_translation[row];
 }
 
 int TranslatedTableModel::get_row_size() const {
@@ -85,7 +93,7 @@ void TranslatedTableModel::on_operation(const Operation& operation) {
         if(operation.m_index >= static_cast<int>(m_translation.size())) {
           m_reverse_translation.push_back(operation.m_index);
           m_translation.push_back(operation.m_index);
-          m_transaction.push(AddOperation{operation.m_index});
+          m_transaction.push(AddOperation(operation.m_index));
           return;
         }
         auto reverse_index = m_reverse_translation[operation.m_index];
@@ -94,7 +102,7 @@ void TranslatedTableModel::on_operation(const Operation& operation) {
           operation.m_index);
         m_reverse_translation.insert(
           m_reverse_translation.begin() + operation.m_index, reverse_index);
-        m_transaction.push(AddOperation{reverse_index});
+        m_transaction.push(AddOperation(reverse_index));
       },
       [&] (const MoveOperation& operation) {
         auto direction = [&] {
@@ -122,11 +130,11 @@ void TranslatedTableModel::on_operation(const Operation& operation) {
         m_translation.erase(m_translation.begin() + reverse_index);
         m_reverse_translation.erase(
           m_reverse_translation.begin() + operation.m_index);
-        m_transaction.push(RemoveOperation{reverse_index});
+        m_transaction.push(RemoveOperation(reverse_index));
       },
       [&] (const UpdateOperation& operation) {
         auto translated_row = m_reverse_translation[operation.m_row];
-        m_transaction.push(UpdateOperation{translated_row, operation.m_column});
+        m_transaction.push(UpdateOperation(translated_row, operation.m_column));
       });
   });
 }
