@@ -27,11 +27,17 @@ namespace Spire {
 
       bool is_filtered(const TableModel& model, int row) const override;
 
+      boost::signals2::connection connect_filter_signal(
+        const FilterSignal::slot_type& slot) const override;
+
     private:
       struct ColumnFilter;
       struct EmptyColumnFilter;
       struct QuantityColumnFilter;
+      mutable FilterSignal m_filter_signal;
       std::vector<std::unique_ptr<ColumnFilter>> m_column_filters;
+
+      void on_filter(int column, Filter filter);
   };
 }
 

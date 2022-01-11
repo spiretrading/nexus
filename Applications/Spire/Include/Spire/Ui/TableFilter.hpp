@@ -22,6 +22,13 @@ namespace Spire {
         UNFILTERED
       };
 
+      /**
+       * Signals a change in a column's filter.
+       * @param column The column whose filter changed.
+       * @param filter The state of the <i>column</i>'s filter.
+       */
+      using FilterSignal = Signal<void (int column, Filter filter)>;
+
       virtual ~TableFilter() = default;
 
       /**
@@ -49,6 +56,10 @@ namespace Spire {
        *         <i>model</i> is filtered out of the TableView.
        */
       virtual bool is_filtered(const TableModel& model, int row) const = 0;
+
+      /** Connects a slot to the FilterSignal. */
+      virtual boost::signals2::connection connect_filter_signal(
+        const FilterSignal::slot_type& slot) const = 0;
   };
 }
 

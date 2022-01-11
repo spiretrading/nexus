@@ -17,6 +17,9 @@ namespace Spire {
       QWidget* make_filter_widget(int column, QWidget& parent) override;
 
       bool is_filtered(const TableModel& model, int row) const override;
+
+      boost::signals2::connection connect_filter_signal(
+        const FilterSignal::slot_type& slot) const override;
   };
 }
 

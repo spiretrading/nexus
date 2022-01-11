@@ -4,15 +4,20 @@
 #include "Spire/Ui/TableModel.hpp"
 
 using namespace boost;
+using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 
 struct StandardTableFilter::ColumnFilter {
+  using FilterSignal = Signal<void (Filter filter)>;
+
   ~ColumnFilter() = default;
   virtual TableFilter::Filter get_filter() const = 0;
   virtual QWidget* make_filter_widget(QWidget& parent) = 0;
   virtual bool is_filtered(const TableModel& model, int row, int column) const =
     0;
+  virtual connection connect_filter_signal(const FilterSignal::slot_type& slot)
+    const = 0;
 };
 
 struct StandardTableFilter::EmptyColumnFilter : ColumnFilter {
@@ -28,9 +33,15 @@ struct StandardTableFilter::EmptyColumnFilter : ColumnFilter {
       override {
     return false;
   }
+
+  connection connect_filter_signal(const FilterSignal::slot_type& slot) const
+      override {
+    return {};
+  }
 };
 
 struct StandardTableFilter::QuantityColumnFilter : ColumnFilter {
+  mutable FilterSignal m_filter_signal;
   std::shared_ptr<LocalValueModel<QuantityFilterPanel::Range>> m_range;
 
   QuantityColumnFilter()
@@ -45,7 +56,15 @@ struct StandardTableFilter::QuantityColumnFilter : ColumnFilter {
   }
 
   QWidget* make_filter_widget(QWidget& parent) override {
-    return new QuantityFilterPanel(m_range, "Filter quantity.", parent);
+    auto panel = new QuantityFilterPanel(m_range, "Filter quantity.", parent);
+    panel->connect_submit_signal([=] (const auto& range) {
+      if(range.m_min || range.m_max) {
+        m_filter_signal(Filter::FILTERED);
+      } else {
+        m_filter_signal(Filter::UNFILTERED);
+      }
+    });
+    return panel;
   }
 
   bool is_filtered(const TableModel& model, int row, int column) const
@@ -55,15 +74,26 @@ struct StandardTableFilter::QuantityColumnFilter : ColumnFilter {
     return current.m_min && value < current.m_min ||
       current.m_max && value > current.m_max;
   }
+
+  connection connect_filter_signal(const FilterSignal::slot_type& slot) const
+      override {
+    return m_filter_signal.connect(slot);
+  }
 };
 
 StandardTableFilter::StandardTableFilter(std::vector<std::type_index> types) {
-  for(auto& type : types) {
-    if(type == typeid(Quantity)) {
-      m_column_filters.push_back(std::make_unique<QuantityColumnFilter>());
-    } else {
-      m_column_filters.push_back(std::make_unique<EmptyColumnFilter>());
-    }
+  for(auto column = 0; column != static_cast<int>(types.size()); ++column) {
+    auto& type = types[column];
+    auto filter = [&] () -> std::unique_ptr<ColumnFilter> {
+      if(type == typeid(Quantity)) {
+        return std::make_unique<QuantityColumnFilter>();
+      } else {
+        return std::make_unique<EmptyColumnFilter>();
+      }
+    }();
+    filter->connect_filter_signal(
+      std::bind_front(&StandardTableFilter::on_filter, this, column));
+    m_column_filters.push_back(std::move(filter));
   }
 }
 
@@ -83,4 +113,13 @@ bool StandardTableFilter::is_filtered(const TableModel& model, int row) const {
     }
   }
   return false;
+}
+
+connection StandardTableFilter::connect_filter_signal(
+    const FilterSignal::slot_type& slot) const {
+  return m_filter_signal.connect(slot);
+}
+
+void StandardTableFilter::on_filter(int index, Filter filter) {
+  m_filter_signal(index, filter);
 }

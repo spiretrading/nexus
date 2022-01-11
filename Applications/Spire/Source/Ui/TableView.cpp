@@ -68,6 +68,8 @@ TableView::TableView(
   header_view->connect_sort_signal(
     std::bind_front(&TableView::on_order_update, this));
   header_view->connect_filter_signal(
+    std::bind_front(&TableView::on_filter_clicked, this));
+  m_filter_connection = m_filter->connect_filter_signal(
     std::bind_front(&TableView::on_filter, this));
 }
 
@@ -107,9 +109,19 @@ void TableView::on_order_update(int index, TableHeaderItem::Order order) {
   m_sort_signal(index, order);
 }
 
-void TableView::on_filter(int index) {
+void TableView::on_filter_clicked(int index) {
   auto widget = m_filter->make_filter_widget(index, *this);
   widget->show();
+}
+
+void TableView::on_filter(int column, TableFilter::Filter filter) {
+  auto& item = m_header->get(column);
+  if(item.m_filter != filter) {
+    auto revised_item = item;
+    revised_item.m_filter = filter;
+    m_header->set(column, revised_item);
+  }
+  m_filtered_table->set_filter(std::bind_front(&TableView::is_filtered, this));
 }
 
 TableViewBuilder::TableViewBuilder(
