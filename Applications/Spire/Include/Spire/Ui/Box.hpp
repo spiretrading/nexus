@@ -1,5 +1,6 @@
 #ifndef SPIRE_BOX_HPP
 #define SPIRE_BOX_HPP
+#include <QPainterPath>
 #include "Spire/Styles/Selectors.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -161,8 +162,6 @@ namespace Styles {
       void resizeEvent(QResizeEvent* event) override;
 
     private:
-      // TODO: these definitions and helper functions may not strictly belong to the Box, maybe
-      //        declare them elsewhere and use free functions for creating borders.
       template<typename T>
       struct SideProperty {
         T m_top;
@@ -170,26 +169,27 @@ namespace Styles {
         T m_bottom;
         T m_left;
       };
-      template<typename T>
+      template <typename T>
       struct CornerProperty {
         T m_top_left;
         T m_top_right;
         T m_bottom_right;
         T m_bottom_left;
       };
-      using BoxPadding = SideProperty<int>;
-      using BoxBorderWidth = SideProperty<int>;
-      using BoxBorderColor = SideProperty<QColor>;
-      using BoxBorderRadius = CornerProperty<int>;
+      using Padding = SideProperty<int>;
+      using BorderWidth = SideProperty<int>;
+      using BorderColor = SideProperty<QColor>;
+      using BorderRadius = CornerProperty<int>;
+      using BorderGeometry = SideProperty<QPainterPath>;
       struct BoxStyle {
-        public:
-          BoxPadding m_padding;
-          QColor m_background_color;
-          BoxBorderWidth m_border_width;
-          BoxBorderColor m_border_color;
-          BoxBorderRadius m_border_radius;
+        BoxStyle();
 
-          BoxStyle();
+        Padding m_padding;
+        QColor m_background_color;
+        BorderWidth m_border_width;
+        BorderColor m_border_color;
+        BorderRadius m_border_radius;
+        SideProperty<QPainterPath> m_border_geometry;
       };
       QWidget* m_container;
       QWidget* m_body;
@@ -197,9 +197,12 @@ namespace Styles {
       BoxStyle m_style;
       boost::signals2::scoped_connection m_style_connection;
       mutable boost::optional<QSize> m_size_hint;
-
-      double radii_reduction_factor(const BoxBorderRadius& radii) const;
-      void reduce_radii();
+      
+      void paint_border_side(QPainter& painter,
+        int width, const QColor& color, const QPainterPath& geometry) const;
+      double radius_reduction_factor(const BorderRadius& radius) const;
+      BorderRadius reduce_radius(BorderRadius radius) const;
+      void update_border_geometry();
       void on_style();
   };
 

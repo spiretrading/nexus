@@ -1,12 +1,167 @@
 #include "Spire/Ui/Box.hpp"
 #include <QHBoxLayout>
 #include <QPainter>
+#include <QPainterPathStroker>
 #include <QResizeEvent>
 #include "Spire/Spire/Dimensions.hpp"
 
 using namespace boost;
 using namespace Spire;
 using namespace Spire::Styles;
+
+namespace {
+  double get_transition_point(int border_width1, int border_width2) {
+    return static_cast<double>(border_width1) / (border_width1 + border_width2);
+  }
+
+  QPointF get_curve_pos(
+      QPointF start, QPointF ctrl, QPointF end, double percent) {
+    double x1 = (ctrl.x() - start.x()) * percent + start.x();
+    double y1 = (ctrl.y() - start.y()) * percent + start.y();
+    double x2 = (end.x() - ctrl.x()) * percent + ctrl.x();
+    double y2 = (end.y() - ctrl.y()) * percent + ctrl.y();
+    return {(x2 - x1) * percent + x1, (y2 - y1) * percent + y1};
+  }
+
+  struct Curve {
+    QPointF m_start;
+    QPointF m_ctrl;
+    QPointF m_end;
+  };
+
+  Curve make_left_outer(int radius, int border, int previous_border) {
+    auto start = [&] {
+      if(previous_border <= 0) {
+        return QPointF(0, radius);
+      }
+      auto start = QPointF(0, radius);
+      auto end = QPointF(radius, 0);
+      auto tp = get_transition_point(border, previous_border);
+      auto point = get_curve_pos(start, QPointF(0, 0), end, 1 - tp);
+      return point;
+    }();
+    auto end = [&] {
+      return QPointF(radius, 0);
+    }();
+    auto control = [&] {
+      return QPointF(static_cast<double>(radius / 2), 0);
+    }();
+    return {start, control, end};
+  }
+
+  Curve make_right_outer(int radius, int widget_width,
+      int border_width, int next_border_width) {
+    auto start = [&] {
+      return QPointF(widget_width - radius, 0);
+    }();
+    auto end = [&] {
+      if(next_border_width <= 0) {
+        return QPointF(widget_width, radius);
+      }
+      auto start = QPointF(widget_width - radius, 0);
+      auto end = QPointF(widget_width, radius);
+      auto tp = get_transition_point(border_width, next_border_width);
+      auto point = get_curve_pos(start, QPointF(widget_width, 0), end, tp);
+      return point;
+    }();
+    auto control = [&] {
+      return QPointF(widget_width - (radius / 2), 0);
+    }();
+    return {start, control, end};
+  }
+
+  Curve make_right_inner(int radius, int widget_width,
+      int border_width, int next_border_width) {
+    auto ideal_start = QPointF(widget_width - next_border_width, radius);
+    auto start = [&] {
+      if(next_border_width <= 0) {
+        return QPointF(widget_width, radius);
+      } else if(radius - next_border_width <= 0) {
+        return QPointF(widget_width - next_border_width, border_width);
+      }
+      auto end = QPointF(widget_width - radius, border_width);
+      auto tp = get_transition_point(border_width, next_border_width);
+      // TODO: address this 1 - tp calculation by having a way from inferring
+      //        direction in the get_transition_point function.
+      auto point = get_curve_pos(ideal_start,
+        QPointF(widget_width - next_border_width, border_width), end, 1 - tp);
+      return point;
+    }();
+    auto end = [&] {
+      if(next_border_width <= 0) {
+        return QPointF(widget_width - radius, border_width);
+      }
+      return QPointF(
+        widget_width - (next_border_width + std::max(0, radius - next_border_width)),
+        border_width);
+    }();
+    auto ctrl = [&] {
+      return QPointF(start.x() - (ideal_start.x() - start.x()), border_width);
+    }();
+    return {start, ctrl, end};
+  }
+
+  Curve make_left_inner(
+      int radius, int border_width, int previous_border_width) {
+    auto start = [&] {
+      if(previous_border_width <= 0) {
+        return QPointF(previous_border_width + radius, border_width);
+      }
+      // TODO: these curves are the same for each start/end of the inner corners,
+      //        so don't duplicate
+      // TODO: potentially constrain these radius - border calculations
+      return QPointF(
+        previous_border_width + std::max(0, radius - previous_border_width),
+        border_width);
+    }();
+    auto ideal_end = QPointF(previous_border_width,
+      border_width + std::max(0, radius - border_width));
+    auto end = [&] {
+      if(previous_border_width <= 0) {
+        return QPointF(
+          previous_border_width, border_width + std::max(0, radius - border_width));
+      } else if(radius - previous_border_width <= 0) {
+        return QPointF(previous_border_width, border_width);
+      }
+      auto start = QPointF(
+        previous_border_width + std::max(0, radius - border_width),
+        border_width);
+      auto tp = get_transition_point(border_width, previous_border_width);
+      auto point = get_curve_pos(
+        start, QPointF(previous_border_width, border_width), ideal_end, tp);
+      return point;
+    }();
+    auto ctrl = [&] {
+      return QPointF(end.x() + (end.x() - ideal_end.x()), border_width);
+    }();
+    return Curve{start, ctrl, end};
+  }
+
+  auto create_border_side(
+      int left_radius, int right_radius, int border_width, int width,
+      int height, int previous_border_width, int next_border_width) {
+    // TODO: if border_width is 0, still generate some border so the
+    //        clip path works properly for the background.
+    auto loc = make_left_outer(
+      left_radius, border_width, previous_border_width);
+    auto roc = make_right_outer(right_radius, width,
+      border_width, next_border_width);
+    auto ric = make_right_inner(right_radius, width,
+      border_width, next_border_width);
+    auto lic = make_left_inner(left_radius,
+      border_width, previous_border_width);
+    auto path = QPainterPath(loc.m_start);
+    path.quadTo(loc.m_ctrl, loc.m_end);
+    path.lineTo(roc.m_start);
+    path.quadTo(roc.m_ctrl, roc.m_end);
+    path.lineTo(ric.m_start);
+    path.quadTo(ric.m_ctrl, ric.m_end);
+    path.lineTo(lic.m_start);
+    path.quadTo(lic.m_ctrl, lic.m_end);
+    path.lineTo(loc.m_start);
+    return path;
+  }
+}
 
 BorderSize Spire::Styles::border_size(Expression<int> size) {
   return BorderSize(size, size, size, size);
@@ -39,8 +194,10 @@ Padding Spire::Styles::padding(int size) {
 
 Box::BoxStyle::BoxStyle()
   : m_padding{0, 0, 0, 0},
-    m_background_color(Qt::transparent),
+    m_background_color{Qt::transparent},
     m_border_width{0, 0, 0, 0},
+    m_border_color{
+      Qt::transparent, Qt::transparent, Qt::transparent, Qt::transparent},
     m_border_radius{0, 0, 0, 0} {}
 
 Box::Box(QWidget* body, QWidget* parent)
@@ -120,12 +277,17 @@ bool Box::event(QEvent* event) {
 
 void Box::paintEvent(QPaintEvent* event) {
   auto painter = QPainter(this);
-  // TODO: only calculate border and clip path(s) once on a resize/style change
-  // TODO: use QPainterPathStroker to generate a clip path for the 'see-through'
-  //        portion of background when corners are rounded:
-  //        painter.setClipPath(QPainterPathStroker().createStroke(path));
-
+  painter.setRenderHint(QPainter::Antialiasing);
+  painter.setPen(Qt::NoPen);
   painter.fillRect(rect(), m_style.m_background_color);
+  paint_border_side(painter, m_style.m_border_width.m_top,
+    m_style.m_border_color.m_top, m_style.m_border_geometry.m_top);
+  paint_border_side(painter, m_style.m_border_width.m_right,
+    m_style.m_border_color.m_right, m_style.m_border_geometry.m_right);
+  paint_border_side(painter, m_style.m_border_width.m_bottom,
+    m_style.m_border_color.m_bottom, m_style.m_border_geometry.m_bottom);
+  paint_border_side(painter, m_style.m_border_width.m_left,
+    m_style.m_border_color.m_left, m_style.m_border_geometry.m_left);
 }
 
 void Box::resizeEvent(QResizeEvent* event) {
@@ -162,59 +324,86 @@ void Box::resizeEvent(QResizeEvent* event) {
   }
   // TODO: since the resizeEvent is called after the size has changed,
   //        will this radius update still be visible?
-  reduce_radii();
+  //reduce_radii();
+  update_border_geometry();
   QWidget::resizeEvent(event);
 }
 
-double Box::radii_reduction_factor(const BoxBorderRadius& radii) const {
+void Box::paint_border_side(QPainter& painter,
+    int width, const QColor& color, const QPainterPath& geometry) const {
+  if(width > 0) {
+    painter.setBrush(color);
+    painter.drawPath(geometry);
+  }
+}
+
+double Box::radius_reduction_factor(const BorderRadius& radius) const {
   // TODO: instead of if, just calculate the factor then return if it's less than 1.0:
   //      if(auto factor = ...; factor < 1.0f) { return factor };
   //      or use min(..., min(..., min(...))) on each value
-  if(radii.m_top_left + radii.m_top_right > width()) {
+  if(radius.m_top_left + radius.m_top_right > width()) {
     return static_cast<double>(width()) /
-      (radii.m_top_left + radii.m_top_right);
-  } else if(radii.m_top_right + radii.m_bottom_right > height()) {
+      (radius.m_top_left + radius.m_top_right);
+  } else if(radius.m_top_right + radius.m_bottom_right > height()) {
     return static_cast<double>(height()) /
-      (radii.m_top_right + radii.m_bottom_right);
-  } else if(radii.m_bottom_left + radii.m_bottom_right > width()) {
+      (radius.m_top_right + radius.m_bottom_right);
+  } else if(radius.m_bottom_left + radius.m_bottom_right > width()) {
     return static_cast<double>(width()) /
-      (radii.m_bottom_left + radii.m_bottom_right);
-  } else if(radii.m_bottom_left + radii.m_top_left > height()) {
+      (radius.m_bottom_left + radius.m_bottom_right);
+  } else if(radius.m_bottom_left + radius.m_top_left > height()) {
     return static_cast<double>(height()) /
-      (radii.m_bottom_left + radii.m_bottom_right);
+      (radius.m_bottom_left + radius.m_bottom_right);
   }
   return 1.0f;
 }
 
-void Box::reduce_radii() {
-  qDebug() << "before reduction:";
-  qDebug() << "widget size: " << size();
-  qDebug() << "tl: " << m_style.m_border_radius.m_top_left;
-  qDebug() << "tr: " << m_style.m_border_radius.m_top_right;
-  qDebug() << "br: " << m_style.m_border_radius.m_bottom_right;
-  qDebug() << "bl: " << m_style.m_border_radius.m_bottom_left;
-  // TODO: double-check this formula is correct
-  // TODO: improve
-  auto factor = radii_reduction_factor(m_style.m_border_radius);
+Box::BorderRadius Box::reduce_radius(BorderRadius radius) const {
+  auto factor = radius_reduction_factor(radius);
   while(factor < 1.0f) {
-    qDebug() << "while factor value: " << factor;
-    m_style.m_border_radius.m_top_left *= factor;
-    m_style.m_border_radius.m_top_right *= factor;
-    m_style.m_border_radius.m_bottom_right *= factor;
-    m_style.m_border_radius.m_bottom_left *= factor;
-    factor = radii_reduction_factor(m_style.m_border_radius);
+    //qDebug() << "while factor value: " << factor;
+
+    // Note: can't use original radii because they shouldn't be overidden in
+    //        case the Box is resized later and the original radii would fit
+    //        without adjustment.
+    radius.m_top_left *= factor;
+    radius.m_top_right *= factor;
+    radius.m_bottom_right *= factor;
+    radius.m_bottom_left *= factor;
+    factor = radius_reduction_factor(radius);
   }
-  qDebug() << "after final reduction:";
-  qDebug() << "tl: " << m_style.m_border_radius.m_top_left;
-  qDebug() << "tr: " << m_style.m_border_radius.m_top_right;
-  qDebug() << "br: " << m_style.m_border_radius.m_bottom_right;
-  qDebug() << "bl: " << m_style.m_border_radius.m_bottom_left;
+  return radius;
+}
+
+void Box::update_border_geometry() {
+  auto radius = reduce_radius(m_style.m_border_radius);
+  const auto& border_width = m_style.m_border_width;
+
+  // TODO: this geometry will need to be made in pieces: first, an outline
+  //        to define the clip path, and again, to define the complete border side.
+  //        Ideally, there wouldn't be duplication.
+  m_style.m_border_geometry.m_top = create_border_side(
+    radius.m_top_left, radius.m_top_right, border_width.m_top, width(),
+    height(), border_width.m_left, border_width.m_right);
+  m_style.m_border_geometry.m_right = create_border_side(radius.m_top_right,
+    radius.m_bottom_right, border_width.m_right, height(), width(),
+    border_width.m_top, border_width.m_bottom);
+  m_style.m_border_geometry.m_right = QTransform().
+    rotate(90).translate(0, -width()).map(m_style.m_border_geometry.m_right);
+  m_style.m_border_geometry.m_bottom = create_border_side(
+    radius.m_bottom_right, radius.m_bottom_left, border_width.m_bottom,
+    width(), height(), border_width.m_right, border_width.m_left);
+  m_style.m_border_geometry.m_bottom = QTransform().rotate(180).translate(
+    -width(), -height()).map(m_style.m_border_geometry.m_bottom);
+  m_style.m_border_geometry.m_left = create_border_side(
+    radius.m_bottom_left, radius.m_top_left, border_width.m_left, height(),
+    width(), border_width.m_bottom, border_width.m_top);
+  m_style.m_border_geometry.m_left = QTransform().rotate(270).translate(
+    -height(), 0).map(m_style.m_border_geometry.m_left);
+  update();
 }
 
 void Box::on_style() {
   m_body_geometry = QRect(0, 0, width(), height());
-  // TODO: if the border path is updated here, it may be that only the background
-  //        color needs to be stored, because the border style is never referenced again.
   m_style = BoxStyle();
   auto& stylist = find_stylist(*this);
   for(auto& property : stylist.get_computed_block()) {
@@ -260,7 +449,7 @@ void Box::on_style() {
       },
       [&] (const BorderBottomColor& color) {
         stylist.evaluate(color, [=] (auto color) {
-          m_style.m_border_color.m_bottom;
+          m_style.m_border_color.m_bottom = color;
         });
       },
       [&] (const BorderLeftColor& color) {
@@ -331,7 +520,7 @@ void Box::on_style() {
     updateGeometry();
     m_container->setGeometry(m_body_geometry);
   }
-  update();
+  update_border_geometry();
 }
 
 Box* Spire::make_input_box(QWidget* body, QWidget* parent) {
