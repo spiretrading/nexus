@@ -1,7 +1,6 @@
 #include "Spire/Ui/Box.hpp"
 #include <QHBoxLayout>
 #include <QPainter>
-#include <QPainterPathStroker>
 #include <QResizeEvent>
 #include "Spire/Spire/Dimensions.hpp"
 
@@ -325,12 +324,10 @@ bool Box::event(QEvent* event) {
 void Box::paintEvent(QPaintEvent* event) {
   auto painter = QPainter(this);
   painter.setRenderHint(QPainter::Antialiasing);
-  if(auto shape_type = get_border_shape();
-      shape_type != BorderShape::COMPLEX) {
-    if(shape_type == BorderShape::RECTANGLE) {
-      draw_rectangle_border(painter);
-      return;
-    }
+  if(m_border_shape == BorderShape::RECTANGLE) {
+    draw_rectangular_border(painter);
+    return;
+  } else if(m_border_shape == BorderShape::ROUNDED_RECTANGLE) {
     draw_rounded_border(painter);
     return;
   }
@@ -383,7 +380,7 @@ void Box::resizeEvent(QResizeEvent* event) {
   QWidget::resizeEvent(event);
 }
 
-void Box::draw_rectangle_border(QPainter& painter) const {
+void Box::draw_rectangular_border(QPainter& painter) const {
   painter.fillRect(rect(), m_style.m_border_color.m_top);
   const auto& border_width = m_style.m_border_width;
   painter.fillRect(rect().adjusted(border_width.m_left, border_width.m_top,
@@ -442,7 +439,8 @@ Box::BorderRadius Box::reduce_radius() const {
 }
 
 void Box::update_border_geometry() {
-  if(get_border_shape() != BorderShape::COMPLEX) {
+  m_border_shape = get_border_shape();
+  if(m_border_shape != BorderShape::COMPLEX) {
     update();
     return;
   }

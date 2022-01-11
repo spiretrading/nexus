@@ -205,10 +205,11 @@ namespace Styles {
       BoxStyle m_style;
       BorderGeometry m_border_geometry;
       QPainterPath m_clip_path;
+      BorderShape m_border_shape;
       boost::signals2::scoped_connection m_style_connection;
       mutable boost::optional<QSize> m_size_hint;
 
-      void draw_rectangle_border(QPainter& painter) const;
+      void draw_rectangular_border(QPainter& painter) const;
       void draw_rounded_border(QPainter& painter) const;
       BorderShape get_border_shape() const;
       double radius_reduction_factor(const BorderRadius& radius) const;
