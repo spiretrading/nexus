@@ -399,18 +399,18 @@ void Box::draw_rounded_border(QPainter& painter) const {
     std::max(0, radius - border_width), std::max(0, radius - border_width));
 }
 
-Box::BorderShape Box::get_border_shape() const {
+void Box::update_border_shape() {
   if(m_style.m_border_radius.are_equal() &&
       m_style.m_border_color.are_equal()) {
     if(m_style.m_border_radius.m_top_left > 0) {
       if(m_style.m_border_width.are_equal()) {
-        return BorderShape::ROUNDED_RECTANGLE;
+        m_border_shape = BorderShape::ROUNDED_RECTANGLE;
       }
     } else {
-      return BorderShape::RECTANGLE;
+      m_border_shape = BorderShape::RECTANGLE;
     }
   }
-  return BorderShape::COMPLEX;
+  m_border_shape = BorderShape::COMPLEX;
 }
 
 double Box::radius_reduction_factor(const BorderRadius& radius) const {
@@ -439,7 +439,7 @@ Box::BorderRadius Box::reduce_radius() const {
 }
 
 void Box::update_border_geometry() {
-  m_border_shape = get_border_shape();
+  update_border_shape();
   if(m_border_shape != BorderShape::COMPLEX) {
     update();
     return;

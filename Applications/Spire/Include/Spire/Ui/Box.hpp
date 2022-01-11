@@ -211,7 +211,7 @@ namespace Styles {
 
       void draw_rectangular_border(QPainter& painter) const;
       void draw_rounded_border(QPainter& painter) const;
-      BorderShape get_border_shape() const;
+      void update_border_shape();
       double radius_reduction_factor(const BorderRadius& radius) const;
       BorderRadius reduce_radius() const;
       void update_border_geometry();
