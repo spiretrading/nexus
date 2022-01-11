@@ -417,23 +417,15 @@ Box::BorderShape Box::get_border_shape() const {
 }
 
 double Box::radius_reduction_factor(const BorderRadius& radius) const {
-  // TODO: instead of if, just calculate the factor then return if it's less than 1.0:
-  //      if(auto factor = ...; factor < 1.0f) { return factor };
-  //      or use min(..., min(..., min(...))) on each value
-  if(radius.m_top_left + radius.m_top_right > width()) {
-    return static_cast<double>(width()) /
-      (radius.m_top_left + radius.m_top_right);
-  } else if(radius.m_top_right + radius.m_bottom_right > height()) {
-    return static_cast<double>(height()) /
-      (radius.m_top_right + radius.m_bottom_right);
-  } else if(radius.m_bottom_left + radius.m_bottom_right > width()) {
-    return static_cast<double>(width()) /
-      (radius.m_bottom_left + radius.m_bottom_right);
-  } else if(radius.m_bottom_left + radius.m_top_left > height()) {
-    return static_cast<double>(height()) /
-      (radius.m_bottom_left + radius.m_bottom_right);
-  }
-  return 1.0f;
+  return std::min(1.0,
+    std::min(static_cast<double>(width()) /
+      (radius.m_top_left + radius.m_top_right),
+    std::min(static_cast<double>(height()) /
+      (radius.m_top_right + radius.m_bottom_right),
+    std::min(static_cast<double>(width()) /
+      (radius.m_bottom_left + radius.m_bottom_right),
+      static_cast<double>(height()) /
+      (radius.m_bottom_left + radius.m_top_left)))));
 }
 
 Box::BorderRadius Box::reduce_radius() const {
