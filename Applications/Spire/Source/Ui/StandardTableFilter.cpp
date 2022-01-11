@@ -5,6 +5,7 @@
 
 using namespace boost;
 using namespace boost::signals2;
+using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Spire;
 
@@ -40,36 +41,35 @@ struct StandardTableFilter::EmptyColumnFilter : ColumnFilter {
   }
 };
 
-struct StandardTableFilter::QuantityColumnFilter : ColumnFilter {
+template<typename T>
+struct StandardTableFilter::ScalarColumnFilter : ColumnFilter {
+  using InputBox = T;
+  using FilterPanel = ScalarFilterPanel<InputBox>;
+  using Scalar = typename FilterPanel::Type;
+  using Range = typename FilterPanel::Range;
   mutable FilterSignal m_filter_signal;
-  std::shared_ptr<LocalValueModel<QuantityFilterPanel::Range>> m_range;
+  std::shared_ptr<LocalValueModel<Range>> m_range;
 
-  QuantityColumnFilter()
-    : m_range(
-        std::make_shared<LocalValueModel<QuantityFilterPanel::Range>>()) {}
+  ScalarColumnFilter()
+    : m_range(std::make_shared<LocalValueModel<Range>>()) {}
 
   TableFilter::Filter get_filter() const override {
-    if(m_range->get() == QuantityFilterPanel::Range(none, none)) {
+    if(m_range->get() == Range(none, none)) {
       return TableFilter::Filter::UNFILTERED;
     }
     return TableFilter::Filter::FILTERED;
   }
 
   QWidget* make_filter_widget(QWidget& parent) override {
-    auto panel = new QuantityFilterPanel(m_range, "Filter quantity.", parent);
-    panel->connect_submit_signal([=] (const auto& range) {
-      if(range.m_min || range.m_max) {
-        m_filter_signal(Filter::FILTERED);
-      } else {
-        m_filter_signal(Filter::UNFILTERED);
-      }
-    });
+    auto panel = new FilterPanel(m_range, "Filter", parent);
+    panel->connect_submit_signal(
+      std::bind_front(&ScalarColumnFilter::on_submit, this));
     return panel;
   }
 
   bool is_filtered(const TableModel& model, int row, int column) const
       override {
-    auto& value = model.get<Quantity>(row, column);
+    auto& value = model.get<Scalar>(row, column);
     auto& current = m_range->get();
     return current.m_min && value < current.m_min ||
       current.m_max && value > current.m_max;
@@ -79,14 +79,30 @@ struct StandardTableFilter::QuantityColumnFilter : ColumnFilter {
       override {
     return m_filter_signal.connect(slot);
   }
+
+  void on_submit(const Range& range) {
+    if(range.m_min || range.m_max) {
+      m_filter_signal(Filter::FILTERED);
+    } else {
+      m_filter_signal(Filter::UNFILTERED);
+    }
+  }
 };
 
 StandardTableFilter::StandardTableFilter(std::vector<std::type_index> types) {
   for(auto column = 0; column != static_cast<int>(types.size()); ++column) {
     auto& type = types[column];
     auto filter = [&] () -> std::unique_ptr<ColumnFilter> {
-      if(type == typeid(Quantity)) {
-        return std::make_unique<QuantityColumnFilter>();
+      if(type == typeid(Decimal)) {
+        return std::make_unique<ScalarColumnFilter<DecimalBox>>();
+      } else if(type == typeid(time_duration)) {
+        return std::make_unique<ScalarColumnFilter<DurationBox>>();
+      } else if(type == typeid(int)) {
+        return std::make_unique<ScalarColumnFilter<IntegerBox>>();
+      } else if(type == typeid(Money)) {
+        return std::make_unique<ScalarColumnFilter<MoneyBox>>();
+      } else if(type == typeid(Quantity)) {
+        return std::make_unique<ScalarColumnFilter<QuantityBox>>();
       } else {
         return std::make_unique<EmptyColumnFilter>();
       }
