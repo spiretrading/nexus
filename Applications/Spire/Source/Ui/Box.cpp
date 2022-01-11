@@ -26,6 +26,22 @@ namespace {
     BorderCornerCurves m_right;
   };
 
+  auto border_right_transform(int width) {
+    return QTransform().rotate(90).translate(0, -width);
+  }
+
+  auto border_bottom_transform(int width, int height) {
+    return QTransform().rotate(180).translate(-width, -height);
+  }
+
+  auto border_left_transform(int height) {
+    return QTransform().rotate(270).translate(-height, 0);
+  }
+
+  auto get_outer_curves(const BorderSideCurves& curves) {
+    return std::make_tuple(curves.m_left.m_outer, curves.m_right.m_outer);
+  }
+
   double get_transition_point(int border_width1, int border_width2) {
     return static_cast<double>(border_width1) / (border_width1 + border_width2);
   }
@@ -152,20 +168,26 @@ namespace {
         right_radius, border_width, next_border_width, widget_width)};
   }
 
-  auto make_border_side_path(const BorderSideCurves& curves) {
+  auto make_border_side_outer_path(const BorderSideCurves& curves) {
     const auto& left_outer = curves.m_left.m_outer;
-    const auto& left_inner = curves.m_left.m_inner;
     const auto& right_outer = curves.m_right.m_outer;
-    const auto& right_inner = curves.m_right.m_inner;
     auto path = QPainterPath(left_outer.m_start);
     path.quadTo(left_outer.m_control, left_outer.m_end);
     path.lineTo(right_outer.m_start);
     path.quadTo(right_outer.m_control, right_outer.m_end);
+    return path;
+  }
+
+  auto make_border_side_path(
+      const QPainterPath& outer_path, const BorderSideCurves& curves) {
+    const auto& left_inner = curves.m_left.m_inner;
+    const auto& right_inner = curves.m_right.m_inner;
+    auto path = outer_path;
     path.lineTo(right_inner.m_start);
     path.quadTo(right_inner.m_control, right_inner.m_end);
     path.lineTo(left_inner.m_start);
     path.quadTo(left_inner.m_control, left_inner.m_end);
-    path.lineTo(left_outer.m_start);
+    path.lineTo(curves.m_left.m_outer.m_start);
     return path;
   }
 }
@@ -284,6 +306,7 @@ bool Box::event(QEvent* event) {
 
 void Box::paintEvent(QPaintEvent* event) {
   auto painter = QPainter(this);
+  painter.setClipPath(m_clip_path);
   painter.setRenderHint(QPainter::Antialiasing);
   painter.setPen(Qt::NoPen);
   painter.fillRect(rect(), m_style.m_background_color);
@@ -383,8 +406,6 @@ Box::BorderRadius Box::reduce_radius(BorderRadius radius) const {
 void Box::update_border_geometry() {
   auto radius = reduce_radius(m_style.m_border_radius);
   const auto& border_width = m_style.m_border_width;
-
-
   auto top_curves = make_border_side_curves(
     radius.m_top_left, radius.m_top_right, border_width.m_top,
     border_width.m_left, border_width.m_right, width());
@@ -397,16 +418,24 @@ void Box::update_border_geometry() {
   auto left_curves = make_border_side_curves(
     radius.m_bottom_left, radius.m_top_left, border_width.m_left,
     border_width.m_bottom, border_width.m_top, height());
-
-  // TODO: define clip region
-
-  m_border_geometry.m_top = make_border_side_path(top_curves);
-  m_border_geometry.m_right = QTransform().
-    rotate(90).translate(0, -width()).map(make_border_side_path(right_curves));
-  m_border_geometry.m_bottom = QTransform().rotate(180).translate(
-    -width(), -height()).map(make_border_side_path(bottom_curves));
-  m_border_geometry.m_left = QTransform().rotate(270).translate(
-    -height(), 0).map(make_border_side_path(left_curves));
+  auto top_path = make_border_side_outer_path(top_curves);
+  auto right_path = make_border_side_outer_path(right_curves);
+  auto right_transform = border_right_transform(width());
+  auto bottom_path = make_border_side_outer_path(bottom_curves);
+  auto bottom_transform = border_bottom_transform(width(), height());
+  auto left_path = make_border_side_outer_path(left_curves);
+  auto left_transform = border_left_transform(height());
+  m_border_geometry.m_top = make_border_side_path(top_path, top_curves);
+  m_border_geometry.m_right = right_transform.map(
+    make_border_side_path(right_path, right_curves));
+  m_border_geometry.m_bottom = bottom_transform.map(
+    make_border_side_path(bottom_path, bottom_curves));
+  m_border_geometry.m_left = left_transform.map(
+    make_border_side_path(left_path, left_curves));
+  m_clip_path = top_path;
+  m_clip_path.connectPath(right_transform.map(right_path));
+  m_clip_path.connectPath(bottom_transform.map(bottom_path));
+  m_clip_path.connectPath(left_transform.map(left_path));
   update();
 }
 
