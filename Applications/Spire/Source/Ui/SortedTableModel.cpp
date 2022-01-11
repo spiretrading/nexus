@@ -171,7 +171,7 @@ void Spire::adjust(SortedTableModel::ColumnOrder order,
     [&] (const auto& value) {
       return value.m_index == order.m_index;
     });
-  if(i == column_order.begin()) {
+  if(i == column_order.begin() && i != column_order.end()) {
     *i = order;
     return;
   } else if(i != column_order.end()) {

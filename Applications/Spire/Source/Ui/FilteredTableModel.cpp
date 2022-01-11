@@ -4,8 +4,8 @@
 using namespace boost::signals2;
 using namespace Spire;
 
-FilteredTableModel::FilteredTableModel(std::shared_ptr<TableModel> source,
-  std::function<bool(const TableModel&, int)> filter)
+FilteredTableModel::FilteredTableModel(
+    std::shared_ptr<TableModel> source, Filter filter)
     : m_source(std::move(source)),
       m_filter(std::move(filter)) {
   for(auto i = 0; i != m_source->get_row_size(); ++i) {
@@ -15,6 +15,42 @@ FilteredTableModel::FilteredTableModel(std::shared_ptr<TableModel> source,
   }
   m_source_connection = m_source->connect_operation_signal(
     [=] (const auto& operation) { on_operation(operation); });
+}
+
+void FilteredTableModel::set_filter(const Filter& filter) {
+  m_filter = filter;
+  auto source_row = 0;
+  auto filtered_row = 0;
+  m_transaction.transact([&] {
+    while(source_row != m_source->get_row_size() &&
+        filtered_row != static_cast<int>(m_filtered_data.size())) {
+      if(!m_filter(*m_source, source_row)) {
+        if(m_filtered_data[filtered_row] != source_row) {
+          m_filtered_data.insert(
+            m_filtered_data.begin() + filtered_row, source_row);
+          m_transaction.push(AddOperation(filtered_row));
+        }
+        ++filtered_row;
+      } else {
+        if(m_filtered_data[filtered_row] == source_row) {
+          m_filtered_data.erase(m_filtered_data.begin() + filtered_row);
+          m_transaction.push(RemoveOperation(filtered_row));
+        }
+      }
+      ++source_row;
+    }
+    while(filtered_row != static_cast<int>(m_filtered_data.size())) {
+      m_filtered_data.erase(m_filtered_data.begin() + filtered_row);
+      m_transaction.push(RemoveOperation(filtered_row));
+    }
+    while(source_row != m_source->get_row_size()) {
+      if(!m_filter(*m_source, source_row)) {
+        m_filtered_data.push_back(source_row);
+        m_transaction.push(AddOperation(m_filtered_data.size() - 1));
+      }
+      ++source_row;
+    }
+  });
 }
 
 int FilteredTableModel::get_row_size() const {
@@ -62,17 +98,17 @@ void FilteredTableModel::on_operation(const Operation& operation) {
         if(operation.m_index >= m_source->get_row_size() - 1) {
           if(!m_filter(*m_source, operation.m_index)) {
             m_filtered_data.push_back(operation.m_index);
-            m_transaction.push(AddOperation{
-              static_cast<int>(m_filtered_data.size()) - 1});
+            m_transaction.push(AddOperation(
+              static_cast<int>(m_filtered_data.size()) - 1));
           }
         } else {
           auto i = std::get<1>(find(operation.m_index));
           std::for_each(i, m_filtered_data.end(),
             [] (int& value) { ++value; });
           if(!m_filter(*m_source, operation.m_index)) {
-            m_transaction.push(AddOperation{
+            m_transaction.push(AddOperation(
               static_cast<int>(m_filtered_data.insert(i, operation.m_index) -
-              m_filtered_data.begin())});
+              m_filtered_data.begin())));
           }
         }
       },
@@ -94,9 +130,9 @@ void FilteredTableModel::on_operation(const Operation& operation) {
             }
           }
           *destination = operation.m_destination;
-          m_transaction.push(MoveOperation{
+          m_transaction.push(MoveOperation(
             static_cast<int>(source - m_filtered_data.begin()),
-            static_cast<int>(destination - m_filtered_data.begin())});
+            static_cast<int>(destination - m_filtered_data.begin())));
         } else if(operation.m_source < operation.m_destination) {
             auto destination = std::upper_bound(source, m_filtered_data.end(),
               operation.m_destination);
@@ -113,25 +149,25 @@ void FilteredTableModel::on_operation(const Operation& operation) {
         if(is_found) {
           auto index = static_cast<int>(i - m_filtered_data.begin());
           m_filtered_data.erase(i);
-          m_transaction.push(RemoveOperation{index});
+          m_transaction.push(RemoveOperation(index));
         }
       },
       [&] (const UpdateOperation& operation) {
         auto [is_found, i] = find(operation.m_row);
         if(!m_filter(*m_source, operation.m_row)) {
           if(is_found) {
-            m_transaction.push(UpdateOperation{
+            m_transaction.push(UpdateOperation(
               static_cast<int>(i - m_filtered_data.begin()),
-              operation.m_column});
+              operation.m_column));
           } else {
-            m_transaction.push(AddOperation{
+            m_transaction.push(AddOperation(
               static_cast<int>(m_filtered_data.insert(i, operation.m_row) -
-              m_filtered_data.begin())});
+              m_filtered_data.begin())));
           }
         } else if(is_found) {
           auto index = static_cast<int>(i - m_filtered_data.begin());
           m_filtered_data.erase(i);
-          m_transaction.push(RemoveOperation{index});
+          m_transaction.push(RemoveOperation(index));
         }
       });
   });

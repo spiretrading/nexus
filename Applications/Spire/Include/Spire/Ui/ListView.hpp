@@ -12,13 +12,13 @@
 namespace Spire {
 namespace Details {
   template<typename T>
-  struct ViewBuilder {
+  struct ListViewBuilder {
     using type =
       std::function<QWidget* (const std::shared_ptr<T>&, int)>;
   };
 
   template<>
-  struct ViewBuilder<void> {
+  struct ListViewBuilder<void> {
     using type =
       std::function<QWidget* (const std::shared_ptr<AnyListModel>&, int)>;
   };
@@ -93,7 +93,7 @@ namespace Styles {
        *         <i>list</i> at the given <i>index</i>.
        */
       template<typename T = void>
-      using ViewBuilder = typename Details::ViewBuilder<T>::type;
+      using ViewBuilder = typename Details::ListViewBuilder<T>::type;
 
       /**
        * Signals that the current item was submitted.

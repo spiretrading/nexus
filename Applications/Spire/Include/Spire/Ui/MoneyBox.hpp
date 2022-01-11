@@ -24,6 +24,13 @@ namespace Spire {
     public:
 
       /**
+       * Constructs a MoneyBox using a local current value model and default
+       * keyboard modifiers.
+       * @param parent The parent widget.
+       */
+      explicit MoneyBox(QWidget* parent = nullptr);
+
+      /**
        * Constructs a MoneyBox with a LocalOptionalValueModel.
        * @param modifiers The keyboard modifier increments.
        * @param parent The parent widget.
