@@ -324,7 +324,6 @@ bool Box::event(QEvent* event) {
 void Box::paintEvent(QPaintEvent* event) {
   auto painter = QPainter(this);
   painter.setRenderHint(QPainter::Antialiasing);
-  painter.setPen(Qt::NoPen);
   if(m_border_shape == BorderShape::RECTANGLE) {
     draw_rectangular_border(painter);
     return;
@@ -333,6 +332,7 @@ void Box::paintEvent(QPaintEvent* event) {
     return;
   }
   painter.setClipPath(m_clip_path);
+  painter.setPen(Qt::NoPen);
   painter.fillRect(rect(), m_style.m_background_color);
   paint_border_side(painter, m_style.m_border_width.m_top,
     m_style.m_border_color.m_top, m_border_geometry.m_top);
@@ -388,6 +388,7 @@ void Box::draw_rectangular_border(QPainter& painter) const {
 }
 
 void Box::draw_rounded_border(QPainter& painter) const {
+  painter.setPen(Qt::NoPen);
   painter.setBrush(m_style.m_border_color.m_top);
   auto radius = reduce_radius().m_top_left;
   painter.drawRoundedRect(rect(), radius, radius);
