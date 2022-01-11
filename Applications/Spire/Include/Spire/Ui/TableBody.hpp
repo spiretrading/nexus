@@ -164,7 +164,6 @@ namespace Styles {
       std::shared_ptr<CurrentModel> m_current;
       std::shared_ptr<ListModel<int>> m_widths;
       ViewBuilder m_view_builder;
-      std::vector<Cover*> m_row_covers;
       std::vector<ColumnCover*> m_column_covers;
       boost::optional<Index> m_current_index;
       TableItem* m_current_item;

@@ -258,11 +258,11 @@ void TableBody::paintEvent(QPaintEvent* event) {
       painter.fillRect(cover->geometry(), cover->m_background_color);
     }
   }
-  for(auto i = 0; i != static_cast<int>(m_row_covers.size()); ++i) {
-    auto cover = m_row_covers[i];
-    if(cover->m_background_color.alphaF() != 0 &&
+  for(auto i = 0; i != layout()->count(); ++i) {
+    auto& cover = *static_cast<Cover*>(layout()->itemAt(i)->widget());
+    if(cover.m_background_color.alphaF() != 0 &&
         (!m_current_index || m_current_index->m_row != i)) {
-      painter.fillRect(cover->geometry(), cover->m_background_color);
+      painter.fillRect(cover.geometry(), cover.m_background_color);
     }
   }
   if(m_current_item) {
@@ -271,9 +271,10 @@ void TableBody::paintEvent(QPaintEvent* event) {
       painter.fillRect(
         column_cover->geometry(), column_cover->m_background_color);
     }
-    auto row_cover = m_row_covers[m_current_index->m_row];
-    if(row_cover->m_background_color.alphaF() != 0) {
-      painter.fillRect(row_cover->geometry(), row_cover->m_background_color);
+    auto& row_cover =
+      *static_cast<Cover*>(layout()->itemAt(m_current_index->m_row)->widget());
+    if(row_cover.m_background_color.alphaF() != 0) {
+      painter.fillRect(row_cover.geometry(), row_cover.m_background_color);
     }
     auto current_position =
       m_current_item->parentWidget()->mapToParent(m_current_item->pos());
@@ -439,14 +440,17 @@ void TableBody::on_current(const optional<Index>& index) {
   m_current_index = index;
   m_current_item = find_item(index);
   if(previous_index) {
-    if(!m_current_index || m_current_index->m_row != previous_index->m_row) {
+    if(previous_item && 
+        (!m_current_index || m_current_index->m_row != previous_index->m_row)) {
       unmatch(*previous_item->parentWidget(), CurrentRow());
     }
     if(!m_current_index ||
         m_current_index->m_column != previous_index->m_column) {
       unmatch(*m_column_covers[previous_index->m_column], CurrentColumn());
     }
-    forfeit(*this, *previous_item, Current());
+    if(previous_item) {
+      forfeit(*this, *previous_item, Current());
+    }
   }
   if(m_current_index) {
     adopt(*this, *m_current_item, Current());
@@ -528,8 +532,14 @@ void TableBody::on_cover_style(Cover& cover) {
 
 void TableBody::on_table_operation(const TableModel::Operation& operation) {
   auto& row_layout = *static_cast<QVBoxLayout*>(layout());
+  auto adjusted_current = m_current_index;
   visit(operation,
     [&] (const TableModel::AddOperation& operation) {
+      if(adjusted_current) {
+        if(operation.m_index <= adjusted_current->m_row) {
+          ++adjusted_current->m_row;
+        }
+      }
       auto row = new Cover(this);
       match(*row, Row());
       auto column_layout = new QHBoxLayout(row);
@@ -552,20 +562,35 @@ void TableBody::on_table_operation(const TableModel::Operation& operation) {
           std::bind_front(&TableBody::on_item_clicked, this, std::ref(*item)));
       }
       row_layout.insertWidget(operation.m_index, row);
-      m_row_covers.insert(m_row_covers.begin() + operation.m_index, row);
       connect_style_signal(*row, std::bind_front(
         &TableBody::on_cover_style, this, std::ref(*row)));
       on_cover_style(*row);
     },
     [&] (const TableModel::RemoveOperation& operation) {
-      auto cover = m_row_covers[operation.m_index];
-      m_row_covers.erase(m_row_covers.begin() + operation.m_index);
+      if(adjusted_current) {
+        if(operation.m_index == adjusted_current->m_row) {
+          adjusted_current = none;
+        } else if(operation.m_index < adjusted_current->m_row) {
+          --adjusted_current->m_row;
+        }
+      }
       auto row = row_layout.itemAt(operation.m_index);
       row_layout.removeItem(row);
       delete row->widget();
       delete row;
     },
     [&] (const TableModel::MoveOperation& operation) {
+      if(adjusted_current) {
+        if(adjusted_current->m_row = operation.m_source) {
+          adjusted_current->m_row = operation.m_destination;
+        } else if(operation.m_source < adjusted_current->m_row &&
+            operation.m_destination >= adjusted_current->m_row) {
+          --adjusted_current->m_row;
+        } else if(operation.m_source > adjusted_current->m_row &&
+            operation.m_destination <= adjusted_current->m_row) {
+          ++adjusted_current->m_row;
+        }
+      }
       auto& row = *row_layout.itemAt(operation.m_source);
       row_layout.removeItem(&row);
       auto destination = [&] {
@@ -576,6 +601,12 @@ void TableBody::on_table_operation(const TableModel::Operation& operation) {
       }();
       row_layout.insertItem(destination, &row);
     });
+  if(adjusted_current != m_current_index) {
+    if(!adjusted_current) {
+      m_current_item = nullptr;
+    }
+    m_current->set(adjusted_current);
+  }
 }
 
 void TableBody::on_widths_update(const ListModel<int>::Operation& operation) {

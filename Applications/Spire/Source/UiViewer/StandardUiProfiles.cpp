@@ -2508,7 +2508,7 @@ UiProfile Spire::make_table_view_profile() {
     for(auto row = 0; row != 5; ++row) {
       auto values = std::vector<std::any>();
       for(auto column = 0; column != 4; ++column) {
-        values.push_back(Quantity(row * 4 + column));
+        values.push_back(row * 4 + column);
       }
       model->push(values);
     }
