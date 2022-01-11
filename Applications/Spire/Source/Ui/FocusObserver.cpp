@@ -135,3 +135,16 @@ bool Spire::is_set(FocusObserver::State left, FocusObserver::State right) {
     static_cast<std::underlying_type_t<FocusObserver::State>>(right)) !=
     FocusObserver::State::NONE;
 }
+
+std::ostream& Spire::operator <<(std::ostream& out, FocusObserver::State state) {
+  if(state == FocusObserver::State::NONE) {
+    return out << "NONE";
+  } else if(state == FocusObserver::State::FOCUS_IN) {
+    return out << "FOCUS_IN";
+  } else if(state == FocusObserver::State::FOCUS) {
+    return out << "FOCUS";
+  } else if(state == FocusObserver::State::FOCUS_VISIBLE) {
+    return out << "FOCUS_VISIBLE";
+  }
+  return out << "?";
+}

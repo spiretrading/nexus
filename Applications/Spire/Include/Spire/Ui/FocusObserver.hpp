@@ -1,6 +1,7 @@
 #ifndef SPIRE_FOCUS_OBSERVER_HPP
 #define SPIRE_FOCUS_OBSERVER_HPP
 #include <memory>
+#include <ostream>
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -65,6 +66,8 @@ namespace Spire {
    * @return <code>true</code> iff <i>left</i> is a superset of <i>right</i>.
    */
   bool is_set(FocusObserver::State left, FocusObserver::State right);
+
+  std::ostream& operator <<(std::ostream& out, FocusObserver::State state);
 }
 
 #endif
