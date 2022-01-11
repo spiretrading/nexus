@@ -189,12 +189,13 @@ namespace Styles {
         BorderWidth m_border_width;
         BorderColor m_border_color;
         BorderRadius m_border_radius;
-        SideProperty<QPainterPath> m_border_geometry;
       };
       QWidget* m_container;
       QWidget* m_body;
       QRect m_body_geometry;
       BoxStyle m_style;
+      BorderGeometry m_border_geometry;
+      QPainterPath m_clip_path;
       boost::signals2::scoped_connection m_style_connection;
       mutable boost::optional<QSize> m_size_hint;
       

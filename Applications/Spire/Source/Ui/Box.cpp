@@ -10,26 +10,41 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  struct QuadraticBezierCurve {
+    QPointF m_start;
+    QPointF m_control;
+    QPointF m_end;
+  };
+
+  struct BorderCornerCurves {
+    QuadraticBezierCurve m_outer;
+    QuadraticBezierCurve m_inner;
+  };
+
+  struct BorderSideCurves {
+    BorderCornerCurves m_left;
+    BorderCornerCurves m_right;
+  };
+
   double get_transition_point(int border_width1, int border_width2) {
     return static_cast<double>(border_width1) / (border_width1 + border_width2);
   }
 
-  QPointF get_curve_pos(
-      QPointF start, QPointF ctrl, QPointF end, double percent) {
-    double x1 = (ctrl.x() - start.x()) * percent + start.x();
-    double y1 = (ctrl.y() - start.y()) * percent + start.y();
-    double x2 = (end.x() - ctrl.x()) * percent + ctrl.x();
-    double y2 = (end.y() - ctrl.y()) * percent + ctrl.y();
+  QPointF get_curve_position(
+      const QuadraticBezierCurve& curve, double percent) {
+    double x1 =
+      (curve.m_control.x() - curve.m_start.x()) * percent + curve.m_start.x();
+    double y1 =
+      (curve.m_control.y() - curve.m_start.y()) * percent + curve.m_start.y();
+    double x2 =
+      (curve.m_end.x() - curve.m_control.x()) * percent + curve.m_control.x();
+    double y2 =
+      (curve.m_end.y() - curve.m_control.y()) * percent + curve.m_control.y();
     return {(x2 - x1) * percent + x1, (y2 - y1) * percent + y1};
   }
 
-  struct Curve {
-    QPointF m_start;
-    QPointF m_ctrl;
-    QPointF m_end;
-  };
-
-  Curve make_left_outer(int radius, int border, int previous_border) {
+  QuadraticBezierCurve make_left_outer_border_curve(
+      int radius, int border, int previous_border) {
     auto start = [&] {
       if(previous_border <= 0) {
         return QPointF(0, radius);
@@ -37,7 +52,7 @@ namespace {
       auto start = QPointF(0, radius);
       auto end = QPointF(radius, 0);
       auto tp = get_transition_point(border, previous_border);
-      auto point = get_curve_pos(start, QPointF(0, 0), end, 1 - tp);
+      auto point = get_curve_position({start, QPointF(0, 0), end}, 1 - tp);
       return point;
     }();
     auto end = [&] {
@@ -49,59 +64,7 @@ namespace {
     return {start, control, end};
   }
 
-  Curve make_right_outer(int radius, int widget_width,
-      int border_width, int next_border_width) {
-    auto start = [&] {
-      return QPointF(widget_width - radius, 0);
-    }();
-    auto end = [&] {
-      if(next_border_width <= 0) {
-        return QPointF(widget_width, radius);
-      }
-      auto start = QPointF(widget_width - radius, 0);
-      auto end = QPointF(widget_width, radius);
-      auto tp = get_transition_point(border_width, next_border_width);
-      auto point = get_curve_pos(start, QPointF(widget_width, 0), end, tp);
-      return point;
-    }();
-    auto control = [&] {
-      return QPointF(widget_width - (radius / 2), 0);
-    }();
-    return {start, control, end};
-  }
-
-  Curve make_right_inner(int radius, int widget_width,
-      int border_width, int next_border_width) {
-    auto ideal_start = QPointF(widget_width - next_border_width, radius);
-    auto start = [&] {
-      if(next_border_width <= 0) {
-        return QPointF(widget_width, radius);
-      } else if(radius - next_border_width <= 0) {
-        return QPointF(widget_width - next_border_width, border_width);
-      }
-      auto end = QPointF(widget_width - radius, border_width);
-      auto tp = get_transition_point(border_width, next_border_width);
-      // TODO: address this 1 - tp calculation by having a way from inferring
-      //        direction in the get_transition_point function.
-      auto point = get_curve_pos(ideal_start,
-        QPointF(widget_width - next_border_width, border_width), end, 1 - tp);
-      return point;
-    }();
-    auto end = [&] {
-      if(next_border_width <= 0) {
-        return QPointF(widget_width - radius, border_width);
-      }
-      return QPointF(
-        widget_width - (next_border_width + std::max(0, radius - next_border_width)),
-        border_width);
-    }();
-    auto ctrl = [&] {
-      return QPointF(start.x() - (ideal_start.x() - start.x()), border_width);
-    }();
-    return {start, ctrl, end};
-  }
-
-  Curve make_left_inner(
+  QuadraticBezierCurve make_left_inner_border_curve(
       int radius, int border_width, int previous_border_width) {
     auto start = [&] {
       if(previous_border_width <= 0) {
@@ -109,7 +72,6 @@ namespace {
       }
       // TODO: these curves are the same for each start/end of the inner corners,
       //        so don't duplicate
-      // TODO: potentially constrain these radius - border calculations
       return QPointF(
         previous_border_width + std::max(0, radius - previous_border_width),
         border_width);
@@ -127,38 +89,110 @@ namespace {
         previous_border_width + std::max(0, radius - border_width),
         border_width);
       auto tp = get_transition_point(border_width, previous_border_width);
-      auto point = get_curve_pos(
-        start, QPointF(previous_border_width, border_width), ideal_end, tp);
+      auto point = get_curve_position(
+        {start, QPointF(previous_border_width, border_width), ideal_end}, tp);
       return point;
     }();
     auto ctrl = [&] {
       return QPointF(end.x() + (end.x() - ideal_end.x()), border_width);
     }();
-    return Curve{start, ctrl, end};
+    return {start, ctrl, end};
   }
 
-  auto create_border_side(
-      int left_radius, int right_radius, int border_width, int width,
-      int height, int previous_border_width, int next_border_width) {
-    // TODO: if border_width is 0, still generate some border so the
-    //        clip path works properly for the background.
-    auto loc = make_left_outer(
-      left_radius, border_width, previous_border_width);
-    auto roc = make_right_outer(right_radius, width,
-      border_width, next_border_width);
-    auto ric = make_right_inner(right_radius, width,
-      border_width, next_border_width);
-    auto lic = make_left_inner(left_radius,
-      border_width, previous_border_width);
-    auto path = QPainterPath(loc.m_start);
-    path.quadTo(loc.m_ctrl, loc.m_end);
-    path.lineTo(roc.m_start);
-    path.quadTo(roc.m_ctrl, roc.m_end);
-    path.lineTo(ric.m_start);
-    path.quadTo(ric.m_ctrl, ric.m_end);
-    path.lineTo(lic.m_start);
-    path.quadTo(lic.m_ctrl, lic.m_end);
-    path.lineTo(loc.m_start);
+  QuadraticBezierCurve make_right_outer_border_curve(
+      int radius, int border_width, int next_border_width, int widget_width) {
+    auto start = [&] {
+      return QPointF(widget_width - radius, 0);
+    }();
+    auto end = [&] {
+      if(next_border_width <= 0) {
+        return QPointF(widget_width, radius);
+      }
+      auto start = QPointF(widget_width - radius, 0);
+      auto end = QPointF(widget_width, radius);
+      auto tp = get_transition_point(border_width, next_border_width);
+      auto point = get_curve_position(
+        {start, QPointF(widget_width, 0), end}, tp);
+      return point;
+    }();
+    auto control = [&] {
+      return QPointF(widget_width - (radius / 2), 0);
+    }();
+    return {start, control, end};
+  }
+
+  QuadraticBezierCurve make_right_inner_border_curve(
+      int radius, int border_width, int next_border_width, int widget_width) {
+    auto ideal_start = QPointF(widget_width - next_border_width, radius);
+    auto start = [&] {
+      if(next_border_width <= 0) {
+        return QPointF(widget_width, radius);
+      } else if(radius - next_border_width <= 0) {
+        return QPointF(widget_width - next_border_width, border_width);
+      }
+      auto end = QPointF(widget_width - radius, border_width);
+      auto tp = get_transition_point(border_width, next_border_width);
+      // TODO: address this 1 - tp calculation by having a way from inferring
+      //        direction in the get_transition_point function.
+      auto point = get_curve_position({ideal_start,
+        QPointF(widget_width - next_border_width, border_width), end}, 1 - tp);
+      return point;
+    }();
+    auto end = [&] {
+      if(next_border_width <= 0) {
+        return QPointF(widget_width - radius, border_width);
+      }
+      return QPointF(widget_width - (next_border_width +
+        std::max(0, radius - next_border_width)), border_width);
+    }();
+    auto ctrl = [&] {
+      return QPointF(start.x() - (ideal_start.x() - start.x()), border_width);
+    }();
+    return {start, ctrl, end};
+  }
+
+  BorderCornerCurves make_left_border_curves(
+      int radius, int border_width, int previous_border_width) {
+    return {
+      make_left_outer_border_curve(
+        radius, border_width, previous_border_width),
+      make_left_inner_border_curve(
+        radius, border_width, previous_border_width)};
+  }
+
+  BorderCornerCurves make_right_border_curves(
+      int radius, int border_width, int next_border_width, int widget_width) {
+    return {
+      make_right_outer_border_curve(
+        radius, border_width, next_border_width, widget_width),
+      make_right_inner_border_curve(
+        radius, border_width, next_border_width, widget_width)};
+  }
+
+  BorderSideCurves make_border_side_curves(
+      int left_radius, int right_radius, int border_width,
+      int previous_border_width, int next_border_width, int widget_width) {
+    return {
+      make_left_border_curves(
+        left_radius, border_width, previous_border_width),
+      make_right_border_curves(
+        right_radius, border_width, next_border_width, widget_width)};
+  }
+
+  auto make_border_side_path(const BorderSideCurves& curves) {
+    const auto& left_outer = curves.m_left.m_outer;
+    const auto& left_inner = curves.m_left.m_inner;
+    const auto& right_outer = curves.m_right.m_outer;
+    const auto& right_inner = curves.m_right.m_inner;
+    auto path = QPainterPath(left_outer.m_start);
+    path.quadTo(left_outer.m_control, left_outer.m_end);
+    path.lineTo(right_outer.m_start);
+    path.quadTo(right_outer.m_control, right_outer.m_end);
+    path.lineTo(right_inner.m_start);
+    path.quadTo(right_inner.m_control, right_inner.m_end);
+    path.lineTo(left_inner.m_start);
+    path.quadTo(left_inner.m_control, left_inner.m_end);
+    path.lineTo(left_outer.m_start);
     return path;
   }
 }
@@ -281,13 +315,13 @@ void Box::paintEvent(QPaintEvent* event) {
   painter.setPen(Qt::NoPen);
   painter.fillRect(rect(), m_style.m_background_color);
   paint_border_side(painter, m_style.m_border_width.m_top,
-    m_style.m_border_color.m_top, m_style.m_border_geometry.m_top);
-  paint_border_side(painter, m_style.m_border_width.m_right,
-    m_style.m_border_color.m_right, m_style.m_border_geometry.m_right);
+    m_style.m_border_color.m_top, m_border_geometry.m_top);
   paint_border_side(painter, m_style.m_border_width.m_bottom,
-    m_style.m_border_color.m_bottom, m_style.m_border_geometry.m_bottom);
+    m_style.m_border_color.m_bottom, m_border_geometry.m_bottom);
+  paint_border_side(painter, m_style.m_border_width.m_right,
+    m_style.m_border_color.m_right, m_border_geometry.m_right);
   paint_border_side(painter, m_style.m_border_width.m_left,
-    m_style.m_border_color.m_left, m_style.m_border_geometry.m_left);
+    m_style.m_border_color.m_left, m_border_geometry.m_left);
 }
 
 void Box::resizeEvent(QResizeEvent* event) {
@@ -332,8 +366,7 @@ void Box::resizeEvent(QResizeEvent* event) {
 void Box::paint_border_side(QPainter& painter,
     int width, const QColor& color, const QPainterPath& geometry) const {
   if(width > 0) {
-    painter.setBrush(color);
-    painter.drawPath(geometry);
+    painter.fillPath(geometry, color);
   }
 }
 
@@ -378,27 +411,29 @@ void Box::update_border_geometry() {
   auto radius = reduce_radius(m_style.m_border_radius);
   const auto& border_width = m_style.m_border_width;
 
-  // TODO: this geometry will need to be made in pieces: first, an outline
-  //        to define the clip path, and again, to define the complete border side.
-  //        Ideally, there wouldn't be duplication.
-  m_style.m_border_geometry.m_top = create_border_side(
-    radius.m_top_left, radius.m_top_right, border_width.m_top, width(),
-    height(), border_width.m_left, border_width.m_right);
-  m_style.m_border_geometry.m_right = create_border_side(radius.m_top_right,
-    radius.m_bottom_right, border_width.m_right, height(), width(),
-    border_width.m_top, border_width.m_bottom);
-  m_style.m_border_geometry.m_right = QTransform().
-    rotate(90).translate(0, -width()).map(m_style.m_border_geometry.m_right);
-  m_style.m_border_geometry.m_bottom = create_border_side(
+
+  auto top_curves = make_border_side_curves(
+    radius.m_top_left, radius.m_top_right, border_width.m_top,
+    border_width.m_left, border_width.m_right, width());
+  auto right_curves = make_border_side_curves(
+    radius.m_top_right, radius.m_bottom_right, border_width.m_right,
+    border_width.m_top, border_width.m_bottom, height());
+  auto bottom_curves = make_border_side_curves(
     radius.m_bottom_right, radius.m_bottom_left, border_width.m_bottom,
-    width(), height(), border_width.m_right, border_width.m_left);
-  m_style.m_border_geometry.m_bottom = QTransform().rotate(180).translate(
-    -width(), -height()).map(m_style.m_border_geometry.m_bottom);
-  m_style.m_border_geometry.m_left = create_border_side(
-    radius.m_bottom_left, radius.m_top_left, border_width.m_left, height(),
-    width(), border_width.m_bottom, border_width.m_top);
-  m_style.m_border_geometry.m_left = QTransform().rotate(270).translate(
-    -height(), 0).map(m_style.m_border_geometry.m_left);
+    border_width.m_right, border_width.m_left, width());
+  auto left_curves = make_border_side_curves(
+    radius.m_bottom_left, radius.m_top_left, border_width.m_left,
+    border_width.m_bottom, border_width.m_top, height());
+
+  // TODO: define clip region
+
+  m_border_geometry.m_top = make_border_side_path(top_curves);
+  m_border_geometry.m_right = QTransform().
+    rotate(90).translate(0, -width()).map(make_border_side_path(right_curves));
+  m_border_geometry.m_bottom = QTransform().rotate(180).translate(
+    -width(), -height()).map(make_border_side_path(bottom_curves));
+  m_border_geometry.m_left = QTransform().rotate(270).translate(
+    -height(), 0).map(make_border_side_path(left_curves));
   update();
 }
 
