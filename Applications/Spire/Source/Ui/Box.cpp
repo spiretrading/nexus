@@ -49,19 +49,12 @@ namespace {
       if(previous_border <= 0) {
         return QPointF(0, radius);
       }
-      auto start = QPointF(0, radius);
-      auto end = QPointF(radius, 0);
-      auto tp = get_transition_point(border, previous_border);
-      auto point = get_curve_position({start, QPointF(0, 0), end}, 1 - tp);
-      return point;
+      return get_curve_position(
+        {QPointF(0, radius), QPointF(0, 0), QPointF(radius, 0)},
+        get_transition_point(previous_border, border));
     }();
-    auto end = [&] {
-      return QPointF(radius, 0);
-    }();
-    auto control = [&] {
-      return QPointF(static_cast<double>(radius / 2), 0);
-    }();
-    return {start, control, end};
+    return {
+      start, QPointF(static_cast<double>(radius / 2), 0), QPointF(radius, 0)};
   }
 
   QuadraticBezierCurve make_left_inner_border_curve(
@@ -70,73 +63,55 @@ namespace {
       if(previous_border_width <= 0) {
         return QPointF(previous_border_width + radius, border_width);
       }
-      // TODO: these curves are the same for each start/end of the inner corners,
-      //        so don't duplicate
       return QPointF(
         previous_border_width + std::max(0, radius - previous_border_width),
         border_width);
     }();
-    auto ideal_end = QPointF(previous_border_width,
+    auto full_curve_end = QPointF(previous_border_width,
       border_width + std::max(0, radius - border_width));
     auto end = [&] {
       if(previous_border_width <= 0) {
-        return QPointF(
-          previous_border_width, border_width + std::max(0, radius - border_width));
+        return QPointF(previous_border_width,
+          border_width + std::max(0, radius - border_width));
       } else if(radius - previous_border_width <= 0) {
         return QPointF(previous_border_width, border_width);
       }
-      auto start = QPointF(
-        previous_border_width + std::max(0, radius - border_width),
-        border_width);
-      auto tp = get_transition_point(border_width, previous_border_width);
-      auto point = get_curve_position(
-        {start, QPointF(previous_border_width, border_width), ideal_end}, tp);
-      return point;
+      return get_curve_position({QPointF(previous_border_width +
+          std::max(0, radius - border_width), border_width),
+        QPointF(previous_border_width, border_width), full_curve_end},
+        get_transition_point(border_width, previous_border_width));
     }();
-    auto ctrl = [&] {
-      return QPointF(end.x() + (end.x() - ideal_end.x()), border_width);
-    }();
-    return {start, ctrl, end};
+    return {start,
+      QPointF(end.x() + (end.x() - full_curve_end.x()), border_width), end};
   }
 
   QuadraticBezierCurve make_right_outer_border_curve(
       int radius, int border_width, int next_border_width, int widget_width) {
-    auto start = [&] {
-      return QPointF(widget_width - radius, 0);
-    }();
     auto end = [&] {
       if(next_border_width <= 0) {
         return QPointF(widget_width, radius);
       }
-      auto start = QPointF(widget_width - radius, 0);
-      auto end = QPointF(widget_width, radius);
-      auto tp = get_transition_point(border_width, next_border_width);
-      auto point = get_curve_position(
-        {start, QPointF(widget_width, 0), end}, tp);
-      return point;
+      return get_curve_position({QPointF(widget_width - radius, 0),
+        QPointF(widget_width, 0), QPointF(widget_width, radius)},
+        get_transition_point(border_width, next_border_width));
     }();
-    auto control = [&] {
-      return QPointF(widget_width - (radius / 2), 0);
-    }();
-    return {start, control, end};
+    return {QPointF(widget_width - radius, 0),
+      QPointF(widget_width - (radius / 2), 0), end};
   }
 
   QuadraticBezierCurve make_right_inner_border_curve(
       int radius, int border_width, int next_border_width, int widget_width) {
-    auto ideal_start = QPointF(widget_width - next_border_width, radius);
+    auto full_curve_start = QPointF(widget_width - next_border_width, radius);
     auto start = [&] {
       if(next_border_width <= 0) {
         return QPointF(widget_width, radius);
       } else if(radius - next_border_width <= 0) {
         return QPointF(widget_width - next_border_width, border_width);
       }
-      auto end = QPointF(widget_width - radius, border_width);
-      auto tp = get_transition_point(border_width, next_border_width);
-      // TODO: address this 1 - tp calculation by having a way from inferring
-      //        direction in the get_transition_point function.
-      auto point = get_curve_position({ideal_start,
-        QPointF(widget_width - next_border_width, border_width), end}, 1 - tp);
-      return point;
+      return get_curve_position({full_curve_start,
+        QPointF(widget_width - next_border_width, border_width),
+        QPointF(widget_width - radius, border_width)},
+        get_transition_point(next_border_width, border_width));
     }();
     auto end = [&] {
       if(next_border_width <= 0) {
@@ -145,10 +120,8 @@ namespace {
       return QPointF(widget_width - (next_border_width +
         std::max(0, radius - next_border_width)), border_width);
     }();
-    auto ctrl = [&] {
-      return QPointF(start.x() - (ideal_start.x() - start.x()), border_width);
-    }();
-    return {start, ctrl, end};
+    return {start, QPointF(
+      start.x() - (full_curve_start.x() - start.x()), border_width), end};
   }
 
   BorderCornerCurves make_left_border_curves(
