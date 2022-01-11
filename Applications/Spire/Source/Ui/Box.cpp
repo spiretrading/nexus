@@ -190,6 +190,13 @@ namespace {
     path.lineTo(curves.m_left.m_outer.m_start);
     return path;
   }
+
+  auto paint_border_side(QPainter& painter,
+      int width, const QColor& color, const QPainterPath& geometry) {
+    if(width > 0) {
+      painter.fillPath(geometry, color);
+    }
+  }
 }
 
 BorderSize Spire::Styles::border_size(Expression<int> size) {
@@ -219,6 +226,17 @@ VerticalPadding Spire::Styles::vertical_padding(int size) {
 Padding Spire::Styles::padding(int size) {
   return Padding(PaddingTop(size), PaddingRight(size), PaddingBottom(size),
     PaddingLeft(size));
+}
+
+template<typename T>
+bool Box::SideProperty<T>::are_equal() const {
+  return (m_top == m_right) && (m_right == m_bottom) && (m_bottom == m_left);
+}
+
+template<typename T>
+bool Box::CornerProperty<T>::are_equal() const {
+  return (m_top_left == m_top_right) &&
+    (m_top_right == m_bottom_right) && (m_bottom_right == m_bottom_left);
 }
 
 Box::BoxStyle::BoxStyle()
@@ -306,8 +324,18 @@ bool Box::event(QEvent* event) {
 
 void Box::paintEvent(QPaintEvent* event) {
   auto painter = QPainter(this);
-  painter.setClipPath(m_clip_path);
   painter.setRenderHint(QPainter::Antialiasing);
+  if(auto shape_type = get_border_shape();
+      shape_type != BorderShape::COMPLEX) {
+    if(shape_type == BorderShape::RECTANGLE) {
+      painter.fillRect(rect(), m_style.m_background_color);
+      draw_rectangle_border(
+        painter, rect(), m_style.m_border_width, m_style.m_border_color.m_top);
+      return;
+    }
+    return;
+  }
+  painter.setClipPath(m_clip_path);
   painter.setPen(Qt::NoPen);
   painter.fillRect(rect(), m_style.m_background_color);
   paint_border_side(painter, m_style.m_border_width.m_top,
@@ -352,18 +380,28 @@ void Box::resizeEvent(QResizeEvent* event) {
     }
     m_container->setGeometry(m_body_geometry);
   }
-  // TODO: since the resizeEvent is called after the size has changed,
-  //        will this radius update still be visible?
-  //reduce_radii();
   update_border_geometry();
   QWidget::resizeEvent(event);
 }
 
-void Box::paint_border_side(QPainter& painter,
-    int width, const QColor& color, const QPainterPath& geometry) const {
-  if(width > 0) {
-    painter.fillPath(geometry, color);
+void Box::draw_rectangle_border(QPainter& painter, const QRect& region,
+    const BorderWidth& width, const QColor& color) const {
+  auto border_region = QRegion(region).subtracted(region.adjusted(
+    width.m_left, width.m_top, -width.m_right, -width.m_bottom));
+  for(auto& rect : border_region) {
+    painter.fillRect(rect, color);
   }
+}
+
+Box::BorderShape Box::get_border_shape() const {
+  if(m_style.m_border_radius.are_equal() &&
+      m_style.m_border_color.are_equal()) {
+    if(m_style.m_border_radius.m_top_left > 0) {
+      return BorderShape::ROUNDED_RECTANGLE;
+    }
+    return BorderShape::RECTANGLE;
+  }
+  return BorderShape::COMPLEX;
 }
 
 double Box::radius_reduction_factor(const BorderRadius& radius) const {
@@ -389,11 +427,6 @@ double Box::radius_reduction_factor(const BorderRadius& radius) const {
 Box::BorderRadius Box::reduce_radius(BorderRadius radius) const {
   auto factor = radius_reduction_factor(radius);
   while(factor < 1.0f) {
-    //qDebug() << "while factor value: " << factor;
-
-    // Note: can't use original radii because they shouldn't be overidden in
-    //        case the Box is resized later and the original radii would fit
-    //        without adjustment.
     radius.m_top_left *= factor;
     radius.m_top_right *= factor;
     radius.m_bottom_right *= factor;
@@ -404,6 +437,10 @@ Box::BorderRadius Box::reduce_radius(BorderRadius radius) const {
 }
 
 void Box::update_border_geometry() {
+  if(get_border_shape() != BorderShape::COMPLEX) {
+    update();
+    return;
+  }
   auto radius = reduce_radius(m_style.m_border_radius);
   const auto& border_width = m_style.m_border_width;
   auto top_curves = make_border_side_curves(

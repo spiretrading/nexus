@@ -168,6 +168,8 @@ namespace Styles {
         T m_right;
         T m_bottom;
         T m_left;
+
+        bool are_equal() const;
       };
       template <typename T>
       struct CornerProperty {
@@ -175,6 +177,8 @@ namespace Styles {
         T m_top_right;
         T m_bottom_right;
         T m_bottom_left;
+
+        bool are_equal() const;
       };
       using Padding = SideProperty<int>;
       using BorderWidth = SideProperty<int>;
@@ -190,6 +194,11 @@ namespace Styles {
         BorderColor m_border_color;
         BorderRadius m_border_radius;
       };
+      enum class BorderShape {
+        RECTANGLE,
+        ROUNDED_RECTANGLE,
+        COMPLEX
+      };
       QWidget* m_container;
       QWidget* m_body;
       QRect m_body_geometry;
@@ -198,9 +207,10 @@ namespace Styles {
       QPainterPath m_clip_path;
       boost::signals2::scoped_connection m_style_connection;
       mutable boost::optional<QSize> m_size_hint;
-      
-      void paint_border_side(QPainter& painter,
-        int width, const QColor& color, const QPainterPath& geometry) const;
+
+      void draw_rectangle_border(QPainter& painter, const QRect& region,
+        const BorderWidth& width, const QColor& color) const;
+      BorderShape get_border_shape() const;
       double radius_reduction_factor(const BorderRadius& radius) const;
       BorderRadius reduce_radius(BorderRadius radius) const;
       void update_border_geometry();
