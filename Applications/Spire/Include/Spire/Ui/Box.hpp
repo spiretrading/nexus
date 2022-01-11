@@ -208,11 +208,11 @@ namespace Styles {
       boost::signals2::scoped_connection m_style_connection;
       mutable boost::optional<QSize> m_size_hint;
 
-      void draw_rectangle_border(QPainter& painter, const QRect& region,
-        const BorderWidth& width, const QColor& color) const;
+      void draw_rectangle_border(QPainter& painter) const;
+      void draw_rounded_border(QPainter& painter) const;
       BorderShape get_border_shape() const;
       double radius_reduction_factor(const BorderRadius& radius) const;
-      BorderRadius reduce_radius(BorderRadius radius) const;
+      BorderRadius reduce_radius() const;
       void update_border_geometry();
       void on_style();
   };

@@ -328,11 +328,10 @@ void Box::paintEvent(QPaintEvent* event) {
   if(auto shape_type = get_border_shape();
       shape_type != BorderShape::COMPLEX) {
     if(shape_type == BorderShape::RECTANGLE) {
-      painter.fillRect(rect(), m_style.m_background_color);
-      draw_rectangle_border(
-        painter, rect(), m_style.m_border_width, m_style.m_border_color.m_top);
+      draw_rectangle_border(painter);
       return;
     }
+    draw_rounded_border(painter);
     return;
   }
   painter.setClipPath(m_clip_path);
@@ -384,22 +383,35 @@ void Box::resizeEvent(QResizeEvent* event) {
   QWidget::resizeEvent(event);
 }
 
-void Box::draw_rectangle_border(QPainter& painter, const QRect& region,
-    const BorderWidth& width, const QColor& color) const {
-  auto border_region = QRegion(region).subtracted(region.adjusted(
-    width.m_left, width.m_top, -width.m_right, -width.m_bottom));
-  for(auto& rect : border_region) {
-    painter.fillRect(rect, color);
-  }
+void Box::draw_rectangle_border(QPainter& painter) const {
+  painter.fillRect(rect(), m_style.m_border_color.m_top);
+  const auto& border_width = m_style.m_border_width;
+  painter.fillRect(rect().adjusted(border_width.m_left, border_width.m_top,
+    -border_width.m_right, -border_width.m_bottom), m_style.m_background_color);
+}
+
+void Box::draw_rounded_border(QPainter& painter) const {
+  painter.setPen(Qt::NoPen);
+  painter.setBrush(m_style.m_border_color.m_top);
+  auto radius = reduce_radius().m_top_left;
+  painter.drawRoundedRect(rect(), radius, radius);
+  painter.setBrush(m_style.m_background_color);
+  auto border_width = m_style.m_border_width.m_top;
+  painter.drawRoundedRect(rect().adjusted(
+    border_width, border_width, -border_width, -border_width),
+    std::max(0, radius - border_width), std::max(0, radius - border_width));
 }
 
 Box::BorderShape Box::get_border_shape() const {
   if(m_style.m_border_radius.are_equal() &&
       m_style.m_border_color.are_equal()) {
     if(m_style.m_border_radius.m_top_left > 0) {
-      return BorderShape::ROUNDED_RECTANGLE;
+      if(m_style.m_border_width.are_equal()) {
+        return BorderShape::ROUNDED_RECTANGLE;
+      }
+    } else {
+      return BorderShape::RECTANGLE;
     }
-    return BorderShape::RECTANGLE;
   }
   return BorderShape::COMPLEX;
 }
@@ -424,7 +436,8 @@ double Box::radius_reduction_factor(const BorderRadius& radius) const {
   return 1.0f;
 }
 
-Box::BorderRadius Box::reduce_radius(BorderRadius radius) const {
+Box::BorderRadius Box::reduce_radius() const {
+  auto radius = m_style.m_border_radius;
   auto factor = radius_reduction_factor(radius);
   while(factor < 1.0f) {
     radius.m_top_left *= factor;
@@ -441,7 +454,7 @@ void Box::update_border_geometry() {
     update();
     return;
   }
-  auto radius = reduce_radius(m_style.m_border_radius);
+  auto radius = reduce_radius();
   const auto& border_width = m_style.m_border_width;
   auto top_curves = make_border_side_curves(
     radius.m_top_left, radius.m_top_right, border_width.m_top,
