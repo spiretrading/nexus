@@ -41,6 +41,13 @@ namespace {
     return std::make_tuple(curves.m_left.m_outer, curves.m_right.m_outer);
   }
 
+  double get_reduction_factor(int size, int radius1, int radius2) {
+    if(auto radii_sum = radius1 + radius2; radii_sum > 0) {
+      return static_cast<double>(size) / radii_sum;
+    }
+    return 1.0;
+  }
+
   double get_transition_point(int border_width1, int border_width2) {
     return static_cast<double>(border_width1) / (border_width1 + border_width2);
   }
@@ -416,15 +423,15 @@ void Box::update_border_shape() {
 }
 
 double Box::radius_reduction_factor(const BorderRadius& radius) const {
-  return std::min(1.0,
-    std::min(static_cast<double>(width()) /
-      (radius.m_top_left + radius.m_top_right),
-    std::min(static_cast<double>(height()) /
-      (radius.m_top_right + radius.m_bottom_right),
-    std::min(static_cast<double>(width()) /
-      (radius.m_bottom_left + radius.m_bottom_right),
-      static_cast<double>(height()) /
-      (radius.m_bottom_left + radius.m_top_left)))));
+  return
+    std::min(1.0, std::min(get_reduction_factor(
+      width(), radius.m_top_left, radius.m_top_right),
+    std::min(get_reduction_factor(
+      height(), radius.m_top_right, radius.m_bottom_right),
+    std::min(get_reduction_factor(
+      width(), radius.m_bottom_left, radius.m_bottom_right),
+      get_reduction_factor(
+        height(), radius.m_bottom_left, radius.m_top_left)))));
 }
 
 Box::BorderRadius Box::reduce_radius() const {
