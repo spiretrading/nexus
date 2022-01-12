@@ -38,6 +38,17 @@ namespace Spire {
        */
       void move(int source, int destination);
 
+      /**
+       * Given an index into the source table, returns the index in this
+       * translated table.
+       */
+      int get_source_to_translation(int row) const;
+
+      /**
+       * Given an index into this table, returns the index in the source table.
+       */
+      int get_translation_to_source(int row) const;
+
       int get_row_size() const override;
 
       int get_column_size() const override;

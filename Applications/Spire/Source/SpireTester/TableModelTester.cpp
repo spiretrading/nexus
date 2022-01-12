@@ -31,25 +31,25 @@ TEST_SUITE("TableModel") {
           REQUIRE(update_operation.m_column == 0);
         });
     };
-    auto add_operation = TableModel::AddOperation{0};
+    auto add_operation = TableModel::AddOperation(0);
     visitor(add_operation);
     REQUIRE(add_count == 1);
     REQUIRE(move_count == 0);
     REQUIRE(remove_count == 0);
     REQUIRE(update_count == 0);
-    auto move_operation = TableModel::MoveOperation{0, 1};
+    auto move_operation = TableModel::MoveOperation(0, 1);
     visitor(move_operation);
     REQUIRE(add_count == 1);
     REQUIRE(move_count == 1);
     REQUIRE(remove_count == 0);
     REQUIRE(update_count == 0);
-    auto remove_operation = TableModel::RemoveOperation{1};
+    auto remove_operation = TableModel::RemoveOperation(1);
     visitor(remove_operation);
     REQUIRE(add_count == 1);
     REQUIRE(move_count == 1);
     REQUIRE(remove_count == 1);
     REQUIRE(update_count == 0);
-    auto update_operation = TableModel::UpdateOperation{0, 0};
+    auto update_operation = TableModel::UpdateOperation(0, 0);
     visitor(update_operation);
     REQUIRE(add_count == 1);
     REQUIRE(move_count == 1);
@@ -66,16 +66,16 @@ TEST_SUITE("TableModel") {
         REQUIRE(move_operation.m_destination == 1);
       });
     };
-    auto add_operation = TableModel::AddOperation{0};
+    auto add_operation = TableModel::AddOperation(0);
     visitor(add_operation);
     REQUIRE(move_count == 0);
-    auto move_operation = TableModel::MoveOperation{0, 1};
+    auto move_operation = TableModel::MoveOperation(0, 1);
     visitor(move_operation);
     REQUIRE(move_count == 1);
-    auto remove_operation = TableModel::RemoveOperation{1};
+    auto remove_operation = TableModel::RemoveOperation(1);
     visitor(remove_operation);
     REQUIRE(move_count == 1);
-    auto update_operation = TableModel::UpdateOperation{0, 0};
+    auto update_operation = TableModel::UpdateOperation(0, 0);
     visitor(update_operation);
     REQUIRE(move_count == 1);
   }
@@ -93,19 +93,19 @@ TEST_SUITE("TableModel") {
           ++default_count;
         });
     };
-    auto add_operation = TableModel::AddOperation{0};
+    auto add_operation = TableModel::AddOperation(0);
     visitor(add_operation);
     REQUIRE(add_count == 1);
     REQUIRE(default_count == 0);
-    auto move_operation = TableModel::MoveOperation{0, 1};
+    auto move_operation = TableModel::MoveOperation(0, 1);
     visitor(move_operation);
     REQUIRE(add_count == 1);
     REQUIRE(default_count == 1);
-    auto remove_operation = TableModel::RemoveOperation{1};
+    auto remove_operation = TableModel::RemoveOperation(1);
     visitor(remove_operation);
     REQUIRE(add_count == 1);
     REQUIRE(default_count == 2);
-    auto update_operation = TableModel::UpdateOperation{0, 0};
+    auto update_operation = TableModel::UpdateOperation(0, 0);
     visitor(update_operation);
     REQUIRE(add_count == 1);
     REQUIRE(default_count == 3);
@@ -118,10 +118,10 @@ TEST_SUITE("TableModel") {
     auto remove_count = 0;
     auto update_count = 0;
     auto transaction = TableModel::Transaction();
-    transaction.m_operations.push_back(TableModel::AddOperation{0});
-    transaction.m_operations.push_back(TableModel::MoveOperation{0, 1});
-    transaction.m_operations.push_back(TableModel::RemoveOperation{1});
-    transaction.m_operations.push_back(TableModel::UpdateOperation{0, 0});
+    transaction.m_operations.push_back(TableModel::AddOperation(0));
+    transaction.m_operations.push_back(TableModel::MoveOperation(0, 1));
+    transaction.m_operations.push_back(TableModel::RemoveOperation(1));
+    transaction.m_operations.push_back(TableModel::UpdateOperation(0, 0));
     visit(transaction,
       [&] (const TableModel::AddOperation& add_operation) {
         ++add_count;
@@ -158,11 +158,11 @@ TEST_SUITE("TableModel") {
   TEST_CASE("visit_partial_operations_in_transaction") {
     auto remove_count = 0;
     auto transaction = TableModel::Transaction();
-    transaction.m_operations.push_back(TableModel::AddOperation{0});
-    transaction.m_operations.push_back(TableModel::MoveOperation{0, 1});
-    transaction.m_operations.push_back(TableModel::RemoveOperation{1});
-    transaction.m_operations.push_back(TableModel::UpdateOperation{0, 0});
-    transaction.m_operations.push_back(TableModel::RemoveOperation{2});
+    transaction.m_operations.push_back(TableModel::AddOperation(0));
+    transaction.m_operations.push_back(TableModel::MoveOperation(0, 1));
+    transaction.m_operations.push_back(TableModel::RemoveOperation(1));
+    transaction.m_operations.push_back(TableModel::UpdateOperation(0, 0));
+    transaction.m_operations.push_back(TableModel::RemoveOperation(2));
     visit(transaction,
       [&] (const TableModel::RemoveOperation& remove_operation) {
         ++remove_count;
@@ -175,10 +175,10 @@ TEST_SUITE("TableModel") {
     auto remove_count = 0;
     auto default_count = 0;
     auto transaction = TableModel::Transaction();
-    transaction.m_operations.push_back(TableModel::AddOperation{0});
-    transaction.m_operations.push_back(TableModel::MoveOperation{0, 1});
-    transaction.m_operations.push_back(TableModel::RemoveOperation{1});
-    transaction.m_operations.push_back(TableModel::UpdateOperation{0, 0});
+    transaction.m_operations.push_back(TableModel::AddOperation(0));
+    transaction.m_operations.push_back(TableModel::MoveOperation(0, 1));
+    transaction.m_operations.push_back(TableModel::RemoveOperation(1));
+    transaction.m_operations.push_back(TableModel::UpdateOperation(0, 0));
     visit(transaction,
       [&] (const TableModel::RemoveOperation& remove_operation) {
         ++remove_count;
@@ -194,7 +194,7 @@ TEST_SUITE("TableModel") {
   TEST_CASE("visit_all_operations_in_transaction_with_one_operation") {
     auto add_count = 0;
     auto transaction = TableModel::Transaction();
-    transaction.m_operations.push_back(TableModel::AddOperation{0});
+    transaction.m_operations.push_back(TableModel::AddOperation(0));
     visit(transaction,
       [&] (const TableModel::AddOperation& add_operation) {
         ++add_count;
