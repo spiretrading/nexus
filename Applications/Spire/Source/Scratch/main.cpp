@@ -12,24 +12,22 @@ void draw_border(QSize size, int left, int top, int radius, QWidget& widget) {
   painter.setRenderHint(QPainter::Antialiasing);
   painter.fillRect(QRect(QPoint(0, 0), size), Qt::white);
   auto top_left_bar = radius;
-  painter.fillRect(
-    QRect(QPoint(0, top_left_bar), QSize(left, size.height() - top_left_bar)),
+  painter.fillRect(QRect(
+    QPoint(0, top_left_bar - 1), QSize(left, size.height() - top_left_bar + 1)),
     Qt::blue);
   auto corner_path = QPainterPath(QPoint(0, top_left_bar - 1));
   corner_path.arcTo(
-    QRect(QPoint(0, 0), QSize(2 * radius - 1, 2 * radius - 1)), -180, -90);
+    QRect(QPoint(0, 0), QSize(2 * radius, 2 * radius)), -180, -90);
   corner_path.lineTo(QPoint(radius, top));
   if(radius > top || radius > left) {
     corner_path.arcTo(QRect(QPoint(left, top),
-      QSize(2 * (radius - left) - 1, 2 * (radius - top) - 1)), 90, 90);
+      QSize(2 * (radius - left), 2 * (radius - top))), 90, 90);
   }
   corner_path.lineTo(QPoint(0, top_left_bar - 1));
   painter.setPen(Qt::blue);
   painter.fillPath(corner_path, Qt::blue);
-//  painter.drawPath(corner_path);
   painter.fillRect(
-    QRect(QPoint(radius, 0), QSize(size.width() - radius, top)),
-    Qt::blue);
+    QRect(QPoint(radius, 0), QSize(size.width() - radius, top)), Qt::blue);
 }
 
 struct Canvas : QWidget {
