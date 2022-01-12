@@ -111,7 +111,7 @@ namespace {
         get_transition_point(border_width, next_border_width));
     }();
     return {QPointF(widget_width - radius, 0),
-      QPointF(widget_width - (radius / 2), 0), end};
+      QPointF(widget_width - (static_cast<double>(radius) / 2), 0), end};
   }
 
   QuadraticBezierCurve make_right_inner_border_curve(
