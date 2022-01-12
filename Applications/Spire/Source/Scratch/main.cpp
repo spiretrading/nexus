@@ -7,33 +7,58 @@
 
 using namespace Spire;
 
-void draw_border(QSize size, int left, int top, int radius, QWidget& widget) {
+struct Border {
+  int m_size;
+  QColor m_color;
+};
+
+struct Borders {
+  Border m_top;
+  Border m_right;
+  Border m_bottom;
+  Border m_left;
+  int m_top_right_radius;
+  int m_bottom_right_radius;
+  int m_bottom_left_radius;
+  int m_top_left_radius;
+};
+
+void draw_border(QSize size, Borders borders, QWidget& widget) {
   auto painter = QPainter(&widget);
   painter.setRenderHint(QPainter::Antialiasing);
   painter.fillRect(QRect(QPoint(0, 0), size), Qt::white);
-  auto top_left_bar = radius;
-  painter.fillRect(QRect(
-    QPoint(0, top_left_bar - 1), QSize(left, size.height() - top_left_bar + 1)),
-    Qt::blue);
-  auto corner_path = QPainterPath(QPoint(0, top_left_bar - 1));
-  corner_path.arcTo(
-    QRect(QPoint(0, 0), QSize(2 * radius, 2 * radius)), -180, -90);
-  corner_path.lineTo(QPoint(radius, top));
-  if(radius > top || radius > left) {
-    corner_path.arcTo(QRect(QPoint(left, top),
-      QSize(2 * (radius - left), 2 * (radius - top))), 90, 90);
+  painter.fillRect(QRect(QPoint(0, borders.m_top_left_radius - 1), QSize(
+    borders.m_left.m_size, size.height() - borders.m_top_left_radius)),
+    borders.m_left.m_color);
+  auto top_left_corner_path =
+    QPainterPath(QPoint(0, borders.m_top_left_radius - 1));
+  top_left_corner_path.arcTo(QRect(QPoint(0, 0),
+    QSize(2 * borders.m_top_left_radius, 2 * borders.m_top_left_radius)),
+    -180, -90);
+  top_left_corner_path.lineTo(
+    QPoint(borders.m_top_left_radius, borders.m_top.m_size));
+  if(borders.m_top_left_radius > borders.m_top.m_size ||
+      borders.m_top_left_radius > borders.m_left.m_size) {
+    top_left_corner_path.arcTo(
+      QRect(QPoint(borders.m_left.m_size, borders.m_top.m_size),
+      QSize(2 * (borders.m_top_left_radius - borders.m_left.m_size),
+      2 * (borders.m_top_left_radius - borders.m_top.m_size))), 90, 90);
   }
-  corner_path.lineTo(QPoint(0, top_left_bar - 1));
-  painter.setPen(Qt::blue);
-  painter.fillPath(corner_path, Qt::blue);
+  top_left_corner_path.lineTo(QPoint(0, borders.m_top_left_radius));
+  painter.fillPath(top_left_corner_path, borders.m_top.m_color);
   painter.fillRect(
-    QRect(QPoint(radius, 0), QSize(size.width() - radius, top)), Qt::blue);
+    QRect(QPoint(borders.m_top_left_radius, 0),
+    QSize(size.width() - borders.m_top_left_radius, borders.m_top.m_size)),
+    borders.m_top.m_color);
 }
 
 struct Canvas : QWidget {
   void paintEvent(QPaintEvent* event) override {
-    draw_border(size(), scale_width(10), scale_height(20), scale_width(30),
-      *this);
+    auto borders = Borders();
+    borders.m_left = {scale_width(10), Qt::blue};
+    borders.m_top = {scale_height(20), Qt::blue};
+    borders.m_top_left_radius = scale_width(30);
+    draw_border(size(), borders, *this);
   };
 };
 
