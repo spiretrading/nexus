@@ -110,6 +110,54 @@ void BoxPainter::set_borders(const Borders& borders) {
   m_borders = borders;
 }
 
+void BoxPainter::set_top_border_size(int size) {
+  m_borders.m_top.m_size = size;
+}
+
+void BoxPainter::set_top_border_color(QColor color) {
+  m_borders.m_top.m_color = color;
+}
+
+void BoxPainter::set_right_border_size(int size) {
+  m_borders.m_right.m_size = size;
+}
+
+void BoxPainter::set_right_border_color(QColor color) {
+  m_borders.m_right.m_color = color;
+}
+
+void BoxPainter::set_bottom_border_size(int size) {
+  m_borders.m_bottom.m_size = size;
+}
+
+void BoxPainter::set_bottom_border_color(QColor color) {
+  m_borders.m_bottom.m_color = color;
+}
+
+void BoxPainter::set_left_border_size(int size) {
+  m_borders.m_left.m_size = size;
+}
+
+void BoxPainter::set_left_border_color(QColor color) {
+  m_borders.m_left.m_color = color;
+}
+
+void BoxPainter::set_top_right_radius(int radius) {
+  m_borders.m_top_right_radius = radius;
+}
+
+void BoxPainter::set_bottom_right_radius(int radius) {
+  m_borders.m_bottom_right_radius = radius;
+}
+
+void BoxPainter::set_bottom_left_radius(int radius) {
+  m_borders.m_bottom_left_radius = radius;
+}
+
+void BoxPainter::set_top_left_radius(int radius) {
+  m_borders.m_top_left_radius = radius;
+}
+
 void BoxPainter::paint(QPainter& painter) const {
   auto path = QPainterPath();
   auto size = QSize(painter.device()->width(), painter.device()->height());

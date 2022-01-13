@@ -70,6 +70,42 @@ namespace Spire {
       /** Sets the border properties. */
       void set_borders(const Borders& borders);
 
+      /** Sets the size of the top border. */
+      void set_top_border_size(int size);
+
+      /** Sets the color of the top border. */
+      void set_top_border_color(QColor color);
+
+      /** Sets the size of the right border. */
+      void set_right_border_size(int size);
+
+      /** Sets the color of the right border. */
+      void set_right_border_color(QColor color);
+
+      /** Sets the size of the bottom border. */
+      void set_bottom_border_size(int size);
+
+      /** Sets the color of the bottom border. */
+      void set_bottom_border_color(QColor color);
+
+      /** Sets the size of the left border. */
+      void set_left_border_size(int size);
+
+      /** Sets the color of the left border. */
+      void set_left_border_color(QColor color);
+
+      /** Sets the radius of the top-right border. */
+      void set_top_right_radius(int radius);
+
+      /** Sets the radius of the bottom-right border. */
+      void set_bottom_right_radius(int radius);
+
+      /** Sets the radius of the bottom-left border. */
+      void set_bottom_left_radius(int radius);
+
+      /** Sets the radius of the top-left border. */
+      void set_top_left_radius(int radius);
+
       /** Paints a box on a given QPainter. */
       void paint(QPainter& painter) const;
 

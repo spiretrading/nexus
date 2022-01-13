@@ -1,7 +1,7 @@
 #ifndef SPIRE_BOX_HPP
 #define SPIRE_BOX_HPP
 #include "Spire/Styles/Selectors.hpp"
-#include "Spire/Styles/StyleSheetMap.hpp"
+#include "Spire/Ui/BoxPainter.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -158,13 +158,14 @@ namespace Styles {
 
     protected:
       bool event(QEvent* event) override;
+      void paintEvent(QPaintEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
 
     private:
       QWidget* m_container;
       QWidget* m_body;
       QRect m_body_geometry;
-      Styles::StyleSheetMap m_styles;
+      BoxPainter m_painter;
       boost::signals2::scoped_connection m_style_connection;
       mutable boost::optional<QSize> m_size_hint;
 
