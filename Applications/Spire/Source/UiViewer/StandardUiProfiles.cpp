@@ -49,6 +49,7 @@
 #include "Spire/Ui/OverlayPanel.hpp"
 #include "Spire/Ui/QuantityBox.hpp"
 #include "Spire/Ui/RegionListItem.hpp"
+#include "Spire/Ui/ResponsiveLabel.hpp"
 #include "Spire/Ui/ScalarFilterPanel.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
@@ -2157,6 +2158,32 @@ UiProfile Spire::make_region_list_item_profile() {
     item->setMinimumSize(0, 0);
     item->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
     return item;
+  });
+  return profile;
+}
+
+UiProfile Spire::make_responsive_label_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(
+    make_standard_property("label1", QString("Hello world")));
+  properties.push_back(make_standard_property("label2", QString("Hello w.")));
+  properties.push_back(make_standard_property("label3", QString("Hello")));
+  properties.push_back(make_standard_property("label4", QString("HW")));
+  properties.push_back(make_standard_property("font-size", 12));
+  auto profile = UiProfile("ResponsiveLabel", properties, [] (auto& profile) {
+    auto labels = std::make_shared<ArrayListModel<QString>>();
+    auto& label1 = get<QString>("label1", profile.get_properties());
+    labels->push(label1.get());
+    auto& label2 = get<QString>("label2", profile.get_properties());
+    labels->push(label2.get());
+    auto& label3 = get<QString>("label3", profile.get_properties());
+    labels->push(label3.get());
+    auto& label4 = get<QString>("label4", profile.get_properties());
+    labels->push(label4.get());
+    auto label = new ResponsiveLabel(labels);
+    apply_widget_properties(label, profile.get_properties());
+    return label;
   });
   return profile;
 }
