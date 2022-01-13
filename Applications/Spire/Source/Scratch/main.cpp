@@ -34,7 +34,11 @@ void draw_corner(QPainter& painter, QPainterPath& path,
   auto corner_angle = -90 * (static_cast<double>(horizontal_border.m_size) /
     (vertical_border.m_size + horizontal_border.m_size));
   path.arcTo(QRect(QPoint(0, 0), 2 * QSize(radius, radius)), 180, corner_angle);
-  auto outer_joint = path.currentPosition();
+  auto outer_joint = [&] {
+    auto currentPosition = path.currentPosition();
+    return QPoint(
+      std::floor(currentPosition.x()), std::floor(currentPosition.y()));
+  }();
   path.lineTo(QPoint(outer_joint.x(), radius - 1));
   painter.fillPath(path, horizontal_border.m_color);
   path.clear();
@@ -43,7 +47,6 @@ void draw_corner(QPainter& painter, QPainterPath& path,
   path.arcTo(QRect(QPoint(horizontal_border.m_size, vertical_border.m_size),
     2 * QSize(radius - horizontal_border.m_size, radius -
       vertical_border.m_size)), 180, corner_angle);
-  auto inner_joint = path.currentPosition();
   path.lineTo(outer_joint);
   painter.fillPath(path, horizontal_border.m_color);
   path.clear();
@@ -63,7 +66,7 @@ void draw_border(QSize size, Borders borders, QWidget& widget) {
   painter.setRenderHint(QPainter::Antialiasing);
   painter.fillRect(QRect(QPoint(borders.m_left.m_size, borders.m_top.m_size),
     size - QSize(borders.m_left.m_size + borders.m_right.m_size,
-      borders.m_top.m_size - borders.m_bottom.m_size)), Qt::white);
+      borders.m_top.m_size + borders.m_bottom.m_size)), Qt::white);
   painter.fillRect(QRect(QPoint(0, borders.m_top_left_radius - 1), QSize(
     borders.m_left.m_size, size.height() - borders.m_top_left_radius -
     borders.m_bottom_left_radius + 1)), borders.m_left.m_color);
