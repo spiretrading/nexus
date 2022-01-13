@@ -78,8 +78,8 @@ void ResponsiveLabel::set_current(const optional<int> cached_label_index) {
   update_current_bounds(m_current_cached_label_index);
   m_text_model->set(
     m_labels->get(m_cached_labels.at(*m_current_cached_label_index).m_index));
-  adjustSize();
-  if(get_pixel_width(m_text_model->get()) > width()) {
+  if(m_text_box->is_text_elided() && m_current_cached_label_index != 0) {
+    adjustSize();
     update_display_text();
   }
 }
@@ -138,11 +138,10 @@ void ResponsiveLabel::update_current_font() {
 }
 
 void ResponsiveLabel::update_display_text() {
-  if(m_cached_labels.empty() ||
-      m_cached_labels.front().m_pixel_width > width()) {
+  if(m_cached_labels.empty()) {
     set_current(none);
     return;
-  } else if(m_cached_labels.back().m_pixel_width < width()) {
+  } else if(m_cached_labels.back().m_pixel_width <= width()) {
     set_current(m_cached_labels.size() - 1);
     return;
   }
@@ -152,25 +151,35 @@ void ResponsiveLabel::update_display_text() {
         return cached_label.m_pixel_width < width;
       });
   }();
+  if(cached_label == m_cached_labels.begin()) {
+    set_current(0);
+    return;
+  }
   set_current(std::distance(m_cached_labels.begin(), std::prev(cached_label)));
 }
 
 void ResponsiveLabel::on_label_added(int index) {
   m_cached_labels.push_back({index, get_pixel_width(m_labels->get(index))});
-  if(index != m_labels->get_size() - 1) {
+  if(m_cached_labels.size() > 1 && m_cached_labels.back().m_pixel_width <
+      m_cached_labels.at(m_cached_labels.size() - 2).m_pixel_width) {
+    qDebug() << "add sorted";
     sort_cached_labels();
   }
   set_current(m_cached_labels.size() - 1);
 }
 
 void ResponsiveLabel::on_label_removed(int index) {
-  auto label = std::find_if(m_cached_labels.begin(), m_cached_labels.end(),
-    [&] (const auto& cached_label) {
-      return index == cached_label.m_index;
-    });
-  m_cached_labels.erase(label);
-  // TODO: don't reset, decrement all indices that are greater than label's index
-  reset_cached_labels();
+  for(auto i = m_cached_labels.begin(); i != m_cached_labels.end(); ++i) {
+    if(i->m_index == index) {
+      i = m_cached_labels.erase(i);
+      if(i == m_cached_labels.end()) {
+        break;
+      }
+    }
+    if(i->m_index > index) {
+      --(i->m_index);
+    }
+  }
   auto current_index = [&] () -> optional<int> {
     if(m_cached_labels.empty()) {
       return none;
@@ -187,8 +196,25 @@ void ResponsiveLabel::on_label_updated(int index) {
         return index == cached_label.m_index;
       });
   cached_label->m_pixel_width = get_pixel_width(m_labels->get(index));
-  // TODO: optimizations
-  sort_cached_labels();
+  if(m_cached_labels.size() > 1) {
+    auto lower = [&] {
+      if(cached_label == m_cached_labels.begin()) {
+        return 0;
+      }
+      return std::prev(cached_label)->m_pixel_width;
+    }();
+    auto upper = [&] {
+      if(std::next(cached_label) == m_cached_labels.end()) {
+        return cached_label->m_pixel_width;
+      }
+      return std::next(cached_label)->m_pixel_width;
+    }();
+    if(cached_label->m_pixel_width <= lower ||
+        upper <= cached_label->m_pixel_width) {
+      qDebug() << "update sorted";
+      sort_cached_labels();
+    }
+  }
   set_current(m_cached_labels.size() - 1);
 }
 

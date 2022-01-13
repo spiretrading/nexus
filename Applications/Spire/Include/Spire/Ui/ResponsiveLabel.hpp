@@ -50,6 +50,7 @@ namespace Spire {
       QFont m_text_box_font;
       std::vector<CachedLabel> m_cached_labels;
       boost::optional<int> m_current_cached_label_index;
+      // TODO: just get from m_current_cached_label_index
       int m_current_label_length;
       int m_next_label_length;
 
