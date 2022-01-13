@@ -37,13 +37,12 @@ void draw_corner(QPainter& painter, QPainterPath& path,
   path.arcTo(QRect(QPoint(0, 0), 2 * QSize(radius, radius)), 180, corner_angle);
   auto outer_joint = [&] {
     auto currentPosition = path.currentPosition();
-    return QPoint(
-      std::floor(currentPosition.x()), std::floor(currentPosition.y()));
+    return QPoint(currentPosition.x(), currentPosition.y());
   }();
   if(radius < horizontal_border.m_size) {
     path.lineTo(QPoint(horizontal_border.m_size, vertical_border.m_size));
   } else {
-    path.lineTo(QPoint(outer_joint.x(), radius - 1));
+    path.lineTo(QPoint(0, radius - 1));
   }
   painter.fillPath(path, horizontal_border.m_color);
   path.clear();
@@ -51,10 +50,10 @@ void draw_corner(QPainter& painter, QPainterPath& path,
     path.moveTo(QPoint(horizontal_border.m_size, vertical_border.m_size));
     path.lineTo(QPoint(horizontal_border.m_size, 0));
     path.lineTo(QPoint(radius, 0));
-    path.arcTo(QRect(QPoint(0, 0), 2 * QSize(radius, radius)), 90,
-      90 - corner_angle);
+    path.arcTo(
+      QRect(QPoint(0, 0), 2 * QSize(radius, radius)), 90, 90 - corner_angle);
   } else {
-    path.moveTo(QPoint(outer_joint.x(), radius - 1));
+    path.moveTo(QPoint(0, radius - 1));
     path.lineTo(QPoint(horizontal_border.m_size, radius - 1));
     path.arcTo(QRect(QPoint(horizontal_border.m_size, vertical_border.m_size),
       2 * QSize(radius - horizontal_border.m_size, radius -
@@ -63,8 +62,8 @@ void draw_corner(QPainter& painter, QPainterPath& path,
     painter.fillPath(path, horizontal_border.m_color);
     path.clear();
     path.moveTo(outer_joint);
-    path.arcTo(QRect(QPoint(0, 0), 2 * QSize(radius, radius)), 180 + corner_angle,
-      -90 - corner_angle);
+    path.arcTo(QRect(QPoint(0, 0), 2 * QSize(radius, radius)),
+      180 + corner_angle, -90 - corner_angle);
     path.lineTo(QPoint(radius, vertical_border.m_size));
     path.arcTo(QRect(QPoint(horizontal_border.m_size, vertical_border.m_size),
       2 * QSize(radius - horizontal_border.m_size, radius -
@@ -113,10 +112,10 @@ struct Canvas : QWidget {
     borders.m_left = {scale_width(10), QColor(0x0000FF)};
     borders.m_top = {scale_height(20), QColor(0xFF0000)};
     borders.m_right = {scale_width(30), QColor(0x00FF00)};
-    borders.m_bottom = {scale_height(40), QColor(0xFF00FF)};
+    borders.m_bottom = {scale_height(10), QColor(0xFF00FF)};
     borders.m_top_left_radius = scale_width(5);
     borders.m_top_right_radius = scale_width(50);
-    borders.m_bottom_right_radius = scale_width(50);
+    borders.m_bottom_right_radius = scale_width(0);
     borders.m_bottom_left_radius = scale_width(50);
     draw_border(size(), borders, *this);
   };
