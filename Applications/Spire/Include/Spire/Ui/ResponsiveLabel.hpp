@@ -42,6 +42,7 @@ namespace Spire {
         int m_pixel_length;
       };
       std::shared_ptr<ListModel<QString>> m_labels;
+      boost::signals2::connection m_list_operation_connection;
       TextBox* m_text_box;
       std::shared_ptr<LocalTextModel> m_text_model;
       boost::signals2::scoped_connection m_style_connection;
@@ -50,7 +51,7 @@ namespace Spire {
       int m_current_label_length;
       int m_next_label_length;
 
-      bool is_outside_width(int width) const;
+      bool is_outside_current_bounds(int width) const;
       void reset_cached_labels();
       void sort_cached_labels();
       void update_current_bounds(const boost::optional<int>& index);

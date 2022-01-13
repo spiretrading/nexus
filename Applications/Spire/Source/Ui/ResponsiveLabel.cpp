@@ -15,11 +15,11 @@ ResponsiveLabel::ResponsiveLabel(
   m_text_box = make_label(m_text_model, this);
   proxy_style(*this, *m_text_box);
   m_style_connection =
-    connect_style_signal(*this, [=] { on_text_box_style(); });
+    connect_style_signal(*m_text_box, [=] { on_text_box_style(); });
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   layout->addWidget(m_text_box);
-  m_labels->connect_operation_signal(
+  m_list_operation_connection = m_labels->connect_operation_signal(
     [=] (auto operation) { on_list_operation(operation); });
   update_current_font();
   reset_cached_labels();
@@ -46,15 +46,14 @@ QSize ResponsiveLabel::sizeHint() const {
 }
 
 void ResponsiveLabel::resizeEvent(QResizeEvent* event) {
-  qDebug() << "w: " << width();
-  qDebug() << "tbw: " << m_text_box->width();
-  if(is_outside_width(width())) {
+    QFontMetrics(m_text_box_font).horizontalAdvance(m_text_model->get());
+  if(is_outside_current_bounds(width())) {
     update_display_text();
   }
   QWidget::resizeEvent(event);
 }
 
-bool ResponsiveLabel::is_outside_width(int width) const {
+bool ResponsiveLabel::is_outside_current_bounds(int width) const {
   // TODO: if these members are only used here, then store the current cached label index
   //        and retrieve them when needed.
   return width < m_current_label_length || width >= m_next_label_length;
@@ -99,7 +98,7 @@ void ResponsiveLabel::update_current_bounds(
 void ResponsiveLabel::update_current_font() {
   auto updated_font = QFont();
   auto updated_font_size = m_text_box_font.pixelSize();
-  auto& stylist = find_stylist(*this);
+  auto& stylist = find_stylist(*m_text_box);
   for(auto& property : stylist.get_computed_block()) {
     property.visit(
       [&] (const Font& font) {
