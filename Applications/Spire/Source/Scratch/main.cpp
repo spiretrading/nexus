@@ -30,7 +30,8 @@ void draw_corner(QPainter& painter, QPainterPath& path,
   painter.save();
   painter.translate(origin);
   painter.rotate(orientation);
-  path.moveTo(QPoint(0, radius - 1));
+  path.moveTo(QPoint(0, std::max(vertical_border.m_size, radius - 1)));
+  path.lineTo(QPoint(0, radius - 1));
   auto corner_angle = -90 * (static_cast<double>(horizontal_border.m_size) /
     (vertical_border.m_size + horizontal_border.m_size));
   path.arcTo(QRect(QPoint(0, 0), 2 * QSize(radius, radius)), 180, corner_angle);
@@ -39,26 +40,39 @@ void draw_corner(QPainter& painter, QPainterPath& path,
     return QPoint(
       std::floor(currentPosition.x()), std::floor(currentPosition.y()));
   }();
-  path.lineTo(QPoint(outer_joint.x(), radius - 1));
+  if(radius < horizontal_border.m_size) {
+    path.lineTo(QPoint(horizontal_border.m_size, vertical_border.m_size));
+  } else {
+    path.lineTo(QPoint(outer_joint.x(), radius - 1));
+  }
   painter.fillPath(path, horizontal_border.m_color);
   path.clear();
-  path.moveTo(QPoint(outer_joint.x(), radius - 1));
-  path.lineTo(QPoint(horizontal_border.m_size, radius - 1));
-  path.arcTo(QRect(QPoint(horizontal_border.m_size, vertical_border.m_size),
-    2 * QSize(radius - horizontal_border.m_size, radius -
-      vertical_border.m_size)), 180, corner_angle);
-  path.lineTo(outer_joint);
-  painter.fillPath(path, horizontal_border.m_color);
-  path.clear();
-  path.moveTo(outer_joint);
-  path.arcTo(QRect(QPoint(0, 0), 2 * QSize(radius, radius)), 180 + corner_angle,
-    -90 - corner_angle);
-  path.lineTo(QPoint(radius, vertical_border.m_size));
-  path.arcTo(QRect(QPoint(horizontal_border.m_size, vertical_border.m_size),
-    2 * QSize(radius - horizontal_border.m_size, radius -
-      vertical_border.m_size)), 90, 90 + corner_angle);
+  if(radius < vertical_border.m_size) {
+    path.moveTo(QPoint(horizontal_border.m_size, vertical_border.m_size));
+    path.lineTo(QPoint(horizontal_border.m_size, 0));
+    path.lineTo(QPoint(radius, 0));
+    path.arcTo(QRect(QPoint(0, 0), 2 * QSize(radius, radius)), 90,
+      90 - corner_angle);
+  } else {
+    path.moveTo(QPoint(outer_joint.x(), radius - 1));
+    path.lineTo(QPoint(horizontal_border.m_size, radius - 1));
+    path.arcTo(QRect(QPoint(horizontal_border.m_size, vertical_border.m_size),
+      2 * QSize(radius - horizontal_border.m_size, radius -
+        vertical_border.m_size)), 180, corner_angle);
+    path.lineTo(outer_joint);
+    painter.fillPath(path, horizontal_border.m_color);
+    path.clear();
+    path.moveTo(outer_joint);
+    path.arcTo(QRect(QPoint(0, 0), 2 * QSize(radius, radius)), 180 + corner_angle,
+      -90 - corner_angle);
+    path.lineTo(QPoint(radius, vertical_border.m_size));
+    path.arcTo(QRect(QPoint(horizontal_border.m_size, vertical_border.m_size),
+      2 * QSize(radius - horizontal_border.m_size, radius -
+        vertical_border.m_size)), 90, 90 + corner_angle);
+  }
   painter.fillPath(path, vertical_border.m_color);
   painter.restore();
+  path.clear();
 }
 
 void draw_border(QSize size, Borders borders, QWidget& widget) {
@@ -85,13 +99,10 @@ void draw_border(QSize size, Borders borders, QWidget& widget) {
   auto path = QPainterPath();
   draw_corner(painter, path, borders.m_left, borders.m_top,
     borders.m_top_left_radius, QPoint(0, 0), 0);
-  path.clear();
   draw_corner(painter, path, borders.m_top, borders.m_right,
     borders.m_top_right_radius, QPoint(size.width(), 0), 90);
-  path.clear();
   draw_corner(painter, path, borders.m_right, borders.m_bottom,
     borders.m_bottom_right_radius, QPoint(size.width(), size.height()), 180);
-  path.clear();
   draw_corner(painter, path, borders.m_bottom, borders.m_left,
     borders.m_bottom_left_radius, QPoint(0, size.height()), 270);
 }
@@ -103,7 +114,7 @@ struct Canvas : QWidget {
     borders.m_top = {scale_height(20), QColor(0xFF0000)};
     borders.m_right = {scale_width(30), QColor(0x00FF00)};
     borders.m_bottom = {scale_height(40), QColor(0xFF00FF)};
-    borders.m_top_left_radius = scale_width(50);
+    borders.m_top_left_radius = scale_width(5);
     borders.m_top_right_radius = scale_width(50);
     borders.m_bottom_right_radius = scale_width(50);
     borders.m_bottom_left_radius = scale_width(50);
