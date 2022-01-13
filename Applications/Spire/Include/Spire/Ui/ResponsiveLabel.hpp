@@ -5,7 +5,6 @@
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
-
   /**
    * Displays a TextBox used as a label whose current value is the longest value
    * among a list of values that will fit within it's body without overflowing.
@@ -29,6 +28,37 @@ namespace Spire {
 
       /** Returns the highlight model. */
       const std::shared_ptr<HighlightModel>& get_highlight() const;
+
+      QSize sizeHint() const override;
+
+    protected:
+      void resizeEvent(QResizeEvent* event) override;
+
+    private:
+      struct CachedLabel {
+        int m_index;
+        int m_pixel_length;
+      };
+      std::shared_ptr<ListModel<QString>> m_labels;
+      TextBox* m_text_box;
+      std::shared_ptr<LocalTextModel> m_text_model;
+      boost::signals2::scoped_connection m_style_connection;
+      QFont m_text_box_font;
+      std::vector<CachedLabel> m_cached_labels;
+      int m_current_label_length;
+      int m_next_label_length;
+
+      bool is_outside_width(int width) const;
+      void reset_cached_labels();
+      void sort_cached_labels();
+      void update_current_bounds(const boost::optional<int>& index);
+      void update_current_font();
+      void update_display_text();
+      void on_label_added(int index);
+      void on_label_removed(int index);
+      void on_label_updated(int index);
+      void on_list_operation(const AnyListModel::Operation& operation);
+      void on_text_box_style();
   };
 }
 
