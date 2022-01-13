@@ -114,7 +114,7 @@ int main(int argc, char** argv) {
   application->setApplicationName(QObject::tr("Scratch"));
   initialize_resources();
   auto canvas = new Canvas();
-  canvas->resize(scale(200, 200));
+  canvas->resize(scale(140, 160));
   canvas->show();
   application->exec();
 }
