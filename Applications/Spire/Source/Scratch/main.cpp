@@ -30,21 +30,31 @@ void draw_corner(QPainter& painter, QPainterPath& path,
   painter.save();
   painter.translate(origin);
   painter.rotate(orientation);
-  path.moveTo(QPoint(0, std::max(vertical_border.m_size, radius - 1)));
-  path.lineTo(QPoint(0, radius - 1));
+  if(radius < vertical_border.m_size) {
+    path.moveTo(QPoint(0, std::max(vertical_border.m_size, radius - 1)));
+    path.lineTo(QPoint(0, radius - 1));
+  } else {
+    path.moveTo(QPoint(0, radius - 1));
+  }
   auto corner_angle = -90 * (static_cast<double>(horizontal_border.m_size) /
     (vertical_border.m_size + horizontal_border.m_size));
-  path.arcTo(QRect(QPoint(0, 0), 2 * QSize(radius, radius)), 180, corner_angle);
+  if(radius < vertical_border.m_size) {
+    path.arcTo(
+      QRect(QPoint(0, 0), 2 * QSize(radius, radius)), 180, corner_angle);
+  } else {
+    path.arcMoveTo(
+      QRect(QPoint(0, 0), 2 * QSize(radius, radius)), corner_angle);
+  }
   auto outer_joint = [&] {
     auto currentPosition = path.currentPosition();
     return QPoint(currentPosition.x(), currentPosition.y());
   }();
   if(radius < horizontal_border.m_size) {
     path.lineTo(QPoint(horizontal_border.m_size, vertical_border.m_size));
+    painter.fillPath(path, horizontal_border.m_color);
   } else {
-    path.lineTo(QPoint(0, radius - 1));
+    path.moveTo(QPoint(0, radius - 1));
   }
-  painter.fillPath(path, horizontal_border.m_color);
   path.clear();
   if(radius < vertical_border.m_size) {
     path.moveTo(QPoint(horizontal_border.m_size, vertical_border.m_size));
@@ -59,6 +69,8 @@ void draw_corner(QPainter& painter, QPainterPath& path,
       2 * QSize(radius - horizontal_border.m_size, radius -
         vertical_border.m_size)), 180, corner_angle);
     path.lineTo(outer_joint);
+    path.arcTo(QRect(QPoint(0, 0), 2 * QSize(radius, radius)),
+      180 + corner_angle, -corner_angle);
     painter.fillPath(path, horizontal_border.m_color);
     path.clear();
     path.moveTo(outer_joint);
@@ -110,13 +122,13 @@ struct Canvas : QWidget {
   void paintEvent(QPaintEvent* event) override {
     auto borders = Borders();
     borders.m_left = {scale_width(10), QColor(0x0000FF)};
-    borders.m_top = {scale_height(20), QColor(0xFF0000)};
-    borders.m_right = {scale_width(30), QColor(0x00FF00)};
+    borders.m_top = {scale_height(10), QColor(0xFF0000)};
+    borders.m_right = {scale_width(10), QColor(0x00FF00)};
     borders.m_bottom = {scale_height(10), QColor(0xFF00FF)};
-    borders.m_top_left_radius = scale_width(5);
-    borders.m_top_right_radius = scale_width(50);
-    borders.m_bottom_right_radius = scale_width(0);
-    borders.m_bottom_left_radius = scale_width(50);
+    borders.m_top_left_radius = scale_width(0);
+    borders.m_top_right_radius = scale_width(75);
+    borders.m_bottom_right_radius = scale_width(75);
+    borders.m_bottom_left_radius = scale_width(75);
     draw_border(size(), borders, *this);
   };
 };
@@ -127,7 +139,7 @@ int main(int argc, char** argv) {
   application->setApplicationName(QObject::tr("Scratch"));
   initialize_resources();
   auto canvas = new Canvas();
-  canvas->resize(scale(140, 160));
+  canvas->resize(scale(150, 150));
   canvas->show();
   application->exec();
 }
