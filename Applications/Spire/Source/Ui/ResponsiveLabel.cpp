@@ -9,9 +9,7 @@ using namespace Spire::Styles;
 ResponsiveLabel::ResponsiveLabel(
     std::shared_ptr<ListModel<QString>> labels, QWidget* parent)
     : m_labels(std::move(labels)),
-      m_text_model(std::make_shared<LocalTextModel>()),
-      m_current_label_length(0),
-      m_next_label_length(0) {
+      m_text_model(std::make_shared<LocalTextModel>()) {
   m_text_box = make_label(m_text_model, this);
   proxy_style(*this, *m_text_box);
   m_style_connection =
@@ -50,12 +48,30 @@ void ResponsiveLabel::resizeEvent(QResizeEvent* event) {
   QWidget::resizeEvent(event);
 }
 
+int ResponsiveLabel::get_current_label_pixel_width() const {
+  if(!m_current_cached_label_index) {
+    return 0;
+  }
+  return m_cached_labels.at(*m_current_cached_label_index).m_pixel_width;
+}
+
+int ResponsiveLabel::get_next_label_pixel_width() const {
+  if(!m_current_cached_label_index) {
+    return 0;
+  } else if(*m_current_cached_label_index + 1 >
+      static_cast<int>(m_cached_labels.size()) - 1) {
+    return QWIDGETSIZE_MAX;
+  }
+  return m_cached_labels.at(*m_current_cached_label_index + 1).m_pixel_width;
+}
+
 int ResponsiveLabel::get_pixel_width(const QString& text) const {
   return QFontMetrics(m_text_box_font).horizontalAdvance(text);
 }
 
 bool ResponsiveLabel::is_outside_current_bounds(int width) const {
-  return width < m_current_label_length || width >= m_next_label_length;
+  return width < get_current_label_pixel_width() ||
+    width >= get_next_label_pixel_width();
 }
 
 void ResponsiveLabel::reset_cached_labels() {
@@ -71,11 +87,9 @@ void ResponsiveLabel::reset_cached_labels() {
 void ResponsiveLabel::set_current(const optional<int> cached_label_index) {
   m_current_cached_label_index = cached_label_index;
   if(!cached_label_index) {
-    update_current_bounds(m_current_cached_label_index);
     m_text_model->set("");
     return;
   }
-  update_current_bounds(m_current_cached_label_index);
   m_text_model->set(
     m_labels->get(m_cached_labels.at(*m_current_cached_label_index).m_index));
   if(m_text_box->is_text_elided() && m_current_cached_label_index != 0) {
@@ -89,25 +103,6 @@ void ResponsiveLabel::sort_cached_labels() {
     [=] (const auto& first, const auto& second) {
       return first.m_pixel_width < second.m_pixel_width;
     });
-}
-
-void ResponsiveLabel::update_current_bounds(
-    const optional<int>& cached_label_index) {
-  if(!m_current_cached_label_index) {
-    m_current_label_length = 0;
-    m_next_label_length = 0;
-    return;
-  }
-  m_current_label_length = [&] {
-    return m_cached_labels.at(*m_current_cached_label_index).m_pixel_width;
-  }();
-  m_next_label_length = [&] {
-    if(*m_current_cached_label_index + 1 >
-        static_cast<int>(m_cached_labels.size()) - 1) {
-      return QWIDGETSIZE_MAX;
-    }
-    return m_cached_labels.at(*m_current_cached_label_index + 1).m_pixel_width;
-  }();
 }
 
 void ResponsiveLabel::update_current_font() {
@@ -162,7 +157,6 @@ void ResponsiveLabel::on_label_added(int index) {
   m_cached_labels.push_back({index, get_pixel_width(m_labels->get(index))});
   if(m_cached_labels.size() > 1 && m_cached_labels.back().m_pixel_width <
       m_cached_labels.at(m_cached_labels.size() - 2).m_pixel_width) {
-    qDebug() << "add sorted";
     sort_cached_labels();
   }
   set_current(m_cached_labels.size() - 1);
@@ -211,7 +205,6 @@ void ResponsiveLabel::on_label_updated(int index) {
     }();
     if(cached_label->m_pixel_width <= lower ||
         upper <= cached_label->m_pixel_width) {
-      qDebug() << "update sorted";
       sort_cached_labels();
     }
   }

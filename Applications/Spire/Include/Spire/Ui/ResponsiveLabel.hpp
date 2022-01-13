@@ -50,17 +50,14 @@ namespace Spire {
       QFont m_text_box_font;
       std::vector<CachedLabel> m_cached_labels;
       boost::optional<int> m_current_cached_label_index;
-      // TODO: just get from m_current_cached_label_index
-      int m_current_label_length;
-      int m_next_label_length;
 
+      int get_current_label_pixel_width() const;
+      int get_next_label_pixel_width() const;
       int get_pixel_width(const QString& text) const;
       bool is_outside_current_bounds(int width) const;
       void reset_cached_labels();
       void set_current(const boost::optional<int> cached_label_index);
       void sort_cached_labels();
-      void update_current_bounds(
-        const boost::optional<int>& cached_label_index);
       void update_current_font();
       void update_display_text();
       void on_label_added(int index);
