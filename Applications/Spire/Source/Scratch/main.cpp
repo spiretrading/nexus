@@ -43,7 +43,7 @@ void draw_corner(QPainter& painter, QPainterPath& path,
       QRect(QPoint(0, 0), 2 * QSize(radius, radius)), 180, corner_angle);
   } else {
     path.arcMoveTo(
-      QRect(QPoint(0, 0), 2 * QSize(radius, radius)), corner_angle);
+      QRect(QPoint(0, 0), 2 * QSize(radius, radius)), 180 + corner_angle);
   }
   auto outer_joint = [&] {
     auto currentPosition = path.currentPosition();
@@ -122,13 +122,13 @@ struct Canvas : QWidget {
   void paintEvent(QPaintEvent* event) override {
     auto borders = Borders();
     borders.m_left = {scale_width(10), QColor(0x0000FF)};
-    borders.m_top = {scale_height(10), QColor(0xFF0000)};
+    borders.m_top = {scale_height(20), QColor(0xFF0000)};
     borders.m_right = {scale_width(10), QColor(0x00FF00)};
     borders.m_bottom = {scale_height(10), QColor(0xFF00FF)};
-    borders.m_top_left_radius = scale_width(0);
-    borders.m_top_right_radius = scale_width(75);
-    borders.m_bottom_right_radius = scale_width(75);
-    borders.m_bottom_left_radius = scale_width(75);
+    borders.m_top_left_radius = scale_width(40);
+    borders.m_top_right_radius = scale_width(0);
+    borders.m_bottom_right_radius = scale_width(0);
+    borders.m_bottom_left_radius = scale_width(0);
     draw_border(size(), borders, *this);
   };
 };
