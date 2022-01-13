@@ -8,6 +8,8 @@ namespace Spire {
   /**
    * Displays a TextBox used as a label whose current value is the longest value
    * among a list of values that will fit within it's body without overflowing.
+   * Where two values share the same pixel length, the value with the lowest
+   * list index among the same length values is displayed.
    */
   class ResponsiveLabel : public QWidget {
     public:
