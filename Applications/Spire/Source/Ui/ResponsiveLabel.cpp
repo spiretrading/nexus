@@ -23,6 +23,7 @@ ResponsiveLabel::ResponsiveLabel(
     [=] (auto operation) { on_list_operation(operation); });
   update_current_font();
   reset_cached_labels();
+  update_display_text();
 }
 
 const std::shared_ptr<ListModel<QString>>&
@@ -43,7 +44,6 @@ QSize ResponsiveLabel::sizeHint() const {
 }
 
 void ResponsiveLabel::resizeEvent(QResizeEvent* event) {
-  qDebug() << "resize: " << size();
   if(is_outside_current_bounds(width())) {
     update_display_text();
   }
@@ -55,8 +55,6 @@ int ResponsiveLabel::get_pixel_width(const QString& text) const {
 }
 
 bool ResponsiveLabel::is_outside_current_bounds(int width) const {
-  // TODO: if these members are only used here, then store the current cached label index
-  //        and retrieve them when needed.
   return width < m_current_label_length || width >= m_next_label_length;
 }
 
@@ -68,7 +66,6 @@ void ResponsiveLabel::reset_cached_labels() {
     m_cached_labels.push_back({i, get_pixel_width(m_labels->get(i))});
   }
   sort_cached_labels();
-  update_display_text();
 }
 
 void ResponsiveLabel::set_current(const optional<int> cached_label_index) {
@@ -141,7 +138,8 @@ void ResponsiveLabel::update_current_font() {
 }
 
 void ResponsiveLabel::update_display_text() {
-  if(m_cached_labels.empty()) {
+  if(m_cached_labels.empty() ||
+      m_cached_labels.front().m_pixel_width > width()) {
     set_current(none);
     return;
   } else if(m_cached_labels.back().m_pixel_width < width()) {
@@ -154,11 +152,7 @@ void ResponsiveLabel::update_display_text() {
         return cached_label.m_pixel_width < width;
       });
   }();
-  if(cached_label == m_cached_labels.begin()) {
-    set_current(none);
-    return;
-  }
-  set_current(std::distance(m_cached_labels.begin(), --cached_label));
+  set_current(std::distance(m_cached_labels.begin(), std::prev(cached_label)));
 }
 
 void ResponsiveLabel::on_label_added(int index) {
