@@ -37,9 +37,8 @@ namespace Spire {
       void resizeEvent(QResizeEvent* event) override;
 
     private:
-      // TODO: better name
-      struct CachedLabel {
-        int m_index;
+      struct MappedLabel {
+        int m_list_index;
         int m_pixel_width;
       };
       std::shared_ptr<ListModel<QString>> m_labels;
@@ -48,16 +47,16 @@ namespace Spire {
       std::shared_ptr<LocalTextModel> m_text_model;
       boost::signals2::scoped_connection m_style_connection;
       QFont m_text_box_font;
-      std::vector<CachedLabel> m_cached_labels;
-      boost::optional<int> m_current_cached_label_index;
+      std::vector<MappedLabel> m_mapped_labels;
+      boost::optional<int> m_current_mapped_index;
 
       int get_current_label_pixel_width() const;
       int get_next_label_pixel_width() const;
       int get_pixel_width(const QString& text) const;
       bool is_outside_current_bounds(int width) const;
-      void reset_cached_labels();
-      void set_current(const boost::optional<int> cached_label_index);
-      void sort_cached_labels();
+      void reset_mapped_labels();
+      void set_current(const boost::optional<int> mapped_index);
+      void sort_mapped_labels();
       void update_current_font();
       void update_display_text();
       void on_label_added(int index);
