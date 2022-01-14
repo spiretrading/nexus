@@ -88,11 +88,13 @@ namespace {
 BoxPainter::BoxPainter()
   : m_background_color(Qt::transparent),
     m_borders({Border(0, Qt::transparent), Border(0, Qt::transparent),
-      Border(0, Qt::transparent), Border(0, Qt::transparent), 0, 0, 0, 0}) {}
+      Border(0, Qt::transparent), Border(0, Qt::transparent), 0, 0, 0, 0}),
+    m_classification(Classification::REGULAR) {}
 
 BoxPainter::BoxPainter(QColor background_color, Borders borders)
   : m_background_color(background_color),
-    m_borders(borders) {}
+    m_borders(borders),
+    m_classification(evaluate_classification()) {}
 
 QColor BoxPainter::get_background_color() const {
   return m_background_color;
@@ -108,82 +110,130 @@ const BoxPainter::Borders& BoxPainter::get_borders() const {
 
 void BoxPainter::set_borders(const Borders& borders) {
   m_borders = borders;
+  m_classification = evaluate_classification();
 }
 
 void BoxPainter::set_top_border_size(int size) {
   m_borders.m_top.m_size = size;
+  m_classification = evaluate_classification();
 }
 
 void BoxPainter::set_top_border_color(QColor color) {
   m_borders.m_top.m_color = color;
+  m_classification = evaluate_classification();
 }
 
 void BoxPainter::set_right_border_size(int size) {
   m_borders.m_right.m_size = size;
+  m_classification = evaluate_classification();
 }
 
 void BoxPainter::set_right_border_color(QColor color) {
   m_borders.m_right.m_color = color;
+  m_classification = evaluate_classification();
 }
 
 void BoxPainter::set_bottom_border_size(int size) {
   m_borders.m_bottom.m_size = size;
+  m_classification = evaluate_classification();
 }
 
 void BoxPainter::set_bottom_border_color(QColor color) {
   m_borders.m_bottom.m_color = color;
+  m_classification = evaluate_classification();
 }
 
 void BoxPainter::set_left_border_size(int size) {
   m_borders.m_left.m_size = size;
+  m_classification = evaluate_classification();
 }
 
 void BoxPainter::set_left_border_color(QColor color) {
   m_borders.m_left.m_color = color;
+  m_classification = evaluate_classification();
 }
 
 void BoxPainter::set_top_right_radius(int radius) {
   m_borders.m_top_right_radius = radius;
+  m_classification = evaluate_classification();
 }
 
 void BoxPainter::set_bottom_right_radius(int radius) {
   m_borders.m_bottom_right_radius = radius;
+  m_classification = evaluate_classification();
 }
 
 void BoxPainter::set_bottom_left_radius(int radius) {
   m_borders.m_bottom_left_radius = radius;
+  m_classification = evaluate_classification();
 }
 
 void BoxPainter::set_top_left_radius(int radius) {
   m_borders.m_top_left_radius = radius;
+  m_classification = evaluate_classification();
 }
 
 void BoxPainter::paint(QPainter& painter) const {
-  auto path = QPainterPath();
   auto size = QSize(painter.device()->width(), painter.device()->height());
-  draw_background(painter, path, m_background_color, m_borders, size);
-  painter.fillRect(QRect(QPoint(0, m_borders.m_top_left_radius - 1), QSize(
-    m_borders.m_left.m_size, size.height() - m_borders.m_top_left_radius -
-    m_borders.m_bottom_left_radius + 1)), m_borders.m_left.m_color);
-  painter.fillRect(QRect(QPoint(m_borders.m_top_left_radius, 0), QSize(
-    size.width() - m_borders.m_top_left_radius - m_borders.m_top_right_radius +
-    1, m_borders.m_top.m_size)), m_borders.m_top.m_color);
-  painter.fillRect(QRect(QPoint(
-    size.width() - m_borders.m_right.m_size, m_borders.m_top_right_radius - 1),
-    QSize(m_borders.m_right.m_size, size.height() -
-      m_borders.m_top_right_radius - m_borders.m_bottom_right_radius + 2)),
-      m_borders.m_right.m_color);
-  painter.fillRect(QRect(QPoint(m_borders.m_bottom_left_radius - 1,
-    size.height() - m_borders.m_bottom.m_size), QSize(
-    size.width() - m_borders.m_bottom_left_radius -
-    m_borders.m_bottom_right_radius + 1, m_borders.m_bottom.m_size)),
-    m_borders.m_bottom.m_color);
-  draw_corner(painter, path, m_borders.m_left, m_borders.m_top,
-    m_borders.m_top_left_radius, QPoint(0, 0), 0);
-  draw_corner(painter, path, m_borders.m_top, m_borders.m_right,
-    m_borders.m_top_right_radius, QPoint(size.width(), 0), 90);
-  draw_corner(painter, path, m_borders.m_right, m_borders.m_bottom,
-    m_borders.m_bottom_right_radius, QPoint(size.width(), size.height()), 180);
-  draw_corner(painter, path, m_borders.m_bottom, m_borders.m_left,
-    m_borders.m_bottom_left_radius, QPoint(0, size.height()), 270);
+  if(m_classification == Classification::REGULAR) {
+    painter.fillRect(QRect(QPoint(0, 0), size), m_background_color);
+    painter.setPen(QPen(
+      QBrush(m_borders.m_top.m_color), m_borders.m_top.m_size, Qt::SolidLine));
+    painter.drawRect(QRect(QPoint(0, 0),
+      size - QSize(m_borders.m_top.m_size, m_borders.m_top.m_size)));
+  } else if(m_classification == Classification::REGULAR_CURVED) {
+    auto path = QPainterPath();
+    path.addRoundedRect(QRect(QPoint(0, 0),
+      size - QSize(m_borders.m_top.m_size, m_borders.m_top.m_size)),
+      m_borders.m_top_left_radius, m_borders.m_top_right_radius);
+    painter.fillPath(path, m_background_color);
+    painter.setPen(QPen(
+      QBrush(m_borders.m_top.m_color), m_borders.m_top.m_size, Qt::SolidLine));
+    painter.drawRoundedRect(QRect(QPoint(0, 0),
+      size - QSize(m_borders.m_top.m_size, m_borders.m_top.m_size)),
+      m_borders.m_top_left_radius, m_borders.m_top_right_radius);
+  } else {
+    auto path = QPainterPath();
+    draw_background(painter, path, m_background_color, m_borders, size);
+    painter.fillRect(QRect(QPoint(0, m_borders.m_top_left_radius - 1), QSize(
+      m_borders.m_left.m_size, size.height() - m_borders.m_top_left_radius -
+      m_borders.m_bottom_left_radius + 1)), m_borders.m_left.m_color);
+    painter.fillRect(QRect(QPoint(m_borders.m_top_left_radius, 0), QSize(
+      size.width() - m_borders.m_top_left_radius - m_borders.m_top_right_radius +
+      1, m_borders.m_top.m_size)), m_borders.m_top.m_color);
+    painter.fillRect(QRect(QPoint(
+      size.width() - m_borders.m_right.m_size, m_borders.m_top_right_radius - 1),
+      QSize(m_borders.m_right.m_size, size.height() -
+        m_borders.m_top_right_radius - m_borders.m_bottom_right_radius + 2)),
+        m_borders.m_right.m_color);
+    painter.fillRect(QRect(QPoint(m_borders.m_bottom_left_radius - 1,
+      size.height() - m_borders.m_bottom.m_size), QSize(
+      size.width() - m_borders.m_bottom_left_radius -
+      m_borders.m_bottom_right_radius + 1, m_borders.m_bottom.m_size)),
+      m_borders.m_bottom.m_color);
+    draw_corner(painter, path, m_borders.m_left, m_borders.m_top,
+      m_borders.m_top_left_radius, QPoint(0, 0), 0);
+    draw_corner(painter, path, m_borders.m_top, m_borders.m_right,
+      m_borders.m_top_right_radius, QPoint(size.width(), 0), 90);
+    draw_corner(painter, path, m_borders.m_right, m_borders.m_bottom,
+      m_borders.m_bottom_right_radius, QPoint(size.width(), size.height()),
+      180);
+    draw_corner(painter, path, m_borders.m_bottom, m_borders.m_left,
+      m_borders.m_bottom_left_radius, QPoint(0, size.height()), 270);
+  }
+}
+
+BoxPainter::Classification BoxPainter::evaluate_classification() const {
+  if(m_borders.m_top == m_borders.m_right && m_borders.m_right ==
+      m_borders.m_bottom && m_borders.m_bottom == m_borders.m_left) {
+    if(m_borders.m_top_right_radius == m_borders.m_bottom_right_radius &&
+        m_borders.m_bottom_right_radius == m_borders.m_bottom_left_radius &&
+        m_borders.m_bottom_left_radius == m_borders.m_top_left_radius) {
+      if(m_borders.m_top_left_radius == 0) {
+        return Classification::REGULAR;
+      }
+      return Classification::REGULAR_CURVED;
+    }
+  }
+  return Classification::OTHER;
 }

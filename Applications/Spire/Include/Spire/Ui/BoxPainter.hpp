@@ -17,6 +17,8 @@ namespace Spire {
 
         /** The border's color. */
         QColor m_color;
+
+        bool operator ==(const Border&) const = default;
       };
 
       /** Stores all borders and the Box's border radii. */
@@ -110,8 +112,16 @@ namespace Spire {
       void paint(QPainter& painter) const;
 
     private:
+      enum class Classification {
+        REGULAR,
+        REGULAR_CURVED,
+        OTHER
+      };
       QColor m_background_color;
       Borders m_borders;
+      Classification m_classification;
+
+      Classification evaluate_classification() const;
   };
 }
 
