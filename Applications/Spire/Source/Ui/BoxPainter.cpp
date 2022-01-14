@@ -198,11 +198,12 @@ void BoxPainter::paint(QPainter& painter) const {
     painter.fillRect(QRect(QPoint(0, m_borders.m_top_left_radius - 1), QSize(
       m_borders.m_left.m_size, size.height() - m_borders.m_top_left_radius -
       m_borders.m_bottom_left_radius + 1)), m_borders.m_left.m_color);
-    painter.fillRect(QRect(QPoint(m_borders.m_top_left_radius, 0), QSize(
-      size.width() - m_borders.m_top_left_radius - m_borders.m_top_right_radius +
-      1, m_borders.m_top.m_size)), m_borders.m_top.m_color);
-    painter.fillRect(QRect(QPoint(
-      size.width() - m_borders.m_right.m_size, m_borders.m_top_right_radius - 1),
+    painter.fillRect(QRect(QPoint(m_borders.m_top_left_radius, 0),
+      QSize(size.width() - m_borders.m_top_left_radius -
+      m_borders.m_top_right_radius + 1, m_borders.m_top.m_size)),
+      m_borders.m_top.m_color);
+    painter.fillRect(QRect(QPoint(size.width() - m_borders.m_right.m_size,
+      m_borders.m_top_right_radius - 1),
       QSize(m_borders.m_right.m_size, size.height() -
         m_borders.m_top_right_radius - m_borders.m_bottom_right_radius + 2)),
         m_borders.m_right.m_color);
