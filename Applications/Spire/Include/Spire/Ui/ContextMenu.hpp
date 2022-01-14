@@ -84,8 +84,10 @@ namespace Spire {
       ListView* m_list_view;
       OverlayPanel* m_window;
       QWidget* m_active_menu_window;
+      QMargins m_window_border_size;
       boost::optional<QSize> m_window_size;
       std::unordered_map<int, QWidget*> m_sub_menus;
+      boost::signals2::scoped_connection m_window_style_connection;
 
       QWidget* build_item(const std::shared_ptr<AnyListModel>& list, int index);
       ListItem* get_current_item() const;
@@ -94,6 +96,7 @@ namespace Spire {
       void handle_right_or_enter_event(QEvent* event);
       bool handle_mouse_event(QMouseEvent* event);
       void on_submit(const std::any& submission);
+      void on_window_style();
       void position_menu(ListItem* item);
       void hide_active_menu();
       void show_sub_menu(int index);

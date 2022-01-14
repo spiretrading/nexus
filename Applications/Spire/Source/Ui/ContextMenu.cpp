@@ -68,6 +68,9 @@ ContextMenu::ContextMenu(QWidget& parent)
   m_window->setMouseTracking(true);
   m_window->installEventFilter(this);
   m_window->parentWidget()->installEventFilter(this);
+  on_window_style();
+  m_window_style_connection =
+    connect_style_signal(*m_window, [=] { on_window_style(); });
 }
 
 void ContextMenu::add_menu(const QString& name, const ContextMenu& menu) {
@@ -253,6 +256,34 @@ void ContextMenu::on_submit(const std::any& submission) {
   }
 }
 
+void ContextMenu::on_window_style() {
+  m_window_border_size = QMargins();
+  auto& stylist = find_stylist(*m_window);
+  for(auto& property : stylist.get_computed_block()) {
+    property.visit(
+      [&] (const BorderTopSize& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          m_window_border_size.setTop(size);
+        });
+      },
+      [&] (const BorderRightSize& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          m_window_border_size.setRight(size);
+        });
+      },
+      [&] (const BorderBottomSize& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          m_window_border_size.setBottom(size);
+        });
+      },
+      [&] (const BorderLeftSize& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          m_window_border_size.setLeft(size);
+        });
+      });
+  }
+}
+
 void ContextMenu::position_menu(ListItem* item) {
   auto item_pos = m_list_view->mapToGlobal(item->pos());
   auto menu_geomerty = m_window->geometry();
@@ -270,9 +301,9 @@ void ContextMenu::position_menu(ListItem* item) {
     }
   }();
   auto y = [&] {
-    if(screen_geometry.bottom() - item_pos.y() >
+    if(screen_geometry.bottom() - item_pos.y() + m_window_border_size.top() >
         m_active_menu_window->height() + MARGIN_HEIGHT()) {
-      return item_pos.y() - menu_margins.top();
+      return item_pos.y() - menu_margins.top() - m_window_border_size.top();
     } else {
       return screen_geometry.bottom() - m_active_menu_window->height() -
         MARGIN_HEIGHT() + active_menu_margins.bottom();
