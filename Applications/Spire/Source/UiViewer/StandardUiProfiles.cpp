@@ -2216,7 +2216,7 @@ UiProfile Spire::make_responsive_label_profile() {
     auto& font_size = get<int>("font-size", profile.get_properties());
     font_size.connect_changed_signal([=] (auto size) {
       update_style(*label, [&] (auto& style) {
-        style.get(Any()).set(FontSize(size));
+        style.get(Any()).set(FontSize(scale_height(size)));
       });
     });
     return label;
