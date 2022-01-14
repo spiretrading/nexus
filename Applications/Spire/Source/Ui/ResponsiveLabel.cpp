@@ -37,10 +37,6 @@ const std::shared_ptr<HighlightModel>& ResponsiveLabel::get_highlight() const {
   return m_text_box->get_highlight();
 }
 
-QSize ResponsiveLabel::sizeHint() const {
-  return m_text_box->sizeHint();
-}
-
 void ResponsiveLabel::resizeEvent(QResizeEvent* event) {
   if(is_outside_current_bounds(width())) {
     update_display_text();
@@ -101,7 +97,10 @@ void ResponsiveLabel::set_current(const optional<int> mapped_label_index) {
 void ResponsiveLabel::sort_mapped_labels() {
   std::sort(m_mapped_labels.begin(), m_mapped_labels.end(),
     [=] (const auto& first, const auto& second) {
-      return first.m_pixel_width < second.m_pixel_width;
+      if(first.m_pixel_width != second.m_pixel_width) {
+        return first.m_pixel_width < second.m_pixel_width;
+      }
+      return first.m_list_index < second.m_list_index;
     });
 }
 
@@ -137,7 +136,7 @@ void ResponsiveLabel::update_display_text() {
     set_current(none);
     return;
   } else if(m_mapped_labels.back().m_pixel_width <= width()) {
-    set_current(m_mapped_labels.size() - 1);
+    set_current(static_cast<int>(m_mapped_labels.size()) - 1);
     return;
   }
   auto mapped_label = [&] {
@@ -159,7 +158,7 @@ void ResponsiveLabel::on_label_added(int index) {
       m_mapped_labels.at(m_mapped_labels.size() - 2).m_pixel_width) {
     sort_mapped_labels();
   }
-  set_current(m_mapped_labels.size() - 1);
+  set_current(static_cast<int>(m_mapped_labels.size()) - 1);
 }
 
 void ResponsiveLabel::on_label_removed(int index) {
@@ -178,7 +177,7 @@ void ResponsiveLabel::on_label_removed(int index) {
     if(m_mapped_labels.empty()) {
       return none;
     }
-    return m_mapped_labels.size() - 1;
+    return static_cast<int>(m_mapped_labels.size()) - 1;
   }();
   set_current(current_index);
 }
@@ -208,7 +207,7 @@ void ResponsiveLabel::on_label_updated(int index) {
       sort_mapped_labels();
     }
   }
-  set_current(m_mapped_labels.size() - 1);
+  set_current(static_cast<int>(m_mapped_labels.size()) - 1);
 }
 
 void ResponsiveLabel::on_list_operation(

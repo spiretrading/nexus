@@ -31,8 +31,6 @@ namespace Spire {
       /** Returns the highlight model. */
       const std::shared_ptr<HighlightModel>& get_highlight() const;
 
-      QSize sizeHint() const override;
-
     protected:
       void resizeEvent(QResizeEvent* event) override;
 
