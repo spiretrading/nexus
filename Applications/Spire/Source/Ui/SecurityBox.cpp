@@ -36,8 +36,7 @@ struct SecurityBox::SecurityQueryModel : ComboBox::QueryModel {
         auto securities = std::unordered_set<Security>();
         for(auto& value : matches) {
           auto& security = std::any_cast<SecurityInfo&>(value).m_security;
-          if(!securities.contains(security)) {
-            securities.insert(security);
+          if(securities.insert(security).second) {
             result.push_back(security);
           }
         }
