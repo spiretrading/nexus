@@ -44,9 +44,11 @@ SortedTableModel::SortedTableModel(
 SortedTableModel::SortedTableModel(std::shared_ptr<TableModel> source,
     std::vector<ColumnOrder> order, Comparator comparator)
     : m_source(std::move(source)),
-      m_order(std::move(order)),
+      m_translation(m_source),
       m_comparator(std::move(comparator)) {
-  sort();
+  set_column_order(order);
+  m_source_connection = m_translation.connect_operation_signal(
+    [=] (const auto& operation) { on_operation(operation); });
 }
 
 const SortedTableModel::Comparator& SortedTableModel::get_comparator() const {
@@ -64,20 +66,20 @@ void SortedTableModel::set_column_order(const std::vector<ColumnOrder>& order) {
 }
 
 int SortedTableModel::get_row_size() const {
-  return m_translation->get_row_size();
+  return m_translation.get_row_size();
 }
 
 int SortedTableModel::get_column_size() const {
-  return m_translation->get_column_size();
+  return m_translation.get_column_size();
 }
 
 const std::any& SortedTableModel::at(int row, int column) const {
-  return m_translation->at(row, column);
+  return m_translation.at(row, column);
 }
 
 QValidator::State
     SortedTableModel::set(int row, int column, const std::any& value) {
-  return m_translation->set(row, column, value);
+  return m_translation.set(row, column, value);
 }
 
 connection SortedTableModel::connect_operation_signal(
@@ -90,54 +92,43 @@ bool SortedTableModel::row_comparator(int lhs, int rhs) const {
     if(order.m_order == Ordering::NONE) {
       continue;
     }
-    auto is_lesser = m_comparator(m_translation->at(lhs, order.m_index),
-      m_translation->at(rhs, order.m_index));
+    auto is_lesser = m_comparator(m_translation.at(lhs, order.m_index),
+      m_translation.at(rhs, order.m_index));
     if(is_lesser) {
       return order.m_order == Ordering::ASCENDING;
     }
-    auto is_greater = m_comparator(m_translation->at(rhs, order.m_index),
-      m_translation->at(lhs, order.m_index));
+    auto is_greater = m_comparator(m_translation.at(rhs, order.m_index),
+      m_translation.at(lhs, order.m_index));
     if(is_greater) {
       return order.m_order == Ordering::DESCENDING;
     }
   }
-  return lhs < rhs;
+  return m_translation.get_translation_to_source(lhs) <
+    m_translation.get_translation_to_source(rhs);
 }
 
 void SortedTableModel::sort() {
-  m_translation.emplace(m_source);
-  auto ordering = std::vector<int>(get_row_size());
-  std::iota(ordering.begin(), ordering.end(), 0);
-  std::sort(ordering.begin(), ordering.end(),
-    [&] (auto lhs, auto rhs) { return row_comparator(lhs, rhs); });
-  for(auto i = 0; i != get_row_size(); ++i) {
-    m_translation->move(ordering[i], i);
-    for(auto j = i + 1; j < get_row_size(); ++j) {
-      if(ordering[j] < ordering[i]) {
-        ++ordering[j];
-      }
-    }
-  }
   m_transaction.transact([&] {
-    for(auto i = get_row_size() - 1; i >= 0; --i) {
-      m_transaction.push(RemoveOperation{i});
-    }
-    for(auto i = 0; i != get_row_size(); ++i) {
-      m_transaction.push(AddOperation{i});
-    }
+    m_translation.transact([&] {
+      for(auto i = 1; i < get_row_size(); ++i) {
+        auto index = find_sorted_index(i, i + 1);
+        if(index != i) {
+          m_translation.move(i, index);
+          m_transaction.push(MoveOperation(i, index));
+        }
+      }
+    });
   });
-  m_source_connection = m_translation->connect_operation_signal(
-    [=] (const auto& operation) { on_operation(operation); });
 }
 
-int SortedTableModel::find_sorted_index(int row) const {
+int SortedTableModel::find_sorted_index(int row, int size) const {
   if(row != 0 && row_comparator(row, row - 1)) {
     return *std::lower_bound(
       make_counting_iterator(0), make_counting_iterator(row), row,
       [&] (auto lhs, auto rhs) { return row_comparator(lhs, rhs); });
-  } else if(row != get_row_size() - 1 && row_comparator(row + 1, row)) {
+  } else if(row != size - 1 && row_comparator(row + 1, row)) {
     return *std::lower_bound(make_counting_iterator(row + 1),
-      make_counting_iterator(get_row_size()), row,
+      make_counting_iterator(size), row,
       [&] (auto lhs, auto rhs) { return row_comparator(lhs, rhs); }) - 1;
   }
   return row;
@@ -147,17 +138,17 @@ void SortedTableModel::on_operation(const Operation& operation) {
   m_transaction.transact([&] {
     visit(operation,
       [&] (const AddOperation& operation) {
-        auto index = find_sorted_index(operation.m_index);
-        m_translation->move(operation.m_index, index);
-        m_transaction.push(AddOperation{index});
+        auto index = find_sorted_index(operation.m_index, get_row_size());
+        m_translation.move(operation.m_index, index);
+        m_transaction.push(AddOperation(index));
       },
       [&] (const UpdateOperation& operation) {
-        auto index = find_sorted_index(operation.m_row);
+        auto index = find_sorted_index(operation.m_row, get_row_size());
         if(operation.m_row != index) {
-          m_translation->move(operation.m_row, index);
-          m_transaction.push(MoveOperation{operation.m_row, index});
+          m_translation.move(operation.m_row, index);
+          m_transaction.push(MoveOperation(operation.m_row, index));
         }
-        m_transaction.push(UpdateOperation{index, operation.m_column});
+        m_transaction.push(UpdateOperation(index, operation.m_column));
       },
       [&] (const RemoveOperation& operation) {
         m_transaction.push(operation);
@@ -171,7 +162,7 @@ void Spire::adjust(SortedTableModel::ColumnOrder order,
     [&] (const auto& value) {
       return value.m_index == order.m_index;
     });
-  if(i == column_order.begin()) {
+  if(i == column_order.begin() && i != column_order.end()) {
     *i = order;
     return;
   } else if(i != column_order.end()) {

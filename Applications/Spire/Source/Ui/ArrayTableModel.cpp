@@ -18,7 +18,7 @@ void ArrayTableModel::insert(const std::vector<std::any>& row, int index) {
     throw std::out_of_range("The index is out of range.");
   }
   m_data.insert(std::next(m_data.begin(), index), row);
-  m_transaction.push(AddOperation{index});
+  m_transaction.push(AddOperation(index));
 }
 
 void ArrayTableModel::move(int source, int destination) {
@@ -39,7 +39,7 @@ void ArrayTableModel::move(int source, int destination) {
       std::next(m_data.begin(), source), std::next(m_data.begin(), source + 1));
   }
   m_data[destination] = std::move(source_row);
-  m_transaction.push(MoveOperation{source, destination});
+  m_transaction.push(MoveOperation(source, destination));
 }
 
 void ArrayTableModel::remove(int index) {
@@ -47,7 +47,7 @@ void ArrayTableModel::remove(int index) {
     throw std::out_of_range("The index is out of range.");
   }
   m_data.erase(std::next(m_data.begin(), index));
-  m_transaction.push(RemoveOperation{index});
+  m_transaction.push(RemoveOperation(index));
 }
 
 int ArrayTableModel::get_row_size() const {
@@ -77,7 +77,7 @@ QValidator::State ArrayTableModel::set(int row, int column,
     return QValidator::State::Invalid;
   }
   m_data[row][column] = value;
-  m_transaction.push(UpdateOperation{row, column});
+  m_transaction.push(UpdateOperation(row, column));
   return QValidator::State::Acceptable;
 }
 

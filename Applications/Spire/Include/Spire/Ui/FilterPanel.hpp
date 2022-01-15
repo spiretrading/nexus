@@ -4,9 +4,7 @@
 
 namespace Spire {
 
-  /**
-   * Represents a panel to display inputs for filtering values.
-   */
+  /** Represents a panel to display inputs for filtering values. */
   class FilterPanel : public QWidget {
     public:
 

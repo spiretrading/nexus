@@ -13,7 +13,7 @@ namespace Spire {
       /**
        * Constructs a SubMenuItem.
        * @param label The label displayed on the SubMenuItem.
-       * @param sub_menu The ContextMenu component that this SubMenuItem opens.
+       * @param menu The ContextMenu component that this SubMenuItem opens.
        * @param parent The parent widget.
        */
       SubMenuItem(QString label, ContextMenu& menu, QWidget* parent = nullptr);

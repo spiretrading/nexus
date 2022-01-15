@@ -13,6 +13,7 @@ namespace {
     Stylist* m_stylist;
     SelectionUpdateSignal m_on_update;
     FocusObserver m_observer;
+    bool m_is_match;
     scoped_connection m_connection;
 
     FocusExecutor(FocusObserver::State state, const Stylist& base,
@@ -21,17 +22,21 @@ namespace {
           m_stylist(const_cast<Stylist*>(&base)),
           m_on_update(on_update),
           m_observer(m_stylist->get_widget()),
+          m_is_match(false),
           m_connection(m_observer.connect_state_signal(
             std::bind_front(&FocusExecutor::on_state, this))) {
       if(is_match(m_observer.get_state())) {
+        m_is_match = true;
         m_on_update({m_stylist}, {});
       }
     }
 
     void on_state(FocusObserver::State state) {
-      if(is_match(state)) {
+      if(is_match(state) && !m_is_match) {
+        m_is_match = true;
         m_on_update({m_stylist}, {});
-      } else {
+      } else if(m_is_match) {
+        m_is_match = false;
         m_on_update({}, {m_stylist});
       }
     }

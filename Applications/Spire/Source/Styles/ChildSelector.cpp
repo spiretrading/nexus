@@ -4,12 +4,16 @@
 #include "Spire/Styles/CombinatorSelector.hpp"
 #include "Spire/Styles/Stylist.hpp"
 
+using namespace boost;
+using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
   struct ChildObserver : public QObject {
     SelectionUpdateSignal m_on_update;
+    scoped_connection m_adopted_connection;
+    scoped_connection m_forfeit_connection;
 
     ChildObserver(
         const Stylist& stylist, const SelectionUpdateSignal& on_update)
@@ -20,10 +24,17 @@ namespace {
           children.insert(&find_stylist(static_cast<QWidget&>(*child)));
         }
       }
+      for(auto child : stylist.get_adoptions()) {
+        children.insert(child);
+      }
       if(!children.empty()) {
         m_on_update(std::move(children), {});
       }
       stylist.get_widget().installEventFilter(this);
+      m_adopted_connection = stylist.connect_adopted_signal(
+        std::bind_front(&ChildObserver::on_adopted, this));
+      m_forfeit_connection = stylist.connect_forfeit_signal(
+        std::bind_front(&ChildObserver::on_forfeit, this));
     }
 
     bool eventFilter(QObject* watched, QEvent* event) override {
@@ -42,6 +53,14 @@ namespace {
         }
       }
       return QObject::eventFilter(watched, event);
+    }
+
+    void on_adopted(Stylist& stylist, const Selector& selector) {
+      m_on_update({&stylist}, {});
+    }
+
+    void on_forfeit(Stylist& stylist, const Selector& selector) {
+      m_on_update({}, {&stylist});
     }
   };
 }

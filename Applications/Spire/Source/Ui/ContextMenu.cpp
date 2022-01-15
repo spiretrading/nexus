@@ -1,7 +1,6 @@
 #include "Spire/Ui/ContextMenu.hpp"
 #include <QCoreApplication>
 #include <QHBoxLayout>
-#include <QEvent>
 #include <QKeyEvent>
 #include <QScreen>
 #include <QTimer>
@@ -61,7 +60,6 @@ ContextMenu::ContextMenu(QWidget& parent)
   layout->addWidget(m_list_view);
   m_window = new OverlayPanel(*this, parent);
   m_window->setWindowFlags(Qt::Popup | (m_window->windowFlags() & ~Qt::Tool));
-  m_window->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
   m_window->set_closed_on_focus_out(true);
   m_window->set_positioning(OverlayPanel::Positioning::NONE);
   m_window->set_is_draggable(false);
@@ -238,7 +236,7 @@ bool ContextMenu::handle_mouse_event(QMouseEvent* event) {
         clear_hover_style();
         m_list_view->get_current()->set(none);
       } else if(event->type() == QEvent::MouseButtonPress ||
-        event->type() == QEvent::MouseButtonDblClick) {
+          event->type() == QEvent::MouseButtonDblClick) {
         return true;
       }
     }
