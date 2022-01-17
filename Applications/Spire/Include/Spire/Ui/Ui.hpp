@@ -57,7 +57,7 @@ namespace Spire {
   class SortedTableModel;
   template<typename T> class StagingValueModel;
   class StandardTableFilter;
-  class SubMenuItem;
+  class SubmenuItem;
   class TableBody;
   class TableHeader;
   class TableHeaderItem;

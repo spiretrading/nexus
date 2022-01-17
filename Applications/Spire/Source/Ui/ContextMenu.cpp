@@ -9,7 +9,7 @@
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
-#include "Spire/Ui/SubMenuItem.hpp"
+#include "Spire/Ui/SubmenuItem.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace boost;
@@ -119,7 +119,7 @@ bool ContextMenu::eventFilter(QObject* watched, QEvent* event) {
         break;
       case Qt::Key_Enter:
       case Qt::Key_Return:
-        if(typeid(*watched) == typeid(SubMenuItem)) {
+        if(typeid(*watched) == typeid(SubmenuItem)) {
           handle_right_or_enter_event(event);
         } else if(watched == m_window) {
           focus_first_item();
@@ -164,7 +164,7 @@ bool ContextMenu::event(QEvent* event) {
       if(item->geometry().contains(hover_event.pos())) {
         if(m_list_view->get_current()->get() != i) {
           m_list_view->get_current()->set(i);
-          show_sub_menu(i);
+          show_submenu(i);
         }
         break;
       }
@@ -186,17 +186,17 @@ QWidget* ContextMenu::build_item(const std::shared_ptr<AnyListModel>& list,
     check_box->set_label(item.m_name);
     return check_box;
   }
-  auto sub_menu =
+  auto submenu =
     const_cast<ContextMenu*>(std::any_cast<const ContextMenu*>(item.m_data));
-  auto sub_menu_item = new SubMenuItem(item.m_name, *sub_menu);
-  sub_menu_item->installEventFilter(this);
-  sub_menu->connect_submit_signal(
+  auto submenu_item = new SubmenuItem(item.m_name, *submenu);
+  submenu_item->installEventFilter(this);
+  submenu->connect_submit_signal(
     [=] (const ContextMenu& menu, const QString& label) {
       hide();
       m_submit_signal(menu, label);
     });
-  m_sub_menus[index] = sub_menu->window();
-  return sub_menu_item;
+  m_submenus[index] = submenu->window();
+  return submenu_item;
 }
 
 ListItem* ContextMenu::get_current_item() const {
@@ -221,7 +221,7 @@ void ContextMenu::focus_first_item() {
 
 void ContextMenu::handle_right_or_enter_event(QEvent* event) {
   if(auto current = m_list_view->get_current()->get()) {
-    show_sub_menu(*current);
+    show_submenu(*current);
     if(m_active_menu_window) {
       QCoreApplication::sendEvent(m_active_menu_window, event);
     }
@@ -318,10 +318,10 @@ void ContextMenu::hide_active_menu() {
   }
 }
 
-void ContextMenu::show_sub_menu(int index) {
+void ContextMenu::show_submenu(int index) {
   auto menu_item = std::any_cast<MenuItem>(m_list->get(index));
   if(menu_item.m_type == MenuItemType::SUBMENU) {
-    auto menu_window = m_sub_menus[index];
+    auto menu_window = m_submenus[index];
     if(m_active_menu_window == menu_window) {
       return;
     }

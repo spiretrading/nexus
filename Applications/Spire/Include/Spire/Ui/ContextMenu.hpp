@@ -86,7 +86,7 @@ namespace Spire {
       QWidget* m_active_menu_window;
       QMargins m_window_border_size;
       boost::optional<QSize> m_window_size;
-      std::unordered_map<int, QWidget*> m_sub_menus;
+      std::unordered_map<int, QWidget*> m_submenus;
       boost::signals2::scoped_connection m_window_style_connection;
 
       QWidget* build_item(const std::shared_ptr<AnyListModel>& list, int index);
@@ -99,7 +99,7 @@ namespace Spire {
       void on_window_style();
       void position_menu(ListItem* item);
       void hide_active_menu();
-      void show_sub_menu(int index);
+      void show_submenu(int index);
   };
 }
 

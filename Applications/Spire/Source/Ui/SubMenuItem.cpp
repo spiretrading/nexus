@@ -1,4 +1,4 @@
-#include "Spire/Ui/SubMenuItem.hpp"
+#include "Spire/Ui/SubmenuItem.hpp"
 #include <QHBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Icon.hpp"
@@ -24,7 +24,7 @@ namespace {
   }
 }
 
-SubMenuItem::SubMenuItem(QString label, ContextMenu& menu, QWidget* parent)
+SubmenuItem::SubmenuItem(QString label, ContextMenu& menu, QWidget* parent)
     : QWidget(parent),
       m_menu(&menu) {
   auto layout = new QHBoxLayout(this);
@@ -40,6 +40,6 @@ SubMenuItem::SubMenuItem(QString label, ContextMenu& menu, QWidget* parent)
   set_style(*this, DEFAULT_STYLE());
 }
 
-ContextMenu& SubMenuItem::get_context_menu() {
+ContextMenu& SubmenuItem::get_context_menu() {
   return *m_menu;
 }
