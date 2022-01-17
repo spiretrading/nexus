@@ -176,6 +176,38 @@ namespace Styles {
         StyleProperties(std::function<void ()> commit);
         void clear();
       };
+      class TextBoxImpl : public Box {
+        public:
+
+          const QString& get_display_text() const;
+
+          void set_display_text(const QString& text);
+
+          // function to call to request an update to the display text
+          void set_update_function(const std::function<void ()>& update);
+
+          // called in TextBox::paintEvent
+          void paint(QPainter& painter) const;
+
+          const std::shared_ptr<HighlightModel>& get_highlight() const;
+
+          const QString& get_placeholder() const;
+
+          void set_placeholder(const QString& placeholder);
+
+          bool is_read_only() const;
+
+          void set_read_only(bool read_only);
+
+          boost::signals2::connection connect_submit_signal(
+            const SubmitSignal::slot_type& slot) const;
+
+          boost::signals2::connection connect_reject_signal(
+            const RejectSignal::slot_type& slot) const;
+
+        protected:
+          TextBoxImpl(TextBox* parent);
+      };
       struct TextValidator;
       class PlaceholderBox;
       mutable SubmitSignal m_submit_signal;

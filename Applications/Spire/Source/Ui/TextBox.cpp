@@ -486,6 +486,8 @@ void TextBox::elide_text() {
 }
 
 void TextBox::update_display_text() {
+  // TODO: verify hasFocus functions correctly after the updates; the relationships
+  //        between widgets will be changed.
   if(!isEnabled() || is_read_only() || !hasFocus()) {
     elide_text();
   } else if(m_line_edit->text() != m_current->get()) {
