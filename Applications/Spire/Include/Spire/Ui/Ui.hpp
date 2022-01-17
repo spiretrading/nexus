@@ -17,6 +17,7 @@ namespace Spire {
   class CheckBox;
   class ClosedFilterPanel;
   class ComboBox;
+  class ContextMenu;
   class DateBox;
   class DateFilterPanel;
   class DecimalBox;
@@ -56,6 +57,7 @@ namespace Spire {
   class SortedTableModel;
   template<typename T> class StagingValueModel;
   class StandardTableFilter;
+  class SubmenuItem;
   class TableBody;
   class TableHeader;
   class TableHeaderItem;
