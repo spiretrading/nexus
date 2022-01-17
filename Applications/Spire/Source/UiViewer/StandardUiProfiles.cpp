@@ -738,43 +738,42 @@ UiProfile Spire::make_context_menu_profile() {
       auto menu = new ContextMenu(*button);
       auto view_menu = new ContextMenu(*static_cast<QWidget*>(menu));
       view_menu->add_action("Large", profile.make_event_slot<>(
-        QString::fromUtf8("Action:Large")));
+        QString("Action:Large")));
       view_menu->add_action("Medium", profile.make_event_slot<>(
-        QString::fromUtf8("Action:Medium")));
+        QString("Action:Medium")));
       view_menu->add_action("Small", profile.make_event_slot<>(
-        QString::fromUtf8("Action:Small")));
+        QString("Action:Small")));
       auto empty_menu = new ContextMenu(*static_cast<QWidget*>(view_menu));
       view_menu->add_menu("Empty", *empty_menu);
       menu->add_menu("View", *view_menu);
       auto sort_menu = new ContextMenu(*static_cast<QWidget*>(menu));
       sort_menu->add_action("Name", profile.make_event_slot<>(
-        QString::fromUtf8("Action:Name")));
+        QString("Action:Name")));
       sort_menu->add_action("Size", profile.make_event_slot<>(
-        QString::fromUtf8("Action:Size")));
+        QString("Action:Size")));
       auto type_menu = new ContextMenu(*static_cast<QWidget*>(sort_menu));
       type_menu->add_action("Security", profile.make_event_slot<>(
-        QString::fromUtf8("Action:Security")));
+        QString("Action:Security")));
       type_menu->add_action("Side", profile.make_event_slot<>(
-        QString::fromUtf8("Action:Side")));
+        QString("Action:Side")));
       sort_menu->add_menu("Type", *type_menu);
       menu->add_menu("Sort by", *sort_menu);
-      menu->add_action("Cut", profile.make_event_slot<>(
-        QString::fromUtf8("Action:Cut")));
+      menu->add_action("Cut", profile.make_event_slot<>(QString("Action:Cut")));
       menu->add_action("Copy", profile.make_event_slot<>(
-        QString::fromUtf8("Action:Copy")));
+        QString("Action:Copy")));
       menu->add_action("Paste", profile.make_event_slot<>(
-        QString::fromUtf8("Action:Paste")));
+        QString("Action:Paste")));
       auto date_model = std::make_shared<LocalBooleanModel>();
       date_model->set(true);
       date_model->connect_update_signal(
-        profile.make_event_slot<bool>(QString::fromUtf8("Date CheckedSignal")));
+        profile.make_event_slot<bool>(QString("Date CheckedSignal")));
       menu->add_check_box("Date", date_model);
       auto time_model = menu->add_check_box("Time");
       time_model->connect_update_signal(
-        profile.make_event_slot<bool>(QString::fromUtf8("Time CheckedSignal")));
+        profile.make_event_slot<bool>(QString("Time CheckedSignal")));
       menu->add_action("This is a long name for test",
         profile.make_event_slot<>(
-          QString::fromUtf8("Action:This is a long name for test")));
+          QString("Action:This is a long name for test")));
       button->connect_clicked_signal([=] {
         auto pos = QCursor::pos();
         menu->window()->move(pos.x(), pos.y() + button->height());
