@@ -1,5 +1,6 @@
 #ifndef SPIRE_CONTEXT_MENU_HPP
 #define SPIRE_CONTEXT_MENU_HPP
+#include <variant>
 #include <QWidget>
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Ui/CheckBox.hpp"
@@ -36,7 +37,7 @@ namespace Spire {
        * @param name The name of the menu.
        * @param menu The menu to add.
        */
-      void add_menu(const QString& name, const ContextMenu& menu);
+      void add_menu(const QString& name, ContextMenu& menu);
 
       /**
        * Adds an action.
@@ -77,7 +78,8 @@ namespace Spire {
       struct MenuItem {
         MenuItemType m_type;
         QString m_name;
-        std::any m_data;
+        std::variant<ContextMenu*, Action, std::shared_ptr<BooleanModel>>
+          m_data;
       };
       mutable SubmitSignal m_submit_signal;
       std::shared_ptr<ArrayListModel<MenuItem>> m_list;

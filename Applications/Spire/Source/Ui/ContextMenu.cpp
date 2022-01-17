@@ -71,7 +71,7 @@ ContextMenu::ContextMenu(QWidget& parent)
     connect_style_signal(*m_window, [=] { on_window_style(); });
 }
 
-void ContextMenu::add_menu(const QString& name, const ContextMenu& menu) {
+void ContextMenu::add_menu(const QString& name, ContextMenu& menu) {
   menu.window()->setParent(this);
   m_list->push(MenuItem(MenuItemType::SUBMENU, name, &menu));
 }
@@ -181,12 +181,11 @@ QWidget* ContextMenu::build_item(const std::shared_ptr<AnyListModel>& list,
     return make_label(item.m_name);
   } else if(item.m_type == MenuItemType::CHECK) {
     auto check_box =
-      new CheckBox(std::any_cast<std::shared_ptr<BooleanModel>>(item.m_data));
+      new CheckBox(std::get<std::shared_ptr<BooleanModel>>(item.m_data));
     check_box->set_label(item.m_name);
     return check_box;
   }
-  auto submenu =
-    const_cast<ContextMenu*>(std::any_cast<const ContextMenu*>(item.m_data));
+  auto submenu = std::get<ContextMenu*>(item.m_data);
   auto submenu_item = new SubmenuItem(item.m_name, *submenu);
   submenu_item->installEventFilter(this);
   submenu->connect_submit_signal(
@@ -247,7 +246,7 @@ void ContextMenu::on_submit(const std::any& submission) {
   auto current = m_list_view->get_current()->get();
   auto menu_item = std::any_cast<MenuItem>(m_list->get(*current));
   if(menu_item.m_type == MenuItemType::ACTION) {
-    std::any_cast<Action>(menu_item.m_data)(menu_item.m_name);
+    std::get<Action>(menu_item.m_data)(menu_item.m_name);
     hide();
     m_submit_signal(*this, menu_item.m_name);
   }
