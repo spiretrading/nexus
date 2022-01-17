@@ -77,14 +77,6 @@ namespace Spire {
   class WindowObserver;
 
   /**
-   * Draws a border inside the given region.
-   * @param region The region to draw a border inside of.
-   * @param color The border's color.
-   * @param painter The QPainter instance that draws the border.
-   */
-  void draw_border(const QRect& region, const QColor& color, QPainter* painter);
-
-  /**
    * Fades a window in by animating its window opacity. The returned animation
    * is deleted on completion.
    * @param target The window to fade in or out. Used as the parent for the

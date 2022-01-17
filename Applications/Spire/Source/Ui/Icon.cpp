@@ -44,7 +44,11 @@ void Icon::paintEvent(QPaintEvent* event) {
   painter.drawPixmap((width() - icon.width()) / 2,
     (height() - icon.height()) / 2, icon);
   if(m_border_color) {
-    draw_border(rect(), *m_border_color, &painter);
+    auto border_region = QRegion(rect()).subtracted(rect().adjusted(
+      scale_width(1), scale_height(1), -scale_width(1), -scale_height(1)));
+    for(auto& rect : border_region) {
+      painter.fillRect(rect, *m_border_color);
+    }
   }
 }
 

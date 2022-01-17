@@ -6,17 +6,6 @@
 using namespace boost::posix_time;
 using namespace Spire;
 
-void Spire::draw_border(const QRect& region, const QColor& color,
-    QPainter* painter) {
-  painter->save();
-  auto border_region = QRegion(region).subtracted(region.adjusted(
-    scale_width(1), scale_height(1), -scale_width(1), -scale_height(1)));
-  for(auto& rect : border_region) {
-    painter->fillRect(rect, color);
-  }
-  painter->restore();
-}
-
 QPropertyAnimation* Spire::fade_window(QObject* target, bool reverse,
     time_duration fade_speed) {
   auto animation = new QPropertyAnimation(target, "windowOpacity", target);
