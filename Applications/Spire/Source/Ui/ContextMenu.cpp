@@ -82,8 +82,7 @@ void ContextMenu::add_action(const QString& name, const Action& action) {
 
 std::shared_ptr<BooleanModel> ContextMenu::add_check_box(const QString& name) {
   auto model = std::make_shared<LocalBooleanModel>();
-  m_list->push(MenuItem(MenuItemType::CHECK, name,
-    std::static_pointer_cast<BooleanModel>(model)));
+  add_check_box(name, model);
   return model;
 }
 
@@ -119,7 +118,7 @@ bool ContextMenu::eventFilter(QObject* watched, QEvent* event) {
         break;
       case Qt::Key_Enter:
       case Qt::Key_Return:
-        if(typeid(*watched) == typeid(SubmenuItem)) {
+        if(dynamic_cast<const SubmenuItem*>(watched)) {
           handle_right_or_enter_event(event);
         } else if(watched == m_window) {
           focus_first_item();
