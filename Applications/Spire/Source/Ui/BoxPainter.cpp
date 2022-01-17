@@ -63,12 +63,13 @@ namespace {
     pixmap.fill(Qt::transparent);
     auto pixmap_painter = QPainter(&pixmap);
     pixmap_painter.setRenderHint(QPainter::Antialiasing);
-    pixmap_painter.setRenderHint(QPainter::HighQualityAntialiasing);
     auto corner_angle = -90 * (static_cast<double>(horizontal_border.m_size) /
       (vertical_border.m_size + horizontal_border.m_size));
     if(radius < vertical_border.m_size) {
       path.moveTo(QPoint(0, vertical_border.m_size - 1));
       path.lineTo(QPoint(0, radius));
+    } else {
+      path.moveTo(QPoint(0, radius));
     }
     if(radius <= horizontal_border.m_size || radius <= vertical_border.m_size) {
       path.arcTo(
@@ -122,14 +123,21 @@ namespace {
       path.arcTo(QRect(QPoint(0, 0), 2 * QSize(radius, radius)),
         180 + corner_angle, -90 - corner_angle);
       path.lineTo(QPoint(radius - 1, vertical_border.m_size - 1));
-      path.arcTo(QRect(QPoint(horizontal_border.m_size - 1, vertical_border.m_size - 1),
+      path.arcTo(QRect(
+        QPoint(horizontal_border.m_size - 1, vertical_border.m_size - 1),
         2 * QSize(radius - horizontal_border.m_size - 1, radius -
           vertical_border.m_size - 1)), 90, 90 + corner_angle);
     }
     path.closeSubpath();
+    pixmap_painter.drawRect(
+      QRect(QPoint(0, std::max(radius, vertical_border.m_size) - 1),
+        QSize(horizontal_border.m_size - 1, 1)));
     pixmap_painter.setPen(vertical_border.m_color);
     pixmap_painter.setBrush(vertical_border.m_color);
     pixmap_painter.drawPath(path);
+    pixmap_painter.drawRect(
+      QRect(QPoint(std::max(radius, horizontal_border.m_size) - 1, 0),
+        QSize(1, vertical_border.m_size - 1)));
     painter.drawPixmap(0, 0, pixmap);
     painter.restore();
     path.clear();
