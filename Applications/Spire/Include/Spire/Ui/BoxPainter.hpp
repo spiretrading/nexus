@@ -1,6 +1,7 @@
 #ifndef SPIRE_BOX_PAINTER_HPP
 #define SPIRE_BOX_PAINTER_HPP
 #include <QColor>
+#include "Spire/Styles/Styles.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -123,6 +124,16 @@ namespace Spire {
 
       Classification evaluate_classification() const;
   };
+
+  /**
+   * Visits a style Property and updates a BoxPainter if the property represents
+   * a box styling.
+   * @param property The property to visit.
+   * @param painter The BoxPainter to update based on the <i>property</i>.
+   * @param stylist The Stylist used to evaluate the <i>property</i>.
+   */
+  void visit(const Styles::Property& property, BoxPainter& painter,
+    Styles::Stylist& stylist);
 }
 
 #endif

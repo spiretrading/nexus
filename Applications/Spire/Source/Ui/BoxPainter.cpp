@@ -1,8 +1,12 @@
 #include "Spire/Ui/BoxPainter.hpp"
 #include <QPainter>
 #include <QPainterPath>
+#include "Spire/Styles/Property.hpp"
+#include "Spire/Styles/Stylist.hpp"
+#include "Spire/Ui/Box.hpp"
 
 using namespace Spire;
+using namespace Spire::Styles;
 
 namespace {
   void draw_borders(QPainter& painter, QPainterPath& path,
@@ -140,6 +144,89 @@ namespace {
     painter.restore();
     path.clear();
   }
+}
+
+void Spire::visit(
+    const Property& property, BoxPainter& painter, Stylist& stylist) {
+  property.visit(
+    [&] (const BackgroundColor& color) {
+      stylist.evaluate(color, [&painter, &stylist] (auto color) {
+        painter.set_background_color(color);
+        stylist.get_widget().update();
+      });
+    },
+    [&] (const BorderTopSize& size) {
+      stylist.evaluate(size, [&painter, &stylist] (auto size) {
+        painter.set_top_border_size(size);
+        stylist.get_widget().update();
+      });
+    },
+    [&] (const BorderRightSize& size) {
+      stylist.evaluate(size, [&painter, &stylist] (auto size) {
+        painter.set_right_border_size(size);
+        stylist.get_widget().update();
+      });
+    },
+    [&] (const BorderBottomSize& size) {
+      stylist.evaluate(size, [&painter, &stylist] (auto size) {
+        painter.set_bottom_border_size(size);
+        stylist.get_widget().update();
+      });
+    },
+    [&] (const BorderLeftSize& size) {
+      stylist.evaluate(size, [&painter, &stylist] (auto size) {
+        painter.set_left_border_size(size);
+        stylist.get_widget().update();
+      });
+    },
+    [&] (const BorderTopColor& color) {
+      stylist.evaluate(color, [&painter, &stylist] (auto color) {
+        painter.set_top_border_color(color);
+        stylist.get_widget().update();
+      });
+    },
+    [&] (const BorderRightColor& color) {
+      stylist.evaluate(color, [&painter, &stylist] (auto color) {
+        painter.set_right_border_color(color);
+        stylist.get_widget().update();
+      });
+    },
+    [&] (const BorderBottomColor& color) {
+      stylist.evaluate(color, [&painter, &stylist] (auto color) {
+        painter.set_bottom_border_color(color);
+        stylist.get_widget().update();
+      });
+    },
+    [&] (const BorderLeftColor& color) {
+      stylist.evaluate(color, [&painter, &stylist] (auto color) {
+        painter.set_left_border_color(color);
+        stylist.get_widget().update();
+      });
+    },
+    [&] (const BorderTopLeftRadius& radius) {
+      stylist.evaluate(radius, [&painter, &stylist] (auto radius) {
+        painter.set_top_left_radius(radius);
+        stylist.get_widget().update();
+      });
+    },
+    [&] (const BorderTopRightRadius& radius) {
+      stylist.evaluate(radius, [&painter, &stylist] (auto radius) {
+        painter.set_top_right_radius(radius);
+        stylist.get_widget().update();
+      });
+    },
+    [&] (const BorderBottomRightRadius& radius) {
+      stylist.evaluate(radius, [&painter, &stylist] (auto radius) {
+        painter.set_bottom_right_radius(radius);
+        stylist.get_widget().update();
+      });
+    },
+    [&] (const BorderBottomLeftRadius& radius) {
+      stylist.evaluate(radius, [&painter, &stylist] (auto radius) {
+        painter.set_bottom_left_radius(radius);
+        stylist.get_widget().update();
+      });
+    });
 }
 
 BoxPainter::BoxPainter()

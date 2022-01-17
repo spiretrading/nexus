@@ -157,87 +157,26 @@ void Box::on_style() {
   m_body_geometry = QRect(0, 0, width(), height());
   auto& stylist = find_stylist(*this);
   for(auto& property : stylist.get_computed_block()) {
+    visit(property, m_painter, stylist);
     property.visit(
-      [&] (const BackgroundColor& color) {
-        stylist.evaluate(color, [=] (auto color) {
-          m_painter.set_background_color(color);
-          update();
-        });
-      },
       [&] (const BorderTopSize& size) {
         stylist.evaluate(size, [=] (auto size) {
-          m_painter.set_top_border_size(size);
           m_body_geometry.setTop(m_body_geometry.top() + size);
-          update();
         });
       },
       [&] (const BorderRightSize& size) {
         stylist.evaluate(size, [=] (auto size) {
-          m_painter.set_right_border_size(size);
           m_body_geometry.setRight(m_body_geometry.right() - size);
-          update();
         });
       },
       [&] (const BorderBottomSize& size) {
         stylist.evaluate(size, [=] (auto size) {
-          m_painter.set_bottom_border_size(size);
           m_body_geometry.setBottom(m_body_geometry.bottom() - size);
-          update();
         });
       },
       [&] (const BorderLeftSize& size) {
         stylist.evaluate(size, [=] (auto size) {
-          m_painter.set_left_border_size(size);
           m_body_geometry.setLeft(m_body_geometry.left() + size);
-          update();
-        });
-      },
-      [&] (const BorderTopColor& color) {
-        stylist.evaluate(color, [=] (auto color) {
-          m_painter.set_top_border_color(color);
-          update();
-        });
-      },
-      [&] (const BorderRightColor& color) {
-        stylist.evaluate(color, [=] (auto color) {
-          m_painter.set_right_border_color(color);
-          update();
-        });
-      },
-      [&] (const BorderBottomColor& color) {
-        stylist.evaluate(color, [=] (auto color) {
-          m_painter.set_bottom_border_color(color);
-          update();
-        });
-      },
-      [&] (const BorderLeftColor& color) {
-        stylist.evaluate(color, [=] (auto color) {
-          m_painter.set_left_border_color(color);
-          update();
-        });
-      },
-      [&] (const BorderTopLeftRadius& radius) {
-        stylist.evaluate(radius, [=] (auto radius) {
-          m_painter.set_top_left_radius(radius);
-          update();
-        });
-      },
-      [&] (const BorderTopRightRadius& radius) {
-        stylist.evaluate(radius, [=] (auto radius) {
-          m_painter.set_top_right_radius(radius);
-          update();
-        });
-      },
-      [&] (const BorderBottomRightRadius& radius) {
-        stylist.evaluate(radius, [=] (auto radius) {
-          m_painter.set_bottom_right_radius(radius);
-          update();
-        });
-      },
-      [&] (const BorderBottomLeftRadius& radius) {
-        stylist.evaluate(radius, [=] (auto radius) {
-          m_painter.set_bottom_left_radius(radius);
-          update();
         });
       },
       [&] (const PaddingTop& size) {

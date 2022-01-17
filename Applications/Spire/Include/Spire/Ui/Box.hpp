@@ -169,7 +169,6 @@ namespace Styles {
       boost::signals2::scoped_connection m_style_connection;
       mutable boost::optional<QSize> m_size_hint;
 
-      void commit_style();
       void on_style();
   };
 
