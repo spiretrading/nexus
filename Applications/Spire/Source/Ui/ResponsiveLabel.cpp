@@ -154,7 +154,7 @@ void ResponsiveLabel::update_display_text() {
 
 void ResponsiveLabel::on_label_added(int index) {
   m_mapped_labels.push_back({index, get_pixel_width(m_labels->get(index))});
-  if(m_mapped_labels.size() > 1 && m_mapped_labels.back().m_pixel_width <
+  if(m_mapped_labels.size() > 1 && m_mapped_labels.back().m_pixel_width <=
       m_mapped_labels.at(m_mapped_labels.size() - 2).m_pixel_width) {
     sort_mapped_labels();
   }
