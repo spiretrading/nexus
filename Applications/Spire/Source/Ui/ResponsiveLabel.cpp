@@ -100,7 +100,7 @@ void ResponsiveLabel::sort_mapped_labels() {
       if(first.m_pixel_width != second.m_pixel_width) {
         return first.m_pixel_width < second.m_pixel_width;
       }
-      return first.m_list_index < second.m_list_index;
+      return first.m_list_index > second.m_list_index;
     });
 }
 
