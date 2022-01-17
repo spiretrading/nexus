@@ -176,7 +176,7 @@ bool ContextMenu::event(QEvent* event) {
 
 QWidget* ContextMenu::build_item(const std::shared_ptr<AnyListModel>& list,
     int index) {
-  auto item = std::any_cast<MenuItem>(list->get(index));
+  auto item = std::any_cast<MenuItem&&>(list->get(index));
   if(item.m_type == MenuItemType::ACTION) {
     return make_label(item.m_name);
   } else if(item.m_type == MenuItemType::CHECK) {
@@ -243,8 +243,8 @@ bool ContextMenu::handle_mouse_event(QMouseEvent* event) {
 }
 
 void ContextMenu::on_submit(const std::any& submission) {
-  auto current = m_list_view->get_current()->get();
-  auto menu_item = std::any_cast<MenuItem>(m_list->get(*current));
+  auto menu_item = std::any_cast<MenuItem&&>(
+    m_list->get(*m_list_view->get_current()->get()));
   if(menu_item.m_type == MenuItemType::ACTION) {
     std::get<Action>(menu_item.m_data)();
     hide();
@@ -317,7 +317,7 @@ void ContextMenu::hide_active_menu() {
 }
 
 void ContextMenu::show_submenu(int index) {
-  auto menu_item = std::any_cast<MenuItem>(m_list->get(index));
+  auto menu_item = std::any_cast<MenuItem&&>(m_list->get(index));
   if(menu_item.m_type == MenuItemType::SUBMENU) {
     auto menu_window = m_submenus[index];
     if(m_active_menu_window == menu_window) {
