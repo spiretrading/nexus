@@ -73,23 +73,23 @@ ContextMenu::ContextMenu(QWidget& parent)
 
 void ContextMenu::add_menu(const QString& name, const ContextMenu& menu) {
   menu.window()->setParent(this);
-  m_list->push(MenuItem{MenuItemType::SUBMENU, name, &menu});
+  m_list->push(MenuItem(MenuItemType::SUBMENU, name, &menu));
 }
 
 void ContextMenu::add_action(const QString& name, const Action& action) {
-  m_list->push(MenuItem{MenuItemType::ACTION, name, action});
+  m_list->push(MenuItem(MenuItemType::ACTION, name, action));
 }
 
 std::shared_ptr<BooleanModel> ContextMenu::add_check_box(const QString& name) {
   auto model = std::make_shared<LocalBooleanModel>();
-  m_list->push(MenuItem{MenuItemType::CHECK, name,
-    std::static_pointer_cast<BooleanModel>(model)});
+  m_list->push(MenuItem(MenuItemType::CHECK, name,
+    std::static_pointer_cast<BooleanModel>(model)));
   return model;
 }
 
 void ContextMenu::add_check_box(const QString& name,
     const std::shared_ptr<BooleanModel>& checked) {
-  m_list->push(MenuItem{MenuItemType::CHECK, name, checked});
+  m_list->push(MenuItem(MenuItemType::CHECK, name, checked));
 }
 
 connection ContextMenu::connect_submit_signal(
