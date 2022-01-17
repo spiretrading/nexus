@@ -2430,6 +2430,8 @@ UiProfile Spire::make_security_box_profile() {
     for(auto security_info : security_infos) {
       model->add(displayTextAny(security_info.m_security).toLower(),
         security_info);
+      model->add(QString::fromStdString(security_info.m_name).toLower(),
+        security_info);
     }
     auto box = new SecurityBox(model);
     box->setFixedWidth(scale_width(112));
