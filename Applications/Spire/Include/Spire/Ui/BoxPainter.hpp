@@ -113,8 +113,8 @@ namespace Spire {
 
     private:
       enum class Classification {
+        NONE,
         REGULAR,
-        REGULAR_CURVED,
         OTHER
       };
       QColor m_background_color;
