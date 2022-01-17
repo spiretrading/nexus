@@ -246,7 +246,7 @@ void ContextMenu::on_submit(const std::any& submission) {
   auto current = m_list_view->get_current()->get();
   auto menu_item = std::any_cast<MenuItem>(m_list->get(*current));
   if(menu_item.m_type == MenuItemType::ACTION) {
-    std::get<Action>(menu_item.m_data)(menu_item.m_name);
+    std::get<Action>(menu_item.m_data)();
     hide();
     m_submit_signal(*this, menu_item.m_name);
   }

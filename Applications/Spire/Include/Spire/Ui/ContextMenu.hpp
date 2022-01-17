@@ -22,9 +22,8 @@ namespace Spire {
 
       /**
        * The type of function used to do an action.
-       * @param name The name of the action.
        */
-      using Action = std::function<void (const QString& name)>;
+      using Action = std::function<void ()>;
 
       /**
        * Constructs a ContextMenu.
