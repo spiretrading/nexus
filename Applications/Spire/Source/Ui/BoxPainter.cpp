@@ -157,7 +157,7 @@ namespace {
   }
 }
 
-void Spire::visit(
+void Spire::apply(
     const Property& property, BoxPainter& painter, Stylist& stylist) {
   property.visit(
     [&] (const BackgroundColor& color) {
@@ -168,49 +168,49 @@ void Spire::visit(
     },
     [&] (const BorderTopSize& size) {
       stylist.evaluate(size, [&painter, &stylist] (auto size) {
-        painter.set_top_border_size(size);
+        painter.set_border_top_size(size);
         stylist.get_widget().update();
       });
     },
     [&] (const BorderRightSize& size) {
       stylist.evaluate(size, [&painter, &stylist] (auto size) {
-        painter.set_right_border_size(size);
+        painter.set_border_right_size(size);
         stylist.get_widget().update();
       });
     },
     [&] (const BorderBottomSize& size) {
       stylist.evaluate(size, [&painter, &stylist] (auto size) {
-        painter.set_bottom_border_size(size);
+        painter.set_border_bottom_size(size);
         stylist.get_widget().update();
       });
     },
     [&] (const BorderLeftSize& size) {
       stylist.evaluate(size, [&painter, &stylist] (auto size) {
-        painter.set_left_border_size(size);
+        painter.set_border_left_size(size);
         stylist.get_widget().update();
       });
     },
     [&] (const BorderTopColor& color) {
       stylist.evaluate(color, [&painter, &stylist] (auto color) {
-        painter.set_top_border_color(color);
+        painter.set_border_top_color(color);
         stylist.get_widget().update();
       });
     },
     [&] (const BorderRightColor& color) {
       stylist.evaluate(color, [&painter, &stylist] (auto color) {
-        painter.set_right_border_color(color);
+        painter.set_border_right_color(color);
         stylist.get_widget().update();
       });
     },
     [&] (const BorderBottomColor& color) {
       stylist.evaluate(color, [&painter, &stylist] (auto color) {
-        painter.set_bottom_border_color(color);
+        painter.set_border_bottom_color(color);
         stylist.get_widget().update();
       });
     },
     [&] (const BorderLeftColor& color) {
       stylist.evaluate(color, [&painter, &stylist] (auto color) {
-        painter.set_left_border_color(color);
+        painter.set_border_left_color(color);
         stylist.get_widget().update();
       });
     },
@@ -268,42 +268,42 @@ void BoxPainter::set_borders(const Borders& borders) {
   m_classification = evaluate_classification();
 }
 
-void BoxPainter::set_top_border_size(int size) {
+void BoxPainter::set_border_top_size(int size) {
   m_borders.m_top.m_size = size;
   m_classification = evaluate_classification();
 }
 
-void BoxPainter::set_top_border_color(QColor color) {
+void BoxPainter::set_border_top_color(QColor color) {
   m_borders.m_top.m_color = color;
   m_classification = evaluate_classification();
 }
 
-void BoxPainter::set_right_border_size(int size) {
+void BoxPainter::set_border_right_size(int size) {
   m_borders.m_right.m_size = size;
   m_classification = evaluate_classification();
 }
 
-void BoxPainter::set_right_border_color(QColor color) {
+void BoxPainter::set_border_right_color(QColor color) {
   m_borders.m_right.m_color = color;
   m_classification = evaluate_classification();
 }
 
-void BoxPainter::set_bottom_border_size(int size) {
+void BoxPainter::set_border_bottom_size(int size) {
   m_borders.m_bottom.m_size = size;
   m_classification = evaluate_classification();
 }
 
-void BoxPainter::set_bottom_border_color(QColor color) {
+void BoxPainter::set_border_bottom_color(QColor color) {
   m_borders.m_bottom.m_color = color;
   m_classification = evaluate_classification();
 }
 
-void BoxPainter::set_left_border_size(int size) {
+void BoxPainter::set_border_left_size(int size) {
   m_borders.m_left.m_size = size;
   m_classification = evaluate_classification();
 }
 
-void BoxPainter::set_left_border_color(QColor color) {
+void BoxPainter::set_border_left_color(QColor color) {
   m_borders.m_left.m_color = color;
   m_classification = evaluate_classification();
 }
