@@ -2,6 +2,7 @@
 #define SPIRE_ICON_HPP
 #include <boost/optional/optional.hpp>
 #include "Spire/Styles/Stylist.hpp"
+#include "Spire/Ui/BoxPainter.hpp"
 
 namespace Spire {
 namespace Styles {
@@ -31,9 +32,8 @@ namespace Styles {
 
     private:
       QImage m_icon;
-      QColor m_background_color;
       boost::optional<QColor> m_fill;
-      boost::optional<QColor> m_border_color;
+      BoxPainter m_painter;
       boost::signals2::scoped_connection m_style_connection;
 
       void on_style();

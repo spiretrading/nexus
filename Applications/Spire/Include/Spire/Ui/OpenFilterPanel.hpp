@@ -36,7 +36,8 @@ namespace Details {
 
     template<typename T>
     OpenInputBox(T box)
-      : m_input_box(std::make_unique<WrappingOpenInputBox<T>>(std::move(box))) {}
+      : m_input_box(
+          std::make_unique<WrappingOpenInputBox<T>>(std::move(box))) {}
 
     void clear_current() {
       m_input_box->clear_current();

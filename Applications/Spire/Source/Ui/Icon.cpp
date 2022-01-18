@@ -20,7 +20,6 @@ namespace {
 Icon::Icon(QImage icon, QWidget* parent)
     : QWidget(parent),
       m_icon(std::move(icon)),
-      m_background_color(QColor(0xF5F5F5)),
       m_fill(QColor(0x755EEC)) {
   setAttribute(Qt::WA_Hover);
   set_style(*this, DEFAULT_STYLE());
@@ -34,7 +33,7 @@ QSize Icon::sizeHint() const {
 
 void Icon::paintEvent(QPaintEvent* event) {
   auto painter = QPainter(this);
-  painter.fillRect(rect(), m_background_color);
+  m_painter.paint(painter);
   auto icon = QPixmap::fromImage(m_icon);
   auto image_painter = QPainter(&icon);
   image_painter.setCompositionMode(QPainter::CompositionMode_SourceIn);
@@ -43,25 +42,14 @@ void Icon::paintEvent(QPaintEvent* event) {
   }
   painter.drawPixmap((width() - icon.width()) / 2,
     (height() - icon.height()) / 2, icon);
-  if(m_border_color) {
-    draw_border(rect(), *m_border_color, &painter);
-  }
 }
 
 void Icon::on_style() {
   auto& stylist = find_stylist(*this);
-  auto& block = stylist.get_computed_block();
-  m_background_color = QColor(0xF5F5F5);
   m_fill = QColor(0x755EEC);
-  m_border_color = none;
-  for(auto& property : block) {
+  for(auto& property : stylist.get_computed_block()) {
+    visit(property, m_painter, stylist);
     property.visit(
-      [&] (const BackgroundColor& color) {
-        stylist.evaluate(color, [=] (auto color) {
-          m_background_color = color;
-          update();
-        });
-      },
       [&] (const IconImage& image) {
         stylist.evaluate(image, [=] (auto image) {
           m_icon = std::move(image);
@@ -73,13 +61,6 @@ void Icon::on_style() {
           m_fill = color;
           update();
         });
-      },
-      [&] (const BorderTopColor& color) {
-        stylist.evaluate(color, [=] (auto color) {
-          m_border_color = color;
-          update();
-        });
       });
   }
-  update();
 }

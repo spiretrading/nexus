@@ -12,6 +12,7 @@
 namespace Spire {
   class ArrayTableModel;
   class Box;
+  class BoxPainter;
   class Button;
   class CalendarDatePicker;
   class CheckBox;
@@ -46,6 +47,8 @@ namespace Spire {
   class OpenFilterPanel;
   class OverlayPanel;
   class RegionListItem;
+  class ResponsiveLabel;
+  template<typename T> class RowViewListModel;
   template<typename T> class ScalarFilterPanel;
   class ScrollBar;
   class ScrollBox;
@@ -79,14 +82,6 @@ namespace Spire {
   class WindowObserver;
 
   /**
-   * Draws a border inside the given region.
-   * @param region The region to draw a border inside of.
-   * @param color The border's color.
-   * @param painter The QPainter instance that draws the border.
-   */
-  void draw_border(const QRect& region, const QColor& color, QPainter* painter);
-
-  /**
    * Fades a window in by animating its window opacity. The returned animation
    * is deleted on completion.
    * @param target The window to fade in or out. Used as the parent for the
@@ -117,19 +112,6 @@ namespace Spire {
    *         dimensions.
    */
   QImage imageFromSvg(const QString& path, const QSize& size, const QRect& box);
-
-  /**
-   * Constructs a horizontal Spire-styled table header with fixed size,
-   * immovable, column headers.
-   * @param parent The parent widget.
-   */
-  QHeaderView* make_fixed_header(QWidget* parent);
-
-  /**
-   * Constructs a horizontal, Spire-styled, table header.
-   * @param parent The parent widget.
-   */
-  QHeaderView* make_header(QWidget* parent);
 }
 
 #endif
