@@ -20,6 +20,9 @@ namespace Spire {
   /** Returns a UiProfile for the ComboBox. */
   UiProfile make_combo_box_profile();
 
+  /** Returns a UiProfile for the ComboBox. */
+  UiProfile make_context_menu_profile();
+
   /** Returns a UiProfile for the DateBox. */
   UiProfile make_date_box_profile();
 

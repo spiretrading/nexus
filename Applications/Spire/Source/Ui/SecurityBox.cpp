@@ -33,8 +33,12 @@ struct SecurityBox::SecurityQueryModel : ComboBox::QueryModel {
           }
         }();
         auto result = std::vector<std::any>();
+        auto securities = std::unordered_set<Security>();
         for(auto& value : matches) {
-          result.push_back(std::any_cast<SecurityInfo&>(value).m_security);
+          auto& security = std::any_cast<SecurityInfo&>(value).m_security;
+          if(securities.insert(security).second) {
+            result.push_back(security);
+          }
         }
         return result;
     });
