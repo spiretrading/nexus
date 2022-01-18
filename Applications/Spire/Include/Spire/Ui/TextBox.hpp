@@ -158,10 +158,7 @@ namespace Styles {
       QSize sizeHint() const override;
 
     protected:
-      bool eventFilter(QObject* watched, QEvent* event) override;
       void changeEvent(QEvent* event) override;
-      void mousePressEvent(QMouseEvent* event) override;
-      void keyPressEvent(QKeyEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
 
     private:
@@ -177,19 +174,15 @@ namespace Styles {
         void clear();
       };
       struct TextValidator;
-      class PlaceholderBox;
+      class EditableTextBox;
       mutable SubmitSignal m_submit_signal;
       mutable RejectSignal m_reject_signal;
       std::shared_ptr<TextModel> m_current;
-      QString m_submission;
       std::shared_ptr<HighlightModel> m_highlight;
-      bool m_is_rejected;
-      bool m_has_update;
-      bool m_is_handling_key_press;
       StyleProperties m_line_edit_styles;
       TextValidator* m_text_validator;
-      QLineEdit* m_line_edit;
-      PlaceholderBox* m_box;
+      QString m_placeholder;
+      EditableTextBox* m_editable_text_box;
       boost::signals2::scoped_connection m_style_connection;
       boost::signals2::scoped_connection m_placeholder_style_connection;
       boost::signals2::scoped_connection m_current_connection;
@@ -202,11 +195,11 @@ namespace Styles {
       void update_placeholder_text();
       void commit_style();
       void on_current(const QString& current);
-      void on_editing_finished();
-      void on_text_edited(const QString& text);
-      void on_cursor_position(int old_position, int new_position);
-      void on_selection();
-      void on_highlight(const Highlight& highlight);
+      //void on_editing_finished();
+      //void on_text_edited(const QString& text);
+      //void on_cursor_position(int old_position, int new_position);
+      //void on_selection();
+      //void on_highlight(const Highlight& highlight);
       void on_style();
   };
 
