@@ -38,7 +38,7 @@ namespace {
 ScrollBar::ScrollBar(Qt::Orientation orientation, QWidget* parent)
     : QWidget(parent),
       m_orientation(orientation),
-      m_range{0, 100},
+      m_range(0, 100),
       m_line_size(1),
       m_page_size(20),
       m_position(0),

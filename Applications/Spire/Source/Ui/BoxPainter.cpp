@@ -36,6 +36,9 @@ namespace {
   void draw_border(QPainter& painter, BoxPainter::Border border, int top_radius,
       BoxPainter::Border top_border, int bottom_radius,
       BoxPainter::Border bottom_border, QPoint origin, qreal orientation) {
+    if(border.m_size <= 0) {
+      return;
+    }
     painter.save();
     painter.translate(origin);
     painter.rotate(orientation);
@@ -57,6 +60,10 @@ namespace {
   void draw_corner(QPainter& painter, QPainterPath& path,
       BoxPainter::Border horizontal_border, BoxPainter::Border vertical_border,
       int radius, QPoint origin, qreal orientation) {
+    if(std::max(radius, horizontal_border.m_size) == 0 ||
+        std::max(radius, vertical_border.m_size) == 0) {
+      return;
+    }
     painter.save();
     painter.translate(origin);
     painter.rotate(orientation);
@@ -117,9 +124,11 @@ namespace {
       path.lineTo(outer_joint);
       path.arcTo(QRect(QPoint(0, 0), 2 * QSize(radius, radius)),
         180 + corner_angle, -corner_angle);
-      pixmap_painter.setPen(horizontal_border.m_color);
-      pixmap_painter.setBrush(horizontal_border.m_color);
-      pixmap_painter.drawPath(path);
+      if(horizontal_border.m_size > 0) {
+        pixmap_painter.setPen(horizontal_border.m_color);
+        pixmap_painter.setBrush(horizontal_border.m_color);
+        pixmap_painter.drawPath(path);
+      }
       path.clear();
       path.moveTo(outer_joint);
       path.arcTo(QRect(QPoint(0, 0), 2 * QSize(radius, radius)),
@@ -131,15 +140,17 @@ namespace {
           (vertical_border.m_size - 1))), 90, 90 + corner_angle);
     }
     path.closeSubpath();
-    pixmap_painter.drawRect(
-      QRect(QPoint(0, std::max(radius, vertical_border.m_size) - 1),
-        QSize(horizontal_border.m_size - 1, 1)));
-    pixmap_painter.setPen(vertical_border.m_color);
-    pixmap_painter.setBrush(vertical_border.m_color);
-    pixmap_painter.drawPath(path);
-    pixmap_painter.drawRect(
-      QRect(QPoint(std::max(radius, horizontal_border.m_size) - 1, 0),
-        QSize(1, vertical_border.m_size - 1)));
+    if(vertical_border.m_size > 0) {
+      pixmap_painter.drawRect(
+        QRect(QPoint(0, std::max(radius, vertical_border.m_size) - 1),
+          QSize(horizontal_border.m_size - 1, 1)));
+      pixmap_painter.setPen(vertical_border.m_color);
+      pixmap_painter.setBrush(vertical_border.m_color);
+      pixmap_painter.drawPath(path);
+      pixmap_painter.drawRect(
+        QRect(QPoint(std::max(radius, horizontal_border.m_size) - 1, 0),
+          QSize(1, vertical_border.m_size - 1)));
+    }
     painter.drawPixmap(0, 0, pixmap);
     painter.restore();
     path.clear();
@@ -324,11 +335,13 @@ void BoxPainter::paint(QPainter& painter) const {
   auto size = QSize(painter.device()->width(), painter.device()->height());
   if(m_classification == Classification::REGULAR) {
     painter.fillRect(QRect(QPoint(0, 0), size), m_background_color);
-    painter.setPen(QPen(QBrush(m_borders.m_top.m_color), m_borders.m_top.m_size,
-      Qt::SolidLine, Qt::FlatCap, Qt::MiterJoin));
-    painter.drawRect(
-      QRect(QPoint(m_borders.m_top.m_size / 2, m_borders.m_top.m_size / 2),
-        size - QSize(m_borders.m_top.m_size, m_borders.m_top.m_size)));
+    if(m_borders.m_top.m_size > 0) {
+      painter.setPen(QPen(QBrush(m_borders.m_top.m_color),
+        m_borders.m_top.m_size, Qt::SolidLine, Qt::FlatCap, Qt::MiterJoin));
+      painter.drawRect(
+        QRect(QPoint(m_borders.m_top.m_size / 2, m_borders.m_top.m_size / 2),
+          size - QSize(m_borders.m_top.m_size, m_borders.m_top.m_size)));
+    }
   } else {
     auto path = QPainterPath();
     painter.setPen(m_background_color);
