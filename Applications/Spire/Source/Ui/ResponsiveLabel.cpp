@@ -1,4 +1,5 @@
 #include "Spire/Ui/ResponsiveLabel.hpp"
+#include <tuple>
 #include <QHBoxLayout>
 #include "Spire/Spire/LocalValueModel.hpp"
 
@@ -80,7 +81,7 @@ void ResponsiveLabel::reset_mapped_labels() {
   sort_mapped_labels();
 }
 
-void ResponsiveLabel::set_current(const optional<int> mapped_label_index) {
+void ResponsiveLabel::set_current(const optional<int>& mapped_label_index) {
   m_current_mapped_index = mapped_label_index;
   if(!m_current_mapped_index) {
     m_text_model->set("");
@@ -97,10 +98,8 @@ void ResponsiveLabel::set_current(const optional<int> mapped_label_index) {
 void ResponsiveLabel::sort_mapped_labels() {
   std::sort(m_mapped_labels.begin(), m_mapped_labels.end(),
     [=] (const auto& first, const auto& second) {
-      if(first.m_pixel_width != second.m_pixel_width) {
-        return first.m_pixel_width < second.m_pixel_width;
-      }
-      return first.m_list_index > second.m_list_index;
+      return std::tie(first.m_pixel_width, -first.m_list_index) <
+        std::tie(second.m_pixel_width, -second.m_list_index);
     });
 }
 

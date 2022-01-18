@@ -1,10 +1,16 @@
 #ifndef SPIRE_RESPONSIVE_LABEL_HPP
 #define SPIRE_RESPONSIVE_LABEL_HPP
+#include <memory>
+#include <vector>
+#include <boost/optional/optional.hpp>
+#include <boost/signals2/connection.hpp>
+#include <QFont>
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+
   /**
    * Displays a TextBox used as a label whose current value is the longest value
    * among a list of values that will fit within it's body without overflowing.
@@ -40,7 +46,7 @@ namespace Spire {
         int m_pixel_width;
       };
       std::shared_ptr<ListModel<QString>> m_labels;
-      boost::signals2::connection m_list_operation_connection;
+      boost::signals2::scoped_connection m_list_operation_connection;
       TextBox* m_text_box;
       std::shared_ptr<LocalTextModel> m_text_model;
       boost::signals2::scoped_connection m_style_connection;
@@ -53,7 +59,7 @@ namespace Spire {
       int get_pixel_width(const QString& text) const;
       bool is_outside_current_bounds(int width) const;
       void reset_mapped_labels();
-      void set_current(const boost::optional<int> mapped_index);
+      void set_current(const boost::optional<int>& mapped_index);
       void sort_mapped_labels();
       void update_current_font();
       void update_display_text();
