@@ -63,7 +63,7 @@ namespace Details {
         EXCLUDE
       };
 
-      /** The OpenInputBox using to get input inside the OpenFilterPanel. */
+      /** The OpenInputBox used to get input inside the OpenFilterPanel. */
       using OpenInputBox = typename Details::OpenInputBox;
 
       /** The type of model using to retrieve potential matches to a query. */
@@ -88,7 +88,7 @@ namespace Details {
           const SubmitHandler& submit_handler)>;
 
       /**
-       * Signals the list of filted values and the filter mode.
+       * Signals the list of filtered values and the filter mode.
        * @param submission The list of values that the user wants to filter.
        * @param mode The filter mode.
        */
@@ -96,7 +96,7 @@ namespace Details {
         Signal<void (const std::shared_ptr<AnyListModel>& submission,
           FilterMode mode)>;
 
-      /** The default InputBox builder which builds an OpenInputBox */
+      /** The default InputBox builder which builds an OpenInputBox. */
       static OpenInputBox default_input_box_builder(
         const std::shared_ptr<QueryModel>& query_model,
         const std::shared_ptr<AnyListModel>& filtered_model,
