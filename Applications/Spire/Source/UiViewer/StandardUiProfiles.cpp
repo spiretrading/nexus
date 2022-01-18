@@ -24,6 +24,7 @@
 #include "Spire/Ui/Checkbox.hpp"
 #include "Spire/Ui/ClosedFilterPanel.hpp"
 #include "Spire/Ui/ComboBox.hpp"
+#include "Spire/Ui/ContextMenu.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DateBox.hpp"
 #include "Spire/Ui/DateFilterPanel.hpp"
@@ -49,6 +50,7 @@
 #include "Spire/Ui/OverlayPanel.hpp"
 #include "Spire/Ui/QuantityBox.hpp"
 #include "Spire/Ui/RegionListItem.hpp"
+#include "Spire/Ui/ResponsiveLabel.hpp"
 #include "Spire/Ui/ScalarFilterPanel.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
@@ -58,6 +60,7 @@
 #include "Spire/Ui/SecurityListItem.hpp"
 #include "Spire/Ui/SideBox.hpp"
 #include "Spire/Ui/SideFilterPanel.hpp"
+#include "Spire/Ui/SubmenuItem.hpp"
 #include "Spire/Ui/TableHeader.hpp"
 #include "Spire/Ui/TableHeaderItem.hpp"
 #include "Spire/Ui/TableView.hpp"
@@ -506,44 +509,140 @@ namespace {
         {"UNFILTERED", TableFilter::Filter::UNFILTERED}});
     return property;
   }
+
+  template<typename T, typename U, typename V>
+  auto connect_style_property_change_signal(
+      TypedUiProperty<T>& property, QWidget* widget) {
+    property.connect_changed_signal([=] (const T& value) {
+      update_style(*widget, [&] (auto& style) {
+        style.get(U()).set(V(value));
+      });
+    });
+  }
 }
 
 UiProfile Spire::make_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
-  properties.push_back(make_standard_property("border-size", 1));
-  properties.push_back(make_standard_property("border-radius", 0));
-  auto profile = UiProfile("Box", properties, [] (auto& profile) {
-    auto box = new Box(nullptr);
-    box->setFixedSize(scale(100, 100));
-    apply_widget_properties(box, profile.get_properties());
-    auto& border_size = get<int>("border-size", profile.get_properties());
-    auto& border_radius = get<int>("border-radius", profile.get_properties());
-    auto style = StyleSheet();
-    style.get(Any()).
-      set(BackgroundColor(QColor(0xFFFFFF))).
-      set(border(scale_width(border_size.get()), QColor(0xC8C8C8))).
-      set(Styles::border_radius(scale_width(border_radius.get()))).
-      set(horizontal_padding(scale_width(8)));
-    style.get(Hover() || Focus()).
-      set(border_color(QColor(0x4B23A0)));
-    style.get(Disabled()).
-      set(BackgroundColor(QColor(0xF5F5F5))).
-      set(border_color(QColor(0xC8C8C8)));
-    set_style(*box, std::move(style));
-    border_size.connect_changed_signal([=, &border_size] (auto size) {
-      update_style(*box, [&] (auto& style) {
-        style.get(Any()).set(
-          Styles::border_size(scale_width(border_size.get())));
-      });
-    });
-    border_radius.connect_changed_signal([=, &border_radius] (auto radius) {
-      update_style(*box, [&] (auto& style) {
-        style.get(Any()).set(
-          Styles::border_radius(scale_width(border_radius.get())));
-      });
-    });
-    return box;
+  properties.push_back(
+    make_standard_property("background-color", QColor(0xFFFFFF)));
+  properties.push_back(make_standard_property("padding-top", 1));
+  properties.push_back(make_standard_property("padding-right", 1));
+  properties.push_back(make_standard_property("padding-bottom", 1));
+  properties.push_back(make_standard_property("padding-left", 1));
+  properties.push_back(make_standard_property("border-top-size", 1));
+  properties.push_back(make_standard_property("border-right-size", 1));
+  properties.push_back(make_standard_property("border-bottom-size", 1));
+  properties.push_back(make_standard_property("border-left-size", 1));
+  properties.push_back(
+    make_standard_property("border-top-color", QColor(0xC8C8C8)));
+  properties.push_back(
+    make_standard_property("border-right-color", QColor(0xC8C8C8)));
+  properties.push_back(
+    make_standard_property("border-bottom-color", QColor(0xC8C8C8)));
+  properties.push_back(
+    make_standard_property("border-left-color", QColor(0xC8C8C8)));
+  properties.push_back(make_standard_property("top-left-radius", 0));
+  properties.push_back(make_standard_property("top-right-radius", 0));
+  properties.push_back(make_standard_property("bottom-right-radius", 0));
+  properties.push_back(make_standard_property("bottom-left-radius", 0));
+  auto profile = UiProfile(QString::fromUtf8("Box"), properties,
+    [] (auto& profile) {
+      auto box = new Box(nullptr);
+      box->setFixedSize(scale(100, 100));
+      apply_widget_properties(box, profile.get_properties());
+      TypedUiProperty<QColor>& background_color =
+        get<QColor>("background-color", profile.get_properties());
+      auto& padding_top = get<int>("padding-top", profile.get_properties());
+      auto& padding_right =
+        get<int>("padding-right", profile.get_properties());
+      auto& padding_bottom =
+        get<int>("padding-bottom", profile.get_properties());
+      auto& padding_left = get<int>("padding-left", profile.get_properties());
+      auto& border_top_size =
+        get<int>("border-top-size", profile.get_properties());
+      auto& border_right_size =
+        get<int>("border-right-size", profile.get_properties());
+      auto& border_bottom_size =
+        get<int>("border-bottom-size", profile.get_properties());
+      auto& border_left_size =
+        get<int>("border-left-size", profile.get_properties());
+      auto& border_top_color =
+        get<QColor>("border-top-color", profile.get_properties());
+      auto& border_right_color =
+        get<QColor>("border-right-color", profile.get_properties());
+      auto& border_bottom_color =
+        get<QColor>("border-bottom-color", profile.get_properties());
+      auto& border_left_color =
+        get<QColor>("border-left-color", profile.get_properties());
+      auto& top_left_radius =
+        get<int>("top-left-radius", profile.get_properties());
+      auto& top_right_radius =
+        get<int>("top-right-radius", profile.get_properties());
+      auto& bottom_right_radius =
+        get<int>("bottom-right-radius", profile.get_properties());
+      auto& bottom_left_radius =
+        get<int>("bottom-left-radius", profile.get_properties());
+      auto style = StyleSheet();
+      style.get(Any()).
+        set(BackgroundColor(background_color.get())).
+        set(PaddingTop(padding_top.get())).
+        set(PaddingRight(padding_right.get())).
+        set(PaddingBottom(padding_bottom.get())).
+        set(PaddingLeft(padding_left.get())).
+        set(BorderTopSize(scale_height(border_top_size.get()))).
+        set(BorderRightSize(scale_width(border_right_size.get()))).
+        set(BorderBottomSize(scale_height(border_bottom_size.get()))).
+        set(BorderLeftSize(scale_width(border_left_size.get()))).
+        set(BorderTopColor(border_top_color.get())).
+        set(BorderRightColor(border_right_color.get())).
+        set(BorderBottomColor(border_bottom_color.get())).
+        set(BorderLeftColor(border_left_color.get())).
+        set(BorderTopLeftRadius(scale_width(top_left_radius.get()))).
+        set(BorderTopRightRadius(scale_width(top_right_radius.get()))).
+        set(BorderBottomRightRadius(scale_width(bottom_right_radius.get()))).
+        set(BorderBottomLeftRadius(scale_width(bottom_left_radius.get())));
+      style.get(Hover() || Focus()).
+        set(border_color(QColor(0x4B23A0)));
+      style.get(Disabled()).
+        set(BackgroundColor(QColor(0xF5F5F5))).
+        set(border_color(QColor(0xC8C8C8)));
+      set_style(*box, std::move(style));
+      connect_style_property_change_signal<QColor, Any, BackgroundColor>(
+        background_color, box);
+      connect_style_property_change_signal<int, Any, PaddingTop>(
+        padding_top, box);
+      connect_style_property_change_signal<int, Any, PaddingRight>(
+        padding_right, box);
+      connect_style_property_change_signal<int, Any, PaddingBottom>(
+        padding_bottom, box);
+      connect_style_property_change_signal<int, Any, PaddingLeft>(
+        padding_left, box);
+      connect_style_property_change_signal<int, Any, BorderTopSize>(
+        border_top_size, box);
+      connect_style_property_change_signal<int, Any, BorderRightSize>(
+        border_right_size, box);
+      connect_style_property_change_signal<int, Any, BorderBottomSize>(
+        border_bottom_size, box);
+      connect_style_property_change_signal<int, Any, BorderLeftSize>(
+        border_left_size, box);
+      connect_style_property_change_signal<QColor, Any, BorderTopColor>(
+        border_top_color, box);
+      connect_style_property_change_signal<QColor, Any, BorderRightColor>(
+        border_right_color, box);
+      connect_style_property_change_signal<QColor, Any, BorderBottomColor>(
+        border_bottom_color, box);
+      connect_style_property_change_signal<QColor, Any, BorderLeftColor>(
+        border_left_color, box);
+      connect_style_property_change_signal<int, Any, BorderTopLeftRadius>(
+        top_left_radius, box);
+      connect_style_property_change_signal<int, Any, BorderTopRightRadius>(
+        top_right_radius, box);
+      connect_style_property_change_signal<int, Any, BorderBottomRightRadius>(
+        bottom_right_radius, box);
+      connect_style_property_change_signal<int, Any, BorderBottomLeftRadius>(
+        bottom_left_radius, box);
+      return box;
   });
   return profile;
 }
@@ -725,6 +824,60 @@ UiProfile Spire::make_combo_box_profile() {
     box->connect_submit_signal(profile.make_event_slot<std::any>("Submit"));
     return box;
   });
+  return profile;
+}
+
+UiProfile Spire::make_context_menu_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  auto profile = UiProfile(QString::fromUtf8("ContextMenu"), properties,
+    [] (auto& profile) {
+      auto button = make_label_button(QString::fromUtf8("Click me"));
+      auto menu = new ContextMenu(*button);
+      auto view_menu = new ContextMenu(*static_cast<QWidget*>(menu));
+      view_menu->add_action("Large", profile.make_event_slot<>(
+        QString("Action:Large")));
+      view_menu->add_action("Medium", profile.make_event_slot<>(
+        QString("Action:Medium")));
+      view_menu->add_action("Small", profile.make_event_slot<>(
+        QString("Action:Small")));
+      auto empty_menu = new ContextMenu(*static_cast<QWidget*>(view_menu));
+      view_menu->add_menu("Empty", *empty_menu);
+      menu->add_menu("View", *view_menu);
+      auto sort_menu = new ContextMenu(*static_cast<QWidget*>(menu));
+      sort_menu->add_action("Name", profile.make_event_slot<>(
+        QString("Action:Name")));
+      sort_menu->add_action("Size", profile.make_event_slot<>(
+        QString("Action:Size")));
+      auto type_menu = new ContextMenu(*static_cast<QWidget*>(sort_menu));
+      type_menu->add_action("Security", profile.make_event_slot<>(
+        QString("Action:Security")));
+      type_menu->add_action("Side", profile.make_event_slot<>(
+        QString("Action:Side")));
+      sort_menu->add_menu("Type", *type_menu);
+      menu->add_menu("Sort by", *sort_menu);
+      menu->add_action("Cut", profile.make_event_slot<>(QString("Action:Cut")));
+      menu->add_action("Copy", profile.make_event_slot<>(
+        QString("Action:Copy")));
+      menu->add_action("Paste", profile.make_event_slot<>(
+        QString("Action:Paste")));
+      auto date_model = std::make_shared<LocalBooleanModel>();
+      date_model->set(true);
+      date_model->connect_update_signal(
+        profile.make_event_slot<bool>(QString("Date CheckedSignal")));
+      menu->add_check_box("Date", date_model);
+      auto time_model = menu->add_check_box("Time");
+      time_model->connect_update_signal(
+        profile.make_event_slot<bool>(QString("Time CheckedSignal")));
+      menu->add_action("This is a long name for test",
+        profile.make_event_slot<>(
+          QString("Action:This is a long name for test")));
+      button->connect_clicked_signal([=] {
+        auto pos = QCursor::pos();
+        menu->window()->move(pos.x(), pos.y() + button->height());
+        menu->show();
+      });
+      return button;
+    });
   return profile;
 }
 
@@ -2161,6 +2314,68 @@ UiProfile Spire::make_region_list_item_profile() {
   return profile;
 }
 
+UiProfile Spire::make_responsive_label_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(
+    make_standard_property("label1", QString("Hello world")));
+  properties.push_back(make_standard_property("label2", QString("Hello w.")));
+  properties.push_back(make_standard_property("label3", QString("Hello")));
+  properties.push_back(make_standard_property("label4", QString("HW")));
+  properties.push_back(make_standard_property("font-size", 12));
+  auto profile = UiProfile("ResponsiveLabel", properties, [] (auto& profile) {
+    auto labels = std::make_shared<ArrayListModel<QString>>();
+    auto& label1 = get<QString>("label1", profile.get_properties());
+    labels->push(label1.get());
+    auto& label2 = get<QString>("label2", profile.get_properties());
+    labels->push(label2.get());
+    auto& label3 = get<QString>("label3", profile.get_properties());
+    labels->push(label3.get());
+    auto& label4 = get<QString>("label4", profile.get_properties());
+    labels->push(label4.get());
+    auto label = new ResponsiveLabel(labels);
+    apply_widget_properties(label, profile.get_properties());
+    auto label_map =
+      std::make_shared<std::unordered_map<int, int>>();
+    auto connect_label_changed_signal =
+      [=] (auto& property, auto id, auto label_list) {
+        label_map->insert_or_assign(id, id);
+        property.connect_changed_signal([=] (const auto& value) {
+          if(value.isEmpty()) {
+            if(auto index = label_map->find(id); index != label_map->end()) {
+              labels->remove(label_map->at(index->first));
+              for(auto& label_property : *label_map) {
+                if(label_property.second > index->second) {
+                  label_property.second -= 1;
+                }
+              }
+            }
+            label_map->erase(id);
+            return;
+          } else if(auto index = label_map->find(id);
+              index == label_map->end()) {
+            labels->push(value);
+            label_map->insert_or_assign(id, labels->get_size() - 1);
+            return;
+          }
+          labels->set(label_map->at(id), value);
+        });
+      };
+    connect_label_changed_signal(label1, 0, labels);
+    connect_label_changed_signal(label2, 1, labels);
+    connect_label_changed_signal(label3, 2, labels);
+    connect_label_changed_signal(label4, 3, labels);
+    auto& font_size = get<int>("font-size", profile.get_properties());
+    font_size.connect_changed_signal([=] (auto size) {
+      update_style(*label, [&] (auto& style) {
+        style.get(Any()).set(FontSize(scale_height(size)));
+      });
+    });
+    return label;
+  });
+  return profile;
+}
+
 UiProfile Spire::make_scroll_bar_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
@@ -2373,6 +2588,8 @@ UiProfile Spire::make_security_box_profile() {
     auto model = std::make_shared<LocalComboBoxQueryModel>();
     for(auto security_info : security_infos) {
       model->add(displayTextAny(security_info.m_security).toLower(),
+        security_info);
+      model->add(QString::fromStdString(security_info.m_name).toLower(),
         security_info);
     }
     auto box = new SecurityBox(model);

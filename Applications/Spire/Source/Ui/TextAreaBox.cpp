@@ -208,6 +208,8 @@ TextAreaBox::TextAreaBox(std::shared_ptr<TextModel> current, QWidget* parent)
       m_placeholder_styles([=] { commit_placeholder_style(); }),
       m_submission(current->get()) {
   m_text_edit = new ContentSizedTextEdit(std::move(current));
+  m_text_edit->setObjectName(QString("0x%1").arg(
+    reinterpret_cast<std::intptr_t>(this)));
   m_text_edit->setSizePolicy(
     QSizePolicy::Expanding, QSizePolicy::MinimumExpanding);
   m_text_edit->installEventFilter(this);
@@ -281,9 +283,9 @@ void TextAreaBox::commit_placeholder_style() {
 
 void TextAreaBox::commit_style() {
   auto stylesheet = QString(
-    R"(QTextEdit {
+    R"(#0x%1 {
       background: transparent;
-      border-width: 0px;)");
+      border-width: 0px;)").arg(reinterpret_cast<std::intptr_t>(this));
   m_text_edit_styles.m_styles.write(stylesheet);
   auto font = m_text_edit_styles.m_font;
   if(m_text_edit_styles.m_size) {

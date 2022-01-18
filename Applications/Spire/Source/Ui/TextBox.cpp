@@ -270,6 +270,8 @@ TextBox::TextBox(std::shared_ptr<TextModel> current, QWidget* parent)
       m_is_handling_key_press(false),
       m_line_edit_styles([=] { commit_style(); }) {
   m_line_edit = new QLineEdit(m_current->get());
+  m_line_edit->setObjectName(QString("0x%1").arg(
+    reinterpret_cast<std::intptr_t>(this)));
   m_line_edit->setFrame(false);
   m_line_edit->setTextMargins(-2, 0, -4, 0);
   m_line_edit->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -503,10 +505,10 @@ void TextBox::update_placeholder_text() {
 
 void TextBox::commit_style() {
   auto stylesheet = QString(
-    R"(QLineEdit {
+    R"(#0x%1 {
       background: transparent;
       border-width: 0px;
-      padding: 0px;)");
+      padding: 0px;)").arg(reinterpret_cast<std::intptr_t>(this));
   m_line_edit_styles.m_styles.write(stylesheet);
   auto alignment = m_line_edit_styles.m_alignment.value_or(
     Qt::Alignment(Qt::AlignmentFlag::AlignLeft));

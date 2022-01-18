@@ -20,6 +20,9 @@ namespace Spire {
   /** Returns a UiProfile for the ComboBox. */
   UiProfile make_combo_box_profile();
 
+  /** Returns a UiProfile for the ComboBox. */
+  UiProfile make_context_menu_profile();
+
   /** Returns a UiProfile for the DateBox. */
   UiProfile make_date_box_profile();
 
@@ -127,6 +130,9 @@ namespace Spire {
 
   /** Returns a UiProfile for the RegionListItem. */
   UiProfile make_region_list_item_profile();
+
+  /** Returns a UiProfile for the ResponsiveLabel. */
+  UiProfile make_responsive_label_profile();
 
   /** Returns a UiProfile for the ScrollBar. */
   UiProfile make_scroll_bar_profile();

@@ -6,17 +6,6 @@
 using namespace boost::posix_time;
 using namespace Spire;
 
-void Spire::draw_border(const QRect& region, const QColor& color,
-    QPainter* painter) {
-  painter->save();
-  auto border_region = QRegion(region).subtracted(region.adjusted(
-    scale_width(1), scale_height(1), -scale_width(1), -scale_height(1)));
-  for(auto& rect : border_region) {
-    painter->fillRect(rect, color);
-  }
-  painter->restore();
-}
-
 QPropertyAnimation* Spire::fade_window(QObject* target, bool reverse,
     time_duration fade_speed) {
   auto animation = new QPropertyAnimation(target, "windowOpacity", target);
@@ -47,61 +36,4 @@ QImage Spire::imageFromSvg(const QString& path, const QSize& size,
   auto painter = QPainter(&image);
   painter.drawPixmap(box.topLeft(), svg_pixmap);
   return image;
-}
-
-QHeaderView* Spire::make_fixed_header(QWidget* parent) {
-  auto header = new QHeaderView(Qt::Horizontal, parent);
-  header->setFixedHeight(scale_height(30));
-  header->setStretchLastSection(true);
-  header->setSectionsClickable(false);
-  header->setSectionsMovable(false);
-  header->setSectionResizeMode(QHeaderView::Fixed);
-  header->setDefaultAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-  header->setStyleSheet(QString(R"(
-    QHeaderView {
-      background-color: #FFFFFF;
-    }
-
-    QHeaderView::section {
-      background-color: #FFFFFF;
-      border: none;
-      color: #4B23A0;
-      font-family: Roboto;
-      font-size: %2px;
-      font-weight: 550;
-      padding-left: %1px;
-      padding-right: %1px;
-    })").arg(scale_width(8)).arg(scale_height(12)));
-  return header;
-}
-
-QHeaderView* Spire::make_header(QWidget* parent) {
-  auto header = make_fixed_header(parent);
-  header->setSectionsMovable(true);
-  header->setSectionResizeMode(QHeaderView::Interactive);
-  header->setStyleSheet(QString(R"(
-    QHeaderView {
-      background-color: #FFFFFF;
-      padding-left: %1px;
-    }
-
-    QHeaderView::section {
-      background-color: #FFFFFF;
-      background-image: url(:/Icons/column-border.png);
-      background-position: left;
-      background-repeat: repeat;
-      border: none;
-      color: #4B23A0;
-      font-family: Roboto;
-      font-size: %2px;
-      font-weight: 550;
-      padding-left: %1px;
-      padding-right: %1px;
-    }
-
-    QHeaderView::section::first {
-      background: none;
-      background-color: #FFFFFF;
-    })").arg(scale_width(8)).arg(scale_height(12)));
-  return header;
 }

@@ -119,6 +119,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_check_box_profile());
   add(make_closed_filter_panel_profile());
   add(make_combo_box_profile());
+  add(make_context_menu_profile());
   add(make_date_box_profile());
   add(make_date_filter_panel_profile());
   add(make_decimal_box_profile());
@@ -155,6 +156,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_quantity_filter_panel_profile());
   add(make_radio_button_profile());
   add(make_region_list_item_profile());
+  add(make_responsive_label_profile());
   add(make_scroll_bar_profile());
   add(make_scroll_box_profile());
   add(make_scrollable_list_box_profile());
