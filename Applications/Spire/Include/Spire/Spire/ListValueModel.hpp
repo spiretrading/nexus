@@ -50,6 +50,17 @@ namespace Spire {
   template<typename L>
   ListValueModel(std::shared_ptr<L>, int) -> ListValueModel<typename L::Type>;
 
+  /**
+   * Constructs a ListValueModel from a specified index into a ListModel.
+   * @param source The ListModel to view.
+   * @param index The index of the value in the <i>source</i> to view. 
+   */
+  template<typename T>
+  auto make_list_value_model(std::shared_ptr<T> source, int index) {
+    return std::make_shared<ListValueModel<typename T::Type>>(
+      std::move(source), index);
+  }
+
   template<typename T>
   ListValueModel<T>::ListValueModel(
       std::shared_ptr<ListModel<Type>> source, int index)

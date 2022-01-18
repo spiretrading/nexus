@@ -16,15 +16,24 @@ namespace Spire {
   class FilteredTableModel : public TableModel {
     public:
 
-      /** 
-       * Constructs a FilteredTableModel from a TableModel and a filter function.
-       * @param source The model.
-       * @param filter A function that takes a TableModel and the index of a
-       *               row, and returns true if that row should be excluded of
-       *               the model.
+      /**
+       * The type of callable used to filter rows.
+       * @param model The model being filtered.
+       * @param row The index of the row within the <i>model</i> to test.
+       * @return <code>true</code> iff the <i>row</i> should be excluded.
        */
-      FilteredTableModel(std::shared_ptr<TableModel> source,
-        std::function<bool(const TableModel&, int)> filter);
+      using Filter = std::function<bool (const TableModel& model, int row)>;
+
+      /**
+       * Constructs a FilteredTableModel from a TableModel and a filter
+       * function.
+       * @param source The model to filter.
+       * @param filter The filter applied to every row of the <i>source</i>.
+       */
+      FilteredTableModel(std::shared_ptr<TableModel> source, Filter filter);
+
+      /** Applies a new filter to this model. */
+      void set_filter(const Filter& filter);
 
       int get_row_size() const override;
 
@@ -32,14 +41,15 @@ namespace Spire {
 
       const std::any& at(int row, int column) const override;
 
-      QValidator::State set(int row, int column, const std::any& value) override;
+      QValidator::State set(
+        int row, int column, const std::any& value) override;
 
       boost::signals2::connection connect_operation_signal(
         const OperationSignal::slot_type& slot) const override;
 
     private:
       std::shared_ptr<TableModel> m_source;
-      std::function<bool(const TableModel&, int)> m_filter;
+      Filter m_filter;
       std::vector<int> m_filtered_data;
       TableModelTransactionLog m_transaction;
       boost::signals2::scoped_connection m_source_connection;

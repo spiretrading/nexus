@@ -25,6 +25,13 @@ namespace Spire {
     public:
 
       /**
+       * Constructs a QuantityBox with a LocalOptionalValueModel and default
+       * modifiers.
+       * @param parent The parent widget.
+       */
+      explicit QuantityBox(QWidget* parent = nullptr);
+
+      /**
        * Constructs a QuantityBox with a LocalOptionalValueModel.
        * @param modifiers The keyboard modifier increments.
        * @param parent The parent widget.

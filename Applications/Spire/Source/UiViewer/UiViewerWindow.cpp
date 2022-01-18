@@ -60,7 +60,7 @@ namespace {
     return container;
   }
 
-  auto get_hover_state_name(HoverObserver::State state) {
+  auto to_string(HoverObserver::State state) {
     switch(state) {
       case HoverObserver::State::MOUSE_IN:
         return QString::fromUtf8("MOUSE_IN");
@@ -119,6 +119,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_check_box_profile());
   add(make_closed_filter_panel_profile());
   add(make_combo_box_profile());
+  add(make_context_menu_profile());
   add(make_date_box_profile());
   add(make_date_filter_panel_profile());
   add(make_decimal_box_profile());
@@ -164,7 +165,9 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_security_list_item_profile());
   add(make_side_box_profile());
   add(make_side_filter_panel_profile());
-  add(make_table_header_cell_profile());
+  add(make_table_header_profile());
+  add(make_table_header_item_profile());
+  add(make_table_view_profile());
   add(make_tag_profile());
   add(make_tag_box_profile());
   add(make_text_area_box_profile());
@@ -189,8 +192,8 @@ void UiViewerWindow::update_table(const UiProfile& profile) {
   table->show();
 }
 
-void UiViewerWindow::on_event(const QString& name,
-    const std::vector<std::any>& arguments) {
+void UiViewerWindow::on_event(
+    const QString& name, const std::vector<std::any>& arguments) {
   ++m_line_count;
   auto log = QString();
   log += QString::number(m_line_count) + ": " + name;
@@ -203,11 +206,10 @@ void UiViewerWindow::on_event(const QString& name,
       } else {
         prepend_comma = true;
       }
-      if(argument.type() == typeid(std::nullptr_t)) {
+      if(auto value = std::any_cast<std::nullptr_t>(&argument)) {
         log += QString::fromUtf8("null");
-      } else if(argument.type() == typeid(HoverObserver::State)) {
-        log +=
-          get_hover_state_name(std::any_cast<HoverObserver::State>(argument));
+      } else if(auto value = std::any_cast<HoverObserver::State>(&argument)) {
+        log += to_string(*value);
       } else {
         log += displayTextAny(argument);
       }
