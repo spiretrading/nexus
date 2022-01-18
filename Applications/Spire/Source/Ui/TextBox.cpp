@@ -342,10 +342,6 @@ void TextBox::set_read_only(bool read_only) {
   update_placeholder_text();
 }
 
-bool TextBox::is_text_elided() const {
-  return m_text_validator->m_is_text_elided;
-}
-
 connection TextBox::connect_submit_signal(
     const SubmitSignal::slot_type& slot) const {
   return m_submit_signal.connect(slot);

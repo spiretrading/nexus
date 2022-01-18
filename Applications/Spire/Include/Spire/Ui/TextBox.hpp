@@ -147,9 +147,6 @@ namespace Styles {
       /** Sets whether the box is read-only. */
       void set_read_only(bool read_only);
 
-      /** Returns true iff the displayed text is elided. */
-      bool is_text_elided() const;
-
       /** Connects a slot to the SubmitSignal. */
       boost::signals2::connection connect_submit_signal(
         const SubmitSignal::slot_type& slot) const;
