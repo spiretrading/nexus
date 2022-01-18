@@ -107,19 +107,6 @@ namespace Spire {
    *         dimensions.
    */
   QImage imageFromSvg(const QString& path, const QSize& size, const QRect& box);
-
-  /**
-   * Constructs a horizontal Spire-styled table header with fixed size,
-   * immovable, column headers.
-   * @param parent The parent widget.
-   */
-  QHeaderView* make_fixed_header(QWidget* parent);
-
-  /**
-   * Constructs a horizontal, Spire-styled, table header.
-   * @param parent The parent widget.
-   */
-  QHeaderView* make_header(QWidget* parent);
 }
 
 #endif
