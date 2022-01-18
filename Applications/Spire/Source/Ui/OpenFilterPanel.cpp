@@ -236,7 +236,7 @@ OpenFilterPanel::OpenFilterPanel(std::shared_ptr<QueryModel> query_model,
   m_filter_panel = new FilterPanel(std::move(title), this, parent);
   m_filter_panel->connect_reset_signal(
     std::bind_front(&OpenFilterPanel::on_reset, this));
-  window()->setWindowFlags(Qt::Tool | (window()->windowFlags() & ~Qt::Popup));
+  window()->setWindowFlags(Qt::Tool | window()->windowFlags());
   window()->installEventFilter(this);
 }
 
