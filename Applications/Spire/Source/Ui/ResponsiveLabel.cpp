@@ -195,9 +195,7 @@ void ResponsiveLabel::on_label_added(int index) {
 }
 
 void ResponsiveLabel::on_label_removed(int index) {
-  if(index == m_mapped_labels.size() - 1) {
-    update_size_hint();
-  }
+  auto size_hint_updated = index == m_mapped_labels.back().m_list_index;
   for(auto i = m_mapped_labels.begin(); i != m_mapped_labels.end(); ++i) {
     if(i->m_list_index == index) {
       i = m_mapped_labels.erase(i);
@@ -209,12 +207,9 @@ void ResponsiveLabel::on_label_removed(int index) {
       --(i->m_list_index);
     }
   }
-  auto current_index = [&] () -> optional<int> {
-    if(m_mapped_labels.empty()) {
-      return none;
-    }
-    return static_cast<int>(m_mapped_labels.size()) - 1;
-  }();
+  if(size_hint_updated) {
+    update_size_hint();
+  }
   update_display_text();
 }
 
