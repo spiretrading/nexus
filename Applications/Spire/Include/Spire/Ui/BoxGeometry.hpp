@@ -13,6 +13,12 @@ namespace Spire {
       /** Constructs a BoxGeometry defining a box with zero width and height. */
       BoxGeometry();
 
+      /**
+       * Returns the overall geometry which by definition is equal to the border
+       * area.
+       */
+      const QRect& get_geometry() const;
+
       /** Returns the rectangle defining the edge of the border area. */
       const QRect& get_border_area() const;
 
@@ -69,9 +75,6 @@ namespace Spire {
 
       /** Returns the rectangle defining the edge of the content area. */
       const QRect& get_content_area() const;
-
-      /** Returns the size of this box. */
-      QSize get_size() const;
 
       /** Sets the size of the entire box. */
       void set_size(QSize size);

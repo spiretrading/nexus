@@ -1,6 +1,7 @@
 #ifndef SPIRE_BOX_HPP
 #define SPIRE_BOX_HPP
 #include "Spire/Styles/Selectors.hpp"
+#include "Spire/Ui/BoxGeometry.hpp"
 #include "Spire/Ui/BoxPainter.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -164,7 +165,7 @@ namespace Styles {
     private:
       QWidget* m_container;
       QWidget* m_body;
-      QRect m_body_geometry;
+      BoxGeometry m_geometry;
       BoxPainter m_painter;
       boost::signals2::scoped_connection m_style_connection;
       mutable boost::optional<QSize> m_size_hint;

@@ -29,7 +29,7 @@ TEST_SUITE("BoxGeometry") {
     REQUIRE(geometry.get_padding_area() == QRect(QPoint(0, 0), QSize(0, 0)));
     require_padding(geometry, {0, 0, 0, 0});
     REQUIRE(geometry.get_content_area() == QRect(QPoint(0, 0), QSize(0, 0)));
-    REQUIRE(geometry.get_size() == QSize(0, 0));
+    REQUIRE(geometry.get_geometry() == QRect(QPoint(0, 0), QSize(0, 0)));
   }
 
   TEST_CASE("set_areas") {

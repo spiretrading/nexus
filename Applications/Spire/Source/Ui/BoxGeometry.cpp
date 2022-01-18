@@ -10,6 +10,10 @@ BoxGeometry::BoxGeometry()
     m_padding_area(QPoint(0, 0), QSize(0, 0)),
     m_content_area(QPoint(0, 0), QSize(0, 0)) {}
 
+const QRect& BoxGeometry::get_geometry() const {
+  return get_border_area();
+}
+
 const QRect& BoxGeometry::get_border_area() const {
   return m_border_area;
 }
@@ -92,10 +96,6 @@ void BoxGeometry::set_padding_left(int size) {
 
 const QRect& BoxGeometry::get_content_area() const {
   return m_content_area;
-}
-
-QSize BoxGeometry::get_size() const {
-  return m_border_area.size();
 }
 
 void BoxGeometry::set_size(QSize size) {
