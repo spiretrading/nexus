@@ -20,7 +20,7 @@ ResponsiveLabel::ResponsiveLabel(
   layout->addWidget(m_text_box);
   m_list_operation_connection = m_labels->connect_operation_signal(
     [=] (auto operation) { on_list_operation(operation); });
-  update_current_font();
+  on_text_box_style();
   reset_mapped_labels();
   update_display_text();
 }
@@ -36,6 +36,10 @@ const std::shared_ptr<TextModel>& ResponsiveLabel::get_current() const {
 
 const std::shared_ptr<HighlightModel>& ResponsiveLabel::get_highlight() const {
   return m_text_box->get_highlight();
+}
+
+QSize ResponsiveLabel::sizeHint() const {
+  return m_size_hint;
 }
 
 void ResponsiveLabel::resizeEvent(QResizeEvent* event) {
@@ -89,10 +93,6 @@ void ResponsiveLabel::set_current(const optional<int>& mapped_label_index) {
   }
   m_text_model->set(
     m_labels->get(m_mapped_labels.at(*m_current_mapped_index).m_list_index));
-  if(m_text_box->is_text_elided() && m_current_mapped_index != 0) {
-    adjustSize();
-    update_display_text();
-  }
 }
 
 void ResponsiveLabel::sort_mapped_labels() {
@@ -101,33 +101,6 @@ void ResponsiveLabel::sort_mapped_labels() {
       return std::tie(first.m_pixel_width, -first.m_list_index) <
         std::tie(second.m_pixel_width, -second.m_list_index);
     });
-}
-
-void ResponsiveLabel::update_current_font() {
-  auto updated_font = QFont();
-  auto updated_font_size = m_text_box_font.pixelSize();
-  auto& stylist = find_stylist(*m_text_box);
-  for(auto& property : stylist.get_computed_block()) {
-    property.visit(
-      [&] (const Font& font) {
-        stylist.evaluate(font, [&] (const auto& font) {
-          updated_font = font;
-        });
-      },
-      [&] (const FontSize& size) {
-        stylist.evaluate(size, [&] (auto size) {
-          updated_font_size = size;
-        });
-      });
-  }
-  if(updated_font != m_text_box_font ||
-      updated_font_size != m_text_box_font.pixelSize()) {
-    m_text_box_font = updated_font;
-    m_text_box_font.setPixelSize(updated_font_size);
-    auto current = m_current_mapped_index;
-    reset_mapped_labels();
-    set_current(current);
-  }
 }
 
 void ResponsiveLabel::update_display_text() {
@@ -151,16 +124,80 @@ void ResponsiveLabel::update_display_text() {
   set_current(std::distance(m_mapped_labels.begin(), std::prev(mapped_label)));
 }
 
+void ResponsiveLabel::update_size_hint() {
+  auto previous_size_hint = m_size_hint;
+  m_size_hint = QSize(0, 0);
+  auto& stylist = find_stylist(*m_text_box);
+  for(auto& property : stylist.get_computed_block()) {
+    property.visit(
+      [&] (const BorderLeftSize& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          m_size_hint.rwidth() += size;
+        });
+      },
+      [&] (const BorderTopSize& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          m_size_hint.rheight() += size;
+        });
+      },
+      [&] (const BorderRightSize& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          m_size_hint.rwidth() += size;
+        });
+      },
+      [&] (const BorderBottomSize& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          m_size_hint.rheight() += size;
+        });
+      },
+      [&] (const PaddingLeft& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          m_size_hint.rwidth() += size;
+        });
+      },
+      [&] (const PaddingTop& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          m_size_hint.rheight() += size;
+        });
+      },
+      [&] (const PaddingRight& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          m_size_hint.rwidth() += size;
+        });
+      },
+      [&] (const PaddingBottom& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          m_size_hint.rheight() += size;
+        });
+      });
+  }
+  if(!m_mapped_labels.empty()) {
+    m_size_hint.rwidth() += m_mapped_labels.back().m_pixel_width;
+    m_size_hint.rheight() += QFontMetrics(m_text_box_font).height();
+  }
+  if(m_size_hint != previous_size_hint) {
+    updateGeometry();
+  }
+}
+
 void ResponsiveLabel::on_label_added(int index) {
   m_mapped_labels.push_back({index, get_pixel_width(m_labels->get(index))});
-  if(m_mapped_labels.size() > 1 && m_mapped_labels.back().m_pixel_width <=
-      m_mapped_labels.at(m_mapped_labels.size() - 2).m_pixel_width) {
-    sort_mapped_labels();
+  if(m_mapped_labels.size() > 1) {
+    if(m_mapped_labels.back().m_pixel_width <=
+        m_mapped_labels.at(m_mapped_labels.size() - 2).m_pixel_width) {
+      sort_mapped_labels();
+    }
+    if(m_mapped_labels.back().m_pixel_width > m_size_hint.width()) {
+      update_size_hint();
+    }
   }
-  set_current(static_cast<int>(m_mapped_labels.size()) - 1);
+  update_display_text();
 }
 
 void ResponsiveLabel::on_label_removed(int index) {
+  if(index == m_mapped_labels.size() - 1) {
+    update_size_hint();
+  }
   for(auto i = m_mapped_labels.begin(); i != m_mapped_labels.end(); ++i) {
     if(i->m_list_index == index) {
       i = m_mapped_labels.erase(i);
@@ -178,7 +215,7 @@ void ResponsiveLabel::on_label_removed(int index) {
     }
     return static_cast<int>(m_mapped_labels.size()) - 1;
   }();
-  set_current(current_index);
+  update_display_text();
 }
 
 void ResponsiveLabel::on_label_updated(int index) {
@@ -204,9 +241,10 @@ void ResponsiveLabel::on_label_updated(int index) {
     if(mapped_label->m_pixel_width <= lower ||
         upper <= mapped_label->m_pixel_width) {
       sort_mapped_labels();
+      update_size_hint();
     }
   }
-  set_current(static_cast<int>(m_mapped_labels.size()) - 1);
+  update_display_text();
 }
 
 void ResponsiveLabel::on_list_operation(
@@ -224,5 +262,26 @@ void ResponsiveLabel::on_list_operation(
 }
 
 void ResponsiveLabel::on_text_box_style() {
-  update_current_font();
+  auto previous_font = m_text_box_font;
+  auto previous_font_size = m_text_box_font.pixelSize();
+  auto& stylist = find_stylist(*m_text_box);
+  for(auto& property : stylist.get_computed_block()) {
+    property.visit(
+      [&] (const Font& font) {
+        stylist.evaluate(font, [=] (const auto& font) {
+          m_text_box_font = font;
+        });
+      },
+      [&] (const FontSize& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          m_text_box_font.setPixelSize(size);
+        });
+      });
+  }
+  if(previous_font != m_text_box_font ||
+      previous_font_size != m_text_box_font.pixelSize()) {
+    reset_mapped_labels();
+    update_display_text();
+  }
+  update_size_hint();
 }

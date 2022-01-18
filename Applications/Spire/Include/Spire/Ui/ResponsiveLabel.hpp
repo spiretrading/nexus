@@ -5,6 +5,7 @@
 #include <boost/optional/optional.hpp>
 #include <boost/signals2/connection.hpp>
 #include <QFont>
+#include <QSize>
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/Ui.hpp"
@@ -37,6 +38,8 @@ namespace Spire {
       /** Returns the highlight model. */
       const std::shared_ptr<HighlightModel>& get_highlight() const;
 
+      QSize sizeHint() const override;
+
     protected:
       void resizeEvent(QResizeEvent* event) override;
 
@@ -50,6 +53,7 @@ namespace Spire {
       TextBox* m_text_box;
       std::shared_ptr<LocalTextModel> m_text_model;
       boost::signals2::scoped_connection m_style_connection;
+      QSize m_size_hint;
       QFont m_text_box_font;
       std::vector<MappedLabel> m_mapped_labels;
       boost::optional<int> m_current_mapped_index;
@@ -61,8 +65,8 @@ namespace Spire {
       void reset_mapped_labels();
       void set_current(const boost::optional<int>& mapped_index);
       void sort_mapped_labels();
-      void update_current_font();
       void update_display_text();
+      void update_size_hint();
       void on_label_added(int index);
       void on_label_removed(int index);
       void on_label_updated(int index);
