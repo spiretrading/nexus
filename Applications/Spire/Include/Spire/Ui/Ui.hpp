@@ -12,6 +12,7 @@
 namespace Spire {
   class ArrayTableModel;
   class Box;
+  class BoxGeometry;
   class BoxPainter;
   class Button;
   class CalendarDatePicker;

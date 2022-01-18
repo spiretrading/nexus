@@ -157,7 +157,7 @@ void Box::on_style() {
   m_body_geometry = QRect(0, 0, width(), height());
   auto& stylist = find_stylist(*this);
   for(auto& property : stylist.get_computed_block()) {
-    visit(property, m_painter, stylist);
+    apply(property, m_painter, stylist);
     property.visit(
       [&] (const BorderTopSize& size) {
         stylist.evaluate(size, [=] (auto size) {

@@ -74,28 +74,28 @@ namespace Spire {
       void set_borders(const Borders& borders);
 
       /** Sets the size of the top border. */
-      void set_top_border_size(int size);
+      void set_border_top_size(int size);
 
       /** Sets the color of the top border. */
-      void set_top_border_color(QColor color);
+      void set_border_top_color(QColor color);
 
       /** Sets the size of the right border. */
-      void set_right_border_size(int size);
+      void set_border_right_size(int size);
 
       /** Sets the color of the right border. */
-      void set_right_border_color(QColor color);
+      void set_border_right_color(QColor color);
 
       /** Sets the size of the bottom border. */
-      void set_bottom_border_size(int size);
+      void set_border_bottom_size(int size);
 
       /** Sets the color of the bottom border. */
-      void set_bottom_border_color(QColor color);
+      void set_border_bottom_color(QColor color);
 
       /** Sets the size of the left border. */
-      void set_left_border_size(int size);
+      void set_border_left_size(int size);
 
       /** Sets the color of the left border. */
-      void set_left_border_color(QColor color);
+      void set_border_left_color(QColor color);
 
       /** Sets the radius of the top-right border. */
       void set_top_right_radius(int radius);
@@ -126,13 +126,12 @@ namespace Spire {
   };
 
   /**
-   * Visits a style Property and updates a BoxPainter if the property represents
-   * a box styling.
-   * @param property The property to visit.
-   * @param painter The BoxPainter to update based on the <i>property</i>.
+   * Applies a style Property to a BoxPainter.
+   * @param property The property to apply.
+   * @param painter The BoxPainter to apply the <i>property</i> to.
    * @param stylist The Stylist used to evaluate the <i>property</i>.
    */
-  void visit(const Styles::Property& property, BoxPainter& painter,
+  void apply(const Styles::Property& property, BoxPainter& painter,
     Styles::Stylist& stylist);
 }
 
