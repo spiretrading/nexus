@@ -327,7 +327,6 @@ void OpenFilterPanel::on_reset() {
   submit();
 }
 
-
 void OpenFilterPanel::submit() {
   if(m_filtered->get_size() == 0) {
     m_submit_signal(m_filtered, FilterMode::EXCLUDE);

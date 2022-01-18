@@ -80,7 +80,7 @@ namespace Details {
        * @param query_model The model used to query matches by the ComboBox.
        * @param filtered_model The model contains a list of terms filtered out.
        * @param submit_handler The handler used to handle the SubmitSignal.
-       * @return The QWidget that shall be a particular ComboBox.
+       * @return The InputBoxBuilder that shall take input.
        */
       using InputBoxBuilder = std::function<
         OpenInputBox (const std::shared_ptr<QueryModel>& query_model,
@@ -96,7 +96,7 @@ namespace Details {
         Signal<void (const std::shared_ptr<AnyListModel>& submission,
           FilterMode mode)>;
 
-      /** The default InputBox builder which builds a ComboBox */
+      /** The default InputBox builder which builds an OpenInputBox */
       static OpenInputBox default_input_box_builder(
         const std::shared_ptr<QueryModel>& query_model,
         const std::shared_ptr<AnyListModel>& filtered_model,
