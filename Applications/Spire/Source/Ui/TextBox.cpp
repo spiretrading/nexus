@@ -210,9 +210,6 @@ class TextBox::EditableTextBox : public QLineEdit {
     bool eventFilter(QObject* watched, QEvent* event) override {
       if(event->type() == QEvent::MouseButtonPress) {
         auto e = static_cast<QMouseEvent*>(event);
-        // TODO: based on the original, the TextBox should recieve this event first,
-        //        but calling sendEvent winds up back here in an infinite loop.
-        //QCoreApplication::sendEvent(m_text_box, event);
         e->accept();
         e->setLocalPos(mapFromGlobal(e->globalPos()));
         mousePressEvent(e);
