@@ -193,11 +193,8 @@ namespace Styles {
       mutable boost::optional<QSize> m_size_hint;
 
       QSize compute_decoration_size() const;
-      void draw_text(QPainter& painter,
-        const TextStyleProperties& style, const QString& text) const;
       void elide_text();
       void initialize_editable_text_box();
-      bool is_placeholder_visible() const;
       void update_display_text();
       void on_current(const QString& current);
       void on_style();
