@@ -163,6 +163,8 @@ class TextBox::EditableTextBox : public QLineEdit {
 
     void set_placeholder(const QString& placeholder) {
       m_placeholder = placeholder;
+      elide_placeholder_text();
+      update();
     }
 
     void set_style(
@@ -261,10 +263,14 @@ class TextBox::EditableTextBox : public QLineEdit {
         auto painter = QPainter(this);
         painter.setPen(m_placeholder_style.m_text_color);
         painter.setFont(m_placeholder_style.m_font);
-        painter.drawText(
-          contentsRect(), m_placeholder_style.m_alignment, m_placeholder);
+        painter.drawText(contentsRect(),
+          m_placeholder_style.m_alignment, m_elided_placeholder);
       }
       QLineEdit::paintEvent(event);
+    }
+    void resizeEvent(QResizeEvent* event) override {
+      elide_placeholder_text();
+      QLineEdit::resizeEvent(event);
     }
 
   private:
@@ -276,6 +282,7 @@ class TextBox::EditableTextBox : public QLineEdit {
     std::shared_ptr<HighlightModel> m_highlight;
     TextValidator* m_text_validator;
     QString m_placeholder;
+    QString m_elided_placeholder;
     TextStyleProperties m_placeholder_style;
     bool m_is_rejected;
     bool m_has_update;
@@ -283,6 +290,10 @@ class TextBox::EditableTextBox : public QLineEdit {
     scoped_connection m_current_connection;
     scoped_connection m_placeholder_style_connection;
 
+    void elide_placeholder_text() {
+      m_elided_placeholder =
+        fontMetrics().elidedText(m_placeholder, Qt::ElideRight, width());
+    }
     bool is_placeholder_visible() const {
       return !isReadOnly() &&
         !m_placeholder.isEmpty() && m_current->get().isEmpty();
@@ -438,7 +449,6 @@ void TextBox::set_read_only(bool read_only) {
     unmatch(*this, ReadOnly());
   }
   update_display_text();
-  //update_placeholder_text();
 }
 
 connection TextBox::connect_submit_signal(
@@ -526,14 +536,12 @@ void TextBox::initialize_editable_text_box() {
 }
 
 void TextBox::update_display_text() {
-  // TODO: the current 'displayed' (potentially elided) text is the same for both
-  //        painted and QLineEdit, so find a way to combine the setting of the
-  //        displayed text.
   if(!isEnabled() || is_read_only() || !hasFocus()) {
     elide_text();
   } else if(m_editable_text_box &&
       m_editable_text_box->text() != m_current->get()) {
-    m_editable_text_box->set_display_text(m_current->get(), false);
+    m_display_text = m_current->get();
+    m_editable_text_box->set_display_text(m_display_text, false);
   }
   m_size_hint = none;
   updateGeometry();
@@ -542,7 +550,6 @@ void TextBox::update_display_text() {
 
 void TextBox::on_current(const QString& current) {
   update_display_text();
-  //update_placeholder_text();
 }
 
 void TextBox::on_style() {
