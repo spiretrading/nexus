@@ -464,7 +464,7 @@ TextStyle Spire::Styles::text_style(QFont font, QColor color) {
 TextBox::TextStyleProperties::TextStyleProperties()
   : m_alignment(Qt::AlignLeft | Qt::AlignVCenter),
     m_size(scale_height(12)),
-    m_echo_mode(QLineEdit::NoEcho) {}
+    m_echo_mode(QLineEdit::Normal) {}
 
 TextBox::TextBox(QWidget* parent)
   : TextBox(std::make_shared<LocalTextModel>(), parent) {}
@@ -619,6 +619,7 @@ void TextBox::elide_text() {
 
 void TextBox::initialize_editable_text_box() {
   m_editable_text_box = new EditableTextBox(m_current, m_highlight, this);
+  m_editable_text_box->set_style(m_geometry, m_text_style);
 }
 
 bool TextBox::is_placeholder_visible() const {
