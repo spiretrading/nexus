@@ -417,8 +417,6 @@ void TextBox::set_placeholder(const QString& placeholder) {
   if(m_editable_text_box) {
     m_editable_text_box->set_placeholder(m_placeholder);
   }
-  // TODO: add m_elided_placeholder, display instead of m_placeholder
-  //        potentially call the old update_placeholder_text()
 }
 
 bool TextBox::is_read_only() const {
@@ -523,9 +521,8 @@ void TextBox::elide_text() {
 
 void TextBox::initialize_editable_text_box() {
   m_editable_text_box = new EditableTextBox(m_current, m_highlight, this);
-  m_editable_text_box->set_style(m_geometry, m_text_style);
-  // TODO: may/will not have the placeholder style at this point.
   m_editable_text_box->set_placeholder(m_placeholder);
+  on_style();
 }
 
 void TextBox::update_display_text() {
