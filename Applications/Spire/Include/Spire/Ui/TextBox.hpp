@@ -165,16 +165,14 @@ namespace Styles {
       void showEvent(QShowEvent* event) override;
 
     private:
-      struct StyleProperties {
-        Styles::StyleSheetMap m_styles;
-        boost::optional<Qt::Alignment> m_alignment;
-        boost::optional<QFont> m_font;
-        boost::optional<int> m_size;
+      struct TextStyleProperties {
+        Qt::Alignment m_alignment;
+        QFont m_font;
+        int m_size;
         QColor m_text_color;
-        boost::optional<QLineEdit::EchoMode> m_echo_mode;
+        QLineEdit::EchoMode m_echo_mode;
 
-        StyleProperties(std::function<void ()> commit);
-        void clear();
+        TextStyleProperties();
       };
       struct TextValidator;
       class EditableTextBox;
@@ -184,7 +182,8 @@ namespace Styles {
       QString m_display_text;
       QString m_placeholder;
       std::shared_ptr<HighlightModel> m_highlight;
-      StyleProperties m_line_edit_styles;
+      TextStyleProperties m_text_style;
+      TextStyleProperties m_placeholder_style;
       EditableTextBox* m_editable_text_box;
       BoxGeometry m_geometry;
       BoxPainter m_box_painter;
@@ -194,11 +193,12 @@ namespace Styles {
       mutable boost::optional<QSize> m_size_hint;
 
       QSize compute_decoration_size() const;
+      void draw_text(QPainter& painter,
+        const TextStyleProperties& style, const QString& text) const;
       void elide_text();
       void initialize_editable_text_box();
       bool is_placeholder_visible() const;
       void update_display_text();
-      void commit_style();
       void on_current(const QString& current);
       void on_style();
   };

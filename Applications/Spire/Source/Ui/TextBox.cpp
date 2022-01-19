@@ -261,10 +261,6 @@ class TextBox::EditableTextBox : public QLineEdit {
       setSelection(current_highlight.m_start, get_size(current_highlight));
       setValidator(m_text_validator);
       installEventFilter(this);
-      
-      // TODO: style
-      //m_style_connection = connect_style_signal(*this, [=] { on_style(); });
-
       connect(this, &QLineEdit::editingFinished, this,
         &EditableTextBox::on_editing_finished);
       connect(
@@ -284,6 +280,31 @@ class TextBox::EditableTextBox : public QLineEdit {
       auto layout = new QHBoxLayout(m_text_box);
       layout->setContentsMargins(0, 0, 0, 0);
       layout->addWidget(this);
+    }
+
+    void set_style(
+        const BoxGeometry& geometry, const TextStyleProperties& text_style) {
+      m_text_box->layout()->setContentsMargins(8, 0, 8, 0);
+      auto stylesheet = QString(
+        R"(#0x%1 {
+          background: transparent;
+          border-width: 0px;
+          padding: 0px;)").arg(reinterpret_cast<std::intptr_t>(this));
+      auto map = StyleSheetMap([] {});
+      map.set("color", text_style.m_text_color);
+      map.write(stylesheet);
+      if(text_style.m_alignment != alignment()) {
+        setAlignment(text_style.m_alignment);
+      }
+      auto font = text_style.m_font;
+      font.setPixelSize(text_style.m_size);
+      setFont(font);
+      if(text_style.m_echo_mode != echoMode()) {
+        setEchoMode(text_style.m_echo_mode);
+      }
+      if(stylesheet != styleSheet()) {
+        setStyleSheet(stylesheet);
+      }
     }
 
     void set_display_text(const QString& text, bool is_elided) {
@@ -440,17 +461,10 @@ TextStyle Spire::Styles::text_style(QFont font, QColor color) {
   return TextStyle(Font(std::move(font)), TextColor(color));
 }
 
-TextBox::StyleProperties::StyleProperties(std::function<void ()> commit)
-  : m_styles(std::move(commit)) {}
-
-void TextBox::StyleProperties::clear() {
-  m_styles.clear();
-  m_alignment = none;
-  m_font = none;
-  m_size = none;
-  m_text_color = QColor();
-  m_echo_mode = none;
-}
+TextBox::TextStyleProperties::TextStyleProperties()
+  : m_alignment(Qt::AlignLeft | Qt::AlignVCenter),
+    m_size(scale_height(12)),
+    m_echo_mode(QLineEdit::NoEcho) {}
 
 TextBox::TextBox(QWidget* parent)
   : TextBox(std::make_shared<LocalTextModel>(), parent) {}
@@ -462,8 +476,7 @@ TextBox::TextBox(std::shared_ptr<TextModel> current, QWidget* parent)
     : QWidget(parent),
       m_current(std::move(current)),
       m_highlight(std::make_shared<LocalValueModel<Highlight>>()),
-      m_editable_text_box(nullptr),
-      m_line_edit_styles([=] { commit_style(); }) {
+      m_editable_text_box(nullptr) {
   add_pseudo_element(*this, Placeholder());
   m_style_connection = connect_style_signal(*this, [=] { on_style(); });
   m_placeholder_style_connection =
@@ -491,14 +504,8 @@ const std::shared_ptr<HighlightModel>& TextBox::get_highlight() const {
 
 void TextBox::set_placeholder(const QString& placeholder) {
   m_placeholder = placeholder;
-  //if(m_editable_text_box) {
-  //  m_editable_text_box->
-  //}
-  //m_box->set_placeholder(placeholder);
-  //update_placeholder_text();
-  //void TextBox::update_placeholder_text() {
-  //  //m_box->set_placeholder_visible(is_placeholder_visible());
-  //}
+  // TODO: add m_elided_placeholder, display instead of m_placeholder
+  //        potentially call the old update_placeholder_text()
 }
 
 bool TextBox::is_read_only() const {
@@ -543,7 +550,7 @@ QSize TextBox::sizeHint() const {
     }
     return 1;
   }();
-  auto metrics = QFontMetrics(m_line_edit_styles.m_font.value_or(QFont()));
+  auto metrics = QFontMetrics(m_text_style.m_font);
   m_size_hint.emplace(
     metrics.horizontalAdvance(m_current->get()) +
       cursor_width, metrics.height());
@@ -566,13 +573,11 @@ void TextBox::paintEvent(QPaintEvent* event) {
   m_box_painter.paint(painter);
   if(m_editable_text_box) {
     if(is_placeholder_visible()) {
-      // TODO: paint placeholder
-      painter.drawText(m_geometry.get_content_area(), Qt::AlignLeft, "Test Placeholder");
+      // TODO: update to m_displayed_placeholder/elided_placeholder.
+      draw_text(painter, m_placeholder_style, m_placeholder);
     }
   } else if(!m_current->get().isEmpty()) {
-    //painter.setFont(m_font);
-    //painter.setPen(m_text_color);
-    //painter.drawText(rect() - m_margins, m_alignment, m_elided_placeholder);
+    draw_text(painter, m_text_style, m_display_text);
   }
 }
 
@@ -594,12 +599,17 @@ QSize TextBox::compute_decoration_size() const {
     m_geometry.get_content_area().size();
 }
 
+void TextBox::draw_text(QPainter& painter,
+    const TextStyleProperties& style, const QString& text) const {
+  painter.setPen(style.m_text_color);
+  painter.setFont(style.m_font);
+  painter.drawText(m_geometry.get_content_area(), style.m_alignment, text);
+}
+
 void TextBox::elide_text() {
-  auto font_metrics = QFontMetrics(m_line_edit_styles.m_font.value_or(QFont()));
-  //auto rect = QRect(QPoint(0, 0), size() - compute_decoration_size());
-  auto rect = m_geometry.get_content_area();
+  auto font_metrics = QFontMetrics(m_text_style.m_font);
   m_display_text = font_metrics.elidedText(
-    m_current->get(), Qt::ElideRight, rect.width());
+    m_current->get(), Qt::ElideRight, m_geometry.get_content_area().width());
   if(m_editable_text_box && m_display_text != m_editable_text_box->text()) {
     m_editable_text_box->set_display_text(
       m_display_text, m_display_text != m_current->get());
@@ -634,32 +644,6 @@ void TextBox::update_display_text() {
   updateGeometry();
 }
 
-void TextBox::commit_style() {
-  //auto stylesheet = QString(
-  //  R"(#0x%1 {
-  //    background: transparent;
-  //    border-width: 0px;
-  //    padding: 0px;)").arg(reinterpret_cast<std::intptr_t>(this));
-  //m_line_edit_styles.m_styles.write(stylesheet);
-  //auto alignment = m_line_edit_styles.m_alignment.value_or(
-  //  Qt::Alignment(Qt::AlignmentFlag::AlignLeft));
-  //if(alignment != m_line_edit->alignment()) {
-  //  m_line_edit->setAlignment(alignment);
-  //}
-  //auto font = m_line_edit_styles.m_font.value_or(QFont());
-  //if(m_line_edit_styles.m_size) {
-  //  font.setPixelSize(*m_line_edit_styles.m_size);
-  //}
-  //m_line_edit->setFont(font);
-  //if(m_line_edit_styles.m_echo_mode) {
-  //  m_line_edit->setEchoMode(*m_line_edit_styles.m_echo_mode);
-  //}
-  //if(stylesheet != m_line_edit->styleSheet()) {
-  //  m_line_edit->setStyleSheet(stylesheet);
-  //}
-  //update_display_text();
-}
-
 void TextBox::on_current(const QString& current) {
   update_display_text();
   //update_placeholder_text();
@@ -667,39 +651,68 @@ void TextBox::on_current(const QString& current) {
 
 void TextBox::on_style() {
   auto& stylist = find_stylist(*this);
-  m_line_edit_styles.clear();
-  m_line_edit_styles.m_styles.buffer([&] {
-    for(auto& property : stylist.get_computed_block()) {
-      apply(property, m_geometry, stylist);
-      apply(property, m_box_painter, stylist);
-      property.visit(
-        [&] (const TextColor& color) {
-          stylist.evaluate(color, [=] (auto color) {
-            m_line_edit_styles.m_styles.set("color", color);
-          });
-        },
-        [&] (const TextAlign& alignment) {
-          stylist.evaluate(alignment, [=] (auto alignment) {
-            m_line_edit_styles.m_alignment = alignment;
-          });
-        },
-        [&] (const Font& font) {
-          stylist.evaluate(font, [=] (const auto& font) {
-            m_line_edit_styles.m_font = font;
-          });
-        },
-        [&] (const FontSize& size) {
-          stylist.evaluate(size, [=] (auto size) {
-            m_line_edit_styles.m_size = size;
-          });
-        },
-        [&] (const EchoMode& mode) {
-          stylist.evaluate(mode, [=] (auto mode) {
-            m_line_edit_styles.m_echo_mode = mode;
-          });
+  m_text_style = TextStyleProperties();
+  for(auto& property : stylist.get_computed_block()) {
+    apply(property, m_geometry, stylist);
+    apply(property, m_box_painter, stylist);
+    // TODO: the text and placeholder style visitors are the same, so combine.
+    property.visit(
+      [&] (const TextColor& color) {
+        stylist.evaluate(color, [=] (auto color) {
+          m_text_style.m_text_color = color;
         });
-    }
-  });
+      },
+      [&] (const TextAlign& alignment) {
+        stylist.evaluate(alignment, [=] (auto alignment) {
+          m_text_style.m_alignment = alignment;
+        });
+      },
+      [&] (const Font& font) {
+        stylist.evaluate(font, [=] (const auto& font) {
+          m_text_style.m_font = font;
+        });
+      },
+      [&] (const FontSize& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          m_text_style.m_size = size;
+        });
+      },
+      [&] (const EchoMode& mode) {
+        stylist.evaluate(mode, [=] (auto mode) {
+          m_text_style.m_echo_mode = mode;
+        });
+      });
+  }
+  auto& placeholder_stylist = *find_stylist(*this, Placeholder());
+  m_placeholder_style = TextStyleProperties();
+  for(auto& property : placeholder_stylist.get_computed_block()) {
+    property.visit(
+      [&] (const TextColor& color) {
+        placeholder_stylist.evaluate(color, [=] (auto color) {
+          m_placeholder_style.m_text_color = color;
+        });
+      },
+      [&] (const TextAlign& alignment) {
+        placeholder_stylist.evaluate(alignment, [=] (auto alignment) {
+          m_placeholder_style.m_alignment = alignment;
+        });
+      },
+      [&] (const Font& font) {
+        placeholder_stylist.evaluate(font, [=] (auto font) {
+          m_placeholder_style.m_font = font;
+        });
+      },
+      [&] (const FontSize& size) {
+        placeholder_stylist.evaluate(size, [=] (auto size) {
+          m_placeholder_style.m_size = size;
+        });
+      });
+  }
+  if(m_editable_text_box) {
+    m_editable_text_box->set_style(m_geometry, m_text_style);
+  }
+  // TODO: maybe call update in this method, for cases where the text is painted
+  update_display_text();
   // TODO: probably call update
 }
 
