@@ -428,7 +428,7 @@ void TextBox::set_placeholder(const QString& placeholder) {
 }
 
 bool TextBox::is_read_only() const {
-  return m_editable_text_box && m_editable_text_box->isReadOnly();
+  return !m_editable_text_box || m_editable_text_box->isReadOnly();
 }
 
 void TextBox::set_read_only(bool read_only) {
@@ -504,7 +504,7 @@ void TextBox::resizeEvent(QResizeEvent* event) {
 }
 
 void TextBox::showEvent(QShowEvent* event) {
-  if(!m_editable_text_box && (is_read_only() || isEnabled())) {
+  if(!m_editable_text_box && (!is_read_only() || isEnabled())) {
     initialize_editable_text_box();
   }
   QWidget::showEvent(event);
