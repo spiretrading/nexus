@@ -63,63 +63,48 @@ namespace Details {
         EXCLUDE
       };
 
-      /** The OpenInputBox used to get input inside the OpenFilterPanel. */
-      using OpenInputBox = typename Details::OpenInputBox;
-
-      /** The type of model using to retrieve potential matches to a query. */
+      /** The type of model used to retrieve potential matches to a query. */
       using QueryModel = ComboBox::QueryModel;
 
       /**
-       * The type of function used to handle the SubmitSignal of the ComboBox.
-       * @param submission The submitted value.
-       */
-      using SubmitHandler = std::function<void(const std::any& submission)>;
-
-      /**
-       * The type of function used to build a particular input box.
-       * @param query_model The model used to query matches by the ComboBox.
-       * @param filtered_model The model contains a list of terms filtered out.
-       * @param submit_handler The handler used to handle the SubmitSignal.
-       * @return The InputBoxBuilder that shall take input.
+       * The type of function used to build the input box submitting filtered
+       * values.
+       * @param matches The list of existing matches. These values should not be
+       * resubmitted by the input box.
+       * @return A new InputBox to be displayed.
        */
       using InputBoxBuilder = std::function<
-        OpenInputBox (const std::shared_ptr<QueryModel>& query_model,
-          const std::shared_ptr<AnyListModel>& filtered_model,
-          const SubmitHandler& submit_handler)>;
+        InputBox (std::shared_ptr<AnyListModel> submissions)>;
 
       /**
        * Signals the list of filtered values and the filter mode.
-       * @param submission The list of values that the user wants to filter.
+       * @param submissions The list of values to filter.
        * @param mode The filter mode.
        */
-      using SubmitSignal =
-        Signal<void (const std::shared_ptr<AnyListModel>& submission,
-          FilterMode mode)>;
+      using SubmitSignal = Signal<void (
+        const std::shared_ptr<AnyListModel>& submissions, FilterMode mode)>;
 
-      /** The default InputBox builder which builds an OpenInputBox. */
-      static OpenInputBox default_input_box_builder(
-        const std::shared_ptr<QueryModel>& query_model,
-        const std::shared_ptr<AnyListModel>& filtered_model,
-        const SubmitHandler& submit_handler);
+      /** Implements an InputBox builder returning a ComboBox. */
+      static InputBox default_input_box_builder(
+        const std::shared_ptr<AnyListModel>& filtered_model);
 
       /**
-       * Constructs an OpenFilterPanel using a defalut InputBoxBuilder.
-       * @param query_model The model used to query matches.
+       * Constructs an OpenFilterPanel using a ComboBox as its input box.
+       * @param query_model The model used by the ComboBox.
        * @param title The title of the panel.
        * @param parent The parent widget.
        */
-      OpenFilterPanel(std::shared_ptr<QueryModel> query_model,
-        QString title, QWidget& parent);
+      OpenFilterPanel(std::shared_ptr<QueryModel> query_model, QString title,
+        QWidget& parent);
 
       /**
-       * Constructs an OpenFilterPanel.
+       * Constructs an OpenFilterPanel over an empty list of matches.
        * @param query_model The model used to query matches.
        * @param input_box_builder The InputBoxBuilder to use.
        * @param title The title of the panel.
        * @param parent The parent widget.
        */
-      OpenFilterPanel(std::shared_ptr<QueryModel> query_model,
-        InputBoxBuilder input_box_builder, QString title, QWidget& parent);
+      OpenFilterPanel(InputBoxBuilder input_box_builder, QString title, QWidget& parent);
 
       /** Connects a slot to the submit signal. */
       boost::signals2::connection connect_submit_signal(
