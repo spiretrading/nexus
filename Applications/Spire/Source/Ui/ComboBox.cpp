@@ -1,6 +1,5 @@
 #include "Spire/Ui/ComboBox.hpp"
 #include <boost/signals2/shared_connection_block.hpp>
-#include <QApplication>
 #include <QHBoxLayout>
 #include <QKeyEvent>
 #include "Spire/Spire/ArrayListModel.hpp"
@@ -355,7 +354,6 @@ void ComboBox::on_drop_down_submit(const std::any& submission) {
   }
   m_submission = submission;
   m_submission_text = text;
-  QApplication::setActiveWindow(window());
   m_drop_down_list->hide();
   m_submit_signal(submission);
 }
