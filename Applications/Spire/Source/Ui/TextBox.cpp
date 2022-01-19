@@ -167,8 +167,11 @@ class TextBox::EditableTextBox : public QLineEdit {
 
     void set_style(
         const BoxGeometry& geometry, const TextStyleProperties& text_style) {
-      // TODO: set margins using box geometry
-      m_text_box->layout()->setContentsMargins(8, 0, 8, 0);
+      m_text_box->layout()->setContentsMargins(
+        geometry.get_border_left() + geometry.get_padding_left(),
+        geometry.get_border_top() + geometry.get_padding_top(),
+        geometry.get_border_right() + geometry.get_padding_right(),
+        geometry.get_border_bottom() + geometry.get_padding_bottom());
       auto stylesheet = QString(
         R"(#0x%1 {
           background: transparent;
@@ -249,8 +252,7 @@ class TextBox::EditableTextBox : public QLineEdit {
       if(focusEvent->lostFocus() &&
           focusEvent->reason() != Qt::ActiveWindowFocusReason &&
           focusEvent->reason() != Qt::PopupFocusReason) {
-        // TODO: Can focus out be moved to the ETB?
-        //update_display_text();
+        m_text_box->update_display_text();
       }
       QLineEdit::focusOutEvent(event);
     }
@@ -259,16 +261,10 @@ class TextBox::EditableTextBox : public QLineEdit {
         auto painter = QPainter(this);
         painter.setPen(m_placeholder_style.m_text_color);
         painter.setFont(m_placeholder_style.m_font);
-        // TODO: verify this works, or use the layout's contents rect.
         painter.drawText(
           contentsRect(), m_placeholder_style.m_alignment, m_placeholder);
       }
       QLineEdit::paintEvent(event);
-    }
-    // TODO: may not be required
-    void resizeEvent(QResizeEvent* event) override {
-      //update_display_text();
-      QLineEdit::resizeEvent(event);
     }
 
   private:
@@ -287,7 +283,6 @@ class TextBox::EditableTextBox : public QLineEdit {
     scoped_connection m_current_connection;
     scoped_connection m_placeholder_style_connection;
 
-    // TODO: sort these methods
     bool is_placeholder_visible() const {
       return !isReadOnly() &&
         !m_placeholder.isEmpty() && m_current->get().isEmpty();
@@ -297,6 +292,13 @@ class TextBox::EditableTextBox : public QLineEdit {
       if(m_is_rejected) {
         m_is_rejected = false;
         unmatch(*m_text_box, Rejected());
+      }
+    }
+    void on_cursor_position(int old_position, int new_position) {
+      if(hasSelectedText()) {
+        on_selection();
+      } else if(m_highlight->get() != Highlight(cursorPosition())) {
+        m_highlight->set(Highlight(cursorPosition()));
       }
     }
     void on_editing_finished() {
@@ -313,24 +315,6 @@ class TextBox::EditableTextBox : public QLineEdit {
             match(*m_text_box, Rejected());
           }
         }
-      }
-    }
-    void on_text_edited(const QString& text) {
-      m_current->set(text);
-    }
-    void on_cursor_position(int old_position, int new_position) {
-      if(hasSelectedText()) {
-        on_selection();
-      } else if(m_highlight->get() != Highlight(cursorPosition())) {
-        m_highlight->set(Highlight(cursorPosition()));
-      }
-    }
-    void on_selection() {
-      if(!hasSelectedText()) {
-        on_cursor_position(0, cursorPosition());
-      } else if(m_highlight->get() !=
-          Highlight(selectionStart(), selectionEnd())) {
-        m_highlight->set({selectionStart(), selectionEnd()});
       }
     }
     void on_highlight(const Highlight& highlight) {
@@ -373,6 +357,17 @@ class TextBox::EditableTextBox : public QLineEdit {
       if(is_placeholder_visible()) {
         update();
       }
+    }
+    void on_selection() {
+      if(!hasSelectedText()) {
+        on_cursor_position(0, cursorPosition());
+      } else if(m_highlight->get() !=
+          Highlight(selectionStart(), selectionEnd())) {
+        m_highlight->set({selectionStart(), selectionEnd()});
+      }
+    }
+    void on_text_edited(const QString& text) {
+      m_current->set(text);
     }
 };
 
@@ -562,7 +557,6 @@ void TextBox::on_style() {
   for(auto& property : stylist.get_computed_block()) {
     apply(property, m_geometry, stylist);
     apply(property, m_box_painter, stylist);
-    // TODO: the text and placeholder style visitors are the same, so combine.
     property.visit(
       [&] (const TextColor& color) {
         stylist.evaluate(color, [=] (auto color) {

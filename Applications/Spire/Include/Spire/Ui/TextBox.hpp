@@ -176,6 +176,7 @@ namespace Styles {
       };
       struct TextValidator;
       class EditableTextBox;
+      friend class EditableTextBox;
       mutable SubmitSignal m_submit_signal;
       mutable RejectSignal m_reject_signal;
       std::shared_ptr<TextModel> m_current;
