@@ -242,14 +242,13 @@ class TextBox::EditableTextBox : public QLineEdit {
   public:
 
     EditableTextBox(std::shared_ptr<TextModel> current,
-        std::shared_ptr<HighlightModel> highlight,
-        TextValidator* text_validator, TextBox* text_box)
+        std::shared_ptr<HighlightModel> highlight, TextBox* text_box)
         : QLineEdit(current->get(), text_box),
           m_text_box(text_box),
           m_current(std::move(current)),
           m_submission(m_current->get()),
           m_highlight(std::move(highlight)),
-          m_text_validator(text_validator),
+          m_text_validator(new TextValidator(m_current, this)),
           m_is_rejected(false),
           m_has_update(false),
           m_is_handling_key_press(false) {
@@ -262,14 +261,6 @@ class TextBox::EditableTextBox : public QLineEdit {
       setSelection(current_highlight.m_start, get_size(current_highlight));
       setValidator(m_text_validator);
       installEventFilter(this);
-
-      // TODO: required?
-      setCursor(cursor());
-
-      // TODO: needs layout, maybe add the layout in ETB, but delete it on destruction of ETB
-      //auto layout = new QHBoxLayout(this);
-      //layout->setContentsMargins(0, 0, 0, 0);
-      //layout->addWidget(m_box);
       
       // TODO: style
       //m_style_connection = connect_style_signal(*this, [=] { on_style(); });
@@ -286,7 +277,18 @@ class TextBox::EditableTextBox : public QLineEdit {
         std::bind_front(&EditableTextBox::on_selection, this));
       m_highlight->connect_update_signal(
         std::bind_front(&EditableTextBox::on_highlight, this));
+      m_text_box->setCursor(cursor());
+      m_text_box->setFocusPolicy(focusPolicy());
+      m_text_box->setFocusProxy(this);
       m_text_box->installEventFilter(this);
+      auto layout = new QHBoxLayout(m_text_box);
+      layout->setContentsMargins(0, 0, 0, 0);
+      layout->addWidget(this);
+    }
+
+    void set_display_text(const QString& text, bool is_elided) {
+      m_text_validator->m_is_text_elided = is_elided;
+      setText(text);
     }
 
     const QString& get_submission() const {
@@ -307,33 +309,31 @@ class TextBox::EditableTextBox : public QLineEdit {
     bool eventFilter(QObject* watched, QEvent* event) override {
       if(event->type() == QEvent::MouseButtonPress) {
         auto e = static_cast<QMouseEvent*>(event);
-        QWidget::mousePressEvent(e);
+        // TODO: based on the original, the TextBox should recieve this event first,
+        //        but calling sendEvent winds up back here in an infinite loop.
+        //QCoreApplication::sendEvent(m_text_box, event);
         e->accept();
         e->setLocalPos(mapFromGlobal(e->globalPos()));
-        //QCoreApplication::sendEvent(this, event); // replaced by:
         mousePressEvent(e);
       } else if(event->type() == QEvent::KeyPress) {
         auto e = static_cast<QKeyEvent*>(event);
         if(e->key() == Qt::Key_Escape) {
           if(m_submission != m_current->get()) {
             m_current->set(m_submission);
-            // TODO: return true or false?
             return true;
           }
         } else if(e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return) {
           m_has_update = true;
           on_editing_finished();
-          // TODO: return true or false?
           return true;
         } else if(!m_is_handling_key_press) {
           m_is_handling_key_press = true;
-          //QCoreApplication::sendEvent(m_line_edit, event); // replaced by:
-          keyPressEvent(e);
+            QLineEdit::keyPressEvent(e);
           m_is_handling_key_press = false;
-          // TODO: return true or false?
-          return true;
+          if(e->isAccepted()) {
+            return true;
+          }
         }
-        //QWidget::keyPressEvent(event);
       }
       return QLineEdit::eventFilter(watched, event);
     }
@@ -353,23 +353,16 @@ class TextBox::EditableTextBox : public QLineEdit {
       if(focusEvent->lostFocus() &&
           focusEvent->reason() != Qt::ActiveWindowFocusReason &&
           focusEvent->reason() != Qt::PopupFocusReason) {
-        // TODO: Can focus in/out be moved to the ETB?
+        // TODO: Can focus out be moved to the ETB?
         //update_display_text();
       }
       QLineEdit::focusOutEvent(event);
     }
-    void keyPressEvent(QKeyEvent* event) override {
-      if(!m_is_handling_key_press) {
-        QLineEdit::keyPressEvent(event);
-
-        // TODO: required?
-        event->accept();
-      }
-    }
     // TODO: may not be required
-    //void resizeEvent(QResizeEvent* event) override {
-    //  update_display_text();
-    //}
+    void resizeEvent(QResizeEvent* event) override {
+      //update_display_text();
+      QLineEdit::resizeEvent(event);
+    }
 
   private:
     mutable SubmitSignal m_submit_signal;
@@ -379,6 +372,7 @@ class TextBox::EditableTextBox : public QLineEdit {
     QString m_submission;
     std::shared_ptr<HighlightModel> m_highlight;
     TextValidator* m_text_validator;
+    QString m_placeholder;
     bool m_is_rejected;
     bool m_has_update;
     bool m_is_handling_key_press;
@@ -470,33 +464,11 @@ TextBox::TextBox(std::shared_ptr<TextModel> current, QWidget* parent)
       m_highlight(std::make_shared<LocalValueModel<Highlight>>()),
       m_editable_text_box(nullptr),
       m_line_edit_styles([=] { commit_style(); }) {
-
-  // TODO: where should this go? If in TextBox, move to ctor initializer
-  m_text_validator = new TextValidator(m_current, this);
-
-  //setCursor(m_line_edit->cursor());
-
-  // TODO: ???
-  //setFocusPolicy(m_line_edit->focusPolicy());
-
-  // TODO: needs layout, maybe add the layout in ETB, but delete it on destruction of ETB
-  //auto layout = new QHBoxLayout(this);
-  //layout->setContentsMargins(0, 0, 0, 0);
-  //layout->addWidget(m_box);
-  
-  // TODO: the Box proxies its focus to its body, so proxy the TextBox focus to
-  //        the EditableTextBox.
-  //setFocusProxy(m_box);
-
-  // TODO: required?
-  //proxy_style(*this, *m_box);
-
   add_pseudo_element(*this, Placeholder());
-
-
-  //m_style_connection = connect_style_signal(*this, [=] { on_style(); });
+  m_style_connection = connect_style_signal(*this, [=] { on_style(); });
   m_placeholder_style_connection =
     connect_style_signal(*this, Placeholder(), [=] { on_style(); });
+  // TODO: crashes the UiViewer at startup, for whatever reason
   //set_style(*this, DEFAULT_STYLE());
   m_current_connection = m_current->connect_update_signal(
     [=] (const auto& value) { on_current(value); });
@@ -518,8 +490,15 @@ const std::shared_ptr<HighlightModel>& TextBox::get_highlight() const {
 }
 
 void TextBox::set_placeholder(const QString& placeholder) {
+  m_placeholder = placeholder;
+  //if(m_editable_text_box) {
+  //  m_editable_text_box->
+  //}
   //m_box->set_placeholder(placeholder);
-  update_placeholder_text();
+  //update_placeholder_text();
+  //void TextBox::update_placeholder_text() {
+  //  //m_box->set_placeholder_visible(is_placeholder_visible());
+  //}
 }
 
 bool TextBox::is_read_only() const {
@@ -529,9 +508,8 @@ bool TextBox::is_read_only() const {
 void TextBox::set_read_only(bool read_only) {
   if(!m_editable_text_box && read_only) {
     return;
-  } else if(!m_editable_text_box && !read_only) {
-    m_editable_text_box =
-      new EditableTextBox(m_current, m_highlight, m_text_validator, this);
+  } else if(!m_editable_text_box) {
+    initialize_editable_text_box();
   }
   m_editable_text_box->setReadOnly(read_only);
   m_editable_text_box->setCursorPosition(0);
@@ -542,7 +520,7 @@ void TextBox::set_read_only(bool read_only) {
     unmatch(*this, ReadOnly());
   }
   update_display_text();
-  update_placeholder_text();
+  //update_placeholder_text();
 }
 
 connection TextBox::connect_submit_signal(
@@ -565,78 +543,77 @@ QSize TextBox::sizeHint() const {
     }
     return 1;
   }();
-  // TODO:
-  m_size_hint.emplace(100, 26);
-  //m_size_hint.emplace(
-  //  m_text_box->fontMetrics().horizontalAdvance(m_current->get()) +
-  //    cursor_width, m_text_box->fontMetrics().height());
+  auto metrics = QFontMetrics(m_line_edit_styles.m_font.value_or(QFont()));
+  m_size_hint.emplace(
+    metrics.horizontalAdvance(m_current->get()) +
+      cursor_width, metrics.height());
   *m_size_hint += compute_decoration_size();
   return *m_size_hint;
 }
 
 void TextBox::changeEvent(QEvent* event) {
   if(event->type() == QEvent::EnabledChange) {
+    if(!m_editable_text_box && isEnabled()) {
+      initialize_editable_text_box();
+    }
     update_display_text();
   }
   QWidget::changeEvent(event);
 }
 
+void TextBox::paintEvent(QPaintEvent* event) {
+  auto painter = QPainter(this);
+  m_box_painter.paint(painter);
+  if(m_editable_text_box) {
+    if(is_placeholder_visible()) {
+      // TODO: paint placeholder
+      painter.drawText(m_geometry.get_content_area(), Qt::AlignLeft, "Test Placeholder");
+    }
+  } else if(!m_current->get().isEmpty()) {
+    //painter.setFont(m_font);
+    //painter.setPen(m_text_color);
+    //painter.drawText(rect() - m_margins, m_alignment, m_elided_placeholder);
+  }
+}
+
 void TextBox::resizeEvent(QResizeEvent* event) {
+  m_geometry.set_size(size());
   update_display_text();
   QWidget::resizeEvent(event);
 }
 
-QSize TextBox::compute_decoration_size() const {
-  auto decoration_size = QSize(0, 0);
-  for(auto& property : get_evaluated_block(*this)) {
-    property.visit(
-      [&] (std::in_place_type_t<BorderTopSize>, int size) {
-        decoration_size.rheight() += size;
-      },
-      [&] (std::in_place_type_t<BorderRightSize>, int size) {
-        decoration_size.rwidth() += size;
-      },
-      [&] (std::in_place_type_t<BorderBottomSize>, int size) {
-        decoration_size.rheight() += size;
-      },
-      [&] (std::in_place_type_t<BorderLeftSize>, int size) {
-        decoration_size.rwidth() += size;
-      },
-      [&] (std::in_place_type_t<PaddingTop>, int size) {
-        decoration_size.rheight() += size;
-      },
-      [&] (std::in_place_type_t<PaddingRight>, int size) {
-        decoration_size.rwidth() += size;
-      },
-      [&] (std::in_place_type_t<PaddingBottom>, int size) {
-        decoration_size.rheight() += size;
-      },
-      [&] (std::in_place_type_t<PaddingLeft>, int size) {
-        decoration_size.rwidth() += size;
-      });
+void TextBox::showEvent(QShowEvent* event) {
+  if(!m_editable_text_box && (is_read_only() || isEnabled())) {
+    initialize_editable_text_box();
   }
-  return decoration_size;
+  QWidget::showEvent(event);
 }
 
-bool TextBox::is_placeholder_visible() const {
-  return !is_read_only() && m_current->get().isEmpty() &&
-    !m_placeholder.isEmpty();
+QSize TextBox::compute_decoration_size() const {
+  return m_geometry.get_geometry().size() -
+    m_geometry.get_content_area().size();
 }
 
 void TextBox::elide_text() {
-  // TODO: this might be related to the 'displayed' text TODO comment
-  if(!m_editable_text_box) {
-    return;
-  }
-  auto font_metrics = m_editable_text_box->fontMetrics();
-  auto rect = QRect(QPoint(0, 0), size() - compute_decoration_size());
-  auto elided_text = font_metrics.elidedText(
+  auto font_metrics = QFontMetrics(m_line_edit_styles.m_font.value_or(QFont()));
+  //auto rect = QRect(QPoint(0, 0), size() - compute_decoration_size());
+  auto rect = m_geometry.get_content_area();
+  m_display_text = font_metrics.elidedText(
     m_current->get(), Qt::ElideRight, rect.width());
-  m_text_validator->m_is_text_elided = elided_text != m_current->get();
-  if(elided_text != m_editable_text_box->text()) {
-    m_editable_text_box->setText(elided_text);
+  if(m_editable_text_box && m_display_text != m_editable_text_box->text()) {
+    m_editable_text_box->set_display_text(
+      m_display_text, m_display_text != m_current->get());
     m_editable_text_box->setCursorPosition(0);
   }
+}
+
+void TextBox::initialize_editable_text_box() {
+  m_editable_text_box = new EditableTextBox(m_current, m_highlight, this);
+}
+
+bool TextBox::is_placeholder_visible() const {
+  return m_editable_text_box && !m_editable_text_box->isReadOnly() &&
+    !m_placeholder.isEmpty() && m_current->get().isEmpty();
 }
 
 void TextBox::update_display_text() {
@@ -650,14 +627,11 @@ void TextBox::update_display_text() {
     elide_text();
   } else if(m_editable_text_box &&
       m_editable_text_box->text() != m_current->get()) {
-    m_editable_text_box->setText(m_current->get());
+    m_editable_text_box->set_display_text(m_current->get(), false);
+    //m_editable_text_box->setText(m_current->get());
   }
   m_size_hint = none;
   updateGeometry();
-}
-
-void TextBox::update_placeholder_text() {
-  //m_box->set_placeholder_visible(is_placeholder_visible());
 }
 
 void TextBox::commit_style() {
@@ -688,7 +662,7 @@ void TextBox::commit_style() {
 
 void TextBox::on_current(const QString& current) {
   update_display_text();
-  update_placeholder_text();
+  //update_placeholder_text();
 }
 
 void TextBox::on_style() {
@@ -696,6 +670,8 @@ void TextBox::on_style() {
   m_line_edit_styles.clear();
   m_line_edit_styles.m_styles.buffer([&] {
     for(auto& property : stylist.get_computed_block()) {
+      apply(property, m_geometry, stylist);
+      apply(property, m_box_painter, stylist);
       property.visit(
         [&] (const TextColor& color) {
           stylist.evaluate(color, [=] (auto color) {
@@ -724,7 +700,7 @@ void TextBox::on_style() {
         });
     }
   });
-  //m_box->update_style();
+  // TODO: probably call update
 }
 
 TextBox* Spire::make_label(QString label, QWidget* parent) {

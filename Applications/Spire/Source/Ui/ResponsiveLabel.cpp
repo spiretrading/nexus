@@ -2,6 +2,7 @@
 #include <tuple>
 #include <QHBoxLayout>
 #include "Spire/Spire/LocalValueModel.hpp"
+#include "Spire/Ui/Box.hpp"
 
 using namespace boost;
 using namespace Spire;

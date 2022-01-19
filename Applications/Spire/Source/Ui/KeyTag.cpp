@@ -2,6 +2,7 @@
 #include <QHBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
+#include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace Spire;

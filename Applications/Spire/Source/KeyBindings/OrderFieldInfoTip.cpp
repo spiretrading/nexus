@@ -2,6 +2,7 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/InfoTip.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/TextAreaBox.hpp"

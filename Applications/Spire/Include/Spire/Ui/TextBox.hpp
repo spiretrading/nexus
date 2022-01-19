@@ -5,7 +5,8 @@
 #include <QLineEdit>
 #include "Spire/Spire/ValueModel.hpp"
 #include "Spire/Styles/StyleSheetMap.hpp"
-#include "Spire/Ui/Box.hpp"
+#include "Spire/Ui/BoxGeometry.hpp"
+#include "Spire/Ui/BoxPainter.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -159,7 +160,9 @@ namespace Styles {
 
     protected:
       void changeEvent(QEvent* event) override;
+      void paintEvent(QPaintEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
+      void showEvent(QShowEvent* event) override;
 
     private:
       struct StyleProperties {
@@ -178,28 +181,25 @@ namespace Styles {
       mutable SubmitSignal m_submit_signal;
       mutable RejectSignal m_reject_signal;
       std::shared_ptr<TextModel> m_current;
+      QString m_display_text;
+      QString m_placeholder;
       std::shared_ptr<HighlightModel> m_highlight;
       StyleProperties m_line_edit_styles;
-      TextValidator* m_text_validator;
-      QString m_placeholder;
       EditableTextBox* m_editable_text_box;
+      BoxGeometry m_geometry;
+      BoxPainter m_box_painter;
       boost::signals2::scoped_connection m_style_connection;
       boost::signals2::scoped_connection m_placeholder_style_connection;
       boost::signals2::scoped_connection m_current_connection;
       mutable boost::optional<QSize> m_size_hint;
 
       QSize compute_decoration_size() const;
-      bool is_placeholder_visible() const;
       void elide_text();
+      void initialize_editable_text_box();
+      bool is_placeholder_visible() const;
       void update_display_text();
-      void update_placeholder_text();
       void commit_style();
       void on_current(const QString& current);
-      //void on_editing_finished();
-      //void on_text_edited(const QString& text);
-      //void on_cursor_position(int old_position, int new_position);
-      //void on_selection();
-      //void on_highlight(const Highlight& highlight);
       void on_style();
   };
 

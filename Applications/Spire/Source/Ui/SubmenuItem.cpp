@@ -1,6 +1,7 @@
 #include "Spire/Ui/SubmenuItem.hpp"
 #include <QHBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
