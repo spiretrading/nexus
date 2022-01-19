@@ -32,9 +32,6 @@ struct FocusObserver::FocusEventFilter : QObject {
   }
 
   void on_focus_changed(QWidget* old, QWidget* now) {
-    if(!now) {
-      return;
-    }
     static auto widget_focus_visible = std::pair<QWidget*, bool>();
     static auto previous_widget_focus_visible = widget_focus_visible;
     if(widget_focus_visible.first != now &&
@@ -71,7 +68,7 @@ struct FocusObserver::FocusEventFilter : QObject {
         }
     } else if(is_ancestor(m_widget, now)) {
       m_state = State::FOCUS_IN;
-    } else {
+    } else if(m_widget == old || m_widget->isAncestorOf(old)) {
       m_state = State::NONE;
     }
     if(state != m_state) {
