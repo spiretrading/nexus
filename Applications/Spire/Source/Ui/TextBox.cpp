@@ -433,6 +433,7 @@ bool TextBox::is_read_only() const {
 
 void TextBox::set_read_only(bool read_only) {
   if(!m_editable_text_box && read_only) {
+    match(*this, ReadOnly());
     return;
   } else if(!m_editable_text_box) {
     initialize_editable_text_box();
