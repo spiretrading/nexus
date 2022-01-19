@@ -529,18 +529,15 @@ void TextBox::update_display_text() {
   // TODO: the current 'displayed' (potentially elided) text is the same for both
   //        painted and QLineEdit, so find a way to combine the setting of the
   //        displayed text.
-
-  // TODO: verify hasFocus functions correctly after the updates; the relationships
-  //        between widgets will be changed.
   if(!isEnabled() || is_read_only() || !hasFocus()) {
     elide_text();
   } else if(m_editable_text_box &&
       m_editable_text_box->text() != m_current->get()) {
     m_editable_text_box->set_display_text(m_current->get(), false);
-    //m_editable_text_box->setText(m_current->get());
   }
   m_size_hint = none;
   updateGeometry();
+  update();
 }
 
 void TextBox::on_current(const QString& current) {
@@ -585,8 +582,6 @@ void TextBox::on_style() {
     m_editable_text_box->set_style(m_geometry, m_text_style);
   }
   update_display_text();
-  // TODO: probably call update
-  // TODO: maybe call update in update_display_text, for cases where the text is painted
 }
 
 TextBox* Spire::make_label(QString label, QWidget* parent) {
