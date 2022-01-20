@@ -105,10 +105,10 @@ struct TextBox::TextValidator : QValidator {
   }
 };
 
-class TextBox::EditableTextBox : public QLineEdit {
+class TextBox::LineEdit : public QLineEdit {
   public:
 
-    EditableTextBox(std::shared_ptr<TextModel> current,
+    LineEdit(std::shared_ptr<TextModel> current,
         std::shared_ptr<HighlightModel> highlight, TextBox* text_box)
         : QLineEdit(current->get(), text_box),
           m_text_box(text_box),
@@ -129,17 +129,17 @@ class TextBox::EditableTextBox : public QLineEdit {
       setValidator(m_text_validator);
       installEventFilter(this);
       connect(this, &QLineEdit::editingFinished, this,
-        &EditableTextBox::on_editing_finished);
+        &LineEdit::on_editing_finished);
       connect(
-        this, &QLineEdit::textEdited, this, &EditableTextBox::on_text_edited);
+        this, &QLineEdit::textEdited, this, &LineEdit::on_text_edited);
       m_current_connection = m_current->connect_update_signal(
         [=] (const auto& value) { on_current(value); });
       connect(this, &QLineEdit::cursorPositionChanged, this,
-        std::bind_front(&EditableTextBox::on_cursor_position, this));
+        std::bind_front(&LineEdit::on_cursor_position, this));
       connect(this, &QLineEdit::selectionChanged, this,
-        std::bind_front(&EditableTextBox::on_selection, this));
+        std::bind_front(&LineEdit::on_selection, this));
       m_highlight->connect_update_signal(
-        std::bind_front(&EditableTextBox::on_highlight, this));
+        std::bind_front(&LineEdit::on_highlight, this));
       m_text_box->setCursor(cursor());
       m_text_box->setFocusPolicy(focusPolicy());
       m_text_box->setFocusProxy(this);
@@ -398,7 +398,7 @@ TextBox::TextBox(std::shared_ptr<TextModel> current, QWidget* parent)
     : QWidget(parent),
       m_current(std::move(current)),
       m_highlight(std::make_shared<LocalValueModel<Highlight>>()),
-      m_editable_text_box(nullptr) {
+      m_line_edit(nullptr) {
   m_style_connection = connect_style_signal(*this, [=] { on_style(); });
   set_style(*this, DEFAULT_STYLE());
   m_current_connection = m_current->connect_update_signal(
@@ -410,8 +410,8 @@ const std::shared_ptr<TextModel>& TextBox::get_current() const {
 }
 
 const QString& TextBox::get_submission() const {
-  if(m_editable_text_box) {
-    return m_editable_text_box->get_submission();
+  if(m_line_edit) {
+    return m_line_edit->get_submission();
   }
   return m_current->get();
 }
@@ -422,25 +422,25 @@ const std::shared_ptr<HighlightModel>& TextBox::get_highlight() const {
 
 void TextBox::set_placeholder(const QString& placeholder) {
   m_placeholder = placeholder;
-  if(m_editable_text_box) {
-    m_editable_text_box->set_placeholder(m_placeholder);
+  if(m_line_edit) {
+    m_line_edit->set_placeholder(m_placeholder);
   }
 }
 
 bool TextBox::is_read_only() const {
-  return !m_editable_text_box || m_editable_text_box->isReadOnly();
+  return !m_line_edit || m_line_edit->isReadOnly();
 }
 
 void TextBox::set_read_only(bool read_only) {
-  if(!m_editable_text_box && read_only) {
+  if(!m_line_edit && read_only) {
     match(*this, ReadOnly());
     return;
-  } else if(!m_editable_text_box) {
-    initialize_editable_text_box();
+  } else if(!m_line_edit) {
+    initialize_line_edit();
   }
-  m_editable_text_box->setReadOnly(read_only);
-  m_editable_text_box->setCursorPosition(0);
-  setCursor(m_editable_text_box->cursor());
+  m_line_edit->setReadOnly(read_only);
+  m_line_edit->setCursorPosition(0);
+  setCursor(m_line_edit->cursor());
   if(read_only) {
     match(*this, ReadOnly());
   } else {
@@ -479,8 +479,8 @@ QSize TextBox::sizeHint() const {
 
 void TextBox::changeEvent(QEvent* event) {
   if(event->type() == QEvent::EnabledChange) {
-    if(!m_editable_text_box && isEnabled()) {
-      initialize_editable_text_box();
+    if(!m_line_edit && isEnabled()) {
+      initialize_line_edit();
     }
     update_display_text();
   }
@@ -490,7 +490,7 @@ void TextBox::changeEvent(QEvent* event) {
 void TextBox::paintEvent(QPaintEvent* event) {
   auto painter = QPainter(this);
   m_box_painter.paint(painter);
-  if(!m_editable_text_box && !m_current->get().isEmpty()) {
+  if(!m_line_edit && !m_current->get().isEmpty()) {
     painter.setPen(m_text_style.m_text_color);
     painter.setFont(m_text_style.m_font);
     painter.drawText(
@@ -505,8 +505,8 @@ void TextBox::resizeEvent(QResizeEvent* event) {
 }
 
 void TextBox::showEvent(QShowEvent* event) {
-  if(!m_editable_text_box && (!is_read_only() || isEnabled())) {
-    initialize_editable_text_box();
+  if(!m_line_edit && (!is_read_only() || isEnabled())) {
+    initialize_line_edit();
   }
   QWidget::showEvent(event);
 }
@@ -520,26 +520,26 @@ void TextBox::elide_text() {
   auto font_metrics = QFontMetrics(m_text_style.m_font);
   m_display_text = font_metrics.elidedText(
     m_current->get(), Qt::ElideRight, m_geometry.get_content_area().width());
-  if(m_editable_text_box && m_display_text != m_editable_text_box->text()) {
-    m_editable_text_box->set_display_text(
+  if(m_line_edit && m_display_text != m_line_edit->text()) {
+    m_line_edit->set_display_text(
       m_display_text, m_display_text != m_current->get());
-    m_editable_text_box->setCursorPosition(0);
+    m_line_edit->setCursorPosition(0);
   }
 }
 
-void TextBox::initialize_editable_text_box() {
-  m_editable_text_box = new EditableTextBox(m_current, m_highlight, this);
-  m_editable_text_box->set_placeholder(m_placeholder);
+void TextBox::initialize_line_edit() {
+  m_line_edit = new LineEdit(m_current, m_highlight, this);
+  m_line_edit->set_placeholder(m_placeholder);
   on_style();
 }
 
 void TextBox::update_display_text() {
   if(!isEnabled() || is_read_only() || !hasFocus()) {
     elide_text();
-  } else if(m_editable_text_box &&
-      m_editable_text_box->text() != m_current->get()) {
+  } else if(m_line_edit &&
+      m_line_edit->text() != m_current->get()) {
     m_display_text = m_current->get();
-    m_editable_text_box->set_display_text(m_display_text, false);
+    m_line_edit->set_display_text(m_display_text, false);
   }
   m_size_hint = none;
   updateGeometry();
@@ -583,8 +583,8 @@ void TextBox::on_style() {
         });
       });
   }
-  if(m_editable_text_box) {
-    m_editable_text_box->set_style(m_geometry, m_text_style);
+  if(m_line_edit) {
+    m_line_edit->set_style(m_geometry, m_text_style);
   }
   update_display_text();
 }

@@ -175,8 +175,8 @@ namespace Styles {
         TextStyleProperties();
       };
       struct TextValidator;
-      class EditableTextBox;
-      friend class EditableTextBox;
+      class LineEdit;
+      friend class LineEdit;
       mutable SubmitSignal m_submit_signal;
       mutable RejectSignal m_reject_signal;
       std::shared_ptr<TextModel> m_current;
@@ -185,7 +185,7 @@ namespace Styles {
       std::shared_ptr<HighlightModel> m_highlight;
       TextStyleProperties m_text_style;
       TextStyleProperties m_placeholder_style;
-      EditableTextBox* m_editable_text_box;
+      LineEdit* m_line_edit;
       BoxGeometry m_geometry;
       BoxPainter m_box_painter;
       boost::signals2::scoped_connection m_style_connection;
@@ -195,7 +195,7 @@ namespace Styles {
 
       QSize compute_decoration_size() const;
       void elide_text();
-      void initialize_editable_text_box();
+      void initialize_line_edit();
       void update_display_text();
       void on_current(const QString& current);
       void on_style();
