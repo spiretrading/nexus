@@ -410,10 +410,7 @@ const std::shared_ptr<TextModel>& TextBox::get_current() const {
 }
 
 const QString& TextBox::get_submission() const {
-  if(m_line_edit) {
-    return m_submission->get();
-  }
-  return m_current->get();
+  return m_submission->get();
 }
 
 const std::shared_ptr<HighlightModel>& TextBox::get_highlight() const {
