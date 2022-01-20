@@ -8,6 +8,7 @@
 
 namespace Spire {
   class AnyListModel;
+  class AnyRef;
   template<typename T> class ArrayListModel;
   class CancelKeySequenceValidationModel;
   template<typename T> class ColumnViewListModel;
