@@ -152,9 +152,12 @@ class TextBox::LineEdit : public QLineEdit {
         *m_text_box, Placeholder(), [=] { on_placeholder_style(); });
     }
 
-    void set_display_text(const QString& text, bool is_elided) {
-      m_text_validator->m_is_text_elided = is_elided;
+    void set_display_text(const QString& text) {
+      m_text_validator->m_is_text_elided = text != m_current->get();
       setText(text);
+      if(m_text_validator->m_is_text_elided) {
+        setCursorPosition(0);
+      }
     }
 
     const QString& get_submission() const {
@@ -204,6 +207,11 @@ class TextBox::LineEdit : public QLineEdit {
     connection connect_reject_signal(
         const RejectSignal::slot_type& slot) const {
       return m_reject_signal.connect(slot);
+    }
+
+    void setReadOnly(bool read_only) {
+      QLineEdit::setReadOnly(read_only);
+      setCursorPosition(0);
     }
 
   protected:
@@ -439,7 +447,6 @@ void TextBox::set_read_only(bool read_only) {
     initialize_line_edit();
   }
   m_line_edit->setReadOnly(read_only);
-  m_line_edit->setCursorPosition(0);
   setCursor(m_line_edit->cursor());
   if(read_only) {
     match(*this, ReadOnly());
@@ -473,7 +480,8 @@ QSize TextBox::sizeHint() const {
   m_size_hint.emplace(
     metrics.horizontalAdvance(m_current->get()) +
       cursor_width, metrics.height());
-  *m_size_hint += compute_decoration_size();
+  *m_size_hint += m_geometry.get_geometry().size() -
+    m_geometry.get_content_area().size();
   return *m_size_hint;
 }
 
@@ -511,19 +519,12 @@ void TextBox::showEvent(QShowEvent* event) {
   QWidget::showEvent(event);
 }
 
-QSize TextBox::compute_decoration_size() const {
-  return m_geometry.get_geometry().size() -
-    m_geometry.get_content_area().size();
-}
-
 void TextBox::elide_text() {
   auto font_metrics = QFontMetrics(m_text_style.m_font);
   m_display_text = font_metrics.elidedText(
     m_current->get(), Qt::ElideRight, m_geometry.get_content_area().width());
   if(m_line_edit && m_display_text != m_line_edit->text()) {
-    m_line_edit->set_display_text(
-      m_display_text, m_display_text != m_current->get());
-    m_line_edit->setCursorPosition(0);
+    m_line_edit->set_display_text(m_display_text);
   }
 }
 
@@ -539,7 +540,7 @@ void TextBox::update_display_text() {
   } else if(m_line_edit &&
       m_line_edit->text() != m_current->get()) {
     m_display_text = m_current->get();
-    m_line_edit->set_display_text(m_display_text, false);
+    m_line_edit->set_display_text(m_display_text);
   }
   m_size_hint = none;
   updateGeometry();

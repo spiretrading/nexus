@@ -184,16 +184,13 @@ namespace Styles {
       QString m_placeholder;
       std::shared_ptr<HighlightModel> m_highlight;
       TextStyleProperties m_text_style;
-      TextStyleProperties m_placeholder_style;
       LineEdit* m_line_edit;
       BoxGeometry m_geometry;
       BoxPainter m_box_painter;
       boost::signals2::scoped_connection m_style_connection;
-      boost::signals2::scoped_connection m_placeholder_style_connection;
       boost::signals2::scoped_connection m_current_connection;
       mutable boost::optional<QSize> m_size_hint;
 
-      QSize compute_decoration_size() const;
       void elide_text();
       void initialize_line_edit();
       void update_display_text();
