@@ -182,9 +182,7 @@ class TextBox::LineEdit : public QLineEdit {
       if(text_style.m_alignment != alignment()) {
         setAlignment(text_style.m_alignment);
       }
-      auto font = text_style.m_font;
-      font.setPixelSize(text_style.m_size);
-      setFont(font);
+      setFont(text_style.m_font);
       if(text_style.m_echo_mode != echoMode()) {
         setEchoMode(text_style.m_echo_mode);
       }
@@ -196,6 +194,11 @@ class TextBox::LineEdit : public QLineEdit {
     connection connect_reject_signal(
         const RejectSignal::slot_type& slot) const {
       return m_reject_signal.connect(slot);
+    }
+
+    void setReadOnly(bool read_only) {
+      QLineEdit::setReadOnly(read_only);
+      setCursorPosition(0);
     }
 
   protected:
@@ -326,6 +329,7 @@ class TextBox::LineEdit : public QLineEdit {
       }
     }
     void on_placeholder_style() {
+      auto font_size = std::make_shared<optional<int>>();
       auto& placeholder_stylist = *find_stylist(*m_text_box, Placeholder());
       m_placeholder_style = TextStyleProperties();
       for(auto& property : placeholder_stylist.get_computed_block()) {
@@ -347,9 +351,12 @@ class TextBox::LineEdit : public QLineEdit {
           },
           [&] (const FontSize& size) {
             placeholder_stylist.evaluate(size, [=] (auto size) {
-              m_placeholder_style.m_size = size;
+              *font_size = size;
             });
           });
+      }
+      if(*font_size) {
+        m_placeholder_style.m_font.setPixelSize(*(*font_size));
       }
       if(is_placeholder_visible()) {
         update();
@@ -374,7 +381,6 @@ TextStyle Spire::Styles::text_style(QFont font, QColor color) {
 
 TextBox::TextStyleProperties::TextStyleProperties()
   : m_alignment(Qt::AlignLeft | Qt::AlignVCenter),
-    m_size(scale_height(12)),
     m_echo_mode(QLineEdit::Normal) {}
 
 TextBox::TextBox(QWidget* parent)
@@ -436,7 +442,6 @@ void TextBox::set_read_only(bool read_only) {
   m_line_edit->setReadOnly(read_only);
   setCursor(m_line_edit->cursor());
   if(m_is_read_only) {
-    m_line_edit->setCursorPosition(0);
     match(*this, ReadOnly());
   } else {
     unmatch(*this, ReadOnly());
@@ -543,6 +548,7 @@ void TextBox::on_current(const QString& current) {
 }
 
 void TextBox::on_style() {
+  auto font_size = std::make_shared<optional<int>>();
   auto& stylist = find_stylist(*this);
   m_text_style = TextStyleProperties();
   for(auto& property : stylist.get_computed_block()) {
@@ -566,7 +572,7 @@ void TextBox::on_style() {
       },
       [&] (const FontSize& size) {
         stylist.evaluate(size, [=] (auto size) {
-          m_text_style.m_size = size;
+          *font_size = size;
         });
       },
       [&] (const EchoMode& mode) {
@@ -574,6 +580,9 @@ void TextBox::on_style() {
           m_text_style.m_echo_mode = mode;
         });
       });
+  }
+  if(*font_size) {
+    m_text_style.m_font.setPixelSize(*(*font_size));
   }
   if(m_line_edit) {
     m_line_edit->set_style(m_geometry, m_text_style);

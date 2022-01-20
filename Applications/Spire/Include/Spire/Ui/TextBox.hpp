@@ -168,7 +168,6 @@ namespace Styles {
       struct TextStyleProperties {
         Qt::Alignment m_alignment;
         QFont m_font;
-        int m_size;
         QColor m_text_color;
         QLineEdit::EchoMode m_echo_mode;
 
