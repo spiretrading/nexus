@@ -7,7 +7,6 @@ using namespace Spire;
 TEST_SUITE("AnyRef") {
   TEST_CASE("empty") {
     auto any = AnyRef();
-    REQUIRE(any.get() == nullptr);
     REQUIRE(!any.has_value());
     REQUIRE(any.get_type() == typeid(void));
     REQUIRE(!any.is_const());
@@ -18,7 +17,6 @@ TEST_SUITE("AnyRef") {
   TEST_CASE("ref") {
     auto value = 123;
     auto any = AnyRef(value);
-    REQUIRE(any.get() == &value);
     REQUIRE(any.has_value());
     REQUIRE(any.get_type() == typeid(int));
     REQUIRE(!any.is_const());
@@ -36,7 +34,7 @@ TEST_SUITE("AnyRef") {
   }
 
   TEST_CASE("const_ref") {
-    auto value = false;
+    const auto value = false;
     auto any = AnyRef(value);
     REQUIRE(any.get_type() == typeid(bool));
     REQUIRE(any.is_const());
