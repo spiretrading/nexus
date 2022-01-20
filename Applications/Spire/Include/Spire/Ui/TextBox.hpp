@@ -7,6 +7,7 @@
 #include "Spire/Styles/StyleSheetMap.hpp"
 #include "Spire/Ui/BoxGeometry.hpp"
 #include "Spire/Ui/BoxPainter.hpp"
+#include "Spire/Ui/CheckBox.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -183,6 +184,7 @@ namespace Styles {
       std::shared_ptr<TextModel> m_submission;
       QString m_display_text;
       QString m_placeholder;
+      std::shared_ptr<BooleanModel> m_read_only;
       std::shared_ptr<HighlightModel> m_highlight;
       TextStyleProperties m_text_style;
       LineEdit* m_line_edit;

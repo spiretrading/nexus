@@ -110,6 +110,7 @@ class TextBox::LineEdit : public QLineEdit {
 
     LineEdit(std::shared_ptr<TextModel> current,
         std::shared_ptr<TextModel> submission,
+        std::shared_ptr<BooleanModel> read_only,
         std::shared_ptr<HighlightModel> highlight, TextBox* text_box)
         : QLineEdit(current->get(), text_box),
           m_text_box(text_box),
@@ -151,6 +152,9 @@ class TextBox::LineEdit : public QLineEdit {
       add_pseudo_element(*m_text_box, Placeholder());
       m_placeholder_style_connection = connect_style_signal(
         *m_text_box, Placeholder(), [=] { on_placeholder_style(); });
+      m_read_only_connection = read_only->connect_update_signal(
+        [=] (auto value) { on_read_only(value); });
+      setReadOnly(read_only->get());
     }
 
     void set_display_text(const QString& text) {
@@ -197,11 +201,6 @@ class TextBox::LineEdit : public QLineEdit {
     connection connect_reject_signal(
         const RejectSignal::slot_type& slot) const {
       return m_reject_signal.connect(slot);
-    }
-
-    void setReadOnly(bool read_only) {
-      QLineEdit::setReadOnly(read_only);
-      setCursorPosition(0);
     }
 
   protected:
@@ -282,6 +281,7 @@ class TextBox::LineEdit : public QLineEdit {
     bool m_has_update;
     bool m_is_handling_key_press;
     scoped_connection m_current_connection;
+    scoped_connection m_read_only_connection;
     scoped_connection m_placeholder_style_connection;
 
     void elide_placeholder_text() {
@@ -362,6 +362,10 @@ class TextBox::LineEdit : public QLineEdit {
         update();
       }
     }
+    void on_read_only(bool read_only) {
+      setReadOnly(read_only);
+      setCursorPosition(0);
+    }
     void on_selection() {
       if(!hasSelectedText()) {
         on_cursor_position(0, cursorPosition());
@@ -394,6 +398,7 @@ TextBox::TextBox(std::shared_ptr<TextModel> current, QWidget* parent)
     : QWidget(parent),
       m_current(std::move(current)),
       m_submission(std::make_shared<LocalTextModel>(m_current->get())),
+      m_read_only(std::make_shared<LocalBooleanModel>(false)),
       m_highlight(std::make_shared<LocalValueModel<Highlight>>()),
       m_line_edit(nullptr) {
   m_style_connection = connect_style_signal(*this, [=] { on_style(); });
@@ -425,19 +430,22 @@ void TextBox::set_placeholder(const QString& placeholder) {
 }
 
 bool TextBox::is_read_only() const {
-  return !m_line_edit || m_line_edit->isReadOnly();
+  return m_read_only->get();
 }
 
 void TextBox::set_read_only(bool read_only) {
-  if(!m_line_edit && read_only) {
+  if(read_only == m_read_only->get()) {
+    return;
+  }
+  m_read_only->set(read_only);
+  if(!m_line_edit && m_read_only->get()) {
     match(*this, ReadOnly());
     return;
   } else if(!m_line_edit) {
     initialize_line_edit();
   }
-  m_line_edit->setReadOnly(read_only);
   setCursor(m_line_edit->cursor());
-  if(read_only) {
+  if(m_read_only->get()) {
     match(*this, ReadOnly());
   } else {
     unmatch(*this, ReadOnly());
@@ -518,7 +526,8 @@ void TextBox::elide_text() {
 }
 
 void TextBox::initialize_line_edit() {
-  m_line_edit = new LineEdit(m_current, m_submission, m_highlight, this);
+  m_line_edit =
+    new LineEdit(m_current, m_submission, m_read_only, m_highlight, this);
   m_line_edit->set_placeholder(m_placeholder);
   m_line_edit->connect_reject_signal(
     [=] (const auto& value) { m_reject_signal(value); });
