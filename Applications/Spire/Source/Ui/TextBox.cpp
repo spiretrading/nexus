@@ -110,7 +110,6 @@ class TextBox::LineEdit : public QLineEdit {
 
     LineEdit(std::shared_ptr<TextModel> current,
         std::shared_ptr<TextModel> submission,
-        std::shared_ptr<BooleanModel> read_only,
         std::shared_ptr<HighlightModel> highlight, TextBox* text_box)
         : QLineEdit(current->get(), text_box),
           m_text_box(text_box),
@@ -152,9 +151,6 @@ class TextBox::LineEdit : public QLineEdit {
       add_pseudo_element(*m_text_box, Placeholder());
       m_placeholder_style_connection = connect_style_signal(
         *m_text_box, Placeholder(), [=] { on_placeholder_style(); });
-      m_read_only_connection = read_only->connect_update_signal(
-        [=] (auto value) { on_read_only(value); });
-      setReadOnly(read_only->get());
     }
 
     void set_display_text(const QString& text) {
@@ -363,10 +359,6 @@ class TextBox::LineEdit : public QLineEdit {
         update();
       }
     }
-    void on_read_only(bool read_only) {
-      setReadOnly(read_only);
-      setCursorPosition(0);
-    }
     void on_selection() {
       if(!hasSelectedText()) {
         on_cursor_position(0, cursorPosition());
@@ -399,7 +391,7 @@ TextBox::TextBox(std::shared_ptr<TextModel> current, QWidget* parent)
     : QWidget(parent),
       m_current(std::move(current)),
       m_submission(std::make_shared<LocalTextModel>(m_current->get())),
-      m_read_only(std::make_shared<LocalBooleanModel>(false)),
+      m_is_read_only(false),
       m_highlight(std::make_shared<LocalValueModel<Highlight>>()),
       m_line_edit(nullptr) {
   m_style_connection = connect_style_signal(*this, [=] { on_style(); });
@@ -431,22 +423,24 @@ void TextBox::set_placeholder(const QString& placeholder) {
 }
 
 bool TextBox::is_read_only() const {
-  return m_read_only->get();
+  return m_is_read_only;
 }
 
 void TextBox::set_read_only(bool read_only) {
-  if(read_only == m_read_only->get()) {
+  if(read_only == m_is_read_only) {
     return;
   }
-  m_read_only->set(read_only);
-  if(!m_line_edit && m_read_only->get()) {
+  m_is_read_only = read_only;
+  if(!m_line_edit && m_is_read_only) {
     match(*this, ReadOnly());
     return;
   } else if(!m_line_edit) {
     initialize_line_edit();
   }
+  m_line_edit->setReadOnly(read_only);
   setCursor(m_line_edit->cursor());
-  if(m_read_only->get()) {
+  if(m_is_read_only) {
+    m_line_edit->setCursorPosition(0);
     match(*this, ReadOnly());
   } else {
     unmatch(*this, ReadOnly());
@@ -527,9 +521,9 @@ void TextBox::elide_text() {
 }
 
 void TextBox::initialize_line_edit() {
-  m_line_edit =
-    new LineEdit(m_current, m_submission, m_read_only, m_highlight, this);
+  m_line_edit = new LineEdit(m_current, m_submission, m_highlight, this);
   m_line_edit->set_placeholder(m_placeholder);
+  m_line_edit->setReadOnly(m_is_read_only);
   m_line_edit->connect_reject_signal(
     [=] (const auto& value) { m_reject_signal(value); });
   on_style();
