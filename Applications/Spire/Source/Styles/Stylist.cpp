@@ -106,7 +106,7 @@ Stylist::~Stylist() {
   }
   while(!m_sources.empty()) {
     auto& source = m_sources.back();
-    if(source.m_source->m_widget != m_widget) {
+    if(source.m_source != this) {
       source.m_source->on_selection_update(
         const_cast<RuleEntry&>(*source.m_rule), {}, {this});
     } else {
