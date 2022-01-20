@@ -4,7 +4,6 @@
 #include <QLabel>
 #include <QLineEdit>
 #include "Spire/Spire/ValueModel.hpp"
-#include "Spire/Styles/StyleSheetMap.hpp"
 #include "Spire/Ui/BoxGeometry.hpp"
 #include "Spire/Ui/BoxPainter.hpp"
 #include "Spire/Ui/CheckBox.hpp"
@@ -177,7 +176,6 @@ namespace Styles {
       };
       struct TextValidator;
       class LineEdit;
-      friend class LineEdit;
       mutable SubmitSignal m_submit_signal;
       mutable RejectSignal m_reject_signal;
       std::shared_ptr<TextModel> m_current;

@@ -174,12 +174,11 @@ class TextBox::LineEdit : public QLineEdit {
         geometry.get_padding_right(), geometry.get_padding_bottom());
       auto stylesheet = QString(
         R"(#0x%1 {
-          background: transparent;
+          background-color: transparent;
           border-width: 0px;
-          padding: 0px;)").arg(reinterpret_cast<std::intptr_t>(this));
-      auto map = StyleSheetMap([] {});
-      map.set("color", text_style.m_text_color);
-      map.write(stylesheet);
+          color: %2;
+          padding: 0px; })").arg(reinterpret_cast<std::intptr_t>(this)).
+          arg(text_style.m_text_color.name());
       if(text_style.m_alignment != alignment()) {
         setAlignment(text_style.m_alignment);
       }
@@ -229,9 +228,8 @@ class TextBox::LineEdit : public QLineEdit {
       return QLineEdit::eventFilter(watched, event);
     }
     void focusInEvent(QFocusEvent* event) override {
-      auto focus_event = static_cast<QFocusEvent*>(event);
-      if(focus_event->reason() != Qt::ActiveWindowFocusReason &&
-          focus_event->reason() != Qt::PopupFocusReason) {
+      if(event->reason() != Qt::ActiveWindowFocusReason &&
+          event->reason() != Qt::PopupFocusReason) {
         m_text_validator->m_is_text_elided = false;
         if(text() != m_current->get()) {
           setText(m_current->get());
@@ -240,10 +238,8 @@ class TextBox::LineEdit : public QLineEdit {
       QLineEdit::focusInEvent(event);
     }
     void focusOutEvent(QFocusEvent* event) override {
-      auto focusEvent = static_cast<QFocusEvent*>(event);
-      if(focusEvent->lostFocus() &&
-          focusEvent->reason() != Qt::ActiveWindowFocusReason &&
-          focusEvent->reason() != Qt::PopupFocusReason) {
+      if(event->lostFocus() && event->reason() != Qt::ActiveWindowFocusReason &&
+          event->reason() != Qt::PopupFocusReason) {
         m_text_box->update_display_text();
       }
       QLineEdit::focusOutEvent(event);
