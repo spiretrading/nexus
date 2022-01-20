@@ -429,9 +429,10 @@ const std::shared_ptr<HighlightModel>& TextBox::get_highlight() const {
 }
 
 void TextBox::set_placeholder(const QString& placeholder) {
-  m_placeholder = placeholder;
   if(m_line_edit) {
     m_line_edit->set_placeholder(m_placeholder);
+  } else {
+    m_placeholder = placeholder;
   }
 }
 
