@@ -48,7 +48,7 @@ void Icon::on_style() {
   auto& stylist = find_stylist(*this);
   m_fill = QColor(0x755EEC);
   for(auto& property : stylist.get_computed_block()) {
-    visit(property, m_painter, stylist);
+    apply(property, m_painter, stylist);
     property.visit(
       [&] (const IconImage& image) {
         stylist.evaluate(image, [=] (auto image) {

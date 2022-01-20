@@ -10,8 +10,10 @@
 #include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
+  class AnyInputBox;
   class ArrayTableModel;
   class Box;
+  class BoxGeometry;
   class BoxPainter;
   class Button;
   class CalendarDatePicker;
