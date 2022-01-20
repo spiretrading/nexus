@@ -109,11 +109,12 @@ class TextBox::LineEdit : public QLineEdit {
   public:
 
     LineEdit(std::shared_ptr<TextModel> current,
+        std::shared_ptr<TextModel> submission,
         std::shared_ptr<HighlightModel> highlight, TextBox* text_box)
         : QLineEdit(current->get(), text_box),
           m_text_box(text_box),
           m_current(std::move(current)),
-          m_submission(m_current->get()),
+          m_submission(std::move(submission)),
           m_highlight(std::move(highlight)),
           m_text_validator(new TextValidator(m_current, this)),
           m_is_rejected(false),
@@ -160,10 +161,6 @@ class TextBox::LineEdit : public QLineEdit {
       }
     }
 
-    const QString& get_submission() const {
-      return m_submission;
-    }
-
     void set_placeholder(const QString& placeholder) {
       m_placeholder = placeholder;
       elide_placeholder_text();
@@ -197,11 +194,6 @@ class TextBox::LineEdit : public QLineEdit {
       }
     }
 
-    connection connect_submit_signal(
-        const SubmitSignal::slot_type& slot) const {
-      return m_submit_signal.connect(slot);
-    }
-
     connection connect_reject_signal(
         const RejectSignal::slot_type& slot) const {
       return m_reject_signal.connect(slot);
@@ -222,8 +214,8 @@ class TextBox::LineEdit : public QLineEdit {
       } else if(event->type() == QEvent::KeyPress) {
         auto e = static_cast<QKeyEvent*>(event);
         if(e->key() == Qt::Key_Escape) {
-          if(m_submission != m_current->get()) {
-            m_current->set(m_submission);
+          if(m_submission->get() != m_current->get()) {
+            m_current->set(m_submission->get());
             return true;
           }
         } else if(e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return) {
@@ -277,11 +269,10 @@ class TextBox::LineEdit : public QLineEdit {
     }
 
   private:
-    mutable SubmitSignal m_submit_signal;
     mutable RejectSignal m_reject_signal;
     TextBox* m_text_box;
     std::shared_ptr<TextModel> m_current;
-    QString m_submission;
+    std::shared_ptr<TextModel> m_submission;
     std::shared_ptr<HighlightModel> m_highlight;
     TextValidator* m_text_validator;
     QString m_placeholder;
@@ -318,12 +309,11 @@ class TextBox::LineEdit : public QLineEdit {
     void on_editing_finished() {
       if(!isReadOnly() && m_has_update) {
         if(m_current->get_state() == QValidator::Acceptable) {
-          m_submission = m_current->get();
+          m_submission->set(m_current->get());
           m_has_update = false;
-          m_submit_signal(m_submission);
         } else {
           m_reject_signal(m_current->get());
-          m_current->set(m_submission);
+          m_current->set(m_submission->get());
           if(!m_is_rejected) {
             m_is_rejected = true;
             match(*m_text_box, Rejected());
@@ -403,12 +393,16 @@ TextBox::TextBox(QString current, QWidget* parent)
 TextBox::TextBox(std::shared_ptr<TextModel> current, QWidget* parent)
     : QWidget(parent),
       m_current(std::move(current)),
+      m_submission(std::make_shared<LocalTextModel>(m_current->get())),
       m_highlight(std::make_shared<LocalValueModel<Highlight>>()),
       m_line_edit(nullptr) {
   m_style_connection = connect_style_signal(*this, [=] { on_style(); });
   set_style(*this, DEFAULT_STYLE());
   m_current_connection = m_current->connect_update_signal(
     [=] (const auto& value) { on_current(value); });
+  m_submission->connect_update_signal([=] (const auto& value) {
+    on_submission(value);
+  });
 }
 
 const std::shared_ptr<TextModel>& TextBox::get_current() const {
@@ -417,7 +411,7 @@ const std::shared_ptr<TextModel>& TextBox::get_current() const {
 
 const QString& TextBox::get_submission() const {
   if(m_line_edit) {
-    return m_line_edit->get_submission();
+    return m_submission->get();
   }
   return m_current->get();
 }
@@ -527,8 +521,10 @@ void TextBox::elide_text() {
 }
 
 void TextBox::initialize_line_edit() {
-  m_line_edit = new LineEdit(m_current, m_highlight, this);
+  m_line_edit = new LineEdit(m_current, m_submission, m_highlight, this);
   m_line_edit->set_placeholder(m_placeholder);
+  m_line_edit->connect_reject_signal(
+    [=] (const auto& value) { m_reject_signal(value); });
   on_style();
 }
 
@@ -586,6 +582,10 @@ void TextBox::on_style() {
     m_line_edit->set_style(m_geometry, m_text_style);
   }
   update_display_text();
+}
+
+void TextBox::on_submission(const QString& submission) {
+  m_submit_signal(submission);
 }
 
 TextBox* Spire::make_label(QString label, QWidget* parent) {

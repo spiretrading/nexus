@@ -180,6 +180,7 @@ namespace Styles {
       mutable SubmitSignal m_submit_signal;
       mutable RejectSignal m_reject_signal;
       std::shared_ptr<TextModel> m_current;
+      std::shared_ptr<TextModel> m_submission;
       QString m_display_text;
       QString m_placeholder;
       std::shared_ptr<HighlightModel> m_highlight;
@@ -196,6 +197,7 @@ namespace Styles {
       void update_display_text();
       void on_current(const QString& current);
       void on_style();
+      void on_submission(const QString& submission);
   };
 
   /**
