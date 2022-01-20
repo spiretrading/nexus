@@ -140,7 +140,7 @@ class TextBox::LineEdit : public QLineEdit {
         std::bind_front(&LineEdit::on_cursor_position, this));
       connect(this, &QLineEdit::selectionChanged, this,
         std::bind_front(&LineEdit::on_selection, this));
-      m_highlight->connect_update_signal(
+      m_highlight_connection = m_highlight->connect_update_signal(
         std::bind_front(&LineEdit::on_highlight, this));
       m_text_box->setCursor(cursor());
       m_text_box->setFocusPolicy(focusPolicy());
@@ -282,6 +282,7 @@ class TextBox::LineEdit : public QLineEdit {
     bool m_is_handling_key_press;
     scoped_connection m_current_connection;
     scoped_connection m_read_only_connection;
+    scoped_connection m_highlight_connection;
     scoped_connection m_placeholder_style_connection;
 
     void elide_placeholder_text() {
