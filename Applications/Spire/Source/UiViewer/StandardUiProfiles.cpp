@@ -2108,39 +2108,9 @@ UiProfile Spire::make_navigation_view_profile() {
 
 UiProfile Spire::make_open_filter_panel_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
-  auto profile = UiProfile(QString::fromUtf8("OpenFilterPanel"), properties,
+  auto profile = UiProfile(QString("OpenFilterPanel"), properties,
     [] (auto& profile) {
-      auto model = std::make_shared<LocalComboBoxQueryModel>();
-      model->add(QString("Almond"));
-      model->add(QString("Amber"));
-      model->add(QString("Amberose"));
-      model->add(QString("Apple"));
-      model->add(QString("Beige"));
-      model->add(QString("Bronze"));
-      model->add(QString("Brown"));
-      model->add(QString("Black"));
-      model->add(QString("Car"));
-      auto button = make_label_button(QString::fromUtf8("Click me"));
-      auto panel = new OpenFilterPanel(model,
-        QString::fromUtf8("Filter by something"), *button);
-      auto submit_filter_slot =
-        profile.make_event_slot<QString>(QString::fromUtf8("SubmitSignal"));
-      panel->connect_submit_signal(
-        [=] (const std::shared_ptr<AnyListModel>& submission,
-        OpenFilterPanel::FilterMode mode) {
-          auto result = QString();
-          if(mode == OpenFilterPanel::FilterMode::INCLUDE) {
-            result += "Include: ";
-          } else {
-            result += "Exclude: ";
-          }
-          for(auto i = 0; i < submission->get_size(); ++i) {
-            result += displayTextAny(submission->get(i)) + " ";
-          }
-          submit_filter_slot(result);
-        });
-      button->connect_clicked_signal([=] { panel->show(); });
-      return button;
+      return new Box(nullptr);
     });
   return profile;
 }
