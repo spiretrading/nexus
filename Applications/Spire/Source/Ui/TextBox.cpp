@@ -230,6 +230,7 @@ class TextBox::LineEdit : public QLineEdit {
       }
       return QLineEdit::eventFilter(watched, event);
     }
+
     void focusInEvent(QFocusEvent* event) override {
       if(event->reason() != Qt::ActiveWindowFocusReason &&
           event->reason() != Qt::PopupFocusReason) {
@@ -240,6 +241,7 @@ class TextBox::LineEdit : public QLineEdit {
       }
       QLineEdit::focusInEvent(event);
     }
+
     void focusOutEvent(QFocusEvent* event) override {
       if(event->lostFocus() && event->reason() != Qt::ActiveWindowFocusReason &&
           event->reason() != Qt::PopupFocusReason) {
@@ -257,6 +259,7 @@ class TextBox::LineEdit : public QLineEdit {
       }
       QLineEdit::paintEvent(event);
     }
+
     void resizeEvent(QResizeEvent* event) override {
       elide_placeholder_text();
       QLineEdit::resizeEvent(event);
@@ -284,10 +287,12 @@ class TextBox::LineEdit : public QLineEdit {
       m_elided_placeholder =
         fontMetrics().elidedText(m_placeholder, Qt::ElideRight, width());
     }
+
     bool is_placeholder_visible() const {
       return !isReadOnly() &&
         !m_placeholder.isEmpty() && m_current->get().isEmpty();
     }
+
     void on_current(const QString& current) {
       m_has_update = true;
       if(m_is_rejected) {
@@ -295,6 +300,7 @@ class TextBox::LineEdit : public QLineEdit {
         unmatch(*m_text_box, Rejected());
       }
     }
+
     void on_cursor_position(int old_position, int new_position) {
       if(hasSelectedText()) {
         on_selection();
@@ -302,6 +308,7 @@ class TextBox::LineEdit : public QLineEdit {
         m_highlight->set(Highlight(cursorPosition()));
       }
     }
+
     void on_editing_finished() {
       if(!isReadOnly() && m_has_update) {
         if(m_current->get_state() == QValidator::Acceptable) {
@@ -317,6 +324,7 @@ class TextBox::LineEdit : public QLineEdit {
         }
       }
     }
+
     void on_highlight(const Highlight& highlight) {
       if(is_collapsed(highlight)) {
         auto blocker = QSignalBlocker(this);
@@ -328,6 +336,7 @@ class TextBox::LineEdit : public QLineEdit {
         setSelection(highlight.m_start, get_size(highlight));
       }
     }
+
     void on_placeholder_style() {
       auto font_size = std::make_shared<optional<int>>();
       auto& placeholder_stylist = *find_stylist(*m_text_box, Placeholder());
@@ -362,6 +371,7 @@ class TextBox::LineEdit : public QLineEdit {
         update();
       }
     }
+
     void on_selection() {
       if(!hasSelectedText()) {
         on_cursor_position(0, cursorPosition());
@@ -370,6 +380,7 @@ class TextBox::LineEdit : public QLineEdit {
         m_highlight->set({selectionStart(), selectionEnd()});
       }
     }
+
     void on_text_edited(const QString& text) {
       m_current->set(text);
     }
