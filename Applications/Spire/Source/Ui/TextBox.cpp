@@ -445,18 +445,17 @@ void TextBox::set_read_only(bool read_only) {
     return;
   }
   m_is_read_only = read_only;
-  if(!m_line_edit && m_is_read_only) {
-    match(*this, ReadOnly());
-    return;
-  } else if(!m_line_edit) {
-    initialize_line_edit();
-  }
-  m_line_edit->setReadOnly(read_only);
-  setCursor(m_line_edit->cursor());
   if(m_is_read_only) {
     match(*this, ReadOnly());
   } else {
     unmatch(*this, ReadOnly());
+    if(!m_line_edit && isVisible()) {
+      initialize_line_edit();
+    }
+  }
+  if(m_line_edit) {
+    m_line_edit->setReadOnly(read_only);
+    setCursor(m_line_edit->cursor());
   }
   update_display_text();
 }
