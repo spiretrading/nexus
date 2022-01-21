@@ -249,6 +249,7 @@ class TextBox::LineEdit : public QLineEdit {
       }
       QLineEdit::focusOutEvent(event);
     }
+
     void paintEvent(QPaintEvent* event) override {
       if(is_placeholder_visible()) {
         auto painter = QPainter(this);
