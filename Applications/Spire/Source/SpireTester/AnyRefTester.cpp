@@ -68,7 +68,8 @@ TEST_SUITE("AnyRef") {
   }
 
   TEST_CASE("const_volatile_ref") {
-    volatile const auto value = new std::string("abc");
+    auto r = std::string("abc");
+    volatile const auto& value = r;
     auto any = AnyRef(value);
     REQUIRE(any.get_type() == typeid(std::string));
     REQUIRE(any.is_const());
@@ -77,15 +78,14 @@ TEST_SUITE("AnyRef") {
     REQUIRE_THROWS_AS(any_cast<const std::string>(any), std::bad_any_cast);
     REQUIRE_THROWS_AS(any_cast<std::string>(any), std::bad_any_cast);
     REQUIRE_THROWS_AS(any_cast<volatile std::string>(any), std::bad_any_cast);
-    REQUIRE(&any_cast<const volatile std::string>(any) == value);
+    REQUIRE(&any_cast<const volatile std::string>(any) == &value);
     REQUIRE(any_cast<std::string>(&any) == nullptr);
     REQUIRE(any_cast<const std::string>(&any) == nullptr);
     REQUIRE(any_cast<volatile std::string>(&any) == nullptr);
-    REQUIRE(any_cast<const volatile std::string>(&any) == value);
-    delete value;
+    REQUIRE(any_cast<const volatile std::string>(&any) == &value);
   }
 
-  TEST_CASE("copy construtor and copy assigment operator") {
+  TEST_CASE("copy_construtor_assigment") {
     volatile auto value = 3.14;
     auto any1 = AnyRef(value);
     auto any2 = any1;
@@ -117,7 +117,7 @@ TEST_SUITE("AnyRef") {
     REQUIRE(any_cast<const volatile double>(&any3) == &value);
   }
 
-  TEST_CASE("move construtor and move assigment operator") {
+  TEST_CASE("move_construtor_and_assigment") {
     const auto value = false;
     auto any1 = AnyRef(value);
     auto any2 = std::move(any1);
@@ -134,7 +134,7 @@ TEST_SUITE("AnyRef") {
     REQUIRE(any_cast<volatile bool>(&any2) == nullptr);
     REQUIRE(any_cast<const volatile bool>(&any2) == nullptr);
     auto any3 = AnyRef();
-    any3 = std::move(any1);
+    any3 = std::move(any2);
     REQUIRE(any3.get_type() == typeid(bool));
     REQUIRE(any3.is_const());
     REQUIRE(!any3.is_volatile());

@@ -1,6 +1,7 @@
 #ifndef SPIRE_ANY_REF_HPP
 #define SPIRE_ANY_REF_HPP
 #include <any>
+#include <typeindex>
 #include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
@@ -20,33 +21,23 @@ namespace Spire {
 
       /** Constructs an AnyRef referencing a non-const, non-volatile object. */
       template<typename T>
-      requires std::conjunction_v<
-        std::negation<std::is_same<std::decay_t<T>, AnyRef>>,
-        std::is_copy_constructible<std::decay_t<T>>>
       AnyRef(T& ref) noexcept;
 
       /** Constructs an AnyRef referencing a const object. */
       template<typename T>
-      requires std::conjunction_v<
-        std::negation<std::is_same<std::decay_t<T>, AnyRef>>,
-        std::is_copy_constructible<std::decay_t<T>>>
       AnyRef(const T& ref) noexcept;
 
       /** Constructs an AnyRef referencing a volatile object. */
       template<typename T>
-      requires std::conjunction_v<
-        std::negation<std::is_same<std::decay_t<T>, AnyRef>>,
-        std::is_copy_constructible<std::decay_t<T>>>
       AnyRef(volatile T& ref) noexcept;
 
       /** Constructs an AnyRef referencing a const and volatile object. */
       template<typename T>
-      requires std::conjunction_v<
-        std::negation<std::is_same<std::decay_t<T>, AnyRef>>,
-        std::is_copy_constructible<std::decay_t<T>>>
       AnyRef(const volatile T& ref) noexcept;
 
       AnyRef(const AnyRef& any) noexcept = default;
+
+      AnyRef(AnyRef& any) noexcept = default;
 
       AnyRef(AnyRef&& any) noexcept;
 
@@ -70,13 +61,15 @@ namespace Spire {
 
       AnyRef& operator =(const AnyRef& any) noexcept = default;
 
+      AnyRef& operator =(AnyRef& any) noexcept = default;
+
       AnyRef& operator =(std::nullptr_t) noexcept;
 
       template<typename T>
-      AnyRef& operator =(T& ref) noexcept;
+      AnyRef& operator =(const T& ref) noexcept;
 
       template<typename T>
-      AnyRef& operator =(const T& ref) noexcept;
+      AnyRef& operator =(T& ref) noexcept;
 
       template<typename T>
       AnyRef& operator =(volatile T& ref) noexcept;
@@ -90,21 +83,17 @@ namespace Spire {
       enum class Qualifiers : std::uint8_t {
         NONE = 0,
         CONSTANT = 1,
-        VOLATILE = 2
+        VOLATILE = 2,
+        CONST_VOLATILE = 3
       };
-      template<typename T>
-      friend const T* any_cast(const AnyRef* any) noexcept;
-      template<typename T>
-      friend T* any_cast(AnyRef* any) noexcept;
       void* m_ptr;
-      std::type_info const& (*m_get_type)();
+      const std::type_info* m_type;
       Qualifiers m_qualifiers;
 
       template<typename T>
-      const T* cast() const noexcept;
-      template<typename T>
-      T* cast() noexcept;
-      bool is_set(Qualifiers left, Qualifiers right) const;
+      friend T* any_cast(AnyRef* any) noexcept;
+      static bool is_set(Qualifiers a, Qualifiers b);
+      AnyRef(void* ptr, const std::type_info& type, Qualifiers qualifiers);
   };
 
   /**
@@ -116,11 +105,10 @@ namespace Spire {
    */
   template<typename T>
   const T& any_cast(const AnyRef& any) {
-    const auto p = any_cast<T>(&any);
-    if (!p) {
-      throw std::bad_any_cast();
+    if(auto p = any_cast<T>(&any)) {
+      return *p;
     }
-    return static_cast<const T&>(*p);
+    throw std::bad_any_cast();
   }
 
   /**
@@ -133,11 +121,10 @@ namespace Spire {
    */
   template<typename T>
   T& any_cast(AnyRef& any) {
-    auto p = any_cast<T>(&any);
-    if (!p) {
-      throw std::bad_any_cast();
+    if(auto p = any_cast<T>(&any)) {
+      return *p;
     }
-    return static_cast<T&>(*p);
+    throw std::bad_any_cast();
   }
 
   /**
@@ -149,10 +136,7 @@ namespace Spire {
    */
   template<typename T>
   const T* any_cast(const AnyRef* any) noexcept {
-    if(!any) {
-      return nullptr;
-    }
-    return any->cast<T>();
+    return any_cast<T>(const_cast<AnyRef*>(any));
   }
 
   /**
@@ -165,84 +149,38 @@ namespace Spire {
    */
   template<typename T>
   T* any_cast(AnyRef* any) noexcept {
-    if(!any) {
+    if(any->get_type() != typeid(T) ||
+        any->is_const() && !std::is_const_v<T> ||
+        any->is_volatile() != std::is_volatile_v<T>) {
       return nullptr;
     }
-    return any->cast<T>();
+    return static_cast<T*>(any->m_ptr);
   }
 
   template<typename T>
-  requires std::conjunction_v<
-    std::negation<std::is_same<std::decay_t<T>, AnyRef>>,
-    std::is_copy_constructible<std::decay_t<T>>>
   AnyRef::AnyRef(T& ref) noexcept
-      : m_qualifiers(Qualifiers::NONE),
-        m_get_type([] () -> std::type_info const& {
-          return typeid(std::remove_pointer_t<T>); }) {
-    if constexpr(std::is_pointer_v<T>) {
-      m_ptr = static_cast<void*>(ref);
-    } else {
-      m_ptr = static_cast<void*>(&ref);
-    }
-  }
+    : AnyRef(&ref, typeid(T), Qualifiers::NONE) {}
 
   template<typename T>
-  requires std::conjunction_v<
-    std::negation<std::is_same<std::decay_t<T>, AnyRef>>,
-    std::is_copy_constructible<std::decay_t<T>>>
   AnyRef::AnyRef(const T& ref) noexcept
-      : m_qualifiers(Qualifiers::CONSTANT),
-        m_get_type([] () -> std::type_info const& {
-          return typeid(std::remove_pointer_t<T>); }) {
-    if constexpr(std::is_pointer_v<T>) {
-      m_ptr = static_cast<void*>(ref);
-    } else {
-      m_ptr = const_cast<void*>(static_cast<const void*>(&ref));
-    }
-  }
+    : AnyRef(const_cast<T*>(&ref), typeid(T), Qualifiers::CONSTANT) {}
 
   template<typename T>
-  requires std::conjunction_v<
-    std::negation<std::is_same<std::decay_t<T>, AnyRef>>,
-    std::is_copy_constructible<std::decay_t<T>>>
   AnyRef::AnyRef(volatile T& ref) noexcept
-      : m_qualifiers(Qualifiers::VOLATILE),
-        m_get_type([] () -> std::type_info const& {
-          return typeid(std::remove_pointer_t<T>); }) {
-    if constexpr(std::is_pointer_v<T>) {
-      m_ptr = static_cast<void*>(ref);
-    } else {
-      m_ptr = const_cast<void*>(static_cast<volatile void*>(&ref));
-    }
-  }
+    : AnyRef(const_cast<T*>(&ref), typeid(T), Qualifiers::VOLATILE) {}
 
   template<typename T>
-  requires std::conjunction_v<
-    std::negation<std::is_same<std::decay_t<T>, AnyRef>>,
-    std::is_copy_constructible<std::decay_t<T>>>
   AnyRef::AnyRef(const volatile T& ref) noexcept
-      : m_qualifiers(static_cast<Qualifiers>(
-          static_cast<std::underlying_type_t<Qualifiers>>(
-            Qualifiers::CONSTANT) |
-          static_cast<std::underlying_type_t<Qualifiers>>(
-            Qualifiers::VOLATILE))),
-        m_get_type([] () -> std::type_info const& {
-          return typeid(std::remove_pointer_t<T>); }) {
-    if constexpr(std::is_pointer_v<T>) {
-      m_ptr = static_cast<void*>(ref);
-    } else {
-      m_ptr = const_cast<void*>(static_cast<const volatile void*>(&ref));
-    }
-  }
+    : AnyRef(const_cast<T*>(&ref), typeid(T), Qualifiers::CONST_VOLATILE) {}
 
   template<typename T>
-  AnyRef& AnyRef::operator =(T& ref) noexcept {
+  AnyRef& AnyRef::operator =(const T& ref) noexcept {
     *this = AnyRef(ref);
     return *this;
   }
 
   template<typename T>
-  AnyRef& AnyRef::operator =(const T& ref) noexcept {
+  AnyRef& AnyRef::operator =(T& ref) noexcept {
     *this = AnyRef(ref);
     return *this;
   }
@@ -257,27 +195,6 @@ namespace Spire {
   AnyRef& AnyRef::operator =(const volatile T& ref) noexcept {
     *this = AnyRef(ref);
     return *this;
-  }
-
-  template<typename T>
-  const T* AnyRef::cast() const noexcept {
-    if(m_get_type() != typeid(T)) {
-      return nullptr;
-    }
-    if(std::is_const_v<T> == is_const() &&
-        std::is_volatile_v<T> == is_volatile()) {
-      return static_cast<const T*>(m_ptr);
-    } else if constexpr(std::is_const_v<T>) {
-      if(std::is_volatile_v<T> == is_volatile()) {
-        return static_cast<const T*>(m_ptr);
-      }
-    }
-    return nullptr;
-  }
-
-  template<typename T>
-  T* AnyRef::cast() noexcept {
-    return const_cast<T*>(static_cast<const AnyRef*>(this)->cast<T>());
   }
 }
 
