@@ -96,6 +96,10 @@ IF NOT EXIST quickfix-v.1.15.1 (
     PUSHD src\C++
     sed -i "105s/.*/template<typename T> using SmartPtr = std::shared_ptr<T>;/" Utility.h
     sed -i "108s/.*/template<typename T> using SmartPtr = std::shared_ptr<T>;/" Utility.h
+    sed -i "s/std::auto_ptr/std::shared_ptr/" DOMDocument.h
+    sed -i "s/std::auto_ptr/std::shared_ptr/" Message.h
+    sed -i "s/std::auto_ptr/std::shared_ptr/" Message.cpp
+    sed -i "s/pGroup\.release()/new Group(\*pGroup)/" Message.cpp
     POPD
     devenv /Upgrade quickfix_vs12.sln
     msbuild quickfix_vs12.sln /p:PlatformToolset=v142 /p:configuration=Debug ^
