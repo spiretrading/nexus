@@ -148,9 +148,9 @@ class TextBox::LineEdit : public QLineEdit {
       auto layout = new QHBoxLayout(m_text_box);
       layout->setContentsMargins(0, 0, 0, 0);
       layout->addWidget(this);
-      add_pseudo_element(*m_text_box, Placeholder());
       m_placeholder_style_connection = connect_style_signal(
         *m_text_box, Placeholder(), [=] { on_placeholder_style(); });
+      on_placeholder_style();
     }
 
     void set_display_text(const QString& text) {
@@ -408,6 +408,7 @@ TextBox::TextBox(std::shared_ptr<TextModel> current, QWidget* parent)
       m_is_read_only(false),
       m_highlight(std::make_shared<LocalValueModel<Highlight>>()),
       m_line_edit(nullptr) {
+  add_pseudo_element(*this, Placeholder());
   m_style_connection = connect_style_signal(*this, [=] { on_style(); });
   set_style(*this, DEFAULT_STYLE());
   m_current_connection = m_current->connect_update_signal(
@@ -431,7 +432,7 @@ const std::shared_ptr<HighlightModel>& TextBox::get_highlight() const {
 
 void TextBox::set_placeholder(const QString& placeholder) {
   if(m_line_edit) {
-    m_line_edit->set_placeholder(m_placeholder);
+    m_line_edit->set_placeholder(placeholder);
   } else {
     m_placeholder = placeholder;
   }
