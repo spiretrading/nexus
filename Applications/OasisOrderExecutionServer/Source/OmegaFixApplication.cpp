@@ -184,6 +184,8 @@ void OmegaFixApplication::onMessage(const FIX42::ExecutionReport& message,
         } else {
           update->m_lastMarket = DefaultMarkets::TSX().GetData();
         }
+      } else if(lastMkt == "XTSX") {
+        update->m_lastMarket = DefaultMarkets::TSXV().GetData();
       }
     });
 }
