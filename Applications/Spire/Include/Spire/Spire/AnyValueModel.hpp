@@ -32,10 +32,18 @@ namespace Spire {
 
       boost::signals2::connection connect_update_signal(
         const UpdateSignal::slot_type& slot) const override;
+
+    private:
+      mutable UpdateSignal m_update_signal;
+      Type m_value;
+      std::function<void (const Type&)> m_set_value;
   };
 
   template<typename T>
-  AnyValueModel::AnyValueModel(std::shared_ptr<ValueModel<T>> source) {}
+  AnyValueModel::AnyValueModel(std::shared_ptr<ValueModel<T>> source)
+    : m_value(const_cast<T&>(source->get())),
+      m_set_value([=] (const Type& value) {
+        any_cast<T>(m_value) = any_cast<const T>(value); }) {}
 }
 
 #endif
