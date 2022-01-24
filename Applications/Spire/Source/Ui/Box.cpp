@@ -40,8 +40,6 @@ Padding Spire::Styles::padding(int size) {
 Box::Box(QWidget* body, QWidget* parent)
     : QWidget(parent),
       m_body(body) {
-  auto box_layout = new QHBoxLayout(this);
-  box_layout->setContentsMargins({});
   if(m_body) {
     m_container = new QWidget(this);
     auto layout = new QHBoxLayout(m_container);

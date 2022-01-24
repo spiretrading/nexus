@@ -1,6 +1,7 @@
 #ifndef SPIRE_ANY_REF_HPP
 #define SPIRE_ANY_REF_HPP
 #include <any>
+#include <typeindex>
 #include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
@@ -36,13 +37,9 @@ namespace Spire {
 
       AnyRef(const AnyRef& any) noexcept = default;
 
+      AnyRef(AnyRef& any) noexcept = default;
+
       AnyRef(AnyRef&& any) noexcept;
-
-      /** Returns a raw pointer to the referenced object. */
-      const void* get() const noexcept;
-
-      /** Returns a raw pointer to the referenced object. */
-      void* get() noexcept;
 
       /** Returns <code>true</code> iff this object is not empty. */
       bool has_value() const noexcept;
@@ -64,13 +61,15 @@ namespace Spire {
 
       AnyRef& operator =(const AnyRef& any) noexcept = default;
 
+      AnyRef& operator =(AnyRef& any) noexcept = default;
+
       AnyRef& operator =(std::nullptr_t) noexcept;
 
       template<typename T>
-      AnyRef& operator =(T& ref) noexcept;
+      AnyRef& operator =(const T& ref) noexcept;
 
       template<typename T>
-      AnyRef& operator =(const T& ref) noexcept;
+      AnyRef& operator =(T& ref) noexcept;
 
       template<typename T>
       AnyRef& operator =(volatile T& ref) noexcept;
@@ -79,6 +78,22 @@ namespace Spire {
       AnyRef& operator =(const volatile T& ref) noexcept;
 
       AnyRef& operator =(AnyRef&& any) noexcept;
+
+    private:
+      enum class Qualifiers : std::uint8_t {
+        NONE = 0,
+        CONSTANT = 1,
+        VOLATILE = 2,
+        CONST_VOLATILE = 3
+      };
+      void* m_ptr;
+      const std::type_info* m_type;
+      Qualifiers m_qualifiers;
+
+      template<typename T>
+      friend T* any_cast(AnyRef* any) noexcept;
+      static bool is_set(Qualifiers a, Qualifiers b);
+      AnyRef(void* ptr, const std::type_info& type, Qualifiers qualifiers);
   };
 
   /**
@@ -90,6 +105,9 @@ namespace Spire {
    */
   template<typename T>
   const T& any_cast(const AnyRef& any) {
+    if(auto p = any_cast<T>(&any)) {
+      return *p;
+    }
     throw std::bad_any_cast();
   }
 
@@ -103,6 +121,9 @@ namespace Spire {
    */
   template<typename T>
   T& any_cast(AnyRef& any) {
+    if(auto p = any_cast<T>(&any)) {
+      return *p;
+    }
     throw std::bad_any_cast();
   }
 
@@ -115,7 +136,7 @@ namespace Spire {
    */
   template<typename T>
   const T* any_cast(const AnyRef* any) noexcept {
-    return nullptr;
+    return any_cast<T>(const_cast<AnyRef*>(any));
   }
 
   /**
@@ -128,38 +149,51 @@ namespace Spire {
    */
   template<typename T>
   T* any_cast(AnyRef* any) noexcept {
-    return nullptr;
+    if(any->get_type() != typeid(T) ||
+        any->is_const() && !std::is_const_v<T> ||
+        any->is_volatile() != std::is_volatile_v<T>) {
+      return nullptr;
+    }
+    return static_cast<T*>(any->m_ptr);
   }
 
   template<typename T>
-  AnyRef::AnyRef(T& ref) noexcept {}
+  AnyRef::AnyRef(T& ref) noexcept
+    : AnyRef(&ref, typeid(T), Qualifiers::NONE) {}
 
   template<typename T>
-  AnyRef::AnyRef(const T& ref) noexcept {}
+  AnyRef::AnyRef(const T& ref) noexcept
+    : AnyRef(const_cast<T*>(&ref), typeid(T), Qualifiers::CONSTANT) {}
 
   template<typename T>
-  AnyRef::AnyRef(volatile T& ref) noexcept {}
+  AnyRef::AnyRef(volatile T& ref) noexcept
+    : AnyRef(const_cast<T*>(&ref), typeid(T), Qualifiers::VOLATILE) {}
 
   template<typename T>
-  AnyRef::AnyRef(const volatile T& ref) noexcept {}
+  AnyRef::AnyRef(const volatile T& ref) noexcept
+    : AnyRef(const_cast<T*>(&ref), typeid(T), Qualifiers::CONST_VOLATILE) {}
 
   template<typename T>
-  AnyRef& AnyRef::operator =(T& ref) noexcept {
+  AnyRef& AnyRef::operator =(const T& ref) noexcept {
+    *this = AnyRef(ref);
     return *this;
   }
 
   template<typename T>
-  AnyRef& AnyRef::operator =(const T& ref) noexcept {
+  AnyRef& AnyRef::operator =(T& ref) noexcept {
+    *this = AnyRef(ref);
     return *this;
   }
 
   template<typename T>
   AnyRef& AnyRef::operator =(volatile T& ref) noexcept {
+    *this = AnyRef(ref);
     return *this;
   }
 
   template<typename T>
   AnyRef& AnyRef::operator =(const volatile T& ref) noexcept {
+    *this = AnyRef(ref);
     return *this;
   }
 }
