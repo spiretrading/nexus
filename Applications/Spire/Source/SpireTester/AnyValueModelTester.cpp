@@ -16,13 +16,17 @@ TEST_SUITE("AnyValueModel") {
     });
     REQUIRE(any_cast<int>(any_model.get()) == 123);
     REQUIRE(any_model.set(55) == QValidator::State::Acceptable);
+    REQUIRE(operations.size() == 1);
+    auto update = operations.front();
+    operations.pop_front();
+    REQUIRE(any_cast<const int>(update) == 55);
     REQUIRE(source->get() == 55);
     REQUIRE(any_model.set(3.14) == QValidator::State::Invalid);
     REQUIRE(source->get() == 55);
     source->set(321);
     REQUIRE(operations.size() == 1);
-    auto update = operations.front();
+    update = operations.front();
     operations.pop_front();
-    REQUIRE(any_cast<int>(update) == 321);
+    REQUIRE(any_cast<const int>(update) == 321);
   }
 }
