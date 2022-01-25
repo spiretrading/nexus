@@ -1,11 +1,9 @@
 #ifndef SPIRE_ANY_VALUE_MODEL_HPP
 #define SPIRE_ANY_VALUE_MODEL_HPP
-#include <any>
 #include <memory>
-#include <boost/signals2/shared_connection_block.hpp>
 #include "Spire/Spire/AnyRef.hpp"
-#include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Spire/Spire.hpp"
+#include "Spire/Spire/ValueModel.hpp"
 
 namespace Spire {
 
@@ -26,6 +24,8 @@ namespace Spire {
       template<typename T>
       explicit AnyValueModel(std::shared_ptr<ValueModel<T>> source);
 
+      QValidator::State get_state() const override;
+
       const Type& get() const override;
 
       QValidator::State test(const Type& value) const override;
@@ -36,56 +36,84 @@ namespace Spire {
         const UpdateSignal::slot_type& slot) const override;
 
     private:
-      mutable UpdateSignal m_update_signal;
-      std::any m_source;
-      LocalValueModel<Type> m_model;
-      std::function<QValidator::State (const Type&)> m_test;
-      boost::signals2::scoped_connection m_source_connection;
-      boost::signals2::scoped_connection m_model_connection;
+      struct VirtualValueModel {
+        virtual ~VirtualValueModel() = default;
+        virtual QValidator::State get_state() const = 0;
+        virtual const Type& get() const = 0;
+        virtual QValidator::State test(const Type& value) const = 0;
+        virtual QValidator::State set(const Type& value) = 0;
+        virtual boost::signals2::connection connect_update_signal(
+          const UpdateSignal::slot_type& slot) const = 0;
+      };
+      template<typename T>
+      struct WrapperValueModel final : VirtualValueModel {
+        mutable UpdateSignal m_update_signal;
+        std::shared_ptr<ValueModel<T>> m_model;
+        AnyRef m_value;
+        boost::signals2::scoped_connection m_connection;
 
-      template<typename T>
-      const std::shared_ptr<ValueModel<T>>& get_source() const;
-      template<typename T>
-      QValidator::State on_test(const Type& value) const;
-      template<typename T>
-      void on_source_update(const T& value);
-      template<typename T>
-      void on_model_update(const Type& value);
+        WrapperValueModel(std::shared_ptr<ValueModel<T>> model);
+        QValidator::State get_state() const override;
+        const Type& get() const override;
+        QValidator::State test(const Type& value) const override;
+        QValidator::State set(const Type& value) override;
+        boost::signals2::connection connect_update_signal(
+          const UpdateSignal::slot_type& slot) const override;
+        void on_update(const T& value);
+      };
+      std::unique_ptr<VirtualValueModel> m_model;
   };
 
   template<typename T>
   AnyValueModel::AnyValueModel(std::shared_ptr<ValueModel<T>> source)
-    : m_source(std::move(source)),
-      m_model(const_cast<T&>(get_source<T>()->get())),
-      m_test(std::bind_front(&AnyValueModel::on_test<T>, this)),
-      m_source_connection(get_source<T>()->connect_update_signal(
-        std::bind_front(&AnyValueModel::on_source_update<T>, this))),
-      m_model_connection(m_model.connect_update_signal(
-        std::bind_front(&AnyValueModel::on_model_update<T>, this))) {}
+    : m_model(std::make_unique<WrapperValueModel<T>>(std::move(source))) {}
 
   template<typename T>
-  const std::shared_ptr<ValueModel<T>>& AnyValueModel::get_source() const {
-    return std::any_cast<const std::shared_ptr<ValueModel<T>>&>(m_source);
+  AnyValueModel::WrapperValueModel<T>::WrapperValueModel(
+    std::shared_ptr<ValueModel<T>> model)
+    : m_model(std::move(model)),
+      m_value(m_model->get()),
+      m_connection(m_model->connect_update_signal(
+        std::bind_front(&WrapperValueModel::on_update, this))) {}
+
+  template<typename T>
+  QValidator::State AnyValueModel::WrapperValueModel<T>::get_state() const {
+    return m_model->get_state();
   }
 
   template<typename T>
-  QValidator::State AnyValueModel::on_test(const Type& value) const {
-    try {
-      return get_source<T>()->test(any_cast<const T>(value));
-    } catch(const std::bad_any_cast&) {
-      return QValidator::State::Invalid;
+  const AnyValueModel::Type& AnyValueModel::WrapperValueModel<T>::get() const {
+    return m_value;
+  }
+
+  template<typename T>
+  QValidator::State AnyValueModel::WrapperValueModel<T>::test(
+      const Type& value) const {
+    if(auto p = any_cast<const T>(&value)) {
+      return m_model->test(*p);
     }
+    return QValidator::State::Invalid;
   }
 
   template<typename T>
-  void AnyValueModel::on_source_update(const T& value) {
-    auto blocker = boost::signals2::shared_connection_block(m_model_connection);
-    m_model.set(const_cast<T&>(get_source<T>()->get()));
+  QValidator::State AnyValueModel::WrapperValueModel<T>::set(
+      const Type& value) {
+    if(auto p = any_cast<const T>(&value)) {
+      return m_model->set(*p);
+    }
+    return QValidator::State::Invalid;
   }
 
   template<typename T>
-  void AnyValueModel::on_model_update(const Type& value) {
-    get_source<T>()->set(any_cast<const T>(value));
+  boost::signals2::connection AnyValueModel::WrapperValueModel<T>::
+      connect_update_signal(const UpdateSignal::slot_type& slot) const {
+    return m_update_signal.connect(slot);
+  }
+
+  template<typename T>
+  void AnyValueModel::WrapperValueModel<T>::on_update(const T& value) {
+    m_value = m_model->get();
+    m_update_signal(m_value);
   }
 }
 
