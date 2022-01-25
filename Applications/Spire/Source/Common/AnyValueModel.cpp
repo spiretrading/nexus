@@ -5,22 +5,19 @@ using namespace boost::signals2;
 using namespace Spire;
 
 const AnyValueModel::Type& AnyValueModel::get() const {
-  return m_value;
+  return m_model.get();
 }
 
 QValidator::State AnyValueModel::test(const Type& value) const {
-  if(m_value.has_value()) {
-    return QValidator::State::Acceptable;
-  }
-  return QValidator::State::Invalid;
+  return m_test(value);
 }
 
 QValidator::State AnyValueModel::set(const Type& value) {
-  if(m_value.get_type() != value.get_type()) {
+  if(get().get_type() != value.get_type()) {
     return QValidator::State::Invalid;
   }
-  m_set_value(value);
-  m_update_signal(m_value);
+  m_model.set(value);
+  m_update_signal(get());
   return QValidator::State::Acceptable;
 }
 
