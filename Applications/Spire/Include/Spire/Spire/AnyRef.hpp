@@ -105,7 +105,7 @@ namespace Spire {
    */
   template<typename T>
   const T& any_cast(const AnyRef& any) {
-    if(auto p = any_cast<T>(&any)) {
+    if(auto p = any_cast<const T>(&any)) {
       return *p;
     }
     throw std::bad_any_cast();
@@ -136,7 +136,7 @@ namespace Spire {
    */
   template<typename T>
   const T* any_cast(const AnyRef* any) noexcept {
-    return any_cast<T>(const_cast<AnyRef*>(any));
+    return any_cast<const T>(const_cast<AnyRef*>(any));
   }
 
   /**
