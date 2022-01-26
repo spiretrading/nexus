@@ -141,7 +141,6 @@ class TextBox::LineEdit : public QLineEdit {
       m_text_box->setCursor(cursor());
       m_text_box->setFocusPolicy(focusPolicy());
       m_text_box->setFocusProxy(this);
-      m_text_box->installEventFilter(this);
       auto layout = new QHBoxLayout(m_text_box);
       layout->setContentsMargins(0, 0, 0, 0);
       layout->addWidget(this);
@@ -199,16 +198,6 @@ class TextBox::LineEdit : public QLineEdit {
     }
 
   protected:
-    bool eventFilter(QObject* watched, QEvent* event) override {
-      if(event->type() == QEvent::MouseButtonPress) {
-        auto e = static_cast<QMouseEvent*>(event);
-        e->accept();
-        e->setLocalPos(mapFromGlobal(e->globalPos()));
-        mousePressEvent(e);
-      }
-      return QLineEdit::eventFilter(watched, event);
-    }
-
     void focusInEvent(QFocusEvent* event) override {
       if(event->reason() != Qt::ActiveWindowFocusReason &&
           event->reason() != Qt::PopupFocusReason) {
@@ -491,6 +480,14 @@ void TextBox::changeEvent(QEvent* event) {
     update_display_text();
   }
   QWidget::changeEvent(event);
+}
+
+void TextBox::mousePressEvent(QMouseEvent* event) {
+  if(m_line_edit) {
+    event->accept();
+    event->setLocalPos(m_line_edit->mapFromGlobal(event->globalPos()));
+    QCoreApplication::sendEvent(m_line_edit, event);
+  }
 }
 
 void TextBox::paintEvent(QPaintEvent* event) {
