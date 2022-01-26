@@ -1,9 +1,11 @@
 #include "Spire/Ui/SearchBox.hpp"
 #include <QHBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
+#include "Spire/Styles/Selectors.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;

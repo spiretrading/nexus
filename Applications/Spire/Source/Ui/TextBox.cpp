@@ -105,136 +105,266 @@ struct TextBox::TextValidator : QValidator {
   }
 };
 
-class TextBox::PlaceholderBox : public Box {
+class TextBox::LineEdit : public QLineEdit {
   public:
-    explicit PlaceholderBox(QWidget* body)
-      : Box(body),
-        m_is_placeholder_visible(false) {}
+    LineEdit(std::shared_ptr<TextModel> current,
+        std::shared_ptr<TextModel> submission,
+        std::shared_ptr<HighlightModel> highlight, TextBox* text_box)
+        : QLineEdit(current->get(), text_box),
+          m_text_box(text_box),
+          m_current(std::move(current)),
+          m_submission(std::move(submission)),
+          m_highlight(std::move(highlight)),
+          m_text_validator(new TextValidator(m_current, this)),
+          m_is_rejected(false),
+          m_has_update(false) {
+      setObjectName(QString("0x%1").arg(reinterpret_cast<std::intptr_t>(this)));
+      setFrame(false);
+      setTextMargins(-2, 0, -4, 0);
+      setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+      auto& current_highlight = m_highlight->get();
+      setCursorPosition(current_highlight.m_end);
+      setSelection(current_highlight.m_start, get_size(current_highlight));
+      setValidator(m_text_validator);
+      connect(this, &QLineEdit::editingFinished, this,
+        &LineEdit::on_editing_finished);
+      connect(
+        this, &QLineEdit::textEdited, this, &LineEdit::on_text_edited);
+      m_current_connection = m_current->connect_update_signal(
+        [=] (const auto& value) { on_current(value); });
+      connect(this, &QLineEdit::cursorPositionChanged, this,
+        std::bind_front(&LineEdit::on_cursor_position, this));
+      connect(this, &QLineEdit::selectionChanged, this,
+        std::bind_front(&LineEdit::on_selection, this));
+      m_highlight_connection = m_highlight->connect_update_signal(
+        std::bind_front(&LineEdit::on_highlight, this));
+      m_text_box->setCursor(cursor());
+      m_text_box->setFocusPolicy(focusPolicy());
+      m_text_box->setFocusProxy(this);
+      auto layout = new QHBoxLayout(m_text_box);
+      layout->setContentsMargins(0, 0, 0, 0);
+      layout->addWidget(this);
+      m_placeholder_style_connection = connect_style_signal(
+        *m_text_box, Placeholder(), [=] { on_placeholder_style(); });
+      on_placeholder_style();
+    }
 
-    const QString& get_placeholder() const {
-      return m_placeholder;
+    void set_display_text(const QString& text) {
+      m_text_validator->m_is_text_elided = text != m_current->get();
+      setText(text);
+      if(m_text_validator->m_is_text_elided) {
+        setCursorPosition(0);
+      }
     }
 
     void set_placeholder(const QString& placeholder) {
       m_placeholder = placeholder;
-      update_elision();
+      elide_placeholder_text();
       update();
     }
 
-    void set_placeholder_visible(bool is_visible) {
-      if(is_visible != m_is_placeholder_visible) {
-        m_is_placeholder_visible = is_visible;
-        update();
+    void set_style(
+        const BoxGeometry& geometry, const TextStyleProperties& text_style) {
+      m_text_box->layout()->setContentsMargins(
+        geometry.get_padding_left(), geometry.get_padding_top(),
+        geometry.get_padding_right(), geometry.get_padding_bottom());
+      auto stylesheet = QString(
+        R"(#0x%1 {
+          background-color: transparent;
+          border-width: 0px;
+          color: %2;
+          padding: 0px; })").arg(reinterpret_cast<std::intptr_t>(this)).
+          arg(text_style.m_text_color.name());
+      if(text_style.m_alignment != alignment()) {
+        setAlignment(text_style.m_alignment);
+      }
+      setFont(text_style.m_font);
+      if(text_style.m_echo_mode != echoMode()) {
+        setEchoMode(text_style.m_echo_mode);
+      }
+      if(stylesheet != styleSheet()) {
+        setStyleSheet(stylesheet);
       }
     }
 
-    void update_style() {
-      m_margins = {};
-      m_alignment = Qt::AlignLeft;
-      m_font = {};
-      m_text_color = {};
-      auto& stylist = find_stylist(*parentWidget());
-      auto block = stylist.get_computed_block();
-      for(auto& property : block) {
-        property.visit(
-          [&] (const BorderLeftSize& size) {
-            stylist.evaluate(size, [=] (auto size) {
-              m_margins.setLeft(m_margins.left() + size);
-            });
-          },
-          [&] (const BorderTopSize& size) {
-            stylist.evaluate(size, [=] (auto size) {
-              m_margins.setTop(m_margins.top() + size);
-            });
-          },
-          [&] (const BorderRightSize& size) {
-            stylist.evaluate(size, [=] (auto size) {
-              m_margins.setRight(m_margins.right() + size);
-            });
-          },
-          [&] (const BorderBottomSize& size) {
-            stylist.evaluate(size, [=] (auto size) {
-              m_margins.setBottom(m_margins.bottom() + size);
-            });
-          },
-          [&] (const PaddingLeft& size) {
-            stylist.evaluate(size, [=] (auto size) {
-              m_margins.setLeft(m_margins.left() + size);
-            });
-          },
-          [&] (const PaddingTop& size) {
-            stylist.evaluate(size, [=] (auto size) {
-              m_margins.setTop(m_margins.top() + size);
-            });
-          },
-          [&] (const PaddingRight& size) {
-            stylist.evaluate(size, [=] (auto size) {
-              m_margins.setRight(m_margins.right() + size);
-            });
-          },
-          [&] (const PaddingBottom& size) {
-            stylist.evaluate(size, [=] (auto size) {
-              m_margins.setBottom(m_margins.bottom() + size);
-            });
-          });
+    connection connect_reject_signal(
+        const RejectSignal::slot_type& slot) const {
+      return m_reject_signal.connect(slot);
+    }
+
+    void setReadOnly(bool read_only) {
+      QLineEdit::setReadOnly(read_only);
+      setCursorPosition(0);
+    }
+
+  protected:
+    void focusInEvent(QFocusEvent* event) override {
+      if(event->reason() != Qt::ActiveWindowFocusReason &&
+          event->reason() != Qt::PopupFocusReason) {
+        m_text_validator->m_is_text_elided = false;
+        if(text() != m_current->get()) {
+          setText(m_current->get());
+        }
       }
-      auto& placeholder_stylist = *find_stylist(*parentWidget(), Placeholder());
-      merge(block, placeholder_stylist.get_computed_block());
-      for(auto& property : block) {
+      QLineEdit::focusInEvent(event);
+    }
+
+    void focusOutEvent(QFocusEvent* event) override {
+      if(event->lostFocus() && event->reason() != Qt::ActiveWindowFocusReason &&
+          event->reason() != Qt::PopupFocusReason) {
+        m_text_box->update_display_text();
+      }
+      QLineEdit::focusOutEvent(event);
+    }
+
+    void keyPressEvent(QKeyEvent* event) override {
+      if(event->key() == Qt::Key_Escape) {
+        if(m_submission->get() != m_current->get()) {
+          m_current->set(m_submission->get());
+          return;
+        }
+      } else if(event->key() == Qt::Key_Enter ||
+          event->key() == Qt::Key_Return) {
+        m_has_update = true;
+        on_editing_finished();
+        return;
+      }
+      QLineEdit::keyPressEvent(event);
+    }
+
+    void paintEvent(QPaintEvent* event) override {
+      if(is_placeholder_visible()) {
+        auto painter = QPainter(this);
+        painter.setPen(m_placeholder_style.m_text_color);
+        painter.setFont(m_placeholder_style.m_font);
+        painter.drawText(contentsRect(),
+          m_placeholder_style.m_alignment, m_elided_placeholder);
+      }
+      QLineEdit::paintEvent(event);
+    }
+
+    void resizeEvent(QResizeEvent* event) override {
+      elide_placeholder_text();
+      QLineEdit::resizeEvent(event);
+    }
+
+  private:
+    mutable RejectSignal m_reject_signal;
+    TextBox* m_text_box;
+    std::shared_ptr<TextModel> m_current;
+    std::shared_ptr<TextModel> m_submission;
+    std::shared_ptr<HighlightModel> m_highlight;
+    TextValidator* m_text_validator;
+    QString m_placeholder;
+    QString m_elided_placeholder;
+    TextStyleProperties m_placeholder_style;
+    bool m_is_rejected;
+    bool m_has_update;
+    scoped_connection m_current_connection;
+    scoped_connection m_read_only_connection;
+    scoped_connection m_highlight_connection;
+    scoped_connection m_placeholder_style_connection;
+
+    void elide_placeholder_text() {
+      m_elided_placeholder =
+        fontMetrics().elidedText(m_placeholder, Qt::ElideRight, width());
+    }
+
+    bool is_placeholder_visible() const {
+      return !isReadOnly() &&
+        !m_placeholder.isEmpty() && m_current->get().isEmpty();
+    }
+
+    void on_current(const QString& current) {
+      m_has_update = true;
+      if(m_is_rejected) {
+        m_is_rejected = false;
+        unmatch(*m_text_box, Rejected());
+      }
+    }
+
+    void on_cursor_position(int old_position, int new_position) {
+      if(hasSelectedText()) {
+        on_selection();
+      } else if(m_highlight->get() != Highlight(cursorPosition())) {
+        m_highlight->set(Highlight(cursorPosition()));
+      }
+    }
+
+    void on_editing_finished() {
+      if(!isReadOnly() && m_has_update) {
+        if(m_current->get_state() == QValidator::Acceptable) {
+          m_submission->set(m_current->get());
+          m_has_update = false;
+        } else {
+          m_reject_signal(m_current->get());
+          m_current->set(m_submission->get());
+          if(!m_is_rejected) {
+            m_is_rejected = true;
+            match(*m_text_box, Rejected());
+          }
+        }
+      }
+    }
+
+    void on_highlight(const Highlight& highlight) {
+      if(is_collapsed(highlight)) {
+        auto blocker = QSignalBlocker(this);
+        deselect();
+        setCursorPosition(highlight.m_end);
+      } else if(highlight !=
+          Highlight(selectionStart(), selectionEnd())) {
+        auto blocker = QSignalBlocker(this);
+        setSelection(highlight.m_start, get_size(highlight));
+      }
+    }
+
+    void on_placeholder_style() {
+      auto font_size = std::make_shared<optional<int>>();
+      auto& placeholder_stylist = *find_stylist(*m_text_box, Placeholder());
+      m_placeholder_style = TextStyleProperties();
+      for(auto& property : placeholder_stylist.get_computed_block()) {
         property.visit(
           [&] (const TextColor& color) {
             placeholder_stylist.evaluate(color, [=] (auto color) {
-              m_text_color = color;
+              m_placeholder_style.m_text_color = color;
             });
           },
           [&] (const TextAlign& alignment) {
             placeholder_stylist.evaluate(alignment, [=] (auto alignment) {
-              m_alignment = alignment;
+              m_placeholder_style.m_alignment = alignment;
             });
           },
           [&] (const Font& font) {
             placeholder_stylist.evaluate(font, [=] (auto font) {
-              m_font = font;
+              m_placeholder_style.m_font = font;
             });
           },
           [&] (const FontSize& size) {
             placeholder_stylist.evaluate(size, [=] (auto size) {
-              m_font.setPixelSize(size);
+              *font_size = size;
             });
           });
       }
-      update_elision();
-      update();
-    }
-
-  protected:
-    void paintEvent(QPaintEvent* event) override {
-      Box::paintEvent(event);
-      if(m_is_placeholder_visible) {
-        auto painter = QPainter(this);
-        painter.setFont(m_font);
-        painter.setPen(m_text_color);
-        painter.drawText(rect() - m_margins, m_alignment, m_elided_placeholder);
+      if(*font_size) {
+        m_placeholder_style.m_font.setPixelSize(*(*font_size));
+      }
+      if(is_placeholder_visible()) {
+        update();
       }
     }
 
-    void resizeEvent(QResizeEvent* event) override {
-      update_elision();
-      Box::resizeEvent(event);
+    void on_selection() {
+      if(!hasSelectedText()) {
+        on_cursor_position(0, cursorPosition());
+      } else if(m_highlight->get() !=
+          Highlight(selectionStart(), selectionEnd())) {
+        m_highlight->set({selectionStart(), selectionEnd()});
+      }
     }
 
-  private:
-    QString m_placeholder;
-    QString m_elided_placeholder;
-    bool m_is_placeholder_visible;
-    QMargins m_margins;
-    Qt::Alignment m_alignment;
-    QFont m_font;
-    QColor m_text_color;
-
-    void update_elision() {
-      m_elided_placeholder = QFontMetrics(m_font).elidedText(m_placeholder,
-        Qt::ElideRight, width() - m_margins.left() - m_margins.right());
+    void on_text_edited(const QString& text) {
+      m_current->set(text);
     }
 };
 
@@ -242,17 +372,9 @@ TextStyle Spire::Styles::text_style(QFont font, QColor color) {
   return TextStyle(Font(std::move(font)), TextColor(color));
 }
 
-TextBox::StyleProperties::StyleProperties(std::function<void ()> commit)
-  : m_styles(std::move(commit)) {}
-
-void TextBox::StyleProperties::clear() {
-  m_styles.clear();
-  m_alignment = none;
-  m_font = none;
-  m_size = none;
-  m_text_color = QColor();
-  m_echo_mode = none;
-}
+TextBox::TextStyleProperties::TextStyleProperties()
+  : m_alignment(Qt::AlignLeft | Qt::AlignVCenter),
+    m_echo_mode(QLineEdit::Normal) {}
 
 TextBox::TextBox(QWidget* parent)
   : TextBox(std::make_shared<LocalTextModel>(), parent) {}
@@ -263,48 +385,18 @@ TextBox::TextBox(QString current, QWidget* parent)
 TextBox::TextBox(std::shared_ptr<TextModel> current, QWidget* parent)
     : QWidget(parent),
       m_current(std::move(current)),
-      m_submission(m_current->get()),
+      m_submission(std::make_shared<LocalTextModel>(m_current->get())),
+      m_is_read_only(false),
       m_highlight(std::make_shared<LocalValueModel<Highlight>>()),
-      m_is_rejected(false),
-      m_has_update(false),
-      m_is_handling_key_press(false),
-      m_line_edit_styles([=] { commit_style(); }) {
-  m_line_edit = new QLineEdit(m_current->get());
-  m_line_edit->setObjectName(QString("0x%1").arg(
-    reinterpret_cast<std::intptr_t>(this)));
-  m_line_edit->setFrame(false);
-  m_line_edit->setTextMargins(-2, 0, -4, 0);
-  m_line_edit->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  auto& highlight = m_highlight->get();
-  m_line_edit->setCursorPosition(highlight.m_end);
-  m_line_edit->setSelection(highlight.m_start, get_size(highlight));
-  m_text_validator = new TextValidator(m_current, this);
-  m_line_edit->setValidator(m_text_validator);
-  m_line_edit->installEventFilter(this);
-  setCursor(m_line_edit->cursor());
-  setFocusPolicy(m_line_edit->focusPolicy());
-  m_box = new PlaceholderBox(m_line_edit);
-  auto layout = new QHBoxLayout(this);
-  layout->setContentsMargins(0, 0, 0, 0);
-  layout->addWidget(m_box);
-  setFocusProxy(m_box);
-  proxy_style(*this, *m_box);
+      m_line_edit(nullptr) {
   add_pseudo_element(*this, Placeholder());
   m_style_connection = connect_style_signal(*this, [=] { on_style(); });
-  m_placeholder_style_connection =
-    connect_style_signal(*this, Placeholder(), [=] { on_style(); });
   set_style(*this, DEFAULT_STYLE());
-  connect(m_line_edit, &QLineEdit::editingFinished, this,
-    &TextBox::on_editing_finished);
-  connect(m_line_edit, &QLineEdit::textEdited, this, &TextBox::on_text_edited);
   m_current_connection = m_current->connect_update_signal(
     [=] (const auto& value) { on_current(value); });
-  connect(m_line_edit, &QLineEdit::cursorPositionChanged, this,
-    std::bind_front(&TextBox::on_cursor_position, this));
-  connect(m_line_edit, &QLineEdit::selectionChanged, this,
-    std::bind_front(&TextBox::on_selection, this));
-  m_highlight->connect_update_signal(
-    std::bind_front(&TextBox::on_highlight, this));
+  m_submission->connect_update_signal([=] (const auto& value) {
+    on_submission(value);
+  });
 }
 
 const std::shared_ptr<TextModel>& TextBox::get_current() const {
@@ -312,7 +404,7 @@ const std::shared_ptr<TextModel>& TextBox::get_current() const {
 }
 
 const QString& TextBox::get_submission() const {
-  return m_submission;
+  return m_submission->get();
 }
 
 const std::shared_ptr<HighlightModel>& TextBox::get_highlight() const {
@@ -320,28 +412,35 @@ const std::shared_ptr<HighlightModel>& TextBox::get_highlight() const {
 }
 
 void TextBox::set_placeholder(const QString& placeholder) {
-  m_box->set_placeholder(placeholder);
-  update_placeholder_text();
+  if(m_line_edit) {
+    m_line_edit->set_placeholder(placeholder);
+  } else {
+    m_placeholder = placeholder;
+  }
 }
 
 bool TextBox::is_read_only() const {
-  return m_line_edit->isReadOnly();
+  return m_is_read_only;
 }
 
 void TextBox::set_read_only(bool read_only) {
-  if(m_line_edit->isReadOnly() == read_only) {
+  if(read_only == m_is_read_only) {
     return;
   }
-  m_line_edit->setReadOnly(read_only);
-  m_line_edit->setCursorPosition(0);
-  setCursor(m_line_edit->cursor());
-  if(read_only) {
+  m_is_read_only = read_only;
+  if(m_is_read_only) {
     match(*this, ReadOnly());
   } else {
     unmatch(*this, ReadOnly());
+    if(!m_line_edit && isVisible()) {
+      initialize_line_edit();
+    }
+  }
+  if(m_line_edit) {
+    m_line_edit->setReadOnly(read_only);
+    setCursor(m_line_edit->cursor());
   }
   update_display_text();
-  update_placeholder_text();
 }
 
 connection TextBox::connect_submit_signal(
@@ -364,264 +463,137 @@ QSize TextBox::sizeHint() const {
     }
     return 1;
   }();
+  auto metrics = QFontMetrics(m_text_style.m_font);
   m_size_hint.emplace(
-    m_line_edit->fontMetrics().horizontalAdvance(m_current->get()) +
-      cursor_width, m_line_edit->fontMetrics().height());
-  *m_size_hint += compute_decoration_size();
+    metrics.horizontalAdvance(m_current->get()) +
+      cursor_width, metrics.height());
+  *m_size_hint += m_geometry.get_geometry().size() -
+    m_geometry.get_content_area().size();
   return *m_size_hint;
-}
-
-bool TextBox::eventFilter(QObject* watched, QEvent* event) {
-  if(event->type() == QEvent::FocusIn) {
-    auto focus_event = static_cast<QFocusEvent*>(event);
-    if(focus_event->reason() != Qt::ActiveWindowFocusReason &&
-        focus_event->reason() != Qt::PopupFocusReason) {
-      m_text_validator->m_is_text_elided = false;
-      if(m_line_edit->text() != m_current->get()) {
-        m_line_edit->setText(m_current->get());
-      }
-    }
-  } else if(event->type() == QEvent::FocusOut) {
-    auto focusEvent = static_cast<QFocusEvent*>(event);
-    if(focusEvent->lostFocus() &&
-        focusEvent->reason() != Qt::ActiveWindowFocusReason &&
-        focusEvent->reason() != Qt::PopupFocusReason) {
-      update_display_text();
-    }
-  } else if(event->type() == QEvent::KeyPress) {
-    if(!m_is_handling_key_press) {
-      QCoreApplication::sendEvent(this, event);
-      event->accept();
-      return true;
-    }
-  } else if(event->type() == QEvent::Resize) {
-    update_display_text();
-  }
-  return QWidget::eventFilter(watched, event);
 }
 
 void TextBox::changeEvent(QEvent* event) {
   if(event->type() == QEvent::EnabledChange) {
+    if(!m_line_edit && isEnabled()) {
+      initialize_line_edit();
+    }
     update_display_text();
   }
   QWidget::changeEvent(event);
 }
 
 void TextBox::mousePressEvent(QMouseEvent* event) {
-  QWidget::mousePressEvent(event);
-  event->accept();
-  event->setLocalPos(m_line_edit->mapFromGlobal(event->globalPos()));
-  QCoreApplication::sendEvent(m_line_edit, event);
+  if(m_line_edit) {
+    event->accept();
+    event->setLocalPos(m_line_edit->mapFromGlobal(event->globalPos()));
+    QCoreApplication::sendEvent(m_line_edit, event);
+  }
 }
 
-void TextBox::keyPressEvent(QKeyEvent* event) {
-  if(event->key() == Qt::Key_Escape) {
-    if(m_submission != m_current->get()) {
-      m_current->set(m_submission);
-      return;
-    }
-  } else if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
-    m_has_update = true;
-    on_editing_finished();
-    return;
-  } else if(!m_is_handling_key_press) {
-    m_is_handling_key_press = true;
-    QCoreApplication::sendEvent(m_line_edit, event);
-    m_is_handling_key_press = false;
-    return;
+void TextBox::paintEvent(QPaintEvent* event) {
+  auto painter = QPainter(this);
+  m_box_painter.paint(painter);
+  if(!m_line_edit && !m_current->get().isEmpty()) {
+    painter.setPen(m_text_style.m_text_color);
+    painter.setFont(m_text_style.m_font);
+    painter.drawText(
+      m_geometry.get_content_area(), m_text_style.m_alignment, m_display_text);
   }
-  QWidget::keyPressEvent(event);
 }
 
 void TextBox::resizeEvent(QResizeEvent* event) {
+  m_geometry.set_size(size());
   update_display_text();
   QWidget::resizeEvent(event);
 }
 
-QSize TextBox::compute_decoration_size() const {
-  auto decoration_size = QSize(0, 0);
-  for(auto& property : get_evaluated_block(*m_box)) {
-    property.visit(
-      [&] (std::in_place_type_t<BorderTopSize>, int size) {
-        decoration_size.rheight() += size;
-      },
-      [&] (std::in_place_type_t<BorderRightSize>, int size) {
-        decoration_size.rwidth() += size;
-      },
-      [&] (std::in_place_type_t<BorderBottomSize>, int size) {
-        decoration_size.rheight() += size;
-      },
-      [&] (std::in_place_type_t<BorderLeftSize>, int size) {
-        decoration_size.rwidth() += size;
-      },
-      [&] (std::in_place_type_t<PaddingTop>, int size) {
-        decoration_size.rheight() += size;
-      },
-      [&] (std::in_place_type_t<PaddingRight>, int size) {
-        decoration_size.rwidth() += size;
-      },
-      [&] (std::in_place_type_t<PaddingBottom>, int size) {
-        decoration_size.rheight() += size;
-      },
-      [&] (std::in_place_type_t<PaddingLeft>, int size) {
-        decoration_size.rwidth() += size;
-      });
+void TextBox::showEvent(QShowEvent* event) {
+  if(!m_line_edit && (!is_read_only() || isEnabled())) {
+    initialize_line_edit();
   }
-  return decoration_size;
-}
-
-bool TextBox::is_placeholder_visible() const {
-  return !is_read_only() && m_current->get().isEmpty() &&
-    !m_box->get_placeholder().isEmpty();
+  QWidget::showEvent(event);
 }
 
 void TextBox::elide_text() {
-  auto font_metrics = m_line_edit->fontMetrics();
-  auto rect = QRect(QPoint(0, 0), size() - compute_decoration_size());
-  auto elided_text = font_metrics.elidedText(
-    m_current->get(), Qt::ElideRight, rect.width());
-  m_text_validator->m_is_text_elided = elided_text != m_current->get();
-  if(elided_text != m_line_edit->text()) {
-    m_line_edit->setText(elided_text);
-    m_line_edit->setCursorPosition(0);
+  auto font_metrics = QFontMetrics(m_text_style.m_font);
+  m_display_text = font_metrics.elidedText(
+    m_current->get(), Qt::ElideRight, m_geometry.get_content_area().width());
+  if(m_line_edit && m_display_text != m_line_edit->text()) {
+    m_line_edit->set_display_text(m_display_text);
   }
+}
+
+void TextBox::initialize_line_edit() {
+  m_line_edit = new LineEdit(m_current, m_submission, m_highlight, this);
+  m_line_edit->set_placeholder(m_placeholder);
+  m_line_edit->setReadOnly(m_is_read_only);
+  m_line_edit->connect_reject_signal(
+    [=] (const auto& value) { m_reject_signal(value); });
+  on_style();
 }
 
 void TextBox::update_display_text() {
   if(!isEnabled() || is_read_only() || !hasFocus()) {
     elide_text();
-  } else if(m_line_edit->text() != m_current->get()) {
-    m_line_edit->setText(m_current->get());
+  } else if(m_line_edit &&
+      m_line_edit->text() != m_current->get()) {
+    m_display_text = m_current->get();
+    m_line_edit->set_display_text(m_display_text);
   }
   m_size_hint = none;
   updateGeometry();
-}
-
-void TextBox::update_placeholder_text() {
-  m_box->set_placeholder_visible(is_placeholder_visible());
-}
-
-void TextBox::commit_style() {
-  auto stylesheet = QString(
-    R"(#0x%1 {
-      background: transparent;
-      border-width: 0px;
-      padding: 0px;)").arg(reinterpret_cast<std::intptr_t>(this));
-  m_line_edit_styles.m_styles.write(stylesheet);
-  auto alignment = m_line_edit_styles.m_alignment.value_or(
-    Qt::Alignment(Qt::AlignmentFlag::AlignLeft));
-  if(alignment != m_line_edit->alignment()) {
-    m_line_edit->setAlignment(alignment);
-  }
-  auto font = m_line_edit_styles.m_font.value_or(QFont());
-  if(m_line_edit_styles.m_size) {
-    font.setPixelSize(*m_line_edit_styles.m_size);
-  }
-  m_line_edit->setFont(font);
-  if(m_line_edit_styles.m_echo_mode) {
-    m_line_edit->setEchoMode(*m_line_edit_styles.m_echo_mode);
-  }
-  if(stylesheet != m_line_edit->styleSheet()) {
-    m_line_edit->setStyleSheet(stylesheet);
-  }
-  update_display_text();
+  update();
 }
 
 void TextBox::on_current(const QString& current) {
-  m_has_update = true;
-  if(m_is_rejected) {
-    m_is_rejected = false;
-    unmatch(*this, Rejected());
-  }
   update_display_text();
-  update_placeholder_text();
-}
-
-void TextBox::on_editing_finished() {
-  if(!is_read_only() && m_has_update) {
-    if(m_current->get_state() == QValidator::Acceptable) {
-      m_submission = m_current->get();
-      m_has_update = false;
-      m_submit_signal(m_submission);
-    } else {
-      m_reject_signal(m_current->get());
-      m_current->set(m_submission);
-      if(!m_is_rejected) {
-        m_is_rejected = true;
-        match(*this, Rejected());
-      }
-    }
-  }
-}
-
-void TextBox::on_text_edited(const QString& text) {
-  m_current->set(text);
-}
-
-void TextBox::on_cursor_position(int old_position, int new_position) {
-  if(m_line_edit->hasSelectedText()) {
-    on_selection();
-  } else if(m_highlight->get() != Highlight(m_line_edit->cursorPosition())) {
-    m_highlight->set(Highlight(m_line_edit->cursorPosition()));
-  }
-}
-
-void TextBox::on_selection() {
-  if(!m_line_edit->hasSelectedText()) {
-    on_cursor_position(0, m_line_edit->cursorPosition());
-  } else if(m_highlight->get() !=
-      Highlight(m_line_edit->selectionStart(), m_line_edit->selectionEnd())) {
-    m_highlight->set(
-      {m_line_edit->selectionStart(), m_line_edit->selectionEnd()});
-  }
-}
-
-void TextBox::on_highlight(const Highlight& highlight) {
-  if(is_collapsed(highlight)) {
-    auto blocker = QSignalBlocker(m_line_edit);
-    m_line_edit->deselect();
-    m_line_edit->setCursorPosition(highlight.m_end);
-  } else if(highlight !=
-      Highlight(m_line_edit->selectionStart(), m_line_edit->selectionEnd())) {
-    auto blocker = QSignalBlocker(m_line_edit);
-    m_line_edit->setSelection(highlight.m_start, get_size(highlight));
-  }
 }
 
 void TextBox::on_style() {
+  auto font_size = std::make_shared<optional<int>>();
   auto& stylist = find_stylist(*this);
-  m_line_edit_styles.clear();
-  m_line_edit_styles.m_styles.buffer([&] {
-    for(auto& property : stylist.get_computed_block()) {
-      property.visit(
-        [&] (const TextColor& color) {
-          stylist.evaluate(color, [=] (auto color) {
-            m_line_edit_styles.m_styles.set("color", color);
-          });
-        },
-        [&] (const TextAlign& alignment) {
-          stylist.evaluate(alignment, [=] (auto alignment) {
-            m_line_edit_styles.m_alignment = alignment;
-          });
-        },
-        [&] (const Font& font) {
-          stylist.evaluate(font, [=] (const auto& font) {
-            m_line_edit_styles.m_font = font;
-          });
-        },
-        [&] (const FontSize& size) {
-          stylist.evaluate(size, [=] (auto size) {
-            m_line_edit_styles.m_size = size;
-          });
-        },
-        [&] (const EchoMode& mode) {
-          stylist.evaluate(mode, [=] (auto mode) {
-            m_line_edit_styles.m_echo_mode = mode;
-          });
+  m_text_style = TextStyleProperties();
+  for(auto& property : stylist.get_computed_block()) {
+    apply(property, m_geometry, stylist);
+    apply(property, m_box_painter, stylist);
+    property.visit(
+      [&] (const TextColor& color) {
+        stylist.evaluate(color, [=] (auto color) {
+          m_text_style.m_text_color = color;
         });
-    }
-  });
-  m_box->update_style();
+      },
+      [&] (const TextAlign& alignment) {
+        stylist.evaluate(alignment, [=] (auto alignment) {
+          m_text_style.m_alignment = alignment;
+        });
+      },
+      [&] (const Font& font) {
+        stylist.evaluate(font, [=] (const auto& font) {
+          m_text_style.m_font = font;
+        });
+      },
+      [&] (const FontSize& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          *font_size = size;
+        });
+      },
+      [&] (const EchoMode& mode) {
+        stylist.evaluate(mode, [=] (auto mode) {
+          m_text_style.m_echo_mode = mode;
+        });
+      });
+  }
+  if(*font_size) {
+    m_text_style.m_font.setPixelSize(*(*font_size));
+  }
+  if(m_line_edit) {
+    m_line_edit->set_style(m_geometry, m_text_style);
+  }
+  update_display_text();
+}
+
+void TextBox::on_submission(const QString& submission) {
+  m_submit_signal(submission);
 }
 
 TextBox* Spire::make_label(QString label, QWidget* parent) {
