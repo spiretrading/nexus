@@ -5,6 +5,7 @@
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
+#include "Spire/Styles/Selectors.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;

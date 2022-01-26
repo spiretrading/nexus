@@ -3,7 +3,6 @@
 #include <QVBoxLayout>
 #include "Nexus/Definitions/DefaultCountryDatabase.hpp"
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/TextBox.hpp"
 

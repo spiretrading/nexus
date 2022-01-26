@@ -6,7 +6,6 @@
 #include "Spire/Ui/InfoTip.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/TextAreaBox.hpp"
-#include "Spire/Ui/TextBox.hpp"
 
 using namespace Spire;
 using namespace Spire::Styles;

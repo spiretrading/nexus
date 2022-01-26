@@ -1,7 +1,6 @@
 #include "Spire/Ui/DestinationListItem.hpp"
 #include <QVBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace Nexus;

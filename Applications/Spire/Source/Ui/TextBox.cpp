@@ -107,7 +107,6 @@ struct TextBox::TextValidator : QValidator {
 
 class TextBox::LineEdit : public QLineEdit {
   public:
-
     LineEdit(std::shared_ptr<TextModel> current,
         std::shared_ptr<TextModel> submission,
         std::shared_ptr<HighlightModel> highlight, TextBox* text_box)
