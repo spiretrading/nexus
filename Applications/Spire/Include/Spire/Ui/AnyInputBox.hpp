@@ -99,8 +99,6 @@ namespace Details {
         T* m_input_box;
         std::shared_ptr<AnyValueModel> m_current;
         AnyRef m_submission;
-        boost::signals2::scoped_connection m_submit_connection;
-        boost::signals2::scoped_connection m_reject_connection;
 
         WrapperInputBox(T& input_box);
         const std::shared_ptr<AnyValueModel>& get_current() const override;
