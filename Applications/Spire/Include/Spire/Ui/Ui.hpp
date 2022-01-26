@@ -10,6 +10,7 @@
 #include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
+  class AnyInputBox;
   class ArrayTableModel;
   class Box;
   class BoxGeometry;
