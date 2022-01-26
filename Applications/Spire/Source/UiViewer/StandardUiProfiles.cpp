@@ -2722,7 +2722,7 @@ UiProfile Spire::make_table_view_profile() {
   populate_widget_properties(properties);
   auto profile = UiProfile("TableView", properties, [] (auto& profile) {
     auto model = std::make_shared<ArrayTableModel>();
-    for(auto row = 0; row != 5; ++row) {
+    for(auto row = 0; row != 50; ++row) {
       auto values = std::vector<std::any>();
       for(auto column = 0; column != 4; ++column) {
         values.push_back(row * 4 + column);

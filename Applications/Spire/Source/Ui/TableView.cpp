@@ -4,6 +4,7 @@
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/EmptyTableFilter.hpp"
 #include "Spire/Ui/FilteredTableModel.hpp"
+#include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/SortedTableModel.hpp"
 #include "Spire/Ui/StandardTableFilter.hpp"
 #include "Spire/Ui/TableBody.hpp"
@@ -50,8 +51,10 @@ TableView::TableView(
     }
   }
   m_header_view = new TableHeader(m_header);
+  m_header_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   box_body_layout->addWidget(m_header_view);
   auto box = new Box(box_body);
+  box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   update_style(*box, [] (auto& style) {
     style.get(Any()).set(BackgroundColor(QColor(0xFFFFFF)));
   });
@@ -61,11 +64,13 @@ TableView::TableView(
   m_sorted_table = std::make_shared<SortedTableModel>(m_filtered_table);
   m_body = new TableBody(m_sorted_table, std::move(current),
     m_header_view->get_widths(), std::move(view_builder));
+  m_body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+  auto scroll_box = new ScrollBox(m_body);
   auto layout = new QVBoxLayout(this);
   layout->setContentsMargins({});
   layout->setSpacing(0);
   layout->addWidget(box);
-  layout->addWidget(m_body);
+  layout->addWidget(scroll_box);
   m_header_view->connect_sort_signal(
     std::bind_front(&TableView::on_order_update, this));
   m_header_view->connect_filter_signal(
