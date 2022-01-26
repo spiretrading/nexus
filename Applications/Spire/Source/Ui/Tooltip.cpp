@@ -1,6 +1,5 @@
 #include "Spire/Ui/Tooltip.hpp"
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace Spire;

@@ -11,7 +11,6 @@
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
-#include "Spire/Ui/TextBox.hpp"
 
 using namespace boost;
 using namespace boost::gregorian;
