@@ -2,8 +2,8 @@
 #define SPIRE_ANY_INPUT_BOX_HPP
 #include <QHBoxLayout>
 #include <QWidget>
-#include "Spire/Spire/AnyValueModel.hpp"
 #include "Spire/Spire/AnyRef.hpp"
+#include "Spire/Spire/AnyValueModel.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -174,7 +174,7 @@ namespace Details {
     if constexpr(Details::has_reject_signal_v<T>) {
       return m_input_box->connect_reject_signal(slot);
     }
-    return boost::signals2::connection();
+    return {};
   }
 }
 
