@@ -118,8 +118,7 @@ class TextBox::LineEdit : public QLineEdit {
           m_highlight(std::move(highlight)),
           m_text_validator(new TextValidator(m_current, this)),
           m_is_rejected(false),
-          m_has_update(false),
-          m_is_handling_key_press(false) {
+          m_has_update(false) {
       setObjectName(QString("0x%1").arg(reinterpret_cast<std::intptr_t>(this)));
       setFrame(false);
       setTextMargins(-2, 0, -4, 0);
@@ -128,7 +127,6 @@ class TextBox::LineEdit : public QLineEdit {
       setCursorPosition(current_highlight.m_end);
       setSelection(current_highlight.m_start, get_size(current_highlight));
       setValidator(m_text_validator);
-      installEventFilter(this);
       connect(this, &QLineEdit::editingFinished, this,
         &LineEdit::on_editing_finished);
       connect(
@@ -208,25 +206,6 @@ class TextBox::LineEdit : public QLineEdit {
         e->accept();
         e->setLocalPos(mapFromGlobal(e->globalPos()));
         mousePressEvent(e);
-      } else if(event->type() == QEvent::KeyPress) {
-        auto e = static_cast<QKeyEvent*>(event);
-        if(e->key() == Qt::Key_Escape) {
-          if(m_submission->get() != m_current->get()) {
-            m_current->set(m_submission->get());
-            return true;
-          }
-        } else if(e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return) {
-          m_has_update = true;
-          on_editing_finished();
-          return true;
-        } else if(!m_is_handling_key_press) {
-          m_is_handling_key_press = true;
-          QLineEdit::keyPressEvent(e);
-          m_is_handling_key_press = false;
-          if(e->isAccepted()) {
-            return true;
-          }
-        }
       }
       return QLineEdit::eventFilter(watched, event);
     }
@@ -248,6 +227,21 @@ class TextBox::LineEdit : public QLineEdit {
         m_text_box->update_display_text();
       }
       QLineEdit::focusOutEvent(event);
+    }
+
+    void keyPressEvent(QKeyEvent* event) override {
+      if(event->key() == Qt::Key_Escape) {
+        if(m_submission->get() != m_current->get()) {
+          m_current->set(m_submission->get());
+          return;
+        }
+      } else if(event->key() == Qt::Key_Enter ||
+          event->key() == Qt::Key_Return) {
+        m_has_update = true;
+        on_editing_finished();
+        return;
+      }
+      QLineEdit::keyPressEvent(event);
     }
 
     void paintEvent(QPaintEvent* event) override {
@@ -278,7 +272,6 @@ class TextBox::LineEdit : public QLineEdit {
     TextStyleProperties m_placeholder_style;
     bool m_is_rejected;
     bool m_has_update;
-    bool m_is_handling_key_press;
     scoped_connection m_current_connection;
     scoped_connection m_read_only_connection;
     scoped_connection m_highlight_connection;
