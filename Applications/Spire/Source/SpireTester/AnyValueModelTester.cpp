@@ -9,8 +9,7 @@ TEST_SUITE("AnyValueModel") {
   TEST_CASE("wrapper") {
     auto source = std::make_shared<LocalValueModel<int>>(123);
     auto operations = std::deque<AnyRef>();
-    auto any_model =
-      AnyValueModel(std::static_pointer_cast<ValueModel<int>>(source));
+    auto any_model = AnyValueModel(source);
     any_model.connect_update_signal([&] (const auto& value) {
       operations.push_back(value);
     });
