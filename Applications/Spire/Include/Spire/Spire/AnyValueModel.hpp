@@ -22,7 +22,8 @@ namespace Spire {
        * @param source The ValueModel to wrap.
        */
       template<typename T>
-      explicit AnyValueModel(std::shared_ptr<ValueModel<T>> source);
+      explicit AnyValueModel(std::shared_ptr<T> source) requires
+        std::derived_from<T, ValueModel<typename T::Type>>;
 
       QValidator::State get_state() const override;
 
@@ -65,8 +66,10 @@ namespace Spire {
   };
 
   template<typename T>
-  AnyValueModel::AnyValueModel(std::shared_ptr<ValueModel<T>> source)
-    : m_model(std::make_unique<WrapperValueModel<T>>(std::move(source))) {}
+  AnyValueModel::AnyValueModel(std::shared_ptr<T> source) requires
+    std::derived_from<T, ValueModel<typename T::Type>>
+    : m_model(std::make_unique<WrapperValueModel<typename T::Type>>(
+        std::move(source))) {}
 
   template<typename T>
   AnyValueModel::WrapperValueModel<T>::WrapperValueModel(

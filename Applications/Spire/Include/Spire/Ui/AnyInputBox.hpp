@@ -17,13 +17,6 @@ namespace Details {
   template<typename T>
   constexpr auto has_reject_signal_v = has_reject_signal<T>::value;
 
-  template<typename T>
-  using input_current_type = decltype(std::declval<T>().get_current());
-
-  template<typename T>
-  using input_current_type_t =
-    typename std::remove_cvref_t<input_current_type<T>>::element_type::Type;
-
   template <class AlwaysVoid, template<class...> class Op, class... Args>
   struct detector {
     using value_t = std::false_type;
@@ -134,9 +127,7 @@ namespace Details {
   template<typename T>
   AnyInputBox::WrapperInputBox<T>::WrapperInputBox(T& input_box)
     : m_input_box(&input_box),
-      m_current(std::make_shared<AnyValueModel>(
-        std::static_pointer_cast<ValueModel<Details::input_current_type_t<T>>>(
-          m_input_box->get_current()))) {}
+      m_current(std::make_shared<AnyValueModel>(m_input_box->get_current())) {}
 
   template<typename T>
   const std::shared_ptr<AnyValueModel>&
