@@ -103,8 +103,6 @@ namespace Details {
       };
       template<typename T>
       struct WrapperInputBox final : AbstractInputBox {
-        mutable SubmitSignal m_submit_signal;
-        mutable RejectSignal m_reject_signal;
         T* m_input_box;
         std::shared_ptr<AnyValueModel> m_current;
         AnyRef m_submission;
