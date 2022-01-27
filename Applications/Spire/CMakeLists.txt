@@ -87,6 +87,7 @@ endmacro()
 
 add_subdirectory(Config/Library)
 add_subdirectory(Config/LoginUiTester)
+add_subdirectory(Config/OrderImbalanceIndicatorUiTester)
 add_subdirectory(Config/Resources)
 add_subdirectory(Config/Scratch)
 add_subdirectory(Config/Spire)
