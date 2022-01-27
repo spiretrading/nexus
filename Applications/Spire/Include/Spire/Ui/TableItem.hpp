@@ -15,6 +15,18 @@ namespace Spire {
 
         /** The background color to use. */
         QColor m_background_color;
+
+        /** The top border color. */
+        QColor m_border_top_color;
+
+        /** The right border color. */
+        QColor m_border_right_color;
+
+        /** The bottom border color. */
+        QColor m_border_bottom_color;
+
+        /** The left border color. */
+        QColor m_border_left_color;
       };
 
       /** Signals that this TableItem was clicked on. */

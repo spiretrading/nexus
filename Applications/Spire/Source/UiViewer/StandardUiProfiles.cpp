@@ -2737,7 +2737,7 @@ UiProfile Spire::make_table_view_profile() {
   populate_widget_properties(properties);
   auto profile = UiProfile("TableView", properties, [] (auto& profile) {
     auto model = std::make_shared<ArrayTableModel>();
-    for(auto row = 0; row != 5; ++row) {
+    for(auto row = 0; row != 50; ++row) {
       auto values = std::vector<std::any>();
       for(auto column = 0; column != 4; ++column) {
         values.push_back(row * 4 + column);
@@ -2771,6 +2771,8 @@ UiProfile Spire::make_table_view_profile() {
     view->connect_sort_signal(
       profile.make_event_slot<int, TableHeaderItem::Order>(
         "Sort", to_string_converter(get_order_property())));
+    auto& height = get<int>("height", profile.get_properties());
+    height.set(300);
     return view;
   });
   return profile;
