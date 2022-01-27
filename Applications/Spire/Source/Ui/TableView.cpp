@@ -8,6 +8,7 @@
 #include "Spire/Ui/SortedTableModel.hpp"
 #include "Spire/Ui/StandardTableFilter.hpp"
 #include "Spire/Ui/TableBody.hpp"
+#include "Spire/Ui/TableItem.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -65,18 +66,20 @@ TableView::TableView(
   m_body = new TableBody(m_sorted_table, std::move(current),
     m_header_view->get_widths(), std::move(view_builder));
   m_body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-  auto scroll_box = new ScrollBox(m_body);
+  m_scroll_box = new ScrollBox(m_body);
   auto layout = new QVBoxLayout(this);
   layout->setContentsMargins({});
   layout->setSpacing(0);
   layout->addWidget(box);
-  layout->addWidget(scroll_box);
+  layout->addWidget(m_scroll_box);
   m_header_view->connect_sort_signal(
     std::bind_front(&TableView::on_order_update, this));
   m_header_view->connect_filter_signal(
     std::bind_front(&TableView::on_filter_clicked, this));
   m_filter_connection = m_filter->connect_filter_signal(
     std::bind_front(&TableView::on_filter, this));
+  m_current_connection = m_body->get_current()->connect_update_signal(
+    std::bind_front(&TableView::on_current, this));
 }
 
 const std::shared_ptr<TableModel>& TableView::get_table() const {
@@ -129,6 +132,14 @@ void TableView::on_filter(int column, TableFilter::Filter filter) {
     m_header->set(column, revised_item);
   }
   m_filtered_table->set_filter(std::bind_front(&TableView::is_filtered, this));
+}
+
+void TableView::on_current(const optional<Index>& current) {
+  if(current) {
+    if(auto item = m_body->get_item(*current)) {
+      m_scroll_box->scroll_to(*item);
+    }
+  }
 }
 
 TableViewBuilder::TableViewBuilder(
