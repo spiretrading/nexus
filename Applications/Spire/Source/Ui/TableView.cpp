@@ -4,6 +4,7 @@
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/EmptyTableFilter.hpp"
 #include "Spire/Ui/FilteredTableModel.hpp"
+#include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/SortedTableModel.hpp"
 #include "Spire/Ui/StandardTableFilter.hpp"
@@ -38,7 +39,9 @@ TableView::TableView(
     : QWidget(parent),
       m_table(std::move(table)),
       m_header(std::move(header)),
-      m_filter(std::move(filter)) {
+      m_filter(std::move(filter)),
+      m_horizontal_spacing(0),
+      m_vertical_spacing(0) {
   auto box_body = new QWidget();
   auto box_body_layout = new QVBoxLayout(box_body);
   box_body_layout->setContentsMargins({});
@@ -80,6 +83,9 @@ TableView::TableView(
     std::bind_front(&TableView::on_filter, this));
   m_current_connection = m_body->get_current()->connect_update_signal(
     std::bind_front(&TableView::on_current, this));
+  m_body_style_connection = connect_style_signal(
+    *m_body, std::bind_front(&TableView::on_body_style, this));
+  on_body_style();
 }
 
 const std::shared_ptr<TableModel>& TableView::get_table() const {
@@ -137,9 +143,47 @@ void TableView::on_filter(int column, TableFilter::Filter filter) {
 void TableView::on_current(const optional<Index>& current) {
   if(current) {
     if(auto item = m_body->get_item(*current)) {
+      auto& horizontal_scroll_bar = m_scroll_box->get_horizontal_scroll_bar();
+      auto old_x = horizontal_scroll_bar.get_position();
+      auto& vertical_scroll_bar = m_scroll_box->get_vertical_scroll_bar();
+      auto old_y = vertical_scroll_bar.get_position();
       m_scroll_box->scroll_to(*item);
+      auto x = horizontal_scroll_bar.get_position();
+      if(x > old_x) {
+        horizontal_scroll_bar.set_position(x + m_horizontal_spacing);
+      } else if(x < old_x) {
+        horizontal_scroll_bar.set_position(x - m_horizontal_spacing);
+      }
+      auto y = vertical_scroll_bar.get_position();
+      if(y > old_y) {
+        vertical_scroll_bar.set_position(y + m_vertical_spacing);
+      } else if(y < old_y) {
+        vertical_scroll_bar.set_position(y - m_vertical_spacing);
+      }
     }
   }
+}
+
+void TableView::on_body_style() {
+  auto& stylist = find_stylist(*m_body);
+  m_horizontal_spacing = 0;
+  m_vertical_spacing = 0;
+  for(auto& property : stylist.get_computed_block()) {
+    property.visit(
+      [&] (const HorizontalSpacing& spacing) {
+        stylist.evaluate(spacing, [=] (auto spacing) {
+          m_horizontal_spacing = spacing;
+          update();
+        });
+      },
+      [&] (const VerticalSpacing& spacing) {
+        stylist.evaluate(spacing, [=] (auto spacing) {
+          m_vertical_spacing = spacing;
+          update();
+        });
+      });
+  }
+  update();
 }
 
 TableViewBuilder::TableViewBuilder(
