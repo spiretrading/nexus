@@ -2756,6 +2756,8 @@ UiProfile Spire::make_table_view_profile() {
     view->connect_sort_signal(
       profile.make_event_slot<int, TableHeaderItem::Order>(
         "Sort", to_string_converter(get_order_property())));
+    auto& height = get<int>("height", profile.get_properties());
+    height.set(300);
     return view;
   });
   return profile;
