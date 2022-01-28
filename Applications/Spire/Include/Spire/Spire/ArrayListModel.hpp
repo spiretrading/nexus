@@ -39,55 +39,17 @@ namespace Spire {
       template<typename F>
       decltype(auto) transact(F&& transaction);
 
-      /**
-       * Appends a value.
-       * @param value The value to append to this model.
-       * @return <code>QValidator::State::Acceptable</code> if the model
-       *         supports the operation, <code>QValidator::State::Invalid</code>
-       *         otherwise.
-       */
-      QValidator::State push(const Type& value) override;
-
-      /**
-       * Inserts a value at a specified index.
-       * @param value The value to insert.
-       * @param index The index to insert the value at.
-       * @throws <code>std::out_of_range</code> -
-       *         <code>index < 0 or index > get_size()</code>.
-       * @return <code>QValidator::State::Acceptable</code> if the model
-       *         supports the operation, <code>QValidator::State::Invalid</code>
-       *         otherwise.
-       */
-      QValidator::State insert(const Type& value, int index) override;
-
-      /**
-       * Moves a value.
-       * @param source - The index of the value to move.
-       * @param destination - The index to move the value to.
-       * @throws <code>std::out_of_range</code> - The source or destination are
-       *         not within this table's range.
-       * @return <code>QValidator::State::Acceptable</code> if the model
-       *         supports the operation, <code>QValidator::State::Invalid</code>
-       *         otherwise.
-       */
-      QValidator::State move(int source, int destination) override;
-
-      /**
-       * Removes a value from the table.
-       * @param index - The index of the value to remove.
-       * @throws <code>std::out_of_range</code> - The index is not within this
-       *         table's range.
-       * @return <code>QValidator::State::Acceptable</code> if the model
-       *         supports the operation, <code>QValidator::State::Invalid</code>
-       *         otherwise.
-       */
-      QValidator::State remove(int index) override;
-
       int get_size() const override;
 
       const Type& get(int index) const override;
 
       QValidator::State set(int index, const Type& value) override;
+
+      QValidator::State insert(const Type& value, int index) override;
+
+      QValidator::State move(int source, int destination) override;
+
+      QValidator::State remove(int index) override;
 
       boost::signals2::connection connect_operation_signal(
         const typename OperationSignal::slot_type& slot) const override;
@@ -104,8 +66,27 @@ namespace Spire {
   }
 
   template<typename T>
-  QValidator::State ArrayListModel<T>::push(const Type& value) {
-    return insert(value, get_size());
+  int ArrayListModel<T>::get_size() const {
+    return static_cast<int>(m_data.size());
+  }
+
+  template<typename T>
+  const typename ArrayListModel<T>::Type& ArrayListModel<T>::get(int index)
+      const {
+    if(index < 0 || index >= get_size()) {
+      throw std::out_of_range("The index is out of range.");
+    }
+    return m_data[index];
+  }
+
+  template<typename T>
+  QValidator::State ArrayListModel<T>::set(int index, const Type& value) {
+    if(index < 0 || index >= get_size()) {
+      return QValidator::State::Invalid;
+    }
+    m_data[index] = value;
+    m_transaction.push(UpdateOperation(index));
+    return QValidator::State::Acceptable;
   }
 
   template<typename T>
@@ -149,30 +130,6 @@ namespace Spire {
     }
     m_data.erase(std::next(m_data.begin(), index));
     m_transaction.push(RemoveOperation(index));
-    return QValidator::State::Acceptable;
-  }
-
-  template<typename T>
-  int ArrayListModel<T>::get_size() const {
-    return static_cast<int>(m_data.size());
-  }
-
-  template<typename T>
-  const typename ArrayListModel<T>::Type& ArrayListModel<T>::get(int index)
-      const {
-    if(index < 0 || index >= get_size()) {
-      throw std::out_of_range("The index is out of range.");
-    }
-    return m_data[index];
-  }
-
-  template<typename T>
-  QValidator::State ArrayListModel<T>::set(int index, const Type& value) {
-    if(index < 0 || index >= get_size()) {
-      return QValidator::State::Invalid;
-    }
-    m_data[index] = value;
-    m_transaction.push(UpdateOperation(index));
     return QValidator::State::Acceptable;
   }
 
