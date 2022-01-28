@@ -3,6 +3,7 @@
 #include <QHBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/Utility.hpp"
+#include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/TextBox.hpp"

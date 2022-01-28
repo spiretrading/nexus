@@ -66,12 +66,19 @@ namespace Spire {
       std::shared_ptr<TableFilter> m_filter;
       TableHeader* m_header_view;
       TableBody* m_body;
+      int m_horizontal_spacing;
+      int m_vertical_spacing;
+      ScrollBox* m_scroll_box;
       boost::signals2::scoped_connection m_filter_connection;
+      boost::signals2::scoped_connection m_current_connection;
+      boost::signals2::scoped_connection m_body_style_connection;
 
       bool is_filtered(const TableModel& model, int row);
       void on_order_update(int index, TableHeaderItem::Order order);
       void on_filter_clicked(int index);
       void on_filter(int column, TableFilter::Filter filter);
+      void on_current(const boost::optional<Index>& current);
+      void on_body_style();
   };
 
   /**

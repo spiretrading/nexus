@@ -4,8 +4,9 @@
 #include <QLabel>
 #include <QLineEdit>
 #include "Spire/Spire/ValueModel.hpp"
-#include "Spire/Styles/StyleSheetMap.hpp"
-#include "Spire/Ui/Box.hpp"
+#include "Spire/Ui/BoxGeometry.hpp"
+#include "Spire/Ui/BoxPainter.hpp"
+#include "Spire/Ui/CheckBox.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -158,56 +159,45 @@ namespace Styles {
       QSize sizeHint() const override;
 
     protected:
-      bool eventFilter(QObject* watched, QEvent* event) override;
       void changeEvent(QEvent* event) override;
       void mousePressEvent(QMouseEvent* event) override;
-      void keyPressEvent(QKeyEvent* event) override;
+      void paintEvent(QPaintEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
+      void showEvent(QShowEvent* event) override;
 
     private:
-      struct StyleProperties {
-        Styles::StyleSheetMap m_styles;
-        boost::optional<Qt::Alignment> m_alignment;
-        boost::optional<QFont> m_font;
-        boost::optional<int> m_size;
+      struct TextStyleProperties {
+        Qt::Alignment m_alignment;
+        QFont m_font;
         QColor m_text_color;
-        boost::optional<QLineEdit::EchoMode> m_echo_mode;
+        QLineEdit::EchoMode m_echo_mode;
 
-        StyleProperties(std::function<void ()> commit);
-        void clear();
+        TextStyleProperties();
       };
       struct TextValidator;
-      class PlaceholderBox;
+      class LineEdit;
       mutable SubmitSignal m_submit_signal;
       mutable RejectSignal m_reject_signal;
       std::shared_ptr<TextModel> m_current;
-      QString m_submission;
+      std::shared_ptr<TextModel> m_submission;
+      QString m_display_text;
+      QString m_placeholder;
+      bool m_is_read_only;
       std::shared_ptr<HighlightModel> m_highlight;
-      bool m_is_rejected;
-      bool m_has_update;
-      bool m_is_handling_key_press;
-      StyleProperties m_line_edit_styles;
-      TextValidator* m_text_validator;
-      QLineEdit* m_line_edit;
-      PlaceholderBox* m_box;
+      TextStyleProperties m_text_style;
+      LineEdit* m_line_edit;
+      BoxGeometry m_geometry;
+      BoxPainter m_box_painter;
       boost::signals2::scoped_connection m_style_connection;
-      boost::signals2::scoped_connection m_placeholder_style_connection;
       boost::signals2::scoped_connection m_current_connection;
       mutable boost::optional<QSize> m_size_hint;
 
-      QSize compute_decoration_size() const;
-      bool is_placeholder_visible() const;
       void elide_text();
+      void initialize_line_edit();
       void update_display_text();
-      void update_placeholder_text();
-      void commit_style();
       void on_current(const QString& current);
-      void on_editing_finished();
-      void on_text_edited(const QString& text);
-      void on_cursor_position(int old_position, int new_position);
-      void on_selection();
-      void on_highlight(const Highlight& highlight);
       void on_style();
+      void on_submission(const QString& submission);
   };
 
   /**

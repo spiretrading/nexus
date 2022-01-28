@@ -142,6 +142,12 @@ namespace Styles {
       /** Returns the current value. */
       const std::shared_ptr<CurrentModel>& get_current() const;
 
+      /** Returns the TableItem at a specified index. */
+      const TableItem* get_item(Index index) const;
+
+      /** Returns the TableItem at a specified index. */
+      TableItem* get_item(Index index);
+
     protected:
       bool event(QEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;

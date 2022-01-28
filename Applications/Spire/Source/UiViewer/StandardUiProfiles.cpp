@@ -520,6 +520,21 @@ namespace {
       });
     });
   }
+
+  class RejectedTextModel : public LocalTextModel {
+    public:
+      void set_rejected(const QString& rejected) {
+        m_rejected = rejected;
+      }
+      QValidator::State get_state() const {
+        if(get() == m_rejected) {
+          return QValidator::Invalid;
+        }
+        return QValidator::Acceptable;
+      }
+    private:
+      QString m_rejected;
+  };
 }
 
 UiProfile Spire::make_box_profile() {
@@ -2762,7 +2777,7 @@ UiProfile Spire::make_table_view_profile() {
   populate_widget_properties(properties);
   auto profile = UiProfile("TableView", properties, [] (auto& profile) {
     auto model = std::make_shared<ArrayTableModel>();
-    for(auto row = 0; row != 5; ++row) {
+    for(auto row = 0; row != 50; ++row) {
       auto values = std::vector<std::any>();
       for(auto column = 0; column != 4; ++column) {
         values.push_back(row * 4 + column);
@@ -2796,6 +2811,8 @@ UiProfile Spire::make_table_view_profile() {
     view->connect_sort_signal(
       profile.make_event_slot<int, TableHeaderItem::Order>(
         "Sort", to_string_converter(get_order_property())));
+    auto& height = get<int>("height", profile.get_properties());
+    height.set(300);
     return view;
   });
   return profile;
@@ -2935,9 +2952,11 @@ UiProfile Spire::make_text_box_profile() {
   properties.push_back(make_standard_property<bool>("read_only"));
   properties.push_back(make_standard_property<QString>("current"));
   properties.push_back(make_standard_property<QString>("placeholder"));
+  properties.push_back(make_standard_property<QString>("rejected", "deny"));
   properties.push_back(make_standard_property("horizontal_padding", 8));
   auto profile = UiProfile("TextBox", properties, [] (auto& profile) {
-    auto text_box = new TextBox();
+    auto model = std::make_shared<RejectedTextModel>();
+    auto text_box = new TextBox(model);
     text_box->setFixedWidth(scale_width(100));
     apply_widget_properties(text_box, profile.get_properties());
     auto& read_only = get<bool>("read_only", profile.get_properties());
@@ -2949,6 +2968,10 @@ UiProfile Spire::make_text_box_profile() {
     auto& placeholder = get<QString>("placeholder", profile.get_properties());
     placeholder.connect_changed_signal([=] (const auto& text) {
       text_box->set_placeholder(text);
+    });
+    auto& rejected = get<QString>("rejected", profile.get_properties());
+    rejected.connect_changed_signal([=] (const auto& value) {
+      model->set_rejected(value);
     });
     auto& padding = get<int>("horizontal_padding", profile.get_properties());
     padding.connect_changed_signal([=] (const auto& value) {

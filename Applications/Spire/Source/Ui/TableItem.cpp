@@ -42,6 +42,46 @@ void TableItem::on_style() {
             }
           }
         });
+      },
+      [&] (const BorderTopColor& color) {
+        stylist.evaluate(color, [=] (auto color) {
+          m_styles.m_border_top_color = color;
+          if(auto row = parentWidget()) {
+            if(auto body = row->parentWidget()) {
+              body->update();
+            }
+          }
+        });
+      },
+      [&] (const BorderRightColor& color) {
+        stylist.evaluate(color, [=] (auto color) {
+          m_styles.m_border_right_color = color;
+          if(auto row = parentWidget()) {
+            if(auto body = row->parentWidget()) {
+              body->update();
+            }
+          }
+        });
+      },
+      [&] (const BorderBottomColor& color) {
+        stylist.evaluate(color, [=] (auto color) {
+          m_styles.m_border_bottom_color = color;
+          if(auto row = parentWidget()) {
+            if(auto body = row->parentWidget()) {
+              body->update();
+            }
+          }
+        });
+      },
+      [&] (const BorderLeftColor& color) {
+        stylist.evaluate(color, [=] (auto color) {
+          m_styles.m_border_left_color = color;
+          if(auto row = parentWidget()) {
+            if(auto body = row->parentWidget()) {
+              body->update();
+            }
+          }
+        });
       });
   }
 }

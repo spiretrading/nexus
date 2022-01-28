@@ -146,13 +146,11 @@ TableBody::TableBody(
       set(HorizontalSpacing(scale_width(1))).
       set(VerticalSpacing(scale_width(1))).
       set(grid_color(QColor(0xE0E0E0)));
-    style.get(Any() > (Row() && Hover())).
-      set(BackgroundColor(QColor(0xF2F2FF)));
-    style.get(Any() > (Column() && Hover())).
-      set(BackgroundColor(QColor(0xF2F2FF)));
-    style.get(Any() > Current()).set(BackgroundColor(QColor(0xFF0000)));
-    style.get(Any() > CurrentRow()).set(BackgroundColor(QColor(0x00FF00)));
-    style.get(Any() > CurrentColumn()).set(BackgroundColor(QColor(0x0000FF)));
+    style.get(Any() > Current()).
+      set(BackgroundColor(QColor(0xFFFFFF))).
+      set(border_color(QColor(0x4B23A0)));
+    style.get(Any() > CurrentRow()).set(BackgroundColor(QColor(0xE2E0FF)));
+    style.get(Any() > CurrentColumn()).set(BackgroundColor(QColor(0xE2E0FF)));
   });
   for(auto row = 0; row != m_table->get_row_size(); ++row) {
     on_table_operation(TableModel::AddOperation(row));
@@ -188,6 +186,14 @@ const std::shared_ptr<TableModel>& TableBody::get_table() const {
 
 const std::shared_ptr<TableBody::CurrentModel>& TableBody::get_current() const {
   return m_current;
+}
+
+const TableItem* TableBody::get_item(Index index) const {
+  return const_cast<TableBody*>(this)->get_item(index);
+}
+
+TableItem* TableBody::get_item(Index index) {
+  return find_item(index);
 }
 
 bool TableBody::event(QEvent* event) {
@@ -309,6 +315,34 @@ void TableBody::paintEvent(QPaintEvent* event) {
       }
     }
     draw_border(width() - m_styles.m_horizontal_spacing);
+  }
+  if(m_current_item) {
+    auto current_position =
+      m_current_item->parentWidget()->mapToParent(m_current_item->pos());
+    auto& styles = m_current_item->get_styles();
+    auto top_left = current_position -
+      QPoint(m_styles.m_horizontal_spacing, m_styles.m_vertical_spacing);
+    auto top_right = top_left + QPoint(
+      m_current_item->size().width() + 2 * m_styles.m_horizontal_spacing - 1,
+      0);
+    auto bottom_right = top_right + QPoint(
+      0, m_current_item->size().height() + 2 * m_styles.m_vertical_spacing - 1);
+    auto bottom_left = top_left + QPoint(
+      0, m_current_item->size().height() + 2 * m_styles.m_vertical_spacing - 1);
+    painter.setPen(QPen(QBrush(styles.m_border_top_color),
+      m_styles.m_vertical_spacing,  Qt::SolidLine, Qt::FlatCap, Qt::MiterJoin));
+    painter.drawLine(QLine(top_left, top_right));
+    painter.setPen(QPen(QBrush(styles.m_border_right_color),
+      m_styles.m_horizontal_spacing,  Qt::SolidLine, Qt::FlatCap,
+      Qt::MiterJoin));
+    painter.drawLine(QLine(top_right, bottom_right));
+    painter.setPen(QPen(QBrush(styles.m_border_bottom_color),
+      m_styles.m_vertical_spacing,  Qt::SolidLine, Qt::FlatCap, Qt::MiterJoin));
+    painter.drawLine(bottom_left, bottom_right + QPoint(1, 0));
+    painter.setPen(QPen(QBrush(styles.m_border_left_color),
+      m_styles.m_horizontal_spacing,  Qt::SolidLine, Qt::FlatCap,
+      Qt::MiterJoin));
+    painter.drawLine(top_left, bottom_left);
   }
   QWidget::paintEvent(event);
 }
