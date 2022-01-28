@@ -42,8 +42,11 @@ namespace Spire {
       /**
        * Appends a value.
        * @param value The value to append to this model.
+       * @return <code>QValidator::State::Acceptable</code> if the model
+       *         supports the operation, <code>QValidator::State::Invalid</code>
+       *         otherwise.
        */
-      void push(const Type& value);
+      QValidator::State push(const Type& value) override;
 
       /**
        * Inserts a value at a specified index.
@@ -51,8 +54,11 @@ namespace Spire {
        * @param index The index to insert the value at.
        * @throws <code>std::out_of_range</code> -
        *         <code>index < 0 or index > get_size()</code>.
+       * @return <code>QValidator::State::Acceptable</code> if the model
+       *         supports the operation, <code>QValidator::State::Invalid</code>
+       *         otherwise.
        */
-      void insert(const Type& value, int index);
+      QValidator::State insert(const Type& value, int index) override;
 
       /**
        * Moves a value.
@@ -60,16 +66,22 @@ namespace Spire {
        * @param destination - The index to move the value to.
        * @throws <code>std::out_of_range</code> - The source or destination are
        *         not within this table's range.
+       * @return <code>QValidator::State::Acceptable</code> if the model
+       *         supports the operation, <code>QValidator::State::Invalid</code>
+       *         otherwise.
        */
-      void move(int source, int destination);
+      QValidator::State move(int source, int destination) override;
 
       /**
        * Removes a value from the table.
        * @param index - The index of the value to remove.
        * @throws <code>std::out_of_range</code> - The index is not within this
        *         table's range.
+       * @return <code>QValidator::State::Acceptable</code> if the model
+       *         supports the operation, <code>QValidator::State::Invalid</code>
+       *         otherwise.
        */
-      void remove(int index);
+      QValidator::State remove(int index) override;
 
       int get_size() const override;
 
@@ -92,27 +104,28 @@ namespace Spire {
   }
 
   template<typename T>
-  void ArrayListModel<T>::push(const Type& value) {
-    insert(value, get_size());
+  QValidator::State ArrayListModel<T>::push(const Type& value) {
+    return insert(value, get_size());
   }
 
   template<typename T>
-  void ArrayListModel<T>::insert(const Type& value, int index) {
+  QValidator::State ArrayListModel<T>::insert(const Type& value, int index) {
     if(index < 0 || index > get_size()) {
       throw std::out_of_range("The index is out of range.");
     }
     m_data.insert(std::next(m_data.begin(), index), value);
     m_transaction.push(AddOperation(index));
+    return QValidator::State::Acceptable;
   }
 
   template<typename T>
-  void ArrayListModel<T>::move(int source, int destination) {
+  QValidator::State ArrayListModel<T>::move(int source, int destination) {
     if(source < 0 || source >= get_size() || destination < 0 ||
         destination >= get_size()) {
       throw std::out_of_range("The source or destination is out of range.");
     }
     if(source == destination) {
-      return;
+      return QValidator::State::Acceptable;
     }
     auto source_row = std::move(m_data[source]);
     if(source < destination) {
@@ -126,15 +139,17 @@ namespace Spire {
     }
     m_data[destination] = std::move(source_row);
     m_transaction.push(MoveOperation(source, destination));
+    return QValidator::State::Acceptable;
   }
 
   template<typename T>
-  void ArrayListModel<T>::remove(int index) {
+  QValidator::State ArrayListModel<T>::remove(int index) {
     if(index < 0 || index >= get_size()) {
       throw std::out_of_range("The index is out of range.");
     }
     m_data.erase(std::next(m_data.begin(), index));
     m_transaction.push(RemoveOperation(index));
+    return QValidator::State::Acceptable;
   }
 
   template<typename T>

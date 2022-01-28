@@ -86,6 +86,18 @@ struct TagBox::PartialListModel : public AnyListModel {
     return m_source->set(index, value);
   }
 
+  QValidator::State insert(const std::any& value, int index) override {
+    return QValidator::State::Invalid;
+  }
+
+  QValidator::State move(int source, int destination) override {
+    return QValidator::State::Invalid;
+  }
+
+  QValidator::State remove(int index) override {
+    return QValidator::State::Invalid;
+  }
+
   connection connect_operation_signal(
       const OperationSignal::slot_type& slot) const override {
     return m_transaction.connect_operation_signal(slot);
