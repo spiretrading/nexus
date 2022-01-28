@@ -148,6 +148,44 @@ namespace Details {
        */
       virtual QValidator::State set(int index, const std::any& value) = 0;
 
+      /**
+       * Appends a value.
+       * @param value The value to append to this model.
+       * @return <code>QValidator::State::Acceptable</code> if the model
+       *         supports the operation, <code>QValidator::State::Invalid</code>
+       *         otherwise.
+       */
+      virtual QValidator::State push(const std::any& value);
+
+      /**
+       * Inserts a value at a specified index.
+       * @param value The value to insert.
+       * @param index The index to insert the value at.
+       * @return <code>QValidator::State::Acceptable</code> if the model
+       *         supports the operation, <code>QValidator::State::Invalid</code>
+       *         otherwise.
+       */
+      virtual QValidator::State insert(const std::any& value, int index) = 0;
+
+      /**
+       * Moves a value.
+       * @param source - The index of the value to move.
+       * @param destination - The index to move the value to.
+       * @return <code>QValidator::State::Acceptable</code> if the model
+       *         supports the operation, <code>QValidator::State::Invalid</code>
+       *         otherwise.
+       */
+      virtual QValidator::State move(int source, int destination) = 0;
+
+      /**
+       * Removes a value from the model.
+       * @param index - The index of the value to remove.
+       * @return <code>QValidator::State::Acceptable</code> if the model
+       *         supports the operation, <code>QValidator::State::Invalid</code>
+       *         otherwise.
+       */
+      virtual QValidator::State remove(int index) = 0;
+
       /** Connects a slot to the OperationSignal. */
       virtual boost::signals2::connection connect_operation_signal(
         const OperationSignal::slot_type& slot) const = 0;
@@ -195,6 +233,44 @@ namespace Details {
        */
       virtual QValidator::State set(int index, const Type& value);
 
+      /**
+       * Appends a value.
+       * @param value The value to append to this model.
+       * @return <code>QValidator::State::Acceptable</code> if the model
+       *         supports the operation, <code>QValidator::State::Invalid</code>
+       *         otherwise.
+       */
+      virtual QValidator::State push(const Type& value);
+
+      /**
+       * Inserts a value at a specified index.
+       * @param value The value to insert.
+       * @param index The index to insert the value at.
+       * @return <code>QValidator::State::Acceptable</code> if the model
+       *         supports the operation, <code>QValidator::State::Invalid</code>
+       *         otherwise.
+       */
+      virtual QValidator::State insert(const Type& value, int index);
+
+      /**
+       * Moves a value.
+       * @param source - The index of the value to move.
+       * @param destination - The index to move the value to.
+       * @return <code>QValidator::State::Acceptable</code> if the model
+       *         supports the operation, <code>QValidator::State::Invalid</code>
+       *         otherwise.
+       */
+      virtual QValidator::State move(int source, int destination) override;
+
+      /**
+       * Removes a value from the model.
+       * @param index - The index of the value to remove.
+       * @return <code>QValidator::State::Acceptable</code> if the model
+       *         supports the operation, <code>QValidator::State::Invalid</code>
+       *         otherwise.
+       */
+      virtual QValidator::State remove(int index) override;
+
     protected:
 
       /** Constructs an empty model. */
@@ -205,6 +281,7 @@ namespace Details {
       ListModel& operator =(const ListModel&) = delete;
       QValidator::State set(int index, const std::any& value) override;
       std::any at(int index) const override;
+      QValidator::State insert(const std::any& value, int index) override;
   };
 
   template<>
@@ -215,6 +292,14 @@ namespace Details {
       virtual const Type& get(int index) const = 0;
 
       virtual QValidator::State set(int index, const Type& value);
+
+      virtual QValidator::State push(const Type& value);
+
+      virtual QValidator::State insert(const Type& value, int index);
+
+      virtual QValidator::State move(int source, int destination) override;
+
+      virtual QValidator::State remove(int index) override;
 
     protected:
       ListModel() = default;
@@ -248,6 +333,31 @@ namespace Details {
   template<typename T>
   std::any ListModel<T>::at(int index) const {
     return get(index);
+  }
+
+  template<typename T>
+  QValidator::State ListModel<T>::push(const Type& value) {
+    return insert(value, get_size());
+  }
+
+  template<typename T>
+  QValidator::State ListModel<T>::insert(const Type& value, int index) {
+    return QValidator::State::Invalid;
+  }
+
+  template<typename T>
+  QValidator::State ListModel<T>::move(int source, int destination) {
+    return QValidator::State::Invalid;
+  }
+
+  template<typename T>
+  QValidator::State ListModel<T>::remove(int index) {
+    return QValidator::State::Invalid;
+  }
+
+  template<typename T>
+  QValidator::State ListModel<T>::insert(const std::any& value, int index) {
+    return insert(std::any_cast<const Type&>(value), index);
   }
 }
 

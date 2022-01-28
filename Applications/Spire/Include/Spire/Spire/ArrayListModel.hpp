@@ -39,43 +39,17 @@ namespace Spire {
       template<typename F>
       decltype(auto) transact(F&& transaction);
 
-      /**
-       * Appends a value.
-       * @param value The value to append to this model.
-       */
-      void push(const Type& value);
-
-      /**
-       * Inserts a value at a specified index.
-       * @param value The value to insert.
-       * @param index The index to insert the value at.
-       * @throws <code>std::out_of_range</code> -
-       *         <code>index < 0 or index > get_size()</code>.
-       */
-      void insert(const Type& value, int index);
-
-      /**
-       * Moves a value.
-       * @param source - The index of the value to move.
-       * @param destination - The index to move the value to.
-       * @throws <code>std::out_of_range</code> - The source or destination are
-       *         not within this table's range.
-       */
-      void move(int source, int destination);
-
-      /**
-       * Removes a value from the table.
-       * @param index - The index of the value to remove.
-       * @throws <code>std::out_of_range</code> - The index is not within this
-       *         table's range.
-       */
-      void remove(int index);
-
       int get_size() const override;
 
       const Type& get(int index) const override;
 
       QValidator::State set(int index, const Type& value) override;
+
+      QValidator::State insert(const Type& value, int index) override;
+
+      QValidator::State move(int source, int destination) override;
+
+      QValidator::State remove(int index) override;
 
       boost::signals2::connection connect_operation_signal(
         const typename OperationSignal::slot_type& slot) const override;
@@ -89,52 +63,6 @@ namespace Spire {
   template<typename F>
   decltype(auto) ArrayListModel<T>::transact(F&& transaction) {
     return m_transaction.transact(std::forward<F>(transaction));
-  }
-
-  template<typename T>
-  void ArrayListModel<T>::push(const Type& value) {
-    insert(value, get_size());
-  }
-
-  template<typename T>
-  void ArrayListModel<T>::insert(const Type& value, int index) {
-    if(index < 0 || index > get_size()) {
-      throw std::out_of_range("The index is out of range.");
-    }
-    m_data.insert(std::next(m_data.begin(), index), value);
-    m_transaction.push(AddOperation(index));
-  }
-
-  template<typename T>
-  void ArrayListModel<T>::move(int source, int destination) {
-    if(source < 0 || source >= get_size() || destination < 0 ||
-        destination >= get_size()) {
-      throw std::out_of_range("The source or destination is out of range.");
-    }
-    if(source == destination) {
-      return;
-    }
-    auto source_row = std::move(m_data[source]);
-    if(source < destination) {
-      std::move(std::next(m_data.begin(), source + 1),
-        std::next(m_data.begin(), destination + 1),
-        std::next(m_data.begin(), source));
-    } else {
-      std::move_backward(std::next(m_data.begin(), destination),
-        std::next(m_data.begin(), source),
-        std::next(m_data.begin(), source + 1));
-    }
-    m_data[destination] = std::move(source_row);
-    m_transaction.push(MoveOperation(source, destination));
-  }
-
-  template<typename T>
-  void ArrayListModel<T>::remove(int index) {
-    if(index < 0 || index >= get_size()) {
-      throw std::out_of_range("The index is out of range.");
-    }
-    m_data.erase(std::next(m_data.begin(), index));
-    m_transaction.push(RemoveOperation(index));
   }
 
   template<typename T>
@@ -158,6 +86,50 @@ namespace Spire {
     }
     m_data[index] = value;
     m_transaction.push(UpdateOperation(index));
+    return QValidator::State::Acceptable;
+  }
+
+  template<typename T>
+  QValidator::State ArrayListModel<T>::insert(const Type& value, int index) {
+    if(index < 0 || index > get_size()) {
+      throw std::out_of_range("The index is out of range.");
+    }
+    m_data.insert(std::next(m_data.begin(), index), value);
+    m_transaction.push(AddOperation(index));
+    return QValidator::State::Acceptable;
+  }
+
+  template<typename T>
+  QValidator::State ArrayListModel<T>::move(int source, int destination) {
+    if(source < 0 || source >= get_size() || destination < 0 ||
+        destination >= get_size()) {
+      throw std::out_of_range("The source or destination is out of range.");
+    }
+    if(source == destination) {
+      return QValidator::State::Acceptable;
+    }
+    auto source_row = std::move(m_data[source]);
+    if(source < destination) {
+      std::move(std::next(m_data.begin(), source + 1),
+        std::next(m_data.begin(), destination + 1),
+        std::next(m_data.begin(), source));
+    } else {
+      std::move_backward(std::next(m_data.begin(), destination),
+        std::next(m_data.begin(), source),
+        std::next(m_data.begin(), source + 1));
+    }
+    m_data[destination] = std::move(source_row);
+    m_transaction.push(MoveOperation(source, destination));
+    return QValidator::State::Acceptable;
+  }
+
+  template<typename T>
+  QValidator::State ArrayListModel<T>::remove(int index) {
+    if(index < 0 || index >= get_size()) {
+      throw std::out_of_range("The index is out of range.");
+    }
+    m_data.erase(std::next(m_data.begin(), index));
+    m_transaction.push(RemoveOperation(index));
     return QValidator::State::Acceptable;
   }
 
