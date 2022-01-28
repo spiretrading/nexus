@@ -120,6 +120,7 @@ namespace Details {
     auto layout = new QHBoxLayout(this);
     layout->setContentsMargins({});
     layout->addWidget(&input_box);
+    setFocusProxy(&input_box);
   }
 
   template<typename T>

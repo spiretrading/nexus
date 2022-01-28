@@ -1,30 +1,364 @@
 #include "Spire/Ui/OpenFilterPanel.hpp"
+#include <QHBoxLayout>
+#include <QVBoxLayout>
+#include "Spire/Spire/ArrayListModel.hpp"
+#include "Spire/Spire/AssociativeValueModel.hpp"
+#include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/AnyInputBox.hpp"
+#include "Spire/Ui/Button.hpp"
+#include "Spire/Ui/Checkbox.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
+#include "Spire/Ui/FilterPanel.hpp"
+#include "Spire/Ui/Icon.hpp"
+#include "Spire/Ui/ListItem.hpp"
+#include "Spire/Ui/ScrollableListBox.hpp"
+#include "Spire/Ui/TextBox.hpp"
 
 using namespace boost;
-using namespace boost::signals2;
+using namespace signals2;
 using namespace Spire;
+using namespace Styles;
+
+namespace {
+  auto DELETE_BUTTON_STYLE(StyleSheet style) {
+    style.get(Any() >> is_a<TextBox>()).set(PaddingRight(scale_width(8)));
+    style.get((Hover() || Press()) / Body() >> is_a<Icon>()).
+      set(BackgroundColor(QColor(Qt::transparent)));
+    style.get(Disabled() / Body() >> is_a<Icon>()).
+      set(Visibility::NONE);
+    return style;
+  }
+
+  auto LIST_ITEM_STYLE(StyleSheet style) {
+    style.get((Any() || Hover() || Press() || Focus() || Selected())).
+      set(BackgroundColor(QColor(0xFFFFFF))).
+      set(border_size(0)).
+      set(PaddingRight(scale_width(10)));
+    return style;
+  }
+
+  auto display_text(OpenFilterPanel::Mode mode) {
+    if(mode == OpenFilterPanel::Mode::INCLUDE) {
+      static const auto value = QObject::tr("Include");
+      return value;
+    } else {
+      static const auto value = QObject::tr("Exclude");
+      return value;
+    }
+  }
+}
+
+class DeletableItem : public QWidget {
+  public:
+    using DeleteSignal = Signal<void()>;
+
+    explicit DeletableItem(QString label, QWidget* parent = nullptr) {
+      auto layout = new QHBoxLayout(this);
+      layout->setContentsMargins({});
+      layout->setSpacing(0);
+      auto label_box = make_label(std::move(label));
+      label_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+      layout->addWidget(label_box);
+      m_delete_button = make_delete_icon_button();
+      m_delete_button->setFixedSize(scale(16, 16));
+      m_delete_button->setFocusPolicy(Qt::NoFocus);
+      update_style(*m_delete_button, [&] (auto& style) {
+        style = DELETE_BUTTON_STYLE(style);
+      });
+      layout->addWidget(m_delete_button);
+    }
+
+    connection connect_delete_signal(
+        const DeleteSignal::slot_type& slot) const {
+      return m_delete_button->connect_clicked_signal(slot);
+    }
+
+  private:
+    Button* m_delete_button;
+};
+
+class OpenFilterPanel::FilterModeButtonGroup {
+  public:
+    explicit FilterModeButtonGroup(std::shared_ptr<ValueModel<Mode>> model)
+        : m_model(std::move(model)),
+          m_current(std::make_shared<AssociativeValueModel<Mode>>()),
+          m_connection(m_model->connect_update_signal(
+            std::bind_front(&FilterModeButtonGroup::on_model_update, this))) {
+      make_button(Mode::INCLUDE);
+      make_button(Mode::EXCLUDE);
+      on_update(m_current->get(), true);
+    }
+
+    const std::shared_ptr<ValueModel<Mode>>& get_model() const {
+      return m_model;
+    }
+
+    CheckBox* get_button(Mode type) {
+      return m_buttons[type];
+    }
+
+  private:
+    std::shared_ptr<ValueModel<Mode>> m_model;
+    std::shared_ptr<AssociativeValueModel<Mode>> m_current;
+    std::unordered_map<Mode, CheckBox*> m_buttons;
+    scoped_connection m_connection;
+
+    void on_update(Mode mode, bool value) {
+      m_buttons[mode]->get_current()->set(value);
+      if(value) {
+        auto blocker = shared_connection_block(m_connection);
+        m_model->set(mode);
+      }
+    }
+
+    void on_model_update(const Mode mode) {
+      m_current->set(mode);
+    }
+
+    void make_button(Mode mode) {
+      auto button = make_radio_button();
+      button->set_label(display_text(mode));
+      button->get_current()->connect_update_signal([=] (auto value) {
+        if(m_current->get() == mode && !value) {
+          button->get_current()->set(true);
+        } else if(value) {
+          m_current->set(mode);
+        }
+      });
+      m_current->get_association(mode)->connect_update_signal(
+        std::bind_front(&FilterModeButtonGroup::on_update, this, mode));
+      m_buttons[mode] = button;
+    }
+};
+
+struct ComboBoxQueryModel : ComboBox::QueryModel {
+  std::shared_ptr<ComboBox::QueryModel> m_source;
+  std::shared_ptr<AnyListModel> m_matches;
+  std::unordered_set<QString> m_matches_set;
+  scoped_connection m_matches_connection;
+
+  ComboBoxQueryModel(std::shared_ptr<ComboBox::QueryModel> source,
+    std::shared_ptr<AnyListModel> matches)
+    : m_source(std::move(source)),
+      m_matches(std::move(matches)),
+      m_matches_connection(m_matches->connect_operation_signal(
+        std::bind_front(&ComboBoxQueryModel::on_operation, this))) {}
+
+  std::any parse(const QString& query) override {
+    auto value = m_source->parse(query);
+    if(!value.has_value()) {
+      return value;
+    }
+    if(m_matches_set.contains(displayTextAny(value))) {
+      static auto result = std::any();
+      return result;
+    }
+    return value;
+  }
+
+  QtPromise<std::vector<std::any>> submit(const QString& query) override {
+    return m_source->submit(query).then([=] (auto&& source_result) {
+      auto matches = [&] {
+        try {
+          return source_result.Get();
+        } catch(const std::exception&) {
+          return std::vector<std::any>();
+        }
+      }();
+      auto result = std::vector<std::any>();
+      for(auto& value : matches) {
+        if(!m_matches_set.contains(displayTextAny(value))) {
+          result.push_back(value);
+        }
+      }
+      return result;
+    });
+  }
+
+  void on_operation(const AnyListModel::Operation& operation) {
+    visit(operation,
+      [&] (const AnyListModel::AddOperation& operation) {
+        m_matches_set.insert(
+          displayTextAny(m_matches->get(operation.m_index)));
+      },
+      [&] (const AnyListModel::RemoveOperation& operation) {
+        m_matches_set.clear();
+        for(auto i = 0; i < m_matches->get_size(); ++i) {
+          m_matches_set.insert(displayTextAny(m_matches->get(i)));
+        }
+      });
+  }
+};
+
+AnyInputBox* combo_box_builder(
+    std::shared_ptr<ComboBox::QueryModel> query_model,
+    std::shared_ptr<AnyListModel> matches) {
+  auto box = new ComboBox(
+    std::make_shared<ComboBoxQueryModel>(query_model, matches));
+  box->set_placeholder(QObject::tr("Type here"));
+  return new AnyInputBox(*box);
+}
 
 OpenFilterPanel::OpenFilterPanel(
   std::shared_ptr<ComboBox::QueryModel> query_model, QString title,
-  QWidget& parent) {}
+  QWidget& parent)
+  : OpenFilterPanel(std::bind_front(&combo_box_builder, std::move(query_model)),
+      std::move(title), parent) {}
 
 OpenFilterPanel::OpenFilterPanel(
-  InputBoxBuilder input_box_builder, QString title, QWidget& parent) {}
+  InputBoxBuilder input_box_builder, QString title, QWidget& parent)
+  : OpenFilterPanel(std::move(input_box_builder),
+    std::make_shared<ArrayListModel<std::any>>(),
+    std::make_shared<LocalValueModel<Mode>>(),
+    std::move(title), parent) {}
 
 OpenFilterPanel::OpenFilterPanel(InputBoxBuilder input_box_builder,
-  std::shared_ptr<AnyListModel> matches, std::shared_ptr<ValueModel<Mode>> mode,
-  QString title, QWidget& parent) {}
+    std::shared_ptr<AnyListModel> matches,
+    std::shared_ptr<ValueModel<Mode>> mode,
+    QString title, QWidget& parent)
+    : QWidget(&parent),
+      m_matches(std::move(matches)),
+      m_mode(std::move(mode)),
+      m_mode_button_group(std::make_unique<FilterModeButtonGroup>(m_mode)) {
+  auto layout = new QVBoxLayout(this);
+  layout->setContentsMargins({});
+  layout->setSpacing(0);
+  auto mode_layout = new QHBoxLayout();
+  mode_layout->setContentsMargins({});
+  mode_layout->setSpacing(scale_width(18));
+  auto include_button = m_mode_button_group->get_button(Mode::INCLUDE);
+  include_button->setFixedHeight(scale_height(16));
+  mode_layout->addWidget(include_button);
+  auto exclude_button = m_mode_button_group->get_button(Mode::EXCLUDE);
+  exclude_button->setFixedHeight(scale_height(16));
+  mode_layout->addWidget(exclude_button);
+  m_mode_connection =
+    m_mode_button_group->get_model()->connect_update_signal(
+      std::bind_front(&OpenFilterPanel::on_mode_current, this));
+  mode_layout->addStretch();
+  layout->addLayout(mode_layout);
+  layout->addSpacing(scale_height(18));
+  m_input_box = input_box_builder(m_matches);
+  m_input_box->connect_submit_signal(
+    std::bind_front(&OpenFilterPanel::on_input_box_submission, this));
+  layout->addWidget(m_input_box);
+  layout->addSpacing(scale_height(8));
+  m_list_view = new ListView(m_matches,
+    std::bind_front(&OpenFilterPanel::make_item, this));
+  m_list_view->get_current()->connect_update_signal(
+    std::bind_front(&OpenFilterPanel::on_list_view_current, this));
+  m_operation_connection = m_matches->connect_operation_signal(
+    std::bind_front(&OpenFilterPanel::on_operation, this));
+  auto scrollable_list_box = new ScrollableListBox(*m_list_view);
+  scrollable_list_box->setMinimumSize(scale_width(164), scale_height(80));
+  scrollable_list_box->setMaximumHeight(scale_height(158));
+  layout->addWidget(scrollable_list_box);
+  m_filter_panel = new FilterPanel(std::move(title), this, parent);
+  m_filter_panel->connect_reset_signal(
+    std::bind_front(&OpenFilterPanel::on_reset, this));
+  window()->setWindowFlags(Qt::Tool | (window()->windowFlags() & ~Qt::Popup));
+  window()->installEventFilter(this);
+}
 
 const std::shared_ptr<AnyListModel>& OpenFilterPanel::get_matches() const {
-  throw std::runtime_error("Not implemented.");
+  return m_matches;
 }
 
 const std::shared_ptr<ValueModel<OpenFilterPanel::Mode>>&
     OpenFilterPanel::get_mode() const {
-  throw std::runtime_error("Not implemented.");
+  return m_mode;
 }
 
 connection OpenFilterPanel::connect_submit_signal(
     const SubmitSignal::slot_type& slot) const {
-  return {};
+  return m_submit_signal.connect(slot);
+}
+
+bool OpenFilterPanel::eventFilter(QObject* watched, QEvent* event) {
+  if(event->type() == QEvent::Close) {
+    m_filter_panel->hide();
+    hide();
+  }
+  return QWidget::eventFilter(watched, event);
+}
+
+bool OpenFilterPanel::event(QEvent* event) {
+  if(event->type() == QEvent::ShowToParent) {
+    m_filter_panel->show();
+    window()->activateWindow();
+    m_input_box->setFocus();
+  } else if(event->type() == QEvent::HideToParent) {
+    m_filter_panel->hide();
+  }
+  return QWidget::event(event);
+}
+
+QWidget* OpenFilterPanel::make_item(const std::shared_ptr<AnyListModel>& model,
+    int index) {
+  auto label = displayTextAny(model->get(index));
+  auto item = new DeletableItem(label);
+  item->connect_delete_signal([=] {
+    auto index = [&] {
+      for(auto i = 0; i < m_matches->get_size(); ++i) {
+        if(label == displayTextAny(model->get(i))) {
+          return i;
+        }
+      }
+      return -1;
+    }();
+    if(index >= 0) {
+      m_matches->remove(index);
+      m_input_box->setFocus();
+    }
+  });
+  return item;
+}
+
+void OpenFilterPanel::on_input_box_submission(const AnyRef& submission) {
+  m_input_box->get_current()->set(std::any());
+  m_matches->push(any_cast<std::any>(submission));
+}
+
+void OpenFilterPanel::on_list_view_current(const optional<int>& current) {
+  m_list_view->setFocusPolicy(Qt::NoFocus);
+}
+
+void OpenFilterPanel::on_mode_current(Mode mode) {
+  submit();
+}
+
+void OpenFilterPanel::on_operation(const AnyListModel::Operation& operation) {
+  visit(operation,
+    [&] (const AnyListModel::AddOperation& operation) {
+      auto item = m_list_view->get_list_item(operation.m_index);
+      update_style(*item, [&] (auto& style) {
+        style = LIST_ITEM_STYLE(style);
+      });
+      item->setFocusPolicy(Qt::NoFocus);
+      m_list_view->setFocusPolicy(Qt::NoFocus);
+      submit();
+    },
+    [&] (const AnyListModel::RemoveOperation& operation) {
+      submit();
+    });
+}
+
+void OpenFilterPanel::on_reset() {
+  auto operation_blocker = shared_connection_block(m_operation_connection);
+  while(m_matches->get_size() != 0) {
+    m_matches->remove(m_matches->get_size() - 1);
+  }
+  auto mode_blocker = shared_connection_block(m_mode_connection);
+  m_mode_button_group->get_model()->set(Mode::INCLUDE);
+  m_input_box->get_current()->set(std::any());
+  m_input_box->setFocus();
+  submit();
+}
+
+void OpenFilterPanel::submit() {
+  if(m_matches->get_size() == 0) {
+    m_submit_signal(m_matches, Mode::EXCLUDE);
+  } else {
+    m_submit_signal(m_matches, m_mode->get());
+  }
 }
