@@ -193,6 +193,15 @@ struct ComboBoxQueryModel : ComboBox::QueryModel {
 AnyInputBox* combo_box_builder(
     std::shared_ptr<ComboBox::QueryModel> query_model,
     std::shared_ptr<AnyListModel> matches) {
+  matches->connect_operation_signal(
+    [=] (const AnyListModel::Operation& operation) {
+      visit(operation,
+        [&] (const AnyListModel::AddOperation& operation) {
+          matches->set(operation.m_index,
+            any_cast<std::any>(std::any_cast<AnyRef>(
+              matches->get(operation.m_index))));
+        });
+    });
   auto box = new ComboBox(
     std::make_shared<ComboBoxQueryModel>(query_model, matches));
   box->set_placeholder(QObject::tr("Type here"));
@@ -315,8 +324,8 @@ QWidget* OpenFilterPanel::make_item(const std::shared_ptr<AnyListModel>& model,
 }
 
 void OpenFilterPanel::on_input_box_submission(const AnyRef& submission) {
-  m_input_box->get_current()->set(std::any());
-  m_matches->push(any_cast<std::any>(submission));
+  m_input_box->get_current()->set({});
+  m_matches->push(submission);
 }
 
 void OpenFilterPanel::on_list_view_current(const optional<int>& current) {
@@ -350,7 +359,7 @@ void OpenFilterPanel::on_reset() {
   }
   auto mode_blocker = shared_connection_block(m_mode_connection);
   m_mode_button_group->get_model()->set(Mode::INCLUDE);
-  m_input_box->get_current()->set(std::any());
+  m_input_box->get_current()->set({});
   m_input_box->setFocus();
   submit();
 }

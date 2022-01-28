@@ -101,6 +101,9 @@ namespace Spire {
   template<typename T>
   QValidator::State AnyValueModel::WrapperValueModel<T>::set(
       const Type& value) {
+    if(!value.has_value()) {
+      return m_model->set(T{});
+    }
     if(auto p = any_cast<const T>(&value)) {
       return m_model->set(*p);
     }
