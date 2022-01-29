@@ -219,7 +219,7 @@ OpenFilterPanel::OpenFilterPanel(
   InputBoxBuilder input_box_builder, QString title, QWidget& parent)
   : OpenFilterPanel(std::move(input_box_builder),
     std::make_shared<ArrayListModel<std::any>>(),
-    std::make_shared<LocalValueModel<Mode>>(),
+    std::make_shared<LocalValueModel<Mode>>(Mode::INCLUDE),
     std::move(title), parent) {}
 
 OpenFilterPanel::OpenFilterPanel(InputBoxBuilder input_box_builder,

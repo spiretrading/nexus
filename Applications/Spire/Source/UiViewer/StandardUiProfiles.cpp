@@ -2142,7 +2142,7 @@ UiProfile Spire::make_open_filter_panel_profile() {
         profile.make_event_slot<QString>(QString::fromUtf8("SubmitSignal"));
       panel->connect_submit_signal(
         [=] (const std::shared_ptr<AnyListModel>& submission,
-        OpenFilterPanel::Mode mode) {
+            OpenFilterPanel::Mode mode) {
           auto result = QString();
           if(mode == OpenFilterPanel::Mode::INCLUDE) {
             result += "Include: ";
