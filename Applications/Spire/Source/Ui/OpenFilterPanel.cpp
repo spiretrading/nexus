@@ -52,7 +52,8 @@ class DeletableItem : public QWidget {
   public:
     using DeleteSignal = Signal<void()>;
 
-    explicit DeletableItem(QString label, QWidget* parent = nullptr) {
+    explicit DeletableItem(QString label, QWidget* parent = nullptr)
+        : QWidget(parent) {
       auto layout = new QHBoxLayout(this);
       layout->setContentsMargins({});
       layout->setSpacing(0);
