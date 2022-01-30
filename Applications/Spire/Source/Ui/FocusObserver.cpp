@@ -7,91 +7,58 @@
 using namespace boost::signals2;
 using namespace Spire;
 
-namespace {
-  struct FocusReasonObserver : QObject {
-    struct Entry {
-      bool m_is_removed;
-      const QWidget* m_widget;
-      Qt::FocusReason* m_focus_reason;
-    };
-    std::vector<std::unique_ptr<Entry>> m_entries;
-    std::unordered_map<const QWidget*, Entry*> m_widget_to_entry;
-
-    FocusReasonObserver() {
-      qApp->installEventFilter(this);
-    }
-
-    void add(const QWidget& widget, Qt::FocusReason& focus_reason) {
-      m_entries.push_back(
-        std::make_unique<Entry>(false, &widget, &focus_reason));
-      m_widget_to_entry.insert(std::pair(&widget, m_entries.back().get()));
-    }
-
-    void remove(const QWidget& widget) {
-      auto i = m_widget_to_entry.find(&widget);
-      if(i == m_widget_to_entry.end()) {
-        return;
-      }
-      i->second->m_is_removed = true;
-      m_widget_to_entry.erase(i);
-    }
-
-    bool eventFilter(QObject* watched, QEvent* event) override {
-      if(event->type() == QEvent::FocusIn && watched->isWidgetType()) {
-        m_entries.erase(std::remove_if(m_entries.begin(), m_entries.end(),
-          [&] (auto& entry) {
-            if(entry->m_is_removed) {
-              return true;
-            }
-            if(is_ancestor(entry->m_widget, static_cast<QWidget*>(watched))) {
-              *entry->m_focus_reason =
-                static_cast<QFocusEvent*>(event)->reason();
-            }
-            return false;
-          }), m_entries.end());
-      }
-      return QObject::eventFilter(watched, event);
-    }
-  };
-
-  std::shared_ptr<FocusReasonObserver> get_focus_reason_observer() {
-    static auto observer = std::weak_ptr<FocusReasonObserver>();
+struct FocusObserver::ApplicationFocusFilter : QObject {
+  static std::shared_ptr<ApplicationFocusFilter> get_instance() {
+    static auto observer = std::weak_ptr<ApplicationFocusFilter>();
     if(auto instance = observer.lock()) {
       return instance;
     }
-    auto instance = std::make_shared<FocusReasonObserver>();
+    auto instance = std::make_shared<ApplicationFocusFilter>();
     observer = instance;
     return instance;
   }
-}
 
-struct FocusObserver::FocusEventFilter : QObject {
-  mutable StateSignal m_state_signal;
-  const QWidget* m_widget;
-  Qt::FocusReason m_focus_reason;
-  State m_state;
-  State m_old_state;
-  std::shared_ptr<FocusReasonObserver> m_focus_reason_observer;
+  struct Entry {
+    bool m_is_removed;
+    FocusEventFilter* m_filter;
+  };
+  std::vector<std::unique_ptr<Entry>> m_entries;
+  std::unordered_map<FocusEventFilter*, Entry*> m_filter_to_entry;
 
-  FocusEventFilter(const QWidget& widget)
-      : m_widget(&widget),
-        m_focus_reason(Qt::MouseFocusReason),
-        m_state(find_focus_state(*m_widget)),
-        m_old_state(m_state),
-        m_focus_reason_observer(get_focus_reason_observer()) {
-    m_focus_reason_observer->add(*m_widget, m_focus_reason);
+  ApplicationFocusFilter() {
+    qApp->installEventFilter(this);
     connect(qApp, &QApplication::focusChanged, this,
-      &FocusEventFilter::on_focus_changed);
+      &ApplicationFocusFilter::on_focus_changed);
   }
 
-  ~FocusEventFilter() {
-    m_focus_reason_observer->remove(*m_widget);
+  void add(FocusEventFilter& filter) {
+    m_entries.push_back(std::make_unique<Entry>(false, &filter));
+    m_filter_to_entry.insert(std::pair(&filter, m_entries.back().get()));
+  }
+
+  void remove(FocusEventFilter& filter) {
+    auto i = m_filter_to_entry.find(&filter);
+    if(i == m_filter_to_entry.end()) {
+      return;
+    }
+    i->second->m_is_removed = true;
+    m_filter_to_entry.erase(i);
   }
 
   bool eventFilter(QObject* watched, QEvent* event) override {
-    if(event->type() == QEvent::FocusIn && watched->isWidgetType() &&
-        is_ancestor(m_widget, static_cast<QWidget*>(watched))) {
-      m_focus_reason = static_cast<QFocusEvent*>(event)->reason();
+    if(event->type() == QEvent::FocusIn && watched->isWidgetType()) {
+      m_entries.erase(std::remove_if(m_entries.begin(), m_entries.end(),
+        [&] (auto& entry) {
+          if(entry->m_is_removed) {
+            return true;
+          }
+          if(is_ancestor(
+              entry->m_filter->m_widget, static_cast<QWidget*>(watched))) {
+            entry->m_filter->m_focus_reason =
+              static_cast<QFocusEvent*>(event)->reason();
+          }
+          return false;
+        }), m_entries.end());
     }
     return QObject::eventFilter(watched, event);
   }
@@ -103,43 +70,72 @@ struct FocusObserver::FocusEventFilter : QObject {
         previous_widget_focus_visible != widget_focus_visible) {
       previous_widget_focus_visible = widget_focus_visible;
     }
-    auto state = m_state;
-    if(m_widget == now) {
-      m_state = State::FOCUS;
-      switch(m_focus_reason) {
-        case Qt::TabFocusReason:
-        case Qt::BacktabFocusReason:
-        case Qt::ShortcutFocusReason:
-          m_state = State::FOCUS_VISIBLE;
-          widget_focus_visible = {now, true};
-          break;
-        case Qt::ActiveWindowFocusReason:
-        case Qt::PopupFocusReason:
-          if(m_old_state == State::FOCUS_VISIBLE) {
-            m_state = State::FOCUS_VISIBLE;
-            widget_focus_visible = {now, true};
-          }
-          break;
-        case Qt::OtherFocusReason:
-          if(previous_widget_focus_visible.first == old &&
-              previous_widget_focus_visible.second) {
-            m_state = State::FOCUS_VISIBLE;
-            widget_focus_visible = {now, true};
-          }
-          break;
-        default:
-          widget_focus_visible = {now, false};
-          break;
+    m_entries.erase(std::remove_if(m_entries.begin(), m_entries.end(),
+      [&] (auto& entry) {
+        if(entry->m_is_removed) {
+          return true;
         }
-    } else if(is_ancestor(m_widget, now)) {
-      m_state = State::FOCUS_IN;
-    } else {
-      m_state = State::NONE;
-    }
-    if(state != m_state) {
-      m_old_state = state;
-      m_state_signal(m_state);
-    }
+        auto state = entry->m_filter->m_state;
+        if(entry->m_filter->m_widget == now) {
+          entry->m_filter->m_state = State::FOCUS;
+          switch(entry->m_filter->m_focus_reason) {
+            case Qt::TabFocusReason:
+            case Qt::BacktabFocusReason:
+            case Qt::ShortcutFocusReason:
+              entry->m_filter->m_state = State::FOCUS_VISIBLE;
+              widget_focus_visible = {now, true};
+              break;
+            case Qt::ActiveWindowFocusReason:
+            case Qt::PopupFocusReason:
+              if(entry->m_filter->m_old_state == State::FOCUS_VISIBLE) {
+                entry->m_filter->m_state = State::FOCUS_VISIBLE;
+                widget_focus_visible = {now, true};
+              }
+              break;
+            case Qt::OtherFocusReason:
+              if(previous_widget_focus_visible.first == old &&
+                  previous_widget_focus_visible.second) {
+                entry->m_filter->m_state = State::FOCUS_VISIBLE;
+                widget_focus_visible = {now, true};
+              }
+              break;
+            default:
+              widget_focus_visible = {now, false};
+              break;
+            }
+        } else if(is_ancestor(entry->m_filter->m_widget, now)) {
+          entry->m_filter->m_state = State::FOCUS_IN;
+        } else {
+          entry->m_filter->m_state = State::NONE;
+        }
+        if(state != entry->m_filter->m_state) {
+          entry->m_filter->m_old_state = state;
+          entry->m_filter->m_state_signal(entry->m_filter->m_state);
+        }
+        return false;
+      }), m_entries.end());
+  }
+};
+
+struct FocusObserver::FocusEventFilter {
+  mutable StateSignal m_state_signal;
+  const QWidget* m_widget;
+  Qt::FocusReason m_focus_reason;
+  State m_state;
+  State m_old_state;
+  std::shared_ptr<ApplicationFocusFilter> m_application_focus_filter;
+
+  FocusEventFilter(const QWidget& widget)
+      : m_widget(&widget),
+        m_focus_reason(Qt::MouseFocusReason),
+        m_state(find_focus_state(*m_widget)),
+        m_old_state(m_state),
+        m_application_focus_filter(ApplicationFocusFilter::get_instance()) {
+    m_application_focus_filter->add(*this);
+  }
+
+  ~FocusEventFilter() {
+    m_application_focus_filter->remove(*this);
   }
 
   connection connect_state_signal(const StateSignal::slot_type& slot) const {
@@ -162,7 +158,7 @@ FocusObserver::FocusObserver(const QWidget& widget) {
         if(p->m_widget) {
           filters.erase(p->m_widget);
         }
-        p->deleteLater();
+        delete p;
       });
     QObject::connect(&widget, &QObject::destroyed, [&widget] (auto) {
       auto filter = filters.find(&widget);

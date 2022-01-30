@@ -52,6 +52,7 @@ namespace Spire {
         const StateSignal::slot_type& slot) const;
 
     private:
+      struct ApplicationFocusFilter;
       struct FocusEventFilter;
       mutable StateSignal m_state_signal;
       std::shared_ptr<FocusEventFilter> m_filter;
