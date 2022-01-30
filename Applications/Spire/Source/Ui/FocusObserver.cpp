@@ -1,4 +1,5 @@
 #include "Spire/Ui/FocusObserver.hpp"
+#include <vector>
 #include <QApplication>
 #include <QFocusEvent>
 #include "Spire/Spire/Utility.hpp"
@@ -6,21 +7,85 @@
 using namespace boost::signals2;
 using namespace Spire;
 
+namespace {
+  struct FocusReasonObserver : QObject {
+    struct Entry {
+      bool m_is_removed;
+      const QWidget* m_widget;
+      Qt::FocusReason* m_focus_reason;
+    };
+    std::vector<std::unique_ptr<Entry>> m_entries;
+    std::unordered_map<const QWidget*, Entry*> m_widget_to_entry;
+
+    FocusReasonObserver() {
+      qApp->installEventFilter(this);
+    }
+
+    void add(const QWidget& widget, Qt::FocusReason& focus_reason) {
+      m_entries.push_back(
+        std::make_unique<Entry>(false, &widget, &focus_reason));
+      m_widget_to_entry.insert(std::pair(&widget, m_entries.back().get()));
+    }
+
+    void remove(const QWidget& widget) {
+      auto i = m_widget_to_entry.find(&widget);
+      if(i == m_widget_to_entry.end()) {
+        return;
+      }
+      i->second->m_is_removed = true;
+      m_widget_to_entry.erase(i);
+    }
+
+    bool eventFilter(QObject* watched, QEvent* event) override {
+      if(event->type() == QEvent::FocusIn && watched->isWidgetType()) {
+        m_entries.erase(std::remove_if(m_entries.begin(), m_entries.end(),
+          [&] (auto& entry) {
+            if(entry->m_is_removed) {
+              return true;
+            }
+            if(is_ancestor(entry->m_widget, static_cast<QWidget*>(watched))) {
+              *entry->m_focus_reason =
+                static_cast<QFocusEvent*>(event)->reason();
+            }
+            return false;
+          }), m_entries.end());
+      }
+      return QObject::eventFilter(watched, event);
+    }
+  };
+
+  std::shared_ptr<FocusReasonObserver> get_focus_reason_observer() {
+    static auto observer = std::weak_ptr<FocusReasonObserver>();
+    if(auto instance = observer.lock()) {
+      return instance;
+    }
+    auto instance = std::make_shared<FocusReasonObserver>();
+    observer = instance;
+    return instance;
+  }
+}
+
 struct FocusObserver::FocusEventFilter : QObject {
   mutable StateSignal m_state_signal;
   const QWidget* m_widget;
+  Qt::FocusReason m_focus_reason;
   State m_state;
   State m_old_state;
-  Qt::FocusReason m_focus_reason;
+  std::shared_ptr<FocusReasonObserver> m_focus_reason_observer;
 
   FocusEventFilter(const QWidget& widget)
       : m_widget(&widget),
         m_focus_reason(Qt::MouseFocusReason),
-        m_state(find_focus_state(*m_widget)) {
-    m_old_state = m_state;
-    qApp->installEventFilter(this);
+        m_state(find_focus_state(*m_widget)),
+        m_old_state(m_state),
+        m_focus_reason_observer(get_focus_reason_observer()) {
+    m_focus_reason_observer->add(*m_widget, m_focus_reason);
     connect(qApp, &QApplication::focusChanged, this,
       &FocusEventFilter::on_focus_changed);
+  }
+
+  ~FocusEventFilter() {
+    m_focus_reason_observer->remove(*m_widget);
   }
 
   bool eventFilter(QObject* watched, QEvent* event) override {
