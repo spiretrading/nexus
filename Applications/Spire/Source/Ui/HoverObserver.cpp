@@ -1,7 +1,7 @@
 #include "Spire/Ui/HoverObserver.hpp"
-#include <unordered_map>
 #include <QApplication>
 #include <QChildEvent>
+#include "Spire/Spire/ExtensionCache.hpp"
 #include "Spire/Ui/GlobalPositionObserver.hpp"
 
 using namespace boost::signals2;
@@ -107,35 +107,9 @@ struct HoverObserver::EventFilter : QObject {
 };
 
 HoverObserver::HoverObserver(QWidget& widget) {
-  static auto filters =
-    std::unordered_map<const QWidget*, std::weak_ptr<EventFilter>>();
-  auto filter = filters.find(&widget);
-  if(filter != filters.end()) {
-    m_filter = filter->second.lock();
-  } else {
-    m_filter = std::shared_ptr<EventFilter>(
-      new EventFilter(widget), [] (auto* p) {
-        if(!p) {
-          return;
-        }
-        if(p->m_widget) {
-          filters.erase(p->m_widget);
-        }
-        p->deleteLater();
-      });
-    QObject::connect(&widget, &QObject::destroyed, [&widget] (auto) {
-      auto filter = filters.find(&widget);
-      if(filter != filters.end()) {
-        filter->second.lock()->m_widget = nullptr;
-        filters.erase(filter);
-      }
-    });
-    filters.emplace(&widget, m_filter);
-  }
+  m_filter = find_extension<EventFilter>(widget);
   m_filter_connection = m_filter->m_state_signal.connect(m_state_signal);
 }
-
-HoverObserver::~HoverObserver() = default;
 
 HoverObserver::State HoverObserver::get_state() const {
   return m_filter->m_state;

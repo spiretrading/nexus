@@ -2,6 +2,7 @@
 #include <vector>
 #include <QApplication>
 #include <QFocusEvent>
+#include "Spire/Spire/ExtensionCache.hpp"
 #include "Spire/Spire/Utility.hpp"
 
 using namespace boost::signals2;
@@ -144,31 +145,7 @@ struct FocusObserver::FocusEventFilter {
 };
 
 FocusObserver::FocusObserver(const QWidget& widget) {
-  static auto filters =
-    std::unordered_map<const QWidget*, std::weak_ptr<FocusEventFilter>>();
-  auto filter = filters.find(&widget);
-  if(filter != filters.end()) {
-    m_filter = filter->second.lock();
-  } else {
-    m_filter = std::shared_ptr<FocusEventFilter>(
-      new FocusEventFilter(widget), [] (auto* p) {
-        if(!p) {
-          return;
-        }
-        if(p->m_widget) {
-          filters.erase(p->m_widget);
-        }
-        delete p;
-      });
-    QObject::connect(&widget, &QObject::destroyed, [&widget] (auto) {
-      auto filter = filters.find(&widget);
-      if(filter != filters.end()) {
-        filter->second.lock()->m_widget = nullptr;
-        filters.erase(filter);
-      }
-    });
-    filters.emplace(&widget, m_filter);
-  }
+  m_filter = find_extension<FocusEventFilter>(widget);
   m_filter_connection = m_filter->m_state_signal.connect(m_state_signal);
 }
 
@@ -182,10 +159,12 @@ connection FocusObserver::connect_state_signal(
 }
 
 FocusObserver::State Spire::find_focus_state(const QWidget& widget) {
-  if(widget.hasFocus()) {
-    return FocusObserver::State::FOCUS;
-  } else if(is_ancestor(&widget, QApplication::focusWidget())) {
-    return FocusObserver::State::FOCUS_IN;
+  if(widget.isVisible()) {
+    if(widget.hasFocus()) {
+      return FocusObserver::State::FOCUS;
+    } else if(is_ancestor(&widget, QApplication::focusWidget())) {
+      return FocusObserver::State::FOCUS_IN;
+    }
   }
   return FocusObserver::State::NONE;
 }
