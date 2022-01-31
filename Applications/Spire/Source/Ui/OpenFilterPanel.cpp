@@ -29,7 +29,8 @@ namespace {
     return style;
   }
 
-  auto LIST_ITEM_STYLE(StyleSheet style) {
+  auto LIST_ITEM_STYLE() {
+    auto style = StyleSheet();
     style.get((Any() || Hover() || Press() || Focus() || Selected())).
       set(BackgroundColor(QColor(0xFFFFFF))).
       set(border_size(0)).
@@ -341,9 +342,7 @@ void OpenFilterPanel::on_matches_operation(
   visit(operation,
     [&] (const AnyListModel::AddOperation& operation) {
       auto item = m_list_view->get_list_item(operation.m_index);
-      update_style(*item, [] (auto& style) {
-        style = LIST_ITEM_STYLE(style);
-      });
+      set_style(*item, LIST_ITEM_STYLE());
       item->setFocusPolicy(Qt::NoFocus);
       m_list_view->setFocusPolicy(Qt::NoFocus);
       submit();
