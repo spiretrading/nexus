@@ -83,14 +83,19 @@ struct ComboBoxFilterQueryModel : ComboBox::QueryModel {
   std::shared_ptr<ComboBox::QueryModel> m_source;
   std::shared_ptr<AnyListModel> m_matches;
   std::unordered_set<QString> m_matches_set;
+  std::vector<QString> m_matches_list;
   scoped_connection m_matches_connection;
 
   ComboBoxFilterQueryModel(std::shared_ptr<ComboBox::QueryModel> source,
-    std::shared_ptr<AnyListModel> matches)
-    : m_source(std::move(source)),
-      m_matches(std::move(matches)),
-      m_matches_connection(m_matches->connect_operation_signal(
-        std::bind_front(&ComboBoxFilterQueryModel::on_operation, this))) {}
+      std::shared_ptr<AnyListModel> matches)
+      : m_source(std::move(source)),
+        m_matches(std::move(matches)),
+        m_matches_connection(m_matches->connect_operation_signal(
+          std::bind_front(&ComboBoxFilterQueryModel::on_operation, this))) {
+    for(auto i = 0; i < m_matches->get_size(); ++i) {
+      add_match(i);
+    }
+  }
 
   std::any parse(const QString& query) override {
     auto value = m_source->parse(query);
@@ -106,19 +111,16 @@ struct ComboBoxFilterQueryModel : ComboBox::QueryModel {
 
   QtPromise<std::vector<std::any>> submit(const QString& query) override {
     return m_source->submit(query).then([=] (auto&& source_result) {
-      auto matches = [&] {
+      auto result = [&] {
         try {
           return source_result.Get();
         } catch(const std::exception&) {
           return std::vector<std::any>();
         }
       }();
-      auto result = std::vector<std::any>();
-      for(auto& value : matches) {
-        if(!m_matches_set.contains(displayTextAny(value))) {
-          result.push_back(value);
-        }
-      }
+      std::erase_if(result, [=] (const auto& value) {
+        return m_matches_set.contains(displayTextAny(value));
+      });
       return result;
     });
   }
@@ -126,15 +128,18 @@ struct ComboBoxFilterQueryModel : ComboBox::QueryModel {
   void on_operation(const AnyListModel::Operation& operation) {
     visit(operation,
       [&] (const AnyListModel::AddOperation& operation) {
-        m_matches_set.insert(
-          displayTextAny(m_matches->get(operation.m_index)));
+        add_match(operation.m_index);
       },
       [&] (const AnyListModel::RemoveOperation& operation) {
-        m_matches_set.clear();
-        for(auto i = 0; i < m_matches->get_size(); ++i) {
-          m_matches_set.insert(displayTextAny(m_matches->get(i)));
-        }
+        m_matches_set.erase(m_matches_list[operation.m_index]);
+        m_matches_list.erase(m_matches_list.begin() + operation.m_index);
       });
+  }
+
+  void add_match(int index) {
+    auto value = displayTextAny(m_matches->get(index));
+    m_matches_set.insert(value);
+    m_matches_list.insert(m_matches_list.begin() + index, value);
   }
 };
 
