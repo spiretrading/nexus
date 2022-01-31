@@ -349,7 +349,6 @@ void OpenFilterPanel::on_matches_operation(
       auto item = m_list_view->get_list_item(operation.m_index);
       set_style(*item, LIST_ITEM_STYLE());
       item->setFocusPolicy(Qt::NoFocus);
-      m_list_view->setFocusPolicy(Qt::NoFocus);
       submit();
     },
     [&] (const AnyListModel::RemoveOperation& operation) {
