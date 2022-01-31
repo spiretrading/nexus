@@ -156,17 +156,17 @@ class OpenFilterPanel::FilterModeButtonGroup {
     }
 
     CheckBox* get_button(Mode mode) {
-      return m_buttons[mode];
+      return m_buttons[static_cast<int>(mode)];
     }
 
   private:
     std::shared_ptr<ValueModel<Mode>> m_model;
     std::shared_ptr<AssociativeValueModel<Mode>> m_current;
-    std::unordered_map<Mode, CheckBox*> m_buttons;
+    std::array<CheckBox*, 2> m_buttons;
     scoped_connection m_connection;
 
     void on_update(Mode mode, bool value) {
-      m_buttons[mode]->get_current()->set(value);
+      get_button(mode)->get_current()->set(value);
       if(value) {
         auto blocker = shared_connection_block(m_connection);
         m_model->set(mode);
@@ -189,7 +189,7 @@ class OpenFilterPanel::FilterModeButtonGroup {
       });
       m_current->get_association(mode)->connect_update_signal(
         std::bind_front(&FilterModeButtonGroup::on_update, this, mode));
-      m_buttons[mode] = button;
+      m_buttons[static_cast<int>(mode)] = button;
     }
 };
 
