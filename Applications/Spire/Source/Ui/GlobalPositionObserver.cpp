@@ -1,5 +1,6 @@
 #include "Spire/Ui/GlobalPositionObserver.hpp"
 #include <QEvent>
+#include "Spire/Spire/ExtensionCache.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;
@@ -68,16 +69,17 @@ struct GlobalPositionObserver::EventFilter : QObject {
   }
 };
 
-GlobalPositionObserver::GlobalPositionObserver(QWidget& widget)
-  : m_event_filter(std::make_unique<EventFilter>(widget)) {}
-
-GlobalPositionObserver::~GlobalPositionObserver() = default;
+GlobalPositionObserver::GlobalPositionObserver(QWidget& widget) {
+  m_filter = find_extension<EventFilter>(widget);
+  m_position_connection =
+    m_filter->m_position_signal.connect(m_position_signal);
+}
 
 QPoint GlobalPositionObserver::get_position() const {
-  return m_event_filter->m_position;
+  return m_filter->m_position;
 }
 
 connection GlobalPositionObserver::connect_position_signal(
     const PositionSignal::slot_type& slot) const {
-  return m_event_filter->m_position_signal.connect(slot);
+  return m_position_signal.connect(slot);
 }

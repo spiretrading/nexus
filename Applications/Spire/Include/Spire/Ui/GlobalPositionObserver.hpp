@@ -20,8 +20,6 @@ namespace Spire {
        */
       explicit GlobalPositionObserver(QWidget& widget);
 
-      ~GlobalPositionObserver();
-
       /** Returns the current global position. */
       QPoint get_position() const;
 
@@ -31,7 +29,9 @@ namespace Spire {
 
     private:
       struct EventFilter;
-      std::unique_ptr<EventFilter> m_event_filter;
+      mutable PositionSignal m_position_signal;
+      std::shared_ptr<EventFilter> m_filter;
+      boost::signals2::scoped_connection m_position_connection;
   };
 }
 
