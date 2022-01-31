@@ -101,8 +101,11 @@ void FocusObserver::ApplicationFocusFilter::on_focus_changed(
       previous_widget_focus_visible != widget_focus_visible) {
     previous_widget_focus_visible = widget_focus_visible;
   }
-  std::erase_if(m_entries, [&] (auto& entry) { return entry->m_is_removed; });
-  for(auto& entry : m_entries) {
+  auto signaling_entries = std::vector<Entry*>();
+  std::erase_if(m_entries, [&] (const auto& entry) {
+    if(entry->m_is_removed) {
+      return true;
+    }
     auto state = entry->m_filter->m_state;
     if(entry->m_filter->m_widget == now) {
       entry->m_filter->m_state = State::FOCUS;
@@ -138,8 +141,13 @@ void FocusObserver::ApplicationFocusFilter::on_focus_changed(
     }
     if(state != entry->m_filter->m_state) {
       entry->m_filter->m_old_state = state;
-      entry->m_filter->m_state_signal(entry->m_filter->m_state);
+      signaling_entries.push_back(entry.get());
     }
+    return false;
+  });
+  for(auto& signaling_entry : signaling_entries) {
+    signaling_entry->m_filter->m_state_signal(
+      signaling_entry->m_filter->m_state);
   }
 }
 
