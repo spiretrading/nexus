@@ -64,58 +64,7 @@ struct FocusObserver::ApplicationFocusFilter : QObject {
     return QObject::eventFilter(watched, event);
   }
 
-  void on_focus_changed(QWidget* old, QWidget* now) {
-    static auto widget_focus_visible = std::pair<QWidget*, bool>();
-    static auto previous_widget_focus_visible = widget_focus_visible;
-    if(widget_focus_visible.first != now &&
-        previous_widget_focus_visible != widget_focus_visible) {
-      previous_widget_focus_visible = widget_focus_visible;
-    }
-    m_entries.erase(std::remove_if(m_entries.begin(), m_entries.end(),
-      [&] (auto& entry) {
-        if(entry->m_is_removed) {
-          return true;
-        }
-        auto state = entry->m_filter->m_state;
-        if(entry->m_filter->m_widget == now) {
-          entry->m_filter->m_state = State::FOCUS;
-          switch(entry->m_filter->m_focus_reason) {
-            case Qt::TabFocusReason:
-            case Qt::BacktabFocusReason:
-            case Qt::ShortcutFocusReason:
-              entry->m_filter->m_state = State::FOCUS_VISIBLE;
-              widget_focus_visible = {now, true};
-              break;
-            case Qt::ActiveWindowFocusReason:
-            case Qt::PopupFocusReason:
-              if(entry->m_filter->m_old_state == State::FOCUS_VISIBLE) {
-                entry->m_filter->m_state = State::FOCUS_VISIBLE;
-                widget_focus_visible = {now, true};
-              }
-              break;
-            case Qt::OtherFocusReason:
-              if(previous_widget_focus_visible.first == old &&
-                  previous_widget_focus_visible.second) {
-                entry->m_filter->m_state = State::FOCUS_VISIBLE;
-                widget_focus_visible = {now, true};
-              }
-              break;
-            default:
-              widget_focus_visible = {now, false};
-              break;
-            }
-        } else if(is_ancestor(entry->m_filter->m_widget, now)) {
-          entry->m_filter->m_state = State::FOCUS_IN;
-        } else {
-          entry->m_filter->m_state = State::NONE;
-        }
-        if(state != entry->m_filter->m_state) {
-          entry->m_filter->m_old_state = state;
-          entry->m_filter->m_state_signal(entry->m_filter->m_state);
-        }
-        return false;
-      }), m_entries.end());
-  }
+  void on_focus_changed(QWidget* old, QWidget* now);
 };
 
 struct FocusObserver::FocusEventFilter {
@@ -143,6 +92,56 @@ struct FocusObserver::FocusEventFilter {
     return m_state_signal.connect(slot);
   }
 };
+
+void FocusObserver::ApplicationFocusFilter::on_focus_changed(
+    QWidget* old, QWidget* now) {
+  static auto widget_focus_visible = std::pair<QWidget*, bool>();
+  static auto previous_widget_focus_visible = widget_focus_visible;
+  if(widget_focus_visible.first != now &&
+      previous_widget_focus_visible != widget_focus_visible) {
+    previous_widget_focus_visible = widget_focus_visible;
+  }
+  std::erase_if(m_entries, [&] (auto& entry) { return entry->m_is_removed; });
+  for(auto& entry : m_entries) {
+    auto state = entry->m_filter->m_state;
+    if(entry->m_filter->m_widget == now) {
+      entry->m_filter->m_state = State::FOCUS;
+      switch(entry->m_filter->m_focus_reason) {
+        case Qt::TabFocusReason:
+        case Qt::BacktabFocusReason:
+        case Qt::ShortcutFocusReason:
+          entry->m_filter->m_state = State::FOCUS_VISIBLE;
+          widget_focus_visible = {now, true};
+          break;
+        case Qt::ActiveWindowFocusReason:
+        case Qt::PopupFocusReason:
+          if(entry->m_filter->m_old_state == State::FOCUS_VISIBLE) {
+            entry->m_filter->m_state = State::FOCUS_VISIBLE;
+            widget_focus_visible = {now, true};
+          }
+          break;
+        case Qt::OtherFocusReason:
+          if(previous_widget_focus_visible.first == old &&
+              previous_widget_focus_visible.second) {
+            entry->m_filter->m_state = State::FOCUS_VISIBLE;
+            widget_focus_visible = {now, true};
+          }
+          break;
+        default:
+          widget_focus_visible = {now, false};
+          break;
+      }
+    } else if(is_ancestor(entry->m_filter->m_widget, now)) {
+      entry->m_filter->m_state = State::FOCUS_IN;
+    } else {
+      entry->m_filter->m_state = State::NONE;
+    }
+    if(state != entry->m_filter->m_state) {
+      entry->m_filter->m_old_state = state;
+      entry->m_filter->m_state_signal(entry->m_filter->m_state);
+    }
+  }
+}
 
 FocusObserver::FocusObserver(const QWidget& widget) {
   m_filter = find_extension<FocusEventFilter>(widget);
