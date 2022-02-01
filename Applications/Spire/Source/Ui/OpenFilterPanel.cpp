@@ -258,8 +258,6 @@ OpenFilterPanel::OpenFilterPanel(InputBoxBuilder input_box_builder,
   layout->addSpacing(scale_height(8));
   m_list_view = new ListView(m_matches,
     std::bind_front(&OpenFilterPanel::make_item, this));
-  m_list_view->get_current()->connect_update_signal(
-    std::bind_front(&OpenFilterPanel::on_list_view_current, this));
   m_matches_connection = m_matches->connect_operation_signal(
     std::bind_front(&OpenFilterPanel::on_matches_operation, this));
   auto scrollable_list_box = new ScrollableListBox(*m_list_view);
@@ -331,10 +329,6 @@ QWidget* OpenFilterPanel::make_item(const std::shared_ptr<AnyListModel>& model,
 void OpenFilterPanel::on_input_box_submission(const AnyRef& submission) {
   m_input_box->get_current()->set({});
   m_matches->push(submission);
-}
-
-void OpenFilterPanel::on_list_view_current(const optional<int>& current) {
-  m_list_view->setFocusPolicy(Qt::NoFocus);
 }
 
 void OpenFilterPanel::on_mode_current(Mode mode) {
