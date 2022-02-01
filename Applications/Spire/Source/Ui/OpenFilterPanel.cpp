@@ -31,7 +31,7 @@ namespace {
 
   auto LIST_ITEM_STYLE() {
     auto style = StyleSheet();
-    style.get((Any() || Hover() || Press() || Focus() || Selected())).
+    style.get(Any() || Hover() || Press() || Focus() || Selected()).
       set(BackgroundColor(QColor(0xFFFFFF))).
       set(border_size(0)).
       set(PaddingRight(scale_width(10)));
