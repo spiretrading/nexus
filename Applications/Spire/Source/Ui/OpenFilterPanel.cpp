@@ -38,7 +38,7 @@ namespace {
     return style;
   }
 
-  auto display_text(OpenFilterPanel::Mode mode) {
+  auto& display_text(OpenFilterPanel::Mode mode) {
     if(mode == OpenFilterPanel::Mode::INCLUDE) {
       static const auto value = QObject::tr("Include");
       return value;
