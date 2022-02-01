@@ -51,7 +51,7 @@ namespace {
 
 class DeletableItem : public QWidget {
   public:
-    using DeleteSignal = Signal<void()>;
+    using DeleteSignal = Signal<void ()>;
 
     explicit DeletableItem(QString label, QWidget* parent = nullptr)
         : QWidget(parent) {
@@ -103,8 +103,7 @@ struct ComboBoxFilterQueryModel : ComboBox::QueryModel {
       return value;
     }
     if(m_matches_set.contains(displayTextAny(value))) {
-      static auto result = std::any();
-      return result;
+      return std::any();
     }
     return value;
   }
@@ -118,7 +117,7 @@ struct ComboBoxFilterQueryModel : ComboBox::QueryModel {
           return std::vector<std::any>();
         }
       }();
-      std::erase_if(result, [=] (const auto& value) {
+      std::erase_if(result, [&] (const auto& value) {
         return m_matches_set.contains(displayTextAny(value));
       });
       return result;
@@ -178,7 +177,7 @@ class OpenFilterPanel::FilterModeButtonGroup {
       }
     }
 
-    void on_model_update(const Mode mode) {
+    void on_model_update(Mode mode) {
       m_current->set(mode);
     }
 
