@@ -12,14 +12,12 @@ void LocalOrderImbalanceIndicatorModel::publish(
   }
   while(!m_publish_queue.empty()) {
     const auto& current_imbalance = m_publish_queue.front();
-    if(m_imbalances.contains(current_imbalance.m_security)) {
+    if(!m_imbalances.insert(
+        {current_imbalance.m_security, current_imbalance}).second) {
       if(auto& previous_imbalance = m_imbalances.at(imbalance.m_security);
           previous_imbalance.m_timestamp < imbalance.m_timestamp) {
         previous_imbalance = current_imbalance;
       }
-    } else {
-      m_imbalances.insert_or_assign(
-        current_imbalance.m_security, current_imbalance);
     }
     for(auto& subscription : m_subscriptions) {
       if(contains(subscription.m_interval, current_imbalance.m_timestamp)) {
