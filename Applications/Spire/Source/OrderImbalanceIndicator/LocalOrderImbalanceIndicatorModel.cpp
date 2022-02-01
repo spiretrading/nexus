@@ -13,8 +13,8 @@ void LocalOrderImbalanceIndicatorModel::publish(
   while(!m_publish_queue.empty()) {
     const auto& current_imbalance = m_publish_queue.front();
     if(m_imbalances.contains(current_imbalance.m_security)) {
-      auto& previous_imbalance = m_imbalances.at(imbalance.m_security);
-      if(previous_imbalance.m_timestamp < imbalance.m_timestamp) {
+      if(auto& previous_imbalance = m_imbalances.at(imbalance.m_security);
+          previous_imbalance.m_timestamp < imbalance.m_timestamp) {
         previous_imbalance = current_imbalance;
       }
     } else {

@@ -43,7 +43,7 @@ namespace {
 }
 
 TEST_SUITE("LocalOrderImbalanceIndicatorModel") {
-  TEST_CASE("subscription_result") {
+  TEST_CASE("subscription_snapshot") {
     run_test([] {
       auto model = std::make_shared<LocalOrderImbalanceIndicatorModel>();
       auto A100 = make_imbalance("A", 100);
