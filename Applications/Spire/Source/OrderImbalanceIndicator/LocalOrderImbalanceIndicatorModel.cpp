@@ -21,7 +21,7 @@ void LocalOrderImbalanceIndicatorModel::publish(
       m_imbalances.insert_or_assign(
         current_imbalance.m_security, current_imbalance);
     }
-    for(const auto& subscription : m_subscriptions) {
+    for(auto& subscription : m_subscriptions) {
       if(contains(subscription.m_interval, current_imbalance.m_timestamp)) {
         subscription.m_signal(current_imbalance);
       }

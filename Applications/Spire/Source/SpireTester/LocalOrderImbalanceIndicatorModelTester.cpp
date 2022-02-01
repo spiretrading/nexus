@@ -107,10 +107,28 @@ TEST_SUITE("LocalOrderImbalanceIndicatorModel") {
 
   TEST_CASE("publish_reentrant") {
     auto model = std::make_shared<LocalOrderImbalanceIndicatorModel>();
-    
-  }
-
-  TEST_CASE("delayed_subscription_result") {
-    
+    auto published = std::vector<OrderImbalance>();
+    auto subscription_publisher = model->subscribe(closed(0, 500),
+      [&] (const auto& imbalance) {
+        auto timestamp = to_time_t(imbalance.m_timestamp);
+        if(timestamp % 100 == 0) {
+          model->publish(make_imbalance("A", timestamp + 50));
+        }
+      });
+    auto subscription = model->subscribe(closed(0, 500),
+      [&] (const auto& imbalance) { published.push_back(imbalance); });
+    auto A100 = make_imbalance("A", 100);
+    auto A200 = make_imbalance("A", 200);
+    auto A400 = make_imbalance("A", 400);
+    model->publish(A100);
+    model->publish(A200);
+    model->publish(A400);
+    REQUIRE(published.size() == 6);
+    REQUIRE(published[0] == A100);
+    REQUIRE(published[1] == make_imbalance("A", 150));
+    REQUIRE(published[2] == A200);
+    REQUIRE(published[3] == make_imbalance("A", 250));
+    REQUIRE(published[4] == A400);
+    REQUIRE(published[5] == make_imbalance("A", 450));
   }
 }
