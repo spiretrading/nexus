@@ -30,6 +30,16 @@ namespace {
     auto result = model->subscribe(closed(lower, upper), [] (const auto&) {});
     return wait(std::move(result.m_snapshot));
   }
+
+  auto load_open(const auto& model, auto lower, auto upper) {
+    auto result = model->subscribe(open(lower, upper), [] (const auto&) {});
+    return wait(std::move(result.m_snapshot));
+  }
+
+  bool contains(const auto& container, const auto& value) {
+    return
+      std::find(container.begin(), container.end(), value) != container.end();
+  }
 }
 
 TEST_SUITE("LocalOrderImbalanceIndicatorModel") {
@@ -42,18 +52,61 @@ TEST_SUITE("LocalOrderImbalanceIndicatorModel") {
       model->publish(B200);
       auto load1 = load_closed(model, 0, 300);
       REQUIRE(load1.size() == 2);
+      REQUIRE(contains(load1, A100));
+      REQUIRE(contains(load1, B200));
+      auto B300 = make_imbalance("B", 300);
+      model->publish(B300);
+      auto load2 = load_closed(model, 0, 300);
+      REQUIRE(load2.size() == 2);
+      REQUIRE(contains(load2, A100));
+      REQUIRE(contains(load2, B300));
+      auto load3 = load_open(model, 100, 300);
+      REQUIRE(load3.empty());
+      auto load4 = load_open(model, 100, 400);
+      REQUIRE(load4.size() == 1);
+      REQUIRE(load4.front() == B300);
     });
   }
 
   TEST_CASE("publishing") {
-    
+    auto model = std::make_shared<LocalOrderImbalanceIndicatorModel>();
+    auto published1 = OrderImbalance();
+    auto published2 = OrderImbalance();
+    auto result1 = model->subscribe(closed(0, 1000),
+      [&] (const auto& imbalance) { published1 = imbalance; });
+    auto result2 = model->subscribe(open(100, 1000),
+      [&] (const auto& imbalance) { published2 = imbalance; });
+    REQUIRE(published1 == OrderImbalance());
+    REQUIRE(published2 == OrderImbalance());
+    auto A100 = make_imbalance("A", 100);
+    model->publish(A100);
+    REQUIRE(published1 == A100);
+    REQUIRE(published2 == OrderImbalance());
+    auto A200 = make_imbalance("A", 200);
+    model->publish(A200);
+    REQUIRE(published1 == A200);
+    REQUIRE(published2 == A200);
+    auto A1000 = make_imbalance("A", 1000);
+    model->publish(A1000);
+    REQUIRE(published1 == A1000);
+    REQUIRE(published2 == A200);
   }
 
-  TEST_CASE("multiple_subscriptions") {
-    
+  TEST_CASE("publish_out_of_order") {
+    run_test([] {
+      auto model = std::make_shared<LocalOrderImbalanceIndicatorModel>();
+      auto A100 = make_imbalance("A", 100);
+      auto A500 = make_imbalance("A", 500);
+      model->publish(A500);
+      model->publish(A100);
+      auto load = load_closed(model, 0, 1000);
+      REQUIRE(load.size() == 1);
+      REQUIRE(load.front() == A500);
+    });
   }
 
   TEST_CASE("publish_reentrant") {
+    auto model = std::make_shared<LocalOrderImbalanceIndicatorModel>();
     
   }
 

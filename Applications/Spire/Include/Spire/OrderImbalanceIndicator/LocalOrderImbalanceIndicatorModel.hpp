@@ -1,5 +1,8 @@
 #ifndef SPIRE_LOCAL_ORDER_IMBALANCE_INDICATOR_MODEL_HPP
 #define SPIRE_LOCAL_ORDER_IMBALANCE_INDICATOR_MODEL_HPP
+#include <queue>
+#include <unordered_map>
+#include <vector>
 #include "Nexus/Definitions/OrderImbalance.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorModel.hpp"
 #include "Spire/Spire/Intervals.hpp"
@@ -30,6 +33,7 @@ namespace Spire {
       };
       std::vector<Subscription> m_subscriptions;
       std::unordered_map<Nexus::Security, Nexus::OrderImbalance> m_imbalances;
+      std::queue<Nexus::OrderImbalance> m_publish_queue;
 
       QtPromise<std::vector<Nexus::OrderImbalance>>
         load(const TimeInterval& interval) const;

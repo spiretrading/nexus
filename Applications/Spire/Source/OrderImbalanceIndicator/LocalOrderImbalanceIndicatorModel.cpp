@@ -6,20 +6,27 @@ using namespace Spire;
 
 void LocalOrderImbalanceIndicatorModel::publish(
     const Nexus::OrderImbalance& imbalance) {
-  if(m_imbalances.contains(imbalance.m_security)) {
-    auto& current_imbalance = m_imbalances.at(imbalance.m_security);
-    if(current_imbalance.m_timestamp < imbalance.m_timestamp) {
-      current_imbalance = imbalance;
-    } else {
-      return;
-    }
-  } else {
-    m_imbalances.insert_or_assign(imbalance.m_security, imbalance);
+  m_publish_queue.push(imbalance);
+  if(m_publish_queue.size() > 1) {
+    return;
   }
-  for(const auto& subscription : m_subscriptions) {
-    if(contains(subscription.m_interval, imbalance.m_timestamp)) {
-      subscription.m_signal(imbalance);
+  while(!m_publish_queue.empty()) {
+    const auto& current_imbalance = m_publish_queue.front();
+    if(m_imbalances.contains(current_imbalance.m_security)) {
+      auto& previous_imbalance = m_imbalances.at(imbalance.m_security);
+      if(previous_imbalance.m_timestamp < imbalance.m_timestamp) {
+        previous_imbalance = current_imbalance;
+      }
+    } else {
+      m_imbalances.insert_or_assign(
+        current_imbalance.m_security, current_imbalance);
     }
+    for(const auto& subscription : m_subscriptions) {
+      if(contains(subscription.m_interval, current_imbalance.m_timestamp)) {
+        subscription.m_signal(current_imbalance);
+      }
+    }
+    m_publish_queue.pop();
   }
 }
 
