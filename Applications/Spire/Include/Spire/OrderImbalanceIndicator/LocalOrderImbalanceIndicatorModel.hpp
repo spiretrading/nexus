@@ -3,6 +3,8 @@
 #include "Nexus/Definitions/OrderImbalance.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorModel.hpp"
 #include "Spire/Spire/Intervals.hpp"
+#include "Spire/Spire/QtPromise.hpp"
+#include "Spire/Spire/SubscriptionResult.hpp"
 
 namespace Spire {
 
@@ -20,6 +22,17 @@ namespace Spire {
       SubscriptionResult<std::vector<Nexus::OrderImbalance>>
         subscribe(const TimeInterval& interval,
           const OrderImbalanceSignal::slot_type& slot) override;
+
+    private:
+      struct Subscription {
+        TimeInterval m_interval;
+        OrderImbalanceSignal m_signal;
+      };
+      std::vector<Subscription> m_subscriptions;
+      std::unordered_map<Nexus::Security, Nexus::OrderImbalance> m_imbalances;
+
+      QtPromise<std::vector<Nexus::OrderImbalance>>
+        load(const TimeInterval& interval) const;
   };
 }
 
