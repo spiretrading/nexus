@@ -60,11 +60,22 @@ TEST_SUITE("LocalOrderImbalanceIndicatorModel") {
       REQUIRE(load2.size() == 2);
       REQUIRE(contains(load2, A100));
       REQUIRE(contains(load2, B300));
-      auto load3 = load_open(model, 100, 300);
+      auto load3 = load_open(model, 300, 400);
       REQUIRE(load3.empty());
       auto load4 = load_open(model, 100, 400);
       REQUIRE(load4.size() == 1);
       REQUIRE(load4.front() == B300);
+      auto load5 = load_closed(model, 100, 250);
+      REQUIRE(load5.size() == 2);
+      REQUIRE(contains(load5, A100));
+      REQUIRE(contains(load5, B200));
+      auto load6 = load_open(model, 100, 300);
+      REQUIRE(load6.size() == 1);
+      REQUIRE(load6.front() == B200);
+      auto load7 = load_open(model, 0, 100);
+      REQUIRE(load7.empty());
+      auto load8 = load_open(model, 300, 1000);
+      REQUIRE(load8.empty());
     });
   }
 

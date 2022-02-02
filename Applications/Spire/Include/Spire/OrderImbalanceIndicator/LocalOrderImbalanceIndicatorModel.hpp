@@ -27,7 +27,8 @@ namespace Spire {
         OrderImbalanceSignal m_signal;
       };
       std::vector<Subscription> m_subscriptions;
-      std::unordered_map<Nexus::Security, Nexus::OrderImbalance> m_imbalances;
+      std::unordered_map<Nexus::Security, std::vector<Nexus::OrderImbalance>>
+        m_imbalances;
       std::queue<Nexus::OrderImbalance> m_publish_queue;
 
       QtPromise<std::vector<Nexus::OrderImbalance>>

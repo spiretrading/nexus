@@ -12,22 +12,29 @@ void LocalOrderImbalanceIndicatorModel::publish(
   }
   while(!m_publish_queue.empty()) {
     const auto& current_imbalance = m_publish_queue.front();
-    if(!m_imbalances.insert(
-        {current_imbalance.m_security, current_imbalance}).second) {
-      if(auto& previous_imbalance = m_imbalances.at(imbalance.m_security);
-          previous_imbalance.m_timestamp < imbalance.m_timestamp) {
-        previous_imbalance = current_imbalance;
-      }
+    if(auto i = m_imbalances.find(current_imbalance.m_security);
+        i != m_imbalances.end()) {
+      auto& security_imbalances = i->second;
+      auto index = std::lower_bound(security_imbalances.begin(),
+        security_imbalances.end(), imbalance,
+        [&] (const auto& imbalance, const auto& current) {
+          return imbalance.m_timestamp < current.m_timestamp;
+        });
+      security_imbalances.insert(index, current_imbalance);
+    } else {
+      m_imbalances.insert({imbalance.m_security, {imbalance}});
     }
-    for(auto& subscription : m_subscriptions) {
-      if(contains(subscription.m_interval, current_imbalance.m_timestamp)) {
-        subscription.m_signal(current_imbalance);
+    for(auto i = m_subscriptions.begin(); i != m_subscriptions.end();) {
+      if(i->m_signal.empty()) {
+        i = m_subscriptions.erase(i);
+        continue;
+      } else if(contains(i->m_interval, current_imbalance.m_timestamp)) {
+        i->m_signal(current_imbalance);
       }
+      ++i;
     }
     m_publish_queue.pop();
   }
-  std::erase_if(m_subscriptions,
-    [] (const auto& subscription) { return subscription.m_signal.empty(); });
 }
 
 SubscriptionResult<std::vector<Nexus::OrderImbalance>>
@@ -40,11 +47,25 @@ SubscriptionResult<std::vector<Nexus::OrderImbalance>>
 QtPromise<std::vector<Nexus::OrderImbalance>>
     LocalOrderImbalanceIndicatorModel::load(
       const TimeInterval& interval) const {
-  auto imbalances = std::vector<OrderImbalance>();
-  for(const auto& [security, imbalance] : m_imbalances) {
-    if(contains(interval, imbalance.m_timestamp)) {
-      imbalances.push_back(imbalance);
+  auto loaded_imbalances = std::vector<OrderImbalance>();
+  for(const auto& [security, imbalances] : m_imbalances) {
+    if(imbalances.empty() || !intersects(interval, TimeInterval::closed(
+        imbalances.front().m_timestamp, imbalances.back().m_timestamp))) {
+      continue;
+    }
+    auto i = std::lower_bound(imbalances.begin(), imbalances.end(),
+      interval.upper(), [&] (const auto& imbalance, auto upper) {
+        if(is_right_closed(interval.bounds())) {
+          return imbalance.m_timestamp <= upper;
+        }
+        return imbalance.m_timestamp < upper;
+      });
+    if(i != imbalances.begin()) {
+      i = std::prev(i);
+      if(contains(interval, i->m_timestamp)) {
+        loaded_imbalances.push_back(*i);
+      }
     }
   }
-  return imbalances;
+  return loaded_imbalances;
 }
