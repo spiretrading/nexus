@@ -198,21 +198,13 @@ class OpenFilterPanel::FilterModeButtonGroup {
 
 AnyInputBox* combo_box_builder(std::shared_ptr<ComboBox::QueryModel> model,
     std::shared_ptr<AnyListModel> matches) {
-  matches->connect_operation_signal(
-    [=] (const AnyListModel::Operation& operation) {
-      visit(operation,
-        [&] (const AnyListModel::AddOperation& operation) {
-          matches->set(operation.m_index,
-            any_cast<std::any>(std::any_cast<AnyRef>(
-              matches->get(operation.m_index))));
-        });
-    });
   auto box = new ComboBox(
     std::make_shared<ComboBoxFilterQueryModel>(model, matches));
   box->set_placeholder(QObject::tr("Type here"));
   auto input_box = new AnyInputBox(*box);
-  input_box->connect_submit_signal([=] (const auto&) {
+  input_box->connect_submit_signal([=] (const auto& submission) {
     input_box->get_current()->set(std::any());
+    matches->push(any_cast<std::any>(submission));
   });
   return input_box;
 }
@@ -255,8 +247,6 @@ OpenFilterPanel::OpenFilterPanel(InputBoxBuilder input_box_builder,
   layout->addLayout(mode_layout);
   layout->addSpacing(scale_height(18));
   m_input_box = input_box_builder(m_matches);
-  m_input_box->connect_submit_signal(
-    std::bind_front(&OpenFilterPanel::on_input_box_submission, this));
   layout->addWidget(m_input_box);
   layout->addSpacing(scale_height(8));
   m_list_view = new ListView(m_matches,
@@ -330,10 +320,6 @@ QWidget* OpenFilterPanel::make_item(const std::shared_ptr<AnyListModel>& model,
     }
   });
   return item;
-}
-
-void OpenFilterPanel::on_input_box_submission(const AnyRef& submission) {
-  m_matches->push(submission);
 }
 
 void OpenFilterPanel::on_mode_current(Mode mode) {

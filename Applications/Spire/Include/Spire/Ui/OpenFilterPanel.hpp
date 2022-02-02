@@ -97,7 +97,6 @@ namespace Spire {
       boost::signals2::scoped_connection m_matches_connection;
 
       QWidget* make_item(const std::shared_ptr<AnyListModel>& model, int index);
-      void on_input_box_submission(const AnyRef& submission);
       void on_mode_current(Mode mode);
       void on_matches_operation(const AnyListModel::Operation& operation);
       void on_reset();
