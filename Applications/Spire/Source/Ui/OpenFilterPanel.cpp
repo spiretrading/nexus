@@ -210,7 +210,11 @@ AnyInputBox* combo_box_builder(std::shared_ptr<ComboBox::QueryModel> model,
   auto box = new ComboBox(
     std::make_shared<ComboBoxFilterQueryModel>(model, matches));
   box->set_placeholder(QObject::tr("Type here"));
-  return new AnyInputBox(*box);
+  auto input_box = new AnyInputBox(*box);
+  input_box->connect_submit_signal([=] (const auto&) {
+    input_box->get_current()->set(std::any());
+  });
+  return input_box;
 }
 
 OpenFilterPanel::OpenFilterPanel(
@@ -329,7 +333,6 @@ QWidget* OpenFilterPanel::make_item(const std::shared_ptr<AnyListModel>& model,
 }
 
 void OpenFilterPanel::on_input_box_submission(const AnyRef& submission) {
-  m_input_box->get_current()->set({});
   m_matches->push(submission);
 }
 
@@ -341,7 +344,7 @@ void OpenFilterPanel::on_matches_operation(
     const AnyListModel::Operation& operation) {
   visit(operation,
     [&] (const AnyListModel::AddOperation& operation) {
-      update_style(*m_list_view, [] (auto& style) {});
+      update_style(*m_list_view, [] (auto&) {});
       submit();
     },
     [&] (const AnyListModel::RemoveOperation& operation) {
@@ -356,7 +359,6 @@ void OpenFilterPanel::on_reset() {
   }
   auto mode_blocker = shared_connection_block(m_mode_connection);
   m_mode_button_group->get_model()->set(Mode::INCLUDE);
-  m_input_box->get_current()->set({});
   m_input_box->setFocus();
   submit();
 }
