@@ -29,9 +29,8 @@ namespace {
     return style;
   }
 
-  auto LIST_ITEM_STYLE() {
-    auto style = StyleSheet();
-    style.get(Any() || Hover() || Press() || Focus() || Selected()).
+  auto LIST_VIEW_STYLE(StyleSheet style) {
+    style.get(Any() >> is_a<ListItem>()).
       set(BackgroundColor(QColor(0xFFFFFF))).
       set(border_size(0)).
       set(PaddingRight(scale_width(10)));
@@ -258,6 +257,9 @@ OpenFilterPanel::OpenFilterPanel(InputBoxBuilder input_box_builder,
   layout->addSpacing(scale_height(8));
   m_list_view = new ListView(m_matches,
     std::bind_front(&OpenFilterPanel::make_item, this));
+  update_style(*m_list_view, [] (auto& style) {
+    style = LIST_VIEW_STYLE(style);
+  });
   m_matches_connection = m_matches->connect_operation_signal(
     std::bind_front(&OpenFilterPanel::on_matches_operation, this));
   auto scrollable_list_box = new ScrollableListBox(*m_list_view);
@@ -339,9 +341,7 @@ void OpenFilterPanel::on_matches_operation(
     const AnyListModel::Operation& operation) {
   visit(operation,
     [&] (const AnyListModel::AddOperation& operation) {
-      auto item = m_list_view->get_list_item(operation.m_index);
-      set_style(*item, LIST_ITEM_STYLE());
-      item->setFocusPolicy(Qt::NoFocus);
+      update_style(*m_list_view, [] (auto& style) {});
       submit();
     },
     [&] (const AnyListModel::RemoveOperation& operation) {
