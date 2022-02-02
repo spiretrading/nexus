@@ -2,12 +2,7 @@
 #define SPIRE_LOCAL_ORDER_IMBALANCE_INDICATOR_MODEL_HPP
 #include <queue>
 #include <unordered_map>
-#include <vector>
-#include "Nexus/Definitions/OrderImbalance.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorModel.hpp"
-#include "Spire/Spire/Intervals.hpp"
-#include "Spire/Spire/QtPromise.hpp"
-#include "Spire/Spire/SubscriptionResult.hpp"
 
 namespace Spire {
 
