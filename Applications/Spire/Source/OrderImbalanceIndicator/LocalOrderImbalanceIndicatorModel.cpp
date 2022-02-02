@@ -26,6 +26,8 @@ void LocalOrderImbalanceIndicatorModel::publish(
     }
     m_publish_queue.pop();
   }
+  std::erase_if(m_subscriptions,
+    [&] (const auto& subscription) { return subscription.m_signal.empty(); });
 }
 
 SubscriptionResult<std::vector<Nexus::OrderImbalance>>
