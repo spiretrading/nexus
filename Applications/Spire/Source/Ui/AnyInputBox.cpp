@@ -8,8 +8,16 @@ const std::shared_ptr<AnyValueModel>& AnyInputBox::get_current() const {
   return m_input_box->get_current();
 }
 
+const std::shared_ptr<HighlightModel>& AnyInputBox::get_highlight() const {
+  return m_input_box->get_highlight();
+}
+
 const AnyRef& AnyInputBox::get_submission() const {
   return m_input_box->get_submission();
+}
+
+void AnyInputBox::set_placeholder(const QString& placeholder) {
+  m_input_box->set_placeholder(placeholder);
 }
 
 bool AnyInputBox::is_read_only() const {
