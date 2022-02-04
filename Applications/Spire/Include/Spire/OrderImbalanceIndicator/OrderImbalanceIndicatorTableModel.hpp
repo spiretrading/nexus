@@ -1,5 +1,6 @@
 #ifndef SPIRE_ORDER_IMBALANCE_INDICATOR_TABLE_MODEL_HPP
 #define SPIRE_ORDER_IMBALANCE_INDICATOR_TABLE_MODEL_HPP
+#include "Beam/TimeService/TimeClient.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorModel.hpp"
 #include "Spire/Ui/ArrayTableModel.hpp"
 
@@ -18,7 +19,8 @@ namespace Spire {
        * @param source The source OrderImbalanceIndicatorModel.
        */
       OrderImbalanceIndicatorTableModel(
-        std::shared_ptr<OrderImbalanceIndicatorModel> source);
+        std::shared_ptr<OrderImbalanceIndicatorModel> source,
+        std::shared_ptr<Beam::TimeService::TimeClient> time_client);
   
       /**
        * Replaces the model's current OrderImbalances with the imbalances
@@ -51,6 +53,7 @@ namespace Spire {
       };
       std::shared_ptr<OrderImbalanceIndicatorModel> m_source;
       ArrayTableModel m_table_model;
+      std::shared_ptr<Beam::TimeService::TimeClient> m_time_client;
       TimeInterval m_interval;
       boost::signals2::scoped_connection m_subscription_connection;
       QtPromise<std::vector<Nexus::OrderImbalance>> m_load;

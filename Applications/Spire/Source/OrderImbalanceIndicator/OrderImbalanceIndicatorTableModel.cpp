@@ -1,14 +1,17 @@
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorTableModel.hpp"
 #include <boost/date_time/gregorian/gregorian.hpp>
 
+using namespace Beam::TimeService;
 using namespace boost::posix_time;
 using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 
 OrderImbalanceIndicatorTableModel::OrderImbalanceIndicatorTableModel(
-    std::shared_ptr<OrderImbalanceIndicatorModel> source)
-    : m_source(std::move(source)) {
+    std::shared_ptr<OrderImbalanceIndicatorModel> source,
+    std::shared_ptr<TimeClient> time_client)
+    : m_source(std::move(source)),
+      m_time_client(std::move(time_client)) {
 
 }
 
@@ -23,6 +26,7 @@ void OrderImbalanceIndicatorTableModel::set_interval(
 
 void OrderImbalanceIndicatorTableModel::set_offset(
     const time_duration& offset) {
+
   // TODO: proper current time source, localization?
   set_interval(TimeInterval::closed(
     second_clock::local_time() - offset, std::numeric_limits<ptime>::max()));
@@ -49,7 +53,7 @@ connection OrderImbalanceIndicatorTableModel::connect_operation_signal(
 std::vector<std::any> OrderImbalanceIndicatorTableModel::make_row(
     const Nexus::OrderImbalance& imbalance) {
   return {imbalance.m_security, imbalance.m_side, imbalance.m_size,
-    imbalance.m_referencePrice, imbalance.m_side * imbalance.m_referencePrice,
+    imbalance.m_referencePrice, imbalance.m_size * imbalance.m_referencePrice,
     imbalance.m_timestamp.date(), imbalance.m_timestamp.time_of_day()};
 }
 
@@ -57,7 +61,7 @@ void OrderImbalanceIndicatorTableModel::set_row(
     int index, const Nexus::OrderImbalance& imbalance) {
   // TODO: 'batch' these updates if possible
   auto row = make_row(imbalance);
-  for(auto i = 1; i < row.size(); ++i) {
+  for(auto i = std::size_t(1); i < row.size(); ++i) {
     m_table_model.set(index, i, row.at(i));
   }
 }
