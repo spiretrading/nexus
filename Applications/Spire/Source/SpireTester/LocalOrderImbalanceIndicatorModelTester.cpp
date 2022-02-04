@@ -47,8 +47,8 @@ TEST_SUITE("LocalOrderImbalanceIndicatorModel") {
     run_test([] {
       auto model = LocalOrderImbalanceIndicatorModel();
       auto A100 = make_imbalance("A", 100);
-      auto B200 = make_imbalance("B", 200);
       model.publish(A100);
+      auto B200 = make_imbalance("B", 200);
       model.publish(B200);
       auto load1 = load_closed(model, 0, 300);
       REQUIRE(load1.size() == 2);
@@ -82,9 +82,9 @@ TEST_SUITE("LocalOrderImbalanceIndicatorModel") {
   TEST_CASE("publishing") {
     auto model = LocalOrderImbalanceIndicatorModel();
     auto published1 = OrderImbalance();
-    auto published2 = OrderImbalance();
     auto result1 = model.subscribe(closed(0, 1000),
       [&] (const auto& imbalance) { published1 = imbalance; });
+    auto published2 = OrderImbalance();
     auto result2 = model.subscribe(open(100, 1000),
       [&] (const auto& imbalance) { published2 = imbalance; });
     REQUIRE(published1 == OrderImbalance());
@@ -106,9 +106,9 @@ TEST_SUITE("LocalOrderImbalanceIndicatorModel") {
   TEST_CASE("publish_out_of_order") {
     run_test([] {
       auto model = LocalOrderImbalanceIndicatorModel();
-      auto A100 = make_imbalance("A", 100);
       auto A500 = make_imbalance("A", 500);
       model.publish(A500);
+      auto A100 = make_imbalance("A", 100);
       model.publish(A100);
       auto load = load_closed(model, 0, 1000);
       REQUIRE(load.size() == 1);
@@ -129,10 +129,10 @@ TEST_SUITE("LocalOrderImbalanceIndicatorModel") {
     auto subscription = model.subscribe(closed(0, 500),
       [&] (const auto& imbalance) { published.push_back(imbalance); });
     auto A100 = make_imbalance("A", 100);
-    auto A200 = make_imbalance("A", 200);
-    auto A400 = make_imbalance("A", 400);
     model.publish(A100);
+    auto A200 = make_imbalance("A", 200);
     model.publish(A200);
+    auto A400 = make_imbalance("A", 400);
     model.publish(A400);
     REQUIRE(published.size() == 6);
     REQUIRE(published[0] == A100);
