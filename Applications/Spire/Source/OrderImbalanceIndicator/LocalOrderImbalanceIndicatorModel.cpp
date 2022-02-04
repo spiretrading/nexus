@@ -24,15 +24,16 @@ void LocalOrderImbalanceIndicatorModel::publish(
         });
       security_imbalances.insert(index, current_imbalance);
     }
-    for(auto i = m_subscriptions.begin(); i != m_subscriptions.end();) {
-      if(i->m_signal.empty()) {
-        i = m_subscriptions.erase(i);
-        continue;
-      } else if(contains(i->m_interval, current_imbalance.m_timestamp)) {
-        i->m_signal(current_imbalance);
-      }
-      ++i;
-    }
+    std::erase_if(m_subscriptions,
+      [&] (const auto& subscription) {
+        if(subscription.m_signal.empty()) {
+          return true;
+        }
+        if(contains(subscription.m_interval, current_imbalance.m_timestamp)) {
+          subscription.m_signal(current_imbalance);
+        }
+        return false;
+      });
     m_publish_queue.pop();
   }
 }
