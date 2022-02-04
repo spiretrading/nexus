@@ -49,7 +49,7 @@ QtPromise<std::vector<Nexus::OrderImbalance>>
     LocalOrderImbalanceIndicatorModel::load(
       const TimeInterval& interval) const {
   auto loaded_imbalances = std::vector<OrderImbalance>();
-  for(const auto& [security, imbalances] : m_imbalances) {
+  for(auto& [security, imbalances] : m_imbalances) {
     if(imbalances.empty() || !intersects(interval, TimeInterval::closed(
         imbalances.front().m_timestamp, imbalances.back().m_timestamp))) {
       continue;
