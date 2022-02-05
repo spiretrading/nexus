@@ -63,6 +63,7 @@ namespace Spire {
   template<typename T> class StagingValueModel;
   class StandardTableFilter;
   class SubmenuItem;
+  class TabView;
   class TableBody;
   class TableHeader;
   class TableHeaderItem;
