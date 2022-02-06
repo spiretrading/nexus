@@ -310,11 +310,30 @@ void Stylist::apply(const StyleSheet& style) {
 }
 
 void Stylist::apply(Stylist& source, const RuleEntry& rule) {
-  auto i = std::lower_bound(m_sources.begin(), m_sources.end(), rule,
+  auto level = 0;
+  auto base = this;
+  auto target = &source;
+  auto increment = 1;
+  while(base != target) {
+    if(auto parent = base->get_widget().parentWidget()) {
+      base = &find_stylist(*parent);
+      level += increment;
+    } else if(increment == 1) {
+      level = 0;
+      base = &source;
+      target = this;
+      increment = -1;
+    } else {
+      level = 0;
+      break;
+    }
+  }
+  auto j = std::lower_bound(m_sources.begin(), m_sources.end(), rule,
     [&] (const auto& left, const auto& right) {
-      return left.m_rule->m_priority < right.m_priority;
+      return std::tie(left.m_level, left.m_rule->m_priority) <
+        std::tie(level, right.m_priority);
     });
-  m_sources.insert(i, {&source, &rule});
+  m_sources.insert(j, {&source, level, &rule});
   apply_proxies();
 }
 
