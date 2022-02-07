@@ -123,7 +123,6 @@ TagBox::TagBox(std::shared_ptr<AnyListModel> list,
     std::bind_front(&TagBox::on_text_box_style, this));
   m_highlight_connection = m_text_box->get_highlight()->connect_update_signal(
     [=] (const Highlight&) { reposition_list_view(); });
-  m_text_box->installEventFilter(this);
   m_list_view = new ListView(m_model,
     std::bind_front(&TagBox::make_tag, this));
   m_list_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -164,6 +163,14 @@ const std::shared_ptr<TextModel>& TagBox::get_current() const {
   return m_text_box->get_current();
 }
 
+const std::shared_ptr<HighlightModel>& TagBox::get_highlight() const {
+  return m_text_box->get_highlight();
+}
+
+void TagBox::set_placeholder(const QString& placeholder) {
+  m_text_box->set_placeholder(placeholder);
+}
+
 bool TagBox::is_read_only() const {
   return m_is_read_only;
 }
@@ -182,20 +189,20 @@ void TagBox::set_read_only(bool is_read_only) {
   }
 }
 
-connection TagBox::connect_delete_signal(
-    const DeleteSignal::slot_type& slot) const {
-  return m_delete_signal.connect(slot);
+connection TagBox::connect_submit_signal(
+    const SubmitSignal::slot_type& slot) const {
+  return m_text_box->connect_submit_signal(slot);
 }
 
 bool TagBox::eventFilter(QObject* watched, QEvent* event) {
-  if(watched == m_text_box && event->type() == QEvent::KeyPress) {
+  if(watched == m_text_box->focusProxy() && event->type() == QEvent::KeyPress) {
     auto& key_event = *static_cast<QKeyEvent*>(event);
     switch(key_event.key()) {
       case Qt::Key_Backspace:
         if(m_text_box->get_highlight()->get().m_start == 0 &&
             m_text_box->get_highlight()->get().m_end == 0 &&
             get_list()->get_size() > 0) {
-          m_delete_signal(get_list()->get_size() - 1);
+          get_list()->remove(get_list()->get_size() - 1);
         }
         break;
       case Qt::Key_Down:
@@ -226,6 +233,11 @@ void TagBox::resizeEvent(QResizeEvent* event) {
   QWidget::resizeEvent(event);
 }
 
+void TagBox::showEvent(QShowEvent* event) {
+  m_text_box->focusProxy()->installEventFilter(this);
+  QWidget::showEvent(event);
+}
+
 QWidget* TagBox::make_tag(
     const std::shared_ptr<AnyListModel>& model, int index) {
   if(index < model->get_size() - 2) {
@@ -242,7 +254,7 @@ QWidget* TagBox::make_tag(
         return -1;
       }();
       if(tag_index >= 0) {
-        m_delete_signal(tag_index);
+        get_list()->remove(tag_index);
       }
     });
     connect(tag, &QWidget::destroyed, [=] {
