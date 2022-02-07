@@ -10,6 +10,11 @@ BoxGeometry::BoxGeometry()
     m_padding_area(QPoint(0, 0), QSize(0, 0)),
     m_content_area(QPoint(0, 0), QSize(0, 0)) {}
 
+BoxGeometry::BoxGeometry(QSize size)
+  : m_border_area(QPoint(0, 0), size),
+    m_padding_area(QPoint(0, 0), size),
+    m_content_area(QPoint(0, 0), size) {}
+
 const QRect& BoxGeometry::get_geometry() const {
   return get_border_area();
 }

@@ -116,7 +116,7 @@ void Box::paintEvent(QPaintEvent* event) {
 
 void Box::resizeEvent(QResizeEvent* event) {
   if(m_body) {
-    m_geometry.set_size(QSize(width(), height()));
+    m_geometry.set_size(size());
     m_size_hint = none;
     updateGeometry();
     m_container->setGeometry(m_geometry.get_content_area());
@@ -126,6 +126,8 @@ void Box::resizeEvent(QResizeEvent* event) {
 
 void Box::on_style() {
   auto& stylist = find_stylist(*this);
+  m_geometry = BoxGeometry(size());
+  m_painter = BoxPainter();
   for(auto& property : stylist.get_computed_block()) {
     apply(property, m_geometry, stylist);
     apply(property, m_painter, stylist);

@@ -14,6 +14,12 @@ namespace Spire {
       BoxGeometry();
 
       /**
+       * Constructs a BoxGeometry with an initial size.
+       * @param size The size of the geometry.
+       */
+      explicit BoxGeometry(QSize size);
+
+      /**
        * Returns the overall geometry which by definition is equal to the border
        * area.
        */
