@@ -16,11 +16,6 @@ using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::Styles;
 
-AnyInputBox* ComboBox::default_input_box_builder() {
-  auto text_box = new TextBox();
-  return new AnyInputBox(*text_box);
-}
-
 ComboBox::ComboBox(std::shared_ptr<QueryModel> query_model, QWidget* parent)
   : ComboBox(std::move(query_model), &ListView::default_view_builder, parent) {}
 
@@ -34,10 +29,10 @@ ComboBox::ComboBox(std::shared_ptr<QueryModel> query_model,
   std::shared_ptr<CurrentModel> current, ViewBuilder view_builder,
   QWidget* parent)
   : ComboBox(std::move(query_model), std::move(current),
-      default_input_box_builder, std::move(view_builder), parent) {}
+      new AnyInputBox(*(new TextBox())), std::move(view_builder), parent) {}
 
 ComboBox::ComboBox(std::shared_ptr<QueryModel> query_model,
-    std::shared_ptr<CurrentModel> current, InputBoxBuilder input_box_builder,
+    std::shared_ptr<CurrentModel> current, AnyInputBox* input_box,
     ViewBuilder view_builder, QWidget* parent)
     : QWidget(parent),
       m_query_model(std::move(query_model)),
@@ -45,13 +40,13 @@ ComboBox::ComboBox(std::shared_ptr<QueryModel> query_model,
       m_submission(m_current->get()),
       m_submission_text(displayTextAny(m_submission)),
       m_is_read_only(false),
+      m_input_box(input_box),
       m_focus_observer(*this),
       m_matches(std::make_shared<ArrayListModel<std::any>>()),
       m_completion_tag(0),
       m_has_autocomplete_selection(false),
       m_current_connection(m_current->connect_update_signal(
         std::bind_front(&ComboBox::on_current, this))) {
-  m_input_box = input_box_builder();
   setFocusProxy(m_input_box);
   proxy_style(*this, *m_input_box);
   m_input_box->installEventFilter(this);

@@ -22,12 +22,6 @@ namespace Spire {
       using ViewBuilder = ListView::ViewBuilder<void>;
 
       /**
-       * The type of function used to build the input box.
-       * @return A new AnyInputBox to be displayed.
-       */
-      using InputBoxBuilder = std::function<AnyInputBox* ()>;
-
-      /**
        * Signals that the value was submitted.
        * @param submission The submitted value.
        */
@@ -65,12 +59,9 @@ namespace Spire {
           QueryModel& operator =(const QueryModel&) = delete;
       };
 
-      /** The default input box builder which uses a TextBox as an input box. */
-      static AnyInputBox* default_input_box_builder();
-
       /**
-       * Constructs a ComboBox using default local models, a default input box
-       * builder and a default view builder.
+       * Constructs a ComboBox using default local models, a TextBox and
+       * a default view builder.
        * @param query_model The model used to query matches.
        * @param parent The parent widget.
        */
@@ -78,8 +69,7 @@ namespace Spire {
         std::shared_ptr<QueryModel> query_model, QWidget* parent = nullptr);
 
       /**
-       * Constructs a ComboBox using default local models and a default
-       * input box builder.
+       * Constructs a ComboBox using default local models and a TextBox.
        * @param query_model The model used to query matches.
        * @param view_builder The ViewBuilder to use.
        * @param parent The parent widget.
@@ -88,7 +78,7 @@ namespace Spire {
         ViewBuilder view_builder, QWidget* parent = nullptr);
 
       /**
-       * Constructs a ComboBox using a default input box builder.
+       * Constructs a ComboBox using a TextBox.
        * @param query_model The model used to query matches.
        * @param current The current value's model.
        * @param view_builder The ViewBuilder to use.
@@ -102,14 +92,13 @@ namespace Spire {
        * Constructs a ComboBox.
        * @param query_model The model used to query matches.
        * @param current The current value's model.
-       * @param input_box_builder The InputBoxBuilder to use.
+       * @param input_box The input box to use.
        * @param view_builder The ViewBuilder to use.
        * @param parent The parent widget.
        */
       ComboBox(std::shared_ptr<QueryModel> query_model,
-        std::shared_ptr<CurrentModel> current,
-        InputBoxBuilder input_box_builder, ViewBuilder view_builder,
-        QWidget* parent = nullptr);
+        std::shared_ptr<CurrentModel> current, AnyInputBox* input_box,
+        ViewBuilder view_builder, QWidget* parent = nullptr);
 
       /** Returns the model used to query matches. */
       const std::shared_ptr<QueryModel>& get_query_model() const;
