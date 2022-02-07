@@ -167,6 +167,7 @@ namespace Spire::Styles {
       };
       struct Source {
         Stylist* m_source;
+        int m_level;
         const RuleEntry* m_rule;
       };
       struct BaseEvaluatorEntry {

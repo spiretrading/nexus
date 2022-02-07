@@ -21,26 +21,16 @@ namespace {
     return style;
   }
 
-  auto LIST_ITEM_STYLE() {
-    auto style = StyleSheet();
-    style.get(Any()).
-      set(BackgroundColor(QColor(Qt::transparent))).
-      set(border_size(0)).
-      set(padding(0));
-    return style;
-  }
-
   auto LIST_VIEW_STYLE(StyleSheet style) {
     style.get(Any()).
       set(ListItemGap(scale_width(4))).
       set(ListOverflowGap(scale_width(3))).
       set(Overflow::WRAP).
       set(Qt::Horizontal);
-    auto& list_item_rule = style.get(Any() >> is_a<ListItem>());
-    auto list_item_style = LIST_ITEM_STYLE();
-    for(auto& property : list_item_style.get(Any()).get_block()) {
-      list_item_rule.set(property);
-    }
+    style.get(Any() >> is_a<ListItem>()).
+      set(BackgroundColor(QColor(Qt::transparent))).
+      set(border_size(0)).
+      set(padding(0));
     return style;
   }
 
@@ -126,7 +116,9 @@ TagBox::TagBox(std::shared_ptr<AnyListModel> list,
   m_list_view = new ListView(m_model,
     std::bind_front(&TagBox::make_tag, this));
   m_list_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  set_style(*m_list_view, LIST_VIEW_STYLE(get_style(*m_list_view)));
+  update_style(*m_list_view, [] (auto& style) {
+    style = LIST_VIEW_STYLE(style);
+  });
   m_list_view_style_connection = connect_style_signal(*m_list_view,
     std::bind_front(&TagBox::on_list_view_style, this));
   m_list_view->get_list()->connect_operation_signal(
@@ -282,9 +274,6 @@ void TagBox::on_focus(FocusObserver::State state) {
 void TagBox::on_operation(const AnyListModel::Operation& operation) {
   visit(operation,
     [&] (const AnyListModel::AddOperation& operation) {
-      auto item = m_list_view->get_list_item(operation.m_index);
-      set_style(*item, LIST_ITEM_STYLE());
-      item->setFocusPolicy(Qt::NoFocus);
       m_list_view->setFocusPolicy(Qt::NoFocus);
       if(m_text_box->focusPolicy() != Qt::StrongFocus) {
         m_text_box->setFocusPolicy(Qt::StrongFocus);

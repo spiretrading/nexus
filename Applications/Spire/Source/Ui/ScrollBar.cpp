@@ -236,6 +236,7 @@ void ScrollBar::update_thumb() {
       style.get(Any()).set(PaddingLeft(m_thumb_position));
     }
   });
+  update();
 }
 
 void ScrollBar::scroll_page() {

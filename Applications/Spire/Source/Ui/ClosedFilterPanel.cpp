@@ -22,20 +22,15 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  auto LIST_ITEM_STYLE() {
-    auto style = StyleSheet();
+  auto LIST_VIEW_STYLE(StyleSheet style) {
     style.get(Any()).
+      set(EdgeNavigation::CONTAIN);
+    style.get(Any() >> is_a<ListItem>()).
       set(BackgroundColor(QColor(0xFFFFFF))).
       set(border_size(0)).
       set(PaddingLeft(scale_width(8))).
       set(PaddingRight(scale_width(10))).
       set(vertical_padding(scale_height(5)));
-    return style;
-  }
-
-  auto LIST_VIEW_STYLE(StyleSheet style) {
-    style.get(Any()).
-      set(EdgeNavigation::CONTAIN);
     return style;
   }
 
@@ -76,12 +71,9 @@ ClosedFilterPanel::ClosedFilterPanel(std::shared_ptr<TableModel> table,
       check_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
       return check_box;
     });
-  update_style(*m_list_view, [&] (auto& style) {
+  update_style(*m_list_view, [] (auto& style) {
     style = LIST_VIEW_STYLE(style);
   });
-  for(auto i = 0; i < m_list_view->get_list()->get_size(); ++i) {
-    set_style(*m_list_view->get_list_item(i), LIST_ITEM_STYLE());
-  }
   m_list_view->get_current()->set(0);
   m_list_view->get_list()->connect_operation_signal(
     std::bind_front(&ClosedFilterPanel::on_list_model_operation, this));
@@ -132,8 +124,6 @@ void ClosedFilterPanel::on_list_model_operation(
     const AnyListModel::Operation& operation) {
   visit(operation,
     [&] (const AnyListModel::AddOperation& operation) {
-      set_style(
-        *m_list_view->get_list_item(operation.m_index), LIST_ITEM_STYLE());
       invalidate_descendants(*window());
       if(m_table->get<bool>(operation.m_index, 1)) {
         m_submission->push(m_table->at(operation.m_index, 0));
