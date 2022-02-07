@@ -330,7 +330,6 @@ void OpenFilterPanel::on_matches_operation(
     const AnyListModel::Operation& operation) {
   visit(operation,
     [&] (const AnyListModel::AddOperation& operation) {
-      update_style(*m_list_view, [] (auto&) {});
       submit();
     },
     [&] (const AnyListModel::RemoveOperation& operation) {
