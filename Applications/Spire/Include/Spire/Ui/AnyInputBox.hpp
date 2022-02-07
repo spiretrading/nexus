@@ -38,7 +38,7 @@ namespace Details {
 
   template<typename T>
   using set_placeholder_type =
-    decltype(std::declval<T>().set_placeholder(std::declval<const QString&>()));
+    decltype(std::declval<T>().set_placeholder(std::declval<QString>()));
 
   template<typename T>
   constexpr auto has_set_placeholder_v =
@@ -47,7 +47,7 @@ namespace Details {
   template<typename T>
   using connect_reject_signal_type =
     decltype(std::declval<T>().connect_reject_signal(
-      std::declval<const T::RejectSignal::slot_type&>()));
+      std::declval<typename T::RejectSignal::slot_type>()));
 
   template<typename T>
   constexpr auto has_reject_signal_v =
