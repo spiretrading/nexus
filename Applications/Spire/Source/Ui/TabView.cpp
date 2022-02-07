@@ -16,7 +16,7 @@ struct Tab : QWidget {
   Tab(std::shared_ptr<ListModel<QString>> labels) {
     setMinimumWidth(scale_width(54));
     setMaximumWidth(scale_width(160));
-    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     auto label = new ResponsiveLabel(std::move(labels));
     label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     update_style(*label, [] (auto& style) {
@@ -27,6 +27,7 @@ struct Tab : QWidget {
     });
     auto divider = new Box(nullptr);
     divider->setFixedSize(scale(1, 14));
+    adopt(*this, *divider, TabView::Divider());
     auto body = new QWidget();
     body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     auto body_layout = new QHBoxLayout(body);
@@ -37,18 +38,15 @@ struct Tab : QWidget {
     auto box = new Box(body);
     box->setSizePolicy(
       QSizePolicy::Expanding, box->sizePolicy().verticalPolicy());
-    update_style(*box, [] (auto& style) {
-      style.get(Any()).
-        set(BackgroundColor(QColor(0xEBEBEB))).
-        set(border_size(scale_width(1))).
-        set(border_color(QColor(Qt::transparent)));
-      style.get(Hover()).set(BackgroundColor(QColor(0xE0E0E0)));
-    });
     auto layout = new QHBoxLayout(this);
     layout->setSpacing(0);
     layout->setContentsMargins({});
     layout->addWidget(box);
     proxy_style(*this, *box);
+    update_style(*this, [] (auto& style) {
+      style.get(!TabView::LastTab() > TabView::Divider()).
+        set(BackgroundColor(QColor(0xC8C8C8)));
+    });
   }
 };
 
@@ -62,7 +60,11 @@ TabView::TabView(QWidget* parent)
       for(auto& label : labels) {
         labels_model->push(label);
       }
-      return new Tab(std::move(labels_model));
+      auto tab = new Tab(std::move(labels_model));
+      if(index == model->get_size() - 1) {
+        match(*tab, LastTab());
+      }
+      return tab;
     });
   auto scrollable_list_box = new ScrollableListBox(*m_tab_list);
   scrollable_list_box->setFixedHeight(scale_height(26));
@@ -77,11 +79,22 @@ TabView::TabView(QWidget* parent)
     style.get(Any()).
       set(Qt::Orientation::Horizontal).
       set(EdgeNavigation::WRAP);
-    style.get(Any() >>
-        (is_a<ListItem>() && (Any() || Hover() || Current() || Selected()))).
+    style.get(Any() >> is_a<ListItem>()).
       set(BackgroundColor(QColor(Qt::transparent))).
       set(padding(0)).
       set(border_size(0));
+    style.get(Any() >> is_a<ListItem>()).
+      set(BackgroundColor(QColor(0xEBEBEB))).
+      set(BorderTopSize(scale_height(1))).
+      set(border_color(QColor(Qt::transparent)));
+    style.get(Any() >> (is_a<ListItem>() && Hover())).
+      set(BackgroundColor(QColor(0xE0E0E0)));
+    style.get(Any() >> (is_a<ListItem>() && Current())).
+      set(BackgroundColor(QColor(0xFFFFFF)));
+  });
+  update_style(*this, [] (auto& style) {
+    style.get(FocusIn() >> (is_a<ListItem>() && Current())).
+      set(BorderTopColor(QColor(0x4B23A0)));
   });
   auto layout = new QVBoxLayout(this);
   layout->setSpacing(0);
@@ -96,6 +109,11 @@ void TabView::add(const QString& label, QWidget& body) {
 }
 
 void TabView::add(std::vector<QString> labels, QWidget& body) {
+  if(!m_bodies.empty()) {
+    auto item =
+      m_tab_list->get_list_item(m_tab_list->get_list()->get_size() - 1);
+    unmatch(item->get_body(), LastTab());
+  }
   m_bodies.push_back(&body);
   m_labels->push(labels);
   if(!m_tab_list->get_current()->get()) {

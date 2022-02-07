@@ -83,7 +83,7 @@ ListView::ListView(
       m_focus_reason(Qt::OtherFocusReason) {
   setFocusPolicy(Qt::StrongFocus);
   for(auto i = 0; i < m_list->get_size(); ++i) {
-    auto item = new ListItem(m_view_builder(m_list, i));
+    auto item = new ListItem(*m_view_builder(m_list, i));
     m_items.emplace_back(new ItemEntry{item, i, false});
     m_items.back()->m_connection =
       item->connect_submit_signal([=, item = m_items.back().get()] {
@@ -394,7 +394,7 @@ void ListView::update_focus(optional<int> current) {
 }
 
 void ListView::add_item(int index) {
-  auto item = new ListItem(m_view_builder(m_list, index));
+  auto item = new ListItem(*m_view_builder(m_list, index));
   m_items.emplace(m_items.begin() + index, new ItemEntry{item, index, false});
   m_items[index]->m_connection = item->connect_submit_signal(
     [=, item = m_items[index].get()] {

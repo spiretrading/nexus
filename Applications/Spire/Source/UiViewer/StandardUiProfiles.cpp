@@ -1841,7 +1841,7 @@ UiProfile Spire::make_list_item_profile() {
   properties.push_back(make_standard_property("current", false));
   properties.push_back(make_standard_property("selected", false));
   auto profile = UiProfile("ListItem", properties, [] (auto& profile) {
-    auto item = new ListItem(make_label("Test Component"));
+    auto item = new ListItem(*make_label("Test Component"));
     item->setFixedWidth(scale_width(100));
     apply_widget_properties(item, profile.get_properties());
     item->connect_submit_signal(profile.make_event_slot("Submit"));

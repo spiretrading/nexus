@@ -4,11 +4,16 @@
 #include <vector>
 #include <boost/optional/optional.hpp>
 #include <QWidget>
+#include "Spire/Styles/StateSelector.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
   class TabView : public QWidget {
     public:
+      using Divider = Styles::StateSelector<void, struct DividerTag>;
+
+      using LastTab = Styles::StateSelector<void, struct LastTabTag>;
+
       explicit TabView(QWidget* parent = nullptr);
 
       void add(const QString& label, QWidget& body);
