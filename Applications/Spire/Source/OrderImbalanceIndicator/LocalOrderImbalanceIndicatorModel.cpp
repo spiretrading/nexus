@@ -11,28 +11,29 @@ void LocalOrderImbalanceIndicatorModel::publish(
     return;
   }
   while(!m_publish_queue.empty()) {
-    const auto& current_imbalance = m_publish_queue.front();
-    if(auto i = m_imbalances.find(current_imbalance.m_security);
-        i != m_imbalances.end()) {
-      auto& security_imbalances = i->second;
+    auto& current_imbalance = m_publish_queue.front();
+    auto& security_imbalances = m_imbalances[current_imbalance.m_security];
+    if(security_imbalances.empty() || current_imbalance.m_timestamp >
+        security_imbalances.back().m_timestamp) {
+      security_imbalances.push_back(current_imbalance);
+    } else {
       auto index = std::lower_bound(security_imbalances.begin(),
-        security_imbalances.end(), imbalance,
+        security_imbalances.end(), current_imbalance,
         [&] (const auto& imbalance, const auto& current) {
           return imbalance.m_timestamp < current.m_timestamp;
         });
       security_imbalances.insert(index, current_imbalance);
-    } else {
-      m_imbalances.insert({imbalance.m_security, {imbalance}});
     }
-    for(auto i = m_subscriptions.begin(); i != m_subscriptions.end();) {
-      if(i->m_signal.empty()) {
-        i = m_subscriptions.erase(i);
-        continue;
-      } else if(contains(i->m_interval, current_imbalance.m_timestamp)) {
-        i->m_signal(current_imbalance);
-      }
-      ++i;
-    }
+    std::erase_if(m_subscriptions,
+      [&] (const auto& subscription) {
+        if(subscription.m_signal.empty()) {
+          return true;
+        }
+        if(contains(subscription.m_interval, current_imbalance.m_timestamp)) {
+          subscription.m_signal(current_imbalance);
+        }
+        return false;
+      });
     m_publish_queue.pop();
   }
 }
@@ -48,7 +49,7 @@ QtPromise<std::vector<Nexus::OrderImbalance>>
     LocalOrderImbalanceIndicatorModel::load(
       const TimeInterval& interval) const {
   auto loaded_imbalances = std::vector<OrderImbalance>();
-  for(const auto& [security, imbalances] : m_imbalances) {
+  for(auto& [security, imbalances] : m_imbalances) {
     if(imbalances.empty() || !intersects(interval, TimeInterval::closed(
         imbalances.front().m_timestamp, imbalances.back().m_timestamp))) {
       continue;

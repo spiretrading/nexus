@@ -26,13 +26,13 @@ namespace {
     return TimeInterval::open(from_time_t(lower), from_time_t(upper));
   }
 
-  auto load_closed(const auto& model, auto lower, auto upper) {
-    auto result = model->subscribe(closed(lower, upper), [] (const auto&) {});
+  auto load_closed(auto& model, auto lower, auto upper) {
+    auto result = model.subscribe(closed(lower, upper), [] (const auto&) {});
     return wait(std::move(result.m_snapshot));
   }
 
-  auto load_open(const auto& model, auto lower, auto upper) {
-    auto result = model->subscribe(open(lower, upper), [] (const auto&) {});
+  auto load_open(auto& model, auto lower, auto upper) {
+    auto result = model.subscribe(open(lower, upper), [] (const auto&) {});
     return wait(std::move(result.m_snapshot));
   }
 
@@ -45,17 +45,17 @@ namespace {
 TEST_SUITE("LocalOrderImbalanceIndicatorModel") {
   TEST_CASE("subscription_snapshot") {
     run_test([] {
-      auto model = std::make_shared<LocalOrderImbalanceIndicatorModel>();
+      auto model = LocalOrderImbalanceIndicatorModel();
       auto A100 = make_imbalance("A", 100);
+      model.publish(A100);
       auto B200 = make_imbalance("B", 200);
-      model->publish(A100);
-      model->publish(B200);
+      model.publish(B200);
       auto load1 = load_closed(model, 0, 300);
       REQUIRE(load1.size() == 2);
       REQUIRE(contains(load1, A100));
       REQUIRE(contains(load1, B200));
       auto B300 = make_imbalance("B", 300);
-      model->publish(B300);
+      model.publish(B300);
       auto load2 = load_closed(model, 0, 300);
       REQUIRE(load2.size() == 2);
       REQUIRE(contains(load2, A100));
@@ -80,36 +80,36 @@ TEST_SUITE("LocalOrderImbalanceIndicatorModel") {
   }
 
   TEST_CASE("publishing") {
-    auto model = std::make_shared<LocalOrderImbalanceIndicatorModel>();
+    auto model = LocalOrderImbalanceIndicatorModel();
     auto published1 = OrderImbalance();
-    auto published2 = OrderImbalance();
-    auto result1 = model->subscribe(closed(0, 1000),
+    auto result1 = model.subscribe(closed(0, 1000),
       [&] (const auto& imbalance) { published1 = imbalance; });
-    auto result2 = model->subscribe(open(100, 1000),
+    auto published2 = OrderImbalance();
+    auto result2 = model.subscribe(open(100, 1000),
       [&] (const auto& imbalance) { published2 = imbalance; });
     REQUIRE(published1 == OrderImbalance());
     REQUIRE(published2 == OrderImbalance());
     auto A100 = make_imbalance("A", 100);
-    model->publish(A100);
+    model.publish(A100);
     REQUIRE(published1 == A100);
     REQUIRE(published2 == OrderImbalance());
     auto A200 = make_imbalance("A", 200);
-    model->publish(A200);
+    model.publish(A200);
     REQUIRE(published1 == A200);
     REQUIRE(published2 == A200);
     auto A1000 = make_imbalance("A", 1000);
-    model->publish(A1000);
+    model.publish(A1000);
     REQUIRE(published1 == A1000);
     REQUIRE(published2 == A200);
   }
 
   TEST_CASE("publish_out_of_order") {
     run_test([] {
-      auto model = std::make_shared<LocalOrderImbalanceIndicatorModel>();
-      auto A100 = make_imbalance("A", 100);
+      auto model = LocalOrderImbalanceIndicatorModel();
       auto A500 = make_imbalance("A", 500);
-      model->publish(A500);
-      model->publish(A100);
+      model.publish(A500);
+      auto A100 = make_imbalance("A", 100);
+      model.publish(A100);
       auto load = load_closed(model, 0, 1000);
       REQUIRE(load.size() == 1);
       REQUIRE(load.front() == A500);
@@ -117,23 +117,23 @@ TEST_SUITE("LocalOrderImbalanceIndicatorModel") {
   }
 
   TEST_CASE("publish_reentrant") {
-    auto model = std::make_shared<LocalOrderImbalanceIndicatorModel>();
+    auto model = LocalOrderImbalanceIndicatorModel();
     auto published = std::vector<OrderImbalance>();
-    auto subscription_publisher = model->subscribe(closed(0, 500),
+    auto subscription_publisher = model.subscribe(closed(0, 500),
       [&] (const auto& imbalance) {
         auto timestamp = to_time_t(imbalance.m_timestamp);
         if(timestamp % 100 == 0) {
-          model->publish(make_imbalance("A", timestamp + 50));
+          model.publish(make_imbalance("A", timestamp + 50));
         }
       });
-    auto subscription = model->subscribe(closed(0, 500),
+    auto subscription = model.subscribe(closed(0, 500),
       [&] (const auto& imbalance) { published.push_back(imbalance); });
     auto A100 = make_imbalance("A", 100);
+    model.publish(A100);
     auto A200 = make_imbalance("A", 200);
+    model.publish(A200);
     auto A400 = make_imbalance("A", 400);
-    model->publish(A100);
-    model->publish(A200);
-    model->publish(A400);
+    model.publish(A400);
     REQUIRE(published.size() == 6);
     REQUIRE(published[0] == A100);
     REQUIRE(published[1] == make_imbalance("A", 150));
