@@ -22,6 +22,12 @@ namespace Spire {
       using ViewBuilder = ListView::ViewBuilder<void>;
 
       /**
+       * The type of function used to build the input box.
+       * @return A new AnyInputBox to be displayed.
+       */
+      using InputBoxBuilder = std::function<AnyInputBox* ()>;
+
+      /**
        * Signals that the value was submitted.
        * @param submission The submitted value.
        */
@@ -59,9 +65,12 @@ namespace Spire {
           QueryModel& operator =(const QueryModel&) = delete;
       };
 
+      /** The default input box builder which uses a TextBox as an input box. */
+      static AnyInputBox* default_input_box_builder();
+
       /**
-       * Constructs a ComboBox using default local models and a default view
-       * builder.
+       * Constructs a ComboBox using default local models, a default input box
+       * builder and a default view builder.
        * @param query_model The model used to query matches.
        * @param parent The parent widget.
        */
@@ -69,7 +78,8 @@ namespace Spire {
         std::shared_ptr<QueryModel> query_model, QWidget* parent = nullptr);
 
       /**
-       * Constructs a ComboBox using default local models.
+       * Constructs a ComboBox using default local models and a default
+       * input box builder.
        * @param query_model The model used to query matches.
        * @param view_builder The ViewBuilder to use.
        * @param parent The parent widget.
@@ -78,7 +88,7 @@ namespace Spire {
         ViewBuilder view_builder, QWidget* parent = nullptr);
 
       /**
-       * Constructs a ComboBox.
+       * Constructs a ComboBox using a default input box builder.
        * @param query_model The model used to query matches.
        * @param current The current value's model.
        * @param view_builder The ViewBuilder to use.
@@ -86,6 +96,19 @@ namespace Spire {
        */
       ComboBox(std::shared_ptr<QueryModel> query_model,
         std::shared_ptr<CurrentModel> current, ViewBuilder view_builder,
+        QWidget* parent = nullptr);
+
+      /**
+       * Constructs a ComboBox.
+       * @param query_model The model used to query matches.
+       * @param current The current value's model.
+       * @param input_box_builder The InputBoxBuilder to use.
+       * @param view_builder The ViewBuilder to use.
+       * @param parent The parent widget.
+       */
+      ComboBox(std::shared_ptr<QueryModel> query_model,
+        std::shared_ptr<CurrentModel> current,
+        InputBoxBuilder input_box_builder, ViewBuilder view_builder,
         QWidget* parent = nullptr);
 
       /** Returns the model used to query matches. */
@@ -124,7 +147,7 @@ namespace Spire {
       std::any m_submission;
       QString m_submission_text;
       bool m_is_read_only;
-      TextBox* m_input_box;
+      AnyInputBox* m_input_box;
       ListView* m_list_view;
       FocusObserver m_focus_observer;
       std::shared_ptr<ArrayListModel<std::any>> m_matches;
@@ -146,9 +169,9 @@ namespace Spire {
       void revert_current();
       void submit(const QString& query, bool is_passive = false);
       void on_current(const std::any& current);
-      void on_input(const QString& query);
+      void on_input(const AnyRef& current);
       void on_highlight(const Highlight& highlight);
-      void on_submit(const QString& query);
+      void on_submit(const AnyRef& query);
       void on_query(std::uint32_t tag, bool show,
         Beam::Expect<std::vector<std::any>>&& result);
       void on_drop_down_current(boost::optional<int> index);
