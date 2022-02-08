@@ -82,7 +82,7 @@ void ScrollableListBox::on_list_view_style() {
         }
         return QSizePolicy::Expanding;
       }
-      return QSizePolicy::Fixed;
+      return QSizePolicy::MinimumExpanding;
     }();
     auto vertical_policy = [&] {
       if(direction == Qt::Orientation::Vertical) {
@@ -91,7 +91,7 @@ void ScrollableListBox::on_list_view_style() {
         }
         return QSizePolicy::Expanding;
       }
-      return QSizePolicy::Fixed;
+      return QSizePolicy::MinimumExpanding;
     }();
     return QSizePolicy(horizontal_policy, vertical_policy);
   }();
