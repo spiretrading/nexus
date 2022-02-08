@@ -384,8 +384,8 @@ void ScrollBox::update_layout() {
         return std::max(expanding_width, m_body->sizeHint().width());
       } else if(m_body->sizePolicy().horizontalPolicy() ==
           QSizePolicy::Expanding) {
-        return m_viewport->width() -
-          padding_size.width() - scroll_bar_size.width();
+        return std::clamp(m_body->minimumWidth(),
+          m_viewport->width() - padding_size.width(), m_body->maximumWidth());
       } else if(m_body->sizeHint().width() != -1 &&
           (m_body->sizePolicy().horizontalPolicy() == QSizePolicy::Preferred ||
           m_body->sizePolicy().horizontalPolicy() == QSizePolicy::Fixed)) {
@@ -401,8 +401,8 @@ void ScrollBox::update_layout() {
         return std::max(expanding_height, m_body->sizeHint().height());
       } else if(m_body->sizePolicy().verticalPolicy() ==
           QSizePolicy::Expanding) {
-        return m_viewport->height() -
-          padding_size.height() - scroll_bar_size.height();
+        return std::clamp(m_body->minimumHeight(), m_viewport->height() -
+          padding_size.height(), m_body->maximumHeight());
       } else if(m_body->sizeHint().height() != -1 &&
           (m_body->sizePolicy().verticalPolicy() == QSizePolicy::Preferred ||
           m_body->sizePolicy().verticalPolicy() == QSizePolicy::Fixed)) {
