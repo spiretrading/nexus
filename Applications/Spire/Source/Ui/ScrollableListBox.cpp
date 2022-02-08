@@ -75,12 +75,25 @@ void ScrollableListBox::on_list_view_style() {
       });
   }
   auto size_policy = [&] {
-    if(direction == Qt::Orientation::Vertical && overflow == Overflow::NONE ||
-        direction == Qt::Orientation::Horizontal &&
-        overflow == Overflow::WRAP) {
-      return QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Preferred);
-    }
-    return QSizePolicy(QSizePolicy::Preferred, QSizePolicy::MinimumExpanding);
+    auto horizontal_policy = [&] {
+      if(direction == Qt::Orientation::Horizontal) {
+        if(overflow == Overflow::NONE) {
+          return QSizePolicy::Fixed;
+        }
+        return QSizePolicy::Expanding;
+      }
+      return QSizePolicy::Preferred;
+    }();
+    auto vertical_policy = [&] {
+      if(direction == Qt::Orientation::Vertical) {
+        if(overflow == Overflow::NONE) {
+          return QSizePolicy::Fixed;
+        }
+        return QSizePolicy::Expanding;
+      }
+      return QSizePolicy::Preferred;
+    }();
+    return QSizePolicy(horizontal_policy, vertical_policy);
   }();
   if(size_policy != m_list_view->sizePolicy()) {
     m_list_view->setSizePolicy(size_policy);

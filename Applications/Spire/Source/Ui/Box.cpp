@@ -145,9 +145,6 @@ bool Box::event(QEvent* event) {
   if(event->type() == QEvent::LayoutRequest) {
     m_minimum_size_hint = none;
     m_size_hint = none;
-    if(m_body) {
-      setMinimumSize(m_body->minimumSize());
-    }
   }
   return QWidget::event(event);
 }
