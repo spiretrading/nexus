@@ -23,6 +23,8 @@ namespace Spire {
       /** Returns the body or a <code>nullptr</code>. */
       QWidget* get_body();
 
+      QSize minimumSizeHint() const override;
+
       QSize sizeHint() const override;
 
     protected:
@@ -36,6 +38,7 @@ namespace Spire {
       BoxGeometry m_geometry;
       BoxPainter m_painter;
       boost::signals2::scoped_connection m_style_connection;
+      mutable boost::optional<QSize> m_minimum_size_hint;
       mutable boost::optional<QSize> m_size_hint;
 
       void on_style();

@@ -94,16 +94,14 @@ ListView::ListView(
     m_items[*m_selected]->m_item->set_selected(true);
   }
   update_focus(m_last_current);
-  auto layout = new QHBoxLayout();
-  layout->setContentsMargins({});
   auto body = new QWidget();
-  auto body_layout = new QBoxLayout(QBoxLayout::LeftToRight);
+  auto body_layout = new QBoxLayout(QBoxLayout::LeftToRight, body);
   body_layout->setContentsMargins({});
-  body->setLayout(body_layout);
   body->installEventFilter(this);
   m_box = new Box(body);
+  auto layout = new QHBoxLayout(this);
+  layout->setContentsMargins({});
   layout->addWidget(m_box);
-  setLayout(layout);
   set_style(*this, DEFAULT_STYLE());
   update_layout();
   proxy_style(*this, *m_box);

@@ -61,6 +61,46 @@ QWidget* Box::get_body() {
   return m_body;
 }
 
+QSize Box::minimumSizeHint() const {
+  if(m_minimum_size_hint) {
+    return *m_minimum_size_hint;
+  } else if(m_container) {
+    m_minimum_size_hint.emplace(m_body->minimumSizeHint());
+    if(m_minimum_size_hint->isValid()) {
+      for(auto& property : get_evaluated_block(*this)) {
+        property.visit(
+          [&] (std::in_place_type_t<BorderTopSize>, int size) {
+            m_minimum_size_hint->rheight() += size;
+          },
+          [&] (std::in_place_type_t<BorderRightSize>, int size) {
+            m_minimum_size_hint->rwidth() += size;
+          },
+          [&] (std::in_place_type_t<BorderBottomSize>, int size) {
+            m_minimum_size_hint->rheight() += size;
+          },
+          [&] (std::in_place_type_t<BorderLeftSize>, int size) {
+            m_minimum_size_hint->rwidth() += size;
+          },
+          [&] (std::in_place_type_t<PaddingTop>, int size) {
+            m_minimum_size_hint->rheight() += size;
+          },
+          [&] (std::in_place_type_t<PaddingRight>, int size) {
+            m_minimum_size_hint->rwidth() += size;
+          },
+          [&] (std::in_place_type_t<PaddingBottom>, int size) {
+            m_minimum_size_hint->rheight() += size;
+          },
+          [&] (std::in_place_type_t<PaddingLeft>, int size) {
+            m_minimum_size_hint->rwidth() += size;
+          });
+      }
+    }
+  } else {
+    m_minimum_size_hint.emplace(QWidget::minimumSizeHint());
+  }
+  return *m_minimum_size_hint;
+}
+
 QSize Box::sizeHint() const {
   if(m_size_hint) {
     return *m_size_hint;
@@ -103,8 +143,11 @@ QSize Box::sizeHint() const {
 
 bool Box::event(QEvent* event) {
   if(event->type() == QEvent::LayoutRequest) {
+    m_minimum_size_hint = none;
     m_size_hint = none;
-    updateGeometry();
+    if(m_body) {
+      setMinimumSize(m_body->minimumSize());
+    }
   }
   return QWidget::event(event);
 }
@@ -117,6 +160,7 @@ void Box::paintEvent(QPaintEvent* event) {
 void Box::resizeEvent(QResizeEvent* event) {
   if(m_body) {
     m_geometry.set_size(size());
+    m_minimum_size_hint = none;
     m_size_hint = none;
     updateGeometry();
     m_container->setGeometry(m_geometry.get_content_area());
@@ -139,6 +183,7 @@ void Box::on_style() {
             if(current_alignment != alignment) {
               m_container->layout()->setAlignment(alignment);
               m_container->layout()->update();
+              m_minimum_size_hint = none;
               m_size_hint = none;
               updateGeometry();
             }
@@ -147,6 +192,7 @@ void Box::on_style() {
       });
   }
   if(m_body) {
+    m_minimum_size_hint = none;
     m_size_hint = none;
     updateGeometry();
     m_container->setGeometry(m_geometry.get_content_area());
