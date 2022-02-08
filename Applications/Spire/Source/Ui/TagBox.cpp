@@ -1,4 +1,5 @@
 #include "Spire/Ui/TagBox.hpp"
+#include <QCoreApplication>
 #include <QHBoxLayout>
 #include <QKeyEvent>
 #include "Spire/Spire/Dimensions.hpp"
@@ -201,6 +202,7 @@ bool TagBox::eventFilter(QObject* watched, QEvent* event) {
       case Qt::Key_Up:
       case Qt::Key_PageDown:
       case Qt::Key_PageUp:
+        QCoreApplication::sendEvent(this, event);
         return true;
       default:
         break;
@@ -294,6 +296,7 @@ void TagBox::on_operation(const AnyListModel::Operation& operation) {
 }
 
 void TagBox::on_submit(const std::any& submission) {
+  m_list_view->setFocusPolicy(Qt::NoFocus);
   if(m_text_box->focusPolicy() != Qt::StrongFocus) {
     m_text_box->setFocusPolicy(Qt::StrongFocus);
   }
