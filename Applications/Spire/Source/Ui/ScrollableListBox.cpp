@@ -25,7 +25,6 @@ namespace {
 ScrollableListBox::ScrollableListBox(ListView& list_view, QWidget* parent)
     : QWidget(parent),
       m_list_view(&list_view) {
-  m_list_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   setFocusProxy(m_list_view);
   m_scroll_box = new ScrollBox(m_list_view);
   m_scroll_box->setFocusPolicy(Qt::NoFocus);
@@ -33,6 +32,8 @@ ScrollableListBox::ScrollableListBox(ListView& list_view, QWidget* parent)
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   layout->addWidget(m_scroll_box);
+  m_list_view_style_connection =
+    connect_style_signal(*m_list_view, [=] { on_list_view_style(); });
   set_style(*this, make_default_style());
   m_current_connection = m_list_view->get_current()->connect_update_signal(
     [=] (const auto& current) { on_current(current); });
@@ -54,4 +55,35 @@ void ScrollableListBox::on_current(const optional<int>& current) {
     return;
   }
   m_scroll_box->scroll_to(*m_list_view->get_list_item(*current));
+}
+
+void ScrollableListBox::on_list_view_style() {
+  auto direction = Qt::Orientation::Vertical;
+  auto overflow = Overflow::NONE;
+  auto& stylist = find_stylist(*m_list_view);
+  for(auto& property : stylist.get_computed_block()) {
+    property.visit(
+      [&] (EnumProperty<Qt::Orientation> direction_style) {
+        stylist.evaluate(direction_style, [&] (auto d) {
+          direction = d;
+        });
+      },
+      [&] (EnumProperty<Overflow> overflow_style) {
+        stylist.evaluate(overflow_style, [&] (auto o) {
+          overflow = o;
+        });
+      });
+  }
+  auto size_policy = [&] {
+    if(direction == Qt::Orientation::Vertical && overflow == Overflow::NONE ||
+        direction == Qt::Orientation::Horizontal &&
+        overflow == Overflow::WRAP) {
+      return QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Preferred);
+    }
+    return QSizePolicy(QSizePolicy::Preferred, QSizePolicy::MinimumExpanding);
+  }();
+  if(size_policy != m_list_view->sizePolicy()) {
+    m_list_view->setSizePolicy(size_policy);
+    m_list_view->updateGeometry();
+  }
 }
