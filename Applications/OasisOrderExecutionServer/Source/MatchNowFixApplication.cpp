@@ -22,11 +22,13 @@ namespace {
   const auto UMIR_ACCOUNT_TYPE_TAG = 47;
   const auto ANONYMOUS_TAG = 7012;
   const auto CONSTRAINTS_TAG = 6005;
+  const auto NO_TRADE_FEAT_TAG = 7713;
+  const auto NO_TRADE_KEY_TAG = 7714;
 }
 
-MatchNowFixApplication::MatchNowFixApplication(Ref<LiveNtpTimeClient>
-    timeClient)
-    : m_timeClient(timeClient.Get()) {}
+MatchNowFixApplication::MatchNowFixApplication(
+  Ref<LiveNtpTimeClient> timeClient)
+  : m_timeClient(timeClient.Get()) {}
 
 const Order& MatchNowFixApplication::Recover(
     const SequencedAccountOrderRecord& orderRecord) {
@@ -38,10 +40,10 @@ const Order& MatchNowFixApplication::Submit(const OrderInfo& info) {
     GetSessionId().getTargetCompID(),
     [&] (Out<FIX42::NewOrderSingle> newOrderSingle) {
       if(info.m_fields.m_security.GetCountry() != DefaultCountries::CA()) {
-        BOOST_THROW_EXCEPTION(FixOrderRejectedException{"Invalid country."});
+        BOOST_THROW_EXCEPTION(FixOrderRejectedException("Invalid country."));
       }
       if(info.m_fields.m_currency != DefaultCurrencies::CAD()) {
-        BOOST_THROW_EXCEPTION(FixOrderRejectedException{"Invalid currency."});
+        BOOST_THROW_EXCEPTION(FixOrderRejectedException("Invalid currency."));
       }
       newOrderSingle->getHeader().set(FIX::SenderSubID(GetSenderSubID()));
       newOrderSingle->set(FIX::Account(GetAccount()));
@@ -49,6 +51,12 @@ const Order& MatchNowFixApplication::Submit(const OrderInfo& info) {
       auto& anonymousTag = GetAnonymousTag();
       if(anonymousTag.is_initialized()) {
         newOrderSingle->setField(ANONYMOUS_TAG, *anonymousTag);
+      }
+      auto noTradeFeat = GetNoTradeFeat();
+      auto noTradeKey = GetNoTradeKey();
+      if(!noTradeFeat.empty() && !noTradeKey.empty()) {
+        newOrderSingle->setField(NO_TRADE_FEAT_TAG, noTradeFeat);
+        newOrderSingle->setField(NO_TRADE_KEY_TAG, noTradeKey);
       }
       if(m_lei) {
         m_lei->populate(Store(newOrderSingle));
@@ -64,9 +72,17 @@ const Order& MatchNowFixApplication::Submit(const OrderInfo& info) {
         auto value = boost::get<std::string>(constraintsTag.GetValue());
         if(value == "PAG") {
           newOrderSingle->setField(CONSTRAINTS_TAG, "PAG=-1");
+          if(info.m_fields.m_destination == "MATNLP") {
+            newOrderSingle->setField(FIX::ExecInst("R"));
+          }
         } else if(value == "PMI") {
           newOrderSingle->setField(CONSTRAINTS_TAG, "PMI=1");
+          if(info.m_fields.m_destination == "MATNLP") {
+            newOrderSingle->setField(FIX::ExecInst("p"));
+          }
         }
+      } else if(info.m_fields.m_destination == "MATNLP") {
+        newOrderSingle->setField(FIX::ExecInst("M"));
       }
     });
 }
@@ -173,4 +189,18 @@ const optional<std::string>& MatchNowFixApplication::GetAnonymousTag() const {
     m_anonymousTag.emplace(none);
   }
   return *m_anonymousTag;
+}
+
+std::string MatchNowFixApplication::GetNoTradeFeat() const {
+  if(GetSessionSettings().get(GetSessionId()).has("NoTradeFeat")) {
+    return GetSessionSettings().get(GetSessionId()).getString("NoTradeFeat");
+  }
+  return {};
+}
+
+std::string MatchNowFixApplication::GetNoTradeKey() const {
+  if(GetSessionSettings().get(GetSessionId()).has("NoTradeKey")) {
+    return GetSessionSettings().get(GetSessionId()).getString("NoTradeKey");
+  }
+  return {};
 }

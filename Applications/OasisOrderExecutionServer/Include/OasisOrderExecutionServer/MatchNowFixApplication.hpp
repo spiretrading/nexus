@@ -11,17 +11,17 @@
 
 namespace Nexus::OasisOrderExecutionService {
 
-  /* Implements a FIX Application for TriAct's MATCH Now. */
+  /** Implements a FIX Application for TriAct's MATCH Now. */
   class MatchNowFixApplication : public FixUtilities::FixApplication,
       public FIX::MessageCracker {
     public:
 
-      //! Constructs a MatchNowFixApplication.
-      /*!
-        \param timeClient The TimeClient used for timestamps.
-      */
-      MatchNowFixApplication(Beam::Ref<Beam::TimeService::LiveNtpTimeClient>
-        timeClient);
+      /**
+       * Constructs a MatchNowFixApplication.
+       * @param timeClient The TimeClient used for timestamps.
+       */
+      MatchNowFixApplication(
+        Beam::Ref<Beam::TimeService::LiveNtpTimeClient> timeClient);
 
       const OrderExecutionService::Order& Recover(
         const OrderExecutionService::SequencedAccountOrderRecord& orderRecord)
@@ -70,6 +70,8 @@ namespace Nexus::OasisOrderExecutionService {
       std::string GetAccount() const;
       std::string GetSenderSubID() const;
       const boost::optional<std::string>& GetAnonymousTag() const;
+      std::string GetNoTradeFeat() const;
+      std::string GetNoTradeKey() const;
   };
 }
 
