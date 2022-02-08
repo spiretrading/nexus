@@ -153,13 +153,6 @@ bool ListView::eventFilter(QObject* watched, QEvent* event) {
   return QWidget::eventFilter(watched, event);
 }
 
-bool ListView::event(QEvent* event) {
-  if(event->type() == QEvent::LayoutRequest) {
-    update_layout();
-  }
-  return QWidget::event(event);
-}
-
 void ListView::keyPressEvent(QKeyEvent* event) {
   switch(event->key()) {
     case Qt::Key_Home:
@@ -487,14 +480,19 @@ void ListView::move_item(int source, int destination) {
 
 void ListView::update_layout() {
   auto& body = *m_box->get_body();
-  if(m_direction == Qt::Orientation::Horizontal && m_overflow ==
+  if((m_direction == Qt::Orientation::Horizontal && m_overflow ==
       Overflow::NONE || m_direction == Qt::Orientation::Vertical &&
-      m_overflow == Overflow::WRAP) {
-    body.setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
-  } else {
+      m_overflow == Overflow::WRAP)) {
+    if(body.sizePolicy() !=
+        QSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding)) {
+      body.setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
+      body.updateGeometry();
+    }
+  } else if(body.sizePolicy() !=
+      QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred)) {
     body.setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    body.updateGeometry();
   }
-  body.updateGeometry();
   auto& body_layout = *static_cast<QBoxLayout*>(body.layout());
   while(auto item = body_layout.takeAt(body_layout.count() - 1)) {
     delete item;
@@ -548,7 +546,6 @@ void ListView::update_layout() {
       new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding));
     body_layout.addLayout(inner_layout);
   }
-  updateGeometry();
 }
 
 void ListView::on_list_operation(const AnyListModel::Operation& operation) {

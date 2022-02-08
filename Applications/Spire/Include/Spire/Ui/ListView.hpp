@@ -184,7 +184,6 @@ namespace Styles {
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
-      bool event(QEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
 
     private:
