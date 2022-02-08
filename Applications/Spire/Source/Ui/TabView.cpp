@@ -16,7 +16,6 @@ struct Tab : QWidget {
   Tab(std::shared_ptr<ListModel<QString>> labels) {
     setMinimumWidth(scale_width(54));
     setMaximumWidth(scale_width(160));
-    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     auto label = new ResponsiveLabel(std::move(labels));
     label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     update_style(*label, [] (auto& style) {
