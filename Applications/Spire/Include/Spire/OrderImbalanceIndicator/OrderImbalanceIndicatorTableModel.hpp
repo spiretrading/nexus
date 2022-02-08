@@ -9,7 +9,7 @@ namespace Spire {
   class microsec_clock {
     public:
 
-      void set_current(boost::posix_time::ptime current) {
+      static void set_current(boost::posix_time::ptime current) {
         m_current = current;
       }
 
@@ -86,8 +86,13 @@ namespace Spire {
       std::unordered_map<Nexus::Security, Imbalance> m_imbalances;
       QTimer m_expiration_timer;
 
-      std::vector<std::any> make_row(const Nexus::OrderImbalance& imbalance);
-      void set_row(int index, const Nexus::OrderImbalance& imbalance);
+      std::vector<std::any> make_row(
+        const Nexus::OrderImbalance& imbalance) const;
+      std::vector<boost::optional<std::any>> make_row_update(
+        const Nexus::OrderImbalance& current,
+        const Nexus::OrderImbalance& previous) const;
+      void set_row(
+        const Nexus::OrderImbalance& current, Imbalance& previous);
       void on_expiration_timeout();
       void on_imbalance(const Nexus::OrderImbalance& imbalance);
       void on_load(const std::vector<Nexus::OrderImbalance>& imbalances);

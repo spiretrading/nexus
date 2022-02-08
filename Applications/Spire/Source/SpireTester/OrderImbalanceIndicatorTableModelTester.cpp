@@ -14,10 +14,14 @@ namespace {
     std::vector<TableModel::MoveOperation> m_moves;
     std::vector<TableModel::UpdateOperation> m_updates;
 
-    bool counts_equal(std::size_t add_count, std::size_t remove_count,
-        std::size_t move_count, std::size_t update_count) {
-      return m_adds.size() == add_count && m_removes.size() == remove_count &&
-        m_moves.size() == move_count && m_updates.size() == update_count;
+    //bool counts_equal(std::size_t add_count, std::size_t remove_count,
+    //    std::size_t move_count, std::size_t update_count) {
+    //  return m_adds.size() == add_count && m_removes.size() == remove_count &&
+    //    m_moves.size() == move_count && m_updates.size() == update_count;
+    //}
+
+    bool adds_equal(std::size_t count) {
+      return m_adds.size() == count;
     }
 
     std::size_t operation_count() const {
@@ -57,16 +61,6 @@ namespace {
     return TimeInterval::open(from_time_t(lower), from_time_t(upper));
   }
 
-  auto load_closed(auto& model, auto lower, auto upper) {
-    auto result = model.subscribe(closed(lower, upper), [] (const auto&) {});
-    return wait(std::move(result.m_snapshot));
-  }
-
-  auto load_open(auto& model, auto lower, auto upper) {
-    auto result = model.subscribe(open(lower, upper), [] (const auto&) {});
-    return wait(std::move(result.m_snapshot));
-  }
-
   bool contains(const auto& container, const auto& value) {
     return
       std::find(container.begin(), container.end(), value) != container.end();
@@ -91,16 +85,20 @@ namespace {
   }
 
   const auto A100 = make_imbalance("A", 100);
+  const auto A300 = make_imbalance("A", 300);
+  const auto A500 = make_imbalance("A", 500);
   const auto B100 = make_imbalance("B", 100);
+  const auto B300 = make_imbalance("B", 300);
+  const auto B550 = make_imbalance("B", 550);
 }
 
 TEST_SUITE("OrderImbalanceIndicatorTableModel") {
   TEST_CASE("set_interval") {
     run_test([] {
-      auto test_model = std::make_shared<LocalOrderImbalanceIndicatorModel>();
-      auto model = OrderImbalanceIndicatorTableModel(test_model);
-      test_model->publish(A100);
-      test_model->publish(B100);
+      auto local_model = std::make_shared<LocalOrderImbalanceIndicatorModel>();
+      auto model = OrderImbalanceIndicatorTableModel(local_model);
+      local_model->publish(A100);
+      local_model->publish(B100);
       auto operation_log = TableOperationLog{};
       model.connect_operation_signal(
         std::bind_front(&TableOperationLog::on_operation, &operation_log));
@@ -109,12 +107,35 @@ TEST_SUITE("OrderImbalanceIndicatorTableModel") {
       REQUIRE(model.get_row_size() == 2);
       REQUIRE(row_equals(model, 0, A100));
       REQUIRE(row_equals(model, 1, B100));
-      REQUIRE(operation_log.counts_equal(2, 0, 0, 0));
+      REQUIRE(operation_log.operation_count() == 2);
+      REQUIRE(operation_log.m_adds.size() == 2);
       model.set_interval(open(0, 100));
       wait_until([&] { return operation_log.operation_count() == 4; });
       REQUIRE(model.get_row_size() == 0);
-      // TODO: should these deletions cause some intermediate move operations?
-      REQUIRE(operation_log.counts_equal(2, 2, 0, 0));
+      REQUIRE(operation_log.operation_count() == 4);
+      REQUIRE(operation_log.m_adds.size() == 2);
+      REQUIRE(operation_log.m_removes.size() == 2);
+      local_model->publish(A300);
+      local_model->publish(B300);
+      REQUIRE(operation_log.operation_count() == 4);
+      REQUIRE(model.get_row_size() == 0);
+      model.set_interval(closed(200, 1000));
+      wait_until([&] { return operation_log.operation_count() == 6; });
+      REQUIRE(model.get_row_size() == 2);
+      REQUIRE(row_equals(model, 0, A300));
+      REQUIRE(row_equals(model, 1, B300));
+      REQUIRE(operation_log.operation_count() == 6);
+      REQUIRE(operation_log.m_adds.size() == 4);
+      REQUIRE(operation_log.m_removes.size() == 2);
+      local_model->publish(A500);
+      local_model->publish(B550);
+      REQUIRE(model.get_row_size() == 2);
+      REQUIRE(row_equals(model, 0, A500));
+      REQUIRE(row_equals(model, 1, B550));
+      REQUIRE(operation_log.operation_count() == 12);
+      REQUIRE(operation_log.m_adds.size() == 4);
+      REQUIRE(operation_log.m_removes.size() == 2);
+      REQUIRE(operation_log.m_updates.size() == 6);
     });
   }
 

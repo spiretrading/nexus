@@ -1,7 +1,7 @@
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorTableModel.hpp"
 #include <boost/date_time/gregorian/gregorian.hpp>
 
-using namespace Beam::TimeService;
+using namespace boost;
 using namespace boost::posix_time;
 using namespace boost::signals2;
 using namespace Nexus;
@@ -9,6 +9,15 @@ using namespace Spire;
 
 namespace {
   const auto EXPIRATION_TIMEOUT_MS = 1000;
+
+  template<typename T>
+  auto get_update(const T& potential,
+      const T& current) -> optional<std::any> {
+    if(potential == current) {
+      return none;
+    }
+    return std::make_any<T>(potential);
+  }
 }
 
 OrderImbalanceIndicatorTableModel::OrderImbalanceIndicatorTableModel(
@@ -57,18 +66,34 @@ connection OrderImbalanceIndicatorTableModel::connect_operation_signal(
 }
 
 std::vector<std::any> OrderImbalanceIndicatorTableModel::make_row(
-    const Nexus::OrderImbalance& imbalance) {
+    const Nexus::OrderImbalance& imbalance) const {
   return {imbalance.m_security, imbalance.m_side, imbalance.m_size,
     imbalance.m_referencePrice, imbalance.m_size * imbalance.m_referencePrice,
     imbalance.m_timestamp.date(), imbalance.m_timestamp.time_of_day()};
 }
 
+std::vector<optional<std::any>>
+    OrderImbalanceIndicatorTableModel::make_row_update(
+      const OrderImbalance& current, const OrderImbalance& previous) const {
+  return {none, get_update(current.m_side, previous.m_side),
+    get_update(current.m_size, previous.m_size),
+    get_update(current.m_referencePrice, previous.m_referencePrice),
+    get_update(current.m_size * current.m_referencePrice,
+      previous.m_size * previous.m_referencePrice),
+    get_update(current.m_timestamp.date(), previous.m_timestamp.date()),
+    get_update(current.m_timestamp.time_of_day(),
+      previous.m_timestamp.time_of_day())};
+}
+
 void OrderImbalanceIndicatorTableModel::set_row(
-    int index, const Nexus::OrderImbalance& imbalance) {
+    const OrderImbalance& current, Imbalance& previous) {
   m_table_model.transact([&] {
-    auto row = make_row(imbalance);
+    auto row = make_row_update(current, previous.m_imbalance);
     for(auto i = std::size_t(1); i < row.size(); ++i) {
-      m_table_model.set(index, i, row.at(i));
+      if(auto value = row.at(i)) {
+        m_table_model.set(previous.m_row_index, i, *value);
+        previous.m_imbalance = current;
+      }
     }
   });
 }
@@ -79,15 +104,13 @@ void OrderImbalanceIndicatorTableModel::on_expiration_timeout() {
 
 void OrderImbalanceIndicatorTableModel::on_imbalance(
     const Nexus::OrderImbalance& imbalance) {
-  auto& current_imbalance = m_imbalances[imbalance.m_security];
-  if(current_imbalance.m_imbalance != OrderImbalance()) {
-    if(current_imbalance.m_imbalance.m_timestamp <
-      imbalance.m_timestamp) {
-      current_imbalance.m_imbalance = imbalance;
-      set_row(current_imbalance.m_row_index, imbalance);
+  auto& previous_imbalance = m_imbalances[imbalance.m_security];
+  if(previous_imbalance.m_imbalance != OrderImbalance()) {
+    if(previous_imbalance.m_imbalance.m_timestamp < imbalance.m_timestamp) {
+      set_row(imbalance, previous_imbalance);
     }
   } else {
-    current_imbalance = {get_row_size(), imbalance};
+    previous_imbalance = {get_row_size(), imbalance};
     m_table_model.push(make_row(imbalance));
   }
 }
