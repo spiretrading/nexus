@@ -1,10 +1,38 @@
 #ifndef SPIRE_ORDER_IMBALANCE_INDICATOR_TABLE_MODEL_HPP
 #define SPIRE_ORDER_IMBALANCE_INDICATOR_TABLE_MODEL_HPP
-#include "Beam/TimeService/TimeClient.hpp"
+#include <QTimer>
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorModel.hpp"
 #include "Spire/Ui/ArrayTableModel.hpp"
 
 namespace Spire {
+
+  class microsec_clock {
+    public:
+
+      void set_current(boost::posix_time::ptime current) {
+        m_current = current;
+      }
+
+      //! return a local time object for the given zone, based on computer clock
+      template<typename U>
+      static boost::posix_time::ptime local_time(boost::shared_ptr<U> time_zone) {
+        return universal_time();
+      }
+
+      //! Returns the local time based on computer clock settings
+      static boost::posix_time::ptime local_time() {
+        return universal_time();
+      }
+
+      //! Returns the UTC time based on computer settings
+      static boost::posix_time::ptime universal_time() {
+        return m_current;
+      }
+
+    private:
+      inline static boost::posix_time::ptime m_current =
+        boost::posix_time::from_time_t(0);
+  };
 
   /**
    * Implements a TableModel using an OrderImbalanceIndicatorModel as a source
@@ -19,8 +47,7 @@ namespace Spire {
        * @param source The source OrderImbalanceIndicatorModel.
        */
       OrderImbalanceIndicatorTableModel(
-        std::shared_ptr<OrderImbalanceIndicatorModel> source,
-        std::shared_ptr<Beam::TimeService::TimeClient> time_client);
+        std::shared_ptr<OrderImbalanceIndicatorModel> source);
   
       /**
        * Replaces the model's current OrderImbalances with the imbalances
@@ -53,14 +80,15 @@ namespace Spire {
       };
       std::shared_ptr<OrderImbalanceIndicatorModel> m_source;
       ArrayTableModel m_table_model;
-      std::shared_ptr<Beam::TimeService::TimeClient> m_time_client;
       TimeInterval m_interval;
       boost::signals2::scoped_connection m_subscription_connection;
       QtPromise<std::vector<Nexus::OrderImbalance>> m_load;
       std::unordered_map<Nexus::Security, Imbalance> m_imbalances;
+      QTimer m_expiration_timer;
 
       std::vector<std::any> make_row(const Nexus::OrderImbalance& imbalance);
       void set_row(int index, const Nexus::OrderImbalance& imbalance);
+      void on_expiration_timeout();
       void on_imbalance(const Nexus::OrderImbalance& imbalance);
       void on_load(const std::vector<Nexus::OrderImbalance>& imbalances);
   };

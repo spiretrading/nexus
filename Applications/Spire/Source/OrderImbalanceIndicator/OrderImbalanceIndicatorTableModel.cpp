@@ -7,16 +7,24 @@ using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 
-OrderImbalanceIndicatorTableModel::OrderImbalanceIndicatorTableModel(
-    std::shared_ptr<OrderImbalanceIndicatorModel> source,
-    std::shared_ptr<TimeClient> time_client)
-    : m_source(std::move(source)),
-      m_time_client(std::move(time_client)) {
+namespace {
+  const auto EXPIRATION_TIMEOUT_MS = 1000;
+}
 
+OrderImbalanceIndicatorTableModel::OrderImbalanceIndicatorTableModel(
+    std::shared_ptr<OrderImbalanceIndicatorModel> source)
+    : m_source(std::move(source)) {
+  m_expiration_timer.setTimerType(Qt::CoarseTimer);
+  m_expiration_timer.setInterval(EXPIRATION_TIMEOUT_MS);
+  QObject::connect(&m_expiration_timer, &QTimer::timeout,
+    [=] { on_expiration_timeout(); });
 }
 
 void OrderImbalanceIndicatorTableModel::set_interval(
     const TimeInterval& interval) {
+  if(!m_expiration_timer.isActive()) {
+    m_expiration_timer.start();
+  }
   auto subscription = m_source->subscribe(interval,
     [=] (const auto& imbalance) { on_imbalance(imbalance); });
   m_subscription_connection = std::move(subscription.m_connection);
@@ -26,10 +34,8 @@ void OrderImbalanceIndicatorTableModel::set_interval(
 
 void OrderImbalanceIndicatorTableModel::set_offset(
     const time_duration& offset) {
-
-  // TODO: proper current time source, localization?
   set_interval(TimeInterval::closed(
-    second_clock::local_time() - offset, std::numeric_limits<ptime>::max()));
+    microsec_clock::local_time() - offset, std::numeric_limits<ptime>::max()));
 }
 
 int OrderImbalanceIndicatorTableModel::get_row_size() const {
@@ -59,31 +65,52 @@ std::vector<std::any> OrderImbalanceIndicatorTableModel::make_row(
 
 void OrderImbalanceIndicatorTableModel::set_row(
     int index, const Nexus::OrderImbalance& imbalance) {
-  // TODO: 'batch' these updates if possible
-  auto row = make_row(imbalance);
-  for(auto i = std::size_t(1); i < row.size(); ++i) {
-    m_table_model.set(index, i, row.at(i));
-  }
+  m_table_model.transact([&] {
+    auto row = make_row(imbalance);
+    for(auto i = std::size_t(1); i < row.size(); ++i) {
+      m_table_model.set(index, i, row.at(i));
+    }
+  });
+}
+
+void OrderImbalanceIndicatorTableModel::on_expiration_timeout() {
+
 }
 
 void OrderImbalanceIndicatorTableModel::on_imbalance(
     const Nexus::OrderImbalance& imbalance) {
-  if(auto existing_imbalance = m_imbalances.find(imbalance.m_security);
-      existing_imbalance != m_imbalances.end()) {
-    if(existing_imbalance->second.m_imbalance.m_timestamp <
+  auto& current_imbalance = m_imbalances[imbalance.m_security];
+  if(current_imbalance.m_imbalance != OrderImbalance()) {
+    if(current_imbalance.m_imbalance.m_timestamp <
       imbalance.m_timestamp) {
-      existing_imbalance->second.m_imbalance = imbalance;
-      set_row(existing_imbalance->second.m_row_index, imbalance);
+      current_imbalance.m_imbalance = imbalance;
+      set_row(current_imbalance.m_row_index, imbalance);
     }
   } else {
-    m_imbalances.insert({imbalance.m_security, {get_row_size(), imbalance}});
+    current_imbalance = {get_row_size(), imbalance};
     m_table_model.push(make_row(imbalance));
   }
 }
 
 void OrderImbalanceIndicatorTableModel::on_load(
     const std::vector<OrderImbalance>& imbalances) {
-  for(const auto& imbalance : imbalances) {
-    on_imbalance(imbalance);
-  }
+  m_table_model.transact([&] {
+    // TODO: works for now, improve
+    auto current = std::unordered_set<Security>();
+    for(auto& imbalance : imbalances) {
+      current.insert(imbalance.m_security);
+      on_imbalance(imbalance);
+    }
+    auto removed_rows = 0;
+    std::erase_if(m_imbalances, [&] (const auto& imbalance) {
+      auto& current_imbalance = m_imbalances[imbalance.first];
+      if(!current.contains(current_imbalance.m_imbalance.m_security)) {
+        m_table_model.remove(current_imbalance.m_row_index - removed_rows);
+        ++removed_rows;
+        return true;
+      }
+      current_imbalance.m_row_index -= removed_rows;
+      return false;
+    });
+  });
 }
