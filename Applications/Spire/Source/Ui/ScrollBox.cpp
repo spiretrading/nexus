@@ -216,20 +216,16 @@ bool ScrollBox::eventFilter(QObject* watched, QEvent* event) {
   if(watched == m_viewport) {
     if(event->type() == QEvent::Resize ||
         event->type() == QEvent::LayoutRequest) {
-      m_viewport->updateGeometry();
       update_layout();
     }
-    return QWidget::eventFilter(watched, event);
-  }
-  if(watched != m_body) {
-    if(event->type() == QEvent::Show || event->type() == QEvent::Hide) {
-      update_ranges();
-    }
-  }
-  if(watched != m_viewport) {
+  } else if(watched == m_body) {
     if(event->type() == QEvent::Resize) {
       update_ranges();
+    } else if(event->type() == QEvent::LayoutRequest) {
+      update_layout();
     }
+  } else if(event->type() == QEvent::Show || event->type() == QEvent::Hide) {
+    update_ranges();
   }
   return QWidget::eventFilter(watched, event);
 }
@@ -413,7 +409,6 @@ void ScrollBox::update_layout() {
   }();
   if(body_size != m_body->size()) {
     m_body->resize(body_size);
-    update_layout();
     return;
   }
   if(m_vertical_display_policy == DisplayPolicy::ON_OVERFLOW &&

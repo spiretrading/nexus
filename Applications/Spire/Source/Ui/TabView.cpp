@@ -17,7 +17,6 @@ struct Tab : QWidget {
     setMinimumWidth(scale_width(54));
     setMaximumWidth(scale_width(160));
     auto label = new ResponsiveLabel(std::move(labels));
-    label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     update_style(*label, [] (auto& style) {
       style.get(Any()).
         set(PaddingLeft(scale_width(8))).
@@ -28,15 +27,12 @@ struct Tab : QWidget {
     divider->setFixedSize(scale(1, 14));
     adopt(*this, *divider, TabView::Divider());
     auto body = new QWidget();
-    body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     auto body_layout = new QHBoxLayout(body);
     body_layout->setSpacing(0);
     body_layout->setContentsMargins({});
     body_layout->addWidget(label);
     body_layout->addWidget(divider, 0, Qt::AlignVCenter);
     auto box = new Box(body);
-    box->setSizePolicy(
-      QSizePolicy::Expanding, box->sizePolicy().verticalPolicy());
     auto layout = new QHBoxLayout(this);
     layout->setSpacing(0);
     layout->setContentsMargins({});
@@ -67,8 +63,6 @@ TabView::TabView(QWidget* parent)
     });
   auto scrollable_list_box = new ScrollableListBox(*m_tab_list);
   scrollable_list_box->setFixedHeight(scale_height(26));
-  scrollable_list_box->setSizePolicy(
-    QSizePolicy::Expanding, QSizePolicy::Fixed);
   update_style(*scrollable_list_box, [] (auto& style) {
     style.get(Any()).
       set(BackgroundColor(QColor(0xEBEBEB))).
