@@ -64,8 +64,8 @@ ScrollBox::ScrollBox(QWidget* body, QWidget* parent)
       m_vertical_display_policy(DisplayPolicy::ON_OVERFLOW),
       m_border_styles([=] { commit_border_styles(); }),
       m_padding_styles([=] { commit_padding_styles(); }) {
+  setFocusPolicy(Qt::StrongFocus);
   setObjectName(QString("0x%1").arg(reinterpret_cast<std::intptr_t>(this)));
-  auto layers = new LayeredWidget();
   m_viewport = new QWidget();
   m_viewport->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_viewport->setObjectName(
@@ -73,6 +73,7 @@ ScrollBox::ScrollBox(QWidget* body, QWidget* parent)
   m_viewport->installEventFilter(this);
   m_body->installEventFilter(this);
   m_body->setParent(m_viewport);
+  auto layers = new LayeredWidget();
   layers->add(m_viewport);
   m_scrollable_layer = new ScrollableLayer();
   m_scrollable_layer->setSizePolicy(
@@ -86,11 +87,9 @@ ScrollBox::ScrollBox(QWidget* body, QWidget* parent)
   m_scrollable_layer->get_horizontal_scroll_bar().installEventFilter(this);
   m_scrollable_layer->get_vertical_scroll_bar().installEventFilter(this);
   layers->add(m_scrollable_layer);
-  auto layout = new QHBoxLayout();
+  auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   layout->addWidget(layers);
-  setLayout(layout);
-  setFocusPolicy(Qt::StrongFocus);
   update_ranges();
   m_style_connection = connect_style_signal(*this, [=] { on_style(); });
 }

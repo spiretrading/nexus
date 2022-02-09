@@ -1,5 +1,6 @@
 #include "Spire/Ui/TabView.hpp"
 #include <QHBoxLayout>
+#include <QResizeEvent>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
@@ -16,6 +17,7 @@ struct Tab : QWidget {
   Tab(std::shared_ptr<ListModel<QString>> labels) {
     setMinimumWidth(scale_width(54));
     setMaximumWidth(scale_width(160));
+    setFixedHeight(scale_height(26));
     auto label = new ResponsiveLabel(std::move(labels));
     update_style(*label, [] (auto& style) {
       style.get(Any()).
@@ -27,6 +29,7 @@ struct Tab : QWidget {
     divider->setFixedSize(scale(1, 14));
     adopt(*this, *divider, TabView::Divider());
     auto body = new QWidget();
+    body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     auto body_layout = new QHBoxLayout(body);
     body_layout->setSpacing(0);
     body_layout->setContentsMargins({});
@@ -61,13 +64,15 @@ TabView::TabView(QWidget* parent)
       }
       return tab;
     });
-  auto scrollable_list_box = new ScrollableListBox(*m_tab_list);
-  scrollable_list_box->setFixedHeight(scale_height(26));
-  update_style(*scrollable_list_box, [] (auto& style) {
-    style.get(Any()).
-      set(BackgroundColor(QColor(0xEBEBEB))).
-      set(border_size(0));
-  });
+  m_tab_list->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+  m_tab_list->setFixedHeight(scale_height(26));
+//  auto scrollable_list_box = new ScrollableListBox(*m_tab_list);
+//  scrollable_list_box->setFixedHeight(scale_height(26));
+//  update_style(*scrollable_list_box, [] (auto& style) {
+//    style.get(Any()).
+//      set(BackgroundColor(QColor(0xEBEBEB))).
+//      set(border_size(0));
+//  });
   update_style(*m_tab_list, [] (auto& style) {
     style.get(Any()).
       set(Qt::Orientation::Horizontal).
@@ -92,7 +97,8 @@ TabView::TabView(QWidget* parent)
   auto layout = new QVBoxLayout(this);
   layout->setSpacing(0);
   layout->setContentsMargins({});
-  layout->addWidget(scrollable_list_box);
+  layout->addWidget(m_tab_list);
+//  layout->addWidget(scrollable_list_box);
   m_tab_list->get_current()->connect_update_signal(
     std::bind_front(&TabView::on_current, this));
 }
