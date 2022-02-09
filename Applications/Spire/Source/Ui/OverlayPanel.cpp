@@ -45,6 +45,55 @@ namespace {
   }
 }
 
+class OverlayPanel::ParentMoveObserver : public QObject {
+  public:
+    using MoveSignal = Signal<void()>;
+
+    ParentMoveObserver(QWidget& widget) {
+      install_parent_event_filter(widget);
+    }
+
+    ~ParentMoveObserver() {
+      for(auto parent : m_parents) {
+        parent->removeEventFilter(this);
+      }
+    }
+
+    connection connect_move_signal(const MoveSignal::slot_type& slot) const {
+      return m_move_signal.connect(slot);
+    }
+
+    bool eventFilter(QObject* watched, QEvent* event) override {
+      if(event->type() == QEvent::Move) {
+        m_move_signal();
+      } else if(event->type() == QEvent::ParentChange) {
+        auto i = std::find(m_parents.begin(), m_parents.end(), watched);
+        auto j = std::next(i, 1);
+        while(j != m_parents.end()) {
+          (*j)->removeEventFilter(this);
+          j = m_parents.erase(j);
+        }
+        if(i != m_parents.end()) {
+          install_parent_event_filter(*(*i));
+        }
+      }
+      return QObject::eventFilter(watched, event);
+    }
+
+  private:
+    mutable MoveSignal m_move_signal;
+    std::list<QWidget*> m_parents;
+
+    void install_parent_event_filter(const QWidget& widget) {
+      auto parent = widget.parentWidget();
+      while(parent) {
+        m_parents.push_back(parent);
+        parent->installEventFilter(this);
+        parent = parent->parentWidget();
+      }
+    }
+};
+
 OverlayPanel::OverlayPanel(QWidget& body, QWidget& parent)
     : QWidget(&parent,
         Qt::Tool | Qt::FramelessWindowHint | Qt::NoDropShadowWindowHint),
@@ -54,7 +103,7 @@ OverlayPanel::OverlayPanel(QWidget& body, QWidget& parent)
       m_was_activated(false),
       m_positioning(Positioning::PARENT),
       m_focus_observer(*this),
-      m_window_observer(parent),
+      m_parent_move_observer(std::make_unique<ParentMoveObserver>(*this)),
       m_parent_focus_observer(parent) {
   setAttribute(Qt::WA_TranslucentBackground);
   setAttribute(Qt::WA_QuitOnClose);
@@ -77,13 +126,10 @@ OverlayPanel::OverlayPanel(QWidget& body, QWidget& parent)
     std::bind_front(&OverlayPanel::on_focus, this));
   m_parent_focus_connection = m_parent_focus_observer.connect_state_signal(
     std::bind_front(&OverlayPanel::on_parent_focus, this));
-  m_window = m_window_observer.get_window();
-  if(m_window) {
-    m_window->installEventFilter(this);
-  }
-  m_window_observer.connect_window_signal(
-    std::bind_front(&OverlayPanel::on_window, this));
+  m_parent_move_observer->connect_move_signal(
+    std::bind_front(&OverlayPanel::on_parent_move, this));
   m_body->installEventFilter(this);
+  parent.installEventFilter(this);
 }
 
 const QWidget& OverlayPanel::get_body() const {
@@ -116,6 +162,15 @@ OverlayPanel::Positioning OverlayPanel::get_positioning() const {
 
 void OverlayPanel::set_positioning(Positioning positioning) {
   m_positioning = positioning;
+  if(m_positioning == Positioning::PARENT) {
+    if(!m_parent_move_observer) {
+      m_parent_move_observer = std::make_unique<ParentMoveObserver>(*this);
+      parentWidget()->installEventFilter(this);
+    }
+  } else if(m_parent_move_observer) {
+    m_parent_move_observer.reset();
+    parentWidget()->removeEventFilter(this);
+  }
 }
 
 bool OverlayPanel::eventFilter(QObject* watched, QEvent* event) {
@@ -130,11 +185,9 @@ bool OverlayPanel::eventFilter(QObject* watched, QEvent* event) {
         move(pos() + (mouse_event.pos() - m_mouse_pressed_position));
       }
     }
-  } else if(watched == m_window) {
-    if(event->type() == QEvent::Move || event->type() == QEvent::Resize) {
-      if(isVisible()) {
-        position();
-      }
+  } else if(watched == parentWidget() && event->type() == QEvent::Resize) {
+    if(isVisible()) {
+      position();
     }
   }
   return QWidget::eventFilter(watched, event);
@@ -215,10 +268,10 @@ void OverlayPanel::on_parent_focus(FocusObserver::State state) {
   }
 }
 
-void OverlayPanel::on_window(QWidget* window) {
-  m_window->removeEventFilter(this);
-  m_window = window;
-  m_window->installEventFilter(this);
+void OverlayPanel::on_parent_move() {
+  if(isVisible()) {
+    position();
+  }
 }
 
 void OverlayPanel::update_mask() {

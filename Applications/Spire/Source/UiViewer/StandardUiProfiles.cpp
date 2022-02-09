@@ -2263,6 +2263,7 @@ UiProfile Spire::make_order_type_filter_panel_profile() {
 
 UiProfile Spire::make_overlay_panel_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
   properties.push_back(make_standard_property("close-on-focus-out", false));
   properties.push_back(make_standard_property("draggable", true));
   auto positioning_property = define_enum<OverlayPanel::Positioning>(
@@ -2277,6 +2278,7 @@ UiProfile Spire::make_overlay_panel_profile() {
     auto& positioning =
       get<OverlayPanel::Positioning>("positioning", profile.get_properties());
     auto button = make_label_button("Click me");
+    apply_widget_properties(button, profile.get_properties());
     auto panel = QPointer<OverlayPanel>();
     button->connect_clicked_signal(
       [=, &profile, &close_on_focus_out, &draggable, &positioning]
