@@ -102,7 +102,7 @@ TitleBar::TitleBar(QImage icon, QWidget* parent)
   m_container_layout->addWidget(m_close_button);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
-  layout->addWidget(new Box(container, this));
+  layout->addWidget(new Box(container));
   set_icon(icon);
   connect_window_signals();
 }

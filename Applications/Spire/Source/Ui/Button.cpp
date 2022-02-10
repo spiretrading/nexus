@@ -104,7 +104,7 @@ Button* Spire::make_icon_button(QImage icon, QWidget* parent) {
 
 Button* Spire::make_icon_button(QImage icon, QString tooltip_text,
     QWidget* parent) {
-  auto button_icon = new Icon(icon, parent);
+  auto button_icon = new Icon(icon);
   button_icon->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto button = new Button(new Box(button_icon), parent);
   auto tooltip = new Tooltip(tooltip_text, button);

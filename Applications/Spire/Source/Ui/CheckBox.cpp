@@ -73,7 +73,7 @@ CheckBox::CheckBox(std::shared_ptr<BooleanModel> current, QWidget* parent)
   body_layout->setSpacing(0);
   auto check = new Icon(CHECK_ICON(), parent);
   check->setFocusPolicy(Qt::NoFocus);
-  auto check_box = new Box(check, this);
+  auto check_box = new Box(check);
   check_box->setFixedSize(scale(16, 16));
   body_layout->addWidget(check_box);
   m_label = make_label("", this);

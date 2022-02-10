@@ -67,7 +67,7 @@ SearchBox::SearchBox(std::shared_ptr<TextModel> model, QWidget* parent)
   m_delete_button->setFocusPolicy(Qt::NoFocus);
   m_delete_button->hide();
   container_layout->addWidget(m_delete_button);
-  auto box = new Box(container, this);
+  auto box = new Box(container);
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   layout->addWidget(box);

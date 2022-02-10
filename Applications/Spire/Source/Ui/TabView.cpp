@@ -18,6 +18,7 @@ struct Tab : QWidget {
     setMinimumWidth(scale_width(54));
     setMaximumWidth(scale_width(160));
     setFixedHeight(scale_height(26));
+    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     auto label = new ResponsiveLabel(std::move(labels));
     update_style(*label, [] (auto& style) {
       style.get(Any()).

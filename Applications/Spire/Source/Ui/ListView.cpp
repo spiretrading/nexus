@@ -495,11 +495,11 @@ void ListView::update_layout() {
   while(auto item = body_layout.takeAt(body_layout.count() - 1)) {
     delete item;
   }
-  auto direction = [&] {
+  auto [direction, alignment] = [&] {
     if(m_direction == Qt::Orientation::Horizontal) {
-      return QBoxLayout::TopToBottom;
+      return std::tuple(QBoxLayout::TopToBottom, Qt::AlignLeft);
     }
-    return QBoxLayout::LeftToRight;
+    return std::tuple(QBoxLayout::LeftToRight, Qt::AlignTop);
   }();
   body_layout.setDirection(direction);
   body_layout.setSpacing(m_overflow_gap);
@@ -517,6 +517,7 @@ void ListView::update_layout() {
     auto inner_layout = new QBoxLayout(reverse(direction));
     inner_layout->setContentsMargins({});
     inner_layout->setSpacing(m_item_gap);
+    inner_layout->setAlignment(alignment);
     while(i != m_items.end()) {
       auto item_size = [&] {
         if(m_direction == Qt::Orientation::Horizontal) {
@@ -531,17 +532,13 @@ void ListView::update_layout() {
       }
       remaining_size -= inner_layout->spacing();
       if(m_direction == Qt::Orientation::Horizontal) {
-        (*i)->m_item->setSizePolicy(
-          QSizePolicy::Preferred, QSizePolicy::Expanding);
+        (*i)->m_item->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
       } else {
-        (*i)->m_item->setSizePolicy(
-          QSizePolicy::Expanding, QSizePolicy::Preferred);
+        (*i)->m_item->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
       }
       inner_layout->addWidget((*i)->m_item);
       ++i;
     }
-    inner_layout->addSpacerItem(
-      new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding));
     body_layout.addLayout(inner_layout);
   }
 }

@@ -8,6 +8,13 @@ using namespace boost;
 using namespace Spire;
 using namespace Spire::Styles;
 
+namespace {
+  bool is_set(Box::Fit a, Box::Fit b) {
+    return (std::underlying_type_t<Box::Fit>(a) &
+      std::underlying_type_t<Box::Fit>(b)) != 0;
+  }
+}
+
 BorderSize Spire::Styles::border_size(Expression<int> size) {
   return BorderSize(size, size, size, size);
 }
@@ -38,8 +45,12 @@ Padding Spire::Styles::padding(int size) {
 }
 
 Box::Box(QWidget* body, QWidget* parent)
+  : Box(body, Fit::NONE, parent) {}
+
+Box::Box(QWidget* body, Fit fit, QWidget* parent)
     : QWidget(parent),
-      m_body(body) {
+      m_body(body),
+      m_fit(fit) {
   if(m_body) {
     m_container = new QWidget(this);
     auto layout = new QHBoxLayout(m_container);
@@ -47,6 +58,12 @@ Box::Box(QWidget* body, QWidget* parent)
     layout->addWidget(m_body);
     layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
     setFocusProxy(m_body);
+    if(is_set(m_fit, Fit::WIDTH)) {
+      setMinimumWidth(m_body->minimumWidth());
+    }
+    if(is_set(m_fit, Fit::HEIGHT)) {
+      setMinimumHeight(m_body->minimumHeight());
+    }
   } else {
     m_container = nullptr;
   }
@@ -145,6 +162,15 @@ bool Box::event(QEvent* event) {
   if(event->type() == QEvent::LayoutRequest) {
     m_minimum_size_hint = none;
     m_size_hint = none;
+    if(is_set(m_fit, Fit::WIDTH)) {
+      setMinimumWidth(m_body->minimumWidth());
+    }
+    if(is_set(m_fit, Fit::HEIGHT)) {
+      setMinimumHeight(m_body->minimumHeight());
+    }
+    if(m_fit == Fit::NONE) {
+      updateGeometry();
+    }
   }
   return QWidget::event(event);
 }
