@@ -92,6 +92,11 @@ namespace Spire {
   };
 
   /**
+   * Returns the size of the styling (padding/borders) surrounding the content.
+   */
+  QSize get_styling_size(const BoxGeometry& geometry);
+
+  /**
    * Applies a style Property to a BoxGeometry.
    * @param property The property to apply.
    * @param geometry The BoxGeometry to apply the <i>property</i> to.

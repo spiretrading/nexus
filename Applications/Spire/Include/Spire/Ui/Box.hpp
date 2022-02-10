@@ -66,6 +66,7 @@ namespace Spire {
       mutable boost::optional<QSize> m_minimum_size_hint;
       mutable boost::optional<QSize> m_size_hint;
 
+      void update_fit();
       void on_style();
   };
 

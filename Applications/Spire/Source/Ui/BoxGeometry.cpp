@@ -115,6 +115,10 @@ void BoxGeometry::set_size(QSize size) {
   m_content_area.setBottom(m_padding_area.bottom() - bottom_padding);
 }
 
+QSize Spire::get_styling_size(const BoxGeometry& geometry) {
+  return geometry.get_geometry().size() - geometry.get_content_area().size();
+}
+
 void Spire::apply(
     const Property& property, BoxGeometry& geometry, Stylist& stylist) {
   property.visit(
