@@ -43,6 +43,8 @@ namespace {
 
   auto WINDOW_BUTTON_STYLE() {
     auto style = StyleSheet();
+    style.get(Any() / Body()).
+      set(BackgroundColor(QColor(0xF5F5F5)));
     style.get(Any() >> is_a<Icon>()).
       set(Fill(QColor(Qt::black)));
     style.get(!Active() >> is_a<Icon>()).

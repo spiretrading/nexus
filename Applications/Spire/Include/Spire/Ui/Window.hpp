@@ -39,12 +39,11 @@ namespace Spire {
        */
       void set_body(QWidget* body);
 
-      void changeEvent(QEvent* event) override;
       void closeEvent(QCloseEvent* event) override;
       bool event(QEvent* event) override;
       bool eventFilter(QObject* watched, QEvent* event) override;
-      bool nativeEvent(const QByteArray& eventType, void* message,
-        long* result) override;
+      bool nativeEvent(
+        const QByteArray& eventType, void* message, long* result) override;
 
     private:
       mutable ClosedSignal m_closed_signal;
