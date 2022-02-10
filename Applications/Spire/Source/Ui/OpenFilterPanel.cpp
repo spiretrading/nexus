@@ -29,16 +29,15 @@ namespace {
     return style;
   }
 
-  auto LIST_ITEM_STYLE() {
-    auto style = StyleSheet();
-    style.get((Any() || Hover() || Press() || Focus() || Selected())).
+  auto LIST_VIEW_STYLE(StyleSheet style) {
+    style.get(Any() >> is_a<ListItem>()).
       set(BackgroundColor(QColor(0xFFFFFF))).
       set(border_size(0)).
       set(PaddingRight(scale_width(10)));
     return style;
   }
 
-  auto display_text(OpenFilterPanel::Mode mode) {
+  auto& display_text(OpenFilterPanel::Mode mode) {
     if(mode == OpenFilterPanel::Mode::INCLUDE) {
       static const auto value = QObject::tr("Include");
       return value;
@@ -51,7 +50,7 @@ namespace {
 
 class DeletableItem : public QWidget {
   public:
-    using DeleteSignal = Signal<void()>;
+    using DeleteSignal = Signal<void ()>;
 
     explicit DeletableItem(QString label, QWidget* parent = nullptr)
         : QWidget(parent) {
@@ -103,8 +102,7 @@ struct ComboBoxFilterQueryModel : ComboBox::QueryModel {
       return value;
     }
     if(m_matches_set.contains(displayTextAny(value))) {
-      static auto result = std::any();
-      return result;
+      return std::any();
     }
     return value;
   }
@@ -118,7 +116,7 @@ struct ComboBoxFilterQueryModel : ComboBox::QueryModel {
           return std::vector<std::any>();
         }
       }();
-      std::erase_if(result, [=] (const auto& value) {
+      std::erase_if(result, [&] (const auto& value) {
         return m_matches_set.contains(displayTextAny(value));
       });
       return result;
@@ -178,7 +176,7 @@ class OpenFilterPanel::FilterModeButtonGroup {
       }
     }
 
-    void on_model_update(const Mode mode) {
+    void on_model_update(Mode mode) {
       m_current->set(mode);
     }
 
@@ -200,19 +198,15 @@ class OpenFilterPanel::FilterModeButtonGroup {
 
 AnyInputBox* combo_box_builder(std::shared_ptr<ComboBox::QueryModel> model,
     std::shared_ptr<AnyListModel> matches) {
-  matches->connect_operation_signal(
-    [=] (const AnyListModel::Operation& operation) {
-      visit(operation,
-        [&] (const AnyListModel::AddOperation& operation) {
-          matches->set(operation.m_index,
-            any_cast<std::any>(std::any_cast<AnyRef>(
-              matches->get(operation.m_index))));
-        });
-    });
   auto box = new ComboBox(
     std::make_shared<ComboBoxFilterQueryModel>(model, matches));
   box->set_placeholder(QObject::tr("Type here"));
-  return new AnyInputBox(*box);
+  auto input_box = new AnyInputBox(*box);
+  input_box->connect_submit_signal([=] (const auto& submission) {
+    input_box->get_current()->set(std::any());
+    matches->push(any_cast<std::any>(submission));
+  });
+  return input_box;
 }
 
 OpenFilterPanel::OpenFilterPanel(
@@ -253,14 +247,13 @@ OpenFilterPanel::OpenFilterPanel(InputBoxBuilder input_box_builder,
   layout->addLayout(mode_layout);
   layout->addSpacing(scale_height(18));
   m_input_box = input_box_builder(m_matches);
-  m_input_box->connect_submit_signal(
-    std::bind_front(&OpenFilterPanel::on_input_box_submission, this));
   layout->addWidget(m_input_box);
   layout->addSpacing(scale_height(8));
   m_list_view = new ListView(m_matches,
     std::bind_front(&OpenFilterPanel::make_item, this));
-  m_list_view->get_current()->connect_update_signal(
-    std::bind_front(&OpenFilterPanel::on_list_view_current, this));
+  update_style(*m_list_view, [] (auto& style) {
+    style = LIST_VIEW_STYLE(style);
+  });
   m_matches_connection = m_matches->connect_operation_signal(
     std::bind_front(&OpenFilterPanel::on_matches_operation, this));
   auto scrollable_list_box = new ScrollableListBox(*m_list_view);
@@ -329,15 +322,6 @@ QWidget* OpenFilterPanel::make_item(const std::shared_ptr<AnyListModel>& model,
   return item;
 }
 
-void OpenFilterPanel::on_input_box_submission(const AnyRef& submission) {
-  m_input_box->get_current()->set({});
-  m_matches->push(submission);
-}
-
-void OpenFilterPanel::on_list_view_current(const optional<int>& current) {
-  m_list_view->setFocusPolicy(Qt::NoFocus);
-}
-
 void OpenFilterPanel::on_mode_current(Mode mode) {
   submit();
 }
@@ -346,9 +330,6 @@ void OpenFilterPanel::on_matches_operation(
     const AnyListModel::Operation& operation) {
   visit(operation,
     [&] (const AnyListModel::AddOperation& operation) {
-      auto item = m_list_view->get_list_item(operation.m_index);
-      set_style(*item, LIST_ITEM_STYLE());
-      item->setFocusPolicy(Qt::NoFocus);
       submit();
     },
     [&] (const AnyListModel::RemoveOperation& operation) {
@@ -363,7 +344,6 @@ void OpenFilterPanel::on_reset() {
   }
   auto mode_blocker = shared_connection_block(m_mode_connection);
   m_mode_button_group->get_model()->set(Mode::INCLUDE);
-  m_input_box->get_current()->set({});
   m_input_box->setFocus();
   submit();
 }
