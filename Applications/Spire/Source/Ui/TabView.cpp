@@ -97,6 +97,7 @@ TabView::TabView(QWidget* parent)
   auto layout = new QVBoxLayout(this);
   layout->setSpacing(0);
   layout->setContentsMargins({});
+  layout->setAlignment(Qt::AlignTop);
   layout->addWidget(m_tab_list);
 //  layout->addWidget(scrollable_list_box);
   m_tab_list->get_current()->connect_update_signal(
