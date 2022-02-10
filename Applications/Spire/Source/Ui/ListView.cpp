@@ -86,7 +86,7 @@ ListView::ListView(
   setFocusPolicy(Qt::StrongFocus);
   for(auto i = 0; i < m_list->get_size(); ++i) {
     auto item = new ListItem(*m_view_builder(m_list, i));
-    m_items.emplace_back(new ItemEntry{item, i, false});
+    m_items.emplace_back(new ItemEntry(item, i, false));
     m_items.back()->m_connection =
       item->connect_submit_signal([=, item = m_items.back().get()] {
         on_item_submitted(*item);
@@ -407,7 +407,7 @@ void ListView::update_focus(optional<int> current) {
 
 void ListView::add_item(int index) {
   auto item = new ListItem(*m_view_builder(m_list, index));
-  m_items.emplace(m_items.begin() + index, new ItemEntry{item, index, false});
+  m_items.emplace(m_items.begin() + index, new ItemEntry(item, index, false));
   m_items[index]->m_connection = item->connect_submit_signal(
     [=, item = m_items[index].get()] {
       on_item_submitted(*item);
@@ -499,16 +499,16 @@ void ListView::move_item(int source, int destination) {
 
 void ListView::update_layout() {
   auto& body = *m_box->get_body();
-  if((m_direction == Qt::Orientation::Horizontal && m_overflow ==
+  if(m_direction == Qt::Orientation::Horizontal && m_overflow ==
       Overflow::NONE || m_direction == Qt::Orientation::Vertical &&
-      m_overflow == Overflow::WRAP)) {
-    if(body.sizePolicy() !=
-        QSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding)) {
+      m_overflow == Overflow::WRAP) {
+    if(body.sizePolicy().horizontalPolicy() != QSizePolicy::Preferred ||
+        body.sizePolicy().verticalPolicy() != QSizePolicy::Expanding) {
       body.setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
       body.updateGeometry();
     }
-  } else if(body.sizePolicy() !=
-      QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred)) {
+  } else if(body.sizePolicy().horizontalPolicy() != QSizePolicy::Expanding ||
+      body.sizePolicy().verticalPolicy() != QSizePolicy::Preferred) {
     body.setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     body.updateGeometry();
   }

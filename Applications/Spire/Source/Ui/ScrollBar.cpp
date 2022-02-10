@@ -92,6 +92,9 @@ ScrollBar::Range ScrollBar::get_range() const {
 }
 
 void ScrollBar::set_range(const Range& range) {
+  if(range == m_range) {
+    return;
+  }
   m_range = range;
   if(m_position < m_range.m_start) {
     set_position(m_range.m_start);

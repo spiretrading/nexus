@@ -74,29 +74,27 @@ void ScrollableListBox::on_list_view_style() {
         });
       });
   }
-  auto size_policy = [&] {
-    auto horizontal_policy = [&] {
-      if(direction == Qt::Orientation::Horizontal) {
-        if(overflow == Overflow::NONE) {
-          return QSizePolicy::Fixed;
-        }
-        return QSizePolicy::Expanding;
+  auto horizontal_policy = [&] {
+    if(direction == Qt::Orientation::Horizontal) {
+      if(overflow == Overflow::NONE) {
+        return QSizePolicy::Fixed;
       }
-      return QSizePolicy::MinimumExpanding;
-    }();
-    auto vertical_policy = [&] {
-      if(direction == Qt::Orientation::Vertical) {
-        if(overflow == Overflow::NONE) {
-          return QSizePolicy::Fixed;
-        }
-        return QSizePolicy::Expanding;
-      }
-      return QSizePolicy::MinimumExpanding;
-    }();
-    return QSizePolicy(horizontal_policy, vertical_policy);
+      return QSizePolicy::Expanding;
+    }
+    return QSizePolicy::MinimumExpanding;
   }();
-  if(size_policy != m_list_view->sizePolicy()) {
-    m_list_view->setSizePolicy(size_policy);
+  auto vertical_policy = [&] {
+    if(direction == Qt::Orientation::Vertical) {
+      if(overflow == Overflow::NONE) {
+        return QSizePolicy::Fixed;
+      }
+      return QSizePolicy::Expanding;
+    }
+    return QSizePolicy::MinimumExpanding;
+  }();
+  if(m_list_view->sizePolicy().horizontalPolicy() != horizontal_policy ||
+      m_list_view->sizePolicy().verticalPolicy() != vertical_policy) {
+    m_list_view->setSizePolicy(horizontal_policy, vertical_policy);
     m_list_view->updateGeometry();
   }
 }

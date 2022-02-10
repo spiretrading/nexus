@@ -66,13 +66,12 @@ TabView::TabView(QWidget* parent)
       return tab;
     });
   m_tab_list->set_item_size_policy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-//  auto scrollable_list_box = new ScrollableListBox(*m_tab_list);
-//  scrollable_list_box->setFixedHeight(scale_height(26));
-//  update_style(*scrollable_list_box, [] (auto& style) {
-//    style.get(Any()).
-//      set(BackgroundColor(QColor(0xEBEBEB))).
-//      set(border_size(0));
-//  });
+  auto scrollable_list_box = new ScrollableListBox(*m_tab_list);
+  update_style(*scrollable_list_box, [] (auto& style) {
+    style.get(Any()).
+      set(BackgroundColor(QColor(0xEBEBEB))).
+      set(border_size(0));
+  });
   update_style(*m_tab_list, [] (auto& style) {
     style.get(Any()).
       set(Qt::Orientation::Horizontal).
@@ -98,8 +97,7 @@ TabView::TabView(QWidget* parent)
   layout->setSpacing(0);
   layout->setContentsMargins({});
   layout->setAlignment(Qt::AlignTop);
-  layout->addWidget(m_tab_list);
-//  layout->addWidget(scrollable_list_box);
+  layout->addWidget(scrollable_list_box);
   m_tab_list->get_current()->connect_update_signal(
     std::bind_front(&TabView::on_current, this));
 }

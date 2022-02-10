@@ -21,6 +21,8 @@ namespace Spire {
 
         /** The end of the scrollable range. */
         int m_end;
+
+        bool operator ==(const Range&) const = default;
       };
 
       /**

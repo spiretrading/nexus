@@ -55,6 +55,26 @@ namespace {
     }
     return 0;
   }
+
+  struct Viewport : QWidget {
+    QWidget* m_body;
+
+    Viewport(QWidget& body)
+        : m_body(&body) {
+      m_body->setParent(this);
+    }
+
+    QSize sizeHint() const override {
+      return m_body->sizeHint();
+    }
+
+    bool event(QEvent* event) override {
+      if(event->type() == QEvent::LayoutRequest) {
+        updateGeometry();
+      }
+      return QWidget::event(event);
+    }
+  };
 }
 
 ScrollBox::ScrollBox(QWidget* body, QWidget* parent)
@@ -66,13 +86,11 @@ ScrollBox::ScrollBox(QWidget* body, QWidget* parent)
       m_padding_styles([=] { commit_padding_styles(); }) {
   setFocusPolicy(Qt::StrongFocus);
   setObjectName(QString("0x%1").arg(reinterpret_cast<std::intptr_t>(this)));
-  m_viewport = new QWidget();
+  m_viewport = new Viewport(*m_body);
   m_viewport->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_viewport->setObjectName(
     QString("0x%1").arg(reinterpret_cast<std::intptr_t>(m_viewport)));
-  m_viewport->installEventFilter(this);
   m_body->installEventFilter(this);
-  m_body->setParent(m_viewport);
   auto layers = new LayeredWidget();
   layers->add(m_viewport);
   m_scrollable_layer = new ScrollableLayer();
@@ -212,11 +230,7 @@ QSize ScrollBox::sizeHint() const {
 }
 
 bool ScrollBox::eventFilter(QObject* watched, QEvent* event) {
-  if(watched == m_viewport) {
-    if(event->type() == QEvent::LayoutRequest) {
-      update_ranges();
-    }
-  } else if(watched == m_body) {
+  if(watched == m_body) {
     if(event->type() == QEvent::Resize) {
       update_ranges();
     }
@@ -224,6 +238,13 @@ bool ScrollBox::eventFilter(QObject* watched, QEvent* event) {
     update_ranges();
   }
   return QWidget::eventFilter(watched, event);
+}
+
+bool ScrollBox::event(QEvent* event) {
+  if(event->type() == QEvent::LayoutRequest) {
+    update_ranges();
+  }
+  return QWidget::event(event);
 }
 
 void ScrollBox::keyPressEvent(QKeyEvent* event) {
@@ -388,9 +409,13 @@ void ScrollBox::update_layout() {
   const auto EXPAND = QSizePolicy::GrowFlag | QSizePolicy::IgnoreFlag;
   if(!(m_body->sizePolicy().horizontalPolicy() & EXPAND)) {
     setMaximumWidth(contents_size.width() + scroll_bar_size.width());
+  } else {
+    setMaximumWidth(QWIDGETSIZE_MAX);
   }
   if(!(m_body->sizePolicy().verticalPolicy() & EXPAND)) {
     setMaximumHeight(contents_size.height() + scroll_bar_size.height());
+  } else {
+    setMaximumHeight(QWIDGETSIZE_MAX);
   }
   auto body_size = [&] {
     auto body_width = policyToSize(m_body->sizePolicy().horizontalPolicy(),
