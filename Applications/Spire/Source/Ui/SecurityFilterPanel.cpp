@@ -1,5 +1,4 @@
 #include "Spire/Ui/SecurityFilterPanel.hpp"
-#include <QHBoxLayout>
 #include "Nexus/Definitions/SecurityInfo.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"

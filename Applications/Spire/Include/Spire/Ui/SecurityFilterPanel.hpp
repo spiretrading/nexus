@@ -1,7 +1,6 @@
 #ifndef SPIRE_SECURITY_FILTER_PANEL_HPP
 #define SPIRE_SECURITY_FILTER_PANEL_HPP
 #include "Nexus/Definitions/Security.hpp"
-#include "Spire/Spire/ListModel.hpp"
 #include "Spire/Ui/OpenFilterPanel.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -61,10 +60,9 @@ namespace Spire {
 
     private:
       mutable SubmitSignal m_submit_signal;
-      OpenFilterPanel* m_panel;
-      QWidget* m_filter_panel;
       std::shared_ptr<ComboBox::QueryModel> m_query_model;
       std::shared_ptr<ListModel<Nexus::Security>> m_matches;
+      OpenFilterPanel* m_panel;
   };
 }
 
