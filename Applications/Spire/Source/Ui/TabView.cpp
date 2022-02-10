@@ -65,8 +65,7 @@ TabView::TabView(QWidget* parent)
       }
       return tab;
     });
-  m_tab_list->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-  m_tab_list->setFixedHeight(scale_height(26));
+  m_tab_list->set_item_size_policy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 //  auto scrollable_list_box = new ScrollableListBox(*m_tab_list);
 //  scrollable_list_box->setFixedHeight(scale_height(26));
 //  update_style(*scrollable_list_box, [] (auto& style) {

@@ -77,6 +77,8 @@ ListView::ListView(
       m_edge_navigation(EdgeNavigation::WRAP),
       m_overflow(Overflow::NONE),
       m_selection_mode(SelectionMode::SINGLE),
+      m_direction_policy(QSizePolicy::Fixed),
+      m_perpendicular_policy(QSizePolicy::Expanding),
       m_item_gap(DEFAULT_GAP),
       m_overflow_gap(DEFAULT_OVERFLOW_GAP),
       m_query_timer(new QTimer(this)),
@@ -137,6 +139,25 @@ ListItem* ListView::get_list_item(int index) {
     return nullptr;
   }
   return m_items[index]->m_item;
+}
+
+void ListView::set_direction_size_policy(QSizePolicy::Policy policy) {
+  set_item_size_policy(policy, m_perpendicular_policy);
+}
+
+void ListView::set_perpendicular_size_policy(QSizePolicy::Policy policy) {
+  set_item_size_policy(m_direction_policy, policy);
+}
+
+void ListView::set_item_size_policy(QSizePolicy::Policy direction_policy,
+    QSizePolicy::Policy perpendicular_policy) {
+  if(m_direction_policy == direction_policy &&
+      m_perpendicular_policy == perpendicular_policy) {
+    return;
+  }
+  m_direction_policy = direction_policy;
+  m_perpendicular_policy = perpendicular_policy;
+  update_layout();
 }
 
 connection ListView::connect_submit_signal(
@@ -532,9 +553,9 @@ void ListView::update_layout() {
       }
       remaining_size -= inner_layout->spacing();
       if(m_direction == Qt::Orientation::Horizontal) {
-        (*i)->m_item->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+        (*i)->m_item->setSizePolicy(m_direction_policy, m_perpendicular_policy);
       } else {
-        (*i)->m_item->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+        (*i)->m_item->setSizePolicy(m_perpendicular_policy, m_direction_policy);
       }
       inner_layout->addWidget((*i)->m_item);
       ++i;
