@@ -61,6 +61,8 @@ namespace {
 
     Viewport(QWidget& body)
         : m_body(&body) {
+      setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+      setObjectName(QString("0x%1").arg(reinterpret_cast<std::intptr_t>(this)));
       m_body->setParent(this);
     }
 
@@ -87,9 +89,6 @@ ScrollBox::ScrollBox(QWidget* body, QWidget* parent)
   setFocusPolicy(Qt::StrongFocus);
   setObjectName(QString("0x%1").arg(reinterpret_cast<std::intptr_t>(this)));
   m_viewport = new Viewport(*m_body);
-  m_viewport->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  m_viewport->setObjectName(
-    QString("0x%1").arg(reinterpret_cast<std::intptr_t>(m_viewport)));
   m_body->installEventFilter(this);
   auto layers = new LayeredWidget();
   layers->add(m_viewport);
@@ -213,16 +212,12 @@ void ScrollBox::scroll_to(const QWidget& widget) {
 QSize ScrollBox::sizeHint() const {
   auto size = m_body->sizeHint() + toSize(m_borders) + toSize(m_padding);
   if(m_vertical_display_policy == DisplayPolicy::ALWAYS ||
-      m_vertical_display_policy == DisplayPolicy::ON_ENGAGE ||
-      m_vertical_display_policy == DisplayPolicy::ON_OVERFLOW &&
-      !m_scrollable_layer->get_vertical_scroll_bar().isHidden()) {
+      m_vertical_display_policy == DisplayPolicy::ON_ENGAGE) {
     size.rwidth() +=
       m_scrollable_layer->get_vertical_scroll_bar().sizeHint().width();
   }
   if(m_horizontal_display_policy == DisplayPolicy::ALWAYS ||
-      m_horizontal_display_policy == DisplayPolicy::ON_ENGAGE ||
-      m_horizontal_display_policy == DisplayPolicy::ON_OVERFLOW &&
-      !m_scrollable_layer->get_horizontal_scroll_bar().isHidden()) {
+      m_horizontal_display_policy == DisplayPolicy::ON_ENGAGE) {
     size.rheight() +=
       m_scrollable_layer->get_horizontal_scroll_bar().sizeHint().height();
   }
@@ -408,12 +403,14 @@ void ScrollBox::update_layout() {
   auto contents_size = m_body->size() + toSize(m_borders) + padding;
   const auto EXPAND = QSizePolicy::GrowFlag | QSizePolicy::IgnoreFlag;
   if(!(m_body->sizePolicy().horizontalPolicy() & EXPAND)) {
-    setMaximumWidth(contents_size.width() + scroll_bar_size.width());
+    setMaximumWidth(std::min(
+      contents_size.width() + scroll_bar_size.width(), QWIDGETSIZE_MAX));
   } else {
     setMaximumWidth(QWIDGETSIZE_MAX);
   }
   if(!(m_body->sizePolicy().verticalPolicy() & EXPAND)) {
-    setMaximumHeight(contents_size.height() + scroll_bar_size.height());
+    setMaximumHeight(std::min(
+      contents_size.height() + scroll_bar_size.height(), QWIDGETSIZE_MAX));
   } else {
     setMaximumHeight(QWIDGETSIZE_MAX);
   }

@@ -136,13 +136,17 @@ void Box::update_fit() {
   }
   if(is_set(m_fit, Fit::WIDTH)) {
     auto styling_width = get_styling_size(m_geometry).width();
-    setMinimumWidth(m_body->minimumWidth() + styling_width);
-    setMaximumWidth(m_body->maximumWidth() + styling_width);
+    setMinimumWidth(
+      std::min(m_body->minimumWidth() + styling_width, QWIDGETSIZE_MAX));
+    setMaximumWidth(
+      std::min(m_body->maximumWidth() + styling_width, QWIDGETSIZE_MAX));
   }
   if(is_set(m_fit, Fit::HEIGHT)) {
     auto styling_height = get_styling_size(m_geometry).height();
-    setMinimumHeight(m_body->minimumHeight() + styling_height);
-    setMaximumHeight(m_body->maximumHeight() + styling_height);
+    setMinimumHeight(
+      std::min(m_body->minimumHeight() + styling_height, QWIDGETSIZE_MAX));
+    setMaximumHeight(
+      std::min(m_body->maximumHeight() + styling_height, QWIDGETSIZE_MAX));
   }
 }
 
