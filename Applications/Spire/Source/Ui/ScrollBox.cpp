@@ -213,15 +213,12 @@ QSize ScrollBox::sizeHint() const {
 
 bool ScrollBox::eventFilter(QObject* watched, QEvent* event) {
   if(watched == m_viewport) {
-    if(event->type() == QEvent::Resize ||
-        event->type() == QEvent::LayoutRequest) {
-      update_layout();
+    if(event->type() == QEvent::LayoutRequest) {
+      updateGeometry();
     }
   } else if(watched == m_body) {
     if(event->type() == QEvent::Resize) {
       update_ranges();
-    } else if(event->type() == QEvent::LayoutRequest) {
-      update_layout();
     }
   } else if(event->type() == QEvent::Show || event->type() == QEvent::Hide) {
     update_ranges();
