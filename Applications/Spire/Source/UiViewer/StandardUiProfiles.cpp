@@ -461,6 +461,39 @@ namespace {
     panel->show();
   }
 
+  std::shared_ptr<ComboBox::QueryModel> populate_security_query_model() {
+    auto security_infos = std::vector<SecurityInfo>();
+    security_infos.emplace_back(*ParseWildCardSecurity("MRU.TSX",
+      GetDefaultMarketDatabase(), GetDefaultCountryDatabase()),
+      "Metro Inc.", "", 0);
+    security_infos.emplace_back(*ParseWildCardSecurity("MG.TSX",
+      GetDefaultMarketDatabase(), GetDefaultCountryDatabase()),
+      "Magna International Inc.", "", 0);
+    security_infos.emplace_back(*ParseWildCardSecurity("MGA.TSX",
+      GetDefaultMarketDatabase(), GetDefaultCountryDatabase()),
+      "Mega Uranium Ltd.", "", 0);
+    security_infos.emplace_back(*ParseWildCardSecurity("MGAB.TSX",
+      GetDefaultMarketDatabase(), GetDefaultCountryDatabase()),
+      "Mackenzie Global Fixed Income Alloc ETF", "", 0);
+    security_infos.emplace_back(*ParseWildCardSecurity("MON.NYSE",
+      GetDefaultMarketDatabase(), GetDefaultCountryDatabase()),
+      "Monsanto Co.", "", 0);
+    security_infos.emplace_back(*ParseWildCardSecurity("MFC.TSX",
+      GetDefaultMarketDatabase(), GetDefaultCountryDatabase()),
+      "Manulife Financial Corporation", "", 0);
+    security_infos.emplace_back(*ParseWildCardSecurity("MX.TSX",
+      GetDefaultMarketDatabase(), GetDefaultCountryDatabase()),
+      "Methanex Corporation", "", 0);
+    auto model = std::make_shared<LocalComboBoxQueryModel>();
+    for(auto security_info : security_infos) {
+      model->add(displayTextAny(security_info.m_security).toLower(),
+        security_info);
+      model->add(QString::fromStdString(security_info.m_name).toLower(),
+        security_info);
+    }
+    return model;
+  }
+
   struct HoverBox {
     Box* m_box;
     HoverObserver m_observer;
@@ -2619,35 +2652,7 @@ UiProfile Spire::make_security_box_profile() {
   properties.push_back(make_standard_property<QString>("placeholder"));
   properties.push_back(make_standard_property("read_only", false));
   auto profile = UiProfile("SecurityBox", properties, [] (auto& profile) {
-    auto security_infos = std::vector<SecurityInfo>();
-    security_infos.emplace_back(*ParseWildCardSecurity("MRU.TSX",
-      GetDefaultMarketDatabase(), GetDefaultCountryDatabase()),
-      "Metro Inc.", "", 0);
-    security_infos.emplace_back(*ParseWildCardSecurity("MG.TSX",
-      GetDefaultMarketDatabase(), GetDefaultCountryDatabase()),
-      "Magna International Inc.", "", 0);
-    security_infos.emplace_back(*ParseWildCardSecurity("MGA.TSX",
-      GetDefaultMarketDatabase(), GetDefaultCountryDatabase()),
-      "Mega Uranium Ltd.", "", 0);
-    security_infos.emplace_back(*ParseWildCardSecurity("MGAB.TSX",
-      GetDefaultMarketDatabase(), GetDefaultCountryDatabase()),
-      "Mackenzie Global Fixed Income Alloc ETF", "", 0);
-    security_infos.emplace_back(*ParseWildCardSecurity("MON.NYSE",
-      GetDefaultMarketDatabase(), GetDefaultCountryDatabase()),
-      "Monsanto Co.", "", 0);
-    security_infos.emplace_back(*ParseWildCardSecurity("MFC.TSX",
-      GetDefaultMarketDatabase(), GetDefaultCountryDatabase()),
-      "Manulife Financial Corporation", "", 0);
-    security_infos.emplace_back(*ParseWildCardSecurity("MX.TSX",
-      GetDefaultMarketDatabase(), GetDefaultCountryDatabase()),
-      "Methanex Corporation", "", 0);
-    auto model = std::make_shared<LocalComboBoxQueryModel>();
-    for(auto security_info : security_infos) {
-      model->add(displayTextAny(security_info.m_security).toLower(),
-        security_info);
-      model->add(QString::fromStdString(security_info.m_name).toLower(),
-        security_info);
-    }
+    auto model = populate_security_query_model();
     auto box = new SecurityBox(model);
     box->setFixedWidth(scale_width(112));
     apply_widget_properties(box, profile.get_properties());
@@ -2681,35 +2686,7 @@ UiProfile Spire::make_security_filter_panel_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   auto profile = UiProfile(QString("SecurityFilterPanel"), properties,
     [] (auto& profile) {
-      auto security_infos = std::vector<SecurityInfo>();
-      security_infos.emplace_back(*ParseWildCardSecurity("MRU.TSX",
-        GetDefaultMarketDatabase(), GetDefaultCountryDatabase()),
-        "Metro Inc.", "", 0);
-      security_infos.emplace_back(*ParseWildCardSecurity("MG.TSX",
-        GetDefaultMarketDatabase(), GetDefaultCountryDatabase()),
-        "Magna International Inc.", "", 0);
-      security_infos.emplace_back(*ParseWildCardSecurity("MGA.TSX",
-        GetDefaultMarketDatabase(), GetDefaultCountryDatabase()),
-        "Mega Uranium Ltd.", "", 0);
-      security_infos.emplace_back(*ParseWildCardSecurity("MGAB.TSX",
-        GetDefaultMarketDatabase(), GetDefaultCountryDatabase()),
-        "Mackenzie Global Fixed Income Alloc ETF", "", 0);
-      security_infos.emplace_back(*ParseWildCardSecurity("MON.NYSE",
-        GetDefaultMarketDatabase(), GetDefaultCountryDatabase()),
-        "Monsanto Co.", "", 0);
-      security_infos.emplace_back(*ParseWildCardSecurity("MFC.TSX",
-        GetDefaultMarketDatabase(), GetDefaultCountryDatabase()),
-        "Manulife Financial Corporation", "", 0);
-      security_infos.emplace_back(*ParseWildCardSecurity("MX.TSX",
-        GetDefaultMarketDatabase(), GetDefaultCountryDatabase()),
-        "Methanex Corporation", "", 0);
-      auto model = std::make_shared<LocalComboBoxQueryModel>();
-      for(auto security_info : security_infos) {
-        model->add(displayTextAny(security_info.m_security).toLower(),
-          security_info);
-        model->add(QString::fromStdString(security_info.m_name).toLower(),
-          security_info);
-      }
+      auto model = populate_security_query_model();
       auto button = make_label_button(QString::fromUtf8("Click me"));
       auto panel = new SecurityFilterPanel(model, *button);
       auto submit_filter_slot =
