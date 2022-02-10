@@ -29,6 +29,7 @@ ListItem::ListItem(QWidget& body, QWidget* parent)
       m_is_selected(false) {
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
+  layout->setSizeConstraint(QLayout::SetMinAndMaxSize);
   m_box = new Box(&body, Box::Fit::BOTH);
   m_button = new Button(m_box, this);
   m_button->setFocusPolicy(Qt::ClickFocus);

@@ -214,7 +214,7 @@ QSize ScrollBox::sizeHint() const {
 bool ScrollBox::eventFilter(QObject* watched, QEvent* event) {
   if(watched == m_viewport) {
     if(event->type() == QEvent::LayoutRequest) {
-      updateGeometry();
+      update_ranges();
     }
   } else if(watched == m_body) {
     if(event->type() == QEvent::Resize) {

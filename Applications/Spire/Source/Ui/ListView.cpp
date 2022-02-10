@@ -532,7 +532,7 @@ void ListView::update_layout() {
       }
       remaining_size -= inner_layout->spacing();
       if(m_direction == Qt::Orientation::Horizontal) {
-        (*i)->m_item->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
+        (*i)->m_item->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
       } else {
         (*i)->m_item->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
       }

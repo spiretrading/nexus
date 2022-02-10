@@ -60,9 +60,11 @@ Box::Box(QWidget* body, Fit fit, QWidget* parent)
     setFocusProxy(m_body);
     if(is_set(m_fit, Fit::WIDTH)) {
       setMinimumWidth(m_body->minimumWidth());
+      setMaximumWidth(m_body->maximumWidth());
     }
     if(is_set(m_fit, Fit::HEIGHT)) {
       setMinimumHeight(m_body->minimumHeight());
+      setMaximumHeight(m_body->maximumHeight());
     }
   } else {
     m_container = nullptr;
@@ -164,9 +166,11 @@ bool Box::event(QEvent* event) {
     m_size_hint = none;
     if(is_set(m_fit, Fit::WIDTH)) {
       setMinimumWidth(m_body->minimumWidth());
+      setMaximumWidth(m_body->maximumWidth());
     }
     if(is_set(m_fit, Fit::HEIGHT)) {
       setMinimumHeight(m_body->minimumHeight());
+      setMaximumHeight(m_body->maximumHeight());
     }
     if(m_fit == Fit::NONE) {
       updateGeometry();

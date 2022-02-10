@@ -17,6 +17,7 @@ Button::Button(QWidget* body, QWidget* parent)
       m_is_down(false) {
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
+  layout->setSizeConstraint(QLayout::SetMinAndMaxSize);
   layout->addWidget(m_body);
   setFocusPolicy(Qt::StrongFocus);
 }
