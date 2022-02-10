@@ -257,6 +257,7 @@ QColor BoxPainter::get_background_color() const {
 
 void BoxPainter::set_background_color(QColor color) {
   m_background_color = color;
+  m_classification = evaluate_classification();
 }
 
 const BoxPainter::Borders& BoxPainter::get_borders() const {
