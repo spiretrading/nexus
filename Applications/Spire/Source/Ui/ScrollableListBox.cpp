@@ -77,7 +77,7 @@ void ScrollableListBox::on_list_view_style() {
   auto horizontal_policy = [&] {
     if(direction == Qt::Orientation::Horizontal) {
       if(overflow == Overflow::NONE) {
-        return QSizePolicy::Preferred;
+        return QSizePolicy::Minimum;
       }
       return QSizePolicy::Expanding;
     }
@@ -86,7 +86,7 @@ void ScrollableListBox::on_list_view_style() {
   auto vertical_policy = [&] {
     if(direction == Qt::Orientation::Vertical) {
       if(overflow == Overflow::NONE) {
-        return QSizePolicy::Preferred;
+        return QSizePolicy::Minimum;
       }
       return QSizePolicy::Expanding;
     }
