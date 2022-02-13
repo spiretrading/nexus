@@ -31,7 +31,78 @@ namespace {
       margins.left() + margins.right(), margins.top() + margins.bottom());
   }
 
-  int policyToSize(QSizePolicy::Policy policy, int viewport, int size_hint,
+  enum class ScrollBarVisibility {
+    HIDDEN,
+    CONDITIONAL,
+    VISIBLE
+  };
+
+  ScrollBarVisibility to_visibility(ScrollBox::DisplayPolicy display_policy,
+      QSizePolicy::Policy size_policy, int viewport, int size_hint,
+      int minimum_size_hint, int minimum_size, int maximum_size, int padding,
+      int scrollbar_size) {
+    if(display_policy == ScrollBox::DisplayPolicy::NEVER) {
+      return ScrollBarVisibility::HIDDEN;
+    } else if(display_policy == ScrollBox::DisplayPolicy::ALWAYS ||
+        display_policy == ScrollBox::DisplayPolicy::ON_ENGAGE) {
+      return ScrollBarVisibility::VISIBLE;
+    }
+    auto size = [&] {
+      if(size_policy == QSizePolicy::Fixed ||
+          size_policy == QSizePolicy::Minimum ||
+          size_policy == QSizePolicy::MinimumExpanding) {
+        return std::clamp(
+          size_hint, std::max(minimum_size_hint, minimum_size), maximum_size);
+      }
+      return std::max(minimum_size_hint, minimum_size);
+    }();
+    if(size <= viewport - padding - scrollbar_size) {
+      return ScrollBarVisibility::HIDDEN;
+    } else if(size <= viewport - padding) {
+      return ScrollBarVisibility::CONDITIONAL;
+    }
+    return ScrollBarVisibility::VISIBLE;
+  }
+
+  std::tuple<bool, bool> to_scroll_bar_visibility(
+      ScrollBox::DisplayPolicy horizontal_policy,
+      ScrollBox::DisplayPolicy vertical_policy, const QSizePolicy& size_policy,
+      QSize viewport, QSize size_hint, QSize minimum_size_hint,
+      QSize minimum_size, QSize maximum_size, QSize padding,
+      QSize scroll_bar_size) {
+    auto horizontal_visibility = to_visibility(
+      horizontal_policy, size_policy.horizontalPolicy(), viewport.width(),
+      size_hint.width(), minimum_size_hint.width(), minimum_size.width(),
+      maximum_size.width(), padding.width(), scroll_bar_size.width());
+    auto vertical_visibility = to_visibility(
+      vertical_policy, size_policy.verticalPolicy(), viewport.height(),
+      size_hint.height(), minimum_size_hint.height(), minimum_size.height(),
+      maximum_size.height(), padding.height(), scroll_bar_size.height());
+    if(horizontal_visibility == ScrollBarVisibility::CONDITIONAL &&
+        vertical_visibility == ScrollBarVisibility::CONDITIONAL ||
+        horizontal_visibility == ScrollBarVisibility::HIDDEN &&
+        vertical_visibility == ScrollBarVisibility::HIDDEN ||
+        horizontal_visibility == ScrollBarVisibility::HIDDEN &&
+        vertical_visibility == ScrollBarVisibility::CONDITIONAL ||
+        horizontal_visibility == ScrollBarVisibility::CONDITIONAL &&
+        vertical_visibility == ScrollBarVisibility::HIDDEN) {
+      return {false, false};
+    } else if(horizontal_visibility == ScrollBarVisibility::VISIBLE &&
+        vertical_visibility == ScrollBarVisibility::VISIBLE ||
+        horizontal_visibility == ScrollBarVisibility::CONDITIONAL &&
+        vertical_visibility == ScrollBarVisibility::VISIBLE ||
+        horizontal_visibility == ScrollBarVisibility::VISIBLE &&
+        vertical_visibility == ScrollBarVisibility::CONDITIONAL) {
+      return {true, true};
+    } else if(horizontal_visibility == ScrollBarVisibility::HIDDEN) {
+      return {false, true};
+    } else if(vertical_visibility == ScrollBarVisibility::HIDDEN) {
+      return {true, false};
+    }
+    return {false, false};
+  }
+
+  int policy_to_size(QSizePolicy::Policy policy, int viewport, int size_hint,
       int minimum_size_hint, int minimum_size, int maximum_size, int padding) {
     if(policy == QSizePolicy::Fixed) {
       return std::clamp(size_hint, std::max(minimum_size_hint, minimum_size),
@@ -107,7 +178,7 @@ ScrollBox::ScrollBox(QWidget* body, QWidget* parent)
   auto layout = new QHBoxLayout(this);
   layout->setContentsMargins({});
   layout->addWidget(layers);
-  update_ranges();
+  update_layout();
   m_style_connection = connect_style_signal(*this, [=] { on_style(); });
 }
 
@@ -128,14 +199,7 @@ void ScrollBox::set_horizontal(DisplayPolicy policy) {
     return;
   }
   m_horizontal_display_policy = policy;
-  if(m_horizontal_display_policy == DisplayPolicy::NEVER) {
-    m_scrollable_layer->get_horizontal_scroll_bar().hide();
-    updateGeometry();
-  } else if(m_horizontal_display_policy == DisplayPolicy::ALWAYS) {
-    m_scrollable_layer->get_horizontal_scroll_bar().show();
-    updateGeometry();
-  }
-  update_ranges();
+  update_layout();
 }
 
 ScrollBox::DisplayPolicy ScrollBox::get_vertical_display_policy() const {
@@ -147,14 +211,7 @@ void ScrollBox::set_vertical(DisplayPolicy policy) {
     return;
   }
   m_vertical_display_policy = policy;
-  if(m_vertical_display_policy == DisplayPolicy::NEVER) {
-    m_scrollable_layer->get_vertical_scroll_bar().hide();
-    updateGeometry();
-  } else if(m_vertical_display_policy == DisplayPolicy::ALWAYS) {
-    m_scrollable_layer->get_vertical_scroll_bar().show();
-    updateGeometry();
-  }
-  update_ranges();
+  update_layout();
 }
 
 void ScrollBox::set(DisplayPolicy policy) {
@@ -227,7 +284,7 @@ QSize ScrollBox::sizeHint() const {
 bool ScrollBox::eventFilter(QObject* watched, QEvent* event) {
   if(watched == m_body) {
     if(event->type() == QEvent::Resize) {
-      update_ranges();
+      update_layout();
     }
   } else if(event->type() == QEvent::Show || event->type() == QEvent::Hide) {
     update_ranges();
@@ -237,7 +294,7 @@ bool ScrollBox::eventFilter(QObject* watched, QEvent* event) {
 
 bool ScrollBox::event(QEvent* event) {
   if(event->type() == QEvent::LayoutRequest) {
-    update_ranges();
+    update_layout();
   }
   return QWidget::event(event);
 }
@@ -247,7 +304,7 @@ void ScrollBox::keyPressEvent(QKeyEvent* event) {
 }
 
 void ScrollBox::resizeEvent(QResizeEvent* event) {
-  update_ranges();
+  update_layout();
 }
 
 void ScrollBox::wheelEvent(QWheelEvent* event) {
@@ -278,7 +335,7 @@ void ScrollBox::commit_padding_styles() {
     m_scrollable_layer->get_horizontal_scroll_bar().get_position());
   on_vertical_scroll(
     m_scrollable_layer->get_vertical_scroll_bar().get_position());
-  update_ranges();
+  update_layout();
 }
 
 void ScrollBox::on_style() {
@@ -398,8 +455,36 @@ void ScrollBox::on_horizontal_scroll(int position) {
 }
 
 void ScrollBox::update_layout() {
-  auto scroll_bar_size = get_scroll_bar_size(*m_scrollable_layer);
   auto padding = toSize(m_padding);
+  auto scroll_bar_size =  QSize(
+    m_scrollable_layer->get_vertical_scroll_bar().sizeHint().width(),
+    m_scrollable_layer->get_horizontal_scroll_bar().sizeHint().height());
+  auto [is_horizontal_scroll_bar_shown, is_vertical_scroll_bar_shown] =
+    to_scroll_bar_visibility(m_horizontal_display_policy,
+      m_vertical_display_policy, m_body->sizePolicy(), m_viewport->size(),
+      m_body->sizeHint(), m_body->minimumSizeHint(), m_body->minimumSize(),
+      m_body->maximumSize(), padding, scroll_bar_size);
+  if(!is_horizontal_scroll_bar_shown) {
+    scroll_bar_size.rheight() = 0;
+  }
+  if(!is_vertical_scroll_bar_shown) {
+    scroll_bar_size.rwidth() = 0;
+  }
+  auto body_size = [&] {
+    auto body_width = policy_to_size(m_body->sizePolicy().horizontalPolicy(),
+      m_viewport->width() - scroll_bar_size.width(), m_body->sizeHint().width(),
+      m_body->minimumSizeHint().width(), m_body->minimumWidth(),
+      m_body->maximumWidth(), padding.width());
+    auto body_height = policy_to_size(m_body->sizePolicy().verticalPolicy(),
+      m_viewport->height() - scroll_bar_size.height(),
+      m_body->sizeHint().height(), m_body->minimumSizeHint().height(),
+      m_body->minimumHeight(), m_body->maximumHeight(), padding.height());
+    return QSize(body_width, body_height);
+  }();
+  if(body_size != m_body->size()) {
+    m_body->resize(body_size);
+    return;
+  }
   auto contents_size = m_body->size() + toSize(m_borders) + padding;
   const auto EXPAND = QSizePolicy::GrowFlag | QSizePolicy::IgnoreFlag;
   if(!(m_body->sizePolicy().horizontalPolicy() & EXPAND)) {
@@ -414,67 +499,26 @@ void ScrollBox::update_layout() {
   } else {
     setMaximumHeight(QWIDGETSIZE_MAX);
   }
-  auto body_size = [&] {
-    auto body_width = policyToSize(m_body->sizePolicy().horizontalPolicy(),
-      m_viewport->width(), m_body->sizeHint().width(),
-      m_body->minimumSizeHint().width(), m_body->minimumWidth(),
-      m_body->maximumWidth(), padding.width());
-    auto body_height = policyToSize(m_body->sizePolicy().verticalPolicy(),
-      m_viewport->height(), m_body->sizeHint().height(),
-      m_body->minimumSizeHint().height(), m_body->minimumHeight(),
-      m_body->maximumHeight(), padding.height());
-    return QSize(body_width, body_height);
-  }();
-  if(body_size != m_body->size()) {
-    m_body->resize(body_size);
-    return;
+  auto is_update_geometry_needed = false;
+  if(m_scrollable_layer->get_horizontal_scroll_bar().isVisible() !=
+      is_horizontal_scroll_bar_shown) {
+    m_scrollable_layer->get_horizontal_scroll_bar().setVisible(
+      is_horizontal_scroll_bar_shown);
+    is_update_geometry_needed = true;
   }
-  if(m_vertical_display_policy == DisplayPolicy::ON_OVERFLOW &&
-      m_horizontal_display_policy == DisplayPolicy::ON_OVERFLOW) {
-    if(contents_size.width() <= size().width() &&
-        contents_size.height() <= size().height()) {
-      if(m_scrollable_layer->get_vertical_scroll_bar().isVisible()) {
-        m_scrollable_layer->get_vertical_scroll_bar().hide();
-        updateGeometry();
-        return;
-      }
-      if(m_scrollable_layer->get_horizontal_scroll_bar().isVisible()) {
-        m_scrollable_layer->get_horizontal_scroll_bar().hide();
-        updateGeometry();
-        return;
-      }
-    }
+  if(m_scrollable_layer->get_vertical_scroll_bar().isVisible() !=
+      is_vertical_scroll_bar_shown) {
+    m_scrollable_layer->get_vertical_scroll_bar().setVisible(
+      is_vertical_scroll_bar_shown);
+    is_update_geometry_needed = true;
   }
-  if(m_vertical_display_policy == DisplayPolicy::ON_OVERFLOW) {
-    if(contents_size.height() <= height()) {
-      if(m_scrollable_layer->get_vertical_scroll_bar().isVisible()) {
-        m_scrollable_layer->get_vertical_scroll_bar().hide();
-        updateGeometry();
-        return;
-      }
-    } else if(!m_scrollable_layer->get_vertical_scroll_bar().isVisible()) {
-      m_scrollable_layer->get_vertical_scroll_bar().show();
-      updateGeometry();
-      return;
-    }
+  if(is_update_geometry_needed) {
+    updateGeometry();
   }
-  if(m_horizontal_display_policy == DisplayPolicy::ON_OVERFLOW) {
-    if(contents_size.width() <= width()) {
-      if(m_scrollable_layer->get_horizontal_scroll_bar().isVisible()) {
-        m_scrollable_layer->get_horizontal_scroll_bar().hide();
-        updateGeometry();
-        return;
-      }
-    } else if(!m_scrollable_layer->get_horizontal_scroll_bar().isVisible()) {
-      m_scrollable_layer->get_horizontal_scroll_bar().show();
-      updateGeometry();
-      return;
-    }
-  }
+  update_ranges();
 }
 
 void ScrollBox::update_ranges() {
-  update_layout();
   auto scroll_bar_size = get_scroll_bar_size(*m_scrollable_layer);
   auto range = m_body->size() + toSize(m_padding) + scroll_bar_size -
     m_viewport->size();

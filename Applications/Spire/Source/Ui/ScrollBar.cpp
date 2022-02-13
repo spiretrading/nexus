@@ -89,9 +89,6 @@ ScrollBar::Range ScrollBar::get_range() const {
 }
 
 void ScrollBar::set_range(const Range& range) {
-  if(range == m_range) {
-    return;
-  }
   m_range = range;
   if(m_position < m_range.m_start) {
     set_position(m_range.m_start);
@@ -223,19 +220,22 @@ void ScrollBar::update_thumb() {
       m_thumb->setFixedWidth(thumb_size);
     }
   }
-  if(m_range.m_end <= m_range.m_start) {
-    m_thumb_position = 0;
-  } else {
-    m_thumb_position = (track_size - thumb_size) *
-      (m_position - m_range.m_start) / (m_range.m_end - m_range.m_start);
-  }
-  update_style(*m_track, [&] (auto& style) {
-    if(m_orientation == Qt::Orientation::Vertical) {
-      style.get(Any()).set(PaddingTop(m_thumb_position));
-    } else {
-      style.get(Any()).set(PaddingLeft(m_thumb_position));
+  auto expected_position = [&] {
+    if(m_range.m_end <= m_range.m_start) {
+      return 0;
     }
-  });
+    return (track_size - thumb_size) *
+      (m_position - m_range.m_start) / (m_range.m_end - m_range.m_start);
+  }();
+  if(m_thumb_position != expected_position) {
+    update_style(*m_track, [&] (auto& style) {
+      if(m_orientation == Qt::Orientation::Vertical) {
+        style.get(Any()).set(PaddingTop(m_thumb_position));
+      } else {
+        style.get(Any()).set(PaddingLeft(m_thumb_position));
+      }
+    });
+  }
 }
 
 void ScrollBar::scroll_page() {
