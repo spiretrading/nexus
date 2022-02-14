@@ -75,22 +75,16 @@ namespace {
   }
 
   auto rows_equal(
-      const auto& model, const std::vector<OrderImbalance>& imbalances) {
-    if(model.get_row_size() != imbalances.size()) {
+      const auto& model, const auto& imbalance1, const auto& imbalance2) {
+    if(model.get_row_size() != 2) {
       return false;
     }
-    auto found = std::unordered_set<Security>();
-    for(auto i = 0; i < model.get_row_size(); ++i) {
-      for(auto j = 0; j < model.get_row_size(); ++j) {
-        if(row_equals(model, i, imbalances[j])) {
-          if(found.contains(imbalances[j].m_security)) {
-            return false;
-          }
-          found.insert(imbalances[j].m_security);
-        }
-      }
-    }
-    return true;
+    auto row1 = std::tie(model.get<Security>(0, 0), model.get<Quantity>(0, 2));
+    auto row2 = std::tie(model.get<Security>(1, 0), model.get<Quantity>(1, 2));
+    auto imb1 = std::tie(imbalance1.m_security, imbalance1.m_size);
+    auto imb2 = std::tie(imbalance2.m_security, imbalance2.m_size);
+    return row1 != row2 && (row1 == imb1 && row2 == imb2 ||
+      row1 == imb2 && row2 == imb1);
   }
 
   const auto A100 = make_imbalance("A", 100);
@@ -115,7 +109,7 @@ TEST_SUITE("OrderImbalanceIndicatorTableModel") {
       model.set_interval(closed(0, 200));
       wait_until([&] { return operation_log.operation_count() == 2; });
       REQUIRE(model.get_row_size() == 2);
-      REQUIRE(rows_equal(model, { A100, B100 }));
+      REQUIRE(rows_equal(model, A100, B100));
       REQUIRE(operation_log.operation_count() == 2);
       REQUIRE(operation_log.m_adds.size() == 2);
       model.set_interval(open(0, 100));
@@ -131,14 +125,14 @@ TEST_SUITE("OrderImbalanceIndicatorTableModel") {
       model.set_interval(closed(200, 500));
       wait_until([&] { return operation_log.operation_count() == 6; });
       REQUIRE(model.get_row_size() == 2);
-      REQUIRE(rows_equal(model, { A300, B300 }));
+      REQUIRE(rows_equal(model, A300, B300));
       REQUIRE(operation_log.operation_count() == 6);
       REQUIRE(operation_log.m_adds.size() == 4);
       REQUIRE(operation_log.m_removes.size() == 2);
       local_model->publish(A500);
       local_model->publish(B550);
       REQUIRE(model.get_row_size() == 2);
-      REQUIRE(rows_equal(model, { A500, B300 }));
+      REQUIRE(rows_equal(model, A500, B300));
       REQUIRE(operation_log.operation_count() == 9);
       REQUIRE(operation_log.m_adds.size() == 4);
       REQUIRE(operation_log.m_removes.size() == 2);
@@ -161,7 +155,7 @@ TEST_SUITE("OrderImbalanceIndicatorTableModel") {
       model.set_offset(seconds(600));
       wait_until([&] { return operation_log.operation_count() == 2; });
       REQUIRE(model.get_row_size() == 2);
-      REQUIRE(rows_equal(model, {A100, B100}));
+      REQUIRE(rows_equal(model, A100, B100));
       REQUIRE(operation_log.operation_count() == 2);
       REQUIRE(operation_log.m_adds.size() == 2);
       clock->SetTime(from_time_t(300));
@@ -169,7 +163,7 @@ TEST_SUITE("OrderImbalanceIndicatorTableModel") {
       local_model->publish(B300);
       wait_until([&] { return operation_log.operation_count() == 8; });
       REQUIRE(model.get_row_size() == 2);
-      REQUIRE(rows_equal(model, {A300, B300}));
+      REQUIRE(rows_equal(model, A300, B300));
       REQUIRE(operation_log.operation_count() == 8);
       REQUIRE(operation_log.m_adds.size() == 2);
       REQUIRE(operation_log.m_updates.size() == 6);
