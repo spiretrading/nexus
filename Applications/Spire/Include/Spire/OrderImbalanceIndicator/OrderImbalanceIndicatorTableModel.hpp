@@ -1,38 +1,12 @@
 #ifndef SPIRE_ORDER_IMBALANCE_INDICATOR_TABLE_MODEL_HPP
 #define SPIRE_ORDER_IMBALANCE_INDICATOR_TABLE_MODEL_HPP
+#include <chrono>
 #include <QTimer>
+#include <Beam/TimeService/TimeClientBox.hpp>
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorModel.hpp"
 #include "Spire/Ui/ArrayTableModel.hpp"
 
 namespace Spire {
-
-  class microsec_clock {
-    public:
-
-      static void set_current(boost::posix_time::ptime current) {
-        m_current = current;
-      }
-
-      //! return a local time object for the given zone, based on computer clock
-      template<typename U>
-      static boost::posix_time::ptime local_time(boost::shared_ptr<U> time_zone) {
-        return universal_time();
-      }
-
-      //! Returns the local time based on computer clock settings
-      static boost::posix_time::ptime local_time() {
-        return universal_time();
-      }
-
-      //! Returns the UTC time based on computer settings
-      static boost::posix_time::ptime universal_time() {
-        return m_current;
-      }
-
-    private:
-      inline static boost::posix_time::ptime m_current =
-        boost::posix_time::from_time_t(0);
-  };
 
   /**
    * Implements a TableModel using an OrderImbalanceIndicatorModel as a source
@@ -45,9 +19,12 @@ namespace Spire {
        * Constructs an empty OrderImbalanceIndicatorTableModel with
        * a given source OrderImbalanceIndicatorModel.
        * @param source The source OrderImbalanceIndicatorModel.
+       * @param clock Clock used to determine the current time for dynamic
+       *              intervals.
        */
       OrderImbalanceIndicatorTableModel(
-        std::shared_ptr<OrderImbalanceIndicatorModel> source);
+        std::shared_ptr<OrderImbalanceIndicatorModel> source,
+        Beam::TimeService::TimeClientBox clock);
   
       /**
        * Replaces the model's current OrderImbalances with the imbalances
@@ -80,7 +57,9 @@ namespace Spire {
       };
       std::shared_ptr<OrderImbalanceIndicatorModel> m_source;
       ArrayTableModel m_table_model;
+      Beam::TimeService::TimeClientBox m_clock;
       TimeInterval m_interval;
+      boost::posix_time::time_duration m_offset;
       boost::signals2::scoped_connection m_subscription_connection;
       QtPromise<std::vector<Nexus::OrderImbalance>> m_load;
       std::unordered_map<Nexus::Security, Imbalance> m_imbalances;

@@ -1,8 +1,10 @@
 #include <doctest/doctest.h>
+#include <Beam/TimeService/FixedTimeClient.hpp>
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorTableModel.hpp"
 #include "Spire/OrderImbalanceIndicator/LocalOrderImbalanceIndicatorModel.hpp"
 #include "Spire/SpireTester/SpireTester.hpp"
 
+using namespace Beam::TimeService;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Spire;
@@ -13,16 +15,6 @@ namespace {
     std::vector<TableModel::RemoveOperation> m_removes;
     std::vector<TableModel::MoveOperation> m_moves;
     std::vector<TableModel::UpdateOperation> m_updates;
-
-    //bool counts_equal(std::size_t add_count, std::size_t remove_count,
-    //    std::size_t move_count, std::size_t update_count) {
-    //  return m_adds.size() == add_count && m_removes.size() == remove_count &&
-    //    m_moves.size() == move_count && m_updates.size() == update_count;
-    //}
-
-    bool adds_equal(std::size_t count) {
-      return m_adds.size() == count;
-    }
 
     std::size_t operation_count() const {
       return
@@ -46,8 +38,6 @@ namespace {
     }
   };
 
-  // TODO: maybe add these to a header instead of copy-pasting from the local
-  //       imbalance tests.
   auto make_imbalance(const auto& symbol, auto timestamp) {
     return OrderImbalance(Security(symbol, DefaultCountries::US()), Side::ASK,
       Quantity(timestamp), Money(12.34), from_time_t(timestamp));
@@ -84,6 +74,25 @@ namespace {
         model.get<time_duration>(index, 6)) == imbalance.m_timestamp;
   }
 
+  auto rows_equal(
+      const auto& model, const std::vector<OrderImbalance>& imbalances) {
+    if(model.get_row_size() != imbalances.size()) {
+      return false;
+    }
+    auto found = std::unordered_set<Security>();
+    for(auto i = 0; i < model.get_row_size(); ++i) {
+      for(auto j = 0; j < model.get_row_size(); ++j) {
+        if(row_equals(model, i, imbalances[j])) {
+          if(found.contains(imbalances[j].m_security)) {
+            return false;
+          }
+          found.insert(imbalances[j].m_security);
+        }
+      }
+    }
+    return true;
+  }
+
   const auto A100 = make_imbalance("A", 100);
   const auto A300 = make_imbalance("A", 300);
   const auto A500 = make_imbalance("A", 500);
@@ -96,7 +105,8 @@ TEST_SUITE("OrderImbalanceIndicatorTableModel") {
   TEST_CASE("set_interval") {
     run_test([] {
       auto local_model = std::make_shared<LocalOrderImbalanceIndicatorModel>();
-      auto model = OrderImbalanceIndicatorTableModel(local_model);
+      auto model = OrderImbalanceIndicatorTableModel(
+        local_model, TimeClientBox(std::make_shared<FixedTimeClient>()));
       local_model->publish(A100);
       local_model->publish(B100);
       auto operation_log = TableOperationLog{};
@@ -105,8 +115,7 @@ TEST_SUITE("OrderImbalanceIndicatorTableModel") {
       model.set_interval(closed(0, 200));
       wait_until([&] { return operation_log.operation_count() == 2; });
       REQUIRE(model.get_row_size() == 2);
-      REQUIRE(row_equals(model, 0, A100));
-      REQUIRE(row_equals(model, 1, B100));
+      REQUIRE(rows_equal(model, { A100, B100 }));
       REQUIRE(operation_log.operation_count() == 2);
       REQUIRE(operation_log.m_adds.size() == 2);
       model.set_interval(open(0, 100));
@@ -119,35 +128,130 @@ TEST_SUITE("OrderImbalanceIndicatorTableModel") {
       local_model->publish(B300);
       REQUIRE(operation_log.operation_count() == 4);
       REQUIRE(model.get_row_size() == 0);
-      model.set_interval(closed(200, 1000));
+      model.set_interval(closed(200, 500));
       wait_until([&] { return operation_log.operation_count() == 6; });
       REQUIRE(model.get_row_size() == 2);
-      REQUIRE(row_equals(model, 0, A300));
-      REQUIRE(row_equals(model, 1, B300));
+      REQUIRE(rows_equal(model, { A300, B300 }));
       REQUIRE(operation_log.operation_count() == 6);
       REQUIRE(operation_log.m_adds.size() == 4);
       REQUIRE(operation_log.m_removes.size() == 2);
       local_model->publish(A500);
       local_model->publish(B550);
       REQUIRE(model.get_row_size() == 2);
-      REQUIRE(row_equals(model, 0, A500));
-      REQUIRE(row_equals(model, 1, B550));
-      REQUIRE(operation_log.operation_count() == 12);
+      REQUIRE(rows_equal(model, { A500, B300 }));
+      REQUIRE(operation_log.operation_count() == 9);
       REQUIRE(operation_log.m_adds.size() == 4);
       REQUIRE(operation_log.m_removes.size() == 2);
-      REQUIRE(operation_log.m_updates.size() == 6);
+      REQUIRE(operation_log.m_updates.size() == 3);
     });
   }
 
   TEST_CASE("set_offset") {
-    
+    run_test([] {
+      auto clock = std::make_shared<FixedTimeClient>(from_time_t(200));
+      auto local_model = std::make_shared<LocalOrderImbalanceIndicatorModel>();
+      local_model->publish(A100);
+      local_model->publish(B100);
+      auto model =
+        OrderImbalanceIndicatorTableModel(local_model, TimeClientBox(clock));
+      auto operation_log = TableOperationLog{};
+      model.connect_operation_signal(
+        std::bind_front(&TableOperationLog::on_operation, &operation_log));
+      REQUIRE(model.get_row_size() == 0);
+      model.set_offset(seconds(600));
+      wait_until([&] { return operation_log.operation_count() == 2; });
+      REQUIRE(model.get_row_size() == 2);
+      REQUIRE(rows_equal(model, {A100, B100}));
+      REQUIRE(operation_log.operation_count() == 2);
+      REQUIRE(operation_log.m_adds.size() == 2);
+      clock->SetTime(from_time_t(300));
+      local_model->publish(A300);
+      local_model->publish(B300);
+      wait_until([&] { return operation_log.operation_count() == 8; });
+      REQUIRE(model.get_row_size() == 2);
+      REQUIRE(rows_equal(model, {A300, B300}));
+      REQUIRE(operation_log.operation_count() == 8);
+      REQUIRE(operation_log.m_adds.size() == 2);
+      REQUIRE(operation_log.m_updates.size() == 6);
+    });
   }
 
   TEST_CASE("published_imbalances") {
-    
+    run_test([] {
+      auto local_model = std::make_shared<LocalOrderImbalanceIndicatorModel>();
+      auto model = OrderImbalanceIndicatorTableModel(
+        local_model, TimeClientBox(std::make_shared<FixedTimeClient>()));
+      auto operation_log = TableOperationLog{};
+      model.connect_operation_signal(
+        std::bind_front(&TableOperationLog::on_operation, &operation_log));
+      model.set_interval(open(100, 550));
+      local_model->publish(A100);
+      REQUIRE(model.get_row_size() == 0);
+      REQUIRE(operation_log.operation_count() == 0);
+      local_model->publish(B100);
+      REQUIRE(model.get_row_size() == 0);
+      REQUIRE(operation_log.operation_count() == 0);
+      local_model->publish(A300);
+      REQUIRE(model.get_row_size() == 1);
+      REQUIRE(operation_log.operation_count() == 1);
+      REQUIRE(operation_log.m_adds.size() == 1);
+      local_model->publish(B300);
+      REQUIRE(model.get_row_size() == 2);
+      REQUIRE(operation_log.operation_count() == 2);
+      REQUIRE(operation_log.m_adds.size() == 2);
+      local_model->publish(A500);
+      REQUIRE(model.get_row_size() == 2);
+      REQUIRE(operation_log.operation_count() == 5);
+      REQUIRE(operation_log.m_adds.size() == 2);
+      REQUIRE(operation_log.m_updates.size() == 3);
+      local_model->publish(B550);
+      REQUIRE(model.get_row_size() == 2);
+      REQUIRE(operation_log.operation_count() == 5);
+    });
   }
 
   TEST_CASE("expired_imbalances") {
-    
+    run_test([] {
+      auto clock = std::make_shared<FixedTimeClient>(from_time_t(0));
+      auto local_model = std::make_shared<LocalOrderImbalanceIndicatorModel>();
+      auto model =
+        OrderImbalanceIndicatorTableModel(local_model, TimeClientBox(clock));
+      auto operation_log = TableOperationLog{};
+      model.connect_operation_signal(
+        std::bind_front(&TableOperationLog::on_operation, &operation_log));
+      local_model->publish(A100);
+      local_model->publish(B100);
+      model.set_offset(seconds(200));
+      wait_until([&] { return operation_log.operation_count() == 2; });
+      REQUIRE(model.get_row_size() == 2);
+      REQUIRE(operation_log.operation_count() == 2);
+      REQUIRE(operation_log.m_adds.size() == 2);
+      clock->SetTime(from_time_t(350));
+      wait_until([&] { return operation_log.operation_count() == 4; });
+      REQUIRE(model.get_row_size() == 0);
+      REQUIRE(operation_log.operation_count() == 4);
+      REQUIRE(operation_log.m_adds.size() == 2);
+      REQUIRE(operation_log.m_removes.size() == 2);
+      clock->SetTime(from_time_t(600));
+      local_model->publish(A500);
+      local_model->publish(B550);
+      wait_until([&] { return operation_log.operation_count() == 6; });
+      REQUIRE(model.get_row_size() == 2);
+      REQUIRE(operation_log.operation_count() == 6);
+      REQUIRE(operation_log.m_adds.size() == 4);
+      REQUIRE(operation_log.m_removes.size() == 2);
+      clock->SetTime(from_time_t(725));
+      wait_until([&] { return operation_log.operation_count() == 7; });
+      REQUIRE(model.get_row_size() == 1);
+      REQUIRE(operation_log.operation_count() == 7);
+      REQUIRE(operation_log.m_adds.size() == 4);
+      REQUIRE(operation_log.m_removes.size() == 3);
+      clock->SetTime(from_time_t(775));
+      wait_until([&] { return operation_log.operation_count() == 8; });
+      REQUIRE(model.get_row_size() == 0);
+      REQUIRE(operation_log.operation_count() == 8);
+      REQUIRE(operation_log.m_adds.size() == 4);
+      REQUIRE(operation_log.m_removes.size() == 4);
+    });
   }
 }

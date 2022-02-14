@@ -1,6 +1,8 @@
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorTableModel.hpp"
+#include <chrono>
 #include <boost/date_time/gregorian/gregorian.hpp>
 
+using namespace Beam::TimeService;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace boost::signals2;
@@ -21,19 +23,22 @@ namespace {
 }
 
 OrderImbalanceIndicatorTableModel::OrderImbalanceIndicatorTableModel(
-    std::shared_ptr<OrderImbalanceIndicatorModel> source)
-    : m_source(std::move(source)) {
+    std::shared_ptr<OrderImbalanceIndicatorModel> source,
+    TimeClientBox clock)
+    : m_source(std::move(source)),
+      m_clock(std::move(clock)) {
   m_expiration_timer.setTimerType(Qt::CoarseTimer);
   m_expiration_timer.setInterval(EXPIRATION_TIMEOUT_MS);
   QObject::connect(&m_expiration_timer, &QTimer::timeout,
     [=] { on_expiration_timeout(); });
+  m_expiration_timer.setInterval(
+    std::numeric_limits<std::chrono::milliseconds>::max());
 }
 
 void OrderImbalanceIndicatorTableModel::set_interval(
     const TimeInterval& interval) {
-  if(!m_expiration_timer.isActive()) {
-    m_expiration_timer.start();
-  }
+  m_interval = interval;
+  m_expiration_timer.stop();
   auto subscription = m_source->subscribe(interval,
     [=] (const auto& imbalance) { on_imbalance(imbalance); });
   m_subscription_connection = std::move(subscription.m_connection);
@@ -43,8 +48,12 @@ void OrderImbalanceIndicatorTableModel::set_interval(
 
 void OrderImbalanceIndicatorTableModel::set_offset(
     const time_duration& offset) {
+  m_offset = offset;
   set_interval(TimeInterval::closed(
-    microsec_clock::local_time() - offset, std::numeric_limits<ptime>::max()));
+    m_clock.GetTime() - m_offset, std::numeric_limits<ptime>::max()));
+  if(!m_expiration_timer.isActive()) {
+    m_expiration_timer.start();
+  }
 }
 
 int OrderImbalanceIndicatorTableModel::get_row_size() const {
@@ -99,7 +108,18 @@ void OrderImbalanceIndicatorTableModel::set_row(
 }
 
 void OrderImbalanceIndicatorTableModel::on_expiration_timeout() {
-
+  auto removed_rows = 0;
+  std::erase_if(m_imbalances, [&] (const auto& imbalance) {
+    auto& current_imbalance = m_imbalances[imbalance.first];
+    if(current_imbalance.m_imbalance.m_timestamp <
+        m_clock.GetTime() - m_offset) {
+      m_table_model.remove(current_imbalance.m_row_index - removed_rows);
+      ++removed_rows;
+      return true;
+    }
+    current_imbalance.m_row_index -= removed_rows;
+    return false;
+  });
 }
 
 void OrderImbalanceIndicatorTableModel::on_imbalance(
