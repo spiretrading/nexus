@@ -27,7 +27,6 @@ OrderImbalanceIndicatorTableModel::OrderImbalanceIndicatorTableModel(
     TimeClientBox clock)
     : m_source(std::move(source)),
       m_clock(std::move(clock)) {
-  m_expiration_timer.setTimerType(Qt::CoarseTimer);
   m_expiration_timer.setInterval(EXPIRATION_TIMEOUT_MS);
   QObject::connect(&m_expiration_timer, &QTimer::timeout,
     [=] { on_expiration_timeout(); });
@@ -39,7 +38,7 @@ void OrderImbalanceIndicatorTableModel::set_interval(
     const TimeInterval& interval) {
   m_interval = interval;
   m_expiration_timer.stop();
-  auto subscription = m_source->subscribe(interval,
+  auto subscription = m_source->subscribe(m_interval,
     [=] (const auto& imbalance) { on_imbalance(imbalance); });
   m_subscription_connection = std::move(subscription.m_connection);
   m_load = std::move(subscription.m_snapshot);
@@ -72,6 +71,20 @@ const std::any&
 connection OrderImbalanceIndicatorTableModel::connect_operation_signal(
     const typename OperationSignal::slot_type& slot) const {
   return m_table_model.connect_operation_signal(slot);
+}
+
+void OrderImbalanceIndicatorTableModel::insert_imbalance(
+    std::unordered_map<Security, Imbalance>& imbalances,
+    const OrderImbalance& imbalance) {
+  auto& previous_imbalance = imbalances[imbalance.m_security];
+  if(previous_imbalance.m_imbalance != OrderImbalance()) {
+    if(previous_imbalance.m_imbalance.m_timestamp < imbalance.m_timestamp) {
+      set_row(imbalance, previous_imbalance);
+    }
+  } else {
+    previous_imbalance = {get_row_size(), imbalance};
+    m_table_model.push(make_row(imbalance));
+  }
 }
 
 std::vector<std::any> OrderImbalanceIndicatorTableModel::make_row(
@@ -124,36 +137,21 @@ void OrderImbalanceIndicatorTableModel::on_expiration_timeout() {
 
 void OrderImbalanceIndicatorTableModel::on_imbalance(
     const Nexus::OrderImbalance& imbalance) {
-  auto& previous_imbalance = m_imbalances[imbalance.m_security];
-  if(previous_imbalance.m_imbalance != OrderImbalance()) {
-    if(previous_imbalance.m_imbalance.m_timestamp < imbalance.m_timestamp) {
-      set_row(imbalance, previous_imbalance);
-    }
-  } else {
-    previous_imbalance = {get_row_size(), imbalance};
-    m_table_model.push(make_row(imbalance));
-  }
+  insert_imbalance(m_imbalances, imbalance);
 }
 
 void OrderImbalanceIndicatorTableModel::on_load(
     const std::vector<OrderImbalance>& imbalances) {
   m_table_model.transact([&] {
-    // TODO: works for now, improve
-    auto current = std::unordered_set<Security>();
-    for(auto& imbalance : imbalances) {
-      current.insert(imbalance.m_security);
-      on_imbalance(imbalance);
+    while(m_table_model.get_row_size() > 0) {
+      m_table_model.remove(m_table_model.get_row_size() - 1);
     }
-    auto removed_rows = 0;
-    std::erase_if(m_imbalances, [&] (const auto& imbalance) {
-      auto& current_imbalance = m_imbalances[imbalance.first];
-      if(!current.contains(current_imbalance.m_imbalance.m_security)) {
-        m_table_model.remove(current_imbalance.m_row_index - removed_rows);
-        ++removed_rows;
-        return true;
+    m_imbalances = [&] {
+      auto updated_imbalances = std::unordered_map<Security, Imbalance>();
+      for(auto& imbalance : imbalances) {
+        insert_imbalance(updated_imbalances, imbalance);
       }
-      current_imbalance.m_row_index -= removed_rows;
-      return false;
-    });
+      return updated_imbalances;
+    }();
   });
 }

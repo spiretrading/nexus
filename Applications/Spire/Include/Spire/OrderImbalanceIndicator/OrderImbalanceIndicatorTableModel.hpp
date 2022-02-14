@@ -65,6 +65,9 @@ namespace Spire {
       std::unordered_map<Nexus::Security, Imbalance> m_imbalances;
       QTimer m_expiration_timer;
 
+      void insert_imbalance(
+        std::unordered_map<Nexus::Security, Imbalance>& imbalances,
+        const Nexus::OrderImbalance& imbalance);
       std::vector<std::any> make_row(
         const Nexus::OrderImbalance& imbalance) const;
       std::vector<boost::optional<std::any>> make_row_update(
