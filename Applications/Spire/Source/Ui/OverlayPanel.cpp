@@ -1,5 +1,4 @@
 #include "Spire/Ui/OverlayPanel.hpp"
-#include <QApplication>
 #include <QGraphicsDropShadowEffect>
 #include <QHBoxLayout>
 #include <QMouseEvent>
@@ -54,8 +53,8 @@ OverlayPanel::OverlayPanel(QWidget& body, QWidget& parent)
       m_was_activated(false),
       m_positioning(Positioning::PARENT),
       m_focus_observer(*this),
-      m_window_observer(parent),
-      m_parent_focus_observer(parent) {
+      m_parent_focus_observer(parent),
+      m_parent_position_observer(parent) {
   setAttribute(Qt::WA_TranslucentBackground);
   setAttribute(Qt::WA_QuitOnClose);
   auto box = new Box(m_body);
@@ -77,13 +76,11 @@ OverlayPanel::OverlayPanel(QWidget& body, QWidget& parent)
     std::bind_front(&OverlayPanel::on_focus, this));
   m_parent_focus_connection = m_parent_focus_observer.connect_state_signal(
     std::bind_front(&OverlayPanel::on_parent_focus, this));
-  m_window = m_window_observer.get_window();
-  if(m_window) {
-    m_window->installEventFilter(this);
-  }
-  m_window_observer.connect_window_signal(
-    std::bind_front(&OverlayPanel::on_window, this));
+  m_parent_position_connection =
+    m_parent_position_observer.connect_position_signal(
+      std::bind_front(&OverlayPanel::on_parent_move, this));
   m_body->installEventFilter(this);
+  parent.installEventFilter(this);
 }
 
 const QWidget& OverlayPanel::get_body() const {
@@ -130,11 +127,9 @@ bool OverlayPanel::eventFilter(QObject* watched, QEvent* event) {
         move(pos() + (mouse_event.pos() - m_mouse_pressed_position));
       }
     }
-  } else if(watched == m_window) {
-    if(event->type() == QEvent::Move || event->type() == QEvent::Resize) {
-      if(isVisible()) {
-        position();
-      }
+  } else if(watched == parentWidget() && event->type() == QEvent::Resize) {
+    if(isVisible()) {
+      position();
     }
   }
   return QWidget::eventFilter(watched, event);
@@ -215,10 +210,10 @@ void OverlayPanel::on_parent_focus(FocusObserver::State state) {
   }
 }
 
-void OverlayPanel::on_window(QWidget* window) {
-  m_window->removeEventFilter(this);
-  m_window = window;
-  m_window->installEventFilter(this);
+void OverlayPanel::on_parent_move(QPoint) {
+  if(isVisible()) {
+    position();
+  }
 }
 
 void OverlayPanel::update_mask() {
