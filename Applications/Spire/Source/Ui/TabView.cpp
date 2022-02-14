@@ -13,41 +13,45 @@ using namespace boost;
 using namespace Spire;
 using namespace Spire::Styles;
 
-struct Tab : QWidget {
-  Tab(std::shared_ptr<ListModel<QString>> labels) {
-    setMinimumWidth(scale_width(54));
-    setMaximumWidth(scale_width(160));
-    setFixedHeight(scale_height(26));
-    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-    auto label = new ResponsiveLabel(std::move(labels));
-    update_style(*label, [] (auto& style) {
-      style.get(Any()).
-        set(PaddingLeft(scale_width(8))).
-        set(PaddingRight(scale_width(2))).
-        set(TextColor(QColor(0x808080)));
-    });
-    auto divider = new Box(nullptr);
-    divider->setFixedSize(scale(1, 14));
-    adopt(*this, *divider, TabView::Divider());
-    auto body = new QWidget();
-    body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    auto body_layout = new QHBoxLayout(body);
-    body_layout->setSpacing(0);
-    body_layout->setContentsMargins({});
-    body_layout->addWidget(label);
-    body_layout->addWidget(divider, 0, Qt::AlignVCenter);
-    auto box = new Box(body);
-    auto layout = new QHBoxLayout(this);
-    layout->setSpacing(0);
-    layout->setContentsMargins({});
-    layout->addWidget(box);
-    proxy_style(*this, *box);
-    update_style(*this, [] (auto& style) {
-      style.get(!TabView::LastTab() > TabView::Divider()).
-        set(BackgroundColor(QColor(0xC8C8C8)));
-    });
-  }
-};
+namespace {
+  using PrecedesCurrent = StateSelector<void, struct PrecedesCurrentTag>;
+
+  struct Tab : QWidget {
+    Tab(std::shared_ptr<ListModel<QString>> labels) {
+      setMinimumWidth(scale_width(54));
+      setMaximumWidth(scale_width(160));
+      setFixedHeight(scale_height(26));
+      setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+      auto label = new ResponsiveLabel(std::move(labels));
+      update_style(*label, [] (auto& style) {
+        style.get(Any()).
+          set(PaddingLeft(scale_width(8))).
+          set(PaddingRight(scale_width(2))).
+          set(TextColor(QColor(0x808080)));
+      });
+      auto divider = new Box(nullptr);
+      divider->setFixedSize(scale(1, 14));
+      adopt(*this, *divider, TabView::Divider());
+      auto body = new QWidget();
+      body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+      auto body_layout = new QHBoxLayout(body);
+      body_layout->setSpacing(0);
+      body_layout->setContentsMargins({});
+      body_layout->addWidget(label);
+      body_layout->addWidget(divider, 0, Qt::AlignVCenter);
+      auto box = new Box(body);
+      auto layout = new QHBoxLayout(this);
+      layout->setSpacing(0);
+      layout->setContentsMargins({});
+      layout->addWidget(box);
+      proxy_style(*this, *box);
+      update_style(*this, [] (auto& style) {
+        style.get(Any() > TabView::Divider()).
+          set(BackgroundColor(QColor(0xC8C8C8)));
+      });
+    }
+  };
+}
 
 TabView::TabView(QWidget* parent)
     : m_labels(std::make_shared<ArrayListModel<std::vector<QString>>>()) {
@@ -59,11 +63,7 @@ TabView::TabView(QWidget* parent)
       for(auto& label : labels) {
         labels_model->push(label);
       }
-      auto tab = new Tab(std::move(labels_model));
-      if(index == model->get_size() - 1) {
-        match(*tab, LastTab());
-      }
-      return tab;
+      return new Tab(std::move(labels_model));
     });
   m_tab_list->set_item_size_policy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   auto scrollable_list_box = new ScrollableListBox(*m_tab_list);
@@ -88,6 +88,8 @@ TabView::TabView(QWidget* parent)
       set(BackgroundColor(QColor(0xE0E0E0)));
     style.get(Any() >> (is_a<ListItem>() && Current())).
       set(BackgroundColor(QColor(0xFFFFFF)));
+    style.get(Any() >> (is_a<ListItem>() && (Current() || PrecedesCurrent())) >>
+      is_a<Tab>() > TabView::Divider()).set(Visibility::INVISIBLE);
   });
   update_style(*this, [] (auto& style) {
     style.get(FocusIn() >> (is_a<ListItem>() && Current())).
@@ -107,11 +109,6 @@ void TabView::add(const QString& label, QWidget& body) {
 }
 
 void TabView::add(std::vector<QString> labels, QWidget& body) {
-  if(!m_bodies.empty()) {
-    auto item =
-      m_tab_list->get_list_item(m_tab_list->get_list()->get_size() - 1);
-    unmatch(item->get_body(), LastTab());
-  }
   m_bodies.push_back(&body);
   m_labels->push(labels);
   if(!m_tab_list->get_current()->get()) {
@@ -120,6 +117,10 @@ void TabView::add(std::vector<QString> labels, QWidget& body) {
 }
 
 void TabView::on_current(optional<int> current) {
+  if(m_current && *m_current > 0) {
+    unmatch(*m_tab_list->get_list_item(*m_current - 1), PrecedesCurrent());
+  }
+  m_current = current;
   auto layout = static_cast<QVBoxLayout*>(this->layout());
   if(layout->count() > 1) {
     auto item = layout->itemAt(1);
@@ -130,5 +131,8 @@ void TabView::on_current(optional<int> current) {
   if(current) {
     layout->addWidget(m_bodies[*current], 0, Qt::AlignTop | Qt::AlignLeft);
     m_bodies[*current]->show();
+    if(*current > 0) {
+      match(*m_tab_list->get_list_item(*m_current - 1), PrecedesCurrent());
+    }
   }
 }
