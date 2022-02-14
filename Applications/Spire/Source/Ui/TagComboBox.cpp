@@ -88,6 +88,7 @@ void TagComboBox::on_submit(const std::any& submission) {
 void TagComboBox::on_operation(const AnyListModel::Operation& operation) {
   visit(operation,
     [&] (const AnyListModel::AddOperation& operation) {
+      m_tag_box->setFocus();
       m_submit_signal(get_list());
     },
     [&] (const AnyListModel::RemoveOperation& operation) {
