@@ -4,6 +4,7 @@
 #include <QKeyEvent>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
+#include "Spire/Ui/AnyInputBox.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DropDownBox.hpp"
 #include "Spire/Ui/DropDownList.hpp"
@@ -25,21 +26,27 @@ ComboBox::ComboBox(std::shared_ptr<QueryModel> query_model,
       std::move(view_builder), parent) {}
 
 ComboBox::ComboBox(std::shared_ptr<QueryModel> query_model,
-    std::shared_ptr<CurrentModel> current, ViewBuilder view_builder,
-    QWidget* parent)
+  std::shared_ptr<CurrentModel> current, ViewBuilder view_builder,
+  QWidget* parent)
+  : ComboBox(std::move(query_model), std::move(current),
+      new AnyInputBox(*(new TextBox())), std::move(view_builder), parent) {}
+
+ComboBox::ComboBox(std::shared_ptr<QueryModel> query_model,
+    std::shared_ptr<CurrentModel> current, AnyInputBox* input_box,
+    ViewBuilder view_builder, QWidget* parent)
     : QWidget(parent),
       m_query_model(std::move(query_model)),
       m_current(std::move(current)),
       m_submission(m_current->get()),
       m_submission_text(displayTextAny(m_submission)),
       m_is_read_only(false),
+      m_input_box(input_box),
       m_focus_observer(*this),
       m_matches(std::make_shared<ArrayListModel<std::any>>()),
       m_completion_tag(0),
       m_has_autocomplete_selection(false),
       m_current_connection(m_current->connect_update_signal(
         std::bind_front(&ComboBox::on_current, this))) {
-  m_input_box = new TextBox();
   setFocusProxy(m_input_box);
   proxy_style(*this, *m_input_box);
   m_input_box->installEventFilter(this);
@@ -157,7 +164,7 @@ void ComboBox::keyPressEvent(QKeyEvent* event) {
 void ComboBox::update_completion() {
   if(m_matches->get_size() != 0) {
     auto& highlight = *m_input_box->get_highlight();
-    auto& query = m_input_box->get_current()->get();
+    auto& query = any_cast<QString>(m_input_box->get_current()->get());
     if(highlight.get().m_end != query.size()) {
       m_prefix.clear();
       m_completion.clear();
@@ -188,7 +195,7 @@ void ComboBox::update_completion() {
     m_completion = std::move(completion);
   } else {
     m_last_completion.clear();
-    m_prefix = m_input_box->get_current()->get();
+    m_prefix = any_cast<QString>(m_input_box->get_current()->get());
     m_completion.clear();
   }
 }
@@ -243,13 +250,14 @@ void ComboBox::submit(const QString& query, bool is_passive) {
 }
 
 void ComboBox::on_current(const std::any& current) {
-  if(!is_equal(current,
-      m_query_model->parse(m_input_box->get_current()->get()))) {
+  if(!is_equal(current, m_query_model->parse(
+      any_cast<QString>(m_input_box->get_current()->get())))) {
     m_input_box->get_current()->set(displayTextAny(current));
   }
 }
 
-void ComboBox::on_input(const QString& query) {
+void ComboBox::on_input(const AnyRef& current) {
+  auto& query = any_cast<QString>(current);
   m_user_query = query;
   m_has_autocomplete_selection = false;
   if(query.isEmpty()) {
@@ -271,7 +279,7 @@ void ComboBox::on_highlight(const Highlight& highlight) {
     return;
   }
   m_has_autocomplete_selection = false;
-  auto& query = m_input_box->get_current()->get();
+  auto& query = any_cast<QString>(m_input_box->get_current()->get());
   auto value = m_query_model->parse(query);
   if(!value.has_value()) {
     return;
@@ -282,12 +290,12 @@ void ComboBox::on_highlight(const Highlight& highlight) {
   m_current->set(value);
 }
 
-void ComboBox::on_submit(const QString& query) {
+void ComboBox::on_submit(const AnyRef& query) {
   if(find_focus_state(*m_input_box) == FocusObserver::State::NONE) {
     return;
   }
-  m_user_query = query;
-  submit(query);
+  m_user_query = any_cast<QString>(query);
+  submit(*m_user_query);
 }
 
 void ComboBox::on_query(
@@ -361,7 +369,7 @@ void ComboBox::on_drop_down_submit(const std::any& submission) {
 void ComboBox::on_focus(FocusObserver::State state) {
   if(state == FocusObserver::State::NONE) {
     m_drop_down_list->hide();
-    submit(m_input_box->get_current()->get(), true);
+    submit(any_cast<QString>(m_input_box->get_current()->get()), true);
   }
 }
 

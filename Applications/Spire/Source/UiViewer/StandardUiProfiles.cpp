@@ -45,6 +45,7 @@
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/MoneyBox.hpp"
 #include "Spire/Ui/NavigationView.hpp"
+#include "Spire/Ui/OpenFilterPanel.hpp"
 #include "Spire/Ui/OrderTypeBox.hpp"
 #include "Spire/Ui/OrderTypeFilterPanel.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
@@ -2120,6 +2121,45 @@ UiProfile Spire::make_navigation_view_profile() {
   return profile;
 }
 
+UiProfile Spire::make_open_filter_panel_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  auto profile = UiProfile(QString("OpenFilterPanel"), properties,
+    [] (auto& profile) {
+      auto model = std::make_shared<LocalComboBoxQueryModel>();
+      model->add(QString("Almond"));
+      model->add(QString("Amber"));
+      model->add(QString("Amberose"));
+      model->add(QString("Apple"));
+      model->add(QString("Beige"));
+      model->add(QString("Bronze"));
+      model->add(QString("Brown"));
+      model->add(QString("Black"));
+      model->add(QString("Car"));
+      auto button = make_label_button(QString::fromUtf8("Click me"));
+      auto panel = new OpenFilterPanel(model,
+        QString::fromUtf8("OpenFilterPanel"), *button);
+      auto submit_filter_slot =
+        profile.make_event_slot<QString>(QString::fromUtf8("SubmitSignal"));
+      panel->connect_submit_signal(
+        [=] (const std::shared_ptr<AnyListModel>& submission,
+            OpenFilterPanel::Mode mode) {
+          auto result = QString();
+          if(mode == OpenFilterPanel::Mode::INCLUDE) {
+            result += "Include: ";
+          } else {
+            result += "Exclude: ";
+          }
+          for(auto i = 0; i < submission->get_size(); ++i) {
+            result += displayTextAny(submission->get(i)) + " ";
+          }
+          submit_filter_slot(result);
+        });
+      button->connect_clicked_signal([=] { panel->show(); });
+      return button;
+    });
+  return profile;
+}
+
 UiProfile Spire::make_order_field_info_tip_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
@@ -2223,6 +2263,7 @@ UiProfile Spire::make_order_type_filter_panel_profile() {
 
 UiProfile Spire::make_overlay_panel_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
   properties.push_back(make_standard_property("close-on-focus-out", false));
   properties.push_back(make_standard_property("draggable", true));
   auto positioning_property = define_enum<OverlayPanel::Positioning>(
@@ -2237,6 +2278,7 @@ UiProfile Spire::make_overlay_panel_profile() {
     auto& positioning =
       get<OverlayPanel::Positioning>("positioning", profile.get_properties());
     auto button = make_label_button("Click me");
+    apply_widget_properties(button, profile.get_properties());
     auto panel = QPointer<OverlayPanel>();
     button->connect_clicked_signal(
       [=, &profile, &close_on_focus_out, &draggable, &positioning]
@@ -2802,6 +2844,7 @@ UiProfile Spire::make_tag_profile() {
 UiProfile Spire::make_tag_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
+  properties.push_back(make_standard_property<QString>("placeholder"));
   properties.push_back(make_standard_property("read_only", false));
   auto overflow_property = define_enum<TagBoxOverflow>(
     {{"WRAP", TagBoxOverflow::WRAP}, {"ELIDE", TagBoxOverflow::ELIDE}});
@@ -2816,6 +2859,10 @@ UiProfile Spire::make_tag_box_profile() {
     auto current_model = std::make_shared<LocalTextModel>();
     auto tag_box = new TagBox(list_model, current_model);
     apply_widget_properties(tag_box, profile.get_properties());
+    auto& placeholder = get<QString>("placeholder", profile.get_properties());
+    placeholder.connect_changed_signal([=] (const auto& text) {
+      tag_box->set_placeholder(text);
+    });
     auto& read_only = get<bool>("read_only", profile.get_properties());
     read_only.connect_changed_signal([=] (auto is_read_only) {
       tag_box->set_read_only(is_read_only);
@@ -2832,11 +2879,7 @@ UiProfile Spire::make_tag_box_profile() {
         list_model->push(value);
       }
     });
-    auto delete_slot = profile.make_event_slot<QString>("Delete");
-    tag_box->connect_delete_signal([=] (int index) {
-      list_model->remove(index);
-      delete_slot(QString("%1").arg(index));
-    });
+    tag_box->connect_submit_signal(profile.make_event_slot<QString>("Submit"));
     return tag_box;
   });
   return profile;

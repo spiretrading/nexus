@@ -24,11 +24,8 @@ namespace Styles {
   class TagBox : public QWidget {
     public:
 
-      /**
-       * Signals that the tag at the index is being deleted.
-       * @param index The index of the deleted tag.
-       */
-      using DeleteSignal = Signal<void (int index)>;
+       /** Signals that the current value in the TextBox is being submitted. */
+      using SubmitSignal = TextBox::SubmitSignal;
 
       /**
        * Constructs a TagBox.
@@ -45,6 +42,12 @@ namespace Styles {
       /** Returns the current text model. */
       const std::shared_ptr<TextModel>& get_current() const;
 
+      /** Returns the highlight model. */
+      const std::shared_ptr<HighlightModel>& get_highlight() const;
+
+      /** Sets the placeholder value. */
+      void set_placeholder(const QString& placeholder);
+
       /** Returns <code>true</code> iff this TagBox is read-only. */
       bool is_read_only() const;
 
@@ -55,17 +58,17 @@ namespace Styles {
        */
       void set_read_only(bool is_read_only);
 
-      /** Connects a slot to the DeleteSignal. */
-      boost::signals2::connection connect_delete_signal(
-        const DeleteSignal::slot_type& slot) const;
+      /** Connects a slot to the SubmitSignal. */
+      boost::signals2::connection connect_submit_signal(
+        const SubmitSignal::slot_type& slot) const;
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
       void changeEvent(QEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
+      void showEvent(QShowEvent* event) override;
 
     private:
-      mutable DeleteSignal m_delete_signal;
       struct PartialListModel;
       std::shared_ptr<PartialListModel> m_model;
       bool m_is_read_only;
