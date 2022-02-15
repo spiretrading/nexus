@@ -39,6 +39,9 @@ namespace Spire {
        */
       void add(std::vector<QString> labels, QWidget& body);
 
+    protected:
+      void keyPressEvent(QKeyEvent* event) override;
+
     private:
       std::shared_ptr<ArrayListModel<std::vector<QString>>> m_labels;
       ListView* m_tab_list;

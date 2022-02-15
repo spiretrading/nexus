@@ -1,12 +1,13 @@
 #include "Spire/Ui/TabView.hpp"
 #include <QHBoxLayout>
-#include <QResizeEvent>
+#include <QKeyEvent>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/ResponsiveLabel.hpp"
+#include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/ScrollableListBox.hpp"
 
 using namespace boost;
@@ -26,7 +27,7 @@ namespace {
       update_style(*label, [] (auto& style) {
         style.get(Any()).
           set(PaddingLeft(scale_width(8))).
-          set(PaddingRight(scale_width(2))).
+          set(PaddingRight(scale_width(7))).
           set(TextColor(QColor(0x808080)));
       });
       auto divider = new Box(nullptr);
@@ -68,6 +69,8 @@ TabView::TabView(QWidget* parent)
   m_tab_list->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
   m_tab_list->set_item_size_policy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   auto scrollable_list_box = new ScrollableListBox(*m_tab_list);
+  scrollable_list_box->get_scroll_box().set(
+    ScrollBox::DisplayPolicy::NEVER, ScrollBox::DisplayPolicy::NEVER);
   update_style(*scrollable_list_box, [] (auto& style) {
     style.get(Any()).
       set(BackgroundColor(QColor(0xEBEBEB))).
@@ -85,6 +88,8 @@ TabView::TabView(QWidget* parent)
       set(BackgroundColor(QColor(0xEBEBEB))).
       set(BorderTopSize(scale_height(1))).
       set(border_color(QColor(Qt::transparent)));
+    style.get(Any() >> (is_a<ListItem>() && (Current() || Hover())) >>
+        is_a<ResponsiveLabel>()).set(TextColor(QColor(Qt::black)));
     style.get(Any() >> (is_a<ListItem>() && Hover())).
       set(BackgroundColor(QColor(0xE0E0E0)));
     style.get(Any() >> (is_a<ListItem>() && Current())).
@@ -114,6 +119,38 @@ void TabView::add(std::vector<QString> labels, QWidget& body) {
   m_labels->push(labels);
   if(!m_tab_list->get_current()->get()) {
     m_tab_list->get_current()->set(0);
+  }
+}
+
+void TabView::keyPressEvent(QKeyEvent* event) {
+  auto direction = [&] {
+    if(event->modifiers() == Qt::ControlModifier) {
+      if(event->key() == Qt::Key_Tab) {
+        return 1;
+      } else if(event->key() == Qt::Key_Backtab) {
+        return -1;
+      }
+    } else if(event->modifiers() == (Qt::ControlModifier | Qt::ShiftModifier)) {
+      if(event->key() == Qt::Key_Backtab) {
+        return -1;
+      }
+    }
+    return 0;
+  }();
+  if(direction == 0) {
+    return QWidget::keyPressEvent(event);
+  }
+  auto& current = m_tab_list->get_current();
+  if(!current->get()) {
+    if(m_tab_list->get_list()->get_size() > 0) {
+      current->set(0);
+    }
+  } else if(direction == 1) {
+    current->set((*current->get() + 1) % m_tab_list->get_list()->get_size());
+  } else if(*current->get() == 0) {
+    current->set(m_tab_list->get_list()->get_size() - 1);
+  } else {
+    current->set(*current->get() - 1);
   }
 }
 

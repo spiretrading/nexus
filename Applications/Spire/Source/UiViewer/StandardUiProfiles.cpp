@@ -2677,10 +2677,10 @@ UiProfile Spire::make_tab_view_profile() {
   populate_widget_properties(properties);
   auto profile = UiProfile("TabView", properties, [] (auto& profile) {
     auto view = new TabView();
-    view->add("Positions", *make_label("Positions"));
-    view->add("Order Log", *make_label("Order Log"));
-    view->add("Executions", *make_label("Executions"));
-    view->add("Profit/Loss", *make_label("Profit/Loss"));
+    view->add("Positions", *make_label_button("Positions"));
+    view->add("Order Log", *make_label_button("Order Log"));
+    view->add("Executions", *make_label_button("Executions"));
+    view->add("Profit/Loss", *make_label_button("Profit/Loss"));
     apply_widget_properties(view, profile.get_properties());
     return view;
   });
