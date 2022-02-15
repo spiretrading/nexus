@@ -2,7 +2,6 @@
 #define SPIRE_OPEN_FILTER_PANEL_TEMPLATE_HPP
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
-#include "Spire/Ui/AnyInputBox.hpp"
 #include "Spire/Ui/OpenFilterPanel.hpp"
 #include "Spire/Ui/Ui.hpp"
 
