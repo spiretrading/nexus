@@ -30,8 +30,6 @@ OrderImbalanceIndicatorTableModel::OrderImbalanceIndicatorTableModel(
   m_expiration_timer.setInterval(EXPIRATION_TIMEOUT_MS);
   QObject::connect(&m_expiration_timer, &QTimer::timeout,
     [=] { on_expiration_timeout(); });
-  m_expiration_timer.setInterval(
-    std::numeric_limits<std::chrono::milliseconds>::max());
 }
 
 void OrderImbalanceIndicatorTableModel::set_interval(

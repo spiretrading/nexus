@@ -1,6 +1,5 @@
 #ifndef SPIRE_ORDER_IMBALANCE_INDICATOR_TABLE_MODEL_HPP
 #define SPIRE_ORDER_IMBALANCE_INDICATOR_TABLE_MODEL_HPP
-#include <chrono>
 #include <QTimer>
 #include <Beam/TimeService/TimeClientBox.hpp>
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorModel.hpp"
