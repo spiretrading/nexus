@@ -112,9 +112,9 @@ void OrderImbalanceIndicatorTableModel::set_row(
     for(auto i = std::size_t(1); i < row.size(); ++i) {
       if(auto value = row.at(i)) {
         m_table_model.set(previous.m_row_index, i, *value);
-        previous.m_imbalance = current;
       }
     }
+    previous.m_imbalance = current;
   });
 }
 
