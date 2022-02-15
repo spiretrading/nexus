@@ -30,6 +30,7 @@
 #include "Spire/Ui/DateFilterPanel.hpp"
 #include "Spire/Ui/DecimalBox.hpp"
 #include "Spire/Ui/DestinationBox.hpp"
+#include "Spire/Ui/DestinationFilterPanel.hpp"
 #include "Spire/Ui/DestinationListItem.hpp"
 #include "Spire/Ui/DropDownBox.hpp"
 #include "Spire/Ui/DropDownList.hpp"
@@ -136,6 +137,20 @@ namespace {
       return QString("(%1, %2)").arg(index->m_row).arg(index->m_column);
     }
     return QString("None");
+  }
+
+  QString to_string(const std::shared_ptr<AnyListModel>& submission,
+      OpenFilterPanel::Mode mode) {
+    auto result = QString();
+    if(mode == OpenFilterPanel::Mode::INCLUDE) {
+      result += "Include: ";
+    } else {
+      result += "Exclude: ";
+    }
+    for(auto i = 0; i < submission->get_size(); ++i) {
+      result += displayTextAny(submission->get(i)) + " ";
+    }
+    return result;
   }
 
   template<typename T>
@@ -460,6 +475,16 @@ namespace {
     panel->set_is_draggable(draggable);
     panel->set_positioning(positioning);
     panel->show();
+  }
+
+  std::shared_ptr<ComboBox::QueryModel> populate_destination_query_model() {
+    auto destinations = GetDefaultDestinationDatabase().SelectEntries(
+      [] (auto& value) { return true; });
+    auto model = std::make_shared<LocalComboBoxQueryModel>();
+    for(auto destination : destinations) {
+      model->add(displayTextAny(destination.m_id).toLower(), destination);
+    }
+    return model;
   }
 
   std::shared_ptr<ComboBox::QueryModel> populate_security_query_model() {
@@ -1326,12 +1351,7 @@ UiProfile Spire::make_destination_box_profile() {
   properties.push_back(make_standard_property<QString>("placeholder"));
   properties.push_back(make_standard_property("read_only", false));
   auto profile = UiProfile("DestinationBox", properties, [] (auto& profile) {
-    auto destinations = GetDefaultDestinationDatabase().SelectEntries(
-      [] (auto& value) { return true; });
-    auto model = std::make_shared<LocalComboBoxQueryModel>();
-    for(auto destination : destinations) {
-      model->add(displayTextAny(destination.m_id).toLower(), destination);
-    }
+    auto model = populate_destination_query_model();
     auto box = new DestinationBox(model);
     box->setFixedWidth(scale_width(112));
     apply_widget_properties(box, profile.get_properties());
@@ -1359,6 +1379,26 @@ UiProfile Spire::make_destination_box_profile() {
     box->connect_submit_signal(profile.make_event_slot<Destination>("Submit"));
     return box;
   });
+  return profile;
+}
+
+UiProfile Spire::make_destination_filter_panel_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  auto profile = UiProfile(QString("DestinationFilterPanel"), properties,
+    [] (auto& profile) {
+      auto button = make_label_button(QString::fromUtf8("Click me"));
+      auto panel = make_destination_filter_panel(
+        populate_destination_query_model(), *button);
+      auto submit_filter_slot =
+        profile.make_event_slot<QString>(QString::fromUtf8("SubmitSignal"));
+      panel->connect_submit_signal(
+        [=] (const std::shared_ptr<AnyListModel>& submission,
+            OpenFilterPanel::Mode mode) {
+          submit_filter_slot(to_string(submission, mode));
+        });
+      button->connect_clicked_signal([=] { panel->show(); });
+      return button;
+    });
   return profile;
 }
 
@@ -2178,16 +2218,7 @@ UiProfile Spire::make_open_filter_panel_profile() {
       panel->connect_submit_signal(
         [=] (const std::shared_ptr<AnyListModel>& submission,
             OpenFilterPanel::Mode mode) {
-          auto result = QString();
-          if(mode == OpenFilterPanel::Mode::INCLUDE) {
-            result += "Include: ";
-          } else {
-            result += "Exclude: ";
-          }
-          for(auto i = 0; i < submission->get_size(); ++i) {
-            result += displayTextAny(submission->get(i)) + " ";
-          }
-          submit_filter_slot(result);
+          submit_filter_slot(to_string(submission, mode));
         });
       button->connect_clicked_signal([=] { panel->show(); });
       return button;
@@ -2697,16 +2728,7 @@ UiProfile Spire::make_security_filter_panel_profile() {
       panel->connect_submit_signal(
         [=] (const std::shared_ptr<AnyListModel>& submission,
             OpenFilterPanel::Mode mode) {
-          auto result = QString();
-          if(mode == OpenFilterPanel::Mode::INCLUDE) {
-            result += "Include: ";
-          } else {
-            result += "Exclude: ";
-          }
-          for(auto i = 0; i < submission->get_size(); ++i) {
-            result += displayTextAny(submission->get(i)) + " ";
-          }
-          submit_filter_slot(result);
+          submit_filter_slot(to_string(submission, mode));
         });
       button->connect_clicked_signal([=] { panel->show(); });
       return button;

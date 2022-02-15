@@ -1,26 +1,25 @@
-#include "Spire/Ui/SecurityFilterPanel.hpp"
-#include "Nexus/Definitions/SecurityInfo.hpp"
+#include "Spire/Ui/DestinationFilterPanel.hpp"
 #include "Spire/Ui/AnyInputBox.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
-#include "Spire/Ui/SecurityBox.hpp"
+#include "Spire/Ui/DestinationBox.hpp"
 
 using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 
-struct SecurityFilterQueryModel : ComboBox::QueryModel {
+struct DestinationFilterQueryModel : ComboBox::QueryModel {
   std::shared_ptr<ComboBox::QueryModel> m_source;
   std::shared_ptr<AnyListModel> m_matches;
   std::unordered_set<QString> m_matches_set;
   std::vector<QString> m_matches_list;
   scoped_connection m_matches_connection;
 
-  SecurityFilterQueryModel(std::shared_ptr<ComboBox::QueryModel> source,
+  DestinationFilterQueryModel(std::shared_ptr<ComboBox::QueryModel> source,
       std::shared_ptr<AnyListModel> matches)
       : m_source(std::move(source)),
         m_matches(std::move(matches)),
         m_matches_connection(m_matches->connect_operation_signal(
-          std::bind_front(&SecurityFilterQueryModel::on_operation, this))) {
+          std::bind_front(&DestinationFilterQueryModel::on_operation, this))) {
     for(auto i = 0; i < m_matches->get_size(); ++i) {
       add_match(i);
     }
@@ -31,8 +30,8 @@ struct SecurityFilterQueryModel : ComboBox::QueryModel {
     if(!value.has_value()) {
       return value;
     }
-    if(m_matches_set.contains(
-        displayTextAny(std::any_cast<SecurityInfo&>(value).m_security))) {
+    if(m_matches_set.contains(displayTextAny(
+        std::any_cast<DestinationDatabase::Entry&>(value).m_id))) {
       return std::any();
     }
     return value;
@@ -48,8 +47,8 @@ struct SecurityFilterQueryModel : ComboBox::QueryModel {
         }
       }();
       std::erase_if(result, [&] (auto& value) {
-        return m_matches_set.contains(
-          displayTextAny(std::any_cast<SecurityInfo&>(value).m_security));
+        return m_matches_set.contains(displayTextAny(
+          std::any_cast<DestinationDatabase::Entry&>(value).m_id));
       });
       return result;
     });
@@ -73,34 +72,34 @@ struct SecurityFilterQueryModel : ComboBox::QueryModel {
   }
 };
 
-AnyInputBox* security_box_builder(std::shared_ptr<ComboBox::QueryModel> model,
+AnyInputBox* destination_box_builder(std::shared_ptr<ComboBox::QueryModel> model,
     std::shared_ptr<AnyListModel> matches) {
-  auto box = new SecurityBox(
-    std::make_shared<SecurityFilterQueryModel>(model, matches));
-  box->set_placeholder(QObject::tr("Search securities"));
+  auto box = new DestinationBox(
+    std::make_shared<DestinationFilterQueryModel>(model, matches));
+  box->set_placeholder(QObject::tr("Search destinations"));
   auto input_box = new AnyInputBox(*box);
   input_box->connect_submit_signal([=] (const auto& submission) {
-    input_box->get_current()->set(Security());
-    matches->push(any_cast<Security>(submission));
+    input_box->get_current()->set(Destination());
+    matches->push(any_cast<Destination>(submission));
   });
   return input_box;
 }
 
-SecurityFilterPanel* Spire::make_security_filter_panel(
+DestinationFilterPanel* Spire::make_destination_filter_panel(
     std::shared_ptr<ComboBox::QueryModel> query_model, QWidget& parent) {
-  return make_security_filter_panel(std::move(query_model),
-    std::make_shared<ArrayListModel<Security>>(),
-    std::make_shared<LocalValueModel<SecurityFilterPanel::Mode>>(
-      SecurityFilterPanel::Mode::INCLUDE), parent);
+  return make_destination_filter_panel(std::move(query_model),
+    std::make_shared<ArrayListModel<Destination>>(),
+    std::make_shared<LocalValueModel<DestinationFilterPanel::Mode>>(
+      DestinationFilterPanel::Mode::INCLUDE), parent);
 }
 
-SecurityFilterPanel* Spire::make_security_filter_panel(
+DestinationFilterPanel* Spire::make_destination_filter_panel(
     std::shared_ptr<ComboBox::QueryModel> query_model,
-    std::shared_ptr<ListModel<Security>> matches,
-    std::shared_ptr<ValueModel<SecurityFilterPanel::Mode>> mode,
+    std::shared_ptr<ListModel<Destination>> matches,
+    std::shared_ptr<ValueModel<DestinationFilterPanel::Mode>> mode,
     QWidget& parent) {
-  return new SecurityFilterPanel(
-    std::bind_front(security_box_builder, std::move(query_model)),
-    std::move(matches), std::move(mode), QObject::tr("Filter by Security"),
+  return new DestinationFilterPanel(
+    std::bind_front(destination_box_builder, std::move(query_model)),
+    std::move(matches), std::move(mode), QObject::tr("Filter by Destination"),
     parent);
 }

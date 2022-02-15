@@ -126,6 +126,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_decimal_filter_panel_profile());
   add(make_delete_icon_button_profile());
   add(make_destination_box_profile());
+  add(make_destination_filter_panel_profile());
   add(make_destination_list_item_profile());
   add(make_drop_down_box_profile());
   add(make_drop_down_list_profile());
