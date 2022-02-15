@@ -228,6 +228,7 @@ void ScrollBar::update_thumb() {
       (m_position - m_range.m_start) / (m_range.m_end - m_range.m_start);
   }();
   if(m_thumb_position != expected_position) {
+    m_thumb_position = expected_position;
     update_style(*m_track, [&] (auto& style) {
       if(m_orientation == Qt::Orientation::Vertical) {
         style.get(Any()).set(PaddingTop(m_thumb_position));

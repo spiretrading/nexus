@@ -2681,7 +2681,6 @@ UiProfile Spire::make_tab_view_profile() {
     view->add("Order Log", *make_label("Order Log"));
     view->add("Executions", *make_label("Executions"));
     view->add("Profit/Loss", *make_label("Profit/Loss"));
-    view->show();
     apply_widget_properties(view, profile.get_properties());
     return view;
   });
