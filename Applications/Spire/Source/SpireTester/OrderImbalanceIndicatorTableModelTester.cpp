@@ -63,17 +63,6 @@ namespace {
     }
   }
 
-  auto row_equals(const auto& model, auto index, const auto& imbalance) {
-    return model.get<Security>(index, 0) == imbalance.m_security &&
-      model.get<Side>(index, 1) == imbalance.m_side &&
-      model.get<Quantity>(index, 2) == imbalance.m_size &&
-      model.get<Money>(index, 3) == imbalance.m_referencePrice &&
-      model.get<Money>(index, 4) ==
-        imbalance.m_size * imbalance.m_referencePrice &&
-      ptime(model.get<boost::gregorian::date>(index, 5),
-        model.get<time_duration>(index, 6)) == imbalance.m_timestamp;
-  }
-
   auto rows_equal(
       const auto& model, const auto& imbalance1, const auto& imbalance2) {
     if(model.get_row_size() != 2) {
