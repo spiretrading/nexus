@@ -46,20 +46,17 @@ ScrollBar::ScrollBar(Qt::Orientation orientation, QWidget* parent)
       m_thumb_position(0),
       m_track_scroll_direction(0),
       m_track_scroll_timer(this) {
-  m_thumb = new Box(nullptr, nullptr);
-  update_style(*m_thumb, [&] (auto& style) {
-    style.get(Any()).set(BackgroundColor(QColor(0xC8C8C8)));
-  });
   if(m_orientation == Qt::Orientation::Vertical) {
     setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
-    m_thumb->setSizePolicy(
-      QSizePolicy::Policy::Expanding, QSizePolicy::Policy::Fixed);
   } else {
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-    m_thumb->setSizePolicy(
-      QSizePolicy::Policy::Fixed, QSizePolicy::Policy::Expanding);
   }
-  m_track = new Box(m_thumb, this);
+  m_thumb = new Box();
+  update_style(*m_thumb, [] (auto& style) {
+    style.get(Any()).set(BackgroundColor(QColor(0xC8C8C8)));
+  });
+  m_thumb->setSizePolicy(sizePolicy().transposed());
+  m_track = new Box(m_thumb);
   update_style(*m_track, [&] (auto& style) {
     style.get(Any()).
       set(border(0, QColor(Qt::black))).
@@ -223,20 +220,23 @@ void ScrollBar::update_thumb() {
       m_thumb->setFixedWidth(thumb_size);
     }
   }
-  if(m_range.m_end <= m_range.m_start) {
-    m_thumb_position = 0;
-  } else {
-    m_thumb_position = (track_size - thumb_size) *
-      (m_position - m_range.m_start) / (m_range.m_end - m_range.m_start);
-  }
-  update_style(*m_track, [&] (auto& style) {
-    if(m_orientation == Qt::Orientation::Vertical) {
-      style.get(Any()).set(PaddingTop(m_thumb_position));
-    } else {
-      style.get(Any()).set(PaddingLeft(m_thumb_position));
+  auto expected_position = [&] {
+    if(m_range.m_end <= m_range.m_start) {
+      return 0;
     }
-  });
-  update();
+    return (track_size - thumb_size) *
+      (m_position - m_range.m_start) / (m_range.m_end - m_range.m_start);
+  }();
+  if(m_thumb_position != expected_position) {
+    m_thumb_position = expected_position;
+    update_style(*m_track, [&] (auto& style) {
+      if(m_orientation == Qt::Orientation::Vertical) {
+        style.get(Any()).set(PaddingTop(m_thumb_position));
+      } else {
+        style.get(Any()).set(PaddingLeft(m_thumb_position));
+      }
+    });
+  }
 }
 
 void ScrollBar::scroll_page() {

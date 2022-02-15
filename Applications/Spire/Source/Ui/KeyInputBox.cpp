@@ -93,7 +93,7 @@ KeyInputBox::KeyInputBox(
   layers->add(new Caret(this));
   auto layout = new QHBoxLayout();
   layout->setContentsMargins({});
-  auto input_box = make_input_box(layers, this);
+  auto input_box = make_input_box(layers);
   update_style(*input_box, [&] (auto& style) {
     style.get(Any()).set(vertical_padding(scale_height(3)));
   });

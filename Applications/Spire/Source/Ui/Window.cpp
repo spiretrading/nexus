@@ -44,12 +44,11 @@ Window::Window(QWidget* parent)
       m_body(nullptr),
       m_is_resizable(true) {
   setWindowFlags(windowFlags() | Qt::Window | Qt::WindowSystemMenuHint);
-  setObjectName("spire_window");
   m_title_bar = new TitleBar(make_svg_window_icon(":/Icons/spire.svg"), this);
   auto layout = new QVBoxLayout(this);
   layout->setSpacing(0);
-  layout->setContentsMargins(scale_width(1), scale_height(1), scale_width(1),
-    scale_height(1));
+  layout->setContentsMargins(
+    scale_width(1), scale_height(1), scale_width(1), scale_height(1));
   layout->addWidget(m_title_bar);
 }
 
@@ -59,16 +58,6 @@ void Window::set_icon(const QImage& icon) {
 
 void Window::set_svg_icon(const QString& icon_path) {
   set_icon(make_svg_window_icon(icon_path));
-}
-
-void Window::changeEvent(QEvent* event) {
-  if(event->type() == QEvent::ActivationChange) {
-    if(isActiveWindow()) {
-      setStyleSheet("#spire_window { background-color: #A0A0A0; }");
-    } else {
-      setStyleSheet("#spire_window { background-color: #C8C8C8; }");
-    }
-  }
 }
 
 void Window::closeEvent(QCloseEvent* event) {

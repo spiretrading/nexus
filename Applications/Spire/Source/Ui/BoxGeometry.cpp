@@ -10,6 +10,11 @@ BoxGeometry::BoxGeometry()
     m_padding_area(QPoint(0, 0), QSize(0, 0)),
     m_content_area(QPoint(0, 0), QSize(0, 0)) {}
 
+BoxGeometry::BoxGeometry(QSize size)
+  : m_border_area(QPoint(0, 0), size),
+    m_padding_area(QPoint(0, 0), size),
+    m_content_area(QPoint(0, 0), size) {}
+
 const QRect& BoxGeometry::get_geometry() const {
   return get_border_area();
 }
@@ -108,6 +113,10 @@ void BoxGeometry::set_size(QSize size) {
   m_padding_area.setBottom(m_border_area.bottom() - bottom_border);
   m_content_area.setRight(m_padding_area.right() - right_padding);
   m_content_area.setBottom(m_padding_area.bottom() - bottom_padding);
+}
+
+QSize Spire::get_styling_size(const BoxGeometry& geometry) {
+  return geometry.get_geometry().size() - geometry.get_content_area().size();
 }
 
 void Spire::apply(

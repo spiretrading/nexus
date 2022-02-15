@@ -24,22 +24,24 @@ namespace {
   }
 }
 
-ListItem::ListItem(QWidget* component, QWidget* parent)
+ListItem::ListItem(QWidget& body, QWidget* parent)
     : QWidget(parent),
       m_is_selected(false) {
-  auto layout = new QHBoxLayout(this);
-  layout->setContentsMargins({});
-  m_box = new Box(component);
+  setFocusPolicy(Qt::ClickFocus);
+  m_box = new Box(&body, Box::Fit::BOTH);
   m_button = new Button(m_box, this);
+  m_button->layout()->setSizeConstraint(QLayout::SetMinAndMaxSize);
   m_button->setFocusPolicy(Qt::ClickFocus);
-  if(component->isEnabled()) {
-    setFocusProxy(component);
+  if(body.isEnabled()) {
+    setFocusProxy(&body);
   } else {
     m_box->setFocusProxy(nullptr);
     setFocusProxy(m_button);
   }
+  auto layout = new QHBoxLayout(this);
+  layout->setContentsMargins({});
+  layout->setSizeConstraint(QLayout::SetMinAndMaxSize);
   layout->addWidget(m_button);
-  setFocusPolicy(Qt::ClickFocus);
   proxy_style(*m_button, *m_box);
   proxy_style(*this, *m_button);
   set_style(*this, DEFAULT_STYLE());
@@ -56,6 +58,10 @@ void ListItem::set_selected(bool is_selected) {
   } else {
     unmatch(*this, Selected());
   }
+}
+
+QWidget& ListItem::get_body() {
+  return *m_box->get_body();
 }
 
 connection ListItem::connect_submit_signal(

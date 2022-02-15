@@ -23,10 +23,10 @@ namespace Styles {
 
       /**
        * Constructs a ListItem.
-       * @param component The component to display.
+       * @param body The body of the item.
        * @param parent The parent widget.
        */
-      explicit ListItem(QWidget* component, QWidget* parent = nullptr);
+      explicit ListItem(QWidget& body, QWidget* parent = nullptr);
 
       /** Returns <code>true</code> iff this ListItem is selected. */
       bool is_selected() const;
@@ -36,6 +36,9 @@ namespace Styles {
        * @param is_selected True iff the ListItem should be selected.
        */
       void set_selected(bool is_selected);
+
+      /** Returns the body of this item. */
+      QWidget& get_body();
 
       /** Connects a slot to the submit signal. */
       boost::signals2::connection connect_submit_signal(

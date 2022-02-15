@@ -77,14 +77,16 @@ ListView::ListView(
       m_edge_navigation(EdgeNavigation::WRAP),
       m_overflow(Overflow::NONE),
       m_selection_mode(SelectionMode::SINGLE),
+      m_direction_policy(QSizePolicy::Fixed),
+      m_perpendicular_policy(QSizePolicy::Expanding),
       m_item_gap(DEFAULT_GAP),
       m_overflow_gap(DEFAULT_OVERFLOW_GAP),
       m_query_timer(new QTimer(this)),
       m_focus_reason(Qt::OtherFocusReason) {
   setFocusPolicy(Qt::StrongFocus);
   for(auto i = 0; i < m_list->get_size(); ++i) {
-    auto item = new ListItem(m_view_builder(m_list, i));
-    m_items.emplace_back(new ItemEntry{item, i, false});
+    auto item = new ListItem(*m_view_builder(m_list, i));
+    m_items.emplace_back(new ItemEntry(item, i, false));
     m_items.back()->m_connection =
       item->connect_submit_signal([=, item = m_items.back().get()] {
         on_item_submitted(*item);
@@ -94,16 +96,14 @@ ListView::ListView(
     m_items[*m_selected]->m_item->set_selected(true);
   }
   update_focus(m_last_current);
-  auto layout = new QHBoxLayout();
-  layout->setContentsMargins({});
   auto body = new QWidget();
-  auto body_layout = new QBoxLayout(QBoxLayout::LeftToRight);
+  auto body_layout = new QBoxLayout(QBoxLayout::LeftToRight, body);
   body_layout->setContentsMargins({});
-  body->setLayout(body_layout);
   body->installEventFilter(this);
   m_box = new Box(body);
+  auto layout = new QHBoxLayout(this);
+  layout->setContentsMargins({});
   layout->addWidget(m_box);
-  setLayout(layout);
   set_style(*this, DEFAULT_STYLE());
   update_layout();
   proxy_style(*this, *m_box);
@@ -141,6 +141,25 @@ ListItem* ListView::get_list_item(int index) {
   return m_items[index]->m_item;
 }
 
+void ListView::set_direction_size_policy(QSizePolicy::Policy policy) {
+  set_item_size_policy(policy, m_perpendicular_policy);
+}
+
+void ListView::set_perpendicular_size_policy(QSizePolicy::Policy policy) {
+  set_item_size_policy(m_direction_policy, policy);
+}
+
+void ListView::set_item_size_policy(QSizePolicy::Policy direction_policy,
+    QSizePolicy::Policy perpendicular_policy) {
+  if(m_direction_policy == direction_policy &&
+      m_perpendicular_policy == perpendicular_policy) {
+    return;
+  }
+  m_direction_policy = direction_policy;
+  m_perpendicular_policy = perpendicular_policy;
+  update_layout();
+}
+
 connection ListView::connect_submit_signal(
     const SubmitSignal::slot_type& slot) const {
   return m_submit_signal.connect(slot);
@@ -151,13 +170,6 @@ bool ListView::eventFilter(QObject* watched, QEvent* event) {
     update_layout();
   }
   return QWidget::eventFilter(watched, event);
-}
-
-bool ListView::event(QEvent* event) {
-  if(event->type() == QEvent::LayoutRequest) {
-    update_layout();
-  }
-  return QWidget::event(event);
 }
 
 void ListView::keyPressEvent(QKeyEvent* event) {
@@ -394,8 +406,8 @@ void ListView::update_focus(optional<int> current) {
 }
 
 void ListView::add_item(int index) {
-  auto item = new ListItem(m_view_builder(m_list, index));
-  m_items.emplace(m_items.begin() + index, new ItemEntry{item, index, false});
+  auto item = new ListItem(*m_view_builder(m_list, index));
+  m_items.emplace(m_items.begin() + index, new ItemEntry(item, index, false));
   m_items[index]->m_connection = item->connect_submit_signal(
     [=, item = m_items[index].get()] {
       on_item_submitted(*item);
@@ -490,20 +502,25 @@ void ListView::update_layout() {
   if(m_direction == Qt::Orientation::Horizontal && m_overflow ==
       Overflow::NONE || m_direction == Qt::Orientation::Vertical &&
       m_overflow == Overflow::WRAP) {
-    body.setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
-  } else {
+    if(body.sizePolicy().horizontalPolicy() != QSizePolicy::Preferred ||
+        body.sizePolicy().verticalPolicy() != QSizePolicy::Expanding) {
+      body.setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
+      body.updateGeometry();
+    }
+  } else if(body.sizePolicy().horizontalPolicy() != QSizePolicy::Expanding ||
+      body.sizePolicy().verticalPolicy() != QSizePolicy::Preferred) {
     body.setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    body.updateGeometry();
   }
-  body.updateGeometry();
   auto& body_layout = *static_cast<QBoxLayout*>(body.layout());
   while(auto item = body_layout.takeAt(body_layout.count() - 1)) {
     delete item;
   }
-  auto direction = [&] {
+  auto [direction, alignment] = [&] {
     if(m_direction == Qt::Orientation::Horizontal) {
-      return QBoxLayout::TopToBottom;
+      return std::tuple(QBoxLayout::TopToBottom, Qt::AlignLeft);
     }
-    return QBoxLayout::LeftToRight;
+    return std::tuple(QBoxLayout::LeftToRight, Qt::AlignTop);
   }();
   body_layout.setDirection(direction);
   body_layout.setSpacing(m_overflow_gap);
@@ -521,6 +538,7 @@ void ListView::update_layout() {
     auto inner_layout = new QBoxLayout(reverse(direction));
     inner_layout->setContentsMargins({});
     inner_layout->setSpacing(m_item_gap);
+    inner_layout->setAlignment(alignment);
     while(i != m_items.end()) {
       auto item_size = [&] {
         if(m_direction == Qt::Orientation::Horizontal) {
@@ -535,20 +553,15 @@ void ListView::update_layout() {
       }
       remaining_size -= inner_layout->spacing();
       if(m_direction == Qt::Orientation::Horizontal) {
-        (*i)->m_item->setSizePolicy(
-          QSizePolicy::Preferred, QSizePolicy::Expanding);
+        (*i)->m_item->setSizePolicy(m_direction_policy, m_perpendicular_policy);
       } else {
-        (*i)->m_item->setSizePolicy(
-          QSizePolicy::Expanding, QSizePolicy::Preferred);
+        (*i)->m_item->setSizePolicy(m_perpendicular_policy, m_direction_policy);
       }
       inner_layout->addWidget((*i)->m_item);
       ++i;
     }
-    inner_layout->addSpacerItem(
-      new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding));
     body_layout.addLayout(inner_layout);
   }
-  updateGeometry();
 }
 
 void ListView::on_list_operation(const AnyListModel::Operation& operation) {

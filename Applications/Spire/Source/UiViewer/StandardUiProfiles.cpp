@@ -62,6 +62,7 @@
 #include "Spire/Ui/SideBox.hpp"
 #include "Spire/Ui/SideFilterPanel.hpp"
 #include "Spire/Ui/SubmenuItem.hpp"
+#include "Spire/Ui/TabView.hpp"
 #include "Spire/Ui/TableHeader.hpp"
 #include "Spire/Ui/TableHeaderItem.hpp"
 #include "Spire/Ui/TableView.hpp"
@@ -1842,7 +1843,7 @@ UiProfile Spire::make_list_item_profile() {
   properties.push_back(make_standard_property("current", false));
   properties.push_back(make_standard_property("selected", false));
   auto profile = UiProfile("ListItem", properties, [] (auto& profile) {
-    auto item = new ListItem(make_label("Test Component"));
+    auto item = new ListItem(*make_label("Test Component"));
     item->setFixedWidth(scale_width(100));
     apply_widget_properties(item, profile.get_properties());
     item->connect_submit_signal(profile.make_event_slot("Submit"));
@@ -2710,6 +2711,21 @@ UiProfile Spire::make_side_filter_panel_profile() {
   properties.push_back(make_standard_property<bool>("Sell"));
   auto profile = UiProfile("SideFilterPanel", properties, std::bind_front(
     setup_closed_filter_panel_profile<Side, make_side_filter_panel>));
+  return profile;
+}
+
+UiProfile Spire::make_tab_view_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto profile = UiProfile("TabView", properties, [] (auto& profile) {
+    auto view = new TabView();
+    view->add("Positions", *make_label_button("Positions"));
+    view->add("Order Log", *make_label_button("Order Log"));
+    view->add("Executions", *make_label_button("Executions"));
+    view->add("Profit/Loss", *make_label_button("Profit/Loss"));
+    apply_widget_properties(view, profile.get_properties());
+    return view;
+  });
   return profile;
 }
 
