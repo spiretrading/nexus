@@ -110,19 +110,15 @@ Button* Spire::make_icon_button(QImage icon, QString tooltip_text,
   auto tooltip = new Tooltip(tooltip_text, button);
   auto style = StyleSheet();
   style.get(Body()).
-    set(BackgroundColor(QColor(0xF5F5F5))).
-    set(border(scale_width(1), QColor(Qt::transparent)));
-  style.get((!Disabled() && Hover() || Press()) / Body()).
-    set(BackgroundColor(QColor(0xE0E0E0)));
-  style.get(Focus() / Body()).
-    set(border_color(QColor(0x4B, 0x23, 0xA0)));
-  style.get(Any() >> is_a<Icon>()).
     set(BackgroundColor(QColor(Qt::transparent))).
-    set(Fill(QColor(0x535353)));
-  style.get((!Disabled() && Hover() || Press()) / Body() >> is_a<Icon>()).
-    set(Fill(QColor(0x4B, 0x23, 0xA0)));
-  style.get(Disabled() / Body() >> is_a<Icon>()).
-    set(Fill(QColor(0xD0, 0xD0, 0xD0)));
+    set(border(scale_width(1), QColor(Qt::transparent)));
+  style.get((Hover() || Press()) / Body()).
+    set(BackgroundColor(QColor(0xE0E0E0)));
+  style.get(FocusVisible() / Body()).set(border_color(QColor(0x4B23A0)));
+  style.get(Any() >> is_a<Icon>()).set(Fill(QColor(0x535353)));
+  style.get(Hover() >> is_a<Icon>()).set(Fill(QColor(0x4B23A0)));
+  style.get(Press() >> is_a<Icon>()).set(Fill(QColor(0x7E71B8)));
+  style.get(Disabled() >> is_a<Icon>()).set(Fill(QColor(0xC8C8C8)));
   set_style(*button, std::move(style));
   return button;
 }
