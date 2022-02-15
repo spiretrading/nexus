@@ -61,6 +61,7 @@
 #include "Spire/Ui/SideBox.hpp"
 #include "Spire/Ui/SideFilterPanel.hpp"
 #include "Spire/Ui/SubmenuItem.hpp"
+#include "Spire/Ui/TabView.hpp"
 #include "Spire/Ui/TableHeader.hpp"
 #include "Spire/Ui/TableHeaderItem.hpp"
 #include "Spire/Ui/TableView.hpp"
@@ -2668,6 +2669,22 @@ UiProfile Spire::make_side_filter_panel_profile() {
   properties.push_back(make_standard_property<bool>("Sell"));
   auto profile = UiProfile("SideFilterPanel", properties, std::bind_front(
     setup_closed_filter_panel_profile<Side, make_side_filter_panel>));
+  return profile;
+}
+
+UiProfile Spire::make_tab_view_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto profile = UiProfile("TabView", properties, [] (auto& profile) {
+    auto view = new TabView();
+    view->add("Positions", *make_label("Positions"));
+    view->add("Order Log", *make_label("Order Log"));
+    view->add("Executions", *make_label("Executions"));
+    view->add("Profit/Loss", *make_label("Profit/Loss"));
+    view->show();
+    apply_widget_properties(view, profile.get_properties());
+    return view;
+  });
   return profile;
 }
 
