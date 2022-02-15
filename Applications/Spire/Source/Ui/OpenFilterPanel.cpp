@@ -294,9 +294,10 @@ bool OpenFilterPanel::event(QEvent* event) {
   if(event->type() == QEvent::ShowToParent) {
     m_filter_panel->show();
     window()->activateWindow();
-    m_input_box->setFocus();
   } else if(event->type() == QEvent::HideToParent) {
     m_filter_panel->hide();
+  } else if(event->type() == QEvent::FocusIn) {
+    m_input_box->setFocus();
   }
   return QWidget::event(event);
 }

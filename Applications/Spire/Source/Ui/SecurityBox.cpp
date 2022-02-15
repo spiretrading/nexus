@@ -76,6 +76,7 @@ SecurityBox::SecurityBox(std::shared_ptr<ComboBox::QueryModel> query_model,
   layout->setContentsMargins({});
   layout->setSpacing(0);
   layout->addWidget(m_combo_box);
+  setFocusProxy(m_combo_box);
 }
 
 const std::shared_ptr<ComboBox::QueryModel>&

@@ -152,6 +152,9 @@ namespace Spire {
   /** Returns a UiProfile for the SecurityBox. */
   UiProfile make_security_box_profile();
 
+  /** Returns a UiProfile for the SecurityFilterPanel. */
+  UiProfile make_security_filter_panel_profile();
+
   /** Returns a UiProfile for the SecurityListItem. */
   UiProfile make_security_list_item_profile();
 
