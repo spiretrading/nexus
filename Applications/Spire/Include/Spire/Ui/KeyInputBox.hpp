@@ -49,6 +49,8 @@ namespace Spire {
       boost::signals2::connection connect_submit_signal(
         const SubmitSignal::slot_type& slot) const;
 
+      QSize sizeHint() const override;
+
     protected:
       void focusInEvent(QFocusEvent* event) override;
       void focusOutEvent(QFocusEvent* event) override;

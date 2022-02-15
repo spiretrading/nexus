@@ -308,6 +308,8 @@ QString CustomVariantItemDelegate::displayText(const QVariant& value,
   } else if(value.canConvert<Money>()) {
     return QString::fromStdString(lexical_cast<std::string>(
       value.value<Money>()));
+  } else if(value.canConvert<QKeySequence>()) {
+    return value.value<QKeySequence>().toString();
   } else if(value.canConvert<Quantity>()) {
     return locale.toString(static_cast<double>(value.value<Quantity>()));
   } else if(value.canConvert<OrderStatus>()) {
@@ -316,8 +318,6 @@ QString CustomVariantItemDelegate::displayText(const QVariant& value,
     return Spire::displayText(value.value<OrderType>());
   } else if(value.canConvert<PositionSideToken>()) {
     return value.value<PositionSideToken>().to_string();
-  } else if(value.canConvert<QString>()) {
-    return value.value<QString>();
   } else if(value.canConvert<Region>()) {
     auto region = value.value<Region>();
     if(region.IsGlobal()) {
@@ -334,6 +334,8 @@ QString CustomVariantItemDelegate::displayText(const QVariant& value,
   } else if(value.canConvert<std::any>()) {
     auto translated_value = to_qvariant(value.value<std::any>());
     return displayText(translated_value, locale);
+  } else if(value.canConvert<QString>()) {
+    return value.value<QString>();
   }
   return QStyledItemDelegate::displayText(value, locale);
 }

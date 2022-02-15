@@ -1746,7 +1746,7 @@ UiProfile Spire::make_key_input_box_profile() {
   properties.push_back(make_standard_property<QString>("current"));
   auto profile = UiProfile("KeyInputBox", properties, [] (auto& profile) {
     auto box = new KeyInputBox();
-    box->setFixedSize(scale_width(100), scale_height(26));
+    box->setFixedWidth(scale_width(100));
     apply_widget_properties(box, profile.get_properties());
     auto& current = get<QString>("current", profile.get_properties());
     current.connect_changed_signal([=] (auto value) {

@@ -147,7 +147,7 @@ namespace Spire {
    * @param T The type to construct.
    * @param string The string used to instantiate the object.
    * @returns An initialized optional iff construction was successful and the
-              object is valid.
+   *          object is valid.
    */
   template<typename T>
   boost::optional<T> from_string(const QString& string) = delete;
