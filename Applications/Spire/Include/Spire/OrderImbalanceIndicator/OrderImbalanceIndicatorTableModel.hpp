@@ -15,8 +15,8 @@ namespace Spire {
     public:
 
       /**
-       * Constructs an empty OrderImbalanceIndicatorTableModel with
-       * a given source OrderImbalanceIndicatorModel.
+       * Constructs an empty OrderImbalanceIndicatorTableModel with a given
+       * source OrderImbalanceIndicatorModel.
        * @param source The source OrderImbalanceIndicatorModel.
        * @param clock Clock used to determine the current time for dynamic
        *              intervals.
