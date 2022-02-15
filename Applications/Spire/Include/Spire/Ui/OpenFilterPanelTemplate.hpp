@@ -48,7 +48,7 @@ namespace Spire {
       /**
        * Constructs an OpenFilterPanelTemplate.
        * @param input_box_builder The InputBoxBuilder to use.
-       * @param matches The list of secuirty values to match against.
+       * @param matches The list of values to match against.
        * @param mode The filter mode.
        * @param title The title of the panel.
        * @param parent The parent widget.

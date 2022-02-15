@@ -22,7 +22,7 @@ namespace Spire {
   /**
    * Returns a new SecurityFilterPanel.
    * @param query_model The model used to query matches.
-   * @param matches The list of secuirty values to match against.
+   * @param matches The list of security values to match against.
    * @param mode The filter mode.
    * @param parent The parent widget.
    */
