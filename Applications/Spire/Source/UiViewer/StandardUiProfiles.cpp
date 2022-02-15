@@ -58,6 +58,7 @@
 #include "Spire/Ui/ScrollableListBox.hpp"
 #include "Spire/Ui/SearchBox.hpp"
 #include "Spire/Ui/SecurityBox.hpp"
+#include "Spire/Ui/SecurityFilterPanel.hpp"
 #include "Spire/Ui/SecurityListItem.hpp"
 #include "Spire/Ui/SideBox.hpp"
 #include "Spire/Ui/SideFilterPanel.hpp"
@@ -459,6 +460,39 @@ namespace {
     panel->set_is_draggable(draggable);
     panel->set_positioning(positioning);
     panel->show();
+  }
+
+  std::shared_ptr<ComboBox::QueryModel> populate_security_query_model() {
+    auto security_infos = std::vector<SecurityInfo>();
+    security_infos.emplace_back(*ParseWildCardSecurity("MRU.TSX",
+      GetDefaultMarketDatabase(), GetDefaultCountryDatabase()),
+      "Metro Inc.", "", 0);
+    security_infos.emplace_back(*ParseWildCardSecurity("MG.TSX",
+      GetDefaultMarketDatabase(), GetDefaultCountryDatabase()),
+      "Magna International Inc.", "", 0);
+    security_infos.emplace_back(*ParseWildCardSecurity("MGA.TSX",
+      GetDefaultMarketDatabase(), GetDefaultCountryDatabase()),
+      "Mega Uranium Ltd.", "", 0);
+    security_infos.emplace_back(*ParseWildCardSecurity("MGAB.TSX",
+      GetDefaultMarketDatabase(), GetDefaultCountryDatabase()),
+      "Mackenzie Global Fixed Income Alloc ETF", "", 0);
+    security_infos.emplace_back(*ParseWildCardSecurity("MON.NYSE",
+      GetDefaultMarketDatabase(), GetDefaultCountryDatabase()),
+      "Monsanto Co.", "", 0);
+    security_infos.emplace_back(*ParseWildCardSecurity("MFC.TSX",
+      GetDefaultMarketDatabase(), GetDefaultCountryDatabase()),
+      "Manulife Financial Corporation", "", 0);
+    security_infos.emplace_back(*ParseWildCardSecurity("MX.TSX",
+      GetDefaultMarketDatabase(), GetDefaultCountryDatabase()),
+      "Methanex Corporation", "", 0);
+    auto model = std::make_shared<LocalComboBoxQueryModel>();
+    for(auto security_info : security_infos) {
+      model->add(displayTextAny(security_info.m_security).toLower(),
+        security_info);
+      model->add(QString::fromStdString(security_info.m_name).toLower(),
+        security_info);
+    }
+    return model;
   }
 
   struct HoverBox {
@@ -2621,35 +2655,7 @@ UiProfile Spire::make_security_box_profile() {
   properties.push_back(make_standard_property<QString>("placeholder"));
   properties.push_back(make_standard_property("read_only", false));
   auto profile = UiProfile("SecurityBox", properties, [] (auto& profile) {
-    auto security_infos = std::vector<SecurityInfo>();
-    security_infos.emplace_back(*ParseWildCardSecurity("MRU.TSX",
-      GetDefaultMarketDatabase(), GetDefaultCountryDatabase()),
-      "Metro Inc.", "", 0);
-    security_infos.emplace_back(*ParseWildCardSecurity("MG.TSX",
-      GetDefaultMarketDatabase(), GetDefaultCountryDatabase()),
-      "Magna International Inc.", "", 0);
-    security_infos.emplace_back(*ParseWildCardSecurity("MGA.TSX",
-      GetDefaultMarketDatabase(), GetDefaultCountryDatabase()),
-      "Mega Uranium Ltd.", "", 0);
-    security_infos.emplace_back(*ParseWildCardSecurity("MGAB.TSX",
-      GetDefaultMarketDatabase(), GetDefaultCountryDatabase()),
-      "Mackenzie Global Fixed Income Alloc ETF", "", 0);
-    security_infos.emplace_back(*ParseWildCardSecurity("MON.NYSE",
-      GetDefaultMarketDatabase(), GetDefaultCountryDatabase()),
-      "Monsanto Co.", "", 0);
-    security_infos.emplace_back(*ParseWildCardSecurity("MFC.TSX",
-      GetDefaultMarketDatabase(), GetDefaultCountryDatabase()),
-      "Manulife Financial Corporation", "", 0);
-    security_infos.emplace_back(*ParseWildCardSecurity("MX.TSX",
-      GetDefaultMarketDatabase(), GetDefaultCountryDatabase()),
-      "Methanex Corporation", "", 0);
-    auto model = std::make_shared<LocalComboBoxQueryModel>();
-    for(auto security_info : security_infos) {
-      model->add(displayTextAny(security_info.m_security).toLower(),
-        security_info);
-      model->add(QString::fromStdString(security_info.m_name).toLower(),
-        security_info);
-    }
+    auto model = populate_security_query_model();
     auto box = new SecurityBox(model);
     box->setFixedWidth(scale_width(112));
     apply_widget_properties(box, profile.get_properties());
@@ -2676,6 +2682,35 @@ UiProfile Spire::make_security_box_profile() {
     box->connect_submit_signal(profile.make_event_slot<Security>("Submit"));
     return box;
   });
+  return profile;
+}
+
+UiProfile Spire::make_security_filter_panel_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  auto profile = UiProfile(QString("SecurityFilterPanel"), properties,
+    [] (auto& profile) {
+      auto model = populate_security_query_model();
+      auto button = make_label_button(QString::fromUtf8("Click me"));
+      auto panel = make_security_filter_panel(model, *button);
+      auto submit_filter_slot =
+        profile.make_event_slot<QString>(QString::fromUtf8("SubmitSignal"));
+      panel->connect_submit_signal(
+        [=] (const std::shared_ptr<AnyListModel>& submission,
+            OpenFilterPanel::Mode mode) {
+          auto result = QString();
+          if(mode == OpenFilterPanel::Mode::INCLUDE) {
+            result += "Include: ";
+          } else {
+            result += "Exclude: ";
+          }
+          for(auto i = 0; i < submission->get_size(); ++i) {
+            result += displayTextAny(submission->get(i)) + " ";
+          }
+          submit_filter_slot(result);
+        });
+      button->connect_clicked_signal([=] { panel->show(); });
+      return button;
+    });
   return profile;
 }
 
