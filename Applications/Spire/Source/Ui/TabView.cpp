@@ -65,6 +65,7 @@ TabView::TabView(QWidget* parent)
       }
       return new Tab(std::move(labels_model));
     });
+  m_tab_list->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
   m_tab_list->set_item_size_policy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   auto scrollable_list_box = new ScrollableListBox(*m_tab_list);
   update_style(*scrollable_list_box, [] (auto& style) {
