@@ -15,6 +15,7 @@ namespace Spire::Styles::Tests {
   /** Selectors provided for testing purposes. */
   using Foo = StateSelector<void, struct FooSelectorTag>;
   using Bar = StateSelector<void, struct BarSelectorTag>;
+  using Qux = StateSelector<void, struct QuxSelectorTag>;
 
   /** Stores the arguments passed to a SelectionUpdateSignal. */
   struct SelectionUpdate {
