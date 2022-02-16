@@ -1,12 +1,12 @@
 #include "Spire/Ui/ListView.hpp"
 #include <boost/signals2/shared_connection_block.hpp>
-#include <QHBoxLayout>
 #include <QKeyEvent>
 #include <QTimer>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
+#include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
@@ -101,9 +101,7 @@ ListView::ListView(
   body_layout->setContentsMargins({});
   body->installEventFilter(this);
   m_box = new Box(body);
-  auto layout = new QHBoxLayout(this);
-  layout->setContentsMargins({});
-  layout->addWidget(m_box);
+  enclose(*this, *m_box);
   set_style(*this, DEFAULT_STYLE());
   update_layout();
   proxy_style(*this, *m_box);

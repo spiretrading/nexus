@@ -1,8 +1,8 @@
 #include "Spire/Ui/OverlayPanel.hpp"
 #include <QGraphicsDropShadowEffect>
-#include <QHBoxLayout>
 #include <QMouseEvent>
 #include <QScreen>
+#include <QVBoxLayout>
 #include <QWindow>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
