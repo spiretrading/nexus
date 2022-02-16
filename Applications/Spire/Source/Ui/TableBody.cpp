@@ -583,8 +583,6 @@ void TableBody::on_table_operation(const TableModel::Operation& operation) {
         auto item =
           new TableItem(*m_view_builder(m_table, operation.m_index, column));
         if(column != m_table->get_column_size() - 1) {
-          item->setSizePolicy(
-            QSizePolicy::Fixed, item->sizePolicy().verticalPolicy());
           item->setFixedWidth(
             m_widths->get(column) - m_styles.m_horizontal_spacing);
         } else {

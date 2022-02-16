@@ -93,7 +93,7 @@ KeyInputBox::KeyInputBox(
   layers->add(new Caret(this));
   auto layout = new QHBoxLayout();
   layout->setContentsMargins({});
-  auto input_box = make_input_box(layers, this);
+  auto input_box = make_input_box(layers);
   update_style(*input_box, [&] (auto& style) {
     style.get(Any()).set(vertical_padding(scale_height(3)));
   });
@@ -117,6 +117,16 @@ const std::shared_ptr<KeySequenceValueModel>& KeyInputBox::get_current() const {
 connection KeyInputBox::connect_submit_signal(
     const SubmitSignal::slot_type& slot) const {
   return m_submit_signal.connect(slot);
+}
+
+QSize KeyInputBox::sizeHint() const {
+  static auto size = QSize(0, scale_height(26));
+  auto base_size_hint = QWidget::sizeHint();
+  if(base_size_hint.isValid()) {
+    base_size_hint.setHeight(std::max(base_size_hint.height(), size.height()));
+    return base_size_hint;
+  }
+  return size;
 }
 
 void KeyInputBox::focusInEvent(QFocusEvent* event) {

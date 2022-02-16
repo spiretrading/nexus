@@ -47,6 +47,7 @@ namespace Spire {
   class MoneyBox;
   class NavigationView;
   class OpenFilterPanel;
+  template<typename T> class OpenFilterPanelTemplate;
   class OverlayPanel;
   class RegionListItem;
   class ResponsiveLabel;
@@ -64,6 +65,7 @@ namespace Spire {
   template<typename T> class StagingValueModel;
   class StandardTableFilter;
   class SubmenuItem;
+  class TabView;
   class TableBody;
   class TableHeader;
   class TableHeaderItem;

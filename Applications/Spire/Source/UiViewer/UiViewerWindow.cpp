@@ -163,9 +163,11 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_scrollable_list_box_profile());
   add(make_search_box_profile());
   add(make_security_box_profile());
+  add(make_security_filter_panel_profile());
   add(make_security_list_item_profile());
   add(make_side_box_profile());
   add(make_side_filter_panel_profile());
+  add(make_tab_view_profile());
   add(make_table_header_profile());
   add(make_table_header_item_profile());
   add(make_table_view_profile());

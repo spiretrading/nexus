@@ -14,6 +14,12 @@ namespace Spire {
       BoxGeometry();
 
       /**
+       * Constructs a BoxGeometry with an initial size.
+       * @param size The size of the geometry.
+       */
+      explicit BoxGeometry(QSize size);
+
+      /**
        * Returns the overall geometry which by definition is equal to the border
        * area.
        */
@@ -84,6 +90,11 @@ namespace Spire {
       QRect m_padding_area;
       QRect m_content_area;
   };
+
+  /**
+   * Returns the size of the styling (padding/borders) surrounding the content.
+   */
+  QSize get_styling_size(const BoxGeometry& geometry);
 
   /**
    * Applies a style Property to a BoxGeometry.

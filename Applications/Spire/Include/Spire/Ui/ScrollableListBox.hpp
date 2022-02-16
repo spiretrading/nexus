@@ -28,8 +28,9 @@ namespace Spire {
 
     private:
       ListView* m_list_view;
-      boost::signals2::scoped_connection m_list_view_style_connection;
+      QSizePolicy m_size_policy;
       ScrollBox* m_scroll_box;
+      boost::signals2::scoped_connection m_list_view_style_connection;
       boost::signals2::scoped_connection m_current_connection;
 
       void on_list_view_style();

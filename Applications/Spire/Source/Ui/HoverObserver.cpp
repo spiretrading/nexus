@@ -9,6 +9,9 @@ using namespace Spire;
 
 namespace {
   HoverObserver::State get_state(const QWidget& widget, QPoint position) {
+    if(!widget.isEnabled()) {
+      return HoverObserver::State::NONE;
+    }
     auto cursor = QCursor::pos();
     if(QRect(position, widget.size()).contains(cursor)) {
       auto hovered_widget = qApp->widgetAt(cursor);
@@ -63,7 +66,8 @@ struct HoverObserver::EventFilter : QObject {
       set_state(::get_state(*m_widget, m_position_observer.get_position()));
     } else if(event->type() == QEvent::Leave) {
       set_state(State::NONE);
-    } else if(event->type() == QEvent::MouseMove) {
+    } else if(event->type() == QEvent::EnabledChange ||
+        event->type() == QEvent::MouseMove) {
       set_state(::get_state(*m_widget, m_position_observer.get_position()));
     } else if(event->type() == QEvent::ChildAdded) {
       auto& child_event = static_cast<QChildEvent&>(*event);

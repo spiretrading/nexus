@@ -178,13 +178,34 @@ namespace Styles {
        */
       ListItem* get_list_item(int index);
 
+      /**
+       * Sets the size policy of ListItems along the direction they're laid out.
+       */
+      void set_direction_size_policy(QSizePolicy::Policy policy);
+
+      /**
+       * Sets the size policy of ListItems perpendicular to the direction
+       * they're laid out.
+       */
+      void set_perpendicular_size_policy(QSizePolicy::Policy policy);
+
+      /**
+       * Sets the size policy of the ListItems along the direction they're laid
+       * out as well as to its perpendicular direction.
+       * @param direction_policy The size policy to set along the direction
+       *        of the layout.
+       * @param perpendicular_policy The size policy to set along the
+       *        perpendicular direction of the layout.
+       */
+      void set_item_size_policy(QSizePolicy::Policy direction_policy,
+        QSizePolicy::Policy perpendicular_policy);
+
       /** Connects a slot to the submit signal. */
       boost::signals2::connection connect_submit_signal(
         const SubmitSignal::slot_type& slot) const;
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
-      bool event(QEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
 
     private:
@@ -206,6 +227,8 @@ namespace Styles {
       boost::optional<int> m_selected;
       std::vector<std::unique_ptr<ItemEntry>> m_items;
       Box* m_box;
+      QSizePolicy::Policy m_direction_policy;
+      QSizePolicy::Policy m_perpendicular_policy;
       int m_item_gap;
       int m_overflow_gap;
       Qt::Orientation m_direction;
