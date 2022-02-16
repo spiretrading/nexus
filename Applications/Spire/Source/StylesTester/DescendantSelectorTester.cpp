@@ -107,7 +107,6 @@ TEST_SUITE("DescendantSelector") {
         REQUIRE((find<TokenStyleB>(block) == TokenStyleB(55)));
         REQUIRE((find<TokenStyleC>(block) == TokenStyleC(66)));
         REQUIRE((find<TokenStyleD>(block) == TokenStyleD(12)));
-        token->setParent(nullptr);
         delete token;
       }
     });
