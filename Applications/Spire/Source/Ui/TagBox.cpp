@@ -117,6 +117,7 @@ TagBox::TagBox(std::shared_ptr<AnyListModel> list,
   m_list_view = new ListView(m_model,
     std::bind_front(&TagBox::make_tag, this));
   m_list_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  m_list_view->set_direction_size_policy(QSizePolicy::Expanding);
   update_style(*m_list_view, [] (auto& style) {
     style = LIST_VIEW_STYLE(style);
   });
