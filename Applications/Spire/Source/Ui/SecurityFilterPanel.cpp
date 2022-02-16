@@ -52,7 +52,7 @@ struct SecurityFilterQueryModel : ComboBox::QueryModel {
         std::erase_if(result, [&] (auto& value) {
           return set->contains(
             displayTextAny(std::any_cast<SecurityInfo&>(value).m_security));
-          });
+        });
         return result;
       });
   }
