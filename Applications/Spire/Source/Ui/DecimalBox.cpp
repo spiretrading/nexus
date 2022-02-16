@@ -2,7 +2,6 @@
 #include <bitset>
 #include <boost/signals2/shared_connection_block.hpp>
 #include <QGuiApplication>
-#include <QHBoxLayout>
 #include <QKeyEvent>
 #include <qt_windows.h>
 #include "Spire/Spire/Dimensions.hpp"
@@ -10,6 +9,7 @@
 #include "Spire/Spire/Utility.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/Icon.hpp"
+#include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace boost;
@@ -345,17 +345,15 @@ DecimalBox::DecimalBox(std::shared_ptr<OptionalDecimalModel> current,
       m_submission(m_current->get()),
       m_modifiers(std::move(modifiers)),
       m_tick(TickIndicator::NONE) {
-  auto layout = new QHBoxLayout(this);
-  layout->setContentsMargins({});
   m_text_box = new TextBox(m_adaptor_model, this);
   update_style(*m_text_box, [&] (auto& style) {
     style.get(+Any() % (is_a<Button>() && !matches(Visibility::NONE))).set(
       PaddingRight(scale_width(26)));
   });
+  enclose(*this, *m_text_box);
   proxy_style(*this, *m_text_box);
   m_style_connection = connect_style_signal(*this, [=] { on_style(); });
   setFocusProxy(m_text_box);
-  layout->addWidget(m_text_box);
   if(auto current = m_current->get()) {
     if(*current > 0) {
       m_sign = SignIndicator::POSITIVE;

@@ -1,7 +1,6 @@
 #include "Spire/Ui/ClosedFilterPanel.hpp"
 #include <boost/signals2/shared_connection_block.hpp>
 #include <QEvent>
-#include <QHBoxLayout>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ColumnViewListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
@@ -10,6 +9,7 @@
 #include "Spire/Ui/CheckBox.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/FilterPanel.hpp"
+#include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
@@ -84,9 +84,7 @@ ClosedFilterPanel::ClosedFilterPanel(std::shared_ptr<TableModel> table,
       scrollable_list_box->maximumHeight()) {
     scrollable_list_box->get_scroll_box().get_vertical_scroll_bar().show();
   }
-  auto layout = new QHBoxLayout(this);
-  layout->setContentsMargins({});
-  layout->addWidget(scrollable_list_box);
+  enclose(*this, *scrollable_list_box);
   setFocusProxy(scrollable_list_box);
   m_filter_panel = new FilterPanel(std::move(title), this, parent);
   m_filter_panel->connect_reset_signal(
