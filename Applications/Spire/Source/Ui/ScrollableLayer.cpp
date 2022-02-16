@@ -1,8 +1,8 @@
 #include "Spire/Ui/ScrollableLayer.hpp"
 #include <QApplication>
-#include <QGridLayout>
 #include <QKeyEvent>
 #include "Spire/Ui/Box.hpp"
+#include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
 
 using namespace Spire;
@@ -14,13 +14,11 @@ ScrollableLayer::ScrollableLayer(QWidget* parent)
       m_horizontal_scroll_bar(
         new ScrollBar(Qt::Orientation::Horizontal, this)),
       m_corner_box(new Box(nullptr)) {
-  auto layout = new QGridLayout(this);
-  layout->setContentsMargins({});
-  layout->setSpacing(0);
+  auto layout = make_grid_layout(this);
   layout->setColumnStretch(0, 1);
-  auto spacer =
-    new QSpacerItem(1, 1, QSizePolicy::Expanding, QSizePolicy::Expanding);
-  layout->addItem(spacer, 0, 0);
+  layout->addItem(
+    new QSpacerItem(1, 1, QSizePolicy::Expanding, QSizePolicy::Expanding), 0,
+    0);
   layout->addWidget(m_vertical_scroll_bar, 0, 1);
   layout->addWidget(m_horizontal_scroll_bar, 1, 0);
   update_style(*m_corner_box, [&] (auto& style) {

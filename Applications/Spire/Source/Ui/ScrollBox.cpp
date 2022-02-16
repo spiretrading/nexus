@@ -1,8 +1,8 @@
 #include "Spire/Ui/ScrollBox.hpp"
 #include <QEvent>
-#include <QHBoxLayout>
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/LayeredWidget.hpp"
+#include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollableLayer.hpp"
 
@@ -175,9 +175,7 @@ ScrollBox::ScrollBox(QWidget* body, QWidget* parent)
   m_scrollable_layer->get_horizontal_scroll_bar().installEventFilter(this);
   m_scrollable_layer->get_vertical_scroll_bar().installEventFilter(this);
   layers->add(m_scrollable_layer);
-  auto layout = new QHBoxLayout(this);
-  layout->setContentsMargins({});
-  layout->addWidget(layers);
+  enclose(*this, *layers);
   update_layout();
   m_style_connection = connect_style_signal(*this, [=] { on_style(); });
 }

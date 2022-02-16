@@ -1,5 +1,6 @@
 #ifndef SPIRE_LAYOUTS_HPP
 #define SPIRE_LAYOUTS_HPP
+#include <QGridLayout>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include "Spire/Ui/Ui.hpp"
@@ -17,6 +18,12 @@ namespace Spire {
    * @param parent The optional parent to the layout.
    */
   QHBoxLayout* make_hbox_layout(QWidget* parent = nullptr);
+
+  /**
+   * Returns a new QGridLayout with no margins or spacing.
+   * @param parent The optional parent to the layout.
+   */
+  QGridLayout* make_grid_layout(QWidget* parent = nullptr);
 
   /**
    * Sets the layout of some parent widget to a new BoxLayout with no margins

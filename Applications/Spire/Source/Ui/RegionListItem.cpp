@@ -1,9 +1,8 @@
 #include "Spire/Ui/RegionListItem.hpp"
-#include <QHBoxLayout>
-#include <QVBoxLayout>
 #include "Nexus/Definitions/DefaultCountryDatabase.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Icon.hpp"
+#include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace boost;
@@ -53,21 +52,14 @@ RegionListItem::RegionListItem(Region region, QWidget* parent)
     : QWidget(parent),
       m_region(std::move(region)),
       m_type(get_type()) {
-  auto layout = new QVBoxLayout(this);
-  layout->setContentsMargins({});
-  layout->setSpacing(0);
-  auto value_container_layout = new QHBoxLayout();
-  value_container_layout->setContentsMargins({});
-  value_container_layout->setSpacing(0);
   auto value_label = make_value_label();
   value_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
   update_style(*value_label, [&] (auto& style) {
     style = VALUE_LABEL_STYLE(style);
   });
+  auto value_container_layout = make_hbox_layout();
   value_container_layout->addWidget(value_label);
-  auto type_icon_layout = new QVBoxLayout();
-  type_icon_layout->setContentsMargins({});
-  type_icon_layout->setSpacing(0);
+  auto type_icon_layout = make_vbox_layout();
   type_icon_layout->addStretch();
   if(auto type_icon = make_type_icon()) {
     type_icon->setFocusPolicy(Qt::NoFocus);
@@ -76,6 +68,7 @@ RegionListItem::RegionListItem(Region region, QWidget* parent)
   }
   type_icon_layout->addStretch();
   value_container_layout->addLayout(type_icon_layout);
+  auto layout = make_vbox_layout(this);
   layout->addLayout(value_container_layout);
   auto name_label = make_label(QString::fromStdString(m_region.GetName()));
   name_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
@@ -108,29 +101,28 @@ TextBox* RegionListItem::make_value_label() const {
     return make_label(
       QString::fromStdString(m_region.GetMarkets().begin()->GetData()));
   } else if(m_type == Type::COUNTRY) {
-    return make_label(GetDefaultCountryDatabase().
-      FromCode(*m_region.GetCountries().begin()).m_threeLetterCode.GetData());
+    return make_label(GetDefaultCountryDatabase().FromCode(
+      *m_region.GetCountries().begin()).m_threeLetterCode.GetData());
   }
   return make_label("");
 }
 
 Icon* RegionListItem::make_type_icon() const {
   if(m_type == Type::SECURITY) {
-    auto icon = new Icon(
-      imageFromSvg(":/Icons/security-symbol.svg", ICON_SIZE()));
+    auto icon =
+      new Icon(imageFromSvg(":/Icons/security-symbol.svg", ICON_SIZE()));
     icon->setFixedSize(ICON_SIZE());
     return icon;
   } else if(m_type == Type::MARKET) {
-    auto icon = new Icon(
-      imageFromSvg(":/Icons/market-symbol.svg", ICON_SIZE()));
+    auto icon =
+      new Icon(imageFromSvg(":/Icons/market-symbol.svg", ICON_SIZE()));
     icon->setFixedSize(ICON_SIZE());
     return icon;
   } else if(m_type == Type::COUNTRY) {
-    auto country_code = QString(GetDefaultCountryDatabase().
-      FromCode(*m_region.GetCountries().begin()).
-      m_threeLetterCode.GetData()).toLower();
-    auto flag_icon = new Icon(imageFromSvg(QString(":/Icons/flag_icons/%1.svg").
-      arg(country_code), FLAG_SIZE()));
+    auto country_code = QString(GetDefaultCountryDatabase().FromCode(
+      *m_region.GetCountries().begin()).m_threeLetterCode.GetData()).toLower();
+    auto flag_icon = new Icon(imageFromSvg(
+      QString(":/Icons/flag_icons/%1.svg").arg(country_code), FLAG_SIZE()));
     flag_icon->setFixedSize(FLAG_SIZE());
     return flag_icon;
   }

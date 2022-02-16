@@ -16,6 +16,13 @@ QHBoxLayout* Spire::make_hbox_layout(QWidget* parent) {
   return layout;
 }
 
+QGridLayout* Spire::make_grid_layout(QWidget* parent) {
+  auto layout = new QGridLayout(parent);
+  layout->setContentsMargins({});
+  layout->setSpacing(0);
+  return layout;
+}
+
 void Spire::enclose(QWidget& parent, QWidget& body) {
   enclose(parent, body, Qt::AlignCenter);
 }
