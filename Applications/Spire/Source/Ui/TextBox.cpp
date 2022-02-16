@@ -1,6 +1,5 @@
 #include "Spire/Ui/TextBox.hpp"
 #include <QCoreApplication>
-#include <QHBoxLayout>
 #include <QKeyEvent>
 #include <QPainter>
 #include "Spire/Spire/Dimensions.hpp"
@@ -10,6 +9,7 @@
 #include "Spire/Styles/RevertExpression.hpp"
 #include "Spire/Styles/TimeoutExpression.hpp"
 #include "Spire/Ui/Box.hpp"
+#include "Spire/Ui/Layouts.hpp"
 
 using namespace boost;
 using namespace boost::posix_time;
@@ -141,9 +141,7 @@ class TextBox::LineEdit : public QLineEdit {
       m_text_box->setCursor(cursor());
       m_text_box->setFocusPolicy(focusPolicy());
       m_text_box->setFocusProxy(this);
-      auto layout = new QHBoxLayout(m_text_box);
-      layout->setContentsMargins(0, 0, 0, 0);
-      layout->addWidget(this);
+      enclose(*m_text_box, *this);
       m_placeholder_style_connection = connect_style_signal(
         *m_text_box, Placeholder(), [=] { on_placeholder_style(); });
       on_placeholder_style();

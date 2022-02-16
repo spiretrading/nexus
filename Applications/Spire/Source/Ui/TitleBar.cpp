@@ -10,6 +10,7 @@
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/Icon.hpp"
+#include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/Window.hpp"
 
@@ -66,9 +67,7 @@ TitleBar::TitleBar(QImage icon, QWidget* parent)
       m_window_button(nullptr) {
   setFixedHeight(scale_height(26));
   auto container = new QWidget(this);
-  m_container_layout = new QHBoxLayout(container);
-  m_container_layout->setContentsMargins({});
-  m_container_layout->setSpacing(0);
+  m_container_layout = make_hbox_layout(container);
   m_title_label = make_label("", this);
   update_style(*m_title_label, [&] (auto& style) {
     style.get(ReadOnly() && Disabled()).set(BackgroundColor(QColor(0xF5F5F5)));
@@ -102,9 +101,7 @@ TitleBar::TitleBar(QImage icon, QWidget* parent)
     set(Fill(QColor(0xFFFFFF)));
   set_style(*m_close_button, std::move(close_button_style));
   m_container_layout->addWidget(m_close_button);
-  auto layout = new QHBoxLayout(this);
-  layout->setContentsMargins({});
-  layout->addWidget(new Box(container));
+  enclose(*this, *(new Box(container)));
   set_icon(icon);
   connect_window_signals();
 }
