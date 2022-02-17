@@ -1,5 +1,4 @@
 #include "Spire/Ui/DateBox.hpp"
-#include <QHBoxLayout>
 #include <QMouseEvent>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ScalarValueModelDecorator.hpp"
@@ -10,6 +9,7 @@
 #include "Spire/Styles/TimeoutExpression.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
+#include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
 
 using namespace boost;
@@ -82,9 +82,7 @@ namespace {
       const std::shared_ptr<OptionalIntegerModel>& month,
       const std::shared_ptr<OptionalIntegerModel>& day) {
     auto body = new QWidget();
-    auto layout = new QHBoxLayout(body);
-    layout->setContentsMargins({});
-    layout->setSpacing(0);
+    auto layout = make_hbox_layout(body);
     layout->addSpacerItem(
       new QSpacerItem(1, 1, QSizePolicy::Expanding, QSizePolicy::Fixed));
     auto year_box = make_year_box(year);
@@ -276,9 +274,7 @@ DateBox::DateBox(std::shared_ptr<OptionalDateModel> current, QWidget* parent)
   update_style(*input_box, [&] (auto& style) {
     style.get(Any()).set(padding(0));
   });
-  auto layout = new QHBoxLayout(this);
-  layout->setContentsMargins({});
-  layout->addWidget(input_box);
+  enclose(*this, *input_box);
   set_style(*this, DEFAULT_STYLE());
   m_date_picker = make_date_picker(m_model->m_source, this);
   m_style_connection = connect_style_signal(*this, [=] { on_style(); });
@@ -305,7 +301,7 @@ void DateBox::set_read_only(bool read_only) {
   m_year_box->set_read_only(m_is_read_only);
   m_month_box->set_read_only(m_is_read_only);
   m_day_box->set_read_only(m_is_read_only);
-  auto& layout = *static_cast<QHBoxLayout*>(m_body->layout());
+  auto& layout = *static_cast<QBoxLayout*>(m_body->layout());
   if(m_is_read_only) {
     layout.removeItem(layout.itemAt(0));
     match(*this, ReadOnly());

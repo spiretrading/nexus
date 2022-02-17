@@ -1,10 +1,10 @@
 #include "Spire/Ui/Tag.hpp"
-#include <QHBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Styles/Stylist.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/Icon.hpp"
+#include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace boost::signals2;
@@ -38,9 +38,7 @@ Tag::Tag(QString label, QWidget* parent)
     : QWidget(parent),
       m_is_read_only(false) {
   auto container = new QWidget(this);
-  auto container_layout = new QHBoxLayout(container);
-  container_layout->setContentsMargins({});
-  container_layout->setSpacing(0);
+  auto container_layout = make_hbox_layout(container);
   auto label_box = make_label(std::move(label));
   label_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   container_layout->addWidget(label_box);
@@ -52,9 +50,7 @@ Tag::Tag(QString label, QWidget* parent)
   });
   container_layout->addWidget(m_delete_button);
   auto box = new Box(container);
-  auto layout = new QHBoxLayout(this);
-  layout->setContentsMargins({});
-  layout->addWidget(box);
+  enclose(*this, *box);
   proxy_style(*this, *box);
   set_style(*this, DEFAULT_STYLE());
 }

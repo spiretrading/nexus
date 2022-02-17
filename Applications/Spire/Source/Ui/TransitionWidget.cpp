@@ -1,9 +1,9 @@
 #include "Spire/Ui/TransitionWidget.hpp"
 #include <QEvent>
-#include <QHBoxLayout>
 #include <QLabel>
 #include <QMovie>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/Layouts.hpp"
 
 using namespace Spire;
 
@@ -12,18 +12,15 @@ TransitionWidget::TransitionWidget(QWidget* parent)
       m_show_timer(this) {
   setObjectName("transition_widget");
   setStyleSheet("#transition_widget { background-color: transparent; }");
-  auto layout = new QHBoxLayout(this);
-  layout->setContentsMargins({});
-  auto backing_widget = new QLabel(this);
-  auto logo = new QMovie(":/Icons/pre-loader.gif", QByteArray(),
-    backing_widget);
+  auto backing_widget = new QLabel();
+  auto logo = new QMovie(":/Icons/pre-loader.gif", QByteArray());
   logo->setScaledSize(scale(32, 32));
   backing_widget->setMovie(logo);
   backing_widget->setStyleSheet(
     QString("QLabel { padding-top: %1px; }").arg(scale_height(50)));
   backing_widget->setAlignment(Qt::AlignHCenter);
   backing_widget->movie()->start();
-  layout->addWidget(backing_widget);
+  enclose(*this, *backing_widget);
   parent->installEventFilter(this);
   hide();
   connect(&m_show_timer, &QTimer::timeout, [=] { on_show_timer(); });

@@ -1,6 +1,4 @@
 #include "Spire/Ui/OpenFilterPanel.hpp"
-#include <QHBoxLayout>
-#include <QVBoxLayout>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/AssociativeValueModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
@@ -10,6 +8,7 @@
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/FilterPanel.hpp"
 #include "Spire/Ui/Icon.hpp"
+#include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/ScrollableListBox.hpp"
 #include "Spire/Ui/TextBox.hpp"
@@ -54,11 +53,9 @@ class DeletableItem : public QWidget {
 
     explicit DeletableItem(QString label, QWidget* parent = nullptr)
         : QWidget(parent) {
-      auto layout = new QHBoxLayout(this);
-      layout->setContentsMargins({});
-      layout->setSpacing(0);
       auto label_box = make_label(std::move(label));
       label_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+      auto layout = make_hbox_layout(this);
       layout->addWidget(label_box);
       m_delete_button = make_delete_icon_button();
       m_delete_button->setFixedSize(scale(16, 16));
@@ -229,14 +226,10 @@ OpenFilterPanel::OpenFilterPanel(InputBoxBuilder input_box_builder,
       m_matches(std::move(matches)),
       m_mode(std::move(mode)),
       m_mode_button_group(std::make_unique<FilterModeButtonGroup>(m_mode)) {
-  auto layout = new QVBoxLayout(this);
-  layout->setContentsMargins({});
-  layout->setSpacing(0);
-  auto mode_layout = new QHBoxLayout();
-  mode_layout->setContentsMargins({});
-  mode_layout->setSpacing(scale_width(18));
   auto include_button = m_mode_button_group->get_button(Mode::INCLUDE);
   include_button->setFixedHeight(scale_height(16));
+  auto mode_layout = make_hbox_layout();
+  mode_layout->setSpacing(scale_width(18));
   mode_layout->addWidget(include_button);
   auto exclude_button = m_mode_button_group->get_button(Mode::EXCLUDE);
   exclude_button->setFixedHeight(scale_height(16));
@@ -244,6 +237,7 @@ OpenFilterPanel::OpenFilterPanel(InputBoxBuilder input_box_builder,
   m_mode_connection = m_mode_button_group->get_model()->connect_update_signal(
     std::bind_front(&OpenFilterPanel::on_mode_current, this));
   mode_layout->addStretch();
+  auto layout = make_vbox_layout(this);
   layout->addLayout(mode_layout);
   layout->addSpacing(scale_height(18));
   m_input_box = input_box_builder(m_matches);
