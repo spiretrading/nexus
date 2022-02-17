@@ -82,6 +82,7 @@ std::size_t Stylist::SelectorHash::operator ()(const Selector& selector) const {
 }
 
 Stylist::~Stylist() {
+  m_delete_signal();
   get_animation_timer().disconnect(m_animation_connection);
   for(auto& rule : m_rules) {
     auto selection = std::move(rule->m_selection);
@@ -246,6 +247,11 @@ connection Stylist::connect_adopted_signal(
 connection Stylist::connect_forfeit_signal(
     const ForfeitSignal::slot_type& slot) const {
   return m_forfeit_signal.connect(slot);
+}
+
+connection Stylist::connect_delete_signal(
+    const DeleteSignal::slot_type& slot) const {
+  return m_delete_signal.connect(slot);
 }
 
 Stylist::Stylist(QWidget& widget, boost::optional<PseudoElement> pseudo_element)
