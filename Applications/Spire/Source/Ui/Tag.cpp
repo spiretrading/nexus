@@ -50,9 +50,7 @@ Tag::Tag(QString label, QWidget* parent)
   });
   container_layout->addWidget(m_delete_button);
   auto box = new Box(container);
-  auto layout = new QHBoxLayout(this);
-  layout->setContentsMargins({});
-  layout->addWidget(box);
+  enclose(*this, *box);
   proxy_style(*this, *box);
   set_style(*this, DEFAULT_STYLE());
 }

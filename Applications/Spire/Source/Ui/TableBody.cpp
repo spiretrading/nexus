@@ -291,7 +291,7 @@ void TableBody::paintEvent(QPaintEvent* event) {
       painter.fillRect(QRect(0, top, width(), m_styles.m_vertical_spacing),
         m_styles.m_horizontal_grid_color);
     };
-    auto& row_layout = *static_cast<QVBoxLayout*>(layout());
+    auto& row_layout = *static_cast<QBoxLayout*>(layout());
     for(auto row = 0; row != row_layout.count(); ++row) {
       draw_border(
         row_layout.itemAt(row)->geometry().top() - m_styles.m_vertical_spacing);
@@ -562,7 +562,7 @@ void TableBody::on_cover_style(Cover& cover) {
 }
 
 void TableBody::on_table_operation(const TableModel::Operation& operation) {
-  auto& row_layout = *static_cast<QVBoxLayout*>(layout());
+  auto& row_layout = *static_cast<QBoxLayout*>(layout());
   auto adjusted_current = m_current_index;
   visit(operation,
     [&] (const TableModel::AddOperation& operation) {

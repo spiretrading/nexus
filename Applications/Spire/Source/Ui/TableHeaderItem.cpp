@@ -111,7 +111,7 @@ TableHeaderItem::TableHeaderItem(
   adopt(*this, *hover_element, HoverElement());
   auto contents = new QWidget();
   contents->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-  auto contents_layout = new QHBoxLayout(contents);
+  auto contents_layout = make_hbox_layout(contents);
   contents_layout->setContentsMargins({scale_width(8), 0, 0, 0});
   contents_layout->addWidget(name_label);
   contents_layout->addSpacerItem(
@@ -121,12 +121,12 @@ TableHeaderItem::TableHeaderItem(
   auto top_layout = make_hbox_layout();
   top_layout->addWidget(contents);
   top_layout->addWidget(m_sash);
-  auto bottom_layout = new QHBoxLayout();
+  auto bottom_layout = make_hbox_layout();
   bottom_layout->setContentsMargins({scale_width(8), 0, 0, 0});
   bottom_layout->addWidget(hover_element);
   bottom_layout->addSpacerItem(
     new QSpacerItem(1, 0, QSizePolicy::Expanding, QSizePolicy::Expanding));
-  auto layout = new QVBoxLayout(this);
+  auto layout = make_vbox_layout(this);
   layout->setContentsMargins({0, scale_height(8), 0, 0});
   layout->addLayout(top_layout);
   layout->addLayout(bottom_layout);

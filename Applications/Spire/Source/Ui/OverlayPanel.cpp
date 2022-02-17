@@ -2,10 +2,10 @@
 #include <QGraphicsDropShadowEffect>
 #include <QMouseEvent>
 #include <QScreen>
-#include <QVBoxLayout>
 #include <QWindow>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
+#include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/WindowObserver.hpp"
 
 using namespace boost::posix_time;
@@ -60,7 +60,7 @@ OverlayPanel::OverlayPanel(QWidget& body, QWidget& parent)
   auto box = new Box(m_body);
   box->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
   setFocusProxy(box);
-  auto layout = new QVBoxLayout(this);
+  auto layout = make_vbox_layout(this);
   layout->setContentsMargins(DROP_SHADOW_MARGINS());
   layout->addWidget(box);
   layout->addSpacerItem(

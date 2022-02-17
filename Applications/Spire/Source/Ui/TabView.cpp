@@ -150,7 +150,7 @@ void TabView::on_current(optional<int> current) {
     unmatch(*m_tab_list->get_list_item(*m_current - 1), PrecedesCurrent());
   }
   m_current = current;
-  auto layout = static_cast<QVBoxLayout*>(this->layout());
+  auto layout = static_cast<QBoxLayout*>(this->layout());
   if(layout->count() > 1) {
     auto item = layout->itemAt(1);
     layout->removeItem(item);

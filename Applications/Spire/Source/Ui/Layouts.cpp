@@ -24,7 +24,7 @@ QGridLayout* Spire::make_grid_layout(QWidget* parent) {
 }
 
 void Spire::enclose(QWidget& parent, QWidget& body) {
-  enclose(parent, body, Qt::AlignCenter);
+  enclose(parent, body, Qt::Alignment());
 }
 
 void Spire::enclose(QWidget& parent, QWidget& body, Qt::Alignment alignment) {

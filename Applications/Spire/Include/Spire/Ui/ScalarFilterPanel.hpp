@@ -167,10 +167,10 @@ namespace Spire {
   template<typename T>
   QHBoxLayout* ScalarFilterPanel<T>::make_row_layout(
       QString label, ScalarBox& box) {
-    auto layout = new QHBoxLayout();
     auto label_box = new TextBox(std::move(label));
     label_box->set_read_only(true);
     label_box->setFocusPolicy(Qt::NoFocus);
+    auto layout = make_hbox_layout();
     layout->addWidget(label_box);
     layout->addSpacing(scale_width(18));
     layout->addStretch();

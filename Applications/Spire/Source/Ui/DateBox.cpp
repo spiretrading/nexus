@@ -301,7 +301,7 @@ void DateBox::set_read_only(bool read_only) {
   m_year_box->set_read_only(m_is_read_only);
   m_month_box->set_read_only(m_is_read_only);
   m_day_box->set_read_only(m_is_read_only);
-  auto& layout = *static_cast<QHBoxLayout*>(m_body->layout());
+  auto& layout = *static_cast<QBoxLayout*>(m_body->layout());
   if(m_is_read_only) {
     layout.removeItem(layout.itemAt(0));
     match(*this, ReadOnly());
