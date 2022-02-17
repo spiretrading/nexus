@@ -1,8 +1,8 @@
 #include "Spire/Ui/Box.hpp"
-#include <QHBoxLayout>
 #include <QPainter>
 #include <QResizeEvent>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/Layouts.hpp"
 
 using namespace boost;
 using namespace Spire;
@@ -53,10 +53,7 @@ Box::Box(QWidget* body, Fit fit, QWidget* parent)
       m_fit(fit) {
   if(m_body) {
     m_container = new QWidget(this);
-    auto layout = new QHBoxLayout(m_container);
-    layout->setContentsMargins({});
-    layout->addWidget(m_body);
-    layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
+    enclose(*m_container, *m_body, Qt::AlignTop | Qt::AlignLeft);
     setFocusProxy(m_body);
     update_fit();
   } else {

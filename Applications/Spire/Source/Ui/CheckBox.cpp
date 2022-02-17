@@ -1,11 +1,11 @@
 #include "Spire/Ui/Checkbox.hpp"
 #include <QEvent>
-#include <QHBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/Utility.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/Icon.hpp"
+#include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -58,23 +58,18 @@ CheckBox::CheckBox(std::shared_ptr<BooleanModel> current, QWidget* parent)
     : QWidget(parent),
       m_current(std::move(current)),
       m_is_read_only(false) {
-  auto layout = new QHBoxLayout(this);
-  layout->setContentsMargins({});
-  layout->setSpacing(0);
   auto body = new QWidget(this);
   auto button = new Button(body, this);
   setFocusProxy(button);
   button->connect_clicked_signal([=] {
     m_current->set(!m_current->get());
   });
-  layout->addWidget(button);
-  auto body_layout = new QHBoxLayout(body);
-  body_layout->setContentsMargins({});
-  body_layout->setSpacing(0);
+  enclose(*this, *button);
   auto check = new Icon(CHECK_ICON(), parent);
   check->setFocusPolicy(Qt::NoFocus);
   auto check_box = new Box(check);
   check_box->setFixedSize(scale(16, 16));
+  auto body_layout = make_hbox_layout(body);
   body_layout->addWidget(check_box);
   m_label = make_label("", this);
   body_layout->addWidget(m_label);
@@ -127,9 +122,9 @@ void CheckBox::on_layout_direction(Qt::LayoutDirection direction) {
   update_style(*this, [&] (auto& style) {
     auto [padding_left, padding_right] = [&] {
       if(direction == Qt::LeftToRight) {
-        return std::make_tuple(scale_width(8), 0);
+        return std::tuple(scale_width(8), 0);
       }
-      return std::make_tuple(0, scale_width(8));
+      return std::tuple(0, scale_width(8));
     }();
     style.get(Any() >> is_a<TextBox>()).
       set(PaddingLeft(padding_left)).
@@ -140,10 +135,8 @@ void CheckBox::on_layout_direction(Qt::LayoutDirection direction) {
 CheckBox* Spire::make_radio_button(QWidget* parent) {
   auto button = new CheckBox(parent);
   update_style(*button, [&] (auto& style) {
-    style.get(Any() >> is_a<Icon>()).
-      set(IconImage(RADIO_CHECK_ICON()));
-    style.get(Any() >> is_a<Box>()).
-      set(border_radius(scale_width(8)));
+    style.get(Any() >> is_a<Icon>()).set(IconImage(RADIO_CHECK_ICON()));
+    style.get(Any() >> is_a<Box>()).set(border_radius(scale_width(8)));
   });
   return button;
 }

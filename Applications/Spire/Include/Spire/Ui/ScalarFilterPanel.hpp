@@ -3,8 +3,6 @@
 #include <memory>
 #include <type_traits>
 #include <QEvent>
-#include <QHBoxLayout>
-#include <QVBoxLayout>
 #include <QWidget>
 #include <boost/optional/optional.hpp>
 #include <boost/signals2/connection.hpp>
@@ -14,6 +12,7 @@
 #include "Spire/Ui/DurationBox.hpp"
 #include "Spire/Ui/FilterPanel.hpp"
 #include "Spire/Ui/IntegerBox.hpp"
+#include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/MoneyBox.hpp"
 #include "Spire/Ui/QuantityBox.hpp"
 #include "Spire/Ui/TextBox.hpp"
@@ -110,11 +109,9 @@ namespace Spire {
         m_range(std::move(range)) {
     m_filter_panel = new FilterPanel(std::move(title), this, parent);
     m_filter_panel->connect_reset_signal([=] { on_reset(); });
-    auto layout = new QVBoxLayout(this);
-    layout->setSpacing(0);
-    layout->setContentsMargins({});
     m_min_box = make_scalar_box(m_range->get().m_min);
     auto min_layout = make_row_layout(tr("Min"), *m_min_box);
+    auto layout = make_vbox_layout(this);
     layout->addLayout(min_layout);
     layout->addSpacing(scale_height(10));
     m_max_box = make_scalar_box(m_range->get().m_max);

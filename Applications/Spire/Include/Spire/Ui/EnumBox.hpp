@@ -1,11 +1,11 @@
 #ifndef SPIRE_ENUM_BOX_HPP
 #define SPIRE_ENUM_BOX_HPP
-#include <QHBoxLayout>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ListIndexValueModel.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DropDownBox.hpp"
+#include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -120,9 +120,7 @@ namespace Spire {
           const std::shared_ptr<ListModel<Type>>& model, auto index) {
         return view_builder(model->get(index));
       });
-    auto layout = new QHBoxLayout(this);
-    layout->setContentsMargins({});
-    layout->addWidget(m_drop_down_box);
+    enclose(*this, *m_drop_down_box);
   }
 
   template<typename T>
