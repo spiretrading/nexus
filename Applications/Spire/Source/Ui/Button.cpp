@@ -153,7 +153,8 @@ Button* Spire::make_label_button(const QString& label, QWidget* parent) {
     set(TextColor(QColor(0xFFFFFF))).
     set(BackgroundColor(QColor(0x4B23A0)));
   style.get(Press() / Body()).
-    set(BackgroundColor(QColor(0xFF0000)));
+    set(TextColor(QColor(0xFFFFFF))).
+    set(BackgroundColor(QColor(0x7E71B8)));
   style.get(FocusVisible() / Body()).
     set(border_color(QColor(0x4B23A0)));
   style.get(Disabled() / Body()).
