@@ -248,6 +248,10 @@ class TextBox::LineEdit : public QLineEdit {
       QLineEdit::resizeEvent(event);
     }
 
+    QSize minimumSizeHint() const override {
+      return {0, 0};
+    }
+
   private:
     mutable RejectSignal m_reject_signal;
     TextBox* m_text_box;
