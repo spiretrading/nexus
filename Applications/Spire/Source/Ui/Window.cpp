@@ -4,12 +4,12 @@
 #include <QPainter>
 #include <QScreen>
 #include <QTimer>
-#include <QVBoxLayout>
 #include <QWindow>
 #include <dwmapi.h>
 #include <qt_windows.h>
 #include <windowsx.h>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/TitleBar.hpp"
 
@@ -45,8 +45,7 @@ Window::Window(QWidget* parent)
       m_is_resizable(true) {
   setWindowFlags(windowFlags() | Qt::Window | Qt::WindowSystemMenuHint);
   m_title_bar = new TitleBar(make_svg_window_icon(":/Icons/spire.svg"), this);
-  auto layout = new QVBoxLayout(this);
-  layout->setSpacing(0);
+  auto layout = make_vbox_layout(this);
   layout->setContentsMargins(
     scale_width(1), scale_height(1), scale_width(1), scale_height(1));
   layout->addWidget(m_title_bar);

@@ -1,8 +1,8 @@
 #include "Spire/Ui/DestinationBox.hpp"
-#include <QHBoxLayout>
 #include "Spire/Spire/TransformValueModel.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DestinationListItem.hpp"
+#include "Spire/Ui/Layouts.hpp"
 
 using namespace Beam;
 using namespace boost::signals2;
@@ -70,10 +70,7 @@ DestinationBox::DestinationBox(
   m_combo_box->connect_submit_signal([=] (const auto& submission) {
     m_submit_signal(std::any_cast<const Destination&>(submission));
   });
-  auto layout = new QHBoxLayout(this);
-  layout->setContentsMargins({});
-  layout->setSpacing(0);
-  layout->addWidget(m_combo_box);
+  enclose(*this, *m_combo_box);
 }
 
 const std::shared_ptr<ComboBox::QueryModel>&

@@ -1,9 +1,9 @@
 #include "Spire/Ui/Button.hpp"
-#include <QHBoxLayout>
 #include <QMouseEvent>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Icon.hpp"
+#include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/Tooltip.hpp"
 
@@ -15,10 +15,8 @@ Button::Button(QWidget* body, QWidget* parent)
     : QWidget(parent),
       m_body(body),
       m_is_down(false) {
-  auto layout = new QHBoxLayout(this);
-  layout->setContentsMargins({});
-  layout->addWidget(m_body);
   setFocusPolicy(Qt::StrongFocus);
+  enclose(*this, *m_body);
 }
 
 const QWidget& Button::get_body() const {

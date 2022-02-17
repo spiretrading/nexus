@@ -1,6 +1,6 @@
 #include "Spire/Ui/ListItem.hpp"
-#include <QHBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/Layouts.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;
@@ -38,8 +38,7 @@ ListItem::ListItem(QWidget& body, QWidget* parent)
     m_box->setFocusProxy(nullptr);
     setFocusProxy(m_button);
   }
-  auto layout = new QHBoxLayout(this);
-  layout->setContentsMargins({});
+  auto layout = make_hbox_layout(this);
   layout->setSizeConstraint(QLayout::SetMinAndMaxSize);
   layout->addWidget(m_button);
   proxy_style(*m_button, *m_box);

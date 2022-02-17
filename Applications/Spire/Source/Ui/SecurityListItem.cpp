@@ -1,9 +1,8 @@
 #include "Spire/Ui/SecurityListItem.hpp"
-#include <QHBoxLayout>
-#include <QVBoxLayout>
 #include "Nexus/Definitions/DefaultCountryDatabase.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Icon.hpp"
+#include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace boost;
@@ -47,23 +46,14 @@ namespace {
 SecurityListItem::SecurityListItem(SecurityInfo security_info, QWidget* parent)
     : QWidget(parent),
       m_security_info(std::move(security_info)) {
-  auto layout = new QVBoxLayout(this);
-  layout->setContentsMargins({});
-  layout->setSpacing(0);
-  auto value_container_layout = new QHBoxLayout();
-  value_container_layout->setContentsMargins({});
-  value_container_layout->setSpacing(0);
   auto value_label = make_label(
     QString::fromStdString(ToString(m_security_info.m_security)));
   value_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
   update_style(*value_label, [&] (auto& style) {
     style = VALUE_LABEL_STYLE(style);
   });
+  auto value_container_layout = make_hbox_layout();
   value_container_layout->addWidget(value_label);
-  auto flag_icon_layout = new QVBoxLayout();
-  flag_icon_layout->setContentsMargins({});
-  flag_icon_layout->setSpacing(0);
-  flag_icon_layout->addStretch();
   auto country_code = QString(GetDefaultCountryDatabase().
     FromCode(m_security_info.m_security.GetCountry()).
     m_threeLetterCode.GetData()).toLower();
@@ -72,9 +62,12 @@ SecurityListItem::SecurityListItem(SecurityInfo security_info, QWidget* parent)
   flag_icon->setFixedSize(FLAG_SIZE());
   set_style(*flag_icon, FLAG_ICON_STYLE());
   flag_icon->setFocusPolicy(Qt::NoFocus);
+  auto flag_icon_layout = make_vbox_layout();
+  flag_icon_layout->addStretch();
   flag_icon_layout->addWidget(flag_icon);
   flag_icon_layout->addStretch();
   value_container_layout->addLayout(flag_icon_layout);
+  auto layout = make_vbox_layout(this);
   layout->addLayout(value_container_layout);
   auto name_label = make_label(QString::fromStdString(m_security_info.m_name));
   name_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);

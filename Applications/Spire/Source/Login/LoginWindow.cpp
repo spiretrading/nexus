@@ -1,13 +1,12 @@
 #include "Spire/Login/LoginWindow.hpp"
-#include <QHBoxLayout>
 #include <QMovie>
-#include <QVBoxLayout>
 #include "Spire/Login/ChromaHashWidget.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/DropShadow.hpp"
 #include "Spire/Ui/Icon.hpp"
+#include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace boost;
@@ -95,15 +94,13 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
       background-color: #4B23A0;
       border: 1px solid #321471;
     })");
-  auto layout = new QVBoxLayout(this);
-  layout->setContentsMargins({});
-  layout->setSpacing(0);
   auto close_button =
     make_icon_button(imageFromSvg(":/Icons/close.svg", BUTTON_SIZE()), this);
   set_style(*close_button, CLOSE_BUTTON_STYLE());
   close_button->setFixedSize(BUTTON_SIZE());
   close_button->setFocusPolicy(Qt::NoFocus);
   close_button->connect_clicked_signal([=] { window()->close(); });
+  auto layout = make_vbox_layout(this);
   layout->addWidget(close_button, 0, Qt::AlignRight);
   layout->addSpacing(scale_height(30));
   m_logo_widget = new QLabel(parent);
@@ -134,9 +131,8 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
   });
   layout->addWidget(m_username_text_box, 0, Qt::AlignCenter);
   layout->addSpacing(scale_height(15));
-  auto password_layout = new QHBoxLayout();
+  auto password_layout = make_hbox_layout();
   password_layout->setContentsMargins(scale_width(52), 0, scale_width(52), 0);
-  password_layout->setSpacing(0);
   m_password_text_box = new TextBox(this);
   m_password_text_box->set_placeholder(tr("Password"));
   update_style(*m_password_text_box, [&] (auto& style) {
@@ -154,9 +150,8 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
   password_layout->addWidget(m_chroma_hash_widget);
   layout->addLayout(password_layout);
   layout->addSpacing(scale_height(30));
-  auto button_layout = new QHBoxLayout();
+  auto button_layout = make_hbox_layout();
   button_layout->setContentsMargins(scale_width(52), 0, scale_width(52), 0);
-  button_layout->setSpacing(0);
   auto build_label =
     new TextBox(QString(tr("Build ")) + QString::fromStdString(version), this);
   build_label->set_read_only(true);

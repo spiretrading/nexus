@@ -1,9 +1,9 @@
 #include "Spire/Ui/TagBox.hpp"
-#include <QHBoxLayout>
 #include <QKeyEvent>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
+#include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/ListModelTransactionLog.hpp"
 #include "Spire/Ui/ListView.hpp"
@@ -127,15 +127,9 @@ TagBox::TagBox(std::shared_ptr<AnyListModel> list,
   m_list_view->setFocusPolicy(Qt::NoFocus);
   m_list_view->installEventFilter(this);
   m_list_view_container = new QWidget();
-  auto container_layout = new QHBoxLayout(m_list_view_container);
-  container_layout->setContentsMargins({});
-  container_layout->setSpacing(0);
-  container_layout->addWidget(m_list_view);
+  enclose(*m_list_view_container, *m_list_view);
   auto input_box = make_input_box(m_list_view_container);
-  auto layout = new QHBoxLayout(this);
-  layout->setContentsMargins({});
-  layout->setSpacing(0);
-  layout->addWidget(input_box);
+  enclose(*this, *input_box);
   proxy_style(*this, *input_box);
   set_style(*this, INPUT_BOX_STYLE(get_style(*input_box)));
   m_style_connection = connect_style_signal(*this, [=] { on_style(); });

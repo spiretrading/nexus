@@ -1,8 +1,8 @@
 #include "Spire/Ui/ScrollableListBox.hpp"
-#include <QHBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ValueModel.hpp"
 #include "Spire/Ui/Box.hpp"
+#include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
@@ -30,9 +30,7 @@ ScrollableListBox::ScrollableListBox(ListView& list_view, QWidget* parent)
   m_scroll_box = new ScrollBox(m_list_view);
   m_scroll_box->setFocusPolicy(Qt::NoFocus);
   proxy_style(*this, *m_scroll_box);
-  auto layout = new QHBoxLayout(this);
-  layout->setContentsMargins({});
-  layout->addWidget(m_scroll_box);
+  enclose(*this, *m_scroll_box);
   m_list_view_style_connection =
     connect_style_signal(*m_list_view, [=] { on_list_view_style(); });
   set_style(*this, make_default_style());
