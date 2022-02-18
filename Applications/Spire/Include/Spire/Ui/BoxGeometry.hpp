@@ -97,6 +97,11 @@ namespace Spire {
   QSize get_styling_size(const BoxGeometry& geometry);
 
   /**
+   * Returns the margins surrounding the content.
+   */
+  QMargins get_content_margins(const BoxGeometry& geometry);
+
+  /**
    * Applies a style Property to a BoxGeometry.
    * @param property The property to apply.
    * @param geometry The BoxGeometry to apply the <i>property</i> to.

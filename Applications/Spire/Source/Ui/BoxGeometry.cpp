@@ -119,6 +119,13 @@ QSize Spire::get_styling_size(const BoxGeometry& geometry) {
   return geometry.get_geometry().size() - geometry.get_content_area().size();
 }
 
+QMargins Spire::get_content_margins(const BoxGeometry& geometry) {
+  return {geometry.get_border_left() + geometry.get_padding_left(),
+    geometry.get_border_top() + geometry.get_padding_top(),
+    geometry.get_border_right() + geometry.get_padding_right(),
+    geometry.get_border_bottom() + geometry.get_padding_bottom()};
+}
+
 void Spire::apply(
     const Property& property, BoxGeometry& geometry, Stylist& stylist) {
   property.visit(

@@ -163,9 +163,7 @@ class TextBox::LineEdit : public QLineEdit {
 
     void set_style(
         const BoxGeometry& geometry, const TextStyleProperties& text_style) {
-      m_text_box->layout()->setContentsMargins(
-        geometry.get_padding_left(), geometry.get_padding_top(),
-        geometry.get_padding_right(), geometry.get_padding_bottom());
+      m_text_box->layout()->setContentsMargins(get_content_margins(geometry));
       auto stylesheet = QString(
         R"(#0x%1 {
           background-color: transparent;
