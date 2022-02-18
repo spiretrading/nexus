@@ -61,6 +61,9 @@ namespace Spire::Styles {
       using ForfeitSignal =
         Signal<void (Stylist& stylist, const Selector& selector)>;
 
+      /** Signals that this Stylist is being deleted. */
+      using DeleteSignal = Signal<void ()>;
+
       ~Stylist();
 
       /** Returns the QWidget being styled. */
@@ -154,6 +157,10 @@ namespace Spire::Styles {
       boost::signals2::connection connect_forfeit_signal(
         const ForfeitSignal::slot_type& slot) const;
 
+      /** Connects a slot to the DeleteSignal. */
+      boost::signals2::connection connect_delete_signal(
+        const DeleteSignal::slot_type& slot) const;
+
     private:
       struct StyleEventFilter;
       struct SelectorHash {
@@ -200,6 +207,7 @@ namespace Spire::Styles {
       mutable StyleSignal m_style_signal;
       mutable AdoptedSignal m_adopted_signal;
       mutable ForfeitSignal m_forfeit_signal;
+      mutable DeleteSignal m_delete_signal;
       QWidget* m_widget;
       boost::optional<PseudoElement> m_pseudo_element;
       StyleSheet m_style;

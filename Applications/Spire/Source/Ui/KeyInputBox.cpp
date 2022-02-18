@@ -1,5 +1,4 @@
 #include "Spire/Ui/KeyInputBox.hpp"
-#include <QHBoxLayout>
 #include <QKeyEvent>
 #include <QPainter>
 #include <QTimer>
@@ -7,6 +6,7 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/KeyTag.hpp"
+#include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/LayeredWidget.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
@@ -91,17 +91,12 @@ KeyInputBox::KeyInputBox(
   m_body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   layers->add(m_body);
   layers->add(new Caret(this));
-  auto layout = new QHBoxLayout();
-  layout->setContentsMargins({});
   auto input_box = make_input_box(layers);
   update_style(*input_box, [&] (auto& style) {
     style.get(Any()).set(vertical_padding(scale_height(3)));
   });
-  layout->addWidget(input_box);
-  setLayout(layout);
-  auto body_layout = new QHBoxLayout();
-  body_layout->setContentsMargins({});
-  m_body->setLayout(body_layout);
+  enclose(*this, *input_box);
+  m_body->setLayout(make_hbox_layout());
   set_status(Status::NONE);
   m_current_connection = m_current->connect_update_signal(
     [=] (const auto& current) { on_current(current); });

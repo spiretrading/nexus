@@ -1,23 +1,29 @@
 #include "Spire/Styles/DescendantSelector.hpp"
+#include <Beam/SignalHandling/ConnectionGroup.hpp>
 #include <deque>
 #include <QChildEvent>
 #include <QWidget>
 #include "Spire/Styles/CombinatorSelector.hpp"
 #include "Spire/Styles/Stylist.hpp"
 
+using namespace Beam::SignalHandling;
 using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
   struct DescendantObserver : public QObject {
     SelectionUpdateSignal m_on_update;
+    ConnectionGroup m_delete_connections;
 
     DescendantObserver(
         const Stylist& stylist, const SelectionUpdateSignal& on_update)
         : m_on_update(on_update) {
-      auto descendants = build_descendants(stylist.get_widget());
       stylist.get_widget().installEventFilter(this);
+      auto descendants = build_descendants(stylist.get_widget());
       for(auto descendant : descendants) {
+        auto connection = descendant->connect_delete_signal(std::bind_front(
+          &DescendantObserver::on_delete, this, std::ref(*descendant)));
+        m_delete_connections.AddConnection(&descendant, connection);
         descendant->get_widget().installEventFilter(this);
       }
       m_on_update(std::move(descendants), {});
@@ -50,6 +56,9 @@ namespace {
           auto descendants = build_descendants(child);
           descendants.insert(&find_stylist(child));
           for(auto descendant : descendants) {
+            auto connection = descendant->connect_delete_signal(std::bind_front(
+              &DescendantObserver::on_delete, this, std::ref(*descendant)));
+            m_delete_connections.AddConnection(&descendant, connection);
             descendant->get_widget().installEventFilter(this);
           }
           m_on_update(std::move(descendants), {});
@@ -61,12 +70,23 @@ namespace {
           auto descendants = build_descendants(child);
           descendants.insert(&find_stylist(child));
           for(auto descendant : descendants) {
+            m_delete_connections.Disconnect(&descendant);
             descendant->get_widget().removeEventFilter(this);
           }
           m_on_update({}, std::move(descendants));
         }
       }
       return QObject::eventFilter(watched, event);
+    }
+
+    void on_delete(const Stylist& stylist) {
+      auto descendants = build_descendants(stylist.get_widget());
+      descendants.insert(&stylist);
+      for(auto descendant : descendants) {
+        m_delete_connections.Disconnect(&descendant);
+        descendant->get_widget().removeEventFilter(this);
+      }
+      m_on_update({}, std::move(descendants));
     }
   };
 }

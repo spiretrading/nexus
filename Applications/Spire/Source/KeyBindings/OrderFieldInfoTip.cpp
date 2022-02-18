@@ -1,9 +1,8 @@
 #include "Spire/KeyBindings/OrderFieldInfoTip.hpp"
-#include <QHBoxLayout>
-#include <QVBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/InfoTip.hpp"
+#include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/TextAreaBox.hpp"
 
@@ -51,10 +50,9 @@ namespace {
         set(PaddingTop(scale_height(6))).
         set(PaddingBottom(0));
     });
-    auto layout = new QVBoxLayout();
+    auto layout = make_vbox_layout();
     layout->setContentsMargins(
       scale_width(18), scale_height(18), scale_width(18), scale_height(18));
-    layout->setSpacing(0);
     layout->addWidget(name_label);
     layout->addWidget(description_label);
     return layout;
@@ -82,7 +80,7 @@ namespace {
 
   auto make_values_table(
       const std::vector<OrderFieldInfoTip::Model::Argument>& arguments) {
-    auto layout = new QGridLayout();
+    auto layout = make_grid_layout();
     layout->setContentsMargins(
       scale_width(18), 0, scale_width(18), scale_height(18));
     layout->setHorizontalSpacing(0);
@@ -99,9 +97,7 @@ namespace {
   auto make_scroll_box_body(const OrderFieldInfoTip::Model& model) {
     auto body = new QWidget();
     body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-    auto layout = new QVBoxLayout(body);
-    layout->setContentsMargins({});
-    layout->setSpacing(0);
+    auto layout = make_vbox_layout(body);
     layout->addLayout(make_description_layout(model));
     if(!model.m_tag.m_arguments.empty()) {
       layout->addLayout(make_values_table(model.m_tag.m_arguments));
@@ -150,9 +146,7 @@ namespace {
     set_style(*prerequisites_label, PREREQUISITES_STYLE());
     auto container = new QWidget();
     container->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-    auto layout = new QVBoxLayout(container);
-    layout->setContentsMargins({});
-    layout->setSpacing(0);
+    auto layout = make_vbox_layout(container);
     layout->addWidget(header);
     layout->addWidget(prerequisites_label);
     auto box = new Box(container);
@@ -170,9 +164,7 @@ namespace {
 OrderFieldInfoTip::OrderFieldInfoTip(Model model, QWidget* parent)
     : QWidget(parent) {
   setFixedWidth(scale_width(280));
-  auto layout = new QVBoxLayout(this);
-  layout->setContentsMargins({});
-  layout->setSpacing(0);
+  auto layout = make_vbox_layout(this);
   layout->addWidget(make_scroll_box(model));
   if(!model.m_prerequisites.empty()) {
     layout->addWidget(make_prerequisite_container(model));

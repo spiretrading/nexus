@@ -8,6 +8,7 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/HoverObserver.hpp"
+#include "Spire/Ui/Layouts.hpp"
 #include "Spire/UiViewer/StandardUiProfiles.hpp"
 #include "Spire/UiViewer/UiProfile.hpp"
 #include "Spire/UiViewer/UiPropertyTableView.hpp"
@@ -75,10 +76,7 @@ namespace {
 
     SizeAdjustedContainer(QWidget* body)
         : m_body(body) {
-      auto layout = new QVBoxLayout();
-      layout->setContentsMargins({});
-      layout->addWidget(m_body);
-      setLayout(layout);
+      enclose(*this, *m_body);
     }
 
     bool event(QEvent* event) override {

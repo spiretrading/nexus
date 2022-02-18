@@ -1,8 +1,8 @@
 #include "Spire/Ui/FilterPanel.hpp"
 #include <QEvent>
-#include <QVBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Button.hpp"
+#include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
@@ -26,15 +26,14 @@ namespace {
 FilterPanel::FilterPanel(QString title, QWidget* body, QWidget& parent)
     : QWidget(&parent),
       m_body(body) {
-  auto layout = new QVBoxLayout(this);
-  layout->setSpacing(0);
-  layout->setContentsMargins(
-    scale_width(MARGIN_SIZE), scale_height(MARGIN_SIZE),
-    scale_width(MARGIN_SIZE), scale_height(MARGIN_SIZE));
   auto header = make_label(std::move(title));
   update_style(*header, [&] (auto& style) {
     style = HEADER_STYLE(style);
   });
+  auto layout = make_vbox_layout(this);
+  layout->setContentsMargins(
+    scale_width(MARGIN_SIZE), scale_height(MARGIN_SIZE),
+    scale_width(MARGIN_SIZE), scale_height(MARGIN_SIZE));
   layout->addWidget(header);
   layout->addSpacing(scale_height(18));
   layout->addWidget(m_body);

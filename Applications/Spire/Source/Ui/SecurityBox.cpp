@@ -1,7 +1,7 @@
 #include "Spire/Ui/SecurityBox.hpp"
-#include <QHBoxLayout>
 #include "Spire/Spire/TransformValueModel.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
+#include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/SecurityListItem.hpp"
 
 using namespace Beam;
@@ -72,10 +72,7 @@ SecurityBox::SecurityBox(std::shared_ptr<ComboBox::QueryModel> query_model,
   m_combo_box->connect_submit_signal([=] (const auto& submission) {
     m_submit_signal(std::any_cast<const Security&>(submission));
   });
-  auto layout = new QHBoxLayout(this);
-  layout->setContentsMargins({});
-  layout->setSpacing(0);
-  layout->addWidget(m_combo_box);
+  enclose(*this, *m_combo_box);
   setFocusProxy(m_combo_box);
 }
 

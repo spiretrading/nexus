@@ -1,13 +1,12 @@
 #include "Spire/Ui/TableBody.hpp"
 #include <QApplication>
 #include <QEnterEvent>
-#include <QHBoxLayout>
 #include <QMouseEvent>
 #include <QPainter>
-#include <QVBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
+#include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TableItem.hpp"
 #include "Spire/Ui/TableModel.hpp"
 #include "Spire/Ui/TextBox.hpp"
@@ -135,9 +134,7 @@ TableBody::TableBody(
       m_current_index(m_current->get()),
       m_current_item(nullptr) {
   setFocusPolicy(Qt::StrongFocus);
-  auto row_layout = new QVBoxLayout(this);
-  row_layout->setContentsMargins({});
-  row_layout->setSpacing(0);
+  auto row_layout = make_vbox_layout(this);
   m_style_connection =
     connect_style_signal(*this, std::bind_front(&TableBody::on_style, this));
   update_style(*this, [] (auto& style) {
@@ -294,7 +291,7 @@ void TableBody::paintEvent(QPaintEvent* event) {
       painter.fillRect(QRect(0, top, width(), m_styles.m_vertical_spacing),
         m_styles.m_horizontal_grid_color);
     };
-    auto& row_layout = *static_cast<QVBoxLayout*>(layout());
+    auto& row_layout = *static_cast<QBoxLayout*>(layout());
     for(auto row = 0; row != row_layout.count(); ++row) {
       draw_border(
         row_layout.itemAt(row)->geometry().top() - m_styles.m_vertical_spacing);
@@ -565,7 +562,7 @@ void TableBody::on_cover_style(Cover& cover) {
 }
 
 void TableBody::on_table_operation(const TableModel::Operation& operation) {
-  auto& row_layout = *static_cast<QVBoxLayout*>(layout());
+  auto& row_layout = *static_cast<QBoxLayout*>(layout());
   auto adjusted_current = m_current_index;
   visit(operation,
     [&] (const TableModel::AddOperation& operation) {
@@ -576,8 +573,7 @@ void TableBody::on_table_operation(const TableModel::Operation& operation) {
       }
       auto row = new Cover(this);
       match(*row, Row());
-      auto column_layout = new QHBoxLayout(row);
-      column_layout->setContentsMargins({});
+      auto column_layout = make_hbox_layout(row);
       column_layout->setSpacing(m_styles.m_horizontal_spacing);
       for(auto column = 0; column != m_table->get_column_size(); ++column) {
         auto item =

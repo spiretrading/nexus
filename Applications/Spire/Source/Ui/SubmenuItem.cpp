@@ -1,7 +1,7 @@
 #include "Spire/Ui/SubmenuItem.hpp"
-#include <QHBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Icon.hpp"
+#include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace Spire;
@@ -27,14 +27,12 @@ namespace {
 SubmenuItem::SubmenuItem(QString label, ContextMenu& menu, QWidget* parent)
     : QWidget(parent),
       m_menu(&menu) {
-  auto layout = new QHBoxLayout(this);
-  layout->setContentsMargins({});
-  layout->setSpacing(0);
   auto label_box = make_label(label);
   label_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+  auto layout = make_hbox_layout(this);
   layout->addWidget(label_box);
-  auto icon = new Icon(
-    imageFromSvg(":/Icons/menu-arrow.svg", scale(4, 6)), this);
+  auto icon =
+    new Icon(imageFromSvg(":/Icons/menu-arrow.svg", scale(4, 6)), this);
   icon->setFixedSize(scale(4, 6));
   layout->addWidget(icon, 0, Qt::AlignVCenter);
   set_style(*this, DEFAULT_STYLE());

@@ -1,9 +1,9 @@
 #ifndef SPIRE_ANY_INPUT_BOX_HPP
 #define SPIRE_ANY_INPUT_BOX_HPP
-#include <QHBoxLayout>
 #include <QWidget>
 #include "Spire/Spire/AnyRef.hpp"
 #include "Spire/Spire/AnyValueModel.hpp"
+#include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -160,10 +160,8 @@ namespace Details {
   AnyInputBox::AnyInputBox(T& input_box, QWidget* parent)
       : QWidget(parent),
         m_input_box(std::make_unique<WrapperInputBox<T>>(input_box)) {
-    auto layout = new QHBoxLayout(this);
-    layout->setContentsMargins({});
-    layout->addWidget(&input_box);
     setFocusProxy(&input_box);
+    enclose(*this, input_box);
   }
 
   template<typename T>
