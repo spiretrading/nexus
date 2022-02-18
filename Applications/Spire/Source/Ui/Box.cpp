@@ -145,6 +145,7 @@ void Box::update_fit() {
     setMaximumHeight(
       std::min(m_body->maximumHeight() + styling_height, QWIDGETSIZE_MAX));
   }
+  updateGeometry();
 }
 
 void Box::on_style() {
