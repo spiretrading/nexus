@@ -19,6 +19,7 @@ namespace Spire {
 
   /**
    * Returns a new KeyFilterPanel using an empty list of matches.
+   * @param current The current value model.
    * @param parent The parent widget.
    */
   KeyFilterPanel* make_key_filter_panel(
@@ -26,6 +27,7 @@ namespace Spire {
 
   /**
    * Returns a new KeyFilterPanel.
+   * @param current The current value model.
    * @param matches The list of QKeySequence to match against.
    * @param mode The filter mode.
    * @param parent The parent widget.

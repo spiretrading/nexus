@@ -4,15 +4,14 @@
 #include "Spire/Ui/AnyInputBox.hpp"
 #include "Spire/Ui/KeyInputBox.hpp"
 
-using namespace boost::signals2;
 using namespace Spire;
 
 namespace {
   AnyInputBox* input_box_builder(std::shared_ptr<KeySequenceValueModel> current,
       std::shared_ptr<AnyListModel> matches) {
     auto input_box = new AnyInputBox(*(new KeyInputBox(std::move(current))));
-    input_box->get_current()->connect_update_signal([=] (const auto& current) {
-      auto sequence = any_cast<QKeySequence>(current);
+    input_box->get_current()->connect_update_signal([=] (const auto& value) {
+      auto& sequence = any_cast<QKeySequence>(value);
       if(sequence.isEmpty()) {
         return;
       }

@@ -45,8 +45,7 @@ namespace Details {
     is_detected<set_placeholder_type, T>::value;
 
   template<typename T>
-  using is_read_only_type =
-    decltype(std::declval<T>().is_read_only());
+  using is_read_only_type = decltype(std::declval<T>().is_read_only());
 
   template<typename T>
   constexpr auto has_is_read_only_v = is_detected<is_read_only_type, T>::value;
