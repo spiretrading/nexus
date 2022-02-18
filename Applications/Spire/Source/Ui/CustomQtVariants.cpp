@@ -282,58 +282,62 @@ CustomVariantItemDelegate::CustomVariantItemDelegate(QObject* parent)
 
 QString CustomVariantItemDelegate::displayText(const QVariant& value,
     const QLocale& locale) const {
-  if(value.canConvert<gregorian::date>()) {
-    return QString::fromStdString(
-      to_iso_extended_string(value.value<gregorian::date>()));
-  } else if(value.canConvert<ptime>()) {
-    auto time_value = ToLocalTime(value.value<ptime>());
-    auto currentTime = ToLocalTime(
-      posix_time::second_clock::universal_time());
-    if(time_value.date() == currentTime.date()) {
-      return QString::fromStdString(to_simple_string(time_value).substr(12));
-    } else {
-      return QString::fromStdString(to_simple_string(time_value));
+  if(value.type() == QVariant::Type::UserType) {
+    if(value.canConvert<gregorian::date>()) {
+      return QString::fromStdString(
+        to_iso_extended_string(value.value<gregorian::date>()));
+    } else if(value.canConvert<ptime>()) {
+      auto time_value = ToLocalTime(value.value<ptime>());
+      auto currentTime =
+        ToLocalTime(posix_time::second_clock::universal_time());
+      if(time_value.date() == currentTime.date()) {
+        return QString::fromStdString(to_simple_string(time_value).substr(12));
+      } else {
+        return QString::fromStdString(to_simple_string(time_value));
+      }
+    } else if(value.canConvert<posix_time::time_duration>()) {
+      return QString::fromStdString(
+        to_simple_string(value.value<posix_time::time_duration>()));
+    } else if(value.canConvert<CurrencyId>()) {
+      auto& entry =
+        GetDefaultCurrencyDatabase().FromId(value.value<CurrencyId>());
+      return QString::fromStdString(entry.m_code.GetData());
+    } else if(value.canConvert<MarketToken>()) {
+      auto& entry =
+        GetDefaultMarketDatabase().FromCode(value.value<MarketToken>().m_code);
+      return QString::fromStdString(entry.m_displayName);
+    } else if(value.canConvert<Money>()) {
+      return QString::fromStdString(
+        lexical_cast<std::string>(value.value<Money>()));
+    } else if(value.canConvert<Quantity>()) {
+      return locale.toString(static_cast<double>(value.value<Quantity>()));
+    } else if(value.canConvert<OrderStatus>()) {
+      return Spire::displayText(value.value<OrderStatus>());
+    } else if(value.canConvert<OrderType>()) {
+      return Spire::displayText(value.value<OrderType>());
+    } else if(value.canConvert<PositionSideToken>()) {
+      return value.value<PositionSideToken>().to_string();
+    } else if(value.canConvert<Region>()) {
+      auto region = value.value<Region>();
+      if(region.IsGlobal()) {
+        return QObject::tr("Global");
+      }
+      return QString::fromStdString(region.GetName());
+    } else if(value.canConvert<Security>()) {
+      return QString::fromStdString(ToWildCardString(value.value<Security>(),
+        GetDefaultMarketDatabase(), GetDefaultCountryDatabase()));
+    } else if(value.canConvert<Side>()) {
+      return Spire::displayText(value.value<Side>());
+    } else if(value.canConvert<TimeInForce>()) {
+      return Spire::displayText(value.value<TimeInForce>().GetType());
+    } else if(value.canConvert<std::any>()) {
+      auto translated_value = to_qvariant(value.value<std::any>());
+      return displayText(translated_value, locale);
     }
-  } else if(value.canConvert<posix_time::time_duration>()) {
-    return QString::fromStdString(to_simple_string(
-      value.value<posix_time::time_duration>()));
-  } else if(value.canConvert<CurrencyId>()) {
-    auto& entry = GetDefaultCurrencyDatabase().FromId(
-      value.value<CurrencyId>());
-    return QString::fromStdString(entry.m_code.GetData());
-  } else if(value.canConvert<MarketToken>()) {
-    auto& entry = GetDefaultMarketDatabase().FromCode(
-      value.value<MarketToken>().m_code);
-    return QString::fromStdString(entry.m_displayName);
-  } else if(value.canConvert<Money>()) {
-    return QString::fromStdString(lexical_cast<std::string>(
-      value.value<Money>()));
-  } else if(value.canConvert<Quantity>()) {
-    return locale.toString(static_cast<double>(value.value<Quantity>()));
-  } else if(value.canConvert<OrderStatus>()) {
-    return Spire::displayText(value.value<OrderStatus>());
-  } else if(value.canConvert<OrderType>()) {
-    return Spire::displayText(value.value<OrderType>());
-  } else if(value.canConvert<PositionSideToken>()) {
-    return value.value<PositionSideToken>().to_string();
-  } else if(value.canConvert<QString>()) {
+  } else if(value.type() == QMetaType::QKeySequence) {
+    return value.value<QKeySequence>().toString();
+  } else if(value.type() == QMetaType::QString) {
     return value.value<QString>();
-  } else if(value.canConvert<Region>()) {
-    auto region = value.value<Region>();
-    if(region.IsGlobal()) {
-      return QObject::tr("Global");
-    }
-    return QString::fromStdString(region.GetName());
-  } else if(value.canConvert<Security>()) {
-    return QString::fromStdString(ToWildCardString(value.value<Security>(),
-      GetDefaultMarketDatabase(), GetDefaultCountryDatabase()));
-  } else if(value.canConvert<Side>()) {
-    return Spire::displayText(value.value<Side>());
-  } else if(value.canConvert<TimeInForce>()) {
-    return Spire::displayText(value.value<TimeInForce>().GetType());
-  } else if(value.canConvert<std::any>()) {
-    auto translated_value = to_qvariant(value.value<std::any>());
-    return displayText(translated_value, locale);
   }
   return QStyledItemDelegate::displayText(value, locale);
 }
@@ -405,7 +409,7 @@ bool CustomVariantSortFilterProxyModel::lessThan(const QModelIndex& left,
     auto& rightEntry = GetDefaultMarketDatabase().FromCode(
       right_variant.value<MarketToken>().m_code);
     return leftEntry.m_displayName < rightEntry.m_displayName;
-  } else if(left_variant.canConvert<QKeySequence>()) {
+  } else if(left_variant.type() == QMetaType::QKeySequence) {
     auto left = left_variant.value<QKeySequence>().toString();
     auto right = right_variant.value<QKeySequence>().toString();
     return left < right;

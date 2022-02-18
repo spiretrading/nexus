@@ -1,6 +1,5 @@
 #include "Spire/Ui/DurationBox.hpp"
 #include <boost/signals2/shared_connection_block.hpp>
-#include <QHBoxLayout>
 #include <QKeyEvent>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalScalarValueModel.hpp"
@@ -11,6 +10,7 @@
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/IntegerBox.hpp"
+#include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace boost;
@@ -417,18 +417,14 @@ DurationBox::DurationBox(std::shared_ptr<OptionalDurationModel> current,
   m_second_field = make_second_field(std::move(second_model), *this);
   auto hour_minute_colon = make_colon();
   auto minute_second_colon = make_colon();
-  auto container_layout = new QHBoxLayout(container);
-  container_layout->setContentsMargins({});
-  container_layout->setSpacing(0);
+  auto container_layout = make_hbox_layout(container);
   container_layout->addWidget(m_hour_field, 6);
   container_layout->addWidget(hour_minute_colon);
   container_layout->addWidget(m_minute_field, 7);
   container_layout->addWidget(minute_second_colon);
   container_layout->addWidget(m_second_field, 11);
   auto box = new Box(container);
-  auto layout = new QHBoxLayout(this);
-  layout->setContentsMargins({});
-  layout->addWidget(box);
+  enclose(*this, *box);
   setFocusPolicy(Qt::StrongFocus);
   setFocusProxy(box);
   proxy_style(*this, *box);

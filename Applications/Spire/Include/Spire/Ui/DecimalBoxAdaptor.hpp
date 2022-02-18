@@ -1,8 +1,8 @@
 #ifndef SPIRE_DECIMAL_BOX_ADAPTOR_HPP
 #define SPIRE_DECIMAL_BOX_ADAPTOR_HPP
-#include <QHBoxLayout>
 #include "Spire/Spire/LocalScalarValueModel.hpp"
 #include "Spire/Ui/DecimalBox.hpp"
+#include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -212,8 +212,6 @@ namespace Spire {
         m_current(std::move(current)),
         m_adaptor_model(std::move(adaptor_model)),
         m_submission(m_current->get()) {
-    auto layout = new QHBoxLayout(this);
-    layout->setContentsMargins({});
     auto adapted_modifiers = QHash<Qt::KeyboardModifier, Decimal>();
     for(auto modifier = modifiers.begin();
         modifier != modifiers.end(); ++modifier) {
@@ -223,7 +221,7 @@ namespace Spire {
       new DecimalBox(m_adaptor_model, std::move(adapted_modifiers), this);
     Styles::proxy_style(*this, *m_decimal_box);
     setFocusProxy(m_decimal_box);
-    layout->addWidget(m_decimal_box);
+    enclose(*this, *m_decimal_box);
     m_submit_connection = m_decimal_box->connect_submit_signal(
       [=] (const auto& submission) { on_submit(submission); });
     m_reject_connection = m_decimal_box->connect_reject_signal(

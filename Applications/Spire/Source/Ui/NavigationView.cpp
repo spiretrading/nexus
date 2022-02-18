@@ -1,12 +1,11 @@
 #include "Spire/Ui/NavigationView.hpp"
-#include <QHBoxLayout>
-#include <QVBoxLayout>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/CheckBox.hpp"
 #include "Spire/Ui/LayeredWidget.hpp"
+#include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/TextBox.hpp"
@@ -39,19 +38,15 @@ class LabelContainer : public QWidget {
     explicit LabelContainer(QString label, QWidget* parent = nullptr)
         : QWidget(parent) {
       auto body = new QWidget();
-      auto body_layout = new QVBoxLayout(body);
-      body_layout->setContentsMargins({});
-      body_layout->setSpacing(0);
       auto text_box = make_label(std::move(label));
       text_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+      auto body_layout = make_vbox_layout(body);
       body_layout->addWidget(text_box);
       auto select_line = new SelectLine();
       select_line->setFixedHeight(scale_height(2));
       body_layout->addWidget(select_line);
       auto box = new Box(body);
-      auto layout = new QHBoxLayout(this);
-      layout->setContentsMargins({});
-      layout->addWidget(box);
+      enclose(*this, *box);
       proxy_style(*this, *box);
     }
 };
@@ -69,9 +64,7 @@ class NavigationTab : public QWidget {
       auto tab = new Tab();
       tab->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
       layers->add(tab);
-      auto layout = new QHBoxLayout(this);
-      layout->setContentsMargins({});
-      layout->addWidget(layers);
+      enclose(*this, *layers);
       auto style = StyleSheet();
       style.get(Any() >> is_a<LabelContainer>()).
         set(horizontal_padding(scale_width(8)));
@@ -94,18 +87,8 @@ NavigationView::NavigationView(
       m_current(std::move(current)),
       m_current_connection(m_current->connect_update_signal(
         std::bind_front(&NavigationView::on_current, this))) {
-  auto layout = new QVBoxLayout(this);
-  layout->setContentsMargins({});
-  layout->setSpacing(0);
   auto navigation_menu = new QWidget();
   navigation_menu->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-  auto navigation_menu_layout = new QVBoxLayout(navigation_menu);
-  navigation_menu_layout->setContentsMargins({});
-  navigation_menu_layout->setSpacing(0);
-  navigation_menu_layout->addSpacing(scale_height(7));
-  auto navigation_list_layout = new QHBoxLayout();
-  navigation_list_layout->setContentsMargins({});
-  navigation_list_layout->setSpacing(0);
   m_navigation_list = std::make_shared<ArrayListModel<std::any>>();
   m_navigation_view = new ListView(m_navigation_list,
     [] (const auto& model, auto index) {
@@ -113,23 +96,23 @@ NavigationView::NavigationView(
         std::any_cast<const QString&>(model->get(index)));
     });
   m_navigation_view->setFixedHeight(scale_height(28));
+  auto navigation_list_layout = make_hbox_layout();
   navigation_list_layout->addWidget(m_navigation_view);
   navigation_list_layout->addStretch();
+  auto navigation_menu_layout = make_vbox_layout(navigation_menu);
+  navigation_menu_layout->addSpacing(scale_height(7));
   navigation_menu_layout->addLayout(navigation_list_layout);
   auto separator = new Separator();
   separator->setFixedHeight(scale_height(5));
   navigation_menu_layout->addWidget(separator);
+  auto layout = make_vbox_layout(this);
   layout->addWidget(navigation_menu);
-  auto content_block_layout = new QHBoxLayout();
-  content_block_layout->setContentsMargins({});
-  content_block_layout->setSpacing(0);
-  auto content_layout = new QVBoxLayout();
-  content_layout->setContentsMargins({});
-  content_layout->setSpacing(0);
   m_stacked_widget = new QStackedWidget();
   m_stacked_widget->setContentsMargins({});
+  auto content_layout = make_vbox_layout();
   content_layout->addWidget(m_stacked_widget);
   content_layout->addStretch();
+  auto content_block_layout = make_hbox_layout();
   content_block_layout->addLayout(content_layout);
   content_block_layout->addStretch();
   layout->addLayout(content_block_layout);

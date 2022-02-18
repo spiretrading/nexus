@@ -1,6 +1,6 @@
 #include "Spire/Ui/DestinationListItem.hpp"
-#include <QVBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace Nexus;
@@ -23,11 +23,9 @@ DestinationListItem::DestinationListItem(DestinationDatabase::Entry destination,
     QWidget* parent)
     : QWidget(parent),
       m_destination(std::move(destination)) {
-  auto layout = new QVBoxLayout(this);
-  layout->setContentsMargins({});
-  layout->setSpacing(0);
   auto value_label = make_label(QString::fromStdString(m_destination.m_id));
   value_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+  auto layout = make_vbox_layout(this);
   layout->addWidget(value_label);
   auto name_label = make_label(
     QString::fromStdString(m_destination.m_description));

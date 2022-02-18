@@ -1,6 +1,6 @@
 #include "Spire/Ui/DropDownList.hpp"
-#include <QHBoxLayout>
 #include <QKeyEvent>
+#include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
@@ -34,13 +34,11 @@ DropDownList::DropDownList(ListView& list_view, QWidget& parent)
     : QWidget(&parent),
       m_list_view(&list_view),
       m_panel_border_size(0, 0) {
-  auto layout = new QHBoxLayout(this);
-  layout->setContentsMargins({});
   m_scrollable_list_box = new ScrollableListBox(*m_list_view, this);
   update_style(*m_scrollable_list_box, [&] (auto& style) {
     style = SCROLLABLE_LIST_STYLE(style);
   });
-  layout->addWidget(m_scrollable_list_box);
+  enclose(*this, *m_scrollable_list_box);
   setFocusProxy(m_scrollable_list_box);
   m_panel = new OverlayPanel(*this, parent);
   m_panel->set_closed_on_focus_out(true);

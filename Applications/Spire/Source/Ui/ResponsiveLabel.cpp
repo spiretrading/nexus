@@ -1,7 +1,7 @@
 #include "Spire/Ui/ResponsiveLabel.hpp"
 #include <tuple>
-#include <QHBoxLayout>
 #include "Spire/Spire/LocalValueModel.hpp"
+#include "Spire/Ui/Layouts.hpp"
 
 using namespace boost;
 using namespace Spire;
@@ -15,9 +15,7 @@ ResponsiveLabel::ResponsiveLabel(
   proxy_style(*this, *m_text_box);
   m_style_connection =
     connect_style_signal(*m_text_box, [=] { on_text_box_style(); });
-  auto layout = new QHBoxLayout(this);
-  layout->setContentsMargins({});
-  layout->addWidget(m_text_box);
+  enclose(*this, *m_text_box);
   m_list_operation_connection = m_labels->connect_operation_signal(
     [=] (auto operation) { on_list_operation(operation); });
   on_text_box_style();

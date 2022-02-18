@@ -1,9 +1,9 @@
 #include "Spire/Ui/TabView.hpp"
-#include <QHBoxLayout>
 #include <QKeyEvent>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
+#include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/ResponsiveLabel.hpp"
@@ -35,16 +35,11 @@ namespace {
       adopt(*this, *divider, TabView::Divider());
       auto body = new QWidget();
       body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-      auto body_layout = new QHBoxLayout(body);
-      body_layout->setSpacing(0);
-      body_layout->setContentsMargins({});
+      auto body_layout = make_hbox_layout(body);
       body_layout->addWidget(label);
       body_layout->addWidget(divider, 0, Qt::AlignVCenter);
       auto box = new Box(body);
-      auto layout = new QHBoxLayout(this);
-      layout->setSpacing(0);
-      layout->setContentsMargins({});
-      layout->addWidget(box);
+      enclose(*this, *box);
       proxy_style(*this, *box);
       update_style(*this, [] (auto& style) {
         style.get(Any() > TabView::Divider()).
@@ -101,11 +96,7 @@ TabView::TabView(QWidget* parent)
     style.get(FocusIn() >> (is_a<ListItem>() && Current())).
       set(BorderTopColor(QColor(0x4B23A0)));
   });
-  auto layout = new QVBoxLayout(this);
-  layout->setSpacing(0);
-  layout->setContentsMargins({});
-  layout->setAlignment(Qt::AlignTop);
-  layout->addWidget(scrollable_list_box);
+  enclose(*this, *scrollable_list_box, Qt::AlignTop);
   m_tab_list->get_current()->connect_update_signal(
     std::bind_front(&TabView::on_current, this));
 }
@@ -159,7 +150,7 @@ void TabView::on_current(optional<int> current) {
     unmatch(*m_tab_list->get_list_item(*m_current - 1), PrecedesCurrent());
   }
   m_current = current;
-  auto layout = static_cast<QVBoxLayout*>(this->layout());
+  auto layout = static_cast<QBoxLayout*>(this->layout());
   if(layout->count() > 1) {
     auto item = layout->itemAt(1);
     layout->removeItem(item);

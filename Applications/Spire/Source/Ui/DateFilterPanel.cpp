@@ -1,7 +1,5 @@
 #include "Spire/Ui/DateFilterPanel.hpp"
 #include <QEvent>
-#include <QHBoxLayout>
-#include <QVBoxLayout>
 #include "Spire/Spire/AssociativeValueModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
@@ -11,6 +9,7 @@
 #include "Spire/Ui/DateBox.hpp"
 #include "Spire/Ui/FilterPanel.hpp"
 #include "Spire/Ui/IntegerBox.hpp"
+#include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
@@ -47,9 +46,7 @@ namespace {
   }
 
   auto make_date_row_layout(const QString& label, DateBox& date_box) {
-    auto layout = new QHBoxLayout();
-    layout->setContentsMargins({});
-    layout->setSpacing(0);
+    auto layout = make_hbox_layout();
     layout->addWidget(make_label(label));
     layout->addSpacing(scale_width(18));
     layout->addStretch();
@@ -60,26 +57,21 @@ namespace {
 
   auto make_range_setting_body(DateBox& start_date_box, DateBox& end_date_box) {
     auto body = new QWidget();
-    auto layout = new QHBoxLayout(body);
-    layout->setContentsMargins({});
-    layout->setSpacing(0);
+    auto layout = make_hbox_layout(body);
     layout->addSpacing(scale_width(24));
-    auto date_range_layout = new QVBoxLayout();
-    date_range_layout->setContentsMargins({});
+    auto date_range_layout = make_vbox_layout();
     date_range_layout->setSpacing(scale_height(10));
-    date_range_layout->addLayout(make_date_row_layout(QObject::tr("Start Date"),
-      start_date_box));
-    date_range_layout->addLayout(make_date_row_layout(QObject::tr("End Date"),
-      end_date_box));
+    date_range_layout->addLayout(
+      make_date_row_layout(QObject::tr("Start Date"), start_date_box));
+    date_range_layout->addLayout(
+      make_date_row_layout(QObject::tr("End Date"), end_date_box));
     layout->addLayout(date_range_layout);
     return body;
   }
 
   auto make_offset_body(QWidget& offset_value, QWidget& units) {
     auto body = new QWidget();
-    auto layout = new QHBoxLayout(body);
-    layout->setContentsMargins({});
-    layout->setSpacing(0);
+    auto layout = make_hbox_layout(body);
     layout->addSpacing(scale_width(24));
     offset_value.setFixedSize(scale_width(60), scale_height(26));
     layout->addWidget(&offset_value);
@@ -106,8 +98,7 @@ class OffsetUnitButtonGroup : public QWidget {
         QWidget* parent = nullptr)
         : QWidget(parent),
           m_model(std::move(model)) {
-      auto layout = new QHBoxLayout(this);
-      layout->setContentsMargins({});
+      auto layout = make_hbox_layout(this);
       layout->setSpacing(scale_width(4));
       for(auto unit : {DateFilterPanel::DateUnit::DAY,
           DateFilterPanel::DateUnit::WEEK, DateFilterPanel::DateUnit::MONTH,
@@ -328,14 +319,12 @@ DateFilterPanel::DateFilterPanel(std::shared_ptr<DateRangeModel> model,
           m_model->get())) {
   m_filter_panel = new FilterPanel(QObject::tr("Filter by Date"), this, parent);
   m_filter_panel->connect_reset_signal([=] { on_reset(); });
-  auto layout = new QVBoxLayout(this);
-  layout->setContentsMargins({});
-  layout->setSpacing(0);
   m_range_type_button_group->get_current()->connect_update_signal(
     std::bind_front(&DateFilterPanel::on_date_range_type_current, this));
   auto offset_button =
     m_range_type_button_group->get_button(DateRangeType::OFFSET);
   offset_button->setFixedHeight(scale_height(16));
+  auto layout = make_vbox_layout(this);
   layout->addWidget(offset_button, 0, Qt::AlignLeft);
   layout->addSpacing(scale_height(18));
   auto offset_value_box = new IntegerBox(m_model->m_offset_value);

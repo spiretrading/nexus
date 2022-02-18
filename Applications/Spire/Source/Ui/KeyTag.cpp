@@ -1,7 +1,7 @@
 #include "Spire/Ui/KeyTag.hpp"
-#include <QHBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
+#include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace Spire;
@@ -55,9 +55,8 @@ KeyTag::KeyTag(std::shared_ptr<KeyModel> current, QWidget* parent)
       m_current(std::move(current)),
       m_state(State::DEFAULT) {
   setFocusPolicy(Qt::NoFocus);
-  auto layout = new QHBoxLayout(this);
-  layout->setContentsMargins({});
   m_label = make_label("");
+  enclose(*this, *m_label);
   proxy_style(*this, *m_label);
   update_style(*m_label, [&] (auto& style) {
     style = TAG_STYLE(style);
@@ -70,7 +69,6 @@ KeyTag::KeyTag(std::shared_ptr<KeyModel> current, QWidget* parent)
     style.get(EscapeKeyState()).
       set(BackgroundColor(ESCAPE_BACKGROUND_COLOR));
   });
-  layout->addWidget(m_label);
   m_current_connection = m_current->connect_update_signal([=] (auto key) {
     on_current(key);
   });

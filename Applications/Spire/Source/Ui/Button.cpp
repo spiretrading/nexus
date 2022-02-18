@@ -1,9 +1,9 @@
 #include "Spire/Ui/Button.hpp"
-#include <QHBoxLayout>
 #include <QMouseEvent>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Icon.hpp"
+#include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/Tooltip.hpp"
 
@@ -15,10 +15,8 @@ Button::Button(QWidget* body, QWidget* parent)
     : QWidget(parent),
       m_body(body),
       m_is_down(false) {
-  auto layout = new QHBoxLayout(this);
-  layout->setContentsMargins({});
-  layout->addWidget(m_body);
   setFocusPolicy(Qt::StrongFocus);
+  enclose(*this, *m_body);
 }
 
 const QWidget& Button::get_body() const {
@@ -110,19 +108,15 @@ Button* Spire::make_icon_button(QImage icon, QString tooltip_text,
   auto tooltip = new Tooltip(tooltip_text, button);
   auto style = StyleSheet();
   style.get(Body()).
-    set(BackgroundColor(QColor(0xF5F5F5))).
-    set(border(scale_width(1), QColor(Qt::transparent)));
-  style.get((!Disabled() && Hover() || Press()) / Body()).
-    set(BackgroundColor(QColor(0xE0E0E0)));
-  style.get(Focus() / Body()).
-    set(border_color(QColor(0x4B, 0x23, 0xA0)));
-  style.get(Any() >> is_a<Icon>()).
     set(BackgroundColor(QColor(Qt::transparent))).
-    set(Fill(QColor(0x535353)));
-  style.get((!Disabled() && Hover() || Press()) / Body() >> is_a<Icon>()).
-    set(Fill(QColor(0x4B, 0x23, 0xA0)));
-  style.get(Disabled() / Body() >> is_a<Icon>()).
-    set(Fill(QColor(0xD0, 0xD0, 0xD0)));
+    set(border(scale_width(1), QColor(Qt::transparent)));
+  style.get((Hover() || Press()) / Body()).
+    set(BackgroundColor(QColor(0xE0E0E0)));
+  style.get(FocusVisible() / Body()).set(border_color(QColor(0x4B23A0)));
+  style.get(Any() >> is_a<Icon>()).set(Fill(QColor(0x535353)));
+  style.get(Hover() >> is_a<Icon>()).set(Fill(QColor(0x4B23A0)));
+  style.get(Press() >> is_a<Icon>()).set(Fill(QColor(0x7E71B8)));
+  style.get(Disabled() >> is_a<Icon>()).set(Fill(QColor(0xC8C8C8)));
   set_style(*button, std::move(style));
   return button;
 }
@@ -155,13 +149,16 @@ Button* Spire::make_label_button(const QString& label, QWidget* parent) {
     set(border(scale_width(1), QColor(Qt::transparent))).
     set(BackgroundColor(QColor(0xEBEBEB))).
     set(horizontal_padding(scale_width(8)));
-  style.get((!Disabled() && Hover() || Press()) / Body()).
+  style.get(Hover() / Body()).
     set(TextColor(QColor(0xFFFFFF))).
     set(BackgroundColor(QColor(0x4B23A0)));
-  style.get(Focus() / Body()).
+  style.get(Press() / Body()).
+    set(TextColor(QColor(0xFFFFFF))).
+    set(BackgroundColor(QColor(0x7E71B8)));
+  style.get(FocusVisible() / Body()).
     set(border_color(QColor(0x4B23A0)));
   style.get(Disabled() / Body()).
-    set(TextColor(QColor(0xC8C8C8)));
+    set(TextColor(QColor(0xB8B8B8)));
   set_style(*button, std::move(style));
   return button;
 }

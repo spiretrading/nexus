@@ -1,9 +1,9 @@
 #include "Spire/Ui/TableHeader.hpp"
-#include <QHBoxLayout>
 #include <QMouseEvent>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ListValueModel.hpp"
+#include "Spire/Ui/Layouts.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -15,9 +15,7 @@ TableHeader::TableHeader(
       m_items(items),
       m_resize_index(-1) {
   m_widths = std::make_shared<ArrayListModel<int>>();
-  auto layout = new QHBoxLayout(this);
-  layout->setContentsMargins({});
-  layout->setSpacing(0);
+  auto layout = make_hbox_layout(this);
   for(auto i = 0; i != m_items->get_size(); ++i) {
     auto item = new TableHeaderItem(make_list_value_model(m_items, i));
     auto is_last = i == m_items->get_size() - 1;
