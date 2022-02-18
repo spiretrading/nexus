@@ -11,6 +11,18 @@ namespace {
   AnyInputBox* input_box_builder(std::shared_ptr<KeySequenceValueModel> current,
       std::shared_ptr<AnyListModel> matches) {
     auto input_box = new AnyInputBox(*(new KeyInputBox(std::move(current))));
+    input_box->get_current()->connect_update_signal([=] (const auto& current) {
+      auto sequence = any_cast<QKeySequence>(current);
+      if(sequence.isEmpty()) {
+        return;
+      }
+      for(auto i = 0; i < matches->get_size(); ++i) {
+        if(sequence == std::any_cast<QKeySequence>(matches->get(i))) {
+          input_box->get_current()->set(QKeySequence());
+          break;
+        }
+      }
+    });
     input_box->connect_submit_signal([=] (const auto& submission) {
       if(!any_cast<QKeySequence>(submission).isEmpty()) {
         input_box->get_current()->set(QKeySequence());

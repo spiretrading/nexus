@@ -1780,10 +1780,7 @@ UiProfile Spire::make_key_filter_panel_profile() {
   auto profile = UiProfile(QString("KeyFilterPanel"), properties,
     [] (auto& profile) {
       auto button = make_label_button(QString::fromUtf8("Click me"));
-      auto model = std::make_shared<LocalKeySequenceValueModel>();
-      auto panel = make_key_filter_panel(model, *button);
-      model->connect_update_signal(
-        profile.make_event_slot<QKeySequence>("Current"));
+      auto panel = make_key_filter_panel(*button);
       auto submit_filter_slot =
         profile.make_event_slot<QString>(QString::fromUtf8("SubmitSignal"));
       panel->connect_submit_signal(
