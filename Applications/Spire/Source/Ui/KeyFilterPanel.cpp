@@ -7,16 +7,20 @@ using namespace boost::signals2;
 using namespace Spire;
 
 struct KeyInputBoxValueModel : ValueModel<QKeySequence> {
+  mutable UpdateSignal m_update_signal;
   std::shared_ptr<KeySequenceValueModel> m_source;
   std::shared_ptr<AnyListModel> m_matches;
   std::unordered_set<QString> m_matches_set;
   std::vector<QString> m_matches_list;
+  scoped_connection m_source_connection;
   scoped_connection m_matches_connection;
 
   KeyInputBoxValueModel(std::shared_ptr<KeySequenceValueModel> source,
       std::shared_ptr<AnyListModel> matches)
       : m_source(std::move(source)),
         m_matches(std::move(matches)),
+        m_source_connection(m_source->connect_update_signal(
+          std::bind_front(&KeyInputBoxValueModel::on_current, this))),
         m_matches_connection(m_matches->connect_operation_signal(
           std::bind_front(&KeyInputBoxValueModel::on_operation, this))) {
     for(auto i = 0; i < m_matches->get_size(); ++i) {
@@ -45,7 +49,11 @@ struct KeyInputBoxValueModel : ValueModel<QKeySequence> {
 
   connection connect_update_signal(
       const UpdateSignal::slot_type& slot) const override {
-    return m_source->connect_update_signal(slot);
+    return m_update_signal.connect(slot);
+  }
+
+  void on_current(const QKeySequence& current) {
+    m_update_signal(current);
   }
 
   void on_operation(const AnyListModel::Operation& operation) {
