@@ -80,9 +80,10 @@ AnyInputBox* key_input_box_builder(
   auto input_box = new AnyInputBox(*(new KeyInputBox(
     std::make_shared<KeyInputBoxValueModel>(std::move(current), matches))));
   input_box->connect_submit_signal([=] (const auto& submission) {
-    if(!any_cast<QKeySequence>(submission).isEmpty()) {
+    auto& sequence = any_cast<QKeySequence>(submission);
+    if(!sequence.isEmpty()) {
       input_box->get_current()->set(QKeySequence());
-      matches->push(any_cast<QKeySequence>(submission));
+      matches->push(sequence);
     }
   });
   return input_box;
