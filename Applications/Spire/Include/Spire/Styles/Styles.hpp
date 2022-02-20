@@ -42,6 +42,7 @@ namespace Spire::Styles {
   class StyleSheet;
   class StyleSheetMap;
   class Stylist;
+  class TopSelector;
 }
 
 #endif

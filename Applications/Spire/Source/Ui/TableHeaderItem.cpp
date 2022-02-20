@@ -99,16 +99,16 @@ TableHeaderItem::TableHeaderItem(
       m_model(std::move(model)),
       m_is_resizeable(true) {
   auto name_label = make_label(make_field_value_model(m_model, &Model::m_name));
-  adopt(*this, *name_label, Label());
+  match(*name_label, Label());
   auto sort_indicator =
     new SortIndicator(make_field_value_model(m_model, &Model::m_order));
   m_filter_button = make_filter_button();
-  adopt(*this, *m_filter_button, FilterButton());
+  match(*m_filter_button, FilterButton());
   m_sash = make_sash();
   m_sash->installEventFilter(this);
   auto hover_element = new Box(nullptr);
   hover_element->setFixedSize(scale(18, 2));
-  adopt(*this, *hover_element, HoverElement());
+  match(*hover_element, HoverElement());
   auto contents = new QWidget();
   contents->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   auto contents_layout = make_hbox_layout(contents);

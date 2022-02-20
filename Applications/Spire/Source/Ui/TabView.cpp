@@ -32,7 +32,7 @@ namespace {
       });
       auto divider = new Box(nullptr);
       divider->setFixedSize(scale(1, 14));
-      adopt(*this, *divider, TabView::Divider());
+      match(*divider, TabView::Divider());
       auto body = new QWidget();
       body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
       auto body_layout = make_hbox_layout(body);
