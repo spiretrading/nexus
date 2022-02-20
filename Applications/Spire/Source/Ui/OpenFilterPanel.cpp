@@ -20,16 +20,16 @@ using namespace Styles;
 
 namespace {
   auto DELETE_BUTTON_STYLE(StyleSheet style) {
-    style.get(Any() >> is_a<TextBox>()).set(PaddingRight(scale_width(8)));
-    style.get((Hover() || Press()) / Body() >> is_a<Icon>()).
+    style.get(Any() > is_a<TextBox>()).set(PaddingRight(scale_width(8)));
+    style.get((Hover() || Press()) / Body() > is_a<Icon>()).
       set(BackgroundColor(QColor(Qt::transparent)));
-    style.get(Disabled() / Body() >> is_a<Icon>()).
+    style.get(Disabled() / Body() > is_a<Icon>()).
       set(Visibility::NONE);
     return style;
   }
 
   auto LIST_VIEW_STYLE(StyleSheet style) {
-    style.get(Any() >> is_a<ListItem>()).
+    style.get(Any() > is_a<ListItem>()).
       set(BackgroundColor(QColor(0xFFFFFF))).
       set(border_size(0)).
       set(PaddingRight(scale_width(10)));

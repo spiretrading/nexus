@@ -313,13 +313,13 @@ CalendarDatePicker::CalendarDatePicker(
     set(Qt::Horizontal).
     set(EdgeNavigation(EdgeNavigation::CONTAIN)).
     set(Overflow(Overflow::WRAP));
-  calendar_style.get(Any() >> is_a<ListItem>()).
+  calendar_style.get(Any() > is_a<ListItem>()).
     set(border_size(0)).
     set(padding(0));
-  calendar_style.get(Any() >> (is_a<ListItem>() && Hover())).
+  calendar_style.get(Any() > (is_a<ListItem>() && Hover())).
     set(BackgroundColor(QColor(0xFFFFFF)));
   calendar_style.get(
-      Any() >> (is_a<ListItem>() && Selected()) >> is_a<CalendarDayLabel>()).
+      Any() > (is_a<ListItem>() && Selected()) > is_a<CalendarDayLabel>()).
     set(BackgroundColor(QColor(0x4B23A0))).
     set(border(0, QColor(Qt::transparent))).
     set(TextColor(QColor(0xFFFFFF)));

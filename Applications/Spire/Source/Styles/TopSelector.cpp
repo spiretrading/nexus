@@ -46,7 +46,7 @@ namespace {
         if(child->isWidgetType()) {
           auto& stylist = find_stylist(*static_cast<QWidget*>(child));
           m_connections.insert(std::pair(
-            &stylist, select(TopSelector(m_selector, m_selector), stylist,
+            &stylist, select(TopSelector(Any(), m_selector), stylist,
               std::bind_front(&TopObserver::on_child_update, this))));
         }
       }
@@ -60,7 +60,7 @@ namespace {
           auto& stylist =
             find_stylist(*static_cast<QWidget*>(child_event.child()));
           m_connections.insert(std::pair(&stylist,
-            select(TopSelector(m_selector, m_selector), stylist,
+            select(TopSelector(Any(), m_selector), stylist,
               std::bind_front(&TopObserver::on_child_update, this))));
         }
       } else if(event->type() == QEvent::ChildRemoved) {

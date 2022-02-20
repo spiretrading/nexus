@@ -10,15 +10,15 @@ using namespace Spire::Styles;
 namespace {
   auto DEFAULT_STYLE() {
     auto style = StyleSheet();
-    style.get(Any() >> is_a<Icon>()).
+    style.get(Any() > is_a<Icon>()).
       set(BackgroundColor(QColor(Qt::transparent))).
       set(Fill(QColor(0x333333)));
-    style.get(Any() >> is_a<TextBox>()).
+    style.get(Any() > is_a<TextBox>()).
       set(PaddingRight(scale_width(14)));
-    style.get(Disabled() >> is_a<Icon>()).
+    style.get(Disabled() > is_a<Icon>()).
       set(BackgroundColor(QColor(Qt::transparent))).
       set(Fill(QColor(0xC8C8C8)));
-    style.get(Disabled() >> is_a<TextBox>()).
+    style.get(Disabled() > is_a<TextBox>()).
       set(Fill(QColor(0xC8C8C8)));
     return style;
   }

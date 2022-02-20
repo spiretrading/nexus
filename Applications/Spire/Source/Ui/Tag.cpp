@@ -18,17 +18,17 @@ namespace {
       set(BackgroundColor(QColor(0xEBEBEB))).
       set(border_radius(scale_width(3))).
       set(border_size(0));
-    style.get(Any() >> is_a<TextBox>()).
+    style.get(Any() > is_a<TextBox>()).
       set(border_size(0)).
       set(horizontal_padding(scale_width(5))).
       set(vertical_padding(scale_height(2)));
-    style.get(ReadOnly() >> is_a<Button>()).
+    style.get(ReadOnly() > is_a<Button>()).
       set(Visibility::NONE);
     return style;
   }
 
   auto DELETE_BUTTON_STYLE(StyleSheet style) {
-    style.get((Hover() || Press()) / Body() >> is_a<Icon>()).
+    style.get((Hover() || Press()) / Body() > is_a<Icon>()).
       set(BackgroundColor(QColor(Qt::transparent)));
     return style;
   }

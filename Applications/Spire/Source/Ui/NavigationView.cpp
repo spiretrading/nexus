@@ -66,13 +66,13 @@ class NavigationTab : public QWidget {
       layers->add(tab);
       enclose(*this, *layers);
       auto style = StyleSheet();
-      style.get(Any() >> is_a<LabelContainer>()).
+      style.get(Any() > is_a<LabelContainer>()).
         set(horizontal_padding(scale_width(8)));
-      style.get(Any() >> is_a<Tab>()).
+      style.get(Any() > is_a<Tab>()).
         set(border(scale_width(1), QColor(Qt::transparent)));
-      style.get(FocusVisible() >> is_a<Tab>()).
+      style.get(FocusVisible() > is_a<Tab>()).
         set(border_color(QColor(0x4B23A0)));
-      style.get(FocusVisible() >> is_a<TextBox>()).
+      style.get(FocusVisible() > is_a<TextBox>()).
         set(TextColor(QColor(0x4B23A0)));
       set_style(*this, std::move(style));
     }
@@ -117,12 +117,12 @@ NavigationView::NavigationView(
   content_block_layout->addStretch();
   layout->addLayout(content_block_layout);
   auto style = StyleSheet();
-  style.get(Any() >> is_a<ListView>()).
+  style.get(Any() > is_a<ListView>()).
     set(EdgeNavigation::CONTAIN).
     set(Overflow::NONE).
     set(Qt::Horizontal).
     set(SelectionMode::SINGLE);
-  style.get(Any() >> is_a<Separator>()).
+  style.get(Any() > is_a<Separator>()).
     set(BorderTopSize(scale_height(1))).
     set(BorderTopColor(QColor(0xD0D0D0)));
   set_style(*this, std::move(style));
@@ -153,13 +153,13 @@ void NavigationView::insert_tab(int index, QWidget& page,
     set(border_color(QColor(Qt::transparent))).
     set(border_size(0)).
     set(padding(0));
-  style.get((Checked() || Hover()) >> is_a<TextBox>()).
+  style.get((Checked() || Hover()) > is_a<TextBox>()).
     set(TextColor(QColor(0x4B23A0)));
-  style.get(Disabled() >> is_a<TextBox>()).
+  style.get(Disabled() > is_a<TextBox>()).
     set(TextColor(QColor(0xC8C8C8)));
-  style.get(Checked() >> is_a<SelectLine>()).
+  style.get(Checked() > is_a<SelectLine>()).
     set(BackgroundColor(QColor(0x4B23A0)));
-  style.get((Checked() && Disabled()) >> is_a<SelectLine>()).
+  style.get((Checked() && Disabled()) > is_a<SelectLine>()).
     set(BackgroundColor(QColor(0xC8C8C8)));
   set_style(*m_navigation_view->get_list_item(index), std::move(style));
   m_stacked_widget->insertWidget(index, &page);

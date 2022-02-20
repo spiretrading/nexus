@@ -31,13 +31,13 @@ namespace {
       set(BackgroundColor(QColor(0xF5F5F5)));
     style.get((Hover() || Press()) / Body()).
       set(BackgroundColor(QColor(0xE0E0E0)));
-    style.get(Any() >> is_a<Icon>()).
+    style.get(Any() > is_a<Icon>()).
       set(BackgroundColor(QColor(Qt::transparent)));
-    style.get(Active() >> is_a<Icon>()).
+    style.get(Active() > is_a<Icon>()).
       set(Fill(QColor(Qt::black)));
-    style.get(!Active() >> is_a<Icon>()).
+    style.get(!Active() > is_a<Icon>()).
       set(Fill(QColor(0xA0A0A0)));
-    style.get(Hover() >> is_a<Icon>()).
+    style.get(Hover() > is_a<Icon>()).
       set(Fill(QColor(Qt::black)));
     return style;
   }
@@ -46,9 +46,9 @@ namespace {
     auto style = StyleSheet();
     style.get(Any() / Body()).
       set(BackgroundColor(QColor(0xF5F5F5)));
-    style.get(Any() >> is_a<Icon>()).
+    style.get(Any() > is_a<Icon>()).
       set(Fill(QColor(Qt::black)));
-    style.get(!Active() >> is_a<Icon>()).
+    style.get(!Active() > is_a<Icon>()).
       set(Fill(QColor(0xA0A0A0)));
     return style;
   }
@@ -97,7 +97,7 @@ TitleBar::TitleBar(QImage icon, QWidget* parent)
   auto close_button_style = BUTTON_STYLE();
   close_button_style.get((Hover() || Press()) / Body()).
     set(BackgroundColor(QColor(0xE63F44)));
-  close_button_style.get((Hover() || Press()) >> is_a<Icon>()).
+  close_button_style.get((Hover() || Press()) > is_a<Icon>()).
     set(Fill(QColor(0xFFFFFF)));
   set_style(*m_close_button, std::move(close_button_style));
   m_container_layout->addWidget(m_close_button);

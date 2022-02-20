@@ -27,12 +27,12 @@ namespace {
 
   auto CLOSE_BUTTON_STYLE() {
     auto style = StyleSheet();
-    style.get(Any() >> is_a<Icon>()).
+    style.get(Any() > is_a<Icon>()).
       set(BackgroundColor(QColor(Qt::transparent))).
       set(Fill(QColor(0xE2E0FF)));
-    style.get(!Active() >> is_a<Icon>()).
+    style.get(!Active() > is_a<Icon>()).
       set(Fill(QColor(0xBAB3D9)));
-    style.get((Hover() || Press()) >> is_a<Icon>()).
+    style.get((Hover() || Press()) > is_a<Icon>()).
       set(BackgroundColor(QColor(0x401D8B))).
       set(Fill(QColor(0xE63F45)));
     return style;
