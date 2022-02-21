@@ -1,4 +1,5 @@
 #include "Spire/Styles/TopSelector.hpp"
+#include <Beam/SignalHandling/ConnectionGroup.hpp>
 #include <QChildEvent>
 #include <QWidget>
 #include "Spire/Styles/Any.hpp"
@@ -6,6 +7,7 @@
 #include "Spire/Styles/FlipSelector.hpp"
 #include "Spire/Styles/Stylist.hpp"
 
+using namespace Beam::SignalHandling;
 using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
@@ -28,26 +30,30 @@ namespace {
   }
 
   struct TopObserver : public QObject {
+    struct Match {
+      SelectConnection m_connection;
+      std::unordered_set<const Stylist*> m_selection;
+    };
     Selector m_selector;
     const Stylist* m_stylist;
     SelectionUpdateSignal m_on_update;
+    SelectConnection m_select_connection;
     std::unordered_set<const Stylist*> m_base_selection;
     std::unordered_set<const Stylist*> m_children_selection;
-    std::unordered_map<const Stylist*, SelectConnection> m_connections;
+    std::unordered_map<const Stylist*, int> m_selection_count;
+    std::unordered_map<const Stylist*, Match> m_matches;
+    ConnectionGroup m_delete_connections;
 
     TopObserver(const Selector& selector, const Stylist& stylist,
         const SelectionUpdateSignal& on_update)
         : m_selector(selector),
           m_stylist(&stylist),
           m_on_update(on_update) {
-      m_connections.insert(std::pair(&stylist, select(m_selector, *m_stylist,
-        std::bind_front(&TopObserver::on_update, this))));
+      m_select_connection = select(
+        m_selector, *m_stylist, std::bind_front(&TopObserver::on_update, this));
       for(auto child : stylist.get_widget().children()) {
         if(child->isWidgetType()) {
-          auto& stylist = find_stylist(*static_cast<QWidget*>(child));
-          m_connections.insert(std::pair(
-            &stylist, select(TopSelector(Any(), m_selector), stylist,
-              std::bind_front(&TopObserver::on_child_update, this))));
+          add(find_stylist(*static_cast<QWidget*>(child)));
         }
       }
       stylist.get_widget().installEventFilter(this);
@@ -57,18 +63,12 @@ namespace {
       if(event->type() == QEvent::ChildAdded) {
         auto& child_event = static_cast<QChildEvent&>(*event);
         if(child_event.child()->isWidgetType()) {
-          auto& stylist =
-            find_stylist(*static_cast<QWidget*>(child_event.child()));
-          m_connections.insert(std::pair(&stylist,
-            select(TopSelector(Any(), m_selector), stylist,
-              std::bind_front(&TopObserver::on_child_update, this))));
+          add(find_stylist(*static_cast<QWidget*>(child_event.child())));
         }
       } else if(event->type() == QEvent::ChildRemoved) {
         auto& child_event = static_cast<QChildEvent&>(*event);
         if(child_event.child()->isWidgetType()) {
-          auto& stylist =
-            find_stylist(*static_cast<QWidget*>(child_event.child()));
-          m_connections.erase(&stylist);
+          remove(find_stylist(*static_cast<QWidget*>(child_event.child())));
         }
       }
       return QObject::eventFilter(watched, event);
@@ -83,8 +83,8 @@ namespace {
         m_on_update(std::move(additions), std::move(children_removals));
         return;
       }
-      m_base_selection.insert(additions.begin(), additions.end());
       m_base_selection.erase(removals.begin(), removals.end());
+      m_base_selection.insert(additions.begin(), additions.end());
       if(m_base_selection.empty()) {
         auto children_selection = m_children_selection;
         removals.erase(children_selection.begin(), children_selection.end());
@@ -94,13 +94,54 @@ namespace {
       }
     }
 
-    void on_child_update(std::unordered_set<const Stylist*>&& additions,
+    void on_child_update(Match& match,
+        std::unordered_set<const Stylist*>&& additions,
         std::unordered_set<const Stylist*>&& removals) {
+      match.m_selection.erase(removals.begin(), removals.end());
+      match.m_selection.insert(additions.begin(), additions.end());
+      std::erase_if(additions, [&] (auto addition) {
+        auto& count = m_selection_count[addition];
+        ++count;
+        return count != 1;
+      });
       m_children_selection.insert(additions.begin(), additions.end());
-      m_children_selection.erase(removals.begin(), removals.end());
       if(m_base_selection.empty()) {
+        std::erase_if(removals, [&] (auto removal) {
+          auto& count = m_selection_count[removal];
+          --count;
+          if(count == 0) {
+            m_children_selection.erase(removal);
+            return true;
+          }
+          return false;
+        });
         m_on_update(std::move(additions), std::move(removals));
+      } else {
+        for(auto removal : removals) {
+          auto& count = m_selection_count[removal];
+          --count;
+          if(count == 0) {
+            m_children_selection.erase(removal);
+          }
+        };
       }
+    }
+
+    void add(const Stylist& stylist) {
+      auto connection = stylist.connect_delete_signal(
+        std::bind_front(&TopObserver::remove, this, std::ref(stylist)));
+      m_delete_connections.AddConnection(&stylist, connection);
+      auto& match = m_matches[&stylist];
+      match.m_connection = select(TopSelector(Any(), m_selector), stylist,
+        std::bind_front(&TopObserver::on_child_update, this, std::ref(match)));
+    }
+
+    void remove(const Stylist& stylist) {
+      stylist.get_widget().removeEventFilter(this);
+      auto& match = m_matches[&stylist];
+      auto removals = match.m_selection;
+      on_child_update(match, {}, std::move(removals));
+      m_matches.erase(&stylist);
     }
   };
 }
