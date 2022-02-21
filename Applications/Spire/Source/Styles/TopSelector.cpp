@@ -25,8 +25,10 @@ namespace {
     auto intersection = std::unordered_set<const Stylist*>();
     std::copy_if(begin, end, std::inserter(intersection, intersection.begin()),
       [&] (const auto& element) { return set->count(element) > 0; });
-    a.erase(intersection.begin(), intersection.end());
-    b.erase(intersection.begin(), intersection.end());
+    for(auto i : intersection) {
+      a.erase(i);
+      b.erase(i);
+    }
   }
 
   struct TopObserver : public QObject {
@@ -83,11 +85,15 @@ namespace {
         m_on_update(std::move(additions), std::move(children_removals));
         return;
       }
-      m_base_selection.erase(removals.begin(), removals.end());
+      for(auto removal : removals) {
+        m_base_selection.erase(removal);
+      }
       m_base_selection.insert(additions.begin(), additions.end());
       if(m_base_selection.empty()) {
         auto children_selection = m_children_selection;
-        removals.erase(children_selection.begin(), children_selection.end());
+        for(auto selection : children_selection) {
+          removals.erase(selection);
+        }
         m_on_update(std::move(children_selection), std::move(removals));
       } else {
         m_on_update(std::move(additions), std::move(removals));
@@ -97,7 +103,9 @@ namespace {
     void on_child_update(Match& match,
         std::unordered_set<const Stylist*>&& additions,
         std::unordered_set<const Stylist*>&& removals) {
-      match.m_selection.erase(removals.begin(), removals.end());
+      for(auto removal : removals) {
+        match.m_selection.erase(removal);
+      }
       match.m_selection.insert(additions.begin(), additions.end());
       std::erase_if(additions, [&] (auto addition) {
         auto& count = m_selection_count[addition];
@@ -111,9 +119,9 @@ namespace {
           --count;
           if(count == 0) {
             m_children_selection.erase(removal);
-            return true;
+            return false;
           }
-          return false;
+          return true;
         });
         m_on_update(std::move(additions), std::move(removals));
       } else {
