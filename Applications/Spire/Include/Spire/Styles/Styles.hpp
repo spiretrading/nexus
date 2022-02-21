@@ -9,8 +9,6 @@ namespace Spire::Styles {
   class Block;
   class ChildSelector;
   class CombinatorSelector;
-  template<typename T, typename G> class ComponentId;
-  class ComponentSelector;
   template<typename... T> class CompositeProperty;
   template<typename T> class ConstantExpression;
   class DescendantSelector;
@@ -26,7 +24,6 @@ namespace Spire::Styles {
   class NotSelector;
   class OrSelector;
   class ParentSelector;
-  class PathSelector;
   class Property;
   class PropertyMatchSelector;
   class PseudoElement;

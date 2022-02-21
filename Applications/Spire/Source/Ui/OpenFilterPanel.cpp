@@ -21,10 +21,9 @@ using namespace Styles;
 namespace {
   auto DELETE_BUTTON_STYLE(StyleSheet style) {
     style.get(Any() > is_a<TextBox>()).set(PaddingRight(scale_width(8)));
-    style.get((Hover() || Press()) / Body() > is_a<Icon>()).
+    style.get((Hover() || Press()) > Body() > is_a<Icon>()).
       set(BackgroundColor(QColor(Qt::transparent)));
-    style.get(Disabled() / Body() > is_a<Icon>()).
-      set(Visibility::NONE);
+    style.get(Disabled() > Body() > is_a<Icon>()).set(Visibility::NONE);
     return style;
   }
 

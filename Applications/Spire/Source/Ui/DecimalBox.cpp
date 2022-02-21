@@ -7,6 +7,7 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalScalarValueModel.hpp"
 #include "Spire/Spire/Utility.hpp"
+#include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/Layouts.hpp"
@@ -43,13 +44,13 @@ namespace {
   auto create_button(const QString& icon, QWidget* parent) {
     auto button = make_icon_button(imageFromSvg(icon, BUTTON_SIZE()), parent);
     update_style(*button, [&] (auto& style) {
-      style.get(Body()).
+      style.get(Any() > Body()).
         set(BackgroundColor(QColor(0xFFFFFF))).
         set(Fill(QColor(0x333333)));
-      style.get(Hover() / Body()).
+      style.get(Hover() > Body()).
         set(BackgroundColor(QColor(0xEBEBEB))).
         set(Fill(QColor(0x4B23A0)));
-      style.get(Disabled() / Body()).
+      style.get(Disabled() > Body()).
         set(BackgroundColor(QColor(Qt::transparent))).
         set(Fill(QColor(0xC8C8C8)));
       style.get(+Any() < ReadOnly()).set(Visibility::NONE);

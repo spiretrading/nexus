@@ -71,9 +71,9 @@ namespace {
     auto button = make_icon_button(icon);
     button->setFixedSize(scale(16, 16));
     update_style(*button, [] (auto& style) {
-      style.get(Body()).set(BackgroundColor(Qt::transparent));
-      style.get(Body() / Body()).set(Fill(QColor(0xC8C8C8)));
-      style.get(Press() || (Body() && Hover())).
+      style.get(Any() > Body()).set(BackgroundColor(Qt::transparent));
+      style.get(Any() > Body() > Body()).set(Fill(QColor(0xC8C8C8)));
+      style.get(Press() || Any() > (Body() && Hover())).
         set(BackgroundColor(QColor(0xF2F2F2)));
     });
     return button;
@@ -137,7 +137,7 @@ TableHeaderItem::TableHeaderItem(
   style.get((Hover() && Sortable()) > HoverElement()).
     set(BackgroundColor(0x4B23A0)).
     set(Visibility::VISIBLE);
-  style.get(Filtered() > FilterButton() / Body() / Body()).
+  style.get(Filtered() > FilterButton() > Body() > Body()).
     set(Fill(QColor(0x4B23A0)));
   set_style(*this, std::move(style));
   m_connection = m_model->connect_update_signal(

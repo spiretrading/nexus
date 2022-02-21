@@ -1,10 +1,14 @@
 #ifndef SPIRE_BOX_HPP
 #define SPIRE_BOX_HPP
+#include "Spire/Styles/StateSelector.hpp"
 #include "Spire/Ui/BoxGeometry.hpp"
 #include "Spire/Ui/BoxPainter.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+namespace Styles {
+  using Body = StateSelector<void, struct BodyTag>;
+}
 
   /** Implements a containter displaying a component within a styled box. */
   class Box : public QWidget {
@@ -76,11 +80,6 @@ namespace Spire {
    * @param parent The parent widget.
    */
   Box* make_input_box(QWidget* body, QWidget* parent = nullptr);
-}
-
-namespace Spire::Styles {
-  template<>
-  struct ComponentFinder<Box, Body> : BaseComponentFinder<Box, Body> {};
 }
 
 #endif

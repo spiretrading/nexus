@@ -1,6 +1,6 @@
 #ifndef SPIRE_BUTTON_HPP
 #define SPIRE_BUTTON_HPP
-#include "Spire/Styles/ComponentSelector.hpp"
+#include "Spire/Styles/StateSelector.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -73,11 +73,6 @@ namespace Styles {
    * @param parent The parent widget.
    */
   Button* make_label_button(const QString& label, QWidget* parent = nullptr);
-}
-
-namespace Spire::Styles {
-  template<>
-  struct ComponentFinder<Button, Body> : BaseComponentFinder<Button, Body> {};
 }
 
 #endif

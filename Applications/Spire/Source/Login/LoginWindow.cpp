@@ -50,21 +50,20 @@ namespace {
     auto font = QFont("Roboto");
     font.setWeight(QFont::Bold);
     font.setPixelSize(scale_width(14));
-    style.get(Body()).
+    style.get(Any() > Body()).
       set(TextAlign(Qt::Alignment(Qt::AlignCenter))).
       set(text_style(font, QColor(0, 0, 0))).
-      set(BackgroundColor(QColor(0x68, 0x4B, 0xC7))).
-      set(border(scale_width(1), QColor(0x68, 0x4B, 0xC7))).
-      set(TextColor(QColor(0xE2, 0xE0, 0xFF)));
-    style.get(Hover() / Body()).
-      set(BackgroundColor(QColor(0x8D, 0x78, 0xEC))).
-      set(border_color(QColor(0x8D, 0x78, 0xEC)));
-    style.get(Focus() / Body()).
-      set(border_color(QColor(0x8D, 0x78, 0xEC)));
-    style.get(Disabled() / Body()).
-      set(BackgroundColor(QColor(0x4B, 0x23, 0xA0))).
-      set(TextColor(QColor(0x8D, 0x78, 0xEC))).
-      set(border_color(QColor(0x68, 0x4B, 0xC7)));
+      set(BackgroundColor(QColor(0x684BC7))).
+      set(border(scale_width(1), QColor(0x684BC7))).
+      set(TextColor(QColor(0xE2E0FF)));
+    style.get(Hover() > Body()).
+      set(BackgroundColor(QColor(0x8D78EC))).
+      set(border_color(QColor(0x8D78EC)));
+    style.get(Focus() > Body()).set(border_color(QColor(0x8D78EC)));
+    style.get(Disabled() > Body()).
+      set(BackgroundColor(QColor(0x4B23A0))).
+      set(TextColor(QColor(0x8D78EC))).
+      set(border_color(QColor(0x684BC7)));
     return style;
   }
 

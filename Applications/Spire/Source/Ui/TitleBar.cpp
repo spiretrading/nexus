@@ -27,29 +27,22 @@ namespace {
 
   auto BUTTON_STYLE() {
     auto style = StyleSheet();
-    style.get(Any() / Body()).
-      set(BackgroundColor(QColor(0xF5F5F5)));
-    style.get((Hover() || Press()) / Body()).
+    style.get(Any() > Body()).set(BackgroundColor(QColor(0xF5F5F5)));
+    style.get((Hover() || Press()) > Body()).
       set(BackgroundColor(QColor(0xE0E0E0)));
     style.get(Any() > is_a<Icon>()).
       set(BackgroundColor(QColor(Qt::transparent)));
-    style.get(Active() > is_a<Icon>()).
-      set(Fill(QColor(Qt::black)));
-    style.get(!Active() > is_a<Icon>()).
-      set(Fill(QColor(0xA0A0A0)));
-    style.get(Hover() > is_a<Icon>()).
-      set(Fill(QColor(Qt::black)));
+    style.get(Active() > is_a<Icon>()).set(Fill(QColor(Qt::black)));
+    style.get(!Active() > is_a<Icon>()).set(Fill(QColor(0xA0A0A0)));
+    style.get(Hover() > is_a<Icon>()).set(Fill(QColor(Qt::black)));
     return style;
   }
 
   auto WINDOW_BUTTON_STYLE() {
     auto style = StyleSheet();
-    style.get(Any() / Body()).
-      set(BackgroundColor(QColor(0xF5F5F5)));
-    style.get(Any() > is_a<Icon>()).
-      set(Fill(QColor(Qt::black)));
-    style.get(!Active() > is_a<Icon>()).
-      set(Fill(QColor(0xA0A0A0)));
+    style.get(Any() > Body()).set(BackgroundColor(QColor(0xF5F5F5)));
+    style.get(Any() > is_a<Icon>()).set(Fill(QColor(Qt::black)));
+    style.get(!Active() > is_a<Icon>()).set(Fill(QColor(0xA0A0A0)));
     return style;
   }
 
@@ -95,7 +88,7 @@ TitleBar::TitleBar(QImage icon, QWidget* parent)
   m_close_button->setFixedSize(BUTTON_SIZE());
   m_close_button->connect_clicked_signal([=] { on_close_button_press(); });
   auto close_button_style = BUTTON_STYLE();
-  close_button_style.get((Hover() || Press()) / Body()).
+  close_button_style.get((Hover() || Press()) > Body()).
     set(BackgroundColor(QColor(0xE63F44)));
   close_button_style.get((Hover() || Press()) > is_a<Icon>()).
     set(Fill(QColor(0xFFFFFF)));

@@ -1576,9 +1576,9 @@ UiProfile Spire::make_focus_observer_profile() {
       } else if(value == 1) {
         auto label_button = make_label_button("Label Button");
         update_style(*label_button, [&] (auto& style) {
-          style.get(Focus() / Body()).set(
+          style.get(Focus() > Body()).set(
             border_color(QColor(Qt::transparent)));
-          style.get(FocusVisible() / Body()).set(
+          style.get(FocusVisible() > Body()).set(
             border_color(QColor(0x4B23A0)));
         });
         return label_button;
@@ -1851,7 +1851,7 @@ UiProfile Spire::make_label_button_profile() {
       get<QColor>("pressed-color", profile.get_properties());
     pressed_color.connect_changed_signal([=] (const auto& color) {
       update_style(*button, [&] (auto& style) {
-        style.get(Press() / Body()).set(BackgroundColor(color));
+        style.get(Press() > Body()).set(BackgroundColor(color));
       });
     });
     button->connect_clicked_signal(profile.make_event_slot("ClickedSignal"));

@@ -159,6 +159,7 @@ ScrollBox::ScrollBox(QWidget* body, QWidget* parent)
       m_padding_styles([=] { commit_padding_styles(); }) {
   setFocusPolicy(Qt::StrongFocus);
   setObjectName(QString("0x%1").arg(reinterpret_cast<std::intptr_t>(this)));
+  match(*m_body, Body());
   m_viewport = new Viewport(*m_body);
   m_body->installEventFilter(this);
   auto layers = new LayeredWidget();
@@ -528,11 +529,4 @@ void ScrollBox::update_ranges() {
     0, std::max(range.width(), 0));
   m_scrollable_layer->get_horizontal_scroll_bar().set_page_size(
     m_viewport->width());
-}
-
-SelectConnection BaseComponentFinder<ScrollBox, Body>::operator ()(
-    const ScrollBox& box, const Body& body,
-    const SelectionUpdateSignal& on_update) const {
-  on_update({&find_stylist(box.get_body())}, {});
-  return {};
 }
