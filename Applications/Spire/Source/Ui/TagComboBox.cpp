@@ -79,6 +79,7 @@ void TagComboBox::on_submit(const std::any& submission) {
     return false;
   }();
   if(!is_found) {
+    m_tag_box->get_current()->set("");
     list->push(submission);
   }
 }
