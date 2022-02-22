@@ -83,20 +83,22 @@ KeyInputBox::KeyInputBox(
     std::shared_ptr<KeySequenceValueModel> current, QWidget* parent)
     : QWidget(parent),
       m_current(std::move(current)),
-      m_status(Status::UNINITIALIZED) {
+      m_status(Status::UNINITIALIZED),
+      m_is_modified(false) {
   setFocusPolicy(Qt::StrongFocus);
-  auto layers = new LayeredWidget();
-  layers->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
   m_body = new QWidget();
   m_body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  m_body->setLayout(make_hbox_layout());
+  auto layers = new LayeredWidget();
+  layers->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
   layers->add(m_body);
   layers->add(new Caret(this));
-  auto input_box = make_input_box(layers);
-  update_style(*input_box, [&] (auto& style) {
+  m_input_box = make_input_box(layers);
+  proxy_style(*this, *m_input_box);
+  enclose(*this, *m_input_box);
+  update_style(*this, [] (auto& style) {
     style.get(Any()).set(vertical_padding(scale_height(3)));
   });
-  enclose(*this, *input_box);
-  m_body->setLayout(make_hbox_layout());
   set_status(Status::NONE);
   m_current_connection = m_current->connect_update_signal(
     [=] (const auto& current) { on_current(current); });
@@ -125,10 +127,12 @@ QSize KeyInputBox::sizeHint() const {
 }
 
 void KeyInputBox::focusInEvent(QFocusEvent* event) {
+  match(*m_input_box, FocusIn());
   transition_status();
 }
 
 void KeyInputBox::focusOutEvent(QFocusEvent* event) {
+  unmatch(*m_input_box, FocusIn());
   set_status(Status::NONE);
   transition_submission();
 }
@@ -179,9 +183,10 @@ void KeyInputBox::transition_status() {
 }
 
 void KeyInputBox::transition_submission() {
-  if(m_status == Status::PROMPT) {
+  if(m_status == Status::PROMPT || !m_is_modified) {
     return;
   }
+  m_is_modified = false;
   m_submission = m_current->get();
   m_submit_signal(m_submission);
 }
@@ -209,6 +214,7 @@ void KeyInputBox::set_status(Status status) {
 }
 
 void KeyInputBox::on_current(const QKeySequence& current) {
+  m_is_modified = true;
   transition_status();
   layout_key_sequence();
   if(current.count() == 0) {
