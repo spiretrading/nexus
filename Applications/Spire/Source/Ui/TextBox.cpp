@@ -1,6 +1,5 @@
 #include "Spire/Ui/TextBox.hpp"
 #include <QCoreApplication>
-#include <QHBoxLayout>
 #include <QKeyEvent>
 #include <QPainter>
 #include "Spire/Spire/Dimensions.hpp"
@@ -10,6 +9,7 @@
 #include "Spire/Styles/RevertExpression.hpp"
 #include "Spire/Styles/TimeoutExpression.hpp"
 #include "Spire/Ui/Box.hpp"
+#include "Spire/Ui/Layouts.hpp"
 
 using namespace boost;
 using namespace boost::posix_time;
@@ -61,8 +61,7 @@ namespace {
       set(border_color(
         chain(timeout(QColor(0xB71C1C), milliseconds(550)), revert)));
     style.get(Placeholder()).set(TextColor(QColor(0xA0A0A0)));
-    style.get(Disabled() / Placeholder()).
-      set(TextColor(QColor(0xC8C8C8)));
+    style.get(Disabled() > Placeholder()).set(TextColor(QColor(0xC8C8C8)));
     return style;
   }
 }
@@ -141,9 +140,7 @@ class TextBox::LineEdit : public QLineEdit {
       m_text_box->setCursor(cursor());
       m_text_box->setFocusPolicy(focusPolicy());
       m_text_box->setFocusProxy(this);
-      auto layout = new QHBoxLayout(m_text_box);
-      layout->setContentsMargins(0, 0, 0, 0);
-      layout->addWidget(this);
+      enclose(*m_text_box, *this);
       m_placeholder_style_connection = connect_style_signal(
         *m_text_box, Placeholder(), [=] { on_placeholder_style(); });
       on_placeholder_style();
@@ -165,9 +162,7 @@ class TextBox::LineEdit : public QLineEdit {
 
     void set_style(
         const BoxGeometry& geometry, const TextStyleProperties& text_style) {
-      m_text_box->layout()->setContentsMargins(
-        geometry.get_padding_left(), geometry.get_padding_top(),
-        geometry.get_padding_right(), geometry.get_padding_bottom());
+      m_text_box->layout()->setContentsMargins(get_content_margins(geometry));
       auto stylesheet = QString(
         R"(#0x%1 {
           background-color: transparent;
@@ -246,6 +241,10 @@ class TextBox::LineEdit : public QLineEdit {
     void resizeEvent(QResizeEvent* event) override {
       elide_placeholder_text();
       QLineEdit::resizeEvent(event);
+    }
+
+    QSize minimumSizeHint() const override {
+      return {0, 0};
     }
 
   private:

@@ -10,6 +10,7 @@
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/Icon.hpp"
+#include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/Window.hpp"
 
@@ -26,29 +27,22 @@ namespace {
 
   auto BUTTON_STYLE() {
     auto style = StyleSheet();
-    style.get(Any() / Body()).
-      set(BackgroundColor(QColor(0xF5F5F5)));
-    style.get((Hover() || Press()) / Body()).
+    style.get(Any() > Body()).set(BackgroundColor(QColor(0xF5F5F5)));
+    style.get((Hover() || Press()) > Body()).
       set(BackgroundColor(QColor(0xE0E0E0)));
-    style.get(Any() >> is_a<Icon>()).
+    style.get(Any() > is_a<Icon>()).
       set(BackgroundColor(QColor(Qt::transparent)));
-    style.get(Active() >> is_a<Icon>()).
-      set(Fill(QColor(Qt::black)));
-    style.get(!Active() >> is_a<Icon>()).
-      set(Fill(QColor(0xA0A0A0)));
-    style.get(Hover() >> is_a<Icon>()).
-      set(Fill(QColor(Qt::black)));
+    style.get(Active() > is_a<Icon>()).set(Fill(QColor(Qt::black)));
+    style.get(!Active() > is_a<Icon>()).set(Fill(QColor(0xA0A0A0)));
+    style.get(Hover() > is_a<Icon>()).set(Fill(QColor(Qt::black)));
     return style;
   }
 
   auto WINDOW_BUTTON_STYLE() {
     auto style = StyleSheet();
-    style.get(Any() / Body()).
-      set(BackgroundColor(QColor(0xF5F5F5)));
-    style.get(Any() >> is_a<Icon>()).
-      set(Fill(QColor(Qt::black)));
-    style.get(!Active() >> is_a<Icon>()).
-      set(Fill(QColor(0xA0A0A0)));
+    style.get(Any() > Body()).set(BackgroundColor(QColor(0xF5F5F5)));
+    style.get(Any() > is_a<Icon>()).set(Fill(QColor(Qt::black)));
+    style.get(!Active() > is_a<Icon>()).set(Fill(QColor(0xA0A0A0)));
     return style;
   }
 
@@ -66,9 +60,7 @@ TitleBar::TitleBar(QImage icon, QWidget* parent)
       m_window_button(nullptr) {
   setFixedHeight(scale_height(26));
   auto container = new QWidget(this);
-  m_container_layout = new QHBoxLayout(container);
-  m_container_layout->setContentsMargins({});
-  m_container_layout->setSpacing(0);
+  m_container_layout = make_hbox_layout(container);
   m_title_label = make_label("", this);
   update_style(*m_title_label, [&] (auto& style) {
     style.get(ReadOnly() && Disabled()).set(BackgroundColor(QColor(0xF5F5F5)));
@@ -96,15 +88,13 @@ TitleBar::TitleBar(QImage icon, QWidget* parent)
   m_close_button->setFixedSize(BUTTON_SIZE());
   m_close_button->connect_clicked_signal([=] { on_close_button_press(); });
   auto close_button_style = BUTTON_STYLE();
-  close_button_style.get((Hover() || Press()) / Body()).
+  close_button_style.get((Hover() || Press()) > Body()).
     set(BackgroundColor(QColor(0xE63F44)));
-  close_button_style.get((Hover() || Press()) >> is_a<Icon>()).
+  close_button_style.get((Hover() || Press()) > is_a<Icon>()).
     set(Fill(QColor(0xFFFFFF)));
   set_style(*m_close_button, std::move(close_button_style));
   m_container_layout->addWidget(m_close_button);
-  auto layout = new QHBoxLayout(this);
-  layout->setContentsMargins({});
-  layout->addWidget(new Box(container));
+  enclose(*this, *(new Box(container)));
   set_icon(icon);
   connect_window_signals();
 }

@@ -1,11 +1,11 @@
 #include "Spire/Ui/ContextMenu.hpp"
 #include <QCoreApplication>
-#include <QHBoxLayout>
 #include <QKeyEvent>
 #include <QScreen>
 #include <QTimer>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
@@ -55,9 +55,7 @@ ContextMenu::ContextMenu(QWidget& parent)
     std::bind_front(&ContextMenu::on_submit, this));
   m_list_view->installEventFilter(this);
   setFocusProxy(m_list_view);
-  auto layout = new QHBoxLayout(this);
-  layout->setContentsMargins({});
-  layout->addWidget(m_list_view);
+  enclose(*this, *m_list_view);
   m_window = new OverlayPanel(*this, parent);
   m_window->setWindowFlags(Qt::Popup | (m_window->windowFlags() & ~Qt::Tool));
   m_window->set_closed_on_focus_out(true);

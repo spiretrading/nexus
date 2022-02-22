@@ -1,9 +1,9 @@
 #include "Spire/Ui/TableView.hpp"
-#include <QVBoxLayout>
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/EmptyTableFilter.hpp"
 #include "Spire/Ui/FilteredTableModel.hpp"
+#include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/SortedTableModel.hpp"
@@ -42,9 +42,6 @@ TableView::TableView(
       m_filter(std::move(filter)),
       m_horizontal_spacing(0),
       m_vertical_spacing(0) {
-  auto box_body = new QWidget();
-  auto box_body_layout = new QVBoxLayout(box_body);
-  box_body_layout->setContentsMargins({});
   for(auto i = 0; i != m_header->get_size(); ++i) {
     auto& item = m_header->get(i);
     auto filter = m_filter->get_filter(i);
@@ -56,7 +53,8 @@ TableView::TableView(
   }
   m_header_view = new TableHeader(m_header);
   m_header_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-  box_body_layout->addWidget(m_header_view);
+  auto box_body = new QWidget();
+  enclose(*box_body, *m_header_view);
   auto box = new Box(box_body);
   box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   update_style(*box, [] (auto& style) {
@@ -70,9 +68,7 @@ TableView::TableView(
     m_header_view->get_widths(), std::move(view_builder));
   m_body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   m_scroll_box = new ScrollBox(m_body);
-  auto layout = new QVBoxLayout(this);
-  layout->setContentsMargins({});
-  layout->setSpacing(0);
+  auto layout = make_vbox_layout(this);
   layout->addWidget(box);
   layout->addWidget(m_scroll_box);
   m_header_view->connect_sort_signal(

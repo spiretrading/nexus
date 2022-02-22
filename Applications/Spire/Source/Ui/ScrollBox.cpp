@@ -1,8 +1,8 @@
 #include "Spire/Ui/ScrollBox.hpp"
 #include <QEvent>
-#include <QHBoxLayout>
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/LayeredWidget.hpp"
+#include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollableLayer.hpp"
 
@@ -159,6 +159,7 @@ ScrollBox::ScrollBox(QWidget* body, QWidget* parent)
       m_padding_styles([=] { commit_padding_styles(); }) {
   setFocusPolicy(Qt::StrongFocus);
   setObjectName(QString("0x%1").arg(reinterpret_cast<std::intptr_t>(this)));
+  match(*m_body, Body());
   m_viewport = new Viewport(*m_body);
   m_body->installEventFilter(this);
   auto layers = new LayeredWidget();
@@ -175,9 +176,7 @@ ScrollBox::ScrollBox(QWidget* body, QWidget* parent)
   m_scrollable_layer->get_horizontal_scroll_bar().installEventFilter(this);
   m_scrollable_layer->get_vertical_scroll_bar().installEventFilter(this);
   layers->add(m_scrollable_layer);
-  auto layout = new QHBoxLayout(this);
-  layout->setContentsMargins({});
-  layout->addWidget(layers);
+  enclose(*this, *layers);
   update_layout();
   m_style_connection = connect_style_signal(*this, [=] { on_style(); });
 }
@@ -530,11 +529,4 @@ void ScrollBox::update_ranges() {
     0, std::max(range.width(), 0));
   m_scrollable_layer->get_horizontal_scroll_bar().set_page_size(
     m_viewport->width());
-}
-
-SelectConnection BaseComponentFinder<ScrollBox, Body>::operator ()(
-    const ScrollBox& box, const Body& body,
-    const SelectionUpdateSignal& on_update) const {
-  on_update({&find_stylist(box.get_body())}, {});
-  return {};
 }

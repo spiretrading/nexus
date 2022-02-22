@@ -1,10 +1,10 @@
 #include "Spire/Ui/Tag.hpp"
-#include <QHBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Styles/Stylist.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/Icon.hpp"
+#include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace boost::signals2;
@@ -18,17 +18,17 @@ namespace {
       set(BackgroundColor(QColor(0xEBEBEB))).
       set(border_radius(scale_width(3))).
       set(border_size(0));
-    style.get(Any() >> is_a<TextBox>()).
+    style.get(Any() > is_a<TextBox>()).
       set(border_size(0)).
       set(horizontal_padding(scale_width(5))).
       set(vertical_padding(scale_height(2)));
-    style.get(ReadOnly() >> is_a<Button>()).
+    style.get(ReadOnly() > is_a<Button>()).
       set(Visibility::NONE);
     return style;
   }
 
   auto DELETE_BUTTON_STYLE(StyleSheet style) {
-    style.get((Hover() || Press()) / Body() >> is_a<Icon>()).
+    style.get((Hover() || Press()) > Body() > is_a<Icon>()).
       set(BackgroundColor(QColor(Qt::transparent)));
     return style;
   }
@@ -38,9 +38,7 @@ Tag::Tag(QString label, QWidget* parent)
     : QWidget(parent),
       m_is_read_only(false) {
   auto container = new QWidget(this);
-  auto container_layout = new QHBoxLayout(container);
-  container_layout->setContentsMargins({});
-  container_layout->setSpacing(0);
+  auto container_layout = make_hbox_layout(container);
   auto label_box = make_label(std::move(label));
   label_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   container_layout->addWidget(label_box);
@@ -52,9 +50,7 @@ Tag::Tag(QString label, QWidget* parent)
   });
   container_layout->addWidget(m_delete_button);
   auto box = new Box(container);
-  auto layout = new QHBoxLayout(this);
-  layout->setContentsMargins({});
-  layout->addWidget(box);
+  enclose(*this, *box);
   proxy_style(*this, *box);
   set_style(*this, DEFAULT_STYLE());
 }

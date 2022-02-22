@@ -1,12 +1,11 @@
 #include "Spire/Ui/TableHeaderItem.hpp"
-#include <QHBoxLayout>
 #include <QMouseEvent>
-#include <QVBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/FieldValueModel.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/Icon.hpp"
+#include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace boost;
@@ -36,8 +35,7 @@ namespace {
     explicit SortIndicator(
         std::shared_ptr<ValueModel<TableHeaderItem::Order>> order)
         : m_order(std::move(order)) {
-      auto layout = new QHBoxLayout(this);
-      layout->setContentsMargins({});
+      auto layout = make_hbox_layout(this);
       on_order(m_order->get());
       m_order_connection = m_order->connect_update_signal(
         std::bind_front(&SortIndicator::on_order, this));
@@ -73,9 +71,9 @@ namespace {
     auto button = make_icon_button(icon);
     button->setFixedSize(scale(16, 16));
     update_style(*button, [] (auto& style) {
-      style.get(Body()).set(BackgroundColor(Qt::transparent));
-      style.get(Body() / Body()).set(Fill(QColor(0xC8C8C8)));
-      style.get(Press() || (Body() && Hover())).
+      style.get(Any() > Body()).set(BackgroundColor(Qt::transparent));
+      style.get(Any() > Body() > Body()).set(Fill(QColor(0xC8C8C8)));
+      style.get(Press() || Any() > (Body() && Hover())).
         set(BackgroundColor(QColor(0xF2F2F2)));
     });
     return button;
@@ -90,11 +88,7 @@ namespace {
     update_style(*resize_handle, [] (auto& style) {
       style.get(Any()).set(BackgroundColor(QColor(0xC8C8C8)));
     });
-    auto layout = new QHBoxLayout(sash);
-    layout->setContentsMargins({});
-    layout->addSpacerItem(
-      new QSpacerItem(1, 0, QSizePolicy::Expanding, QSizePolicy::Expanding));
-    layout->addWidget(resize_handle);
+    enclose(*sash, *resize_handle, Qt::AlignRight);
     return sash;
   }
 }
@@ -105,36 +99,34 @@ TableHeaderItem::TableHeaderItem(
       m_model(std::move(model)),
       m_is_resizeable(true) {
   auto name_label = make_label(make_field_value_model(m_model, &Model::m_name));
-  adopt(*this, *name_label, Label());
+  match(*name_label, Label());
   auto sort_indicator =
     new SortIndicator(make_field_value_model(m_model, &Model::m_order));
   m_filter_button = make_filter_button();
-  adopt(*this, *m_filter_button, FilterButton());
+  match(*m_filter_button, FilterButton());
   m_sash = make_sash();
   m_sash->installEventFilter(this);
   auto hover_element = new Box(nullptr);
   hover_element->setFixedSize(scale(18, 2));
-  adopt(*this, *hover_element, HoverElement());
+  match(*hover_element, HoverElement());
   auto contents = new QWidget();
   contents->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-  auto contents_layout = new QHBoxLayout(contents);
+  auto contents_layout = make_hbox_layout(contents);
   contents_layout->setContentsMargins({scale_width(8), 0, 0, 0});
   contents_layout->addWidget(name_label);
   contents_layout->addSpacerItem(
     new QSpacerItem(1, 0, QSizePolicy::Expanding, QSizePolicy::Expanding));
   contents_layout->addWidget(sort_indicator);
   contents_layout->addWidget(m_filter_button);
-  auto top_layout = new QHBoxLayout();
-  top_layout->setSpacing(0);
-  top_layout->setContentsMargins({});
+  auto top_layout = make_hbox_layout();
   top_layout->addWidget(contents);
   top_layout->addWidget(m_sash);
-  auto bottom_layout = new QHBoxLayout();
+  auto bottom_layout = make_hbox_layout();
   bottom_layout->setContentsMargins({scale_width(8), 0, 0, 0});
   bottom_layout->addWidget(hover_element);
   bottom_layout->addSpacerItem(
     new QSpacerItem(1, 0, QSizePolicy::Expanding, QSizePolicy::Expanding));
-  auto layout = new QVBoxLayout(this);
+  auto layout = make_vbox_layout(this);
   layout->setContentsMargins({0, scale_height(8), 0, 0});
   layout->addLayout(top_layout);
   layout->addLayout(bottom_layout);
@@ -145,7 +137,7 @@ TableHeaderItem::TableHeaderItem(
   style.get((Hover() && Sortable()) > HoverElement()).
     set(BackgroundColor(0x4B23A0)).
     set(Visibility::VISIBLE);
-  style.get(Filtered() > FilterButton() / Body() / Body()).
+  style.get(Filtered() > FilterButton() > Body() > Body()).
     set(Fill(QColor(0x4B23A0)));
   set_style(*this, std::move(style));
   m_connection = m_model->connect_update_signal(

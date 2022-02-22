@@ -1,8 +1,8 @@
 #include "Spire/Ui/Box.hpp"
-#include <QHBoxLayout>
 #include <QPainter>
 #include <QResizeEvent>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/Layouts.hpp"
 
 using namespace boost;
 using namespace Spire;
@@ -52,11 +52,9 @@ Box::Box(QWidget* body, Fit fit, QWidget* parent)
       m_body(body),
       m_fit(fit) {
   if(m_body) {
+    match(*m_body, Body());
     m_container = new QWidget(this);
-    auto layout = new QHBoxLayout(m_container);
-    layout->setContentsMargins({});
-    layout->addWidget(m_body);
-    layout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
+    enclose(*m_container, *m_body, Qt::AlignTop | Qt::AlignLeft);
     setFocusProxy(m_body);
     update_fit();
   } else {
@@ -148,6 +146,7 @@ void Box::update_fit() {
     setMaximumHeight(
       std::min(m_body->maximumHeight() + styling_height, QWIDGETSIZE_MAX));
   }
+  updateGeometry();
 }
 
 void Box::on_style() {
@@ -200,12 +199,4 @@ Box* Spire::make_input_box(QWidget* body, QWidget* parent) {
     set(horizontal_padding(0));
   set_style(*box, std::move(style));
   return box;
-}
-
-SelectConnection BaseComponentFinder<Box, Body>::operator ()(const Box& box,
-    const Body& body, const SelectionUpdateSignal& on_update) const {
-  if(auto body = box.get_body()) {
-    on_update({&find_stylist(*body)}, {});
-  }
-  return {};
 }

@@ -1,9 +1,9 @@
 #include "Spire/Ui/TabView.hpp"
-#include <QHBoxLayout>
 #include <QKeyEvent>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
+#include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/ResponsiveLabel.hpp"
@@ -32,19 +32,14 @@ namespace {
       });
       auto divider = new Box(nullptr);
       divider->setFixedSize(scale(1, 14));
-      adopt(*this, *divider, TabView::Divider());
+      match(*divider, TabView::Divider());
       auto body = new QWidget();
       body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-      auto body_layout = new QHBoxLayout(body);
-      body_layout->setSpacing(0);
-      body_layout->setContentsMargins({});
+      auto body_layout = make_hbox_layout(body);
       body_layout->addWidget(label);
       body_layout->addWidget(divider, 0, Qt::AlignVCenter);
       auto box = new Box(body);
-      auto layout = new QHBoxLayout(this);
-      layout->setSpacing(0);
-      layout->setContentsMargins({});
-      layout->addWidget(box);
+      enclose(*this, *box);
       proxy_style(*this, *box);
       update_style(*this, [] (auto& style) {
         style.get(Any() > TabView::Divider()).
@@ -80,32 +75,28 @@ TabView::TabView(QWidget* parent)
     style.get(Any()).
       set(Qt::Orientation::Horizontal).
       set(EdgeNavigation::WRAP);
-    style.get(Any() >> is_a<ListItem>()).
+    style.get(Any() > is_a<ListItem>()).
       set(BackgroundColor(QColor(Qt::transparent))).
       set(padding(0)).
       set(border_size(0));
-    style.get(Any() >> is_a<ListItem>()).
+    style.get(Any() > is_a<ListItem>()).
       set(BackgroundColor(QColor(0xEBEBEB))).
       set(BorderTopSize(scale_height(1))).
       set(border_color(QColor(Qt::transparent)));
-    style.get(Any() >> (is_a<ListItem>() && (Current() || Hover())) >>
+    style.get(Any() > (is_a<ListItem>() && (Current() || Hover())) >
         is_a<ResponsiveLabel>()).set(TextColor(QColor(Qt::black)));
-    style.get(Any() >> (is_a<ListItem>() && Hover())).
+    style.get(Any() > (is_a<ListItem>() && Hover())).
       set(BackgroundColor(QColor(0xE0E0E0)));
-    style.get(Any() >> (is_a<ListItem>() && Current())).
+    style.get(Any() > (is_a<ListItem>() && Current())).
       set(BackgroundColor(QColor(0xFFFFFF)));
-    style.get(Any() >> (is_a<ListItem>() && (Current() || PrecedesCurrent())) >>
+    style.get(Any() > (is_a<ListItem>() && (Current() || PrecedesCurrent())) >
       is_a<Tab>() > TabView::Divider()).set(Visibility::INVISIBLE);
   });
   update_style(*this, [] (auto& style) {
-    style.get(FocusIn() >> (is_a<ListItem>() && Current())).
+    style.get(FocusIn() > (is_a<ListItem>() && Current())).
       set(BorderTopColor(QColor(0x4B23A0)));
   });
-  auto layout = new QVBoxLayout(this);
-  layout->setSpacing(0);
-  layout->setContentsMargins({});
-  layout->setAlignment(Qt::AlignTop);
-  layout->addWidget(scrollable_list_box);
+  enclose(*this, *scrollable_list_box, Qt::AlignTop);
   m_tab_list->get_current()->connect_update_signal(
     std::bind_front(&TabView::on_current, this));
 }
@@ -159,7 +150,7 @@ void TabView::on_current(optional<int> current) {
     unmatch(*m_tab_list->get_list_item(*m_current - 1), PrecedesCurrent());
   }
   m_current = current;
-  auto layout = static_cast<QVBoxLayout*>(this->layout());
+  auto layout = static_cast<QBoxLayout*>(this->layout());
   if(layout->count() > 1) {
     auto item = layout->itemAt(1);
     layout->removeItem(item);

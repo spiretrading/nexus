@@ -2,13 +2,13 @@
 #include <boost/signals2/shared_connection_block.hpp>
 #include <QCoreApplication>
 #include <QKeyEvent>
-#include <QVBoxLayout>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ListValueModel.hpp"
 #include "Spire/Spire/LocalScalarValueModel.hpp"
 #include "Spire/Spire/ToTextModel.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
+#include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/ListModelTransactionLog.hpp"
@@ -54,9 +54,7 @@ namespace {
     auto header = new QWidget(parent);
     header->setFocusPolicy(Qt::NoFocus);
     header->setFixedSize(scale(168, 26));
-    auto layout = new QHBoxLayout(header);
-    layout->setContentsMargins({});
-    layout->setSpacing(0);
+    auto layout = make_hbox_layout(header);
     auto locale = QLocale();
     layout->addWidget(make_header_label(locale.dayName(7).at(0), header));
     for(auto i = 1; i < 7; ++i) {
@@ -157,14 +155,14 @@ class CalendarDatePicker::MonthSpinner : public QWidget {
         std::shared_ptr<DateModel> current, QWidget* parent = nullptr)
         : QWidget(parent),
           m_current(std::move(current)) {
-      auto layout = new QHBoxLayout(this);
-      layout->setContentsMargins({scale_width(4), 0, scale_width(4), 0});
-      layout->setSpacing(scale_width(8));
       const auto BUTTON_SIZE = scale(16, 16);
       m_previous_button = make_icon_button(
         imageFromSvg(":Icons/calendar-arrow-left.svg", BUTTON_SIZE));
       m_previous_button->setFixedSize(BUTTON_SIZE);
       m_previous_button->connect_clicked_signal([=] { decrement(); });
+      auto layout = make_hbox_layout(this);
+      layout->setContentsMargins({scale_width(4), 0, scale_width(4), 0});
+      layout->setSpacing(scale_width(8));
       layout->addWidget(m_previous_button);
       m_label = make_label(std::make_shared<ToTextModel<date>>(m_current,
         [] (const date& current) {
@@ -239,9 +237,7 @@ class CalendarDayLabel : public QWidget {
           set(border_color(QColor(Qt::transparent))).
           set(TextColor(QColor(0xC8C8C8)));
       });
-      auto layout = new QHBoxLayout(this);
-      layout->setContentsMargins({});
-      layout->addWidget(m_label);
+      enclose(*this, *m_label);
       on_current(std::any_cast<date>(m_current->get()));
     }
 
@@ -282,7 +278,7 @@ CalendarDatePicker::CalendarDatePicker(
   m_current_connection = m_current->connect_update_signal([=] (auto current) {
     on_current(current);
   });
-  auto layout = new QVBoxLayout(this);
+  auto layout = make_vbox_layout(this);
   layout->setContentsMargins(
     scale_width(4), scale_height(8), scale_width(4), scale_height(4));
   layout->setSpacing(scale_height(4));
@@ -317,13 +313,13 @@ CalendarDatePicker::CalendarDatePicker(
     set(Qt::Horizontal).
     set(EdgeNavigation(EdgeNavigation::CONTAIN)).
     set(Overflow(Overflow::WRAP));
-  calendar_style.get(Any() >> is_a<ListItem>()).
+  calendar_style.get(Any() > is_a<ListItem>()).
     set(border_size(0)).
     set(padding(0));
-  calendar_style.get(Any() >> (is_a<ListItem>() && Hover())).
+  calendar_style.get(Any() > (is_a<ListItem>() && Hover())).
     set(BackgroundColor(QColor(0xFFFFFF)));
   calendar_style.get(
-      Any() >> (is_a<ListItem>() && Selected()) >> is_a<CalendarDayLabel>()).
+      Any() > (is_a<ListItem>() && Selected()) > is_a<CalendarDayLabel>()).
     set(BackgroundColor(QColor(0x4B23A0))).
     set(border(0, QColor(Qt::transparent))).
     set(TextColor(QColor(0xFFFFFF)));

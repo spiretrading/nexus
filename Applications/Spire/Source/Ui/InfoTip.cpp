@@ -3,13 +3,13 @@
 #include <QGraphicsPathItem>
 #include <QGraphicsScene>
 #include <QGuiApplication>
-#include <QHBoxLayout>
 #include <QMouseEvent>
 #include <QPainter>
 #include <QPainterPath>
 #include <QScreen>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
+#include "Spire/Ui/Layouts.hpp"
 
 using namespace boost::posix_time;
 using namespace Spire;
@@ -63,10 +63,10 @@ InfoTip::InfoTip(QWidget* body, QWidget* parent)
   setAttribute(Qt::WA_ShowWithoutActivating);
   setAttribute(Qt::WA_TranslucentBackground);
   auto container = new QWidget(this);
-  auto layout = new QHBoxLayout(this);
+  auto layout = make_hbox_layout(this);
   layout->setContentsMargins(get_margins());
   layout->addWidget(container);
-  auto container_layout = new QHBoxLayout(container);
+  auto container_layout = make_hbox_layout(container);
   container_layout->setContentsMargins(
     {scale_width(1), scale_height(1), 0, 0});
   container_layout->addWidget(m_body);

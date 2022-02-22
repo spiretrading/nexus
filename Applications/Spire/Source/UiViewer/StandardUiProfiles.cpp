@@ -1577,9 +1577,9 @@ UiProfile Spire::make_focus_observer_profile() {
       } else if(value == 1) {
         auto label_button = make_label_button("Label Button");
         update_style(*label_button, [&] (auto& style) {
-          style.get(Focus() / Body()).set(
+          style.get(Focus() > Body()).set(
             border_color(QColor(Qt::transparent)));
-          style.get(FocusVisible() / Body()).set(
+          style.get(FocusVisible() > Body()).set(
             border_color(QColor(0x4B23A0)));
         });
         return label_button;
@@ -1843,7 +1843,7 @@ UiProfile Spire::make_label_button_profile() {
   properties.push_back(
     make_standard_property<QString>("label", QString("Click me!")));
   properties.push_back(
-    make_standard_property<QColor>("pressed-color", QColor(0x4B23A0)));
+    make_standard_property<QColor>("pressed-color", QColor(0x7E71B8)));
   auto profile = UiProfile("LabelButton", properties, [] (auto& profile) {
     auto& label = get<QString>("label", profile.get_properties());
     auto button = make_label_button(label.get());
@@ -1852,7 +1852,7 @@ UiProfile Spire::make_label_button_profile() {
       get<QColor>("pressed-color", profile.get_properties());
     pressed_color.connect_changed_signal([=] (const auto& color) {
       update_style(*button, [&] (auto& style) {
-        style.get(Press() / Body()).set(BackgroundColor(color));
+        style.get(Press() > Body()).set(BackgroundColor(color));
       });
     });
     button->connect_clicked_signal(profile.make_event_slot("ClickedSignal"));
@@ -3065,6 +3065,7 @@ UiProfile Spire::make_text_box_profile() {
   properties.push_back(make_standard_property<QString>("placeholder"));
   properties.push_back(make_standard_property<QString>("rejected", "deny"));
   properties.push_back(make_standard_property("horizontal_padding", 8));
+  properties.push_back(make_standard_property("border_size", 1));
   auto profile = UiProfile("TextBox", properties, [] (auto& profile) {
     auto model = std::make_shared<RejectedTextModel>();
     auto text_box = new TextBox(model);
@@ -3088,6 +3089,12 @@ UiProfile Spire::make_text_box_profile() {
     padding.connect_changed_signal([=] (const auto& value) {
       update_style(*text_box, [&] (auto& style) {
         style.get(Any()).set(horizontal_padding(scale_width(value)));
+      });
+    });
+    auto& border = get<int>("border_size", profile.get_properties());
+    border.connect_changed_signal([=] (const auto& value) {
+      update_style(*text_box, [&] (auto& style) {
+        style.get(Any()).set(border_size(scale_width(value)));
       });
     });
     text_box->get_current()->connect_update_signal(

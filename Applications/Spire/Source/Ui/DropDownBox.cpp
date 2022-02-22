@@ -1,6 +1,5 @@
 #include "Spire/Ui/DropDownBox.hpp"
 #include <QCoreApplication>
-#include <QHBoxLayout>
 #include <QKeyEvent>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
@@ -9,6 +8,7 @@
 #include "Spire/Ui/DropDownList.hpp"
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/LayeredWidget.hpp"
+#include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
 #include "Spire/Ui/TextBox.hpp"
@@ -21,17 +21,17 @@ using namespace Spire::Styles;
 namespace {
   auto DEFAULT_STYLE() {
     auto style = StyleSheet();
-    style.get(Any() >> is_a<Icon>()).
+    style.get(Any() > is_a<Icon>()).
       set(Fill(QColor(0x333333))).
       set(BackgroundColor(QColor(Qt::transparent)));
-    style.get(Disabled() >> is_a<Icon>()).set(Fill(QColor(0xC8C8C8)));
-    style.get(ReadOnly() >> is_a<Icon>()).set(Visibility::NONE);
-    style.get(Any() >> (is_a<TextBox>() && !(+Any() << is_a<ListItem>()))).
+    style.get(Disabled() > is_a<Icon>()).set(Fill(QColor(0xC8C8C8)));
+    style.get(ReadOnly() > is_a<Icon>()).set(Visibility::NONE);
+    style.get(Any() > (is_a<TextBox>() && !(+Any() << is_a<ListItem>()))).
       set(PaddingRight(scale_width(14)));
-    style.get(PopUp() >> is_a<TextBox>() ||
-      (+Any() >> is_a<Button>() && (Hover() || FocusIn())) >> is_a<TextBox>()).
+    style.get(PopUp() > is_a<TextBox>() ||
+      (+Any() > is_a<Button>() && (Hover() || FocusIn())) > is_a<TextBox>()).
       set(border_color(QColor(0x4B23A0)));
-    style.get(ReadOnly() >> (is_a<TextBox>() && !(+Any() << is_a<ListItem>()))).
+    style.get(ReadOnly() > (is_a<TextBox>() && !(+Any() << is_a<ListItem>()))).
       set(horizontal_padding(0)).
       set(border_color(QColor(Qt::transparent))).
       set(BackgroundColor(QColor(Qt::transparent)));
@@ -64,22 +64,18 @@ DropDownBox::DropDownBox(std::shared_ptr<AnyListModel> list,
   auto icon_layer = new QWidget();
   icon_layer->setAttribute(Qt::WA_TransparentForMouseEvents);
   icon_layer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  auto icon_layer_layout = new QHBoxLayout(icon_layer);
-  icon_layer_layout->setContentsMargins({});
-  icon_layer_layout->setSpacing(0);
-  icon_layer_layout->addStretch();
   auto drop_down_icon =
     new Icon(imageFromSvg(":/Icons/dropdown-arrow.svg", scale(6, 4)));
   drop_down_icon->setFixedSize(scale(6, 4));
+  auto icon_layer_layout = make_hbox_layout(icon_layer);
+  icon_layer_layout->addStretch();
   icon_layer_layout->addWidget(drop_down_icon);
   icon_layer_layout->addSpacing(scale_width(8));
   layers->add(icon_layer);
   m_button = new Button(new QWidget());
   m_button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   layers->add(m_button);
-  auto layout = new QHBoxLayout(this);
-  layout->setContentsMargins({});
-  layout->addWidget(layers);
+  enclose(*this, *layers);
   m_drop_down_list = new DropDownList(*m_list_view, *this);
   m_drop_down_list->installEventFilter(this);
   auto window = m_drop_down_list->window();

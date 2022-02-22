@@ -1,11 +1,11 @@
 #include "Spire/Ui/TextAreaBox.hpp"
 #include <QAbstractTextDocumentLayout>
-#include <QHBoxLayout>
 #include <QPainter>
 #include <QScrollBar>
 #include <QTextDocument>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
+#include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
 
@@ -44,7 +44,7 @@ namespace {
       set(BackgroundColor(QColor(Qt::transparent))).
       set(border_color(QColor(Qt::transparent)));
     style.get(Placeholder()).set(TextColor(QColor(0xA0A0A0)));
-    style.get(Disabled() / Placeholder()).set(TextColor(QColor(0xC8C8C8)));
+    style.get(Disabled() > Placeholder()).set(TextColor(QColor(0xC8C8C8)));
     return style;
   }
 }
@@ -218,9 +218,7 @@ TextAreaBox::TextAreaBox(std::shared_ptr<TextModel> current, QWidget* parent)
     ScrollBox::DisplayPolicy::NEVER, ScrollBox::DisplayPolicy::ON_OVERFLOW);
   m_scroll_box->setFocusProxy(m_text_edit);
   setFocusProxy(m_scroll_box);
-  auto layout = new QHBoxLayout(this);
-  layout->setContentsMargins({});
-  layout->addWidget(m_scroll_box);
+  enclose(*this, *m_scroll_box);
   proxy_style(*this, *m_scroll_box);
   add_pseudo_element(*this, Placeholder());
   m_style_connection = connect_style_signal(*this, [=] { on_style(); });

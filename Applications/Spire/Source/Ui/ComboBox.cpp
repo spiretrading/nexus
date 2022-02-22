@@ -1,6 +1,5 @@
 #include "Spire/Ui/ComboBox.hpp"
 #include <boost/signals2/shared_connection_block.hpp>
-#include <QHBoxLayout>
 #include <QKeyEvent>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
@@ -8,6 +7,7 @@
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DropDownBox.hpp"
 #include "Spire/Ui/DropDownList.hpp"
+#include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace Beam;
@@ -52,14 +52,11 @@ ComboBox::ComboBox(std::shared_ptr<QueryModel> query_model,
   m_input_box->installEventFilter(this);
   m_input_box->connect_submit_signal(
     std::bind_front(&ComboBox::on_submit, this));
+  enclose(*this, *m_input_box);
   m_input_connection = m_input_box->get_current()->connect_update_signal(
     std::bind_front(&ComboBox::on_input, this));
   m_highlight_connection = m_input_box->get_highlight()->connect_update_signal(
     std::bind_front(&ComboBox::on_highlight, this));
-  auto layout = new QHBoxLayout(this);
-  layout->setContentsMargins({});
-  layout->setSpacing(0);
-  layout->addWidget(m_input_box);
   m_list_view = new ListView(
     std::static_pointer_cast<AnyListModel>(m_matches), std::move(view_builder));
   m_drop_down_list = new DropDownList(*m_list_view, *this);

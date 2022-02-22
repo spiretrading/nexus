@@ -44,22 +44,8 @@ namespace Spire::Styles {
        */
       using MatchSignal = Signal<void (bool is_match)>;
 
-      /**
-       * Signals that a Stylist was adopted.
-       * @param stylist The stylist that was adopted.
-       * @param selector The Selector used to identify the adopted
-       *                 <i>stylist</i>.
-       */
-      using AdoptedSignal =
-        Signal<void (Stylist& stylist, const Selector& selector)>;
-
-      /**
-       * Signals that a previously adopted Stylist was removed.
-       * @param stylist The stylist that was removed.
-       * @param selector The Selector that used to identify the <i>stylist</i>.
-       */
-      using ForfeitSignal =
-        Signal<void (Stylist& stylist, const Selector& selector)>;
+      /** Signals that this Stylist is being deleted. */
+      using DeleteSignal = Signal<void ()>;
 
       ~Stylist();
 
@@ -100,23 +86,6 @@ namespace Spire::Styles {
       void remove_proxy(QWidget& widget);
 
       /**
-       * Adopts a Stylist as a child.
-       * @param stylist The stylist to adopt.
-       * @param selector The selector used to identify this child.
-       */
-      void adopt(Stylist& stylist, const Selector& selector);
-
-      /**
-       * Removes a previously adopted Stylist.
-       * @param stylist The stylist to forfeit.
-       * @param selector The selector used to identify this child.
-       */
-      void forfeit(Stylist& stylist, const Selector& selector);
-
-      /** Returns the list of adopted stylists. */
-      const std::vector<Stylist*>& get_adoptions() const;
-
-      /**
        * Directs this Stylist to match a Selector.
        * @param selector The selector to match.
        */
@@ -146,13 +115,9 @@ namespace Spire::Styles {
       boost::signals2::connection connect_match_signal(
         const Selector& selector, const MatchSignal::slot_type& slot) const;
 
-      /** Connects a slot to the AdoptedSignal. */
-      boost::signals2::connection connect_adopted_signal(
-        const AdoptedSignal::slot_type& slot) const;
-
-      /** Connects a slot to the ForfeitSignal. */
-      boost::signals2::connection connect_forfeit_signal(
-        const ForfeitSignal::slot_type& slot) const;
+      /** Connects a slot to the DeleteSignal. */
+      boost::signals2::connection connect_delete_signal(
+        const DeleteSignal::slot_type& slot) const;
 
     private:
       struct StyleEventFilter;
@@ -198,8 +163,7 @@ namespace Spire::Styles {
       friend Evaluator<T> make_evaluator(
         RevertExpression<T> expression, const Stylist& stylist);
       mutable StyleSignal m_style_signal;
-      mutable AdoptedSignal m_adopted_signal;
-      mutable ForfeitSignal m_forfeit_signal;
+      mutable DeleteSignal m_delete_signal;
       QWidget* m_widget;
       boost::optional<PseudoElement> m_pseudo_element;
       StyleSheet m_style;
@@ -209,7 +173,6 @@ namespace Spire::Styles {
       mutable boost::optional<Block> m_computed_block;
       std::vector<Stylist*> m_proxies;
       std::vector<Stylist*> m_principals;
-      std::vector<Stylist*> m_adoptions;
       std::unordered_set<Selector, SelectorHash> m_matches;
       mutable std::unordered_map<Selector, MatchSignal, SelectorHash>
         m_match_signals;
@@ -316,22 +279,6 @@ namespace Spire::Styles {
    * @param destination The QWidget receiving the style.
    */
   void proxy_style(QWidget& source, QWidget& destination);
-
-  /**
-   * Adopts a widget as a child.
-   * @param parent The parent adopting.
-   * @param widget The widget to adopt.
-   * @param selector The selector used to identify the <i>widget</i>.
-   */
-  void adopt(QWidget& source, QWidget& widget, const Selector& selector);
-
-  /**
-   * Removes a previously adopted a widget.
-   * @param parent The parent that made the adoption.
-   * @param widget The widget that was adopted.
-   * @param selector The selector used to identify the <i>widget</i>.
-   */
-  void forfeit(QWidget& source, QWidget& widget, const Selector& selector);
 
   /**
    * Indicates a widget no longer matches a Selector.

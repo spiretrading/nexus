@@ -1,6 +1,6 @@
 #include "Spire/Ui/TableItem.hpp"
-#include <QHBoxLayout>
 #include "Spire/Ui/Box.hpp"
+#include "Spire/Ui/Layouts.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -10,10 +10,8 @@ using namespace Spire::Styles;
 TableItem::TableItem(QWidget& component, QWidget* parent)
     : QWidget(parent) {
   m_styles.m_background_color = Qt::transparent;
-  auto layout = new QHBoxLayout(this);
-  layout->setContentsMargins({});
   m_button = new Button(&component);
-  layout->addWidget(m_button);
+  enclose(*this, *m_button);
   m_style_connection =
     connect_style_signal(*this, std::bind_front(&TableItem::on_style, this));
 }

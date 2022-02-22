@@ -1,8 +1,8 @@
 #include "Spire/Ui/ScrollBar.hpp"
-#include <QHBoxLayout>
 #include <QMouseEvent>
-#include "Spire/Ui/Box.hpp"
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/Box.hpp"
+#include "Spire/Ui/Layouts.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -71,9 +71,7 @@ ScrollBar::ScrollBar(Qt::Orientation orientation, QWidget* parent)
     style.get(Any()).set(PaddingRight(0));
     style.get(Any()).set(PaddingBottom(0));
   });
-  auto layout = new QHBoxLayout(this);
-  layout->setContentsMargins({});
-  layout->addWidget(m_track);
+  enclose(*this, *m_track);
   m_track_scroll_timer.setSingleShot(true);
   connect(
     &m_track_scroll_timer, &QTimer::timeout, this, &ScrollBar::scroll_page);

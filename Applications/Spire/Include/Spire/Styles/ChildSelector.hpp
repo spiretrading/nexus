@@ -31,13 +31,6 @@ namespace Spire::Styles {
       Selector m_child;
   };
 
-  /**
-   * Provides an operator for the ChildSelector.
-   * @param base The selector for the base widget.
-   * @param child The selector for the child.
-   */
-  ChildSelector operator >(Selector base, Selector child);
-
   SelectConnection select(const ChildSelector& selector, const Stylist& base,
     const SelectionUpdateSignal& on_update);
 }
