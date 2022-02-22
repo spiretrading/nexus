@@ -32,9 +32,7 @@ TagComboBox::TagComboBox(std::shared_ptr<ComboBox::QueryModel> query_model,
     std::bind_front(&TagComboBox::on_submit, this));
   m_tag_box->get_list()->connect_operation_signal(
     std::bind_front(&TagComboBox::on_operation, this));
-  auto layout = new QHBoxLayout(this);
-  layout->setContentsMargins({});
-  layout->addWidget(m_combo_box);
+  enclose(*this, *m_combo_box);
   setFocusProxy(m_combo_box);
 }
 
