@@ -27,7 +27,7 @@ namespace {
       set(ListOverflowGap(scale_width(3))).
       set(Overflow::WRAP).
       set(Qt::Horizontal);
-    style.get(Any() >> is_a<ListItem>()).
+    style.get(Any() > is_a<ListItem>()).
       set(BackgroundColor(QColor(Qt::transparent))).
       set(border_size(0)).
       set(padding(0));

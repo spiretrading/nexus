@@ -1,7 +1,6 @@
 #ifndef SPIRE_SCROLL_BOX_HPP
 #define SPIRE_SCROLL_BOX_HPP
 #include <QWidget>
-#include "Spire/Styles/ComponentSelector.hpp"
 #include "Spire/Styles/StyleSheetMap.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -111,12 +110,6 @@ namespace Spire {
       void update_layout();
       void update_ranges();
   };
-}
-
-namespace Spire::Styles {
-  template<>
-  struct ComponentFinder<ScrollBox, Body> :
-    BaseComponentFinder<ScrollBox, Body> {};
 }
 
 #endif

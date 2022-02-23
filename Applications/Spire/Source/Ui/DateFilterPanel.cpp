@@ -20,10 +20,10 @@ using namespace Spire::Styles;
 
 namespace {
   auto LABEL_CHECK_BUTTON_STYLE(StyleSheet style) {
-    style.get((Checked() && !Hover() && !Press()) / Body()).
+    style.get((Checked() && !Hover() && !Press()) > Body()).
       set(BackgroundColor(QColor(0x7F5EEC))).
       set(TextColor(QColor(0xFFFFFF)));
-    style.get((Checked() && Disabled()) / Body()).
+    style.get((Checked() && Disabled()) > Body()).
       set(BackgroundColor(QColor(0xC8C8C8))).
       set(TextColor(QColor(0xFFFFFF)));
     return style;

@@ -165,7 +165,7 @@ TableBody::TableBody(
   }
   m_current_item = find_item(m_current->get());
   if(m_current_item) {
-    adopt(*this, *m_current_item, Current());
+    match(*m_current_item, Current());
     match(*m_current_item->parentWidget(), CurrentRow());
     match(*m_column_covers[m_current_index->m_column], CurrentColumn());
   }
@@ -480,11 +480,11 @@ void TableBody::on_current(const optional<Index>& index) {
       unmatch(*m_column_covers[previous_index->m_column], CurrentColumn());
     }
     if(previous_item) {
-      forfeit(*this, *previous_item, Current());
+      unmatch(*previous_item, Current());
     }
   }
   if(m_current_index) {
-    adopt(*this, *m_current_item, Current());
+    match(*m_current_item, Current());
     if(!previous_index || previous_index->m_row != m_current_index->m_row) {
       match(*m_current_item->parentWidget(), CurrentRow());
     }

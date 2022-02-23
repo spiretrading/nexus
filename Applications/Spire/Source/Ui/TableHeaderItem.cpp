@@ -71,9 +71,9 @@ namespace {
     auto button = make_icon_button(icon);
     button->setFixedSize(scale(16, 16));
     update_style(*button, [] (auto& style) {
-      style.get(Body()).set(BackgroundColor(Qt::transparent));
-      style.get(Body() / Body()).set(Fill(QColor(0xC8C8C8)));
-      style.get(Press() || (Body() && Hover())).
+      style.get(Any() > Body()).set(BackgroundColor(Qt::transparent));
+      style.get(Any() > Body() > Body()).set(Fill(QColor(0xC8C8C8)));
+      style.get(Press() || Any() > (Body() && Hover())).
         set(BackgroundColor(QColor(0xF2F2F2)));
     });
     return button;
@@ -99,16 +99,16 @@ TableHeaderItem::TableHeaderItem(
       m_model(std::move(model)),
       m_is_resizeable(true) {
   auto name_label = make_label(make_field_value_model(m_model, &Model::m_name));
-  adopt(*this, *name_label, Label());
+  match(*name_label, Label());
   auto sort_indicator =
     new SortIndicator(make_field_value_model(m_model, &Model::m_order));
   m_filter_button = make_filter_button();
-  adopt(*this, *m_filter_button, FilterButton());
+  match(*m_filter_button, FilterButton());
   m_sash = make_sash();
   m_sash->installEventFilter(this);
   auto hover_element = new Box(nullptr);
   hover_element->setFixedSize(scale(18, 2));
-  adopt(*this, *hover_element, HoverElement());
+  match(*hover_element, HoverElement());
   auto contents = new QWidget();
   contents->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   auto contents_layout = make_hbox_layout(contents);
@@ -137,7 +137,7 @@ TableHeaderItem::TableHeaderItem(
   style.get((Hover() && Sortable()) > HoverElement()).
     set(BackgroundColor(0x4B23A0)).
     set(Visibility::VISIBLE);
-  style.get(Filtered() > FilterButton() / Body() / Body()).
+  style.get(Filtered() > FilterButton() > Body() > Body()).
     set(Fill(QColor(0x4B23A0)));
   set_style(*this, std::move(style));
   m_connection = m_model->connect_update_signal(

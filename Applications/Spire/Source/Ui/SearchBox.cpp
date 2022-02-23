@@ -24,22 +24,22 @@ namespace {
     style.get(Disabled()).
       set(BackgroundColor(QColor(0xF5F5F5))).
       set(border_color(QColor(0xC8C8C8)));
-    style.get(Any() >> (is_a<Icon>() && !(+Any() << is_a<Button>()))).
+    style.get(Any() > (is_a<Icon>() && !(+Any() << is_a<Button>()))).
       set(BackgroundColor(QColor(Qt::transparent))).
       set(Fill(QColor(0xA0A0A0)));
-    style.get(Disabled() >> (is_a<Icon>() && !(+Any() << is_a<Button>()))).
+    style.get(Disabled() > (is_a<Icon>() && !(+Any() << is_a<Button>()))).
       set(Fill(QColor(0xC8C8C8)));
     auto font = QFont("Roboto");
     font.setWeight(QFont::Normal);
     font.setPixelSize(scale_width(12));
-    style.get(Any() >> is_a<TextBox>()).
+    style.get(Any() > is_a<TextBox>()).
       set(BackgroundColor(QColor(Qt::transparent))).
       set(border_size(0)).
       set(text_style(font, QColor(Qt::black))).
       set(TextAlign(Qt::Alignment(Qt::AlignLeft) | Qt::AlignVCenter)).
       set(vertical_padding(0)).
       set(horizontal_padding(scale_width(5)));
-    style.get(Disabled() >> is_a<TextBox>()).
+    style.get(Disabled() > is_a<TextBox>()).
       set(TextColor(QColor(0xC8C8C8)));
     return style;
   }

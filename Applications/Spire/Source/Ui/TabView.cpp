@@ -32,7 +32,7 @@ namespace {
       });
       auto divider = new Box(nullptr);
       divider->setFixedSize(scale(1, 14));
-      adopt(*this, *divider, TabView::Divider());
+      match(*divider, TabView::Divider());
       auto body = new QWidget();
       body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
       auto body_layout = make_hbox_layout(body);
@@ -75,25 +75,25 @@ TabView::TabView(QWidget* parent)
     style.get(Any()).
       set(Qt::Orientation::Horizontal).
       set(EdgeNavigation::WRAP);
-    style.get(Any() >> is_a<ListItem>()).
+    style.get(Any() > is_a<ListItem>()).
       set(BackgroundColor(QColor(Qt::transparent))).
       set(padding(0)).
       set(border_size(0));
-    style.get(Any() >> is_a<ListItem>()).
+    style.get(Any() > is_a<ListItem>()).
       set(BackgroundColor(QColor(0xEBEBEB))).
       set(BorderTopSize(scale_height(1))).
       set(border_color(QColor(Qt::transparent)));
-    style.get(Any() >> (is_a<ListItem>() && (Current() || Hover())) >>
+    style.get(Any() > (is_a<ListItem>() && (Current() || Hover())) >
         is_a<ResponsiveLabel>()).set(TextColor(QColor(Qt::black)));
-    style.get(Any() >> (is_a<ListItem>() && Hover())).
+    style.get(Any() > (is_a<ListItem>() && Hover())).
       set(BackgroundColor(QColor(0xE0E0E0)));
-    style.get(Any() >> (is_a<ListItem>() && Current())).
+    style.get(Any() > (is_a<ListItem>() && Current())).
       set(BackgroundColor(QColor(0xFFFFFF)));
-    style.get(Any() >> (is_a<ListItem>() && (Current() || PrecedesCurrent())) >>
+    style.get(Any() > (is_a<ListItem>() && (Current() || PrecedesCurrent())) >
       is_a<Tab>() > TabView::Divider()).set(Visibility::INVISIBLE);
   });
   update_style(*this, [] (auto& style) {
-    style.get(FocusIn() >> (is_a<ListItem>() && Current())).
+    style.get(FocusIn() > (is_a<ListItem>() && Current())).
       set(BorderTopColor(QColor(0x4B23A0)));
   });
   enclose(*this, *scrollable_list_box, Qt::AlignTop);

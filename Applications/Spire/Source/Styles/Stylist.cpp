@@ -191,26 +191,6 @@ void Stylist::remove_proxy(QWidget& widget) {
   stylist.apply_proxies();
 }
 
-void Stylist::adopt(Stylist& stylist, const Selector& selector) {
-  m_adoptions.push_back(&stylist);
-  stylist.match(selector);
-  m_adopted_signal(stylist, selector);
-}
-
-void Stylist::forfeit(Stylist& stylist, const Selector& selector) {
-  auto i = std::find(m_adoptions.begin(), m_adoptions.end(), &stylist);
-  if(i == m_adoptions.end()) {
-    return;
-  }
-  m_adoptions.erase(i);
-  stylist.unmatch(selector);
-  m_forfeit_signal(stylist, selector);
-}
-
-const std::vector<Stylist*>& Stylist::get_adoptions() const {
-  return m_adoptions;
-}
-
 void Stylist::match(const Selector& selector) {
   if(m_matches.insert(selector).second) {
     auto signal = m_match_signals.find(selector);
@@ -237,16 +217,6 @@ connection Stylist::connect_style_signal(
 connection Stylist::connect_match_signal(
     const Selector& selector, const MatchSignal::slot_type& slot) const {
   return m_match_signals[selector].connect(slot);
-}
-
-connection Stylist::connect_adopted_signal(
-    const AdoptedSignal::slot_type& slot) const {
-  return m_adopted_signal.connect(slot);
-}
-
-connection Stylist::connect_forfeit_signal(
-    const ForfeitSignal::slot_type& slot) const {
-  return m_forfeit_signal.connect(slot);
 }
 
 connection Stylist::connect_delete_signal(
@@ -572,16 +542,6 @@ void Spire::Styles::add_pseudo_element(QWidget& source,
 
 void Spire::Styles::proxy_style(QWidget& source, QWidget& destination) {
   find_stylist(source).add_proxy(destination);
-}
-
-void Spire::Styles::adopt(
-    QWidget& source, QWidget& widget, const Selector& selector) {
-  find_stylist(source).adopt(find_stylist(widget), selector);
-}
-
-void Spire::Styles::forfeit(
-    QWidget& source, QWidget& widget, const Selector& selector) {
-  find_stylist(source).forfeit(find_stylist(widget), selector);
 }
 
 void Spire::Styles::match(QWidget& widget, const Selector& selector) {
