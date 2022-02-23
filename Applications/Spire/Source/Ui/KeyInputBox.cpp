@@ -1,4 +1,5 @@
 #include "Spire/Ui/KeyInputBox.hpp"
+#include <boost/signals2/shared_connection_block.hpp>
 #include <QKeyEvent>
 #include <QPainter>
 #include <QTimer>
@@ -83,20 +84,22 @@ KeyInputBox::KeyInputBox(
     std::shared_ptr<KeySequenceValueModel> current, QWidget* parent)
     : QWidget(parent),
       m_current(std::move(current)),
-      m_status(Status::UNINITIALIZED) {
+      m_status(Status::UNINITIALIZED),
+      m_is_modified(false) {
   setFocusPolicy(Qt::StrongFocus);
-  auto layers = new LayeredWidget();
-  layers->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
   m_body = new QWidget();
   m_body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  m_body->setLayout(make_hbox_layout());
+  auto layers = new LayeredWidget();
+  layers->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
   layers->add(m_body);
   layers->add(new Caret(this));
-  auto input_box = make_input_box(layers);
-  update_style(*input_box, [&] (auto& style) {
+  m_input_box = make_input_box(layers);
+  proxy_style(*this, *m_input_box);
+  enclose(*this, *m_input_box);
+  update_style(*this, [] (auto& style) {
     style.get(Any()).set(vertical_padding(scale_height(3)));
   });
-  enclose(*this, *input_box);
-  m_body->setLayout(make_hbox_layout());
   set_status(Status::NONE);
   m_current_connection = m_current->connect_update_signal(
     [=] (const auto& current) { on_current(current); });
@@ -125,10 +128,12 @@ QSize KeyInputBox::sizeHint() const {
 }
 
 void KeyInputBox::focusInEvent(QFocusEvent* event) {
+  match(*m_input_box, FocusIn());
   transition_status();
 }
 
 void KeyInputBox::focusOutEvent(QFocusEvent* event) {
+  unmatch(*m_input_box, FocusIn());
   set_status(Status::NONE);
   transition_submission();
 }
@@ -138,16 +143,21 @@ void KeyInputBox::keyPressEvent(QKeyEvent* event) {
   if(key == Qt::Key_Shift ||
       key == Qt::Key_Meta || key == Qt::Key_Control || key == Qt::Key_Alt) {
     return;
-  } else if(key == Qt::Key_Enter) {
-    transition_submission();
   } else if(event->modifiers() == 0) {
     if(key == Qt::Key_Delete || key == Qt::Key_Backspace) {
       m_submission = m_current->get();
       m_current->set(QKeySequence());
     } else if(key == Qt::Key_Escape &&
-        m_current->set(key) == QValidator::Invalid) {
-      m_current->set(m_submission);
-    } else if(key == Qt::Key_Return) {
+        m_current->set(key) == QValidator::Invalid && m_is_modified) {
+      {
+        auto blocker = shared_connection_block(m_current_connection);
+        m_current->set(m_submission);
+      }
+      m_is_modified = false;
+      transition_status();
+      layout_key_sequence();
+    } else if(key == Qt::Key_Enter || key == Qt::Key_Return) {
+      m_is_modified = true;
       transition_submission();
     } else {
       m_current->set(key);
@@ -179,9 +189,13 @@ void KeyInputBox::transition_status() {
 }
 
 void KeyInputBox::transition_submission() {
-  if(m_status == Status::PROMPT) {
+  if(m_status == Status::PROMPT || !m_is_modified) {
     return;
   }
+  if(m_current->get_state() == QValidator::State::Intermediate) {
+    return;
+  }
+  m_is_modified = false;
   m_submission = m_current->get();
   m_submit_signal(m_submission);
 }
@@ -209,6 +223,7 @@ void KeyInputBox::set_status(Status status) {
 }
 
 void KeyInputBox::on_current(const QKeySequence& current) {
+  m_is_modified = true;
   transition_status();
   layout_key_sequence();
   if(current.count() == 0) {

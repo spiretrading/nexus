@@ -13,8 +13,9 @@ namespace {
     Stylist* m_stylist;
     SelectionUpdateSignal m_on_update;
     FocusObserver m_observer;
-    bool m_is_match;
-    scoped_connection m_connection;
+    int m_match_count;
+    scoped_connection m_state_connection;
+    scoped_connection m_match_connection;
 
     FocusExecutor(FocusObserver::State state, const Stylist& base,
         const SelectionUpdateSignal& on_update)
@@ -22,22 +23,54 @@ namespace {
           m_stylist(const_cast<Stylist*>(&base)),
           m_on_update(on_update),
           m_observer(m_stylist->get_widget()),
-          m_is_match(false),
-          m_connection(m_observer.connect_state_signal(
+          m_match_count(0),
+          m_state_connection(m_observer.connect_state_signal(
             std::bind_front(&FocusExecutor::on_state, this))) {
       if(is_match(m_observer.get_state())) {
-        m_is_match = true;
+        ++m_match_count;
         m_on_update({m_stylist}, {});
+      }
+      auto selector = [&] () -> Selector {
+        if(state == FocusObserver::State::FOCUS_IN) {
+          return FocusIn();
+        } else if(state == FocusObserver::State::FOCUS_VISIBLE) {
+          return FocusVisible();
+        }
+        return Focus();
+      }();
+      m_match_connection = scoped_connection(
+        base.connect_match_signal(selector, [=, &base] (auto is_match) {
+          if(is_match) {
+            ++m_match_count;
+            if(m_match_count == 1) {
+              m_on_update({&base}, {});
+            }
+          } else {
+            --m_match_count;
+            if(m_match_count == 0) {
+              m_on_update({}, {&base});
+            }
+          }
+        }));
+      if(base.is_match(selector)) {
+        ++m_match_count;
+        if(m_match_count == 1) {
+          m_on_update({&base}, {});
+        }
       }
     }
 
     void on_state(FocusObserver::State state) {
-      if(is_match(state) && !m_is_match) {
-        m_is_match = true;
-        m_on_update({m_stylist}, {});
-      } else if(m_is_match) {
-        m_is_match = false;
-        m_on_update({}, {m_stylist});
+      if(is_match(state)) {
+        ++m_match_count;
+        if(m_match_count == 1) {
+          m_on_update({m_stylist}, {});
+        }
+      } else if(m_match_count > 0) {
+        --m_match_count;
+        if(m_match_count == 0) {
+          m_on_update({}, {m_stylist});
+        }
       }
     }
 

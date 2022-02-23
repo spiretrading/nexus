@@ -542,11 +542,9 @@ void DecimalBox::on_current(const optional<Decimal>& current) {
     }
   }
   m_up_button->setEnabled(!is_read_only() && (!m_current->get_maximum() ||
-    !m_current->get() ||
-    m_current->get() < m_current->get_maximum()));
+    !m_current->get() || m_current->get() < m_current->get_maximum()));
   m_down_button->setEnabled(!is_read_only() && (!m_current->get_minimum() ||
-    !m_current->get() ||
-    m_current->get() > m_current->get_minimum()));
+    !m_current->get() || m_current->get() > m_current->get_minimum()));
 }
 
 void DecimalBox::on_submit(const QString& submission) {
