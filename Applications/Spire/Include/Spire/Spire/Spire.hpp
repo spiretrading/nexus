@@ -14,6 +14,7 @@ namespace Spire {
   template<typename T> class ColumnViewListModel;
   template<typename T> class ConstantValueModel;
   class Definitions;
+  class ExcludingQueryModel;
   template<typename T> class FieldValueModel;
   class KeySequenceValidationModel;
   template<typename T> class ListIndexValueModel;
