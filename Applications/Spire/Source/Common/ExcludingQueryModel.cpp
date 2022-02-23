@@ -46,6 +46,10 @@ QtPromise<std::vector<std::any>> ExcludingQueryModel::submit(
   });
 }
 
+QString ExcludingQueryModel::to_string(const std::any& value) {
+  return displayTextAny(value);
+}
+
 void ExcludingQueryModel::add_exclusion(int index) {
   auto value = displayTextAny(m_exclusions->get(index));
   m_exclusion_set.insert(value);
@@ -61,14 +65,4 @@ void ExcludingQueryModel::on_operation(const AnyListModel::Operation& operation)
       m_exclusion_set.erase(m_exclusion_list[operation.m_index]);
       m_exclusion_list.erase(m_exclusion_list.begin() + operation.m_index);
     });
-}
-
-QString ExcludingQueryModel::to_string(const std::any& value) {
-  if(value.type() == typeid(DestinationDatabase::Entry)) {
-    return displayTextAny(
-      std::any_cast<const DestinationDatabase::Entry&>(value).m_id);
-  } else if(value.type() == typeid(SecurityInfo)) {
-    return displayTextAny(std::any_cast<const SecurityInfo&>(value).m_security);
-  }
-  return displayTextAny(value);
 }

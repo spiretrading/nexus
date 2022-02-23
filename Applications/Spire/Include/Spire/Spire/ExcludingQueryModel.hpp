@@ -23,6 +23,13 @@ namespace Spire {
 
       QtPromise<std::vector<std::any>> submit(const QString& query) override;
 
+      /**
+       * Converts a std::any to a QString.
+       * @param value The value of std::any.
+       * @return The string representation of the value.
+       */
+      virtual QString to_string(const std::any& value);
+
     private:
       std::shared_ptr<ComboBox::QueryModel> m_source;
       std::shared_ptr<AnyListModel> m_exclusions;
@@ -32,7 +39,6 @@ namespace Spire {
 
       void add_exclusion(int index);
       void on_operation(const AnyListModel::Operation& operation);
-      QString to_string(const std::any& value);
   };
 }
 
