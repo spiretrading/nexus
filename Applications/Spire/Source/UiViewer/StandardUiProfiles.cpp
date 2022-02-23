@@ -13,6 +13,7 @@
 #include "Spire/Spire/FieldValueModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalScalarValueModel.hpp"
+#include "Spire/Spire/ValidatedValueModel.hpp"
 #include "Spire/Styles/ChainExpression.hpp"
 #include "Spire/Styles/LinearExpression.hpp"
 #include "Spire/Styles/RevertExpression.hpp"
@@ -1779,7 +1780,25 @@ UiProfile Spire::make_key_input_box_profile() {
   populate_widget_properties(properties);
   properties.push_back(make_standard_property<QString>("current"));
   auto profile = UiProfile("KeyInputBox", properties, [] (auto& profile) {
-    auto box = new KeyInputBox();
+    auto model = make_validated_value_model<QKeySequence>([] (auto sequence) {
+      if(sequence.count() == 0) {
+        return QValidator::Intermediate;
+      } else if(sequence.count() > 1) {
+        return QValidator::Invalid;
+      }
+      auto key = sequence[0];
+      key &= ~Qt::ShiftModifier;
+      key &= ~Qt::ControlModifier;
+      key &= ~Qt::AltModifier;
+      key &= ~Qt::MetaModifier;
+      key &= ~Qt::KeypadModifier;
+      key &= ~Qt::GroupSwitchModifier;
+      if(key >= Qt::Key_F1 && key <= Qt::Key_F32) {
+        return QValidator::Acceptable;
+      }
+      return QValidator::Invalid;
+    });
+    auto box = new KeyInputBox(model);
     box->setFixedWidth(scale_width(100));
     apply_widget_properties(box, profile.get_properties());
     auto& current = get<QString>("current", profile.get_properties());

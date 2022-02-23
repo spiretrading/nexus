@@ -1,4 +1,5 @@
 #include "Spire/Ui/KeyInputBox.hpp"
+#include <boost/signals2/shared_connection_block.hpp>
 #include <QKeyEvent>
 #include <QPainter>
 #include <QTimer>
@@ -142,16 +143,21 @@ void KeyInputBox::keyPressEvent(QKeyEvent* event) {
   if(key == Qt::Key_Shift ||
       key == Qt::Key_Meta || key == Qt::Key_Control || key == Qt::Key_Alt) {
     return;
-  } else if(key == Qt::Key_Enter) {
-    transition_submission();
   } else if(event->modifiers() == 0) {
     if(key == Qt::Key_Delete || key == Qt::Key_Backspace) {
       m_submission = m_current->get();
       m_current->set(QKeySequence());
     } else if(key == Qt::Key_Escape &&
-        m_current->set(key) == QValidator::Invalid) {
-      m_current->set(m_submission);
-    } else if(key == Qt::Key_Return) {
+        m_current->set(key) == QValidator::Invalid && m_is_modified) {
+      {
+        auto blocker = shared_connection_block(m_current_connection);
+        m_current->set(m_submission);
+      }
+      m_is_modified = false;
+      transition_status();
+      layout_key_sequence();
+    } else if(key == Qt::Key_Enter || key == Qt::Key_Return) {
+      m_is_modified = true;
       transition_submission();
     } else {
       m_current->set(key);
@@ -184,6 +190,9 @@ void KeyInputBox::transition_status() {
 
 void KeyInputBox::transition_submission() {
   if(m_status == Status::PROMPT || !m_is_modified) {
+    return;
+  }
+  if(m_current->get_state() == QValidator::State::Intermediate) {
     return;
   }
   m_is_modified = false;
