@@ -40,6 +40,7 @@
 #include "Spire/Ui/HoverObserver.hpp"
 #include "Spire/Ui/InfoTip.hpp"
 #include "Spire/Ui/IntegerBox.hpp"
+#include "Spire/Ui/KeyFilterPanel.hpp"
 #include "Spire/Ui/KeyInputBox.hpp"
 #include "Spire/Ui/KeyTag.hpp"
 #include "Spire/Ui/ListItem.hpp"
@@ -1772,6 +1773,34 @@ UiProfile Spire::make_integer_filter_panel_profile() {
     properties, QString("Filter Integer"));
   auto profile = UiProfile("IntegerFilterPanel", properties,
     setup_scalar_filter_panel_profile<IntegerBox>);
+  return profile;
+}
+
+UiProfile Spire::make_key_filter_panel_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  auto profile = UiProfile(QString("KeyFilterPanel"), properties,
+    [] (auto& profile) {
+      auto button = make_label_button(QString::fromUtf8("Click me"));
+      auto panel = make_key_filter_panel(*button);
+      auto submit_filter_slot =
+        profile.make_event_slot<QString>(QString::fromUtf8("SubmitSignal"));
+      panel->connect_submit_signal(
+        [=] (const std::shared_ptr<AnyListModel>& submission,
+            OpenFilterPanel::Mode mode) {
+          auto result = QString();
+          if(mode == OpenFilterPanel::Mode::INCLUDE) {
+            result += "Include: ";
+          } else {
+            result += "Exclude: ";
+          }
+          for(auto i = 0; i < submission->get_size(); ++i) {
+            result += displayTextAny(submission->get(i)) + " ";
+          }
+          submit_filter_slot(result);
+        });
+      button->connect_clicked_signal([=] { panel->show(); });
+      return button;
+    });
   return profile;
 }
 

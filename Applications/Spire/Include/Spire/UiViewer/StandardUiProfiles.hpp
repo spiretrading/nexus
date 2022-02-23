@@ -80,6 +80,9 @@ namespace Spire {
   /** Returns a UiProfile for the IntegerFilterPanel. */
   UiProfile make_integer_filter_panel_profile();
 
+  /** Returns a UiProfile for the KeyFilterPanel. */
+  UiProfile make_key_filter_panel_profile();
+
   /** Returns a UiProfile for the KeyInputBox. */
   UiProfile make_key_input_box_profile();
 

@@ -45,6 +45,20 @@ namespace Details {
     is_detected<set_placeholder_type, T>::value;
 
   template<typename T>
+  using is_read_only_type = decltype(std::declval<T>().is_read_only());
+
+  template<typename T>
+  constexpr auto has_is_read_only_v = is_detected<is_read_only_type, T>::value;
+
+  template<typename T>
+  using set_read_only_type =
+    decltype(std::declval<T>().set_read_only(std::declval<bool>()));
+
+  template<typename T>
+  constexpr auto has_set_read_only_v =
+    is_detected<set_read_only_type, T>::value;
+
+  template<typename T>
   using connect_reject_signal_type =
     decltype(std::declval<T>().connect_reject_signal(
       std::declval<typename T::RejectSignal::slot_type>()));
@@ -192,12 +206,18 @@ namespace Details {
 
   template<typename T>
   bool AnyInputBox::WrapperInputBox<T>::is_read_only() const {
-    return m_input_box->is_read_only();
+    if constexpr(Details::has_is_read_only_v<T>) {
+      return m_input_box->is_read_only();
+    } else {
+      return false;
+    }
   }
 
   template<typename T>
   void AnyInputBox::WrapperInputBox<T>::set_read_only(bool read_only) {
-    m_input_box->set_read_only(read_only);
+    if constexpr(Details::has_set_read_only_v<T>) {
+      m_input_box->set_read_only(read_only);
+    }
   }
 
   template<typename T>
