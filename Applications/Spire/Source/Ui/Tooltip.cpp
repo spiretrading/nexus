@@ -14,7 +14,7 @@ namespace {
     auto font = QFont("Roboto");
     font.setWeight(60);
     font.setPixelSize(scale_width(10));
-    style.get(Any() >> is_a<TextBox>()).
+    style.get(Any() > is_a<TextBox>()).
       set(Font(font)).
       set(TextColor(QColor(0xFFFFFF))).
       set(TextAlign(Qt::Alignment(Qt::AlignCenter))).

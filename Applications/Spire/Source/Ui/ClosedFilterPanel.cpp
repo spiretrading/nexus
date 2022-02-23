@@ -25,7 +25,7 @@ namespace {
   auto LIST_VIEW_STYLE(StyleSheet style) {
     style.get(Any()).
       set(EdgeNavigation::CONTAIN);
-    style.get(Any() >> is_a<ListItem>()).
+    style.get(Any() > is_a<ListItem>()).
       set(BackgroundColor(QColor(0xFFFFFF))).
       set(border_size(0)).
       set(PaddingLeft(scale_width(8))).

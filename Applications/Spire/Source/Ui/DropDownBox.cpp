@@ -21,17 +21,17 @@ using namespace Spire::Styles;
 namespace {
   auto DEFAULT_STYLE() {
     auto style = StyleSheet();
-    style.get(Any() >> is_a<Icon>()).
+    style.get(Any() > is_a<Icon>()).
       set(Fill(QColor(0x333333))).
       set(BackgroundColor(QColor(Qt::transparent)));
-    style.get(Disabled() >> is_a<Icon>()).set(Fill(QColor(0xC8C8C8)));
-    style.get(ReadOnly() >> is_a<Icon>()).set(Visibility::NONE);
-    style.get(Any() >> (is_a<TextBox>() && !(+Any() << is_a<ListItem>()))).
+    style.get(Disabled() > is_a<Icon>()).set(Fill(QColor(0xC8C8C8)));
+    style.get(ReadOnly() > is_a<Icon>()).set(Visibility::NONE);
+    style.get(Any() > (is_a<TextBox>() && !(+Any() << is_a<ListItem>()))).
       set(PaddingRight(scale_width(14)));
-    style.get(PopUp() >> is_a<TextBox>() ||
-      (+Any() >> is_a<Button>() && (Hover() || FocusIn())) >> is_a<TextBox>()).
+    style.get(PopUp() > is_a<TextBox>() ||
+      (+Any() > is_a<Button>() && (Hover() || FocusIn())) > is_a<TextBox>()).
       set(border_color(QColor(0x4B23A0)));
-    style.get(ReadOnly() >> (is_a<TextBox>() && !(+Any() << is_a<ListItem>()))).
+    style.get(ReadOnly() > (is_a<TextBox>() && !(+Any() << is_a<ListItem>()))).
       set(horizontal_padding(0)).
       set(border_color(QColor(Qt::transparent))).
       set(BackgroundColor(QColor(Qt::transparent)));

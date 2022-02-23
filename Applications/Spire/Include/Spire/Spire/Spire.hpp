@@ -1,5 +1,6 @@
 #ifndef SPIRE_HPP
 #define SPIRE_HPP
+#include <concepts>
 #include <boost/signals2/dummy_mutex.hpp>
 #include <boost/signals2/signal_type.hpp>
 #ifdef _DEBUG
@@ -43,6 +44,7 @@ namespace Spire {
   template<typename T, typename U, typename F, typename G>
     class TransformValueModel;
   class UnsignedQuantityModel;
+  template<typename T, std::invocable<const T&> F> class ValidatedValueModel;
   template<typename T> class ValueModel;
 
   /** Defines the common type of boost signal used throughout Spire. */

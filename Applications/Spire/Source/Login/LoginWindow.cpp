@@ -27,12 +27,12 @@ namespace {
 
   auto CLOSE_BUTTON_STYLE() {
     auto style = StyleSheet();
-    style.get(Any() >> is_a<Icon>()).
+    style.get(Any() > is_a<Icon>()).
       set(BackgroundColor(QColor(Qt::transparent))).
       set(Fill(QColor(0xE2E0FF)));
-    style.get(!Active() >> is_a<Icon>()).
+    style.get(!Active() > is_a<Icon>()).
       set(Fill(QColor(0xBAB3D9)));
-    style.get((Hover() || Press()) >> is_a<Icon>()).
+    style.get((Hover() || Press()) > is_a<Icon>()).
       set(BackgroundColor(QColor(0x401D8B))).
       set(Fill(QColor(0xE63F45)));
     return style;
@@ -50,21 +50,20 @@ namespace {
     auto font = QFont("Roboto");
     font.setWeight(QFont::Bold);
     font.setPixelSize(scale_width(14));
-    style.get(Body()).
+    style.get(Any() > Body()).
       set(TextAlign(Qt::Alignment(Qt::AlignCenter))).
       set(text_style(font, QColor(0, 0, 0))).
-      set(BackgroundColor(QColor(0x68, 0x4B, 0xC7))).
-      set(border(scale_width(1), QColor(0x68, 0x4B, 0xC7))).
-      set(TextColor(QColor(0xE2, 0xE0, 0xFF)));
-    style.get(Hover() / Body()).
-      set(BackgroundColor(QColor(0x8D, 0x78, 0xEC))).
-      set(border_color(QColor(0x8D, 0x78, 0xEC)));
-    style.get(Focus() / Body()).
-      set(border_color(QColor(0x8D, 0x78, 0xEC)));
-    style.get(Disabled() / Body()).
-      set(BackgroundColor(QColor(0x4B, 0x23, 0xA0))).
-      set(TextColor(QColor(0x8D, 0x78, 0xEC))).
-      set(border_color(QColor(0x68, 0x4B, 0xC7)));
+      set(BackgroundColor(QColor(0x684BC7))).
+      set(border(scale_width(1), QColor(0x684BC7))).
+      set(TextColor(QColor(0xE2E0FF)));
+    style.get(Hover() > Body()).
+      set(BackgroundColor(QColor(0x8D78EC))).
+      set(border_color(QColor(0x8D78EC)));
+    style.get(Focus() > Body()).set(border_color(QColor(0x8D78EC)));
+    style.get(Disabled() > Body()).
+      set(BackgroundColor(QColor(0x4B23A0))).
+      set(TextColor(QColor(0x8D78EC))).
+      set(border_color(QColor(0x684BC7)));
     return style;
   }
 

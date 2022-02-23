@@ -16,6 +16,7 @@ Button::Button(QWidget* body, QWidget* parent)
       m_body(body),
       m_is_down(false) {
   setFocusPolicy(Qt::StrongFocus);
+  match(*m_body, Body());
   enclose(*this, *m_body);
 }
 
@@ -107,16 +108,16 @@ Button* Spire::make_icon_button(QImage icon, QString tooltip_text,
   auto button = new Button(new Box(button_icon), parent);
   auto tooltip = new Tooltip(tooltip_text, button);
   auto style = StyleSheet();
-  style.get(Body()).
+  style.get(Any() > Body()).
     set(BackgroundColor(QColor(Qt::transparent))).
     set(border(scale_width(1), QColor(Qt::transparent)));
-  style.get((Hover() || Press()) / Body()).
+  style.get((Hover() || Press()) > Body()).
     set(BackgroundColor(QColor(0xE0E0E0)));
-  style.get(FocusVisible() / Body()).set(border_color(QColor(0x4B23A0)));
-  style.get(Any() >> is_a<Icon>()).set(Fill(QColor(0x535353)));
-  style.get(Hover() >> is_a<Icon>()).set(Fill(QColor(0x4B23A0)));
-  style.get(Press() >> is_a<Icon>()).set(Fill(QColor(0x7E71B8)));
-  style.get(Disabled() >> is_a<Icon>()).set(Fill(QColor(0xC8C8C8)));
+  style.get(FocusVisible() > Body()).set(border_color(QColor(0x4B23A0)));
+  style.get(Any() > is_a<Icon>()).set(Fill(QColor(0x535353)));
+  style.get(Hover() > is_a<Icon>()).set(Fill(QColor(0x4B23A0)));
+  style.get(Press() > is_a<Icon>()).set(Fill(QColor(0x7E71B8)));
+  style.get(Disabled() > is_a<Icon>()).set(Fill(QColor(0xC8C8C8)));
   set_style(*button, std::move(style));
   return button;
 }
@@ -125,16 +126,15 @@ Button* Spire::make_delete_icon_button(QWidget* parent) {
   auto button = make_icon_button(
     imageFromSvg(":/Icons/delete.svg", scale(16, 16)), parent);
   update_style(*button, [&] (auto& style) {
-    style.get(Any() >> is_a<Box>()).
+    style.get(Any() > is_a<Box>()).
       set(BackgroundColor(QColor(Qt::transparent)));
-    style.get(Any() >> is_a<Icon>()).
+    style.get(Any() > is_a<Icon>()).
       set(BackgroundColor(QColor(Qt::transparent))).
       set(Fill(QColor(0xA0A0A0)));
-    style.get((!Disabled() && Hover() || Press()) / Body() >> is_a<Icon>()).
+    style.get((Hover() || Press()) > Body() > is_a<Icon>()).
       set(BackgroundColor(QColor(0xEBEBEB))).
-      set(Fill(QColor(0x4B, 0x23, 0xA0)));
-    style.get(Disabled() / Body() >> is_a<Icon>()).
-      set(Fill(QColor(0xD0, 0xD0, 0xD0)));
+      set(Fill(QColor(0x4B23A0)));
+    style.get(Disabled() > Body() > is_a<Icon>()).set(Fill(QColor(0xD0D0D0)));
   });
   return button;
 }
@@ -144,28 +144,19 @@ Button* Spire::make_label_button(const QString& label, QWidget* parent) {
   auto button = new Button(label_box, parent);
   button->setFixedHeight(scale_height(26));
   auto style = StyleSheet();
-  style.get(Body()).
+  style.get(Any() > Body()).
     set(TextAlign(Qt::Alignment(Qt::AlignCenter))).
     set(border(scale_width(1), QColor(Qt::transparent))).
     set(BackgroundColor(QColor(0xEBEBEB))).
     set(horizontal_padding(scale_width(8)));
-  style.get(Hover() / Body()).
+  style.get(Hover() > Body()).
     set(TextColor(QColor(0xFFFFFF))).
     set(BackgroundColor(QColor(0x4B23A0)));
-  style.get(Press() / Body()).
+  style.get(Press() > Body()).
     set(TextColor(QColor(0xFFFFFF))).
     set(BackgroundColor(QColor(0x7E71B8)));
-  style.get(FocusVisible() / Body()).
-    set(border_color(QColor(0x4B23A0)));
-  style.get(Disabled() / Body()).
-    set(TextColor(QColor(0xB8B8B8)));
+  style.get(FocusVisible() > Body()).set(border_color(QColor(0x4B23A0)));
+  style.get(Disabled() > Body()).set(TextColor(QColor(0xB8B8B8)));
   set_style(*button, std::move(style));
   return button;
-}
-
-SelectConnection BaseComponentFinder<Button, Body>::operator ()(
-    const Button& button, const Body& body,
-    const SelectionUpdateSignal& on_update) const {
-  on_update({&find_stylist(button.get_body())}, {});
-  return {};
 }

@@ -52,6 +52,7 @@ Box::Box(QWidget* body, Fit fit, QWidget* parent)
       m_body(body),
       m_fit(fit) {
   if(m_body) {
+    match(*m_body, Body());
     m_container = new QWidget(this);
     enclose(*m_container, *m_body, Qt::AlignTop | Qt::AlignLeft);
     setFocusProxy(m_body);
@@ -198,12 +199,4 @@ Box* Spire::make_input_box(QWidget* body, QWidget* parent) {
     set(horizontal_padding(0));
   set_style(*box, std::move(style));
   return box;
-}
-
-SelectConnection BaseComponentFinder<Box, Body>::operator ()(const Box& box,
-    const Body& body, const SelectionUpdateSignal& on_update) const {
-  if(auto body = box.get_body()) {
-    on_update({&find_stylist(*body)}, {});
-  }
-  return {};
 }
