@@ -1,5 +1,6 @@
 #ifndef SPIRE_SPLIT_VIEW_HPP
 #define SPIRE_SPLIT_VIEW_HPP
+#include <boost/signals2/connection.hpp>
 #include "Spire/Styles/StateSelector.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -14,6 +15,12 @@ namespace Spire {
 
       /** Selects the divider. */
       using Divider = Styles::StateSelector<void, struct DividerTag>;
+
+      /** Selects the primary component. */
+      using Primary = Styles::StateSelector<void, struct PrimaryTag>;
+
+      /** Selects the secondary component. */
+      using Secondary = Styles::StateSelector<void, struct SecondaryTag>;
 
       /**
        * Constructs a SplitView.
@@ -32,6 +39,9 @@ namespace Spire {
       QWidget* m_secondary;
       Box* m_divider;
       Qt::Orientation m_orientation;
+      boost::signals2::scoped_connection m_style_connection;
+
+      void on_style();
   };
 }
 

@@ -532,6 +532,13 @@ namespace {
     return {};
   }
 
+  const auto& get_orientation_property() {
+    static auto property = define_enum<Qt::Orientation>(
+      {{"HORIZONTAL", Qt::Orientation::Horizontal},
+       {"VERTICAL", Qt::Orientation::Vertical}});
+    return property;
+  }
+
   const auto& get_order_property() {
     static auto property = define_enum<TableHeaderItem::Order>(
       {{"NONE", TableHeaderItem::Order::NONE},
@@ -1958,10 +1965,8 @@ UiProfile Spire::make_list_view_profile() {
      {"WRAP", EdgeNavigation::WRAP}});
   properties.push_back(
     make_standard_enum_property("edge_navigation", navigation_property));
-  auto direction_property = define_enum<Qt::Orientation>(
-    {{"Vertical", Qt::Vertical}, {"Horizontal", Qt::Horizontal}});
   properties.push_back(
-    make_standard_enum_property("direction", direction_property));
+    make_standard_enum_property("direction", get_orientation_property()));
   auto overflow_property = define_enum<Overflow>(
     {{"WRAP", Overflow::WRAP}, {"NONE", Overflow::NONE}});
   properties.push_back(
@@ -2639,10 +2644,8 @@ UiProfile Spire::make_scroll_box_profile() {
 UiProfile Spire::make_scrollable_list_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
-  auto direction_property = define_enum<Qt::Orientation>(
-    {{"Vertical", Qt::Vertical}, {"Horizontal", Qt::Horizontal}});
   properties.push_back(
-    make_standard_enum_property("direction", direction_property));
+    make_standard_enum_property("direction", get_orientation_property()));
   auto overflow_property = define_enum<Overflow>(
     {{"NONE", Overflow::NONE}, {"WRAP", Overflow::WRAP}});
   properties.push_back(
@@ -2801,6 +2804,8 @@ UiProfile Spire::make_side_filter_panel_profile() {
 UiProfile Spire::make_split_view_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
+  properties.push_back(make_standard_enum_property(
+    "orientation", Qt::Orientation::Horizontal, get_orientation_property()));
   properties.push_back(make_standard_property("primary_minimum_width", 100));
   properties.push_back(make_standard_property("primary_maximum_width", 500));
   properties.push_back(make_standard_property("primary_minimum_height", 100));
@@ -2820,6 +2825,13 @@ UiProfile Spire::make_split_view_profile() {
     });
     auto view = new SplitView(*primary_box, *secondary_box);
     apply_widget_properties(view, profile.get_properties());
+    auto& orientation =
+      get<Qt::Orientation>("orientation", profile.get_properties());
+    orientation.connect_changed_signal([=] (auto orientation) {
+      update_style(*view, [&] (auto& style) {
+        style.get(Any()).set(orientation);
+      });
+    });
     auto& primary_minimum_width =
       get<int>("primary_minimum_width", profile.get_properties());
     primary_minimum_width.connect_changed_signal([=] (auto width) {
