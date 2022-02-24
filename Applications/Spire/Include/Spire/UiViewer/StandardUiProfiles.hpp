@@ -167,6 +167,9 @@ namespace Spire {
   /** Returns a UiProfile for the SideFilterPanel. */
   UiProfile make_side_filter_panel_profile();
 
+  /** Returns a UiProfile for the SplitView. */
+  UiProfile make_split_view_profile();
+
   /** Returns a UiProfile for the TabView. */
   UiProfile make_tab_view_profile();
 

@@ -64,6 +64,7 @@
 #include "Spire/Ui/SecurityListItem.hpp"
 #include "Spire/Ui/SideBox.hpp"
 #include "Spire/Ui/SideFilterPanel.hpp"
+#include "Spire/Ui/SplitView.hpp"
 #include "Spire/Ui/SubmenuItem.hpp"
 #include "Spire/Ui/TabView.hpp"
 #include "Spire/Ui/TableHeader.hpp"
@@ -2794,6 +2795,73 @@ UiProfile Spire::make_side_filter_panel_profile() {
   properties.push_back(make_standard_property<bool>("Sell"));
   auto profile = UiProfile("SideFilterPanel", properties, std::bind_front(
     setup_closed_filter_panel_profile<Side, make_side_filter_panel>));
+  return profile;
+}
+
+UiProfile Spire::make_split_view_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_property("primary_minimum_width", 100));
+  properties.push_back(make_standard_property("primary_maximum_width", 500));
+  properties.push_back(make_standard_property("primary_minimum_height", 100));
+  properties.push_back(make_standard_property("primary_maximum_height", 500));
+  properties.push_back(make_standard_property("secondary_minimum_width", 100));
+  properties.push_back(make_standard_property("secondary_maximum_width", 500));
+  properties.push_back(make_standard_property("secondary_minimum_height", 100));
+  properties.push_back(make_standard_property("secondary_maximum_height", 500));
+  auto profile = UiProfile("SplitView", properties, [] (auto& profile) {
+    auto primary_box = new Box();
+    update_style(*primary_box, [] (auto& style) {
+      style.get(Any()).set(BackgroundColor(QColor(0xFF0000)));
+    });
+    auto secondary_box = new Box();
+    update_style(*secondary_box, [] (auto& style) {
+      style.get(Any()).set(BackgroundColor(QColor(0x0000FF)));
+    });
+    auto view = new SplitView(*primary_box, *secondary_box);
+    apply_widget_properties(view, profile.get_properties());
+    auto& primary_minimum_width =
+      get<int>("primary_minimum_width", profile.get_properties());
+    primary_minimum_width.connect_changed_signal([=] (auto width) {
+      primary_box->setMinimumWidth(width);
+    });
+    auto& primary_maximum_width =
+      get<int>("primary_maximum_width", profile.get_properties());
+    primary_maximum_width.connect_changed_signal([=] (auto width) {
+      primary_box->setMaximumWidth(width);
+    });
+    auto& primary_minimum_height =
+      get<int>("primary_minimum_height", profile.get_properties());
+    primary_minimum_width.connect_changed_signal([=] (auto height) {
+      primary_box->setMinimumHeight(height);
+    });
+    auto& primary_maximum_height =
+      get<int>("primary_maximum_height", profile.get_properties());
+    primary_maximum_width.connect_changed_signal([=] (auto height) {
+      primary_box->setMaximumHeight(height);
+    });
+    auto& secondary_minimum_width =
+      get<int>("secondary_minimum_width", profile.get_properties());
+    secondary_minimum_width.connect_changed_signal([=] (auto width) {
+      secondary_box->setMinimumWidth(width);
+    });
+    auto& secondary_maximum_width =
+      get<int>("secondary_maximum_width", profile.get_properties());
+    secondary_maximum_width.connect_changed_signal([=] (auto width) {
+      secondary_box->setMaximumWidth(width);
+    });
+    auto& secondary_minimum_height =
+      get<int>("secondary_minimum_height", profile.get_properties());
+    secondary_minimum_height.connect_changed_signal([=] (auto height) {
+      secondary_box->setMinimumHeight(height);
+    });
+    auto& secondary_maximum_height =
+      get<int>("secondary_maximum_height", profile.get_properties());
+    secondary_maximum_height.connect_changed_signal([=] (auto height) {
+      secondary_box->setMaximumHeight(height);
+    });
+    return view;
+  });
   return profile;
 }
 
