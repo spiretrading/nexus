@@ -138,6 +138,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_input_box_profile());
   add(make_integer_box_profile());
   add(make_integer_filter_panel_profile());
+  add(make_key_filter_panel_profile());
   add(make_key_input_box_profile());
   add(make_key_tag_profile());
   add(make_label_button_profile());
