@@ -35,9 +35,10 @@ namespace Spire {
         QWidget& primary, QWidget& secondary, QWidget* parent = nullptr);
 
     private:
+      struct DividerBox;
       QWidget* m_primary;
       QWidget* m_secondary;
-      Box* m_divider;
+      DividerBox* m_divider;
       Qt::Orientation m_orientation;
       boost::signals2::scoped_connection m_style_connection;
 
