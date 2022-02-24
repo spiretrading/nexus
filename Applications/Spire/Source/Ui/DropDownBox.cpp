@@ -53,7 +53,8 @@ DropDownBox::DropDownBox(std::shared_ptr<AnyListModel> list,
     std::shared_ptr<CurrentModel> current,
     std::shared_ptr<SelectionModel> selection, ViewBuilder<> view_builder,
     QWidget* parent)
-    : QWidget(parent) {
+    : QWidget(parent),
+      m_is_modified(false) {
   m_list_view = new ListView(std::move(list), std::move(current),
     std::move(selection), std::move(view_builder));
   m_text_box = new TextBox();
@@ -86,7 +87,7 @@ DropDownBox::DropDownBox(std::shared_ptr<AnyListModel> list,
   on_current(get_current()->get());
   m_button->connect_clicked_signal([=] { on_click(); });
   m_current_connection = m_list_view->get_current()->connect_update_signal(
-      [=] (const auto& current) { on_current(current); });
+    [=] (const auto& current) { on_current(current); });
   m_submit_connection = m_list_view->connect_submit_signal(
     [=] (const auto& submission) { on_submit(submission); });
   m_button->installEventFilter(this);
@@ -194,6 +195,7 @@ void DropDownBox::on_current(const optional<int>& current) {
     }
     return QString();
   }();
+  m_is_modified = true;
   m_text_box->get_current()->set(text);
 }
 
@@ -212,8 +214,12 @@ void DropDownBox::revert_current() {
 }
 
 void DropDownBox::submit() {
+  if(!m_is_modified) {
+    return;
+  }
   m_submission = m_list_view->get_current()->get();
   if(m_submission) {
+    m_is_modified = false;
     m_submit_signal(m_list_view->get_list()->get(*m_submission));
   }
 }

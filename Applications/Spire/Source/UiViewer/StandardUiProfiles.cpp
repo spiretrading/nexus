@@ -1397,6 +1397,15 @@ UiProfile Spire::make_drop_down_box_profile() {
     read_only.connect_changed_signal([=] (auto is_read_only) {
       drop_down_box->set_read_only(is_read_only);
     });
+    auto current_slot = profile.make_event_slot<optional<std::any>>("Current");
+    drop_down_box->get_current()->connect_update_signal(
+      [=] (auto current) {
+        if(current) {
+          current_slot(drop_down_box->get_list()->get(*current));
+        } else {
+          current_slot(none);
+        }
+      });
     drop_down_box->connect_submit_signal(
       profile.make_event_slot<optional<std::any>>("Submit"));
     return drop_down_box;

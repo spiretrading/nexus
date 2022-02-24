@@ -122,6 +122,7 @@ namespace Styles {
       Button* m_button;
       DropDownList* m_drop_down_list;
       boost::optional<int> m_submission;
+      bool m_is_modified;
       boost::signals2::scoped_connection m_submit_connection;
       boost::signals2::scoped_connection m_current_connection;
 
