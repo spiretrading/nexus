@@ -1,6 +1,4 @@
 #include "Spire/Spire/ExcludingQueryModel.hpp"
-#include "Nexus/Definitions/Destination.hpp"
-#include "Nexus/Definitions/SecurityInfo.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 
 using namespace Nexus;
@@ -46,10 +44,6 @@ QtPromise<std::vector<std::any>> ExcludingQueryModel::submit(
   });
 }
 
-QString ExcludingQueryModel::to_string(const std::any& value) {
-  return displayTextAny(value);
-}
-
 void ExcludingQueryModel::add_exclusion(int index) {
   auto value = displayTextAny(m_exclusions->get(index));
   m_exclusion_set.insert(value);
@@ -65,4 +59,8 @@ void ExcludingQueryModel::on_operation(const AnyListModel::Operation& operation)
       m_exclusion_set.erase(m_exclusion_list[operation.m_index]);
       m_exclusion_list.erase(m_exclusion_list.begin() + operation.m_index);
     });
+}
+
+QString ExcludingQueryModel::to_string(const std::any& value) {
+  return displayTextAny(value);
 }
