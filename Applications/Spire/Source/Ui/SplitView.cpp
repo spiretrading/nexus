@@ -1,5 +1,7 @@
 #include "Spire/Ui/SplitView.hpp"
 #include <QBoxLayout>
+#include <QMoveEvent>
+#include <QResizeEvent>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Styles/Stylist.hpp"
 #include "Spire/Ui/Box.hpp"
@@ -24,7 +26,11 @@ namespace {
 
   struct Sash : QWidget {
     static const auto base_size = 12;
-    using QWidget::QWidget;
+    bool m_is_dragging;
+
+    Sash(QWidget* parent)
+      : QWidget(parent),
+        m_is_dragging(false) {}
 
     void set_orientation(Qt::Orientation orientation) {
       if(orientation == Qt::Orientation::Horizontal) {
@@ -32,6 +38,15 @@ namespace {
       } else {
         setCursor(Qt::SizeVerCursor);
       }
+    }
+
+    void mouseMoveEvent(QMouseEvent* event) override {
+    }
+
+    void mousePressEvent(QMouseEvent* event) override {
+    }
+
+    void mouseReleaseEvent(QMouseEvent* event) override {
     }
   };
 }
