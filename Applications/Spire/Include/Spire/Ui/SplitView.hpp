@@ -36,12 +36,14 @@ namespace Spire {
 
     private:
       struct DividerBox;
-      QWidget* m_primary;
-      QWidget* m_secondary;
+      struct Panel;
+      Panel* m_primary;
+      Panel* m_secondary;
       DividerBox* m_divider;
       Qt::Orientation m_orientation;
       boost::signals2::scoped_connection m_style_connection;
 
+      void on_drag(int offset);
       void on_style();
   };
 }

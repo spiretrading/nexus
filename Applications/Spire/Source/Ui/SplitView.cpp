@@ -1,11 +1,14 @@
 #include "Spire/Ui/SplitView.hpp"
+#include <boost/optional/optional.hpp>
 #include <QBoxLayout>
 #include <QMoveEvent>
 #include <QResizeEvent>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Styles/Stylist.hpp"
 #include "Spire/Ui/Box.hpp"
+#include "Spire/Ui/Layouts.hpp"
 
+using namespace boost;
 using namespace Spire;
 using namespace Spire::Styles;
 
@@ -25,15 +28,17 @@ namespace {
   }
 
   struct Sash : QWidget {
+    using DragSignal = Signal<void (int offset)>;
     static const auto base_size = 12;
-    bool m_is_dragging;
+    mutable DragSignal m_drag_signal;
+    Qt::Orientation m_orientation;
+    optional<int> m_drag_origin;
 
-    Sash(QWidget* parent)
-      : QWidget(parent),
-        m_is_dragging(false) {}
+    using QWidget::QWidget;
 
     void set_orientation(Qt::Orientation orientation) {
-      if(orientation == Qt::Orientation::Horizontal) {
+      m_orientation = orientation;
+      if(m_orientation == Qt::Orientation::Horizontal) {
         setCursor(Qt::SizeHorCursor);
       } else {
         setCursor(Qt::SizeVerCursor);
@@ -41,12 +46,36 @@ namespace {
     }
 
     void mouseMoveEvent(QMouseEvent* event) override {
+      if(!m_drag_origin) {
+        return QWidget::mouseMoveEvent(event);
+      }
+      if(m_orientation == Qt::Orientation::Horizontal) {
+        m_drag_signal(event->pos().x() - *m_drag_origin);
+        m_drag_origin = event->pos().x();
+      } else {
+        m_drag_signal(event->pos().y() - *m_drag_origin);
+        m_drag_origin = event->pos().y();
+      }
     }
 
     void mousePressEvent(QMouseEvent* event) override {
+      if(event->button() == Qt::LeftButton && !m_drag_origin) {
+        if(m_orientation == Qt::Orientation::Horizontal) {
+          m_drag_origin = event->pos().x();
+        } else {
+          m_drag_origin = event->pos().y();
+        }
+        return;
+      }
+      QWidget::mousePressEvent(event);
     }
 
     void mouseReleaseEvent(QMouseEvent* event) override {
+      if(event->button() == Qt::LeftButton && m_drag_origin) {
+        m_drag_origin = none;
+        return;
+      }
+      QWidget::mouseReleaseEvent(event);
     }
   };
 }
@@ -109,10 +138,20 @@ struct SplitView::DividerBox : Box {
   }
 };
 
+struct SplitView::Panel : QWidget {
+  QWidget* m_body;
+
+  Panel(QWidget& body)
+      : m_body(&body) {
+    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    enclose(*this, *m_body);
+  }
+};
+
 SplitView::SplitView(QWidget& primary, QWidget& secondary, QWidget* parent)
     : QWidget(parent),
-      m_primary(&primary),
-      m_secondary(&secondary),
+      m_primary(new Panel(primary)),
+      m_secondary(new Panel(secondary)),
       m_orientation(Qt::Orientation::Horizontal) {
   match(*m_primary, Primary());
   match(*m_secondary, Secondary());
@@ -121,6 +160,8 @@ SplitView::SplitView(QWidget& primary, QWidget& secondary, QWidget* parent)
   update_style(*m_divider, [] (auto& style) {
     style.get(Any()).set(BackgroundColor(QColor(0xC8C8C8)));
   });
+  m_divider->m_sash->m_drag_signal.connect(
+    std::bind_front(&SplitView::on_drag, this));
   auto layout = new QBoxLayout(to_direction(m_orientation), this);
   layout->setSpacing(0);
   layout->setContentsMargins({});
@@ -137,21 +178,32 @@ SplitView::SplitView(QWidget& primary, QWidget& secondary, QWidget* parent)
     connect_style_signal(*this, std::bind_front(&SplitView::on_style, this));
 }
 
+void SplitView::on_drag(int offset) {
+  if(m_orientation == Qt::Orientation::Horizontal) {
+    if(offset < 0) {
+      auto available_width =
+        m_primary->width() - m_primary->m_body->minimumWidth();
+      auto width = std::max(
+        m_primary->m_body->minimumWidth(), available_width + offset);
+      m_primary->setFixedWidth(width);
+    }
+  }
+}
+
 void SplitView::on_style() {
   auto& stylist = find_stylist(*this);
   for(auto& property : stylist.get_computed_block()) {
-    property.visit(
-      [&] (EnumProperty<Qt::Orientation> orientation) {
-        stylist.evaluate(orientation, [=] (auto orientation) {
-          if(orientation == m_orientation) {
-            return;
-          }
-          m_orientation = orientation;
-          m_divider->set_orientation(m_orientation);
-          static_cast<QBoxLayout*>(layout())->setDirection(
-            to_direction(m_orientation));
-          layout()->setAlignment(to_alignment(m_orientation));
-        });
+    property.visit([&] (EnumProperty<Qt::Orientation> orientation) {
+      stylist.evaluate(orientation, [=] (auto orientation) {
+        if(orientation == m_orientation) {
+          return;
+        }
+        m_orientation = orientation;
+        m_divider->set_orientation(m_orientation);
+        static_cast<QBoxLayout*>(layout())->setDirection(
+          to_direction(m_orientation));
+        layout()->setAlignment(to_alignment(m_orientation));
       });
+    });
   }
 }
