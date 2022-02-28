@@ -30,7 +30,17 @@ void LocalOrderImbalanceIndicatorTableModel::add(
 }
 
 void LocalOrderImbalanceIndicatorTableModel::remove(const Security& security) {
-
+  if(auto removed_imbalance = m_imbalances.find(security);
+      removed_imbalance != m_imbalances.end()) {
+    auto removed_index = removed_imbalance->second.m_row_index;
+    for(auto& imbalance : m_imbalances) {
+      if(imbalance.second.m_row_index > removed_index) {
+        --imbalance.second.m_row_index;
+      }
+    }
+    m_imbalances.erase(removed_imbalance->second.m_imbalance.m_security);
+    m_table.remove(removed_index);
+  }
 }
 
 int LocalOrderImbalanceIndicatorTableModel::get_row_size() const {

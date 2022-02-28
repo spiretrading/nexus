@@ -44,8 +44,9 @@ namespace Spire {
         const Nexus::OrderImbalance& current, MappedImbalance& previous);
       std::vector<std::any> make_row(
         const Nexus::OrderImbalance& imbalance) const;
-      std::vector<boost::optional<std::any>> make_row_update(
-        const OrderImbalance& current, const OrderImbalance& previous) const;
+      std::vector<boost::optional<std::any>>
+        make_row_update(const Nexus::OrderImbalance& current,
+          const Nexus::OrderImbalance& previous) const;
   };
 }
 
