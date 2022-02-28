@@ -29,8 +29,10 @@ namespace {
 
   struct Sash : QWidget {
     using DragSignal = Signal<void (int offset)>;
-    static const auto base_size = 12;
+    using ResetSignal = Signal<void ()>;
+    static const auto base_size = 4;
     mutable DragSignal m_drag_signal;
+    mutable ResetSignal m_reset_signal;
     Qt::Orientation m_orientation;
     int m_last_mouse_position;
     optional<int> m_drag_origin;
@@ -44,6 +46,25 @@ namespace {
       } else {
         setCursor(Qt::SizeVerCursor);
       }
+    }
+
+    void changeEvent(QEvent* event) override {
+      if(isEnabled()) {
+        if(m_orientation == Qt::Orientation::Horizontal) {
+          setCursor(Qt::SizeHorCursor);
+        } else {
+          setCursor(Qt::SizeVerCursor);
+        }
+      } else {
+        setCursor(QCursor());
+      }
+    }
+
+    void mouseDoubleClickEvent(QMouseEvent* event) override {
+      if(event->button() == Qt::LeftButton) {
+        m_reset_signal();
+      }
+      QWidget::mouseDoubleClickEvent(event);
     }
 
     void mouseMoveEvent(QMouseEvent* event) override {
@@ -136,7 +157,7 @@ struct SplitView::DividerBox : Box {
       m_sash->move(
         0, event->pos().y() - scale_height((Sash::base_size - base_size) / 2));
     }
-    QWidget::moveEvent(event);
+    Box::moveEvent(event);
   }
 
   void resizeEvent(QResizeEvent* event) override {
@@ -147,17 +168,26 @@ struct SplitView::DividerBox : Box {
       m_sash->resize(event->size().width(),
         event->size().height() + scale_height(Sash::base_size - base_size));
     }
-    QWidget::resizeEvent(event);
+    Box::resizeEvent(event);
   }
 };
 
 struct SplitView::Panel : QWidget {
+  using LayoutSignal = Signal<void ()>;
+  mutable LayoutSignal m_layout_signal;
   QWidget* m_body;
 
   Panel(QWidget& body)
       : m_body(&body) {
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     enclose(*this, *m_body);
+  }
+
+  bool event(QEvent* event) override {
+    if(event->type() == QEvent::LayoutRequest) {
+      m_layout_signal();
+    }
+    return QWidget::event(event);
   }
 };
 
@@ -175,6 +205,8 @@ SplitView::SplitView(QWidget& primary, QWidget& secondary, QWidget* parent)
   });
   m_divider->m_sash->m_drag_signal.connect(
     std::bind_front(&SplitView::on_drag, this));
+  m_divider->m_sash->m_reset_signal.connect(
+    std::bind_front(&SplitView::on_reset, this));
   auto layout = new QBoxLayout(to_direction(m_orientation), this);
   layout->setSpacing(0);
   layout->setContentsMargins({});
@@ -182,13 +214,32 @@ SplitView::SplitView(QWidget& primary, QWidget& secondary, QWidget* parent)
   layout->addWidget(m_primary);
   layout->addWidget(m_divider);
   layout->addWidget(m_secondary);
+  m_primary->m_layout_signal.connect(
+    std::bind_front(&SplitView::update_divider_state, this));
   m_primary->stackUnder(m_divider->m_sash);
+  m_secondary->m_layout_signal.connect(
+    std::bind_front(&SplitView::update_divider_state, this));
   m_secondary->stackUnder(m_divider->m_sash);
+  update_divider_state();
   update_style(*this, [] (auto& style) {
     style.get(Any()).set(Qt::Orientation::Horizontal);
   });
   m_style_connection =
     connect_style_signal(*this, std::bind_front(&SplitView::on_style, this));
+}
+
+void SplitView::update_divider_state() {
+  auto disabled = m_orientation == Qt::Orientation::Horizontal && (
+    m_primary->m_body->minimumWidth() == m_primary->m_body->maximumWidth() ||
+    m_secondary->m_body->minimumWidth() ==
+    m_secondary->m_body->maximumWidth()) ||
+    m_orientation == Qt::Orientation::Vertical && (
+    m_primary->m_body->minimumHeight() ==
+    m_primary->m_body->maximumHeight() ||
+    m_secondary->m_body->minimumHeight() ==
+    m_secondary->m_body->maximumHeight());
+  m_divider->setDisabled(disabled);
+  m_divider->m_sash->setDisabled(disabled);
 }
 
 void SplitView::on_drag(int offset) {
@@ -219,6 +270,16 @@ void SplitView::on_drag(int offset) {
   }
 }
 
+void SplitView::on_reset() {
+  if(m_orientation == Qt::Orientation::Horizontal) {
+    m_primary->setFixedWidth(std::max(m_primary->m_body->minimumWidth(),
+      (width() - DividerBox::base_size) / 2));
+  } else {
+    m_primary->setFixedHeight(std::max(m_primary->m_body->minimumHeight(),
+      (height() - DividerBox::base_size) / 2));
+  }
+}
+
 void SplitView::on_style() {
   auto& stylist = find_stylist(*this);
   for(auto& property : stylist.get_computed_block()) {
@@ -229,6 +290,7 @@ void SplitView::on_style() {
         }
         m_orientation = orientation;
         m_divider->set_orientation(m_orientation);
+        update_divider_state();
         static_cast<QBoxLayout*>(layout())->setDirection(
           to_direction(m_orientation));
         layout()->setAlignment(to_alignment(m_orientation));

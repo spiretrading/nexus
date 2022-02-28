@@ -43,7 +43,9 @@ namespace Spire {
       Qt::Orientation m_orientation;
       boost::signals2::scoped_connection m_style_connection;
 
+      void update_divider_state();
       void on_drag(int offset);
+      void on_reset();
       void on_style();
   };
 }
