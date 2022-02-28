@@ -1,5 +1,5 @@
-#ifndef LOCAL_ORDER_IMBALANCE_INDICATOR_TABLE_MODEL_HPP
-#define LOCAL_ORDER_IMBALANCE_INDICATOR_TABLE_MODEL_HPP
+#ifndef SPIRE_LOCAL_ORDER_IMBALANCE_INDICATOR_TABLE_MODEL_HPP
+#define SPIRE_LOCAL_ORDER_IMBALANCE_INDICATOR_TABLE_MODEL_HPP
 #include "Nexus/Definitions/OrderImbalance.hpp"
 #include "Spire/Ui/ArrayTableModel.hpp"
 
@@ -10,9 +10,10 @@ namespace Spire {
     public:
 
       /**
-       * Appends the given OrderImbalance to the table, or, updates the
-       * existing imbalance if the associated security has an older
-       * imbalance in the table.
+       * Appends the given OrderImbalance to the table if an imbalance with the
+       * same security is not already in the table, or, updates the existing
+       * imbalance iff the given imbalance is newer than the existing imbalance
+       * for the same security.
        * @param imbalance The imbalance to add to the model.
        */
       void add(const Nexus::OrderImbalance& imbalance);
