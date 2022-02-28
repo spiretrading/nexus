@@ -19,13 +19,12 @@ namespace {
 void LocalOrderImbalanceIndicatorTableModel::add(
     const OrderImbalance& imbalance) {
   auto& previous_imbalance = m_imbalances[imbalance.m_security];
-  if(previous_imbalance.m_imbalance != OrderImbalance()) {
-    if(previous_imbalance.m_imbalance.m_timestamp < imbalance.m_timestamp) {
-      set_row(imbalance, previous_imbalance);
-    }
-  } else {
+  if(previous_imbalance.m_imbalance == OrderImbalance()) {
     previous_imbalance = {get_row_size(), imbalance};
     m_table.push(make_row(imbalance));
+  } else if(
+      previous_imbalance.m_imbalance.m_timestamp < imbalance.m_timestamp) {
+    set_row(imbalance, previous_imbalance);
   }
 }
 
