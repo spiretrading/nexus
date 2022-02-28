@@ -2817,11 +2817,11 @@ UiProfile Spire::make_split_view_profile() {
   auto profile = UiProfile("SplitView", properties, [] (auto& profile) {
     auto primary_box = new Box();
     update_style(*primary_box, [] (auto& style) {
-      style.get(Any()).set(BackgroundColor(QColor(0xFF0000)));
+      style.get(Any()).set(BackgroundColor(QColor(0xFFDFBF)));
     });
     auto secondary_box = new Box();
     update_style(*secondary_box, [] (auto& style) {
-      style.get(Any()).set(BackgroundColor(QColor(0x0000FF)));
+      style.get(Any()).set(BackgroundColor(QColor(0xFFFFBF)));
     });
     auto view = new SplitView(*primary_box, *secondary_box);
     auto& width = get<int>("width", profile.get_properties());

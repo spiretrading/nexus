@@ -13,6 +13,8 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  using Drag = StateSelector<void, struct DragTag>;
+
   QBoxLayout::Direction to_direction(Qt::Orientation orientation) {
     if(orientation == Qt::Orientation::Horizontal) {
       return QBoxLayout::Direction::LeftToRight;
@@ -99,6 +101,7 @@ namespace {
           m_last_mouse_position = event->globalPos().y();
           m_drag_origin = event->pos().y();
         }
+        match(*this, Drag());
         return;
       }
       QWidget::mousePressEvent(event);
@@ -107,6 +110,7 @@ namespace {
     void mouseReleaseEvent(QMouseEvent* event) override {
       if(event->button() == Qt::LeftButton && m_drag_origin) {
         m_drag_origin = none;
+        unmatch(*this, Drag());
         return;
       }
       QWidget::mouseReleaseEvent(event);
@@ -223,6 +227,9 @@ SplitView::SplitView(QWidget& primary, QWidget& secondary, QWidget* parent)
   update_divider_state();
   update_style(*this, [] (auto& style) {
     style.get(Any()).set(Qt::Orientation::Horizontal);
+    style.get(
+        Any() > (is_a<Sash>() && (Hover() || Drag())) % is_a<DividerBox>()).
+      set(BackgroundColor(QColor(0x4B23A0)));
   });
   m_style_connection =
     connect_style_signal(*this, std::bind_front(&SplitView::on_style, this));
