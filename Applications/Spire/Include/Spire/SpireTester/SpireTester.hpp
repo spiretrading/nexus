@@ -12,7 +12,8 @@
 #endif
 
 namespace Spire {
-  class test_chart_model;
+  class TableOperationLog;
+  class TestChartModel;
 
   /**
    * Runs a unit test that use QtPromises.
