@@ -32,6 +32,7 @@ namespace {
     static const auto base_size = 12;
     mutable DragSignal m_drag_signal;
     Qt::Orientation m_orientation;
+    int m_last_mouse_position;
     optional<int> m_drag_origin;
 
     using QWidget::QWidget;
@@ -50,19 +51,31 @@ namespace {
         return QWidget::mouseMoveEvent(event);
       }
       if(m_orientation == Qt::Orientation::Horizontal) {
-        m_drag_signal(event->pos().x() - *m_drag_origin);
-        m_drag_origin = event->pos().x();
+        if(event->globalPos().x() - m_last_mouse_position < 0 &&
+            event->pos().x() < *m_drag_origin ||
+            event->globalPos().x() - m_last_mouse_position > 0 &&
+            event->pos().x() > *m_drag_origin) {
+          m_drag_signal(event->globalPos().x() - m_last_mouse_position);
+        }
+        m_last_mouse_position = event->globalPos().x();
       } else {
-        m_drag_signal(event->pos().y() - *m_drag_origin);
-        m_drag_origin = event->pos().y();
+        if(event->globalPos().y() - m_last_mouse_position < 0 &&
+            event->pos().y() < *m_drag_origin ||
+            event->globalPos().y() - m_last_mouse_position > 0 &&
+            event->pos().y() > *m_drag_origin) {
+          m_drag_signal(event->globalPos().y() - m_last_mouse_position);
+        }
+        m_last_mouse_position = event->globalPos().y();
       }
     }
 
     void mousePressEvent(QMouseEvent* event) override {
       if(event->button() == Qt::LeftButton && !m_drag_origin) {
         if(m_orientation == Qt::Orientation::Horizontal) {
+          m_last_mouse_position = event->globalPos().x();
           m_drag_origin = event->pos().x();
         } else {
+          m_last_mouse_position = event->globalPos().y();
           m_drag_origin = event->pos().y();
         }
         return;
@@ -180,13 +193,29 @@ SplitView::SplitView(QWidget& primary, QWidget& secondary, QWidget* parent)
 
 void SplitView::on_drag(int offset) {
   if(m_orientation == Qt::Orientation::Horizontal) {
-    if(offset < 0) {
-      auto available_width =
-        m_primary->width() - m_primary->m_body->minimumWidth();
-      auto width = std::max(
-        m_primary->m_body->minimumWidth(), available_width + offset);
-      m_primary->setFixedWidth(width);
-    }
+    auto width = [&] {
+      if(offset < 0) {
+        return std::max({m_primary->m_body->minimumWidth(),
+          m_primary->width() + offset, size().width() - m_divider->width() -
+            m_secondary->m_body->maximumWidth()});
+      }
+      return std::min({m_primary->m_body->maximumWidth(),
+        m_primary->width() + offset, size().width() - m_divider->width() -
+          m_secondary->m_body->minimumWidth()});
+    }();
+    m_primary->setFixedWidth(width);
+  } else {
+    auto height = [&] {
+      if(offset < 0) {
+        return std::max({m_primary->m_body->minimumHeight(),
+          m_primary->height() + offset, size().height() - m_divider->height() -
+            m_secondary->m_body->maximumHeight()});
+      }
+      return std::min({m_primary->m_body->maximumHeight(),
+        m_primary->height() + offset, size().height() - m_divider->height() -
+          m_secondary->m_body->minimumHeight()});
+    }();
+    m_primary->setFixedHeight(height);
   }
 }
 
