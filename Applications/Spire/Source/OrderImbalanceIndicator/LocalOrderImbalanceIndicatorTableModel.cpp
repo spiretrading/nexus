@@ -81,10 +81,10 @@ std::vector<std::any> LocalOrderImbalanceIndicatorTableModel::make_row(
     imbalance.m_timestamp.date(), imbalance.m_timestamp.time_of_day()};
 }
 
-std::vector<boost::optional<std::any>>
+std::vector<optional<std::any>>
     LocalOrderImbalanceIndicatorTableModel::make_row_update(
       const OrderImbalance& current, const OrderImbalance& previous) const {
-  return {boost::none, get_cell_update(current.m_side, previous.m_side),
+  return {none, get_cell_update(current.m_side, previous.m_side),
     get_cell_update(current.m_size, previous.m_size),
     get_cell_update(current.m_referencePrice, previous.m_referencePrice),
     get_cell_update(current.m_size * current.m_referencePrice,
