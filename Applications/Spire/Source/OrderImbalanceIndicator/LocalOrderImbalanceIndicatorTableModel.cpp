@@ -38,7 +38,7 @@ void LocalOrderImbalanceIndicatorTableModel::remove(const Security& security) {
         --imbalance.second.m_row_index;
       }
     }
-    m_imbalances.erase(removed_imbalance->second.m_imbalance.m_security);
+    m_imbalances.erase(removed_imbalance);
     m_table.remove(removed_index);
   }
 }
