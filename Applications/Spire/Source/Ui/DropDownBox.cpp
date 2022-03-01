@@ -127,6 +127,23 @@ connection DropDownBox::connect_submit_signal(
 
 bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
   if(watched == m_button) {
+    if(event->type() == QEvent::KeyPress) {
+      auto& key_event = *static_cast<const QKeyEvent*>(event);
+      if(key_event.key() == Qt::Key_Enter ||
+          key_event.key() == Qt::Key_Return) {
+        if(!is_read_only()) {
+          m_is_modified = true;
+          submit();
+        }
+        return true;
+      }
+    } else if(event->type() == QEvent::KeyRelease) {
+      auto& key_event = *static_cast<const QKeyEvent*>(event);
+      if(key_event.key() == Qt::Key_Enter ||
+          key_event.key() == Qt::Key_Return) {
+        return true;
+      }
+    }
     if(event->type() == QEvent::FocusOut) {
       if(!is_read_only() && !m_drop_down_list->isVisible()) {
         submit();
