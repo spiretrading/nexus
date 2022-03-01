@@ -2,7 +2,6 @@
 #define SPIRE_ORDER_IMBALANCE_INDICATOR_TABLE_MODEL_HPP
 #include "Spire/OrderImbalanceIndicator/LocalOrderImbalanceIndicatorTableModel.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorModel.hpp"
-#include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorModelSubscriber.hpp"
 #include "Spire/Ui/ArrayTableModel.hpp"
 
 namespace Spire {

@@ -29,6 +29,12 @@ namespace Spire {
       });
     app.exec();
   }
+
+  /**
+   * Processes events in the Qt event loop until the given predicate returns
+   * true.
+   */
+  void wait_until(const std::function<bool ()>& predicate);
 }
 
 #endif
