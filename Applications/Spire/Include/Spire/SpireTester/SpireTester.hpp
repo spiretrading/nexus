@@ -12,7 +12,6 @@
 #endif
 
 namespace Spire {
-  class TableOperationLog;
   class TestChartModel;
 
   /**
