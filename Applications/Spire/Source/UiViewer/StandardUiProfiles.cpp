@@ -2867,12 +2867,12 @@ UiProfile Spire::make_split_view_profile() {
     });
     auto& primary_minimum_height =
       get<int>("primary_minimum_height", profile.get_properties());
-    primary_minimum_width.connect_changed_signal([=] (auto height) {
+    primary_minimum_height.connect_changed_signal([=] (auto height) {
       primary_box->setMinimumHeight(scale_height(height));
     });
     auto& primary_maximum_height =
       get<int>("primary_maximum_height", profile.get_properties());
-    primary_maximum_width.connect_changed_signal([=] (auto height) {
+    primary_maximum_height.connect_changed_signal([=] (auto height) {
       if(height < 0) {
         primary_box->setMaximumHeight(QWIDGETSIZE_MAX);
       } else {

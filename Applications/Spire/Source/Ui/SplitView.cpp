@@ -65,6 +65,7 @@ namespace {
     void mouseDoubleClickEvent(QMouseEvent* event) override {
       if(event->button() == Qt::LeftButton) {
         m_reset_signal();
+        return;
       }
       QWidget::mouseDoubleClickEvent(event);
     }
