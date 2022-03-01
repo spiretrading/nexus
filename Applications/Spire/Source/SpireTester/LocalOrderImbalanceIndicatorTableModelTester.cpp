@@ -1,7 +1,6 @@
 #include <doctest/doctest.h>
 #include <queue>
 #include "Spire/OrderImbalanceIndicator/LocalOrderImbalanceIndicatorTableModel.hpp"
-#include "Spire/SpireTester/TableOperationLog.hpp"
 
 using namespace boost::gregorian;
 using namespace boost::posix_time;
