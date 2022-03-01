@@ -1,12 +1,5 @@
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorTableModel.hpp"
-#include <chrono>
-#include <boost/date_time/gregorian/gregorian.hpp>
-#include <Beam/Queues/Publisher.hpp>
 
-using namespace Beam::Threading;
-using namespace Beam::TimeService;
-using namespace boost;
-using namespace boost::posix_time;
 using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
