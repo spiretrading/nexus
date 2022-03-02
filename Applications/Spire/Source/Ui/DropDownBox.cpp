@@ -21,6 +21,17 @@ using namespace Spire::Styles;
 namespace {
   auto DEFAULT_STYLE() {
     auto style = StyleSheet();
+    style.get(ReadOnly() > is_a<TextBox>()).
+      set(BackgroundColor(QColor(Qt::transparent))).
+      set(border_color(QColor(Qt::transparent))).
+      set(horizontal_padding(0));
+    style.get(Disabled() > is_a<TextBox>()).
+      set(BackgroundColor(QColor(0xF5F5F5))).
+      set(border_color(QColor(0xC8C8C8))).
+      set(TextColor(QColor(0xC8C8C8)));
+    style.get((ReadOnly() && Disabled()) > is_a<TextBox>()).
+      set(BackgroundColor(QColor(Qt::transparent))).
+      set(border_color(QColor(Qt::transparent)));
     style.get(Any() > is_a<Icon>()).
       set(Fill(QColor(0x333333))).
       set(BackgroundColor(QColor(Qt::transparent)));
@@ -53,12 +64,21 @@ DropDownBox::DropDownBox(std::shared_ptr<AnyListModel> list,
     std::shared_ptr<CurrentModel> current,
     std::shared_ptr<SelectionModel> selection, ViewBuilder<> view_builder,
     QWidget* parent)
-    : QWidget(parent) {
+    : QWidget(parent),
+      m_is_read_only(false),
+      m_is_modified(false) {
   m_list_view = new ListView(std::move(list), std::move(current),
     std::move(selection), std::move(view_builder));
   m_text_box = new TextBox();
   m_text_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_text_box->setFocusPolicy(Qt::NoFocus);
+  m_text_box->set_read_only(true);
+  m_text_box->setDisabled(true);
+  update_style(*m_text_box, [] (auto& style) {
+    style.get(ReadOnly()).clear();
+    style.get(Disabled()).clear();
+    style.get(ReadOnly() && Disabled()).clear();
+  });
   auto layers = new LayeredWidget();
   layers->add(m_text_box);
   auto icon_layer = new QWidget();
@@ -86,7 +106,7 @@ DropDownBox::DropDownBox(std::shared_ptr<AnyListModel> list,
   on_current(get_current()->get());
   m_button->connect_clicked_signal([=] { on_click(); });
   m_current_connection = m_list_view->get_current()->connect_update_signal(
-      [=] (const auto& current) { on_current(current); });
+    [=] (const auto& current) { on_current(current); });
   m_submit_connection = m_list_view->connect_submit_signal(
     [=] (const auto& submission) { on_submit(submission); });
   m_button->installEventFilter(this);
@@ -107,12 +127,15 @@ const std::shared_ptr<DropDownBox::SelectionModel>&
 }
 
 bool DropDownBox::is_read_only() const {
-  return m_text_box->is_read_only();
+  return m_is_read_only;
 }
 
 void DropDownBox::set_read_only(bool is_read_only) {
-  m_text_box->set_read_only(is_read_only);
-  if(is_read_only) {
+  if(m_is_read_only == is_read_only) {
+    return;
+  }
+  m_is_read_only = is_read_only;
+  if(m_is_read_only) {
     match(*this, ReadOnly());
   } else {
     unmatch(*this, ReadOnly());
@@ -126,6 +149,23 @@ connection DropDownBox::connect_submit_signal(
 
 bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
   if(watched == m_button) {
+    if(event->type() == QEvent::KeyPress) {
+      auto& key_event = *static_cast<const QKeyEvent*>(event);
+      if(key_event.key() == Qt::Key_Enter ||
+          key_event.key() == Qt::Key_Return) {
+        if(!is_read_only()) {
+          m_is_modified = true;
+          submit();
+        }
+        return true;
+      }
+    } else if(event->type() == QEvent::KeyRelease) {
+      auto& key_event = *static_cast<const QKeyEvent*>(event);
+      if(key_event.key() == Qt::Key_Enter ||
+          key_event.key() == Qt::Key_Return) {
+        return true;
+      }
+    }
     if(event->type() == QEvent::FocusOut) {
       if(!is_read_only() && !m_drop_down_list->isVisible()) {
         submit();
@@ -194,6 +234,7 @@ void DropDownBox::on_current(const optional<int>& current) {
     }
     return QString();
   }();
+  m_is_modified = true;
   m_text_box->get_current()->set(text);
 }
 
@@ -212,8 +253,12 @@ void DropDownBox::revert_current() {
 }
 
 void DropDownBox::submit() {
+  if(!m_is_modified) {
+    return;
+  }
   m_submission = m_list_view->get_current()->get();
   if(m_submission) {
+    m_is_modified = false;
     m_submit_signal(m_list_view->get_list()->get(*m_submission));
   }
 }
