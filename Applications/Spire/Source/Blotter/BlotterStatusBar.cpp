@@ -6,7 +6,8 @@
 using namespace Spire;
 using namespace Spire::Styles;
 
-BlotterStatusBar::BlotterStatusBar(QWidget* parent) {
+BlotterStatusBar::BlotterStatusBar(
+    std::shared_ptr<BlotterStatusModel> status, QWidget* parent) {
   setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   setFixedHeight(scale_height(26));
   m_box = new Box(nullptr, nullptr);

@@ -1,5 +1,6 @@
 #include "Spire/Blotter/BlotterWindow.hpp"
 #include "Spire/Blotter/BlotterExecutionsView.hpp"
+#include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/Blotter/BlotterOrderLogView.hpp"
 #include "Spire/Blotter/BlotterPositionsView.hpp"
 #include "Spire/Blotter/BlotterProfitAndLossView.hpp"
@@ -13,7 +14,8 @@
 using namespace Spire;
 using namespace Spire::Styles;
 
-BlotterWindow::BlotterWindow(QWidget* parent)
+BlotterWindow::BlotterWindow(
+    std::shared_ptr<BlotterModel> blotter, QWidget* parent)
     : Window(parent) {
   setWindowTitle("Blotter");
   set_svg_icon(":/Icons/blotter.svg");
@@ -35,6 +37,6 @@ BlotterWindow::BlotterWindow(QWidget* parent)
   });
   auto layout = make_vbox_layout(body);
   layout->addWidget(split_view);
-  auto status_bar = new BlotterStatusBar();
+  auto status_bar = new BlotterStatusBar(blotter->get_status());
   layout->addWidget(status_bar);
 }
