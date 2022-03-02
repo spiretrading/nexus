@@ -383,6 +383,10 @@ const std::shared_ptr<OptionalDecimalModel>& DecimalBox::get_current() const {
   return m_current;
 }
 
+std::shared_ptr<const TextModel> DecimalBox::get_text() const {
+  return m_text_box->get_current();
+}
+
 void DecimalBox::set_placeholder(const QString& value) {
   m_text_box->set_placeholder(value);
 }
