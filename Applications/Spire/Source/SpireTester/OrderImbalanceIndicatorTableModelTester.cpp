@@ -43,6 +43,13 @@ namespace {
       operation, std::forward<F>(f)..., [] (const auto&) { REQUIRE(false); });
   }
 
+  void wait_until(const std::function<bool ()>& predicate) {
+    while(!predicate()) {
+      QApplication::processEvents(QEventLoop::WaitForMoreEvents);
+      QCoreApplication::sendPostedEvents();
+    }
+  }
+
   auto A100 = make_imbalance("A", 100);
   auto A300 = make_imbalance("A", 300);
   auto B150 = make_imbalance("B", 150);
