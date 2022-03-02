@@ -81,6 +81,7 @@ namespace Spire {
   class TextBox;
   class TimeBox;
   class TitleBar;
+  class ToggleButton;
   class Tooltip;
   class TransitionWidget;
   class TranslatedTableModel;
