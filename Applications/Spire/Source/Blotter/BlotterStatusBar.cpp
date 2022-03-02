@@ -76,7 +76,8 @@ namespace {
 }
 
 BlotterStatusBar::BlotterStatusBar(
-    std::shared_ptr<BlotterStatusModel> status, QWidget* parent) {
+    std::shared_ptr<BlotterStatusModel> status, QWidget* parent)
+    : m_status(std::move(status)) {
   setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   setFixedHeight(scale_height(26));
   auto body = new QWidget();
@@ -85,20 +86,20 @@ BlotterStatusBar::BlotterStatusBar(
   layout->setSpacing(scale_width(12));
   layout->setAlignment(Qt::AlignVCenter);
   layout->addWidget(new StatusLabel({tr("Total P/L"), tr("Tot P/L"), tr("P/L")},
-    status->get_total_profit_and_loss()));
+    m_status->get_total_profit_and_loss()));
   layout->addWidget(new StatusLabel(
     {tr("Unrealized P/L"), tr("Unreal P/L"), tr("U P/L")},
-    status->get_unrealized_profit_and_loss()));
+    m_status->get_unrealized_profit_and_loss()));
   layout->addWidget(new StatusLabel(
     {tr("Realized P/L"), tr("Real P/L"), tr("R P/L")},
-    status->get_realized_profit_and_loss()));
-  layout->addWidget(new StatusLabel({tr("Fees")}, status->get_fees()));
+    m_status->get_realized_profit_and_loss()));
+  layout->addWidget(new StatusLabel({tr("Fees")}, m_status->get_fees()));
   layout->addWidget(
-    new StatusLabel({tr("Cost Basis"), tr("CB")}, status->get_cost_basis()));
-  layout->addWidget(new StatusLabel(
-    {tr("Buying Power"), tr("Buy Pwr"), tr("BP")}, status->get_buying_power()));
+    new StatusLabel({tr("Cost Basis"), tr("CB")}, m_status->get_cost_basis()));
+  layout->addWidget(new StatusLabel({tr("Buying Power"), tr("Buy Pwr"),
+    tr("BP")}, m_status->get_buying_power()));
   layout->addWidget(
-    new StatusLabel({tr("Net Loss"), tr("NL")}, status->get_net_loss()));
+    new StatusLabel({tr("Net Loss"), tr("NL")}, m_status->get_net_loss()));
   m_box = new Box(body);
   enclose(*this, *m_box);
   proxy_style(*this, *m_box);

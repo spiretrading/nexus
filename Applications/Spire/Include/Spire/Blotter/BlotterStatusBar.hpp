@@ -20,6 +20,7 @@ namespace Spire {
         std::shared_ptr<BlotterStatusModel> status, QWidget* parent = nullptr);
 
     private:
+      std::shared_ptr<BlotterStatusModel> m_status;
       Box* m_box;
   };
 }

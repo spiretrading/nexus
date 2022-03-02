@@ -16,8 +16,8 @@ using namespace Spire::Styles;
 
 BlotterWindow::BlotterWindow(
     std::shared_ptr<BlotterModel> blotter, QWidget* parent)
-    : Window(parent) {
-  setWindowTitle("Blotter");
+    : Window(parent),
+      m_blotter(std::move(blotter)) {
   set_svg_icon(":/Icons/blotter.svg");
   auto body = new QWidget();
   set_body(body);
@@ -37,6 +37,17 @@ BlotterWindow::BlotterWindow(
   });
   auto layout = make_vbox_layout(body);
   layout->addWidget(split_view);
-  auto status_bar = new BlotterStatusBar(blotter->get_status());
+  auto status_bar = new BlotterStatusBar(m_blotter->get_status());
   layout->addWidget(status_bar);
+  m_name_connection = m_blotter->get_name()->connect_update_signal(
+    std::bind_front(&BlotterWindow::on_name_update, this));
+  on_name_update(m_blotter->get_name()->get());
+}
+
+void BlotterWindow::on_name_update(const QString& name) {
+  if(name.isEmpty()) {
+    setWindowTitle(tr("Blotter"));
+  } else {
+    setWindowTitle(tr("Blotter") + " - " + name);
+  }
 }

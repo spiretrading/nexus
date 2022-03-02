@@ -13,6 +13,7 @@ int main(int argc, char** argv) {
   application.setApplicationName(QObject::tr("Blotter UI Tester"));
   initialize_resources();
   auto blotter = make_local_blotter_model();
+  blotter->get_name()->set("North America");
   auto window = BlotterWindow(blotter);
   window.show();
   application.exec();
