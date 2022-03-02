@@ -3,6 +3,8 @@
 
 namespace Spire {
   class BlotterWindow;
+  class BlotterStatusBar;
+  class BlotterTaskView;
 }
 
 #endif

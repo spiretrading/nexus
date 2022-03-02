@@ -11,6 +11,13 @@ namespace Spire {
 
       /** Constructs a blotter window. */
       explicit BlotterWindow(QWidget* parent = nullptr);
+
+    private:
+      QWidget* m_body;
+      BlotterTaskView* m_task_view;
+      TabView* m_tab_view;
+      SplitView* m_split_view;
+      BlotterStatusBar* m_status_bar;
   };
 }
 
