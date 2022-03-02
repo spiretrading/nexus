@@ -50,6 +50,7 @@
 #include "Spire/Ui/OrderTypeFilterPanel.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
 #include "Spire/Ui/QuantityBox.hpp"
+#include "Spire/Ui/RegionBox.hpp"
 #include "Spire/Ui/RegionListItem.hpp"
 #include "Spire/Ui/ResponsiveLabel.hpp"
 #include "Spire/Ui/ScalarFilterPanel.hpp"
@@ -2367,6 +2368,94 @@ UiProfile Spire::make_radio_button_profile() {
   return UiProfile("RadioButton", properties, [=] (auto& profile) {
     return setup_checkable_profile(profile, make_radio_button());
   });
+}
+
+UiProfile Spire::make_region_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_property<QString>("current"));
+  properties.push_back(make_standard_property<QString>("placeholder"));
+  properties.push_back(make_standard_property("read_only", false));
+  auto profile = UiProfile("RegionBox", properties, [] (auto& profile) {
+    auto securities = std::vector<std::pair<std::string, std::string>>{
+      {"MSFT.NSDQ", "Microsoft Corporation"},
+      {"MG.TSX", "Magna International Inc."},
+      {"MRU.TSX", "Metro Inc."},
+      {"TSO.ASX", "Tesoro Resources Limited"}};
+    auto markets = std::vector<MarketCode>{DefaultMarkets::NSEX(),
+      DefaultMarkets::ISE(), DefaultMarkets::CSE(), DefaultMarkets::TSX(),
+      DefaultMarkets::TSXV()};
+    auto countries = std::vector<CountryCode>{DefaultCountries::US(),
+      DefaultCountries::CA(), DefaultCountries::AU()};
+    auto model = std::make_shared<LocalComboBoxQueryModel>();
+    for(auto& s : securities) {
+      auto security = *ParseWildCardSecurity(s.first,
+        GetDefaultMarketDatabase(), GetDefaultCountryDatabase());
+      auto region = Region(security);
+      region.SetName(s.second);
+      model->add(displayTextAny(security).toLower(), region);
+      model->add(QString::fromStdString(region.GetName()).toLower(), region);
+    }
+    for(auto& market_code : markets) {
+      auto market = GetDefaultMarketDatabase().FromCode(market_code);
+      auto region = Region(market);
+      region.SetName(market.m_description);
+      model->add(displayText(market.m_code).toLower(), region);
+      model->add(QString::fromStdString(region.GetName()).toLower(), region);
+    }
+    for(auto& country : countries) {
+      auto region = Region(country);
+      region.SetName(
+        GetDefaultCountryDatabase().FromCode(country).m_name);
+      model->add(displayText(country).toLower(), region);
+      model->add(QString::fromStdString(region.GetName()).toLower(), region);
+    }
+    auto box = new RegionBox(model);
+    box->setFixedWidth(scale_width(112));
+    apply_widget_properties(box, profile.get_properties());
+    auto current_connection = box->get_current()->connect_update_signal(
+      profile.make_event_slot<Region>("Current"));
+    auto& current = get<QString>("current", profile.get_properties());
+    current.connect_changed_signal([=] (const auto& current) {
+      auto value = model->parse(current);
+      if(value.has_value()) {
+        box->get_current()->set(std::any_cast<Region>(value));
+      } else {
+        auto current_blocker = shared_connection_block(current_connection);
+        box->get_current()->set(Region());
+      }
+    });
+    auto& placeholder = get<QString>("placeholder", profile.get_properties());
+    placeholder.connect_changed_signal([=] (const auto& placeholder) {
+      box->set_placeholder(placeholder);
+    });
+    auto& read_only = get<bool>("read_only", profile.get_properties());
+    read_only.connect_changed_signal(
+      std::bind_front(&RegionBox::set_read_only, box));
+    auto submit_slot = profile.make_event_slot<QString>("SubmitSignal");
+    box->connect_submit_signal([=] (const Region& region) {
+      auto result = QString();
+      result += "Region{Country{";
+      for(auto& country : region.GetCountries()) {
+        result += displayText(country);
+        result += " ";
+      }
+      result += "} Market{";
+      for(auto& market : region.GetMarkets()) {
+        result += displayText(market);
+        result += " ";
+      }
+      result += "} Security{";
+      for(auto& security : region.GetSecurities()) {
+        result += displayTextAny(security);
+        result += " ";
+      }
+      result += "}}";
+      submit_slot(result);
+    });
+    return box;
+  });
+  return profile;
 }
 
 UiProfile Spire::make_region_list_item_profile() {

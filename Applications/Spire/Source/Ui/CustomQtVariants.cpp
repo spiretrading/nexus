@@ -155,6 +155,15 @@ QVariant Spire::to_qvariant(const std::any& value) {
 
 void Spire::register_custom_qt_variants() {}
 
+const QString Spire::displayText(Nexus::CountryCode country) {
+  return
+    GetDefaultCountryDatabase().FromCode(country).m_threeLetterCode.GetData();
+}
+
+const QString Spire::displayText(Nexus::MarketCode market) {
+  return market.GetData();
+}
+
 const QString& Spire::displayText(Nexus::TimeInForce time_in_force) {
   auto type = time_in_force.GetType();
   if(type == TimeInForce::Type::DAY) {
@@ -321,6 +330,14 @@ QString CustomVariantItemDelegate::displayText(const QVariant& value,
       auto region = value.value<Region>();
       if(region.IsGlobal()) {
         return QObject::tr("Global");
+      }
+      if(region.GetCountries().size() == 1) {
+        return ::displayText(*region.GetCountries().begin());
+      } else if(region.GetMarkets().size() == 1) {
+        return ::displayText(*region.GetMarkets().begin());
+      } else if(region.GetSecurities().size() == 1) {
+        return displayText(
+          to_qvariant(*region.GetSecurities().begin()), locale);
       }
       return QString::fromStdString(region.GetName());
     } else if(value.canConvert<Security>()) {

@@ -49,6 +49,7 @@ namespace Spire {
   class OpenFilterPanel;
   template<typename T> class OpenFilterPanelTemplate;
   class OverlayPanel;
+  class RegionBox;
   class RegionListItem;
   class ResponsiveLabel;
   template<typename T> class RowViewListModel;

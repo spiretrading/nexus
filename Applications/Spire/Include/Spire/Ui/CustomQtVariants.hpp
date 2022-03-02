@@ -124,6 +124,12 @@ namespace Spire {
   /** Registers the custom QVariant types. */
   void register_custom_qt_variants();
 
+  /** Returns the text representation of a CountryCode. */
+  const QString displayText(Nexus::CountryCode country);
+
+  /** Returns the text representation of a MarketCode. */
+  const QString displayText(Nexus::MarketCode market);
+
   /** Returns the text representation of a TimeInForce. */
   const QString& displayText(Nexus::TimeInForce time_in_force);
 
