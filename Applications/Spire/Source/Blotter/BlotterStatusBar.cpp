@@ -95,6 +95,10 @@ BlotterStatusBar::BlotterStatusBar(
   layout->addWidget(new StatusLabel({tr("Fees")}, status->get_fees()));
   layout->addWidget(
     new StatusLabel({tr("Cost Basis"), tr("CB")}, status->get_cost_basis()));
+  layout->addWidget(new StatusLabel(
+    {tr("Buying Power"), tr("Buy Pwr"), tr("BP")}, status->get_buying_power()));
+  layout->addWidget(
+    new StatusLabel({tr("Net Loss"), tr("NL")}, status->get_net_loss()));
   m_box = new Box(body);
   enclose(*this, *m_box);
   proxy_style(*this, *m_box);
