@@ -1,4 +1,8 @@
 #include "Spire/Blotter/BlotterWindow.hpp"
+#include "Spire/Blotter/BlotterExecutionsView.hpp"
+#include "Spire/Blotter/BlotterOrderLogView.hpp"
+#include "Spire/Blotter/BlotterPositionsView.hpp"
+#include "Spire/Blotter/BlotterProfitAndLossView.hpp"
 #include "Spire/Blotter/BlotterStatusBar.hpp"
 #include "Spire/Blotter/BlotterTaskView.hpp"
 #include "Spire/Styles/Selectors.hpp"
@@ -13,16 +17,24 @@ BlotterWindow::BlotterWindow(QWidget* parent)
     : Window(parent) {
   setWindowTitle("Blotter");
   set_svg_icon(":/Icons/blotter.svg");
-  m_body = new QWidget();
-  set_body(m_body);
-  m_task_view = new BlotterTaskView();
-  m_tab_view = new TabView();
-  m_split_view = new SplitView(*m_task_view, *m_tab_view);
-  update_style(*m_split_view, [] (auto& styles) {
+  auto body = new QWidget();
+  set_body(body);
+  auto tabs = new TabView();
+  auto positions = new BlotterPositionsView();
+  tabs->add(tr("Positions"), *positions);
+  auto order_log = new BlotterOrderLogView();
+  tabs->add(tr("Order Log"), *order_log);
+  auto executions = new BlotterExecutionsView();
+  tabs->add(tr("Executions"), *executions);
+  auto profit_and_loss = new BlotterProfitAndLossView();
+  tabs->add(tr("Profit/Loss"), *profit_and_loss);
+  auto tasks = new BlotterTaskView();
+  auto split_view = new SplitView(*tasks, *tabs);
+  update_style(*split_view, [] (auto& styles) {
     styles.get(Any()).set(Qt::Orientation::Vertical);
   });
-  auto layout = make_vbox_layout(m_body);
-  layout->addWidget(m_split_view);
-  m_status_bar = new BlotterStatusBar();
-  layout->addWidget(m_status_bar);
+  auto layout = make_vbox_layout(body);
+  layout->addWidget(split_view);
+  auto status_bar = new BlotterStatusBar();
+  layout->addWidget(status_bar);
 }
