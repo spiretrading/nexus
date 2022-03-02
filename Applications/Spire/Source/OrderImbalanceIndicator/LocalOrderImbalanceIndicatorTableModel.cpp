@@ -56,7 +56,7 @@ const std::any& LocalOrderImbalanceIndicatorTableModel::at(
 }
 
 connection LocalOrderImbalanceIndicatorTableModel::connect_operation_signal(
-    const typename OperationSignal::slot_type& slot) const {
+    const OperationSignal::slot_type& slot) const {
   return m_table.connect_operation_signal(slot);
 }
 

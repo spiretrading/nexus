@@ -31,7 +31,7 @@ namespace Spire {
       const std::any& at(int row, int column) const override;
 
       boost::signals2::connection connect_operation_signal(
-        const typename OperationSignal::slot_type& slot) const override;
+        const OperationSignal::slot_type& slot) const override;
 
     private:
       struct MappedImbalance {
