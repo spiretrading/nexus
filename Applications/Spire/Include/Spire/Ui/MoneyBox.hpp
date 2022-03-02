@@ -48,6 +48,14 @@ namespace Spire {
         QHash<Qt::KeyboardModifier, Nexus::Money> modifiers,
         QWidget* parent = nullptr);
   };
+
+  /**
+   * Makes a MoneyBox used as a disabled and read-only label.
+   * @param current The current value to represent.
+   * @param parent The parent widget.
+   */
+  MoneyBox* make_money_label(
+    std::shared_ptr<MoneyModel> current, QWidget* parent = nullptr);
 }
 
 #endif

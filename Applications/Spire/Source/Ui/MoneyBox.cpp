@@ -1,5 +1,7 @@
 #include "Spire/Ui/MoneyBox.hpp"
+#include "Spire/Spire/OptionalScalarValueModelDecorator.hpp"
 #include "Spire/Styles/Selectors.hpp"
+#include "Spire/Ui/TextBox.hpp"
 
 using namespace Nexus;
 using namespace Spire;
@@ -33,4 +35,13 @@ MoneyBox::MoneyBox(std::shared_ptr<OptionalMoneyModel> model,
   update_style(get_decimal_box(), [&] (auto& style) {
     style.get(Any()).set(TrailingZeros(2));
   });
+}
+
+MoneyBox* Spire::make_money_label(
+    std::shared_ptr<MoneyModel> current, QWidget* parent) {
+  auto label = new MoneyBox(std::make_shared<
+    OptionalScalarValueModelDecorator<Money>>(current), {}, parent);
+  apply_label_style(*label);
+  label->set_read_only(true);
+  return label;
 }

@@ -24,6 +24,7 @@ namespace Spire {
   template<typename T> class LocalScalarValueModel;
   class LocalTechnicalsModel;
   template<typename T> class LocalValueModel;
+  template<typename T> class OptionalScalarValueModelDecorator;
   template<typename T> class QtFuture;
   template<typename T> class QtPromise;
   class RangeInputModel;

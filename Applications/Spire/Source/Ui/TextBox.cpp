@@ -19,14 +19,7 @@ using namespace Spire::Styles;
 
 namespace {
   void apply_label_style(TextBox& text_box) {
-    update_style(text_box, [&] (auto& style) {
-      style.get(Any()).
-        set(border_size(0)).
-        set(vertical_padding(0));
-      style.get(ReadOnly() && Disabled()).
-        set(TextColor(QColor(Qt::black)));
-    });
-    text_box.setDisabled(true);
+    Spire::apply_label_style(text_box);
     text_box.set_read_only(true);
   }
 
@@ -595,14 +588,25 @@ void TextBox::on_submission(const QString& submission) {
   m_submit_signal(submission);
 }
 
+void Spire::apply_label_style(QWidget& widget) {
+  update_style(widget, [] (auto& style) {
+    style.get(Any()).
+      set(border_size(0)).
+      set(vertical_padding(0));
+    style.get(ReadOnly() && Disabled()).
+      set(TextColor(QColor(Qt::black)));
+  });
+  widget.setDisabled(true);
+}
+
 TextBox* Spire::make_label(QString label, QWidget* parent) {
   auto text_box = new TextBox(std::move(label), parent);
-  apply_label_style(*text_box);
+  ::apply_label_style(*text_box);
   return text_box;
 }
 
 TextBox* Spire::make_label(std::shared_ptr<TextModel> model, QWidget* parent) {
   auto text_box = new TextBox(std::move(model), parent);
-  apply_label_style(*text_box);
+  ::apply_label_style(*text_box);
   return text_box;
 }
