@@ -45,6 +45,9 @@ namespace Spire::Styles {
       /** Returns the styling block. */
       Block& get_block();
 
+      /** Clears this rule's block. */
+      void clear();
+
       /** Sets a property on the Block. */
       Rule& set(Property property);
 

@@ -121,7 +121,9 @@ namespace Styles {
       TextBox* m_text_box;
       Button* m_button;
       DropDownList* m_drop_down_list;
+      bool m_is_read_only;
       boost::optional<int> m_submission;
+      bool m_is_modified;
       boost::signals2::scoped_connection m_submit_connection;
       boost::signals2::scoped_connection m_current_connection;
 

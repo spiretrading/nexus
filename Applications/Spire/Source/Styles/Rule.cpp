@@ -29,6 +29,10 @@ Block& Rule::get_block() {
   return m_block;
 }
 
+void Rule::clear() {
+  m_block.clear();
+}
+
 Rule& Rule::set(Property property) {
   get_block().set(std::move(property));
   return *this;
