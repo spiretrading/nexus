@@ -71,9 +71,7 @@ ToggleButton* Spire::make_icon_toggle_button(
   auto button_icon = new Icon(std::move(icon));
   button_icon->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto button = new ToggleButton(new Box(button_icon), parent);
-  if(!tooltip.isEmpty()) {
-    new Tooltip(std::move(tooltip), button);
-  }
+  add_tooltip(std::move(tooltip), *button);
   auto style = StyleSheet();
   style.get(Any() > Body()).
     set(BackgroundColor(QColor(Qt::transparent))).

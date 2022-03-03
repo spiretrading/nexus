@@ -64,12 +64,11 @@ Button* Spire::make_icon_button(QImage icon, QWidget* parent) {
   return make_icon_button(std::move(icon), "", parent);
 }
 
-Button* Spire::make_icon_button(
-    QImage icon, QString tooltip_text, QWidget* parent) {
+Button* Spire::make_icon_button(QImage icon, QString tooltip, QWidget* parent) {
   auto button_icon = new Icon(std::move(icon));
   button_icon->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto button = new Button(new Box(button_icon), parent);
-  auto tooltip = new Tooltip(tooltip_text, button);
+  add_tooltip(std::move(tooltip), *button);
   auto style = StyleSheet();
   style.get(Any() > Body()).
     set(BackgroundColor(QColor(Qt::transparent))).

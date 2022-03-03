@@ -48,14 +48,14 @@ namespace Spire {
   };
 
   /**
-   * Makes a ToggleButton whose body displays an icon and no tooltip.
+   * Makes a ToggleButton whose body displays an icon.
    * @param icon The icon to display.
    * @param parent The parent widget.
    */
   ToggleButton* make_icon_toggle_button(QImage icon, QWidget* parent = nullptr);
 
   /**
-   * Makes a ToggleButton whose body displays an icon.
+   * Makes a ToggleButton whose body displays an icon and displays a tooltip.
    * @param icon The icon used within the button.
    * @param tooltip The text of the Tooltip to display.
    * @param parent The parent widget.

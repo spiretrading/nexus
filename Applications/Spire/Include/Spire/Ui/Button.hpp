@@ -57,11 +57,11 @@ namespace Styles {
   /**
    * Returns a newly constructed Button displaying an Icon and a tooltip.
    * @param icon The icon used within the button.
-   * @param tooltip_text The text of the Tooltip to display.
+   * @param tooltip The text of the Tooltip to display.
    * @param parent The parent widget.
    */
-  Button* make_icon_button(QImage icon, QString tooltip_text,
-    QWidget* parent = nullptr);
+  Button* make_icon_button(
+    QImage icon, QString tooltip, QWidget* parent = nullptr);
 
   /**
    * Returns a newly constructed DeleteIconButton.
