@@ -1,6 +1,7 @@
 #ifndef SPIRE_MONEY_BOX_HPP
 #define SPIRE_MONEY_BOX_HPP
 #include "Nexus/Definitions/Money.hpp"
+#include "Spire/Spire/ScalarValueModel.hpp"
 #include "Spire/Ui/DecimalBoxAdaptor.hpp"
 #include "Spire/Ui/Ui.hpp"
 
