@@ -159,19 +159,16 @@ namespace details {
     if(m_launch_policy == LaunchPolicy::DEFERRED) {
       QCoreApplication::postEvent(this, new QtDeferredExecutionEvent());
     } else if(m_launch_policy == LaunchPolicy::ASYNC) {
-      m_routine = Beam::Routines::Spawn(
-        [=] {
-          execute();
-        });
+      m_routine = Beam::Routines::Spawn([=] { execute(); });
     }
   }
 
   template<typename Executor>
   void QtPromiseImp<Executor>::then(ContinuationType continuation) {
     m_continuation.emplace(std::move(continuation));
-    if(m_value.is_initialized()) {
-      QCoreApplication::postEvent(this,
-        make_qt_promise_event(std::move(*m_value)));
+    if(m_value) {
+      QCoreApplication::postEvent(
+        this, make_qt_promise_event(std::move(*m_value)));
       m_value = boost::none;
     }
   }
@@ -189,7 +186,7 @@ namespace details {
         m_self = nullptr;
         return true;
       }
-      if(m_continuation.is_initialized()) {
+      if(m_continuation) {
         disconnect();
         auto self = std::move(m_self);
         (*m_continuation)(std::move(result));
@@ -204,7 +201,7 @@ namespace details {
         return true;
       }
       auto& promise_event = *static_cast<QtPromiseEvent<Type>*>(event);
-      if(m_continuation.is_initialized()) {
+      if(m_continuation) {
         disconnect();
         auto self = std::move(m_self);
         (*m_continuation)(std::move(promise_event.get_result()));
@@ -236,8 +233,8 @@ namespace details {
           });
       }
     } else {
-      QCoreApplication::postEvent(this,
-        make_qt_promise_event(Beam::Try(m_executor)));
+      QCoreApplication::postEvent(
+        this, make_qt_promise_event(Beam::Try(m_executor)));
     }
   }
 }
