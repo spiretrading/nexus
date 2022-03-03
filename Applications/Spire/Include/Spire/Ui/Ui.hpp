@@ -18,7 +18,6 @@ namespace Spire {
   class Button;
   class CalendarDatePicker;
   class CheckBox;
-  class ClickObserver;
   class ClosedFilterPanel;
   class ComboBox;
   class ContextMenu;
@@ -50,6 +49,7 @@ namespace Spire {
   class OpenFilterPanel;
   template<typename T> class OpenFilterPanelTemplate;
   class OverlayPanel;
+  class PressObserver;
   class RegionListItem;
   class ResponsiveLabel;
   template<typename T> class RowViewListModel;
