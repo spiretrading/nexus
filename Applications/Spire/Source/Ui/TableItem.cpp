@@ -20,9 +20,9 @@ const TableItem::Styles& TableItem::get_styles() const {
   return m_styles;
 }
 
-connection TableItem::connect_clicked_signal(
-    const ClickedSignal::slot_type& slot) const {
-  return m_button->connect_clicked_signal(slot);
+connection TableItem::connect_click_signal(
+    const ClickSignal::slot_type& slot) const {
+  return m_button->connect_click_signal(slot);
 }
 
 void TableItem::on_style() {

@@ -23,7 +23,7 @@ Button::Button(QWidget* body, QWidget* parent)
     std::bind_front(&Button::on_press_start, this));
   m_press_observer.connect_press_end_signal(
     std::bind_front(&Button::on_press_end, this));
-  m_click_observer.connect_click_signal(m_clicked_signal);
+  m_click_observer.connect_click_signal(m_click_signal);
 }
 
 const QWidget& Button::get_body() const {
@@ -34,9 +34,9 @@ QWidget& Button::get_body() {
   return *m_body;
 }
 
-connection Button::connect_clicked_signal(
-    const ClickedSignal::slot_type& slot) const {
-  return m_clicked_signal.connect(slot);
+connection Button::connect_click_signal(
+    const ClickSignal::slot_type& slot) const {
+  return m_click_signal.connect(slot);
 }
 
 void Button::keyPressEvent(QKeyEvent* event) {
@@ -44,7 +44,7 @@ void Button::keyPressEvent(QKeyEvent* event) {
     case Qt::Key_Enter:
     case Qt::Key_Return:
       if(!event->isAutoRepeat()) {
-        m_clicked_signal();
+        m_click_signal();
       }
       break;
     default:
@@ -61,12 +61,12 @@ void Button::on_press_end(PressObserver::Reason reason) {
 }
 
 Button* Spire::make_icon_button(QImage icon, QWidget* parent) {
-  return make_icon_button(icon, "", parent);
+  return make_icon_button(std::move(icon), "", parent);
 }
 
 Button* Spire::make_icon_button(
     QImage icon, QString tooltip_text, QWidget* parent) {
-  auto button_icon = new Icon(icon);
+  auto button_icon = new Icon(std::move(icon));
   button_icon->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto button = new Button(new Box(button_icon), parent);
   auto tooltip = new Tooltip(tooltip_text, button);

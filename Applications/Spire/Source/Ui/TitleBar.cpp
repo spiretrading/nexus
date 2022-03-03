@@ -69,24 +69,24 @@ TitleBar::TitleBar(QImage icon, QWidget* parent)
   m_title_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_container_layout->addWidget(m_title_label);
   m_minimize_button = create_button(":/Icons/minimize.svg", this);
-  m_minimize_button->connect_clicked_signal([=] {
+  m_minimize_button->connect_click_signal([=] {
     on_minimize_button_press();
   });
   m_container_layout->addWidget(m_minimize_button);
   m_maximize_button = create_button(":/Icons/maximize.svg", this);
-  m_maximize_button->connect_clicked_signal([=] {
+  m_maximize_button->connect_click_signal([=] {
     on_maximize_button_press();
   });
   m_container_layout->addWidget(m_maximize_button);
   m_restore_button = create_button(":/Icons/restore.svg", this);
-  m_restore_button->connect_clicked_signal([=] { on_restore_button_press(); });
+  m_restore_button->connect_click_signal([=] { on_restore_button_press(); });
   m_restore_button->hide();
   m_container_layout->addWidget(m_restore_button);
   m_close_button = make_icon_button(
     imageFromSvg(":/Icons/close.svg", BUTTON_SIZE()), parent);
   m_close_button->setFocusPolicy(Qt::FocusPolicy::NoFocus);
   m_close_button->setFixedSize(BUTTON_SIZE());
-  m_close_button->connect_clicked_signal([=] { on_close_button_press(); });
+  m_close_button->connect_click_signal([=] { on_close_button_press(); });
   auto close_button_style = BUTTON_STYLE();
   close_button_style.get((Hover() || Press()) > Body()).
     set(BackgroundColor(QColor(0xE63F44)));

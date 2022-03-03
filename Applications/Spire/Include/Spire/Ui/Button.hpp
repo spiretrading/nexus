@@ -17,7 +17,7 @@ namespace Styles {
     public:
 
       /** Signals that the button is clicked. */
-      using ClickedSignal = Signal<void ()>;
+      using ClickSignal = Signal<void ()>;
 
       /**
        * Constructs a Button.
@@ -31,14 +31,14 @@ namespace Styles {
       QWidget& get_body();
 
       /** Connects a slot to the click signal. */
-      boost::signals2::connection connect_clicked_signal(
-        const ClickedSignal::slot_type& slot) const;
+      boost::signals2::connection connect_click_signal(
+        const ClickSignal::slot_type& slot) const;
 
     protected:
       void keyPressEvent(QKeyEvent* event) override;
 
     private:
-      mutable ClickedSignal m_clicked_signal;
+      mutable ClickSignal m_click_signal;
       QWidget* m_body;
       PressObserver m_press_observer;
       ClickObserver m_click_observer;

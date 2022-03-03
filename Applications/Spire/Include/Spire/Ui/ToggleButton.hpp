@@ -13,28 +13,18 @@ namespace Spire {
        * Constructs a ToggleButton using a local model initialized to
        * <code>false</code>.
        * @param body The widget displayed inside of the button.
-       * @param tooltip The contents of the tooltip.
        * @param parent The parent widget.
        */
-      ToggleButton(QWidget* body, QString tooltip, QWidget* parent = nullptr);
-
-      /**
-       * Constructs a ToggleButton using a local model initialized to
-       * <code>false</code> and no tooltip.
-       * @param body The widget displayed inside of the button.
-       * @param parent The parent widget.
-       */
-      explicit ToggleButton(QWidget* body, QWidget* parent = nullptr);
+      ToggleButton(QWidget* body, QWidget* parent = nullptr);
 
       /**
        * Constructs a ToggleButton.
        * @param body The widget displayed inside of the button.
        * @param current Whether the button is checked.
-       * @param tooltip The contents of the tooltip.
        * @param parent The parent widget.
        */
       ToggleButton(QWidget* body, std::shared_ptr<BooleanModel> current,
-        QString tooltip, QWidget* parent = nullptr);
+        QWidget* parent = nullptr);
 
       /** Returns the body. */
       const QWidget& get_body() const;
@@ -49,8 +39,12 @@ namespace Spire {
       const std::shared_ptr<BooleanModel>& get_current() const;
 
     private:
-      QWidget* m_body;
+      Button* m_button;
       std::shared_ptr<BooleanModel> m_current;
+      boost::signals2::scoped_connection m_connection;
+
+      void on_click();
+      void on_update(bool current);
   };
 
   /**

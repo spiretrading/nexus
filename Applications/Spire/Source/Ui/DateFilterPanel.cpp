@@ -108,7 +108,7 @@ class OffsetUnitButtonGroup : public QWidget {
         set_style(*button, LABEL_CHECK_BUTTON_STYLE(get_style(*button)));
         m_model->get_association(unit)->connect_update_signal(
           std::bind_front(&OffsetUnitButtonGroup::on_update, this, unit));
-        button->connect_clicked_signal([=] { m_model->set(unit); });
+        button->connect_click_signal([=] { m_model->set(unit); });
         layout->addWidget(button);
       }
       on_update(m_model->get(), true);

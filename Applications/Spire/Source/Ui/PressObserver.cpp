@@ -24,7 +24,9 @@ struct PressObserver::PressEventFilter : QObject {
       auto& focus_event = *static_cast<QFocusEvent*>(event);
       if(focus_event.reason() != Qt::PopupFocusReason && m_is_key_down) {
         m_is_key_down = false;
-        m_press_end_signal(Reason::KEYBOARD);
+        if(!isDisabled(*watched)) {
+          m_press_end_signal(Reason::KEYBOARD);
+        }
       }
     } else if(event->type() == QEvent::KeyPress) {
       auto& key_event = *static_cast<QKeyEvent*>(event);
@@ -32,7 +34,9 @@ struct PressObserver::PressEventFilter : QObject {
         key_event.accept();
         if(!key_event.isAutoRepeat() && !m_is_key_down) {
           m_is_key_down = true;
-          m_press_start_signal(Reason::KEYBOARD);
+          if(!isDisabled(*watched)) {
+            m_press_start_signal(Reason::KEYBOARD);
+          }
         }
       }
     } else if(event->type() == QEvent::KeyRelease) {
@@ -41,25 +45,36 @@ struct PressObserver::PressEventFilter : QObject {
         key_event.accept();
         if(!key_event.isAutoRepeat() && m_is_key_down) {
           m_is_key_down = false;
-          m_press_end_signal(Reason::KEYBOARD);
+          if(!isDisabled(*watched)) {
+            m_press_end_signal(Reason::KEYBOARD);
+          }
         }
       }
-    } else if(event->type() == QEvent::MouseButtonPress) {
+    } else if(event->type() == QEvent::MouseButtonPress ||
+        event->type() == QEvent::MouseButtonDblClick) {
       auto& mouse_event = *static_cast<QMouseEvent*>(event);
       if(mouse_event.button() == Qt::LeftButton && !m_is_mouse_down) {
         m_is_mouse_down = true;
         mouse_event.accept();
-        m_press_start_signal(Reason::MOUSE);
+        if(!isDisabled(*watched)) {
+          m_press_start_signal(Reason::MOUSE);
+        }
       }
     } else if(event->type() == QEvent::MouseButtonRelease) {
       auto& mouse_event = *static_cast<QMouseEvent*>(event);
       if(mouse_event.button() == Qt::LeftButton && m_is_mouse_down) {
         m_is_mouse_down = false;
         mouse_event.accept();
-        m_press_end_signal(Reason::MOUSE);
+        if(!isDisabled(*watched)) {
+          m_press_end_signal(Reason::MOUSE);
+        }
       }
     }
     return QObject::eventFilter(watched, event);
+  }
+
+  static bool isDisabled(QObject& watched) {
+    return !static_cast<QWidget&>(watched).isEnabled();
   }
 };
 
