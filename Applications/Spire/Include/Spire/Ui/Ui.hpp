@@ -18,6 +18,7 @@ namespace Spire {
   class Button;
   class CalendarDatePicker;
   class CheckBox;
+  class ClickObserver;
   class ClosedFilterPanel;
   class ComboBox;
   class ContextMenu;

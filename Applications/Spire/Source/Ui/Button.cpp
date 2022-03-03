@@ -1,5 +1,5 @@
 #include "Spire/Ui/Button.hpp"
-#include <QMouseEvent>
+#include <QKeyEvent>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Icon.hpp"
@@ -14,10 +14,16 @@ using namespace Spire::Styles;
 Button::Button(QWidget* body, QWidget* parent)
     : QWidget(parent),
       m_body(body),
-      m_is_down(false) {
+      m_press_observer(*this),
+      m_click_observer(*this) {
   setFocusPolicy(Qt::StrongFocus);
   match(*m_body, Body());
   enclose(*this, *m_body);
+  m_press_observer.connect_press_start_signal(
+    std::bind_front(&Button::on_press_start, this));
+  m_press_observer.connect_press_end_signal(
+    std::bind_front(&Button::on_press_end, this));
+  m_click_observer.connect_click_signal(m_clicked_signal);
 }
 
 const QWidget& Button::get_body() const {
@@ -33,14 +39,6 @@ connection Button::connect_clicked_signal(
   return m_clicked_signal.connect(slot);
 }
 
-void Button::focusOutEvent(QFocusEvent* event) {
-  if(event->reason() != Qt::PopupFocusReason && m_is_down) {
-    m_is_down = false;
-  }
-  unmatch(*this, Press());
-  QWidget::focusOutEvent(event);
-}
-
 void Button::keyPressEvent(QKeyEvent* event) {
   switch(event->key()) {
     case Qt::Key_Enter:
@@ -49,60 +47,25 @@ void Button::keyPressEvent(QKeyEvent* event) {
         m_clicked_signal();
       }
       break;
-    case Qt::Key_Space:
-      if(!event->isAutoRepeat()) {
-        m_is_down = true;
-        match(*this, Press());
-      }
-      break;
     default:
       QWidget::keyPressEvent(event);
   }
 }
 
-void Button::keyReleaseEvent(QKeyEvent* event) {
-  switch(event->key()) {
-    case Qt::Key_Space:
-      if(!event->isAutoRepeat() && m_is_down) {
-        m_is_down = false;
-        unmatch(*this, Press());
-        m_clicked_signal();
-      }
-      break;
-    default:
-      QWidget::keyReleaseEvent(event);
-  }
+void Button::on_press_start(PressObserver::Reason reason) {
+  match(*this, Press());
 }
 
-void Button::mousePressEvent(QMouseEvent* event) {
-  if(event->button() == Qt::LeftButton && rect().contains(event->pos())) {
-    m_is_down = true;
-    match(*this, Press());
-    return;
-  }
-  QWidget::mousePressEvent(event);
-}
-
-void Button::mouseReleaseEvent(QMouseEvent* event) {
-  if(event->button() == Qt::LeftButton) {
-    unmatch(*this, Press());
-    if(rect().contains(event->pos())) {
-      if(m_is_down) {
-        m_is_down = false;
-        m_clicked_signal();
-        return;
-      }
-    }
-  }
-  QWidget::mouseReleaseEvent(event);
+void Button::on_press_end(PressObserver::Reason reason) {
+  unmatch(*this, Press());
 }
 
 Button* Spire::make_icon_button(QImage icon, QWidget* parent) {
   return make_icon_button(icon, "", parent);
 }
 
-Button* Spire::make_icon_button(QImage icon, QString tooltip_text,
-    QWidget* parent) {
+Button* Spire::make_icon_button(
+    QImage icon, QString tooltip_text, QWidget* parent) {
   auto button_icon = new Icon(icon);
   button_icon->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto button = new Button(new Box(button_icon), parent);

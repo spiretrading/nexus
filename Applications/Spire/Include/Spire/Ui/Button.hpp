@@ -1,6 +1,8 @@
 #ifndef SPIRE_BUTTON_HPP
 #define SPIRE_BUTTON_HPP
 #include "Spire/Styles/StateSelector.hpp"
+#include "Spire/Ui/ClickObserver.hpp"
+#include "Spire/Ui/PressObserver.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -33,16 +35,16 @@ namespace Styles {
         const ClickedSignal::slot_type& slot) const;
 
     protected:
-      void focusOutEvent(QFocusEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
-      void keyReleaseEvent(QKeyEvent* event) override;
-      void mousePressEvent(QMouseEvent* event) override;
-      void mouseReleaseEvent(QMouseEvent* event) override;
 
     private:
       mutable ClickedSignal m_clicked_signal;
       QWidget* m_body;
-      bool m_is_down;
+      PressObserver m_press_observer;
+      ClickObserver m_click_observer;
+
+      void on_press_start(PressObserver::Reason reason);
+      void on_press_end(PressObserver::Reason reason);
   };
 
   /**

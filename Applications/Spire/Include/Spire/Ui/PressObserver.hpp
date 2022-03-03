@@ -14,8 +14,27 @@ namespace Spire {
   class PressObserver {
     public:
 
-      /** Signals a press. */
-      using PressSignal = Signal<void ()>;
+      /** Specifies the reason for the press. */
+      enum class Reason {
+
+        /** The press is due to the keyboard. */
+        KEYBOARD,
+
+        /** The press is due to the mouse. */
+        MOUSE
+      };
+
+      /**
+       * Signals the start of a press.
+       * @param reason The reason for the press.
+       */
+      using PressStartSignal = Signal<void (Reason reason)>;
+
+      /**
+       * Signals the end of a press.
+       * @param reason The reason for the press.
+       */
+      using PressEndSignal = Signal<void (Reason reason)>;
 
       /**
        * Constructs a PressObserver.
@@ -25,9 +44,13 @@ namespace Spire {
 
       ~PressObserver();
 
-      /** Connects a slot to the press signal. */
-      boost::signals2::connection connect_press_signal(
-        const PressSignal::slot_type& slot) const;
+      /** Connects a slot to the press start signal. */
+      boost::signals2::connection connect_press_start_signal(
+        const PressStartSignal::slot_type& slot) const;
+
+      /** Connects a slot to the press end signal. */
+      boost::signals2::connection connect_press_end_signal(
+        const PressStartSignal::slot_type& slot) const;
 
     private:
       struct PressEventFilter;
