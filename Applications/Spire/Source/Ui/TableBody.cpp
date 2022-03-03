@@ -586,7 +586,7 @@ void TableBody::on_table_operation(const TableModel::Operation& operation) {
             QSizePolicy::Expanding, item->sizePolicy().verticalPolicy());
         }
         column_layout->addWidget(item);
-        item->connect_clicked_signal(
+        item->connect_click_signal(
           std::bind_front(&TableBody::on_item_clicked, this, std::ref(*item)));
       }
       row_layout.insertWidget(operation.m_index, row);

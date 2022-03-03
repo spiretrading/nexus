@@ -29,8 +29,8 @@ namespace Spire {
         QColor m_border_left_color;
       };
 
-      /** Signals that this TableItem was clicked on. */
-      using ClickedSignal = Button::ClickedSignal;
+      /** Signals that this TableItem was click on. */
+      using ClickSignal = Button::ClickSignal;
 
       /**
        * Constructs a TableItem.
@@ -42,9 +42,9 @@ namespace Spire {
       /** Returns the styling applied to this item. */
       const Styles& get_styles() const;
 
-      /** Connects a slot to the ClickedSignal. */
-      boost::signals2::connection connect_clicked_signal(
-        const ClickedSignal::slot_type& slot) const;
+      /** Connects a slot to the ClickSignal. */
+      boost::signals2::connection connect_click_signal(
+        const ClickSignal::slot_type& slot) const;
 
     private:
       Button* m_button;

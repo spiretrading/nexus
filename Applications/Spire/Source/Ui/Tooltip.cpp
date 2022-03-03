@@ -39,3 +39,9 @@ void Tooltip::set_label(const QString& text) {
     m_tooltip->hide();
   }
 }
+
+void Spire::add_tooltip(QString text, QWidget& parent) {
+  if(!text.isEmpty()) {
+    new Tooltip(std::move(text), &parent);
+  }
+}
