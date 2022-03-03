@@ -8,6 +8,7 @@ namespace Spire {
   class BlotterPositionsView;
   class BlotterProfitAndLossView;
   class BlotterStatusBar;
+  class BlotterStatusMessageIndicator;
   class BlotterStatusModel;
   class BlotterTaskView;
   class BlotterWindow;

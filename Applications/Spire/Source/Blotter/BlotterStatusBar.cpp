@@ -1,4 +1,5 @@
 #include "Spire/Blotter/BlotterStatusBar.hpp"
+#include "Spire/Blotter/BlotterStatusMessageIndicator.hpp"
 #include "Spire/Blotter/BlotterStatusModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
@@ -96,10 +97,12 @@ BlotterStatusBar::BlotterStatusBar(
   layout->addWidget(new StatusLabel({tr("Fees")}, m_status->get_fees()));
   layout->addWidget(
     new StatusLabel({tr("Cost Basis"), tr("CB")}, m_status->get_cost_basis()));
+  layout->addSpacerItem(new QSpacerItem(1, 0, QSizePolicy::Expanding));
   layout->addWidget(new StatusLabel({tr("Buying Power"), tr("Buy Pwr"),
     tr("BP")}, m_status->get_buying_power()));
   layout->addWidget(
     new StatusLabel({tr("Net Loss"), tr("NL")}, m_status->get_net_loss()));
+  layout->addWidget(new BlotterStatusMessageIndicator());
   m_box = new Box(body);
   enclose(*this, *m_box);
   proxy_style(*this, *m_box);
