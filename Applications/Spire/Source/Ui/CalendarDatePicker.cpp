@@ -159,7 +159,7 @@ class CalendarDatePicker::MonthSpinner : public QWidget {
       m_previous_button = make_icon_button(
         imageFromSvg(":Icons/calendar-arrow-left.svg", BUTTON_SIZE));
       m_previous_button->setFixedSize(BUTTON_SIZE);
-      m_previous_button->connect_clicked_signal([=] { decrement(); });
+      m_previous_button->connect_click_signal([=] { decrement(); });
       auto layout = make_hbox_layout(this);
       layout->setContentsMargins({scale_width(4), 0, scale_width(4), 0});
       layout->setSpacing(scale_width(8));
@@ -177,7 +177,7 @@ class CalendarDatePicker::MonthSpinner : public QWidget {
       m_next_button = make_icon_button(
         imageFromSvg(":Icons/calendar-arrow-right.svg", BUTTON_SIZE));
       m_next_button->setFixedSize(BUTTON_SIZE);
-      m_next_button->connect_clicked_signal([=] { increment(); });
+      m_next_button->connect_click_signal([=] { increment(); });
       layout->addWidget(m_next_button);
     }
 

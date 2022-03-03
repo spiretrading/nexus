@@ -26,6 +26,14 @@ namespace Spire {
       TextBox* m_label;
       InfoTip* m_tooltip;
   };
+
+  /**
+   * Adds a Tooltip to a QWidget, is a no-op if the text of the tooltip is
+   * empty.
+   * @param text The Tooltip's label text.
+   * @param parent The parent widget that when hovered will show the Tooltip.
+   */
+  void add_tooltip(QString text, QWidget& parent);
 }
 
 #endif

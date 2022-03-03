@@ -70,5 +70,5 @@ void Tag::set_read_only(bool is_read_only) {
 
 connection Tag::connect_delete_signal(
     const DeleteSignal::slot_type& slot) const {
-  return m_delete_button->connect_clicked_signal(slot);
+  return m_delete_button->connect_click_signal(slot);
 }

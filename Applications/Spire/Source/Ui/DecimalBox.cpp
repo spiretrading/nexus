@@ -373,9 +373,9 @@ DecimalBox::DecimalBox(std::shared_ptr<OptionalDecimalModel> current,
   m_reject_connection = m_text_box->connect_reject_signal(
     [=] (const auto& value) { on_reject(value); });
   m_up_button = create_button(":/Icons/arrow-up.svg", this);
-  m_up_button->connect_clicked_signal([=] { increment(); });
+  m_up_button->connect_click_signal([=] { increment(); });
   m_down_button = create_button(":/Icons/arrow-down.svg", this);
-  m_down_button->connect_clicked_signal([=] { decrement(); });
+  m_down_button->connect_click_signal([=] { decrement(); });
   update_button_positions();
 }
 

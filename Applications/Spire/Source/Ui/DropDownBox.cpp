@@ -104,7 +104,7 @@ DropDownBox::DropDownBox(std::shared_ptr<AnyListModel> list,
   set_style(*this, DEFAULT_STYLE());
   setFocusProxy(m_button);
   on_current(get_current()->get());
-  m_button->connect_clicked_signal([=] { on_click(); });
+  m_button->connect_click_signal([=] { on_click(); });
   m_current_connection = m_list_view->get_current()->connect_update_signal(
     [=] (const auto& current) { on_current(current); });
   m_submit_connection = m_list_view->connect_submit_signal(
