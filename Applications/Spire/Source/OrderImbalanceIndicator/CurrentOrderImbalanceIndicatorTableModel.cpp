@@ -1,8 +1,11 @@
 #include "Spire/OrderImbalanceIndicator/CurrentOrderImbalanceIndicatorTableModel.hpp"
+#include <Beam/Queues/Publisher.hpp>
 #include <Beam/Threading/Timer.hpp>
 
 using namespace Beam::Threading;
 using namespace Beam::TimeService;
+using namespace boost;
+using namespace boost::gregorian;
 using namespace boost::posix_time;
 using namespace boost::signals2;
 using namespace Nexus;
@@ -42,56 +45,57 @@ connection CurrentOrderImbalanceIndicatorTableModel::connect_operation_signal(
   return m_table.connect_operation_signal(slot);
 }
 
+void CurrentOrderImbalanceIndicatorTableModel::set_next_expiring(int row) {
+  m_next_expiring = Expiring{m_table.get<Security>(row, 0),
+    ptime(m_table.get<date>(row, 5), m_table.get<time_duration>(row, 6))};
+}
+
 void CurrentOrderImbalanceIndicatorTableModel::update_next_expiring() {
   if(m_table.get_row_size() == 0) {
-    //m_next_expiring = none;
+    m_next_expiring = none;
     m_timer.reset();
     return;
   }
-  //auto next = std::min_element(m_imbalances.begin(), m_imbalances.end(),
-  //  [] (const auto& first, const auto& second) {
-  //    return first.second.m_imbalance.m_timestamp <
-  //      second.second.m_imbalance.m_timestamp;
-  //  })->second.m_imbalance;
-  //if(next.m_timestamp > m_clock.GetTime()) {
-  //  return;
-  //}
-  //m_next_expiring = next.m_security;
-  //auto a = m_clock.GetTime() - next.m_timestamp;
+  auto next_expiration = std::numeric_limits<ptime>::max();
+  auto row = 0;
+  for(auto i = 0; i < m_table.get_row_size(); ++i) {
+    auto time =
+      ptime(m_table.get<date>(i, 5), m_table.get<time_duration>(i, 6));
+    if(time < next_expiration) {
+      row = i;
+      //m_next_expiring = Expiring{m_table.get<Security>(i, 0), time};
+    }
+  }
+  set_next_expiring(row);
+  //auto a = m_clock.GetTime() - m_next_expiring->m_timestamp;
   //auto b = m_offset - a;
-  //m_timer = std::make_unique<TimerBox>(
-  //  m_timer_factory(m_clock.GetTime() - next.m_timestamp));
-  //m_timer->GetPublisher().Monitor(
-  //  m_timer_queue.GetSlot<Beam::Threading::Timer::Result>(
-  //    [=] (auto result) { on_expiration_timeout(result); }));
-  //m_timer->Start();
+  auto timer = std::make_unique<TimerBox>(
+    m_timer_factory(m_next_expiring->m_timestamp - m_clock.GetTime()));
+  m_timers.push_back(std::move(timer));
+  m_timers.back()->GetPublisher().Monitor(m_timer_queue.GetSlot<Timer::Result>(
+    [=] (auto result) { on_expiration_timeout(result); }));
+  m_timers.back()->Start();
 }
 
 void CurrentOrderImbalanceIndicatorTableModel::on_expiration_timeout(
     Timer::Result result) {
-  if(result != Timer::Result::EXPIRED) {
-    return;
-  }
-  m_table.remove(m_next_expiring);
-  //auto removed_rows = 0;
-  //std::erase_if(m_imbalances, [&] (const auto& imbalance) {
-  //  auto& current_imbalance = m_imbalances[imbalance.first];
-  //  if(current_imbalance.m_imbalance.m_timestamp <=
-  //      m_clock.GetTime() - *m_offset) {
-  //    m_table_model.remove(current_imbalance.m_row_index - removed_rows);
-  //    ++removed_rows;
-  //    return true;
-  //  }
-  //  current_imbalance.m_row_index -= removed_rows;
-  //  return false;
-  //});
+  // TODO:
+  //if(result != Timer::Result::EXPIRED) {
+  //  return;
+  //}
+  m_table.remove(m_next_expiring->m_security);
   update_next_expiring();
 }
 
 void CurrentOrderImbalanceIndicatorTableModel::on_imbalance(
     const OrderImbalance& imbalance) {
-  // TODO: check timestamp against expiring imbalance
+  auto is_update_required =
+    !m_next_expiring || m_next_expiring->m_timestamp > imbalance.m_timestamp ||
+    m_next_expiring->m_security == imbalance.m_security;
   m_table.add(imbalance);
+  if(is_update_required) {
+    update_next_expiring();
+  }
 }
 
 void CurrentOrderImbalanceIndicatorTableModel::on_load(
@@ -99,4 +103,5 @@ void CurrentOrderImbalanceIndicatorTableModel::on_load(
   for(auto& imbalance : imbalances) {
     m_table.add(imbalance);
   }
+  update_next_expiring();
 }

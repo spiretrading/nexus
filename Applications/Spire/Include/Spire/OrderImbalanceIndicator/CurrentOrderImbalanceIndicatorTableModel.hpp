@@ -42,6 +42,10 @@ namespace Spire {
         const OperationSignal::slot_type& slot) const override;
 
     private:
+      struct Expiring {
+        Nexus::Security m_security;
+        boost::posix_time::ptime m_timestamp;
+      };
       std::shared_ptr<OrderImbalanceIndicatorModel> m_source;
       LocalOrderImbalanceIndicatorTableModel m_table;
       boost::signals2::scoped_connection m_subscription_connection;
@@ -51,8 +55,11 @@ namespace Spire {
       TimerFactory m_timer_factory;
       Beam::CallbackQueue m_timer_queue;
       std::unique_ptr<Beam::Threading::TimerBox> m_timer;
-      Nexus::Security m_next_expiring;
+      boost::optional<Expiring> m_next_expiring;
+      // TODO:
+      std::vector<std::unique_ptr<Beam::Threading::TimerBox>> m_timers;
 
+      void set_next_expiring(int row);
       void update_next_expiring();
       void on_expiration_timeout(Beam::Threading::Timer::Result result);
       void on_imbalance(const Nexus::OrderImbalance& imbalance);
