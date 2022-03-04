@@ -31,6 +31,17 @@ TEST_SUITE("QtPromise") {
     });
   }
 
+  TEST_CASE("reassigned_chained_promise") {
+    run_test([] {
+      auto promise1 = QtPromise([] { return 5; });
+      auto promise2 = promise1.then([] (auto&& result) {
+        return 7 + result.Get();
+      });
+      auto result = wait(std::move(promise2));
+      REQUIRE(result == 12);
+    });
+  }
+
   TEST_CASE("empty_promise") {
     run_test([] {
       auto promises = std::vector<QtPromise<std::vector<int>>>();
