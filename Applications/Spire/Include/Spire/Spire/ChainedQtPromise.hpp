@@ -48,8 +48,8 @@ namespace Spire {
 
   template<typename P, typename E>
   template<typename ExecutorForward>
-  ChainedQtPromise<P, E>::ChainedQtPromise(Promise promise,
-    ExecutorForward&& executor)
+  ChainedQtPromise<P, E>::ChainedQtPromise(
+    Promise promise, ExecutorForward&& executor)
     : m_is_disconnected(false),
       m_promise(std::move(promise)),
       m_executor(std::forward<ExecutorForward>(executor)) {}
@@ -59,11 +59,11 @@ namespace Spire {
     m_self = std::move(self);
     if constexpr(is_promise_v<
         std::invoke_result_t<Executor, Beam::Expect<typename Promise::Type>>>) {
-      m_promise.then([=, self = m_self] (auto&& result) {
+      m_promise.finish([=, self = m_self] (auto&& result) {
         auto continuation = std::make_shared<
           std::invoke_result_t<Executor, Beam::Expect<typename Promise::Type>>>(
             m_executor(std::forward<decltype(result)>(result)));
-        continuation->then([=, continuation = continuation] (auto&& result) {
+        continuation->finish([=, continuation = continuation] (auto&& result) {
           QCoreApplication::postEvent(this, details::make_qt_promise_event(
             std::forward<decltype(result)>(result)));
         });
