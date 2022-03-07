@@ -19,6 +19,8 @@
     <file>Fonts/Roboto/Roboto-Thin.ttf</file>
     <file>Fonts/Roboto/Roboto-ThinItalic.ttf</file>
     <file>Icons/blotter/bell.svg</file>
+    <file>Icons/blotter/positions/flatten.svg</file>
+    <file>Icons/blotter/positions/flatten_all.svg</file>
     <file>Icons/logo.gif</file>
     <file>Icons/search.svg</file>
     <file>Icons/check.svg</file>

@@ -4,6 +4,7 @@
 #include "Spire/Blotter/BlotterWindow.hpp"
 #include "Spire/Blotter/CompositeBlotterModel.hpp"
 #include "Spire/Blotter/CompositeBlotterStatusModel.hpp"
+#include "Spire/Blotter/LocalBlotterPositionsModel.hpp"
 #include "Spire/Spire/Resources.hpp"
 #include "Spire/Ui/MoneyBox.hpp"
 #include "Spire/Ui/Window.hpp"
@@ -86,6 +87,7 @@ int main(int argc, char** argv) {
   auto controller = StatusBarController();
   auto blotter = std::make_shared<CompositeBlotterModel>(
     std::make_shared<LocalTextModel>("North America"),
+    std::make_shared<LocalBlotterPositionsModel>(),
     std::make_shared<CompositeBlotterStatusModel>(controller.m_buying_power,
       controller.m_net_loss, controller.m_total_profit_and_loss,
       controller.m_unrealized_profit_and_loss,

@@ -5,6 +5,7 @@ namespace Spire {
   class BlotterExecutionsView;
   class BlotterModel;
   class BlotterOrderLogView;
+  class BlotterPositionsModel;
   class BlotterPositionsView;
   class BlotterProfitAndLossView;
   class BlotterStatusBar;
@@ -14,6 +15,7 @@ namespace Spire {
   class BlotterWindow;
   class CompositeBlotterModel;
   class CompositeBlotterStatusModel;
+  class LocalBlotterPositionsModel;
 }
 
 #endif

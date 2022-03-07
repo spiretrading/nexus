@@ -1,4 +1,5 @@
 #include "Spire/Ui/TableView.hpp"
+#include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/EmptyTableFilter.hpp"
@@ -186,6 +187,7 @@ TableViewBuilder::TableViewBuilder(
   std::shared_ptr<TableModel> table, QWidget* parent)
   : m_table(std::move(table)),
     m_parent(parent),
+    m_header(std::make_shared<ArrayListModel<TableHeaderItem::Model>>()),
     m_filter(std::make_shared<EmptyTableFilter>()),
     m_current(std::make_shared<LocalValueModel<optional<TableBody::Index>>>()),
     m_view_builder(&TableView::default_view_builder) {}
@@ -194,6 +196,28 @@ TableViewBuilder& TableViewBuilder::set_header(
     const std::shared_ptr<TableView::HeaderModel>& header) {
   m_header = header;
   return *this;
+}
+
+TableViewBuilder& TableViewBuilder::add_header_item(QString name) {
+  return add_header_item(std::move(name), QString());
+}
+
+TableViewBuilder& TableViewBuilder::add_header_item(
+    QString name, QString short_name) {
+  return add_header_item(
+    std::move(name), std::move(short_name), TableFilter::Filter::NONE);
+}
+
+TableViewBuilder& TableViewBuilder::add_header_item(
+    QString name, QString short_name, TableFilter::Filter filter) {
+  m_header->push(TableHeaderItem::Model(std::move(name), std::move(short_name),
+    TableHeaderItem::Order::NONE, filter));
+  return *this;
+}
+
+TableViewBuilder& TableViewBuilder::add_header_item(
+    QString name, TableFilter::Filter filter) {
+  return add_header_item(std::move(name), QString(), filter);
 }
 
 TableViewBuilder& TableViewBuilder::set_filter(

@@ -22,7 +22,7 @@ BlotterWindow::BlotterWindow(
   auto body = new QWidget();
   set_body(body);
   auto tabs = new TabView();
-  auto positions = new BlotterPositionsView();
+  auto positions = new BlotterPositionsView(m_blotter->get_positions());
   tabs->add(tr("Positions"), *positions);
   auto order_log = new BlotterOrderLogView();
   tabs->add(tr("Order Log"), *order_log);

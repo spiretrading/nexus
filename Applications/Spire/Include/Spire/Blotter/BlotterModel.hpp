@@ -17,6 +17,9 @@ namespace Spire {
       /** Returns the name of this blotter. */
       virtual std::shared_ptr<TextModel> get_name() = 0;
 
+      /** Returns the blotter's positions. */
+      virtual std::shared_ptr<BlotterPositionsModel> get_positions() = 0;
+
       /** Returns the blotter's status. */
       virtual std::shared_ptr<BlotterStatusModel> get_status() = 0;
 

@@ -158,7 +158,7 @@ void TabView::on_current(optional<int> current) {
     delete item;
   }
   if(current) {
-    layout->addWidget(m_bodies[*current], 0, Qt::AlignTop | Qt::AlignLeft);
+    layout->addWidget(m_bodies[*current]);
     m_bodies[*current]->show();
     if(*current > 0) {
       match(*m_tab_list->get_list_item(*m_current - 1), PrecedesCurrent());
