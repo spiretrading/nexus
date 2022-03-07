@@ -1,5 +1,4 @@
 #include "Spire/Ui/TagBox.hpp"
-#include <QCoreApplication>
 #include <QKeyEvent>
 #include <QStringBuilder>
 #include "Spire/Spire/Dimensions.hpp"
@@ -206,25 +205,20 @@ connection TagBox::connect_submit_signal(
 }
 
 bool TagBox::eventFilter(QObject* watched, QEvent* event) {
-  if(watched == m_text_box->focusProxy() && event->type() == QEvent::KeyPress) {
+  if(event->type() == QEvent::KeyPress) {
     auto& key_event = *static_cast<QKeyEvent*>(event);
-    switch(key_event.key()) {
-      case Qt::Key_Backspace:
-        if(m_text_box->get_highlight()->get().m_start == 0 &&
-            m_text_box->get_highlight()->get().m_end == 0 &&
-            get_list()->get_size() > 0) {
-          get_list()->remove(get_list()->get_size() - 1);
-          return true;
-        }
-        break;
-      case Qt::Key_Down:
-      case Qt::Key_Up:
-      case Qt::Key_PageDown:
-      case Qt::Key_PageUp:
-        QCoreApplication::sendEvent(m_scroll_box, event);
-        return true;
-      default:
-        break;
+    if(watched == m_text_box->focusProxy() &&
+        key_event.key() == Qt::Key_Backspace &&
+        m_text_box->get_highlight()->get().m_start == 0 &&
+        m_text_box->get_highlight()->get().m_end == 0 &&
+        get_list()->get_size() > 0) {
+      get_list()->remove(get_list()->get_size() - 1);
+      return true;
+    } else if(watched == m_list_view && (key_event.key() == Qt::Key_Down ||
+        key_event.key() == Qt::Key_Up || key_event.key() == Qt::Key_PageDown ||
+        key_event.key() == Qt::Key_PageUp)) {
+      event->ignore();
+      return true;
     }
   } else if(event->type() == QEvent::LayoutRequest) {
     if(watched == m_list_view) {
