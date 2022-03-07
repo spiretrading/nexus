@@ -3076,9 +3076,9 @@ UiProfile Spire::make_tag_box_profile() {
   properties.push_back(make_standard_property<QString>("add_tag"));
   auto profile = UiProfile("TagBox", properties, [] (auto& profile) {
     auto list_model = std::make_shared<ArrayListModel<QString>>();
-    list_model->push("ONE");
-    list_model->push("TWO");
-    list_model->push("THREE");
+    list_model->push("CAN");
+    list_model->push("MSFT.NSDQ");
+    list_model->push("XIU.TSX");
     auto current_model = std::make_shared<LocalTextModel>();
     auto tag_box = new TagBox(list_model, current_model);
     apply_widget_properties(tag_box, profile.get_properties());

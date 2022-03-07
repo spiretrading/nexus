@@ -82,12 +82,13 @@ namespace Styles {
       std::vector<Tag*> m_tags;
       Styles::TagBoxOverflow m_overflow;
       QFont m_font;
-      QMargins m_margins;
       QString m_placeholder;
       QString m_tip;
       bool m_is_read_only;
       int m_tags_width;
       int m_list_item_gap;
+      int m_input_box_horizontal_padding;
+      int m_list_view_horizontal_padding;
       int m_scroll_bar_end_range;
       boost::signals2::scoped_connection m_style_connection;
       boost::signals2::scoped_connection m_list_view_style_connection;

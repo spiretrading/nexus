@@ -22,28 +22,25 @@ using namespace Spire::Styles;
 
 namespace {
   auto INPUT_BOX_STYLE(StyleSheet style) {
-    style.get(Any()).
-      set(vertical_padding(scale_height(3)));
+    style.get(Any()).set(padding(0));
+    style.get(Any() >> is_a<ScrollableListBox>()).
+      set(BackgroundColor(QColor(Qt::transparent))).
+      set(border_size(0));
     return style;
   }
 
   auto LIST_VIEW_STYLE(StyleSheet style) {
     style.get(Any()).
+      set(horizontal_padding(scale_width(8))).
       set(ListItemGap(scale_width(4))).
       set(ListOverflowGap(scale_width(3))).
       set(Overflow::WRAP).
-      set(Qt::Horizontal);
+      set(Qt::Horizontal).
+      set(vertical_padding(scale_height(3)));
     style.get(Any() > is_a<ListItem>()).
       set(BackgroundColor(QColor(Qt::transparent))).
       set(border_size(0)).
       set(padding(0));
-    return style;
-  }
-
-  auto SCROLLABLE_LIST_BOX_STYLE(StyleSheet style) {
-    style.get(Any()).
-      set(BackgroundColor(QColor(Qt::transparent))).
-      set(border_size(0));
     return style;
   }
 
@@ -120,11 +117,15 @@ TagBox::TagBox(std::shared_ptr<AnyListModel> list,
       m_is_read_only(false),
       m_tags_width(0),
       m_list_item_gap(0),
+      m_input_box_horizontal_padding(0),
+      m_list_view_horizontal_padding(0),
       m_scroll_bar_end_range(0),
       m_focus_connection(m_focus_observer.connect_state_signal(
         std::bind_front(&TagBox::on_focus, this))) {
   m_text_box = new TextBox(std::move(current));
-  set_style(*m_text_box, TEXT_BOX_STYLE(get_style(*m_text_box)));
+  update_style(*m_text_box, [] (auto& style) {
+    style = TEXT_BOX_STYLE(style);
+  });
   m_text_box->get_current()->connect_update_signal(
     std::bind_front(&TagBox::on_text_box_current, this));
   m_text_box_style_connection = connect_style_signal(*m_text_box,
@@ -148,9 +149,6 @@ TagBox::TagBox(std::shared_ptr<AnyListModel> list,
   m_scrollable_list_box = new ScrollableListBox(*m_list_view);
   m_scrollable_list_box->setSizePolicy(QSizePolicy::Expanding,
     QSizePolicy::Expanding);
-  update_style(*m_scrollable_list_box, [] (auto& style) {
-    style = SCROLLABLE_LIST_BOX_STYLE(style);
-  });
   m_scrollable_list_box->setFocusPolicy(Qt::NoFocus);
   m_scroll_box = &m_scrollable_list_box->get_scroll_box();
   m_scroll_box->installEventFilter(this);
@@ -295,7 +293,9 @@ QWidget* TagBox::make_tag(
     return tag;
   } else if(index == model->get_size() - 2) {
     auto ellipses_box = make_label(tr("..."));
-    set_style(*ellipses_box, TEXT_BOX_STYLE(get_style(*ellipses_box)));
+    update_style(*ellipses_box, [] (auto& style) {
+      style = TEXT_BOX_STYLE(style);
+    });
     return ellipses_box;
   }
   return m_text_box;
@@ -354,7 +354,7 @@ void TagBox::on_list_view_submit(const std::any& submission) {
 }
 
 void TagBox::on_style() {
-  m_margins = {};
+  m_input_box_horizontal_padding = 0;
   auto& stylist = find_stylist(*this);
   auto has_update = std::make_shared<bool>(false);
   for(auto& property : stylist.get_computed_block()) {
@@ -369,22 +369,22 @@ void TagBox::on_style() {
       },
       [&] (const BorderRightSize& size) {
         stylist.evaluate(size, [=] (auto size) {
-          m_margins.setRight(m_margins.right() + size);
+          m_input_box_horizontal_padding += size;
         });
       },
       [&] (const BorderLeftSize& size) {
         stylist.evaluate(size, [=] (auto size) {
-          m_margins.setLeft(m_margins.left() + size);
+          m_input_box_horizontal_padding += size;
         });
       },
       [&] (const PaddingRight& size) {
         stylist.evaluate(size, [=] (auto size) {
-          m_margins.setRight(m_margins.right() + size);
+          m_input_box_horizontal_padding += size;
         });
       },
       [&] (const PaddingLeft& size) {
         stylist.evaluate(size, [=] (auto size) {
-          m_margins.setLeft(m_margins.left() + size);
+          m_input_box_horizontal_padding += size;
         });
       });
   }
@@ -397,12 +397,23 @@ void TagBox::on_style() {
 
 void TagBox::on_list_view_style() {
   m_list_item_gap = 0;
+  m_list_view_horizontal_padding = 0;
   auto& stylist = find_stylist(*m_list_view);
   for(auto& property : stylist.get_computed_block()) {
     property.visit(
       [&] (const ListItemGap& gap) {
         stylist.evaluate(gap, [=] (auto gap) {
           m_list_item_gap = gap;
+        });
+      },
+      [&] (const PaddingRight& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          m_list_view_horizontal_padding += size;
+        });
+      },
+      [&] (const PaddingLeft& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          m_list_view_horizontal_padding += size;
         });
       });
   }
@@ -487,7 +498,8 @@ void TagBox::overflow() {
   if(m_overflow == TagBoxOverflow::ELIDE &&
       m_focus_observer.get_state() == FocusObserver::State::NONE) {
     auto text_box_height = m_text_box->sizeHint().height();
-    auto visible_area_width = width() - m_margins.left() - m_margins.right();
+    auto visible_area_width =
+      width() - m_input_box_horizontal_padding - m_list_view_horizontal_padding;
     auto ellipses_width = m_ellipses_item->sizeHint().width();
     auto first_char_length = QFontMetrics(m_font).horizontalAdvance(
       m_text_box->get_current()->get(), 3);
