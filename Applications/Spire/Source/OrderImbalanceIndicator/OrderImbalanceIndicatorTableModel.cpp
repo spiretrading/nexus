@@ -13,7 +13,6 @@ OrderImbalanceIndicatorTableModel::OrderImbalanceIndicatorTableModel(
   m_subscription_connection = std::move(subscription.m_connection);
   m_load = subscription.m_snapshot.then(
     [=] (auto&& result) { on_load(result.Get()); });
-  m_load.disconnect();
 }
 
 int OrderImbalanceIndicatorTableModel::get_row_size() const {
