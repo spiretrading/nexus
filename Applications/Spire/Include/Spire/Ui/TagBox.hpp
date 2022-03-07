@@ -73,7 +73,6 @@ namespace Styles {
       std::shared_ptr<PartialListModel> m_model;
       TextBox* m_text_box;
       ListView* m_list_view;
-      ScrollableListBox* m_scrollable_list_box;
       ScrollBox* m_scroll_box;
       ScrollBar* m_vertical_scroll_bar;
       ListItem* m_ellipses_item;

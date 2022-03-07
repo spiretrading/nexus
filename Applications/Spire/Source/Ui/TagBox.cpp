@@ -1,5 +1,4 @@
 #include "Spire/Ui/TagBox.hpp"
-#include <QCoreApplication>
 #include <QKeyEvent>
 #include <QStringBuilder>
 #include "Spire/Spire/Dimensions.hpp"
@@ -146,14 +145,14 @@ TagBox::TagBox(std::shared_ptr<AnyListModel> list,
     std::bind_front(&TagBox::on_list_view_submit, this));
   m_list_view->setFocusPolicy(Qt::NoFocus);
   m_list_view->installEventFilter(this);
-  m_scrollable_list_box = new ScrollableListBox(*m_list_view);
-  m_scrollable_list_box->setSizePolicy(QSizePolicy::Expanding,
+  auto scrollable_list_box = new ScrollableListBox(*m_list_view);
+  scrollable_list_box->setSizePolicy(QSizePolicy::Expanding,
     QSizePolicy::Expanding);
-  m_scrollable_list_box->setFocusPolicy(Qt::NoFocus);
-  m_scroll_box = &m_scrollable_list_box->get_scroll_box();
+  scrollable_list_box->setFocusPolicy(Qt::NoFocus);
+  m_scroll_box = &scrollable_list_box->get_scroll_box();
   m_scroll_box->installEventFilter(this);
   m_vertical_scroll_bar = &m_scroll_box->get_vertical_scroll_bar();
-  auto input_box = make_input_box(m_scrollable_list_box);
+  auto input_box = make_input_box(scrollable_list_box);
   enclose(*this, *input_box);
   proxy_style(*this, *input_box);
   set_style(*this, INPUT_BOX_STYLE(get_style(*input_box)));
@@ -206,25 +205,20 @@ connection TagBox::connect_submit_signal(
 }
 
 bool TagBox::eventFilter(QObject* watched, QEvent* event) {
-  if(watched == m_text_box->focusProxy() && event->type() == QEvent::KeyPress) {
+  if(event->type() == QEvent::KeyPress) {
     auto& key_event = *static_cast<QKeyEvent*>(event);
-    switch(key_event.key()) {
-      case Qt::Key_Backspace:
-        if(m_text_box->get_highlight()->get().m_start == 0 &&
-            m_text_box->get_highlight()->get().m_end == 0 &&
-            get_list()->get_size() > 0) {
-          get_list()->remove(get_list()->get_size() - 1);
-          return true;
-        }
-        break;
-      case Qt::Key_Down:
-      case Qt::Key_Up:
-      case Qt::Key_PageDown:
-      case Qt::Key_PageUp:
-        QCoreApplication::sendEvent(m_scroll_box, event);
-        return true;
-      default:
-        break;
+    if(watched == m_text_box->focusProxy() &&
+        key_event.key() == Qt::Key_Backspace &&
+        m_text_box->get_highlight()->get().m_start == 0 &&
+        m_text_box->get_highlight()->get().m_end == 0 &&
+        get_list()->get_size() > 0) {
+      get_list()->remove(get_list()->get_size() - 1);
+      return true;
+    } else if(watched == m_list_view && (key_event.key() == Qt::Key_Down ||
+        key_event.key() == Qt::Key_Up || key_event.key() == Qt::Key_PageDown ||
+        key_event.key() == Qt::Key_PageUp)) {
+      event->ignore();
+      return true;
     }
   } else if(event->type() == QEvent::LayoutRequest) {
     if(watched == m_list_view) {
