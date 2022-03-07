@@ -154,7 +154,7 @@ namespace Spire {
   template<typename T>
   T wait(QtPromise<T>& promise) {
     auto future = std::optional<Beam::Expect<T>>();
-    promise.then([&] (auto&& result) {
+    auto continuation = promise.then([&] (auto&& result) {
       future.emplace(std::forward<decltype(result)>(result));
     });
     while(!future.has_value()) {

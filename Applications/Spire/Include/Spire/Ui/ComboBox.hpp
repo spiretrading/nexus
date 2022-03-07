@@ -143,7 +143,7 @@ namespace Spire {
       DropDownList* m_drop_down_list;
       boost::optional<QString> m_user_query;
       std::uint32_t m_completion_tag;
-      QtPromise<std::vector<std::any>> m_query_result;
+      QtPromise<void> m_query_result;
       QString m_prefix;
       QString m_completion;
       QString m_last_completion;

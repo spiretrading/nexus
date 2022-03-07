@@ -70,7 +70,7 @@ namespace Spire {
       std::vector<ServerEntry> m_servers;
       ServiceClientsFactory m_service_clients_factory;
       LoginWindow* m_login_window;
-      QtPromise<Nexus::ServiceClientsBox> m_login_promise;
+      QtPromise<void> m_login_promise;
       boost::optional<Nexus::ServiceClientsBox> m_service_clients;
 
       LoginController(const LoginController&) = delete;

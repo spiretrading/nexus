@@ -7,15 +7,33 @@ using namespace Spire;
 TEST_SUITE("QtPromise") {
   TEST_CASE("immediate_value") {
     run_test([] {
-      auto p = QtPromise<int>([] { return 10; });
-      auto r = wait(std::move(p));
-      REQUIRE(r == 10);
+      auto promise = QtPromise<int>([] { return 10; });
+      auto result = wait(std::move(promise));
+      REQUIRE(result == 10);
+    });
+  }
+
+  TEST_CASE("promise_then") {
+    run_test([] {
+      auto promise = QtPromise([] {
+        return 123;
+      }).then([] (auto result) {
+        return result + 1;
+      }).then([] (auto result) {
+        return result + 2;
+      }).then([] (auto result) {
+        return result + 3;
+      }).then([] (auto result) {
+        return result + 4;
+      });
+      auto result = wait(std::move(promise));
+      REQUIRE(result == 133);
     });
   }
 
   TEST_CASE("chaining_promise_then") {
     run_test([] {
-      auto p = QtPromise([] {
+      auto promise = QtPromise([] {
         return 123;
       }).then([] (auto result) {
         return QtPromise([=] {
@@ -26,8 +44,19 @@ TEST_SUITE("QtPromise") {
       }).then([] (auto result) {
         return 6 * result.Get();
       });
-      auto r = wait(std::move(p));
-      REQUIRE(r == 4428);
+      auto result = wait(std::move(promise));
+      REQUIRE(result == 4428);
+    });
+  }
+
+  TEST_CASE("reassigned_chained_promise") {
+    run_test([] {
+      auto promise1 = QtPromise([] { return 5; });
+      auto promise2 = promise1.then([] (auto&& result) {
+        return 7 + result.Get();
+      });
+      auto result = wait(std::move(promise2));
+      REQUIRE(result == 12);
     });
   }
 
