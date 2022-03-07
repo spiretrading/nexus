@@ -50,6 +50,7 @@ namespace Spire {
   class OpenFilterPanel;
   template<typename T> class OpenFilterPanelTemplate;
   class OverlayPanel;
+  class PressObserver;
   class RegionListItem;
   class ResponsiveLabel;
   template<typename T> class RowViewListModel;
@@ -81,6 +82,7 @@ namespace Spire {
   class TextBox;
   class TimeBox;
   class TitleBar;
+  class ToggleButton;
   class Tooltip;
   class TransitionWidget;
   class TranslatedTableModel;

@@ -68,6 +68,9 @@ namespace Spire {
   /** Returns a UiProfile for the IconButton. */
   UiProfile make_icon_button_profile();
 
+  /** Returns a UiProfile for the IconToggleButton. */
+  UiProfile make_icon_toggle_button_profile();
+
   /** Returns a UiProfile for the IntoTip. */
   UiProfile make_info_tip_profile();
 

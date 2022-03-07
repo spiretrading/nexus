@@ -76,6 +76,7 @@
 #include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/TimeInForceBox.hpp"
 #include "Spire/Ui/TimeInForceFilterPanel.hpp"
+#include "Spire/Ui/ToggleButton.hpp"
 #include "Spire/Ui/Tooltip.hpp"
 #include "Spire/UiViewer/StandardUiProperties.hpp"
 #include "Spire/UiViewer/UiProfile.hpp"
@@ -340,7 +341,7 @@ namespace {
         }
         submit_filter_slot(result);
       });
-    button->connect_clicked_signal([=] { panel->show(); });
+    button->connect_click_signal([=] { panel->show(); });
     return button;
   }
 
@@ -377,7 +378,7 @@ namespace {
     using Type = typename Panel::Type;
     auto button = make_label_button("Click me");
     auto range = std::make_shared<LocalValueModel<typename Panel::Range>>();
-    button->connect_clicked_signal([=, &profile] {
+    button->connect_click_signal([=, &profile] {
       auto& title = get<QString>("title", profile.get_properties());
       auto panel = new Panel(range, title.get(), *button);
       auto filter_slot = profile.make_event_slot<QString>("SubmitSignal");
@@ -445,7 +446,7 @@ namespace {
     auto create_button = make_label_button("Show child panel", body);
     container_layout->addWidget(create_button);
     auto close_button = make_label_button("Close", body);
-    close_button->connect_clicked_signal([=] { body->window()->close(); });
+    close_button->connect_click_signal([=] { body->window()->close(); });
     container_layout->addWidget(close_button);
     return body;
   }
@@ -455,7 +456,7 @@ namespace {
     auto body = create_panel_body();
     auto panel = new OverlayPanel(*body, *parent);
     auto button = body->findChild<Button*>();
-    button->connect_clicked_signal([=] {
+    button->connect_click_signal([=] {
       create_child_panel(close_on_focus_out, draggable, positioning, button);
     });
     panel->setAttribute(Qt::WA_DeleteOnClose);
@@ -835,9 +836,7 @@ UiProfile Spire::make_closed_filter_panel_profile() {
         }
         submit_filter_slot(result);
       });
-    button->connect_clicked_signal([=] {
-      panel->show();
-    });
+    button->connect_click_signal([=] { panel->show(); });
     return button;
   });
   return profile;
@@ -932,7 +931,7 @@ UiProfile Spire::make_context_menu_profile() {
       menu->add_action("This is a long name for test",
         profile.make_event_slot<>(
           QString("Action:This is a long name for test")));
-      button->connect_clicked_signal([=] {
+      button->connect_click_signal([=] {
         auto pos = QCursor::pos();
         menu->window()->move(pos.x(), pos.y() + button->height());
         menu->show();
@@ -1095,7 +1094,7 @@ UiProfile Spire::make_date_filter_panel_profile() {
         }
         filter_slot(result);
       });
-    button->connect_clicked_signal([=] {
+    button->connect_click_signal([=] {
       panel->show();
     });
     return button;
@@ -1303,7 +1302,7 @@ UiProfile Spire::make_decimal_filter_panel_profile() {
       auto button = make_label_button("Click me");
       auto range = std::make_shared<
         LocalValueModel<ScalarFilterPanel<DecimalBox>::Range>>();
-      button->connect_clicked_signal([=, &profile, &title] {
+      button->connect_click_signal([=, &profile, &title] {
         auto panel = new DecimalFilterPanel(range, title.get(), *button);
         auto submit_slot = profile.make_event_slot<QString>("SubmitSignal");
         panel->connect_submit_signal([=] (const auto& submission) {
@@ -1323,7 +1322,7 @@ UiProfile Spire::make_delete_icon_button_profile() {
   auto profile = UiProfile("DeleteIconButton", properties, [] (auto& profile) {
     auto button = make_delete_icon_button();
     apply_widget_properties(button, profile.get_properties());
-    button->connect_clicked_signal(profile.make_event_slot("ClickedSignal"));
+    button->connect_click_signal(profile.make_event_slot("ClickSignal"));
     return button;
   });
   return profile;
@@ -1429,7 +1428,7 @@ UiProfile Spire::make_drop_down_list_profile() {
     auto& item_count = get<int>("item_count", profile.get_properties());
     auto& item_text = get<QString>("item_label", profile.get_properties());
     auto button = make_label_button("DropDownList");
-    button->connect_clicked_signal([&, button] {
+    button->connect_click_signal([&, button] {
       auto list_model = std::make_shared<ArrayListModel<QString>>();
       for(auto i = 0; i < item_count.get(); ++i) {
         list_model->push(item_text.get() + QString("%1").arg(i));
@@ -1503,7 +1502,7 @@ UiProfile Spire::make_duration_filter_panel_profile() {
       auto button = make_label_button(QString("Click me"));
       auto range =
         std::make_shared<LocalValueModel<DurationFilterPanel::Range>>();
-      button->connect_clicked_signal([=, &profile] {
+      button->connect_click_signal([=, &profile] {
         auto panel =
           new DurationFilterPanel(range, "Filter by Duration", *button);
         auto filter_slot = profile.make_event_slot<QString>("SubmitSignal");
@@ -1533,7 +1532,7 @@ UiProfile Spire::make_filter_panel_profile() {
   auto profile = UiProfile("FilterPanel", properties, [] (auto& profile) {
     auto& title = get<QString>("title", profile.get_properties());
     auto button = make_label_button("Click me");
-    button->connect_clicked_signal([&, button] {
+    button->connect_click_signal([&, button] {
       auto component = new QWidget();
       component->setObjectName("component");
       component->setStyleSheet("#component {background-color: #F5F5F5;}");
@@ -1669,7 +1668,7 @@ UiProfile Spire::make_hover_observer_profile() {
     parent_box->move(translate(175, 0));
     auto add_button = make_label_button("Add Child", container);
     add_button->move(translate(75, 225));
-    add_button->connect_clicked_signal([=, &profile] {
+    add_button->connect_click_signal([=, &profile] {
       auto parent_box = std::move(box_stack->top());
       auto box = make_input_box(new QWidget(), parent_box->m_box);
       box->setFixedSize(parent_box->m_box->size().shrunkBy({scale_width(10),
@@ -1681,7 +1680,7 @@ UiProfile Spire::make_hover_observer_profile() {
     });
     auto remove_button = make_label_button("Remove Child", container);
     remove_button->move(translate(200, 225));
-    remove_button->connect_clicked_signal([=] {
+    remove_button->connect_click_signal([=] {
       if(box_stack->size() > 1) {
         auto box = std::move(box_stack->top());
         box_stack->pop();
@@ -1690,13 +1689,13 @@ UiProfile Spire::make_hover_observer_profile() {
     });
     auto left_button = make_label_button("Move Left", container);
     left_button->move(translate(75, 265));
-    left_button->connect_clicked_signal([=] {
+    left_button->connect_click_signal([=] {
       container->window()->move(
         container->window()->x() - scale_width(50), container->window()->y());
     });
     auto right_button = make_label_button("Move Right", container);
     right_button->move(translate(200, 265));
-    right_button->connect_clicked_signal([=] {
+    right_button->connect_click_signal([=] {
       container->window()->move(
         container->window()->x() + scale_width(50), container->window()->y());
     });
@@ -1714,7 +1713,22 @@ UiProfile Spire::make_icon_button_profile() {
     auto button = make_icon_button(
       imageFromSvg(":/Icons/demo.svg", scale(26, 26)), tooltip.get());
     apply_widget_properties(button, profile.get_properties());
-    button->connect_clicked_signal(profile.make_event_slot("ClickedSignal"));
+    button->connect_click_signal(profile.make_event_slot("ClickSignal"));
+    return button;
+  });
+  return profile;
+}
+
+UiProfile Spire::make_icon_toggle_button_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_property<QString>("tooltip", "Tooltip"));
+  auto profile = UiProfile("IconToggleButton", properties, [] (auto& profile) {
+    auto& tooltip = get<QString>("tooltip", profile.get_properties());
+    auto button = make_icon_toggle_button(
+      imageFromSvg(":/Icons/demo.svg", scale(26, 26)), tooltip.get());
+    apply_widget_properties(button, profile.get_properties());
+//    button->connect_click_signal(profile.make_event_slot("ClickSignal"));
     return button;
   });
   return profile;
@@ -1815,7 +1829,7 @@ UiProfile Spire::make_key_filter_panel_profile() {
           }
           submit_filter_slot(result);
         });
-      button->connect_clicked_signal([=] { panel->show(); });
+      button->connect_click_signal([=] { panel->show(); });
       return button;
     });
   return profile;
@@ -1919,7 +1933,7 @@ UiProfile Spire::make_label_button_profile() {
         style.get(Press() > Body()).set(BackgroundColor(color));
       });
     });
-    button->connect_clicked_signal(profile.make_event_slot("ClickedSignal"));
+    button->connect_click_signal(profile.make_event_slot("ClickSignal"));
     return button;
   });
   return profile;
@@ -2252,7 +2266,7 @@ UiProfile Spire::make_open_filter_panel_profile() {
           }
           submit_filter_slot(result);
         });
-      button->connect_clicked_signal([=] { panel->show(); });
+      button->connect_click_signal([=] { panel->show(); });
       return button;
     });
   return profile;
@@ -2378,7 +2392,7 @@ UiProfile Spire::make_overlay_panel_profile() {
     auto button = make_label_button("Click me");
     apply_widget_properties(button, profile.get_properties());
     auto panel = QPointer<OverlayPanel>();
-    button->connect_clicked_signal(
+    button->connect_click_signal(
       [=, &profile, &close_on_focus_out, &draggable, &positioning]
           () mutable {
         if(panel && !close_on_focus_out.get()) {
@@ -2387,7 +2401,7 @@ UiProfile Spire::make_overlay_panel_profile() {
         auto body = create_panel_body();
         panel = new OverlayPanel(*body, *button);
         auto child_button = body->findChild<Button*>();
-        child_button->connect_clicked_signal(
+        child_button->connect_click_signal(
           [=, &close_on_focus_out, &draggable, &positioning] {
             create_child_panel(close_on_focus_out.get(), draggable.get(),
               positioning.get(), child_button);
@@ -2769,7 +2783,7 @@ UiProfile Spire::make_security_filter_panel_profile() {
           }
           submit_filter_slot(result);
         });
-      button->connect_clicked_signal([=] { panel->show(); });
+      button->connect_click_signal([=] { panel->show(); });
       return button;
     });
   return profile;
