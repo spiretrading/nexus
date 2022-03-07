@@ -43,8 +43,7 @@ void LoginController::on_login(const std::string& username,
   m_login_promise = QtPromise([=] {
     return m_service_clients_factory(username, password,
       m_servers.front().m_address);
-  }, LaunchPolicy::ASYNC);
-  m_login_promise.then(
+  }, LaunchPolicy::ASYNC).then(
     [=] (auto&& result) { on_login_promise(std::move(result)); });
 }
 

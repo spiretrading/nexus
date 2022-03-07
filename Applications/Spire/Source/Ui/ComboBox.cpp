@@ -240,8 +240,7 @@ void ComboBox::submit(const QString& query, bool is_passive) {
   m_submission_text = query;
   m_input_box->get_highlight()->set(Highlight(query.size()));
   m_drop_down_list->hide();
-  m_query_result = m_query_model->submit(query);
-  m_query_result.then(
+  m_query_result = m_query_model->submit(query).then(
     std::bind_front(&ComboBox::on_query, this, ++m_completion_tag, false));
   m_submit_signal(value);
 }
@@ -260,8 +259,7 @@ void ComboBox::on_input(const AnyRef& current) {
   if(query.isEmpty()) {
     on_query(++m_completion_tag, true, std::vector<std::any>());
   } else {
-    m_query_result = m_query_model->submit(query);
-    m_query_result.then(
+    m_query_result = m_query_model->submit(query).then(
       std::bind_front(&ComboBox::on_query, this, ++m_completion_tag, true));
     auto value = m_query_model->parse(query);
     if(value.has_value()) {
