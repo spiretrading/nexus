@@ -145,14 +145,14 @@ TagBox::TagBox(std::shared_ptr<AnyListModel> list,
     std::bind_front(&TagBox::on_list_view_submit, this));
   m_list_view->setFocusPolicy(Qt::NoFocus);
   m_list_view->installEventFilter(this);
-  m_scrollable_list_box = new ScrollableListBox(*m_list_view);
-  m_scrollable_list_box->setSizePolicy(QSizePolicy::Expanding,
+  auto scrollable_list_box = new ScrollableListBox(*m_list_view);
+  scrollable_list_box->setSizePolicy(QSizePolicy::Expanding,
     QSizePolicy::Expanding);
-  m_scrollable_list_box->setFocusPolicy(Qt::NoFocus);
-  m_scroll_box = &m_scrollable_list_box->get_scroll_box();
+  scrollable_list_box->setFocusPolicy(Qt::NoFocus);
+  m_scroll_box = &scrollable_list_box->get_scroll_box();
   m_scroll_box->installEventFilter(this);
   m_vertical_scroll_bar = &m_scroll_box->get_vertical_scroll_bar();
-  auto input_box = make_input_box(m_scrollable_list_box);
+  auto input_box = make_input_box(scrollable_list_box);
   enclose(*this, *input_box);
   proxy_style(*this, *input_box);
   set_style(*this, INPUT_BOX_STYLE(get_style(*input_box)));
