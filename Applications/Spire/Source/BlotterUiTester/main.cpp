@@ -46,6 +46,13 @@ namespace {
         std::bind_front(&StatusBarController::on_total_update, this));
     }
 
+    bool eventFilter(QObject* object, QEvent* event) override {
+      if(event->type() == QEvent::Close) {
+        QApplication::quit();
+      }
+      return QWidget::eventFilter(object, event);
+    }
+
     void add_money_input(QGridLayout& layout, const QString& name, int row,
         QDoubleSpinBox*& box, std::shared_ptr<MoneyModel>& value) {
       layout.addWidget(new QLabel(name + ": "), row, 0);
@@ -77,7 +84,6 @@ int main(int argc, char** argv) {
   application.setApplicationName(QObject::tr("Blotter UI Tester"));
   initialize_resources();
   auto controller = StatusBarController();
-  controller.show();
   auto blotter = std::make_shared<CompositeBlotterModel>(
     std::make_shared<LocalTextModel>("North America"),
     std::make_shared<CompositeBlotterStatusModel>(controller.m_buying_power,
@@ -85,7 +91,11 @@ int main(int argc, char** argv) {
       controller.m_unrealized_profit_and_loss,
       controller.m_realized_profit_and_loss, controller.m_fees,
       controller.m_cost_basis));
+  controller.setAttribute(Qt::WA_ShowWithoutActivating);
   auto window = BlotterWindow(blotter);
   window.show();
+  controller.move(window.pos() + QPoint(0, window.size().height()));
+  controller.show();
+  window.installEventFilter(&controller);
   application.exec();
 }
