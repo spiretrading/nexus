@@ -16,6 +16,13 @@ namespace Spire {
   class CurrentOrderImbalanceIndicatorTableModel : public TableModel {
     public:
 
+      /**
+       * Represents a function to create TimerBoxes that expire after a
+       * specific duration.
+       * @param duration The duration between starting the TimerBox instance
+       *                 and its expiration.
+       * @returns The TimerBox instance.
+       */
       using TimerFactory = std::function<
         Beam::Threading::TimerBox (boost::posix_time::time_duration duration)>;
 
@@ -48,12 +55,11 @@ namespace Spire {
       };
       struct CallbackTimer {
         CallbackTimer(std::unique_ptr<Beam::Threading::TimerBox> timer,
-          const std::function<void (Beam::Threading::Timer::Result result)>&
-            expiration_callback);
-
+          std::function<void ()> expiration_callback);
         private:
           Beam::CallbackQueue m_queue;
           std::unique_ptr<Beam::Threading::TimerBox> m_timer;
+          std::function<void ()> m_expiration_callback;
       };
       std::shared_ptr<OrderImbalanceIndicatorModel> m_source;
       LocalOrderImbalanceIndicatorTableModel m_table;
@@ -66,7 +72,7 @@ namespace Spire {
       boost::optional<Expiring> m_next_expiring;
 
       void update_next_expiring();
-      void on_expiration_timeout(Beam::Threading::Timer::Result result);
+      void on_expiration_timeout();
       void on_imbalance(const Nexus::OrderImbalance& imbalance);
       void on_load(const std::vector<Nexus::OrderImbalance>& imbalances);
   };

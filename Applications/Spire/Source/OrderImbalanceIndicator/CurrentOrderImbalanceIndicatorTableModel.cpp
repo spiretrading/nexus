@@ -13,11 +13,13 @@ using namespace Nexus;
 using namespace Spire;
 
 CurrentOrderImbalanceIndicatorTableModel::CallbackTimer::CallbackTimer(
-    std::unique_ptr<TimerBox> timer,
-    const std::function<void (Timer::Result result)>& expiration_callback)
-    : m_timer(std::move(timer)) {
+    std::unique_ptr<TimerBox> timer, std::function<void ()> expiration_callback)
+    : m_timer(std::move(timer)),
+      m_expiration_callback(std::move(expiration_callback)) {
   m_timer->GetPublisher().Monitor(
-    m_queue.GetSlot<Timer::Result>(expiration_callback));
+    m_queue.GetSlot<Timer::Result>([=] (auto result) {
+      if(result == Timer::Result::EXPIRED) { m_expiration_callback(); }
+    }));
   m_timer->Start();
 }
 
@@ -77,11 +79,7 @@ void CurrentOrderImbalanceIndicatorTableModel::update_next_expiring() {
       &CurrentOrderImbalanceIndicatorTableModel::on_expiration_timeout, this));
 }
 
-void CurrentOrderImbalanceIndicatorTableModel::on_expiration_timeout(
-    Timer::Result result) {
-  if(result != Timer::Result::EXPIRED) {
-    return;
-  }
+void CurrentOrderImbalanceIndicatorTableModel::on_expiration_timeout() {
   m_table.remove(m_next_expiring->m_security);
   update_next_expiring();
 }
