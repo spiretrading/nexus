@@ -46,6 +46,15 @@ namespace Spire {
         Nexus::Security m_security;
         boost::posix_time::ptime m_timestamp;
       };
+      struct CallbackTimer {
+        CallbackTimer(std::unique_ptr<Beam::Threading::TimerBox> timer,
+          const std::function<void (Beam::Threading::Timer::Result result)>&
+            expiration_callback);
+
+        private:
+          Beam::CallbackQueue m_queue;
+          std::unique_ptr<Beam::Threading::TimerBox> m_timer;
+      };
       std::shared_ptr<OrderImbalanceIndicatorModel> m_source;
       LocalOrderImbalanceIndicatorTableModel m_table;
       boost::signals2::scoped_connection m_subscription_connection;
@@ -53,13 +62,9 @@ namespace Spire {
       boost::posix_time::time_duration m_offset;
       Beam::TimeService::TimeClientBox m_clock;
       TimerFactory m_timer_factory;
-      Beam::CallbackQueue m_timer_queue;
-      std::unique_ptr<Beam::Threading::TimerBox> m_timer;
+      std::deque<CallbackTimer> m_timers;
       boost::optional<Expiring> m_next_expiring;
-      // TODO:
-      std::vector<std::unique_ptr<Beam::Threading::TimerBox>> m_timers;
 
-      void set_next_expiring(int row);
       void update_next_expiring();
       void on_expiration_timeout(Beam::Threading::Timer::Result result);
       void on_imbalance(const Nexus::OrderImbalance& imbalance);
