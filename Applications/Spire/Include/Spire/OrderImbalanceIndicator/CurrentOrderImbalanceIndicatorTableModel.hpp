@@ -17,8 +17,7 @@ namespace Spire {
     public:
 
       /**
-       * Represents a function to create TimerBoxes that expire after a
-       * specific duration.
+       * Represents a function for creating TimeBox instances.
        * @param duration The duration between starting the TimerBox instance
        *                 and its expiration.
        * @returns The TimerBox instance.
