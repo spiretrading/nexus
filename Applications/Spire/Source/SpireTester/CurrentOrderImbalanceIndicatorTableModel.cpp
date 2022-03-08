@@ -23,25 +23,27 @@ namespace {
       Quantity(timestamp), Money(timestamp), from_time_t(timestamp));
   }
 
-  auto row_equals(const auto& model, auto row, auto imbalance) {
-    return model.get<Security>(row, 0) == imbalance.m_security &&
-      model.get<Side>(row, 1) == imbalance.m_side &&
-      model.get<Quantity>(row, 2) == imbalance.m_size &&
-      model.get<Money>(row, 3) == imbalance.m_referencePrice &&
-      model.get<Money>(row, 4) ==
-        imbalance.m_size * imbalance.m_referencePrice &&
-      model.get<date>(row, 5) == imbalance.m_timestamp.date() &&
-      model.get<time_duration>(row, 6) == imbalance.m_timestamp.time_of_day();
+  auto row_imbalance(const auto& model, auto row) {
+    auto timestamp =
+      ptime(model.get<date>(row, 5), model.get<time_duration>(row, 6));
+    return OrderImbalance(model.get<Security>(row, 0), model.get<Side>(row, 1),
+      model.get<Quantity>(row, 2), model.get<Money>(row, 3), timestamp);
   }
 
   auto rows_equal(
-      const auto& model, const auto& imbalance1, const auto& imbalance2) {
-    if(model.get_row_size() != 2) {
+      const auto& model, const std::vector<OrderImbalance>& imbalances) {
+    if(model.get_row_size() != imbalances.size()) {
       return false;
     }
-    return
-      row_equals(model, 0, imbalance1) && row_equals(model, 1, imbalance2) ||
-      row_equals(model, 0, imbalance2) && row_equals(model, 1, imbalance1);
+    auto model_imbalances = [&] {
+      auto imbalances = std::vector<OrderImbalance>();
+      for(auto i = 0; i < model.get_row_size(); ++i) {
+        imbalances.push_back(row_imbalance(model, i));
+      }
+      return imbalances;
+    }();
+    return std::is_permutation(model_imbalances.begin(), model_imbalances.end(),
+      imbalances.begin());
   }
 
   template<typename... F>
@@ -56,6 +58,7 @@ namespace {
   auto B150 = make_imbalance("B", 150);
   auto B350 = make_imbalance("B", 350);
   auto B400 = make_imbalance("B", 400);
+  auto C110 = make_imbalance("C", 110);
 }
 
 TEST_SUITE("CurrentOrderImbalanceIndicatorTableModel") {
@@ -75,7 +78,7 @@ TEST_SUITE("CurrentOrderImbalanceIndicatorTableModel") {
       [&] (const auto& operation) { operations.push_back(operation); }));
     source->publish(A100);
     REQUIRE(model.get_row_size() == 1);
-    REQUIRE(row_equals(model, 0, A100));
+    REQUIRE(row_imbalance(model, 0) == A100);
     REQUIRE(operations.size() == 1);
     test_operation(operations.front(),
       [&] (const TableModel::AddOperation& operation) {
@@ -84,12 +87,12 @@ TEST_SUITE("CurrentOrderImbalanceIndicatorTableModel") {
     operations.pop_front();
     source->publish(B150);
     REQUIRE(model.get_row_size() == 2);
-    REQUIRE(rows_equal(model, A100, B150));
+    REQUIRE(rows_equal(model, {A100, B150}));
     REQUIRE(operations.size() == 1);
     auto row = 0;
     test_operation(operations.front(),
       [&] (const TableModel::AddOperation& operation) {
-        if(row_equals(model, 0, B150)) {
+        if(row_imbalance(model, 0) == B150) {
           REQUIRE(operation.m_index == 0);
           row = 1;
         } else {
@@ -100,7 +103,7 @@ TEST_SUITE("CurrentOrderImbalanceIndicatorTableModel") {
     operations.pop_front();
     environment.AdvanceTime(seconds(100));
     REQUIRE(model.get_row_size() == 1);
-    REQUIRE(row_equals(model, 0, B150));
+    REQUIRE(row_imbalance(model, 0) == B150);
     REQUIRE(operations.size() == 1);
     test_operation(operations.front(),
       [&] (const TableModel::RemoveOperation& operation) {
@@ -117,7 +120,7 @@ TEST_SUITE("CurrentOrderImbalanceIndicatorTableModel") {
     operations.pop_front();
     source->publish(A300);
     REQUIRE(model.get_row_size() == 1);
-    REQUIRE(row_equals(model, 0, A300));
+    REQUIRE(row_imbalance(model, 0) == A300);
     REQUIRE(operations.size() == 1);
     test_operation(operations.front(),
       [&] (const TableModel::AddOperation& operation) {
@@ -126,11 +129,11 @@ TEST_SUITE("CurrentOrderImbalanceIndicatorTableModel") {
     operations.pop_front();
     source->publish(B350);
     REQUIRE(model.get_row_size() == 2);
-    REQUIRE(rows_equal(model, A300, B350));
+    REQUIRE(rows_equal(model, {A300, B350}));
     REQUIRE(operations.size() == 1);
     test_operation(operations.front(),
       [&] (const TableModel::AddOperation& operation) {
-        if(row_equals(model, 0, B350)) {
+        if(row_imbalance(model, 0) == B350) {
           REQUIRE(operation.m_index == 0);
           row = 1;
         } else {
@@ -141,7 +144,7 @@ TEST_SUITE("CurrentOrderImbalanceIndicatorTableModel") {
     operations.pop_front();
     environment.AdvanceTime(seconds(150));
     REQUIRE(model.get_row_size() == 1);
-    REQUIRE(row_equals(model, 0, B350));
+    REQUIRE(row_imbalance(model, 0) == B350);
     REQUIRE(operations.size() == 1);
     test_operation(operations.front(),
       [&] (const TableModel::RemoveOperation& operation) {
@@ -167,7 +170,7 @@ TEST_SUITE("CurrentOrderImbalanceIndicatorTableModel") {
       });
     source->publish(B400);
     REQUIRE(model.get_row_size() == 1);
-    REQUIRE(row_equals(model, 0, B400));
+    REQUIRE(row_imbalance(model, 0) == B400);
     operations.pop_front();
     connection = model.connect_operation_signal(
       [&] (const auto& operation) { operations.push_back(operation); });
@@ -179,5 +182,40 @@ TEST_SUITE("CurrentOrderImbalanceIndicatorTableModel") {
         REQUIRE(operation.m_index == 0);
       });
     operations.pop_front();
+  }
+
+  TEST_CASE("older_published_imbalances") {
+    auto environment = TimeServiceTestEnvironment(from_time_t(0));
+    auto timer_factory = CurrentOrderImbalanceIndicatorTableModel::TimerFactory(
+      [&] (auto duration) {
+        return
+          TimerBox(std::make_unique<TestTimer>(duration, Ref(environment)));
+      });
+    auto source = std::make_shared<LocalOrderImbalanceIndicatorModel>();
+    auto model = CurrentOrderImbalanceIndicatorTableModel(seconds(200),
+      TimeClientBox(std::make_unique<TestTimeClient>(Ref(environment))),
+      timer_factory, source);
+    source->publish(B350);
+    REQUIRE(model.get_row_size() == 1);
+    REQUIRE(row_imbalance(model, 0) == B350);
+    environment.AdvanceTime(seconds(50));
+    source->publish(C110);
+    REQUIRE(model.get_row_size() == 2);
+    REQUIRE(rows_equal(model, {B350, C110}));
+    environment.AdvanceTime(seconds(25));
+    source->publish(A100);
+    REQUIRE(model.get_row_size() == 3);
+    REQUIRE(rows_equal(model, {B350, C110, A100}));
+    environment.AdvanceTime(seconds(25));
+    REQUIRE(model.get_row_size() == 2);
+    REQUIRE(rows_equal(model, {B350, C110}));
+    environment.AdvanceTime(seconds(25));
+    REQUIRE(model.get_row_size() == 1);
+    REQUIRE(row_imbalance(model, 0) == B350);
+    source->publish(B150);
+    REQUIRE(model.get_row_size() == 1);
+    REQUIRE(row_imbalance(model, 0) == B350);
+    environment.AdvanceTime(seconds(225));
+    REQUIRE(model.get_row_size() == 0);
   }
 }
