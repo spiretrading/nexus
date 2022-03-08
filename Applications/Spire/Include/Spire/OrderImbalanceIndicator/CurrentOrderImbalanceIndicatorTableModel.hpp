@@ -63,17 +63,20 @@ namespace Spire {
       std::shared_ptr<OrderImbalanceIndicatorModel> m_source;
       LocalOrderImbalanceIndicatorTableModel m_table;
       boost::signals2::scoped_connection m_subscription_connection;
+      boost::signals2::scoped_connection m_operation_connection;
       QtPromise<void> m_load;
       boost::posix_time::time_duration m_offset;
       Beam::TimeService::TimeClientBox m_clock;
       TimerFactory m_timer_factory;
       std::deque<CallbackTimer> m_timers;
       boost::optional<Expiring> m_next_expiring;
+      TableModelTransactionLog m_transaction;
 
       void update_next_expiring();
       void on_expiration_timeout();
       void on_imbalance(const Nexus::OrderImbalance& imbalance);
       void on_load(const std::vector<Nexus::OrderImbalance>& imbalances);
+      void on_operation(TableModel::Operation operation);
   };
 }
 

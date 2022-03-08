@@ -30,6 +30,8 @@ CurrentOrderImbalanceIndicatorTableModel::CurrentOrderImbalanceIndicatorTableMod
       m_offset(offset),
       m_clock(std::move(clock)),
       m_timer_factory(std::move(timer_factory)) {
+  m_operation_connection = m_table.connect_operation_signal(std::bind_front(
+    &CurrentOrderImbalanceIndicatorTableModel::on_operation, this));
   auto subscription = m_source->subscribe(
     TimeInterval::closed(m_clock.GetTime() - m_offset,
       std::numeric_limits<ptime>::max()), std::bind_front(
@@ -54,7 +56,7 @@ const std::any& CurrentOrderImbalanceIndicatorTableModel::at(
 
 connection CurrentOrderImbalanceIndicatorTableModel::connect_operation_signal(
     const OperationSignal::slot_type& slot) const {
-  return m_table.connect_operation_signal(slot);
+  return m_transaction.connect_operation_signal(slot);
 }
 
 void CurrentOrderImbalanceIndicatorTableModel::update_next_expiring() {
@@ -80,8 +82,10 @@ void CurrentOrderImbalanceIndicatorTableModel::update_next_expiring() {
 }
 
 void CurrentOrderImbalanceIndicatorTableModel::on_expiration_timeout() {
-  m_table.remove(m_next_expiring->m_security);
-  update_next_expiring();
+  m_transaction.transact([&] {
+    m_table.remove(m_next_expiring->m_security);
+    update_next_expiring();
+  });
 }
 
 void CurrentOrderImbalanceIndicatorTableModel::on_imbalance(
@@ -89,17 +93,26 @@ void CurrentOrderImbalanceIndicatorTableModel::on_imbalance(
   auto is_update_required =
     !m_next_expiring || m_next_expiring->m_timestamp > imbalance.m_timestamp ||
     m_next_expiring->m_security == imbalance.m_security;
-  m_table.add(imbalance);
-  if(is_update_required) {
-    m_timers.clear();
-    update_next_expiring();
-  }
+  m_transaction.transact([&] {
+    m_table.add(imbalance);
+    if(is_update_required) {
+      m_timers.clear();
+      update_next_expiring();
+    }
+  });
 }
 
 void CurrentOrderImbalanceIndicatorTableModel::on_load(
     const std::vector<OrderImbalance>& imbalances) {
-  for(auto& imbalance : imbalances) {
-    m_table.add(imbalance);
-  }
+  m_transaction.transact([&] {
+    for(auto& imbalance : imbalances) {
+      m_table.add(imbalance);
+    }
+  });
   update_next_expiring();
+}
+
+void CurrentOrderImbalanceIndicatorTableModel::on_operation(
+    TableModel::Operation operation) {
+  m_transaction.push(std::move(operation));
 }
