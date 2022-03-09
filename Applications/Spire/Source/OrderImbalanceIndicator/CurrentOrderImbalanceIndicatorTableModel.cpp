@@ -121,6 +121,7 @@ void CurrentOrderImbalanceIndicatorTableModel::on_load(
       oldest = std::min(oldest, imbalance.m_timestamp);
     }
     if(!m_next_expiring || m_next_expiring->m_timestamp > oldest) {
+      m_timers.clear();
       update_next_expiring();
     }
   });
