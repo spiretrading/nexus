@@ -52,9 +52,11 @@ namespace Spire {
         Nexus::Security m_security;
         boost::posix_time::ptime m_timestamp;
       };
-      struct CallbackTimer {
-        CallbackTimer(std::unique_ptr<Beam::Threading::TimerBox> timer,
-          std::function<void ()> expiration_callback);
+      class CallbackTimer {
+        public:
+          CallbackTimer(std::unique_ptr<Beam::Threading::TimerBox> timer,
+            std::function<void ()> expiration_callback);
+
         private:
           Beam::CallbackQueue m_queue;
           std::function<void ()> m_expiration_callback;
