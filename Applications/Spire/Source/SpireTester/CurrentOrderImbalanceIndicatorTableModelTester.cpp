@@ -274,8 +274,6 @@ TEST_SUITE("CurrentOrderImbalanceIndicatorTableModel") {
       auto source = std::make_shared<LocalOrderImbalanceIndicatorModel>();
       source->publish(A100);
       source->publish(B100);
-      source->publish(C100);
-      source->publish(D100);
       auto model = CurrentOrderImbalanceIndicatorTableModel(seconds(200),
         TimeClientBox(std::make_unique<TestTimeClient>(Ref(environment))),
         timer_factory, source);
@@ -283,6 +281,8 @@ TEST_SUITE("CurrentOrderImbalanceIndicatorTableModel") {
       auto connection = scoped_connection(model.connect_operation_signal(
         [&] (const auto& operation) { operations.push_back(operation);
           environment.AdvanceTime(seconds(10)); }));
+      source->publish(C100);
+      source->publish(D100);
       wait_until([&] { return model.get_row_size() == 4; });
       REQUIRE(model.get_row_size() == 4);
       environment.AdvanceTime(seconds(300));

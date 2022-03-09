@@ -115,10 +115,14 @@ void CurrentOrderImbalanceIndicatorTableModel::on_imbalance(
 void CurrentOrderImbalanceIndicatorTableModel::on_load(
     const std::vector<OrderImbalance>& imbalances) {
   m_transaction.transact([&] {
+    auto oldest = std::numeric_limits<ptime>::max();
     for(auto& imbalance : imbalances) {
       m_table.add(imbalance);
+      oldest = std::min(oldest, imbalance.m_timestamp);
     }
-    update_next_expiring();
+    if(!m_next_expiring || m_next_expiring->m_timestamp > oldest) {
+      update_next_expiring();
+    }
   });
 }
 
