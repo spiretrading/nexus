@@ -57,8 +57,8 @@ namespace Spire {
           std::function<void ()> expiration_callback);
         private:
           Beam::CallbackQueue m_queue;
-          std::unique_ptr<Beam::Threading::TimerBox> m_timer;
           std::function<void ()> m_expiration_callback;
+          std::unique_ptr<Beam::Threading::TimerBox> m_timer;
       };
       std::shared_ptr<OrderImbalanceIndicatorModel> m_source;
       LocalOrderImbalanceIndicatorTableModel m_table;

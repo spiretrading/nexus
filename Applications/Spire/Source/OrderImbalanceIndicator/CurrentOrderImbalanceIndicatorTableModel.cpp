@@ -66,24 +66,28 @@ void CurrentOrderImbalanceIndicatorTableModel::update_next_expiring() {
   }
   auto next_expiration = std::numeric_limits<ptime>::max();
   auto row = 0;
-  for(auto i = 0; i < m_table.get_row_size(); ++i) {
+  auto time_interval_lower = m_clock.GetTime() - m_offset;
+  for(auto i = 0; i < m_table.get_row_size();) {
     auto time =
       ptime(m_table.get<date>(i, 5), m_table.get<time_duration>(i, 6));
-    if(time < next_expiration) {
+    if(time <= time_interval_lower) {
+      m_table.remove(m_table.get<Security>(i, 0));
+      continue;
+    } else if(time < next_expiration) {
       next_expiration = time;
       row = i;
     }
+    ++i;
+  }
+  if(m_table.get_row_size() == 0) {
+    m_next_expiring = none;
+    return;
   }
   m_next_expiring = Expiring{m_table.get<Security>(row, 0),
     ptime(m_table.get<date>(row, 5), m_table.get<time_duration>(row, 6))};
-  auto expiration_interval = [&] () -> time_duration {
-    if(m_next_expiring->m_timestamp <= (m_clock.GetTime() - m_offset)) {
-      return milliseconds(0);
-    }
-    return m_next_expiring->m_timestamp - m_clock.GetTime();
-  }();
-  m_timers.emplace_back(std::make_unique<TimerBox>(
-    m_timer_factory(expiration_interval)), std::bind_front(
+  m_timers.emplace_back(std::make_unique<TimerBox>(m_timer_factory(
+    (m_next_expiring->m_timestamp + m_offset) - m_clock.GetTime())),
+    std::bind_front(
       &CurrentOrderImbalanceIndicatorTableModel::on_expiration_timeout, this));
 }
 
