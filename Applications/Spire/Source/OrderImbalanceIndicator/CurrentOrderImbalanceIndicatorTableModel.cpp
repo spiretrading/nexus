@@ -76,8 +76,14 @@ void CurrentOrderImbalanceIndicatorTableModel::update_next_expiring() {
   }
   m_next_expiring = Expiring{m_table.get<Security>(row, 0),
     ptime(m_table.get<date>(row, 5), m_table.get<time_duration>(row, 6))};
-  m_timers.emplace_back(std::make_unique<TimerBox>(m_timer_factory(
-    m_next_expiring->m_timestamp - m_clock.GetTime())), std::bind_front(
+  auto expiration_interval = [&] () -> time_duration {
+    if(m_next_expiring->m_timestamp <= (m_clock.GetTime() - m_offset)) {
+      return milliseconds(0);
+    }
+    return m_next_expiring->m_timestamp - m_clock.GetTime();
+  }();
+  m_timers.emplace_back(std::make_unique<TimerBox>(
+    m_timer_factory(expiration_interval)), std::bind_front(
       &CurrentOrderImbalanceIndicatorTableModel::on_expiration_timeout, this));
 }
 
@@ -108,8 +114,8 @@ void CurrentOrderImbalanceIndicatorTableModel::on_load(
     for(auto& imbalance : imbalances) {
       m_table.add(imbalance);
     }
+    update_next_expiring();
   });
-  update_next_expiring();
 }
 
 void CurrentOrderImbalanceIndicatorTableModel::on_operation(
