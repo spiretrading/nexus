@@ -1,5 +1,3 @@
-#define DOCTEST_CONFIG_NO_EXCEPTIONS_BUT_WITH_ALL_ASSERTS
-
 #include <doctest/doctest.h>
 #include <Beam/Threading/TimerBox.hpp>
 #include <Beam/TimeService/TimeClientBox.hpp>
@@ -19,8 +17,6 @@ using namespace boost::posix_time;
 using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
-
-#define M(x, y) if(x) printf("Line: %d\t%s\n", __LINE__, y)
 
 namespace {
   auto make_imbalance(const auto& symbol, auto timestamp) {
