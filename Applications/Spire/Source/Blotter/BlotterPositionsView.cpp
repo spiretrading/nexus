@@ -72,9 +72,8 @@ BlotterPositionsView::BlotterPositionsView(
   table_view_builder.add_header_item(
     tr("Currency"), tr("Curr"), TableFilter::Filter::NONE);
   auto table = table_view_builder.make();
-  table->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+  table->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   layout->addWidget(table);
-  layout->addStretch();
 }
 
 const std::shared_ptr<BlotterPositionsModel>&
