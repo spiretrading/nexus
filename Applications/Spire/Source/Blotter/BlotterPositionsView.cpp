@@ -20,6 +20,12 @@ namespace {
   }
 }
 
+const QKeySequence BlotterPositionsView::FLATTEN_SELECTED_KEY_SEQUENCE =
+  QKeySequence(Qt::CTRL + Qt::Key_F);
+
+const QKeySequence BlotterPositionsView::FLATTEN_ALL_KEY_SEQUENCE =
+  QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::Key_F);
+
 BlotterPositionsView::BlotterPositionsView(
     std::shared_ptr<BlotterPositionsModel> positions, QWidget* parent)
     : m_positions(std::move(positions)) {
@@ -29,13 +35,18 @@ BlotterPositionsView::BlotterPositionsView(
   command_list->push(Command::FLATTEN_ALL);
   auto commands = new ListView(command_list,
     [] (const std::shared_ptr<ListModel<Command>>& model, auto index) {
-      auto path = [&] {
+      auto [path, shortcut] = [&] {
         if(model->get(index) == Command::FLATTEN) {
-          return ":/Icons/blotter/positions/flatten.svg";
+          return std::tuple(":/Icons/blotter/positions/flatten.svg",
+            tr("Flatten") +
+              " (" + FLATTEN_SELECTED_KEY_SEQUENCE.toString() + ")");
         }
-        return ":/Icons/blotter/positions/flatten_all.svg";
+        return std::tuple(":/Icons/blotter/positions/flatten_all.svg",
+          tr("Flatten all") +
+            " (" + FLATTEN_ALL_KEY_SEQUENCE.toString() + ")");
       }();
-      return make_icon_button(imageFromSvg(path, scale(26, 26)));
+      return make_icon_button(
+        imageFromSvg(path, scale(26, 26)), std::move(shortcut));
     });
   update_style(*commands, [] (auto& style) {
     style.get(Any()).

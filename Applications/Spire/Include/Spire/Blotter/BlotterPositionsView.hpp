@@ -1,6 +1,7 @@
 #ifndef SPIRE_BLOTTER_POSITIONS_VIEW_HPP
 #define SPIRE_BLOTTER_POSITIONS_VIEW_HPP
 #include <vector>
+#include <QKeySequence>
 #include <QWidget>
 #include "Nexus/Definitions/Security.hpp"
 #include "Spire/Blotter/Blotter.hpp"
@@ -11,6 +12,12 @@ namespace Spire {
   /** Displays the blotter's positions. */
   class BlotterPositionsView : public QWidget {
     public:
+
+      /** The key sequence to flatten selected position. */
+      const static QKeySequence FLATTEN_SELECTED_KEY_SEQUENCE;
+
+      /** The key sequence to flatten all positions. */
+      const static QKeySequence FLATTEN_ALL_KEY_SEQUENCE;
 
       /**
        * Signals to flatten a list of positions identified by the position's
