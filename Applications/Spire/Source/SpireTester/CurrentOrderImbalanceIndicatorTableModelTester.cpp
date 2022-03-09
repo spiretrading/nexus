@@ -1,3 +1,5 @@
+#define DOCTEST_CONFIG_NO_EXCEPTIONS_BUT_WITH_ALL_ASSERTS
+
 #include <doctest/doctest.h>
 #include <Beam/Threading/TimerBox.hpp>
 #include <Beam/TimeService/TimeClientBox.hpp>
@@ -6,6 +8,7 @@
 #include <Beam/TimeServiceTests/TestTimer.hpp>
 #include "Spire/OrderImbalanceIndicator/CurrentOrderImbalanceIndicatorTableModel.hpp"
 #include "Spire/OrderImbalanceIndicator/LocalOrderImbalanceIndicatorModel.hpp"
+#include "Spire/SpireTester/SpireTester.hpp"
 
 using namespace Beam;
 using namespace Beam::Threading;
@@ -16,6 +19,8 @@ using namespace boost::posix_time;
 using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
+
+#define M(x, y) if(x) printf("Line: %d\t%s\n", __LINE__, y)
 
 namespace {
   auto make_imbalance(const auto& symbol, auto timestamp) {
@@ -53,16 +58,26 @@ namespace {
       operation, std::forward<F>(f)..., [] (const auto&) { REQUIRE(false); });
   }
 
+  void wait_until(const std::function<bool ()>& predicate) {
+    while(!predicate()) {
+      QApplication::processEvents(QEventLoop::WaitForMoreEvents);
+      QCoreApplication::sendPostedEvents();
+    }
+  }
+
   auto A100 = make_imbalance("A", 100);
   auto A300 = make_imbalance("A", 300);
+  auto B100 = make_imbalance("B", 100);
   auto B150 = make_imbalance("B", 150);
   auto B350 = make_imbalance("B", 350);
   auto B400 = make_imbalance("B", 400);
+  auto C100 = make_imbalance("C", 100);
   auto C110 = make_imbalance("C", 110);
+  auto D100 = make_imbalance("D", 100);
 }
 
 TEST_SUITE("CurrentOrderImbalanceIndicatorTableModel") {
-  TEST_CASE("offset") {
+  TEST_CASE("expiring") {
     auto environment = TimeServiceTestEnvironment(from_time_t(0));
     auto timer_factory = CurrentOrderImbalanceIndicatorTableModel::TimerFactory(
       [&] (auto duration) {
@@ -101,7 +116,7 @@ TEST_SUITE("CurrentOrderImbalanceIndicatorTableModel") {
         }
       });
     operations.pop_front();
-    environment.AdvanceTime(seconds(100));
+    environment.AdvanceTime(seconds(300));
     REQUIRE(model.get_row_size() == 1);
     REQUIRE(row_imbalance(model, 0) == B150);
     REQUIRE(operations.size() == 1);
@@ -184,6 +199,39 @@ TEST_SUITE("CurrentOrderImbalanceIndicatorTableModel") {
     operations.pop_front();
   }
 
+  TEST_CASE("load_operations") {
+    run_test([] {
+      auto environment = TimeServiceTestEnvironment(from_time_t(0));
+      auto timer_factory = CurrentOrderImbalanceIndicatorTableModel::TimerFactory(
+        [&] (auto duration) {
+          return
+            TimerBox(std::make_unique<TestTimer>(duration, Ref(environment)));
+        });
+      auto source = std::make_shared<LocalOrderImbalanceIndicatorModel>();
+      source->publish(A100);
+      source->publish(B150);
+      source->publish(C100);
+      auto model = CurrentOrderImbalanceIndicatorTableModel(seconds(200),
+        TimeClientBox(std::make_unique<TestTimeClient>(Ref(environment))),
+        timer_factory, source);
+      auto operations_count = 0;
+      auto connection = scoped_connection(model.connect_operation_signal(
+        [&] (const auto& operation) {
+          ++operations_count;
+          auto transaction = get<TableModel::Transaction>(&operation);
+          REQUIRE(transaction != nullptr);
+          REQUIRE(transaction->m_operations.size() == 3);
+          REQUIRE(rows_equal(model, {A100, B150, C100}));
+          auto& operations = transaction->m_operations;
+          for(auto& add : operations) {
+            test_operation(add, [&] (const TableModel::AddOperation&) {});
+          }
+        }));
+      wait_until([&] { return operations_count == 1; });
+      REQUIRE(operations_count == 1);
+    });
+  }
+
   TEST_CASE("older_published_imbalances") {
     auto environment = TimeServiceTestEnvironment(from_time_t(0));
     auto timer_factory = CurrentOrderImbalanceIndicatorTableModel::TimerFactory(
@@ -198,7 +246,7 @@ TEST_SUITE("CurrentOrderImbalanceIndicatorTableModel") {
     source->publish(B350);
     REQUIRE(model.get_row_size() == 1);
     REQUIRE(row_imbalance(model, 0) == B350);
-    environment.AdvanceTime(seconds(50));
+    environment.AdvanceTime(seconds(250));
     source->publish(C110);
     REQUIRE(model.get_row_size() == 2);
     REQUIRE(rows_equal(model, {B350, C110}));
@@ -217,5 +265,32 @@ TEST_SUITE("CurrentOrderImbalanceIndicatorTableModel") {
     REQUIRE(row_imbalance(model, 0) == B350);
     environment.AdvanceTime(seconds(225));
     REQUIRE(model.get_row_size() == 0);
+  }
+
+  TEST_CASE("coincident_timestamps") {
+    run_test([] {
+      auto environment = TimeServiceTestEnvironment(from_time_t(0));
+      auto timer_factory = CurrentOrderImbalanceIndicatorTableModel::TimerFactory(
+        [&] (auto duration) {
+          return
+            TimerBox(std::make_unique<TestTimer>(duration, Ref(environment)));
+        });
+      auto source = std::make_shared<LocalOrderImbalanceIndicatorModel>();
+      source->publish(A100);
+      source->publish(B100);
+      source->publish(C100);
+      source->publish(D100);
+      auto model = CurrentOrderImbalanceIndicatorTableModel(seconds(200),
+        TimeClientBox(std::make_unique<TestTimeClient>(Ref(environment))),
+        timer_factory, source);
+      auto operations = std::deque<TableModel::Operation>();
+      auto connection = scoped_connection(model.connect_operation_signal(
+        [&] (const auto& operation) { operations.push_back(operation);
+          environment.AdvanceTime(seconds(10)); }));
+      wait_until([&] { return model.get_row_size() == 4; });
+      REQUIRE(model.get_row_size() == 4);
+      environment.AdvanceTime(seconds(300));
+      REQUIRE(model.get_row_size() == 0);
+    });
   }
 }
