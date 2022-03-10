@@ -24,7 +24,7 @@ BlotterWindow::BlotterWindow(
   auto tabs = new TabView();
   auto positions = new BlotterPositionsView(m_blotter->get_positions());
   tabs->add(tr("Positions"), *positions);
-  auto order_log = new BlotterOrderLogView();
+  auto order_log = new BlotterOrderLogView(m_blotter->get_orders());
   tabs->add(tr("Order Log"), *order_log);
   auto executions = new BlotterExecutionsView();
   tabs->add(tr("Executions"), *executions);

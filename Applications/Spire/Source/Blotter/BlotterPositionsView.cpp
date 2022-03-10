@@ -28,7 +28,8 @@ const QKeySequence BlotterPositionsView::FLATTEN_ALL_KEY_SEQUENCE =
 
 BlotterPositionsView::BlotterPositionsView(
     std::shared_ptr<BlotterPositionsModel> positions, QWidget* parent)
-    : m_positions(std::move(positions)) {
+    : QWidget(parent),
+      m_positions(std::move(positions)) {
   setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto command_list = std::make_shared<ArrayListModel<Command>>();
   command_list->push(Command::FLATTEN);
@@ -68,7 +69,7 @@ BlotterPositionsView::BlotterPositionsView(
   });
   auto layout = make_vbox_layout(this);
   layout->addWidget(command_bar);
-  auto table_view_builder = TableViewBuilder(to_table(positions));
+  auto table_view_builder = TableViewBuilder(to_table(m_positions));
   table_view_builder.add_header_item(tr("Security"), TableFilter::Filter::NONE);
   table_view_builder.add_header_item(
     tr("Quantity"), tr("Qty"), TableFilter::Filter::NONE);

@@ -15,21 +15,26 @@ namespace Spire {
        * Constructs a CompositeBlotterModel.
        * @param name Represents the name of this blotter.
        * @param positions Represents this blotter's positions.
+       * @param positions Represents this blotter's orders.
        * @param status Represents the blotter's status/summary.
        */
       CompositeBlotterModel(std::shared_ptr<TextModel> name,
         std::shared_ptr<BlotterPositionsModel> positions,
+        std::shared_ptr<OrderListModel> orders,
         std::shared_ptr<BlotterStatusModel> status);
 
       std::shared_ptr<TextModel> get_name() override;
 
       std::shared_ptr<BlotterPositionsModel> get_positions() override;
 
+      std::shared_ptr<OrderListModel> get_orders() override;
+
       std::shared_ptr<BlotterStatusModel> get_status() override;
 
     private:
       std::shared_ptr<TextModel> m_name;
       std::shared_ptr<BlotterPositionsModel> m_positions;
+      std::shared_ptr<OrderListModel> m_orders;
       std::shared_ptr<BlotterStatusModel> m_status;
   };
 
