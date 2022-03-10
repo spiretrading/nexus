@@ -14,9 +14,6 @@ namespace {
   }
 }
 
-const QKeySequence BlotterOrderLogView::CANCEL_KEY_SEQUENCE =
-  QKeySequence(Qt::Key_Escape);
-
 BlotterOrderLogView::BlotterOrderLogView(
     std::shared_ptr<OrderListModel> orders, QWidget* parent)
     : QWidget(parent),
@@ -41,9 +38,4 @@ BlotterOrderLogView::BlotterOrderLogView(
 
 const std::shared_ptr<OrderListModel>& BlotterOrderLogView::get_orders() const {
   return m_orders;
-}
-
-connection BlotterOrderLogView::connect_cancel_signal(
-    const CancelSignal::slot_type& slot) const {
-  return m_cancel_signal.connect(slot);
 }

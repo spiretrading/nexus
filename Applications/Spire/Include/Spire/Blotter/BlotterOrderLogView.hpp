@@ -13,16 +13,6 @@ namespace Spire {
   class BlotterOrderLogView : public QWidget {
     public:
 
-      /** The key sequence to cancel selected orders. */
-      const static QKeySequence CANCEL_KEY_SEQUENCE;
-
-      /**
-       * Signals to cancel a list of orders.
-       * @param orders The list of orders to cancel.
-       */
-      using CancelSignal = Signal<void (
-        const std::vector<Nexus::OrderExecutionService::Order*>& orders)>;
-
       /**
        * Constructs a BlotterOrderLogView.
        * @param orders The list of orders to display.
@@ -34,12 +24,7 @@ namespace Spire {
       /** Returns the list of orders displayed. */
       const std::shared_ptr<OrderListModel>& get_orders() const;
 
-      /** Connects a slot to the CancelSignal. */
-      boost::signals2::connection connect_cancel_signal(
-        const CancelSignal::slot_type& slot) const;
-
     private:
-      mutable CancelSignal m_cancel_signal;
       std::shared_ptr<OrderListModel> m_orders;
   };
 }
