@@ -289,4 +289,38 @@ TEST_SUITE("CurrentOrderImbalanceIndicatorTableModel") {
       REQUIRE(model.get_row_size() == 0);
     });
   }
+
+  TEST_CASE("already_expired_imbalances") {
+    run_test([] {
+      auto environment = TimeServiceTestEnvironment(from_time_t(300));
+      auto timer_factory = CurrentOrderImbalanceIndicatorTableModel::TimerFactory(
+        [&] (auto duration) {
+          return
+            TimerBox(std::make_unique<TestTimer>(duration, Ref(environment)));
+        });
+      auto source = std::make_shared<LocalOrderImbalanceIndicatorModel>();
+      source->publish(A100);
+      source->publish(B350);
+      auto model = CurrentOrderImbalanceIndicatorTableModel(seconds(200),
+        TimeClientBox(std::make_unique<TestTimeClient>(Ref(environment))),
+        timer_factory, source);
+      auto operations = std::deque<TableModel::Operation>();
+      auto connection = scoped_connection(model.connect_operation_signal(
+        [&] (const auto& operation) { operations.push_back(operation);
+          environment.AdvanceTime(seconds(10)); }));
+      wait_until([&] { return model.get_row_size() == 1; });
+      REQUIRE(model.get_row_size() == 1);
+      REQUIRE(row_imbalance(model, 0) == B350);
+      REQUIRE(operations.size() == 1);
+      test_operation(operations.front(),
+        [&] (const TableModel::AddOperation& operation) {
+          REQUIRE(operation.m_index == 0);
+        });
+      operations.pop_front();
+      source->publish(C100);
+      REQUIRE(model.get_row_size() == 1);
+      REQUIRE(row_imbalance(model, 0) == B350);
+      REQUIRE(operations.size() == 0);
+    });
+  }
 }

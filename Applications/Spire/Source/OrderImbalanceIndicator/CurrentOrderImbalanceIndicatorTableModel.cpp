@@ -100,6 +100,9 @@ void CurrentOrderImbalanceIndicatorTableModel::on_expiration_timeout() {
 
 void CurrentOrderImbalanceIndicatorTableModel::on_imbalance(
     const OrderImbalance& imbalance) {
+  if(imbalance.m_timestamp < m_clock.GetTime() - m_offset) {
+    return;
+  }
   auto is_update_required =
     !m_next_expiring || m_next_expiring->m_timestamp > imbalance.m_timestamp ||
     m_next_expiring->m_security == imbalance.m_security;
@@ -116,9 +119,12 @@ void CurrentOrderImbalanceIndicatorTableModel::on_load(
     const std::vector<OrderImbalance>& imbalances) {
   m_transaction.transact([&] {
     auto oldest = std::numeric_limits<ptime>::max();
+    auto time_interval_lower = m_clock.GetTime() - m_offset;
     for(auto& imbalance : imbalances) {
-      m_table.add(imbalance);
-      oldest = std::min(oldest, imbalance.m_timestamp);
+      if(imbalance.m_timestamp > time_interval_lower) {
+        m_table.add(imbalance);
+        oldest = std::min(oldest, imbalance.m_timestamp);
+      }
     }
     if(!m_next_expiring || m_next_expiring->m_timestamp > oldest) {
       m_timers.clear();
