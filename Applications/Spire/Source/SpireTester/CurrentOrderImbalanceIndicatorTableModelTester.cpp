@@ -1,9 +1,9 @@
 #include <doctest/doctest.h>
 #include <Beam/Threading/TimerBox.hpp>
 #include <Beam/TimeService/TimeClientBox.hpp>
-#include <Beam/TimeServiceTests/TimeServiceTestEnvironment.hpp>
 #include <Beam/TimeServiceTests/TestTimeClient.hpp>
 #include <Beam/TimeServiceTests/TestTimer.hpp>
+#include <Beam/TimeServiceTests/TimeServiceTestEnvironment.hpp>
 #include "Spire/OrderImbalanceIndicator/CurrentOrderImbalanceIndicatorTableModel.hpp"
 #include "Spire/OrderImbalanceIndicator/LocalOrderImbalanceIndicatorModel.hpp"
 #include "Spire/SpireTester/SpireTester.hpp"
