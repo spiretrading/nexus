@@ -3015,9 +3015,11 @@ UiProfile Spire::make_table_header_item_profile() {
 UiProfile Spire::make_table_view_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
+  properties.push_back(make_standard_property("row_count", 50));
   auto profile = UiProfile("TableView", properties, [] (auto& profile) {
     auto model = std::make_shared<ArrayTableModel>();
-    for(auto row = 0; row != 50; ++row) {
+    auto& row_count = get<int>("row_count", profile.get_properties());
+    for(auto row = 0; row != row_count.get(); ++row) {
       auto values = std::vector<std::any>();
       for(auto column = 0; column != 4; ++column) {
         values.push_back(row * 4 + column);

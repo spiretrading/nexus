@@ -22,7 +22,7 @@ using namespace Spire::Styles;
 namespace {
   auto INPUT_BOX_STYLE(StyleSheet style) {
     style.get(Any()).set(padding(0));
-    style.get(Any() >> is_a<ScrollableListBox>()).
+    style.get(Any() > is_a<ScrollableListBox>()).
       set(BackgroundColor(QColor(Qt::transparent))).
       set(border_size(0));
     return style;
@@ -504,7 +504,7 @@ void TagBox::overflow() {
         text_box_height);
     } else {
       auto length = 0;
-      bool is_tag_hidden = false;
+      auto is_tag_hidden = false;
       auto i = get_list()->get_size() - 1;
       while(i >= 0 && (length - difference) < ellipses_width + m_list_item_gap) {
         auto item = m_list_view->get_list_item(i);
