@@ -78,6 +78,7 @@ namespace Spire {
   class TableView;
   class Tag;
   class TagBox;
+  class TagComboBox;
   class TextAreaBox;
   class TextBox;
   class TimeBox;
@@ -100,6 +101,14 @@ namespace Spire {
    */
   QPropertyAnimation* fade_window(
     QObject* target, bool reverse, boost::posix_time::time_duration fade_speed);
+
+  /**
+   * Find the focus proxy of a widget recursively.
+   * @param widget The widget looking for the focus proxy.
+   * @return the focus proxy of the widget, or <code>nullptr</code> iff
+             no focus proxy is found.
+   */
+  QWidget* find_focus_proxy(QWidget& widget);
 
   /**
    * Builds a QImage from an SVG resource where the size of the SVG is equal
