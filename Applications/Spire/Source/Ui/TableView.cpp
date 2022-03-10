@@ -71,6 +71,7 @@ TableView::TableView(
   auto layout = make_vbox_layout(this);
   layout->addWidget(box);
   layout->addWidget(m_scroll_box);
+  layout->addStretch(1);
   m_header_view->connect_sort_signal(
     std::bind_front(&TableView::on_order_update, this));
   m_header_view->connect_filter_signal(
