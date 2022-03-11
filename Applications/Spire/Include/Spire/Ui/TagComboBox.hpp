@@ -96,6 +96,7 @@ namespace Spire {
         BELOW
       };
       mutable SubmitSignal m_submit_signal;
+      std::shared_ptr<AnyListModel> m_submission;
       TagBox* m_tag_box;
       ComboBox* m_combo_box;
       QWidget* m_focus_proxy;
