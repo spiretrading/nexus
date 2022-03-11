@@ -286,10 +286,6 @@ void TagComboBox::on_focus(FocusObserver::State state) {
     m_tag_box->get_current()->set("");
     update_space();
     move(m_pos);
-    if(m_overflow == TagBoxOverflow::WRAP) {
-      setMaximumHeight(QWIDGETSIZE_MAX);
-      adjustSize();
-    }
     if(m_is_modified) {
       submit();
     }
@@ -331,12 +327,16 @@ void TagComboBox::align() {
     m_alignment = Alignment::ABOVE;
     m_is_internal_move = true;
     move(x(), m_pos.y() + m_min_height - height());
-    setMaximumHeight(m_above_space);
+    if(m_overflow == TagBoxOverflow::ELIDE) {
+      setMaximumHeight(m_above_space);
+    }
   } else {
     m_alignment = Alignment::BELOW;
     m_is_internal_move = true;
     move(m_pos);
-    setMaximumHeight(m_below_space);
+    if(m_overflow == TagBoxOverflow::ELIDE) {
+      setMaximumHeight(m_below_space);
+    }
   }
   adjustSize();
 }
