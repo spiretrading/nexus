@@ -71,19 +71,24 @@ namespace Styles {
     private:
       struct PartialListModel;
       std::shared_ptr<PartialListModel> m_model;
-      bool m_is_read_only;
-      QWidget* m_list_view_container;
-      ListView* m_list_view;
       TextBox* m_text_box;
+      ListView* m_list_view;
+      ScrollBox* m_scroll_box;
+      ScrollBar* m_vertical_scroll_bar;
       ListItem* m_ellipses_item;
+      Tooltip* m_tooltip;
       FocusObserver m_focus_observer;
       std::vector<Tag*> m_tags;
       Styles::TagBoxOverflow m_overflow;
       QFont m_font;
-      QMargins m_margins;
+      QString m_placeholder;
+      QString m_tip;
+      bool m_is_read_only;
       int m_tags_width;
       int m_list_item_gap;
-      boost::signals2::scoped_connection m_highlight_connection;
+      int m_input_box_horizontal_padding;
+      int m_list_view_horizontal_padding;
+      int m_scroll_bar_end_range;
       boost::signals2::scoped_connection m_style_connection;
       boost::signals2::scoped_connection m_list_view_style_connection;
       boost::signals2::scoped_connection m_text_box_style_connection;
@@ -92,18 +97,20 @@ namespace Styles {
       QWidget* make_tag(const std::shared_ptr<AnyListModel>& model, int index);
       void on_focus(FocusObserver::State state);
       void on_operation(const AnyListModel::Operation& operation);
-      void on_submit(const std::any& submission);
+      void on_text_box_current(const QString& current);
+      void on_list_view_submit(const std::any& submission);
       void on_style();
       void on_list_view_style();
       void on_text_box_style();
+      void update();
+      void update_placeholder();
       void update_tags_read_only();
       void update_tags_width();
+      void update_tip();
+      void update_tooltip();
       void overflow();
-      void reposition_list_view();
       void show_all_tags();
-      void add_list_view_to_layout();
-      void remove_list_view_from_layout();
-      void remove_text_box_width_constraint();
+      void remove_text_box_size_constraint();
   };
 }
 
