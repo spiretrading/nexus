@@ -21,6 +21,8 @@ namespace Spire {
        */
       explicit StandardTableFilter(std::vector<std::type_index> types);
 
+      ~StandardTableFilter();
+
       Filter get_filter(int column) override;
 
       QWidget* make_filter_widget(int column, QWidget& parent) override;
