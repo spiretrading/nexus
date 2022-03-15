@@ -28,6 +28,10 @@ namespace Spire {
       /** Returns the blotter's orders. */
       virtual std::shared_ptr<OrderListModel> get_orders() = 0;
 
+      /** Returns the blotter's profit and loss. */
+      virtual std::shared_ptr<BlotterProfitAndLossModel> get_profit_and_loss() =
+        0;
+
       /** Returns the blotter's status. */
       virtual std::shared_ptr<BlotterStatusModel> get_status() = 0;
 

@@ -12,12 +12,19 @@ namespace Spire {
 
       /**
        * Constructs a BlotterProfitAndLossView.
+       * @param profit_and_loss The profit and losses per security to display.
        * @param parent The parent widget.
        */
-      explicit BlotterProfitAndLossView(QWidget* parent = nullptr);
+      explicit BlotterProfitAndLossView(
+        std::shared_ptr<BlotterProfitAndLossModel> profit_and_loss,
+        QWidget* parent = nullptr);
+
+      /** Returns the displayed profit and losses. */
+      const std::shared_ptr<BlotterProfitAndLossModel>& get_profit_and_loss()
+        const;
 
     private:
-      Box* m_box;
+      std::shared_ptr<BlotterProfitAndLossModel> m_profit_and_loss;
   };
 }
 

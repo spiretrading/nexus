@@ -28,7 +28,8 @@ BlotterWindow::BlotterWindow(
   tabs->add(tr("Order Log"), *order_log);
   auto executions = new BlotterExecutionsView(m_blotter->get_orders());
   tabs->add(tr("Executions"), *executions);
-  auto profit_and_loss = new BlotterProfitAndLossView();
+  auto profit_and_loss =
+    new BlotterProfitAndLossView(m_blotter->get_profit_and_loss());
   tabs->add(tr("Profit/Loss"), *profit_and_loss);
   auto tasks = new BlotterTaskView();
   auto split_view = new SplitView(*tasks, *tabs);
