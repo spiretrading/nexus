@@ -113,6 +113,8 @@ StandardTableFilter::StandardTableFilter(std::vector<std::type_index> types) {
   }
 }
 
+StandardTableFilter::~StandardTableFilter() = default;
+
 TableFilter::Filter StandardTableFilter::get_filter(int column) {
   return m_column_filters[column]->get_filter();
 }
