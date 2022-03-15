@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 26 26">
+  <g id="_IconButton_" data-name="&lt;IconButton&gt;" transform="translate(0.114)">
+    <rect id="Button" width="26" height="26" transform="translate(-0.114)" fill="#f5f5f5" opacity="0"/>
+    <g id="Group_3231" data-name="Group 3231" transform="translate(5 5)">
+      <path id="Path_563" data-name="Path 563" d="M189.5,547.453a8,8,0,1,0,8,8A8,8,0,0,0,189.5,547.453Zm0,14a6,6,0,1,1,6-6A6,6,0,0,1,189.5,561.453Z" transform="translate(-181.499 -547.453)" fill="#535353"/>
+      <path id="Path_564" data-name="Path 564" d="M193,553.367l-1.414-1.414-2.086,2.086-2.086-2.086L186,553.367l2.086,2.086L186,557.538l1.414,1.414,2.086-2.086,2.086,2.086L193,557.538l-2.086-2.086Z" transform="translate(-181.499 -547.453)" fill="#535353"/>
+    </g>
+  </g>
+</svg>

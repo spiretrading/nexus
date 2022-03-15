@@ -12,6 +12,7 @@ namespace Spire {
   class BlotterStatusBar;
   class BlotterStatusMessageIndicator;
   class BlotterStatusModel;
+  class BlotterTaskModel;
   class BlotterTaskView;
   class BlotterWindow;
   class CompositeBlotterModel;

@@ -9,11 +9,17 @@ using namespace Nexus::OrderExecutionService;
 using namespace Spire;
 
 CompositeBlotterModel::CompositeBlotterModel(std::shared_ptr<TextModel> name,
+    std::shared_ptr<BooleanModel> is_active,
+    std::shared_ptr<BooleanModel> is_pinned,
+    std::shared_ptr<TaskListModel> tasks,
     std::shared_ptr<BlotterPositionsModel> positions,
     std::shared_ptr<OrderListModel> orders,
     std::shared_ptr<BlotterProfitAndLossModel> profit_and_loss,
     std::shared_ptr<BlotterStatusModel> status)
   : m_name(std::move(name)),
+    m_is_active(std::move(is_active)),
+    m_is_pinned(std::move(is_pinned)),
+    m_tasks(std::move(tasks)),
     m_positions(std::move(positions)),
     m_orders(std::move(orders)),
     m_profit_and_loss(std::move(profit_and_loss)),
@@ -21,6 +27,18 @@ CompositeBlotterModel::CompositeBlotterModel(std::shared_ptr<TextModel> name,
 
 std::shared_ptr<TextModel> CompositeBlotterModel::get_name() {
   return m_name;
+}
+
+std::shared_ptr<BooleanModel> CompositeBlotterModel::is_active() {
+  return m_is_active;
+}
+
+std::shared_ptr<BooleanModel> CompositeBlotterModel::is_pinned() {
+  return m_is_pinned;
+}
+
+std::shared_ptr<TaskListModel> CompositeBlotterModel::get_tasks() {
+  return m_tasks;
 }
 
 std::shared_ptr<BlotterPositionsModel> CompositeBlotterModel::get_positions() {
@@ -43,6 +61,9 @@ std::shared_ptr<BlotterStatusModel> CompositeBlotterModel::get_status() {
 std::shared_ptr<CompositeBlotterModel> Spire::make_local_blotter_model() {
   return std::make_shared<CompositeBlotterModel>(
     std::make_shared<LocalTextModel>(),
+    std::make_shared<LocalBooleanModel>(),
+    std::make_shared<LocalBooleanModel>(),
+    std::make_shared<ArrayListModel<std::shared_ptr<Task>>>(),
     std::make_shared<LocalBlotterPositionsModel>(),
     std::make_shared<ArrayListModel<Order*>>(),
     std::make_shared<LocalBlotterProfitAndLossModel>(),

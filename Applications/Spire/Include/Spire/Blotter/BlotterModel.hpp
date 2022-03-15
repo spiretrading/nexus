@@ -3,6 +3,7 @@
 #include <memory>
 #include "Nexus/OrderExecutionService/Order.hpp"
 #include "Spire/Blotter/Blotter.hpp"
+#include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
@@ -10,6 +11,9 @@ namespace Spire {
 
   /** The type of list model used for orders displayed in the blotter. */
   using OrderListModel = ListModel<Nexus::OrderExecutionService::Order*>;
+
+  /** The type of list model used for tasks displayed in the blotter. */
+  using TaskListModel = ListModel<std::shared_ptr<Task>>;
 
   /**
    * Defines the interface representing a blotter, used to keep track of trading
@@ -21,6 +25,15 @@ namespace Spire {
 
       /** Returns the name of this blotter. */
       virtual std::shared_ptr<TextModel> get_name() = 0;
+
+      /** Whether this is the application's active blotter. */
+      virtual std::shared_ptr<BooleanModel> is_active() = 0;
+
+      /** Whether this blotter persists after being closed. */
+      virtual std::shared_ptr<BooleanModel> is_pinned() = 0;
+
+      /** Returns this blotter's tasks. */
+      virtual std::shared_ptr<TaskListModel> get_tasks() = 0;
 
       /** Returns the blotter's positions. */
       virtual std::shared_ptr<BlotterPositionsModel> get_positions() = 0;

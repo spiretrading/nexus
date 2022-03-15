@@ -1,0 +1,5 @@
+<svg id="activate_icon" data-name="activate icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+  <path id="Path_32" data-name="Path 32" d="M4.184,14.689,1.4,11.9a.966.966,0,0,1,0-1.4L2,9.7l4.278,4.291-.7.7A.96.96,0,0,1,4.184,14.689Z" transform="translate(0.072 0.001)" fill="#535353"/>
+  <path id="Path_34" data-name="Path 34" d="M0,0,2.989,0l0,1.395L0,1.395Z" transform="translate(0.989 12.896) rotate(45)" fill="#535353"/>
+  <path id="Path_33" data-name="Path 33" d="M14.043,1.9C11.755-.4,8.272-.8,5.884,1.6c-1.99,2-1.89,4.191-2.985,6.586a1.063,1.063,0,0,0,.2,1.2l3.482,3.492a.93.93,0,0,0,1.094.2c2.388-1.1,4.577-1,6.567-2.993C16.73,7.683,16.332,4.291,14.043,1.9Z" transform="translate(0.063 0.022)" fill="#535353"/>
+</svg>

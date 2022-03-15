@@ -91,6 +91,9 @@ int main(int argc, char** argv) {
   auto controller = StatusBarController();
   auto blotter = std::make_shared<CompositeBlotterModel>(
     std::make_shared<LocalTextModel>("North America"),
+    std::make_shared<LocalBooleanModel>(),
+    std::make_shared<LocalBooleanModel>(),
+    std::make_shared<ArrayListModel<std::shared_ptr<Task>>>(),
     std::make_shared<LocalBlotterPositionsModel>(),
     std::make_shared<ArrayListModel<Order*>>(),
     std::make_shared<LocalBlotterProfitAndLossModel>(),
