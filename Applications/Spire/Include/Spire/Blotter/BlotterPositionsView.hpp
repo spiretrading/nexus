@@ -65,7 +65,6 @@ namespace Spire {
       mutable FlattenSignal m_flatten_signal;
       mutable ReverseSignal m_reverse_signal;
       std::shared_ptr<BlotterPositionsModel> m_positions;
-      Box* m_box;
   };
 }
 

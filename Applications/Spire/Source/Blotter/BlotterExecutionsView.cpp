@@ -26,7 +26,6 @@ BlotterExecutionsView::BlotterExecutionsView(
   table_view_builder.add_header_item(tr("Quantity"), tr("Qty"));
   table_view_builder.add_header_item(tr("Last Quantity"), tr("Last Qty"));
   table_view_builder.add_header_item(tr("Price"), tr("Px"));
-  table_view_builder.add_header_item(tr("Last Price"));
   table_view_builder.add_header_item(tr("Last Price"), tr("Last Px"));
   table_view_builder.add_header_item(tr("Profit and Loss"), tr("P/L"));
   table_view_builder.add_header_item(tr("Market"), tr("Mkt"));
