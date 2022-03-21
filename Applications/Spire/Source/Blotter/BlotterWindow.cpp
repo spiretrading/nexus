@@ -6,6 +6,7 @@
 #include "Spire/Blotter/BlotterProfitAndLossView.hpp"
 #include "Spire/Blotter/BlotterStatusBar.hpp"
 #include "Spire/Blotter/BlotterTaskView.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Styles/Selectors.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/SplitView.hpp"
@@ -44,6 +45,7 @@ BlotterWindow::BlotterWindow(
   m_name_connection = m_blotter->get_name()->connect_update_signal(
     std::bind_front(&BlotterWindow::on_name_update, this));
   on_name_update(m_blotter->get_name()->get());
+  resize(scale(640, 454));
 }
 
 void BlotterWindow::on_name_update(const QString& name) {

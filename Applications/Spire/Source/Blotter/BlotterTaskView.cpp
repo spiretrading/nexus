@@ -7,6 +7,7 @@
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/ListView.hpp"
+#include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/TableView.hpp"
 
 using namespace Spire;
@@ -97,5 +98,8 @@ BlotterTaskView::BlotterTaskView(std::shared_ptr<BooleanModel> is_active,
   table_view_builder.add_header_item(tr("Volume"), TableFilter::Filter::NONE);
   auto table = table_view_builder.make();
   table->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  layout->addWidget(table);
+  auto scroll_box = new ScrollBox(table);
+  scroll_box->set(
+    ScrollBox::DisplayPolicy::ON_OVERFLOW, ScrollBox::DisplayPolicy::NEVER);
+  layout->addWidget(scroll_box);
 }
