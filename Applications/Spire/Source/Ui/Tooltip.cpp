@@ -26,6 +26,7 @@ namespace {
 Tooltip::Tooltip(QString text, QWidget* parent)
     : QObject(parent) {
   m_label = make_label("", parent);
+  m_label->setFixedHeight(scale_height(30));
   m_tooltip = new InfoTip(m_label, parent);
   set_label(std::move(text));
   set_style(*m_tooltip, DEFAULT_STYLE());
