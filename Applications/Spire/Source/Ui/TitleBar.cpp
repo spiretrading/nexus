@@ -59,14 +59,14 @@ TitleBar::TitleBar(QImage icon, QWidget* parent)
     : QWidget(parent),
       m_window_button(nullptr) {
   setFixedHeight(scale_height(26));
-  auto container = new QWidget(this);
-  m_container_layout = make_hbox_layout(container);
+  setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   m_title_label = make_label("", this);
   update_style(*m_title_label, [&] (auto& style) {
     style.get(ReadOnly() && Disabled()).set(BackgroundColor(QColor(0xF5F5F5)));
     style.get(!Active()).set(TextColor(QColor(0xA0A0A0)));
   });
   m_title_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  m_container_layout = make_hbox_layout(this);
   m_container_layout->addWidget(m_title_label);
   m_minimize_button = create_button(":/Icons/minimize.svg", this);
   m_minimize_button->connect_click_signal([=] {
@@ -94,7 +94,6 @@ TitleBar::TitleBar(QImage icon, QWidget* parent)
     set(Fill(QColor(0xFFFFFF)));
   set_style(*m_close_button, std::move(close_button_style));
   m_container_layout->addWidget(m_close_button);
-  enclose(*this, *(new Box(container)));
   set_icon(icon);
   connect_window_signals();
 }
