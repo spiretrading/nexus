@@ -256,10 +256,10 @@ void InfoTip::on_fade_out_finished() {
 void InfoTip::on_show_timeout() {
   if(isEnabled() && parentWidget()->underMouse()) {
     layout()->setContentsMargins(get_margins());
-    adjustSize();
     move(get_position());
     fade_in();
     show();
+    adjustSize();
   }
 }
 
