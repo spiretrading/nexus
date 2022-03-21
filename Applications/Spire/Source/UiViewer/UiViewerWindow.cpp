@@ -96,6 +96,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   setWindowIcon(QIcon(":/Icons/taskbar_icons/spire.png"));
   resize(scale(775, 580));
   m_body = new QSplitter(Qt::Horizontal, this);
+  m_body->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
   m_body->setObjectName("ui_viewer_body");
   m_body->setStyleSheet("#ui_viewer_body { background-color: #F5F5F5; }");
   m_body->setContentsMargins(scale_width(6), scale_height(6), scale_width(6),
