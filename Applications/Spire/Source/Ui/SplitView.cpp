@@ -6,6 +6,7 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Styles/Stylist.hpp"
 #include "Spire/Ui/Box.hpp"
+#include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/Layouts.hpp"
 
 using namespace boost;
@@ -251,30 +252,61 @@ void SplitView::update_divider_state() {
 }
 
 void SplitView::on_drag(int offset) {
+  auto set_fixed_size = [&] (auto set_fixed_size, int cursor, int start,
+      int end, int primary_hint, int secondary_hint, int primary_minimum,
+      int primary_maximum, int secondary_minimum, int secondary_maximum,
+      int size, int body_size, int divider_size) {
+    if(cursor <= start) {
+      if(find_focus_state(*m_primary) != FocusObserver::State::NONE) {
+        setFocus(Qt::FocusReason::OtherFocusReason);
+      }
+      m_primary->hide();
+    } else if(cursor >= end) {
+      if(find_focus_state(*m_secondary) != FocusObserver::State::NONE) {
+        setFocus(Qt::FocusReason::OtherFocusReason);
+      }
+      m_secondary->hide();
+      (m_primary->*set_fixed_size)(QWIDGETSIZE_MAX);
+    } else if(m_secondary->isHidden() && cursor < end) {
+      (m_primary->*set_fixed_size)(size - divider_size -
+        std::max(secondary_hint, secondary_minimum));
+      m_secondary->show();
+    } else {
+      auto primary_size = [&] {
+        if(offset < 0) {
+          return std::max({primary_hint, primary_minimum, size + offset,
+            body_size - divider_size - secondary_maximum});
+        }
+        auto base = body_size - std::max(secondary_hint, secondary_minimum);
+        return std::min({primary_maximum, size + offset, base - divider_size});
+      }();
+      (m_primary->*set_fixed_size)(primary_size);
+      if(m_primary->isHidden() && cursor > start) {
+        m_primary->show();
+      }
+    }
+  };
   if(m_orientation == Qt::Orientation::Horizontal) {
-    auto width = [&] {
-      if(offset < 0) {
-        return std::max({m_primary->m_body->minimumWidth(),
-          m_primary->width() + offset, size().width() - m_divider->width() -
-            m_secondary->m_body->maximumWidth()});
-      }
-      return std::min({m_primary->m_body->maximumWidth(),
-        m_primary->width() + offset, size().width() - m_divider->width() -
-          m_secondary->m_body->minimumWidth()});
-    }();
-    m_primary->setFixedWidth(width);
+    auto cursor = QCursor::pos().x();
+    auto left = mapToGlobal(QPoint(0, 0)).x();
+    auto right = mapToGlobal(QPoint(width() - 1, 0)).x();
+    set_fixed_size(&QWidget::setFixedWidth, cursor, left, right,
+      m_primary->m_body->sizeHint().width(),
+      m_secondary->m_body->sizeHint().width(),
+      m_primary->m_body->minimumWidth(), m_primary->m_body->maximumWidth(),
+      m_secondary->m_body->minimumWidth(), m_secondary->m_body->maximumWidth(),
+      m_primary->width(), width(), m_divider->width());
   } else {
-    auto height = [&] {
-      if(offset < 0) {
-        return std::max({m_primary->m_body->minimumHeight(),
-          m_primary->height() + offset, size().height() - m_divider->height() -
-            m_secondary->m_body->maximumHeight()});
-      }
-      return std::min({m_primary->m_body->maximumHeight(),
-        m_primary->height() + offset, size().height() - m_divider->height() -
-          m_secondary->m_body->minimumHeight()});
-    }();
-    m_primary->setFixedHeight(height);
+    auto cursor = QCursor::pos().y();
+    auto top = mapToGlobal(QPoint(0, 0)).y();
+    auto bottom = mapToGlobal(QPoint(0, height() - 1)).y();
+    set_fixed_size(&QWidget::setFixedHeight, cursor, top, bottom,
+      m_primary->m_body->sizeHint().height(),
+      m_secondary->m_body->sizeHint().height(),
+      m_primary->m_body->minimumHeight(), m_primary->m_body->maximumHeight(),
+      m_secondary->m_body->minimumHeight(),
+      m_secondary->m_body->maximumHeight(), m_primary->height(), height(),
+      m_divider->height());
   }
 }
 
@@ -286,6 +318,8 @@ void SplitView::on_reset() {
     m_primary->setFixedHeight(std::max(m_primary->m_body->minimumHeight(),
       (height() - DividerBox::base_size) / 2));
   }
+  m_primary->show();
+  m_secondary->show();
 }
 
 void SplitView::on_style() {
