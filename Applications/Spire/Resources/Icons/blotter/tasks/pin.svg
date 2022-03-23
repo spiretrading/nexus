@@ -1,3 +1,14 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
-  <path id="Path_524" data-name="Path 524" d="M563.543,199.8l-2.829-2.829a1,1,0,0,0-1.414,0l-2.828,2.829-.707-.708a1,1,0,0,0-1.415,0l-3.535,3.536,2.828,2.828-5.807,5.808.718.719.7.695,5.808-5.807,2.828,2.828,3.536-3.536a1,1,0,0,0,0-1.414l-.708-.707,2.829-2.828A1,1,0,0,0,563.543,199.8Zm-5.657,4.242,1.414,1.414-1.414,1.415-4.243-4.243,1.415-1.414,1.414,1.414,3.535-3.536,1.415,1.415Z" transform="translate(-547.836 -196.68)" fill="#535353"/>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 26 26">
+  <defs>
+    <clipPath id="clip-path">
+      <rect id="Rectangle_1747" data-name="Rectangle 1747" width="16" height="16" fill="#535353"/>
+    </clipPath>
+  </defs>
+  <g id="_ToggleButton_" data-name="&lt;ToggleButton&gt;" transform="translate(0.034)">
+    <rect id="Box" width="26" height="26" transform="translate(-0.034)" fill="none"/>
+    <rect id="button_container" data-name="button container" width="26" height="26" transform="translate(-0.034)" fill="#535353" opacity="0.001"/>
+    <g id="Group_3438" data-name="Group 3438" transform="translate(4.966 5)" clip-path="url(#clip-path)">
+      <path id="Path_603" data-name="Path 603" d="M12.138,7.256l3.394-3.394a1.6,1.6,0,0,0,0-2.262L14.4.468a1.6,1.6,0,0,0-2.262,0l-3.394,3.4L8.178,3.3a1.6,1.6,0,0,0-2.262,0L3.653,5.559,6.48,8.388,0,14.868,1.131,16,7.613,9.52l2.827,2.827L12.7,10.08a1.6,1.6,0,0,0,0-2.262Z" transform="translate(0.034 0)" fill="#535353"/>
+    </g>
+  </g>
 </svg>
