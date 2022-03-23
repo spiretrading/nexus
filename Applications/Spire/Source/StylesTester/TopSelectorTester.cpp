@@ -63,8 +63,11 @@ TEST_SUITE("TopSelector") {
   TEST_CASE("combinator") {
     run_test([] {
       auto root = new QWidget();
+      root->setObjectName("Root");
       auto child1 = new QWidget(root);
+      child1->setObjectName("Child1");
       auto child2 = new QWidget(root);
+      child2->setObjectName("Child2");
       auto updates = std::deque<SelectionUpdate>();
       auto connection = select(TopSelector(Foo(), Bar()),
         find_stylist(*root), [&] (auto&& additions, auto&& removals) {
