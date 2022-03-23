@@ -111,6 +111,16 @@ void TabView::add(std::vector<QString> labels, QWidget& body) {
   if(!m_tab_list->get_current()->get()) {
     m_tab_list->get_current()->set(0);
   }
+  updateGeometry();
+}
+
+QSize TabView::sizeHint() const {
+  auto max_hint = QSize(0, 0);
+  for(auto body : m_bodies) {
+    max_hint.rwidth() = std::max(max_hint.width(), body->sizeHint().width());
+    max_hint.rheight() = std::max(max_hint.height(), body->sizeHint().height());
+  }
+  return m_tab_list->sizeHint() + max_hint;
 }
 
 void TabView::keyPressEvent(QKeyEvent* event) {
