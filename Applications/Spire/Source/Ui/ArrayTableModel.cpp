@@ -62,7 +62,7 @@ int ArrayTableModel::get_column_size() const {
   }
 }
 
-const std::any& ArrayTableModel::at(int row, int column) const {
+AnyRef ArrayTableModel::at(int row, int column) const {
   if(row < 0 || row >= get_row_size() || column < 0 ||
       column >= get_column_size()) {
     throw std::out_of_range("The row or column is out of range.");
@@ -70,8 +70,8 @@ const std::any& ArrayTableModel::at(int row, int column) const {
   return m_data[row][column];
 }
 
-QValidator::State ArrayTableModel::set(int row, int column,
-    const std::any& value) {
+QValidator::State ArrayTableModel::set(
+    int row, int column, const std::any& value) {
   if(row < 0 || row >= get_row_size() || column < 0 ||
       column >= get_column_size()) {
     return QValidator::State::Invalid;

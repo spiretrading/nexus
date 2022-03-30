@@ -233,7 +233,7 @@ TableViewBuilder& TableViewBuilder::set_standard_filter() {
   }
   auto types = std::vector<std::type_index>();
   for(auto i = 0; i != m_table->get_column_size(); ++i) {
-    types.push_back(m_table->at(0, i).type());
+    types.push_back(m_table->at(0, i).get_type());
   }
   return set_filter(std::make_shared<StandardTableFilter>(std::move(types)));
 }

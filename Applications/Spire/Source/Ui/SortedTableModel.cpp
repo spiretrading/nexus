@@ -10,20 +10,20 @@ using namespace Spire;
 
 namespace {
   template<typename T>
-  bool compare(const std::any& lhs, const std::any& rhs) {
-    return std::any_cast<const T&>(lhs) < std::any_cast<const T&>(rhs);
+  bool compare(const AnyRef& lhs, const AnyRef& rhs) {
+    return any_cast<T>(lhs) < any_cast<T>(rhs);
   }
 
-  bool default_comparator(const std::any& lhs, const std::any& rhs) {
-    if(lhs.type() != rhs.type()) {
+  bool default_comparator(const AnyRef& lhs, const AnyRef& rhs) {
+    if(lhs.get_type() != rhs.get_type()) {
       return false;
-    } else if(lhs.type() == typeid(int)) {
+    } else if(lhs.get_type() == typeid(int)) {
       return compare<int>(lhs, rhs);
-    } else if(lhs.type() == typeid(QString)) {
+    } else if(lhs.get_type() == typeid(QString)) {
       return compare<QString>(lhs, rhs);
-    } else if(lhs.type() == typeid(Decimal)) {
+    } else if(lhs.get_type() == typeid(Decimal)) {
       return compare<Decimal>(lhs, rhs);
-    } else if(lhs.type() == typeid(time_duration)) {
+    } else if(lhs.get_type() == typeid(time_duration)) {
       return compare<time_duration>(lhs, rhs);
     }
     return false;
@@ -73,7 +73,7 @@ int SortedTableModel::get_column_size() const {
   return m_translation.get_column_size();
 }
 
-const std::any& SortedTableModel::at(int row, int column) const {
+AnyRef SortedTableModel::at(int row, int column) const {
   return m_translation.at(row, column);
 }
 

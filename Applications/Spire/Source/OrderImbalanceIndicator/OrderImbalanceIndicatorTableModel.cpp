@@ -23,8 +23,7 @@ int OrderImbalanceIndicatorTableModel::get_column_size() const {
   return m_table.get_column_size();
 }
 
-const std::any& OrderImbalanceIndicatorTableModel::at(
-    int row, int column) const {
+AnyRef OrderImbalanceIndicatorTableModel::at(int row, int column) const {
   return m_table.at(row, column);
 }
 

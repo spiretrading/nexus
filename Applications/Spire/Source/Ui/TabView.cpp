@@ -61,11 +61,13 @@ TabView::TabView(QWidget* parent)
       }
       return new Tab(std::move(labels_model));
     });
-  m_tab_list->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+  m_tab_list->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   m_tab_list->set_item_size_policy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   auto scrollable_list_box = new ScrollableListBox(*m_tab_list);
   scrollable_list_box->get_scroll_box().set(
     ScrollBox::DisplayPolicy::NEVER, ScrollBox::DisplayPolicy::NEVER);
+  scrollable_list_box->setSizePolicy(
+    QSizePolicy::Expanding, QSizePolicy::Fixed);
   update_style(*scrollable_list_box, [] (auto& style) {
     style.get(Any()).
       set(BackgroundColor(QColor(0xEBEBEB))).

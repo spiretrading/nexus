@@ -8,14 +8,13 @@ using namespace boost::signals2;
 using namespace Spire;
 
 namespace {
-  bool test_comparator(const std::any& lhs, const std::any& rhs) {
-    if(lhs.type() == typeid(int)) {
-      return std::any_cast<int>(lhs) < std::any_cast<int>(rhs);
-    } else if(lhs.type() == typeid(std::string)) {
-      return std::any_cast<std::string>(lhs) <
-        std::any_cast<std::string>(rhs);
-    } else if(lhs.type() == typeid(float)) {
-      return std::any_cast<float>(lhs) < std::any_cast<float>(rhs);
+  bool test_comparator(const AnyRef& lhs, const AnyRef& rhs) {
+    if(lhs.get_type() == typeid(int)) {
+      return any_cast<int>(lhs) < any_cast<int>(rhs);
+    } else if(lhs.get_type() == typeid(std::string)) {
+      return any_cast<std::string>(lhs) < any_cast<std::string>(rhs);
+    } else if(lhs.get_type() == typeid(float)) {
+      return any_cast<float>(lhs) < any_cast<float>(rhs);
     }
     return false;
   }
