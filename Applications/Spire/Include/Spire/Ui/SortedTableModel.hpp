@@ -10,8 +10,8 @@
 namespace Spire {
 
   /**
-   * Implements a TableModel that provides a view over a source model by
-   * sorting a column in ascending order, descending order or without any order.
+   * Implements a TableModel that provides a view over a source model by sorting
+   * a column in ascending order, descending order or without any order.
    */
   class SortedTableModel : public TableModel {
     public:
@@ -22,7 +22,7 @@ namespace Spire {
        * @return Returns <code>true</code> iff the first argument is less than
        *         the second.
        */
-      using Comparator = std::function<bool (const std::any&, const std::any&)>;
+      using Comparator = std::function<bool (const AnyRef&, const AnyRef&)>;
 
       /** Specifies a sort order. */
       enum class Ordering {
@@ -103,7 +103,7 @@ namespace Spire {
 
       int get_column_size() const override;
 
-      const std::any& at(int row, int column) const override;
+      AnyRef at(int row, int column) const override;
 
       QValidator::State set(
         int row, int column, const std::any& value) override;

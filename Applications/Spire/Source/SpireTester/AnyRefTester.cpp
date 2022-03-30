@@ -148,4 +148,11 @@ TEST_SUITE("AnyRef") {
     REQUIRE(any_cast<volatile bool>(&any3) == nullptr);
     REQUIRE(any_cast<const volatile bool>(&any3) == nullptr);
   }
+
+  TEST_CASE("any_ref_from_any") {
+    auto value = std::any(123);
+    auto ref = AnyRef(value);
+    REQUIRE(ref.get_type() == typeid(int));
+    REQUIRE(any_cast<int>(ref) == 123);
+  }
 }

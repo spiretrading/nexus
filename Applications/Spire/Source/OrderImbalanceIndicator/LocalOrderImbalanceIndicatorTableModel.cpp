@@ -50,8 +50,7 @@ int LocalOrderImbalanceIndicatorTableModel::get_column_size() const {
   return m_table.get_column_size();
 }
 
-const std::any& LocalOrderImbalanceIndicatorTableModel::at(
-    int row, int column) const {
+AnyRef LocalOrderImbalanceIndicatorTableModel::at(int row, int column) const {
   return m_table.at(row, column);
 }
 

@@ -1,5 +1,6 @@
 #ifndef SPIRE_TABLE_MODEL_HPP
 #define SPIRE_TABLE_MODEL_HPP
+#include "Spire/Spire/AnyRef.hpp"
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -77,7 +78,7 @@ namespace Spire {
        * @throws <code>std::out_of_range</code> iff row or column is out of
        *         range.
        */
-      virtual const std::any& at(int row, int column) const = 0;
+      virtual AnyRef at(int row, int column) const = 0;
 
       /**
        * Returns the value at a specified row and column.
@@ -114,7 +115,7 @@ namespace Spire {
 
   template<typename T>
   const T& TableModel::get(int row, int column) const {
-    return std::any_cast<const T&>(at(row, column));
+    return any_cast<const T>(at(row, column));
   }
 
   /**

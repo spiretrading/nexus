@@ -54,7 +54,7 @@ int TranslatedTableModel::get_column_size() const {
   return m_source->get_column_size();
 }
 
-const std::any& TranslatedTableModel::at(int row, int column) const {
+AnyRef TranslatedTableModel::at(int row, int column) const {
   if(row < 0 || row >= get_row_size()) {
     throw std::out_of_range("The row is out of range.");
   }

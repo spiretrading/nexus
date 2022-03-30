@@ -53,7 +53,7 @@ namespace Spire {
 
       int get_column_size() const override;
 
-      const std::any& at(int row, int column) const override;
+      AnyRef at(int row, int column) const override;
 
       QValidator::State set(
         int row, int column, const std::any& value) override;
