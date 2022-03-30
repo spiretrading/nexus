@@ -58,6 +58,13 @@ namespace Spire {
     private:
       mutable ExecuteSignal m_execute_signal;
       mutable CancelSignal m_cancel_signal;
+      std::shared_ptr<BooleanModel> m_is_active;
+      std::shared_ptr<BooleanModel> m_is_pinned;
+      std::shared_ptr<TaskListModel> m_tasks;
+      boost::signals2::scoped_connection m_tasks_connection;
+
+      void on_tasks_operation(
+        const ListModel<std::shared_ptr<Task>>::Operation& operation);
   };
 }
 

@@ -9,11 +9,21 @@
 
 namespace Spire {
 
+  /** Stores a Task and the auxilliary data needed to view it in a blotter. */
+  struct TaskEntry {
+
+    /** The Task represented by this entry. */
+    std::shared_ptr<Task> m_task;
+
+    /** Whether to pin this entry to the blotter. */
+    std::shared_ptr<BooleanModel> m_is_pinned;
+  };
+
   /** The type of list model used for orders displayed in the blotter. */
   using OrderListModel = ListModel<Nexus::OrderExecutionService::Order*>;
 
   /** The type of list model used for tasks displayed in the blotter. */
-  using TaskListModel = ListModel<std::shared_ptr<Task>>;
+  using TaskListModel = ListModel<TaskEntry>;
 
   /**
    * Defines the interface representing a blotter, used to keep track of trading

@@ -63,7 +63,7 @@ std::shared_ptr<CompositeBlotterModel> Spire::make_local_blotter_model() {
     std::make_shared<LocalTextModel>(),
     std::make_shared<LocalBooleanModel>(),
     std::make_shared<LocalBooleanModel>(),
-    std::make_shared<ArrayListModel<std::shared_ptr<Task>>>(),
+    std::make_shared<ArrayListModel<TaskEntry>>(),
     std::make_shared<LocalBlotterPositionsModel>(),
     std::make_shared<ArrayListModel<Order*>>(),
     std::make_shared<LocalBlotterProfitAndLossModel>(),

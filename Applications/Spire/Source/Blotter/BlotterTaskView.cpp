@@ -10,6 +10,8 @@
 #include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/TableView.hpp"
 
+using namespace boost;
+using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::Styles;
 
@@ -23,12 +25,28 @@ namespace {
   };
 
   using Separator = StateSelector<void, struct SeparatorTag>;
+
+  struct TaskTableModel : TableModel {
+    int get_row_size() const override;
+
+    int get_column_size() const override;
+
+    AnyRef at(int row, int column) const override;
+
+    QValidator::State set(int row, int column, const std::any& value) override;
+
+    connection connect_operation_signal(
+      const typename OperationSignal::slot_type& slot) const override;
+  };
 }
 
 BlotterTaskView::BlotterTaskView(std::shared_ptr<BooleanModel> is_active,
     std::shared_ptr<BooleanModel> is_pinned,
     std::shared_ptr<TaskListModel> tasks, QWidget* parent)
-    : QWidget(parent) {
+    : QWidget(parent),
+      m_is_active(std::move(is_active)),
+      m_is_pinned(std::move(is_pinned)),
+      m_tasks(std::move(tasks)) {
   setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto command_list = std::make_shared<ArrayListModel<CommandItem>>();
   command_list->push(CommandItem::ACTIVATE);
@@ -102,4 +120,32 @@ BlotterTaskView::BlotterTaskView(std::shared_ptr<BooleanModel> is_active,
   scroll_box->set(
     ScrollBox::DisplayPolicy::ON_OVERFLOW, ScrollBox::DisplayPolicy::NEVER);
   layout->addWidget(scroll_box);
+  m_tasks_connection = m_tasks->connect_operation_signal(
+    std::bind_front(&BlotterTaskView::on_tasks_operation, this));
+}
+
+const std::shared_ptr<BooleanModel>& BlotterTaskView::is_active() {
+  return m_is_active;
+}
+
+const std::shared_ptr<BooleanModel>& BlotterTaskView::is_pinned() {
+  return m_is_pinned;
+}
+
+const std::shared_ptr<TaskListModel>& BlotterTaskView::get_tasks() {
+  return m_tasks;
+}
+
+connection BlotterTaskView::connect_execute_signal(
+    const ExecuteSignal::slot_type& slot) const {
+  return m_execute_signal.connect(slot);
+}
+
+connection BlotterTaskView::connect_cancel_signal(
+    const CancelSignal::slot_type& slot) const {
+  return m_cancel_signal.connect(slot);
+}
+
+void BlotterTaskView::on_tasks_operation(
+    const ListModel<std::shared_ptr<Task>>::Operation& operation) {
 }
