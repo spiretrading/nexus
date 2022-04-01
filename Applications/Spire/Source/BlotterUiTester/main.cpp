@@ -7,6 +7,7 @@
 #include "Spire/Blotter/CompositeBlotterStatusModel.hpp"
 #include "Spire/Blotter/LocalBlotterPositionsModel.hpp"
 #include "Spire/Blotter/LocalBlotterProfitAndLossModel.hpp"
+#include "Spire/Canvas/Task.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Resources.hpp"
 #include "Spire/Ui/MoneyBox.hpp"
@@ -89,11 +90,11 @@ int main(int argc, char** argv) {
   application.setApplicationName(QObject::tr("Blotter UI Tester"));
   initialize_resources();
   auto controller = StatusBarController();
+  auto tasks = std::make_shared<ArrayListModel<TaskEntry>>();
   auto blotter = std::make_shared<CompositeBlotterModel>(
     std::make_shared<LocalTextModel>("North America"),
     std::make_shared<LocalBooleanModel>(),
-    std::make_shared<LocalBooleanModel>(),
-    std::make_shared<ArrayListModel<TaskEntry>>(),
+    std::make_shared<LocalBooleanModel>(), tasks,
     std::make_shared<LocalBlotterPositionsModel>(),
     std::make_shared<ArrayListModel<Order*>>(),
     std::make_shared<LocalBlotterProfitAndLossModel>(),
@@ -108,5 +109,7 @@ int main(int argc, char** argv) {
   controller.move(window.pos() + QPoint(0, window.size().height()));
   controller.show();
   window.installEventFilter(&controller);
+  tasks->push(
+    TaskEntry(std::make_shared<Task>(), std::make_shared<LocalBooleanModel>()));
   application.exec();
 }

@@ -1,4 +1,5 @@
 #include "Spire/Blotter/BlotterTaskView.hpp"
+#include "Spire/Canvas/Task.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/ArrayTableModel.hpp"
@@ -27,16 +28,66 @@ namespace {
   using Separator = StateSelector<void, struct SeparatorTag>;
 
   struct TaskTableModel : TableModel {
-    int get_row_size() const override;
+    enum Column {
+      PINNED,
+      NAME,
+      ID,
+      STATE
+    };
+    static const auto COLUMN_SIZE = 9;
+    std::shared_ptr<TaskListModel> m_tasks;
+    scoped_connection m_operation_connection;
+    TableModelTransactionLog m_transaction;
 
-    int get_column_size() const override;
+    TaskTableModel(std::shared_ptr<TaskListModel> tasks)
+      : m_tasks(std::move(tasks)),
+        m_operation_connection(m_tasks->connect_operation_signal(
+          std::bind_front(&TaskTableModel::on_operation, this))) {}
 
-    AnyRef at(int row, int column) const override;
+    int get_row_size() const override {
+      return m_tasks->get_size();
+    }
 
-    QValidator::State set(int row, int column, const std::any& value) override;
+    int get_column_size() const override {
+      return COLUMN_SIZE;
+    }
+
+    AnyRef at(int row, int column) const override {
+      if(column < 0 || column >= get_column_size()) {
+        throw std::out_of_range("Column is out of range.");
+      }
+      if(column == Column::PINNED) {
+        return m_tasks->get(row).m_is_pinned->get();
+      } else if(column == Column::NAME) {
+        static auto value = std::string("hello");
+        return value;
+      } else if(column == Column::ID) {
+        return m_tasks->get(row).m_task->get_id();
+      }
+      static auto value = 123;
+      return value;
+    }
 
     connection connect_operation_signal(
-      const typename OperationSignal::slot_type& slot) const override;
+        const typename OperationSignal::slot_type& slot) const override {
+      return m_transaction.connect_operation_signal(slot);
+    }
+
+    void on_operation(const TaskListModel::Operation& operation) {
+      m_transaction.transact([&] {
+        visit(operation,
+          [&] (const TaskListModel::AddOperation& operation) {
+            m_transaction.push(TableModel::AddOperation(operation.m_index));
+          },
+          [&] (const TaskListModel::RemoveOperation& operation) {
+            m_transaction.push(TableModel::RemoveOperation(operation.m_index));
+          },
+          [&] (const TaskListModel::MoveOperation& operation) {
+            m_transaction.push(TableModel::MoveOperation(
+              operation.m_source, operation.m_destination));
+          });
+      });
+    }
   };
 }
 
@@ -105,11 +156,12 @@ BlotterTaskView::BlotterTaskView(std::shared_ptr<BooleanModel> is_active,
   auto layout = make_vbox_layout(this);
   layout->addWidget(command_bar);
   auto table_view_builder =
-    TableViewBuilder(std::make_shared<ArrayTableModel>());
-  table_view_builder.add_header_item(tr("ID"), TableFilter::Filter::NONE);
-  table_view_builder.add_header_item(tr("Name"), TableFilter::Filter::NONE);
+    TableViewBuilder(std::make_shared<TaskTableModel>(m_tasks));
   table_view_builder.add_header_item(tr("Pinned"), TableFilter::Filter::NONE);
+  table_view_builder.add_header_item(tr("Name"), TableFilter::Filter::NONE);
+  table_view_builder.add_header_item(tr("ID"), TableFilter::Filter::NONE);
   table_view_builder.add_header_item(tr("State"), TableFilter::Filter::NONE);
+  table_view_builder.add_header_item(tr("Security"), TableFilter::Filter::NONE);
   table_view_builder.add_header_item(tr("Side"), TableFilter::Filter::NONE);
   table_view_builder.add_header_item(tr("Price"), TableFilter::Filter::NONE);
   table_view_builder.add_header_item(tr("Quantity"), TableFilter::Filter::NONE);
