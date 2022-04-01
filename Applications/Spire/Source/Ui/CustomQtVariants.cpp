@@ -2,6 +2,7 @@
 #include <Beam/TimeService/ToLocalTime.hpp>
 #include <QDateTime>
 #include "Nexus/Definitions/SecuritySet.hpp"
+#include "Spire/Spire/AnyRef.hpp"
 
 using namespace Beam;
 using namespace Beam::TimeService;
@@ -75,31 +76,27 @@ bool PositionSideToken::operator !=(PositionSideToken token) const {
   return !(*this == token);
 }
 
-QTime Spire::to_qtime(const posix_time::time_duration& time) {
-  auto timestamp = QTime(static_cast<int>(time.hours()),
+QTime Spire::to_qtime(posix_time::time_duration time) {
+  return QTime(static_cast<int>(time.hours()),
     static_cast<int>(time.minutes()), static_cast<int>(time.seconds()),
     static_cast<int>(time.fractional_seconds() / 1000));
-  return timestamp;
 }
 
 posix_time::time_duration Spire::to_time_duration(const QTime& time) {
-  auto timestamp = posix_time::time_duration(time.hour(), time.minute(),
-    time.second(), time.msec());
-  return timestamp;
+  return posix_time::time_duration(
+    time.hour(), time.minute(), time.second(), time.msec());
 }
 
-QDateTime Spire::to_qdate_time(const ptime& time) {
-  auto date_time = QDateTime(QDate(time.date().year(), time.date().month(),
+QDateTime Spire::to_qdate_time(ptime time) {
+  return QDateTime(QDate(time.date().year(), time.date().month(),
     time.date().day()), to_qtime(time.time_of_day()));
-  return date_time;
 }
 
-posix_time::ptime Spire::to_ptime(const QDateTime& time) {
-  auto posix_time = ptime(gregorian::date(
-    time.date().year(), time.date().month(), time.date().day()),
-    posix_time::time_duration(time.time().hour(), time.time().minute(),
-    time.time().second(), time.time().msec()));
-  return posix_time;
+ptime Spire::to_ptime(const QDateTime& time) {
+  return ptime(
+    gregorian::date(time.date().year(), time.date().month(), time.date().day()),
+      posix_time::time_duration(time.time().hour(), time.time().minute(),
+        time.time().second(), time.time().msec()));
 }
 
 QVariant Spire::to_qvariant(const std::any& value) {
@@ -116,8 +113,8 @@ QVariant Spire::to_qvariant(const std::any& value) {
   } else if(value.type() == typeid(posix_time::time_duration)) {
     return QVariant::fromValue(std::any_cast<posix_time::time_duration>(value));
   } else if(value.type() == typeid(std::string)) {
-    return QVariant::fromValue(QString::fromStdString(
-      std::any_cast<std::string>(value)));
+    return QVariant::fromValue(
+      QString::fromStdString(std::any_cast<std::string>(value)));
   } else if(value.type() == typeid(CurrencyId)) {
     return QVariant::fromValue(std::any_cast<CurrencyId>(value));
   } else if(value.type() == typeid(MarketToken)) {
@@ -154,6 +151,50 @@ QVariant Spire::to_qvariant(const std::any& value) {
 }
 
 void Spire::register_custom_qt_variants() {}
+
+QString Spire::displayText(int value) {
+  return displayText(std::any(value));
+}
+
+QString Spire::displayText(const std::string& value) {
+  return QString::fromStdString(value);
+}
+
+QString Spire::displayText(gregorian::date date) {
+  return QString::fromStdString(to_iso_extended_string(date));
+}
+
+QString Spire::displayText(ptime time) {
+  auto local_time = ToLocalTime(time);
+  auto current_time = ToLocalTime(posix_time::second_clock::universal_time());
+  if(local_time.date() == current_time.date()) {
+    return QString::fromStdString(to_simple_string(local_time).substr(12));
+  }
+  return QString::fromStdString(to_simple_string(local_time));
+}
+
+QString Spire::displayText(posix_time::time_duration time) {
+  return QString::fromStdString(to_simple_string(time));
+}
+
+QString Spire::displayText(CurrencyId currency) {
+  auto& entry = GetDefaultCurrencyDatabase().FromId(currency);
+  return QString::fromStdString(entry.m_code.GetData());
+}
+
+QString Spire::displayText(MarketToken market) {
+  auto& entry = GetDefaultMarketDatabase().FromCode(market.m_code);
+  return QString::fromStdString(entry.m_displayName);
+}
+
+QString Spire::displayText(Money value) {
+  return QString::fromStdString(lexical_cast<std::string>(value));
+}
+
+QString Spire::displayText(Quantity value) {
+  static auto locale = QLocale();
+  return locale.toString(static_cast<double>(value));
+}
 
 const QString& Spire::displayText(Nexus::TimeInForce time_in_force) {
   auto type = time_in_force.GetType();
@@ -204,34 +245,34 @@ const QString& Spire::displayText(OrderStatus status) {
   if(status == OrderStatus::PENDING_NEW) {
     static const auto value = QObject::tr("Pending New");
     return value;
-  } else if(status ==  OrderStatus::REJECTED) {
+  } else if(status == OrderStatus::REJECTED) {
     static const auto value = QObject::tr("Rejected");
     return value;
-  } else if(status ==  OrderStatus::NEW) {
+  } else if(status == OrderStatus::NEW) {
     static const auto value = QObject::tr("New");
     return value;
-  } else if(status ==  OrderStatus::PARTIALLY_FILLED) {
+  } else if(status == OrderStatus::PARTIALLY_FILLED) {
     static const auto value = QObject::tr("Partially Filled");
     return value;
-  } else if(status ==  OrderStatus::EXPIRED) {
+  } else if(status == OrderStatus::EXPIRED) {
     static const auto value = QObject::tr("Expired");
     return value;
-  } else if(status ==  OrderStatus::CANCELED) {
+  } else if(status == OrderStatus::CANCELED) {
     static const auto value = QObject::tr("Canceled");
     return value;
-  } else if(status ==  OrderStatus::SUSPENDED) {
+  } else if(status == OrderStatus::SUSPENDED) {
     static const auto value = QObject::tr("Suspended");
     return value;
-  } else if(status ==  OrderStatus::STOPPED) {
+  } else if(status == OrderStatus::STOPPED) {
     static const auto value = QObject::tr("Stopped");
     return value;
-  } else if(status ==  OrderStatus::FILLED) {
+  } else if(status == OrderStatus::FILLED) {
     static const auto value = QObject::tr("Filled");
     return value;
-  } else if(status ==  OrderStatus::DONE_FOR_DAY) {
+  } else if(status == OrderStatus::DONE_FOR_DAY) {
     static const auto value = QObject::tr("Done For Day");
     return value;
-  } else if(status ==  OrderStatus::PENDING_CANCEL) {
+  } else if(status == OrderStatus::PENDING_CANCEL) {
     static const auto value = QObject::tr("Pending Cancel");
     return value;
   } else if(status == OrderStatus::CANCEL_REJECT) {
@@ -262,6 +303,26 @@ const QString& Spire::displayText(OrderType type) {
   }
 }
 
+QString Spire::displayText(PositionSideToken token) {
+  return token.to_string();
+}
+
+QString Spire::displayText(const Region& region) {
+  if(region.IsGlobal()) {
+    return QObject::tr("Global");
+  }
+  return QString::fromStdString(region.GetName());
+}
+
+QString Spire::displayText(const Security& security) {
+  return QString::fromStdString(ToWildCardString(
+    security, GetDefaultMarketDatabase(), GetDefaultCountryDatabase()));
+}
+
+QString Spire::displayText(const AnyRef& value) {
+  return displayText(to_any(value));
+}
+
 QString Spire::displayText(const std::any& value) {
   auto translated_value = to_qvariant(value);
   return CustomVariantItemDelegate().displayText(translated_value);
@@ -284,48 +345,29 @@ QString CustomVariantItemDelegate::displayText(const QVariant& value,
     const QLocale& locale) const {
   if(value.type() == QVariant::Type::UserType) {
     if(value.canConvert<gregorian::date>()) {
-      return QString::fromStdString(
-        to_iso_extended_string(value.value<gregorian::date>()));
+      return Spire::displayText(value.value<gregorian::date>());
     } else if(value.canConvert<ptime>()) {
-      auto time_value = ToLocalTime(value.value<ptime>());
-      auto currentTime =
-        ToLocalTime(posix_time::second_clock::universal_time());
-      if(time_value.date() == currentTime.date()) {
-        return QString::fromStdString(to_simple_string(time_value).substr(12));
-      } else {
-        return QString::fromStdString(to_simple_string(time_value));
-      }
+      return Spire::displayText(value.value<ptime>());
     } else if(value.canConvert<posix_time::time_duration>()) {
-      return QString::fromStdString(
-        to_simple_string(value.value<posix_time::time_duration>()));
+      return Spire::displayText(value.value<posix_time::time_duration>());
     } else if(value.canConvert<CurrencyId>()) {
-      auto& entry =
-        GetDefaultCurrencyDatabase().FromId(value.value<CurrencyId>());
-      return QString::fromStdString(entry.m_code.GetData());
+      return Spire::displayText(value.value<CurrencyId>());
     } else if(value.canConvert<MarketToken>()) {
-      auto& entry =
-        GetDefaultMarketDatabase().FromCode(value.value<MarketToken>().m_code);
-      return QString::fromStdString(entry.m_displayName);
+      return Spire::displayText(value.value<MarketToken>());
     } else if(value.canConvert<Money>()) {
-      return QString::fromStdString(
-        lexical_cast<std::string>(value.value<Money>()));
+      return Spire::displayText(value.value<Money>());
     } else if(value.canConvert<Quantity>()) {
-      return locale.toString(static_cast<double>(value.value<Quantity>()));
+      return Spire::displayText(value.value<Quantity>());
     } else if(value.canConvert<OrderStatus>()) {
       return Spire::displayText(value.value<OrderStatus>());
     } else if(value.canConvert<OrderType>()) {
       return Spire::displayText(value.value<OrderType>());
     } else if(value.canConvert<PositionSideToken>()) {
-      return value.value<PositionSideToken>().to_string();
+      return Spire::displayText(value.value<PositionSideToken>());
     } else if(value.canConvert<Region>()) {
-      auto region = value.value<Region>();
-      if(region.IsGlobal()) {
-        return QObject::tr("Global");
-      }
-      return QString::fromStdString(region.GetName());
+      return Spire::displayText(value.value<Region>());
     } else if(value.canConvert<Security>()) {
-      return QString::fromStdString(ToWildCardString(value.value<Security>(),
-        GetDefaultMarketDatabase(), GetDefaultCountryDatabase()));
+      return Spire::displayText(value.value<Security>());
     } else if(value.canConvert<Side>()) {
       return Spire::displayText(value.value<Side>());
     } else if(value.canConvert<TimeInForce>()) {
@@ -439,8 +481,7 @@ optional<ptime> Spire::from_string(const QString& string) {
 }
 
 template<>
-optional<posix_time::time_duration>
-    Spire::from_string(const QString& string) {
+optional<posix_time::time_duration> Spire::from_string(const QString& string) {
   return from_string_lexical_cast<posix_time::time_duration>(string);
 }
 

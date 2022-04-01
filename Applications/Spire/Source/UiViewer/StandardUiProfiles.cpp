@@ -1727,7 +1727,6 @@ UiProfile Spire::make_icon_toggle_button_profile() {
     auto button = make_icon_toggle_button(
       imageFromSvg(":/Icons/demo.svg", scale(26, 26)), tooltip.get());
     apply_widget_properties(button, profile.get_properties());
-//    button->connect_click_signal(profile.make_event_slot("ClickSignal"));
     return button;
   });
   return profile;
