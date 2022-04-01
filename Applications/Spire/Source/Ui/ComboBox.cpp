@@ -38,7 +38,7 @@ ComboBox::ComboBox(std::shared_ptr<QueryModel> query_model,
       m_query_model(std::move(query_model)),
       m_current(std::move(current)),
       m_submission(m_current->get()),
-      m_submission_text(displayTextAny(m_submission)),
+      m_submission_text(displayText(m_submission)),
       m_is_read_only(false),
       m_input_box(input_box),
       m_focus_observer(*this),
@@ -167,7 +167,7 @@ void ComboBox::update_completion() {
       m_completion.clear();
       return;
     }
-    auto top_match = displayTextAny(m_matches->get(0));
+    auto top_match = displayText(m_matches->get(0));
     if(!top_match.toLower().startsWith(query.toLower())) {
       m_prefix = query;
       m_completion.clear();
@@ -223,7 +223,7 @@ void ComboBox::submit(const QString& query, bool is_passive) {
   if(!value.has_value()) {
     return;
   }
-  if(is_passive && displayTextAny(value) == displayTextAny(m_submission)) {
+  if(is_passive && displayText(value) == displayText(m_submission)) {
     return;
   }
   if(!m_completion.isEmpty()) {
@@ -248,7 +248,7 @@ void ComboBox::submit(const QString& query, bool is_passive) {
 void ComboBox::on_current(const std::any& current) {
   if(!is_equal(current, m_query_model->parse(
       any_cast<QString>(m_input_box->get_current()->get())))) {
-    m_input_box->get_current()->set(displayTextAny(current));
+    m_input_box->get_current()->set(displayText(current));
   }
 }
 
@@ -331,7 +331,7 @@ void ComboBox::on_query(
 void ComboBox::on_drop_down_current(optional<int> index) {
   if(index) {
     auto value = m_drop_down_list->get_list_view().get_list()->get(*index);
-    auto text = displayTextAny(value);
+    auto text = displayText(value);
     {
       auto input_blocker = shared_connection_block(m_input_connection);
       auto highlight_blocker = shared_connection_block(m_highlight_connection);
@@ -347,7 +347,7 @@ void ComboBox::on_drop_down_current(optional<int> index) {
 }
 
 void ComboBox::on_drop_down_submit(const std::any& submission) {
-  auto text = displayTextAny(submission);
+  auto text = displayText(submission);
   {
     auto input_blocker = shared_connection_block(m_input_connection);
     auto highlight_blocker = shared_connection_block(m_highlight_connection);
@@ -372,7 +372,7 @@ LocalComboBoxQueryModel::LocalComboBoxQueryModel()
   : m_values(QChar()) {}
 
 void LocalComboBoxQueryModel::add(const std::any& value) {
-  add(displayTextAny(value).toLower(), value);
+  add(displayText(value).toLower(), value);
 }
 
 void LocalComboBoxQueryModel::add(const QString& id, const std::any& value) {

@@ -107,13 +107,13 @@ Q_DECLARE_METATYPE(std::any);
 namespace Spire {
 
   /** Converts a posix time duration into a QTime. */
-  QTime to_qtime(const boost::posix_time::time_duration& time);
+  QTime to_qtime(boost::posix_time::time_duration time);
 
   /** Converts a QTime into a posix time duration. */
   boost::posix_time::time_duration to_time_duration(const QTime& time);
 
   /** Converts a QDateTime into a posix timestamp. */
-  QDateTime to_qdate_time(const boost::posix_time::ptime& time);
+  QDateTime to_qdate_time(boost::posix_time::ptime time);
 
   /** Converts a posix timestamp into a QDateTime. */
   boost::posix_time::ptime to_ptime(const QDateTime& time);
@@ -123,6 +123,33 @@ namespace Spire {
 
   /** Registers the custom QVariant types. */
   void register_custom_qt_variants();
+
+  /** Returns the text representation of an int. */
+  QString displayText(int value);
+
+  /** Returns the text representation of an std::string. */
+  QString displayText(const std::string& value);
+
+  /** Returns the text representation of a date. */
+  QString displayText(boost::gregorian::date date);
+
+  /** Returns the text representation of a ptime. */
+  QString displayText(boost::posix_time::ptime time);
+
+  /** Returns the text representation of a time_duration. */
+  QString displayText(boost::posix_time::time_duration time);
+
+  /** Returns the text representation of a CurrencyId. */
+  QString displayText(Nexus::CurrencyId currency);
+
+  /** Returns the text representation of a MarketToken. */
+  QString displayText(MarketToken market);
+
+  /** Returns the text representation of a Money value. */
+  QString displayText(Nexus::Money value);
+
+  /** Returns the text representation of a Quantity value. */
+  QString displayText(Nexus::Quantity value);
 
   /** Returns the text representation of a TimeInForce. */
   const QString& displayText(Nexus::TimeInForce time_in_force);
@@ -136,8 +163,23 @@ namespace Spire {
   /** Returns the text representation of an OrderType. */
   const QString& displayText(Nexus::OrderType type);
 
+  /** Returns the text representation of a PositionSideToken. */
+  QString displayText(PositionSideToken token);
+
+  /** Returns the text representation of a Region. */
+  QString displayText(const Nexus::Region& region);
+
+  /** Returns the text representation of a Security. */
+  QString displayText(const Nexus::Security& security);
+
+  /** Returns the text representation of the value stored within an AnyRef. */
+  QString displayText(const AnyRef& value);
+
   /** Returns the text representation of the value stored within an std::any. */
-  QString displayTextAny(const std::any& value);
+  QString displayText(const std::any& value);
+
+  template<typename T>
+  QString displayText(const T&) = delete;
 
   /** Tests if two <code>std::any</code> have equal types and values. */
   bool is_equal(const std::any& left, const std::any& right);
@@ -177,8 +219,8 @@ namespace Spire {
       explicit CustomVariantSortFilterProxyModel(QObject* parent = nullptr);
 
     protected:
-      bool lessThan(const QModelIndex& left,
-        const QModelIndex& right) const override;
+      bool lessThan(
+        const QModelIndex& left, const QModelIndex& right) const override;
   };
 
   template<>

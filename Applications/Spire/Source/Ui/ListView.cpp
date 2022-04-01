@@ -49,7 +49,7 @@ void ListView::ItemEntry::set(bool is_current) {
 
 QWidget* ListView::default_view_builder(
     const std::shared_ptr<AnyListModel>& list, int index) {
-  return make_label(displayTextAny(list->get(index)));
+  return make_label(displayText(list->get(index)));
 }
 
 ListView::ListView(std::shared_ptr<AnyListModel> list, QWidget* parent)
@@ -229,7 +229,7 @@ void ListView::append_query(const QString& query) {
     auto short_match = optional<int>();
     while(i != start) {
       if(m_items[i]->m_item->isEnabled()) {
-        auto item_text = displayTextAny(m_list->get(i)).toLower();
+        auto item_text = displayText(m_list->get(i)).toLower();
         if(item_text.startsWith(m_query.toLower())) {
           short_match = none;
           set(i);
