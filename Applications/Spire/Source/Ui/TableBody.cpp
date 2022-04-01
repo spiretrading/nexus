@@ -25,7 +25,7 @@ GridColor Spire::Styles::grid_color(QColor color) {
 
 QWidget* TableBody::default_view_builder(
     const std::shared_ptr<TableModel>& table, int row, int column) {
-  return make_label(displayTextAny(table->at(row, column)));
+  return make_label(displayText(table->at(row, column)));
 }
 
 struct TableBody::Cover : QWidget {

@@ -262,13 +262,13 @@ void TagBox::showEvent(QShowEvent* event) {
 QWidget* TagBox::make_tag(
     const std::shared_ptr<AnyListModel>& model, int index) {
   if(index < model->get_size() - 2) {
-    auto label = displayTextAny(model->get(index));
+    auto label = displayText(model->get(index));
     auto tag = new Tag(label, this);
     tag->set_read_only(m_is_read_only || !isEnabled());
     tag->connect_delete_signal([=] {
       auto tag_index = [&] {
         for(auto i = 0; i < get_list()->get_size(); ++i) {
-          if(label == displayTextAny(m_model->get(i))) {
+          if(label == displayText(m_model->get(i))) {
             return i;
           }
         }
@@ -474,7 +474,7 @@ void TagBox::update_tip() {
   if(m_overflow == TagBoxOverflow::ELIDE) {
     m_tip.clear();
     for(auto i = 0; i < get_list()->get_size(); ++i) {
-      m_tip = m_tip % displayTextAny(get_list()->get(i)) % ", ";
+      m_tip = m_tip % displayText(get_list()->get(i)) % ", ";
     }
     m_tip.remove(m_tip.length() - 2, 2);
   }

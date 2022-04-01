@@ -65,7 +65,7 @@ DestinationBox::DestinationBox(
     [=] (const auto& list, auto index) {
       return new DestinationListItem(
         std::any_cast<DestinationDatabase::Entry&&>(
-          m_query_model->m_source->parse(displayTextAny(list->get(index)))));
+          m_query_model->m_source->parse(displayText(list->get(index)))));
     });
   m_combo_box->connect_submit_signal([=] (const auto& submission) {
     m_submit_signal(std::any_cast<const Destination&>(submission));

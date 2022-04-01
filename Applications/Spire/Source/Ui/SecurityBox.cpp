@@ -67,7 +67,7 @@ SecurityBox::SecurityBox(std::shared_ptr<ComboBox::QueryModel> query_model,
     [=] (const auto& list, auto index) {
       return new SecurityListItem(
         std::any_cast<SecurityInfo&&>(m_query_model->m_source->parse(
-          displayTextAny(list->get(index)))));
+          displayText(list->get(index)))));
     });
   m_combo_box->connect_submit_signal([=] (const auto& submission) {
     m_submit_signal(std::any_cast<const Security&>(submission));

@@ -137,7 +137,7 @@ namespace Spire {
   const QString& displayText(Nexus::OrderType type);
 
   /** Returns the text representation of the value stored within an std::any. */
-  QString displayTextAny(const std::any& value);
+  QString displayText(const std::any& value);
 
   /** Tests if two <code>std::any</code> have equal types and values. */
   bool is_equal(const std::any& left, const std::any& right);
