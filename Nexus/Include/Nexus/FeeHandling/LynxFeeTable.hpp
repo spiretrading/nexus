@@ -38,7 +38,7 @@ namespace Nexus {
       SUBDOLLAR,
 
       /** Midpoint execution. */
-      MIDPOINT,
+      MIDPOINT
     };
 
     /** The number of price classes enumerated. */
