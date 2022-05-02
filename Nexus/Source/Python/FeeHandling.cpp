@@ -348,15 +348,19 @@ void Nexus::Python::ExportLynxFeeTable(module& module) {
     .def(init())
     .def(init<const LynxFeeTable&>())
     .def_readwrite("fee_table", &LynxFeeTable::m_feeTable);
-  enum_<LynxFeeTable::PriceClass>(outer, "PriceClass")
-    .value("NONE", LynxFeeTable::PriceClass::NONE)
-    .value("DEFAULT", LynxFeeTable::PriceClass::DEFAULT)
-    .value("SUBDOLLAR", LynxFeeTable::PriceClass::SUBDOLLAR);
+  enum_<LynxFeeTable::Classification>(outer, "Classification")
+    .value("NONE", LynxFeeTable::Classification::NONE)
+    .value("DEFAULT", LynxFeeTable::Classification::DEFAULT)
+    .value("INTERLISTED", LynxFeeTable::Classification::INTERLISTED)
+    .value("ETF", LynxFeeTable::Classification::ETF)
+    .value("SUBDOLLAR", LynxFeeTable::Classification::SUBDOLLAR)
+    .value("MIDPOINT", LynxFeeTable::Classification::MIDPOINT);
   module.def("parse_lynx_fee_table", &ParseLynxFeeTable);
+  module.def("is_lynx_midpoint_order", &IsLynxMidpointOrder);
   module.def("lookup_fee", static_cast<Money (*)(const LynxFeeTable&,
-    LiquidityFlag, LynxFeeTable::PriceClass)>(&LookupFee));
+    LiquidityFlag, LynxFeeTable::Classification)>(&LookupFee));
   module.def("calculate_fee", static_cast<Money (*)(const LynxFeeTable&,
-    const ExecutionReport&)>(&CalculateFee));
+    const OrderFields&, const ExecutionReport&)>(&CalculateFee));
 }
 
 void Nexus::Python::ExportMatnFeeTable(module& module) {
