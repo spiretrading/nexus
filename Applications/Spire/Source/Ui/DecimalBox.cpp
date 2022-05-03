@@ -172,6 +172,14 @@ struct DecimalBox::DecimalToTextModel : TextModel {
     } else if(value == "+" && (max && *max > 0 || !max)) {
       return QValidator::State::Intermediate;
     } else if(auto decimal = text_to_decimal(value)) {
+      if(value.contains('.')) {
+        if(min && trunc(*decimal) != trunc(*min) && *decimal < *min) {
+          return QValidator::State::Invalid;
+        }
+        if(max && trunc(*decimal) != trunc(*max) && *decimal > *max) {
+          return QValidator::State::Invalid;
+        }
+      }
       auto state = validate(*decimal, min, max);
       if(value.contains('.') && value.endsWith('0') &&
           state == QValidator::State::Intermediate) {
@@ -209,10 +217,6 @@ struct DecimalBox::DecimalToTextModel : TextModel {
     } else if(auto decimal = text_to_decimal(value)) {
       auto state =
         validate(*decimal, m_model->get_minimum(), m_model->get_maximum());
-      if(value.contains('.') && value.endsWith('0') &&
-          state == QValidator::State::Intermediate) {
-        return QValidator::State::Invalid;
-      }
       if(state == QValidator::State::Invalid) {
         return QValidator::State::Invalid;
       }
