@@ -58,11 +58,35 @@ TEST_SUITE("DecimalBox") {
   TEST_CASE("validate_fractional") {
     CHECK(DecimalBox::validate(Decimal("0.3"), Decimal("0.1"),
       Decimal("0.4")) == QValidator::Acceptable);
+    CHECK(DecimalBox::validate(Decimal("0"), Decimal("0.29"),
+      Decimal("0.31")) == QValidator::Intermediate);
     CHECK(DecimalBox::validate(Decimal("0.2"), Decimal("0.29"),
       Decimal("0.31")) == QValidator::Intermediate);
+    CHECK(DecimalBox::validate(Decimal("0.2"), Decimal("0.29"),
+      Decimal("2.31")) == QValidator::Intermediate);
     CHECK(DecimalBox::validate(Decimal("0.02"), Decimal("0.29"),
-      Decimal("0.31")) == QValidator::Intermediate);
+      Decimal("0.31")) == QValidator::Invalid);
+    CHECK(DecimalBox::validate(Decimal("0.21"), Decimal("0.29"),
+      Decimal("0.31")) == QValidator::Invalid);
     CHECK(DecimalBox::validate(Decimal("0.32"), Decimal("0.29"),
       Decimal("0.31")) == QValidator::Invalid);
+    CHECK(DecimalBox::validate(Decimal("-0.3"), Decimal("-0.4"),
+      Decimal("-0.1")) == QValidator::Acceptable);
+    CHECK(DecimalBox::validate(Decimal("-0"), Decimal("-0.31"),
+      Decimal("-0.29")) == QValidator::Intermediate);
+    CHECK(DecimalBox::validate(Decimal("-6.3"), Decimal("-6.35"),
+      Decimal("-6.27")) == QValidator::Acceptable);
+    CHECK(DecimalBox::validate(Decimal("-6.32"), Decimal("-6.35"),
+      Decimal("-6.27")) == QValidator::Acceptable);
+    CHECK(DecimalBox::validate(Decimal("-6.37"), Decimal("-6.35"),
+      Decimal("-6.27")) == QValidator::Invalid);
+    CHECK(DecimalBox::validate(Decimal("-6.2"), Decimal("-6.35"),
+      Decimal("-6.27")) == QValidator::Intermediate);
+    CHECK(DecimalBox::validate(Decimal("-6.2"), Decimal("-7.35"),
+      Decimal("-6.27")) == QValidator::Intermediate);
+    CHECK(DecimalBox::validate(Decimal("-6.21"), Decimal("-6.35"),
+      Decimal("-6.27")) == QValidator::Invalid);
+    CHECK(DecimalBox::validate(Decimal("-6.28"), Decimal("-6.35"),
+      Decimal("-6.27")) == QValidator::Acceptable);
   }
 }

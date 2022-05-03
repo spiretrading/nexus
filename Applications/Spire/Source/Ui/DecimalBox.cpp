@@ -168,6 +168,10 @@ struct DecimalBox::DecimalToTextModel : TextModel {
     } else if(auto decimal = text_to_decimal(value)) {
       auto state =
         validate(*decimal, m_model->get_minimum(), m_model->get_maximum());
+      if(value.contains('.') && value.endsWith('0') &&
+          state == QValidator::State::Intermediate) {
+        return QValidator::State::Invalid;
+      }
       if(state == QValidator::State::Invalid) {
         return QValidator::State::Invalid;
       }
@@ -200,6 +204,10 @@ struct DecimalBox::DecimalToTextModel : TextModel {
     } else if(auto decimal = text_to_decimal(value)) {
       auto state =
         validate(*decimal, m_model->get_minimum(), m_model->get_maximum());
+      if(value.contains('.') && value.endsWith('0') &&
+          state == QValidator::State::Intermediate) {
+        return QValidator::State::Invalid;
+      }
       if(state == QValidator::State::Invalid) {
         return QValidator::State::Invalid;
       }
@@ -309,15 +317,60 @@ struct DecimalBox::DecimalToTextModel : TextModel {
 
 QValidator::State DecimalBox::validate(const Decimal& value,
     const optional<Decimal>& min, const optional<Decimal>& max) {
+  auto validate_decimal_part = [] (const Decimal& value,
+      const Decimal& boundary, bool is_less_than) {
+    auto v = value;
+    auto b = boundary;
+    while(v != 0) {
+      v = v * 10;
+      b = b * 10;
+      auto tv = trunc(v);
+      auto tb = trunc(b);
+      if(is_less_than && tv < tb || !is_less_than && tv > tb) {
+        return QValidator::State::Invalid;
+      }
+      v = v - tv;
+      b = b - tb;
+    };
+    return QValidator::State::Intermediate;
+  };
   if(min && max && value >= min && value <= max ||
       min && !max && value >= min || !min && max && value <= max ||
       !min && !max) {
     return QValidator::State::Acceptable;
-  } else if(max && *max >= 0 && value > *max ||
-      min && *min <= 0 && value < *min) {
+  } else if(max && (*max >= 0 && value > *max || *max < 0 && value > 0) ||
+      min && (*min <= 0 && value < *min || *min > 0 && value < 0)) {
     return QValidator::State::Invalid;
-  } else if(min && *min - trunc(*min) != 0 || max && *max - trunc(*max) != 0) {
-    return QValidator::State::Intermediate;
+  } else if(min && trunc(value) == trunc(*min)) {
+    auto decimal_part = value - trunc(value);
+    if(decimal_part == 0) {
+      return QValidator::State::Intermediate;
+    }
+    if(decimal_part < 0) {
+      if(decimal_part >= *min - trunc(*min) &&
+          max && trunc(value) == trunc(*max)) {
+        return validate_decimal_part(Decimal(decimal_part),
+          Decimal(*max - trunc(*max)), false);
+      }
+    } else {
+      return validate_decimal_part(Decimal(decimal_part),
+        Decimal(*min - trunc(*min)), true);
+    }
+  } else if(max && trunc(value) == trunc(*max)) {
+    auto decimal_part = value - trunc(value);
+    if(decimal_part == 0) {
+      return QValidator::State::Intermediate;
+    }
+    if(decimal_part > 0) {
+      if(decimal_part <= *max - trunc(*max) &&
+          min && trunc(value) == trunc(*min)) {
+        return validate_decimal_part(Decimal(decimal_part),
+          Decimal(*min - trunc(*min)), true);
+      }
+    } else {
+      return validate_decimal_part(Decimal(decimal_part),
+        Decimal(*max - trunc(*max)), false);
+    }
   } else if(!max && validate(value, Decimal(trunc(*min / 10)), none) ||
       !min && validate(value, none, Decimal(trunc(*max / 10))) ||
       validate(value, Decimal(trunc(*min / 10)), Decimal(trunc(*max / 10)))) {
