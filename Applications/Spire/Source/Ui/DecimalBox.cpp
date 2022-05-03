@@ -161,13 +161,18 @@ struct DecimalBox::DecimalToTextModel : TextModel {
         return m_validator;
       }
     }();
+    auto min = m_model->get_minimum();
+    auto max = m_model->get_maximum();
     if(!validator.exactMatch(value)) {
       return QValidator::State::Invalid;
-    } else if(value.isEmpty() || value == "-" || value == "+") {
+    } else if(value.isEmpty()) {
+      return QValidator::State::Intermediate;
+    } else if(value == "-" && (min && *min < 0 || !min)) {
+      return QValidator::State::Intermediate;
+    } else if(value == "+" && (max && *max > 0 || !max)) {
       return QValidator::State::Intermediate;
     } else if(auto decimal = text_to_decimal(value)) {
-      auto state =
-        validate(*decimal, m_model->get_minimum(), m_model->get_maximum());
+      auto state = validate(*decimal, min, max);
       if(value.contains('.') && value.endsWith('0') &&
           state == QValidator::State::Intermediate) {
         return QValidator::State::Invalid;
