@@ -1,4 +1,5 @@
 #include "Spire/Ui/QuantityBox.hpp"
+#include <QKeyEvent>
 #include "Spire/Spire/UnsignedQuantityModel.hpp"
 #include "Spire/Styles/Selectors.hpp"
 
@@ -34,4 +35,50 @@ QuantityBox::QuantityBox(std::shared_ptr<OptionalQuantityModel> model,
   update_style(get_decimal_box(), [&] (auto& style) {
     style.get(Any()).set(TrailingZeros(0));
   });
+  get_decimal_box().installEventFilter(this);
+}
+
+bool QuantityBox::eventFilter(QObject* watched, QEvent* event) {
+  if(watched == &get_decimal_box() && event->type() == QEvent::Show) {
+    auto proxy = find_focus_proxy(get_decimal_box());
+    if(proxy) {
+      proxy->installEventFilter(this);
+    }
+  } else if(!is_read_only() && event->type() == QEvent::KeyPress) {
+    auto& key_event = *static_cast<QKeyEvent*>(event);
+    auto multiplier = 1.0;
+    if(key_event.key() == Qt::Key_K) {
+      multiplier = 1000;
+    } else if(key_event.key() == Qt::Key_H) {
+      multiplier = 100;
+    } else if(key_event.key() == Qt::Key_D) {
+      if(key_event.modifiers().testFlag(Qt::AltModifier)) {
+        multiplier = 10;
+      } else {
+        multiplier = 0.1;
+      }
+    } else if(key_event.key() == Qt::Key_C) {
+      multiplier = 0.01;
+    } else if(key_event.key() == Qt::Key_M) {
+      multiplier = 0.001;
+    }
+    if(multiplier != 1) {
+      auto current = get_current()->get();
+      if(current) {
+        auto min = get_current()->get_minimum();
+        auto max = get_current()->get_maximum();
+        auto value = *current * multiplier;
+        if(min && value < min) {
+          value = *min;
+        } else if(max && value > max) {
+          value = *max;
+        }
+        if(value != *current) {
+          get_current()->set(value);
+        }
+      }
+      return true;
+    }
+  }
+  return DecimalBoxAdaptor<Nexus::Quantity>::eventFilter(watched, event);
 }
