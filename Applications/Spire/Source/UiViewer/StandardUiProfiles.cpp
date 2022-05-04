@@ -1107,7 +1107,7 @@ UiProfile Spire::make_decimal_box_profile() {
   properties.push_back(make_standard_property("current", QString("1")));
   properties.push_back(make_standard_property("minimum", QString("-100")));
   properties.push_back(make_standard_property("maximum", QString("100")));
-  properties.push_back(make_standard_property("decimal_places", 2));
+  properties.push_back(make_standard_property("decimal_places", 4));
   properties.push_back(make_standard_property("leading_zeros", 0));
   properties.push_back(make_standard_property("trailing_zeros", 0));
   properties.push_back(

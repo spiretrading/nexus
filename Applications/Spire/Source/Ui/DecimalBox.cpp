@@ -19,6 +19,13 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  auto validate_fractional_part(const Decimal& value, int decimal_places) {
+    if(value < pow(Decimal(10), -decimal_places)) {
+      return QValidator::State::Intermediate;
+    }
+    return QValidator::State::Invalid;
+  }
+
   optional<Decimal> text_to_decimal(const QString& text) {
     auto trimmed_text = text.trimmed().toStdString();
     if(trimmed_text.empty()) {
@@ -172,23 +179,21 @@ struct DecimalBox::DecimalToTextModel : TextModel {
     } else if(value == "+" && (max && *max > 0 || !max)) {
       return QValidator::State::Intermediate;
     } else if(auto decimal = text_to_decimal(value)) {
-      auto validate_fractional_part = [&value] (const Decimal& d) {
-        auto decimal_places = value.length() - value.indexOf('.') - 1;
-        if(d < pow(Decimal(10), -decimal_places)) {
-          return QValidator::State::Intermediate;
-        }
+      if(value.front() != '-' && max && *max < 0 ||
+          value.front() == '-' && min && *min > 0) {
         return QValidator::State::Invalid;
-      };
+      }
       if(value.contains('.')) {
         if(min) {
           if(trunc(*decimal) != trunc(*min)) {
             if(*decimal < *min) {
               return QValidator::State::Invalid;
             }
-          } else if(*decimal > 0) {
+          } else if(*decimal >= 0) {
             auto d = *min - *decimal;
-            if(d > 0) {
-              return validate_fractional_part(d);
+            if(d >= 0) {
+              return validate_fractional_part(d,
+                value.length() - value.indexOf('.') - 1);
             }
           }
         }
@@ -197,10 +202,11 @@ struct DecimalBox::DecimalToTextModel : TextModel {
             if(*decimal > *max) {
               return QValidator::State::Invalid;
             }
-          } else if(*decimal < 0) {
+          } else if(*decimal <= 0) {
             auto d = *decimal - *max;
-            if(d > 0) {
-              return validate_fractional_part(d);
+            if(d >= 0) {
+              return validate_fractional_part(d,
+                value.length() - value.indexOf('.') - 1);
             }
           }
         }
@@ -348,21 +354,15 @@ struct DecimalBox::DecimalToTextModel : TextModel {
 QValidator::State DecimalBox::validate(const Decimal& value,
     const optional<Decimal>& min, const optional<Decimal>& max) {
   auto validate_fractional_part = [] (const Decimal& value,
-      const Decimal& boundary, bool is_less_than) {
-    auto v = value;
-    auto b = boundary;
+      const Decimal& fractional_part) {
+    auto decimal_places = 0;
+    auto v = Decimal(value - trunc(value));
     while(v != 0) {
-      v = v * 10;
-      b = b * 10;
-      auto tv = trunc(v);
-      auto tb = trunc(b);
-      if(is_less_than && tv < tb || !is_less_than && tv > tb) {
-        return QValidator::State::Invalid;
-      }
-      v = v - tv;
-      b = b - tb;
-    };
-    return QValidator::State::Intermediate;
+      v *= 10;
+      v = v - trunc(v);
+      ++decimal_places;
+    }
+    return ::validate_fractional_part(fractional_part, decimal_places);
   };
   if(min && max && value >= min && value <= max ||
       min && !max && value >= min || !min && max && value <= max ||
@@ -372,31 +372,26 @@ QValidator::State DecimalBox::validate(const Decimal& value,
       min && (*min <= 0 && value < *min || *min > 0 && value < 0)) {
     return QValidator::State::Invalid;
   } else if(min && trunc(value) == trunc(*min)) {
-    auto decimal_part = value - trunc(value);
-    if(decimal_part == 0) {
+    auto fractional_part = value - trunc(value);
+    if(fractional_part == 0) {
       return QValidator::State::Intermediate;
-    }
-    if(decimal_part < 0) {
-      if(decimal_part >= *min - trunc(*min) &&
-          max && trunc(value) == trunc(*max)) {
-        return validate_fractional_part(decimal_part, *max - trunc(*max),
-          false);
+    } else if(fractional_part < 0) {
+      if(max && trunc(value) == trunc(*max)) {
+        return validate_fractional_part(fractional_part, value - *max);
       }
     } else {
-      return validate_fractional_part(decimal_part, *min - trunc(*min), true);
+      return validate_fractional_part(fractional_part, *min - value);
     }
   } else if(max && trunc(value) == trunc(*max)) {
-    auto decimal_part = value - trunc(value);
-    if(decimal_part == 0) {
+    auto fractional_part = value - trunc(value);
+    if(fractional_part == 0) {
       return QValidator::State::Intermediate;
-    }
-    if(decimal_part > 0) {
-      if(decimal_part <= *max - trunc(*max) &&
-          min && trunc(value) == trunc(*min)) {
-        return validate_fractional_part(decimal_part, *min - trunc(*min), true);
+    } else if(fractional_part > 0) {
+      if(min && trunc(value) == trunc(*min)) {
+        return validate_fractional_part(fractional_part, *min - value);
       }
     } else {
-      return validate_fractional_part(decimal_part, *max - trunc(*max), false);
+      return validate_fractional_part(fractional_part, value - *max);
     }
   } else if(!max && validate(value, Decimal(trunc(*min / 10)), none) ||
       !min && validate(value, none, Decimal(trunc(*max / 10))) ||
