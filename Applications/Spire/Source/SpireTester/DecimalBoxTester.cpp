@@ -62,8 +62,6 @@ TEST_SUITE("DecimalBox") {
       Decimal("0.31")) == QValidator::Intermediate);
     CHECK(DecimalBox::validate(Decimal("0.2"), Decimal("0.29"),
       Decimal("0.31")) == QValidator::Intermediate);
-    CHECK(DecimalBox::validate(Decimal("0.2"), Decimal("0.29"),
-      Decimal("2.31")) == QValidator::Intermediate);
     CHECK(DecimalBox::validate(Decimal("0.02"), Decimal("0.29"),
       Decimal("0.31")) == QValidator::Invalid);
     CHECK(DecimalBox::validate(Decimal("0.21"), Decimal("0.29"),
@@ -88,5 +86,9 @@ TEST_SUITE("DecimalBox") {
       Decimal("-6.27")) == QValidator::Invalid);
     CHECK(DecimalBox::validate(Decimal("-6.28"), Decimal("-6.35"),
       Decimal("-6.27")) == QValidator::Acceptable);
+    CHECK(DecimalBox::validate(Decimal("0.60"), Decimal("0.606"),
+      Decimal("0.611")) == QValidator::Intermediate);
+    CHECK(DecimalBox::validate(Decimal("6.00"), Decimal("6.006"),
+      Decimal("6.611")) == QValidator::Intermediate);
   }
 }

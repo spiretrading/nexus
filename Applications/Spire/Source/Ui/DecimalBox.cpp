@@ -172,19 +172,40 @@ struct DecimalBox::DecimalToTextModel : TextModel {
     } else if(value == "+" && (max && *max > 0 || !max)) {
       return QValidator::State::Intermediate;
     } else if(auto decimal = text_to_decimal(value)) {
-      if(value.contains('.')) {
-        if(min && trunc(*decimal) != trunc(*min) && *decimal < *min) {
-          return QValidator::State::Invalid;
+      auto validate_fractional_part = [&value] (const Decimal& d) {
+        auto decimal_places = value.length() - value.indexOf('.') - 1;
+        if(d < pow(Decimal(10), -decimal_places)) {
+          return QValidator::State::Intermediate;
         }
-        if(max && trunc(*decimal) != trunc(*max) && *decimal > *max) {
-          return QValidator::State::Invalid;
+        return QValidator::State::Invalid;
+      };
+      if(value.contains('.')) {
+        if(min) {
+          if(trunc(*decimal) != trunc(*min)) {
+            if(*decimal < *min) {
+              return QValidator::State::Invalid;
+            }
+          } else if(*decimal > 0) {
+            auto d = *min - *decimal;
+            if(d > 0) {
+              return validate_fractional_part(d);
+            }
+          }
+        }
+        if(max) {
+          if(trunc(*decimal) != trunc(*max)) {
+            if(*decimal > *max) {
+              return QValidator::State::Invalid;
+            }
+          } else if(*decimal < 0) {
+            auto d = *decimal - *max;
+            if(d > 0) {
+              return validate_fractional_part(d);
+            }
+          }
         }
       }
       auto state = validate(*decimal, min, max);
-      if(value.contains('.') && value.endsWith('0') &&
-          state == QValidator::State::Intermediate) {
-        return QValidator::State::Invalid;
-      }
       if(state == QValidator::State::Invalid) {
         return QValidator::State::Invalid;
       }
@@ -326,7 +347,7 @@ struct DecimalBox::DecimalToTextModel : TextModel {
 
 QValidator::State DecimalBox::validate(const Decimal& value,
     const optional<Decimal>& min, const optional<Decimal>& max) {
-  auto validate_decimal_part = [] (const Decimal& value,
+  auto validate_fractional_part = [] (const Decimal& value,
       const Decimal& boundary, bool is_less_than) {
     auto v = value;
     auto b = boundary;
@@ -358,12 +379,11 @@ QValidator::State DecimalBox::validate(const Decimal& value,
     if(decimal_part < 0) {
       if(decimal_part >= *min - trunc(*min) &&
           max && trunc(value) == trunc(*max)) {
-        return validate_decimal_part(Decimal(decimal_part),
-          Decimal(*max - trunc(*max)), false);
+        return validate_fractional_part(decimal_part, *max - trunc(*max),
+          false);
       }
     } else {
-      return validate_decimal_part(Decimal(decimal_part),
-        Decimal(*min - trunc(*min)), true);
+      return validate_fractional_part(decimal_part, *min - trunc(*min), true);
     }
   } else if(max && trunc(value) == trunc(*max)) {
     auto decimal_part = value - trunc(value);
@@ -373,12 +393,10 @@ QValidator::State DecimalBox::validate(const Decimal& value,
     if(decimal_part > 0) {
       if(decimal_part <= *max - trunc(*max) &&
           min && trunc(value) == trunc(*min)) {
-        return validate_decimal_part(Decimal(decimal_part),
-          Decimal(*min - trunc(*min)), true);
+        return validate_fractional_part(decimal_part, *min - trunc(*min), true);
       }
     } else {
-      return validate_decimal_part(Decimal(decimal_part),
-        Decimal(*max - trunc(*max)), false);
+      return validate_fractional_part(decimal_part, *max - trunc(*max), false);
     }
   } else if(!max && validate(value, Decimal(trunc(*min / 10)), none) ||
       !min && validate(value, none, Decimal(trunc(*max / 10))) ||
