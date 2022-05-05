@@ -46,38 +46,36 @@ bool QuantityBox::eventFilter(QObject* watched, QEvent* event) {
     }
   } else if(event->type() == QEvent::KeyPress && !is_read_only()) {
     auto& key_event = *static_cast<QKeyEvent*>(event);
-    auto multiplier = 1.0;
-    if(key_event.key() == Qt::Key_K) {
-      multiplier = 1000;
-    } else if(key_event.key() == Qt::Key_H) {
-      multiplier = 100;
-    } else if(key_event.key() == Qt::Key_D) {
-      if(key_event.modifiers().testFlag(Qt::AltModifier)) {
-        multiplier = 10;
-      } else {
-        multiplier = 0.1;
-      }
-    } else if(key_event.key() == Qt::Key_C) {
-      multiplier = 0.01;
-    } else if(key_event.key() == Qt::Key_M) {
-      multiplier = 0.001;
-    }
-    if(multiplier != 1) {
-      auto current = get_current()->get();
-      if(current) {
-        auto min = get_current()->get_minimum();
-        auto max = get_current()->get_maximum();
-        auto value = *current * multiplier;
-        if(min && value < min) {
-          value = *min;
-        } else if(max && value > max) {
-          value = *max;
+    auto current = get_current()->get();
+    if(current) {
+      auto value = [&] {
+        if(key_event.key() == Qt::Key_K) {
+          return *current * 1000;
+        } else if(key_event.key() == Qt::Key_H) {
+          return *current * 100;
+        } else if(key_event.key() == Qt::Key_D) {
+          if(key_event.modifiers().testFlag(Qt::AltModifier)) {
+            return *current * 10;
+          } else {
+            return *current / 10;
+          }
+        } else if(key_event.key() == Qt::Key_C) {
+          return *current / 100;
+        } else if(key_event.key() == Qt::Key_M) {
+          return *current / 1000;
         }
-        if(value != *current) {
-          get_current()->set(value);
-        }
+        return *current;
+      }();
+      auto min = get_current()->get_minimum();
+      auto max = get_current()->get_maximum();
+      if(min && value < *min) {
+        value = *min;
+      } else if(max && value > *max) {
+        value = *max;
       }
-      return true;
+      if(value != *current) {
+        get_current()->set(value);
+      }
     }
   }
   return DecimalBoxAdaptor<Nexus::Quantity>::eventFilter(watched, event);
