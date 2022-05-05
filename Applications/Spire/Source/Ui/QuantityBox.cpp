@@ -46,8 +46,7 @@ bool QuantityBox::eventFilter(QObject* watched, QEvent* event) {
     }
   } else if(event->type() == QEvent::KeyPress && !is_read_only()) {
     auto& key_event = *static_cast<QKeyEvent*>(event);
-    auto current = get_current()->get();
-    if(current) {
+    if(auto current = get_current()->get()) {
       auto value = [&] {
         if(key_event.key() == Qt::Key_K) {
           return *current * 1000;
