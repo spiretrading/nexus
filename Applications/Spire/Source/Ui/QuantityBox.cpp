@@ -44,7 +44,7 @@ bool QuantityBox::eventFilter(QObject* watched, QEvent* event) {
     if(proxy) {
       proxy->installEventFilter(this);
     }
-  } else if(!is_read_only() && event->type() == QEvent::KeyPress) {
+  } else if(event->type() == QEvent::KeyPress && !is_read_only()) {
     auto& key_event = *static_cast<QKeyEvent*>(event);
     auto multiplier = 1.0;
     if(key_event.key() == Qt::Key_K) {
