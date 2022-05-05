@@ -1107,7 +1107,7 @@ UiProfile Spire::make_decimal_box_profile() {
   properties.push_back(make_standard_property("current", QString("1")));
   properties.push_back(make_standard_property("minimum", QString("-100")));
   properties.push_back(make_standard_property("maximum", QString("100")));
-  properties.push_back(make_standard_property("decimal_places", 2));
+  properties.push_back(make_standard_property("decimal_places", 4));
   properties.push_back(make_standard_property("leading_zeros", 0));
   properties.push_back(make_standard_property("trailing_zeros", 0));
   properties.push_back(
@@ -1134,12 +1134,16 @@ UiProfile Spire::make_decimal_box_profile() {
     minimum.connect_changed_signal([=] (const auto& value) {
       if(auto minimum = parse_decimal(value)) {
         model->set_minimum(*minimum);
+      } else {
+        model->set_minimum(none);
       }
     });
     auto& maximum = get<QString>("maximum", profile.get_properties());
     maximum.connect_changed_signal([=] (const auto& value) {
       if(auto maximum = parse_decimal(value)) {
         model->set_maximum(*maximum);
+      } else {
+        model->set_maximum(none);
       }
     });
     auto& decimal_places =
