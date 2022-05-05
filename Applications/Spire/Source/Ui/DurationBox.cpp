@@ -335,14 +335,6 @@ namespace {
     return style;
   }
 
-  QWidget* find_focus_proxy(QWidget& widget) {
-    auto proxy = &widget;
-    while(proxy->focusProxy()) {
-      proxy = proxy->focusProxy();
-    }
-    return proxy;
-  }
-
   auto make_hour_field(std::shared_ptr<OptionalIntegerModel> current,
       QWidget& event_filter) {
     auto field = new IntegerBox(std::move(current));
