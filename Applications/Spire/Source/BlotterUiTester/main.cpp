@@ -109,7 +109,6 @@ int main(int argc, char** argv) {
   controller.move(window.pos() + QPoint(0, window.size().height()));
   controller.show();
   window.installEventFilter(&controller);
-  tasks->push(
-    TaskEntry(std::make_shared<Task>(), std::make_shared<LocalBooleanModel>()));
+  tasks->push(TaskEntry(std::make_shared<Task>(), false));
   application.exec();
 }

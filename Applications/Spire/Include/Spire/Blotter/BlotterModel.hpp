@@ -16,7 +16,7 @@ namespace Spire {
     std::shared_ptr<Task> m_task;
 
     /** Whether to pin this entry to the blotter. */
-    std::shared_ptr<BooleanModel> m_is_pinned;
+    bool m_is_pinned;
   };
 
   /** The type of list model used for orders displayed in the blotter. */

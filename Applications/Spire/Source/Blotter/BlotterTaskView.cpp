@@ -57,15 +57,14 @@ namespace {
         throw std::out_of_range("Column is out of range.");
       }
       if(column == Column::PINNED) {
-        return m_tasks->get(row).m_is_pinned->get();
+        return m_tasks->get(row).m_is_pinned;
       } else if(column == Column::NAME) {
         static auto value = std::string("hello");
         return value;
       } else if(column == Column::ID) {
         return m_tasks->get(row).m_task->get_id();
       }
-      static auto value = 123;
-      return value;
+      return {};
     }
 
     connection connect_operation_signal(
