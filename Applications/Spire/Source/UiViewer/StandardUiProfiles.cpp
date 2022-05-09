@@ -78,6 +78,7 @@
 #include "Spire/Ui/TimeInForceFilterPanel.hpp"
 #include "Spire/Ui/ToggleButton.hpp"
 #include "Spire/Ui/Tooltip.hpp"
+#include "Spire/Ui/TransitionView.hpp"
 #include "Spire/UiViewer/StandardUiProperties.hpp"
 #include "Spire/UiViewer/UiProfile.hpp"
 
@@ -3325,6 +3326,59 @@ UiProfile Spire::make_tooltip_profile() {
       tooltip->set_label(text);
     });
     return label;
+  });
+  return profile;
+}
+
+UiProfile Spire::make_transition_view_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  properties.push_back(make_standard_property<int>("width", 200));
+  properties.push_back(make_standard_property<int>("height", 300));
+  auto status_property = define_enum<TransitionView::Status>(
+    {{"NONE", TransitionView::Status::NONE},
+     {"LOADING", TransitionView::Status::LOADING},
+     {"READY", TransitionView::Status::READY}});
+  properties.push_back(make_standard_enum_property("status", status_property));
+  auto profile = UiProfile("TransitionView", properties, [] (auto& profile) {
+    auto list_model = std::make_shared<ArrayListModel<QString>>();
+    for(auto i = 0; i < 10; ++i) {
+      list_model->push(QString("Item%1").arg(i));
+    }
+    auto list_view = new ListView(list_model,
+      [] (const std::shared_ptr<ListModel<QString>>& model, auto index) {
+        return make_label(model->get(index));
+      });
+    update_style(*list_view, [&] (auto& style) {
+      style.get(Any()).set(Qt::Orientation::Vertical);
+    });
+    auto transition_view =
+      new TransitionView(new ScrollableListBox(*list_view));
+    auto box = new Box(transition_view);
+    update_style(*box, [&] (auto& style) {
+      style.get(Any()).set(border(scale_width(1), QColor(0x4B23A0)));
+    });
+    auto& width = get<int>("width", profile.get_properties());
+    width.connect_changed_signal([=] (auto value) {
+      if(value != 0) {
+        if(unscale_width(transition_view->width()) != value) {
+          transition_view->setFixedWidth(scale_width(value));
+        }
+      }
+    });
+    auto& height = get<int>("height", profile.get_properties());
+    height.connect_changed_signal([=] (auto value) {
+      if(value != 0) {
+        if(unscale_height(transition_view->height()) != value) {
+          transition_view->setFixedHeight(scale_height(value));
+        }
+      }
+    });
+    auto& status =
+      get<TransitionView::Status>("status", profile.get_properties());
+    status.connect_changed_signal([=] (auto s) {
+      transition_view->set_status(s);
+    });
+    return box;
   });
   return profile;
 }

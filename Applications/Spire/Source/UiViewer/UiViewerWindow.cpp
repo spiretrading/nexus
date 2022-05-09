@@ -181,6 +181,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_time_in_force_box_profile());
   add(make_time_in_force_filter_panel_profile());
   add(make_tooltip_profile());
+  add(make_transition_view_profile());
   m_widget_list->setCurrentRow(0);
 }
 
