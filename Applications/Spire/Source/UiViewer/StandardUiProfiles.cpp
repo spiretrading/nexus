@@ -45,6 +45,7 @@
 #include "Spire/Ui/KeyTag.hpp"
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/ListView.hpp"
+#include "Spire/Ui/MarketBox.hpp"
 #include "Spire/Ui/MoneyBox.hpp"
 #include "Spire/Ui/NavigationView.hpp"
 #include "Spire/Ui/OpenFilterPanel.hpp"
@@ -2152,6 +2153,44 @@ UiProfile Spire::make_list_view_profile() {
     list_view->connect_submit_signal(
       profile.make_event_slot<optional<std::any>>("Submit"));
     return list_view;
+  });
+  return profile;
+}
+
+UiProfile Spire::make_market_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_property<QString>("current"));
+  properties.push_back(make_standard_property<QString>("placeholder"));
+  properties.push_back(make_standard_property("read_only", false));
+  auto profile = UiProfile("MarketBox", properties, [] (auto& profile) {
+    auto markets = GetDefaultMarketDatabase().GetEntries();
+    auto model = std::make_shared<LocalComboBoxQueryModel>();
+    for(auto market : markets) {
+      model->add(displayText(MarketToken(market.m_code)).toLower(), market);
+    }
+    auto box = new MarketBox(model);
+    box->setFixedWidth(scale_width(112));
+    apply_widget_properties(box, profile.get_properties());
+    auto& current = get<QString>("current", profile.get_properties());
+    current.connect_changed_signal([=] (const auto& current) {
+      auto value = model->parse(current);
+      if(value.has_value()) {
+        auto market = std::any_cast<MarketDatabase::Entry>(value).m_code;
+        box->get_current()->set(market);
+      }
+    });
+    auto& placeholder = get<QString>("placeholder", profile.get_properties());
+    placeholder.connect_changed_signal([=] (const auto& placeholder) {
+      box->set_placeholder(placeholder);
+    });
+    auto& read_only = get<bool>("read_only", profile.get_properties());
+    read_only.connect_changed_signal(
+      std::bind_front(&MarketBox::set_read_only, box));
+    box->get_current()->connect_update_signal(
+      profile.make_event_slot<MarketToken>("Current"));
+    box->connect_submit_signal(profile.make_event_slot<MarketToken>("Submit"));
+    return box;
   });
   return profile;
 }
