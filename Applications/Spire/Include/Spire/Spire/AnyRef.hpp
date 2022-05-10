@@ -13,6 +13,12 @@ namespace Spire {
   class AnyRef {
     public:
 
+      /** Type tag used to indicate the AnyRef owns its value. */
+      struct by_value_t {};
+
+      /** Variable form of the <i>by_value_t</i> type tag. */
+      static constexpr auto by_value = by_value_t();
+
       /** Constructs an empty object. */
       AnyRef() noexcept;
 
@@ -28,6 +34,10 @@ namespace Spire {
        * Constructs an AnyRef to the value represented by an <i>std::any</i>.
        */
       AnyRef(const std::any& value) noexcept;
+
+      /** Constructs an AnyRef that owns its value. */
+      template<typename T>
+      AnyRef(T value, by_value_t);
 
       /** Constructs an AnyRef referencing a non-const, non-volatile object. */
       template<typename T>
@@ -45,11 +55,13 @@ namespace Spire {
       template<typename T>
       AnyRef(const volatile T& ref) noexcept;
 
-      AnyRef(const AnyRef& any) noexcept = default;
+      AnyRef(const AnyRef& any);
 
-      AnyRef(AnyRef& any) noexcept = default;
+      AnyRef(AnyRef& any);
 
       AnyRef(AnyRef&& any) noexcept;
+
+      ~AnyRef();
 
       /** Returns <code>true</code> iff this object is not empty. */
       bool has_value() const noexcept;
@@ -94,11 +106,14 @@ namespace Spire {
         NONE = 0,
         CONSTANT = 1,
         VOLATILE = 2,
-        CONST_VOLATILE = 3
+        CONST_VOLATILE = 3,
+        OWNED = 5
       };
       struct BaseTypeInfo {
         virtual const std::type_info& get_type(void* ptr) const noexcept = 0;
         virtual std::any to_any(void* ptr) const noexcept = 0;
+        virtual void* copy(const void* ptr) const = 0;
+        virtual void drop(const void* ptr) const noexcept = 0;
       };
       template<typename T>
       struct TypeInfo : BaseTypeInfo {
@@ -107,8 +122,7 @@ namespace Spire {
           return instance;
         }
 
-        const std::type_info& get_type(void* ptr) const noexcept
-            override {
+        const std::type_info& get_type(void* ptr) const noexcept override {
           return typeid(T);
         }
 
@@ -119,11 +133,29 @@ namespace Spire {
             return *static_cast<T*>(ptr);
           }
         }
+
+        void* copy(const void* ptr) const override {
+          if constexpr(std::is_same_v<T, void>) {
+            return nullptr;
+          } else {
+            return new T(*static_cast<const T*>(ptr));
+          }
+        }
+
+        void drop(const void* ptr) const noexcept {
+          if constexpr(std::is_same_v<T, void>) {
+            return;
+          } else {
+            delete static_cast<const T*>(ptr);
+          }
+        }
       };
       struct AnyTypeInfo : BaseTypeInfo {
         static const AnyTypeInfo& get();
         const std::type_info& get_type(void* ptr) const noexcept override;
         std::any to_any(void* ptr) const noexcept override;
+        void* copy(const void* ptr) const;
+        void drop(const void* ptr) const noexcept;
       };
       void* m_ptr;
       const BaseTypeInfo* m_type;
@@ -133,7 +165,8 @@ namespace Spire {
       friend T* any_cast(AnyRef* any) noexcept;
       friend std::any to_any(const AnyRef& any) noexcept;
       static bool is_set(Qualifiers a, Qualifiers b);
-      AnyRef(void* ptr, const BaseTypeInfo& type, Qualifiers qualifiers);
+      AnyRef(
+        void* ptr, const BaseTypeInfo& type, Qualifiers qualifiers) noexcept;
   };
 
   /**
@@ -205,6 +238,10 @@ namespace Spire {
    * Returns a copy of the value referenced by an AnyRef as an <i>std::any</i>.
    */
   std::any to_any(const AnyRef& any) noexcept;
+
+  template<typename T>
+  AnyRef::AnyRef(T value, by_value_t)
+    : AnyRef(new T(std::move(value)), TypeInfo<T>::get(), Qualifiers::OWNED) {}
 
   template<typename T>
   AnyRef::AnyRef(T& ref) noexcept

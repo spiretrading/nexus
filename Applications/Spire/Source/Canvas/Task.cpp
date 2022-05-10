@@ -3,10 +3,6 @@
 using namespace Beam;
 using namespace Spire;
 
-namespace {
-  auto next_id = 0;
-}
-
 Task::StateEntry::StateEntry(State state)
   : m_state(state) {}
 
@@ -14,8 +10,8 @@ Task::StateEntry::StateEntry(State state, std::string message)
   : m_state(state),
     m_message(std::move(message)) {}
 
-Task::Task()
-  : m_id(++next_id) {}
+Task::Task(int id)
+  : m_id(id) {}
 
 int Task::get_id() const {
   return m_id;

@@ -63,8 +63,11 @@ namespace Spire {
         StateEntry(State state, std::string message);
       };
 
-      /** Constructs a Task in the READY state. */
-      Task();
+      /**
+       * Constructs a Task in the READY state.
+       * @param id The task's unique id.
+       */
+      explicit Task(int id);
 
       /** Returns a unique id for this Task. */
       int get_id() const;

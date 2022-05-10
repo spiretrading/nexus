@@ -67,10 +67,23 @@ ToggleButton* Spire::make_icon_toggle_button(QImage icon, QWidget* parent) {
 }
 
 ToggleButton* Spire::make_icon_toggle_button(
-    QImage icon, QString tooltip, QWidget* parent) {
+    QImage icon, std::shared_ptr<BooleanModel> current, QWidget* parent) {
+  return make_icon_toggle_button(
+    std::move(icon), std::move(current), "", parent);
+}
+
+ToggleButton* Spire::make_icon_toggle_button(QImage icon, QString tooltip,
+    QWidget* parent) {
+  return make_icon_toggle_button(std::move(icon),
+    std::make_shared<LocalBooleanModel>(), std::move(tooltip), parent);
+}
+
+ToggleButton* Spire::make_icon_toggle_button(QImage icon,
+    std::shared_ptr<BooleanModel> current, QString tooltip, QWidget* parent) {
   auto button_icon = new Icon(std::move(icon));
   button_icon->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  auto button = new ToggleButton(new Box(button_icon), parent);
+  auto button =
+    new ToggleButton(new Box(button_icon), std::move(current), parent);
   add_tooltip(std::move(tooltip), *button);
   auto style = StyleSheet();
   style.get(Any() > Body()).

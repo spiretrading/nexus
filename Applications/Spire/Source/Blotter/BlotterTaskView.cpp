@@ -2,6 +2,8 @@
 #include "Spire/Canvas/Task.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/ColumnViewListModel.hpp"
+#include "Spire/Spire/ListValueModel.hpp"
 #include "Spire/Ui/ArrayTableModel.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
@@ -10,6 +12,7 @@
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/TableView.hpp"
+#include "Spire/Ui/ToggleButton.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -62,9 +65,19 @@ namespace {
         static auto value = std::string("hello");
         return value;
       } else if(column == Column::ID) {
-        return m_tasks->get(row).m_task->get_id();
+        return AnyRef(m_tasks->get(row).m_task->get_id(), AnyRef::by_value);
       }
       return {};
+    }
+
+    QValidator::State set(int row, int column, const std::any& value) override {
+      if(column == Column::PINNED) {
+        auto task = m_tasks->get(row);
+        task.m_is_pinned = std::any_cast<bool>(value);
+        m_tasks->set(row, task);
+        return QValidator::State::Acceptable;
+      }
+      return TableModel::set(row, column, value);
     }
 
     connection connect_operation_signal(
@@ -84,6 +97,10 @@ namespace {
           [&] (const TaskListModel::MoveOperation& operation) {
             m_transaction.push(TableModel::MoveOperation(
               operation.m_source, operation.m_destination));
+          },
+          [&] (const TaskListModel::UpdateOperation& operation) {
+            m_transaction.push(
+              TableModel::UpdateOperation(operation.m_index, 0));
           });
       });
     }
@@ -165,6 +182,18 @@ BlotterTaskView::BlotterTaskView(std::shared_ptr<BooleanModel> is_active,
   table_view_builder.add_header_item(tr("Price"), TableFilter::Filter::NONE);
   table_view_builder.add_header_item(tr("Quantity"), TableFilter::Filter::NONE);
   table_view_builder.add_header_item(tr("Volume"), TableFilter::Filter::NONE);
+  table_view_builder.set_view_builder(
+    [] (auto model, auto row, auto column) -> QWidget* {
+      if(column == 0) {
+        return make_icon_toggle_button(
+          imageFromSvg(":/Icons/blotter/tasks/pin.svg", scale(26, 26)),
+          std::static_pointer_cast<BooleanModel>(
+            std::make_shared<ListValueModel<bool>>(
+              std::make_shared<ColumnViewListModel<bool>>(model, column),
+              row)));
+      }
+      return TableView::default_view_builder(model, row, column);
+    });
   auto table = table_view_builder.make();
   table->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto scroll_box = new ScrollBox(table);

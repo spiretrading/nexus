@@ -55,6 +55,15 @@ namespace Spire {
   ToggleButton* make_icon_toggle_button(QImage icon, QWidget* parent = nullptr);
 
   /**
+   * Makes a ToggleButton whose body displays an icon.
+   * @param icon The icon to display.
+   * @param current Whether the button is checked.
+   * @param parent The parent widget.
+   */
+  ToggleButton* make_icon_toggle_button(QImage icon,
+    std::shared_ptr<BooleanModel> current, QWidget* parent = nullptr);
+
+  /**
    * Makes a ToggleButton whose body displays an icon and displays a tooltip.
    * @param icon The icon used within the button.
    * @param tooltip The text of the Tooltip to display.
@@ -62,6 +71,17 @@ namespace Spire {
    */
   ToggleButton* make_icon_toggle_button(
     QImage icon, QString tooltip, QWidget* parent = nullptr);
+
+  /**
+   * Makes a ToggleButton whose body displays an icon and displays a tooltip.
+   * @param icon The icon used within the button.
+   * @param current Whether the button is checked.
+   * @param tooltip The text of the Tooltip to display.
+   * @param parent The parent widget.
+   */
+  ToggleButton* make_icon_toggle_button(
+    QImage icon, std::shared_ptr<BooleanModel> current, QString tooltip,
+    QWidget* parent = nullptr);
 }
 
 #endif

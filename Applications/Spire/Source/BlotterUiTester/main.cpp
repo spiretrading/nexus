@@ -109,6 +109,6 @@ int main(int argc, char** argv) {
   controller.move(window.pos() + QPoint(0, window.size().height()));
   controller.show();
   window.installEventFilter(&controller);
-  tasks->push(TaskEntry(std::make_shared<Task>(), false));
+  tasks->push(TaskEntry(std::make_shared<Task>(12), false));
   application.exec();
 }
