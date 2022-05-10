@@ -2181,9 +2181,8 @@ UiProfile Spire::make_market_box_profile() {
       }
     });
     auto& placeholder = get<QString>("placeholder", profile.get_properties());
-    placeholder.connect_changed_signal([=] (const auto& placeholder) {
-      box->set_placeholder(placeholder);
-    });
+    placeholder.connect_changed_signal(
+      std::bind_front(&MarketBox::set_placeholder, box));
     auto& read_only = get<bool>("read_only", profile.get_properties());
     read_only.connect_changed_signal(
       std::bind_front(&MarketBox::set_read_only, box));

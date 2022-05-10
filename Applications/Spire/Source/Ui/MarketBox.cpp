@@ -84,8 +84,7 @@ const std::shared_ptr<ComboBox::QueryModel>&
   return m_query_model->m_source;
 }
 
-const std::shared_ptr<MarketBox::CurrentModel>&
-    MarketBox::get_current() const {
+const std::shared_ptr<MarketBox::CurrentModel>& MarketBox::get_current() const {
   return m_current;
 }
 
