@@ -1,4 +1,5 @@
 #include "Spire/Ui/MarketBox.hpp"
+#include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "Spire/Spire/TransformValueModel.hpp"
 #include "Spire/Ui/DestinationBox.hpp"
 #include "Spire/Ui/Layouts.hpp"

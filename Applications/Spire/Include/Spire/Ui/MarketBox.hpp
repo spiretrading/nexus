@@ -2,7 +2,6 @@
 #define SPIRE_MARKET_BOX_HPP
 #include "Nexus/Definitions/Market.hpp"
 #include "Spire/Ui/ComboBox.hpp"
-#include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
