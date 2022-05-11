@@ -45,6 +45,7 @@ namespace Spire {
   class LayeredWidget;
   class ListItem;
   class ListView;
+  class MarketBox;
   class MoneyBox;
   class NavigationView;
   class OpenFilterPanel;
