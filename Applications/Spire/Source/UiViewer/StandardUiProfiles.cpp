@@ -2168,16 +2168,20 @@ UiProfile Spire::make_market_box_profile() {
     auto model = std::make_shared<LocalComboBoxQueryModel>();
     for(auto market : markets) {
       model->add(displayText(MarketToken(market.m_code)).toLower(), market);
+      model->add(QString(market.m_code.GetData()).toLower(), market);
     }
     auto box = new MarketBox(model);
     box->setFixedWidth(scale_width(112));
     apply_widget_properties(box, profile.get_properties());
     auto& current = get<QString>("current", profile.get_properties());
     current.connect_changed_signal([=] (const auto& current) {
-      auto value = model->parse(current);
-      if(value.has_value()) {
-        auto market = std::any_cast<MarketDatabase::Entry>(value).m_code;
-        box->get_current()->set(market);
+      if(current.length() != 4) {
+        return;
+      }
+      auto code = MarketCode(current.toUpper().toStdString().c_str());
+      auto& market = GetDefaultMarketDatabase().FromCode(code);
+      if(!market.m_code.IsEmpty()) {
+        box->get_current()->set(code);
       }
     });
     auto& placeholder = get<QString>("placeholder", profile.get_properties());

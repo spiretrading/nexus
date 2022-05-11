@@ -1,5 +1,4 @@
 #include "Spire/Ui/MarketBox.hpp"
-#include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "Spire/Spire/TransformValueModel.hpp"
 #include "Spire/Ui/DestinationBox.hpp"
 #include "Spire/Ui/Layouts.hpp"
@@ -15,12 +14,21 @@ namespace {
     destination_entry.m_description = market.m_description;
     return destination_entry;
   }
+
+  auto to_market(const std::shared_ptr<ComboBox::QueryModel>& model,
+      const Destination& destination) {
+    auto market_entry = model->parse(QString::fromStdString(destination));
+    if(market_entry.has_value()) {
+      return std::any_cast<MarketDatabase::Entry>(market_entry).m_code;
+    }
+    return MarketCode();
+  }
 }
 
 struct MarketBox::MarketQueryModel : ComboBox::QueryModel {
   std::shared_ptr<ComboBox::QueryModel> m_source;
 
-  explicit MarketQueryModel(std::shared_ptr<QueryModel> source)
+  explicit MarketQueryModel(std::shared_ptr<ComboBox::QueryModel> source)
     : m_source(std::move(source)) {}
 
   std::any parse(const QString& query) override {
@@ -65,16 +73,19 @@ MarketBox::MarketBox(
       m_current(std::move(current)) {
   auto destination_box_current = make_transform_value_model(m_current,
     [=] (const MarketCode& current) {
-      return GetDefaultMarketDatabase().FromCode(current).m_displayName;
+      auto destination = m_query_model->parse(current.GetData());
+      if(destination.has_value()) {
+        return std::any_cast<DestinationDatabase::Entry>(destination).m_id;
+      }
+      return Destination();
     },
-    [] (const Destination& current) {
-      return GetDefaultMarketDatabase().FromDisplayName(current).m_code;
+    [=] (const Destination& current) {
+      return to_market(m_query_model->m_source, current);
     });
   m_destination_box =
     new DestinationBox(m_query_model, destination_box_current);
   m_destination_box->connect_submit_signal([=] (const auto& submission) {
-    m_submission =
-      GetDefaultMarketDatabase().FromDisplayName(submission).m_code;
+    m_submission = to_market(m_query_model->m_source, submission);
     m_submit_signal(m_submission);
   });
   enclose(*this, *m_destination_box);
