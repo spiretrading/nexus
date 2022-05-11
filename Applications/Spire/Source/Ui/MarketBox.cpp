@@ -33,11 +33,12 @@ struct MarketBox::MarketQueryModel : ComboBox::QueryModel {
 
   QtPromise<std::vector<std::any>> submit(const QString& query) override {
     return m_source->submit(query).then([=] (auto&& source_result) {
-        auto matches = [&] {
+        auto& matches = [&] () -> std::vector<std::any>& {
           try {
             return source_result.Get();
           } catch(const std::exception&) {
-            return std::vector<std::any>();
+            static auto empty_matches = std::vector<std::any>();
+            return empty_matches;
           }
         }();
         auto result = std::vector<std::any>();
