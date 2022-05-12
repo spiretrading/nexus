@@ -1,6 +1,9 @@
 #include <QApplication>
 #include <QDoubleSpinBox>
 #include <QGridLayout>
+#include <QHBoxLayout>
+#include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
+#include "Nexus/Definitions/SecurityInfo.hpp"
 #include "Nexus/OrderExecutionService/Order.hpp"
 #include "Spire/Blotter/BlotterWindow.hpp"
 #include "Spire/Blotter/CompositeBlotterModel.hpp"
@@ -9,8 +12,16 @@
 #include "Spire/Blotter/LocalBlotterProfitAndLossModel.hpp"
 #include "Spire/Canvas/Task.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/Resources.hpp"
+#include "Spire/Ui/Button.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
+#include "Spire/Ui/DestinationBox.hpp"
 #include "Spire/Ui/MoneyBox.hpp"
+#include "Spire/Ui/OrderTypeBox.hpp"
+#include "Spire/Ui/QuantityBox.hpp"
+#include "Spire/Ui/SecurityBox.hpp"
+#include "Spire/Ui/SideBox.hpp"
 #include "Spire/Ui/Window.hpp"
 #include "Version.hpp"
 
@@ -82,6 +93,55 @@ namespace {
         m_unrealized_profit_and_loss->get());
     }
   };
+
+  auto make_security_box() {
+    auto security_infos = std::vector<SecurityInfo>();
+    security_infos.emplace_back(ParseSecurity("MRU.TSX"), "Metro Inc.", "", 0);
+    security_infos.emplace_back(
+      ParseSecurity("MG.TSX"), "Magna International Inc.", "", 0);
+    security_infos.emplace_back(
+      ParseSecurity("MGA.TSX"), "Mega Uranium Ltd.", "", 0);
+    security_infos.emplace_back(ParseSecurity("MGAB.TSX"),
+      "Mackenzie Global Fixed Income Alloc ETF", "", 0);
+    security_infos.emplace_back(
+      ParseSecurity("MON.NYSE"), "Monsanto Co.", "", 0);
+    security_infos.emplace_back(
+      ParseSecurity("MFC.TSX"), "Manulife Financial Corporation", "", 0);
+    security_infos.emplace_back(
+      ParseSecurity("MX.TSX"), "Methanex Corporation", "", 0);
+    auto model = std::make_shared<LocalComboBoxQueryModel>();
+    for(auto& security_info : security_infos) {
+      model->add(
+        displayText(security_info.m_security).toLower(), security_info);
+      model->add(
+        QString::fromStdString(security_info.m_name).toLower(), security_info);
+    }
+    return new SecurityBox(model);
+  }
+
+  auto make_destination_box() {
+    auto destinations = GetDefaultDestinationDatabase().SelectEntries(
+      [] (auto& value) { return true; });
+    auto model = std::make_shared<LocalComboBoxQueryModel>();
+    for(auto destination : destinations) {
+      model->add(displayText(destination.m_id).toLower(), destination);
+    }
+    return new DestinationBox(model);
+  }
+
+  struct OrderEntryPanel : QWidget {
+    OrderEntryPanel(QWidget* parent = nullptr)
+        : QWidget(parent) {
+      auto layout = new QHBoxLayout(this);
+      layout->addWidget(make_security_box());
+      layout->addWidget(make_destination_box());
+      layout->addWidget(make_order_type_box());
+      layout->addWidget(make_side_box());
+      layout->addWidget(new QuantityBox());
+      layout->addWidget(new MoneyBox());
+      layout->addWidget(make_label_button("Submit"));
+    }
+  };
 }
 
 int main(int argc, char** argv) {
@@ -108,6 +168,9 @@ int main(int argc, char** argv) {
   window.show();
   controller.move(window.pos() + QPoint(0, window.size().height()));
   controller.show();
+  auto order_entry_panel = OrderEntryPanel();
+  order_entry_panel.show();
+  order_entry_panel.resize(scale(500, 50));
   window.installEventFilter(&controller);
   tasks->push(TaskEntry(std::make_shared<Task>(12), false));
   application.exec();
