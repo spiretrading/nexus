@@ -36,7 +36,7 @@ namespace Spire {
        */
       BlotterTaskView(std::shared_ptr<BooleanModel> is_active,
         std::shared_ptr<BooleanModel> is_pinned,
-        std::shared_ptr<TaskListModel> tasks, QWidget* parent = nullptr);
+        std::shared_ptr<BlotterTaskListModel> tasks, QWidget* parent = nullptr);
 
       /** Whether this is the application's active blotter. */
       const std::shared_ptr<BooleanModel>& is_active();
@@ -45,7 +45,7 @@ namespace Spire {
       const std::shared_ptr<BooleanModel>& is_pinned();
 
       /** Returns this blotter's tasks. */
-      const std::shared_ptr<TaskListModel>& get_tasks();
+      const std::shared_ptr<BlotterTaskListModel>& get_tasks();
 
       /** Connects a slot to the ExecuteSignal. */
       boost::signals2::connection connect_execute_signal(
@@ -60,7 +60,7 @@ namespace Spire {
       mutable CancelSignal m_cancel_signal;
       std::shared_ptr<BooleanModel> m_is_active;
       std::shared_ptr<BooleanModel> m_is_pinned;
-      std::shared_ptr<TaskListModel> m_tasks;
+      std::shared_ptr<BlotterTaskListModel> m_tasks;
       boost::signals2::scoped_connection m_tasks_connection;
 
       void on_tasks_operation(

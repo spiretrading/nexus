@@ -11,7 +11,7 @@ using namespace Spire;
 CompositeBlotterModel::CompositeBlotterModel(std::shared_ptr<TextModel> name,
     std::shared_ptr<BooleanModel> is_active,
     std::shared_ptr<BooleanModel> is_pinned,
-    std::shared_ptr<TaskListModel> tasks,
+    std::shared_ptr<BlotterTaskListModel> tasks,
     std::shared_ptr<BlotterPositionsModel> positions,
     std::shared_ptr<OrderListModel> orders,
     std::shared_ptr<BlotterProfitAndLossModel> profit_and_loss,
@@ -37,7 +37,7 @@ std::shared_ptr<BooleanModel> CompositeBlotterModel::is_pinned() {
   return m_is_pinned;
 }
 
-std::shared_ptr<TaskListModel> CompositeBlotterModel::get_tasks() {
+std::shared_ptr<BlotterTaskListModel> CompositeBlotterModel::get_tasks() {
   return m_tasks;
 }
 
@@ -63,7 +63,7 @@ std::shared_ptr<CompositeBlotterModel> Spire::make_local_blotter_model() {
     std::make_shared<LocalTextModel>(),
     std::make_shared<LocalBooleanModel>(),
     std::make_shared<LocalBooleanModel>(),
-    std::make_shared<ArrayListModel<TaskEntry>>(),
+    std::make_shared<ArrayListModel<BlotterTaskEntry>>(),
     std::make_shared<LocalBlotterPositionsModel>(),
     std::make_shared<ArrayListModel<Order*>>(),
     std::make_shared<LocalBlotterProfitAndLossModel>(),

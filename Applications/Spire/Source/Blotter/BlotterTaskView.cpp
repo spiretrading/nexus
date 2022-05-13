@@ -38,11 +38,11 @@ namespace {
       STATE
     };
     static const auto COLUMN_SIZE = 9;
-    std::shared_ptr<TaskListModel> m_tasks;
+    std::shared_ptr<BlotterTaskListModel> m_tasks;
     scoped_connection m_operation_connection;
     TableModelTransactionLog m_transaction;
 
-    TaskTableModel(std::shared_ptr<TaskListModel> tasks)
+    TaskTableModel(std::shared_ptr<BlotterTaskListModel> tasks)
       : m_tasks(std::move(tasks)),
         m_operation_connection(m_tasks->connect_operation_signal(
           std::bind_front(&TaskTableModel::on_operation, this))) {}
@@ -85,20 +85,20 @@ namespace {
       return m_transaction.connect_operation_signal(slot);
     }
 
-    void on_operation(const TaskListModel::Operation& operation) {
+    void on_operation(const BlotterTaskListModel::Operation& operation) {
       m_transaction.transact([&] {
         visit(operation,
-          [&] (const TaskListModel::AddOperation& operation) {
+          [&] (const BlotterTaskListModel::AddOperation& operation) {
             m_transaction.push(TableModel::AddOperation(operation.m_index));
           },
-          [&] (const TaskListModel::RemoveOperation& operation) {
+          [&] (const BlotterTaskListModel::RemoveOperation& operation) {
             m_transaction.push(TableModel::RemoveOperation(operation.m_index));
           },
-          [&] (const TaskListModel::MoveOperation& operation) {
+          [&] (const BlotterTaskListModel::MoveOperation& operation) {
             m_transaction.push(TableModel::MoveOperation(
               operation.m_source, operation.m_destination));
           },
-          [&] (const TaskListModel::UpdateOperation& operation) {
+          [&] (const BlotterTaskListModel::UpdateOperation& operation) {
             m_transaction.push(
               TableModel::UpdateOperation(operation.m_index, 0));
           });
@@ -109,7 +109,7 @@ namespace {
 
 BlotterTaskView::BlotterTaskView(std::shared_ptr<BooleanModel> is_active,
     std::shared_ptr<BooleanModel> is_pinned,
-    std::shared_ptr<TaskListModel> tasks, QWidget* parent)
+    std::shared_ptr<BlotterTaskListModel> tasks, QWidget* parent)
     : QWidget(parent),
       m_is_active(std::move(is_active)),
       m_is_pinned(std::move(is_pinned)),
@@ -212,7 +212,7 @@ const std::shared_ptr<BooleanModel>& BlotterTaskView::is_pinned() {
   return m_is_pinned;
 }
 
-const std::shared_ptr<TaskListModel>& BlotterTaskView::get_tasks() {
+const std::shared_ptr<BlotterTaskListModel>& BlotterTaskView::get_tasks() {
   return m_tasks;
 }
 

@@ -133,7 +133,7 @@ namespace {
 
   struct OrderEntryPanel : QWidget {
     int m_next_id;
-    std::shared_ptr<ListModel<TaskEntry>> m_tasks;
+    std::shared_ptr<ListModel<BlotterTaskEntry>> m_tasks;
     SecurityBox* m_security_box;
     DestinationBox* m_destination_box;
     OrderTypeBox* m_order_type_box;
@@ -142,8 +142,8 @@ namespace {
     MoneyBox* m_money_box;
     Button* m_submit_button;
 
-    OrderEntryPanel(
-        std::shared_ptr<ListModel<TaskEntry>> tasks, QWidget* parent = nullptr)
+    OrderEntryPanel(std::shared_ptr<ListModel<BlotterTaskEntry>> tasks,
+        QWidget* parent = nullptr)
         : QWidget(parent),
           m_next_id(1),
           m_tasks(std::move(tasks)) {
@@ -181,7 +181,7 @@ int main(int argc, char** argv) {
   application.setApplicationName(QObject::tr("Blotter UI Tester"));
   initialize_resources();
   auto controller = StatusBarController();
-  auto tasks = std::make_shared<ArrayListModel<TaskEntry>>();
+  auto tasks = std::make_shared<ArrayListModel<BlotterTaskEntry>>();
   auto blotter = std::make_shared<CompositeBlotterModel>(
     std::make_shared<LocalTextModel>("North America"),
     std::make_shared<LocalBooleanModel>(),

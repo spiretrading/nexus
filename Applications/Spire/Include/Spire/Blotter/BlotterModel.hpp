@@ -1,6 +1,7 @@
 #ifndef SPIRE_BLOTTER_MODEL_HPP
 #define SPIRE_BLOTTER_MODEL_HPP
 #include <memory>
+#include <Beam/Queues/QueueReader.hpp>
 #include "Nexus/OrderExecutionService/Order.hpp"
 #include "Spire/Blotter/Blotter.hpp"
 #include "Spire/Canvas/Canvas.hpp"
@@ -10,20 +11,24 @@
 namespace Spire {
 
   /** Stores a Task and the auxilliary data needed to view it in a blotter. */
-  struct TaskEntry {
+  struct BlotterTaskEntry {
 
     /** The Task represented by this entry. */
     std::shared_ptr<Task> m_task;
 
     /** Whether to pin this entry to the blotter. */
     bool m_is_pinned;
+
+    /** Publishes the orders submitted by this task. */
+    std::shared_ptr<Beam::QueueReader<Nexus::OrderExecutionService::Order*>>
+      m_orders;
   };
 
   /** The type of list model used for orders displayed in the blotter. */
   using OrderListModel = ListModel<Nexus::OrderExecutionService::Order*>;
 
   /** The type of list model used for tasks displayed in the blotter. */
-  using TaskListModel = ListModel<TaskEntry>;
+  using BlotterTaskListModel = ListModel<BlotterTaskEntry>;
 
   /**
    * Defines the interface representing a blotter, used to keep track of trading
@@ -43,7 +48,7 @@ namespace Spire {
       virtual std::shared_ptr<BooleanModel> is_pinned() = 0;
 
       /** Returns this blotter's tasks. */
-      virtual std::shared_ptr<TaskListModel> get_tasks() = 0;
+      virtual std::shared_ptr<BlotterTaskListModel> get_tasks() = 0;
 
       /** Returns the blotter's positions. */
       virtual std::shared_ptr<BlotterPositionsModel> get_positions() = 0;

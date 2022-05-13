@@ -23,7 +23,7 @@ namespace Spire {
       CompositeBlotterModel(std::shared_ptr<TextModel> name,
         std::shared_ptr<BooleanModel> is_active,
         std::shared_ptr<BooleanModel> is_pinned,
-        std::shared_ptr<TaskListModel> tasks,
+        std::shared_ptr<BlotterTaskListModel> tasks,
         std::shared_ptr<BlotterPositionsModel> positions,
         std::shared_ptr<OrderListModel> orders,
         std::shared_ptr<BlotterProfitAndLossModel> profit_and_loss,
@@ -35,7 +35,7 @@ namespace Spire {
 
       std::shared_ptr<BooleanModel> is_pinned() override;
 
-      std::shared_ptr<TaskListModel> get_tasks() override;
+      std::shared_ptr<BlotterTaskListModel> get_tasks() override;
 
       std::shared_ptr<BlotterPositionsModel> get_positions() override;
 
@@ -50,7 +50,7 @@ namespace Spire {
       std::shared_ptr<TextModel> m_name;
       std::shared_ptr<BooleanModel> m_is_active;
       std::shared_ptr<BooleanModel> m_is_pinned;
-      std::shared_ptr<TaskListModel> m_tasks;
+      std::shared_ptr<BlotterTaskListModel> m_tasks;
       std::shared_ptr<BlotterPositionsModel> m_positions;
       std::shared_ptr<OrderListModel> m_orders;
       std::shared_ptr<BlotterProfitAndLossModel> m_profit_and_loss;
