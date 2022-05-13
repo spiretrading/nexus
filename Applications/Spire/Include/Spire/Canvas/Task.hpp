@@ -1,10 +1,13 @@
 #ifndef SPIRE_TASK_HPP
 #define SPIRE_TASK_HPP
+#include <atomic>
 #include <ostream>
 #include <string>
 #include <Aspen/Aspen.hpp>
 #include <Beam/Queues/SequencePublisher.hpp>
+#include <boost/optional/optional.hpp>
 #include "Spire/Canvas/Canvas.hpp"
+#include "Spire/Canvas/Executor.hpp"
 
 namespace Spire {
 
@@ -66,8 +69,9 @@ namespace Spire {
       /**
        * Constructs a Task in the READY state.
        * @param id The task's unique id.
+       * @param reactor The reactor to execute.
        */
-      explicit Task(int id);
+      explicit Task(int id, Aspen::Box<void> reactor);
 
       /** Returns a unique id for this Task. */
       int get_id() const;
@@ -83,6 +87,13 @@ namespace Spire {
 
     private:
       int m_id;
+      bool m_is_executable;
+      std::atomic_bool m_is_cancelable;
+      bool m_is_failed;
+      State m_state;
+      Aspen::Box<void> m_reactor;
+      Aspen::Shared<Aspen::Cell<bool>> m_cancel_token;
+      boost::optional<Executor> m_executor;
       Beam::SequencePublisher<StateEntry> m_publisher;
 
       Task(const Task&) = delete;

@@ -96,6 +96,8 @@ namespace {
 
   auto make_security_box() {
     auto security_infos = std::vector<SecurityInfo>();
+    security_infos.emplace_back(
+      ParseSecurity("MSFT.NSDQ"), "Microsoft Inc.", "", 0);
     security_infos.emplace_back(ParseSecurity("MRU.TSX"), "Metro Inc.", "", 0);
     security_infos.emplace_back(
       ParseSecurity("MG.TSX"), "Magna International Inc.", "", 0);
@@ -130,16 +132,45 @@ namespace {
   }
 
   struct OrderEntryPanel : QWidget {
-    OrderEntryPanel(QWidget* parent = nullptr)
-        : QWidget(parent) {
+    int m_next_id;
+    std::shared_ptr<ListModel<TaskEntry>> m_tasks;
+    SecurityBox* m_security_box;
+    DestinationBox* m_destination_box;
+    OrderTypeBox* m_order_type_box;
+    SideBox* m_side_box;
+    QuantityBox* m_quantity_box;
+    MoneyBox* m_money_box;
+    Button* m_submit_button;
+
+    OrderEntryPanel(
+        std::shared_ptr<ListModel<TaskEntry>> tasks, QWidget* parent = nullptr)
+        : QWidget(parent),
+          m_next_id(1),
+          m_tasks(std::move(tasks)) {
+      m_security_box = make_security_box();
+      m_security_box->get_current()->set(ParseSecurity("MSFT.NSDQ"));
+      m_destination_box = make_destination_box();
+      m_destination_box->get_current()->set("NASDAQ");
+      m_order_type_box = make_order_type_box();
+      m_side_box = make_side_box();
+      m_quantity_box = new QuantityBox();
+      m_quantity_box->get_current()->set(Quantity(100));
+      m_money_box = new MoneyBox();
+      m_money_box->get_current()->set(Money::ONE);
+      m_submit_button = make_label_button("Submit");
       auto layout = new QHBoxLayout(this);
-      layout->addWidget(make_security_box());
-      layout->addWidget(make_destination_box());
-      layout->addWidget(make_order_type_box());
-      layout->addWidget(make_side_box());
-      layout->addWidget(new QuantityBox());
-      layout->addWidget(new MoneyBox());
-      layout->addWidget(make_label_button("Submit"));
+      layout->addWidget(m_security_box);
+      layout->addWidget(m_destination_box);
+      layout->addWidget(m_order_type_box);
+      layout->addWidget(m_side_box);
+      layout->addWidget(m_quantity_box);
+      layout->addWidget(m_money_box);
+      layout->addWidget(m_submit_button);
+      m_submit_button->connect_click_signal(
+        std::bind_front(&OrderEntryPanel::on_submit, this));
+    }
+
+    void on_submit() {
     }
   };
 }
@@ -168,10 +199,10 @@ int main(int argc, char** argv) {
   window.show();
   controller.move(window.pos() + QPoint(0, window.size().height()));
   controller.show();
-  auto order_entry_panel = OrderEntryPanel();
+  auto order_entry_panel = OrderEntryPanel(tasks);
+  order_entry_panel.move(window.pos() + QPoint(0, window.size().height()));
   order_entry_panel.show();
   order_entry_panel.resize(scale(500, 50));
   window.installEventFilter(&controller);
-  tasks->push(TaskEntry(std::make_shared<Task>(12), false));
   application.exec();
 }

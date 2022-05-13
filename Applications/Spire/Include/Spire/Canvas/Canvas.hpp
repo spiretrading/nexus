@@ -3,6 +3,7 @@
 #include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
+  class Executor;
   class Task;
 }
 
