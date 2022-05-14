@@ -69,3 +69,10 @@ std::shared_ptr<CompositeBlotterModel> Spire::make_local_blotter_model() {
     std::make_shared<LocalBlotterProfitAndLossModel>(),
     make_local_blotter_status_model());
 }
+
+std::shared_ptr<CompositeBlotterModel> Spire::make_derived_blotter_model(
+    std::shared_ptr<TextModel> name, std::shared_ptr<BooleanModel> is_active,
+    std::shared_ptr<BooleanModel> is_pinned,
+    std::shared_ptr<BlotterTaskListModel> tasks) {
+  return make_local_blotter_model();
+}

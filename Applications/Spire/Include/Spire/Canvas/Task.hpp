@@ -68,13 +68,9 @@ namespace Spire {
 
       /**
        * Constructs a Task in the READY state.
-       * @param id The task's unique id.
        * @param reactor The reactor to execute.
        */
-      explicit Task(int id, Aspen::Box<void> reactor);
-
-      /** Returns a unique id for this Task. */
-      int get_id() const;
+      explicit Task(Aspen::Box<void> reactor);
 
       /** Executes this Task. */
       void execute();
@@ -86,7 +82,6 @@ namespace Spire {
       const Beam::Publisher<StateEntry>& get_publisher() const;
 
     private:
-      int m_id;
       bool m_is_executable;
       std::atomic_bool m_is_cancelable;
       bool m_is_failed;

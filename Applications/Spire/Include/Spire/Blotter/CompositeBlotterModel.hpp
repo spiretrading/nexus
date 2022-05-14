@@ -59,6 +59,19 @@ namespace Spire {
 
   /** Makes a CompositeBlotterModel using local models as its constituents. */
   std::shared_ptr<CompositeBlotterModel> make_local_blotter_model();
+
+  /**
+   * Makes a CompositeBlotterModel whose positions, orders, profit and loss,
+   * and status is derived from its tasks model.
+   * @param name Represents the name of this blotter.
+   * @param is_active Whether this blotter is the active blotter.
+   * @param is_pinned Whether this blotter is pinned.
+   * @param tasks The list of tasks belonging to this blotter.
+   */
+  std::shared_ptr<CompositeBlotterModel> make_derived_blotter_model(
+    std::shared_ptr<TextModel> name, std::shared_ptr<BooleanModel> is_active,
+    std::shared_ptr<BooleanModel> is_pinned,
+    std::shared_ptr<BlotterTaskListModel> tasks);
 }
 
 #endif

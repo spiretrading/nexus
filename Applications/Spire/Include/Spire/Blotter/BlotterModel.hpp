@@ -13,11 +13,17 @@ namespace Spire {
   /** Stores a Task and the auxilliary data needed to view it in a blotter. */
   struct BlotterTaskEntry {
 
-    /** The Task represented by this entry. */
-    std::shared_ptr<Task> m_task;
+    /** The entry's unique id. */
+    int m_id;
+
+    /** The name of the task. */
+    std::string m_name;
 
     /** Whether to pin this entry to the blotter. */
     bool m_is_pinned;
+
+    /** The Task represented by this entry. */
+    std::shared_ptr<Task> m_task;
 
     /** Publishes the orders submitted by this task. */
     std::shared_ptr<Beam::QueueReader<Nexus::OrderExecutionService::Order*>>

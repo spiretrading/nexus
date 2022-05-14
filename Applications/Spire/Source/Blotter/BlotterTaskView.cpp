@@ -62,10 +62,9 @@ namespace {
       if(column == Column::PINNED) {
         return m_tasks->get(row).m_is_pinned;
       } else if(column == Column::NAME) {
-        static auto value = std::string("hello");
-        return value;
+        return m_tasks->get(row).m_name;
       } else if(column == Column::ID) {
-        return AnyRef(m_tasks->get(row).m_task->get_id(), AnyRef::by_value);
+        return m_tasks->get(row).m_id;
       }
       return {};
     }

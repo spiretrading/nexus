@@ -11,17 +11,12 @@ Task::StateEntry::StateEntry(State state, std::string message)
   : m_state(state),
     m_message(std::move(message)) {}
 
-Task::Task(int id, Box<void> reactor)
-  : m_id(id),
-    m_is_executable(true),
+Task::Task(Box<void> reactor)
+  : m_is_executable(true),
     m_is_cancelable(true),
     m_is_failed(false),
     m_state(State::READY),
     m_reactor(std::move(reactor)) {}
-
-int Task::get_id() const {
-  return m_id;
-}
 
 void Task::execute() {
   if(!std::exchange(m_is_executable, false)) {
