@@ -59,7 +59,7 @@ void TransitionView::make_pending_widget() {
   auto pending_middle_layout = make_hbox_layout(m_pending_widget);
   pending_middle_layout->addStretch();
   m_spinner = new QMovie(":/Icons/spinner.gif", QByteArray());
-  m_spinner->setScaledSize(scale(32, 32));
+  m_spinner->setScaledSize(scale(44, 44));
   auto spinner_widget = new QLabel();
   spinner_widget->setMovie(m_spinner);
   auto spinner_container = new Box(spinner_widget);
