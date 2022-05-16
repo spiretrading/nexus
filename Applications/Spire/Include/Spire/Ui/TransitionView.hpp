@@ -24,10 +24,10 @@ namespace Spire {
 
       /**
        * Constructs a TransitionView.
-       * @param component The component to display when status is READY. 
+       * @param body The component to display when status is READY.
        * @param parent The parent widget.
        */
-      explicit TransitionView(QWidget* component, QWidget* parent = nullptr);
+      explicit TransitionView(QWidget* body, QWidget* parent = nullptr);
 
       /** Sets the loading status of the component data.
        *  @param status The status of data.
@@ -35,7 +35,7 @@ namespace Spire {
       void set_status(Status status);
 
     private:
-      QWidget* m_component;
+      QWidget* m_body;
       QWidget* m_pending_widget;
       QTimer* m_timer;
       QMovie* m_spinner;
@@ -45,7 +45,6 @@ namespace Spire {
       void clear_layout();
       void make_pending_widget();
       void on_timer_expired();
-      void stop_playing_spinner();
   };
 }
 
