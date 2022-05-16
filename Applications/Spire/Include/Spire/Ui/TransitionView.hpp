@@ -37,8 +37,8 @@ namespace Spire {
     private:
       QWidget* m_body;
       QWidget* m_pending_widget;
-      QTimer* m_timer;
       QMovie* m_spinner;
+      QTimer* m_timer;
       Status m_status;
 
       void add_widget_to_layout(QWidget& widget);

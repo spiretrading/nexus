@@ -12,10 +12,11 @@ using namespace Spire::Styles;
 TransitionView::TransitionView(QWidget* body, QWidget* parent)
     : QWidget(parent),
       m_body(body),
+      m_pending_widget(nullptr),
+      m_spinner(nullptr),
       m_timer(new QTimer(this)),
       m_status(Status::NONE) {
   make_vbox_layout(this);
-  make_pending_widget();
   m_timer->setSingleShot(true);
   connect(m_timer, &QTimer::timeout,
     std::bind_front(&TransitionView::on_timer_expired, this));
@@ -30,7 +31,7 @@ void TransitionView::set_status(Status status) {
     m_timer->start(2000);
   } else {
     m_timer->stop();
-    if(m_spinner->state() != QMovie::NotRunning) {
+    if(m_spinner && m_spinner->state() != QMovie::NotRunning) {
       m_spinner->stop();
     }
     clear_layout();
@@ -52,10 +53,13 @@ void TransitionView::clear_layout() {
 }
 
 void TransitionView::make_pending_widget() {
+  if(m_pending_widget) {
+    return;
+  }
   m_pending_widget = new QWidget(this);
   auto pending_layout = make_vbox_layout(m_pending_widget);
   pending_layout->addStretch(66);
-  auto pending_middle_layout = make_hbox_layout(m_pending_widget);
+  auto pending_middle_layout = make_hbox_layout();
   pending_middle_layout->addStretch();
   m_spinner = new QMovie(":/Icons/spinner.gif", QByteArray());
   m_spinner->setScaledSize(scale(44, 44));
@@ -71,11 +75,11 @@ void TransitionView::make_pending_widget() {
   pending_middle_layout->addStretch();
   pending_layout->addLayout(pending_middle_layout);
   pending_layout->addStretch(130);
-  m_pending_widget->hide();
 }
 
 void TransitionView::on_timer_expired() {
   clear_layout();
+  make_pending_widget();
   m_spinner->start();
   add_widget_to_layout(*m_pending_widget);
 }
