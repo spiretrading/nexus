@@ -27,6 +27,7 @@ void TransitionView::set_status(Status status) {
   }
   m_status = status;
   if(m_status == Status::NONE) {
+    m_timer->stop();
     clear_layout();
     stop_playing_spinner();
   } else if(m_status == Status::READY) {
