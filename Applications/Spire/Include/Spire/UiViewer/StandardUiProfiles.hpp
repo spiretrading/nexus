@@ -104,6 +104,9 @@ namespace Spire {
   /** Returns a UiProfile for the ListView. */
   UiProfile make_list_view_profile();
 
+  /** Returns a UiProfile for the MarketBox. */
+  UiProfile make_market_box_profile();
+
   /** Returns a UiProfile for the MoneyBox. */
   UiProfile make_money_box_profile();
 

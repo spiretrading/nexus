@@ -45,6 +45,7 @@ namespace Spire {
   class LayeredWidget;
   class ListItem;
   class ListView;
+  class MarketBox;
   class MoneyBox;
   class NavigationView;
   class OpenFilterPanel;
@@ -100,6 +101,13 @@ namespace Spire {
    */
   QPropertyAnimation* fade_window(
     QObject* target, bool reverse, boost::posix_time::time_duration fade_speed);
+
+  /**
+   * Find the focus proxy that is at the bottom of the proxy chain of a widget.
+   * @param widget The widget with a focus proxy.
+   * @returns The focus proxy widget.
+   */
+  QWidget* find_focus_proxy(QWidget& widget);
 
   /**
    * Builds a QImage from an SVG resource where the size of the SVG is equal

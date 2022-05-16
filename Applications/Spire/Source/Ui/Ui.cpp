@@ -22,6 +22,14 @@ QPropertyAnimation* Spire::fade_window(QObject* target, bool reverse,
   return animation;
 }
 
+QWidget* Spire::find_focus_proxy(QWidget& widget) {
+  auto proxy = &widget;
+  while(proxy->focusProxy()) {
+    proxy = proxy->focusProxy();
+  }
+  return proxy;
+}
+
 QImage Spire::imageFromSvg(const QString& path, const QSize& size) {
   return imageFromSvg(path, size, QRect(0, 0, size.width(), size.height()));
 }
