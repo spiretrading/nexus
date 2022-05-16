@@ -46,8 +46,7 @@ void TransitionView::add_widget_to_layout(QWidget& widget) {
 }
 
 void TransitionView::clear_layout() {
-  auto item = layout()->takeAt(0);
-  if(item) {
+  if(auto item = layout()->takeAt(0)) {
     item->widget()->hide();
   }
 }
