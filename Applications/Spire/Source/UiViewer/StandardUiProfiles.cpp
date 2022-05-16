@@ -3354,7 +3354,7 @@ UiProfile Spire::make_transition_view_profile() {
     auto transition_view =
       new TransitionView(new ScrollableListBox(*list_view));
     auto box = new Box(transition_view);
-    update_style(*box, [&] (auto& style) {
+    update_style(*box, [] (auto& style) {
       style.get(Any()).set(border(scale_width(1), QColor(0x4B23A0)));
     });
     auto& width = get<int>("width", profile.get_properties());

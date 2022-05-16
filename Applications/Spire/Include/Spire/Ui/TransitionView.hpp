@@ -9,7 +9,7 @@ namespace Spire {
   class TransitionView : public QWidget {
     public:
 
-      /** Specifies the loading status of data within component. */
+      /** Specifies the loading status of data within body. */
       enum class Status {
 
         /** No data is available. */

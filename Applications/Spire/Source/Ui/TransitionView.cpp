@@ -63,7 +63,7 @@ void TransitionView::make_pending_widget() {
   auto spinner_widget = new QLabel();
   spinner_widget->setMovie(m_spinner);
   auto spinner_container = new Box(spinner_widget);
-  update_style(*spinner_container, [&] (auto& style) {
+  update_style(*spinner_container, [] (auto& style) {
     style.get(Any()).
       set(horizontal_padding(scale_width(8))).
       set(vertical_padding(scale_height(8)));
