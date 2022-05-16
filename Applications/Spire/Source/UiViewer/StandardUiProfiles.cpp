@@ -3348,7 +3348,7 @@ UiProfile Spire::make_transition_view_profile() {
       [] (const std::shared_ptr<ListModel<QString>>& model, auto index) {
         return make_label(model->get(index));
       });
-    update_style(*list_view, [&] (auto& style) {
+    update_style(*list_view, [] (auto& style) {
       style.get(Any()).set(Qt::Orientation::Vertical);
     });
     auto transition_view =

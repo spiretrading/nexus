@@ -1,7 +1,6 @@
 #ifndef SPIRE_TRANSITION_VIEW_HPP
 #define SPIRE_TRANSITION_VIEW_HPP
 #include <QWidget>
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 
