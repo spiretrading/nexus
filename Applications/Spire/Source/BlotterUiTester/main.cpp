@@ -1,3 +1,4 @@
+#include <Beam/Queues/Queue.hpp>
 #include <QApplication>
 #include <QHBoxLayout>
 #include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
@@ -19,6 +20,7 @@
 #include "Spire/Ui/SideBox.hpp"
 #include "Version.hpp"
 
+using namespace Beam;
 using namespace Nexus;
 using namespace Nexus::OrderExecutionService;
 using namespace Spire;
@@ -63,7 +65,7 @@ namespace {
 
   struct OrderEntryPanel : QWidget {
     int m_next_id;
-    std::shared_ptr<ListModel<BlotterTaskEntry>> m_tasks;
+    std::shared_ptr<BlotterTaskListModel> m_tasks;
     SecurityBox* m_security_box;
     DestinationBox* m_destination_box;
     OrderTypeBox* m_order_type_box;
@@ -72,8 +74,8 @@ namespace {
     MoneyBox* m_money_box;
     Button* m_submit_button;
 
-    OrderEntryPanel(std::shared_ptr<ListModel<BlotterTaskEntry>> tasks,
-        QWidget* parent = nullptr)
+    OrderEntryPanel(
+        std::shared_ptr<BlotterTaskListModel> tasks, QWidget* parent = nullptr)
         : QWidget(parent),
           m_next_id(1),
           m_tasks(std::move(tasks)) {
@@ -108,6 +110,12 @@ namespace {
     }
 
     void on_submit() {
+      auto task = std::make_unique<Task>(Aspen::Box<void>(Aspen::constant(5)));
+      auto orders = std::make_shared<Queue<Order*>>();
+      auto entry = std::make_shared<BlotterTaskEntry>(BlotterTaskEntry(
+        m_next_id, "Dummy", false, std::move(task), orders));
+      ++m_next_id;
+      m_tasks->push(entry);
     }
   };
 }
@@ -117,7 +125,8 @@ int main(int argc, char** argv) {
   application.setOrganizationName(QObject::tr("Spire Trading Inc"));
   application.setApplicationName(QObject::tr("Blotter UI Tester"));
   initialize_resources();
-  auto tasks = std::make_shared<ArrayListModel<BlotterTaskEntry>>();
+  auto tasks =
+    std::make_shared<ArrayListModel<std::shared_ptr<BlotterTaskEntry>>>();
   auto blotter = make_derived_blotter_model(
     std::make_shared<LocalTextModel>("North America"),
     std::make_shared<LocalBooleanModel>(),

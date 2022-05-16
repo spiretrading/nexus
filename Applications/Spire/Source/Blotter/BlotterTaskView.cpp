@@ -60,11 +60,11 @@ namespace {
         throw std::out_of_range("Column is out of range.");
       }
       if(column == Column::PINNED) {
-        return m_tasks->get(row).m_is_pinned;
+        return m_tasks->get(row)->m_is_pinned;
       } else if(column == Column::NAME) {
-        return m_tasks->get(row).m_name;
+        return m_tasks->get(row)->m_name;
       } else if(column == Column::ID) {
-        return m_tasks->get(row).m_id;
+        return m_tasks->get(row)->m_id;
       }
       return {};
     }
@@ -72,7 +72,7 @@ namespace {
     QValidator::State set(int row, int column, const std::any& value) override {
       if(column == Column::PINNED) {
         auto task = m_tasks->get(row);
-        task.m_is_pinned = std::any_cast<bool>(value);
+        task->m_is_pinned = std::any_cast<bool>(value);
         m_tasks->set(row, task);
         return QValidator::State::Acceptable;
       }

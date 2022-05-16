@@ -1,10 +1,11 @@
 #ifndef SPIRE_BLOTTER_MODEL_HPP
 #define SPIRE_BLOTTER_MODEL_HPP
 #include <memory>
-#include <Beam/Queues/QueueReader.hpp>
+#include <string>
+#include <Beam/Queues/ScopedQueueReader.hpp>
 #include "Nexus/OrderExecutionService/Order.hpp"
 #include "Spire/Blotter/Blotter.hpp"
-#include "Spire/Canvas/Canvas.hpp"
+#include "Spire/Canvas/Task.hpp"
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
@@ -23,18 +24,17 @@ namespace Spire {
     bool m_is_pinned;
 
     /** The Task represented by this entry. */
-    std::shared_ptr<Task> m_task;
+    std::unique_ptr<Task> m_task;
 
     /** Publishes the orders submitted by this task. */
-    std::shared_ptr<Beam::QueueReader<Nexus::OrderExecutionService::Order*>>
-      m_orders;
+    Beam::ScopedQueueReader<Nexus::OrderExecutionService::Order*> m_orders;
   };
 
   /** The type of list model used for orders displayed in the blotter. */
   using OrderListModel = ListModel<Nexus::OrderExecutionService::Order*>;
 
   /** The type of list model used for tasks displayed in the blotter. */
-  using BlotterTaskListModel = ListModel<BlotterTaskEntry>;
+  using BlotterTaskListModel = ListModel<std::shared_ptr<BlotterTaskEntry>>;
 
   /**
    * Defines the interface representing a blotter, used to keep track of trading
