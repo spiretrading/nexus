@@ -1997,11 +1997,13 @@ UiProfile Spire::make_list_view_profile() {
     {{"WRAP", Overflow::WRAP}, {"NONE", Overflow::NONE}});
   properties.push_back(
     make_standard_enum_property("overflow", overflow_property));
+/*
   auto selection_mode_property = define_enum<SelectionMode>(
     {{"NONE", SelectionMode::NONE},
      {"SINGLE", SelectionMode::SINGLE}});
   properties.push_back(
     make_standard_enum_property("selection_mode", selection_mode_property));
+*/
   auto change_item_property = define_enum<int>({{"Delete", 0}, {"Add", 1}});
   properties.push_back(
     make_standard_enum_property("change_item", change_item_property));
@@ -2101,6 +2103,7 @@ UiProfile Spire::make_list_view_profile() {
         style.get(Any()).set(value);
       });
     });
+/*
     auto& selection_mode =
       get<SelectionMode>("selection_mode", profile.get_properties());
     selection_mode.connect_changed_signal([=] (auto value) {
@@ -2108,6 +2111,7 @@ UiProfile Spire::make_list_view_profile() {
         style.get(Any()).set(value);
       });
     });
+*/
     auto& current_item = get<int>("current_item", profile.get_properties());
     current_item.connect_changed_signal([=] (auto index) {
       if(index == -1) {
@@ -2116,6 +2120,7 @@ UiProfile Spire::make_list_view_profile() {
         list_view->get_current()->set(index);
       }
     });
+/*
     auto& select_item = get<int>("select_item", profile.get_properties());
     select_item.connect_changed_signal([=] (auto index) {
       if(index == -1) {
@@ -2124,6 +2129,7 @@ UiProfile Spire::make_list_view_profile() {
         list_view->get_selection()->set(index);
       }
     });
+*/
     auto& disable_item = get<int>("disable_item", profile.get_properties());
     disable_item.connect_changed_signal([=] (auto value) {
       if(auto item = list_view->get_list_item(value)) {
@@ -2148,8 +2154,8 @@ UiProfile Spire::make_list_view_profile() {
       });
     list_view->get_current()->connect_update_signal(
       profile.make_event_slot<optional<int>>("Current"));
-    list_view->get_selection()->connect_update_signal(
-      profile.make_event_slot<optional<int>>("Selection"));
+// TODO    list_view->get_selection()->connect_update_signal(
+//      profile.make_event_slot<optional<int>>("Selection"));
     list_view->connect_submit_signal(
       profile.make_event_slot<optional<std::any>>("Submit"));
     return list_view;

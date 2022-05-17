@@ -8,6 +8,7 @@
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ListItem.hpp"
+#include "Spire/Ui/MultiSelectionModel.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace boost;
@@ -59,8 +60,8 @@ ListView::ListView(std::shared_ptr<AnyListModel> list,
   ViewBuilder<> view_builder, QWidget* parent)
   : ListView(std::move(list),
       std::make_shared<LocalValueModel<optional<int>>>(),
-      std::make_shared<LocalValueModel<optional<int>>>(),
-      std::move(view_builder), parent) {}
+      std::make_shared<MultiSelectionModel>(), std::move(view_builder),
+      parent) {}
 
 ListView::ListView(
     std::shared_ptr<AnyListModel> list, std::shared_ptr<CurrentModel> current,
@@ -72,11 +73,9 @@ ListView::ListView(
       m_last_current(m_current->get()),
       m_selection(std::move(selection)),
       m_view_builder(std::move(view_builder)),
-      m_selected(m_selection->get()),
       m_direction(Qt::Vertical),
       m_edge_navigation(EdgeNavigation::WRAP),
       m_overflow(Overflow::NONE),
-      m_selection_mode(SelectionMode::SINGLE),
       m_direction_policy(QSizePolicy::Fixed),
       m_perpendicular_policy(QSizePolicy::Expanding),
       m_item_gap(DEFAULT_GAP),
@@ -92,9 +91,11 @@ ListView::ListView(
         on_item_submitted(*item);
       });
   }
+/*
   if(m_selected) {
     m_items[*m_selected]->m_item->set_selected(true);
   }
+*/
   update_focus(m_last_current);
   auto body = new QWidget();
   auto body_layout = new QBoxLayout(QBoxLayout::LeftToRight, body);
@@ -115,7 +116,7 @@ ListView::ListView(
     [=] (const auto& operation) { on_list_operation(operation); });
   m_current_connection = m_current->connect_update_signal(
     [=] (const auto& current) { on_current(current); });
-  m_selection_connection = m_selection->connect_update_signal(
+  m_selection_connection = m_selection->connect_operation_signal(
     [=] (const auto& selection) { on_selection(selection); });
 }
 
@@ -414,6 +415,7 @@ void ListView::add_item(int index) {
     ++(*i)->m_index;
   }
   update_layout();
+/*
   auto selection = m_selection->get();
   if(m_current->get() && *m_current->get() >= index) {
     set(*m_current->get() + 1);
@@ -422,6 +424,7 @@ void ListView::add_item(int index) {
     m_selected = *selection + 1;
     m_selection->set(m_selected);
   }
+*/
 }
 
 void ListView::remove_item(int index) {
@@ -431,6 +434,7 @@ void ListView::remove_item(int index) {
   for(auto i = m_items.begin() + index; i != m_items.end(); ++i) {
     --(*i)->m_index;
   }
+/*
   auto selection = m_selection->get();
   if(m_current->get()) {
     if(m_current->get() == index) {
@@ -448,6 +452,7 @@ void ListView::remove_item(int index) {
     }
     m_selection->set(m_selected);
   }
+*/
   update_layout();
 }
 
@@ -482,6 +487,7 @@ void ListView::move_item(int source, int destination) {
   };
   adjust(m_last_current);
   adjust(m_focus_index);
+/*
   auto selection = m_selection->get();
   auto current = m_current->get();
   if(adjust(current)) {
@@ -492,6 +498,7 @@ void ListView::move_item(int source, int destination) {
     m_selected = selection;
     m_selection->set(*m_selected);
   }
+*/
   update_layout();
 }
 
@@ -594,12 +601,15 @@ void ListView::on_current(const optional<int>& current) {
     m_navigation_box = QRect();
   }
   m_last_current = current;
+/*
   if(m_selection_mode != SelectionMode::NONE) {
     m_selection->set(current);
   }
+*/
 }
 
-void ListView::on_selection(const optional<int>& selected) {
+void ListView::on_selection(const AnyListModel::Operation& operation) {
+/*
   if(m_selected == selected) {
     return;
   }
@@ -610,6 +620,7 @@ void ListView::on_selection(const optional<int>& selected) {
   if(m_selected) {
     m_items[*m_selected]->m_item->set_selected(true);
   }
+*/
 }
 
 void ListView::on_item_submitted(ItemEntry& item) {
@@ -650,12 +661,6 @@ void ListView::on_style() {
       [&] (EnumProperty<Overflow> overflow) {
         stylist.evaluate(overflow, [=] (auto overflow) {
           m_overflow = overflow;
-          *has_update = true;
-        });
-      },
-      [&] (EnumProperty<SelectionMode> selection_mode) {
-        stylist.evaluate(selection_mode, [=] (auto selection_mode) {
-          m_selection_mode = selection_mode;
           *has_update = true;
         });
       });

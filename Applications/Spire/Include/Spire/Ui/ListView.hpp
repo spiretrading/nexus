@@ -56,16 +56,6 @@ namespace Styles {
     /** List items wrap to fill the perpendicular space. */
     WRAP
   };
-
-  /** Specifies the selection behavior for the ListView. */
-  enum class SelectionMode {
-
-    /** Items can not be selected. */
-    NONE,
-
-    /** The user can select a single item. */
-    SINGLE
-  };
 }
 
   /**
@@ -81,9 +71,9 @@ namespace Styles {
       using CurrentModel = ValueModel<boost::optional<int>>;
 
       /**
-       * The type of model representing the index of the selected value.
+       * The type of model representing the list of selected indicies.
        */
-      using SelectionModel = ValueModel<boost::optional<int>>;
+      using SelectionModel = ListModel<int>;
 
       /**
        * The type of function used to build a QWidget representing a value.
@@ -129,11 +119,34 @@ namespace Styles {
       /**
        * Constructs a ListView using default local models.
        * @param list The model of values to display.
+       * @param selection The selection model.
+       * @param view_builder The ViewBuilder to use.
+       * @param parent The parent widget.
+       */
+      ListView(std::shared_ptr<AnyListModel> list,
+        std::shared_ptr<SelectionModel> selection, ViewBuilder<> view_builder,
+        QWidget* parent = nullptr);
+
+      /**
+       * Constructs a ListView using default local models.
+       * @param list The model of values to display.
        * @param view_builder The ViewBuilder to use.
        * @param parent The parent widget.
        */
       template<std::derived_from<AnyListModel> T>
       ListView(std::shared_ptr<T> list, ViewBuilder<T> view_builder,
+        QWidget* parent = nullptr);
+
+      /**
+       * Constructs a ListView using default local models.
+       * @param list The model of values to display.
+       * @param selection The selection model.
+       * @param view_builder The ViewBuilder to use.
+       * @param parent The parent widget.
+       */
+      template<std::derived_from<AnyListModel> T>
+      ListView(std::shared_ptr<T> list,
+        std::shared_ptr<SelectionModel> selection, ViewBuilder<T> view_builder,
         QWidget* parent = nullptr);
 
       /**
@@ -234,7 +247,6 @@ namespace Styles {
       Qt::Orientation m_direction;
       Styles::EdgeNavigation m_edge_navigation;
       Styles::Overflow m_overflow;
-      Styles::SelectionMode m_selection_mode;
       QRect m_navigation_box;
       QString m_query;
       QTimer* m_query_timer;
@@ -262,7 +274,7 @@ namespace Styles {
       void update_layout();
       void on_list_operation(const AnyListModel::Operation& operation);
       void on_current(const boost::optional<int>& current);
-      void on_selection(const boost::optional<int>& selected);
+      void on_selection(const AnyListModel::Operation& operation);
       void on_item_submitted(ItemEntry& item);
       void on_style();
       void on_query_timer_expired();
@@ -276,6 +288,16 @@ namespace Styles {
           const std::shared_ptr<AnyListModel>& model, int index) {
         return view_builder(std::static_pointer_cast<T>(model), index);
       }, parent) {}
+
+  template<std::derived_from<AnyListModel> T>
+  ListView::ListView(std::shared_ptr<T> list,
+    std::shared_ptr<SelectionModel> selection, ViewBuilder<T> view_builder,
+    QWidget* parent)
+    : ListView(std::static_pointer_cast<AnyListModel>(list),
+        std::move(selection), [view_builder = std::move(view_builder)] (
+            const std::shared_ptr<AnyListModel>& model, int index) {
+          return view_builder(std::static_pointer_cast<T>(model), index);
+        }, parent) {}
 
   template<std::derived_from<AnyListModel> T>
   ListView::ListView(std::shared_ptr<T> list,
