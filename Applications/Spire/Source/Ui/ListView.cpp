@@ -98,11 +98,9 @@ ListView::ListView(
         on_item_submitted(*item);
       });
   }
-/*
-  if(m_selected) {
-    m_items[*m_selected]->m_item->set_selected(true);
+  for(auto i = 0; i != m_selection->get_size(); ++i) {
+    m_items[m_selection->get(i)]->m_item->set_selected(true);
   }
-*/
   update_focus(m_last_current);
   auto body = new QWidget();
   auto body_layout = new QBoxLayout(QBoxLayout::LeftToRight, body);
@@ -608,26 +606,21 @@ void ListView::on_current(const optional<int>& current) {
     m_navigation_box = QRect();
   }
   m_last_current = current;
-/*
-  if(m_selection_mode != SelectionMode::NONE) {
-    m_selection->set(current);
+  if(current) {
+    m_selection->push(*current);
+  } else {
+    clear(*m_selection);
   }
-*/
 }
 
 void ListView::on_selection(const AnyListModel::Operation& operation) {
-/*
-  if(m_selected == selected) {
-    return;
-  }
-  if(m_selected && *m_selected < static_cast<int>(m_items.size())) {
-    m_items[*m_selected]->m_item->set_selected(false);
-  }
-  m_selected = selected;
-  if(m_selected) {
-    m_items[*m_selected]->m_item->set_selected(true);
-  }
-*/
+  visit(operation,
+    [&] (const AnyListModel::AddOperation& operation) {
+      m_items[m_selection->get(operation.m_index)]->m_item->set_selected(true);
+    },
+    [&] (const AnyListModel::RemoveOperation& operation) {
+      m_items[m_selection->get(operation.m_index)]->m_item->set_selected(false);
+    });
 }
 
 void ListView::on_item_submitted(ItemEntry& item) {
