@@ -58,10 +58,17 @@ ListView::ListView(std::shared_ptr<AnyListModel> list, QWidget* parent)
 
 ListView::ListView(std::shared_ptr<AnyListModel> list,
   ViewBuilder<> view_builder, QWidget* parent)
-  : ListView(std::move(list),
-      std::make_shared<LocalValueModel<optional<int>>>(),
+  : ListView(
+      std::move(list), std::make_shared<LocalValueModel<optional<int>>>(),
       std::make_shared<MultiSelectionModel>(), std::move(view_builder),
       parent) {}
+
+ListView::ListView(std::shared_ptr<AnyListModel> list,
+  std::shared_ptr<SelectionModel> selection, ViewBuilder<> view_builder,
+  QWidget* parent)
+  : ListView(
+      std::move(list), std::make_shared<LocalValueModel<optional<int>>>(),
+      std::move(selection), std::move(view_builder), parent) {}
 
 ListView::ListView(
     std::shared_ptr<AnyListModel> list, std::shared_ptr<CurrentModel> current,
