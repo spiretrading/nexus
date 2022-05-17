@@ -64,6 +64,7 @@ namespace Spire {
   class SecurityBox;
   class SecurityListItem;
   class SecurityStack;
+  class SecurityView;
   class SortedTableModel;
   template<typename T> class StagingValueModel;
   class StandardTableFilter;

@@ -63,6 +63,7 @@
 #include "Spire/Ui/SecurityBox.hpp"
 #include "Spire/Ui/SecurityFilterPanel.hpp"
 #include "Spire/Ui/SecurityListItem.hpp"
+#include "Spire/Ui/SecurityView.hpp"
 #include "Spire/Ui/SideBox.hpp"
 #include "Spire/Ui/SideFilterPanel.hpp"
 #include "Spire/Ui/SplitView.hpp"
@@ -2844,6 +2845,46 @@ UiProfile Spire::make_security_list_item_profile() {
     auto item = new SecurityListItem(security_info);
     apply_widget_properties(item, profile.get_properties());
     return item;
+  });
+  return profile;
+}
+
+UiProfile Spire::make_security_view_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  properties.push_back(make_standard_property<int>("width", 266));
+  properties.push_back(make_standard_property<int>("height", 361));
+  auto profile = UiProfile("SecurityView", properties, [] (auto& profile) {
+    auto model = populate_security_query_model();
+    auto label = make_label("");
+    label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    auto security_view = new SecurityView(model, label);
+    security_view->setFixedSize(scale(266, 361));
+    auto box = new Box(security_view);
+    update_style(*box, [] (auto& style) {
+      style.get(Any()).set(border(scale_width(1), QColor(0x4B23A0)));
+    });
+    security_view->get_current()->connect_update_signal(
+      profile.make_event_slot<Security>("Current", [=] (const auto& security) {
+        label->get_current()->set(displayText(security));
+        return security;
+      }));
+    auto& width = get<int>("width", profile.get_properties());
+    width.connect_changed_signal([=] (auto value) {
+      if(value != 0) {
+        if(unscale_width(security_view->width()) != value) {
+          security_view->setFixedWidth(scale_width(value));
+        }
+      }
+    });
+    auto& height = get<int>("height", profile.get_properties());
+    height.connect_changed_signal([=] (auto value) {
+      if(value != 0) {
+        if(unscale_height(security_view->height()) != value) {
+          security_view->setFixedHeight(scale_height(value));
+        }
+      }
+    });
+    return box;
   });
   return profile;
 }

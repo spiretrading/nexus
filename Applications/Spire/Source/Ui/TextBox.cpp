@@ -509,6 +509,7 @@ void TextBox::resizeEvent(QResizeEvent* event) {
 void TextBox::showEvent(QShowEvent* event) {
   if(!m_line_edit && (!is_read_only() || isEnabled())) {
     initialize_line_edit();
+    m_line_edit->show();
   }
   QWidget::showEvent(event);
 }
