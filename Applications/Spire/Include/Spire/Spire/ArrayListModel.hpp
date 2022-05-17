@@ -82,7 +82,7 @@ namespace Spire {
   template<typename T>
   QValidator::State ArrayListModel<T>::set(int index, const Type& value) {
     if(index < 0 || index >= get_size()) {
-      return QValidator::State::Invalid;
+      throw std::out_of_range("The index is out of range.");
     }
     m_data[index] = value;
     m_transaction.push(UpdateOperation(index));

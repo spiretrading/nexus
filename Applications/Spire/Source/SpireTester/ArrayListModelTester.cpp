@@ -198,7 +198,7 @@ TEST_SUITE("ArrayListModel") {
       [&] (const auto& operation) {
         operations.push_back(operation);
       }));
-    REQUIRE(model.set(2, 0) == QValidator::State::Invalid);
+    REQUIRE_THROWS(model.set(2, 0));
     REQUIRE(model.get_size() == 0);
     REQUIRE(operations.empty());
     REQUIRE_NOTHROW(model.push(1));

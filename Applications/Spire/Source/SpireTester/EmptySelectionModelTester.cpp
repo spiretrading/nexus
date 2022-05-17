@@ -11,7 +11,8 @@ TEST_SUITE("EmptySelectionModel") {
     REQUIRE(model.get_size() == 0);
     REQUIRE_THROWS(model.get(0));
     REQUIRE_THROWS(model.set(0, 0));
-    REQUIRE_THROWS(model.insert(0, 0));
+    REQUIRE(model.insert(12, 0) == QValidator::State::Invalid);
+    REQUIRE_THROWS(model.insert(12, 1));
     REQUIRE_THROWS(model.move(0, 0));
     REQUIRE_THROWS(model.remove(0));
   }

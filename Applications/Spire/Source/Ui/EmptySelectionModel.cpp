@@ -13,11 +13,14 @@ const int& EmptySelectionModel::get(int index) const {
 }
 
 QValidator::State EmptySelectionModel::set(int index, const int& value) {
-  return QValidator::State::Invalid;
+  throw std::out_of_range("The index is out of range.");
 }
 
 QValidator::State EmptySelectionModel::insert(const int& value, int index) {
-  return QValidator::State::Invalid;
+  if(index == 0) {
+    return QValidator::State::Invalid;
+  }
+  throw std::out_of_range("The index is out of range.");
 }
 
 QValidator::State EmptySelectionModel::move(int source, int destination) {
