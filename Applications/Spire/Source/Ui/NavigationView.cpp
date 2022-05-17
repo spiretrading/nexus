@@ -8,7 +8,6 @@
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/ListView.hpp"
-#include "Spire/Ui/SingleSelectionModel.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace boost;
@@ -92,7 +91,6 @@ NavigationView::NavigationView(
   navigation_menu->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   m_navigation_list = std::make_shared<ArrayListModel<std::any>>();
   m_navigation_view = new ListView(m_navigation_list,
-    std::make_shared<SingleSelectionModel>(),
     [] (const auto& model, auto index) {
       return new NavigationTab(
         std::any_cast<const QString&>(model->get(index)));

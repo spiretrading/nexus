@@ -176,7 +176,11 @@ bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
     if(event->type() == QEvent::FocusOut) {
       if(!is_read_only() && !m_drop_down_list->isVisible()) {
         submit();
-// TODO        m_list_view->get_selection()->set(m_submission);
+        if(m_submission) {
+          m_list_view->get_selection()->push(*m_submission);
+        } else {
+          clear(*m_list_view->get_selection());
+        }
       }
     }
   } else if(watched == m_drop_down_list) {

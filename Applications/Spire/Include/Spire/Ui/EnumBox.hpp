@@ -115,7 +115,6 @@ namespace Spire {
     }
     m_drop_down_box = new DropDownBox(settings.m_cases,
       std::make_shared<ListIndexValueModel<Type>>(settings.m_cases, m_current),
-      std::make_shared<SingleSelectionModel>(),
       [view_builder = settings.m_view_builder] (
           const std::shared_ptr<ListModel<Type>>& model, auto index) {
         return view_builder(model->get(index));

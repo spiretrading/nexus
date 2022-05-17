@@ -61,3 +61,7 @@ connection SingleSelectionModel::connect_operation_signal(
     const typename OperationSignal::slot_type& slot) const {
   return m_transaction.connect_operation_signal(slot);
 }
+
+void SingleSelectionModel::transact(const std::function<void ()>& transaction) {
+  m_transaction.transact(transaction);
+}

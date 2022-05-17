@@ -35,3 +35,7 @@ connection EmptySelectionModel::connect_operation_signal(
     const typename OperationSignal::slot_type& slot) const {
   return {};
 }
+
+void EmptySelectionModel::transact(const std::function<void ()>& transaction) {
+  transaction();
+}

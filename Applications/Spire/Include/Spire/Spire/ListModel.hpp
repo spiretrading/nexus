@@ -1,6 +1,7 @@
 #ifndef SPIRE_LIST_MODEL_HPP
 #define SPIRE_LIST_MODEL_HPP
 #include <any>
+#include <functional>
 #include <type_traits>
 #include <utility>
 #include <vector>
@@ -186,6 +187,18 @@ namespace Details {
        */
       virtual QValidator::State remove(int index) = 0;
 
+      /**
+       * Takes a callable function and invokes it. All operations performed on
+       * this model during the transaction get appended to a
+       * <code>Transaction</code> that is signalled at the end of the
+       * transaction. If a transaction is already being invoked, then all
+       * operations are appened into the parent transaction.
+       * @param transaction The transaction to perform.
+       * @return The result of the transaction.
+       */
+      template<typename F>
+      decltype(auto) transact(F&& transaction);
+
       /** Connects a slot to the OperationSignal. */
       virtual boost::signals2::connection connect_operation_signal(
         const OperationSignal::slot_type& slot) const = 0;
@@ -200,6 +213,17 @@ namespace Details {
        * @throws <code>std::out_of_range</code> iff index is out of range.
        */
       virtual std::any at(int index) const = 0;
+
+      /**
+       * Takes a callable function and invokes it. All operations performed on
+       * this model during the transaction get appended to a
+       * <code>Transaction</code> that is signalled at the end of the
+       * transaction. If a transaction is already being invoked, then all
+       * operations are appened into the parent transaction.
+       * @param transaction The transaction to perform.
+       * @return The result of the transaction.
+       */
+      virtual void transact(const std::function<void ()>& transaction) = 0;
 
     private:
       AnyListModel(const AnyListModel&) = delete;
@@ -260,7 +284,7 @@ namespace Details {
        *         supports the operation, <code>QValidator::State::Invalid</code>
        *         otherwise.
        */
-      virtual QValidator::State move(int source, int destination) override;
+      QValidator::State move(int source, int destination) override;
 
       /**
        * Removes a value from the model.
@@ -269,7 +293,7 @@ namespace Details {
        *         supports the operation, <code>QValidator::State::Invalid</code>
        *         otherwise.
        */
-      virtual QValidator::State remove(int index) override;
+      QValidator::State remove(int index) override;
 
     protected:
 
@@ -297,9 +321,9 @@ namespace Details {
 
       virtual QValidator::State insert(const Type& value, int index);
 
-      virtual QValidator::State move(int source, int destination) override;
+      QValidator::State move(int source, int destination) override;
 
-      virtual QValidator::State remove(int index) override;
+      QValidator::State remove(int index) override;
 
     protected:
       ListModel() = default;
@@ -318,6 +342,27 @@ namespace Details {
   template<typename... F>
   void visit(const AnyListModel::Operation& operation, F&&... f) {
     return Details::visit<AnyListModel>(operation, std::forward<F>(f)...);
+  }
+
+  /** Removes all values from a ListModel. */
+  void clear(AnyListModel& model);
+
+  template<typename F>
+  decltype(auto) AnyListModel::transact(F&& transaction) {
+    using Result = decltype(transaction());
+    auto t = static_cast<void (AnyListModel::*)(const std::function<void ()>&)>(
+      &AnyListModel::transact);
+    if constexpr(std::is_same_v<Result, void>) {
+      (this->*t)([&] {
+        std::forward<F>(transaction)();
+      });
+    } else {
+      auto result = boost::optional<decltype(transaction())>();
+      (this->*t)([&] {
+        result.emplace(std::forward<F>(transaction)());
+      });
+      return *result;
+    }
   }
 
   template<typename T>

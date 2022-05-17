@@ -2,6 +2,15 @@
 
 using namespace Spire;
 
+void Spire::clear(AnyListModel& model) {
+  auto size = model.get_size();
+  model.transact([&] {
+    for(auto i = size; i >= 0; --i) {
+      model.remove(i);
+    }
+  });
+}
+
 std::any AnyListModel::get(int index) const {
   return at(index);
 }

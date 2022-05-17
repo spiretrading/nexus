@@ -8,7 +8,7 @@
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ListItem.hpp"
-#include "Spire/Ui/MultiSelectionModel.hpp"
+#include "Spire/Ui/SingleSelectionModel.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace boost;
@@ -60,7 +60,7 @@ ListView::ListView(std::shared_ptr<AnyListModel> list,
   ViewBuilder<> view_builder, QWidget* parent)
   : ListView(
       std::move(list), std::make_shared<LocalValueModel<optional<int>>>(),
-      std::make_shared<MultiSelectionModel>(), std::move(view_builder),
+      std::make_shared<SingleSelectionModel>(), std::move(view_builder),
       parent) {}
 
 ListView::ListView(std::shared_ptr<AnyListModel> list,

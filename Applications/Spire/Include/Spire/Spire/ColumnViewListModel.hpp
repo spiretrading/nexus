@@ -47,6 +47,11 @@ namespace Spire {
       boost::signals2::connection connect_operation_signal(
         const OperationSignal::slot_type& slot) const override;
 
+      using ListModel<T>::transact;
+
+    protected:
+      void transact(const std::function<void ()>& transaction) override;
+
     private:
       std::shared_ptr<TableModel> m_source;
       int m_column;
@@ -99,6 +104,12 @@ namespace Spire {
   boost::signals2::connection ColumnViewListModel<T>::connect_operation_signal(
       const OperationSignal::slot_type& slot) const {
     return m_transaction.connect_operation_signal(slot);
+  }
+
+  template<typename T>
+  void ColumnViewListModel<T>::transact(
+      const std::function<void ()>& transaction) {
+    m_transaction.transact(transaction);
   }
 
   template<typename T>

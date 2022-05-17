@@ -29,6 +29,9 @@ namespace Spire {
       boost::signals2::connection connect_operation_signal(
         const typename OperationSignal::slot_type& slot) const override;
 
+    protected:
+      void transact(const std::function<void ()>& f) override;
+
     private:
       boost::optional<int> m_value;
       ListModelTransactionLog<int> m_transaction;

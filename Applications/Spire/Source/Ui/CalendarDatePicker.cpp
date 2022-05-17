@@ -90,6 +90,11 @@ class CalendarListModel : public ListModel<date> {
       return m_transaction.connect_operation_signal(slot);
     }
 
+  protected:
+    void transact(const std::function<void ()>& transaction) override {
+      m_transaction.transact(transaction);
+    }
+
   private:
     std::shared_ptr<DateModel> m_current;
     scoped_connection m_current_connection;
