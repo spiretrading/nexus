@@ -8,9 +8,8 @@ using namespace Spire;
 
 namespace {
   template<typename... F>
-  decltype(auto) test_operation(
-      const ListModel<int>::Operation& operation, F&&... f) {
-    return visit(
+  void test_operation(const ListModel<int>::Operation& operation, F&&... f) {
+    visit(
       operation, std::forward<F>(f)..., [] (const auto&) { REQUIRE(false); });
   }
 }
@@ -236,15 +235,19 @@ TEST_SUITE("ArrayListModel") {
     auto connection = scoped_connection(model.connect_operation_signal(
       [&] (const ListModel<int>::Operation& operation) {
         operations.push_back(operation);
-        auto transaction = get<ListModel<int>::Transaction>(&operation);
-        REQUIRE(transaction != nullptr);
-        REQUIRE(transaction->m_operations.size() == 5);
-        auto& operations = transaction->m_operations;
-        REQUIRE(get<ListModel<int>::AddOperation>(&operations[0]));
-        REQUIRE(get<ListModel<int>::UpdateOperation>(&operations[1]));
-        REQUIRE(get<ListModel<int>::AddOperation>(&operations[2]));
-        REQUIRE(get<ListModel<int>::RemoveOperation>(&operations[3]));
-        REQUIRE(get<ListModel<int>::AddOperation>(&operations[4]));
+        auto transaction = operation.get<ListModel<int>::Transaction>();
+        REQUIRE((transaction != none));
+        REQUIRE(transaction->size() == 5);
+        REQUIRE(
+          ((*transaction)[0].get<ListModel<int>::AddOperation>() != none));
+        REQUIRE(
+          ((*transaction)[1].get<ListModel<int>::UpdateOperation>() != none));
+        REQUIRE(
+          ((*transaction)[2].get<ListModel<int>::AddOperation>() != none));
+        REQUIRE(
+          ((*transaction)[3].get<ListModel<int>::RemoveOperation>() != none));
+        REQUIRE(
+          ((*transaction)[4].get<ListModel<int>::AddOperation>() != none));
       }));
     model.transact([&] {
       model.push(1);
@@ -266,12 +269,13 @@ TEST_SUITE("ArrayListModel") {
         model.transact([&] {
           model.push(7);
         });
-        auto transaction = get<ListModel<int>::Transaction>(&operation);
-        REQUIRE(transaction != nullptr);
-        REQUIRE(transaction->m_operations.size() == 2);
-        auto& operations = transaction->m_operations;
-        REQUIRE(get<ListModel<int>::AddOperation>(&operations[0]));
-        REQUIRE(get<ListModel<int>::AddOperation>(&operations[1]));
+        auto transaction = operation.get<ListModel<int>::Transaction>();
+        REQUIRE((transaction != none));
+        REQUIRE(transaction->size() == 2);
+        REQUIRE(
+          ((*transaction)[0].get<ListModel<int>::AddOperation>() != none));
+        REQUIRE(
+          ((*transaction)[1].get<ListModel<int>::AddOperation>() != none));
       });
     model.transact([&] {
       model.push(1);

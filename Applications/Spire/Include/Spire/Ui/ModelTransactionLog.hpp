@@ -64,7 +64,7 @@ namespace Details {
   template<typename T>
   void ModelTransactionLog<T>::push(typename T::Operation&& operation) {
     if(m_level > 0) {
-      m_transaction.m_operations.push_back(std::move(operation));
+      m_transaction.push_back(std::move(operation));
     } else {
       m_operation_signal(operation);
     }
@@ -80,10 +80,10 @@ namespace Details {
         return;
       }
       auto transaction = std::move(m_transaction);
-      if(transaction.m_operations.empty()) {
+      if(transaction.empty()) {
         return;
-      } else if(transaction.m_operations.size() == 1) {
-        m_operation_signal(transaction.m_operations.front());
+      } else if(transaction.size() == 1) {
+        m_operation_signal(transaction.front());
       } else {
         m_operation_signal(transaction);
       }

@@ -18,59 +18,6 @@
 #include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
-namespace Details {
-  template<typename O>
-  struct ModelTransaction {
-    std::vector<O> m_operations;
-  };
-
-  template<typename M, typename F>
-  void visit(const typename M::Operation& operation, F&& f) {
-    static_assert(std::is_invocable_v<F, const typename M::AddOperation&> ||
-      std::is_invocable_v<F, const typename M::RemoveOperation&> ||
-      std::is_invocable_v<F, const typename M::MoveOperation&> ||
-      std::is_invocable_v<F, const typename M::UpdateOperation&>);
-    if(auto transaction = boost::get<typename M::Transaction>(&operation)) {
-      for(auto& transaction_operation : transaction->m_operations) {
-        visit<M>(transaction_operation, std::forward<F>(f));
-      }
-    } else {
-      boost::apply_visitor([&] (const auto& operation) {
-        using Parameter = std::decay_t<decltype(operation)>;
-        if constexpr(std::is_invocable_v<F, Parameter>) {
-          std::forward<F>(f)(operation);
-        }
-      }, operation);
-    }
-  }
-
-  template<typename M, typename F, typename... G>
-  typename std::enable_if_t<(sizeof...(G) != 0)>
-  visit(const typename M::Operation& operation, F&& f, G&&... g) {
-    static_assert(std::is_invocable_v<F, const typename M::AddOperation&> ||
-      std::is_invocable_v<F, const typename M::RemoveOperation&> ||
-      std::is_invocable_v<F, const typename M::MoveOperation&> ||
-      std::is_invocable_v<F, const typename M::UpdateOperation&>);
-    if(auto transaction = boost::get<typename M::Transaction>(&operation)) {
-      for(auto& transaction_operation : transaction->m_operations) {
-        visit<M>(
-          transaction_operation, std::forward<F>(f), std::forward<G>(g)...);
-      }
-    } else {
-      auto is_visited = boost::apply_visitor([&] (const auto& operation) {
-        using Parameter = std::decay_t<decltype(operation)>;
-        if constexpr(std::is_invocable_v<F, Parameter>) {
-          std::forward<F>(f)(operation);
-          return true;
-        }
-        return false;
-      }, operation);
-      if(!is_visited) {
-        visit<M>(operation, std::forward<G>(g)...);
-      }
-    }
-  }
-}
 
   /** Base class used to model a list of values. */
   class AnyListModel {
@@ -81,6 +28,9 @@ namespace Details {
 
         /** The index where the value was inserted. */
         int m_index;
+
+        /** The value that was added. */
+        std::any m_value;
       };
 
       /** Indicates a value was removed from the model. */
@@ -88,6 +38,9 @@ namespace Details {
 
         /** The index of the value removed. */
         int m_index;
+
+        /** The value that was removed. */
+        std::any m_value;
       };
 
       /** Indicates a value was moved from one index to another. */
@@ -105,22 +58,54 @@ namespace Details {
 
         /** The index of the updated value. */
         int m_index;
+
+        /** The previous value. */
+        std::any m_previous;
+
+        /** The updated value. */
+        std::any m_value;
       };
 
       /** Consolidates all basic operations. */
-      using Operation = typename boost::make_recursive_variant<AddOperation,
-        RemoveOperation, MoveOperation, UpdateOperation,
-        Details::ModelTransaction<boost::recursive_variant_>>::type;
+      class Operation {
+        public:
+
+          /** Constructs an Operation encapsulating an AddOperation. */
+          Operation(AddOperation operation);
+
+          /** Constructs an Operation encapsulating a RemoveOperation. */
+          Operation(RemoveOperation operation);
+
+          /** Constructs an Operation encapsulating a MoveOperation. */
+          Operation(MoveOperation operation);
+
+          /** Constructs an Operation encapsulating an UpdateOperation. */
+          Operation(UpdateOperation operation);
+
+          /** Constructs an Operation encapsulating a Transaction. */
+          Operation(std::vector<Operation> operation);
+
+          /** Extracts a reference to a specific operation. */
+          template<typename T>
+          boost::optional<const T&> get() const;
+
+          /**
+           * Applies a callable to an Operation.
+           * @param f The callable to apply.
+           */
+          template<typename... F>
+          void visit(F&&... f) const;
+
+        private:
+          boost::variant<AddOperation, RemoveOperation, MoveOperation,
+            UpdateOperation, std::vector<Operation>> m_operation;
+      };
 
       /**
        * An operation consisting of a list of sub-operations performed as single
        * transaction.
        */
-      using Transaction = typename boost::mpl::deref<
-        typename boost::mpl::advance<
-          typename boost::mpl::begin<Operation::types>::type,
-          boost::mpl::int_<
-            boost::mpl::size<Operation::types>::value - 1>>::type>::type;
+      using Transaction = std::vector<Operation>;
 
       /**
        * Signals an operation was applied to this model.
@@ -241,6 +226,66 @@ namespace Details {
       /** The type of value being listed. */
       using Type = T;
 
+      /** Indicates a value was added to the model. */
+      struct AddOperation : AnyListModel::AddOperation {
+        AddOperation(int index, Type value);
+
+        /** Returns the value that was added. */
+        const Type& get_value() const;
+      };
+
+      /** Indicates a value was removed from the model. */
+      struct RemoveOperation : AnyListModel::RemoveOperation {
+        RemoveOperation(int index, Type value);
+
+        /** Returns the value that was removed. */
+        const Type& get_value() const;
+      };
+
+      /** Indicates a value was updated. */
+      struct UpdateOperation : AnyListModel::UpdateOperation {
+        UpdateOperation(int index, Type previous, Type value);
+
+        /** Returns the previous value. */
+        const Type& get_previous() const;
+
+        /** Returns the updated value. */
+        const Type& get_value() const;
+      };
+
+      /** Consolidates all basic operations. */
+      struct Operation : AnyListModel::Operation {
+
+        /** Constructs an Operation encapsulating an AddOperation. */
+        Operation(AddOperation operation);
+
+        /** Constructs an Operation encapsulating a RemoveOperation. */
+        Operation(RemoveOperation operation);
+
+        /** Constructs an Operation encapsulating a MoveOperation. */
+        Operation(MoveOperation operation);
+
+        /** Constructs an Operation encapsulating an UpdateOperation. */
+        Operation(UpdateOperation operation);
+
+        /** Constructs an Operation encapsulating a Transaction. */
+        Operation(std::vector<Operation> operation);
+
+        template<typename U>
+        boost::optional<const U&> get() const;
+
+        template<typename... F>
+        void visit(F&&... f) const;
+      };
+
+      using Transaction = std::vector<Operation>;
+
+      /**
+       * Signals an operation was applied to this model.
+       * @param operation The operation that was applied.
+       */
+      using OperationSignal = Signal<void (const Operation&)>;
+
       /**
        * Returns the value at a specified index.
        * @throws <code>std::out_of_range</code> iff index is out of range.
@@ -295,6 +340,14 @@ namespace Details {
        */
       QValidator::State remove(int index) override;
 
+      /** Connects a slot to the OperationSignal. */
+      virtual boost::signals2::connection connect_operation_signal(
+        const typename OperationSignal::slot_type& slot) const = 0;
+
+      /** Connects a slot to the OperationSignal. */
+      boost::signals2::connection connect_operation_signal(
+        const AnyListModel::OperationSignal::slot_type& slot) const override;
+
     protected:
 
       /** Constructs an empty model. */
@@ -339,13 +392,57 @@ namespace Details {
    * @param operation The operation to visit.
    * @param f The callable to apply to the <i>operation</i>.
    */
-  template<typename... F>
-  void visit(const AnyListModel::Operation& operation, F&&... f) {
-    return Details::visit<AnyListModel>(operation, std::forward<F>(f)...);
+  template<typename Operation, typename... F>
+  void visit(const Operation& operation, F&&... f) {
+    operation.visit(std::forward<F>(f)...);
   }
 
   /** Removes all values from a ListModel. */
   void clear(AnyListModel& model);
+
+  template<typename T>
+  boost::optional<const T&> AnyListModel::Operation::get() const {
+    if(auto operation = boost::get<T>(&m_operation)) {
+      return *operation;
+    }
+    return boost::none;
+  }
+
+  template<typename... F>
+  void AnyListModel::Operation::visit(F&&... f) const {
+    if(auto transaction = get<AnyListModel::Transaction>()) {
+      for(auto& operation : *transaction) {
+        visit(std::forward<F>(f)...);
+      }
+    } else {
+      auto head = [&] (auto&& f) {
+        boost::apply_visitor([&] (const auto& operation) {
+          using Parameter = std::decay_t<decltype(operation)>;
+          if constexpr(std::is_invocable_v<decltype(f), Parameter>) {
+            std::forward<decltype(f)>(f)(operation);
+          }
+        }, m_operation);
+      };
+      auto tail = [&] (auto&& f, auto&&... g) {
+        auto is_visited = boost::apply_visitor([&] (const auto& operation) {
+          using Parameter = std::decay_t<decltype(operation)>;
+          if constexpr(std::is_invocable_v<decltype(f), Parameter>) {
+            std::forward<decltype(f)>(f)(operation);
+            return true;
+          }
+          return false;
+        }, m_operation);
+        if(!is_visited) {
+          visit(std::forward<decltype(g)>(g)...);
+        }
+      };
+      if constexpr(sizeof...(F) == 1) {
+        head(std::forward<F>(f)...);
+      } else {
+        tail(std::forward<F>(f)...);
+      }
+    }
+  }
 
   template<typename F>
   decltype(auto) AnyListModel::transact(F&& transaction) {
@@ -363,6 +460,113 @@ namespace Details {
       });
       return *result;
     }
+  }
+
+  template<typename T>
+  ListModel<T>::AddOperation::AddOperation(int index, Type value)
+    : AnyListModel::AddOperation(index, std::move(value)) {}
+
+  template<typename T>
+  const typename ListModel<T>::Type& ListModel<T>::AddOperation::get_value()
+      const {
+    return std::any_cast<const Type&>(m_value);
+  }
+
+  template<typename T>
+  ListModel<T>::RemoveOperation::RemoveOperation(int index, Type value)
+    : AnyListModel::RemoveOperation(index, std::move(value)) {}
+
+  template<typename T>
+  const typename ListModel<T>::Type& ListModel<T>::RemoveOperation::get_value()
+      const {
+    return std::any_cast<const Type&>(m_value);
+  }
+
+  template<typename T>
+  ListModel<T>::UpdateOperation::UpdateOperation(
+    int index, Type previous, Type value)
+    : AnyListModel::UpdateOperation(
+        index, std::move(previous), std::move(value)) {}
+
+  template<typename T>
+  const typename ListModel<T>::Type&
+      ListModel<T>::UpdateOperation::get_previous() const {
+    return std::any_cast<const Type&>(m_previous);
+  }
+
+  template<typename T>
+  const typename ListModel<T>::Type& ListModel<T>::UpdateOperation::get_value()
+      const {
+    return std::any_cast<const Type&>(m_value);
+  }
+
+  template<typename T>
+  ListModel<T>::Operation::Operation(AddOperation operation)
+    : AnyListModel::Operation(std::move(operation)) {}
+
+  template<typename T>
+  ListModel<T>::Operation::Operation(RemoveOperation operation)
+    : AnyListModel::Operation(std::move(operation)) {}
+
+  template<typename T>
+  ListModel<T>::Operation::Operation(MoveOperation operation)
+    : AnyListModel::Operation(std::move(operation)) {}
+
+  template<typename T>
+  ListModel<T>::Operation::Operation(UpdateOperation operation)
+    : AnyListModel::Operation(std::move(operation)) {}
+
+  template<typename T>
+  ListModel<T>::Operation::Operation(std::vector<Operation> operation)
+    : AnyListModel::Operation([&] {
+        auto operations = std::vector<AnyListModel::Operation>();
+        for(auto& o : operation) {
+          operations.push_back(std::move(o));
+        }
+        return operations;
+      }()) {}
+
+  template<typename T>
+  template<typename U>
+  boost::optional<const U&> ListModel<T>::Operation::get() const {
+    if constexpr(std::is_same_v<U, AddOperation>) {
+      if(auto operation =
+          AnyListModel::Operation::get<AnyListModel::AddOperation>()) {
+        return static_cast<const AddOperation&>(*operation);
+      }
+      return boost::none;
+    } else if constexpr(std::is_same_v<U, RemoveOperation>) {
+      if(auto operation =
+          AnyListModel::Operation::get<AnyListModel::RemoveOperation>()) {
+        return static_cast<const RemoveOperation&>(*operation);
+      }
+      return boost::none;
+    } else if constexpr(std::is_same_v<U, MoveOperation>) {
+      if(auto operation =
+          AnyListModel::Operation::get<AnyListModel::MoveOperation>()) {
+        return static_cast<const MoveOperation&>(*operation);
+      }
+      return boost::none;
+    } else if constexpr(std::is_same_v<U, UpdateOperation>) {
+      if(auto operation =
+          AnyListModel::Operation::get<AnyListModel::UpdateOperation>()) {
+        return static_cast<const UpdateOperation&>(*operation);
+      }
+      return boost::none;
+    } else if constexpr(std::is_same_v<U, Transaction>) {
+      if(auto operation =
+          AnyListModel::Operation::get<AnyListModel::Transaction>()) {
+        return reinterpret_cast<const Transaction&>(
+          AnyListModel::Operation::get<AnyListModel::Transaction>());
+      }
+      return boost::none;
+    }
+    return boost::none;
+  }
+
+  template<typename T>
+  template<typename... F>
+  void ListModel<T>::Operation::visit(F&&... f) const {
   }
 
   template<typename T>
