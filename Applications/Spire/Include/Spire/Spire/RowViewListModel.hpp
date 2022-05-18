@@ -18,7 +18,15 @@ namespace Spire {
     public:
       using Type = typename ListModel<T>::Type;
 
-      using OperationSignal = typename ListModel<T>::OperationSignal;
+      using OperationSignal = ListModel<T>::OperationSignal;
+
+      using AddOperation = typename ListModel<T>::AddOperation;
+
+      using MoveOperation = typename ListModel<T>::MoveOperation;
+
+      using RemoveOperation = typename ListModel<T>::RemoveOperation;
+
+      using UpdateOperation = typename ListModel<T>::UpdateOperation;
 
       /**
        * Constructs a RowViewListModel from a specified row of the table model.
@@ -34,7 +42,7 @@ namespace Spire {
       QValidator::State set(int index, const Type& value) override;
 
       boost::signals2::connection connect_operation_signal(
-        const OperationSignal::slot_type& slot) const override;
+        const typename OperationSignal::slot_type& slot) const override;
 
       using ListModel<T>::transact;
 
@@ -60,7 +68,7 @@ namespace Spire {
     } else {
       m_row = row;
       m_source_connection = m_source->connect_operation_signal(
-        [=] (const auto& operation) { on_operation(operation); });
+        std::bind_front(&RowViewListModel::on_operation, this));
     }
   }
 
@@ -134,8 +142,9 @@ namespace Spire {
         },
         [&] (const TableModel::UpdateOperation& operation) {
           if(m_row == operation.m_row) {
-            m_transaction.push(
-              AnyListModel::UpdateOperation(operation.m_column));
+            m_transaction.push(UpdateOperation(operation.m_column,
+              std::any_cast<const Type&>(operation.m_previous),
+              std::any_cast<const Type&>(operation.m_value)));
           }
         });
       });

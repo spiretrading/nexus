@@ -128,8 +128,8 @@ TEST_SUITE("ColumnViewListModel") {
       [&] (const auto& operation) {
         ++signal_count;
         auto remove_operation =
-          get<ColumnViewListModel<int>::RemoveOperation>(&operation);
-        REQUIRE(remove_operation != nullptr);
+          operation.get<ColumnViewListModel<int>::RemoveOperation>();
+        REQUIRE((remove_operation != none));
         REQUIRE(remove_operation->m_index == index);
       }));
     index = 3;
@@ -162,8 +162,8 @@ TEST_SUITE("ColumnViewListModel") {
       [&] (const auto& operation) {
         ++signal_count;
         auto move_operation =
-          get<ColumnViewListModel<int>::MoveOperation>(&operation);
-        REQUIRE(move_operation != nullptr);
+          operation.get<ColumnViewListModel<int>::MoveOperation>();
+        REQUIRE((move_operation != none));
         REQUIRE(move_operation->m_source == source_index);
         REQUIRE(move_operation->m_destination == destination_index);
       }));

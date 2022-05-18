@@ -341,17 +341,17 @@ namespace Spire {
       QValidator::State remove(int index) override;
 
       /** Connects a slot to the OperationSignal. */
-      virtual boost::signals2::connection connect_operation_signal(
-        const typename OperationSignal::slot_type& slot) const = 0;
-
-      /** Connects a slot to the OperationSignal. */
-      boost::signals2::connection connect_operation_signal(
-        const AnyListModel::OperationSignal::slot_type& slot) const override;
+      template<typename F>
+      boost::signals2::connection connect_operation_signal(const F& slot) const;
 
     protected:
 
       /** Constructs an empty model. */
       ListModel() = default;
+
+      /** Connects a slot to the OperationSignal. */
+      virtual boost::signals2::connection connect_operation_signal(
+        const typename OperationSignal::slot_type& slot) const = 0;
 
     private:
       ListModel(const ListModel&) = delete;
@@ -359,6 +359,8 @@ namespace Spire {
       QValidator::State set(int index, const std::any& value) override;
       std::any at(int index) const override;
       QValidator::State insert(const std::any& value, int index) override;
+      boost::signals2::connection connect_operation_signal(
+        const AnyListModel::OperationSignal::slot_type& slot) const override;
   };
 
   template<>
@@ -605,8 +607,28 @@ namespace Spire {
   }
 
   template<typename T>
+  template<typename F>
+  boost::signals2::connection
+      ListModel<T>::connect_operation_signal(const F& slot) const {
+    if constexpr(std::is_invocable_v<F, Operation>) {
+      return connect_operation_signal(
+        static_cast<typename OperationSignal::slot_type>(slot));
+    } else {
+      return AnyListModel::connect_operation_signal(slot);
+    }
+  }
+
+  template<typename T>
   QValidator::State ListModel<T>::insert(const std::any& value, int index) {
     return insert(std::any_cast<const Type&>(value), index);
+  }
+
+  template<typename T>
+  boost::signals2::connection ListModel<T>::connect_operation_signal(
+      const AnyListModel::OperationSignal::slot_type& slot) const {
+    return connect_operation_signal([=] (const Operation& operation) {
+      slot(static_cast<const AnyListModel::Operation&>(operation));
+    });
   }
 }
 

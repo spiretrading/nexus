@@ -16,13 +16,13 @@ namespace Spire {
 
       using OperationSignal = ListModel<T>::OperationSignal;
 
-      using ListModel<T>::AddOperation;
+      using AddOperation = typename ListModel<T>::AddOperation;
 
-      using ListModel<T>::RemoveOperation;
+      using MoveOperation = typename ListModel<T>::MoveOperation;
 
-      using ListModel<T>::MoveOperation;
+      using RemoveOperation = typename ListModel<T>::RemoveOperation;
 
-      using ListModel<T>::UpdateOperation;
+      using UpdateOperation = typename ListModel<T>::UpdateOperation;
 
       /** Constructs an empty ArrayListModel. */
       ArrayListModel() = default;

@@ -15,6 +15,9 @@ namespace Spire {
 
         /** The index where the row was inserted. */
         int m_index;
+
+        /** A list representation of the added row. */
+        std::shared_ptr<AnyListModel> m_row;
       };
 
       /** Indicates a row was removed from the model. */
@@ -22,6 +25,9 @@ namespace Spire {
 
         /** The index of the row removed. */
         int m_index;
+
+        /** A list representation of the removed row. */
+        std::shared_ptr<AnyListModel> m_row;
       };
 
       /** Indicates a row was moved from one index to another. */
@@ -42,22 +48,53 @@ namespace Spire {
 
         /** The column of the updated value. */
         int m_column;
+
+        /** The previous value. */
+        std::any m_previous;
+
+        /** The updated value. */
+        std::any m_value;
       };
 
       /** Consolidates all basic operations. */
-      using Operation = typename boost::make_recursive_variant<AddOperation,
-        RemoveOperation, MoveOperation, UpdateOperation,
-        Details::ModelTransaction<boost::recursive_variant_>>::type;
+      class Operation {
+        public:
 
+          /** Constructs an Operation encapsulating an AddOperation. */
+          Operation(AddOperation operation);
+
+          /** Constructs an Operation encapsulating a RemoveOperation. */
+          Operation(RemoveOperation operation);
+
+          /** Constructs an Operation encapsulating a MoveOperation. */
+          Operation(MoveOperation operation);
+
+          /** Constructs an Operation encapsulating an UpdateOperation. */
+          Operation(UpdateOperation operation);
+
+          /** Constructs an Operation encapsulating a Transaction. */
+          Operation(std::vector<Operation> operation);
+
+          /** Extracts a reference to a specific operation. */
+          template<typename T>
+          boost::optional<const T&> get() const;
+
+          /**
+           * Applies a callable to an Operation.
+           * @param f The callable to apply.
+           */
+          template<typename... F>
+          void visit(F&&... f) const;
+
+        private:
+          boost::variant<AddOperation, RemoveOperation, MoveOperation,
+            UpdateOperation, std::vector<Operation>> m_operation;
+      };
       /**
        * An operation consisting of a list of sub-operations performed as
        * single transaction.
        */
-      using Transaction = typename boost::mpl::deref<
-        typename boost::mpl::advance<
-          typename boost::mpl::begin<Operation::types>::type,
-          boost::mpl::int_<
-            boost::mpl::size<Operation::types>::value - 1>>::type>::type;
+      using Transaction = std::vector<Operation>;
 
       /**
        * Signals an operation was applied to this model.
@@ -101,7 +138,7 @@ namespace Spire {
 
       /** Connects a slot to the OperationSignal. */
       virtual boost::signals2::connection connect_operation_signal(
-        const typename OperationSignal::slot_type& slot) const = 0;
+        const OperationSignal::slot_type& slot) const = 0;
 
     protected:
 
@@ -125,7 +162,51 @@ namespace Spire {
    */
   template<typename... F>
   void visit(const TableModel::Operation& operation, F&&... f) {
-    return Details::visit<TableModel>(operation, std::forward<F>(f)...);
+    operation.visit(std::forward<F>(f)...);
+  }
+
+  template<typename T>
+  boost::optional<const T&> TableModel::Operation::get() const {
+    if(auto operation = boost::get<T>(&m_operation)) {
+      return *operation;
+    }
+    return boost::none;
+  }
+
+  template<typename... F>
+  void TableModel::Operation::visit(F&&... f) const {
+    if(auto transaction = get<TableModel::Transaction>()) {
+      for(auto& operation : *transaction) {
+        visit(std::forward<F>(f)...);
+      }
+    } else {
+      auto head = [&] (auto&& f) {
+        boost::apply_visitor([&] (const auto& operation) {
+          using Parameter = std::decay_t<decltype(operation)>;
+          if constexpr(std::is_invocable_v<decltype(f), Parameter>) {
+            std::forward<decltype(f)>(f)(operation);
+          }
+        }, m_operation);
+      };
+      auto tail = [&] (auto&& f, auto&&... g) {
+        auto is_visited = boost::apply_visitor([&] (const auto& operation) {
+          using Parameter = std::decay_t<decltype(operation)>;
+          if constexpr(std::is_invocable_v<decltype(f), Parameter>) {
+            std::forward<decltype(f)>(f)(operation);
+            return true;
+          }
+          return false;
+        }, m_operation);
+        if(!is_visited) {
+          visit(std::forward<decltype(g)>(g)...);
+        }
+      };
+      if constexpr(sizeof...(F) == 1) {
+        head(std::forward<F>(f)...);
+      } else {
+        tail(std::forward<F>(f)...);
+      }
+    }
   }
 }
 

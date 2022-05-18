@@ -22,19 +22,21 @@ QValidator::State SingleSelectionModel::set(int index, const int& value) {
   if(index < 0 || index >= get_size()) {
     throw std::out_of_range("The index is out of range.");
   }
+  auto previous = *m_value;
   *m_value = value;
-  m_transaction.push(UpdateOperation(index));
+  m_transaction.push(UpdateOperation(index, previous, value));
   return QValidator::State::Acceptable;
 }
 
 QValidator::State SingleSelectionModel::insert(const int& value, int index) {
   if(!m_value && index == 0) {
     m_value = value;
-    m_transaction.push(AddOperation(index));
+    m_transaction.push(AddOperation(index, value));
     return QValidator::State::Acceptable;
   } else if(m_value && (index == 0 || index == 1)) {
+    auto previous = *m_value;
     m_value = value;
-    m_transaction.push(UpdateOperation(0));
+    m_transaction.push(UpdateOperation(0, previous, value));
     return QValidator::State::Acceptable;
   }
   throw std::out_of_range("The index is out of range.");
@@ -52,8 +54,9 @@ QValidator::State SingleSelectionModel::remove(int index) {
   if(index < 0 || index >= get_size()) {
     throw std::out_of_range("The index is out of range.");
   }
+  auto previous = *m_value;
   m_value = none;
-  m_transaction.push(RemoveOperation(index));
+  m_transaction.push(RemoveOperation(index, previous));
   return QValidator::State::Acceptable;
 }
 

@@ -118,11 +118,11 @@ TEST_SUITE("TableModel") {
     auto remove_count = 0;
     auto update_count = 0;
     auto transaction = TableModel::Transaction();
-    transaction.m_operations.push_back(TableModel::AddOperation(0));
-    transaction.m_operations.push_back(TableModel::MoveOperation(0, 1));
-    transaction.m_operations.push_back(TableModel::RemoveOperation(1));
-    transaction.m_operations.push_back(TableModel::UpdateOperation(0, 0));
-    visit(transaction,
+    transaction.push_back(TableModel::AddOperation(0));
+    transaction.push_back(TableModel::MoveOperation(0, 1));
+    transaction.push_back(TableModel::RemoveOperation(1));
+    transaction.push_back(TableModel::UpdateOperation(0, 0));
+    visit(TableModel::Operation(transaction),
       [&] (const TableModel::AddOperation& add_operation) {
         ++add_count;
         REQUIRE(index == 0);
@@ -158,12 +158,12 @@ TEST_SUITE("TableModel") {
   TEST_CASE("visit_partial_operations_in_transaction") {
     auto remove_count = 0;
     auto transaction = TableModel::Transaction();
-    transaction.m_operations.push_back(TableModel::AddOperation(0));
-    transaction.m_operations.push_back(TableModel::MoveOperation(0, 1));
-    transaction.m_operations.push_back(TableModel::RemoveOperation(1));
-    transaction.m_operations.push_back(TableModel::UpdateOperation(0, 0));
-    transaction.m_operations.push_back(TableModel::RemoveOperation(2));
-    visit(transaction,
+    transaction.push_back(TableModel::AddOperation(0));
+    transaction.push_back(TableModel::MoveOperation(0, 1));
+    transaction.push_back(TableModel::RemoveOperation(1));
+    transaction.push_back(TableModel::UpdateOperation(0, 0));
+    transaction.push_back(TableModel::RemoveOperation(2));
+    visit(TableModel::Operation(transaction),
       [&] (const TableModel::RemoveOperation& remove_operation) {
         ++remove_count;
         REQUIRE(remove_operation.m_index == remove_count);
@@ -175,11 +175,11 @@ TEST_SUITE("TableModel") {
     auto remove_count = 0;
     auto default_count = 0;
     auto transaction = TableModel::Transaction();
-    transaction.m_operations.push_back(TableModel::AddOperation(0));
-    transaction.m_operations.push_back(TableModel::MoveOperation(0, 1));
-    transaction.m_operations.push_back(TableModel::RemoveOperation(1));
-    transaction.m_operations.push_back(TableModel::UpdateOperation(0, 0));
-    visit(transaction,
+    transaction.push_back(TableModel::AddOperation(0));
+    transaction.push_back(TableModel::MoveOperation(0, 1));
+    transaction.push_back(TableModel::RemoveOperation(1));
+    transaction.push_back(TableModel::UpdateOperation(0, 0));
+    visit(TableModel::Operation(transaction),
       [&] (const TableModel::RemoveOperation& remove_operation) {
         ++remove_count;
         REQUIRE(remove_operation.m_index == 1);
@@ -194,8 +194,8 @@ TEST_SUITE("TableModel") {
   TEST_CASE("visit_all_operations_in_transaction_with_one_operation") {
     auto add_count = 0;
     auto transaction = TableModel::Transaction();
-    transaction.m_operations.push_back(TableModel::AddOperation(0));
-    visit(transaction,
+    transaction.push_back(TableModel::AddOperation(0));
+    visit(TableModel::Operation(transaction),
       [&] (const TableModel::AddOperation& add_operation) {
         ++add_count;
         REQUIRE(add_operation.m_index == 0);
