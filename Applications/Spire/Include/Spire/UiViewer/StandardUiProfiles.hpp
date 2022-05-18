@@ -211,6 +211,9 @@ namespace Spire {
 
   /** Returns a UiProfile for the Tooltip. */
   UiProfile make_tooltip_profile();
+
+  /** Returns a UiProfile for the TransitionView. */
+  UiProfile make_transition_view_profile();
 }
 
 #endif
