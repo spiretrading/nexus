@@ -5,6 +5,17 @@ using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
 
+namespace {
+  int find_index(int value, ListModel<int>& list) {
+    for(auto i = 0; i != list.get_size(); ++i) {
+      if(list.get(i) == value) {
+        return i;
+      }
+    }
+    return -1;
+  }
+}
+
 ListSelectionController::ListSelectionController(
   std::shared_ptr<ListModel<int>> selection)
   : m_mode(Mode::SINGLE),
@@ -66,7 +77,22 @@ void ListSelectionController::move(int source, int destination) {
 }
 
 void ListSelectionController::click(int index) {
-  m_selection->push(index);
+  if(m_mode == Mode::SINGLE) {
+    if(find_index(index, *m_selection) != -1) {
+      return;
+    }
+    m_selection->transact([&] {
+      clear(*m_selection);
+      m_selection->push(index);
+    });
+  } else if(m_mode == Mode::INCREMENTAL) {
+    auto selection_index = find_index(index, *m_selection);
+    if(selection_index == -1) {
+      m_selection->push(index);
+    } else {
+      m_selection->remove(selection_index);
+    }
+  }
 }
 
 void ListSelectionController::navigate(int index) {

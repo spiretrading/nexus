@@ -1,6 +1,7 @@
 #ifndef SPIRE_MULTI_SELECTION_MODEL_HPP
 #define SPIRE_MULTI_SELECTION_MODEL_HPP
-#include "Spire/Spire/ListModel.hpp"
+#include <unordered_set>
+#include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -29,6 +30,10 @@ namespace Spire {
 
       boost::signals2::connection connect_operation_signal(
         const typename OperationSignal::slot_type& slot) const override;
+
+    private:
+      std::unordered_set<int> m_selection;
+      ArrayListModel<int> m_list;
   };
 }
 

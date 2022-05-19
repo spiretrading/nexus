@@ -216,6 +216,13 @@ void ListView::keyPressEvent(QKeyEvent* event) {
         cross_next();
       }
       break;
+    case Qt::Key_Control:
+      m_selection_controller.set_mode(
+        ListSelectionController::Mode::INCREMENTAL);
+      break;
+    case Qt::Key_Shift:
+      m_selection_controller.set_mode(ListSelectionController::Mode::RANGE);
+      break;
     default:
       {
         auto text = event->text();

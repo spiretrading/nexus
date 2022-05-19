@@ -5,30 +5,42 @@ using namespace boost::signals2;
 using namespace Spire;
 
 int MultiSelectionModel::get_size() const {
-  throw std::runtime_error("Not implemented.");
+  return m_list.get_size();
 }
 
 const int& MultiSelectionModel::get(int index) const {
-  throw std::runtime_error("Not implemented.");
+  return m_list.get(index);
 }
 
 QValidator::State MultiSelectionModel::set(int index, const int& value) {
-  throw std::runtime_error("Not implemented.");
+  auto previous = m_list.get(index);
+  if(previous == value) {
+    return QValidator::State::Acceptable;
+  }
+  if(m_selection.insert(value).second) {
+    m_selection.erase(previous);
+    return m_list.set(index, value);
+  }
+  return m_list.remove(index);
 }
 
 QValidator::State MultiSelectionModel::insert(const int& value, int index) {
-  throw std::runtime_error("Not implemented.");
+  if(m_selection.insert(value).second) {
+    return m_list.insert(value, index);
+  }
+  return QValidator::State::Acceptable;
 }
 
 QValidator::State MultiSelectionModel::move(int source, int destination) {
-  throw std::runtime_error("Not implemented.");
+  return m_list.move(source, destination);
 }
 
 QValidator::State MultiSelectionModel::remove(int index) {
-  throw std::runtime_error("Not implemented.");
+  m_selection.erase(m_list.get(index));
+  return m_list.remove(index);
 }
 
 connection MultiSelectionModel::connect_operation_signal(
     const typename OperationSignal::slot_type& slot) const {
-  throw std::runtime_error("Not implemented.");
+  return m_list.connect_operation_signal(slot);
 }
