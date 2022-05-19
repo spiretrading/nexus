@@ -32,6 +32,7 @@ TEST_SUITE("ArrayListModel") {
     test_operation(operation,
       [&] (const ListModel<int>::AddOperation& operation) {
         REQUIRE(operation.m_index == model.get_size() - 1);
+        REQUIRE(operation.get_value() == 3);
       });
     REQUIRE_NOTHROW(model.push(2));
     REQUIRE(model.get_size() == 2);
@@ -42,6 +43,7 @@ TEST_SUITE("ArrayListModel") {
     test_operation(operation,
       [&] (const ListModel<int>::AddOperation& operation) {
         REQUIRE(operation.m_index == model.get_size() - 1);
+        REQUIRE(operation.get_value() == 2);
       });
   }
 
@@ -75,6 +77,7 @@ TEST_SUITE("ArrayListModel") {
     test_operation(operation,
       [&] (const ListModel<int>::RemoveOperation& operation) {
         REQUIRE(operation.m_index == 0);
+        REQUIRE(operation.get_value() == 1);
       });
     connection = model.connect_operation_signal(
       [&] (const ListModel<int>::Operation& operation) {
@@ -162,6 +165,7 @@ TEST_SUITE("ArrayListModel") {
     test_operation(operation,
       [&] (const ListModel<int>::AddOperation& operation) {
         REQUIRE(operation.m_index == 0);
+        REQUIRE(operation.get_value() == 1);
       });
     REQUIRE_NOTHROW(model.insert(2, 0));
     REQUIRE(model.get_size() == 2);
@@ -173,6 +177,7 @@ TEST_SUITE("ArrayListModel") {
     test_operation(operation,
       [&] (const ListModel<int>::AddOperation& operation) {
         REQUIRE(operation.m_index == 0);
+        REQUIRE(operation.get_value() == 2);
       });
     REQUIRE_THROWS(model.insert(3, -1));
     REQUIRE(model.get_size() == 2);
@@ -187,6 +192,7 @@ TEST_SUITE("ArrayListModel") {
     test_operation(operation,
       [&] (const ListModel<int>::AddOperation& operation) {
         REQUIRE(operation.m_index == 1);
+        REQUIRE(operation.get_value() == 3);
       });
   }
 
@@ -216,6 +222,8 @@ TEST_SUITE("ArrayListModel") {
     test_operation(operation,
       [&] (const ListModel<int>::UpdateOperation& operation) {
         REQUIRE(operation.m_index == 0);
+        REQUIRE(operation.get_previous() == 1);
+        REQUIRE(operation.get_value() == 0);
       });
     REQUIRE(model.set(2, 10) == QValidator::State::Acceptable);
     REQUIRE(model.get_size() == 3);
@@ -226,6 +234,8 @@ TEST_SUITE("ArrayListModel") {
     test_operation(operation,
       [&] (const ListModel<int>::UpdateOperation& operation) {
         REQUIRE(operation.m_index == 2);
+        REQUIRE(operation.get_previous() == 7);
+        REQUIRE(operation.get_value() == 10);
       });
   }
 
