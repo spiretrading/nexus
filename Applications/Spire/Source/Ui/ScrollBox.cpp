@@ -267,13 +267,15 @@ void ScrollBox::scroll_to(const QWidget& widget) {
 
 QSize ScrollBox::sizeHint() const {
   auto size = m_body->sizeHint() + toSize(m_borders) + toSize(m_padding);
-  if(m_vertical_display_policy == DisplayPolicy::ALWAYS ||
-      m_vertical_display_policy == DisplayPolicy::ON_ENGAGE) {
+  if(m_vertical_display_policy == DisplayPolicy::ALWAYS  ||
+      m_vertical_display_policy == DisplayPolicy::ON_ENGAGE ||
+      !m_scrollable_layer->get_vertical_scroll_bar().isHidden()) {
     size.rwidth() +=
       m_scrollable_layer->get_vertical_scroll_bar().sizeHint().width();
   }
-  if(m_horizontal_display_policy == DisplayPolicy::ALWAYS ||
-      m_horizontal_display_policy == DisplayPolicy::ON_ENGAGE) {
+  if(m_horizontal_display_policy == DisplayPolicy::ALWAYS  ||
+      m_horizontal_display_policy == DisplayPolicy::ON_ENGAGE ||
+      !m_scrollable_layer->get_horizontal_scroll_bar().isHidden()) {
     size.rheight() +=
       m_scrollable_layer->get_horizontal_scroll_bar().sizeHint().height();
   }
@@ -455,7 +457,7 @@ void ScrollBox::on_horizontal_scroll(int position) {
 
 void ScrollBox::update_layout() {
   auto padding = toSize(m_padding);
-  auto scroll_bar_size =  QSize(
+  auto scroll_bar_size = QSize(
     m_scrollable_layer->get_vertical_scroll_bar().sizeHint().width(),
     m_scrollable_layer->get_horizontal_scroll_bar().sizeHint().height());
   auto [is_horizontal_scroll_bar_shown, is_vertical_scroll_bar_shown] =
