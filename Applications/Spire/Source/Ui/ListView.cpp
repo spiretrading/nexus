@@ -235,6 +235,23 @@ void ListView::keyPressEvent(QKeyEvent* event) {
   }
 }
 
+void ListView::keyReleaseEvent(QKeyEvent* event) {
+  switch(event->key()) {
+    case Qt::Key_Control:
+      if(m_selection_controller.get_mode() ==
+          ListSelectionController::Mode::INCREMENTAL) {
+        m_selection_controller.set_mode(ListSelectionController::Mode::SINGLE);
+      }
+      break;
+    case Qt::Key_Shift:
+      if(m_selection_controller.get_mode() ==
+          ListSelectionController::Mode::RANGE) {
+        m_selection_controller.set_mode(ListSelectionController::Mode::SINGLE);
+      }
+      break;
+  }
+}
+
 void ListView::append_query(const QString& query) {
   m_query += query;
   if(!m_items.empty()) {
@@ -311,6 +328,7 @@ void ListView::navigate(
     }
   } while(i != start && !m_items[i]->m_item->isEnabled());
   set(i);
+  m_selection_controller.navigate(i);
 }
 
 void ListView::cross_previous() {
@@ -369,6 +387,7 @@ void ListView::cross(int direction) {
   }
   m_navigation_box = navigation_box;
   set(candidate);
+  m_selection_controller.navigate(candidate);
   if(candidate == m_current->get()) {
     m_navigation_box = navigation_box;
   }

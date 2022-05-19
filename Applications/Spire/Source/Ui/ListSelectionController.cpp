@@ -28,6 +28,10 @@ const std::shared_ptr<ListModel<int>>&
   return m_selection;
 }
 
+ListSelectionController::Mode ListSelectionController::get_mode() const {
+  return m_mode;
+}
+
 void ListSelectionController::set_mode(Mode mode) {
   m_mode = mode;
 }
@@ -96,6 +100,9 @@ void ListSelectionController::click(int index) {
 }
 
 void ListSelectionController::navigate(int index) {
+  if(m_mode == Mode::SINGLE) {
+    click(index);
+  }
 }
 
 connection ListSelectionController::connect_operation_signal(

@@ -222,6 +222,7 @@ namespace Styles {
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
+      void keyReleaseEvent(QKeyEvent* event) override;
 
     private:
       struct ItemEntry {

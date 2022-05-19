@@ -34,6 +34,9 @@ namespace Spire {
       /** Returns the selection model. */
       const std::shared_ptr<ListModel<int>>& get_selection() const;
 
+      /** Returns the selection mode. */
+      Mode get_mode() const;
+
       /** Sets the selection mode. */
       void set_mode(Mode mode);
 
