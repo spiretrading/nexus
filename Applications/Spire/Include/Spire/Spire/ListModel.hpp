@@ -31,6 +31,13 @@ namespace Spire {
 
         /** The value that was added. */
         std::any m_value;
+
+        /**
+         * Constructs an AddOperation.
+         * @param index The index where the value was inserted.
+         * @param value The value that was added.
+         */
+        AddOperation(int index, std::any value);
       };
 
       /** Indicates a value was removed from the model. */
@@ -41,6 +48,13 @@ namespace Spire {
 
         /** The value that was removed. */
         std::any m_value;
+
+        /**
+         * Constructs a RemoveOperation.
+         * @param index The index of the value removed.
+         * @param value The value that was removed.
+         */
+        RemoveOperation(int index, std::any value);
       };
 
       /** Indicates a value was moved from one index to another. */
@@ -51,6 +65,13 @@ namespace Spire {
 
         /** The index that the value was moved to. */
         int m_destination;
+
+        /**
+         * Constructs a MoveOperation.
+         * @param source The index of the value that was moved.
+         * @param destination The index that the value was moved to.
+         */
+        MoveOperation(int source, int destination);
       };
 
       /** Indicates a value was updated. */
@@ -64,6 +85,14 @@ namespace Spire {
 
         /** The updated value. */
         std::any m_value;
+
+        /**
+         * Constructs an UpdateOperation.
+         * @param index The index of the updated value.
+         * @param previous The previous value.
+         * @param value The updated value.
+         */
+        UpdateOperation(int index, std::any previous, std::any value);
       };
 
       /** Consolidates all basic operations. */
@@ -96,7 +125,7 @@ namespace Spire {
           template<typename... F>
           void visit(F&&... f) const;
 
-        private:
+        protected:
           boost::variant<AddOperation, RemoveOperation, MoveOperation,
             UpdateOperation, std::vector<Operation>> m_operation;
       };
@@ -228,6 +257,12 @@ namespace Spire {
 
       /** Indicates a value was added to the model. */
       struct AddOperation : AnyListModel::AddOperation {
+
+        /**
+         * Constructs an AddOperation.
+         * @param index The index where the value was inserted.
+         * @param value The value that was added.
+         */
         AddOperation(int index, Type value);
 
         /** Returns the value that was added. */
@@ -236,6 +271,12 @@ namespace Spire {
 
       /** Indicates a value was removed from the model. */
       struct RemoveOperation : AnyListModel::RemoveOperation {
+
+        /**
+         * Constructs a RemoveOperation.
+         * @param index The index of the value removed.
+         * @param value The value that was removed.
+         */
         RemoveOperation(int index, Type value);
 
         /** Returns the value that was removed. */
@@ -244,6 +285,13 @@ namespace Spire {
 
       /** Indicates a value was updated. */
       struct UpdateOperation : AnyListModel::UpdateOperation {
+
+        /**
+         * Constructs an UpdateOperation.
+         * @param index The index of the updated value.
+         * @param previous The previous value.
+         * @param value The updated value.
+         */
         UpdateOperation(int index, Type previous, Type value);
 
         /** Returns the previous value. */
@@ -354,6 +402,30 @@ namespace Spire {
         const typename OperationSignal::slot_type& slot) const = 0;
 
     private:
+      template<typename U>
+      struct downcast {};
+      template<>
+      struct downcast<AnyListModel::AddOperation> {
+        using type = AddOperation;
+      };
+      template<>
+      struct downcast<AnyListModel::RemoveOperation> {
+        using type = RemoveOperation;
+      };
+      template<>
+      struct downcast<AnyListModel::MoveOperation> {
+        using type = MoveOperation;
+      };
+      template<>
+      struct downcast<AnyListModel::UpdateOperation> {
+        using type = UpdateOperation;
+      };
+      template<>
+      struct downcast<AnyListModel::Transaction> {
+        using type = Transaction;
+      };
+      template<typename U>
+      using downcast_t = typename downcast<U>::type;
       ListModel(const ListModel&) = delete;
       ListModel& operator =(const ListModel&) = delete;
       QValidator::State set(int index, const std::any& value) override;
@@ -412,35 +484,35 @@ namespace Spire {
 
   template<typename... F>
   void AnyListModel::Operation::visit(F&&... f) const {
-    if(auto transaction = get<AnyListModel::Transaction>()) {
+    if(auto transaction = get<Transaction>()) {
       for(auto& operation : *transaction) {
-        visit(std::forward<F>(f)...);
+        operation.visit(std::forward<F>(f)...);
       }
     } else {
-      auto head = [&] (auto&& f) {
-        boost::apply_visitor([&] (const auto& operation) {
-          using Parameter = std::decay_t<decltype(operation)>;
-          if constexpr(std::is_invocable_v<decltype(f), Parameter>) {
-            std::forward<decltype(f)>(f)(operation);
-          }
-        }, m_operation);
-      };
-      auto tail = [&] (auto&& f, auto&&... g) {
-        auto is_visited = boost::apply_visitor([&] (const auto& operation) {
-          using Parameter = std::decay_t<decltype(operation)>;
-          if constexpr(std::is_invocable_v<decltype(f), Parameter>) {
-            std::forward<decltype(f)>(f)(operation);
-            return true;
-          }
-          return false;
-        }, m_operation);
-        if(!is_visited) {
-          visit(std::forward<decltype(g)>(g)...);
-        }
-      };
       if constexpr(sizeof...(F) == 1) {
+        auto head = [&] (auto&& f) {
+          boost::apply_visitor([&] (const auto& operation) {
+            using Parameter = std::decay_t<decltype(operation)>;
+            if constexpr(std::is_invocable_v<decltype(f), const Parameter&>) {
+              std::forward<decltype(f)>(f)(operation);
+            }
+          }, m_operation);
+        };
         head(std::forward<F>(f)...);
-      } else {
+      } else if constexpr(sizeof...(F) != 0) {
+        auto tail = [&] (auto&& f, auto&&... g) {
+          auto is_visited = boost::apply_visitor([&] (const auto& operation) {
+            using Parameter = std::decay_t<decltype(operation)>;
+            if constexpr(std::is_invocable_v<decltype(f), const Parameter&>) {
+              std::forward<decltype(f)>(f)(operation);
+              return true;
+            }
+            return false;
+          }, m_operation);
+          if(!is_visited) {
+            visit(std::forward<decltype(g)>(g)...);
+          }
+        };
         tail(std::forward<F>(f)...);
       }
     }
@@ -558,8 +630,7 @@ namespace Spire {
     } else if constexpr(std::is_same_v<U, Transaction>) {
       if(auto operation =
           AnyListModel::Operation::get<AnyListModel::Transaction>()) {
-        return reinterpret_cast<const Transaction&>(
-          AnyListModel::Operation::get<AnyListModel::Transaction>());
+        return reinterpret_cast<const Transaction&>(*operation);
       }
       return boost::none;
     }
@@ -569,6 +640,42 @@ namespace Spire {
   template<typename T>
   template<typename... F>
   void ListModel<T>::Operation::visit(F&&... f) const {
+    if(auto transaction = get<Transaction>()) {
+      for(auto& operation : *transaction) {
+        operation.visit(std::forward<F>(f)...);
+      }
+    } else {
+      if constexpr(sizeof...(F) == 1) {
+        auto head = [&] (auto&& f) {
+          boost::apply_visitor([&] (const auto& operation) {
+            using Parameter = downcast_t<std::decay_t<decltype(operation)>>;
+            if constexpr(!std::is_same_v<Parameter, Transaction> &&
+                std::is_invocable_v<decltype(f), const Parameter&>) {
+              std::forward<decltype(f)>(f)(
+                static_cast<const Parameter&>(operation));
+            }
+          }, m_operation);
+        };
+        head(std::forward<F>(f)...);
+      } else if constexpr(sizeof...(F) != 0) {
+        auto tail = [&] (auto&& f, auto&&... g) {
+          auto is_visited = boost::apply_visitor([&] (const auto& operation) {
+            using Parameter = downcast_t<std::decay_t<decltype(operation)>>;
+            if constexpr(!std::is_same_v<Parameter, Transaction> &&
+                std::is_invocable_v<decltype(f), const Parameter&>) {
+              std::forward<decltype(f)>(f)(
+                static_cast<const Parameter&>(operation));
+              return true;
+            }
+            return false;
+          }, m_operation);
+          if(!is_visited) {
+            visit(std::forward<decltype(g)>(g)...);
+          }
+        };
+        tail(std::forward<F>(f)...);
+      }
+    }
   }
 
   template<typename T>
@@ -610,7 +717,7 @@ namespace Spire {
   template<typename F>
   boost::signals2::connection
       ListModel<T>::connect_operation_signal(const F& slot) const {
-    if constexpr(std::is_invocable_v<F, Operation>) {
+    if constexpr(std::is_invocable_v<F, const Operation&>) {
       return connect_operation_signal(
         static_cast<typename OperationSignal::slot_type>(slot));
     } else {

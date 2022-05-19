@@ -17,7 +17,14 @@ namespace Spire {
         int m_index;
 
         /** A list representation of the added row. */
-        std::shared_ptr<AnyListModel> m_row;
+        std::shared_ptr<const AnyListModel> m_row;
+
+        /**
+         * Constructs an AddOperation.
+         * @param index The index where the row was inserted.
+         * @param row The list representation of the added row.
+         */
+        AddOperation(int index, std::shared_ptr<const AnyListModel> row);
       };
 
       /** Indicates a row was removed from the model. */
@@ -27,7 +34,14 @@ namespace Spire {
         int m_index;
 
         /** A list representation of the removed row. */
-        std::shared_ptr<AnyListModel> m_row;
+        std::shared_ptr<const AnyListModel> m_row;
+
+        /**
+         * Constructs a RemoveOperation.
+         * @param index The index where the row removed.
+         * @param row The list representation of the removed row.
+         */
+        RemoveOperation(int index, std::shared_ptr<const AnyListModel> row);
       };
 
       /** Indicates a row was moved from one index to another. */
@@ -38,6 +52,13 @@ namespace Spire {
 
         /** The index that the row was moved to. */
         int m_destination;
+
+        /**
+         * Constructs a MoveOperation.
+         * @param source The index of the row that was moved.
+         * @param destination The index that the row was moved to.
+         */
+        MoveOperation(int source, int destination);
       };
 
       /** Indicates a value was updated. */
@@ -54,6 +75,15 @@ namespace Spire {
 
         /** The updated value. */
         std::any m_value;
+
+        /**
+         * Constructs an UpdateOperation.
+         * @param row The row of the updated value.
+         * @param column The column of the updated value.
+         * @param previous The previous value.
+         * @param value The updated value.
+         */
+        UpdateOperation(int row, int column, std::any previous, std::any value);
       };
 
       /** Consolidates all basic operations. */
@@ -175,35 +205,35 @@ namespace Spire {
 
   template<typename... F>
   void TableModel::Operation::visit(F&&... f) const {
-    if(auto transaction = get<TableModel::Transaction>()) {
+    if(auto transaction = get<Transaction>()) {
       for(auto& operation : *transaction) {
-        visit(std::forward<F>(f)...);
+        operation.visit(std::forward<F>(f)...);
       }
     } else {
-      auto head = [&] (auto&& f) {
-        boost::apply_visitor([&] (const auto& operation) {
-          using Parameter = std::decay_t<decltype(operation)>;
-          if constexpr(std::is_invocable_v<decltype(f), Parameter>) {
-            std::forward<decltype(f)>(f)(operation);
-          }
-        }, m_operation);
-      };
-      auto tail = [&] (auto&& f, auto&&... g) {
-        auto is_visited = boost::apply_visitor([&] (const auto& operation) {
-          using Parameter = std::decay_t<decltype(operation)>;
-          if constexpr(std::is_invocable_v<decltype(f), Parameter>) {
-            std::forward<decltype(f)>(f)(operation);
-            return true;
-          }
-          return false;
-        }, m_operation);
-        if(!is_visited) {
-          visit(std::forward<decltype(g)>(g)...);
-        }
-      };
       if constexpr(sizeof...(F) == 1) {
+        auto head = [&] (auto&& f) {
+          boost::apply_visitor([&] (const auto& operation) {
+            using Parameter = std::decay_t<decltype(operation)>;
+            if constexpr(std::is_invocable_v<decltype(f), const Parameter&>) {
+              std::forward<decltype(f)>(f)(operation);
+            }
+          }, m_operation);
+        };
         head(std::forward<F>(f)...);
-      } else {
+      } else if constexpr(sizeof...(F) != 0) {
+        auto tail = [&] (auto&& f, auto&&... g) {
+          auto is_visited = boost::apply_visitor([&] (const auto& operation) {
+            using Parameter = std::decay_t<decltype(operation)>;
+            if constexpr(std::is_invocable_v<decltype(f), const Parameter&>) {
+              std::forward<decltype(f)>(f)(operation);
+              return true;
+            }
+            return false;
+          }, m_operation);
+          if(!is_visited) {
+            visit(std::forward<decltype(g)>(g)...);
+          }
+        };
         tail(std::forward<F>(f)...);
       }
     }

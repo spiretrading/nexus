@@ -1,6 +1,7 @@
 #include "Spire/Ui/ArrayTableModel.hpp"
 #include <algorithm>
 #include <stdexcept>
+#include "Spire/Spire/ArrayListModel.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -18,7 +19,8 @@ void ArrayTableModel::insert(const std::vector<std::any>& row, int index) {
     throw std::out_of_range("The index is out of range.");
   }
   m_data.insert(std::next(m_data.begin(), index), row);
-  m_transaction.push(AddOperation(index));
+  auto model = std::make_shared<ArrayListModel<std::any>>(row);
+  m_transaction.push(AddOperation(index, std::move(model)));
 }
 
 void ArrayTableModel::move(int source, int destination) {
@@ -46,8 +48,10 @@ void ArrayTableModel::remove(int index) {
   if(index < 0 || index >= get_row_size()) {
     throw std::out_of_range("The index is out of range.");
   }
+  auto previous =
+    std::make_shared<ArrayListModel<std::any>>(std::move(m_data[index]));
   m_data.erase(std::next(m_data.begin(), index));
-  m_transaction.push(RemoveOperation(index));
+  m_transaction.push(RemoveOperation(index, std::move(previous)));
 }
 
 int ArrayTableModel::get_row_size() const {
@@ -76,8 +80,9 @@ QValidator::State ArrayTableModel::set(
       column >= get_column_size()) {
     return QValidator::State::Invalid;
   }
+  auto previous = std::move(m_data[row][column]);
   m_data[row][column] = value;
-  m_transaction.push(UpdateOperation(row, column));
+  m_transaction.push(UpdateOperation(row, column, std::move(previous), value));
   return QValidator::State::Acceptable;
 }
 

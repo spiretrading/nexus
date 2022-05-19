@@ -27,6 +27,12 @@ namespace Spire {
       /** Constructs an empty ArrayListModel. */
       ArrayListModel() = default;
 
+      /**
+       * Constructs an ArrayListModel.
+       * @param data The initial data to populate the model with.
+       */
+      explicit ArrayListModel(std::vector<Type> data);
+
       int get_size() const override;
 
       const Type& get(int index) const override;
@@ -51,6 +57,10 @@ namespace Spire {
       std::vector<Type> m_data;
       ListModelTransactionLog<Type> m_transaction;
   };
+
+  template<typename T>
+  ArrayListModel<T>::ArrayListModel(std::vector<Type> data)
+    : m_data(std::move(data)) {}
 
   template<typename T>
   int ArrayListModel<T>::get_size() const {
