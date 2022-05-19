@@ -62,6 +62,8 @@ TEST_SUITE("ColumnViewListModel") {
     test_operation(operation,
       [&] (const ColumnViewListModel<int>::UpdateOperation& operation) {
         REQUIRE(operation.m_index == 2);
+        REQUIRE(operation.get_previous() == 8);
+        REQUIRE(operation.get_value() == 0);
       });
   }
 
@@ -91,6 +93,7 @@ TEST_SUITE("ColumnViewListModel") {
     test_operation(operation,
       [&] (const ColumnViewListModel<int>::AddOperation& operation) {
         REQUIRE(operation.m_index == 2);
+        REQUIRE(operation.get_value() == 6);
       });
     REQUIRE(invalid_model.get_size() == 0);
     REQUIRE(model.get_size() == 3);
@@ -105,6 +108,7 @@ TEST_SUITE("ColumnViewListModel") {
     test_operation(operation,
       [&] (const ColumnViewListModel<int>::AddOperation& operation) {
         REQUIRE(operation.m_index == 1);
+        REQUIRE(operation.get_value() == 8);
       });
     REQUIRE(invalid_model.get_size() == 0);
     REQUIRE(model.get_size() == 4);
@@ -123,6 +127,7 @@ TEST_SUITE("ColumnViewListModel") {
     auto model = ColumnViewListModel<int>(source, 1);
     REQUIRE(model.get_size() == 4);
     auto index = 0;
+    auto value = 0;
     auto signal_count = 0;
     auto connection = scoped_connection(model.connect_operation_signal(
       [&] (const auto& operation) {
@@ -131,8 +136,10 @@ TEST_SUITE("ColumnViewListModel") {
           operation.get<ColumnViewListModel<int>::RemoveOperation>();
         REQUIRE((remove_operation != none));
         REQUIRE(remove_operation->m_index == index);
+        REQUIRE(remove_operation->get_value() == value);
       }));
     index = 3;
+    value = 8;
     source->remove(index);
     REQUIRE(signal_count == 1);
     REQUIRE(model.get_size() == 3);
@@ -140,6 +147,7 @@ TEST_SUITE("ColumnViewListModel") {
     REQUIRE(model.get(1) == 4);
     REQUIRE(model.get(2) == 6);
     index = 1;
+    value = 4;
     source->remove(index);
     REQUIRE(signal_count == 2);
     REQUIRE(model.get_size() == 2);
@@ -212,6 +220,8 @@ TEST_SUITE("ColumnViewListModel") {
     test_operation(operation,
       [&] (const ColumnViewListModel<int>::UpdateOperation& operation) {
         REQUIRE(operation.m_index == 2);
+        REQUIRE(operation.get_previous() == 6);
+        REQUIRE(operation.get_value() == 0);
       });
   }
 
