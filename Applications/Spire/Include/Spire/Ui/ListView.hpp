@@ -8,6 +8,7 @@
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Styles/BasicProperty.hpp"
 #include "Spire/Ui/ClickObserver.hpp"
+#include "Spire/Ui/ListSelectionController.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -239,7 +240,7 @@ namespace Styles {
       std::shared_ptr<CurrentModel> m_current;
       boost::optional<int> m_last_current;
       boost::optional<int> m_focus_index;
-      std::shared_ptr<SelectionModel> m_selection;
+      ListSelectionController m_selection_controller;
       ViewBuilder<> m_view_builder;
       boost::optional<int> m_selected;
       std::vector<std::unique_ptr<ItemEntry>> m_items;
@@ -258,7 +259,6 @@ namespace Styles {
       boost::signals2::scoped_connection m_style_connection;
       boost::signals2::scoped_connection m_list_connection;
       boost::signals2::scoped_connection m_current_connection;
-      boost::signals2::scoped_connection m_selection_connection;
 
       void append_query(const QString& query);
       void navigate_home();

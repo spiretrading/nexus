@@ -84,7 +84,7 @@ ListView::ListView(
       m_list(std::move(list)),
       m_current(std::move(current)),
       m_last_current(m_current->get()),
-      m_selection(std::move(selection)),
+      m_selection_controller(std::move(selection)),
       m_view_builder(std::move(view_builder)),
       m_direction(Qt::Vertical),
       m_edge_navigation(EdgeNavigation::WRAP),
@@ -99,8 +99,9 @@ ListView::ListView(
   for(auto i = 0; i != m_list->get_size(); ++i) {
     make_item_entry(i);
   }
-  for(auto i = 0; i != m_selection->get_size(); ++i) {
-    m_items[m_selection->get(i)]->m_item->set_selected(true);
+  auto& selection_model = m_selection_controller.get_selection();
+  for(auto i = 0; i != selection_model->get_size(); ++i) {
+    m_items[selection_model->get(i)]->m_item->set_selected(true);
   }
   update_focus(m_last_current);
   auto body = new QWidget();
@@ -122,8 +123,8 @@ ListView::ListView(
     [=] (const auto& operation) { on_list_operation(operation); });
   m_current_connection = m_current->connect_update_signal(
     [=] (const auto& current) { on_current(current); });
-  m_selection_connection = m_selection->connect_operation_signal(
-    [=] (const auto& selection) { on_selection(selection); });
+  m_selection_controller.connect_operation_signal(
+    std::bind_front(&ListView::on_selection, this));
 }
 
 const std::shared_ptr<AnyListModel>& ListView::get_list() const {
@@ -136,7 +137,7 @@ const std::shared_ptr<ListView::CurrentModel>& ListView::get_current() const {
 
 const std::shared_ptr<ListView::SelectionModel>&
     ListView::get_selection() const {
-  return m_selection;
+  return m_selection_controller.get_selection();
 }
 
 ListItem* ListView::get_list_item(int index) {
@@ -431,17 +432,7 @@ void ListView::add_item(int index) {
   if(m_current->get() && *m_current->get() >= index) {
     set(*m_current->get() + 1);
   }
-  {
-    auto blocker = shared_connection_block(m_selection_connection);
-    m_selection->transact([&] {
-      for(auto i = 0; i != m_selection->get_size(); ++i) {
-        auto selection = m_selection->get(i);
-        if(selection >= index) {
-          m_selection->set(i, selection + 1);
-        }
-      }
-    });
-  }
+  m_selection_controller.add(index);
 }
 
 void ListView::remove_item(int index) {
@@ -451,19 +442,7 @@ void ListView::remove_item(int index) {
   for(auto i = m_items.begin() + index; i != m_items.end(); ++i) {
     --(*i)->m_index;
   }
-  {
-    auto blocker = shared_connection_block(m_selection_connection);
-    m_selection->transact([&] {
-      for(auto i = 0; i != m_selection->get_size(); ++i) {
-        auto selection = m_selection->get(i);
-        if(selection == index) {
-          m_selection->remove(i);
-        } else if(selection > index) {
-          m_selection->set(i, selection - 1);
-        }
-      }
-    });
-  }
+  m_selection_controller.remove(index);
   if(m_current->get()) {
     if(m_current->get() == index) {
       set(*m_current->get());
@@ -509,17 +488,7 @@ void ListView::move_item(int source, int destination) {
   if(adjust(current)) {
     m_current->set(current);
   }
-  {
-    auto blocker = shared_connection_block(m_selection_connection);
-    m_selection->transact([&] {
-      for(auto i = 0; i != m_selection->get_size(); ++i) {
-        auto selection = boost::optional<int>(m_selection->get(i));
-        if(adjust(selection)) {
-          m_selection->set(i, *selection);
-        }
-      }
-    });
-  }
+  m_selection_controller.move(source, destination);
   update_layout();
 }
 
@@ -591,8 +560,7 @@ void ListView::update_layout() {
 }
 
 void ListView::on_item_click(ItemEntry& item) {
-  item.m_item->set_selected(true);
-  m_selection->push(item.m_index);
+  m_selection_controller.click(item.m_index);
 }
 
 void ListView::on_list_operation(const AnyListModel::Operation& operation) {
