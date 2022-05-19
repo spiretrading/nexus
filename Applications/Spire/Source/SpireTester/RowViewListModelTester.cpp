@@ -10,7 +10,7 @@ using namespace Spire;
 namespace {
   template<typename... F>
   decltype(auto) test_operation(
-      const AnyListModel::Operation& operation, F&&... f) {
+      const RowViewListModel<int>::Operation& operation, F&&... f) {
     return visit(
       operation, std::forward<F>(f)..., [] (const auto&) { REQUIRE(false); });
   }
@@ -40,7 +40,7 @@ TEST_SUITE("RowViewListModel") {
     REQUIRE(model.get(0) == 4);
     REQUIRE(model.get(1) == 5);
     REQUIRE(model.get(2) == 6);
-    auto operations = std::deque<AnyListModel::Operation>();
+    auto operations = std::deque<RowViewListModel<int>::Operation>();
     auto connection = scoped_connection(model.connect_operation_signal(
       [&] (const auto& operation) {
         operations.push_back(operation);
@@ -57,8 +57,10 @@ TEST_SUITE("RowViewListModel") {
     auto operation = operations.front();
     operations.pop_front();
     test_operation(operation,
-      [&] (const AnyListModel::UpdateOperation& operation) {
+      [&] (const RowViewListModel<int>::UpdateOperation& operation) {
         REQUIRE(operation.m_index == 2);
+        REQUIRE(operation.get_previous() == 6);
+        REQUIRE(operation.get_value() == 0);
       });
   }
 
@@ -68,14 +70,14 @@ TEST_SUITE("RowViewListModel") {
     source->push({2});
     auto invalid_model = RowViewListModel<int>(source, 3);
     REQUIRE(invalid_model.get_size() == 0);
-    auto operations1 = std::deque<AnyListModel::Operation>();
+    auto operations1 = std::deque<RowViewListModel<int>::Operation>();
     auto connection1 = scoped_connection(invalid_model.connect_operation_signal(
       [&] (const auto& operation) {
         operations1.push_back(operation);
       }));
     auto model = RowViewListModel<int>(source, 1);
     REQUIRE(model.get(0) == 2);
-    auto operations2 = std::deque<AnyListModel::Operation>();
+    auto operations2 = std::deque<RowViewListModel<int>::Operation>();
     auto connection2 = scoped_connection(model.connect_operation_signal(
       [&] (const auto& operation) {
         operations2.push_back(operation);
@@ -172,7 +174,7 @@ TEST_SUITE("RowViewListModel") {
     REQUIRE(model.get(0) == 4);
     REQUIRE(model.get(1) == 5);
     REQUIRE(model.get(2) == 6);
-    auto operations = std::deque<AnyListModel::Operation>();
+    auto operations = std::deque<RowViewListModel<int>::Operation>();
     auto connection = scoped_connection(model.connect_operation_signal(
       [&] (const auto& operation) {
         operations.push_back(operation);
@@ -185,8 +187,10 @@ TEST_SUITE("RowViewListModel") {
     auto operation = operations.front();
     operations.pop_front();
     test_operation(operation,
-      [&] (const AnyListModel::UpdateOperation& operation) {
+      [&] (const RowViewListModel<int>::UpdateOperation& operation) {
         REQUIRE(operation.m_index == 0);
+        REQUIRE(operation.get_previous() == 4);
+        REQUIRE(operation.get_value() == 0);
       });
     source->set(1, 2, 10);
     REQUIRE(model.get(2) == 10);
@@ -194,8 +198,10 @@ TEST_SUITE("RowViewListModel") {
     operation = operations.front();
     operations.pop_front();
     test_operation(operation,
-      [&] (const AnyListModel::UpdateOperation& operation) {
+      [&] (const RowViewListModel<int>::UpdateOperation& operation) {
         REQUIRE(operation.m_index == 2);
+        REQUIRE(operation.get_previous() == 6);
+        REQUIRE(operation.get_value() == 10);
       });
   }
 
@@ -204,7 +210,7 @@ TEST_SUITE("RowViewListModel") {
     source->push({1, 2, 3});
     source->push({4, 5, 6});
     auto model = RowViewListModel<int>(source, 1);
-    auto operations = std::deque<AnyListModel::Operation>();
+    auto operations = std::deque<RowViewListModel<int>::Operation>();
     auto connection = scoped_connection(model.connect_operation_signal(
       [&] (const auto& operation) {
         operations.push_back(operation);
@@ -230,16 +236,16 @@ TEST_SUITE("RowViewListModel") {
     auto remove_count = 0;
     auto update_count = 0;
     test_operation(operation,
-      [&] (const AnyListModel::AddOperation& operation) {
+      [&] (const RowViewListModel<int>::AddOperation& operation) {
         ++add_count;
       },
-      [&] (const AnyListModel::MoveOperation& operation) {
+      [&] (const RowViewListModel<int>::MoveOperation& operation) {
         ++move_count;
       },
-      [&] (const AnyListModel::RemoveOperation& operation) {
+      [&] (const RowViewListModel<int>::RemoveOperation& operation) {
         ++remove_count;
       },
-      [&] (const AnyListModel::UpdateOperation& operation) {
+      [&] (const RowViewListModel<int>::UpdateOperation& operation) {
         ++update_count;
       });
     REQUIRE(add_count == 0);
