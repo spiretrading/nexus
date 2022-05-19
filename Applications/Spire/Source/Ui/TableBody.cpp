@@ -3,6 +3,7 @@
 #include <QEnterEvent>
 #include <QMouseEvent>
 #include <QPainter>
+#include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
@@ -150,7 +151,11 @@ TableBody::TableBody(
     style.get(Any() > CurrentColumn()).set(BackgroundColor(QColor(0xE2E0FF)));
   });
   for(auto row = 0; row != m_table->get_row_size(); ++row) {
-    on_table_operation(TableModel::AddOperation(row, nullptr));
+    auto value = std::make_shared<ArrayListModel<std::any>>();
+    for(auto i = 0; i != m_table->get_column_size(); ++i) {
+      value->push(to_any(m_table->at(row, i)));
+    }
+    on_table_operation(TableModel::AddOperation(row, std::move(value)));
   }
   auto left = 0;
   for(auto column = 0; column != m_table->get_column_size(); ++column) {

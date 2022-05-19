@@ -31,7 +31,7 @@ void FilteredTableModel::set_filter(const Filter& filter) {
             m_filtered_data.begin() + filtered_row, source_row);
           auto value = std::make_shared<ArrayListModel<std::any>>();
           for(auto i = 0; i != get_column_size(); ++i) {
-            value->push(at(filtered_row, i));
+            value->push(to_any(at(filtered_row, i)));
           }
           m_transaction.push(AddOperation(filtered_row, std::move(value)));
         }
@@ -40,7 +40,7 @@ void FilteredTableModel::set_filter(const Filter& filter) {
         if(m_filtered_data[filtered_row] == source_row) {
           auto value = std::make_shared<ArrayListModel<std::any>>();
           for(auto i = 0; i != get_column_size(); ++i) {
-            value->push(at(filtered_row, i));
+            value->push(to_any(at(filtered_row, i)));
           }
           m_filtered_data.erase(m_filtered_data.begin() + filtered_row);
           m_transaction.push(RemoveOperation(filtered_row, std::move(value)));
@@ -51,7 +51,7 @@ void FilteredTableModel::set_filter(const Filter& filter) {
     while(filtered_row != static_cast<int>(m_filtered_data.size())) {
       auto value = std::make_shared<ArrayListModel<std::any>>();
       for(auto i = 0; i != get_column_size(); ++i) {
-        value->push(at(filtered_row, i));
+        value->push(to_any(at(filtered_row, i)));
       }
       m_filtered_data.erase(m_filtered_data.begin() + filtered_row);
       m_transaction.push(RemoveOperation(filtered_row, std::move(value)));
@@ -61,7 +61,7 @@ void FilteredTableModel::set_filter(const Filter& filter) {
         m_filtered_data.push_back(source_row);
         auto value = std::make_shared<ArrayListModel<std::any>>();
         for(auto i = 0; i != get_column_size(); ++i) {
-          value->push(at(m_filtered_data.size() - 1, i));
+          value->push(to_any(at(m_filtered_data.size() - 1, i)));
         }
         m_transaction.push(
           AddOperation(m_filtered_data.size() - 1, std::move(value)));
@@ -182,7 +182,7 @@ void FilteredTableModel::on_operation(const Operation& operation) {
               i, operation.m_row) - m_filtered_data.begin());
             auto value = std::make_shared<ArrayListModel<std::any>>();
             for(auto i = 0; i != get_column_size(); ++i) {
-              value->push(at(filtered_row, i));
+              value->push(to_any(at(filtered_row, i)));
             }
             m_transaction.push(AddOperation(filtered_row, std::move(value)));
           }
@@ -190,7 +190,7 @@ void FilteredTableModel::on_operation(const Operation& operation) {
           auto index = static_cast<int>(i - m_filtered_data.begin());
           auto value = std::make_shared<ArrayListModel<std::any>>();
           for(auto i = 0; i != get_column_size(); ++i) {
-            value->push(at(index, i));
+            value->push(to_any(at(index, i)));
           }
           m_filtered_data.erase(i);
           m_transaction.push(RemoveOperation(index, std::move(value)));
