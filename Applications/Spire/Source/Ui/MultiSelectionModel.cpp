@@ -44,3 +44,7 @@ connection MultiSelectionModel::connect_operation_signal(
     const typename OperationSignal::slot_type& slot) const {
   return m_list.connect_operation_signal(slot);
 }
+
+void MultiSelectionModel::transact(const std::function<void ()>& transaction) {
+  m_list.transact([&] { transaction(); });
+}
