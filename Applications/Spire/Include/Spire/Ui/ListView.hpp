@@ -7,6 +7,7 @@
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Styles/BasicProperty.hpp"
+#include "Spire/Ui/ClickObserver.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -226,8 +227,11 @@ namespace Styles {
         ListItem* m_item;
         int m_index;
         bool m_is_current;
-        boost::signals2::scoped_connection m_connection;
+        ClickObserver m_click_observer;
+        boost::signals2::scoped_connection m_submit_connection;
+        boost::signals2::scoped_connection m_click_connection;
 
+        ItemEntry(ListItem& item, int index);
         void set(bool is_current);
       };
       mutable SubmitSignal m_submit_signal;
@@ -268,13 +272,15 @@ namespace Styles {
       void cross(int direction);
       void set(boost::optional<int> current);
       void update_focus(boost::optional<int> current);
+      void make_item_entry(int index);
       void add_item(int index);
       void remove_item(int index);
       void move_item(int source, int destination);
       void update_layout();
+      void on_item_click(ItemEntry& item);
       void on_list_operation(const AnyListModel::Operation& operation);
       void on_current(const boost::optional<int>& current);
-      void on_selection(const AnyListModel::Operation& operation);
+      void on_selection(const ListModel<int>::Operation& operation);
       void on_item_submitted(ItemEntry& item);
       void on_style();
       void on_query_timer_expired();

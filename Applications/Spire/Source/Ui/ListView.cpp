@@ -36,6 +36,12 @@ namespace {
   }
 }
 
+ListView::ItemEntry::ItemEntry(ListItem& item, int index)
+  : m_item(&item),
+    m_index(index),
+    m_is_current(false),
+    m_click_observer(*m_item) {}
+
 void ListView::ItemEntry::set(bool is_current) {
   if(m_is_current == is_current) {
     return;
@@ -90,13 +96,8 @@ ListView::ListView(
       m_query_timer(new QTimer(this)),
       m_focus_reason(Qt::OtherFocusReason) {
   setFocusPolicy(Qt::StrongFocus);
-  for(auto i = 0; i < m_list->get_size(); ++i) {
-    auto item = new ListItem(*m_view_builder(m_list, i));
-    m_items.emplace_back(new ItemEntry(item, i, false));
-    m_items.back()->m_connection =
-      item->connect_submit_signal([=, item = m_items.back().get()] {
-        on_item_submitted(*item);
-      });
+  for(auto i = 0; i != m_list->get_size(); ++i) {
+    make_item_entry(i);
   }
   for(auto i = 0; i != m_selection->get_size(); ++i) {
     m_items[m_selection->get(i)]->m_item->set_selected(true);
@@ -409,27 +410,38 @@ void ListView::update_focus(optional<int> current) {
   }
 }
 
-void ListView::add_item(int index) {
+void ListView::make_item_entry(int index) {
   auto item = new ListItem(*m_view_builder(m_list, index));
-  m_items.emplace(m_items.begin() + index, new ItemEntry(item, index, false));
-  m_items[index]->m_connection = item->connect_submit_signal(
+  m_items.emplace(m_items.begin() + index, new ItemEntry(*item, index));
+  m_items[index]->m_click_connection =
+    m_items[index]->m_click_observer.connect_click_signal(std::bind_front(
+      &ListView::on_item_click, this, std::ref(*m_items[index])));
+  m_items[index]->m_submit_connection = item->connect_submit_signal(
     [=, item = m_items[index].get()] {
       on_item_submitted(*item);
     });
+}
+
+void ListView::add_item(int index) {
+  make_item_entry(index);
   for(auto i = m_items.begin() + index + 1; i != m_items.end(); ++i) {
     ++(*i)->m_index;
   }
   update_layout();
-/*
-  auto selection = m_selection->get();
   if(m_current->get() && *m_current->get() >= index) {
     set(*m_current->get() + 1);
   }
-  if(selection && *selection >= index) {
-    m_selected = *selection + 1;
-    m_selection->set(m_selected);
+  {
+    auto blocker = shared_connection_block(m_selection_connection);
+    m_selection->transact([&] {
+      for(auto i = 0; i != m_selection->get_size(); ++i) {
+        auto selection = m_selection->get(i);
+        if(selection >= index) {
+          m_selection->set(i, selection + 1);
+        }
+      }
+    });
   }
-*/
 }
 
 void ListView::remove_item(int index) {
@@ -439,8 +451,19 @@ void ListView::remove_item(int index) {
   for(auto i = m_items.begin() + index; i != m_items.end(); ++i) {
     --(*i)->m_index;
   }
-/*
-  auto selection = m_selection->get();
+  {
+    auto blocker = shared_connection_block(m_selection_connection);
+    m_selection->transact([&] {
+      for(auto i = 0; i != m_selection->get_size(); ++i) {
+        auto selection = m_selection->get(i);
+        if(selection == index) {
+          m_selection->remove(i);
+        } else if(selection > index) {
+          m_selection->set(i, selection - 1);
+        }
+      }
+    });
+  }
   if(m_current->get()) {
     if(m_current->get() == index) {
       set(*m_current->get());
@@ -448,16 +471,6 @@ void ListView::remove_item(int index) {
       set(*m_current->get() - 1);
     }
   }
-  if(selection && *selection >= index) {
-    auto blocker = shared_connection_block(m_selection_connection);
-    if(selection == index) {
-      m_selected = none;
-    } else {
-      m_selected = *selection - 1;
-    }
-    m_selection->set(m_selected);
-  }
-*/
   update_layout();
 }
 
@@ -492,18 +505,21 @@ void ListView::move_item(int source, int destination) {
   };
   adjust(m_last_current);
   adjust(m_focus_index);
-/*
-  auto selection = m_selection->get();
   auto current = m_current->get();
   if(adjust(current)) {
     m_current->set(current);
   }
-  if(adjust(selection)) {
+  {
     auto blocker = shared_connection_block(m_selection_connection);
-    m_selected = selection;
-    m_selection->set(*m_selected);
+    m_selection->transact([&] {
+      for(auto i = 0; i != m_selection->get_size(); ++i) {
+        auto selection = boost::optional<int>(m_selection->get(i));
+        if(adjust(selection)) {
+          m_selection->set(i, *selection);
+        }
+      }
+    });
   }
-*/
   update_layout();
 }
 
@@ -574,6 +590,11 @@ void ListView::update_layout() {
   }
 }
 
+void ListView::on_item_click(ItemEntry& item) {
+  item.m_item->set_selected(true);
+  m_selection->push(item.m_index);
+}
+
 void ListView::on_list_operation(const AnyListModel::Operation& operation) {
   visit(operation,
     [&] (const AnyListModel::AddOperation& operation) {
@@ -606,20 +627,19 @@ void ListView::on_current(const optional<int>& current) {
     m_navigation_box = QRect();
   }
   m_last_current = current;
-  if(current) {
-    m_selection->push(*current);
-  } else {
-    clear(*m_selection);
-  }
 }
 
-void ListView::on_selection(const AnyListModel::Operation& operation) {
+void ListView::on_selection(const ListModel<int>::Operation& operation) {
   visit(operation,
-    [&] (const AnyListModel::AddOperation& operation) {
-      m_items[m_selection->get(operation.m_index)]->m_item->set_selected(true);
+    [&] (const ListModel<int>::AddOperation& operation) {
+      m_items[operation.get_value()]->m_item->set_selected(true);
     },
-    [&] (const AnyListModel::RemoveOperation& operation) {
-      m_items[m_selection->get(operation.m_index)]->m_item->set_selected(false);
+    [&] (const ListModel<int>::RemoveOperation& operation) {
+      m_items[operation.get_value()]->m_item->set_selected(false);
+    },
+    [&] (const ListModel<int>::UpdateOperation& operation) {
+      m_items[operation.get_previous()]->m_item->set_selected(false);
+      m_items[operation.get_value()]->m_item->set_selected(true);
     });
 }
 
