@@ -49,17 +49,24 @@ void ListSelectionController::add(int index) {
 }
 
 void ListSelectionController::remove(int index) {
-  auto blocker = shared_connection_block(m_connection);
-  m_selection->transact([&] {
-    for(auto i = 0; i != m_selection->get_size(); ++i) {
-      auto selection = m_selection->get(i);
-      if(selection == index) {
-        m_selection->remove(i);
-      } else if(selection > index) {
-        m_selection->set(i, selection - 1);
+  auto operation = optional<ListModel<int>::Operation>();
+  {
+    auto blocker = shared_connection_block(m_connection);
+    m_selection->transact([&] {
+      for(auto i = 0; i != m_selection->get_size(); ++i) {
+        auto selection = m_selection->get(i);
+        if(selection == index) {
+          m_selection->remove(i);
+          operation = ListModel<int>::RemoveOperation(i, index);
+        } else if(selection > index) {
+          m_selection->set(i, selection - 1);
+        }
       }
-    }
-  });
+    });
+  }
+  if(operation) {
+    m_operation_signal(*operation);
+  }
 }
 
 void ListSelectionController::move(int source, int destination) {
