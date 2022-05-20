@@ -267,13 +267,13 @@ void ScrollBox::scroll_to(const QWidget& widget) {
 
 QSize ScrollBox::sizeHint() const {
   auto size = m_body->sizeHint() + toSize(m_borders) + toSize(m_padding);
-  if(m_vertical_display_policy == DisplayPolicy::ALWAYS  ||
+  if(m_vertical_display_policy == DisplayPolicy::ALWAYS ||
       m_vertical_display_policy == DisplayPolicy::ON_ENGAGE ||
       !m_scrollable_layer->get_vertical_scroll_bar().isHidden()) {
     size.rwidth() +=
       m_scrollable_layer->get_vertical_scroll_bar().sizeHint().width();
   }
-  if(m_horizontal_display_policy == DisplayPolicy::ALWAYS  ||
+  if(m_horizontal_display_policy == DisplayPolicy::ALWAYS ||
       m_horizontal_display_policy == DisplayPolicy::ON_ENGAGE ||
       !m_scrollable_layer->get_horizontal_scroll_bar().isHidden()) {
     size.rheight() +=
