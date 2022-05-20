@@ -16,18 +16,18 @@ namespace Spire {
 
       int get_size() const override;
 
-      const Type& get(int index) const override;
+      const int& get(int index) const override;
 
-      QValidator::State set(int index, const Type& value) override;
+      QValidator::State set(int index, const int& value) override;
 
-      QValidator::State insert(const Type& value, int index) override;
+      QValidator::State insert(const int& value, int index) override;
 
       QValidator::State move(int source, int destination) override;
 
       QValidator::State remove(int index) override;
 
       boost::signals2::connection connect_operation_signal(
-        const typename OperationSignal::slot_type& slot) const override;
+        const OperationSignal::slot_type& slot) const override;
 
     protected:
       void transact(const std::function<void ()>& f) override;

@@ -114,24 +114,28 @@ void ListSelectionController::click(int index) {
       m_range_anchor = index;
     } else if(!m_current) {
       auto direction = get_direction(*m_range_anchor, index);
-      for(auto i = *m_range_anchor; direction * i <= direction * index;
-          i += direction) {
-        m_selection->push(i);
-      }
+      m_selection->transact([&] {
+        for(auto i = *m_range_anchor; direction * i <= direction * index;
+            i += direction) {
+          m_selection->push(i);
+        }
+      });
     } else {
       auto direction = get_direction(*m_current, index);
-      for(auto i = *m_current; i != index + direction; i += direction) {
-        if(direction * i >= direction * *m_range_anchor) {
-          if(find_index(i, *m_selection) == -1) {
-            m_selection->push(i);
-          }
-        } else if(i != index) {
-          auto j = find_index(i, *m_selection);
-          if(j != -1) {
-            m_selection->remove(j);
+      m_selection->transact([&] {
+        for(auto i = *m_current; i != index + direction; i += direction) {
+          if(direction * i >= direction * *m_range_anchor) {
+            if(find_index(i, *m_selection) == -1) {
+              m_selection->push(i);
+            }
+          } else if(i != index) {
+            auto j = find_index(i, *m_selection);
+            if(j != -1) {
+              m_selection->remove(j);
+            }
           }
         }
-      }
+      });
     }
   }
   m_current = index;
