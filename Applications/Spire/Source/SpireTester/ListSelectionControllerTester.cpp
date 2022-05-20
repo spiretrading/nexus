@@ -3,6 +3,7 @@
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Ui/ListSelectionController.hpp"
 
+using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
 
@@ -42,6 +43,19 @@ TEST_SUITE("ListSelectionController") {
     controller.click(3);
     REQUIRE(selection->get_size() == 1);
     REQUIRE(selection->get(0) == 3);
+  }
+
+  TEST_CASE("single_click_existing_selection") {
+    auto selection = std::make_shared<ArrayListModel<int>>();
+    selection->push(1);
+    selection->push(2);
+    selection->push(3);
+    selection->push(4);
+    auto controller = ListSelectionController(selection);
+    REQUIRE(controller.get_mode() == ListSelectionController::Mode::SINGLE);
+    controller.click(2);
+    REQUIRE(selection->get_size() == 1);
+    REQUIRE(selection->get(0) == 2);
   }
 
   TEST_CASE("single_navigate") {
@@ -114,5 +128,24 @@ TEST_SUITE("ListSelectionController") {
     controller.navigate(5);
     REQUIRE(selection->get_size() == 1);
     REQUIRE(find(*selection, 5));
+  }
+
+  TEST_CASE("range_click") {
+    auto selection = std::make_shared<ArrayListModel<int>>();
+    auto controller = ListSelectionController(selection);
+    controller.set_mode(ListSelectionController::Mode::RANGE);
+    controller.click(3);
+    REQUIRE(selection->get_size() == 1);
+    REQUIRE(find(*selection, 3));
+    controller.click(6);
+    REQUIRE(selection->get_size() == 4);
+    REQUIRE(find(*selection, 3));
+    REQUIRE(find(*selection, 4));
+    REQUIRE(find(*selection, 5));
+    REQUIRE(find(*selection, 6));
+    controller.click(2);
+    REQUIRE(selection->get_size() == 2);
+    REQUIRE(find(*selection, 2));
+    REQUIRE(find(*selection, 3));
   }
 }

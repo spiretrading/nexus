@@ -64,13 +64,13 @@ namespace Spire {
 
       /**
        * Updates the selection when an item is clicked.
-       * @param The index of the clicked item.
+       * @param index The index of the clicked item.
        */
       void click(int index);
 
       /**
        * Updates the selection when an item is navigated to (by keyboard).
-       * @param The index of item that was navigated to.
+       * @param index The index to navigate to.
        */
       void navigate(int index);
 
@@ -82,6 +82,8 @@ namespace Spire {
       mutable SelectionModel::OperationSignal m_operation_signal;
       Mode m_mode;
       std::shared_ptr<SelectionModel> m_selection;
+      boost::optional<int> m_current;
+      boost::optional<int> m_range_anchor;
       boost::signals2::scoped_connection m_connection;
 
       void on_operation(const SelectionModel::Operation& operation);

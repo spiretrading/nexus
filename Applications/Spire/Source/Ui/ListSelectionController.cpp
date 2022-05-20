@@ -14,6 +14,13 @@ namespace {
     }
     return -1;
   }
+
+  int get_direction(int start, int end) {
+    if(start <= end) {
+      return 1;
+    }
+    return -1;
+  }
 }
 
 ListSelectionController::ListSelectionController(
@@ -70,12 +77,7 @@ void ListSelectionController::remove(int index) {
 }
 
 void ListSelectionController::move(int source, int destination) {
-  auto direction = [&] {
-    if(source < destination) {
-      return -1;
-    }
-    return 1;
-  }();
+  auto direction = get_direction(destination, source);
   auto blocker = shared_connection_block(m_connection);
   m_selection->transact([&] {
     for(auto i = 0; i != m_selection->get_size(); ++i) {
@@ -89,13 +91,13 @@ void ListSelectionController::move(int source, int destination) {
 
 void ListSelectionController::click(int index) {
   if(m_mode == Mode::SINGLE) {
-    if(find_index(index, *m_selection) != -1) {
-      return;
+    if(m_selection->get_size() != 1 || m_selection->get(0) != index) {
+      m_selection->transact([&] {
+        clear(*m_selection);
+        m_selection->push(index);
+      });
     }
-    m_selection->transact([&] {
-      clear(*m_selection);
-      m_selection->push(index);
-    });
+    m_range_anchor = index;
   } else if(m_mode == Mode::INCREMENTAL) {
     auto selection_index = find_index(index, *m_selection);
     if(selection_index == -1) {
@@ -103,11 +105,40 @@ void ListSelectionController::click(int index) {
     } else {
       m_selection->remove(selection_index);
     }
+    m_range_anchor = index;
+  } else if(m_mode == Mode::RANGE) {
+    if(!m_range_anchor) {
+      m_mode = Mode::SINGLE;
+      click(index);
+      m_mode = Mode::RANGE;
+      m_range_anchor = index;
+    } else if(!m_current) {
+      auto direction = get_direction(*m_range_anchor, index);
+      for(auto i = *m_range_anchor; direction * i <= direction * index;
+          i += direction) {
+        m_selection->push(i);
+      }
+    } else {
+      auto direction = get_direction(*m_current, index);
+      for(auto i = *m_current; i != index + direction; i += direction) {
+        if(direction * i >= direction * *m_range_anchor) {
+          if(find_index(i, *m_selection) == -1) {
+            m_selection->push(i);
+          }
+        } else if(i != index) {
+          auto j = find_index(i, *m_selection);
+          if(j != -1) {
+            m_selection->remove(j);
+          }
+        }
+      }
+    }
   }
+  m_current = index;
 }
 
 void ListSelectionController::navigate(int index) {
-  if(m_mode == Mode::SINGLE) {
+  if(m_mode == Mode::SINGLE || m_mode == Mode::RANGE) {
     click(index);
   }
 }
