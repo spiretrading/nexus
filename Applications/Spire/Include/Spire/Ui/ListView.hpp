@@ -8,6 +8,7 @@
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Styles/BasicProperty.hpp"
 #include "Spire/Ui/ClickObserver.hpp"
+#include "Spire/Ui/ListCurrentController.hpp"
 #include "Spire/Ui/ListSelectionController.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -36,19 +37,6 @@ namespace Styles {
    */
   using ListOverflowGap = BasicProperty<int, struct ListOverflowGapTag>;
 
-  /**
-   * Specifies the keyboard navigation behavior when the first or last list
-   * item is selected and the key for next or previous list item is pressed.
-   */
-  enum class EdgeNavigation {
-
-    /** Selection stops at the current selection. */
-    CONTAIN,
-
-    /** Selection moves from the first item to last item and vice versa. */
-    WRAP
-  };
-
   /** Specifies how to layout items on overflow. */
   enum class Overflow {
 
@@ -58,6 +46,8 @@ namespace Styles {
     /** List items wrap to fill the perpendicular space. */
     WRAP
   };
+
+  using EdgeNavigation = ListCurrentController::EdgeNavigation;
 }
 
   /**
@@ -67,15 +57,11 @@ namespace Styles {
   class ListView : public QWidget {
     public:
 
-      /**
-       * The type of model representing the index of the current value.
-       */
-      using CurrentModel = ValueModel<boost::optional<int>>;
+      /** The type of model representing the index of the current value. */
+      using CurrentModel = ListCurrentController::CurrentModel;
 
-      /**
-       * The type of model representing the list of selected indicies.
-       */
-      using SelectionModel = ListModel<int>;
+      /** The type of model representing the list of selected indicies. */
+      using SelectionModel = ListSelectionController::SelectionModel;
 
       /**
        * The type of function used to build a QWidget representing a value.
@@ -238,12 +224,10 @@ namespace Styles {
       };
       mutable SubmitSignal m_submit_signal;
       std::shared_ptr<AnyListModel> m_list;
-      std::shared_ptr<CurrentModel> m_current;
-      boost::optional<int> m_last_current;
       boost::optional<int> m_focus_index;
+      ListCurrentController m_current_controller;
       ListSelectionController m_selection_controller;
       ViewBuilder<> m_view_builder;
-      boost::optional<int> m_selected;
       std::vector<std::unique_ptr<ItemEntry>> m_items;
       Box* m_box;
       QSizePolicy::Policy m_direction_policy;
@@ -251,9 +235,7 @@ namespace Styles {
       int m_item_gap;
       int m_overflow_gap;
       Qt::Orientation m_direction;
-      Styles::EdgeNavigation m_edge_navigation;
       Styles::Overflow m_overflow;
-      QRect m_navigation_box;
       QString m_query;
       QTimer* m_query_timer;
       Qt::FocusReason m_focus_reason;
@@ -262,16 +244,6 @@ namespace Styles {
       boost::signals2::scoped_connection m_current_connection;
 
       void append_query(const QString& query);
-      void navigate_home();
-      void navigate_end();
-      void navigate_next();
-      void navigate_previous();
-      void navigate(
-        int direction, int start, Styles::EdgeNavigation edge_navigation);
-      void cross_next();
-      void cross_previous();
-      void cross(int direction);
-      void set(boost::optional<int> current);
       void update_focus(boost::optional<int> current);
       void make_item_entry(int index);
       void add_item(int index);
@@ -280,7 +252,8 @@ namespace Styles {
       void update_layout();
       void on_item_click(ItemEntry& item);
       void on_list_operation(const AnyListModel::Operation& operation);
-      void on_current(const boost::optional<int>& current);
+      void on_current(
+        boost::optional<int> previous, boost::optional<int> current);
       void on_selection(const ListModel<int>::Operation& operation);
       void on_item_submitted(ItemEntry& item);
       void on_style();

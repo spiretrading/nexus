@@ -10,6 +10,9 @@ namespace Spire {
   class ListSelectionController {
     public:
 
+      /** The type of model representing the list of selected indicies. */
+      using SelectionModel = ListModel<int>;
+
       /** Enumerates the different ways that items can be selected. */
       enum class Mode {
 
@@ -29,10 +32,10 @@ namespace Spire {
        * @param selection The model of selected items.
        */
       explicit ListSelectionController(
-        std::shared_ptr<ListModel<int>> selection);
+        std::shared_ptr<SelectionModel> selection);
 
       /** Returns the selection model. */
-      const std::shared_ptr<ListModel<int>>& get_selection() const;
+      const std::shared_ptr<SelectionModel>& get_selection() const;
 
       /** Returns the selection mode. */
       Mode get_mode() const;
@@ -73,15 +76,15 @@ namespace Spire {
 
       /** Connects a slot to a signal indicating a change to the selection. */
       boost::signals2::connection connect_operation_signal(
-        const ListModel<int>::OperationSignal::slot_type& slot) const;
+        const SelectionModel::OperationSignal::slot_type& slot) const;
 
     private:
-      mutable ListModel<int>::OperationSignal m_operation_signal;
+      mutable SelectionModel::OperationSignal m_operation_signal;
       Mode m_mode;
-      std::shared_ptr<ListModel<int>> m_selection;
+      std::shared_ptr<SelectionModel> m_selection;
       boost::signals2::scoped_connection m_connection;
 
-      void on_operation(const ListModel<int>::Operation& operation);
+      void on_operation(const SelectionModel::Operation& operation);
   };
 }
 

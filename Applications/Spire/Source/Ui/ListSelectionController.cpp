@@ -6,7 +6,7 @@ using namespace boost::signals2;
 using namespace Spire;
 
 namespace {
-  int find_index(int value, ListModel<int>& list) {
+  int find_index(int value, ListSelectionController::SelectionModel& list) {
     for(auto i = 0; i != list.get_size(); ++i) {
       if(list.get(i) == value) {
         return i;
@@ -17,13 +17,13 @@ namespace {
 }
 
 ListSelectionController::ListSelectionController(
-  std::shared_ptr<ListModel<int>> selection)
+  std::shared_ptr<SelectionModel> selection)
   : m_mode(Mode::SINGLE),
     m_selection(std::move(selection)),
     m_connection(m_selection->connect_operation_signal(
       std::bind_front(&ListSelectionController::on_operation, this))) {}
 
-const std::shared_ptr<ListModel<int>>&
+const std::shared_ptr<ListSelectionController::SelectionModel>&
     ListSelectionController::get_selection() const {
   return m_selection;
 }
@@ -49,7 +49,7 @@ void ListSelectionController::add(int index) {
 }
 
 void ListSelectionController::remove(int index) {
-  auto operation = optional<ListModel<int>::Operation>();
+  auto operation = optional<SelectionModel::Operation>();
   {
     auto blocker = shared_connection_block(m_connection);
     m_selection->transact([&] {
@@ -57,7 +57,7 @@ void ListSelectionController::remove(int index) {
         auto selection = m_selection->get(i);
         if(selection == index) {
           m_selection->remove(i);
-          operation = ListModel<int>::RemoveOperation(i, index);
+          operation = SelectionModel::RemoveOperation(i, index);
         } else if(selection > index) {
           m_selection->set(i, selection - 1);
         }
@@ -113,11 +113,11 @@ void ListSelectionController::navigate(int index) {
 }
 
 connection ListSelectionController::connect_operation_signal(
-    const ListModel<int>::OperationSignal::slot_type& slot) const {
+    const SelectionModel::OperationSignal::slot_type& slot) const {
   return m_operation_signal.connect(slot);
 }
 
 void ListSelectionController::on_operation(
-    const ListModel<int>::Operation& operation) {
+    const SelectionModel::Operation& operation) {
   m_operation_signal(operation);
 }
