@@ -35,11 +35,11 @@ void ListSelectionModel::set_mode(Mode mode) {
   } else if(m_mode == Mode::SINGLE) {
     m_model = std::make_shared<SingleSelectionModel>();
     auto operation = Transaction();
-    for(auto i = previous->get_size() - 1; i > 0; --i) {
+    for(auto i = previous->get_size() - 2; i >= 0; --i) {
       operation.push_back(RemoveOperation(i, previous->get(i)));
     }
     if(previous->get_size() >= 1) {
-      m_model->push(previous->get(0));
+      m_model->push(previous->get(previous->get_size() - 1));
     }
     if(!operation.empty()) {
       m_operation_signal(operation);
