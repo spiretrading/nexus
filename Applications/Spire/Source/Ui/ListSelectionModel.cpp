@@ -24,7 +24,7 @@ void ListSelectionModel::set_mode(Mode mode) {
   m_mode = mode;
   auto previous = m_model;
   if(m_mode == Mode::NONE) {
-    m_model = std::make_shared<EmptySelectionModel>();
+    m_model = std::make_shared<ListEmptySelectionModel>();
     auto operation = Transaction();
     for(auto i = previous->get_size() - 1; i >= 0; --i) {
       operation.push_back(RemoveOperation(i, previous->get(i)));

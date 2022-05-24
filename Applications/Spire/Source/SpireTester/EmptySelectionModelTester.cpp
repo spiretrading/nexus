@@ -7,7 +7,7 @@ using namespace Spire;
 
 TEST_SUITE("EmptySelectionModel") {
   TEST_CASE("construct") {
-    auto model = EmptySelectionModel();
+    auto model = ListEmptySelectionModel();
     REQUIRE(model.get_size() == 0);
     REQUIRE_THROWS(model.get(0));
     REQUIRE_THROWS(model.set(0, 0));
