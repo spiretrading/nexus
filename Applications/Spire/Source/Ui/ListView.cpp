@@ -80,7 +80,7 @@ ListView::ListView(std::shared_ptr<AnyListModel> list,
   ViewBuilder<> view_builder, QWidget* parent)
   : ListView(
       std::move(list), std::make_shared<LocalValueModel<optional<int>>>(),
-      std::make_shared<SingleSelectionModel>(), std::move(view_builder),
+      std::make_shared<ListSingleSelectionModel>(), std::move(view_builder),
       parent) {}
 
 ListView::ListView(std::shared_ptr<AnyListModel> list,

@@ -104,25 +104,6 @@ struct TableBody::ColumnCover : Cover {
   }
 };
 
-TableBody::TableBody(std::shared_ptr<TableModel> table,
-  std::shared_ptr<ListModel<int>> widths, QWidget* parent)
-  : TableBody(
-      std::move(table), std::make_shared<LocalValueModel<optional<Index>>>(),
-      std::move(widths), &default_view_builder, parent) {}
-
-TableBody::TableBody(std::shared_ptr<TableModel> table,
-  std::shared_ptr<CurrentModel> current, std::shared_ptr<ListModel<int>> widths,
-  QWidget* parent)
-  : TableBody(std::move(table), std::move(current), std::move(widths),
-      &default_view_builder, parent) {}
-
-TableBody::TableBody(
-  std::shared_ptr<TableModel> table, std::shared_ptr<ListModel<int>> widths,
-  ViewBuilder view_builder, QWidget* parent)
-  : TableBody(std::move(table),
-      std::make_shared<LocalValueModel<optional<Index>>>(), std::move(widths),
-      std::move(view_builder), parent) {}
-
 TableBody::TableBody(
     std::shared_ptr<TableModel> table, std::shared_ptr<CurrentModel> current,
     std::shared_ptr<SelectionModel> selection,

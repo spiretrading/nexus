@@ -7,7 +7,7 @@ using namespace Spire;
 
 TEST_SUITE("SingleSelectionModel") {
   TEST_CASE("construct") {
-    auto model = SingleSelectionModel();
+    auto model = ListSingleSelectionModel();
     REQUIRE(model.get_size() == 0);
     REQUIRE_THROWS(model.get(0));
     REQUIRE_THROWS(model.set(0, 54));
@@ -16,7 +16,7 @@ TEST_SUITE("SingleSelectionModel") {
   }
 
   TEST_CASE("update") {
-    auto model = SingleSelectionModel();
+    auto model = ListSingleSelectionModel();
     REQUIRE(model.push(5) == QValidator::State::Acceptable);
     REQUIRE(model.get_size() == 1);
     REQUIRE(model.get(0) == 5);

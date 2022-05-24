@@ -88,6 +88,8 @@ namespace Spire {
     private:
       Mode m_mode;
       std::shared_ptr<SelectionModel> m_selection;
+      int m_row_size;
+      int m_column_size;
   };
 }
 

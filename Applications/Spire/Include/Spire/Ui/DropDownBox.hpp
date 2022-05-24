@@ -172,7 +172,7 @@ namespace Styles {
     std::shared_ptr<CurrentModel> current, ViewBuilder<T> view_builder,
     QWidget* parent)
     : DropDownBox(std::move(list), std::move(current),
-        std::make_shared<SingleSelectionModel>(), std::move(view_builder),
+        std::make_shared<ListSingleSelectionModel>(), std::move(view_builder),
         parent) {}
 
   template<std::derived_from<AnyListModel> T>

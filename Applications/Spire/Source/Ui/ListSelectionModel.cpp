@@ -9,7 +9,7 @@ using namespace Spire;
 
 ListSelectionModel::ListSelectionModel()
   : m_mode(Mode::SINGLE),
-    m_model(std::make_shared<SingleSelectionModel>()) {
+    m_model(std::make_shared<ListSingleSelectionModel>()) {
   m_model->connect_operation_signal(m_operation_signal);
 }
 
@@ -33,7 +33,7 @@ void ListSelectionModel::set_mode(Mode mode) {
       m_operation_signal(operation);
     }
   } else if(m_mode == Mode::SINGLE) {
-    m_model = std::make_shared<SingleSelectionModel>();
+    m_model = std::make_shared<ListSingleSelectionModel>();
     auto operation = Transaction();
     for(auto i = previous->get_size() - 2; i >= 0; --i) {
       operation.push_back(RemoveOperation(i, previous->get(i)));

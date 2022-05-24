@@ -85,51 +85,6 @@ namespace Styles {
         const std::shared_ptr<TableModel>& table, int row, int column);
 
       /**
-       * Constructs a TableBody using default local models and a default view
-       * builder.
-       * @param table The model of values to display.
-       * @param widths The widths of each column.
-       * @param parent The parent widget.
-       */
-      explicit TableBody(std::shared_ptr<TableModel> table,
-        std::shared_ptr<ListModel<int>> widths, QWidget* parent = nullptr);
-
-      /**
-       * Constructs a TableBody using a default view builder.
-       * @param table The model of values to display.
-       * @param current The current value.
-       * @param widths The widths of each column.
-       * @param parent The parent widget.
-       */
-      explicit TableBody(std::shared_ptr<TableModel> table,
-        std::shared_ptr<CurrentModel> current,
-        std::shared_ptr<ListModel<int>> widths, QWidget* parent = nullptr);
-
-      /**
-       * Constructs a TableBody using default local models.
-       * @param table The model of values to display.
-       * @param widths The widths of each column.
-       * @param view_builder The ViewBuilder to use.
-       * @param parent The parent widget.
-       */
-      TableBody(std::shared_ptr<TableModel> table,
-        std::shared_ptr<ListModel<int>> widths, ViewBuilder view_builder,
-        QWidget* parent = nullptr);
-
-      /**
-       * Constructs a TableBody.
-       * @param table The model of values to display.
-       * @param current The current value.
-       * @param widths The widths of each column.
-       * @param view_builder The ViewBuilder to use.
-       * @param parent The parent widget.
-       */
-      TableBody(std::shared_ptr<TableModel> table,
-        std::shared_ptr<CurrentModel> current,
-        std::shared_ptr<ListModel<int>> widths, ViewBuilder view_builder,
-        QWidget* parent = nullptr);
-
-      /**
        * Constructs a TableBody.
        * @param table The model of values to display.
        * @param current The current value.
