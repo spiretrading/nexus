@@ -35,7 +35,8 @@ QWidget* TableView::default_view_builder(
 TableView::TableView(
     std::shared_ptr<TableModel> table, std::shared_ptr<HeaderModel> header,
     std::shared_ptr<TableFilter> filter, std::shared_ptr<CurrentModel> current,
-    ViewBuilder view_builder, QWidget* parent)
+    std::shared_ptr<SelectionModel> selection, ViewBuilder view_builder,
+    QWidget* parent)
     : QWidget(parent),
       m_table(std::move(table)),
       m_header(std::move(header)),
@@ -65,7 +66,7 @@ TableView::TableView(
     std::bind_front(&TableView::is_filtered, this));
   m_sorted_table = std::make_shared<SortedTableModel>(m_filtered_table);
   m_body = new TableBody(m_sorted_table, std::move(current),
-    m_header_view->get_widths(), std::move(view_builder));
+    std::move(selection), m_header_view->get_widths(), std::move(view_builder));
   m_body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   m_scroll_box = new ScrollBox(m_body);
   auto layout = make_vbox_layout(this);
@@ -91,6 +92,11 @@ const std::shared_ptr<TableModel>& TableView::get_table() const {
 
 const std::shared_ptr<TableView::CurrentModel>& TableView::get_current() const {
   return m_body->get_current();
+}
+
+const std::shared_ptr<TableView::SelectionModel>&
+    TableView::get_selection() const {
+  return m_body->get_selection();
 }
 
 connection TableView::connect_sort_signal(
@@ -220,6 +226,12 @@ TableViewBuilder& TableViewBuilder::set_current(
   return *this;
 }
 
+TableViewBuilder& TableViewBuilder::set_selection(
+    const std::shared_ptr<TableView::SelectionModel>& selection) {
+  m_selection = selection;
+  return *this;
+}
+
 TableViewBuilder& TableViewBuilder::set_view_builder(
     const TableView::ViewBuilder& view_builder) {
   m_view_builder = view_builder;
@@ -227,6 +239,6 @@ TableViewBuilder& TableViewBuilder::set_view_builder(
 }
 
 TableView* TableViewBuilder::make() const {
-  return new TableView(
-    m_table, m_header, m_filter, m_current, m_view_builder, m_parent);
+  return new TableView(m_table, m_header, m_filter, m_current, m_selection,
+    m_view_builder, m_parent);
 }

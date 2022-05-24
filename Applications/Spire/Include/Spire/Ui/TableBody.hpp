@@ -12,6 +12,7 @@
 #include "Spire/Styles/StateSelector.hpp"
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/TableCurrentController.hpp"
+#include "Spire/Ui/TableSelectionController.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -70,8 +71,9 @@ namespace Styles {
       using ViewBuilder = std::function<QWidget* (
         const std::shared_ptr<TableModel>& table, int row, int column)>;
 
-      /** The type of model to the index of the current value. */
       using CurrentModel = TableCurrentController::CurrentModel;
+
+      using SelectionModel = TableSelectionController::SelectionModel;
 
       using Index = TableIndex;
 
@@ -127,11 +129,29 @@ namespace Styles {
         std::shared_ptr<ListModel<int>> widths, ViewBuilder view_builder,
         QWidget* parent = nullptr);
 
+      /**
+       * Constructs a TableBody.
+       * @param table The model of values to display.
+       * @param current The current value.
+       * @param selection The selection.
+       * @param widths The widths of each column.
+       * @param view_builder The ViewBuilder to use.
+       * @param parent The parent widget.
+       */
+      TableBody(std::shared_ptr<TableModel> table,
+        std::shared_ptr<CurrentModel> current,
+        std::shared_ptr<SelectionModel> selection,
+        std::shared_ptr<ListModel<int>> widths, ViewBuilder view_builder,
+        QWidget* parent = nullptr);
+
       /** Returns the table of values displayed. */
       const std::shared_ptr<TableModel>& get_table() const;
 
       /** Returns the current value. */
       const std::shared_ptr<CurrentModel>& get_current() const;
+
+      /** Returns the selection. */
+      const std::shared_ptr<SelectionModel>& get_selection() const;
 
       /** Returns the TableItem at a specified index. */
       const TableItem* get_item(Index index) const;
@@ -159,6 +179,7 @@ namespace Styles {
       };
       std::shared_ptr<TableModel> m_table;
       TableCurrentController m_current_controller;
+      TableSelectionController m_selection_controller;
       std::shared_ptr<ListModel<int>> m_widths;
       ViewBuilder m_view_builder;
       std::vector<ColumnCover*> m_column_covers;

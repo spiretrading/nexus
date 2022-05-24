@@ -125,11 +125,14 @@ TableBody::TableBody(
 
 TableBody::TableBody(
     std::shared_ptr<TableModel> table, std::shared_ptr<CurrentModel> current,
+    std::shared_ptr<SelectionModel> selection,
     std::shared_ptr<ListModel<int>> widths, ViewBuilder view_builder,
     QWidget* parent)
     : QWidget(parent),
       m_table(std::move(table)),
       m_current_controller(std::move(current), 0, m_table->get_column_size()),
+      m_selection_controller(
+        std::move(selection), 0, m_table->get_column_size()),
       m_widths(std::move(widths)),
       m_view_builder(std::move(view_builder)) {
   setFocusPolicy(Qt::StrongFocus);
@@ -182,6 +185,11 @@ const std::shared_ptr<TableModel>& TableBody::get_table() const {
 
 const std::shared_ptr<TableBody::CurrentModel>& TableBody::get_current() const {
   return m_current_controller.get_current();
+}
+
+const std::shared_ptr<TableBody::SelectionModel>&
+    TableBody::get_selection() const {
+  return m_selection_controller.get_selection();
 }
 
 const TableItem* TableBody::get_item(Index index) const {
