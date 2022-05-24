@@ -1,4 +1,4 @@
-#include "Spire/Ui/TranslatedTableModel.hpp"
+#include "Spire/Spire/TranslatedTableModel.hpp"
 #include <algorithm>
 
 using namespace boost::signals2;

@@ -1,6 +1,6 @@
 #include <boost/variant/get.hpp>
 #include <doctest/doctest.h>
-#include "Spire/Ui/ArrayTableModel.hpp"
+#include "Spire/Spire/ArrayTableModel.hpp"
 
 using namespace boost;
 using namespace boost::signals2;

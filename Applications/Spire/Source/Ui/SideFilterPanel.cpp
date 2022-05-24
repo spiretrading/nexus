@@ -1,6 +1,6 @@
 #include "Spire/Ui/SideFilterPanel.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
-#include "Spire/Ui/ArrayTableModel.hpp"
+#include "Spire/Spire/ArrayTableModel.hpp"
 
 using namespace Nexus;
 using namespace Spire;

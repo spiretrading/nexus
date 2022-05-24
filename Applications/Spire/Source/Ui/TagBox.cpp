@@ -2,11 +2,11 @@
 #include <QKeyEvent>
 #include <QStringBuilder>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/ListModelTransactionLog.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ListItem.hpp"
-#include "Spire/Ui/ListModelTransactionLog.hpp"
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/ScrollableListBox.hpp"
 #include "Spire/Ui/ScrollBar.hpp"

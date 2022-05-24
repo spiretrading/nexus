@@ -2,7 +2,7 @@
 #define SPIRE_SINGLE_SELECTION_MODEL_HPP
 #include <boost/optional/optional.hpp>
 #include "Spire/Spire/ListModel.hpp"
-#include "Spire/Ui/ListModelTransactionLog.hpp"
+#include "Spire/Spire/ListModelTransactionLog.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {

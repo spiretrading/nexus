@@ -1,4 +1,4 @@
-#include "Spire/Ui/SortedTableModel.hpp"
+#include "Spire/Spire/SortedTableModel.hpp"
 #include <algorithm>
 #include <boost/iterator/counting_iterator.hpp>
 #include "Spire/Ui/DecimalBox.hpp"

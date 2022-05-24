@@ -2,7 +2,7 @@
 #define SPIRE_MODEL_TRANSACTION_LOG_HPP
 #include <functional>
 #include <utility>
-#include "Spire/Ui/Ui.hpp"
+#include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
 namespace Details {

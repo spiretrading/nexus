@@ -5,12 +5,12 @@
 #include <boost/optional/optional.hpp>
 #include <QWidget>
 #include "Spire/Spire/ListModel.hpp"
+#include "Spire/Spire/TableModel.hpp"
 #include "Spire/Spire/ValueModel.hpp"
 #include "Spire/Styles/BasicProperty.hpp"
 #include "Spire/Styles/CompositeProperty.hpp"
 #include "Spire/Styles/StateSelector.hpp"
 #include "Spire/Ui/ListItem.hpp"
-#include "Spire/Ui/TableModel.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {

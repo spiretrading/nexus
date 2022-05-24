@@ -2,10 +2,10 @@
 #define SPIRE_SORTED_TABLE_MODEL_HPP
 #include <functional>
 #include <vector>
-#include "Spire/Ui/TableModel.hpp"
-#include "Spire/Ui/TableModelTransactionLog.hpp"
-#include "Spire/Ui/TranslatedTableModel.hpp"
-#include "Spire/Ui/Ui.hpp"
+#include "Spire/Spire/Spire.hpp"
+#include "Spire/Spire/TableModel.hpp"
+#include "Spire/Spire/TableModelTransactionLog.hpp"
+#include "Spire/Spire/TranslatedTableModel.hpp"
 
 namespace Spire {
 

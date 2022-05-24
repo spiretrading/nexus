@@ -1,4 +1,4 @@
-#include "Spire/Ui/FilteredTableModel.hpp"
+#include "Spire/Spire/FilteredTableModel.hpp"
 #include <algorithm>
 #include "Spire/Spire/ArrayListModel.hpp"
 

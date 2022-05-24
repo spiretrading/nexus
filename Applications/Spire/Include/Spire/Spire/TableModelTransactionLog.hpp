@@ -1,7 +1,7 @@
 #ifndef SPIRE_TABLE_MODEL_TRANSACTION_LOG_HPP
 #define SPIRE_TABLE_MODEL_TRANSACTION_LOG_HPP
-#include "Spire/Ui/ModelTransactionLog.hpp"
-#include "Spire/Ui/TableModel.hpp"
+#include "Spire/Spire/ModelTransactionLog.hpp"
+#include "Spire/Spire/TableModel.hpp"
 
 namespace Spire {
   using TableModelTransactionLog = ModelTransactionLog<TableModel>;

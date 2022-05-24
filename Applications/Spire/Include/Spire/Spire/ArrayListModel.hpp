@@ -3,8 +3,8 @@
 #include <stdexcept>
 #include <vector>
 #include "Spire/Spire/ListModel.hpp"
+#include "Spire/Spire/ListModelTransactionLog.hpp"
 #include "Spire/Spire/Spire.hpp"
-#include "Spire/Ui/ListModelTransactionLog.hpp"
 
 namespace Spire {
 

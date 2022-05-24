@@ -3,6 +3,7 @@
 #include <QCoreApplication>
 #include <QKeyEvent>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/ListModelTransactionLog.hpp"
 #include "Spire/Spire/ListValueModel.hpp"
 #include "Spire/Spire/LocalScalarValueModel.hpp"
 #include "Spire/Spire/ToTextModel.hpp"
@@ -11,7 +12,6 @@
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/ListView.hpp"
-#include "Spire/Ui/ListModelTransactionLog.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace boost;

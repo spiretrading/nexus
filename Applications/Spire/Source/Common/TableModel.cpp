@@ -1,4 +1,4 @@
-#include "Spire/Ui/TableModel.hpp"
+#include "Spire/Spire/TableModel.hpp"
 
 using namespace Spire;
 

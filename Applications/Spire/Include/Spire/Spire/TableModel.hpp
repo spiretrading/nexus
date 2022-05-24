@@ -2,7 +2,7 @@
 #define SPIRE_TABLE_MODEL_HPP
 #include "Spire/Spire/AnyRef.hpp"
 #include "Spire/Spire/ListModel.hpp"
-#include "Spire/Ui/Ui.hpp"
+#include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
 

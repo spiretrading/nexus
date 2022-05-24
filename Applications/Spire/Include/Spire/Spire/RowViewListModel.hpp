@@ -2,9 +2,9 @@
 #define SPIRE_ROW_VIEW_LIST_MODEL_HPP
 #include <boost/signals2/connection.hpp>
 #include "Spire/Spire/ListModel.hpp"
-#include "Spire/Ui/ListModelTransactionLog.hpp"
-#include "Spire/Ui/TableModel.hpp"
-#include "Spire/Ui/Ui.hpp"
+#include "Spire/Spire/ListModelTransactionLog.hpp"
+#include "Spire/Spire/Spire.hpp"
+#include "Spire/Spire/TableModel.hpp"
 
 namespace Spire {
 

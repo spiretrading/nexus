@@ -6,10 +6,10 @@
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
+#include "Spire/Spire/TableModel.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TableItem.hpp"
-#include "Spire/Ui/TableModel.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace boost;

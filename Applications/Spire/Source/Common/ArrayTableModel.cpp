@@ -1,4 +1,4 @@
-#include "Spire/Ui/ArrayTableModel.hpp"
+#include "Spire/Spire/ArrayTableModel.hpp"
 #include <algorithm>
 #include <stdexcept>
 #include "Spire/Spire/ArrayListModel.hpp"
