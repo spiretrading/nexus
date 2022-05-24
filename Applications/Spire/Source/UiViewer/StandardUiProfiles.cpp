@@ -44,6 +44,7 @@
 #include "Spire/Ui/KeyInputBox.hpp"
 #include "Spire/Ui/KeyTag.hpp"
 #include "Spire/Ui/ListItem.hpp"
+#include "Spire/Ui/ListSelectionModel.hpp"
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/MarketBox.hpp"
 #include "Spire/Ui/MoneyBox.hpp"
@@ -1998,17 +1999,17 @@ UiProfile Spire::make_list_view_profile() {
     {{"WRAP", Overflow::WRAP}, {"NONE", Overflow::NONE}});
   properties.push_back(
     make_standard_enum_property("overflow", overflow_property));
-  auto selection_mode_property = define_enum<SelectionMode>(
-    {{"NONE", SelectionMode::NONE},
-     {"SINGLE", SelectionMode::SINGLE}});
-  properties.push_back(
-    make_standard_enum_property("selection_mode", selection_mode_property));
+  auto selection_mode_property = define_enum<ListSelectionModel::Mode>(
+    {{"NONE", ListSelectionModel::Mode::NONE},
+     {"SINGLE", ListSelectionModel::Mode::SINGLE},
+     {"MULTI", ListSelectionModel::Mode::MULTI}});
+  properties.push_back(make_standard_enum_property("selection_mode",
+    ListSelectionModel::Mode::SINGLE, selection_mode_property));
   auto change_item_property = define_enum<int>({{"Delete", 0}, {"Add", 1}});
   properties.push_back(
     make_standard_enum_property("change_item", change_item_property));
   properties.push_back(make_standard_property("change_item_index", -1));
   properties.push_back(make_standard_property("current_item", -1));
-  properties.push_back(make_standard_property("select_item", -1));
   properties.push_back(make_standard_property("disable_item", -1));
   properties.push_back(make_standard_property("enable_item", -1));
   properties.push_back(make_standard_property("auto_set_current_null", false));
@@ -2048,8 +2049,9 @@ UiProfile Spire::make_list_view_profile() {
           list_model->insert(QString("newItem%1").arg(index++), value);
         }
       });
+    auto selection_model = std::make_shared<ListSelectionModel>();
     auto list_view =
-      new ListView(list_model,
+      new ListView(list_model, selection_model,
         [&] (const std::shared_ptr<ListModel<QString>>& model, auto index) {
           auto label = make_label(model->get(index));
           if(random_height_seed.get() == 0) {
@@ -2095,16 +2097,14 @@ UiProfile Spire::make_list_view_profile() {
         style.get(Any()).set(value);
       });
     });
+    auto& selection_mode =
+      get<ListSelectionModel::Mode>("selection_mode", profile.get_properties());
+    selection_mode.connect_changed_signal([=] (auto value) {
+      selection_model->set_mode(value);
+    });
     auto& navigation =
       get<EdgeNavigation>("edge_navigation", profile.get_properties());
     navigation.connect_changed_signal([=] (auto value) {
-      update_style(*list_view, [&] (auto& style) {
-        style.get(Any()).set(value);
-      });
-    });
-    auto& selection_mode =
-      get<SelectionMode>("selection_mode", profile.get_properties());
-    selection_mode.connect_changed_signal([=] (auto value) {
       update_style(*list_view, [&] (auto& style) {
         style.get(Any()).set(value);
       });
@@ -2115,14 +2115,6 @@ UiProfile Spire::make_list_view_profile() {
         list_view->get_current()->set(none);
       } else if(index >= 0 && index < list_model->get_size()) {
         list_view->get_current()->set(index);
-      }
-    });
-    auto& select_item = get<int>("select_item", profile.get_properties());
-    select_item.connect_changed_signal([=] (auto index) {
-      if(index == -1) {
-        list_view->get_selection()->set(none);
-      } else if(index >= 0 && index < list_model->get_size()) {
-        list_view->get_selection()->set(index);
       }
     });
     auto& disable_item = get<int>("disable_item", profile.get_properties());
@@ -2149,8 +2141,8 @@ UiProfile Spire::make_list_view_profile() {
       });
     list_view->get_current()->connect_update_signal(
       profile.make_event_slot<optional<int>>("Current"));
-    list_view->get_selection()->connect_update_signal(
-      profile.make_event_slot<optional<int>>("Selection"));
+    list_view->get_selection()->connect_operation_signal(
+      profile.make_event_slot<AnyListModel::Operation>("Selection"));
     list_view->connect_submit_signal(
       profile.make_event_slot<optional<std::any>>("Submit"));
     return list_view;

@@ -45,7 +45,12 @@ namespace Spire {
       QValidator::State set(int index, const Type& value) override;
 
       boost::signals2::connection connect_operation_signal(
-        const OperationSignal::slot_type& slot) const override;
+        const typename OperationSignal::slot_type& slot) const override;
+
+      using ListModel<T>::transact;
+
+    protected:
+      void transact(const std::function<void ()>& transaction) override;
 
     private:
       std::shared_ptr<TableModel> m_source;
@@ -97,8 +102,14 @@ namespace Spire {
 
   template<typename T>
   boost::signals2::connection ColumnViewListModel<T>::connect_operation_signal(
-      const OperationSignal::slot_type& slot) const {
+      const typename OperationSignal::slot_type& slot) const {
     return m_transaction.connect_operation_signal(slot);
+  }
+
+  template<typename T>
+  void ColumnViewListModel<T>::transact(
+      const std::function<void ()>& transaction) {
+    m_transaction.transact(transaction);
   }
 
   template<typename T>
@@ -107,18 +118,22 @@ namespace Spire {
     m_transaction.transact([&] {
       visit(operation,
         [&] (const TableModel::AddOperation& operation) {
-          m_transaction.push(AddOperation(operation.m_index));
+          m_transaction.push(AddOperation(operation.m_index,
+            std::any_cast<const Type&>(operation.m_row->get(m_column))));
         },
         [&] (const TableModel::MoveOperation& operation) {
           m_transaction.push(
             MoveOperation(operation.m_source, operation.m_destination));
         },
         [&] (const TableModel::RemoveOperation& operation) {
-          m_transaction.push(RemoveOperation(operation.m_index));
+          m_transaction.push(RemoveOperation(operation.m_index,
+            std::any_cast<const Type&>(operation.m_row->get(m_column))));
         },
         [&] (const TableModel::UpdateOperation& operation) {
           if(m_column == operation.m_column) {
-            m_transaction.push(UpdateOperation(operation.m_row));
+            m_transaction.push(UpdateOperation(operation.m_row,
+              std::any_cast<const Type&>(operation.m_previous),
+              std::any_cast<const Type&>(operation.m_value)));
           }
         });
       });

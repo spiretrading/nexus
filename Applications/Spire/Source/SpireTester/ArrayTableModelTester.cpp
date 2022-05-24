@@ -15,8 +15,8 @@ TEST_SUITE("ArrayTableModel") {
     auto connection = scoped_connection(model.connect_operation_signal(
       [&] (const TableModel::Operation& operation) {
         ++signal_count;
-        auto add_operation = get<TableModel::AddOperation>(&operation);
-        REQUIRE(add_operation != nullptr);
+        auto add_operation = operation.get<TableModel::AddOperation>();
+        REQUIRE((add_operation != none));
       }));
     REQUIRE_NOTHROW(model.push({3, 1, 4}));
     REQUIRE(signal_count == 1);
@@ -45,8 +45,8 @@ TEST_SUITE("ArrayTableModel") {
     connection = model.connect_operation_signal(
       [&] (const TableModel::Operation& operation) {
         ++signal_count;
-        auto add_operation = get<TableModel::AddOperation>(&operation);
-        REQUIRE(add_operation != nullptr);
+        auto add_operation = operation.get<TableModel::AddOperation>();
+        REQUIRE((add_operation != none));
         REQUIRE(add_operation->m_index == model.get_row_size() - 1);
       });
     REQUIRE_NOTHROW(model.push({1, 2}));
@@ -59,8 +59,8 @@ TEST_SUITE("ArrayTableModel") {
     connection = model.connect_operation_signal(
       [&] (const TableModel::Operation& operation) {
         ++signal_count;
-        auto remove_operation = get<TableModel::RemoveOperation>(&operation);
-        REQUIRE(remove_operation != nullptr);
+        auto remove_operation = operation.get<TableModel::RemoveOperation>();
+        REQUIRE((remove_operation != none));
         REQUIRE(remove_operation->m_index == 0);
       });
     REQUIRE_NOTHROW(model.remove(0));
@@ -88,8 +88,8 @@ TEST_SUITE("ArrayTableModel") {
     connection = model.connect_operation_signal(
       [&] (const TableModel::Operation& operation) {
         ++signal_count;
-        auto add_operation = get<TableModel::AddOperation>(&operation);
-        REQUIRE(add_operation != nullptr);
+        auto add_operation = operation.get<TableModel::AddOperation>();
+        REQUIRE((add_operation != none));
         REQUIRE(add_operation->m_index == model.get_row_size() - 1);
       });
     REQUIRE_NOTHROW(model.push({1, 2, 3}));
@@ -106,8 +106,8 @@ TEST_SUITE("ArrayTableModel") {
     connection = model.connect_operation_signal(
       [&] (const TableModel::Operation& operation) {
         ++signal_count;
-        auto move_operation = get<TableModel::MoveOperation>(&operation);
-        REQUIRE(move_operation != nullptr);
+        auto move_operation = operation.get<TableModel::MoveOperation>();
+        REQUIRE((move_operation != none));
         REQUIRE(move_operation->m_source == source);
         REQUIRE(move_operation->m_destination == destination);
       });
@@ -155,8 +155,8 @@ TEST_SUITE("ArrayTableModel") {
     auto connection = scoped_connection(model.connect_operation_signal(
       [&] (const TableModel::Operation& operation) {
         ++signal_count;
-        auto add_operation = get<TableModel::AddOperation>(&operation);
-        REQUIRE(add_operation != nullptr);
+        auto add_operation = operation.get<TableModel::AddOperation>();
+        REQUIRE((add_operation != none));
         REQUIRE(add_operation->m_index == index);
       }));
     index = 0;
@@ -169,8 +169,8 @@ TEST_SUITE("ArrayTableModel") {
     connection = model.connect_operation_signal(
       [&] (const TableModel::Operation& operation) {
         ++signal_count;
-        auto remove_operation = get<TableModel::RemoveOperation>(&operation);
-        REQUIRE(remove_operation != nullptr);
+        auto remove_operation = operation.get<TableModel::RemoveOperation>();
+        REQUIRE((remove_operation != none));
       });
     REQUIRE_NOTHROW(model.remove(index));
     REQUIRE(signal_count == 2);
@@ -178,8 +178,8 @@ TEST_SUITE("ArrayTableModel") {
     connection = model.connect_operation_signal(
       [&] (const TableModel::Operation& operation) {
         ++signal_count;
-        auto add_operation = get<TableModel::AddOperation>(&operation);
-        REQUIRE(add_operation != nullptr);
+        auto add_operation = operation.get<TableModel::AddOperation>();
+        REQUIRE((add_operation != none));
         REQUIRE(add_operation->m_index == index);
       });
     index = 0;
@@ -229,8 +229,8 @@ TEST_SUITE("ArrayTableModel") {
     connection = model.connect_operation_signal(
       [&] (const TableModel::Operation& operation) {
         ++signal_count;
-        auto add_operation = get<TableModel::AddOperation>(&operation);
-        REQUIRE(add_operation != nullptr);
+        auto add_operation = operation.get<TableModel::AddOperation>();
+        REQUIRE((add_operation != none));
         REQUIRE(add_operation->m_index == model.get_row_size() - 1);
       });
     REQUIRE_NOTHROW(model.push({1, 2, 3}));
@@ -244,8 +244,8 @@ TEST_SUITE("ArrayTableModel") {
     connection = model.connect_operation_signal(
       [&] (const TableModel::Operation& operation) {
         ++signal_count;
-        auto update_operation = get<TableModel::UpdateOperation>(&operation);
-        REQUIRE(update_operation != nullptr);
+        auto update_operation = operation.get<TableModel::UpdateOperation>();
+        REQUIRE((update_operation != none));
         REQUIRE(update_operation->m_row == row);
         REQUIRE(update_operation->m_column == column);
       });
@@ -279,15 +279,14 @@ TEST_SUITE("ArrayTableModel") {
     auto connection = scoped_connection(model.connect_operation_signal(
       [&] (const TableModel::Operation& operation) {
         ++signal_count;
-        auto transaction = get<TableModel::Transaction>(&operation);
-        REQUIRE(transaction != nullptr);
-        REQUIRE(transaction->m_operations.size() == 5);
-        auto& operations = transaction->m_operations;
-        REQUIRE(get<TableModel::AddOperation>(&operations[0]));
-        REQUIRE(get<TableModel::UpdateOperation>(&operations[1]));
-        REQUIRE(get<TableModel::AddOperation>(&operations[2]));
-        REQUIRE(get<TableModel::RemoveOperation>(&operations[3]));
-        REQUIRE(get<TableModel::AddOperation>(&operations[4]));
+        auto transaction = operation.get<TableModel::Transaction>();
+        REQUIRE((transaction != none));
+        REQUIRE(transaction->size() == 5);
+        REQUIRE(((*transaction)[0].get<TableModel::AddOperation>() != none));
+        REQUIRE(((*transaction)[1].get<TableModel::UpdateOperation>() != none));
+        REQUIRE(((*transaction)[2].get<TableModel::AddOperation>() != none));
+        REQUIRE(((*transaction)[3].get<TableModel::RemoveOperation>() != none));
+        REQUIRE(((*transaction)[4].get<TableModel::AddOperation>() != none));
       }));
     model.transact([&] {
       model.push({1, 2, 3});
@@ -308,12 +307,11 @@ TEST_SUITE("ArrayTableModel") {
         model.transact([&] {
           model.push({7, 8, 9});
         });
-        auto transaction = get<TableModel::Transaction>(&operation);
-        REQUIRE(transaction != nullptr);
-        REQUIRE(transaction->m_operations.size() == 2);
-        auto& operations = transaction->m_operations;
-        REQUIRE(get<TableModel::AddOperation>(&operations[0]));
-        REQUIRE(get<TableModel::AddOperation>(&operations[1]));
+        auto transaction = operation.get<TableModel::Transaction>();
+        REQUIRE((transaction != none));
+        REQUIRE(transaction->size() == 2);
+        REQUIRE(((*transaction)[0].get<TableModel::AddOperation>() != none));
+        REQUIRE(((*transaction)[1].get<TableModel::AddOperation>() != none));
       });
     model.transact([&] {
       model.push({1, 2, 3});
@@ -323,8 +321,8 @@ TEST_SUITE("ArrayTableModel") {
     connection = model.connect_operation_signal(
       [&] (const TableModel::Operation& operation) {
         ++signal_count;
-        auto add_operation = get<TableModel::AddOperation>(&operation);
-        REQUIRE(add_operation != nullptr);
+        auto add_operation = operation.get<TableModel::AddOperation>();
+        REQUIRE((add_operation != none));
         REQUIRE(add_operation->m_index == model.get_row_size() - 1);
       });
     model.transact([&] {

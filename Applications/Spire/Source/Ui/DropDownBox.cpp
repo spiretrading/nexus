@@ -57,8 +57,15 @@ DropDownBox::DropDownBox(std::shared_ptr<AnyListModel> list,
   ViewBuilder<> view_builder, QWidget* parent)
   : DropDownBox(std::move(list),
       std::make_shared<LocalValueModel<optional<int>>>(),
-      std::make_shared<LocalValueModel<optional<int>>>(),
+      std::make_shared<SingleSelectionModel>(),
       std::move(view_builder), parent) {}
+
+DropDownBox::DropDownBox(std::shared_ptr<AnyListModel> list,
+  std::shared_ptr<CurrentModel> current, ViewBuilder<> view_builder,
+  QWidget* parent)
+  : DropDownBox(std::move(list), std::move(current),
+      std::make_shared<SingleSelectionModel>(), std::move(view_builder),
+      parent) {}
 
 DropDownBox::DropDownBox(std::shared_ptr<AnyListModel> list,
     std::shared_ptr<CurrentModel> current,
@@ -169,7 +176,11 @@ bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
     if(event->type() == QEvent::FocusOut) {
       if(!is_read_only() && !m_drop_down_list->isVisible()) {
         submit();
-        m_list_view->get_selection()->set(m_submission);
+        if(m_submission) {
+          m_list_view->get_selection()->push(*m_submission);
+        } else {
+          clear(*m_list_view->get_selection());
+        }
       }
     }
   } else if(watched == m_drop_down_list) {

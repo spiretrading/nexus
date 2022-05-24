@@ -140,7 +140,7 @@ void SortedTableModel::on_operation(const Operation& operation) {
       [&] (const AddOperation& operation) {
         auto index = find_sorted_index(operation.m_index, get_row_size());
         m_translation.move(operation.m_index, index);
-        m_transaction.push(AddOperation(index));
+        m_transaction.push(AddOperation(index, operation.m_row));
       },
       [&] (const UpdateOperation& operation) {
         auto index = find_sorted_index(operation.m_row, get_row_size());
@@ -148,7 +148,8 @@ void SortedTableModel::on_operation(const Operation& operation) {
           m_translation.move(operation.m_row, index);
           m_transaction.push(MoveOperation(operation.m_row, index));
         }
-        m_transaction.push(UpdateOperation(index, operation.m_column));
+        m_transaction.push(UpdateOperation(
+          index, operation.m_column, operation.m_previous, operation.m_value));
       },
       [&] (const RemoveOperation& operation) {
         m_transaction.push(operation);

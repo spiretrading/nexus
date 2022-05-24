@@ -120,8 +120,7 @@ NavigationView::NavigationView(
   style.get(Any() > is_a<ListView>()).
     set(EdgeNavigation::CONTAIN).
     set(Overflow::NONE).
-    set(Qt::Horizontal).
-    set(SelectionMode::SINGLE);
+    set(Qt::Horizontal);
   style.get(Any() > is_a<Separator>()).
     set(BorderTopSize(scale_height(1))).
     set(BorderTopColor(QColor(0xD0D0D0)));

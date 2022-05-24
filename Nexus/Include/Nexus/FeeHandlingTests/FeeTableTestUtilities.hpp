@@ -148,6 +148,49 @@ namespace Nexus::Tests {
    * @param feeTable The fee table to test.
    * @param orderFields The OrderFields used to produce an ExecutionReport.
    * @param liquidityFlag The trade's LiquidityFlag.
+   * @param quantity The last quantity filled.
+   * @param calculateFee The function used to calculate the fee.
+   * @param expectedFee The expected fee to use in the calculation.
+   */
+  template<typename FeeTable, typename CalculateFeeType>
+  void TestPerShareFeeCalculation(const FeeTable& feeTable,
+      const OrderExecutionService::OrderFields& orderFields,
+      std::string liquidityFlag, Quantity quantity,
+      CalculateFeeType&& calculateFee, Money expectedFee) {
+    auto executionReport = OrderExecutionService::ExecutionReport::
+      MakeInitialReport(0, boost::posix_time::second_clock::universal_time());
+    executionReport.m_lastPrice = orderFields.m_price;
+    executionReport.m_lastQuantity = quantity;
+    executionReport.m_liquidityFlag = liquidityFlag;
+    auto calculatedTotal = calculateFee(feeTable, orderFields, executionReport);
+    auto expectedTotal = executionReport.m_lastQuantity * expectedFee;
+    REQUIRE(calculatedTotal == expectedTotal);
+  }
+
+  /**
+   * Tests a per share fee calculation.
+   * @param feeTable The fee table to test.
+   * @param orderFields The OrderFields used to produce an ExecutionReport.
+   * @param liquidityFlag The trade's LiquidityFlag.
+   * @param quantity The last quantity filled.
+   * @param calculateFee The function used to calculate the fee.
+   * @param expectedFee The expected fee to use in the calculation.
+   */
+  template<typename FeeTable, typename CalculateFeeType>
+  void TestPerShareFeeCalculation(const FeeTable& feeTable,
+      const OrderExecutionService::OrderFields& orderFields,
+      LiquidityFlag liquidityFlag, Quantity quantity,
+      CalculateFeeType&& calculateFee, Money expectedFee) {
+    TestPerShareFeeCalculation(feeTable, orderFields,
+      boost::lexical_cast<std::string>(liquidityFlag), quantity, calculateFee,
+      expectedFee);
+  }
+
+  /**
+   * Tests a per share fee calculation.
+   * @param feeTable The fee table to test.
+   * @param orderFields The OrderFields used to produce an ExecutionReport.
+   * @param liquidityFlag The trade's LiquidityFlag.
    * @param calculateFee The function used to calculate the fee.
    * @param expectedFee The expected fee to use in the calculation.
    */
@@ -156,14 +199,8 @@ namespace Nexus::Tests {
       const OrderExecutionService::OrderFields& orderFields,
       const std::string& liquidityFlag, CalculateFeeType&& calculateFee,
       Money expectedFee) {
-    auto executionReport = OrderExecutionService::ExecutionReport::
-      MakeInitialReport(0, boost::posix_time::second_clock::universal_time());
-    executionReport.m_lastPrice = orderFields.m_price;
-    executionReport.m_lastQuantity = orderFields.m_quantity;
-    executionReport.m_liquidityFlag = liquidityFlag;
-    auto calculatedTotal = calculateFee(feeTable, orderFields, executionReport);
-    auto expectedTotal = executionReport.m_lastQuantity * expectedFee;
-    REQUIRE(calculatedTotal == expectedTotal);
+    TestPerShareFeeCalculation(feeTable, orderFields,
+      liquidityFlag, orderFields.m_quantity, calculateFee, expectedFee);
   }
 
   /**

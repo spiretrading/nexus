@@ -102,6 +102,10 @@ struct TagBox::PartialListModel : public AnyListModel {
     return m_transaction.connect_operation_signal(slot);
   }
 
+  void transact(const std::function<void ()>& transaction) override {
+    m_transaction.transact(transaction);
+  }
+
   void on_operation(const Operation& operation) {
     m_transaction.push(Operation(operation));
   }
