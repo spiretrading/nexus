@@ -188,7 +188,7 @@ TableViewBuilder::TableViewBuilder(
   : m_table(std::move(table)),
     m_parent(parent),
     m_filter(std::make_shared<EmptyTableFilter>()),
-    m_current(std::make_shared<LocalValueModel<optional<TableBody::Index>>>()),
+    m_current(std::make_shared<LocalValueModel<optional<TableIndex>>>()),
     m_view_builder(&TableView::default_view_builder) {}
 
 TableViewBuilder& TableViewBuilder::set_header(

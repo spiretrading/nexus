@@ -13,7 +13,7 @@ namespace Spire {
     /** The index's column. */
     int m_column;
 
-    auto operator ==(const TableIndex&) const = default;
+    bool operator ==(const TableIndex&) const = default;
   };
 }
 

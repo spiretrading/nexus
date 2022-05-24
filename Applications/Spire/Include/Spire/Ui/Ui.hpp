@@ -70,6 +70,7 @@ namespace Spire {
   class SubmenuItem;
   class TabView;
   class TableBody;
+  class TableCurrentController;
   class TableHeader;
   class TableHeaderItem;
   class TableFilter;

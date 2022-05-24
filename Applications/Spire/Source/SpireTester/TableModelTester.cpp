@@ -1,5 +1,5 @@
 #include <doctest/doctest.h>
-#include "Spire/Ui/TableModel.hpp"
+#include "Spire/Spire/TableModel.hpp"
 
 using namespace boost;
 using namespace Spire;

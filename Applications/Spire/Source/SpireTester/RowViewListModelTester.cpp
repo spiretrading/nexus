@@ -1,7 +1,7 @@
 #include <deque>
 #include <doctest/doctest.h>
+#include "Spire/Spire/ArrayTableModel.hpp"
 #include "Spire/Spire/RowViewListModel.hpp"
-#include "Spire/Ui/ArrayTableModel.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
