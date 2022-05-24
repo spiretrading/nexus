@@ -1,4 +1,5 @@
 #include "Spire/Ui/TableCurrentController.hpp"
+#include <boost/signals2/shared_connection_block.hpp>
 
 using namespace boost;
 using namespace boost::signals2;
@@ -8,7 +9,10 @@ TableCurrentController::TableCurrentController(
   std::shared_ptr<CurrentModel> current, int row_size, int column_size)
   : m_current(std::move(current)),
     m_row_size(row_size),
-    m_column_size(column_size) {}
+    m_column_size(column_size),
+    m_last_current(m_current->get()),
+    m_connection(m_current->connect_update_signal(
+      std::bind_front(&TableCurrentController::on_current, this))) {}
 
 const std::shared_ptr<TableCurrentController::CurrentModel>&
     TableCurrentController::get_current() const {
@@ -24,12 +28,50 @@ int TableCurrentController::get_column_size() const {
 }
 
 void TableCurrentController::add_row(int index) {
+  ++m_row_size;
+  if(m_current->get() && m_current->get()->m_row >= index) {
+    auto blocker = shared_connection_block(m_connection);
+    m_current->set(
+      Index(m_current->get()->m_row + 1, m_current->get()->m_column));
+  }
 }
 
 void TableCurrentController::remove_row(int index) {
+  --m_row_size;
+  if(m_current->get()) {
+    if(m_current->get()->m_row == index) {
+      m_current->set(Index(index, m_current->get()->m_column));
+    } else if(m_current->get()->m_row > index) {
+      auto blocker = shared_connection_block(m_connection);
+      m_current->set(
+        Index(m_current->get()->m_row - 1, m_current->get()->m_column));
+    }
+  }
 }
 
 void TableCurrentController::move_row(int source, int destination) {
+  if(source == destination) {
+    return;
+  }
+  auto direction = [&] {
+    if(source < destination) {
+      return -1;
+    }
+    return 1;
+  }();
+  auto adjust = [&] (auto& value) {
+    if(value && (value->m_row >= source || value->m_row <= destination)) {
+      value->m_row += direction;
+      return true;
+    }
+    return false;
+  };
+  adjust(m_last_current);
+  auto current = m_current->get();
+  if(adjust(current)) {
+    auto blocker = shared_connection_block(m_connection);
+    m_current->set(current);
+  }
 }
 
 void TableCurrentController::navigate_home() {
@@ -120,4 +162,10 @@ void TableCurrentController::navigate_previous_column() {
 connection TableCurrentController::connect_update_signal(
     const UpdateSignal::slot_type& slot) const {
   return m_update_signal.connect(slot);
+}
+
+void TableCurrentController::on_current(const optional<Index>& current) {
+  auto previous = m_last_current;
+  m_last_current = current;
+  m_update_signal(previous, current);
 }

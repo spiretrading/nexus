@@ -106,7 +106,7 @@ namespace Spire {
       boost::optional<Index> m_last_current;
       boost::signals2::scoped_connection m_connection;
 
-      void on_current(boost::optional<Index> current);
+      void on_current(const boost::optional<Index>& current);
   };
 }
 

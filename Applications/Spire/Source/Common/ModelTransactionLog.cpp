@@ -1,4 +1,4 @@
-#include "Spire/Ui/ModelTransactionLog.hpp"
+#include "Spire/Spire/ModelTransactionLog.hpp"
 
 using namespace Spire::Details;
 
