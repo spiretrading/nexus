@@ -90,6 +90,9 @@ namespace Spire {
       std::shared_ptr<SelectionModel> m_selection;
       int m_row_size;
       int m_column_size;
+      boost::optional<Index> m_current;
+      boost::optional<Index> m_range_anchor;
+      boost::signals2::scoped_connection m_connection;
   };
 }
 

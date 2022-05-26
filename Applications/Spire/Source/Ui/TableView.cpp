@@ -64,8 +64,8 @@ TableView::TableView(
     style.get(Any()).set(BackgroundColor(QColor(0xFFFFFF)));
   });
   proxy_style(*this, *box);
-  m_filtered_table = std::make_shared<FilteredTableModel>(m_table,
-    std::bind_front(&TableView::is_filtered, this));
+  m_filtered_table = std::make_shared<FilteredTableModel>(
+    m_table, std::bind_front(&TableView::is_filtered, this));
   m_sorted_table = std::make_shared<SortedTableModel>(m_filtered_table);
   m_body = new TableBody(m_sorted_table, std::move(current),
     std::move(selection), m_header_view->get_widths(), std::move(view_builder));
