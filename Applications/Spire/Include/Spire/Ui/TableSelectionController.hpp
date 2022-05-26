@@ -85,14 +85,21 @@ namespace Spire {
        */
       void navigate(Index index);
 
+      /** Connects a slot to a signal indicating a change to the selection. */
+      boost::signals2::connection connect_row_operation_signal(
+        const ListModel<int>::OperationSignal::slot_type& slot) const;
+
     private:
+      mutable ListModel<int>::OperationSignal m_row_operation_signal;
       Mode m_mode;
       std::shared_ptr<SelectionModel> m_selection;
       int m_row_size;
       int m_column_size;
       boost::optional<Index> m_current;
       boost::optional<Index> m_range_anchor;
-      boost::signals2::scoped_connection m_connection;
+      boost::signals2::scoped_connection m_row_connection;
+
+      void on_row_operation(const ListModel<int>::Operation& operation);
   };
 }
 

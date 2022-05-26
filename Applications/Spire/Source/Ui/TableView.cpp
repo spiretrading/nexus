@@ -6,6 +6,7 @@
 #include "Spire/Ui/EmptySelectionModel.hpp"
 #include "Spire/Ui/EmptyTableFilter.hpp"
 #include "Spire/Ui/Layouts.hpp"
+#include "Spire/Ui/MultiSelectionModel.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/SingleSelectionModel.hpp"
@@ -199,7 +200,7 @@ TableViewBuilder::TableViewBuilder(
     m_current(std::make_shared<LocalValueModel<optional<TableIndex>>>()),
     m_selection(std::make_shared<TableSelectionModel>(
       std::make_shared<TableEmptySelectionModel>(),
-      std::make_shared<ListSingleSelectionModel>(),
+      std::make_shared<ListMultiSelectionModel>(),
       std::make_shared<ListEmptySelectionModel>())),
     m_view_builder(&TableView::default_view_builder) {}
 

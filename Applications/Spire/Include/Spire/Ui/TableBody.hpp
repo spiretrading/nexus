@@ -117,6 +117,7 @@ namespace Styles {
     protected:
       bool event(QEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
+      void keyReleaseEvent(QKeyEvent* event) override;
       void paintEvent(QPaintEvent* event) override;
 
     private:
@@ -146,6 +147,7 @@ namespace Styles {
       boost::signals2::scoped_connection m_widths_connection;
 
       TableItem* get_current_item();
+      Cover* find_row(int index);
       TableItem* find_item(const boost::optional<Index>& index);
       void add_column_cover(int index, const QRect& geometry);
       void add_row(int index);
@@ -154,6 +156,7 @@ namespace Styles {
       void on_item_clicked(TableItem& item);
       void on_current(const boost::optional<Index>& previous,
         const boost::optional<Index>& current);
+      void on_row_selection(const ListModel<int>::Operation& operation);
       void on_style();
       void on_cover_style(Cover& cover);
       void on_table_operation(const TableModel::Operation& operation);

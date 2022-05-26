@@ -77,7 +77,9 @@ TableSelectionController::TableSelectionController(
   : m_mode(Mode::SINGLE),
     m_selection(std::move(selection)),
     m_row_size(row_size),
-    m_column_size(column_size) {}
+    m_column_size(column_size),
+    m_row_connection(m_selection->get_row_selection()->connect_operation_signal(
+      std::bind_front(&TableSelectionController::on_row_operation, this))) {}
 
 const std::shared_ptr<TableSelectionController::SelectionModel>&
     TableSelectionController::get_selection() const {
@@ -101,7 +103,7 @@ int TableSelectionController::get_column_size() const {
 }
 
 void TableSelectionController::add_row(int index) {
-  auto blocker = shared_connection_block(m_connection);
+  auto blocker = shared_connection_block(m_row_connection);
   m_selection->transact([&] {
     auto& rows = m_selection->get_row_selection();
     for(auto i = 0; i != rows->get_size(); ++i) {
@@ -126,7 +128,7 @@ void TableSelectionController::remove_row(int index) {
   auto row_operation = optional<ListModel<int>::Operation>();
   auto item_operation = optional<ListModel<TableIndex>::Operation>();
   {
-    auto blocker = shared_connection_block(m_connection);
+    auto blocker = shared_connection_block(m_row_connection);
     m_selection->transact([&] {
       auto& rows = m_selection->get_row_selection();
       for(auto i = 0; i != rows->get_size(); ++i) {
@@ -152,6 +154,9 @@ void TableSelectionController::remove_row(int index) {
       }
     });
   }
+  if(row_operation) {
+    m_row_operation_signal(*row_operation);
+  }
 //  if(operation) {
 //    m_operation_signal(*operation);
 //  }
@@ -159,7 +164,7 @@ void TableSelectionController::remove_row(int index) {
 
 void TableSelectionController::move_row(int source, int destination) {
   auto direction = get_direction(destination, source);
-  auto blocker = shared_connection_block(m_connection);
+  auto blocker = shared_connection_block(m_row_connection);
   m_selection->transact([&] {
     auto& rows = m_selection->get_row_selection();
     for(auto i = 0; i != rows->get_size(); ++i) {
@@ -265,4 +270,14 @@ void TableSelectionController::navigate(Index index) {
   if(m_mode == Mode::SINGLE || m_mode == Mode::RANGE) {
     click(index);
   }
+}
+
+connection TableSelectionController::connect_row_operation_signal(
+    const ListModel<int>::OperationSignal::slot_type& slot) const {
+  return m_row_operation_signal.connect(slot);
+}
+
+void TableSelectionController::on_row_operation(
+    const ListModel<int>::Operation& operation) {
+  m_row_operation_signal(operation);
 }

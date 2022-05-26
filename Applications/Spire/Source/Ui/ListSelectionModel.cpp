@@ -45,7 +45,7 @@ void ListSelectionModel::set_mode(Mode mode) {
       m_operation_signal(operation);
     }
   } else {
-    m_model = std::make_shared<MultiSelectionModel>();
+    m_model = std::make_shared<ListMultiSelectionModel>();
     for(auto i = 0; i != previous->get_size(); ++i) {
       m_model->push(previous->get(i));
     }
