@@ -82,7 +82,11 @@ TableSelectionController::TableSelectionController(
       m_selection->get_item_selection()->connect_operation_signal(
         std::bind_front(&TableSelectionController::on_item_operation, this))),
     m_row_connection(m_selection->get_row_selection()->connect_operation_signal(
-      std::bind_front(&TableSelectionController::on_row_operation, this))) {}
+      std::bind_front(&TableSelectionController::on_row_operation, this))),
+    m_column_connection(
+      m_selection->get_column_selection()->connect_operation_signal(
+        std::bind_front(
+          &TableSelectionController::on_column_operation, this))) {}
 
 const std::shared_ptr<TableSelectionController::SelectionModel>&
     TableSelectionController::get_selection() const {
@@ -287,6 +291,11 @@ connection TableSelectionController::connect_row_operation_signal(
   return m_row_operation_signal.connect(slot);
 }
 
+connection TableSelectionController::connect_column_operation_signal(
+    const ListModel<int>::OperationSignal::slot_type& slot) const {
+  return m_column_operation_signal.connect(slot);
+}
+
 void TableSelectionController::on_item_operation(
     const ListModel<Index>::Operation& operation) {
   m_item_operation_signal(operation);
@@ -295,4 +304,9 @@ void TableSelectionController::on_item_operation(
 void TableSelectionController::on_row_operation(
     const ListModel<int>::Operation& operation) {
   m_row_operation_signal(operation);
+}
+
+void TableSelectionController::on_column_operation(
+    const ListModel<int>::Operation& operation) {
+  m_column_operation_signal(operation);
 }

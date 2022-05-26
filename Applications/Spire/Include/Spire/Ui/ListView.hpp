@@ -3,6 +3,7 @@
 #include <concepts>
 #include <functional>
 #include <memory>
+#include <unordered_set>
 #include <QWidget>
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Spire/Spire.hpp"
@@ -225,6 +226,7 @@ namespace Styles {
       mutable SubmitSignal m_submit_signal;
       std::shared_ptr<AnyListModel> m_list;
       boost::optional<int> m_focus_index;
+      std::unordered_set<Qt::Key> m_keys;
       ListCurrentController m_current_controller;
       ListSelectionController m_selection_controller;
       ViewBuilder<> m_view_builder;

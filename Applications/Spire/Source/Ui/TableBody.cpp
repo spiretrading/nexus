@@ -238,10 +238,12 @@ void TableBody::keyPressEvent(QKeyEvent* event) {
       m_current_controller.navigate_next_column();
       break;
     case Qt::Key_Control:
+      m_keys.insert(Qt::Key_Control);
       m_selection_controller.set_mode(
         TableSelectionController::Mode::INCREMENTAL);
       break;
     case Qt::Key_Shift:
+      m_keys.insert(Qt::Key_Shift);
       m_selection_controller.set_mode(TableSelectionController::Mode::RANGE);
       break;
     default:
@@ -252,15 +254,29 @@ void TableBody::keyPressEvent(QKeyEvent* event) {
 void TableBody::keyReleaseEvent(QKeyEvent* event) {
   switch(event->key()) {
     case Qt::Key_Control:
+      m_keys.erase(Qt::Key_Control);
       if(m_selection_controller.get_mode() ==
           TableSelectionController::Mode::INCREMENTAL) {
-        m_selection_controller.set_mode(TableSelectionController::Mode::SINGLE);
+        if(m_keys.count(Qt::Key_Shift) == 1) {
+          m_selection_controller.set_mode(
+            TableSelectionController::Mode::RANGE);
+        } else {
+          m_selection_controller.set_mode(
+            TableSelectionController::Mode::SINGLE);
+        }
       }
       break;
     case Qt::Key_Shift:
+      m_keys.erase(Qt::Key_Shift);
       if(m_selection_controller.get_mode() ==
           TableSelectionController::Mode::RANGE) {
-        m_selection_controller.set_mode(TableSelectionController::Mode::SINGLE);
+        if(m_keys.count(Qt::Key_Control) == 1) {
+          m_selection_controller.set_mode(
+            TableSelectionController::Mode::INCREMENTAL);
+        } else {
+          m_selection_controller.set_mode(
+            TableSelectionController::Mode::SINGLE);
+        }
       }
       break;
   }

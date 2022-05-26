@@ -229,10 +229,12 @@ void ListView::keyPressEvent(QKeyEvent* event) {
       }
       break;
     case Qt::Key_Control:
+      m_keys.insert(Qt::Key_Control);
       m_selection_controller.set_mode(
         ListSelectionController::Mode::INCREMENTAL);
       break;
     case Qt::Key_Shift:
+      m_keys.insert(Qt::Key_Shift);
       m_selection_controller.set_mode(ListSelectionController::Mode::RANGE);
       break;
     default:
@@ -250,15 +252,28 @@ void ListView::keyPressEvent(QKeyEvent* event) {
 void ListView::keyReleaseEvent(QKeyEvent* event) {
   switch(event->key()) {
     case Qt::Key_Control:
+      m_keys.erase(Qt::Key_Control);
       if(m_selection_controller.get_mode() ==
           ListSelectionController::Mode::INCREMENTAL) {
-        m_selection_controller.set_mode(ListSelectionController::Mode::SINGLE);
+        if(m_keys.count(Qt::Key_Shift) == 1) {
+          m_selection_controller.set_mode(ListSelectionController::Mode::RANGE);
+        } else {
+          m_selection_controller.set_mode(
+            ListSelectionController::Mode::SINGLE);
+        }
       }
       break;
     case Qt::Key_Shift:
+      m_keys.erase(Qt::Key_Shift);
       if(m_selection_controller.get_mode() ==
           ListSelectionController::Mode::RANGE) {
-        m_selection_controller.set_mode(ListSelectionController::Mode::SINGLE);
+        if(m_keys.count(Qt::Key_Control) == 1) {
+          m_selection_controller.set_mode(
+            ListSelectionController::Mode::INCREMENTAL);
+        } else {
+          m_selection_controller.set_mode(
+            ListSelectionController::Mode::SINGLE);
+        }
       }
       break;
   }

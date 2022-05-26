@@ -2,6 +2,7 @@
 #define SPIRE_TABLE_BODY_HPP
 #include <functional>
 #include <memory>
+#include <unordered_set>
 #include <boost/optional/optional.hpp>
 #include <QWidget>
 #include "Spire/Spire/ListModel.hpp"
@@ -134,6 +135,7 @@ namespace Styles {
         QColor m_background_color;
       };
       std::shared_ptr<TableModel> m_table;
+      std::unordered_set<Qt::Key> m_keys;
       TableCurrentController m_current_controller;
       TableSelectionController m_selection_controller;
       std::shared_ptr<ListModel<int>> m_widths;
