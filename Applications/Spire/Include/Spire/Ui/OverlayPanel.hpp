@@ -83,10 +83,10 @@ namespace Spire {
       bool m_was_activated;
       Positioning m_positioning;
       QPoint m_mouse_pressed_position;
-      FocusObserver m_focus_observer;
-      boost::signals2::scoped_connection m_focus_connection;
       FocusObserver m_parent_focus_observer;
       boost::signals2::scoped_connection m_parent_focus_connection;
+      FocusObserver m_focus_observer;
+      boost::signals2::scoped_connection m_focus_connection;
       GlobalPositionObserver m_parent_position_observer;
       boost::signals2::scoped_connection m_parent_position_connection;
 
