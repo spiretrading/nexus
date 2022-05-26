@@ -78,6 +78,9 @@ TableSelectionController::TableSelectionController(
     m_selection(std::move(selection)),
     m_row_size(row_size),
     m_column_size(column_size),
+    m_item_connection(
+      m_selection->get_item_selection()->connect_operation_signal(
+        std::bind_front(&TableSelectionController::on_item_operation, this))),
     m_row_connection(m_selection->get_row_selection()->connect_operation_signal(
       std::bind_front(&TableSelectionController::on_row_operation, this))) {}
 
@@ -103,7 +106,8 @@ int TableSelectionController::get_column_size() const {
 }
 
 void TableSelectionController::add_row(int index) {
-  auto blocker = shared_connection_block(m_row_connection);
+  auto item_blocker = shared_connection_block(m_item_connection);
+  auto row_blocker = shared_connection_block(m_row_connection);
   m_selection->transact([&] {
     auto& rows = m_selection->get_row_selection();
     for(auto i = 0; i != rows->get_size(); ++i) {
@@ -128,7 +132,8 @@ void TableSelectionController::remove_row(int index) {
   auto row_operation = optional<ListModel<int>::Operation>();
   auto item_operation = optional<ListModel<TableIndex>::Operation>();
   {
-    auto blocker = shared_connection_block(m_row_connection);
+    auto item_blocker = shared_connection_block(m_item_connection);
+    auto row_blocker = shared_connection_block(m_row_connection);
     m_selection->transact([&] {
       auto& rows = m_selection->get_row_selection();
       for(auto i = 0; i != rows->get_size(); ++i) {
@@ -157,14 +162,15 @@ void TableSelectionController::remove_row(int index) {
   if(row_operation) {
     m_row_operation_signal(*row_operation);
   }
-//  if(operation) {
-//    m_operation_signal(*operation);
-//  }
+  if(item_operation) {
+    m_item_operation_signal(*item_operation);
+  }
 }
 
 void TableSelectionController::move_row(int source, int destination) {
+  auto item_blocker = shared_connection_block(m_item_connection);
+  auto row_blocker = shared_connection_block(m_row_connection);
   auto direction = get_direction(destination, source);
-  auto blocker = shared_connection_block(m_row_connection);
   m_selection->transact([&] {
     auto& rows = m_selection->get_row_selection();
     for(auto i = 0; i != rows->get_size(); ++i) {
@@ -238,10 +244,9 @@ void TableSelectionController::click(Index index) {
       auto select =
         [&] (auto selection, auto current, auto index, auto anchor) {
           auto direction = get_direction(current, index);
-          for(auto i = current; can_advance(
-              i, direction, increment(index, direction, m_column_size));
+          for(auto i = current; can_advance(i, direction, index);
               advance(i, direction, m_column_size)) {
-            if(!can_advance(i, direction, anchor)) {
+            if(i == anchor || !can_advance(i, direction, anchor)) {
               if(find_index(i, *selection) == -1) {
                 selection->push(i);
               }
@@ -272,9 +277,19 @@ void TableSelectionController::navigate(Index index) {
   }
 }
 
+connection TableSelectionController::connect_item_operation_signal(
+    const ListModel<Index>::OperationSignal::slot_type& slot) const {
+  return m_item_operation_signal.connect(slot);
+}
+
 connection TableSelectionController::connect_row_operation_signal(
     const ListModel<int>::OperationSignal::slot_type& slot) const {
   return m_row_operation_signal.connect(slot);
+}
+
+void TableSelectionController::on_item_operation(
+    const ListModel<Index>::Operation& operation) {
+  m_item_operation_signal(operation);
 }
 
 void TableSelectionController::on_row_operation(
