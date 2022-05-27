@@ -95,7 +95,6 @@ struct FocusObserver::FocusEventFilter {
 
 void FocusObserver::ApplicationFocusFilter::on_focus_changed(
     QWidget* old, QWidget* now) {
-  qDebug() << old << " " << now;
   static auto widget_focus_visible = std::pair<QWidget*, bool>();
   static auto previous_widget_focus_visible = widget_focus_visible;
   if(widget_focus_visible.first != now &&

@@ -49,7 +49,6 @@ class SecurityView::SecuritySearchWindow : public QWidget {
 
     bool eventFilter(QObject* watched, QEvent* event) override {
       if(event->type() == QEvent::Close) {
-        m_panel->hide();
         hide();
       }
       return QWidget::eventFilter(watched, event);
@@ -65,8 +64,8 @@ class SecurityView::SecuritySearchWindow : public QWidget {
         m_panel->activateWindow();
       } else if(event->type() == QEvent::HideToParent) {
         m_security_box->get_current()->set(Security());
-        m_panel->hide();
-        hide();
+        setFocus();
+        m_panel->close();
       }
       return QWidget::event(event);
     }
