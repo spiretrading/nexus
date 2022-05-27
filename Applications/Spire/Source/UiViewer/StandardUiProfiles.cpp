@@ -2861,7 +2861,8 @@ UiProfile Spire::make_security_view_profile() {
     security_view->setFixedSize(scale(266, 361));
     auto box = new Box(security_view);
     update_style(*box, [] (auto& style) {
-      style.get(Any()).set(border(scale_width(1), QColor(0x4B23A0)));
+      style.get(Hover() || Focus()).
+        set(border(scale_width(1), QColor(0x4B23A0)));
     });
     security_view->get_current()->connect_update_signal(
       profile.make_event_slot<Security>("Current", [=] (const auto& security) {

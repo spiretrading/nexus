@@ -13,18 +13,6 @@ using namespace Nexus;
 using namespace Spire;
 using namespace Spire::Styles;
 
-namespace {
-  auto HEADER_STYLE(StyleSheet style) {
-    auto font = QFont("Roboto");
-    font.setWeight(QFont::Medium);
-    font.setPixelSize(scale_width(12));
-    style.get(ReadOnly() && Disabled()).
-      set(text_style(font, QColor(0x808080))).
-      set(PaddingBottom(scale_height(8)));
-    return style;
-  }
-}
-
 class SecurityView::SecuritySearchWindow : public QWidget {
   public:
     explicit SecuritySearchWindow(
@@ -32,7 +20,12 @@ class SecurityView::SecuritySearchWindow : public QWidget {
         : QWidget(parent) {
       auto header = make_label(tr("Security"));
       update_style(*header, [] (auto& style) {
-        style = HEADER_STYLE(style);
+        auto font = QFont("Roboto");
+        font.setWeight(QFont::Medium);
+        font.setPixelSize(scale_width(12));
+        style.get(ReadOnly() && Disabled()).
+          set(text_style(font, QColor(0x808080))).
+          set(PaddingBottom(scale_height(8)));
       });
       m_security_box = new SecurityBox(std::move(query_model));
       update_style(*m_security_box, [] (auto& style) {
@@ -108,9 +101,10 @@ SecurityView::SecurityView(std::shared_ptr<ComboBox::QueryModel> query_model,
   m_prompt = make_label(tr("Enter a ticker symbol."));
   update_style(*m_prompt, [] (auto& style) {
     style.get(ReadOnly() && Disabled()).
+      set(TextAlign(Qt::Alignment(Qt::AlignCenter))).
       set(horizontal_padding(scale_width(8))).
       set(vertical_padding(scale_height(8)));
-    });
+  });
   m_layers = new QStackedWidget();
   m_layers->addWidget(m_prompt);
   m_layers->addWidget(m_body);
