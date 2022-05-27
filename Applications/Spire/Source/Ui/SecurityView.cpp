@@ -132,8 +132,8 @@ QWidget& SecurityView::get_body() {
 }
 
 void SecurityView::keyPressEvent(QKeyEvent* event) {
-  auto text = event->text();
-  if(text.size() == 1 && (text[0].isLetterOrNumber() || text[0] == '_')) {
+  if(auto text = event->text();
+      text.size() == 1 && (text[0].isLetterOrNumber() || text[0] == '_')) {
     m_search_window->show();
     QApplication::sendEvent(find_focus_proxy(*m_search_window), event);
   } else if(event->key() == Qt::Key_PageUp) {
@@ -148,6 +148,13 @@ void SecurityView::keyPressEvent(QKeyEvent* event) {
 }
 
 void SecurityView::on_submit(const Nexus::Security& security) {
+  if(auto iter = std::find(m_securities.begin(), m_securities.end(), security);
+      iter != m_securities.end()) {
+    if(std::distance(m_securities.begin(), iter) <= m_current_index) {
+      --m_current_index;
+    }
+    m_securities.erase(iter);
+  }
   ++m_current_index;
   m_securities.insert(m_securities.begin() + m_current_index, security);
   m_current->set(security);
