@@ -194,6 +194,37 @@ void TableSelectionController::move_row(int source, int destination) {
   });
 }
 
+void TableSelectionController::select_all() {
+  auto select = [&] (auto selection, auto current, auto start, auto end) {
+    for(auto i = start; i != end; advance(i, 1, m_column_size)) {
+      if(i != current && find_index(i, *selection) == -1) {
+        selection->push(i);
+      }
+    }
+    if(current) {
+      if(find_index(*current, *selection) == -1) {
+        selection->push(*current);
+      }
+    }
+  };
+  m_selection->transact([&] {
+    auto [current_row, current_column, current] = [&] {
+      if(m_current) {
+        return std::tuple(optional<int>(m_current->m_row),
+          optional<int>(m_current->m_column), optional<TableIndex>(m_current));
+      } else {
+        return std::tuple(
+          optional<int>(), optional<int>(), optional<TableIndex>());
+      }
+    }();
+    select(m_selection->get_row_selection(), current_row, 0, m_row_size);
+    select(
+      m_selection->get_column_selection(), current_column, 0, m_column_size);
+    select(m_selection->get_item_selection(), current, TableIndex(0, 0),
+      TableIndex(m_row_size, 0));
+  });
+}
+
 void TableSelectionController::click(Index index) {
   if(m_mode == Mode::SINGLE) {
     auto select = [&] (auto selection, auto index) {

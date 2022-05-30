@@ -73,6 +73,9 @@ namespace Spire {
        */
       void move_row(int source, int destination);
 
+      /** Selects all items. */
+      void select_all();
+
       /**
        * Updates the selection when an item is clicked.
        * @param index The index of the clicked item.

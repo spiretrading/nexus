@@ -1,4 +1,5 @@
 #include "Spire/Ui/ListView.hpp"
+#include <boost/signals2/shared_connection_block.hpp>
 #include <QKeyEvent>
 #include <QTimer>
 #include "Spire/Spire/Dimensions.hpp"
@@ -133,9 +134,9 @@ ListView::ListView(
     m_query_timer, &QTimer::timeout, this, [=] { on_query_timer_expired(); });
   m_list_connection = m_list->connect_operation_signal(
     [=] (const auto& operation) { on_list_operation(operation); });
-  m_current_controller.connect_update_signal(
+  m_current_connection = m_current_controller.connect_update_signal(
     std::bind_front(&ListView::on_current, this));
-  m_selection_controller.connect_operation_signal(
+  m_selection_connection = m_selection_controller.connect_operation_signal(
     std::bind_front(&ListView::on_selection, this));
 }
 
@@ -226,6 +227,11 @@ void ListView::keyPressEvent(QKeyEvent* event) {
         m_current_controller.navigate_next();
       } else if(m_overflow == Overflow::WRAP) {
         m_current_controller.cross_next(m_direction);
+      }
+      break;
+    case Qt::Key_A:
+      if(event->modifiers() & Qt::Modifier::CTRL && !event->isAutoRepeat()) {
+        m_selection_controller.select_all();
       }
       break;
     case Qt::Key_Control:
@@ -345,6 +351,7 @@ void ListView::make_item_entry(int index) {
       on_item_submitted(*item);
     });
   m_current_controller.add(std::make_unique<QWidgetItemView>(*item), index);
+  m_selection_controller.add(index);
 }
 
 void ListView::add_item(int index) {
@@ -356,7 +363,6 @@ void ListView::add_item(int index) {
     ++*m_focus_index;
   }
   update_layout();
-  m_selection_controller.add(index);
 }
 
 void ListView::remove_item(int index) {
@@ -373,8 +379,11 @@ void ListView::remove_item(int index) {
       --*m_focus_index;
     }
   }
+  auto current_blocker = shared_connection_block(m_current_connection);
+  auto selection_blocker = shared_connection_block(m_selection_connection);
   m_current_controller.remove(index);
   m_selection_controller.remove(index);
+  on_current(none, m_current_controller.get_current()->get());
   update_layout();
 }
 

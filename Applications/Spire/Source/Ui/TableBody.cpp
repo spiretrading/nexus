@@ -234,6 +234,11 @@ void TableBody::keyPressEvent(QKeyEvent* event) {
     case Qt::Key_Right:
       m_current_controller.navigate_next_column();
       break;
+    case Qt::Key_A:
+      if(event->modifiers() & Qt::Modifier::CTRL && !event->isAutoRepeat()) {
+        m_selection_controller.select_all();
+      }
+      break;
     case Qt::Key_Control:
       m_keys.insert(Qt::Key_Control);
       m_selection_controller.set_mode(

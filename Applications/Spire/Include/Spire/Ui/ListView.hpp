@@ -244,6 +244,7 @@ namespace Styles {
       boost::signals2::scoped_connection m_style_connection;
       boost::signals2::scoped_connection m_list_connection;
       boost::signals2::scoped_connection m_current_connection;
+      boost::signals2::scoped_connection m_selection_connection;
 
       void append_query(const QString& query);
       void update_focus(boost::optional<int> current);
