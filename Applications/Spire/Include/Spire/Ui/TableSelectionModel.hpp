@@ -12,6 +12,15 @@ namespace Spire {
     public:
       using Index = TableIndex;
 
+      /** The type of model used to select items. */
+      using ItemSelectionModel = ListModel<Index>;
+
+      /** The type of model used to select rows. */
+      using RowSelectionModel = ListModel<int>;
+
+      /** The type of model used to select columns. */
+      using ColumnSelectionModel = ListModel<int>;
+
       /**
        * Constructs a TableSelectionModel.
        * @param item_selection The list of selected items.
@@ -23,22 +32,22 @@ namespace Spire {
         std::shared_ptr<ListModel<int>> column_selection);
 
       /** Returns the list of selected items. */
-      std::shared_ptr<const ListModel<Index>> get_item_selection() const;
+      std::shared_ptr<const ItemSelectionModel> get_item_selection() const;
 
       /** Returns the list of selected items. */
-      const std::shared_ptr<ListModel<Index>>& get_item_selection();
+      const std::shared_ptr<ItemSelectionModel>& get_item_selection();
 
       /** Returns the list of selected rows. */
-      std::shared_ptr<const ListModel<int>> get_row_selection() const;
+      std::shared_ptr<const RowSelectionModel> get_row_selection() const;
 
       /** Returns the list of selected rows. */
-      const std::shared_ptr<ListModel<int>>& get_row_selection();
+      const std::shared_ptr<RowSelectionModel>& get_row_selection();
 
       /** Returns the list of selected columns. */
-      std::shared_ptr<const ListModel<int>> get_column_selection() const;
+      std::shared_ptr<const ColumnSelectionModel> get_column_selection() const;
 
       /** Returns the list of selected columns. */
-      const std::shared_ptr<ListModel<int>>& get_column_selection();
+      const std::shared_ptr<ColumnSelectionModel>& get_column_selection();
 
       /**
        * Performs a transaction on all of the item, row and column selections.
@@ -47,9 +56,9 @@ namespace Spire {
       decltype(auto) transact(F&& f);
 
     private:
-      std::shared_ptr<ListModel<Index>> m_item_selection;
-      std::shared_ptr<ListModel<int>> m_row_selection;
-      std::shared_ptr<ListModel<int>> m_column_selection;
+      std::shared_ptr<ItemSelectionModel> m_item_selection;
+      std::shared_ptr<RowSelectionModel> m_row_selection;
+      std::shared_ptr<ColumnSelectionModel> m_column_selection;
   };
 
   template<typename F>

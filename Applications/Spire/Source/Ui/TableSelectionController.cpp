@@ -298,15 +298,54 @@ connection TableSelectionController::connect_column_operation_signal(
 
 void TableSelectionController::on_item_operation(
     const ListModel<Index>::Operation& operation) {
+  visit(operation,
+    [&] (const TableSelectionModel::ItemSelectionModel::RemoveOperation&
+        operation) {
+      if(operation.get_value() == m_range_anchor) {
+        m_range_anchor = none;
+      }
+    },
+    [&] (const TableSelectionModel::ItemSelectionModel::UpdateOperation&
+        operation) {
+      if(operation.get_previous() == m_range_anchor) {
+        m_range_anchor = none;
+      }
+    });
   m_item_operation_signal(operation);
 }
 
 void TableSelectionController::on_row_operation(
     const ListModel<int>::Operation& operation) {
+  visit(operation,
+    [&] (const TableSelectionModel::RowSelectionModel::RemoveOperation&
+        operation) {
+      if(operation.get_value() == m_range_anchor->m_row) {
+        m_range_anchor = none;
+      }
+    },
+    [&] (const TableSelectionModel::RowSelectionModel::UpdateOperation&
+        operation) {
+      if(operation.get_previous() == m_range_anchor->m_row) {
+        m_range_anchor = none;
+      }
+    });
   m_row_operation_signal(operation);
 }
 
 void TableSelectionController::on_column_operation(
     const ListModel<int>::Operation& operation) {
+  visit(operation,
+    [&] (const TableSelectionModel::ColumnSelectionModel::RemoveOperation&
+        operation) {
+      if(operation.get_value() == m_range_anchor->m_column) {
+        m_range_anchor = none;
+      }
+    },
+    [&] (const TableSelectionModel::ColumnSelectionModel::UpdateOperation&
+        operation) {
+      if(operation.get_previous() == m_range_anchor->m_column) {
+        m_range_anchor = none;
+      }
+    });
   m_column_operation_signal(operation);
 }

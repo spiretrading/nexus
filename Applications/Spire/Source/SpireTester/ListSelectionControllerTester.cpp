@@ -2,6 +2,7 @@
 #include <doctest/doctest.h>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Ui/ListSelectionController.hpp"
+#include "Spire/Ui/SingleSelectionModel.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -147,5 +148,20 @@ TEST_SUITE("ListSelectionController") {
     REQUIRE(selection->get_size() == 2);
     REQUIRE(find(*selection, 2));
     REQUIRE(find(*selection, 3));
+  }
+
+  TEST_CASE("range_navigation_single_selection") {
+    auto selection = std::make_shared<ListSingleSelectionModel>();
+    auto controller = ListSelectionController(selection);
+    controller.set_mode(ListSelectionController::Mode::RANGE);
+    controller.add(0);
+    controller.add(1);
+    controller.add(2);
+    controller.navigate(0);
+    controller.navigate(1);
+    controller.navigate(2);
+    controller.navigate(1);
+    REQUIRE(selection->get_size() == 1);
+    REQUIRE(selection->get(0) == 1);
   }
 }

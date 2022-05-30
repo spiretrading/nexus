@@ -154,5 +154,16 @@ connection ListSelectionController::connect_operation_signal(
 
 void ListSelectionController::on_operation(
     const SelectionModel::Operation& operation) {
+  visit(operation,
+    [&] (const SelectionModel::RemoveOperation& operation) {
+      if(operation.get_value() == m_range_anchor) {
+        m_range_anchor = none;
+      }
+    },
+    [&] (const SelectionModel::UpdateOperation& operation) {
+      if(operation.get_previous() == m_range_anchor) {
+        m_range_anchor = none;
+      }
+    });
   m_operation_signal(operation);
 }
