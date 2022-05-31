@@ -5,6 +5,7 @@
 #include <QTimer>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/EmptySelectionModel.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/ListView.hpp"
@@ -33,8 +34,7 @@ namespace {
 
   auto LIST_VIEW_STYLE(StyleSheet style) {
     style.get(Any()).
-      set(EdgeNavigation::CONTAIN).
-      set(SelectionMode::NONE);
+      set(EdgeNavigation::CONTAIN);
     return style;
   }
 }
@@ -45,7 +45,7 @@ ContextMenu::ContextMenu(QWidget& parent)
   setAttribute(Qt::WA_Hover);
   setMaximumWidth(scale_width(MAX_WIDTH));
   m_list = std::make_shared<ArrayListModel<MenuItem>>();
-  m_list_view = new ListView(m_list,
+  m_list_view = new ListView(m_list, std::make_shared<EmptySelectionModel>(),
     std::bind_front(&ContextMenu::build_item, this));
   m_list_view->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
   update_style(*m_list_view, [&] (auto& style) {

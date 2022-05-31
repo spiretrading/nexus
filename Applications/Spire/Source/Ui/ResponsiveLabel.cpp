@@ -17,7 +17,7 @@ ResponsiveLabel::ResponsiveLabel(
     connect_style_signal(*m_text_box, [=] { on_text_box_style(); });
   enclose(*this, *m_text_box);
   m_list_operation_connection = m_labels->connect_operation_signal(
-    [=] (auto operation) { on_list_operation(operation); });
+    std::bind_front(&ResponsiveLabel::on_list_operation, this));
   on_text_box_style();
   reset_mapped_labels();
   update_display_text();

@@ -8,9 +8,8 @@ using namespace Spire;
 
 namespace {
   template<typename... F>
-  decltype(auto) test_operation(
-      const ListModel<int>::Operation& operation, F&&... f) {
-    return visit(
+  void test_operation(const ListModel<int>::Operation& operation, F&&... f) {
+    visit(
       operation, std::forward<F>(f)..., [] (const auto&) { REQUIRE(false); });
   }
 }
@@ -33,6 +32,7 @@ TEST_SUITE("ArrayListModel") {
     test_operation(operation,
       [&] (const ListModel<int>::AddOperation& operation) {
         REQUIRE(operation.m_index == model.get_size() - 1);
+        REQUIRE(operation.get_value() == 3);
       });
     REQUIRE_NOTHROW(model.push(2));
     REQUIRE(model.get_size() == 2);
@@ -43,6 +43,7 @@ TEST_SUITE("ArrayListModel") {
     test_operation(operation,
       [&] (const ListModel<int>::AddOperation& operation) {
         REQUIRE(operation.m_index == model.get_size() - 1);
+        REQUIRE(operation.get_value() == 2);
       });
   }
 
@@ -76,6 +77,7 @@ TEST_SUITE("ArrayListModel") {
     test_operation(operation,
       [&] (const ListModel<int>::RemoveOperation& operation) {
         REQUIRE(operation.m_index == 0);
+        REQUIRE(operation.get_value() == 1);
       });
     connection = model.connect_operation_signal(
       [&] (const ListModel<int>::Operation& operation) {
@@ -163,6 +165,7 @@ TEST_SUITE("ArrayListModel") {
     test_operation(operation,
       [&] (const ListModel<int>::AddOperation& operation) {
         REQUIRE(operation.m_index == 0);
+        REQUIRE(operation.get_value() == 1);
       });
     REQUIRE_NOTHROW(model.insert(2, 0));
     REQUIRE(model.get_size() == 2);
@@ -174,6 +177,7 @@ TEST_SUITE("ArrayListModel") {
     test_operation(operation,
       [&] (const ListModel<int>::AddOperation& operation) {
         REQUIRE(operation.m_index == 0);
+        REQUIRE(operation.get_value() == 2);
       });
     REQUIRE_THROWS(model.insert(3, -1));
     REQUIRE(model.get_size() == 2);
@@ -188,6 +192,7 @@ TEST_SUITE("ArrayListModel") {
     test_operation(operation,
       [&] (const ListModel<int>::AddOperation& operation) {
         REQUIRE(operation.m_index == 1);
+        REQUIRE(operation.get_value() == 3);
       });
   }
 
@@ -198,7 +203,7 @@ TEST_SUITE("ArrayListModel") {
       [&] (const auto& operation) {
         operations.push_back(operation);
       }));
-    REQUIRE(model.set(2, 0) == QValidator::State::Invalid);
+    REQUIRE_THROWS(model.set(2, 0));
     REQUIRE(model.get_size() == 0);
     REQUIRE(operations.empty());
     REQUIRE_NOTHROW(model.push(1));
@@ -217,6 +222,8 @@ TEST_SUITE("ArrayListModel") {
     test_operation(operation,
       [&] (const ListModel<int>::UpdateOperation& operation) {
         REQUIRE(operation.m_index == 0);
+        REQUIRE(operation.get_previous() == 1);
+        REQUIRE(operation.get_value() == 0);
       });
     REQUIRE(model.set(2, 10) == QValidator::State::Acceptable);
     REQUIRE(model.get_size() == 3);
@@ -227,6 +234,8 @@ TEST_SUITE("ArrayListModel") {
     test_operation(operation,
       [&] (const ListModel<int>::UpdateOperation& operation) {
         REQUIRE(operation.m_index == 2);
+        REQUIRE(operation.get_previous() == 7);
+        REQUIRE(operation.get_value() == 10);
       });
   }
 
@@ -236,15 +245,19 @@ TEST_SUITE("ArrayListModel") {
     auto connection = scoped_connection(model.connect_operation_signal(
       [&] (const ListModel<int>::Operation& operation) {
         operations.push_back(operation);
-        auto transaction = get<ListModel<int>::Transaction>(&operation);
-        REQUIRE(transaction != nullptr);
-        REQUIRE(transaction->m_operations.size() == 5);
-        auto& operations = transaction->m_operations;
-        REQUIRE(get<ListModel<int>::AddOperation>(&operations[0]));
-        REQUIRE(get<ListModel<int>::UpdateOperation>(&operations[1]));
-        REQUIRE(get<ListModel<int>::AddOperation>(&operations[2]));
-        REQUIRE(get<ListModel<int>::RemoveOperation>(&operations[3]));
-        REQUIRE(get<ListModel<int>::AddOperation>(&operations[4]));
+        auto transaction = operation.get<ListModel<int>::Transaction>();
+        REQUIRE((transaction != none));
+        REQUIRE(transaction->size() == 5);
+        REQUIRE(
+          ((*transaction)[0].get<ListModel<int>::AddOperation>() != none));
+        REQUIRE(
+          ((*transaction)[1].get<ListModel<int>::UpdateOperation>() != none));
+        REQUIRE(
+          ((*transaction)[2].get<ListModel<int>::AddOperation>() != none));
+        REQUIRE(
+          ((*transaction)[3].get<ListModel<int>::RemoveOperation>() != none));
+        REQUIRE(
+          ((*transaction)[4].get<ListModel<int>::AddOperation>() != none));
       }));
     model.transact([&] {
       model.push(1);
@@ -266,12 +279,13 @@ TEST_SUITE("ArrayListModel") {
         model.transact([&] {
           model.push(7);
         });
-        auto transaction = get<ListModel<int>::Transaction>(&operation);
-        REQUIRE(transaction != nullptr);
-        REQUIRE(transaction->m_operations.size() == 2);
-        auto& operations = transaction->m_operations;
-        REQUIRE(get<ListModel<int>::AddOperation>(&operations[0]));
-        REQUIRE(get<ListModel<int>::AddOperation>(&operations[1]));
+        auto transaction = operation.get<ListModel<int>::Transaction>();
+        REQUIRE((transaction != none));
+        REQUIRE(transaction->size() == 2);
+        REQUIRE(
+          ((*transaction)[0].get<ListModel<int>::AddOperation>() != none));
+        REQUIRE(
+          ((*transaction)[1].get<ListModel<int>::AddOperation>() != none));
       });
     model.transact([&] {
       model.push(1);

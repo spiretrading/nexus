@@ -10,6 +10,7 @@
 #include "Nexus/Definitions/SecuritySet.hpp"
 #include "Spire/KeyBindings/OrderFieldInfoTip.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
+#include "Spire/Spire/ArrayTableModel.hpp"
 #include "Spire/Spire/FieldValueModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalScalarValueModel.hpp"
@@ -18,7 +19,6 @@
 #include "Spire/Styles/LinearExpression.hpp"
 #include "Spire/Styles/RevertExpression.hpp"
 #include "Spire/Styles/TimeoutExpression.hpp"
-#include "Spire/Ui/ArrayTableModel.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/CalendarDatePicker.hpp"
@@ -44,6 +44,7 @@
 #include "Spire/Ui/KeyInputBox.hpp"
 #include "Spire/Ui/KeyTag.hpp"
 #include "Spire/Ui/ListItem.hpp"
+#include "Spire/Ui/ListSelectionModel.hpp"
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/MarketBox.hpp"
 #include "Spire/Ui/MoneyBox.hpp"
@@ -80,6 +81,7 @@
 #include "Spire/Ui/TimeInForceFilterPanel.hpp"
 #include "Spire/Ui/ToggleButton.hpp"
 #include "Spire/Ui/Tooltip.hpp"
+#include "Spire/Ui/TransitionView.hpp"
 #include "Spire/UiViewer/StandardUiProperties.hpp"
 #include "Spire/UiViewer/UiProfile.hpp"
 
@@ -1998,17 +2000,17 @@ UiProfile Spire::make_list_view_profile() {
     {{"WRAP", Overflow::WRAP}, {"NONE", Overflow::NONE}});
   properties.push_back(
     make_standard_enum_property("overflow", overflow_property));
-  auto selection_mode_property = define_enum<SelectionMode>(
-    {{"NONE", SelectionMode::NONE},
-     {"SINGLE", SelectionMode::SINGLE}});
-  properties.push_back(
-    make_standard_enum_property("selection_mode", selection_mode_property));
+  auto selection_mode_property = define_enum<ListSelectionModel::Mode>(
+    {{"NONE", ListSelectionModel::Mode::NONE},
+     {"SINGLE", ListSelectionModel::Mode::SINGLE},
+     {"MULTI", ListSelectionModel::Mode::MULTI}});
+  properties.push_back(make_standard_enum_property("selection_mode",
+    ListSelectionModel::Mode::SINGLE, selection_mode_property));
   auto change_item_property = define_enum<int>({{"Delete", 0}, {"Add", 1}});
   properties.push_back(
     make_standard_enum_property("change_item", change_item_property));
   properties.push_back(make_standard_property("change_item_index", -1));
   properties.push_back(make_standard_property("current_item", -1));
-  properties.push_back(make_standard_property("select_item", -1));
   properties.push_back(make_standard_property("disable_item", -1));
   properties.push_back(make_standard_property("enable_item", -1));
   properties.push_back(make_standard_property("auto_set_current_null", false));
@@ -2048,8 +2050,9 @@ UiProfile Spire::make_list_view_profile() {
           list_model->insert(QString("newItem%1").arg(index++), value);
         }
       });
+    auto selection_model = std::make_shared<ListSelectionModel>();
     auto list_view =
-      new ListView(list_model,
+      new ListView(list_model, selection_model,
         [&] (const std::shared_ptr<ListModel<QString>>& model, auto index) {
           auto label = make_label(model->get(index));
           if(random_height_seed.get() == 0) {
@@ -2095,16 +2098,14 @@ UiProfile Spire::make_list_view_profile() {
         style.get(Any()).set(value);
       });
     });
+    auto& selection_mode =
+      get<ListSelectionModel::Mode>("selection_mode", profile.get_properties());
+    selection_mode.connect_changed_signal([=] (auto value) {
+      selection_model->set_mode(value);
+    });
     auto& navigation =
       get<EdgeNavigation>("edge_navigation", profile.get_properties());
     navigation.connect_changed_signal([=] (auto value) {
-      update_style(*list_view, [&] (auto& style) {
-        style.get(Any()).set(value);
-      });
-    });
-    auto& selection_mode =
-      get<SelectionMode>("selection_mode", profile.get_properties());
-    selection_mode.connect_changed_signal([=] (auto value) {
       update_style(*list_view, [&] (auto& style) {
         style.get(Any()).set(value);
       });
@@ -2115,14 +2116,6 @@ UiProfile Spire::make_list_view_profile() {
         list_view->get_current()->set(none);
       } else if(index >= 0 && index < list_model->get_size()) {
         list_view->get_current()->set(index);
-      }
-    });
-    auto& select_item = get<int>("select_item", profile.get_properties());
-    select_item.connect_changed_signal([=] (auto index) {
-      if(index == -1) {
-        list_view->get_selection()->set(none);
-      } else if(index >= 0 && index < list_model->get_size()) {
-        list_view->get_selection()->set(index);
       }
     });
     auto& disable_item = get<int>("disable_item", profile.get_properties());
@@ -2149,8 +2142,8 @@ UiProfile Spire::make_list_view_profile() {
       });
     list_view->get_current()->connect_update_signal(
       profile.make_event_slot<optional<int>>("Current"));
-    list_view->get_selection()->connect_update_signal(
-      profile.make_event_slot<optional<int>>("Selection"));
+    list_view->get_selection()->connect_operation_signal(
+      profile.make_event_slot<AnyListModel::Operation>("Selection"));
     list_view->connect_submit_signal(
       profile.make_event_slot<optional<std::any>>("Submit"));
     return list_view;
@@ -3408,6 +3401,59 @@ UiProfile Spire::make_tooltip_profile() {
       tooltip->set_label(text);
     });
     return label;
+  });
+  return profile;
+}
+
+UiProfile Spire::make_transition_view_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  properties.push_back(make_standard_property<int>("width", 200));
+  properties.push_back(make_standard_property<int>("height", 300));
+  auto status_property = define_enum<TransitionView::Status>(
+    {{"NONE", TransitionView::Status::NONE},
+     {"LOADING", TransitionView::Status::LOADING},
+     {"READY", TransitionView::Status::READY}});
+  properties.push_back(make_standard_enum_property("status", status_property));
+  auto profile = UiProfile("TransitionView", properties, [] (auto& profile) {
+    auto list_model = std::make_shared<ArrayListModel<QString>>();
+    for(auto i = 0; i < 10; ++i) {
+      list_model->push(QString("Item%1").arg(i));
+    }
+    auto list_view = new ListView(list_model,
+      [] (const std::shared_ptr<ListModel<QString>>& model, auto index) {
+        return make_label(model->get(index));
+      });
+    update_style(*list_view, [] (auto& style) {
+      style.get(Any()).set(Qt::Orientation::Vertical);
+    });
+    auto transition_view =
+      new TransitionView(new ScrollableListBox(*list_view));
+    auto box = new Box(transition_view);
+    update_style(*box, [] (auto& style) {
+      style.get(Any()).set(border(scale_width(1), QColor(0x4B23A0)));
+    });
+    auto& width = get<int>("width", profile.get_properties());
+    width.connect_changed_signal([=] (auto value) {
+      if(value != 0) {
+        if(unscale_width(transition_view->width()) != value) {
+          transition_view->setFixedWidth(scale_width(value));
+        }
+      }
+    });
+    auto& height = get<int>("height", profile.get_properties());
+    height.connect_changed_signal([=] (auto value) {
+      if(value != 0) {
+        if(unscale_height(transition_view->height()) != value) {
+          transition_view->setFixedHeight(scale_height(value));
+        }
+      }
+    });
+    auto& status =
+      get<TransitionView::Status>("status", profile.get_properties());
+    status.connect_changed_signal([=] (auto s) {
+      transition_view->set_status(s);
+    });
+    return box;
   });
   return profile;
 }

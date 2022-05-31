@@ -211,7 +211,7 @@ void ComboBox::revert_to(const QString& query, bool autocomplete) {
 void ComboBox::revert_current() {
   auto& list_view = m_drop_down_list->get_list_view();
   list_view.get_current()->set(none);
-  list_view.get_selection()->set(none);
+  clear(*list_view.get_selection());
   if(m_user_query) {
     revert_to(*m_user_query, true);
   }
@@ -321,7 +321,7 @@ void ComboBox::on_query(
         !m_drop_down_list->isVisible()) {
       auto blocker = shared_connection_block(m_drop_down_current_connection);
       m_drop_down_list->get_list_view().get_current()->set(none);
-      m_drop_down_list->get_list_view().get_selection()->set(none);
+      clear(*m_drop_down_list->get_list_view().get_selection());
       m_drop_down_list->show();
     }
   }

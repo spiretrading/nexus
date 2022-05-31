@@ -1,7 +1,7 @@
 #include <deque>
 #include <doctest/doctest.h>
-#include "Spire/Ui/ArrayTableModel.hpp"
-#include "Spire/Ui/FilteredTableModel.hpp"
+#include "Spire/Spire/ArrayTableModel.hpp"
+#include "Spire/Spire/FilteredTableModel.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -45,8 +45,8 @@ TEST_SUITE("FilteredTableModel") {
     auto connection = scoped_connection(filtered_model.connect_operation_signal(
       [&] (const TableModel::Operation& operation) {
         ++signal_count;
-        auto add_operation = get<TableModel::AddOperation>(&operation);
-        REQUIRE(add_operation != nullptr);
+        auto add_operation = operation.get<TableModel::AddOperation>();
+        REQUIRE((add_operation != none));
         REQUIRE(add_operation->m_index == filtered_model.get_row_size() - 1);
       }));
     source->push({10});
@@ -90,8 +90,8 @@ TEST_SUITE("FilteredTableModel") {
     auto connection = scoped_connection(filtered_model.connect_operation_signal(
       [&] (const TableModel::Operation& operation) {
         ++signal_count;
-        auto add_operation = get<TableModel::AddOperation>(&operation);
-        REQUIRE(add_operation != nullptr);
+        auto add_operation = operation.get<TableModel::AddOperation>();
+        REQUIRE((add_operation != none));
         REQUIRE(add_operation->m_index == added_index);
       }));
     source->insert({9}, 1);
@@ -151,8 +151,8 @@ TEST_SUITE("FilteredTableModel") {
     auto connection = scoped_connection(filtered_model.connect_operation_signal(
       [&] (const TableModel::Operation& operation) {
         ++signal_count;
-        auto remove_operation = get<TableModel::RemoveOperation>(&operation);
-        REQUIRE(remove_operation != nullptr);
+        auto remove_operation = operation.get<TableModel::RemoveOperation>();
+        REQUIRE((remove_operation != none));
         REQUIRE(remove_operation->m_index == 0);
       }));
     source->remove(2);
@@ -202,8 +202,8 @@ TEST_SUITE("FilteredTableModel") {
     auto connection = scoped_connection(filtered_model.connect_operation_signal(
       [&] (const TableModel::Operation& operation) {
         ++signal_count;
-        auto move_operation = get<TableModel::MoveOperation>(&operation);
-        REQUIRE(move_operation != nullptr);
+        auto move_operation = operation.get<TableModel::MoveOperation>();
+        REQUIRE((move_operation != none));
         REQUIRE(move_operation->m_source == source_row);
         REQUIRE(move_operation->m_destination == destination_row);
       }));
@@ -449,48 +449,47 @@ TEST_SUITE("FilteredTableModel") {
     REQUIRE(filtered_model.get<int>(6, 0) == 12);
     REQUIRE(filtered_model.get<int>(7, 0) == 14);
     REQUIRE(operations.size() == 1);
-    auto transaction = get<TableModel::Transaction>(&operations.front());
-    REQUIRE(transaction != nullptr);
-    REQUIRE(transaction->m_operations.size() == 13);
-    auto add = get<TableModel::AddOperation>(&transaction->m_operations[0]);
-    REQUIRE(add != nullptr);
+    auto transaction = operations.front().get<TableModel::Transaction>();
+    REQUIRE((transaction != none));
+    REQUIRE(transaction->size() == 13);
+    auto add = (*transaction)[0].get<TableModel::AddOperation>();
+    REQUIRE((add != none));
     REQUIRE(add->m_index == 0);
-    auto remove =
-      get<TableModel::RemoveOperation>(&transaction->m_operations[1]);
-    REQUIRE(remove != nullptr);
+    auto remove = (*transaction)[1].get<TableModel::RemoveOperation>();
+    REQUIRE((remove != none));
     REQUIRE(remove->m_index == 1);
-    add = get<TableModel::AddOperation>(&transaction->m_operations[2]);
-    REQUIRE(add != nullptr);
+    add = (*transaction)[2].get<TableModel::AddOperation>();
+    REQUIRE((add != none));
     REQUIRE(add->m_index == 1);
-    remove = get<TableModel::RemoveOperation>(&transaction->m_operations[3]);
-    REQUIRE(remove != nullptr);
+    remove = (*transaction)[3].get<TableModel::RemoveOperation>();
+    REQUIRE((remove != none));
     REQUIRE(remove->m_index == 2);
-    add = get<TableModel::AddOperation>(&transaction->m_operations[4]);
-    REQUIRE(add != nullptr);
+    add = (*transaction)[4].get<TableModel::AddOperation>();
+    REQUIRE((add != none));
     REQUIRE(add->m_index == 2);
-    remove = get<TableModel::RemoveOperation>(&transaction->m_operations[5]);
-    REQUIRE(remove != nullptr);
+    remove = (*transaction)[5].get<TableModel::RemoveOperation>();
+    REQUIRE((remove != none));
     REQUIRE(remove->m_index == 3);
-    add = get<TableModel::AddOperation>(&transaction->m_operations[6]);
-    REQUIRE(add != nullptr);
+    add = (*transaction)[6].get<TableModel::AddOperation>();
+    REQUIRE((add != none));
     REQUIRE(add->m_index == 3);
-    remove = get<TableModel::RemoveOperation>(&transaction->m_operations[7]);
-    REQUIRE(remove != nullptr);
+    remove = (*transaction)[7].get<TableModel::RemoveOperation>();
+    REQUIRE((remove != none));
     REQUIRE(remove->m_index == 4);
-    add = get<TableModel::AddOperation>(&transaction->m_operations[8]);
-    REQUIRE(add != nullptr);
+    add = (*transaction)[8].get<TableModel::AddOperation>();
+    REQUIRE((add != none));
     REQUIRE(add->m_index == 4);
-    remove = get<TableModel::RemoveOperation>(&transaction->m_operations[9]);
-    REQUIRE(remove != nullptr);
+    remove = (*transaction)[9].get<TableModel::RemoveOperation>();
+    REQUIRE((remove != none));
     REQUIRE(remove->m_index == 5);
-    add = get<TableModel::AddOperation>(&transaction->m_operations[10]);
-    REQUIRE(add != nullptr);
+    add = (*transaction)[10].get<TableModel::AddOperation>();
+    REQUIRE((add != none));
     REQUIRE(add->m_index == 5);
-    add = get<TableModel::AddOperation>(&transaction->m_operations[11]);
-    REQUIRE(add != nullptr);
+    add = (*transaction)[11].get<TableModel::AddOperation>();
+    REQUIRE((add != none));
     REQUIRE(add->m_index == 6);
-    add = get<TableModel::AddOperation>(&transaction->m_operations[12]);
-    REQUIRE(add != nullptr);
+    add = (*transaction)[12].get<TableModel::AddOperation>();
+    REQUIRE((add != none));
     REQUIRE(add->m_index == 7);
   }
 
@@ -536,48 +535,47 @@ TEST_SUITE("FilteredTableModel") {
     REQUIRE(filtered_model.get<int>(3, 0) == 6);
     REQUIRE(filtered_model.get<int>(4, 0) == 8);
     REQUIRE(operations.size() == 1);
-    auto transaction = get<TableModel::Transaction>(&operations.front());
-    REQUIRE(transaction != nullptr);
-    REQUIRE(transaction->m_operations.size() == 13);
-    auto add = get<TableModel::AddOperation>(&transaction->m_operations[0]);
-    REQUIRE(add != nullptr);
+    auto transaction = operations.front().get<TableModel::Transaction>();
+    REQUIRE((transaction != none));
+    REQUIRE(transaction->size() == 13);
+    auto add = (*transaction)[0].get<TableModel::AddOperation>();
+    REQUIRE((add != none));
     REQUIRE(add->m_index == 0);
-    auto remove =
-      get<TableModel::RemoveOperation>(&transaction->m_operations[1]);
-    REQUIRE(remove != nullptr);
+    auto remove = (*transaction)[1].get<TableModel::RemoveOperation>();
+    REQUIRE((remove != none));
     REQUIRE(remove->m_index == 1);
-    add = get<TableModel::AddOperation>(&transaction->m_operations[2]);
-    REQUIRE(add != nullptr);
+    add = (*transaction)[2].get<TableModel::AddOperation>();
+    REQUIRE((add != none));
     REQUIRE(add->m_index == 1);
-    remove = get<TableModel::RemoveOperation>(&transaction->m_operations[3]);
-    REQUIRE(remove != nullptr);
+    remove = (*transaction)[3].get<TableModel::RemoveOperation>();
+    REQUIRE((remove != none));
     REQUIRE(remove->m_index == 2);
-    add = get<TableModel::AddOperation>(&transaction->m_operations[4]);
-    REQUIRE(add != nullptr);
+    add = (*transaction)[4].get<TableModel::AddOperation>();
+    REQUIRE((add != none));
     REQUIRE(add->m_index == 2);
-    remove = get<TableModel::RemoveOperation>(&transaction->m_operations[5]);
-    REQUIRE(remove != nullptr);
+    remove = (*transaction)[5].get<TableModel::RemoveOperation>();
+    REQUIRE((remove != none));
     REQUIRE(remove->m_index == 3);
-    add = get<TableModel::AddOperation>(&transaction->m_operations[6]);
-    REQUIRE(add != nullptr);
+    add = (*transaction)[6].get<TableModel::AddOperation>();
+    REQUIRE((add != none));
     REQUIRE(add->m_index == 3);
-    remove = get<TableModel::RemoveOperation>(&transaction->m_operations[7]);
-    REQUIRE(remove != nullptr);
+    remove = (*transaction)[7].get<TableModel::RemoveOperation>();
+    REQUIRE((remove != none));
     REQUIRE(remove->m_index == 4);
-    add = get<TableModel::AddOperation>(&transaction->m_operations[8]);
-    REQUIRE(add != nullptr);
+    add = (*transaction)[8].get<TableModel::AddOperation>();
+    REQUIRE((add != none));
     REQUIRE(add->m_index == 4);
-    remove = get<TableModel::RemoveOperation>(&transaction->m_operations[9]);
-    REQUIRE(remove != nullptr);
+    remove = (*transaction)[9].get<TableModel::RemoveOperation>();
+    REQUIRE((remove != none));
     REQUIRE(remove->m_index == 5);
-    remove = get<TableModel::RemoveOperation>(&transaction->m_operations[10]);
-    REQUIRE(remove != nullptr);
+    remove = (*transaction)[10].get<TableModel::RemoveOperation>();
+    REQUIRE((remove != none));
     REQUIRE(remove->m_index == 5);
-    remove = get<TableModel::RemoveOperation>(&transaction->m_operations[11]);
-    REQUIRE(remove != nullptr);
+    remove = (*transaction)[11].get<TableModel::RemoveOperation>();
+    REQUIRE((remove != none));
     REQUIRE(remove->m_index == 5);
-    remove = get<TableModel::RemoveOperation>(&transaction->m_operations[12]);
-    REQUIRE(remove != nullptr);
+    remove = (*transaction)[12].get<TableModel::RemoveOperation>();
+    REQUIRE((remove != none));
     REQUIRE(remove->m_index == 5);
   }
 }

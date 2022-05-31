@@ -531,17 +531,12 @@ void DecimalBox::increment() {
 
 Decimal DecimalBox::get_increment() const {
   auto modifier_flags = static_cast<int>(qApp->keyboardModifiers());
-  auto modifiers =
-    std::bitset<std::numeric_limits<int>::digits>(modifier_flags);
-  if(modifiers.count() != 1) {
-    auto increment = m_modifiers.find(
-      static_cast<Qt::KeyboardModifier>(modifiers.to_ulong()));
-    if(increment == m_modifiers.end()) {
-      return m_modifiers.find(Qt::NoModifier).value();
-    }
+  if(auto increment =
+      m_modifiers.find(static_cast<Qt::KeyboardModifier>(modifier_flags));
+      increment != m_modifiers.end()) {
+    return increment.value();
   }
-  return m_modifiers.find(
-    static_cast<Qt::KeyboardModifier>(modifiers.to_ulong())).value();
+  return m_modifiers[Qt::NoModifier];
 }
 
 void DecimalBox::step_by(const Decimal& value) {

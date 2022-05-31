@@ -2,11 +2,11 @@
 #include <QKeyEvent>
 #include <QStringBuilder>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/ListModelTransactionLog.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ListItem.hpp"
-#include "Spire/Ui/ListModelTransactionLog.hpp"
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/ScrollableListBox.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
@@ -100,6 +100,10 @@ struct TagBox::PartialListModel : public AnyListModel {
   connection connect_operation_signal(
       const OperationSignal::slot_type& slot) const override {
     return m_transaction.connect_operation_signal(slot);
+  }
+
+  void transact(const std::function<void ()>& transaction) override {
+    m_transaction.transact(transaction);
   }
 
   void on_operation(const Operation& operation) {

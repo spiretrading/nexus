@@ -11,7 +11,6 @@
 
 namespace Spire {
   class AnyInputBox;
-  class ArrayTableModel;
   class Box;
   class BoxGeometry;
   class BoxPainter;
@@ -31,9 +30,9 @@ namespace Spire {
   class DropDownList;
   class DropShadow;
   class DurationBox;
+  class EmptySelectionModel;
   class EmptyTableFilter;
   template<typename T> class EnumBox;
-  class FilteredTableModel;
   class FilterPanel;
   class FocusObserver;
   class GlobalPositionObserver;
@@ -47,6 +46,7 @@ namespace Spire {
   class ListView;
   class MarketBox;
   class MoneyBox;
+  class MultiSelectionModel;
   class NavigationView;
   class OpenFilterPanel;
   template<typename T> class OpenFilterPanelTemplate;
@@ -54,7 +54,6 @@ namespace Spire {
   class PressObserver;
   class RegionListItem;
   class ResponsiveLabel;
-  template<typename T> class RowViewListModel;
   template<typename T> class ScalarFilterPanel;
   class ScrollBar;
   class ScrollBox;
@@ -65,6 +64,7 @@ namespace Spire {
   class SecurityListItem;
   class SecurityStack;
   class SecurityView;
+  class SingleSelectionModel;
   class SortedTableModel;
   template<typename T> class StagingValueModel;
   class StandardTableFilter;
@@ -72,11 +72,11 @@ namespace Spire {
   class SubmenuItem;
   class TabView;
   class TableBody;
+  class TableCurrentController;
   class TableHeader;
   class TableHeaderItem;
   class TableFilter;
   class TableItem;
-  class TableModel;
   class TableView;
   class Tag;
   class TagBox;
@@ -86,8 +86,8 @@ namespace Spire {
   class TitleBar;
   class ToggleButton;
   class Tooltip;
+  class TransitionView;
   class TransitionWidget;
-  class TranslatedTableModel;
   class Window;
   class WindowObserver;
 
