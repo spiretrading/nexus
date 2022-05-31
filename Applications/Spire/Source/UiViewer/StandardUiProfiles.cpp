@@ -2858,7 +2858,6 @@ UiProfile Spire::make_security_view_profile() {
     auto label = make_label("");
     label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     auto security_view = new SecurityView(model, label);
-    security_view->setFixedSize(scale(266, 361));
     auto box = new Box(security_view);
     update_style(*box, [] (auto& style) {
       style.get(Hover() || Focus()).

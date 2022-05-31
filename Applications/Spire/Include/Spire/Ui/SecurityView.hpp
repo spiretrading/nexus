@@ -7,7 +7,10 @@
 
 namespace Spire {
 
-  /** Displays securities and provides the functionality to quickly search and cycle through securities. */
+  /**
+   * Displays securities and provides the functionality to quickly search and
+   * cycle through securities.
+   */
   class SecurityView : public QWidget {
     public:
 

@@ -100,7 +100,7 @@ SecurityView::SecurityView(std::shared_ptr<ComboBox::QueryModel> query_model,
   m_prompt = make_label(tr("Enter a ticker symbol."));
   update_style(*m_prompt, [] (auto& style) {
     style.get(ReadOnly() && Disabled()).
-      set(TextAlign(Qt::Alignment(Qt::AlignCenter))).
+      set(TextAlign(Qt::AlignCenter)).
       set(horizontal_padding(scale_width(8))).
       set(vertical_padding(scale_height(8)));
   });
@@ -146,7 +146,7 @@ void SecurityView::keyPressEvent(QKeyEvent* event) {
   QWidget::keyPressEvent(event);
 }
 
-void SecurityView::on_submit(const Nexus::Security& security) {
+void SecurityView::on_submit(const Security& security) {
   if(auto iter = std::find(m_securities.begin(), m_securities.end(), security);
       iter != m_securities.end()) {
     if(std::distance(m_securities.begin(), iter) <= m_current_index) {
