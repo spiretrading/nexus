@@ -1,10 +1,10 @@
 #include "Spire/Blotter/BlotterTaskView.hpp"
 #include "Spire/Canvas/Task.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
+#include "Spire/Spire/ArrayTableModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ColumnViewListModel.hpp"
 #include "Spire/Spire/ListValueModel.hpp"
-#include "Spire/Ui/ArrayTableModel.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/Layouts.hpp"
@@ -88,10 +88,21 @@ namespace {
       m_transaction.transact([&] {
         visit(operation,
           [&] (const BlotterTaskListModel::AddOperation& operation) {
-            m_transaction.push(TableModel::AddOperation(operation.m_index));
+            auto row = std::make_shared<ArrayListModel<std::any>>();
+            for(auto i = 0; i != get_column_size(); ++i) {
+              row->push(to_any(at(operation.m_index, i)));
+            }
+            m_transaction.push(
+              TableModel::AddOperation(operation.m_index, row));
           },
           [&] (const BlotterTaskListModel::RemoveOperation& operation) {
-            m_transaction.push(TableModel::RemoveOperation(operation.m_index));
+            auto row = std::make_shared<ArrayListModel<std::any>>();
+            row->push(operation.get_value()->m_is_pinned);
+            row->push(operation.get_value()->m_name);
+            row->push(operation.get_value()->m_id);
+            row->push(Task::State::ACTIVE);
+            m_transaction.push(
+              TableModel::RemoveOperation(operation.m_index, row));
           },
           [&] (const BlotterTaskListModel::MoveOperation& operation) {
             m_transaction.push(TableModel::MoveOperation(
@@ -99,7 +110,9 @@ namespace {
           },
           [&] (const BlotterTaskListModel::UpdateOperation& operation) {
             m_transaction.push(
-              TableModel::UpdateOperation(operation.m_index, 0));
+              TableModel::UpdateOperation(operation.m_index, 0,
+                operation.get_previous()->m_is_pinned,
+                operation.get_value()->m_is_pinned));
           });
       });
     }
@@ -226,5 +239,5 @@ connection BlotterTaskView::connect_cancel_signal(
 }
 
 void BlotterTaskView::on_tasks_operation(
-    const ListModel<std::shared_ptr<Task>>::Operation& operation) {
+    const BlotterTaskListModel::Operation& operation) {
 }

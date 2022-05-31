@@ -1,7 +1,7 @@
 #include "Spire/Blotter/BlotterPositionsView.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
+#include "Spire/Spire/ArrayTableModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Ui/ArrayTableModel.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/Layouts.hpp"

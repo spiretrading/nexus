@@ -1,5 +1,5 @@
 #include "Spire/Blotter/BlotterProfitAndLossView.hpp"
-#include "Spire/Ui/ArrayTableModel.hpp"
+#include "Spire/Spire/ArrayTableModel.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/TableView.hpp"

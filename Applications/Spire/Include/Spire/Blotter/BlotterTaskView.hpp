@@ -63,8 +63,7 @@ namespace Spire {
       std::shared_ptr<BlotterTaskListModel> m_tasks;
       boost::signals2::scoped_connection m_tasks_connection;
 
-      void on_tasks_operation(
-        const ListModel<std::shared_ptr<Task>>::Operation& operation);
+      void on_tasks_operation(const BlotterTaskListModel::Operation& operation);
   };
 }
 
