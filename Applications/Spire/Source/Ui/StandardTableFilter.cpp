@@ -1,7 +1,7 @@
 #include "Spire/Ui/StandardTableFilter.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
+#include "Spire/Spire/TableModel.hpp"
 #include "Spire/Ui/ScalarFilterPanel.hpp"
-#include "Spire/Ui/TableModel.hpp"
 
 using namespace boost;
 using namespace boost::signals2;

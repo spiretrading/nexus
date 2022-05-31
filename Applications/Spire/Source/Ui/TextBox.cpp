@@ -216,6 +216,10 @@ class TextBox::LineEdit : public QLineEdit {
         m_has_update = true;
         on_editing_finished();
         return;
+      } else if(event->modifiers() & Qt::ControlModifier &&
+          (event->key() == Qt::Key_Up || event->key() == Qt::Key_Down)) {
+        event->ignore();
+        return;
       }
       QLineEdit::keyPressEvent(event);
     }

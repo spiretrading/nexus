@@ -3,8 +3,8 @@
 #include <stdexcept>
 #include <vector>
 #include "Spire/Spire/ListModel.hpp"
+#include "Spire/Spire/ListModelTransactionLog.hpp"
 #include "Spire/Spire/Spire.hpp"
-#include "Spire/Ui/ListModelTransactionLog.hpp"
 
 namespace Spire {
 
@@ -16,28 +16,22 @@ namespace Spire {
 
       using OperationSignal = ListModel<T>::OperationSignal;
 
-      using ListModel<T>::AddOperation;
+      using AddOperation = typename ListModel<T>::AddOperation;
 
-      using ListModel<T>::RemoveOperation;
+      using MoveOperation = typename ListModel<T>::MoveOperation;
 
-      using ListModel<T>::MoveOperation;
+      using RemoveOperation = typename ListModel<T>::RemoveOperation;
 
-      using ListModel<T>::UpdateOperation;
+      using UpdateOperation = typename ListModel<T>::UpdateOperation;
 
       /** Constructs an empty ArrayListModel. */
       ArrayListModel() = default;
 
       /**
-       * Takes a callable function and invokes it. All operations performed on
-       * this model during the transaction get appended to a
-       * <code>Transaction</code> that is signalled at the end of the
-       * transaction. If a transaction is already being invoked, then all
-       * operations are appened into the parent transaction.
-       * @param transaction The transaction to perform.
-       * @return The result of the transaction.
+       * Constructs an ArrayListModel.
+       * @param data The initial data to populate the model with.
        */
-      template<typename F>
-      decltype(auto) transact(F&& transaction);
+      explicit ArrayListModel(std::vector<Type> data);
 
       int get_size() const override;
 
@@ -54,16 +48,19 @@ namespace Spire {
       boost::signals2::connection connect_operation_signal(
         const typename OperationSignal::slot_type& slot) const override;
 
+      using ListModel<T>::transact;
+
+    protected:
+      void transact(const std::function<void ()>& transaction) override;
+
     private:
       std::vector<Type> m_data;
       ListModelTransactionLog<Type> m_transaction;
   };
 
   template<typename T>
-  template<typename F>
-  decltype(auto) ArrayListModel<T>::transact(F&& transaction) {
-    return m_transaction.transact(std::forward<F>(transaction));
-  }
+  ArrayListModel<T>::ArrayListModel(std::vector<Type> data)
+    : m_data(std::move(data)) {}
 
   template<typename T>
   int ArrayListModel<T>::get_size() const {
@@ -82,10 +79,11 @@ namespace Spire {
   template<typename T>
   QValidator::State ArrayListModel<T>::set(int index, const Type& value) {
     if(index < 0 || index >= get_size()) {
-      return QValidator::State::Invalid;
+      throw std::out_of_range("The index is out of range.");
     }
+    auto previous = m_data[index];
     m_data[index] = value;
-    m_transaction.push(UpdateOperation(index));
+    m_transaction.push(UpdateOperation(index, previous, value));
     return QValidator::State::Acceptable;
   }
 
@@ -95,7 +93,7 @@ namespace Spire {
       throw std::out_of_range("The index is out of range.");
     }
     m_data.insert(std::next(m_data.begin(), index), value);
-    m_transaction.push(AddOperation(index));
+    m_transaction.push(AddOperation(index, value));
     return QValidator::State::Acceptable;
   }
 
@@ -128,8 +126,9 @@ namespace Spire {
     if(index < 0 || index >= get_size()) {
       throw std::out_of_range("The index is out of range.");
     }
+    auto value = m_data[index];
     m_data.erase(std::next(m_data.begin(), index));
-    m_transaction.push(RemoveOperation(index));
+    m_transaction.push(RemoveOperation(index, value));
     return QValidator::State::Acceptable;
   }
 
@@ -137,6 +136,11 @@ namespace Spire {
   boost::signals2::connection ArrayListModel<T>::connect_operation_signal(
       const typename OperationSignal::slot_type& slot) const {
     return m_transaction.connect_operation_signal(slot);
+  }
+
+  template<typename T>
+  void ArrayListModel<T>::transact(const std::function<void ()>& transaction) {
+    m_transaction.transact(transaction);
   }
 }
 

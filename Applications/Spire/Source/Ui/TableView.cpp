@@ -1,13 +1,13 @@
 #include "Spire/Ui/TableView.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
+#include "Spire/Spire/FilteredTableModel.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
+#include "Spire/Spire/SortedTableModel.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/EmptyTableFilter.hpp"
-#include "Spire/Ui/FilteredTableModel.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
-#include "Spire/Ui/SortedTableModel.hpp"
 #include "Spire/Ui/StandardTableFilter.hpp"
 #include "Spire/Ui/TableBody.hpp"
 #include "Spire/Ui/TableItem.hpp"
@@ -190,7 +190,7 @@ TableViewBuilder::TableViewBuilder(
     m_parent(parent),
     m_header(std::make_shared<ArrayListModel<TableHeaderItem::Model>>()),
     m_filter(std::make_shared<EmptyTableFilter>()),
-    m_current(std::make_shared<LocalValueModel<optional<TableBody::Index>>>()),
+    m_current(std::make_shared<LocalValueModel<optional<TableIndex>>>()),
     m_view_builder(&TableView::default_view_builder) {}
 
 TableViewBuilder& TableViewBuilder::set_header(
