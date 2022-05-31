@@ -63,13 +63,15 @@ void ListSelectionController::remove(int index) {
   {
     auto blocker = shared_connection_block(m_connection);
     m_selection->transact([&] {
-      for(auto i = 0; i != m_selection->get_size(); ++i) {
+      auto i = 0;
+      while(i != m_selection->get_size()) {
         auto selection = m_selection->get(i);
         if(selection == index) {
           m_selection->remove(i);
           operation = SelectionModel::RemoveOperation(i, index);
         } else if(selection > index) {
           m_selection->set(i, selection - 1);
+          ++i;
         }
       }
     });
