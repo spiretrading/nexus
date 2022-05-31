@@ -16,7 +16,8 @@ using namespace Spire::Styles;
 class SecurityView::SecuritySearchWindow : public QWidget {
   public:
     explicit SecuritySearchWindow(
-        std::shared_ptr<ComboBox::QueryModel> query_model, QWidget* parent)
+        std::shared_ptr<ComboBox::QueryModel> query_model,
+        QWidget* parent = nullptr)
         : QWidget(parent) {
       auto header = make_label(tr("Security"));
       update_style(*header, [] (auto& style) {
@@ -135,11 +136,11 @@ void SecurityView::keyPressEvent(QKeyEvent* event) {
       text.size() == 1 && (text[0].isLetterOrNumber() || text[0] == '_')) {
     m_search_window->show();
     QApplication::sendEvent(find_focus_proxy(*m_search_window), event);
-  } else if(event->key() == Qt::Key_PageUp) {
+  } else if(event->key() == Qt::Key_PageUp && !m_securities.empty()) {
     m_current_index =
       (m_securities.size() + m_current_index - 1) % m_securities.size();
     m_current->set(m_securities[m_current_index]);
-  } else if(event->key() == Qt::Key_PageDown) {
+  } else if(event->key() == Qt::Key_PageDown && !m_securities.empty()) {
     m_current_index = (m_current_index + 1) % m_securities.size();
     m_current->set(m_securities[m_current_index]);
   }

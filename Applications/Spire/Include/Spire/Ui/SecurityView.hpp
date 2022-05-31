@@ -23,7 +23,7 @@ namespace Spire {
        * @param body The component that represents the current security.
        * @param parent The parent widget.
        */
-      explicit SecurityView(std::shared_ptr<ComboBox::QueryModel> query_model,
+      SecurityView(std::shared_ptr<ComboBox::QueryModel> query_model,
         QWidget* body, QWidget* parent = nullptr);
 
       /**
