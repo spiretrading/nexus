@@ -14,7 +14,7 @@ namespace Spire {
     public:
       using Type = typename ListModel<T>::Type;
 
-      using OperationSignal = ListModel<T>::OperationSignal;
+      using OperationSignal = typename ListModel<T>::OperationSignal;
 
       using AddOperation = typename ListModel<T>::AddOperation;
 
