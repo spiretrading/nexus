@@ -1,7 +1,9 @@
 #ifndef SPIRE_SECURITY_VIEW_HPP
 #define SPIRE_SECURITY_VIEW_HPP
+#include <vector>
 #include <QStackedWidget>
 #include "Nexus/Definitions/Security.hpp"
+#include "Spire/Spire/ValueModel.hpp"
 #include "Spire/Ui/ComboBox.hpp"
 #include "Spire/Ui/Ui.hpp"
 
