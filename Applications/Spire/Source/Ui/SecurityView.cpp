@@ -148,12 +148,12 @@ void SecurityView::keyPressEvent(QKeyEvent* event) {
 }
 
 void SecurityView::on_submit(const Security& security) {
-  if(auto iter = std::find(m_securities.begin(), m_securities.end(), security);
-      iter != m_securities.end()) {
-    if(std::distance(m_securities.begin(), iter) <= m_current_index) {
+  if(auto i = std::find(m_securities.begin(), m_securities.end(), security);
+      i != m_securities.end()) {
+    if(std::distance(m_securities.begin(), i) <= m_current_index) {
       --m_current_index;
     }
-    m_securities.erase(iter);
+    m_securities.erase(i);
   }
   ++m_current_index;
   m_securities.insert(m_securities.begin() + m_current_index, security);
