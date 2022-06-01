@@ -46,11 +46,19 @@ class SecurityView::SecuritySearchWindow : public QWidget {
       });
       m_panel->set_positioning(OverlayPanel::Positioning::NONE);
       m_panel->installEventFilter(this);
+      m_input_box = find_focus_proxy(*m_security_box);
+      m_input_box->installEventFilter(this);
     }
 
     bool eventFilter(QObject* watched, QEvent* event) override {
-      if(event->type() == QEvent::Close) {
+      if(watched == m_panel && event->type() == QEvent::Close) {
         hide();
+      } else if(watched == m_input_box && event->type() == QEvent::KeyPress) {
+        auto& key_event = static_cast<QKeyEvent&>(*event);
+        if(key_event.key() == Qt::Key_Escape) {
+          QApplication::sendEvent(m_panel, event);
+          return true;
+        }
       }
       return QWidget::eventFilter(watched, event);
     }
@@ -83,6 +91,7 @@ class SecurityView::SecuritySearchWindow : public QWidget {
   private:
     SecurityBox* m_security_box;
     OverlayPanel* m_panel;
+    QWidget* m_input_box;
 };
 
 SecurityView::SecurityView(std::shared_ptr<ComboBox::QueryModel> query_model,
