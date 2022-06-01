@@ -54,13 +54,13 @@ namespace Spire {
 
     private:
       class SecuritySearchWindow;
-      QWidget* m_body;
-      TextBox* m_prompt;
       SecuritySearchWindow* m_search_window;
-      QStackedWidget* m_layers;
+      QWidget* m_body;
       std::shared_ptr<CurrentModel> m_current;
-      std::vector<Nexus::Security> m_securities;
       int m_current_index;
+      TextBox* m_prompt;
+      QStackedWidget* m_layers;
+      std::vector<Nexus::Security> m_securities;
 
       void on_submit(const Nexus::Security& security);
   };

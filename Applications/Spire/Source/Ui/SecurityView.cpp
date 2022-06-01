@@ -93,8 +93,8 @@ SecurityView::SecurityView(std::shared_ptr<ComboBox::QueryModel> query_model,
 SecurityView::SecurityView(std::shared_ptr<ComboBox::QueryModel> query_model,
     QWidget* body, std::shared_ptr<CurrentModel> current, QWidget* parent)
     : QWidget(parent),
-      m_body(body),
       m_search_window(new SecuritySearchWindow(std::move(query_model), this)),
+      m_body(body),
       m_current(std::move(current)),
       m_current_index(-1) {
   setFocusPolicy(Qt::StrongFocus);
