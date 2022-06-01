@@ -26,17 +26,17 @@ namespace Spire {
        * @param parent The parent widget.
        */
       SecurityView(std::shared_ptr<ComboBox::QueryModel> query_model,
-        QWidget* body, QWidget* parent = nullptr);
+        QWidget& body, QWidget* parent = nullptr);
 
       /**
        * Constructs a SecurityView.
        * @param query_model The model used to query matches.
-       * @param body The component that represents the current security.
        * @param current The current value's model.
+       * @param body The component that represents the current security.
        * @param parent The parent widget.
        */
       SecurityView(std::shared_ptr<ComboBox::QueryModel> query_model,
-        QWidget* body, std::shared_ptr<CurrentModel> current,
+        std::shared_ptr<CurrentModel> current, QWidget& body,
         QWidget* parent = nullptr);
 
       /** Returns the model used to query matches. */
@@ -57,12 +57,12 @@ namespace Spire {
     private:
       class SecuritySearchWindow;
       SecuritySearchWindow* m_search_window;
-      QWidget* m_body;
       std::shared_ptr<CurrentModel> m_current;
-      int m_current_index;
+      QWidget* m_body;
       TextBox* m_prompt;
       QStackedWidget* m_layers;
       std::vector<Nexus::Security> m_securities;
+      int m_current_index;
 
       void on_submit(const Nexus::Security& security);
   };

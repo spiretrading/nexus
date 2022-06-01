@@ -95,16 +95,16 @@ class SecurityView::SecuritySearchWindow : public QWidget {
 };
 
 SecurityView::SecurityView(std::shared_ptr<ComboBox::QueryModel> query_model,
-  QWidget* body, QWidget* parent)
-  : SecurityView(std::move(query_model), body,
-      std::make_shared<LocalValueModel<Security>>(), parent) {}
+  QWidget& body, QWidget* parent)
+  : SecurityView(std::move(query_model),
+      std::make_shared<LocalValueModel<Security>>(), body, parent) {}
 
 SecurityView::SecurityView(std::shared_ptr<ComboBox::QueryModel> query_model,
-    QWidget* body, std::shared_ptr<CurrentModel> current, QWidget* parent)
+    std::shared_ptr<CurrentModel> current, QWidget& body, QWidget* parent)
     : QWidget(parent),
       m_search_window(new SecuritySearchWindow(std::move(query_model), this)),
-      m_body(body),
       m_current(std::move(current)),
+      m_body(&body),
       m_current_index(-1) {
   setFocusPolicy(Qt::StrongFocus);
   m_prompt = make_label(tr("Enter a ticker symbol."));
