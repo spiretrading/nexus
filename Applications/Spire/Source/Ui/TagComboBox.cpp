@@ -39,7 +39,6 @@ struct TagComboBoxQueryModel : ComboBox::QueryModel {
   std::shared_ptr<ComboBox::QueryModel> m_source;
   std::shared_ptr<AnyListModel> m_exclusions;
   std::unordered_set<QString> m_exclusion_set;
-  std::vector<QString> m_exclusion_list;
   scoped_connection m_connection;
 
   TagComboBoxQueryModel(std::shared_ptr<QueryModel> source,
@@ -49,7 +48,7 @@ struct TagComboBoxQueryModel : ComboBox::QueryModel {
         m_connection(m_exclusions->connect_operation_signal(
           std::bind_front(&TagComboBoxQueryModel::on_operation, this))) {
     for(auto i = 0; i < m_exclusions->get_size(); ++i) {
-      add_exclusion(i);
+      m_exclusion_set.insert(displayText(m_exclusions->get(i)));
     }
   }
 
@@ -66,34 +65,28 @@ struct TagComboBoxQueryModel : ComboBox::QueryModel {
 
   QtPromise<std::vector<std::any>> submit(const QString& query) override {
     return m_source->submit(query).then([=] (auto&& source_result) {
-      auto result = [&] {
+      auto& matches = [&] () -> std::vector<std::any>& {
         try {
           return source_result.Get();
         } catch(const std::exception&) {
-          return std::vector<std::any>();
+          static auto empty_matches = std::vector<std::any>();
+          return empty_matches;
         }
       }();
-      std::erase_if(result, [&] (auto& value) {
+      std::erase_if(matches, [&] (auto& value) {
         return m_exclusion_set.contains(displayText(value));
       });
-      return result;
+      return matches;
     });
-  }
-
-  void add_exclusion(int index) {
-    auto value = displayText(m_exclusions->get(index));
-    m_exclusion_set.insert(value);
-    m_exclusion_list.insert(m_exclusion_list.begin() + index, value);
   }
 
   void on_operation(const AnyListModel::Operation& operation) {
     visit(operation,
       [&] (const AnyListModel::AddOperation& operation) {
-        add_exclusion(operation.m_index);
+        m_exclusion_set.insert(displayText(operation.m_value));
       },
       [&] (const AnyListModel::RemoveOperation& operation) {
-        m_exclusion_set.erase(m_exclusion_list[operation.m_index]);
-        m_exclusion_list.erase(m_exclusion_list.begin() + operation.m_index);
+        m_exclusion_set.erase(displayText(operation.m_value));
       });
   }
 };
