@@ -27,6 +27,7 @@ ListSelectionController::ListSelectionController(
   std::shared_ptr<SelectionModel> selection)
   : m_mode(Mode::SINGLE),
     m_selection(std::move(selection)),
+    m_size(0),
     m_connection(m_selection->connect_operation_signal(
       std::bind_front(&ListSelectionController::on_operation, this))) {}
 
@@ -44,6 +45,7 @@ void ListSelectionController::set_mode(Mode mode) {
 }
 
 void ListSelectionController::add(int index) {
+  ++m_size;
   auto blocker = shared_connection_block(m_connection);
   m_selection->transact([&] {
     for(auto i = 0; i != m_selection->get_size(); ++i) {
@@ -56,17 +58,25 @@ void ListSelectionController::add(int index) {
 }
 
 void ListSelectionController::remove(int index) {
+  --m_size;
   auto operation = optional<SelectionModel::Operation>();
   {
     auto blocker = shared_connection_block(m_connection);
     m_selection->transact([&] {
-      for(auto i = 0; i != m_selection->get_size(); ++i) {
+      auto i = 0;
+      while(i != m_selection->get_size()) {
         auto selection = m_selection->get(i);
         if(selection == index) {
-          m_selection->remove(i);
-          operation = SelectionModel::RemoveOperation(i, index);
-        } else if(selection > index) {
-          m_selection->set(i, selection - 1);
+          if(m_selection->remove(i) != QValidator::State::Invalid) {
+            operation = SelectionModel::RemoveOperation(i, index);
+          } else {
+            ++i;
+          }
+        } else {
+          if(selection > index) {
+            m_selection->set(i, selection - 1);
+          }
+          ++i;
         }
       }
     });
@@ -84,6 +94,21 @@ void ListSelectionController::move(int source, int destination) {
       auto selection = m_selection->get(i);
       if(selection >= source || selection <= destination) {
         m_selection->set(i, selection + direction);
+      }
+    }
+  });
+}
+
+void ListSelectionController::select_all() {
+  m_selection->transact([&] {
+    for(auto i = 0; i != m_size; ++i) {
+      if(i != m_current && find_index(i, *m_selection) == -1) {
+        m_selection->push(i);
+      }
+    }
+    if(m_current) {
+      if(find_index(*m_current, *m_selection) == -1) {
+        m_selection->push(*m_current);
       }
     }
   });
@@ -154,5 +179,16 @@ connection ListSelectionController::connect_operation_signal(
 
 void ListSelectionController::on_operation(
     const SelectionModel::Operation& operation) {
+  visit(operation,
+    [&] (const SelectionModel::RemoveOperation& operation) {
+      if(operation.get_value() == m_range_anchor) {
+        m_range_anchor = none;
+      }
+    },
+    [&] (const SelectionModel::UpdateOperation& operation) {
+      if(operation.get_previous() == m_range_anchor) {
+        m_range_anchor = none;
+      }
+    });
   m_operation_signal(operation);
 }

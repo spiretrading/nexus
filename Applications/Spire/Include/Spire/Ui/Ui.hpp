@@ -30,7 +30,7 @@ namespace Spire {
   class DropDownList;
   class DropShadow;
   class DurationBox;
-  class EmptySelectionModel;
+  template<typename T> class EmptySelectionModel;
   class EmptyTableFilter;
   template<typename T> class EnumBox;
   class FilterPanel;
@@ -46,7 +46,7 @@ namespace Spire {
   class ListView;
   class MarketBox;
   class MoneyBox;
-  class MultiSelectionModel;
+  template<typename T> class MultiSelectionModel;
   class NavigationView;
   class OpenFilterPanel;
   template<typename T> class OpenFilterPanelTemplate;
@@ -63,7 +63,7 @@ namespace Spire {
   class SecurityBox;
   class SecurityListItem;
   class SecurityStack;
-  class SingleSelectionModel;
+  template<typename T> class SingleSelectionModel;
   template<typename T> class StagingValueModel;
   class StandardTableFilter;
   class SplitView;
@@ -75,6 +75,7 @@ namespace Spire {
   class TableHeaderItem;
   class TableFilter;
   class TableItem;
+  class TableSelectionModel;
   class TableView;
   class Tag;
   class TagBox;

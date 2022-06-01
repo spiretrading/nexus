@@ -104,32 +104,16 @@ struct TableBody::ColumnCover : Cover {
   }
 };
 
-TableBody::TableBody(std::shared_ptr<TableModel> table,
-  std::shared_ptr<ListModel<int>> widths, QWidget* parent)
-  : TableBody(
-      std::move(table), std::make_shared<LocalValueModel<optional<Index>>>(),
-      std::move(widths), &default_view_builder, parent) {}
-
-TableBody::TableBody(std::shared_ptr<TableModel> table,
-  std::shared_ptr<CurrentModel> current, std::shared_ptr<ListModel<int>> widths,
-  QWidget* parent)
-  : TableBody(std::move(table), std::move(current), std::move(widths),
-      &default_view_builder, parent) {}
-
-TableBody::TableBody(
-  std::shared_ptr<TableModel> table, std::shared_ptr<ListModel<int>> widths,
-  ViewBuilder view_builder, QWidget* parent)
-  : TableBody(std::move(table),
-      std::make_shared<LocalValueModel<optional<Index>>>(), std::move(widths),
-      std::move(view_builder), parent) {}
-
 TableBody::TableBody(
     std::shared_ptr<TableModel> table, std::shared_ptr<CurrentModel> current,
+    std::shared_ptr<SelectionModel> selection,
     std::shared_ptr<ListModel<int>> widths, ViewBuilder view_builder,
     QWidget* parent)
     : QWidget(parent),
       m_table(std::move(table)),
       m_current_controller(std::move(current), 0, m_table->get_column_size()),
+      m_selection_controller(
+        std::move(selection), 0, m_table->get_column_size()),
       m_widths(std::move(widths)),
       m_view_builder(std::move(view_builder)) {
   setFocusPolicy(Qt::StrongFocus);
@@ -172,6 +156,8 @@ TableBody::TableBody(
     std::bind_front(&TableBody::on_table_operation, this));
   m_current_connection = m_current_controller.connect_update_signal(
      std::bind_front(&TableBody::on_current, this));
+  m_selection_controller.connect_row_operation_signal(
+    std::bind_front(&TableBody::on_row_selection, this));
   m_widths_connection = m_widths->connect_operation_signal(
     std::bind_front(&TableBody::on_widths_update, this));
 }
@@ -182,6 +168,11 @@ const std::shared_ptr<TableModel>& TableBody::get_table() const {
 
 const std::shared_ptr<TableBody::CurrentModel>& TableBody::get_current() const {
   return m_current_controller.get_current();
+}
+
+const std::shared_ptr<TableBody::SelectionModel>&
+    TableBody::get_selection() const {
+  return m_selection_controller.get_selection();
 }
 
 const TableItem* TableBody::get_item(Index index) const {
@@ -243,8 +234,53 @@ void TableBody::keyPressEvent(QKeyEvent* event) {
     case Qt::Key_Right:
       m_current_controller.navigate_next_column();
       break;
+    case Qt::Key_A:
+      if(event->modifiers() & Qt::Modifier::CTRL && !event->isAutoRepeat()) {
+        m_selection_controller.select_all();
+      }
+      break;
+    case Qt::Key_Control:
+      m_keys.insert(Qt::Key_Control);
+      m_selection_controller.set_mode(
+        TableSelectionController::Mode::INCREMENTAL);
+      break;
+    case Qt::Key_Shift:
+      m_keys.insert(Qt::Key_Shift);
+      m_selection_controller.set_mode(TableSelectionController::Mode::RANGE);
+      break;
     default:
       QWidget::keyPressEvent(event);
+  }
+}
+
+void TableBody::keyReleaseEvent(QKeyEvent* event) {
+  switch(event->key()) {
+    case Qt::Key_Control:
+      m_keys.erase(Qt::Key_Control);
+      if(m_selection_controller.get_mode() ==
+          TableSelectionController::Mode::INCREMENTAL) {
+        if(m_keys.count(Qt::Key_Shift) == 1) {
+          m_selection_controller.set_mode(
+            TableSelectionController::Mode::RANGE);
+        } else {
+          m_selection_controller.set_mode(
+            TableSelectionController::Mode::SINGLE);
+        }
+      }
+      break;
+    case Qt::Key_Shift:
+      m_keys.erase(Qt::Key_Shift);
+      if(m_selection_controller.get_mode() ==
+          TableSelectionController::Mode::RANGE) {
+        if(m_keys.count(Qt::Key_Control) == 1) {
+          m_selection_controller.set_mode(
+            TableSelectionController::Mode::INCREMENTAL);
+        } else {
+          m_selection_controller.set_mode(
+            TableSelectionController::Mode::SINGLE);
+        }
+      }
+      break;
   }
 }
 
@@ -347,6 +383,10 @@ TableItem* TableBody::get_current_item() {
   return find_item(m_current_controller.get_current()->get());
 }
 
+TableBody::Cover* TableBody::find_row(int index) {
+  return static_cast<Cover*>(layout()->itemAt(index)->widget());
+}
+
 TableItem* TableBody::find_item(const optional<Index>& index) {
   if(!index) {
     return nullptr;
@@ -391,6 +431,7 @@ void TableBody::add_row(int index) {
     *row, std::bind_front(&TableBody::on_cover_style, this, std::ref(*row)));
   on_cover_style(*row);
   m_current_controller.add_row(index);
+  m_selection_controller.add_row(index);
 }
 
 void TableBody::remove_row(int index) {
@@ -400,6 +441,7 @@ void TableBody::remove_row(int index) {
   delete row->widget();
   delete row;
   m_current_controller.remove_row(index);
+  m_selection_controller.remove_row(index);
 }
 
 void TableBody::move_row(int source, int destination) {
@@ -414,16 +456,17 @@ void TableBody::move_row(int source, int destination) {
   }();
   row_layout.insertItem(index, &row);
   m_current_controller.move_row(source, destination);
+  m_selection_controller.move_row(source, destination);
 }
 
 void TableBody::on_item_clicked(TableItem& item) {
   auto& row_widget = *item.parentWidget();
-  auto row_index = layout()->indexOf(&row_widget);
-  auto column_index = row_widget.layout()->indexOf(&item);
-  if(m_current_controller.get_current()->get() !=
-      Index(row_index, column_index)) {
-    m_current_controller.get_current()->set(Index(row_index, column_index));
+  auto index =
+    Index(layout()->indexOf(&row_widget), row_widget.layout()->indexOf(&item));
+  if(m_current_controller.get_current()->get() != index) {
+    m_current_controller.get_current()->set(index);
   }
+  m_selection_controller.click(index);
 }
 
 void TableBody::on_current(
@@ -447,7 +490,22 @@ void TableBody::on_current(
     if(!previous || previous->m_column != current->m_column) {
       match(*m_column_covers[current->m_column], CurrentColumn());
     }
+    m_selection_controller.navigate(*current);
   }
+}
+
+void TableBody::on_row_selection(const ListModel<int>::Operation& operation) {
+  visit(operation,
+    [&] (const ListModel<int>::AddOperation& operation) {
+      match(*find_row(operation.get_value()), Selected());
+    },
+    [&] (const ListModel<int>::RemoveOperation& operation) {
+      unmatch(*find_row(operation.get_value()), Selected());
+    },
+    [&] (const ListModel<int>::UpdateOperation& operation) {
+      unmatch(*find_row(operation.get_previous()), Selected());
+      match(*find_row(operation.get_value()), Selected());
+    });
 }
 
 void TableBody::on_style() {

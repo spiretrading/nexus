@@ -62,6 +62,9 @@ namespace Spire {
        */
       void move(int source, int destination);
 
+      /** Selects all items. */
+      void select_all();
+
       /**
        * Updates the selection when an item is clicked.
        * @param index The index of the clicked item.
@@ -82,6 +85,7 @@ namespace Spire {
       mutable SelectionModel::OperationSignal m_operation_signal;
       Mode m_mode;
       std::shared_ptr<SelectionModel> m_selection;
+      int m_size;
       boost::optional<int> m_current;
       boost::optional<int> m_range_anchor;
       boost::signals2::scoped_connection m_connection;

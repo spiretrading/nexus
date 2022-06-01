@@ -23,6 +23,8 @@ namespace Spire {
 
       using CurrentModel = TableBody::CurrentModel;
 
+      using SelectionModel = TableBody::SelectionModel;
+
       using SortSignal = TableHeader::SortSignal;
 
       /**
@@ -38,13 +40,15 @@ namespace Spire {
        * @param header The model used to display the header.
        * @param filter The filter to apply.
        * @param current The current value.
+       * @param selection The selection.
        * @param view_builder The ViewBuilder to use.
        * @param parent The parent widget.
        */
       TableView(std::shared_ptr<TableModel> table,
         std::shared_ptr<HeaderModel> header,
         std::shared_ptr<TableFilter> filter,
-        std::shared_ptr<CurrentModel> current, ViewBuilder view_builder,
+        std::shared_ptr<CurrentModel> current,
+        std::shared_ptr<SelectionModel> selection, ViewBuilder view_builder,
         QWidget* parent = nullptr);
 
       /** Returns the table of values displayed. */
@@ -52,6 +56,9 @@ namespace Spire {
 
       /** Returns the current value. */
       const std::shared_ptr<CurrentModel>& get_current() const;
+
+      /** Returns the selection. */
+      const std::shared_ptr<SelectionModel>& get_selection() const;
 
       /** Connects a slot to the sort signal. */
       boost::signals2::connection connect_sort_signal(
@@ -139,9 +146,13 @@ namespace Spire {
       /** Applies the standard filter. */
       TableViewBuilder& set_standard_filter();
 
-      /** Sets the current value. */
+      /** Sets the current index. */
       TableViewBuilder& set_current(
         const std::shared_ptr<TableView::CurrentModel>& current);
+
+      /** Sets the selection. */
+      TableViewBuilder& set_selection(
+        const std::shared_ptr<TableView::SelectionModel>& selection);
 
       /** Sets the ViewBuilder to use. */
       TableViewBuilder& set_view_builder(
@@ -156,6 +167,7 @@ namespace Spire {
       std::shared_ptr<TableView::HeaderModel> m_header;
       std::shared_ptr<TableFilter> m_filter;
       std::shared_ptr<TableView::CurrentModel> m_current;
+      std::shared_ptr<TableView::SelectionModel> m_selection;
       TableView::ViewBuilder m_view_builder;
   };
 }

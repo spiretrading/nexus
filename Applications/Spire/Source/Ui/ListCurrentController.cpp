@@ -36,9 +36,17 @@ void ListCurrentController::add(std::unique_ptr<ItemView> view, int index) {
 }
 
 void ListCurrentController::remove(int index) {
+  m_views.erase(m_views.begin() + index);
   if(m_current->get()) {
     if(m_current->get() == index) {
-      m_current->set(index);
+      auto size = static_cast<int>(m_views.size());
+      if(size == 0) {
+        m_current->set(none);
+      } else if(index >= size) {
+        m_current->set(size - 1);
+      } else {
+        m_current->set(index);
+      }
     } else if(m_current->get() > index) {
       auto blocker = shared_connection_block(m_connection);
       m_current->set(*m_current->get() - 1);
@@ -56,6 +64,13 @@ void ListCurrentController::move(int source, int destination) {
     }
     return 1;
   }();
+  if(direction == 1) {
+    std::rotate(m_views.begin() + source, m_views.begin() + source + 1,
+      m_views.begin() + destination + 1);
+  } else {
+    std::rotate(m_views.rend() - source - 1, m_views.rend() - source,
+      m_views.rend() - destination);
+  }
   auto adjust = [&] (auto& value) {
     if(value && (*value >= source || *value <= destination)) {
       *value += direction;

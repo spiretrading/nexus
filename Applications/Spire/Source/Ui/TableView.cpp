@@ -4,10 +4,12 @@
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Spire/SortedTableModel.hpp"
 #include "Spire/Ui/Box.hpp"
+#include "Spire/Ui/EmptySelectionModel.hpp"
 #include "Spire/Ui/EmptyTableFilter.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
+#include "Spire/Ui/SingleSelectionModel.hpp"
 #include "Spire/Ui/StandardTableFilter.hpp"
 #include "Spire/Ui/TableBody.hpp"
 #include "Spire/Ui/TableItem.hpp"
@@ -36,7 +38,8 @@ QWidget* TableView::default_view_builder(
 TableView::TableView(
     std::shared_ptr<TableModel> table, std::shared_ptr<HeaderModel> header,
     std::shared_ptr<TableFilter> filter, std::shared_ptr<CurrentModel> current,
-    ViewBuilder view_builder, QWidget* parent)
+    std::shared_ptr<SelectionModel> selection, ViewBuilder view_builder,
+    QWidget* parent)
     : QWidget(parent),
       m_table(std::move(table)),
       m_header(std::move(header)),
@@ -62,11 +65,11 @@ TableView::TableView(
     style.get(Any()).set(BackgroundColor(QColor(0xFFFFFF)));
   });
   proxy_style(*this, *box);
-  m_filtered_table = std::make_shared<FilteredTableModel>(m_table,
-    std::bind_front(&TableView::is_filtered, this));
+  m_filtered_table = std::make_shared<FilteredTableModel>(
+    m_table, std::bind_front(&TableView::is_filtered, this));
   m_sorted_table = std::make_shared<SortedTableModel>(m_filtered_table);
   m_body = new TableBody(m_sorted_table, std::move(current),
-    m_header_view->get_widths(), std::move(view_builder));
+    std::move(selection), m_header_view->get_widths(), std::move(view_builder));
   m_body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   m_scroll_box = new ScrollBox(m_body);
   auto layout = make_vbox_layout(this);
@@ -92,6 +95,11 @@ const std::shared_ptr<TableModel>& TableView::get_table() const {
 
 const std::shared_ptr<TableView::CurrentModel>& TableView::get_current() const {
   return m_body->get_current();
+}
+
+const std::shared_ptr<TableView::SelectionModel>&
+    TableView::get_selection() const {
+  return m_body->get_selection();
 }
 
 connection TableView::connect_sort_signal(
@@ -191,6 +199,10 @@ TableViewBuilder::TableViewBuilder(
     m_header(std::make_shared<ArrayListModel<TableHeaderItem::Model>>()),
     m_filter(std::make_shared<EmptyTableFilter>()),
     m_current(std::make_shared<LocalValueModel<optional<TableIndex>>>()),
+    m_selection(std::make_shared<TableSelectionModel>(
+      std::make_shared<TableEmptySelectionModel>(),
+      std::make_shared<ListSingleSelectionModel>(),
+      std::make_shared<ListEmptySelectionModel>())),
     m_view_builder(&TableView::default_view_builder) {}
 
 TableViewBuilder& TableViewBuilder::set_header(
@@ -244,6 +256,12 @@ TableViewBuilder& TableViewBuilder::set_current(
   return *this;
 }
 
+TableViewBuilder& TableViewBuilder::set_selection(
+    const std::shared_ptr<TableView::SelectionModel>& selection) {
+  m_selection = selection;
+  return *this;
+}
+
 TableViewBuilder& TableViewBuilder::set_view_builder(
     const TableView::ViewBuilder& view_builder) {
   m_view_builder = view_builder;
@@ -251,6 +269,6 @@ TableViewBuilder& TableViewBuilder::set_view_builder(
 }
 
 TableView* TableViewBuilder::make() const {
-  return new TableView(
-    m_table, m_header, m_filter, m_current, m_view_builder, m_parent);
+  return new TableView(m_table, m_header, m_filter, m_current, m_selection,
+    m_view_builder, m_parent);
 }
