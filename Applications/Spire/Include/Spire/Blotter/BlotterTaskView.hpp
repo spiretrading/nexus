@@ -15,31 +15,30 @@ namespace Spire {
 
       /**
        * Signals to execute a list of selected Tasks.
-       * @param tasks The list of Tasks to execute.
+       * @param tasks The list of selected BlotterTaskEntries to execute.
        */
-      using ExecuteSignal =
-        Signal<void (const std::vector<std::shared_ptr<Task>>& tasks)>;
+      using ExecuteSignal = Signal<
+        void (const std::vector<std::shared_ptr<BlotterTaskEntry>>& tasks)>;
 
       /**
        * Signals to cancel a list of selected Tasks.
-       * @param tasks The list of Tasks to cancel.
+       * @param tasks The list of selected BlotterTaskEntries to cancel.
        */
-      using CancelSignal =
-        Signal<void (const std::vector<std::shared_ptr<Task>>& tasks)>;
+      using CancelSignal = Signal<
+        void (const std::vector<std::shared_ptr<BlotterTaskEntry>>& tasks)>;
 
       /**
        * Constructs a BlotterTaskView.
        * @param is_active Whether this blotter is the active blotter.
        * @param is_pinned Whether this blotter is pinned.
        * @param tasks The list of tasks belonging to this blotter.
-       * @param task_selection The list of selected tasks.
+       * @param selection The list of selected tasks.
        * @param parent The parent widget.
        */
       BlotterTaskView(std::shared_ptr<BooleanModel> is_active,
         std::shared_ptr<BooleanModel> is_pinned,
         std::shared_ptr<BlotterTaskListModel> tasks,
-        std::shared_ptr<ListModel<int>> task_selection,
-        QWidget* parent = nullptr);
+        std::shared_ptr<ListModel<int>> selection, QWidget* parent = nullptr);
 
       /** Whether this is the application's active blotter. */
       const std::shared_ptr<BooleanModel>& is_active();
@@ -64,9 +63,12 @@ namespace Spire {
       std::shared_ptr<BooleanModel> m_is_active;
       std::shared_ptr<BooleanModel> m_is_pinned;
       std::shared_ptr<BlotterTaskListModel> m_tasks;
-      boost::signals2::scoped_connection m_tasks_connection;
+      std::shared_ptr<ListModel<int>> m_selection;
 
-      void on_tasks_operation(const BlotterTaskListModel::Operation& operation);
+      std::vector<std::shared_ptr<BlotterTaskEntry>> make_selected_tasks()
+        const;
+      void on_execute();
+      void on_cancel();
   };
 }
 

@@ -123,11 +123,12 @@ namespace {
 BlotterTaskView::BlotterTaskView(std::shared_ptr<BooleanModel> is_active,
     std::shared_ptr<BooleanModel> is_pinned,
     std::shared_ptr<BlotterTaskListModel> tasks,
-    std::shared_ptr<ListModel<int>> task_selection, QWidget* parent)
+    std::shared_ptr<ListModel<int>> selection, QWidget* parent)
     : QWidget(parent),
       m_is_active(std::move(is_active)),
       m_is_pinned(std::move(is_pinned)),
-      m_tasks(std::move(tasks)) {
+      m_tasks(std::move(tasks)),
+      m_selection(std::move(selection)) {
   setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto command_list = std::make_shared<ArrayListModel<CommandItem>>();
   command_list->push(CommandItem::ACTIVATE);
@@ -136,7 +137,7 @@ BlotterTaskView::BlotterTaskView(std::shared_ptr<BooleanModel> is_active,
   command_list->push(CommandItem::RUN);
   command_list->push(CommandItem::CANCEL);
   auto commands = new ListView(command_list,
-    [] (const std::shared_ptr<ListModel<CommandItem>>& model, auto index) ->
+    [=] (const std::shared_ptr<ListModel<CommandItem>>& model, auto index) ->
         QWidget* {
       if(model->get(index) == CommandItem::SEPARATOR) {
         auto separator = new Box(nullptr, nullptr);
@@ -147,21 +148,26 @@ BlotterTaskView::BlotterTaskView(std::shared_ptr<BooleanModel> is_active,
         separator->setFixedSize(scale(1, 14));
         return separator;
       }
-      auto [path, shortcut] = [&] {
+      auto [path, shortcut, slot] = [&] {
         if(model->get(index) == CommandItem::ACTIVATE) {
-          return std::tuple(
-            ":/Icons/blotter/tasks/active.svg", tr("Set as active blotter"));
+          return std::tuple(":/Icons/blotter/tasks/active.svg",
+            tr("Set as active blotter"), std::function<void ()>());
         } else if(model->get(index) == CommandItem::PIN) {
-          return std::tuple(
-            ":/Icons/blotter/tasks/pin.svg", tr("Pin blotter"));
+          return std::tuple(":/Icons/blotter/tasks/pin.svg", tr("Pin blotter"),
+            std::function<void ()>());
         } else if(model->get(index) == CommandItem::RUN) {
-          return std::tuple(":/Icons/blotter/tasks/run.svg", tr("Run task"));
+          return std::tuple(":/Icons/blotter/tasks/run.svg", tr("Run task"),
+            std::function<void ()>(
+              std::bind_front(&BlotterTaskView::on_execute, this)));
         }
-        return std::tuple(
-          ":/Icons/blotter/tasks/cancel.svg", tr("Cancel task"));
+        return std::tuple(":/Icons/blotter/tasks/cancel.svg", tr("Cancel task"),
+          std::function<void ()>(
+            std::bind_front(&BlotterTaskView::on_cancel, this)));
       }();
-      return make_icon_button(
+      auto button = make_icon_button(
         imageFromSvg(path, scale(26, 26)), std::move(shortcut));
+      button->connect_click_signal(slot);
+      return button;
     });
   update_style(*commands, [] (auto& style) {
     style.get(Any()).
@@ -196,10 +202,10 @@ BlotterTaskView::BlotterTaskView(std::shared_ptr<BooleanModel> is_active,
   table_view_builder.add_header_item(tr("Price"), TableFilter::Filter::NONE);
   table_view_builder.add_header_item(tr("Quantity"), TableFilter::Filter::NONE);
   table_view_builder.add_header_item(tr("Volume"), TableFilter::Filter::NONE);
-  auto selection = std::make_shared<TableSelectionModel>(
-    std::make_shared<TableEmptySelectionModel>(), std::move(task_selection),
+  auto table_selection = std::make_shared<TableSelectionModel>(
+    std::make_shared<TableEmptySelectionModel>(), m_selection,
     std::make_shared<ListEmptySelectionModel>());
-  table_view_builder.set_selection(std::move(selection));
+  table_view_builder.set_selection(std::move(table_selection));
   table_view_builder.set_view_builder(
     [] (auto model, auto row, auto column) -> QWidget* {
       if(column == 0) {
@@ -218,8 +224,6 @@ BlotterTaskView::BlotterTaskView(std::shared_ptr<BooleanModel> is_active,
   scroll_box->set(
     ScrollBox::DisplayPolicy::ON_OVERFLOW, ScrollBox::DisplayPolicy::NEVER);
   layout->addWidget(scroll_box);
-  m_tasks_connection = m_tasks->connect_operation_signal(
-    std::bind_front(&BlotterTaskView::on_tasks_operation, this));
 }
 
 const std::shared_ptr<BooleanModel>& BlotterTaskView::is_active() {
@@ -244,6 +248,19 @@ connection BlotterTaskView::connect_cancel_signal(
   return m_cancel_signal.connect(slot);
 }
 
-void BlotterTaskView::on_tasks_operation(
-    const BlotterTaskListModel::Operation& operation) {
+std::vector<std::shared_ptr<BlotterTaskEntry>>
+    BlotterTaskView::make_selected_tasks() const {
+  auto tasks = std::vector<std::shared_ptr<BlotterTaskEntry>>();
+  for(auto i = 0; i != m_selection->get_size(); ++i) {
+    tasks.push_back(m_tasks->get(i));
+  }
+  return tasks;
+}
+
+void BlotterTaskView::on_execute() {
+  m_execute_signal(make_selected_tasks());
+}
+
+void BlotterTaskView::on_cancel() {
+  m_cancel_signal(make_selected_tasks());
 }
