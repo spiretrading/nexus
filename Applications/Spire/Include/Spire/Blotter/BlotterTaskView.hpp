@@ -32,11 +32,14 @@ namespace Spire {
        * @param is_active Whether this blotter is the active blotter.
        * @param is_pinned Whether this blotter is pinned.
        * @param tasks The list of tasks belonging to this blotter.
+       * @param task_selection The list of selected tasks.
        * @param parent The parent widget.
        */
       BlotterTaskView(std::shared_ptr<BooleanModel> is_active,
         std::shared_ptr<BooleanModel> is_pinned,
-        std::shared_ptr<BlotterTaskListModel> tasks, QWidget* parent = nullptr);
+        std::shared_ptr<BlotterTaskListModel> tasks,
+        std::shared_ptr<ListModel<int>> task_selection,
+        QWidget* parent = nullptr);
 
       /** Whether this is the application's active blotter. */
       const std::shared_ptr<BooleanModel>& is_active();

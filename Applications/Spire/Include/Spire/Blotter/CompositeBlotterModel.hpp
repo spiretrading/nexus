@@ -15,6 +15,7 @@ namespace Spire {
        * @param is_active Whether this blotter is the active blotter.
        * @param is_pinned Whether this blotter is pinned.
        * @param tasks The list of tasks belonging to this blotter.
+       * @param task_selection The list of selected tasks.
        * @param positions Represents this blotter's positions.
        * @param orders Represents this blotter's orders.
        * @param profit_and_loss Represents this blotter's profit and loss.
@@ -24,6 +25,7 @@ namespace Spire {
         std::shared_ptr<BooleanModel> is_active,
         std::shared_ptr<BooleanModel> is_pinned,
         std::shared_ptr<BlotterTaskListModel> tasks,
+        std::shared_ptr<ListModel<int>> task_selection,
         std::shared_ptr<BlotterPositionsModel> positions,
         std::shared_ptr<OrderListModel> orders,
         std::shared_ptr<BlotterProfitAndLossModel> profit_and_loss,
@@ -36,6 +38,8 @@ namespace Spire {
       std::shared_ptr<BooleanModel> is_pinned() override;
 
       std::shared_ptr<BlotterTaskListModel> get_tasks() override;
+
+      std::shared_ptr<ListModel<int>> get_task_selection() const override;
 
       std::shared_ptr<BlotterPositionsModel> get_positions() override;
 
@@ -51,6 +55,7 @@ namespace Spire {
       std::shared_ptr<BooleanModel> m_is_active;
       std::shared_ptr<BooleanModel> m_is_pinned;
       std::shared_ptr<BlotterTaskListModel> m_tasks;
+      std::shared_ptr<ListModel<int>> m_task_selection;
       std::shared_ptr<BlotterPositionsModel> m_positions;
       std::shared_ptr<OrderListModel> m_orders;
       std::shared_ptr<BlotterProfitAndLossModel> m_profit_and_loss;

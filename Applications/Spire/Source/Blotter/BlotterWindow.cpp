@@ -33,7 +33,8 @@ BlotterWindow::BlotterWindow(
     new BlotterProfitAndLossView(m_blotter->get_profit_and_loss());
   tabs->add(tr("Profit/Loss"), *profit_and_loss);
   auto tasks = new BlotterTaskView(
-    m_blotter->is_active(), m_blotter->is_pinned(), m_blotter->get_tasks());
+    m_blotter->is_active(), m_blotter->is_pinned(), m_blotter->get_tasks(),
+    m_blotter->get_task_selection());
   auto split_view = new SplitView(*tasks, *tabs);
   update_style(*split_view, [] (auto& styles) {
     styles.get(Any()).set(Qt::Orientation::Vertical);

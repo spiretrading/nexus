@@ -7,6 +7,7 @@
 #include "Spire/Spire/ListValueModel.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
+#include "Spire/Ui/EmptySelectionModel.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/ListView.hpp"
@@ -121,7 +122,8 @@ namespace {
 
 BlotterTaskView::BlotterTaskView(std::shared_ptr<BooleanModel> is_active,
     std::shared_ptr<BooleanModel> is_pinned,
-    std::shared_ptr<BlotterTaskListModel> tasks, QWidget* parent)
+    std::shared_ptr<BlotterTaskListModel> tasks,
+    std::shared_ptr<ListModel<int>> task_selection, QWidget* parent)
     : QWidget(parent),
       m_is_active(std::move(is_active)),
       m_is_pinned(std::move(is_pinned)),
@@ -194,6 +196,10 @@ BlotterTaskView::BlotterTaskView(std::shared_ptr<BooleanModel> is_active,
   table_view_builder.add_header_item(tr("Price"), TableFilter::Filter::NONE);
   table_view_builder.add_header_item(tr("Quantity"), TableFilter::Filter::NONE);
   table_view_builder.add_header_item(tr("Volume"), TableFilter::Filter::NONE);
+  auto selection = std::make_shared<TableSelectionModel>(
+    std::make_shared<TableEmptySelectionModel>(), std::move(task_selection),
+    std::make_shared<ListEmptySelectionModel>());
+  table_view_builder.set_selection(std::move(selection));
   table_view_builder.set_view_builder(
     [] (auto model, auto row, auto column) -> QWidget* {
       if(column == 0) {
