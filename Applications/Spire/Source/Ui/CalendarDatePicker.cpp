@@ -3,6 +3,7 @@
 #include <QCoreApplication>
 #include <QKeyEvent>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/ListModelTransactionLog.hpp"
 #include "Spire/Spire/ListValueModel.hpp"
 #include "Spire/Spire/LocalScalarValueModel.hpp"
 #include "Spire/Spire/ToTextModel.hpp"
@@ -11,7 +12,6 @@
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/ListView.hpp"
-#include "Spire/Ui/ListModelTransactionLog.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace boost;
@@ -90,6 +90,11 @@ class CalendarListModel : public ListModel<date> {
       return m_transaction.connect_operation_signal(slot);
     }
 
+  protected:
+    void transact(const std::function<void ()>& transaction) override {
+      m_transaction.transact(transaction);
+    }
+
   private:
     std::shared_ptr<DateModel> m_current;
     scoped_connection m_current_connection;
@@ -97,13 +102,11 @@ class CalendarListModel : public ListModel<date> {
     ListModelTransactionLog<date> m_transaction;
 
     void on_current(date current) {
-      auto dates = get_calendar_dates(current);
-      for(auto i = std::size_t(0); i < dates.size(); ++i) {
-        m_dates[i] = dates[i];
-      }
+      auto previous = m_dates;
+      m_dates = get_calendar_dates(current);
       m_transaction.transact([&] {
         for(auto i = 0; i < static_cast<int>(m_dates.size()); ++i) {
-          m_transaction.push(UpdateOperation(i));
+          m_transaction.push(UpdateOperation(i, previous[i], m_dates[i]));
         }
       });
     }
@@ -115,7 +118,7 @@ class RequiredDateModel : public DateModel {
       : m_model(std::move(model)),
         m_current(m_model->get().value_or(day_clock::local_day())),
         m_current_connection(m_model->connect_update_signal(
-          [=] (const auto& current) { on_current(current); })) {}
+          std::bind_front(&RequiredDateModel::on_current, this))) {}
 
     const Type& get() const override {
       return m_current;

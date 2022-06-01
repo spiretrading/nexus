@@ -7,23 +7,25 @@
 
 namespace Spire {
 
-  /*! \brief Encapsulates a QtPromise resolving to a future value.
-      \tparam T The type of value to resolve to.
-  */
+  /**
+   * Encapsulates a QtPromise resolving to a future value.
+   * @param <T> The type of value to resolve to.
+   */
   template<typename>
   class QtFuture;
 
-  /*! \brief Encapsulates a QtPromise resolving to a future value.
-      \tparam T The type of value to resolve to.
-  */
+  /**
+   * Encapsulates a QtPromise resolving to a future value.
+   * @param <T> The type of value to resolve to.
+   */
   template<typename T>
   class BaseQtFuture {
     public:
 
-      //! The type of value to resolve to.
+      /** The type of value to resolve to. */
       using Type = T;
 
-      //! Resolves the QtPromise waiting on this future to an exception.
+      /** Resolves the QtPromise waiting on this future to an exception. */
       void resolve(std::exception_ptr e);
 
     protected:
@@ -37,14 +39,15 @@ namespace Spire {
       friend struct std::pair<QtFuture<Type>, QtPromise<Type>>;
   };
 
-  /*! \brief Encapsulates a QtPromise resolving to a future value.
-      \tparam T The type of value to resolve to.
-  */
+  /**
+   * Encapsulates a QtPromise resolving to a future value.
+   * @param <T> The type of value to resolve to.
+   */
   template<typename T>
   class QtFuture : public BaseQtFuture<T> {
     public:
 
-      //! The type of value to resolve to.
+      /** The type of value to resolve to. */
       using Type = T;
 
       QtFuture(QtFuture&&) = default;
@@ -53,7 +56,7 @@ namespace Spire {
 
       using BaseQtFuture<T>::resolve;
 
-      //! Resolves the QtPromise waiting on this future.
+      /** Resolves the QtPromise waiting on this future. */
       void resolve(Type value);
 
     private:
@@ -62,7 +65,7 @@ namespace Spire {
       using BaseQtFuture<T>::BaseQtFuture;
   };
 
-  //! Specializes QtFuture for void promises.
+  /** Specializes QtFuture for void promises. */
   template<>
   class QtFuture<void> : public BaseQtFuture<void> {
     public:
@@ -73,7 +76,7 @@ namespace Spire {
 
       using BaseQtFuture<void>::resolve;
 
-      //! Resolves the QtPromise waiting on this future.
+      /** Resolves the QtPromise waiting on this future. */
       void resolve();
 
     private:
@@ -82,8 +85,10 @@ namespace Spire {
       using BaseQtFuture<void>::BaseQtFuture;
   };
 
-  //! Returns a pair consisting of a QtFuture<T> and its corresponding
-  //! QtPromise<T>.
+  /**
+   * Returns a pair consisting of a QtFuture<T> and its corresponding
+   * QtPromise<T>.
+   */
   template<typename T>
   std::pair<QtFuture<T>, QtPromise<T>> make_future() {
     auto async = std::make_unique<Beam::Routines::Async<T>>();

@@ -1,7 +1,7 @@
 #include <deque>
 #include <doctest/doctest.h>
-#include "Spire/Ui/ArrayTableModel.hpp"
-#include "Spire/Ui/TranslatedTableModel.hpp"
+#include "Spire/Spire/ArrayTableModel.hpp"
+#include "Spire/Spire/TranslatedTableModel.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -139,9 +139,9 @@ TEST_SUITE("TranslatedTableModel") {
         translation.transact([&] {
           translation.move(4, 5);
         });
-        auto transaction = get<TableModel::Transaction>(&operation);
-        REQUIRE(transaction != nullptr);
-        REQUIRE(transaction->m_operations.size() == 3);
+        auto transaction = operation.get<TableModel::Transaction>();
+        REQUIRE((transaction != none));
+        REQUIRE(transaction->size() == 3);
       });
     translation.transact([&] {
       translation.move(4, 0);
@@ -171,9 +171,9 @@ TEST_SUITE("TranslatedTableModel") {
     auto connection = scoped_connection(translation.connect_operation_signal(
       [&] (const TableModel::Operation& operation) {
         ++signal_count;
-        auto transaction = get<TableModel::Transaction>(&operation);
-        REQUIRE(transaction != nullptr);
-        REQUIRE(transaction->m_operations.size() == 4);
+        auto transaction = operation.get<TableModel::Transaction>();
+        REQUIRE((transaction != none));
+        REQUIRE(transaction->size() == 4);
       }));
     translation.transact([&] {
       source->insert({3}, 2);
@@ -210,8 +210,8 @@ TEST_SUITE("TranslatedTableModel") {
     auto connection = scoped_connection(translation.connect_operation_signal(
       [&] (const TableModel::Operation& operation) {
         ++signal_count;
-        auto add_operation = get<TableModel::AddOperation>(&operation);
-        REQUIRE(add_operation != nullptr);
+        auto add_operation = operation.get<TableModel::AddOperation>();
+        REQUIRE((add_operation != none));
         REQUIRE(add_operation->m_index == translation.get_row_size() - 1);
       }));
     source->push({6});
@@ -241,8 +241,8 @@ TEST_SUITE("TranslatedTableModel") {
     auto connection = scoped_connection(translation.connect_operation_signal(
       [&] (const TableModel::Operation& operation) {
         ++signal_count;
-        auto add_operation = get<TableModel::AddOperation>(&operation);
-        REQUIRE(add_operation != nullptr);
+        auto add_operation = operation.get<TableModel::AddOperation>();
+        REQUIRE((add_operation != none));
         REQUIRE(add_operation->m_index == 3);
       }));
     source->insert({6}, 2);
@@ -334,8 +334,8 @@ TEST_SUITE("TranslatedTableModel") {
     auto connection = scoped_connection(translation.connect_operation_signal(
       [&] (const TableModel::Operation& operation) {
         ++signal_count;
-        auto remove_operation = get<TableModel::RemoveOperation>(&operation);
-        REQUIRE(remove_operation != nullptr);
+        auto remove_operation = operation.get<TableModel::RemoveOperation>();
+        REQUIRE((remove_operation != none));
         REQUIRE(remove_operation->m_index == removed_row);
       }));
     removed_row = 2;
@@ -369,8 +369,8 @@ TEST_SUITE("TranslatedTableModel") {
     auto connection = scoped_connection(translation.connect_operation_signal(
       [&] (const TableModel::Operation& operation) {
         ++signal_count;
-        auto update_operation = get<TableModel::UpdateOperation>(&operation);
-        REQUIRE(update_operation != nullptr);
+        auto update_operation = operation.get<TableModel::UpdateOperation>();
+        REQUIRE((update_operation != none));
         REQUIRE(update_operation->m_row == updated_row);
         REQUIRE(update_operation->m_column == 0);
       }));

@@ -104,6 +104,9 @@ namespace Spire {
   /** Returns a UiProfile for the ListView. */
   UiProfile make_list_view_profile();
 
+  /** Returns a UiProfile for the MarketBox. */
+  UiProfile make_market_box_profile();
+
   /** Returns a UiProfile for the MoneyBox. */
   UiProfile make_money_box_profile();
 
@@ -164,6 +167,9 @@ namespace Spire {
   /** Returns a UiProfile for the SecurityListItem. */
   UiProfile make_security_list_item_profile();
 
+  /** Returns a UiProfile for the SecurityView. */
+  UiProfile make_security_view_profile();
+
   /** Returns a UiProfile for the SideBox. */
   UiProfile make_side_box_profile();
 
@@ -211,6 +217,9 @@ namespace Spire {
 
   /** Returns a UiProfile for the Tooltip. */
   UiProfile make_tooltip_profile();
+
+  /** Returns a UiProfile for the TransitionView. */
+  UiProfile make_transition_view_profile();
 }
 
 #endif

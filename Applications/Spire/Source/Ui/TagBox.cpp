@@ -2,11 +2,11 @@
 #include <QKeyEvent>
 #include <QStringBuilder>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/ListModelTransactionLog.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ListItem.hpp"
-#include "Spire/Ui/ListModelTransactionLog.hpp"
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/ScrollableListBox.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
@@ -100,6 +100,10 @@ struct TagBox::PartialListModel : public AnyListModel {
   connection connect_operation_signal(
       const OperationSignal::slot_type& slot) const override {
     return m_transaction.connect_operation_signal(slot);
+  }
+
+  void transact(const std::function<void ()>& transaction) override {
+    m_transaction.transact(transaction);
   }
 
   void on_operation(const Operation& operation) {
@@ -262,13 +266,13 @@ void TagBox::showEvent(QShowEvent* event) {
 QWidget* TagBox::make_tag(
     const std::shared_ptr<AnyListModel>& model, int index) {
   if(index < model->get_size() - 2) {
-    auto label = displayTextAny(model->get(index));
+    auto label = displayText(model->get(index));
     auto tag = new Tag(label, this);
     tag->set_read_only(m_is_read_only || !isEnabled());
     tag->connect_delete_signal([=] {
       auto tag_index = [&] {
         for(auto i = 0; i < get_list()->get_size(); ++i) {
-          if(label == displayTextAny(m_model->get(i))) {
+          if(label == displayText(m_model->get(i))) {
             return i;
           }
         }
@@ -474,7 +478,7 @@ void TagBox::update_tip() {
   if(m_overflow == TagBoxOverflow::ELIDE) {
     m_tip.clear();
     for(auto i = 0; i < get_list()->get_size(); ++i) {
-      m_tip = m_tip % displayTextAny(get_list()->get(i)) % ", ";
+      m_tip = m_tip % displayText(get_list()->get(i)) % ", ";
     }
     m_tip.remove(m_tip.length() - 2, 2);
   }

@@ -96,6 +96,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   setWindowIcon(QIcon(":/Icons/taskbar_icons/spire.png"));
   resize(scale(775, 580));
   m_body = new QSplitter(Qt::Horizontal, this);
+  m_body->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
   m_body->setObjectName("ui_viewer_body");
   m_body->setStyleSheet("#ui_viewer_body { background-color: #F5F5F5; }");
   m_body->setContentsMargins(scale_width(6), scale_height(6), scale_width(6),
@@ -145,6 +146,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_label_profile());
   add(make_list_item_profile());
   add(make_list_view_profile());
+  add(make_market_box_profile());
   add(make_money_box_profile());
   add(make_money_filter_panel_profile());
   add(make_navigation_view_profile());
@@ -165,6 +167,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_security_box_profile());
   add(make_security_filter_panel_profile());
   add(make_security_list_item_profile());
+  add(make_security_view_profile());
   add(make_side_box_profile());
   add(make_side_filter_panel_profile());
   add(make_split_view_profile());
@@ -181,6 +184,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_time_in_force_box_profile());
   add(make_time_in_force_filter_panel_profile());
   add(make_tooltip_profile());
+  add(make_transition_view_profile());
   m_widget_list->setCurrentRow(0);
 }
 
@@ -216,7 +220,7 @@ void UiViewerWindow::on_event(
       } else if(auto value = std::any_cast<HoverObserver::State>(&argument)) {
         log += to_string(*value);
       } else {
-        log += displayTextAny(argument);
+        log += displayText(argument);
       }
     }
     log += ")";

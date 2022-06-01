@@ -58,7 +58,7 @@ struct TagComboBoxQueryModel : ComboBox::QueryModel {
     if(!value.has_value()) {
       return value;
     }
-    if(m_exclusion_set.contains(displayTextAny(value))) {
+    if(m_exclusion_set.contains(displayText(value))) {
       return std::any();
     }
     return value;
@@ -74,14 +74,14 @@ struct TagComboBoxQueryModel : ComboBox::QueryModel {
         }
       }();
       std::erase_if(result, [&] (auto& value) {
-        return m_exclusion_set.contains(displayTextAny(value));
+        return m_exclusion_set.contains(displayText(value));
       });
       return result;
     });
   }
 
   void add_exclusion(int index) {
-    auto value = displayTextAny(m_exclusions->get(index));
+    auto value = displayText(m_exclusions->get(index));
     m_exclusion_set.insert(value);
     m_exclusion_list.insert(m_exclusion_list.begin() + index, value);
   }

@@ -110,5 +110,6 @@
     <file>Icons/sort_descending.svg</file>
     <file>Icons/filter.svg</file>
     <file>Icons/menu-arrow.svg</file>
+    <file>Icons/spinner.gif</file>
   </qresource>
 </RCC>

@@ -10,6 +10,7 @@
 #include "Nexus/Definitions/SecuritySet.hpp"
 #include "Spire/KeyBindings/OrderFieldInfoTip.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
+#include "Spire/Spire/ArrayTableModel.hpp"
 #include "Spire/Spire/FieldValueModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalScalarValueModel.hpp"
@@ -18,7 +19,6 @@
 #include "Spire/Styles/LinearExpression.hpp"
 #include "Spire/Styles/RevertExpression.hpp"
 #include "Spire/Styles/TimeoutExpression.hpp"
-#include "Spire/Ui/ArrayTableModel.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/CalendarDatePicker.hpp"
@@ -44,7 +44,9 @@
 #include "Spire/Ui/KeyInputBox.hpp"
 #include "Spire/Ui/KeyTag.hpp"
 #include "Spire/Ui/ListItem.hpp"
+#include "Spire/Ui/ListSelectionModel.hpp"
 #include "Spire/Ui/ListView.hpp"
+#include "Spire/Ui/MarketBox.hpp"
 #include "Spire/Ui/MoneyBox.hpp"
 #include "Spire/Ui/NavigationView.hpp"
 #include "Spire/Ui/OpenFilterPanel.hpp"
@@ -62,6 +64,7 @@
 #include "Spire/Ui/SecurityBox.hpp"
 #include "Spire/Ui/SecurityFilterPanel.hpp"
 #include "Spire/Ui/SecurityListItem.hpp"
+#include "Spire/Ui/SecurityView.hpp"
 #include "Spire/Ui/SideBox.hpp"
 #include "Spire/Ui/SideFilterPanel.hpp"
 #include "Spire/Ui/SplitView.hpp"
@@ -79,6 +82,7 @@
 #include "Spire/Ui/TimeInForceFilterPanel.hpp"
 #include "Spire/Ui/ToggleButton.hpp"
 #include "Spire/Ui/Tooltip.hpp"
+#include "Spire/Ui/TransitionView.hpp"
 #include "Spire/UiViewer/StandardUiProperties.hpp"
 #include "Spire/UiViewer/UiProfile.hpp"
 
@@ -338,7 +342,7 @@ namespace {
       [=] (const std::shared_ptr<AnyListModel>& submission) {
         auto result = QString();
         for(auto i = 0; i < submission->get_size(); ++i) {
-          result += displayTextAny(submission->get(i)) + " ";
+          result += displayText(submission->get(i)) + " ";
         }
         submit_filter_slot(result);
       });
@@ -387,7 +391,7 @@ namespace {
         [=] (const typename Panel::Range& submission) {
           auto to_string = [&] (const auto& value) {
             if(value) {
-              return displayTextAny(*value);
+              return displayText(*value);
             }
             return QString("null");
           };
@@ -492,10 +496,10 @@ namespace {
       "Methanex Corporation", "", 0);
     auto model = std::make_shared<LocalComboBoxQueryModel>();
     for(auto security_info : security_infos) {
-      model->add(displayTextAny(security_info.m_security).toLower(),
-        security_info);
-      model->add(QString::fromStdString(security_info.m_name).toLower(),
-        security_info);
+      model->add(
+        displayText(security_info.m_security).toLower(), security_info);
+      model->add(
+        QString::fromStdString(security_info.m_name).toLower(), security_info);
     }
     return model;
   }
@@ -714,12 +718,12 @@ UiProfile Spire::make_calendar_date_picker_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
   auto current_date = boost::gregorian::day_clock::local_day();
+  properties.push_back(
+    make_standard_property("current", displayText(current_date)));
   properties.push_back(make_standard_property(
-    "current", displayTextAny(current_date)));
+    "min", displayText(current_date - boost::gregorian::months(2))));
   properties.push_back(make_standard_property(
-    "min", displayTextAny(current_date - boost::gregorian::months(2))));
-  properties.push_back(make_standard_property(
-    "max", displayTextAny(current_date + boost::gregorian::months(2))));
+    "max", displayText(current_date + boost::gregorian::months(2))));
   auto profile = UiProfile("CalendarDatePicker", properties,
     [] (auto& profile) {
       auto model = std::make_shared<LocalOptionalDateModel>();
@@ -747,7 +751,7 @@ UiProfile Spire::make_calendar_date_picker_profile() {
       });
       calendar->get_current()->connect_update_signal([&current] (auto day) {
         if(day) {
-          current.set(displayTextAny(*day));
+          current.set(displayText(*day));
         }
       });
       calendar->get_current()->connect_update_signal(
@@ -833,7 +837,7 @@ UiProfile Spire::make_closed_filter_panel_profile() {
       [=] (const std::shared_ptr<AnyListModel>& submission) {
         auto result = QString();
         for(auto i = 0; i < submission->get_size(); ++i) {
-          result += displayTextAny(submission->get(i)) + " ";
+          result += displayText(submission->get(i)) + " ";
         }
         submit_filter_slot(result);
       });
@@ -947,13 +951,13 @@ UiProfile Spire::make_date_box_profile() {
   populate_widget_properties(properties);
   auto current_date = day_clock::local_day();
   properties.push_back(
-    make_standard_property("current", displayTextAny(current_date)));
+    make_standard_property("current", displayText(current_date)));
   properties.push_back(make_standard_property("format", DateFormat::YYYYMMDD));
   properties.push_back(make_standard_property("read_only", false));
   properties.push_back(
-    make_standard_property("min", displayTextAny(current_date - months(2))));
+    make_standard_property("min", displayText(current_date - months(2))));
   properties.push_back(
-    make_standard_property("max", displayTextAny(current_date + months(2))));
+    make_standard_property("max", displayText(current_date + months(2))));
   auto profile = UiProfile("DateBox", properties, [] (auto& profile) {
     auto model = std::make_shared<LocalOptionalDateModel>();
     model->connect_update_signal(
@@ -1012,11 +1016,10 @@ UiProfile Spire::make_date_box_profile() {
 UiProfile Spire::make_date_filter_panel_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   auto current_date = day_clock::local_day();
+  properties.push_back(make_standard_property(
+    "default_start_date", displayText(current_date - months(3))));
   properties.push_back(
-    make_standard_property("default_start_date",
-      displayTextAny(current_date - months(3))));
-  properties.push_back(
-    make_standard_property("default_end_date", displayTextAny(current_date)));
+    make_standard_property("default_end_date", displayText(current_date)));
   properties.push_back(make_standard_property("default_offset_value", 1));
   auto default_unit_property = define_enum<DateFilterPanel::DateUnit>(
     {{"Day", DateFilterPanel::DateUnit::DAY},
@@ -1067,13 +1070,13 @@ UiProfile Spire::make_date_filter_panel_profile() {
       [=] (const DateFilterPanel::DateRange& submission) {
         auto result = QString();
         if(submission.m_start) {
-          result += displayTextAny(*submission.m_start);
+          result += displayText(*submission.m_start);
         } else {
           result += "none";
         }
         result += " - ";
         if(submission.m_end) {
-          result += displayTextAny(*submission.m_end);
+          result += displayText(*submission.m_end);
         } else {
           result += "none";
         }
@@ -1109,7 +1112,7 @@ UiProfile Spire::make_decimal_box_profile() {
   properties.push_back(make_standard_property("current", QString("1")));
   properties.push_back(make_standard_property("minimum", QString("-100")));
   properties.push_back(make_standard_property("maximum", QString("100")));
-  properties.push_back(make_standard_property("decimal_places", 2));
+  properties.push_back(make_standard_property("decimal_places", 4));
   properties.push_back(make_standard_property("leading_zeros", 0));
   properties.push_back(make_standard_property("trailing_zeros", 0));
   properties.push_back(
@@ -1136,12 +1139,16 @@ UiProfile Spire::make_decimal_box_profile() {
     minimum.connect_changed_signal([=] (const auto& value) {
       if(auto minimum = parse_decimal(value)) {
         model->set_minimum(*minimum);
+      } else {
+        model->set_minimum(none);
       }
     });
     auto& maximum = get<QString>("maximum", profile.get_properties());
     maximum.connect_changed_signal([=] (const auto& value) {
       if(auto maximum = parse_decimal(value)) {
         model->set_maximum(*maximum);
+      } else {
+        model->set_maximum(none);
       }
     });
     auto& decimal_places =
@@ -1340,7 +1347,7 @@ UiProfile Spire::make_destination_box_profile() {
       [] (auto& value) { return true; });
     auto model = std::make_shared<LocalComboBoxQueryModel>();
     for(auto destination : destinations) {
-      model->add(displayTextAny(destination.m_id).toLower(), destination);
+      model->add(displayText(destination.m_id).toLower(), destination);
     }
     auto box = new DestinationBox(model);
     box->setFixedWidth(scale_width(112));
@@ -1729,7 +1736,6 @@ UiProfile Spire::make_icon_toggle_button_profile() {
     auto button = make_icon_toggle_button(
       imageFromSvg(":/Icons/demo.svg", scale(26, 26)), tooltip.get());
     apply_widget_properties(button, profile.get_properties());
-//    button->connect_click_signal(profile.make_event_slot("ClickSignal"));
     return button;
   });
   return profile;
@@ -1826,7 +1832,7 @@ UiProfile Spire::make_key_filter_panel_profile() {
             result += "Exclude: ";
           }
           for(auto i = 0; i < submission->get_size(); ++i) {
-            result += displayTextAny(submission->get(i)) + " ";
+            result += displayText(submission->get(i)) + " ";
           }
           submit_filter_slot(result);
         });
@@ -1995,17 +2001,17 @@ UiProfile Spire::make_list_view_profile() {
     {{"WRAP", Overflow::WRAP}, {"NONE", Overflow::NONE}});
   properties.push_back(
     make_standard_enum_property("overflow", overflow_property));
-  auto selection_mode_property = define_enum<SelectionMode>(
-    {{"NONE", SelectionMode::NONE},
-     {"SINGLE", SelectionMode::SINGLE}});
-  properties.push_back(
-    make_standard_enum_property("selection_mode", selection_mode_property));
+  auto selection_mode_property = define_enum<ListSelectionModel::Mode>(
+    {{"NONE", ListSelectionModel::Mode::NONE},
+     {"SINGLE", ListSelectionModel::Mode::SINGLE},
+     {"MULTI", ListSelectionModel::Mode::MULTI}});
+  properties.push_back(make_standard_enum_property("selection_mode",
+    ListSelectionModel::Mode::SINGLE, selection_mode_property));
   auto change_item_property = define_enum<int>({{"Delete", 0}, {"Add", 1}});
   properties.push_back(
     make_standard_enum_property("change_item", change_item_property));
   properties.push_back(make_standard_property("change_item_index", -1));
   properties.push_back(make_standard_property("current_item", -1));
-  properties.push_back(make_standard_property("select_item", -1));
   properties.push_back(make_standard_property("disable_item", -1));
   properties.push_back(make_standard_property("enable_item", -1));
   properties.push_back(make_standard_property("auto_set_current_null", false));
@@ -2045,8 +2051,9 @@ UiProfile Spire::make_list_view_profile() {
           list_model->insert(QString("newItem%1").arg(index++), value);
         }
       });
+    auto selection_model = std::make_shared<ListSelectionModel>();
     auto list_view =
-      new ListView(list_model,
+      new ListView(list_model, selection_model,
         [&] (const std::shared_ptr<ListModel<QString>>& model, auto index) {
           auto label = make_label(model->get(index));
           if(random_height_seed.get() == 0) {
@@ -2092,16 +2099,14 @@ UiProfile Spire::make_list_view_profile() {
         style.get(Any()).set(value);
       });
     });
+    auto& selection_mode =
+      get<ListSelectionModel::Mode>("selection_mode", profile.get_properties());
+    selection_mode.connect_changed_signal([=] (auto value) {
+      selection_model->set_mode(value);
+    });
     auto& navigation =
       get<EdgeNavigation>("edge_navigation", profile.get_properties());
     navigation.connect_changed_signal([=] (auto value) {
-      update_style(*list_view, [&] (auto& style) {
-        style.get(Any()).set(value);
-      });
-    });
-    auto& selection_mode =
-      get<SelectionMode>("selection_mode", profile.get_properties());
-    selection_mode.connect_changed_signal([=] (auto value) {
       update_style(*list_view, [&] (auto& style) {
         style.get(Any()).set(value);
       });
@@ -2112,14 +2117,6 @@ UiProfile Spire::make_list_view_profile() {
         list_view->get_current()->set(none);
       } else if(index >= 0 && index < list_model->get_size()) {
         list_view->get_current()->set(index);
-      }
-    });
-    auto& select_item = get<int>("select_item", profile.get_properties());
-    select_item.connect_changed_signal([=] (auto index) {
-      if(index == -1) {
-        list_view->get_selection()->set(none);
-      } else if(index >= 0 && index < list_model->get_size()) {
-        list_view->get_selection()->set(index);
       }
     });
     auto& disable_item = get<int>("disable_item", profile.get_properties());
@@ -2146,11 +2143,52 @@ UiProfile Spire::make_list_view_profile() {
       });
     list_view->get_current()->connect_update_signal(
       profile.make_event_slot<optional<int>>("Current"));
-    list_view->get_selection()->connect_update_signal(
-      profile.make_event_slot<optional<int>>("Selection"));
+    list_view->get_selection()->connect_operation_signal(
+      profile.make_event_slot<AnyListModel::Operation>("Selection"));
     list_view->connect_submit_signal(
       profile.make_event_slot<optional<std::any>>("Submit"));
     return list_view;
+  });
+  return profile;
+}
+
+UiProfile Spire::make_market_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_property<QString>("current"));
+  properties.push_back(make_standard_property<QString>("placeholder"));
+  properties.push_back(make_standard_property("read_only", false));
+  auto profile = UiProfile("MarketBox", properties, [] (auto& profile) {
+    auto markets = GetDefaultMarketDatabase().GetEntries();
+    auto model = std::make_shared<LocalComboBoxQueryModel>();
+    for(auto market : markets) {
+      model->add(displayText(MarketToken(market.m_code)).toLower(), market);
+      model->add(QString(market.m_code.GetData()).toLower(), market);
+    }
+    auto box = new MarketBox(model);
+    box->setFixedWidth(scale_width(112));
+    apply_widget_properties(box, profile.get_properties());
+    auto& current = get<QString>("current", profile.get_properties());
+    current.connect_changed_signal([=] (const auto& current) {
+      if(current.length() != 4) {
+        return;
+      }
+      auto code = MarketCode(current.toUpper().toStdString().c_str());
+      auto& market = GetDefaultMarketDatabase().FromCode(code);
+      if(!market.m_code.IsEmpty()) {
+        box->get_current()->set(code);
+      }
+    });
+    auto& placeholder = get<QString>("placeholder", profile.get_properties());
+    placeholder.connect_changed_signal(
+      std::bind_front(&MarketBox::set_placeholder, box));
+    auto& read_only = get<bool>("read_only", profile.get_properties());
+    read_only.connect_changed_signal(
+      std::bind_front(&MarketBox::set_read_only, box));
+    box->get_current()->connect_update_signal(
+      profile.make_event_slot<MarketToken>("Current"));
+    box->connect_submit_signal(profile.make_event_slot<MarketToken>("Submit"));
+    return box;
   });
   return profile;
 }
@@ -2263,7 +2301,7 @@ UiProfile Spire::make_open_filter_panel_profile() {
             result += "Exclude: ";
           }
           for(auto i = 0; i < submission->get_size(); ++i) {
-            result += displayTextAny(submission->get(i)) + " ";
+            result += displayText(submission->get(i)) + " ";
           }
           submit_filter_slot(result);
         });
@@ -2780,7 +2818,7 @@ UiProfile Spire::make_security_filter_panel_profile() {
             result += "Exclude: ";
           }
           for(auto i = 0; i < submission->get_size(); ++i) {
-            result += displayTextAny(submission->get(i)) + " ";
+            result += displayText(submission->get(i)) + " ";
           }
           submit_filter_slot(result);
         });
@@ -2801,6 +2839,46 @@ UiProfile Spire::make_security_list_item_profile() {
     auto item = new SecurityListItem(security_info);
     apply_widget_properties(item, profile.get_properties());
     return item;
+  });
+  return profile;
+}
+
+UiProfile Spire::make_security_view_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  properties.push_back(make_standard_property<int>("width", 266));
+  properties.push_back(make_standard_property<int>("height", 361));
+  auto profile = UiProfile("SecurityView", properties, [] (auto& profile) {
+    auto model = populate_security_query_model();
+    auto label = make_label("");
+    label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    auto security_view = new SecurityView(model, *label);
+    auto box = new Box(security_view);
+    update_style(*box, [] (auto& style) {
+      style.get(Hover() || Focus()).
+        set(border(scale_width(1), QColor(0x4B23A0)));
+    });
+    security_view->get_current()->connect_update_signal(
+      profile.make_event_slot<Security>("Current", [=] (const auto& security) {
+        label->get_current()->set(displayText(security));
+        return security;
+      }));
+    auto& width = get<int>("width", profile.get_properties());
+    width.connect_changed_signal([=] (auto value) {
+      if(value != 0) {
+        if(unscale_width(security_view->width()) != value) {
+          security_view->setFixedWidth(scale_width(value));
+        }
+      }
+    });
+    auto& height = get<int>("height", profile.get_properties());
+    height.connect_changed_signal([=] (auto value) {
+      if(value != 0) {
+        if(unscale_height(security_view->height()) != value) {
+          security_view->setFixedHeight(scale_height(value));
+        }
+      }
+    });
+    return box;
   });
   return profile;
 }
@@ -3188,7 +3266,7 @@ UiProfile Spire::make_tag_combo_box_profile() {
       [=] (const std::shared_ptr<AnyListModel>& submission) {
         auto result = QString();
         for(auto i = 0; i < submission->get_size(); ++i) {
-          result += displayTextAny(submission->get(i)) + " ";
+          result += displayText(submission->get(i)) + " ";
         }
         submit_filter_slot(result);
       });
@@ -3396,6 +3474,59 @@ UiProfile Spire::make_tooltip_profile() {
       tooltip->set_label(text);
     });
     return label;
+  });
+  return profile;
+}
+
+UiProfile Spire::make_transition_view_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  properties.push_back(make_standard_property<int>("width", 200));
+  properties.push_back(make_standard_property<int>("height", 300));
+  auto status_property = define_enum<TransitionView::Status>(
+    {{"NONE", TransitionView::Status::NONE},
+     {"LOADING", TransitionView::Status::LOADING},
+     {"READY", TransitionView::Status::READY}});
+  properties.push_back(make_standard_enum_property("status", status_property));
+  auto profile = UiProfile("TransitionView", properties, [] (auto& profile) {
+    auto list_model = std::make_shared<ArrayListModel<QString>>();
+    for(auto i = 0; i < 10; ++i) {
+      list_model->push(QString("Item%1").arg(i));
+    }
+    auto list_view = new ListView(list_model,
+      [] (const std::shared_ptr<ListModel<QString>>& model, auto index) {
+        return make_label(model->get(index));
+      });
+    update_style(*list_view, [] (auto& style) {
+      style.get(Any()).set(Qt::Orientation::Vertical);
+    });
+    auto transition_view =
+      new TransitionView(new ScrollableListBox(*list_view));
+    auto box = new Box(transition_view);
+    update_style(*box, [] (auto& style) {
+      style.get(Any()).set(border(scale_width(1), QColor(0x4B23A0)));
+    });
+    auto& width = get<int>("width", profile.get_properties());
+    width.connect_changed_signal([=] (auto value) {
+      if(value != 0) {
+        if(unscale_width(transition_view->width()) != value) {
+          transition_view->setFixedWidth(scale_width(value));
+        }
+      }
+    });
+    auto& height = get<int>("height", profile.get_properties());
+    height.connect_changed_signal([=] (auto value) {
+      if(value != 0) {
+        if(unscale_height(transition_view->height()) != value) {
+          transition_view->setFixedHeight(scale_height(value));
+        }
+      }
+    });
+    auto& status =
+      get<TransitionView::Status>("status", profile.get_properties());
+    status.connect_changed_signal([=] (auto s) {
+      transition_view->set_status(s);
+    });
+    return box;
   });
   return profile;
 }
