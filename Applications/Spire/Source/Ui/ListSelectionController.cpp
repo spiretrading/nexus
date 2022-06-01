@@ -67,10 +67,15 @@ void ListSelectionController::remove(int index) {
       while(i != m_selection->get_size()) {
         auto selection = m_selection->get(i);
         if(selection == index) {
-          m_selection->remove(i);
-          operation = SelectionModel::RemoveOperation(i, index);
-        } else if(selection > index) {
-          m_selection->set(i, selection - 1);
+          if(m_selection->remove(i) != QValidator::State::Invalid) {
+            operation = SelectionModel::RemoveOperation(i, index);
+          } else {
+            ++i;
+          }
+        } else {
+          if(selection > index) {
+            m_selection->set(i, selection - 1);
+          }
           ++i;
         }
       }
