@@ -26,11 +26,17 @@ namespace {
 
   void copy_list_model(const std::shared_ptr<AnyListModel>& from,
       const std::shared_ptr<AnyListModel>& to) {
-    while(to->get_size() != 0) {
-      to->remove(to->get_size() - 1);
+    for(auto i = 0; i != from->get_size(); ++i) {
+      if(i < to->get_size()) {
+        if(!is_equal(from->get(i), to->get(i))) {
+          to->insert(from->get(i), i);
+        }
+      } else {
+        to->push(from->get(i));
+      }
     }
-    for(auto i = 0; i < from->get_size(); ++i) {
-      to->push(from->get(i));
+    while(to->get_size() > from->get_size()) {
+      to->remove(to->get_size() - 1);
     }
   }
 }
@@ -107,7 +113,7 @@ TagComboBox::TagComboBox(std::shared_ptr<ComboBox::QueryModel> query_model,
     std::shared_ptr<AnyListModel> list, std::shared_ptr<CurrentModel> current,
     ViewBuilder view_builder, QWidget* parent)
     : QWidget(parent),
-      m_submission(std::move(list)),
+      m_submission(std::make_shared<ArrayListModel<std::any>>()),
       m_focus_proxy(nullptr),
       m_window(nullptr),
       m_focus_observer(*this),
@@ -118,8 +124,7 @@ TagComboBox::TagComboBox(std::shared_ptr<ComboBox::QueryModel> query_model,
       m_below_space(0),
       m_focus_connection(m_focus_observer.connect_state_signal(
         std::bind_front(&TagComboBox::on_focus, this))) {
-  m_tag_box = new TagBox(std::make_shared<ArrayListModel<std::any>>(),
-    std::make_shared<LocalTextModel>());
+  m_tag_box = new TagBox(std::move(list), std::make_shared<LocalTextModel>());
   m_min_height = m_tag_box->sizeHint().height();
   m_list_connection = m_tag_box->get_list()->connect_operation_signal(
     std::bind_front(&TagComboBox::on_operation, this));
@@ -142,7 +147,7 @@ const std::shared_ptr<ComboBox::QueryModel>&
 }
 
 const std::shared_ptr<AnyListModel>& TagComboBox::get_list() const {
-  return m_submission;
+  return m_tag_box->get_list();
 }
 
 const std::shared_ptr<TagComboBox::CurrentModel>&
