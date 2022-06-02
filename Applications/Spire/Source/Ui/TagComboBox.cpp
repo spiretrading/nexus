@@ -114,13 +114,13 @@ TagComboBox::TagComboBox(std::shared_ptr<ComboBox::QueryModel> query_model,
       m_alignment(Alignment::NONE),
       m_is_modified(false),
       m_is_internal_move(false),
-      m_min_height(0),
       m_above_space(0),
       m_below_space(0),
       m_focus_connection(m_focus_observer.connect_state_signal(
         std::bind_front(&TagComboBox::on_focus, this))) {
   m_tag_box = new TagBox(std::make_shared<ArrayListModel<std::any>>(),
     std::make_shared<LocalTextModel>());
+  m_min_height = m_tag_box->sizeHint().height();
   m_list_connection = m_tag_box->get_list()->connect_operation_signal(
     std::bind_front(&TagComboBox::on_operation, this));
   m_tag_box_style_connection = connect_style_signal(*m_tag_box,
@@ -302,11 +302,6 @@ void TagComboBox::on_tag_box_style() {
           }
         });
       });
-  }
-  if(*has_update && m_overflow == TagBoxOverflow::WRAP) {
-    auto tag_box = TagBox(std::make_shared<ArrayListModel<std::any>>(),
-      std::make_shared<LocalTextModel>());
-    m_min_height = tag_box.sizeHint().height();
   }
 }
 
