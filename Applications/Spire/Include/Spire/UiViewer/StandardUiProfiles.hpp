@@ -167,6 +167,9 @@ namespace Spire {
   /** Returns a UiProfile for the SecurityListItem. */
   UiProfile make_security_list_item_profile();
 
+  /** Returns a UiProfile for the SecurityView. */
+  UiProfile make_security_view_profile();
+
   /** Returns a UiProfile for the SideBox. */
   UiProfile make_side_box_profile();
 
