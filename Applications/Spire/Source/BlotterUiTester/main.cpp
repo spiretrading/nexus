@@ -64,8 +64,6 @@ namespace {
   }
 
   struct OrderEntryPanel : QWidget {
-    int m_next_id;
-    std::shared_ptr<BlotterTaskListModel> m_tasks;
     SecurityBox* m_security_box;
     DestinationBox* m_destination_box;
     OrderTypeBox* m_order_type_box;
@@ -74,11 +72,8 @@ namespace {
     MoneyBox* m_money_box;
     Button* m_submit_button;
 
-    OrderEntryPanel(
-        std::shared_ptr<BlotterTaskListModel> tasks, QWidget* parent = nullptr)
-        : QWidget(parent),
-          m_next_id(1),
-          m_tasks(std::move(tasks)) {
+    OrderEntryPanel(QWidget* parent = nullptr)
+        : QWidget(parent) {
       m_security_box = make_security_box();
       m_security_box->get_current()->set(ParseSecurity("MSFT.NSDQ"));
       m_destination_box = make_destination_box();
@@ -98,8 +93,6 @@ namespace {
       layout->addWidget(m_quantity_box);
       layout->addWidget(m_money_box);
       layout->addWidget(m_submit_button);
-      m_submit_button->connect_click_signal(
-        std::bind_front(&OrderEntryPanel::on_submit, this));
     }
 
     bool eventFilter(QObject* object, QEvent* event) override {
@@ -108,6 +101,34 @@ namespace {
       }
       return QWidget::eventFilter(object, event);
     }
+  };
+
+  struct BlotterWindowController {
+    int m_next_id;
+    std::shared_ptr<BlotterModel> m_blotter;
+    BlotterWindow* m_blotter_window;
+    OrderEntryPanel* m_order_entry_panel;
+
+    BlotterWindowController(
+        std::shared_ptr<BlotterModel> blotter, QWidget* parent = nullptr)
+        : m_next_id(1),
+          m_blotter(std::move(blotter)) {
+      m_blotter_window = new BlotterWindow(m_blotter);
+      m_blotter_window->show();
+      m_order_entry_panel = new OrderEntryPanel();
+      m_blotter_window->installEventFilter(m_order_entry_panel);
+      m_blotter_window->get_task_view().connect_execute_signal(
+        std::bind_front(&BlotterWindowController::on_execute, this));
+      m_blotter_window->get_task_view().connect_cancel_signal(
+        std::bind_front(&BlotterWindowController::on_cancel, this));
+      m_order_entry_panel->setAttribute(Qt::WA_ShowWithoutActivating);
+      m_order_entry_panel->move(
+        m_blotter_window->pos() + QPoint(0, m_blotter_window->size().height()));
+      m_order_entry_panel->show();
+      m_order_entry_panel->resize(scale(500, 50));
+      m_order_entry_panel->m_submit_button->connect_click_signal(
+        std::bind_front(&BlotterWindowController::on_submit, this));
+    }
 
     void on_submit() {
       auto task = std::make_unique<Task>(Aspen::Box<void>(Aspen::constant(5)));
@@ -115,7 +136,23 @@ namespace {
       auto entry = std::make_shared<BlotterTaskEntry>(BlotterTaskEntry(
         m_next_id, "Dummy", false, std::move(task), orders));
       ++m_next_id;
-      m_tasks->push(entry);
+      m_blotter->get_tasks()->push(entry);
+    }
+
+    void on_execute(
+        const std::vector<std::shared_ptr<BlotterTaskEntry>>& tasks) {
+      for(auto task : tasks) {
+        qDebug() << "Execute: " << task->m_id;
+        task->m_task->execute();
+      }
+    }
+
+    void on_cancel(
+        const std::vector<std::shared_ptr<BlotterTaskEntry>>& tasks) {
+      for(auto task : tasks) {
+        qDebug() << "Cancel: " << task->m_id;
+        task->m_task->cancel();
+      }
     }
   };
 }
@@ -131,13 +168,6 @@ int main(int argc, char** argv) {
     std::make_shared<LocalTextModel>("North America"),
     std::make_shared<LocalBooleanModel>(),
     std::make_shared<LocalBooleanModel>(), tasks);
-  auto window = BlotterWindow(blotter);
-  window.show();
-  auto order_entry_panel = OrderEntryPanel(tasks);
-  window.installEventFilter(&order_entry_panel);
-  order_entry_panel.setAttribute(Qt::WA_ShowWithoutActivating);
-  order_entry_panel.move(window.pos() + QPoint(0, window.size().height()));
-  order_entry_panel.show();
-  order_entry_panel.resize(scale(500, 50));
+  auto controller = BlotterWindowController(blotter);
   application.exec();
 }
