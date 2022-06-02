@@ -10,14 +10,14 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  QWidget* find_drop_down_window(QWidget& widget) {
+  QWidget* find_pop_up_window(QWidget& widget) {
     auto& children = widget.children();
     for(auto child : children) {
       if(!child->isWidgetType()) {
         continue;
       }
       auto& widget = *static_cast<QWidget*>(child);
-      if(widget.windowFlags() & Qt::Tool) {
+      if(widget.isWindow()) {
         return &widget;
       }
     }
@@ -129,7 +129,7 @@ TagComboBox::TagComboBox(std::shared_ptr<ComboBox::QueryModel> query_model,
     std::make_shared<TagComboBoxQueryModel>(std::move(query_model),
     m_tag_box->get_list()), std::move(current),
     new AnyInputBox(*m_tag_box), std::move(view_builder));
-  m_drop_down_window = find_drop_down_window(*m_combo_box);
+  m_drop_down_window = find_pop_up_window(*m_combo_box);
   m_combo_box->connect_submit_signal(
     std::bind_front(&TagComboBox::on_combo_box_submit, this));
   enclose(*this, *m_combo_box);
@@ -203,7 +203,7 @@ bool TagComboBox::eventFilter(QObject* watched, QEvent* event) {
         key_event.key() == Qt::Key_Up ||
         key_event.key() == Qt::Key_PageDown ||
         key_event.key() == Qt::Key_PageUp) {
-      if(m_drop_down_window->isVisible()) {
+      if(m_drop_down_window && m_drop_down_window->isVisible()) {
         QCoreApplication::sendEvent(m_combo_box, event);
         event->accept();
         return true;
