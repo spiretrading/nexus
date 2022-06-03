@@ -1,8 +1,8 @@
 #include "Spire/Ui/TagComboBox.hpp"
-#include <QHBoxLayout>
 #include <QKeyEvent>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Ui/AnyInputBox.hpp"
+#include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 
 using namespace boost::signals2;
@@ -79,7 +79,7 @@ struct TagComboBoxQueryModel : ComboBox::QueryModel {
           return empty_matches;
         }
       }();
-      std::erase_if(matches, [&] (auto& value) {
+      std::erase_if(matches, [=] (auto& value) {
         return m_exclusion_set.contains(displayText(value));
       });
       return matches;

@@ -2,7 +2,6 @@
 #define SPIRE_TAG_COMBO_BOX_HPP
 #include "Spire/Ui/ComboBox.hpp"
 #include "Spire/Ui/FocusObserver.hpp"
-#include "Spire/Ui/PressObserver.hpp"
 #include "Spire/Ui/TagBox.hpp"
 #include "Spire/Ui/Ui.hpp"
 
