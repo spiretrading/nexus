@@ -290,7 +290,7 @@ QWidget* TagBox::make_tag(
         setFocus();
       }
     });
-    m_tags.emplace_back(tag);
+    m_tags.insert(m_tags.begin() + index, tag);
     return tag;
   } else if(index == model->get_size() - 2) {
     auto ellipses_box = make_label(tr("..."));

@@ -84,7 +84,6 @@ namespace Spire {
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
-      bool event(QEvent* event) override;
       void showEvent(QShowEvent* event) override;
       void moveEvent(QMoveEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
@@ -101,6 +100,7 @@ namespace Spire {
       std::shared_ptr<AnyListModel> m_submission;
       FocusObserver m_focus_observer;
       QWidget* m_input_box;
+      QWidget* m_parent_window;
       QWidget* m_drop_down_window;
       Styles::TagBoxOverflow m_overflow;
       Alignment m_alignment;
