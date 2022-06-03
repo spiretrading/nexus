@@ -216,9 +216,10 @@ bool TagBox::eventFilter(QObject* watched, QEvent* event) {
     auto& key_event = *static_cast<QKeyEvent*>(event);
     if(watched == m_text_box->focusProxy() &&
         key_event.key() == Qt::Key_Backspace &&
-        m_text_box->get_highlight()->get().m_start == 0 &&
-        m_text_box->get_highlight()->get().m_end == 0 &&
-        get_list()->get_size() > 0) {
+        get_list()->get_size() > 0 &&
+        (m_text_box->get_highlight()->get().m_start == 0 &&
+        m_text_box->get_highlight()->get().m_end == 0 ||
+        m_text_box->get_current()->get().isEmpty())) {
       get_list()->remove(get_list()->get_size() - 1);
       return true;
     } else if(watched == m_list_view && (key_event.key() == Qt::Key_Down ||
@@ -502,21 +503,21 @@ void TagBox::overflow() {
     auto visible_area_width =
       width() - m_input_box_horizontal_padding - m_list_view_horizontal_padding;
     auto ellipses_width = m_ellipses_item->sizeHint().width();
-    auto char_length = QFontMetrics(m_font).horizontalAdvance(
-      m_text_box->get_current()->get(), 3);
-    auto difference = m_tags_width + char_length - visible_area_width;
+    auto first_char_length = QFontMetrics(m_font).horizontalAdvance(
+      m_text_box->get_current()->get(), 0);
+    auto difference = m_tags_width + first_char_length - visible_area_width;
     if(difference <= 0) {
       show_all_tags();
       m_text_box->setFixedSize(visible_area_width - m_tags_width,
         text_box_height);
     } else {
-      auto length = 0;
+      auto hidden_length = 0;
       auto is_tag_hidden = false;
       auto i = get_list()->get_size() - 1;
       while(i >= 0 &&
-          (length - difference) < ellipses_width + m_list_item_gap) {
+          difference - hidden_length > ellipses_width + m_list_item_gap) {
         auto item = m_list_view->get_list_item(i);
-        length += item->sizeHint().width() + m_list_item_gap;
+        hidden_length += item->sizeHint().width() + m_list_item_gap;
         item->hide();
         is_tag_hidden = true;
         --i;
