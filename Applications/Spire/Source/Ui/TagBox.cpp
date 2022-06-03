@@ -513,7 +513,8 @@ void TagBox::overflow() {
       auto length = 0;
       auto is_tag_hidden = false;
       auto i = get_list()->get_size() - 1;
-      while(i >= 0 && (length - difference) < ellipses_width + m_list_item_gap) {
+      while(i >= 0 &&
+          (length - difference) < ellipses_width + m_list_item_gap) {
         auto item = m_list_view->get_list_item(i);
         length += item->sizeHint().width() + m_list_item_gap;
         item->hide();
