@@ -27,7 +27,7 @@ namespace Spire {
     std::unique_ptr<Task> m_task;
 
     /** Publishes the orders submitted by this task. */
-    Beam::ScopedQueueReader<Nexus::OrderExecutionService::Order*> m_orders;
+    Beam::ScopedQueueReader<const Nexus::OrderExecutionService::Order*> m_orders;
   };
 
   /** The type of list model used for orders displayed in the blotter. */

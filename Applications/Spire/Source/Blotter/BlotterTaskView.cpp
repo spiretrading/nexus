@@ -252,7 +252,7 @@ std::vector<std::shared_ptr<BlotterTaskEntry>>
     BlotterTaskView::make_selected_tasks() const {
   auto tasks = std::vector<std::shared_ptr<BlotterTaskEntry>>();
   for(auto i = 0; i != m_selection->get_size(); ++i) {
-    tasks.push_back(m_tasks->get(i));
+    tasks.push_back(m_tasks->get(m_selection->get(i)));
   }
   return tasks;
 }
