@@ -106,16 +106,9 @@ namespace Spire {
     QObject* target, bool reverse, boost::posix_time::time_duration fade_speed);
 
   /**
-<<<<<<< HEAD
-   * Find the focus proxy of a widget recursively.
-   * @param widget The widget looking for the focus proxy.
-   * @return the focus proxy of the widget, or <code>nullptr</code> iff
-             no focus proxy is found.
-=======
    * Find the focus proxy that is at the bottom of the proxy chain of a widget.
    * @param widget The widget with a focus proxy.
    * @returns The focus proxy widget.
->>>>>>> spire2018
    */
   QWidget* find_focus_proxy(QWidget& widget);
 
