@@ -114,9 +114,8 @@ TagComboBox::TagComboBox(std::shared_ptr<ComboBox::QueryModel> query_model,
     ViewBuilder view_builder, QWidget* parent)
     : QWidget(parent),
       m_submission(std::make_shared<ArrayListModel<std::any>>()),
-      m_focus_proxy(nullptr),
-      m_window(nullptr),
       m_focus_observer(*this),
+      m_input_box(nullptr),
       m_alignment(Alignment::NONE),
       m_is_modified(false),
       m_is_internal_move(false),
@@ -139,6 +138,8 @@ TagComboBox::TagComboBox(std::shared_ptr<ComboBox::QueryModel> query_model,
     std::bind_front(&TagComboBox::on_combo_box_submit, this));
   enclose(*this, *m_combo_box);
   setFocusProxy(m_combo_box);
+  window()->installEventFilter(this);
+  on_tag_box_style();
 }
 
 const std::shared_ptr<ComboBox::QueryModel>&
@@ -173,7 +174,7 @@ connection TagComboBox::connect_submit_signal(
 }
 
 bool TagComboBox::eventFilter(QObject* watched, QEvent* event) {
-  if(watched == m_focus_proxy && event->type() == QEvent::KeyPress) {
+  if(watched == m_input_box && event->type() == QEvent::KeyPress) {
     auto& key_event = *static_cast<QKeyEvent*>(event);
     if(key_event.key() == Qt::Key_Enter || key_event.key() == Qt::Key_Return) {
       if(key_event.text() == " ") {
@@ -196,7 +197,7 @@ bool TagComboBox::eventFilter(QObject* watched, QEvent* event) {
           m_tag_box->get_current()->get()).has_value()) {
         auto new_event = QKeyEvent(key_event.type(), Qt::Key_Enter,
           key_event.modifiers(), key_event.text());
-        QCoreApplication::sendEvent(m_focus_proxy, &new_event);
+        QCoreApplication::sendEvent(m_input_box, &new_event);
         return true;
       }
     } else if(key_event.key() == Qt::Key_Escape) {
@@ -214,7 +215,7 @@ bool TagComboBox::eventFilter(QObject* watched, QEvent* event) {
         return true;
       }
     }
-  } else if(watched == m_window && event->type() == QEvent::Resize) {
+  } else if(watched == window() && event->type() == QEvent::Resize) {
     update_space();
     if(m_focus_observer.get_state() != FocusObserver::State::NONE) {
       m_alignment = Alignment::NONE;
@@ -232,13 +233,9 @@ bool TagComboBox::event(QEvent* event) {
 }
 
 void TagComboBox::showEvent(QShowEvent* event) {
-  if(!m_focus_proxy) {
-    m_focus_proxy = find_focus_proxy(*m_tag_box);
-    m_focus_proxy->installEventFilter(this);
-  }
-  if(!m_window) {
-    m_window = window();
-    m_window->installEventFilter(this);
+  if(!m_input_box) {
+    m_input_box = find_focus_proxy(*m_tag_box);
+    m_input_box->installEventFilter(this);
   }
   update_space();
   QWidget::showEvent(event);
@@ -246,7 +243,7 @@ void TagComboBox::showEvent(QShowEvent* event) {
 
 void TagComboBox::moveEvent(QMoveEvent* event) {
   if(!m_is_internal_move) {
-    m_pos = event->pos();
+    m_position = event->pos();
   }
   m_is_internal_move = false;
   QWidget::moveEvent(event);
@@ -280,30 +277,24 @@ void TagComboBox::on_operation(const AnyListModel::Operation& operation) {
 
 void TagComboBox::on_focus(FocusObserver::State state) {
   if(state == FocusObserver::State::NONE) {
-    m_alignment = Alignment::NONE;
     m_tag_box->get_current()->set("");
+    m_alignment = Alignment::NONE;
+    set_position(m_position);
     update_space();
-    move(m_pos);
     if(m_is_modified) {
       submit();
-    }
-  } else {
-    if(m_overflow == TagBoxOverflow::WRAP) {
-      align();
     }
   }
 }
 
 void TagComboBox::on_tag_box_style() {
   auto& stylist = find_stylist(*m_tag_box);
-  auto has_update = std::make_shared<bool>(false);
   for(auto& property : stylist.get_computed_block()) {
     property.visit(
       [&] (EnumProperty<TagBoxOverflow> overflow) {
         stylist.evaluate(overflow, [=] (auto overflow) {
           if(m_overflow != overflow) {
             m_overflow = overflow;
-            *has_update = true;
           }
         });
       });
@@ -312,26 +303,24 @@ void TagComboBox::on_tag_box_style() {
 
 void TagComboBox::align() {
   if(m_alignment == Alignment::ABOVE) {
-    m_is_internal_move = true;
-    move(x(), m_pos.y() + m_min_height - height());
+    set_position({x(), m_position.y() + m_min_height - height()});
     return;
   }
   if(sizeHint().height() > m_below_space && m_above_space > m_below_space) {
     m_alignment = Alignment::ABOVE;
-    m_is_internal_move = true;
-    move(x(), m_pos.y() + m_min_height - height());
-    if(m_overflow == TagBoxOverflow::ELIDE) {
-      setMaximumHeight(m_above_space);
-    }
+    set_position({x(), m_position.y() + m_min_height - height()});
+    setMaximumHeight(m_above_space);
   } else {
     m_alignment = Alignment::BELOW;
-    m_is_internal_move = true;
-    move(m_pos);
-    if(m_overflow == TagBoxOverflow::ELIDE) {
-      setMaximumHeight(m_below_space);
-    }
+    set_position(m_position);
+    setMaximumHeight(m_below_space);
   }
   adjustSize();
+}
+
+void TagComboBox::set_position(const QPoint& pos) {
+  m_is_internal_move = true;
+  move(pos);
 }
 
 void TagComboBox::submit() {
@@ -341,8 +330,8 @@ void TagComboBox::submit() {
 }
 
 void TagComboBox::update_space() {
-  auto y = parentWidget()->mapToGlobal(m_pos).y();
-  auto window_y = m_window->geometry().y();
-  m_above_space = y + m_min_height - window_y;
-  m_below_space = window_y + m_window->height() - y;
+  auto y = parentWidget()->mapToGlobal(m_position).y();
+  auto& window_rect = window()->geometry();
+  m_above_space = y + m_min_height - window_rect.y();
+  m_below_space = window_rect.bottom() - y;
 }

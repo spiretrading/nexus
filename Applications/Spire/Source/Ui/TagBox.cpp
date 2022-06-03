@@ -160,6 +160,9 @@ TagBox::TagBox(std::shared_ptr<AnyListModel> list,
   enclose(*this, *input_box);
   proxy_style(*this, *input_box);
   set_style(*this, INPUT_BOX_STYLE(get_style(*input_box)));
+  update_style(*this, [] (auto& style) {
+    style.get(Any()).set(TagBoxOverflow::WRAP);
+  });
   m_style_connection = connect_style_signal(*this, [=] { on_style(); });
   m_ellipses_item = m_list_view->get_list_item(get_list()->get_size());
   m_ellipses_item->hide();

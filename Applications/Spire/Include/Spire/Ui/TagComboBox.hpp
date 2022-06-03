@@ -96,18 +96,17 @@ namespace Spire {
         BELOW
       };
       mutable SubmitSignal m_submit_signal;
-      std::shared_ptr<AnyListModel> m_submission;
       TagBox* m_tag_box;
       ComboBox* m_combo_box;
-      QWidget* m_focus_proxy;
-      QWidget* m_drop_down_window;
-      QWidget* m_window;
+      std::shared_ptr<AnyListModel> m_submission;
       FocusObserver m_focus_observer;
+      QWidget* m_input_box;
+      QWidget* m_drop_down_window;
       Styles::TagBoxOverflow m_overflow;
       Alignment m_alignment;
       bool m_is_modified;
       bool m_is_internal_move;
-      QPoint m_pos;
+      QPoint m_position;
       int m_min_height;
       int m_above_space;
       int m_below_space;
@@ -120,6 +119,7 @@ namespace Spire {
       void on_focus(FocusObserver::State state);
       void on_tag_box_style();
       void align();
+      void set_position(const QPoint& pos);
       void submit();
       void update_space();
   };
