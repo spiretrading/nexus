@@ -1,5 +1,6 @@
 #include "Spire/Blotter/CompositeBlotterModel.hpp"
 #include "Spire/Blotter/CompositeBlotterStatusModel.hpp"
+#include "Spire/Blotter/DerivedOrderListModel.hpp"
 #include "Spire/Blotter/LocalBlotterPositionsModel.hpp"
 #include "Spire/Blotter/LocalBlotterProfitAndLossModel.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
@@ -74,7 +75,7 @@ std::shared_ptr<CompositeBlotterModel> Spire::make_local_blotter_model() {
     std::make_shared<ArrayListModel<std::shared_ptr<BlotterTaskEntry>>>(),
     std::make_shared<ListMultiSelectionModel>(),
     std::make_shared<LocalBlotterPositionsModel>(),
-    std::make_shared<ArrayListModel<Order*>>(),
+    std::make_shared<ArrayListModel<const Order*>>(),
     std::make_shared<LocalBlotterProfitAndLossModel>(),
     make_local_blotter_status_model());
 }
@@ -84,10 +85,10 @@ std::shared_ptr<CompositeBlotterModel> Spire::make_derived_blotter_model(
     std::shared_ptr<BooleanModel> is_pinned,
     std::shared_ptr<BlotterTaskListModel> tasks) {
   return std::make_shared<CompositeBlotterModel>(std::move(name),
-    std::move(is_active), std::move(is_pinned), std::move(tasks),
+    std::move(is_active), std::move(is_pinned), tasks,
     std::make_shared<ListMultiSelectionModel>(),
     std::make_shared<LocalBlotterPositionsModel>(),
-    std::make_shared<ArrayListModel<Order*>>(),
+    std::make_shared<DerivedOrderListModel>(tasks),
     std::make_shared<LocalBlotterProfitAndLossModel>(),
     make_local_blotter_status_model());
 }

@@ -2,7 +2,7 @@
 #define SPIRE_BLOTTER_MODEL_HPP
 #include <memory>
 #include <string>
-#include <Beam/Queues/ScopedQueueReader.hpp>
+#include <Beam/Queues/Publisher.hpp>
 #include "Nexus/OrderExecutionService/Order.hpp"
 #include "Spire/Blotter/Blotter.hpp"
 #include "Spire/Canvas/Task.hpp"
@@ -27,11 +27,12 @@ namespace Spire {
     std::unique_ptr<Task> m_task;
 
     /** Publishes the orders submitted by this task. */
-    Beam::ScopedQueueReader<const Nexus::OrderExecutionService::Order*> m_orders;
+    std::shared_ptr<Beam::SequencePublisher<
+      const Nexus::OrderExecutionService::Order*>> m_orders;
   };
 
   /** The type of list model used for orders displayed in the blotter. */
-  using OrderListModel = ListModel<Nexus::OrderExecutionService::Order*>;
+  using OrderListModel = ListModel<const Nexus::OrderExecutionService::Order*>;
 
   /** The type of list model used for tasks displayed in the blotter. */
   using BlotterTaskListModel = ListModel<std::shared_ptr<BlotterTaskEntry>>;

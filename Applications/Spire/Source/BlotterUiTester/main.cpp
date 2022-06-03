@@ -134,11 +134,12 @@ namespace {
 
   struct ObserverOrderExecutionClient {
     MockOrderExecutionClient* m_client;
-    std::shared_ptr<Queue<const Order*>> m_submissions;
+    std::shared_ptr<QueueWriter<const Order*>> m_submissions;
 
-    ObserverOrderExecutionClient(MockOrderExecutionClient& client)
+    ObserverOrderExecutionClient(MockOrderExecutionClient& client,
+      std::shared_ptr<QueueWriter<const Order*>> submissions)
       : m_client(&client),
-        m_submissions(std::make_shared<Queue<const Order*>>()) {}
+        m_submissions(std::move(submissions)) {}
 
     const Order& Submit(const OrderFields& fields) {
       auto& order = m_client->Submit(fields);
@@ -179,8 +180,8 @@ namespace {
         std::bind_front(&BlotterWindowController::on_submit, this));
     }
 
-    std::tuple<Aspen::Box<void>, std::shared_ptr<Queue<const Order*>>>
-        make_order_reactor() {
+    std::tuple<Aspen::Box<void>,
+        std::shared_ptr<SequencePublisher<const Order*>>> make_order_reactor() {
       auto& security =
         m_order_entry_panel->m_security_box->get_current()->get();
       auto order_type = 
@@ -194,15 +195,16 @@ namespace {
       auto price =
         m_order_entry_panel->m_price_box->get_current()->get().get_value_or(
           Money::ZERO);
-      auto client = std::make_unique<ObserverOrderExecutionClient>(m_client);
-      auto submissions = client->m_submissions;
+      auto submissions = std::make_shared<SequencePublisher<const Order*>>();
+      auto client =
+        std::make_unique<ObserverOrderExecutionClient>(m_client, submissions);
       return std::tuple(Aspen::Box<void>(OrderReactor(std::move(client),
         Aspen::constant(DirectoryEntry()), Aspen::constant(security),
         Aspen::constant(CurrencyId::NONE), Aspen::constant(order_type),
         Aspen::constant(side), Aspen::constant(destination),
         Aspen::constant(quantity), Aspen::constant(price),
         Aspen::constant(TimeInForce()), std::vector<Aspen::Box<Nexus::Tag>>())),
-        submissions);
+        std::move(submissions));
     }
 
     void on_submit() {
@@ -211,7 +213,7 @@ namespace {
       auto entry = std::make_shared<BlotterTaskEntry>(BlotterTaskEntry(
         m_next_task_id,
         m_order_entry_panel->m_name_box->get_current()->get().toStdString(),
-        false, std::move(task), submissions));
+        false, std::move(task), std::move(submissions)));
       ++m_next_task_id;
       m_blotter->get_tasks()->push(entry);
     }
