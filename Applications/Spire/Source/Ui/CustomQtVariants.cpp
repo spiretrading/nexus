@@ -104,6 +104,10 @@ QVariant Spire::to_qvariant(const std::any& value) {
     return QVariant::fromValue(std::any_cast<bool>(value));
   } else if(value.type() == typeid(int)) {
     return QVariant::fromValue(std::any_cast<int>(value));
+  } else if(value.type() == typeid(std::int64_t)) {
+    return QVariant::fromValue(std::any_cast<std::int64_t>(value));
+  } else if(value.type() == typeid(std::uint64_t)) {
+    return QVariant::fromValue(std::any_cast<std::uint64_t>(value));
   } else if(value.type() == typeid(double)) {
     return QVariant::fromValue(std::any_cast<double>(value));
   } else if(value.type() == typeid(gregorian::date)) {
@@ -332,10 +336,10 @@ bool Spire::is_equal(const std::any& left, const std::any& right) {
   if(left.type() != right.type()) {
     return false;
   }
-  return is_equal_any<bool, int, Quantity, double, gregorian::date, ptime,
-    posix_time::time_duration, std::string, CurrencyId, MarketToken, Money,
-    Region, OrderStatus, OrderType, PositionSideToken, Security, Side,
-    TimeInForce, QColor, QString>(left, right);
+  return is_equal_any<bool, int, std::int64_t, std::uint64_t, Quantity, double,
+    gregorian::date, ptime, posix_time::time_duration, std::string, CurrencyId,
+    MarketToken, Money, Region, OrderStatus, OrderType, PositionSideToken,
+    Security, Side, TimeInForce, QColor, QString>(left, right);
 }
 
 CustomVariantItemDelegate::CustomVariantItemDelegate(QObject* parent)

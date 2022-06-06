@@ -1,10 +1,13 @@
 #include "Spire/Blotter/BlotterOrderLogView.hpp"
+#include <unordered_map>
 #include "Spire/Spire/ArrayListModel.hpp"
+#include "Spire/Spire/QtTaskQueue.hpp"
 #include "Spire/Spire/TableModelTransactionLog.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/TableView.hpp"
 
+using namespace Beam;
 using namespace boost;
 using namespace boost::signals2;
 using namespace Nexus;
@@ -27,8 +30,14 @@ namespace {
       PRICE,
       TIME_IN_FORCE
     };
+    struct OrderStatusEntry {
+      OrderStatus m_status;
+      std::vector<int> m_indexes;
+    };
     static const auto COLUMN_SIZE = 11;
+    QtTaskQueue m_tasks;
     std::shared_ptr<OrderListModel> m_orders;
+    std::unordered_map<const Order*, OrderStatusEntry> m_statuses;
     scoped_connection m_operation_connection;
     TableModelTransactionLog m_transaction;
 
@@ -57,6 +66,42 @@ namespace {
       return m_transaction.connect_operation_signal(slot);
     }
 
+    void add(const Order& order, int index) {
+      auto status = m_statuses.find(&order);
+      if(status != m_statuses.end()) {
+        status->second.m_indexes.push_back(index);
+        return;
+      }
+      m_statuses[&order].m_indexes.push_back(index);
+      auto execution_reports = optional<std::vector<ExecutionReport>>();
+      order.GetPublisher().Monitor(m_tasks.get_slot<ExecutionReport>(
+        std::bind_front(&OrderTableModel::on_execution_report, this,
+          std::cref(order))), Store(execution_reports));
+      if(execution_reports) {
+        for(auto& report : *execution_reports) {
+          on_execution_report(order, report);
+        }
+      }
+    }
+
+    void on_execution_report(
+        const Order& order, const ExecutionReport& report) {
+      auto& status = m_statuses[&order];
+      if(report.m_status != OrderStatus::PARTIALLY_FILLED ||
+          status.m_status != OrderStatus::PENDING_CANCEL) {
+        auto previous = status.m_status;
+        status.m_status = report.m_status;
+        m_transaction.transact([&] {
+          for(auto index : status.m_indexes) {
+            if(index < m_orders->get_size() && m_orders->get(index) == &order) {
+              m_transaction.push(UpdateOperation(
+                index, static_cast<int>(STATUS), previous, status.m_status));
+            }
+          }
+        });
+      }
+    }
+
     void on_operation(const OrderListModel::Operation& operation) {
       m_transaction.transact([&] {
         visit(operation,
@@ -65,41 +110,43 @@ namespace {
             for(auto i = 0; i != get_column_size(); ++i) {
               row->push(to_any(at(operation.m_index, i)));
             }
-            m_transaction.push(
-              TableModel::AddOperation(operation.m_index, row));
+            m_transaction.push(AddOperation(operation.m_index, row));
+            add(*operation.get_value(), operation.m_index);
           },
           [&] (const OrderListModel::RemoveOperation& operation) {
             auto row = std::make_shared<ArrayListModel<std::any>>();
             for(auto i = 0; i != COLUMN_SIZE; ++i) {
               row->push(to_any(extract_field(*operation.get_value(), i)));
             }
-            m_transaction.push(
-              TableModel::RemoveOperation(operation.m_index, row));
+            m_transaction.push(RemoveOperation(operation.m_index, row));
           },
           [&] (const OrderListModel::MoveOperation& operation) {
-            m_transaction.push(TableModel::MoveOperation(
-              operation.m_source, operation.m_destination));
+            m_transaction.push(
+              MoveOperation(operation.m_source, operation.m_destination));
           },
           [&] (const OrderListModel::UpdateOperation& operation) {
+            add(*operation.get_value(), operation.m_index);
             for(auto i = 0; i != COLUMN_SIZE; ++i) {
-              m_transaction.push(
-                TableModel::UpdateOperation(operation.m_index, i,
-                  to_any(extract_field(*operation.get_previous(), i)),
-                  to_any(extract_field(*operation.get_value(), i))));
+              m_transaction.push(UpdateOperation(operation.m_index, i,
+                to_any(extract_field(*operation.get_previous(), i)),
+                to_any(extract_field(*operation.get_value(), i))));
             }
           });
       });
     }
 
-    static AnyRef extract_field(const Order& order, int column) {
+    AnyRef extract_field(const Order& order, int column) const {
       if(column == Column::TIME) {
         return order.GetInfo().m_timestamp;
       } else if(column == Column::ID) {
         return order.GetInfo().m_orderId;
       } else if(column == Column::STATUS) {
-
-        // TODO
-        return AnyRef(123, AnyRef::by_value);
+        auto status = m_statuses.find(&order);
+        if(status == m_statuses.end()) {
+          static const auto NONE = OrderStatus::NONE;
+          return NONE;
+        }
+        return status->second.m_status;
       } else if(column == Column::SECURITY) {
         return order.GetInfo().m_fields.m_security;
       } else if(column == Column::CURRENCY) {

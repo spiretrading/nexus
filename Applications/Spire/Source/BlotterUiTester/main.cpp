@@ -119,8 +119,13 @@ namespace {
 
     const Order& Submit(const OrderFields& fields) {
       auto id = ++m_next_id;
-      auto order = std::make_unique<PrimitiveOrder>(
-        OrderInfo(fields, id, second_clock::universal_time()));
+      auto proper_fields = fields;
+      if(proper_fields.m_currency == CurrencyId::NONE) {
+        proper_fields.m_currency = GetDefaultMarketDatabase().FromCode(
+          proper_fields.m_security.GetMarket()).m_currency;
+      }
+      auto order = std::make_unique<PrimitiveOrder>(OrderInfo(
+        std::move(proper_fields), id, second_clock::universal_time()));
       auto result = order.get();
       m_orders.insert(std::move(order));
       return *result;
