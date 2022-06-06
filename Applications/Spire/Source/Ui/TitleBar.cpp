@@ -59,34 +59,34 @@ TitleBar::TitleBar(QImage icon, QWidget* parent)
     : QWidget(parent),
       m_window_button(nullptr) {
   setFixedHeight(scale_height(26));
-  auto container = new QWidget(this);
-  m_container_layout = make_hbox_layout(container);
+  setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   m_title_label = make_label("", this);
   update_style(*m_title_label, [&] (auto& style) {
     style.get(ReadOnly() && Disabled()).set(BackgroundColor(QColor(0xF5F5F5)));
     style.get(!Active()).set(TextColor(QColor(0xA0A0A0)));
   });
   m_title_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  m_container_layout = make_hbox_layout(this);
   m_container_layout->addWidget(m_title_label);
   m_minimize_button = create_button(":/Icons/minimize.svg", this);
-  m_minimize_button->connect_clicked_signal([=] {
+  m_minimize_button->connect_click_signal([=] {
     on_minimize_button_press();
   });
   m_container_layout->addWidget(m_minimize_button);
   m_maximize_button = create_button(":/Icons/maximize.svg", this);
-  m_maximize_button->connect_clicked_signal([=] {
+  m_maximize_button->connect_click_signal([=] {
     on_maximize_button_press();
   });
   m_container_layout->addWidget(m_maximize_button);
   m_restore_button = create_button(":/Icons/restore.svg", this);
-  m_restore_button->connect_clicked_signal([=] { on_restore_button_press(); });
+  m_restore_button->connect_click_signal([=] { on_restore_button_press(); });
   m_restore_button->hide();
   m_container_layout->addWidget(m_restore_button);
   m_close_button = make_icon_button(
     imageFromSvg(":/Icons/close.svg", BUTTON_SIZE()), parent);
   m_close_button->setFocusPolicy(Qt::FocusPolicy::NoFocus);
   m_close_button->setFixedSize(BUTTON_SIZE());
-  m_close_button->connect_clicked_signal([=] { on_close_button_press(); });
+  m_close_button->connect_click_signal([=] { on_close_button_press(); });
   auto close_button_style = BUTTON_STYLE();
   close_button_style.get((Hover() || Press()) > Body()).
     set(BackgroundColor(QColor(0xE63F44)));
@@ -94,7 +94,6 @@ TitleBar::TitleBar(QImage icon, QWidget* parent)
     set(Fill(QColor(0xFFFFFF)));
   set_style(*m_close_button, std::move(close_button_style));
   m_container_layout->addWidget(m_close_button);
-  enclose(*this, *(new Box(container)));
   set_icon(icon);
   connect_window_signals();
 }

@@ -8,6 +8,7 @@
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ListItem.hpp"
+#include "Spire/Ui/SingleSelectionModel.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace boost;
@@ -33,7 +34,28 @@ namespace {
       set(ListOverflowGap(scale_width(DEFAULT_OVERFLOW_GAP)));
     return style;
   }
+
+  struct QWidgetItemView : ListCurrentController::ItemView {
+    QWidget* m_widget;
+
+    QWidgetItemView(QWidget& widget)
+      : m_widget(&widget) {}
+
+    bool is_selectable() const override {
+      return m_widget->isEnabled();
+    }
+
+    QRect get_geometry() const override {
+      return m_widget->frameGeometry();
+    }
+  };
 }
+
+ListView::ItemEntry::ItemEntry(ListItem& item, int index)
+  : m_item(&item),
+    m_index(index),
+    m_is_current(false),
+    m_click_observer(*m_item) {}
 
 void ListView::ItemEntry::set(bool is_current) {
   if(m_is_current == is_current) {
@@ -49,7 +71,7 @@ void ListView::ItemEntry::set(bool is_current) {
 
 QWidget* ListView::default_view_builder(
     const std::shared_ptr<AnyListModel>& list, int index) {
-  return make_label(displayTextAny(list->get(index)));
+  return make_label(displayText(list->get(index)));
 }
 
 ListView::ListView(std::shared_ptr<AnyListModel> list, QWidget* parent)
@@ -57,10 +79,17 @@ ListView::ListView(std::shared_ptr<AnyListModel> list, QWidget* parent)
 
 ListView::ListView(std::shared_ptr<AnyListModel> list,
   ViewBuilder<> view_builder, QWidget* parent)
-  : ListView(std::move(list),
-      std::make_shared<LocalValueModel<optional<int>>>(),
-      std::make_shared<LocalValueModel<optional<int>>>(),
-      std::move(view_builder), parent) {}
+  : ListView(
+      std::move(list), std::make_shared<LocalValueModel<optional<int>>>(),
+      std::make_shared<ListSingleSelectionModel>(), std::move(view_builder),
+      parent) {}
+
+ListView::ListView(std::shared_ptr<AnyListModel> list,
+  std::shared_ptr<SelectionModel> selection, ViewBuilder<> view_builder,
+  QWidget* parent)
+  : ListView(
+      std::move(list), std::make_shared<LocalValueModel<optional<int>>>(),
+      std::move(selection), std::move(view_builder), parent) {}
 
 ListView::ListView(
     std::shared_ptr<AnyListModel> list, std::shared_ptr<CurrentModel> current,
@@ -68,15 +97,11 @@ ListView::ListView(
     QWidget* parent)
     : QWidget(parent),
       m_list(std::move(list)),
-      m_current(std::move(current)),
-      m_last_current(m_current->get()),
-      m_selection(std::move(selection)),
+      m_current_controller(std::move(current)),
+      m_selection_controller(std::move(selection)),
       m_view_builder(std::move(view_builder)),
-      m_selected(m_selection->get()),
       m_direction(Qt::Vertical),
-      m_edge_navigation(EdgeNavigation::WRAP),
       m_overflow(Overflow::NONE),
-      m_selection_mode(SelectionMode::SINGLE),
       m_direction_policy(QSizePolicy::Fixed),
       m_perpendicular_policy(QSizePolicy::Expanding),
       m_item_gap(DEFAULT_GAP),
@@ -84,18 +109,14 @@ ListView::ListView(
       m_query_timer(new QTimer(this)),
       m_focus_reason(Qt::OtherFocusReason) {
   setFocusPolicy(Qt::StrongFocus);
-  for(auto i = 0; i < m_list->get_size(); ++i) {
-    auto item = new ListItem(*m_view_builder(m_list, i));
-    m_items.emplace_back(new ItemEntry(item, i, false));
-    m_items.back()->m_connection =
-      item->connect_submit_signal([=, item = m_items.back().get()] {
-        on_item_submitted(*item);
-      });
+  for(auto i = 0; i != m_list->get_size(); ++i) {
+    make_item_entry(i);
   }
-  if(m_selected) {
-    m_items[*m_selected]->m_item->set_selected(true);
+  auto& selection_model = m_selection_controller.get_selection();
+  for(auto i = 0; i != selection_model->get_size(); ++i) {
+    m_items[selection_model->get(i)]->m_item->set_selected(true);
   }
-  update_focus(m_last_current);
+  update_focus(none);
   auto body = new QWidget();
   auto body_layout = new QBoxLayout(QBoxLayout::LeftToRight, body);
   body_layout->setContentsMargins({});
@@ -113,10 +134,10 @@ ListView::ListView(
     m_query_timer, &QTimer::timeout, this, [=] { on_query_timer_expired(); });
   m_list_connection = m_list->connect_operation_signal(
     [=] (const auto& operation) { on_list_operation(operation); });
-  m_current_connection = m_current->connect_update_signal(
-    [=] (const auto& current) { on_current(current); });
-  m_selection_connection = m_selection->connect_update_signal(
-    [=] (const auto& selection) { on_selection(selection); });
+  m_current_connection = m_current_controller.connect_update_signal(
+    std::bind_front(&ListView::on_current, this));
+  m_selection_connection = m_selection_controller.connect_operation_signal(
+    std::bind_front(&ListView::on_selection, this));
 }
 
 const std::shared_ptr<AnyListModel>& ListView::get_list() const {
@@ -124,12 +145,12 @@ const std::shared_ptr<AnyListModel>& ListView::get_list() const {
 }
 
 const std::shared_ptr<ListView::CurrentModel>& ListView::get_current() const {
-  return m_current;
+  return m_current_controller.get_current();
 }
 
 const std::shared_ptr<ListView::SelectionModel>&
     ListView::get_selection() const {
-  return m_selection;
+  return m_selection_controller.get_selection();
 }
 
 ListItem* ListView::get_list_item(int index) {
@@ -174,39 +195,53 @@ void ListView::keyPressEvent(QKeyEvent* event) {
   switch(event->key()) {
     case Qt::Key_Home:
     case Qt::Key_PageUp:
-      navigate_home();
+      m_current_controller.navigate_home();
       break;
     case Qt::Key_End:
     case Qt::Key_PageDown:
-      navigate_end();
+      m_current_controller.navigate_end();
       break;
     case Qt::Key_Up:
       if(m_direction == Qt::Orientation::Vertical) {
-        navigate_previous();
+        m_current_controller.navigate_previous();
       } else if(m_overflow == Overflow::WRAP) {
-        cross_previous();
+        m_current_controller.cross_previous(m_direction);
       }
       break;
     case Qt::Key_Down:
       if(m_direction == Qt::Orientation::Vertical) {
-        navigate_next();
+        m_current_controller.navigate_next();
       } else if(m_overflow == Overflow::WRAP) {
-        cross_next();
+        m_current_controller.cross_next(m_direction);
       }
       break;
     case Qt::Key_Left:
       if(m_direction == Qt::Orientation::Horizontal) {
-        navigate_previous();
+        m_current_controller.navigate_previous();
       } else if(m_overflow == Overflow::WRAP) {
-        cross_previous();
+        m_current_controller.cross_previous(m_direction);
       }
       break;
     case Qt::Key_Right:
       if(m_direction == Qt::Orientation::Horizontal) {
-        navigate_next();
+        m_current_controller.navigate_next();
       } else if(m_overflow == Overflow::WRAP) {
-        cross_next();
+        m_current_controller.cross_next(m_direction);
       }
+      break;
+    case Qt::Key_A:
+      if(event->modifiers() & Qt::Modifier::CTRL && !event->isAutoRepeat()) {
+        m_selection_controller.select_all();
+      }
+      break;
+    case Qt::Key_Control:
+      m_keys.insert(Qt::Key_Control);
+      m_selection_controller.set_mode(
+        ListSelectionController::Mode::INCREMENTAL);
+      break;
+    case Qt::Key_Shift:
+      m_keys.insert(Qt::Key_Shift);
+      m_selection_controller.set_mode(ListSelectionController::Mode::RANGE);
       break;
     default:
       {
@@ -220,19 +255,49 @@ void ListView::keyPressEvent(QKeyEvent* event) {
   }
 }
 
+void ListView::keyReleaseEvent(QKeyEvent* event) {
+  switch(event->key()) {
+    case Qt::Key_Control:
+      m_keys.erase(Qt::Key_Control);
+      if(m_selection_controller.get_mode() ==
+          ListSelectionController::Mode::INCREMENTAL) {
+        if(m_keys.count(Qt::Key_Shift) == 1) {
+          m_selection_controller.set_mode(ListSelectionController::Mode::RANGE);
+        } else {
+          m_selection_controller.set_mode(
+            ListSelectionController::Mode::SINGLE);
+        }
+      }
+      break;
+    case Qt::Key_Shift:
+      m_keys.erase(Qt::Key_Shift);
+      if(m_selection_controller.get_mode() ==
+          ListSelectionController::Mode::RANGE) {
+        if(m_keys.count(Qt::Key_Control) == 1) {
+          m_selection_controller.set_mode(
+            ListSelectionController::Mode::INCREMENTAL);
+        } else {
+          m_selection_controller.set_mode(
+            ListSelectionController::Mode::SINGLE);
+        }
+      }
+      break;
+  }
+}
+
 void ListView::append_query(const QString& query) {
   m_query += query;
   if(!m_items.empty()) {
-    auto start = m_current->get().get_value_or(-1);
+    auto start = m_current_controller.get_current()->get().get_value_or(-1);
     auto i = (start + 1) % static_cast<int>(m_items.size());
     auto is_repeated_query = m_query.count(m_query.at(0)) == m_query.count();
     auto short_match = optional<int>();
     while(i != start) {
       if(m_items[i]->m_item->isEnabled()) {
-        auto item_text = displayTextAny(m_list->get(i)).toLower();
+        auto item_text = displayText(m_list->get(i)).toLower();
         if(item_text.startsWith(m_query.toLower())) {
           short_match = none;
-          set(i);
+          m_current_controller.get_current()->set(i);
           break;
         } else if(is_repeated_query &&
             !short_match && item_text.startsWith(m_query[0])) {
@@ -248,138 +313,10 @@ void ListView::append_query(const QString& query) {
       }
     }
     if(short_match) {
-      set(*short_match);
+      m_current_controller.get_current()->set(*short_match);
     }
   }
   m_query_timer->start();
-}
-
-void ListView::navigate_home() {
-  navigate(1, -1, EdgeNavigation::CONTAIN);
-}
-
-void ListView::navigate_end() {
-  navigate(-1, static_cast<int>(m_items.size()), EdgeNavigation::CONTAIN);
-}
-
-void ListView::navigate_next() {
-  navigate(1, m_current->get().value_or(-1), m_edge_navigation);
-}
-
-void ListView::navigate_previous() {
-  if(m_current->get()) {
-    navigate(-1, *m_current->get(), m_edge_navigation);
-  } else {
-    navigate_next();
-  }
-}
-
-void ListView::navigate(
-    int direction, int start, EdgeNavigation edge_navigation) {
-  if(m_items.empty()) {
-    return;
-  }
-  auto i = start;
-  do {
-    i += direction;
-    if(i < 0 || i >= static_cast<int>(m_items.size())) {
-      if(edge_navigation == EdgeNavigation::CONTAIN) {
-        return;
-      } else if(direction == -1) {
-        i = static_cast<int>(m_items.size()) - 1;
-      } else {
-        if(start == -1) {
-          return;
-        }
-        i = 0;
-      }
-    }
-  } while(i != start && !m_items[i]->m_item->isEnabled());
-  set(i);
-}
-
-void ListView::cross_previous() {
-  cross(-1);
-}
-
-void ListView::cross_next() {
-  cross(1);
-}
-
-void ListView::cross(int direction) {
-  if(m_items.empty()) {
-    return;
-  }
-  if(!m_current->get()) {
-    navigate_next();
-    return;
-  }
-  if(m_navigation_box.isNull()) {
-    if(m_current->get()) {
-      m_navigation_box =
-        m_items[*m_current->get()]->m_item->frameGeometry();
-    } else {
-      m_navigation_box = m_items.front()->m_item->frameGeometry();
-    }
-  }
-  auto i = *m_current->get() + direction;
-  auto navigation_box = m_navigation_box;
-  auto candidate = -1;
-  while(i >= 0 && i != static_cast<int>(m_items.size())) {
-    if(m_items[i]->m_item->isEnabled()) {
-      if(candidate == -1) {
-        if(m_direction == Qt::Orientation::Horizontal) {
-          navigation_box.moveTop(m_items[i]->m_item->pos().y());
-        } else {
-          navigation_box.moveLeft(m_items[i]->m_item->pos().x());
-        }
-      }
-      if((m_direction == Qt::Orientation::Horizontal &&
-          direction * m_navigation_box.y() < direction * navigation_box.y() ||
-          m_direction == Qt::Orientation::Vertical &&
-          direction * m_navigation_box.x() < direction * navigation_box.x()) &&
-          navigation_box.intersects(m_items[i]->m_item->frameGeometry())) {
-        candidate = i;
-        if(direction == 1) {
-          break;
-        }
-      } else if(candidate != -1) {
-        break;
-      }
-    }
-    i += direction;
-  }
-  if(candidate == -1) {
-    return;
-  }
-  m_navigation_box = navigation_box;
-  set(candidate);
-  if(candidate == m_current->get()) {
-    m_navigation_box = navigation_box;
-  }
-}
-
-void ListView::set(optional<int> current) {
-  if(!current && !m_current->get() || m_items.empty()) {
-    return;
-  }
-  if(auto& previous_index = m_current->get();
-      previous_index && *previous_index < static_cast<int>(m_items.size())) {
-    auto& previous_item = *m_items[*previous_index];
-    if(previous_index == current && previous_item.m_is_current) {
-      return;
-    }
-    previous_item.set(false);
-  }
-  if(current) {
-    if(*current >= static_cast<int>(m_items.size())) {
-      current = static_cast<int>(m_items.size()) - 1;
-    }
-    m_items[*current]->set(true);
-  }
-  m_last_current = current;
-  m_focus_reason = Qt::ShortcutFocusReason;
-  m_current->set(current);
 }
 
 void ListView::update_focus(optional<int> current) {
@@ -403,25 +340,29 @@ void ListView::update_focus(optional<int> current) {
   }
 }
 
-void ListView::add_item(int index) {
+void ListView::make_item_entry(int index) {
   auto item = new ListItem(*m_view_builder(m_list, index));
-  m_items.emplace(m_items.begin() + index, new ItemEntry(item, index, false));
-  m_items[index]->m_connection = item->connect_submit_signal(
+  m_items.emplace(m_items.begin() + index, new ItemEntry(*item, index));
+  m_items[index]->m_click_connection =
+    m_items[index]->m_click_observer.connect_click_signal(std::bind_front(
+      &ListView::on_item_click, this, std::ref(*m_items[index])));
+  m_items[index]->m_submit_connection = item->connect_submit_signal(
     [=, item = m_items[index].get()] {
       on_item_submitted(*item);
     });
+  m_current_controller.add(std::make_unique<QWidgetItemView>(*item), index);
+  m_selection_controller.add(index);
+}
+
+void ListView::add_item(int index) {
+  make_item_entry(index);
   for(auto i = m_items.begin() + index + 1; i != m_items.end(); ++i) {
     ++(*i)->m_index;
   }
+  if(m_focus_index && *m_focus_index > index) {
+    ++*m_focus_index;
+  }
   update_layout();
-  auto selection = m_selection->get();
-  if(m_current->get() && *m_current->get() >= index) {
-    set(*m_current->get() + 1);
-  }
-  if(selection && *selection >= index) {
-    m_selected = *selection + 1;
-    m_selection->set(m_selected);
-  }
 }
 
 void ListView::remove_item(int index) {
@@ -431,67 +372,49 @@ void ListView::remove_item(int index) {
   for(auto i = m_items.begin() + index; i != m_items.end(); ++i) {
     --(*i)->m_index;
   }
-  auto selection = m_selection->get();
-  if(m_current->get()) {
-    if(m_current->get() == index) {
-      set(*m_current->get());
-    } else if(m_current->get() > index) {
-      set(*m_current->get() - 1);
+  if(m_focus_index) {
+    if(*m_focus_index == index) {
+      m_focus_index = none;
+    } else if(*m_focus_index > index) {
+      --*m_focus_index;
     }
   }
-  if(selection && *selection >= index) {
-    auto blocker = shared_connection_block(m_selection_connection);
-    if(selection == index) {
-      m_selected = none;
-    } else {
-      m_selected = *selection - 1;
-    }
-    m_selection->set(m_selected);
-  }
+  auto current_blocker = shared_connection_block(m_current_connection);
+  auto selection_blocker = shared_connection_block(m_selection_connection);
+  m_current_controller.remove(index);
+  m_selection_controller.remove(index);
+  on_current(none, m_current_controller.get_current()->get());
   update_layout();
 }
 
 void ListView::move_item(int source, int destination) {
-  auto direction = [&] {
-    if(source < destination) {
-      for(auto i = std::next(m_items.begin(), source + 1);
-          i != std::next(m_items.begin(), destination + 1); ++i) {
-        --(*i)->m_index;
-      }
-      std::rotate(std::next(m_items.begin(), source), std::next(m_items.begin(),
-        source + 1), std::next(m_items.begin(), destination + 1));
-      return -1;
-    } else {
-      for(auto i = std::next(m_items.begin(), destination);
-          i != std::next(m_items.begin(), source); ++i) {
-        ++(*i)->m_index;
-      }
-      std::rotate(std::next(m_items.rbegin(), m_items.size() - source - 1),
-        std::next(m_items.rbegin(), m_items.size() - source), std::next(
-        m_items.rbegin(), m_items.size() - destination));
-      return 1;
+  if(source < destination) {
+    for(auto i = std::next(m_items.begin(), source + 1);
+        i != std::next(m_items.begin(), destination + 1); ++i) {
+      --(*i)->m_index;
     }
-  }();
+    std::rotate(std::next(m_items.begin(), source), std::next(m_items.begin(),
+      source + 1), std::next(m_items.begin(), destination + 1));
+    if(m_focus_index &&
+        (*m_focus_index >= source || *m_focus_index <= destination)) {
+      --*m_focus_index;
+    }
+  } else {
+    for(auto i = std::next(m_items.begin(), destination);
+        i != std::next(m_items.begin(), source); ++i) {
+      ++(*i)->m_index;
+    }
+    std::rotate(std::next(m_items.rbegin(), m_items.size() - source - 1),
+      std::next(m_items.rbegin(), m_items.size() - source), std::next(
+      m_items.rbegin(), m_items.size() - destination));
+    if(m_focus_index &&
+        (*m_focus_index >= source || *m_focus_index <= destination)) {
+      ++*m_focus_index;
+    }
+  }
   m_items[destination]->m_index = destination;
-  auto adjust = [&] (auto& value) {
-    if(value && (*value >= source || *value <= destination)) {
-      *value += direction;
-      return true;
-    }
-    return false;
-  };
-  adjust(m_last_current);
-  adjust(m_focus_index);
-  auto selection = m_selection->get();
-  auto current = m_current->get();
-  if(adjust(current)) {
-    m_current->set(current);
-  }
-  if(adjust(selection)) {
-    auto blocker = shared_connection_block(m_selection_connection);
-    m_selected = selection;
-    m_selection->set(*m_selected);
-  }
+  m_current_controller.move(source, destination);
+  m_selection_controller.move(source, destination);
   update_layout();
 }
 
@@ -562,6 +485,10 @@ void ListView::update_layout() {
   }
 }
 
+void ListView::on_item_click(ItemEntry& item) {
+  m_selection_controller.click(item.m_index);
+}
+
 void ListView::on_list_operation(const AnyListModel::Operation& operation) {
   visit(operation,
     [&] (const AnyListModel::AddOperation& operation) {
@@ -575,10 +502,10 @@ void ListView::on_list_operation(const AnyListModel::Operation& operation) {
     });
 }
 
-void ListView::on_current(const optional<int>& current) {
+void ListView::on_current(optional<int> previous, optional<int> current) {
   update_focus(current);
-  if(m_last_current && m_last_current != current) {
-    m_items[*m_last_current]->set(false);
+  if(previous && previous != current) {
+    m_items[*previous]->set(false);
   }
   if(current && (hasFocus() || isAncestorOf(focusWidget()))) {
     m_items[*current]->m_item->setFocus(m_focus_reason);
@@ -588,33 +515,27 @@ void ListView::on_current(const optional<int>& current) {
   m_focus_reason = Qt::OtherFocusReason;
   if(current) {
     auto& item = *m_items[*current];
-    m_navigation_box = item.m_item->frameGeometry();
     item.set(true);
-  } else {
-    m_navigation_box = QRect();
-  }
-  m_last_current = current;
-  if(m_selection_mode != SelectionMode::NONE) {
-    m_selection->set(current);
+    m_selection_controller.navigate(*current);
   }
 }
 
-void ListView::on_selection(const optional<int>& selected) {
-  if(m_selected == selected) {
-    return;
-  }
-  if(m_selected && *m_selected < static_cast<int>(m_items.size())) {
-    m_items[*m_selected]->m_item->set_selected(false);
-  }
-  m_selected = selected;
-  if(m_selected) {
-    m_items[*m_selected]->m_item->set_selected(true);
-  }
+void ListView::on_selection(const ListModel<int>::Operation& operation) {
+  visit(operation,
+    [&] (const ListModel<int>::AddOperation& operation) {
+      m_items[operation.get_value()]->m_item->set_selected(true);
+    },
+    [&] (const ListModel<int>::RemoveOperation& operation) {
+      m_items[operation.get_value()]->m_item->set_selected(false);
+    },
+    [&] (const ListModel<int>::UpdateOperation& operation) {
+      m_items[operation.get_previous()]->m_item->set_selected(false);
+      m_items[operation.get_value()]->m_item->set_selected(true);
+    });
 }
 
 void ListView::on_item_submitted(ItemEntry& item) {
-  m_navigation_box = item.m_item->frameGeometry();
-  set(item.m_index);
+  m_current_controller.get_current()->set(item.m_index);
   m_submit_signal(m_list->get(item.m_index));
 }
 
@@ -643,19 +564,13 @@ void ListView::on_style() {
       },
       [&] (EnumProperty<EdgeNavigation> edge_navigation) {
         stylist.evaluate(edge_navigation, [=] (auto edge_navigation) {
-          m_edge_navigation = edge_navigation;
+          m_current_controller.set_edge_navigation(edge_navigation);
           *has_update = true;
         });
       },
       [&] (EnumProperty<Overflow> overflow) {
         stylist.evaluate(overflow, [=] (auto overflow) {
           m_overflow = overflow;
-          *has_update = true;
-        });
-      },
-      [&] (EnumProperty<SelectionMode> selection_mode) {
-        stylist.evaluate(selection_mode, [=] (auto selection_mode) {
-          m_selection_mode = selection_mode;
           *has_update = true;
         });
       });

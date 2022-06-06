@@ -32,7 +32,7 @@ struct SecurityFilterQueryModel : ComboBox::QueryModel {
       return value;
     }
     if(m_matches_set.contains(
-        displayTextAny(std::any_cast<SecurityInfo&>(value).m_security))) {
+        displayText(std::any_cast<SecurityInfo&>(value).m_security))) {
       return std::any();
     }
     return value;
@@ -49,7 +49,7 @@ struct SecurityFilterQueryModel : ComboBox::QueryModel {
       }();
       std::erase_if(result, [&] (auto& value) {
         return m_matches_set.contains(
-          displayTextAny(std::any_cast<SecurityInfo&>(value).m_security));
+          displayText(std::any_cast<SecurityInfo&>(value).m_security));
       });
       return result;
     });
@@ -67,7 +67,7 @@ struct SecurityFilterQueryModel : ComboBox::QueryModel {
   }
 
   void add_match(int index) {
-    auto value = displayTextAny(m_matches->get(index));
+    auto value = displayText(m_matches->get(index));
     m_matches_set.insert(value);
     m_matches_list.insert(m_matches_list.begin() + index, value);
   }

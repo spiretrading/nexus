@@ -98,7 +98,7 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
   set_style(*close_button, CLOSE_BUTTON_STYLE());
   close_button->setFixedSize(BUTTON_SIZE());
   close_button->setFocusPolicy(Qt::NoFocus);
-  close_button->connect_clicked_signal([=] { window()->close(); });
+  close_button->connect_click_signal([=] { window()->close(); });
   auto layout = make_vbox_layout(this);
   layout->addWidget(close_button, 0, Qt::AlignRight);
   layout->addSpacing(scale_height(30));
@@ -163,7 +163,7 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
   m_sign_in_button = make_label_button(tr("Sign In"), this);
   m_sign_in_button->setFixedSize(scale(120, 30));
   set_style(*m_sign_in_button, SIGN_IN_BUTTON_STYLE());
-  m_sign_in_button->connect_clicked_signal([=] { try_login(); });
+  m_sign_in_button->connect_click_signal([=] { try_login(); });
   m_sign_in_button->setDisabled(true);
   button_layout->addWidget(m_sign_in_button);
   layout->addLayout(button_layout);

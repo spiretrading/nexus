@@ -52,8 +52,8 @@ OverlayPanel::OverlayPanel(QWidget& body, QWidget& parent)
       m_is_draggable(true),
       m_was_activated(false),
       m_positioning(Positioning::PARENT),
-      m_focus_observer(*this),
       m_parent_focus_observer(parent),
+      m_focus_observer(*this),
       m_parent_position_observer(parent) {
   setAttribute(Qt::WA_TranslucentBackground);
   setAttribute(Qt::WA_QuitOnClose);
@@ -217,8 +217,10 @@ void OverlayPanel::on_parent_move(QPoint) {
 }
 
 void OverlayPanel::update_mask() {
-  auto intersection = geometry().intersected(
-    QRect(parentWidget()->mapToGlobal(QPoint()), parentWidget()->size()));
-  setMask(QPolygon(rect()).subtracted(
-    QRect(mapFromGlobal(intersection.topLeft()), intersection.size())));
+  if(m_positioning == Positioning::PARENT) {
+    auto intersection = geometry().intersected(
+      QRect(parentWidget()->mapToGlobal(QPoint()), parentWidget()->size()));
+    setMask(QPolygon(rect()).subtracted(
+      QRect(mapFromGlobal(intersection.topLeft()), intersection.size())));
+  }
 }

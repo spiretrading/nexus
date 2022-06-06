@@ -2,7 +2,7 @@
 #define SPIRE_VALUE_MODEL_HPP
 #include <boost/signals2/connection.hpp>
 #include <QValidator>
-#include "Spire/Ui/Ui.hpp"
+#include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
 

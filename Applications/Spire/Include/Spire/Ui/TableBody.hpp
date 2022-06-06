@@ -2,15 +2,18 @@
 #define SPIRE_TABLE_BODY_HPP
 #include <functional>
 #include <memory>
+#include <unordered_set>
 #include <boost/optional/optional.hpp>
 #include <QWidget>
 #include "Spire/Spire/ListModel.hpp"
+#include "Spire/Spire/TableModel.hpp"
 #include "Spire/Spire/ValueModel.hpp"
 #include "Spire/Styles/BasicProperty.hpp"
 #include "Spire/Styles/CompositeProperty.hpp"
 #include "Spire/Styles/StateSelector.hpp"
 #include "Spire/Ui/ListItem.hpp"
-#include "Spire/Ui/TableModel.hpp"
+#include "Spire/Ui/TableCurrentController.hpp"
+#include "Spire/Ui/TableSelectionController.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -69,20 +72,11 @@ namespace Styles {
       using ViewBuilder = std::function<QWidget* (
         const std::shared_ptr<TableModel>& table, int row, int column)>;
 
-      /** Stores an index to a value. */
-      struct Index {
+      using CurrentModel = TableCurrentController::CurrentModel;
 
-        /** The row being indexed. */
-        int m_row;
+      using SelectionModel = TableSelectionController::SelectionModel;
 
-        /** The column being indexed. */
-        int m_column;
-
-        bool operator ==(const Index&) const = default;
-      };
-
-      /** The type of model to the index of the current value. */
-      using CurrentModel = ValueModel<boost::optional<Index>>;
+      using Index = TableIndex;
 
       /**
        * The default view builder which uses a label styled TextBox to display
@@ -92,47 +86,17 @@ namespace Styles {
         const std::shared_ptr<TableModel>& table, int row, int column);
 
       /**
-       * Constructs a TableBody using default local models and a default view
-       * builder.
-       * @param table The model of values to display.
-       * @param widths The widths of each column.
-       * @param parent The parent widget.
-       */
-      explicit TableBody(std::shared_ptr<TableModel> table,
-        std::shared_ptr<ListModel<int>> widths, QWidget* parent = nullptr);
-
-      /**
-       * Constructs a TableBody using a default view builder.
-       * @param table The model of values to display.
-       * @param current The current value.
-       * @param widths The widths of each column.
-       * @param parent The parent widget.
-       */
-      explicit TableBody(std::shared_ptr<TableModel> table,
-        std::shared_ptr<CurrentModel> current,
-        std::shared_ptr<ListModel<int>> widths, QWidget* parent = nullptr);
-
-      /**
-       * Constructs a TableBody using default local models.
-       * @param table The model of values to display.
-       * @param widths The widths of each column.
-       * @param view_builder The ViewBuilder to use.
-       * @param parent The parent widget.
-       */
-      TableBody(std::shared_ptr<TableModel> table,
-        std::shared_ptr<ListModel<int>> widths, ViewBuilder view_builder,
-        QWidget* parent = nullptr);
-
-      /**
        * Constructs a TableBody.
        * @param table The model of values to display.
        * @param current The current value.
+       * @param selection The selection.
        * @param widths The widths of each column.
        * @param view_builder The ViewBuilder to use.
        * @param parent The parent widget.
        */
       TableBody(std::shared_ptr<TableModel> table,
         std::shared_ptr<CurrentModel> current,
+        std::shared_ptr<SelectionModel> selection,
         std::shared_ptr<ListModel<int>> widths, ViewBuilder view_builder,
         QWidget* parent = nullptr);
 
@@ -141,6 +105,9 @@ namespace Styles {
 
       /** Returns the current value. */
       const std::shared_ptr<CurrentModel>& get_current() const;
+
+      /** Returns the selection. */
+      const std::shared_ptr<SelectionModel>& get_selection() const;
 
       /** Returns the TableItem at a specified index. */
       const TableItem* get_item(Index index) const;
@@ -151,6 +118,7 @@ namespace Styles {
     protected:
       bool event(QEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
+      void keyReleaseEvent(QKeyEvent* event) override;
       void paintEvent(QPaintEvent* event) override;
 
     private:
@@ -167,12 +135,12 @@ namespace Styles {
         QColor m_background_color;
       };
       std::shared_ptr<TableModel> m_table;
-      std::shared_ptr<CurrentModel> m_current;
+      std::unordered_set<Qt::Key> m_keys;
+      TableCurrentController m_current_controller;
+      TableSelectionController m_selection_controller;
       std::shared_ptr<ListModel<int>> m_widths;
       ViewBuilder m_view_builder;
       std::vector<ColumnCover*> m_column_covers;
-      boost::optional<Index> m_current_index;
-      TableItem* m_current_item;
       Styles m_styles;
       boost::signals2::scoped_connection m_style_connection;
       boost::signals2::scoped_connection m_row_style_connection;
@@ -180,20 +148,17 @@ namespace Styles {
       boost::signals2::scoped_connection m_current_connection;
       boost::signals2::scoped_connection m_widths_connection;
 
+      TableItem* get_current_item();
+      Cover* find_row(int index);
       TableItem* find_item(const boost::optional<Index>& index);
       void add_column_cover(int index, const QRect& geometry);
-      void navigate_home();
-      void navigate_home_row();
-      void navigate_home_column();
-      void navigate_end();
-      void navigate_end_row();
-      void navigate_end_column();
-      void navigate_previous_row();
-      void navigate_next_row();
-      void navigate_previous_column();
-      void navigate_next_column();
+      void add_row(int index);
+      void remove_row(int index);
+      void move_row(int source, int destination);
       void on_item_clicked(TableItem& item);
-      void on_current(const boost::optional<Index>& index);
+      void on_current(const boost::optional<Index>& previous,
+        const boost::optional<Index>& current);
+      void on_row_selection(const ListModel<int>::Operation& operation);
       void on_style();
       void on_cover_style(Cover& cover);
       void on_table_operation(const TableModel::Operation& operation);

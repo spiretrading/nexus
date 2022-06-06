@@ -1,6 +1,8 @@
 #ifndef SPIRE_BUTTON_HPP
 #define SPIRE_BUTTON_HPP
 #include "Spire/Styles/StateSelector.hpp"
+#include "Spire/Ui/ClickObserver.hpp"
+#include "Spire/Ui/PressObserver.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -15,7 +17,7 @@ namespace Styles {
     public:
 
       /** Signals that the button is clicked. */
-      using ClickedSignal = Signal<void ()>;
+      using ClickSignal = Signal<void ()>;
 
       /**
        * Constructs a Button.
@@ -29,20 +31,20 @@ namespace Styles {
       QWidget& get_body();
 
       /** Connects a slot to the click signal. */
-      boost::signals2::connection connect_clicked_signal(
-        const ClickedSignal::slot_type& slot) const;
+      boost::signals2::connection connect_click_signal(
+        const ClickSignal::slot_type& slot) const;
 
     protected:
-      void focusOutEvent(QFocusEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
-      void keyReleaseEvent(QKeyEvent* event) override;
-      void mousePressEvent(QMouseEvent* event) override;
-      void mouseReleaseEvent(QMouseEvent* event) override;
 
     private:
-      mutable ClickedSignal m_clicked_signal;
+      mutable ClickSignal m_click_signal;
       QWidget* m_body;
-      bool m_is_down;
+      PressObserver m_press_observer;
+      ClickObserver m_click_observer;
+
+      void on_press_start(PressObserver::Reason reason);
+      void on_press_end(PressObserver::Reason reason);
   };
 
   /**
@@ -55,11 +57,11 @@ namespace Styles {
   /**
    * Returns a newly constructed Button displaying an Icon and a tooltip.
    * @param icon The icon used within the button.
-   * @param tooltip_text The text of the Tooltip to display.
+   * @param tooltip The text of the Tooltip to display.
    * @param parent The parent widget.
    */
-  Button* make_icon_button(QImage icon, QString tooltip_text,
-    QWidget* parent = nullptr);
+  Button* make_icon_button(
+    QImage icon, QString tooltip, QWidget* parent = nullptr);
 
   /**
    * Returns a newly constructed DeleteIconButton.

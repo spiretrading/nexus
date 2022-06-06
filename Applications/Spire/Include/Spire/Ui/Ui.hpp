@@ -11,13 +11,13 @@
 
 namespace Spire {
   class AnyInputBox;
-  class ArrayTableModel;
   class Box;
   class BoxGeometry;
   class BoxPainter;
   class Button;
   class CalendarDatePicker;
   class CheckBox;
+  class ClickObserver;
   class ClosedFilterPanel;
   class ComboBox;
   class ContextMenu;
@@ -30,9 +30,9 @@ namespace Spire {
   class DropDownList;
   class DropShadow;
   class DurationBox;
+  template<typename T> class EmptySelectionModel;
   class EmptyTableFilter;
   template<typename T> class EnumBox;
-  class FilteredTableModel;
   class FilterPanel;
   class FocusObserver;
   class GlobalPositionObserver;
@@ -44,15 +44,17 @@ namespace Spire {
   class LayeredWidget;
   class ListItem;
   class ListView;
+  class MarketBox;
   class MoneyBox;
+  template<typename T> class MultiSelectionModel;
   class NavigationView;
   class OpenFilterPanel;
   template<typename T> class OpenFilterPanelTemplate;
   class OverlayPanel;
+  class PressObserver;
   class RegionBox;
   class RegionListItem;
   class ResponsiveLabel;
-  template<typename T> class RowViewListModel;
   template<typename T> class ScalarFilterPanel;
   class ScrollBar;
   class ScrollBox;
@@ -62,17 +64,21 @@ namespace Spire {
   class SecurityBox;
   class SecurityListItem;
   class SecurityStack;
+  class SecurityView;
+  template<typename T> class SingleSelectionModel;
   class SortedTableModel;
   template<typename T> class StagingValueModel;
   class StandardTableFilter;
+  class SplitView;
   class SubmenuItem;
   class TabView;
   class TableBody;
+  class TableCurrentController;
   class TableHeader;
   class TableHeaderItem;
   class TableFilter;
   class TableItem;
-  class TableModel;
+  class TableSelectionModel;
   class TableView;
   class Tag;
   class TagBox;
@@ -81,9 +87,10 @@ namespace Spire {
   class TextBox;
   class TimeBox;
   class TitleBar;
+  class ToggleButton;
   class Tooltip;
+  class TransitionView;
   class TransitionWidget;
-  class TranslatedTableModel;
   class Window;
   class WindowObserver;
 
@@ -98,6 +105,13 @@ namespace Spire {
    */
   QPropertyAnimation* fade_window(
     QObject* target, bool reverse, boost::posix_time::time_duration fade_speed);
+
+  /**
+   * Find the focus proxy that is at the bottom of the proxy chain of a widget.
+   * @param widget The widget with a focus proxy.
+   * @returns The focus proxy widget.
+   */
+  QWidget* find_focus_proxy(QWidget& widget);
 
   /**
    * Builds a QImage from an SVG resource where the size of the SVG is equal

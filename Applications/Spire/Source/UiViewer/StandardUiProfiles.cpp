@@ -10,14 +10,15 @@
 #include "Nexus/Definitions/SecuritySet.hpp"
 #include "Spire/KeyBindings/OrderFieldInfoTip.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
+#include "Spire/Spire/ArrayTableModel.hpp"
 #include "Spire/Spire/FieldValueModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalScalarValueModel.hpp"
+#include "Spire/Spire/ValidatedValueModel.hpp"
 #include "Spire/Styles/ChainExpression.hpp"
 #include "Spire/Styles/LinearExpression.hpp"
 #include "Spire/Styles/RevertExpression.hpp"
 #include "Spire/Styles/TimeoutExpression.hpp"
-#include "Spire/Ui/ArrayTableModel.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/CalendarDatePicker.hpp"
@@ -39,10 +40,13 @@
 #include "Spire/Ui/HoverObserver.hpp"
 #include "Spire/Ui/InfoTip.hpp"
 #include "Spire/Ui/IntegerBox.hpp"
+#include "Spire/Ui/KeyFilterPanel.hpp"
 #include "Spire/Ui/KeyInputBox.hpp"
 #include "Spire/Ui/KeyTag.hpp"
 #include "Spire/Ui/ListItem.hpp"
+#include "Spire/Ui/ListSelectionModel.hpp"
 #include "Spire/Ui/ListView.hpp"
+#include "Spire/Ui/MarketBox.hpp"
 #include "Spire/Ui/MoneyBox.hpp"
 #include "Spire/Ui/NavigationView.hpp"
 #include "Spire/Ui/OpenFilterPanel.hpp"
@@ -61,8 +65,10 @@
 #include "Spire/Ui/SecurityBox.hpp"
 #include "Spire/Ui/SecurityFilterPanel.hpp"
 #include "Spire/Ui/SecurityListItem.hpp"
+#include "Spire/Ui/SecurityView.hpp"
 #include "Spire/Ui/SideBox.hpp"
 #include "Spire/Ui/SideFilterPanel.hpp"
+#include "Spire/Ui/SplitView.hpp"
 #include "Spire/Ui/SubmenuItem.hpp"
 #include "Spire/Ui/TabView.hpp"
 #include "Spire/Ui/TableHeader.hpp"
@@ -75,7 +81,9 @@
 #include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/TimeInForceBox.hpp"
 #include "Spire/Ui/TimeInForceFilterPanel.hpp"
+#include "Spire/Ui/ToggleButton.hpp"
 #include "Spire/Ui/Tooltip.hpp"
+#include "Spire/Ui/TransitionView.hpp"
 #include "Spire/UiViewer/StandardUiProperties.hpp"
 #include "Spire/UiViewer/UiProfile.hpp"
 
@@ -335,11 +343,11 @@ namespace {
       [=] (const std::shared_ptr<AnyListModel>& submission) {
         auto result = QString();
         for(auto i = 0; i < submission->get_size(); ++i) {
-          result += displayTextAny(submission->get(i)) + " ";
+          result += displayText(submission->get(i)) + " ";
         }
         submit_filter_slot(result);
       });
-    button->connect_clicked_signal([=] { panel->show(); });
+    button->connect_click_signal([=] { panel->show(); });
     return button;
   }
 
@@ -376,7 +384,7 @@ namespace {
     using Type = typename Panel::Type;
     auto button = make_label_button("Click me");
     auto range = std::make_shared<LocalValueModel<typename Panel::Range>>();
-    button->connect_clicked_signal([=, &profile] {
+    button->connect_click_signal([=, &profile] {
       auto& title = get<QString>("title", profile.get_properties());
       auto panel = new Panel(range, title.get(), *button);
       auto filter_slot = profile.make_event_slot<QString>("SubmitSignal");
@@ -384,7 +392,7 @@ namespace {
         [=] (const typename Panel::Range& submission) {
           auto to_string = [&] (const auto& value) {
             if(value) {
-              return displayTextAny(*value);
+              return displayText(*value);
             }
             return QString("null");
           };
@@ -444,7 +452,7 @@ namespace {
     auto create_button = make_label_button("Show child panel", body);
     container_layout->addWidget(create_button);
     auto close_button = make_label_button("Close", body);
-    close_button->connect_clicked_signal([=] { body->window()->close(); });
+    close_button->connect_click_signal([=] { body->window()->close(); });
     container_layout->addWidget(close_button);
     return body;
   }
@@ -454,7 +462,7 @@ namespace {
     auto body = create_panel_body();
     auto panel = new OverlayPanel(*body, *parent);
     auto button = body->findChild<Button*>();
-    button->connect_clicked_signal([=] {
+    button->connect_click_signal([=] {
       create_child_panel(close_on_focus_out, draggable, positioning, button);
     });
     panel->setAttribute(Qt::WA_DeleteOnClose);
@@ -489,10 +497,10 @@ namespace {
       "Methanex Corporation", "", 0);
     auto model = std::make_shared<LocalComboBoxQueryModel>();
     for(auto security_info : security_infos) {
-      model->add(displayTextAny(security_info.m_security).toLower(),
-        security_info);
-      model->add(QString::fromStdString(security_info.m_name).toLower(),
-        security_info);
+      model->add(
+        displayText(security_info.m_security).toLower(), security_info);
+      model->add(
+        QString::fromStdString(security_info.m_name).toLower(), security_info);
     }
     return model;
   }
@@ -529,6 +537,13 @@ namespace {
       }
     } catch(const std::exception&) {}
     return {};
+  }
+
+  const auto& get_orientation_property() {
+    static auto property = define_enum<Qt::Orientation>(
+      {{"HORIZONTAL", Qt::Orientation::Horizontal},
+       {"VERTICAL", Qt::Orientation::Vertical}});
+    return property;
   }
 
   const auto& get_order_property() {
@@ -704,12 +719,12 @@ UiProfile Spire::make_calendar_date_picker_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
   auto current_date = boost::gregorian::day_clock::local_day();
+  properties.push_back(
+    make_standard_property("current", displayText(current_date)));
   properties.push_back(make_standard_property(
-    "current", displayTextAny(current_date)));
+    "min", displayText(current_date - boost::gregorian::months(2))));
   properties.push_back(make_standard_property(
-    "min", displayTextAny(current_date - boost::gregorian::months(2))));
-  properties.push_back(make_standard_property(
-    "max", displayTextAny(current_date + boost::gregorian::months(2))));
+    "max", displayText(current_date + boost::gregorian::months(2))));
   auto profile = UiProfile("CalendarDatePicker", properties,
     [] (auto& profile) {
       auto model = std::make_shared<LocalOptionalDateModel>();
@@ -737,7 +752,7 @@ UiProfile Spire::make_calendar_date_picker_profile() {
       });
       calendar->get_current()->connect_update_signal([&current] (auto day) {
         if(day) {
-          current.set(displayTextAny(*day));
+          current.set(displayText(*day));
         }
       });
       calendar->get_current()->connect_update_signal(
@@ -823,13 +838,11 @@ UiProfile Spire::make_closed_filter_panel_profile() {
       [=] (const std::shared_ptr<AnyListModel>& submission) {
         auto result = QString();
         for(auto i = 0; i < submission->get_size(); ++i) {
-          result += displayTextAny(submission->get(i)) + " ";
+          result += displayText(submission->get(i)) + " ";
         }
         submit_filter_slot(result);
       });
-    button->connect_clicked_signal([=] {
-      panel->show();
-    });
+    button->connect_click_signal([=] { panel->show(); });
     return button;
   });
   return profile;
@@ -924,7 +937,7 @@ UiProfile Spire::make_context_menu_profile() {
       menu->add_action("This is a long name for test",
         profile.make_event_slot<>(
           QString("Action:This is a long name for test")));
-      button->connect_clicked_signal([=] {
+      button->connect_click_signal([=] {
         auto pos = QCursor::pos();
         menu->window()->move(pos.x(), pos.y() + button->height());
         menu->show();
@@ -939,13 +952,13 @@ UiProfile Spire::make_date_box_profile() {
   populate_widget_properties(properties);
   auto current_date = day_clock::local_day();
   properties.push_back(
-    make_standard_property("current", displayTextAny(current_date)));
+    make_standard_property("current", displayText(current_date)));
   properties.push_back(make_standard_property("format", DateFormat::YYYYMMDD));
   properties.push_back(make_standard_property("read_only", false));
   properties.push_back(
-    make_standard_property("min", displayTextAny(current_date - months(2))));
+    make_standard_property("min", displayText(current_date - months(2))));
   properties.push_back(
-    make_standard_property("max", displayTextAny(current_date + months(2))));
+    make_standard_property("max", displayText(current_date + months(2))));
   auto profile = UiProfile("DateBox", properties, [] (auto& profile) {
     auto model = std::make_shared<LocalOptionalDateModel>();
     model->connect_update_signal(
@@ -1004,11 +1017,10 @@ UiProfile Spire::make_date_box_profile() {
 UiProfile Spire::make_date_filter_panel_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   auto current_date = day_clock::local_day();
+  properties.push_back(make_standard_property(
+    "default_start_date", displayText(current_date - months(3))));
   properties.push_back(
-    make_standard_property("default_start_date",
-      displayTextAny(current_date - months(3))));
-  properties.push_back(
-    make_standard_property("default_end_date", displayTextAny(current_date)));
+    make_standard_property("default_end_date", displayText(current_date)));
   properties.push_back(make_standard_property("default_offset_value", 1));
   auto default_unit_property = define_enum<DateFilterPanel::DateUnit>(
     {{"Day", DateFilterPanel::DateUnit::DAY},
@@ -1059,13 +1071,13 @@ UiProfile Spire::make_date_filter_panel_profile() {
       [=] (const DateFilterPanel::DateRange& submission) {
         auto result = QString();
         if(submission.m_start) {
-          result += displayTextAny(*submission.m_start);
+          result += displayText(*submission.m_start);
         } else {
           result += "none";
         }
         result += " - ";
         if(submission.m_end) {
-          result += displayTextAny(*submission.m_end);
+          result += displayText(*submission.m_end);
         } else {
           result += "none";
         }
@@ -1087,7 +1099,7 @@ UiProfile Spire::make_date_filter_panel_profile() {
         }
         filter_slot(result);
       });
-    button->connect_clicked_signal([=] {
+    button->connect_click_signal([=] {
       panel->show();
     });
     return button;
@@ -1101,7 +1113,7 @@ UiProfile Spire::make_decimal_box_profile() {
   properties.push_back(make_standard_property("current", QString("1")));
   properties.push_back(make_standard_property("minimum", QString("-100")));
   properties.push_back(make_standard_property("maximum", QString("100")));
-  properties.push_back(make_standard_property("decimal_places", 2));
+  properties.push_back(make_standard_property("decimal_places", 4));
   properties.push_back(make_standard_property("leading_zeros", 0));
   properties.push_back(make_standard_property("trailing_zeros", 0));
   properties.push_back(
@@ -1128,12 +1140,16 @@ UiProfile Spire::make_decimal_box_profile() {
     minimum.connect_changed_signal([=] (const auto& value) {
       if(auto minimum = parse_decimal(value)) {
         model->set_minimum(*minimum);
+      } else {
+        model->set_minimum(none);
       }
     });
     auto& maximum = get<QString>("maximum", profile.get_properties());
     maximum.connect_changed_signal([=] (const auto& value) {
       if(auto maximum = parse_decimal(value)) {
         model->set_maximum(*maximum);
+      } else {
+        model->set_maximum(none);
       }
     });
     auto& decimal_places =
@@ -1295,7 +1311,7 @@ UiProfile Spire::make_decimal_filter_panel_profile() {
       auto button = make_label_button("Click me");
       auto range = std::make_shared<
         LocalValueModel<ScalarFilterPanel<DecimalBox>::Range>>();
-      button->connect_clicked_signal([=, &profile, &title] {
+      button->connect_click_signal([=, &profile, &title] {
         auto panel = new DecimalFilterPanel(range, title.get(), *button);
         auto submit_slot = profile.make_event_slot<QString>("SubmitSignal");
         panel->connect_submit_signal([=] (const auto& submission) {
@@ -1315,7 +1331,7 @@ UiProfile Spire::make_delete_icon_button_profile() {
   auto profile = UiProfile("DeleteIconButton", properties, [] (auto& profile) {
     auto button = make_delete_icon_button();
     apply_widget_properties(button, profile.get_properties());
-    button->connect_clicked_signal(profile.make_event_slot("ClickedSignal"));
+    button->connect_click_signal(profile.make_event_slot("ClickSignal"));
     return button;
   });
   return profile;
@@ -1332,7 +1348,7 @@ UiProfile Spire::make_destination_box_profile() {
       [] (auto& value) { return true; });
     auto model = std::make_shared<LocalComboBoxQueryModel>();
     for(auto destination : destinations) {
-      model->add(displayTextAny(destination.m_id).toLower(), destination);
+      model->add(displayText(destination.m_id).toLower(), destination);
     }
     auto box = new DestinationBox(model);
     box->setFixedWidth(scale_width(112));
@@ -1397,6 +1413,15 @@ UiProfile Spire::make_drop_down_box_profile() {
     read_only.connect_changed_signal([=] (auto is_read_only) {
       drop_down_box->set_read_only(is_read_only);
     });
+    auto current_slot = profile.make_event_slot<optional<std::any>>("Current");
+    drop_down_box->get_current()->connect_update_signal(
+      [=] (auto current) {
+        if(current) {
+          current_slot(drop_down_box->get_list()->get(*current));
+        } else {
+          current_slot(none);
+        }
+      });
     drop_down_box->connect_submit_signal(
       profile.make_event_slot<optional<std::any>>("Submit"));
     return drop_down_box;
@@ -1412,7 +1437,7 @@ UiProfile Spire::make_drop_down_list_profile() {
     auto& item_count = get<int>("item_count", profile.get_properties());
     auto& item_text = get<QString>("item_label", profile.get_properties());
     auto button = make_label_button("DropDownList");
-    button->connect_clicked_signal([&, button] {
+    button->connect_click_signal([&, button] {
       auto list_model = std::make_shared<ArrayListModel<QString>>();
       for(auto i = 0; i < item_count.get(); ++i) {
         list_model->push(item_text.get() + QString("%1").arg(i));
@@ -1486,7 +1511,7 @@ UiProfile Spire::make_duration_filter_panel_profile() {
       auto button = make_label_button(QString("Click me"));
       auto range =
         std::make_shared<LocalValueModel<DurationFilterPanel::Range>>();
-      button->connect_clicked_signal([=, &profile] {
+      button->connect_click_signal([=, &profile] {
         auto panel =
           new DurationFilterPanel(range, "Filter by Duration", *button);
         auto filter_slot = profile.make_event_slot<QString>("SubmitSignal");
@@ -1516,7 +1541,7 @@ UiProfile Spire::make_filter_panel_profile() {
   auto profile = UiProfile("FilterPanel", properties, [] (auto& profile) {
     auto& title = get<QString>("title", profile.get_properties());
     auto button = make_label_button("Click me");
-    button->connect_clicked_signal([&, button] {
+    button->connect_click_signal([&, button] {
       auto component = new QWidget();
       component->setObjectName("component");
       component->setStyleSheet("#component {background-color: #F5F5F5;}");
@@ -1652,7 +1677,7 @@ UiProfile Spire::make_hover_observer_profile() {
     parent_box->move(translate(175, 0));
     auto add_button = make_label_button("Add Child", container);
     add_button->move(translate(75, 225));
-    add_button->connect_clicked_signal([=, &profile] {
+    add_button->connect_click_signal([=, &profile] {
       auto parent_box = std::move(box_stack->top());
       auto box = make_input_box(new QWidget(), parent_box->m_box);
       box->setFixedSize(parent_box->m_box->size().shrunkBy({scale_width(10),
@@ -1664,7 +1689,7 @@ UiProfile Spire::make_hover_observer_profile() {
     });
     auto remove_button = make_label_button("Remove Child", container);
     remove_button->move(translate(200, 225));
-    remove_button->connect_clicked_signal([=] {
+    remove_button->connect_click_signal([=] {
       if(box_stack->size() > 1) {
         auto box = std::move(box_stack->top());
         box_stack->pop();
@@ -1673,13 +1698,13 @@ UiProfile Spire::make_hover_observer_profile() {
     });
     auto left_button = make_label_button("Move Left", container);
     left_button->move(translate(75, 265));
-    left_button->connect_clicked_signal([=] {
+    left_button->connect_click_signal([=] {
       container->window()->move(
         container->window()->x() - scale_width(50), container->window()->y());
     });
     auto right_button = make_label_button("Move Right", container);
     right_button->move(translate(200, 265));
-    right_button->connect_clicked_signal([=] {
+    right_button->connect_click_signal([=] {
       container->window()->move(
         container->window()->x() + scale_width(50), container->window()->y());
     });
@@ -1697,7 +1722,21 @@ UiProfile Spire::make_icon_button_profile() {
     auto button = make_icon_button(
       imageFromSvg(":/Icons/demo.svg", scale(26, 26)), tooltip.get());
     apply_widget_properties(button, profile.get_properties());
-    button->connect_clicked_signal(profile.make_event_slot("ClickedSignal"));
+    button->connect_click_signal(profile.make_event_slot("ClickSignal"));
+    return button;
+  });
+  return profile;
+}
+
+UiProfile Spire::make_icon_toggle_button_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_property<QString>("tooltip", "Tooltip"));
+  auto profile = UiProfile("IconToggleButton", properties, [] (auto& profile) {
+    auto& tooltip = get<QString>("tooltip", profile.get_properties());
+    auto button = make_icon_toggle_button(
+      imageFromSvg(":/Icons/demo.svg", scale(26, 26)), tooltip.get());
+    apply_widget_properties(button, profile.get_properties());
     return button;
   });
   return profile;
@@ -1776,12 +1815,58 @@ UiProfile Spire::make_integer_filter_panel_profile() {
   return profile;
 }
 
+UiProfile Spire::make_key_filter_panel_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  auto profile = UiProfile(QString("KeyFilterPanel"), properties,
+    [] (auto& profile) {
+      auto button = make_label_button(QString::fromUtf8("Click me"));
+      auto panel = make_key_filter_panel(*button);
+      auto submit_filter_slot =
+        profile.make_event_slot<QString>(QString::fromUtf8("SubmitSignal"));
+      panel->connect_submit_signal(
+        [=] (const std::shared_ptr<AnyListModel>& submission,
+            OpenFilterPanel::Mode mode) {
+          auto result = QString();
+          if(mode == OpenFilterPanel::Mode::INCLUDE) {
+            result += "Include: ";
+          } else {
+            result += "Exclude: ";
+          }
+          for(auto i = 0; i < submission->get_size(); ++i) {
+            result += displayText(submission->get(i)) + " ";
+          }
+          submit_filter_slot(result);
+        });
+      button->connect_click_signal([=] { panel->show(); });
+      return button;
+    });
+  return profile;
+}
+
 UiProfile Spire::make_key_input_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
   properties.push_back(make_standard_property<QString>("current"));
   auto profile = UiProfile("KeyInputBox", properties, [] (auto& profile) {
-    auto box = new KeyInputBox();
+    auto model = make_validated_value_model<QKeySequence>([] (auto sequence) {
+      if(sequence.count() == 0) {
+        return QValidator::Intermediate;
+      } else if(sequence.count() > 1) {
+        return QValidator::Invalid;
+      }
+      auto key = sequence[0];
+      key &= ~Qt::ShiftModifier;
+      key &= ~Qt::ControlModifier;
+      key &= ~Qt::AltModifier;
+      key &= ~Qt::MetaModifier;
+      key &= ~Qt::KeypadModifier;
+      key &= ~Qt::GroupSwitchModifier;
+      if(key >= Qt::Key_F1 && key <= Qt::Key_F32) {
+        return QValidator::Acceptable;
+      }
+      return QValidator::Invalid;
+    });
+    auto box = new KeyInputBox(model);
     box->setFixedWidth(scale_width(100));
     apply_widget_properties(box, profile.get_properties());
     auto& current = get<QString>("current", profile.get_properties());
@@ -1856,7 +1941,7 @@ UiProfile Spire::make_label_button_profile() {
         style.get(Press() > Body()).set(BackgroundColor(color));
       });
     });
-    button->connect_clicked_signal(profile.make_event_slot("ClickedSignal"));
+    button->connect_click_signal(profile.make_event_slot("ClickSignal"));
     return button;
   });
   return profile;
@@ -1911,25 +1996,23 @@ UiProfile Spire::make_list_view_profile() {
      {"WRAP", EdgeNavigation::WRAP}});
   properties.push_back(
     make_standard_enum_property("edge_navigation", navigation_property));
-  auto direction_property = define_enum<Qt::Orientation>(
-    {{"Vertical", Qt::Vertical}, {"Horizontal", Qt::Horizontal}});
   properties.push_back(
-    make_standard_enum_property("direction", direction_property));
+    make_standard_enum_property("direction", get_orientation_property()));
   auto overflow_property = define_enum<Overflow>(
     {{"WRAP", Overflow::WRAP}, {"NONE", Overflow::NONE}});
   properties.push_back(
     make_standard_enum_property("overflow", overflow_property));
-  auto selection_mode_property = define_enum<SelectionMode>(
-    {{"NONE", SelectionMode::NONE},
-     {"SINGLE", SelectionMode::SINGLE}});
-  properties.push_back(
-    make_standard_enum_property("selection_mode", selection_mode_property));
+  auto selection_mode_property = define_enum<ListSelectionModel::Mode>(
+    {{"NONE", ListSelectionModel::Mode::NONE},
+     {"SINGLE", ListSelectionModel::Mode::SINGLE},
+     {"MULTI", ListSelectionModel::Mode::MULTI}});
+  properties.push_back(make_standard_enum_property("selection_mode",
+    ListSelectionModel::Mode::SINGLE, selection_mode_property));
   auto change_item_property = define_enum<int>({{"Delete", 0}, {"Add", 1}});
   properties.push_back(
     make_standard_enum_property("change_item", change_item_property));
   properties.push_back(make_standard_property("change_item_index", -1));
   properties.push_back(make_standard_property("current_item", -1));
-  properties.push_back(make_standard_property("select_item", -1));
   properties.push_back(make_standard_property("disable_item", -1));
   properties.push_back(make_standard_property("enable_item", -1));
   properties.push_back(make_standard_property("auto_set_current_null", false));
@@ -1969,8 +2052,9 @@ UiProfile Spire::make_list_view_profile() {
           list_model->insert(QString("newItem%1").arg(index++), value);
         }
       });
+    auto selection_model = std::make_shared<ListSelectionModel>();
     auto list_view =
-      new ListView(list_model,
+      new ListView(list_model, selection_model,
         [&] (const std::shared_ptr<ListModel<QString>>& model, auto index) {
           auto label = make_label(model->get(index));
           if(random_height_seed.get() == 0) {
@@ -2016,16 +2100,14 @@ UiProfile Spire::make_list_view_profile() {
         style.get(Any()).set(value);
       });
     });
+    auto& selection_mode =
+      get<ListSelectionModel::Mode>("selection_mode", profile.get_properties());
+    selection_mode.connect_changed_signal([=] (auto value) {
+      selection_model->set_mode(value);
+    });
     auto& navigation =
       get<EdgeNavigation>("edge_navigation", profile.get_properties());
     navigation.connect_changed_signal([=] (auto value) {
-      update_style(*list_view, [&] (auto& style) {
-        style.get(Any()).set(value);
-      });
-    });
-    auto& selection_mode =
-      get<SelectionMode>("selection_mode", profile.get_properties());
-    selection_mode.connect_changed_signal([=] (auto value) {
       update_style(*list_view, [&] (auto& style) {
         style.get(Any()).set(value);
       });
@@ -2036,14 +2118,6 @@ UiProfile Spire::make_list_view_profile() {
         list_view->get_current()->set(none);
       } else if(index >= 0 && index < list_model->get_size()) {
         list_view->get_current()->set(index);
-      }
-    });
-    auto& select_item = get<int>("select_item", profile.get_properties());
-    select_item.connect_changed_signal([=] (auto index) {
-      if(index == -1) {
-        list_view->get_selection()->set(none);
-      } else if(index >= 0 && index < list_model->get_size()) {
-        list_view->get_selection()->set(index);
       }
     });
     auto& disable_item = get<int>("disable_item", profile.get_properties());
@@ -2070,11 +2144,52 @@ UiProfile Spire::make_list_view_profile() {
       });
     list_view->get_current()->connect_update_signal(
       profile.make_event_slot<optional<int>>("Current"));
-    list_view->get_selection()->connect_update_signal(
-      profile.make_event_slot<optional<int>>("Selection"));
+    list_view->get_selection()->connect_operation_signal(
+      profile.make_event_slot<AnyListModel::Operation>("Selection"));
     list_view->connect_submit_signal(
       profile.make_event_slot<optional<std::any>>("Submit"));
     return list_view;
+  });
+  return profile;
+}
+
+UiProfile Spire::make_market_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_property<QString>("current"));
+  properties.push_back(make_standard_property<QString>("placeholder"));
+  properties.push_back(make_standard_property("read_only", false));
+  auto profile = UiProfile("MarketBox", properties, [] (auto& profile) {
+    auto markets = GetDefaultMarketDatabase().GetEntries();
+    auto model = std::make_shared<LocalComboBoxQueryModel>();
+    for(auto market : markets) {
+      model->add(displayText(MarketToken(market.m_code)).toLower(), market);
+      model->add(QString(market.m_code.GetData()).toLower(), market);
+    }
+    auto box = new MarketBox(model);
+    box->setFixedWidth(scale_width(112));
+    apply_widget_properties(box, profile.get_properties());
+    auto& current = get<QString>("current", profile.get_properties());
+    current.connect_changed_signal([=] (const auto& current) {
+      if(current.length() != 4) {
+        return;
+      }
+      auto code = MarketCode(current.toUpper().toStdString().c_str());
+      auto& market = GetDefaultMarketDatabase().FromCode(code);
+      if(!market.m_code.IsEmpty()) {
+        box->get_current()->set(code);
+      }
+    });
+    auto& placeholder = get<QString>("placeholder", profile.get_properties());
+    placeholder.connect_changed_signal(
+      std::bind_front(&MarketBox::set_placeholder, box));
+    auto& read_only = get<bool>("read_only", profile.get_properties());
+    read_only.connect_changed_signal(
+      std::bind_front(&MarketBox::set_read_only, box));
+    box->get_current()->connect_update_signal(
+      profile.make_event_slot<MarketToken>("Current"));
+    box->connect_submit_signal(profile.make_event_slot<MarketToken>("Submit"));
+    return box;
   });
   return profile;
 }
@@ -2187,11 +2302,11 @@ UiProfile Spire::make_open_filter_panel_profile() {
             result += "Exclude: ";
           }
           for(auto i = 0; i < submission->get_size(); ++i) {
-            result += displayTextAny(submission->get(i)) + " ";
+            result += displayText(submission->get(i)) + " ";
           }
           submit_filter_slot(result);
         });
-      button->connect_clicked_signal([=] { panel->show(); });
+      button->connect_click_signal([=] { panel->show(); });
       return button;
     });
   return profile;
@@ -2317,7 +2432,7 @@ UiProfile Spire::make_overlay_panel_profile() {
     auto button = make_label_button("Click me");
     apply_widget_properties(button, profile.get_properties());
     auto panel = QPointer<OverlayPanel>();
-    button->connect_clicked_signal(
+    button->connect_click_signal(
       [=, &profile, &close_on_focus_out, &draggable, &positioning]
           () mutable {
         if(panel && !close_on_focus_out.get()) {
@@ -2326,7 +2441,7 @@ UiProfile Spire::make_overlay_panel_profile() {
         auto body = create_panel_body();
         panel = new OverlayPanel(*body, *button);
         auto child_button = body->findChild<Button*>();
-        child_button->connect_clicked_signal(
+        child_button->connect_click_signal(
           [=, &close_on_focus_out, &draggable, &positioning] {
             create_child_panel(close_on_focus_out.get(), draggable.get(),
               positioning.get(), child_button);
@@ -2393,21 +2508,22 @@ UiProfile Spire::make_region_box_profile() {
         GetDefaultMarketDatabase(), GetDefaultCountryDatabase());
       auto region = Region(security);
       region.SetName(s.second);
-      model->add(displayTextAny(security).toLower(), region);
+      model->add(displayText(security).toLower(), region);
       model->add(QString::fromStdString(region.GetName()).toLower(), region);
     }
     for(auto& market_code : markets) {
       auto market = GetDefaultMarketDatabase().FromCode(market_code);
       auto region = Region(market);
       region.SetName(market.m_description);
-      model->add(displayText(market.m_code).toLower(), region);
+      model->add(displayText(MarketToken(market.m_code)).toLower(), region);
       model->add(QString::fromStdString(region.GetName()).toLower(), region);
     }
     for(auto& country : countries) {
       auto region = Region(country);
       region.SetName(
         GetDefaultCountryDatabase().FromCode(country).m_name);
-      model->add(displayText(country).toLower(), region);
+      model->add(QString(GetDefaultCountryDatabase().FromCode(country).
+        m_threeLetterCode.GetData()).toLower(), region);
       model->add(QString::fromStdString(region.GetName()).toLower(), region);
     }
     auto box = new RegionBox(model);
@@ -2437,17 +2553,18 @@ UiProfile Spire::make_region_box_profile() {
       auto result = QString();
       result += "Region{Country{";
       for(auto& country : region.GetCountries()) {
-        result += displayText(country);
+        result += GetDefaultCountryDatabase().FromCode(country).
+          m_threeLetterCode.GetData();
         result += " ";
       }
       result += "} Market{";
       for(auto& market : region.GetMarkets()) {
-        result += displayText(market);
+        result += displayText(MarketToken(market));
         result += " ";
       }
       result += "} Security{";
       for(auto& security : region.GetSecurities()) {
-        result += displayTextAny(security);
+        result += displayText(security);
         result += " ";
       }
       result += "}}";
@@ -2680,10 +2797,8 @@ UiProfile Spire::make_scroll_box_profile() {
 UiProfile Spire::make_scrollable_list_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
-  auto direction_property = define_enum<Qt::Orientation>(
-    {{"Vertical", Qt::Vertical}, {"Horizontal", Qt::Horizontal}});
   properties.push_back(
-    make_standard_enum_property("direction", direction_property));
+    make_standard_enum_property("direction", get_orientation_property()));
   auto overflow_property = define_enum<Overflow>(
     {{"NONE", Overflow::NONE}, {"WRAP", Overflow::WRAP}});
   properties.push_back(
@@ -2794,11 +2909,11 @@ UiProfile Spire::make_security_filter_panel_profile() {
             result += "Exclude: ";
           }
           for(auto i = 0; i < submission->get_size(); ++i) {
-            result += displayTextAny(submission->get(i)) + " ";
+            result += displayText(submission->get(i)) + " ";
           }
           submit_filter_slot(result);
         });
-      button->connect_clicked_signal([=] { panel->show(); });
+      button->connect_click_signal([=] { panel->show(); });
       return button;
     });
   return profile;
@@ -2815,6 +2930,46 @@ UiProfile Spire::make_security_list_item_profile() {
     auto item = new SecurityListItem(security_info);
     apply_widget_properties(item, profile.get_properties());
     return item;
+  });
+  return profile;
+}
+
+UiProfile Spire::make_security_view_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  properties.push_back(make_standard_property<int>("width", 266));
+  properties.push_back(make_standard_property<int>("height", 361));
+  auto profile = UiProfile("SecurityView", properties, [] (auto& profile) {
+    auto model = populate_security_query_model();
+    auto label = make_label("");
+    label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    auto security_view = new SecurityView(model, *label);
+    auto box = new Box(security_view);
+    update_style(*box, [] (auto& style) {
+      style.get(Hover() || Focus()).
+        set(border(scale_width(1), QColor(0x4B23A0)));
+    });
+    security_view->get_current()->connect_update_signal(
+      profile.make_event_slot<Security>("Current", [=] (const auto& security) {
+        label->get_current()->set(displayText(security));
+        return security;
+      }));
+    auto& width = get<int>("width", profile.get_properties());
+    width.connect_changed_signal([=] (auto value) {
+      if(value != 0) {
+        if(unscale_width(security_view->width()) != value) {
+          security_view->setFixedWidth(scale_width(value));
+        }
+      }
+    });
+    auto& height = get<int>("height", profile.get_properties());
+    height.connect_changed_signal([=] (auto value) {
+      if(value != 0) {
+        if(unscale_height(security_view->height()) != value) {
+          security_view->setFixedHeight(scale_height(value));
+        }
+      }
+    });
+    return box;
   });
   return profile;
 }
@@ -2836,6 +2991,117 @@ UiProfile Spire::make_side_filter_panel_profile() {
   properties.push_back(make_standard_property<bool>("Sell"));
   auto profile = UiProfile("SideFilterPanel", properties, std::bind_front(
     setup_closed_filter_panel_profile<Side, make_side_filter_panel>));
+  return profile;
+}
+
+UiProfile Spire::make_split_view_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_enum_property(
+    "orientation", Qt::Orientation::Horizontal, get_orientation_property()));
+  properties.push_back(make_standard_property("primary_minimum_width", 222));
+  properties.push_back(make_standard_property("primary_maximum_width", 774));
+  properties.push_back(make_standard_property("primary_minimum_height", 100));
+  properties.push_back(make_standard_property("primary_maximum_height", -1));
+  properties.push_back(make_standard_property("secondary_minimum_width", 224));
+  properties.push_back(make_standard_property("secondary_maximum_width", -1));
+  properties.push_back(make_standard_property("secondary_minimum_height", 100));
+  properties.push_back(make_standard_property("secondary_maximum_height", -1));
+  auto profile = UiProfile("SplitView", properties, [] (auto& profile) {
+    auto primary_box = new Box();
+    update_style(*primary_box, [] (auto& style) {
+      style.get(Any()).set(BackgroundColor(QColor(0xFFDFBF)));
+    });
+    auto secondary_box = new Box();
+    update_style(*secondary_box, [] (auto& style) {
+      style.get(Any()).set(BackgroundColor(QColor(0xFFFFBF)));
+    });
+    auto view = new SplitView(*primary_box, *secondary_box);
+    auto& width = get<int>("width", profile.get_properties());
+    width.set(1000);
+    apply_widget_properties(view, profile.get_properties());
+    auto& orientation =
+      get<Qt::Orientation>("orientation", profile.get_properties());
+    orientation.connect_changed_signal([=, &profile] (auto orientation) {
+      update_style(*view, [&] (auto& style) {
+        auto& width = get<int>("width", profile.get_properties());
+        auto& height = get<int>("height", profile.get_properties());
+        if(orientation == Qt::Orientation::Horizontal) {
+          width.set(1000);
+          height.set(100);
+        } else {
+          width.set(100);
+          height.set(1000);
+        }
+        get<int>("primary_minimum_width", profile.get_properties()).set(222);
+        get<int>("primary_maximum_width", profile.get_properties()).set(774);
+        get<int>("primary_minimum_height", profile.get_properties()).set(100);
+        get<int>("primary_maximum_height", profile.get_properties()).set(-1);
+        get<int>("secondary_minimum_width", profile.get_properties()).set(224);
+        get<int>("secondary_maximum_width", profile.get_properties()).set(-1);
+        get<int>("secondary_minimum_height", profile.get_properties()).set(100);
+        get<int>("secondary_maximum_height", profile.get_properties()).set(-1);
+        style.get(Any()).set(orientation);
+      });
+    });
+    auto& primary_minimum_width =
+      get<int>("primary_minimum_width", profile.get_properties());
+    primary_minimum_width.connect_changed_signal([=] (auto width) {
+      primary_box->setMinimumWidth(scale_width(width));
+    });
+    auto& primary_maximum_width =
+      get<int>("primary_maximum_width", profile.get_properties());
+    primary_maximum_width.connect_changed_signal([=] (auto width) {
+      if(width < 0) {
+        primary_box->setMaximumWidth(QWIDGETSIZE_MAX);
+      } else {
+        primary_box->setMaximumWidth(scale_width(width));
+      }
+    });
+    auto& primary_minimum_height =
+      get<int>("primary_minimum_height", profile.get_properties());
+    primary_minimum_height.connect_changed_signal([=] (auto height) {
+      primary_box->setMinimumHeight(scale_height(height));
+    });
+    auto& primary_maximum_height =
+      get<int>("primary_maximum_height", profile.get_properties());
+    primary_maximum_height.connect_changed_signal([=] (auto height) {
+      if(height < 0) {
+        primary_box->setMaximumHeight(QWIDGETSIZE_MAX);
+      } else {
+        primary_box->setMaximumHeight(scale_height(height));
+      }
+    });
+    auto& secondary_minimum_width =
+      get<int>("secondary_minimum_width", profile.get_properties());
+    secondary_minimum_width.connect_changed_signal([=] (auto width) {
+      secondary_box->setMinimumWidth(scale_width(width));
+    });
+    auto& secondary_maximum_width =
+      get<int>("secondary_maximum_width", profile.get_properties());
+    secondary_maximum_width.connect_changed_signal([=] (auto width) {
+      if(width < 0) {
+        secondary_box->setMaximumWidth(QWIDGETSIZE_MAX);
+      } else {
+        secondary_box->setMaximumWidth(scale_width(width));
+      }
+    });
+    auto& secondary_minimum_height =
+      get<int>("secondary_minimum_height", profile.get_properties());
+    secondary_minimum_height.connect_changed_signal([=] (auto height) {
+      secondary_box->setMinimumHeight(scale_height(height));
+    });
+    auto& secondary_maximum_height =
+      get<int>("secondary_maximum_height", profile.get_properties());
+    secondary_maximum_height.connect_changed_signal([=] (auto height) {
+      if(height < 0) {
+        secondary_box->setMaximumHeight(QWIDGETSIZE_MAX);
+      } else {
+        secondary_box->setMaximumHeight(scale_height(height));
+      }
+    });
+    return view;
+  });
   return profile;
 }
 
@@ -2918,9 +3184,11 @@ UiProfile Spire::make_table_header_item_profile() {
 UiProfile Spire::make_table_view_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
+  properties.push_back(make_standard_property("row_count", 50));
   auto profile = UiProfile("TableView", properties, [] (auto& profile) {
     auto model = std::make_shared<ArrayTableModel>();
-    for(auto row = 0; row != 50; ++row) {
+    auto& row_count = get<int>("row_count", profile.get_properties());
+    for(auto row = 0; row != row_count.get(); ++row) {
       auto values = std::vector<std::any>();
       for(auto column = 0; column != 4; ++column) {
         values.push_back(row * 4 + column);
@@ -2994,9 +3262,9 @@ UiProfile Spire::make_tag_box_profile() {
   properties.push_back(make_standard_property<QString>("add_tag"));
   auto profile = UiProfile("TagBox", properties, [] (auto& profile) {
     auto list_model = std::make_shared<ArrayListModel<QString>>();
-    list_model->push("ONE");
-    list_model->push("TWO");
-    list_model->push("THREE");
+    list_model->push("CAN");
+    list_model->push("MSFT.NSDQ");
+    list_model->push("XIU.TSX");
     auto current_model = std::make_shared<LocalTextModel>();
     auto tag_box = new TagBox(list_model, current_model);
     apply_widget_properties(tag_box, profile.get_properties());
@@ -3032,13 +3300,20 @@ UiProfile Spire::make_tag_combo_box_profile() {
   properties.push_back(make_standard_property<QString>("current"));
   properties.push_back(make_standard_property<QString>("placeholder"));
   properties.push_back(make_standard_property("read_only", false));
+  auto overflow_property = define_enum<TagBoxOverflow>(
+    {{"WRAP", TagBoxOverflow::WRAP}, {"ELIDE", TagBoxOverflow::ELIDE}});
+  properties.push_back(
+    make_standard_enum_property("overflow", overflow_property));
   auto profile = UiProfile("TagComboBox", properties, [] (auto& profile) {
     auto model = std::make_shared<LocalComboBoxQueryModel>();
     model->add(QString("TSX"));
+    model->add(QString("TSXV"));
     model->add(QString("TSO.ASX"));
     model->add(QString("TSU.TSX"));
     model->add(QString("TSN.TSXV"));
     model->add(QString("TSL.NYSE"));
+    model->add(QString("MSFT.NSDQ"));
+    model->add(QString("XDRX"));
     model->add(QString("XIU.TSX"));
     model->add(QString("AUS"));
     model->add(QString("CAN"));
@@ -3052,6 +3327,9 @@ UiProfile Spire::make_tag_combo_box_profile() {
       profile.make_event_slot<std::any>("Current"));
     auto& current = get<QString>("current", profile.get_properties());
     current.connect_changed_signal([=] (const auto& current) {
+      if(current.isEmpty()) {
+        return;
+      }
       auto value = model->parse(current);
       if(value.has_value()) {
         box->get_current()->set(value);
@@ -3067,13 +3345,19 @@ UiProfile Spire::make_tag_combo_box_profile() {
     auto& read_only = get<bool>("read_only", profile.get_properties());
     read_only.connect_changed_signal(
       std::bind_front(&TagComboBox::set_read_only, box));
+    auto& overflow = get<TagBoxOverflow>("overflow", profile.get_properties());
+    overflow.connect_changed_signal([=] (auto value) {
+      update_style(*box, [&] (auto& style) {
+        style.get(Any() > is_a<TagBox>()).set(value);
+      });
+    });
     auto submit_filter_slot =
       profile.make_event_slot<QString>(QString::fromUtf8("SubmitSignal"));
     box->connect_submit_signal(
       [=] (const std::shared_ptr<AnyListModel>& submission) {
         auto result = QString();
         for(auto i = 0; i < submission->get_size(); ++i) {
-          result += displayTextAny(submission->get(i)) + " ";
+          result += displayText(submission->get(i)) + " ";
         }
         submit_filter_slot(result);
       });
@@ -3281,6 +3565,59 @@ UiProfile Spire::make_tooltip_profile() {
       tooltip->set_label(text);
     });
     return label;
+  });
+  return profile;
+}
+
+UiProfile Spire::make_transition_view_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  properties.push_back(make_standard_property<int>("width", 200));
+  properties.push_back(make_standard_property<int>("height", 300));
+  auto status_property = define_enum<TransitionView::Status>(
+    {{"NONE", TransitionView::Status::NONE},
+     {"LOADING", TransitionView::Status::LOADING},
+     {"READY", TransitionView::Status::READY}});
+  properties.push_back(make_standard_enum_property("status", status_property));
+  auto profile = UiProfile("TransitionView", properties, [] (auto& profile) {
+    auto list_model = std::make_shared<ArrayListModel<QString>>();
+    for(auto i = 0; i < 10; ++i) {
+      list_model->push(QString("Item%1").arg(i));
+    }
+    auto list_view = new ListView(list_model,
+      [] (const std::shared_ptr<ListModel<QString>>& model, auto index) {
+        return make_label(model->get(index));
+      });
+    update_style(*list_view, [] (auto& style) {
+      style.get(Any()).set(Qt::Orientation::Vertical);
+    });
+    auto transition_view =
+      new TransitionView(new ScrollableListBox(*list_view));
+    auto box = new Box(transition_view);
+    update_style(*box, [] (auto& style) {
+      style.get(Any()).set(border(scale_width(1), QColor(0x4B23A0)));
+    });
+    auto& width = get<int>("width", profile.get_properties());
+    width.connect_changed_signal([=] (auto value) {
+      if(value != 0) {
+        if(unscale_width(transition_view->width()) != value) {
+          transition_view->setFixedWidth(scale_width(value));
+        }
+      }
+    });
+    auto& height = get<int>("height", profile.get_properties());
+    height.connect_changed_signal([=] (auto value) {
+      if(value != 0) {
+        if(unscale_height(transition_view->height()) != value) {
+          transition_view->setFixedHeight(scale_height(value));
+        }
+      }
+    });
+    auto& status =
+      get<TransitionView::Status>("status", profile.get_properties());
+    status.connect_changed_signal([=] (auto s) {
+      transition_view->set_status(s);
+    });
+    return box;
   });
   return profile;
 }

@@ -41,7 +41,7 @@ FilterPanel::FilterPanel(QString title, QWidget* body, QWidget& parent)
   auto reset_button = make_label_button(tr("Reset to Default"));
   reset_button->setFixedHeight(scale_height(26));
   layout->addWidget(reset_button, 0, Qt::AlignRight);
-  reset_button->connect_clicked_signal([=] { m_reset_signal(); });
+  reset_button->connect_click_signal([=] { m_reset_signal(); });
   m_panel = new OverlayPanel(*this, parent);
   m_panel->setWindowFlags(Qt::Popup | (m_panel->windowFlags() & ~Qt::Tool));
   m_panel->set_closed_on_focus_out(true);

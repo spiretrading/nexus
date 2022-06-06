@@ -96,11 +96,13 @@ RegionListItem::Type RegionListItem::get_type() const {
 
 TextBox* RegionListItem::make_value_label() const {
   if(m_type == Type::SECURITY) {
-    return make_label(displayTextAny(*m_region.GetSecurities().begin()));
+    return make_label(displayText(*m_region.GetSecurities().begin()));
   } else if(m_type == Type::MARKET) {
-    return make_label(displayText(*m_region.GetMarkets().begin()));
+    return make_label(
+      QString::fromStdString(m_region.GetMarkets().begin()->GetData()));
   } else if(m_type == Type::COUNTRY) {
-    return make_label(displayText(*m_region.GetCountries().begin()));
+    return make_label(GetDefaultCountryDatabase().FromCode(
+      *m_region.GetCountries().begin()).m_threeLetterCode.GetData());
   }
   return make_label("");
 }

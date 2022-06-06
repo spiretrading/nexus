@@ -67,7 +67,7 @@ class DeletableItem : public QWidget {
 
     connection connect_delete_signal(
         const DeleteSignal::slot_type& slot) const {
-      return m_delete_button->connect_clicked_signal(slot);
+      return m_delete_button->connect_click_signal(slot);
     }
 
   private:
@@ -97,7 +97,7 @@ struct ComboBoxFilterQueryModel : ComboBox::QueryModel {
     if(!value.has_value()) {
       return value;
     }
-    if(m_matches_set.contains(displayTextAny(value))) {
+    if(m_matches_set.contains(displayText(value))) {
       return std::any();
     }
     return value;
@@ -113,7 +113,7 @@ struct ComboBoxFilterQueryModel : ComboBox::QueryModel {
         }
       }();
       std::erase_if(result, [&] (const auto& value) {
-        return m_matches_set.contains(displayTextAny(value));
+        return m_matches_set.contains(displayText(value));
       });
       return result;
     });
@@ -131,7 +131,7 @@ struct ComboBoxFilterQueryModel : ComboBox::QueryModel {
   }
 
   void add_match(int index) {
-    auto value = displayTextAny(m_matches->get(index));
+    auto value = displayText(m_matches->get(index));
     m_matches_set.insert(value);
     m_matches_list.insert(m_matches_list.begin() + index, value);
   }
@@ -297,12 +297,12 @@ bool OpenFilterPanel::event(QEvent* event) {
 
 QWidget* OpenFilterPanel::make_item(const std::shared_ptr<AnyListModel>& model,
     int index) {
-  auto label = displayTextAny(model->get(index));
+  auto label = displayText(model->get(index));
   auto item = new DeletableItem(label);
   item->connect_delete_signal([=] {
     auto index = [&] {
       for(auto i = 0; i < m_matches->get_size(); ++i) {
-        if(label == displayTextAny(model->get(i))) {
+        if(label == displayText(model->get(i))) {
           return i;
         }
       }
