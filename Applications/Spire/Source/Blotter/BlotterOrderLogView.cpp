@@ -37,7 +37,7 @@ namespace {
     static const auto COLUMN_SIZE = 11;
     QtTaskQueue m_tasks;
     std::shared_ptr<OrderListModel> m_orders;
-    std::unordered_map<const Order*, OrderStatusEntry> m_statuses;
+    std::unordered_map<const Order*, OrderStatusEntry> m_status_entries;
     scoped_connection m_operation_connection;
     TableModelTransactionLog m_transaction;
 
@@ -67,12 +67,12 @@ namespace {
     }
 
     void add(const Order& order, int index) {
-      auto status = m_statuses.find(&order);
-      if(status != m_statuses.end()) {
-        status->second.m_indexes.push_back(index);
+      auto entry = m_status_entries.find(&order);
+      if(entry != m_status_entries.end()) {
+        entry->second.m_indexes.push_back(index);
         return;
       }
-      m_statuses[&order].m_indexes.push_back(index);
+      m_status_entries[&order].m_indexes.push_back(index);
       auto execution_reports = optional<std::vector<ExecutionReport>>();
       order.GetPublisher().Monitor(m_tasks.get_slot<ExecutionReport>(
         std::bind_front(&OrderTableModel::on_execution_report, this,
@@ -84,22 +84,36 @@ namespace {
       }
     }
 
+    void reindex(OrderStatusEntry& entry, const Order& order) {
+      entry.m_indexes.clear();
+      for(auto i = 0; i != m_orders->get_size(); ++i) {
+        if(m_orders->get(i) == &order) {
+          entry.m_indexes.push_back(i);
+        }
+      }
+    }
+
     void on_execution_report(
         const Order& order, const ExecutionReport& report) {
-      auto& status = m_statuses[&order];
-      if(report.m_status != OrderStatus::PARTIALLY_FILLED ||
-          status.m_status != OrderStatus::PENDING_CANCEL) {
-        auto previous = status.m_status;
-        status.m_status = report.m_status;
-        m_transaction.transact([&] {
-          for(auto index : status.m_indexes) {
-            if(index < m_orders->get_size() && m_orders->get(index) == &order) {
-              m_transaction.push(UpdateOperation(
-                index, static_cast<int>(STATUS), previous, status.m_status));
-            }
-          }
-        });
+      auto& entry = m_status_entries[&order];
+      if(report.m_status == OrderStatus::PARTIALLY_FILLED &&
+          entry.m_status == OrderStatus::PENDING_CANCEL) {
+        return;
       }
+      auto previous = entry.m_status;
+      entry.m_status = report.m_status;
+      for(auto& index : entry.m_indexes) {
+        if(index >= m_orders->get_size() || m_orders->get(index) != &order) {
+          reindex(entry, order);
+          break;
+        }
+      }
+      m_transaction.transact([&] {
+        for(auto& index : entry.m_indexes) {
+          m_transaction.push(UpdateOperation(
+            index, static_cast<int>(STATUS), previous, entry.m_status));
+        }
+      });
     }
 
     void on_operation(const OrderListModel::Operation& operation) {
@@ -141,8 +155,8 @@ namespace {
       } else if(column == Column::ID) {
         return order.GetInfo().m_orderId;
       } else if(column == Column::STATUS) {
-        auto status = m_statuses.find(&order);
-        if(status == m_statuses.end()) {
+        auto status = m_status_entries.find(&order);
+        if(status == m_status_entries.end()) {
           static const auto NONE = OrderStatus::NONE;
           return NONE;
         }
@@ -162,7 +176,7 @@ namespace {
       } else if(column == Column::PRICE) {
         return order.GetInfo().m_fields.m_price;
       } else if(column == Column::TIME_IN_FORCE) {
-        return order.GetInfo().m_fields.m_timeInForce.GetType();
+        return order.GetInfo().m_fields.m_timeInForce;
       }
       return {};
     }

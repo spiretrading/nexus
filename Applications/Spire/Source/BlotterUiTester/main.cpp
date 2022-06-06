@@ -208,8 +208,8 @@ namespace {
         Aspen::constant(CurrencyId::NONE), Aspen::constant(order_type),
         Aspen::constant(side), Aspen::constant(destination),
         Aspen::constant(quantity), Aspen::constant(price),
-        Aspen::constant(TimeInForce()), std::vector<Aspen::Box<Nexus::Tag>>())),
-        std::move(submissions));
+        Aspen::constant(TimeInForce(TimeInForce::Type::GTC)),
+        std::vector<Aspen::Box<Nexus::Tag>>())), std::move(submissions));
     }
 
     void on_submit() {
