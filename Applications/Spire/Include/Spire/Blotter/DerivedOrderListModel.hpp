@@ -1,5 +1,7 @@
 #ifndef SPIRE_DERIVED_ORDER_LIST_MODEL_HPP
 #define SPIRE_DERIVED_ORDER_LIST_MODEL_HPP
+#include <unordered_map>
+#include <unordered_set>
 #include "Spire/Blotter/Blotter.hpp"
 #include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
@@ -37,11 +39,16 @@ namespace Spire {
       std::shared_ptr<BlotterTaskListModel> m_tasks;
       std::shared_ptr<
         ArrayListModel<const Nexus::OrderExecutionService::Order*>> m_orders;
+      std::unordered_map<const BlotterTaskEntry*, std::unordered_set<
+        const Nexus::OrderExecutionService::Order*>> m_task_to_orders;
+      std::unordered_map<const Nexus::OrderExecutionService::Order*, int>
+        m_order_to_count;
       boost::signals2::scoped_connection m_connection;
 
       void add(const std::shared_ptr<BlotterTaskEntry>& entry);
       void remove(const std::shared_ptr<BlotterTaskEntry>& entry);
-      void on_order(const Nexus::OrderExecutionService::Order* order);
+      void on_order(const BlotterTaskEntry& entry,
+        const Nexus::OrderExecutionService::Order* order);
       void on_operation(const BlotterTaskListModel::Operation& operation);
   };
 }

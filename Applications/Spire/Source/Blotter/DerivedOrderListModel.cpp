@@ -37,18 +37,48 @@ void DerivedOrderListModel::transact(
 
 void DerivedOrderListModel::add(
     const std::shared_ptr<BlotterTaskEntry>& entry) {
-  entry->m_orders->Monitor(m_queue.get_slot<const Order*>(
-    std::bind_front(&DerivedOrderListModel::on_order, this)));
+  entry->m_orders->Monitor(m_queue.get_slot<const Order*>(std::bind_front(
+    &DerivedOrderListModel::on_order, this, std::cref(*entry))));
 }
 
 void DerivedOrderListModel::remove(
     const std::shared_ptr<BlotterTaskEntry>& entry) {
-
-  // TODO
+  auto& orders = m_task_to_orders[entry.get()];
+  auto removals = std::unordered_set<const Order*>();
+  for(auto& order : orders) {
+    auto& count = m_order_to_count[order];
+    --count;
+    if(count == 0) {
+      removals.insert(order);
+      m_order_to_count.erase(order);
+    }
+  }
+  m_task_to_orders.erase(entry.get());
+  auto removal_count = removals.size();
+  if(removal_count == 0) {
+    return;
+  }
+  m_orders->transact([&] {
+    for(auto i = m_orders->get_size() - 1; i >= 0; --i) {
+      if(removals.contains(m_orders->get(i))) {
+        m_orders->remove(i);
+        --removal_count;
+        if(removal_count == 0) {
+          return;
+        }
+      }
+    }
+  });
 }
 
-void DerivedOrderListModel::on_order(const Order* order) {
-  m_orders->push(order);
+void DerivedOrderListModel::on_order(
+    const BlotterTaskEntry& entry, const Order* order) {
+  m_task_to_orders[&entry].insert(order);
+  auto& count = m_order_to_count[order];
+  ++count;
+  if(count == 1) {
+    m_orders->push(order);
+  }
 }
 
 void DerivedOrderListModel::on_operation(

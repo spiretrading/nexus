@@ -30,8 +30,7 @@ void ListCurrentController::set_edge_navigation(EdgeNavigation navigation) {
 void ListCurrentController::add(std::unique_ptr<ItemView> view, int index) {
   m_views.insert(std::next(m_views.begin(), index), std::move(view));
   if(m_current->get() && *m_current->get() >= index) {
-    auto blocker = shared_connection_block(m_connection);
-    m_current->set(*m_current->get() + 1);
+    m_current->set(*m_current->get());
   }
 }
 
@@ -48,8 +47,7 @@ void ListCurrentController::remove(int index) {
         m_current->set(index);
       }
     } else if(m_current->get() > index) {
-      auto blocker = shared_connection_block(m_connection);
-      m_current->set(*m_current->get() - 1);
+      m_current->set(*m_current->get());
     }
   }
 }
@@ -71,18 +69,11 @@ void ListCurrentController::move(int source, int destination) {
     std::rotate(m_views.rend() - source - 1, m_views.rend() - source,
       m_views.rend() - destination);
   }
-  auto adjust = [&] (auto& value) {
-    if(value && (*value >= source || *value <= destination)) {
-      *value += direction;
-      return true;
+  if(auto current = m_current->get()) {
+    if(direction * *current >= source &&
+        direction * *current <= destination) {
+      m_current->set(*m_current->get());
     }
-    return false;
-  };
-  adjust(m_last_current);
-  auto current = m_current->get();
-  if(adjust(current)) {
-    auto blocker = shared_connection_block(m_connection);
-    m_current->set(current);
   }
 }
 
