@@ -1,4 +1,5 @@
 #include "Spire/Blotter/BlotterExecutionsView.hpp"
+#include "Spire/Blotter/ExecutionReportsToTableModel.hpp"
 #include "Spire/Spire/ArrayTableModel.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
@@ -7,18 +8,13 @@
 using namespace Spire;
 using namespace Spire::Styles;
 
-namespace {
-  auto to_table(std::shared_ptr<ExecutionReportListModel> orders) {
-    return std::make_shared<ArrayTableModel>();
-  }
-}
-
 BlotterExecutionsView::BlotterExecutionsView(
     std::shared_ptr<ExecutionReportListModel> reports, QWidget* parent)
     : QWidget(parent),
       m_reports(std::move(reports)) {
   setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  auto table_view_builder = TableViewBuilder(to_table(m_reports));
+  auto table_view_builder =
+    TableViewBuilder(std::make_shared<ExecutionReportsToTableModel>(m_reports));
   table_view_builder.add_header_item(tr("Time"));
   table_view_builder.add_header_item(tr("ID"));
   table_view_builder.add_header_item(tr("Side"));
@@ -28,7 +24,6 @@ BlotterExecutionsView::BlotterExecutionsView(
   table_view_builder.add_header_item(tr("Last Quantity"), tr("Last Qty"));
   table_view_builder.add_header_item(tr("Price"), tr("Px"));
   table_view_builder.add_header_item(tr("Last Price"), tr("Last Px"));
-  table_view_builder.add_header_item(tr("Profit and Loss"), tr("P/L"));
   table_view_builder.add_header_item(tr("Market"), tr("Mkt"));
   table_view_builder.add_header_item(tr("Flag"));
   table_view_builder.add_header_item(tr("Execution Fee"), tr("Exec Fee"));
