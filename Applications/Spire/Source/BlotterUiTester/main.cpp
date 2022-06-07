@@ -7,13 +7,13 @@
 #include "Nexus/Definitions/SecurityInfo.hpp"
 #include "Nexus/OrderExecutionService/Order.hpp"
 #include "Nexus/OrderExecutionService/OrderReactor.hpp"
-#include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 #include "Nexus/OrderExecutionServiceTests/PrimitiveOrderUtilities.hpp"
 #include "Spire/Blotter/BlotterWindow.hpp"
 #include "Spire/Blotter/CompositeBlotterModel.hpp"
 #include "Spire/Canvas/Task.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/QtTaskQueue.hpp"
 #include "Spire/Spire/Resources.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/CheckBox.hpp"
@@ -32,6 +32,7 @@ using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::OrderExecutionService;
+using namespace Nexus::OrderExecutionService::Tests;
 using namespace Spire;
 
 namespace {
@@ -252,6 +253,7 @@ namespace {
     BlotterWindow* m_blotter_window;
     ControlPanel* m_control_panel;
     MockOrderExecutionClient m_client;
+    QtTaskQueue m_tasks;
 
     BlotterWindowController(
         std::shared_ptr<BlotterModel> blotter, QWidget* parent = nullptr)
@@ -302,6 +304,8 @@ namespace {
 
     void on_submit() {
       auto [reactor, submissions] = make_order_reactor();
+      submissions->Monitor(m_tasks.get_slot<const Order*>(
+        std::bind_front(&BlotterWindowController::on_new_order, this)));
       auto task = std::make_unique<Task>(std::move(reactor));
       auto entry = std::make_shared<BlotterTaskEntry>(BlotterTaskEntry(
         m_next_task_id, m_control_panel->
@@ -323,6 +327,17 @@ namespace {
       for(auto task : tasks) {
         task->m_task->cancel();
       }
+    }
+
+    void on_new_order(const Order* order) {
+      auto auto_accept =
+        m_control_panel->m_execution_report_panel->m_auto_accept;
+      if(!auto_accept->get_current()->get()) {
+        return;
+      }
+      Accept(*const_cast<PrimitiveOrder*>(
+        static_cast<const PrimitiveOrder*>(order)),
+        second_clock::universal_time());
     }
   };
 }

@@ -37,9 +37,13 @@ void OrdersToExecutionReportListModel::transact(
 }
 
 void OrdersToExecutionReportListModel::add(const Order& order) {
-  order.GetPublisher().Monitor(m_queue.get_slot<ExecutionReport>(
-    std::bind_front(&OrdersToExecutionReportListModel::on_report, this,
-      std::cref(order))));
+  auto& count = m_order_to_count[&order];
+  ++count;
+  if(count == 1) {
+    order.GetPublisher().Monitor(m_queue.get_slot<ExecutionReport>(
+      std::bind_front(&OrdersToExecutionReportListModel::on_report, this,
+        std::cref(order))));
+  }
 }
 
 void OrdersToExecutionReportListModel::remove(const Order& order) {
@@ -59,11 +63,7 @@ void OrdersToExecutionReportListModel::remove(const Order& order) {
 
 void OrdersToExecutionReportListModel::on_report(
     const Order& order, const ExecutionReport& report) {
-  auto& count = m_order_to_count[&order];
-  ++count;
-  if(count == 1) {
-    m_reports->push(ExecutionReportEntry(&order, report));
-  }
+  m_reports->push(ExecutionReportEntry(&order, report));
 }
 
 void OrdersToExecutionReportListModel::on_operation(
