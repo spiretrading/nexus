@@ -20,6 +20,7 @@ namespace Spire {
   class DerivedOrderListModel;
   class LocalBlotterPositionsModel;
   class LocalBlotterProfitAndLossModel;
+  class OrdersToExecutionReportListModel;
 }
 
 #endif
