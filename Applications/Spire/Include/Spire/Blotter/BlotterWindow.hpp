@@ -3,6 +3,7 @@
 #include <memory>
 #include <boost/signals2/connection.hpp>
 #include "Spire/Blotter/Blotter.hpp"
+#include "Spire/Blotter/BlotterOrderLogView.hpp"
 #include "Spire/Blotter/BlotterTaskView.hpp"
 #include "Spire/Ui/Window.hpp"
 
@@ -23,9 +24,13 @@ namespace Spire {
       /** Returns the window's BlotterTaskView. */
       BlotterTaskView& get_task_view();
 
+      /** Returns the window's BlotterOrderLogView. */
+      BlotterOrderLogView& get_order_log_view();
+
     private:
       std::shared_ptr<BlotterModel> m_blotter;
       BlotterTaskView* m_task_view;
+      BlotterOrderLogView* m_order_log_view;
       boost::signals2::scoped_connection m_name_connection;
 
       void on_name_update(const QString& name);

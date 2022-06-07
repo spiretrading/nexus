@@ -28,8 +28,8 @@ BlotterWindow::BlotterWindow(
   auto positions = new BlotterPositionsView(m_blotter->get_positions());
   tabs->add(tr("Positions"), *positions);
   auto orders = std::make_shared<TasksToOrderListModel>(m_blotter->get_tasks());
-  auto order_log = new BlotterOrderLogView(orders);
-  tabs->add(tr("Order Log"), *order_log);
+  m_order_log_view = new BlotterOrderLogView(orders);
+  tabs->add(tr("Order Log"), *m_order_log_view);
   auto executions = new BlotterExecutionsView(
     std::make_shared<OrdersToExecutionReportListModel>(orders));
   tabs->add(tr("Executions"), *executions);
@@ -55,6 +55,10 @@ BlotterWindow::BlotterWindow(
 
 BlotterTaskView& BlotterWindow::get_task_view() {
   return *m_task_view;
+}
+
+BlotterOrderLogView& BlotterWindow::get_order_log_view() {
+  return *m_order_log_view;
 }
 
 void BlotterWindow::on_name_update(const QString& name) {
