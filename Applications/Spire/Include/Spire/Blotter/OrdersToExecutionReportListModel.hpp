@@ -34,13 +34,13 @@ namespace Spire {
       void transact(const std::function<void ()>& transaction) override;
 
     private:
-      QtTaskQueue m_queue;
       std::shared_ptr<OrderListModel> m_orders;
       std::shared_ptr<ArrayListModel<
         Nexus::OrderExecutionService::ExecutionReportEntry>> m_reports;
       std::unordered_map<const Nexus::OrderExecutionService::Order*, int>
         m_order_to_count;
       boost::signals2::scoped_connection m_connection;
+      QtTaskQueue m_queue;
 
       void add(const Nexus::OrderExecutionService::Order& order);
       void remove(const Nexus::OrderExecutionService::Order& order);

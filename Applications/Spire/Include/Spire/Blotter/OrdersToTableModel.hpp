@@ -74,12 +74,12 @@ namespace Spire {
         Nexus::OrderStatus m_status;
         std::vector<int> m_indexes;
       };
-      QtTaskQueue m_tasks;
       std::shared_ptr<OrderListModel> m_orders;
       std::unordered_map<const Nexus::OrderExecutionService::Order*,
         OrderStatusEntry> m_status_entries;
       TableModelTransactionLog m_transaction;
       boost::signals2::scoped_connection m_connection;
+      QtTaskQueue m_tasks;
 
       AnyRef extract_field(
         const Nexus::OrderExecutionService::Order& order, Column column) const;

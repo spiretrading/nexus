@@ -35,7 +35,6 @@ namespace Spire {
       void transact(const std::function<void ()>& transaction) override;
 
     private:
-      QtTaskQueue m_queue;
       std::shared_ptr<BlotterTaskListModel> m_tasks;
       std::shared_ptr<
         ArrayListModel<const Nexus::OrderExecutionService::Order*>> m_orders;
@@ -44,6 +43,7 @@ namespace Spire {
       std::unordered_map<const Nexus::OrderExecutionService::Order*, int>
         m_order_to_count;
       boost::signals2::scoped_connection m_connection;
+      QtTaskQueue m_queue;
 
       void add(const std::shared_ptr<BlotterTaskEntry>& entry);
       void remove(const std::shared_ptr<BlotterTaskEntry>& entry);
