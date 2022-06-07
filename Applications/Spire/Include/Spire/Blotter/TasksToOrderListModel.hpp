@@ -1,5 +1,5 @@
-#ifndef SPIRE_DERIVED_ORDER_LIST_MODEL_HPP
-#define SPIRE_DERIVED_ORDER_LIST_MODEL_HPP
+#ifndef SPIRE_TASKS_TO_ORDER_LIST_MODEL_HPP
+#define SPIRE_TASKS_TO_ORDER_LIST_MODEL_HPP
 #include <unordered_map>
 #include <unordered_set>
 #include "Spire/Blotter/Blotter.hpp"
@@ -13,15 +13,15 @@ namespace Spire {
    * Implements a ListModel listing out all distinct orders published by a
    * specified list of tasks.
    */
-  class DerivedOrderListModel : public OrderListModel {
+  class TasksToOrderListModel : public OrderListModel {
     public:
 
       /**
-       * Constructs a DerivedOrderListModel.
+       * Constructs a TasksToOrderListModel.
        * @param tasks The list of tasks producing the orders that this model is
        *        to publish.
        */
-      explicit DerivedOrderListModel(
+      explicit TasksToOrderListModel(
         std::shared_ptr<BlotterTaskListModel> tasks);
 
       int get_size() const override;

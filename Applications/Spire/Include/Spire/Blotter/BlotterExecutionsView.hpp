@@ -13,17 +13,18 @@ namespace Spire {
 
       /**
        * Constructs a BlotterExecutionsView.
-       * @param orders The list of orders whose execution reports are displayed.
+       * @param reports The list of execution reports are displayed.
        * @param parent The parent widget.
        */
       explicit BlotterExecutionsView(
-        std::shared_ptr<OrderListModel> orders, QWidget* parent = nullptr);
+        std::shared_ptr<ExecutionReportListModel> reports,
+        QWidget* parent = nullptr);
 
       /** Returns the list of orders whose execution reports are displayed. */
-      const std::shared_ptr<OrderListModel>& get_orders() const;
+      const std::shared_ptr<ExecutionReportListModel>& get_reports() const;
 
     private:
-      std::shared_ptr<OrderListModel> m_orders;
+      std::shared_ptr<ExecutionReportListModel> m_reports;
   };
 }
 

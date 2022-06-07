@@ -8,17 +8,17 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  auto to_table(std::shared_ptr<OrderListModel> orders) {
+  auto to_table(std::shared_ptr<ExecutionReportListModel> orders) {
     return std::make_shared<ArrayTableModel>();
   }
 }
 
 BlotterExecutionsView::BlotterExecutionsView(
-    std::shared_ptr<OrderListModel> orders, QWidget* parent)
+    std::shared_ptr<ExecutionReportListModel> reports, QWidget* parent)
     : QWidget(parent),
-      m_orders(std::move(orders)) {
+      m_reports(std::move(reports)) {
   setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  auto table_view_builder = TableViewBuilder(to_table(m_orders));
+  auto table_view_builder = TableViewBuilder(to_table(m_reports));
   table_view_builder.add_header_item(tr("Time"));
   table_view_builder.add_header_item(tr("ID"));
   table_view_builder.add_header_item(tr("Side"));
@@ -41,4 +41,9 @@ BlotterExecutionsView::BlotterExecutionsView(
   scroll_box->set(
     ScrollBox::DisplayPolicy::ON_OVERFLOW, ScrollBox::DisplayPolicy::NEVER);
   enclose(*this, *scroll_box);
+}
+
+const std::shared_ptr<ExecutionReportListModel>&
+    BlotterExecutionsView::get_reports() const {
+  return m_reports;
 }

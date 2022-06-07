@@ -27,7 +27,6 @@ namespace Spire {
         std::shared_ptr<BlotterTaskListModel> tasks,
         std::shared_ptr<ListModel<int>> task_selection,
         std::shared_ptr<BlotterPositionsModel> positions,
-        std::shared_ptr<OrderListModel> orders,
         std::shared_ptr<BlotterProfitAndLossModel> profit_and_loss,
         std::shared_ptr<BlotterStatusModel> status);
 
@@ -43,8 +42,6 @@ namespace Spire {
 
       std::shared_ptr<BlotterPositionsModel> get_positions() override;
 
-      std::shared_ptr<OrderListModel> get_orders() override;
-
       std::shared_ptr<BlotterProfitAndLossModel> get_profit_and_loss()
         override;
 
@@ -57,7 +54,6 @@ namespace Spire {
       std::shared_ptr<BlotterTaskListModel> m_tasks;
       std::shared_ptr<ListModel<int>> m_task_selection;
       std::shared_ptr<BlotterPositionsModel> m_positions;
-      std::shared_ptr<OrderListModel> m_orders;
       std::shared_ptr<BlotterProfitAndLossModel> m_profit_and_loss;
       std::shared_ptr<BlotterStatusModel> m_status;
   };

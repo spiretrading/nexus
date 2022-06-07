@@ -3,6 +3,7 @@
 #include <memory>
 #include <string>
 #include <Beam/Queues/Publisher.hpp>
+#include "Nexus/OrderExecutionService/ExecutionReportPublisher.hpp"
 #include "Nexus/OrderExecutionService/Order.hpp"
 #include "Spire/Blotter/Blotter.hpp"
 #include "Spire/Canvas/Task.hpp"
@@ -31,11 +32,15 @@ namespace Spire {
       const Nexus::OrderExecutionService::Order*>> m_orders;
   };
 
+  /** The type of list model used for tasks displayed in the blotter. */
+  using BlotterTaskListModel = ListModel<std::shared_ptr<BlotterTaskEntry>>;
+
   /** The type of list model used for orders displayed in the blotter. */
   using OrderListModel = ListModel<const Nexus::OrderExecutionService::Order*>;
 
-  /** The type of list model used for tasks displayed in the blotter. */
-  using BlotterTaskListModel = ListModel<std::shared_ptr<BlotterTaskEntry>>;
+  /** The type of list model used for execution reports displayed in the blotter. */
+  using ExecutionReportListModel =
+    ListModel<Nexus::OrderExecutionService::ExecutionReportEntry>;
 
   /**
    * Defines the interface representing a blotter, used to keep track of trading
@@ -62,9 +67,6 @@ namespace Spire {
 
       /** Returns the blotter's positions. */
       virtual std::shared_ptr<BlotterPositionsModel> get_positions() = 0;
-
-      /** Returns the blotter's orders. */
-      virtual std::shared_ptr<OrderListModel> get_orders() = 0;
 
       /** Returns the blotter's profit and loss. */
       virtual std::shared_ptr<BlotterProfitAndLossModel>

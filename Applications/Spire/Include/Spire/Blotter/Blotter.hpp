@@ -17,10 +17,10 @@ namespace Spire {
   class BlotterWindow;
   class CompositeBlotterModel;
   class CompositeBlotterStatusModel;
-  class DerivedOrderListModel;
   class LocalBlotterPositionsModel;
   class LocalBlotterProfitAndLossModel;
   class OrdersToExecutionReportListModel;
+  class TasksToOrderListModel;
 }
 
 #endif

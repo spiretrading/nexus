@@ -1,6 +1,5 @@
 #ifndef SPIRE_ORDERS_TO_EXECUTION_REPORT_LIST_MODEL_HPP
 #define SPIRE_ORDERS_TO_EXECUTION_REPORT_LIST_MODEL_HPP
-#include "Nexus/OrderExecutionService/ExecutionReport.hpp"
 #include "Spire/Blotter/Blotter.hpp"
 #include "Spire/Blotter/BlotterModel.hpp"
 
@@ -10,8 +9,7 @@ namespace Spire {
    * Implements a ListModel listing out all execution reports published by a
    * specified list of orders.
    */
-  class OrdersToExecutionReportListModel :
-      public ListModel<Nexus::OrderExecutionService::ExecutionReport> {
+  class OrdersToExecutionReportListModel : public ExecutionReportListModel {
     public:
 
       /**
