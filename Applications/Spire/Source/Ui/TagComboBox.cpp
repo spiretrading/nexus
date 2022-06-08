@@ -139,7 +139,9 @@ TagComboBox::TagComboBox(std::shared_ptr<ComboBox::QueryModel> query_model,
   enclose(*this, *m_combo_box);
   setFocusProxy(m_combo_box);
   m_parent_window = window();
-  m_parent_window->installEventFilter(this);
+  if(m_parent_window != this) {
+    m_parent_window->installEventFilter(this);
+  }
   m_drop_down_window = find_pop_up_window(*m_combo_box);
   on_tag_box_style();
 }
@@ -318,14 +320,16 @@ void TagComboBox::align() {
     set_position({x(), m_position.y() + m_min_height - height()});
     return;
   }
-  if(sizeHint().height() > m_below_space && m_above_space > m_below_space) {
+  if(sizeHint().height() >= m_below_space && m_above_space > m_below_space) {
     m_alignment = Alignment::ABOVE;
     set_position({x(), m_position.y() + m_min_height - height()});
     setMaximumHeight(m_above_space);
+    m_tag_box->setMaximumHeight(m_above_space);
   } else {
     m_alignment = Alignment::BELOW;
     set_position(m_position);
     setMaximumHeight(m_below_space);
+    m_tag_box->setMaximumHeight(m_below_space);
   }
 }
 
