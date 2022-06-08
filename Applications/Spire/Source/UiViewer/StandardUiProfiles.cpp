@@ -75,6 +75,7 @@
 #include "Spire/Ui/TableView.hpp"
 #include "Spire/Ui/Tag.hpp"
 #include "Spire/Ui/TagBox.hpp"
+#include "Spire/Ui/TagComboBox.hpp"
 #include "Spire/Ui/TextAreaBox.hpp"
 #include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/TimeInForceBox.hpp"
@@ -3198,6 +3199,78 @@ UiProfile Spire::make_tag_box_profile() {
     });
     tag_box->connect_submit_signal(profile.make_event_slot<QString>("Submit"));
     return tag_box;
+  });
+  return profile;
+}
+
+UiProfile Spire::make_tag_combo_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_property<QString>("current"));
+  properties.push_back(make_standard_property<QString>("placeholder"));
+  properties.push_back(make_standard_property("read_only", false));
+  auto overflow_property = define_enum<TagBoxOverflow>(
+    {{"WRAP", TagBoxOverflow::WRAP}, {"ELIDE", TagBoxOverflow::ELIDE}});
+  properties.push_back(
+    make_standard_enum_property("overflow", overflow_property));
+  auto profile = UiProfile("TagComboBox", properties, [] (auto& profile) {
+    auto model = std::make_shared<LocalComboBoxQueryModel>();
+    model->add(QString("TSX"));
+    model->add(QString("TSXV"));
+    model->add(QString("TSO.ASX"));
+    model->add(QString("TSU.TSX"));
+    model->add(QString("TSN.TSXV"));
+    model->add(QString("TSL.NYSE"));
+    model->add(QString("MSFT.NSDQ"));
+    model->add(QString("XDRX"));
+    model->add(QString("XIU.TSX"));
+    model->add(QString("AUS"));
+    model->add(QString("CAN"));
+    model->add(QString("CHN"));
+    model->add(QString("JPN"));
+    model->add(QString("USA"));
+    auto box = new TagComboBox(model);
+    box->setFixedWidth(scale_width(112));
+    apply_widget_properties(box, profile.get_properties());
+    auto current_connection = box->get_current()->connect_update_signal(
+      profile.make_event_slot<std::any>("Current"));
+    auto& current = get<QString>("current", profile.get_properties());
+    current.connect_changed_signal([=] (const auto& current) {
+      if(current.isEmpty()) {
+        return;
+      }
+      auto value = model->parse(current);
+      if(value.has_value()) {
+        box->get_current()->set(value);
+      } else {
+        auto current_blocker = shared_connection_block(current_connection);
+        box->get_current()->set(current);
+      }
+    });
+    auto& placeholder = get<QString>("placeholder", profile.get_properties());
+    placeholder.connect_changed_signal([=] (const auto& placeholder) {
+      box->set_placeholder(placeholder);
+    });
+    auto& read_only = get<bool>("read_only", profile.get_properties());
+    read_only.connect_changed_signal(
+      std::bind_front(&TagComboBox::set_read_only, box));
+    auto& overflow = get<TagBoxOverflow>("overflow", profile.get_properties());
+    overflow.connect_changed_signal([=] (auto value) {
+      update_style(*box, [&] (auto& style) {
+        style.get(Any() > is_a<TagBox>()).set(value);
+      });
+    });
+    auto submit_filter_slot =
+      profile.make_event_slot<QString>(QString::fromUtf8("SubmitSignal"));
+    box->connect_submit_signal(
+      [=] (const std::shared_ptr<AnyListModel>& submission) {
+        auto result = QString();
+        for(auto i = 0; i < submission->get_size(); ++i) {
+          result += displayText(submission->get(i)) + " ";
+        }
+        submit_filter_slot(result);
+      });
+    return box;
   });
   return profile;
 }

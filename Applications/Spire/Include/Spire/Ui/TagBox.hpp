@@ -29,15 +29,15 @@ namespace Styles {
 
       /**
        * Constructs a TagBox.
-       * @param list The list model which holds a list of tags.
+       * @param tags The list model which holds a list of tags.
        * @param current The current text's model.
        * @param parent The parent widget.
        */
-      TagBox(std::shared_ptr<AnyListModel> list,
+      TagBox(std::shared_ptr<AnyListModel> tags,
         std::shared_ptr<TextModel> current, QWidget* parent = nullptr);
 
       /** Returns the list of tags. */
-      const std::shared_ptr<AnyListModel>& get_list() const;
+      const std::shared_ptr<AnyListModel>& get_tags() const;
 
       /** Returns the current text model. */
       const std::shared_ptr<TextModel>& get_current() const;
@@ -64,6 +64,7 @@ namespace Styles {
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
+      bool event(QEvent* event) override;
       void changeEvent(QEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
       void showEvent(QShowEvent* event) override;
@@ -84,9 +85,9 @@ namespace Styles {
       QString m_placeholder;
       QString m_tip;
       bool m_is_read_only;
+      QMargins m_input_box_padding;
       int m_tags_width;
       int m_list_item_gap;
-      int m_input_box_horizontal_padding;
       int m_list_view_horizontal_padding;
       int m_scroll_bar_end_range;
       boost::signals2::scoped_connection m_style_connection;

@@ -81,6 +81,7 @@ namespace Spire {
   class TableView;
   class Tag;
   class TagBox;
+  class TagComboBox;
   class TextAreaBox;
   class TextBox;
   class TimeBox;
