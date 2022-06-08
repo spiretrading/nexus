@@ -51,6 +51,14 @@ namespace {
       set(vertical_padding(scale_height(2)));
     return style;
   }
+
+  int horizontal_length(const QMargins& margins) {
+    return margins.left() + margins.right();
+  }
+
+  int vertical_length(const QMargins& margins) {
+    return margins.top() + margins.bottom();
+  }
 }
 
 struct TagBox::PartialListModel : public AnyListModel {
@@ -250,7 +258,16 @@ bool TagBox::eventFilter(QObject* watched, QEvent* event) {
 
 bool TagBox::event(QEvent* event) {
   if(event->type() == QEvent::LayoutRequest) {
-    auto maximum_size = maximumSize().shrunkBy(m_input_box_padding);
+    auto maximum_size = [&] {
+      auto size = maximumSize();
+      if(size.width() != QWIDGETSIZE_MAX) {
+        size.rwidth() -= horizontal_length(m_input_box_padding);
+      }
+      if(size.height() != QWIDGETSIZE_MAX) {
+        size.rheight() -= vertical_length(m_input_box_padding);
+      }
+      return size;
+    }();
     if(maximum_size != m_list_view->parentWidget()->maximumSize()) {
       m_list_view->parentWidget()->setMaximumSize(maximum_size);
     }
@@ -529,12 +546,10 @@ void TagBox::overflow() {
   if(m_overflow == TagBoxOverflow::ELIDE &&
       m_focus_observer.get_state() == FocusObserver::State::NONE) {
     auto text_box_height = m_text_box->sizeHint().height();
-    auto visible_area_width = width() - m_input_box_padding.left() -
-      m_input_box_padding.right() - m_list_view_horizontal_padding;
+    auto visible_area_width = width() - horizontal_length(m_input_box_padding) -
+      m_list_view_horizontal_padding;
     auto ellipses_width = m_ellipses_item->sizeHint().width();
-    auto first_char_length = QFontMetrics(m_font).horizontalAdvance(
-      m_text_box->get_current()->get(), 0);
-    auto difference = m_tags_width + first_char_length - visible_area_width;
+    auto difference = m_tags_width - visible_area_width;
     if(difference <= 0) {
       show_all_tags();
       m_text_box->setFixedSize(visible_area_width - m_tags_width,
@@ -543,8 +558,13 @@ void TagBox::overflow() {
       auto hidden_length = 0;
       auto is_tag_hidden = false;
       auto i = get_list()->get_size() - 1;
-      while(i >= 0 &&
-          difference - hidden_length > ellipses_width + m_list_item_gap) {
+      auto ellipses_and_gap = [&] {
+        if(get_list()->get_size() > 0) {
+          return ellipses_width + m_list_item_gap;
+        }
+        return 0;
+      }();
+      while(i >= 0 && hidden_length - difference < ellipses_and_gap) {
         auto item = m_list_view->get_list_item(i);
         hidden_length += item->sizeHint().width() + m_list_item_gap;
         item->hide();
