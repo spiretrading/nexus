@@ -171,14 +171,14 @@ TagBox::TagBox(std::shared_ptr<AnyListModel> list,
     style.get(Any()).set(TagBoxOverflow::WRAP);
   });
   m_style_connection = connect_style_signal(*this, [=] { on_style(); });
-  m_ellipses_item = m_list_view->get_list_item(get_list()->get_size());
+  m_ellipses_item = m_list_view->get_list_item(get_tags()->get_size());
   m_ellipses_item->hide();
   m_tooltip = new Tooltip("", this);
   setFocusProxy(m_text_box);
   setFocusPolicy(Qt::StrongFocus);
 }
 
-const std::shared_ptr<AnyListModel>& TagBox::get_list() const {
+const std::shared_ptr<AnyListModel>& TagBox::get_tags() const {
   return m_model->m_source;
 }
 
@@ -223,11 +223,11 @@ bool TagBox::eventFilter(QObject* watched, QEvent* event) {
     auto& key_event = *static_cast<QKeyEvent*>(event);
     if(watched == m_text_box->focusProxy() &&
         key_event.key() == Qt::Key_Backspace &&
-        get_list()->get_size() > 0 &&
+        get_tags()->get_size() > 0 &&
         (m_text_box->get_highlight()->get().m_start == 0 &&
         m_text_box->get_highlight()->get().m_end == 0 ||
         m_text_box->get_current()->get().isEmpty())) {
-      get_list()->remove(get_list()->get_size() - 1);
+      get_tags()->remove(get_tags()->get_size() - 1);
       return true;
     } else if(watched == m_list_view && (key_event.key() == Qt::Key_Down ||
         key_event.key() == Qt::Key_Up || key_event.key() == Qt::Key_PageDown ||
@@ -301,7 +301,7 @@ QWidget* TagBox::make_tag(
     tag->set_read_only(m_is_read_only || !isEnabled());
     tag->connect_delete_signal([=] {
       auto tag_index = [&] {
-        for(auto i = 0; i < get_list()->get_size(); ++i) {
+        for(auto i = 0; i < get_tags()->get_size(); ++i) {
           if(label == displayText(m_model->get(i))) {
             return i;
           }
@@ -309,7 +309,7 @@ QWidget* TagBox::make_tag(
         return -1;
       }();
       if(tag_index >= 0) {
-        get_list()->remove(tag_index);
+        get_tags()->remove(tag_index);
       }
     });
     connect(tag, &QWidget::destroyed, [=] {
@@ -517,7 +517,7 @@ void TagBox::update_tags_read_only() {
 void TagBox::update_tags_width() {
   if(m_overflow == TagBoxOverflow::ELIDE) {
     m_tags_width = 0;
-    for(auto i = 0; i < get_list()->get_size(); ++i) {
+    for(auto i = 0; i < get_tags()->get_size(); ++i) {
       m_tags_width += m_list_view->get_list_item(i)->sizeHint().width()
         + m_list_item_gap;
     }
@@ -527,8 +527,8 @@ void TagBox::update_tags_width() {
 void TagBox::update_tip() {
   if(m_overflow == TagBoxOverflow::ELIDE) {
     m_tip.clear();
-    for(auto i = 0; i < get_list()->get_size(); ++i) {
-      m_tip = m_tip % displayText(get_list()->get(i)) % ", ";
+    for(auto i = 0; i < get_tags()->get_size(); ++i) {
+      m_tip = m_tip % displayText(get_tags()->get(i)) % ", ";
     }
     m_tip.remove(m_tip.length() - 2, 2);
   }
@@ -557,9 +557,9 @@ void TagBox::overflow() {
     } else {
       auto hidden_length = 0;
       auto is_tag_hidden = false;
-      auto i = get_list()->get_size() - 1;
+      auto i = get_tags()->get_size() - 1;
       auto ellipses_and_gap = [&] {
-        if(get_list()->get_size() > 0) {
+        if(get_tags()->get_size() > 0) {
           return ellipses_width + m_list_item_gap;
         }
         return 0;
@@ -598,7 +598,7 @@ void TagBox::overflow() {
 
 void TagBox::show_all_tags() {
   if(m_ellipses_item->isVisible()) {
-    for(auto i = 0; i < get_list()->get_size(); ++i) {
+    for(auto i = 0; i < get_tags()->get_size(); ++i) {
       m_list_view->get_list_item(i)->show();
     }
     m_ellipses_item->hide();
