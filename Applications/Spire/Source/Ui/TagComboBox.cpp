@@ -64,7 +64,8 @@ struct TagComboBoxQueryModel : ComboBox::QueryModel {
       return value;
     }
     if(m_exclusion_set.contains(displayText(value))) {
-      return std::any();
+      static auto empty_value = std::any();
+      return empty_value;
     }
     return value;
   }
