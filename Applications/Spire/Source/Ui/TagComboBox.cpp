@@ -11,13 +11,11 @@ using namespace Spire::Styles;
 
 namespace {
   QWidget* find_pop_up_window(QWidget& widget) {
-    auto& children = widget.children();
-    for(auto child : children) {
+    for(auto child : widget.children()) {
       if(!child->isWidgetType()) {
         continue;
       }
-      auto& widget = *static_cast<QWidget*>(child);
-      if(widget.isWindow()) {
+      if(auto& widget = *static_cast<QWidget*>(child); widget.isWindow()) {
         return &widget;
       }
     }
