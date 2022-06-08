@@ -24,8 +24,12 @@ namespace Spire {
       /** Returns the list of orders displayed. */
       const std::shared_ptr<OrderListModel>& get_orders() const;
 
+      /** Returns the list of selected orders. */
+      const std::shared_ptr<OrderListModel>& get_selection() const;
+
     private:
       std::shared_ptr<OrderListModel> m_orders;
+      std::shared_ptr<OrderListModel> m_selection;
   };
 }
 

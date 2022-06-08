@@ -1,9 +1,14 @@
 #include "Spire/Blotter/BlotterOrderLogView.hpp"
 #include "Spire/Blotter/OrdersToTableModel.hpp"
+#include "Spire/Ui/EmptySelectionModel.hpp"
 #include "Spire/Ui/Layouts.hpp"
+#include "Spire/Ui/ListSelectionValueModel.hpp"
+#include "Spire/Ui/MultiSelectionModel.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/TableView.hpp"
 
+using namespace Nexus;
+using namespace Nexus::OrderExecutionService;
 using namespace Spire;
 using namespace Spire::Styles;
 
@@ -25,7 +30,14 @@ BlotterOrderLogView::BlotterOrderLogView(
   table_view_builder.add_header_item(tr("Quantity"), tr("Qty"));
   table_view_builder.add_header_item(tr("Price"), tr("Px"));
   table_view_builder.add_header_item(tr("Time in Force"), tr("TIF"));
+  auto selection = std::make_shared<TableSelectionModel>(
+    std::make_shared<TableEmptySelectionModel>(),
+    std::make_shared<ListMultiSelectionModel>(),
+    std::make_shared<ListEmptySelectionModel>());
+  table_view_builder.set_selection(std::move(selection));
   auto table = table_view_builder.make();
+  m_selection = std::make_shared<ListSelectionValueModel<const Order*>>(
+    m_orders, table->get_selection()->get_row_selection());
   table->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto scroll_box = new ScrollBox(table);
   scroll_box->set(
@@ -35,4 +47,9 @@ BlotterOrderLogView::BlotterOrderLogView(
 
 const std::shared_ptr<OrderListModel>& BlotterOrderLogView::get_orders() const {
   return m_orders;
+}
+
+const std::shared_ptr<OrderListModel>&
+    BlotterOrderLogView::get_selection() const {
+  return m_selection;
 }

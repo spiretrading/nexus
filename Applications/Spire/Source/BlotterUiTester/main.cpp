@@ -274,6 +274,12 @@ namespace {
       m_control_panel->
         m_order_entry_panel->m_submit_button->connect_click_signal(
           std::bind_front(&BlotterWindowController::on_submit, this));
+      m_control_panel->
+        m_execution_report_panel->m_accept_button->connect_click_signal(
+          std::bind_front(&BlotterWindowController::on_accept, this));
+      m_control_panel->
+        m_execution_report_panel->m_reject_button->connect_click_signal(
+          std::bind_front(&BlotterWindowController::on_reject, this));
     }
 
     std::tuple<Aspen::Box<void>,
@@ -302,6 +308,11 @@ namespace {
         std::vector<Aspen::Box<Nexus::Tag>>())), std::move(submissions));
     }
 
+    std::string get_message() const {
+      return m_control_panel->m_execution_report_panel->
+        m_message_box->get_current()->get().toStdString();
+    }
+
     void on_submit() {
       auto [reactor, submissions] = make_order_reactor();
       submissions->Monitor(m_tasks.get_slot<const Order*>(
@@ -313,6 +324,32 @@ namespace {
         false, std::move(task), std::move(submissions)));
       ++m_next_task_id;
       m_blotter->get_tasks()->push(entry);
+    }
+
+    void set_initial_status(OrderStatus status) {
+      auto orders = m_blotter_window->get_order_log_view().get_selection();
+      for(auto i = 0; i != orders->get_size(); ++i) {
+        auto& order = *const_cast<PrimitiveOrder*>(
+          static_cast<const PrimitiveOrder*>(orders->get(i)));
+        order.With([&] (auto status, auto& reports) {
+          if(reports.size() != 1) {
+            return;
+          }
+          auto& lastReport = reports.back();
+          auto updatedReport = ExecutionReport::MakeUpdatedReport(
+            lastReport, status, second_clock::universal_time());
+          updatedReport.m_text = get_message();
+          order.Update(updatedReport);
+        });
+      }
+    }
+
+    void on_accept() {
+      set_initial_status(OrderStatus::NEW);
+    }
+
+    void on_reject() {
+      set_initial_status(OrderStatus::REJECTED);
     }
 
     void on_execute(
