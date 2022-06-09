@@ -300,6 +300,9 @@ namespace {
         m_execution_report_panel->m_reject_button->connect_click_signal(
           std::bind_front(&BlotterWindowController::on_reject, this));
       m_control_panel->
+        m_execution_report_panel->m_fill_button->connect_click_signal(
+          std::bind_front(&BlotterWindowController::on_fill, this));
+      m_control_panel->
         m_execution_report_panel->m_cancel_button->connect_click_signal(
           std::bind_front(&BlotterWindowController::on_cancel_orders, this));
     }
@@ -328,6 +331,41 @@ namespace {
         Aspen::constant(quantity), Aspen::constant(price),
         Aspen::constant(TimeInForce(TimeInForce::Type::GTC)),
         std::vector<Aspen::Box<Nexus::Tag>>())), std::move(submissions));
+    }
+
+    optional<Quantity> get_last_quantity() const {
+      return m_control_panel->
+        m_execution_report_panel->m_last_quantity_box->get_current()->get();
+    }
+
+    optional<Money> get_last_price() const {
+      return m_control_panel->
+        m_execution_report_panel->m_last_price_box->get_current()->get();
+    }
+
+    std::string get_market() const {
+      return m_control_panel->m_execution_report_panel->
+        m_market_box->get_current()->get().toStdString();
+    }
+
+    std::string get_flag() const {
+      return m_control_panel->m_execution_report_panel->
+        m_flag_box->get_current()->get().toStdString();
+    }
+
+    Money get_execution_fee() const {
+      return m_control_panel->m_execution_report_panel->
+        m_execution_fee_box->get_current()->get().value_or(Money::ZERO);
+    }
+
+    Money get_processing_fee() const {
+      return m_control_panel->m_execution_report_panel->
+        m_processing_fee_box->get_current()->get().value_or(Money::ZERO);
+    }
+
+    Money get_miscellaneous_fee() const {
+      return m_control_panel->m_execution_report_panel->
+        m_miscellaneous_fee_box->get_current()->get().value_or(Money::ZERO);
     }
 
     std::string get_message() const {
@@ -372,6 +410,49 @@ namespace {
 
     void on_reject() {
       set_initial_status(OrderStatus::REJECTED);
+    }
+
+    void on_fill() {
+      auto orders = m_blotter_window->get_order_log_view().get_selection();
+      for(auto i = 0; i != orders->get_size(); ++i) {
+        auto& order = *const_cast<PrimitiveOrder*>(
+          static_cast<const PrimitiveOrder*>(orders->get(i)));
+        order.With([&] (auto current_status, auto& reports) {
+          if(IsTerminal(current_status)) {
+            return;
+          }
+          auto fill = Quantity(0);
+          for(auto& report : reports) {
+            fill += report.m_lastQuantity;
+          }
+          auto next_fill = [&] {
+            if(auto last_quantity = get_last_quantity()) {
+              return std::min(
+                *last_quantity, order.GetInfo().m_fields.m_quantity - fill);
+            }
+            return order.GetInfo().m_fields.m_quantity - fill;
+          }();
+          auto status = [&] {
+            if(fill + next_fill == order.GetInfo().m_fields.m_quantity) {
+              return OrderStatus::FILLED;
+            }
+            return OrderStatus::PARTIALLY_FILLED;
+          }();
+          auto& lastReport = reports.back();
+          auto updatedReport = ExecutionReport::MakeUpdatedReport(
+            lastReport, status, second_clock::universal_time());
+          updatedReport.m_lastQuantity = next_fill;
+          updatedReport.m_lastPrice =
+            get_last_price().value_or(order.GetInfo().m_fields.m_price);
+          updatedReport.m_lastMarket = get_market();
+          updatedReport.m_liquidityFlag = get_flag();
+          updatedReport.m_executionFee = get_execution_fee();
+          updatedReport.m_processingFee = get_processing_fee();
+          updatedReport.m_commission = get_miscellaneous_fee();
+          updatedReport.m_text = get_message();
+          order.Update(updatedReport);
+        });
+      }
     }
 
     void on_cancel_orders() {
