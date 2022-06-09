@@ -218,6 +218,9 @@ bool TagComboBox::eventFilter(QObject* watched, QEvent* event) {
         return true;
       }
     }
+  } else if(watched == m_input_box && event->type() == QEvent::FocusOut &&
+      find_focus_state(*m_drop_down_window) != FocusObserver::State::NONE) {
+    return true;
   } else if(watched == m_parent_window && event->type() == QEvent::Resize) {
     update_space();
     if(m_focus_observer.get_state() != FocusObserver::State::NONE) {

@@ -5,9 +5,9 @@
 #include "Spire/Spire/ListModelTransactionLog.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
+#include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ListItem.hpp"
-#include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/ScrollableListBox.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
@@ -123,15 +123,13 @@ TagBox::TagBox(std::shared_ptr<AnyListModel> list,
     std::shared_ptr<TextModel> current, QWidget* parent)
     : QWidget(parent),
       m_model(std::make_shared<PartialListModel>(std::move(list))),
-      m_focus_observer(*this),
       m_overflow(TagBoxOverflow::WRAP),
+      m_list_view_overflow(Overflow::WRAP),
       m_is_read_only(false),
       m_tags_width(0),
       m_list_item_gap(0),
       m_list_view_horizontal_padding(0),
-      m_scroll_bar_end_range(0),
-      m_focus_connection(m_focus_observer.connect_state_signal(
-        std::bind_front(&TagBox::on_focus, this))) {
+      m_scroll_bar_end_range(0) {
   m_text_box = new TextBox(std::move(current));
   update_style(*m_text_box, [] (auto& style) {
     style = TEXT_BOX_STYLE(style);
@@ -247,10 +245,20 @@ bool TagBox::eventFilter(QObject* watched, QEvent* event) {
       }
       update_tags_width();
     } else if(watched == m_scroll_box && !m_is_read_only &&
-        m_focus_observer.get_state() != FocusObserver::State::NONE &&
+        find_focus_state(*this) != FocusObserver::State::NONE &&
         m_vertical_scroll_bar->get_range().m_end != m_scroll_bar_end_range) {
       scroll_to_end(*m_vertical_scroll_bar);
       m_scroll_bar_end_range = m_vertical_scroll_bar->get_range().m_end;
+    }
+  } else if(watched == m_text_box->focusProxy()) {
+    if(event->type() == QEvent::FocusIn || event->type() == QEvent::FocusOut) {
+      if(is_read_only()) {
+        return QWidget::eventFilter(watched, event);
+      }
+      update();
+      if(event->type() == QEvent::FocusIn) {
+        scroll_to_end(*m_vertical_scroll_bar);
+      }
     }
   }
   return QWidget::eventFilter(watched, event);
@@ -313,7 +321,7 @@ QWidget* TagBox::make_tag(
       }
     });
     connect(tag, &QWidget::destroyed, [=] {
-      if(m_focus_observer.get_state() != FocusObserver::State::NONE) {
+      if(find_focus_state(*this) != FocusObserver::State::NONE) {
         setFocus();
       }
     });
@@ -327,17 +335,6 @@ QWidget* TagBox::make_tag(
     return ellipses_box;
   }
   return m_text_box;
-}
-
-void TagBox::on_focus(FocusObserver::State state) {
-  if(m_is_read_only) {
-    return;
-  }
-  update();
-  if(state != FocusObserver::State::NONE) {
-    scroll_to_end(*m_vertical_scroll_bar);
-    setFocus();
-  }
 }
 
 void TagBox::on_operation(const AnyListModel::Operation& operation) {
@@ -358,7 +355,7 @@ void TagBox::on_operation(const AnyListModel::Operation& operation) {
       update_tags_width();
       update_tip();
       update();
-      if(m_focus_observer.get_state() != FocusObserver::State::NONE) {
+      if(find_focus_state(*this) != FocusObserver::State::NONE) {
         setFocus();
       }
     });
@@ -486,14 +483,17 @@ void TagBox::on_text_box_style() {
 }
 
 void TagBox::update() {
-  if(m_overflow == TagBoxOverflow::ELIDE &&
-      m_focus_observer.get_state() == FocusObserver::State::NONE) {
-    update_style(*m_list_view, [] (auto& style) {
-      style.get(Any()).set(Overflow::NONE);
-    });
-  } else {
-    update_style(*m_list_view, [] (auto& style) {
-      style.get(Any()).set(Overflow::WRAP);
+  auto list_view_overflow = [&] {
+    if(m_overflow == TagBoxOverflow::ELIDE &&
+        find_focus_state(*this) == FocusObserver::State::NONE) {
+      return Overflow::NONE;
+    }
+    return Overflow::WRAP;
+  }();
+  if(list_view_overflow != m_list_view_overflow) {
+    m_list_view_overflow = list_view_overflow;
+    update_style(*m_list_view, [=] (auto& style) {
+      style.get(Any()).set(m_list_view_overflow);
     });
   }
   overflow();
@@ -544,7 +544,7 @@ void TagBox::update_tooltip() {
 
 void TagBox::overflow() {
   if(m_overflow == TagBoxOverflow::ELIDE &&
-      m_focus_observer.get_state() == FocusObserver::State::NONE) {
+      find_focus_state(*this) == FocusObserver::State::NONE) {
     auto text_box_height = m_text_box->sizeHint().height();
     auto visible_area_width = width() - horizontal_length(m_input_box_padding) -
       m_list_view_horizontal_padding;
