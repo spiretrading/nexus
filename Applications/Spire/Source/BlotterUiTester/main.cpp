@@ -222,8 +222,24 @@ namespace {
     }
 
     void Cancel(const Order& order) {
-      Tests::Cancel(
-        const_cast<PrimitiveOrder&>(static_cast<const PrimitiveOrder&>(order)));
+      auto& base_order = const_cast<PrimitiveOrder&>(
+        static_cast<const PrimitiveOrder&>(order));
+      base_order.With([&] (auto current_status, auto& reports) {
+        auto is_pending_cancel = false;
+        for(auto& report : reports) {
+          if(report.m_status == OrderStatus::PENDING_CANCEL) {
+            is_pending_cancel = true;
+            break;
+          }
+        }
+        if(is_pending_cancel) {
+          return;
+        }
+        auto& lastReport = reports.back();
+        auto updatedReport = ExecutionReport::MakeUpdatedReport(lastReport,
+          OrderStatus::PENDING_CANCEL, second_clock::universal_time());
+        base_order.Update(updatedReport);
+      });
     }
   };
 
@@ -266,7 +282,10 @@ namespace {
       m_blotter_window->get_task_view().connect_execute_signal(
         std::bind_front(&BlotterWindowController::on_execute, this));
       m_blotter_window->get_task_view().connect_cancel_signal(
-        std::bind_front(&BlotterWindowController::on_cancel, this));
+        std::bind_front(&BlotterWindowController::on_cancel_tasks, this));
+      m_blotter_window->get_order_log_view().connect_cancel_signal(
+        std::bind_front(&BlotterWindowController::on_cancel_orders_request,
+          this));
       m_control_panel->setAttribute(Qt::WA_ShowWithoutActivating);
       m_control_panel->move(
         m_blotter_window->pos() + QPoint(0, m_blotter_window->size().height()));
@@ -280,6 +299,9 @@ namespace {
       m_control_panel->
         m_execution_report_panel->m_reject_button->connect_click_signal(
           std::bind_front(&BlotterWindowController::on_reject, this));
+      m_control_panel->
+        m_execution_report_panel->m_cancel_button->connect_click_signal(
+          std::bind_front(&BlotterWindowController::on_cancel_orders, this));
     }
 
     std::tuple<Aspen::Box<void>,
@@ -352,6 +374,34 @@ namespace {
       set_initial_status(OrderStatus::REJECTED);
     }
 
+    void on_cancel_orders() {
+      auto orders = m_blotter_window->get_order_log_view().get_selection();
+      for(auto i = 0; i != orders->get_size(); ++i) {
+        auto& order = *const_cast<PrimitiveOrder*>(
+          static_cast<const PrimitiveOrder*>(orders->get(i)));
+        order.With([&] (auto current_status, auto& reports) {
+          if(IsTerminal(current_status)) {
+            return;
+          }
+          auto is_pending_cancel = false;
+          for(auto& report : reports) {
+            if(report.m_status == OrderStatus::PENDING_CANCEL) {
+              is_pending_cancel = true;
+              break;
+            }
+          }
+          if(!is_pending_cancel) {
+            return;
+          }
+          auto& lastReport = reports.back();
+          auto updatedReport = ExecutionReport::MakeUpdatedReport(
+            lastReport, OrderStatus::CANCELED, second_clock::universal_time());
+          updatedReport.m_text = get_message();
+          order.Update(updatedReport);
+        });
+      }
+    }
+
     void on_execute(
         const std::vector<std::shared_ptr<BlotterTaskEntry>>& tasks) {
       for(auto task : tasks) {
@@ -359,22 +409,48 @@ namespace {
       }
     }
 
-    void on_cancel(
+    void on_cancel_tasks(
         const std::vector<std::shared_ptr<BlotterTaskEntry>>& tasks) {
       for(auto task : tasks) {
         task->m_task->cancel();
       }
     }
 
+    void on_cancel_orders_request(const std::vector<const Order*>& orders) {
+      for(auto& order : orders) {
+        m_client.Cancel(*order);
+      }
+    }
+
     void on_new_order(const Order* order) {
+      order->GetPublisher().Monitor(m_tasks.get_slot<ExecutionReport>(
+        std::bind_front(&BlotterWindowController::on_execution_report, this,
+          std::cref(*order))));
       auto auto_accept =
         m_control_panel->m_execution_report_panel->m_auto_accept;
       if(!auto_accept->get_current()->get()) {
         return;
       }
-      Accept(*const_cast<PrimitiveOrder*>(
-        static_cast<const PrimitiveOrder*>(order)),
-        second_clock::universal_time());
+      Accept(*const_cast<PrimitiveOrder*>(static_cast<const PrimitiveOrder*>(
+        order)), second_clock::universal_time());
+    }
+
+    void on_execution_report(
+        const Order& order, const ExecutionReport& report) {
+      auto auto_cancel =
+        m_control_panel->m_execution_report_panel->m_auto_cancel;
+      if(!auto_cancel->get_current()->get() ||
+          report.m_status != OrderStatus::PENDING_CANCEL) {
+        return;
+      }
+      auto& base_order =
+        const_cast<PrimitiveOrder&>(static_cast<const PrimitiveOrder&>(order));
+      base_order.With([&] (auto current_status, auto& reports) {
+        auto& lastReport = reports.back();
+        auto updatedReport = ExecutionReport::MakeUpdatedReport(
+          lastReport, OrderStatus::CANCELED, second_clock::universal_time());
+        base_order.Update(updatedReport);
+      });
     }
   };
 }

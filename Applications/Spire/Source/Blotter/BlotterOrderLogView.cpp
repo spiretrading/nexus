@@ -1,4 +1,5 @@
 #include "Spire/Blotter/BlotterOrderLogView.hpp"
+#include <QKeyEvent>
 #include "Spire/Blotter/OrdersToTableModel.hpp"
 #include "Spire/Ui/EmptySelectionModel.hpp"
 #include "Spire/Ui/Layouts.hpp"
@@ -7,6 +8,8 @@
 #include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/TableView.hpp"
 
+using namespace boost;
+using namespace boost::signals2;
 using namespace Nexus;
 using namespace Nexus::OrderExecutionService;
 using namespace Spire;
@@ -52,4 +55,25 @@ const std::shared_ptr<OrderListModel>& BlotterOrderLogView::get_orders() const {
 const std::shared_ptr<OrderListModel>&
     BlotterOrderLogView::get_selection() const {
   return m_selection;
+}
+
+connection BlotterOrderLogView::connect_cancel_signal(
+    const CancelSignal::slot_type& slot) const {
+  return m_cancel_signal.connect(slot);
+}
+
+void BlotterOrderLogView::keyPressEvent(QKeyEvent* event) {
+  if(event->key() == Qt::Key_Escape) {
+    auto orders = std::vector<const Order*>();
+    for(auto i = 0; i != m_selection->get_size(); ++i) {
+      auto order = m_selection->get(i);
+      auto snapshot = order->GetPublisher().GetSnapshot();
+      if(snapshot && !IsTerminal(snapshot->back().m_status)) {
+        orders.push_back(m_selection->get(i));
+      }
+    }
+    m_cancel_signal(orders);
+    return;
+  }
+  QWidget::keyPressEvent(event);
 }

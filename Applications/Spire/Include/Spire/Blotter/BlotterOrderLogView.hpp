@@ -14,6 +14,13 @@ namespace Spire {
     public:
 
       /**
+       * Signals to cancel a list of selected orders.
+       * @param orders The list of selected orders to cancel.
+       */
+      using CancelSignal = Signal<void (
+        const std::vector<const Nexus::OrderExecutionService::Order*>& orders)>;
+
+      /**
        * Constructs a BlotterOrderLogView.
        * @param orders The list of orders to display.
        * @param parent The parent widget.
@@ -27,7 +34,15 @@ namespace Spire {
       /** Returns the list of selected orders. */
       const std::shared_ptr<OrderListModel>& get_selection() const;
 
+      /** Connects a slot to the CancelSignal. */
+      boost::signals2::connection connect_cancel_signal(
+        const CancelSignal::slot_type& slot) const;
+
+    protected:
+      void keyPressEvent(QKeyEvent* event) override;
+
     private:
+      mutable CancelSignal m_cancel_signal;
       std::shared_ptr<OrderListModel> m_orders;
       std::shared_ptr<OrderListModel> m_selection;
   };
