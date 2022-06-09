@@ -331,7 +331,7 @@ namespace {
       for(auto i = 0; i != orders->get_size(); ++i) {
         auto& order = *const_cast<PrimitiveOrder*>(
           static_cast<const PrimitiveOrder*>(orders->get(i)));
-        order.With([&] (auto status, auto& reports) {
+        order.With([&] (auto current_status, auto& reports) {
           if(reports.size() != 1) {
             return;
           }

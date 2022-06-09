@@ -222,6 +222,13 @@ namespace Spire {
    */
   template<typename T>
   T* any_cast(AnyRef* any) noexcept {
+    if constexpr(std::is_same_v<std::remove_cvref_t<T>, AnyRef>) {
+      if(any->is_const() && !std::is_const_v<T> ||
+          any->is_volatile() != std::is_volatile_v<T>) {
+        return nullptr;
+      }
+      return any;
+    }
     if(any->get_type() != typeid(T) ||
         any->is_const() && !std::is_const_v<T> ||
         any->is_volatile() != std::is_volatile_v<T>) {
