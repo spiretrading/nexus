@@ -1,8 +1,7 @@
 #ifndef SPIRE_TAG_BOX_HPP
 #define SPIRE_TAG_BOX_HPP
 #include <QWidget>
-#include "Spire/Spire/ListModel.hpp"
-#include "Spire/Ui/FocusObserver.hpp"
+#include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -78,9 +77,9 @@ namespace Styles {
       ScrollBar* m_vertical_scroll_bar;
       ListItem* m_ellipses_item;
       Tooltip* m_tooltip;
-      FocusObserver m_focus_observer;
       std::vector<Tag*> m_tags;
       Styles::TagBoxOverflow m_overflow;
+      Styles::Overflow m_list_view_overflow;
       QFont m_font;
       QString m_placeholder;
       QString m_tip;
@@ -93,10 +92,8 @@ namespace Styles {
       boost::signals2::scoped_connection m_style_connection;
       boost::signals2::scoped_connection m_list_view_style_connection;
       boost::signals2::scoped_connection m_text_box_style_connection;
-      boost::signals2::scoped_connection m_focus_connection;
 
       QWidget* make_tag(const std::shared_ptr<AnyListModel>& model, int index);
-      void on_focus(FocusObserver::State state);
       void on_operation(const AnyListModel::Operation& operation);
       void on_text_box_current(const QString& current);
       void on_list_view_submit(const std::any& submission);
