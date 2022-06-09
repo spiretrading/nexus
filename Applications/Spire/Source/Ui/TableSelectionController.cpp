@@ -110,6 +110,7 @@ int TableSelectionController::get_column_size() const {
 }
 
 void TableSelectionController::add_row(int index) {
+  ++m_row_size;
   auto item_blocker = shared_connection_block(m_item_connection);
   auto row_blocker = shared_connection_block(m_row_connection);
   m_selection->transact([&] {
@@ -133,32 +134,52 @@ void TableSelectionController::add_row(int index) {
 }
 
 void TableSelectionController::remove_row(int index) {
+  --m_row_size;
   auto row_operation = optional<ListModel<int>::Operation>();
   auto item_operation = optional<ListModel<TableIndex>::Operation>();
   {
     auto item_blocker = shared_connection_block(m_item_connection);
     auto row_blocker = shared_connection_block(m_row_connection);
     m_selection->transact([&] {
-      auto& rows = m_selection->get_row_selection();
-      for(auto i = 0; i != rows->get_size(); ++i) {
-        auto selection = rows->get(i);
-        if(selection == index) {
-          rows->remove(i);
-          row_operation = ListModel<int>::RemoveOperation(i, index);
-        } else if(selection > index) {
-          rows->set(i, selection - 1);
+      {
+        auto& rows = m_selection->get_row_selection();
+        auto i = 0;
+        while(i != rows->get_size()) {
+          auto selection = rows->get(i);
+          if(selection == index) {
+            if(rows->remove(i) != QValidator::State::Invalid) {
+              row_operation = ListModel<int>::RemoveOperation(i, index);
+            } else {
+              ++i;
+            }
+          } else {
+            if(selection > index) {
+              rows->set(i, selection - 1);
+            }
+            ++i;
+          }
         }
       }
-      auto& items = m_selection->get_item_selection();
-      for(auto i = 0; i != items->get_size(); ++i) {
-        auto selection = items->get(i);
-        if(selection.m_row == index) {
-          items->remove(i);
-          item_operation = ListModel<TableIndex>::RemoveOperation(i, selection);
-        } else if(selection.m_row > index) {
-          auto update = selection;
-          --update.m_row;
-          items->set(i, update);
+      {
+        auto& items = m_selection->get_item_selection();
+        auto i = 0;
+        while(i != items->get_size()) {
+          auto selection = items->get(i);
+          if(selection.m_row == index) {
+            if(items->remove(i) != QValidator::State::Invalid) {
+              item_operation =
+                ListModel<TableIndex>::RemoveOperation(i, selection);
+            } else {
+              ++i;
+            }
+          } else {
+            if(selection.m_row > index) {
+              auto update = selection;
+              --update.m_row;
+              items->set(i, update);
+            }
+            ++i;
+          }
         }
       }
     });
@@ -350,13 +371,13 @@ void TableSelectionController::on_row_operation(
   visit(operation,
     [&] (const TableSelectionModel::RowSelectionModel::RemoveOperation&
         operation) {
-      if(operation.get_value() == m_range_anchor->m_row) {
+      if(m_range_anchor && operation.get_value() == m_range_anchor->m_row) {
         m_range_anchor = none;
       }
     },
     [&] (const TableSelectionModel::RowSelectionModel::UpdateOperation&
         operation) {
-      if(operation.get_previous() == m_range_anchor->m_row) {
+      if(m_range_anchor && operation.get_previous() == m_range_anchor->m_row) {
         m_range_anchor = none;
       }
     });
@@ -368,13 +389,14 @@ void TableSelectionController::on_column_operation(
   visit(operation,
     [&] (const TableSelectionModel::ColumnSelectionModel::RemoveOperation&
         operation) {
-      if(operation.get_value() == m_range_anchor->m_column) {
+      if(m_range_anchor && operation.get_value() == m_range_anchor->m_column) {
         m_range_anchor = none;
       }
     },
     [&] (const TableSelectionModel::ColumnSelectionModel::UpdateOperation&
         operation) {
-      if(operation.get_previous() == m_range_anchor->m_column) {
+      if(m_range_anchor &&
+          operation.get_previous() == m_range_anchor->m_column) {
         m_range_anchor = none;
       }
     });

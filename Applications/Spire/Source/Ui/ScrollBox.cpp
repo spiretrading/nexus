@@ -460,9 +460,19 @@ void ScrollBox::update_layout() {
   auto scroll_bar_size = QSize(
     m_scrollable_layer->get_vertical_scroll_bar().sizeHint().width(),
     m_scrollable_layer->get_horizontal_scroll_bar().sizeHint().height());
+  auto viewport_size = [&] {
+    auto size = m_viewport->maximumSize();
+    if(size.width() == QWIDGETSIZE_MAX) {
+      size.setWidth(m_viewport->size().width());
+    }
+    if(size.height() == QWIDGETSIZE_MAX) {
+      size.setHeight(m_viewport->size().height());
+    }
+    return size;
+  }();
   auto [is_horizontal_scroll_bar_shown, is_vertical_scroll_bar_shown] =
     to_scroll_bar_visibility(m_horizontal_display_policy,
-      m_vertical_display_policy, m_body->sizePolicy(), m_viewport->size(),
+      m_vertical_display_policy, m_body->sizePolicy(), viewport_size,
       m_body->sizeHint(), m_body->minimumSizeHint(), m_body->minimumSize(),
       m_body->maximumSize(), padding, scroll_bar_size);
   if(!is_horizontal_scroll_bar_shown) {

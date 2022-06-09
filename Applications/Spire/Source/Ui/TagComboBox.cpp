@@ -11,13 +11,11 @@ using namespace Spire::Styles;
 
 namespace {
   QWidget* find_pop_up_window(QWidget& widget) {
-    auto& children = widget.children();
-    for(auto child : children) {
+    for(auto child : widget.children()) {
       if(!child->isWidgetType()) {
         continue;
       }
-      auto& widget = *static_cast<QWidget*>(child);
-      if(widget.isWindow()) {
+      if(auto& widget = *static_cast<QWidget*>(child); widget.isWindow()) {
         return &widget;
       }
     }
@@ -64,7 +62,8 @@ struct TagComboBoxQueryModel : ComboBox::QueryModel {
       return value;
     }
     if(m_exclusion_set.contains(displayText(value))) {
-      return std::any();
+      static auto empty_value = std::any();
+      return empty_value;
     }
     return value;
   }
@@ -110,7 +109,7 @@ TagComboBox::TagComboBox(std::shared_ptr<ComboBox::QueryModel> query_model,
       std::move(view_builder), parent) {}
 
 TagComboBox::TagComboBox(std::shared_ptr<ComboBox::QueryModel> query_model,
-    std::shared_ptr<AnyListModel> list, std::shared_ptr<CurrentModel> current,
+    std::shared_ptr<AnyListModel> tags, std::shared_ptr<CurrentModel> current,
     ViewBuilder view_builder, QWidget* parent)
     : QWidget(parent),
       m_submission(std::make_shared<ArrayListModel<std::any>>()),
@@ -124,22 +123,24 @@ TagComboBox::TagComboBox(std::shared_ptr<ComboBox::QueryModel> query_model,
       m_below_space(0),
       m_focus_connection(m_focus_observer.connect_state_signal(
         std::bind_front(&TagComboBox::on_focus, this))) {
-  m_tag_box = new TagBox(std::move(list), std::make_shared<LocalTextModel>());
+  m_tag_box = new TagBox(std::move(tags), std::make_shared<LocalTextModel>());
   m_tag_box->installEventFilter(this);
-  m_list_connection = m_tag_box->get_list()->connect_operation_signal(
+  m_list_connection = m_tag_box->get_tags()->connect_operation_signal(
     std::bind_front(&TagComboBox::on_operation, this));
   m_tag_box_style_connection = connect_style_signal(*m_tag_box,
     std::bind_front(&TagComboBox::on_tag_box_style, this));
   m_combo_box = new ComboBox(
     std::make_shared<TagComboBoxQueryModel>(std::move(query_model),
-    m_tag_box->get_list()), std::move(current),
+    m_tag_box->get_tags()), std::move(current),
     new AnyInputBox(*m_tag_box), std::move(view_builder));
   m_combo_box->connect_submit_signal(
     std::bind_front(&TagComboBox::on_combo_box_submit, this));
   enclose(*this, *m_combo_box);
   setFocusProxy(m_combo_box);
   m_parent_window = window();
-  m_parent_window->installEventFilter(this);
+  if(m_parent_window != this) {
+    m_parent_window->installEventFilter(this);
+  }
   m_drop_down_window = find_pop_up_window(*m_combo_box);
   on_tag_box_style();
 }
@@ -149,8 +150,8 @@ const std::shared_ptr<ComboBox::QueryModel>&
   return m_combo_box->get_query_model();
 }
 
-const std::shared_ptr<AnyListModel>& TagComboBox::get_list() const {
-  return m_tag_box->get_list();
+const std::shared_ptr<AnyListModel>& TagComboBox::get_tags() const {
+  return m_tag_box->get_tags();
 }
 
 const std::shared_ptr<TagComboBox::CurrentModel>&
@@ -188,7 +189,7 @@ bool TagComboBox::eventFilter(QObject* watched, QEvent* event) {
           if(!is_equal(m_combo_box->get_current()->get(), value)) {
             m_combo_box->get_current()->set(value);
           }
-          m_tag_box->get_list()->push(value);
+          m_tag_box->get_tags()->push(value);
         }
         m_tag_box->get_current()->set("");
       }
@@ -204,7 +205,7 @@ bool TagComboBox::eventFilter(QObject* watched, QEvent* event) {
       }
     } else if(key_event.key() == Qt::Key_Escape) {
       m_tag_box->get_current()->set("");
-      copy_list_model(m_submission, m_tag_box->get_list());
+      copy_list_model(m_submission, m_tag_box->get_tags());
       m_is_modified = false;
       return true;
     } else if(key_event.key() == Qt::Key_Down ||
@@ -217,6 +218,9 @@ bool TagComboBox::eventFilter(QObject* watched, QEvent* event) {
         return true;
       }
     }
+  } else if(watched == m_input_box && event->type() == QEvent::FocusOut &&
+      find_focus_state(*m_drop_down_window) != FocusObserver::State::NONE) {
+    return true;
   } else if(watched == m_parent_window && event->type() == QEvent::Resize) {
     update_space();
     if(m_focus_observer.get_state() != FocusObserver::State::NONE) {
@@ -267,7 +271,7 @@ void TagComboBox::resizeEvent(QResizeEvent* event) {
 
 void TagComboBox::on_combo_box_submit(const std::any& submission) {
   m_tag_box->get_current()->set("");
-  m_tag_box->get_list()->push(submission);
+  m_tag_box->get_tags()->push(submission);
 }
 
 void TagComboBox::on_operation(const AnyListModel::Operation& operation) {
@@ -318,14 +322,16 @@ void TagComboBox::align() {
     set_position({x(), m_position.y() + m_min_height - height()});
     return;
   }
-  if(sizeHint().height() > m_below_space && m_above_space > m_below_space) {
+  if(sizeHint().height() >= m_below_space && m_above_space > m_below_space) {
     m_alignment = Alignment::ABOVE;
     set_position({x(), m_position.y() + m_min_height - height()});
     setMaximumHeight(m_above_space);
+    m_tag_box->setMaximumHeight(m_above_space);
   } else {
     m_alignment = Alignment::BELOW;
     set_position(m_position);
     setMaximumHeight(m_below_space);
+    m_tag_box->setMaximumHeight(m_below_space);
   }
 }
 
@@ -335,7 +341,7 @@ void TagComboBox::set_position(const QPoint& pos) {
 }
 
 void TagComboBox::submit() {
-  copy_list_model(m_tag_box->get_list(), m_submission);
+  copy_list_model(m_tag_box->get_tags(), m_submission);
   m_is_modified = false;
   m_submit_signal(m_submission);
 }
