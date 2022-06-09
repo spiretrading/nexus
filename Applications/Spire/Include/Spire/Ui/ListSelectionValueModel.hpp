@@ -99,16 +99,16 @@ namespace Spire {
       visit(operation,
         [&] (const typename ListModel<int>::AddOperation& operation) {
           m_selection_values.insert(
-            m_selection_values.begin() + operation.get_value(),
-            get(operation.get_value()));
+            m_selection_values.begin() + operation.m_index,
+            get(operation.m_index));
           m_transaction.push(
-            AddOperation(operation.m_index, get(operation.get_value())));
+            AddOperation(operation.m_index, get(operation.m_index)));
         },
         [&] (const typename ListModel<int>::RemoveOperation& operation) {
           m_transaction.push(RemoveOperation(
-            operation.m_index, m_selection_values[operation.get_value()]));
+            operation.m_index, m_selection_values[operation.m_index]));
           m_selection_values.erase(
-            m_selection_values.begin() + operation.get_value());
+            m_selection_values.begin() + operation.m_index);
         },
         [&] (const typename ListModel<int>::MoveOperation& operation) {
           if(operation.m_source < operation.m_destination) {
