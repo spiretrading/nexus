@@ -245,6 +245,7 @@ namespace {
 
   struct ObserverOrderExecutionClient {
     MockOrderExecutionClient* m_client;
+    std::vector<const Order*> m_orders;
     std::shared_ptr<QueueWriter<const Order*>> m_submissions;
 
     ObserverOrderExecutionClient(MockOrderExecutionClient& client,
@@ -252,8 +253,15 @@ namespace {
       : m_client(&client),
         m_submissions(std::move(submissions)) {}
 
+    ~ObserverOrderExecutionClient() {
+      for(auto order : m_orders) {
+        Cancel(*order);
+      }
+    }
+
     const Order& Submit(const OrderFields& fields) {
       auto& order = m_client->Submit(fields);
+      m_orders.push_back(&order);
       m_submissions->Push(&order);
       return order;
     }
@@ -324,13 +332,14 @@ namespace {
       auto submissions = std::make_shared<SequencePublisher<const Order*>>();
       auto client =
         std::make_unique<ObserverOrderExecutionClient>(m_client, submissions);
-      return std::tuple(Aspen::Box<void>(OrderReactor(std::move(client),
-        Aspen::constant(DirectoryEntry()), Aspen::constant(security),
-        Aspen::constant(CurrencyId::NONE), Aspen::constant(order_type),
-        Aspen::constant(side), Aspen::constant(destination),
-        Aspen::constant(quantity), Aspen::constant(price),
-        Aspen::constant(TimeInForce(TimeInForce::Type::GTC)),
-        std::vector<Aspen::Box<Nexus::Tag>>())), std::move(submissions));
+      return std::tuple(Aspen::Box<void>(
+        OrderReactor(std::move(client), Aspen::constant(DirectoryEntry()),
+          Aspen::constant(security), Aspen::constant(CurrencyId::NONE),
+          Aspen::constant(order_type), Aspen::constant(side),
+          Aspen::constant(destination), Aspen::constant(quantity),
+          Aspen::constant(price),
+          Aspen::constant(TimeInForce(TimeInForce::Type::GTC)),
+          std::vector<Aspen::Box<Nexus::Tag>>())), std::move(submissions));
     }
 
     optional<Quantity> get_last_quantity() const {
