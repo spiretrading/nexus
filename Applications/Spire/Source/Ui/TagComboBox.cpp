@@ -286,9 +286,7 @@ void TagComboBox::on_focus(FocusObserver::State state) {
     m_alignment = Alignment::NONE;
     set_position(m_position);
     update_space();
-    if(m_is_modified) {
-      submit();
-    }
+    submit();
   } else {
     align();
   }
@@ -337,6 +335,9 @@ void TagComboBox::set_position(const QPoint& pos) {
 }
 
 void TagComboBox::submit() {
+  if(!m_is_modified) {
+    return;
+  }
   copy_list_model(get_current(), m_submission);
   m_is_modified = false;
   m_submit_signal(m_submission);
