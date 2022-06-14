@@ -14,8 +14,10 @@ namespace Spire {
   class ArrayTableModel;
   class CancelKeySequenceValidationModel;
   template<typename T> class ColumnViewListModel;
+  template<typename T> class CompositeModel;
   template<typename T> class ConstantValueModel;
   class Definitions;
+  class Field;
   template<typename T> class FieldValueModel;
   class FilteredTableModel;
   class KeySequenceValidationModel;
