@@ -13,3 +13,8 @@ bool Field::operator ==(const Field& field) const {
 bool Field::operator !=(const Field& field) const {
   return !(*this == field);
 }
+
+std::size_t std::hash<Spire::Field>::operator ()(
+    const Spire::Field& field) const {
+  return field.get_hash();
+}

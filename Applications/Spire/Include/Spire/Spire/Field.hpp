@@ -1,6 +1,7 @@
 #ifndef SPIRE_FIELD_HPP
 #define SPIRE_FIELD_HPP
 #include <cstring>
+#include <functional>
 #include <memory>
 #include "Spire/Spire/Spire.hpp"
 
@@ -106,6 +107,13 @@ namespace Spire {
     }
     return false;
   }
+}
+
+namespace std {
+  template<>
+  struct hash<Spire::Field> {
+    std::size_t operator ()(const Spire::Field& field) const;
+  };
 }
 
 #endif
