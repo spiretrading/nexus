@@ -189,7 +189,9 @@ bool TagComboBox::eventFilter(QObject* watched, QEvent* event) {
         }
         m_tag_box->get_current()->set("");
       }
-      submit();
+      if(get_current()->get_size() > 0) {
+        submit();
+      }
       return true;
     } else if(key_event.key() == Qt::Key_Space) {
       if(m_combo_box->get_query_model()->parse(
@@ -286,7 +288,9 @@ void TagComboBox::on_focus(FocusObserver::State state) {
     m_alignment = Alignment::NONE;
     set_position(m_position);
     update_space();
-    submit();
+    if(m_is_modified && get_current()->get_size() > 0) {
+      submit();
+    }
   } else {
     align();
   }
@@ -335,9 +339,6 @@ void TagComboBox::set_position(const QPoint& pos) {
 }
 
 void TagComboBox::submit() {
-  if(!m_is_modified) {
-    return;
-  }
   copy_list_model(get_current(), m_submission);
   m_is_modified = false;
   m_submit_signal(m_submission);
