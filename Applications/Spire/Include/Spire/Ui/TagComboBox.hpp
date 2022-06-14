@@ -11,9 +11,6 @@ namespace Spire {
   class TagComboBox : public QWidget {
     public:
 
-      /** The type of model representing the current value. */
-      using CurrentModel = ComboBox::CurrentModel;
-
       /** The type of function used to build a QWidget representing a value. */
       using ViewBuilder = ComboBox::ViewBuilder;
 
@@ -25,8 +22,8 @@ namespace Spire {
         Signal<void (const std::shared_ptr<AnyListModel>& submission)>;
 
       /**
-       * Constructs a TagComboBox using an empty list of tags, a default
-       * local model and a default view builder.
+       * Constructs a TagComboBox using a default local model and a default
+       * view builder.
        * @param query_model The model used to query matches.
        * @param parent The parent widget.
        */
@@ -34,8 +31,7 @@ namespace Spire {
         QWidget* parent = nullptr);
 
       /**
-       * Constructs a TagComboBox using an empty list of tags and a default
-       * local model.
+       * Constructs a TagComboBox using a default local model.
        * @param query_model The model used to query matches.
        * @param view_builder The ViewBuilder to use.
        * @param parent The parent widget.
@@ -46,24 +42,19 @@ namespace Spire {
       /**
        * Constructs a TagComboBox.
        * @param query_model The model used to query matches.
-       * @param tags The list model which holds a list of tags.
-       * @param current The current value's model.
+       * @param current The current model which holds a list of tags.
        * @param view_builder The ViewBuilder to use.
        * @param parent The parent widget.
        */
       TagComboBox(std::shared_ptr<ComboBox::QueryModel> query_model,
-        std::shared_ptr<AnyListModel> tags,
-        std::shared_ptr<CurrentModel> current,
+        std::shared_ptr<AnyListModel> current,
         ViewBuilder view_builder, QWidget* parent = nullptr);
 
       /** Returns the model used to query matches. */
       const std::shared_ptr<ComboBox::QueryModel>& get_query_model() const;
 
-      /** Returns the list of tags. */
-      const std::shared_ptr<AnyListModel>& get_tags() const;
-
-      /** Returns the current model. */
-      const std::shared_ptr<CurrentModel>& get_current() const;
+      /** Returns the current list of tags. */
+      const std::shared_ptr<AnyListModel>& get_current() const;
 
       /** Sets the placeholder value. */
       void set_placeholder(const QString& placeholder);

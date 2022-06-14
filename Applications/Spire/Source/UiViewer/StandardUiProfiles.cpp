@@ -3297,7 +3297,6 @@ UiProfile Spire::make_tag_box_profile() {
 UiProfile Spire::make_tag_combo_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
-  properties.push_back(make_standard_property<QString>("current"));
   properties.push_back(make_standard_property<QString>("placeholder"));
   properties.push_back(make_standard_property("read_only", false));
   auto overflow_property = define_enum<TagBoxOverflow>(
@@ -3323,21 +3322,6 @@ UiProfile Spire::make_tag_combo_box_profile() {
     auto box = new TagComboBox(model);
     box->setFixedWidth(scale_width(112));
     apply_widget_properties(box, profile.get_properties());
-    auto current_connection = box->get_current()->connect_update_signal(
-      profile.make_event_slot<std::any>("Current"));
-    auto& current = get<QString>("current", profile.get_properties());
-    current.connect_changed_signal([=] (const auto& current) {
-      if(current.isEmpty()) {
-        return;
-      }
-      auto value = model->parse(current);
-      if(value.has_value()) {
-        box->get_current()->set(value);
-      } else {
-        auto current_blocker = shared_connection_block(current_connection);
-        box->get_current()->set(current);
-      }
-    });
     auto& placeholder = get<QString>("placeholder", profile.get_properties());
     placeholder.connect_changed_signal([=] (const auto& placeholder) {
       box->set_placeholder(placeholder);
@@ -3351,8 +3335,31 @@ UiProfile Spire::make_tag_combo_box_profile() {
         style.get(Any() > is_a<TagBox>()).set(value);
       });
     });
+    auto current_filter_slot =
+      profile.make_event_slot<QString>(QString::fromUtf8("Current"));
+    auto print_current = [=] {
+      auto result = QString();
+      for(auto i = 0; i < box->get_current()->get_size(); ++i) {
+        result += displayText(box->get_current()->get(i)) + " ";
+      }
+      current_filter_slot(result);
+    };
+    box->get_current()->connect_operation_signal(
+      [=] (const AnyListModel::Operation& operation) {
+        if(auto transaction = operation.get<AnyListModel::Transaction>()) {
+          print_current();
+        } else {
+          visit(operation,
+            [=] (const AnyListModel::AddOperation& operation) {
+              print_current();
+            },
+            [=] (const AnyListModel::RemoveOperation& operation) {
+              print_current();
+            });
+        }
+      });
     auto submit_filter_slot =
-      profile.make_event_slot<QString>(QString::fromUtf8("SubmitSignal"));
+      profile.make_event_slot<QString>(QString::fromUtf8("Submit"));
     box->connect_submit_signal(
       [=] (const std::shared_ptr<AnyListModel>& submission) {
         auto result = QString();
