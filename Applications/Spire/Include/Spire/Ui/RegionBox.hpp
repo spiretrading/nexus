@@ -30,7 +30,6 @@ namespace Spire {
       /**
        * Constructs a RegionBox.
        * @param query_model The model used to query matches.
-       * @param list The list model which holds a list of region tags.
        * @param current The current value's model.
        * @param parent The parent widget.
        */
@@ -60,14 +59,23 @@ namespace Spire {
       boost::signals2::connection connect_submit_signal(
         const SubmitSignal::slot_type& slot) const;
 
+    protected:
+      bool eventFilter(QObject* watched, QEvent* event) override;
+      bool event(QEvent* event) override;
+      void moveEvent(QMoveEvent* event) override;
+
     private:
       struct RegionQueryModel;
       mutable SubmitSignal m_submit_signal;
       std::shared_ptr<RegionQueryModel> m_query_model;
       std::shared_ptr<CurrentModel> m_current;
       TagComboBox* m_tag_combo_box;
+      bool m_is_external_move;
+      boost::signals2::scoped_connection m_current_connection;
 
+      void on_current(const Nexus::Region& region);
       void on_submit(const std::shared_ptr<AnyListModel>& submission);
+      void on_tags_operation(const AnyListModel::Operation& operation);
   };
 }
 

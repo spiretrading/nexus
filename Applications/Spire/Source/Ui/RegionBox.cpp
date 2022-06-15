@@ -1,7 +1,8 @@
 #include "Spire/Ui/RegionBox.hpp"
+#include <boost/signals2/shared_connection_block.hpp>
+#include <QMoveEvent>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
-#include "Spire/Spire/TransformValueModel.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/RegionListItem.hpp"
 #include "Spire/Ui/TagComboBox.hpp"
@@ -9,9 +10,10 @@
 using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
+using namespace Spire::Styles;
 
 namespace {
-  struct hash {
+  struct RegionHash {
     std::size_t operator()(const Region& region) const {
       auto seed = std::size_t(0);
       boost::hash_combine(seed, boost::hash_range(
@@ -38,15 +40,16 @@ struct RegionBox::RegionQueryModel : ComboBox::QueryModel {
 
   QtPromise<std::vector<std::any>> submit(const QString& query) override {
     return m_source->submit(query).then([] (auto&& source_result) {
-        auto matches = [&] {
+        auto& matches = [&] () -> std::vector<std::any>& {
           try {
             return source_result.Get();
           } catch(const std::exception&) {
-            return std::vector<std::any>();
+            static auto empty_matches = std::vector<std::any>();
+            return empty_matches;
           }
         }();
         auto result = std::vector<std::any>();
-        auto regions = std::unordered_set<Region, hash>();
+        auto regions = std::unordered_set<Region, RegionHash>();
         for(auto& value : matches) {
           auto& region = std::any_cast<Region&>(value);
           if(regions.insert(region).second) {
@@ -57,6 +60,7 @@ struct RegionBox::RegionQueryModel : ComboBox::QueryModel {
     });
   }
 };
+
 RegionBox::RegionBox(std::shared_ptr<ComboBox::QueryModel> query_model,
   QWidget* parent)
   : RegionBox(query_model, std::make_shared<LocalValueModel<Region>>(),
@@ -67,26 +71,28 @@ RegionBox::RegionBox(std::shared_ptr<ComboBox::QueryModel> query_model,
     : QWidget(parent),
       m_query_model(
         std::make_shared<RegionQueryModel>(std::move(query_model))),
-      m_current(std::move(current)) {
-  auto tag_combo_box_current = make_transform_value_model(m_current,
-    [] (const Region& current) {
-      return std::any(current);
-    },
-    [] (const std::any& current) {
-      return std::any_cast<Region>(current);
-    });
+      m_current(std::move(current)),
+      m_is_external_move(false),
+      m_current_connection(m_current->connect_update_signal(
+        std::bind_front(&RegionBox::on_current, this))) {
   m_tag_combo_box = new TagComboBox(m_query_model,
     std::make_shared<ArrayListModel<std::any>>(),
-    tag_combo_box_current, [] (const auto& list, auto index) {
+    [] (const auto& list, auto index) {
       return new RegionListItem(std::any_cast<Region&&>(list->get(index)));
     });
   m_tag_combo_box->connect_submit_signal(
     std::bind_front(&RegionBox::on_submit, this));
+  m_tag_combo_box->get_current()->connect_operation_signal(
+    std::bind_front(&RegionBox::on_tags_operation, this));
+  m_tag_combo_box->installEventFilter(this);
+  m_tag_combo_box->setSizePolicy(QSizePolicy::Expanding,
+    QSizePolicy::Expanding);
   enclose(*this, *m_tag_combo_box);
   setFocusProxy(m_tag_combo_box);
 }
 
-const std::shared_ptr<ComboBox::QueryModel>& RegionBox::get_query_model() const {
+const std::shared_ptr<ComboBox::QueryModel>&
+    RegionBox::get_query_model() const {
   return m_query_model->m_source;
 }
 
@@ -111,14 +117,58 @@ connection RegionBox::connect_submit_signal(
   return m_submit_signal.connect(slot);
 }
 
-void RegionBox::on_submit(const std::shared_ptr<AnyListModel>& submission) {
-  if(submission->get_size() == 1) {
-    m_submit_signal(std::any_cast<Region&&>(submission->get(0)));
-    return;
+bool RegionBox::eventFilter(QObject* watched, QEvent* event) {
+  if(watched == m_tag_combo_box && event->type() == QEvent::LayoutRequest) {
+    adjustSize();
+  } else if(watched == m_tag_combo_box && event->type() == QEvent::Move) {
+    if(!m_is_external_move) {
+      move(parentWidget()->mapFromGlobal(mapToGlobal(m_tag_combo_box->pos())));
+    }
   }
+  return QWidget::eventFilter(watched, event);
+}
+
+bool RegionBox::event(QEvent* event) {
+  if(event->type() == QEvent::LayoutRequest) {
+    if(m_tag_combo_box->minimumSize() != minimumSize()) {
+      m_tag_combo_box->setMinimumSize(minimumSize());
+    }
+    if(m_tag_combo_box->maximumSize().width() != maximumSize().width()) {
+      m_tag_combo_box->setMaximumWidth(maximumSize().width());
+    }
+  }
+  return QWidget::event(event);
+}
+
+void RegionBox::moveEvent(QMoveEvent* event) {
+  m_is_external_move = true;
+  QApplication::sendEvent(m_tag_combo_box, event);
+  m_is_external_move = false;
+  QWidget::moveEvent(event);
+}
+
+void RegionBox::on_current(const Region& region) {
+  while(m_tag_combo_box->get_current()->get_size() != 0) {
+    m_tag_combo_box->get_current()->remove(
+      m_tag_combo_box->get_current()->get_size() - 1);
+  }
+  m_tag_combo_box->get_current()->push(region);
+}
+
+void RegionBox::on_submit(const std::shared_ptr<AnyListModel>& submission) {
   auto region = Nexus::Region();
   for(auto i = 0; i < submission->get_size(); ++i) {
     region = region + std::any_cast<Region&&>(submission->get(i));
   }
   m_submit_signal(region);
+}
+
+void RegionBox::on_tags_operation(const AnyListModel::Operation& operation) {
+  auto region = Nexus::Region();
+  for(auto i = 0; i < m_tag_combo_box->get_current()->get_size(); ++i) {
+    region =
+      region + std::any_cast<Region&&>(m_tag_combo_box->get_current()->get(i));
+  }
+  auto blocker = shared_connection_block(m_current_connection);
+  m_current->set(region);
 }

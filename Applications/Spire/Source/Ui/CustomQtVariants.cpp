@@ -115,6 +115,8 @@ QVariant Spire::to_qvariant(const std::any& value) {
   } else if(value.type() == typeid(std::string)) {
     return QVariant::fromValue(
       QString::fromStdString(std::any_cast<std::string>(value)));
+  } else if(value.type() == typeid(CountryCode)) {
+    return QVariant::fromValue(std::any_cast<CountryCode>(value));
   } else if(value.type() == typeid(CurrencyId)) {
     return QVariant::fromValue(std::any_cast<CurrencyId>(value));
   } else if(value.type() == typeid(MarketToken)) {
@@ -175,6 +177,11 @@ QString Spire::displayText(ptime time) {
 
 QString Spire::displayText(posix_time::time_duration time) {
   return QString::fromStdString(to_simple_string(time));
+}
+
+QString Spire::displayText(CountryCode code) {
+  auto& entry = GetDefaultCountryDatabase().FromCode(code);
+  return QString::fromStdString(entry.m_threeLetterCode.GetData());
 }
 
 QString Spire::displayText(CurrencyId currency) {
@@ -311,6 +318,16 @@ QString Spire::displayText(const Region& region) {
   if(region.IsGlobal()) {
     return QObject::tr("Global");
   }
+  if(region.GetSecurities().size() == 1 && region.GetMarkets().empty() &&
+      region.GetCountries().empty()) {
+    return displayText(*region.GetSecurities().begin());
+  } else if(region.GetMarkets().size() == 1 && region.GetSecurities().empty() &&
+      region.GetCountries().empty()) {
+    return displayText(MarketToken(*region.GetMarkets().begin()));
+  } else if(region.GetCountries().size() == 1 &&
+      region.GetSecurities().empty() && region.GetMarkets().empty()) {
+    return displayText(*region.GetCountries().begin());
+  }
   return QString::fromStdString(region.GetName());
 }
 
@@ -333,9 +350,9 @@ bool Spire::is_equal(const std::any& left, const std::any& right) {
     return false;
   }
   return is_equal_any<bool, int, Quantity, double, gregorian::date, ptime,
-    posix_time::time_duration, std::string, CurrencyId, MarketToken, Money,
-    Region, OrderStatus, OrderType, PositionSideToken, Security, Side,
-    TimeInForce, QColor, QString>(left, right);
+    posix_time::time_duration, std::string, CountryCode, CurrencyId,
+    MarketToken, Money, Region, OrderStatus, OrderType, PositionSideToken,
+    Security, Side, TimeInForce, QColor, QString>(left, right);
 }
 
 CustomVariantItemDelegate::CustomVariantItemDelegate(QObject* parent)
@@ -350,6 +367,8 @@ QString CustomVariantItemDelegate::displayText(const QVariant& value,
       return Spire::displayText(value.value<ptime>());
     } else if(value.canConvert<posix_time::time_duration>()) {
       return Spire::displayText(value.value<posix_time::time_duration>());
+    } else if(value.canConvert<CountryCode>()) {
+      return Spire::displayText(value.value<CountryCode>());
     } else if(value.canConvert<CurrencyId>()) {
       return Spire::displayText(value.value<CurrencyId>());
     } else if(value.canConvert<MarketToken>()) {
@@ -434,6 +453,12 @@ bool CustomVariantSortFilterProxyModel::lessThan(const QModelIndex& left,
   } else if(left_variant.canConvert<TimeInForce>()) {
     return compare(displayText(left_variant.value<TimeInForce>()),
       displayText(right_variant.value<TimeInForce>()), left, right);
+  } else if(left_variant.canConvert<CountryCode>()) {
+    auto& leftEntry = GetDefaultCountryDatabase().FromCode(
+      left_variant.value<CountryCode>());
+    auto& rightEntry = GetDefaultCountryDatabase().FromCode(
+      right_variant.value<CountryCode>());
+    return leftEntry.m_code < rightEntry.m_code;
   } else if(left_variant.canConvert<CurrencyId>()) {
     auto& leftEntry = GetDefaultCurrencyDatabase().FromId(
       left_variant.value<CurrencyId>());

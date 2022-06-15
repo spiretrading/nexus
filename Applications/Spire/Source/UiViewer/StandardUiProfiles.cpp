@@ -2491,11 +2491,17 @@ UiProfile Spire::make_region_box_profile() {
   properties.push_back(make_standard_property<QString>("current"));
   properties.push_back(make_standard_property<QString>("placeholder"));
   properties.push_back(make_standard_property("read_only", false));
+  auto overflow_property = define_enum<TagBoxOverflow>(
+    {{"WRAP", TagBoxOverflow::WRAP}, {"ELIDE", TagBoxOverflow::ELIDE}});
+  properties.push_back(
+    make_standard_enum_property("overflow", overflow_property));
   auto profile = UiProfile("RegionBox", properties, [] (auto& profile) {
     auto securities = std::vector<std::pair<std::string, std::string>>{
       {"MSFT.NSDQ", "Microsoft Corporation"},
       {"MG.TSX", "Magna International Inc."},
       {"MRU.TSX", "Metro Inc."},
+      {"MFC.TSX", "Manulife Financial Corporation"},
+      {"MX.TSX", "Methanex Corporation"},
       {"TSO.ASX", "Tesoro Resources Limited"}};
     auto markets = std::vector<MarketCode>{DefaultMarkets::NSEX(),
       DefaultMarkets::ISE(), DefaultMarkets::CSE(), DefaultMarkets::TSX(),
@@ -2522,23 +2528,17 @@ UiProfile Spire::make_region_box_profile() {
       auto region = Region(country);
       region.SetName(
         GetDefaultCountryDatabase().FromCode(country).m_name);
-      model->add(QString(GetDefaultCountryDatabase().FromCode(country).
-        m_threeLetterCode.GetData()).toLower(), region);
+      model->add(displayText(country).toLower(), region);
       model->add(QString::fromStdString(region.GetName()).toLower(), region);
     }
     auto box = new RegionBox(model);
     box->setFixedWidth(scale_width(112));
     apply_widget_properties(box, profile.get_properties());
-    auto current_connection = box->get_current()->connect_update_signal(
-      profile.make_event_slot<Region>("Current"));
     auto& current = get<QString>("current", profile.get_properties());
     current.connect_changed_signal([=] (const auto& current) {
       auto value = model->parse(current);
       if(value.has_value()) {
         box->get_current()->set(std::any_cast<Region>(value));
-      } else {
-        auto current_blocker = shared_connection_block(current_connection);
-        box->get_current()->set(Region());
       }
     });
     auto& placeholder = get<QString>("placeholder", profile.get_properties());
@@ -2548,27 +2548,41 @@ UiProfile Spire::make_region_box_profile() {
     auto& read_only = get<bool>("read_only", profile.get_properties());
     read_only.connect_changed_signal(
       std::bind_front(&RegionBox::set_read_only, box));
-    auto submit_slot = profile.make_event_slot<QString>("SubmitSignal");
-    box->connect_submit_signal([=] (const Region& region) {
+    auto& overflow = get<TagBoxOverflow>("overflow", profile.get_properties());
+    overflow.connect_changed_signal([=] (auto value) {
+      update_style(*box, [&] (auto& style) {
+        style.get(Any() > is_a<TagBox>()).set(value);
+      });
+    });
+    auto print_region = [] (const Region& region) {
       auto result = QString();
-      result += "Region{Country{";
+      result += "Region{Countries{";
       for(auto& country : region.GetCountries()) {
         result += GetDefaultCountryDatabase().FromCode(country).
           m_threeLetterCode.GetData();
         result += " ";
       }
-      result += "} Market{";
+      result += "} Markets{";
       for(auto& market : region.GetMarkets()) {
         result += displayText(MarketToken(market));
         result += " ";
       }
-      result += "} Security{";
+      result += "} Securities{";
       for(auto& security : region.GetSecurities()) {
         result += displayText(security);
         result += " ";
       }
       result += "}}";
-      submit_slot(result);
+      return result;
+    };
+    auto current_slot = profile.make_event_slot<QString>("Current");
+    box->get_current()->connect_update_signal(
+      [=] (const Region& region) {
+        current_slot(print_region(region));
+      });
+    auto submit_slot = profile.make_event_slot<QString>("Submit");
+    box->connect_submit_signal([=] (const Region& region) {
+      submit_slot(print_region(region));
     });
     return box;
   });
