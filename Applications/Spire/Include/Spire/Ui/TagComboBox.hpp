@@ -97,10 +97,13 @@ namespace Spire {
       Alignment m_last_alignment;
       bool m_is_modified;
       bool m_is_internal_move;
+      bool m_is_in_layout;
       QPoint m_position;
+      QPoint m_bottom_left;
       int m_min_height;
       int m_above_space;
       int m_below_space;
+      int m_max_height;
       boost::signals2::scoped_connection m_focus_connection;
       boost::signals2::scoped_connection m_list_connection;
       boost::signals2::scoped_connection m_tag_box_style_connection;
@@ -110,8 +113,11 @@ namespace Spire {
       void on_focus(FocusObserver::State state);
       void on_tag_box_style();
       void align();
+      void adjust_size();
       void set_position(const QPoint& pos);
       void submit();
+      void update_position_and_space();
+      void update_position();
       void update_space();
   };
 }

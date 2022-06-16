@@ -62,6 +62,7 @@ namespace Spire {
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
       bool event(QEvent* event) override;
+      void showEvent(QShowEvent* event) override;
       void moveEvent(QMoveEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
 
@@ -72,6 +73,7 @@ namespace Spire {
       std::shared_ptr<CurrentModel> m_current;
       TagComboBox* m_tag_combo_box;
       bool m_is_external_move;
+      bool m_is_tag_combo_box_move;
       boost::signals2::scoped_connection m_current_connection;
 
       void on_current(const Nexus::Region& region);

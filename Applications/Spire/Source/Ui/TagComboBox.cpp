@@ -121,9 +121,11 @@ TagComboBox::TagComboBox(std::shared_ptr<ComboBox::QueryModel> query_model,
       m_last_alignment(m_alignment),
       m_is_modified(false),
       m_is_internal_move(false),
+      m_is_in_layout(false),
       m_min_height(0),
       m_above_space(0),
       m_below_space(0),
+      m_max_height(QWIDGETSIZE_MAX),
       m_focus_connection(m_focus_observer.connect_state_signal(
         std::bind_front(&TagComboBox::on_focus, this))) {
   m_tag_box = new TagBox(std::move(current), std::make_shared<LocalTextModel>());
@@ -222,10 +224,18 @@ bool TagComboBox::eventFilter(QObject* watched, QEvent* event) {
     if(m_focus_observer.get_state() != FocusObserver::State::NONE) {
       m_alignment = Alignment::NONE;
       align();
-      adjustSize();
+      adjust_size();
     }
   } else if(watched == m_tag_box && event->type() == QEvent::LayoutRequest) {
-    adjustSize();
+    adjust_size();
+  } else if(watched == parentWidget()) {
+    if(event->type() == QEvent::Move) {
+      if(!m_is_internal_move && m_parent_window) {
+        update_position_and_space();
+      }
+    } else if(event->type() == QEvent::Resize) {
+      adjust_size();
+    }
   }
   return QWidget::eventFilter(watched, event);
 }
@@ -238,27 +248,25 @@ void TagComboBox::showEvent(QShowEvent* event) {
   if(!m_parent_window) {
     m_parent_window = window();
     m_parent_window->installEventFilter(this);
-    m_position =
-      m_parent_window->mapFromGlobal(parentWidget()->mapToGlobal(pos()));
+    m_bottom_left = mapToGlobal(rect().bottomLeft());
+    update_position();
     update_space();
+  }
+  if(auto parent = parentWidget()) {
+    if(auto layout = parent->layout()) {
+      if(layout->indexOf(this) >= 0) {
+        m_is_in_layout = true;
+        parent->installEventFilter(this);
+      }
+    }
   }
   QWidget::showEvent(event);
 }
 
 void TagComboBox::moveEvent(QMoveEvent* event) {
-  if(!m_is_internal_move && m_parent_window) {
-    auto pos_in_window =
-      m_parent_window->mapFromGlobal(parentWidget()->mapToGlobal(pos()));
-    auto bottom_left_in_window =
-      m_parent_window->mapFromGlobal(parentWidget()->mapToGlobal(
-        rect().bottomLeft()));
-    if(pos_in_window.x() != m_position.x() &&
-        m_position.y() + m_min_height != bottom_left_in_window.y()) {
-      m_position = pos_in_window;
-      update_space();
-    }
+  if(!m_is_internal_move && !m_is_in_layout && m_parent_window) {
+    update_position_and_space();
   }
-  m_is_internal_move = false;
   QWidget::moveEvent(event);
 }
 
@@ -332,13 +340,11 @@ void TagComboBox::align() {
   }
   if(sizeHint().height() >= m_below_space && m_above_space > m_below_space) {
     m_alignment = Alignment::ABOVE;
-    setMaximumHeight(m_above_space);
-    m_tag_box->setMaximumHeight(m_above_space);
+    m_max_height = m_above_space;
     set_position({m_position.x(), m_position.y() + m_min_height - height()});
   } else {
     m_alignment = Alignment::BELOW;
-    setMaximumHeight(m_below_space);
-    m_tag_box->setMaximumHeight(m_below_space);
+    m_max_height = m_below_space;
     if(m_last_alignment != m_alignment) {
       set_position(m_position);
     }
@@ -346,15 +352,51 @@ void TagComboBox::align() {
   m_last_alignment = m_alignment;
 }
 
+void TagComboBox::adjust_size() {
+  if(minimumHeight() == maximumHeight()) {
+    m_tag_box->setMaximumHeight(QWIDGETSIZE_MAX);
+    setFixedHeight(maximumHeight());
+    return;
+  }
+  auto height = [&] {
+    auto max_height = std::min(m_max_height, maximumHeight());
+    m_tag_box->setMaximumHeight(max_height);
+    if(sizeHint().height() >= max_height) {
+      return max_height;
+    }
+    return sizeHint().height();
+  }();
+  resize(width(), height);
+}
+
 void TagComboBox::set_position(const QPoint& pos) {
   m_is_internal_move = true;
   move(parentWidget()->mapFromGlobal(m_parent_window->mapToGlobal(pos)));
+  m_is_internal_move = false;
 }
 
 void TagComboBox::submit() {
   copy_list_model(get_current(), m_submission);
   m_is_modified = false;
   m_submit_signal(m_submission);
+}
+
+void TagComboBox::update_position_and_space() {
+  auto bottom_left = mapToGlobal(rect().bottomLeft());
+  if(m_bottom_left != bottom_left) {
+    m_bottom_left = bottom_left;
+    update_position();
+    update_space();
+  }
+}
+
+void TagComboBox::update_position() {
+  if(m_parent_window == parentWidget()) {
+    m_position = pos();
+  } else {
+    m_position =
+      m_parent_window->mapFromGlobal(parentWidget()->mapToGlobal(QPoint(0, 0)));
+  }
 }
 
 void TagComboBox::update_space() {
