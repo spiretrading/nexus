@@ -63,6 +63,7 @@ namespace Spire {
       bool eventFilter(QObject* watched, QEvent* event) override;
       bool event(QEvent* event) override;
       void moveEvent(QMoveEvent* event) override;
+      void resizeEvent(QResizeEvent* event) override;
 
     private:
       struct RegionQueryModel;

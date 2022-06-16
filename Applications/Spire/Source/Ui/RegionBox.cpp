@@ -133,8 +133,8 @@ bool RegionBox::event(QEvent* event) {
     if(m_tag_combo_box->minimumSize() != minimumSize()) {
       m_tag_combo_box->setMinimumSize(minimumSize());
     }
-    if(m_tag_combo_box->maximumSize().width() != maximumSize().width()) {
-      m_tag_combo_box->setMaximumWidth(maximumSize().width());
+    if(m_tag_combo_box->maximumSize() != maximumSize()) {
+      m_tag_combo_box->setMaximumSize(maximumSize());
     }
   }
   return QWidget::event(event);
@@ -145,6 +145,16 @@ void RegionBox::moveEvent(QMoveEvent* event) {
   QApplication::sendEvent(m_tag_combo_box, event);
   m_is_external_move = false;
   QWidget::moveEvent(event);
+}
+
+void RegionBox::resizeEvent(QResizeEvent* event) {
+  if(m_tag_combo_box->minimumSize() != minimumSize()) {
+    m_tag_combo_box->setMinimumSize(minimumSize());
+  }
+  if(m_tag_combo_box->maximumSize() != maximumSize()) {
+    m_tag_combo_box->setMaximumSize(maximumSize());
+  }
+  QWidget::resizeEvent(event);
 }
 
 void RegionBox::on_current(const Region& region) {
