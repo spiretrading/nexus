@@ -7,6 +7,7 @@
 #include "Spire/Blotter/BlotterStatusBar.hpp"
 #include "Spire/Blotter/BlotterTaskView.hpp"
 #include "Spire/Blotter/OrdersToExecutionReportListModel.hpp"
+#include "Spire/Blotter/PositionsModel.hpp"
 #include "Spire/Blotter/TasksToOrderListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Styles/Selectors.hpp"
@@ -14,6 +15,8 @@
 #include "Spire/Ui/SplitView.hpp"
 #include "Spire/Ui/TabView.hpp"
 
+using namespace Nexus;
+using namespace Nexus::RiskService;
 using namespace Spire;
 using namespace Spire::Styles;
 
@@ -25,9 +28,11 @@ BlotterWindow::BlotterWindow(
   auto body = new QWidget();
   set_body(body);
   auto tabs = new TabView();
-  auto positions = new BlotterPositionsView(m_blotter->get_positions());
-  tabs->add(tr("Positions"), *positions);
   auto orders = std::make_shared<TasksToOrderListModel>(m_blotter->get_tasks());
+  auto positions = std::make_shared<PositionsModel>(
+    InventorySnapshot(), orders, blotter->get_valuation());
+  auto positions_view = new BlotterPositionsView(positions);
+  tabs->add(tr("Positions"), *positions_view);
   m_order_log_view = new BlotterOrderLogView(orders);
   tabs->add(tr("Order Log"), *m_order_log_view);
   auto executions = new BlotterExecutionsView(

@@ -42,12 +42,11 @@ namespace Spire {
        * @param positions The set of positions to display.
        * @param parent The parent widget.
        */
-      explicit BlotterPositionsView(
-        std::shared_ptr<BlotterPositionsModel> positions,
+      explicit BlotterPositionsView(std::shared_ptr<PositionsModel> positions,
         QWidget* parent = nullptr);
 
       /** Returns the set of positions displayed. */
-      const std::shared_ptr<BlotterPositionsModel>& get_positions() const;
+      const std::shared_ptr<PositionsModel>& get_positions() const;
 
       /** Connects a slot to the FlattenSignal. */
       boost::signals2::connection connect_flatten_signal(
@@ -64,7 +63,7 @@ namespace Spire {
       };
       mutable FlattenSignal m_flatten_signal;
       mutable ReverseSignal m_reverse_signal;
-      std::shared_ptr<BlotterPositionsModel> m_positions;
+      std::shared_ptr<PositionsModel> m_positions;
   };
 }
 

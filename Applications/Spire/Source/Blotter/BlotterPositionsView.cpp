@@ -16,7 +16,7 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  auto to_table(std::shared_ptr<BlotterPositionsModel> positions) {
+  auto to_table(std::shared_ptr<PositionsModel> positions) {
     return std::make_shared<ArrayTableModel>();
   }
 }
@@ -28,7 +28,7 @@ const QKeySequence BlotterPositionsView::FLATTEN_ALL_KEY_SEQUENCE =
   QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::Key_F);
 
 BlotterPositionsView::BlotterPositionsView(
-    std::shared_ptr<BlotterPositionsModel> positions, QWidget* parent)
+    std::shared_ptr<PositionsModel> positions, QWidget* parent)
     : QWidget(parent),
       m_positions(std::move(positions)) {
   setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -92,7 +92,7 @@ BlotterPositionsView::BlotterPositionsView(
   layout->addWidget(scroll_box);
 }
 
-const std::shared_ptr<BlotterPositionsModel>&
+const std::shared_ptr<PositionsModel>&
     BlotterPositionsView::get_positions() const {
   return m_positions;
 }

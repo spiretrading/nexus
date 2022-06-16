@@ -5,7 +5,6 @@ namespace Spire {
   class BlotterExecutionsView;
   class BlotterModel;
   class BlotterOrderLogView;
-  class BlotterPositionsModel;
   class BlotterPositionsView;
   class BlotterProfitAndLossModel;
   class BlotterProfitAndLossView;
@@ -18,11 +17,14 @@ namespace Spire {
   class CompositeBlotterModel;
   class CompositeBlotterStatusModel;
   class ExecutionReportsToTableModel;
-  class LocalBlotterPositionsModel;
   class LocalBlotterProfitAndLossModel;
+  class LocalValuationModel;
   class OrdersToExecutionReportListModel;
   class OrdersToTableModel;
+  class PositionsModel;
   class TasksToOrderListModel;
+  struct Valuation;
+  class ValuationModel;
 }
 
 #endif

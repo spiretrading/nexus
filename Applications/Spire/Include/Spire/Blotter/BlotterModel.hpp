@@ -65,8 +65,8 @@ namespace Spire {
       /** Returns the list of selected tasks. */
       virtual std::shared_ptr<ListModel<int>> get_task_selection() const = 0;
 
-      /** Returns the blotter's positions. */
-      virtual std::shared_ptr<BlotterPositionsModel> get_positions() = 0;
+      /** Returns the valuations used by this blotter. */
+      virtual std::shared_ptr<ValuationModel> get_valuation() = 0;
 
       /** Returns the blotter's profit and loss. */
       virtual std::shared_ptr<BlotterProfitAndLossModel>
