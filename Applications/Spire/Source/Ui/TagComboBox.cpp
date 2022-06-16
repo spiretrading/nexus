@@ -118,6 +118,7 @@ TagComboBox::TagComboBox(std::shared_ptr<ComboBox::QueryModel> query_model,
       m_input_box(nullptr),
       m_parent_window(nullptr),
       m_alignment(Alignment::NONE),
+      m_last_alignment(m_alignment),
       m_is_modified(false),
       m_is_internal_move(false),
       m_min_height(0),
@@ -338,8 +339,11 @@ void TagComboBox::align() {
     m_alignment = Alignment::BELOW;
     setMaximumHeight(m_below_space);
     m_tag_box->setMaximumHeight(m_below_space);
-    set_position(m_position);
+    if(m_last_alignment != m_alignment) {
+      set_position(m_position);
+    }
   }
+  m_last_alignment = m_alignment;
 }
 
 void TagComboBox::set_position(const QPoint& pos) {

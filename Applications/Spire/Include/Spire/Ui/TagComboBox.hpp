@@ -94,6 +94,7 @@ namespace Spire {
       QWidget* m_drop_down_window;
       Styles::TagBoxOverflow m_overflow;
       Alignment m_alignment;
+      Alignment m_last_alignment;
       bool m_is_modified;
       bool m_is_internal_move;
       QPoint m_position;
