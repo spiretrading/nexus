@@ -177,7 +177,7 @@ void RegionBox::on_current(const Region& region) {
       current->remove(current->get_size() - 1);
     }
   });
-  m_tag_combo_box->get_current()->push(region);
+  current->push(region);
 }
 
 void RegionBox::on_submit(const std::shared_ptr<AnyListModel>& submission) {
