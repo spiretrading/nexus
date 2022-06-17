@@ -73,7 +73,6 @@ RegionBox::RegionBox(std::shared_ptr<ComboBox::QueryModel> query_model,
         std::make_shared<RegionQueryModel>(std::move(query_model))),
       m_current(std::move(current)),
       m_is_external_move(false),
-      m_is_tag_combo_box_move(false),
       m_current_connection(m_current->connect_update_signal(
         std::bind_front(&RegionBox::on_current, this))) {
   m_tag_combo_box = new TagComboBox(m_query_model,
@@ -123,9 +122,7 @@ bool RegionBox::eventFilter(QObject* watched, QEvent* event) {
     resize(m_tag_combo_box->size());
   } else if(watched == m_tag_combo_box && event->type() == QEvent::Move) {
     if(!m_is_external_move) {
-      m_is_tag_combo_box_move = true;
       move(parentWidget()->mapFromGlobal(mapToGlobal(m_tag_combo_box->pos())));
-      m_is_tag_combo_box_move = false;
     }
   } else if(watched == parentWidget() && event->type() == QEvent::Move) {
     QApplication::sendEvent(this, event);
@@ -157,11 +154,9 @@ void RegionBox::showEvent(QShowEvent* event) {
 }
 
 void RegionBox::moveEvent(QMoveEvent* event) {
-  if(!m_is_tag_combo_box_move) {
-    m_is_external_move = true;
-    QApplication::sendEvent(m_tag_combo_box, event);
-    m_is_external_move = false;
-  }
+  m_is_external_move = true;
+  QApplication::sendEvent(m_tag_combo_box, event);
+  m_is_external_move = false;
   QWidget::moveEvent(event);
 }
 
