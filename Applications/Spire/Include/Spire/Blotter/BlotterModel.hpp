@@ -38,7 +38,9 @@ namespace Spire {
   /** The type of list model used for orders displayed in the blotter. */
   using OrderListModel = ListModel<const Nexus::OrderExecutionService::Order*>;
 
-  /** The type of list model used for execution reports displayed in the blotter. */
+  /**
+   * The type of list model used for execution reports displayed in the blotter.
+   */
   using ExecutionReportListModel =
     ListModel<Nexus::OrderExecutionService::ExecutionReportEntry>;
 
