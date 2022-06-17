@@ -194,11 +194,9 @@ bool ListView::eventFilter(QObject* watched, QEvent* event) {
 void ListView::keyPressEvent(QKeyEvent* event) {
   switch(event->key()) {
     case Qt::Key_Home:
-    case Qt::Key_PageUp:
       m_current_controller.navigate_home();
       break;
     case Qt::Key_End:
-    case Qt::Key_PageDown:
       m_current_controller.navigate_end();
       break;
     case Qt::Key_Up:
