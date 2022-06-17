@@ -1,5 +1,6 @@
 #ifndef SPIRE_LOCAL_VALUATION_MODEL_HPP
 #define SPIRE_LOCAL_VALUATION_MODEL_HPP
+#include <unordered_map>
 #include "Spire/Blotter/Blotter.hpp"
 #include "Spire/Blotter/ValuationModel.hpp"
 
@@ -24,6 +25,10 @@ namespace Spire {
 
       std::shared_ptr<CompositeModel<Nexus::Accounting::SecurityValuation>>
         get_valuation(const Nexus::Security& security) const override;
+
+    private:
+      std::unordered_map<Nexus::Security, std::shared_ptr<
+        CompositeModel<Nexus::Accounting::SecurityValuation>>> m_valuations;
   };
 }
 

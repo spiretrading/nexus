@@ -11,6 +11,7 @@ namespace Spire {
 
       /**
        * Constructs a CompositeBlotterModel.
+       * @param markets The market database to use.
        * @param name Represents the name of this blotter.
        * @param is_active Whether this blotter is the active blotter.
        * @param is_pinned Whether this blotter is pinned.
@@ -21,7 +22,8 @@ namespace Spire {
        * @param profit_and_loss Represents this blotter's profit and loss.
        * @param status Represents the blotter's status/summary.
        */
-      CompositeBlotterModel(std::shared_ptr<TextModel> name,
+      CompositeBlotterModel(Nexus::MarketDatabase markets,
+        std::shared_ptr<TextModel> name,
         std::shared_ptr<BooleanModel> is_active,
         std::shared_ptr<BooleanModel> is_pinned,
         std::shared_ptr<BlotterTaskListModel> tasks,
@@ -29,6 +31,8 @@ namespace Spire {
         std::shared_ptr<ValuationModel> valuation,
         std::shared_ptr<BlotterProfitAndLossModel> profit_and_loss,
         std::shared_ptr<BlotterStatusModel> status);
+
+      const Nexus::MarketDatabase& get_markets() const override;
 
       std::shared_ptr<TextModel> get_name() override;
 
@@ -48,6 +52,7 @@ namespace Spire {
       std::shared_ptr<BlotterStatusModel> get_status() override;
 
     private:
+      Nexus::MarketDatabase m_markets;
       std::shared_ptr<TextModel> m_name;
       std::shared_ptr<BooleanModel> m_is_active;
       std::shared_ptr<BooleanModel> m_is_pinned;
@@ -58,19 +63,25 @@ namespace Spire {
       std::shared_ptr<BlotterStatusModel> m_status;
   };
 
-  /** Makes a CompositeBlotterModel using local models as its constituents. */
-  std::shared_ptr<CompositeBlotterModel> make_local_blotter_model();
+  /**
+   * Makes a CompositeBlotterModel using local models as its constituents.
+   * @param markets The market database to use.
+   */
+  std::shared_ptr<CompositeBlotterModel> make_local_blotter_model(
+    Nexus::MarketDatabase markets);
 
   /**
    * Makes a CompositeBlotterModel whose positions, orders, profit and loss,
    * and status is derived from its tasks model.
+   * @param markets The market database to use.
    * @param name Represents the name of this blotter.
    * @param is_active Whether this blotter is the active blotter.
    * @param is_pinned Whether this blotter is pinned.
    * @param tasks The list of tasks belonging to this blotter.
    */
   std::shared_ptr<CompositeBlotterModel> make_derived_blotter_model(
-    std::shared_ptr<TextModel> name, std::shared_ptr<BooleanModel> is_active,
+    Nexus::MarketDatabase markets, std::shared_ptr<TextModel> name,
+    std::shared_ptr<BooleanModel> is_active,
     std::shared_ptr<BooleanModel> is_pinned,
     std::shared_ptr<BlotterTaskListModel> tasks);
 }

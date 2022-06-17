@@ -552,7 +552,7 @@ int main(int argc, char** argv) {
   initialize_resources();
   auto tasks =
     std::make_shared<ArrayListModel<std::shared_ptr<BlotterTaskEntry>>>();
-  auto blotter = make_derived_blotter_model(
+  auto blotter = make_derived_blotter_model(GetDefaultMarketDatabase(),
     std::make_shared<LocalTextModel>("North America"),
     std::make_shared<LocalBooleanModel>(),
     std::make_shared<LocalBooleanModel>(), tasks);

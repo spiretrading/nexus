@@ -18,6 +18,11 @@ TEST_SUITE("LocalValuationModel") {
     auto tst_ask = std::make_shared<LocalValueModel<optional<Money>>>();
     tst_valuation->add(&SecurityValuation::m_askValue, tst_ask);
     auto model = LocalValuationModel();
-    model.add(ParseSecurity("TST.NYSE"), tst_valuation);
+    auto tst = ParseSecurity("TST.NYSE");
+    model.add(tst, tst_valuation);
+    REQUIRE(model.get_valuation(tst) == tst_valuation);
+    auto foo = model.get_valuation(ParseSecurity("FOO.NYSE"));
+    REQUIRE(foo != nullptr);
+    REQUIRE(foo != tst_valuation);
   }
 }

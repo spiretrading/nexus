@@ -1,9 +1,12 @@
 #ifndef SPIRE_POSITIONS_MODEL_HPP
 #define SPIRE_POSITIONS_MODEL_HPP
+#include <unordered_map>
 #include <vector>
+#include "Nexus/Accounting/Portfolio.hpp"
 #include "Nexus/RiskService/InventorySnapshot.hpp"
 #include "Spire/Blotter/Blotter.hpp"
 #include "Spire/Blotter/BlotterModel.hpp"
+#include "Spire/Spire/QtTaskQueue.hpp"
 
 namespace Spire {
 
@@ -30,11 +33,13 @@ namespace Spire {
       /**
        * Constructs a PositionsModel from an initial snapshot updated by a
        * list of orders and using a given valuation for the profit and loss.
+       * @param markets The MarketDatabase used to lookup currencies.
        * @param snapshot The initial position snapshot.
        * @param orders The list of orders used to update the set of positions.
        * @param valuation The valuation used for the unrealized profit and loss.
        */
-      PositionsModel(const Nexus::RiskService::InventorySnapshot& snapshot,
+      PositionsModel(Nexus::MarketDatabase markets,
+        const Nexus::RiskService::InventorySnapshot& snapshot,
         std::shared_ptr<OrderListModel> orders,
         std::shared_ptr<ValuationModel> valuation);
 
@@ -47,9 +52,22 @@ namespace Spire {
 
     private:
       mutable UpdateSignal m_update_signal;
+      std::shared_ptr<OrderListModel> m_orders;
+      std::shared_ptr<ValuationModel> m_valuation;
+      std::unordered_map<Nexus::Security, Entry> m_positions;
+      std::unordered_map<Nexus::Security, boost::signals2::scoped_connection>
+        m_valuation_connections;
+      Nexus::Accounting::Portfolio<Nexus::Accounting::TrueAverageBookkeeper<
+        Nexus::Accounting::Inventory<Nexus::Accounting::Position<
+          Nexus::Security>>>> m_portfolio;
+      QtTaskQueue m_tasks;
 
       PositionsModel(const PositionsModel&) = delete;
       PositionsModel& operator =(const PositionsModel&) = delete;
+      void on_report(const Nexus::OrderExecutionService::Order& order,
+        const Nexus::OrderExecutionService::ExecutionReport& report);
+      void on_valuation(const Nexus::Security& security,
+        const Nexus::Accounting::SecurityValuation& valuation);
   };
 }
 

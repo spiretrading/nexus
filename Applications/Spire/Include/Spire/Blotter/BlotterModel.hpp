@@ -3,6 +3,7 @@
 #include <memory>
 #include <string>
 #include <Beam/Queues/Publisher.hpp>
+#include "Nexus/Definitions/Market.hpp"
 #include "Nexus/OrderExecutionService/ExecutionReportPublisher.hpp"
 #include "Nexus/OrderExecutionService/Order.hpp"
 #include "Spire/Blotter/Blotter.hpp"
@@ -51,6 +52,9 @@ namespace Spire {
   class BlotterModel {
     public:
       virtual ~BlotterModel() = default;
+
+      /** Returns the market database to use. */
+      virtual const Nexus::MarketDatabase& get_markets() const = 0;
 
       /** Returns the name of this blotter. */
       virtual std::shared_ptr<TextModel> get_name() = 0;
