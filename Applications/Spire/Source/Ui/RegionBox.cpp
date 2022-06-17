@@ -171,10 +171,13 @@ void RegionBox::resizeEvent(QResizeEvent* event) {
 }
 
 void RegionBox::on_current(const Region& region) {
-  while(m_tag_combo_box->get_current()->get_size() != 0) {
-    m_tag_combo_box->get_current()->remove(
-      m_tag_combo_box->get_current()->get_size() - 1);
-  }
+  auto& current = m_tag_combo_box->get_current();
+  current->transact([&] {
+    while(m_tag_combo_box->get_current()->get_size() != 0) {
+      m_tag_combo_box->get_current()->remove(
+        m_tag_combo_box->get_current()->get_size() - 1);
+    }
+  });
   m_tag_combo_box->get_current()->push(region);
 }
 
