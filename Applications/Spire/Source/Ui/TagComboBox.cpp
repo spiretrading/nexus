@@ -371,7 +371,11 @@ void TagComboBox::adjust_size() {
 
 void TagComboBox::set_position(const QPoint& pos) {
   m_is_internal_move = true;
-  move(parentWidget()->mapFromGlobal(m_parent_window->mapToGlobal(pos)));
+  if(m_parent_window == parentWidget()) {
+    move(pos);
+  } else {
+    move(parentWidget()->mapFromGlobal(m_parent_window->mapToGlobal(pos)));
+  }
   m_is_internal_move = false;
 }
 

@@ -1,5 +1,4 @@
 #include "Spire/Ui/TagBox.hpp"
-#include <QCoreApplication>
 #include <QKeyEvent>
 #include <QStringBuilder>
 #include "Spire/Spire/Dimensions.hpp"
