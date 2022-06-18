@@ -1,4 +1,5 @@
 #include "Spire/Blotter/BlotterPositionsView.hpp"
+#include "Spire/Blotter/PortfolioToPositionsTableModel.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ArrayTableModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
@@ -14,12 +15,6 @@ using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::Styles;
-
-namespace {
-  auto to_table(std::shared_ptr<PortfolioModel> portfolio) {
-    return std::make_shared<ArrayTableModel>();
-  }
-}
 
 const QKeySequence BlotterPositionsView::FLATTEN_SELECTED_KEY_SEQUENCE =
   QKeySequence(Qt::CTRL + Qt::Key_F);
@@ -70,7 +65,8 @@ BlotterPositionsView::BlotterPositionsView(
   });
   auto layout = make_vbox_layout(this);
   layout->addWidget(command_bar);
-  auto table_view_builder = TableViewBuilder(to_table(m_portfolio));
+  auto table_view_builder = TableViewBuilder(
+    std::make_shared<PortfolioToPositionsTableModel>(m_portfolio));
   table_view_builder.add_header_item(tr("Security"), TableFilter::Filter::NONE);
   table_view_builder.add_header_item(
     tr("Quantity"), tr("Qty"), TableFilter::Filter::NONE);

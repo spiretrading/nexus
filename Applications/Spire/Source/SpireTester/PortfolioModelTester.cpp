@@ -66,6 +66,9 @@ TEST_SUITE("PortfolioModel") {
       update = updates.front();
       updates.pop_front();
       REQUIRE(update.m_unrealizedSecurity == -Money::ONE);
+      tst_ask->set(99 * Money::CENT);
+      QApplication::processEvents();
+      REQUIRE(updates.empty());
     });
   }
 }

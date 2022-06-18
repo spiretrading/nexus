@@ -22,6 +22,7 @@ namespace Spire {
   class OrdersToExecutionReportListModel;
   class OrdersToTableModel;
   class PortfolioModel;
+  class PortfolioToPositionsTableModel;
   class TasksToOrderListModel;
   struct Valuation;
   class ValuationModel;

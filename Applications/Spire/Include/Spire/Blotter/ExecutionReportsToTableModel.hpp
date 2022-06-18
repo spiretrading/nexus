@@ -28,7 +28,6 @@ namespace Spire {
         /** The security of the order the report belongs to. */
         SECURITY,
 
-
         /** The report's order status field. */
         ORDER_STATUS,
 
