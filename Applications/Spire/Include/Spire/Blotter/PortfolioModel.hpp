@@ -1,5 +1,5 @@
-#ifndef SPIRE_POSITIONS_MODEL_HPP
-#define SPIRE_POSITIONS_MODEL_HPP
+#ifndef SPIRE_PORTFOLIO_MODEL_HPP
+#define SPIRE_PORTFOLIO_MODEL_HPP
 #include <unordered_map>
 #include <vector>
 #include "Nexus/Accounting/Portfolio.hpp"
@@ -10,25 +10,20 @@
 
 namespace Spire {
 
-  /** Represents a set of open positions. */
-  class PositionsModel {
+  /** Updates a portfolio based on a list of orders and a valuation. */
+  class PortfolioModel {
     public:
 
-      /** Stores a position and its profit and loss. */
-      struct Entry {
-
-        /** The entry's position. */
-        Nexus::Accounting::Position<Nexus::Security> m_position;
-
-        /** The position's profit and loss. */
-        Nexus::Money m_profit_and_loss;
-      };
+      /** The type of portfolio used. */
+      using Portfolio = Nexus::Accounting::Portfolio<
+        Nexus::Accounting::TrueAverageBookkeeper<Nexus::Accounting::Inventory<
+          Nexus::Accounting::Position<Nexus::Security>>>>;
 
       /**
        * Signals an update to a position.
        * @param entry The updated position entry.
        */
-      using UpdateSignal = Signal<void (const Entry& entry)>;
+      using UpdateSignal = Signal<void (const Portfolio::UpdateEntry& update)>;
 
       /**
        * Constructs a PositionsModel from an initial snapshot updated by a
@@ -38,13 +33,13 @@ namespace Spire {
        * @param orders The list of orders used to update the set of positions.
        * @param valuation The valuation used for the unrealized profit and loss.
        */
-      PositionsModel(Nexus::MarketDatabase markets,
+      PortfolioModel(Nexus::MarketDatabase markets,
         const Nexus::RiskService::InventorySnapshot& snapshot,
         std::shared_ptr<OrderListModel> orders,
         std::shared_ptr<ValuationModel> valuation);
 
-      /** Returns a snapshot of all open positions. */
-      std::vector<Entry> get_positions() const;
+      /** Returns a snapshot of the portfolio. */
+      const Portfolio& get_portfolio() const;
 
       /** Connects a slot to the update signal. */
       boost::signals2::connection connect_update_signal(
@@ -52,9 +47,9 @@ namespace Spire {
 
     private:
       mutable UpdateSignal m_update_signal;
+      Nexus::MarketDatabase m_markets;
       std::shared_ptr<OrderListModel> m_orders;
       std::shared_ptr<ValuationModel> m_valuation;
-      std::unordered_map<Nexus::Security, Entry> m_positions;
       std::unordered_map<Nexus::Security, boost::signals2::scoped_connection>
         m_valuation_connections;
       Nexus::Accounting::Portfolio<Nexus::Accounting::TrueAverageBookkeeper<
@@ -62,8 +57,9 @@ namespace Spire {
           Nexus::Security>>>> m_portfolio;
       QtTaskQueue m_tasks;
 
-      PositionsModel(const PositionsModel&) = delete;
-      PositionsModel& operator =(const PositionsModel&) = delete;
+      PortfolioModel(const PortfolioModel&) = delete;
+      PortfolioModel& operator =(const PortfolioModel&) = delete;
+      void signal_update(const Nexus::Security& security);
       void on_report(const Nexus::OrderExecutionService::Order& order,
         const Nexus::OrderExecutionService::ExecutionReport& report);
       void on_valuation(const Nexus::Security& security,

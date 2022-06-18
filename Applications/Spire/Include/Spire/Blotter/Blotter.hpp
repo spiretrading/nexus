@@ -21,7 +21,7 @@ namespace Spire {
   class LocalValuationModel;
   class OrdersToExecutionReportListModel;
   class OrdersToTableModel;
-  class PositionsModel;
+  class PortfolioModel;
   class TasksToOrderListModel;
   struct Valuation;
   class ValuationModel;

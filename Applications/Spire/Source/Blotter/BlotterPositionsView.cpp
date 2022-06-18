@@ -16,7 +16,7 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  auto to_table(std::shared_ptr<PositionsModel> positions) {
+  auto to_table(std::shared_ptr<PortfolioModel> portfolio) {
     return std::make_shared<ArrayTableModel>();
   }
 }
@@ -28,9 +28,9 @@ const QKeySequence BlotterPositionsView::FLATTEN_ALL_KEY_SEQUENCE =
   QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::Key_F);
 
 BlotterPositionsView::BlotterPositionsView(
-    std::shared_ptr<PositionsModel> positions, QWidget* parent)
+    std::shared_ptr<PortfolioModel> portfolio, QWidget* parent)
     : QWidget(parent),
-      m_positions(std::move(positions)) {
+      m_portfolio(std::move(portfolio)) {
   setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto command_list = std::make_shared<ArrayListModel<Command>>();
   command_list->push(Command::FLATTEN);
@@ -70,7 +70,7 @@ BlotterPositionsView::BlotterPositionsView(
   });
   auto layout = make_vbox_layout(this);
   layout->addWidget(command_bar);
-  auto table_view_builder = TableViewBuilder(to_table(m_positions));
+  auto table_view_builder = TableViewBuilder(to_table(m_portfolio));
   table_view_builder.add_header_item(tr("Security"), TableFilter::Filter::NONE);
   table_view_builder.add_header_item(
     tr("Quantity"), tr("Qty"), TableFilter::Filter::NONE);
@@ -92,9 +92,9 @@ BlotterPositionsView::BlotterPositionsView(
   layout->addWidget(scroll_box);
 }
 
-const std::shared_ptr<PositionsModel>&
-    BlotterPositionsView::get_positions() const {
-  return m_positions;
+const std::shared_ptr<PortfolioModel>&
+    BlotterPositionsView::get_portfolio() const {
+  return m_portfolio;
 }
 
 connection BlotterPositionsView::connect_flatten_signal(
