@@ -56,6 +56,7 @@ namespace Spire {
         Nexus::Accounting::Inventory<Nexus::Accounting::Position<
           Nexus::Security>>>> m_portfolio;
       QtTaskQueue m_tasks;
+      boost::signals2::scoped_connection m_orders_connection;
 
       PortfolioModel(const PortfolioModel&) = delete;
       PortfolioModel& operator =(const PortfolioModel&) = delete;
@@ -64,6 +65,7 @@ namespace Spire {
         const Nexus::OrderExecutionService::ExecutionReport& report);
       void on_valuation(const Nexus::Security& security,
         const Nexus::Accounting::SecurityValuation& valuation);
+      void on_operation(const OrderListModel::Operation& operation);
   };
 }
 

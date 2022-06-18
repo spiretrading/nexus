@@ -38,6 +38,8 @@ PortfolioModel::PortfolioModel(MarketDatabase markets,
   for(auto& report : reports) {
     on_report(*report.first, report.second);
   }
+  m_orders_connection = m_orders->connect_operation_signal(
+    std::bind_front(&PortfolioModel::on_operation, this));
 }
 
 const PortfolioModel::Portfolio& PortfolioModel::get_portfolio() const {
@@ -72,6 +74,7 @@ void PortfolioModel::on_report(
   auto& security = order.GetInfo().m_fields.m_security; 
   if(!m_valuation_connections.contains(security)) {
     auto valuation = m_valuation->get_valuation(security);
+    on_valuation(security, valuation->get());
     auto connection = valuation->connect_update_signal(
       std::bind_front(&PortfolioModel::on_valuation, this, security));
     m_valuation_connections.insert(std::pair(security, std::move(connection)));
@@ -92,8 +95,18 @@ void PortfolioModel::on_valuation(
     } else if(valuation.m_bidValue) {
       return m_portfolio.UpdateBid(security, *valuation.m_bidValue);
     }
+    return false;
   }();
   if(has_update) {
     signal_update(security);
   }
+}
+
+void PortfolioModel::on_operation(const OrderListModel::Operation& operation) {
+  visit(operation,
+    [&] (const OrderListModel::AddOperation& operation) {
+      auto& order = *operation.get_value();
+      order.GetPublisher().Monitor(m_tasks.get_slot<ExecutionReport>(
+        std::bind_front(&PortfolioModel::on_report, this, std::ref(order))));
+    });
 }
