@@ -75,7 +75,6 @@ BlotterPositionsView::BlotterPositionsView(
     tr("Average Price"), tr("Avg Px"), TableFilter::Filter::NONE);
   table_view_builder.add_header_item(
     tr("Profit/Loss"), tr("P/L"), TableFilter::Filter::NONE);
-  table_view_builder.add_header_item(tr("Fees"), TableFilter::Filter::NONE);
   table_view_builder.add_header_item(
     tr("Cost Basis"), tr("CB"), TableFilter::Filter::NONE);
   table_view_builder.add_header_item(

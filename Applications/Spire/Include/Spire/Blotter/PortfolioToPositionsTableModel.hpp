@@ -1,6 +1,10 @@
 #ifndef SPIRE_PORTFOLIO_TO_POSITIONS_TABLE_MODEL_HPP
 #define SPIRE_PORTFOLIO_TO_POSITIONS_TABLE_MODEL_HPP
+#include <unordered_map>
+#include "Nexus/Definitions/Security.hpp"
 #include "Spire/Blotter/Blotter.hpp"
+#include "Spire/Blotter/PortfolioModel.hpp"
+#include "Spire/Spire/ArrayTableModel.hpp"
 #include "Spire/Spire/TableModel.hpp"
 
 namespace Spire {
@@ -24,11 +28,11 @@ namespace Spire {
         /** The position's side. */
         SIDE,
 
-        /** The profit and loss. */
-        PROFIT_AND_LOSS,
-
         /** The average price of the position. */
         AVERAGE_PRICE,
+
+        /** The profit and loss. */
+        PROFIT_AND_LOSS,
 
         /** The position's cost basis. */
         COST_BASIS,
@@ -56,6 +60,14 @@ namespace Spire {
 
       boost::signals2::connection connect_operation_signal(
         const OperationSignal::slot_type& slot) const override;
+
+    private:
+      std::shared_ptr<PortfolioModel> m_portfolio;
+      std::unordered_map<Nexus::Security, int> m_indexes;
+      ArrayTableModel m_table;
+      boost::signals2::scoped_connection m_connection;
+
+      void on_update(const PortfolioModel::Portfolio::UpdateEntry& update);
   };
 }
 

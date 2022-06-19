@@ -10,8 +10,10 @@
 #include "Nexus/OrderExecutionServiceTests/PrimitiveOrderUtilities.hpp"
 #include "Spire/Blotter/BlotterWindow.hpp"
 #include "Spire/Blotter/CompositeBlotterModel.hpp"
+#include "Spire/Blotter/LocalValuationModel.hpp"
 #include "Spire/Canvas/Task.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
+#include "Spire/Spire/ConstantValueModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/QtTaskQueue.hpp"
 #include "Spire/Spire/Resources.hpp"
@@ -31,6 +33,7 @@ using namespace Beam::ServiceLocator;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
+using namespace Nexus::Accounting;
 using namespace Nexus::OrderExecutionService;
 using namespace Nexus::OrderExecutionService::Tests;
 using namespace Spire;
@@ -552,10 +555,21 @@ int main(int argc, char** argv) {
   initialize_resources();
   auto tasks =
     std::make_shared<ArrayListModel<std::shared_ptr<BlotterTaskEntry>>>();
+  auto valuation = std::make_shared<LocalValuationModel>();
+  auto msft_valuation = std::make_shared<CompositeModel<SecurityValuation>>();
+  msft_valuation->add(&SecurityValuation::m_currency,
+    make_constant_value_model(DefaultCurrencies::USD()));
+  auto msft_bid =
+    std::make_shared<LocalValueModel<optional<Money>>>(Money::ONE);
+  msft_valuation->add(&SecurityValuation::m_bidValue, msft_bid);
+  auto msft_ask =
+    std::make_shared<LocalValueModel<optional<Money>>>(Money::ONE);
+  msft_valuation->add(&SecurityValuation::m_askValue, msft_ask);
+  valuation->add(ParseSecurity("MSFT.NSDQ"), msft_valuation);
   auto blotter = make_derived_blotter_model(GetDefaultMarketDatabase(),
     std::make_shared<LocalTextModel>("North America"),
     std::make_shared<LocalBooleanModel>(),
-    std::make_shared<LocalBooleanModel>(), tasks);
+    std::make_shared<LocalBooleanModel>(), tasks, valuation);
   auto controller = BlotterWindowController(blotter);
   application.exec();
 }

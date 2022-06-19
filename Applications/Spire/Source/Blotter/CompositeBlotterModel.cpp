@@ -82,11 +82,11 @@ std::shared_ptr<CompositeBlotterModel> Spire::make_derived_blotter_model(
     MarketDatabase markets, std::shared_ptr<TextModel> name,
     std::shared_ptr<BooleanModel> is_active,
     std::shared_ptr<BooleanModel> is_pinned,
-    std::shared_ptr<BlotterTaskListModel> tasks) {
+    std::shared_ptr<BlotterTaskListModel> tasks,
+    std::shared_ptr<ValuationModel> valuation) {
   return std::make_shared<CompositeBlotterModel>(std::move(markets),
     std::move(name), std::move(is_active), std::move(is_pinned), tasks,
-    std::make_shared<ListMultiSelectionModel>(),
-    std::make_shared<LocalValuationModel>(),
+    std::make_shared<ListMultiSelectionModel>(), std::move(valuation),
     std::make_shared<LocalBlotterProfitAndLossModel>(),
     make_local_blotter_status_model());
 }

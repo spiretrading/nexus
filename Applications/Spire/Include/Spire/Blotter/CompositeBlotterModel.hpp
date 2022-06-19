@@ -78,12 +78,14 @@ namespace Spire {
    * @param is_active Whether this blotter is the active blotter.
    * @param is_pinned Whether this blotter is pinned.
    * @param tasks The list of tasks belonging to this blotter.
+   * @param valuation The valuation to use.
    */
   std::shared_ptr<CompositeBlotterModel> make_derived_blotter_model(
     Nexus::MarketDatabase markets, std::shared_ptr<TextModel> name,
     std::shared_ptr<BooleanModel> is_active,
     std::shared_ptr<BooleanModel> is_pinned,
-    std::shared_ptr<BlotterTaskListModel> tasks);
+    std::shared_ptr<BlotterTaskListModel> tasks,
+    std::shared_ptr<ValuationModel> valuation);
 }
 
 #endif
