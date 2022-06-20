@@ -566,10 +566,14 @@ int main(int argc, char** argv) {
     std::make_shared<LocalValueModel<optional<Money>>>(Money::ONE);
   msft_valuation->add(&SecurityValuation::m_askValue, msft_ask);
   valuation->add(ParseSecurity("MSFT.NSDQ"), msft_valuation);
-  auto blotter = make_derived_blotter_model(GetDefaultMarketDatabase(),
+  auto exchange_rates = ExchangeRateTable();
+  auto blotter = make_derived_blotter_model(
     std::make_shared<LocalTextModel>("North America"),
     std::make_shared<LocalBooleanModel>(),
-    std::make_shared<LocalBooleanModel>(), tasks, valuation);
+    std::make_shared<LocalBooleanModel>(), GetDefaultMarketDatabase(),
+    DefaultCurrencies::USD(), exchange_rates,
+    std::make_shared<LocalMoneyModel>(), std::make_shared<LocalMoneyModel>(),
+    tasks, valuation);
   auto controller = BlotterWindowController(blotter);
   application.exec();
 }

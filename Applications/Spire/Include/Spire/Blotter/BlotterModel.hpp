@@ -3,12 +3,14 @@
 #include <memory>
 #include <string>
 #include <Beam/Queues/Publisher.hpp>
+#include "Nexus/Definitions/ExchangeRateTable.hpp"
 #include "Nexus/Definitions/Market.hpp"
 #include "Nexus/OrderExecutionService/ExecutionReportPublisher.hpp"
 #include "Nexus/OrderExecutionService/Order.hpp"
 #include "Spire/Blotter/Blotter.hpp"
 #include "Spire/Canvas/Task.hpp"
 #include "Spire/Spire/ListModel.hpp"
+#include "Spire/Ui/MoneyBox.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 namespace Spire {
@@ -53,9 +55,6 @@ namespace Spire {
     public:
       virtual ~BlotterModel() = default;
 
-      /** Returns the market database to use. */
-      virtual const Nexus::MarketDatabase& get_markets() const = 0;
-
       /** Returns the name of this blotter. */
       virtual std::shared_ptr<TextModel> get_name() = 0;
 
@@ -64,6 +63,24 @@ namespace Spire {
 
       /** Whether this blotter persists after being closed. */
       virtual std::shared_ptr<BooleanModel> is_pinned() = 0;
+
+      /** Returns the market database to use. */
+      virtual const Nexus::MarketDatabase& get_markets() const = 0;
+
+      /** Returns the blotter's primary currency. */
+      virtual Nexus::CurrencyId get_currency() const = 0;
+
+      /**
+       * Returns the table of exchange rates used to convert currencies to the
+       * blotter's primary currency.
+       */
+      virtual const Nexus::ExchangeRateTable& get_exchange_rates() const = 0;
+
+      /** Returns the account's buying power. */
+      virtual std::shared_ptr<MoneyModel> get_buying_power() = 0;
+
+      /** Returns the account's allowable net loss. */
+      virtual std::shared_ptr<MoneyModel> get_net_loss() = 0;
 
       /** Returns this blotter's tasks. */
       virtual std::shared_ptr<BlotterTaskListModel> get_tasks() = 0;
@@ -77,9 +94,6 @@ namespace Spire {
       /** Returns the blotter's profit and loss. */
       virtual std::shared_ptr<BlotterProfitAndLossModel>
         get_profit_and_loss() = 0;
-
-      /** Returns the blotter's status. */
-      virtual std::shared_ptr<BlotterStatusModel> get_status() = 0;
 
     protected:
 

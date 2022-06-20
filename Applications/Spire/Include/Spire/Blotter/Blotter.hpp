@@ -15,7 +15,6 @@ namespace Spire {
   class BlotterTaskView;
   class BlotterWindow;
   class CompositeBlotterModel;
-  class CompositeBlotterStatusModel;
   class ExecutionReportsToTableModel;
   class LocalBlotterProfitAndLossModel;
   class LocalValuationModel;

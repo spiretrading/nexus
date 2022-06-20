@@ -5,6 +5,7 @@
 #include "Spire/Blotter/BlotterPositionsView.hpp"
 #include "Spire/Blotter/BlotterProfitAndLossView.hpp"
 #include "Spire/Blotter/BlotterStatusBar.hpp"
+#include "Spire/Blotter/BlotterStatusModel.hpp"
 #include "Spire/Blotter/BlotterTaskView.hpp"
 #include "Spire/Blotter/OrdersToExecutionReportListModel.hpp"
 #include "Spire/Blotter/PortfolioModel.hpp"
@@ -50,7 +51,9 @@ BlotterWindow::BlotterWindow(
   });
   auto layout = make_vbox_layout(body);
   layout->addWidget(split_view);
-  auto status_bar = new BlotterStatusBar(m_blotter->get_status());
+  auto status_bar = new BlotterStatusBar(std::make_shared<BlotterStatusModel>(
+    m_blotter->get_currency(), m_blotter->get_exchange_rates(),
+    m_blotter->get_buying_power(), m_blotter->get_net_loss(), portfolio));
   layout->addWidget(status_bar);
   m_name_connection = m_blotter->get_name()->connect_update_signal(
     std::bind_front(&BlotterWindow::on_name_update, this));
