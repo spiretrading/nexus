@@ -104,10 +104,6 @@ namespace {
       return none;
     }
 
-    int get_increment() const {
-      return 1;
-    }
-
     QValidator::State get_state() const {
       return m_state;
     }
@@ -162,10 +158,6 @@ namespace {
 
     optional<int> get_maximum() const {
       return 59;
-    }
-
-    int get_increment() const {
-      return 1;
     }
 
     QValidator::State get_state() const {
@@ -229,7 +221,7 @@ namespace {
       return Decimal("59.999");
     }
 
-    Decimal get_increment() const {
+    optional<Decimal> get_increment() const {
       return Decimal("0.001");
     }
 

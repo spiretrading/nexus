@@ -3,6 +3,7 @@
 #include "Spire/Spire/UnsignedQuantityModel.hpp"
 #include "Spire/Styles/Selectors.hpp"
 
+using namespace boost;
 using namespace Nexus;
 using namespace Spire;
 using namespace Spire::Styles;
@@ -11,7 +12,7 @@ namespace {
   struct QuantityToDecimalModel : ToDecimalModel<Quantity> {
     using ToDecimalModel<Quantity>::ToDecimalModel;
 
-    Decimal get_increment() const override {
+    optional<Decimal> get_increment() const override {
       return Decimal("0.000001");
     }
   };

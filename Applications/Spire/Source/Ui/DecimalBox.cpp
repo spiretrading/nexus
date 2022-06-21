@@ -69,7 +69,7 @@ namespace {
 
   auto make_modifiers(const OptionalDecimalModel& current) {
     auto modifiers = QHash<Qt::KeyboardModifier, Decimal>();
-    modifiers[Qt::NoModifier] = current.get_increment();
+    modifiers[Qt::NoModifier] = current.get_increment().get_value_or(1);
     return modifiers;
   }
 }
@@ -87,7 +87,8 @@ struct DecimalBox::DecimalToTextModel : TextModel {
 
   DecimalToTextModel(std::shared_ptr<OptionalDecimalModel> model)
       : m_model(std::move(model)),
-        m_decimal_places(-log10(m_model->get_increment()).convert_to<int>()),
+        m_decimal_places(
+          -log10(m_model->get_increment().get_value_or(1)).convert_to<int>()),
         m_leading_zeros(0),
         m_trailing_zeros(0),
         m_current(to_string(m_model->get())),
@@ -154,7 +155,7 @@ struct DecimalBox::DecimalToTextModel : TextModel {
 
   QValidator::State test(const QString& value) const override {
     auto decimal_places = 0;
-    auto i = m_model->get_increment();
+    auto i = m_model->get_increment().get_value_or(1);
     while(i < 1) {
       i *= 10;
       ++decimal_places;
@@ -222,7 +223,7 @@ struct DecimalBox::DecimalToTextModel : TextModel {
 
   QValidator::State set(const QString& value) override {
     auto decimal_places = 0;
-    auto i = m_model->get_increment();
+    auto i = m_model->get_increment().get_value_or(1);
     while(i < 1) {
       i *= 10;
       ++decimal_places;

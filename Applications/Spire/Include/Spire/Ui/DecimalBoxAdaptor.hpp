@@ -245,7 +245,8 @@ namespace Spire {
   auto DecimalBoxAdaptor<T>::make_modifiers(
       const ScalarValueModel<boost::optional<Type>>& model) {
     auto modifiers = QHash<Qt::KeyboardModifier, Type>();
-    modifiers[Qt::NoModifier] = model.get_increment();
+    modifiers[Qt::NoModifier] =
+      model.get_increment().get_value_or(static_cast<Type>(1));
     return modifiers;
   }
 

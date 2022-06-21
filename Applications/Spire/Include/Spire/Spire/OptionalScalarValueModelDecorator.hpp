@@ -42,7 +42,7 @@ namespace Spire {
 
       boost::optional<Scalar> get_maximum() const override;
 
-      Scalar get_increment() const override;
+      boost::optional<Scalar> get_increment() const override;
 
     private:
       mutable UpdateSignal m_update_signal;
@@ -114,7 +114,7 @@ namespace Spire {
   }
 
   template<typename T>
-  typename OptionalScalarValueModelDecorator<T>::Scalar
+  boost::optional<typename OptionalScalarValueModelDecorator<T>::Scalar>
       OptionalScalarValueModelDecorator<T>::get_increment() const {
     return m_model->get_increment();
   }

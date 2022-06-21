@@ -3,6 +3,7 @@
 #include "Spire/Styles/Selectors.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
+using namespace boost;
 using namespace Nexus;
 using namespace Spire;
 using namespace Spire::Styles;
@@ -11,7 +12,7 @@ namespace {
   struct MoneyToDecimalModel : ToDecimalModel<Money> {
     using ToDecimalModel<Money>::ToDecimalModel;
 
-    Decimal get_increment() const override {
+    optional<Decimal> get_increment() const override {
       return Decimal("0.000001");
     }
   };
