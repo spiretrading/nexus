@@ -30,6 +30,7 @@ namespace {
 
   auto LIST_VIEW_STYLE(StyleSheet style) {
     style.get(Any()).
+      set(BackgroundColor(QColor(Qt::yellow))).
       set(horizontal_padding(scale_width(8))).
       set(ListItemGap(scale_width(4))).
       set(ListOverflowGap(scale_width(3))).
@@ -123,13 +124,16 @@ TagBox::TagBox(std::shared_ptr<AnyListModel> list,
     std::shared_ptr<TextModel> current, QWidget* parent)
     : QWidget(parent),
       m_model(std::make_shared<PartialListModel>(std::move(list))),
+      m_focus_observer(*this),
       m_overflow(TagBoxOverflow::WRAP),
       m_list_view_overflow(Overflow::WRAP),
       m_is_read_only(false),
       m_tags_width(0),
       m_list_item_gap(0),
       m_list_view_horizontal_padding(0),
-      m_scroll_bar_end_range(0) {
+      m_scroll_bar_end_range(0),
+      m_focus_connection(m_focus_observer.connect_state_signal(
+        std::bind_front(&TagBox::on_focus, this))) {
   m_text_box = new TextBox(std::move(current));
   update_style(*m_text_box, [] (auto& style) {
     style = TEXT_BOX_STYLE(style);
@@ -159,6 +163,10 @@ TagBox::TagBox(std::shared_ptr<AnyListModel> list,
     QSizePolicy::Expanding);
   scrollable_list_box->setFocusPolicy(Qt::NoFocus);
   m_scroll_box = &scrollable_list_box->get_scroll_box();
+  update_style(*scrollable_list_box, [] (auto& style) {
+    style.get(Any()).
+      set(BackgroundColor(QColor(Qt::blue)));
+  });
   m_scroll_box->installEventFilter(this);
   m_vertical_scroll_bar = &m_scroll_box->get_vertical_scroll_bar();
   auto input_box = make_input_box(scrollable_list_box);
@@ -166,7 +174,8 @@ TagBox::TagBox(std::shared_ptr<AnyListModel> list,
   proxy_style(*this, *input_box);
   set_style(*this, INPUT_BOX_STYLE(get_style(*input_box)));
   update_style(*this, [] (auto& style) {
-    style.get(Any()).set(TagBoxOverflow::WRAP);
+    style.get(Any()).set(TagBoxOverflow::WRAP).
+      set(BackgroundColor(QColor(Qt::red)));
   });
   m_style_connection = connect_style_signal(*this, [=] { on_style(); });
   m_ellipses_item = m_list_view->get_list_item(get_tags()->get_size());
@@ -245,20 +254,10 @@ bool TagBox::eventFilter(QObject* watched, QEvent* event) {
       }
       update_tags_width();
     } else if(watched == m_scroll_box && !m_is_read_only &&
-        find_focus_state(*this) != FocusObserver::State::NONE &&
+        m_focus_observer.get_state() != FocusObserver::State::NONE &&
         m_vertical_scroll_bar->get_range().m_end != m_scroll_bar_end_range) {
       scroll_to_end(*m_vertical_scroll_bar);
       m_scroll_bar_end_range = m_vertical_scroll_bar->get_range().m_end;
-    }
-  } else if(watched == m_text_box->focusProxy()) {
-    if(event->type() == QEvent::FocusIn || event->type() == QEvent::FocusOut) {
-      if(is_read_only()) {
-        return QWidget::eventFilter(watched, event);
-      }
-      update();
-      if(event->type() == QEvent::FocusIn) {
-        scroll_to_end(*m_vertical_scroll_bar);
-      }
     }
   }
   return QWidget::eventFilter(watched, event);
@@ -276,7 +275,9 @@ bool TagBox::event(QEvent* event) {
       }
       return size;
     }();
+    auto parent = m_list_view->parentWidget();
     if(maximum_size != m_list_view->parentWidget()->maximumSize()) {
+      qDebug() << "parent:" << parent << " size:" << maximum_size;
       m_list_view->parentWidget()->setMaximumSize(maximum_size);
     }
   }
@@ -321,7 +322,7 @@ QWidget* TagBox::make_tag(
       }
     });
     connect(tag, &QWidget::destroyed, [=] {
-      if(find_focus_state(*this) != FocusObserver::State::NONE) {
+      if(m_focus_observer.get_state() != FocusObserver::State::NONE) {
         setFocus();
       }
     });
@@ -335,6 +336,16 @@ QWidget* TagBox::make_tag(
     return ellipses_box;
   }
   return m_text_box;
+}
+
+void TagBox::on_focus(FocusObserver::State state) {
+  if(is_read_only()) {
+    return;
+  }
+  update();
+  if(state != FocusObserver::State::NONE) {
+    scroll_to_end(*m_vertical_scroll_bar);
+  }
 }
 
 void TagBox::on_operation(const AnyListModel::Operation& operation) {
@@ -355,7 +366,7 @@ void TagBox::on_operation(const AnyListModel::Operation& operation) {
       update_tags_width();
       update_tip();
       update();
-      if(find_focus_state(*this) != FocusObserver::State::NONE) {
+      if(m_focus_observer.get_state() != FocusObserver::State::NONE) {
         setFocus();
       }
     });
@@ -485,7 +496,7 @@ void TagBox::on_text_box_style() {
 void TagBox::update() {
   auto list_view_overflow = [&] {
     if(m_overflow == TagBoxOverflow::ELIDE &&
-        find_focus_state(*this) == FocusObserver::State::NONE) {
+        m_focus_observer.get_state() == FocusObserver::State::NONE) {
       return Overflow::NONE;
     }
     return Overflow::WRAP;
@@ -544,7 +555,7 @@ void TagBox::update_tooltip() {
 
 void TagBox::overflow() {
   if(m_overflow == TagBoxOverflow::ELIDE &&
-      find_focus_state(*this) == FocusObserver::State::NONE) {
+      m_focus_observer.get_state() == FocusObserver::State::NONE) {
     auto text_box_height = m_text_box->sizeHint().height();
     auto visible_area_width = width() - horizontal_length(m_input_box_padding) -
       m_list_view_horizontal_padding;

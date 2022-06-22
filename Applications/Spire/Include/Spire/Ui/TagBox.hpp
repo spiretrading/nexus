@@ -1,6 +1,7 @@
 #ifndef SPIRE_TAG_BOX_HPP
 #define SPIRE_TAG_BOX_HPP
 #include <QWidget>
+#include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/Ui.hpp"
@@ -71,6 +72,7 @@ namespace Styles {
     private:
       struct PartialListModel;
       std::shared_ptr<PartialListModel> m_model;
+      FocusObserver m_focus_observer;
       TextBox* m_text_box;
       ListView* m_list_view;
       ScrollBox* m_scroll_box;
@@ -89,11 +91,13 @@ namespace Styles {
       int m_list_item_gap;
       int m_list_view_horizontal_padding;
       int m_scroll_bar_end_range;
+      boost::signals2::scoped_connection m_focus_connection;
       boost::signals2::scoped_connection m_style_connection;
       boost::signals2::scoped_connection m_list_view_style_connection;
       boost::signals2::scoped_connection m_text_box_style_connection;
 
       QWidget* make_tag(const std::shared_ptr<AnyListModel>& model, int index);
+      void on_focus(FocusObserver::State state);
       void on_operation(const AnyListModel::Operation& operation);
       void on_text_box_current(const QString& current);
       void on_list_view_submit(const std::any& submission);
