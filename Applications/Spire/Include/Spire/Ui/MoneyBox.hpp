@@ -32,6 +32,14 @@ namespace Spire {
       explicit MoneyBox(QWidget* parent = nullptr);
 
       /**
+       * Constructs a MoneyBox.
+       * @param current The current value model.
+       * @param parent The parent widget.
+       */
+      explicit MoneyBox(std::shared_ptr<OptionalMoneyModel> current,
+        QWidget* parent = nullptr);
+
+      /**
        * Constructs a MoneyBox with a LocalOptionalValueModel.
        * @param modifiers The keyboard modifier increments.
        * @param parent The parent widget.

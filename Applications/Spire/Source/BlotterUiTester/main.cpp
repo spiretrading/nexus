@@ -39,29 +39,28 @@ using namespace Nexus::OrderExecutionService::Tests;
 using namespace Spire;
 
 namespace {
+  auto get_security_info_list() {
+    static auto info = [&] {
+      auto info = std::vector<SecurityInfo>();
+      info.emplace_back(ParseSecurity("A.NYSE"), "A Inc.", "", 0);
+      info.emplace_back(ParseSecurity("B.NYSE"), "B Inc.", "", 0);
+      info.emplace_back(ParseSecurity("C.NYSE"), "C Inc.", "", 0);
+      info.emplace_back(ParseSecurity("D.TSX"), "D Inc.", "", 0);
+      info.emplace_back(ParseSecurity("E.TSX"), "E Inc.", "", 0);
+      info.emplace_back(ParseSecurity("F.TSX"), "F Inc.", "", 0);
+      info.emplace_back(ParseSecurity("G.ASX"), "G Inc.", "", 0);
+      info.emplace_back(ParseSecurity("H.ASX"), "H Inc.", "", 0);
+      info.emplace_back(ParseSecurity("I.ASX"), "I Inc.", "", 0);
+      return info;
+    }();
+    return info;
+  }
+
   auto make_security_box() {
-    auto security_infos = std::vector<SecurityInfo>();
-    security_infos.emplace_back(
-      ParseSecurity("MSFT.NSDQ"), "Microsoft Inc.", "", 0);
-    security_infos.emplace_back(ParseSecurity("MRU.TSX"), "Metro Inc.", "", 0);
-    security_infos.emplace_back(
-      ParseSecurity("MG.TSX"), "Magna International Inc.", "", 0);
-    security_infos.emplace_back(
-      ParseSecurity("MGA.TSX"), "Mega Uranium Ltd.", "", 0);
-    security_infos.emplace_back(ParseSecurity("MGAB.TSX"),
-      "Mackenzie Global Fixed Income Alloc ETF", "", 0);
-    security_infos.emplace_back(
-      ParseSecurity("MON.NYSE"), "Monsanto Co.", "", 0);
-    security_infos.emplace_back(
-      ParseSecurity("MFC.TSX"), "Manulife Financial Corporation", "", 0);
-    security_infos.emplace_back(
-      ParseSecurity("MX.TSX"), "Methanex Corporation", "", 0);
     auto model = std::make_shared<LocalComboBoxQueryModel>();
-    for(auto& security_info : security_infos) {
-      model->add(
-        displayText(security_info.m_security).toLower(), security_info);
-      model->add(
-        QString::fromStdString(security_info.m_name).toLower(), security_info);
+    for(auto& info : get_security_info_list()) {
+      model->add(displayText(info.m_security).toLower(), info);
+      model->add(QString::fromStdString(info.m_name).toLower(), info);
     }
     return new SecurityBox(model);
   }
@@ -75,6 +74,33 @@ namespace {
     }
     return new DestinationBox(model);
   }
+
+  struct ValuationWindow : QWidget {
+    std::shared_ptr<LocalValuationModel> m_valuation;
+
+    ValuationWindow(std::shared_ptr<LocalValuationModel> valuation,
+        QWidget* parent = nullptr)
+        : m_valuation(std::move(valuation)) {
+      auto& markets = GetDefaultMarketDatabase();
+      auto layout = new QGridLayout(this);
+      auto row = 0;
+      for(auto& info : get_security_info_list()) {
+        layout->addWidget(make_label(
+          QString::fromStdString(ToString(info.m_security))), row, 0);
+        auto value = std::make_shared<LocalOptionalMoneyModel>(Money::ONE);
+        layout->addWidget(new MoneyBox(value), row, 1);
+        ++row;
+        auto valuation = std::make_shared<CompositeModel<SecurityValuation>>();
+        valuation->add(
+          &SecurityValuation::m_currency, make_constant_value_model(
+            markets.FromCode(info.m_security.GetMarket()).m_currency));
+        valuation->add(&SecurityValuation::m_bidValue, value);
+        valuation->add(&SecurityValuation::m_askValue, value);
+        m_valuation->add(info.m_security, valuation);
+      }
+      resize(scale(230, 330));
+    }
+  };
 
   struct OrderEntryPanel : QWidget {
     TextBox* m_name_box;
@@ -90,9 +116,9 @@ namespace {
         : QWidget(parent) {
       m_name_box = new TextBox("Test Order");
       m_security_box = make_security_box();
-      m_security_box->get_current()->set(ParseSecurity("MSFT.NSDQ"));
+      m_security_box->get_current()->set(ParseSecurity("A.NYSE"));
       m_destination_box = make_destination_box();
-      m_destination_box->get_current()->set("NASDAQ");
+      m_destination_box->get_current()->set("");
       m_order_type_box = make_order_type_box();
       m_side_box = make_side_box();
       m_quantity_box = new QuantityBox();
@@ -204,6 +230,13 @@ namespace {
       layout->addWidget(m_order_entry_panel);
       layout->addWidget(m_execution_report_panel);
     }
+
+    bool eventFilter(QObject* receiver, QEvent* event) override {
+      if(event->type() == QEvent::Close) {
+        QApplication::closeAllWindows();
+      }
+      return QWidget::eventFilter(receiver, event);
+    }
   };
 
   struct MockOrderExecutionClient {
@@ -278,14 +311,17 @@ namespace {
     int m_next_task_id;
     std::shared_ptr<BlotterModel> m_blotter;
     BlotterWindow* m_blotter_window;
+    std::shared_ptr<LocalValuationModel> m_valuation;
+    ValuationWindow* m_valuation_window;
     ControlPanel* m_control_panel;
     MockOrderExecutionClient m_client;
     QtTaskQueue m_tasks;
 
-    BlotterWindowController(
-        std::shared_ptr<BlotterModel> blotter, QWidget* parent = nullptr)
+    BlotterWindowController(std::shared_ptr<BlotterModel> blotter,
+        std::shared_ptr<LocalValuationModel> valuation)
         : m_next_task_id(1),
-          m_blotter(std::move(blotter)) {
+          m_blotter(std::move(blotter)),
+          m_valuation(std::move(valuation)) {
       m_blotter_window = new BlotterWindow(m_blotter);
       m_blotter_window->show();
       m_control_panel = new ControlPanel();
@@ -316,6 +352,11 @@ namespace {
       m_control_panel->
         m_execution_report_panel->m_cancel_button->connect_click_signal(
           std::bind_front(&BlotterWindowController::on_cancel_orders, this));
+      m_valuation_window = new ValuationWindow(m_valuation);
+      m_valuation_window->setAttribute(Qt::WA_ShowWithoutActivating);
+      m_valuation_window->show();
+      m_valuation_window->move(m_blotter_window->pos().x() +
+        m_blotter_window->frameGeometry().width(), m_blotter_window->pos().y());
     }
 
     std::tuple<Aspen::Box<void>,
@@ -552,21 +593,12 @@ int main(int argc, char** argv) {
   auto application = QApplication(argc, argv);
   application.setOrganizationName(QObject::tr("Spire Trading Inc"));
   application.setApplicationName(QObject::tr("Blotter UI Tester"));
+  application.setQuitOnLastWindowClosed(true);
   initialize_resources();
+  auto exchange_rates = ExchangeRateTable();
   auto tasks =
     std::make_shared<ArrayListModel<std::shared_ptr<BlotterTaskEntry>>>();
   auto valuation = std::make_shared<LocalValuationModel>();
-  auto msft_valuation = std::make_shared<CompositeModel<SecurityValuation>>();
-  msft_valuation->add(&SecurityValuation::m_currency,
-    make_constant_value_model(DefaultCurrencies::USD()));
-  auto msft_bid =
-    std::make_shared<LocalValueModel<optional<Money>>>(Money::ONE);
-  msft_valuation->add(&SecurityValuation::m_bidValue, msft_bid);
-  auto msft_ask =
-    std::make_shared<LocalValueModel<optional<Money>>>(Money::ONE);
-  msft_valuation->add(&SecurityValuation::m_askValue, msft_ask);
-  valuation->add(ParseSecurity("MSFT.NSDQ"), msft_valuation);
-  auto exchange_rates = ExchangeRateTable();
   auto blotter = make_derived_blotter_model(
     std::make_shared<LocalTextModel>("North America"),
     std::make_shared<LocalBooleanModel>(),
@@ -574,6 +606,6 @@ int main(int argc, char** argv) {
     DefaultCurrencies::USD(), exchange_rates,
     std::make_shared<LocalMoneyModel>(), std::make_shared<LocalMoneyModel>(),
     tasks, valuation);
-  auto controller = BlotterWindowController(blotter);
+  auto controller = BlotterWindowController(blotter, valuation);
   application.exec();
 }
