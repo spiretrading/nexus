@@ -162,8 +162,9 @@ ScrollBox::ScrollBox(QWidget* body, QWidget* parent)
   match(*m_body, Body());
   m_viewport = new Viewport(*m_body);
   m_body->installEventFilter(this);
-  auto layers = new LayeredWidget();
-  layers->add(m_viewport);
+  m_layers = new LayeredWidget();
+  m_layers->installEventFilter(this);
+  m_layers->add(m_viewport);
   m_scrollable_layer = new ScrollableLayer();
   m_scrollable_layer->setSizePolicy(
     QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -175,8 +176,8 @@ ScrollBox::ScrollBox(QWidget* body, QWidget* parent)
     [=] (auto position) { on_horizontal_scroll(position); });
   m_scrollable_layer->get_horizontal_scroll_bar().installEventFilter(this);
   m_scrollable_layer->get_vertical_scroll_bar().installEventFilter(this);
-  layers->add(m_scrollable_layer);
-  enclose(*this, *layers);
+  m_layers->add(m_scrollable_layer);
+  enclose(*this, *m_layers);
   update_layout();
   m_style_connection = connect_style_signal(*this, [=] { on_style(); });
 }
@@ -289,6 +290,8 @@ bool ScrollBox::eventFilter(QObject* watched, QEvent* event) {
     }
   } else if(event->type() == QEvent::Show || event->type() == QEvent::Hide) {
     update_ranges();
+  } else if(watched == m_layers && event->type() == QEvent::Resize) {
+    m_viewport->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
   }
   return QWidget::eventFilter(watched, event);
 }

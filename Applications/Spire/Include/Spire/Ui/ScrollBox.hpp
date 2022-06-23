@@ -96,6 +96,7 @@ namespace Spire {
       DisplayPolicy m_vertical_display_policy;
       QWidget* m_viewport;
       ScrollableLayer* m_scrollable_layer;
+      LayeredWidget* m_layers;
       QMargins m_padding;
       QMargins m_borders;
       Styles::StyleSheetMap m_border_styles;
