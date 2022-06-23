@@ -30,7 +30,6 @@ namespace {
 
   auto LIST_VIEW_STYLE(StyleSheet style) {
     style.get(Any()).
-      set(BackgroundColor(QColor(Qt::yellow))).
       set(horizontal_padding(scale_width(8))).
       set(ListItemGap(scale_width(4))).
       set(ListOverflowGap(scale_width(3))).
@@ -163,10 +162,6 @@ TagBox::TagBox(std::shared_ptr<AnyListModel> list,
     QSizePolicy::Expanding);
   scrollable_list_box->setFocusPolicy(Qt::NoFocus);
   m_scroll_box = &scrollable_list_box->get_scroll_box();
-  update_style(*scrollable_list_box, [] (auto& style) {
-    style.get(Any()).
-      set(BackgroundColor(QColor(Qt::blue)));
-  });
   m_scroll_box->installEventFilter(this);
   m_vertical_scroll_bar = &m_scroll_box->get_vertical_scroll_bar();
   auto input_box = make_input_box(scrollable_list_box);
@@ -174,8 +169,7 @@ TagBox::TagBox(std::shared_ptr<AnyListModel> list,
   proxy_style(*this, *input_box);
   set_style(*this, INPUT_BOX_STYLE(get_style(*input_box)));
   update_style(*this, [] (auto& style) {
-    style.get(Any()).set(TagBoxOverflow::WRAP).
-      set(BackgroundColor(QColor(Qt::red)));
+    style.get(Any()).set(TagBoxOverflow::WRAP);
   });
   m_style_connection = connect_style_signal(*this, [=] { on_style(); });
   m_ellipses_item = m_list_view->get_list_item(get_tags()->get_size());
@@ -275,9 +269,7 @@ bool TagBox::event(QEvent* event) {
       }
       return size;
     }();
-    auto parent = m_list_view->parentWidget();
     if(maximum_size != m_list_view->parentWidget()->maximumSize()) {
-      qDebug() << "parent:" << parent << " size:" << maximum_size;
       m_list_view->parentWidget()->setMaximumSize(maximum_size);
     }
   }
@@ -563,8 +555,6 @@ void TagBox::overflow() {
     auto difference = m_tags_width - visible_area_width;
     if(difference <= 0) {
       show_all_tags();
-      m_text_box->setFixedSize(visible_area_width - m_tags_width,
-        text_box_height);
     } else {
       auto hidden_length = 0;
       auto is_tag_hidden = false;
