@@ -310,10 +310,10 @@ namespace {
   struct BlotterWindowController {
     int m_next_task_id;
     std::shared_ptr<BlotterModel> m_blotter;
-    BlotterWindow* m_blotter_window;
+    std::unique_ptr<BlotterWindow> m_blotter_window;
     std::shared_ptr<LocalValuationModel> m_valuation;
-    ValuationWindow* m_valuation_window;
-    ControlPanel* m_control_panel;
+    std::unique_ptr<ValuationWindow> m_valuation_window;
+    std::unique_ptr<ControlPanel> m_control_panel;
     MockOrderExecutionClient m_client;
     QtTaskQueue m_tasks;
 
@@ -322,17 +322,17 @@ namespace {
         : m_next_task_id(1),
           m_blotter(std::move(blotter)),
           m_valuation(std::move(valuation)) {
-      m_blotter_window = new BlotterWindow(m_blotter);
+      m_blotter_window = std::make_unique<BlotterWindow>(m_blotter);
       m_blotter_window->show();
-      m_control_panel = new ControlPanel();
-      m_blotter_window->installEventFilter(m_control_panel);
+      m_control_panel = std::make_unique<ControlPanel>();
+      m_blotter_window->installEventFilter(m_control_panel.get());
       m_blotter_window->get_task_view().connect_execute_signal(
         std::bind_front(&BlotterWindowController::on_execute, this));
       m_blotter_window->get_task_view().connect_cancel_signal(
         std::bind_front(&BlotterWindowController::on_cancel_tasks, this));
       m_blotter_window->get_order_log_view().connect_cancel_signal(
-        std::bind_front(&BlotterWindowController::on_cancel_orders_request,
-          this));
+        std::bind_front(
+          &BlotterWindowController::on_cancel_orders_request, this));
       m_control_panel->setAttribute(Qt::WA_ShowWithoutActivating);
       m_control_panel->move(
         m_blotter_window->pos() + QPoint(0, m_blotter_window->size().height()));
@@ -352,7 +352,7 @@ namespace {
       m_control_panel->
         m_execution_report_panel->m_cancel_button->connect_click_signal(
           std::bind_front(&BlotterWindowController::on_cancel_orders, this));
-      m_valuation_window = new ValuationWindow(m_valuation);
+      m_valuation_window = std::make_unique<ValuationWindow>(m_valuation);
       m_valuation_window->setAttribute(Qt::WA_ShowWithoutActivating);
       m_valuation_window->show();
       m_valuation_window->move(m_blotter_window->pos().x() +
@@ -605,7 +605,8 @@ int main(int argc, char** argv) {
     std::make_shared<LocalBooleanModel>(), GetDefaultMarketDatabase(),
     DefaultCurrencies::USD(), exchange_rates,
     std::make_shared<LocalMoneyModel>(), std::make_shared<LocalMoneyModel>(),
-    tasks, valuation);
-  auto controller = BlotterWindowController(blotter, valuation);
+    std::move(tasks), valuation);
+  auto controller =
+    BlotterWindowController(std::move(blotter), std::move(valuation));
   application.exec();
 }

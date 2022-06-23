@@ -55,7 +55,7 @@ void OrdersToExecutionReportListModel::remove(const Order& order) {
   m_reports->transact([&] {
     for(auto i = m_reports->get_size() - 1; i >= 0; --i) {
       if(m_reports->get(i).m_order == &order) {
-        m_orders->remove(i);
+        m_reports->remove(i);
       }
     }
   });
