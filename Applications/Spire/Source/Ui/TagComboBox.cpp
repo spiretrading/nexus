@@ -162,6 +162,10 @@ connection TagComboBox::connect_submit_signal(
   return m_submit_signal.connect(slot);
 }
 
+QSize TagComboBox::sizeHint() const {
+  return m_tag_box->sizeHint();
+}
+
 bool TagComboBox::eventFilter(QObject* watched, QEvent* event) {
   if(watched == m_input_box && event->type() == QEvent::KeyPress) {
     auto& key_event = *static_cast<QKeyEvent*>(event);
@@ -215,7 +219,12 @@ bool TagComboBox::eventFilter(QObject* watched, QEvent* event) {
 
 bool TagComboBox::event(QEvent* event) {
   if(event->type() == QEvent::LayoutRequest) {
-    adjustSize();
+    if(m_tag_box->minimumSize() != minimumSize()) {
+      m_tag_box->setMinimumSize(minimumSize());
+    }
+    if(m_tag_box->maximumSize() != maximumSize()) {
+      m_tag_box->setMaximumSize(maximumSize());
+    }
   }
   return QWidget::event(event);
 }
@@ -226,6 +235,16 @@ void TagComboBox::showEvent(QShowEvent* event) {
     m_input_box->installEventFilter(this);
   }
   QWidget::showEvent(event);
+}
+
+void TagComboBox::resizeEvent(QResizeEvent* event) {
+  if(m_tag_box->minimumSize() != minimumSize()) {
+    m_tag_box->setMinimumSize(minimumSize());
+  }
+  if(m_tag_box->maximumSize() != maximumSize()) {
+    m_tag_box->setMaximumSize(maximumSize());
+  }
+  QWidget::resizeEvent(event);
 }
 
 void TagComboBox::on_combo_box_submit(const std::any& submission) {
