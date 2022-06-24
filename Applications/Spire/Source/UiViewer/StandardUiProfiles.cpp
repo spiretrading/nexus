@@ -37,6 +37,7 @@
 #include "Spire/Ui/DurationBox.hpp"
 #include "Spire/Ui/FilterPanel.hpp"
 #include "Spire/Ui/FocusObserver.hpp"
+#include "Spire/Ui/FocusPopupBox.hpp"
 #include "Spire/Ui/HoverObserver.hpp"
 #include "Spire/Ui/InfoTip.hpp"
 #include "Spire/Ui/IntegerBox.hpp"
@@ -1648,6 +1649,40 @@ UiProfile Spire::make_focus_observer_profile() {
   return profile;
 }
 
+UiProfile Spire::make_focus_popup_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto test_widget_property = define_enum<int>(
+    {{"TagBox", 0}, {"TextBox", 1}});
+  properties.push_back(
+    make_standard_enum_property("widget", test_widget_property));
+  auto profile = UiProfile("FocusPopupBox", properties, [] (auto& profile) {
+    auto& test_widget = get<int>("widget", profile.get_properties());
+    auto widget = [&] () -> QWidget* {
+      auto value = test_widget.get();
+      if(value == 0) {
+        auto tag_box = new TagBox(std::make_shared<ArrayListModel<QString>>(),
+          std::make_shared<LocalTextModel>());
+        tag_box->connect_submit_signal([=] (const auto& value) {
+          if(!value.isEmpty()) {
+            tag_box->get_tags()->push(value);
+          }
+        });
+        return tag_box;
+      } else {
+        return new TextBox();
+      }
+    }();
+    auto box = new FocusPopupBox(*widget);
+    apply_widget_properties(box, profile.get_properties());
+    box->setMinimumSize(0, 0);
+    box->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
+    box->setFixedWidth(scale_width(120));
+    return box;
+  });
+  return profile;
+}
+
 UiProfile Spire::make_hover_observer_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
@@ -3228,19 +3263,20 @@ UiProfile Spire::make_tag_combo_box_profile() {
     model->add(QString("CHN"));
     model->add(QString("JPN"));
     model->add(QString("USA"));
-    auto box = new TagComboBox(model);
+    auto tag_combo_box = new TagComboBox(model);
+    auto box = new FocusPopupBox(*tag_combo_box);
     box->setFixedWidth(scale_width(112));
     apply_widget_properties(box, profile.get_properties());
     auto& placeholder = get<QString>("placeholder", profile.get_properties());
     placeholder.connect_changed_signal([=] (const auto& placeholder) {
-      box->set_placeholder(placeholder);
+      tag_combo_box->set_placeholder(placeholder);
     });
     auto& read_only = get<bool>("read_only", profile.get_properties());
     read_only.connect_changed_signal(
-      std::bind_front(&TagComboBox::set_read_only, box));
+      std::bind_front(&TagComboBox::set_read_only, tag_combo_box));
     auto& overflow = get<TagBoxOverflow>("overflow", profile.get_properties());
     overflow.connect_changed_signal([=] (auto value) {
-      update_style(*box, [&] (auto& style) {
+      update_style(*tag_combo_box, [&] (auto& style) {
         style.get(Any() > is_a<TagBox>()).set(value);
       });
     });
@@ -3248,12 +3284,12 @@ UiProfile Spire::make_tag_combo_box_profile() {
       profile.make_event_slot<QString>(QString::fromUtf8("Current"));
     auto print_current = [=] {
       auto result = QString();
-      for(auto i = 0; i < box->get_current()->get_size(); ++i) {
-        result += displayText(box->get_current()->get(i)) + " ";
+      for(auto i = 0; i < tag_combo_box->get_current()->get_size(); ++i) {
+        result += displayText(tag_combo_box->get_current()->get(i)) + " ";
       }
       current_filter_slot(result);
     };
-    box->get_current()->connect_operation_signal(
+    tag_combo_box->get_current()->connect_operation_signal(
       [=] (const AnyListModel::Operation& operation) {
         if(auto transaction = operation.get<AnyListModel::Transaction>()) {
           print_current();
@@ -3269,7 +3305,7 @@ UiProfile Spire::make_tag_combo_box_profile() {
       });
     auto submit_filter_slot =
       profile.make_event_slot<QString>(QString::fromUtf8("Submit"));
-    box->connect_submit_signal(
+    tag_combo_box->connect_submit_signal(
       [=] (const std::shared_ptr<AnyListModel>& submission) {
         auto result = QString();
         for(auto i = 0; i < submission->get_size(); ++i) {
