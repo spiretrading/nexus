@@ -10,7 +10,7 @@ namespace Spire {
    * Takes a body and allows the body to expand beyond the size of its parent
    * by popping out of its parent.
    */
-  class FocusPopupBox : public QWidget {
+  class PopupBox : public QWidget {
     public:
 
       /**
@@ -18,7 +18,7 @@ namespace Spire {
        * @param body The component to which the functionality is added.
        * @param parent The parent widget.
        */
-      FocusPopupBox(QWidget& body, QWidget* parent = nullptr);
+      PopupBox(QWidget& body, QWidget* parent = nullptr);
 
       /** Returns the body. */
       const QWidget& get_body() const;
@@ -50,6 +50,8 @@ namespace Spire {
       int m_max_height;
       int m_above_space;
       int m_below_space;
+      int m_right_space;
+      mutable QSize m_size_hint;
       boost::signals2::scoped_connection m_focus_connection;
       boost::signals2::scoped_connection m_body_focus_connection;
       boost::signals2::scoped_connection m_position_connection;

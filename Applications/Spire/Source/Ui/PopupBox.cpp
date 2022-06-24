@@ -1,4 +1,4 @@
-#include "Spire/Ui/FocusPopupBox.hpp"
+#include "Spire/Ui/PopupBox.hpp"
 #include <QEvent>
 #include <QResizeEvent>
 #include "Spire/Ui/Layouts.hpp"
@@ -24,7 +24,7 @@ namespace {
   }
 }
 
-FocusPopupBox::FocusPopupBox(QWidget& body, QWidget* parent)
+PopupBox::PopupBox(QWidget& body, QWidget* parent)
     : QWidget(parent),
       m_body(&body),
       m_window(nullptr),
@@ -37,39 +37,46 @@ FocusPopupBox::FocusPopupBox(QWidget& body, QWidget* parent)
       m_max_height(QWIDGETSIZE_MAX),
       m_above_space(0),
       m_below_space(0),
+      m_right_space(0),
       m_focus_connection(m_focus_observer.connect_state_signal(
-        std::bind_front(&FocusPopupBox::on_focus, this))),
+        std::bind_front(&PopupBox::on_focus, this))),
       m_body_focus_connection(m_body_focus_observer.connect_state_signal(
-        std::bind_front(&FocusPopupBox::on_body_focus, this))),
+        std::bind_front(&PopupBox::on_body_focus, this))),
       m_position_connection(m_position_observer.connect_position_signal(
-        std::bind_front(&FocusPopupBox::on_position, this))) {
+        std::bind_front(&PopupBox::on_position, this))) {
   m_body->installEventFilter(this);
   m_body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   enclose(*this, *m_body);
 }
 
-const QWidget& FocusPopupBox::get_body() const {
+const QWidget& PopupBox::get_body() const {
   return *m_body;
 }
 
-QWidget& FocusPopupBox::get_body() {
+QWidget& PopupBox::get_body() {
   return *m_body;
 }
 
-QSize FocusPopupBox::sizeHint() const {
+QSize PopupBox::sizeHint() const {
   if(layout()->count() == 0) {
-    return m_body->sizeHint();
+    return m_size_hint;
   }
-  return layout()->sizeHint();
+  m_size_hint = m_body->sizeHint();
+  return QWidget::sizeHint();
 }
 
-bool FocusPopupBox::eventFilter(QObject* watched, QEvent* event) {
-  if(watched == m_window && event->type() == QEvent::Resize) {
-    update_space();
-    if(layout()->count() == 0 &&
-        m_body_focus_observer.get_state() != FocusObserver::State::NONE) {
-      m_alignment = Alignment::NONE;
-      align();
+bool PopupBox::eventFilter(QObject* watched, QEvent* event) {
+  if(watched == m_window) {
+    if(event->type() == QEvent::Resize) {
+      update_space();
+      if(layout()->count() == 0 &&
+          m_body_focus_observer.get_state() != FocusObserver::State::NONE) {
+        m_alignment = Alignment::NONE;
+        align();
+        adjust_size();
+      }
+    } else if(event->type() == QEvent::LayoutRequest &&
+        layout()->count() == 0) {
       adjust_size();
     }
   } else if(watched == m_body) {
@@ -84,28 +91,26 @@ bool FocusPopupBox::eventFilter(QObject* watched, QEvent* event) {
       align();
     } else if(event->type() == QEvent::LayoutRequest &&
         layout()->count() == 0) {
-      adjust_size();
+     adjust_size();
     }
   }
   return QObject::eventFilter(watched, event);
 }
 
-void FocusPopupBox::resizeEvent(QResizeEvent* event) {
+void PopupBox::resizeEvent(QResizeEvent* event) {
   if(layout()->count() == 0) {
-    m_body->setFixedWidth(event->size().width());
     align();
     adjust_size();
   }
   QWidget::resizeEvent(event);
 }
 
-void FocusPopupBox::on_focus(FocusObserver::State state) {
+void PopupBox::on_focus(FocusObserver::State state) {
   if(state != FocusObserver::State::NONE && layout()->count() > 0) {
     layout()->removeWidget(m_body);
     m_body->setParent(m_window);
     m_body->raise();
     m_body->show();
-    m_body->setFixedWidth(width());
     m_body->setFocus();
     m_alignment = Alignment::NONE;
     m_last_alignment = m_alignment;
@@ -114,7 +119,7 @@ void FocusPopupBox::on_focus(FocusObserver::State state) {
   }
 }
 
-void FocusPopupBox::on_body_focus(FocusObserver::State state) {
+void PopupBox::on_body_focus(FocusObserver::State state) {
   if(state == FocusObserver::State::NONE && layout()->count() == 0) {
     m_body->setMinimumSize(0, 0);
     m_body->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
@@ -122,7 +127,7 @@ void FocusPopupBox::on_body_focus(FocusObserver::State state) {
   }
 }
 
-void FocusPopupBox::on_position(const QPoint& position) {
+void PopupBox::on_position(const QPoint& position) {
   m_position = position;
   if(m_window) {
     auto& window_rect = m_window->geometry();
@@ -138,7 +143,7 @@ void FocusPopupBox::on_position(const QPoint& position) {
   }
 }
 
-void FocusPopupBox::align() {
+void PopupBox::align() {
   if(m_alignment == Alignment::ABOVE) {
     set_position(
       {m_position.x(), m_position.y() + m_min_height - m_body->height()});
@@ -160,27 +165,22 @@ void FocusPopupBox::align() {
   m_last_alignment = m_alignment;
 }
 
-void FocusPopupBox::adjust_size() {
+void PopupBox::adjust_size() {
   if(minimumHeight() == maximumHeight()) {
     m_body->setMaximumHeight(QWIDGETSIZE_MAX);
     return;
   }
-  auto height = [&] {
-    auto max_height = std::min(m_max_height, maximumHeight());
-    m_body->setMaximumHeight(max_height);
-    if(m_body->sizeHint().height() >= max_height) {
-      return max_height;
-    }
-    return m_body->sizeHint().height();
-  }();
-  m_body->resize(m_body->width(), height);
+  m_body->setMaximumSize(std::min(m_right_space, maximumWidth()),
+    std::min(m_max_height, maximumHeight()));
+  m_body->setMinimumWidth(width());
+  m_body->adjustSize();
 }
 
-void FocusPopupBox::set_position(const QPoint& pos) {
+void PopupBox::set_position(const QPoint& pos) {
   m_body->move(m_window->mapFromGlobal(pos));
 }
 
-void FocusPopupBox::update_space() {
+void PopupBox::update_space() {
   if(!m_window) {
     return;
   }
@@ -188,4 +188,5 @@ void FocusPopupBox::update_space() {
   m_above_space = m_position.y() + m_min_height - window_rect.y();
   m_above_space = std::max(m_above_space, 0);
   m_below_space = window_rect.bottom() - m_position.y();
+  m_right_space = window_rect.right() - m_position.x();
 }

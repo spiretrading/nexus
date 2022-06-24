@@ -35,7 +35,6 @@ namespace Spire {
   template<typename T> class EnumBox;
   class FilterPanel;
   class FocusObserver;
-  class FocusPopupBox;
   class GlobalPositionObserver;
   struct Highlight;
   class HoverObserver;
@@ -52,6 +51,7 @@ namespace Spire {
   class OpenFilterPanel;
   template<typename T> class OpenFilterPanelTemplate;
   class OverlayPanel;
+  class PopupBox;
   class PressObserver;
   class RegionListItem;
   class ResponsiveLabel;

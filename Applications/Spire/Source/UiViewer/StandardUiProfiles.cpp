@@ -37,7 +37,6 @@
 #include "Spire/Ui/DurationBox.hpp"
 #include "Spire/Ui/FilterPanel.hpp"
 #include "Spire/Ui/FocusObserver.hpp"
-#include "Spire/Ui/FocusPopupBox.hpp"
 #include "Spire/Ui/HoverObserver.hpp"
 #include "Spire/Ui/InfoTip.hpp"
 #include "Spire/Ui/IntegerBox.hpp"
@@ -54,6 +53,7 @@
 #include "Spire/Ui/OrderTypeBox.hpp"
 #include "Spire/Ui/OrderTypeFilterPanel.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
+#include "Spire/Ui/PopupBox.hpp"
 #include "Spire/Ui/QuantityBox.hpp"
 #include "Spire/Ui/RegionListItem.hpp"
 #include "Spire/Ui/ResponsiveLabel.hpp"
@@ -1649,40 +1649,6 @@ UiProfile Spire::make_focus_observer_profile() {
   return profile;
 }
 
-UiProfile Spire::make_focus_popup_box_profile() {
-  auto properties = std::vector<std::shared_ptr<UiProperty>>();
-  populate_widget_properties(properties);
-  auto test_widget_property = define_enum<int>(
-    {{"TagBox", 0}, {"TextBox", 1}});
-  properties.push_back(
-    make_standard_enum_property("widget", test_widget_property));
-  auto profile = UiProfile("FocusPopupBox", properties, [] (auto& profile) {
-    auto& test_widget = get<int>("widget", profile.get_properties());
-    auto widget = [&] () -> QWidget* {
-      auto value = test_widget.get();
-      if(value == 0) {
-        auto tag_box = new TagBox(std::make_shared<ArrayListModel<QString>>(),
-          std::make_shared<LocalTextModel>());
-        tag_box->connect_submit_signal([=] (const auto& value) {
-          if(!value.isEmpty()) {
-            tag_box->get_tags()->push(value);
-          }
-        });
-        return tag_box;
-      } else {
-        return new TextBox();
-      }
-    }();
-    auto box = new FocusPopupBox(*widget);
-    apply_widget_properties(box, profile.get_properties());
-    box->setMinimumSize(0, 0);
-    box->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
-    box->setFixedWidth(scale_width(120));
-    return box;
-  });
-  return profile;
-}
-
 UiProfile Spire::make_hover_observer_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
@@ -2491,6 +2457,40 @@ UiProfile Spire::make_overlay_panel_profile() {
   return profile;
 }
 
+UiProfile Spire::make_popup_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto test_widget_property = define_enum<int>(
+    {{"TagBox", 0}, {"TextBox", 1}});
+  properties.push_back(
+    make_standard_enum_property("widget", test_widget_property));
+  auto profile = UiProfile("PopupBox", properties, [] (auto& profile) {
+    auto& test_widget = get<int>("widget", profile.get_properties());
+    auto widget = [&] () -> QWidget* {
+      auto value = test_widget.get();
+      if(value == 0) {
+        auto tag_box = new TagBox(std::make_shared<ArrayListModel<QString>>(),
+          std::make_shared<LocalTextModel>());
+        tag_box->connect_submit_signal([=] (const auto& value) {
+          if(!value.isEmpty()) {
+            tag_box->get_tags()->push(value);
+          }
+        });
+        return tag_box;
+      } else {
+        return new TextBox();
+      }
+    }();
+    auto box = new PopupBox(*widget);
+    apply_widget_properties(box, profile.get_properties());
+    box->setMinimumSize(0, 0);
+    box->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
+    box->setMinimumWidth(scale_width(120));
+    return box;
+  });
+  return profile;
+}
+
 UiProfile Spire::make_quantity_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
@@ -3264,8 +3264,8 @@ UiProfile Spire::make_tag_combo_box_profile() {
     model->add(QString("JPN"));
     model->add(QString("USA"));
     auto tag_combo_box = new TagComboBox(model);
-    auto box = new FocusPopupBox(*tag_combo_box);
-    box->setFixedWidth(scale_width(112));
+    auto box = new PopupBox(*tag_combo_box);
+    box->setMinimumWidth(scale_width(112));
     apply_widget_properties(box, profile.get_properties());
     auto& placeholder = get<QString>("placeholder", profile.get_properties());
     placeholder.connect_changed_signal([=] (const auto& placeholder) {

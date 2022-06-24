@@ -132,7 +132,6 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_duration_filter_panel_profile());
   add(make_filter_panel_profile());
   add(make_focus_observer_profile());
-  add(make_focus_popup_box_profile());
   add(make_hover_observer_profile());
   add(make_icon_button_profile());
   add(make_icon_toggle_button_profile());
@@ -156,6 +155,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_order_type_box_profile());
   add(make_order_type_filter_panel_profile());
   add(make_overlay_panel_profile());
+  add(make_popup_box_profile());
   add(make_quantity_box_profile());
   add(make_quantity_filter_panel_profile());
   add(make_radio_button_profile());

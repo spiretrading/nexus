@@ -62,9 +62,6 @@ namespace Spire {
   /** Returns a UiProfile for the FocusObserver. */
   UiProfile make_focus_observer_profile();
 
-  /** Returns a UiProfile for the FocusPopupBox. */
-  UiProfile make_focus_popup_box_profile();
-
   /** Returns a UiProfile for the HoverObserver. */
   UiProfile make_hover_observer_profile();
 
@@ -133,6 +130,9 @@ namespace Spire {
 
   /** Returns a UiProfile for the OverlayPanel. */
   UiProfile make_overlay_panel_profile();
+
+  /** Returns a UiProfile for the PopupBox. */
+  UiProfile make_popup_box_profile();
 
   /** Returns a UiProfile for the QuantityBox. */
   UiProfile make_quantity_box_profile();
