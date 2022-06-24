@@ -309,12 +309,12 @@ namespace {
 
   struct BlotterWindowController {
     int m_next_task_id;
+    MockOrderExecutionClient m_client;
     std::shared_ptr<BlotterModel> m_blotter;
     std::unique_ptr<BlotterWindow> m_blotter_window;
     std::shared_ptr<LocalValuationModel> m_valuation;
     std::unique_ptr<ValuationWindow> m_valuation_window;
     std::unique_ptr<ControlPanel> m_control_panel;
-    MockOrderExecutionClient m_client;
     QtTaskQueue m_tasks;
 
     BlotterWindowController(std::shared_ptr<BlotterModel> blotter,
@@ -596,16 +596,15 @@ int main(int argc, char** argv) {
   application.setQuitOnLastWindowClosed(true);
   initialize_resources();
   auto exchange_rates = ExchangeRateTable();
-  auto tasks =
-    std::make_shared<ArrayListModel<std::shared_ptr<BlotterTaskEntry>>>();
   auto valuation = std::make_shared<LocalValuationModel>();
   auto blotter = make_derived_blotter_model(
     std::make_shared<LocalTextModel>("North America"),
     std::make_shared<LocalBooleanModel>(),
     std::make_shared<LocalBooleanModel>(), GetDefaultMarketDatabase(),
-    DefaultCurrencies::USD(), exchange_rates,
+    DefaultCurrencies::USD(), std::move(exchange_rates),
     std::make_shared<LocalMoneyModel>(), std::make_shared<LocalMoneyModel>(),
-    std::move(tasks), valuation);
+    std::make_shared<ArrayListModel<std::shared_ptr<BlotterTaskEntry>>>(),
+    valuation);
   auto controller =
     BlotterWindowController(std::move(blotter), std::move(valuation));
   application.exec();
