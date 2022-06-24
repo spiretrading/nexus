@@ -238,14 +238,8 @@ bool TagBox::eventFilter(QObject* watched, QEvent* event) {
     }
   } else if(event->type() == QEvent::LayoutRequest) {
     if(watched == m_list_view) {
-      if(m_overflow == TagBoxOverflow::ELIDE &&
-          m_text_box->maximumWidth() == m_text_box->minimumWidth()) {
-        m_list_view->get_list_item(m_model->get_size() - 1)->
-          setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
-      } else {
-        m_list_view->get_list_item(m_model->get_size() - 1)->
-          setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-      }
+      m_list_view->get_list_item(m_model->get_size() - 1)->
+        setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
       update_tags_width();
     } else if(watched == m_scroll_box && !m_is_read_only &&
         m_focus_observer.get_state() != FocusObserver::State::NONE &&
@@ -540,6 +534,9 @@ void TagBox::update_tooltip() {
 void TagBox::overflow() {
   if(m_overflow == TagBoxOverflow::ELIDE &&
       m_focus_observer.get_state() == FocusObserver::State::NONE) {
+    if(m_tags_width == 0) {
+      return;
+    }
     auto text_box_height = m_text_box->sizeHint().height();
     auto visible_area_width = width() - horizontal_length(m_input_box_padding) -
       m_list_view_horizontal_padding;
@@ -547,6 +544,8 @@ void TagBox::overflow() {
     auto difference = m_tags_width - visible_area_width;
     if(difference <= 0) {
       show_all_tags();
+      m_text_box->setFixedSize(visible_area_width - m_tags_width,
+        text_box_height);
     } else {
       auto hidden_length = 0;
       auto is_tag_hidden = false;
