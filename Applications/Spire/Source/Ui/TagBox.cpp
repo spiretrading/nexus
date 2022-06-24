@@ -336,31 +336,27 @@ void TagBox::on_focus(FocusObserver::State state) {
   }
   update();
   if(state != FocusObserver::State::NONE) {
+    m_text_box->setFocusPolicy(Qt::StrongFocus);
+    setFocus();
     scroll_to_end(*m_vertical_scroll_bar);
   }
 }
 
 void TagBox::on_operation(const AnyListModel::Operation& operation) {
+  auto update_all = [=] {
+    m_list_view->setFocusPolicy(Qt::NoFocus);
+    update_placeholder();
+    update_tags_width();
+    update_tip();
+    update();
+  };
   visit(operation,
     [&] (const AnyListModel::AddOperation& operation) {
-      m_list_view->setFocusPolicy(Qt::NoFocus);
-      if(m_text_box->focusPolicy() != Qt::StrongFocus) {
-        m_text_box->setFocusPolicy(Qt::StrongFocus);
-      }
-      update_placeholder();
-      update_tags_width();
-      update_tip();
-      update();
+      update_all();
     },
     [&] (const AnyListModel::RemoveOperation& operation) {
       m_tags.erase(m_tags.begin() + operation.m_index);
-      update_placeholder();
-      update_tags_width();
-      update_tip();
-      update();
-      if(m_focus_observer.get_state() != FocusObserver::State::NONE) {
-        setFocus();
-      }
+      update_all();
     });
 }
 
@@ -374,10 +370,6 @@ void TagBox::on_list_view_submit(const std::any& submission) {
     return;
   }
   m_list_view->setFocusPolicy(Qt::NoFocus);
-  if(m_text_box->focusPolicy() != Qt::StrongFocus) {
-    m_text_box->setFocusPolicy(Qt::StrongFocus);
-  }
-  scroll_to_end(*m_vertical_scroll_bar);
   setFocus();
 }
 
