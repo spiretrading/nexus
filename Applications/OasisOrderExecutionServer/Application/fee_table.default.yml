@@ -106,13 +106,19 @@ ca_equities:
   # LYNX ATS fees based on http://omegaats.com/lynx-ats-pricing/
   # Fees for notes and debentures are not supported.
   #
-  #            Active, Passive
-  #  >= $1.00     X       X
-  #   < $1.00     X       X
+  #                Active, Passive
+  #  >= $1.00         X       X
+  #  Interlisted      X       X
+  #  ETF              X       X
+  #  < $1.00          X       X
+  #  Midpoint         X       X
   lynx:
     fee_table:
-      [[ 0.00023, 0.0000],
-       [ 0.00023, 0.0000]]
+      [[0.00135, -0.00115],
+       [0.00255, -0.00235],
+       [0.00170, -0.00150],
+       [0.00040, -0.00020],
+       [0.00000, -0.00020]]
 
   # Match NOW fees based on http://www.triactcanada.com/fee-schedule.htm
   # Fees for notes and debentures are not supported.
