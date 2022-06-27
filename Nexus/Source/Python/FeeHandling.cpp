@@ -348,15 +348,19 @@ void Nexus::Python::ExportLynxFeeTable(module& module) {
     .def(init())
     .def(init<const LynxFeeTable&>())
     .def_readwrite("fee_table", &LynxFeeTable::m_feeTable);
-  enum_<LynxFeeTable::PriceClass>(outer, "PriceClass")
-    .value("NONE", LynxFeeTable::PriceClass::NONE)
-    .value("DEFAULT", LynxFeeTable::PriceClass::DEFAULT)
-    .value("SUBDOLLAR", LynxFeeTable::PriceClass::SUBDOLLAR);
+  enum_<LynxFeeTable::Classification>(outer, "Classification")
+    .value("NONE", LynxFeeTable::Classification::NONE)
+    .value("DEFAULT", LynxFeeTable::Classification::DEFAULT)
+    .value("INTERLISTED", LynxFeeTable::Classification::INTERLISTED)
+    .value("ETF", LynxFeeTable::Classification::ETF)
+    .value("SUBDOLLAR", LynxFeeTable::Classification::SUBDOLLAR)
+    .value("MIDPOINT", LynxFeeTable::Classification::MIDPOINT);
   module.def("parse_lynx_fee_table", &ParseLynxFeeTable);
+  module.def("is_lynx_midpoint_order", &IsLynxMidpointOrder);
   module.def("lookup_fee", static_cast<Money (*)(const LynxFeeTable&,
-    LiquidityFlag, LynxFeeTable::PriceClass)>(&LookupFee));
+    LiquidityFlag, LynxFeeTable::Classification)>(&LookupFee));
   module.def("calculate_fee", static_cast<Money (*)(const LynxFeeTable&,
-    const ExecutionReport&)>(&CalculateFee));
+    const OrderFields&, const ExecutionReport&)>(&CalculateFee));
 }
 
 void Nexus::Python::ExportMatnFeeTable(module& module) {
@@ -399,19 +403,27 @@ void Nexus::Python::ExportNeoeFeeTable(module& module) {
     .def_readwrite("general_fee_table", &NeoeFeeTable::m_generalFeeTable)
     .def_readwrite("interlisted_fee_table",
       &NeoeFeeTable::m_interlistedFeeTable)
+    .def_readwrite("etf_fee_table", &NeoeFeeTable::m_etfFeeTable)
     .def_readwrite("neoe_book_fee_table", &NeoeFeeTable::m_neoBookFeeTable);
   enum_<NeoeFeeTable::PriceClass>(outer, "PriceClass")
     .value("NONE", NeoeFeeTable::PriceClass::NONE)
     .value("DEFAULT", NeoeFeeTable::PriceClass::DEFAULT)
     .value("SUBDOLLAR", NeoeFeeTable::PriceClass::SUBDOLLAR);
+  enum_<NeoeFeeTable::Classification>(outer, "Classification")
+    .value("GENERAL", NeoeFeeTable::Classification::GENERAL)
+    .value("INTERLISTED", NeoeFeeTable::Classification::INTERLISTED)
+    .value("ETF", NeoeFeeTable::Classification::ETF);
   module.def("parse_neoe_fee_table", &ParseNeoeFeeTable);
   module.def("is_neo_book_order", &IsNeoBookOrder);
   module.def("lookup_general_fee", static_cast<Money (*)(const NeoeFeeTable&,
     LiquidityFlag, NeoeFeeTable::PriceClass)>(&LookupGeneralFee));
   module.def("lookup_interlisted_fee", &LookupInterlistedFee);
+  module.def("lookup_etf_fee", static_cast<Money (*)(const NeoeFeeTable&,
+    LiquidityFlag, NeoeFeeTable::PriceClass)>(&LookupEtfFee));
   module.def("lookup_neo_book_fee", &LookupNeoBookFee);
-  module.def("calculate_fee", static_cast<Money (*)(const NeoeFeeTable&, bool,
-    const OrderFields&, const ExecutionReport&)>(&CalculateFee));
+  module.def("calculate_fee", static_cast<Money (*)(const NeoeFeeTable&,
+    NeoeFeeTable::Classification, const OrderFields&, const ExecutionReport&)>(
+      &CalculateFee));
 }
 
 void Nexus::Python::ExportNexFeeTable(module& module) {

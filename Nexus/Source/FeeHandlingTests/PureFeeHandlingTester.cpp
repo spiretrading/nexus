@@ -34,7 +34,7 @@ namespace {
       feeTable.m_tsxVentureListedFeeTable[i][
         static_cast<int>(LiquidityFlag::PASSIVE)] *= -1;
     }
-    feeTable.m_tsxVentureListedSubdimeCap = 1000 * Money::CENT;
+    feeTable.m_tsxVentureListedSubdimeCap = 1000 * Money::ONE;
     feeTable.m_oddLot = 12 * Money::ONE;
     feeTable.m_designatedSecurities.insert(GetDesignatedSecurity());
     return feeTable;
@@ -249,18 +249,19 @@ TEST_SUITE("PureFeeHandling") {
       executionReport.m_liquidityFlag = "?";
       auto calculatedFee = CalculateFee(feeTable, GetUnlistedSecurity(),
         executionReport);
-      auto expectedFee = executionReport.m_lastQuantity * LookupTsxListedFee(
-        feeTable, LiquidityFlag::ACTIVE, PureFeeTable::PriceClass::DEFAULT);
+      auto expectedFee = executionReport.m_lastQuantity *
+        LookupTsxVentureListedFee(
+          feeTable, LiquidityFlag::ACTIVE, PureFeeTable::PriceClass::DEFAULT);
       REQUIRE(calculatedFee == expectedFee);
     }
   }
 
   TEST_CASE("empty_liquidity_flag") {
     auto feeTable = MakeFeeTable();
-    auto expectedFee = LookupTsxListedFee(feeTable, LiquidityFlag::ACTIVE,
-      PureFeeTable::PriceClass::DEFAULT);
+    auto expectedFee = LookupTsxVentureListedFee(
+      feeTable, LiquidityFlag::ACTIVE, PureFeeTable::PriceClass::DEFAULT);
     TestPerShareFeeCalculation(feeTable, Money::ONE, 100, LiquidityFlag::NONE,
-      std::bind(CalculateFee, std::placeholders::_1, GetTsxSecurity(),
+      std::bind(CalculateFee, std::placeholders::_1, GetTsxVentureSecurity(),
         std::placeholders::_2), expectedFee);
     TestPerShareFeeCalculation(feeTable, Money::ONE, 100, LiquidityFlag::NONE,
       std::bind(CalculateFee, std::placeholders::_1, GetUnlistedSecurity(),

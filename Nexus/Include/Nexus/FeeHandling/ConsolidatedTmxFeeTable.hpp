@@ -212,7 +212,8 @@ namespace Nexus {
     if(!lynxConfig) {
       BOOST_THROW_EXCEPTION(std::runtime_error("Fee table for LYNX missing."));
     } else {
-      feeTable.m_lynxFeeTable = ParseLynxFeeTable(lynxConfig);
+      feeTable.m_lynxFeeTable = ParseLynxFeeTable(
+        lynxConfig, feeTable.m_etfs, feeTable.m_interlisted);
     }
     auto matnConfig = config["matn"];
     if(!matnConfig) {
@@ -339,7 +340,8 @@ namespace Nexus {
         return CalculateFee(feeTable.m_xcx2FeeTable, order.GetInfo().m_fields,
           executionReport);
       } else if(lastMarket == DefaultMarkets::LYNX()) {
-        return CalculateFee(feeTable.m_lynxFeeTable, executionReport);
+        return CalculateFee(
+          feeTable.m_lynxFeeTable, order.GetInfo().m_fields, executionReport);
       } else if(lastMarket == DefaultMarkets::MATN()) {
         auto classification = [&] {
           if(Beam::Contains(feeTable.m_etfs,
@@ -352,9 +354,18 @@ namespace Nexus {
         return CalculateFee(feeTable.m_matnFeeTable, classification,
           executionReport);
       } else if(lastMarket == DefaultMarkets::NEOE()) {
-        auto isInterlisted = Beam::Contains(feeTable.m_interlisted,
-          order.GetInfo().m_fields.m_security);
-        return CalculateFee(feeTable.m_neoeFeeTable, isInterlisted,
+        auto classification = [&] {
+          if(Beam::Contains(
+              feeTable.m_interlisted, order.GetInfo().m_fields.m_security)) {
+            return NeoeFeeTable::Classification::INTERLISTED;
+          } else if(Beam::Contains(
+              feeTable.m_etfs, order.GetInfo().m_fields.m_security)) {
+            return NeoeFeeTable::Classification::ETF;
+          } else {
+            return NeoeFeeTable::Classification::GENERAL;
+          }
+        }();
+        return CalculateFee(feeTable.m_neoeFeeTable, classification,
           order.GetInfo().m_fields, executionReport);
       } else if(lastMarket == DefaultMarkets::OMGA()) {
         auto isEtf = Beam::Contains(feeTable.m_etfs,

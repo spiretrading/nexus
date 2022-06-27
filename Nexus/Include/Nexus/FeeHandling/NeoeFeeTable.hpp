@@ -23,11 +23,27 @@ namespace Nexus {
       SUBDOLLAR,
 
       /** Price >= $1.00. */
-      DEFAULT,
+      DEFAULT
     };
 
     /** The number of price classes enumerated. */
     static constexpr auto PRICE_CLASS_COUNT = std::size_t(2);
+
+    /** Enumerates the listing classifications. */
+    enum class Classification {
+
+      /** General listing. */
+      GENERAL,
+
+      /** Interlisted security. */
+      INTERLISTED,
+
+      /** ETF listing. */
+      ETF
+    };
+
+    /** The number of listing classifications. */
+    static constexpr auto CLASSIFICATION_COUNT = std::size_t(3);
 
     /** The general fee table. */
     std::array<std::array<Money, LIQUIDITY_FLAG_COUNT>, PRICE_CLASS_COUNT>
@@ -36,6 +52,10 @@ namespace Nexus {
     /** The interlisted fee table. */
     std::array<std::array<Money, LIQUIDITY_FLAG_COUNT>, PRICE_CLASS_COUNT>
       m_interlistedFeeTable;
+
+    /** The ETF fee table. */
+    std::array<std::array<Money, LIQUIDITY_FLAG_COUNT>, PRICE_CLASS_COUNT>
+      m_etfFeeTable;
 
     /** The NEO book fee table. */
     std::array<std::array<Money, LIQUIDITY_FLAG_COUNT>, PRICE_CLASS_COUNT>
@@ -49,12 +69,14 @@ namespace Nexus {
    */
   inline NeoeFeeTable ParseNeoeFeeTable(const YAML::Node& config) {
     auto feeTable = NeoeFeeTable();
-    ParseFeeTable(config, "general_table",
-      Beam::Store(feeTable.m_generalFeeTable));
-    ParseFeeTable(config, "interlisted_table",
-      Beam::Store(feeTable.m_interlistedFeeTable));
-    ParseFeeTable(config, "neo_book_table",
-      Beam::Store(feeTable.m_neoBookFeeTable));
+    ParseFeeTable(
+      config, "general_table", Beam::Store(feeTable.m_generalFeeTable));
+    ParseFeeTable(
+      config, "interlisted_table", Beam::Store(feeTable.m_interlistedFeeTable));
+    ParseFeeTable(
+      config, "etf_table", Beam::Store(feeTable.m_interlistedFeeTable));
+    ParseFeeTable(
+      config, "neo_book_table", Beam::Store(feeTable.m_neoBookFeeTable));
     return feeTable;
   }
 
@@ -97,6 +119,20 @@ namespace Nexus {
   }
 
   /**
+   * Looks up an ETF fee.
+   * @param feeTable The NeoeFeeTable used to lookup the fee.
+   * @param liquidityFlag The trade's LiquidityFlag.
+   * @param priceClass The trade's PriceClass.
+   * @return The fee corresponding to the specified <i>liquidityFlag</i> and
+   *         <i>priceClass</i>.
+   */
+  inline Money LookupEtfFee(const NeoeFeeTable& feeTable,
+      LiquidityFlag liquidityFlag, NeoeFeeTable::PriceClass priceClass) {
+    return feeTable.m_etfFeeTable[static_cast<int>(priceClass)][
+      static_cast<int>(liquidityFlag)];
+  }
+
+  /**
    * Looks up a NEO book fee.
    * @param feeTable The NeoeFeeTable used to lookup the fee.
    * @param liquidityFlag The trade's LiquidityFlag.
@@ -112,13 +148,13 @@ namespace Nexus {
   /**
    * Calculates the fee on a trade executed on NEOE.
    * @param feeTable The NeoeFeeTable used to calculate the fee.
-   * @param isInterlisted Whether the calculation is for an interlisted
-   *        security.
+   * @param classification The listing classification of the security.
    * @param orderFields The OrderFields submitted for the Order.
    * @param executionReport The ExecutionReport to calculate the fee for.
    * @return The fee calculated for the specified trade.
    */
-  inline Money CalculateFee(const NeoeFeeTable& feeTable, bool isInterlisted,
+  inline Money CalculateFee(const NeoeFeeTable& feeTable,
+      NeoeFeeTable::Classification classification,
       const OrderExecutionService::OrderFields& orderFields,
       const OrderExecutionService::ExecutionReport& executionReport) {
     if(executionReport.m_lastQuantity == 0) {
@@ -151,8 +187,10 @@ namespace Nexus {
     auto fee = [&] {
       if(IsNeoBookOrder(orderFields)) {
         return LookupNeoBookFee(feeTable, liquidityFlag, priceClass);
-      } else if(isInterlisted) {
+      } else if(classification == NeoeFeeTable::Classification::INTERLISTED) {
         return LookupInterlistedFee(feeTable, liquidityFlag, priceClass);
+      } else if(classification == NeoeFeeTable::Classification::ETF) {
+        return LookupEtfFee(feeTable, liquidityFlag, priceClass);
       } else {
         return LookupGeneralFee(feeTable, liquidityFlag, priceClass);
       }
