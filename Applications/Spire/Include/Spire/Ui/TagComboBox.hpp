@@ -99,6 +99,7 @@ namespace Spire {
       void on_focus(FocusObserver::State state);
       void on_tag_box_style();
       void submit();
+      void update_min_max_size();
   };
 }
 

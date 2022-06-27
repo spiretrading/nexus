@@ -6,24 +6,6 @@
 using namespace boost::signals2;
 using namespace Spire;
 
-namespace {
-  auto is_widget_in_layout(const QLayout& layout, QWidget* widget) {
-    for(auto i = 0; i < layout.count(); ++i) {
-      auto item = layout.itemAt(i);
-      if(!item) {
-        continue;
-      }
-      if(item->widget() == widget) {
-        return true;
-      }
-      if(item->layout()) {
-        return is_widget_in_layout(*item->layout(), widget);
-      }
-    }
-    return false;
-  }
-}
-
 PopupBox::PopupBox(QWidget& body, QWidget* parent)
     : QWidget(parent),
       m_body(&body),
@@ -32,7 +14,6 @@ PopupBox::PopupBox(QWidget& body, QWidget* parent)
       m_body_focus_observer(*m_body),
       m_position_observer(*this),
       m_alignment(Alignment::NONE),
-      m_last_alignment(m_alignment),
       m_min_height(m_body->sizeHint().height()),
       m_max_height(QWIDGETSIZE_MAX),
       m_above_space(0),
@@ -58,7 +39,7 @@ QWidget& PopupBox::get_body() {
 }
 
 QSize PopupBox::sizeHint() const {
-  if(layout()->count() == 0) {
+  if(has_popped_up()) {
     return m_size_hint;
   }
   m_size_hint = m_body->sizeHint();
@@ -69,14 +50,12 @@ bool PopupBox::eventFilter(QObject* watched, QEvent* event) {
   if(watched == m_window) {
     if(event->type() == QEvent::Resize) {
       update_space();
-      if(layout()->count() == 0 &&
-          m_body_focus_observer.get_state() != FocusObserver::State::NONE) {
+      if(has_popped_up()) {
         m_alignment = Alignment::NONE;
         align();
         adjust_size();
       }
-    } else if(event->type() == QEvent::LayoutRequest &&
-        layout()->count() == 0) {
+    } else if(event->type() == QEvent::LayoutRequest && has_popped_up()) {
       adjust_size();
     }
   } else if(watched == m_body) {
@@ -86,41 +65,39 @@ bool PopupBox::eventFilter(QObject* watched, QEvent* event) {
         m_window->installEventFilter(this);
         update_space();
       }
-    } else if(event->type() == QEvent::Resize && layout()->count() == 0 &&
-        m_focus_observer.get_state() != FocusObserver::State::NONE) {
-      align();
-    } else if(event->type() == QEvent::LayoutRequest &&
-        layout()->count() == 0) {
-     adjust_size();
+    } else if(event->type() == QEvent::LayoutRequest && has_popped_up()) {
+      adjust_size();
     }
   }
   return QObject::eventFilter(watched, event);
 }
 
 void PopupBox::resizeEvent(QResizeEvent* event) {
-  if(layout()->count() == 0) {
+  if(has_popped_up()) {
     align();
     adjust_size();
   }
   QWidget::resizeEvent(event);
 }
 
+bool PopupBox::has_popped_up() const {
+  return layout()->count() == 0;
+}
+
 void PopupBox::on_focus(FocusObserver::State state) {
-  if(state != FocusObserver::State::NONE && layout()->count() > 0) {
+  if(state != FocusObserver::State::NONE && !has_popped_up()) {
     layout()->removeWidget(m_body);
     m_body->setParent(m_window);
     m_body->raise();
     m_body->show();
     m_body->setFocus();
     m_alignment = Alignment::NONE;
-    m_last_alignment = m_alignment;
     align();
-    parentWidget()->clearFocus();
   }
 }
 
 void PopupBox::on_body_focus(FocusObserver::State state) {
-  if(state == FocusObserver::State::NONE && layout()->count() == 0) {
+  if(state == FocusObserver::State::NONE && has_popped_up()) {
     m_body->setMinimumSize(0, 0);
     m_body->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
     layout()->addWidget(m_body);
@@ -138,8 +115,8 @@ void PopupBox::on_position(const QPoint& position) {
       m_position.setY(window_rect.y());
     }
   }
-  if(layout()->count() == 0) {
-    set_position(m_position);
+  if(has_popped_up()) {
+    align();
   }
 }
 
@@ -158,11 +135,8 @@ void PopupBox::align() {
   } else {
     m_alignment = Alignment::BELOW;
     m_max_height = m_below_space;
-    if(m_last_alignment != m_alignment) {
-      set_position(m_position);
-    }
+    set_position(m_position);
   }
-  m_last_alignment = m_alignment;
 }
 
 void PopupBox::adjust_size() {
