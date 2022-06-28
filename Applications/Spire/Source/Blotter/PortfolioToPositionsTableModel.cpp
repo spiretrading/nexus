@@ -45,16 +45,26 @@ void PortfolioToPositionsTableModel::on_update(
     m_table.push(row);
   } else {
     m_table.transact([&] {
-      m_table.set(index->second, Column::QUANTITY,
-        Abs(update.m_securityInventory.m_position.m_quantity));
-      m_table.set(index->second, Column::SIDE,
-        GetSide(update.m_securityInventory.m_position.m_quantity));
-      m_table.set(index->second, Column::AVERAGE_PRICE,
-        GetAveragePrice(update.m_securityInventory.m_position));
-      m_table.set(
-        index->second, Column::PROFIT_AND_LOSS, update.m_unrealizedSecurity);
-      m_table.set(index->second, Column::COST_BASIS,
-        update.m_securityInventory.m_position.m_costBasis);
+      if(update.m_securityInventory.m_position.m_quantity == 0) {
+        for(auto& i : m_indexes) {
+          if(i.second > index->second) {
+            --i.second;
+          }
+        }
+        m_table.remove(index->second);
+        m_indexes.erase(security);
+      } else {
+        m_table.set(index->second, Column::QUANTITY,
+          Abs(update.m_securityInventory.m_position.m_quantity));
+        m_table.set(index->second, Column::SIDE,
+          GetSide(update.m_securityInventory.m_position.m_quantity));
+        m_table.set(index->second, Column::AVERAGE_PRICE,
+          GetAveragePrice(update.m_securityInventory.m_position));
+        m_table.set(
+          index->second, Column::PROFIT_AND_LOSS, update.m_unrealizedSecurity);
+        m_table.set(index->second, Column::COST_BASIS,
+          update.m_securityInventory.m_position.m_costBasis);
+      }
     });
   }
 }
