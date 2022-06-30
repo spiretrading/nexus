@@ -95,6 +95,10 @@ namespace Spire {
       virtual std::shared_ptr<BlotterProfitAndLossModel>
         get_profit_and_loss() = 0;
 
+      /** Returns the list of selected positions. */
+      virtual std::shared_ptr<ListModel<int>> get_position_selection() const =
+        0;
+
     protected:
 
       /** Constructs a BlotterModel. */

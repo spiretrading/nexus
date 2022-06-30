@@ -147,15 +147,17 @@ BlotterTaskView::BlotterTaskView(std::shared_ptr<BooleanModel> is_active,
         set_style(*separator, std::move(style));
         separator->setFixedSize(scale(1, 14));
         return separator;
+      } else if(model->get(index) == CommandItem::ACTIVATE) {
+        return make_icon_toggle_button(
+          imageFromSvg(":/Icons/blotter/tasks/active.svg", scale(26, 26)),
+          m_is_active, tr("Set as active blotter"));
+      } else if(model->get(index) == CommandItem::PIN) {
+        return make_icon_toggle_button(
+          imageFromSvg(":/Icons/blotter/tasks/pin.svg", scale(26, 26)),
+          m_is_pinned, tr("Pin blotter"));
       }
-      auto [path, shortcut, slot] = [&] {
-        if(model->get(index) == CommandItem::ACTIVATE) {
-          return std::tuple(":/Icons/blotter/tasks/active.svg",
-            tr("Set as active blotter"), std::function<void ()>());
-        } else if(model->get(index) == CommandItem::PIN) {
-          return std::tuple(":/Icons/blotter/tasks/pin.svg", tr("Pin blotter"),
-            std::function<void ()>());
-        } else if(model->get(index) == CommandItem::RUN) {
+      auto [path, tooltip, slot] = [&] {
+        if(model->get(index) == CommandItem::RUN) {
           return std::tuple(":/Icons/blotter/tasks/run.svg", tr("Run task"),
             std::function<void ()>(
               std::bind_front(&BlotterTaskView::on_execute, this)));
@@ -165,7 +167,7 @@ BlotterTaskView::BlotterTaskView(std::shared_ptr<BooleanModel> is_active,
             std::bind_front(&BlotterTaskView::on_cancel, this)));
       }();
       auto button = make_icon_button(
-        imageFromSvg(path, scale(26, 26)), std::move(shortcut));
+        imageFromSvg(path, scale(26, 26)), std::move(tooltip));
       button->connect_click_signal(slot);
       return button;
     });

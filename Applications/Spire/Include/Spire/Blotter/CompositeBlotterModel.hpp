@@ -25,6 +25,7 @@ namespace Spire {
        * @param valuation The valuation used by this blotter.
        * @param orders Represents this blotter's orders.
        * @param profit_and_loss Represents this blotter's profit and loss.
+       * @param position_selection The list of selected positions.
        */
       CompositeBlotterModel(std::shared_ptr<TextModel> name,
         std::shared_ptr<BooleanModel> is_active,
@@ -35,7 +36,8 @@ namespace Spire {
         std::shared_ptr<BlotterTaskListModel> tasks,
         std::shared_ptr<ListModel<int>> task_selection,
         std::shared_ptr<ValuationModel> valuation,
-        std::shared_ptr<BlotterProfitAndLossModel> profit_and_loss);
+        std::shared_ptr<BlotterProfitAndLossModel> profit_and_loss,
+        std::shared_ptr<ListModel<int>> position_selection);
 
       std::shared_ptr<TextModel> get_name() override;
 
@@ -62,6 +64,8 @@ namespace Spire {
       std::shared_ptr<BlotterProfitAndLossModel> get_profit_and_loss()
         override;
 
+      std::shared_ptr<ListModel<int>> get_position_selection() const override;
+
     private:
       std::shared_ptr<TextModel> m_name;
       std::shared_ptr<BooleanModel> m_is_active;
@@ -75,6 +79,7 @@ namespace Spire {
       std::shared_ptr<ListModel<int>> m_task_selection;
       std::shared_ptr<ValuationModel> m_valuation;
       std::shared_ptr<BlotterProfitAndLossModel> m_profit_and_loss;
+      std::shared_ptr<ListModel<int>> m_position_selection;
   };
 
   /**

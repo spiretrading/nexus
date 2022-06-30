@@ -32,7 +32,8 @@ BlotterWindow::BlotterWindow(
   auto orders = std::make_shared<TasksToOrderListModel>(m_blotter->get_tasks());
   auto portfolio = std::make_shared<PortfolioModel>(m_blotter->get_markets(),
     InventorySnapshot(), orders, m_blotter->get_valuation());
-  auto positions_view = new BlotterPositionsView(portfolio);
+  auto positions_view =
+    new BlotterPositionsView(portfolio, m_blotter->get_position_selection());
   tabs->add(tr("Positions"), *positions_view);
   m_order_log_view = new BlotterOrderLogView(orders);
   tabs->add(tr("Order Log"), *m_order_log_view);
