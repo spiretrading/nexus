@@ -146,9 +146,14 @@ void PopupBox::adjust_size() {
     m_body->setMaximumHeight(QWIDGETSIZE_MAX);
     return;
   }
-  m_body->setMaximumSize(std::min(m_right_space, maximumWidth()),
-    std::min(m_max_height, maximumHeight()));
-  m_body->setMinimumWidth(width());
+  if(m_body->sizeHint().height() > height()) {
+    m_body->setFixedWidth(width());
+    m_body->setMaximumHeight(std::min(m_max_height, maximumHeight()));
+  } else {
+    m_body->setMaximumSize(std::min(m_right_space, maximumWidth()),
+      std::min(m_max_height, maximumHeight()));
+    m_body->setMinimumWidth(width());
+  }
   m_body->adjustSize();
 }
 
