@@ -1,8 +1,8 @@
-#ifndef SPIRE_FOCUS_POPUP_BOX_HPP
-#define SPIRE_FOCUS_POPUP_BOX_HPP
-#include "Spire/Ui/Ui.hpp"
+#ifndef SPIRE_POPUP_BOX_HPP
+#define SPIRE_POPUP_BOX_HPP
 #include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/GlobalPositionObserver.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 
@@ -14,8 +14,8 @@ namespace Spire {
     public:
 
       /**
-       * Constructs a AlignableWrapper.
-       * @param body The component to which the functionality is added.
+       * Constructs a PopupBox.
+       * @param body The component which can pop up.
        * @param parent The parent widget.
        */
       PopupBox(QWidget& body, QWidget* parent = nullptr);

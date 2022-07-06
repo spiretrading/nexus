@@ -235,6 +235,11 @@ bool TagBox::eventFilter(QObject* watched, QEvent* event) {
       m_list_view->get_list_item(m_model->get_size() - 1)->
         setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
       update_tags_width();
+      if(m_overflow == TagBoxOverflow::WRAP &&
+          m_focus_observer.get_state() == FocusObserver::State::NONE ||
+          sizeHint().height() > maximumHeight()) {
+        m_scroll_box->set_vertical(ScrollBox::DisplayPolicy::ON_OVERFLOW);
+      }
     } else if(watched == m_scroll_box && !m_is_read_only &&
         m_focus_observer.get_state() != FocusObserver::State::NONE &&
         m_vertical_scroll_bar->get_range().m_end != m_scroll_bar_end_range) {
@@ -255,12 +260,12 @@ void TagBox::changeEvent(QEvent* event) {
 
 void TagBox::resizeEvent(QResizeEvent* event) {
   overflow();
-  if(m_overflow == TagBoxOverflow::ELIDE &&
-      m_focus_observer.get_state() == FocusObserver::State::NONE ||
-      sizeHint().height() <= height()) {
-    m_scroll_box->set_vertical(ScrollBox::DisplayPolicy::NEVER);
-  } else {
+  if((m_overflow == TagBoxOverflow::WRAP ||
+      m_focus_observer.get_state() != FocusObserver::State::NONE) &&
+      sizeHint().height() > maximumHeight()) {
     m_scroll_box->set_vertical(ScrollBox::DisplayPolicy::ON_OVERFLOW);
+  } else {
+    m_scroll_box->set_vertical(ScrollBox::DisplayPolicy::NEVER);
   }
   QWidget::resizeEvent(event);
 }

@@ -1,7 +1,5 @@
 #include "Spire/Ui/PopupBox.hpp"
 #include <QApplication>
-#include <QEvent>
-#include <QResizeEvent>
 #include "Spire/Ui/Layouts.hpp"
 
 using namespace boost::signals2;
@@ -60,12 +58,10 @@ bool PopupBox::eventFilter(QObject* watched, QEvent* event) {
       adjust_size();
     }
   } else if(watched == m_body) {
-    if(event->type() == QEvent::Show) {
-      if(!m_window) {
-        m_window = window();
-        m_window->installEventFilter(this);
-        update_space();
-      }
+    if(event->type() == QEvent::Show && !m_window) {
+      m_window = window();
+      m_window->installEventFilter(this);
+      update_space();
     } else if(event->type() == QEvent::LayoutRequest && has_popped_up()) {
       align();
       adjust_size();
@@ -142,17 +138,31 @@ void PopupBox::align() {
 }
 
 void PopupBox::adjust_size() {
-  if(minimumHeight() == maximumHeight()) {
-    m_body->setMaximumHeight(QWIDGETSIZE_MAX);
+  if(minimumSize() == maximumSize()) {
+    m_body->setFixedSize(minimumSize());
     return;
-  }
-  if(m_body->sizeHint().height() > height()) {
-    m_body->setFixedWidth(width());
+  } else if(minimumWidth() == maximumWidth()) {
+    m_body->setFixedWidth(minimumWidth());
+    m_body->setMinimumHeight(std::max(height(), minimumHeight()));
     m_body->setMaximumHeight(std::min(m_max_height, maximumHeight()));
+  } else if(minimumHeight() == maximumHeight()) {
+    m_body->setFixedHeight(minimumHeight());
+    if(m_body->sizeHint().height() > height()) {
+      m_body->setFixedWidth(std::max(width(), minimumWidth()));
+    } else {
+      m_body->setMinimumWidth(std::max(width(), minimumWidth()));
+      m_body->setMaximumWidth(std::min(m_right_space, maximumWidth()));
+    }
   } else {
-    m_body->setMaximumSize(std::min(m_right_space, maximumWidth()),
-      std::min(m_max_height, maximumHeight()));
-    m_body->setMinimumWidth(width());
+    m_body->setMinimumHeight(std::max(height(), minimumHeight()));
+    if(m_body->sizeHint().height() > height()) {
+      m_body->setFixedWidth(std::max(width(), minimumWidth()));
+      m_body->setMaximumHeight(std::min(m_max_height, maximumHeight()));
+    } else {
+      m_body->setMaximumSize(std::min(m_right_space, maximumWidth()),
+        std::min(m_max_height, maximumHeight()));
+      m_body->setMinimumWidth(std::max(width(), minimumWidth()));
+    }
   }
   m_body->adjustSize();
 }
@@ -166,8 +176,7 @@ void PopupBox::update_space() {
     return;
   }
   auto& window_rect = m_window->geometry();
-  m_above_space = m_position.y() + m_min_height - window_rect.y();
-  m_above_space = std::max(m_above_space, 0);
+  m_above_space = std::max(m_position.y() + m_min_height - window_rect.y(), 0);
   m_below_space = window_rect.bottom() - m_position.y();
   m_right_space = window_rect.right() - m_position.x();
 }

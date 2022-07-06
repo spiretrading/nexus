@@ -220,12 +220,24 @@ bool TagComboBox::eventFilter(QObject* watched, QEvent* event) {
   return QWidget::eventFilter(watched, event);
 }
 
+bool TagComboBox::event(QEvent* event) {
+  if(event->type() == QEvent::LayoutRequest) {
+    update_min_max_size();
+  }
+  return QWidget::event(event);
+}
+
 void TagComboBox::showEvent(QShowEvent* event) {
   if(!m_input_box) {
     m_input_box = find_focus_proxy(*m_tag_box);
     m_input_box->installEventFilter(this);
   }
   QWidget::showEvent(event);
+}
+
+void TagComboBox::resizeEvent(QResizeEvent* event) {
+  update_min_max_size();
+  QWidget::resizeEvent(event);
 }
 
 void TagComboBox::on_combo_box_submit(const std::any& submission) {
@@ -270,4 +282,13 @@ void TagComboBox::submit() {
   copy_list_model(get_current(), m_submission);
   m_is_modified = false;
   m_submit_signal(m_submission);
+}
+
+void TagComboBox::update_min_max_size() {
+  if(m_tag_box->minimumSize() != minimumSize()) {
+    m_tag_box->setMinimumSize(minimumSize());
+  }
+  if(m_tag_box->maximumSize() != maximumSize()) {
+    m_tag_box->setMaximumSize(maximumSize());
+  }
 }
