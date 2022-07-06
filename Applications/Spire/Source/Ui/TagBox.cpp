@@ -51,14 +51,6 @@ namespace {
       set(vertical_padding(scale_height(2)));
     return style;
   }
-
-  int horizontal_length(const QMargins& margins) {
-    return margins.left() + margins.right();
-  }
-
-  int vertical_length(const QMargins& margins) {
-    return margins.top() + margins.bottom();
-  }
 }
 
 struct TagBox::PartialListModel : public AnyListModel {
@@ -124,11 +116,13 @@ TagBox::TagBox(std::shared_ptr<AnyListModel> list,
     : QWidget(parent),
       m_model(std::make_shared<PartialListModel>(std::move(list))),
       m_focus_observer(*this),
+      m_scroll_box(nullptr),
       m_overflow(TagBoxOverflow::WRAP),
       m_list_view_overflow(Overflow::WRAP),
       m_is_read_only(false),
       m_tags_width(0),
       m_list_item_gap(0),
+      m_input_box_horizontal_padding(0),
       m_list_view_horizontal_padding(0),
       m_scroll_bar_end_range(0),
       m_focus_connection(m_focus_observer.connect_state_signal(
@@ -251,25 +245,6 @@ bool TagBox::eventFilter(QObject* watched, QEvent* event) {
   return QWidget::eventFilter(watched, event);
 }
 
-bool TagBox::event(QEvent* event) {
-  if(event->type() == QEvent::LayoutRequest) {
-    auto maximum_size = [&] {
-      auto size = maximumSize();
-      if(size.width() != QWIDGETSIZE_MAX) {
-        size.rwidth() -= horizontal_length(m_input_box_padding);
-      }
-      if(size.height() != QWIDGETSIZE_MAX) {
-        size.rheight() -= vertical_length(m_input_box_padding);
-      }
-      return size;
-    }();
-    if(maximum_size != m_list_view->parentWidget()->maximumSize()) {
-      m_list_view->parentWidget()->setMaximumSize(maximum_size);
-    }
-  }
-  return QWidget::event(event);
-}
-
 void TagBox::changeEvent(QEvent* event) {
   if(event->type() == QEvent::EnabledChange) {
     update_tags_read_only();
@@ -280,6 +255,13 @@ void TagBox::changeEvent(QEvent* event) {
 
 void TagBox::resizeEvent(QResizeEvent* event) {
   overflow();
+  if(m_overflow == TagBoxOverflow::ELIDE &&
+      m_focus_observer.get_state() == FocusObserver::State::NONE ||
+      sizeHint().height() <= height()) {
+    m_scroll_box->set_vertical(ScrollBox::DisplayPolicy::NEVER);
+  } else {
+    m_scroll_box->set_vertical(ScrollBox::DisplayPolicy::ON_OVERFLOW);
+  }
   QWidget::resizeEvent(event);
 }
 
@@ -368,7 +350,7 @@ void TagBox::on_list_view_submit(const std::any& submission) {
 }
 
 void TagBox::on_style() {
-  m_input_box_padding = {};
+  m_input_box_horizontal_padding = 0;
   auto& stylist = find_stylist(*this);
   auto has_update = std::make_shared<bool>(false);
   for(auto& property : stylist.get_computed_block()) {
@@ -383,42 +365,22 @@ void TagBox::on_style() {
       },
       [&] (const BorderRightSize& size) {
         stylist.evaluate(size, [=] (auto size) {
-          m_input_box_padding.setRight(m_input_box_padding.right() + size);
+          m_input_box_horizontal_padding += size;
         });
       },
       [&] (const BorderLeftSize& size) {
         stylist.evaluate(size, [=] (auto size) {
-          m_input_box_padding.setLeft(m_input_box_padding.left() + size);
-        });
-      },
-      [&] (const BorderTopSize& size) {
-        stylist.evaluate(size, [=] (auto size) {
-          m_input_box_padding.setTop(m_input_box_padding.top() + size);
-        });
-      },
-      [&] (const BorderBottomSize& size) {
-        stylist.evaluate(size, [=] (auto size) {
-          m_input_box_padding.setBottom(m_input_box_padding.bottom() + size);
+          m_input_box_horizontal_padding += size;
         });
       },
       [&] (const PaddingRight& size) {
         stylist.evaluate(size, [=] (auto size) {
-          m_input_box_padding.setRight(m_input_box_padding.right() + size);
+          m_input_box_horizontal_padding += size;
         });
       },
       [&] (const PaddingLeft& size) {
         stylist.evaluate(size, [=] (auto size) {
-          m_input_box_padding.setLeft(m_input_box_padding.left() + size);
-        });
-      },
-      [&] (const PaddingTop& size) {
-        stylist.evaluate(size, [=] (auto size) {
-          m_input_box_padding.setTop(m_input_box_padding.top() + size);
-        });
-      },
-      [&] (const PaddingBottom& size) {
-        stylist.evaluate(size, [=] (auto size) {
-          m_input_box_padding.setBottom(m_input_box_padding.bottom() + size);
+          m_input_box_horizontal_padding += size;
         });
       });
   }
@@ -538,7 +500,7 @@ void TagBox::overflow() {
       return;
     }
     auto text_box_height = m_text_box->sizeHint().height();
-    auto visible_area_width = width() - horizontal_length(m_input_box_padding) -
+    auto visible_area_width = width() - m_input_box_horizontal_padding -
       m_list_view_horizontal_padding;
     auto ellipses_width = m_ellipses_item->sizeHint().width();
     auto difference = m_tags_width - visible_area_width;
