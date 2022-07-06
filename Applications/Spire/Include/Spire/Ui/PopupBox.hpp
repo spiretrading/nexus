@@ -40,6 +40,7 @@ namespace Spire {
       };
       QWidget* m_body;
       QWidget* m_window;
+      FocusObserver m_focus_observer;
       FocusObserver m_body_focus_observer;
       GlobalPositionObserver m_position_observer;
       Alignment m_alignment;
@@ -50,10 +51,12 @@ namespace Spire {
       int m_below_space;
       int m_right_space;
       mutable QSize m_size_hint;
+      boost::signals2::scoped_connection m_focus_connection;
       boost::signals2::scoped_connection m_body_focus_connection;
       boost::signals2::scoped_connection m_position_connection;
 
       bool has_popped_up() const;
+      void on_focus(FocusObserver::State state);
       void on_body_focus(FocusObserver::State state);
       void on_position(const QPoint& position);
       void align();

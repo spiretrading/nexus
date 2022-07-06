@@ -11,6 +11,7 @@ PopupBox::PopupBox(QWidget& body, QWidget* parent)
     : QWidget(parent),
       m_body(&body),
       m_window(nullptr),
+      m_focus_observer(*this),
       m_body_focus_observer(*m_body),
       m_position_observer(*this),
       m_alignment(Alignment::NONE),
@@ -19,6 +20,8 @@ PopupBox::PopupBox(QWidget& body, QWidget* parent)
       m_above_space(0),
       m_below_space(0),
       m_right_space(0),
+      m_focus_connection(m_focus_observer.connect_state_signal(
+        std::bind_front(&PopupBox::on_focus, this))),
       m_body_focus_connection(m_body_focus_observer.connect_state_signal(
         std::bind_front(&PopupBox::on_body_focus, this))),
       m_position_connection(m_position_observer.connect_position_signal(
@@ -83,23 +86,20 @@ bool PopupBox::has_popped_up() const {
   return layout()->count() == 0;
 }
 
-void PopupBox::on_body_focus(FocusObserver::State state) {
-  static auto is_changing_parent = false;
-  if(is_changing_parent) {
-    return;
-  }
+void PopupBox::on_focus(FocusObserver::State state) {
   if(state != FocusObserver::State::NONE && !has_popped_up()) {
     layout()->removeWidget(m_body);
-    is_changing_parent = true;
     m_body->setParent(m_window);
-    is_changing_parent = false;
     m_body->show();
     m_body->setFocus();
     m_alignment = Alignment::NONE;
     align();
-  } else if(state == FocusObserver::State::NONE &&
-      find_focus_state(*this) == FocusObserver::State::NONE &&
-      has_popped_up() && QApplication::focusWidget()) {
+  }
+}
+
+void PopupBox::on_body_focus(FocusObserver::State state) {
+  if(state == FocusObserver::State::NONE && has_popped_up() &&
+      QApplication::focusWidget()) {
     m_body->setMinimumSize(0, 0);
     m_body->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
     layout()->addWidget(m_body);
