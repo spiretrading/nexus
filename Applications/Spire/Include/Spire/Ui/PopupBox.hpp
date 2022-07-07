@@ -64,7 +64,6 @@ namespace Spire {
       void set_position(const QPoint& pos);
       void update_space();
   };
-  
 }
 
 #endif
