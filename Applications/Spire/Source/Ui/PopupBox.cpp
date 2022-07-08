@@ -107,25 +107,25 @@ void PopupBox::adjust_size() {
     return;
   } else if(minimumWidth() == maximumWidth()) {
     m_body->setFixedWidth(minimumWidth());
-    m_body->setMinimumHeight(std::max(height(), minimumHeight()));
+    m_body->setMinimumHeight(height());
     m_body->setMaximumHeight(std::min(m_max_height, maximumHeight()));
   } else if(minimumHeight() == maximumHeight()) {
     m_body->setFixedHeight(minimumHeight());
     if(m_body->sizeHint().height() > height()) {
-      m_body->setFixedWidth(std::max(width(), minimumWidth()));
+      m_body->setFixedWidth(width());
     } else {
-      m_body->setMinimumWidth(std::max(width(), minimumWidth()));
+      m_body->setMinimumWidth(width());
       m_body->setMaximumWidth(std::min(m_right_space, maximumWidth()));
     }
   } else {
-    m_body->setMinimumHeight(std::max(height(), minimumHeight()));
+    m_body->setMinimumHeight(height());
     if(m_body->sizeHint().height() > height()) {
-      m_body->setFixedWidth(std::max(width(), minimumWidth()));
+      m_body->setFixedWidth(width());
       m_body->setMaximumHeight(std::min(m_max_height, maximumHeight()));
     } else {
       m_body->setMaximumSize(std::min(m_right_space, maximumWidth()),
         std::min(m_max_height, maximumHeight()));
-      m_body->setMinimumWidth(std::max(width(), minimumWidth()));
+      m_body->setMinimumWidth(width());
     }
   }
   m_body->adjustSize();
