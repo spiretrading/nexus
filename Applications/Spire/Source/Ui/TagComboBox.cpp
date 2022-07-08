@@ -240,9 +240,33 @@ void TagComboBox::resizeEvent(QResizeEvent* event) {
   QWidget::resizeEvent(event);
 }
 
+void TagComboBox::submit() {
+  copy_list_model(get_current(), m_submission);
+  m_is_modified = false;
+  m_submit_signal(m_submission);
+}
+
+void TagComboBox::update_min_max_size() {
+  if(m_tag_box->minimumSize() != minimumSize()) {
+    m_tag_box->setMinimumSize(minimumSize());
+  }
+  if(m_tag_box->maximumSize() != maximumSize()) {
+    m_tag_box->setMaximumSize(maximumSize());
+  }
+}
+
 void TagComboBox::on_combo_box_submit(const std::any& submission) {
   m_tag_box->get_current()->set("");
   get_current()->push(submission);
+}
+
+void TagComboBox::on_focus(FocusObserver::State state) {
+  if(state == FocusObserver::State::NONE) {
+    m_tag_box->get_current()->set("");
+    if(m_is_modified && get_current()->get_size() > 0) {
+      submit();
+    }
+  }
 }
 
 void TagComboBox::on_operation(const AnyListModel::Operation& operation) {
@@ -253,15 +277,6 @@ void TagComboBox::on_operation(const AnyListModel::Operation& operation) {
     [&] (const AnyListModel::RemoveOperation& operation) {
       m_is_modified = true;
     });
-}
-
-void TagComboBox::on_focus(FocusObserver::State state) {
-  if(state == FocusObserver::State::NONE) {
-    m_tag_box->get_current()->set("");
-    if(m_is_modified && get_current()->get_size() > 0) {
-      submit();
-    }
-  }
 }
 
 void TagComboBox::on_tag_box_style() {
@@ -275,20 +290,5 @@ void TagComboBox::on_tag_box_style() {
           }
         });
       });
-  }
-}
-
-void TagComboBox::submit() {
-  copy_list_model(get_current(), m_submission);
-  m_is_modified = false;
-  m_submit_signal(m_submission);
-}
-
-void TagComboBox::update_min_max_size() {
-  if(m_tag_box->minimumSize() != minimumSize()) {
-    m_tag_box->setMinimumSize(minimumSize());
-  }
-  if(m_tag_box->maximumSize() != maximumSize()) {
-    m_tag_box->setMaximumSize(maximumSize());
   }
 }

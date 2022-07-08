@@ -81,7 +81,6 @@ namespace Styles {
       std::vector<Tag*> m_tags;
       Styles::TagBoxOverflow m_overflow;
       Styles::Overflow m_list_view_overflow;
-      QFont m_font;
       QString m_placeholder;
       QString m_tip;
       bool m_is_read_only;
@@ -93,16 +92,8 @@ namespace Styles {
       boost::signals2::scoped_connection m_focus_connection;
       boost::signals2::scoped_connection m_style_connection;
       boost::signals2::scoped_connection m_list_view_style_connection;
-      boost::signals2::scoped_connection m_text_box_style_connection;
 
       QWidget* make_tag(const std::shared_ptr<AnyListModel>& model, int index);
-      void on_focus(FocusObserver::State state);
-      void on_operation(const AnyListModel::Operation& operation);
-      void on_text_box_current(const QString& current);
-      void on_list_view_submit(const std::any& submission);
-      void on_style();
-      void on_list_view_style();
-      void on_text_box_style();
       void update();
       void update_placeholder();
       void update_tags_read_only();
@@ -112,6 +103,12 @@ namespace Styles {
       void overflow();
       void show_all_tags();
       void remove_text_box_size_constraint();
+      void on_focus(FocusObserver::State state);
+      void on_list_operation(const AnyListModel::Operation& operation);
+      void on_list_view_submit(const std::any& submission);
+      void on_text_box_current(const QString& current);
+      void on_style();
+      void on_list_view_style();
   };
 }
 

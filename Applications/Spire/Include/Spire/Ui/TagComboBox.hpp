@@ -94,12 +94,12 @@ namespace Spire {
       boost::signals2::scoped_connection m_list_connection;
       boost::signals2::scoped_connection m_tag_box_style_connection;
 
-      void on_combo_box_submit(const std::any& submission);
-      void on_operation(const AnyListModel::Operation& operation);
-      void on_focus(FocusObserver::State state);
-      void on_tag_box_style();
       void submit();
       void update_min_max_size();
+      void on_combo_box_submit(const std::any& submission);
+      void on_focus(FocusObserver::State state);
+      void on_operation(const AnyListModel::Operation& operation);
+      void on_tag_box_style();
   };
 }
 

@@ -133,8 +133,6 @@ TagBox::TagBox(std::shared_ptr<AnyListModel> list,
   });
   m_text_box->get_current()->connect_update_signal(
     std::bind_front(&TagBox::on_text_box_current, this));
-  m_text_box_style_connection = connect_style_signal(*m_text_box,
-    std::bind_front(&TagBox::on_text_box_style, this));
   m_list_view = new ListView(m_model,
     std::bind_front(&TagBox::make_tag, this));
   m_list_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -146,7 +144,7 @@ TagBox::TagBox(std::shared_ptr<AnyListModel> list,
   m_list_view_style_connection = connect_style_signal(*m_list_view,
     std::bind_front(&TagBox::on_list_view_style, this));
   m_list_view->get_list()->connect_operation_signal(
-    std::bind_front(&TagBox::on_operation, this));
+    std::bind_front(&TagBox::on_list_operation, this));
   m_list_view->connect_submit_signal(
     std::bind_front(&TagBox::on_list_view_submit, this));
   m_list_view->setFocusPolicy(Qt::NoFocus);
@@ -311,133 +309,6 @@ QWidget* TagBox::make_tag(
   return m_text_box;
 }
 
-void TagBox::on_focus(FocusObserver::State state) {
-  if(is_read_only()) {
-    return;
-  }
-  update();
-  if(state != FocusObserver::State::NONE) {
-    m_text_box->setFocusPolicy(Qt::StrongFocus);
-    setFocus();
-    scroll_to_end(*m_vertical_scroll_bar);
-  }
-}
-
-void TagBox::on_operation(const AnyListModel::Operation& operation) {
-  auto update_all = [=] {
-    m_list_view->setFocusPolicy(Qt::NoFocus);
-    update_placeholder();
-    update_tags_width();
-    update_tip();
-    update();
-  };
-  visit(operation,
-    [&] (const AnyListModel::AddOperation& operation) {
-      update_all();
-    },
-    [&] (const AnyListModel::RemoveOperation& operation) {
-      m_tags.erase(m_tags.begin() + operation.m_index);
-      update_all();
-    });
-}
-
-void TagBox::on_text_box_current(const QString& current) {
-  m_list_view->adjustSize();
-  scroll_to_end(*m_vertical_scroll_bar);
-}
-
-void TagBox::on_list_view_submit(const std::any& submission) {
-  if(m_is_read_only) {
-    return;
-  }
-  m_list_view->setFocusPolicy(Qt::NoFocus);
-  setFocus();
-}
-
-void TagBox::on_style() {
-  m_input_box_horizontal_padding = 0;
-  auto& stylist = find_stylist(*this);
-  auto has_update = std::make_shared<bool>(false);
-  for(auto& property : stylist.get_computed_block()) {
-    property.visit(
-      [&] (EnumProperty<TagBoxOverflow> overflow) {
-        stylist.evaluate(overflow, [=] (auto overflow) {
-          if(m_overflow != overflow) {
-            m_overflow = overflow;
-            *has_update = true;
-          }
-        });
-      },
-      [&] (const BorderRightSize& size) {
-        stylist.evaluate(size, [=] (auto size) {
-          m_input_box_horizontal_padding += size;
-        });
-      },
-      [&] (const BorderLeftSize& size) {
-        stylist.evaluate(size, [=] (auto size) {
-          m_input_box_horizontal_padding += size;
-        });
-      },
-      [&] (const PaddingRight& size) {
-        stylist.evaluate(size, [=] (auto size) {
-          m_input_box_horizontal_padding += size;
-        });
-      },
-      [&] (const PaddingLeft& size) {
-        stylist.evaluate(size, [=] (auto size) {
-          m_input_box_horizontal_padding += size;
-        });
-      });
-  }
-  update_tags_width();
-  if(*has_update) {
-    update_tip();
-    update();
-  }
-}
-
-void TagBox::on_list_view_style() {
-  m_list_item_gap = 0;
-  m_list_view_horizontal_padding = 0;
-  auto& stylist = find_stylist(*m_list_view);
-  for(auto& property : stylist.get_computed_block()) {
-    property.visit(
-      [&] (const ListItemGap& gap) {
-        stylist.evaluate(gap, [=] (auto gap) {
-          m_list_item_gap = gap;
-        });
-      },
-      [&] (const PaddingRight& size) {
-        stylist.evaluate(size, [=] (auto size) {
-          m_list_view_horizontal_padding += size;
-        });
-      },
-      [&] (const PaddingLeft& size) {
-        stylist.evaluate(size, [=] (auto size) {
-          m_list_view_horizontal_padding += size;
-        });
-      });
-  }
-}
-
-void TagBox::on_text_box_style() {
-  m_font = {};
-  auto& stylist = find_stylist(*m_text_box);
-  for(auto& property : stylist.get_computed_block()) {
-    property.visit(
-      [&] (const Font& font) {
-        stylist.evaluate(font, [=] (auto font) {
-          m_font = font;
-        });
-      },
-      [&] (const FontSize& size) {
-        stylist.evaluate(size, [=] (auto size) {
-          m_font.setPixelSize(size);
-        });
-      });
-  }
-}
-
 void TagBox::update() {
   auto list_view_overflow = [&] {
     if(m_overflow == TagBoxOverflow::ELIDE &&
@@ -572,5 +443,114 @@ void TagBox::remove_text_box_size_constraint() {
   if(m_text_box->maximumHeight() == m_text_box->minimumHeight()) {
     m_text_box->setMinimumHeight(0);
     m_text_box->setMaximumHeight(QWIDGETSIZE_MAX);
+  }
+}
+
+void TagBox::on_focus(FocusObserver::State state) {
+  if(is_read_only()) {
+    return;
+  }
+  update();
+  if(state != FocusObserver::State::NONE) {
+    m_text_box->setFocusPolicy(Qt::StrongFocus);
+    setFocus();
+    scroll_to_end(*m_vertical_scroll_bar);
+  }
+}
+
+void TagBox::on_list_operation(const AnyListModel::Operation& operation) {
+  auto update_all = [=] {
+    m_list_view->setFocusPolicy(Qt::NoFocus);
+    update_placeholder();
+    update_tags_width();
+    update_tip();
+    update();
+  };
+  visit(operation,
+    [&] (const AnyListModel::AddOperation& operation) {
+      update_all();
+    },
+    [&] (const AnyListModel::RemoveOperation& operation) {
+      m_tags.erase(m_tags.begin() + operation.m_index);
+      update_all();
+    });
+}
+
+void TagBox::on_list_view_submit(const std::any& submission) {
+  if(m_is_read_only) {
+    return;
+  }
+  m_list_view->setFocusPolicy(Qt::NoFocus);
+  setFocus();
+}
+
+void TagBox::on_text_box_current(const QString& current) {
+  m_list_view->adjustSize();
+  scroll_to_end(*m_vertical_scroll_bar);
+}
+
+void TagBox::on_style() {
+  m_input_box_horizontal_padding = 0;
+  auto& stylist = find_stylist(*this);
+  auto has_update = std::make_shared<bool>(false);
+  for(auto& property : stylist.get_computed_block()) {
+    property.visit(
+      [&] (EnumProperty<TagBoxOverflow> overflow) {
+        stylist.evaluate(overflow, [=] (auto overflow) {
+          if(m_overflow != overflow) {
+            m_overflow = overflow;
+            *has_update = true;
+          }
+        });
+      },
+      [&] (const BorderRightSize& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          m_input_box_horizontal_padding += size;
+        });
+      },
+      [&] (const BorderLeftSize& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          m_input_box_horizontal_padding += size;
+        });
+      },
+      [&] (const PaddingRight& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          m_input_box_horizontal_padding += size;
+        });
+      },
+      [&] (const PaddingLeft& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          m_input_box_horizontal_padding += size;
+        });
+      });
+  }
+  update_tags_width();
+  if(*has_update) {
+    update_tip();
+    update();
+  }
+}
+
+void TagBox::on_list_view_style() {
+  m_list_item_gap = 0;
+  m_list_view_horizontal_padding = 0;
+  auto& stylist = find_stylist(*m_list_view);
+  for(auto& property : stylist.get_computed_block()) {
+    property.visit(
+      [&] (const ListItemGap& gap) {
+        stylist.evaluate(gap, [=] (auto gap) {
+          m_list_item_gap = gap;
+        });
+      },
+      [&] (const PaddingRight& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          m_list_view_horizontal_padding += size;
+        });
+      },
+      [&] (const PaddingLeft& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          m_list_view_horizontal_padding += size;
+        });
+      });
   }
 }
