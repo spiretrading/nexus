@@ -17,16 +17,16 @@ PopupBox::PopupBox(QWidget& body, QWidget* parent)
       m_max_height(QWIDGETSIZE_MAX),
       m_above_space(0),
       m_below_space(0),
-      m_right_space(0),
-      m_body_focus_connection(m_body_focus_observer.connect_state_signal(
-        std::bind_front(&PopupBox::on_body_focus, this))),
-      m_focus_connection(m_focus_observer.connect_state_signal(
-        std::bind_front(&PopupBox::on_focus, this))),
-      m_position_connection(m_position_observer.connect_position_signal(
-        std::bind_front(&PopupBox::on_position, this))) {
+      m_right_space(0) {
   m_body->installEventFilter(this);
   m_body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   enclose(*this, *m_body);
+  m_body_focus_observer.connect_state_signal(
+    std::bind_front(&PopupBox::on_body_focus, this));
+  m_focus_observer.connect_state_signal(
+    std::bind_front(&PopupBox::on_focus, this));
+  m_position_observer.connect_position_signal(
+    std::bind_front(&PopupBox::on_position, this));
 }
 
 const QWidget& PopupBox::get_body() const {

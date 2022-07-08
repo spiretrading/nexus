@@ -89,7 +89,6 @@ namespace Styles {
       int m_input_box_horizontal_padding;
       int m_list_view_horizontal_padding;
       int m_scroll_bar_end_range;
-      boost::signals2::scoped_connection m_focus_connection;
       boost::signals2::scoped_connection m_style_connection;
       boost::signals2::scoped_connection m_list_view_style_connection;
 

@@ -90,7 +90,6 @@ namespace Spire {
       QWidget* m_drop_down_window;
       Styles::TagBoxOverflow m_overflow;
       bool m_is_modified;
-      boost::signals2::scoped_connection m_focus_connection;
       boost::signals2::scoped_connection m_list_connection;
       boost::signals2::scoped_connection m_tag_box_style_connection;
 

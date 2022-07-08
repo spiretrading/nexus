@@ -116,9 +116,7 @@ TagComboBox::TagComboBox(std::shared_ptr<ComboBox::QueryModel> query_model,
       m_submission(std::make_shared<ArrayListModel<std::any>>()),
       m_focus_observer(*this),
       m_input_box(nullptr),
-      m_is_modified(false),
-      m_focus_connection(m_focus_observer.connect_state_signal(
-        std::bind_front(&TagComboBox::on_focus, this))) {
+      m_is_modified(false) {
   m_tag_box = new TagBox(std::move(current), std::make_shared<LocalTextModel>());
   m_list_connection = m_tag_box->get_tags()->connect_operation_signal(
     std::bind_front(&TagComboBox::on_operation, this));
@@ -134,6 +132,8 @@ TagComboBox::TagComboBox(std::shared_ptr<ComboBox::QueryModel> query_model,
   setFocusProxy(m_combo_box);
   m_drop_down_window = find_pop_up_window(*m_combo_box);
   on_tag_box_style();
+  m_focus_observer.connect_state_signal(
+    std::bind_front(&TagComboBox::on_focus, this));
 }
 
 const std::shared_ptr<ComboBox::QueryModel>&

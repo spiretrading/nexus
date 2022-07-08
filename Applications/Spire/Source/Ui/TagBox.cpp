@@ -124,9 +124,7 @@ TagBox::TagBox(std::shared_ptr<AnyListModel> list,
       m_list_item_gap(0),
       m_input_box_horizontal_padding(0),
       m_list_view_horizontal_padding(0),
-      m_scroll_bar_end_range(0),
-      m_focus_connection(m_focus_observer.connect_state_signal(
-        std::bind_front(&TagBox::on_focus, this))) {
+      m_scroll_bar_end_range(0) {
   m_text_box = new TextBox(std::move(current));
   update_style(*m_text_box, [] (auto& style) {
     style = TEXT_BOX_STYLE(style);
@@ -169,6 +167,8 @@ TagBox::TagBox(std::shared_ptr<AnyListModel> list,
   m_tooltip = new Tooltip("", this);
   setFocusProxy(m_text_box);
   setFocusPolicy(Qt::StrongFocus);
+  m_focus_observer.connect_state_signal(
+    std::bind_front(&TagBox::on_focus, this));
 }
 
 const std::shared_ptr<AnyListModel>& TagBox::get_tags() const {
