@@ -447,9 +447,6 @@ void TagBox::remove_text_box_size_constraint() {
 }
 
 void TagBox::on_focus(FocusObserver::State state) {
-  if(is_read_only()) {
-    return;
-  }
   update();
   if(state != FocusObserver::State::NONE) {
     m_text_box->setFocusPolicy(Qt::StrongFocus);
@@ -477,9 +474,6 @@ void TagBox::on_list_operation(const AnyListModel::Operation& operation) {
 }
 
 void TagBox::on_list_view_submit(const std::any& submission) {
-  if(m_is_read_only) {
-    return;
-  }
   m_list_view->setFocusPolicy(Qt::NoFocus);
   setFocus();
 }
