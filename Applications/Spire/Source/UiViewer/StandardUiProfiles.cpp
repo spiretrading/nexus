@@ -505,6 +505,33 @@ namespace {
     return model;
   }
 
+  auto populate_tag_box_model() {
+    auto model = std::make_shared<ArrayListModel<QString>>();
+    model->push("CAN");
+    model->push("MSFT.NSDQ");
+    model->push("XIU.TSX");
+    return model;
+  }
+
+  auto populate_tag_combo_box_model() {
+    auto model = std::make_shared<LocalComboBoxQueryModel>();
+    model->add(QString("TSX"));
+    model->add(QString("TSXV"));
+    model->add(QString("TSO.ASX"));
+    model->add(QString("TSU.TSX"));
+    model->add(QString("TSN.TSXV"));
+    model->add(QString("TSL.NYSE"));
+    model->add(QString("MSFT.NSDQ"));
+    model->add(QString("XDRX"));
+    model->add(QString("XIU.TSX"));
+    model->add(QString("AUS"));
+    model->add(QString("CAN"));
+    model->add(QString("CHN"));
+    model->add(QString("JPN"));
+    model->add(QString("USA"));
+    return model;
+  }
+
   struct HoverBox {
     Box* m_box;
     HoverObserver m_observer;
@@ -2459,34 +2486,57 @@ UiProfile Spire::make_overlay_panel_profile() {
 
 UiProfile Spire::make_popup_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
-  populate_widget_properties(properties);
-  auto test_widget_property = define_enum<int>(
-    {{"TagBox", 0}, {"TextBox", 1}});
-  properties.push_back(
-    make_standard_enum_property("widget", test_widget_property));
   auto profile = UiProfile("PopupBox", properties, [] (auto& profile) {
-    auto& test_widget = get<int>("widget", profile.get_properties());
-    auto widget = [&] () -> QWidget* {
-      auto value = test_widget.get();
-      if(value == 0) {
-        auto tag_box = new TagBox(std::make_shared<ArrayListModel<QString>>(),
-          std::make_shared<LocalTextModel>());
-        tag_box->connect_submit_signal([=] (const auto& value) {
-          if(!value.isEmpty()) {
-            tag_box->get_tags()->push(value);
+    auto grid_layout = new QGridLayout();
+    grid_layout->setSpacing(0);
+    for(auto i = 0; i < 5; ++i) {
+      for(auto j = 0; j < 3; ++j) {
+        auto widget = [&] () -> QWidget* {
+          if(i == 1 && j == 1) {
+            return new PopupBox(*new KeyInputBox());
+          } else if(i == 3 && j == 1) {
+            auto tag_box = new TagBox(populate_tag_box_model(),
+              std::make_shared<LocalTextModel>());
+            tag_box->set_placeholder("TagBox");
+            update_style(*tag_box, [&] (auto& style) {
+              style.get(Any()).set(TagBoxOverflow::ELIDE);
+            });
+            tag_box->connect_submit_signal([=] (const auto& value) {
+              if(!value.isEmpty()) {
+                tag_box->get_tags()->push(value);
+              }
+            });
+            return new PopupBox(*tag_box);
+          } else if(i == 4 && j == 2) {
+            auto tag_combo_box =
+              new TagComboBox(populate_tag_combo_box_model());
+            tag_combo_box->set_placeholder("TagComboBox");
+            update_style(*tag_combo_box, [&] (auto& style) {
+              style.get(Any() > is_a<TagBox>()).set(TagBoxOverflow::ELIDE);
+            });
+            return new PopupBox(*tag_combo_box);
           }
-        });
-        return tag_box;
-      } else {
-        return new TextBox();
+          auto text_box = new TextBox(QString("%1").arg(i));
+          return new PopupBox(*text_box);
+        }();
+        grid_layout->addWidget(widget, i, j);
+        if(j != 0) {
+          grid_layout->setColumnStretch(j, 1);
+        }
       }
-    }();
-    auto box = new PopupBox(*widget);
-    apply_widget_properties(box, profile.get_properties());
-    box->setMinimumSize(0, 0);
-    box->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
-    box->setMinimumWidth(scale_width(120));
-    return box;
+    }
+    auto widget = new QWidget();
+    auto layout = make_hbox_layout(widget);
+    layout->addStretch(1);
+    auto vertical_layout = make_vbox_layout();
+    vertical_layout->addStretch(1);
+    vertical_layout->addLayout(grid_layout);
+    vertical_layout->addStretch(1);
+    layout->addLayout(vertical_layout, 5);
+    layout->addStretch(1);
+    widget->setMinimumSize(scale(200, 200));
+    auto w = widget;
+    return widget;
   });
   return profile;
 }
@@ -3205,12 +3255,8 @@ UiProfile Spire::make_tag_box_profile() {
     make_standard_enum_property("overflow", overflow_property));
   properties.push_back(make_standard_property<QString>("add_tag"));
   auto profile = UiProfile("TagBox", properties, [] (auto& profile) {
-    auto list_model = std::make_shared<ArrayListModel<QString>>();
-    list_model->push("CAN");
-    list_model->push("MSFT.NSDQ");
-    list_model->push("XIU.TSX");
-    auto current_model = std::make_shared<LocalTextModel>();
-    auto tag_box = new TagBox(list_model, current_model);
+    auto tag_box = new TagBox(populate_tag_box_model(),
+      std::make_shared<LocalTextModel>());
     apply_widget_properties(tag_box, profile.get_properties());
     auto& placeholder = get<QString>("placeholder", profile.get_properties());
     placeholder.connect_changed_signal([=] (const auto& text) {
@@ -3229,7 +3275,7 @@ UiProfile Spire::make_tag_box_profile() {
     auto& add_tag = get<QString>("add_tag", profile.get_properties());
     add_tag.connect_changed_signal([=] (const auto& value) {
       if(!value.isEmpty()) {
-        list_model->push(value);
+        tag_box->get_tags()->push(value);
       }
     });
     tag_box->connect_submit_signal(profile.make_event_slot<QString>("Submit"));
@@ -3248,22 +3294,7 @@ UiProfile Spire::make_tag_combo_box_profile() {
   properties.push_back(
     make_standard_enum_property("overflow", overflow_property));
   auto profile = UiProfile("TagComboBox", properties, [] (auto& profile) {
-    auto model = std::make_shared<LocalComboBoxQueryModel>();
-    model->add(QString("TSX"));
-    model->add(QString("TSXV"));
-    model->add(QString("TSO.ASX"));
-    model->add(QString("TSU.TSX"));
-    model->add(QString("TSN.TSXV"));
-    model->add(QString("TSL.NYSE"));
-    model->add(QString("MSFT.NSDQ"));
-    model->add(QString("XDRX"));
-    model->add(QString("XIU.TSX"));
-    model->add(QString("AUS"));
-    model->add(QString("CAN"));
-    model->add(QString("CHN"));
-    model->add(QString("JPN"));
-    model->add(QString("USA"));
-    auto tag_combo_box = new TagComboBox(model);
+    auto tag_combo_box = new TagComboBox(populate_tag_combo_box_model());
     auto box = new PopupBox(*tag_combo_box);
     box->setMinimumWidth(scale_width(112));
     apply_widget_properties(box, profile.get_properties());
