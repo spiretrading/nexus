@@ -160,10 +160,10 @@ void PopupBox::on_focus(FocusObserver::State state) {
     return;
   }
   if(state != FocusObserver::State::NONE && !has_popped_up()) {
-    layout()->removeWidget(m_body);
     is_changing_parent = true;
     m_body->setParent(m_window);
     is_changing_parent = false;
+    layout()->removeWidget(m_body);
     m_body->show();
     m_body->setFocus();
     m_alignment = Alignment::NONE;
