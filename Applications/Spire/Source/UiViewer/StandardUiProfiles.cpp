@@ -2535,7 +2535,6 @@ UiProfile Spire::make_popup_box_profile() {
     layout->addLayout(vertical_layout, 5);
     layout->addStretch(1);
     widget->setMinimumSize(scale(200, 200));
-    auto w = widget;
     return widget;
   });
   return profile;
