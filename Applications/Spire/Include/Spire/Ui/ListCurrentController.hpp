@@ -150,6 +150,7 @@ namespace Spire {
       QRect m_navigation_box;
       boost::signals2::scoped_connection m_connection;
 
+      void update(boost::optional<int> current);
       void on_current(boost::optional<int> current);
   };
 }
