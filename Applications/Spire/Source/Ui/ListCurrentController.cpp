@@ -30,8 +30,10 @@ void ListCurrentController::set_edge_navigation(EdgeNavigation navigation) {
 void ListCurrentController::add(std::unique_ptr<ItemView> view, int index) {
   m_views.insert(std::next(m_views.begin(), index), std::move(view));
   if(m_current->get() && *m_current->get() >= index) {
+    auto current = *m_current->get() + 1;
+    update(current);
     auto blocker = shared_connection_block(m_connection);
-    m_current->set(*m_current->get() + 1);
+    m_current->set(current);
   }
 }
 
@@ -48,8 +50,10 @@ void ListCurrentController::remove(int index) {
         m_current->set(index);
       }
     } else if(m_current->get() > index) {
+      auto current = *m_current->get() - 1;
+      update(current);
       auto blocker = shared_connection_block(m_connection);
-      m_current->set(*m_current->get() - 1);
+      m_current->set(current);
     }
   }
 }
@@ -81,6 +85,7 @@ void ListCurrentController::move(int source, int destination) {
   adjust(m_last_current);
   auto current = m_current->get();
   if(adjust(current)) {
+    update(current);
     auto blocker = shared_connection_block(m_connection);
     m_current->set(current);
   }
@@ -199,13 +204,17 @@ connection ListCurrentController::connect_update_signal(
   return m_update_signal.connect(slot);
 }
 
-void ListCurrentController::on_current(optional<int> current) {
-  auto previous = m_last_current;
+void ListCurrentController::update(optional<int> current) {
   m_last_current = current;
   if(current) {
     m_navigation_box = m_views[*current]->get_geometry();
   } else {
     m_navigation_box = QRect();
   }
+}
+
+void ListCurrentController::on_current(optional<int> current) {
+  auto previous = m_last_current;
+  update(current);
   m_update_signal(previous, current);
 }
