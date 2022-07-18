@@ -1,5 +1,5 @@
 #include "Spire/Blotter/CompositeBlotterModel.hpp"
-#include "Spire/Blotter/LocalBlotterProfitAndLossModel.hpp"
+#include "Spire/Blotter/BlotterProfitAndLossModel.hpp"
 #include "Spire/Blotter/LocalValuationModel.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Ui/MultiSelectionModel.hpp"
@@ -17,7 +17,6 @@ CompositeBlotterModel::CompositeBlotterModel(std::shared_ptr<TextModel> name,
     std::shared_ptr<BlotterTaskListModel> tasks,
     std::shared_ptr<ListModel<int>> task_selection,
     std::shared_ptr<ValuationModel> valuation,
-    std::shared_ptr<BlotterProfitAndLossModel> profit_and_loss,
     std::shared_ptr<ListModel<int>> position_selection)
   : m_name(std::move(name)),
     m_is_active(std::move(is_active)),
@@ -30,7 +29,6 @@ CompositeBlotterModel::CompositeBlotterModel(std::shared_ptr<TextModel> name,
     m_tasks(std::move(tasks)),
     m_task_selection(std::move(task_selection)),
     m_valuation(std::move(valuation)),
-    m_profit_and_loss(std::move(profit_and_loss)),
     m_position_selection(std::move(position_selection)) {}
 
 std::shared_ptr<TextModel> CompositeBlotterModel::get_name() {
@@ -78,11 +76,6 @@ std::shared_ptr<ValuationModel> CompositeBlotterModel::get_valuation() {
   return m_valuation;
 }
 
-std::shared_ptr<BlotterProfitAndLossModel>
-    CompositeBlotterModel::get_profit_and_loss() {
-  return m_profit_and_loss;
-}
-
 std::shared_ptr<ListModel<int>>
     CompositeBlotterModel::get_position_selection() const {
   return m_position_selection;
@@ -99,7 +92,6 @@ std::shared_ptr<CompositeBlotterModel> Spire::make_local_blotter_model(
     std::make_shared<ArrayListModel<std::shared_ptr<BlotterTaskEntry>>>(),
     std::make_shared<ListMultiSelectionModel>(),
     std::make_shared<LocalValuationModel>(),
-    std::make_shared<LocalBlotterProfitAndLossModel>(),
     std::make_shared<ListMultiSelectionModel>());
 }
 
@@ -115,6 +107,5 @@ std::shared_ptr<CompositeBlotterModel> Spire::make_derived_blotter_model(
     std::move(is_active), std::move(is_pinned), std::move(markets), currency,
     std::move(exchange_rates), std::move(buying_power), std::move(net_loss),
     std::move(tasks), std::make_shared<ListMultiSelectionModel>(),
-    std::move(valuation), std::make_shared<LocalBlotterProfitAndLossModel>(),
-    std::make_shared<ListMultiSelectionModel>());
+    std::move(valuation), std::make_shared<ListMultiSelectionModel>());
 }

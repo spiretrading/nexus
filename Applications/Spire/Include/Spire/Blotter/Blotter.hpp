@@ -16,7 +16,6 @@ namespace Spire {
   class BlotterWindow;
   class CompositeBlotterModel;
   class ExecutionReportsToTableModel;
-  class LocalBlotterProfitAndLossModel;
   class LocalValuationModel;
   class OrdersToExecutionReportListModel;
   class OrdersToTableModel;

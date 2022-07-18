@@ -91,10 +91,6 @@ namespace Spire {
       /** Returns the valuations used by this blotter. */
       virtual std::shared_ptr<ValuationModel> get_valuation() = 0;
 
-      /** Returns the blotter's profit and loss. */
-      virtual std::shared_ptr<BlotterProfitAndLossModel>
-        get_profit_and_loss() = 0;
-
       /** Returns the list of selected positions. */
       virtual std::shared_ptr<ListModel<int>> get_position_selection() const =
         0;

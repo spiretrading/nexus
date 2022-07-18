@@ -1,4 +1,5 @@
 #include "Spire/Blotter/BlotterProfitAndLossView.hpp"
+#include "Spire/Blotter/BlotterProfitAndLossModel.hpp"
 #include "Spire/Spire/ArrayTableModel.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
@@ -7,19 +8,13 @@
 using namespace Spire;
 using namespace Spire::Styles;
 
-namespace {
-  auto to_table(std::shared_ptr<BlotterProfitAndLossModel> profit_and_loss) {
-    return std::make_shared<ArrayTableModel>();
-  }
-}
-
 BlotterProfitAndLossView::BlotterProfitAndLossView(
     std::shared_ptr<BlotterProfitAndLossModel> profit_and_loss,
     QWidget* parent)
     : QWidget(parent),
       m_profit_and_loss(std::move(profit_and_loss)) {
   setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  auto table_view_builder = TableViewBuilder(to_table(m_profit_and_loss));
+  auto table_view_builder = TableViewBuilder(m_profit_and_loss);
   table_view_builder.add_header_item(tr("Currency"), tr("Curr"));
   table_view_builder.add_header_item(tr("Security"));
   table_view_builder.add_header_item(tr("Profit/Loss"), tr("P/L"));

@@ -3,6 +3,7 @@
 #include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/Blotter/BlotterOrderLogView.hpp"
 #include "Spire/Blotter/BlotterPositionsView.hpp"
+#include "Spire/Blotter/BlotterProfitAndLossModel.hpp"
 #include "Spire/Blotter/BlotterProfitAndLossView.hpp"
 #include "Spire/Blotter/BlotterStatusBar.hpp"
 #include "Spire/Blotter/BlotterStatusModel.hpp"
@@ -40,8 +41,8 @@ BlotterWindow::BlotterWindow(
   auto executions = new BlotterExecutionsView(
     std::make_shared<OrdersToExecutionReportListModel>(orders));
   tabs->add(tr("Executions"), *executions);
-  auto profit_and_loss =
-    new BlotterProfitAndLossView(m_blotter->get_profit_and_loss());
+  auto profit_and_loss = new BlotterProfitAndLossView(
+    std::make_shared<BlotterProfitAndLossModel>(portfolio));
   tabs->add(tr("Profit/Loss"), *profit_and_loss);
   m_task_view = new BlotterTaskView(
     m_blotter->is_active(), m_blotter->is_pinned(), m_blotter->get_tasks(),
