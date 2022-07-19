@@ -59,7 +59,10 @@ namespace Spire {
       ArrayTableModel m_table;
       boost::signals2::scoped_connection m_connection;
 
-      void on_update(const PortfolioModel::Portfolio::UpdateEntry& update);
+      void update(const Index& index, const Nexus::Security& security,
+        Nexus::Money unrealized_profit_and_loss,
+        const PortfolioModel::Portfolio::UpdateEntry::Inventory& inventory);
+      void on_update(const PortfolioModel::Portfolio::UpdateEntry& entry);
   };
 }
 

@@ -29,29 +29,35 @@ connection BlotterProfitAndLossModel::connect_operation_signal(
   return m_table.connect_operation_signal(slot);
 }
 
-void BlotterProfitAndLossModel::on_update(
-    const PortfolioModel::Portfolio::UpdateEntry& update) {
-  auto& security = update.m_securityInventory.m_position.m_key.m_index;
-  auto index = m_indexes.find(security);
-  if(index == m_indexes.end()) {
-    m_indexes.insert(std::pair(security, m_table.get_row_size())).first;
+void BlotterProfitAndLossModel::update(const Index& index,
+    const Security& security, Money unrealized_profit_and_loss,
+    const PortfolioModel::Portfolio::UpdateEntry::Inventory& inventory) {
+  auto i = m_indexes.find(index);
+  if(i == m_indexes.end()) {
+    m_indexes.insert(std::pair(index, m_table.get_row_size())).first;
     auto row = std::vector<std::any>();
-    row.push_back(update.m_currencyInventory.m_position.m_key.m_currency);
+    row.push_back(inventory.m_position.m_key.m_currency);
     row.push_back(security);
-    row.push_back(update.m_unrealizedSecurity +
-      GetRealizedProfitAndLoss(update.m_securityInventory));
-    row.push_back(update.m_securityInventory.m_fees);
-    row.push_back(update.m_securityInventory.m_volume);
+    row.push_back(
+      unrealized_profit_and_loss + GetRealizedProfitAndLoss(inventory));
+    row.push_back(inventory.m_fees);
+    row.push_back(inventory.m_volume);
     m_table.push(row);
   } else {
-    m_table.transact([&] {
-      m_table.set(
-        index->second, Column::PROFIT_AND_LOSS, update.m_unrealizedSecurity +
-          GetRealizedProfitAndLoss(update.m_securityInventory));
-      m_table.set(
-        index->second, Column::FEES, update.m_securityInventory.m_fees);
-      m_table.set(
-        index->second, Column::VOLUME, update.m_securityInventory.m_volume);
-    });
+    m_table.set(i->second, Column::PROFIT_AND_LOSS,
+      unrealized_profit_and_loss + GetRealizedProfitAndLoss(inventory));
+    m_table.set(i->second, Column::FEES, inventory.m_fees);
+    m_table.set(i->second, Column::VOLUME, inventory.m_volume);
   }
+}
+
+void BlotterProfitAndLossModel::on_update(
+    const PortfolioModel::Portfolio::UpdateEntry& entry) {
+  auto& currency = entry.m_currencyInventory.m_position.m_key.m_currency;
+  auto& security = entry.m_securityInventory.m_position.m_key.m_index;
+  m_table.transact([&] {
+    update(currency, {}, entry.m_unrealizedCurrency, entry.m_currencyInventory);
+    update(security, security, entry.m_unrealizedSecurity,
+      entry.m_securityInventory);
+  });
 }
