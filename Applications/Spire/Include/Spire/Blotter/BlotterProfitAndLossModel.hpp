@@ -14,6 +14,16 @@ namespace Spire {
   class BlotterProfitAndLossModel : public TableModel {
     public:
 
+      /** Stores a currency index and whether that currency is expanded. */
+      struct CurrencyIndex {
+
+        /** The currency being indexed. */
+        Nexus::CurrencyId m_index;
+
+        /** Whether the currency is expanded. */
+        bool m_is_expanded;
+      };
+
       /** Lists out the columns of the table. */
       enum Column {
 
@@ -59,8 +69,7 @@ namespace Spire {
       ArrayTableModel m_table;
       boost::signals2::scoped_connection m_connection;
 
-      void update(const Index& index, const Nexus::Security& security,
-        Nexus::Money unrealized_profit_and_loss,
+      void update(const Index& index, Nexus::Money unrealized_profit_and_loss,
         const PortfolioModel::Portfolio::UpdateEntry::Inventory& inventory);
       void on_update(const PortfolioModel::Portfolio::UpdateEntry& entry);
   };

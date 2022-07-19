@@ -30,14 +30,20 @@ connection BlotterProfitAndLossModel::connect_operation_signal(
 }
 
 void BlotterProfitAndLossModel::update(const Index& index,
-    const Security& security, Money unrealized_profit_and_loss,
+    Money unrealized_profit_and_loss,
     const PortfolioModel::Portfolio::UpdateEntry::Inventory& inventory) {
   auto i = m_indexes.find(index);
   if(i == m_indexes.end()) {
     m_indexes.insert(std::pair(index, m_table.get_row_size())).first;
     auto row = std::vector<std::any>();
-    row.push_back(inventory.m_position.m_key.m_currency);
-    row.push_back(security);
+    if(index.type() == typeid(CurrencyId)) {
+      row.push_back(
+        CurrencyIndex(inventory.m_position.m_key.m_currency, false));
+      row.push_back(Security());
+    } else {
+      row.push_back(inventory.m_position.m_key.m_currency);
+      row.push_back(boost::get<Security>(index));
+    }
     row.push_back(
       unrealized_profit_and_loss + GetRealizedProfitAndLoss(inventory));
     row.push_back(inventory.m_fees);
@@ -56,8 +62,8 @@ void BlotterProfitAndLossModel::on_update(
   auto& currency = entry.m_currencyInventory.m_position.m_key.m_currency;
   auto& security = entry.m_securityInventory.m_position.m_key.m_index;
   m_table.transact([&] {
-    update(currency, {}, entry.m_unrealizedCurrency, entry.m_currencyInventory);
-    update(security, security, entry.m_unrealizedSecurity,
+    update(currency, entry.m_unrealizedCurrency, entry.m_currencyInventory);
+    update(security, entry.m_unrealizedSecurity,
       entry.m_securityInventory);
   });
 }
