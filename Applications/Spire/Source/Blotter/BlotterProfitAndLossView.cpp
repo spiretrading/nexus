@@ -2,6 +2,7 @@
 #include "Spire/Blotter/BlotterProfitAndLossModel.hpp"
 #include "Spire/Spire/ArrayTableModel.hpp"
 #include "Spire/Spire/ColumnViewListModel.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/FieldValueModel.hpp"
 #include "Spire/Spire/ListValueModel.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
@@ -23,7 +24,14 @@ namespace {
         std::shared_ptr<BooleanModel> is_expanded)
         : m_currency(std::move(currency)),
           m_is_expanded(std::move(is_expanded)) {
-      enclose(*this, *make_label(displayText(m_currency->get())));
+      auto layout = make_hbox_layout(this);
+      auto expand_button = make_icon_toggle_button(imageFromSvg(
+        ":/Icons/blotter/profit_and_loss/expand_arrow.svg", scale(16, 26)),
+        imageFromSvg(":/Icons/blotter/profit_and_loss/collapse_arrow.svg",
+          scale(16, 26)), m_is_expanded);
+      expand_button->setFixedSize(scale(16, 26));
+      layout->addWidget(expand_button);
+      layout->addWidget(make_label(displayText(m_currency->get())));
     }
   };
 }

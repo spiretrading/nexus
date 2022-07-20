@@ -59,6 +59,9 @@ namespace Spire {
 
       AnyRef at(int row, int column) const override;
 
+      QValidator::State set(int row, int column, const std::any& value)
+        override;
+
       boost::signals2::connection connect_operation_signal(
         const OperationSignal::slot_type& slot) const override;
 

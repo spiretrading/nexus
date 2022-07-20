@@ -24,6 +24,18 @@ AnyRef BlotterProfitAndLossModel::at(int row, int column) const {
   return m_table.at(row, column);
 }
 
+QValidator::State BlotterProfitAndLossModel::set(
+    int row, int column, const std::any& value) {
+  if(column != CURRENCY || value.type() != typeid(CurrencyIndex)) {
+    return QValidator::State::Invalid;
+  }
+  auto& index = std::any_cast<const CurrencyIndex&>(value);
+  if(m_table.get<CurrencyIndex>(row, column).m_index != index.m_index) {
+    return QValidator::State::Invalid;
+  }
+  return m_table.set(row, column, value);
+}
+
 connection BlotterProfitAndLossModel::connect_operation_signal(
     const OperationSignal::slot_type& slot) const {
   return m_table.connect_operation_signal(slot);

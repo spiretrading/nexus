@@ -86,7 +86,8 @@ namespace Spire {
   /**
    * Makes a ToggleButton whose body displays different icons when
    * checked/unchecked.
-   * @param icon The icon used within the button.
+   * @param icon The icon displayed when unchecked.
+   * @param checked_icon The icon displayed when checked.
    * @param current Whether the button is checked.
    * @param parent The parent widget.
    */
