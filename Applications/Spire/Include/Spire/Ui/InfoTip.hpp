@@ -44,6 +44,7 @@ namespace Spire {
       };
 
       QWidget* m_body;
+      QWidget* m_container;
       bool m_is_interactive;
       QTimer m_show_timer;
       QColor m_background_color;

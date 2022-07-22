@@ -1744,30 +1744,55 @@ UiProfile Spire::make_icon_toggle_button_profile() {
 UiProfile Spire::make_info_tip_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
+  properties.push_back(
+    make_standard_property<QString>("label", QString("Body Label")));
   properties.push_back(make_standard_property<bool>("interactive"));
+  properties.push_back(make_standard_property("padding-top", 8));
+  properties.push_back(make_standard_property("padding-right", 8));
+  properties.push_back(make_standard_property("padding-bottom", 8));
+  properties.push_back(make_standard_property("padding-left", 8));
+  properties.push_back(make_standard_property("border-size", 1));
   properties.push_back(
-    make_standard_property<int>("body-width", scale_width(100)));
-  properties.push_back(
-    make_standard_property<int>("body-height", scale_height(30)));
+    make_standard_property<QColor>("label-color", QColor(0xFFFFFF)));
   auto profile = UiProfile("InfoTip", properties, [] (auto& profile) {
     auto button = make_label_button("Hover me!");
-    auto body_label = make_label("Body Label");
+    auto body_label = make_label("");
     update_style(*body_label, [&] (auto& style) {
       style.get(Any()).set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
     });
     auto info_tip = new InfoTip(body_label, button);
     apply_widget_properties(button, profile.get_properties());
+    auto& label = get<QString>("label", profile.get_properties());
+    label.connect_changed_signal([=] (auto value) {
+      body_label->get_current()->set(value);
+    });
     auto& interactive = get<bool>("interactive", profile.get_properties());
     interactive.connect_changed_signal([=] (bool is_interactive) {
       info_tip->set_interactive(is_interactive);
     });
-    auto& body_width = get<int>("body-width", profile.get_properties());
-    body_width.connect_changed_signal([=] (auto width) {
-      body_label->setFixedWidth(width);
+    auto& padding_top = get<int>("padding-top", profile.get_properties());
+    connect_style_property_change_signal<int, Any, PaddingTop>(
+      padding_top, info_tip);
+    auto& padding_right = get<int>("padding-right", profile.get_properties());
+    connect_style_property_change_signal<int, Any, PaddingRight>(
+      padding_right, info_tip);
+    auto& padding_bottom = get<int>("padding-bottom", profile.get_properties());
+    connect_style_property_change_signal<int, Any, PaddingBottom>(
+      padding_bottom, info_tip);
+    auto& padding_left = get<int>("padding-left", profile.get_properties());
+    connect_style_property_change_signal<int, Any, PaddingLeft>(
+      padding_left, info_tip);
+    auto& border = get<int>("border-size", profile.get_properties());
+    border.connect_changed_signal([=] (auto value) {
+      update_style(*info_tip, [&] (auto& style) {
+        style.get(Any()).set(border_size(value));
+      });
     });
-    auto& body_height = get<int>("body-height", profile.get_properties());
-    body_height.connect_changed_signal([=] (auto height) {
-      body_label->setFixedHeight(height);
+    auto& label_color = get<QColor>("label-color", profile.get_properties());
+    label_color.connect_changed_signal([=] (const auto& color) {
+      update_style(*body_label, [&] (auto& style) {
+        style.get(ReadOnly() && Disabled()).set(BackgroundColor(color));
+      });
     });
     return button;
   });
