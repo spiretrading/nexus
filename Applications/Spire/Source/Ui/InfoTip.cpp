@@ -267,7 +267,7 @@ void InfoTip::on_show_timeout() {
 }
 
 void InfoTip::on_style() {
-  auto padding = QMargins();
+  auto padding = std::make_shared<QMargins>();
   auto& stylist = find_stylist(*this);
   auto& block = stylist.get_computed_block();
   for(auto& property : block) {
@@ -288,29 +288,29 @@ void InfoTip::on_style() {
         });
       },
       [&] (const PaddingRight& size) {
-        stylist.evaluate(size, [&] (auto size) {
-          padding.setRight(size);
+        stylist.evaluate(size, [=] (auto size) {
+          padding->setRight(size);
         });
       },
       [&] (const PaddingLeft& size) {
-        stylist.evaluate(size, [&] (auto size) {
-          padding.setLeft(size);
+        stylist.evaluate(size, [=] (auto size) {
+          padding->setLeft(size);
         });
       },
       [&] (const PaddingTop& size) {
-        stylist.evaluate(size, [&] (auto size) {
-          padding.setTop(size);
+        stylist.evaluate(size, [=] (auto size) {
+          padding->setTop(size);
         });
       },
       [&] (const PaddingBottom& size) {
-        stylist.evaluate(size, [&] (auto size) {
-          padding.setBottom(size);
+        stylist.evaluate(size, [=] (auto size) {
+          padding->setBottom(size);
         });
       });
   }
   if(m_border_size == 0) {
     m_border_color = m_background_color;
   }
-  m_container->layout()->setContentsMargins(padding + m_border_size);
+  m_container->layout()->setContentsMargins(*padding + m_border_size);
   update();
 }
