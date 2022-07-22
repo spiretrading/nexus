@@ -134,7 +134,7 @@ QPainterPath InfoTip::get_arrow_path() const {
     if(orientation == Orientation::TOP_LEFT ||
         orientation == Orientation::TOP_RIGHT) {
       auto y = height() - margins.bottom() -
-        static_cast<int>(std::round(half_border_size));
+        static_cast<int>(std::ceil(half_border_size));
       return QVector<QPoint>({{left_x, y}, {tip_x, height() - Y_OFFSET()},
         {right_x, y}});
     }
@@ -237,7 +237,7 @@ QPixmap InfoTip::render_background() const {
   auto path = get_arrow_path();
   auto half_border_size = m_border_size / 2.0;
   auto border_margins = QMargins(half_border_size, half_border_size,
-    std::round(half_border_size), std::round(half_border_size));
+    std::ceil(half_border_size), std::ceil(half_border_size));
   path.addRect(rect().marginsRemoved(get_margins() + border_margins));
   auto arrow = scene.addPath(path.simplified(), QPen(m_border_color,
     m_border_size), m_background_color);
