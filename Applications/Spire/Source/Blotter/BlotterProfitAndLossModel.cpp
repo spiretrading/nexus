@@ -48,12 +48,11 @@ void BlotterProfitAndLossModel::update(const Index& index,
   if(i == m_indexes.end()) {
     m_indexes.insert(std::pair(index, m_table.get_row_size())).first;
     auto row = std::vector<std::any>();
+    row.push_back(
+      CurrencyIndex(inventory.m_position.m_key.m_currency, false));
     if(index.type() == typeid(CurrencyId)) {
-      row.push_back(
-        CurrencyIndex(inventory.m_position.m_key.m_currency, false));
       row.push_back(Security());
     } else {
-      row.push_back(inventory.m_position.m_key.m_currency);
       row.push_back(boost::get<Security>(index));
     }
     row.push_back(
