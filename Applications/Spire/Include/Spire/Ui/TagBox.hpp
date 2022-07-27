@@ -67,6 +67,7 @@ namespace Spire {
       TextAreaBox* m_text_area_box;
       InfoTip* m_info_tip;
       FocusObserver m_focus_observer;
+      std::unique_ptr<GlobalPositionObserver> m_text_box_position_observer;
       std::vector<Tag*> m_tags;
       Styles::Overflow m_list_view_overflow;
       QFont m_font;
