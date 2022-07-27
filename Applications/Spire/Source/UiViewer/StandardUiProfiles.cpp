@@ -3240,7 +3240,7 @@ UiProfile Spire::make_tag_combo_box_profile() {
     model->add(QString("JPN"));
     model->add(QString("USA"));
     auto box = new TagComboBox(model);
-    box->setFixedWidth(scale_width(112));
+    box->setMinimumWidth(scale_width(112));
     apply_widget_properties(box, profile.get_properties());
     auto& placeholder = get<QString>("placeholder", profile.get_properties());
     placeholder.connect_changed_signal([=] (const auto& placeholder) {
