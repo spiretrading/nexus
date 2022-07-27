@@ -1,23 +1,12 @@
 #ifndef SPIRE_TAG_BOX_HPP
 #define SPIRE_TAG_BOX_HPP
 #include <QWidget>
+#include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
-namespace Styles {
-
-  /** Specifies how to layout the tags on overflow. */
-  enum class TagBoxOverflow {
-
-    /** Tags will be truncated with ellipsis. */
-    ELIDE,
-
-    /** Tags will wrap onto multiple lines if they are too long. */
-    WRAP
-  };
-}
 
   /** Displays a list of tags within a box. */
   class TagBox : public QWidget {
@@ -63,7 +52,6 @@ namespace Styles {
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
-      bool event(QEvent* event) override;
       void changeEvent(QEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
       void showEvent(QShowEvent* event) override;
@@ -73,42 +61,43 @@ namespace Styles {
       std::shared_ptr<PartialListModel> m_model;
       TextBox* m_text_box;
       ListView* m_list_view;
-      ScrollBox* m_scroll_box;
+      ScrollableListBox* m_scrollable_list_box;
+      ScrollBar* m_horizontal_scroll_bar;
       ScrollBar* m_vertical_scroll_bar;
-      ListItem* m_ellipses_item;
-      Tooltip* m_tooltip;
+      TextAreaBox* m_text_area_box;
+      InfoTip* m_info_tip;
+      FocusObserver m_focus_observer;
       std::vector<Tag*> m_tags;
-      Styles::TagBoxOverflow m_overflow;
       Styles::Overflow m_list_view_overflow;
       QFont m_font;
       QString m_placeholder;
-      QString m_tip;
       bool m_is_read_only;
+      QMargins m_input_box_border;
       QMargins m_input_box_padding;
-      int m_tags_width;
+      QMargins m_list_view_padding;
       int m_list_item_gap;
-      int m_list_view_horizontal_padding;
-      int m_scroll_bar_end_range;
+      int m_min_scroll_height;
+      int m_horizontal_scroll_bar_end_range;
+      int m_vertical_scroll_bar_end_range;
       boost::signals2::scoped_connection m_style_connection;
       boost::signals2::scoped_connection m_list_view_style_connection;
-      boost::signals2::scoped_connection m_text_box_style_connection;
+      boost::signals2::scoped_connection m_text_area_box_style_connection;
 
       QWidget* make_tag(const std::shared_ptr<AnyListModel>& model, int index);
+      void scroll_to_text_box();
+      void update_placeholder();
+      void update_scroll_bar_end_range(ScrollBar& scroll_bar, int& end_range);
+      void update_tag_size_policy();
+      void update_tags_read_only();
+      void update_tip();
+      void update_tooltip();
+      void on_focus(FocusObserver::State state);
       void on_operation(const AnyListModel::Operation& operation);
       void on_text_box_current(const QString& current);
       void on_list_view_submit(const std::any& submission);
       void on_style();
       void on_list_view_style();
-      void on_text_box_style();
-      void update();
-      void update_placeholder();
-      void update_tags_read_only();
-      void update_tags_width();
-      void update_tip();
-      void update_tooltip();
-      void overflow();
-      void show_all_tags();
-      void remove_text_box_size_constraint();
+      void on_text_area_style_style();
   };
 }
 

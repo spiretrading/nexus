@@ -3189,10 +3189,6 @@ UiProfile Spire::make_tag_box_profile() {
   populate_widget_properties(properties);
   properties.push_back(make_standard_property<QString>("placeholder"));
   properties.push_back(make_standard_property("read_only", false));
-  auto overflow_property = define_enum<TagBoxOverflow>(
-    {{"WRAP", TagBoxOverflow::WRAP}, {"ELIDE", TagBoxOverflow::ELIDE}});
-  properties.push_back(
-    make_standard_enum_property("overflow", overflow_property));
   properties.push_back(make_standard_property<QString>("add_tag"));
   auto profile = UiProfile("TagBox", properties, [] (auto& profile) {
     auto list_model = std::make_shared<ArrayListModel<QString>>();
@@ -3209,12 +3205,6 @@ UiProfile Spire::make_tag_box_profile() {
     auto& read_only = get<bool>("read_only", profile.get_properties());
     read_only.connect_changed_signal([=] (auto is_read_only) {
       tag_box->set_read_only(is_read_only);
-    });
-    auto& overflow = get<TagBoxOverflow>("overflow", profile.get_properties());
-    overflow.connect_changed_signal([=] (auto value) {
-      update_style(*tag_box, [&] (auto& style) {
-        style.get(Any()).set(value);
-      });
     });
     auto& add_tag = get<QString>("add_tag", profile.get_properties());
     add_tag.connect_changed_signal([=] (const auto& value) {
@@ -3233,10 +3223,6 @@ UiProfile Spire::make_tag_combo_box_profile() {
   populate_widget_properties(properties);
   properties.push_back(make_standard_property<QString>("placeholder"));
   properties.push_back(make_standard_property("read_only", false));
-  auto overflow_property = define_enum<TagBoxOverflow>(
-    {{"WRAP", TagBoxOverflow::WRAP}, {"ELIDE", TagBoxOverflow::ELIDE}});
-  properties.push_back(
-    make_standard_enum_property("overflow", overflow_property));
   auto profile = UiProfile("TagComboBox", properties, [] (auto& profile) {
     auto model = std::make_shared<LocalComboBoxQueryModel>();
     model->add(QString("TSX"));
@@ -3263,12 +3249,6 @@ UiProfile Spire::make_tag_combo_box_profile() {
     auto& read_only = get<bool>("read_only", profile.get_properties());
     read_only.connect_changed_signal(
       std::bind_front(&TagComboBox::set_read_only, box));
-    auto& overflow = get<TagBoxOverflow>("overflow", profile.get_properties());
-    overflow.connect_changed_signal([=] (auto value) {
-      update_style(*box, [&] (auto& style) {
-        style.get(Any() > is_a<TagBox>()).set(value);
-      });
-    });
     auto current_filter_slot =
       profile.make_event_slot<QString>(QString::fromUtf8("Current"));
     auto print_current = [=] {
