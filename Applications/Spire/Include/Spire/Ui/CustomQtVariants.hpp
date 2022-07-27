@@ -88,6 +88,7 @@ namespace Spire {
 Q_DECLARE_METATYPE(boost::gregorian::date);
 Q_DECLARE_METATYPE(boost::posix_time::ptime);
 Q_DECLARE_METATYPE(boost::posix_time::time_duration);
+Q_DECLARE_METATYPE(Nexus::CountryCode);
 Q_DECLARE_METATYPE(Nexus::CurrencyId);
 Q_DECLARE_METATYPE(Nexus::Money);
 Q_DECLARE_METATYPE(Nexus::OrderStatus);
@@ -138,6 +139,9 @@ namespace Spire {
 
   /** Returns the text representation of a time_duration. */
   QString displayText(boost::posix_time::time_duration time);
+
+  /** Returns the text representation of a CountryCode. */
+  QString displayText(Nexus::CountryCode code);
 
   /** Returns the text representation of a CurrencyId. */
   QString displayText(Nexus::CurrencyId currency);

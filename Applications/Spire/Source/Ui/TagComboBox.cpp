@@ -8,7 +8,6 @@
 
 using namespace boost::signals2;
 using namespace Spire;
-using namespace Spire::Styles;
 
 namespace {
   QWidget* find_pop_up_window(QWidget& widget) {
