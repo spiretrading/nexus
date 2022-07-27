@@ -5,6 +5,7 @@
 #include "Spire/Spire/ListModelTransactionLog.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/FocusObserver.hpp"
+#include "Spire/Ui/GlobalPositionObserver.hpp"
 #include "Spire/Ui/InfoTip.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ListItem.hpp"
@@ -207,6 +208,13 @@ TagBox::TagBox(std::shared_ptr<AnyListModel> list,
   setFocusPolicy(Qt::StrongFocus);
   m_focus_observer.connect_state_signal(
     std::bind_front(&TagBox::on_focus, this));
+  m_text_box_position_observer =
+    std::make_unique<GlobalPositionObserver>(*m_text_box);
+  m_text_box_position_observer->connect_position_signal([=] (auto pos) {
+    if(m_list_view_overflow == Styles::Overflow::NONE) {
+      update_tooltip();
+    }
+  });
 }
 
 const std::shared_ptr<AnyListModel>& TagBox::get_tags() const {
@@ -405,10 +413,17 @@ void TagBox::update_tooltip() {
         }
         return 0;
       }();
-      if(m_list_view->width() - m_list_view_padding.left() -
-          m_list_view->get_list_item(m_model->get_size() - 1)->width() -
-          m_list_item_gap > m_scrollable_list_box->width() - scroll_bar_width) {
-        return true;
+      if(!m_tags.empty()) {
+        auto first_tag_left =
+          m_list_view->get_list_item(0)->mapToGlobal(QPoint(0, 0)).x();
+        auto last_tag = m_list_view->get_list_item(m_model->get_size() - 2);
+        auto last_tag_right =
+          last_tag->mapToGlobal(QPoint(last_tag->width() - 1, 0)).x();
+        auto x = mapToGlobal(QPoint(0, 0)).x();
+        auto right = x + width() - 1;
+        if(first_tag_left < x || last_tag_right > right) {
+          return true;
+        }
       }
     } else {
       auto list_view_content_width =
