@@ -154,6 +154,8 @@ TagBox::TagBox(std::shared_ptr<AnyListModel> list,
       m_focus_observer(*this),
       m_list_view_overflow(Overflow::NONE),
       m_is_read_only(false),
+      m_list_item_gap(0),
+      m_min_scroll_height(0),
       m_horizontal_scroll_bar_end_range(0),
       m_vertical_scroll_bar_end_range(0) {
   m_text_box = new TextBox(std::move(current));
@@ -164,8 +166,7 @@ TagBox::TagBox(std::shared_ptr<AnyListModel> list,
     std::bind_front(&TagBox::on_text_box_current, this));
   m_list_view = new ListView(m_model,
     std::bind_front(&TagBox::make_tag, this));
-  m_list_view->set_item_size_policy(QSizePolicy::Fixed,
-    QSizePolicy::Preferred);
+  m_list_view->set_item_size_policy(QSizePolicy::Fixed, QSizePolicy::Preferred);
   update_style(*m_list_view, [] (auto& style) {
     style = LIST_VIEW_STYLE(style);
   });
@@ -399,7 +400,7 @@ void TagBox::update_tip() {
   for(auto i = 0; i < get_tags()->get_size(); ++i) {
     tip = tip % displayText(get_tags()->get(i)) % split_string;
   }
-  tip.remove(tip.length() - 3, 3);
+  tip.remove(tip.length() - split_string.length(), split_string.length());
   m_text_area_box->get_current()->set(tip);
   auto text_edit = m_text_area_box->findChild<QTextEdit*>();
   text_edit->document()->adjustSize();
