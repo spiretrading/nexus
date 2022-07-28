@@ -73,20 +73,6 @@ namespace {
   int vertical_length(const QMargins& margins) {
     return margins.top() + margins.bottom();
   }
-
-  void invalidate_descendants(QWidget& widget) {
-    for(auto child : widget.children()) {
-      if(!child->isWidgetType()) {
-        continue;
-      }
-      auto& widget = *static_cast<QWidget*>(child);
-      invalidate_descendants(widget);
-      widget.updateGeometry();
-      if(widget.layout()) {
-        widget.layout()->invalidate();
-      }
-    }
-  }
 }
 
 struct TagBox::PartialListModel : public AnyListModel {
@@ -154,6 +140,8 @@ TagBox::TagBox(std::shared_ptr<AnyListModel> list,
       m_focus_observer(*this),
       m_list_view_overflow(Overflow::NONE),
       m_is_read_only(false),
+      m_list_item_gap(0),
+      m_min_scroll_height(0),
       m_horizontal_scroll_bar_end_range(0),
       m_vertical_scroll_bar_end_range(0) {
   m_text_box = new TextBox(std::move(current));
@@ -164,8 +152,7 @@ TagBox::TagBox(std::shared_ptr<AnyListModel> list,
     std::bind_front(&TagBox::on_text_box_current, this));
   m_list_view = new ListView(m_model,
     std::bind_front(&TagBox::make_tag, this));
-  m_list_view->set_item_size_policy(QSizePolicy::Fixed,
-    QSizePolicy::Preferred);
+  m_list_view->set_item_size_policy(QSizePolicy::Fixed, QSizePolicy::Preferred);
   update_style(*m_list_view, [] (auto& style) {
     style = LIST_VIEW_STYLE(style);
   });
@@ -192,7 +179,8 @@ TagBox::TagBox(std::shared_ptr<AnyListModel> list,
   enclose(*this, *input_box);
   proxy_style(*this, *input_box);
   set_style(*this, INPUT_BOX_STYLE(get_style(*input_box)));
-  m_style_connection = connect_style_signal(*this, [=] { on_style(); });
+  m_style_connection = connect_style_signal(*this,
+    std::bind_front(&TagBox::on_style, this));
   m_text_area_box = new TextAreaBox("");
   m_text_area_box->set_read_only(true);
   m_text_area_box_style_connection = connect_style_signal(*m_text_area_box,
@@ -399,7 +387,7 @@ void TagBox::update_tip() {
   for(auto i = 0; i < get_tags()->get_size(); ++i) {
     tip = tip % displayText(get_tags()->get(i)) % split_string;
   }
-  tip.remove(tip.length() - 3, 3);
+  tip.remove(tip.length() - split_string.length(), split_string.length());
   m_text_area_box->get_current()->set(tip);
   auto text_edit = m_text_area_box->findChild<QTextEdit*>();
   text_edit->document()->adjustSize();
@@ -411,7 +399,7 @@ void TagBox::update_tip() {
 }
 
 void TagBox::update_tooltip() {
-  auto is_tag_overflow = [=] {
+  auto is_tag_overflow = [&] {
     if(m_list_view_overflow == Styles::Overflow::NONE) {
       auto scroll_bar_width = [&] {
         if(m_vertical_scroll_bar->isVisible()) {
@@ -445,7 +433,7 @@ void TagBox::update_tooltip() {
   if(isEnabled() && is_tag_overflow &&
       !m_text_area_box->get_current()->get().isEmpty()) {
     m_info_tip->setAttribute(Qt::WA_DontShowOnScreen, false);
-    invalidate_descendants(*m_info_tip);
+    invalidate_descendant_layouts(*m_info_tip);
     m_info_tip->adjustSize();
   } else {
     m_info_tip->setAttribute(Qt::WA_DontShowOnScreen, true);

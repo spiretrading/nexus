@@ -33,20 +33,6 @@ namespace {
       set(vertical_padding(scale_height(5)));
     return style;
   }
-
-  void invalidate_descendants(QWidget& widget) {
-    for(auto child : widget.children()) {
-      if(!child->isWidgetType()) {
-        continue;
-      }
-      auto& widget = *static_cast<QWidget*>(child);
-      invalidate_descendants(widget);
-      widget.updateGeometry();
-      if(widget.layout()) {
-        widget.layout()->invalidate();
-      }
-    }
-  }
 }
 
 ClosedFilterPanel::ClosedFilterPanel(std::shared_ptr<TableModel> table,
@@ -122,13 +108,13 @@ void ClosedFilterPanel::on_list_model_operation(
     const AnyListModel::Operation& operation) {
   visit(operation,
     [&] (const AnyListModel::AddOperation& operation) {
-      invalidate_descendants(*window());
+      invalidate_descendant_layouts(*window());
       if(m_table->get<bool>(operation.m_index, 1)) {
         m_submission->push(m_table->at(operation.m_index, 0));
       }
     },
     [&] (const AnyListModel::RemoveOperation& operation) {
-      invalidate_descendants(*window());
+      invalidate_descendant_layouts(*window());
       auto index = m_submission->get_size();
       while(--index >= 0) {
         m_submission->remove(index);

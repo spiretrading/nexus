@@ -71,7 +71,6 @@ RegionBox::RegionBox(std::shared_ptr<ComboBox::QueryModel> query_model,
       m_query_model(
         std::make_shared<RegionQueryModel>(std::move(query_model))),
       m_current(std::move(current)),
-      m_is_external_move(false),
       m_current_connection(m_current->connect_update_signal(
         std::bind_front(&RegionBox::on_current, this))) {
   m_tag_combo_box = new TagComboBox(m_query_model,
