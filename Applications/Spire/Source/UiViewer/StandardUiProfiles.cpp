@@ -2566,7 +2566,7 @@ UiProfile Spire::make_popup_box_profile() {
         auto widget = [&] () {
           if(i == 1 && j == 1) {
             auto region_box = new RegionBox(populate_region_box_model());
-            region_box->set_placeholder("TagBox");
+            region_box->set_placeholder("RegionBox");
             return new PopupBox(*region_box);
           } else if(i == 3 && j == 1) {
             auto tag_box = new TagBox(populate_tag_box_model(),

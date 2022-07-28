@@ -30,6 +30,7 @@ namespace Spire {
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
+      void showEvent(QShowEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
 
     private:
@@ -51,7 +52,6 @@ namespace Spire {
       int m_above_space;
       int m_below_space;
       int m_right_space;
-      mutable QSize m_size_hint;
 
       bool has_popped_up() const;
       void align();
