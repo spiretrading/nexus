@@ -69,7 +69,6 @@ namespace Spire {
       std::shared_ptr<RegionQueryModel> m_query_model;
       std::shared_ptr<CurrentModel> m_current;
       TagComboBox* m_tag_combo_box;
-      bool m_is_external_move;
       boost::signals2::scoped_connection m_current_connection;
 
       void update_min_max_size();
