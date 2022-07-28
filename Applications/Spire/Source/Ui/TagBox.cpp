@@ -179,7 +179,8 @@ TagBox::TagBox(std::shared_ptr<AnyListModel> list,
   enclose(*this, *input_box);
   proxy_style(*this, *input_box);
   set_style(*this, INPUT_BOX_STYLE(get_style(*input_box)));
-  m_style_connection = connect_style_signal(*this, [=] { on_style(); });
+  m_style_connection = connect_style_signal(*this,
+    std::bind_front(&TagBox::on_style, this));
   m_text_area_box = new TextAreaBox("");
   m_text_area_box->set_read_only(true);
   m_text_area_box_style_connection = connect_style_signal(*m_text_area_box,
@@ -398,7 +399,7 @@ void TagBox::update_tip() {
 }
 
 void TagBox::update_tooltip() {
-  auto is_tag_overflow = [=] {
+  auto is_tag_overflow = [&] {
     if(m_list_view_overflow == Styles::Overflow::NONE) {
       auto scroll_bar_width = [&] {
         if(m_vertical_scroll_bar->isVisible()) {
