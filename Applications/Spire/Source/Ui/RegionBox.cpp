@@ -84,8 +84,6 @@ RegionBox::RegionBox(std::shared_ptr<ComboBox::QueryModel> query_model,
   m_tag_combo_box->get_current()->connect_operation_signal(
     std::bind_front(&RegionBox::on_tags_operation, this));
   m_tag_combo_box->installEventFilter(this);
-  m_tag_combo_box->setSizePolicy(QSizePolicy::Expanding,
-    QSizePolicy::Expanding);
   enclose(*this, *m_tag_combo_box);
   setFocusProxy(m_tag_combo_box);
 }
@@ -116,58 +114,26 @@ connection RegionBox::connect_submit_signal(
   return m_submit_signal.connect(slot);
 }
 
-//bool RegionBox::eventFilter(QObject* watched, QEvent* event) {
-//  if(watched == m_tag_combo_box && event->type() == QEvent::LayoutRequest) {
-//    resize(m_tag_combo_box->size());
-//  } else if(watched == m_tag_combo_box && event->type() == QEvent::Move) {
-//    if(!m_is_external_move) {
-//      move(parentWidget()->mapFromGlobal(mapToGlobal(m_tag_combo_box->pos())));
-//    }
-//  } else if(watched == parentWidget() && event->type() == QEvent::Move) {
-//    QApplication::sendEvent(this, event);
-//  }
-//  return QWidget::eventFilter(watched, event);
-//}
+bool RegionBox::event(QEvent* event) {
+  if(event->type() == QEvent::LayoutRequest) {
+    update_min_max_size();
+  }
+  return QWidget::event(event);
+}
 
-//bool RegionBox::event(QEvent* event) {
-//  if(event->type() == QEvent::LayoutRequest) {
-//    if(m_tag_combo_box->minimumSize() != minimumSize()) {
-//      m_tag_combo_box->setMinimumSize(minimumSize());
-//    }
-//    if(m_tag_combo_box->maximumSize() != maximumSize()) {
-//      m_tag_combo_box->setMaximumSize(maximumSize());
-//    }
-//  }
-//  return QWidget::event(event);
-//}
-//
-//void RegionBox::showEvent(QShowEvent* event) {
-//  if(auto parent = parentWidget()) {
-//    if(auto layout = parent->layout()) {
-//      if(layout->indexOf(this) >= 0) {
-//        parent->installEventFilter(this);
-//      }
-//    }
-//  }
-//  QWidget::showEvent(event);
-//}
-//
-//void RegionBox::moveEvent(QMoveEvent* event) {
-//  m_is_external_move = true;
-//  QApplication::sendEvent(m_tag_combo_box, event);
-//  m_is_external_move = false;
-//  QWidget::moveEvent(event);
-//}
-//
-//void RegionBox::resizeEvent(QResizeEvent* event) {
-//  if(m_tag_combo_box->minimumSize() != minimumSize()) {
-//    m_tag_combo_box->setMinimumSize(minimumSize());
-//  }
-//  if(m_tag_combo_box->maximumSize() != maximumSize()) {
-//    m_tag_combo_box->setMaximumSize(maximumSize());
-//  }
-//  QWidget::resizeEvent(event);
-//}
+void RegionBox::resizeEvent(QResizeEvent* event) {
+  update_min_max_size();
+  QWidget::resizeEvent(event);
+}
+
+void RegionBox::update_min_max_size() {
+  if(m_tag_combo_box->minimumSize() != minimumSize()) {
+    m_tag_combo_box->setMinimumSize(minimumSize());
+  }
+  if(m_tag_combo_box->maximumSize() != maximumSize()) {
+    m_tag_combo_box->setMaximumSize(maximumSize());
+  }
+}
 
 void RegionBox::on_current(const Region& region) {
   auto& current = m_tag_combo_box->get_current();
