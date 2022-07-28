@@ -101,7 +101,7 @@ namespace Spire {
       void on_list_view_submit(const std::any& submission);
       void on_style();
       void on_list_view_style();
-      void on_text_area_style_style();
+      void on_text_area_style();
   };
 }
 
