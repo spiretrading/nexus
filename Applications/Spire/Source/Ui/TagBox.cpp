@@ -283,30 +283,33 @@ bool TagBox::eventFilter(QObject* watched, QEvent* event) {
       m_vertical_scroll_bar_end_range);
   } else if(watched == m_list_view && event->type() == QEvent::Resize) {
     update_tooltip();
+  } else if(watched == m_list_view && event->type() == QEvent::LayoutRequest) {
+    update_vertical_scroll_bar_visible();
   }
   return QWidget::eventFilter(watched, event);
+}
+
+bool TagBox::event(QEvent* event) {
+  if(event->type() == QEvent::LayoutRequest) {
+    update_overflow();
+    update_tooltip();
+  }
+  return QWidget::event(event);
 }
 
 void TagBox::changeEvent(QEvent* event) {
   if(event->type() == QEvent::EnabledChange) {
     update_tags_read_only();
     update_tooltip();
+    update_vertical_scroll_bar_visible();
   }
   QWidget::changeEvent(event);
 }
 
 void TagBox::resizeEvent(QResizeEvent* event) {
-  m_list_view_overflow = [&] {
-    if(event->size().height() > m_min_scroll_height) {
-      return Overflow::WRAP;
-    }
-    return Overflow::NONE;
-  }();
-  update_style(*m_list_view, [=] (auto& style) {
-    style.get(Any()).set(m_list_view_overflow);
-  });
-  update_tag_size_policy();
+  update_overflow();
   update_tooltip();
+  update_vertical_scroll_bar_visible();
   QWidget::resizeEvent(event);
 }
 
@@ -443,6 +446,33 @@ void TagBox::update_tooltip() {
     m_info_tip->adjustSize();
   } else {
     m_info_tip->setAttribute(Qt::WA_DontShowOnScreen, true);
+  }
+}
+
+void TagBox::update_overflow() {
+  auto old_overflow = m_list_view_overflow;
+  m_list_view_overflow = [&] {
+    if(height() <= m_min_scroll_height && minimumHeight() == maximumHeight()) {
+      return Overflow::NONE;
+    }
+    return Overflow::WRAP;
+  }();
+  if(old_overflow != m_list_view_overflow) {
+    update_style(*m_list_view, [=] (auto& style) {
+      style.get(Any()).set(m_list_view_overflow);
+    });
+    update_tag_size_policy();
+  }
+}
+
+void TagBox::update_vertical_scroll_bar_visible() {
+  if(m_list_view->sizeHint().height() + vertical_length(m_input_box_padding) +
+      vertical_length(m_input_box_border) > maximumHeight()) {
+    m_scrollable_list_box->get_scroll_box().set_vertical(
+      ScrollBox::DisplayPolicy::ON_OVERFLOW);
+  } else {
+    m_scrollable_list_box->get_scroll_box().set_vertical(
+      ScrollBox::DisplayPolicy::NEVER);
   }
 }
 

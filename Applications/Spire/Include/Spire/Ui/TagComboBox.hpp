@@ -73,7 +73,9 @@ namespace Spire {
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
+      bool event(QEvent* event) override;
       void showEvent(QShowEvent* event) override;
+      void resizeEvent(QResizeEvent* event) override;
 
     private:
       mutable SubmitSignal m_submit_signal;
@@ -87,6 +89,7 @@ namespace Spire {
       boost::signals2::scoped_connection m_list_connection;
 
       void submit();
+      void update_min_max_size();
       void on_combo_box_submit(const std::any& submission);
       void on_focus(FocusObserver::State state);
       void on_operation(const AnyListModel::Operation& operation);
