@@ -47,13 +47,13 @@ QImage Spire::imageFromSvg(const QString& path, const QSize& size,
   return image;
 }
 
-void Spire::invalidate_descendants(QWidget& widget) {
+void Spire::invalidate_descendant_layouts(QWidget& widget) {
   for(auto child : widget.children()) {
     if(!child->isWidgetType()) {
       continue;
     }
     auto& widget = *static_cast<QWidget*>(child);
-    invalidate_descendants(widget);
+    invalidate_descendant_layouts(widget);
     widget.updateGeometry();
     if(widget.layout()) {
       widget.layout()->invalidate();

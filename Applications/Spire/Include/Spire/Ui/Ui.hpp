@@ -134,9 +134,9 @@ namespace Spire {
 
   /**
    * Invalidates the layout of all descendants of the widget.
-   * @param widget The widget whose layout will be invalidated.
+   * @param widget The widget whose descendants' layout will be invalidated.
    */
-  void invalidate_descendants(QWidget& widget);
+  void invalidate_descendant_layouts(QWidget& widget);
 }
 
 #endif

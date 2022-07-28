@@ -108,13 +108,13 @@ void ClosedFilterPanel::on_list_model_operation(
     const AnyListModel::Operation& operation) {
   visit(operation,
     [&] (const AnyListModel::AddOperation& operation) {
-      invalidate_descendants(*window());
+      invalidate_descendant_layouts(*window());
       if(m_table->get<bool>(operation.m_index, 1)) {
         m_submission->push(m_table->at(operation.m_index, 0));
       }
     },
     [&] (const AnyListModel::RemoveOperation& operation) {
-      invalidate_descendants(*window());
+      invalidate_descendant_layouts(*window());
       auto index = m_submission->get_size();
       while(--index >= 0) {
         m_submission->remove(index);

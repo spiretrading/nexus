@@ -433,7 +433,7 @@ void TagBox::update_tooltip() {
   if(isEnabled() && is_tag_overflow &&
       !m_text_area_box->get_current()->get().isEmpty()) {
     m_info_tip->setAttribute(Qt::WA_DontShowOnScreen, false);
-    invalidate_descendants(*m_info_tip);
+    invalidate_descendant_layouts(*m_info_tip);
     m_info_tip->adjustSize();
   } else {
     m_info_tip->setAttribute(Qt::WA_DontShowOnScreen, true);
