@@ -22,7 +22,10 @@ using namespace Spire::Styles;
 
 namespace {
   auto INPUT_BOX_STYLE(StyleSheet style) {
-    style.get(Any()).set(padding(0));
+    style.get(Any()).
+      set(PaddingLeft(scale_width(8))).
+      set(PaddingRight(0)).
+      set(vertical_padding(0));
     style.get(Any() > is_a<ScrollableListBox>()).
       set(BackgroundColor(QColor(Qt::transparent))).
       set(border_size(0));
@@ -31,11 +34,11 @@ namespace {
 
   auto LIST_VIEW_STYLE(StyleSheet style) {
     style.get(Any()).
-      set(horizontal_padding(scale_width(8))).
       set(ListItemGap(scale_width(4))).
       set(ListOverflowGap(scale_width(3))).
       set(Overflow::WRAP).
       set(Qt::Horizontal).
+      set(PaddingRight(scale_width(8))).
       set(vertical_padding(scale_height(3)));
     style.get(Any() > is_a<ListItem>()).
       set(BackgroundColor(QColor(Qt::transparent))).
@@ -193,7 +196,7 @@ TagBox::TagBox(std::shared_ptr<AnyListModel> list,
   m_text_area_box = new TextAreaBox("");
   m_text_area_box->set_read_only(true);
   m_text_area_box_style_connection = connect_style_signal(*m_text_area_box,
-    std::bind_front(&TagBox::on_text_area_style_style, this));
+    std::bind_front(&TagBox::on_text_area_style, this));
   update_style(*m_text_area_box, [] (auto& style) {
     style = TEXT_AREA_BOX_STYLE(style);
   });
@@ -283,30 +286,33 @@ bool TagBox::eventFilter(QObject* watched, QEvent* event) {
       m_vertical_scroll_bar_end_range);
   } else if(watched == m_list_view && event->type() == QEvent::Resize) {
     update_tooltip();
+  } else if(watched == m_list_view && event->type() == QEvent::LayoutRequest) {
+    update_vertical_scroll_bar_visible();
   }
   return QWidget::eventFilter(watched, event);
+}
+
+bool TagBox::event(QEvent* event) {
+  if(event->type() == QEvent::LayoutRequest) {
+    update_overflow();
+    update_tooltip();
+  }
+  return QWidget::event(event);
 }
 
 void TagBox::changeEvent(QEvent* event) {
   if(event->type() == QEvent::EnabledChange) {
     update_tags_read_only();
     update_tooltip();
+    update_vertical_scroll_bar_visible();
   }
   QWidget::changeEvent(event);
 }
 
 void TagBox::resizeEvent(QResizeEvent* event) {
-  m_list_view_overflow = [&] {
-    if(event->size().height() > m_min_scroll_height) {
-      return Overflow::WRAP;
-    }
-    return Overflow::NONE;
-  }();
-  update_style(*m_list_view, [=] (auto& style) {
-    style.get(Any()).set(m_list_view_overflow);
-  });
-  update_tag_size_policy();
+  update_overflow();
   update_tooltip();
+  update_vertical_scroll_bar_visible();
   QWidget::resizeEvent(event);
 }
 
@@ -419,8 +425,8 @@ void TagBox::update_tooltip() {
         auto last_tag = m_list_view->get_list_item(m_model->get_size() - 2);
         auto last_tag_right =
           last_tag->mapToGlobal(QPoint(last_tag->width() - 1, 0)).x();
-        auto x = mapToGlobal(QPoint(0, 0)).x();
-        auto right = x + width() - 1;
+        auto x = m_scrollable_list_box->mapToGlobal(QPoint(0, 0)).x();
+        auto right = x + m_scrollable_list_box->width() - 1;
         if(first_tag_left < x || last_tag_right > right) {
           return true;
         }
@@ -443,6 +449,56 @@ void TagBox::update_tooltip() {
     m_info_tip->adjustSize();
   } else {
     m_info_tip->setAttribute(Qt::WA_DontShowOnScreen, true);
+  }
+}
+
+void TagBox::update_overflow() {
+  auto old_overflow = m_list_view_overflow;
+  m_list_view_overflow = [&] {
+    if(height() <= m_min_scroll_height && minimumHeight() == maximumHeight()) {
+      return Overflow::NONE;
+    }
+    return Overflow::WRAP;
+  }();
+  if(old_overflow != m_list_view_overflow) {
+    if(m_list_view_overflow == Overflow::NONE) {
+      update_style(*m_list_view, [] (auto& style) {
+        style.get(Any()).
+          set(Overflow::NONE).
+          set(PaddingRight(0));
+      });
+      update_style(*this, [] (auto& style) {
+        style.get(Any()).set(PaddingRight(scale_width(8)));
+      });
+    } else {
+      update_style(*m_list_view, [] (auto& style) {
+        style.get(Any()).
+          set(Overflow::WRAP).
+          set(PaddingRight(scale_width(8)));
+      });
+      update_style(*this, [] (auto& style) {
+        style.get(Any()).set(PaddingRight(0));
+      });
+    }
+    update_tag_size_policy();
+  }
+}
+
+void TagBox::update_vertical_scroll_bar_visible() {
+  if(m_list_view_overflow == Overflow::WRAP &&
+      m_list_view->sizeHint().height() + vertical_length(m_input_box_padding) +
+      vertical_length(m_input_box_border) > maximumHeight()) {
+    if(m_scrollable_list_box->get_scroll_box().get_vertical_display_policy() !=
+        ScrollBox::DisplayPolicy::ON_OVERFLOW) {
+      m_scrollable_list_box->get_scroll_box().set_vertical(
+        ScrollBox::DisplayPolicy::ON_OVERFLOW);
+    }
+  } else {
+    if(m_scrollable_list_box->get_scroll_box().get_vertical_display_policy() !=
+        ScrollBox::DisplayPolicy::NEVER) {
+      m_scrollable_list_box->get_scroll_box().set_vertical(
+        ScrollBox::DisplayPolicy::NEVER);
+    }
   }
 }
 
@@ -569,7 +625,7 @@ void TagBox::on_list_view_style() {
   }
 }
 
-void TagBox::on_text_area_style_style() {
+void TagBox::on_text_area_style() {
   m_font = {};
   auto& stylist = find_stylist(*m_text_area_box);
   for(auto& property : stylist.get_computed_block()) {

@@ -59,12 +59,9 @@ namespace Spire {
       boost::signals2::connection connect_submit_signal(
         const SubmitSignal::slot_type& slot) const;
 
-    //protected:
-    //  //bool eventFilter(QObject* watched, QEvent* event) override;
-    //  bool event(QEvent* event) override;
-    //  void showEvent(QShowEvent* event) override;
-    //  void moveEvent(QMoveEvent* event) override;
-    //  void resizeEvent(QResizeEvent* event) override;
+    protected:
+      bool event(QEvent* event) override;
+      void resizeEvent(QResizeEvent* event) override;
 
     private:
       struct RegionQueryModel;
@@ -75,6 +72,7 @@ namespace Spire {
       bool m_is_external_move;
       boost::signals2::scoped_connection m_current_connection;
 
+      void update_min_max_size();
       void on_current(const Nexus::Region& region);
       void on_submit(const std::shared_ptr<AnyListModel>& submission);
       void on_tags_operation(const AnyListModel::Operation& operation);

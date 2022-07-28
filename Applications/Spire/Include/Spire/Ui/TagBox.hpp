@@ -52,6 +52,7 @@ namespace Spire {
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
+      bool event(QEvent* event) override;
       void changeEvent(QEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
       void showEvent(QShowEvent* event) override;
@@ -92,13 +93,15 @@ namespace Spire {
       void update_tags_read_only();
       void update_tip();
       void update_tooltip();
+      void update_overflow();
+      void update_vertical_scroll_bar_visible();
       void on_focus(FocusObserver::State state);
       void on_operation(const AnyListModel::Operation& operation);
       void on_text_box_current(const QString& current);
       void on_list_view_submit(const std::any& submission);
       void on_style();
       void on_list_view_style();
-      void on_text_area_style_style();
+      void on_text_area_style();
   };
 }
 
