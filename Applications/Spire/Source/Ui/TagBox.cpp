@@ -22,7 +22,10 @@ using namespace Spire::Styles;
 
 namespace {
   auto INPUT_BOX_STYLE(StyleSheet style) {
-    style.get(Any()).set(padding(0));
+    style.get(Any()).
+      set(PaddingLeft(scale_width(8))).
+      set(PaddingRight(0)).
+      set(vertical_padding(0));
     style.get(Any() > is_a<ScrollableListBox>()).
       set(BackgroundColor(QColor(Qt::transparent))).
       set(border_size(0));
@@ -31,11 +34,11 @@ namespace {
 
   auto LIST_VIEW_STYLE(StyleSheet style) {
     style.get(Any()).
-      set(horizontal_padding(scale_width(8))).
       set(ListItemGap(scale_width(4))).
       set(ListOverflowGap(scale_width(3))).
       set(Overflow::WRAP).
       set(Qt::Horizontal).
+      set(PaddingRight(scale_width(8))).
       set(vertical_padding(scale_height(3)));
     style.get(Any() > is_a<ListItem>()).
       set(BackgroundColor(QColor(Qt::transparent))).
@@ -193,7 +196,7 @@ TagBox::TagBox(std::shared_ptr<AnyListModel> list,
   m_text_area_box = new TextAreaBox("");
   m_text_area_box->set_read_only(true);
   m_text_area_box_style_connection = connect_style_signal(*m_text_area_box,
-    std::bind_front(&TagBox::on_text_area_style_style, this));
+    std::bind_front(&TagBox::on_text_area_style, this));
   update_style(*m_text_area_box, [] (auto& style) {
     style = TEXT_AREA_BOX_STYLE(style);
   });
@@ -422,8 +425,8 @@ void TagBox::update_tooltip() {
         auto last_tag = m_list_view->get_list_item(m_model->get_size() - 2);
         auto last_tag_right =
           last_tag->mapToGlobal(QPoint(last_tag->width() - 1, 0)).x();
-        auto x = mapToGlobal(QPoint(0, 0)).x();
-        auto right = x + width() - 1;
+        auto x = m_scrollable_list_box->mapToGlobal(QPoint(0, 0)).x();
+        auto right = x + m_scrollable_list_box->width() - 1;
         if(first_tag_left < x || last_tag_right > right) {
           return true;
         }
@@ -458,21 +461,44 @@ void TagBox::update_overflow() {
     return Overflow::WRAP;
   }();
   if(old_overflow != m_list_view_overflow) {
-    update_style(*m_list_view, [=] (auto& style) {
-      style.get(Any()).set(m_list_view_overflow);
-    });
+    if(m_list_view_overflow == Overflow::NONE) {
+      update_style(*m_list_view, [] (auto& style) {
+        style.get(Any()).
+          set(Overflow::NONE).
+          set(PaddingRight(0));
+      });
+      update_style(*this, [] (auto& style) {
+        style.get(Any()).set(PaddingRight(scale_width(8)));
+      });
+    } else {
+      update_style(*m_list_view, [] (auto& style) {
+        style.get(Any()).
+          set(Overflow::WRAP).
+          set(PaddingRight(scale_width(8)));
+      });
+      update_style(*this, [] (auto& style) {
+        style.get(Any()).set(PaddingRight(0));
+      });
+    }
     update_tag_size_policy();
   }
 }
 
 void TagBox::update_vertical_scroll_bar_visible() {
-  if(m_list_view->sizeHint().height() + vertical_length(m_input_box_padding) +
+  if(m_list_view_overflow == Overflow::WRAP &&
+      m_list_view->sizeHint().height() + vertical_length(m_input_box_padding) +
       vertical_length(m_input_box_border) > maximumHeight()) {
-    m_scrollable_list_box->get_scroll_box().set_vertical(
-      ScrollBox::DisplayPolicy::ON_OVERFLOW);
+    if(m_scrollable_list_box->get_scroll_box().get_vertical_display_policy() !=
+        ScrollBox::DisplayPolicy::ON_OVERFLOW) {
+      m_scrollable_list_box->get_scroll_box().set_vertical(
+        ScrollBox::DisplayPolicy::ON_OVERFLOW);
+    }
   } else {
-    m_scrollable_list_box->get_scroll_box().set_vertical(
-      ScrollBox::DisplayPolicy::NEVER);
+    if(m_scrollable_list_box->get_scroll_box().get_vertical_display_policy() !=
+        ScrollBox::DisplayPolicy::NEVER) {
+      m_scrollable_list_box->get_scroll_box().set_vertical(
+        ScrollBox::DisplayPolicy::NEVER);
+    }
   }
 }
 
@@ -599,7 +625,7 @@ void TagBox::on_list_view_style() {
   }
 }
 
-void TagBox::on_text_area_style_style() {
+void TagBox::on_text_area_style() {
   m_font = {};
   auto& stylist = find_stylist(*m_text_area_box);
   for(auto& property : stylist.get_computed_block()) {
