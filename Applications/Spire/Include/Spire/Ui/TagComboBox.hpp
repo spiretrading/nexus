@@ -2,7 +2,6 @@
 #define SPIRE_TAG_COMBO_BOX_HPP
 #include "Spire/Ui/ComboBox.hpp"
 #include "Spire/Ui/FocusObserver.hpp"
-#include "Spire/Ui/TagBox.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -74,44 +73,26 @@ namespace Spire {
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
+      bool event(QEvent* event) override;
       void showEvent(QShowEvent* event) override;
-      void moveEvent(QMoveEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
 
     private:
-      enum class Alignment : std::uint8_t {
-        NONE,
-        ABOVE,
-        BELOW
-      };
       mutable SubmitSignal m_submit_signal;
       TagBox* m_tag_box;
       ComboBox* m_combo_box;
       std::shared_ptr<AnyListModel> m_submission;
       FocusObserver m_focus_observer;
       QWidget* m_input_box;
-      QWidget* m_parent_window;
       QWidget* m_drop_down_window;
-      Styles::TagBoxOverflow m_overflow;
-      Alignment m_alignment;
       bool m_is_modified;
-      bool m_is_internal_move;
-      QPoint m_position;
-      int m_min_height;
-      int m_above_space;
-      int m_below_space;
-      boost::signals2::scoped_connection m_focus_connection;
       boost::signals2::scoped_connection m_list_connection;
-      boost::signals2::scoped_connection m_tag_box_style_connection;
 
-      void on_combo_box_submit(const std::any& submission);
-      void on_operation(const AnyListModel::Operation& operation);
-      void on_focus(FocusObserver::State state);
-      void on_tag_box_style();
-      void align();
-      void set_position(const QPoint& pos);
       void submit();
-      void update_space();
+      void update_min_max_size();
+      void on_combo_box_submit(const std::any& submission);
+      void on_focus(FocusObserver::State state);
+      void on_operation(const AnyListModel::Operation& operation);
   };
 }
 

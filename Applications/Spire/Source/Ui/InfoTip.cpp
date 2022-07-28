@@ -232,7 +232,7 @@ QPixmap InfoTip::render_background() const {
   scene.setSceneRect(rect());
   auto shadow = QGraphicsDropShadowEffect();
   shadow.setColor(DROP_SHADOW_COLOR);
-  shadow.setOffset(0, scale_height(3));
+  shadow.setOffset(0, 0);
   shadow.setBlurRadius(scale_width(5));
   auto path = get_arrow_path();
   auto half_border_size = m_border_size / 2.0;
