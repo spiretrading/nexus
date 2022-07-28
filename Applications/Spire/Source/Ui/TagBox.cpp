@@ -73,20 +73,6 @@ namespace {
   int vertical_length(const QMargins& margins) {
     return margins.top() + margins.bottom();
   }
-
-  void invalidate_descendants(QWidget& widget) {
-    for(auto child : widget.children()) {
-      if(!child->isWidgetType()) {
-        continue;
-      }
-      auto& widget = *static_cast<QWidget*>(child);
-      invalidate_descendants(widget);
-      widget.updateGeometry();
-      if(widget.layout()) {
-        widget.layout()->invalidate();
-      }
-    }
-  }
 }
 
 struct TagBox::PartialListModel : public AnyListModel {

@@ -33,20 +33,6 @@ namespace {
       set(vertical_padding(scale_height(5)));
     return style;
   }
-
-  void invalidate_descendants(QWidget& widget) {
-    for(auto child : widget.children()) {
-      if(!child->isWidgetType()) {
-        continue;
-      }
-      auto& widget = *static_cast<QWidget*>(child);
-      invalidate_descendants(widget);
-      widget.updateGeometry();
-      if(widget.layout()) {
-        widget.layout()->invalidate();
-      }
-    }
-  }
 }
 
 ClosedFilterPanel::ClosedFilterPanel(std::shared_ptr<TableModel> table,

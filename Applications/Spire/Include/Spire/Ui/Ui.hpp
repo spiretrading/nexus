@@ -131,6 +131,12 @@ namespace Spire {
    *         dimensions.
    */
   QImage imageFromSvg(const QString& path, const QSize& size, const QRect& box);
+
+  /**
+   * Invalidates the layout of all descendants of the widget.
+   * @param widget The widget whose layout will be invalidated.
+   */
+  void invalidate_descendants(QWidget& widget);
 }
 
 #endif
