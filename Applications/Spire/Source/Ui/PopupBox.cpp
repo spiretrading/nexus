@@ -169,7 +169,6 @@ void PopupBox::on_focus(FocusObserver::State state) {
     is_changing_parent = false;
     layout()->removeWidget(m_body);
     m_body->show();
-    m_body->adjustSize();
     m_body->setFocus();
     m_alignment = Alignment::NONE;
     align();
