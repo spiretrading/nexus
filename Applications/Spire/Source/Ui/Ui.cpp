@@ -1,5 +1,6 @@
 #include "Spire/Ui/Ui.hpp"
 #include <QIcon>
+#include <QLayout>
 #include <QPainter>
 #include "Spire/Spire/Dimensions.hpp"
 
@@ -44,4 +45,18 @@ QImage Spire::imageFromSvg(const QString& path, const QSize& size,
   auto painter = QPainter(&image);
   painter.drawPixmap(box.topLeft(), svg_pixmap);
   return image;
+}
+
+void Spire::invalidate_descendant_layouts(QWidget& widget) {
+  for(auto child : widget.children()) {
+    if(!child->isWidgetType()) {
+      continue;
+    }
+    auto& widget = *static_cast<QWidget*>(child);
+    invalidate_descendant_layouts(widget);
+    widget.updateGeometry();
+    if(widget.layout()) {
+      widget.layout()->invalidate();
+    }
+  }
 }
