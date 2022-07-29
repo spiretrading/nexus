@@ -53,6 +53,7 @@
 #include "Spire/Ui/OrderTypeBox.hpp"
 #include "Spire/Ui/OrderTypeFilterPanel.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
+#include "Spire/Ui/PopupBox.hpp"
 #include "Spire/Ui/QuantityBox.hpp"
 #include "Spire/Ui/RegionBox.hpp"
 #include "Spire/Ui/RegionListItem.hpp"
@@ -2544,6 +2545,94 @@ UiProfile Spire::make_overlay_panel_profile() {
         panel->show();
       });
     return button;
+  });
+  return profile;
+}
+
+UiProfile Spire::make_popup_box_profile() {
+    auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  auto size_policy_property = define_enum<int>(
+    {{"Blue", 0}, {"Green", 1}, {"Yellow", 2}});
+  properties.push_back(make_standard_enum_property("horizontal_size_policy",
+    size_policy_property));
+  properties.push_back(make_standard_enum_property("vertical_size_policy",
+    size_policy_property));
+  auto profile = UiProfile("PopupBox", properties, [] (auto& profile) {
+    auto popup_boxes = std::vector<PopupBox*>();
+    auto grid_layout = new QGridLayout();
+    grid_layout->setSpacing(0);
+    for(auto i = 0; i < 5; ++i) {
+      for(auto j = 0; j < 3; ++j) {
+        auto widget = [&] () {
+          if(i == 1 && j == 1) {
+            auto region_box = new RegionBox(populate_region_box_model());
+            region_box->set_placeholder("RegionBox");
+            return new PopupBox(*region_box);
+          } else if(i == 3 && j == 1) {
+            auto tag_box = new TagBox(populate_tag_box_model(),
+              std::make_shared<LocalTextModel>());
+            tag_box->set_placeholder("TagBox");
+            tag_box->connect_submit_signal([=] (const auto& value) {
+              if(!value.isEmpty()) {
+                tag_box->get_tags()->push(value);
+              }
+            });
+            return new PopupBox(*tag_box);
+          } else if(i == 4 && j == 2) {
+            auto tag_combo_box =
+              new TagComboBox(populate_tag_combo_box_model());
+            tag_combo_box->set_placeholder("TagComboBox");
+            return new PopupBox(*tag_combo_box);
+          }
+          auto text_box = new TextBox(QString("%1").arg(i));
+          return new PopupBox(*text_box);
+        }();
+        popup_boxes.push_back(widget);
+        grid_layout->addWidget(widget, i, j);
+        if(j != 0) {
+          grid_layout->setColumnStretch(j, 1);
+        }
+      }
+    }
+    auto widget = new QWidget();
+    auto layout = make_hbox_layout(widget);
+    layout->addStretch(1);
+    auto vertical_layout = make_vbox_layout();
+    vertical_layout->addStretch(1);
+    vertical_layout->addLayout(grid_layout);
+    vertical_layout->addStretch(1);
+    layout->addLayout(vertical_layout, 5);
+    layout->addStretch(1);
+    widget->setMinimumSize(scale(200, 200));
+    auto& horizontal_size_policy = get<int>("horizontal_size_policy", profile.get_properties());
+    horizontal_size_policy.connect_changed_signal([=] (auto value) {
+      for(auto box : popup_boxes) {
+        auto policy = box->sizePolicy();
+        if(value == 0) {
+          policy.setHorizontalPolicy(QSizePolicy::Expanding);
+        } else if(value == 1) {
+          policy.setHorizontalPolicy(QSizePolicy::Preferred);
+        } else {
+          policy.setHorizontalPolicy(QSizePolicy::Fixed);
+        }
+        box->setSizePolicy(policy);
+      }
+    });
+    auto& vertical_size_policy = get<int>("vertical_size_policy", profile.get_properties());
+    vertical_size_policy.connect_changed_signal([=] (auto value) {
+      for(auto box : popup_boxes) {
+        auto policy = box->sizePolicy();
+        if(value == 0) {
+          policy.setVerticalPolicy(QSizePolicy::Expanding);
+        } else if(value == 1) {
+          policy.setVerticalPolicy(QSizePolicy::Preferred);
+        } else {
+          policy.setVerticalPolicy(QSizePolicy::Fixed);
+        }
+        box->setSizePolicy(policy);
+      }
+    });
+    return widget;
   });
   return profile;
 }

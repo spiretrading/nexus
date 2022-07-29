@@ -51,6 +51,7 @@ namespace Spire {
   class OpenFilterPanel;
   template<typename T> class OpenFilterPanelTemplate;
   class OverlayPanel;
+  class PopupBox;
   class PressObserver;
   class RegionBox;
   class RegionListItem;
