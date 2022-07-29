@@ -7,10 +7,10 @@ using namespace Nexus::Accounting;
 using namespace Spire;
 
 BlotterProfitAndLossModel::BlotterProfitAndLossModel(
-    std::shared_ptr<PortfolioModel> portfolio)
-    : m_portfolio(std::move(portfolio)),
-      m_connection(m_portfolio->connect_update_signal(
-        std::bind_front(&BlotterProfitAndLossModel::on_update, this))) {}
+  std::shared_ptr<PortfolioModel> portfolio)
+  : m_portfolio(std::move(portfolio)),
+    m_connection(m_portfolio->connect_update_signal(
+      std::bind_front(&BlotterProfitAndLossModel::on_update, this))) {}
 
 int BlotterProfitAndLossModel::get_row_size() const {
   return m_table.get_row_size();
@@ -30,10 +30,16 @@ QValidator::State BlotterProfitAndLossModel::set(
     return QValidator::State::Invalid;
   }
   auto& index = std::any_cast<const CurrencyIndex&>(value);
-  if(m_table.get<CurrencyIndex>(row, column).m_index != index.m_index) {
+  auto& current_index = m_table.get<CurrencyIndex>(row, column);
+  if(current_index.m_index != index.m_index) {
     return QValidator::State::Invalid;
   }
-  return m_table.set(row, column, value);
+  if(current_index.m_is_expanded == index.m_is_expanded) {
+    return QValidator::State::Acceptable;
+  }
+  m_table.transact([&] {
+    m_table.set(row, column, value);
+  });
 }
 
 connection BlotterProfitAndLossModel::connect_operation_signal(

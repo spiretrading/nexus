@@ -51,18 +51,23 @@ BlotterProfitAndLossView::BlotterProfitAndLossView(
   table_view_builder.set_view_builder([] (
       const std::shared_ptr<TableModel>& table, int row, int column) ->
         QWidget* {
-    if(column == BlotterProfitAndLossModel::CURRENCY &&
-        table->get<Security>(row, BlotterProfitAndLossModel::SECURITY) ==
+    if(column == BlotterProfitAndLossModel::CURRENCY) {
+      if(table->get<Security>(row, BlotterProfitAndLossModel::SECURITY) ==
           Security()) {
-      auto index = std::make_shared<
-        ListValueModel<BlotterProfitAndLossModel::CurrencyIndex>>(
-          std::make_shared<ColumnViewListModel<
-            BlotterProfitAndLossModel::CurrencyIndex>>(table, column), row);
-      auto currency = make_field_value_model(
-        index, &BlotterProfitAndLossModel::CurrencyIndex::m_index);
-      auto is_expanded = make_field_value_model(
-        index, &BlotterProfitAndLossModel::CurrencyIndex::m_is_expanded);
-      return new CurrencyExpandButton(currency, is_expanded);
+        auto index = std::make_shared<
+          ListValueModel<BlotterProfitAndLossModel::CurrencyIndex>>(
+            std::make_shared<ColumnViewListModel<
+              BlotterProfitAndLossModel::CurrencyIndex>>(table, column), row);
+        auto currency = make_field_value_model(
+          index, &BlotterProfitAndLossModel::CurrencyIndex::m_index);
+        auto is_expanded = make_field_value_model(
+          index, &BlotterProfitAndLossModel::CurrencyIndex::m_is_expanded);
+        return new CurrencyExpandButton(currency, is_expanded);
+      } else {
+        auto index =
+          table->get<BlotterProfitAndLossModel::CurrencyIndex>(row, column);
+        return make_label(displayText(index.m_index));
+      }
     }
     return TableView::default_view_builder(table, row, column);
   });
