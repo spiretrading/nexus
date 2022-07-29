@@ -56,16 +56,12 @@ bool PopupBox::eventFilter(QObject* watched, QEvent* event) {
       m_window = window();
       m_window->installEventFilter(this);
       update_space();
+      m_body->setFixedHeight(m_min_height);
     } else if(event->type() == QEvent::LayoutRequest && has_popped_up()) {
       adjust_size();
     }
   }
   return QObject::eventFilter(watched, event);
-}
-
-void PopupBox::showEvent(QShowEvent* event) {
-  m_body->setFixedHeight(sizeHint().height());
-  QWidget::showEvent(event);
 }
 
 void PopupBox::resizeEvent(QResizeEvent* event) {
