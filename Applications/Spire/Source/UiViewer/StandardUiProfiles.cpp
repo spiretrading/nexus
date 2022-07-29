@@ -54,6 +54,7 @@
 #include "Spire/Ui/OrderTypeFilterPanel.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
 #include "Spire/Ui/QuantityBox.hpp"
+#include "Spire/Ui/RegionBox.hpp"
 #include "Spire/Ui/RegionListItem.hpp"
 #include "Spire/Ui/ResponsiveLabel.hpp"
 #include "Spire/Ui/ScalarFilterPanel.hpp"
@@ -500,6 +501,72 @@ namespace {
         displayText(security_info.m_security).toLower(), security_info);
       model->add(
         QString::fromStdString(security_info.m_name).toLower(), security_info);
+    }
+    return model;
+  }
+
+  auto populate_tag_box_model() {
+    auto model = std::make_shared<ArrayListModel<QString>>();
+    model->push("CAN");
+    model->push("MSFT.NSDQ");
+    model->push("XIU.TSX");
+    return model;
+  }
+
+  auto populate_tag_combo_box_model() {
+    auto model = std::make_shared<LocalComboBoxQueryModel>();
+    model->add(QString("TSX"));
+    model->add(QString("TSXV"));
+    model->add(QString("TSO.ASX"));
+    model->add(QString("TSU.TSX"));
+    model->add(QString("TSN.TSXV"));
+    model->add(QString("TSL.NYSE"));
+    model->add(QString("MSFT.NSDQ"));
+    model->add(QString("XDRX"));
+    model->add(QString("XIU.TSX"));
+    model->add(QString("AUS"));
+    model->add(QString("CAN"));
+    model->add(QString("CHN"));
+    model->add(QString("JPN"));
+    model->add(QString("USA"));
+    return model;
+  }
+
+  auto populate_region_box_model() {
+    auto securities = std::vector<std::pair<std::string, std::string>>{
+      {"MSFT.NSDQ", "Microsoft Corporation"},
+      {"MG.TSX", "Magna International Inc."},
+      {"MRU.TSX", "Metro Inc."},
+      {"MFC.TSX", "Manulife Financial Corporation"},
+      {"MX.TSX", "Methanex Corporation"},
+      {"TSO.ASX", "Tesoro Resources Limited"}};
+    auto markets = std::vector<MarketCode>{DefaultMarkets::NSEX(),
+      DefaultMarkets::ISE(), DefaultMarkets::CSE(), DefaultMarkets::TSX(),
+      DefaultMarkets::TSXV()};
+    auto countries = std::vector<CountryCode>{DefaultCountries::US(),
+      DefaultCountries::CA(), DefaultCountries::AU()};
+    auto model = std::make_shared<LocalComboBoxQueryModel>();
+    for(auto& security_info : securities) {
+      auto security = *ParseWildCardSecurity(security_info.first,
+        GetDefaultMarketDatabase(), GetDefaultCountryDatabase());
+      auto region = Region(security);
+      region.SetName(security_info.second);
+      model->add(displayText(security).toLower(), region);
+      model->add(QString::fromStdString(region.GetName()).toLower(), region);
+    }
+    for(auto& market_code : markets) {
+      auto market = GetDefaultMarketDatabase().FromCode(market_code);
+      auto region = Region(market);
+      region.SetName(market.m_description);
+      model->add(displayText(MarketToken(market.m_code)).toLower(), region);
+      model->add(QString::fromStdString(region.GetName()).toLower(), region);
+    }
+    for(auto& country : countries) {
+      auto region = Region(country);
+      region.SetName(
+        GetDefaultCountryDatabase().FromCode(country).m_name);
+      model->add(displayText(country).toLower(), region);
+      model->add(QString::fromStdString(region.GetName()).toLower(), region);
     }
     return model;
   }
@@ -2509,6 +2576,65 @@ UiProfile Spire::make_radio_button_profile() {
   });
 }
 
+UiProfile Spire::make_region_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_property<QString>("current"));
+  properties.push_back(make_standard_property<QString>("placeholder"));
+  properties.push_back(make_standard_property("read_only", false));
+  auto profile = UiProfile("RegionBox", properties, [] (auto& profile) {
+    auto box = new RegionBox(populate_region_box_model());
+    box->setMinimumWidth(scale_width(112));
+    apply_widget_properties(box, profile.get_properties());
+    auto& current = get<QString>("current", profile.get_properties());
+    current.connect_changed_signal([=] (const auto& current) {
+      auto value = box->get_query_model()->parse(current);
+      if(value.has_value()) {
+        box->get_current()->set(std::any_cast<Region>(value));
+      }
+    });
+    auto& placeholder = get<QString>("placeholder", profile.get_properties());
+    placeholder.connect_changed_signal([=] (const auto& placeholder) {
+      box->set_placeholder(placeholder);
+    });
+    auto& read_only = get<bool>("read_only", profile.get_properties());
+    read_only.connect_changed_signal(
+      std::bind_front(&RegionBox::set_read_only, box));
+    auto print_region = [] (const Region& region) {
+      auto result = QString();
+      result += "Region{Countries{";
+      for(auto& country : region.GetCountries()) {
+        result += GetDefaultCountryDatabase().FromCode(country).
+          m_threeLetterCode.GetData();
+        result += " ";
+      }
+      result += "} Markets{";
+      for(auto& market : region.GetMarkets()) {
+        result += displayText(MarketToken(market));
+        result += " ";
+      }
+      result += "} Securities{";
+      for(auto& security : region.GetSecurities()) {
+        result += displayText(security);
+        result += " ";
+      }
+      result += "}}";
+      return result;
+    };
+    auto current_slot = profile.make_event_slot<QString>("Current");
+    box->get_current()->connect_update_signal(
+      [=] (const Region& region) {
+        current_slot(print_region(region));
+      });
+    auto submit_slot = profile.make_event_slot<QString>("Submit");
+    box->connect_submit_signal([=] (const Region& region) {
+      submit_slot(print_region(region));
+    });
+    return box;
+  });
+  return profile;
+}
+
 UiProfile Spire::make_region_list_item_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
@@ -3191,12 +3317,8 @@ UiProfile Spire::make_tag_box_profile() {
   properties.push_back(make_standard_property("read_only", false));
   properties.push_back(make_standard_property<QString>("add_tag"));
   auto profile = UiProfile("TagBox", properties, [] (auto& profile) {
-    auto list_model = std::make_shared<ArrayListModel<QString>>();
-    list_model->push("CAN");
-    list_model->push("MSFT.NSDQ");
-    list_model->push("XIU.TSX");
-    auto current_model = std::make_shared<LocalTextModel>();
-    auto tag_box = new TagBox(list_model, current_model);
+    auto tag_box = new TagBox(populate_tag_box_model(),
+      std::make_shared<LocalTextModel>());
     apply_widget_properties(tag_box, profile.get_properties());
     auto& placeholder = get<QString>("placeholder", profile.get_properties());
     placeholder.connect_changed_signal([=] (const auto& text) {
@@ -3209,7 +3331,7 @@ UiProfile Spire::make_tag_box_profile() {
     auto& add_tag = get<QString>("add_tag", profile.get_properties());
     add_tag.connect_changed_signal([=] (const auto& value) {
       if(!value.isEmpty()) {
-        list_model->push(value);
+        tag_box->get_tags()->push(value);
       }
     });
     tag_box->connect_submit_signal(profile.make_event_slot<QString>("Submit"));
@@ -3224,22 +3346,7 @@ UiProfile Spire::make_tag_combo_box_profile() {
   properties.push_back(make_standard_property<QString>("placeholder"));
   properties.push_back(make_standard_property("read_only", false));
   auto profile = UiProfile("TagComboBox", properties, [] (auto& profile) {
-    auto model = std::make_shared<LocalComboBoxQueryModel>();
-    model->add(QString("TSX"));
-    model->add(QString("TSXV"));
-    model->add(QString("TSO.ASX"));
-    model->add(QString("TSU.TSX"));
-    model->add(QString("TSN.TSXV"));
-    model->add(QString("TSL.NYSE"));
-    model->add(QString("MSFT.NSDQ"));
-    model->add(QString("XDRX"));
-    model->add(QString("XIU.TSX"));
-    model->add(QString("AUS"));
-    model->add(QString("CAN"));
-    model->add(QString("CHN"));
-    model->add(QString("JPN"));
-    model->add(QString("USA"));
-    auto box = new TagComboBox(model);
+    auto box = new TagComboBox(populate_tag_combo_box_model());
     box->setMinimumWidth(scale_width(112));
     apply_widget_properties(box, profile.get_properties());
     auto& placeholder = get<QString>("placeholder", profile.get_properties());
