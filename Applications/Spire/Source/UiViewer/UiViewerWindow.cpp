@@ -240,7 +240,6 @@ void UiViewerWindow::on_item_selected(const QListWidgetItem* current,
   update_table(profile);
   m_stage = new QSplitter(Qt::Vertical);
   m_center_stage = new QScrollArea();
-  //m_center_stage->setWidget(new SizeAdjustedContainer(profile.get_widget()));
   if(profile.get_name() == "PopupBox") {
     m_center_stage->setWidget(profile.get_widget());
     m_center_stage->setMinimumSize(profile.get_widget()->minimumSize());

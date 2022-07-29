@@ -44,15 +44,11 @@ QSize PopupBox::sizeHint() const {
 }
 
 bool PopupBox::eventFilter(QObject* watched, QEvent* event) {
-  if(watched == m_window) {
-    if(event->type() == QEvent::Resize) {
-      update_space();
-      if(has_popped_up()) {
-        m_alignment = Alignment::NONE;
-        align();
-        adjust_size();
-      }
-    } else if(event->type() == QEvent::LayoutRequest && has_popped_up()) {
+  if(watched == m_window && event->type() == QEvent::Resize) {
+    update_space();
+    if(has_popped_up()) {
+      m_alignment = Alignment::NONE;
+      align();
       adjust_size();
     }
   } else if(watched == m_body) {
@@ -61,7 +57,6 @@ bool PopupBox::eventFilter(QObject* watched, QEvent* event) {
       m_window->installEventFilter(this);
       update_space();
     } else if(event->type() == QEvent::LayoutRequest && has_popped_up()) {
-      align();
       adjust_size();
     }
   }
@@ -112,7 +107,7 @@ void PopupBox::adjust_size() {
         m_body->sizeHint().width() < width() && width() > m_right_space) {
       m_body->setFixedWidth(m_right_space);
     } else {
-      m_body->setMinimumWidth(std::max(m_body->sizeHint().width(), width()));
+      m_body->setMinimumWidth(width());
       m_body->setMaximumWidth(std::min(m_right_space, maximumWidth()));
     }
   } else if(size_policy.horizontalPolicy() == QSizePolicy::Expanding) {
@@ -122,6 +117,7 @@ void PopupBox::adjust_size() {
   }
   if(size_policy.verticalPolicy() == QSizePolicy::Preferred ||
       size_policy.verticalPolicy() == QSizePolicy::Ignored) {
+    m_body->setMinimumHeight(height());
     m_body->setMaximumHeight(std::min(m_max_height, maximumHeight()));
   } else if(size_policy.verticalPolicy() == QSizePolicy::Expanding) {
     m_body->setFixedHeight(height());
