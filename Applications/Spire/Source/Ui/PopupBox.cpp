@@ -44,11 +44,15 @@ QSize PopupBox::sizeHint() const {
 }
 
 bool PopupBox::eventFilter(QObject* watched, QEvent* event) {
-  if(watched == m_window && event->type() == QEvent::Resize) {
-    update_space();
-    if(has_popped_up()) {
-      m_alignment = Alignment::NONE;
-      align();
+  if(watched == m_window) {
+    if(event->type() == QEvent::Resize) {
+      update_space();
+      if(has_popped_up()) {
+        m_alignment = Alignment::NONE;
+        align();
+        adjust_size();
+      }
+    } else if(event->type() == QEvent::LayoutRequest && has_popped_up()) {
       adjust_size();
     }
   } else if(watched == m_body) {
@@ -56,16 +60,12 @@ bool PopupBox::eventFilter(QObject* watched, QEvent* event) {
       m_window = window();
       m_window->installEventFilter(this);
       update_space();
+      m_body->setFixedHeight(m_min_height);
     } else if(event->type() == QEvent::LayoutRequest && has_popped_up()) {
       adjust_size();
     }
   }
   return QObject::eventFilter(watched, event);
-}
-
-void PopupBox::showEvent(QShowEvent* event) {
-  m_body->setFixedHeight(sizeHint().height());
-  QWidget::showEvent(event);
 }
 
 void PopupBox::resizeEvent(QResizeEvent* event) {

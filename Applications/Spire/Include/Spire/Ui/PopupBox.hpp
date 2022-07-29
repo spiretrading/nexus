@@ -18,7 +18,7 @@ namespace Spire {
        * @param body The component which can pop up.
        * @param parent The parent widget.
        */
-      PopupBox(QWidget& body, QWidget* parent = nullptr);
+      explicit PopupBox(QWidget& body, QWidget* parent = nullptr);
 
       /** Returns the body. */
       const QWidget& get_body() const;
@@ -30,7 +30,6 @@ namespace Spire {
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
-      void showEvent(QShowEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
 
     private:
