@@ -26,7 +26,7 @@ AnyRef BlotterProfitAndLossModel::at(int row, int column) const {
 
 QValidator::State BlotterProfitAndLossModel::set(
     int row, int column, const std::any& value) {
-  if(column != CURRENCY || value.type() != typeid(CurrencyIndex)) {
+  if(column != Column::CURRENCY || value.type() != typeid(CurrencyIndex)) {
     return QValidator::State::Invalid;
   }
   auto& index = std::any_cast<const CurrencyIndex&>(value);
@@ -39,7 +39,31 @@ QValidator::State BlotterProfitAndLossModel::set(
   }
   m_table.transact([&] {
     m_table.set(row, column, value);
+    if(index.m_is_expanded) {
+      for(auto& inventory :
+          m_portfolio->get_portfolio().GetBookkeeper().GetInventoryRange()) {
+        if(inventory.m_position.m_key.m_currency == index.m_index) {
+          auto& security = inventory.m_position.m_key.m_index;
+          auto& entry =
+            m_portfolio->get_portfolio().GetSecurityEntries().at(security);
+          update(security, entry.m_unrealized, inventory);
+        }
+      }
+    } else {
+      auto i = 0;
+      while(i != m_table.get_row_size()) {
+        auto& security = m_table.get<Security>(i, Column::SECURITY);
+        if(m_table.get<CurrencyIndex>(i, Column::CURRENCY).m_index ==
+            index.m_index && security != Security()) {
+          m_table.remove(i);
+          m_indexes.erase(security);
+        } else {
+          ++i;
+        }
+      }
+    }
   });
+  return QValidator::State::Acceptable;
 }
 
 connection BlotterProfitAndLossModel::connect_operation_signal(
@@ -52,10 +76,16 @@ void BlotterProfitAndLossModel::update(const Index& index,
     const PortfolioModel::Portfolio::UpdateEntry::Inventory& inventory) {
   auto i = m_indexes.find(index);
   if(i == m_indexes.end()) {
+    auto currency = inventory.m_position.m_key.m_currency;
+    if(index.type() == typeid(Security)) {
+      auto& i = get<CurrencyIndex>(m_indexes.at(currency), Column::CURRENCY);
+      if(!i.m_is_expanded) {
+        return;
+      }
+    }
     m_indexes.insert(std::pair(index, m_table.get_row_size())).first;
     auto row = std::vector<std::any>();
-    row.push_back(
-      CurrencyIndex(inventory.m_position.m_key.m_currency, false));
+    row.push_back(CurrencyIndex(currency, false));
     if(index.type() == typeid(CurrencyId)) {
       row.push_back(Security());
     } else {
@@ -80,7 +110,6 @@ void BlotterProfitAndLossModel::on_update(
   auto& security = entry.m_securityInventory.m_position.m_key.m_index;
   m_table.transact([&] {
     update(currency, entry.m_unrealizedCurrency, entry.m_currencyInventory);
-    update(security, entry.m_unrealizedSecurity,
-      entry.m_securityInventory);
+    update(security, entry.m_unrealizedSecurity, entry.m_securityInventory);
   });
 }
