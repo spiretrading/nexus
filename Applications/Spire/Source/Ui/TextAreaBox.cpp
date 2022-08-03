@@ -75,8 +75,20 @@ class TextAreaBox::ContentSizedTextEdit : public QTextEdit {
       return m_current;
     }
 
+    QSize minimumSizeHint() const override {
+      return {static_cast<int>(document()->idealWidth()),
+        static_cast<int>(document()->size().height())};
+    }
+
     QSize sizeHint() const override {
-      return document()->documentLayout()->documentSize().toSize();
+      auto cursor_width = [&] {
+        if(isReadOnly()) {
+          return 0;
+        }
+        return cursorWidth();
+      }();
+      return {static_cast<int>(document()->idealWidth()) + cursor_width,
+        static_cast<int>(document()->size().height())};
     }
 
   private:
@@ -109,6 +121,7 @@ class TextAreaBox::ContentSizedTextEdit : public QTextEdit {
       synchronize([&] {
         setText(current);
       });
+      updateGeometry();
     }
 };
 
@@ -227,6 +240,10 @@ TextAreaBox::TextAreaBox(std::shared_ptr<TextModel> current, QWidget* parent)
   set_style(*this, DEFAULT_STYLE());
   connect(m_text_edit, &QTextEdit::cursorPositionChanged, this,
     &TextAreaBox::on_cursor_position);
+  get_current()->connect_update_signal(
+    std::bind_front(&TextAreaBox::on_current_update, this));
+  m_vertical_scroll_bar = &m_scroll_box->get_vertical_scroll_bar();
+  m_vertical_scroll_bar->installEventFilter(this);
 }
 
 const std::shared_ptr<TextModel>& TextAreaBox::get_current() const {
@@ -265,11 +282,24 @@ connection TextAreaBox::connect_submit_signal(
 }
 
 bool TextAreaBox::eventFilter(QObject* watched, QEvent* event) {
-  if(event->type() == QEvent::FocusOut) {
-    m_submission = m_text_edit->get_current()->get();
-    m_submit_signal(m_submission);
+  if(watched == m_text_edit) {
+    if(event->type() == QEvent::FocusOut) {
+      m_submission = m_text_edit->get_current()->get();
+      m_submit_signal(m_submission);
+    } else if(event->type() == QEvent::Resize) {
+      scroll_to_end(*m_vertical_scroll_bar);
+    }
+  } else if(watched == m_vertical_scroll_bar && (event->type() == QEvent::Show
+      || event->type() == QEvent::Hide)) {
+    m_text_edit->document()->setTextWidth(-1);
+    update_text_width(width());
   }
   return QWidget::eventFilter(watched, event);
+}
+
+void TextAreaBox::resizeEvent(QResizeEvent* event) {
+  update_text_width(width());
+  QWidget::resizeEvent(event);
 }
 
 void TextAreaBox::commit_placeholder_style() {
@@ -299,14 +329,48 @@ void TextAreaBox::commit_style() {
   }
 }
 
+QSize TextAreaBox::get_padding_size() const {
+  auto& padding = m_text_edit_styles.m_padding;
+  return {padding.left() + padding.right(), padding.top() + padding.bottom()};
+}
+
+int TextAreaBox::get_cursor_width() const {
+  if(is_read_only()) {
+    return 0;
+  }
+  return m_text_edit->cursorWidth();
+}
+
+int TextAreaBox::get_horizontal_padding_length() const {
+  return m_text_edit_styles.m_padding.left() +
+    m_text_edit_styles.m_padding.right() +
+    m_text_edit_styles.m_border_sizes.left() +
+    m_text_edit_styles.m_border_sizes.right();
+}
+
+int TextAreaBox::get_scroll_bar_width() const {
+  if(m_vertical_scroll_bar->isVisible()) {
+    return m_vertical_scroll_bar->sizeHint().width();
+  }
+  return 0;
+}
+
 bool TextAreaBox::is_placeholder_shown() const {
   return !is_read_only() && m_text_edit->get_current()->get().isEmpty() &&
     !m_placeholder_text.isEmpty();
 }
 
-QSize TextAreaBox::get_padding_size() const {
-  auto& padding = m_text_edit_styles.m_padding;
-  return {padding.left() + padding.right(), padding.top() + padding.bottom()};
+void TextAreaBox::update_text_width(int width) {
+  m_text_edit->document()->setTextWidth(width - get_cursor_width() -
+    get_horizontal_padding_length() - get_scroll_bar_width());
+}
+
+void TextAreaBox::on_current_update(const QString& current) {
+  m_text_edit->document()->setTextWidth(-1);
+  if(m_text_edit->sizeHint().width() + get_horizontal_padding_length() +
+      get_scroll_bar_width() > maximumWidth()) {
+    update_text_width(maximumWidth());
+  }
 }
 
 void TextAreaBox::on_cursor_position() {
