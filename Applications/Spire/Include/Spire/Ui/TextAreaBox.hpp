@@ -68,6 +68,7 @@ namespace Styles {
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
+      void resizeEvent(QResizeEvent* event) override;
 
     private:
       class ContentSizedTextEdit;
@@ -90,6 +91,7 @@ namespace Styles {
       ElidedLabel* m_placeholder;
       QStackedWidget* m_stacked_widget;
       ScrollBox* m_scroll_box;
+      ScrollBar* m_vertical_scroll_bar;
       StyleProperties m_text_edit_styles;
       StyleProperties m_placeholder_styles;
       boost::signals2::scoped_connection m_style_connection;
@@ -100,7 +102,12 @@ namespace Styles {
       void commit_placeholder_style();
       void commit_style();
       QSize get_padding_size() const;
+      int get_cursor_width() const;
+      int get_horizontal_padding_length() const;
+      int get_scroll_bar_width() const;
       bool is_placeholder_shown() const;
+      void update_text_width(int width);
+      void on_current_update(const QString& current);
       void on_cursor_position();
       void on_style();
   };
