@@ -71,7 +71,6 @@ namespace Spire {
       std::unique_ptr<GlobalPositionObserver> m_text_box_position_observer;
       std::vector<Tag*> m_tags;
       Styles::Overflow m_list_view_overflow;
-      QFont m_font;
       QString m_placeholder;
       bool m_is_read_only;
       QMargins m_input_box_border;

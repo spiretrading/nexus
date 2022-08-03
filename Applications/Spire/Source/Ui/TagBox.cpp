@@ -389,13 +389,6 @@ void TagBox::update_tip() {
   }
   tip.remove(tip.length() - split_string.length(), split_string.length());
   m_text_area_box->get_current()->set(tip);
-  auto text_edit = m_text_area_box->findChild<QTextEdit*>();
-  text_edit->document()->adjustSize();
-  text_edit->document()->setTextWidth(-1);
-  auto max_width = 50 * QFontMetrics(m_font).averageCharWidth();
-  if(text_edit->document()->idealWidth() > max_width) {
-    text_edit->document()->setTextWidth(max_width);
-  }
 }
 
 void TagBox::update_tooltip() {
@@ -614,19 +607,42 @@ void TagBox::on_list_view_style() {
 }
 
 void TagBox::on_text_area_style() {
-  m_font = {};
+  auto text_font = std::make_shared<QFont>();
+  auto horizontal_padding = std::make_shared<int>();
   auto& stylist = find_stylist(*m_text_area_box);
   for(auto& property : stylist.get_computed_block()) {
     property.visit(
       [&] (const Font& font) {
         stylist.evaluate(font, [=] (auto font) {
-          m_font = font;
+          *text_font = font;
         });
       },
       [&] (const FontSize& size) {
         stylist.evaluate(size, [=] (auto size) {
-          m_font.setPixelSize(size);
+          text_font->setPixelSize(size);
+        });
+      },
+      [&] (const BorderBottomSize& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          *horizontal_padding += size;
+        });
+      },
+      [&] (const BorderTopSize& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          *horizontal_padding += size;
+        });
+      },
+      [&] (const PaddingBottom& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          *horizontal_padding += size;
+        });
+      },
+      [&] (const PaddingTop& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          *horizontal_padding += size;
         });
       });
   }
+  m_text_area_box->setMaximumWidth(
+    50 * QFontMetrics(*text_font).averageCharWidth() + *horizontal_padding);
 }
