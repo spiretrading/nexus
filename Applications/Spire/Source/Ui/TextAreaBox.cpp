@@ -274,6 +274,7 @@ void TextAreaBox::set_read_only(bool read_only) {
     m_scroll_box->set_vertical(ScrollBox::DisplayPolicy::ON_OVERFLOW);
     unmatch(*this, ReadOnly());
   }
+  update_text_width(width());
 }
 
 connection TextAreaBox::connect_submit_signal(
