@@ -1,6 +1,7 @@
 #include "Spire/Spire/SortedTableModel.hpp"
 #include <algorithm>
 #include <boost/iterator/counting_iterator.hpp>
+#include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DecimalBox.hpp"
 
 using namespace boost::iterators;
@@ -8,34 +9,15 @@ using namespace boost::posix_time;
 using namespace boost::signals2;
 using namespace Spire;
 
-namespace {
-  template<typename T>
-  bool compare(const AnyRef& lhs, const AnyRef& rhs) {
-    return any_cast<T>(lhs) < any_cast<T>(rhs);
-  }
-
-  bool default_comparator(const AnyRef& lhs, const AnyRef& rhs) {
-    if(lhs.get_type() != rhs.get_type()) {
-      return false;
-    } else if(lhs.get_type() == typeid(int)) {
-      return compare<int>(lhs, rhs);
-    } else if(lhs.get_type() == typeid(QString)) {
-      return compare<QString>(lhs, rhs);
-    } else if(lhs.get_type() == typeid(Decimal)) {
-      return compare<Decimal>(lhs, rhs);
-    } else if(lhs.get_type() == typeid(time_duration)) {
-      return compare<time_duration>(lhs, rhs);
-    }
-    return false;
-  }
-}
-
 SortedTableModel::SortedTableModel(std::shared_ptr<TableModel> source)
   : SortedTableModel(std::move(source), std::vector<ColumnOrder>()) {}
 
 SortedTableModel::SortedTableModel(
   std::shared_ptr<TableModel> source, std::vector<ColumnOrder> order)
-  : SortedTableModel(std::move(source), std::move(order), default_comparator) {}
+  : SortedTableModel(std::move(source), std::move(order),
+      [] (const AnyRef& left, const AnyRef& right) {
+        return compare(left, right);
+      }) {}
 
 SortedTableModel::SortedTableModel(
   std::shared_ptr<TableModel> source, Comparator comparator)

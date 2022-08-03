@@ -4,9 +4,6 @@
 #include <boost/date_time/gregorian/greg_date.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/optional/optional.hpp>
-#include <QSortFilterProxyModel>
-#include <QStyledItemDelegate>
-#include <QVariant>
 #include "Nexus/Definitions/Currency.hpp"
 #include "Nexus/Definitions/Market.hpp"
 #include "Nexus/Definitions/Money.hpp"
@@ -17,7 +14,7 @@
 #include "Nexus/Definitions/Security.hpp"
 #include "Nexus/Definitions/Side.hpp"
 #include "Nexus/Definitions/TimeInForce.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/Spire/AnyRef.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -83,46 +80,6 @@ namespace Spire {
      */
     bool operator !=(PositionSideToken token) const;
   };
-}
-
-Q_DECLARE_METATYPE(boost::gregorian::date);
-Q_DECLARE_METATYPE(boost::posix_time::ptime);
-Q_DECLARE_METATYPE(boost::posix_time::time_duration);
-Q_DECLARE_METATYPE(Nexus::CurrencyId);
-Q_DECLARE_METATYPE(Nexus::Money);
-Q_DECLARE_METATYPE(Nexus::OrderStatus);
-Q_DECLARE_METATYPE(Nexus::OrderType);
-Q_DECLARE_METATYPE(Nexus::Quantity);
-Q_DECLARE_METATYPE(Nexus::Region);
-Q_DECLARE_METATYPE(Nexus::Security);
-Q_DECLARE_METATYPE(Nexus::Side);
-Q_DECLARE_METATYPE(Nexus::TimeInForce);
-Q_DECLARE_METATYPE(Spire::MarketToken);
-Q_DECLARE_METATYPE(Spire::PositionSideToken);
-
-/** Add back this style when charting is implemented. */
-//Q_DECLARE_METATYPE(Spire::TrendLineStyle);
-Q_DECLARE_METATYPE(std::any);
-
-namespace Spire {
-
-  /** Converts a posix time duration into a QTime. */
-  QTime to_qtime(boost::posix_time::time_duration time);
-
-  /** Converts a QTime into a posix time duration. */
-  boost::posix_time::time_duration to_time_duration(const QTime& time);
-
-  /** Converts a QDateTime into a posix timestamp. */
-  QDateTime to_qdate_time(boost::posix_time::ptime time);
-
-  /** Converts a posix timestamp into a QDateTime. */
-  boost::posix_time::ptime to_ptime(const QDateTime& time);
-
-  /** Converts an std::any to a QVariant. */
-  QVariant to_qvariant(const std::any& value);
-
-  /** Registers the custom QVariant types. */
-  void register_custom_qt_variants();
 
   /** Returns the text representation of an int. */
   QString displayText(int value);
@@ -172,6 +129,9 @@ namespace Spire {
   /** Returns the text representation of a Security. */
   QString displayText(const Nexus::Security& security);
 
+  /** Returns the text representation of a QKeySequence. */
+  QString displayText(const QKeySequence& value);
+
   /** Returns the text representation of the value stored within an AnyRef. */
   QString displayText(const AnyRef& value);
 
@@ -180,6 +140,12 @@ namespace Spire {
 
   template<typename T>
   QString displayText(const T&) = delete;
+
+  /**
+   * Returns <code>true</code> iff the <i>left</i> value comes before the
+   * <i>right</i> value in the type's natural ordering.
+   */
+  bool compare(const AnyRef& left, const AnyRef& right);
 
   /** Tests if two <code>std::any</code> have equal types and values. */
   bool is_equal(const std::any& left, const std::any& right);
@@ -193,35 +159,6 @@ namespace Spire {
    */
   template<typename T>
   boost::optional<T> from_string(const QString& string) = delete;
-
-  /** Implements Qt's item delegate to support the custom QVariant types. **/
-  class CustomVariantItemDelegate : public QStyledItemDelegate {
-    public:
-
-      /**
-       * Constructs an item delegate for custom variants.
-       * @param parent The parent object.
-       */
-      explicit CustomVariantItemDelegate(QObject* parent = nullptr);
-
-      QString displayText(const QVariant& value,
-        const QLocale& locale = QLocale()) const override;
-  };
-
-  /** Implements Qt's proxy model to support the custom QVariant types. **/
-  class CustomVariantSortFilterProxyModel : public QSortFilterProxyModel {
-    public:
-
-      /**
-       * Constructs a proxy model for custom variants.
-       * @param parent The parent object.
-       */
-      explicit CustomVariantSortFilterProxyModel(QObject* parent = nullptr);
-
-    protected:
-      bool lessThan(
-        const QModelIndex& left, const QModelIndex& right) const override;
-  };
 
   template<>
   boost::optional<int> from_string(const QString& string);

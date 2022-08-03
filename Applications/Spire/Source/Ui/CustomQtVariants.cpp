@@ -1,8 +1,7 @@
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include <Beam/TimeService/ToLocalTime.hpp>
-#include <QDateTime>
+#include <QStyledItemDelegate>
 #include "Nexus/Definitions/SecuritySet.hpp"
-#include "Spire/Spire/AnyRef.hpp"
 
 using namespace Beam;
 using namespace Beam::TimeService;
@@ -14,13 +13,13 @@ using namespace Spire;
 
 namespace {
   template<typename T>
-  bool compare(const T& left, const T& right, const QModelIndex& leftIndex,
-      const QModelIndex& rightIndex) {
-    if(left == right) {
-      return leftIndex.row() < rightIndex.row();
-    } else {
-      return left < right;
-    }
+  bool compare(const AnyRef& left, const AnyRef& right) {
+    return any_cast<T>(left) < any_cast<T>(right);
+  }
+
+  template<typename T>
+  bool compare_text(const AnyRef& left, const AnyRef& right) {
+    return displayText(any_cast<T>(left)) < displayText(any_cast<T>(right));
   }
 
   template<typename T, typename... U>
@@ -75,86 +74,6 @@ bool PositionSideToken::operator ==(PositionSideToken token) const {
 bool PositionSideToken::operator !=(PositionSideToken token) const {
   return !(*this == token);
 }
-
-QTime Spire::to_qtime(posix_time::time_duration time) {
-  return QTime(static_cast<int>(time.hours()),
-    static_cast<int>(time.minutes()), static_cast<int>(time.seconds()),
-    static_cast<int>(time.fractional_seconds() / 1000));
-}
-
-posix_time::time_duration Spire::to_time_duration(const QTime& time) {
-  return posix_time::time_duration(
-    time.hour(), time.minute(), time.second(), time.msec());
-}
-
-QDateTime Spire::to_qdate_time(ptime time) {
-  return QDateTime(QDate(time.date().year(), time.date().month(),
-    time.date().day()), to_qtime(time.time_of_day()));
-}
-
-ptime Spire::to_ptime(const QDateTime& time) {
-  return ptime(
-    gregorian::date(time.date().year(), time.date().month(), time.date().day()),
-      posix_time::time_duration(time.time().hour(), time.time().minute(),
-        time.time().second(), time.time().msec()));
-}
-
-QVariant Spire::to_qvariant(const std::any& value) {
-  if(value.type() == typeid(bool)) {
-    return QVariant::fromValue(std::any_cast<bool>(value));
-  } else if(value.type() == typeid(int)) {
-    return QVariant::fromValue(std::any_cast<int>(value));
-  } else if(value.type() == typeid(std::int64_t)) {
-    return QVariant::fromValue(std::any_cast<std::int64_t>(value));
-  } else if(value.type() == typeid(std::uint64_t)) {
-    return QVariant::fromValue(std::any_cast<std::uint64_t>(value));
-  } else if(value.type() == typeid(double)) {
-    return QVariant::fromValue(std::any_cast<double>(value));
-  } else if(value.type() == typeid(gregorian::date)) {
-    return QVariant::fromValue(std::any_cast<gregorian::date>(value));
-  } else if(value.type() == typeid(ptime)) {
-    return QVariant::fromValue(std::any_cast<ptime>(value));
-  } else if(value.type() == typeid(posix_time::time_duration)) {
-    return QVariant::fromValue(std::any_cast<posix_time::time_duration>(value));
-  } else if(value.type() == typeid(std::string)) {
-    return QVariant::fromValue(
-      QString::fromStdString(std::any_cast<std::string>(value)));
-  } else if(value.type() == typeid(CurrencyId)) {
-    return QVariant::fromValue(std::any_cast<CurrencyId>(value));
-  } else if(value.type() == typeid(MarketToken)) {
-    return QVariant::fromValue(std::any_cast<MarketToken>(value));
-  } else if(value.type() == typeid(Money)) {
-    return QVariant::fromValue(std::any_cast<Money>(value));
-  } else if(value.type() == typeid(Quantity)) {
-    return QVariant::fromValue(std::any_cast<Quantity>(value));
-  } else if(value.type() == typeid(Region)) {
-    return QVariant::fromValue(std::any_cast<Region>(value));
-  } else if(value.type() == typeid(OrderStatus)) {
-    return QVariant::fromValue(std::any_cast<OrderStatus>(value));
-  } else if(value.type() == typeid(OrderType)) {
-    return QVariant::fromValue(std::any_cast<OrderType>(value));
-  } else if(value.type() == typeid(PositionSideToken)) {
-    return QVariant::fromValue(std::any_cast<PositionSideToken>(value));
-  } else if(value.type() == typeid(Security)) {
-    return QVariant::fromValue(std::any_cast<Security>(value));
-  } else if(value.type() == typeid(Side)) {
-    return QVariant::fromValue(std::any_cast<Side>(value));
-  } else if(value.type() == typeid(TimeInForce)) {
-    return QVariant::fromValue(std::any_cast<TimeInForce>(value));
-  } else if(value.type() == typeid(QColor)) {
-    return QVariant::fromValue(std::any_cast<QColor>(value));
-  } else if(value.type() == typeid(QString)) {
-    return QVariant::fromValue(std::any_cast<QString>(value));
-  } else if(value.type() == typeid(QKeySequence)) {
-    return QVariant::fromValue(std::any_cast<QKeySequence>(value));
-  } else if(value.type() == typeid(const char*)) {
-    return QVariant::fromValue(
-      QString::fromUtf8(std::any_cast<const char*>(value)));
-  }
-  return QVariant();
-}
-
-void Spire::register_custom_qt_variants() {}
 
 QString Spire::displayText(int value) {
   return displayText(std::any(value));
@@ -227,7 +146,7 @@ const QString& Spire::displayText(Nexus::TimeInForce time_in_force) {
     static const auto value = QObject::tr("OPG");
     return value;
   } else {
-    static const auto value = QObject::tr("NONE");
+    static const auto value = QObject::tr("");
     return value;
   }
 }
@@ -302,7 +221,7 @@ const QString& Spire::displayText(OrderType type) {
     static const auto value = QObject::tr("Stop");
     return value;
   } else {
-    static const auto value = QObject::tr("None");
+    static const auto value = QObject::tr("");
     return value;
   }
 }
@@ -323,13 +242,115 @@ QString Spire::displayText(const Security& security) {
     security, GetDefaultMarketDatabase(), GetDefaultCountryDatabase()));
 }
 
+QString Spire::displayText(const QKeySequence& value) {
+  return value.toString();
+}
+
 QString Spire::displayText(const AnyRef& value) {
   return displayText(to_any(value));
 }
 
 QString Spire::displayText(const std::any& value) {
-  auto translated_value = to_qvariant(value);
-  return CustomVariantItemDelegate().displayText(translated_value);
+  if(value.type() == typeid(gregorian::date)) {
+    return displayText(std::any_cast<gregorian::date>(value));
+  } else if(value.type() == typeid(ptime)) {
+    return displayText(std::any_cast<ptime>(value));
+  } else if(value.type() == typeid(posix_time::time_duration)) {
+    return displayText(std::any_cast<posix_time::time_duration>(value));
+  } else if(value.type() == typeid(CurrencyId)) {
+    return displayText(std::any_cast<CurrencyId>(value));
+  } else if(value.type() == typeid(MarketToken)) {
+    return displayText(std::any_cast<MarketToken>(value));
+  } else if(value.type() == typeid(Money)) {
+    return displayText(std::any_cast<Money>(value));
+  } else if(value.type() == typeid(Quantity)) {
+    return displayText(std::any_cast<Quantity>(value));
+  } else if(value.type() == typeid(OrderStatus)) {
+    return displayText(std::any_cast<OrderStatus>(value));
+  } else if(value.type() == typeid(OrderType)) {
+    return displayText(std::any_cast<OrderType>(value));
+  } else if(value.type() == typeid(PositionSideToken)) {
+    return displayText(std::any_cast<PositionSideToken>(value));
+  } else if(value.type() == typeid(Region)) {
+    return displayText(std::any_cast<Region>(value));
+  } else if(value.type() == typeid(Security)) {
+    return displayText(std::any_cast<Security>(value));
+  } else if(value.type() == typeid(Side)) {
+    return displayText(std::any_cast<Side>(value));
+  } else if(value.type() == typeid(TimeInForce)) {
+    return displayText(std::any_cast<TimeInForce>(value));
+  } else if(value.type() == typeid(std::string)) {
+    return QString::fromStdString(std::any_cast<std::string>(value));
+  } else if(value.type() == typeid(QString)) {
+    return std::any_cast<QString>(value);
+  } else if(value.type() == typeid(const char*)) {
+    return QString::fromUtf8(std::any_cast<const char*>(value));
+  } else {
+    static auto delegate = QStyledItemDelegate();
+    static auto locale = QLocale();
+    if(value.type() == typeid(bool)) {
+      return delegate.displayText(std::any_cast<bool>(value), locale);
+    } else if(value.type() == typeid(unsigned int)) {
+      return delegate.displayText(std::any_cast<unsigned int>(value), locale);
+    } else if(value.type() == typeid(int)) {
+      return delegate.displayText(std::any_cast<int>(value), locale);
+    } else if(value.type() == typeid(std::uint64_t)) {
+      return delegate.displayText(std::any_cast<std::uint64_t>(value), locale);
+    } else if(value.type() == typeid(std::int64_t)) {
+      return delegate.displayText(std::any_cast<std::int64_t>(value), locale);
+    } else if(value.type() == typeid(double)) {
+      return delegate.displayText(std::any_cast<double>(value), locale);
+    }
+  }
+  return QString();
+}
+
+bool Spire::compare(const AnyRef& left, const AnyRef& right) {
+  if(left.get_type() != right.get_type()) {
+    return false;
+  }
+  if(left.get_type() == typeid(gregorian::date)) {
+    return ::compare<gregorian::date>(left, right);
+  } else if(left.get_type() == typeid(ptime)) {
+    return ::compare<ptime>(left, right);
+  } else if(left.get_type() == typeid(posix_time::time_duration)) {
+    return ::compare<posix_time::time_duration>(left, right);
+  } else if(left.get_type() == typeid(Money)) {
+    return ::compare<Money>(left, right);
+  } else if(left.get_type() == typeid(Quantity)) {
+    return ::compare<Quantity>(left, right);
+  } else if(left.get_type() == typeid(OrderStatus)) {
+    return ::compare<OrderStatus>(left, right);
+  } else if(left.get_type() == typeid(OrderType)) {
+    return ::compare<OrderType>(left, right);
+  } else if(left.get_type() == typeid(Security)) {
+    return compare_text<Security>(left, right);
+  } else if(left.get_type() == typeid(Side)) {
+    return compare_text<Side>(left, right);
+  } else if(left.get_type() == typeid(TimeInForce)) {
+    return compare_text<TimeInForce>(left, right);
+  } else if(left.get_type() == typeid(CurrencyId)) {
+    return compare_text<CurrencyId>(left, right);
+  } else if(left.get_type() == typeid(PositionSideToken)) {
+    return compare_text<PositionSideToken>(left, right);
+  } else if(left.get_type() == typeid(MarketToken)) {
+    return compare_text<MarketToken>(left, right);
+  } else if(left.get_type() == typeid(QMetaType::QKeySequence)) {
+    return compare_text<QKeySequence>(left, right);
+  } else if(left.get_type() == typeid(bool)) {
+    return ::compare<bool>(left, right);
+  } else if(left.get_type() == typeid(unsigned int)) {
+    return ::compare<unsigned int>(left, right);
+  } else if(left.get_type() == typeid(int)) {
+    return ::compare<int>(left, right);
+  } else if(left.get_type() == typeid(std::uint64_t)) {
+    return ::compare<std::uint64_t>(left, right);
+  } else if(left.get_type() == typeid(std::int64_t)) {
+    return ::compare<std::int64_t>(left, right);
+  } else if(left.get_type() == typeid(double)) {
+    return ::compare<double>(left, right);
+  }
+  return false;
 }
 
 bool Spire::is_equal(const std::any& left, const std::any& right) {
@@ -340,128 +361,6 @@ bool Spire::is_equal(const std::any& left, const std::any& right) {
     gregorian::date, ptime, posix_time::time_duration, std::string, CurrencyId,
     MarketToken, Money, Region, OrderStatus, OrderType, PositionSideToken,
     Security, Side, TimeInForce, QColor, QString>(left, right);
-}
-
-CustomVariantItemDelegate::CustomVariantItemDelegate(QObject* parent)
-  : QStyledItemDelegate(parent) {}
-
-QString CustomVariantItemDelegate::displayText(const QVariant& value,
-    const QLocale& locale) const {
-  if(value.type() == QVariant::Type::UserType) {
-    if(value.canConvert<gregorian::date>()) {
-      return Spire::displayText(value.value<gregorian::date>());
-    } else if(value.canConvert<ptime>()) {
-      return Spire::displayText(value.value<ptime>());
-    } else if(value.canConvert<posix_time::time_duration>()) {
-      return Spire::displayText(value.value<posix_time::time_duration>());
-    } else if(value.canConvert<CurrencyId>()) {
-      return Spire::displayText(value.value<CurrencyId>());
-    } else if(value.canConvert<MarketToken>()) {
-      return Spire::displayText(value.value<MarketToken>());
-    } else if(value.canConvert<Money>()) {
-      return Spire::displayText(value.value<Money>());
-    } else if(value.canConvert<Quantity>()) {
-      return Spire::displayText(value.value<Quantity>());
-    } else if(value.canConvert<OrderStatus>()) {
-      return Spire::displayText(value.value<OrderStatus>());
-    } else if(value.canConvert<OrderType>()) {
-      return Spire::displayText(value.value<OrderType>());
-    } else if(value.canConvert<PositionSideToken>()) {
-      return Spire::displayText(value.value<PositionSideToken>());
-    } else if(value.canConvert<Region>()) {
-      return Spire::displayText(value.value<Region>());
-    } else if(value.canConvert<Security>()) {
-      return Spire::displayText(value.value<Security>());
-    } else if(value.canConvert<Side>()) {
-      return Spire::displayText(value.value<Side>());
-    } else if(value.canConvert<TimeInForce>()) {
-      return Spire::displayText(value.value<TimeInForce>());
-    } else if(value.canConvert<std::any>()) {
-      auto translated_value = to_qvariant(value.value<std::any>());
-      return displayText(translated_value, locale);
-    }
-  } else if(value.type() == QMetaType::QKeySequence) {
-    return value.value<QKeySequence>().toString();
-  } else if(value.type() == QMetaType::QString) {
-    return value.value<QString>();
-  }
-  return QStyledItemDelegate::displayText(value, locale);
-}
-
-CustomVariantSortFilterProxyModel::CustomVariantSortFilterProxyModel(
-    QObject* parent)
-    : QSortFilterProxyModel(parent) {
-  setDynamicSortFilter(true);
-}
-
-bool CustomVariantSortFilterProxyModel::lessThan(const QModelIndex& left,
-    const QModelIndex& right) const {
-  auto left_variant = sourceModel()->data(left, sortRole());
-  if(left_variant.canConvert<std::any>()) {
-    left_variant = to_qvariant(left_variant.value<std::any>());
-  }
-  auto right_variant = sourceModel()->data(right, sortRole());
-  if(right_variant.canConvert<std::any>()) {
-    right_variant = to_qvariant(right_variant.value<std::any>());
-  }
-  if(left_variant.type() != right_variant.type()) {
-    return QSortFilterProxyModel::lessThan(left, right);
-  }
-  if(left_variant.canConvert<gregorian::date>()) {
-    return compare(left_variant.value<gregorian::date>(),
-      right_variant.value<gregorian::date>(), left, right);
-  } else if(left_variant.canConvert<ptime>()) {
-    return compare(left_variant.value<ptime>(), right_variant.value<ptime>(),
-      left, right);
-  } else if(left_variant.canConvert<posix_time::time_duration>()) {
-    return compare(left_variant.value<posix_time::time_duration>(),
-      right_variant.value<posix_time::time_duration>(), left, right);
-  } else if(left_variant.canConvert<Money>()) {
-    return compare(left_variant.value<Money>(), right_variant.value<Money>(),
-      left, right);
-  } else if(left_variant.canConvert<Quantity>()) {
-    return compare(left_variant.value<Quantity>(),
-      right_variant.value<Quantity>(), left, right);
-  } else if(left_variant.canConvert<OrderStatus>()) {
-    return compare(displayText(left_variant.value<OrderStatus>()),
-      displayText(right_variant.value<OrderStatus>()), left, right);
-  } else if(left_variant.canConvert<OrderType>()) {
-    return compare(displayText(left_variant.value<OrderType>()),
-      displayText(right_variant.value<OrderType>()), left, right);
-  } else if(left_variant.canConvert<Security>()) {
-    return compare(ToString(left_variant.value<Security>(),
-      GetDefaultMarketDatabase()), ToString(right_variant.value<Security>(),
-      GetDefaultMarketDatabase()), left, right);
-  } else if(left_variant.canConvert<Side>()) {
-    return compare(displayText(left_variant.value<Side>()),
-      displayText(right_variant.value<Side>()), left, right);
-  } else if(left_variant.canConvert<TimeInForce>()) {
-    return compare(displayText(left_variant.value<TimeInForce>()),
-      displayText(right_variant.value<TimeInForce>()), left, right);
-  } else if(left_variant.canConvert<CurrencyId>()) {
-    auto& leftEntry = GetDefaultCurrencyDatabase().FromId(
-      left_variant.value<CurrencyId>());
-    auto& rightEntry = GetDefaultCurrencyDatabase().FromId(
-      right_variant.value<CurrencyId>());
-    return leftEntry.m_code < rightEntry.m_code;
-  } else if(left_variant.canConvert<PositionSideToken>()) {
-    return compare(left_variant.value<PositionSideToken>().to_string(),
-      right_variant.value<PositionSideToken>().to_string(), left, right);
-  } else if(left_variant.canConvert<MarketToken>()) {
-    auto& leftEntry = GetDefaultMarketDatabase().FromCode(
-      left_variant.value<MarketToken>().m_code);
-    auto& rightEntry = GetDefaultMarketDatabase().FromCode(
-      right_variant.value<MarketToken>().m_code);
-    return leftEntry.m_displayName < rightEntry.m_displayName;
-  } else if(left_variant.type() == QMetaType::QKeySequence) {
-    auto left = left_variant.value<QKeySequence>().toString();
-    auto right = right_variant.value<QKeySequence>().toString();
-    return left < right;
-  }
-  if(left_variant == right_variant) {
-    return left.row() < right.row();
-  }
-  return QSortFilterProxyModel::lessThan(left, right);
 }
 
 template<>

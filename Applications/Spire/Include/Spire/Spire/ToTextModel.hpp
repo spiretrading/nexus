@@ -91,9 +91,8 @@ namespace Spire {
   template<typename T>
   ToTextModel<T>::ToTextModel(std::shared_ptr<ValueModel<Source>> model)
     : ToTextModel(std::move(model), [] (const Source& value) {
-          return CustomVariantItemDelegate().displayText(
-            QVariant::fromValue(value));
-        }, &Spire::from_string<Source>) {}
+        return displayText(value);
+      }, &Spire::from_string<Source>) {}
 
   template<typename T>
   ToTextModel<T>::ToTextModel(
@@ -104,11 +103,9 @@ namespace Spire {
   template<typename T>
   ToTextModel<T>::ToTextModel(
     std::shared_ptr<ValueModel<Source>> model, FromString from_string)
-    : ToTextModel(std::move(model),
-        [] (const Source& value) {
-          return CustomVariantItemDelegate().displayText(
-            QVariant::fromValue(value));
-        }, from_string) {}
+    : ToTextModel(std::move(model), [] (const Source& value) {
+        return displayText(value);
+      }, &Spire::from_string<Source>, from_string) {}
 
   template<typename T>
   ToTextModel<T>::ToTextModel(std::shared_ptr<ValueModel<Source>> model,
