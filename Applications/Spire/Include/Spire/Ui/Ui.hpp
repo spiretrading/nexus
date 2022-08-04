@@ -52,7 +52,9 @@ namespace Spire {
   class OpenFilterPanel;
   template<typename T> class OpenFilterPanelTemplate;
   class OverlayPanel;
+  class PopupBox;
   class PressObserver;
+  class RegionBox;
   class RegionListItem;
   class ResponsiveLabel;
   template<typename T> class ScalarFilterPanel;
@@ -132,6 +134,12 @@ namespace Spire {
    *         dimensions.
    */
   QImage imageFromSvg(const QString& path, const QSize& size, const QRect& box);
+
+  /**
+   * Invalidates the layout of all descendants of the widget.
+   * @param widget The widget whose descendants' layout will be invalidated.
+   */
+  void invalidate_descendant_layouts(QWidget& widget);
 }
 
 #endif

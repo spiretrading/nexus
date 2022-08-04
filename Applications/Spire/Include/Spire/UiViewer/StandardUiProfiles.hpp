@@ -131,6 +131,9 @@ namespace Spire {
   /** Returns a UiProfile for the OverlayPanel. */
   UiProfile make_overlay_panel_profile();
 
+  /** Returns a UiProfile for the PopupBox. */
+  UiProfile make_popup_box_profile();
+
   /** Returns a UiProfile for the QuantityBox. */
   UiProfile make_quantity_box_profile();
 
@@ -139,6 +142,9 @@ namespace Spire {
 
   /** Returns a UiProfile for the RadioButton. */
   UiProfile make_radio_button_profile();
+
+  /** Returns a UiProfile for the RegionBox. */
+  UiProfile make_region_box_profile();
 
   /** Returns a UiProfile for the RegionListItem. */
   UiProfile make_region_list_item_profile();

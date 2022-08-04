@@ -155,9 +155,11 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_order_type_box_profile());
   add(make_order_type_filter_panel_profile());
   add(make_overlay_panel_profile());
+  add(make_popup_box_profile());
   add(make_quantity_box_profile());
   add(make_quantity_filter_panel_profile());
   add(make_radio_button_profile());
+  add(make_region_box_profile());
   add(make_region_list_item_profile());
   add(make_responsive_label_profile());
   add(make_scroll_bar_profile());
@@ -238,7 +240,14 @@ void UiViewerWindow::on_item_selected(const QListWidgetItem* current,
   update_table(profile);
   m_stage = new QSplitter(Qt::Vertical);
   m_center_stage = new QScrollArea();
-  m_center_stage->setWidget(new SizeAdjustedContainer(profile.get_widget()));
+  if(profile.get_name() == "PopupBox") {
+    m_center_stage->setWidget(profile.get_widget());
+    m_center_stage->setMinimumSize(profile.get_widget()->minimumSize());
+    m_center_stage->setWidgetResizable(true);
+    m_rebuild_button->setDisabled(true);
+  } else {
+    m_center_stage->setWidget(new SizeAdjustedContainer(profile.get_widget()));
+  }
   m_center_stage->setAlignment(Qt::AlignCenter);
   m_stage->addWidget(m_center_stage);
   m_event_log = new QTextEdit();

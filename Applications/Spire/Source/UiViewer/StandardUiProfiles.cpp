@@ -53,7 +53,9 @@
 #include "Spire/Ui/OrderTypeBox.hpp"
 #include "Spire/Ui/OrderTypeFilterPanel.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
+#include "Spire/Ui/PopupBox.hpp"
 #include "Spire/Ui/QuantityBox.hpp"
+#include "Spire/Ui/RegionBox.hpp"
 #include "Spire/Ui/RegionListItem.hpp"
 #include "Spire/Ui/ResponsiveLabel.hpp"
 #include "Spire/Ui/ScalarFilterPanel.hpp"
@@ -499,6 +501,72 @@ namespace {
       model->add(to_text(security_info.m_security).toLower(), security_info);
       model->add(
         QString::fromStdString(security_info.m_name).toLower(), security_info);
+    }
+    return model;
+  }
+
+  auto populate_tag_box_model() {
+    auto model = std::make_shared<ArrayListModel<QString>>();
+    model->push("CAN");
+    model->push("MSFT.NSDQ");
+    model->push("XIU.TSX");
+    return model;
+  }
+
+  auto populate_tag_combo_box_model() {
+    auto model = std::make_shared<LocalComboBoxQueryModel>();
+    model->add(QString("TSX"));
+    model->add(QString("TSXV"));
+    model->add(QString("TSO.ASX"));
+    model->add(QString("TSU.TSX"));
+    model->add(QString("TSN.TSXV"));
+    model->add(QString("TSL.NYSE"));
+    model->add(QString("MSFT.NSDQ"));
+    model->add(QString("XDRX"));
+    model->add(QString("XIU.TSX"));
+    model->add(QString("AUS"));
+    model->add(QString("CAN"));
+    model->add(QString("CHN"));
+    model->add(QString("JPN"));
+    model->add(QString("USA"));
+    return model;
+  }
+
+  auto populate_region_box_model() {
+    auto securities = std::vector<std::pair<std::string, std::string>>{
+      {"MSFT.NSDQ", "Microsoft Corporation"},
+      {"MG.TSX", "Magna International Inc."},
+      {"MRU.TSX", "Metro Inc."},
+      {"MFC.TSX", "Manulife Financial Corporation"},
+      {"MX.TSX", "Methanex Corporation"},
+      {"TSO.ASX", "Tesoro Resources Limited"}};
+    auto markets = std::vector<MarketCode>{DefaultMarkets::NSEX(),
+      DefaultMarkets::ISE(), DefaultMarkets::CSE(), DefaultMarkets::TSX(),
+      DefaultMarkets::TSXV()};
+    auto countries = std::vector<CountryCode>{DefaultCountries::US(),
+      DefaultCountries::CA(), DefaultCountries::AU()};
+    auto model = std::make_shared<LocalComboBoxQueryModel>();
+    for(auto& security_info : securities) {
+      auto security = *ParseWildCardSecurity(security_info.first,
+        GetDefaultMarketDatabase(), GetDefaultCountryDatabase());
+      auto region = Region(security);
+      region.SetName(security_info.second);
+      model->add(to_text(security).toLower(), region);
+      model->add(QString::fromStdString(region.GetName()).toLower(), region);
+    }
+    for(auto& market_code : markets) {
+      auto market = GetDefaultMarketDatabase().FromCode(market_code);
+      auto region = Region(market);
+      region.SetName(market.m_description);
+      model->add(to_text(MarketToken(market.m_code)).toLower(), region);
+      model->add(QString::fromStdString(region.GetName()).toLower(), region);
+    }
+    for(auto& country : countries) {
+      auto region = Region(country);
+      region.SetName(
+        GetDefaultCountryDatabase().FromCode(country).m_name);
+      model->add(to_text(country).toLower(), region);
+      model->add(QString::fromStdString(region.GetName()).toLower(), region);
     }
     return model;
   }
@@ -1743,30 +1811,55 @@ UiProfile Spire::make_icon_toggle_button_profile() {
 UiProfile Spire::make_info_tip_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
+  properties.push_back(
+    make_standard_property<QString>("label", QString("Body Label")));
   properties.push_back(make_standard_property<bool>("interactive"));
+  properties.push_back(make_standard_property("padding-top", 8));
+  properties.push_back(make_standard_property("padding-right", 8));
+  properties.push_back(make_standard_property("padding-bottom", 8));
+  properties.push_back(make_standard_property("padding-left", 8));
+  properties.push_back(make_standard_property("border-size", 1));
   properties.push_back(
-    make_standard_property<int>("body-width", scale_width(100)));
-  properties.push_back(
-    make_standard_property<int>("body-height", scale_height(30)));
+    make_standard_property<QColor>("label-color", QColor(0xFFFFFF)));
   auto profile = UiProfile("InfoTip", properties, [] (auto& profile) {
     auto button = make_label_button("Hover me!");
-    auto body_label = make_label("Body Label");
+    auto body_label = make_label("");
     update_style(*body_label, [&] (auto& style) {
       style.get(Any()).set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
     });
     auto info_tip = new InfoTip(body_label, button);
     apply_widget_properties(button, profile.get_properties());
+    auto& label = get<QString>("label", profile.get_properties());
+    label.connect_changed_signal([=] (auto value) {
+      body_label->get_current()->set(value);
+    });
     auto& interactive = get<bool>("interactive", profile.get_properties());
     interactive.connect_changed_signal([=] (bool is_interactive) {
       info_tip->set_interactive(is_interactive);
     });
-    auto& body_width = get<int>("body-width", profile.get_properties());
-    body_width.connect_changed_signal([=] (auto width) {
-      body_label->setFixedWidth(width);
+    auto& padding_top = get<int>("padding-top", profile.get_properties());
+    connect_style_property_change_signal<int, Any, PaddingTop>(
+      padding_top, info_tip);
+    auto& padding_right = get<int>("padding-right", profile.get_properties());
+    connect_style_property_change_signal<int, Any, PaddingRight>(
+      padding_right, info_tip);
+    auto& padding_bottom = get<int>("padding-bottom", profile.get_properties());
+    connect_style_property_change_signal<int, Any, PaddingBottom>(
+      padding_bottom, info_tip);
+    auto& padding_left = get<int>("padding-left", profile.get_properties());
+    connect_style_property_change_signal<int, Any, PaddingLeft>(
+      padding_left, info_tip);
+    auto& border = get<int>("border-size", profile.get_properties());
+    border.connect_changed_signal([=] (auto value) {
+      update_style(*info_tip, [&] (auto& style) {
+        style.get(Any()).set(border_size(value));
+      });
     });
-    auto& body_height = get<int>("body-height", profile.get_properties());
-    body_height.connect_changed_signal([=] (auto height) {
-      body_label->setFixedHeight(height);
+    auto& label_color = get<QColor>("label-color", profile.get_properties());
+    label_color.connect_changed_signal([=] (const auto& color) {
+      update_style(*body_label, [&] (auto& style) {
+        style.get(ReadOnly() && Disabled()).set(BackgroundColor(color));
+      });
     });
     return button;
   });
@@ -2455,6 +2548,94 @@ UiProfile Spire::make_overlay_panel_profile() {
   return profile;
 }
 
+UiProfile Spire::make_popup_box_profile() {
+    auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  auto size_policy_property = define_enum<int>(
+    {{"Blue", 0}, {"Green", 1}, {"Yellow", 2}});
+  properties.push_back(make_standard_enum_property("horizontal_size_policy",
+    size_policy_property));
+  properties.push_back(make_standard_enum_property("vertical_size_policy",
+    size_policy_property));
+  auto profile = UiProfile("PopupBox", properties, [] (auto& profile) {
+    auto popup_boxes = std::vector<PopupBox*>();
+    auto grid_layout = new QGridLayout();
+    grid_layout->setSpacing(0);
+    for(auto i = 0; i < 5; ++i) {
+      for(auto j = 0; j < 3; ++j) {
+        auto widget = [&] () {
+          if(i == 1 && j == 1) {
+            auto region_box = new RegionBox(populate_region_box_model());
+            region_box->set_placeholder("RegionBox");
+            return new PopupBox(*region_box);
+          } else if(i == 3 && j == 1) {
+            auto tag_box = new TagBox(populate_tag_box_model(),
+              std::make_shared<LocalTextModel>());
+            tag_box->set_placeholder("TagBox");
+            tag_box->connect_submit_signal([=] (const auto& value) {
+              if(!value.isEmpty()) {
+                tag_box->get_tags()->push(value);
+              }
+            });
+            return new PopupBox(*tag_box);
+          } else if(i == 4 && j == 2) {
+            auto tag_combo_box =
+              new TagComboBox(populate_tag_combo_box_model());
+            tag_combo_box->set_placeholder("TagComboBox");
+            return new PopupBox(*tag_combo_box);
+          }
+          auto text_box = new TextBox(QString("%1").arg(i));
+          return new PopupBox(*text_box);
+        }();
+        popup_boxes.push_back(widget);
+        grid_layout->addWidget(widget, i, j);
+        if(j != 0) {
+          grid_layout->setColumnStretch(j, 1);
+        }
+      }
+    }
+    auto widget = new QWidget();
+    auto layout = make_hbox_layout(widget);
+    layout->addStretch(1);
+    auto vertical_layout = make_vbox_layout();
+    vertical_layout->addStretch(1);
+    vertical_layout->addLayout(grid_layout);
+    vertical_layout->addStretch(1);
+    layout->addLayout(vertical_layout, 5);
+    layout->addStretch(1);
+    widget->setMinimumSize(scale(200, 200));
+    auto& horizontal_size_policy = get<int>("horizontal_size_policy", profile.get_properties());
+    horizontal_size_policy.connect_changed_signal([=] (auto value) {
+      for(auto box : popup_boxes) {
+        auto policy = box->sizePolicy();
+        if(value == 0) {
+          policy.setHorizontalPolicy(QSizePolicy::Expanding);
+        } else if(value == 1) {
+          policy.setHorizontalPolicy(QSizePolicy::Preferred);
+        } else {
+          policy.setHorizontalPolicy(QSizePolicy::Fixed);
+        }
+        box->setSizePolicy(policy);
+      }
+    });
+    auto& vertical_size_policy = get<int>("vertical_size_policy", profile.get_properties());
+    vertical_size_policy.connect_changed_signal([=] (auto value) {
+      for(auto box : popup_boxes) {
+        auto policy = box->sizePolicy();
+        if(value == 0) {
+          policy.setVerticalPolicy(QSizePolicy::Expanding);
+        } else if(value == 1) {
+          policy.setVerticalPolicy(QSizePolicy::Preferred);
+        } else {
+          policy.setVerticalPolicy(QSizePolicy::Fixed);
+        }
+        box->setSizePolicy(policy);
+      }
+    });
+    return widget;
+  });
+  return profile;
+}
+
 UiProfile Spire::make_quantity_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
@@ -2481,6 +2662,65 @@ UiProfile Spire::make_radio_button_profile() {
   return UiProfile("RadioButton", properties, [=] (auto& profile) {
     return setup_checkable_profile(profile, make_radio_button());
   });
+}
+
+UiProfile Spire::make_region_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_property<QString>("current"));
+  properties.push_back(make_standard_property<QString>("placeholder"));
+  properties.push_back(make_standard_property("read_only", false));
+  auto profile = UiProfile("RegionBox", properties, [] (auto& profile) {
+    auto box = new RegionBox(populate_region_box_model());
+    box->setMinimumWidth(scale_width(112));
+    apply_widget_properties(box, profile.get_properties());
+    auto& current = get<QString>("current", profile.get_properties());
+    current.connect_changed_signal([=] (const auto& current) {
+      auto value = box->get_query_model()->parse(current);
+      if(value.has_value()) {
+        box->get_current()->set(std::any_cast<Region>(value));
+      }
+    });
+    auto& placeholder = get<QString>("placeholder", profile.get_properties());
+    placeholder.connect_changed_signal([=] (const auto& placeholder) {
+      box->set_placeholder(placeholder);
+    });
+    auto& read_only = get<bool>("read_only", profile.get_properties());
+    read_only.connect_changed_signal(
+      std::bind_front(&RegionBox::set_read_only, box));
+    auto print_region = [] (const Region& region) {
+      auto result = QString();
+      result += "Region{Countries{";
+      for(auto& country : region.GetCountries()) {
+        result += GetDefaultCountryDatabase().FromCode(country).
+          m_threeLetterCode.GetData();
+        result += " ";
+      }
+      result += "} Markets{";
+      for(auto& market : region.GetMarkets()) {
+        result += to_text(MarketToken(market));
+        result += " ";
+      }
+      result += "} Securities{";
+      for(auto& security : region.GetSecurities()) {
+        result += to_text(security);
+        result += " ";
+      }
+      result += "}}";
+      return result;
+    };
+    auto current_slot = profile.make_event_slot<QString>("Current");
+    box->get_current()->connect_update_signal(
+      [=] (const Region& region) {
+        current_slot(print_region(region));
+      });
+    auto submit_slot = profile.make_event_slot<QString>("Submit");
+    box->connect_submit_signal([=] (const Region& region) {
+      submit_slot(print_region(region));
+    });
+    return box;
+  });
+  return profile;
 }
 
 UiProfile Spire::make_region_list_item_profile() {
@@ -3163,18 +3403,10 @@ UiProfile Spire::make_tag_box_profile() {
   populate_widget_properties(properties);
   properties.push_back(make_standard_property<QString>("placeholder"));
   properties.push_back(make_standard_property("read_only", false));
-  auto overflow_property = define_enum<TagBoxOverflow>(
-    {{"WRAP", TagBoxOverflow::WRAP}, {"ELIDE", TagBoxOverflow::ELIDE}});
-  properties.push_back(
-    make_standard_enum_property("overflow", overflow_property));
   properties.push_back(make_standard_property<QString>("add_tag"));
   auto profile = UiProfile("TagBox", properties, [] (auto& profile) {
-    auto list_model = std::make_shared<ArrayListModel<QString>>();
-    list_model->push("CAN");
-    list_model->push("MSFT.NSDQ");
-    list_model->push("XIU.TSX");
-    auto current_model = std::make_shared<LocalTextModel>();
-    auto tag_box = new TagBox(list_model, current_model);
+    auto tag_box = new TagBox(populate_tag_box_model(),
+      std::make_shared<LocalTextModel>());
     apply_widget_properties(tag_box, profile.get_properties());
     auto& placeholder = get<QString>("placeholder", profile.get_properties());
     placeholder.connect_changed_signal([=] (const auto& text) {
@@ -3184,16 +3416,10 @@ UiProfile Spire::make_tag_box_profile() {
     read_only.connect_changed_signal([=] (auto is_read_only) {
       tag_box->set_read_only(is_read_only);
     });
-    auto& overflow = get<TagBoxOverflow>("overflow", profile.get_properties());
-    overflow.connect_changed_signal([=] (auto value) {
-      update_style(*tag_box, [&] (auto& style) {
-        style.get(Any()).set(value);
-      });
-    });
     auto& add_tag = get<QString>("add_tag", profile.get_properties());
     add_tag.connect_changed_signal([=] (const auto& value) {
       if(!value.isEmpty()) {
-        list_model->push(value);
+        tag_box->get_tags()->push(value);
       }
     });
     tag_box->connect_submit_signal(profile.make_event_slot<QString>("Submit"));
@@ -3207,28 +3433,9 @@ UiProfile Spire::make_tag_combo_box_profile() {
   populate_widget_properties(properties);
   properties.push_back(make_standard_property<QString>("placeholder"));
   properties.push_back(make_standard_property("read_only", false));
-  auto overflow_property = define_enum<TagBoxOverflow>(
-    {{"WRAP", TagBoxOverflow::WRAP}, {"ELIDE", TagBoxOverflow::ELIDE}});
-  properties.push_back(
-    make_standard_enum_property("overflow", overflow_property));
   auto profile = UiProfile("TagComboBox", properties, [] (auto& profile) {
-    auto model = std::make_shared<LocalComboBoxQueryModel>();
-    model->add(QString("TSX"));
-    model->add(QString("TSXV"));
-    model->add(QString("TSO.ASX"));
-    model->add(QString("TSU.TSX"));
-    model->add(QString("TSN.TSXV"));
-    model->add(QString("TSL.NYSE"));
-    model->add(QString("MSFT.NSDQ"));
-    model->add(QString("XDRX"));
-    model->add(QString("XIU.TSX"));
-    model->add(QString("AUS"));
-    model->add(QString("CAN"));
-    model->add(QString("CHN"));
-    model->add(QString("JPN"));
-    model->add(QString("USA"));
-    auto box = new TagComboBox(model);
-    box->setFixedWidth(scale_width(112));
+    auto box = new TagComboBox(populate_tag_combo_box_model());
+    box->setMinimumWidth(scale_width(112));
     apply_widget_properties(box, profile.get_properties());
     auto& placeholder = get<QString>("placeholder", profile.get_properties());
     placeholder.connect_changed_signal([=] (const auto& placeholder) {
@@ -3237,12 +3444,6 @@ UiProfile Spire::make_tag_combo_box_profile() {
     auto& read_only = get<bool>("read_only", profile.get_properties());
     read_only.connect_changed_signal(
       std::bind_front(&TagComboBox::set_read_only, box));
-    auto& overflow = get<TagBoxOverflow>("overflow", profile.get_properties());
-    overflow.connect_changed_signal([=] (auto value) {
-      update_style(*box, [&] (auto& style) {
-        style.get(Any() > is_a<TagBox>()).set(value);
-      });
-    });
     auto current_filter_slot =
       profile.make_event_slot<QString>(QString::fromUtf8("Current"));
     auto print_current = [=] {

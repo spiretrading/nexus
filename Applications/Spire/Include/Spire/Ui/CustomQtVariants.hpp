@@ -22,7 +22,7 @@ namespace Spire {
   /** Wraps a MarketCode so that it can be displayed in a model. **/
   struct MarketToken {
 
-    /** Wraps the MarketCode. */
+    /** The MarketCode being wrapped. */
     Nexus::MarketCode m_code;
 
     /** Constructs a default token. */
@@ -34,52 +34,11 @@ namespace Spire {
      */
     MarketToken(Nexus::MarketCode code);
 
-    /**
-     * Returns <code>true</code> iff <i>token</i> has the same <i>code</i> as
-     * <code>this</code>.
-     */
-    bool operator ==(MarketToken token) const;
-
-    /**
-     * Returns <code>true</code> iff <i>token</i> has a different <i>code</i>
-     * from <code>this</code>.
-     */
-    bool operator !=(MarketToken token) const;
+    auto operator <=>(const MarketToken& token) const = default;
   };
 
-  /**
-   * Wraps a Side so that it can be displayed within the context of a
-   * position.
-   */
-  struct PositionSideToken {
-
-    /** Wraps the Side. */
-    Nexus::Side m_side;
-
-    /** Constructs a default token. */
-    PositionSideToken() = default;
-
-    /**
-     * Wraps a Side.
-     * @param side The Side to wrap.
-     */
-    PositionSideToken(Nexus::Side side);
-
-    /** Returns the string representation of this Side. */
-    QString to_string() const;
-
-    /**
-     * Returns <code>true</code> iff <i>token</i> has the same <i>side</i> as
-     * <code>this</code>.
-     */
-    bool operator ==(PositionSideToken token) const;
-
-    /**
-     * Returns <code>true</code> iff <i>token</i> has a different <i>side</i>
-     * from <code>this</code>.
-     */
-    bool operator !=(PositionSideToken token) const;
-  };
+  /** Returns a CountryCode's three letter code. */
+  QString to_three_letter_code(Nexus::CountryCode code);
 
   /** Returns the text representation of an int. */
   QString to_text(int value);
@@ -95,6 +54,9 @@ namespace Spire {
 
   /** Returns the text representation of a time_duration. */
   QString to_text(boost::posix_time::time_duration time);
+
+  /** Returns the text representation of a CountryCode. */
+  QString to_text(Nexus::CountryCode code);
 
   /** Returns the text representation of a CurrencyId. */
   QString to_text(Nexus::CurrencyId currency);
@@ -119,9 +81,6 @@ namespace Spire {
 
   /** Returns the text representation of an OrderType. */
   const QString& to_text(Nexus::OrderType type);
-
-  /** Returns the text representation of a PositionSideToken. */
-  QString to_text(PositionSideToken token);
 
   /** Returns the text representation of a Region. */
   QString to_text(const Nexus::Region& region);
