@@ -59,7 +59,7 @@ namespace {
   auto make_security_box() {
     auto model = std::make_shared<LocalComboBoxQueryModel>();
     for(auto& info : get_security_info_list()) {
-      model->add(displayText(info.m_security).toLower(), info);
+      model->add(to_text(info.m_security).toLower(), info);
       model->add(QString::fromStdString(info.m_name).toLower(), info);
     }
     return new SecurityBox(model);
@@ -70,7 +70,7 @@ namespace {
       [] (auto& value) { return true; });
     auto model = std::make_shared<LocalComboBoxQueryModel>();
     for(auto destination : destinations) {
-      model->add(displayText(destination.m_id).toLower(), destination);
+      model->add(to_text(destination.m_id).toLower(), destination);
     }
     return new DestinationBox(model);
   }

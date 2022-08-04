@@ -82,64 +82,64 @@ namespace Spire {
   };
 
   /** Returns the text representation of an int. */
-  QString displayText(int value);
+  QString to_text(int value);
 
   /** Returns the text representation of an std::string. */
-  QString displayText(const std::string& value);
+  QString to_text(const std::string& value);
 
   /** Returns the text representation of a date. */
-  QString displayText(boost::gregorian::date date);
+  QString to_text(boost::gregorian::date date);
 
   /** Returns the text representation of a ptime. */
-  QString displayText(boost::posix_time::ptime time);
+  QString to_text(boost::posix_time::ptime time);
 
   /** Returns the text representation of a time_duration. */
-  QString displayText(boost::posix_time::time_duration time);
+  QString to_text(boost::posix_time::time_duration time);
 
   /** Returns the text representation of a CurrencyId. */
-  QString displayText(Nexus::CurrencyId currency);
+  QString to_text(Nexus::CurrencyId currency);
 
   /** Returns the text representation of a MarketToken. */
-  QString displayText(MarketToken market);
+  QString to_text(MarketToken market);
 
   /** Returns the text representation of a Money value. */
-  QString displayText(Nexus::Money value);
+  QString to_text(Nexus::Money value);
 
   /** Returns the text representation of a Quantity value. */
-  QString displayText(Nexus::Quantity value);
+  QString to_text(Nexus::Quantity value);
 
   /** Returns the text representation of a TimeInForce. */
-  const QString& displayText(Nexus::TimeInForce time_in_force);
+  const QString& to_text(Nexus::TimeInForce time_in_force);
 
   /** Returns the text representation of a Side. */
-  const QString& displayText(Nexus::Side side);
+  const QString& to_text(Nexus::Side side);
 
   /** Returns the text representation of an OrderStatus. */
-  const QString& displayText(Nexus::OrderStatus status);
+  const QString& to_text(Nexus::OrderStatus status);
 
   /** Returns the text representation of an OrderType. */
-  const QString& displayText(Nexus::OrderType type);
+  const QString& to_text(Nexus::OrderType type);
 
   /** Returns the text representation of a PositionSideToken. */
-  QString displayText(PositionSideToken token);
+  QString to_text(PositionSideToken token);
 
   /** Returns the text representation of a Region. */
-  QString displayText(const Nexus::Region& region);
+  QString to_text(const Nexus::Region& region);
 
   /** Returns the text representation of a Security. */
-  QString displayText(const Nexus::Security& security);
+  QString to_text(const Nexus::Security& security);
 
   /** Returns the text representation of a QKeySequence. */
-  QString displayText(const QKeySequence& value);
+  QString to_text(const QKeySequence& value);
 
   /** Returns the text representation of the value stored within an AnyRef. */
-  QString displayText(const AnyRef& value);
+  QString to_text(const AnyRef& value);
 
   /** Returns the text representation of the value stored within an std::any. */
-  QString displayText(const std::any& value);
+  QString to_text(const std::any& value);
 
   template<typename T>
-  QString displayText(const T&) = delete;
+  QString to_text(const T&) = delete;
 
   /**
    * Returns <code>true</code> iff the <i>left</i> value comes before the

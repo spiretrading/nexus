@@ -241,7 +241,7 @@ void DropDownBox::on_click() {
 void DropDownBox::on_current(const optional<int>& current) {
   auto text = [&] {
     if(current) {
-      return displayText(m_list_view->get_list()->get(*current));
+      return to_text(m_list_view->get_list()->get(*current));
     }
     return QString();
   }();

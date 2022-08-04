@@ -66,7 +66,7 @@ ClosedFilterPanel::ClosedFilterPanel(std::shared_ptr<TableModel> table,
     [=] (const std::shared_ptr<ListModel<bool>>& list, int index) {
       auto check_box =
         new CheckBox(std::make_shared<ListValueModel<bool>>(list, index));
-      check_box->set_label(displayText(m_table->at(index, 0)));
+      check_box->set_label(to_text(m_table->at(index, 0)));
       check_box->setLayoutDirection(Qt::RightToLeft);
       check_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
       return check_box;
@@ -146,9 +146,9 @@ void ClosedFilterPanel::on_table_model_operation(
   visit(operation,
     [&] (const TableModel::UpdateOperation& operation) {
       auto index = [&] {
-        auto value = displayText(m_table->at(operation.m_row, 0));
+        auto value = to_text(m_table->at(operation.m_row, 0));
         for(auto i = 0; i < m_submission->get_size(); ++i) {
-          if(value == displayText(m_submission->get(i))) {
+          if(value == to_text(m_submission->get(i))) {
             return i;
           }
         }

@@ -342,7 +342,7 @@ namespace {
       [=] (const std::shared_ptr<AnyListModel>& submission) {
         auto result = QString();
         for(auto i = 0; i < submission->get_size(); ++i) {
-          result += displayText(submission->get(i)) + " ";
+          result += to_text(submission->get(i)) + " ";
         }
         submit_filter_slot(result);
       });
@@ -391,7 +391,7 @@ namespace {
         [=] (const typename Panel::Range& submission) {
           auto to_string = [&] (const auto& value) {
             if(value) {
-              return displayText(*value);
+              return to_text(*value);
             }
             return QString("null");
           };
@@ -496,8 +496,7 @@ namespace {
       "Methanex Corporation", "", 0);
     auto model = std::make_shared<LocalComboBoxQueryModel>();
     for(auto security_info : security_infos) {
-      model->add(
-        displayText(security_info.m_security).toLower(), security_info);
+      model->add(to_text(security_info.m_security).toLower(), security_info);
       model->add(
         QString::fromStdString(security_info.m_name).toLower(), security_info);
     }
@@ -719,11 +718,11 @@ UiProfile Spire::make_calendar_date_picker_profile() {
   populate_widget_properties(properties);
   auto current_date = boost::gregorian::day_clock::local_day();
   properties.push_back(
-    make_standard_property("current", displayText(current_date)));
+    make_standard_property("current", to_text(current_date)));
   properties.push_back(make_standard_property(
-    "min", displayText(current_date - boost::gregorian::months(2))));
+    "min", to_text(current_date - boost::gregorian::months(2))));
   properties.push_back(make_standard_property(
-    "max", displayText(current_date + boost::gregorian::months(2))));
+    "max", to_text(current_date + boost::gregorian::months(2))));
   auto profile = UiProfile("CalendarDatePicker", properties,
     [] (auto& profile) {
       auto model = std::make_shared<LocalOptionalDateModel>();
@@ -751,7 +750,7 @@ UiProfile Spire::make_calendar_date_picker_profile() {
       });
       calendar->get_current()->connect_update_signal([&current] (auto day) {
         if(day) {
-          current.set(displayText(*day));
+          current.set(to_text(*day));
         }
       });
       calendar->get_current()->connect_update_signal(
@@ -837,7 +836,7 @@ UiProfile Spire::make_closed_filter_panel_profile() {
       [=] (const std::shared_ptr<AnyListModel>& submission) {
         auto result = QString();
         for(auto i = 0; i < submission->get_size(); ++i) {
-          result += displayText(submission->get(i)) + " ";
+          result += to_text(submission->get(i)) + " ";
         }
         submit_filter_slot(result);
       });
@@ -951,13 +950,13 @@ UiProfile Spire::make_date_box_profile() {
   populate_widget_properties(properties);
   auto current_date = day_clock::local_day();
   properties.push_back(
-    make_standard_property("current", displayText(current_date)));
+    make_standard_property("current", to_text(current_date)));
   properties.push_back(make_standard_property("format", DateFormat::YYYYMMDD));
   properties.push_back(make_standard_property("read_only", false));
   properties.push_back(
-    make_standard_property("min", displayText(current_date - months(2))));
+    make_standard_property("min", to_text(current_date - months(2))));
   properties.push_back(
-    make_standard_property("max", displayText(current_date + months(2))));
+    make_standard_property("max", to_text(current_date + months(2))));
   auto profile = UiProfile("DateBox", properties, [] (auto& profile) {
     auto model = std::make_shared<LocalOptionalDateModel>();
     model->connect_update_signal(
@@ -1017,9 +1016,9 @@ UiProfile Spire::make_date_filter_panel_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   auto current_date = day_clock::local_day();
   properties.push_back(make_standard_property(
-    "default_start_date", displayText(current_date - months(3))));
+    "default_start_date", to_text(current_date - months(3))));
   properties.push_back(
-    make_standard_property("default_end_date", displayText(current_date)));
+    make_standard_property("default_end_date", to_text(current_date)));
   properties.push_back(make_standard_property("default_offset_value", 1));
   auto default_unit_property = define_enum<DateFilterPanel::DateUnit>(
     {{"Day", DateFilterPanel::DateUnit::DAY},
@@ -1070,13 +1069,13 @@ UiProfile Spire::make_date_filter_panel_profile() {
       [=] (const DateFilterPanel::DateRange& submission) {
         auto result = QString();
         if(submission.m_start) {
-          result += displayText(*submission.m_start);
+          result += to_text(*submission.m_start);
         } else {
           result += "none";
         }
         result += " - ";
         if(submission.m_end) {
-          result += displayText(*submission.m_end);
+          result += to_text(*submission.m_end);
         } else {
           result += "none";
         }
@@ -1347,7 +1346,7 @@ UiProfile Spire::make_destination_box_profile() {
       [] (auto& value) { return true; });
     auto model = std::make_shared<LocalComboBoxQueryModel>();
     for(auto destination : destinations) {
-      model->add(displayText(destination.m_id).toLower(), destination);
+      model->add(to_text(destination.m_id).toLower(), destination);
     }
     auto box = new DestinationBox(model);
     box->setFixedWidth(scale_width(112));
@@ -1832,7 +1831,7 @@ UiProfile Spire::make_key_filter_panel_profile() {
             result += "Exclude: ";
           }
           for(auto i = 0; i < submission->get_size(); ++i) {
-            result += displayText(submission->get(i)) + " ";
+            result += to_text(submission->get(i)) + " ";
           }
           submit_filter_slot(result);
         });
@@ -2162,7 +2161,7 @@ UiProfile Spire::make_market_box_profile() {
     auto markets = GetDefaultMarketDatabase().GetEntries();
     auto model = std::make_shared<LocalComboBoxQueryModel>();
     for(auto market : markets) {
-      model->add(displayText(MarketToken(market.m_code)).toLower(), market);
+      model->add(to_text(MarketToken(market.m_code)).toLower(), market);
       model->add(QString(market.m_code.GetData()).toLower(), market);
     }
     auto box = new MarketBox(model);
@@ -2301,7 +2300,7 @@ UiProfile Spire::make_open_filter_panel_profile() {
             result += "Exclude: ";
           }
           for(auto i = 0; i < submission->get_size(); ++i) {
-            result += displayText(submission->get(i)) + " ";
+            result += to_text(submission->get(i)) + " ";
           }
           submit_filter_slot(result);
         });
@@ -2818,7 +2817,7 @@ UiProfile Spire::make_security_filter_panel_profile() {
             result += "Exclude: ";
           }
           for(auto i = 0; i < submission->get_size(); ++i) {
-            result += displayText(submission->get(i)) + " ";
+            result += to_text(submission->get(i)) + " ";
           }
           submit_filter_slot(result);
         });
@@ -2859,7 +2858,7 @@ UiProfile Spire::make_security_view_profile() {
     });
     security_view->get_current()->connect_update_signal(
       profile.make_event_slot<Security>("Current", [=] (const auto& security) {
-        label->get_current()->set(displayText(security));
+        label->get_current()->set(to_text(security));
         return security;
       }));
     auto& width = get<int>("width", profile.get_properties());
@@ -3249,7 +3248,7 @@ UiProfile Spire::make_tag_combo_box_profile() {
     auto print_current = [=] {
       auto result = QString();
       for(auto i = 0; i < box->get_current()->get_size(); ++i) {
-        result += displayText(box->get_current()->get(i)) + " ";
+        result += to_text(box->get_current()->get(i)) + " ";
       }
       current_filter_slot(result);
     };
@@ -3273,7 +3272,7 @@ UiProfile Spire::make_tag_combo_box_profile() {
       [=] (const std::shared_ptr<AnyListModel>& submission) {
         auto result = QString();
         for(auto i = 0; i < submission->get_size(); ++i) {
-          result += displayText(submission->get(i)) + " ";
+          result += to_text(submission->get(i)) + " ";
         }
         submit_filter_slot(result);
       });

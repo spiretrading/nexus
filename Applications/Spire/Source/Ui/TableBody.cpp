@@ -32,7 +32,7 @@ QWidget* TableBody::default_view_builder(
   auto text = std::make_shared<ToTextModel<AnyRef>>(
     std::make_shared<ListValueModel<AnyRef>>(
       std::make_shared<RowViewListModel<AnyRef>>(table, row), column),
-    [] (const AnyRef& value) { return displayText(value); },
+    [] (const AnyRef& value) { return to_text(value); },
     [] (const QString&) { return none; });
   return make_label(text);
 }

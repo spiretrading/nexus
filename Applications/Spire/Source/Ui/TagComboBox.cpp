@@ -54,7 +54,7 @@ struct TagComboBoxQueryModel : ComboBox::QueryModel {
         m_connection(m_exclusions->connect_operation_signal(
           std::bind_front(&TagComboBoxQueryModel::on_operation, this))) {
     for(auto i = 0; i < m_exclusions->get_size(); ++i) {
-      m_exclusion_set.insert(displayText(m_exclusions->get(i)));
+      m_exclusion_set.insert(to_text(m_exclusions->get(i)));
     }
   }
 
@@ -63,7 +63,7 @@ struct TagComboBoxQueryModel : ComboBox::QueryModel {
     if(!value.has_value()) {
       return value;
     }
-    if(m_exclusion_set.contains(displayText(value))) {
+    if(m_exclusion_set.contains(to_text(value))) {
       static auto empty_value = std::any();
       return empty_value;
     }
@@ -81,7 +81,7 @@ struct TagComboBoxQueryModel : ComboBox::QueryModel {
         }
       }();
       std::erase_if(matches, [=] (auto& value) {
-        return m_exclusion_set.contains(displayText(value));
+        return m_exclusion_set.contains(to_text(value));
       });
       return matches;
     });
@@ -90,10 +90,10 @@ struct TagComboBoxQueryModel : ComboBox::QueryModel {
   void on_operation(const AnyListModel::Operation& operation) {
     visit(operation,
       [&] (const AnyListModel::AddOperation& operation) {
-        m_exclusion_set.insert(displayText(operation.m_value));
+        m_exclusion_set.insert(to_text(operation.m_value));
       },
       [&] (const AnyListModel::RemoveOperation& operation) {
-        m_exclusion_set.erase(displayText(operation.m_value));
+        m_exclusion_set.erase(to_text(operation.m_value));
       });
   }
 };

@@ -31,7 +31,7 @@ namespace {
           scale(16, 26)), m_is_expanded);
       expand_button->setFixedSize(scale(16, 26));
       layout->addWidget(expand_button);
-      layout->addWidget(make_label(displayText(m_currency->get())));
+      layout->addWidget(make_label(to_text(m_currency->get())));
     }
   };
 }
@@ -66,7 +66,7 @@ BlotterProfitAndLossView::BlotterProfitAndLossView(
       } else {
         auto index =
           table->get<BlotterProfitAndLossModel::CurrencyIndex>(row, column);
-        return make_label(displayText(index.m_index));
+        return make_label(to_text(index.m_index));
       }
     }
     return TableView::default_view_builder(table, row, column);
