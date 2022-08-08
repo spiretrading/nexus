@@ -32,6 +32,10 @@ void Block::remove(const Property& property) {
   }
 }
 
+void Block::clear() {
+  m_properties.clear();
+}
+
 bool Block::operator ==(const Block& block) const {
   return m_properties == block.m_properties;
 }

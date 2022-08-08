@@ -2,6 +2,7 @@
 #define SPIRE_DROP_DOWN_BOX_HPP
 #include <QWidget>
 #include "Spire/Ui/ListView.hpp"
+#include "Spire/Ui/SingleSelectionModel.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -66,6 +67,17 @@ namespace Styles {
        * Constructs a DropDownBox.
        * @param list The model of list of values to display.
        * @param current The current value model.
+       * @param view_builder The ViewBuilder to use.
+       * @param parent The parent widget.
+       */
+      DropDownBox(std::shared_ptr<AnyListModel> list,
+        std::shared_ptr<CurrentModel> current, ViewBuilder<> view_builder,
+        QWidget* parent = nullptr);
+
+      /**
+       * Constructs a DropDownBox.
+       * @param list The model of list of values to display.
+       * @param current The current value model.
        * @param selection The selection model.
        * @param view_builder The ViewBuilder to use.
        * @param parent The parent widget.
@@ -73,6 +85,18 @@ namespace Styles {
       DropDownBox(std::shared_ptr<AnyListModel> list,
         std::shared_ptr<CurrentModel> current,
         std::shared_ptr<SelectionModel> selection, ViewBuilder<> view_builder,
+        QWidget* parent = nullptr);
+
+      /**
+       * Constructs a DropDownBox.
+       * @param list The model of list of values to display.
+       * @param current The current value model.
+       * @param view_builder The ViewBuilder to use.
+       * @param parent The parent widget.
+       */
+      template<std::derived_from<AnyListModel> T>
+      DropDownBox(std::shared_ptr<T> list,
+        std::shared_ptr<CurrentModel> current, ViewBuilder<T> view_builder,
         QWidget* parent = nullptr);
 
       /**
@@ -121,7 +145,9 @@ namespace Styles {
       TextBox* m_text_box;
       Button* m_button;
       DropDownList* m_drop_down_list;
+      bool m_is_read_only;
       boost::optional<int> m_submission;
+      bool m_is_modified;
       boost::signals2::scoped_connection m_submit_connection;
       boost::signals2::scoped_connection m_current_connection;
 
@@ -140,6 +166,14 @@ namespace Styles {
           const std::shared_ptr<AnyListModel>& model, int index) {
         return view_builder(std::static_pointer_cast<T>(model), index);
       }, parent) {}
+
+  template<std::derived_from<AnyListModel> T>
+  DropDownBox::DropDownBox(std::shared_ptr<T> list,
+    std::shared_ptr<CurrentModel> current, ViewBuilder<T> view_builder,
+    QWidget* parent)
+    : DropDownBox(std::move(list), std::move(current),
+        std::make_shared<ListSingleSelectionModel>(), std::move(view_builder),
+        parent) {}
 
   template<std::derived_from<AnyListModel> T>
   DropDownBox::DropDownBox(std::shared_ptr<T> list,

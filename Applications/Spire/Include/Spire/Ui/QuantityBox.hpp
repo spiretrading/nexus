@@ -48,6 +48,9 @@ namespace Spire {
       QuantityBox(std::shared_ptr<OptionalQuantityModel> current,
         QHash<Qt::KeyboardModifier, Nexus::Quantity> modifiers,
         QWidget* parent = nullptr);
+
+    protected:
+      bool eventFilter(QObject* watched, QEvent* event) override;
   };
 }
 

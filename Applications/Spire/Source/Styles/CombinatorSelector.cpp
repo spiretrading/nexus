@@ -84,16 +84,7 @@ SelectConnection Spire::Styles::select(const CombinatorSelector& selector,
           std::bind_front(&Executor::on_selection, this, std::ref(*addition)));
       }
       for(auto removal : removals) {
-        for(auto selection : m_selection[removal]) {
-          auto& entry = m_match_entries[selection];
-          --entry.m_count;
-          if(entry.m_count == 0) {
-            auto removals = std::move(entry.m_selection);
-            entry.m_selection.clear();
-            on_match(entry, {}, std::move(removals));
-            m_match_entries.erase(selection);
-          }
-        }
+        on_selection(*removal, {}, std::move(m_selection[removal]));
         m_selection.erase(removal);
       }
     }
@@ -101,7 +92,9 @@ SelectConnection Spire::Styles::select(const CombinatorSelector& selector,
     void on_selection(const Stylist& base,
         std::unordered_set<const Stylist*>&& additions,
         std::unordered_set<const Stylist*>&& removals) {
-      m_selection[&base].insert(additions.begin(), additions.end());
+      if(!additions.empty()) {
+        m_selection[&base].insert(additions.begin(), additions.end());
+      }
       auto consolidated_additions = std::unordered_set<const Stylist*>();
       auto consolidated_removals = std::unordered_set<const Stylist*>();
       auto on_update = std::move(m_on_update);

@@ -45,7 +45,7 @@ QtPromise<std::vector<std::any>> ExcludingQueryModel::submit(
 }
 
 void ExcludingQueryModel::add_exclusion(int index) {
-  auto value = displayTextAny(m_exclusions->get(index));
+  auto value = displayText(m_exclusions->get(index));
   m_exclusion_set.insert(value);
   m_exclusion_list.insert(m_exclusion_list.begin() + index, value);
 }
@@ -62,5 +62,5 @@ void ExcludingQueryModel::on_operation(const AnyListModel::Operation& operation)
 }
 
 QString ExcludingQueryModel::to_string(const std::any& value) {
-  return displayTextAny(value);
+  return displayText(value);
 }

@@ -65,5 +65,5 @@ QWidget& ListItem::get_body() {
 
 connection ListItem::connect_submit_signal(
     const SubmitSignal::slot_type& slot) const {
-  return m_button->connect_clicked_signal(slot);
+  return m_button->connect_click_signal(slot);
 }

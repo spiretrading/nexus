@@ -71,6 +71,9 @@ namespace Spire {
   /** Returns a UiProfile for the IconButton. */
   UiProfile make_icon_button_profile();
 
+  /** Returns a UiProfile for the IconToggleButton. */
+  UiProfile make_icon_toggle_button_profile();
+
   /** Returns a UiProfile for the IntoTip. */
   UiProfile make_info_tip_profile();
 
@@ -104,6 +107,9 @@ namespace Spire {
   /** Returns a UiProfile for the ListView. */
   UiProfile make_list_view_profile();
 
+  /** Returns a UiProfile for the MarketBox. */
+  UiProfile make_market_box_profile();
+
   /** Returns a UiProfile for the MoneyBox. */
   UiProfile make_money_box_profile();
 
@@ -128,6 +134,9 @@ namespace Spire {
   /** Returns a UiProfile for the OverlayPanel. */
   UiProfile make_overlay_panel_profile();
 
+  /** Returns a UiProfile for the PopupBox. */
+  UiProfile make_popup_box_profile();
+
   /** Returns a UiProfile for the QuantityBox. */
   UiProfile make_quantity_box_profile();
 
@@ -136,6 +145,9 @@ namespace Spire {
 
   /** Returns a UiProfile for the RadioButton. */
   UiProfile make_radio_button_profile();
+
+  /** Returns a UiProfile for the RegionBox. */
+  UiProfile make_region_box_profile();
 
   /** Returns a UiProfile for the RegionListItem. */
   UiProfile make_region_list_item_profile();
@@ -164,11 +176,17 @@ namespace Spire {
   /** Returns a UiProfile for the SecurityListItem. */
   UiProfile make_security_list_item_profile();
 
+  /** Returns a UiProfile for the SecurityView. */
+  UiProfile make_security_view_profile();
+
   /** Returns a UiProfile for the SideBox. */
   UiProfile make_side_box_profile();
 
   /** Returns a UiProfile for the SideFilterPanel. */
   UiProfile make_side_filter_panel_profile();
+
+  /** Returns a UiProfile for the SplitView. */
+  UiProfile make_split_view_profile();
 
   /** Returns a UiProfile for the TabView. */
   UiProfile make_tab_view_profile();
@@ -188,6 +206,9 @@ namespace Spire {
   /** Returns a UiProfile for the TagBox. */
   UiProfile make_tag_box_profile();
 
+  /** Returns a UiProfile for the TagComboBox. */
+  UiProfile make_tag_combo_box_profile();
+
   /** Returns a UiProfile for the TextAreaBox. */
   UiProfile make_text_area_box_profile();
 
@@ -205,6 +226,9 @@ namespace Spire {
 
   /** Returns a UiProfile for the Tooltip. */
   UiProfile make_tooltip_profile();
+
+  /** Returns a UiProfile for the TransitionView. */
+  UiProfile make_transition_view_profile();
 }
 
 #endif

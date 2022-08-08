@@ -61,11 +61,13 @@ TabView::TabView(QWidget* parent)
       }
       return new Tab(std::move(labels_model));
     });
-  m_tab_list->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+  m_tab_list->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   m_tab_list->set_item_size_policy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   auto scrollable_list_box = new ScrollableListBox(*m_tab_list);
   scrollable_list_box->get_scroll_box().set(
     ScrollBox::DisplayPolicy::NEVER, ScrollBox::DisplayPolicy::NEVER);
+  scrollable_list_box->setSizePolicy(
+    QSizePolicy::Expanding, QSizePolicy::Fixed);
   update_style(*scrollable_list_box, [] (auto& style) {
     style.get(Any()).
       set(BackgroundColor(QColor(0xEBEBEB))).
@@ -111,6 +113,16 @@ void TabView::add(std::vector<QString> labels, QWidget& body) {
   if(!m_tab_list->get_current()->get()) {
     m_tab_list->get_current()->set(0);
   }
+  updateGeometry();
+}
+
+QSize TabView::sizeHint() const {
+  auto max_hint = QSize(0, 0);
+  for(auto body : m_bodies) {
+    max_hint.rwidth() = std::max(max_hint.width(), body->sizeHint().width());
+    max_hint.rheight() = std::max(max_hint.height(), body->sizeHint().height());
+  }
+  return m_tab_list->sizeHint() + max_hint;
 }
 
 void TabView::keyPressEvent(QKeyEvent* event) {

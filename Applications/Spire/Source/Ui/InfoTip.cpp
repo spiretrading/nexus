@@ -62,13 +62,11 @@ InfoTip::InfoTip(QWidget* body, QWidget* parent)
       m_is_interactive(false) {
   setAttribute(Qt::WA_ShowWithoutActivating);
   setAttribute(Qt::WA_TranslucentBackground);
-  auto container = new QWidget(this);
+  m_container = new QWidget(this);
   auto layout = make_hbox_layout(this);
   layout->setContentsMargins(get_margins());
-  layout->addWidget(container);
-  auto container_layout = make_hbox_layout(container);
-  container_layout->setContentsMargins(
-    {scale_width(1), scale_height(1), 0, 0});
+  layout->addWidget(m_container);
+  auto container_layout = make_hbox_layout(m_container);
   container_layout->addWidget(m_body);
   m_show_timer.setInterval(DEFAULT_SHOW_DELAY_MS);
   m_show_timer.setSingleShot(true);
@@ -132,14 +130,16 @@ QPainterPath InfoTip::get_arrow_path() const {
     auto tip_x = left_x + ARROW_SIZE().width() / 2;
     auto right_x = left_x + ARROW_SIZE().width();
     auto orientation = get_orientation();
+    auto half_border_size = m_border_size / 2.0;
     if(orientation == Orientation::TOP_LEFT ||
         orientation == Orientation::TOP_RIGHT) {
-      return QVector<QPoint>({{left_x, height() - margins.bottom()},
-        {tip_x, height() - Y_OFFSET()},
-        {right_x, height() - margins.bottom()}});
+      auto y = height() - margins.bottom() -
+        static_cast<int>(std::ceil(half_border_size));
+      return QVector<QPoint>({{left_x, y}, {tip_x, height() - Y_OFFSET()},
+        {right_x, y}});
     }
-    return QVector<QPoint>({{left_x, margins.top()}, {tip_x, Y_OFFSET()},
-      {right_x, margins.top()}});
+    auto y = margins.top() + static_cast<int>(half_border_size);
+    return QVector<QPoint>({{left_x, y}, {tip_x, Y_OFFSET()}, {right_x, y}});
   }();
   if(get_body_orientation() == BodyOrientation::LEFT) {
     polygon.translate(width() - 2 * (ARROW_X_POSITION() +
@@ -232,10 +232,13 @@ QPixmap InfoTip::render_background() const {
   scene.setSceneRect(rect());
   auto shadow = QGraphicsDropShadowEffect();
   shadow.setColor(DROP_SHADOW_COLOR);
-  shadow.setOffset(0, scale_height(3));
+  shadow.setOffset(0, 0);
   shadow.setBlurRadius(scale_width(5));
   auto path = get_arrow_path();
-  path.addRect(rect().marginsRemoved(get_margins()));
+  auto half_border_size = m_border_size / 2.0;
+  auto border_margins = QMargins(half_border_size, half_border_size,
+    std::ceil(half_border_size), std::ceil(half_border_size));
+  path.addRect(rect().marginsRemoved(get_margins() + border_margins));
   auto arrow = scene.addPath(path.simplified(), QPen(m_border_color,
     m_border_size), m_background_color);
   arrow->setGraphicsEffect(&shadow);
@@ -256,14 +259,15 @@ void InfoTip::on_fade_out_finished() {
 void InfoTip::on_show_timeout() {
   if(isEnabled() && parentWidget()->underMouse()) {
     layout()->setContentsMargins(get_margins());
-    adjustSize();
     move(get_position());
     fade_in();
     show();
+    adjustSize();
   }
 }
 
 void InfoTip::on_style() {
+  auto padding = std::make_shared<QMargins>();
   auto& stylist = find_stylist(*this);
   auto& block = stylist.get_computed_block();
   for(auto& property : block) {
@@ -282,10 +286,31 @@ void InfoTip::on_style() {
         stylist.evaluate(size, [=] (auto size) {
           m_border_size = size;
         });
+      },
+      [&] (const PaddingRight& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          padding->setRight(size);
+        });
+      },
+      [&] (const PaddingLeft& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          padding->setLeft(size);
+        });
+      },
+      [&] (const PaddingTop& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          padding->setTop(size);
+        });
+      },
+      [&] (const PaddingBottom& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          padding->setBottom(size);
+        });
       });
   }
   if(m_border_size == 0) {
     m_border_color = m_background_color;
   }
+  m_container->layout()->setContentsMargins(*padding + m_border_size);
   update();
 }

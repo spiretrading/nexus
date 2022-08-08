@@ -39,6 +39,8 @@ namespace Spire {
        */
       void add(std::vector<QString> labels, QWidget& body);
 
+      QSize sizeHint() const override;
+
     protected:
       void keyPressEvent(QKeyEvent* event) override;
 

@@ -188,7 +188,7 @@ connection TableHeaderItem::connect_sort_signal(
 
 connection TableHeaderItem::connect_filter_signal(
     const FilterSignal::slot_type& slot) const {
-  return m_filter_button->connect_clicked_signal(slot);
+  return m_filter_button->connect_click_signal(slot);
 }
 
 bool TableHeaderItem::eventFilter(QObject* watched, QEvent* event) {

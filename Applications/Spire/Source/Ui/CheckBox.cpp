@@ -61,7 +61,7 @@ CheckBox::CheckBox(std::shared_ptr<BooleanModel> current, QWidget* parent)
   auto body = new QWidget(this);
   auto button = new Button(body, this);
   setFocusProxy(button);
-  button->connect_clicked_signal([=] {
+  button->connect_click_signal([=] {
     m_current->set(!m_current->get());
   });
   enclose(*this, *button);

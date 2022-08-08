@@ -46,6 +46,9 @@ namespace Spire::Styles {
       template<typename... T>
       void remove(const CompositeProperty<T...>& property);
 
+      /** Removes all properties. */
+      void clear();
+
       /** Tests if two Block's contain the same Properties in the same order. */
       bool operator ==(const Block& block) const;
 

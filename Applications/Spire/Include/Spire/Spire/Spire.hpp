@@ -11,12 +11,16 @@ namespace Spire {
   class AnyListModel;
   class AnyRef;
   template<typename T> class ArrayListModel;
+  class ArrayTableModel;
   class CancelKeySequenceValidationModel;
   template<typename T> class ColumnViewListModel;
+  template<typename T> class CompositeModel;
   template<typename T> class ConstantValueModel;
   class Definitions;
   class ExcludingQueryModel;
+  class Field;
   template<typename T> class FieldValueModel;
+  class FilteredTableModel;
   class KeySequenceValidationModel;
   template<typename T> class ListIndexValueModel;
   template<typename T> class ListModel;
@@ -25,17 +29,21 @@ namespace Spire {
   template<typename T> class LocalScalarValueModel;
   class LocalTechnicalsModel;
   template<typename T> class LocalValueModel;
+  template<typename T> class ModelTransactionLog;
   template<typename T> class QtFuture;
   template<typename T> class QtPromise;
+  class QtTaskQueue;
   class RangeInputModel;
   class RealSpinBoxModel;
   template<typename T> class RowViewListModel;
   class Scalar;
   template<typename T> class ScalarValueModel;
   template<typename T> class ScalarValueModelDecorator;
+  class SortedTableModel;
   template<typename T> class SpinBoxModel;
   class SpireController;
   template<typename T> struct SubscriptionResult;
+  class TableModel;
   class TaskKeySequenceValidationModel;
   class TechnicalsModel;
   class TestKeySequenceValidationModel;
@@ -43,6 +51,7 @@ namespace Spire {
   template<typename T> class ToTextModel;
   template<typename T, typename U, typename F, typename G>
     class TransformValueModel;
+  class TranslatedTableModel;
   class UnsignedQuantityModel;
   template<typename T, std::invocable<const T&> F> class ValidatedValueModel;
   template<typename T> class ValueModel;

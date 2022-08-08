@@ -1,7 +1,7 @@
 #include "Spire/Ui/StandardTableFilter.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
+#include "Spire/Spire/TableModel.hpp"
 #include "Spire/Ui/ScalarFilterPanel.hpp"
-#include "Spire/Ui/TableModel.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -112,6 +112,8 @@ StandardTableFilter::StandardTableFilter(std::vector<std::type_index> types) {
     m_column_filters.push_back(std::move(filter));
   }
 }
+
+StandardTableFilter::~StandardTableFilter() = default;
 
 TableFilter::Filter StandardTableFilter::get_filter(int column) {
   return m_column_filters[column]->get_filter();

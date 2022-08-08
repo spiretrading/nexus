@@ -15,7 +15,7 @@ class SecurityExcludingQueryModel : public ExcludingQueryModel {
 
   private:
     QString to_string(const std::any& value) override {
-      return displayTextAny(
+      return displayText(
         std::any_cast<const SecurityInfo&>(value).m_security);
     }
 };

@@ -68,7 +68,7 @@ class DeletableItem : public QWidget {
 
     connection connect_delete_signal(
         const DeleteSignal::slot_type& slot) const {
-      return m_delete_button->connect_clicked_signal(slot);
+      return m_delete_button->connect_click_signal(slot);
     }
 
   private:
@@ -235,12 +235,12 @@ bool OpenFilterPanel::event(QEvent* event) {
 
 QWidget* OpenFilterPanel::make_item(const std::shared_ptr<AnyListModel>& model,
     int index) {
-  auto label = displayTextAny(model->get(index));
+  auto label = displayText(model->get(index));
   auto item = new DeletableItem(label);
   item->connect_delete_signal([=] {
     auto index = [&] {
       for(auto i = 0; i < m_matches->get_size(); ++i) {
-        if(label == displayTextAny(model->get(i))) {
+        if(label == displayText(model->get(i))) {
           return i;
         }
       }

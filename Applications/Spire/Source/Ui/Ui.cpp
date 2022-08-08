@@ -1,5 +1,6 @@
 #include "Spire/Ui/Ui.hpp"
 #include <QIcon>
+#include <QLayout>
 #include <QPainter>
 #include "Spire/Spire/Dimensions.hpp"
 
@@ -22,6 +23,14 @@ QPropertyAnimation* Spire::fade_window(QObject* target, bool reverse,
   return animation;
 }
 
+QWidget* Spire::find_focus_proxy(QWidget& widget) {
+  auto proxy = &widget;
+  while(proxy->focusProxy()) {
+    proxy = proxy->focusProxy();
+  }
+  return proxy;
+}
+
 QImage Spire::imageFromSvg(const QString& path, const QSize& size) {
   return imageFromSvg(path, size, QRect(0, 0, size.width(), size.height()));
 }
@@ -36,4 +45,18 @@ QImage Spire::imageFromSvg(const QString& path, const QSize& size,
   auto painter = QPainter(&image);
   painter.drawPixmap(box.topLeft(), svg_pixmap);
   return image;
+}
+
+void Spire::invalidate_descendant_layouts(QWidget& widget) {
+  for(auto child : widget.children()) {
+    if(!child->isWidgetType()) {
+      continue;
+    }
+    auto& widget = *static_cast<QWidget*>(child);
+    invalidate_descendant_layouts(widget);
+    widget.updateGeometry();
+    if(widget.layout()) {
+      widget.layout()->invalidate();
+    }
+  }
 }

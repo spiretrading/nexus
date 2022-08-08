@@ -71,7 +71,7 @@ SearchBox::SearchBox(std::shared_ptr<TextModel> model, QWidget* parent)
   set_style(*this, DEFAULT_STYLE());
   m_current_connection = m_text_box->get_current()->connect_update_signal(
     [=] (const auto& current) { on_current(current); });
-  m_delete_button->connect_clicked_signal([=] { on_delete_button(); });
+  m_delete_button->connect_click_signal([=] { on_delete_button(); });
 }
 
 const std::shared_ptr<TextModel>& SearchBox::get_current() const {

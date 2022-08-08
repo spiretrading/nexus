@@ -131,7 +131,7 @@ namespace {
           if(count == 0) {
             m_children_selection.erase(removal);
           }
-        };
+        }
       }
     }
 

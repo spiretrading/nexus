@@ -3,12 +3,13 @@
 #include <QEnterEvent>
 #include <QMouseEvent>
 #include <QPainter>
+#include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
+#include "Spire/Spire/TableModel.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TableItem.hpp"
-#include "Spire/Ui/TableModel.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace boost;
@@ -25,7 +26,7 @@ GridColor Spire::Styles::grid_color(QColor color) {
 
 QWidget* TableBody::default_view_builder(
     const std::shared_ptr<TableModel>& table, int row, int column) {
-  return make_label(displayTextAny(table->at(row, column)));
+  return make_label(displayText(table->at(row, column)));
 }
 
 struct TableBody::Cover : QWidget {
@@ -103,36 +104,18 @@ struct TableBody::ColumnCover : Cover {
   }
 };
 
-TableBody::TableBody(std::shared_ptr<TableModel> table,
-  std::shared_ptr<ListModel<int>> widths, QWidget* parent)
-  : TableBody(
-      std::move(table), std::make_shared<LocalValueModel<optional<Index>>>(),
-      std::move(widths), &default_view_builder, parent) {}
-
-TableBody::TableBody(std::shared_ptr<TableModel> table,
-  std::shared_ptr<CurrentModel> current, std::shared_ptr<ListModel<int>> widths,
-  QWidget* parent)
-  : TableBody(std::move(table), std::move(current), std::move(widths),
-      &default_view_builder, parent) {}
-
-TableBody::TableBody(
-  std::shared_ptr<TableModel> table, std::shared_ptr<ListModel<int>> widths,
-  ViewBuilder view_builder, QWidget* parent)
-  : TableBody(std::move(table),
-      std::make_shared<LocalValueModel<optional<Index>>>(), std::move(widths),
-      std::move(view_builder), parent) {}
-
 TableBody::TableBody(
     std::shared_ptr<TableModel> table, std::shared_ptr<CurrentModel> current,
+    std::shared_ptr<SelectionModel> selection,
     std::shared_ptr<ListModel<int>> widths, ViewBuilder view_builder,
     QWidget* parent)
     : QWidget(parent),
       m_table(std::move(table)),
-      m_current(std::move(current)),
+      m_current_controller(std::move(current), 0, m_table->get_column_size()),
+      m_selection_controller(
+        std::move(selection), 0, m_table->get_column_size()),
       m_widths(std::move(widths)),
-      m_view_builder(std::move(view_builder)),
-      m_current_index(m_current->get()),
-      m_current_item(nullptr) {
+      m_view_builder(std::move(view_builder)) {
   setFocusPolicy(Qt::StrongFocus);
   auto row_layout = make_vbox_layout(this);
   m_style_connection =
@@ -150,7 +133,7 @@ TableBody::TableBody(
     style.get(Any() > CurrentColumn()).set(BackgroundColor(QColor(0xE2E0FF)));
   });
   for(auto row = 0; row != m_table->get_row_size(); ++row) {
-    on_table_operation(TableModel::AddOperation(row));
+    add_row(row);
   }
   auto left = 0;
   for(auto column = 0; column != m_table->get_column_size(); ++column) {
@@ -163,16 +146,18 @@ TableBody::TableBody(
     add_column_cover(column, QRect(QPoint(left, 0), QSize(width, height())));
     left += width;
   }
-  m_current_item = find_item(m_current->get());
-  if(m_current_item) {
-    match(*m_current_item, Current());
-    match(*m_current_item->parentWidget(), CurrentRow());
-    match(*m_column_covers[m_current_index->m_column], CurrentColumn());
+  if(auto current_item = get_current_item()) {
+    match(*current_item, Current());
+    match(*current_item->parentWidget(), CurrentRow());
+    match(*m_column_covers[
+      m_current_controller.get_current()->get()->m_column], CurrentColumn());
   }
   m_table_connection = m_table->connect_operation_signal(
     std::bind_front(&TableBody::on_table_operation, this));
-  m_current_connection = m_current->connect_update_signal(
-    std::bind_front(&TableBody::on_current, this));
+  m_current_connection = m_current_controller.connect_update_signal(
+     std::bind_front(&TableBody::on_current, this));
+  m_selection_controller.connect_row_operation_signal(
+    std::bind_front(&TableBody::on_row_selection, this));
   m_widths_connection = m_widths->connect_operation_signal(
     std::bind_front(&TableBody::on_widths_update, this));
 }
@@ -182,7 +167,12 @@ const std::shared_ptr<TableModel>& TableBody::get_table() const {
 }
 
 const std::shared_ptr<TableBody::CurrentModel>& TableBody::get_current() const {
-  return m_current;
+  return m_current_controller.get_current();
+}
+
+const std::shared_ptr<TableBody::SelectionModel>&
+    TableBody::get_selection() const {
+  return m_selection_controller.get_selection();
 }
 
 const TableItem* TableBody::get_item(Index index) const {
@@ -220,32 +210,77 @@ void TableBody::keyPressEvent(QKeyEvent* event) {
   switch(event->key()) {
     case Qt::Key_Home:
       if(event->modifiers() & Qt::KeyboardModifier::ControlModifier) {
-        navigate_home_row();
+        m_current_controller.navigate_home_row();
       } else {
-        navigate_home_column();
+        m_current_controller.navigate_home_column();
       }
       break;
     case Qt::Key_End:
       if(event->modifiers() & Qt::KeyboardModifier::ControlModifier) {
-        navigate_end_row();
+        m_current_controller.navigate_end_row();
       } else {
-        navigate_end_column();
+        m_current_controller.navigate_end_column();
       }
       break;
     case Qt::Key_Up:
-      navigate_previous_row();
+      m_current_controller.navigate_previous_row();
       break;
     case Qt::Key_Down:
-      navigate_next_row();
+      m_current_controller.navigate_next_row();
       break;
     case Qt::Key_Left:
-      navigate_previous_column();
+      m_current_controller.navigate_previous_column();
       break;
     case Qt::Key_Right:
-      navigate_next_column();
+      m_current_controller.navigate_next_column();
+      break;
+    case Qt::Key_A:
+      if(event->modifiers() & Qt::Modifier::CTRL && !event->isAutoRepeat()) {
+        m_selection_controller.select_all();
+      }
+      break;
+    case Qt::Key_Control:
+      m_keys.insert(Qt::Key_Control);
+      m_selection_controller.set_mode(
+        TableSelectionController::Mode::INCREMENTAL);
+      break;
+    case Qt::Key_Shift:
+      m_keys.insert(Qt::Key_Shift);
+      m_selection_controller.set_mode(TableSelectionController::Mode::RANGE);
       break;
     default:
       QWidget::keyPressEvent(event);
+  }
+}
+
+void TableBody::keyReleaseEvent(QKeyEvent* event) {
+  switch(event->key()) {
+    case Qt::Key_Control:
+      m_keys.erase(Qt::Key_Control);
+      if(m_selection_controller.get_mode() ==
+          TableSelectionController::Mode::INCREMENTAL) {
+        if(m_keys.count(Qt::Key_Shift) == 1) {
+          m_selection_controller.set_mode(
+            TableSelectionController::Mode::RANGE);
+        } else {
+          m_selection_controller.set_mode(
+            TableSelectionController::Mode::SINGLE);
+        }
+      }
+      break;
+    case Qt::Key_Shift:
+      m_keys.erase(Qt::Key_Shift);
+      if(m_selection_controller.get_mode() ==
+          TableSelectionController::Mode::RANGE) {
+        if(m_keys.count(Qt::Key_Control) == 1) {
+          m_selection_controller.set_mode(
+            TableSelectionController::Mode::INCREMENTAL);
+        } else {
+          m_selection_controller.set_mode(
+            TableSelectionController::Mode::SINGLE);
+        }
+      }
+      break;
   }
 }
 
@@ -254,36 +289,37 @@ void TableBody::paintEvent(QPaintEvent* event) {
   if(m_styles.m_background_color.alphaF() != 0) {
     painter.fillRect(QRect(QPoint(0, 0), size()), m_styles.m_background_color);
   }
+  auto current = m_current_controller.get_current()->get();
   for(auto i = 0; i != static_cast<int>(m_column_covers.size()); ++i) {
     auto cover = m_column_covers[i];
     if(cover->m_background_color.alphaF() != 0 &&
-        (!m_current_index || m_current_index->m_column != i)) {
+        (!current || current->m_column != i)) {
       painter.fillRect(cover->geometry(), cover->m_background_color);
     }
   }
   for(auto i = 0; i != layout()->count(); ++i) {
     auto& cover = *static_cast<Cover*>(layout()->itemAt(i)->widget());
     if(cover.m_background_color.alphaF() != 0 &&
-        (!m_current_index || m_current_index->m_row != i)) {
+        (!current || current->m_row != i)) {
       painter.fillRect(cover.geometry(), cover.m_background_color);
     }
   }
-  if(m_current_item) {
-    auto column_cover = m_column_covers[m_current_index->m_column];
+  if(auto current_item = get_current_item()) {
+    auto column_cover = m_column_covers[current->m_column];
     if(column_cover->m_background_color.alphaF() != 0) {
       painter.fillRect(
         column_cover->geometry(), column_cover->m_background_color);
     }
     auto& row_cover =
-      *static_cast<Cover*>(layout()->itemAt(m_current_index->m_row)->widget());
+      *static_cast<Cover*>(layout()->itemAt(current->m_row)->widget());
     if(row_cover.m_background_color.alphaF() != 0) {
       painter.fillRect(row_cover.geometry(), row_cover.m_background_color);
     }
     auto current_position =
-      m_current_item->parentWidget()->mapToParent(m_current_item->pos());
-    auto& styles = m_current_item->get_styles();
-    painter.fillRect(QRect(current_position, m_current_item->size()),
-      styles.m_background_color);
+      current_item->parentWidget()->mapToParent(current_item->pos());
+    auto& styles = current_item->get_styles();
+    painter.fillRect(
+      QRect(current_position, current_item->size()), styles.m_background_color);
   }
   if(m_styles.m_vertical_spacing != 0 &&
       m_styles.m_horizontal_grid_color.alphaF() != 0) {
@@ -313,19 +349,18 @@ void TableBody::paintEvent(QPaintEvent* event) {
     }
     draw_border(width() - m_styles.m_horizontal_spacing);
   }
-  if(m_current_item) {
+  if(auto current_item = get_current_item()) {
     auto current_position =
-      m_current_item->parentWidget()->mapToParent(m_current_item->pos());
-    auto& styles = m_current_item->get_styles();
+      current_item->parentWidget()->mapToParent(current_item->pos());
+    auto& styles = current_item->get_styles();
     auto top_left = current_position -
       QPoint(m_styles.m_horizontal_spacing, m_styles.m_vertical_spacing);
     auto top_right = top_left + QPoint(
-      m_current_item->size().width() + 2 * m_styles.m_horizontal_spacing - 1,
-      0);
+      current_item->size().width() + 2 * m_styles.m_horizontal_spacing - 1, 0);
     auto bottom_right = top_right + QPoint(
-      0, m_current_item->size().height() + 2 * m_styles.m_vertical_spacing - 1);
+      0, current_item->size().height() + 2 * m_styles.m_vertical_spacing - 1);
     auto bottom_left = top_left + QPoint(
-      0, m_current_item->size().height() + 2 * m_styles.m_vertical_spacing - 1);
+      0, current_item->size().height() + 2 * m_styles.m_vertical_spacing - 1);
     painter.setPen(QPen(QBrush(styles.m_border_top_color),
       m_styles.m_vertical_spacing,  Qt::SolidLine, Qt::FlatCap, Qt::MiterJoin));
     painter.drawLine(QLine(top_left, top_right));
@@ -342,6 +377,14 @@ void TableBody::paintEvent(QPaintEvent* event) {
     painter.drawLine(top_left, bottom_left);
   }
   QWidget::paintEvent(event);
+}
+
+TableItem* TableBody::get_current_item() {
+  return find_item(m_current_controller.get_current()->get());
+}
+
+TableBody::Cover* TableBody::find_row(int index) {
+  return static_cast<Cover*>(layout()->itemAt(index)->widget());
 }
 
 TableItem* TableBody::find_item(const optional<Index>& index) {
@@ -364,135 +407,105 @@ void TableBody::add_column_cover(int index, const QRect& geometry) {
   on_cover_style(*cover);
 }
 
-void TableBody::navigate_home() {
-  if(m_table->get_row_size() > 0 &&
-      m_table->get_column_size() > 0 && m_current->get() != Index(0, 0)) {
-    m_current->set(Index(0, 0));
+void TableBody::add_row(int index) {
+  auto row = new Cover(this);
+  match(*row, Row());
+  auto column_layout = make_hbox_layout(row);
+  column_layout->setSpacing(m_styles.m_horizontal_spacing);
+  for(auto column = 0; column != m_table->get_column_size(); ++column) {
+    auto item = new TableItem(*m_view_builder(m_table, index, column));
+    if(column != m_table->get_column_size() - 1) {
+      item->setFixedWidth(
+        m_widths->get(column) - m_styles.m_horizontal_spacing);
+    } else {
+      item->setSizePolicy(
+        QSizePolicy::Expanding, item->sizePolicy().verticalPolicy());
+    }
+    column_layout->addWidget(item);
+    item->connect_click_signal(
+      std::bind_front(&TableBody::on_item_clicked, this, std::ref(*item)));
   }
+  auto& row_layout = *static_cast<QBoxLayout*>(layout());
+  row_layout.insertWidget(index, row);
+  connect_style_signal(
+    *row, std::bind_front(&TableBody::on_cover_style, this, std::ref(*row)));
+  on_cover_style(*row);
+  m_current_controller.add_row(index);
+  m_selection_controller.add_row(index);
 }
 
-void TableBody::navigate_home_row() {
-  auto& current = m_current->get();
-  if(!current) {
-    navigate_home();
-  } else if(current->m_row != 0) {
-    m_current->set(Index(0, current->m_column));
-  }
+void TableBody::remove_row(int index) {
+  auto& row_layout = *static_cast<QBoxLayout*>(layout());
+  auto row = row_layout.itemAt(index);
+  row_layout.removeItem(row);
+  delete row->widget();
+  delete row;
+  m_current_controller.remove_row(index);
+  m_selection_controller.remove_row(index);
 }
 
-void TableBody::navigate_home_column() {
-  auto& current = m_current->get();
-  if(!current) {
-    navigate_home();
-  } else if(current->m_column != 0) {
-    m_current->set(Index(current->m_row, 0));
-  }
-}
-
-void TableBody::navigate_end() {
-  if(m_table->get_row_size() > 0 &&
-      m_table->get_column_size() > 0 &&
-      m_current->get() !=
-        Index(m_table->get_row_size() - 1, m_table->get_column_size() - 1)) {
-    m_current->set(
-      Index(m_table->get_row_size() - 1, m_table->get_column_size() - 1));
-  }
-}
-
-void TableBody::navigate_end_row() {
-  auto& current = m_current->get();
-  if(!current) {
-    navigate_end();
-  } else if(current->m_row != m_table->get_row_size() - 1) {
-    m_current->set(Index(m_table->get_row_size() - 1, current->m_column));
-  }
-}
-
-void TableBody::navigate_end_column() {
-  auto& current = m_current->get();
-  if(!current) {
-    navigate_end();
-  } else if(current->m_column != m_table->get_column_size() - 1) {
-    m_current->set(Index(current->m_row, m_table->get_column_size() - 1));
-  }
-}
-
-void TableBody::navigate_previous_row() {
-  auto& current = m_current->get();
-  if(!current) {
-    navigate_home();
-  } else if(current->m_row != 0) {
-    m_current->set(Index(current->m_row - 1, current->m_column));
-  }
-}
-
-void TableBody::navigate_next_row() {
-  auto& current = m_current->get();
-  if(!current) {
-    navigate_home();
-  } else if(current->m_row != m_table->get_row_size() - 1) {
-    m_current->set(Index(current->m_row + 1, current->m_column));
-  }
-}
-
-void TableBody::navigate_previous_column() {
-  auto& current = m_current->get();
-  if(!current) {
-    navigate_home();
-  } else if(current->m_column != 0) {
-    m_current->set(Index(current->m_row, current->m_column - 1));
-  }
-}
-
-void TableBody::navigate_next_column() {
-  auto& current = m_current->get();
-  if(!current) {
-    navigate_home();
-  } else if(current->m_column != m_table->get_column_size() - 1) {
-    m_current->set(Index(current->m_row, current->m_column + 1));
-  }
+void TableBody::move_row(int source, int destination) {
+  auto& row_layout = *static_cast<QBoxLayout*>(layout());
+  auto& row = *row_layout.itemAt(source);
+  row_layout.removeItem(&row);
+  auto index = [&] {
+    if(source < destination) {
+      return destination - 1;
+    }
+    return destination;
+  }();
+  row_layout.insertItem(index, &row);
+  m_current_controller.move_row(source, destination);
+  m_selection_controller.move_row(source, destination);
 }
 
 void TableBody::on_item_clicked(TableItem& item) {
   auto& row_widget = *item.parentWidget();
-  auto row_index = layout()->indexOf(&row_widget);
-  auto column_index = row_widget.layout()->indexOf(&item);
-  if(m_current->get() != Index(row_index, column_index)) {
-    m_current->set(Index(row_index, column_index));
+  auto index =
+    Index(layout()->indexOf(&row_widget), row_widget.layout()->indexOf(&item));
+  if(m_current_controller.get_current()->get() != index) {
+    m_current_controller.get_current()->set(index);
+  }
+  m_selection_controller.click(index);
+}
+
+void TableBody::on_current(
+    const optional<Index>& previous, const optional<Index>& current) {
+  if(previous) {
+    auto previous_item = find_item(previous);
+    if(!current || current->m_row != previous->m_row) {
+      unmatch(*previous_item->parentWidget(), CurrentRow());
+    }
+    if(!current || current->m_column != previous->m_column) {
+      unmatch(*m_column_covers[previous->m_column], CurrentColumn());
+    }
+    unmatch(*previous_item, Current());
+  }
+  if(current) {
+    auto current_item = get_current_item();
+    match(*current_item, Current());
+    if(!previous || previous->m_row != current->m_row) {
+      match(*current_item->parentWidget(), CurrentRow());
+    }
+    if(!previous || previous->m_column != current->m_column) {
+      match(*m_column_covers[current->m_column], CurrentColumn());
+    }
+    m_selection_controller.navigate(*current);
   }
 }
 
-void TableBody::on_current(const optional<Index>& index) {
-  if(index == m_current_index) {
-    return;
-  }
-  auto previous_index = m_current_index;
-  auto previous_item = m_current_item;
-  m_current_index = index;
-  m_current_item = find_item(index);
-  if(previous_index) {
-    if(previous_item && 
-        (!m_current_index || m_current_index->m_row != previous_index->m_row)) {
-      unmatch(*previous_item->parentWidget(), CurrentRow());
-    }
-    if(!m_current_index ||
-        m_current_index->m_column != previous_index->m_column) {
-      unmatch(*m_column_covers[previous_index->m_column], CurrentColumn());
-    }
-    if(previous_item) {
-      unmatch(*previous_item, Current());
-    }
-  }
-  if(m_current_index) {
-    match(*m_current_item, Current());
-    if(!previous_index || previous_index->m_row != m_current_index->m_row) {
-      match(*m_current_item->parentWidget(), CurrentRow());
-    }
-    if(!previous_index ||
-        previous_index->m_column != m_current_index->m_column) {
-      match(*m_column_covers[m_current_index->m_column], CurrentColumn());
-    }
-  }
+void TableBody::on_row_selection(const ListModel<int>::Operation& operation) {
+  visit(operation,
+    [&] (const ListModel<int>::AddOperation& operation) {
+      match(*find_row(operation.get_value()), Selected());
+    },
+    [&] (const ListModel<int>::RemoveOperation& operation) {
+      unmatch(*find_row(operation.get_value()), Selected());
+    },
+    [&] (const ListModel<int>::UpdateOperation& operation) {
+      unmatch(*find_row(operation.get_previous()), Selected());
+      match(*find_row(operation.get_value()), Selected());
+    });
 }
 
 void TableBody::on_style() {
@@ -562,79 +575,16 @@ void TableBody::on_cover_style(Cover& cover) {
 }
 
 void TableBody::on_table_operation(const TableModel::Operation& operation) {
-  auto& row_layout = *static_cast<QBoxLayout*>(layout());
-  auto adjusted_current = m_current_index;
   visit(operation,
     [&] (const TableModel::AddOperation& operation) {
-      if(adjusted_current) {
-        if(operation.m_index <= adjusted_current->m_row) {
-          ++adjusted_current->m_row;
-        }
-      }
-      auto row = new Cover(this);
-      match(*row, Row());
-      auto column_layout = make_hbox_layout(row);
-      column_layout->setSpacing(m_styles.m_horizontal_spacing);
-      for(auto column = 0; column != m_table->get_column_size(); ++column) {
-        auto item =
-          new TableItem(*m_view_builder(m_table, operation.m_index, column));
-        if(column != m_table->get_column_size() - 1) {
-          item->setFixedWidth(
-            m_widths->get(column) - m_styles.m_horizontal_spacing);
-        } else {
-          item->setSizePolicy(
-            QSizePolicy::Expanding, item->sizePolicy().verticalPolicy());
-        }
-        column_layout->addWidget(item);
-        item->connect_clicked_signal(
-          std::bind_front(&TableBody::on_item_clicked, this, std::ref(*item)));
-      }
-      row_layout.insertWidget(operation.m_index, row);
-      connect_style_signal(*row, std::bind_front(
-        &TableBody::on_cover_style, this, std::ref(*row)));
-      on_cover_style(*row);
+      add_row(operation.m_index);
     },
     [&] (const TableModel::RemoveOperation& operation) {
-      if(adjusted_current) {
-        if(operation.m_index == adjusted_current->m_row) {
-          adjusted_current = none;
-        } else if(operation.m_index < adjusted_current->m_row) {
-          --adjusted_current->m_row;
-        }
-      }
-      auto row = row_layout.itemAt(operation.m_index);
-      row_layout.removeItem(row);
-      delete row->widget();
-      delete row;
+      remove_row(operation.m_index);
     },
     [&] (const TableModel::MoveOperation& operation) {
-      if(adjusted_current) {
-        if(adjusted_current->m_row == operation.m_source) {
-          adjusted_current->m_row = operation.m_destination;
-        } else if(operation.m_source < adjusted_current->m_row &&
-            operation.m_destination >= adjusted_current->m_row) {
-          --adjusted_current->m_row;
-        } else if(operation.m_source > adjusted_current->m_row &&
-            operation.m_destination <= adjusted_current->m_row) {
-          ++adjusted_current->m_row;
-        }
-      }
-      auto& row = *row_layout.itemAt(operation.m_source);
-      row_layout.removeItem(&row);
-      auto destination = [&] {
-        if(operation.m_source < operation.m_destination) {
-          return operation.m_destination - 1;
-        }
-        return operation.m_destination;
-      }();
-      row_layout.insertItem(destination, &row);
+      move_row(operation.m_source, operation.m_destination);
     });
-  if(adjusted_current != m_current_index) {
-    if(!adjusted_current) {
-      m_current_item = nullptr;
-    }
-    m_current->set(adjusted_current);
-  }
 }
 
 void TableBody::on_widths_update(const ListModel<int>::Operation& operation) {
