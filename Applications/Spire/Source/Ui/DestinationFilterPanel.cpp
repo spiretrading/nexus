@@ -8,21 +8,10 @@ using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 
-class DestinationExcludingQueryModel : public ExcludingQueryModel {
-  public:
-    using ExcludingQueryModel::ExcludingQueryModel;
-
-  private:
-    QString to_string(const std::any& value) override {
-      return displayText(
-        std::any_cast<const DestinationDatabase::Entry&>(value).m_id);
-    }
-};
-
 AnyInputBox* destination_box_builder(std::shared_ptr<ComboBox::QueryModel> model,
     std::shared_ptr<AnyListModel> matches) {
   auto box = new DestinationBox(
-    std::make_shared<DestinationExcludingQueryModel>(model, matches));
+    std::make_shared<ExcludingQueryModel>(model, matches));
   box->set_placeholder(QObject::tr("Search destinations"));
   auto input_box = new AnyInputBox(*box);
   input_box->connect_submit_signal([=] (const auto& submission) {

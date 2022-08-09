@@ -1,6 +1,8 @@
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include <Beam/TimeService/ToLocalTime.hpp>
 #include <QDateTime>
+#include "Nexus/Definitions/Destination.hpp"
+#include "Nexus/Definitions/SecurityInfo.hpp"
 #include "Nexus/Definitions/SecuritySet.hpp"
 #include "Spire/Spire/AnyRef.hpp"
 
@@ -351,8 +353,9 @@ bool Spire::is_equal(const std::any& left, const std::any& right) {
   }
   return is_equal_any<bool, int, Quantity, double, gregorian::date, ptime,
     posix_time::time_duration, std::string, CountryCode, CurrencyId,
-    MarketToken, Money, Region, OrderStatus, OrderType, PositionSideToken,
-    Security, Side, TimeInForce, QColor, QString>(left, right);
+    DestinationDatabase::Entry, MarketToken, Money, Region, OrderStatus,
+    OrderType, PositionSideToken, Security, SecurityInfo, Side, TimeInForce,
+    QColor, QString>(left, right);
 }
 
 CustomVariantItemDelegate::CustomVariantItemDelegate(QObject* parent)

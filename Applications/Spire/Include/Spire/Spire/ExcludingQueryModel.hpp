@@ -26,13 +26,8 @@ namespace Spire {
     private:
       std::shared_ptr<ComboBox::QueryModel> m_source;
       std::shared_ptr<AnyListModel> m_exclusions;
-      std::unordered_set<QString> m_exclusion_set;
-      std::vector<QString> m_exclusion_list;
-      boost::signals2::scoped_connection m_connection;
 
-      void add_exclusion(int index);
-      void on_operation(const AnyListModel::Operation& operation);
-      virtual QString to_string(const std::any& value);
+      bool is_in_exclusion(const std::any& value);
   };
 }
 

@@ -5,24 +5,19 @@ using namespace Nexus;
 using namespace Spire;
 
 ExcludingQueryModel::ExcludingQueryModel(
-    std::shared_ptr<ComboBox::QueryModel> source,
-    std::shared_ptr<AnyListModel> exclusions)
-    : m_source(std::move(source)),
-      m_exclusions(std::move(exclusions)),
-      m_connection(m_exclusions->connect_operation_signal(
-        std::bind_front(&ExcludingQueryModel::on_operation, this))) {
-  for(auto i = 0; i < m_exclusions->get_size(); ++i) {
-    add_exclusion(i);
-  }
-}
+  std::shared_ptr<ComboBox::QueryModel> source,
+  std::shared_ptr<AnyListModel> exclusions)
+  : m_source(std::move(source)),
+    m_exclusions(std::move(exclusions)) {}
 
 std::any ExcludingQueryModel::parse(const QString& query) {
   auto value = m_source->parse(query);
   if(!value.has_value()) {
     return value;
   }
-  if(m_exclusion_set.contains(to_string(value))) {
-    return std::any();
+  if(is_in_exclusion(value)) {
+    static auto empty_value = std::any();
+    return empty_value;
   }
   return value;
 }
@@ -34,33 +29,22 @@ QtPromise<std::vector<std::any>> ExcludingQueryModel::submit(
       try {
         return source_result.Get();
       } catch(const std::exception&) {
-        return std::vector<std::any>();
+        static auto empty_matches = std::vector<std::any>();
+        return empty_matches;
       }
     }();
     std::erase_if(result, [&] (auto& value) {
-      return m_exclusion_set.contains(to_string(value));
+      return is_in_exclusion(value);
     });
     return result;
   });
 }
 
-void ExcludingQueryModel::add_exclusion(int index) {
-  auto value = displayText(m_exclusions->get(index));
-  m_exclusion_set.insert(value);
-  m_exclusion_list.insert(m_exclusion_list.begin() + index, value);
-}
-
-void ExcludingQueryModel::on_operation(const AnyListModel::Operation& operation) {
-  visit(operation,
-    [&] (const AnyListModel::AddOperation& operation) {
-      add_exclusion(operation.m_index);
-    },
-    [&] (const AnyListModel::RemoveOperation& operation) {
-      m_exclusion_set.erase(m_exclusion_list[operation.m_index]);
-      m_exclusion_list.erase(m_exclusion_list.begin() + operation.m_index);
-    });
-}
-
-QString ExcludingQueryModel::to_string(const std::any& value) {
-  return displayText(value);
+bool ExcludingQueryModel::is_in_exclusion(const std::any& value) {
+  for(auto i = 0; i < m_exclusions->get_size(); ++i) {
+    if(is_equal(value, m_source->parse(displayText(m_exclusions->get(i))))) {
+      return true;
+    }
+  }
+  return false;
 }
