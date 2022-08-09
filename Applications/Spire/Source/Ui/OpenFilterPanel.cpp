@@ -137,8 +137,8 @@ AnyInputBox* combo_box_builder(std::shared_ptr<ComboBox::QueryModel> model,
   box->set_placeholder(QObject::tr("Type here"));
   auto input_box = new AnyInputBox(*box);
   input_box->connect_submit_signal([=] (const auto& submission) {
-    input_box->get_current()->set(std::any());
-    matches->push(any_cast<std::any>(submission));
+    box->get_current()->set(std::any());
+    matches->push(to_any(submission));
   });
   return input_box;
 }
