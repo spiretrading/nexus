@@ -41,6 +41,16 @@ namespace Spire {
       /** Returns the current value model. */
       const std::shared_ptr<KeySequenceValueModel>& get_current() const;
 
+      /** Returns <code>true</code> iff the KeyInputBox is read-only. */
+      bool is_read_only() const;
+
+      /**
+       * Sets the read-only state.
+       * @param is_read_only <code>true</code> iff the KeyInputBox should be
+       *        read-only.
+       */
+      void set_read_only(bool is_read_only);
+
       /**
        * Connects a slot to the SubmitSignal.
        * @param slot The slot to connect to the SubmitSignal.
@@ -69,6 +79,7 @@ namespace Spire {
       QWidget* m_body;
       Box* m_input_box;
       bool m_is_modified;
+      bool m_is_read_only;
       boost::signals2::scoped_connection m_current_connection;
 
       void layout_key_sequence();

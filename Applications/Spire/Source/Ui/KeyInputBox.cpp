@@ -112,6 +112,21 @@ const std::shared_ptr<KeySequenceValueModel>& KeyInputBox::get_current() const {
   return m_current;
 }
 
+bool KeyInputBox::is_read_only() const {
+  return m_is_read_only;
+}
+
+void KeyInputBox::set_read_only(bool is_read_only) {
+  m_is_read_only = is_read_only;
+  if(m_is_read_only) {
+    setFocusPolicy(Qt::NoFocus);
+    match(*m_input_box, ReadOnly());
+  } else {
+    setFocusPolicy(Qt::StrongFocus);
+    unmatch(*m_input_box, ReadOnly());
+  }
+}
+
 connection KeyInputBox::connect_submit_signal(
     const SubmitSignal::slot_type& slot) const {
   return m_submit_signal.connect(slot);
