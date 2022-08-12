@@ -85,6 +85,7 @@ KeyInputBox::KeyInputBox(
     : QWidget(parent),
       m_current(std::move(current)),
       m_status(Status::UNINITIALIZED),
+      m_is_read_only(false),
       m_is_modified(false) {
   setFocusPolicy(Qt::StrongFocus);
   m_body = new QWidget();
