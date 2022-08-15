@@ -1939,6 +1939,7 @@ UiProfile Spire::make_key_input_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
   properties.push_back(make_standard_property<QString>("current"));
+  properties.push_back(make_standard_property("read_only", false));
   auto profile = UiProfile("KeyInputBox", properties, [] (auto& profile) {
     auto model = make_validated_value_model<QKeySequence>([] (auto sequence) {
       if(sequence.count() == 0) {
@@ -1975,6 +1976,9 @@ UiProfile Spire::make_key_input_box_profile() {
         }
       }
     });
+    auto& read_only = get<bool>("read_only", profile.get_properties());
+    read_only.connect_changed_signal(
+      std::bind_front(&KeyInputBox::set_read_only, box));
     box->get_current()->connect_update_signal(
       profile.make_event_slot<QKeySequence>("Current"));
     box->get_current()->connect_update_signal([&current] (const auto& value) {

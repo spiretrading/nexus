@@ -85,6 +85,7 @@ KeyInputBox::KeyInputBox(
     : QWidget(parent),
       m_current(std::move(current)),
       m_status(Status::UNINITIALIZED),
+      m_is_read_only(false),
       m_is_modified(false) {
   setFocusPolicy(Qt::StrongFocus);
   m_body = new QWidget();
@@ -110,6 +111,21 @@ KeyInputBox::KeyInputBox(QWidget* parent)
 
 const std::shared_ptr<KeySequenceValueModel>& KeyInputBox::get_current() const {
   return m_current;
+}
+
+bool KeyInputBox::is_read_only() const {
+  return m_is_read_only;
+}
+
+void KeyInputBox::set_read_only(bool is_read_only) {
+  m_is_read_only = is_read_only;
+  if(m_is_read_only) {
+    setFocusPolicy(Qt::NoFocus);
+    match(*m_input_box, ReadOnly());
+  } else {
+    setFocusPolicy(Qt::StrongFocus);
+    unmatch(*m_input_box, ReadOnly());
+  }
 }
 
 connection KeyInputBox::connect_submit_signal(
