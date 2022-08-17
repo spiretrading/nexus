@@ -95,6 +95,12 @@ NavigationView::NavigationView(
       return new NavigationTab(
         std::any_cast<const QString&>(model->get(index)));
     });
+  update_style(*m_navigation_view, [] (auto& style) {
+    style.get(Any()).
+      set(EdgeNavigation::CONTAIN).
+      set(Overflow::NONE).
+      set(Qt::Horizontal);
+  });
   m_navigation_view->setFixedHeight(scale_height(28));
   auto navigation_list_layout = make_hbox_layout();
   navigation_list_layout->addWidget(m_navigation_view);
@@ -117,10 +123,6 @@ NavigationView::NavigationView(
   content_block_layout->addStretch();
   layout->addLayout(content_block_layout);
   auto style = StyleSheet();
-  style.get(Any() > is_a<ListView>()).
-    set(EdgeNavigation::CONTAIN).
-    set(Overflow::NONE).
-    set(Qt::Horizontal);
   style.get(Any() > is_a<Separator>()).
     set(BorderTopSize(scale_height(1))).
     set(BorderTopColor(QColor(0xD0D0D0)));
