@@ -2314,7 +2314,23 @@ UiProfile Spire::make_navigation_view_profile() {
   properties.push_back(make_standard_property("tab_index", 0));
   properties.push_back(make_standard_property("tab_enabled", true));
   properties.push_back(make_standard_property("current", 0));
+  auto size_policy_property = define_enum<int>(
+    {{"Blue", 0}, {"Green", 1}});
+  properties.push_back(make_standard_enum_property(
+    "page_horizontal_size_policy", size_policy_property));
+  properties.push_back(make_standard_enum_property("page_vertical_size_policy",
+    size_policy_property));
   auto profile = UiProfile("NavigationView", properties, [=] (auto& profile) {
+    auto& horizontal_size_policy = get<int>("page_horizontal_size_policy",
+      profile.get_properties());
+    auto& vertical_size_policy = get<int>("page_vertical_size_policy",
+      profile.get_properties());
+    auto get_size_policy = [] (const auto& size_policy) {
+      if(size_policy.get() == 0) {
+        return QSizePolicy::Expanding;
+      }
+      return QSizePolicy::Preferred;
+    };
     auto navigation_view = new NavigationView();
     apply_widget_properties(navigation_view, profile.get_properties());
     auto filter_slot = profile.make_event_slot<QString>("CurrentSignal");
@@ -2323,7 +2339,10 @@ UiProfile Spire::make_navigation_view_profile() {
         arg(navigation_view->get_label(current)));
     });
     auto page1 = new QWidget();
-    page1->setFixedSize(scale(160, 200));
+    page1->setSizePolicy(get_size_policy(horizontal_size_policy),
+      get_size_policy(vertical_size_policy));
+    page1->setObjectName("page1");
+    page1->setStyleSheet("#page1 {background-color: yellow;}");
     auto layout1 = new QVBoxLayout(page1);
     layout1->setSpacing(scale_width(5));
     layout1->addWidget(make_label_button("Button1"));
@@ -2338,27 +2357,40 @@ UiProfile Spire::make_navigation_view_profile() {
     region_box->set_placeholder("RegionBox");
     layout1->addWidget(region_box);
     navigation_view->add_tab(*page1, "NavTab1");
-    auto page2 = new QWidget();
-    page2->setFixedSize(scale(300, 90));
-    auto layout2 = new QGridLayout(page2);
-    layout2->setSpacing(scale_width(5));
-    layout2->addWidget(make_label("Start Date:"), 0, 0);
-    auto text_box1 = new TextBox();
-    layout2->addWidget(text_box1, 0, 1);
-    layout2->addWidget(make_label("End Date:"), 1, 0);
-    auto text_box2 = new TextBox();
-    layout2->addWidget(text_box2, 1, 1);
+    auto new_page = [] {
+      auto page = new QWidget();
+      page->setObjectName("page");
+      page->setStyleSheet("#page {background-color: cyan;}");
+      auto layout = new QVBoxLayout(page);
+      layout->setSpacing(scale_width(5));
+      auto text_box1 = new TextBox();
+      text_box1->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+      layout->addWidget(text_box1);
+      auto text_box2 = new TextBox();
+      text_box2->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+      layout->addWidget(text_box2);
+      return page;
+    };
+    auto page2 = new_page();
+    page2->setSizePolicy(get_size_policy(horizontal_size_policy),
+      get_size_policy(vertical_size_policy));
     navigation_view->add_tab(*page2, "NavTab2");
-    auto page3 = new QWidget();
+    auto page3 = new_page();
+    page3->setFixedSize(scale(200, 90));
+    navigation_view->add_tab(*page3, "NavTab3");
+    auto page4 = new QWidget();
+    page4->setSizePolicy(get_size_policy(horizontal_size_policy),
+      get_size_policy(vertical_size_policy));
+    page4->setObjectName("page4");
+    page4->setStyleSheet("#page4 {background-color: yellow;}");
     auto reader = QImageReader(":/Icons/color-picker-display.png");
     auto image = QPixmap::fromImage(reader.read());
-    image = image.scaled(QSize(450, 400));
     auto label = new QLabel();
     label->setPixmap(std::move(image));
-    auto layout3 = new QVBoxLayout(page3);
-    layout3->setSpacing(scale_width(5));
-    layout3->addWidget(label);
-    navigation_view->add_tab(*page3, "NavTab3");
+    auto layout4 = new QHBoxLayout(page4);
+    layout4->setSpacing(scale_width(5));
+    layout4->addWidget(label);
+    navigation_view->add_tab(*page4, "NavTab4");
     auto& tab_index = get<int>("tab_index", profile.get_properties());
     auto& tab_enabled = get<bool>("tab_enabled", profile.get_properties());
     tab_enabled.connect_changed_signal([=, &tab_index] (auto value) {
