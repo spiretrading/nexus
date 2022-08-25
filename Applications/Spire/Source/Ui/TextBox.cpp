@@ -139,6 +139,7 @@ class TextBox::LineEdit : public QLineEdit {
         std::bind_front(&LineEdit::on_highlight, this));
       m_text_box->setCursor(cursor());
       m_text_box->setFocusPolicy(focusPolicy());
+      QWidget::setTabOrder(m_text_box, this);
       m_text_box->setFocusProxy(this);
       enclose(*m_text_box, *this);
       m_placeholder_style_connection = connect_style_signal(
