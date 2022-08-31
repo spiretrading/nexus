@@ -30,6 +30,7 @@ namespace Spire {
   class DropDownList;
   class DropShadow;
   class DurationBox;
+  class EditableBox;
   template<typename T> class EmptySelectionModel;
   class EmptyTableFilter;
   template<typename T> class EnumBox;
