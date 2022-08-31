@@ -26,6 +26,8 @@ AnyInputBox& EditableBox::get_input_box() {
 void EditableBox::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Escape) {
     clearFocus();
+  } else {
+    QWidget::keyPressEvent(event);
   }
 }
 
