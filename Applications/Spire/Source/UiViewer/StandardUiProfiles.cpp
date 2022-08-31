@@ -35,6 +35,7 @@
 #include "Spire/Ui/DropDownBox.hpp"
 #include "Spire/Ui/DropDownList.hpp"
 #include "Spire/Ui/DurationBox.hpp"
+#include "Spire/Ui/EditableBox.hpp"
 #include "Spire/Ui/FilterPanel.hpp"
 #include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/HoverObserver.hpp"
@@ -1598,6 +1599,37 @@ UiProfile Spire::make_duration_filter_panel_profile() {
       });
       return button;
     });
+  return profile;
+}
+
+UiProfile Spire::make_editable_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto test_widget_property = define_enum<int>(
+    {{"TextBox", 0}, {"DropDownBox", 1}, {"DecimalBox", 2}});
+  properties.push_back(
+    make_standard_enum_property("input_box", test_widget_property));
+  auto profile = UiProfile("EditableBox", properties, [] (auto& profile) {
+    auto& test_widget = get<int>("input_box", profile.get_properties());
+    auto input_box = [&] {
+      auto value = test_widget.get();
+      if(value == 0) {
+        return new AnyInputBox(*(new TextBox("TextBox")));
+      } else if(value == 1) {
+        auto list_model = std::make_shared<ArrayListModel<QString>>();
+        for(auto i = 0; i < 5; ++i) {
+          list_model->push(QString("item%1").arg(i));
+        }
+        return new AnyInputBox(*(new DropDownBox(list_model)));
+      }
+      return new AnyInputBox((*new DecimalBox(
+        std::make_shared<LocalOptionalDecimalModel>(Decimal(1)))));
+    }();
+    auto editable_box = new EditableBox(*input_box);
+    editable_box->setMinimumWidth(scale_width(112));
+    apply_widget_properties(editable_box, profile.get_properties());
+    return editable_box;
+  });
   return profile;
 }
 

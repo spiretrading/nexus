@@ -56,6 +56,9 @@ namespace Spire {
   /** Returns a UiProfile for the DurationFilterPanel. */
   UiProfile make_duration_filter_panel_profile();
 
+  /** Returns a UiProfile for the EditableBox. */
+  UiProfile make_editable_box_profile();
+
   /** Returns a UiProfile for the FilterPanel. */
   UiProfile make_filter_panel_profile();
 
