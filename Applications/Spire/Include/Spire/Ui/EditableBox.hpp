@@ -27,7 +27,6 @@ namespace Spire {
       AnyInputBox& get_input_box();
 
     protected:
-      //bool eventFilter(QObject* watched, QEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
 
     private:
