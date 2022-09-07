@@ -919,7 +919,7 @@ UiProfile Spire::make_closed_filter_panel_profile() {
 UiProfile Spire::make_combo_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
-  properties.push_back(make_standard_property<QString>("current"));
+  properties.push_back(make_standard_property<QString>("current", "Car"));
   properties.push_back(make_standard_property<QString>("placeholder"));
   properties.push_back(make_standard_property("read_only", false));
   auto profile = UiProfile("ComboBox", properties, [] (auto& profile) {
@@ -933,12 +933,15 @@ UiProfile Spire::make_combo_box_profile() {
     model->add(QString("Brown"));
     model->add(QString("Black"));
     model->add(QString("Car"));
-    auto box = new ComboBox(model);
+    auto& current = get<QString>("current", profile.get_properties());
+    auto current_model =
+      std::make_shared<LocalValueModel<std::any>>(current.get());
+    auto box = new ComboBox(model, current_model,
+      &ListView::default_view_builder);
     box->setFixedWidth(scale_width(112));
     apply_widget_properties(box, profile.get_properties());
     auto current_connection = box->get_current()->connect_update_signal(
       profile.make_event_slot<std::any>("Current"));
-    auto& current = get<QString>("current", profile.get_properties());
     current.connect_changed_signal([=] (const auto& current) {
       auto value = model->parse(current);
       if(value.has_value()) {
@@ -1408,7 +1411,7 @@ UiProfile Spire::make_delete_icon_button_profile() {
 UiProfile Spire::make_destination_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
-  properties.push_back(make_standard_property<QString>("current"));
+  properties.push_back(make_standard_property<QString>("current", "TSX"));
   properties.push_back(make_standard_property<QString>("placeholder"));
   properties.push_back(make_standard_property("read_only", false));
   auto profile = UiProfile("DestinationBox", properties, [] (auto& profile) {
@@ -1418,12 +1421,14 @@ UiProfile Spire::make_destination_box_profile() {
     for(auto destination : destinations) {
       model->add(displayText(destination.m_id).toLower(), destination);
     }
-    auto box = new DestinationBox(model);
+    auto& current = get<QString>("current", profile.get_properties());
+    auto current_model = std::make_shared<LocalValueModel<Destination>>(
+      current.get().toStdString());
+    auto box = new DestinationBox(model, current_model);
     box->setFixedWidth(scale_width(112));
     apply_widget_properties(box, profile.get_properties());
     auto current_connection = box->get_current()->connect_update_signal(
       profile.make_event_slot<Destination>("Current"));
-    auto& current = get<QString>("current", profile.get_properties());
     current.connect_changed_signal([=] (const auto& current) {
       auto value = model->parse(current);
       if(value.has_value()) {
@@ -2284,7 +2289,7 @@ UiProfile Spire::make_list_view_profile() {
 UiProfile Spire::make_market_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
-  properties.push_back(make_standard_property<QString>("current"));
+  properties.push_back(make_standard_property<QString>("current", "ARCX"));
   properties.push_back(make_standard_property<QString>("placeholder"));
   properties.push_back(make_standard_property("read_only", false));
   auto profile = UiProfile("MarketBox", properties, [] (auto& profile) {
@@ -2294,10 +2299,12 @@ UiProfile Spire::make_market_box_profile() {
       model->add(displayText(MarketToken(market.m_code)).toLower(), market);
       model->add(QString(market.m_code.GetData()).toLower(), market);
     }
-    auto box = new MarketBox(model);
+    auto& current = get<QString>("current", profile.get_properties());
+    auto current_model = std::make_shared<LocalValueModel<MarketCode>>(
+      current.get().toStdString());
+    auto box = new MarketBox(model, current_model);
     box->setFixedWidth(scale_width(112));
     apply_widget_properties(box, profile.get_properties());
-    auto& current = get<QString>("current", profile.get_properties());
     current.connect_changed_signal([=] (const auto& current) {
       if(current.length() != 4) {
         return;
@@ -3082,17 +3089,19 @@ UiProfile Spire::make_search_box_profile() {
 UiProfile Spire::make_security_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
-  properties.push_back(make_standard_property<QString>("current"));
+  properties.push_back(make_standard_property<QString>("current", "MX.TSX"));
   properties.push_back(make_standard_property<QString>("placeholder"));
   properties.push_back(make_standard_property("read_only", false));
   auto profile = UiProfile("SecurityBox", properties, [] (auto& profile) {
     auto model = populate_security_query_model();
-    auto box = new SecurityBox(model);
+    auto& current = get<QString>("current", profile.get_properties());
+    auto current_model = std::make_shared<LocalValueModel<Security>>(
+      std::any_cast<SecurityInfo>(model->parse(current.get())).m_security);
+    auto box = new SecurityBox(model, current_model);
     box->setFixedWidth(scale_width(112));
     apply_widget_properties(box, profile.get_properties());
     auto current_connection = box->get_current()->connect_update_signal(
       profile.make_event_slot<Security>("Current"));
-    auto& current = get<QString>("current", profile.get_properties());
     current.connect_changed_signal([=] (const auto& current) {
       auto value = model->parse(current);
       if(value.has_value()) {
