@@ -29,7 +29,8 @@ ComboBox::ComboBox(std::shared_ptr<QueryModel> query_model,
   std::shared_ptr<CurrentModel> current, ViewBuilder view_builder,
   QWidget* parent)
   : ComboBox(std::move(query_model), std::move(current),
-      new AnyInputBox(*(new TextBox())), std::move(view_builder), parent) {}
+      new AnyInputBox(*(new TextBox(displayText(current->get())))),
+      std::move(view_builder), parent) {}
 
 ComboBox::ComboBox(std::shared_ptr<QueryModel> query_model,
     std::shared_ptr<CurrentModel> current, AnyInputBox* input_box,
