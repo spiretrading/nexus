@@ -70,7 +70,10 @@ namespace Spire {
       std::shared_ptr<CurrentModel> m_current;
       TagComboBox* m_tag_combo_box;
       boost::signals2::scoped_connection m_current_connection;
+      boost::signals2::scoped_connection m_tag_operation_connection;
 
+      void region_to_list_of_tags(const Nexus::Region& region,
+        const std::shared_ptr<AnyListModel>& list);
       void update_min_max_size();
       void on_current(const Nexus::Region& region);
       void on_submit(const std::shared_ptr<AnyListModel>& submission);

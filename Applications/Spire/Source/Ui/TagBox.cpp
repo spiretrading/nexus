@@ -335,7 +335,6 @@ QWidget* TagBox::make_tag(
       setFocus();
     }
   });
-  m_tags.insert(m_tags.begin() + index, tag);
   return tag;
 }
 
@@ -346,7 +345,7 @@ void TagBox::scroll_to_text_box() {
 
 void TagBox::update_placeholder() {
   update_tag_size_policy();
-  if(m_tags.empty()) {
+  if(m_model->m_source->get_size() == 0) {
     m_text_box->set_placeholder(m_placeholder);
   } else {
     m_text_box->set_placeholder("");
@@ -362,7 +361,7 @@ void TagBox::update_scroll_bar_end_range(ScrollBar& scroll_bar,
 }
 
 void TagBox::update_tag_size_policy() {
-  if(m_tags.empty()) {
+  if(m_model->m_source->get_size() == 0) {
     m_list_view->set_direction_size_policy(QSizePolicy::Expanding);
   } else {
     if(m_list_view_overflow == Overflow::WRAP) {
@@ -376,8 +375,9 @@ void TagBox::update_tag_size_policy() {
 
 void TagBox::update_tags_read_only() {
   auto is_read_only = m_is_read_only || !isEnabled();
-  for(auto tag : m_tags) {
-    tag->set_read_only(is_read_only);
+  for(auto i = 0; i < m_model->m_source->get_size(); ++i) {
+    static_cast<Tag*>(&(m_list_view->get_list_item(i)->get_body()))->
+      set_read_only(is_read_only);
   }
 }
 
@@ -400,7 +400,7 @@ void TagBox::update_tooltip() {
         }
         return 0;
       }();
-      if(!m_tags.empty()) {
+      if(m_model->m_source->get_size() > 0) {
         auto first_tag_left =
           m_list_view->get_list_item(0)->mapToGlobal(QPoint(0, 0)).x();
         auto last_tag = m_list_view->get_list_item(m_model->get_size() - 2);
@@ -415,7 +415,9 @@ void TagBox::update_tooltip() {
     } else {
       auto list_view_content_width =
         m_list_view->width() - horizontal_length(m_list_view_padding);
-      for(auto tag : m_tags) {
+      for(auto i = 0; i < m_model->m_source->get_size(); ++i) {
+        auto tag =
+          static_cast<Tag*>(&(m_list_view->get_list_item(i)->get_body()));
         if(tag->sizeHint().width() > list_view_content_width) {
           return true;
         }
@@ -508,7 +510,6 @@ void TagBox::on_operation(const AnyListModel::Operation& operation) {
       update_all();
     },
     [&] (const AnyListModel::RemoveOperation& operation) {
-      m_tags.erase(m_tags.begin() + operation.m_index);
       update_all();
     });
 }

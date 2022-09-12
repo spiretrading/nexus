@@ -5,6 +5,7 @@
 #include <QPainter>
 #include <QPointer>
 #include <QRandomGenerator>
+#include <QStringBuilder>
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 #include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 #include "Nexus/Definitions/SecuritySet.hpp"
@@ -544,9 +545,10 @@ namespace {
       {"TSO.ASX", "Tesoro Resources Limited"}};
     auto markets = std::vector<MarketCode>{DefaultMarkets::NSEX(),
       DefaultMarkets::ISE(), DefaultMarkets::CSE(), DefaultMarkets::TSX(),
-      DefaultMarkets::TSXV()};
+      DefaultMarkets::TSXV(), DefaultMarkets::BOSX()};
     auto countries = std::vector<CountryCode>{DefaultCountries::US(),
-      DefaultCountries::CA(), DefaultCountries::AU()};
+      DefaultCountries::CA(), DefaultCountries::AU(), DefaultCountries::JP(),
+      DefaultCountries::CN()};
     auto model = std::make_shared<LocalComboBoxQueryModel>();
     for(auto& security_info : securities) {
       auto security = *ParseWildCardSecurity(security_info.first,
@@ -2752,20 +2754,48 @@ UiProfile Spire::make_radio_button_profile() {
 UiProfile Spire::make_region_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
-  properties.push_back(make_standard_property<QString>("current"));
+  properties.push_back(make_standard_property<QString>("current",
+    "TSX,USA,CAN"));
   properties.push_back(make_standard_property<QString>("placeholder"));
   properties.push_back(make_standard_property("read_only", false));
   auto profile = UiProfile("RegionBox", properties, [] (auto& profile) {
-    auto box = new RegionBox(populate_region_box_model());
-    box->setMinimumWidth(scale_width(112));
-    apply_widget_properties(box, profile.get_properties());
+    auto query_model = populate_region_box_model();
+    auto to_region = [=] (const auto& text) {
+      auto region = Region();
+      for(auto& value : text.split(",")) {
+        auto parse_value = query_model->parse(value);
+        if(parse_value.has_value()) {
+          region = region + std::any_cast<Region&>(parse_value);
+        }
+      }
+      return region;
+    };
+    auto to_text = [] (const auto& region) {
+      auto text = QString();
+      for(auto& country : region.GetCountries()) {
+        text = text % displayText(country) % ",";
+      }
+      for(auto& market : region.GetMarkets()) {
+        text = text % displayText(MarketToken(market)) % ",";
+      }
+      for(auto& security : region.GetSecurities()) {
+        text = text % displayText(security) % ",";
+      }
+      text.remove(text.length() - 1, 1);
+      return text;
+    };
     auto& current = get<QString>("current", profile.get_properties());
-    current.connect_changed_signal([=] (const auto& current) {
-      auto value = box->get_query_model()->parse(current);
-      if(value.has_value()) {
-        box->get_current()->set(std::any_cast<Region>(value));
+    auto current_model = std::make_shared<LocalValueModel<Region>>(
+      to_region(current.get()));
+    current.connect_changed_signal([=] (const auto& value) {
+      auto region = to_region(value);
+      if(current_model->get() != region) {
+        current_model->set(region);
       }
     });
+    auto box = new RegionBox(query_model, current_model);
+    box->setMinimumWidth(scale_width(112));
+    apply_widget_properties(box, profile.get_properties());
     auto& placeholder = get<QString>("placeholder", profile.get_properties());
     placeholder.connect_changed_signal([=] (const auto& placeholder) {
       box->set_placeholder(placeholder);
@@ -2796,8 +2826,11 @@ UiProfile Spire::make_region_box_profile() {
     };
     auto current_slot = profile.make_event_slot<QString>("Current");
     box->get_current()->connect_update_signal(
-      [=] (const Region& region) {
+      [=, &current] (const Region& region) {
         current_slot(print_region(region));
+        if(to_region(current.get()) != region) {
+          current.set(to_text(region));
+        }
       });
     auto submit_slot = profile.make_event_slot<QString>("Submit");
     box->connect_submit_signal([=] (const Region& region) {

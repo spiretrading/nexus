@@ -25,10 +25,23 @@ namespace {
   void copy_list_model(const std::shared_ptr<AnyListModel>& from,
       const std::shared_ptr<AnyListModel>& to) {
     to->transact([&] {
+      auto find = [=] (int index) {
+        for(auto j = index + 1; j != to->get_size(); ++j) {
+          if(is_equal(from->get(index), to->get(j))) {
+            return j;
+          }
+        }
+        return -1;
+      };
       for(auto i = 0; i != from->get_size(); ++i) {
         if(i < to->get_size()) {
           if(!is_equal(from->get(i), to->get(i))) {
-            to->insert(from->get(i), i);
+            auto j = find(i);
+            if(j >= 0) {
+              to->move(j, i);
+            } else {
+              to->insert(from->get(i), i);
+            }
           }
         } else {
           to->push(from->get(i));
@@ -117,6 +130,7 @@ TagComboBox::TagComboBox(std::shared_ptr<ComboBox::QueryModel> query_model,
       m_focus_observer(*this),
       m_input_box(nullptr),
       m_is_modified(false) {
+  copy_list_model(current, m_submission);
   m_tag_box = new TagBox(std::move(current),
     std::make_shared<LocalTextModel>());
   m_tag_box->installEventFilter(this);
