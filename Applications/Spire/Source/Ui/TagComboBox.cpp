@@ -25,7 +25,7 @@ namespace {
   void copy_list_model(const std::shared_ptr<AnyListModel>& from,
       const std::shared_ptr<AnyListModel>& to) {
     to->transact([&] {
-      auto find = [=] (int index) {
+      auto find = [&] (int index) {
         for(auto j = index + 1; j != to->get_size(); ++j) {
           if(is_equal(from->get(index), to->get(j))) {
             return j;
