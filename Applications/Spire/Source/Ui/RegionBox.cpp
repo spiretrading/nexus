@@ -34,43 +34,34 @@ namespace {
       auto lhs_region = std::any_cast<Region&&>(list->get(lhs));
       auto rhs_region = std::any_cast<Region&&>(list->get(rhs));
       if(!lhs_region.GetCountries().empty() &&
-        !rhs_region.GetCountries().empty()) {
+          !rhs_region.GetCountries().empty()) {
         return displayText(*lhs_region.GetCountries().begin()) <
           displayText(*rhs_region.GetCountries().begin());
       } else if(!lhs_region.GetMarkets().empty() &&
-        !rhs_region.GetMarkets().empty()) {
+          !rhs_region.GetMarkets().empty()) {
         return displayText(MarketToken(*lhs_region.GetMarkets().begin())) <
           displayText(MarketToken(*rhs_region.GetMarkets().begin()));
       } else if(!lhs_region.GetSecurities().empty() &&
-        !rhs_region.GetSecurities().empty()) {
+          !rhs_region.GetSecurities().empty()) {
         return displayText(*lhs_region.GetSecurities().begin()) <
           displayText(*rhs_region.GetSecurities().begin());
       }
       if(!lhs_region.GetCountries().empty() ||
-        !rhs_region.GetCountries().empty()) {
+          !rhs_region.GetCountries().empty()) {
         return !lhs_region.GetCountries().empty();
       }
-      if(!lhs_region.GetMarkets().empty() ||
-        !rhs_region.GetMarkets().empty()) {
+      if(!lhs_region.GetMarkets().empty() || !rhs_region.GetMarkets().empty()) {
         return !lhs_region.GetMarkets().empty();
       }
       return true;
     };
-    auto find_sorted_index = [=] (int index, int size) {
-      if(index != 0 && comparator(index, index - 1)) {
-        return *std::lower_bound(
-          make_counting_iterator(0), make_counting_iterator(index), index,
-          [&] (auto lhs, auto rhs) { return comparator(lhs, rhs); });
-      } else if(index != size - 1 && comparator(index + 1, index)) {
-        return *std::lower_bound(make_counting_iterator(index + 1),
-          make_counting_iterator(size), index,
-          [&] (auto lhs, auto rhs) { return comparator(lhs, rhs); }) - 1;
-      }
-      return index;
-    };
     list->transact([&] {
       for(auto i = 0; i < list->get_size(); ++i) {
-        auto index = find_sorted_index(i, i + 1);
+        auto index = *std::upper_bound(
+          make_counting_iterator(0), make_counting_iterator(i), i,
+          [&] (auto lhs, auto rhs) {
+            return comparator(lhs, rhs);
+          });
         if(index != i) {
           list->move(i, index);
         }
