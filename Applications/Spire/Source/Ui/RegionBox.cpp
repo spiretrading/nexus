@@ -1,12 +1,15 @@
 #include "Spire/Ui/RegionBox.hpp"
+#include <boost/iterator/counting_iterator.hpp>
 #include <boost/signals2/shared_connection_block.hpp>
 #include <QMoveEvent>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/RegionListItem.hpp"
 #include "Spire/Ui/TagComboBox.hpp"
 
+using namespace boost::iterators;
 using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
@@ -25,6 +28,59 @@ namespace {
       return seed;
     }
   };
+
+  void to_tag_list(const Region& region, ComboBox::QueryModel& query_model,
+      AnyListModel& list) {
+    for(auto& country : region.GetCountries()) {
+      list.push(query_model.parse(displayText(country)));
+    }
+    for(auto& market : region.GetMarkets()) {
+      list.push(query_model.parse(displayText(MarketToken(market))));
+    }
+    for(auto& security : region.GetSecurities()) {
+      list.push(query_model.parse(displayText(security)));
+    }
+  }
+
+  void sort(AnyListModel& list) {
+    auto comparator = [&] (const auto& lhs, const auto& rhs) {
+      auto lhs_region = std::any_cast<Region&&>(list.get(lhs));
+      auto rhs_region = std::any_cast<Region&&>(list.get(rhs));
+      if(!lhs_region.GetCountries().empty() &&
+          !rhs_region.GetCountries().empty()) {
+        return displayText(*lhs_region.GetCountries().begin()) <
+          displayText(*rhs_region.GetCountries().begin());
+      } else if(!lhs_region.GetMarkets().empty() &&
+          !rhs_region.GetMarkets().empty()) {
+        return displayText(MarketToken(*lhs_region.GetMarkets().begin())) <
+          displayText(MarketToken(*rhs_region.GetMarkets().begin()));
+      } else if(!lhs_region.GetSecurities().empty() &&
+          !rhs_region.GetSecurities().empty()) {
+        return displayText(*lhs_region.GetSecurities().begin()) <
+          displayText(*rhs_region.GetSecurities().begin());
+      }
+      if(!lhs_region.GetCountries().empty() ||
+          !rhs_region.GetCountries().empty()) {
+        return !lhs_region.GetCountries().empty();
+      }
+      if(!lhs_region.GetMarkets().empty() || !rhs_region.GetMarkets().empty()) {
+        return !lhs_region.GetMarkets().empty();
+      }
+      return true;
+    };
+    list.transact([&] {
+      for(auto i = 0; i < list.get_size(); ++i) {
+        auto index = *std::upper_bound(
+          make_counting_iterator(0), make_counting_iterator(i), i,
+          [&] (auto lhs, auto rhs) {
+            return comparator(lhs, rhs);
+          });
+        if(index != i) {
+          list.move(i, index);
+        }
+      }
+    });
+  }
 }
 
 struct RegionBox::RegionQueryModel : ComboBox::QueryModel {
@@ -73,15 +129,20 @@ RegionBox::RegionBox(std::shared_ptr<ComboBox::QueryModel> query_model,
       m_current(std::move(current)),
       m_current_connection(m_current->connect_update_signal(
         std::bind_front(&RegionBox::on_current, this))) {
-  m_tag_combo_box = new TagComboBox(m_query_model,
-    std::make_shared<ArrayListModel<std::any>>(),
+  auto current_model = std::make_shared<ArrayListModel<std::any>>();
+  current_model->transact([&] {
+    to_tag_list(m_current->get(), *m_query_model, *current_model);
+    sort(*current_model);
+  });
+  m_tag_combo_box = new TagComboBox(m_query_model, current_model,
     [] (const auto& list, auto index) {
       return new RegionListItem(std::any_cast<Region&&>(list->get(index)));
     });
   m_tag_combo_box->connect_submit_signal(
     std::bind_front(&RegionBox::on_submit, this));
-  m_tag_combo_box->get_current()->connect_operation_signal(
-    std::bind_front(&RegionBox::on_tags_operation, this));
+  m_tag_operation_connection =
+    m_tag_combo_box->get_current()->connect_operation_signal(
+      std::bind_front(&RegionBox::on_tags_operation, this));
   m_tag_combo_box->installEventFilter(this);
   enclose(*this, *m_tag_combo_box);
   setFocusProxy(m_tag_combo_box);
@@ -135,16 +196,19 @@ void RegionBox::update_min_max_size() {
 }
 
 void RegionBox::on_current(const Region& region) {
+  auto blocker = shared_connection_block(m_tag_operation_connection);
   auto& current = m_tag_combo_box->get_current();
   current->transact([&] {
     while(current->get_size() != 0) {
       current->remove(current->get_size() - 1);
     }
+    to_tag_list(region, *m_query_model, *current);
   });
-  current->push(region);
 }
 
 void RegionBox::on_submit(const std::shared_ptr<AnyListModel>& submission) {
+  sort(*m_tag_combo_box->get_current());
+  sort(*submission);
   auto region = Nexus::Region();
   for(auto i = 0; i < submission->get_size(); ++i) {
     region = region + std::any_cast<Region&&>(submission->get(i));

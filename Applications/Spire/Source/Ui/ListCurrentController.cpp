@@ -69,11 +69,13 @@ void ListCurrentController::move(int source, int destination) {
     return 1;
   }();
   if(direction == 1) {
-    std::rotate(m_views.begin() + source, m_views.begin() + source + 1,
-      m_views.begin() + destination + 1);
+    std::rotate(std::next(m_views.rbegin(), m_views.size() - source - 1),
+      std::next(m_views.rbegin(), m_views.size() - source),
+      std::next(m_views.rbegin(), m_views.size() - destination));
   } else {
-    std::rotate(m_views.rend() - source - 1, m_views.rend() - source,
-      m_views.rend() - destination);
+    std::rotate(std::next(m_views.begin(), source),
+      std::next(m_views.begin(), source + 1),
+      std::next(m_views.begin(), destination + 1));
   }
   auto adjust = [&] (auto& value) {
     if(value && (*value >= source || *value <= destination)) {

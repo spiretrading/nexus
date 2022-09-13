@@ -69,7 +69,6 @@ namespace Spire {
       InfoTip* m_info_tip;
       FocusObserver m_focus_observer;
       std::unique_ptr<GlobalPositionObserver> m_text_box_position_observer;
-      std::vector<Tag*> m_tags;
       Styles::Overflow m_list_view_overflow;
       QString m_placeholder;
       bool m_is_read_only;
