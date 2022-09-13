@@ -44,7 +44,7 @@ namespace {
   }
 
   void sort(const std::shared_ptr<AnyListModel>& list) {
-    auto comparator = [=] (const auto& lhs, const auto& rhs) {
+    auto comparator = [&] (const auto& lhs, const auto& rhs) {
       auto lhs_region = std::any_cast<Region&&>(list->get(lhs));
       auto rhs_region = std::any_cast<Region&&>(list->get(rhs));
       if(!lhs_region.GetCountries().empty() &&
