@@ -29,24 +29,23 @@ namespace {
     }
   };
 
-  void to_tag_list(const Nexus::Region& region,
-      const std::shared_ptr<ComboBox::QueryModel>& query_model,
-      const std::shared_ptr<AnyListModel>& list) {
+  void to_tag_list(const Region& region, ComboBox::QueryModel& query_model,
+      AnyListModel& list) {
     for(auto& country : region.GetCountries()) {
-      list->push(query_model->parse(displayText(country)));
+      list.push(query_model.parse(displayText(country)));
     }
     for(auto& market : region.GetMarkets()) {
-      list->push(query_model->parse(displayText(MarketToken(market))));
+      list.push(query_model.parse(displayText(MarketToken(market))));
     }
     for(auto& security : region.GetSecurities()) {
-      list->push(query_model->parse(displayText(security)));
+      list.push(query_model.parse(displayText(security)));
     }
   }
 
-  void sort(const std::shared_ptr<AnyListModel>& list) {
+  void sort(AnyListModel& list) {
     auto comparator = [&] (const auto& lhs, const auto& rhs) {
-      auto lhs_region = std::any_cast<Region&&>(list->get(lhs));
-      auto rhs_region = std::any_cast<Region&&>(list->get(rhs));
+      auto lhs_region = std::any_cast<Region&&>(list.get(lhs));
+      auto rhs_region = std::any_cast<Region&&>(list.get(rhs));
       if(!lhs_region.GetCountries().empty() &&
           !rhs_region.GetCountries().empty()) {
         return displayText(*lhs_region.GetCountries().begin()) <
@@ -69,15 +68,15 @@ namespace {
       }
       return true;
     };
-    list->transact([&] {
-      for(auto i = 0; i < list->get_size(); ++i) {
+    list.transact([&] {
+      for(auto i = 0; i < list.get_size(); ++i) {
         auto index = *std::upper_bound(
           make_counting_iterator(0), make_counting_iterator(i), i,
           [&] (auto lhs, auto rhs) {
             return comparator(lhs, rhs);
           });
         if(index != i) {
-          list->move(i, index);
+          list.move(i, index);
         }
       }
     });
@@ -132,8 +131,8 @@ RegionBox::RegionBox(std::shared_ptr<ComboBox::QueryModel> query_model,
         std::bind_front(&RegionBox::on_current, this))) {
   auto current_model = std::make_shared<ArrayListModel<std::any>>();
   current_model->transact([&] {
-    to_tag_list(m_current->get(), m_query_model, current_model);
-    sort(current_model);
+    to_tag_list(m_current->get(), *m_query_model, *current_model);
+    sort(*current_model);
   });
   m_tag_combo_box = new TagComboBox(m_query_model, current_model,
     [] (const auto& list, auto index) {
@@ -203,13 +202,13 @@ void RegionBox::on_current(const Region& region) {
     while(current->get_size() != 0) {
       current->remove(current->get_size() - 1);
     }
-    to_tag_list(region, m_query_model, current);
+    to_tag_list(region, *m_query_model, *current);
   });
 }
 
 void RegionBox::on_submit(const std::shared_ptr<AnyListModel>& submission) {
-  sort(m_tag_combo_box->get_current());
-  sort(submission);
+  sort(*m_tag_combo_box->get_current());
+  sort(*submission);
   auto region = Nexus::Region();
   for(auto i = 0; i < submission->get_size(); ++i) {
     region = region + std::any_cast<Region&&>(submission->get(i));
