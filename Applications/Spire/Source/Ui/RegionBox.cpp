@@ -29,6 +29,20 @@ namespace {
     }
   };
 
+  void to_tag_list(const Nexus::Region& region,
+      const std::shared_ptr<ComboBox::QueryModel>& query_model,
+      const std::shared_ptr<AnyListModel>& list) {
+    for(auto& country : region.GetCountries()) {
+      list->push(query_model->parse(displayText(country)));
+    }
+    for(auto& market : region.GetMarkets()) {
+      list->push(query_model->parse(displayText(MarketToken(market))));
+    }
+    for(auto& security : region.GetSecurities()) {
+      list->push(query_model->parse(displayText(security)));
+    }
+  }
+
   void sort(const std::shared_ptr<AnyListModel>& list) {
     auto comparator = [=] (const auto& lhs, const auto& rhs) {
       auto lhs_region = std::any_cast<Region&&>(list->get(lhs));
@@ -118,7 +132,7 @@ RegionBox::RegionBox(std::shared_ptr<ComboBox::QueryModel> query_model,
         std::bind_front(&RegionBox::on_current, this))) {
   auto current_model = std::make_shared<ArrayListModel<std::any>>();
   current_model->transact([&] {
-    region_to_list_of_tags(m_current->get(), current_model);
+    to_tag_list(m_current->get(), m_query_model, current_model);
     sort(current_model);
   });
   m_tag_combo_box = new TagComboBox(m_query_model, current_model,
@@ -173,19 +187,6 @@ void RegionBox::resizeEvent(QResizeEvent* event) {
   QWidget::resizeEvent(event);
 }
 
-void RegionBox::region_to_list_of_tags(const Region& region,
-    const std::shared_ptr<AnyListModel>& list) {
-  for(auto& country : region.GetCountries()) {
-    list->push(m_query_model->parse(displayText(country)));
-  }
-  for(auto& market : region.GetMarkets()) {
-    list->push(m_query_model->parse(displayText(MarketToken(market))));
-  }
-  for(auto& security : region.GetSecurities()) {
-    list->push(m_query_model->parse(displayText(security)));
-  }
-}
-
 void RegionBox::update_min_max_size() {
   if(m_tag_combo_box->minimumSize() != minimumSize()) {
     m_tag_combo_box->setMinimumSize(minimumSize());
@@ -202,7 +203,7 @@ void RegionBox::on_current(const Region& region) {
     while(current->get_size() != 0) {
       current->remove(current->get_size() - 1);
     }
-    region_to_list_of_tags(region, current);
+    to_tag_list(region, m_query_model, current);
   });
 }
 
