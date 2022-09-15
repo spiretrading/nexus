@@ -1613,7 +1613,7 @@ UiProfile Spire::make_editable_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
   auto test_widget_property = define_enum<int>(
-    {{"TextBox", 0}, {"DropDownBox", 1}, {"DecimalBox", 2}});
+    {{"TextBox", 0}, {"DropDownBox", 1}, {"DecimalBox", 2}, {"RegionBox", 3}});
   properties.push_back(
     make_standard_enum_property("input_box", test_widget_property));
   auto profile = UiProfile("EditableBox", properties, [] (auto& profile) {
@@ -1628,9 +1628,14 @@ UiProfile Spire::make_editable_box_profile() {
           list_model->push(QString("item%1").arg(i));
         }
         return new AnyInputBox(*(new DropDownBox(list_model)));
+      } else if(value == 2) {
+        return new AnyInputBox((*new DecimalBox(
+          std::make_shared<LocalOptionalDecimalModel>(Decimal(1)))));
       }
-      return new AnyInputBox((*new DecimalBox(
-        std::make_shared<LocalOptionalDecimalModel>(Decimal(1)))));
+      auto query_model = populate_region_box_model();
+      auto current = std::make_shared<LocalValueModel<Region>>();
+      current->set(std::any_cast<Region>(query_model->parse("TSX")));
+      return new AnyInputBox((*new RegionBox(query_model, current)));
     }();
     auto editable_box = new EditableBox(*input_box);
     editable_box->setMinimumWidth(scale_width(112));

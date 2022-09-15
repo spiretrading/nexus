@@ -174,27 +174,6 @@ connection RegionBox::connect_submit_signal(
   return m_submit_signal.connect(slot);
 }
 
-bool RegionBox::event(QEvent* event) {
-  if(event->type() == QEvent::LayoutRequest) {
-    update_min_max_size();
-  }
-  return QWidget::event(event);
-}
-
-void RegionBox::resizeEvent(QResizeEvent* event) {
-  update_min_max_size();
-  QWidget::resizeEvent(event);
-}
-
-void RegionBox::update_min_max_size() {
-  if(m_tag_combo_box->minimumSize() != minimumSize()) {
-    m_tag_combo_box->setMinimumSize(minimumSize());
-  }
-  if(m_tag_combo_box->maximumSize() != maximumSize()) {
-    m_tag_combo_box->setMaximumSize(maximumSize());
-  }
-}
-
 void RegionBox::on_current(const Region& region) {
   auto blocker = shared_connection_block(m_tag_operation_connection);
   auto& current = m_tag_combo_box->get_current();
