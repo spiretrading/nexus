@@ -511,6 +511,10 @@ void TagBox::on_operation(const AnyListModel::Operation& operation) {
     },
     [&] (const AnyListModel::RemoveOperation& operation) {
       update_all();
+    },
+    [&] (const AnyListModel::MoveOperation& operation) {
+      update_tip();
+      update_tooltip();
     });
 }
 
