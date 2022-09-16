@@ -1,7 +1,6 @@
 #include "Spire/Ui/RegionBox.hpp"
 #include <boost/iterator/counting_iterator.hpp>
 #include <boost/signals2/shared_connection_block.hpp>
-#include <QMoveEvent>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
