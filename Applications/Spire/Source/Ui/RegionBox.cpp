@@ -217,11 +217,20 @@ void RegionBox::on_submit(const std::shared_ptr<AnyListModel>& submission) {
 }
 
 void RegionBox::on_tags_operation(const AnyListModel::Operation& operation) {
-  auto region = Nexus::Region();
-  for(auto i = 0; i < m_tag_combo_box->get_current()->get_size(); ++i) {
-    region =
-      region + std::any_cast<Region&&>(m_tag_combo_box->get_current()->get(i));
-  }
-  auto blocker = shared_connection_block(m_current_connection);
-  m_current->set(region);
+  auto sumbit_current = [=] {
+    auto region = Nexus::Region();
+    for(auto i = 0; i < m_tag_combo_box->get_current()->get_size(); ++i) {
+      region = region +
+        std::any_cast<Region&&>(m_tag_combo_box->get_current()->get(i));
+    }
+    auto blocker = shared_connection_block(m_current_connection);
+    m_current->set(region);
+  };
+  visit(operation,
+    [&] (const AnyListModel::AddOperation& operation) {
+      sumbit_current();
+    },
+    [&] (const AnyListModel::RemoveOperation& operation) {
+      sumbit_current();
+    });
 }
