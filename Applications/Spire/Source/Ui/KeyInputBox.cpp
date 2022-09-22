@@ -197,7 +197,7 @@ void KeyInputBox::layout_key_sequence() {
 }
 
 void KeyInputBox::transition_status() {
-  if(m_current->get().count() == 0) {
+  if(!is_read_only() && m_current->get().count() == 0) {
     set_status(Status::PROMPT);
   } else {
     set_status(Status::NONE);
