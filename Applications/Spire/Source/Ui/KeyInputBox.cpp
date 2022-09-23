@@ -84,6 +84,7 @@ KeyInputBox::KeyInputBox(
     std::shared_ptr<KeySequenceValueModel> current, QWidget* parent)
     : QWidget(parent),
       m_current(std::move(current)),
+      m_submission(m_current->get()),
       m_status(Status::UNINITIALIZED),
       m_is_read_only(false),
       m_is_modified(false) {
