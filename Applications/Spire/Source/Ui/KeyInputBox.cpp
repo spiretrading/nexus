@@ -95,7 +95,8 @@ KeyInputBox::KeyInputBox(
   auto layers = new LayeredWidget();
   layers->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
   layers->add(m_body);
-  layers->add(new Caret(this));
+  m_caret = new Caret(this);
+  layers->add(m_caret);
   m_input_box = make_input_box(layers);
   proxy_style(*this, *m_input_box);
   enclose(*this, *m_input_box);
@@ -121,10 +122,10 @@ bool KeyInputBox::is_read_only() const {
 void KeyInputBox::set_read_only(bool is_read_only) {
   m_is_read_only = is_read_only;
   if(m_is_read_only) {
-    setFocusPolicy(Qt::NoFocus);
+    m_caret->hide();
     match(*m_input_box, ReadOnly());
   } else {
-    setFocusPolicy(Qt::StrongFocus);
+    m_caret->show();
     unmatch(*m_input_box, ReadOnly());
   }
 }
@@ -156,6 +157,9 @@ void KeyInputBox::focusOutEvent(QFocusEvent* event) {
 }
 
 void KeyInputBox::keyPressEvent(QKeyEvent* event) {
+  if(is_read_only()) {
+    return QWidget::keyPressEvent(event);
+  }
   auto key = event->key();
   if(key == Qt::Key_Shift ||
       key == Qt::Key_Meta || key == Qt::Key_Control || key == Qt::Key_Alt) {
