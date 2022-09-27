@@ -9,7 +9,7 @@ EditableBox::EditableBox(AnyInputBox& input_box,
       m_input_box(&input_box),
       m_focus_observer(*this) {
   enclose(*this, *m_input_box);
-  setFocusProxy(m_input_box);
+  setFocusPolicy(Qt::StrongFocus);
   m_focus_observer.connect_state_signal(
     std::bind_front(&EditableBox::on_focus, this));
   m_input_box->set_read_only(true);
@@ -33,8 +33,10 @@ void EditableBox::keyPressEvent(QKeyEvent* event) {
 
 void EditableBox::on_focus(FocusObserver::State state) {
   if(state == FocusObserver::State::NONE) {
+    setFocusProxy(nullptr);
     m_input_box->set_read_only(true);
   } else {
+    setFocusProxy(m_input_box);
     m_input_box->set_read_only(false);
   }
 }

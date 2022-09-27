@@ -176,11 +176,11 @@ void KeyInputBox::keyPressEvent(QKeyEvent* event) {
     } else if(key == Qt::Key_Enter || key == Qt::Key_Return) {
       m_is_modified = true;
       transition_submission();
-    } else {
-      m_current->set(key);
+    } else if(m_current->set(key) == QValidator::Invalid) {
+      return QWidget::keyPressEvent(event);
     }
-  } else {
-    m_current->set(event->modifiers() + key);
+  } else if(m_current->set(event->modifiers() + key) == QValidator::Invalid) {
+    return QWidget::keyPressEvent(event);
   }
 }
 
