@@ -1,7 +1,6 @@
 #include "Spire/Ui/RegionBox.hpp"
 #include <boost/iterator/counting_iterator.hpp>
 #include <boost/signals2/shared_connection_block.hpp>
-#include <QMoveEvent>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
@@ -172,27 +171,6 @@ void RegionBox::set_read_only(bool is_read_only) {
 connection RegionBox::connect_submit_signal(
     const SubmitSignal::slot_type& slot) const {
   return m_submit_signal.connect(slot);
-}
-
-bool RegionBox::event(QEvent* event) {
-  if(event->type() == QEvent::LayoutRequest) {
-    update_min_max_size();
-  }
-  return QWidget::event(event);
-}
-
-void RegionBox::resizeEvent(QResizeEvent* event) {
-  update_min_max_size();
-  QWidget::resizeEvent(event);
-}
-
-void RegionBox::update_min_max_size() {
-  if(m_tag_combo_box->minimumSize() != minimumSize()) {
-    m_tag_combo_box->setMinimumSize(minimumSize());
-  }
-  if(m_tag_combo_box->maximumSize() != maximumSize()) {
-    m_tag_combo_box->setMaximumSize(maximumSize());
-  }
 }
 
 void RegionBox::on_current(const Region& region) {
