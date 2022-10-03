@@ -512,4 +512,20 @@ TEST_SUITE("SortedTableModel") {
     REQUIRE(column_span<float>(sorted_model, 2) ==
       std::vector{1.3f, 11.1f, 3.7f, 4.1f, 9.2f, 7.8f});
   }
+
+  TEST_CASE("transaction") {
+    auto source = std::make_shared<ArrayTableModel>();
+    source->push({4});
+    source->push({2});
+    source->push({9});
+    source->push({6});
+    auto order = std::vector<SortedTableModel::ColumnOrder>();
+    order.push_back({0, SortedTableModel::Ordering::ASCENDING});
+    auto sorted_model = SortedTableModel(source, order);
+    source->transact([&] {
+      source->insert({5}, 1);
+      source->insert({3}, 1);
+    });
+    REQUIRE(column_span<int>(sorted_model, 0) == std::vector{2, 3, 4, 5, 6, 9});
+  }
 }

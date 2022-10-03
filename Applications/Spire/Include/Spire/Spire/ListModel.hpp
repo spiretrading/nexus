@@ -2,6 +2,7 @@
 #define SPIRE_LIST_MODEL_HPP
 #include <any>
 #include <functional>
+#include <ostream>
 #include <type_traits>
 #include <utility>
 #include <vector>
@@ -118,12 +119,23 @@ namespace Spire {
           template<typename T>
           boost::optional<const T&> get() const;
 
+          /** Extracts a reference to a specific operation. */
+          template<typename T>
+          boost::optional<T&> get();
+
           /**
            * Applies a callable to an Operation.
            * @param f The callable to apply.
            */
           template<typename... F>
           void visit(F&&... f) const;
+
+          /**
+           * Applies a callable to an Operation.
+           * @param f The callable to apply.
+           */
+          template<typename... F>
+          void visit(F&&... f);
 
         protected:
           boost::variant<AddOperation, RemoveOperation, MoveOperation,
@@ -322,8 +334,14 @@ namespace Spire {
         template<typename U>
         boost::optional<const U&> get() const;
 
+        template<typename U>
+        boost::optional<U&> get();
+
         template<typename... F>
         void visit(F&&... f) const;
+
+        template<typename... F>
+        void visit(F&&... f);
       };
 
       using Transaction = std::vector<Operation>;
@@ -471,8 +489,33 @@ namespace Spire {
     operation.visit(std::forward<F>(f)...);
   }
 
+  /**
+   * Applies a callable to an Operation.
+   * @param operation The operation to visit.
+   * @param f The callable to apply to the <i>operation</i>.
+   */
+  template<typename Operation, typename... F>
+  void visit(Operation& operation, F&&... f) {
+    operation.visit(std::forward<F>(f)...);
+  }
+
   /** Removes all values from a ListModel. */
   void clear(AnyListModel& model);
+
+  std::ostream& operator <<(
+    std::ostream& out, const AnyListModel::AddOperation& operation);
+
+  std::ostream& operator <<(
+    std::ostream& out, const AnyListModel::RemoveOperation& operation);
+
+  std::ostream& operator <<(
+    std::ostream& out, const AnyListModel::MoveOperation& operation);
+
+  std::ostream& operator <<(
+    std::ostream& out, const AnyListModel::UpdateOperation& operation);
+
+  std::ostream& operator <<(
+    std::ostream& out, const AnyListModel::Operation& operation);
 
   template<typename T>
   boost::optional<const T&> AnyListModel::Operation::get() const {
@@ -482,8 +525,21 @@ namespace Spire {
     return boost::none;
   }
 
+  template<typename T>
+  boost::optional<T&> AnyListModel::Operation::get() {
+    if(auto operation = boost::get<T>(&m_operation)) {
+      return *operation;
+    }
+    return boost::none;
+  }
+
   template<typename... F>
   void AnyListModel::Operation::visit(F&&... f) const {
+    const_cast<Operation&>(*this).visit(std::forward<F>(f)...);
+  }
+
+  template<typename... F>
+  void AnyListModel::Operation::visit(F&&... f) {
     if(auto transaction = get<Transaction>()) {
       for(auto& operation : *transaction) {
         operation.visit(std::forward<F>(f)...);
@@ -491,21 +547,29 @@ namespace Spire {
     } else {
       if constexpr(sizeof...(F) == 1) {
         auto head = [&] (auto&& f) {
-          boost::apply_visitor([&] (const auto& operation) {
+          boost::apply_visitor([&] (auto& operation) {
             using Parameter = std::decay_t<decltype(operation)>;
-            if constexpr(std::is_invocable_v<decltype(f), const Parameter&>) {
-              std::forward<decltype(f)>(f)(operation);
+            if constexpr(!std::is_same_v<Parameter, Transaction>) {
+              constexpr auto is_invocable =
+                std::is_invocable_v<decltype(f), Parameter&>;
+              if constexpr(is_invocable) {
+                std::forward<decltype(f)>(f)(operation);
+              }
             }
           }, m_operation);
         };
         head(std::forward<F>(f)...);
       } else if constexpr(sizeof...(F) != 0) {
         auto tail = [&] (auto&& f, auto&&... g) {
-          auto is_visited = boost::apply_visitor([&] (const auto& operation) {
+          auto is_visited = boost::apply_visitor([&] (auto& operation) {
             using Parameter = std::decay_t<decltype(operation)>;
-            if constexpr(std::is_invocable_v<decltype(f), const Parameter&>) {
-              std::forward<decltype(f)>(f)(operation);
-              return true;
+            if constexpr(!std::is_same_v<Parameter, Transaction>) {
+              constexpr auto is_invocable =
+                std::is_invocable_v<decltype(f), Parameter&>;
+              if constexpr(is_invocable) {
+                std::forward<decltype(f)>(f)(operation);
+                return true;
+              }
             }
             return false;
           }, m_operation);
@@ -638,8 +702,51 @@ namespace Spire {
   }
 
   template<typename T>
+  template<typename U>
+  boost::optional<U&> ListModel<T>::Operation::get() {
+    if constexpr(std::is_same_v<U, AddOperation>) {
+      if(auto operation =
+          AnyListModel::Operation::get<AnyListModel::AddOperation>()) {
+        return static_cast<AddOperation&>(*operation);
+      }
+      return boost::none;
+    } else if constexpr(std::is_same_v<U, RemoveOperation>) {
+      if(auto operation =
+          AnyListModel::Operation::get<AnyListModel::RemoveOperation>()) {
+        return static_cast<RemoveOperation&>(*operation);
+      }
+      return boost::none;
+    } else if constexpr(std::is_same_v<U, MoveOperation>) {
+      if(auto operation =
+          AnyListModel::Operation::get<AnyListModel::MoveOperation>()) {
+        return static_cast<MoveOperation&>(*operation);
+      }
+      return boost::none;
+    } else if constexpr(std::is_same_v<U, UpdateOperation>) {
+      if(auto operation =
+          AnyListModel::Operation::get<AnyListModel::UpdateOperation>()) {
+        return static_cast<UpdateOperation&>(*operation);
+      }
+      return boost::none;
+    } else if constexpr(std::is_same_v<U, Transaction>) {
+      if(auto operation =
+          AnyListModel::Operation::get<AnyListModel::Transaction>()) {
+        return reinterpret_cast<Transaction&>(*operation);
+      }
+      return boost::none;
+    }
+    return boost::none;
+  }
+
+  template<typename T>
   template<typename... F>
   void ListModel<T>::Operation::visit(F&&... f) const {
+    const_cast<Operation&>(*this).visit(std::forward<F>(f)...);
+  }
+
+  template<typename T>
+  template<typename... F>
+  void ListModel<T>::Operation::visit(F&&... f) {
     if(auto transaction = get<Transaction>()) {
       for(auto& operation : *transaction) {
         operation.visit(std::forward<F>(f)...);
@@ -647,25 +754,31 @@ namespace Spire {
     } else {
       if constexpr(sizeof...(F) == 1) {
         auto head = [&] (auto&& f) {
-          boost::apply_visitor([&] (const auto& operation) {
+          boost::apply_visitor([&] (auto& operation) {
             using Parameter = downcast_t<std::decay_t<decltype(operation)>>;
-            if constexpr(!std::is_same_v<Parameter, Transaction> &&
-                std::is_invocable_v<decltype(f), const Parameter&>) {
-              std::forward<decltype(f)>(f)(
-                static_cast<const Parameter&>(operation));
+            if constexpr(!std::is_same_v<Parameter, Transaction>) {
+              constexpr auto is_invocable =
+                std::is_invocable_v<decltype(f), Parameter&>;
+              if constexpr(is_invocable) {
+                std::forward<decltype(f)>(
+                  f)(static_cast<Parameter&>(operation));
+              }
             }
           }, m_operation);
         };
         head(std::forward<F>(f)...);
       } else if constexpr(sizeof...(F) != 0) {
         auto tail = [&] (auto&& f, auto&&... g) {
-          auto is_visited = boost::apply_visitor([&] (const auto& operation) {
+          auto is_visited = boost::apply_visitor([&] (auto& operation) {
             using Parameter = downcast_t<std::decay_t<decltype(operation)>>;
-            if constexpr(!std::is_same_v<Parameter, Transaction> &&
-                std::is_invocable_v<decltype(f), const Parameter&>) {
-              std::forward<decltype(f)>(f)(
-                static_cast<const Parameter&>(operation));
-              return true;
+            if constexpr(!std::is_same_v<Parameter, Transaction>) {
+              constexpr auto is_invocable =
+                std::is_invocable_v<decltype(f), Parameter&>;
+              if constexpr(is_invocable) {
+                std::forward<decltype(f)>(
+                  f)(static_cast<Parameter&>(operation));
+                return true;
+              }
             }
             return false;
           }, m_operation);

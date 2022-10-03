@@ -109,12 +109,23 @@ namespace Spire {
           template<typename T>
           boost::optional<const T&> get() const;
 
+          /** Extracts a reference to a specific operation. */
+          template<typename T>
+          boost::optional<T&> get();
+
           /**
            * Applies a callable to an Operation.
            * @param f The callable to apply.
            */
           template<typename... F>
           void visit(F&&... f) const;
+
+          /**
+           * Applies a callable to an Operation.
+           * @param f The callable to apply.
+           */
+          template<typename... F>
+          void visit(F&&... f);
 
         private:
           boost::variant<AddOperation, RemoveOperation, MoveOperation,
@@ -195,6 +206,16 @@ namespace Spire {
     operation.visit(std::forward<F>(f)...);
   }
 
+  /**
+   * Applies a callable to an Operation.
+   * @param operation The operation to visit.
+   * @param f The callable to apply to the <i>operation</i>.
+   */
+  template<typename... F>
+  void visit(TableModel::Operation& operation, F&&... f) {
+    operation.visit(std::forward<F>(f)...);
+  }
+
   template<typename T>
   boost::optional<const T&> TableModel::Operation::get() const {
     if(auto operation = boost::get<T>(&m_operation)) {
@@ -203,8 +224,21 @@ namespace Spire {
     return boost::none;
   }
 
+  template<typename T>
+  boost::optional<T&> TableModel::Operation::get() {
+    if(auto operation = boost::get<T>(&m_operation)) {
+      return *operation;
+    }
+    return boost::none;
+  }
+
   template<typename... F>
   void TableModel::Operation::visit(F&&... f) const {
+    const_cast<Operation&>(*this).visit(std::forward<F>(f)...);
+  }
+
+  template<typename... F>
+  void TableModel::Operation::visit(F&&... f) {
     if(auto transaction = get<Transaction>()) {
       for(auto& operation : *transaction) {
         operation.visit(std::forward<F>(f)...);
@@ -212,21 +246,29 @@ namespace Spire {
     } else {
       if constexpr(sizeof...(F) == 1) {
         auto head = [&] (auto&& f) {
-          boost::apply_visitor([&] (const auto& operation) {
+          boost::apply_visitor([&] (auto& operation) {
             using Parameter = std::decay_t<decltype(operation)>;
-            if constexpr(std::is_invocable_v<decltype(f), const Parameter&>) {
-              std::forward<decltype(f)>(f)(operation);
+            if constexpr(!std::is_same_v<Parameter, Transaction>) {
+              constexpr auto is_invocable =
+                std::is_invocable_v<decltype(f), Parameter&>;
+              if constexpr(is_invocable) {
+                std::forward<decltype(f)>(f)(operation);
+              }
             }
           }, m_operation);
         };
         head(std::forward<F>(f)...);
       } else if constexpr(sizeof...(F) != 0) {
         auto tail = [&] (auto&& f, auto&&... g) {
-          auto is_visited = boost::apply_visitor([&] (const auto& operation) {
+          auto is_visited = boost::apply_visitor([&] (auto& operation) {
             using Parameter = std::decay_t<decltype(operation)>;
-            if constexpr(std::is_invocable_v<decltype(f), const Parameter&>) {
-              std::forward<decltype(f)>(f)(operation);
-              return true;
+            if constexpr(!std::is_same_v<Parameter, Transaction>) {
+              constexpr auto is_invocable =
+                std::is_invocable_v<decltype(f), Parameter&>;
+              if constexpr(is_invocable) {
+                std::forward<decltype(f)>(f)(operation);
+                return true;
+              }
             }
             return false;
           }, m_operation);

@@ -76,3 +76,51 @@ void Spire::clear(AnyListModel& model) {
     }
   });
 }
+
+std::ostream& Spire::operator <<(
+    std::ostream& out, const AnyListModel::AddOperation& operation) {
+  return out << operation.m_index;
+}
+
+std::ostream& Spire::operator <<(
+    std::ostream& out, const AnyListModel::RemoveOperation& operation) {
+  return out << operation.m_index;
+}
+
+std::ostream& Spire::operator <<(
+    std::ostream& out, const AnyListModel::MoveOperation& operation) {
+  return out <<
+    '(' << operation.m_source << ' ' << operation.m_destination << ')';
+}
+
+std::ostream& Spire::operator <<(
+    std::ostream& out, const AnyListModel::UpdateOperation& operation) {
+  return out << operation.m_index;
+}
+
+std::ostream& Spire::operator <<(
+    std::ostream& out, const AnyListModel::Operation& operation) {
+  if(auto transaction = operation.get<AnyListModel::Transaction>()) {
+    out << "(Transaction";
+    for(auto& operation : *transaction) {
+      out << ' ' << operation;
+    }
+    out << ')';
+  } else {
+    visit(operation,
+      [&] (const AnyListModel::AddOperation& operation) {
+        out << "(AddOperation " << operation << ')';
+      },
+      [&] (const AnyListModel::RemoveOperation& operation) {
+        out << "(RemoveOperation " << operation << ')';
+      },
+      [&] (const AnyListModel::MoveOperation& operation) {
+        out << "(MoveOperation " <<
+          operation.m_source << ' ' << operation.m_destination << ')';
+      },
+      [&] (const AnyListModel::UpdateOperation& operation) {
+        out << "(UpdateOperation " << operation << ')';
+      });
+  }
+  return out;
+}
