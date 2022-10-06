@@ -1,3 +1,4 @@
+#include <deque>
 #include <boost/variant/get.hpp>
 #include <doctest/doctest.h>
 #include "Spire/Spire/ArrayTableModel.hpp"
@@ -275,18 +276,10 @@ TEST_SUITE("ArrayTableModel") {
 
   TEST_CASE("subtransactions") {
     auto model = ArrayTableModel();
-    auto signal_count = 0;
-    auto connection = scoped_connection(model.connect_operation_signal(
-      [&] (const TableModel::Operation& operation) {
-        ++signal_count;
-        auto transaction = operation.get<TableModel::Transaction>();
-        REQUIRE((transaction != none));
-        REQUIRE(transaction->size() == 5);
-        REQUIRE(((*transaction)[0].get<TableModel::AddOperation>() != none));
-        REQUIRE(((*transaction)[1].get<TableModel::UpdateOperation>() != none));
-        REQUIRE(((*transaction)[2].get<TableModel::AddOperation>() != none));
-        REQUIRE(((*transaction)[3].get<TableModel::RemoveOperation>() != none));
-        REQUIRE(((*transaction)[4].get<TableModel::AddOperation>() != none));
+    auto operations = std::deque<TableModel::Operation>();
+    auto connection = scoped_connection(
+      model.connect_operation_signal([&] (const auto& operation) {
+        operations.push_back(operation);
       }));
     model.transact([&] {
       model.push({1, 2, 3});
@@ -299,36 +292,32 @@ TEST_SUITE("ArrayTableModel") {
         model.push({8, 9, 9});
       });
     });
-    REQUIRE(signal_count == 1);
-    connection = model.connect_operation_signal(
-      [&] (const TableModel::Operation& operation) {
-        ++signal_count;
-        connection.disconnect();
-        model.transact([&] {
-          model.push({7, 8, 9});
-        });
-        auto transaction = operation.get<TableModel::Transaction>();
-        REQUIRE((transaction != none));
-        REQUIRE(transaction->size() == 2);
-        REQUIRE(((*transaction)[0].get<TableModel::AddOperation>() != none));
-        REQUIRE(((*transaction)[1].get<TableModel::AddOperation>() != none));
-      });
+    REQUIRE(operations.size() == 7);
+    REQUIRE(get<TableModel::StartTransaction>(&operations[0]) != nullptr);
+    REQUIRE(get<TableModel::AddOperation>(&operations[1]) != nullptr);
+    REQUIRE(get<TableModel::UpdateOperation>(&operations[2]) != nullptr);
+    REQUIRE(get<TableModel::AddOperation>(&operations[3]) != nullptr);
+    REQUIRE(get<TableModel::RemoveOperation>(&operations[4]) != nullptr);
+    REQUIRE(get<TableModel::AddOperation>(&operations[5]) != nullptr);
+    REQUIRE(get<TableModel::EndTransaction>(&operations[6]) != nullptr);
+    operations.clear();
     model.transact([&] {
       model.push({1, 2, 3});
       model.push({4, 5, 6});
     });
-    REQUIRE(signal_count == 2);
-    connection = model.connect_operation_signal(
-      [&] (const TableModel::Operation& operation) {
-        ++signal_count;
-        auto add_operation = operation.get<TableModel::AddOperation>();
-        REQUIRE((add_operation != none));
-        REQUIRE(add_operation->m_index == model.get_row_size() - 1);
-      });
+    REQUIRE(operations.size() == 4);
+    REQUIRE(get<TableModel::StartTransaction>(&operations[0]) != nullptr);
+    REQUIRE(get<TableModel::AddOperation>(&operations[1]) != nullptr);
+    REQUIRE(get<TableModel::AddOperation>(&operations[2]) != nullptr);
+    REQUIRE(get<TableModel::EndTransaction>(&operations[3]) != nullptr);
     model.transact([&] {
       model.push({1, 2, 3});
     });
-    REQUIRE(signal_count == 3);
-#endif
+    REQUIRE(operations.size() == 3);
+    REQUIRE(get<TableModel::StartTransaction>(&operations[0]) != nullptr);
+    REQUIRE(get<TableModel::AddOperation>(&operations[1]) != nullptr);
+    REQUIRE(get<TableModel::EndTransaction>(&operations[2]) != nullptr);
+    model.transact([&] {});
+    REQUIRE(operations.empty());
   }
 }

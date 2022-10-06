@@ -484,8 +484,8 @@ namespace Spire {
    * @param operation The operation to visit.
    * @param f The callable to apply to the <i>operation</i>.
    */
-  template<typename Operation, typename... F>
-  void visit(const Operation& operation, F&&... f) {
+  template<typename T, typename... F>
+  void visit(const typename ListModel<T>::Operation& operation, F&&... f) {
     operation.visit(std::forward<F>(f)...);
   }
 

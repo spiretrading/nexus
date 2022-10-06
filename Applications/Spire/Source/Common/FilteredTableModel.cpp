@@ -121,8 +121,7 @@ void FilteredTableModel::on_operation(const Operation& operation) {
           }
         } else {
           auto i = std::get<1>(find(operation.m_index));
-          std::for_each(i, m_filtered_data.end(),
-            [] (int& value) { ++value; });
+          std::for_each(i, m_filtered_data.end(), [] (int& value) { ++value; });
           if(!m_filter(*m_source, operation.m_index)) {
             m_transaction.push(AddOperation(
               static_cast<int>(m_filtered_data.insert(i, operation.m_index) -
