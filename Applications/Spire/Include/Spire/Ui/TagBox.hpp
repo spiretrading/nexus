@@ -96,6 +96,7 @@ namespace Spire {
       void on_focus(FocusObserver::State state);
       void on_operation(const AnyListModel::Operation& operation);
       void on_text_box_current(const QString& current);
+      void on_list_view_current(const boost::optional<int>& current);
       void on_list_view_submit(const std::any& submission);
       void on_style();
       void on_list_view_style();

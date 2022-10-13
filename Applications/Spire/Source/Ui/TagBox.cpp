@@ -196,6 +196,8 @@ TagBox::TagBox(std::shared_ptr<AnyListModel> list,
     std::bind_front(&TagBox::on_operation, this));
   m_list_view->connect_submit_signal(
     std::bind_front(&TagBox::on_list_view_submit, this));
+  m_list_view->get_current()->connect_update_signal(
+    std::bind_front(&TagBox::on_list_view_current, this));
   m_list_view->setFocusPolicy(Qt::NoFocus);
   m_list_view->installEventFilter(this);
   m_scrollable_list_box = new ScrollableListBox(*m_list_view);
@@ -555,6 +557,12 @@ void TagBox::on_operation(const AnyListModel::Operation& operation) {
 void TagBox::on_text_box_current(const QString& current) {
   m_list_view->adjustSize();
   scroll_to_text_box();
+}
+
+void TagBox::on_list_view_current(const optional<int>& current) {
+  if(current) {
+    m_list_view->get_current()->set(none);
+  }
 }
 
 void TagBox::on_list_view_submit(const std::any& submission) {
