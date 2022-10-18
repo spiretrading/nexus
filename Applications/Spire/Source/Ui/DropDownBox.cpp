@@ -160,11 +160,11 @@ bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
       auto& key_event = *static_cast<const QKeyEvent*>(event);
       if(key_event.key() == Qt::Key_Enter ||
           key_event.key() == Qt::Key_Return) {
-        if(!is_read_only()) {
+        if(is_read_only()) {
+          event->ignore();
+        } else {
           m_is_modified = true;
           submit();
-        } else {
-          event->ignore();
         }
         return true;
       }
