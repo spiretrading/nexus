@@ -126,6 +126,7 @@ bool ComboBox::eventFilter(QObject* watched, QEvent* event) {
         } else {
           revert_to(m_submission_text, false);
         }
+        event->ignore();
         return true;
       }
     }
