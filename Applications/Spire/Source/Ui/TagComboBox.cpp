@@ -177,6 +177,9 @@ connection TagComboBox::connect_submit_signal(
 
 bool TagComboBox::eventFilter(QObject* watched, QEvent* event) {
   if(watched == m_input_box && event->type() == QEvent::KeyPress) {
+    if(is_read_only()) {
+      return QWidget::eventFilter(watched, event);
+    }
     auto& key_event = *static_cast<QKeyEvent*>(event);
     if(key_event.key() == Qt::Key_Enter || key_event.key() == Qt::Key_Return) {
       if(key_event.text() != "\r") {
@@ -205,9 +208,7 @@ bool TagComboBox::eventFilter(QObject* watched, QEvent* event) {
         return true;
       }
     } else if(key_event.key() == Qt::Key_Escape) {
-      m_tag_box->get_current()->set("");
-      copy_list_model(m_submission, get_current());
-      m_is_modified = false;
+      event->ignore();
       return true;
     } else if(key_event.key() == Qt::Key_Down ||
         key_event.key() == Qt::Key_Up ||
@@ -224,6 +225,17 @@ bool TagComboBox::eventFilter(QObject* watched, QEvent* event) {
     return true;
   }
   return QWidget::eventFilter(watched, event);
+}
+
+void TagComboBox::keyPressEvent(QKeyEvent* event) {
+  if(event->key() == Qt::Key_Escape) {
+    m_tag_box->get_current()->set("");
+    copy_list_model(m_submission, get_current());
+    m_is_modified = false;
+    event->ignore();
+    return;
+  }
+  QWidget::keyPressEvent(event);
 }
 
 void TagComboBox::showEvent(QShowEvent* event) {
