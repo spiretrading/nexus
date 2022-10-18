@@ -163,6 +163,8 @@ bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
         if(!is_read_only()) {
           m_is_modified = true;
           submit();
+        } else {
+          event->ignore();
         }
         return true;
       }
