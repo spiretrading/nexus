@@ -133,13 +133,13 @@ TagComboBox::TagComboBox(std::shared_ptr<ComboBox::QueryModel> query_model,
   copy_list_model(current, m_submission);
   m_tag_box = new TagBox(std::move(current),
     std::make_shared<LocalTextModel>());
-  m_tag_box->installEventFilter(this);
   m_list_connection = m_tag_box->get_tags()->connect_operation_signal(
     std::bind_front(&TagComboBox::on_operation, this));
+  m_any_input_box = new AnyInputBox(*m_tag_box);
   m_combo_box = new ComboBox(
     std::make_shared<TagComboBoxQueryModel>(std::move(query_model),
     m_tag_box->get_tags()), std::make_shared<LocalValueModel<std::any>>(),
-    new AnyInputBox(*m_tag_box), std::move(view_builder));
+    m_any_input_box, std::move(view_builder));
   m_combo_box->connect_submit_signal(
     std::bind_front(&TagComboBox::on_combo_box_submit, this));
   enclose(*this, *m_combo_box);
@@ -147,6 +147,7 @@ TagComboBox::TagComboBox(std::shared_ptr<ComboBox::QueryModel> query_model,
   m_drop_down_window = find_pop_up_window(*m_combo_box);
   m_focus_observer.connect_state_signal(
     std::bind_front(&TagComboBox::on_focus, this));
+  m_any_input_box->installEventFilter(this);
 }
 
 const std::shared_ptr<ComboBox::QueryModel>&
@@ -223,6 +224,11 @@ bool TagComboBox::eventFilter(QObject* watched, QEvent* event) {
   } else if(watched == m_input_box && event->type() == QEvent::FocusOut &&
       find_focus_state(*m_drop_down_window) != FocusObserver::State::NONE) {
     return true;
+  } else if(watched == m_any_input_box && event->type() == QEvent::KeyPress) {
+    if(static_cast<QKeyEvent*>(event)->key() == Qt::Key_Escape) {
+      event->ignore();
+      return true;
+    }
   }
   return QWidget::eventFilter(watched, event);
 }
@@ -230,9 +236,12 @@ bool TagComboBox::eventFilter(QObject* watched, QEvent* event) {
 void TagComboBox::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Escape) {
     m_tag_box->get_current()->set("");
-    copy_list_model(m_submission, get_current());
-    m_is_modified = false;
-    event->ignore();
+    if(m_is_modified) {
+      copy_list_model(m_submission, get_current());
+      m_is_modified = false;
+    } else {
+      event->ignore();
+    }
     return;
   }
   QWidget::keyPressEvent(event);

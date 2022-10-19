@@ -83,6 +83,7 @@ namespace Spire {
       std::shared_ptr<AnyListModel> m_submission;
       FocusObserver m_focus_observer;
       QWidget* m_input_box;
+      AnyInputBox* m_any_input_box;
       QWidget* m_drop_down_window;
       bool m_is_modified;
       boost::signals2::scoped_connection m_list_connection;
