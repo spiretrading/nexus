@@ -209,6 +209,7 @@ bool TagComboBox::eventFilter(QObject* watched, QEvent* event) {
         return true;
       }
     } else if(key_event.key() == Qt::Key_Escape) {
+      //m_tag_box->get_current()->set("");
       event->ignore();
       return true;
     } else if(key_event.key() == Qt::Key_Down ||
@@ -235,12 +236,15 @@ bool TagComboBox::eventFilter(QObject* watched, QEvent* event) {
 
 void TagComboBox::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Escape) {
-    m_tag_box->get_current()->set("");
+    event->ignore();
+    if(!m_tag_box->get_current()->get().isEmpty()) {
+      m_tag_box->get_current()->set("");
+      event->accept();
+    }
     if(m_is_modified) {
       copy_list_model(m_submission, get_current());
       m_is_modified = false;
-    } else {
-      event->ignore();
+      event->accept();
     }
     return;
   }
