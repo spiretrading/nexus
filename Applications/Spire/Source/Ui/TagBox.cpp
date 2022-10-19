@@ -273,8 +273,10 @@ void TagBox::set_read_only(bool is_read_only) {
   m_text_box->set_read_only(m_is_read_only);
   update_tags_read_only();
   if(m_is_read_only) {
+    m_list_view->setEnabled(false);
     match(*this, ReadOnly());
   } else {
+    m_list_view->setEnabled(true);
     unmatch(*this, ReadOnly());
   }
 }
@@ -287,7 +289,7 @@ connection TagBox::connect_submit_signal(
 bool TagBox::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::KeyPress) {
     auto& key_event = *static_cast<QKeyEvent*>(event);
-    if(watched == m_text_box->focusProxy() &&
+    if(watched == m_text_box->focusProxy() && !is_read_only() &&
         key_event.key() == Qt::Key_Backspace &&
         get_tags()->get_size() > 0 &&
         (m_text_box->get_highlight()->get().m_start == 0 &&
@@ -295,9 +297,7 @@ bool TagBox::eventFilter(QObject* watched, QEvent* event) {
         m_text_box->get_current()->get().isEmpty())) {
       get_tags()->remove(get_tags()->get_size() - 1);
       return true;
-    } else if(watched == m_list_view && (key_event.key() == Qt::Key_Down ||
-        key_event.key() == Qt::Key_Up || key_event.key() == Qt::Key_PageDown ||
-        key_event.key() == Qt::Key_PageUp)) {
+    } else if(watched == m_list_view) {
       event->ignore();
       return true;
     }
@@ -522,12 +522,14 @@ void TagBox::update_vertical_scroll_bar_visible() {
 }
 
 void TagBox::on_focus(FocusObserver::State state) {
-  if(state != FocusObserver::State::NONE) {
+  if(state == FocusObserver::State::NONE) {
+    scroll_to_start(*m_horizontal_scroll_bar);
+  } else {
     m_text_box->setFocusPolicy(Qt::StrongFocus);
     setFocus();
-    scroll_to_text_box();
-  } else {
-    scroll_to_start(*m_horizontal_scroll_bar);
+    if(!is_read_only()) {
+      scroll_to_text_box();
+    }
   }
 }
 
