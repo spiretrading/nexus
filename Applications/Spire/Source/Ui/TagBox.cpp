@@ -242,9 +242,6 @@ TagBox::TagBox(std::shared_ptr<AnyListModel> list,
       update_tooltip();
     }
   });
-  m_text_item_button = m_list_view->get_list_item(
-    m_list_view->get_list()->get_size() - 1)->findChild<Button*>();
-  m_text_item_button->installEventFilter(this);
 }
 
 const std::shared_ptr<AnyListModel>& TagBox::get_tags() const {
@@ -276,8 +273,10 @@ void TagBox::set_read_only(bool is_read_only) {
   m_text_box->set_read_only(m_is_read_only);
   update_tags_read_only();
   if(m_is_read_only) {
+    m_list_view->setEnabled(false);
     match(*this, ReadOnly());
   } else {
+    m_list_view->setEnabled(true);
     unmatch(*this, ReadOnly());
   }
 }
@@ -299,11 +298,6 @@ bool TagBox::eventFilter(QObject* watched, QEvent* event) {
       get_tags()->remove(get_tags()->get_size() - 1);
       return true;
     } else if(watched == m_list_view) {
-      event->ignore();
-      return true;
-    } else if(watched == m_text_item_button &&
-        (key_event.key() == Qt::Key_Enter ||
-        key_event.key() == Qt::Key_Return)) {
       event->ignore();
       return true;
     }
@@ -576,9 +570,7 @@ void TagBox::on_list_view_current(const optional<int>& current) {
 void TagBox::on_list_view_submit(const std::any& submission) {
   m_list_view->setFocusPolicy(Qt::NoFocus);
   setFocus();
-  if(!is_read_only()) {
-    scroll_to_text_box();
-  }
+  scroll_to_text_box();
 }
 
 void TagBox::on_style() {
