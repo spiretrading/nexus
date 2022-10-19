@@ -67,6 +67,7 @@ namespace Spire {
       ScrollBar* m_vertical_scroll_bar;
       TextAreaBox* m_text_area_box;
       InfoTip* m_info_tip;
+      Button* m_text_item_button;
       FocusObserver m_focus_observer;
       std::unique_ptr<GlobalPositionObserver> m_text_box_position_observer;
       Styles::Overflow m_list_view_overflow;

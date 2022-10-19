@@ -242,6 +242,9 @@ TagBox::TagBox(std::shared_ptr<AnyListModel> list,
       update_tooltip();
     }
   });
+  m_text_item_button = m_list_view->get_list_item(
+    m_list_view->get_list()->get_size() - 1)->findChild<Button*>();
+  m_text_item_button->installEventFilter(this);
 }
 
 const std::shared_ptr<AnyListModel>& TagBox::get_tags() const {
@@ -287,7 +290,7 @@ connection TagBox::connect_submit_signal(
 bool TagBox::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::KeyPress) {
     auto& key_event = *static_cast<QKeyEvent*>(event);
-    if(watched == m_text_box->focusProxy() &&
+    if(watched == m_text_box->focusProxy() && !is_read_only() &&
         key_event.key() == Qt::Key_Backspace &&
         get_tags()->get_size() > 0 &&
         (m_text_box->get_highlight()->get().m_start == 0 &&
@@ -295,9 +298,12 @@ bool TagBox::eventFilter(QObject* watched, QEvent* event) {
         m_text_box->get_current()->get().isEmpty())) {
       get_tags()->remove(get_tags()->get_size() - 1);
       return true;
-    } else if(watched == m_list_view && (key_event.key() == Qt::Key_Down ||
-        key_event.key() == Qt::Key_Up || key_event.key() == Qt::Key_PageDown ||
-        key_event.key() == Qt::Key_PageUp)) {
+    } else if(watched == m_list_view) {
+      event->ignore();
+      return true;
+    } else if(watched == m_text_item_button &&
+        (key_event.key() == Qt::Key_Enter ||
+        key_event.key() == Qt::Key_Return)) {
       event->ignore();
       return true;
     }
@@ -522,12 +528,14 @@ void TagBox::update_vertical_scroll_bar_visible() {
 }
 
 void TagBox::on_focus(FocusObserver::State state) {
-  if(state != FocusObserver::State::NONE) {
+  if(state == FocusObserver::State::NONE) {
+    scroll_to_start(*m_horizontal_scroll_bar);
+  } else {
     m_text_box->setFocusPolicy(Qt::StrongFocus);
     setFocus();
-    scroll_to_text_box();
-  } else {
-    scroll_to_start(*m_horizontal_scroll_bar);
+    if(!is_read_only()) {
+      scroll_to_text_box();
+    }
   }
 }
 
@@ -568,7 +576,9 @@ void TagBox::on_list_view_current(const optional<int>& current) {
 void TagBox::on_list_view_submit(const std::any& submission) {
   m_list_view->setFocusPolicy(Qt::NoFocus);
   setFocus();
-  scroll_to_text_box();
+  if(!is_read_only()) {
+    scroll_to_text_box();
+  }
 }
 
 void TagBox::on_style() {
