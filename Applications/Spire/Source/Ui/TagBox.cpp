@@ -379,7 +379,8 @@ QWidget* TagBox::make_tag(
 
 void TagBox::install_text_proxy_event_filter() {
   if(!m_text_focus_proxy) {
-    if(m_text_focus_proxy = m_text_box->focusProxy()) {
+    m_text_focus_proxy = m_text_box->focusProxy();
+    if(m_text_focus_proxy) {
       m_text_focus_proxy->installEventFilter(this);
     }
   }
