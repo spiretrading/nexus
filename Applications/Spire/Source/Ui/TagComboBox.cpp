@@ -209,7 +209,6 @@ bool TagComboBox::eventFilter(QObject* watched, QEvent* event) {
         return true;
       }
     } else if(key_event.key() == Qt::Key_Escape) {
-      //m_tag_box->get_current()->set("");
       event->ignore();
       return true;
     } else if(key_event.key() == Qt::Key_Down ||
