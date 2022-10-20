@@ -171,6 +171,7 @@ TagBox::TagBox(std::shared_ptr<AnyListModel> list,
     std::shared_ptr<TextModel> current, QWidget* parent)
     : QWidget(parent),
       m_model(std::make_shared<PartialListModel>(std::move(list))),
+      m_text_focus_proxy(nullptr),
       m_focus_observer(*this),
       m_list_view_overflow(Overflow::NONE),
       m_is_read_only(false),
@@ -242,6 +243,9 @@ TagBox::TagBox(std::shared_ptr<AnyListModel> list,
       update_tooltip();
     }
   });
+  m_text_item_button = m_list_view->get_list_item(
+    m_list_view->get_list()->get_size() - 1)->findChild<Button*>();
+  m_text_item_button->installEventFilter(this);
 }
 
 const std::shared_ptr<AnyListModel>& TagBox::get_tags() const {
@@ -273,10 +277,9 @@ void TagBox::set_read_only(bool is_read_only) {
   m_text_box->set_read_only(m_is_read_only);
   update_tags_read_only();
   if(m_is_read_only) {
-    m_list_view->setEnabled(false);
     match(*this, ReadOnly());
   } else {
-    m_list_view->setEnabled(true);
+    install_text_proxy_event_filter();
     unmatch(*this, ReadOnly());
   }
 }
@@ -289,7 +292,7 @@ connection TagBox::connect_submit_signal(
 bool TagBox::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::KeyPress) {
     auto& key_event = *static_cast<QKeyEvent*>(event);
-    if(watched == m_text_box->focusProxy() && !is_read_only() &&
+    if(watched == m_text_focus_proxy && !is_read_only() &&
         key_event.key() == Qt::Key_Backspace &&
         get_tags()->get_size() > 0 &&
         (m_text_box->get_highlight()->get().m_start == 0 &&
@@ -297,7 +300,7 @@ bool TagBox::eventFilter(QObject* watched, QEvent* event) {
         m_text_box->get_current()->get().isEmpty())) {
       get_tags()->remove(get_tags()->get_size() - 1);
       return true;
-    } else if(watched == m_list_view) {
+    } else if(watched == m_list_view || watched == m_text_item_button) {
       event->ignore();
       return true;
     }
@@ -341,7 +344,7 @@ void TagBox::resizeEvent(QResizeEvent* event) {
 }
 
 void TagBox::showEvent(QShowEvent* event) {
-  m_text_box->focusProxy()->installEventFilter(this);
+  install_text_proxy_event_filter();
   QWidget::showEvent(event);
 }
 
@@ -372,6 +375,15 @@ QWidget* TagBox::make_tag(
     }
   });
   return tag;
+}
+
+void TagBox::install_text_proxy_event_filter() {
+  if(!m_text_focus_proxy) {
+    m_text_focus_proxy = m_text_box->focusProxy();
+    if(m_text_focus_proxy) {
+      m_text_focus_proxy->installEventFilter(this);
+    }
+  }
 }
 
 void TagBox::scroll_to_text_box() {

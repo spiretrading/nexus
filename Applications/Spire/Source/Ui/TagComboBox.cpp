@@ -169,6 +169,9 @@ bool TagComboBox::is_read_only() const {
 
 void TagComboBox::set_read_only(bool is_read_only) {
   m_combo_box->set_read_only(is_read_only);
+  if(!is_read_only) {
+    install_text_proxy_event_filter();
+  }
 }
 
 connection TagComboBox::connect_submit_signal(
@@ -251,11 +254,15 @@ void TagComboBox::keyPressEvent(QKeyEvent* event) {
 }
 
 void TagComboBox::showEvent(QShowEvent* event) {
-  if(!m_input_box) {
-    m_input_box = find_focus_proxy(*m_tag_box);
+  install_text_proxy_event_filter();
+  QWidget::showEvent(event);
+}
+
+void TagComboBox::install_text_proxy_event_filter() {
+  if(auto input = find_focus_proxy(*m_tag_box); input != m_input_box) {
+    m_input_box = input;
     m_input_box->installEventFilter(this);
   }
-  QWidget::showEvent(event);
 }
 
 void TagComboBox::submit() {
