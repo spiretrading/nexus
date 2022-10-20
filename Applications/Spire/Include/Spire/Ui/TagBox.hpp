@@ -67,6 +67,8 @@ namespace Spire {
       ScrollBar* m_vertical_scroll_bar;
       TextAreaBox* m_text_area_box;
       InfoTip* m_info_tip;
+      QWidget* m_text_focus_proxy;
+      Button* m_text_item_button;
       FocusObserver m_focus_observer;
       std::unique_ptr<GlobalPositionObserver> m_text_box_position_observer;
       Styles::Overflow m_list_view_overflow;
@@ -84,6 +86,7 @@ namespace Spire {
       boost::signals2::scoped_connection m_text_area_box_style_connection;
 
       QWidget* make_tag(const std::shared_ptr<AnyListModel>& model, int index);
+      void install_text_proxy_event_filter();
       void scroll_to_text_box();
       void update_placeholder();
       void update_scroll_bar_end_range(ScrollBar& scroll_bar, int& end_range);

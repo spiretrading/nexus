@@ -88,6 +88,7 @@ namespace Spire {
       bool m_is_modified;
       boost::signals2::scoped_connection m_list_connection;
 
+      void install_text_proxy_event_filter();
       void submit();
       void on_combo_box_submit(const std::any& submission);
       void on_focus(FocusObserver::State state);
