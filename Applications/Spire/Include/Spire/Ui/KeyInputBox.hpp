@@ -77,6 +77,7 @@ namespace Spire {
       QKeySequence m_submission;
       Status m_status;
       QWidget* m_body;
+      QWidget* m_caret;
       Box* m_input_box;
       bool m_is_read_only;
       bool m_is_modified;

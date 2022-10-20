@@ -575,6 +575,28 @@ namespace {
     return model;
   }
 
+  auto populate_key_input_box_model(const QKeySequence& key) {
+    auto model = make_validated_value_model<QKeySequence>([] (auto sequence) {
+      if(sequence.count() == 0) {
+        return QValidator::Intermediate;
+      } else if(sequence.count() > 1) {
+        return QValidator::Invalid;
+      }
+      auto key = sequence[0];
+      key &= ~Qt::ShiftModifier;
+      key &= ~Qt::ControlModifier;
+      key &= ~Qt::AltModifier;
+      key &= ~Qt::MetaModifier;
+      key &= ~Qt::KeypadModifier;
+      key &= ~Qt::GroupSwitchModifier;
+      if(key >= Qt::Key_F1 && key <= Qt::Key_F32) {
+        return QValidator::Acceptable;
+      }
+      return QValidator::Invalid;
+      }, std::make_shared<LocalKeySequenceValueModel>(key));
+    return model;
+  }
+
   struct HoverBox {
     Box* m_box;
     HoverObserver m_observer;
@@ -1613,7 +1635,8 @@ UiProfile Spire::make_editable_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
   auto test_widget_property = define_enum<int>(
-    {{"TextBox", 0}, {"DropDownBox", 1}, {"DecimalBox", 2}, {"RegionBox", 3}});
+    {{"TextBox", 0}, {"DropDownBox", 1}, {"DecimalBox", 2}, {"KeyInputBox", 3},
+      {"RegionBox", 4}});
   properties.push_back(
     make_standard_enum_property("input_box", test_widget_property));
   auto profile = UiProfile("EditableBox", properties, [] (auto& profile) {
@@ -1631,6 +1654,9 @@ UiProfile Spire::make_editable_box_profile() {
       } else if(value == 2) {
         return new AnyInputBox((*new DecimalBox(
           std::make_shared<LocalOptionalDecimalModel>(Decimal(1)))));
+      } else if(value == 3) {
+        return new AnyInputBox((*new KeyInputBox(populate_key_input_box_model(
+          QKeySequence("F1")))));
       }
       auto query_model = populate_region_box_model();
       auto current = std::make_shared<LocalValueModel<Region>>();
@@ -1986,27 +2012,7 @@ UiProfile Spire::make_key_input_box_profile() {
   properties.push_back(make_standard_property("read_only", false));
   auto profile = UiProfile("KeyInputBox", properties, [] (auto& profile) {
     auto& current = get<QString>("current", profile.get_properties());
-    auto base =
-      std::make_shared<LocalValueModel<QKeySequence>>(current.get());
-    auto model = make_validated_value_model<QKeySequence>([] (auto sequence) {
-      if(sequence.count() == 0) {
-        return QValidator::Intermediate;
-      } else if(sequence.count() > 1) {
-        return QValidator::Invalid;
-      }
-      auto key = sequence[0];
-      key &= ~Qt::ShiftModifier;
-      key &= ~Qt::ControlModifier;
-      key &= ~Qt::AltModifier;
-      key &= ~Qt::MetaModifier;
-      key &= ~Qt::KeypadModifier;
-      key &= ~Qt::GroupSwitchModifier;
-      if(key >= Qt::Key_F1 && key <= Qt::Key_F32) {
-        return QValidator::Acceptable;
-      }
-      return QValidator::Invalid;
-    }, base);
-    auto box = new KeyInputBox(model);
+    auto box = new KeyInputBox(populate_key_input_box_model(current.get()));
     box->setFixedWidth(scale_width(100));
     apply_widget_properties(box, profile.get_properties());
     current.connect_changed_signal([=] (auto value) {
