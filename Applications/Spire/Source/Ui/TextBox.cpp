@@ -214,6 +214,9 @@ class TextBox::LineEdit : public QLineEdit {
     }
 
     void keyPressEvent(QKeyEvent* event) override {
+      if(isReadOnly()) {
+        return QLineEdit::keyPressEvent(event);
+      }
       if(event->key() == Qt::Key_Escape) {
         if(m_submission->get() != m_current->get()) {
           m_current->set(m_submission->get());
