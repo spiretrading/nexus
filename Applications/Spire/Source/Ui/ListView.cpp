@@ -6,6 +6,7 @@
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
+#include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/SingleSelectionModel.hpp"
@@ -106,8 +107,7 @@ ListView::ListView(
       m_perpendicular_policy(QSizePolicy::Expanding),
       m_item_gap(DEFAULT_GAP),
       m_overflow_gap(DEFAULT_OVERFLOW_GAP),
-      m_query_timer(new QTimer(this)),
-      m_focus_reason(Qt::OtherFocusReason) {
+      m_query_timer(new QTimer(this)) {
   setFocusPolicy(Qt::StrongFocus);
   for(auto i = 0; i != m_list->get_size(); ++i) {
     make_item_entry(i);
@@ -505,12 +505,13 @@ void ListView::on_current(optional<int> previous, optional<int> current) {
   if(previous && previous != current) {
     m_items[*previous]->set(false);
   }
-  if(current && (hasFocus() || isAncestorOf(focusWidget()))) {
-    m_items[*current]->m_item->setFocus(m_focus_reason);
-  } else if(isAncestorOf(focusWidget())) {
-    setFocus();
+  if(find_focus_state(*this) != FocusObserver::State::NONE) {
+    if(current) {
+      m_items[*current]->m_item->setFocus();
+    } else {
+      setFocus();
+    }
   }
-  m_focus_reason = Qt::OtherFocusReason;
   if(current) {
     auto& item = *m_items[*current];
     item.set(true);
