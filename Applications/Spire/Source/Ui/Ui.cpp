@@ -60,3 +60,7 @@ void Spire::invalidate_descendant_layouts(QWidget& widget) {
     }
   }
 }
+
+bool Spire::is_a_word(const QString& text) {
+  return text.size() == 1 && (text[0].isLetterOrNumber() || text[0] == '_');
+}

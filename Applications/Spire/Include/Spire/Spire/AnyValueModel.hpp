@@ -103,6 +103,8 @@ namespace Spire {
       const Type& value) {
     if(auto p = any_cast<const T>(&value)) {
       return m_model->set(*p);
+    } else if(!value.has_value()) {
+      return m_model->set(T());
     }
     return QValidator::State::Invalid;
   }

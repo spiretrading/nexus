@@ -140,6 +140,13 @@ namespace Spire {
    * @param widget The widget whose descendants' layout will be invalidated.
    */
   void invalidate_descendant_layouts(QWidget& widget);
+
+  /**
+   * Checks whether the text is a word character.
+   * @param text The text to check.
+   * @param Returns <code>true</code> iff this text is word character.
+   */
+  bool is_a_word(const QString& text);
 }
 
 #endif
