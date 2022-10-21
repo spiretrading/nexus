@@ -479,7 +479,7 @@ TEST_SUITE("SortedTableModel") {
     source->set(3, 0, 1);
     source->insert({6, std::string("Tom"), 11.1f}, 2);
     source->set(5, 1, std::string("Bob"));
-    REQUIRE(signal_count == 4);
+    REQUIRE(signal_count == 7);
     REQUIRE(column_span<int>(sorted_model, 0) == std::vector{9, 6, 4, 2, 2, 1});
     REQUIRE(column_span<std::string>(sorted_model, 1) ==
       std::vector<std::string>{"Jack", "Tom", "John", "Bob", "Bob", "Liam"});
