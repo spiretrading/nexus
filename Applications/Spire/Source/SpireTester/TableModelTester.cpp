@@ -1,8 +1,53 @@
+#include "Spire/SpireTester/TableModelTester.hpp"
 #include <doctest/doctest.h>
 #include "Spire/Spire/TableModel.hpp"
 
 using namespace boost;
 using namespace Spire;
+
+void Spire::require_transaction(
+    const std::deque<TableModel::Operation>& operations,
+    const std::vector<TableModel::Operation>& expected) {
+  auto offset = 0;
+  if(expected.size() == 1) {
+    REQUIRE(operations.size() == 1);
+  } else {
+    REQUIRE(operations.size() == expected.size() + 2);
+    REQUIRE(get<TableModel::StartTransaction>(&operations[0]) != nullptr);
+    offset = 1;
+  }
+  for(auto i = 0; i != std::ssize(expected); ++i) {
+    visit(expected[i],
+      [&] (const TableModel::AddOperation& expected) {
+        auto operation = get<TableModel::AddOperation>(&operations[i + offset]);
+        REQUIRE(operation != nullptr);
+        REQUIRE(operation->m_index == expected.m_index);
+      },
+      [&] (const TableModel::RemoveOperation& expected) {
+        auto operation =
+          get<TableModel::RemoveOperation>(&operations[i + offset]);
+        REQUIRE(operation != nullptr);
+        REQUIRE(operation->m_index == expected.m_index);
+      },
+      [&] (const TableModel::MoveOperation& expected) {
+        auto operation =
+          get<TableModel::MoveOperation>(&operations[i + offset]);
+        REQUIRE(operation != nullptr);
+        REQUIRE(operation->m_source == expected.m_source);
+        REQUIRE(operation->m_destination == expected.m_destination);
+      },
+      [&] (const TableModel::UpdateOperation& expected) {
+        auto operation =
+          get<TableModel::UpdateOperation>(&operations[i + offset]);
+        REQUIRE(operation != nullptr);
+        REQUIRE(operation->m_row == expected.m_row);
+        REQUIRE(operation->m_column == expected.m_column);
+      });
+  }
+  if(expected.size() != 1) {
+    REQUIRE(get<TableModel::EndTransaction>(&operations.back()) != nullptr);
+  }
+}
 
 TEST_SUITE("TableModel") {
   TEST_CASE("visit_all_operations") {

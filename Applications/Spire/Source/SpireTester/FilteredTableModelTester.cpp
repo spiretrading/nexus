@@ -2,44 +2,11 @@
 #include <doctest/doctest.h>
 #include "Spire/Spire/ArrayTableModel.hpp"
 #include "Spire/Spire/FilteredTableModel.hpp"
+#include "Spire/SpireTester/TableModelTester.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
-
-namespace {
-  void require_transaction(const std::deque<TableModel::Operation>& operations,
-      const std::vector<TableModel::Operation>& expected) {
-    REQUIRE(operations.size() == expected.size() + 2);
-    REQUIRE(get<TableModel::StartTransaction>(&operations[0]) != nullptr);
-    for(auto i = 0; i != std::ssize(expected); ++i) {
-      visit(expected[i],
-        [&] (const TableModel::AddOperation& expected) {
-          auto operation = get<TableModel::AddOperation>(&operations[i + 1]);
-          REQUIRE(operation != nullptr);
-          REQUIRE(operation->m_index == expected.m_index);
-        },
-        [&] (const TableModel::RemoveOperation& expected) {
-          auto operation = get<TableModel::RemoveOperation>(&operations[i + 1]);
-          REQUIRE(operation != nullptr);
-          REQUIRE(operation->m_index == expected.m_index);
-        },
-        [&] (const TableModel::MoveOperation& expected) {
-          auto operation = get<TableModel::MoveOperation>(&operations[i + 1]);
-          REQUIRE(operation != nullptr);
-          REQUIRE(operation->m_source == expected.m_source);
-          REQUIRE(operation->m_destination == expected.m_destination);
-        },
-        [&] (const TableModel::UpdateOperation& expected) {
-          auto operation = get<TableModel::UpdateOperation>(&operations[i + 1]);
-          REQUIRE(operation != nullptr);
-          REQUIRE(operation->m_row == expected.m_row);
-          REQUIRE(operation->m_column == expected.m_column);
-        });
-    }
-    REQUIRE(get<TableModel::EndTransaction>(&operations.back()) != nullptr);
-  }
-}
 
 TEST_SUITE("FilteredTableModel") {
   TEST_CASE("filter") {
@@ -391,6 +358,8 @@ TEST_SUITE("FilteredTableModel") {
     REQUIRE(source->get<int>(2, 0) == 9);
     REQUIRE(source->get<int>(3, 0) == 1);
     auto signal_count = 0;
+    auto start_count = 0;
+    auto end_count = 0;
     auto add_count = 0;
     auto move_count = 0;
     auto remove_count = 0;
@@ -399,6 +368,12 @@ TEST_SUITE("FilteredTableModel") {
       [&] (const TableModel::Operation& operation) {
         ++signal_count;
         visit(operation,
+          [&] (const TableModel::StartTransaction&) {
+            ++start_count;
+          },
+          [&] (const TableModel::EndTransaction&) {
+            ++end_count;
+          },
           [&] (const TableModel::AddOperation& add_operation) {
             ++add_count;
           },
@@ -429,7 +404,9 @@ TEST_SUITE("FilteredTableModel") {
       });
       source->move(2, 0);
     });
-    REQUIRE(signal_count == 1);
+    REQUIRE(signal_count == 8);
+    REQUIRE(start_count == 1);
+    REQUIRE(end_count == 1);
     REQUIRE(add_count == 3);
     REQUIRE(move_count == 1);
     REQUIRE(remove_count == 1);
@@ -552,6 +529,7 @@ TEST_SUITE("FilteredTableModel") {
         TableModel::AddOperation(3, nullptr),
         TableModel::RemoveOperation(4, nullptr),
         TableModel::AddOperation(4, nullptr),
+        TableModel::RemoveOperation(5, nullptr),
         TableModel::RemoveOperation(5, nullptr),
         TableModel::RemoveOperation(5, nullptr),
         TableModel::RemoveOperation(5, nullptr)

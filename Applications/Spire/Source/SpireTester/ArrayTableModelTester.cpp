@@ -310,6 +310,7 @@ TEST_SUITE("ArrayTableModel") {
     REQUIRE(get<TableModel::AddOperation>(&operations[1]) != nullptr);
     REQUIRE(get<TableModel::AddOperation>(&operations[2]) != nullptr);
     REQUIRE(get<TableModel::EndTransaction>(&operations[3]) != nullptr);
+    operations.clear();
     model.transact([&] {
       model.push({1, 2, 3});
     });
@@ -317,6 +318,7 @@ TEST_SUITE("ArrayTableModel") {
     REQUIRE(get<TableModel::StartTransaction>(&operations[0]) != nullptr);
     REQUIRE(get<TableModel::AddOperation>(&operations[1]) != nullptr);
     REQUIRE(get<TableModel::EndTransaction>(&operations[2]) != nullptr);
+    operations.clear();
     model.transact([&] {});
     REQUIRE(operations.empty());
   }

@@ -9,6 +9,12 @@ namespace Spire {
       /** Constructs an empty log. */
       TableModelTransactionLog();
 
+      /** Starts a transaction. */
+      void start();
+
+      /** Ends a transaction. */
+      void end();
+
       /**
        * Pushes an operation to a model transaction.
        * @param operation The operation to push.
@@ -47,6 +53,18 @@ namespace Spire {
     : m_level(0),
       m_is_first(true) {}
 
+  inline void TableModelTransactionLog::start() {
+    ++m_level;
+  }
+
+  inline void TableModelTransactionLog::end() {
+    --m_level;
+    if(m_level == 0 && !m_is_first) {
+      m_operation_signal(TableModel::EndTransaction());
+      m_is_first = true;
+    }
+  }
+
   inline void TableModelTransactionLog::push(
       const TableModel::Operation& operation) {
     if(m_level != 0 && m_is_first) {
@@ -58,13 +76,14 @@ namespace Spire {
 
   template<typename F>
   decltype(auto) TableModelTransactionLog::transact(F&& transaction) {
-    ++m_level;
-    std::forward<F>(transaction)();
-    --m_level;
-    if(m_level == 0 && !m_is_first) {
-      m_operation_signal(TableModel::EndTransaction());
-      m_is_first = true;
+    start();
+    try {
+      std::forward<F>(transaction)();
+    } catch(const std::exception&) {
+      end();
+      throw;
     }
+    end();
   }
 
   inline boost::signals2::connection TableModelTransactionLog::

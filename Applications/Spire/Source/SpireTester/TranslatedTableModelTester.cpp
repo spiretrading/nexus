@@ -122,77 +122,6 @@ TEST_SUITE("TranslatedTableModel") {
     REQUIRE(translation.get<int>(2, 0) == 4);
   }
 
-  TEST_CASE("transaction_reentrant") {
-    auto source = std::make_shared<ArrayTableModel>();
-    source->push({4});
-    source->push({2});
-    source->push({10});
-    source->push({9});
-    source->push({1});
-    source->push({6});
-    auto signal_count = 0;
-    auto translation = TranslatedTableModel(source);
-    connection connection = translation.connect_operation_signal(
-      [&] (const TableModel::Operation& operation) {
-        ++signal_count;
-        connection.disconnect();
-        translation.transact([&] {
-          translation.move(4, 5);
-        });
-        auto transaction = operation.get<TableModel::Transaction>();
-        REQUIRE((transaction != none));
-        REQUIRE(transaction->size() == 3);
-      });
-    translation.transact([&] {
-      translation.move(4, 0);
-      translation.transact([&] {
-        translation.move(2, 1);
-        translation.transact([&] {
-          translation.move(5, 3);
-        });
-      });
-    });
-    REQUIRE(signal_count == 1);
-    REQUIRE(translation.get<int>(0, 0) == 1);
-    REQUIRE(translation.get<int>(1, 0) == 2);
-    REQUIRE(translation.get<int>(2, 0) == 4);
-    REQUIRE(translation.get<int>(3, 0) == 6);
-    REQUIRE(translation.get<int>(4, 0) == 9);
-    REQUIRE(translation.get<int>(5, 0) == 10);
-  }
-
-  TEST_CASE("transaction_mixing_with_source_operation") {
-    auto source = std::make_shared<ArrayTableModel>();
-    source->push({4});
-    source->push({2});
-    source->push({1});
-    auto signal_count = 0;
-    auto translation = TranslatedTableModel(source);
-    auto connection = scoped_connection(translation.connect_operation_signal(
-      [&] (const TableModel::Operation& operation) {
-        ++signal_count;
-        auto transaction = operation.get<TableModel::Transaction>();
-        REQUIRE((transaction != none));
-        REQUIRE(transaction->size() == 4);
-      }));
-    translation.transact([&] {
-      source->insert({3}, 2);
-      translation.move(2, 0);
-      translation.transact([&] {
-        source->set(2, 0, 9);
-        translation.transact([&] {
-          translation.move(1, 2);
-        });
-        source->move(3, 1);
-      });
-    });
-    REQUIRE(signal_count == 1);
-    REQUIRE(translation.get<int>(0, 0) == 9);
-    REQUIRE(translation.get<int>(1, 0) == 2);
-    REQUIRE(translation.get<int>(2, 0) == 4);
-    REQUIRE(translation.get<int>(3, 0) == 1);
-  }
-
   TEST_CASE("push_from_source") {
     auto source = std::make_shared<ArrayTableModel>();
     source->push({4});
@@ -210,8 +139,8 @@ TEST_SUITE("TranslatedTableModel") {
     auto connection = scoped_connection(translation.connect_operation_signal(
       [&] (const TableModel::Operation& operation) {
         ++signal_count;
-        auto add_operation = operation.get<TableModel::AddOperation>();
-        REQUIRE((add_operation != none));
+        auto add_operation = get<TableModel::AddOperation>(&operation);
+        REQUIRE(add_operation != nullptr);
         REQUIRE(add_operation->m_index == translation.get_row_size() - 1);
       }));
     source->push({6});
@@ -241,8 +170,8 @@ TEST_SUITE("TranslatedTableModel") {
     auto connection = scoped_connection(translation.connect_operation_signal(
       [&] (const TableModel::Operation& operation) {
         ++signal_count;
-        auto add_operation = operation.get<TableModel::AddOperation>();
-        REQUIRE((add_operation != none));
+        auto add_operation = get<TableModel::AddOperation>(&operation);
+        REQUIRE(add_operation != nullptr);
         REQUIRE(add_operation->m_index == 3);
       }));
     source->insert({6}, 2);
@@ -303,6 +232,7 @@ TEST_SUITE("TranslatedTableModel") {
     REQUIRE(operations.size() == 1);
     auto operation = operations.front();
     operations.pop_front();
+/* TODO
     visit(operation,
       [&] (const TableModel::UpdateOperation& operation) {
         REQUIRE(operation.m_row == 0);
@@ -311,6 +241,7 @@ TEST_SUITE("TranslatedTableModel") {
       [] (const auto&) {
         REQUIRE(false);
       });
+*/
     REQUIRE(translation.get<std::string>(0, 0) == "D");
     REQUIRE(translation.get<std::string>(1, 0) == "B");
     REQUIRE(translation.get<std::string>(2, 0) == "C");
@@ -334,8 +265,8 @@ TEST_SUITE("TranslatedTableModel") {
     auto connection = scoped_connection(translation.connect_operation_signal(
       [&] (const TableModel::Operation& operation) {
         ++signal_count;
-        auto remove_operation = operation.get<TableModel::RemoveOperation>();
-        REQUIRE((remove_operation != none));
+        auto remove_operation = get<TableModel::RemoveOperation>(&operation);
+        REQUIRE(remove_operation != nullptr);
         REQUIRE(remove_operation->m_index == removed_row);
       }));
     removed_row = 2;
@@ -369,8 +300,8 @@ TEST_SUITE("TranslatedTableModel") {
     auto connection = scoped_connection(translation.connect_operation_signal(
       [&] (const TableModel::Operation& operation) {
         ++signal_count;
-        auto update_operation = operation.get<TableModel::UpdateOperation>();
-        REQUIRE((update_operation != none));
+        auto update_operation = get<TableModel::UpdateOperation>(&operation);
+        REQUIRE(update_operation != nullptr);
         REQUIRE(update_operation->m_row == updated_row);
         REQUIRE(update_operation->m_column == 0);
       }));
