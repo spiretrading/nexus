@@ -171,6 +171,7 @@ TagBox::TagBox(std::shared_ptr<AnyListModel> list,
     std::shared_ptr<TextModel> current, QWidget* parent)
     : QWidget(parent),
       m_model(std::make_shared<PartialListModel>(std::move(list))),
+      m_text_focus_proxy(nullptr),
       m_focus_observer(*this),
       m_list_view_overflow(Overflow::NONE),
       m_is_read_only(false),
@@ -196,6 +197,8 @@ TagBox::TagBox(std::shared_ptr<AnyListModel> list,
     std::bind_front(&TagBox::on_operation, this));
   m_list_view->connect_submit_signal(
     std::bind_front(&TagBox::on_list_view_submit, this));
+  m_list_view->get_current()->connect_update_signal(
+    std::bind_front(&TagBox::on_list_view_current, this));
   m_list_view->setFocusPolicy(Qt::NoFocus);
   m_list_view->installEventFilter(this);
   m_scrollable_list_box = new ScrollableListBox(*m_list_view);
@@ -240,6 +243,9 @@ TagBox::TagBox(std::shared_ptr<AnyListModel> list,
       update_tooltip();
     }
   });
+  m_text_item_button = m_list_view->get_list_item(
+    m_list_view->get_list()->get_size() - 1)->findChild<Button*>();
+  m_text_item_button->installEventFilter(this);
 }
 
 const std::shared_ptr<AnyListModel>& TagBox::get_tags() const {
@@ -273,6 +279,7 @@ void TagBox::set_read_only(bool is_read_only) {
   if(m_is_read_only) {
     match(*this, ReadOnly());
   } else {
+    install_text_proxy_event_filter();
     unmatch(*this, ReadOnly());
   }
 }
@@ -285,7 +292,7 @@ connection TagBox::connect_submit_signal(
 bool TagBox::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::KeyPress) {
     auto& key_event = *static_cast<QKeyEvent*>(event);
-    if(watched == m_text_box->focusProxy() &&
+    if(watched == m_text_focus_proxy && !is_read_only() &&
         key_event.key() == Qt::Key_Backspace &&
         get_tags()->get_size() > 0 &&
         (m_text_box->get_highlight()->get().m_start == 0 &&
@@ -293,9 +300,7 @@ bool TagBox::eventFilter(QObject* watched, QEvent* event) {
         m_text_box->get_current()->get().isEmpty())) {
       get_tags()->remove(get_tags()->get_size() - 1);
       return true;
-    } else if(watched == m_list_view && (key_event.key() == Qt::Key_Down ||
-        key_event.key() == Qt::Key_Up || key_event.key() == Qt::Key_PageDown ||
-        key_event.key() == Qt::Key_PageUp)) {
+    } else if(watched == m_list_view || watched == m_text_item_button) {
       event->ignore();
       return true;
     }
@@ -339,7 +344,7 @@ void TagBox::resizeEvent(QResizeEvent* event) {
 }
 
 void TagBox::showEvent(QShowEvent* event) {
-  m_text_box->focusProxy()->installEventFilter(this);
+  install_text_proxy_event_filter();
   QWidget::showEvent(event);
 }
 
@@ -370,6 +375,15 @@ QWidget* TagBox::make_tag(
     }
   });
   return tag;
+}
+
+void TagBox::install_text_proxy_event_filter() {
+  if(!m_text_focus_proxy) {
+    m_text_focus_proxy = m_text_box->focusProxy();
+    if(m_text_focus_proxy) {
+      m_text_focus_proxy->installEventFilter(this);
+    }
+  }
 }
 
 void TagBox::scroll_to_text_box() {
@@ -520,12 +534,14 @@ void TagBox::update_vertical_scroll_bar_visible() {
 }
 
 void TagBox::on_focus(FocusObserver::State state) {
-  if(state != FocusObserver::State::NONE) {
+  if(state == FocusObserver::State::NONE) {
+    scroll_to_start(*m_horizontal_scroll_bar);
+  } else {
     m_text_box->setFocusPolicy(Qt::StrongFocus);
     setFocus();
-    scroll_to_text_box();
-  } else {
-    scroll_to_start(*m_horizontal_scroll_bar);
+    if(!is_read_only()) {
+      scroll_to_text_box();
+    }
   }
 }
 
@@ -555,6 +571,12 @@ void TagBox::on_operation(const AnyListModel::Operation& operation) {
 void TagBox::on_text_box_current(const QString& current) {
   m_list_view->adjustSize();
   scroll_to_text_box();
+}
+
+void TagBox::on_list_view_current(const optional<int>& current) {
+  if(current) {
+    m_list_view->get_current()->set(none);
+  }
 }
 
 void TagBox::on_list_view_submit(const std::any& submission) {
