@@ -2,6 +2,7 @@
 #include <doctest/doctest.h>
 #include "Spire/Spire/ArrayTableModel.hpp"
 #include "Spire/Spire/TranslatedTableModel.hpp"
+#include "Spire/SpireTester/TableModelTester.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -79,14 +80,13 @@ TEST_SUITE("TranslatedTableModel") {
         translation.move(4, 3);
       });
     });
-    REQUIRE(operations.size() == 1);
-    auto operation = operations.front();
-    operations.pop_front();
-    auto move_count = 0;
-    test_operation(operation, [&] (const TableModel::MoveOperation& operation) {
-      ++move_count;
-    });
-    REQUIRE(move_count == 4);
+    require_transaction(operations,
+      {
+        TableModel::MoveOperation(4, 0),
+        TableModel::MoveOperation(1, 2),
+        TableModel::MoveOperation(3, 5),
+        TableModel::MoveOperation(4, 3)
+      });
     REQUIRE(translation.get<int>(0, 0) == 1);
     REQUIRE(translation.get<int>(1, 0) == 2);
     REQUIRE(translation.get<int>(2, 0) == 4);
@@ -110,13 +110,10 @@ TEST_SUITE("TranslatedTableModel") {
       translation.move(0, 2);
       translation.transact([] {});
     });
-    REQUIRE(operations.size() == 1);
-    auto operation = operations.front();
-    operations.pop_front();
-    test_operation(operation, [&] (const TableModel::MoveOperation& operation) {
-      REQUIRE(operation.m_source == 0);
-      REQUIRE(operation.m_destination == 2);
-    });
+    require_transaction(operations,
+      {
+        TableModel::MoveOperation(0, 2)
+      });
     REQUIRE(translation.get<int>(0, 0) == 1);
     REQUIRE(translation.get<int>(1, 0) == 6);
     REQUIRE(translation.get<int>(2, 0) == 4);
@@ -229,19 +226,10 @@ TEST_SUITE("TranslatedTableModel") {
     source->move(0, 2);
     REQUIRE(operations.size() == 0);
     source->set(2, 0, std::string("D"));
-    REQUIRE(operations.size() == 1);
-    auto operation = operations.front();
-    operations.pop_front();
-/* TODO
-    visit(operation,
-      [&] (const TableModel::UpdateOperation& operation) {
-        REQUIRE(operation.m_row == 0);
-        REQUIRE(operation.m_column == 0);
-      },
-      [] (const auto&) {
-        REQUIRE(false);
+    require_transaction(operations,
+      {
+        TableModel::UpdateOperation(0, 0, nullptr, nullptr),
       });
-*/
     REQUIRE(translation.get<std::string>(0, 0) == "D");
     REQUIRE(translation.get<std::string>(1, 0) == "B");
     REQUIRE(translation.get<std::string>(2, 0) == "C");
@@ -344,31 +332,10 @@ TEST_SUITE("TranslatedTableModel") {
     REQUIRE_NOTHROW(translation.move(1, 0));
     REQUIRE(translation.get<int>(0, 0) == 1);
     REQUIRE(translation.get<int>(1, 0) == 2);
-    auto signal_count = 0;
-    auto add_count = 0;
-    auto move_count = 0;
-    auto remove_count = 0;
-    auto update_count = 0;
-    auto connection = scoped_connection(translation.connect_operation_signal(
-      [&] (const TableModel::Operation& operation) {
-        ++signal_count;
-        visit(operation,
-          [&] (const TableModel::AddOperation& add_operation) {
-            ++add_count;
-          },
-          [&] (const TableModel::MoveOperation& move_operation) {
-            ++move_count;
-          },
-          [&] (const TableModel::RemoveOperation& remove_operation) {
-            ++remove_count;
-            REQUIRE(remove_operation.m_index == 1);
-          },
-          [&] (const TableModel::UpdateOperation& update_operation) {
-            ++update_count;
-            REQUIRE(update_operation.m_row == 1);
-            REQUIRE(update_operation.m_column == 0);
-          });
-      }));
+    auto operations = std::deque<TableModel::Operation>();
+    translation.connect_operation_signal([&] (const auto& operation) {
+      operations.push_back(operation);
+    });
     source->transact([&] {
       source->push({4});
       source->transact([&] {
@@ -381,11 +348,14 @@ TEST_SUITE("TranslatedTableModel") {
       });
       source->move(3, 0);
     });
-    REQUIRE(signal_count == 1);
-    REQUIRE(add_count == 3);
-    REQUIRE(move_count == 0);
-    REQUIRE(remove_count == 1);
-    REQUIRE(update_count == 1);
+    require_transaction(operations,
+      {
+        TableModel::AddOperation(2, nullptr),
+        TableModel::UpdateOperation(1, 0, nullptr, nullptr),
+        TableModel::AddOperation(0, nullptr),
+        TableModel::RemoveOperation(1, nullptr),
+        TableModel::AddOperation(3, nullptr)
+      });
     REQUIRE(translation.get<int>(0, 0) == 6);
     REQUIRE(translation.get<int>(1, 0) == 10);
     REQUIRE(translation.get<int>(2, 0) == 4);

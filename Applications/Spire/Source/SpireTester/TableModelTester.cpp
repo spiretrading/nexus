@@ -10,7 +10,11 @@ void Spire::require_transaction(
     const std::vector<TableModel::Operation>& expected) {
   auto offset = 0;
   if(expected.size() == 1) {
-    REQUIRE(operations.size() == 1);
+    if(operations.size() != 1) {
+      REQUIRE(operations.size() == 3);
+      REQUIRE(get<TableModel::StartTransaction>(&operations[0]) != nullptr);
+      offset = 1;
+    }
   } else {
     REQUIRE(operations.size() == expected.size() + 2);
     REQUIRE(get<TableModel::StartTransaction>(&operations[0]) != nullptr);
@@ -44,7 +48,7 @@ void Spire::require_transaction(
         REQUIRE(operation->m_column == expected.m_column);
       });
   }
-  if(expected.size() != 1) {
+  if(offset != 0) {
     REQUIRE(get<TableModel::EndTransaction>(&operations.back()) != nullptr);
   }
 }
