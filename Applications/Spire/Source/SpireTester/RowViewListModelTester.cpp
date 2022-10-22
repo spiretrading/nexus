@@ -228,26 +228,35 @@ TEST_SUITE("RowViewListModel") {
       });
       source->move(2, 0);
     });
-    REQUIRE(operations.size() == 1);
-    auto operation = operations.front();
-    operations.pop_front();
+    auto start_count = 0;
+    auto end_count = 0;
     auto add_count = 0;
     auto move_count = 0;
     auto remove_count = 0;
     auto update_count = 0;
-    test_operation(operation,
-      [&] (const RowViewListModel<int>::AddOperation& operation) {
-        ++add_count;
-      },
-      [&] (const RowViewListModel<int>::MoveOperation& operation) {
-        ++move_count;
-      },
-      [&] (const RowViewListModel<int>::RemoveOperation& operation) {
-        ++remove_count;
-      },
-      [&] (const RowViewListModel<int>::UpdateOperation& operation) {
-        ++update_count;
-      });
+    for(auto& operation : operations) {
+      test_operation(operation,
+        [&] (const RowViewListModel<int>::StartTransaction&) {
+          ++start_count;
+        },
+        [&] (const RowViewListModel<int>::EndTransaction&) {
+          ++end_count;
+        },
+        [&] (const RowViewListModel<int>::AddOperation& operation) {
+          ++add_count;
+        },
+        [&] (const RowViewListModel<int>::MoveOperation& operation) {
+          ++move_count;
+        },
+        [&] (const RowViewListModel<int>::RemoveOperation& operation) {
+          ++remove_count;
+        },
+        [&] (const RowViewListModel<int>::UpdateOperation& operation) {
+          ++update_count;
+        });
+    }
+    REQUIRE(start_count == 1);
+    REQUIRE(end_count == 1);
     REQUIRE(add_count == 0);
     REQUIRE(move_count == 0);
     REQUIRE(remove_count == 0);

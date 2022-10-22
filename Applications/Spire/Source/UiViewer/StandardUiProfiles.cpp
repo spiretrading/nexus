@@ -3588,17 +3588,13 @@ UiProfile Spire::make_tag_combo_box_profile() {
     };
     box->get_current()->connect_operation_signal(
       [=] (const AnyListModel::Operation& operation) {
-        if(auto transaction = operation.get<AnyListModel::Transaction>()) {
-          print_current();
-        } else {
-          visit(operation,
-            [=] (const AnyListModel::AddOperation& operation) {
-              print_current();
-            },
-            [=] (const AnyListModel::RemoveOperation& operation) {
-              print_current();
-            });
-        }
+        visit(operation,
+          [=] (const AnyListModel::AddOperation& operation) {
+            print_current();
+          },
+          [=] (const AnyListModel::RemoveOperation& operation) {
+            print_current();
+          });
       });
     auto submit_filter_slot =
       profile.make_event_slot<QString>(QString::fromUtf8("Submit"));

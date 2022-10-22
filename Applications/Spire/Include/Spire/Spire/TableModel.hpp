@@ -150,36 +150,6 @@ namespace Spire {
       TableModel& operator =(const TableModel&) = delete;
   };
 
-  template<typename... F>
-  void visit(const TableModel::Operation& operation, F&&... f) {
-    if constexpr(sizeof...(F) == 1) {
-      auto head = [&] (auto&& f) {
-        boost::apply_visitor([&] (const auto& operation) {
-          using Parameter = std::decay_t<decltype(operation)>;
-          if constexpr(std::is_invocable_v<decltype(f), const Parameter&>) {
-            std::forward<decltype(f)>(f)(operation);
-          }
-        }, operation);
-      };
-      head(std::forward<F>(f)...);
-    } else if constexpr(sizeof...(F) != 0) {
-      auto tail = [&] (auto&& f, auto&&... g) {
-        auto is_visited = boost::apply_visitor([&] (const auto& operation) {
-          using Parameter = std::decay_t<decltype(operation)>;
-          if constexpr(std::is_invocable_v<decltype(f), const Parameter&>) {
-            std::forward<decltype(f)>(f)(operation);
-            return true;
-          }
-          return false;
-        }, operation);
-        if(!is_visited) {
-          visit(operation, std::forward<decltype(g)>(g)...);
-        }
-      };
-      tail(std::forward<F>(f)...);
-    }
-  }
-
   template<typename T>
   const T& TableModel::get(int row, int column) const {
     return any_cast<const T>(at(row, column));

@@ -133,8 +133,8 @@ TEST_SUITE("ColumnViewListModel") {
       [&] (const auto& operation) {
         ++signal_count;
         auto remove_operation =
-          operation.get<ColumnViewListModel<int>::RemoveOperation>();
-        REQUIRE((remove_operation != none));
+          get<ColumnViewListModel<int>::RemoveOperation>(&operation);
+        REQUIRE(remove_operation != nullptr);
         REQUIRE(remove_operation->m_index == index);
         REQUIRE(remove_operation->get_value() == value);
       }));
@@ -170,8 +170,8 @@ TEST_SUITE("ColumnViewListModel") {
       [&] (const auto& operation) {
         ++signal_count;
         auto move_operation =
-          operation.get<ColumnViewListModel<int>::MoveOperation>();
-        REQUIRE((move_operation != none));
+          get<ColumnViewListModel<int>::MoveOperation>(&operation);
+        REQUIRE(move_operation != nullptr);
         REQUIRE(move_operation->m_source == source_index);
         REQUIRE(move_operation->m_destination == destination_index);
       }));
@@ -248,26 +248,35 @@ TEST_SUITE("ColumnViewListModel") {
         source->move(2, 0);
       });
     });
-    REQUIRE(operations.size() == 1);
-    auto operation = operations.front();
-    operations.pop_front();
+    auto start_count = 0;
+    auto end_count = 0;
     auto add_count = 0;
     auto move_count = 0;
     auto remove_count = 0;
     auto update_count = 0;
-    test_operation(operation,
-      [&] (const ColumnViewListModel<int>::AddOperation& operation) {
-        ++add_count;
-      },
-      [&] (const ColumnViewListModel<int>::MoveOperation& operation) {
-        ++move_count;
-      },
-      [&] (const ColumnViewListModel<int>::RemoveOperation& operation) {
-        ++remove_count;
-      },
-      [&] (const ColumnViewListModel<int>::UpdateOperation& operation) {
-        ++update_count;
-      });
+    for(auto& operation : operations) {
+      test_operation(operation,
+        [&] (const ColumnViewListModel<int>::StartTransaction&) {
+          ++start_count;
+        },
+        [&] (const ColumnViewListModel<int>::EndTransaction&) {
+          ++end_count;
+        },
+        [&] (const ColumnViewListModel<int>::AddOperation& operation) {
+          ++add_count;
+        },
+        [&] (const ColumnViewListModel<int>::MoveOperation& operation) {
+          ++move_count;
+        },
+        [&] (const ColumnViewListModel<int>::RemoveOperation& operation) {
+          ++remove_count;
+        },
+        [&] (const ColumnViewListModel<int>::UpdateOperation& operation) {
+          ++update_count;
+        });
+    }
+    REQUIRE(start_count == 1);
+    REQUIRE(end_count == 1);
     REQUIRE(add_count == 2);
     REQUIRE(move_count == 1);
     REQUIRE(remove_count == 1);

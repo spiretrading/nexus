@@ -20,21 +20,6 @@ AnyListModel::UpdateOperation::UpdateOperation(
     m_previous(std::move(previous)),
     m_value(std::move(value)) {}
 
-AnyListModel::Operation::Operation(AddOperation operation)
-  : m_operation(std::move(operation)) {}
-
-AnyListModel::Operation::Operation(RemoveOperation operation)
-  : m_operation(std::move(operation)) {}
-
-AnyListModel::Operation::Operation(MoveOperation operation)
-  : m_operation(std::move(operation)) {}
-
-AnyListModel::Operation::Operation(UpdateOperation operation)
-  : m_operation(std::move(operation)) {}
-
-AnyListModel::Operation::Operation(std::vector<Operation> operation)
-  : m_operation(std::move(operation)) {}
-
 std::any AnyListModel::get(int index) const {
   return at(index);
 }
@@ -100,27 +85,25 @@ std::ostream& Spire::operator <<(
 
 std::ostream& Spire::operator <<(
     std::ostream& out, const AnyListModel::Operation& operation) {
-  if(auto transaction = operation.get<AnyListModel::Transaction>()) {
-    out << "(Transaction";
-    for(auto& operation : *transaction) {
-      out << ' ' << operation;
-    }
-    out << ')';
-  } else {
-    visit(operation,
-      [&] (const AnyListModel::AddOperation& operation) {
-        out << "(AddOperation " << operation << ')';
-      },
-      [&] (const AnyListModel::RemoveOperation& operation) {
-        out << "(RemoveOperation " << operation << ')';
-      },
-      [&] (const AnyListModel::MoveOperation& operation) {
-        out << "(MoveOperation " <<
-          operation.m_source << ' ' << operation.m_destination << ')';
-      },
-      [&] (const AnyListModel::UpdateOperation& operation) {
-        out << "(UpdateOperation " << operation << ')';
-      });
-  }
+  visit(operation,
+    [&] (const AnyListModel::StartTransaction& operation) {
+      out << "StartTransaction";
+    },
+    [&] (const AnyListModel::EndTransaction& operation) {
+      out << "EndTransaction";
+    },
+    [&] (const AnyListModel::AddOperation& operation) {
+      out << "(AddOperation " << operation << ')';
+    },
+    [&] (const AnyListModel::RemoveOperation& operation) {
+      out << "(RemoveOperation " << operation << ')';
+    },
+    [&] (const AnyListModel::MoveOperation& operation) {
+      out << "(MoveOperation " <<
+        operation.m_source << ' ' << operation.m_destination << ')';
+    },
+    [&] (const AnyListModel::UpdateOperation& operation) {
+      out << "(UpdateOperation " << operation << ')';
+    });
   return out;
 }

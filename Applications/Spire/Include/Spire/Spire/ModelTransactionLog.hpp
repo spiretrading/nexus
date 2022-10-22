@@ -1,17 +1,9 @@
 #ifndef SPIRE_MODEL_TRANSACTION_LOG_HPP
 #define SPIRE_MODEL_TRANSACTION_LOG_HPP
-#include <functional>
 #include <utility>
 #include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
-namespace Details {
-  struct ScopeExit {
-    std::function<void()> m_f;
-    ScopeExit(std::function<void()> f);
-    ~ScopeExit();
-  };
-}
 
   /** Logs a model transaction and signals it upon completion. */
   template<typename T>
@@ -23,6 +15,12 @@ namespace Details {
 
       /** Constructs an empty log. */
       ModelTransactionLog();
+
+      /** Starts a transaction. */
+      void start();
+
+      /** Ends a transaction. */
+      void end();
 
       /**
        * Pushes an operation to a model transaction.
@@ -50,8 +48,8 @@ namespace Details {
 
     private:
       mutable typename Type::OperationSignal m_operation_signal;
-      typename Type::Transaction m_transaction;
       int m_level;
+      bool m_is_first;
 
       ModelTransactionLog(const ModelTransactionLog&) = delete;
       ModelTransactionLog& operator =(const ModelTransactionLog&) = delete;
@@ -59,41 +57,48 @@ namespace Details {
 
   template<typename T>
   ModelTransactionLog<T>::ModelTransactionLog()
-    : m_level(0) {}
+    : m_level(0),
+      m_is_first(true) {}
 
   template<typename T>
-  void ModelTransactionLog<T>::push(typename T::Operation&& operation) {
-    if(m_level > 0) {
-      m_transaction.push_back(std::move(operation));
-    } else {
-      m_operation_signal(operation);
+  void ModelTransactionLog<T>::start() {
+    ++m_level;
+  }
+
+  template<typename T>
+  void ModelTransactionLog<T>::end() {
+    --m_level;
+    if(m_level == 0 && !m_is_first) {
+      m_operation_signal(typename Type::EndTransaction());
+      m_is_first = true;
     }
+  }
+
+  template<typename T>
+  void ModelTransactionLog<T>::push(typename Type::Operation&& operation) {
+    if(m_level != 0 && m_is_first) {
+      m_is_first = false;
+      m_operation_signal(typename Type::StartTransaction());
+    }
+    m_operation_signal(operation);
   }
 
   template<typename T>
   template<typename F>
   decltype(auto) ModelTransactionLog<T>::transact(F&& transaction) {
-    ++m_level;
-    auto on_exit = Details::ScopeExit([&] {
-      --m_level;
-      if(m_level != 0) {
-        return;
-      }
-      auto transaction = std::move(m_transaction);
-      if(transaction.empty()) {
-        return;
-      } else if(transaction.size() == 1) {
-        m_operation_signal(transaction.front());
-      } else {
-        m_operation_signal(transaction);
-      }
-    });
-    return std::forward<F>(transaction)();
+    start();
+    try {
+      std::forward<F>(transaction)();
+    } catch(const std::exception&) {
+      end();
+      throw;
+    }
+    end();
   }
 
   template<typename T>
   boost::signals2::connection ModelTransactionLog<T>::connect_operation_signal(
-    const typename T::OperationSignal::slot_type& slot) const {
+      const typename Type::OperationSignal::slot_type& slot) const {
     return m_operation_signal.connect(slot);
   }
 }
