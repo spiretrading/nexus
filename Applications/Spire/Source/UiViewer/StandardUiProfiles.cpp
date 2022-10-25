@@ -2164,6 +2164,7 @@ UiProfile Spire::make_list_view_profile() {
   properties.push_back(make_standard_property("disable_item", -1));
   properties.push_back(make_standard_property("enable_item", -1));
   properties.push_back(make_standard_property("auto_set_current_null", false));
+  properties.push_back(make_standard_property("delete_submission", false));
   auto profile = UiProfile("ListView", properties, [=] (auto& profile) {
     auto& random_height_seed =
       get<int>("random_height_seed", profile.get_properties());
@@ -2296,6 +2297,13 @@ UiProfile Spire::make_list_view_profile() {
       profile.make_event_slot<AnyListModel::Operation>("Selection"));
     list_view->connect_submit_signal(
       profile.make_event_slot<optional<std::any>>("Submit"));
+    if(get<bool>("delete_submission", profile.get_properties()).get()) {
+      list_view->connect_submit_signal([=] (auto& value) {
+        if(auto index = list_view->get_current()->get()) {
+          list_model->remove(*index);
+        }
+      });
+    }
     return list_view;
   });
   return profile;
