@@ -15,7 +15,6 @@ EditableBox::EditableBox(AnyInputBox& input_box, QWidget* parent)
   m_focus_observer.connect_state_signal(
     std::bind_front(&EditableBox::on_focus, this));
   m_input_box->set_read_only(true);
-  m_input_box->installEventFilter(this);
   m_submit_connection = m_input_box->connect_submit_signal(
     std::bind_front(&EditableBox::on_submit, this));
   install_focus_proxy_event_filter();
@@ -52,9 +51,7 @@ connection EditableBox::connect_end_edit_signal(
 }
 
 bool EditableBox::eventFilter(QObject* watched, QEvent* event) {
-  if(watched == m_input_box && event->type() == QEvent::Show) {
-    install_focus_proxy_event_filter();
-  } else if(watched == m_focus_proxy && event->type() == QEvent::KeyPress &&
+  if(watched == m_focus_proxy && event->type() == QEvent::KeyPress &&
       !is_editing()) {
     if(static_cast<QKeyEvent*>(event)->key() == Qt::Key_Backspace) {
       event->ignore();
@@ -83,6 +80,11 @@ void EditableBox::keyPressEvent(QKeyEvent* event) {
       QWidget::keyPressEvent(event);
     }
   }
+}
+
+void EditableBox::showEvent(QShowEvent* event) {
+  install_focus_proxy_event_filter();
+  QWidget::showEvent(event);
 }
 
 bool EditableBox::focusNextPrevChild(bool next) {

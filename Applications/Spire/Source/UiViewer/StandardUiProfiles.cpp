@@ -3756,7 +3756,7 @@ UiProfile Spire::make_tag_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
   properties.push_back(make_standard_property<QString>("placeholder"));
-  properties.push_back(make_standard_property("read_only", true));
+  properties.push_back(make_standard_property("read_only", false));
   properties.push_back(make_standard_property<QString>("add_tag"));
   auto profile = UiProfile("TagBox", properties, [] (auto& profile) {
     auto tag_box = new TagBox(populate_tag_box_model(),
