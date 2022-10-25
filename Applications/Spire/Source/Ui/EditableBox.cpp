@@ -18,6 +18,7 @@ EditableBox::EditableBox(AnyInputBox& input_box, QWidget* parent)
   m_input_box->installEventFilter(this);
   m_submit_connection = m_input_box->connect_submit_signal(
     std::bind_front(&EditableBox::on_submit, this));
+  install_focus_proxy_event_filter();
 }
 
 const AnyInputBox& EditableBox::get_input_box() const {
@@ -69,9 +70,7 @@ void EditableBox::keyPressEvent(QKeyEvent* event) {
   } else if(event->key() == Qt::Key_Escape) {
     set_editing(false);
   } else if(event->key() == Qt::Key_Backspace) {
-    m_input_box->setEnabled(false);
     m_input_box->get_current()->set(AnyRef());
-    m_input_box->setEnabled(true);
   } else {
     if(is_editing()) {
       return;
@@ -79,9 +78,7 @@ void EditableBox::keyPressEvent(QKeyEvent* event) {
     if(is_a_word(event->text())) {
       set_editing(true);
       select_all_text();
-      if(m_focus_proxy) {
-        QCoreApplication::sendEvent(m_focus_proxy, event);
-      }
+      QCoreApplication::sendEvent(m_focus_proxy, event);
     } else {
       QWidget::keyPressEvent(event);
     }
@@ -97,6 +94,9 @@ bool EditableBox::focusNextPrevChild(bool next) {
 
 void EditableBox::install_focus_proxy_event_filter() {
   if(auto proxy = find_focus_proxy(*m_input_box); proxy != m_focus_proxy) {
+    if(m_focus_proxy) {
+      m_focus_proxy->removeEventFilter(this);
+    }
     m_focus_proxy = proxy;
     m_focus_proxy->installEventFilter(this);
   }
