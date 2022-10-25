@@ -135,25 +135,34 @@ int SortedTableModel::find_sorted_index(int row, int size) const {
 }
 
 void SortedTableModel::on_operation(const Operation& operation) {
-  m_transaction.transact([&] {
-    visit(operation,
-      [&] (const AddOperation& operation) {
-        auto index = find_sorted_index(operation.m_index, get_row_size());
-        m_translation.move(operation.m_index, index);
-        m_transaction.push(AddOperation(index, operation.m_row));
-      },
-      [&] (const UpdateOperation& operation) {
-        auto index = find_sorted_index(operation.m_row, get_row_size());
-        if(operation.m_row != index) {
-          m_translation.move(operation.m_row, index);
+  visit(operation,
+    [&] (const StartTransaction&) {
+      m_transaction.start();
+    },
+    [&] (const EndTransaction&) {
+      m_transaction.end();
+    },
+    [&] (const AddOperation& operation) {
+      auto index = find_sorted_index(operation.m_index, get_row_size());
+      m_translation.move(operation.m_index, index);
+      m_transaction.push(AddOperation(index, operation.m_row));
+    },
+    [&] (const UpdateOperation& operation) {
+      auto index = find_sorted_index(operation.m_row, get_row_size());
+      auto update = UpdateOperation(
+        index, operation.m_column, operation.m_previous, operation.m_value);
+      if(operation.m_row != index) {
+        m_translation.move(operation.m_row, index);
+        m_transaction.transact([&] {
           m_transaction.push(MoveOperation(operation.m_row, index));
-        }
-        m_transaction.push(UpdateOperation(
-          index, operation.m_column, operation.m_previous, operation.m_value));
-      },
-      [&] (const RemoveOperation& operation) {
-        m_transaction.push(operation);
-      });
+          m_transaction.push(std::move(update));
+        });
+      } else {
+        m_transaction.push(std::move(update));
+      }
+    },
+    [&] (const RemoveOperation& operation) {
+      m_transaction.push(operation);
     });
 }
 

@@ -8,8 +8,8 @@ using namespace boost::signals2;
 using namespace Spire;
 
 ListSelectionModel::ListSelectionModel()
-  : m_mode(Mode::SINGLE),
-    m_model(std::make_shared<ListSingleSelectionModel>()) {
+    : m_mode(Mode::SINGLE),
+      m_model(std::make_shared<ListSingleSelectionModel>()) {
   m_model->connect_operation_signal(m_operation_signal);
 }
 
@@ -25,24 +25,36 @@ void ListSelectionModel::set_mode(Mode mode) {
   auto previous = m_model;
   if(m_mode == Mode::NONE) {
     m_model = std::make_shared<ListEmptySelectionModel>();
-    auto operation = Transaction();
+    auto operations = std::vector<Operation>();
     for(auto i = previous->get_size() - 1; i >= 0; --i) {
-      operation.push_back(RemoveOperation(i, previous->get(i)));
+      operations.push_back(RemoveOperation(i, previous->get(i)));
     }
-    if(!operation.empty()) {
-      m_operation_signal(operation);
+    if(operations.size() == 1) {
+      m_operation_signal(operations.front());
+    } else if(!operations.empty()) {
+      m_operation_signal(StartTransaction());
+      for(auto& operation : operations) {
+        m_operation_signal(operation);
+      }
+      m_operation_signal(EndTransaction());
     }
   } else if(m_mode == Mode::SINGLE) {
     m_model = std::make_shared<ListSingleSelectionModel>();
-    auto operation = Transaction();
+    auto operations = std::vector<Operation>();
     for(auto i = previous->get_size() - 2; i >= 0; --i) {
-      operation.push_back(RemoveOperation(i, previous->get(i)));
+      operations.push_back(RemoveOperation(i, previous->get(i)));
     }
     if(previous->get_size() >= 1) {
       m_model->push(previous->get(previous->get_size() - 1));
     }
-    if(!operation.empty()) {
-      m_operation_signal(operation);
+    if(operations.size() == 1) {
+      m_operation_signal(operations.front());
+    } else if(!operations.empty()) {
+      m_operation_signal(StartTransaction());
+      for(auto& operation : operations) {
+        m_operation_signal(operation);
+      }
+      m_operation_signal(EndTransaction());
     }
   } else {
     m_model = std::make_shared<ListMultiSelectionModel>();

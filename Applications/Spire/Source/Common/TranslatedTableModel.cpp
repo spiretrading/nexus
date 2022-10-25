@@ -87,55 +87,59 @@ void TranslatedTableModel::translate(int direction, int row) {
 }
 
 void TranslatedTableModel::on_operation(const Operation& operation) {
-  transact([&] {
-    visit(operation,
-      [&] (const AddOperation& operation) {
-        if(operation.m_index >= static_cast<int>(m_translation.size())) {
-          m_reverse_translation.push_back(operation.m_index);
-          m_translation.push_back(operation.m_index);
-          m_transaction.push(operation);
-          return;
+  visit(operation,
+    [&] (const StartTransaction&) {
+      m_transaction.start();
+    },
+    [&] (const EndTransaction&) {
+      m_transaction.end();
+    },
+    [&] (const AddOperation& operation) {
+      if(operation.m_index >= static_cast<int>(m_translation.size())) {
+        m_reverse_translation.push_back(operation.m_index);
+        m_translation.push_back(operation.m_index);
+        m_transaction.push(operation);
+        return;
+      }
+      auto reverse_index = m_reverse_translation[operation.m_index];
+      translate(1, operation.m_index);
+      m_translation.insert(m_translation.begin() + reverse_index,
+        operation.m_index);
+      m_reverse_translation.insert(
+        m_reverse_translation.begin() + operation.m_index, reverse_index);
+      m_transaction.push(AddOperation(reverse_index, operation.m_row));
+    },
+    [&] (const MoveOperation& operation) {
+      auto direction = [&] {
+        if(operation.m_source < operation.m_destination) {
+          return 1;
         }
-        auto reverse_index = m_reverse_translation[operation.m_index];
-        translate(1, operation.m_index);
-        m_translation.insert(m_translation.begin() + reverse_index,
-          operation.m_index);
-        m_reverse_translation.insert(
-          m_reverse_translation.begin() + operation.m_index, reverse_index);
-        m_transaction.push(AddOperation(reverse_index, operation.m_row));
-      },
-      [&] (const MoveOperation& operation) {
-        auto direction = [&] {
-          if(operation.m_source < operation.m_destination) {
-            return 1;
-          }
-          return -1;
-        }();
-        for(auto i = 0; i != static_cast<int>(m_translation.size()); ++i) {
-          auto& row = m_translation[i];
-          if(direction * row > direction * operation.m_source &&
-              direction * row <= direction * operation.m_destination) {
-            row -= direction;
-          } else if(row == operation.m_source) {
-            row = operation.m_destination;
-          }
+        return -1;
+      }();
+      for(auto i = 0; i != static_cast<int>(m_translation.size()); ++i) {
+        auto& row = m_translation[i];
+        if(direction * row > direction * operation.m_source &&
+            direction * row <= direction * operation.m_destination) {
+          row -= direction;
+        } else if(row == operation.m_source) {
+          row = operation.m_destination;
         }
-        for(auto i = 0; i != static_cast<int>(m_translation.size()); ++i) {
-          m_reverse_translation[m_translation[i]] = i;
-        }
-      },
-      [&] (const RemoveOperation& operation) {
-        auto reverse_index = m_reverse_translation[operation.m_index];
-        translate(-1, operation.m_index);
-        m_translation.erase(m_translation.begin() + reverse_index);
-        m_reverse_translation.erase(
-          m_reverse_translation.begin() + operation.m_index);
-        m_transaction.push(RemoveOperation(reverse_index, operation.m_row));
-      },
-      [&] (const UpdateOperation& operation) {
-        auto translated_row = m_reverse_translation[operation.m_row];
-        m_transaction.push(UpdateOperation(translated_row, operation.m_column,
-          operation.m_previous, operation.m_value));
-      });
-  });
+      }
+      for(auto i = 0; i != static_cast<int>(m_translation.size()); ++i) {
+        m_reverse_translation[m_translation[i]] = i;
+      }
+    },
+    [&] (const RemoveOperation& operation) {
+      auto reverse_index = m_reverse_translation[operation.m_index];
+      translate(-1, operation.m_index);
+      m_translation.erase(m_translation.begin() + reverse_index);
+      m_reverse_translation.erase(
+        m_reverse_translation.begin() + operation.m_index);
+      m_transaction.push(RemoveOperation(reverse_index, operation.m_row));
+    },
+    [&] (const UpdateOperation& operation) {
+      auto translated_row = m_reverse_translation[operation.m_row];
+      m_transaction.push(UpdateOperation(translated_row, operation.m_column,
+        operation.m_previous, operation.m_value));
+    });
 }

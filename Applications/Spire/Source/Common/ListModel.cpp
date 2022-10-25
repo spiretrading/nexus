@@ -20,21 +20,6 @@ AnyListModel::UpdateOperation::UpdateOperation(
     m_previous(std::move(previous)),
     m_value(std::move(value)) {}
 
-AnyListModel::Operation::Operation(AddOperation operation)
-  : m_operation(std::move(operation)) {}
-
-AnyListModel::Operation::Operation(RemoveOperation operation)
-  : m_operation(std::move(operation)) {}
-
-AnyListModel::Operation::Operation(MoveOperation operation)
-  : m_operation(std::move(operation)) {}
-
-AnyListModel::Operation::Operation(UpdateOperation operation)
-  : m_operation(std::move(operation)) {}
-
-AnyListModel::Operation::Operation(std::vector<Operation> operation)
-  : m_operation(std::move(operation)) {}
-
 std::any AnyListModel::get(int index) const {
   return at(index);
 }
@@ -75,4 +60,50 @@ void Spire::clear(AnyListModel& model) {
       model.remove(i);
     }
   });
+}
+
+std::ostream& Spire::operator <<(
+    std::ostream& out, const AnyListModel::AddOperation& operation) {
+  return out << operation.m_index;
+}
+
+std::ostream& Spire::operator <<(
+    std::ostream& out, const AnyListModel::RemoveOperation& operation) {
+  return out << operation.m_index;
+}
+
+std::ostream& Spire::operator <<(
+    std::ostream& out, const AnyListModel::MoveOperation& operation) {
+  return out <<
+    '(' << operation.m_source << ' ' << operation.m_destination << ')';
+}
+
+std::ostream& Spire::operator <<(
+    std::ostream& out, const AnyListModel::UpdateOperation& operation) {
+  return out << operation.m_index;
+}
+
+std::ostream& Spire::operator <<(
+    std::ostream& out, const AnyListModel::Operation& operation) {
+  visit(operation,
+    [&] (const AnyListModel::StartTransaction& operation) {
+      out << "StartTransaction";
+    },
+    [&] (const AnyListModel::EndTransaction& operation) {
+      out << "EndTransaction";
+    },
+    [&] (const AnyListModel::AddOperation& operation) {
+      out << "(AddOperation " << operation << ')';
+    },
+    [&] (const AnyListModel::RemoveOperation& operation) {
+      out << "(RemoveOperation " << operation << ')';
+    },
+    [&] (const AnyListModel::MoveOperation& operation) {
+      out << "(MoveOperation " <<
+        operation.m_source << ' ' << operation.m_destination << ')';
+    },
+    [&] (const AnyListModel::UpdateOperation& operation) {
+      out << "(UpdateOperation " << operation << ')';
+    });
+  return out;
 }
