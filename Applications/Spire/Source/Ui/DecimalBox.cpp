@@ -221,16 +221,7 @@ struct DecimalBox::DecimalToTextModel : TextModel {
   }
 
   QValidator::State set(const QString& value) override {
-    auto decimal_places = 0;
-    auto i = m_model->get_increment();
-    while(i < 1) {
-      i *= 10;
-      ++decimal_places;
-    }
-    if(decimal_places != m_decimal_places) {
-      m_decimal_places = decimal_places;
-      update_validator();
-    }
+    update_decimal_places();
     if(!m_validator.exactMatch(value)) {
       m_is_rejected = false;
       return QValidator::State::Invalid;
@@ -282,6 +273,19 @@ struct DecimalBox::DecimalToTextModel : TextModel {
     }
   }
 
+  void update_decimal_places() {
+    auto decimal_places = 0;
+    auto i = m_model->get_increment();
+    while(i < 1) {
+      i *= 10;
+      ++decimal_places;
+    }
+    if(decimal_places != m_decimal_places) {
+      m_decimal_places = decimal_places;
+      update_validator();
+    }
+  }
+
   void update_validator() {
     m_validator = make_validator(m_decimal_places);
   }
@@ -329,7 +333,19 @@ struct DecimalBox::DecimalToTextModel : TextModel {
       return {};
     }
     auto s = QString::fromStdString(value->str(
-      Decimal::backend_type::cpp_dec_float_digits10, std::ios_base::dec));
+      Decimal::backend_type::cpp_dec_float_digits10, std::ios_base::fixed));
+    auto decimal_point_pos = s.indexOf(".");
+    if(decimal_point_pos >= 0) {
+      auto trailing_zeros = 0;
+      for(auto pos = s.rbegin(); pos != s.rend() - decimal_point_pos; ++pos) {
+        if(*pos == '0' || *pos == '.') {
+          ++trailing_zeros;
+        } else {
+          break;
+        }
+      }
+      s.chop(trailing_zeros);
+    }
     if(DECIMAL_PATTERN.indexIn(s, 0) != -1) {
       auto captures = DECIMAL_PATTERN.capturedTexts();
       if(m_trailing_zeros != 0) {
@@ -346,6 +362,7 @@ struct DecimalBox::DecimalToTextModel : TextModel {
   }
 
   void on_current(const optional<Decimal>& current) {
+    update_decimal_places();
     m_current = to_string(current);
     m_update_signal(m_current);
   }
