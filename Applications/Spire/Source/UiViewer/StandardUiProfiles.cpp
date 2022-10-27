@@ -1339,19 +1339,26 @@ UiProfile Spire::make_decimal_box_profile() {
       decimal_box->set_placeholder(placeholder);
     });
     auto& read_only = get<bool>("read_only", profile.get_properties());
-    read_only.connect_changed_signal([=] (auto value) {
-      decimal_box->set_read_only(value);
-    });
     auto& buttons_visible =
       get<bool>("buttons_visible", profile.get_properties());
+    read_only.connect_changed_signal([=, &buttons_visible] (auto value) {
+      decimal_box->set_read_only(value);
+      if(value) {
+        buttons_visible.set(false);
+      } else {
+        buttons_visible.set(true);
+      }
+    });
     buttons_visible.connect_changed_signal([=] (auto value) {
-      update_style(*decimal_box, [&] (auto& style) {
-        if(value) {
-          style.get(Any() > is_a<Button>()).get_block().remove<Visibility>();
-        } else {
-          style.get(Any() > is_a<Button>()).set(Visibility::NONE);
-        }
-      });
+      if(!decimal_box->is_read_only()) {
+        update_style(*decimal_box, [&] (auto& style) {
+          if(value) {
+            style.get(Any() > is_a<Button>()).set(Visibility::VISIBLE);
+          } else {
+            style.get(Any() > is_a<Button>()).set(Visibility::NONE);
+          }
+          });
+      }
     });
     auto& apply_sign_styling =
       get<bool>("apply_sign_styling", profile.get_properties());
