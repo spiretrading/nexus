@@ -60,7 +60,6 @@ namespace {
       style.get(Disabled() > Body()).
         set(BackgroundColor(QColor(Qt::transparent))).
         set(Fill(QColor(0xC8C8C8)));
-      style.get(+Any() < ReadOnly()).set(Visibility::NONE);
     });
     button->setFocusPolicy(Qt::NoFocus);
     button->setFixedSize(BUTTON_SIZE());
@@ -439,12 +438,15 @@ DecimalBox::DecimalBox(std::shared_ptr<OptionalDecimalModel> current,
       m_modifiers(std::move(modifiers)),
       m_tick(TickIndicator::NONE) {
   m_text_box = new TextBox(m_adaptor_model, this);
-  update_style(*m_text_box, [&] (auto& style) {
-    style.get(+Any() % (is_a<Button>() && !matches(Visibility::NONE))).set(
-      PaddingRight(scale_width(26)));
-  });
   enclose(*this, *m_text_box);
   proxy_style(*this, *m_text_box);
+  update_style(*this, [] (auto& style) {
+    style.get(Any() > is_a<Button>()).set(Visibility::VISIBLE);
+    style.get(ReadOnly() > is_a<Button>()).set(Visibility::NONE);
+    style.get(+(Any() > is_a<TextBox>()) %
+        (is_a<Button>() && matches(Visibility::VISIBLE))).
+      set(PaddingRight(scale_width(24)));
+  });
   m_style_connection = connect_style_signal(*this, [=] { on_style(); });
   setFocusProxy(m_text_box);
   if(auto current = m_current->get()) {
