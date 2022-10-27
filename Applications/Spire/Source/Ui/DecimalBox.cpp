@@ -439,9 +439,8 @@ DecimalBox::DecimalBox(std::shared_ptr<OptionalDecimalModel> current,
       m_modifiers(std::move(modifiers)),
       m_tick(TickIndicator::NONE) {
   m_text_box = new TextBox(m_adaptor_model, this);
-  update_style(*m_text_box, [&] (auto& style) {
-    style.get(+Any() % (is_a<Button>() && !matches(Visibility::NONE))).set(
-      PaddingRight(scale_width(26)));
+  update_style(*m_text_box, [] (auto& style) {
+    style.get(Any()).set(PaddingRight(scale_width(24)));
   });
   enclose(*this, *m_text_box);
   proxy_style(*this, *m_text_box);

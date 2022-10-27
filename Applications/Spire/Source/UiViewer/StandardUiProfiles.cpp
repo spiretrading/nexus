@@ -1222,6 +1222,10 @@ UiProfile Spire::make_decimal_box_profile() {
   properties.push_back(make_standard_property("buttons_visible", true));
   properties.push_back(make_standard_property("apply_sign_styling", false));
   properties.push_back(make_standard_property("apply_tick_styling", false));
+  auto text_alignment_property = define_enum<Qt::Alignment>(
+    {{"LEFT", Qt::AlignLeft}, {"RIGHT", Qt::AlignRight}});
+  properties.push_back(make_standard_enum_property(
+    "text_align", text_alignment_property));
   auto profile = UiProfile("DecimalBox", properties, [] (auto& profile) {
     auto parse_decimal = [] (auto decimal) -> std::optional<Decimal> {
       try {
@@ -1375,6 +1379,13 @@ UiProfile Spire::make_decimal_box_profile() {
               chain(timeout(QColor(0xFFF1F1), milliseconds(250)),
                 linear(QColor(0xFFF1F1), revert, milliseconds(300)))));
         }
+      });
+    });
+    auto& text_alignment = get<Qt::Alignment>("text_align",
+      profile.get_properties());
+    text_alignment.connect_changed_signal([=] (auto alignment) {
+      update_style(*decimal_box, [&] (auto& style) {
+        style.get(Any()).set(TextAlign(Qt::Alignment(alignment)));
       });
     });
     return decimal_box;
