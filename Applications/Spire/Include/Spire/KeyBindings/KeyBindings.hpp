@@ -3,6 +3,8 @@
 
 namespace Spire {
   class OrderFieldInfoTip;
+  class OrderTasksPage;
+  class OrderTaskTableModel;
 }
 
 #endif
