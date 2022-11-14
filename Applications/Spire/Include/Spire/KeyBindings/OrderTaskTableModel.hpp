@@ -13,36 +13,36 @@
 
 namespace Spire {
 
-  /** The field index of the grab handle. */
+  /** The index of the grab handle field. */
   static const auto GRAB_HANDLE_INDEX = 0;
 
-  /** The field index of the name. */
+  /** The index of the name field. */
   static const auto NAME_INDEX = 1;
 
-  /** The field index of the region. */
+  /** The index of the region field. */
   static const auto REGION_INDEX = 2;
 
-  /** The field index of the destination. */
+  /** The index of the destination field. */
   static const auto DESTINATION_INDEX = 3;
 
-  /** The field index of the order type. */
+  /** The index of the order type field. */
   static const auto ORDER_TYPE_INDEX = 4;
 
-  /** The field index of the side. */
+  /** The index of the side field. */
   static const auto SIDE_INDEX = 5;
 
-  /** The field index of the quantity. */
+  /** The index of the quantity field. */
   static const auto QUANTITY_INDEX = 6;
 
-  /** The field index of the time in force. */
+  /** The index of the time in force field. */
   static const auto TIME_IN_FORCE_INDEX = 7;
 
-  /** The field index of the key. */
+  /** The index of the key field. */
   static const auto KEY_INDEX = 8;
 
   /**
-   * Implements a OrderTaskTableModel that converts a list of OrderTask to
-   * the table model used by the OrderTasksPage
+   * Implements an OrderTaskTableModel that accepts a list of the order task
+   * and is used by the OrderTasksPage.
    */
   class OrderTaskTableModel : public TableModel {
     public:
@@ -75,8 +75,8 @@ namespace Spire {
       };
 
       /**
-       * Constructs a OrderTasksTableModel.
-       * @param source The model.
+       * Constructs an OrderTasksTableModel.
+       * @param source A list of OrderTask.
        */
       explicit OrderTaskTableModel(
         std::shared_ptr<ListModel<OrderTask>> source);
@@ -91,7 +91,7 @@ namespace Spire {
        * Moves a row.
        * @param source The index of the row to move.
        * @param destination The index to move the row to.
-       * @throws <code>std::out_of_range</code> - The source or destination are
+       * @throws <code>std::out_of_range</code> - The source or destination is
        *         not within this table's range.
        */
       void move(int source, int destination);

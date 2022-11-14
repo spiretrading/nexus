@@ -6,6 +6,23 @@ using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 
+namespace {
+  auto to_list_model(const OrderTaskTableModel::OrderTask& order_task) {
+    static auto empty_value = std::any();
+    auto list_model = std::make_shared<ArrayListModel<std::any>>();
+    list_model->push(empty_value);
+    list_model->push(order_task.m_name);
+    list_model->push(order_task.m_region);
+    list_model->push(order_task.m_destination);
+    list_model->push(order_task.m_order_type);
+    list_model->push(order_task.m_side);
+    list_model->push(order_task.m_quantity);
+    list_model->push(order_task.m_time_in_force);
+    list_model->push(order_task.m_key_sequence);
+    return list_model;
+  }
+}
+
 OrderTaskTableModel::OrderTaskTableModel(
   std::shared_ptr<ListModel<OrderTask>> source)
   : m_source(std::move(source)),
@@ -46,7 +63,8 @@ AnyRef OrderTaskTableModel::at(int row, int column) const {
     throw std::out_of_range("The row or column is out of range.");
   }
   static auto empty_value = AnyRef();
-  auto get_value = [=] (const auto& order_task) -> AnyRef {
+  if(row < m_source->get_size()) {
+    auto& order_task = m_source->get(row);
     if(column == GRAB_HANDLE_INDEX) {
       return empty_value;
     } if(column == NAME_INDEX) {
@@ -63,11 +81,9 @@ AnyRef OrderTaskTableModel::at(int row, int column) const {
       return order_task.m_quantity;
     } else if(column == TIME_IN_FORCE_INDEX) {
       return order_task.m_time_in_force;
+    } else if(column == KEY_INDEX) {
+      return order_task.m_key_sequence;
     }
-    return order_task.m_key_sequence;
-  };
-  if(row < m_source->get_size()) {
-    return get_value(m_source->get(row));
   }
   return empty_value;
 }
@@ -112,47 +128,24 @@ connection OrderTaskTableModel::connect_operation_signal(
 
 void OrderTaskTableModel::on_operation(
     const AnyListModel::Operation& operation) {
-  static auto empty_value = std::any();
   visit(operation,
     [&] (const AnyListModel::AddOperation& operation) {
-      auto& value = std::any_cast<const OrderTask&>(operation.m_value);
-      auto model = std::make_shared<ArrayListModel<std::any>>();
-      model->push(empty_value);
-      model->push(value.m_name);
-      model->push(value.m_region);
-      model->push(value.m_destination);
-      model->push(value.m_order_type);
-      model->push(value.m_side);
-      model->push(value.m_quantity);
-      model->push(value.m_time_in_force);
-      model->push(value.m_key_sequence);
-      m_transaction.push(
-        TableModel::AddOperation(operation.m_index, std::move(model)));
+      m_transaction.push(TableModel::AddOperation(operation.m_index,
+          to_list_model(std::any_cast<const OrderTask&>(operation.m_value))));
     },
     [&] (const AnyListModel::MoveOperation& operation) {
       m_transaction.push(TableModel::MoveOperation(
         operation.m_source, operation.m_destination));
     },
-      [&] (const AnyListModel::RemoveOperation& operation) {
-      auto& value = std::any_cast<const OrderTask&>(operation.m_value);
-      auto model = std::make_shared<ArrayListModel<std::any>>();
-      model->push(empty_value);
-      model->push(value.m_name);
-      model->push(value.m_region);
-      model->push(value.m_destination);
-      model->push(value.m_order_type);
-      model->push(value.m_side);
-      model->push(value.m_quantity);
-      model->push(value.m_time_in_force);
-      model->push(value.m_key_sequence);
-      m_transaction.push(TableModel::RemoveOperation(
-        operation.m_index, std::move(model)));
+    [&] (const AnyListModel::RemoveOperation& operation) {
+      m_transaction.push(TableModel::RemoveOperation(operation.m_index,
+        to_list_model(std::any_cast<const OrderTask&>(operation.m_value))));
     },
-      [&] (const AnyListModel::UpdateOperation& operation) {
+    [&] (const AnyListModel::UpdateOperation& operation) {
       auto& previous = std::any_cast<const OrderTask&>(operation.m_previous);
       auto& value = std::any_cast<const OrderTask&>(operation.m_value);
-      auto [column, previous_field, current_field] =
-        [&] () -> std::tuple<int, std::any, std::any> {
+      auto [column, previous_field, current_field] = [&] ()
+          -> std::tuple<int, std::any, std::any> {
         if(previous.m_name != value.m_name) {
           return {NAME_INDEX, previous.m_name, value.m_name};
         } else if(previous.m_region != value.m_region) {
@@ -172,6 +165,7 @@ void OrderTaskTableModel::on_operation(
         } else if(previous.m_key_sequence != value.m_key_sequence) {
           return {KEY_INDEX, previous.m_key_sequence, value.m_key_sequence};
         }
+        static auto empty_value = std::any();
         return {GRAB_HANDLE_INDEX, empty_value, empty_value};
       }();
       m_transaction.push(TableModel::UpdateOperation(operation.m_index,
