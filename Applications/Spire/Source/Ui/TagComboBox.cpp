@@ -8,6 +8,7 @@
 
 using namespace boost::signals2;
 using namespace Spire;
+using namespace Spire::Styles;
 
 namespace {
   QWidget* find_pop_up_window(QWidget& widget) {
@@ -143,6 +144,7 @@ TagComboBox::TagComboBox(std::shared_ptr<ComboBox::QueryModel> query_model,
   m_combo_box->connect_submit_signal(
     std::bind_front(&TagComboBox::on_combo_box_submit, this));
   enclose(*this, *m_combo_box);
+  proxy_style(*this, *m_combo_box);
   setFocusProxy(m_combo_box);
   m_drop_down_window = find_pop_up_window(*m_combo_box);
   m_focus_observer.connect_state_signal(
