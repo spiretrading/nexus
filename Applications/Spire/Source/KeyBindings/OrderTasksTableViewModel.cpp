@@ -32,9 +32,8 @@ int OrderTasksTableViewModel::get_column_size() const {
 }
 
 AnyRef OrderTasksTableViewModel::at(int row, int column) const {
-  if(row < 0 || row >= get_row_size() || column < 0 ||
-      column >= get_column_size()) {
-    throw std::out_of_range("The row or column is out of range.");
+  if(row < 0 || row >= get_row_size()) {
+    throw std::out_of_range("The row is out of range.");
   }
   static auto empty_value = AnyRef();
   if(column == 0) {
@@ -48,9 +47,8 @@ AnyRef OrderTasksTableViewModel::at(int row, int column) const {
 
 QValidator::State OrderTasksTableViewModel::set(int row, int column,
     const std::any& value) {
-  if(row < 0 || row >= get_row_size() || column < 0 ||
-      column >= get_column_size()) {
-    throw std::out_of_range("The row or column is out of range.");
+  if(row < 0 || row >= get_row_size()) {
+    throw std::out_of_range("The row is out of range.");
   }
   if(column == 0) {
     return QValidator::State::Invalid;

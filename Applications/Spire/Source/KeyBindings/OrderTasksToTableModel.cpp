@@ -37,18 +37,16 @@ int OrderTasksToTableModel::get_column_size() const {
 }
 
 AnyRef OrderTasksToTableModel::at(int row, int column) const {
-  if(row < 0 || row >= get_row_size() || column < 0 ||
-      column >= get_column_size()) {
-    throw std::out_of_range("The row or column is out of range.");
+  if(column < 0 || column >= get_column_size()) {
+    throw std::out_of_range("The column is out of range.");
   }
   return extract_field(m_source->get(row), static_cast<Column>(column));
 }
 
 QValidator::State OrderTasksToTableModel::set(int row, int column,
     const std::any& value) {
-  if(row < 0 || row >= get_row_size() || column < 0 ||
-      column >= get_column_size()) {
-    throw std::out_of_range("The row or column is out of range.");
+  if(column < 0 || column >= get_column_size()) {
+    throw std::out_of_range("The column is out of range.");
   }
   auto column_index = static_cast<Column>(column);
   auto order_task = m_source->get(row);
