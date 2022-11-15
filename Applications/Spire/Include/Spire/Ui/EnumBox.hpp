@@ -120,6 +120,8 @@ namespace Spire {
         return view_builder(model->get(index));
       });
     enclose(*this, *m_drop_down_box);
+    Styles::proxy_style(*this, *m_drop_down_box);
+    setFocusProxy(m_drop_down_box);
   }
 
   template<typename T>

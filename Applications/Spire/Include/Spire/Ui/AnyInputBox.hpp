@@ -161,6 +161,7 @@ namespace Details {
         m_input_box(std::make_unique<WrapperInputBox<T>>(input_box)) {
     setFocusProxy(&input_box);
     enclose(*this, input_box);
+    Styles::proxy_style(*this, input_box);
   }
 
   template<typename T>

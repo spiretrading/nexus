@@ -2,6 +2,7 @@
 #include <QKeyEvent>
 
 using namespace Spire;
+using namespace Spire::Styles;
 
 EditableBox::EditableBox(AnyInputBox& input_box,
     QWidget* parent)
@@ -9,6 +10,7 @@ EditableBox::EditableBox(AnyInputBox& input_box,
       m_input_box(&input_box),
       m_focus_observer(*this) {
   enclose(*this, *m_input_box);
+  proxy_style(*this, *m_input_box);
   setFocusPolicy(Qt::StrongFocus);
   m_focus_observer.connect_state_signal(
     std::bind_front(&EditableBox::on_focus, this));
