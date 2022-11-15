@@ -108,7 +108,7 @@ void OrderTasksToTableModel::on_operation(
   visit(operation,
     [&] (const ListModel<OrderTask>::AddOperation& operation) {
       m_transaction.push(TableModel::AddOperation(operation.m_index,
-          to_list(operation.get_value())));
+        to_list(operation.get_value())));
     },
     [&] (const ListModel<OrderTask>::MoveOperation& operation) {
       m_transaction.push(TableModel::MoveOperation(
