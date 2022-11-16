@@ -35,14 +35,13 @@ AnyRef OrderTasksTableViewModel::at(int row, int column) const {
   if(row < 0 || row >= get_row_size()) {
     throw std::out_of_range("The row is out of range.");
   }
-  static auto empty_value = AnyRef();
   if(column == 0) {
-    return empty_value;
+    return {};
   }
   if(row < m_source->get_row_size()) {
     return m_source->at(row, column - 1);
   }
-  return empty_value;
+  return {};
 }
 
 QValidator::State OrderTasksTableViewModel::set(int row, int column,
