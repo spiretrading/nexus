@@ -12,6 +12,8 @@
 #include "Spire/Ui/TableItem.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
+extern bool qt_sendSpontaneousEvent(QObject* receiver, QEvent* event);
+
 using namespace boost;
 using namespace Spire;
 using namespace Spire::Styles;
@@ -83,7 +85,12 @@ struct TableBody::ColumnCover : Cover {
           hovered_widget->mapFromGlobal(event.globalPos()), event.windowPos(),
           event.screenPos(), event.button(), event.buttons(), event.modifiers(),
           event.source());
-        auto result = QCoreApplication::sendEvent(hovered_widget, &mouse_event);
+        auto result = [&] {
+          if(event.spontaneous()) {
+            return qt_sendSpontaneousEvent(hovered_widget, &mouse_event);
+          }
+          return QCoreApplication::sendEvent(hovered_widget, &mouse_event);
+        }();
         event.setAccepted(mouse_event.isAccepted());
         return result;
       } else {
