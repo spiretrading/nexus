@@ -429,8 +429,8 @@ void TableBody::add_row(int index) {
         QSizePolicy::Expanding, item->sizePolicy().verticalPolicy());
     }
     column_layout->addWidget(item);
-    item->connect_click_signal(
-      std::bind_front(&TableBody::on_item_clicked, this, std::ref(*item)));
+    item->connect_active_signal(
+      std::bind_front(&TableBody::on_item_activated, this, std::ref(*item)));
   }
   auto& row_layout = *static_cast<QBoxLayout*>(layout());
   row_layout.insertWidget(index, row);
@@ -466,7 +466,7 @@ void TableBody::move_row(int source, int destination) {
   m_selection_controller.move_row(source, destination);
 }
 
-void TableBody::on_item_clicked(TableItem& item) {
+void TableBody::on_item_activated(TableItem& item) {
   auto& row_widget = *item.parentWidget();
   auto index =
     Index(layout()->indexOf(&row_widget), row_widget.layout()->indexOf(&item));

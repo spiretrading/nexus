@@ -155,7 +155,7 @@ namespace Styles {
       void add_row(int index);
       void remove_row(int index);
       void move_row(int source, int destination);
-      void on_item_clicked(TableItem& item);
+      void on_item_activated(TableItem& item);
       void on_current(const boost::optional<Index>& previous,
         const boost::optional<Index>& current);
       void on_row_selection(const ListModel<int>::Operation& operation);
