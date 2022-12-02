@@ -1,6 +1,7 @@
 #include "Spire/UiViewer/StandardUiProfiles.hpp"
 #include <stack>
 #include <QImageReader>
+#include <QKeyEvent>
 #include <QLabel>
 #include <QPainter>
 #include <QPointer>
@@ -678,6 +679,204 @@ namespace {
       }
     private:
       QString m_rejected;
+  };
+
+  class EditableBoxDemo : public QWidget {
+    public:
+      explicit EditableBoxDemo(QWidget* parent = nullptr)
+          : QWidget(parent),
+            m_current_index(0),
+            m_focus_observer(*this) {
+        setFocusPolicy(Qt::StrongFocus);
+        auto body = new QWidget();
+        m_layout = new QHBoxLayout(body);
+        auto box = new Box(body);
+        enclose(*this, *box);
+        proxy_style(*this, *box);
+        update_style(*this, [] (auto& style) {
+          style.get(Any()).set(border(scale_width(1), QColor(0xE0E0E0)));
+        });
+        m_focus_observer.connect_state_signal([=] (auto state) {
+          if(state != FocusObserver::State::NONE) {
+            match(*get_current_item(), Current());
+          } else {
+            unmatch(*get_current_item(), Current());
+          }
+        });
+        init_editors();
+      }
+
+      void init_editors() {
+        auto text_editor = new EditableBox(*new AnyInputBox(
+          *new TextBox("TextBox")));
+        text_editor->setFixedWidth(scale_width(80));
+        add_editor(*text_editor, *text_editor);
+        auto query_model = populate_region_box_model();
+        auto current = std::make_shared<LocalValueModel<Region>>();
+        current->set(std::any_cast<Region>(query_model->parse("TSX")));
+        auto region_editor = new EditableBox(*new AnyInputBox(
+          *new RegionBox(query_model, current)));
+        auto popup_region_editor = new PopupBox(*region_editor);
+        popup_region_editor->setFixedWidth(scale_width(100));
+        add_editor(*popup_region_editor, *region_editor);
+        auto list_model = std::make_shared<ArrayListModel<QString>>();
+        for(auto i = 0; i < 5; ++i) {
+          list_model->push(QString("item%1").arg(i));
+        }
+        auto drop_down_box = new DropDownBox(list_model,
+          ListView::default_view_builder);
+        update_style(*drop_down_box, [] (auto& style) {
+          style.get(Hover() > is_a<TextBox>()).
+            set(border_color(QColor(Qt::transparent)));
+          });
+        auto drop_down_editor =
+          new EditableBox(*new AnyInputBox(*drop_down_box));
+        drop_down_editor->setFixedWidth(scale_width(80));
+        add_editor(*drop_down_editor, *drop_down_editor);
+        auto modifiers = QHash<Qt::KeyboardModifier, Quantity>(
+          {{Qt::NoModifier, 1}, {Qt::AltModifier, 5}, {Qt::ControlModifier, 10},
+            {Qt::ShiftModifier, 20}});
+        auto quantity_box = new QuantityBox(std::make_shared<
+          LocalScalarValueModel<optional<Quantity>>>(Quantity(1)), modifiers);
+        auto quantity_editor = new EditableBox(*new AnyInputBox(*quantity_box));
+        quantity_editor->setFixedWidth(scale_width(80));
+        add_editor(*quantity_editor, *quantity_editor);
+        auto model = populate_security_query_model();
+        auto security_current = std::make_shared<LocalValueModel<Security>>(
+          *ParseWildCardSecurity("MG.TSX", GetDefaultMarketDatabase(),
+          GetDefaultCountryDatabase()));
+        auto security_editor = new EditableBox(*new AnyInputBox(
+          *new SecurityBox(model, security_current)));
+        security_editor->setFixedWidth(scale_width(80));
+        add_editor(*security_editor, *security_editor);
+        auto key_editor = new EditableBox(*new AnyInputBox(*new KeyInputBox(
+          populate_key_input_box_model(QKeySequence("F1")))));
+        key_editor->setFixedWidth(scale_width(80));
+        add_editor(*key_editor, *key_editor);
+      }
+
+    protected:
+      bool focusNextPrevChild(bool next) override {
+        if(isEnabled()) {
+          auto key = [&] {
+            if(next) {
+              return Qt::Key_Tab;
+            }
+            return Qt::Key_Backtab;
+          }();
+          QKeyEvent event(QEvent::KeyPress, key, Qt::NoModifier);
+          keyPressEvent(&event);
+          if(event.isAccepted()) {
+            return true;
+          }
+        }
+        return QWidget::focusNextPrevChild(next);
+      }
+
+      void keyPressEvent(QKeyEvent* event) override {
+        switch(event->key()) {
+        case Qt::Key_Backtab:
+        case Qt::Key_Left:
+          move_left();
+          break;
+        case Qt::Key_Tab:
+        case Qt::Key_Right:
+          move_right();
+          break;
+        case Qt::Key_Enter:
+        case Qt::Key_Return:
+          m_editors[m_current_index]->set_editing(true);
+          break;
+        case Qt::Key_Backspace:
+        case Qt::Key_Delete:
+          QCoreApplication::sendEvent(
+            find_focus_proxy(get_current_item()->get_body()), event);
+          break;
+        default:
+          if(is_a_word(event->text())) {
+            QCoreApplication::sendEvent(
+              find_focus_proxy(get_current_item()->get_body()), event);
+          } else {
+            QWidget::keyPressEvent(event);
+          }
+        }
+      }
+
+    private:
+      int m_current_index;
+      FocusObserver m_focus_observer;
+      QHBoxLayout* m_layout;
+      std::vector<EditableBox*> m_editors;
+
+      void add_editor(QWidget& widget, EditableBox& editor) {
+        m_editors.push_back(&editor);
+        auto item = new ListItem(widget);
+        update_style(*item, [] (auto& style) {
+          style.get(Any()).
+            set(BackgroundColor(QColor(Qt::transparent))).
+            set(border(scale_width(1), QColor(Qt::transparent))).
+            set(padding(0));
+          style.get(Current()).
+            set(BackgroundColor(QColor(Qt::transparent))).
+            set(border_color(QColor(0x4B23A0)));
+          style.get(Focus()).
+            set(border_color(QColor(Qt::transparent)));
+          });
+        editor.connect_start_edit_signal([=] {
+          unmatch(*get_current_item(), Current());
+          m_current_index = m_layout->indexOf(item);
+        });
+        editor.connect_end_edit_signal([=] {
+          unmatch(*get_current_item(), Current());
+          if(!QApplication::focusWidget() && window()->isActiveWindow()) {
+            setFocus();
+          }
+        });
+        m_layout->addWidget(item);
+      }
+
+      ListItem* get_current_item() {
+        return static_cast<ListItem*>(
+          m_layout->itemAt(m_current_index)->widget());
+      }
+
+      void move_left() {
+        if(m_current_index == 0) {
+          return;
+        }
+        auto is_editing = is_current_editing();
+        if(is_editing) {
+          setFocus();
+        }
+        unmatch(*get_current_item(), Current());
+        --m_current_index;
+        if(is_editing) {
+          get_current_item()->setFocus();
+        } else {
+          match(*get_current_item(), Current());
+        }
+      }
+
+      void move_right() {
+        if(m_current_index == m_layout->count() - 1) {
+          return;
+        }
+        auto is_editing = is_current_editing();
+        if(is_editing) {
+          setFocus();
+        }
+        unmatch(*get_current_item(), Current());
+        ++m_current_index;
+        if(is_editing) {
+          get_current_item()->setFocus();
+        } else {
+          match(*get_current_item(), Current());
+        }
+      }
+
+      bool is_current_editing() {
+        return m_editors[m_current_index]->is_editing();
+      }
   };
 }
 
@@ -1653,39 +1852,53 @@ UiProfile Spire::make_editable_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
   auto test_widget_property = define_enum<int>(
-    {{"TextBox", 0}, {"DropDownBox", 1}, {"DecimalBox", 2}, {"KeyInputBox", 3},
+    {{"TextBox", 0}, {"DropDownBox", 1}, {"QuantityBox", 2}, {"KeyInputBox", 3},
       {"RegionBox", 4}});
   properties.push_back(
     make_standard_enum_property("input_box", test_widget_property));
-  auto profile = UiProfile("EditableBox", properties, [] (auto& profile) {
-    auto& test_widget = get<int>("input_box", profile.get_properties());
-    auto input_box = [&] {
-      auto value = test_widget.get();
-      if(value == 0) {
-        return new AnyInputBox(*(new TextBox("TextBox")));
-      } else if(value == 1) {
-        auto list_model = std::make_shared<ArrayListModel<QString>>();
-        for(auto i = 0; i < 5; ++i) {
-          list_model->push(QString("item%1").arg(i));
-        }
-        return new AnyInputBox(*(new DropDownBox(list_model)));
-      } else if(value == 2) {
-        return new AnyInputBox((*new DecimalBox(
-          std::make_shared<LocalOptionalDecimalModel>(Decimal(1)))));
-      } else if(value == 3) {
-        return new AnyInputBox((*new KeyInputBox(populate_key_input_box_model(
-          QKeySequence("F1")))));
+  properties.push_back(make_standard_property("composite_demo", false));
+  auto profile = UiProfile("EditableBox", properties,
+    [] (auto& profile) -> QWidget* {
+      auto& composite = get<bool>("composite_demo", profile.get_properties());
+      if(composite.get()) {
+        return new EditableBoxDemo();
       }
-      auto query_model = populate_region_box_model();
-      auto current = std::make_shared<LocalValueModel<Region>>();
-      current->set(std::any_cast<Region>(query_model->parse("TSX")));
-      return new AnyInputBox((*new RegionBox(query_model, current)));
-    }();
-    auto editable_box = new EditableBox(*input_box);
-    editable_box->setMinimumWidth(scale_width(112));
-    apply_widget_properties(editable_box, profile.get_properties());
-    return editable_box;
-  });
+      auto& test_widget = get<int>("input_box", profile.get_properties());
+      auto input_box = [&] {
+        auto value = test_widget.get();
+        if(value == 0) {
+          return new AnyInputBox(*new TextBox("TextBox"));
+        } else if(value == 1) {
+          auto list_model = std::make_shared<ArrayListModel<QString>>();
+          for(auto i = 0; i < 5; ++i) {
+            list_model->push(QString("item%1").arg(i));
+          }
+          return new AnyInputBox(*new DropDownBox(list_model));
+        } else if(value == 2) {
+          auto modifiers = QHash<Qt::KeyboardModifier, Quantity>(
+            {{Qt::NoModifier, 1}, {Qt::AltModifier, 5},
+              {Qt::ControlModifier, 10}, {Qt::ShiftModifier, 20}});
+          return new AnyInputBox(*new QuantityBox(std::make_shared<
+            LocalScalarValueModel<optional<Quantity>>>(Quantity(1)),
+              modifiers));
+        } else if(value == 3) {
+          return new AnyInputBox(*new KeyInputBox(
+            populate_key_input_box_model(QKeySequence("F1"))));
+        }
+        auto query_model = populate_region_box_model();
+        auto current = std::make_shared<LocalValueModel<Region>>();
+        current->set(std::any_cast<Region>(query_model->parse("TSX")));
+        return new AnyInputBox(*new RegionBox(query_model, current));
+      }();
+      auto editable_box = new EditableBox(*input_box);
+      editable_box->setMinimumWidth(scale_width(112));
+      apply_widget_properties(editable_box, profile.get_properties());
+      editable_box->connect_start_edit_signal(
+        profile.make_event_slot("StartEditSignal"));
+      editable_box->connect_end_edit_signal(
+        profile.make_event_slot("EndEditSignal"));
+      return editable_box;
+    });
   return profile;
 }
 

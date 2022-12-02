@@ -244,7 +244,7 @@ void ListView::keyPressEvent(QKeyEvent* event) {
     default:
       {
         auto text = event->text();
-        if(text.size() == 1 && (text[0].isLetterOrNumber() || text[0] == '_')) {
+        if(is_a_word(text)) {
           append_query(text);
         } else {
           QWidget::keyPressEvent(event);

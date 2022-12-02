@@ -141,8 +141,7 @@ QWidget& SecurityView::get_body() {
 }
 
 void SecurityView::keyPressEvent(QKeyEvent* event) {
-  if(auto text = event->text();
-      text.size() == 1 && (text[0].isLetterOrNumber() || text[0] == '_')) {
+  if(is_a_word(event->text())) {
     m_search_window->show();
     QApplication::sendEvent(find_focus_proxy(*m_search_window), event);
   } else if(event->key() == Qt::Key_PageUp && !m_securities.empty()) {

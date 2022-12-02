@@ -30,6 +30,7 @@ PopupBox::PopupBox(QWidget& body, QWidget* parent)
   m_position_observer.connect_position_signal(
     std::bind_front(&PopupBox::on_position, this));
   m_min_height = m_body->sizeHint().height();
+  setFocusProxy(m_body);
 }
 
 const QWidget& PopupBox::get_body() const {
