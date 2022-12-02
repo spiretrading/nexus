@@ -2,6 +2,7 @@
 #include <doctest/doctest.h>
 #include "Spire/Spire/ArrayTableModel.hpp"
 #include "Spire/Spire/SortedTableModel.hpp"
+#include "Spire/SpireTester/TableModelTester.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -233,12 +234,11 @@ TEST_SUITE("SortedTableModel") {
     REQUIRE(column_span<float>(sorted_model, 2) ==
       std::vector{9.2f, 4.1f, 3.7f, 7.8f, 1.3f, 7.8f});
     source->push({2, std::string("Tom"), 3.0f});
-    REQUIRE(operations.size() == 1);
-    auto operation = operations.front();
-    operations.pop_front();
-    auto add_operation = operation.get<TableModel::AddOperation>();
-    REQUIRE((add_operation != none));
-    REQUIRE(add_operation->m_index == 2);
+    require_transaction(operations,
+      {
+        TableModel::AddOperation(2, nullptr)
+      });
+    operations.clear();
     REQUIRE(column_span<int>(sorted_model, 0) ==
       std::vector{2, 2, 2, 4, 6, 9, 9});
     REQUIRE(column_span<std::string>(sorted_model, 1) ==
@@ -247,12 +247,11 @@ TEST_SUITE("SortedTableModel") {
     REQUIRE(column_span<float>(sorted_model, 2) ==
       std::vector{9.2f, 4.1f, 3.0f, 3.7f, 7.8f, 1.3f, 7.8f});
     source->push({7, std::string("Smith"), 4.4f});
-    REQUIRE(operations.size() == 1);
-    operation = operations.front();
-    operations.pop_front();
-    add_operation = operation.get<TableModel::AddOperation>();
-    REQUIRE((add_operation != none));
-    REQUIRE(add_operation->m_index == 5);
+    require_transaction(operations,
+      {
+        TableModel::AddOperation(5, nullptr)
+      });
+    operations.clear();
     REQUIRE(column_span<int>(sorted_model, 0) ==
       std::vector{2, 2, 2, 4, 6, 7, 9, 9});
     REQUIRE(column_span<std::string>(sorted_model, 1) ==
@@ -283,12 +282,11 @@ TEST_SUITE("SortedTableModel") {
     REQUIRE(column_span<float>(sorted_model, 2) ==
       std::vector{9.2f, 4.1f, 3.7f, 7.8f, 1.3f, 7.8f});
     source->insert({2, std::string("Tom"), 3.0f}, 4);
-    REQUIRE(operations.size() == 1);
-    auto operation = operations.front();
-    operations.pop_front();
-    auto add_operation = operation.get<TableModel::AddOperation>();
-    REQUIRE((add_operation != none));
-    REQUIRE(add_operation->m_index == 2);
+    require_transaction(operations,
+      {
+        TableModel::AddOperation(2, nullptr)
+      });
+    operations.clear();
     REQUIRE(column_span<int>(sorted_model, 0) ==
       std::vector{2, 2, 2, 4, 6, 9, 9});
     REQUIRE(column_span<std::string>(sorted_model, 1) ==
@@ -297,12 +295,11 @@ TEST_SUITE("SortedTableModel") {
     REQUIRE(column_span<float>(sorted_model, 2) ==
       std::vector{9.2f, 4.1f, 3.0f, 3.7f, 7.8f, 1.3f, 7.8f});
     source->insert({7, std::string("Smith"), 4.4f}, 0);
-    REQUIRE(operations.size() == 1);
-    operation = operations.front();
-    operations.pop_front();
-    add_operation = operation.get<TableModel::AddOperation>();
-    REQUIRE((add_operation != none));
-    REQUIRE(add_operation->m_index == 5);
+    require_transaction(operations,
+      {
+        TableModel::AddOperation(5, nullptr)
+      });
+    operations.clear();
     REQUIRE(column_span<int>(sorted_model, 0) ==
       std::vector{2, 2, 2, 4, 6, 7, 9, 9});
     REQUIRE(column_span<std::string>(sorted_model, 1) ==
@@ -325,23 +322,21 @@ TEST_SUITE("SortedTableModel") {
     sorted_model.connect_operation_signal(
       [&] (const auto& operation) { operations.push_back(operation); });
     source->push({1, std::string("Tom"), 3.0f});
-    REQUIRE(operations.size() == 1);
-    auto operation = operations.front();
-    operations.pop_front();
-    auto add_operation = operation.get<TableModel::AddOperation>();
-    REQUIRE((add_operation != none));
-    REQUIRE(add_operation->m_index == 3);
+    require_transaction(operations,
+      {
+        TableModel::AddOperation(3, nullptr)
+      });
+    operations.clear();
     REQUIRE(column_span<int>(sorted_model, 0) == std::vector{4, 2, 9, 1});
     REQUIRE(column_span<std::string>(sorted_model, 1) ==
       std::vector<std::string>{"John", "Bob", "Jack", "Tom"});
     REQUIRE(sorted_model.get_row_size() == 4);
     source->insert({7, std::string("Smith"), 4.4f}, 1);
-    REQUIRE(operations.size() == 1);
-    operation = operations.front();
-    operations.pop_front();
-    add_operation = operation.get<TableModel::AddOperation>();
-    REQUIRE((add_operation != none));
-    REQUIRE(add_operation->m_index == 1);
+    require_transaction(operations,
+      {
+        TableModel::AddOperation(1, nullptr)
+      });
+    operations.clear();
     REQUIRE(column_span<int>(sorted_model, 0) == std::vector{4, 7, 2, 9, 1});
     REQUIRE(column_span<std::string>(sorted_model, 1) ==
       std::vector<std::string>{"John", "Smith", "Bob", "Jack", "Tom"});
@@ -351,12 +346,11 @@ TEST_SUITE("SortedTableModel") {
     sorted_model.set_column_order(order);
     operations.clear();
     source->insert({0, std::string("Liam"), 1.4f}, 3);
-    REQUIRE(operations.size() == 1);
-    operation = operations.front();
-    operations.pop_front();
-    add_operation = operation.get<TableModel::AddOperation>();
-    REQUIRE((add_operation != none));
-    REQUIRE(add_operation->m_index == 3);
+    require_transaction(operations,
+      {
+        TableModel::AddOperation(3, nullptr)
+      });
+    operations.clear();
     REQUIRE(column_span<int>(sorted_model, 0) == std::vector{4, 7, 9, 0, 1});
     REQUIRE(column_span<std::string>(sorted_model, 1) ==
       std::vector<std::string>{"John", "Smith", "Jack", "Liam", "Tom"});
@@ -384,12 +378,11 @@ TEST_SUITE("SortedTableModel") {
     REQUIRE(column_span<float>(sorted_model, 2) ==
       std::vector{9.2f, 4.1f, 3.7f, 7.8f, 1.3f, 7.8f});
     source->remove(2);
-    REQUIRE(operations.size() == 1);
-    auto operation = operations.front();
-    operations.pop_front();
-    auto remove_operation = operation.get<TableModel::RemoveOperation>();
-    REQUIRE((remove_operation != none));
-    REQUIRE(remove_operation->m_index == 4);
+    require_transaction(operations,
+      {
+        TableModel::RemoveOperation(4, nullptr)
+      });
+    operations.clear();
     REQUIRE(column_span<int>(sorted_model, 0) == std::vector{2, 2, 4, 6, 9});
     REQUIRE(column_span<std::string>(sorted_model, 1) ==
       std::vector<std::string>{"Bob", "Bob", "John", "Liam", "Joe"});
@@ -422,64 +415,45 @@ TEST_SUITE("SortedTableModel") {
     REQUIRE(column_span<float>(sorted_model, 2) ==
       std::vector{9.2f, 4.1f, 3.7f, 7.8f, 1.3f, 7.8f});
     source->set(4, 2, 10.0f);
-    REQUIRE(operations.size() == 1);
-    auto operation = operations.front();
-    operations.pop_front();
-    auto update_operation = operation.get<TableModel::UpdateOperation>();
-    REQUIRE((update_operation != none));
-    REQUIRE(update_operation->m_row == 3);
-    REQUIRE(update_operation->m_column == 2);
+    require_transaction(operations,
+      {
+        TableModel::UpdateOperation(3, 2, std::any(), std::any())
+      });
+    operations.clear();
     REQUIRE(column_span<int>(sorted_model, 0) == std::vector{2, 2, 4, 6, 9, 9});
     REQUIRE(column_span<std::string>(sorted_model, 1) ==
       std::vector<std::string>{"Bob", "Bob", "John", "Liam", "Jack", "Joe"});
     REQUIRE(column_span<float>(sorted_model, 2) ==
       std::vector{9.2f, 4.1f, 3.7f, 10.0f, 1.3f, 7.8f});
     source->set(3, 1, std::string("Ava"));
-    REQUIRE(operations.size() == 2);
-    operation = operations.front();
-    operations.pop_front();
-    auto move_operation = operation.get<TableModel::MoveOperation>();
-    REQUIRE((move_operation != none));
-    REQUIRE(move_operation->m_source == 1);
-    REQUIRE(move_operation->m_destination == 0);
-    operation = operations.front();
-    operations.pop_front();
-    update_operation = operation.get<TableModel::UpdateOperation>();
-    REQUIRE((update_operation != none));
-    REQUIRE(update_operation->m_row == 0);
-    REQUIRE(update_operation->m_column == 1);
+    require_transaction(operations,
+      {
+        TableModel::MoveOperation(1, 0),
+        TableModel::UpdateOperation(0, 1, std::any(), std::any())
+      });
+    operations.clear();
     REQUIRE(column_span<int>(sorted_model, 0) == std::vector{2, 2, 4, 6, 9, 9});
     REQUIRE(column_span<std::string>(sorted_model, 1) ==
       std::vector<std::string>{"Ava", "Bob", "John", "Liam", "Jack", "Joe"});
     REQUIRE(column_span<float>(sorted_model, 2) ==
       std::vector{4.1f, 9.2f, 3.7f, 10.0f, 1.3f, 7.8f});
     source->set(2, 0, 0);
-    REQUIRE(operations.size() == 2);
-    operation = operations.front();
-    operations.pop_front();
-    move_operation = operation.get<TableModel::MoveOperation>();
-    REQUIRE((move_operation != none));
-    REQUIRE(move_operation->m_source == 4);
-    REQUIRE(move_operation->m_destination == 0);
-    operation = operations.front();
-    operations.pop_front();
-    update_operation = operation.get<TableModel::UpdateOperation>();
-    REQUIRE((update_operation != none));
-    REQUIRE(update_operation->m_row == 0);
-    REQUIRE(update_operation->m_column == 0);
+    require_transaction(operations,
+      {
+        TableModel::MoveOperation(4, 0),
+        TableModel::UpdateOperation(0, 0, std::any(), std::any())
+      });
+    operations.clear();
     REQUIRE(column_span<int>(sorted_model, 0) == std::vector{0, 2, 2, 4, 6, 9});
     REQUIRE(column_span<std::string>(sorted_model, 1) ==
       std::vector<std::string>{"Jack", "Ava", "Bob", "John", "Liam", "Joe"});
     REQUIRE(column_span<float>(sorted_model, 2) ==
       std::vector{1.3f, 4.1f, 9.2f, 3.7f, 10.f, 7.8f});
     source->set(1, 1, std::string("Tom"));
-    REQUIRE(operations.size() == 1);
-    operation = operations.front();
-    operations.pop_front();
-    update_operation = operation.get<TableModel::UpdateOperation>();
-    REQUIRE((update_operation != none));
-    REQUIRE(update_operation->m_row == 2);
-    REQUIRE(update_operation->m_column == 1);
+    require_transaction(operations,
+      {
+        TableModel::UpdateOperation(2, 1, std::any(), std::any())
+      });
     REQUIRE(column_span<int>(sorted_model, 0) == std::vector{0, 2, 2, 4, 6, 9});
     REQUIRE(column_span<std::string>(sorted_model, 1) ==
       std::vector<std::string>{"Jack", "Ava", "Tom", "John", "Liam", "Joe"});
@@ -505,11 +479,27 @@ TEST_SUITE("SortedTableModel") {
     source->set(3, 0, 1);
     source->insert({6, std::string("Tom"), 11.1f}, 2);
     source->set(5, 1, std::string("Bob"));
-    REQUIRE(signal_count == 4);
+    REQUIRE(signal_count == 7);
     REQUIRE(column_span<int>(sorted_model, 0) == std::vector{9, 6, 4, 2, 2, 1});
     REQUIRE(column_span<std::string>(sorted_model, 1) ==
       std::vector<std::string>{"Jack", "Tom", "John", "Bob", "Bob", "Liam"});
     REQUIRE(column_span<float>(sorted_model, 2) ==
       std::vector{1.3f, 11.1f, 3.7f, 4.1f, 9.2f, 7.8f});
+  }
+
+  TEST_CASE("transaction") {
+    auto source = std::make_shared<ArrayTableModel>();
+    source->push({4});
+    source->push({2});
+    source->push({9});
+    source->push({6});
+    auto order = std::vector<SortedTableModel::ColumnOrder>();
+    order.push_back({0, SortedTableModel::Ordering::ASCENDING});
+    auto sorted_model = SortedTableModel(source, order);
+    source->transact([&] {
+      source->insert({5}, 1);
+      source->insert({3}, 1);
+    });
+    REQUIRE(column_span<int>(sorted_model, 0) == std::vector{2, 3, 4, 5, 6, 9});
   }
 }

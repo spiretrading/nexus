@@ -4,6 +4,7 @@
 
 using namespace boost::signals2;
 using namespace Spire;
+using namespace Spire::Styles;
 
 EditableBox::EditableBox(AnyInputBox& input_box, QWidget* parent)
     : QWidget(parent),
@@ -12,6 +13,8 @@ EditableBox::EditableBox(AnyInputBox& input_box, QWidget* parent)
       m_focus_proxy(nullptr) {
   setFocusProxy(m_input_box);
   enclose(*this, *m_input_box);
+  proxy_style(*this, *m_input_box);
+  setFocusPolicy(Qt::StrongFocus);
   m_focus_observer.connect_state_signal(
     std::bind_front(&EditableBox::on_focus, this));
   m_input_box->set_read_only(true);

@@ -12,6 +12,8 @@
 #include "Spire/Ui/TableItem.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
+extern bool qt_sendSpontaneousEvent(QObject* receiver, QEvent* event);
+
 using namespace boost;
 using namespace Spire;
 using namespace Spire::Styles;
@@ -83,7 +85,12 @@ struct TableBody::ColumnCover : Cover {
           hovered_widget->mapFromGlobal(event.globalPos()), event.windowPos(),
           event.screenPos(), event.button(), event.buttons(), event.modifiers(),
           event.source());
-        auto result = QCoreApplication::sendEvent(hovered_widget, &mouse_event);
+        auto result = [&] {
+          if(event.spontaneous()) {
+            return qt_sendSpontaneousEvent(hovered_widget, &mouse_event);
+          }
+          return QCoreApplication::sendEvent(hovered_widget, &mouse_event);
+        }();
         event.setAccepted(mouse_event.isAccepted());
         return result;
       } else {
@@ -422,8 +429,8 @@ void TableBody::add_row(int index) {
         QSizePolicy::Expanding, item->sizePolicy().verticalPolicy());
     }
     column_layout->addWidget(item);
-    item->connect_click_signal(
-      std::bind_front(&TableBody::on_item_clicked, this, std::ref(*item)));
+    item->connect_active_signal(
+      std::bind_front(&TableBody::on_item_activated, this, std::ref(*item)));
   }
   auto& row_layout = *static_cast<QBoxLayout*>(layout());
   row_layout.insertWidget(index, row);
@@ -459,7 +466,7 @@ void TableBody::move_row(int source, int destination) {
   m_selection_controller.move_row(source, destination);
 }
 
-void TableBody::on_item_clicked(TableItem& item) {
+void TableBody::on_item_activated(TableItem& item) {
   auto& row_widget = *item.parentWidget();
   auto index =
     Index(layout()->indexOf(&row_widget), row_widget.layout()->indexOf(&item));

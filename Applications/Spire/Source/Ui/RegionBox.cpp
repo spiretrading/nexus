@@ -3,6 +3,7 @@
 #include <boost/signals2/shared_connection_block.hpp>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
+#include "Spire/Styles/Stylist.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/RegionListItem.hpp"
@@ -12,6 +13,7 @@ using namespace boost::iterators;
 using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
+using namespace Spire::Styles;
 
 namespace {
   struct RegionHash {
@@ -144,6 +146,7 @@ RegionBox::RegionBox(std::shared_ptr<ComboBox::QueryModel> query_model,
       std::bind_front(&RegionBox::on_tags_operation, this));
   m_tag_combo_box->installEventFilter(this);
   enclose(*this, *m_tag_combo_box);
+  proxy_style(*this, *m_tag_combo_box);
   setFocusProxy(m_tag_combo_box);
 }
 

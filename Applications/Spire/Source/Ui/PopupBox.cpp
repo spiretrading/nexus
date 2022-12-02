@@ -1,9 +1,11 @@
 #include "Spire/Ui/PopupBox.hpp"
 #include <QApplication>
+#include "Spire/Styles/Stylist.hpp"
 #include "Spire/Ui/Layouts.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;
+using namespace Spire::Styles;
 
 PopupBox::PopupBox(QWidget& body, QWidget* parent)
     : QWidget(parent),
@@ -19,6 +21,8 @@ PopupBox::PopupBox(QWidget& body, QWidget* parent)
       m_right_space(0) {
   m_body->installEventFilter(this);
   enclose(*this, *m_body);
+  proxy_style(*this, *m_body);
+  setFocusProxy(m_body);
   m_body_focus_observer.connect_state_signal(
     std::bind_front(&PopupBox::on_body_focus, this));
   m_focus_observer.connect_state_signal(
