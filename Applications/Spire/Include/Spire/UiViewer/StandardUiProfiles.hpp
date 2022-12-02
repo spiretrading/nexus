@@ -65,6 +65,9 @@ namespace Spire {
   /** Returns a UiProfile for the FocusObserver. */
   UiProfile make_focus_observer_profile();
 
+  /** Returns a UiProfile for the GrabHandle. */
+  UiProfile make_grab_handle_profile();
+
   /** Returns a UiProfile for the HoverObserver. */
   UiProfile make_hover_observer_profile();
 

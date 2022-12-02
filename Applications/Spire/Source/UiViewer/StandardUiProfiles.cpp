@@ -9,6 +9,7 @@
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 #include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 #include "Nexus/Definitions/SecuritySet.hpp"
+#include "Spire/KeyBindings/GrabHandle.hpp"
 #include "Spire/KeyBindings/OrderFieldInfoTip.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ArrayTableModel.hpp"
@@ -1800,6 +1801,24 @@ UiProfile Spire::make_focus_observer_profile() {
       observers.push_back(focus_observer);
     }
     return widget;
+  });
+  return profile;
+}
+
+UiProfile Spire::make_grab_handle_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(
+    make_standard_property("background-color", QColor(Qt::transparent)));
+  auto profile = UiProfile("GrabHandle", properties, [] (auto& profile) {
+    auto grab_handle = new GrabHandle();
+    grab_handle->setFixedSize(scale(20, 26));
+    apply_widget_properties(grab_handle, profile.get_properties());
+    auto& background_color =
+      get<QColor>("background-color", profile.get_properties());
+    connect_style_property_change_signal<QColor, Any, BackgroundColor>(
+      background_color, grab_handle);
+    return grab_handle;
   });
   return profile;
 }
