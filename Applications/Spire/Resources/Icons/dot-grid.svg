@@ -1,0 +1,8 @@
+<svg id="dot-grid" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 6 10">
+  <rect id="Rectangle_1631" data-name="Rectangle 1631" width="2" height="2" fill="#535353"/>
+  <rect id="Rectangle_1632" data-name="Rectangle 1632" width="2" height="2" transform="translate(4)" fill="#535353"/>
+  <rect id="Rectangle_1633" data-name="Rectangle 1633" width="2" height="2" transform="translate(0 4)" fill="#535353"/>
+  <rect id="Rectangle_1634" data-name="Rectangle 1634" width="2" height="2" transform="translate(4 4)" fill="#535353"/>
+  <rect id="Rectangle_1635" data-name="Rectangle 1635" width="2" height="2" transform="translate(0 8)" fill="#535353"/>
+  <rect id="Rectangle_1636" data-name="Rectangle 1636" width="2" height="2" transform="translate(4 8)" fill="#535353"/>
+</svg>
