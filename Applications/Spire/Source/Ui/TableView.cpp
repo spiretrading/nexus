@@ -205,8 +205,7 @@ TableViewBuilder::TableViewBuilder(
       std::make_shared<TableEmptySelectionModel>(),
       std::make_shared<ListSingleSelectionModel>(),
       std::make_shared<ListEmptySelectionModel>())),
-    m_view_builder(&TableView::default_view_builder),
-    m_comparator(nullptr) {}
+    m_view_builder(&TableView::default_view_builder) {}
 
 TableViewBuilder& TableViewBuilder::set_header(
     const std::shared_ptr<TableView::HeaderModel>& header) {
