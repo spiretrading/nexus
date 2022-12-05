@@ -96,7 +96,7 @@ namespace Styles {
        * @param region_query_model The model used to query region matches.
        * @param destination_database The destination database.
        * @param market_database The market database.
-       * @param model The list model of OrderTask.
+       * @param model The table model of the TableView.
        * @param row The row index.
        * @param column The column index.
        */

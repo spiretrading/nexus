@@ -31,7 +31,7 @@ namespace {
       }
       auto& widget = *static_cast<QWidget*>(child);
       if(widget.isWindow() &&
-        (widget.windowFlags() & Qt::WindowDoesNotAcceptFocus)) {
+          (widget.windowFlags() & Qt::WindowDoesNotAcceptFocus)) {
         return &widget;
       }
       if(auto window = find_tip_window(widget)) {
@@ -184,13 +184,7 @@ bool OrderTasksRow::is_draggable() const {
 }
 
 void OrderTasksRow::set_draggable(bool is_draggable) {
-  if(is_draggable == m_is_draggable) {
-    return;
-  }
   m_is_draggable = is_draggable;
-  if(m_grab_handle && m_row) {
-    make_hover_observer();
-  }
 }
 
 bool OrderTasksRow::is_ignore_filters() const {
@@ -296,51 +290,50 @@ void OrderTasksRow::make_hover_observer() {
 }
 
 EditableBox* OrderTasksRow::make_editor(
-  const std::shared_ptr<ComboBox::QueryModel>& region_query_model,
-  const DestinationDatabase& destination_database,
-  const MarketDatabase& market_database,
-  const std::shared_ptr<TableModel>& table, int row, int column) {
+    const std::shared_ptr<ComboBox::QueryModel>& region_query_model,
+    const DestinationDatabase& destination_database,
+    const MarketDatabase& market_database,
+    const std::shared_ptr<TableModel>& table, int row, int column) {
   auto input_box = [&] () -> AnyInputBox* {
     switch(static_cast<Column>(column)) {
       case Column::NAME:
         return new AnyInputBox(*new TextBox(
           std::make_shared<ListValueModel<QString>>(
-          std::make_shared<ColumnViewListModel<QString>>(table, column),
-          row)));
+            std::make_shared<ColumnViewListModel<QString>>(table, column),
+              row)));
       case Column::REGION:
         return new AnyInputBox(*new RegionBox(region_query_model,
           std::make_shared<ListValueModel<Region>>(
-          std::make_shared<ColumnViewListModel<Region>>(table, column),
-          row)));
+            std::make_shared<ColumnViewListModel<Region>>(table, column),
+              row)));
       case Column::DESTINATION:
         {
           auto region_model = std::make_shared<ListValueModel<Region>>(
             std::make_shared<ColumnViewListModel<Region>>(
-            table, static_cast<int>(Column::REGION)), row);
+              table, static_cast<int>(Column::REGION)), row);
           auto query_model = std::make_shared<DestinationQueryModel>(
             std::move(region_model), destination_database, market_database);
           return new AnyInputBox(*new DestinationBox(std::move(query_model),
             std::make_shared<ListValueModel<Destination>>(
               std::make_shared<ColumnViewListModel<Destination>>(table, column),
-              row)));
+                row)));
         }
       case Column::ORDER_TYPE:
         return new AnyInputBox(*make_order_type_box(
           std::make_shared<ListValueModel<OrderType>>(
-          std::make_shared<ColumnViewListModel<OrderType>>(table, column),
-          row)));
+            std::make_shared<ColumnViewListModel<OrderType>>(table, column),
+              row)));
       case Column::SIDE:
         return new AnyInputBox(*make_side_box(
           std::make_shared<ListValueModel<Side>>(
-          std::make_shared<ColumnViewListModel<Side>>(table, column),
-          row)));
+            std::make_shared<ColumnViewListModel<Side>>(table, column), row)));
       case Column::QUANTITY:
         {
           auto model =
             std::make_shared<ScalarValueModelDecorator<optional<Quantity>>>(
               std::make_shared<ListValueModel<optional<Quantity>>>(
-              std::make_shared<ColumnViewListModel<optional<Quantity>>>(
-              table, column), row));
+                std::make_shared<ColumnViewListModel<optional<Quantity>>>(
+                  table, column), row));
           return new AnyInputBox(*new QuantityBox(std::move(model),
             make_quantity_modifiers()));
         }
@@ -352,9 +345,9 @@ EditableBox* OrderTasksRow::make_editor(
       case Column::KEY:
         return new AnyInputBox(*new KeyInputBox(
           make_validated_value_model<QKeySequence>(&test_key_sequence,
-          std::make_shared<ListValueModel<QKeySequence>>(
-          std::make_shared<ColumnViewListModel<QKeySequence>>(
-          table, column), row))));
+            std::make_shared<ListValueModel<QKeySequence>>(
+              std::make_shared<ColumnViewListModel<QKeySequence>>(
+                table, column), row))));
       default:
         return nullptr;
       }
@@ -390,7 +383,7 @@ EditableBox* OrderTasksRow::make_empty_editor(
       case Column::KEY:
         return new AnyInputBox(*(new KeyInputBox(
           make_validated_value_model<QKeySequence>(&test_key_sequence,
-          std::make_shared<LocalValueModel<QKeySequence>>()))));
+            std::make_shared<LocalValueModel<QKeySequence>>()))));
       default:
         return nullptr;
     }
@@ -400,11 +393,12 @@ EditableBox* OrderTasksRow::make_empty_editor(
   }
   input_box->connect_submit_signal(
     std::bind_front(&OrderTasksRow::on_submit, this, input_box,
-    static_cast<Column>(column)));
+      static_cast<Column>(column)));
   return new EditableBox(*input_box);;
 }
 
-void OrderTasksRow::on_operation(const ListModel<OrderTask>::Operation& operation) {
+void OrderTasksRow::on_operation(
+    const ListModel<OrderTask>::Operation& operation) {
   visit(operation,
     [&] (const ListModel<OrderTask>::AddOperation& operation) {
       if(m_row_index >= operation.m_index) {
@@ -425,49 +419,49 @@ void OrderTasksRow::on_submit(AnyInputBox* input_box, Column column,
   auto order_task = OrderTask();
   auto has_value = false;
   if(column == Column::NAME) {
-    order_task.m_name = any_cast<const QString>(submission);
+    order_task.m_name = any_cast<QString>(submission);
     if(!order_task.m_name.isEmpty()) {
       has_value = true;
       input_box->get_current()->set(QString());
     }
   } else if(column == Column::REGION) {
-    order_task.m_region = any_cast<const Region>(submission);
+    order_task.m_region = any_cast<Region>(submission);
     if(order_task.m_region != Region()) {
       has_value = true;
       input_box->get_current()->set(Region());
     }
   } else if(column == Column::DESTINATION) {
-    order_task.m_destination = any_cast<const Destination>(submission);
+    order_task.m_destination = any_cast<Destination>(submission);
     if(order_task.m_destination != Destination()) {
       has_value = true;
       input_box->get_current()->set(Destination());
     }
   } else if(column == Column::ORDER_TYPE) {
-    order_task.m_order_type = any_cast<const OrderType>(submission);
+    order_task.m_order_type = any_cast<OrderType>(submission);
     if(order_task.m_order_type != OrderType::NONE) {
       has_value = true;
       input_box->get_current()->set(OrderType());
     }
   } else if(column == Column::SIDE) {
-    order_task.m_side = any_cast<const Side>(submission);
+    order_task.m_side = any_cast<Side>(submission);
     if(order_task.m_side != Side::NONE) {
       has_value = true;
       input_box->get_current()->set(Side());
     }
   } else if(column == Column::QUANTITY) {
-    order_task.m_quantity = any_cast<const optional<Quantity>>(submission);
+    order_task.m_quantity = any_cast<optional<Quantity>>(submission);
     if(order_task.m_quantity) {
       has_value = true;
       input_box->get_current()->set(optional<Quantity>());
     }
   } else if(column == Column::TIME_IN_FORCE) {
-    order_task.m_time_in_force = any_cast<const TimeInForce>(submission);
+    order_task.m_time_in_force = any_cast<TimeInForce>(submission);
     if(order_task.m_time_in_force != TimeInForce()) {
       has_value = true;
       input_box->get_current()->set(TimeInForce());
     }
   } else if(column == Column::KEY) {
-    order_task.m_key = any_cast<const QKeySequence>(submission);
+    order_task.m_key = any_cast<QKeySequence>(submission);
     if(!order_task.m_key.isEmpty()) {
       has_value = true;
       input_box->get_current()->set(QKeySequence());
