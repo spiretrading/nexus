@@ -53,8 +53,7 @@ namespace Spire {
         std::shared_ptr<TableFilter> filter,
         std::shared_ptr<CurrentModel> current,
         std::shared_ptr<SelectionModel> selection, ViewBuilder view_builder,
-        Comparator comparator,
-        QWidget* parent = nullptr);
+        Comparator comparator, QWidget* parent = nullptr);
 
       /** Returns the table of values displayed. */
       const std::shared_ptr<TableModel>& get_table() const;
