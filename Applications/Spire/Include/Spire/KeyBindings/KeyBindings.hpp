@@ -4,6 +4,7 @@
 namespace Spire {
   class GrabHandle;
   class OrderFieldInfoTip;
+  class OrderTasksRow;
   class OrderTasksTableViewModel;
   class OrderTasksToTableModel;
 }
