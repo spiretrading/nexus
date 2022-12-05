@@ -1,7 +1,6 @@
 #include "Spire/Ui/TableView.hpp"
 #include "Spire/Spire/FilteredTableModel.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
-#include "Spire/Spire/SortedTableModel.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/EmptySelectionModel.hpp"
 #include "Spire/Ui/EmptyTableFilter.hpp"
@@ -38,7 +37,7 @@ TableView::TableView(
     std::shared_ptr<TableModel> table, std::shared_ptr<HeaderModel> header,
     std::shared_ptr<TableFilter> filter, std::shared_ptr<CurrentModel> current,
     std::shared_ptr<SelectionModel> selection, ViewBuilder view_builder,
-    QWidget* parent)
+    Comparator comparator, QWidget* parent)
     : QWidget(parent),
       m_table(std::move(table)),
       m_header(std::move(header)),
@@ -66,7 +65,12 @@ TableView::TableView(
   proxy_style(*this, *box);
   m_filtered_table = std::make_shared<FilteredTableModel>(
     m_table, std::bind_front(&TableView::is_filtered, this));
-  m_sorted_table = std::make_shared<SortedTableModel>(m_filtered_table);
+  if(comparator) {
+    m_sorted_table = std::make_shared<SortedTableModel>(m_filtered_table,
+      std::move(comparator));
+  } else {
+    m_sorted_table = std::make_shared<SortedTableModel>(m_filtered_table);
+  }
   m_body = new TableBody(m_sorted_table, std::move(current),
     std::move(selection), m_header_view->get_widths(), std::move(view_builder));
   m_body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
@@ -244,7 +248,13 @@ TableViewBuilder& TableViewBuilder::set_view_builder(
   return *this;
 }
 
+TableViewBuilder& TableViewBuilder::set_comparator(
+    TableView::Comparator comparator) {
+  m_comparator = comparator;
+  return *this;
+}
+
 TableView* TableViewBuilder::make() const {
   return new TableView(m_table, m_header, m_filter, m_current, m_selection,
-    m_view_builder, m_parent);
+    m_view_builder, m_comparator, m_parent);
 }
