@@ -7,6 +7,9 @@
 namespace Spire {
 namespace Styles {
 
+  /** Selects the editing item. */
+  using Editing = StateSelector<void, struct EditingSelectorTag>;
+
   /** Selects the grab handle which is hovered. */
   using HoveredGrabHandle =
     StateSelector<void, struct HoveredGrabHandleSelectorTag>;

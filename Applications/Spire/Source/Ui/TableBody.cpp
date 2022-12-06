@@ -241,11 +241,6 @@ void TableBody::keyPressEvent(QKeyEvent* event) {
     case Qt::Key_Right:
       m_current_controller.navigate_next_column();
       break;
-    case Qt::Key_A:
-      if(event->modifiers() & Qt::Modifier::CTRL && !event->isAutoRepeat()) {
-        m_selection_controller.select_all();
-      }
-      break;
     case Qt::Key_Control:
       m_keys.insert(Qt::Key_Control);
       m_selection_controller.set_mode(
@@ -253,10 +248,27 @@ void TableBody::keyPressEvent(QKeyEvent* event) {
       break;
     case Qt::Key_Shift:
       m_keys.insert(Qt::Key_Shift);
-      m_selection_controller.set_mode(TableSelectionController::Mode::RANGE);
+      //m_selection_controller.set_mode(TableSelectionController::Mode::RANGE);
       break;
+    case Qt::Key_Enter:
+    case Qt::Key_Return:
+    case Qt::Key_Backspace:
+      QCoreApplication::sendEvent(
+        find_focus_proxy(get_current_item()->get_body()), event);
+      break;
+    case Qt::Key_A:
+      if(event->modifiers() & Qt::Modifier::CTRL && !event->isAutoRepeat()) {
+        m_selection_controller.select_all();
+        break;
+      }
     default:
-      QWidget::keyPressEvent(event);
+      auto text = event->text();
+      if(is_a_word(text)) {
+        QCoreApplication::sendEvent(
+          find_focus_proxy(get_current_item()->get_body()), event);
+      } else {
+        QWidget::keyPressEvent(event);
+      }
   }
 }
 
@@ -391,11 +403,21 @@ TableItem* TableBody::get_current_item() {
 }
 
 TableBody::Cover* TableBody::find_row(int index) {
+  if(index < 0 || index >= layout()->count()) {
+    return nullptr;
+  }
   return static_cast<Cover*>(layout()->itemAt(index)->widget());
 }
 
 TableItem* TableBody::find_item(const optional<Index>& index) {
   if(!index) {
+    return nullptr;
+  }
+  if(index->m_row < 0 || index->m_row >= layout()->count()) {
+    return nullptr;
+  }
+  if(index->m_column < 0 ||
+      index->m_column >= layout()->itemAt(index->m_row)->widget()->layout()->count()) {
     return nullptr;
   }
   return static_cast<TableItem*>(layout()->itemAt(index->m_row)->widget()->
@@ -480,20 +502,26 @@ void TableBody::on_current(
     const optional<Index>& previous, const optional<Index>& current) {
   if(previous) {
     auto previous_item = find_item(previous);
-    if(!current || current->m_row != previous->m_row) {
-      unmatch(*previous_item->parentWidget(), CurrentRow());
+    if(previous_item) {
+      if(!current || current->m_row != previous->m_row) {
+        unmatch(*previous_item->parentWidget(), CurrentRow());
+      }
+      if(!current || current->m_column != previous->m_column) {
+        unmatch(*m_column_covers[previous->m_column], CurrentColumn());
+      }
+      unmatch(*previous_item, Current());
     }
-    if(!current || current->m_column != previous->m_column) {
-      unmatch(*m_column_covers[previous->m_column], CurrentColumn());
-    }
-    unmatch(*previous_item, Current());
   }
   if(current) {
     auto current_item = get_current_item();
-    match(*current_item, Current());
-    if(!previous || previous->m_row != current->m_row) {
-      match(*current_item->parentWidget(), CurrentRow());
+    if(!current_item) {
+      return;
     }
+    match(*current_item, Current());
+    match(*current_item->parentWidget(), CurrentRow());
+    //if(!previous || previous->m_row != current->m_row) {
+    //  match(*current_item->parentWidget(), CurrentRow());
+    //}
     if(!previous || previous->m_column != current->m_column) {
       match(*m_column_covers[current->m_column], CurrentColumn());
     }
@@ -504,14 +532,22 @@ void TableBody::on_current(
 void TableBody::on_row_selection(const ListModel<int>::Operation& operation) {
   visit(operation,
     [&] (const ListModel<int>::AddOperation& operation) {
-      match(*find_row(operation.get_value()), Selected());
+      if(auto row = find_row(operation.get_value())) {
+        match(*row, Selected());
+      }
     },
     [&] (const ListModel<int>::RemoveOperation& operation) {
-      unmatch(*find_row(operation.get_value()), Selected());
+      if(auto row = find_row(operation.get_value())) {
+        unmatch(*row, Selected());
+      }
     },
     [&] (const ListModel<int>::UpdateOperation& operation) {
-      unmatch(*find_row(operation.get_previous()), Selected());
-      match(*find_row(operation.get_value()), Selected());
+      if(auto row = find_row(operation.get_previous())) {
+        unmatch(*row, Selected());
+      }
+      if(auto row = find_row(operation.get_value())) {
+        match(*row, Selected());
+      }
     });
 }
 

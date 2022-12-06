@@ -1,0 +1,643 @@
+#include "Spire/KeyBindings/OrderTasksPage.hpp"
+#include <QMouseEvent>
+#include "Spire/KeyBindings/OrderTasksTableViewModel.hpp"
+#include "Spire/KeyBindings/OrderTasksToTableModel.hpp"
+#include "Spire/Spire/ArrayListModel.hpp"
+#include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/FilteredTableModel.hpp"
+#include "Spire/Ui/ContextMenu.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
+#include "Spire/Ui/EditableBox.hpp"
+#include "Spire/Ui/HoverObserver.hpp"
+#include "Spire/Ui/Layouts.hpp"
+#include "Spire/Ui/ScrollBox.hpp"
+#include "Spire/Ui/SearchBox.hpp"
+#include "Spire/Ui/TableBody.hpp"
+#include "Spire/Ui/TableItem.hpp"
+#include "Spire/Ui/TableHeaderItem.hpp"
+
+using namespace boost;
+using namespace boost::signals2;
+using namespace Nexus;
+using namespace Spire;
+using namespace Spire::Styles;
+
+namespace {
+  auto BOLD_LABEL_STYLE(StyleSheet style) {
+    auto font = QFont("Roboto");
+    font.setWeight(QFont::Bold);
+    font.setPixelSize(scale_width(12));
+    style.get(Any()).set(text_style(font, QColor(Qt::black)));
+    return style;
+  }
+
+  auto TABLE_VIEW_STYLE(StyleSheet style) {
+    style.get(Any()).
+      set(BackgroundColor(QColor(0xFFFFFF))).
+      set(BorderBottomColor(QColor(0xE0E0E0))).
+      set(BorderBottomSize(scale_height(1))).
+      set(BorderTopColor(QColor(0xE0E0E0))).
+      set(BorderTopSize(scale_height(1)));
+    style.get(Any() > Current()).
+      set(BackgroundColor(Qt::transparent));
+    style.get((Any() > Editing()) << Current()).
+      set(BackgroundColor(Qt::transparent)).
+      set(border_color(QColor(Qt::transparent)));
+    style.get(Any() > CurrentRow()).set(BackgroundColor(QColor(0x88E2E0FF)));
+    style.get(Any() > CurrentColumn()).set(BackgroundColor(Qt::transparent));
+    style.get(Any() > OutOfRangeRow()).set(BackgroundColor(QColor(0xFDF8DE)));
+    return style;
+  }
+
+  auto populate_header_model() {
+    auto model = std::make_shared<ArrayListModel<TableHeaderItem::Model>>();
+    model->push({"", "",
+      TableHeaderItem::Order::UNORDERED, TableFilter::Filter::NONE});
+    model->push({"Name", "Name",
+      TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
+    model->push({"Region", "Region",
+      TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
+    model->push({"Destination", "Dest",
+      TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
+    model->push({"Order Type", "Ord Type",
+      TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
+    model->push({"Side", "Side",
+      TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
+    model->push({"Quantity", "Qty",
+      TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
+    model->push({"Time in Force", "TIF",
+      TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
+    model->push({"Key", "Key",
+      TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
+    return model;
+  }
+
+  auto populate_header_width() {
+    auto widths = std::vector<int>();
+    widths.push_back(scale_width(20));
+    widths.push_back(scale_width(192));
+    widths.push_back(scale_width(104));
+    widths.push_back(scale_width(110));
+    widths.push_back(scale_width(110));
+    widths.push_back(scale_width(70));
+    widths.push_back(scale_width(90));
+    widths.push_back(scale_width(70));
+    return widths;
+  }
+
+  auto make_help_text_region() {
+    auto help_text_body = new QWidget();
+    auto help_text_layout = make_hbox_layout(help_text_body);
+    auto dash = QString(0x2013);
+    help_text_layout->addWidget(make_label(QObject::tr("Allowed keys are: ")));
+    auto label1 = make_label("F1" + dash + "F12");
+    update_style(*label1, [] (auto& style) {
+      style = BOLD_LABEL_STYLE(style);
+      });
+    help_text_layout->addWidget(label1);
+    help_text_layout->addWidget(make_label(QObject::tr(" and ")));
+    auto label2 = make_label("Ctrl, Shift, Alt  +  F1" + dash + "F12");
+    update_style(*label2, [] (auto& style) {
+      style = BOLD_LABEL_STYLE(style);
+      });
+    help_text_layout->addWidget(label2);
+    help_text_layout->addWidget(make_label(QObject::tr(" and ")));
+    auto label3 = make_label("Ctrl, Shift, Alt  +  0" + dash + "9");
+    update_style(*label3, [] (auto& style) {
+      style = BOLD_LABEL_STYLE(style);
+      });
+    help_text_layout->addWidget(label3);
+    auto help_text_box = new Box(help_text_body);
+    help_text_box->setSizePolicy(QSizePolicy::Expanding,
+      QSizePolicy::Preferred);
+    update_style(*help_text_box, [] (auto& style) {
+      style.get(Any()).
+        set(BackgroundColor(QColor(0xF5F5F5))).
+        set(horizontal_padding(scale_width(8))).
+        set(vertical_padding(scale_width(12)));
+      });
+    return help_text_box;
+  }
+
+  auto make_search_region() {
+    auto search_box = new SearchBox();
+    search_box->set_placeholder(QObject::tr("Search order tasks"));
+    search_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    auto search_region = new Box(search_box);
+    search_region->setSizePolicy(QSizePolicy::Expanding,
+      QSizePolicy::Preferred);
+    update_style(*search_region, [] (auto& style) {
+      style.get(Any()).
+        set(BackgroundColor(QColor(0xFFFFFF))).
+        set(horizontal_padding(scale_width(8))).
+        set(vertical_padding(scale_height(10)));
+      });
+    return std::tuple(search_region, search_box);
+  }
+
+  auto is_region_empty(const Region& region) {
+    return region.GetCountries().empty() && region.GetSecurities().empty() &&
+      region.GetMarkets().empty();
+  }
+
+  auto display_region(const Region& region) {
+    auto text = QString();
+    for(auto& country : region.GetCountries()) {
+      text += displayText(country);
+    }
+    for(auto& market : region.GetMarkets()) {
+      text += displayText(MarketToken(market));
+    }
+    for(auto& security : region.GetSecurities()) {
+      text += displayText(security);
+    }
+    return text;
+  }
+
+  QString display_text(const std::any& value,
+      OrderTasksToTableModel::Column column) {
+    if(column == OrderTasksToTableModel::Column::QUANTITY) {
+      auto quantity = std::any_cast<optional<Quantity>>(value);
+      if(quantity) {
+        auto osstr = std::ostringstream();
+        osstr << *quantity;
+        return QString::fromStdString(osstr.str()).toLower();
+      }
+      return {};
+    } else if(column == OrderTasksToTableModel::Column::REGION) {
+      return display_region(std::any_cast<Region>(value)).toLower();
+    }
+    auto text = displayText(value).toLower();
+    if(text == "none" &&
+        (column == OrderTasksToTableModel::Column::ORDER_TYPE ||
+        column == OrderTasksToTableModel::Column::SIDE ||
+        column == OrderTasksToTableModel::Column::TIME_IN_FORCE)) {
+      return {};
+    }
+    return text;
+  }
+}
+
+std::size_t OrderTasksPage::RegionKeyHash::operator()(
+    const std::pair<Region, QKeySequence>& region_key) const {
+  auto seed = std::size_t(0);
+  hash_combine(seed, hash_range(region_key.first.GetCountries().begin(),
+    region_key.first.GetCountries().end()));
+  auto markets = region_key.first.GetMarkets();
+  hash_combine(seed, hash_range(markets.begin(), markets.end()));
+  hash_combine(seed, hash_range(region_key.first.GetSecurities().begin(),
+    region_key.first.GetSecurities().end()));
+  hash_combine(seed, qHash(region_key.second));
+  return seed;
+}
+
+OrderTasksPage::AddedRow::AddedRow()
+  : m_source_index(-1),
+    m_is_filtered(false) {}
+
+OrderTasksPage::OrderTasksPage(
+    std::shared_ptr<ComboBox::QueryModel> region_query_model,
+    std::shared_ptr<ListModel<OrderTask>> model,
+    const DestinationDatabase& destination_database,
+    const MarketDatabase& market_database, QWidget* parent)
+    : QWidget(parent),
+      m_region_query_model(std::move(region_query_model)),
+      m_destination_database(destination_database),
+      m_market_database(market_database),
+      m_model(std::move(model)) {
+  auto layout = make_vbox_layout(this);
+  layout->setContentsMargins({0, 0, 0, scale_height(20)});
+  layout->addWidget(make_help_text_region());
+  auto [search_region, search_box] = make_search_region();
+  m_search_box = search_box;
+  m_search_box->get_current()->connect_update_signal(
+    std::bind_front(&OrderTasksPage::on_search, this));
+  layout->addWidget(search_region);
+  m_order_tasks_table = std::make_shared<OrderTasksToTableModel>(m_model);
+  m_source_table_operation_connection =
+    m_order_tasks_table->connect_operation_signal(
+      std::bind_front(&OrderTasksPage::on_source_table_operation, this));
+  m_filtered_table = std::make_shared<FilteredTableModel>(
+    std::make_shared<OrderTasksTableViewModel>(m_order_tasks_table),
+    [] (const TableModel& model, int row) {
+      return false;
+    });
+  auto table_view = TableViewBuilder(m_filtered_table).
+    set_header(populate_header_model()).
+    set_view_builder(
+      std::bind_front(&OrderTasksPage::table_view_builder, this)).
+    make();
+  table_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  m_current_connection = table_view->get_current()->connect_update_signal(
+    std::bind_front(&OrderTasksPage::on_current, this));
+  auto table_header = static_cast<TableHeader*>(static_cast<Box*>(
+    table_view->layout()->itemAt(0)->widget())->get_body()->layout()->
+      itemAt(0)->widget());
+  auto grab_handle_header = table_header->layout()->itemAt(
+    static_cast<int>(Column::GRAB_HANDLE))->widget();
+  update_style(*grab_handle_header, [] (auto& style) {
+    style.get(Any() > is_a<Box>()).
+      set(BackgroundColor(Qt::transparent));
+  });
+  auto widths = populate_header_width();
+  for(auto i = 0; i < std::ssize(widths); ++i) {
+    table_header->get_widths()->set(i, widths[i]);
+  }
+  m_table_body = static_cast<TableBody*>(&static_cast<ScrollBox*>(
+    table_view->layout()->itemAt(1)->widget())->get_body());
+  auto table_view_body = new QWidget();
+  auto table_view_layout = make_vbox_layout(table_view_body);
+  table_view_layout->addWidget(table_view);
+  auto table_view_box = new Box(table_view_body);
+  table_view_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  update_style(*table_view_box, [] (auto& style) {
+    style = TABLE_VIEW_STYLE(style);
+  });
+  layout->addWidget(table_view_box);
+  m_table_menu = new ContextMenu(*m_table_body);
+  m_table_menu->add_action(tr("Delete Order"),
+    std::bind_front(&OrderTasksPage::on_delete_order, this));
+  m_view_operation_connection =
+    m_table_body->get_table()->connect_operation_signal(
+      std::bind_front(&OrderTasksPage::on_view_table_operation, this));
+  m_table_body_focus_observer = std::make_unique<FocusObserver>(*m_table_body);
+  m_table_body_focus_observer->connect_state_signal(
+    std::bind_front(&OrderTasksPage::on_table_body_focus, this));
+  build_search_text(*m_order_tasks_table);
+  m_table_menu->window()->move(m_table_body->mapToGlobal(QPoint(100, 100)));
+  m_table_menu->show();
+}
+
+const std::shared_ptr<ComboBox::QueryModel>&
+    OrderTasksPage::get_region_query_model() const {
+  return m_region_query_model;
+}
+
+const std::shared_ptr<ListModel<OrderTask>>& OrderTasksPage::get_model() const {
+  return m_model;
+}
+
+bool OrderTasksPage::eventFilter(QObject* watched, QEvent* event) {
+  if(event->type() == QEvent::MouseButtonRelease) {
+    auto& mouse_event = *static_cast<QMouseEvent*>(event);
+    if(mouse_event.button() == Qt::RightButton) {
+      m_table_menu->window()->move(QCursor::pos());
+      m_table_menu->show();
+    }
+  }
+  return QWidget::eventFilter(watched, event);
+}
+
+bool OrderTasksPage::focusNextPrevChild(bool next) {
+  auto focus_widget = QApplication::focusWidget();
+  if(!m_table_body->isAncestorOf(focus_widget) &&
+      m_table_body != focus_widget) {
+    auto next_focus_widget = [&] {
+      if(next) {
+        return focus_widget->nextInFocusChain();
+      }
+      return focus_widget->previousInFocusChain();
+    }();
+    if(!m_table_body->isAncestorOf(next_focus_widget) &&
+        m_table_body != focus_widget) {
+      return QWidget::focusNextPrevChild(next);
+    }
+  }
+  m_table_body->setFocus();
+  if(next) {
+    table_view_navigate_next();
+  } else {
+    table_view_navigate_previous();
+  }
+  return true;
+}
+
+QWidget* OrderTasksPage::table_view_builder(
+    const std::shared_ptr<TableModel>& table, int row, int column) {
+  auto column_id = static_cast<Column>(column);
+  if(column_id == Column::GRAB_HANDLE) {
+    auto source_row = [&] {
+      if(m_added_row.m_source_index != -1) {
+        return m_added_row.m_source_index;
+      }
+      return row;
+    }();
+    m_rows.insert(m_rows.begin() + row,
+      std::make_unique<OrderTasksRow>(m_model, source_row));
+    if(row != table->get_row_size() - 1) {
+      auto region = table->get<Region>(row, static_cast<int>(Column::REGION));
+      auto key = table->get<QKeySequence>(row, static_cast<int>(Column::KEY));
+      if(!is_region_empty(region) && !key.isEmpty()) {
+        m_region_key_set.insert(std::pair(region, key));
+      }
+    }
+  }
+  auto cell = m_rows[row]->build_cell(m_region_query_model,
+    m_destination_database, m_market_database, table, row, column);
+  if(column_id == Column::GRAB_HANDLE) {
+    cell.m_cell->installEventFilter(this);
+  }
+  if(!cell.m_editor) {
+    return cell.m_cell;
+  }
+  cell.m_editor->connect_end_edit_signal([=] {
+    if(!QApplication::focusWidget()) {
+      m_table_body->setFocus();
+    }
+  });
+  auto get_row_index = [=] (OrderTasksRow* order_tasks_row) {
+    auto i = std::find_if(m_rows.begin(), m_rows.end() - 1,
+      [&] (std::unique_ptr<OrderTasksRow>& row) {
+        return row.get() == order_tasks_row;
+      });
+    if(i != m_rows.end() - 1) {
+      return std::distance(m_rows.begin(), i);
+    }
+    return -1;
+  };
+  if(column_id == Column::REGION) {
+    cell.m_editor->get_input_box().connect_submit_signal(
+      [=, order_tasks_row = m_rows[row].get()] (const auto submission) {
+        if(auto row_index = get_row_index(order_tasks_row); row_index >= 0) {
+          update_key(table, row_index, any_cast<Region>(submission),
+            table->get<QKeySequence>(row_index, static_cast<int>(Column::KEY)));
+        }
+    });
+  } else if(column_id == Column::KEY) {
+    cell.m_editor->get_input_box().connect_submit_signal(
+      [=, order_tasks_row = m_rows[row].get()] (const auto submission) {
+        if(auto row_index = get_row_index(order_tasks_row); row_index >= 0) {
+          update_key(table, row_index,
+            table->get<Region>(row_index, static_cast<int>(Column::REGION)),
+            any_cast<QKeySequence>(submission));
+        }
+    });
+  }
+  return cell.m_cell;
+}
+
+void OrderTasksPage::build_search_text(const TableModel& table) {
+  for(auto row = 0; row < table.get_row_size(); ++row) {
+    auto row_text = std::vector<QString>();
+    for(auto column = 0; column < table.get_column_size(); ++column) {
+      row_text.push_back(display_text(to_any(table.at(row, column)),
+        static_cast<OrderTasksToTableModel::Column>(column)));
+    }
+    m_row_text.push_back(row_text);
+  }
+}
+
+void OrderTasksPage::table_view_navigate_next() {
+  if(m_current_index) {
+    auto column = m_current_index->m_column + 1;
+    if(column >= m_table_body->get_table()->get_column_size()) {
+      auto row = m_current_index->m_row + 1;
+      if(row >= m_table_body->get_table()->get_row_size()) {
+        auto next_focus_widget = nextInFocusChain();
+        while(isAncestorOf(next_focus_widget)) {
+          next_focus_widget = next_focus_widget->nextInFocusChain();
+        }
+        next_focus_widget->setFocus();
+        m_table_body->get_current()->set(none);
+      } else {
+        m_table_body->get_current()->set(TableView::Index(row, 0));
+      }
+    } else {
+      m_table_body->get_current()->set(
+        TableView::Index(m_current_index->m_row, column));
+    }
+  } else {
+    m_table_body->get_current()->set(TableView::Index(0, 0));
+  }
+}
+
+void OrderTasksPage::table_view_navigate_previous() {
+  if(m_current_index) {
+    auto column = m_current_index->m_column - 1;
+    if(column < 0) {
+      auto row = m_current_index->m_row - 1;
+      if(row < 0) {
+        QWidget::focusNextPrevChild(false);
+        m_table_body->get_current()->set(none);
+      } else {
+        m_table_body->get_current()->set(TableView::Index(row,
+          m_table_body->get_table()->get_column_size() - 1));
+      }
+    } else {
+      m_table_body->get_current()->set(
+        TableView::Index(m_current_index->m_row, column));
+    }
+  } else {
+    m_table_body->get_current()->set(
+      TableView::Index(m_table_body->get_table()->get_row_size() - 1,
+        m_table_body->get_table()->get_column_size() - 1));
+  }
+}
+
+bool OrderTasksPage::trigger_filter(int row) {
+  if(row < std::ssize(m_rows) - 1) {
+    if(m_rows[row]->is_out_of_range()) {
+      m_rows[row]->set_ignore_filters(false);
+      m_search_row = row;
+      auto column = static_cast<int>(Column::NAME);
+      m_table_body->get_table()->set(row, column,
+        m_table_body->get_table()->get<QString>(row, column));
+      return true;
+    }
+  }
+  return false;
+}
+
+bool OrderTasksPage::trigger_filters() {
+  auto result = false;
+  for(auto row = 0; row < std::ssize(m_rows) - 1;) {
+    if(trigger_filter(row)) {
+      result = true;
+    } else {
+      ++row;
+    }
+  }
+  return result;
+}
+
+void OrderTasksPage::update_key(const std::shared_ptr<TableModel>& table,
+    int row, const Region& region, const QKeySequence& key) {
+  if(!m_region_key_set.contains({region, key})) {
+    return;
+  }
+  for(auto i = 0; i < table->get_row_size() - 1; ++i) {
+    if(i != row) {
+      if(table->get<QKeySequence>(i, static_cast<int>(Column::KEY)) == key &&
+          table->get<Region>(i, static_cast<int>(Column::REGION)) == region) {
+        table->set(i, static_cast<int>(Column::KEY), QKeySequence());
+        return;
+      }
+    }
+  }
+}
+
+void OrderTasksPage::on_current(const optional<TableView::Index>& index) {
+  auto previous_index = m_current_index;
+  m_current_index = index;
+  if(previous_index) {
+    if(m_current_index) {
+      if(m_current_index->m_row != previous_index->m_row &&
+          previous_index->m_row < std::ssize(m_rows)) {
+        m_rows[previous_index->m_row]->set_ignore_filters(false);
+      }
+    } else {
+      if(previous_index->m_row < std::ssize(m_rows)) {
+        m_rows[previous_index->m_row]->set_ignore_filters(false);
+      }
+    }
+  } else {
+    if(m_current_index) {
+      trigger_filters();
+    }
+  }
+  if(!m_current_index) {
+    m_search_row = none;
+    if(previous_index) {
+      trigger_filter(previous_index->m_row);
+    }
+    return;
+  }
+  m_search_row = none;
+  if(m_current_index->m_row != m_table_body->get_table()->get_row_size() - 1) {
+    m_search_row = m_current_index->m_row;
+  }
+  if(previous_index && m_current_index &&
+      previous_index->m_row != m_current_index->m_row) {
+    trigger_filter(previous_index->m_row);
+  }
+}
+
+void OrderTasksPage::on_delete_order() {
+  if(m_current_index) {
+    m_model->remove(m_rows[m_current_index->m_row]->get_row_index());
+  }
+}
+
+void OrderTasksPage::on_search(const QString& value) {
+  auto query = value.toLower();
+  m_filtered_table->set_filter([=] (const TableModel& model, int row) {
+    if(query.isEmpty() || row == model.get_row_size() - 1) {
+      return false;
+    }
+    auto is_filtered = [&] {
+      for(auto& text : m_row_text[row]) {
+        if(text.contains(query)) {
+          return false;
+        }
+      }
+      return true;
+    }();
+    if(m_added_row.m_source_index != -1) {
+      if(m_added_row.m_source_index == row) {
+        m_added_row.m_is_filtered = is_filtered;
+      }
+      return false;
+    }
+    if(m_search_row && m_rows[*m_search_row]->get_row_index() == row) {
+      if(m_rows[*m_search_row]->is_ignore_filters()) {
+        m_rows[*m_search_row]->set_out_of_range(is_filtered);
+        return false;
+      } else {
+        return is_filtered;
+      }
+    }
+    return is_filtered;
+  });
+}
+
+void OrderTasksPage::on_source_table_operation(
+    const TableModel::Operation& operation) {
+  visit(operation,
+    [&] (const TableModel::AddOperation& operation) {
+      auto row_text = std::vector<QString>();
+      for(auto column = 0; column < operation.m_row->get_size(); ++column) {
+        row_text.push_back(display_text(operation.m_row->get(column),
+          static_cast<OrderTasksToTableModel::Column>(column)));
+      }
+      m_row_text.insert(m_row_text.begin() + operation.m_index, row_text);
+      m_added_row.m_source_index = operation.m_index;
+    },
+    [&] (const TableModel::RemoveOperation& operation) {
+        m_region_key_set.erase({
+          std::any_cast<Region>(operation.m_row->get(
+            static_cast<int>(OrderTasksToTableModel::Column::REGION))),
+          std::any_cast<QKeySequence>(operation.m_row->get(
+            static_cast<int>(OrderTasksToTableModel::Column::KEY)))});
+        m_row_text.erase(m_row_text.begin() + operation.m_index);
+    },
+    [&] (const TableModel::UpdateOperation& operation) {
+      if(static_cast<OrderTasksToTableModel::Column>(operation.m_column) ==
+          OrderTasksToTableModel::Column::REGION) {
+        auto& region = std::any_cast<const Region&>(operation.m_value);
+        auto& key = m_order_tasks_table->get<QKeySequence>(operation.m_row,
+          static_cast<int>(OrderTasksToTableModel::Column::KEY));
+        m_region_key_set.erase(
+          {std::any_cast<Region>(operation.m_previous), key});
+        if(!is_region_empty(region) && !key.isEmpty()) {
+          m_region_key_set.insert({region, key});
+        }
+      } else if(static_cast<OrderTasksToTableModel::Column>(operation.m_column)
+          == OrderTasksToTableModel::Column::KEY) {
+        auto& region = m_order_tasks_table->get<Region>(operation.m_row,
+          static_cast<int>(OrderTasksToTableModel::Column::REGION));
+        auto& key = std::any_cast<const QKeySequence&>(operation.m_value);
+        m_region_key_set.erase(
+          {region, std::any_cast<QKeySequence>(operation.m_previous)});
+        if(!is_region_empty(region) && !key.isEmpty()) {
+          m_region_key_set.insert({region, key});
+        }
+      }
+      m_row_text[operation.m_row][operation.m_column] =
+        display_text(operation.m_value,
+          static_cast<OrderTasksToTableModel::Column>(operation.m_column));
+    });
+}
+
+void OrderTasksPage::on_table_body_focus(FocusObserver::State state) {
+  if(state == FocusObserver::State::NONE) {
+    if(!QApplication::focusWidget()) {
+      return;
+    }
+    m_search_row = none;
+    if(m_current_index) {
+      trigger_filter(m_current_index->m_row);
+    }
+  }
+}
+
+void OrderTasksPage::on_view_table_operation(
+    const TableModel::Operation& operation) {
+  visit(operation,
+    [&] (const TableModel::AddOperation& operation) {
+      if(m_added_row.m_source_index != -1) {
+        if(operation.m_index == m_table_body->get_table()->get_row_size() - 2 &&
+            m_current_index) {
+          m_table_body->get_current()->set(
+            TableView::Index(operation.m_index, m_current_index->m_column));
+        }
+        m_rows[operation.m_index]->set_out_of_range(m_added_row.m_is_filtered);
+        m_added_row.m_source_index = -1;
+        m_added_row.m_is_filtered = false;
+      }
+    },
+    [&] (const TableModel::RemoveOperation& operation) {
+      m_rows.erase(m_rows.begin() + operation.m_index);
+    },
+    [&] (const TableModel::MoveOperation& operation) {
+      if(operation.m_source < operation.m_destination) {
+        std::rotate(std::next(m_rows.begin(), operation.m_source),
+          std::next(m_rows.begin(), operation.m_source + 1),
+          std::next(m_rows.begin(), operation.m_destination + 1));
+      } else {
+        std::rotate(
+          std::next(m_rows.rbegin(), m_rows.size() - operation.m_source - 1),
+          std::next(m_rows.rbegin(), m_rows.size() - operation.m_source),
+          std::next(m_rows.rbegin(), m_rows.size() - operation.m_destination));
+      }
+    });
+}

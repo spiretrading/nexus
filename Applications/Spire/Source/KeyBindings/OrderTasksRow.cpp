@@ -268,16 +268,31 @@ OrderTasksRow::TableCell OrderTasksRow::build_cell(
         break;
     }
   });
-  if(column_id == Column::REGION) {
-    return {new CustomPopupBox(*editor), editor};
-  }
-  return {editor, editor};
+  auto cell = [&] () -> QWidget* {
+    if(column_id == Column::REGION) {
+      return new CustomPopupBox(*editor);
+    }
+    return editor;
+  }();
+  editor->connect_start_edit_signal([=] {
+    match(*cell, Editing());
+    set_ignore_filters(true);
+    m_row->raise();
+  });
+  editor->connect_end_edit_signal([=] {
+    unmatch(*cell, Editing());
+    m_row->lower();
+  });
+  return {cell, editor};
 }
 
 void OrderTasksRow::make_hover_observer() {
   m_hover_observer = std::make_unique<HoverObserver>(*m_row);
   m_hover_connection = m_hover_observer->connect_state_signal(
     [=] (auto state) {
+      if(!m_grab_handle) {
+        return;
+      }
       if(state == HoverObserver::State::NONE) {
         unmatch(*m_grab_handle, HoveredGrabHandle());
       } else {
@@ -285,7 +300,8 @@ void OrderTasksRow::make_hover_observer() {
       }
     });
   QObject::connect(m_row, &QObject::destroyed, [=] {
-    m_hover_connection.disconnect();
+    m_row = nullptr;
+    m_grab_handle = nullptr;
   });
 }
 

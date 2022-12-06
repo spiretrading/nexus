@@ -149,7 +149,8 @@ void PopupBox::update_space() {
 void PopupBox::on_body_focus(FocusObserver::State state) {
   if(state == FocusObserver::State::NONE && has_popped_up() &&
       QApplication::focusWidget()) {
-    m_body->setFixedHeight(m_last_size.height());
+    //m_body->setFixedHeight(m_last_size.height());
+    m_body->setFixedHeight(m_min_height);
     m_body->setMinimumWidth(0);
     m_body->setMaximumWidth(QWIDGETSIZE_MAX);
     layout()->addWidget(m_body);
