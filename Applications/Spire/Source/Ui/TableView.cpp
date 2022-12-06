@@ -126,7 +126,9 @@ void TableView::on_order_update(int index, TableHeaderItem::Order order) {
       m_header->set(i, header_item);
     } else {
       auto item = m_header->get(i);
-      item.m_order = TableHeaderItem::Order::NONE;
+      if(item.m_order != TableHeaderItem::Order::UNORDERED) {
+        item.m_order = TableHeaderItem::Order::NONE;
+      }
       m_header->set(i, item);
     }
   }
