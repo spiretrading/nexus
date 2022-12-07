@@ -64,7 +64,7 @@ namespace Spire {
       std::unordered_set<std::pair<Nexus::Region, QKeySequence>, RegionKeyHash>
         m_region_key_set;
       std::vector<std::vector<QString>> m_row_text;
-      boost::optional<TableView::Index> m_current_index;
+      boost::optional<TableView::Index> m_previous_index;
       AddedRow m_added_row;
       boost::signals2::scoped_connection m_current_connection;
       boost::signals2::scoped_connection m_source_table_operation_connection;

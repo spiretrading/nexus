@@ -389,10 +389,10 @@ void OrderTasksPage::build_search_text(const TableModel& table) {
 }
 
 void OrderTasksPage::table_view_navigate_next() {
-  if(m_current_index) {
-    auto column = m_current_index->m_column + 1;
+  if(auto current = m_table_body->get_current()->get()) {
+    auto column = current->m_column + 1;
     if(column >= m_table_body->get_table()->get_column_size()) {
-      auto row = m_current_index->m_row + 1;
+      auto row = current->m_row + 1;
       if(row >= m_table_body->get_table()->get_row_size()) {
         auto next_focus_widget = nextInFocusChain();
         while(isAncestorOf(next_focus_widget)) {
@@ -405,7 +405,7 @@ void OrderTasksPage::table_view_navigate_next() {
       }
     } else {
       m_table_body->get_current()->set(
-        TableView::Index(m_current_index->m_row, column));
+        TableView::Index(current->m_row, column));
     }
   } else {
     m_table_body->get_current()->set(TableView::Index(0, 0));
@@ -413,10 +413,10 @@ void OrderTasksPage::table_view_navigate_next() {
 }
 
 void OrderTasksPage::table_view_navigate_previous() {
-  if(m_current_index) {
-    auto column = m_current_index->m_column - 1;
+  if(auto current = m_table_body->get_current()->get()) {
+    auto column = current->m_column - 1;
     if(column < 0) {
-      auto row = m_current_index->m_row - 1;
+      auto row = current->m_row - 1;
       if(row < 0) {
         QWidget::focusNextPrevChild(false);
         m_table_body->get_current()->set(none);
@@ -426,7 +426,7 @@ void OrderTasksPage::table_view_navigate_previous() {
       }
     } else {
       m_table_body->get_current()->set(
-        TableView::Index(m_current_index->m_row, column));
+        TableView::Index(current->m_row, column));
     }
   } else {
     m_table_body->get_current()->set(
@@ -436,6 +436,7 @@ void OrderTasksPage::table_view_navigate_previous() {
 }
 
 void OrderTasksPage::do_search(const QString& query) {
+  auto blocker = shared_connection_block(m_current_connection);
   m_filtered_table->set_filter([=] (const TableModel& model, int row) {
     if(query.isEmpty() || row == model.get_row_size() - 1) {
       return false;
@@ -503,32 +504,28 @@ void OrderTasksPage::update_key(const std::shared_ptr<TableModel>& table,
 }
 
 void OrderTasksPage::on_current(const optional<TableView::Index>& index) {
-  auto previous_index = m_current_index;
-  m_current_index = index;
-  if(!m_current_index) {
-    if(previous_index && previous_index->m_row < std::ssize(m_rows)) {
-      m_rows[previous_index->m_row]->set_ignore_filters(false);
+  if(!index) {
+    if(m_previous_index && m_previous_index->m_row < std::ssize(m_rows)) {
+      m_rows[m_previous_index->m_row]->set_ignore_filters(false);
     }
-    auto blocker = shared_connection_block(m_current_connection);
     do_search_on_all_rows();
-    return;
-  }
-  m_rows[m_current_index->m_row]->set_ignore_filters(true);
-  if(!previous_index) {
-    auto blocker = shared_connection_block(m_current_connection);
-    do_search_excluding_a_row(m_current_index->m_row);
-  } else if(previous_index->m_row != m_current_index->m_row) {
-    if(previous_index->m_row < std::ssize(m_rows)) {
-      m_rows[previous_index->m_row]->set_ignore_filters(false);
+  } else {
+    m_rows[index->m_row]->set_ignore_filters(true);
+    if(!m_previous_index) {
+      do_search_excluding_a_row(index->m_row);
+    } else if(m_previous_index->m_row != index->m_row) {
+      if(m_previous_index->m_row < std::ssize(m_rows)) {
+        m_rows[m_previous_index->m_row]->set_ignore_filters(false);
+      }
+      do_search_excluding_a_row(index->m_row);
     }
-    auto blocker = shared_connection_block(m_current_connection);
-    do_search_excluding_a_row(m_current_index->m_row);
   }
+  m_previous_index = index;
 }
 
 void OrderTasksPage::on_delete_order() {
-  if(m_current_index) {
-    m_model->remove(m_rows[m_current_index->m_row]->get_row_index());
+  if(auto current = m_table_body->get_current()->get()) {
+    m_model->remove(m_rows[current->m_row]->get_row_index());
   }
 }
 
@@ -549,12 +546,12 @@ void OrderTasksPage::on_source_table_operation(
       m_added_row.m_source_index = operation.m_index;
     },
     [&] (const TableModel::RemoveOperation& operation) {
-        m_region_key_set.erase({
-          std::any_cast<Region>(operation.m_row->get(
-            static_cast<int>(OrderTasksToTableModel::Column::REGION))),
-          std::any_cast<QKeySequence>(operation.m_row->get(
-            static_cast<int>(OrderTasksToTableModel::Column::KEY)))});
-        m_row_text.erase(m_row_text.begin() + operation.m_index);
+      m_region_key_set.erase({
+        std::any_cast<Region>(operation.m_row->get(
+          static_cast<int>(OrderTasksToTableModel::Column::REGION))),
+        std::any_cast<QKeySequence>(operation.m_row->get(
+          static_cast<int>(OrderTasksToTableModel::Column::KEY)))});
+      m_row_text.erase(m_row_text.begin() + operation.m_index);
     },
     [&] (const TableModel::UpdateOperation& operation) {
       if(static_cast<OrderTasksToTableModel::Column>(operation.m_column) ==
@@ -589,8 +586,8 @@ void OrderTasksPage::on_table_body_focus(FocusObserver::State state) {
     if(!QApplication::focusWidget()) {
       return;
     }
-    if(m_current_index) {
-      m_rows[m_current_index->m_row]->set_ignore_filters(false);
+    if(auto current = m_table_body->get_current()->get()) {
+      m_rows[current->m_row]->set_ignore_filters(false);
     }
     do_search_on_all_rows();
   }
@@ -601,10 +598,11 @@ void OrderTasksPage::on_view_table_operation(
   visit(operation,
     [&] (const TableModel::AddOperation& operation) {
       if(m_added_row.m_source_index != -1) {
+        auto current = m_table_body->get_current()->get();
         if(operation.m_index == m_table_body->get_table()->get_row_size() - 2 &&
-            m_current_index) {
+            current) {
           m_table_body->get_current()->set(
-            TableView::Index(operation.m_index, m_current_index->m_column));
+            TableView::Index(operation.m_index, current->m_column));
         }
         m_rows[operation.m_index]->set_out_of_range(m_added_row.m_is_filtered);
         m_added_row.m_source_index = -1;
