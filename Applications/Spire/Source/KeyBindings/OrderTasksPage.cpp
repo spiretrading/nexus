@@ -335,7 +335,7 @@ QWidget* OrderTasksPage::table_view_builder(
   }
   auto cell = m_rows[row]->build_cell(m_region_query_model,
     m_destination_database, m_market_database, table, row, column);
-  if(column_id == Column::GRAB_HANDLE) {
+  if(column_id == Column::GRAB_HANDLE && row < table->get_row_size() - 1) {
     cell.m_cell->installEventFilter(this);
   }
   if(!cell.m_editor) {
