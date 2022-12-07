@@ -276,7 +276,6 @@ OrderTasksRow::TableCell OrderTasksRow::build_cell(
   }();
   editor->connect_start_edit_signal([=] {
     match(*cell, Editing());
-    set_ignore_filters(true);
     m_row->raise();
   });
   editor->connect_end_edit_signal([=] {

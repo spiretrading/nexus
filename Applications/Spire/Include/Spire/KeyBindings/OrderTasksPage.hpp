@@ -65,7 +65,6 @@ namespace Spire {
         m_region_key_set;
       std::vector<std::vector<QString>> m_row_text;
       boost::optional<TableView::Index> m_current_index;
-      boost::optional<int> m_search_row;
       AddedRow m_added_row;
       boost::signals2::scoped_connection m_current_connection;
       boost::signals2::scoped_connection m_source_table_operation_connection;
@@ -76,8 +75,9 @@ namespace Spire {
       void build_search_text(const TableModel& table);
       void table_view_navigate_next();
       void table_view_navigate_previous();
-      bool trigger_filter(int row);
-      bool trigger_filters();
+      void do_search(const QString& query);
+      void do_search_excluding_a_row(int excluding_row);
+      void do_search_on_all_rows();
       void update_key(const std::shared_ptr<TableModel>& table, int row,
         const Nexus::Region& region, const QKeySequence& key);
       void on_current(const boost::optional<TableView::Index>& index);
