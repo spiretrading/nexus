@@ -616,6 +616,10 @@ void OrderTasksPage::on_delete_order() {
 }
 
 void OrderTasksPage::on_search(const QString& value) {
+  for(auto row = 0; row < std::ssize(m_rows) - 1; ++row) {
+    m_rows[row]->set_ignore_filters(false);
+    m_rows[row]->set_out_of_range(false);
+  }
   do_search(value.toLower());
 }
 
@@ -696,9 +700,7 @@ void OrderTasksPage::on_view_table_operation(
   visit(operation,
     [&] (const TableModel::AddOperation& operation) {
       if(m_added_row.m_source_index != -1) {
-        auto current = m_table_body->get_current()->get();
-        if(operation.m_index == m_table_body->get_table()->get_row_size() - 2 &&
-            current) {
+        if(auto current = m_table_body->get_current()->get()) {
           m_table_body->get_current()->set(
             TableView::Index(operation.m_index, current->m_column));
         }
