@@ -136,11 +136,6 @@ namespace {
     return std::tuple(search_region, search_box);
   }
 
-  auto is_region_empty(const Region& region) {
-    return region.GetCountries().empty() && region.GetSecurities().empty() &&
-      region.GetMarkets().empty();
-  }
-
   auto display_region(const Region& region) {
     auto text = QString();
     for(auto& country : region.GetCountries()) {
@@ -323,13 +318,6 @@ QWidget* OrderTasksPage::table_view_builder(
     }();
     m_rows.insert(m_rows.begin() + row,
       std::make_unique<OrderTasksRow>(m_model, source_row));
-    if(row != table->get_row_size() - 1) {
-      auto region = table->get<Region>(row, static_cast<int>(Column::REGION));
-      auto key = table->get<QKeySequence>(row, static_cast<int>(Column::KEY));
-      if(!is_region_empty(region) && !key.isEmpty()) {
-        m_region_key_set.insert(std::pair(region, key));
-      }
-    }
   }
   auto cell = m_rows[row]->build_cell(m_region_query_model,
     m_destination_database, m_market_database, table, row, column);
@@ -542,6 +530,14 @@ void OrderTasksPage::on_source_table_operation(
       }
       m_row_text.insert(m_row_text.begin() + operation.m_index, row_text);
       m_added_row.m_source_index = operation.m_index;
+      auto region = std::any_cast<Region>(operation.m_row->get(
+        static_cast<int>(OrderTasksToTableModel::Column::REGION)));
+      auto key = std::any_cast<QKeySequence>(operation.m_row->get(
+        static_cast<int>(OrderTasksToTableModel::Column::KEY)));
+      if(!key.isEmpty()) {
+        m_region_key_set.insert(std::pair(region, key));
+      }
+      update_key(m_table_body->get_table(), operation.m_index, region, key);
     },
     [&] (const TableModel::RemoveOperation& operation) {
       m_region_key_set.erase({
@@ -559,7 +555,7 @@ void OrderTasksPage::on_source_table_operation(
           static_cast<int>(OrderTasksToTableModel::Column::KEY));
         m_region_key_set.erase(
           {std::any_cast<Region>(operation.m_previous), key});
-        if(!is_region_empty(region) && !key.isEmpty()) {
+        if(!key.isEmpty()) {
           m_region_key_set.insert({region, key});
         }
       } else if(static_cast<OrderTasksToTableModel::Column>(operation.m_column)
@@ -569,7 +565,7 @@ void OrderTasksPage::on_source_table_operation(
         auto& key = std::any_cast<const QKeySequence&>(operation.m_value);
         m_region_key_set.erase(
           {region, std::any_cast<QKeySequence>(operation.m_previous)});
-        if(!is_region_empty(region) && !key.isEmpty()) {
+        if(!key.isEmpty()) {
           m_region_key_set.insert({region, key});
         }
       }
