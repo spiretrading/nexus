@@ -173,6 +173,54 @@ namespace {
     }
     return text;
   }
+
+  bool compare_text(const QString& lhs, const QString& rhs) {
+    return QString::compare(lhs, rhs, Qt::CaseInsensitive) < 0;
+  }
+
+  bool order_tasks_comparator(const AnyRef& lhs, const AnyRef& rhs) {
+    if(lhs.get_type() != rhs.get_type()) {
+      return false;
+    } else if(!lhs.has_value() || !rhs.has_value()) {
+      return false;
+    } else if(lhs.get_type() == typeid(QString)) {
+      return compare_text(any_cast<QString>(lhs), any_cast<QString>(rhs));
+    } else if(lhs.get_type() == typeid(optional<Quantity>)) {
+      auto& quantity_lhs = any_cast<optional<Quantity>>(lhs);
+      auto& quantity_rhs = any_cast<optional<Quantity>>(rhs);
+      if(quantity_lhs && quantity_rhs) {
+        return *quantity_lhs < *quantity_rhs;
+      } else if(quantity_lhs) {
+        return false;
+      } else if(quantity_rhs) {
+        return true;
+      }
+    } else if(lhs.get_type() == typeid(Side)) {
+      auto& side_lhs = any_cast<Side>(lhs);
+      auto& side_rhs = any_cast<Side>(rhs);
+      if(side_lhs != Side::NONE && side_rhs != Side::NONE) {
+        return displayText(side_lhs) < displayText(side_rhs);
+      } else if(side_lhs != Side::NONE) {
+        return false;
+      } else if(side_rhs != Side::NONE) {
+        return true;
+      }
+    } else if(lhs.get_type() == typeid(TimeInForce)) {
+      return any_cast<TimeInForce>(lhs).GetType() <
+        any_cast<TimeInForce>(rhs).GetType();
+    } else if(lhs.get_type() == typeid(OrderType)) {
+      return any_cast<OrderType>(lhs) < any_cast<OrderType>(rhs);
+    } else if(lhs.get_type() == typeid(Destination)) {
+      return any_cast<Destination>(lhs) < any_cast<Destination>(rhs);
+    } else if(lhs.get_type() == typeid(Region)) {
+      return compare_text(display_region(any_cast<Region>(lhs)),
+        display_region(any_cast<Region>(rhs)));
+    } else if(lhs.get_type() == typeid(QKeySequence)) {
+      return compare_text(any_cast<QKeySequence>(lhs).toString(),
+        any_cast<QKeySequence>(rhs).toString());
+    }
+    return false;
+  }
 }
 
 std::size_t OrderTasksPage::RegionKeyHash::operator()(
@@ -223,10 +271,13 @@ OrderTasksPage::OrderTasksPage(
     set_header(populate_header_model()).
     set_view_builder(
       std::bind_front(&OrderTasksPage::table_view_builder, this)).
+    set_comparator(order_tasks_comparator).
     make();
   table_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_current_connection = table_view->get_current()->connect_update_signal(
     std::bind_front(&OrderTasksPage::on_current, this));
+  m_sort_connection = table_view->connect_sort_signal(
+    std::bind_front(&OrderTasksPage::on_sort, this));
   auto table_header = static_cast<TableHeader*>(static_cast<Box*>(
     table_view->layout()->itemAt(0)->widget())->get_body()->layout()->
       itemAt(0)->widget());
@@ -566,6 +617,10 @@ void OrderTasksPage::on_delete_order() {
 
 void OrderTasksPage::on_search(const QString& value) {
   do_search(value.toLower());
+}
+
+void OrderTasksPage::on_sort(int column, TableHeaderItem::Order order) {
+  m_table_body->update();
 }
 
 void OrderTasksPage::on_source_table_operation(
