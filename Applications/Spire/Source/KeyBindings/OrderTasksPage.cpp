@@ -11,6 +11,7 @@
 #include "Spire/Ui/EditableBox.hpp"
 #include "Spire/Ui/HoverObserver.hpp"
 #include "Spire/Ui/Layouts.hpp"
+#include "Spire/Ui/PopupBox.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/SearchBox.hpp"
 #include "Spire/Ui/TableBody.hpp"
@@ -278,30 +279,73 @@ bool OrderTasksPage::eventFilter(QObject* watched, QEvent* event) {
       m_table_menu->window()->move(QCursor::pos());
       m_table_menu->show();
     }
+  } else if(event->type() == QEvent::KeyPress) {
+    if(auto current = m_table_body->get_current()->get();
+        current && static_cast<Column>(current->m_column) == Column::REGION) {
+      auto& key_event = *static_cast<QKeyEvent*>(event);
+      if(key_event.key() == Qt::Key_Tab) {
+        focusNextPrevChild(true);
+        return true;
+      } else if(key_event.key() == Qt::Key_Backtab) {
+        focusNextPrevChild(false);
+        return true;
+      }
+    }
   }
   return QWidget::eventFilter(watched, event);
 }
 
 bool OrderTasksPage::focusNextPrevChild(bool next) {
-  auto focus_widget = QApplication::focusWidget();
-  if(!m_table_body->isAncestorOf(focus_widget) &&
+  if(auto current = m_table_body->get_current()->get();
+      !current || static_cast<Column>(current->m_column) != Column::REGION) {
+    auto focus_widget = QApplication::focusWidget();
+    if(!m_table_body->isAncestorOf(focus_widget) &&
       m_table_body != focus_widget) {
-    auto next_focus_widget = [&] {
-      if(next) {
-        return focus_widget->nextInFocusChain();
-      }
-      return focus_widget->previousInFocusChain();
-    }();
-    if(!m_table_body->isAncestorOf(next_focus_widget) &&
+      auto next_focus_widget = [&] {
+        if(next) {
+          return focus_widget->nextInFocusChain();
+        }
+        return focus_widget->previousInFocusChain();
+      }();
+      if(!m_table_body->isAncestorOf(next_focus_widget) &&
         m_table_body != focus_widget) {
-      return QWidget::focusNextPrevChild(next);
+        return QWidget::focusNextPrevChild(next);
+      }
     }
   }
+  auto is_editing = [&] {
+    if(auto current = m_table_body->get_current()->get()) {
+      if(static_cast<Column>(current->m_column) == Column::GRAB_HANDLE) {
+        return false;
+      } else if(static_cast<Column>(current->m_column) == Column::REGION) {
+        return static_cast<EditableBox*>(&static_cast<PopupBox*>(
+          m_table_body->get_item(*current)->get_body().layout()->itemAt(0)->
+            widget())->get_body())->is_editing();
+      }
+      return static_cast<EditableBox*>(&m_table_body->get_item(
+        *m_table_body->get_current()->get())->get_body())->is_editing();
+    }
+    return false;
+  }();
   m_table_body->setFocus();
   if(next) {
     table_view_navigate_next();
   } else {
     table_view_navigate_previous();
+  }
+  if(is_editing) {
+    if(auto current = m_table_body->get_current()->get()) {
+      if(static_cast<Column>(current->m_column) == Column::GRAB_HANDLE) {
+        return true;
+      } else if(static_cast<Column>(current->m_column) == Column::REGION) {
+        static_cast<EditableBox*>(&static_cast<PopupBox*>(
+          m_table_body->get_item(*current)->get_body().layout()->itemAt(0)->
+            widget())->get_body())->set_editing(true);
+      } else {
+        static_cast<EditableBox*>(
+          &m_table_body->get_item(*current)->get_body())->set_editing(true);
+      }
+    }
   }
   return true;
 }
@@ -327,6 +371,11 @@ QWidget* OrderTasksPage::table_view_builder(
   if(!cell.m_editor) {
     return cell.m_cell;
   }
+  cell.m_editor->connect_start_edit_signal([=] {
+    if(column_id == Column::REGION) {
+      find_focus_proxy(*cell.m_editor)->installEventFilter(this);
+    }
+  });
   cell.m_editor->connect_end_edit_signal([=] {
     if(!QApplication::focusWidget()) {
       m_table_body->setFocus();
