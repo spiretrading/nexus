@@ -95,7 +95,7 @@ namespace {
     auto label1 = make_label("F1" + dash + "F12");
     update_style(*label1, [] (auto& style) {
       style = BOLD_LABEL_STYLE(style);
-      });
+    });
     help_text_layout->addWidget(label1);
     help_text_layout->addWidget(make_label(QObject::tr(" and ")));
     auto label2 = make_label("Ctrl, Shift, Alt  +  F1" + dash + "F12");
@@ -107,7 +107,7 @@ namespace {
     auto label3 = make_label("Ctrl, Shift, Alt  +  0" + dash + "9");
     update_style(*label3, [] (auto& style) {
       style = BOLD_LABEL_STYLE(style);
-      });
+    });
     help_text_layout->addWidget(label3);
     auto help_text_box = new Box(help_text_body);
     help_text_box->setSizePolicy(QSizePolicy::Expanding,
@@ -117,7 +117,7 @@ namespace {
         set(BackgroundColor(QColor(0xF5F5F5))).
         set(horizontal_padding(scale_width(8))).
         set(vertical_padding(scale_width(12)));
-      });
+    });
     return help_text_box;
   }
 
@@ -133,7 +133,7 @@ namespace {
         set(BackgroundColor(QColor(0xFFFFFF))).
         set(horizontal_padding(scale_width(8))).
         set(vertical_padding(scale_height(10)));
-      });
+    });
     return std::tuple(search_region, search_box);
   }
 
@@ -300,7 +300,7 @@ OrderTasksPage::OrderTasksPage(
     style = TABLE_VIEW_STYLE(style);
   });
   layout->addWidget(table_view_box);
-  m_table_menu = new ContextMenu(*m_table_body);
+  m_table_menu = new ContextMenu(*this);
   m_table_menu->add_action(tr("Delete Order"),
     std::bind_front(&OrderTasksPage::on_delete_order, this));
   m_view_operation_connection =
