@@ -234,12 +234,10 @@ OrderTasksPage::OrderTasksPage(
   auto table_header = static_cast<TableHeader*>(static_cast<Box*>(
     table_view->layout()->itemAt(0)->widget())->get_body()->layout()->
       itemAt(0)->widget());
-  auto grab_handle_header = table_header->layout()->itemAt(
-    static_cast<int>(Column::GRAB_HANDLE))->widget();
-  update_style(*grab_handle_header, [] (auto& style) {
-    style.get(Any() > is_a<Box>()).
-      set(BackgroundColor(Qt::transparent));
-  });
+  auto grab_handle_header =
+    static_cast<TableHeaderItem*>(table_header->layout()->itemAt(
+      static_cast<int>(Column::GRAB_HANDLE))->widget());
+  grab_handle_header->set_is_resizeable(false);
   auto widths = populate_header_width();
   for(auto i = 0; i < std::ssize(widths); ++i) {
     table_header->get_widths()->set(i, widths[i]);
