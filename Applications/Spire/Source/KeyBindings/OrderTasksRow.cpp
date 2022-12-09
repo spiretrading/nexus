@@ -242,6 +242,8 @@ OrderTasksRow::TableCell OrderTasksRow::build_cell(
     update_style(*m_row, [] (auto& style) {
       style.get(Any() > HoveredGrabHandle() > is_a<Icon>()).
         set(Visibility::VISIBLE);
+      style.get(Hover()).
+        set(BackgroundColor(0xF2F2FF));
     });
   }
   auto editor = [&] {
