@@ -221,6 +221,15 @@ namespace {
     }
     return false;
   }
+
+  auto is_in_layout(QLayout* layout, QWidget* widget) {
+    for(auto i = 0; i < layout->count(); ++i) {
+      if(layout->itemAt(i)->widget() == widget) {
+        return true;
+      }
+    }
+    return false;
+  };
 }
 
 std::size_t OrderTasksPage::RegionKeyHash::operator()(
@@ -312,6 +321,18 @@ OrderTasksPage::OrderTasksPage(
   build_search_text(*m_order_tasks_table);
   m_table_menu->window()->move(m_table_body->mapToGlobal(QPoint(100, 100)));
   m_table_menu->show();
+  auto& children = m_table_body->children();
+  auto count = 0;
+  for(auto i = children.rbegin(); i != children.rend(); ++i) {
+    if(count >= OrderTasksRow::COLUMN_SIZE) {
+      break;
+    }
+    if((*i)->isWidgetType() &&
+        !is_in_layout(m_table_body->layout(), static_cast<QWidget*>(*i))) {
+      (*i)->installEventFilter(this);
+      ++count;
+    }
+  }
 }
 
 const std::shared_ptr<ComboBox::QueryModel>&
@@ -324,11 +345,29 @@ const std::shared_ptr<ListModel<OrderTask>>& OrderTasksPage::get_model() const {
 }
 
 bool OrderTasksPage::eventFilter(QObject* watched, QEvent* event) {
-  if(event->type() == QEvent::MouseButtonRelease) {
+  if(event->type() == QEvent::MouseButtonPress) {
     auto& mouse_event = *static_cast<QMouseEvent*>(event);
     if(mouse_event.button() == Qt::RightButton) {
-      m_table_menu->window()->move(QCursor::pos());
-      m_table_menu->show();
+      for(auto i = 0; i < m_table_body->layout()->count(); ++i) {
+        auto row = m_table_body->layout()->itemAt(i)->widget();
+        auto pos = row->mapFromGlobal(mouse_event.globalPos());
+        if(row->rect().contains(pos)) {
+          for(auto j = 0; j < row->layout()->count(); ++j) {
+            auto item = row->layout()->itemAt(j)->widget();
+            pos = item->mapFromGlobal(mouse_event.globalPos());
+            if(item->rect().contains(pos)) {
+              m_table_body->get_current()->set(TableView::Index(i, j));
+              break;
+            }
+          }
+          if(i != m_table_body->layout()->count() - 1) {
+            m_table_menu->window()->move(QCursor::pos());
+            m_table_menu->show();
+          }
+          break;
+        }
+      }
+      return true;
     }
   } else if(event->type() == QEvent::KeyPress) {
     if(auto current = m_table_body->get_current()->get();
@@ -416,9 +455,6 @@ QWidget* OrderTasksPage::table_view_builder(
   }
   auto cell = m_rows[row]->build_cell(m_region_query_model,
     m_destination_database, m_market_database, table, row, column);
-  if(column_id == Column::GRAB_HANDLE && row < table->get_row_size() - 1) {
-    cell.m_cell->installEventFilter(this);
-  }
   if(!cell.m_editor) {
     return cell.m_cell;
   }
@@ -428,6 +464,9 @@ QWidget* OrderTasksPage::table_view_builder(
     }
   });
   cell.m_editor->connect_end_edit_signal([=] {
+    if(column_id == Column::REGION) {
+      find_focus_proxy(*cell.m_editor)->removeEventFilter(this);
+    }
     if(!QApplication::focusWidget()) {
       m_table_body->setFocus();
     }

@@ -63,6 +63,9 @@ namespace Styles {
         KEY
       };
 
+      /** The number of columns in this row. */
+      static const auto COLUMN_SIZE = 9;
+
       /**
        * Constructs an OrderTasksRow.
        * @param model The list model of OrderTask.
