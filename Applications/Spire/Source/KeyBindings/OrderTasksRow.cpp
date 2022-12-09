@@ -1,4 +1,5 @@
 #include "Spire/KeyBindings/OrderTasksRow.hpp"
+#include <QMouseEvent>
 #include "Spire/KeyBindings/GrabHandle.hpp"
 #include "Spire/Spire/ColumnViewListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
@@ -125,26 +126,24 @@ namespace {
   class CustomPopupBox : public QWidget {
     public:
       explicit CustomPopupBox(QWidget& body, QWidget* parent = nullptr)
-          : QWidget(parent),
-            m_click_observer(*this),
-            m_focus_observer(*this) {
+          : QWidget(parent) {
         m_popup_box = new PopupBox(body);
         enclose(*this, *m_popup_box);
         proxy_style(*this, *m_popup_box);
-        setFocusProxy(m_popup_box);
         setFocusPolicy(Qt::ClickFocus);
         m_popup_box->setAttribute(Qt::WA_TransparentForMouseEvents);
         m_tip_window = find_tip_window(body);
-        m_focus_observer.connect_state_signal([=] (auto state) {
-          if(state != FocusObserver::State::NONE) {
-            m_popup_box->get_body().setFocus();
-          }
-        });
       }
 
     protected:
       bool event(QEvent* event) override {
         switch(event->type()) {
+          case QEvent::MouseButtonPress:
+            if(auto& mouse_event = *static_cast<QMouseEvent*>(event);
+                mouse_event.button() == Qt::LeftButton) {
+              m_popup_box->get_body().setFocus();
+            }
+            break;
           case QEvent::Enter:
           case QEvent::Leave:
             if(m_tip_window) {
@@ -155,11 +154,26 @@ namespace {
         return QWidget::event(event);
       }
 
+      void keyPressEvent(QKeyEvent* event) override {
+        switch(event->key()) {
+          case Qt::Key_Enter:
+          case Qt::Key_Return:
+          case Qt::Key_Backspace:
+            QCoreApplication::sendEvent(&m_popup_box->get_body(), event);
+            break;
+          default:
+            auto text = event->text();
+            if(is_a_word(text)) {
+              QCoreApplication::sendEvent(&m_popup_box->get_body(), event);
+            } else {
+              QWidget::keyPressEvent(event);
+            }
+        }
+      }
+
     private:
       PopupBox* m_popup_box;
       QWidget* m_tip_window;
-      ClickObserver m_click_observer;
-      FocusObserver m_focus_observer;
   };
 }
 
@@ -271,18 +285,20 @@ OrderTasksRow::TableCell OrderTasksRow::build_cell(
     }
   });
   auto cell = [&] () -> QWidget* {
-    if(column_id == Column::REGION) {
+    if(column_id == Column::REGION || column_id == Column::QUANTITY) {
       return new CustomPopupBox(*editor);
     }
     return editor;
   }();
+  if(column_id == Column::QUANTITY) {
+    cell->layout()->itemAt(0)->widget()->setSizePolicy(
+      QSizePolicy::Expanding, QSizePolicy::Expanding);
+  }
   editor->connect_start_edit_signal([=] {
     match(*cell, Editing());
-    m_row->raise();
   });
   editor->connect_end_edit_signal([=] {
     unmatch(*cell, Editing());
-    m_row->lower();
   });
   return {cell, editor};
 }

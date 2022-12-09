@@ -248,7 +248,6 @@ void TableBody::keyPressEvent(QKeyEvent* event) {
       break;
     case Qt::Key_Shift:
       m_keys.insert(Qt::Key_Shift);
-      //m_selection_controller.set_mode(TableSelectionController::Mode::RANGE);
       break;
     case Qt::Key_Enter:
     case Qt::Key_Return:
@@ -513,9 +512,6 @@ void TableBody::on_current(
     }
     match(*current_item, Current());
     match(*current_item->parentWidget(), CurrentRow());
-    //if(!previous || previous->m_row != current->m_row) {
-    //  match(*current_item->parentWidget(), CurrentRow());
-    //}
     if(!previous || previous->m_column != current->m_column) {
       match(*m_column_covers[current->m_column], CurrentColumn());
     }

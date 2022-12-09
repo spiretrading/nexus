@@ -371,7 +371,8 @@ bool OrderTasksPage::eventFilter(QObject* watched, QEvent* event) {
     }
   } else if(event->type() == QEvent::KeyPress) {
     if(auto current = m_table_body->get_current()->get();
-        current && static_cast<Column>(current->m_column) == Column::REGION) {
+        current && (static_cast<Column>(current->m_column) == Column::REGION ||
+        static_cast<Column>(current->m_column) == Column::QUANTITY)) {
       auto& key_event = *static_cast<QKeyEvent*>(event);
       if(key_event.key() == Qt::Key_Tab) {
         focusNextPrevChild(true);
@@ -387,7 +388,8 @@ bool OrderTasksPage::eventFilter(QObject* watched, QEvent* event) {
 
 bool OrderTasksPage::focusNextPrevChild(bool next) {
   if(auto current = m_table_body->get_current()->get();
-      !current || static_cast<Column>(current->m_column) != Column::REGION) {
+      !current || (static_cast<Column>(current->m_column) != Column::REGION &&
+      static_cast<Column>(current->m_column) != Column::QUANTITY)) {
     auto focus_widget = QApplication::focusWidget();
     if(!m_table_body->isAncestorOf(focus_widget) &&
       m_table_body != focus_widget) {
@@ -407,7 +409,8 @@ bool OrderTasksPage::focusNextPrevChild(bool next) {
     if(auto current = m_table_body->get_current()->get()) {
       if(static_cast<Column>(current->m_column) == Column::GRAB_HANDLE) {
         return false;
-      } else if(static_cast<Column>(current->m_column) == Column::REGION) {
+      } else if(static_cast<Column>(current->m_column) == Column::REGION ||
+          static_cast<Column>(current->m_column) == Column::QUANTITY) {
         return static_cast<EditableBox*>(&static_cast<PopupBox*>(
           m_table_body->get_item(*current)->get_body().layout()->itemAt(0)->
             widget())->get_body())->is_editing();
@@ -427,7 +430,8 @@ bool OrderTasksPage::focusNextPrevChild(bool next) {
     if(auto current = m_table_body->get_current()->get()) {
       if(static_cast<Column>(current->m_column) == Column::GRAB_HANDLE) {
         return true;
-      } else if(static_cast<Column>(current->m_column) == Column::REGION) {
+      } else if(static_cast<Column>(current->m_column) == Column::REGION ||
+          static_cast<Column>(current->m_column) == Column::QUANTITY) {
         static_cast<EditableBox*>(&static_cast<PopupBox*>(
           m_table_body->get_item(*current)->get_body().layout()->itemAt(0)->
             widget())->get_body())->set_editing(true);
@@ -459,12 +463,12 @@ QWidget* OrderTasksPage::table_view_builder(
     return cell.m_cell;
   }
   cell.m_editor->connect_start_edit_signal([=] {
-    if(column_id == Column::REGION) {
+    if(column_id == Column::REGION || column_id == Column::QUANTITY) {
       find_focus_proxy(*cell.m_editor)->installEventFilter(this);
     }
   });
   cell.m_editor->connect_end_edit_signal([=] {
-    if(column_id == Column::REGION) {
+    if(column_id == Column::REGION || column_id == Column::QUANTITY) {
       find_focus_proxy(*cell.m_editor)->removeEventFilter(this);
     }
     if(!QApplication::focusWidget()) {
