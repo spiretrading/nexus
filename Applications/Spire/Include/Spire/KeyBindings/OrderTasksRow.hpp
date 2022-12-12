@@ -1,5 +1,6 @@
 #ifndef SPIRE_ORDER_TASKS_ROW_HPP
 #define SPIRE_ORDER_TASKS_ROW_HPP
+#include <QPointer>
 #include "Spire/KeyBindings/OrderTask.hpp"
 #include "Spire/Ui/ComboBox.hpp"
 #include "Spire/Ui/HoverObserver.hpp"
@@ -115,8 +116,8 @@ namespace Styles {
     private:
       std::shared_ptr<ListModel<OrderTask>> m_model;
       int m_row_index;
-      QWidget* m_row;
-      QWidget* m_grab_handle;
+      QPointer<QWidget> m_row;
+      QPointer<QWidget> m_grab_handle;
       bool m_is_draggable;
       bool m_is_ignore_filters;
       bool m_is_out_of_range;

@@ -3,6 +3,7 @@
 #include <QEnterEvent>
 #include <QMouseEvent>
 #include <QPainter>
+#include <QPointer>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
@@ -40,11 +41,10 @@ struct TableBody::Cover : QWidget {
 };
 
 struct TableBody::ColumnCover : Cover {
-  QWidget* m_hovered;
+  QPointer<QWidget> m_hovered;
 
   ColumnCover(QWidget* parent)
-      : Cover(parent),
-        m_hovered(nullptr) {
+      : Cover(parent) {
     setMouseTracking(true);
   }
 
@@ -68,7 +68,7 @@ struct TableBody::ColumnCover : Cover {
         QCoreApplication::sendEvent(m_hovered, &leave_event);
       }
       if(hovered_widget == parentWidget()) {
-        m_hovered = nullptr;
+        m_hovered.clear();
       } else {
         m_hovered = hovered_widget;
         if(m_hovered) {
@@ -416,8 +416,8 @@ TableItem* TableBody::find_item(const optional<Index>& index) {
   if(index->m_row < 0 || index->m_row >= layout()->count()) {
     return nullptr;
   }
-  if(index->m_column < 0 ||
-      index->m_column >= layout()->itemAt(index->m_row)->widget()->layout()->count()) {
+  if(index->m_column < 0 || index->m_column >=
+      layout()->itemAt(index->m_row)->widget()->layout()->count()) {
     return nullptr;
   }
   return static_cast<TableItem*>(layout()->itemAt(index->m_row)->widget()->

@@ -223,8 +223,6 @@ OrderTasksRow::OrderTasksRow(std::shared_ptr<ListModel<OrderTask>> model,
   int row)
   : m_model(std::move(model)),
     m_row_index(row),
-    m_row(nullptr),
-    m_grab_handle(nullptr),
     m_is_draggable(true),
     m_is_ignore_filters(false),
     m_is_out_of_range(false),
@@ -358,10 +356,6 @@ void OrderTasksRow::make_hover_observer() {
         match(*m_grab_handle, HoveredGrabHandle());
       }
     });
-  QObject::connect(m_row, &QObject::destroyed, [=] {
-    m_row = nullptr;
-    m_grab_handle = nullptr;
-  });
 }
 
 EditableBox* OrderTasksRow::make_editor(
