@@ -200,9 +200,6 @@ void TableSelectionController::move_row(int source, int destination) {
     auto& rows = m_selection->get_row_selection();
     for(auto i = 0; i != rows->get_size(); ++i) {
       auto selection = rows->get(i);
-      //if(selection >= source || selection <= destination) {
-      //  rows->set(i, selection + direction);
-      //}
       if(selection == source) {
         rows->set(i, destination);
       } else if(direction == 1 && selection >= destination &&
@@ -214,10 +211,6 @@ void TableSelectionController::move_row(int source, int destination) {
     auto& items = m_selection->get_item_selection();
     for(auto i = 0; i != items->get_size(); ++i) {
       auto selection = items->get(i);
-      //if(selection.m_row >= source || selection.m_row <= destination) {
-      //  selection.m_row += direction;
-      //  items->set(i, selection);
-      //}
       if(selection.m_row == source) {
         selection.m_row = destination;
         items->set(i, selection);

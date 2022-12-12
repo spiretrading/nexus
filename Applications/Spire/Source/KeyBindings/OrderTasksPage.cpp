@@ -319,8 +319,6 @@ OrderTasksPage::OrderTasksPage(
   m_table_body_focus_observer->connect_state_signal(
     std::bind_front(&OrderTasksPage::on_table_body_focus, this));
   build_search_text(*m_order_tasks_table);
-  m_table_menu->window()->move(m_table_body->mapToGlobal(QPoint(100, 100)));
-  m_table_menu->show();
   auto& children = m_table_body->children();
   auto count = 0;
   for(auto i = children.rbegin(); i != children.rend(); ++i) {
@@ -389,10 +387,10 @@ bool OrderTasksPage::eventFilter(QObject* watched, QEvent* event) {
 bool OrderTasksPage::focusNextPrevChild(bool next) {
   if(auto current = m_table_body->get_current()->get();
       !current || (static_cast<Column>(current->m_column) != Column::REGION &&
-      static_cast<Column>(current->m_column) != Column::QUANTITY)) {
+        static_cast<Column>(current->m_column) != Column::QUANTITY)) {
     auto focus_widget = QApplication::focusWidget();
     if(!m_table_body->isAncestorOf(focus_widget) &&
-      m_table_body != focus_widget) {
+        m_table_body != focus_widget) {
       auto next_focus_widget = [&] {
         if(next) {
           return focus_widget->nextInFocusChain();
@@ -400,7 +398,7 @@ bool OrderTasksPage::focusNextPrevChild(bool next) {
         return focus_widget->previousInFocusChain();
       }();
       if(!m_table_body->isAncestorOf(next_focus_widget) &&
-        m_table_body != focus_widget) {
+          m_table_body != focus_widget) {
         return QWidget::focusNextPrevChild(next);
       }
     }

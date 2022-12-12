@@ -61,10 +61,6 @@ void TableCurrentController::move_row(int source, int destination) {
     return 1;
   }();
   auto adjust = [&] (auto& value) {
-    //if(value && (value->m_row >= source || value->m_row <= destination)) {
-    //  value->m_row += direction;
-    //  return true;
-    //}
     if(value) {
       if(value->m_row == source) {
         value->m_row = destination;

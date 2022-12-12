@@ -63,6 +63,7 @@ namespace Spire {
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
+      void showEvent(QShowEvent* event) override;
 
     private:
       struct DestinationQueryModel;

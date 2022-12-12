@@ -74,7 +74,6 @@ DestinationBox::DestinationBox(
   m_combo_box->connect_submit_signal([=] (const auto& submission) {
     m_submit_signal(std::any_cast<const Destination&>(submission));
   });
-  find_focus_proxy(*m_combo_box)->installEventFilter(this);
   enclose(*this, *m_combo_box);
   proxy_style(*this, *m_combo_box);
   setFocusProxy(m_combo_box);
@@ -109,9 +108,6 @@ bool DestinationBox::is_read_only() const {
 
 void DestinationBox::set_read_only(bool is_read_only) {
   m_combo_box->set_read_only(is_read_only);
-  if(is_read_only) {
-    find_focus_proxy(*m_combo_box)->installEventFilter(this);
-  }
 }
 
 connection DestinationBox::connect_submit_signal(
@@ -120,9 +116,7 @@ connection DestinationBox::connect_submit_signal(
 }
 
 bool DestinationBox::eventFilter(QObject* watched, QEvent* event) {
-  if(event->type() == QEvent::Show) {
-    find_focus_proxy(*m_combo_box)->installEventFilter(this);
-  } else if(event->type() == QEvent::KeyPress) {
+  if(event->type() == QEvent::KeyPress) {
     auto& key_event = static_cast<QKeyEvent&>(*event);
     if(key_event.key() == Qt::Key_Escape) {
       auto input_box =
@@ -134,4 +128,9 @@ bool DestinationBox::eventFilter(QObject* watched, QEvent* event) {
     }
   }
   return QWidget::eventFilter(watched, event);
+}
+
+void DestinationBox::showEvent(QShowEvent* event) {
+  find_focus_proxy(*m_combo_box)->installEventFilter(this);
+  QWidget::showEvent(event);
 }
