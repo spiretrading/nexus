@@ -1,6 +1,8 @@
 #include "Spire/Ui/DestinationBox.hpp"
+#include <QKeyEvent>
 #include "Spire/Spire/TransformValueModel.hpp"
 #include "Spire/Styles/Stylist.hpp"
+#include "Spire/Ui/AnyInputBox.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DestinationListItem.hpp"
 #include "Spire/Ui/Layouts.hpp"
@@ -72,6 +74,7 @@ DestinationBox::DestinationBox(
   m_combo_box->connect_submit_signal([=] (const auto& submission) {
     m_submit_signal(std::any_cast<const Destination&>(submission));
   });
+  find_focus_proxy(*m_combo_box)->installEventFilter(this);
   enclose(*this, *m_combo_box);
   proxy_style(*this, *m_combo_box);
   setFocusProxy(m_combo_box);
@@ -106,9 +109,29 @@ bool DestinationBox::is_read_only() const {
 
 void DestinationBox::set_read_only(bool is_read_only) {
   m_combo_box->set_read_only(is_read_only);
+  if(is_read_only) {
+    find_focus_proxy(*m_combo_box)->installEventFilter(this);
+  }
 }
 
 connection DestinationBox::connect_submit_signal(
     const SubmitSignal::slot_type& slot) const {
   return m_submit_signal.connect(slot);
+}
+
+bool DestinationBox::eventFilter(QObject* watched, QEvent* event) {
+  if(event->type() == QEvent::Show) {
+    find_focus_proxy(*m_combo_box)->installEventFilter(this);
+  } else if(event->type() == QEvent::KeyPress) {
+    auto& key_event = static_cast<QKeyEvent&>(*event);
+    if(key_event.key() == Qt::Key_Escape) {
+      auto input_box =
+        static_cast<AnyInputBox*>(m_combo_box->layout()->itemAt(0)->widget());
+      if(!m_query_model->parse(
+          any_cast<QString>(input_box->get_submission())).has_value()) {
+        return true;
+      }
+    }
+  }
+  return QWidget::eventFilter(watched, event);
 }

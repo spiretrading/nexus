@@ -5,6 +5,7 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ListValueModel.hpp"
 #include "Spire/Spire/ValidatedValueModel.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DestinationBox.hpp"
 #include "Spire/Ui/EditableBox.hpp"
 #include "Spire/Ui/Icon.hpp"
@@ -68,59 +69,100 @@ namespace {
     return QValidator::Invalid;
   }
 
-  class DestinationQueryModel : public ComboBox::QueryModel {
-    public:
-      DestinationQueryModel(std::shared_ptr<ValueModel<Region>> region_model,
-          const DestinationDatabase& destination_database,
-          const MarketDatabase& market_database)
-          : m_region_model(std::move(region_model)),
-            m_destination_database(destination_database),
-            m_market_database(market_database),
-            m_region_connection(m_region_model->connect_update_signal(
-              std::bind_front(&DestinationQueryModel::on_update, this))) {
-        on_update(m_region_model->get());
+  struct DestinationQueryModel : ComboBox::QueryModel {
+    std::shared_ptr<ValueModel<Region>> m_region_model;
+    const DestinationDatabase& m_destination_database;
+    const MarketDatabase& m_market_database;
+    std::unique_ptr<LocalComboBoxQueryModel> m_local_query_model;
+    scoped_connection m_region_connection;
+
+    DestinationQueryModel(std::shared_ptr<ValueModel<Region>> region_model,
+      const DestinationDatabase& destination_database,
+      const MarketDatabase& market_database)
+      : m_region_model(std::move(region_model)),
+      m_destination_database(destination_database),
+      m_market_database(market_database),
+      m_local_query_model(std::make_unique<LocalComboBoxQueryModel>()),
+      m_region_connection(m_region_model->connect_update_signal(
+        std::bind_front(&DestinationQueryModel::on_update, this))) {
+      on_update(m_region_model->get());
+    }
+
+    std::any parse(const QString& query) override {
+      return m_local_query_model->parse(query);
+    }
+
+    QtPromise<std::vector<std::any>> submit(const QString& query) override {
+      return m_local_query_model->submit(query);
+    }
+
+    void on_update(const Region& region) {
+      auto destinations = m_destination_database.SelectEntries(
+        [] (auto& value) { return true; });
+      auto market_set = std::unordered_set<MarketCode>();
+      for(auto& security : region.GetSecurities()) {
+        market_set.insert(security.GetMarket());
       }
-
-      std::any parse(const QString& query) override {
-        return m_local_query_model.parse(query);
-      }
-
-      QtPromise<std::vector<std::any>> submit(const QString& query) override {
-        return m_local_query_model.submit(query);
-      }
-
-    private:
-      std::shared_ptr<ValueModel<Region>> m_region_model;
-      const DestinationDatabase& m_destination_database;
-      const MarketDatabase& m_market_database;
-      LocalComboBoxQueryModel m_local_query_model;
-      scoped_connection m_region_connection;
-
-      void on_update(const Region& region) {
-        auto destinations = m_destination_database.SelectEntries(
-          [] (auto& value) { return true; });
-        auto market_set = std::unordered_set<MarketCode>();
-        for(auto& security : region.GetSecurities()) {
-          market_set.insert(security.GetMarket());
+      auto region_markets = region.GetMarkets();
+      market_set.insert(region_markets.begin(), region_markets.end());
+      for(auto& country : region.GetCountries()) {
+        auto markets = m_market_database.FromCountry(country);
+        for(auto& market : markets) {
+          market_set.insert(market.m_code);
         }
-        auto region_markets = region.GetMarkets();
-        market_set.insert(region_markets.begin(), region_markets.end());
-        for(auto& country : region.GetCountries()) {
-          auto markets = m_market_database.FromCountry(country);
-          for(auto& market : markets) {
-            market_set.insert(market.m_code);
+      }
+      m_local_query_model = std::make_unique<LocalComboBoxQueryModel>();
+      for(auto& destination : destinations) {
+        for(auto& market : destination.m_markets) {
+          if(market_set.contains(market)) {
+            m_local_query_model->add(displayText(destination.m_id).toLower(),
+              destination);
+            break;
           }
         }
-        for(auto& destination : destinations) {
-          for(auto& market : destination.m_markets) {
-            if(market_set.contains(market)) {
-              m_local_query_model.add(displayText(destination.m_id).toLower(),
-                destination);
-              break;
-            }
-          }
-        }
       }
+    }
+  };
+
+  struct DestinationValueModel : ValueModel<Destination> {
+    std::shared_ptr<ValueModel<Destination>> m_source;
+    std::shared_ptr<DestinationQueryModel> m_query_model;
+    scoped_connection m_connection;
+
+    DestinationValueModel(std::shared_ptr<ValueModel<Destination>> source,
+      std::shared_ptr<DestinationQueryModel> query_model)
+      : m_source(std::move(source)),
+        m_query_model(std::move(query_model)),
+        m_connection(m_query_model->m_region_model->connect_update_signal(
+          std::bind_front(&DestinationValueModel::on_update, this))) {}
+
+    QValidator::State get_state() const override {
+      return m_source->get_state();
+    }
+
+    const Type& get() const override {
+      return m_source->get();
+    }
+
+    QValidator::State test(const Type& value) const override {
+      return m_source->test(value);
+    }
+
+    QValidator::State set(const Type& value) override {
+      return m_source->set(value);
+    }
+
+    connection connect_update_signal(
+        const typename UpdateSignal::slot_type& slot) const override {
+      return m_source->connect_update_signal(slot);
+    }
+
+    void on_update(const Region& region) {
+      if(!m_source->get().empty() &&
+          !m_query_model->parse(displayText(m_source->get())).has_value()) {
+        set(Destination());
+      }
+    }
   };
 
   class CustomPopupBox : public QWidget {
@@ -346,10 +388,12 @@ EditableBox* OrderTasksRow::make_editor(
               table, static_cast<int>(Column::REGION)), row);
           auto query_model = std::make_shared<DestinationQueryModel>(
             std::move(region_model), destination_database, market_database);
-          return new AnyInputBox(*new DestinationBox(std::move(query_model),
+          auto current_model = std::make_shared<DestinationValueModel>(
             std::make_shared<ListValueModel<Destination>>(
               std::make_shared<ColumnViewListModel<Destination>>(table, column),
-                row)));
+                row), query_model);
+          return new AnyInputBox(*new DestinationBox(std::move(query_model),
+            std::move(current_model)));
         }
       case Column::ORDER_TYPE:
         return new AnyInputBox(*make_order_type_box(

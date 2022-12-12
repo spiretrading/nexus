@@ -61,6 +61,9 @@ namespace Spire {
       boost::signals2::connection connect_submit_signal(
         const SubmitSignal::slot_type& slot) const;
 
+    protected:
+      bool eventFilter(QObject* watched, QEvent* event) override;
+
     private:
       struct DestinationQueryModel;
       mutable SubmitSignal m_submit_signal;
