@@ -71,6 +71,9 @@ namespace Spire {
       std::shared_ptr<DestinationQueryModel> m_query_model;
       std::shared_ptr<CurrentModel> m_current;
       ComboBox* m_combo_box;
+      AnyInputBox* m_input_box;
+
+      void on_input_submit(const AnyRef& submission);
   };
 }
 
