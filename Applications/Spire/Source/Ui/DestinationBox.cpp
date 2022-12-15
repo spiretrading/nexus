@@ -1,6 +1,8 @@
 #include "Spire/Ui/DestinationBox.hpp"
+#include <QKeyEvent>
 #include "Spire/Spire/TransformValueModel.hpp"
 #include "Spire/Styles/Stylist.hpp"
+#include "Spire/Ui/AnyInputBox.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DestinationListItem.hpp"
 #include "Spire/Ui/Layouts.hpp"
@@ -111,4 +113,25 @@ void DestinationBox::set_read_only(bool is_read_only) {
 connection DestinationBox::connect_submit_signal(
     const SubmitSignal::slot_type& slot) const {
   return m_submit_signal.connect(slot);
+}
+
+bool DestinationBox::eventFilter(QObject* watched, QEvent* event) {
+  if(event->type() == QEvent::KeyPress) {
+    auto& key_event = static_cast<QKeyEvent&>(*event);
+    if(key_event.key() == Qt::Key_Escape) {
+      auto input_box =
+        static_cast<AnyInputBox*>(m_combo_box->layout()->itemAt(0)->widget());
+      if(!m_query_model->parse(
+          any_cast<QString>(input_box->get_submission())).has_value()) {
+        event->ignore();
+        return true;
+      }
+    }
+  }
+  return QWidget::eventFilter(watched, event);
+}
+
+void DestinationBox::showEvent(QShowEvent* event) {
+  find_focus_proxy(*m_combo_box)->installEventFilter(this);
+  QWidget::showEvent(event);
 }
