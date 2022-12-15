@@ -51,6 +51,7 @@ namespace Spire {
       int m_above_space;
       int m_below_space;
       int m_right_space;
+      boost::signals2::scoped_connection m_focus_connection;
 
       bool has_popped_up() const;
       void align();

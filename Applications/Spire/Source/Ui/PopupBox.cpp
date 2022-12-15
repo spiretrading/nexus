@@ -1,4 +1,5 @@
 #include "Spire/Ui/PopupBox.hpp"
+#include <boost/signals2/shared_connection_block.hpp>
 #include <QApplication>
 #include "Spire/Styles/Stylist.hpp"
 #include "Spire/Ui/Layouts.hpp"
@@ -25,7 +26,7 @@ PopupBox::PopupBox(QWidget& body, QWidget* parent)
   setFocusProxy(m_body);
   m_body_focus_observer.connect_state_signal(
     std::bind_front(&PopupBox::on_body_focus, this));
-  m_focus_observer.connect_state_signal(
+  m_focus_connection = m_focus_observer.connect_state_signal(
     std::bind_front(&PopupBox::on_focus, this));
   m_position_observer.connect_position_signal(
     std::bind_front(&PopupBox::on_position, this));
@@ -157,17 +158,14 @@ void PopupBox::on_body_focus(FocusObserver::State state) {
 }
 
 void PopupBox::on_focus(FocusObserver::State state) {
-  static auto is_changing_parent = false;
-  if(is_changing_parent) {
-    return;
-  }
   if(state != FocusObserver::State::NONE && !has_popped_up()) {
     m_last_size = size();
     m_body->setMinimumSize(0, 0);
     m_body->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
-    is_changing_parent = true;
-    m_body->setParent(m_window);
-    is_changing_parent = false;
+    {
+      auto blocker = shared_connection_block(m_focus_connection);
+      m_body->setParent(m_window);
+    }
     layout()->removeWidget(m_body);
     m_body->show();
     m_body->setFocus();
