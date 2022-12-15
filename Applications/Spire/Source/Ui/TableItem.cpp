@@ -24,6 +24,14 @@ const TableItem::Styles& TableItem::get_styles() const {
   return m_styles;
 }
 
+const QWidget& TableItem::get_body() const {
+  return m_button->get_body();
+}
+
+QWidget& TableItem::get_body() {
+  return m_button->get_body();
+}
+
 connection TableItem::connect_active_signal(
     const ActiveSignal::slot_type& slot) const {
   return m_active_signal.connect(slot);
