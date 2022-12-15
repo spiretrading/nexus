@@ -57,6 +57,7 @@ namespace Spire {
       void align();
       void adjust_size();
       void set_position(const QPoint& pos);
+      void update_window();
       void update_space();
       void on_body_focus(FocusObserver::State state);
       void on_focus(FocusObserver::State state);

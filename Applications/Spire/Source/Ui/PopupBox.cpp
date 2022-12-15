@@ -62,11 +62,8 @@ bool PopupBox::eventFilter(QObject* watched, QEvent* event) {
       adjust_size();
     }
   } else if(watched == m_body) {
-    if(event->type() == QEvent::Show && !m_window) {
-      m_window = window();
-      m_window->installEventFilter(this);
-      update_space();
-      m_body->setFixedHeight(m_min_height);
+    if(event->type() == QEvent::Show) {
+      update_window();
     } else if(event->type() == QEvent::LayoutRequest && has_popped_up()) {
       adjust_size();
     }
@@ -137,6 +134,16 @@ void PopupBox::set_position(const QPoint& pos) {
   m_body->move(m_window->mapFromGlobal(pos));
 }
 
+void PopupBox::update_window() {
+  if(!m_window) {
+    m_window = window();
+    m_window->installEventFilter(this);
+    update_space();
+    m_body->setFixedHeight(m_min_height);
+    adjustSize();
+  }
+}
+
 void PopupBox::update_space() {
   if(!m_window) {
     return;
@@ -150,7 +157,7 @@ void PopupBox::update_space() {
 void PopupBox::on_body_focus(FocusObserver::State state) {
   if(state == FocusObserver::State::NONE && has_popped_up() &&
       QApplication::focusWidget()) {
-    m_body->setFixedHeight(m_last_size.height());
+    m_body->setFixedHeight(m_min_height);
     m_body->setMinimumWidth(0);
     m_body->setMaximumWidth(QWIDGETSIZE_MAX);
     layout()->addWidget(m_body);
@@ -159,14 +166,15 @@ void PopupBox::on_body_focus(FocusObserver::State state) {
 
 void PopupBox::on_focus(FocusObserver::State state) {
   if(state != FocusObserver::State::NONE && !has_popped_up()) {
+    update_window();
     m_last_size = size();
-    m_body->setMinimumSize(0, 0);
-    m_body->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
     {
       auto blocker = shared_connection_block(m_focus_connection);
       m_body->setParent(m_window);
     }
     layout()->removeWidget(m_body);
+    m_body->setMinimumSize(0, 0);
+    m_body->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
     m_body->show();
     m_body->setFocus();
     m_alignment = Alignment::NONE;
