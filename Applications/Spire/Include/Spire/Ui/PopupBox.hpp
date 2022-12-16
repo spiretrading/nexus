@@ -51,11 +51,13 @@ namespace Spire {
       int m_above_space;
       int m_below_space;
       int m_right_space;
+      boost::signals2::scoped_connection m_focus_connection;
 
       bool has_popped_up() const;
       void align();
       void adjust_size();
       void set_position(const QPoint& pos);
+      void update_window();
       void update_space();
       void on_body_focus(FocusObserver::State state);
       void on_focus(FocusObserver::State state);
