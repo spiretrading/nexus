@@ -124,7 +124,8 @@ bool ComboBox::eventFilter(QObject* watched, QEvent* event) {
           m_drop_down_list->hide();
           revert_current();
         } else if(any_cast<QString>(m_input_box->get_current()->get()) !=
-            m_submission_text) {
+            m_submission_text &&
+            m_query_model->parse(m_submission_text).has_value()) {
           revert_to(m_submission_text, false);
         } else {
           event->ignore();
