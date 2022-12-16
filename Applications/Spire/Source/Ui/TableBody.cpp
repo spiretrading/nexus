@@ -242,6 +242,11 @@ void TableBody::keyPressEvent(QKeyEvent* event) {
     case Qt::Key_Right:
       m_current_controller.navigate_next_column();
       break;
+    case Qt::Key_A:
+      if(event->modifiers() & Qt::Modifier::CTRL && !event->isAutoRepeat()) {
+        m_selection_controller.select_all();
+      }
+      break;
     case Qt::Key_Control:
       m_keys.insert(Qt::Key_Control);
       m_selection_controller.set_mode(
@@ -249,26 +254,10 @@ void TableBody::keyPressEvent(QKeyEvent* event) {
       break;
     case Qt::Key_Shift:
       m_keys.insert(Qt::Key_Shift);
+      m_selection_controller.set_mode(TableSelectionController::Mode::RANGE);
       break;
-    case Qt::Key_Enter:
-    case Qt::Key_Return:
-    case Qt::Key_Backspace:
-      QCoreApplication::sendEvent(
-        find_focus_proxy(get_current_item()->get_body()), event);
-      break;
-    case Qt::Key_A:
-      if(event->modifiers() & Qt::Modifier::CTRL && !event->isAutoRepeat()) {
-        m_selection_controller.select_all();
-        break;
-      }
     default:
-      auto text = event->text();
-      if(is_a_word(text)) {
-        QCoreApplication::sendEvent(
-          find_focus_proxy(get_current_item()->get_body()), event);
-      } else {
-        QWidget::keyPressEvent(event);
-      }
+      QWidget::keyPressEvent(event);
   }
 }
 

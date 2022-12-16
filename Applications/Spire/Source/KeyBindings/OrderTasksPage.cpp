@@ -230,6 +230,10 @@ namespace {
     }
     return false;
   };
+
+  QWidget& get_table_item_body(const TableItem& item) {
+    return static_cast<Button*>(item.layout()->itemAt(0)->widget())->get_body();
+  }
 }
 
 std::size_t OrderTasksPage::RegionKeyHash::operator()(
@@ -300,6 +304,7 @@ OrderTasksPage::OrderTasksPage(
   }
   m_table_body = static_cast<TableBody*>(&static_cast<ScrollBox*>(
     table_view->layout()->itemAt(1)->widget())->get_body());
+  m_table_body->installEventFilter(this);
   auto table_view_body = new QWidget();
   auto table_view_layout = make_vbox_layout(table_view_body);
   table_view_layout->addWidget(table_view);
@@ -343,7 +348,34 @@ const std::shared_ptr<ListModel<OrderTask>>& OrderTasksPage::get_model() const {
 }
 
 bool OrderTasksPage::eventFilter(QObject* watched, QEvent* event) {
-  if(event->type() == QEvent::MouseButtonPress) {
+  if(watched == m_table_body) {
+    if(event->type() == QEvent::KeyPress) {
+      auto& key_event = *static_cast<QKeyEvent*>(event);
+      switch(key_event.key()) {
+        case Qt::Key_Enter:
+        case Qt::Key_Return:
+        case Qt::Key_Backspace:
+          if(auto current = m_table_body->get_current()->get()) {
+            QCoreApplication::sendEvent(find_focus_proxy(
+              get_table_item_body(*m_table_body->get_item(*current))), event);
+            return true;
+          }
+        case Qt::Key_A:
+          if(key_event.modifiers() & Qt::Modifier::CTRL &&
+              !key_event.isAutoRepeat()) {
+            return true;
+          }
+        default:
+          if(auto text = key_event.text(); is_a_word(text)) {
+            if(auto current = m_table_body->get_current()->get()) {
+              QCoreApplication::sendEvent(find_focus_proxy(
+                get_table_item_body(*m_table_body->get_item(*current))), event);
+              return true;
+            }
+          }
+      }
+    }
+  } else if(event->type() == QEvent::MouseButtonPress) {
     auto& mouse_event = *static_cast<QMouseEvent*>(event);
     if(mouse_event.button() == Qt::RightButton) {
       for(auto i = 0; i < m_table_body->layout()->count(); ++i) {
@@ -410,11 +442,11 @@ bool OrderTasksPage::focusNextPrevChild(bool next) {
       } else if(static_cast<Column>(current->m_column) == Column::REGION ||
           static_cast<Column>(current->m_column) == Column::QUANTITY) {
         return static_cast<EditableBox*>(&static_cast<PopupBox*>(
-          m_table_body->get_item(*current)->get_body().layout()->itemAt(0)->
-            widget())->get_body())->is_editing();
+          get_table_item_body(*m_table_body->get_item(*current)).layout()->
+            itemAt(0)->widget())->get_body())->is_editing();
       }
-      return static_cast<EditableBox*>(&m_table_body->get_item(
-        *m_table_body->get_current()->get())->get_body())->is_editing();
+      return static_cast<EditableBox*>(&get_table_item_body(
+        *m_table_body->get_item(*current)))->is_editing();
     }
     return false;
   }();
@@ -431,11 +463,11 @@ bool OrderTasksPage::focusNextPrevChild(bool next) {
       } else if(static_cast<Column>(current->m_column) == Column::REGION ||
           static_cast<Column>(current->m_column) == Column::QUANTITY) {
         static_cast<EditableBox*>(&static_cast<PopupBox*>(
-          m_table_body->get_item(*current)->get_body().layout()->itemAt(0)->
-            widget())->get_body())->set_editing(true);
+          get_table_item_body(*m_table_body->get_item(*current)).layout()->
+            itemAt(0)->widget())->get_body())->set_editing(true);
       } else {
-        static_cast<EditableBox*>(
-          &m_table_body->get_item(*current)->get_body())->set_editing(true);
+        static_cast<EditableBox*>(&get_table_item_body(
+          *m_table_body->get_item(*current)))->set_editing(true);
       }
     }
   }
