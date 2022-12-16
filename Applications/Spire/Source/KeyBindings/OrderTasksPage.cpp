@@ -355,7 +355,8 @@ bool OrderTasksPage::eventFilter(QObject* watched, QEvent* event) {
         case Qt::Key_Enter:
         case Qt::Key_Return:
         case Qt::Key_Backspace:
-          if(auto current = m_table_body->get_current()->get()) {
+          if(auto current = m_table_body->get_current()->get();
+              static_cast<Column>(current->m_column) != Column::GRAB_HANDLE) {
             QCoreApplication::sendEvent(find_focus_proxy(
               get_table_item_body(*m_table_body->get_item(*current))), event);
             return true;
@@ -367,7 +368,8 @@ bool OrderTasksPage::eventFilter(QObject* watched, QEvent* event) {
           }
         default:
           if(auto text = key_event.text(); is_a_word(text)) {
-            if(auto current = m_table_body->get_current()->get()) {
+            if(auto current = m_table_body->get_current()->get();
+                static_cast<Column>(current->m_column) != Column::GRAB_HANDLE) {
               QCoreApplication::sendEvent(find_focus_proxy(
                 get_table_item_body(*m_table_body->get_item(*current))), event);
               return true;
