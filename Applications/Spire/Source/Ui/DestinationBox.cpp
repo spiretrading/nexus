@@ -59,8 +59,11 @@ DestinationBox::DestinationBox(
         std::make_shared<DestinationQueryModel>(std::move(query_model))),
       m_current(std::move(current)) {
   auto combo_box_current = make_transform_value_model(m_current,
-    [] (const Destination& current) {
-      return std::any(current);
+    [=] (const Destination& current) {
+      if(m_query_model->parse(displayText(current)).has_value()) {
+        return std::any(current);
+      }
+      return std::any();
     },
     [] (const std::any& current) {
       return std::any_cast<Destination>(current);
@@ -77,6 +80,10 @@ DestinationBox::DestinationBox(
   enclose(*this, *m_combo_box);
   proxy_style(*this, *m_combo_box);
   setFocusProxy(m_combo_box);
+  m_input_box =
+    static_cast<AnyInputBox*>(m_combo_box->layout()->itemAt(0)->widget());
+  m_input_box->connect_submit_signal(
+    std::bind_front(&DestinationBox::on_input_submit, this));
 }
 
 const std::shared_ptr<ComboBox::QueryModel>&
@@ -119,10 +126,9 @@ bool DestinationBox::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::KeyPress) {
     auto& key_event = static_cast<QKeyEvent&>(*event);
     if(key_event.key() == Qt::Key_Escape) {
-      auto input_box =
-        static_cast<AnyInputBox*>(m_combo_box->layout()->itemAt(0)->widget());
       if(!m_query_model->parse(
-          any_cast<QString>(input_box->get_submission())).has_value()) {
+          any_cast<QString>(m_input_box->get_submission())).has_value()) {
+        event->ignore();
         return true;
       }
     }
@@ -133,4 +139,10 @@ bool DestinationBox::eventFilter(QObject* watched, QEvent* event) {
 void DestinationBox::showEvent(QShowEvent* event) {
   find_focus_proxy(*m_combo_box)->installEventFilter(this);
   QWidget::showEvent(event);
+}
+
+void DestinationBox::on_input_submit(const AnyRef& submission) {
+  if(!m_query_model->parse(any_cast<QString>(submission)).has_value()) {
+    m_input_box->get_current()->set(QString());
+  }
 }
