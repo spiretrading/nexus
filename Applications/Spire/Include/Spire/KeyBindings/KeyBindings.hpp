@@ -3,7 +3,9 @@
 
 namespace Spire {
   class GrabHandle;
+  class KeyBindingsWindow;
   class OrderFieldInfoTip;
+  class OrderTasksPage;
   class OrderTasksRow;
   class OrderTasksTableViewModel;
   class OrderTasksToTableModel;

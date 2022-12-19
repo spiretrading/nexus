@@ -100,8 +100,8 @@ int main(int argc, char** argv) {
   window.connect_submit_signal([&] (const auto& order_tasks_submission) {
     if(order_tasks_submission) {
       auto order_tasks_json = QJsonObject();
-      for(auto i = 0; i < (*order_tasks_submission)->get_size(); ++i) {
-        auto& order_task = (*order_tasks_submission)->get(i);
+      for(auto i = 0; i < order_tasks_submission->get_size(); ++i) {
+        auto& order_task = order_tasks_submission->get(i);
         auto json = QJsonObject();
         json["Name"] = order_task.m_name;
         auto region_json = QJsonObject();

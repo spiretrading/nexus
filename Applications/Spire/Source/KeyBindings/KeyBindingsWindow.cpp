@@ -1,4 +1,5 @@
 #include "Spire/KeyBindings/KeyBindingsWindow.hpp"
+#include "Spire/KeyBindings/OrderTasksPage.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Button.hpp"
@@ -6,7 +7,6 @@
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/NavigationView.hpp"
 
-using namespace boost;
 using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;

@@ -1,7 +1,7 @@
 #ifndef SPIRE_KEY_BINDINGS_WINDOW_HPP
 #define SPIRE_KEY_BINDINGS_WINDOW_HPP
 #include "Spire/KeyBindings/KeyBindings.hpp"
-#include "Spire/KeyBindings/OrderTasksPage.hpp"
+#include "Spire/KeyBindings/OrderTask.hpp"
 #include "Spire/Ui/ComboBox.hpp"
 #include "Spire/Ui/Window.hpp"
 
@@ -12,12 +12,12 @@ namespace Spire {
     public:
 
       /**
-       * Signals the submission of key bindings of order tasks.
-       * @param submission The order tasks key bindings to be submitted.
+       * Signals the submission of key bindings.
+       * @param order_tasks_submission The key bindings of the order tasks
+       *        to be submitted.
        */
       using SubmitSignal = Signal<void (
-        const boost::optional<std::shared_ptr<ListModel<OrderTask>>>&
-          order_tasks_submission)>;
+        const std::shared_ptr<ListModel<OrderTask>>& order_tasks_submission)>;
 
       /** Stores the various models used to build a KeyBindingsWindow. */
       struct KeyBindingsModels {
