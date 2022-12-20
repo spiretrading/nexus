@@ -13,18 +13,17 @@ namespace Spire {
 
       /**
        * Signals the submission of key bindings.
-       * @param order_tasks_submission The key bindings of the order tasks
-       *        to be submitted.
+       * @param submission The key bindings of the order tasks to be submitted.
        */
       using SubmitSignal = Signal<void (
-        const std::shared_ptr<ListModel<OrderTask>>& order_tasks_submission)>;
+        const std::shared_ptr<ListModel<OrderTask>>& submission)>;
 
       /**
        * Constructs a KeyBindingsWindow.
        * @param key_bindings The key bindings to represent.
        * @param parent The parent widget.
        */
-      KeyBindingsWindow(std::shared_ptr<KeyBindingsModel> key_bindings,
+      explicit KeyBindingsWindow(std::shared_ptr<KeyBindingsModel> key_bindings,
         QWidget* parent = nullptr);
 
       /** Connects a slot to the submit signal. */

@@ -3,8 +3,8 @@
 #include "Spire/KeyBindings/OrderTasksPage.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/Box.hpp"
+#include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/NavigationView.hpp"
 
@@ -40,8 +40,7 @@ KeyBindingsWindow::KeyBindingsWindow(
   m_navigation_view->setSizePolicy(QSizePolicy::Expanding,
     QSizePolicy::Expanding);
   m_order_tasks_page = new OrderTasksPage(
-    std::move(m_key_bindings->get_region_query_model()),
-    std::move(m_key_bindings->get_order_tasks()),
+    m_key_bindings->get_region_query_model(), m_key_bindings->get_order_tasks(),
     m_key_bindings->get_destinations(), m_key_bindings->get_markets());
   m_order_tasks_page->setSizePolicy(QSizePolicy::Expanding,
     QSizePolicy::Expanding);
@@ -137,5 +136,4 @@ void KeyBindingsWindow::on_order_task_operation(
     [&] (const ListModel<OrderTask>::UpdateOperation& operation) {
       m_is_modified = true;
     });
-
 }
