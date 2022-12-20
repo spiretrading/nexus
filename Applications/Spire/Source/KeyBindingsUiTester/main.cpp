@@ -5,7 +5,7 @@
 #include <QTextEdit>
 #include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 #include "Nexus/Definitions/SecuritySet.hpp"
-#include "Spire/KeyBindings/OrderTasksPage.hpp"
+#include "Spire/KeyBindings/CompositeKeyBindingsModel.hpp"
 #include "Spire/KeyBindings/KeyBindingsWindow.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
@@ -60,35 +60,33 @@ int main(int argc, char** argv) {
   application->setOrganizationName(QObject::tr("Spire Trading Inc"));
   application->setApplicationName(QObject::tr("KeyBindings Ui Tester"));
   initialize_resources();
-  auto model = std::make_shared<ArrayListModel<OrderTask>>();
-  model->push({"Test1",
+  auto order_tasks = std::make_shared<ArrayListModel<OrderTask>>();
+  order_tasks->push({"Test1",
     Region(*ParseWildCardSecurity(
       "MSFT.NSDQ", GetDefaultMarketDatabase(), GetDefaultCountryDatabase())),
     "NASDAQ", OrderType::MARKET, Side::ASK, Quantity(1),
     TimeInForce(TimeInForce::Type::DAY), QKeySequence("Ctrl+F4")});
-  model->push({"Test2",
+  order_tasks->push({"Test2",
     Region(GetDefaultMarketDatabase().FromCode(DefaultMarkets::TSX())),
     "TSX", OrderType::STOP, Side::ASK, Quantity(10),
     TimeInForce(TimeInForce::Type::DAY), QKeySequence("Ctrl+Alt+S")});
-  model->push({"Test3",
+  order_tasks->push({"Test3",
     Region(DefaultCountries::US()), "NYSE",
     OrderType::MARKET, Side::BID, Quantity(20),
     TimeInForce(TimeInForce::Type::IOC), QKeySequence("F3")});
-  auto default_model = std::make_shared<ArrayListModel<OrderTask>>();
-  default_model->push({"TSX DRK Limit Bid",
-    Region(GetDefaultMarketDatabase().FromCode(DefaultMarkets::TSX())), "XDRK",
+  auto default_order_tasks = std::make_shared<ArrayListModel<OrderTask>>();
+  default_order_tasks->push({"TSX DRK Limit Bid",
+    Region(GetDefaultMarketDatabase().FromCode(DefaultMarkets::TSX())), "LYNX",
     OrderType::LIMIT, Side::ASK, Quantity(1500),
     TimeInForce(TimeInForce::Type::DAY), QKeySequence("F3")});
-  default_model->push({"TSX Limit Bid",
-    Region(GetDefaultMarketDatabase().FromCode(DefaultMarkets::TSXV())), "XTSE",
+  default_order_tasks->push({"TSX Limit Bid",
+    Region(GetDefaultMarketDatabase().FromCode(DefaultMarkets::TSXV())), "CX2",
     OrderType::LIMIT, Side::ASK, Quantity(1000),
     TimeInForce(TimeInForce::Type::DAY), QKeySequence("Shift+F1")});
-  auto models = KeyBindingsWindow::KeyBindingsModels();
-  models.m_region_query_model = populate_region_query_model();
-  models.m_order_tasks_model = std::move(model);
-  models.m_default_order_tasks_model = std::move(default_model);
-  auto window = KeyBindingsWindow(models, GetDefaultDestinationDatabase(),
-    GetDefaultMarketDatabase());
+  auto window = KeyBindingsWindow(
+    std::make_shared<CompositeKeyBindingsModel>(std::move(order_tasks),
+      std::move(default_order_tasks), populate_region_query_model(),
+      GetDefaultDestinationDatabase(), GetDefaultMarketDatabase()));
   window.show();
   auto output_widget = QWidget();
   auto output = new QTextEdit();

@@ -1,4 +1,5 @@
 #include "Spire/KeyBindings/KeyBindingsWindow.hpp"
+#include "Spire/KeyBindings/KeyBindingsModel.hpp"
 #include "Spire/KeyBindings/OrderTasksPage.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
@@ -8,7 +9,6 @@
 #include "Spire/Ui/NavigationView.hpp"
 
 using namespace boost::signals2;
-using namespace Nexus;
 using namespace Spire;
 using namespace Spire::Styles;
 
@@ -24,13 +24,12 @@ namespace {
   }
 }
 
-KeyBindingsWindow::KeyBindingsWindow(KeyBindingsModels models,
-    const DestinationDatabase& destination_database,
-    const MarketDatabase& market_database, QWidget* parent)
+KeyBindingsWindow::KeyBindingsWindow(
+    std::shared_ptr<KeyBindingsModel> key_bindings, QWidget* parent)
     : Window(parent),
+      m_key_bindings(std::move(key_bindings)),
       m_order_tasks_submission(std::make_shared<ArrayListModel<OrderTask>>()),
-      m_default_order_tasks_model(
-        std::move(models.m_default_order_tasks_model)) {
+      m_is_modified(false) {
   setWindowTitle(tr("Key Bindings"));
   set_svg_icon(":/Icons/key-bindings.svg");
   setWindowIcon(QIcon(":/Icons/taskbar_icons/key-bindings.png"));
@@ -41,9 +40,9 @@ KeyBindingsWindow::KeyBindingsWindow(KeyBindingsModels models,
   m_navigation_view->setSizePolicy(QSizePolicy::Expanding,
     QSizePolicy::Expanding);
   m_order_tasks_page = new OrderTasksPage(
-    std::move(models.m_region_query_model),
-    std::move(models.m_order_tasks_model), destination_database,
-    market_database);
+    std::move(m_key_bindings->get_region_query_model()),
+    std::move(m_key_bindings->get_order_tasks()),
+    m_key_bindings->get_destinations(), m_key_bindings->get_markets());
   m_order_tasks_page->setSizePolicy(QSizePolicy::Expanding,
     QSizePolicy::Expanding);
   m_navigation_view->add_tab(*m_order_tasks_page, tr("Order Tasks"));
@@ -86,16 +85,9 @@ KeyBindingsWindow::KeyBindingsWindow(KeyBindingsModels models,
   });
   layout()->addWidget(box);
   copy_list_model(m_order_tasks_page->get_model(), m_order_tasks_submission);
-}
-
-const std::shared_ptr<ComboBox::QueryModel>&
-    KeyBindingsWindow::get_region_query_model() const {
-  return m_order_tasks_page->get_region_query_model();
-}
-
-const std::shared_ptr<ListModel<OrderTask>>&
-    KeyBindingsWindow::get_order_task_model() const {
-  return m_order_tasks_page->get_model();
+  m_order_tasks_connection =
+    m_order_tasks_page->get_model()->connect_operation_signal(
+      std::bind_front(&KeyBindingsWindow::on_order_task_operation, this));
 }
 
 connection KeyBindingsWindow::connect_submit_signal(
@@ -104,12 +96,18 @@ connection KeyBindingsWindow::connect_submit_signal(
 }
 
 void KeyBindingsWindow::on_apply() {
-  copy_list_model(m_order_tasks_page->get_model(), m_order_tasks_submission);
+  if(m_is_modified) {
+    m_is_modified = false;
+    copy_list_model(m_order_tasks_page->get_model(), m_order_tasks_submission);
+  }
   m_submit_signal(m_order_tasks_submission);
 }
 
 void KeyBindingsWindow::on_cancel() {
-  copy_list_model(m_order_tasks_submission, m_order_tasks_page->get_model());
+  if(m_is_modified) {
+    m_is_modified = false;
+    copy_list_model(m_order_tasks_submission, m_order_tasks_page->get_model());
+  }
   m_submit_signal(m_order_tasks_submission);
   close();
 }
@@ -120,7 +118,24 @@ void KeyBindingsWindow::on_ok() {
 }
 
 void KeyBindingsWindow::on_reset() {
-  auto& order_tasks_model = m_order_tasks_page->get_model();
-  copy_list_model(m_default_order_tasks_model,
+  copy_list_model(m_key_bindings->get_default_order_tasks(),
     m_order_tasks_page->get_model());
+}
+
+void KeyBindingsWindow::on_order_task_operation(
+    const ListModel<OrderTask>::Operation & operation) {
+  visit(operation,
+    [&] (const ListModel<OrderTask>::AddOperation& operation) {
+      m_is_modified = true;
+    },
+    [&] (const ListModel<OrderTask>::RemoveOperation& operation) {
+      m_is_modified = true;
+    },
+    [&] (const ListModel<OrderTask>::MoveOperation& operation) {
+      m_is_modified = true;
+    },
+    [&] (const ListModel<OrderTask>::UpdateOperation& operation) {
+      m_is_modified = true;
+    });
+
 }

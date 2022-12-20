@@ -3,6 +3,7 @@
 
 namespace Spire {
   class GrabHandle;
+  class KeyBindingsModel;
   class KeyBindingsWindow;
   class OrderFieldInfoTip;
   class OrderTasksPage;
