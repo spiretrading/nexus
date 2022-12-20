@@ -206,7 +206,6 @@ bool TableBody::event(QEvent* event) {
       }();
       cover->setFixedSize(width, height());
       left += width;
-      cover->raise();
     }
     return result;
   } else {
