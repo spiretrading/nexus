@@ -19,7 +19,7 @@ std::shared_ptr<ListModel<OrderTask>>
   return m_order_tasks;
 }
 
-const std::shared_ptr<ListModel<OrderTask>>
+std::shared_ptr<ListModel<OrderTask>>
     CompositeKeyBindingsModel::get_default_order_tasks() const {
   return m_default_order_tasks;
 }

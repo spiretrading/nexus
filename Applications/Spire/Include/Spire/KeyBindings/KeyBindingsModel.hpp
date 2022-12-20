@@ -14,7 +14,7 @@ namespace Spire {
       virtual std::shared_ptr<ListModel<OrderTask>> get_order_tasks() = 0;
 
       /** Returns the default key bindings of the order tasks. */
-      virtual const std::shared_ptr<ListModel<OrderTask>>
+      virtual std::shared_ptr<ListModel<OrderTask>>
         get_default_order_tasks() const = 0;
 
       /** Returns the region query model. */

@@ -27,7 +27,7 @@ namespace Spire {
 
       std::shared_ptr<ListModel<OrderTask>> get_order_tasks() override;
 
-      const std::shared_ptr<ListModel<OrderTask>>
+      std::shared_ptr<ListModel<OrderTask>>
         get_default_order_tasks() const override;
 
       std::shared_ptr<ComboBox::QueryModel> get_region_query_model() override;
