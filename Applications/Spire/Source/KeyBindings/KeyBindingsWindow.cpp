@@ -122,18 +122,13 @@ void KeyBindingsWindow::on_reset() {
 }
 
 void KeyBindingsWindow::on_order_task_operation(
-    const ListModel<OrderTask>::Operation & operation) {
+    const ListModel<OrderTask>::Operation& operation) {
   visit(operation,
-    [&] (const ListModel<OrderTask>::AddOperation& operation) {
-      m_is_modified = true;
+    [&] (const ListModel<OrderTask>::StartTransaction&) {
     },
-    [&] (const ListModel<OrderTask>::RemoveOperation& operation) {
-      m_is_modified = true;
+    [&] (const ListModel<OrderTask>::EndTransaction&) {
     },
-    [&] (const ListModel<OrderTask>::MoveOperation& operation) {
-      m_is_modified = true;
-    },
-    [&] (const ListModel<OrderTask>::UpdateOperation& operation) {
+    [&] (...) {
       m_is_modified = true;
     });
 }
