@@ -2,6 +2,7 @@
 #define SPIRE_KEY_BINDINGS_HPP
 
 namespace Spire {
+  class CompositeKeyBindingsModel;
   class GrabHandle;
   class KeyBindingsModel;
   class KeyBindingsWindow;

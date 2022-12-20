@@ -9,14 +9,13 @@
 #include "Spire/Ui/ContextMenu.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/EditableBox.hpp"
-#include "Spire/Ui/HoverObserver.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/PopupBox.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/SearchBox.hpp"
 #include "Spire/Ui/TableBody.hpp"
-#include "Spire/Ui/TableItem.hpp"
 #include "Spire/Ui/TableHeaderItem.hpp"
+#include "Spire/Ui/TableItem.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -234,6 +233,15 @@ namespace {
   QWidget& get_table_item_body(const TableItem& item) {
     return static_cast<Button*>(item.layout()->itemAt(0)->widget())->get_body();
   }
+
+  EditableBox* get_editable_box_from_item(const TableItem& item) {
+    return static_cast<EditableBox*>(&get_table_item_body(item));
+  }
+
+  EditableBox* get_editable_box_from_popup_item(const TableItem& item) {
+    return static_cast<EditableBox*>(&static_cast<PopupBox*>(
+      get_table_item_body(item).layout()->itemAt(0)->widget())->get_body());
+  }
 }
 
 std::size_t OrderTasksPage::RegionKeyHash::operator()(
@@ -305,6 +313,9 @@ OrderTasksPage::OrderTasksPage(
   m_table_body = static_cast<TableBody*>(&static_cast<ScrollBox*>(
     table_view->layout()->itemAt(1)->widget())->get_body());
   m_table_body->installEventFilter(this);
+  m_view_operation_connection =
+    m_table_body->get_table()->connect_operation_signal(
+      std::bind_front(&OrderTasksPage::on_view_table_operation, this));
   auto table_view_body = new QWidget();
   auto table_view_layout = make_vbox_layout(table_view_body);
   table_view_layout->addWidget(table_view);
@@ -317,9 +328,6 @@ OrderTasksPage::OrderTasksPage(
   m_table_menu = new ContextMenu(*this);
   m_table_menu->add_action(tr("Delete Order"),
     std::bind_front(&OrderTasksPage::on_delete_order, this));
-  m_view_operation_connection =
-    m_table_body->get_table()->connect_operation_signal(
-      std::bind_front(&OrderTasksPage::on_view_table_operation, this));
   m_table_body_focus_observer = std::make_unique<FocusObserver>(*m_table_body);
   m_table_body_focus_observer->connect_state_signal(
     std::bind_front(&OrderTasksPage::on_table_body_focus, this));
@@ -443,12 +451,11 @@ bool OrderTasksPage::focusNextPrevChild(bool next) {
         return false;
       } else if(static_cast<Column>(current->m_column) == Column::REGION ||
           static_cast<Column>(current->m_column) == Column::QUANTITY) {
-        return static_cast<EditableBox*>(&static_cast<PopupBox*>(
-          get_table_item_body(*m_table_body->get_item(*current)).layout()->
-            itemAt(0)->widget())->get_body())->is_editing();
+        return get_editable_box_from_popup_item(
+          *m_table_body->get_item(*current))->is_editing();
       }
-      return static_cast<EditableBox*>(&get_table_item_body(
-        *m_table_body->get_item(*current)))->is_editing();
+      return get_editable_box_from_item(
+        *m_table_body->get_item(*current))->is_editing();
     }
     return false;
   }();
@@ -464,12 +471,11 @@ bool OrderTasksPage::focusNextPrevChild(bool next) {
         return true;
       } else if(static_cast<Column>(current->m_column) == Column::REGION ||
           static_cast<Column>(current->m_column) == Column::QUANTITY) {
-        static_cast<EditableBox*>(&static_cast<PopupBox*>(
-          get_table_item_body(*m_table_body->get_item(*current)).layout()->
-            itemAt(0)->widget())->get_body())->set_editing(true);
+        get_editable_box_from_popup_item(
+          *m_table_body->get_item(*current))->set_editing(true);
       } else {
-        static_cast<EditableBox*>(&get_table_item_body(
-          *m_table_body->get_item(*current)))->set_editing(true);
+        get_editable_box_from_item(
+          *m_table_body->get_item(*current))->set_editing(true);
       }
     }
   }

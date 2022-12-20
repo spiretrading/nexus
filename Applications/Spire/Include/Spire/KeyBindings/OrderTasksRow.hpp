@@ -123,7 +123,6 @@ namespace Styles {
       bool m_is_out_of_range;
       std::unique_ptr<HoverObserver> m_hover_observer;
       boost::signals2::scoped_connection m_source_operation_connection;
-      boost::signals2::scoped_connection m_hover_connection;
 
       void make_hover_observer();
       EditableBox* make_editor(

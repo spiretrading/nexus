@@ -158,8 +158,8 @@ namespace {
     }
 
     void on_update(const Region& region) {
-      if(!m_source->get().empty() &&
-          !m_query_model->parse(displayText(m_source->get())).has_value()) {
+      if(!get().empty() &&
+          !m_query_model->parse(displayText(get())).has_value()) {
         set(Destination());
       }
     }
@@ -306,7 +306,7 @@ OrderTasksRow::TableCell OrderTasksRow::build_cell(
         market_database, table, row, column);
     }
     return make_editor(region_query_model, destination_database,
-    market_database, table, row, column);
+      market_database, table, row, column);
   }();
   update_style(*editor, [&] (auto& style) {
     switch(column_id) {
@@ -345,17 +345,16 @@ OrderTasksRow::TableCell OrderTasksRow::build_cell(
 
 void OrderTasksRow::make_hover_observer() {
   m_hover_observer = std::make_unique<HoverObserver>(*m_row);
-  m_hover_connection = m_hover_observer->connect_state_signal(
-    [=] (auto state) {
-      if(!m_grab_handle) {
-        return;
-      }
-      if(state == HoverObserver::State::NONE) {
-        unmatch(*m_grab_handle, HoveredGrabHandle());
-      } else {
-        match(*m_grab_handle, HoveredGrabHandle());
-      }
-    });
+  m_hover_observer->connect_state_signal([=] (auto state) {
+    if(!m_grab_handle) {
+      return;
+    }
+    if(state == HoverObserver::State::NONE) {
+      unmatch(*m_grab_handle, HoveredGrabHandle());
+    } else {
+      match(*m_grab_handle, HoveredGrabHandle());
+    }
+  });
 }
 
 EditableBox* OrderTasksRow::make_editor(
