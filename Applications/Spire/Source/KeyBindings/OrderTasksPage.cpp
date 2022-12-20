@@ -228,7 +228,7 @@ namespace {
       }
     }
     return false;
-  };
+  }
 
   QWidget& get_table_item_body(const TableItem& item) {
     return static_cast<Button*>(item.layout()->itemAt(0)->widget())->get_body();
@@ -514,10 +514,9 @@ QWidget* OrderTasksPage::table_view_builder(
     }
   });
   auto get_row_index = [=] (OrderTasksRow* order_tasks_row) {
-    auto i = std::find_if(m_rows.begin(), m_rows.end() - 1,
-      [&] (std::unique_ptr<OrderTasksRow>& row) {
-        return row.get() == order_tasks_row;
-      });
+    auto i = std::find_if(m_rows.begin(), m_rows.end() - 1, [&] (auto& row) {
+      return row.get() == order_tasks_row;
+    });
     if(i != m_rows.end() - 1) {
       return std::distance(m_rows.begin(), i);
     }
@@ -525,7 +524,7 @@ QWidget* OrderTasksPage::table_view_builder(
   };
   if(column_id == Column::REGION) {
     cell.m_editor->get_input_box().connect_submit_signal(
-      [=, order_tasks_row = m_rows[row].get()] (const auto submission) {
+      [=, order_tasks_row = m_rows[row].get()] (const auto& submission) {
         if(auto row_index = get_row_index(order_tasks_row); row_index >= 0) {
           update_key(table, row_index, any_cast<Region>(submission),
             table->get<QKeySequence>(row_index, static_cast<int>(Column::KEY)));
@@ -533,7 +532,7 @@ QWidget* OrderTasksPage::table_view_builder(
     });
   } else if(column_id == Column::KEY) {
     cell.m_editor->get_input_box().connect_submit_signal(
-      [=, order_tasks_row = m_rows[row].get()] (const auto submission) {
+      [=, order_tasks_row = m_rows[row].get()] (const auto& submission) {
         if(auto row_index = get_row_index(order_tasks_row); row_index >= 0) {
           update_key(table, row_index,
             table->get<Region>(row_index, static_cast<int>(Column::REGION)),
