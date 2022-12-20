@@ -316,10 +316,7 @@ OrderTasksPage::OrderTasksPage(
   m_view_operation_connection =
     m_table_body->get_table()->connect_operation_signal(
       std::bind_front(&OrderTasksPage::on_view_table_operation, this));
-  auto table_view_body = new QWidget();
-  auto table_view_layout = make_vbox_layout(table_view_body);
-  table_view_layout->addWidget(table_view);
-  auto table_view_box = new Box(table_view_body);
+  auto table_view_box = new Box(table_view);
   table_view_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   update_style(*table_view_box, [] (auto& style) {
     style = TABLE_VIEW_STYLE(style);
@@ -514,9 +511,10 @@ QWidget* OrderTasksPage::table_view_builder(
     }
   });
   auto get_row_index = [=] (OrderTasksRow* order_tasks_row) {
-    auto i = std::find_if(m_rows.begin(), m_rows.end() - 1, [&] (auto& row) {
-      return row.get() == order_tasks_row;
-    });
+    auto i = std::find_if(m_rows.begin(), m_rows.end() - 1,
+      [&] (const auto& row) {
+        return row.get() == order_tasks_row;
+      });
     if(i != m_rows.end() - 1) {
       return std::distance(m_rows.begin(), i);
     }
