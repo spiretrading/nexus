@@ -67,8 +67,9 @@ void TableCurrentController::move_row(int source, int destination) {
       if(value->m_row == source) {
         value->m_row = destination;
         return true;
-      } else if(direction == 1 && value->m_row >= destination && value->m_row < source ||
-        direction == -1 && value->m_row > source && value->m_row <= destination) {
+      } else if(direction == 1 && value->m_row >= destination &&
+          value->m_row < source || direction == -1 && value->m_row > source &&
+          value->m_row <= destination) {
         value->m_row += direction;
         return true;
       }
