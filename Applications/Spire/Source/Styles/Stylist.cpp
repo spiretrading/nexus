@@ -188,6 +188,7 @@ void Stylist::remove_proxy(QWidget& widget) {
   stylist.m_principals.erase(
     std::find(stylist.m_principals.begin(), stylist.m_principals.end(), this));
   m_proxies.erase(i);
+  stylist.apply_proxies();
 }
 
 void Stylist::match(const Selector& selector) {

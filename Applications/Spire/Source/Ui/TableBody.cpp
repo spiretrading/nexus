@@ -392,21 +392,11 @@ TableItem* TableBody::get_current_item() {
 }
 
 TableBody::Cover* TableBody::find_row(int index) {
-  if(index < 0 || index >= layout()->count()) {
-    return nullptr;
-  }
   return static_cast<Cover*>(layout()->itemAt(index)->widget());
 }
 
 TableItem* TableBody::find_item(const optional<Index>& index) {
   if(!index) {
-    return nullptr;
-  }
-  if(index->m_row < 0 || index->m_row >= layout()->count()) {
-    return nullptr;
-  }
-  if(index->m_column < 0 || index->m_column >=
-      layout()->itemAt(index->m_row)->widget()->layout()->count()) {
     return nullptr;
   }
   return static_cast<TableItem*>(layout()->itemAt(index->m_row)->widget()->
@@ -466,7 +456,13 @@ void TableBody::move_row(int source, int destination) {
   auto& row_layout = *static_cast<QBoxLayout*>(layout());
   auto& row = *row_layout.itemAt(source);
   row_layout.removeItem(&row);
-  row_layout.insertItem(destination, &row);
+  auto index = [&] {
+    if(source < destination) {
+      return destination - 1;
+    }
+    return destination;
+  }();
+  row_layout.insertItem(index, &row);
   m_current_controller.move_row(source, destination);
   m_selection_controller.move_row(source, destination);
 }
@@ -485,23 +481,20 @@ void TableBody::on_current(
     const optional<Index>& previous, const optional<Index>& current) {
   if(previous) {
     auto previous_item = find_item(previous);
-    if(previous_item) {
-      if(!current || current->m_row != previous->m_row) {
-        unmatch(*previous_item->parentWidget(), CurrentRow());
-      }
-      if(!current || current->m_column != previous->m_column) {
-        unmatch(*m_column_covers[previous->m_column], CurrentColumn());
-      }
-      unmatch(*previous_item, Current());
+    if(!current || current->m_row != previous->m_row) {
+      unmatch(*previous_item->parentWidget(), CurrentRow());
     }
+    if(!current || current->m_column != previous->m_column) {
+      unmatch(*m_column_covers[previous->m_column], CurrentColumn());
+    }
+    unmatch(*previous_item, Current());
   }
   if(current) {
     auto current_item = get_current_item();
-    if(!current_item) {
-      return;
-    }
     match(*current_item, Current());
-    match(*current_item->parentWidget(), CurrentRow());
+    if(!previous || previous->m_row != current->m_row) {
+      match(*current_item->parentWidget(), CurrentRow());
+    }
     if(!previous || previous->m_column != current->m_column) {
       match(*m_column_covers[current->m_column], CurrentColumn());
     }
@@ -512,22 +505,14 @@ void TableBody::on_current(
 void TableBody::on_row_selection(const ListModel<int>::Operation& operation) {
   visit(operation,
     [&] (const ListModel<int>::AddOperation& operation) {
-      if(auto row = find_row(operation.get_value())) {
-        match(*row, Selected());
-      }
+      match(*find_row(operation.get_value()), Selected());
     },
     [&] (const ListModel<int>::RemoveOperation& operation) {
-      if(auto row = find_row(operation.get_value())) {
-        unmatch(*row, Selected());
-      }
+      unmatch(*find_row(operation.get_value()), Selected());
     },
     [&] (const ListModel<int>::UpdateOperation& operation) {
-      if(auto row = find_row(operation.get_previous())) {
-        unmatch(*row, Selected());
-      }
-      if(auto row = find_row(operation.get_value())) {
-        match(*row, Selected());
-      }
+      unmatch(*find_row(operation.get_previous()), Selected());
+      match(*find_row(operation.get_value()), Selected());
     });
 }
 
