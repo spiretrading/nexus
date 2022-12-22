@@ -127,7 +127,7 @@ void KeyBindingsWindow::on_order_task_operation(
     },
     [&] (const ListModel<OrderTask>::EndTransaction&) {
     },
-    [&] (...) {
+    [&] (const auto&) {
       m_is_modified = true;
     });
 }
