@@ -101,16 +101,16 @@ namespace Styles {
       /**
        * Build a cell.
        * @param region_query_model The model used to query region matches.
-       * @param destination_database The destination database.
-       * @param market_database The market database.
+       * @param destinations The destination database.
+       * @param markets The market database.
        * @param model The table model of the TableView.
        * @param row The row index.
        * @param column The column index.
        */
       TableCell build_cell(
         const std::shared_ptr<ComboBox::QueryModel>& region_query_model,
-        const Nexus::DestinationDatabase& destination_database,
-        const Nexus::MarketDatabase& market_database,
+        const Nexus::DestinationDatabase& destinations,
+        const Nexus::MarketDatabase& markets,
         const std::shared_ptr<TableModel>& table, int row, int column);
 
     private:
@@ -127,13 +127,13 @@ namespace Styles {
       void make_hover_observer();
       EditableBox* make_editor(
         const std::shared_ptr<ComboBox::QueryModel>& region_query_model,
-        const Nexus::DestinationDatabase& destination_database,
-        const Nexus::MarketDatabase& market_database,
+        const Nexus::DestinationDatabase& destinations,
+        const Nexus::MarketDatabase& markets,
         const std::shared_ptr<TableModel>& table, int row, int column);
       EditableBox* make_empty_editor(
         const std::shared_ptr<ComboBox::QueryModel>& region_query_model,
-        const Nexus::DestinationDatabase& destination_database,
-        const Nexus::MarketDatabase& market_database,
+        const Nexus::DestinationDatabase& destinations,
+        const Nexus::MarketDatabase& markets,
         const std::shared_ptr<TableModel>& table, int row, int column);
       void on_operation(const ListModel<OrderTask>::Operation& operation);
       void on_submit(AnyInputBox* input_box, Column column,

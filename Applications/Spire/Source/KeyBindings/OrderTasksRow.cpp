@@ -71,20 +71,19 @@ namespace {
 
   struct DestinationQueryModel : ComboBox::QueryModel {
     std::shared_ptr<ValueModel<Region>> m_region_model;
-    const DestinationDatabase& m_destination_database;
-    const MarketDatabase& m_market_database;
+    DestinationDatabase m_destinations;
+    MarketDatabase m_markets;
     std::unique_ptr<LocalComboBoxQueryModel> m_local_query_model;
     scoped_connection m_region_connection;
 
     DestinationQueryModel(std::shared_ptr<ValueModel<Region>> region_model,
-      const DestinationDatabase& destination_database,
-      const MarketDatabase& market_database)
-      : m_region_model(std::move(region_model)),
-      m_destination_database(destination_database),
-      m_market_database(market_database),
-      m_local_query_model(std::make_unique<LocalComboBoxQueryModel>()),
-      m_region_connection(m_region_model->connect_update_signal(
-        std::bind_front(&DestinationQueryModel::on_update, this))) {
+        DestinationDatabase destinations, MarketDatabase markets)
+        : m_region_model(std::move(region_model)),
+        m_destinations(std::move(destinations)),
+        m_markets(std::move(markets)),
+        m_local_query_model(std::make_unique<LocalComboBoxQueryModel>()),
+        m_region_connection(m_region_model->connect_update_signal(
+          std::bind_front(&DestinationQueryModel::on_update, this))) {
       on_update(m_region_model->get());
     }
 
@@ -97,7 +96,7 @@ namespace {
     }
 
     void on_update(const Region& region) {
-      auto destinations = m_destination_database.SelectEntries(
+      auto destinations = m_destinations.SelectEntries(
         [] (auto& value) { return true; });
       auto market_set = std::unordered_set<MarketCode>();
       for(auto& security : region.GetSecurities()) {
@@ -106,7 +105,7 @@ namespace {
       auto region_markets = region.GetMarkets();
       market_set.insert(region_markets.begin(), region_markets.end());
       for(auto& country : region.GetCountries()) {
-        auto markets = m_market_database.FromCountry(country);
+        auto markets = m_markets.FromCountry(country);
         for(auto& market : markets) {
           market_set.insert(market.m_code);
         }
@@ -269,8 +268,8 @@ void OrderTasksRow::set_out_of_range(bool is_out_of_range) {
 
 OrderTasksRow::TableCell OrderTasksRow::build_cell(
     const std::shared_ptr<ComboBox::QueryModel>& region_query_model,
-    const DestinationDatabase& destination_database,
-    const MarketDatabase& market_database,
+    const DestinationDatabase& destinations,
+    const MarketDatabase& markets,
     const std::shared_ptr<TableModel>& table, int row, int column) {
   if(row == table->get_row_size() - 1) {
     m_is_draggable = false;
@@ -302,11 +301,11 @@ OrderTasksRow::TableCell OrderTasksRow::build_cell(
   }
   auto editor = [&] {
     if(row == table->get_row_size() - 1) {
-      return make_empty_editor(region_query_model, destination_database,
-        market_database, table, row, column);
+      return make_empty_editor(region_query_model, destinations, markets, table,
+        row, column);
     }
-    return make_editor(region_query_model, destination_database,
-      market_database, table, row, column);
+    return make_editor(region_query_model, destinations, markets, table, row,
+      column);
   }();
   update_style(*editor, [&] (auto& style) {
     switch(column_id) {
@@ -359,8 +358,7 @@ void OrderTasksRow::make_hover_observer() {
 
 EditableBox* OrderTasksRow::make_editor(
     const std::shared_ptr<ComboBox::QueryModel>& region_query_model,
-    const DestinationDatabase& destination_database,
-    const MarketDatabase& market_database,
+    const DestinationDatabase& destinations, const MarketDatabase& markets,
     const std::shared_ptr<TableModel>& table, int row, int column) {
   auto input_box = [&] () -> AnyInputBox* {
     switch(static_cast<Column>(column)) {
@@ -380,7 +378,7 @@ EditableBox* OrderTasksRow::make_editor(
             std::make_shared<ColumnViewListModel<Region>>(
               table, static_cast<int>(Column::REGION)), row);
           auto query_model = std::make_shared<DestinationQueryModel>(
-            std::move(region_model), destination_database, market_database);
+            std::move(region_model), destinations, markets);
           auto current_model = std::make_shared<DestinationValueModel>(
             std::make_shared<ListValueModel<Destination>>(
               std::make_shared<ColumnViewListModel<Destination>>(table, column),
@@ -430,8 +428,7 @@ EditableBox* OrderTasksRow::make_editor(
 
 EditableBox* OrderTasksRow::make_empty_editor(
     const std::shared_ptr<ComboBox::QueryModel>& region_query_model,
-    const DestinationDatabase& destination_database,
-    const MarketDatabase& market_database,
+    const DestinationDatabase& destinations, const MarketDatabase& markets,
     const std::shared_ptr<TableModel>& table, int row, int column) {
   auto input_box = [&] () -> AnyInputBox* {
     switch(static_cast<Column>(column)) {

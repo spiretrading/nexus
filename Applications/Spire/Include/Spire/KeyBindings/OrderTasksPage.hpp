@@ -18,14 +18,13 @@ namespace Spire {
        * Constructs a OrderTasksPage.
        * @param region_query_model The model used to query region matches.
        * @param model The list model of OrderTask.
-       * @param destination_database The destination database.
-       * @param market_database The market database.
+       * @param destinations The destination database to use.
+       * @param markets The market database to use.
        * @param parent The parent widget.
        */
       OrderTasksPage(std::shared_ptr<ComboBox::QueryModel> region_query_model,
         std::shared_ptr<ListModel<OrderTask>> model,
-        const Nexus::DestinationDatabase& destination_database,
-        const Nexus::MarketDatabase& market_database,
+        Nexus::DestinationDatabase destinations, Nexus::MarketDatabase markets,
         QWidget* parent = nullptr);
 
       /** Returns the model used to query region matches. */
@@ -52,8 +51,8 @@ namespace Spire {
       };
       std::shared_ptr<ComboBox::QueryModel> m_region_query_model;
       std::shared_ptr<ListModel<OrderTask>> m_model;
-      const Nexus::DestinationDatabase& m_destination_database;
-      const Nexus::MarketDatabase& m_market_database;
+      Nexus::DestinationDatabase m_destinations;
+      Nexus::MarketDatabase m_markets;
       std::shared_ptr<OrderTasksToTableModel> m_order_tasks_table;
       std::shared_ptr<FilteredTableModel> m_filtered_table;
       TableBody* m_table_body;

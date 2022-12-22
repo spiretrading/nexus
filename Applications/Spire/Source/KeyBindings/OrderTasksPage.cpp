@@ -264,13 +264,12 @@ OrderTasksPage::AddedRow::AddedRow()
 OrderTasksPage::OrderTasksPage(
     std::shared_ptr<ComboBox::QueryModel> region_query_model,
     std::shared_ptr<ListModel<OrderTask>> model,
-    const DestinationDatabase& destination_database,
-    const MarketDatabase& market_database, QWidget* parent)
+    DestinationDatabase destinations, MarketDatabase markets, QWidget* parent)
     : QWidget(parent),
       m_region_query_model(std::move(region_query_model)),
-      m_destination_database(destination_database),
-      m_market_database(market_database),
-      m_model(std::move(model)) {
+      m_model(std::move(model)),
+      m_destinations(std::move(destinations)),
+      m_markets(std::move(markets)) {
   auto layout = make_vbox_layout(this);
   layout->setContentsMargins({0, 0, 0, scale_height(20)});
   layout->addWidget(make_help_text_region());
@@ -492,8 +491,8 @@ QWidget* OrderTasksPage::table_view_builder(
     m_rows.insert(m_rows.begin() + row,
       std::make_unique<OrderTasksRow>(m_model, source_row));
   }
-  auto cell = m_rows[row]->build_cell(m_region_query_model,
-    m_destination_database, m_market_database, table, row, column);
+  auto cell = m_rows[row]->build_cell(m_region_query_model, m_destinations,
+    m_markets, table, row, column);
   if(!cell.m_editor) {
     return cell.m_cell;
   }
