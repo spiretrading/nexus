@@ -50,7 +50,7 @@ namespace {
     return style;
   }
 
-  auto populate_header_model() {
+  auto make_header_model() {
     auto model = std::make_shared<ArrayListModel<TableHeaderItem::Model>>();
     model->push({"", "",
       TableHeaderItem::Order::UNORDERED, TableFilter::Filter::NONE});
@@ -73,7 +73,7 @@ namespace {
     return model;
   }
 
-  auto populate_header_width() {
+  auto make_header_widths() {
     auto widths = std::vector<int>();
     widths.push_back(scale_width(20));
     widths.push_back(scale_width(192));
@@ -136,7 +136,7 @@ namespace {
     return std::tuple(search_region, search_box);
   }
 
-  auto display_region(const Region& region) {
+  auto display(const Region& region) {
     auto text = QString();
     for(auto& country : region.GetCountries()) {
       text += displayText(country);
@@ -161,7 +161,7 @@ namespace {
       }
       return {};
     } else if(column == OrderTasksToTableModel::Column::REGION) {
-      return display_region(std::any_cast<Region>(value)).toLower();
+      return display(std::any_cast<Region>(value)).toLower();
     }
     auto text = displayText(value).toLower();
     if(text == "none" &&
@@ -212,8 +212,8 @@ namespace {
     } else if(lhs.get_type() == typeid(Destination)) {
       return any_cast<Destination>(lhs) < any_cast<Destination>(rhs);
     } else if(lhs.get_type() == typeid(Region)) {
-      return compare_text(display_region(any_cast<Region>(lhs)),
-        display_region(any_cast<Region>(rhs)));
+      return compare_text(display(any_cast<Region>(lhs)),
+        display(any_cast<Region>(rhs)));
     } else if(lhs.get_type() == typeid(QKeySequence)) {
       return compare_text(any_cast<QKeySequence>(lhs).toString(),
         any_cast<QKeySequence>(rhs).toString());
@@ -289,7 +289,7 @@ OrderTasksPage::OrderTasksPage(
       return false;
     });
   auto table_view = TableViewBuilder(m_filtered_table).
-    set_header(populate_header_model()).
+    set_header(make_header_model()).
     set_view_builder(
       std::bind_front(&OrderTasksPage::table_view_builder, this)).
     set_comparator(order_tasks_comparator).
@@ -306,7 +306,7 @@ OrderTasksPage::OrderTasksPage(
     static_cast<TableHeaderItem*>(table_header->layout()->itemAt(
       static_cast<int>(Column::GRAB_HANDLE))->widget());
   grab_handle_header->set_is_resizeable(false);
-  auto widths = populate_header_width();
+  auto widths = make_header_widths();
   for(auto i = 0; i < std::ssize(widths); ++i) {
     table_header->get_widths()->set(i, widths[i]);
   }
