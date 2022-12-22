@@ -13,12 +13,11 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  void copy_list_model(const std::shared_ptr<AnyListModel>& from,
-      const std::shared_ptr<AnyListModel>& to) {
-    to->transact([&] {
-      clear(*to);
-      for(auto i = 0; i < from->get_size(); ++i) {
-        to->push(from->get(i));
+  void copy(AnyListModel& from, AnyListModel& to) {
+    to.transact([&] {
+      clear(to);
+      for(auto i = 0; i < from.get_size(); ++i) {
+        to.push(from.get(i));
       }
     });
   }
@@ -83,7 +82,7 @@ KeyBindingsWindow::KeyBindingsWindow(
     style.get(Any()).set(BackgroundColor(QColor(0xF5F5F5)));
   });
   layout()->addWidget(box);
-  copy_list_model(m_order_tasks_page->get_model(), m_order_tasks_submission);
+  copy(*m_order_tasks_page->get_model(), *m_order_tasks_submission);
   m_order_tasks_connection =
     m_order_tasks_page->get_model()->connect_operation_signal(
       std::bind_front(&KeyBindingsWindow::on_order_task_operation, this));
@@ -97,7 +96,7 @@ connection KeyBindingsWindow::connect_submit_signal(
 void KeyBindingsWindow::on_apply() {
   if(m_is_modified) {
     m_is_modified = false;
-    copy_list_model(m_order_tasks_page->get_model(), m_order_tasks_submission);
+    copy(*m_order_tasks_page->get_model(), *m_order_tasks_submission);
   }
   m_submit_signal(m_order_tasks_submission);
 }
@@ -105,7 +104,7 @@ void KeyBindingsWindow::on_apply() {
 void KeyBindingsWindow::on_cancel() {
   if(m_is_modified) {
     m_is_modified = false;
-    copy_list_model(m_order_tasks_submission, m_order_tasks_page->get_model());
+    copy(*m_order_tasks_submission, *m_order_tasks_page->get_model());
   }
   m_submit_signal(m_order_tasks_submission);
   close();
@@ -117,8 +116,8 @@ void KeyBindingsWindow::on_ok() {
 }
 
 void KeyBindingsWindow::on_reset() {
-  copy_list_model(m_key_bindings->get_default_order_tasks(),
-    m_order_tasks_page->get_model());
+  copy(*m_key_bindings->get_default_order_tasks(),
+    *m_order_tasks_page->get_model());
 }
 
 void KeyBindingsWindow::on_order_task_operation(
