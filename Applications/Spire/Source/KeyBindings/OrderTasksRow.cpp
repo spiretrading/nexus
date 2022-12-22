@@ -79,11 +79,11 @@ namespace {
     DestinationQueryModel(std::shared_ptr<ValueModel<Region>> region_model,
         DestinationDatabase destinations, MarketDatabase markets)
         : m_region_model(std::move(region_model)),
-        m_destinations(std::move(destinations)),
-        m_markets(std::move(markets)),
-        m_local_query_model(std::make_unique<LocalComboBoxQueryModel>()),
-        m_region_connection(m_region_model->connect_update_signal(
-          std::bind_front(&DestinationQueryModel::on_update, this))) {
+          m_destinations(std::move(destinations)),
+          m_markets(std::move(markets)),
+          m_local_query_model(std::make_unique<LocalComboBoxQueryModel>()),
+          m_region_connection(m_region_model->connect_update_signal(
+            std::bind_front(&DestinationQueryModel::on_update, this))) {
       on_update(m_region_model->get());
     }
 
