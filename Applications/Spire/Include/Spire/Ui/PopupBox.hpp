@@ -44,7 +44,6 @@ namespace Spire {
       FocusObserver m_focus_observer;
       GlobalPositionObserver m_position_observer;
       Alignment m_alignment;
-      QPoint m_position;
       QSize m_last_size;
       int m_min_height;
       int m_max_height;
