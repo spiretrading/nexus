@@ -232,6 +232,17 @@ int OrderTasksRow::get_row_index() const {
   return m_row_index;
 }
 
+QWidget* OrderTasksRow::get_row() const {
+  return m_row;
+}
+
+QWidget* OrderTasksRow::get_grab_handle() const {
+  if(m_is_draggable && m_grab_handle) {
+    return m_grab_handle->parentWidget()->parentWidget();
+  }
+  return nullptr;
+}
+
 bool OrderTasksRow::is_draggable() const {
   return m_is_draggable;
 }
@@ -477,6 +488,19 @@ void OrderTasksRow::on_operation(
         m_row_index = -1;
       } else if(m_row_index > operation.m_index) {
         --m_row_index;
+      }
+    },
+    [&] (const ListModel<OrderTask>::MoveOperation& operation) {
+      if(m_row_index == operation.m_source) {
+        m_row_index = operation.m_destination;
+      } else if(operation.m_source < operation.m_destination) {
+        if(m_row_index > operation.m_source &&
+          m_row_index <= operation.m_destination) {
+          --m_row_index;
+        }
+      } else if(m_row_index >= operation.m_destination &&
+        m_row_index < operation.m_source) {
+        ++m_row_index;
       }
     });
 }

@@ -2,16 +2,17 @@
 #define SPIRE_ORDER_TASKS_ROW_HPP
 #include <QPointer>
 #include "Spire/KeyBindings/OrderTask.hpp"
+#include "Spire/KeyBindings/TableRow.hpp"
 #include "Spire/Ui/ComboBox.hpp"
 #include "Spire/Ui/HoverObserver.hpp"
 
 namespace Spire {
 namespace Styles {
 
-  /** Selects the editing item. */
+  /** Selects the item being edited. */
   using Editing = StateSelector<void, struct EditingSelectorTag>;
 
-  /** Selects the grab handle which is hovered. */
+  /** Selects the grab handle being hovered. */
   using HoveredGrabHandle =
     StateSelector<void, struct HoveredGrabHandleSelectorTag>;
 
@@ -20,7 +21,7 @@ namespace Styles {
 }
 
   /** Represents a row of the TableView within the OrderTasksPage. */
-  class OrderTasksRow {
+  class OrderTasksRow : public TableRow {
     public:
 
       /** Represents a cell of the TableView. */
@@ -74,29 +75,23 @@ namespace Styles {
        */
       OrderTasksRow(std::shared_ptr<ListModel<OrderTask>> model, int row);
 
-      /** Returns the row index. */
-      int get_row_index() const;
+      int get_row_index() const override;
 
-      /** Returns <code>true</code> iff this row is draggable. */
-      bool is_draggable() const;
+      QWidget* get_row() const override;
 
-      /** Sets whether this row is draggable. */
-      void set_draggable(bool is_draggable);
+      QWidget* get_grab_handle() const override;
 
-      /** Returns <code>true</code> iff this row is excluded from filtering. */
-      bool is_ignore_filters() const;
+      bool is_draggable() const override;
 
-      /** Sets whether this row is excluded from filtering. */
-      void set_ignore_filters(bool is_ignore_filters);
+      void set_draggable(bool is_draggable) override;
 
-      /**
-       * Returns <code>true</code> iff this row does not meet the filter or
-       * sort criteria set.
-       */
-      bool is_out_of_range() const;
+      bool is_ignore_filters() const override;
 
-      /** Sets whether this row doesn't meet the filter or sort criteria set. */
-      void set_out_of_range(bool is_out_of_range);
+      void set_ignore_filters(bool is_ignore_filters) override;
+
+      bool is_out_of_range() const override;
+
+      void set_out_of_range(bool is_out_of_range) override;
 
       /**
        * Build a cell.
