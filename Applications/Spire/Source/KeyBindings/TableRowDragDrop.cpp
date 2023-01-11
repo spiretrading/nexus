@@ -110,7 +110,8 @@ TableRowDragDrop::TableRowDragDrop(std::shared_ptr<AnyListModel> model,
     : m_model(std::move(model)),
       m_rows(std::move(rows)),
       m_table_view(&table_view),
-      m_has_sorted(false) {
+      m_is_sorted(false),
+      m_row_count(m_model->get_size()) {
   m_table_header = static_cast<TableHeader*>(static_cast<Box*>(
     m_table_view->layout()->itemAt(0)->widget())->get_body()->layout()->
       itemAt(0)->widget());
@@ -236,8 +237,8 @@ bool TableRowDragDrop::eventFilter(QObject* watched, QEvent* event) {
 }
 
 void TableRowDragDrop::move(int source, int destination) {
-  if(m_model->get_size() == m_rows->get_size() - 1) {
-    if(m_has_sorted) {
+  if(m_model->get_size() == m_row_count) {
+    if(m_is_sorted) {
       auto translated_model = TranslatedTableModel(m_sorted_model);
       translated_model.move(source, destination);
       m_model->transact([&] {
@@ -253,7 +254,7 @@ void TableRowDragDrop::move(int source, int destination) {
       m_model->move(source, destination);
     }
   } else {
-    if(m_has_sorted) {
+    if(m_is_sorted) {
       auto source_index_cache = std::vector<int>(m_rows->get_size());
       for(auto i = 0; i < m_rows->get_size(); ++i) {
         source_index_cache[i] = m_rows->get(i)->get_row_index();
@@ -300,7 +301,7 @@ void TableRowDragDrop::move(int source, int destination) {
 
 void TableRowDragDrop::clear_sort_order() {
   m_sorted_model->set_column_order({});
-  if(m_has_sorted) {
+  if(m_is_sorted) {
     auto header_items = m_table_header->get_items();
     for(auto i = 0; i < header_items->get_size(); ++i) {
       if(auto item = header_items->get(i);
@@ -310,7 +311,7 @@ void TableRowDragDrop::clear_sort_order() {
         header_items->set(i, item);
       }
     }
-    m_has_sorted = false;
+    m_is_sorted = false;
   }
 }
 
@@ -356,9 +357,13 @@ void TableRowDragDrop::on_operation(const TableModel::Operation& operation) {
         m_rows->get(operation.m_index)->get_grab_handle()->
           installEventFilter(this);
       }
+      ++m_row_count;
+    },
+    [&] (const TableModel::RemoveOperation& operation) {
+      --m_row_count;
     });
 }
 
 void TableRowDragDrop::on_sort(int index, TableHeaderItem::Order order) {
-  m_has_sorted = true;
+  m_is_sorted = true;
 }

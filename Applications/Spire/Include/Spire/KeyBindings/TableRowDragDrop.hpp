@@ -54,7 +54,8 @@ namespace Styles {
       PaddingRow* m_padding_row;
       boost::optional<QPoint> m_press_pos;
       boost::optional<int> m_drag_index;
-      bool m_has_sorted;
+      bool m_is_sorted;
+      int m_row_count;
       boost::signals2::scoped_connection m_operation_connection;
 
       void move(int source, int destination);
