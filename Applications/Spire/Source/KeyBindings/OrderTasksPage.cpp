@@ -261,6 +261,7 @@ std::size_t OrderTasksPage::RegionKeyHash::operator()(
 
 OrderTasksPage::AddedRow::AddedRow()
   : m_source_index(-1),
+    m_filter_source_index(-1),
     m_is_filtered(false) {}
 
 OrderTasksPage::OrderTasksPage(
@@ -290,6 +291,8 @@ OrderTasksPage::OrderTasksPage(
     [] (const TableModel& model, int row) {
       return false;
     });
+  m_filtered_table->connect_operation_signal(
+    std::bind_front(&OrderTasksPage::on_filter_table_operation, this));
   auto table_view = TableViewBuilder(m_filtered_table).
     set_header(make_header_model()).
     set_view_builder(
@@ -488,21 +491,11 @@ QWidget* OrderTasksPage::table_view_builder(
   auto column_id = static_cast<Column>(column);
   if(column_id == Column::GRAB_HANDLE) {
     auto source_row = [&] {
-      if(row == table->get_row_size() - 1) {
-        return row;
-      }
       if(m_added_row.m_source_index != -1) {
         return m_added_row.m_source_index;
       }
-      for(auto i = 0; i < m_model->get_size(); ++i) {
-        if(m_model->get(i).m_name ==
-              table->get<QString>(row, static_cast<int>(Column::NAME)) &&
-            m_model->get(i).m_region ==
-              table->get<Region>(row, static_cast<int>(Column::REGION)) &&
-            m_model->get(i).m_key ==
-              table->get<QKeySequence>(row, static_cast<int>(Column::KEY))) {
-          return i;
-        }
+      if(m_added_row.m_filter_source_index != -1) {
+        return m_added_row.m_filter_source_index;
       }
       return row;
     }();
@@ -718,6 +711,18 @@ void OrderTasksPage::on_sort(int column, TableHeaderItem::Order order) {
   m_table_body->update();
 }
 
+void OrderTasksPage::on_table_body_focus(FocusObserver::State state) {
+  if(state == FocusObserver::State::NONE) {
+    if(!QApplication::focusWidget()) {
+      return;
+    }
+    if(auto current = m_table_body->get_current()->get()) {
+      m_rows->get(current->m_row)->set_ignore_filters(false);
+    }
+    do_search_on_all_rows();
+  }
+}
+
 void OrderTasksPage::on_source_table_operation(
     const TableModel::Operation& operation) {
   visit(operation,
@@ -786,18 +791,6 @@ void OrderTasksPage::on_source_table_operation(
     });
 }
 
-void OrderTasksPage::on_table_body_focus(FocusObserver::State state) {
-  if(state == FocusObserver::State::NONE) {
-    if(!QApplication::focusWidget()) {
-      return;
-    }
-    if(auto current = m_table_body->get_current()->get()) {
-      m_rows->get(current->m_row)->set_ignore_filters(false);
-    }
-    do_search_on_all_rows();
-  }
-}
-
 void OrderTasksPage::on_view_table_operation(
     const TableModel::Operation& operation) {
   visit(operation,
@@ -811,11 +804,22 @@ void OrderTasksPage::on_view_table_operation(
         m_added_row.m_source_index = -1;
         m_added_row.m_is_filtered = false;
       }
+      if(m_added_row.m_filter_source_index != -1) {
+        m_added_row.m_filter_source_index = -1;
+      }
     },
     [&] (const TableModel::RemoveOperation& operation) {
       m_rows->remove(operation.m_index);
     },
     [&] (const TableModel::MoveOperation& operation) {
       m_rows->move(operation.m_source, operation.m_destination);
+    });
+}
+
+void OrderTasksPage::on_filter_table_operation(
+    const TableModel::Operation& operation) {
+  visit(operation,
+    [&] (const TableModel::AddOperation& operation) {
+      m_added_row.m_filter_source_index = operation.m_index;
     });
 }

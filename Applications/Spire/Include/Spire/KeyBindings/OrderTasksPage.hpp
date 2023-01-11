@@ -46,6 +46,7 @@ namespace Spire {
       };
       struct AddedRow {
         int m_source_index;
+        int m_filter_source_index;
         bool m_is_filtered;
 
         AddedRow();
@@ -86,9 +87,10 @@ namespace Spire {
       void on_delete_order();
       void on_search(const QString& value);
       void on_sort(int column, TableHeaderItem::Order order);
-      void on_source_table_operation(const TableModel::Operation& operation);
       void on_table_body_focus(FocusObserver::State state);
+      void on_source_table_operation(const TableModel::Operation& operation);
       void on_view_table_operation(const TableModel::Operation& operation);
+      void on_filter_table_operation(const TableModel::Operation& operation);
   };
 }
 
