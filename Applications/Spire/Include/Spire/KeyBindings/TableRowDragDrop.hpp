@@ -29,7 +29,7 @@ namespace Styles {
 
       /**
        * Constructs a TableRowDragDrop.
-       * @param model The model of the table.
+       * @param model The list model used to move rows.
        * @param rows The rows of the table.
        * @param table_view The table view that performs row dropping.
        */

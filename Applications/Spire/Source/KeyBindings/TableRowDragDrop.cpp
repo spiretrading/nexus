@@ -18,18 +18,33 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  template<typename T>
-  void move(std::vector<T>& list, int source, int destination) {
-    if(source < destination) {
-      std::rotate(std::next(list.begin(), source),
-        std::next(list.begin(), source + 1),
-        std::next(list.begin(), destination + 1));
-    } else {
-      std::rotate(std::next(list.rbegin(), list.size() - source - 1),
-        std::next(list.rbegin(), list.size() - source),
-        std::next(list.rbegin(), list.size() - destination));
+  struct AnyListToTableModel : TableModel {
+    std::shared_ptr<AnyListModel> m_source;
+
+    explicit AnyListToTableModel(std::shared_ptr<AnyListModel> source)
+      : m_source(std::move(source)) {}
+
+    int get_row_size() const override {
+      return m_source->get_size();
     }
-  }
+
+    int get_column_size() const override {
+      return 0;
+    }
+
+    AnyRef at(int row, int column) const override {
+      return AnyRef();
+    }
+
+    QValidator::State set(int row, int column, const std::any& value) override {
+      return QValidator::State::Invalid;
+    }
+
+    connection connect_operation_signal(
+        const OperationSignal::slot_type& slot) const override {
+      return connection();
+    }
+  };
 }
 
 class TableRowDragDrop::PreviewRow : public QWidget {
@@ -256,9 +271,9 @@ void TableRowDragDrop::move(int source, int destination) {
     }
   } else {
     if(m_is_sorted) {
-      auto source_index_cache = std::vector<int>(m_rows->get_size());
+      auto source_model_index_cache = std::vector<int>(m_rows->get_size());
       for(auto i = 0; i < m_rows->get_size(); ++i) {
-        source_index_cache[i] = m_rows->get(i)->get_row_index();
+        source_model_index_cache[i] = m_rows->get(i)->get_row_index();
       }
       auto get_min_source_index = [&] (int lower_bound) {
         auto min = m_model->get_size() - 1;
@@ -271,26 +286,21 @@ void TableRowDragDrop::move(int source, int destination) {
         }
         return min;
       };
-      auto translated_view_model = TranslatedTableModel(m_sorted_model);
-      translated_view_model.move(source, destination);
-      auto array_table_model = std::make_shared<ArrayTableModel>();
-      auto row_size = m_model->get_size();
-      while(row_size > 0) {
-        array_table_model->push({});
-        --row_size;
-      }
-      auto translated_source_model = TranslatedTableModel(array_table_model);
+      auto translated_sorted_model = TranslatedTableModel(m_sorted_model);
+      translated_sorted_model.move(source, destination);
+      auto translated_source_model =
+        TranslatedTableModel(std::make_shared<AnyListToTableModel>(m_model));
       m_model->transact([&] {
-        auto last_destination_index = -1;
-        for(auto i = 0; i < translated_view_model.get_row_size(); ++i) {
+        auto last_destination= -1;
+        for(auto i = 0; i < translated_sorted_model.get_row_size(); ++i) {
           if(m_rows->get(i)->is_draggable()) {
-            auto source_index =
-              translated_source_model.get_source_to_translation(
-                source_index_cache[translated_view_model.get_translation_to_source(i)]);
-            auto destination_index = get_min_source_index(last_destination_index);
-            m_model->move(source_index, destination_index);
-            translated_source_model.move(source_index, destination_index);
-            last_destination_index = destination_index;
+            auto source = translated_source_model.get_source_to_translation(
+              source_model_index_cache[
+                translated_sorted_model.get_translation_to_source(i)]);
+            auto destination = get_min_source_index(last_destination);
+            m_model->move(source, destination);
+            translated_source_model.move(source, destination);
+            last_destination = destination;
           }
         }
       });
