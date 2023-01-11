@@ -304,6 +304,7 @@ void TableRowDragDrop::clear_sort_order() {
     auto header_items = m_table_header->get_items();
     for(auto i = 0; i < header_items->get_size(); ++i) {
       if(auto item = header_items->get(i);
+          item.m_order != TableHeaderItem::Order::UNORDERED &&
           item.m_order != TableHeaderItem::Order::NONE) {
         item.m_order = TableHeaderItem::Order::NONE;
         header_items->set(i, item);
