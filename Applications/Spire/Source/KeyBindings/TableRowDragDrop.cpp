@@ -204,18 +204,19 @@ bool TableRowDragDrop::eventFilter(QObject* watched, QEvent* event) {
       auto grab_handle = static_cast<QWidget*>(watched);
       auto mouse_event = *static_cast<QMouseEvent*>(event);
       m_press_pos = grab_handle->mapToGlobal(mouse_event.pos());
+      m_grab_handle = grab_handle;
     } else if(event->type() == QEvent::MouseButtonRelease) {
       m_press_pos = none;
     } else if(event->type() == QEvent::MouseMove) {
-      auto grab_handle = static_cast<QWidget*>(watched);
       auto mouse_event = *static_cast<QMouseEvent*>(event);
       if(!m_press_pos || m_press_pos &&
-          abs(grab_handle->mapToGlobal(mouse_event.pos()).y() - m_press_pos->y()) <= 4) {
+          abs(m_grab_handle->mapToGlobal(mouse_event.pos()).y() -
+            m_press_pos->y()) <= 4) {
         return QObject::eventFilter(watched, event);
       }
       m_drag_index = [&] () -> optional<int> {
         for(auto i = 0; i < m_rows->get_size(); ++i) {
-          if(m_rows->get(i)->get_grab_handle() == watched) {
+          if(m_rows->get(i)->get_grab_handle() == m_grab_handle) {
             return i;
           }
         }
@@ -224,11 +225,11 @@ bool TableRowDragDrop::eventFilter(QObject* watched, QEvent* event) {
       if(!m_drag_index) {
         return QObject::eventFilter(watched, event);
       }
-      auto drag = new QDrag(grab_handle);
+      auto drag = new QDrag(m_grab_handle);
       auto mime = new QMimeData();
       mime->setData("row", QByteArray::number(*m_drag_index));
       drag->setMimeData(mime);
-      drag_start(grab_handle->mapToGlobal(mouse_event.pos()));
+      drag_start(m_grab_handle->mapToGlobal(mouse_event.pos()));
       drag->exec();
       drag_end();
     }
@@ -283,8 +284,9 @@ void TableRowDragDrop::move(int source, int destination) {
         auto last_destination_index = -1;
         for(auto i = 0; i < translated_view_model.get_row_size(); ++i) {
           if(m_rows->get(i)->is_draggable()) {
-            auto source_index = translated_source_model.get_source_to_translation(
-              source_index_cache[translated_view_model.get_translation_to_source(i)]);
+            auto source_index =
+              translated_source_model.get_source_to_translation(
+                source_index_cache[translated_view_model.get_translation_to_source(i)]);
             auto destination_index = get_min_source_index(last_destination_index);
             m_model->move(source_index, destination_index);
             translated_source_model.move(source_index, destination_index);

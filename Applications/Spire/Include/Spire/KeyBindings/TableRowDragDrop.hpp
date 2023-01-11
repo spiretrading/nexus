@@ -52,6 +52,7 @@ namespace Styles {
       std::shared_ptr<SortedTableModel> m_sorted_model;
       PreviewRow* m_preview_row;
       PaddingRow* m_padding_row;
+      QWidget* m_grab_handle;
       boost::optional<QPoint> m_press_pos;
       boost::optional<int> m_drag_index;
       bool m_is_sorted;
