@@ -32,7 +32,7 @@ If((Get-Command "node.exe" -ErrorAction SilentlyContinue) -eq $null) {
   msiexec /quiet /i node-v19.4.0-x64.msi | Out-Null
   rm .\node-v19.4.0-x64.msi
 }
-If(-Not (Test-Path "C:\Program Files (x86)\Microsoft Visual Studio")) {
+If(-Not (Test-Path "C:\Program Files\Microsoft Visual Studio")) {
   Invoke-WebRequest -UseBasicParsing -Uri "https://aka.ms/vs/17/release/vs_community.exe" -OutFile vs_Community.exe
   ./vs_Community.exe --passive --norestart --wait `
     --add Microsoft.Component.MSBuild `
