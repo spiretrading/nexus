@@ -35,10 +35,12 @@ If((Get-Command "node.exe" -ErrorAction SilentlyContinue) -eq $null) {
 If(-Not (Test-Path "C:\Program Files (x86)\Microsoft Visual Studio")) {
   Invoke-WebRequest -UseBasicParsing -Uri "https://aka.ms/vs/17/release/vs_community.exe" -OutFile vs_Community.exe
   ./vs_Community.exe --passive --norestart --wait `
-    --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 `
-    --add Microsoft.VisualStudio.Component.Windows10SDK `
-    --add Microsoft.VisualStudio.Component.Debugger.JustInTime `
     --add Microsoft.Component.MSBuild `
+    --add Microsoft.VisualStudio.Component.Debugger.JustInTime `
+    --add Microsoft.VisualStudio.Component.Windows10SDK.10586 `
+    --add Microsoft.VisualStudio.Component.Windows10SDK.20348 `
+    --add Microsoft.VisualStudio.Component.Windows10SDK `
+    --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 `
     --add Microsoft.VisualStudio.Component.VC.CoreIde `
     --add Microsoft.VisualStudio.Component.VC.Redist.14.Latest `
     --add Microsoft.VisualStudio.ComponentGroup.NativeDesktop.Core | Out-Null
