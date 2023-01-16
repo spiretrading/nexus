@@ -456,13 +456,7 @@ void TableBody::move_row(int source, int destination) {
   auto& row_layout = *static_cast<QBoxLayout*>(layout());
   auto& row = *row_layout.itemAt(source);
   row_layout.removeItem(&row);
-  auto index = [&] {
-    if(source < destination) {
-      return destination - 1;
-    }
-    return destination;
-  }();
-  row_layout.insertItem(index, &row);
+  row_layout.insertItem(destination, &row);
   m_current_controller.move_row(source, destination);
   m_selection_controller.move_row(source, destination);
 }
