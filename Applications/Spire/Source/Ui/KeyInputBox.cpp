@@ -128,6 +128,7 @@ void KeyInputBox::set_read_only(bool is_read_only) {
     m_caret->show();
     unmatch(*m_input_box, ReadOnly());
   }
+  transition_status();
 }
 
 connection KeyInputBox::connect_submit_signal(
