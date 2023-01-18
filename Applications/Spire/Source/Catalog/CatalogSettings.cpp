@@ -26,12 +26,10 @@ using namespace boost::signals2;
 using namespace boost::uuids;
 using namespace Spire;
 using namespace Spire::UI;
-using namespace std;
-using namespace std::filesystem;
 
 namespace {
   void CreateValuesTab(CatalogSettings& settings) {
-    unique_ptr<CatalogTabModel> tab = std::make_unique<CatalogTabModel>();
+    auto tab = std::make_unique<CatalogTabModel>();
     tab->SetName("Values");
     tab->Add(Ref(*settings.FindEntry(BuiltInCatalogEntry::BOOLEAN_UUID)));
     tab->Add(Ref(*settings.FindEntry(BuiltInCatalogEntry::DATE_TIME_UUID)));
@@ -47,7 +45,7 @@ namespace {
   }
 
   void CreateTasksTab(CatalogSettings& settings) {
-    unique_ptr<CatalogTabModel> tab = std::make_unique<CatalogTabModel>();
+    auto tab = std::make_unique<CatalogTabModel>();
     tab->SetName("Tasks");
     tab->Add(Ref(*settings.FindEntry(
       BuiltInCatalogEntry::LIMIT_ORDER_TASK_UUID)));
@@ -60,35 +58,36 @@ namespace {
   }
 
   void CreateKeyBindingsTab(CatalogSettings& settings) {
-    unique_ptr<CatalogTabModel> tab = std::make_unique<CatalogTabModel>();
+    auto tab = std::make_unique<CatalogTabModel>();
     tab->SetName("Key Bindings");
     settings.Add(std::move(tab));
   }
 
-  void LoadCatalogEntries(const path& catalogDirectoryPath,
+  void LoadCatalogEntries(const std::filesystem::path& catalogDirectoryPath,
       CatalogSettings& settings) {
-    QString warnings;
-    for(directory_iterator i(catalogDirectoryPath);
-        i != directory_iterator(); ++i) {
+    auto warnings = QString();
+    for(auto i = std::filesystem::directory_iterator(catalogDirectoryPath);
+        i != std::filesystem::directory_iterator(); ++i) {
       if(!is_regular_file(*i) || i->path().extension() != ".cat") {
         continue;
       }
       try {
-        BasicIStreamReader<ifstream> reader(Initialize(*i, ios::binary));
-        SharedBuffer buffer;
+        auto reader = BasicIStreamReader<std::ifstream>(
+          Initialize(i->path(), std::ios::binary));
+        auto buffer = SharedBuffer();
         reader.Read(Store(buffer));
-        TypeRegistry<BinarySender<SharedBuffer>> typeRegistry;
+        auto typeRegistry = TypeRegistry<BinarySender<SharedBuffer>>();
         RegisterSpireTypes(Store(typeRegistry));
         auto receiver = BinaryReceiver<SharedBuffer>(Ref(typeRegistry));
         receiver.SetSource(Ref(buffer));
-        unique_ptr<UserCatalogEntry> entry = std::make_unique<UserCatalogEntry>(
-          settings.GetSettingsPath());
+        auto entry =
+          std::make_unique<UserCatalogEntry>(settings.GetSettingsPath());
         receiver.Shuttle(*entry);
         settings.Add(StaticCast<std::unique_ptr<CatalogEntry>>(
           std::move(entry)));
-      } catch(std::exception&) {
+      } catch(const std::exception&) {
         warnings += QObject::tr("Failed to load: ") +
-          QString::fromStdString(path(*i).string()) + "\n";
+          QString::fromStdString(std::filesystem::path(*i).string()) + "\n";
       }
     }
     if(!warnings.isEmpty()) {
@@ -98,28 +97,27 @@ namespace {
 
   void LoadRemoteCatalogEntries(RegistryClientBox& registryClient,
       CatalogSettings& settings) {
-    RegistryEntry libraryDirectory = RegistryService::LoadOrCreateDirectory(
+    auto libraryDirectory = RegistryService::LoadOrCreateDirectory(
       registryClient, CatalogSettings::GetCatalogLibraryRegistryPath(),
       RegistryEntry::GetRoot());
-    vector<RegistryEntry> libraryEntries = registryClient.LoadChildren(
-      libraryDirectory);
-    for(auto i = libraryEntries.begin(); i != libraryEntries.end(); ++i) {
-      if(i->m_type != RegistryEntry::Type::VALUE) {
+    auto libraryEntries = registryClient.LoadChildren(libraryDirectory);
+    for(auto& libraryEntry : libraryEntries) {
+      if(libraryEntry.m_type != RegistryEntry::Type::VALUE) {
         continue;
       }
       try {
-        SharedBuffer buffer = registryClient.Load(*i);
-        TypeRegistry<BinarySender<SharedBuffer>> typeRegistry;
+        auto buffer = registryClient.Load(libraryEntry);
+        auto typeRegistry = TypeRegistry<BinarySender<SharedBuffer>>();
         RegisterSpireTypes(Store(typeRegistry));
         auto receiver = BinaryReceiver<SharedBuffer>(Ref(typeRegistry));
         receiver.SetSource(Ref(buffer));
-        std::unique_ptr<RegistryCatalogEntry> entry =
+        auto entry =
           std::make_unique<RegistryCatalogEntry>(settings.HasRegistryAccess(),
           CatalogSettings::GetCatalogLibraryRegistryPath(), registryClient);
         receiver.Shuttle(*entry);
         settings.Add(StaticCast<std::unique_ptr<CatalogEntry>>(
           std::move(entry)));
-      } catch(std::exception&) {}
+      } catch(const std::exception&) {}
     }
   }
 
@@ -131,36 +129,35 @@ namespace {
     LoadRemoteCatalogEntries(registryClient, settings);
   }
 
-  void LoadCatalogTabs(const path& catalogDirectoryPath,
+  void LoadCatalogTabs(const std::filesystem::path& catalogDirectoryPath,
       CatalogSettings& settings, RegistryClientBox& registryClient) {
-    path catalogTabPath = catalogDirectoryPath / "tabs.list";
-    if(!exists(catalogTabPath)) {
+    auto catalogTabPath = catalogDirectoryPath / "tabs.list";
+    if(!std::filesystem::exists(catalogTabPath)) {
       CreateDefaultCatalog(settings, registryClient);
       return;
     }
-    vector<pair<string, vector<uuid>>> tabs;
-    QString warnings;
+    auto tabs = std::vector<std::pair<std::string, std::vector<uuid>>>();
+    auto warnings = QString();
     try {
-      BasicIStreamReader<ifstream> reader(
-        Initialize(catalogTabPath, ios::binary));
-      SharedBuffer buffer;
+      auto reader = BasicIStreamReader<std::ifstream>(
+        Initialize(catalogTabPath, std::ios::binary));
+      auto buffer = SharedBuffer();
       reader.Read(Store(buffer));
-      TypeRegistry<BinarySender<SharedBuffer>> typeRegistry;
+      auto typeRegistry = TypeRegistry<BinarySender<SharedBuffer>>();
       RegisterSpireTypes(Store(typeRegistry));
       auto receiver = BinaryReceiver<SharedBuffer>(Ref(typeRegistry));
       receiver.SetSource(Ref(buffer));
       receiver.Shuttle(tabs);
-    } catch(std::exception&) {
+    } catch(const std::exception&) {
       QMessageBox::warning(nullptr, QObject::tr("Warning"),
         QObject::tr("Unable to load Catalog Tabs."));
       return;
     }
-    for(auto i = tabs.begin(); i != tabs.end(); ++i) {
-      unique_ptr<CatalogTabModel> tab = std::make_unique<CatalogTabModel>();
-      tab->SetName(i->first);
-      for(auto j = i->second.begin(); j != i->second.end(); ++j) {
-        auto entry = settings.FindEntry(*j);
-        if(entry) {
+    for(auto& t : tabs) {
+      auto tab = std::make_unique<CatalogTabModel>();
+      tab->SetName(t.first);
+      for(auto& j : t.second) {
+        if(auto entry = settings.FindEntry(j)) {
           tab->Add(Ref(*entry));
         }
       }
@@ -168,34 +165,33 @@ namespace {
     }
   }
 
-  void SaveCatalogTabs(const path& catalogDirectoryPath,
+  void SaveCatalogTabs(const std::filesystem::path& catalogDirectoryPath,
       const CatalogSettings& settings) {
-    path catalogTabPath = catalogDirectoryPath / "tabs.list";
-    vector<pair<string, vector<uuid>>> tabs;
-    const vector<unique_ptr<CatalogTabModel>>& catalogTabs =
-      settings.GetCatalogTabs();
-    for(auto i = catalogTabs.begin(); i != catalogTabs.end(); ++i) {
-      if(i->get() == &settings.GetAllTab()) {
+    auto catalogTabPath = catalogDirectoryPath / "tabs.list";
+    auto tabs = std::vector<std::pair<std::string, std::vector<uuid>>>();
+    auto& catalogTabs = settings.GetCatalogTabs();
+    for(auto& tab : catalogTabs) {
+      if(tab.get() == &settings.GetAllTab()) {
         continue;
       }
-      vector<uuid> entries;
-      const vector<CatalogEntry*>& catalogEntries = (*i)->GetEntries();
-      for(auto j = catalogEntries.begin(); j != catalogEntries.end(); ++j) {
-        entries.push_back((*j)->GetUid());
+      auto entries = std::vector<uuid>();
+      auto& catalogEntries = tab->GetEntries();
+      for(auto& entry : catalogEntries) {
+        entries.push_back(entry->GetUid());
       }
-      tabs.push_back(make_pair((*i)->GetName(), entries));
+      tabs.push_back(make_pair(tab->GetName(), entries));
     }
     try {
-      TypeRegistry<BinarySender<SharedBuffer>> typeRegistry;
+      auto typeRegistry = TypeRegistry<BinarySender<SharedBuffer>>();
       RegisterSpireTypes(Store(typeRegistry));
       auto sender = BinarySender<SharedBuffer>(Ref(typeRegistry));
-      SharedBuffer buffer;
+      auto buffer = SharedBuffer();
       sender.SetSink(Ref(buffer));
       sender.Shuttle(tabs);
-      BasicOStreamWriter<ofstream> writer(
-        Initialize(catalogTabPath, ios::binary));
+      auto writer = BasicOStreamWriter<std::ofstream>(
+        Initialize(catalogTabPath, std::ios::binary));
       writer.Write(buffer);
-    } catch(std::exception&) {
+    } catch(const std::exception&) {
       QMessageBox::warning(nullptr, QObject::tr("Warning"),
         QObject::tr("Failed to save Catalog Tabs."));
     }
@@ -203,13 +199,12 @@ namespace {
 }
 
 void CatalogSettings::Load(Out<UserProfile> userProfile) {
-  vector<unique_ptr<CatalogEntry>> builtInEntries =
-    BuiltInCatalogEntry::LoadBuiltInCatalogEntries();
-  CatalogSettings& settings = userProfile->GetCatalogSettings();
-  for(auto i = builtInEntries.begin(); i != builtInEntries.end(); ++i) {
-    settings.Add(std::move(*i));
+  auto builtInEntries = BuiltInCatalogEntry::LoadBuiltInCatalogEntries();
+  auto& settings = userProfile->GetCatalogSettings();
+  for(auto& entry : builtInEntries) {
+    settings.Add(std::move(entry));
   }
-  path catalogDirectoryPath = userProfile->GetProfilePath() / "catalog";
+  auto catalogDirectoryPath = userProfile->GetProfilePath() / "catalog";
   if(!exists(catalogDirectoryPath)) {
     create_directory(catalogDirectoryPath);
     CreateDefaultCatalog(settings,
@@ -224,27 +219,27 @@ void CatalogSettings::Load(Out<UserProfile> userProfile) {
 }
 
 void CatalogSettings::Save(const UserProfile& userProfile) {
-  path catalogDirectoryPath = userProfile.GetProfilePath() / "catalog";
+  auto catalogDirectoryPath = userProfile.GetProfilePath() / "catalog";
   SaveCatalogTabs(catalogDirectoryPath, userProfile.GetCatalogSettings());
 }
 
-const string& CatalogSettings::GetCatalogLibraryRegistryPath() {
-  static string path = "spire/catalog_entries/library";
+const std::string& CatalogSettings::GetCatalogLibraryRegistryPath() {
+  static auto path = std::string("spire/catalog_entries/library");
   return path;
 }
 
-CatalogSettings::CatalogSettings(const path& settingsPath,
+CatalogSettings::CatalogSettings(const std::filesystem::path& settingsPath,
     bool hasRegistryAccess)
     : m_settingsPath(settingsPath),
       m_hasRegistryAccess(hasRegistryAccess) {
-  unique_ptr<CatalogTabModel> tab = std::make_unique<CatalogTabModel>();
+  auto tab = std::make_unique<CatalogTabModel>();
   tab->SetName("All");
   Add(std::move(tab));
 }
 
 CatalogSettings::~CatalogSettings() {}
 
-const path& CatalogSettings::GetSettingsPath() const {
+const std::filesystem::path& CatalogSettings::GetSettingsPath() const {
   return m_settingsPath;
 }
 
@@ -252,8 +247,7 @@ bool CatalogSettings::HasRegistryAccess() const {
   return m_hasRegistryAccess;
 }
 
-boost::optional<CatalogEntry&> CatalogSettings::FindEntry(
-    const uuid& uid) const {
+optional<CatalogEntry&> CatalogSettings::FindEntry(const uuid& uid) const {
   auto entryIterator = m_uuidToEntry.find(uid);
   if(entryIterator == m_uuidToEntry.end()) {
     return none;
@@ -261,17 +255,17 @@ boost::optional<CatalogEntry&> CatalogSettings::FindEntry(
   return *entryIterator->second;
 }
 
-boost::optional<CatalogEntry&> CatalogSettings::FindEntry(
+optional<CatalogEntry&> CatalogSettings::FindEntry(
     const CanvasNode& node) const {
   auto catalogUuid = CatalogEntry::FindUuid(node);
-  if(!catalogUuid.is_initialized()) {
+  if(!catalogUuid) {
     return none;
   }
   return FindEntry(*catalogUuid);
 }
 
-const vector<unique_ptr<CatalogEntry>>& CatalogSettings::GetCatalogEntries()
-    const {
+const std::vector<std::unique_ptr<CatalogEntry>>&
+    CatalogSettings::GetCatalogEntries() const {
   return m_catalogEntries;
 }
 
@@ -283,7 +277,7 @@ CatalogTabModel& CatalogSettings::GetAllTab() {
   return *m_catalogTabs.front();
 }
 
-void CatalogSettings::Add(unique_ptr<CatalogEntry>&& entry) {
+void CatalogSettings::Add(std::unique_ptr<CatalogEntry>&& entry) {
   if(dynamic_cast<PersistentCatalogEntry*>(entry.get()) != nullptr) {
     static_cast<PersistentCatalogEntry&>(*entry).Save();
   }
@@ -295,15 +289,14 @@ void CatalogSettings::Add(unique_ptr<CatalogEntry>&& entry) {
 }
 
 void CatalogSettings::Remove(const CatalogEntry& entry) {
-  for(auto i = m_catalogTabs.begin(); i != m_catalogTabs.end(); ++i) {
-    (*i)->Remove(entry);
+  for(auto& tab : m_catalogTabs) {
+    tab->Remove(entry);
   }
-  unique_ptr<CatalogEntry> selfEntry;
   auto entryIterator = find_if(m_catalogEntries.begin(), m_catalogEntries.end(),
-    [&] (const unique_ptr<CatalogEntry>& i) {
+    [&] (const auto& i) {
       return i.get() == &entry;
     });
-  selfEntry = std::move(*entryIterator);
+  auto selfEntry = std::move(*entryIterator);
   m_catalogEntries.erase(entryIterator);
   m_uuidToEntry.erase(selfEntry->GetUid());
   if(dynamic_cast<const PersistentCatalogEntry*>(selfEntry.get()) != nullptr) {
@@ -313,11 +306,11 @@ void CatalogSettings::Remove(const CatalogEntry& entry) {
 }
 
 void CatalogSettings::Replace(const CatalogEntry& oldEntry,
-    unique_ptr<CatalogEntry>&& newEntry) {
+    std::unique_ptr<CatalogEntry>&& newEntry) {
   if(oldEntry.GetName() != newEntry->GetName()) {
-    for(auto i = m_catalogEntries.begin(); i != m_catalogEntries.end(); ++i) {
-      if((*i)->GetName() == newEntry->GetName()) {
-        BOOST_THROW_EXCEPTION(runtime_error("Entry already exists."));
+    for(auto& entry : m_catalogEntries) {
+      if(entry->GetName() == newEntry->GetName()) {
+        BOOST_THROW_EXCEPTION(std::runtime_error("Entry already exists."));
       }
     }
   }
@@ -328,23 +321,22 @@ void CatalogSettings::Replace(const CatalogEntry& oldEntry,
   Add(std::move(newEntry));
 }
 
-const vector<unique_ptr<CatalogTabModel>>& CatalogSettings::GetCatalogTabs()
-    const {
+const std::vector<std::unique_ptr<CatalogTabModel>>&
+    CatalogSettings::GetCatalogTabs() const {
   return m_catalogTabs;
 }
 
-void CatalogSettings::Add(unique_ptr<CatalogTabModel>&& tab) {
+void CatalogSettings::Add(std::unique_ptr<CatalogTabModel>&& tab) {
   m_catalogTabs.emplace_back(std::move(tab));
   m_catalogTabModelAddedSignal(*m_catalogTabs.back());
 }
 
 void CatalogSettings::Remove(const CatalogTabModel& tab) {
-  unique_ptr<CatalogTabModel> selfModel;
   auto modelIterator = find_if(m_catalogTabs.begin(), m_catalogTabs.end(),
-    [&] (const unique_ptr<CatalogTabModel>& i) {
+    [&] (const auto& i) {
       return i.get() == &tab;
     });
-  selfModel = std::move(*modelIterator);
+  auto selfModel = std::move(*modelIterator);
   m_catalogTabs.erase(modelIterator);
   m_catalogTabModelRemovedSignal(*selfModel);
 }

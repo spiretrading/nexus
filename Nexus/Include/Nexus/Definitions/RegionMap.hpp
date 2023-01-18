@@ -60,9 +60,17 @@ namespace Details {
       using Element = T;
 
       /** Allows iterating over a RegionMap. */
-      class Iterator : public std::iterator<std::forward_iterator_tag,
-          std::tuple<const Region, T>> {
+      class Iterator {
         public:
+          using iterator_category = std::forward_iterator_tag;
+
+          using value_type = std::tuple<const Region, T>;
+
+          using difference_type = std::ptrdiff_t;
+
+          using pointer = value_type*;
+
+          using reference = value_type&;
 
           /** Constructs an empty Iterator. */
           Iterator() = default;
@@ -90,9 +98,17 @@ namespace Details {
       };
 
       /** Allows iterating over a RegionMap. */
-      class ConstIterator : public std::iterator<std::forward_iterator_tag,
-          const std::tuple<const Region, T>> {
+      class ConstIterator {
         public:
+          using iterator_category = std::forward_iterator_tag;
+
+          using value_type = const std::tuple<const Region, T>;
+
+          using difference_type = std::ptrdiff_t;
+
+          using pointer = value_type*;
+
+          using reference = value_type&;
 
           /** Constructs an empty ConstIterator. */
           ConstIterator() = default;

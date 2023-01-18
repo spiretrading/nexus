@@ -33,11 +33,11 @@ namespace Nexus::Python {
       def_property_readonly("close", &Candlestick::GetClose).
       def_property_readonly("high", &Candlestick::GetHigh).
       def_property_readonly("low", &Candlestick::GetLow).
-      def("update", &Candlestick::Update).
-      def(pybind11::self == pybind11::self).
-      def(pybind11::self != pybind11::self);
+      def("update", &Candlestick::Update);
     if constexpr(!std::is_same_v<Candlestick,
         TechnicalAnalysis::Candlestick<pybind11::object, pybind11::object>>) {
+      candlestick.def(pybind11::self == pybind11::self).
+        def(pybind11::self != pybind11::self);
       pybind11::implicitly_convertible<Candlestick,
         TechnicalAnalysis::Candlestick<pybind11::object, pybind11::object>>();
       GetExportedCandlestick().def(pybind11::init(
