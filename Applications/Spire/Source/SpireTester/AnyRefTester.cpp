@@ -28,8 +28,8 @@ TEST_SUITE("AnyRef") {
     REQUIRE_THROWS_AS(any_cast<const volatile int>(any), std::bad_any_cast);
     REQUIRE(any_cast<int>(&any) == &value);
     REQUIRE(any_cast<const int>(&any) == &value);
-    REQUIRE(any_cast<volatile int>(&any) == nullptr);
-    REQUIRE(any_cast<const volatile int>(&any) == nullptr);
+    REQUIRE((any_cast<volatile int>(&any) == nullptr));
+    REQUIRE((any_cast<const volatile int>(&any) == nullptr));
     REQUIRE(any_cast<bool>(&any) == nullptr);
   }
 
@@ -46,8 +46,8 @@ TEST_SUITE("AnyRef") {
     REQUIRE_THROWS_AS(any_cast<const volatile bool>(any), std::bad_any_cast);
     REQUIRE(any_cast<bool>(&any) == nullptr);
     REQUIRE(any_cast<const bool>(&any) == &value);
-    REQUIRE(any_cast<volatile bool>(&any) == nullptr);
-    REQUIRE(any_cast<const volatile bool>(&any) == nullptr);
+    REQUIRE((any_cast<volatile bool>(&any) == nullptr));
+    REQUIRE((any_cast<const volatile bool>(&any) == nullptr));
   }
 
   TEST_CASE("volatile_ref") {
@@ -59,12 +59,12 @@ TEST_SUITE("AnyRef") {
     REQUIRE(!any.is_const_volatile());
     REQUIRE_THROWS_AS(any_cast<const double>(any), std::bad_any_cast);
     REQUIRE_THROWS_AS(any_cast<double>(any), std::bad_any_cast);
-    REQUIRE(&any_cast<volatile double>(any) == &value);
-    REQUIRE(&any_cast<const volatile double>(any) == &value);
+    REQUIRE((&any_cast<volatile double>(any) == &value));
+    REQUIRE((&any_cast<const volatile double>(any) == &value));
     REQUIRE(any_cast<double>(&any) == nullptr);
     REQUIRE(any_cast<const double>(&any) == nullptr);
-    REQUIRE(any_cast<volatile double>(&any) == &value);
-    REQUIRE(any_cast<const volatile double>(&any) == &value);
+    REQUIRE((any_cast<volatile double>(&any) == &value));
+    REQUIRE((any_cast<const volatile double>(&any) == &value));
   }
 
   TEST_CASE("const_volatile_ref") {
@@ -78,11 +78,11 @@ TEST_SUITE("AnyRef") {
     REQUIRE_THROWS_AS(any_cast<const std::string>(any), std::bad_any_cast);
     REQUIRE_THROWS_AS(any_cast<std::string>(any), std::bad_any_cast);
     REQUIRE_THROWS_AS(any_cast<volatile std::string>(any), std::bad_any_cast);
-    REQUIRE(&any_cast<const volatile std::string>(any) == &value);
+    REQUIRE((&any_cast<const volatile std::string>(any) == &value));
     REQUIRE(any_cast<std::string>(&any) == nullptr);
     REQUIRE(any_cast<const std::string>(&any) == nullptr);
-    REQUIRE(any_cast<volatile std::string>(&any) == nullptr);
-    REQUIRE(any_cast<const volatile std::string>(&any) == &value);
+    REQUIRE((any_cast<volatile std::string>(&any) == nullptr));
+    REQUIRE((any_cast<const volatile std::string>(&any) == &value));
   }
 
   TEST_CASE("copy_construtor_assigment") {
@@ -95,12 +95,12 @@ TEST_SUITE("AnyRef") {
     REQUIRE(!any2.is_const_volatile());
     REQUIRE_THROWS_AS(any_cast<const double>(any2), std::bad_any_cast);
     REQUIRE_THROWS_AS(any_cast<double>(any2), std::bad_any_cast);
-    REQUIRE(&any_cast<volatile double>(any2) == &value);
-    REQUIRE(&any_cast<const volatile double>(any2) == &value);
+    REQUIRE((&any_cast<volatile double>(any2) == &value));
+    REQUIRE((&any_cast<const volatile double>(any2) == &value));
     REQUIRE(any_cast<double>(&any2) == nullptr);
     REQUIRE(any_cast<const double>(&any2) == nullptr);
-    REQUIRE(any_cast<volatile double>(&any2) == &value);
-    REQUIRE(any_cast<const volatile double>(&any2) == &value);
+    REQUIRE((any_cast<volatile double>(&any2) == &value));
+    REQUIRE((any_cast<const volatile double>(&any2) == &value));
     auto any3 = AnyRef();
     any3 = any2;
     REQUIRE(any3.get_type() == typeid(double));
@@ -109,12 +109,12 @@ TEST_SUITE("AnyRef") {
     REQUIRE(!any3.is_const_volatile());
     REQUIRE_THROWS_AS(any_cast<const double>(any3), std::bad_any_cast);
     REQUIRE_THROWS_AS(any_cast<double>(any3), std::bad_any_cast);
-    REQUIRE(&any_cast<volatile double>(any3) == &value);
-    REQUIRE(&any_cast<const volatile double>(any3) == &value);
+    REQUIRE((&any_cast<volatile double>(any3) == &value));
+    REQUIRE((&any_cast<const volatile double>(any3) == &value));
     REQUIRE(any_cast<double>(&any3) == nullptr);
     REQUIRE(any_cast<const double>(&any3) == nullptr);
-    REQUIRE(any_cast<volatile double>(&any3) == &value);
-    REQUIRE(any_cast<const volatile double>(&any3) == &value);
+    REQUIRE((any_cast<volatile double>(&any3) == &value));
+    REQUIRE((any_cast<const volatile double>(&any3) == &value));
   }
 
   TEST_CASE("move_construtor_and_assigment") {
@@ -131,8 +131,8 @@ TEST_SUITE("AnyRef") {
     REQUIRE_THROWS_AS(any_cast<const volatile bool>(any2), std::bad_any_cast);
     REQUIRE(any_cast<bool>(&any2) == nullptr);
     REQUIRE(any_cast<const bool>(&any2) == &value);
-    REQUIRE(any_cast<volatile bool>(&any2) == nullptr);
-    REQUIRE(any_cast<const volatile bool>(&any2) == nullptr);
+    REQUIRE((any_cast<volatile bool>(&any2) == nullptr));
+    REQUIRE((any_cast<const volatile bool>(&any2) == nullptr));
     auto any3 = AnyRef();
     any3 = std::move(any2);
     REQUIRE(any3.get_type() == typeid(bool));
@@ -145,8 +145,8 @@ TEST_SUITE("AnyRef") {
     REQUIRE_THROWS_AS(any_cast<const volatile bool>(any3), std::bad_any_cast);
     REQUIRE(any_cast<bool>(&any3) == nullptr);
     REQUIRE(any_cast<const bool>(&any3) == &value);
-    REQUIRE(any_cast<volatile bool>(&any3) == nullptr);
-    REQUIRE(any_cast<const volatile bool>(&any3) == nullptr);
+    REQUIRE((any_cast<volatile bool>(&any3) == nullptr));
+    REQUIRE((any_cast<const volatile bool>(&any3) == nullptr));
   }
 
   TEST_CASE("any_ref_from_any") {
