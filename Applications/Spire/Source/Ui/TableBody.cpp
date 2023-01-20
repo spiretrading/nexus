@@ -546,15 +546,16 @@ void TableBody::on_style() {
   }
   auto& row_layout = *layout();
   for(auto row = 0; row != row_layout.count(); ++row) {
-    row_layout.itemAt(row)->layout()->setSpacing(m_styles.m_horizontal_spacing);
+    row_layout.itemAt(row)->widget()->layout()->setSpacing(
+      m_styles.m_horizontal_spacing);
   }
   row_layout.setSpacing(m_styles.m_vertical_spacing);
   row_layout.setContentsMargins({
     m_styles.m_horizontal_spacing, m_styles.m_vertical_spacing,
     m_styles.m_horizontal_spacing, m_styles.m_vertical_spacing});
   for(auto row = 0; row != row_layout.count(); ++row) {
-    auto& column_layout = *row_layout.itemAt(row)->layout();
-    for(auto column = 0; column != column_layout.count(); ++column) {
+    auto& column_layout = *row_layout.itemAt(row)->widget()->layout();
+    for(auto column = 0; column != m_widths->get_size(); ++column) {
       auto& item = *column_layout.itemAt(column)->widget();
       item.setFixedWidth(m_widths->get(column) - m_styles.m_horizontal_spacing);
     }
