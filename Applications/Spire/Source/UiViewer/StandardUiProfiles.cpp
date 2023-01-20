@@ -14,9 +14,12 @@
 #include "Spire/KeyBindings/OrderFieldInfoTip.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ArrayTableModel.hpp"
-#include "Spire/Spire/FieldValueModel.hpp"
+#include "Spire/Spire/ColumnViewListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/FieldValueModel.hpp"
+#include "Spire/Spire/ListValueModel.hpp"
 #include "Spire/Spire/LocalScalarValueModel.hpp"
+#include "Spire/Spire/ToTextModel.hpp"
 #include "Spire/Spire/ValidatedValueModel.hpp"
 #include "Spire/Styles/ChainExpression.hpp"
 #include "Spire/Styles/LinearExpression.hpp"
@@ -3724,6 +3727,10 @@ UiProfile Spire::make_table_view_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
   properties.push_back(make_standard_property("row_count", 50));
+  properties.push_back(make_standard_property("row", 0));
+  properties.push_back(make_standard_property("column", 0));
+  properties.push_back(make_standard_property("value", 0));
+  properties.push_back(make_standard_property("remove_row", -1));
   auto profile = UiProfile("TableView", properties, [] (auto& profile) {
     auto model = std::make_shared<ArrayTableModel>();
     auto& row_count = get<int>("row_count", profile.get_properties());
@@ -3751,6 +3758,12 @@ UiProfile Spire::make_table_view_profile() {
     auto view = TableViewBuilder(model).
       set_header(header).
       set_standard_filter().
+      set_view_builder(
+        [] (const std::shared_ptr<TableModel>& table, int row, int column) {
+          return make_label(std::make_shared<ToTextModel<int>>(
+            make_list_value_model(std::make_shared<ColumnViewListModel<int>>(
+              table, column), row)));
+        }).
       make();
     apply_widget_properties(view, profile.get_properties());
     view->get_current()->connect_update_signal(
@@ -3763,6 +3776,18 @@ UiProfile Spire::make_table_view_profile() {
         "Sort", to_string_converter(get_order_property())));
     auto& height = get<int>("height", profile.get_properties());
     height.set(300);
+    auto& update_value = get<int>("value", profile.get_properties());
+    update_value.connect_changed_signal([&, view] (auto value) {
+      view->get_table()->set(get<int>("row", profile.get_properties()).get(),
+        get<int>("column", profile.get_properties()).get(), value);
+    });
+    auto& remove_row = get<int>("remove_row", profile.get_properties());
+    remove_row.connect_changed_signal([=] (const auto& value) {
+      if(value < 0 || value >= model->get_row_size()) {
+        return;
+      }
+      model->remove(value);
+    });
     return view;
   });
   return profile;
