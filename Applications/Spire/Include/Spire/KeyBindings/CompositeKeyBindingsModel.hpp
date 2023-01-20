@@ -1,5 +1,6 @@
 #ifndef SPIRE_COMPOSITE_KEY_BINDINGS_MODEL_HPP
 #define SPIRE_COMPOSITE_KEY_BINDINGS_MODEL_HPP
+#include "Spire/KeyBindings/KeyBindings.hpp"
 #include "Spire/KeyBindings/KeyBindingsModel.hpp"
 
 namespace Spire {

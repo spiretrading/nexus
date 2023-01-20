@@ -69,10 +69,10 @@ namespace Styles {
 
       /**
        * Constructs an OrderTasksRow.
-       * @param model The list model of OrderTask.
+       * @param order_tasks The list of OrderTasks.
        * @param row The row index of this OrderTasksRow.
        */
-      OrderTasksRow(std::shared_ptr<ListModel<OrderTask>> model, int row);
+      OrderTasksRow(std::shared_ptr<ListModel<OrderTask>> order_tasks, int row);
 
       /** Returns the row index. */
       int get_row_index() const;
@@ -114,7 +114,7 @@ namespace Styles {
         const std::shared_ptr<TableModel>& table, int row, int column);
 
     private:
-      std::shared_ptr<ListModel<OrderTask>> m_model;
+      std::shared_ptr<ListModel<OrderTask>> m_order_tasks;
       int m_row_index;
       QPointer<QWidget> m_row;
       QPointer<QWidget> m_grab_handle;
@@ -122,7 +122,7 @@ namespace Styles {
       bool m_is_ignore_filters;
       bool m_is_out_of_range;
       std::unique_ptr<HoverObserver> m_hover_observer;
-      boost::signals2::scoped_connection m_source_operation_connection;
+      boost::signals2::scoped_connection m_operation_connection;
 
       void make_hover_observer();
       EditableBox* make_editor(
