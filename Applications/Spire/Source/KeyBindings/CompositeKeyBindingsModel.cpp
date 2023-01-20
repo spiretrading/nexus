@@ -15,7 +15,7 @@ CompositeKeyBindingsModel::CompositeKeyBindingsModel(
     m_markets(std::move(markets)) {}
 
 std::shared_ptr<ListModel<OrderTask>>
-    CompositeKeyBindingsModel::get_order_tasks() {
+    CompositeKeyBindingsModel::get_order_tasks() const {
   return m_order_tasks;
 }
 
@@ -25,7 +25,7 @@ std::shared_ptr<ListModel<OrderTask>>
 }
 
 std::shared_ptr<ComboBox::QueryModel>
-    CompositeKeyBindingsModel::get_region_query_model() {
+    CompositeKeyBindingsModel::get_region_query_model() const {
   return m_region_query_model;
 }
 
