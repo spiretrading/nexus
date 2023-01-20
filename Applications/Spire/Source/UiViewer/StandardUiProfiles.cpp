@@ -3498,6 +3498,7 @@ UiProfile Spire::make_table_view_profile() {
   properties.push_back(make_standard_property("row", 0));
   properties.push_back(make_standard_property("column", 0));
   properties.push_back(make_standard_property("value", 0));
+  properties.push_back(make_standard_property("remove_row", -1));
   auto profile = UiProfile("TableView", properties, [] (auto& profile) {
     auto model = std::make_shared<ArrayTableModel>();
     auto& row_count = get<int>("row_count", profile.get_properties());
@@ -3547,6 +3548,13 @@ UiProfile Spire::make_table_view_profile() {
     update_value.connect_changed_signal([&, view] (auto value) {
       view->get_table()->set(get<int>("row", profile.get_properties()).get(),
         get<int>("column", profile.get_properties()).get(), value);
+    });
+    auto& remove_item = get<int>("remove_row", profile.get_properties());
+    remove_item.connect_changed_signal([=] (const auto& value) {
+      if(value < 0 || value >= model->get_row_size()) {
+        return;
+      }
+      model->remove(value);
     });
     return view;
   });

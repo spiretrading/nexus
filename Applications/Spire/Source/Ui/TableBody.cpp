@@ -475,9 +475,7 @@ void TableBody::on_current(
     const optional<Index>& previous, const optional<Index>& current) {
   if(previous) {
     auto previous_item = find_item(previous);
-    if(!current || current->m_row != previous->m_row) {
-      unmatch(*previous_item->parentWidget(), CurrentRow());
-    }
+    unmatch(*previous_item->parentWidget(), CurrentRow());
     if(!current || current->m_column != previous->m_column) {
       unmatch(*m_column_covers[previous->m_column], CurrentColumn());
     }
@@ -486,9 +484,7 @@ void TableBody::on_current(
   if(current) {
     auto current_item = get_current_item();
     match(*current_item, Current());
-    if(!previous || previous->m_row != current->m_row) {
-      match(*current_item->parentWidget(), CurrentRow());
-    }
+    match(*current_item->parentWidget(), CurrentRow());
     if(!previous || previous->m_column != current->m_column) {
       match(*m_column_covers[current->m_column], CurrentColumn());
     }
