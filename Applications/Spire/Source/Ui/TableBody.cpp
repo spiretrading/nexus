@@ -475,9 +475,7 @@ void TableBody::on_current(
     const optional<Index>& previous, const optional<Index>& current) {
   if(previous) {
     auto previous_item = find_item(previous);
-    if(!current || current->m_row != previous->m_row) {
-      unmatch(*previous_item->parentWidget(), CurrentRow());
-    }
+    unmatch(*previous_item->parentWidget(), CurrentRow());
     if(!current || current->m_column != previous->m_column) {
       unmatch(*m_column_covers[previous->m_column], CurrentColumn());
     }
@@ -486,9 +484,7 @@ void TableBody::on_current(
   if(current) {
     auto current_item = get_current_item();
     match(*current_item, Current());
-    if(!previous || previous->m_row != current->m_row) {
-      match(*current_item->parentWidget(), CurrentRow());
-    }
+    match(*current_item->parentWidget(), CurrentRow());
     if(!previous || previous->m_column != current->m_column) {
       match(*m_column_covers[current->m_column], CurrentColumn());
     }
@@ -546,15 +542,16 @@ void TableBody::on_style() {
   }
   auto& row_layout = *layout();
   for(auto row = 0; row != row_layout.count(); ++row) {
-    row_layout.itemAt(row)->layout()->setSpacing(m_styles.m_horizontal_spacing);
+    row_layout.itemAt(row)->widget()->layout()->setSpacing(
+      m_styles.m_horizontal_spacing);
   }
   row_layout.setSpacing(m_styles.m_vertical_spacing);
   row_layout.setContentsMargins({
     m_styles.m_horizontal_spacing, m_styles.m_vertical_spacing,
     m_styles.m_horizontal_spacing, m_styles.m_vertical_spacing});
   for(auto row = 0; row != row_layout.count(); ++row) {
-    auto& column_layout = *row_layout.itemAt(row)->layout();
-    for(auto column = 0; column != column_layout.count(); ++column) {
+    auto& column_layout = *row_layout.itemAt(row)->widget()->layout();
+    for(auto column = 0; column != m_widths->get_size(); ++column) {
       auto& item = *column_layout.itemAt(column)->widget();
       item.setFixedWidth(m_widths->get(column) - m_styles.m_horizontal_spacing);
     }
