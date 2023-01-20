@@ -3549,8 +3549,8 @@ UiProfile Spire::make_table_view_profile() {
       view->get_table()->set(get<int>("row", profile.get_properties()).get(),
         get<int>("column", profile.get_properties()).get(), value);
     });
-    auto& remove_item = get<int>("remove_row", profile.get_properties());
-    remove_item.connect_changed_signal([=] (const auto& value) {
+    auto& remove_row = get<int>("remove_row", profile.get_properties());
+    remove_row.connect_changed_signal([=] (const auto& value) {
       if(value < 0 || value >= model->get_row_size()) {
         return;
       }
