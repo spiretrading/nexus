@@ -51,7 +51,7 @@ QSize PopupBox::sizeHint() const {
 
 bool PopupBox::eventFilter(QObject* watched, QEvent* event) {
   if(watched == m_window) {
-    if(event->type() == QEvent::Resize) {
+    if(event->type() == QEvent::Resize || event->type() == QEvent::Move) {
       update_space();
       if(has_popped_up()) {
         m_alignment = Alignment::NONE;
@@ -84,9 +84,10 @@ bool PopupBox::has_popped_up() const {
 }
 
 void PopupBox::align() {
+  auto position = mapToGlobal(QPoint(0, 0));
   if(m_alignment == Alignment::ABOVE) {
     set_position(
-      {m_position.x(), m_position.y() + m_min_height - m_body->height()});
+      {position.x(), position.y() + m_min_height - m_body->height()});
     return;
   }
   if(m_body->sizeHint().height() >= m_below_space &&
@@ -94,11 +95,11 @@ void PopupBox::align() {
     m_alignment = Alignment::ABOVE;
     m_max_height = m_above_space;
     set_position(
-      {m_position.x(), m_position.y() + m_min_height - m_body->height()});
+      {position.x(), position.y() + m_min_height - m_body->height()});
   } else {
     m_alignment = Alignment::BELOW;
     m_max_height = m_below_space;
-    set_position(m_position);
+    set_position(position);
   }
 }
 
@@ -149,9 +150,10 @@ void PopupBox::update_space() {
     return;
   }
   auto& window_rect = m_window->geometry();
-  m_above_space = std::max(m_position.y() + m_min_height - window_rect.y(), 0);
-  m_below_space = window_rect.bottom() - m_position.y();
-  m_right_space = window_rect.right() - m_position.x();
+  auto position = mapToGlobal(QPoint(0, 0));
+  m_above_space = std::max(position.y() + m_min_height - window_rect.y(), 0);
+  m_below_space = window_rect.bottom() - position.y();
+  m_right_space = window_rect.right() - position.x();
 }
 
 void PopupBox::on_body_focus(FocusObserver::State state) {
@@ -182,16 +184,6 @@ void PopupBox::on_focus(FocusObserver::State state) {
 }
 
 void PopupBox::on_position(const QPoint& position) {
-  m_position = position;
-  if(m_window) {
-    auto& window_rect = m_window->geometry();
-    if(m_position.x() < window_rect.x()) {
-      m_position.setX(window_rect.x());
-    }
-    if(m_position.y() < window_rect.y()) {
-      m_position.setY(window_rect.y());
-    }
-  }
   if(has_popped_up()) {
     align();
   }

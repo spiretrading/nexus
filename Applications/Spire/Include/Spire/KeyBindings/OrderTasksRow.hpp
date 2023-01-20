@@ -1,11 +1,15 @@
 #ifndef SPIRE_ORDER_TASKS_ROW_HPP
 #define SPIRE_ORDER_TASKS_ROW_HPP
+#include <QPointer>
 #include "Spire/KeyBindings/OrderTask.hpp"
 #include "Spire/Ui/ComboBox.hpp"
 #include "Spire/Ui/HoverObserver.hpp"
 
 namespace Spire {
 namespace Styles {
+
+  /** Selects the editing item. */
+  using Editing = StateSelector<void, struct EditingSelectorTag>;
 
   /** Selects the grab handle which is hovered. */
   using HoveredGrabHandle =
@@ -60,12 +64,15 @@ namespace Styles {
         KEY
       };
 
+      /** The number of columns in this row. */
+      static const auto COLUMN_SIZE = 9;
+
       /**
        * Constructs an OrderTasksRow.
-       * @param model The list model of OrderTask.
+       * @param order_tasks The list of OrderTasks.
        * @param row The row index of this OrderTasksRow.
        */
-      OrderTasksRow(std::shared_ptr<ListModel<OrderTask>> model, int row);
+      OrderTasksRow(std::shared_ptr<ListModel<OrderTask>> order_tasks, int row);
 
       /** Returns the row index. */
       int get_row_index() const;
@@ -94,40 +101,39 @@ namespace Styles {
       /**
        * Build a cell.
        * @param region_query_model The model used to query region matches.
-       * @param destination_database The destination database.
-       * @param market_database The market database.
+       * @param destinations The destination database.
+       * @param markets The market database.
        * @param model The table model of the TableView.
        * @param row The row index.
        * @param column The column index.
        */
       TableCell build_cell(
         const std::shared_ptr<ComboBox::QueryModel>& region_query_model,
-        const Nexus::DestinationDatabase& destination_database,
-        const Nexus::MarketDatabase& market_database,
+        const Nexus::DestinationDatabase& destinations,
+        const Nexus::MarketDatabase& markets,
         const std::shared_ptr<TableModel>& table, int row, int column);
 
     private:
-      std::shared_ptr<ListModel<OrderTask>> m_model;
+      std::shared_ptr<ListModel<OrderTask>> m_order_tasks;
       int m_row_index;
-      QWidget* m_row;
-      QWidget* m_grab_handle;
+      QPointer<QWidget> m_row;
+      QPointer<QWidget> m_grab_handle;
       bool m_is_draggable;
       bool m_is_ignore_filters;
       bool m_is_out_of_range;
       std::unique_ptr<HoverObserver> m_hover_observer;
-      boost::signals2::scoped_connection m_source_operation_connection;
-      boost::signals2::scoped_connection m_hover_connection;
+      boost::signals2::scoped_connection m_operation_connection;
 
       void make_hover_observer();
       EditableBox* make_editor(
         const std::shared_ptr<ComboBox::QueryModel>& region_query_model,
-        const Nexus::DestinationDatabase& destination_database,
-        const Nexus::MarketDatabase& market_database,
+        const Nexus::DestinationDatabase& destinations,
+        const Nexus::MarketDatabase& markets,
         const std::shared_ptr<TableModel>& table, int row, int column);
       EditableBox* make_empty_editor(
         const std::shared_ptr<ComboBox::QueryModel>& region_query_model,
-        const Nexus::DestinationDatabase& destination_database,
-        const Nexus::MarketDatabase& market_database,
+        const Nexus::DestinationDatabase& destinations,
+        const Nexus::MarketDatabase& markets,
         const std::shared_ptr<TableModel>& table, int row, int column);
       void on_operation(const ListModel<OrderTask>::Operation& operation);
       void on_submit(AnyInputBox* input_box, Column column,

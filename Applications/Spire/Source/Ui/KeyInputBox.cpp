@@ -128,6 +128,7 @@ void KeyInputBox::set_read_only(bool is_read_only) {
     m_caret->show();
     unmatch(*m_input_box, ReadOnly());
   }
+  transition_status();
 }
 
 connection KeyInputBox::connect_submit_signal(
@@ -190,14 +191,17 @@ void KeyInputBox::keyPressEvent(QKeyEvent* event) {
 
 void KeyInputBox::layout_key_sequence() {
   if(m_status == Status::NONE) {
-    auto& layout = *m_body->layout();
-    clear(layout);
-    layout.setSpacing(scale_width(4));
+    clear(*m_body->layout());
+    auto key_sequence = new QWidget();
+    auto layout = make_hbox_layout(key_sequence);
+    layout->setSizeConstraint(QLayout::SetFixedSize);
+    layout->setSpacing(scale_width(4));
     for(auto key : split(m_current->get())) {
       auto tag = new KeyTag(make_constant_value_model(key));
       tag->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-      layout.addWidget(tag);
+      layout->addWidget(tag);
     }
+    m_body->layout()->addWidget(key_sequence);
   }
 }
 

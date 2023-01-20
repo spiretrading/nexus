@@ -1,9 +1,11 @@
 #include "Spire/KeyBindings/OrderTasksRow.hpp"
+#include <QMouseEvent>
 #include "Spire/KeyBindings/GrabHandle.hpp"
 #include "Spire/Spire/ColumnViewListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ListValueModel.hpp"
 #include "Spire/Spire/ValidatedValueModel.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DestinationBox.hpp"
 #include "Spire/Ui/EditableBox.hpp"
 #include "Spire/Ui/Icon.hpp"
@@ -67,84 +69,122 @@ namespace {
     return QValidator::Invalid;
   }
 
-  class DestinationQueryModel : public ComboBox::QueryModel {
-    public:
-      DestinationQueryModel(std::shared_ptr<ValueModel<Region>> region_model,
-          const DestinationDatabase& destination_database,
-          const MarketDatabase& market_database)
-          : m_region_model(std::move(region_model)),
-            m_destination_database(destination_database),
-            m_market_database(market_database),
-            m_region_connection(m_region_model->connect_update_signal(
-              std::bind_front(&DestinationQueryModel::on_update, this))) {
-        on_update(m_region_model->get());
+  struct DestinationQueryModel : ComboBox::QueryModel {
+    std::shared_ptr<ValueModel<Region>> m_region_model;
+    DestinationDatabase m_destinations;
+    MarketDatabase m_markets;
+    std::unique_ptr<LocalComboBoxQueryModel> m_local_query_model;
+    scoped_connection m_region_connection;
+
+    DestinationQueryModel(std::shared_ptr<ValueModel<Region>> region_model,
+        DestinationDatabase destinations, MarketDatabase markets)
+        : m_region_model(std::move(region_model)),
+          m_destinations(std::move(destinations)),
+          m_markets(std::move(markets)),
+          m_local_query_model(std::make_unique<LocalComboBoxQueryModel>()),
+          m_region_connection(m_region_model->connect_update_signal(
+            std::bind_front(&DestinationQueryModel::on_update, this))) {
+      on_update(m_region_model->get());
+    }
+
+    std::any parse(const QString& query) override {
+      return m_local_query_model->parse(query);
+    }
+
+    QtPromise<std::vector<std::any>> submit(const QString& query) override {
+      return m_local_query_model->submit(query);
+    }
+
+    void on_update(const Region& region) {
+      auto destinations = m_destinations.SelectEntries(
+        [] (auto& value) { return true; });
+      auto market_set = std::unordered_set<MarketCode>();
+      for(auto& security : region.GetSecurities()) {
+        market_set.insert(security.GetMarket());
       }
-
-      std::any parse(const QString& query) override {
-        return m_local_query_model.parse(query);
-      }
-
-      QtPromise<std::vector<std::any>> submit(const QString& query) override {
-        return m_local_query_model.submit(query);
-      }
-
-    private:
-      std::shared_ptr<ValueModel<Region>> m_region_model;
-      const DestinationDatabase& m_destination_database;
-      const MarketDatabase& m_market_database;
-      LocalComboBoxQueryModel m_local_query_model;
-      scoped_connection m_region_connection;
-
-      void on_update(const Region& region) {
-        auto destinations = m_destination_database.SelectEntries(
-          [] (auto& value) { return true; });
-        auto market_set = std::unordered_set<MarketCode>();
-        for(auto& security : region.GetSecurities()) {
-          market_set.insert(security.GetMarket());
+      auto region_markets = region.GetMarkets();
+      market_set.insert(region_markets.begin(), region_markets.end());
+      for(auto& country : region.GetCountries()) {
+        auto markets = m_markets.FromCountry(country);
+        for(auto& market : markets) {
+          market_set.insert(market.m_code);
         }
-        auto region_markets = region.GetMarkets();
-        market_set.insert(region_markets.begin(), region_markets.end());
-        for(auto& country : region.GetCountries()) {
-          auto markets = m_market_database.FromCountry(country);
-          for(auto& market : markets) {
-            market_set.insert(market.m_code);
+      }
+      m_local_query_model = std::make_unique<LocalComboBoxQueryModel>();
+      for(auto& destination : destinations) {
+        for(auto& market : destination.m_markets) {
+          if(market_set.contains(market)) {
+            m_local_query_model->add(displayText(destination.m_id).toLower(),
+              destination);
+            break;
           }
         }
-        for(auto& destination : destinations) {
-          for(auto& market : destination.m_markets) {
-            if(market_set.contains(market)) {
-              m_local_query_model.add(displayText(destination.m_id).toLower(),
-                destination);
-              break;
-            }
-          }
-        }
       }
+    }
+  };
+
+  struct DestinationValueModel : ValueModel<Destination> {
+    std::shared_ptr<ValueModel<Destination>> m_source;
+    std::shared_ptr<DestinationQueryModel> m_query_model;
+    scoped_connection m_connection;
+
+    DestinationValueModel(std::shared_ptr<ValueModel<Destination>> source,
+      std::shared_ptr<DestinationQueryModel> query_model)
+      : m_source(std::move(source)),
+        m_query_model(std::move(query_model)),
+        m_connection(m_query_model->m_region_model->connect_update_signal(
+          std::bind_front(&DestinationValueModel::on_update, this))) {}
+
+    QValidator::State get_state() const override {
+      return m_source->get_state();
+    }
+
+    const Type& get() const override {
+      return m_source->get();
+    }
+
+    QValidator::State test(const Type& value) const override {
+      return m_source->test(value);
+    }
+
+    QValidator::State set(const Type& value) override {
+      return m_source->set(value);
+    }
+
+    connection connect_update_signal(
+        const typename UpdateSignal::slot_type& slot) const override {
+      return m_source->connect_update_signal(slot);
+    }
+
+    void on_update(const Region& region) {
+      if(!get().empty() &&
+          !m_query_model->parse(displayText(get())).has_value()) {
+        set(Destination());
+      }
+    }
   };
 
   class CustomPopupBox : public QWidget {
     public:
       explicit CustomPopupBox(QWidget& body, QWidget* parent = nullptr)
-          : QWidget(parent),
-            m_click_observer(*this),
-            m_focus_observer(*this) {
+          : QWidget(parent) {
         m_popup_box = new PopupBox(body);
         enclose(*this, *m_popup_box);
         proxy_style(*this, *m_popup_box);
-        setFocusProxy(m_popup_box);
         setFocusPolicy(Qt::ClickFocus);
         m_popup_box->setAttribute(Qt::WA_TransparentForMouseEvents);
         m_tip_window = find_tip_window(body);
-        m_focus_observer.connect_state_signal([=] (auto state) {
-          if(state != FocusObserver::State::NONE) {
-            m_popup_box->get_body().setFocus();
-          }
-        });
       }
 
     protected:
       bool event(QEvent* event) override {
         switch(event->type()) {
+          case QEvent::MouseButtonPress:
+            if(auto& mouse_event = *static_cast<QMouseEvent*>(event);
+                mouse_event.button() == Qt::LeftButton) {
+              m_popup_box->get_body().setFocus();
+            }
+            break;
           case QEvent::Enter:
           case QEvent::Leave:
             if(m_tip_window) {
@@ -155,24 +195,37 @@ namespace {
         return QWidget::event(event);
       }
 
+      void keyPressEvent(QKeyEvent* event) override {
+        switch(event->key()) {
+          case Qt::Key_Enter:
+          case Qt::Key_Return:
+          case Qt::Key_Backspace:
+            QCoreApplication::sendEvent(&m_popup_box->get_body(), event);
+            break;
+          default:
+            auto text = event->text();
+            if(is_a_word(text)) {
+              QCoreApplication::sendEvent(&m_popup_box->get_body(), event);
+            } else {
+              QWidget::keyPressEvent(event);
+            }
+        }
+      }
+
     private:
       PopupBox* m_popup_box;
       QWidget* m_tip_window;
-      ClickObserver m_click_observer;
-      FocusObserver m_focus_observer;
   };
 }
 
-OrderTasksRow::OrderTasksRow(std::shared_ptr<ListModel<OrderTask>> model,
+OrderTasksRow::OrderTasksRow(std::shared_ptr<ListModel<OrderTask>> order_tasks,
   int row)
-  : m_model(std::move(model)),
+  : m_order_tasks(std::move(order_tasks)),
     m_row_index(row),
-    m_row(nullptr),
-    m_grab_handle(nullptr),
     m_is_draggable(true),
     m_is_ignore_filters(false),
     m_is_out_of_range(false),
-    m_source_operation_connection(m_model->connect_operation_signal(
+    m_operation_connection(m_order_tasks->connect_operation_signal(
       std::bind_front(&OrderTasksRow::on_operation, this))) {}
 
 int OrderTasksRow::get_row_index() const {
@@ -215,8 +268,8 @@ void OrderTasksRow::set_out_of_range(bool is_out_of_range) {
 
 OrderTasksRow::TableCell OrderTasksRow::build_cell(
     const std::shared_ptr<ComboBox::QueryModel>& region_query_model,
-    const DestinationDatabase& destination_database,
-    const MarketDatabase& market_database,
+    const DestinationDatabase& destinations,
+    const MarketDatabase& markets,
     const std::shared_ptr<TableModel>& table, int row, int column) {
   if(row == table->get_row_size() - 1) {
     m_is_draggable = false;
@@ -242,15 +295,17 @@ OrderTasksRow::TableCell OrderTasksRow::build_cell(
     update_style(*m_row, [] (auto& style) {
       style.get(Any() > HoveredGrabHandle() > is_a<Icon>()).
         set(Visibility::VISIBLE);
+      style.get(Hover()).
+        set(BackgroundColor(0xF2F2FF));
     });
   }
   auto editor = [&] {
     if(row == table->get_row_size() - 1) {
-      return make_empty_editor(region_query_model, destination_database,
-        market_database, table, row, column);
+      return make_empty_editor(region_query_model, destinations, markets, table,
+        row, column);
     }
-    return make_editor(region_query_model, destination_database,
-    market_database, table, row, column);
+    return make_editor(region_query_model, destinations, markets, table, row,
+      column);
   }();
   update_style(*editor, [&] (auto& style) {
     switch(column_id) {
@@ -268,31 +323,42 @@ OrderTasksRow::TableCell OrderTasksRow::build_cell(
         break;
     }
   });
-  if(column_id == Column::REGION) {
-    return {new CustomPopupBox(*editor), editor};
+  auto cell = [&] () -> QWidget* {
+    if(column_id == Column::REGION || column_id == Column::QUANTITY) {
+      return new CustomPopupBox(*editor);
+    }
+    return editor;
+  }();
+  if(column_id == Column::QUANTITY) {
+    cell->layout()->itemAt(0)->widget()->setSizePolicy(
+      QSizePolicy::Expanding, QSizePolicy::Expanding);
   }
-  return {editor, editor};
+  editor->connect_start_edit_signal([=] {
+    match(*cell, Editing());
+  });
+  editor->connect_end_edit_signal([=] {
+    unmatch(*cell, Editing());
+  });
+  return {cell, editor};
 }
 
 void OrderTasksRow::make_hover_observer() {
   m_hover_observer = std::make_unique<HoverObserver>(*m_row);
-  m_hover_connection = m_hover_observer->connect_state_signal(
-    [=] (auto state) {
-      if(state == HoverObserver::State::NONE) {
-        unmatch(*m_grab_handle, HoveredGrabHandle());
-      } else {
-        match(*m_grab_handle, HoveredGrabHandle());
-      }
-    });
-  QObject::connect(m_row, &QObject::destroyed, [=] {
-    m_hover_connection.disconnect();
+  m_hover_observer->connect_state_signal([=] (auto state) {
+    if(!m_grab_handle) {
+      return;
+    }
+    if(state == HoverObserver::State::NONE) {
+      unmatch(*m_grab_handle, HoveredGrabHandle());
+    } else {
+      match(*m_grab_handle, HoveredGrabHandle());
+    }
   });
 }
 
 EditableBox* OrderTasksRow::make_editor(
     const std::shared_ptr<ComboBox::QueryModel>& region_query_model,
-    const DestinationDatabase& destination_database,
-    const MarketDatabase& market_database,
+    const DestinationDatabase& destinations, const MarketDatabase& markets,
     const std::shared_ptr<TableModel>& table, int row, int column) {
   auto input_box = [&] () -> AnyInputBox* {
     switch(static_cast<Column>(column)) {
@@ -312,11 +378,13 @@ EditableBox* OrderTasksRow::make_editor(
             std::make_shared<ColumnViewListModel<Region>>(
               table, static_cast<int>(Column::REGION)), row);
           auto query_model = std::make_shared<DestinationQueryModel>(
-            std::move(region_model), destination_database, market_database);
-          return new AnyInputBox(*new DestinationBox(std::move(query_model),
+            std::move(region_model), destinations, markets);
+          auto current_model = std::make_shared<DestinationValueModel>(
             std::make_shared<ListValueModel<Destination>>(
               std::make_shared<ColumnViewListModel<Destination>>(table, column),
-                row)));
+                row), query_model);
+          return new AnyInputBox(*new DestinationBox(std::move(query_model),
+            std::move(current_model)));
         }
       case Column::ORDER_TYPE:
         return new AnyInputBox(*make_order_type_box(
@@ -360,8 +428,7 @@ EditableBox* OrderTasksRow::make_editor(
 
 EditableBox* OrderTasksRow::make_empty_editor(
     const std::shared_ptr<ComboBox::QueryModel>& region_query_model,
-    const DestinationDatabase& destination_database,
-    const MarketDatabase& market_database,
+    const DestinationDatabase& destinations, const MarketDatabase& markets,
     const std::shared_ptr<TableModel>& table, int row, int column) {
   auto input_box = [&] () -> AnyInputBox* {
     switch(static_cast<Column>(column)) {
@@ -468,6 +535,6 @@ void OrderTasksRow::on_submit(AnyInputBox* input_box, Column column,
     }
   }
   if(has_value) {
-    m_model->push(order_task);
+    m_order_tasks->push(order_task);
   }
 }
