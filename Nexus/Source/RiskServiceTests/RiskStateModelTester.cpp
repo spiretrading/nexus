@@ -37,21 +37,21 @@ TEST_SUITE("RiskStateModel") {
     auto report = ExecutionReport::MakeInitialReport(1, timeClient.GetTime());
     model.GetPortfolio().Update(fields, report);
     model.UpdatePortfolio();
-    REQUIRE(model.GetRiskState().m_type == RiskState::Type::ACTIVE);
+    REQUIRE((model.GetRiskState().m_type == RiskState::Type::ACTIVE));
     auto fillReport = ExecutionReport::MakeUpdatedReport(report,
       OrderStatus::FILLED, timeClient.GetTime());
     fillReport.m_lastQuantity = 100;
     fillReport.m_lastPrice = Money::ONE;
     model.GetPortfolio().Update(fields, fillReport);
     model.UpdatePortfolio();
-    REQUIRE(model.GetRiskState().m_type == RiskState::Type::ACTIVE);
+    REQUIRE((model.GetRiskState().m_type == RiskState::Type::ACTIVE));
     model.GetPortfolio().Update(TSLA, Money::ONE, 99 * Money::CENT);
     model.UpdatePortfolio();
     REQUIRE(model.GetRiskState() == RiskState(RiskState::Type::CLOSE_ORDERS,
       time_from_string("2020-03-20 13:13:00")));
     model.GetPortfolio().Update(TSLA, Money::ONE + Money::CENT, Money::ONE);
     model.UpdatePortfolio();
-    REQUIRE(model.GetRiskState().m_type == RiskState::Type::ACTIVE);
+    REQUIRE((model.GetRiskState().m_type == RiskState::Type::ACTIVE));
     timeClient.SetTime(time_from_string("2020-03-20 13:13:00"));
     model.UpdateTime();
     model.GetPortfolio().Update(TSLA, Money::ONE, 99 * Money::CENT);
@@ -67,7 +67,7 @@ TEST_SUITE("RiskStateModel") {
     REQUIRE(model.GetRiskState() == RiskState::Type::DISABLED);
     model.GetPortfolio().Update(TSLA, Money::ONE + Money::CENT, Money::ONE);
     model.UpdatePortfolio();
-    REQUIRE(model.GetRiskState().m_type == RiskState::Type::ACTIVE);
+    REQUIRE((model.GetRiskState().m_type == RiskState::Type::ACTIVE));
     model.GetPortfolio().Update(TSLA, Money::ONE, 99 * Money::CENT);
     model.UpdatePortfolio();
     REQUIRE(model.GetRiskState() == RiskState(RiskState::Type::CLOSE_ORDERS,

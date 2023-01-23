@@ -1,6 +1,7 @@
 #ifndef NEXUS_FEE_TABLE_TEST_UTILITIES_HPP
 #define NEXUS_FEE_TABLE_TEST_UTILITIES_HPP
 #include <array>
+#include <cstdlib>
 #include <Beam/Pointers/Out.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/lexical_cast.hpp>
@@ -23,10 +24,8 @@ namespace Nexus::Tests {
    */
   template<std::size_t COLUMNS>
   void PopulateFeeTable(Beam::Out<std::array<Money, COLUMNS>> feeTable) {
-    auto fee = Money::CENT;
     for(auto i = 0; i < COLUMNS; ++i) {
-      (*feeTable)[i] = fee;
-      fee += Money::CENT;
+      (*feeTable)[i] = ((std::rand() % 100) + 1) * Money::CENT;
     }
   }
 
@@ -37,11 +36,9 @@ namespace Nexus::Tests {
   template<std::size_t ROWS, std::size_t COLUMNS>
   void PopulateFeeTable(
       Beam::Out<std::array<std::array<Money, COLUMNS>, ROWS>> feeTable) {
-    auto fee = Money::CENT;
     for(auto i = 0; i < ROWS; ++i) {
       for(auto j = 0; j < COLUMNS; ++j) {
-        (*feeTable)[i][j] = fee;
-        fee += Money::CENT;
+        (*feeTable)[i][j] = ((std::rand() % 100) + 1) * Money::CENT;
       }
     }
   }
