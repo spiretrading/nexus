@@ -70,16 +70,13 @@ namespace Spire::Styles {
 
   template<typename T>
   void EvaluatedBlock::remove() {
-    if constexpr(is_composite_property_v<T>) {
-      static_assert(false, "Not supported.");
-    } else {
-      auto i = std::find_if(m_properties.begin(), m_properties.end(),
-        [] (const auto& property) {
-          return property.get_property_type() == typeid(T);
-        });
-      if(i != m_properties.end()) {
-        m_properties.erase(i);
-      }
+    static_assert(!is_composite_property_v<T>, "Not supported.");
+    auto i = std::find_if(m_properties.begin(), m_properties.end(),
+      [] (const auto& property) {
+        return property.get_property_type() == typeid(T);
+      });
+    if(i != m_properties.end()) {
+      m_properties.erase(i);
     }
   }
 

@@ -13,6 +13,9 @@ namespace Spire::Styles {
   struct is_expression_t : std::false_type {};
 
   template<typename T>
+  struct is_expression_t<Expression<T>> : std::true_type {};
+
+  template<typename T>
   struct is_expression_t<T, std::void_t<decltype(
     make_evaluator(std::declval<T>(), std::declval<const Stylist&>()))>> :
       std::true_type {};
@@ -23,11 +26,6 @@ namespace Spire::Styles {
   template<typename T, typename = void>
   struct expression_type {
     using type = T;
-  };
-
-  template<typename T>
-  struct expression_type<Expression<T>> {
-    using type = typename Expression<T>::Type;
   };
 
   template<typename T>

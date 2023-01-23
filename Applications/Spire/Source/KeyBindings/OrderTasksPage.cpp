@@ -263,11 +263,11 @@ OrderTasksPage::AddedRow::AddedRow()
 
 OrderTasksPage::OrderTasksPage(
     std::shared_ptr<ComboBox::QueryModel> region_query_model,
-    std::shared_ptr<ListModel<OrderTask>> model,
+    std::shared_ptr<ListModel<OrderTask>> order_tasks,
     DestinationDatabase destinations, MarketDatabase markets, QWidget* parent)
     : QWidget(parent),
       m_region_query_model(std::move(region_query_model)),
-      m_model(std::move(model)),
+      m_order_tasks(std::move(order_tasks)),
       m_destinations(std::move(destinations)),
       m_markets(std::move(markets)) {
   auto layout = make_vbox_layout(this);
@@ -278,7 +278,7 @@ OrderTasksPage::OrderTasksPage(
   m_search_box->get_current()->connect_update_signal(
     std::bind_front(&OrderTasksPage::on_search, this));
   layout->addWidget(search_region);
-  m_order_tasks_table = std::make_shared<OrderTasksToTableModel>(m_model);
+  m_order_tasks_table = std::make_shared<OrderTasksToTableModel>(m_order_tasks);
   m_source_table_operation_connection =
     m_order_tasks_table->connect_operation_signal(
       std::bind_front(&OrderTasksPage::on_source_table_operation, this));
@@ -347,8 +347,9 @@ const std::shared_ptr<ComboBox::QueryModel>&
   return m_region_query_model;
 }
 
-const std::shared_ptr<ListModel<OrderTask>>& OrderTasksPage::get_model() const {
-  return m_model;
+const std::shared_ptr<ListModel<OrderTask>>&
+    OrderTasksPage::get_order_tasks() const {
+  return m_order_tasks;
 }
 
 bool OrderTasksPage::eventFilter(QObject* watched, QEvent* event) {
@@ -489,7 +490,7 @@ QWidget* OrderTasksPage::table_view_builder(
       return row;
     }();
     m_rows.insert(m_rows.begin() + row,
-      std::make_unique<OrderTasksRow>(m_model, source_row));
+      std::make_unique<OrderTasksRow>(m_order_tasks, source_row));
   }
   auto cell = m_rows[row]->build_cell(m_region_query_model, m_destinations,
     m_markets, table, row, column);
@@ -688,7 +689,7 @@ void OrderTasksPage::on_current(const optional<TableView::Index>& index) {
 
 void OrderTasksPage::on_delete_order() {
   if(auto current = m_table_body->get_current()->get()) {
-    m_model->remove(m_rows[current->m_row]->get_row_index());
+    m_order_tasks->remove(m_rows[current->m_row]->get_row_index());
   }
 }
 

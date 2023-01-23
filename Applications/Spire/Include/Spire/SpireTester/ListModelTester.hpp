@@ -59,7 +59,8 @@ namespace Spire {
         });
     }
     if(offset != 0) {
-      REQUIRE(get<ListModel<T>::EndTransaction>(&operations.back()) != nullptr);
+      REQUIRE(get<typename ListModel<T>::EndTransaction>(&operations.back()) !=
+        nullptr);
     }
   }
 }

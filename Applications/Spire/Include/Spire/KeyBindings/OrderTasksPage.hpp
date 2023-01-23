@@ -17,13 +17,13 @@ namespace Spire {
       /**
        * Constructs a OrderTasksPage.
        * @param region_query_model The model used to query region matches.
-       * @param model The list model of OrderTask.
+       * @param order_tasks The list of OrderTasks.
        * @param destinations The destination database to use.
        * @param markets The market database to use.
        * @param parent The parent widget.
        */
       OrderTasksPage(std::shared_ptr<ComboBox::QueryModel> region_query_model,
-        std::shared_ptr<ListModel<OrderTask>> model,
+        std::shared_ptr<ListModel<OrderTask>> order_tasks,
         Nexus::DestinationDatabase destinations, Nexus::MarketDatabase markets,
         QWidget* parent = nullptr);
 
@@ -31,8 +31,8 @@ namespace Spire {
       const std::shared_ptr<ComboBox::QueryModel>&
         get_region_query_model() const;
 
-      /** Returns the list model. */
-      const std::shared_ptr<ListModel<OrderTask>>& get_model() const;
+      /** Returns the list of OrderTasks. */
+      const std::shared_ptr<ListModel<OrderTask>>& get_order_tasks() const;
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
@@ -50,7 +50,7 @@ namespace Spire {
         AddedRow();
       };
       std::shared_ptr<ComboBox::QueryModel> m_region_query_model;
-      std::shared_ptr<ListModel<OrderTask>> m_model;
+      std::shared_ptr<ListModel<OrderTask>> m_order_tasks;
       Nexus::DestinationDatabase m_destinations;
       Nexus::MarketDatabase m_markets;
       std::shared_ptr<OrderTasksToTableModel> m_order_tasks_table;

@@ -72,8 +72,10 @@ namespace Nexus::RiskService {
   template<typename B>
   template<typename BF>
   RiskClient<B>::RiskClient(BF&& clientBuilder)
+    BEAM_SUPPRESS_THIS_INITIALIZER()
       try : m_clientHandler(std::forward<BF>(clientBuilder),
               std::bind_front(&RiskClient::OnReconnect, this)) {
+    BEAM_UNSUPPRESS_THIS_INITIALIZER()
     RegisterRiskServices(Beam::Store(m_clientHandler.GetSlots()));
     RegisterRiskMessages(Beam::Store(m_clientHandler.GetSlots()));
     Beam::Services::AddMessageSlot<InventoryMessage>(

@@ -258,14 +258,14 @@ namespace {
   };
 }
 
-OrderTasksRow::OrderTasksRow(std::shared_ptr<ListModel<OrderTask>> model,
+OrderTasksRow::OrderTasksRow(std::shared_ptr<ListModel<OrderTask>> order_tasks,
   int row)
-  : m_model(std::move(model)),
+  : m_order_tasks(std::move(order_tasks)),
     m_row_index(row),
     m_is_draggable(true),
     m_is_ignore_filters(false),
     m_is_out_of_range(false),
-    m_source_operation_connection(m_model->connect_operation_signal(
+    m_operation_connection(m_order_tasks->connect_operation_signal(
       std::bind_front(&OrderTasksRow::on_operation, this))) {}
 
 int OrderTasksRow::get_row_index() const {
@@ -574,6 +574,6 @@ void OrderTasksRow::on_submit(AnyInputBox* input_box, Column column,
     }
   }
   if(has_value) {
-    m_model->push(order_task);
+    m_order_tasks->push(order_task);
   }
 }

@@ -1,5 +1,6 @@
 #ifndef SPIRE_COMPOSITE_KEY_BINDINGS_MODEL_HPP
 #define SPIRE_COMPOSITE_KEY_BINDINGS_MODEL_HPP
+#include "Spire/KeyBindings/KeyBindings.hpp"
 #include "Spire/KeyBindings/KeyBindingsModel.hpp"
 
 namespace Spire {
@@ -25,12 +26,13 @@ namespace Spire {
         Nexus::DestinationDatabase destinations,
         Nexus::MarketDatabase markets);
 
-      std::shared_ptr<ListModel<OrderTask>> get_order_tasks() override;
+      std::shared_ptr<ListModel<OrderTask>> get_order_tasks() const override;
 
       std::shared_ptr<ListModel<OrderTask>>
         get_default_order_tasks() const override;
 
-      std::shared_ptr<ComboBox::QueryModel> get_region_query_model() override;
+      std::shared_ptr<ComboBox::QueryModel>
+        get_region_query_model() const override;
 
       const Nexus::DestinationDatabase& get_destinations() const override;
 
