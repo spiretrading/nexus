@@ -92,18 +92,21 @@ namespace {
     auto dash = QString(0x2013);
     help_text_layout->addWidget(make_label(QObject::tr("Allowed keys are: ")));
     auto label1 = make_label("F1" + dash + "F12");
+    label1->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
     update_style(*label1, [] (auto& style) {
       style = BOLD_LABEL_STYLE(style);
     });
     help_text_layout->addWidget(label1);
     help_text_layout->addWidget(make_label(QObject::tr(" and ")));
     auto label2 = make_label("Ctrl, Shift, Alt  +  F1" + dash + "F12");
+    label2->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
     update_style(*label2, [] (auto& style) {
       style = BOLD_LABEL_STYLE(style);
       });
     help_text_layout->addWidget(label2);
     help_text_layout->addWidget(make_label(QObject::tr(" and ")));
     auto label3 = make_label("Ctrl, Shift, Alt  +  0" + dash + "9");
+    label3->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
     update_style(*label3, [] (auto& style) {
       style = BOLD_LABEL_STYLE(style);
     });
