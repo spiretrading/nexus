@@ -272,6 +272,10 @@ int OrderTasksRow::get_row_index() const {
   return m_row_index;
 }
 
+QWidget* OrderTasksRow::get_row() const {
+  return m_row;
+}
+
 bool OrderTasksRow::is_draggable() const {
   return m_is_draggable;
 }

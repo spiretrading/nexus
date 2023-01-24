@@ -780,6 +780,7 @@ void OrderTasksPage::on_view_table_operation(
     const TableModel::Operation& operation) {
   visit(operation,
     [&] (const TableModel::AddOperation& operation) {
+      m_rows[operation.m_index]->get_row()->show();
       if(m_added_row.m_source_index != -1) {
         if(auto current = m_table_body->get_current()->get()) {
           m_table_body->get_current()->set(

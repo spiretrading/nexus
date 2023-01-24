@@ -77,6 +77,9 @@ namespace Styles {
       /** Returns the row index. */
       int get_row_index() const;
 
+      /** Returns the row widget. */
+      QWidget* get_row() const;
+
       /** Returns <code>true</code> iff this row is draggable. */
       bool is_draggable() const;
 
