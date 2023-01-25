@@ -343,6 +343,8 @@ OrderTasksPage::OrderTasksPage(
       ++count;
     }
   }
+  m_list_operation_connection = m_order_tasks->connect_operation_signal(
+    std::bind_front(&OrderTasksPage::on_list_operation, this));
 }
 
 const std::shared_ptr<ComboBox::QueryModel>&
@@ -702,10 +704,23 @@ void OrderTasksPage::on_search(const QString& value) {
     m_rows[row]->set_out_of_range(false);
   }
   do_search(value.toLower());
+  m_table_body->adjustSize();
+  m_table_body->get_current()->set(m_table_body->get_current()->get());
 }
 
 void OrderTasksPage::on_sort(int column, TableHeaderItem::Order order) {
   m_table_body->update();
+}
+
+void OrderTasksPage::on_list_operation(
+    const ListModel<OrderTask>::Operation& operation) {
+  visit(operation,
+    [&] (const ListModel<OrderTask>::AddOperation& operation) {
+      m_table_body->adjustSize();
+    },
+    [&] (const ListModel<OrderTask>::RemoveOperation& operation) {
+      m_table_body->adjustSize();
+    });
 }
 
 void OrderTasksPage::on_source_table_operation(

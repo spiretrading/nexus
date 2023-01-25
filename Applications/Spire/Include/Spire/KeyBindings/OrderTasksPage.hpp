@@ -67,6 +67,7 @@ namespace Spire {
       AddedRow m_added_row;
       boost::signals2::scoped_connection m_current_connection;
       boost::signals2::scoped_connection m_sort_connection;
+      boost::signals2::scoped_connection m_list_operation_connection;
       boost::signals2::scoped_connection m_source_table_operation_connection;
       boost::signals2::scoped_connection m_view_operation_connection;
 
@@ -84,6 +85,7 @@ namespace Spire {
       void on_delete_order();
       void on_search(const QString& value);
       void on_sort(int column, TableHeaderItem::Order order);
+      void on_list_operation(const ListModel<OrderTask>::Operation& operation);
       void on_source_table_operation(const TableModel::Operation& operation);
       void on_table_body_focus(FocusObserver::State state);
       void on_view_table_operation(const TableModel::Operation& operation);
