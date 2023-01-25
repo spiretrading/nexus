@@ -18,6 +18,8 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  const auto DRAG_SCROLL_THRESHOLD = 50;
+
   struct AnyListToTableModel : TableModel {
     std::shared_ptr<AnyListModel> m_source;
 
@@ -182,12 +184,14 @@ bool TableRowDragDrop::eventFilter(QObject* watched, QEvent* event) {
       m_preview_row->move(x, y);
       auto global_pos = m_table_body->mapToGlobal(drag_event.pos());
       auto pos_in_scroll_box = m_scroll_box->mapFromGlobal(global_pos);
-      if(pos_in_scroll_box.y() < 50) {
+      if(pos_in_scroll_box.y() < DRAG_SCROLL_THRESHOLD) {
         scroll_line_up(m_scroll_box->get_vertical_scroll_bar(),
-          50 - pos_in_scroll_box.y());
-      } else if(pos_in_scroll_box.y() > m_scroll_box->rect().bottom() - 50) {
+          DRAG_SCROLL_THRESHOLD - pos_in_scroll_box.y());
+      } else if(pos_in_scroll_box.y() >
+          m_scroll_box->rect().bottom() - DRAG_SCROLL_THRESHOLD) {
         scroll_line_down(m_scroll_box->get_vertical_scroll_bar(),
-          pos_in_scroll_box.y() - m_scroll_box->rect().bottom() + 50);
+          pos_in_scroll_box.y() - m_scroll_box->rect().bottom() +
+            DRAG_SCROLL_THRESHOLD);
       }
       auto drop_index = [&] {
         for(auto i = 0; i < m_rows->get_size(); ++i) {
