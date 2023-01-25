@@ -143,14 +143,15 @@ namespace {
 
   auto display(const Region& region) {
     auto text = QString();
+    auto delimiter = QString(0x1f);
     for(auto& country : region.GetCountries()) {
-      text += displayText(country);
+      text += displayText(country) + delimiter;
     }
     for(auto& market : region.GetMarkets()) {
-      text += displayText(MarketToken(market));
+      text += displayText(MarketToken(market)) + delimiter;
     }
     for(auto& security : region.GetSecurities()) {
-      text += displayText(security);
+      text += displayText(security) + delimiter;
     }
     return text;
   }
