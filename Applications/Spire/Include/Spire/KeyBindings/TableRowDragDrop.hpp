@@ -2,7 +2,6 @@
 #define SPIRE_TABLE_ROW_DRAG_DROP_HPP
 #include "Spire/KeyBindings/TableRow.hpp"
 #include "Spire/Spire/TableModel.hpp"
-#include "Spire/Spire/TranslatedTableModel.hpp"
 #include "Spire/Styles/BasicProperty.hpp"
 #include "Spire/Ui/TableHeaderItem.hpp"
 #include "Spire/Ui/Ui.hpp"
@@ -31,7 +30,7 @@ namespace Styles {
        * Constructs a TableRowDragDrop.
        * @param model The list model used to move rows.
        * @param rows The rows of the table.
-       * @param table_view The table view that performs row dropping.
+       * @param table_view The table view that performs row drag and drop.
        */
       TableRowDragDrop(std::shared_ptr<AnyListModel> model,
         std::shared_ptr<ListModel<std::shared_ptr<TableRow>>> rows,

@@ -125,11 +125,8 @@ namespace Styles {
         const Nexus::DestinationDatabase& destinations,
         const Nexus::MarketDatabase& markets,
         const std::shared_ptr<TableModel>& table, int row, int column);
-      EditableBox* make_empty_editor(
-        const std::shared_ptr<ComboBox::QueryModel>& region_query_model,
-        const Nexus::DestinationDatabase& destinations,
-        const Nexus::MarketDatabase& markets,
-        const std::shared_ptr<TableModel>& table, int row, int column);
+      EditableBox* make_empty_editor(int column,
+        const std::shared_ptr<ComboBox::QueryModel>& region_query_model);
       void on_operation(const ListModel<OrderTask>::Operation& operation);
       void on_submit(AnyInputBox* input_box, Column column,
         const AnyRef& submission);

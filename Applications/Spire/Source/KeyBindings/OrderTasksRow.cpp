@@ -352,8 +352,7 @@ OrderTasksRow::TableCell OrderTasksRow::build_cell(
   }
   auto editor = [&] {
     if(row == table->get_row_size() - 1) {
-      return make_empty_editor(region_query_model, destinations, markets, table,
-        row, column);
+      return make_empty_editor(column, region_query_model);
     }
     return make_editor(region_query_model, destinations, markets, table, row,
       column);
@@ -476,10 +475,8 @@ EditableBox* OrderTasksRow::make_editor(
     return new EditableBox(*input_box);;
 }
 
-EditableBox* OrderTasksRow::make_empty_editor(
-    const std::shared_ptr<ComboBox::QueryModel>& region_query_model,
-    const DestinationDatabase& destinations, const MarketDatabase& markets,
-    const std::shared_ptr<TableModel>& table, int row, int column) {
+EditableBox* OrderTasksRow::make_empty_editor(int column,
+    const std::shared_ptr<ComboBox::QueryModel>& region_query_model) {
   auto input_box = [&] () -> AnyInputBox* {
     switch(static_cast<Column>(column)) {
       case Column::NAME:

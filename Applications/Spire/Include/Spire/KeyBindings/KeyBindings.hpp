@@ -11,6 +11,8 @@ namespace Spire {
   class OrderTasksRow;
   class OrderTasksTableViewModel;
   class OrderTasksToTableModel;
+  class TableRow;
+  class TableRowDragDrop;
 }
 
 #endif

@@ -1,19 +1,12 @@
 #ifndef SPIRE_TABLE_ROW_HPP
 #define SPIRE_TABLE_ROW_HPP
 #include <QWidget>
-#include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
 
   /** Represents a row of the TableView. */
   class TableRow {
     public:
-
-      ///** Signals that this row has started being dragged. */
-      //using DragStartSignal = Signal<void ()>;
-
-      ///** Signals that this row has quit dragging. */
-      //using DragEndSignal = Signal<void ()>;
 
       virtual ~TableRow() = default;
 
@@ -46,14 +39,6 @@ namespace Spire {
 
       /** Sets whether this row doesn't meet the filter or sort criteria set. */
       virtual void set_out_of_range(bool is_out_of_range) = 0;
-
-      ///** Connects a slot to the StartDragSignal. */
-      //virtual boost::signals2::connection connect_drag_start_signal(
-      //  const DragStartSignal::slot_type& slot) const = 0;
-
-      ///** Connects a slot to the EndDragSignal. */
-      //virtual boost::signals2::connection connect_drag_end_signal(
-      //  const DragEndSignal::slot_type& slot) const = 0;
 
     protected:
 
