@@ -78,7 +78,7 @@ TEST_SUITE("RiskController") {
       Quote(*Money::FromValue("0.99"), 100, Side::BID),
       Quote(*Money::FromValue("1.00"), 100, Side::ASK),
       m_environment.GetTimeEnvironment().GetTime()));
-    REQUIRE(state->Pop().m_type == RiskState::Type::CLOSE_ORDERS);
+    REQUIRE((state->Pop().m_type == RiskState::Type::CLOSE_ORDERS));
   }
 
   TEST_CASE_FIXTURE(Fixture, "single_security_existing_position") {

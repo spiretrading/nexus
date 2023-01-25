@@ -96,8 +96,8 @@ void ResponsiveLabel::set_current(const optional<int>& mapped_label_index) {
 void ResponsiveLabel::sort_mapped_labels() {
   std::sort(m_mapped_labels.begin(), m_mapped_labels.end(),
     [=] (const auto& first, const auto& second) {
-      return std::tie(first.m_pixel_width, -first.m_list_index) <
-        std::tie(second.m_pixel_width, -second.m_list_index);
+      return std::tuple(first.m_pixel_width, -first.m_list_index) <
+        std::tuple(second.m_pixel_width, -second.m_list_index);
     });
 }
 

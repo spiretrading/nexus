@@ -94,18 +94,21 @@ namespace {
     auto dash = QString(0x2013);
     help_text_layout->addWidget(make_label(QObject::tr("Allowed keys are: ")));
     auto label1 = make_label("F1" + dash + "F12");
+    label1->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
     update_style(*label1, [] (auto& style) {
       style = BOLD_LABEL_STYLE(style);
     });
     help_text_layout->addWidget(label1);
     help_text_layout->addWidget(make_label(QObject::tr(" and ")));
     auto label2 = make_label("Ctrl, Shift, Alt  +  F1" + dash + "F12");
+    label2->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
     update_style(*label2, [] (auto& style) {
       style = BOLD_LABEL_STYLE(style);
       });
     help_text_layout->addWidget(label2);
     help_text_layout->addWidget(make_label(QObject::tr(" and ")));
     auto label3 = make_label("Ctrl, Shift, Alt  +  0" + dash + "9");
+    label3->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
     update_style(*label3, [] (auto& style) {
       style = BOLD_LABEL_STYLE(style);
     });
@@ -266,11 +269,11 @@ OrderTasksPage::AddedRow::AddedRow()
 
 OrderTasksPage::OrderTasksPage(
     std::shared_ptr<ComboBox::QueryModel> region_query_model,
-    std::shared_ptr<ListModel<OrderTask>> model,
+    std::shared_ptr<ListModel<OrderTask>> order_tasks,
     DestinationDatabase destinations, MarketDatabase markets, QWidget* parent)
     : QWidget(parent),
       m_region_query_model(std::move(region_query_model)),
-      m_model(std::move(model)),
+      m_order_tasks(std::move(order_tasks)),
       m_destinations(std::move(destinations)),
       m_markets(std::move(markets)),
       m_rows(std::make_shared<ArrayListModel<std::shared_ptr<TableRow>>>()) {
@@ -282,7 +285,7 @@ OrderTasksPage::OrderTasksPage(
   m_search_box->get_current()->connect_update_signal(
     std::bind_front(&OrderTasksPage::on_search, this));
   layout->addWidget(search_region);
-  m_order_tasks_table = std::make_shared<OrderTasksToTableModel>(m_model);
+  m_order_tasks_table = std::make_shared<OrderTasksToTableModel>(m_order_tasks);
   m_source_table_operation_connection =
     m_order_tasks_table->connect_operation_signal(
       std::bind_front(&OrderTasksPage::on_source_table_operation, this));
@@ -347,7 +350,7 @@ OrderTasksPage::OrderTasksPage(
     }
   }
   m_table_row_drag_drop =
-    std::make_unique<TableRowDragDrop>(m_model, m_rows, *table_view);
+    std::make_unique<TableRowDragDrop>(m_order_tasks, m_rows, *table_view);
 }
 
 const std::shared_ptr<ComboBox::QueryModel>&
@@ -355,8 +358,9 @@ const std::shared_ptr<ComboBox::QueryModel>&
   return m_region_query_model;
 }
 
-const std::shared_ptr<ListModel<OrderTask>>& OrderTasksPage::get_model() const {
-  return m_model;
+const std::shared_ptr<ListModel<OrderTask>>&
+    OrderTasksPage::get_order_tasks() const {
+  return m_order_tasks;
 }
 
 bool OrderTasksPage::eventFilter(QObject* watched, QEvent* event) {
@@ -499,7 +503,8 @@ QWidget* OrderTasksPage::table_view_builder(
       }
       return row;
     }();
-    m_rows->insert(std::make_shared<OrderTasksRow>(m_model, source_row), row);
+    m_rows->insert(
+      std::make_shared<OrderTasksRow>(m_order_tasks, source_row), row);
   }
   auto cell = std::static_pointer_cast<OrderTasksRow>(m_rows->get(row))->
     build_cell(m_region_query_model, m_destinations, m_markets, table, row,
@@ -695,7 +700,7 @@ void OrderTasksPage::on_current(const optional<TableView::Index>& index) {
 
 void OrderTasksPage::on_delete_order() {
   if(auto current = m_table_body->get_current()->get()) {
-    m_model->remove(m_rows->get(current->m_row)->get_row_index());
+    m_order_tasks->remove(m_rows->get(current->m_row)->get_row_index());
   }
 }
 
@@ -795,6 +800,7 @@ void OrderTasksPage::on_view_table_operation(
     const TableModel::Operation& operation) {
   visit(operation,
     [&] (const TableModel::AddOperation& operation) {
+      m_rows->get(operation.m_index)->get_row()->show();
       if(m_added_row.m_source_index != -1) {
         if(auto current = m_table_body->get_current()->get()) {
           m_table_body->get_current()->set(

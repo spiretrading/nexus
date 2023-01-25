@@ -82,9 +82,9 @@ KeyBindingsWindow::KeyBindingsWindow(
     style.get(Any()).set(BackgroundColor(QColor(0xF5F5F5)));
   });
   layout()->addWidget(box);
-  copy(*m_order_tasks_page->get_model(), *m_order_tasks_submission);
+  copy(*m_order_tasks_page->get_order_tasks(), *m_order_tasks_submission);
   m_order_tasks_connection =
-    m_order_tasks_page->get_model()->connect_operation_signal(
+    m_order_tasks_page->get_order_tasks()->connect_operation_signal(
       std::bind_front(&KeyBindingsWindow::on_order_task_operation, this));
 }
 
@@ -96,7 +96,7 @@ connection KeyBindingsWindow::connect_submit_signal(
 void KeyBindingsWindow::on_apply() {
   if(m_is_modified) {
     m_is_modified = false;
-    copy(*m_order_tasks_page->get_model(), *m_order_tasks_submission);
+    copy(*m_order_tasks_page->get_order_tasks(), *m_order_tasks_submission);
   }
   m_submit_signal(m_order_tasks_submission);
 }
@@ -104,20 +104,20 @@ void KeyBindingsWindow::on_apply() {
 void KeyBindingsWindow::on_cancel() {
   if(m_is_modified) {
     m_is_modified = false;
-    copy(*m_order_tasks_submission, *m_order_tasks_page->get_model());
+    copy(*m_order_tasks_submission, *m_order_tasks_page->get_order_tasks());
   }
   m_submit_signal(m_order_tasks_submission);
   close();
 }
 
 void KeyBindingsWindow::on_ok() {
-  m_submit_signal(m_order_tasks_page->get_model());
+  m_submit_signal(m_order_tasks_page->get_order_tasks());
   close();
 }
 
 void KeyBindingsWindow::on_reset() {
   copy(*m_key_bindings->get_default_order_tasks(),
-    *m_order_tasks_page->get_model());
+    *m_order_tasks_page->get_order_tasks());
 }
 
 void KeyBindingsWindow::on_order_task_operation(

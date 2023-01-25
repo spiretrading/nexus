@@ -354,9 +354,18 @@ namespace Nexus {
         return CalculateFee(feeTable.m_matnFeeTable, classification,
           executionReport);
       } else if(lastMarket == DefaultMarkets::NEOE()) {
-        auto isInterlisted = Beam::Contains(feeTable.m_interlisted,
-          order.GetInfo().m_fields.m_security);
-        return CalculateFee(feeTable.m_neoeFeeTable, isInterlisted,
+        auto classification = [&] {
+          if(Beam::Contains(
+              feeTable.m_interlisted, order.GetInfo().m_fields.m_security)) {
+            return NeoeFeeTable::Classification::INTERLISTED;
+          } else if(Beam::Contains(
+              feeTable.m_etfs, order.GetInfo().m_fields.m_security)) {
+            return NeoeFeeTable::Classification::ETF;
+          } else {
+            return NeoeFeeTable::Classification::GENERAL;
+          }
+        }();
+        return CalculateFee(feeTable.m_neoeFeeTable, classification,
           order.GetInfo().m_fields, executionReport);
       } else if(lastMarket == DefaultMarkets::OMGA()) {
         auto isEtf = Beam::Contains(feeTable.m_etfs,

@@ -7,18 +7,6 @@
 #include "Spire/Spire/ValueModel.hpp"
 #include "Spire/Ui/Ui.hpp"
 
-namespace std {
-  template<typename T>
-  struct hash<boost::optional<T>> {
-    size_t operator ()(const boost::optional<T>& value) const {
-      if(!value) {
-        return -3333;
-      }
-      return boost::hash_value(*value);
-    }
-  };
-}
-
 namespace Spire {
 
   /**

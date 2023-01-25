@@ -216,16 +216,56 @@ namespace {
       PopupBox* m_popup_box;
       QWidget* m_tip_window;
   };
+
+  template<typename T>
+  class CustomListValueModel : public ListValueModel<T> {
+    public:
+      using Type = typename ListValueModel<T>::Type;
+
+      CustomListValueModel(std::shared_ptr<ListModel<Type>> source, int index)
+        : ListValueModel<Type>(std::move(source), index) {}
+
+      const Type& get() const override {
+        if(ListValueModel<Type>::get_state() == QValidator::State::Acceptable) {
+          return ListValueModel<Type>::get();
+        }
+        static auto value = Type();
+        return value;
+      }
+  };
+
+  template<typename T>
+  auto make_custom_list_value_model(std::shared_ptr<T> source, int index) {
+    return std::make_shared<CustomListValueModel<typename T::Type>>(
+      std::move(source), index);
+  }
+
+  template<typename T>
+  class CustomColumnViewListModel : public ColumnViewListModel<T> {
+    public:
+      using Type = typename ColumnViewListModel<T>::Type;
+
+      CustomColumnViewListModel(std::shared_ptr<TableModel> source, int column)
+        : ColumnViewListModel<T>(std::move(source), column) {}
+
+      const Type& get(int index) const override {
+        if(index != ColumnViewListModel<Type>::get_size() - 1) {
+          return ColumnViewListModel<Type>::get(index);
+        }
+        static auto value = Type();
+        return value;
+      }
+  };
 }
 
-OrderTasksRow::OrderTasksRow(std::shared_ptr<ListModel<OrderTask>> model,
+OrderTasksRow::OrderTasksRow(std::shared_ptr<ListModel<OrderTask>> order_tasks,
   int row)
-  : m_model(std::move(model)),
+  : m_order_tasks(std::move(order_tasks)),
     m_row_index(row),
     m_is_draggable(true),
     m_is_ignore_filters(false),
     m_is_out_of_range(false),
-    m_source_operation_connection(m_model->connect_operation_signal(
+    m_operation_connection(m_order_tasks->connect_operation_signal(
       std::bind_front(&OrderTasksRow::on_operation, this))) {}
 
 int OrderTasksRow::get_row_index() const {
@@ -374,58 +414,57 @@ EditableBox* OrderTasksRow::make_editor(
   auto input_box = [&] () -> AnyInputBox* {
     switch(static_cast<Column>(column)) {
       case Column::NAME:
-        return new AnyInputBox(*new TextBox(
-          std::make_shared<ListValueModel<QString>>(
-            std::make_shared<ColumnViewListModel<QString>>(table, column),
-              row)));
+        return new AnyInputBox(*new TextBox(make_custom_list_value_model(
+          std::make_shared<CustomColumnViewListModel<QString>>(table, column),
+            row)));
       case Column::REGION:
         return new AnyInputBox(*new RegionBox(region_query_model,
-          std::make_shared<ListValueModel<Region>>(
-            std::make_shared<ColumnViewListModel<Region>>(table, column),
+          make_custom_list_value_model(
+            std::make_shared<CustomColumnViewListModel<Region>>(table, column),
               row)));
       case Column::DESTINATION:
         {
-          auto region_model = std::make_shared<ListValueModel<Region>>(
-            std::make_shared<ColumnViewListModel<Region>>(
+          auto region_model = make_custom_list_value_model(
+            std::make_shared<CustomColumnViewListModel<Region>>(
               table, static_cast<int>(Column::REGION)), row);
           auto query_model = std::make_shared<DestinationQueryModel>(
             std::move(region_model), destinations, markets);
           auto current_model = std::make_shared<DestinationValueModel>(
-            std::make_shared<ListValueModel<Destination>>(
-              std::make_shared<ColumnViewListModel<Destination>>(table, column),
-                row), query_model);
+            make_custom_list_value_model(
+              std::make_shared<CustomColumnViewListModel<Destination>>(table,
+                column), row), query_model);
           return new AnyInputBox(*new DestinationBox(std::move(query_model),
             std::move(current_model)));
         }
       case Column::ORDER_TYPE:
         return new AnyInputBox(*make_order_type_box(
-          std::make_shared<ListValueModel<OrderType>>(
-            std::make_shared<ColumnViewListModel<OrderType>>(table, column),
-              row)));
+          make_custom_list_value_model(
+            std::make_shared<CustomColumnViewListModel<OrderType>>(table,
+              column), row)));
       case Column::SIDE:
-        return new AnyInputBox(*make_side_box(
-          std::make_shared<ListValueModel<Side>>(
-            std::make_shared<ColumnViewListModel<Side>>(table, column), row)));
+        return new AnyInputBox(*make_side_box(make_custom_list_value_model(
+            std::make_shared<CustomColumnViewListModel<Side>>(table, column),
+              row)));
       case Column::QUANTITY:
         {
           auto model =
             std::make_shared<ScalarValueModelDecorator<optional<Quantity>>>(
-              std::make_shared<ListValueModel<optional<Quantity>>>(
-                std::make_shared<ColumnViewListModel<optional<Quantity>>>(
+              make_custom_list_value_model(
+                std::make_shared<CustomColumnViewListModel<optional<Quantity>>>(
                   table, column), row));
           return new AnyInputBox(*new QuantityBox(std::move(model),
             make_quantity_modifiers()));
         }
       case Column::TIME_IN_FORCE:
         return new AnyInputBox(*make_time_in_force_box(
-          std::make_shared<ListValueModel<TimeInForce>>(
-            std::make_shared<ColumnViewListModel<TimeInForce>>(table, column),
-              row)));
+          make_custom_list_value_model(
+            std::make_shared<CustomColumnViewListModel<TimeInForce>>(table,
+              column), row)));
       case Column::KEY:
         return new AnyInputBox(*new KeyInputBox(
           make_validated_value_model<QKeySequence>(&test_key_sequence,
-            std::make_shared<ListValueModel<QKeySequence>>(
-              std::make_shared<ColumnViewListModel<QKeySequence>>(
+            make_custom_list_value_model(
+              std::make_shared<CustomColumnViewListModel<QKeySequence>>(
                 table, column), row))));
       default:
         return nullptr;
@@ -559,6 +598,6 @@ void OrderTasksRow::on_submit(AnyInputBox* input_box, Column column,
     }
   }
   if(has_value) {
-    m_model->push(order_task);
+    m_order_tasks->push(order_task);
   }
 }
