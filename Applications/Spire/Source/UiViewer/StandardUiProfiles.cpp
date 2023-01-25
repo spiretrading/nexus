@@ -668,6 +668,19 @@ namespace {
     });
   }
 
+  template<typename V>
+  auto connect_style_property_change_signal(TypedUiProperty<int>& property,
+      const Selector& selector, QWidget* widget) {
+    property.connect_changed_signal([=] (const int& value) {
+      if(value < 0) {
+        return;
+      }
+      update_style(*widget, [&] (auto& style) {
+        style.get(selector).set(V(value));
+      });
+    });
+  }
+
   class RejectedTextModel : public LocalTextModel {
     public:
       void set_rejected(const QString& rejected) {
@@ -3499,6 +3512,12 @@ UiProfile Spire::make_table_view_profile() {
   properties.push_back(make_standard_property("column", 0));
   properties.push_back(make_standard_property("value", 0));
   properties.push_back(make_standard_property("remove_row", -1));
+  properties.push_back(make_standard_property("padding-top", 1));
+  properties.push_back(make_standard_property("padding-right", 1));
+  properties.push_back(make_standard_property("padding-bottom", 1));
+  properties.push_back(make_standard_property("padding-left", 1));
+  properties.push_back(make_standard_property("horizontal-spacing", 1));
+  properties.push_back(make_standard_property("vertical-spacing", 1));
   auto profile = UiProfile("TableView", properties, [] (auto& profile) {
     auto model = std::make_shared<ArrayTableModel>();
     auto& row_count = get<int>("row_count", profile.get_properties());
@@ -3556,6 +3575,27 @@ UiProfile Spire::make_table_view_profile() {
       }
       model->remove(value);
     });
+    auto& padding_top = get<int>("padding-top", profile.get_properties());
+    auto& padding_right = get<int>("padding-right", profile.get_properties());
+    auto& padding_bottom = get<int>("padding-bottom", profile.get_properties());
+    auto& padding_left = get<int>("padding-left", profile.get_properties());
+    auto& horizontal_spacing =
+      get<int>("horizontal-spacing", profile.get_properties());
+    auto& vertical_spacing =
+      get<int>("vertical-spacing", profile.get_properties());
+    auto selector = Any() > is_a<TableBody>();
+    connect_style_property_change_signal<PaddingTop>(
+      padding_top, selector, view);
+    connect_style_property_change_signal<PaddingRight>(
+      padding_right, selector, view);
+    connect_style_property_change_signal<PaddingBottom>(
+      padding_bottom, selector, view);
+    connect_style_property_change_signal<PaddingLeft>(
+      padding_left, selector, view);
+    connect_style_property_change_signal<HorizontalSpacing>(
+      horizontal_spacing, selector, view);
+    connect_style_property_change_signal<VerticalSpacing>(
+      vertical_spacing, selector, view);
     return view;
   });
   return profile;
