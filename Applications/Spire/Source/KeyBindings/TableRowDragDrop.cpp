@@ -248,9 +248,9 @@ bool TableRowDragDrop::eventFilter(QObject* watched, QEvent* event) {
       auto mime = new QMimeData();
       mime->setData("row", QByteArray::number(*m_drag_index));
       drag->setMimeData(mime);
-      drag_start(m_grab_handle->mapToGlobal(mouse_event.pos()));
+      start_drag(m_grab_handle->mapToGlobal(mouse_event.pos()));
       drag->exec();
-      drag_end();
+      end_drag();
     }
   }
   return QObject::eventFilter(watched, event);
@@ -331,7 +331,7 @@ void TableRowDragDrop::clear_sort_order() {
   }
 }
 
-void TableRowDragDrop::drag_start(const QPoint& pos) {
+void TableRowDragDrop::start_drag(const QPoint& pos) {
   auto row = m_rows->get(*m_drag_index)->get_row();
   auto x = m_table_body->layout()->contentsMargins().left();
   m_padding_row->setGeometry(x, row->y(), row->width(), row->height());
@@ -355,7 +355,7 @@ void TableRowDragDrop::drag_start(const QPoint& pos) {
   }
 }
 
-void TableRowDragDrop::drag_end() {
+void TableRowDragDrop::end_drag() {
   unmatch(*m_rows->get(*m_drag_index)->get_grab_handle(), DraggingCurrent());
   unmatch(*m_padding_row, DropUpIndicator());
   unmatch(*m_padding_row, DropDownIndicator());

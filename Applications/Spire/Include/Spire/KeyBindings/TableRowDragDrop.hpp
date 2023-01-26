@@ -60,8 +60,8 @@ namespace Styles {
 
       void move(int source, int destination);
       void clear_sort_order();
-      void drag_start(const QPoint& pos);
-      void drag_end();
+      void start_drag(const QPoint& pos);
+      void end_drag();
       void on_operation(const TableModel::Operation& operation);
       void on_sort(int index, TableHeaderItem::Order order);
   };
