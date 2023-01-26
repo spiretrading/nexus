@@ -392,15 +392,29 @@ TableItem* TableBody::get_current_item() {
 }
 
 TableBody::Cover* TableBody::find_row(int index) {
-  return static_cast<Cover*>(layout()->itemAt(index)->widget());
+  if(auto row = layout()->itemAt(index)) {
+    return static_cast<Cover*>(row->widget());
+  }
+  return nullptr;
+}
+
+TableBody::ColumnCover* TableBody::find_column(int index) {
+  if(index < 0 || index >= std::ssize(m_column_covers)) {
+    return nullptr;
+  }
+  return m_column_covers[index];
 }
 
 TableItem* TableBody::find_item(const optional<Index>& index) {
   if(!index) {
     return nullptr;
   }
-  return static_cast<TableItem*>(layout()->itemAt(index->m_row)->widget()->
-    layout()->itemAt(index->m_column)->widget());
+  if(auto row = find_row(index->m_row)) {
+    if(auto item = row->layout()->itemAt(index->m_column)) {
+      return static_cast<TableItem*>(item->widget());
+    }
+  }
+  return nullptr;
 }
 
 void TableBody::add_column_cover(int index, const QRect& geometry) {
@@ -473,21 +487,31 @@ void TableBody::on_item_activated(TableItem& item) {
 
 void TableBody::on_current(
     const optional<Index>& previous, const optional<Index>& current) {
-  if(previous) {
-    auto previous_item = find_item(previous);
-    unmatch(*previous_item->parentWidget(), CurrentRow());
-    if(!current || current->m_column != previous->m_column) {
-      unmatch(*m_column_covers[previous->m_column], CurrentColumn());
+  auto get_column = [=] (optional<Index> index) -> QWidget* {
+    if(index) {
+      return find_column(index->m_column);
     }
+    return nullptr;
+  };
+  auto previous_column = get_column(previous);
+  auto current_column = get_column(current);
+  if(previous_column && current_column) {
+    if(previous_column != current_column) {
+      unmatch(*previous_column, CurrentColumn());
+      match(*current_column, CurrentColumn());
+    }
+  } else if(previous_column) {
+    unmatch(*previous_column, CurrentColumn());
+  } else if(current_column) {
+    match(*current_column, CurrentColumn());
+  }
+  if(auto previous_item = find_item(previous)) {
+    unmatch(*previous_item->parentWidget(), CurrentRow());
     unmatch(*previous_item, Current());
   }
-  if(current) {
-    auto current_item = get_current_item();
+  if(auto current_item = get_current_item()) {
     match(*current_item, Current());
     match(*current_item->parentWidget(), CurrentRow());
-    if(!previous || previous->m_column != current->m_column) {
-      match(*m_column_covers[current->m_column], CurrentColumn());
-    }
     m_selection_controller.navigate(*current);
   }
 }
@@ -495,14 +519,22 @@ void TableBody::on_current(
 void TableBody::on_row_selection(const ListModel<int>::Operation& operation) {
   visit(operation,
     [&] (const ListModel<int>::AddOperation& operation) {
-      match(*find_row(operation.get_value()), Selected());
+      if(auto row = find_row(operation.get_value())) {
+        match(*row, Selected());
+      }
     },
     [&] (const ListModel<int>::RemoveOperation& operation) {
-      unmatch(*find_row(operation.get_value()), Selected());
+      if(auto row = find_row(operation.get_value())) {
+        unmatch(*row, Selected());
+      }
     },
     [&] (const ListModel<int>::UpdateOperation& operation) {
-      unmatch(*find_row(operation.get_previous()), Selected());
-      match(*find_row(operation.get_value()), Selected());
+      if(auto previous_row = find_row(operation.get_previous())) {
+        unmatch(*previous_row, Selected());
+      }
+      if(auto row = find_row(operation.get_value())) {
+        match(*row, Selected());
+      }
     });
 }
 
