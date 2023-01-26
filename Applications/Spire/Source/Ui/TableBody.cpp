@@ -447,14 +447,14 @@ TableItem* TableBody::find_item(const optional<Index>& index) {
     layout()->itemAt(index->m_column)->widget());
 }
 
-int TableBody::get_left_spacing(int index) {
+int TableBody::get_left_spacing(int index) const {
   if(index == 0) {
     return m_styles.m_padding.left();
   }
   return m_styles.m_horizontal_spacing;
 }
 
-int TableBody::get_top_spacing(int index) {
+int TableBody::get_top_spacing(int index) const {
   if(index == 0) {
     return m_styles.m_padding.top();
   }
