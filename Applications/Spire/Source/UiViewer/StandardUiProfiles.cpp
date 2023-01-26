@@ -668,13 +668,10 @@ namespace {
     });
   }
 
-  template<typename V>
-  auto connect_style_property_change_signal(TypedUiProperty<int>& property,
+  template<typename T, typename V>
+  auto connect_style_property_change_signal(TypedUiProperty<T>& property,
       const Selector& selector, QWidget* widget) {
-    property.connect_changed_signal([=] (const int& value) {
-      if(value < 0) {
-        return;
-      }
+    property.connect_changed_signal([=] (const T& value) {
       update_style(*widget, [&] (auto& style) {
         style.get(selector).set(V(value));
       });
@@ -3584,17 +3581,17 @@ UiProfile Spire::make_table_view_profile() {
     auto& vertical_spacing =
       get<int>("vertical-spacing", profile.get_properties());
     auto selector = Any() > is_a<TableBody>();
-    connect_style_property_change_signal<PaddingTop>(
+    connect_style_property_change_signal<int, PaddingTop>(
       padding_top, selector, view);
-    connect_style_property_change_signal<PaddingRight>(
+    connect_style_property_change_signal<int, PaddingRight>(
       padding_right, selector, view);
-    connect_style_property_change_signal<PaddingBottom>(
+    connect_style_property_change_signal<int, PaddingBottom>(
       padding_bottom, selector, view);
-    connect_style_property_change_signal<PaddingLeft>(
+    connect_style_property_change_signal<int, PaddingLeft>(
       padding_left, selector, view);
-    connect_style_property_change_signal<HorizontalSpacing>(
+    connect_style_property_change_signal<int, HorizontalSpacing>(
       horizontal_spacing, selector, view);
-    connect_style_property_change_signal<VerticalSpacing>(
+    connect_style_property_change_signal<int, VerticalSpacing>(
       vertical_spacing, selector, view);
     return view;
   });
