@@ -578,11 +578,17 @@ void TableBody::on_style() {
       },
       [&] (const HorizontalSpacing& spacing) {
         stylist.evaluate(spacing, [=] (auto spacing) {
+          if(spacing < 0) {
+            spacing = 0;
+          }
           m_styles.m_horizontal_spacing = spacing;
         });
       },
       [&] (const VerticalSpacing& spacing) {
         stylist.evaluate(spacing, [=] (auto spacing) {
+          if(spacing < 0) {
+            spacing = 0;
+          }
           m_styles.m_vertical_spacing = spacing;
         });
       },
@@ -598,21 +604,33 @@ void TableBody::on_style() {
       },
       [&] (const PaddingTop& size) {
         stylist.evaluate(size, [=] (auto size) {
+          if(size < 0) {
+            size = 0;
+          }
           m_styles.m_padding.setTop(size);
         });
       },
       [&] (const PaddingRight& size) {
         stylist.evaluate(size, [=] (auto size) {
+          if(size < 0) {
+            size = 0;
+          }
           m_styles.m_padding.setRight(size);
         });
       },
       [&] (const PaddingBottom& size) {
         stylist.evaluate(size, [=] (auto size) {
+          if(size < 0) {
+            size = 0;
+          }
           m_styles.m_padding.setBottom(size);
         });
       },
       [&] (const PaddingLeft& size) {
         stylist.evaluate(size, [=] (auto size) {
+          if(size < 0) {
+            size = 0;
+          }
           m_styles.m_padding.setLeft(size);
         });
       });
