@@ -578,18 +578,12 @@ void TableBody::on_style() {
       },
       [&] (const HorizontalSpacing& spacing) {
         stylist.evaluate(spacing, [=] (auto spacing) {
-          if(spacing < 0) {
-            spacing = 0;
-          }
-          m_styles.m_horizontal_spacing = spacing;
+          m_styles.m_horizontal_spacing = std::max(0, spacing);
         });
       },
       [&] (const VerticalSpacing& spacing) {
         stylist.evaluate(spacing, [=] (auto spacing) {
-          if(spacing < 0) {
-            spacing = 0;
-          }
-          m_styles.m_vertical_spacing = spacing;
+          m_styles.m_vertical_spacing = std::max(0, spacing);
         });
       },
       [&] (const HorizontalGridColor& color) {
@@ -604,34 +598,22 @@ void TableBody::on_style() {
       },
       [&] (const PaddingTop& size) {
         stylist.evaluate(size, [=] (auto size) {
-          if(size < 0) {
-            size = 0;
-          }
-          m_styles.m_padding.setTop(size);
+          m_styles.m_padding.setTop(std::max(0, size));
         });
       },
       [&] (const PaddingRight& size) {
         stylist.evaluate(size, [=] (auto size) {
-          if(size < 0) {
-            size = 0;
-          }
-          m_styles.m_padding.setRight(size);
+          m_styles.m_padding.setRight(std::max(0, size));
         });
       },
       [&] (const PaddingBottom& size) {
         stylist.evaluate(size, [=] (auto size) {
-          if(size < 0) {
-            size = 0;
-          }
-          m_styles.m_padding.setBottom(size);
+          m_styles.m_padding.setBottom(std::max(0, size));
         });
       },
       [&] (const PaddingLeft& size) {
         stylist.evaluate(size, [=] (auto size) {
-          if(size < 0) {
-            size = 0;
-          }
-          m_styles.m_padding.setLeft(size);
+          m_styles.m_padding.setLeft(std::max(0, size));
         });
       });
   }
