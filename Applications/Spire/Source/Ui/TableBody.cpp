@@ -497,12 +497,6 @@ void TableBody::on_row_selection(const ListModel<int>::Operation& operation) {
     [&] (const ListModel<int>::AddOperation& operation) {
       match(*find_row(operation.get_value()), Selected());
     },
-    [&] (const ListModel<int>::RemoveOperation& operation) {
-      if(operation.get_value() >= 0 &&
-          operation.get_value() < layout()->count()) {
-        unmatch(*find_row(operation.get_value()), Selected());
-      }
-    },
     [&] (const ListModel<int>::UpdateOperation& operation) {
       unmatch(*find_row(operation.get_previous()), Selected());
       match(*find_row(operation.get_value()), Selected());
