@@ -409,7 +409,7 @@ void OrderTasksRow::make_hover_observer() {
 EditableBox* OrderTasksRow::make_editor(
     const std::shared_ptr<ComboBox::QueryModel>& region_query_model,
     const DestinationDatabase& destinations, const MarketDatabase& markets,
-    const std::shared_ptr<TableModel>& table, int row, int column) {
+    const std::shared_ptr<TableModel>& table, int row, int column) const {
   auto input_box = [&] () -> AnyInputBox* {
     switch(static_cast<Column>(column)) {
       case Column::NAME:
