@@ -150,7 +150,6 @@ namespace Styles {
 
       TableItem* get_current_item();
       Cover* find_row(int index);
-      ColumnCover* find_column(int index);
       TableItem* find_item(const boost::optional<Index>& index);
       void add_column_cover(int index, const QRect& geometry);
       void add_row(int index);

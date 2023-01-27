@@ -43,6 +43,9 @@ void TableCurrentController::remove_row(int index) {
   if(m_current->get()) {
     if(m_current->get()->m_row == index) {
       if(m_row_size == index) {
+        if(m_last_current && m_last_current->m_row == m_row_size) {
+          m_last_current = none;
+        }
         if(m_row_size > 0) {
           m_current->set(Index(index - 1, m_current->get()->m_column));
         } else {
