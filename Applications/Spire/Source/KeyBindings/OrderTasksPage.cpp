@@ -332,26 +332,26 @@ namespace {
       texts.push_back(text.right(text.length() - i));
     }
     auto type = time_in_force.GetType();
-    auto description = [&] () -> QString {
+    auto values = [&] () -> std::vector<QString> {
       if(type == TimeInForce::Type::FOK) {
-        return "fill or kill";
+        return {"fill", "kill", "fill or kill"};
       } else if(type == TimeInForce::Type::GTC) {
-        return "good until cancelled";
+        return {"good", "cancel", "good till cancel"};
       } else if(type == TimeInForce::Type::GTD) {
-        return "good until date";
+        return {"good", "date", "good till date"};
       } else if(type == TimeInForce::Type::GTX) {
-        return "good until crossing";
+        return {"good", "crossing", "good till crossing"};
       } else if(type == TimeInForce::Type::IOC) {
-        return "immediate or cancel";
+        return {"immediate", "cancel", "immediate or cancel"};
       } else if(type == TimeInForce::Type::MOC) {
-        return "at the close";
+        return {"close", "at the close"};
       } else if(type == TimeInForce::Type::OPG) {
-        return "at the opening";
+        return {"opening", "at the opening"};
       } else {
-        return "";
+        return {};
       }
     }();
-    texts.push_back(description);
+    texts.insert(texts.end(), values.begin(), values.end());
     return texts;
   }
 
@@ -943,7 +943,8 @@ void OrderTasksPage::on_view_table_operation(
           m_table_body->get_current()->set(
             TableView::Index(operation.m_index, current->m_column));
         }
-        m_rows->get(operation.m_index)->set_out_of_range(m_added_row.m_is_filtered);
+        m_rows->get(operation.m_index)->set_out_of_range(
+          m_added_row.m_is_filtered);
         m_added_row.m_source_index = -1;
         m_added_row.m_is_filtered = false;
       }
