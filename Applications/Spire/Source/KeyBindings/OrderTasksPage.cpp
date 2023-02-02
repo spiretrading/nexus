@@ -2,6 +2,7 @@
 #include <boost/signals2/shared_connection_block.hpp>
 #include <QMouseEvent>
 #include <QStringBuilder>
+#include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 #include "Spire/KeyBindings/OrderTasksTableViewModel.hpp"
 #include "Spire/KeyBindings/OrderTasksToTableModel.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
@@ -665,6 +666,7 @@ void OrderTasksPage::do_search(const QString& query) {
     for(auto i = 0; i < m_rows->get_size() - 1; ++i) {
       if(m_rows->get(i)->get_row_index() == row &&
           m_rows->get(i)->is_ignore_filters()) {
+        m_rows->get(i)->set_out_of_range(is_filtered);
         return false;
       }
     }
@@ -849,7 +851,8 @@ void OrderTasksPage::on_view_table_operation(
           m_table_body->get_current()->set(
             TableView::Index(operation.m_index, current->m_column));
         }
-        m_rows->get(operation.m_index)->set_out_of_range(m_added_row.m_is_filtered);
+        m_rows->get(operation.m_index)->set_out_of_range(
+          m_added_row.m_is_filtered);
         m_added_row.m_source_index = -1;
         m_added_row.m_is_filtered = false;
       }
@@ -869,6 +872,7 @@ void OrderTasksPage::on_filter_table_operation(
     const TableModel::Operation& operation) {
   visit(operation,
     [&] (const TableModel::AddOperation& operation) {
-      m_added_row.m_filter_source_index = operation.m_index;
+      m_added_row.m_filter_source_index =
+        std::any_cast<int>(operation.m_row->get(0));
     });
 }
