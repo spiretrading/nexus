@@ -964,6 +964,7 @@ void OrderTasksPage::on_filter_table_operation(
     const TableModel::Operation& operation) {
   visit(operation,
     [&] (const TableModel::AddOperation& operation) {
-      m_added_row.m_filter_source_index = operation.m_index;
+      m_added_row.m_filter_source_index =
+        std::any_cast<int>(operation.m_row->get(0));
     });
 }
