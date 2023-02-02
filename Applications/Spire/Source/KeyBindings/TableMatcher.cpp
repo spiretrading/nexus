@@ -10,43 +10,52 @@ TableMatcher::TableMatcher(std::shared_ptr<TableModel> model,
       m_operation_connection(m_model->connect_operation_signal(
         std::bind_front(&TableMatcher::on_operation, this))) {
   for(auto row = 0; row < m_model->get_row_size(); ++row) {
-    auto trie = std::make_unique<Trie<QChar, char>>('\0');
+    auto tries = std::vector<std::unique_ptr<Trie<QChar, char>>>();
     for(auto column = 0; column < m_model->get_column_size(); ++column) {
+      auto trie = std::make_unique<Trie<QChar, char>>('\0');
       for(auto& text : m_builder(to_any(m_model->at(row, column)))) {
         trie->insert(text.toLower().data(), char());
       }
+      tries.push_back(std::move(trie));
     }
-    m_rows.push_back(std::move(trie));
+    m_rows.push_back(std::move(tries));
   }
 }
 
 bool TableMatcher::match(int row, const QString& text) const {
-  return m_rows[row]->startsWith(text.toLower().data()) != m_rows[row]->end();
+  auto prefix = text.toLower().data();
+  for(auto column = 0; column < m_model->get_column_size(); ++column) {
+    if(m_rows[row][column]->startsWith(prefix) != m_rows[row][column]->end()) {
+      return true;
+    }
+  }
+  return false;
 }
 
 void TableMatcher::on_operation(
     const TableModel::Operation& operation) {
   visit(operation,
     [&] (const TableModel::AddOperation& operation) {
-      auto trie = std::make_unique<Trie<QChar, char>>('\0');
+      auto tries = std::vector<std::unique_ptr<Trie<QChar, char>>>();
       for(auto column = 0; column < operation.m_row->get_size(); ++column) {
+        auto trie = std::make_unique<Trie<QChar, char>>('\0');
         for(auto& text : m_builder(operation.m_row->get(column))) {
           trie->insert(text.toLower().data(), char());
         }
+        tries.push_back(std::move(trie));
       }
       m_rows.insert(std::next(m_rows.begin(), operation.m_index),
-        std::move(trie));
+        std::move(tries));
     },
     [&] (const TableModel::RemoveOperation& operation) {
       m_rows.erase(std::next(m_rows.begin(), operation.m_index));
     },
     [&] (const TableModel::UpdateOperation& operation) {
-      for(auto& text : m_builder(operation.m_previous)) {
-        m_rows[operation.m_row]->erase(text.toLower().data());
-      }
+      auto trie = std::make_unique<Trie<QChar, char>>('\0');
       for(auto& text : m_builder(operation.m_value)) {
-        m_rows[operation.m_row]->insert(text.toLower().data(), char());
+        trie->insert(text.toLower().data(), char());
       }
+      m_rows[operation.m_row][operation.m_column] = std::move(trie);
     },
     [&] (const TableModel::MoveOperation& operation) {
       if(operation.m_source < operation.m_destination) {

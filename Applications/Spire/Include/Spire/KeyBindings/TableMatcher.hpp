@@ -29,7 +29,7 @@ namespace Spire {
     private:
       std::shared_ptr<TableModel> m_model;
       Builder m_builder;
-      std::vector<std::unique_ptr<rtv::Trie<QChar, char>>> m_rows;
+      std::vector<std::vector<std::unique_ptr<rtv::Trie<QChar, char>>>> m_rows;
       boost::signals2::scoped_connection m_operation_connection;
 
       void on_operation(const TableModel::Operation& operation);
