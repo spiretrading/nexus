@@ -126,6 +126,7 @@ namespace Styles {
         QColor m_background_color;
         int m_horizontal_spacing;
         int m_vertical_spacing;
+        QMargins m_padding;
         QColor m_horizontal_grid_color;
         QColor m_vertical_grid_color;
       };
@@ -151,6 +152,8 @@ namespace Styles {
       TableItem* get_current_item();
       Cover* find_row(int index);
       TableItem* find_item(const boost::optional<Index>& index);
+      int get_left_spacing(int index) const;
+      int get_top_spacing(int index) const;
       void add_column_cover(int index, const QRect& geometry);
       void add_row(int index);
       void remove_row(int index);
