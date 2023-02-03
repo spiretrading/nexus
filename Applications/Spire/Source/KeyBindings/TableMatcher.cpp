@@ -33,8 +33,7 @@ bool TableMatcher::match(int row, const QString& text) const {
   return false;
 }
 
-void TableMatcher::on_operation(
-    const TableModel::Operation& operation) {
+void TableMatcher::on_operation(const TableModel::Operation& operation) {
   visit(operation,
     [&] (const TableModel::AddOperation& operation) {
       auto tries = std::vector<std::unique_ptr<Trie<QChar, char>>>();
