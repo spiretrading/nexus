@@ -6,10 +6,11 @@ using namespace boost::signals2;
 using namespace Spire;
 
 namespace {
-  auto adjust_row(const AnyListModel& source) {
+  auto adjust_row(int index, const AnyListModel& source) {
     auto row = std::make_shared<ArrayListModel<std::any>>();
-    static auto empty_value = std::any();
-    row->push(empty_value);
+    static auto row_index = 0;
+    row_index = index;
+    row->push(row_index);
     for(auto i = 0; i < source.get_size(); ++i) {
       row->push(source.get(i));
     }
@@ -36,7 +37,9 @@ AnyRef OrderTasksTableViewModel::at(int row, int column) const {
     throw std::out_of_range("The row is out of range.");
   }
   if(column == 0) {
-    return {};
+    static auto row_index = 0;
+    row_index = row;
+    return row_index;
   }
   if(row < m_source->get_row_size()) {
     return m_source->at(row, column - 1);
@@ -68,14 +71,14 @@ void OrderTasksTableViewModel::on_operation(
   visit(operation,
     [&] (const TableModel::AddOperation& operation) {
       m_transaction.push(TableModel::AddOperation(operation.m_index,
-        adjust_row(*operation.m_row)));
+        adjust_row(operation.m_index, *operation.m_row)));
     },
     [&] (const TableModel::MoveOperation& operation) {
       m_transaction.push(operation);
     },
     [&] (const TableModel::RemoveOperation& operation) {
       m_transaction.push(TableModel::RemoveOperation(operation.m_index,
-        adjust_row(*operation.m_row)));
+        adjust_row(operation.m_index, *operation.m_row)));
     },
     [&] (const TableModel::UpdateOperation& operation) {
       m_transaction.push(TableModel::UpdateOperation(operation.m_row,

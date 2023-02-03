@@ -832,9 +832,12 @@ void OrderTasksPage::on_source_table_operation(
           std::next(m_row_text.begin(), operation.m_destination + 1));
       } else {
         std::rotate(
-          std::next(m_row_text.rbegin(), m_row_text.size() - operation.m_source - 1),
-          std::next(m_row_text.rbegin(), m_row_text.size() - operation.m_source),
-          std::next(m_row_text.rbegin(), m_row_text.size() - operation.m_destination));
+          std::next(
+            m_row_text.rbegin(), m_row_text.size() - operation.m_source - 1),
+          std::next(
+            m_row_text.rbegin(), m_row_text.size() - operation.m_source),
+          std::next(
+            m_row_text.rbegin(), m_row_text.size() - operation.m_destination));
       }
     });
 }
@@ -849,7 +852,8 @@ void OrderTasksPage::on_view_table_operation(
           m_table_body->get_current()->set(
             TableView::Index(operation.m_index, current->m_column));
         }
-        m_rows->get(operation.m_index)->set_out_of_range(m_added_row.m_is_filtered);
+        m_rows->get(operation.m_index)->set_out_of_range(
+          m_added_row.m_is_filtered);
         m_added_row.m_source_index = -1;
         m_added_row.m_is_filtered = false;
       }
@@ -869,6 +873,7 @@ void OrderTasksPage::on_filter_table_operation(
     const TableModel::Operation& operation) {
   visit(operation,
     [&] (const TableModel::AddOperation& operation) {
-      m_added_row.m_filter_source_index = operation.m_index;
+      m_added_row.m_filter_source_index =
+        std::any_cast<int>(operation.m_row->get(0));
     });
 }
