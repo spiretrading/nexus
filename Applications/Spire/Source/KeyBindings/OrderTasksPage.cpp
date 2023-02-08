@@ -1,7 +1,6 @@
 #include "Spire/KeyBindings/OrderTasksPage.hpp"
 #include <boost/signals2/shared_connection_block.hpp>
 #include <QMouseEvent>
-#include <QStringBuilder>
 #include "Spire/KeyBindings/OrderTasksTableViewModel.hpp"
 #include "Spire/KeyBindings/OrderTasksToTableModel.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
@@ -142,48 +141,21 @@ namespace {
     return std::tuple(search_region, search_box);
   }
 
-  auto to_text(const Region& region) {
-    auto countries = std::set<QString>();
-    for(auto& country : region.GetCountries()) {
-      countries.insert(displayText(country));
-    }
-    auto markets = std::set<QString>();
-    for(auto& market : region.GetMarkets()) {
-      markets.insert(displayText(MarketToken(market)));
-    }
-    auto securities = std::set<QString>();
-    for(auto& security : region.GetSecurities()) {
-      securities.insert(displayText(security));
-    }
+  auto display(const Region& region) {
     auto text = QString();
-    for(auto& country : countries) {
-      text = text % country;
+    for(auto& country : region.GetCountries()) {
+      text += displayText(country);
     }
-    for(auto& market : markets) {
-      text = text % market;
+    for(auto& market : region.GetMarkets()) {
+      text += displayText(MarketToken(market));
     }
-    for(auto& security : securities) {
-      text = text % security;
+    for(auto& security : region.GetSecurities()) {
+      text += displayText(security);
     }
     return text;
   }
 
-  auto to_search_text(const Region& region) {
-    auto text = QString();
-    auto delimiter = QString(0x1f);
-    for(auto& country : region.GetCountries()) {
-      text = text % displayText(country) % delimiter;
-    }
-    for(auto& market : region.GetMarkets()) {
-      text = text % displayText(MarketToken(market)) % delimiter;
-    }
-    for(auto& security : region.GetSecurities()) {
-      text = text % displayText(security) % delimiter;
-    }
-    return text;
-  }
-
-  QString to_search_text(const std::any& value,
+  QString display_text(const std::any& value,
       OrderTasksToTableModel::Column column) {
     if(column == OrderTasksToTableModel::Column::QUANTITY) {
       auto quantity = std::any_cast<optional<Quantity>>(value);
@@ -194,7 +166,7 @@ namespace {
       }
       return {};
     } else if(column == OrderTasksToTableModel::Column::REGION) {
-      return to_search_text(std::any_cast<Region>(value)).toLower();
+      return display(std::any_cast<Region>(value)).toLower();
     }
     auto text = displayText(value).toLower();
     if(text == "none" &&
@@ -245,8 +217,8 @@ namespace {
     } else if(lhs.get_type() == typeid(Destination)) {
       return any_cast<Destination>(lhs) < any_cast<Destination>(rhs);
     } else if(lhs.get_type() == typeid(Region)) {
-      return compare_text(to_text(any_cast<Region>(lhs)),
-        to_text(any_cast<Region>(rhs)));
+      return compare_text(display(any_cast<Region>(lhs)),
+        display(any_cast<Region>(rhs)));
     } else if(lhs.get_type() == typeid(QKeySequence)) {
       return compare_text(any_cast<QKeySequence>(lhs).toString(),
         any_cast<QKeySequence>(rhs).toString());
@@ -588,7 +560,7 @@ void OrderTasksPage::build_search_text(const TableModel& table) {
   for(auto row = 0; row < table.get_row_size(); ++row) {
     auto row_text = std::vector<QString>();
     for(auto column = 0; column < table.get_column_size(); ++column) {
-      row_text.push_back(to_search_text(to_any(table.at(row, column)),
+      row_text.push_back(display_text(to_any(table.at(row, column)),
         static_cast<OrderTasksToTableModel::Column>(column)));
     }
     m_row_text.push_back(row_text);
@@ -777,7 +749,7 @@ void OrderTasksPage::on_source_table_operation(
     [&] (const TableModel::AddOperation& operation) {
       auto row_text = std::vector<QString>();
       for(auto column = 0; column < operation.m_row->get_size(); ++column) {
-        row_text.push_back(to_search_text(operation.m_row->get(column),
+        row_text.push_back(display_text(operation.m_row->get(column),
           static_cast<OrderTasksToTableModel::Column>(column)));
       }
       m_row_text.insert(m_row_text.begin() + operation.m_index, row_text);
@@ -822,7 +794,7 @@ void OrderTasksPage::on_source_table_operation(
         }
       }
       m_row_text[operation.m_row][operation.m_column] =
-        to_search_text(operation.m_value,
+        display_text(operation.m_value,
           static_cast<OrderTasksToTableModel::Column>(operation.m_column));
     },
     [&] (const TableModel::MoveOperation& operation) {
