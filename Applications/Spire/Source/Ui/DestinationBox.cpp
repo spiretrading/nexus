@@ -7,7 +7,6 @@
 #include "Spire/Ui/DestinationListItem.hpp"
 #include "Spire/Ui/Layouts.hpp"
 
-using namespace Beam;
 using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
@@ -29,19 +28,19 @@ struct DestinationBox::DestinationQueryModel : ComboBox::QueryModel {
 
   QtPromise<std::vector<std::any>> submit(const QString& query) override {
     return m_source->submit(query).then([=] (auto&& source_result) {
-        auto matches = [&] {
-          try {
-            return source_result.Get();
-          } catch(const std::exception&) {
-            return std::vector<std::any>();
-          }
-        }();
-        auto result = std::vector<std::any>();
-        for(auto& value : matches) {
-          result.push_back(
-            std::any_cast<DestinationDatabase::Entry&>(value).m_id);
+      auto matches = [&] {
+        try {
+          return source_result.Get();
+        } catch(const std::exception&) {
+          return std::vector<std::any>();
         }
-        return result;
+      }();
+      auto result = std::vector<std::any>();
+      for(auto& value : matches) {
+        result.push_back(
+          std::any_cast<DestinationDatabase::Entry&>(value).m_id);
+      }
+      return result;
     });
   }
 };
@@ -57,7 +56,11 @@ DestinationBox::DestinationBox(
     : QWidget(parent),
       m_query_model(
         std::make_shared<DestinationQueryModel>(std::move(query_model))),
-      m_current(std::move(current)) {
+      m_current(std::move(current)),
+      m_submission(m_current->get()),
+      m_is_rejected(false),
+      m_current_connection(m_current->connect_update_signal(
+        std::bind_front(&DestinationBox::on_current, this))) {
   auto combo_box_current = make_transform_value_model(m_current,
     [=] (const Destination& current) {
       if(m_query_model->parse(displayText(current)).has_value()) {
@@ -66,7 +69,10 @@ DestinationBox::DestinationBox(
       return std::any();
     },
     [] (const std::any& current) {
-      return std::any_cast<Destination>(current);
+      if(current.has_value()) {
+        return std::any_cast<Destination>(current);
+      }
+      return Destination();
     });
   m_combo_box = new ComboBox(m_query_model, combo_box_current,
     [=] (const auto& list, auto index) {
@@ -74,9 +80,8 @@ DestinationBox::DestinationBox(
         std::any_cast<DestinationDatabase::Entry&&>(
           m_query_model->m_source->parse(displayText(list->get(index)))));
     });
-  m_combo_box->connect_submit_signal([=] (const auto& submission) {
-    m_submit_signal(std::any_cast<const Destination&>(submission));
-  });
+  m_combo_box->connect_submit_signal(
+    std::bind_front(&DestinationBox::on_submit, this));
   enclose(*this, *m_combo_box);
   proxy_style(*this, *m_combo_box);
   setFocusProxy(m_combo_box);
@@ -84,6 +89,7 @@ DestinationBox::DestinationBox(
     static_cast<AnyInputBox*>(m_combo_box->layout()->itemAt(0)->widget());
   m_input_box->connect_submit_signal(
     std::bind_front(&DestinationBox::on_input_submit, this));
+  m_input_box->installEventFilter(this);
 }
 
 const std::shared_ptr<ComboBox::QueryModel>&
@@ -97,12 +103,7 @@ const std::shared_ptr<DestinationBox::CurrentModel>&
 }
 
 const Destination& DestinationBox::get_submission() const {
-  auto& submission = m_combo_box->get_submission();
-  if(submission.has_value()) {
-    return std::any_cast<const Destination&>(submission);
-  }
-  static auto destination = Destination();
-  return destination;
+  return m_submission;
 }
 
 void DestinationBox::set_placeholder(const QString& placeholder) {
@@ -126,7 +127,15 @@ bool DestinationBox::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::KeyPress) {
     auto& key_event = static_cast<QKeyEvent&>(*event);
     if(key_event.key() == Qt::Key_Escape) {
-      if(!m_query_model->parse(
+      if(watched == m_input_box) {
+        if(m_submission == Destination()) {
+          if(!any_cast<QString>(m_input_box->get_current()->get()).isEmpty()) {
+            m_current->set(m_submission);
+          }
+          event->ignore();
+          return true;
+        }
+      } else if(!m_query_model->parse(
           any_cast<QString>(m_input_box->get_submission())).has_value()) {
         event->ignore();
         return true;
@@ -141,8 +150,34 @@ void DestinationBox::showEvent(QShowEvent* event) {
   QWidget::showEvent(event);
 }
 
-void DestinationBox::on_input_submit(const AnyRef& submission) {
-  if(!m_query_model->parse(any_cast<QString>(submission)).has_value()) {
-    m_input_box->get_current()->set(QString());
+void DestinationBox::on_current(const Destination& current) {
+  if(m_is_rejected) {
+    m_is_rejected = false;
+    unmatch(*m_input_box->layout()->itemAt(0)->widget(), Rejected());
   }
+}
+
+void DestinationBox::on_input_submit(const AnyRef& submission) {
+  auto query = any_cast<QString>(submission);
+  if(query.isEmpty()) {
+    if(m_current->get() != Destination()) {
+      m_current->set(Destination());
+    }
+    on_submit(std::any());
+  } else if(!m_query_model->parse(query).has_value()) {
+    m_current->set(m_submission);
+    if(!m_is_rejected) {
+      m_is_rejected = true;
+      match(*m_input_box->layout()->itemAt(0)->widget(), Rejected());
+    }
+  }
+}
+
+void DestinationBox::on_submit(const std::any& submission) {
+  if(submission.has_value()) {
+    m_submission = std::any_cast<Destination>(submission);
+  } else {
+    m_submission = Destination();
+  }
+  m_submit_signal(m_submission);
 }
