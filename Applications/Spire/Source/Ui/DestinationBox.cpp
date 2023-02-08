@@ -135,12 +135,10 @@ bool DestinationBox::eventFilter(QObject* watched, QEvent* event) {
           event->ignore();
           return true;
         }
-      } else {
-        if(!m_query_model->parse(
-            any_cast<QString>(m_input_box->get_submission())).has_value()) {
-          event->ignore();
-          return true;
-        }
+      } else if(!m_query_model->parse(
+          any_cast<QString>(m_input_box->get_submission())).has_value()) {
+        event->ignore();
+        return true;
       }
     }
   }
@@ -166,13 +164,11 @@ void DestinationBox::on_input_submit(const AnyRef& submission) {
       m_current->set(Destination());
     }
     on_submit(std::any());
-  } else {
-    if(!m_query_model->parse(query).has_value()) {
-      m_current->set(m_submission);
-      if(!m_is_rejected) {
-        m_is_rejected = true;
-        match(*m_input_box->layout()->itemAt(0)->widget(), Rejected());
-      }
+  } else if(!m_query_model->parse(query).has_value()) {
+    m_current->set(m_submission);
+    if(!m_is_rejected) {
+      m_is_rejected = true;
+      match(*m_input_box->layout()->itemAt(0)->widget(), Rejected());
     }
   }
 }
