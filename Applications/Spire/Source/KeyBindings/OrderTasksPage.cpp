@@ -40,8 +40,7 @@ namespace {
       set(BorderTopColor(QColor(0xE0E0E0))).
       set(BorderTopSize(scale_height(1)));
     style.get(Any() > is_a<TableBody>()).
-      set(PaddingLeft(0)).
-      set(PaddingRight(0));
+      set(horizontal_padding(0));
     style.get(Any() > Current()).
       set(BackgroundColor(Qt::transparent));
     style.get((Any() > Editing()) << Current()).
