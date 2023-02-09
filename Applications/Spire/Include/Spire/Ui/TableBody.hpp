@@ -55,6 +55,9 @@ namespace Styles {
 
   /** Selects the current column. */
   using CurrentColumn = StateSelector<void, struct CurrentColumnTag>;
+
+  /** Selects the hover item . */
+  using HoverItem = StateSelector<void, struct HoverItemTag>;
 }
 
   /** Displays the body of a TableView. */
@@ -116,6 +119,7 @@ namespace Styles {
       TableItem* get_item(Index index);
 
     protected:
+      bool eventFilter(QObject* watched, QEvent* event) override;
       bool event(QEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
       void keyReleaseEvent(QKeyEvent* event) override;
@@ -143,6 +147,7 @@ namespace Styles {
       ViewBuilder m_view_builder;
       std::vector<ColumnCover*> m_column_covers;
       Styles m_styles;
+      boost::optional<Index> m_hover_index;
       boost::signals2::scoped_connection m_style_connection;
       boost::signals2::scoped_connection m_row_style_connection;
       boost::signals2::scoped_connection m_table_connection;
@@ -158,6 +163,8 @@ namespace Styles {
       void add_row(int index);
       void remove_row(int index);
       void move_row(int source, int destination);
+      void draw_item_borders(const boost::optional<Index>& index,
+        QPainter& painter);
       void on_item_activated(TableItem& item);
       void on_current(const boost::optional<Index>& previous,
         const boost::optional<Index>& current);
