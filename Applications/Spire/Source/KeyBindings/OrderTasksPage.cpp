@@ -378,6 +378,8 @@ bool OrderTasksPage::eventFilter(QObject* watched, QEvent* event) {
               !key_event.isAutoRepeat()) {
             return true;
           }
+        case Qt::Key_Shift:
+          return true;
         default:
           if(auto text = key_event.text(); is_a_word(text)) {
             if(auto current = m_table_body->get_current()->get();
@@ -572,21 +574,21 @@ void OrderTasksPage::table_view_navigate_next() {
         next_focus_widget->setFocus();
         m_table_body->get_current()->set(none);
       } else {
-        m_table_body->get_current()->set(TableView::Index(row, 0));
+        m_table_body->get_current()->set(TableView::Index(row, 1));
       }
     } else {
       m_table_body->get_current()->set(
         TableView::Index(current->m_row, column));
     }
   } else {
-    m_table_body->get_current()->set(TableView::Index(0, 0));
+    m_table_body->get_current()->set(TableView::Index(0, 1));
   }
 }
 
 void OrderTasksPage::table_view_navigate_previous() {
   if(auto current = m_table_body->get_current()->get()) {
     auto column = current->m_column - 1;
-    if(column < 0) {
+    if(column <= 0) {
       auto row = current->m_row - 1;
       if(row < 0) {
         QWidget::focusNextPrevChild(false);
@@ -681,6 +683,10 @@ void OrderTasksPage::on_current(const optional<TableView::Index>& index) {
     }
     do_search_on_all_rows();
   } else {
+    if(index->m_column == 0) {
+      m_table_body->get_current()->set(TableBody::Index{index->m_row, 1});
+      return;
+    }
     m_rows[index->m_row]->set_ignore_filters(true);
     if(!m_previous_index) {
       do_search_excluding_a_row(index->m_row);

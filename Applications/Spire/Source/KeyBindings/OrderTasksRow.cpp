@@ -322,13 +322,13 @@ OrderTasksRow::TableCell OrderTasksRow::build_cell(
   auto column_id = static_cast<Column>(column);
   if(column_id == Column::GRAB_HANDLE) {
     m_grab_handle = new GrabHandle();
-    m_grab_handle->setFocusPolicy(Qt::ClickFocus);
     update_style(*m_grab_handle, [] (auto& style) {
       style.get(Any() > is_a<Icon>()).set(Visibility::NONE);
     });
     return {m_grab_handle, nullptr};
   }
   if(m_grab_handle && !m_row) {
+    m_grab_handle->parentWidget()->setFocusPolicy(Qt::NoFocus);
     m_row = m_grab_handle->parentWidget()->parentWidget()->parentWidget();
     if(is_out_of_range()) {
       match(*m_row, OutOfRangeRow());
