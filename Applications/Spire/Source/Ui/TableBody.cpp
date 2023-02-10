@@ -136,7 +136,6 @@ TableBody::TableBody(
       set(horizontal_padding(scale_width(1))).
       set(vertical_padding(scale_height(1))).
       set(grid_color(QColor(0xE0E0E0)));
-    style.get(Any() > HoverItem()).set(border_color(QColor(0xA0A0A0)));
     style.get(Any() > Current()).
       set(BackgroundColor(QColor(0xFFFFFF))).
       set(border_color(QColor(0x4B23A0)));
