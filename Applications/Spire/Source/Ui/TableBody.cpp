@@ -241,8 +241,7 @@ bool TableBody::event(QEvent* event) {
     }
     return result;
   } else if(event->type() == QEvent::HoverLeave) {
-    auto hover_item = find_item(m_hover_index);
-    if(hover_item) {
+    if(auto hover_item = find_item(m_hover_index)) {
       m_hover_index = none;
       unmatch(*hover_item, HoverItem());
       update();
@@ -576,10 +575,6 @@ void TableBody::on_item_activated(TableItem& item) {
 
 void TableBody::on_current(
     const optional<Index>& previous, const optional<Index>& current) {
-  if(auto hover_item = find_item(m_hover_index)) {
-    unmatch(*hover_item, HoverItem());
-    m_hover_index = none;
-  }
   if(previous) {
     auto previous_item = find_item(previous);
     unmatch(*previous_item->parentWidget(), CurrentRow());
@@ -590,6 +585,9 @@ void TableBody::on_current(
   }
   if(current) {
     auto current_item = get_current_item();
+    if(current == m_hover_index) {
+      unmatch(*current_item, HoverItem());
+    }
     match(*current_item, Current());
     match(*current_item->parentWidget(), CurrentRow());
     if(!previous || previous->m_column != current->m_column) {
