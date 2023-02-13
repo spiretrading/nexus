@@ -8,8 +8,9 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 TableItem::TableItem(QWidget& component, QWidget* parent)
-    : QWidget(parent) {
-  m_styles.m_background_color = Qt::transparent;
+    : QWidget(parent),
+      m_styles{Qt::transparent, Qt::transparent, Qt::transparent,
+        Qt::transparent, Qt::transparent} {
   m_button = new Button(&component);
   m_button->connect_click_signal(m_active_signal);
   enclose(*this, *m_button);
@@ -37,8 +38,8 @@ void TableItem::on_focus(FocusObserver::State state) {
 
 void TableItem::on_style() {
   auto& stylist = find_stylist(*this);
-  m_styles = {};
-  m_styles.m_background_color = Qt::transparent;
+  m_styles = {Qt::transparent, Qt::transparent, Qt::transparent,
+    Qt::transparent, Qt::transparent};
   for(auto& property : stylist.get_computed_block()) {
     property.visit(
       [&] (const BackgroundColor& color) {
