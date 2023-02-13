@@ -3515,6 +3515,8 @@ UiProfile Spire::make_table_view_profile() {
   properties.push_back(make_standard_property("padding-left", 1));
   properties.push_back(make_standard_property("horizontal-spacing", 1));
   properties.push_back(make_standard_property("vertical-spacing", 1));
+  properties.push_back(make_standard_property("hover-cell-color",
+    QColor(Qt::transparent)));
   auto profile = UiProfile("TableView", properties, [] (auto& profile) {
     auto model = std::make_shared<ArrayTableModel>();
     auto& row_count = get<int>("row_count", profile.get_properties());
@@ -3593,6 +3595,13 @@ UiProfile Spire::make_table_view_profile() {
       horizontal_spacing, selector, view);
     connect_style_property_change_signal<int, VerticalSpacing>(
       vertical_spacing, selector, view);
+    auto& hover_cell_color =
+      get<QColor>("hover-cell-color", profile.get_properties());
+    hover_cell_color.connect_changed_signal([=] (const QColor& value) {
+      update_style(*view, [&] (auto& style) {
+        style.get(selector > HoverItem()).set(border_color(value));
+      });
+    });
     return view;
   });
   return profile;
