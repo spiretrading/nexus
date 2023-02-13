@@ -1,6 +1,7 @@
 #include "Spire/KeyBindings/OrderTasksPage.hpp"
 #include <boost/signals2/shared_connection_block.hpp>
 #include <QMouseEvent>
+#include "Spire/KeyBindings/GrabHandle.hpp"
 #include "Spire/KeyBindings/OrderTasksTableViewModel.hpp"
 #include "Spire/KeyBindings/OrderTasksToTableModel.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
@@ -45,6 +46,9 @@ namespace {
       set(BackgroundColor(Qt::transparent));
     style.get((Any() > Editing()) << Current()).
       set(BackgroundColor(Qt::transparent)).
+      set(border_color(QColor(Qt::transparent)));
+    style.get(Any() > HoverItem()).set(border_color(QColor(0xA0A0A0)));
+    style.get((Any() > is_a<GrabHandle>()) << HoverItem()).
       set(border_color(QColor(Qt::transparent)));
     style.get(Any() > CurrentRow()).set(BackgroundColor(QColor(0x88E2E0FF)));
     style.get(Any() > CurrentColumn()).set(BackgroundColor(Qt::transparent));
