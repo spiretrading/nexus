@@ -6,11 +6,13 @@ namespace Spire {
   class GrabHandle;
   class KeyBindingsModel;
   class KeyBindingsWindow;
+  class MatchCache;
   class OrderFieldInfoTip;
   class OrderTasksPage;
   class OrderTasksRow;
   class OrderTasksTableViewModel;
   class OrderTasksToTableModel;
+  class TableMatchCache;
 }
 
 #endif

@@ -1,6 +1,7 @@
 #ifndef SPIRE_ORDER_TASKS_PAGE_HPP
 #define SPIRE_ORDER_TASKS_PAGE_HPP
 #include <QWidget>
+#include "Spire/KeyBindings/TableMatchCache.hpp"
 #include "Spire/KeyBindings/OrderTask.hpp"
 #include "Spire/KeyBindings/OrderTasksRow.hpp"
 #include "Spire/KeyBindings/OrderTasksToTableModel.hpp"
@@ -62,9 +63,9 @@ namespace Spire {
       std::vector<std::unique_ptr<OrderTasksRow>> m_rows;
       std::unordered_set<std::pair<Nexus::Region, QKeySequence>, RegionKeyHash>
         m_region_key_set;
-      std::vector<std::vector<QString>> m_row_text;
       boost::optional<TableView::Index> m_previous_index;
       AddedRow m_added_row;
+      std::unique_ptr<TableMatchCache> m_table_match;
       boost::signals2::scoped_connection m_current_connection;
       boost::signals2::scoped_connection m_sort_connection;
       boost::signals2::scoped_connection m_list_operation_connection;
@@ -73,7 +74,6 @@ namespace Spire {
 
       QWidget* table_view_builder(const std::shared_ptr<TableModel>& table,
         int row, int column);
-      void build_search_text(const TableModel& table);
       void table_view_navigate_next();
       void table_view_navigate_previous();
       void do_search(const QString& query);
