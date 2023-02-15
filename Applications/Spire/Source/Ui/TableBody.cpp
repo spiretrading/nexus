@@ -485,6 +485,10 @@ void TableBody::add_row(int index) {
 }
 
 void TableBody::remove_row(int index) {
+  if(m_hover_index && m_hover_index->m_row >= index) {
+    unmatch(*find_item(m_hover_index), HoverItem());
+    m_hover_index = none;
+  }
   auto& row_layout = *static_cast<QBoxLayout*>(layout());
   auto row = row_layout.itemAt(index);
   row_layout.removeItem(row);
