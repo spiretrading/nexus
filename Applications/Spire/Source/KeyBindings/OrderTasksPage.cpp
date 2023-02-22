@@ -523,13 +523,13 @@ bool OrderTasksPage::eventFilter(QObject* watched, QEvent* event) {
               get_table_item_body(*m_table_body->get_item(*current))), event);
             return true;
           }
+        case Qt::Key_Shift:
+          return true;
         case Qt::Key_A:
           if(key_event.modifiers() & Qt::Modifier::CTRL &&
               !key_event.isAutoRepeat()) {
             return true;
           }
-        case Qt::Key_Shift:
-          return true;
         default:
           if(auto text = key_event.text(); is_a_word(text)) {
             if(auto current = m_table_body->get_current()->get();
