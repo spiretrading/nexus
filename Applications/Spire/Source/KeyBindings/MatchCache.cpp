@@ -5,13 +5,13 @@ using namespace Spire;
 MatchCache::MatchCache(Matcher matcher)
   : m_matcher(std::move(matcher)) {}
 
-bool MatchCache::matches(const std::any& value, const QString& source) {
-  if(m_caches.contains(source)) {
+bool MatchCache::matches(const QString& query) {
+  if(m_caches.contains(query)) {
     return true;
   }
-  auto matched = m_matcher(value, source);
+  auto matched = m_matcher(query);
   if(matched) {
-    m_caches.insert(source);
+    m_caches.insert(query);
   }
   return matched;
 }

@@ -65,7 +65,7 @@ namespace Spire {
         m_region_key_set;
       boost::optional<TableView::Index> m_previous_index;
       AddedRow m_added_row;
-      std::unique_ptr<TableMatchCache> m_table_match;
+      std::unique_ptr<TableMatchCache> m_table_match_cache;
       boost::signals2::scoped_connection m_current_connection;
       boost::signals2::scoped_connection m_sort_connection;
       boost::signals2::scoped_connection m_list_operation_connection;
@@ -74,6 +74,8 @@ namespace Spire {
 
       QWidget* table_view_builder(const std::shared_ptr<TableModel>& table,
         int row, int column);
+      TableMatchCache::Matcher table_matcher_builder(
+        const std::shared_ptr<TableModel>& table, int row, int column);
       void table_view_navigate_next();
       void table_view_navigate_previous();
       void do_search(const QString& query);

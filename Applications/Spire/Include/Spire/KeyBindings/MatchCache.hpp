@@ -1,9 +1,8 @@
 #ifndef SPIRE_MATCH_CACHE_HPP
 #define SPIRE_MATCH_CACHE_HPP
-#include <any>
 #include <functional>
-#include <qhash>
 #include <unordered_set>
+#include <QHash>
 #include <QString>
 #include "Spire/KeyBindings/KeyBindings.hpp"
 
@@ -14,13 +13,11 @@ namespace Spire {
     public:
 
       /**
-       * The type of function used to match a value and a string.
-       * @param value The value to be matched.
-       * @param string The search string.
-       * @return <code>true</code> if the string matches the value.
+       * The type of function used to match a query string.
+       * @param query The query string.
+       * @return <code>true</code> if the query string is matched.
        */
-      using Matcher =
-        std::function<bool (const std::any& value, const QString& string)>;
+      using Matcher = std::function<bool (const QString& query)>;
 
       /**
        * Constructs a MatchCache.
@@ -29,12 +26,11 @@ namespace Spire {
       explicit MatchCache(Matcher matcher);
 
       /**
-       * Matches a value against a string.
-       * @param value The value to be matched.
-       * @param string The search string.
-       * @return <code>true</code> if the string matches the value.
+       * Matches the query string.
+       * @param query The query string.
+       * @return <code>true</code> if the query string is matched.
        */
-      bool matches(const std::any& value, const QString& string);
+      bool matches(const QString& query);
 
     private:
       Matcher m_matcher;

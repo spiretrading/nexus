@@ -173,98 +173,100 @@ namespace {
     return string;
   }
 
-  auto suffix_match(const QString& s1, const QString& s2) {
-    auto s = s1.toLower();
-    for(auto i = 0; i < s.length(); ++i) {
-      if(s.right(s.length() - i).startsWith(s2)) {
+  auto suffix_matches(const QString& s1, const QString& s2) {
+    for(auto i = 0; i < s1.length(); ++i) {
+      if(s1.right(s1.length() - i).startsWith(s2)) {
         return true;
       }
     }
     return false;
   }
 
-  auto match(const QString& name, const QString& source) {
-    return suffix_match(name, source);
+  auto matches(const QString& name, const QString& query) {
+    return suffix_matches(name.toLower(), query);
   }
 
-  auto match(const CountryCode& country, const QString& source) {
+  auto matches(const CountryCode& country, const QString& query) {
     auto& entry = GetDefaultCountryDatabase().FromCode(country);
     if(entry.m_code == CountryCode::NONE) {
       return false;
     }
-    return QString::fromStdString(entry.m_name).toLower().startsWith(source) ||
+    return QString::fromStdString(entry.m_name).toLower().startsWith(query) ||
       QString::fromStdString(
-        entry.m_twoLetterCode.GetData()).toLower().startsWith(source) ||
-      suffix_match(entry.m_threeLetterCode.GetData(), source);
+        entry.m_twoLetterCode.GetData()).toLower().startsWith(query) ||
+      suffix_matches(QString::fromStdString(
+        entry.m_threeLetterCode.GetData()).toLower(), query);
   }
 
-  auto match(const MarketCode& market, const QString& source) {
+  auto matches(const MarketCode& market, const QString& query) {
     auto& entry = GetDefaultMarketDatabase().FromCode(market);
     if(entry.m_code.IsEmpty()) {
       return false;
     }
     return QString::fromStdString(
-        entry.m_code.GetData()).toLower().startsWith(source) ||
+        entry.m_code.GetData()).toLower().startsWith(query) ||
       QString::fromStdString(
-        entry.m_description).toLower().startsWith(source) ||
-      suffix_match(QString::fromStdString(entry.m_displayName), source);
+        entry.m_description).toLower().startsWith(query) ||
+      suffix_matches(
+        QString::fromStdString(entry.m_displayName).toLower(), query);
   }
 
-  auto match(const Security& security, const QString& source) {
-    if(suffix_match(displayText(security), source)) {
+  auto matches(const Security& security, const QString& query) {
+    if(suffix_matches(displayText(security).toLower(), query)) {
       return true;
     }
-    return match(security.GetMarket(), source);
+    return matches(security.GetMarket(), query);
   }
 
-  auto match(const Region& region, const QString& source) {
+  auto matches(const Region& region, const QString& query) {
     for(auto& country : region.GetCountries()) {
-      if(match(country, source)) {
+      if(matches(country, query)) {
         return true;
       }
     }
     for(auto& market : region.GetMarkets()) {
-      if(match(market, source)) {
+      if(matches(market, query)) {
         return true;
       }
     }
     for(auto& security : region.GetSecurities()) {
-      if(match(security, source)) {
+      if(matches(security, query)) {
         return true;
       }
     }
     return false;
   }
 
-  auto match(const Destination& destination, const QString& source) {
+  auto matches(const Destination& destination, const QString& query) {
     auto& entry = GetDefaultDestinationDatabase().FromId(destination);
     if(entry.m_id.empty()) {
       return false;
     }
-    return suffix_match(QString::fromStdString(entry.m_id), source) ||
-      QString::fromStdString(entry.m_description).toLower().startsWith(source);
+    return suffix_matches(
+      QString::fromStdString(entry.m_id).toLower(), query) ||
+      QString::fromStdString(entry.m_description).toLower().startsWith(query);
   }
 
-  auto match(const OrderType& order_type, const QString& source) {
+  auto matches(const OrderType& order_type, const QString& query) {
     if(order_type == OrderType::NONE) {
       return false;
     }
-    return suffix_match(displayText(order_type), source);
+    return suffix_matches(displayText(order_type).toLower(), query);
   }
 
-  auto match(const Side& side, const QString& source) {
+  auto matches(const Side& side, const QString& query) {
     if(side == Side::NONE) {
       return false;
     }
-    if(suffix_match(displayText(side), source)) {
+    if(suffix_matches(displayText(side).toLower(), query)) {
       return true;
     }
     auto osstr = std::ostringstream();
     osstr << side;
-    return QString::fromStdString(osstr.str()).toLower().startsWith(source);
+    return QString::fromStdString(osstr.str()).toLower().startsWith(query);
   }
 
-  auto match(const optional<Quantity>& quantity, const QString& source) {
+  auto matches(const optional<Quantity>& quantity, const QString& query) {
     if(!quantity) {
       return false;
     }
@@ -281,14 +283,14 @@ namespace {
       }
       return QString::fromStdString(string);
     }();
-    return suffix_match(text, source);
+    return suffix_matches(text.toLower(), query);
   }
 
-  auto match(const TimeInForce& time_in_force, const QString& source) {
+  auto matches(const TimeInForce& time_in_force, const QString& query) {
     if(time_in_force.GetType() == TimeInForce::Type::NONE) {
       return false;
     }
-    if(suffix_match(displayText(time_in_force), source)) {
+    if(suffix_matches(displayText(time_in_force).toLower(), query)) {
       return true;
     }
     auto values = [&] () -> std::vector<QString> {
@@ -314,36 +316,15 @@ namespace {
       }
     }();
     for(auto& value : values) {
-      if(value.startsWith(source)) {
+      if(value.startsWith(query)) {
         return true;
       }
     }
     return false;
   }
 
-  auto match(const QKeySequence& key, const QString& source) {
-    return suffix_match(key.toString().replace('+', ' '), source);
-  }
-
-  auto match_any(const std::any& value, const QString& source) {
-    if(value.type() == typeid(QString)) {
-      return match(std::any_cast<QString>(value), source);
-    } else if(value.type() == typeid(Region)) {
-      return match(std::any_cast<Region>(value), source);
-    } else if(value.type() == typeid(Destination)) {
-      return match(std::any_cast<Destination>(value), source);
-    } else if(value.type() == typeid(OrderType)) {
-      return match(std::any_cast<OrderType>(value), source);
-    } else if(value.type() == typeid(Side)) {
-      return match(std::any_cast<Side>(value), source);
-    } else if(value.type() == typeid(optional<Quantity>)) {
-      return match(std::any_cast<optional<Quantity>>(value), source);
-    } else if(value.type() == typeid(TimeInForce)) {
-      return match(std::any_cast<TimeInForce>(value), source);
-    } else if(value.type() == typeid(QKeySequence)) {
-      return match(std::any_cast<QKeySequence>(value), source);
-    }
-    return false;
+  auto matches(const QKeySequence& key, const QString& query) {
+    return suffix_matches(key.toString().replace('+', ' ').toLower(), query);
   }
 
   bool compare_text(const QString& lhs, const QString& rhs) {
@@ -455,8 +436,8 @@ OrderTasksPage::OrderTasksPage(
   m_source_table_operation_connection =
     m_order_tasks_table->connect_operation_signal(
       std::bind_front(&OrderTasksPage::on_source_table_operation, this));
-  m_table_match =
-    std::make_unique<TableMatchCache>(m_order_tasks_table, match_any);
+  m_table_match_cache = std::make_unique<TableMatchCache>(m_order_tasks_table,
+    std::bind_front(&OrderTasksPage::table_matcher_builder, this));
   m_filtered_table = std::make_shared<FilteredTableModel>(
     std::make_shared<OrderTasksTableViewModel>(m_order_tasks_table),
     [] (const TableModel& model, int row) {
@@ -719,6 +700,37 @@ QWidget* OrderTasksPage::table_view_builder(
   return cell.m_cell;
 }
 
+TableMatchCache::Matcher OrderTasksPage::table_matcher_builder(
+    const std::shared_ptr<TableModel>& table, int row, int column) {
+  auto column_id = static_cast<OrderTasksToTableModel::Column>(column);
+  if(column_id == OrderTasksToTableModel::Column::NAME) {
+    auto value = table->get<QString>(row, column);
+    return [=] (const QString& query) { return matches(value, query); };
+  } else if(column_id == OrderTasksToTableModel::Column::REGION) {
+    auto value = table->get<Region>(row, column);
+    return [=] (const QString& query) { return matches(value, query); };
+  } else if(column_id == OrderTasksToTableModel::Column::DESTINATION) {
+    auto value = table->get<Destination>(row, column);
+    return [=] (const QString& query) { return matches(value, query); };
+  } else if(column_id == OrderTasksToTableModel::Column::ORDER_TYPE) {
+    auto value = table->get<OrderType>(row, column);
+    return [=] (const QString& query) { return matches(value, query); };
+  } else if(column_id == OrderTasksToTableModel::Column::SIDE) {
+    auto value = table->get<Side>(row, column);
+    return [=] (const QString& query) { return matches(value, query); };
+  } else if(column_id == OrderTasksToTableModel::Column::QUANTITY) {
+    auto value = table->get<optional<Quantity>>(row, column);
+    return [=] (const QString& query) { return matches(value, query); };
+  } else if(column_id == OrderTasksToTableModel::Column::TIME_IN_FORCE) {
+    auto value = table->get<TimeInForce>(row, column);
+    return [=] (const QString& query) { return matches(value, query); };
+  } else if(column_id == OrderTasksToTableModel::Column::KEY) {
+    auto value = table->get<QKeySequence>(row, column);
+    return [=] (const QString& query) { return matches(value, query); };
+  }
+  return [=] (const QString& query) { return false; };
+}
+
 void OrderTasksPage::table_view_navigate_next() {
   if(auto current = m_table_body->get_current()->get()) {
     auto column = current->m_column + 1;
@@ -768,18 +780,12 @@ void OrderTasksPage::table_view_navigate_previous() {
 
 void OrderTasksPage::do_search(const QString& query) {
   auto blocker = shared_connection_block(m_current_connection);
+  auto lower_query = query.toLower();
   m_filtered_table->set_filter([=] (const TableModel& model, int row) {
     if(query.isEmpty() || row == model.get_row_size() - 1) {
       return false;
     }
-    auto is_filtered = [&] {
-      for(auto i = 0; i < OrderTasksToTableModel::COLUMN_SIZE; ++i) {
-        if(m_table_match->matches(row, i, query.toLower())) {
-          return false;
-        }
-      }
-      return true;
-    }();
+    auto is_filtered = !m_table_match_cache->matches(row, lower_query);
     if(m_added_row.m_source_index != -1) {
       if(m_added_row.m_source_index == row) {
         m_added_row.m_is_filtered = is_filtered;
@@ -869,7 +875,7 @@ void OrderTasksPage::on_search(const QString& value) {
     m_rows[row]->set_ignore_filters(false);
     m_rows[row]->set_out_of_range(false);
   }
-  do_search(value.toLower());
+  do_search(value);
   m_table_body->adjustSize();
   m_table_body->get_current()->set(m_table_body->get_current()->get());
 }

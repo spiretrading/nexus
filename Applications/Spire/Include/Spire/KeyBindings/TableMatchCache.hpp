@@ -12,25 +12,35 @@ namespace Spire {
       using Matcher = MatchCache::Matcher;
 
       /**
-       * Constructs a TableMatchCache.
-       * @param model The table model.
-       * @param matcher The matcher function used to match.
-       */
-      TableMatchCache(std::shared_ptr<TableModel> model, Matcher matcher);
-
-      /**
-       * Matches the value in a specified row and column against a string.
+       * The type of function used to build a matcher.
+       * @param table The table of values being matched.
        * @param row The row of the specific value to be matched.
        * @param column The column of the specific value to be matched.
-       * @param string The search string.
-       * @return <code>true</code> if the value in the sprecified row and column
-       *         matches the string.
+       * @return The Matcher used to match the value in the
+       *         <i>table</i> at the given <i>row</i> and <i>column</i>.
        */
-      bool matches(int row, int column, const QString& string);
+      using MatcherBuilder =
+        std::function<Matcher (const std::shared_ptr<TableModel>& table,
+          int row, int column)>;
+
+      /**
+       * Constructs a TableMatchCache.
+       * @param table The table model.
+       * @param builder The builder used to build a matcher.
+       */
+      TableMatchCache(std::shared_ptr<TableModel> table, MatcherBuilder builder);
+
+      /**
+       * Matches a specified row against the query.
+       * @param row The row to be matched.
+       * @param query The query string.
+       * @return <code>true</code> if the specified row matches the query.
+       */
+      bool matches(int row, const QString& query);
 
     private:
-      std::shared_ptr<TableModel> m_model;
-      Matcher m_matcher;
+      std::shared_ptr<TableModel> m_table;
+      MatcherBuilder m_builder;
       std::vector<std::vector<MatchCache>> m_caches;
       boost::signals2::scoped_connection m_operation_connection;
 
