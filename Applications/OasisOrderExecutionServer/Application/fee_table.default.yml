@@ -10,7 +10,7 @@ au_equities:
   clearing_rate_table:
    [[0.000195, 0.000160, 0.000125],
     [0.000245, 0.000210, 0.000175]]
-  trade_rate: 0.000015
+  trade_rate: 0.000045
   trade_fee_cap: 75.00
   gst_rate: 0
 
@@ -116,9 +116,9 @@ ca_equities:
     fee_table:
       [[0.00135, -0.00115],
        [0.00255, -0.00235],
-       [0.00170, -0.00150],
+       [0.00165, -0.00145],
        [0.00040, -0.00020],
-       [0.00000, -0.00020]]
+       [0.00002, 0.00000]]
 
   # Match NOW fees based on http://www.triactcanada.com/fee-schedule.htm
   # Fees for notes and debentures are not supported.
@@ -152,8 +152,8 @@ ca_equities:
   # >= $1.0                X    X
   neoe:
     general_table:
-      [[0.0004, -0.0002],
-       [0.0012, -0.0008]]
+      [[0.0004, -0.0001],
+       [0.0013, -0.0008]]
 
     interlisted_table:
       [[0.0025, -0.0021],
@@ -164,8 +164,8 @@ ca_equities:
        [0.0017, -0.0010]]
 
     neo_book_table:
-      [[-0.0003, 0.0005],
-       [-0.0020, 0.0023]]
+      [[-0.0005, 0.0008],
+       [-0.0019, 0.0023]]
 
   # NEX fees based on http://www.tsx.com/trading/tsx-venture-exchange/fee-schedule
   nex:
@@ -181,8 +181,8 @@ ca_equities:
   # Price < $1.00       X       X           X               X             X           X          X
   omga:
     fee_table:
-      [[0.0034, -0.0025, 0.0034, -0.0025, 0.0034, -0.0025, 0.001],
-       [0.0011, -0.0006, 0.0011, -0.0006, 0.0011, -0.0006, 0.001]]
+      [[0.0034, -0.0025, 0.0034, -0.0025, 0.0034, -0.0025, 0.0000],
+       [0.0011, -0.0006, 0.0011, -0.0006, 0.0011, -0.0006, 0.0000]]
 
   # Pure ATS fees based on http://www.cnsx.ca/CNSX/Trading/Fees--Hours/Fee-Schedule.aspx
   # Fees for notes and debentures are not supported.
@@ -195,16 +195,16 @@ ca_equities:
 
   pure:
     tsx_venture_listed_fee_table:
-      [[-0.0002, 0.0004],
-       [-0.0002, 0.0004],
-       [-0.0002, 0.0004],
-       [-0.0002, 0.0004]]
+      [[-0.0014, 0.0018],
+       [-0.0014, 0.0018],
+       [-0.0006, 0.0008],
+       [-0.0006, 0.0008]]
 
     tsx_listed_fee_table:
       [[-0.0014, 0.0018],
        [-0.0014, 0.0018],
-       [-0.0002, 0.0004],
-       [-0.0002, 0.0004]]
+       [-0.0006, 0.0008],
+       [-0.0006, 0.0008]]
 
     odd_lot: 0.0002
     tsx_venture_subdime_cap: 1000.00
@@ -224,10 +224,10 @@ ca_equities:
   # Table structure mirrors the table on the website, except the columns are as follows:
   #    <$0.10  $0.10-$0.99  >=$1.00  >=$1.00 Interlisted   >=$1.00 ETFs
     continuous_fee_table:
-      [[0.000025, 0.000075,  0.0015,  0.0027,  0.0017],
-       [0.000025, 0.000075, -0.0011, -0.0023, -0.0011],
-       [0.000025, 0.000075,  0.0010,  0.0010,  0.0010],
-       [0.000025, 0.000075,  0.0000,  0.0000,  0.0000]]
+      [[0.0002, 0.0002,  0.0015,  0.0027,  0.0017],
+       [0.0000, 0.0000, -0.0011, -0.0023, -0.0011],
+       [0.0002, 0.0002,  0.0010,  0.0010,  0.0010],
+       [0.0000, 0.0000,  0.0000,  0.0000,  0.0000]]
 
   # Table is structured as:
   #         Fee, Cap
@@ -235,7 +235,7 @@ ca_equities:
   #  Close   X    X
     auction_fee_table:
       [[0.0030, 30.00],
-       [0.0030, 30.00]]
+       [0.0030, 75.00]]
 
   # List is sub-dime, sub-dollar, dollar.
     odd_lot_list:
@@ -248,10 +248,10 @@ ca_equities:
   # This table is restructured to match the structure used by TSX.
   # ETFs and Interlisted have the same values as non-interlisted non-ETFs.
     continuous_fee_table:
-      [[0.000025, 0.000075,  0.0015,  0.0015,  0.0015],
-       [0.000025, 0.000075, -0.0011, -0.0011, -0.0011],
-       [0.000025, 0.000075,  0.0010,  0.0010,  0.0010],
-       [0.000025, 0.000075,  0.0000,  0.0000,  0.0000]]
+      [[0.0002, 0.0002,  0.0015,  0.0015,  0.0015],
+       [0.0000, 0.0000, -0.0011, -0.0011, -0.0011],
+       [0.0002, 0.0002,  0.0010,  0.0010,  0.0010],
+       [0.0000, 0.0000,  0.0000,  0.0000,  0.0000]]
 
   # Table is structured as:
   #         Fee, Cap
@@ -259,7 +259,7 @@ ca_equities:
   #  Close   X    X
     auction_fee_table:
       [[0.0012, 60.00],
-       [0.0012, 60.00]]
+       [0.0012, 75.00]]
 
   # List is sub-dime, sub-dollar, dollar.
     odd_lot_list: [0.000025, 0.000075, 0.0010]
