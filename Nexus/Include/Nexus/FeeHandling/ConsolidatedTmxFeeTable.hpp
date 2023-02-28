@@ -206,7 +206,7 @@ namespace Nexus {
     if(!xcx2Config) {
       BOOST_THROW_EXCEPTION(std::runtime_error("Fee table for XCX2 missing."));
     } else {
-      feeTable.m_xcx2FeeTable = ParseXcx2FeeTable(xcx2Config);
+      feeTable.m_xcx2FeeTable = ParseXcx2FeeTable(xcx2Config, feeTable.m_etfs);
     }
     auto lynxConfig = config["lynx"];
     if(!lynxConfig) {

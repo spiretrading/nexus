@@ -598,10 +598,13 @@ void Nexus::Python::ExportXcx2FeeTable(module& module) {
     .def(init<const Xcx2FeeTable&>())
     .def_readwrite("default_table", &Xcx2FeeTable::m_defaultTable)
     .def_readwrite("tsx_table", &Xcx2FeeTable::m_tsxTable)
-    .def_readwrite("large_trade_size", &Xcx2FeeTable::m_largeTradeSize);
+    .def_readwrite("large_trade_size", &Xcx2FeeTable::m_largeTradeSize)
+    .def_readwrite("etfs", &Xcx2FeeTable::m_etfs);
   enum_<Xcx2FeeTable::PriceClass>(outer, "PriceClass")
     .value("NONE", Xcx2FeeTable::PriceClass::NONE)
     .value("DEFAULT", Xcx2FeeTable::PriceClass::DEFAULT)
+    .value("ETF", Xcx2FeeTable::PriceClass::ETF)
+    .value("SUB_FIVE_DOLLAR", Xcx2FeeTable::PriceClass::SUB_FIVE_DOLLAR)
     .value("SUBDOLLAR", Xcx2FeeTable::PriceClass::SUBDOLLAR)
     .value("SUBDIME", Xcx2FeeTable::PriceClass::SUBDIME);
   enum_<Xcx2FeeTable::Type>(outer, "Type")
