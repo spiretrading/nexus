@@ -531,9 +531,8 @@ void TagBox::update_overflow() {
     } else if(height() <= m_min_scroll_height &&
         height() >= get_maximum_height(*this)) {
       return Overflow::NONE;
-    } else {
-      return Overflow::WRAP;
     }
+    return Overflow::WRAP;
   }();
   if(old_overflow != m_list_view_overflow) {
     if(m_list_view_overflow == Overflow::NONE) {
