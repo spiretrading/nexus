@@ -337,6 +337,12 @@ bool TagBox::eventFilter(QObject* watched, QEvent* event) {
       m_horizontal_scroll_bar_end_range);
     update_scroll_bar_end_range(*m_vertical_scroll_bar,
       m_vertical_scroll_bar_end_range);
+  } else if(watched == m_list_view) {
+    if(event->type() == QEvent::Resize) {
+      update_tooltip();
+    } else if(event->type() == QEvent::LayoutRequest) {
+      update_vertical_scroll_bar_visible();
+    }
   }
   return QWidget::eventFilter(watched, event);
 }
@@ -353,6 +359,7 @@ void TagBox::changeEvent(QEvent* event) {
   if(event->type() == QEvent::EnabledChange) {
     update_tags_read_only();
     update_tooltip();
+    update_vertical_scroll_bar_visible();
   }
   QWidget::changeEvent(event);
 }
@@ -521,11 +528,10 @@ void TagBox::update_overflow() {
         return Overflow::NONE;
       }
       return Overflow::WRAP;
+    } else if(height() <= m_min_scroll_height &&
+        height() >= get_maximum_height(*this)) {
+      return Overflow::NONE;
     } else {
-      if(height() <= m_min_scroll_height &&
-          height() >= get_maximum_height(*this)) {
-        return Overflow::NONE;
-      }
       return Overflow::WRAP;
     }
   }();
