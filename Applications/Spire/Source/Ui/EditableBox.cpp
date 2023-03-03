@@ -66,7 +66,9 @@ bool EditableBox::eventFilter(QObject* watched, QEvent* event) {
 
 void EditableBox::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
-    set_editing(true);
+    if(!event->isAutoRepeat()) {
+      set_editing(true);
+    }
   } else if(event->key() == Qt::Key_Escape) {
     set_editing(false);
   } else if(event->key() == Qt::Key_Backspace) {
