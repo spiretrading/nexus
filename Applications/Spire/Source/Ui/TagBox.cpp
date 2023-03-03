@@ -443,9 +443,10 @@ void TagBox::update_tag_size_policy() {
   } else {
     auto set_tag_text_size_policy = [&] (QSizePolicy::Policy horizontal) {
       for(auto i = 0; i < m_list_view->get_list()->get_size() - 1; ++i) {
-        static_cast<Box*>(m_list_view->get_list_item(i)->get_body().layout()->
-          itemAt(0)->widget())->get_body()->layout()->itemAt(0)->widget()->
-            setSizePolicy(horizontal, QSizePolicy::Expanding);
+        auto& box = *static_cast<Box*>(m_list_view->get_list_item(i)->
+          get_body().layout()->itemAt(0)->widget());
+        auto& label = *box.get_body()->layout()->itemAt(0)->widget();
+        label.setSizePolicy(horizontal, QSizePolicy::Expanding);
       }
     };
     if(m_list_view_overflow == Overflow::WRAP) {
@@ -567,18 +568,18 @@ void TagBox::update_vertical_scroll_bar_visible() {
 }
 
 void TagBox::update_size_constraint() {
-  auto list_view_body =
-    static_cast<Box*>(m_list_view->layout()->itemAt(0)->widget())->get_body();
+  auto& list_view_body =
+    *static_cast<Box*>(m_list_view->layout()->itemAt(0)->widget())->get_body();
   auto max_width = get_maximum_width(*this);
   if(height() <= m_min_scroll_height && max_width != QWIDGETSIZE_MAX &&
       width() < max_width) {
-    list_view_body->layout()->setSizeConstraint(QLayout::SetFixedSize);
+    list_view_body.layout()->setSizeConstraint(QLayout::SetFixedSize);
     m_scrollable_list_box->layout()->setSizeConstraint(QLayout::SetFixedSize);
   } else if(m_scrollable_list_box->layout()->sizeConstraint() !=
       QLayout::SetDefaultConstraint) {
-    list_view_body->layout()->setSizeConstraint(QLayout::SetDefaultConstraint);
-    list_view_body->setMinimumSize(0, 0);
-    list_view_body->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
+    list_view_body.layout()->setSizeConstraint(QLayout::SetDefaultConstraint);
+    list_view_body.setMinimumSize(0, 0);
+    list_view_body.setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
     m_scrollable_list_box->layout()->setSizeConstraint(
       QLayout::SetDefaultConstraint);
     m_scrollable_list_box->setMinimumSize(0, 0);
