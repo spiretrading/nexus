@@ -137,6 +137,7 @@ namespace Spire {
       QString m_submission_text;
       bool m_is_read_only;
       AnyInputBox* m_input_box;
+      QWidget* m_input_focus_proxy;
       ListView* m_list_view;
       FocusObserver m_focus_observer;
       std::shared_ptr<ArrayListModel<std::any>> m_matches;
