@@ -360,10 +360,10 @@ void ComboBox::on_query(
     }
     for(auto& item : selection) {
       m_matches->push(item);
-      auto item =
+      auto list_item =
         m_list_view->get_list_item(m_list_view->get_list()->get_size() - 1);
-      item->setFocusPolicy(Qt::NoFocus);
-      item->layout()->itemAt(0)->widget()->setFocusPolicy(Qt::NoFocus);
+      list_item->setFocusPolicy(Qt::NoFocus);
+      list_item->layout()->itemAt(0)->widget()->setFocusPolicy(Qt::NoFocus);
     }
   }
   update_completion();
@@ -372,7 +372,6 @@ void ComboBox::on_query(
       m_drop_down_list->hide();
     } else if(m_focus_observer.get_state() != FocusObserver::State::NONE &&
         !m_drop_down_list->isVisible()) {
-      clear(*m_drop_down_list->get_list_view().get_selection());
       m_drop_down_list->show();
     }
   }
