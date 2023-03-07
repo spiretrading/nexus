@@ -30,8 +30,12 @@ PopupBox::PopupBox(QWidget& body, QWidget* parent)
     std::bind_front(&PopupBox::on_focus, this));
   m_position_observer.connect_position_signal(
     std::bind_front(&PopupBox::on_position, this));
-  m_min_height = m_body->sizeHint().height();
-  setFocusProxy(m_body);
+  m_min_height = [&] {
+    if(m_body->minimumSizeHint().height() <= 0) {
+      return m_body->sizeHint().height();
+    }
+    return m_body->minimumSizeHint().height();
+  }();
 }
 
 const QWidget& PopupBox::get_body() const {
@@ -59,14 +63,11 @@ bool PopupBox::eventFilter(QObject* watched, QEvent* event) {
         adjust_size();
       }
     } else if(event->type() == QEvent::LayoutRequest && has_popped_up()) {
+      update_space();
       adjust_size();
     }
-  } else if(watched == m_body) {
-    if(event->type() == QEvent::Show) {
-      update_window();
-    } else if(event->type() == QEvent::LayoutRequest && has_popped_up()) {
-      adjust_size();
-    }
+  } else if(watched == m_body && event->type() == QEvent::Show) {
+    update_window();
   }
   return QObject::eventFilter(watched, event);
 }
@@ -107,8 +108,10 @@ void PopupBox::adjust_size() {
   auto size_policy = sizePolicy();
   if(size_policy.horizontalPolicy() == QSizePolicy::Preferred ||
       size_policy.horizontalPolicy() == QSizePolicy::Ignored) {
-    if(m_body->sizeHint().width() > m_right_space ||
-        m_body->sizeHint().width() < width() && width() > m_right_space) {
+    if(m_body->sizeHint().width() > m_right_space) {
+      m_body->setMinimumWidth(width());
+      m_body->setMaximumWidth(m_right_space);
+    } else if(m_body->sizeHint().width() < width() && width() > m_right_space) {
       m_body->setFixedWidth(m_right_space);
     } else {
       m_body->setMinimumWidth(width());
@@ -121,7 +124,7 @@ void PopupBox::adjust_size() {
   }
   if(size_policy.verticalPolicy() == QSizePolicy::Preferred ||
       size_policy.verticalPolicy() == QSizePolicy::Ignored) {
-    m_body->setMinimumHeight(height());
+    m_body->setMinimumHeight(m_min_height);
     m_body->setMaximumHeight(std::min(m_max_height, maximumHeight()));
   } else if(size_policy.verticalPolicy() == QSizePolicy::Expanding) {
     m_body->setFixedHeight(height());

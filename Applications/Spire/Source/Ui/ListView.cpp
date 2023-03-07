@@ -574,7 +574,7 @@ void ListView::on_style() {
         });
       });
   }
-  if(has_update) {
+  if(*has_update) {
     update_layout();
   }
 }
