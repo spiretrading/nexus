@@ -2,16 +2,17 @@
 #define SPIRE_ORDER_TASKS_ROW_HPP
 #include <QPointer>
 #include "Spire/KeyBindings/OrderTask.hpp"
+#include "Spire/KeyBindings/TableRow.hpp"
 #include "Spire/Ui/ComboBox.hpp"
 #include "Spire/Ui/HoverObserver.hpp"
 
 namespace Spire {
 namespace Styles {
 
-  /** Selects the editing item. */
+  /** Selects the item being edited. */
   using Editing = StateSelector<void, struct EditingSelectorTag>;
 
-  /** Selects the grab handle which is hovered. */
+  /** Selects the grab handle being hovered. */
   using HoveredGrabHandle =
     StateSelector<void, struct HoveredGrabHandleSelectorTag>;
 
@@ -20,7 +21,7 @@ namespace Styles {
 }
 
   /** Represents a row of the TableView within the OrderTasksPage. */
-  class OrderTasksRow {
+  class OrderTasksRow : public TableRow {
     public:
 
       /** Represents a cell of the TableView. */
@@ -74,32 +75,23 @@ namespace Styles {
        */
       OrderTasksRow(std::shared_ptr<ListModel<OrderTask>> order_tasks, int row);
 
-      /** Returns the row index. */
-      int get_row_index() const;
+      int get_row_index() const override;
 
-      /** Returns the row widget. */
-      QWidget* get_row() const;
+      QWidget* get_row() const override;
 
-      /** Returns <code>true</code> iff this row is draggable. */
-      bool is_draggable() const;
+      QWidget* get_grab_handle() const override;
 
-      /** Sets whether this row is draggable. */
-      void set_draggable(bool is_draggable);
+      bool is_draggable() const override;
 
-      /** Returns <code>true</code> iff this row is excluded from filtering. */
-      bool is_ignore_filters() const;
+      void set_draggable(bool is_draggable) override;
 
-      /** Sets whether this row is excluded from filtering. */
-      void set_ignore_filters(bool is_ignore_filters);
+      bool is_ignore_filters() const override;
 
-      /**
-       * Returns <code>true</code> iff this row does not meet the filter or
-       * sort criteria set.
-       */
-      bool is_out_of_range() const;
+      void set_ignore_filters(bool is_ignore_filters) override;
 
-      /** Sets whether this row doesn't meet the filter or sort criteria set. */
-      void set_out_of_range(bool is_out_of_range);
+      bool is_out_of_range() const override;
+
+      void set_out_of_range(bool is_out_of_range) override;
 
       /**
        * Build a cell.
@@ -132,12 +124,9 @@ namespace Styles {
         const std::shared_ptr<ComboBox::QueryModel>& region_query_model,
         const Nexus::DestinationDatabase& destinations,
         const Nexus::MarketDatabase& markets,
-        const std::shared_ptr<TableModel>& table, int row, int column);
-      EditableBox* make_empty_editor(
-        const std::shared_ptr<ComboBox::QueryModel>& region_query_model,
-        const Nexus::DestinationDatabase& destinations,
-        const Nexus::MarketDatabase& markets,
-        const std::shared_ptr<TableModel>& table, int row, int column);
+        const std::shared_ptr<TableModel>& table, int row, int column) const;
+      EditableBox* make_empty_editor(int column,
+        const std::shared_ptr<ComboBox::QueryModel>& region_query_model);
       void on_operation(const ListModel<OrderTask>::Operation& operation);
       void on_submit(AnyInputBox* input_box, Column column,
         const AnyRef& submission);
