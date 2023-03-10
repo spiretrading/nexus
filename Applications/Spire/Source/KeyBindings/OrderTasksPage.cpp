@@ -1,6 +1,7 @@
 #include "Spire/KeyBindings/OrderTasksPage.hpp"
 #include <boost/signals2/shared_connection_block.hpp>
 #include <QMouseEvent>
+#include "Spire/KeyBindings/GrabHandle.hpp"
 #include "Spire/KeyBindings/OrderTasksTableViewModel.hpp"
 #include "Spire/KeyBindings/OrderTasksToTableModel.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
@@ -39,10 +40,15 @@ namespace {
       set(BorderBottomSize(scale_height(1))).
       set(BorderTopColor(QColor(0xE0E0E0))).
       set(BorderTopSize(scale_height(1)));
+    style.get(Any() > is_a<TableBody>()).
+      set(horizontal_padding(0));
     style.get(Any() > Current()).
       set(BackgroundColor(Qt::transparent));
     style.get((Any() > Editing()) << Current()).
       set(BackgroundColor(Qt::transparent)).
+      set(border_color(QColor(Qt::transparent)));
+    style.get(Any() > HoverItem()).set(border_color(QColor(0xA0A0A0)));
+    style.get((Any() > is_a<GrabHandle>()) << HoverItem()).
       set(border_color(QColor(Qt::transparent)));
     style.get(Any() > CurrentRow()).set(BackgroundColor(QColor(0x88E2E0FF)));
     style.get(Any() > CurrentColumn()).set(BackgroundColor(Qt::transparent));
@@ -379,6 +385,8 @@ bool OrderTasksPage::eventFilter(QObject* watched, QEvent* event) {
               get_table_item_body(*m_table_body->get_item(*current))), event);
             return true;
           }
+        case Qt::Key_Shift:
+          return true;
         case Qt::Key_A:
           if(key_event.modifiers() & Qt::Modifier::CTRL &&
               !key_event.isAutoRepeat()) {
@@ -580,21 +588,21 @@ void OrderTasksPage::table_view_navigate_next() {
         next_focus_widget->setFocus();
         m_table_body->get_current()->set(none);
       } else {
-        m_table_body->get_current()->set(TableView::Index(row, 0));
+        m_table_body->get_current()->set(TableView::Index(row, 1));
       }
     } else {
       m_table_body->get_current()->set(
         TableView::Index(current->m_row, column));
     }
   } else {
-    m_table_body->get_current()->set(TableView::Index(0, 0));
+    m_table_body->get_current()->set(TableView::Index(0, 1));
   }
 }
 
 void OrderTasksPage::table_view_navigate_previous() {
   if(auto current = m_table_body->get_current()->get()) {
     auto column = current->m_column - 1;
-    if(column < 0) {
+    if(column <= 0) {
       auto row = current->m_row - 1;
       if(row < 0) {
         QWidget::focusNextPrevChild(false);
@@ -687,6 +695,10 @@ void OrderTasksPage::on_current(const optional<TableView::Index>& index) {
     }
     do_search_on_all_rows();
   } else {
+    if(index->m_column == 0) {
+      m_table_body->get_current()->set(TableBody::Index{index->m_row, 1});
+      return;
+    }
     m_rows->get(index->m_row)->set_ignore_filters(true);
     if(!m_previous_index) {
       do_search_excluding_a_row(index->m_row);

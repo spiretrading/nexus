@@ -50,6 +50,10 @@ namespace Spire {
       boost::signals2::connection connect_submit_signal(
         const SubmitSignal::slot_type& slot) const;
 
+      QSize minimumSizeHint() const override;
+
+      QSize sizeHint() const override;
+
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
       bool event(QEvent* event) override;
@@ -84,6 +88,7 @@ namespace Spire {
       boost::signals2::scoped_connection m_style_connection;
       boost::signals2::scoped_connection m_list_view_style_connection;
       boost::signals2::scoped_connection m_text_area_box_style_connection;
+      mutable boost::optional<QSize> m_size_hint;
 
       QWidget* make_tag(const std::shared_ptr<AnyListModel>& model, int index);
       void install_text_proxy_event_filter();
@@ -96,6 +101,7 @@ namespace Spire {
       void update_tooltip();
       void update_overflow();
       void update_vertical_scroll_bar_visible();
+      void update_size_constraint();
       void on_focus(FocusObserver::State state);
       void on_operation(const AnyListModel::Operation& operation);
       void on_text_box_current(const QString& current);

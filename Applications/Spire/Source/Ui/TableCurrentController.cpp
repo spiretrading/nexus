@@ -42,7 +42,18 @@ void TableCurrentController::remove_row(int index) {
   --m_row_size;
   if(m_current->get()) {
     if(m_current->get()->m_row == index) {
-      m_current->set(Index(index, m_current->get()->m_column));
+      if(m_row_size == index) {
+        if(m_last_current && m_last_current->m_row == m_row_size) {
+          m_last_current = none;
+        }
+        if(m_row_size > 0) {
+          m_current->set(Index(index - 1, m_current->get()->m_column));
+        } else {
+          m_current->set(none);
+        }
+      } else {
+        m_current->set(Index(index, m_current->get()->m_column));
+      }
     } else if(m_current->get()->m_row > index) {
       auto blocker = shared_connection_block(m_connection);
       m_last_current =
