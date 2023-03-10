@@ -1,10 +1,11 @@
 #ifndef SPIRE_ORDER_TASKS_PAGE_HPP
 #define SPIRE_ORDER_TASKS_PAGE_HPP
 #include <QWidget>
-#include "Spire/KeyBindings/TableMatchCache.hpp"
 #include "Spire/KeyBindings/OrderTask.hpp"
 #include "Spire/KeyBindings/OrderTasksRow.hpp"
 #include "Spire/KeyBindings/OrderTasksToTableModel.hpp"
+#include "Spire/KeyBindings/TableMatchCache.hpp"
+#include "Spire/KeyBindings/TableRowDragDrop.hpp"
 #include "Spire/Ui/TableView.hpp"
 
 namespace Spire {
@@ -46,6 +47,7 @@ namespace Spire {
       };
       struct AddedRow {
         int m_source_index;
+        int m_filter_source_index;
         bool m_is_filtered;
 
         AddedRow();
@@ -60,12 +62,13 @@ namespace Spire {
       SearchBox* m_search_box;
       ContextMenu* m_table_menu;
       std::unique_ptr<FocusObserver> m_table_body_focus_observer;
-      std::vector<std::unique_ptr<OrderTasksRow>> m_rows;
+      std::shared_ptr<ArrayListModel<std::shared_ptr<TableRow>>> m_rows;
       std::unordered_set<std::pair<Nexus::Region, QKeySequence>, RegionKeyHash>
         m_region_key_set;
       boost::optional<TableView::Index> m_previous_index;
       AddedRow m_added_row;
       std::unique_ptr<TableMatchCache> m_table_match_cache;
+      std::unique_ptr<TableRowDragDrop> m_table_row_drag_drop;
       boost::signals2::scoped_connection m_current_connection;
       boost::signals2::scoped_connection m_sort_connection;
       boost::signals2::scoped_connection m_list_operation_connection;
@@ -87,10 +90,11 @@ namespace Spire {
       void on_delete_order();
       void on_search(const QString& value);
       void on_sort(int column, TableHeaderItem::Order order);
+      void on_table_body_focus(FocusObserver::State state);
       void on_list_operation(const ListModel<OrderTask>::Operation& operation);
       void on_source_table_operation(const TableModel::Operation& operation);
-      void on_table_body_focus(FocusObserver::State state);
       void on_view_table_operation(const TableModel::Operation& operation);
+      void on_filter_table_operation(const TableModel::Operation& operation);
   };
 }
 

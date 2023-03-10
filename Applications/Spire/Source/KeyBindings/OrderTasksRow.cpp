@@ -276,6 +276,13 @@ QWidget* OrderTasksRow::get_row() const {
   return m_row;
 }
 
+QWidget* OrderTasksRow::get_grab_handle() const {
+  if(m_is_draggable && m_grab_handle) {
+    return m_grab_handle->parentWidget()->parentWidget();
+  }
+  return nullptr;
+}
+
 bool OrderTasksRow::is_draggable() const {
   return m_is_draggable;
 }
@@ -345,8 +352,7 @@ OrderTasksRow::TableCell OrderTasksRow::build_cell(
   }
   auto editor = [&] {
     if(row == table->get_row_size() - 1) {
-      return make_empty_editor(region_query_model, destinations, markets, table,
-        row, column);
+      return make_empty_editor(column, region_query_model);
     }
     return make_editor(region_query_model, destinations, markets, table, row,
       column);
@@ -403,7 +409,7 @@ void OrderTasksRow::make_hover_observer() {
 EditableBox* OrderTasksRow::make_editor(
     const std::shared_ptr<ComboBox::QueryModel>& region_query_model,
     const DestinationDatabase& destinations, const MarketDatabase& markets,
-    const std::shared_ptr<TableModel>& table, int row, int column) {
+    const std::shared_ptr<TableModel>& table, int row, int column) const {
   auto input_box = [&] () -> AnyInputBox* {
     switch(static_cast<Column>(column)) {
       case Column::NAME:
@@ -469,10 +475,8 @@ EditableBox* OrderTasksRow::make_editor(
     return new EditableBox(*input_box);;
 }
 
-EditableBox* OrderTasksRow::make_empty_editor(
-    const std::shared_ptr<ComboBox::QueryModel>& region_query_model,
-    const DestinationDatabase& destinations, const MarketDatabase& markets,
-    const std::shared_ptr<TableModel>& table, int row, int column) {
+EditableBox* OrderTasksRow::make_empty_editor(int column,
+    const std::shared_ptr<ComboBox::QueryModel>& region_query_model) {
   auto input_box = [&] () -> AnyInputBox* {
     switch(static_cast<Column>(column)) {
       case Column::NAME:
@@ -520,6 +524,19 @@ void OrderTasksRow::on_operation(
         m_row_index = -1;
       } else if(m_row_index > operation.m_index) {
         --m_row_index;
+      }
+    },
+    [&] (const ListModel<OrderTask>::MoveOperation& operation) {
+      if(m_row_index == operation.m_source) {
+        m_row_index = operation.m_destination;
+      } else if(operation.m_source < operation.m_destination) {
+        if(m_row_index > operation.m_source &&
+          m_row_index <= operation.m_destination) {
+          --m_row_index;
+        }
+      } else if(m_row_index >= operation.m_destination &&
+        m_row_index < operation.m_source) {
+        ++m_row_index;
       }
     });
 }

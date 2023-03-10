@@ -13,6 +13,8 @@ namespace Spire {
   class OrderTasksTableViewModel;
   class OrderTasksToTableModel;
   class TableMatchCache;
+  class TableRow;
+  class TableRowDragDrop;
 }
 
 #endif
