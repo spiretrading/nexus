@@ -2,8 +2,8 @@
 #include <boost/signals2/shared_connection_block.hpp>
 #include <QMouseEvent>
 #include <QStringBuilder>
-#include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 #include "Spire/KeyBindings/GrabHandle.hpp"
+#include "Spire/KeyBindings/OrderTaskMatch.hpp"
 #include "Spire/KeyBindings/OrderTasksTableViewModel.hpp"
 #include "Spire/KeyBindings/OrderTasksToTableModel.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
@@ -175,160 +175,6 @@ namespace {
     return string;
   }
 
-  auto suffix_matches(const QString& s1, const QString& s2) {
-    for(auto i = 0; i < s1.length(); ++i) {
-      if(s1.right(s1.length() - i).startsWith(s2)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  auto matches(const QString& name, const QString& query) {
-    return suffix_matches(name.toLower(), query);
-  }
-
-  auto matches(const CountryCode& country, const QString& query) {
-    auto& entry = GetDefaultCountryDatabase().FromCode(country);
-    if(entry.m_code == CountryCode::NONE) {
-      return false;
-    }
-    return QString::fromStdString(entry.m_name).toLower().startsWith(query) ||
-      QString::fromStdString(
-        entry.m_twoLetterCode.GetData()).toLower().startsWith(query) ||
-      suffix_matches(QString::fromStdString(
-        entry.m_threeLetterCode.GetData()).toLower(), query);
-  }
-
-  auto matches(const MarketCode& market, const QString& query) {
-    auto& entry = GetDefaultMarketDatabase().FromCode(market);
-    if(entry.m_code.IsEmpty()) {
-      return false;
-    }
-    return QString::fromStdString(
-        entry.m_code.GetData()).toLower().startsWith(query) ||
-      QString::fromStdString(
-        entry.m_description).toLower().startsWith(query) ||
-      suffix_matches(
-        QString::fromStdString(entry.m_displayName).toLower(), query);
-  }
-
-  auto matches(const Security& security, const QString& query) {
-    if(suffix_matches(displayText(security).toLower(), query)) {
-      return true;
-    }
-    return matches(security.GetMarket(), query);
-  }
-
-  auto matches(const Region& region, const QString& query) {
-    for(auto& country : region.GetCountries()) {
-      if(matches(country, query)) {
-        return true;
-      }
-    }
-    for(auto& market : region.GetMarkets()) {
-      if(matches(market, query)) {
-        return true;
-      }
-    }
-    for(auto& security : region.GetSecurities()) {
-      if(matches(security, query)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  auto matches(const Destination& destination, const QString& query) {
-    auto& entry = GetDefaultDestinationDatabase().FromId(destination);
-    if(entry.m_id.empty()) {
-      return false;
-    }
-    return suffix_matches(
-      QString::fromStdString(entry.m_id).toLower(), query) ||
-      QString::fromStdString(entry.m_description).toLower().startsWith(query);
-  }
-
-  auto matches(const OrderType& order_type, const QString& query) {
-    if(order_type == OrderType::NONE) {
-      return false;
-    }
-    return suffix_matches(displayText(order_type).toLower(), query);
-  }
-
-  auto matches(const Side& side, const QString& query) {
-    if(side == Side::NONE) {
-      return false;
-    }
-    if(suffix_matches(displayText(side).toLower(), query)) {
-      return true;
-    }
-    auto osstr = std::ostringstream();
-    osstr << side;
-    return QString::fromStdString(osstr.str()).toLower().startsWith(query);
-  }
-
-  auto matches(const optional<Quantity>& quantity, const QString& query) {
-    if(!quantity) {
-      return false;
-    }
-    auto osstr = std::ostringstream();
-    osstr << *quantity;
-    auto string = osstr.str();
-    auto text = [&] {
-      if(auto pos = string.find('.'); pos != std::string::npos) {
-        if(auto last_zero_pos = string.find_last_not_of('0');
-            last_zero_pos > pos) {
-          return QString::fromStdString(
-            string.erase(last_zero_pos + 1, std::string::npos));
-        }
-      }
-      return QString::fromStdString(string);
-    }();
-    return suffix_matches(text.toLower(), query);
-  }
-
-  auto matches(const TimeInForce& time_in_force, const QString& query) {
-    if(time_in_force.GetType() == TimeInForce::Type::NONE) {
-      return false;
-    }
-    if(suffix_matches(displayText(time_in_force).toLower(), query)) {
-      return true;
-    }
-    auto values = [&] () -> std::vector<QString> {
-      switch(time_in_force.GetType()) {
-        case TimeInForce::Type::DAY:
-          return {"session"};
-        case TimeInForce::Type::FOK:
-          return {"fill", "kill", "fill or kill"};
-        case TimeInForce::Type::GTC:
-          return {"good", "cancel", "good till cancel"};
-        case TimeInForce::Type::GTD:
-          return {"good", "date", "good till date"};
-        case TimeInForce::Type::GTX:
-          return {"good", "crossing", "good till crossing"};
-        case TimeInForce::Type::IOC:
-          return {"immediate", "cancel", "immediate or cancel"};
-        case TimeInForce::Type::MOC:
-          return {"close", "at the close"};
-        case TimeInForce::Type::OPG:
-          return {"opening", "at the opening"};
-        default:
-          return {};
-      }
-    }();
-    for(auto& value : values) {
-      if(value.startsWith(query)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  auto matches(const QKeySequence& key, const QString& query) {
-    return suffix_matches(key.toString().replace('+', ' ').toLower(), query);
-  }
-
   bool compare_text(const QString& lhs, const QString& rhs) {
     return QString::compare(lhs, rhs, Qt::CaseInsensitive) < 0;
   }
@@ -397,6 +243,14 @@ namespace {
   EditableBox* get_editable_box_from_popup_item(const TableItem& item) {
     return static_cast<EditableBox*>(&static_cast<PopupBox*>(
       get_table_item_body(item).layout()->itemAt(0)->widget())->get_body());
+  }
+
+  template<typename T>
+  auto make_matcher(const std::shared_ptr<TableModel>& table, int row,
+      int column) {
+    return [=] (const QString& query) {
+      return matches(table->get<T>(row, column), query);
+    };
   }
 }
 
@@ -714,31 +568,23 @@ TableMatchCache::Matcher OrderTasksPage::table_matcher_builder(
     const std::shared_ptr<TableModel>& table, int row, int column) {
   auto column_id = static_cast<OrderTasksToTableModel::Column>(column);
   if(column_id == OrderTasksToTableModel::Column::NAME) {
-    auto value = table->get<QString>(row, column);
-    return [=] (const QString& query) { return matches(value, query); };
+    return make_matcher<QString>(table, row, column);
   } else if(column_id == OrderTasksToTableModel::Column::REGION) {
-    auto value = table->get<Region>(row, column);
-    return [=] (const QString& query) { return matches(value, query); };
+    return make_matcher<Region>(table, row, column);
   } else if(column_id == OrderTasksToTableModel::Column::DESTINATION) {
-    auto value = table->get<Destination>(row, column);
-    return [=] (const QString& query) { return matches(value, query); };
+    return make_matcher<Destination>(table, row, column);
   } else if(column_id == OrderTasksToTableModel::Column::ORDER_TYPE) {
-    auto value = table->get<OrderType>(row, column);
-    return [=] (const QString& query) { return matches(value, query); };
+    return make_matcher<OrderType>(table, row, column);
   } else if(column_id == OrderTasksToTableModel::Column::SIDE) {
-    auto value = table->get<Side>(row, column);
-    return [=] (const QString& query) { return matches(value, query); };
+    return make_matcher<Side>(table, row, column);
   } else if(column_id == OrderTasksToTableModel::Column::QUANTITY) {
-    auto value = table->get<optional<Quantity>>(row, column);
-    return [=] (const QString& query) { return matches(value, query); };
+    return make_matcher<optional<Quantity>>(table, row, column);
   } else if(column_id == OrderTasksToTableModel::Column::TIME_IN_FORCE) {
-    auto value = table->get<TimeInForce>(row, column);
-    return [=] (const QString& query) { return matches(value, query); };
+    return make_matcher<TimeInForce>(table, row, column);
   } else if(column_id == OrderTasksToTableModel::Column::KEY) {
-    auto value = table->get<QKeySequence>(row, column);
-    return [=] (const QString& query) { return matches(value, query); };
+    return make_matcher<QKeySequence>(table, row, column);
   }
-  return [=] (const QString& query) { return false; };
+  return [] (const QString& query) { return false; };
 }
 
 void OrderTasksPage::table_view_navigate_next() {
@@ -790,12 +636,11 @@ void OrderTasksPage::table_view_navigate_previous() {
 
 void OrderTasksPage::do_search(const QString& query) {
   auto blocker = shared_connection_block(m_current_connection);
-  auto lower_query = query.toLower();
   m_filtered_table->set_filter([=] (const TableModel& model, int row) {
     if(query.isEmpty() || row == model.get_row_size() - 1) {
       return false;
     }
-    auto is_filtered = !m_table_match_cache->matches(row, lower_query);
+    auto is_filtered = !m_table_match_cache->matches(row, query);
     if(m_added_row.m_source_index != -1) {
       if(m_added_row.m_source_index == row) {
         m_added_row.m_is_filtered = is_filtered;
