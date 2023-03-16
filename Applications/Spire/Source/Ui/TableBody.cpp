@@ -573,6 +573,11 @@ void TableBody::on_item_activated(TableItem& item) {
     Index(layout()->indexOf(&row_widget), row_widget.layout()->indexOf(&item));
   if(m_current_controller.get_current()->get() != index) {
     m_current_controller.get_current()->set(index);
+    if(auto current = m_current_controller.get_current()->get()) {
+      index = *current;
+    } else {
+      return;
+    }
   }
   m_selection_controller.click(index);
 }
