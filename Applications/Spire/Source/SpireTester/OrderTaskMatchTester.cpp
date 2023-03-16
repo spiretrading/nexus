@@ -184,7 +184,7 @@ TEST_SUITE("OrderTaskMatch") {
     }
   }
 
-  TEST_CASE("match_order_typ") {
+  TEST_CASE("match_order_type") {
     auto order_type = OrderType(OrderType::MARKET);
     REQUIRE(matches(order_type, "m"));
     REQUIRE(matches(order_type, "Ma"));
