@@ -22,10 +22,10 @@ TEST_SUITE("TableMatchCache") {
       call_first_matcher = false;
       call_second_matcher = false;
     };
-    auto is_hitted_first_cache = [&] {
+    auto is_hit_first_cache = [&] {
       return !call_first_matcher;
     };
-    auto is_hitted_second_cache = [&] {
+    auto is_hit_second_cache = [&] {
       return !call_second_matcher;
     };
     auto table = std::make_shared<ArrayTableModel>();
@@ -44,22 +44,22 @@ TEST_SUITE("TableMatchCache") {
         };
       });
     REQUIRE(match_cache.matches(0, "1"));
-    REQUIRE(!is_hitted_first_cache());
+    REQUIRE(!is_hit_first_cache());
     reset_call_matcher();
     REQUIRE(match_cache.matches(0, "1"));
-    REQUIRE(is_hitted_first_cache());
+    REQUIRE(is_hit_first_cache());
     reset_call_matcher();
     REQUIRE(match_cache.matches(0, "1"));
-    REQUIRE(is_hitted_first_cache());
+    REQUIRE(is_hit_first_cache());
     reset_call_matcher();
     REQUIRE(match_cache.matches(0, "he"));
-    REQUIRE(!is_hitted_second_cache());
+    REQUIRE(!is_hit_second_cache());
     reset_call_matcher();
     REQUIRE(match_cache.matches(0, "hello"));
-    REQUIRE(!is_hitted_second_cache());
+    REQUIRE(!is_hit_second_cache());
     reset_call_matcher();
     REQUIRE(match_cache.matches(0, "hello"));
-    REQUIRE(is_hitted_second_cache());
+    REQUIRE(is_hit_second_cache());
     REQUIRE(match_cache.matches(1, "2"));
     REQUIRE(match_cache.matches(1, "wor"));
     REQUIRE(!match_cache.matches(0, "2"));
