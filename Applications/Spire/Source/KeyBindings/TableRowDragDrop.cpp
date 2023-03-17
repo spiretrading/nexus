@@ -10,6 +10,7 @@
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
+#include "Spire/Ui/TableItem.hpp"
 #include "Spire/Ui/TableView.hpp"
 
 using namespace boost;
@@ -345,7 +346,9 @@ void TableRowDragDrop::start_drag(const QPoint& pos) {
   m_preview_row->move(x, m_table_body->mapFromGlobal(pos).y());
   m_preview_row->show();
   m_preview_row->raise();
-  match(*m_rows->get(*m_drag_index)->get_grab_handle(), DraggingCurrent());
+  if(auto current = m_table_body->get_current()->get()) {
+    match(*m_table_body->get_item(*current), DraggingCurrent());
+  }
   if(pos.y() >= m_press_pos->y()) {
     match(*m_padding_row, DropUpIndicator());
     unmatch(*m_padding_row, DropDownIndicator());
@@ -356,7 +359,14 @@ void TableRowDragDrop::start_drag(const QPoint& pos) {
 }
 
 void TableRowDragDrop::end_drag() {
-  unmatch(*m_rows->get(*m_drag_index)->get_grab_handle(), DraggingCurrent());
+  if(auto current = m_table_body->get_current()->get()) {
+    unmatch(*m_table_body->get_item(*current), DraggingCurrent());
+    if(m_drag_index && current->m_row != *m_drag_index) {
+      m_table_body->get_current()->set(TableView::Index(*m_drag_index, 1));
+    }
+  } else if(m_drag_index) {
+    m_table_body->get_current()->set(TableView::Index(*m_drag_index, 1));
+  }
   unmatch(*m_padding_row, DropUpIndicator());
   unmatch(*m_padding_row, DropDownIndicator());
   m_preview_row->set_pixmap(QPixmap(0, 0));
