@@ -1,7 +1,9 @@
 #include "Spire/KeyBindings/OrderTasksPage.hpp"
 #include <boost/signals2/shared_connection_block.hpp>
 #include <QMouseEvent>
+#include <QStringBuilder>
 #include "Spire/KeyBindings/GrabHandle.hpp"
+#include "Spire/KeyBindings/OrderTaskMatch.hpp"
 #include "Spire/KeyBindings/OrderTasksTableViewModel.hpp"
 #include "Spire/KeyBindings/OrderTasksToTableModel.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
@@ -148,40 +150,29 @@ namespace {
   }
 
   auto display(const Region& region) {
-    auto text = QString();
+    auto countries = std::set<QString>();
     for(auto& country : region.GetCountries()) {
-      text += displayText(country);
+      countries.insert(displayText(country));
     }
+    auto markets = std::set<QString>();
     for(auto& market : region.GetMarkets()) {
-      text += displayText(MarketToken(market));
+      markets.insert(displayText(MarketToken(market)));
     }
+    auto securities = std::set<QString>();
     for(auto& security : region.GetSecurities()) {
-      text += displayText(security);
+      securities.insert(displayText(security));
     }
-    return text;
-  }
-
-  QString display_text(const std::any& value,
-      OrderTasksToTableModel::Column column) {
-    if(column == OrderTasksToTableModel::Column::QUANTITY) {
-      auto quantity = std::any_cast<optional<Quantity>>(value);
-      if(quantity) {
-        auto osstr = std::ostringstream();
-        osstr << *quantity;
-        return QString::fromStdString(osstr.str()).toLower();
-      }
-      return {};
-    } else if(column == OrderTasksToTableModel::Column::REGION) {
-      return display(std::any_cast<Region>(value)).toLower();
+    auto string = QString();
+    for(auto& country : countries) {
+      string = string % country;
     }
-    auto text = displayText(value).toLower();
-    if(text == "none" &&
-        (column == OrderTasksToTableModel::Column::ORDER_TYPE ||
-        column == OrderTasksToTableModel::Column::SIDE ||
-        column == OrderTasksToTableModel::Column::TIME_IN_FORCE)) {
-      return {};
+    for(auto& market : markets) {
+      string = string % market;
     }
-    return text;
+    for(auto& security : securities) {
+      string = string % security;
+    }
+    return string;
   }
 
   bool compare_text(const QString& lhs, const QString& rhs) {
@@ -253,6 +244,14 @@ namespace {
     return static_cast<EditableBox*>(&static_cast<PopupBox*>(
       get_table_item_body(item).layout()->itemAt(0)->widget())->get_body());
   }
+
+  template<typename T>
+  auto make_matcher(const std::shared_ptr<TableModel>& table, int row,
+      int column) {
+    return [=] (const QString& query) {
+      return matches(table->get<T>(row, column), query);
+    };
+  }
 }
 
 std::size_t OrderTasksPage::RegionKeyHash::operator()(
@@ -294,6 +293,8 @@ OrderTasksPage::OrderTasksPage(
   m_source_table_operation_connection =
     m_order_tasks_table->connect_operation_signal(
       std::bind_front(&OrderTasksPage::on_source_table_operation, this));
+  m_table_match_cache = std::make_unique<TableMatchCache>(m_order_tasks_table,
+    std::bind_front(&OrderTasksPage::table_matcher_builder, this));
   m_filtered_table = std::make_shared<FilteredTableModel>(
     std::make_shared<OrderTasksTableViewModel>(m_order_tasks_table),
     [] (const TableModel& model, int row) {
@@ -336,7 +337,6 @@ OrderTasksPage::OrderTasksPage(
   m_table_menu = new ContextMenu(*this);
   m_table_menu->add_action(tr("Delete Order"),
     std::bind_front(&OrderTasksPage::on_delete_order, this));
-  build_search_text(*m_order_tasks_table);
   auto& children = m_table_body->children();
   auto count = 0;
   for(auto i = children.rbegin(); i != children.rend(); ++i) {
@@ -551,15 +551,27 @@ QWidget* OrderTasksPage::table_view_builder(
   return cell.m_cell;
 }
 
-void OrderTasksPage::build_search_text(const TableModel& table) {
-  for(auto row = 0; row < table.get_row_size(); ++row) {
-    auto row_text = std::vector<QString>();
-    for(auto column = 0; column < table.get_column_size(); ++column) {
-      row_text.push_back(display_text(to_any(table.at(row, column)),
-        static_cast<OrderTasksToTableModel::Column>(column)));
-    }
-    m_row_text.push_back(row_text);
+TableMatchCache::Matcher OrderTasksPage::table_matcher_builder(
+    const std::shared_ptr<TableModel>& table, int row, int column) {
+  auto column_id = static_cast<OrderTasksToTableModel::Column>(column);
+  if(column_id == OrderTasksToTableModel::Column::NAME) {
+    return make_matcher<QString>(table, row, column);
+  } else if(column_id == OrderTasksToTableModel::Column::REGION) {
+    return make_matcher<Region>(table, row, column);
+  } else if(column_id == OrderTasksToTableModel::Column::DESTINATION) {
+    return make_matcher<Destination>(table, row, column);
+  } else if(column_id == OrderTasksToTableModel::Column::ORDER_TYPE) {
+    return make_matcher<OrderType>(table, row, column);
+  } else if(column_id == OrderTasksToTableModel::Column::SIDE) {
+    return make_matcher<Side>(table, row, column);
+  } else if(column_id == OrderTasksToTableModel::Column::QUANTITY) {
+    return make_matcher<optional<Quantity>>(table, row, column);
+  } else if(column_id == OrderTasksToTableModel::Column::TIME_IN_FORCE) {
+    return make_matcher<TimeInForce>(table, row, column);
+  } else if(column_id == OrderTasksToTableModel::Column::KEY) {
+    return make_matcher<QKeySequence>(table, row, column);
   }
+  return [] (const QString& query) { return false; };
 }
 
 void OrderTasksPage::table_view_navigate_next() {
@@ -616,14 +628,7 @@ void OrderTasksPage::do_search(const QString& query) {
     if(query.isEmpty() || row == model.get_row_size() - 1) {
       return false;
     }
-    auto is_filtered = [&] {
-      for(auto& text : m_row_text[row]) {
-        if(text.contains(query)) {
-          return false;
-        }
-      }
-      return true;
-    }();
+    auto is_filtered = !m_table_match_cache->matches(row, query);
     if(m_added_row.m_source_index == row) {
       m_added_row.m_is_filtered = is_filtered;
       return false;
@@ -733,7 +738,7 @@ void OrderTasksPage::on_search(const QString& value) {
     m_rows->get(row)->set_ignore_filters(false);
     m_rows->get(row)->set_out_of_range(false);
   }
-  do_search(value.toLower());
+  do_search(value);
   m_table_body->adjustSize();
   m_table_body->get_current()->set(m_table_body->get_current()->get());
 }
@@ -757,12 +762,6 @@ void OrderTasksPage::on_source_table_operation(
     const TableModel::Operation& operation) {
   visit(operation,
     [&] (const TableModel::AddOperation& operation) {
-      auto row_text = std::vector<QString>();
-      for(auto column = 0; column < operation.m_row->get_size(); ++column) {
-        row_text.push_back(display_text(operation.m_row->get(column),
-          static_cast<OrderTasksToTableModel::Column>(column)));
-      }
-      m_row_text.insert(m_row_text.begin() + operation.m_index, row_text);
       m_added_row.m_source_index = operation.m_index;
       auto region = std::any_cast<Region>(operation.m_row->get(
         static_cast<int>(OrderTasksToTableModel::Column::REGION)));
@@ -779,7 +778,6 @@ void OrderTasksPage::on_source_table_operation(
           static_cast<int>(OrderTasksToTableModel::Column::REGION))),
         std::any_cast<QKeySequence>(operation.m_row->get(
           static_cast<int>(OrderTasksToTableModel::Column::KEY)))});
-      m_row_text.erase(m_row_text.begin() + operation.m_index);
     },
     [&] (const TableModel::UpdateOperation& operation) {
       if(static_cast<OrderTasksToTableModel::Column>(operation.m_column) ==
@@ -802,24 +800,6 @@ void OrderTasksPage::on_source_table_operation(
         if(!key.isEmpty()) {
           m_region_key_set.insert({region, key});
         }
-      }
-      m_row_text[operation.m_row][operation.m_column] =
-        display_text(operation.m_value,
-          static_cast<OrderTasksToTableModel::Column>(operation.m_column));
-    },
-    [&] (const TableModel::MoveOperation& operation) {
-      if(operation.m_source < operation.m_destination) {
-        std::rotate(std::next(m_row_text.begin(), operation.m_source),
-          std::next(m_row_text.begin(), operation.m_source + 1),
-          std::next(m_row_text.begin(), operation.m_destination + 1));
-      } else {
-        std::rotate(
-          std::next(
-            m_row_text.rbegin(), m_row_text.size() - operation.m_source - 1),
-          std::next(
-            m_row_text.rbegin(), m_row_text.size() - operation.m_source),
-          std::next(
-            m_row_text.rbegin(), m_row_text.size() - operation.m_destination));
       }
     });
 }
