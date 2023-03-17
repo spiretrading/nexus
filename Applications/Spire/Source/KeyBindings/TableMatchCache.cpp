@@ -44,17 +44,12 @@ void TableMatchCache::on_operation(const TableModel::Operation& operation) {
         m_builder(m_table, operation.m_row, operation.m_column));
     },
     [&] (const TableModel::MoveOperation& operation) {
-      if(operation.m_source < operation.m_destination) {
-        std::rotate(std::next(m_caches.begin(), operation.m_source),
-          std::next(m_caches.begin(), operation.m_source + 1),
-          std::next(m_caches.begin(), operation.m_destination + 1));
-      } else {
-        std::rotate(
-          std::next(m_caches.rbegin(),
-            m_caches.size() - operation.m_source - 1),
-          std::next(m_caches.rbegin(), m_caches.size() - operation.m_source),
-          std::next(m_caches.rbegin(),
-            m_caches.size() - operation.m_destination));
+      auto [start, end] =
+        std::minmax(operation.m_source, operation.m_destination);
+      for(auto row = start; row <= end; ++row) {
+        for(auto column = 0; column < m_table->get_column_size(); ++column) {
+          m_caches[row][column] = MatchCache(m_builder(m_table, row, column));
+        }
       }
     });
 }
