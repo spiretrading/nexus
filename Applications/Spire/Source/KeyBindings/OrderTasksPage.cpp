@@ -135,6 +135,7 @@ namespace {
 
   auto make_search_region() {
     auto search_box = new SearchBox();
+    search_box->setFocusPolicy(Qt::StrongFocus);
     search_box->set_placeholder(QObject::tr("Search order tasks"));
     search_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     auto search_region = new Box(search_box);
@@ -280,7 +281,9 @@ OrderTasksPage::OrderTasksPage(
       m_order_tasks(std::move(order_tasks)),
       m_destinations(std::move(destinations)),
       m_markets(std::move(markets)),
-      m_rows(std::make_shared<ArrayListModel<std::shared_ptr<TableRow>>>()) {
+      m_rows(std::make_shared<ArrayListModel<std::shared_ptr<TableRow>>>()),
+      m_previous_row(nullptr),
+      m_table_next_focus_widget(nullptr) {
   auto layout = make_vbox_layout(this);
   layout->setContentsMargins({0, 0, 0, scale_height(20)});
   layout->addWidget(make_help_text_region());
@@ -322,8 +325,10 @@ OrderTasksPage::OrderTasksPage(
   for(auto i = 0; i < std::ssize(widths); ++i) {
     table_header->get_widths()->set(i, widths[i]);
   }
-  m_table_body = static_cast<TableBody*>(&static_cast<ScrollBox*>(
-    table_view->layout()->itemAt(1)->widget())->get_body());
+  auto& scroll_box =
+    *static_cast<ScrollBox*>(table_view->layout()->itemAt(1)->widget());
+  scroll_box.setFocusPolicy(Qt::NoFocus);
+  m_table_body = static_cast<TableBody*>(&scroll_box.get_body());
   m_table_body->installEventFilter(this);
   m_view_operation_connection =
     m_table_body->get_table()->connect_operation_signal(
@@ -355,6 +360,7 @@ OrderTasksPage::OrderTasksPage(
     std::make_unique<TableRowDragDrop>(m_order_tasks, m_rows, *table_view);
   connect(qApp, &QApplication::focusChanged, this,
     &OrderTasksPage::on_focus_changed);
+  setTabOrder(m_search_box, m_table_body);
 }
 
 const std::shared_ptr<ComboBox::QueryModel>&
@@ -381,6 +387,7 @@ bool OrderTasksPage::eventFilter(QObject* watched, QEvent* event) {
               get_table_item_body(*m_table_body->get_item(*current))), event);
             return true;
           }
+          break;
         case Qt::Key_Shift:
           return true;
         case Qt::Key_A:
@@ -438,6 +445,24 @@ bool OrderTasksPage::eventFilter(QObject* watched, QEvent* event) {
     }
   }
   return QWidget::eventFilter(watched, event);
+}
+
+void OrderTasksPage::showEvent(QShowEvent* event) {
+  for(auto row = 0; row < m_table_body->get_table()->get_row_size(); ++row) {
+    for(auto column = 0; column < m_table_body->get_table()->get_column_size();
+        ++column) {
+      auto item = m_table_body->get_item(TableView::Index(row, column));
+      auto& button = *static_cast<Button*>(item->layout()->itemAt(0)->widget());
+      button.setFocusPolicy(Qt::ClickFocus);
+    }
+  }
+  m_table_next_focus_widget = m_table_body->nextInFocusChain();
+  while(isAncestorOf(m_table_next_focus_widget) ||
+      (m_table_next_focus_widget->focusPolicy() & Qt::TabFocus) !=
+        Qt::TabFocus) {
+    m_table_next_focus_widget = m_table_next_focus_widget->nextInFocusChain();
+  }
+  QWidget::showEvent(event);
 }
 
 bool OrderTasksPage::focusNextPrevChild(bool next) {
@@ -580,12 +605,9 @@ void OrderTasksPage::table_view_navigate_next() {
     if(column >= m_table_body->get_table()->get_column_size()) {
       auto row = current->m_row + 1;
       if(row >= m_table_body->get_table()->get_row_size()) {
-        auto next_focus_widget = nextInFocusChain();
-        while(isAncestorOf(next_focus_widget) ||
-            (next_focus_widget->focusPolicy() & Qt::TabFocus) != Qt::TabFocus) {
-          next_focus_widget = next_focus_widget->nextInFocusChain();
+        if(m_table_next_focus_widget) {
+          m_table_next_focus_widget->setFocus(Qt::TabFocusReason);
         }
-        next_focus_widget->setFocus(Qt::TabFocusReason);
         m_table_body->get_current()->set(none);
       } else {
         m_table_body->get_current()->set(TableView::Index(row, 1));
@@ -823,6 +845,13 @@ void OrderTasksPage::on_view_table_operation(
         m_added_row.m_source_index = -1;
         m_added_row.m_is_filtered = false;
       }
+      for(auto i = 0; i < m_table_body->get_table()->get_column_size(); ++i) {
+        auto item =
+          m_table_body->get_item(TableView::Index(operation.m_index, i));
+        auto& button =
+          *static_cast<Button*>(item->layout()->itemAt(0)->widget());
+        button.setFocusPolicy(Qt::ClickFocus);
+      }
     },
     [&] (const TableModel::RemoveOperation& operation) {
       m_rows->remove(operation.m_index);
@@ -833,21 +862,29 @@ void OrderTasksPage::on_view_table_operation(
 }
 
 void OrderTasksPage::on_focus_changed(QWidget* old, QWidget* now) {
-  if(!now || find_focus_state(*m_table_body) != FocusObserver::State::NONE ||
-      !m_table_body->isAncestorOf(old)) {
-    return;
-  }
-  if(auto current = m_table_body->get_current()->get()) {
-    if(static_cast<Column>(current->m_column) == Column::REGION
-        || static_cast<Column>(current->m_column) == Column::QUANTITY) {
-      auto& item = *m_table_body->get_item(*current);
-      auto& popup_box =
-        *get_table_item_body(item).layout()->itemAt(0)->widget();
-      if(popup_box.layout()->count() == 0) {
-        return;
+  if(now) {
+    if(now == m_table_body && old == m_table_next_focus_widget &&
+        !m_table_body->get_current()->get()) {
+      m_table_body->get_current()->set(
+        TableView::Index(m_table_body->get_table()->get_row_size() - 1,
+          m_table_body->get_table()->get_column_size() - 1));
+    } else if(find_focus_state(*m_table_body) == FocusObserver::State::NONE &&
+        m_table_body->isAncestorOf(old)) {
+      if(auto current = m_table_body->get_current()->get()) {
+        if(static_cast<Column>(current->m_column) == Column::REGION
+          || static_cast<Column>(current->m_column) == Column::QUANTITY) {
+          auto& item = *m_table_body->get_item(*current);
+          auto& popup_box =
+            *get_table_item_body(item).layout()->itemAt(0)->widget();
+          if(popup_box.layout()->count() == 0) {
+            return;
+          }
+        }
+        m_rows->get(current->m_row)->set_ignore_filters(false);
+        do_search_on_all_rows();
       }
     }
-    m_rows->get(current->m_row)->set_ignore_filters(false);
-    do_search_on_all_rows();
+  } else if(m_table_body->isAncestorOf(old) && window()->isActiveWindow()) {
+    m_table_body->setFocus();
   }
 }

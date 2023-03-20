@@ -357,6 +357,7 @@ OrderTasksRow::TableCell OrderTasksRow::build_cell(
     return make_editor(region_query_model, destinations, markets, table, row,
       column);
   }();
+  editor->setFocusPolicy(Qt::ClickFocus);
   update_style(*editor, [&] (auto& style) {
     switch(column_id) {
       case Column::ORDER_TYPE:
