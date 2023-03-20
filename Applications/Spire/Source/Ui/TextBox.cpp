@@ -138,7 +138,7 @@ class TextBox::LineEdit : public QLineEdit {
       m_highlight_connection = m_highlight->connect_update_signal(
         std::bind_front(&LineEdit::on_highlight, this));
       m_text_box->setCursor(cursor());
-      m_text_box->setFocusPolicy(focusPolicy());
+      setFocusPolicy(m_text_box->focusPolicy());
       QWidget::setTabOrder(m_text_box, this);
       m_text_box->setFocusProxy(this);
       enclose(*m_text_box, *this);
@@ -396,6 +396,7 @@ TextBox::TextBox(std::shared_ptr<TextModel> current, QWidget* parent)
       m_is_read_only(false),
       m_highlight(std::make_shared<LocalValueModel<Highlight>>()),
       m_line_edit(nullptr) {
+  setFocusPolicy(Qt::StrongFocus);
   add_pseudo_element(*this, Placeholder());
   m_style_connection = connect_style_signal(*this, [=] { on_style(); });
   set_style(*this, DEFAULT_STYLE());
