@@ -591,7 +591,7 @@ void TagBox::on_focus(FocusObserver::State state) {
   if(state == FocusObserver::State::NONE) {
     scroll_to_start(*m_horizontal_scroll_bar);
   } else {
-    m_text_box->setFocusPolicy(Qt::StrongFocus);
+    m_text_box->setFocusPolicy(focusPolicy());
     setFocus();
     if(!is_read_only()) {
       update_size_constraint();
@@ -603,9 +603,7 @@ void TagBox::on_focus(FocusObserver::State state) {
 void TagBox::on_operation(const AnyListModel::Operation& operation) {
   auto update_all = [=] {
     m_list_view->setFocusPolicy(Qt::NoFocus);
-    if(m_text_box->focusPolicy() != Qt::StrongFocus) {
-      m_text_box->setFocusPolicy(Qt::StrongFocus);
-    }
+    m_text_box->setFocusPolicy(focusPolicy());
     update_placeholder();
     update_tip();
     update_tooltip();
