@@ -38,6 +38,7 @@ namespace Spire {
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
+      void showEvent(QShowEvent* event) override;
       bool focusNextPrevChild(bool next) override;
 
     private:
@@ -65,6 +66,7 @@ namespace Spire {
         m_region_key_set;
       boost::optional<TableView::Index> m_previous_index;
       QWidget* m_previous_row;
+      QWidget* m_table_next_focus_widget;
       AddedRow m_added_row;
       std::unique_ptr<TableMatchCache> m_table_match_cache;
       std::unique_ptr<TableRowDragDrop> m_table_row_drag_drop;
