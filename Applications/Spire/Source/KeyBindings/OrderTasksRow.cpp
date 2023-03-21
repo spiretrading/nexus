@@ -256,6 +256,61 @@ namespace {
         return value;
       }
   };
+
+  template<typename T>
+  class InstantUpdateValueModel : public ValueModel<T> {
+    public:
+      using Type = typename ValueModel<T>::Type;
+      using UpdateSignal = typename ValueModel<T>::UpdateSignal;
+
+      InstantUpdateValueModel(std::shared_ptr<ValueModel<Type>> source)
+        : m_source(std::move(source)),
+          m_update_connection(m_source->connect_update_signal(
+            std::bind_front(&InstantUpdateValueModel::on_update, this))) {}
+
+      QValidator::State get_state() const override {
+        return m_source->get_state();
+      }
+
+      const Type& get() const override {
+        return m_source->get();
+      }
+
+      QValidator::State test(const Type& value) const override {
+        return m_source->test(value);
+      }
+
+      QValidator::State set(const Type& value) override {
+        auto state = m_source->set(value);
+        m_value = value;
+        m_update_signal(value);
+        return state;
+      }
+
+      connection connect_update_signal(
+          const typename UpdateSignal::slot_type& slot) const override {
+        return m_update_signal.connect(slot);
+      }
+
+    private:
+      mutable typename UpdateSignal m_update_signal;
+      std::shared_ptr<ValueModel<Type>> m_source;
+      boost::optional<Type> m_value;
+      scoped_connection m_update_connection;
+
+      void on_update(const Type& value) {
+        if(m_value && *m_value != value) {
+          m_value = value;
+          m_update_signal(value);
+        }
+      }
+  };
+
+  template<typename T>
+  auto make_instant_update_value_model(std::shared_ptr<T> source) {
+    return std::make_shared<InstantUpdateValueModel<typename T::Type>>(
+      std::move(source));
+  }
 }
 
 OrderTasksRow::OrderTasksRow(std::shared_ptr<ListModel<OrderTask>> order_tasks,
@@ -414,14 +469,15 @@ EditableBox* OrderTasksRow::make_editor(
   auto input_box = [&] () -> AnyInputBox* {
     switch(static_cast<Column>(column)) {
       case Column::NAME:
-        return new AnyInputBox(*new TextBox(make_custom_list_value_model(
+        return new AnyInputBox(*new TextBox(
+          make_instant_update_value_model(make_custom_list_value_model(
           std::make_shared<CustomColumnViewListModel<QString>>(table, column),
-            row)));
+            row))));
       case Column::REGION:
         return new AnyInputBox(*new RegionBox(region_query_model,
-          make_custom_list_value_model(
+          make_instant_update_value_model(make_custom_list_value_model(
             std::make_shared<CustomColumnViewListModel<Region>>(table, column),
-              row)));
+              row))));
       case Column::DESTINATION:
         {
           auto region_model = make_custom_list_value_model(
@@ -430,42 +486,43 @@ EditableBox* OrderTasksRow::make_editor(
           auto query_model = std::make_shared<DestinationQueryModel>(
             std::move(region_model), destinations, markets);
           auto current_model = std::make_shared<DestinationValueModel>(
-            make_custom_list_value_model(
+            make_instant_update_value_model(make_custom_list_value_model(
               std::make_shared<CustomColumnViewListModel<Destination>>(table,
-                column), row), query_model);
+                column), row)), query_model);
           return new AnyInputBox(*new DestinationBox(std::move(query_model),
             std::move(current_model)));
         }
       case Column::ORDER_TYPE:
         return new AnyInputBox(*make_order_type_box(
-          make_custom_list_value_model(
+          make_instant_update_value_model(make_custom_list_value_model(
             std::make_shared<CustomColumnViewListModel<OrderType>>(table,
-              column), row)));
+              column), row))));
       case Column::SIDE:
-        return new AnyInputBox(*make_side_box(make_custom_list_value_model(
+        return new AnyInputBox(*make_side_box(
+          make_instant_update_value_model(make_custom_list_value_model(
             std::make_shared<CustomColumnViewListModel<Side>>(table, column),
-              row)));
+              row))));
       case Column::QUANTITY:
         {
           auto model =
             std::make_shared<ScalarValueModelDecorator<optional<Quantity>>>(
-              make_custom_list_value_model(
+              make_instant_update_value_model(make_custom_list_value_model(
                 std::make_shared<CustomColumnViewListModel<optional<Quantity>>>(
-                  table, column), row));
+                  table, column), row)));
           return new AnyInputBox(*new QuantityBox(std::move(model),
             make_quantity_modifiers()));
         }
       case Column::TIME_IN_FORCE:
         return new AnyInputBox(*make_time_in_force_box(
-          make_custom_list_value_model(
+          make_instant_update_value_model(make_custom_list_value_model(
             std::make_shared<CustomColumnViewListModel<TimeInForce>>(table,
-              column), row)));
+              column), row))));
       case Column::KEY:
         return new AnyInputBox(*new KeyInputBox(
           make_validated_value_model<QKeySequence>(&test_key_sequence,
-            make_custom_list_value_model(
+            make_instant_update_value_model(make_custom_list_value_model(
               std::make_shared<CustomColumnViewListModel<QKeySequence>>(
-                table, column), row))));
+                table, column), row)))));
       default:
         return nullptr;
       }
