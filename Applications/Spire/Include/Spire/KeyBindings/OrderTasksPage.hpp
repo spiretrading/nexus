@@ -1,6 +1,7 @@
 #ifndef SPIRE_ORDER_TASKS_PAGE_HPP
 #define SPIRE_ORDER_TASKS_PAGE_HPP
 #include <QWidget>
+#include "Spire/KeyBindings/FreezingUpdateTableModel.hpp"
 #include "Spire/KeyBindings/OrderTask.hpp"
 #include "Spire/KeyBindings/OrderTasksRow.hpp"
 #include "Spire/KeyBindings/OrderTasksToTableModel.hpp"
@@ -58,6 +59,7 @@ namespace Spire {
       Nexus::MarketDatabase m_markets;
       std::shared_ptr<OrderTasksToTableModel> m_order_tasks_table;
       std::shared_ptr<FilteredTableModel> m_filtered_table;
+      std::shared_ptr<FreezingUpdateTableModel> m_freezing_table;
       TableBody* m_table_body;
       SearchBox* m_search_box;
       ContextMenu* m_table_menu;

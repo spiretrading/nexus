@@ -3,6 +3,7 @@
 
 namespace Spire {
   class CompositeKeyBindingsModel;
+  class FreezingUpdateTableModel;
   class GrabHandle;
   class KeyBindingsModel;
   class KeyBindingsWindow;

@@ -303,7 +303,9 @@ OrderTasksPage::OrderTasksPage(
     [] (const TableModel& model, int row) {
       return false;
     });
-  auto table_view = TableViewBuilder(m_filtered_table).
+  m_freezing_table =
+    std::make_shared<FreezingUpdateTableModel>(m_filtered_table);
+  auto table_view = TableViewBuilder(m_freezing_table).
     set_header(make_header_model()).
     set_view_builder(
       std::bind_front(&OrderTasksPage::table_view_builder, this)).
@@ -534,19 +536,25 @@ QWidget* OrderTasksPage::table_view_builder(
   if(!cell.m_editor) {
     return cell.m_cell;
   }
-  cell.m_editor->connect_start_edit_signal([=] {
-    if(column_id == Column::REGION || column_id == Column::QUANTITY) {
-      find_focus_proxy(*cell.m_editor)->installEventFilter(this);
-    }
-  });
-  cell.m_editor->connect_end_edit_signal([=] {
-    if(column_id == Column::REGION || column_id == Column::QUANTITY) {
-      find_focus_proxy(*cell.m_editor)->removeEventFilter(this);
-    }
-    if(!QApplication::focusWidget()) {
-      m_table_body->setFocus();
-    }
-  });
+  cell.m_editor->connect_start_edit_signal(
+    [=, order_tasks_row = m_rows->get(row).get()] {
+      if(column_id == Column::REGION || column_id == Column::QUANTITY) {
+        find_focus_proxy(*cell.m_editor)->installEventFilter(this);
+      }
+      m_freezing_table->freeze();
+    });
+  cell.m_editor->connect_end_edit_signal(
+    [=, order_tasks_row = m_rows->get(row).get()] {
+      if(column_id == Column::REGION || column_id == Column::QUANTITY) {
+        find_focus_proxy(*cell.m_editor)->removeEventFilter(this);
+      }
+      if(!order_tasks_row->is_out_of_range()) {
+        m_freezing_table->unfreeze();
+      }
+      if(!QApplication::focusWidget()) {
+        m_table_body->setFocus();
+      }
+    });
   auto get_row_index = [=] (TableRow* table_row) {
     for(auto i = 0; i < m_rows->get_size() - 1; ++i) {
       if(m_rows->get(i).get() == table_row) {
