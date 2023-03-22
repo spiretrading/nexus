@@ -330,6 +330,11 @@ void TableRowDragDrop::clear_sort_order() {
     }
     m_is_sorted = false;
   }
+  if(auto current = m_table_body->get_current()->get()) {
+    if(!m_rows->get(current->m_row)->is_filtered()) {
+      m_rows->get(current->m_row)->set_out_of_range(false);
+    }
+  }
 }
 
 void TableRowDragDrop::start_drag(const QPoint& pos) {

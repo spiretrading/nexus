@@ -64,6 +64,22 @@ void FreezingUpdateTableModel::on_operation(const Operation& operation) {
       }
       m_transaction.push(operation);
     },
+    [&] (const MoveOperation& operation) {
+      if(m_frozen_update) {
+        if(m_frozen_update->m_row == operation.m_source) {
+          m_frozen_update->m_row = operation.m_destination;
+        } else if(operation.m_source < operation.m_destination) {
+          if(m_frozen_update->m_row > operation.m_source &&
+              m_frozen_update->m_row <= operation.m_destination) {
+            --m_frozen_update->m_row;
+          }
+        } else if(m_frozen_update->m_row >= operation.m_destination &&
+            m_frozen_update->m_row < operation.m_source) {
+          ++m_frozen_update->m_row;
+        }
+      }
+      m_transaction.push(operation);
+    },
     [&] (const auto& operation) {
       clear();
       m_transaction.push(operation);
