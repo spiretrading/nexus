@@ -11,15 +11,19 @@ FreezingUpdateTableModel::FreezingUpdateTableModel(
     m_source_connection(m_source->connect_operation_signal(
       std::bind_front(&FreezingUpdateTableModel::on_operation, this))) {}
 
-void FreezingUpdateTableModel::freeze() {
-  m_is_frozen = true;
+bool FreezingUpdateTableModel::is_frozen() const {
+  return m_is_frozen;
 }
 
-void FreezingUpdateTableModel::unfreeze() {
-  if(m_is_frozen && m_frozen_update) {
-    m_transaction.push(*m_frozen_update);
+void FreezingUpdateTableModel::set_frozen(bool is_frozen) {
+  if(m_is_frozen == is_frozen) {
+    return;
   }
-  clear();
+  m_is_frozen = is_frozen;
+  if(!m_is_frozen && m_frozen_update) {
+    m_transaction.push(*m_frozen_update);
+    m_frozen_update.reset();
+  }
 }
 
 int FreezingUpdateTableModel::get_row_size() const {
@@ -42,11 +46,6 @@ QValidator::State FreezingUpdateTableModel::set(
 connection FreezingUpdateTableModel::connect_operation_signal(
     const OperationSignal::slot_type& slot) const {
   return m_transaction.connect_operation_signal(slot);
-}
-
-void FreezingUpdateTableModel::clear() {
-  m_is_frozen = false;
-  m_frozen_update.reset();
 }
 
 void FreezingUpdateTableModel::on_operation(const Operation& operation) {
@@ -81,7 +80,8 @@ void FreezingUpdateTableModel::on_operation(const Operation& operation) {
       m_transaction.push(operation);
     },
     [&] (const auto& operation) {
-      clear();
+      m_is_frozen = false;
+      m_frozen_update.reset();
       m_transaction.push(operation);
     });
 }

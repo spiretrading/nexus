@@ -19,9 +19,9 @@ namespace Spire {
        */
       explicit FreezingUpdateTableModel(std::shared_ptr<TableModel> source);
 
-      void freeze();
+      bool is_frozen() const;
 
-      void unfreeze();
+      void set_frozen(bool is_frozen);
 
       int get_row_size() const override;
 
@@ -42,7 +42,6 @@ namespace Spire {
         TableModelTransactionLog m_transaction;
         boost::signals2::scoped_connection m_source_connection;
 
-        void clear();
         void on_operation(const TableModel::Operation& operation);
   };
 }

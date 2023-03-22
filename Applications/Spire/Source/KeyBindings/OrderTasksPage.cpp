@@ -537,7 +537,7 @@ QWidget* OrderTasksPage::table_view_builder(
     if(column_id == Column::REGION || column_id == Column::QUANTITY) {
       find_focus_proxy(*cell.m_editor)->installEventFilter(this);
     }
-    m_freezing_table->freeze();
+    m_freezing_table->set_frozen(true);
   });
   cell.m_editor->connect_end_edit_signal([=] {
     if(column_id == Column::REGION || column_id == Column::QUANTITY) {
@@ -727,7 +727,7 @@ void OrderTasksPage::on_current(const optional<TableView::Index>& index) {
       m_rows->get(m_previous_index->m_row)->set_out_of_range(false);
     }
     do_search_on_all_rows();
-    m_freezing_table->unfreeze();
+    m_freezing_table->set_frozen(false);
     m_previous_row = nullptr;
   } else {
     if(index->m_column == 0) {
@@ -735,11 +735,16 @@ void OrderTasksPage::on_current(const optional<TableView::Index>& index) {
       return;
     }
     auto current_row = [&] () -> QWidget* {
-      if(index && index->m_row < m_rows->get_size()) {
+      if(index && index->m_row < m_table_body->get_table()->get_row_size()) {
         return m_table_body->get_item(*index)->parentWidget();
       }
       return nullptr;
     }();
+    if(m_table_body->get_table()->get_row_size() != m_rows->get_size()) {
+      m_previous_row = current_row;
+      m_previous_index = index;
+      return;
+    }
     auto current_row_index = [&] () -> optional<int> {
       if(!current_row) {
         return none;
@@ -763,10 +768,10 @@ void OrderTasksPage::on_current(const optional<TableView::Index>& index) {
           m_rows->get(m_previous_index->m_row)->set_out_of_range(false);
         }
         do_search_excluding_a_row(current_row);
-        m_freezing_table->unfreeze();
+        m_freezing_table->set_frozen(false);
       }
       if(is_current_item_editing()) {
-        m_freezing_table->freeze();
+        m_freezing_table->set_frozen(true);
       }
     }
     m_previous_row = current_row;
@@ -918,6 +923,8 @@ void OrderTasksPage::on_focus_changed(QWidget* old, QWidget* now) {
       m_table_body->get_current()->set(
         TableView::Index(m_table_body->get_table()->get_row_size() - 1,
           m_table_body->get_table()->get_column_size() - 1));
+    } else if(m_table_menu->isAncestorOf(now)) {
+      return;
     } else if(m_table_header->isAncestorOf(now)) {
       m_table_body->setFocus();
       if(auto current = m_table_body->get_current()->get()) {
@@ -941,7 +948,7 @@ void OrderTasksPage::on_focus_changed(QWidget* old, QWidget* now) {
         m_rows->get(current->m_row)->set_ignore_sort(false);
         m_rows->get(current->m_row)->set_out_of_range(false);
         do_search_on_all_rows();
-        m_freezing_table->unfreeze();
+        m_freezing_table->set_frozen(false);
       }
     }
   } else if(m_table_body->isAncestorOf(old) && window()->isActiveWindow()) {
