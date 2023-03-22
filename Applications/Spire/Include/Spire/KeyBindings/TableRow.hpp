@@ -31,6 +31,12 @@ namespace Spire {
       /** Sets whether this row is excluded from filtering. */
       virtual void set_ignore_filters(bool is_ignore_filters) = 0;
 
+      /** Returns <code>true</code> iff this row is excluded from sorting. */
+      virtual bool is_ignore_sort() const = 0;
+
+      /** Sets whether this row is excluded from sorting. */
+      virtual void set_ignore_sort(bool is_ignore_sort) = 0;
+
       /**
        * Returns <code>true</code> iff this row does not meet the filter or
        * sort criteria set.
@@ -39,6 +45,12 @@ namespace Spire {
 
       /** Sets whether this row doesn't meet the filter or sort criteria set. */
       virtual void set_out_of_range(bool is_out_of_range) = 0;
+
+      /** Returns <code>true</code> iff this row is filtered. */
+      virtual bool is_filtered() const = 0;
+
+      /** Sets whether this row is filtered. */
+      virtual void set_filtered(bool is_filtered) = 0;
 
     protected:
 

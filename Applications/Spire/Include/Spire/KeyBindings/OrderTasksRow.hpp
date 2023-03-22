@@ -89,9 +89,17 @@ namespace Styles {
 
       void set_ignore_filters(bool is_ignore_filters) override;
 
+      bool is_ignore_sort() const override;
+
+      void set_ignore_sort(bool is_ignore_sort) override;
+
       bool is_out_of_range() const override;
 
       void set_out_of_range(bool is_out_of_range) override;
+
+      bool is_filtered() const override;
+
+      void set_filtered(bool is_filtered) override;
 
       /**
        * Build a cell.
@@ -115,7 +123,9 @@ namespace Styles {
       QPointer<QWidget> m_grab_handle;
       bool m_is_draggable;
       bool m_is_ignore_filters;
+      bool m_is_ignore_sort;
       bool m_is_out_of_range;
+      bool m_is_filtered;
       std::unique_ptr<HoverObserver> m_hover_observer;
       boost::signals2::scoped_connection m_operation_connection;
 

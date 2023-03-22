@@ -319,7 +319,9 @@ OrderTasksRow::OrderTasksRow(std::shared_ptr<ListModel<OrderTask>> order_tasks,
     m_row_index(row),
     m_is_draggable(true),
     m_is_ignore_filters(false),
+    m_is_ignore_sort(false),
     m_is_out_of_range(false),
+    m_is_filtered(false),
     m_operation_connection(m_order_tasks->connect_operation_signal(
       std::bind_front(&OrderTasksRow::on_operation, this))) {}
 
@@ -354,6 +356,14 @@ void OrderTasksRow::set_ignore_filters(bool is_ignore_filters) {
   m_is_ignore_filters = is_ignore_filters;
 }
 
+bool OrderTasksRow::is_ignore_sort() const {
+  return m_is_ignore_sort;
+}
+
+void OrderTasksRow::set_ignore_sort(bool is_ignore_sort) {
+  m_is_ignore_sort = is_ignore_sort;
+}
+
 bool OrderTasksRow::is_out_of_range() const {
   return m_is_out_of_range;
 }
@@ -370,6 +380,15 @@ void OrderTasksRow::set_out_of_range(bool is_out_of_range) {
       unmatch(*m_row, OutOfRangeRow());
     }
   }
+}
+
+bool OrderTasksRow::is_filtered() const {
+  return m_is_filtered;
+}
+
+void OrderTasksRow::set_filtered(bool is_filtered) {
+  m_is_filtered = is_filtered;
+  set_out_of_range(m_is_filtered);
 }
 
 OrderTasksRow::TableCell OrderTasksRow::build_cell(
@@ -441,6 +460,7 @@ OrderTasksRow::TableCell OrderTasksRow::build_cell(
   }
   editor->connect_start_edit_signal([=] {
     match(*cell, Editing());
+    m_is_ignore_sort = true;
   });
   editor->connect_end_edit_signal([=] {
     unmatch(*cell, Editing());

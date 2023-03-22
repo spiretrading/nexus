@@ -50,6 +50,7 @@ namespace Spire {
       struct AddedRow {
         int m_source_index;
         bool m_is_filtered;
+        bool m_is_sorted;
 
         AddedRow();
       };
@@ -59,8 +60,10 @@ namespace Spire {
       Nexus::MarketDatabase m_markets;
       std::shared_ptr<OrderTasksToTableModel> m_order_tasks_table;
       std::shared_ptr<FilteredTableModel> m_filtered_table;
+      std::shared_ptr<SortedTableModel> m_sorted_table;
       std::shared_ptr<FreezingUpdateTableModel> m_freezing_table;
       TableBody* m_table_body;
+      TableHeader* m_table_header;
       SearchBox* m_search_box;
       ContextMenu* m_table_menu;
       std::shared_ptr<ArrayListModel<std::shared_ptr<TableRow>>> m_rows;
@@ -77,11 +80,13 @@ namespace Spire {
       boost::signals2::scoped_connection m_list_operation_connection;
       boost::signals2::scoped_connection m_source_table_operation_connection;
       boost::signals2::scoped_connection m_view_operation_connection;
+      boost::signals2::scoped_connection m_sorted_table_operation_connection;
 
       QWidget* table_view_builder(const std::shared_ptr<TableModel>& table,
         int row, int column);
       TableMatchCache::Matcher table_matcher_builder(
         const std::shared_ptr<TableModel>& table, int row, int column);
+      bool is_current_item_editing() const;
       void table_view_navigate_next();
       void table_view_navigate_previous();
       void do_search(const QString& query);
@@ -96,6 +101,7 @@ namespace Spire {
       void on_list_operation(const ListModel<OrderTask>::Operation& operation);
       void on_source_table_operation(const TableModel::Operation& operation);
       void on_view_table_operation(const TableModel::Operation& operation);
+      void on_sorted_table_operation(const TableModel::Operation& operation);
       void on_focus_changed(QWidget* old, QWidget* now);
   };
 }
