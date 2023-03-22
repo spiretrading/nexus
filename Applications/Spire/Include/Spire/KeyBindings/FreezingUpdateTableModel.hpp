@@ -19,8 +19,10 @@ namespace Spire {
        */
       explicit FreezingUpdateTableModel(std::shared_ptr<TableModel> source);
 
+      /** Returns <code>true</code> iff the update signal is frozen. */
       bool is_frozen() const;
 
+      /** Sets whether this table need to freeze the update signal. */
       void set_frozen(bool is_frozen);
 
       int get_row_size() const override;

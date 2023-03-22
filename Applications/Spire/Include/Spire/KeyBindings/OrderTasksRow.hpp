@@ -126,6 +126,7 @@ namespace Styles {
       bool m_is_ignore_sort;
       bool m_is_out_of_range;
       bool m_is_filtered;
+      RegionBox* m_region_box;
       std::unique_ptr<HoverObserver> m_hover_observer;
       boost::signals2::scoped_connection m_operation_connection;
 
@@ -134,7 +135,7 @@ namespace Styles {
         const std::shared_ptr<ComboBox::QueryModel>& region_query_model,
         const Nexus::DestinationDatabase& destinations,
         const Nexus::MarketDatabase& markets,
-        const std::shared_ptr<TableModel>& table, int row, int column) const;
+        const std::shared_ptr<TableModel>& table, int row, int column);
       EditableBox* make_empty_editor(int column,
         const std::shared_ptr<ComboBox::QueryModel>& region_query_model);
       void on_operation(const ListModel<OrderTask>::Operation& operation);

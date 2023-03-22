@@ -485,7 +485,7 @@ void OrderTasksRow::make_hover_observer() {
 EditableBox* OrderTasksRow::make_editor(
     const std::shared_ptr<ComboBox::QueryModel>& region_query_model,
     const DestinationDatabase& destinations, const MarketDatabase& markets,
-    const std::shared_ptr<TableModel>& table, int row, int column) const {
+    const std::shared_ptr<TableModel>& table, int row, int column) {
   auto input_box = [&] () -> AnyInputBox* {
     switch(static_cast<Column>(column)) {
       case Column::NAME:
@@ -494,17 +494,15 @@ EditableBox* OrderTasksRow::make_editor(
           std::make_shared<CustomColumnViewListModel<QString>>(table, column),
             row))));
       case Column::REGION:
-        return new AnyInputBox(*new RegionBox(region_query_model,
+        m_region_box = new RegionBox(region_query_model,
           make_instant_update_value_model(make_custom_list_value_model(
             std::make_shared<CustomColumnViewListModel<Region>>(table, column),
-              row))));
+              row)));
+        return new AnyInputBox(*m_region_box);
       case Column::DESTINATION:
         {
-          auto region_model = make_custom_list_value_model(
-            std::make_shared<CustomColumnViewListModel<Region>>(
-              table, static_cast<int>(Column::REGION)), row);
           auto query_model = std::make_shared<DestinationQueryModel>(
-            std::move(region_model), destinations, markets);
+            std::move(m_region_box->get_current()), destinations, markets);
           auto current_model = std::make_shared<DestinationValueModel>(
             make_instant_update_value_model(make_custom_list_value_model(
               std::make_shared<CustomColumnViewListModel<Destination>>(table,
