@@ -38,6 +38,11 @@ void TableMatchCache::on_operation(const TableModel::Operation& operation) {
     },
     [&] (const TableModel::RemoveOperation& operation) {
       m_caches.erase(std::next(m_caches.begin(), operation.m_index));
+      for(auto row = operation.m_index; row < m_table->get_row_size(); ++row) {
+        for(auto column = 0; column < m_table->get_column_size(); ++column) {
+          m_caches[row][column] = MatchCache(m_builder(m_table, row, column));
+        }
+      }
     },
     [&] (const TableModel::UpdateOperation& operation) {
       m_caches[operation.m_row][operation.m_column] = MatchCache(
