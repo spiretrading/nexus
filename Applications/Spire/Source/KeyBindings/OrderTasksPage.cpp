@@ -924,6 +924,7 @@ void OrderTasksPage::on_focus_changed(QWidget* old, QWidget* now) {
         m_rows->get(current->m_row)->set_ignore_sort(false);
         m_rows->get(current->m_row)->set_out_of_range(false);
       }
+      do_search_on_all_rows();
     } else if(find_focus_state(*m_table_body) == FocusObserver::State::NONE &&
         m_table_body->isAncestorOf(old)) {
       if(auto current = m_table_body->get_current()->get()) {
