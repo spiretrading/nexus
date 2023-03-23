@@ -25,12 +25,6 @@ namespace Nexus::MarketDataService {
     /** The MPID to display. */
     std::string m_mpid;
 
-    /**
-     * The time used as the origin of market data messages disseminated by
-     * market data server.
-     */
-    boost::posix_time::ptime m_timeOrigin;
-
     /** Whether trades should be treated as a time and sale. */
     bool m_isTimeAndSaleFeed;
   };
