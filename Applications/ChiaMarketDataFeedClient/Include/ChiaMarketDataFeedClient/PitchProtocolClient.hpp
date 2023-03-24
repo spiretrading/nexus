@@ -83,16 +83,19 @@ namespace Nexus::MarketDataService {
           continue;
         }
         m_cursor += UNIT_SIZE;
-        m_sequenceNumber = Beam::FromLittleEndian(
+        auto sequenceNumber = Beam::FromLittleEndian(
           *reinterpret_cast<const std::uint32_t*>(m_cursor));
+        if(sequenceNumber != 0) {
+          m_sequenceNumber = sequenceNumber;
+        }
         m_cursor += SEQUENCE_SIZE;
       }
       auto message =
         PitchMessage::Parse(Beam::Store(m_cursor), m_remainingSize);
       m_remainingSize -= message.m_length;
-      m_cursor += message.m_length;
+      m_cursor += message.m_length - 2;
       return message;
-    }, Beam::IO::IOException("Failed to read STAMP message."));
+    }, Beam::IO::IOException("Failed to read PITCH message."));
   }
 
   template<typename C>

@@ -86,7 +86,7 @@ namespace Nexus::MarketDataService {
   inline PitchMessage PitchMessage::Parse(
       Beam::Out<const char*> cursor, std::size_t size) {
     auto message = PitchMessage();
-    if(size < 2) {
+    if(size == 0) {
       BOOST_THROW_EXCEPTION(PitchParserException("PITCH message too short."));
     }
     message.m_length =
