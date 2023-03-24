@@ -69,18 +69,18 @@ namespace Nexus::MarketDataService {
       int size, Beam::Out<const char*> cursor);
 
     /**
-     * Parses a <code>Nexus::Side</code> field from a message.
+     * Parses a <code>Side</code> field from a message.
      * @param cursor A pointer to the first byte of the field to parse.
      * @return The value of the field.
      */
-    static Nexus::Side ParseSide(Beam::Out<const char*> cursor);
+    static Side ParseSide(Beam::Out<const char*> cursor);
 
     /**
-     * Parses a <code>Nexus::Money</code> field from a message.
+     * Parses a <code>Money</code> field from a message.
      * @param cursor A pointer to the first byte of the field to parse.
      * @return The value of the field.
      */
-    static Nexus::Money ParsePrice(Beam::Out<const char*> cursor);
+    static Money ParsePrice(Beam::Out<const char*> cursor);
   };
 
   inline PitchMessage PitchMessage::Parse(
@@ -144,7 +144,7 @@ namespace Nexus::MarketDataService {
     return value;
   }
 
-  inline Nexus::Side PitchMessage::ParseSide(Beam::Out<const char*> cursor) {
+  inline Side PitchMessage::ParseSide(Beam::Out<const char*> cursor) {
     auto value = ParseChar(Beam::Store(cursor));
     auto side = [&] {
       if(value == 'B') {
@@ -157,10 +157,10 @@ namespace Nexus::MarketDataService {
     return side;
   }
 
-  inline Nexus::Money PitchMessage::ParsePrice(Beam::Out<const char*> cursor) {
+  inline Money PitchMessage::ParsePrice(Beam::Out<const char*> cursor) {
     static auto DENOMINATOR = 10000000;
-    auto value = Nexus::Quantity(ParseUint64(Beam::Store(*cursor)));
-    return Nexus::Money(value / DENOMINATOR);
+    auto value = Quantity(ParseUint64(Beam::Store(*cursor)));
+    return Money(value / DENOMINATOR);
   }
 }
 
