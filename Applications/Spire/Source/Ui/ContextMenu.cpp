@@ -47,7 +47,8 @@ namespace {
   auto LIST_VIEW_STYLE(StyleSheet style) {
     style.get(Any()).set(EdgeNavigation::CONTAIN);
     style.get((Any() > is_a<MenuSeparator>()) << is_a<ListItem>()).
-      set(horizontal_padding(0));
+      set(horizontal_padding(0)).
+      set(border_size(0));
     style.get((Hover() > is_a<MenuSeparator>()) << is_a<ListItem>()).
       set(BackgroundColor(Qt::transparent));
     return style;
