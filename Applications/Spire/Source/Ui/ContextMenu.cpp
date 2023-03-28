@@ -32,9 +32,24 @@ namespace {
     return width;
   }
 
+  class MenuSeparator : public Box {
+    public:
+      explicit MenuSeparator(QWidget* parent = nullptr)
+          : Box(nullptr, parent) {
+        setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+        setFixedHeight(scale_height(1));
+        update_style(*this, [] (auto& style) {
+          style.get(Any()).set(BackgroundColor(QColor(0xC8C8C8)));
+        });
+      }
+  };
+
   auto LIST_VIEW_STYLE(StyleSheet style) {
-    style.get(Any()).
-      set(EdgeNavigation::CONTAIN);
+    style.get(Any()).set(EdgeNavigation::CONTAIN);
+    style.get((Any() > is_a<MenuSeparator>()) << is_a<ListItem>()).
+      set(horizontal_padding(0));
+    style.get((Hover() > is_a<MenuSeparator>()) << is_a<ListItem>()).
+      set(BackgroundColor(Qt::transparent));
     return style;
   }
 }
@@ -88,6 +103,10 @@ std::shared_ptr<BooleanModel> ContextMenu::add_check_box(const QString& name) {
 void ContextMenu::add_check_box(const QString& name,
     const std::shared_ptr<BooleanModel>& checked) {
   m_list->push(MenuItem(MenuItemType::CHECK, name, checked));
+}
+
+void ContextMenu::add_separator() {
+  m_list->push(MenuItem(MenuItemType::SEPARATOR));
 }
 
 connection ContextMenu::connect_submit_signal(
@@ -161,7 +180,7 @@ bool ContextMenu::event(QEvent* event) {
       auto item = m_list_view->get_list_item(i);
       if(item->geometry().contains(hover_event.pos())) {
         if(m_list_view->get_current()->get() != i) {
-          m_list_view->get_current()->set(i);
+          set_list_view_current(i);
           show_submenu(i);
         }
         break;
@@ -183,6 +202,8 @@ QWidget* ContextMenu::build_item(const std::shared_ptr<AnyListModel>& list,
       new CheckBox(std::get<std::shared_ptr<BooleanModel>>(item.m_data));
     check_box->set_label(item.m_name);
     return check_box;
+  } else if(item.m_type == MenuItemType::SEPARATOR) {
+    return new MenuSeparator();
   }
   auto submenu = std::get<ContextMenu*>(item.m_data);
   auto submenu_item = new SubmenuItem(item.m_name, *submenu);
@@ -212,7 +233,7 @@ void ContextMenu::clear_hover_style() {
 
 void ContextMenu::focus_first_item() {
   if(m_list_view->get_list()->get_size() > 0) {
-    m_list_view->get_current()->set(0);
+    set_list_view_current(0);
   }
 }
 
@@ -239,44 +260,6 @@ bool ContextMenu::handle_mouse_event(QMouseEvent* event) {
     }
   }
   return false;
-}
-
-void ContextMenu::on_submit(const std::any& submission) {
-  auto menu_item = std::any_cast<MenuItem&&>(
-    m_list->get(*m_list_view->get_current()->get()));
-  if(menu_item.m_type == MenuItemType::ACTION) {
-    std::get<Action>(menu_item.m_data)();
-    hide();
-    m_submit_signal(*this, menu_item.m_name);
-  }
-}
-
-void ContextMenu::on_window_style() {
-  m_window_border_size = QMargins();
-  auto& stylist = find_stylist(*m_window);
-  for(auto& property : stylist.get_computed_block()) {
-    property.visit(
-      [&] (const BorderTopSize& size) {
-        stylist.evaluate(size, [=] (auto size) {
-          m_window_border_size.setTop(size);
-        });
-      },
-      [&] (const BorderRightSize& size) {
-        stylist.evaluate(size, [=] (auto size) {
-          m_window_border_size.setRight(size);
-        });
-      },
-      [&] (const BorderBottomSize& size) {
-        stylist.evaluate(size, [=] (auto size) {
-          m_window_border_size.setBottom(size);
-        });
-      },
-      [&] (const BorderLeftSize& size) {
-        stylist.evaluate(size, [=] (auto size) {
-          m_window_border_size.setLeft(size);
-        });
-      });
-  }
 }
 
 void ContextMenu::position_menu(ListItem* item) {
@@ -316,7 +299,7 @@ void ContextMenu::hide_active_menu() {
 }
 
 void ContextMenu::show_submenu(int index) {
-  auto menu_item = std::any_cast<MenuItem&&>(m_list->get(index));
+  auto& menu_item = m_list->get(index);
   if(menu_item.m_type == MenuItemType::SUBMENU) {
     auto menu_window = m_submenus[index];
     if(m_active_menu_window == menu_window) {
@@ -327,5 +310,51 @@ void ContextMenu::show_submenu(int index) {
     m_active_menu_window->show();
     position_menu(m_list_view->get_list_item(index));
     m_active_menu_window->installEventFilter(this);
+  }
+}
+
+void ContextMenu::set_list_view_current(int index) {
+  auto& menu_item = m_list->get(index);
+  if(menu_item.m_type == MenuItemType::SEPARATOR) {
+    m_list_view->get_current()->set(none);
+    return;
+  }
+  m_list_view->get_current()->set(index);
+}
+
+void ContextMenu::on_submit(const std::any& submission) {
+  auto& menu_item = m_list->get(*m_list_view->get_current()->get());
+  if(menu_item.m_type == MenuItemType::ACTION) {
+    std::get<Action>(menu_item.m_data)();
+    hide();
+    m_submit_signal(*this, menu_item.m_name);
+  }
+}
+
+void ContextMenu::on_window_style() {
+  m_window_border_size = QMargins();
+  auto& stylist = find_stylist(*m_window);
+  for(auto& property : stylist.get_computed_block()) {
+    property.visit(
+      [&] (const BorderTopSize& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          m_window_border_size.setTop(size);
+        });
+      },
+      [&] (const BorderRightSize& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          m_window_border_size.setRight(size);
+        });
+      },
+      [&] (const BorderBottomSize& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          m_window_border_size.setBottom(size);
+        });
+      },
+      [&] (const BorderLeftSize& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          m_window_border_size.setLeft(size);
+        });
+      });
   }
 }

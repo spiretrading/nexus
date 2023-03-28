@@ -1014,6 +1014,7 @@ UiProfile Spire::make_context_menu_profile() {
         QString("Action:Medium")));
       view_menu->add_action("Small", profile.make_event_slot<>(
         QString("Action:Small")));
+      view_menu->add_separator();
       auto empty_menu = new ContextMenu(*static_cast<QWidget*>(view_menu));
       view_menu->add_menu("Empty", *empty_menu);
       menu->add_menu("View", *view_menu);
@@ -1029,11 +1030,13 @@ UiProfile Spire::make_context_menu_profile() {
         QString("Action:Side")));
       sort_menu->add_menu("Type", *type_menu);
       menu->add_menu("Sort by", *sort_menu);
+      menu->add_separator();
       menu->add_action("Cut", profile.make_event_slot<>(QString("Action:Cut")));
       menu->add_action("Copy", profile.make_event_slot<>(
         QString("Action:Copy")));
       menu->add_action("Paste", profile.make_event_slot<>(
         QString("Action:Paste")));
+      menu->add_separator();
       auto date_model = std::make_shared<LocalBooleanModel>();
       date_model->set(true);
       date_model->connect_update_signal(
@@ -1042,6 +1045,7 @@ UiProfile Spire::make_context_menu_profile() {
       auto time_model = menu->add_check_box("Time");
       time_model->connect_update_signal(
         profile.make_event_slot<bool>(QString("Time CheckedSignal")));
+      menu->add_separator();
       menu->add_action("This is a long name for test",
         profile.make_event_slot<>(
           QString("Action:This is a long name for test")));
