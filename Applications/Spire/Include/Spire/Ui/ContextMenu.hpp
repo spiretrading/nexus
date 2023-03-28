@@ -103,7 +103,7 @@ namespace Spire {
       void position_menu(ListItem* item);
       void hide_active_menu();
       void show_submenu(int index);
-      void set_list_view_current(int index);
+      void on_list_operation(const ListModel<MenuItem>::Operation& operation);
       void on_submit(const std::any& submission);
       void on_window_style();
   };

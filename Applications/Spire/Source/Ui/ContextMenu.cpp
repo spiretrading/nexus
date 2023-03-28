@@ -32,27 +32,9 @@ namespace {
     return width;
   }
 
-  class MenuSeparator : public Box {
-    public:
-      explicit MenuSeparator(QWidget* parent = nullptr)
-          : Box(nullptr, parent) {
-        setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-        setFixedHeight(scale_height(1));
-        update_style(*this, [] (auto& style) {
-          style.get(Any()).set(BackgroundColor(QColor(0xC8C8C8)));
-        });
-      }
-  };
-
   auto LIST_VIEW_STYLE(StyleSheet style) {
-    style.get(Any()).set(EdgeNavigation::CONTAIN);
-    style.get((Any() > is_a<CheckBox>()) << is_a<ListItem>()).
-      set(vertical_padding(scale_height(4)));
-    style.get((Any() > is_a<MenuSeparator>()) << is_a<ListItem>()).
-      set(horizontal_padding(0)).
-      set(border_size(0));
-    style.get((Hover() > is_a<MenuSeparator>()) << is_a<ListItem>()).
-      set(BackgroundColor(Qt::transparent));
+    style.get(Any()).
+      set(EdgeNavigation::CONTAIN);
     return style;
   }
 }
@@ -86,6 +68,8 @@ ContextMenu::ContextMenu(QWidget& parent)
   on_window_style();
   m_window_style_connection =
     connect_style_signal(*m_window, [=] { on_window_style(); });
+  m_list->connect_operation_signal(
+    std::bind_front(&ContextMenu::on_list_operation, this));
 }
 
 void ContextMenu::add_menu(const QString& name, ContextMenu& menu) {
@@ -183,7 +167,7 @@ bool ContextMenu::event(QEvent* event) {
       auto item = m_list_view->get_list_item(i);
       if(item->geometry().contains(hover_event.pos())) {
         if(m_list_view->get_current()->get() != i) {
-          set_list_view_current(i);
+          m_list_view->get_current()->set(i);
           show_submenu(i);
         }
         break;
@@ -206,7 +190,13 @@ QWidget* ContextMenu::build_item(const std::shared_ptr<AnyListModel>& list,
     check_box->set_label(item.m_name);
     return check_box;
   } else if(item.m_type == MenuItemType::SEPARATOR) {
-    return new MenuSeparator();
+    auto separator = new Box();
+    separator->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    separator->setFixedHeight(scale_height(1));
+    update_style(*separator, [] (auto& style) {
+      style.get(Any()).set(BackgroundColor(QColor(0xC8C8C8)));
+    });
+    return separator;
   }
   auto submenu = std::get<ContextMenu*>(item.m_data);
   auto submenu_item = new SubmenuItem(item.m_name, *submenu);
@@ -236,7 +226,7 @@ void ContextMenu::clear_hover_style() {
 
 void ContextMenu::focus_first_item() {
   if(m_list_view->get_list()->get_size() > 0) {
-    set_list_view_current(0);
+    m_list_view->get_current()->set(0);
   }
 }
 
@@ -316,13 +306,30 @@ void ContextMenu::show_submenu(int index) {
   }
 }
 
-void ContextMenu::set_list_view_current(int index) {
-  auto& menu_item = m_list->get(index);
-  if(menu_item.m_type == MenuItemType::SEPARATOR) {
-    m_list_view->get_current()->set(none);
-    return;
-  }
-  m_list_view->get_current()->set(index);
+void ContextMenu::on_list_operation(
+    const ListModel<MenuItem>::Operation& operation) {
+  visit(operation,
+    [&] (const ListModel<MenuItem>::AddOperation& operation) {
+      if(auto item = m_list_view->get_list_item(operation.m_index)) {
+        switch(std::any_cast<MenuItem>(operation.m_value).m_type) {
+          case MenuItemType::SEPARATOR:
+            item->setEnabled(false);
+            update_style(*item, [] (auto& style) {
+              style.get(Any()).
+                set(border_size(0)).
+                set(horizontal_padding(0));
+            });
+            break;
+          case MenuItemType::CHECK:
+            update_style(*item, [] (auto& style) {
+              style.get(Any()).set(vertical_padding(scale_height(4)));
+            });
+            break;
+          default:
+            break;
+        }
+      }
+    });
 }
 
 void ContextMenu::on_submit(const std::any& submission) {
