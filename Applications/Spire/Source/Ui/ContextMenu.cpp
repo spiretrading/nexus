@@ -46,6 +46,8 @@ namespace {
 
   auto LIST_VIEW_STYLE(StyleSheet style) {
     style.get(Any()).set(EdgeNavigation::CONTAIN);
+    style.get((Any() > is_a<CheckBox>()) << is_a<ListItem>()).
+      set(vertical_padding(scale_height(4)));
     style.get((Any() > is_a<MenuSeparator>()) << is_a<ListItem>()).
       set(horizontal_padding(0)).
       set(border_size(0));
