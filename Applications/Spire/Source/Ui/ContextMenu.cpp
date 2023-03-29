@@ -311,7 +311,7 @@ void ContextMenu::on_list_operation(
   visit(operation,
     [&] (const ListModel<MenuItem>::AddOperation& operation) {
       if(auto item = m_list_view->get_list_item(operation.m_index)) {
-        switch(std::any_cast<MenuItem>(operation.m_value).m_type) {
+        switch(std::any_cast<const MenuItem&>(operation.m_value).m_type) {
           case MenuItemType::SEPARATOR:
             item->setEnabled(false);
             update_style(*item, [] (auto& style) {
