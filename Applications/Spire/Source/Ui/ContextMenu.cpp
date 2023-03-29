@@ -19,7 +19,7 @@ using namespace Spire;
 using namespace Styles;
 
 namespace {
-  const auto MAX_WIDTH = 130;
+  const auto MIN_WIDTH = 130;
   const auto MARGIN_SIZE = 50;
 
   auto MARGIN_HEIGHT() {
@@ -43,7 +43,7 @@ ContextMenu::ContextMenu(QWidget& parent)
     : QWidget(&parent),
       m_active_menu_window(nullptr) {
   setAttribute(Qt::WA_Hover);
-  setMinimumWidth(scale_width(MAX_WIDTH));
+  setMinimumWidth(scale_width(MIN_WIDTH));
   m_list = std::make_shared<ArrayListModel<MenuItem>>();
   m_list_view = new ListView(
     m_list, std::make_shared<ListEmptySelectionModel>(),
