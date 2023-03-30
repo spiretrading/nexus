@@ -63,6 +63,7 @@
 #include "Spire/Ui/RegionBox.hpp"
 #include "Spire/Ui/RegionListItem.hpp"
 #include "Spire/Ui/ResponsiveLabel.hpp"
+#include "Spire/Ui/SaleConditionListItem.hpp"
 #include "Spire/Ui/ScalarFilterPanel.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
@@ -2993,6 +2994,21 @@ UiProfile Spire::make_responsive_label_profile() {
       });
     });
     return label;
+  });
+  return profile;
+}
+
+UiProfile Spire::make_sale_condition_list_item_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto profile = UiProfile("SaleConditionListItem", properties,
+    [] (auto& profile) {
+      auto condition_info = SaleConditionInfo(
+        TimeAndSale::Condition(TimeAndSale::Condition::Type::REGULAR, "@"),
+        "Regular Settlement");
+      auto item = new SaleConditionListItem(condition_info);
+      apply_widget_properties(item, profile.get_properties());
+      return item;
   });
   return profile;
 }
