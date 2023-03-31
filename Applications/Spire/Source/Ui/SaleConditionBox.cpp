@@ -108,11 +108,7 @@ const std::shared_ptr<SaleConditionBox::CurrentModel>&
 }
 
 const TimeAndSale::Condition& SaleConditionBox::get_submission() const {
-  if(auto& submission = m_combo_box->get_submission(); submission.has_value()) {
-    return std::any_cast<const TimeAndSale::Condition&>(submission);
-  }
-  static auto condition = TimeAndSale::Condition();
-  return condition;
+  return m_submission;
 }
 
 void SaleConditionBox::set_placeholder(const QString& placeholder) {
