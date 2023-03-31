@@ -155,6 +155,9 @@ namespace Spire {
   /** Returns a UiProfile for the ResponsiveLabel. */
   UiProfile make_responsive_label_profile();
 
+  /** Returns a UiProfile for the SaleConditionBox. */
+  UiProfile make_sale_condition_box_profile();
+
   /** Returns a UiProfile for the SaleConditionListItem. */
   UiProfile make_sale_condition_list_item_profile();
 
