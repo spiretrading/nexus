@@ -137,6 +137,8 @@ QVariant Spire::to_qvariant(const std::any& value) {
     return QVariant::fromValue(std::any_cast<Security>(value));
   } else if(value.type() == typeid(Side)) {
     return QVariant::fromValue(std::any_cast<Side>(value));
+  } else if(value.type() == typeid(TimeAndSale::Condition)) {
+    return QVariant::fromValue(std::any_cast<TimeAndSale::Condition>(value));
   } else if(value.type() == typeid(TimeInForce)) {
     return QVariant::fromValue(std::any_cast<TimeInForce>(value));
   } else if(value.type() == typeid(QColor)) {
@@ -201,6 +203,10 @@ QString Spire::displayText(Money value) {
 QString Spire::displayText(Quantity value) {
   static auto locale = QLocale();
   return locale.toString(static_cast<double>(value));
+}
+
+QString Spire::displayText(const TimeAndSale::Condition& condition) {
+  return QString::fromStdString(condition.m_code);
 }
 
 const QString& Spire::displayText(Nexus::TimeInForce time_in_force) {
@@ -389,6 +395,8 @@ QString CustomVariantItemDelegate::displayText(const QVariant& value,
       return Spire::displayText(value.value<Security>());
     } else if(value.canConvert<Side>()) {
       return Spire::displayText(value.value<Side>());
+    } else if(value.canConvert<TimeAndSale::Condition>()) {
+      return Spire::displayText(value.value<TimeAndSale::Condition>());
     } else if(value.canConvert<TimeInForce>()) {
       return Spire::displayText(value.value<TimeInForce>());
     } else if(value.canConvert<std::any>()) {
@@ -450,6 +458,9 @@ bool CustomVariantSortFilterProxyModel::lessThan(const QModelIndex& left,
   } else if(left_variant.canConvert<Side>()) {
     return compare(displayText(left_variant.value<Side>()),
       displayText(right_variant.value<Side>()), left, right);
+  } else if(left_variant.canConvert<TimeAndSale::Condition>()) {
+    return compare(displayText(left_variant.value<TimeAndSale::Condition>()),
+      displayText(right_variant.value<TimeAndSale::Condition>()), left, right);
   } else if(left_variant.canConvert<TimeInForce>()) {
     return compare(displayText(left_variant.value<TimeInForce>()),
       displayText(right_variant.value<TimeInForce>()), left, right);

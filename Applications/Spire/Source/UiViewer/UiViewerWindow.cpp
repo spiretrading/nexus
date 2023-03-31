@@ -163,6 +163,8 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_region_box_profile());
   add(make_region_list_item_profile());
   add(make_responsive_label_profile());
+  add(make_sale_condition_box_profile());
+  add(make_sale_condition_list_item_profile());
   add(make_scroll_bar_profile());
   add(make_scroll_box_profile());
   add(make_scrollable_list_box_profile());
