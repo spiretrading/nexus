@@ -4,6 +4,8 @@
 namespace Spire {
   class LocalTimeAndSalesModel;
   class TimeAndSalesModel;
+  class TimeAndSalesTableView;
+  class TimeAndSalesWindow;
   class TimeAndSalesWindowProperties;
 }
 
