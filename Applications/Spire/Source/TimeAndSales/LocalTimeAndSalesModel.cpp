@@ -1,6 +1,7 @@
 #include "Spire/TimeAndSales/LocalTimeANdSalesModel.hpp"
 #include <boost/thread/thread.hpp> 
 
+using namespace Beam;
 using namespace Beam::Queries;
 using namespace boost;
 using namespace boost::posix_time;
@@ -74,7 +75,7 @@ void LocalTimeAndSalesModel::set_query_duration(time_duration duration) {
 }
 
 QtPromise<std::vector<TimeAndSalesModel::Entry>>
-    LocalTimeAndSalesModel::query_until(Beam::Queries::Sequence sequence,
+    LocalTimeAndSalesModel::query_until(Queries::Sequence sequence,
       int max_count) {
   return QtPromise([=] {
     auto result = std::vector<TimeAndSalesModel::Entry>();
@@ -83,14 +84,14 @@ QtPromise<std::vector<TimeAndSalesModel::Entry>>
       while(count > 0) {
         result.insert(std::begin(result),
           {SequencedValue(make_time_and_sale(timestamp, m_price),
-            Beam::Queries::Sequence(to_time_t_milliseconds(timestamp))),
+            Queries::Sequence(to_time_t_milliseconds(timestamp))),
           m_indicator});
         --count;
         timestamp -= m_period;
       }
     };
     auto now = microsec_clock::local_time();
-    if(sequence >= Beam::Queries::Sequence(to_time_t_milliseconds(now))) {
+    if(sequence >= Queries::Sequence(to_time_t_milliseconds(now))) {
       populate(now);
     } else {
       populate(from_time_t_milliseconds(sequence.GetOrdinal()));
@@ -108,5 +109,5 @@ connection LocalTimeAndSalesModel::connect_update_signal(
 void LocalTimeAndSalesModel::on_timeout() {
   auto timestamp = microsec_clock::local_time();
   m_update_signal({SequencedValue(make_time_and_sale(timestamp, m_price),
-    Beam::Queries::Sequence(to_time_t_milliseconds(timestamp))), m_indicator});
+    Queries::Sequence(to_time_t_milliseconds(timestamp))), m_indicator});
 }

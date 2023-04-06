@@ -1,10 +1,11 @@
 #include "Spire/TimeAndSales/TimeAndSalesWindowProperties.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 
 using namespace Spire;
 
 TimeAndSalesWindowProperties::TimeAndSalesWindowProperties()
     : m_show_grid(false) {
-  auto font = QFont("Roboto", 10, QFont::Medium);
+  auto font = QFont("Roboto", scale_width(10), QFont::Medium);
   set_style(BboIndicator::UNKNOWN, {QColor(Qt::black), QColor(0xFFFFFF), font});
   set_style(BboIndicator::ABOVE_ASK,
     {QColor(0x007735), QColor(0xEBFFF0), font});
