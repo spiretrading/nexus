@@ -1,8 +1,9 @@
 #include "Spire/TimeAndSales/LocalTimeANdSalesModel.hpp"
-#include <boost/thread/thread.hpp> 
+#include <Beam/Threading/LiveTimer.hpp>
 
 using namespace Beam;
 using namespace Beam::Queries;
+using namespace Beam::Threading;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace boost::signals2;
@@ -96,7 +97,9 @@ QtPromise<std::vector<TimeAndSalesModel::Entry>>
     } else {
       populate(from_time_t_milliseconds(sequence.GetOrdinal()));
     }
-    this_thread::sleep(m_query_duration);
+    auto timer = LiveTimer(m_query_duration);
+    timer.Start();
+    timer.Wait();
     return result;
   }, LaunchPolicy::ASYNC);
 }
