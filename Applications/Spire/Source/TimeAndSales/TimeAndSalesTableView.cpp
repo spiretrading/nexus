@@ -3,21 +3,36 @@
 #include "Spire/Spire/ColumnViewListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ListValueModel.hpp"
+#include "Spire/Ui/ComboBox.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DurationBox.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/MarketBox.hpp"
 #include "Spire/Ui/MoneyBox.hpp"
+#include "Spire/Ui/QuantityBox.hpp"
+#include "Spire/Ui/SaleConditionBox.hpp"
+#include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/TableHeader.hpp"
 #include "Spire/Ui/TableView.hpp"
-#include "Spire/Ui/QuantityBox.hpp"
-#include "Spire/Ui/SaleConditonBox.hpp"
 
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Spire;
+using namespace Spire::Styles;
 
 namespace {
+  auto TABLE_VIEW_STYLE(StyleSheet style) {
+    style.get(Any() > is_a<TableBody>()).
+      set(horizontal_padding(0));
+    style.get(Any() > Current()).
+      set(BackgroundColor(Qt::transparent)).
+      set(border_color(QColor(Qt::transparent)));
+    style.get(Any() > CurrentRow()).set(BackgroundColor(Qt::transparent));
+    style.get(Any() > CurrentColumn()).set(BackgroundColor(Qt::transparent));
+    return style;
+  }
+
   auto make_header_model() {
     auto model = std::make_shared<ArrayListModel<TableHeaderItem::Model>>();
     model->push({"Time", "Time",
@@ -44,21 +59,17 @@ namespace {
 }
 
 TimeAndSalesTableView::TimeAndSalesTableView(
-    std::shared_ptr<TableModel> table,
-    std::shared_ptr<TimeAndSalesWindowProperties> properties, QWidget* parent)
-    : m_table(std::move(table)),
-      m_properties(std::move(properties))/*,
-      m_update_connection(m_time_and_sales->connect_update_signal(
-        std::bind_front(&TimeAndSalesTableView::on_update, this)))*/ {
-      /*m_current_connection(m_time_and_sales->get_security()->connect_update_signal(
-        std::bind_front(&TimeAndSalesTableView::on_current, this))) {*/
-  m_table_model = std::make_shared<ArrayTableModel>();
-  auto table_view = TableViewBuilder(m_table_model).
+    std::shared_ptr<TimeAndSalesTableModel> table, QWidget* parent)
+    : m_table(std::move(table)) {
+  auto table_view = TableViewBuilder(m_table).
     set_header(make_header_model()).
     set_view_builder(
       std::bind_front(&TimeAndSalesTableView::table_view_builder, this)).
     make();
   table_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  update_style(*table_view, [] (auto& style) {
+    style = TABLE_VIEW_STYLE(style);
+  });
   auto table_header = static_cast<TableHeader*>(static_cast<Box*>(
     table_view->layout()->itemAt(0)->widget())->get_body()->layout()->
       itemAt(0)->widget());
@@ -67,66 +78,102 @@ TimeAndSalesTableView::TimeAndSalesTableView(
     table_header->get_widths()->set(i, widths[i]);
   }
   enclose(*this, *table_view);
+  m_table_header = static_cast<TableHeader*>(static_cast<Box*>(
+    table_view->layout()->itemAt(0)->widget())->get_body()->layout()->
+      itemAt(0)->widget());
+  auto& scroll_box =
+    *static_cast<ScrollBox*>(table_view->layout()->itemAt(1)->widget());
+  scroll_box.setFocusPolicy(Qt::NoFocus);
+  m_table_body = static_cast<TableBody*>(&scroll_box.get_body());
 }
 
-const std::shared_ptr<TableModel>& TimeAndSalesTableView::get_table() const {
+const std::shared_ptr<TimeAndSalesTableModel>& TimeAndSalesTableView::get_table() const {
   return m_table;
 }
 
-const std::shared_ptr<TimeAndSalesWindowProperties>&
-  TimeAndSalesTableView::get_properties() const {
-  return m_properties;
+const TableItem* TimeAndSalesTableView::get_item(Index index) const {
+  return m_table_body->get_item(index);
+}
+
+TableItem* TimeAndSalesTableView::get_item(Index index) {
+  return m_table_body->get_item(index);
 }
 
 QWidget* TimeAndSalesTableView::table_view_builder(
     const std::shared_ptr<TableModel>& table, int row, int column) {
   switch(static_cast<Column>(column)) {
-  case Column::TIME:
-    return make_time_box(table->get<time_duration>(row, column));
-    //return make_time_box(make_list_value_model(
-    //  std::make_shared<ColumnViewListModel<time_duration>>(table,
-    //  column), row)->get());
-  case Column::PRICE:
-    return new MoneyBox(std::make_shared<ScalarValueModelDecorator<optional<Money>>>(make_list_value_model(
-      std::make_shared<ColumnViewListModel<Money>>(table,column), row)));
-  case Column::SIZE:
-    return new QuantityBox(std::make_shared<ScalarValueModelDecorator<optional<Quantity>>>(
-      make_list_value_model(
-      std::make_shared<ColumnViewListModel<Quantity>>(
-      table, column), row)));
-  case Column::MARKET:
-    return new MarketBox(make_list_value_model(
-      std::make_shared<ColumnViewListModel<MarketCode>>(table,column), row));
-
+    case Column::TIME:
+    {
+      auto time_box = make_time_box(table->get<ptime>(row, column).time_of_day());
+      time_box->set_read_only(true);
+      update_style(*time_box, [] (auto& style) {
+        style.get(Any()).
+          set(horizontal_padding(scale_width(1))).
+          set(vertical_padding(scale_height(1)));
+        style.get(Any() > is_a<DecimalBox>()).set(TrailingZeros(0));
+      });
+      return time_box;
+    }
+    case Column::PRICE:
+    {
+      auto modifiers = QHash<Qt::KeyboardModifier, Money>(
+        {{Qt::NoModifier, Money::ONE}, {Qt::AltModifier, 5 * Money::ONE},
+        {Qt::ControlModifier, 10 * Money::ONE}, {Qt::ShiftModifier, 20 * Money::ONE}});
+      auto money_box = new MoneyBox(std::make_shared<LocalOptionalMoneyModel>(table->get<Money>(row, column)),
+        std::move(modifiers));
+      update_style(*money_box, [] (auto& style) {
+        style.get(Any()).
+          set(horizontal_padding(scale_width(2))).
+          set(vertical_padding(scale_height(2)));
+      });
+      money_box->set_read_only(true);
+      return money_box;
+    }
+    case Column::SIZE:
+    {
+       auto modifiers = QHash<Qt::KeyboardModifier, Quantity>(
+        {{Qt::NoModifier, 1}, {Qt::AltModifier, 5}, {Qt::ControlModifier, 10},
+          {Qt::ShiftModifier, 20}});
+      auto quantity_box = new QuantityBox(std::make_shared<LocalOptionalQuantityModel>(table->get<Quantity>(row, column)),
+        std::move(modifiers));
+      update_style(*quantity_box, [] (auto& style) {
+        style.get(Any()).
+          set(horizontal_padding(scale_width(2))).
+          set(vertical_padding(scale_height(2)));
+      });
+      quantity_box->set_read_only(true);
+      return quantity_box;
+    }
+    case Column::MARKET:
+    {
+      auto market_code = table->get<std::string>(row, column);
+      auto query_model = std::make_shared<LocalComboBoxQueryModel>();
+      auto market = GetDefaultMarketDatabase().FromCode(market_code);
+      query_model->add(displayText(MarketToken(market.m_code)).toLower(), market);
+      query_model->add(QString(market.m_code.GetData()).toLower(), market);
+      auto market_box = new MarketBox(std::move(query_model),
+        std::make_shared<LocalValueModel<MarketCode>>(market_code));
+      update_style(*market_box, [] (auto& style) {
+        style.get(ReadOnly()).
+          set(horizontal_padding(scale_width(2))).
+          set(vertical_padding(scale_height(2)));
+      });
+      market_box->set_read_only(true);
+      return market_box;
+    }
+    case Column::CONDITION:
+    {
+      auto condition_box = new SaleConditionBox(std::make_shared<LocalComboBoxQueryModel>(),
+        make_list_value_model(
+        std::make_shared<ColumnViewListModel<TimeAndSale::Condition>>(table, column), row));
+      update_style(*condition_box, [] (auto& style) {
+        style.get(Any()).
+          set(horizontal_padding(scale_width(2))).
+          set(vertical_padding(scale_height(2)));
+      });
+      condition_box->set_read_only(true);
+      return condition_box;
+    }
   }
   return nullptr;
 }
-
-//void TimeAndSalesTableView::query_until(Beam::Queries::Sequence sequence) {
-//  auto results = m_time_and_sales->query_until(sequence, 20).then(
-//    [=] (std::vector<TimeAndSalesModel::Entry> entries) {
-//      for(auto& entry : entries) {
-//        auto row = std::vector<std::any>();
-//        row.push_back(entry.m_time_and_sale.GetValue().m_timestamp);
-//        row.push_back(entry.m_time_and_sale.GetValue().m_price);
-//        row.push_back(entry.m_time_and_sale.GetValue().m_size);
-//        row.push_back(entry.m_time_and_sale.GetValue().m_marketCenter);
-//        row.push_back(entry.m_time_and_sale.GetValue().m_condition);
-//        m_table_model->push(row);
-//      }
-//    });
-//}
-
-//void TimeAndSalesTableView::on_current(const Security& security) {
-//
-//}
-
-//void TimeAndSalesTableView::on_update(const TimeAndSalesModel::Entry& entry) {
-//  auto row = std::vector<std::any>();
-//  row.push_back(entry.m_time_and_sale.GetValue().m_timestamp);
-//  row.push_back(entry.m_time_and_sale.GetValue().m_price);
-//  row.push_back(entry.m_time_and_sale.GetValue().m_size);
-//  row.push_back(entry.m_time_and_sale.GetValue().m_marketCenter);
-//  row.push_back(entry.m_time_and_sale.GetValue().m_condition);
-//  m_table_model->insert(row, 0);
-//}

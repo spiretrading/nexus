@@ -20,7 +20,7 @@ namespace {
 
   auto make_time_and_sale(ptime timestamp, Money price) {
     return TimeAndSale(timestamp, price, 100, TimeAndSale::Condition(
-      TimeAndSale::Condition::Type::REGULAR, "@"), "NYSE");
+      TimeAndSale::Condition::Type::REGULAR, "@"), "XNYS");
   }
 }
 

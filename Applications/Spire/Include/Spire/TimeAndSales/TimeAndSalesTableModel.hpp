@@ -8,13 +8,11 @@
 namespace Spire {
 
   /**
-   * Implements an TimeAndSalesToTableModel that converts a list of
+   * Implements an TimeAndSalesTableModel that converts a list of
    * time and sales to a TableModel.
    */
-  class TimeAndSalesToTableModel : public TableModel {
+  class TimeAndSalesTableModel : public TableModel {
     public:
-
-      using Entry = TimeAndSalesModel::Entry;
 
       /* The available columns to display. */
       enum class Column {
@@ -39,11 +37,11 @@ namespace Spire {
       static const auto COLUMN_SIZE = 5;
 
       /**
-       * Constructs an TimeAndSalesToTableModel.
-       * @param source A list of OrderTask.
+       * Constructs an TimeAndSalesTableModel.
+       * @param source A list of time and sales.
        */
-      explicit TimeAndSalesToTableModel(
-        std::shared_ptr<ListModel<Entry>> source);
+      explicit TimeAndSalesTableModel(
+        std::shared_ptr<ListModel<Nexus::TimeAndSale>> source);
 
       int get_row_size() const override;
 
@@ -55,12 +53,12 @@ namespace Spire {
         const OperationSignal::slot_type& slot) const override;
 
     private:
-      std::shared_ptr<ListModel<Entry>> m_source;
+      std::shared_ptr<ListModel<Nexus::TimeAndSale>> m_source;
       TableModelTransactionLog m_transaction;
       boost::signals2::scoped_connection m_source_connection;
 
-      AnyRef extract_field(const Entry& entry, Column column) const;
-      void on_operation(const ListModel<Entry>::Operation& operation);
+      AnyRef extract_field(const Nexus::TimeAndSale& time_and_sale, Column column) const;
+      void on_operation(const ListModel<Nexus::TimeAndSale>::Operation& operation);
   };
 }
 

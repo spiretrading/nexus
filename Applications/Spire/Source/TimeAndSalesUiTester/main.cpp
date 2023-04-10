@@ -50,15 +50,16 @@ int main(int argc, char** argv) {
   application->setOrganizationName(QObject::tr("Spire Trading Inc"));
   application->setApplicationName(QObject::tr("TimeAndSales Ui Tester"));
   initialize_resources();
-  auto security = std::make_shared<LocalValueModel<Security>>(*ParseWildCardSecurity("MRU.TSX",
-    GetDefaultMarketDatabase(), GetDefaultCountryDatabase()));
-  auto time_and_sales = std::make_shared<LocalTimeAndSalesModel>(security->get());
-  time_and_sales->set_query_duration(boost::posix_time::seconds(5));
-  time_and_sales->set_price(Money(200));
-  time_and_sales->set_period(boost::posix_time::seconds(1));
-  time_and_sales->set_bbo_indicator(BboIndicator::AT_BID);
-  TimeAndSalesWindow window(populate_security_query_model(), std::move(security), std::move(time_and_sales),
+  TimeAndSalesWindow window(populate_security_query_model(),
     std::make_shared<TimeAndSalesWindowProperties>());
+  window.get_security()->connect_update_signal([&] (const auto& security) {
+    auto time_and_sales = std::make_shared<LocalTimeAndSalesModel>(security);
+    time_and_sales->set_query_duration(boost::posix_time::seconds(5));
+    time_and_sales->set_price(Money(200));
+    time_and_sales->set_period(boost::posix_time::seconds(1));
+    time_and_sales->set_bbo_indicator(BboIndicator::AT_BID);
+    window.set_time_and_sales_model(std::move(time_and_sales));
+    });
   window.show();
   application->exec();
 }

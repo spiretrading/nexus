@@ -3,44 +3,42 @@
 #include <QWidget>
 #include "Spire/Spire/ArrayTableModel.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesModel.hpp"
-#include "Spire/TimeAndSales/TimeAndSalesToTableModel.hpp"
+#include "Spire/TimeAndSales/TimeAndSalesTableModel.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesWindowProperties.hpp"
+#include "Spire/Ui/TableView.hpp"
 
 namespace Spire {
 
-  /** Display the time and sales TableView. */
+  /** Display the TableView to represent time and sales. */
   class TimeAndSalesTableView : public QWidget {
     public:
 
-      using Column = TimeAndSalesToTableModel::Column;
+      using Index = TableView::Index;
+      using Column = TimeAndSalesTableModel::Column;
 
       /**
        * Constructs a TimeAndSalesTableView.
-       * @param time_and_sales The time and sale to represent.
-       * @param properties 
+       * @param table The time and sale to represent.
        * @param parent The parent widget.
        */
-      explicit TimeAndSalesTableView(std::shared_ptr<TableModel> table,
-        std::shared_ptr<TimeAndSalesWindowProperties> properties,
+      explicit TimeAndSalesTableView(std::shared_ptr<TimeAndSalesTableModel> table,
         QWidget* parent = nullptr);
 
-      /* Returns the time and sales. */
-      const std::shared_ptr<TableModel>& get_table() const;
+      /* Returns the table. */
+      const std::shared_ptr<TimeAndSalesTableModel>& get_table() const;
 
-      /* Returns the properties. */
-      const std::shared_ptr<TimeAndSalesWindowProperties>& get_properties() const;
+      /** Returns the TableItem at a specified index. */
+      const TableItem* get_item(Index index) const;
+
+      /** Returns the TableItem at a specified index. */
+      TableItem* get_item(Index index);
 
     private:
-      std::shared_ptr<TableModel> m_table;
-      std::shared_ptr<TimeAndSalesWindowProperties> m_properties;
-      std::shared_ptr<ArrayTableModel> m_table_model;
-      //boost::signals2::scoped_connection m_update_connection;
-      boost::signals2::scoped_connection m_current_connection;
+      std::shared_ptr<TimeAndSalesTableModel> m_table;
+      TableHeader* m_table_header;
+      TableBody* m_table_body;
 
       QWidget* table_view_builder(const std::shared_ptr<TableModel>& table, int row, int column);
-      //void query_until(Beam::Queries::Sequence sequence);
-      //void on_current(const Nexus::Security& security);
-      //void on_update(const TimeAndSalesModel::Entry& entry);
   };
 }
 

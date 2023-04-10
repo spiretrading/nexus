@@ -10,41 +10,37 @@
 
 namespace Spire {
 
-  /** Display the time and sales window. */
+  /** Display the time and sales window for a security. */
   class TimeAndSalesWindow : public Window {
     public:
 
       /**
        * Constructs a TimeAndSalesWindow.
-       * @param time_and_sales The time and sale to represent.
+       * @param query_model The model used to query security.
+       * @param properties The display properties of the window.
        * @param parent The parent widget.
        */
       explicit TimeAndSalesWindow(
         std::shared_ptr<ComboBox::QueryModel> query_model,
-        std::shared_ptr<ValueModel<Nexus::Security>> security,
-        std::shared_ptr<TimeAndSalesModel> time_and_sales,
         std::shared_ptr<TimeAndSalesWindowProperties> properties,
         QWidget* parent = nullptr);
+
+      /* Sets the time and sales model when the security has been updated. */
+      void set_time_and_sales_model(std::shared_ptr<TimeAndSalesModel> model);
 
       /* Returns the query model. */
       const std::shared_ptr<ComboBox::QueryModel>& get_query_model() const;
 
-      /* Returns the current security. */
-      const std::shared_ptr<ValueModel<Nexus::Security>>& get_security() const;
-
-      /* Returns the time and sales. */
-      const std::shared_ptr<TimeAndSalesModel>& get_time_and_sales() const;
-
       /* Returns the properties. */
       const std::shared_ptr<TimeAndSalesWindowProperties>& get_properties() const;
 
-      /* Updates the time and sales. */
-      void update_time_and_sales(std::shared_ptr<TimeAndSalesModel> model);
+      /* Returns the security that the window represents. */
+      const std::shared_ptr<ValueModel<Nexus::Security>>& get_security() const;
 
     private:
-      std::shared_ptr<TimeAndSalesModel> m_time_and_sales;
-      std::shared_ptr<ArrayListModel<TimeAndSalesModel::Entry>> m_entries;
-         //std::shared_ptr<TimeAndSalesProperties> m_properties,
+      std::shared_ptr<TimeAndSalesModel> m_time_and_sales_model;
+      std::shared_ptr<ArrayListModel<Nexus::TimeAndSale>> m_time_and_sales;
+      std::shared_ptr<TimeAndSalesWindowProperties> m_properties;
       TimeAndSalesTableView* m_table_view;
       TransitionView* m_transition_view;
       SecurityView* m_security_view;
