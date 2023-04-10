@@ -51,6 +51,10 @@ namespace Spire {
 
       /* Constructs a TimeAndSalesModel. */
       TimeAndSalesModel() = default;
+
+    private:
+      TimeAndSalesModel(const TimeAndSalesModel&) = delete;
+      TimeAndSalesModel& operator =(const TimeAndSalesModel&) = delete;
   };
 }
 
