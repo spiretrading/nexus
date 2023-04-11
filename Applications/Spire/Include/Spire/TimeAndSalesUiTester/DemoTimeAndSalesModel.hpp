@@ -1,5 +1,5 @@
-#ifndef SPIRE_LOCAL_TIME_AND_SALES_MODEL_HPP
-#define SPIRE_LOCAL_TIME_AND_SALES_MODEL_HPP
+#ifndef SPIRE_DEMO_TIME_AND_SALES_MODEL_HPP
+#define SPIRE_DEMO_TIME_AND_SALES_MODEL_HPP
 #include <QTimer>
 #include "Nexus/Definitions/Money.hpp"
 #include "Spire/TimeAndSales/TimeAndSales.hpp"
@@ -8,14 +8,14 @@
 namespace Spire {
 
   /*
-   * Implements a local TimeAndSalesModel model that periodically produces new
-   * time and sales.
+   * Implements a TimeAndSalesModel model that periodically produces new
+   * time and sales for demonstration purposes.
    */
-  class LocalTimeAndSalesModel : public TimeAndSalesModel {
+  class DemoTimeAndSalesModel : public TimeAndSalesModel {
     public:
 
-      /** Constructs a LocalTimeAndSalesModel. */
-      explicit LocalTimeAndSalesModel(Nexus::Security security);
+      /** Constructs a DemoTimeAndSalesModel. */
+      explicit DemoTimeAndSalesModel(Nexus::Security security);
 
       /* Returns the price of new time and sales. */
       Nexus::Money get_price() const;

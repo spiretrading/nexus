@@ -1,8 +1,9 @@
-#include "Spire/TimeAndSales/LocalTimeANdSalesModel.hpp"
-#include <boost/thread/thread.hpp> 
+#include "Spire/TimeAndSalesUiTester/DemoTimeAndSalesModel.hpp"
+#include <Beam/Threading/LiveTimer.hpp>
 
 using namespace Beam;
 using namespace Beam::Queries;
+using namespace Beam::Threading;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace boost::signals2;
@@ -24,41 +25,41 @@ namespace {
   }
 }
 
-LocalTimeAndSalesModel::LocalTimeAndSalesModel(Security security) 
+DemoTimeAndSalesModel::DemoTimeAndSalesModel(Security security) 
     : m_security(std::move(security)),
       m_price(Money::ONE),
       m_indicator(BboIndicator::UNKNOWN),
       m_period(seconds(1)),
       m_query_duration(seconds(1)) {
   QObject::connect(&m_timer, &QTimer::timeout,
-    std::bind_front(&LocalTimeAndSalesModel::on_timeout, this));
+    std::bind_front(&DemoTimeAndSalesModel::on_timeout, this));
 }
 
-const Security& LocalTimeAndSalesModel::get_security() const {
+const Security& DemoTimeAndSalesModel::get_security() const {
   return m_security;
 }
 
-Money LocalTimeAndSalesModel::get_price() const {
+Money DemoTimeAndSalesModel::get_price() const {
   return m_price;
 }
 
-void LocalTimeAndSalesModel::set_price(Money price) {
+void DemoTimeAndSalesModel::set_price(Money price) {
   m_price = price;
 }
 
-BboIndicator LocalTimeAndSalesModel::get_bbo_indicator() const {
+BboIndicator DemoTimeAndSalesModel::get_bbo_indicator() const {
   return m_indicator;
 }
 
-void LocalTimeAndSalesModel::set_bbo_indicator(BboIndicator indicator) {
+void DemoTimeAndSalesModel::set_bbo_indicator(BboIndicator indicator) {
   m_indicator = indicator;
 }
 
-time_duration LocalTimeAndSalesModel::get_period() const {
+time_duration DemoTimeAndSalesModel::get_period() const {
   return m_period;
 }
 
-void LocalTimeAndSalesModel::set_period(time_duration period) {
+void DemoTimeAndSalesModel::set_period(time_duration period) {
   m_period = period;
   m_timer.stop();
   if(m_period != pos_infin) {
@@ -66,16 +67,16 @@ void LocalTimeAndSalesModel::set_period(time_duration period) {
   }
 }
 
-time_duration LocalTimeAndSalesModel::get_query_duration() const {
+time_duration DemoTimeAndSalesModel::get_query_duration() const {
   return m_query_duration;
 }
 
-void LocalTimeAndSalesModel::set_query_duration(time_duration duration) {
+void DemoTimeAndSalesModel::set_query_duration(time_duration duration) {
   m_query_duration = duration;
 }
 
 QtPromise<std::vector<TimeAndSalesModel::Entry>>
-    LocalTimeAndSalesModel::query_until(Queries::Sequence sequence,
+    DemoTimeAndSalesModel::query_until(Queries::Sequence sequence,
       int max_count) {
   return QtPromise([=] {
     auto result = std::vector<TimeAndSalesModel::Entry>();
@@ -96,17 +97,19 @@ QtPromise<std::vector<TimeAndSalesModel::Entry>>
     } else {
       populate(from_time_t_milliseconds(sequence.GetOrdinal()));
     }
-    this_thread::sleep(m_query_duration);
+    auto timer = LiveTimer(m_query_duration);
+    timer.Start();
+    timer.Wait();
     return result;
   }, LaunchPolicy::ASYNC);
 }
 
-connection LocalTimeAndSalesModel::connect_update_signal(
+connection DemoTimeAndSalesModel::connect_update_signal(
     const UpdateSignal::slot_type& slot) const {
   return m_update_signal.connect(slot);
 }
 
-void LocalTimeAndSalesModel::on_timeout() {
+void DemoTimeAndSalesModel::on_timeout() {
   auto timestamp = microsec_clock::local_time();
   m_update_signal({SequencedValue(make_time_and_sale(timestamp, m_price),
     Queries::Sequence(to_time_t_milliseconds(timestamp))), m_indicator});

@@ -2,7 +2,6 @@
 #define SPIRE_TIME_AND_SALES_HPP
 
 namespace Spire {
-  class LocalTimeAndSalesModel;
   class TimeAndSalesModel;
   class TimeAndSalesTableView;
   class TimeAndSalesWindow;
