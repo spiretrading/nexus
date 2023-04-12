@@ -20,13 +20,40 @@ namespace {
 }
 
 TimeAndSalesTableModel::TimeAndSalesTableModel(
-  std::shared_ptr<ListModel<TimeAndSale>> source)
-  : m_source(std::move(source)),
-    m_source_connection(m_source->connect_operation_signal(
-      std::bind_front(&TimeAndSalesTableModel::on_operation, this))) {}
+  std::shared_ptr<TimeAndSalesModel> model)
+  : m_model(std::move(model)),
+    m_source_connection(m_model->connect_update_signal(
+      std::bind_front(&TimeAndSalesTableModel::on_update, this))) {
+  load_snapshot(Beam::Queries::Sequence::Present(), 20);
+  m_entries.connect_operation_signal(std::bind_front(&TimeAndSalesTableModel::on_operation, this));
+}
+
+const std::shared_ptr<TimeAndSalesModel>& TimeAndSalesTableModel::get_model() const {
+  return m_model;
+}
+
+void TimeAndSalesTableModel::set_model(std::shared_ptr<TimeAndSalesModel> model) {
+  clear(m_entries);
+  m_model = std::move(model);
+  m_source_connection = m_model->connect_update_signal(
+    std::bind_front(&TimeAndSalesTableModel::on_update, this));
+  load_snapshot(Beam::Queries::Sequence::Present(), 20);
+  //auto size = m_table.get_row_size();
+  //for(auto i = size - 1; i >= 0; --i) {
+  //  m_table.remove(i);
+  //}
+}
+
+void TimeAndSalesTableModel::load_history(int max_count) {
+  load_snapshot(m_entries.get(0).m_time_and_sale.GetSequence(), max_count);
+}
+
+BboIndicator TimeAndSalesTableModel::get(int row) const {
+  return m_entries.get(row).m_indicator;
+}
 
 int TimeAndSalesTableModel::get_row_size() const {
-  return m_source->get_size();
+  return m_entries.get_size();
 }
 
 int TimeAndSalesTableModel::get_column_size() const {
@@ -37,12 +64,23 @@ AnyRef TimeAndSalesTableModel::at(int row, int column) const {
   if(column < 0 || column >= get_column_size()) {
     throw std::out_of_range("The column is out of range.");
   }
-  return extract_field(m_source->get(row), static_cast<Column>(column));
+  return extract_field(m_entries.get(row).m_time_and_sale.GetValue(),
+    static_cast<Column>(column));
 }
 
 connection TimeAndSalesTableModel::connect_operation_signal(
     const OperationSignal::slot_type& slot) const {
   return m_transaction.connect_operation_signal(slot);
+}
+
+connection TimeAndSalesTableModel::connect_begin_loading_signal(
+    const BeginLoadingSignal::slot_type& slot) const {
+  return m_begin_loading_signal.connect(slot);
+}
+
+connection TimeAndSalesTableModel::connect_end_loading_signal(
+    const EndLoadingSignal::slot_type& slot) const {
+  return m_end_loading_signal.connect(slot);
 }
 
 AnyRef TimeAndSalesTableModel::extract_field(const TimeAndSale& time_and_sale,
@@ -61,28 +99,43 @@ AnyRef TimeAndSalesTableModel::extract_field(const TimeAndSale& time_and_sale,
   return {};
 }
 
-void TimeAndSalesTableModel::on_operation(
-    const ListModel<TimeAndSale>::Operation& operation) {
-  visit(operation,
-    [&] (const ListModel<TimeAndSale>::AddOperation& operation) {
-      m_transaction.push(TableModel::AddOperation(operation.m_index,
-        to_list(operation.get_value())));
-    },
-    [&] (const ListModel<TimeAndSale>::MoveOperation& operation) {
-      m_transaction.push(TableModel::MoveOperation(
-        operation.m_source, operation.m_destination));
-    },
-    [&] (const ListModel<TimeAndSale>::RemoveOperation& operation) {
-      m_transaction.push(TableModel::RemoveOperation(operation.m_index,
-        to_list(operation.get_value())));
-    },
-    [&] (const ListModel<TimeAndSale>::UpdateOperation& operation) {
-      for(auto i = 0; i < COLUMN_SIZE; ++i) {
-        m_transaction.push(TableModel::UpdateOperation(operation.m_index, i,
-          to_any(
-            extract_field(operation.get_previous(), static_cast<Column>(i))),
-          to_any(
-            extract_field(operation.get_value(), static_cast<Column>(i)))));
+void TimeAndSalesTableModel::load_snapshot(Beam::Queries::Sequence last, int count) {
+  m_begin_loading_signal();
+  m_promise = m_model->query_until(last, count).then(
+    [=] (auto&& result) {
+      for(auto& entry : result.Get()) {
+        m_entries.push(entry);
+        //m_time_and_sales->insert(entry.m_time_and_sale.GetValue(), 0);
+        //auto time_and_sale_style = m_properties->get_style(entry.m_indicator);
+        //for(auto column = 0; column < m_table_view->get_table()->get_column_size(); ++column) {
+        //  update_style(*m_table_view->get_item({0, column}), [&] (auto& style) {
+        //    style.get(Any() > is_a<TextBox>()).
+        //    set(BackgroundColor(time_and_sale_style.m_band_color)).
+        //    set(text_style(time_and_sale_style.m_font, QColor(time_and_sale_style.m_text_color)));
+        //  style.get(Any() > Body()).
+        //    set(BackgroundColor(time_and_sale_style.m_band_color));
+        //    });
+        //}
       }
+      //return result;
+      m_end_loading_signal();
+    });
+
+}
+
+void TimeAndSalesTableModel::on_update(const TimeAndSalesModel::Entry& entry) {
+  //m_table.insert(to_row(entry.m_time_and_sale.GetValue()), 0);
+}
+
+void TimeAndSalesTableModel::on_operation(
+    const ListModel<TimeAndSalesModel::Entry>::Operation& operation) {
+  visit(operation,
+    [&] (const ListModel<TimeAndSalesModel::Entry>::AddOperation& operation) {
+      m_transaction.push(TableModel::AddOperation(operation.m_index,
+        to_list(operation.get_value().m_time_and_sale.GetValue())));
+    },
+    [&] (const ListModel<TimeAndSalesModel::Entry>::RemoveOperation& operation) {
+      m_transaction.push(TableModel::RemoveOperation(operation.m_index,
+        to_list(operation.get_value().m_time_and_sale.GetValue())));
     });
 }

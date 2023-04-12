@@ -5,8 +5,8 @@
 #include "Nexus/Definitions/SecuritySet.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Spire/Resources.hpp"
-#include "Spire/TimeAndSales/LocalTimeAndSalesModel.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
+#include "Spire/TimeAndSalesUiTester/DemoTimeAndSalesModel.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 
 using namespace Nexus;
@@ -53,12 +53,12 @@ int main(int argc, char** argv) {
   TimeAndSalesWindow window(populate_security_query_model(),
     std::make_shared<TimeAndSalesWindowProperties>());
   window.get_security()->connect_update_signal([&] (const auto& security) {
-    auto time_and_sales = std::make_shared<LocalTimeAndSalesModel>(security);
+    auto time_and_sales = std::make_shared<DemoTimeAndSalesModel>(security);
     time_and_sales->set_query_duration(boost::posix_time::seconds(5));
     time_and_sales->set_price(Money(200));
     time_and_sales->set_period(boost::posix_time::seconds(1));
     time_and_sales->set_bbo_indicator(BboIndicator::AT_BID);
-    window.set_time_and_sales_model(std::move(time_and_sales));
+    window.set_model(std::move(time_and_sales));
     });
   window.show();
   application->exec();

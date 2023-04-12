@@ -1,6 +1,6 @@
-#ifndef SPIRE_TIME_AND_SALES_TO_TABLE_MODEL_HPP
-#define SPIRE_TIME_AND_SALES_TO_TABLE_MODEL_HPP
-#include "Spire/Spire/ListModel.hpp"
+#ifndef SPIRE_TIME_AND_SALES_TABLE_MODEL_HPP
+#define SPIRE_TIME_AND_SALES_TABLE_MODEL_HPP
+#include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/TableModel.hpp"
 #include "Spire/Spire/TableModelTransactionLog.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesModel.hpp"
@@ -8,13 +8,13 @@
 namespace Spire {
 
   /**
-   * Implements an TimeAndSalesTableModel that converts a list of
-   * time and sales to a TableModel.
+   * Implements a TimeAndSalesTableModel that loads the time and sales from
+   * TimeAndSalesModel and converts them to TableModel.
    */
   class TimeAndSalesTableModel : public TableModel {
     public:
 
-      /* The available columns to display. */
+      /* Lists out the columns of the table. */
       enum class Column {
 
         /** The time column. */
@@ -36,12 +36,35 @@ namespace Spire {
       /** The number of columns in this table. */
       static const auto COLUMN_SIZE = 5;
 
+      /* Signals that time and sales are being loaded. */
+      using BeginLoadingSignal = Signal<void ()>;
+
+      /* Signals that time and sales have completed loading. */
+      using EndLoadingSignal = Signal<void ()>;
+
       /**
        * Constructs an TimeAndSalesTableModel.
        * @param source A list of time and sales.
        */
-      explicit TimeAndSalesTableModel(
-        std::shared_ptr<ListModel<Nexus::TimeAndSale>> source);
+      explicit TimeAndSalesTableModel(std::shared_ptr<TimeAndSalesModel> model);
+
+      /* Returns the model. */
+      const std::shared_ptr<TimeAndSalesModel>& get_model() const;
+
+      /* Sets the model. */
+      void set_model(std::shared_ptr<TimeAndSalesModel> model);
+
+      /**
+       * Load the historical time and sales.
+       * @param max_count The maximum number of entries to load.
+       */
+      void load_history(int max_count);
+
+      /**
+       * Returns the bbo indicator at a specified row.
+       * @throws <code>std::out_of_range</code> iff row is out of range.
+       */
+      BboIndicator get(int row) const;
 
       int get_row_size() const override;
 
@@ -52,13 +75,29 @@ namespace Spire {
       boost::signals2::connection connect_operation_signal(
         const OperationSignal::slot_type& slot) const override;
 
+      /* Connects a slot to the BeginLoadingSignal. */
+      boost::signals2::connection connect_begin_loading_signal(
+        const BeginLoadingSignal::slot_type& slot) const;
+
+      /* Connects a slot to the EndLoadingSignal. */
+      boost::signals2::connection connect_end_loading_signal(
+        const EndLoadingSignal::slot_type& slot) const;
+
     private:
-      std::shared_ptr<ListModel<Nexus::TimeAndSale>> m_source;
+      mutable BeginLoadingSignal m_begin_loading_signal;
+      mutable EndLoadingSignal m_end_loading_signal;
+      std::shared_ptr<TimeAndSalesModel> m_model;
+      //ArrayTableModel m_table;
+      ArrayListModel<TimeAndSalesModel::Entry> m_entries;
+      QtPromise<void> m_promise;
       TableModelTransactionLog m_transaction;
       boost::signals2::scoped_connection m_source_connection;
 
-      AnyRef extract_field(const Nexus::TimeAndSale& time_and_sale, Column column) const;
-      void on_operation(const ListModel<Nexus::TimeAndSale>::Operation& operation);
+      AnyRef extract_field(const Nexus::TimeAndSale& time_and_sale,
+        Column column) const;
+      void load_snapshot(Beam::Queries::Sequence last, int count);
+      void on_update(const TimeAndSalesModel::Entry& entry);
+      void on_operation(const ListModel<TimeAndSalesModel::Entry>::Operation& operation);
   };
 }
 

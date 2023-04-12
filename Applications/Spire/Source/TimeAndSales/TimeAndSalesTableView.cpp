@@ -6,13 +6,16 @@
 #include "Spire/Ui/ComboBox.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DurationBox.hpp"
+#include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/MarketBox.hpp"
 #include "Spire/Ui/MoneyBox.hpp"
 #include "Spire/Ui/QuantityBox.hpp"
 #include "Spire/Ui/SaleConditionBox.hpp"
+#include "Spire/Ui/SaleConditionListItem.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/TableHeader.hpp"
+#include "Spire/Ui/TableHeaderItem.hpp"
 #include "Spire/Ui/TableView.hpp"
 
 using namespace boost;
@@ -23,6 +26,9 @@ using namespace Spire::Styles;
 
 namespace {
   auto TABLE_VIEW_STYLE(StyleSheet style) {
+    auto font = QFont("Roboto");
+    font.setWeight(QFont::Medium);
+    font.setPixelSize(scale_width(10));
     style.get(Any() > is_a<TableBody>()).
       set(horizontal_padding(0));
     style.get(Any() > Current()).
@@ -30,6 +36,8 @@ namespace {
       set(border_color(QColor(Qt::transparent)));
     style.get(Any() > CurrentRow()).set(BackgroundColor(Qt::transparent));
     style.get(Any() > CurrentColumn()).set(BackgroundColor(Qt::transparent));
+    style.get(Any() > is_a<TableHeaderItem>() > TableHeaderItem::Label()).
+      set(Font(font));
     return style;
   }
 
@@ -56,6 +64,7 @@ namespace {
     widths.push_back(scale_width(38));
     return widths;
   }
+
 }
 
 TimeAndSalesTableView::TimeAndSalesTableView(
@@ -81,6 +90,8 @@ TimeAndSalesTableView::TimeAndSalesTableView(
   m_table_header = static_cast<TableHeader*>(static_cast<Box*>(
     table_view->layout()->itemAt(0)->widget())->get_body()->layout()->
       itemAt(0)->widget());
+  align_table_header_right(Column::PRICE);
+  align_table_header_right(Column::SIZE);
   auto& scroll_box =
     *static_cast<ScrollBox*>(table_view->layout()->itemAt(1)->widget());
   scroll_box.setFocusPolicy(Qt::NoFocus);
@@ -101,51 +112,37 @@ TableItem* TimeAndSalesTableView::get_item(Index index) {
 
 QWidget* TimeAndSalesTableView::table_view_builder(
     const std::shared_ptr<TableModel>& table, int row, int column) {
-  switch(static_cast<Column>(column)) {
-    case Column::TIME:
-    {
-      auto time_box = make_time_box(table->get<ptime>(row, column).time_of_day());
-      time_box->set_read_only(true);
-      update_style(*time_box, [] (auto& style) {
-        style.get(Any()).
-          set(horizontal_padding(scale_width(1))).
-          set(vertical_padding(scale_height(1)));
-        style.get(Any() > is_a<DecimalBox>()).set(TrailingZeros(0));
-      });
-      return time_box;
-    }
-    case Column::PRICE:
-    {
-      auto modifiers = QHash<Qt::KeyboardModifier, Money>(
-        {{Qt::NoModifier, Money::ONE}, {Qt::AltModifier, 5 * Money::ONE},
-        {Qt::ControlModifier, 10 * Money::ONE}, {Qt::ShiftModifier, 20 * Money::ONE}});
-      auto money_box = new MoneyBox(std::make_shared<LocalOptionalMoneyModel>(table->get<Money>(row, column)),
-        std::move(modifiers));
-      update_style(*money_box, [] (auto& style) {
-        style.get(Any()).
-          set(horizontal_padding(scale_width(2))).
-          set(vertical_padding(scale_height(2)));
-      });
-      money_box->set_read_only(true);
-      return money_box;
-    }
-    case Column::SIZE:
-    {
-       auto modifiers = QHash<Qt::KeyboardModifier, Quantity>(
-        {{Qt::NoModifier, 1}, {Qt::AltModifier, 5}, {Qt::ControlModifier, 10},
-          {Qt::ShiftModifier, 20}});
-      auto quantity_box = new QuantityBox(std::make_shared<LocalOptionalQuantityModel>(table->get<Quantity>(row, column)),
-        std::move(modifiers));
-      update_style(*quantity_box, [] (auto& style) {
-        style.get(Any()).
-          set(horizontal_padding(scale_width(2))).
-          set(vertical_padding(scale_height(2)));
-      });
-      quantity_box->set_read_only(true);
-      return quantity_box;
-    }
-    case Column::MARKET:
-    {
+  auto column_id = static_cast<Column>(column);
+  if(column_id == Column::TIME) {
+    auto time_box = make_time_box(table->get<ptime>(row, column).time_of_day());
+    time_box->set_read_only(true);
+    time_box->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
+    return time_box;
+  } else if(column_id == Column::PRICE) {
+    auto modifiers = QHash<Qt::KeyboardModifier, Money>(
+      {{Qt::NoModifier, Money::ONE}, {Qt::AltModifier, 5 * Money::ONE},
+      {Qt::ControlModifier, 10 * Money::ONE}, {Qt::ShiftModifier, 20 * Money::ONE}});
+    auto money_box = new MoneyBox(std::make_shared<LocalOptionalMoneyModel>(table->get<Money>(row, column)),
+      std::move(modifiers));
+    money_box->set_read_only(true);
+    update_style(*money_box, [] (auto& style) {
+      style.get(Any() > is_a<TextBox>()).
+        set(TextAlign(Qt::AlignRight));
+    });
+    return money_box;
+  } else if(column_id == Column::SIZE) {
+    auto modifiers = QHash<Qt::KeyboardModifier, Quantity>(
+      {{Qt::NoModifier, 1}, {Qt::AltModifier, 5}, {Qt::ControlModifier, 10},
+        {Qt::ShiftModifier, 20}});
+    auto quantity_box = new QuantityBox(std::make_shared<LocalOptionalQuantityModel>(table->get<Quantity>(row, column)),
+      std::move(modifiers));
+    quantity_box->set_read_only(true);
+    update_style(*quantity_box, [] (auto& style) {
+      style.get(Any() > is_a<TextBox>()).
+        set(TextAlign(Qt::AlignRight));
+    });
+    return quantity_box;
+  } else if(column_id == Column::MARKET) {
       auto market_code = table->get<std::string>(row, column);
       auto query_model = std::make_shared<LocalComboBoxQueryModel>();
       auto market = GetDefaultMarketDatabase().FromCode(market_code);
@@ -153,27 +150,33 @@ QWidget* TimeAndSalesTableView::table_view_builder(
       query_model->add(QString(market.m_code.GetData()).toLower(), market);
       auto market_box = new MarketBox(std::move(query_model),
         std::make_shared<LocalValueModel<MarketCode>>(market_code));
-      update_style(*market_box, [] (auto& style) {
-        style.get(ReadOnly()).
-          set(horizontal_padding(scale_width(2))).
-          set(vertical_padding(scale_height(2)));
-      });
       market_box->set_read_only(true);
       return market_box;
-    }
-    case Column::CONDITION:
-    {
-      auto condition_box = new SaleConditionBox(std::make_shared<LocalComboBoxQueryModel>(),
-        make_list_value_model(
-        std::make_shared<ColumnViewListModel<TimeAndSale::Condition>>(table, column), row));
-      update_style(*condition_box, [] (auto& style) {
-        style.get(Any()).
-          set(horizontal_padding(scale_width(2))).
-          set(vertical_padding(scale_height(2)));
-      });
-      condition_box->set_read_only(true);
-      return condition_box;
-    }
+  } else if(column_id == Column::CONDITION) {
+    auto condition = table->get<TimeAndSale::Condition>(row, column);
+    auto condition_info = SaleConditionInfo(condition, "");
+    auto query_model = std::make_shared<LocalComboBoxQueryModel>();
+    query_model->add(QString::fromStdString(condition.m_code).toLower(),
+      condition_info);
+    auto condition_box = new SaleConditionBox(std::move(query_model),
+      std::make_shared<LocalValueModel<TimeAndSale::Condition>>(condition));
+    condition_box->set_read_only(true);
+    return condition_box;
   }
   return nullptr;
+}
+
+void TimeAndSalesTableView::align_table_header_right(Column column) {
+  auto header_item =
+    m_table_header->layout()->itemAt(static_cast<int>(column))->widget();
+  auto layout =
+    header_item->layout()->itemAt(0)->layout()->itemAt(0)->widget()->layout();
+  static_cast<QSpacerItem*>(layout->itemAt(1))->changeSize(0, 0);
+  layout->itemAt(2)->widget()->setFixedWidth(0);
+  layout->itemAt(3)->widget()->setFixedWidth(0);
+  update_style(*header_item, [] (auto& style) {
+    style.get(Any() > TableHeaderItem::Label()).
+      set(TextAlign(Qt::Alignment(Qt::AlignRight)));
+  });
+
 }

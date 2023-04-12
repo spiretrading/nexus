@@ -3933,6 +3933,13 @@ UiProfile Spire::make_time_box_profile() {
     };
     auto& current = get<QString>("current", profile.get_properties());
     auto time_box = make_time_box();
+    update_style(*time_box, [] (auto& style) {
+      //style.get(Any()).
+      //  set(BackgroundColor(Qt::red));
+      style.get(Any() > is_a<TextBox>()).
+      set(vertical_padding(0));
+      //  //set(BackgroundColor(Qt::yellow));
+  });
     apply_widget_properties(time_box, profile.get_properties());
     current.connect_changed_signal([=] (auto value) {
       if(auto current_value = parse_time(value)) {
