@@ -40,7 +40,7 @@ namespace Spire {
 
       QWidget* table_view_builder(const std::shared_ptr<TableModel>& table, int row, int column);
       void align_header_item_right(Column column);
-      void update_header_item_style();
+      void customize_table_header();
   };
 }
 

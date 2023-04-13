@@ -11,6 +11,7 @@
 #include "Spire/Ui/MarketBox.hpp"
 #include "Spire/Ui/MoneyBox.hpp"
 #include "Spire/Ui/QuantityBox.hpp"
+#include "Spire/Ui/ResponsiveLabel.hpp"
 #include "Spire/Ui/SaleConditionBox.hpp"
 #include "Spire/Ui/SaleConditionListItem.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
@@ -90,9 +91,9 @@ TimeAndSalesTableView::TimeAndSalesTableView(
   m_table_header = static_cast<TableHeader*>(static_cast<Box*>(
     table_view->layout()->itemAt(0)->widget())->get_body()->layout()->
       itemAt(0)->widget());
+  customize_table_header();
   align_header_item_right(Column::PRICE);
   align_header_item_right(Column::SIZE);
-  update_header_item_style();
   auto& scroll_box =
     *static_cast<ScrollBox*>(table_view->layout()->itemAt(1)->widget());
   scroll_box.setFocusPolicy(Qt::NoFocus);
@@ -170,25 +171,33 @@ QWidget* TimeAndSalesTableView::table_view_builder(
 void TimeAndSalesTableView::align_header_item_right(Column column) {
   auto header_item =
     m_table_header->layout()->itemAt(static_cast<int>(column))->widget();
-  auto content_layout =
+  auto contents_layout =
     header_item->layout()->itemAt(0)->layout()->itemAt(0)->widget()->layout();
-  static_cast<QSpacerItem*>(content_layout->itemAt(1))->changeSize(0, 0);
-  content_layout->itemAt(2)->widget()->setFixedWidth(0);
-  content_layout->itemAt(3)->widget()->setFixedWidth(0);
+  static_cast<QSpacerItem*>(contents_layout->itemAt(1))->changeSize(0, 0);
+  contents_layout->itemAt(2)->widget()->setFixedWidth(0);
+  contents_layout->itemAt(3)->widget()->setFixedWidth(0);
   update_style(*header_item, [] (auto& style) {
     style.get(Any() > TableHeaderItem::Label()).
       set(TextAlign(Qt::Alignment(Qt::AlignRight | Qt::AlignVCenter)));
   });
 }
 
-void TimeAndSalesTableView::update_header_item_style() {
+void TimeAndSalesTableView::customize_table_header() {
   auto layout = m_table_header->layout();
   for(auto i = 0; i < layout->count(); ++i) {
     auto header_item = m_table_header->layout()->itemAt(i)->widget();
     auto header_item_layout = header_item->layout();
     header_item_layout->setContentsMargins({0, scale_height(5), 0, scale_height(2)});
-    auto content_layout =
+    auto contents_layout =
       header_item_layout->itemAt(0)->layout()->itemAt(0)->widget()->layout();
-    content_layout->setContentsMargins({scale_width(4), 0, 0, 0});
+    contents_layout->setContentsMargins({scale_width(4), 0, 0, 0});
+    auto labels = std::make_shared<ArrayListModel<QString>>();
+    labels->push(m_table_header->get_items()->get(i).m_name);
+    labels->push(m_table_header->get_items()->get(i).m_short_name);
+    auto name_label = new ResponsiveLabel(labels);
+    auto old = contents_layout->replaceWidget(contents_layout->itemAt(0)->widget(), name_label);
+    delete old->widget();
+    delete old;
+    match(*name_label, TableHeaderItem::Label());
   }
 }
