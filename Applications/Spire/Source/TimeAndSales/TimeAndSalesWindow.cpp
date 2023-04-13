@@ -1,29 +1,43 @@
 #include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
+#include <QResizeEvent>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/TimeAndSales/NoneTimeAndSalesModel.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesTableModel.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesTableView.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/Layouts.hpp"
+#include "Spire/Ui/ResponsiveLabel.hpp"
 #include "Spire/Ui/SecurityView.hpp"
 #include "Spire/Ui/TableItem.hpp"
 #include "Spire/Ui/TextBox.hpp"
+#include "Spire/Ui/TitleBar.hpp"
 #include "Spire/Ui/TransitionView.hpp"
 
 using namespace Nexus;
 using namespace Spire;
 using namespace Spire::Styles;
 
+namespace {
+  const auto TITLE_NAME = QObject::tr("Time and Sales");
+  const auto TITLE_SHORT_NAME = QObject::tr("T&S");
+}
+
 TimeAndSalesWindow::TimeAndSalesWindow(std::shared_ptr<ComboBox::QueryModel> query_model,
     std::shared_ptr<TimeAndSalesWindowProperties> properties,
     QWidget* parent)
     : Window(parent),
       m_properties(std::move(properties)) {
-  setWindowTitle(tr("Time and Sales"));
+  auto labels = std::make_shared<ArrayListModel<QString>>();
+  labels->push(TITLE_NAME);
+  labels->push(TITLE_SHORT_NAME);
+  m_title_label = new ResponsiveLabel(labels, this);
+  setWindowTitle(m_title_label->get_current()->get());
+  auto title_bar = static_cast<TitleBar*>(layout()->itemAt(0)->widget());
+  title_bar->layout()->itemAt(1)->widget()->installEventFilter(this);
+  m_title_label->stackUnder(title_bar);
   set_svg_icon(":/Icons/time-sales.svg");
   setWindowIcon(QIcon(":/Icons/taskbar_icons/time-sales.png"));
   resize(scale(180, 410));
-
   m_table_view = new TimeAndSalesTableView(
     std::make_shared<TimeAndSalesTableModel>(
       std::make_shared<NoneTimeAndSalesModel>(Security())));
@@ -65,8 +79,20 @@ const std::shared_ptr<TimeAndSalesWindowProperties>& TimeAndSalesWindow::get_pro
   return m_properties;
 }
 
+bool TimeAndSalesWindow::eventFilter(QObject* watched, QEvent* event) {
+  if(event->type() == QEvent::Resize) {
+    auto& resize_event = *static_cast<QResizeEvent*>(event);
+    m_title_label->resize(resize_event.size());
+    setWindowTitle(m_title_label->get_current()->get());
+  }
+  return Window::eventFilter(watched, event);
+}
+
 void TimeAndSalesWindow::on_current(const Security& security) {
-  setWindowTitle(displayText(security) + tr(" - Time and Sales"));
+  auto prefix_name = displayText(security) + " " + QString(0x2013) + " ";
+  m_title_label->get_labels()->set(0, prefix_name + TITLE_NAME);
+  m_title_label->get_labels()->set(1, prefix_name + TITLE_SHORT_NAME);
+  setWindowTitle(m_title_label->get_current()->get());
 }
 
 void TimeAndSalesWindow::on_table_operation(const TableModel::Operation& operation) {

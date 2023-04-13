@@ -44,15 +44,15 @@ namespace {
 
   auto make_header_model() {
     auto model = std::make_shared<ArrayListModel<TableHeaderItem::Model>>();
-    model->push({"Time", "Time",
+    model->push({QObject::tr("Time"), QObject::tr("Time"),
       TableHeaderItem::Order::UNORDERED, TableFilter::Filter::NONE});
-    model->push({"Price", "Px",
+    model->push({QObject::tr("Price"), QObject::tr("Px"),
       TableHeaderItem::Order::UNORDERED, TableFilter::Filter::NONE});
-    model->push({"Size", "Sz",
+    model->push({QObject::tr("Size"), QObject::tr("Sz"),
       TableHeaderItem::Order::UNORDERED, TableFilter::Filter::NONE});
-    model->push({"Market", "Mkt",
+    model->push({QObject::tr("Market"), QObject::tr("Mkt"),
       TableHeaderItem::Order::UNORDERED, TableFilter::Filter::NONE});
-    model->push({"Condition", "Cond",
+    model->push({QObject::tr("Condition"), QObject::tr("Cond"),
       TableHeaderItem::Order::UNORDERED, TableFilter::Filter::NONE});
     return model;
   }

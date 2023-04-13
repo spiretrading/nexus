@@ -37,13 +37,16 @@ namespace Spire {
       /* Returns the security that the window represents. */
       const std::shared_ptr<ValueModel<Nexus::Security>>& get_security() const;
 
+    protected:
+      bool eventFilter(QObject* watched, QEvent* event) override;
+
     private:
       std::shared_ptr<TimeAndSalesModel> m_model;
-      //std::shared_ptr<ArrayListModel<Nexus::TimeAndSale>> m_time_and_sales;
       std::shared_ptr<TimeAndSalesWindowProperties> m_properties;
       TimeAndSalesTableView* m_table_view;
       TransitionView* m_transition_view;
       SecurityView* m_security_view;
+      ResponsiveLabel* m_title_label;
       QtPromise<void> m_promise;
       boost::signals2::scoped_connection m_current_connection;
 
