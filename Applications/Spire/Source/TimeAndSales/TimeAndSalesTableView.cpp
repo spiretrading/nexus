@@ -90,8 +90,9 @@ TimeAndSalesTableView::TimeAndSalesTableView(
   m_table_header = static_cast<TableHeader*>(static_cast<Box*>(
     table_view->layout()->itemAt(0)->widget())->get_body()->layout()->
       itemAt(0)->widget());
-  align_table_header_right(Column::PRICE);
-  align_table_header_right(Column::SIZE);
+  align_header_item_right(Column::PRICE);
+  align_header_item_right(Column::SIZE);
+  update_header_item_style();
   auto& scroll_box =
     *static_cast<ScrollBox*>(table_view->layout()->itemAt(1)->widget());
   scroll_box.setFocusPolicy(Qt::NoFocus);
@@ -166,17 +167,28 @@ QWidget* TimeAndSalesTableView::table_view_builder(
   return nullptr;
 }
 
-void TimeAndSalesTableView::align_table_header_right(Column column) {
+void TimeAndSalesTableView::align_header_item_right(Column column) {
   auto header_item =
     m_table_header->layout()->itemAt(static_cast<int>(column))->widget();
-  auto layout =
+  auto content_layout =
     header_item->layout()->itemAt(0)->layout()->itemAt(0)->widget()->layout();
-  static_cast<QSpacerItem*>(layout->itemAt(1))->changeSize(0, 0);
-  layout->itemAt(2)->widget()->setFixedWidth(0);
-  layout->itemAt(3)->widget()->setFixedWidth(0);
+  static_cast<QSpacerItem*>(content_layout->itemAt(1))->changeSize(0, 0);
+  content_layout->itemAt(2)->widget()->setFixedWidth(0);
+  content_layout->itemAt(3)->widget()->setFixedWidth(0);
   update_style(*header_item, [] (auto& style) {
     style.get(Any() > TableHeaderItem::Label()).
-      set(TextAlign(Qt::Alignment(Qt::AlignRight)));
+      set(TextAlign(Qt::Alignment(Qt::AlignRight | Qt::AlignVCenter)));
   });
+}
 
+void TimeAndSalesTableView::update_header_item_style() {
+  auto layout = m_table_header->layout();
+  for(auto i = 0; i < layout->count(); ++i) {
+    auto header_item = m_table_header->layout()->itemAt(i)->widget();
+    auto header_item_layout = header_item->layout();
+    header_item_layout->setContentsMargins({0, scale_height(5), 0, scale_height(2)});
+    auto content_layout =
+      header_item_layout->itemAt(0)->layout()->itemAt(0)->widget()->layout();
+    content_layout->setContentsMargins({scale_width(4), 0, 0, 0});
+  }
 }
