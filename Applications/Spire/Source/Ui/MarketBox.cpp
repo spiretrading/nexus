@@ -1,11 +1,13 @@
 #include "Spire/Ui/MarketBox.hpp"
 #include "Spire/Spire/TransformValueModel.hpp"
+#include "Spire/Styles/Stylist.hpp"
 #include "Spire/Ui/DestinationBox.hpp"
 #include "Spire/Ui/Layouts.hpp"
 
 using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
+using namespace Spire::Styles;
 
 namespace {
   auto to_destination(const MarketDatabase::Entry& market) {
@@ -89,6 +91,7 @@ MarketBox::MarketBox(
     m_submit_signal(m_submission);
   });
   enclose(*this, *m_destination_box);
+  proxy_style(*this, *m_destination_box);
 }
 
 const std::shared_ptr<ComboBox::QueryModel>&
