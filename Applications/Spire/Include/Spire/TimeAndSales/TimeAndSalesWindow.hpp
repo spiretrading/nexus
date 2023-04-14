@@ -48,6 +48,7 @@ namespace Spire {
       SecurityView* m_security_view;
       ResponsiveLabel* m_title_label;
       QtPromise<void> m_promise;
+      bool m_is_updating_model;
       boost::signals2::scoped_connection m_current_connection;
 
       void on_current(const Nexus::Security& security);

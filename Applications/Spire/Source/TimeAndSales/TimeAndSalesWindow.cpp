@@ -13,6 +13,7 @@
 #include "Spire/Ui/TitleBar.hpp"
 #include "Spire/Ui/TransitionView.hpp"
 
+using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 using namespace Spire::Styles;
@@ -26,7 +27,8 @@ TimeAndSalesWindow::TimeAndSalesWindow(std::shared_ptr<ComboBox::QueryModel> que
     std::shared_ptr<TimeAndSalesWindowProperties> properties,
     QWidget* parent)
     : Window(parent),
-      m_properties(std::move(properties)) {
+      m_properties(std::move(properties)),
+      m_is_updating_model(false) {
   auto labels = std::make_shared<ArrayListModel<QString>>();
   labels->push(TITLE_NAME);
   labels->push(TITLE_SHORT_NAME);
@@ -52,17 +54,23 @@ TimeAndSalesWindow::TimeAndSalesWindow(std::shared_ptr<ComboBox::QueryModel> que
     style.get(Any()).set(BackgroundColor(QColor(0xFFFFFF)));
   });
   layout()->addWidget(box);
+  m_table_view->get_table()->connect_operation_signal(std::bind_front(&TimeAndSalesWindow::on_table_operation, this));
   m_table_view->get_table()->connect_begin_loading_signal([=] {
-    m_transition_view->set_status(TransitionView::Status::LOADING);
+    if(m_is_updating_model) {
+      m_transition_view->set_status(TransitionView::Status::LOADING);
+    }
   });
   m_table_view->get_table()->connect_end_loading_signal([=] {
-    m_transition_view->set_status(TransitionView::Status::READY);
+    if(m_is_updating_model) {
+      m_transition_view->set_status(TransitionView::Status::READY);
+      m_is_updating_model = false;
+    }
   });
-  m_table_view->get_table()->connect_operation_signal(std::bind_front(&TimeAndSalesWindow::on_table_operation, this));
 }
 
 void TimeAndSalesWindow::set_model(std::shared_ptr<TimeAndSalesModel> model) {
   m_transition_view->set_status(TransitionView::Status::NONE);
+  m_is_updating_model = true;
   m_table_view->get_table()->set_model(std::move(model));
 }
 
@@ -99,15 +107,16 @@ void TimeAndSalesWindow::on_table_operation(const TableModel::Operation& operati
     [&] (const TableModel::AddOperation& operation) {
       auto time_and_sale_style = m_properties->get_style(m_table_view->get_table()->get(operation.m_index));
       for(auto column = 0; column < m_table_view->get_table()->get_column_size(); ++column) {
-        update_style(*m_table_view->get_item({operation.m_index, column}),
-          [&] (auto& style) {
-            style.get(Any() > is_a<TextBox>()).
-              set(text_style(time_and_sale_style.m_font, QColor(time_and_sale_style.m_text_color)));
-            style.get(Any() > Body()).
-              set(BackgroundColor(time_and_sale_style.m_band_color)).
-              set(horizontal_padding(scale_width(2))).
-              set(vertical_padding(scale_height(1.5)));
-          });
+        auto item = m_table_view->get_item({operation.m_index, column});
+        update_style(*item, [&] (auto& style) {
+          style.get(Any() > is_a<TextBox>()).
+            set(text_style(time_and_sale_style.m_font, QColor(time_and_sale_style.m_text_color)));
+          style.get(Any() > Body()).
+            set(BackgroundColor(time_and_sale_style.m_band_color)).
+            set(horizontal_padding(scale_width(2))).
+            set(vertical_padding(scale_height(1.5)));
+        });
+        item->setDisabled(true);
       }
     },
     [&] (const TableModel::RemoveOperation& operation) {

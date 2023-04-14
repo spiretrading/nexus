@@ -1,4 +1,5 @@
 #include "Spire/TimeAndSales/TimeAndSalesTableView.hpp"
+#include <QMovie>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ColumnViewListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
@@ -14,6 +15,7 @@
 #include "Spire/Ui/ResponsiveLabel.hpp"
 #include "Spire/Ui/SaleConditionBox.hpp"
 #include "Spire/Ui/SaleConditionListItem.hpp"
+#include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/TableHeader.hpp"
 #include "Spire/Ui/TableHeaderItem.hpp"
@@ -44,6 +46,10 @@ namespace {
     style.get(Any() > CurrentColumn()).set(BackgroundColor(Qt::transparent));
     style.get(Any() > is_a<TableHeaderItem>() > TableHeaderItem::Label()).
       set(TextStyle(font, QColor(0x595959)));
+    //style.get(Any() > is_a<PullIndicator>()).
+    //  set(Visibility::INVISIBLE);
+    //style.get(Any() > PullDelayed() > is_a<PullIndicator>()).
+    //  set(Visibility::VISIBLE);
     return style;
   }
 
@@ -71,13 +77,42 @@ namespace {
     return widths;
   }
 
+  auto make_pull_indicator() {
+    auto spinner = new QMovie(":/Icons/spinner.gif", QByteArray());
+    spinner->setScaledSize(scale(16, 16));
+    spinner->start();
+    auto spinner_widget = new QLabel();
+    spinner_widget->setMovie(spinner);
+    auto box = new Box(spinner_widget);
+    auto style = StyleSheet();
+    style.get(Any()).
+      set(BodyAlign(Qt::AlignHCenter)).
+      set(horizontal_padding(scale_width(8))).
+      set(PaddingBottom(scale_height(20))).
+      set(PaddingTop(scale_height(8)));
+    set_style(*box, std::move(style));
+    return box;
+  }
 }
 
 TimeAndSalesTableView::TimeAndSalesTableView(
     std::shared_ptr<TimeAndSalesTableModel> table, QWidget* parent)
-    : m_table(std::move(table)) {
+    : m_table(std::move(table)),
+      m_timer(new QTimer(this)),
+      m_is_loading(false),
+      m_begin_loading_connection(m_table->connect_begin_loading_signal(
+        std::bind_front(&TimeAndSalesTableView::on_begin_loading, this))),
+      m_end_loading_connection(m_table->connect_end_loading_signal(
+        std::bind_front(&TimeAndSalesTableView::on_end_loading, this))) {
+  auto current = std::make_shared<LocalValueModel<optional<Index>>>();
+  current->connect_update_signal([=] (const auto& value) {
+    if(value) {
+      current->set(none);
+    }
+  });
   auto table_view = TableViewBuilder(m_table).
     set_header(make_header_model()).
+    set_current(current).
     set_view_builder(
       std::bind_front(&TimeAndSalesTableView::table_view_builder, this)).
     make();
@@ -99,10 +134,25 @@ TimeAndSalesTableView::TimeAndSalesTableView(
   customize_table_header();
   align_header_item_right(Column::PRICE);
   align_header_item_right(Column::SIZE);
-  auto& scroll_box =
+  auto& old_scroll_box =
     *static_cast<ScrollBox*>(table_view->layout()->itemAt(1)->widget());
-  scroll_box.setFocusPolicy(Qt::NoFocus);
-  m_table_body = static_cast<TableBody*>(&scroll_box.get_body());
+  m_table_body = static_cast<TableBody*>(&old_scroll_box.get_body());
+  auto body = new QWidget();
+  auto body_layout = make_vbox_layout(body);
+  body_layout->addWidget(m_table_body);
+  m_pull_indicator = make_pull_indicator();
+  m_pull_indicator->setVisible(false);
+  body_layout->addWidget(m_pull_indicator);
+  m_scroll_box = new ScrollBox(body);
+  m_scroll_box->setFocusPolicy(Qt::NoFocus);
+  auto layout_item = table_view->layout()->replaceWidget(&old_scroll_box, m_scroll_box);
+  delete layout_item->widget();
+  delete layout_item;
+  m_scroll_box->get_vertical_scroll_bar().connect_position_signal(
+    std::bind_front(&TimeAndSalesTableView::on_scroll_position, this));
+  m_timer->setSingleShot(true);
+  connect(m_timer, &QTimer::timeout,
+    std::bind_front(&TimeAndSalesTableView::on_timer_expired, this));
 }
 
 const std::shared_ptr<TimeAndSalesTableModel>& TimeAndSalesTableView::get_table() const {
@@ -205,4 +255,35 @@ void TimeAndSalesTableView::customize_table_header() {
     delete old;
     match(*name_label, TableHeaderItem::Label());
   }
+}
+
+void TimeAndSalesTableView::on_begin_loading() {
+  if(m_is_loading) {
+    return;
+  }
+  m_is_loading = true;
+  m_timer->start(1000);
+}
+
+void TimeAndSalesTableView::on_end_loading() {
+  m_is_loading = false;
+  m_timer->stop();
+  m_pull_indicator->setVisible(false);
+}
+
+void TimeAndSalesTableView::on_scroll_position(int position) {
+  if(m_is_loading) {
+    return;
+  }
+  auto& scroll_bar = m_scroll_box->get_vertical_scroll_bar();
+  if(m_scroll_box->get_body().height() - position - m_scroll_box->get_vertical_scroll_bar().get_page_size() <
+      m_scroll_box->get_vertical_scroll_bar().get_page_size() / 2) {
+    m_table->load_history(10);
+  }
+}
+
+void TimeAndSalesTableView::on_timer_expired() {
+  m_pull_indicator->setVisible(true);
+  m_scroll_box->get_body().adjustSize();
+  scroll_to_end(m_scroll_box->get_vertical_scroll_bar());
 }

@@ -8,6 +8,13 @@
 #include "Spire/Ui/TableView.hpp"
 
 namespace Spire {
+namespace Styles {
+
+  using PullIndicator = StateSelector<void, struct PullIndicatorSelectorTag>;
+
+  /** Selects a indicator to indicate the pull request is being delayed. */
+  using PullDelayed = StateSelector<void, struct PullDelayedSelectorTag>;
+}
 
   /** Display the TableView to represent time and sales. */
   class TimeAndSalesTableView : public QWidget {
@@ -37,10 +44,21 @@ namespace Spire {
       std::shared_ptr<TimeAndSalesTableModel> m_table;
       TableHeader* m_table_header;
       TableBody* m_table_body;
+      QWidget* m_pull_indicator;
+      ScrollBox* m_scroll_box;
+      QTimer* m_timer;
+      bool m_is_loading;
+      boost::signals2::scoped_connection m_begin_loading_connection;
+      boost::signals2::scoped_connection m_end_loading_connection;
 
-      QWidget* table_view_builder(const std::shared_ptr<TableModel>& table, int row, int column);
+      QWidget* table_view_builder(
+        const std::shared_ptr<TableModel>& table, int row, int column);
       void align_header_item_right(Column column);
       void customize_table_header();
+      void on_begin_loading();
+      void on_end_loading();
+      void on_scroll_position(int position);
+      void on_timer_expired();
   };
 }
 
