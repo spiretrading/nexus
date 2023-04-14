@@ -43,7 +43,7 @@ namespace {
     style.get(Any() > CurrentRow()).set(BackgroundColor(Qt::transparent));
     style.get(Any() > CurrentColumn()).set(BackgroundColor(Qt::transparent));
     style.get(Any() > is_a<TableHeaderItem>() > TableHeaderItem::Label()).
-      set(Font(font));
+      set(TextStyle(font, QColor(0x595959)));
     return style;
   }
 
