@@ -15,6 +15,15 @@ namespace Spire {
     public:
 
       /**
+       * The type of function used to build a TimeAndSalesModel based on
+       * the security.
+       * @param security The security that the window is representing.
+       * @return A TimeAndSalesModel.
+       */
+      using ModelBuilder = std::function<std::shared_ptr<TimeAndSalesModel> (
+        const Nexus::Security& security)>;
+
+      /**
        * Constructs a TimeAndSalesWindow.
        * @param query_model The model used to query security.
        * @param properties The display properties of the window.
@@ -22,17 +31,18 @@ namespace Spire {
        */
       explicit TimeAndSalesWindow(
         std::shared_ptr<ComboBox::QueryModel> query_model,
-        std::shared_ptr<TimeAndSalesWindowProperties> properties,
+        TimeAndSalesWindowProperties properties,
+        ModelBuilder model_builder,
         QWidget* parent = nullptr);
 
-      /* Sets the time and sales model when the security has been updated. */
-      void set_model(std::shared_ptr<TimeAndSalesModel> model);
+      /* Returns the time and sales model. */
+      const std::shared_ptr<TimeAndSalesModel>& get_model() const;
 
       /* Returns the query model. */
       const std::shared_ptr<ComboBox::QueryModel>& get_query_model() const;
 
       /* Returns the properties. */
-      const std::shared_ptr<TimeAndSalesWindowProperties>& get_properties() const;
+      const TimeAndSalesWindowProperties& get_properties() const;
 
       /* Returns the security that the window represents. */
       const std::shared_ptr<ValueModel<Nexus::Security>>& get_security() const;
@@ -41,8 +51,8 @@ namespace Spire {
       bool eventFilter(QObject* watched, QEvent* event) override;
 
     private:
-      std::shared_ptr<TimeAndSalesModel> m_model;
-      std::shared_ptr<TimeAndSalesWindowProperties> m_properties;
+      TimeAndSalesWindowProperties m_properties;
+      ModelBuilder m_model_builder;
       TimeAndSalesTableView* m_table_view;
       TransitionView* m_transition_view;
       SecurityView* m_security_view;

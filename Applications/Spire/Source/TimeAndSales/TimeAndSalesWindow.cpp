@@ -23,11 +23,13 @@ namespace {
   const auto TITLE_SHORT_NAME = QObject::tr("T&S");
 }
 
-TimeAndSalesWindow::TimeAndSalesWindow(std::shared_ptr<ComboBox::QueryModel> query_model,
-    std::shared_ptr<TimeAndSalesWindowProperties> properties,
+TimeAndSalesWindow::TimeAndSalesWindow(
+    std::shared_ptr<ComboBox::QueryModel> query_model,
+    TimeAndSalesWindowProperties properties, ModelBuilder model_builder,
     QWidget* parent)
     : Window(parent),
       m_properties(std::move(properties)),
+      m_model_builder(std::move(model_builder)),
       m_is_updating_model(false) {
   auto labels = std::make_shared<ArrayListModel<QString>>();
   labels->push(TITLE_NAME);
@@ -68,10 +70,8 @@ TimeAndSalesWindow::TimeAndSalesWindow(std::shared_ptr<ComboBox::QueryModel> que
   });
 }
 
-void TimeAndSalesWindow::set_model(std::shared_ptr<TimeAndSalesModel> model) {
-  m_transition_view->set_status(TransitionView::Status::NONE);
-  m_is_updating_model = true;
-  m_table_view->get_table()->set_model(std::move(model));
+const std::shared_ptr<TimeAndSalesModel>& TimeAndSalesWindow::get_model() const {
+  return m_table_view->get_table()->get_model();
 }
 
 const std::shared_ptr<ComboBox::QueryModel>& TimeAndSalesWindow::get_query_model() const {
@@ -82,7 +82,7 @@ const std::shared_ptr<ValueModel<Nexus::Security>>& TimeAndSalesWindow::get_secu
   return m_security_view->get_current();
 }
 
-const std::shared_ptr<TimeAndSalesWindowProperties>& TimeAndSalesWindow::get_properties() const {
+const TimeAndSalesWindowProperties& TimeAndSalesWindow::get_properties() const {
   return m_properties;
 }
 
@@ -100,12 +100,15 @@ void TimeAndSalesWindow::on_current(const Security& security) {
   m_title_label->get_labels()->set(0, prefix_name + TITLE_NAME);
   m_title_label->get_labels()->set(1, prefix_name + TITLE_SHORT_NAME);
   setWindowTitle(m_title_label->get_current()->get());
+  m_transition_view->set_status(TransitionView::Status::NONE);
+  m_is_updating_model = true;
+  m_table_view->get_table()->set_model(m_model_builder(security));
 }
 
 void TimeAndSalesWindow::on_table_operation(const TableModel::Operation& operation) {
   visit(operation,
     [&] (const TableModel::AddOperation& operation) {
-      auto time_and_sale_style = m_properties->get_style(m_table_view->get_table()->get(operation.m_index));
+      auto time_and_sale_style = m_properties.get_style(m_table_view->get_table()->get(operation.m_index));
       for(auto column = 0; column < m_table_view->get_table()->get_column_size(); ++column) {
         auto item = m_table_view->get_item({operation.m_index, column});
         update_style(*item, [&] (auto& style) {
