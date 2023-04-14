@@ -30,8 +30,13 @@ namespace {
     auto font = QFont("Roboto");
     font.setWeight(QFont::Medium);
     font.setPixelSize(scale_width(10));
+    style.get(Any()).
+      set(BackgroundColor(QColor(0xFFFFFF)));
     style.get(Any() > is_a<TableBody>()).
-      set(horizontal_padding(0));
+      set(horizontal_padding(0)).
+      set(HorizontalSpacing(0)).
+      set(PaddingBottom(0)).
+      set(VerticalSpacing(0));
     style.get(Any() > Current()).
       set(BackgroundColor(Qt::transparent)).
       set(border_color(QColor(Qt::transparent)));
