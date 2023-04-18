@@ -15,7 +15,6 @@ namespace {
     list_model->push(time_and_sale.m_size);
     list_model->push(time_and_sale.m_marketCenter);
     list_model->push(time_and_sale.m_condition);
-    list_model->push({});
     return list_model;
   }
 }
@@ -54,7 +53,7 @@ int TimeAndSalesTableModel::get_row_size() const {
 }
 
 int TimeAndSalesTableModel::get_column_size() const {
-  return COLUMN_SIZE + 1;
+  return COLUMN_SIZE;
 }
 
 AnyRef TimeAndSalesTableModel::at(int row, int column) const {

@@ -88,67 +88,43 @@ namespace {
   }
 }
 
-//struct TimeAndSalesTableView::TimeAndSalesTableViewModel : public TableModel {
-//  std::shared_ptr<TimeAndSalesTableModel> m_source;
-//  TableModelTransactionLog m_transaction;
-//  boost::signals2::scoped_connection m_source_connection;
-//
-//  explicit TimeAndSalesTableViewModel(std::shared_ptr<TimeAndSalesTableModel> source)
-//    : m_source(std::move(source)),
-//      m_source_connection(m_source->connect_operation_signal(
-//        std::bind_front(&TimeAndSalesTableViewModel::on_operation, this))) {}
-//
-//  int get_row_size() const override {
-//    return m_source->get_row_size();
-//  }
-//
-//  int get_column_size() const override {
-//    return m_source->get_column_size() + 1;
-//  }
-//
-//  AnyRef at(int row, int column) const override {
-//    if(column == m_source->get_column_size()) {
-//      return {};
-//    }
-//    return m_source->at(row, column);
-//  }
-//
-//  connection connect_operation_signal(
-//      const OperationSignal::slot_type& slot) const override {
-//    return m_source->connect_operation_signal(slot);
-//  }
-//
-//  void on_operation(const TableModel::Operation& operation) {
-//    visit(operation,
-//      [&] (const TableModel::AddOperation& operation) {
-//        auto row =
-//          std::const_pointer_cast<ArrayListModel<std::any>>(
-//            std::static_pointer_cast<const ArrayListModel<std::any>>(
-//              operation.m_row));
-//        row->push({});
-//        m_transaction.push(TableModel::AddOperation(operation.m_index, row));
-//      },
-//      [&] (const TableModel::RemoveOperation& operation) {
-//        auto row =
-//          std::const_pointer_cast<ArrayListModel<std::any>>(
-//            std::static_pointer_cast<const ArrayListModel<std::any>>(
-//              operation.m_row));
-//        row->push({});
-//        m_transaction.push(TableModel::RemoveOperation(operation.m_index, row));
-//      });
-//  }
-//};
+struct TimeAndSalesTableView::TimeAndSalesTableViewModel : public TableModel {
+  std::shared_ptr<TimeAndSalesTableModel> m_source;
+
+  explicit TimeAndSalesTableViewModel(
+    std::shared_ptr<TimeAndSalesTableModel> source)
+    : m_source(std::move(source)) {}
+
+  int get_row_size() const override {
+    return m_source->get_row_size();
+  }
+
+  int get_column_size() const override {
+    return m_source->get_column_size() + 1;
+  }
+
+  AnyRef at(int row, int column) const override {
+    if(column == m_source->get_column_size()) {
+      return {};
+    }
+    return m_source->at(row, column);
+  }
+
+  connection connect_operation_signal(
+      const OperationSignal::slot_type& slot) const override {
+    return m_source->connect_operation_signal(slot);
+  }
+};
 
 TimeAndSalesTableView::TimeAndSalesTableView(
     std::shared_ptr<TimeAndSalesTableModel> table, QWidget* parent)
-    //: m_table(std::make_shared<TimeAndSalesTableViewModel>(std::move(table))),
-    : m_table(std::move(table)),
+    : m_table(std::make_shared<TimeAndSalesTableViewModel>(std::move(table))),
       m_timer(new QTimer(this)),
       m_is_loading(false),
       m_resize_index(-1),
-      m_begin_loading_connection(m_table->connect_begin_loading_signal(
+      m_begin_loading_connection(m_table->m_source->connect_begin_loading_signal(
         std::bind_front(&TimeAndSalesTableView::on_begin_loading, this))),
-      m_end_loading_connection(m_table->connect_end_loading_signal(
+      m_end_loading_connection(m_table->m_source->connect_end_loading_signal(
         std::bind_front(&TimeAndSalesTableView::on_end_loading, this))) {
   make_header_item_properties();
   auto current = std::make_shared<LocalValueModel<optional<Index>>>();
@@ -196,7 +172,7 @@ TimeAndSalesTableView::TimeAndSalesTableView(
 }
 
 const std::shared_ptr<TimeAndSalesTableModel>& TimeAndSalesTableView::get_table() const {
-  return m_table;
+  return m_table->m_source;
 }
 
 const TableItem* TimeAndSalesTableView::get_item(Index index) const {
@@ -432,7 +408,7 @@ void TimeAndSalesTableView::on_scroll_position(int position) {
   auto& scroll_bar = m_scroll_box->get_vertical_scroll_bar();
   if(m_scroll_box->get_body().height() - position - m_scroll_box->get_vertical_scroll_bar().get_page_size() <
       m_scroll_box->get_vertical_scroll_bar().get_page_size() / 2) {
-    m_table->load_history(10);
+    m_table->m_source->load_history(10);
   }
 }
 

@@ -154,7 +154,7 @@ void TimeAndSalesWindow::on_table_operation(const TableModel::Operation& operati
   visit(operation,
     [&] (const TableModel::AddOperation& operation) {
       auto time_and_sale_style = m_properties.get_style(m_table_view->get_table()->get(operation.m_index));
-      for(auto column = 0; column < m_table_view->get_table()->get_column_size(); ++column) {
+      for(auto column = 0; column < TimeAndSalesTableModel::COLUMN_SIZE + 1; ++column) {
         auto item = m_table_view->get_item({operation.m_index, column});
         update_style(*item, [&] (auto& style) {
           style.get(Any() > is_a<TextBox>()).

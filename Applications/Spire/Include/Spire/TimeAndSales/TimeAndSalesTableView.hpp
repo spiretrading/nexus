@@ -44,14 +44,13 @@ namespace Styles {
       bool eventFilter(QObject* watched, QEvent* event) override;
 
     private:
-      //struct TimeAndSalesTableViewModel;
+      struct TimeAndSalesTableViewModel;
       struct HeaderItemProperties {
         bool m_is_visible;
         Qt::Alignment m_text_align;
         int m_width;
       };
-      std::shared_ptr<TimeAndSalesTableModel> m_table;
-      //std::shared_ptr<TimeAndSalesTableViewModel> m_table;
+      std::shared_ptr<TimeAndSalesTableViewModel> m_table;
       TableHeader* m_table_header;
       TableBody* m_table_body;
       QWidget* m_pull_indicator;

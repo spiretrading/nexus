@@ -87,7 +87,6 @@ namespace Spire {
       mutable BeginLoadingSignal m_begin_loading_signal;
       mutable EndLoadingSignal m_end_loading_signal;
       std::shared_ptr<TimeAndSalesModel> m_model;
-      //ArrayTableModel m_table;
       ArrayListModel<TimeAndSalesModel::Entry> m_entries;
       QtPromise<void> m_promise;
       TableModelTransactionLog m_transaction;
