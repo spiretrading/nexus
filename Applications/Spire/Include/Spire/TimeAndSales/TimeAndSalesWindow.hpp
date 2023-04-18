@@ -49,18 +49,23 @@ namespace Spire {
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
+      void mousePressEvent(QMouseEvent* event) override;
 
     private:
       TimeAndSalesWindowProperties m_properties;
       ModelBuilder m_model_builder;
+      TitleBar* m_title_bar;
       TimeAndSalesTableView* m_table_view;
       TransitionView* m_transition_view;
       SecurityView* m_security_view;
       ResponsiveLabel* m_title_label;
+      ContextMenu* m_context_menu;
       QtPromise<void> m_promise;
       bool m_is_updating_model;
       boost::signals2::scoped_connection m_current_connection;
 
+      void make_context_menu();
+      void update_export_menu_item();
       void on_current(const Nexus::Security& security);
       void on_table_operation(const TableModel::Operation& operation);
   };

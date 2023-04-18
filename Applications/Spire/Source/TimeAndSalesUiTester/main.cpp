@@ -56,7 +56,7 @@ int main(int argc, char** argv) {
       auto time_and_sales = std::make_shared<DemoTimeAndSalesModel>(security);
       time_and_sales->set_query_duration(boost::posix_time::seconds(5));
       time_and_sales->set_price(Money(200));
-      time_and_sales->set_period(boost::posix_time::seconds(1));
+      time_and_sales->set_period(boost::posix_time::seconds(10));
       time_and_sales->set_bbo_indicator(BboIndicator::AT_BID);
       return time_and_sales;
     });

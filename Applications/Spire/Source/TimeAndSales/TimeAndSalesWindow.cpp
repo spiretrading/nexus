@@ -4,9 +4,11 @@
 #include "Spire/TimeAndSales/NoneTimeAndSalesModel.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesTableModel.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesTableView.hpp"
+#include "Spire/Ui/ContextMenu.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ResponsiveLabel.hpp"
+#include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/SecurityView.hpp"
 #include "Spire/Ui/TableItem.hpp"
 #include "Spire/Ui/TextBox.hpp"
@@ -36,9 +38,9 @@ TimeAndSalesWindow::TimeAndSalesWindow(
   labels->push(TITLE_SHORT_NAME);
   m_title_label = new ResponsiveLabel(labels, this);
   setWindowTitle(m_title_label->get_current()->get());
-  auto title_bar = static_cast<TitleBar*>(layout()->itemAt(0)->widget());
-  title_bar->layout()->itemAt(1)->widget()->installEventFilter(this);
-  m_title_label->stackUnder(title_bar);
+  m_title_bar = static_cast<TitleBar*>(layout()->itemAt(0)->widget());
+  m_title_bar->layout()->itemAt(1)->widget()->installEventFilter(this);
+  m_title_label->stackUnder(m_title_bar);
   set_svg_icon(":/Icons/time-sales.svg");
   setWindowIcon(QIcon(":/Icons/taskbar_icons/time-sales.png"));
   resize(scale(180, 410));
@@ -68,6 +70,7 @@ TimeAndSalesWindow::TimeAndSalesWindow(
       m_is_updating_model = false;
     }
   });
+  make_context_menu();
 }
 
 const std::shared_ptr<TimeAndSalesModel>& TimeAndSalesWindow::get_model() const {
@@ -93,6 +96,48 @@ bool TimeAndSalesWindow::eventFilter(QObject* watched, QEvent* event) {
     setWindowTitle(m_title_label->get_current()->get());
   }
   return Window::eventFilter(watched, event);
+}
+
+void TimeAndSalesWindow::mousePressEvent(QMouseEvent* event) {
+  if(event->button() == Qt::RightButton && !m_table_view->isHidden()) {
+    auto table_header = static_cast<TableHeader*>(static_cast<Box*>(
+      m_table_view->layout()->itemAt(0)->widget()->layout()->itemAt(0)->widget())->get_body()->layout()->
+      itemAt(0)->widget());
+    if((rect().adjusted(0, m_title_bar->height() + table_header->height(), 0, 0).contains(event->pos()))) {
+      m_context_menu->window()->move(event->globalPos());
+      m_context_menu->show();
+    }
+  }
+}
+
+void TimeAndSalesWindow::make_context_menu() {
+  m_context_menu = new ContextMenu(*this);
+  m_context_menu->add_action(tr("Properties"), [] {});
+  auto link_menu = new ContextMenu(*static_cast<QWidget*>(m_context_menu));
+  m_context_menu->add_menu(tr("Link to"), *link_menu);
+  m_context_menu->add_separator();
+  m_context_menu->add_action(tr("Export"), [] {});
+  update_export_menu_item();
+}
+
+void TimeAndSalesWindow::update_export_menu_item() {
+  auto list_view = static_cast<ListView*>(m_context_menu->layout()->itemAt(0)->widget());
+  auto export_item = list_view->get_list_item(list_view->get_list()->get_size() - 1);
+  if(m_table_view->get_table()->get_row_size() == 0) {
+    if(export_item->isEnabled()) {
+      export_item->setEnabled(false);
+      update_style(*export_item, [] (auto& style) {
+        style.get(Any() > is_a<TextBox>()).set(TextColor(QColor(0xC8C8C8)));
+      });
+    }
+  } else {
+    if(!export_item->isEnabled()) {
+      export_item->setEnabled(true);
+      update_style(*export_item, [] (auto& style) {
+        style.get(Any() > is_a<TextBox>()).set(TextColor(Qt::black));
+      });
+    }
+  }
 }
 
 void TimeAndSalesWindow::on_current(const Security& security) {
@@ -121,7 +166,9 @@ void TimeAndSalesWindow::on_table_operation(const TableModel::Operation& operati
         });
         item->setDisabled(true);
       }
+      update_export_menu_item();
     },
     [&] (const TableModel::RemoveOperation& operation) {
+      update_export_menu_item();
     });
 }

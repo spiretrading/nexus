@@ -108,7 +108,7 @@ void TimeAndSalesTableModel::load_snapshot(Beam::Queries::Sequence last, int cou
 }
 
 void TimeAndSalesTableModel::on_update(const TimeAndSalesModel::Entry& entry) {
-  //m_table.insert(to_row(entry.m_time_and_sale.GetValue()), 0);
+  m_entries.insert(entry, 0);
 }
 
 void TimeAndSalesTableModel::on_operation(
