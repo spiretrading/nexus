@@ -187,6 +187,8 @@ QWidget* ContextMenu::build_item(const std::shared_ptr<AnyListModel>& list,
   } else if(item.m_type == MenuItemType::CHECK) {
     auto check_box =
       new CheckBox(std::get<std::shared_ptr<BooleanModel>>(item.m_data));
+    check_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    check_box->setLayoutDirection(Qt::RightToLeft);
     check_box->set_label(item.m_name);
     return check_box;
   } else if(item.m_type == MenuItemType::SEPARATOR) {
