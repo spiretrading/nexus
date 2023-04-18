@@ -15,6 +15,7 @@ namespace {
     list_model->push(time_and_sale.m_size);
     list_model->push(time_and_sale.m_marketCenter);
     list_model->push(time_and_sale.m_condition);
+    list_model->push({});
     return list_model;
   }
 }
@@ -38,10 +39,6 @@ void TimeAndSalesTableModel::set_model(std::shared_ptr<TimeAndSalesModel> model)
   m_source_connection = m_model->connect_update_signal(
     std::bind_front(&TimeAndSalesTableModel::on_update, this));
   load_snapshot(Beam::Queries::Sequence::Present(), 20);
-  //auto size = m_table.get_row_size();
-  //for(auto i = size - 1; i >= 0; --i) {
-  //  m_table.remove(i);
-  //}
 }
 
 void TimeAndSalesTableModel::load_history(int max_count) {
@@ -57,7 +54,7 @@ int TimeAndSalesTableModel::get_row_size() const {
 }
 
 int TimeAndSalesTableModel::get_column_size() const {
-  return COLUMN_SIZE;
+  return COLUMN_SIZE + 1;
 }
 
 AnyRef TimeAndSalesTableModel::at(int row, int column) const {
@@ -105,22 +102,9 @@ void TimeAndSalesTableModel::load_snapshot(Beam::Queries::Sequence last, int cou
     [=] (auto&& result) {
       for(auto& entry : result.Get()) {
         m_entries.push(entry);
-        //m_time_and_sales->insert(entry.m_time_and_sale.GetValue(), 0);
-        //auto time_and_sale_style = m_properties->get_style(entry.m_indicator);
-        //for(auto column = 0; column < m_table_view->get_table()->get_column_size(); ++column) {
-        //  update_style(*m_table_view->get_item({0, column}), [&] (auto& style) {
-        //    style.get(Any() > is_a<TextBox>()).
-        //    set(BackgroundColor(time_and_sale_style.m_band_color)).
-        //    set(text_style(time_and_sale_style.m_font, QColor(time_and_sale_style.m_text_color)));
-        //  style.get(Any() > Body()).
-        //    set(BackgroundColor(time_and_sale_style.m_band_color));
-        //    });
-        //}
       }
-      //return result;
       m_end_loading_signal();
     });
-
 }
 
 void TimeAndSalesTableModel::on_update(const TimeAndSalesModel::Entry& entry) {

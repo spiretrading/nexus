@@ -23,7 +23,8 @@ TableHeader::TableHeader(
       if(is_last) {
         return QSizePolicy::Expanding;
       }
-      return QSizePolicy::Fixed;
+      //return QSizePolicy::Fixed;
+      return QSizePolicy::Expanding;
     }();
     item->setSizePolicy(horizontal_policy, QSizePolicy::Preferred);
     if(!is_last) {

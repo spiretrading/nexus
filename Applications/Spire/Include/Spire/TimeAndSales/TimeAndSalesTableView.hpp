@@ -40,25 +40,45 @@ namespace Styles {
       /** Returns the TableItem at a specified index. */
       TableItem* get_item(Index index);
 
+    protected:
+      bool eventFilter(QObject* watched, QEvent* event) override;
+
     private:
+      //struct TimeAndSalesTableViewModel;
+      struct HeaderItemProperties {
+        bool m_is_visible;
+        Qt::Alignment m_text_align;
+        int m_width;
+      };
       std::shared_ptr<TimeAndSalesTableModel> m_table;
+      //std::shared_ptr<TimeAndSalesTableViewModel> m_table;
       TableHeader* m_table_header;
       TableBody* m_table_body;
       QWidget* m_pull_indicator;
       ScrollBox* m_scroll_box;
       QTimer* m_timer;
+      ContextMenu* m_table_columns_menu;
+      std::vector<HeaderItemProperties> m_header_item_properties;
       bool m_is_loading;
+      int m_resize_index;
+      QPoint m_resize_position;
       boost::signals2::scoped_connection m_begin_loading_connection;
       boost::signals2::scoped_connection m_end_loading_connection;
 
       QWidget* table_view_builder(
         const std::shared_ptr<TableModel>& table, int row, int column);
-      void align_header_item_right(Column column);
+      void make_header_item_properties();
+      void make_table_columns_sub_menu();
       void customize_table_header();
+      int get_next_sibling_index(int index);
+      std::tuple<int, int> get_next_sibling(int index);
+      void resize_column_widths();
       void on_begin_loading();
       void on_end_loading();
       void on_scroll_position(int position);
       void on_timer_expired();
+      void on_start_resize(int index);
+      void on_end_resize(int index);
   };
 }
 

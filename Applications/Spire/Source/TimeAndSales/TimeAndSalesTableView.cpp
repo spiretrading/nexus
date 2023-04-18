@@ -1,10 +1,12 @@
 #include "Spire/TimeAndSales/TimeAndSalesTableView.hpp"
+#include <QMouseEvent>
 #include <QMovie>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ColumnViewListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ListValueModel.hpp"
 #include "Spire/Ui/ComboBox.hpp"
+#include "Spire/Ui/ContextMenu.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DurationBox.hpp"
 #include "Spire/Ui/Icon.hpp"
@@ -19,10 +21,12 @@
 #include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/TableHeader.hpp"
 #include "Spire/Ui/TableHeaderItem.hpp"
+#include "Spire/Ui/TableItem.hpp"
 #include "Spire/Ui/TableView.hpp"
 
 using namespace boost;
 using namespace boost::posix_time;
+using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 using namespace Spire::Styles;
@@ -46,10 +50,6 @@ namespace {
     style.get(Any() > CurrentColumn()).set(BackgroundColor(Qt::transparent));
     style.get(Any() > is_a<TableHeaderItem>() > TableHeaderItem::Label()).
       set(TextStyle(font, QColor(0x595959)));
-    //style.get(Any() > is_a<PullIndicator>()).
-    //  set(Visibility::INVISIBLE);
-    //style.get(Any() > PullDelayed() > is_a<PullIndicator>()).
-    //  set(Visibility::VISIBLE);
     return style;
   }
 
@@ -65,16 +65,9 @@ namespace {
       TableHeaderItem::Order::UNORDERED, TableFilter::Filter::NONE});
     model->push({QObject::tr("Condition"), QObject::tr("Cond"),
       TableHeaderItem::Order::UNORDERED, TableFilter::Filter::NONE});
+    model->push({"", "", TableHeaderItem::Order::UNORDERED,
+      TableFilter::Filter::NONE});
     return model;
-  }
-
-  auto make_header_widths() {
-    auto widths = std::vector<int>();
-    widths.push_back(scale_width(45));
-    widths.push_back(scale_width(50));
-    widths.push_back(scale_width(40));
-    widths.push_back(scale_width(38));
-    return widths;
   }
 
   auto make_pull_indicator() {
@@ -95,15 +88,69 @@ namespace {
   }
 }
 
+//struct TimeAndSalesTableView::TimeAndSalesTableViewModel : public TableModel {
+//  std::shared_ptr<TimeAndSalesTableModel> m_source;
+//  TableModelTransactionLog m_transaction;
+//  boost::signals2::scoped_connection m_source_connection;
+//
+//  explicit TimeAndSalesTableViewModel(std::shared_ptr<TimeAndSalesTableModel> source)
+//    : m_source(std::move(source)),
+//      m_source_connection(m_source->connect_operation_signal(
+//        std::bind_front(&TimeAndSalesTableViewModel::on_operation, this))) {}
+//
+//  int get_row_size() const override {
+//    return m_source->get_row_size();
+//  }
+//
+//  int get_column_size() const override {
+//    return m_source->get_column_size() + 1;
+//  }
+//
+//  AnyRef at(int row, int column) const override {
+//    if(column == m_source->get_column_size()) {
+//      return {};
+//    }
+//    return m_source->at(row, column);
+//  }
+//
+//  connection connect_operation_signal(
+//      const OperationSignal::slot_type& slot) const override {
+//    return m_source->connect_operation_signal(slot);
+//  }
+//
+//  void on_operation(const TableModel::Operation& operation) {
+//    visit(operation,
+//      [&] (const TableModel::AddOperation& operation) {
+//        auto row =
+//          std::const_pointer_cast<ArrayListModel<std::any>>(
+//            std::static_pointer_cast<const ArrayListModel<std::any>>(
+//              operation.m_row));
+//        row->push({});
+//        m_transaction.push(TableModel::AddOperation(operation.m_index, row));
+//      },
+//      [&] (const TableModel::RemoveOperation& operation) {
+//        auto row =
+//          std::const_pointer_cast<ArrayListModel<std::any>>(
+//            std::static_pointer_cast<const ArrayListModel<std::any>>(
+//              operation.m_row));
+//        row->push({});
+//        m_transaction.push(TableModel::RemoveOperation(operation.m_index, row));
+//      });
+//  }
+//};
+
 TimeAndSalesTableView::TimeAndSalesTableView(
     std::shared_ptr<TimeAndSalesTableModel> table, QWidget* parent)
+    //: m_table(std::make_shared<TimeAndSalesTableViewModel>(std::move(table))),
     : m_table(std::move(table)),
       m_timer(new QTimer(this)),
       m_is_loading(false),
+      m_resize_index(-1),
       m_begin_loading_connection(m_table->connect_begin_loading_signal(
         std::bind_front(&TimeAndSalesTableView::on_begin_loading, this))),
       m_end_loading_connection(m_table->connect_end_loading_signal(
         std::bind_front(&TimeAndSalesTableView::on_end_loading, this))) {
+  make_header_item_properties();
   auto current = std::make_shared<LocalValueModel<optional<Index>>>();
   current->connect_update_signal([=] (const auto& value) {
     if(value) {
@@ -120,20 +167,12 @@ TimeAndSalesTableView::TimeAndSalesTableView(
   update_style(*table_view, [] (auto& style) {
     style = TABLE_VIEW_STYLE(style);
   });
-  auto table_header = static_cast<TableHeader*>(static_cast<Box*>(
-    table_view->layout()->itemAt(0)->widget())->get_body()->layout()->
-      itemAt(0)->widget());
-  auto widths = make_header_widths();
-  for(auto i = 0; i < std::ssize(widths); ++i) {
-    table_header->get_widths()->set(i, widths[i]);
-  }
   enclose(*this, *table_view);
   m_table_header = static_cast<TableHeader*>(static_cast<Box*>(
     table_view->layout()->itemAt(0)->widget())->get_body()->layout()->
       itemAt(0)->widget());
+  m_table_header->installEventFilter(this);
   customize_table_header();
-  align_header_item_right(Column::PRICE);
-  align_header_item_right(Column::SIZE);
   auto& old_scroll_box =
     *static_cast<ScrollBox*>(table_view->layout()->itemAt(1)->widget());
   m_table_body = static_cast<TableBody*>(&old_scroll_box.get_body());
@@ -153,6 +192,7 @@ TimeAndSalesTableView::TimeAndSalesTableView(
   m_timer->setSingleShot(true);
   connect(m_timer, &QTimer::timeout,
     std::bind_front(&TimeAndSalesTableView::on_timer_expired, this));
+  make_table_columns_sub_menu();
 }
 
 const std::shared_ptr<TimeAndSalesTableModel>& TimeAndSalesTableView::get_table() const {
@@ -165,6 +205,25 @@ const TableItem* TimeAndSalesTableView::get_item(Index index) const {
 
 TableItem* TimeAndSalesTableView::get_item(Index index) {
   return m_table_body->get_item(index);
+}
+
+bool TimeAndSalesTableView::eventFilter(QObject* watched, QEvent* event) {
+  if(watched == m_table_header) {
+    if(event->type() == QEvent::MouseButtonPress) {
+      auto& mouse_event = *static_cast<QMouseEvent*>(event);
+      if(mouse_event.button() == Qt::RightButton) {
+        m_table_columns_menu->window()->move(mouse_event.globalPos());
+        m_table_columns_menu->show();
+      }
+    } else if(event->type() == QEvent::MouseMove) {
+      if(m_resize_index == -1) {
+        return QWidget::eventFilter(watched, event);
+      }
+      resize_column_widths();
+      return true;
+    }
+  }
+  return QWidget::eventFilter(watched, event);
 }
 
 QWidget* TimeAndSalesTableView::table_view_builder(
@@ -184,8 +243,8 @@ QWidget* TimeAndSalesTableView::table_view_builder(
     money_box->set_read_only(true);
     update_style(*money_box, [] (auto& style) {
       style.get(Any() > is_a<TextBox>()).
-        set(TextAlign(Qt::AlignRight));
-    });
+      set(TextAlign(Qt::AlignRight));
+      });
     return money_box;
   } else if(column_id == Column::SIZE) {
     auto modifiers = QHash<Qt::KeyboardModifier, Quantity>(
@@ -196,19 +255,19 @@ QWidget* TimeAndSalesTableView::table_view_builder(
     quantity_box->set_read_only(true);
     update_style(*quantity_box, [] (auto& style) {
       style.get(Any() > is_a<TextBox>()).
-        set(TextAlign(Qt::AlignRight));
-    });
+      set(TextAlign(Qt::AlignRight));
+      });
     return quantity_box;
   } else if(column_id == Column::MARKET) {
-      auto market_code = table->get<std::string>(row, column);
-      auto query_model = std::make_shared<LocalComboBoxQueryModel>();
-      auto market = GetDefaultMarketDatabase().FromCode(market_code);
-      query_model->add(displayText(MarketToken(market.m_code)).toLower(), market);
-      query_model->add(QString(market.m_code.GetData()).toLower(), market);
-      auto market_box = new MarketBox(std::move(query_model),
-        std::make_shared<LocalValueModel<MarketCode>>(market_code));
-      market_box->set_read_only(true);
-      return market_box;
+    auto market_code = table->get<std::string>(row, column);
+    auto query_model = std::make_shared<LocalComboBoxQueryModel>();
+    auto market = GetDefaultMarketDatabase().FromCode(market_code);
+    query_model->add(displayText(MarketToken(market.m_code)).toLower(), market);
+    query_model->add(QString(market.m_code.GetData()).toLower(), market);
+    auto market_box = new MarketBox(std::move(query_model),
+      std::make_shared<LocalValueModel<MarketCode>>(market_code));
+    market_box->set_read_only(true);
+    return market_box;
   } else if(column_id == Column::CONDITION) {
     auto condition = table->get<TimeAndSale::Condition>(row, column);
     auto condition_info = SaleConditionInfo(condition, "");
@@ -220,31 +279,58 @@ QWidget* TimeAndSalesTableView::table_view_builder(
     condition_box->set_read_only(true);
     return condition_box;
   }
-  return nullptr;
+  return make_label("");
 }
 
-void TimeAndSalesTableView::align_header_item_right(Column column) {
-  auto header_item =
-    m_table_header->layout()->itemAt(static_cast<int>(column))->widget();
-  auto contents_layout =
-    header_item->layout()->itemAt(0)->layout()->itemAt(0)->widget()->layout();
-  static_cast<QSpacerItem*>(contents_layout->itemAt(1))->changeSize(0, 0);
-  contents_layout->itemAt(2)->widget()->setFixedWidth(0);
-  contents_layout->itemAt(3)->widget()->setFixedWidth(0);
-  update_style(*header_item, [] (auto& style) {
-    style.get(Any() > TableHeaderItem::Label()).
-      set(TextAlign(Qt::Alignment(Qt::AlignRight | Qt::AlignVCenter)));
-  });
+void TimeAndSalesTableView::make_header_item_properties() {
+  m_header_item_properties.emplace_back(false, Qt::AlignLeft, scale_width(45));
+  m_header_item_properties.emplace_back(true, Qt::AlignRight, scale_width(50));
+  m_header_item_properties.emplace_back(true, Qt::AlignRight, scale_width(40));
+  m_header_item_properties.emplace_back(true, Qt::AlignLeft, scale_width(38));
+  m_header_item_properties.emplace_back(false, Qt::AlignLeft, scale_width(34));
+  m_header_item_properties.emplace_back(false, Qt::AlignLeft, 0);
+}
+
+void TimeAndSalesTableView::make_table_columns_sub_menu() {
+  m_table_columns_menu = new ContextMenu(*this);
+  auto add_table_columns_sub_menu_item = [&] (int column, bool checked) {
+    auto checked_model = m_table_columns_menu->add_check_box(m_table_header->get_items()->get(column).m_name);
+    checked_model->set(checked);
+    checked_model->connect_update_signal([=] (auto checked) {
+      auto header_item = m_table_header->layout()->itemAt(column)->widget();
+      if(column <= TimeAndSalesTableModel::COLUMN_SIZE) {
+        if(checked) {
+          m_table_header->get_widths()->set(column, m_header_item_properties[column].m_width);
+        } else {
+          m_table_header->get_widths()->set(column, 0);
+        }
+      }
+      header_item->setVisible(checked);
+      m_header_item_properties[column].m_is_visible = checked;
+    });
+  };
+  for(auto i = 0; i < TimeAndSalesTableModel::COLUMN_SIZE; ++i) {
+    add_table_columns_sub_menu_item(i, m_header_item_properties[i].m_is_visible);
+  }
 }
 
 void TimeAndSalesTableView::customize_table_header() {
   auto layout = m_table_header->layout();
   for(auto i = 0; i < layout->count(); ++i) {
-    auto header_item = m_table_header->layout()->itemAt(i)->widget();
-    auto header_item_layout = header_item->layout();
+    auto& header_item = *static_cast<TableHeaderItem*>(m_table_header->layout()->itemAt(i)->widget());
+    auto header_item_layout = header_item.layout();
     header_item_layout->setContentsMargins({0, scale_height(5), 0, scale_height(2)});
     auto contents_layout =
       header_item_layout->itemAt(0)->layout()->itemAt(0)->widget()->layout();
+    if(m_header_item_properties[i].m_text_align == Qt::AlignRight) {
+      static_cast<QSpacerItem*>(contents_layout->itemAt(1))->changeSize(0, 0);
+      contents_layout->itemAt(2)->widget()->setFixedWidth(0);
+      contents_layout->itemAt(3)->widget()->setFixedWidth(0);
+      update_style(header_item, [] (auto& style) {
+        style.get(Any() > TableHeaderItem::Label()).
+          set(TextAlign(Qt::Alignment(Qt::AlignRight | Qt::AlignVCenter)));
+        });
+    }
     contents_layout->setContentsMargins({scale_width(4), 0, 0, 0});
     auto labels = std::make_shared<ArrayListModel<QString>>();
     labels->push(m_table_header->get_items()->get(i).m_name);
@@ -254,7 +340,75 @@ void TimeAndSalesTableView::customize_table_header() {
     delete old->widget();
     delete old;
     match(*name_label, TableHeaderItem::Label());
+    if(i < layout->count() - 1) {
+      if(m_header_item_properties[i].m_is_visible) {
+        m_table_header->get_widths()->set(i, m_header_item_properties[i].m_width);
+      } else {
+        m_table_header->get_widths()->set(i, 0);
+      }
+    }
+    header_item.connect_start_resize_signal(
+      std::bind_front(&TimeAndSalesTableView::on_start_resize, this, i));
+    header_item.connect_end_resize_signal(
+      std::bind_front(&TimeAndSalesTableView::on_end_resize, this, i));
   }
+}
+
+int TimeAndSalesTableView::get_next_sibling_index(int index) {
+  if(index == m_table_header->get_widths()->get_size() - 1) {
+    return index;
+  }
+  if(!m_header_item_properties[index + 1].m_is_visible) {
+    return get_next_sibling_index(index + 1);
+  }
+  return index + 1;
+}
+
+std::tuple<int, int> TimeAndSalesTableView::get_next_sibling(int index) {
+  if(index == m_table_header->get_widths()->get_size() - 1) {
+    auto w = 0;
+    for(auto i = 0; i != m_table_header->get_widths()->get_size(); ++i) {
+      w += m_table_header->get_widths()->get(i);
+    }
+    return std::tuple(index, m_table_header->width() - w);
+  }
+  if(!m_header_item_properties[index + 1].m_is_visible) {
+    return get_next_sibling(index + 1);
+  }
+  return std::tuple(index + 1, m_table_header->get_widths()->get(index + 1));
+}
+
+void TimeAndSalesTableView::resize_column_widths() {
+  auto position = QCursor::pos();
+  auto delta = position.x() - m_resize_position.x();
+  if(delta < 0) {
+    auto width = m_table_header->get_widths()->get(m_resize_index);
+    auto new_width = std::max(scale_width(10), width + delta);
+    delta = new_width - width;
+    position.rx() = delta + m_resize_position.x();
+    if(delta != 0) {
+      m_table_header->get_widths()->set(m_resize_index, m_table_header->get_widths()->get(m_resize_index) + delta);
+      auto sibling_index = get_next_sibling_index(m_resize_index);
+      if(sibling_index != m_table_header->get_widths()->get_size() - 1) {
+        m_table_header->get_widths()->set(
+          sibling_index, m_table_header->get_widths()->get(sibling_index) - delta);
+      }
+    }
+  } else if(delta > 0) {
+    auto [sibling_index, sibling_width] = get_next_sibling(m_resize_index);
+    auto new_sibling_width = std::max(scale_width(10), sibling_width - delta);
+    delta = new_sibling_width - sibling_width;
+    position.rx() = -delta + m_resize_position.x();
+    if(delta != 0) {
+      if(sibling_index != m_table_header->get_widths()->get_size() - 1) {
+        m_table_header->get_widths()->set(
+          sibling_index, m_table_header->get_widths()->get(sibling_index) + delta);
+      }
+      m_table_header->get_widths()->set(m_resize_index, m_table_header->get_widths()->get(m_resize_index) - delta);
+    }
+  }
+  m_resize_position = position;
+
 }
 
 void TimeAndSalesTableView::on_begin_loading() {
@@ -286,4 +440,13 @@ void TimeAndSalesTableView::on_timer_expired() {
   m_pull_indicator->setVisible(true);
   m_scroll_box->get_body().adjustSize();
   scroll_to_end(m_scroll_box->get_vertical_scroll_bar());
+}
+
+void TimeAndSalesTableView::on_start_resize(int index) {
+  m_resize_index = index;
+  m_resize_position = QCursor::pos();
+}
+
+void TimeAndSalesTableView::on_end_resize(int index) {
+  m_resize_index = -1;
 }
