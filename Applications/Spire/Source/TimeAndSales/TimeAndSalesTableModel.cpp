@@ -41,7 +41,7 @@ void TimeAndSalesTableModel::set_model(std::shared_ptr<TimeAndSalesModel> model)
 }
 
 void TimeAndSalesTableModel::load_history(int max_count) {
-  load_snapshot(m_entries.get(0).m_time_and_sale.GetSequence(), max_count);
+  load_snapshot(m_entries.get(m_entries.get_size() - 1).m_time_and_sale.GetSequence(), max_count);
 }
 
 BboIndicator TimeAndSalesTableModel::get(int row) const {
@@ -99,8 +99,9 @@ void TimeAndSalesTableModel::load_snapshot(Beam::Queries::Sequence last, int cou
   m_begin_loading_signal();
   m_promise = m_model->query_until(last, count).then(
     [=] (auto&& result) {
-      for(auto& entry : result.Get()) {
-        m_entries.push(entry);
+      auto& snapshot = result.Get();
+      for(auto i = snapshot.rbegin(); i != snapshot.rend(); ++i) {
+        m_entries.push(*i);
       }
       m_end_loading_signal();
     });

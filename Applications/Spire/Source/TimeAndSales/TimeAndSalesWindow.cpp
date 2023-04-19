@@ -158,9 +158,11 @@ void TimeAndSalesWindow::on_table_operation(const TableModel::Operation& operati
         auto item = m_table_view->get_item({operation.m_index, column});
         update_style(*item, [&] (auto& style) {
           style.get(Any() > is_a<TextBox>()).
-            set(text_style(time_and_sale_style.m_font, QColor(time_and_sale_style.m_text_color)));
+            set(text_style(time_and_sale_style.m_font,
+              QColor(time_and_sale_style.m_text_color)));
           style.get(Any() > Body()).
             set(BackgroundColor(time_and_sale_style.m_band_color)).
+            set(border_size(0)).
             set(horizontal_padding(scale_width(2))).
             set(vertical_padding(scale_height(1.5)));
         });

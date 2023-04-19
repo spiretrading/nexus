@@ -206,9 +206,21 @@ QWidget* TimeAndSalesTableView::table_view_builder(
     const std::shared_ptr<TableModel>& table, int row, int column) {
   auto column_id = static_cast<Column>(column);
   if(column_id == Column::TIME) {
-    auto time_box = make_time_box(table->get<ptime>(row, column).time_of_day());
+    auto time = table->get<ptime>(row, column).time_of_day();
+    auto time_box = make_time_box(time_duration(time.hours(), time.minutes(), time.seconds()));
     time_box->set_read_only(true);
     time_box->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
+    update_style(*time_box, [] (auto& style) {
+      style.get(ReadOnly() > is_a<TextBox>()).
+        set(vertical_padding(0));
+      style.get(Any() > is_a<DecimalBox>()).
+        set(TrailingZeros(0));
+    });
+    auto& box = *static_cast<Box*>(time_box->layout()->itemAt(0)->widget());
+    auto box_body = box.get_body();
+    for(auto i = 0; i < box_body->layout()->count(); ++i) {
+      box_body->layout()->itemAt(i)->widget()->setFixedWidth(QWIDGETSIZE_MAX);
+    }
     return time_box;
   } else if(column_id == Column::PRICE) {
     auto modifiers = QHash<Qt::KeyboardModifier, Money>(
@@ -218,9 +230,8 @@ QWidget* TimeAndSalesTableView::table_view_builder(
       std::move(modifiers));
     money_box->set_read_only(true);
     update_style(*money_box, [] (auto& style) {
-      style.get(Any() > is_a<TextBox>()).
-      set(TextAlign(Qt::AlignRight));
-      });
+      style.get(Any() > is_a<TextBox>()).set(TextAlign(Qt::AlignRight));
+    });
     return money_box;
   } else if(column_id == Column::SIZE) {
     auto modifiers = QHash<Qt::KeyboardModifier, Quantity>(
@@ -230,9 +241,8 @@ QWidget* TimeAndSalesTableView::table_view_builder(
       std::move(modifiers));
     quantity_box->set_read_only(true);
     update_style(*quantity_box, [] (auto& style) {
-      style.get(Any() > is_a<TextBox>()).
-      set(TextAlign(Qt::AlignRight));
-      });
+      style.get(Any() > is_a<TextBox>()).set(TextAlign(Qt::AlignRight));
+    });
     return quantity_box;
   } else if(column_id == Column::MARKET) {
     auto market_code = table->get<std::string>(row, column);
