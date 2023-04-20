@@ -271,7 +271,7 @@ namespace {
         m_seconds.lock())->m_source_connection);
     return ::set(*this, value, m_minutes, m_seconds,
       m_source->get().get_value_or(hours(0)) +
-      hours(value.get_value_or(0)) - hours(m_current.get_value_or(0)));
+        hours(value.get_value_or(0)) - hours(m_current.get_value_or(0)));
   }
 
   QValidator::State MinuteModel::set(const Type& value) {
@@ -283,7 +283,7 @@ namespace {
         m_seconds.lock())->m_source_connection);
     return ::set(*this, value, m_hours, m_seconds,
       m_source->get().get_value_or(minutes(0)) +
-      minutes(value.get_value_or(0)) - minutes(m_current.get_value_or(0)));
+        minutes(value.get_value_or(0)) - minutes(m_current.get_value_or(0)));
   }
 
   auto DEFAULT_STYLE() {
