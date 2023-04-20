@@ -291,6 +291,10 @@ namespace {
         linear(QColor(0xFFF1F1), revert, milliseconds(300))))).
       set(border_color(
         chain(timeout(QColor(0xB71C1C), milliseconds(550)), revert)));
+    style.get(Any() > Colon()).
+      set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
+    style.get(Disabled() > Colon()).
+      set(TextColor(QColor(0xC8C8C8)));
     return style;
   }
 
@@ -323,15 +327,6 @@ namespace {
       set(LeadingZeros(2)).set(TrailingZeros(3)).
       set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
     style.get(Any() > is_a<Button>()).set(Visibility::NONE);
-    return style;
-  }
-
-  auto COLON_FIELD_STYLE(StyleSheet style) {
-    style.get(Any() > Colon()).
-      set(TextAlign(Qt::Alignment(Qt::AlignCenter))).
-      set(TextColor(QColor(Qt::black)));
-    style.get(Disabled() > Colon()).
-      set(TextColor(QColor(0xC8C8C8)));
     return style;
   }
 
@@ -373,10 +368,8 @@ namespace {
   }
 
   auto make_colon() {
-    auto colon = new TextBox(":");
+    auto colon = make_label(":");
     colon->setFixedWidth(scale_width(10));
-    colon->setEnabled(false);
-    colon->set_read_only(true);
     find_stylist(*colon).match(Colon());
     return colon;
   }
@@ -473,10 +466,6 @@ connection DurationBox::connect_reject_signal(
 connection DurationBox::connect_submit_signal(
     const SubmitSignal::slot_type& slot) const {
   return m_submit_signal.connect(slot);
-}
-
-QSize DurationBox::sizeHint() const {
-  return scale(126, 26);
 }
 
 bool DurationBox::eventFilter(QObject* watched, QEvent* event) {
