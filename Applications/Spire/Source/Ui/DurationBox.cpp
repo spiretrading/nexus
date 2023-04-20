@@ -65,11 +65,7 @@ namespace {
   template<typename Model, typename F>
   void on_current(Model& model, const optional<time_duration>& current, F&& f) {
     if(current) {
-      auto field = std::forward<F>(f)(*current);
-      if(!field && !model.m_current) {
-        return;
-      }
-      model.m_current = field;
+      model.m_current = std::forward<F>(f)(*current);
     } else {
       model.m_current = none;
     }
