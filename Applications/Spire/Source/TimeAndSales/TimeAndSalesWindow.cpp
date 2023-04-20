@@ -160,14 +160,14 @@ void TimeAndSalesWindow::on_table_operation(const TableModel::Operation& operati
           style.get(Any() > is_a<TextBox>()).
             set(text_style(time_and_sale_style.m_font,
               QColor(time_and_sale_style.m_text_color)));
-          style.get(Any() > Body()).
-            set(BackgroundColor(time_and_sale_style.m_band_color)).
-            set(border_size(0)).
-            set(horizontal_padding(scale_width(2))).
-            set(vertical_padding(scale_height(1.5)));
         });
         item->setDisabled(true);
       }
+      auto row = m_table_view->get_item({operation.m_index, 0})->parentWidget()->parentWidget();
+      update_style(*row, [&] (auto& style) {
+        style.get(Any()).
+          set(BackgroundColor(time_and_sale_style.m_band_color));
+      });
       update_export_menu_item();
     },
     [&] (const TableModel::RemoveOperation& operation) {
