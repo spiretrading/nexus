@@ -118,11 +118,7 @@ namespace {
           hours(value.get_value_or(0)) - hours(m_current.get_value_or(0)));
     }
 
-    QValidator::State set(const Type& value) {
-      return ::set(*this, value, m_minutes, m_seconds,
-        m_source->get().get_value_or(hours(0)) +
-          hours(value.get_value_or(0)) - hours(m_current.get_value_or(0)));
-    }
+    QValidator::State set(const Type& value);
 
     connection connect_update_signal(
         const UpdateSignal::slot_type& slot) const {
@@ -178,11 +174,7 @@ namespace {
           minutes(value.get_value_or(0)) - minutes(m_current.get_value_or(0)));
     }
 
-    QValidator::State set(const Type& value) {
-      return ::set(*this, value, m_hours, m_seconds,
-        m_source->get().get_value_or(minutes(0)) +
-          minutes(value.get_value_or(0)) - minutes(m_current.get_value_or(0)));
-    }
+    QValidator::State set(const Type& value);
 
     connection connect_update_signal(
         const UpdateSignal::slot_type& slot) const {
@@ -245,6 +237,12 @@ namespace {
     }
 
     QValidator::State set(const Type& value) {
+      auto blocker1 =
+        shared_connection_block(std::static_pointer_cast<HourModel>(
+          m_hours.lock())->m_source_connection);
+      auto blocker2 =
+        shared_connection_block(std::static_pointer_cast<MinuteModel>(
+          m_minutes.lock())->m_source_connection);
       return ::set(*this, value, m_hours, m_minutes,
         m_source->get().get_value_or(seconds(0)) +
           to_seconds(value.get_value_or(0)) -
@@ -263,6 +261,30 @@ namespace {
       });
     }
   };
+
+  QValidator::State HourModel::set(const Type& value) {
+    auto blocker1 =
+      shared_connection_block(std::static_pointer_cast<MinuteModel>(
+        m_minutes.lock())->m_source_connection);
+    auto blocker2 =
+      shared_connection_block(std::static_pointer_cast<SecondModel>(
+        m_seconds.lock())->m_source_connection);
+    return ::set(*this, value, m_minutes, m_seconds,
+      m_source->get().get_value_or(hours(0)) +
+      hours(value.get_value_or(0)) - hours(m_current.get_value_or(0)));
+  }
+
+  QValidator::State MinuteModel::set(const Type& value) {
+    auto blocker1 =
+      shared_connection_block(std::static_pointer_cast<HourModel>(
+        m_hours.lock())->m_source_connection);
+    auto blocker2 =
+      shared_connection_block(std::static_pointer_cast<SecondModel>(
+        m_seconds.lock())->m_source_connection);
+    return ::set(*this, value, m_hours, m_seconds,
+      m_source->get().get_value_or(minutes(0)) +
+      minutes(value.get_value_or(0)) - minutes(m_current.get_value_or(0)));
+  }
 
   auto DEFAULT_STYLE() {
     auto style = StyleSheet();
