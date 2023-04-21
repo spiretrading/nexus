@@ -39,19 +39,19 @@ namespace {
 
   template<typename Model, typename M1, typename M2>
   QValidator::State set(Model& model, const typename Model::Type& value,
-      std::weak_ptr<M1> m1, std::weak_ptr<M2> m2,
+      const std::shared_ptr<M1>& m1, const std::shared_ptr<M2>& m2,
         const optional<time_duration>& update) {
     auto current = [&] () -> optional<time_duration> {
       if(!value) {
-        auto s1 = m1.lock();
-        auto s2 = m2.lock();
-        if((!s1 || !s1->get()) && (!s2 || !s2->get())) {
+        if((!m1 || !m1->get()) && (!m2 || !m2->get())) {
           return none;
         }
       }
       return update;
     }();
     auto blocker = shared_connection_block(model.m_source_connection);
+    auto blocker1 = shared_connection_block(m1->m_source_connection);
+    auto blocker2 = shared_connection_block(m2->m_source_connection);
     if(model.m_source->set(current) != QValidator::State::Invalid) {
       auto state = QValidator::State::Acceptable;
       model.m_state = state;
@@ -71,6 +71,10 @@ namespace {
     }
     model.m_update_signal(model.m_current);
   }
+
+  struct HourModel;
+  struct MinuteModel;
+  struct SecondModel;
 
   struct HourModel : ScalarValueModel<optional<int>> {
     mutable UpdateSignal m_update_signal;
@@ -118,7 +122,13 @@ namespace {
           hours(value.get_value_or(0)) - hours(m_current.get_value_or(0)));
     }
 
-    QValidator::State set(const Type& value);
+    QValidator::State set(const Type& value) {
+      return ::set(*this, value,
+        std::static_pointer_cast<MinuteModel>(m_minutes.lock()),
+        std::static_pointer_cast<SecondModel>(m_seconds.lock()),
+        m_source->get().get_value_or(hours(0)) +
+          hours(value.get_value_or(0)) - hours(m_current.get_value_or(0)));
+    }
 
     connection connect_update_signal(
         const UpdateSignal::slot_type& slot) const {
@@ -174,7 +184,13 @@ namespace {
           minutes(value.get_value_or(0)) - minutes(m_current.get_value_or(0)));
     }
 
-    QValidator::State set(const Type& value);
+    QValidator::State set(const Type& value) {
+      return ::set(*this, value,
+        std::static_pointer_cast<HourModel>(m_hours.lock()),
+        std::static_pointer_cast<SecondModel>(m_seconds.lock()),
+        m_source->get().get_value_or(minutes(0)) +
+          minutes(value.get_value_or(0)) - minutes(m_current.get_value_or(0)));
+    }
 
     connection connect_update_signal(
         const UpdateSignal::slot_type& slot) const {
@@ -237,13 +253,9 @@ namespace {
     }
 
     QValidator::State set(const Type& value) {
-      auto blocker1 =
-        shared_connection_block(std::static_pointer_cast<HourModel>(
-          m_hours.lock())->m_source_connection);
-      auto blocker2 =
-        shared_connection_block(std::static_pointer_cast<MinuteModel>(
-          m_minutes.lock())->m_source_connection);
-      return ::set(*this, value, m_hours, m_minutes,
+      return ::set(*this, value,
+        std::static_pointer_cast<HourModel>(m_hours.lock()),
+        std::static_pointer_cast<MinuteModel>(m_minutes.lock()),
         m_source->get().get_value_or(seconds(0)) +
           to_seconds(value.get_value_or(0)) -
             to_seconds(m_current.get_value_or(0)));
@@ -261,30 +273,6 @@ namespace {
       });
     }
   };
-
-  QValidator::State HourModel::set(const Type& value) {
-    auto blocker1 =
-      shared_connection_block(std::static_pointer_cast<MinuteModel>(
-        m_minutes.lock())->m_source_connection);
-    auto blocker2 =
-      shared_connection_block(std::static_pointer_cast<SecondModel>(
-        m_seconds.lock())->m_source_connection);
-    return ::set(*this, value, m_minutes, m_seconds,
-      m_source->get().get_value_or(hours(0)) +
-        hours(value.get_value_or(0)) - hours(m_current.get_value_or(0)));
-  }
-
-  QValidator::State MinuteModel::set(const Type& value) {
-    auto blocker1 =
-      shared_connection_block(std::static_pointer_cast<HourModel>(
-        m_hours.lock())->m_source_connection);
-    auto blocker2 =
-      shared_connection_block(std::static_pointer_cast<SecondModel>(
-        m_seconds.lock())->m_source_connection);
-    return ::set(*this, value, m_hours, m_seconds,
-      m_source->get().get_value_or(minutes(0)) +
-        minutes(value.get_value_or(0)) - minutes(m_current.get_value_or(0)));
-  }
 
   auto DEFAULT_STYLE() {
     auto style = StyleSheet();
