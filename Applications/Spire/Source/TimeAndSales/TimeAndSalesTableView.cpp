@@ -292,7 +292,7 @@ QWidget* TimeAndSalesTableView::table_view_builder(
 }
 
 void TimeAndSalesTableView::make_header_item_properties() {
-  m_header_item_properties.emplace_back(true, Qt::AlignLeft, scale_width(45));
+  m_header_item_properties.emplace_back(false, Qt::AlignLeft, scale_width(45));
   m_header_item_properties.emplace_back(true, Qt::AlignRight, scale_width(50));
   m_header_item_properties.emplace_back(true, Qt::AlignRight, scale_width(40));
   m_header_item_properties.emplace_back(true, Qt::AlignLeft, scale_width(38));
@@ -439,8 +439,8 @@ void TimeAndSalesTableView::on_scroll_position(int position) {
     return;
   }
   auto& scroll_bar = m_scroll_box->get_vertical_scroll_bar();
-  if(m_scroll_box->get_body().height() - position - m_scroll_box->get_vertical_scroll_bar().get_page_size() <
-      m_scroll_box->get_vertical_scroll_bar().get_page_size() / 2) {
+  if(m_scroll_box->get_body().height() - position - m_scroll_box->get_vertical_scroll_bar().height() <
+      m_scroll_box->get_vertical_scroll_bar().height() / 2) {
     m_table->m_source->load_history(10);
   }
 }
