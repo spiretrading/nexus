@@ -217,12 +217,13 @@ QWidget* TimeAndSalesTableView::table_view_builder(
         style.get(ReadOnly() > is_a<TextBox>()).
           set(border_size(0)).
           set(horizontal_padding(0)).
-          set(vertical_padding(1.5));
+          set(vertical_padding(0));
         style.get(Any() > is_a<DecimalBox>()).
           set(TrailingZeros(0));
         style.get(Any()).
           set(PaddingLeft(scale_width(2))).
-          set(PaddingRight(0));
+          set(PaddingRight(0)).
+          set(vertical_padding(scale_height(1.5)));
       });
       auto& box = *static_cast<Box*>(time_box->layout()->itemAt(0)->widget());
       auto box_body = box.get_body();
@@ -242,7 +243,7 @@ QWidget* TimeAndSalesTableView::table_view_builder(
         std::move(modifiers));
       money_box->set_read_only(true);
       update_style(*money_box, [] (auto& style) {
-        style.get(Any() > is_a<TextBox>()).set(TextAlign(Qt::AlignRight));
+        style.get(Any() > is_a<TextBox>()).set(TextAlign(Qt::AlignRight | Qt::AlignVCenter));
       });
       return money_box;
     } else if(column_id == Column::SIZE) {
@@ -253,7 +254,7 @@ QWidget* TimeAndSalesTableView::table_view_builder(
         std::move(modifiers));
       quantity_box->set_read_only(true);
       update_style(*quantity_box, [] (auto& style) {
-        style.get(Any() > is_a<TextBox>()).set(TextAlign(Qt::AlignRight));
+        style.get(Any() > is_a<TextBox>()).set(TextAlign(Qt::AlignRight | Qt::AlignVCenter));
       });
       return quantity_box;
     } else if(column_id == Column::MARKET) {
@@ -284,7 +285,7 @@ QWidget* TimeAndSalesTableView::table_view_builder(
       style.get(Any()).
       set(border_size(0)).
       set(horizontal_padding(scale_width(2))).
-      set(vertical_padding(0));
+      set(vertical_padding(scale_height(1.5)));
     });
   }
   return item;
