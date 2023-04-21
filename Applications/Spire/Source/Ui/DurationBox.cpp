@@ -93,7 +93,7 @@ namespace {
     if(auto s = model.lock()) {
       return std::static_pointer_cast<T>(s);
     }
-    return std::make_shared<T>(nullptr);
+    return std::shared_ptr<T>();
   }
 
   struct HourModel : ScalarValueModel<optional<int>> {
