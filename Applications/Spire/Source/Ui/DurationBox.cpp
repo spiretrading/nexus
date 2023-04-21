@@ -39,19 +39,31 @@ namespace {
 
   template<typename Model, typename M1, typename M2>
   QValidator::State set(Model& model, const typename Model::Type& value,
-      const std::shared_ptr<M1>& m1, const std::shared_ptr<M2>& m2,
+      std::weak_ptr<M1> m1, std::weak_ptr<M2> m2,
         const optional<time_duration>& update) {
     auto current = [&] () -> optional<time_duration> {
       if(!value) {
-        if((!m1 || !m1->get()) && (!m2 || !m2->get())) {
+        auto s1 = m1.lock();
+        auto s2 = m2.lock();
+        if((!s1 || !s1->get()) && (!s2 || !s2->get())) {
           return none;
         }
       }
       return update;
     }();
     auto blocker = shared_connection_block(model.m_source_connection);
-    auto blocker1 = shared_connection_block(m1->m_source_connection);
-    auto blocker2 = shared_connection_block(m2->m_source_connection);
+    auto blocker1 = [&] {
+      if(auto s1 = m1.lock()) {
+        return shared_connection_block(s1->m_source_connection);
+      }
+      return shared_connection_block();
+    }();
+    auto blocker2 = [&] {
+      if(auto s2 = m2.lock()) {
+        return shared_connection_block(s2->m_source_connection);
+      }
+      return shared_connection_block();
+    }();
     if(model.m_source->set(current) != QValidator::State::Invalid) {
       auto state = QValidator::State::Acceptable;
       model.m_state = state;
@@ -75,6 +87,14 @@ namespace {
   struct HourModel;
   struct MinuteModel;
   struct SecondModel;
+
+  template<typename T, typename M>
+  auto to_shared_model(std::weak_ptr<M> model) {
+    if(auto s = model.lock()) {
+      return std::static_pointer_cast<T>(s);
+    }
+    return std::make_shared<T>(nullptr);
+  }
 
   struct HourModel : ScalarValueModel<optional<int>> {
     mutable UpdateSignal m_update_signal;
@@ -123,9 +143,9 @@ namespace {
     }
 
     QValidator::State set(const Type& value) {
-      return ::set(*this, value,
-        std::static_pointer_cast<MinuteModel>(m_minutes.lock()),
-        std::static_pointer_cast<SecondModel>(m_seconds.lock()),
+      return ::set<HourModel, MinuteModel, SecondModel>(*this, value,
+        to_shared_model<MinuteModel>(m_minutes),
+        to_shared_model<SecondModel>(m_seconds),
         m_source->get().get_value_or(hours(0)) +
           hours(value.get_value_or(0)) - hours(m_current.get_value_or(0)));
     }
@@ -185,9 +205,9 @@ namespace {
     }
 
     QValidator::State set(const Type& value) {
-      return ::set(*this, value,
-        std::static_pointer_cast<HourModel>(m_hours.lock()),
-        std::static_pointer_cast<SecondModel>(m_seconds.lock()),
+      return ::set<MinuteModel, HourModel, SecondModel>(*this, value,
+        to_shared_model<HourModel>(m_hours),
+        to_shared_model<SecondModel>(m_seconds),
         m_source->get().get_value_or(minutes(0)) +
           minutes(value.get_value_or(0)) - minutes(m_current.get_value_or(0)));
     }
@@ -253,9 +273,9 @@ namespace {
     }
 
     QValidator::State set(const Type& value) {
-      return ::set(*this, value,
-        std::static_pointer_cast<HourModel>(m_hours.lock()),
-        std::static_pointer_cast<MinuteModel>(m_minutes.lock()),
+      return ::set<SecondModel, HourModel, MinuteModel>(*this, value,
+        to_shared_model<HourModel>(m_hours),
+        to_shared_model<MinuteModel>(m_minutes),
         m_source->get().get_value_or(seconds(0)) +
           to_seconds(value.get_value_or(0)) -
             to_seconds(m_current.get_value_or(0)));
