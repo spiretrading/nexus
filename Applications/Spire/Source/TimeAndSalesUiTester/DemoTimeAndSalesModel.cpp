@@ -80,6 +80,9 @@ QtPromise<std::vector<TimeAndSalesModel::Entry>>
       int max_count) {
   return QtPromise([=] {
     auto result = std::vector<TimeAndSalesModel::Entry>();
+    if(m_query_duration == pos_infin) {
+      return result;
+    }
     auto populate = [&] (ptime timestamp) {
       auto count = max_count;
       while(count > 0) {
@@ -95,7 +98,7 @@ QtPromise<std::vector<TimeAndSalesModel::Entry>>
     if(sequence >= Queries::Sequence(to_time_t_milliseconds(now))) {
       populate(now);
     } else {
-      populate(from_time_t_milliseconds(sequence.GetOrdinal()));
+      populate(from_time_t_milliseconds(sequence.GetOrdinal()) - m_period);
     }
     auto timer = LiveTimer(m_query_duration);
     timer.Start();
