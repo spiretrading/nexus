@@ -35,9 +35,9 @@ const std::shared_ptr<TimeAndSalesModel>& TimeAndSalesTableModel::get_model() co
 void TimeAndSalesTableModel::set_model(std::shared_ptr<TimeAndSalesModel> model) {
   clear(m_entries);
   m_model = std::move(model);
+  load_snapshot(Beam::Queries::Sequence::Present(), 20);
   m_source_connection = m_model->connect_update_signal(
     std::bind_front(&TimeAndSalesTableModel::on_update, this));
-  load_snapshot(Beam::Queries::Sequence::Present(), 20);
 }
 
 void TimeAndSalesTableModel::load_history(int max_count) {

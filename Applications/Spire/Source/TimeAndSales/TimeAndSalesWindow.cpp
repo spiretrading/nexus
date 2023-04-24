@@ -163,7 +163,7 @@ void TimeAndSalesWindow::on_table_operation(const TableModel::Operation& operati
         });
         item->setDisabled(true);
       }
-      auto row = m_table_view->get_item({operation.m_index, 0})->parentWidget()->parentWidget();
+      auto row = m_table_view->get_item({operation.m_index, 0})->parentWidget();
       update_style(*row, [&] (auto& style) {
         style.get(Any()).
           set(BackgroundColor(time_and_sale_style.m_band_color));
