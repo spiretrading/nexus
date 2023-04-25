@@ -1,12 +1,9 @@
 #include <doctest/doctest.h>
-#include <ostream>
 #include "Nexus/Definitions/SecuritySet.hpp"
-#include "Spire/Ui/CustomQtVariants.hpp"
-#include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ArrayTableModel.hpp"
 #include "Spire/Spire/ExportTable.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
 
-using namespace boost::gregorian;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Spire;
