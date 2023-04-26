@@ -209,9 +209,10 @@ QWidget* TimeAndSalesTableView::table_view_builder(
   auto column_id = static_cast<Column>(column);
   auto item = [&] () -> QWidget* {
     if(column_id == Column::TIME) {
-      auto time = table->get<ptime>(row, column).time_of_day();
+      auto ts = displayText(table->get<ptime>(row, column));
+      ts = ts.left(ts.lastIndexOf('.'));
       auto time_box = make_time_box();
-      time_box->get_current()->set(time_duration(time.hours(), time.minutes(), time.seconds()));
+      time_box->get_current()->set(duration_from_string(ts.toStdString()));
       time_box->set_read_only(true);
       update_style(*time_box, [] (auto& style) {
         style.get(ReadOnly() > is_a<TextBox>()).

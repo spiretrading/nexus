@@ -94,7 +94,7 @@ QtPromise<std::vector<TimeAndSalesModel::Entry>>
         timestamp -= m_period;
       }
     };
-    auto now = microsec_clock::local_time();
+    auto now = microsec_clock::universal_time();
     if(sequence >= Queries::Sequence(to_time_t_milliseconds(now))) {
       populate(now);
     } else {
@@ -113,7 +113,7 @@ connection DemoTimeAndSalesModel::connect_update_signal(
 }
 
 void DemoTimeAndSalesModel::on_timeout() {
-  auto timestamp = microsec_clock::local_time();
+  auto timestamp = microsec_clock::universal_time();
   m_update_signal({SequencedValue(make_time_and_sale(timestamp, m_price),
     Queries::Sequence(to_time_t_milliseconds(timestamp))), m_indicator});
 }
