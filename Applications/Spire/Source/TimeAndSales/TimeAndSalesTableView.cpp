@@ -259,12 +259,13 @@ QWidget* TimeAndSalesTableView::table_view_builder(
       });
       return quantity_box;
     } else if(column_id == Column::MARKET) {
-      auto market_token = table->get<MarketToken>(row, column);
+      auto market_code = table->get<std::string>(row, column);
       auto query_model = std::make_shared<LocalComboBoxQueryModel>();
-      auto market = GetDefaultMarketDatabase().FromCode(market_token.m_code);
+      auto market = GetDefaultMarketDatabase().FromCode(market_code);
+      query_model->add(displayText(MarketToken(market.m_code)).toLower(), market);
       query_model->add(QString(market.m_code.GetData()).toLower(), market);
       auto market_box = new MarketBox(std::move(query_model),
-        std::make_shared<LocalValueModel<MarketCode>>(market_token.m_code));
+        std::make_shared<LocalValueModel<MarketCode>>(market_code));
       market_box->set_read_only(true);
       return market_box;
     } else if(column_id == Column::CONDITION) {
