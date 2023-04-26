@@ -1,6 +1,10 @@
 #include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
+#include <fstream>
+#include <QFileDialog>
 #include <QResizeEvent>
+#include <QStandardPaths>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/ExportTable.hpp"
 #include "Spire/TimeAndSales/NoneTimeAndSalesModel.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesTableModel.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesTableView.hpp"
@@ -116,7 +120,8 @@ void TimeAndSalesWindow::make_context_menu() {
   auto link_menu = new ContextMenu(*static_cast<QWidget*>(m_context_menu));
   m_context_menu->add_menu(tr("Link to"), *link_menu);
   m_context_menu->add_separator();
-  m_context_menu->add_action(tr("Export"), [] {});
+  m_context_menu->add_action(tr("Export"),
+    std::bind_front(&TimeAndSalesWindow::on_export, this));
   update_export_menu_item();
 }
 
@@ -153,7 +158,7 @@ void TimeAndSalesWindow::on_current(const Security& security) {
 void TimeAndSalesWindow::on_table_operation(const TableModel::Operation& operation) {
   visit(operation,
     [&] (const TableModel::AddOperation& operation) {
-      auto time_and_sale_style = m_properties.get_style(m_table_view->get_table()->get(operation.m_index));
+      auto time_and_sale_style = m_properties.get_style(m_table_view->get_table()->get_bbo_indicator(operation.m_index));
       for(auto column = 0; column < TimeAndSalesTableModel::COLUMN_SIZE + 1; ++column) {
         auto item = m_table_view->get_item({operation.m_index, column});
         update_style(*item, [&] (auto& style) {
@@ -173,4 +178,15 @@ void TimeAndSalesWindow::on_table_operation(const TableModel::Operation& operati
     [&] (const TableModel::RemoveOperation& operation) {
       update_export_menu_item();
     });
+}
+
+void TimeAndSalesWindow::on_export() {
+  auto file_name = QFileDialog::getSaveFileName(this, tr("Export As"),
+    QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) +
+      tr("/time_and_sales"), "CSV (*.csv)");
+  if(!file_name.isEmpty()) {
+    auto out = std::ofstream(file_name.toStdString());
+    export_table_as_csv(*m_table_view->get_table(), out);
+  }
+
 }

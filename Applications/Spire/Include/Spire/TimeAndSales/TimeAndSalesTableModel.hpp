@@ -4,6 +4,7 @@
 #include "Spire/Spire/TableModel.hpp"
 #include "Spire/Spire/TableModelTransactionLog.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesModel.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
 
 namespace Spire {
 
@@ -64,7 +65,7 @@ namespace Spire {
        * Returns the bbo indicator at a specified row.
        * @throws <code>std::out_of_range</code> iff row is out of range.
        */
-      BboIndicator get(int row) const;
+      BboIndicator get_bbo_indicator(int row) const;
 
       int get_row_size() const override;
 
@@ -84,19 +85,22 @@ namespace Spire {
         const EndLoadingSignal::slot_type& slot) const;
 
     private:
+      struct TimeAndSaleEntry {
+        TimeAndSalesModel::Entry m_entry;
+        MarketToken m_market;
+      };
       mutable BeginLoadingSignal m_begin_loading_signal;
       mutable EndLoadingSignal m_end_loading_signal;
       std::shared_ptr<TimeAndSalesModel> m_model;
-      ArrayListModel<TimeAndSalesModel::Entry> m_entries;
+      ArrayListModel<TimeAndSaleEntry> m_entries;
       QtPromise<void> m_promise;
       TableModelTransactionLog m_transaction;
       boost::signals2::scoped_connection m_source_connection;
 
-      AnyRef extract_field(const Nexus::TimeAndSale& time_and_sale,
-        Column column) const;
+      AnyRef extract_field(const TimeAndSaleEntry& entry, Column column) const;
       void load_snapshot(Beam::Queries::Sequence last, int count);
       void on_update(const TimeAndSalesModel::Entry& entry);
-      void on_operation(const ListModel<TimeAndSalesModel::Entry>::Operation& operation);
+      void on_operation(const ListModel<TimeAndSaleEntry>::Operation& operation);
   };
 }
 

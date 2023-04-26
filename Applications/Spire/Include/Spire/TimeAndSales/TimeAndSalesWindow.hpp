@@ -68,6 +68,7 @@ namespace Spire {
       void update_export_menu_item();
       void on_current(const Nexus::Security& security);
       void on_table_operation(const TableModel::Operation& operation);
+      void on_export();
   };
 }
 
