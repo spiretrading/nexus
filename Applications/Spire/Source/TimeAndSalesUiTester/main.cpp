@@ -210,7 +210,7 @@ namespace {
       m_time_and_sales_test_window->setAttribute(Qt::WA_ShowWithoutActivating);
       m_time_and_sales_test_window->show();
       m_time_and_sales_test_window->move(m_time_and_sales_window->pos().x() +
-        m_time_and_sales_window->frameGeometry().width(),
+        m_time_and_sales_window->frameGeometry().width() + scale_width(100),
         m_time_and_sales_window->pos().y());
     }
 
