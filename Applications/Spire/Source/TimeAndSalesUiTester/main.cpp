@@ -229,6 +229,7 @@ namespace {
     }
   };
 }
+
 int main(int argc, char** argv) {
   auto application = QApplication(argc, argv);
   application.setOrganizationName(QObject::tr("Spire Trading Inc"));

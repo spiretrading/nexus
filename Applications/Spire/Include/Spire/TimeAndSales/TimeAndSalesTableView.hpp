@@ -51,6 +51,7 @@ namespace Styles {
         int m_width;
       };
       std::shared_ptr<TimeAndSalesTableViewModel> m_table;
+      TableView* m_table_view;
       TableHeader* m_table_header;
       TableBody* m_table_body;
       QWidget* m_pull_indicator;
@@ -68,12 +69,13 @@ namespace Styles {
 
       QWidget* table_view_builder(
         const std::shared_ptr<TableModel>& table, int row, int column);
+      int get_next_sibling_index(int index) const;
       void make_header_item_properties();
       void make_table_columns_sub_menu();
       void customize_table_header();
-      int get_next_sibling_index(int index);
-      std::tuple<int, int> get_next_sibling(int index);
+      void customize_table_body();
       void resize_column_widths();
+      void on_column_sub_menu_check(int column, bool checked);
       void on_begin_loading();
       void on_end_loading();
       void on_table_operation(const TableModel::Operation& operation);

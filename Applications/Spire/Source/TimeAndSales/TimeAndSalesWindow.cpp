@@ -87,8 +87,8 @@ TimeAndSalesWindow::TimeAndSalesWindow(
     QWidget* parent)
     : Window(parent),
       m_properties(std::move(properties)),
-      m_model_builder(std::move(model_builder)),
-      m_is_updating_model(false) {
+      m_model_builder(std::move(model_builder)) {
+  resize(scale(180, 410));
   auto labels = std::make_shared<ArrayListModel<QString>>();
   labels->push(TITLE_NAME);
   labels->push(TITLE_SHORT_NAME);
@@ -99,7 +99,6 @@ TimeAndSalesWindow::TimeAndSalesWindow(
   m_title_label->stackUnder(m_title_bar);
   set_svg_icon(":/Icons/time-sales.svg");
   setWindowIcon(QIcon(":/Icons/taskbar_icons/time-sales.png"));
-  resize(scale(180, 410));
   m_table_view = new TimeAndSalesTableView(
     std::make_shared<TimeAndSalesTableModel>(
       std::make_shared<NoneTimeAndSalesModel>(Security())));
@@ -115,17 +114,13 @@ TimeAndSalesWindow::TimeAndSalesWindow(
     style.get(Any()).set(BackgroundColor(QColor(0xFFFFFF)));
   });
   layout()->addWidget(box);
-  m_table_view->get_table()->connect_operation_signal(std::bind_front(&TimeAndSalesWindow::on_table_operation, this));
+  m_table_view->get_table()->connect_operation_signal(
+    std::bind_front(&TimeAndSalesWindow::on_table_operation, this));
   m_table_view->get_table()->connect_begin_loading_signal([=] {
-    if(m_is_updating_model) {
-      m_transition_view->set_status(TransitionView::Status::LOADING);
-    }
+    m_transition_view->set_status(TransitionView::Status::LOADING);
   });
   m_table_view->get_table()->connect_end_loading_signal([=] {
-    if(m_is_updating_model) {
-      m_transition_view->set_status(TransitionView::Status::READY);
-      m_is_updating_model = false;
-    }
+    m_transition_view->set_status(TransitionView::Status::READY);
   });
   make_context_menu();
 }
@@ -160,10 +155,12 @@ bool TimeAndSalesWindow::eventFilter(QObject* watched, QEvent* event) {
 
 void TimeAndSalesWindow::mousePressEvent(QMouseEvent* event) {
   if(event->button() == Qt::RightButton && !m_table_view->isHidden()) {
-    auto table_header = static_cast<TableHeader*>(static_cast<Box*>(
-      m_table_view->layout()->itemAt(0)->widget()->layout()->itemAt(0)->widget())->get_body()->layout()->
-      itemAt(0)->widget());
-    if((rect().adjusted(0, m_title_bar->height() + table_header->height(), 0, 0).contains(event->pos()))) {
+    auto table_view = m_table_view->layout()->itemAt(0)->widget();
+    auto& scroll_box =
+      *static_cast<ScrollBox*>(table_view->layout()->itemAt(1)->widget());
+    auto table_body = scroll_box.get_body().layout()->itemAt(0)->widget();
+    if(table_body->rect().contains(
+        table_body->mapFromGlobal(event->globalPos()))) {
       m_context_menu->window()->move(event->globalPos());
       m_context_menu->show();
     }
@@ -192,8 +189,10 @@ void TimeAndSalesWindow::make_context_menu() {
 }
 
 void TimeAndSalesWindow::update_export_menu_item() {
-  auto list_view = static_cast<ListView*>(m_context_menu->layout()->itemAt(0)->widget());
-  auto export_item = list_view->get_list_item(list_view->get_list()->get_size() - 1);
+  auto& list_view =
+    *static_cast<ListView*>(m_context_menu->layout()->itemAt(0)->widget());
+  auto export_item =
+    list_view.get_list_item(list_view.get_list()->get_size() - 1);
   if(m_table_view->get_table()->get_row_size() == 0) {
     if(export_item->isEnabled()) {
       export_item->setEnabled(false);
@@ -201,13 +200,11 @@ void TimeAndSalesWindow::update_export_menu_item() {
         style.get(Any() > is_a<TextBox>()).set(TextColor(QColor(0xC8C8C8)));
       });
     }
-  } else {
-    if(!export_item->isEnabled()) {
-      export_item->setEnabled(true);
-      update_style(*export_item, [] (auto& style) {
-        style.get(Any() > is_a<TextBox>()).set(TextColor(Qt::black));
-      });
-    }
+  } else if(!export_item->isEnabled()) {
+    export_item->setEnabled(true);
+    update_style(*export_item, [] (auto& style) {
+      style.get(Any() > is_a<TextBox>()).set(TextColor(Qt::black));
+    });
   }
 }
 
@@ -217,7 +214,6 @@ void TimeAndSalesWindow::on_current(const Security& security) {
   m_title_label->get_labels()->set(1, prefix_name + TITLE_SHORT_NAME);
   setWindowTitle(m_title_label->get_current()->get());
   m_transition_view->set_status(TransitionView::Status::NONE);
-  m_is_updating_model = true;
   m_table_view->get_table()->set_model(m_model_builder(security));
   m_table_view->get_table()->load_history(
     m_table_view->height() / get_row_height());
@@ -229,7 +225,7 @@ void TimeAndSalesWindow::on_table_operation(
     [&] (const TableModel::AddOperation& operation) {
       auto& time_and_sale_style = m_properties.get_style(
         m_table_view->get_table()->get_bbo_indicator(operation.m_index));
-      for(auto i = 0; i < TimeAndSalesTableModel::COLUMN_SIZE; ++i) {
+      for(auto i = 0; i <= TimeAndSalesTableModel::COLUMN_SIZE; ++i) {
         auto item = m_table_view->get_item({operation.m_index, i});
         update_style(*item, [&] (auto& style) {
           style.get(Any() > is_a<TextBox>()).

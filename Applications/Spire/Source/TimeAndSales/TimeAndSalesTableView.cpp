@@ -39,11 +39,10 @@ namespace {
     style.get(Any()).
       set(BackgroundColor(QColor(0xFFFFFF)));
     style.get(Any() > is_a<TableBody>()).
-      set(grid_color(Qt::transparent)).
-      //set(horizontal_padding(scale_width(2))).
       set(horizontal_padding(0)).
       set(HorizontalSpacing(0)).
       set(PaddingBottom(0)).
+      set(PaddingTop(scale_height(1))).
       set(VerticalSpacing(0));
     style.get(Any() > Current()).
       set(BackgroundColor(Qt::transparent)).
@@ -113,6 +112,7 @@ namespace {
       field->setMaximumWidth(QWIDGETSIZE_MAX);
       static_cast<QHBoxLayout*>(box_body->layout())->setStretchFactor(field, 0);
     }
+    time_box->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     return time_box;
   }
 
@@ -186,8 +186,9 @@ TimeAndSalesTableView::TimeAndSalesTableView(
       m_is_loading(false),
       m_last_scroll_y(0),
       m_resize_index(-1),
-      m_begin_loading_connection(m_table->m_source->connect_begin_loading_signal(
-        std::bind_front(&TimeAndSalesTableView::on_begin_loading, this))),
+      m_begin_loading_connection(
+        m_table->m_source->connect_begin_loading_signal(
+          std::bind_front(&TimeAndSalesTableView::on_begin_loading, this))),
       m_end_loading_connection(m_table->m_source->connect_end_loading_signal(
         std::bind_front(&TimeAndSalesTableView::on_end_loading, this))) {
   make_header_item_properties();
@@ -197,45 +198,28 @@ TimeAndSalesTableView::TimeAndSalesTableView(
       current->set(none);
     }
   });
-  auto table_view = TableViewBuilder(m_table).
+  m_table_view = TableViewBuilder(m_table).
     set_header(make_header_model()).
     set_current(current).
     set_view_builder(
       std::bind_front(&TimeAndSalesTableView::table_view_builder, this)).
     make();
-  table_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  update_style(*table_view, [] (auto& style) {
+  m_table_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  update_style(*m_table_view, [] (auto& style) {
     style = TABLE_VIEW_STYLE(style);
   });
-  enclose(*this, *table_view);
-  auto header_box = static_cast<Box*>(table_view->layout()->itemAt(0)->widget());
+  enclose(*this, *m_table_view);
+  auto header_box =
+    static_cast<Box*>(m_table_view->layout()->itemAt(0)->widget());
   m_table_header = static_cast<TableHeader*>(header_box->get_body()->layout()->
       itemAt(0)->widget());
   m_table_header->installEventFilter(this);
   customize_table_header();
-  auto& old_scroll_box =
-    *static_cast<ScrollBox*>(table_view->layout()->itemAt(1)->widget());
-  m_table_body = static_cast<TableBody*>(&old_scroll_box.get_body());
-  auto body = new QWidget();
-  body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-  auto body_layout = make_vbox_layout(body);
-  m_table_body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  body_layout->addWidget(m_table_body);
-  m_pull_indicator = make_pull_indicator();
-  m_pull_indicator->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-  m_pull_indicator->setVisible(false);
-  body_layout->addWidget(m_pull_indicator);
-  m_scroll_box = new ScrollBox(body);
-  m_scroll_box->setFocusPolicy(Qt::NoFocus);
-  auto layout_item = table_view->layout()->replaceWidget(&old_scroll_box, m_scroll_box);
-  delete layout_item->widget();
-  delete layout_item;
-  m_scroll_box->get_vertical_scroll_bar().connect_position_signal(
-    std::bind_front(&TimeAndSalesTableView::on_scroll_position, this));
+  customize_table_body();
+  make_table_columns_sub_menu();
   m_timer->setSingleShot(true);
   connect(m_timer, &QTimer::timeout,
     std::bind_front(&TimeAndSalesTableView::on_timer_expired, this));
-  make_table_columns_sub_menu();
   m_table_operation_connection = m_table->connect_operation_signal(
     std::bind_front(&TimeAndSalesTableView::on_table_operation, this));
 }
@@ -262,11 +246,10 @@ bool TimeAndSalesTableView::eventFilter(QObject* watched, QEvent* event) {
         m_table_columns_menu->show();
       }
     } else if(event->type() == QEvent::MouseMove) {
-      if(m_resize_index == -1) {
-        return QWidget::eventFilter(watched, event);
+      if(m_resize_index >= 0) {
+        resize_column_widths();
+        return true;
       }
-      resize_column_widths();
-      return true;
     }
   }
   return QWidget::eventFilter(watched, event);
@@ -298,8 +281,17 @@ QWidget* TimeAndSalesTableView::table_view_builder(
         set(vertical_padding(scale_height(1.5)));
     });
   }
-  //cell->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
   return cell;
+}
+
+int TimeAndSalesTableView::get_next_sibling_index(int index) const {
+  if(index == m_table_header->get_widths()->get_size() - 1) {
+    return index;
+  }
+  if(!m_header_item_properties[index + 1].m_is_visible) {
+    return get_next_sibling_index(index + 1);
+  }
+  return index + 1;
 }
 
 void TimeAndSalesTableView::make_header_item_properties() {
@@ -313,89 +305,80 @@ void TimeAndSalesTableView::make_header_item_properties() {
 
 void TimeAndSalesTableView::make_table_columns_sub_menu() {
   m_table_columns_menu = new ContextMenu(*this);
-  auto add_table_columns_sub_menu_item = [&] (int column, bool checked) {
-    auto checked_model = m_table_columns_menu->add_check_box(m_table_header->get_items()->get(column).m_name);
-    checked_model->set(checked);
-    checked_model->connect_update_signal([=] (auto checked) {
-      auto header_item = m_table_header->layout()->itemAt(column)->widget();
-      if(column <= TimeAndSalesTableModel::COLUMN_SIZE) {
-        if(checked) {
-          m_table_header->get_widths()->set(column, m_header_item_properties[column].m_width);
-        } else {
-          m_table_header->get_widths()->set(column, 0);
-        }
-      }
-      header_item->setVisible(checked);
-      m_header_item_properties[column].m_is_visible = checked;
-    });
+  auto add_sub_menu = [&] (int column, const QString& name, bool checked) {
+    auto model = m_table_columns_menu->add_check_box(name);
+    model->set(checked);
+    model->connect_update_signal(std::bind_front(
+      &TimeAndSalesTableView::on_column_sub_menu_check, this, column));
   };
   for(auto i = 0; i < TimeAndSalesTableModel::COLUMN_SIZE; ++i) {
-    add_table_columns_sub_menu_item(i, m_header_item_properties[i].m_is_visible);
+    add_sub_menu(i, m_table_header->get_items()->get(i).m_name,
+      m_header_item_properties[i].m_is_visible);
   }
 }
 
 void TimeAndSalesTableView::customize_table_header() {
   auto layout = m_table_header->layout();
-  for(auto i = 0; i < layout->count(); ++i) {
-    auto& header_item = *static_cast<TableHeaderItem*>(m_table_header->layout()->itemAt(i)->widget());
-    auto header_item_layout = header_item.layout();
-    header_item_layout->setContentsMargins({0, scale_height(5), 0, scale_height(2)});
+  for(auto i = 0; i < TimeAndSalesTableModel::COLUMN_SIZE; ++i) {
+    auto& item = *static_cast<TableHeaderItem*>(
+      m_table_header->layout()->itemAt(i)->widget());
+    auto item_layout = item.layout();
+    item_layout->setContentsMargins({0, scale_height(5), 0, scale_height(2)});
     auto contents_layout =
-      header_item_layout->itemAt(0)->layout()->itemAt(0)->widget()->layout();
-    if(m_header_item_properties[i].m_text_align == Qt::AlignRight) {
-      static_cast<QSpacerItem*>(contents_layout->itemAt(1))->changeSize(0, 0);
-      contents_layout->itemAt(2)->widget()->setFixedWidth(0);
-      contents_layout->itemAt(3)->widget()->setFixedWidth(0);
-      update_style(header_item, [] (auto& style) {
-        style.get(Any() > TableHeaderItem::Label()).
-          set(TextAlign(Qt::Alignment(Qt::AlignRight | Qt::AlignVCenter)));
-        });
-    }
+      item_layout->itemAt(0)->layout()->itemAt(0)->widget()->layout();
     contents_layout->setContentsMargins({scale_width(4), 0, 0, 0});
     auto labels = std::make_shared<ArrayListModel<QString>>();
     labels->push(m_table_header->get_items()->get(i).m_name);
     labels->push(m_table_header->get_items()->get(i).m_short_name);
     auto name_label = new ResponsiveLabel(labels);
-    auto old = contents_layout->replaceWidget(contents_layout->itemAt(0)->widget(), name_label);
-    delete old->widget();
-    delete old;
+    name_label->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
+    auto old_label = contents_layout->replaceWidget(
+      contents_layout->itemAt(0)->widget(), name_label);
+    delete old_label->widget();
+    delete old_label;
     match(*name_label, TableHeaderItem::Label());
-    if(i < layout->count() - 1) {
-      if(m_header_item_properties[i].m_is_visible) {
-        m_table_header->get_widths()->set(i, m_header_item_properties[i].m_width);
-      } else {
-        m_table_header->get_widths()->set(i, 0);
-      }
+    if(m_header_item_properties[i].m_text_align == Qt::AlignRight) {
+      static_cast<QSpacerItem*>(contents_layout->itemAt(1))->changeSize(0, 0);
+      contents_layout->itemAt(2)->widget()->setFixedWidth(0);
+      contents_layout->itemAt(3)->widget()->setFixedWidth(0);
+      update_style(item, [] (auto& style) {
+        style.get(Any() > TableHeaderItem::Label()).
+          set(TextAlign(Qt::Alignment(Qt::AlignRight | Qt::AlignVCenter)));
+      });
     }
-    header_item.connect_start_resize_signal(
+    if(m_header_item_properties[i].m_is_visible) {
+      m_table_header->get_widths()->set(i, m_header_item_properties[i].m_width);
+    } else {
+      m_table_header->get_widths()->set(i, 0);
+    }
+    item.connect_start_resize_signal(
       std::bind_front(&TimeAndSalesTableView::on_start_resize, this, i));
-    header_item.connect_end_resize_signal(
+    item.connect_end_resize_signal(
       std::bind_front(&TimeAndSalesTableView::on_end_resize, this, i));
   }
 }
 
-int TimeAndSalesTableView::get_next_sibling_index(int index) {
-  if(index == m_table_header->get_widths()->get_size() - 1) {
-    return index;
-  }
-  if(!m_header_item_properties[index + 1].m_is_visible) {
-    return get_next_sibling_index(index + 1);
-  }
-  return index + 1;
-}
-
-std::tuple<int, int> TimeAndSalesTableView::get_next_sibling(int index) {
-  if(index == m_table_header->get_widths()->get_size() - 1) {
-    auto w = 0;
-    for(auto i = 0; i != m_table_header->get_widths()->get_size(); ++i) {
-      w += m_table_header->get_widths()->get(i);
-    }
-    return std::tuple(index, m_table_header->width() - w);
-  }
-  if(!m_header_item_properties[index + 1].m_is_visible) {
-    return get_next_sibling(index + 1);
-  }
-  return std::tuple(index + 1, m_table_header->get_widths()->get(index + 1));
+void TimeAndSalesTableView::customize_table_body() {
+  auto& old_scroll_box =
+    *static_cast<ScrollBox*>(m_table_view->layout()->itemAt(1)->widget());
+  m_table_body = static_cast<TableBody*>(&old_scroll_box.get_body());
+  auto body = new QWidget();
+  body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+  auto body_layout = make_vbox_layout(body);
+  m_table_body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  body_layout->addWidget(m_table_body);
+  m_pull_indicator = make_pull_indicator();
+  m_pull_indicator->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+  m_pull_indicator->setVisible(false);
+  body_layout->addWidget(m_pull_indicator);
+  m_scroll_box = new ScrollBox(body);
+  m_scroll_box->setFocusPolicy(Qt::NoFocus);
+  m_scroll_box->get_vertical_scroll_bar().connect_position_signal(
+    std::bind_front(&TimeAndSalesTableView::on_scroll_position, this));
+  auto layout_item =
+    m_table_view->layout()->replaceWidget(&old_scroll_box, m_scroll_box);
+  delete layout_item->widget();
+  delete layout_item;
 }
 
 void TimeAndSalesTableView::resize_column_widths() {
@@ -407,27 +390,52 @@ void TimeAndSalesTableView::resize_column_widths() {
     delta = new_width - width;
     position.rx() = delta + m_resize_position.x();
     if(delta != 0) {
-      m_table_header->get_widths()->set(m_resize_index, m_table_header->get_widths()->get(m_resize_index) + delta);
+      m_table_header->get_widths()->set(m_resize_index,
+        m_table_header->get_widths()->get(m_resize_index) + delta);
       auto sibling_index = get_next_sibling_index(m_resize_index);
       if(sibling_index != m_table_header->get_widths()->get_size() - 1) {
-        m_table_header->get_widths()->set(
-          sibling_index, m_table_header->get_widths()->get(sibling_index) - delta);
+        m_table_header->get_widths()->set(sibling_index,
+          m_table_header->get_widths()->get(sibling_index) - delta);
       }
     }
   } else if(delta > 0) {
-    auto [sibling_index, sibling_width] = get_next_sibling(m_resize_index);
+    auto sibling_index = get_next_sibling_index(m_resize_index);
+    auto sibling_width = [&] {
+      if(sibling_index == m_table_header->get_widths()->get_size() - 1) {
+        auto w = 0;
+        for(auto i = 0; i != m_table_header->get_widths()->get_size(); ++i) {
+          w += m_table_header->get_widths()->get(i);
+        }
+        return m_table_header->width() - w;
+      }
+      return m_table_header->get_widths()->get(sibling_index);
+    }();
     auto new_sibling_width = std::max(scale_width(10), sibling_width - delta);
     delta = new_sibling_width - sibling_width;
     position.rx() = -delta + m_resize_position.x();
     if(delta != 0) {
       if(sibling_index != m_table_header->get_widths()->get_size() - 1) {
-        m_table_header->get_widths()->set(
-          sibling_index, m_table_header->get_widths()->get(sibling_index) + delta);
+        m_table_header->get_widths()->set(sibling_index,
+          m_table_header->get_widths()->get(sibling_index) + delta);
       }
-      m_table_header->get_widths()->set(m_resize_index, m_table_header->get_widths()->get(m_resize_index) - delta);
+      m_table_header->get_widths()->set(m_resize_index,
+        m_table_header->get_widths()->get(m_resize_index) - delta);
     }
   }
   m_resize_position = position;
+}
+
+void TimeAndSalesTableView::on_column_sub_menu_check(int column, bool checked) {
+  if(column <= TimeAndSalesTableModel::COLUMN_SIZE) {
+    if(checked) {
+      m_table_header->get_widths()->set(column,
+        m_header_item_properties[column].m_width);
+    } else {
+      m_table_header->get_widths()->set(column, 0);
+    }
+  }
+  m_table_header->layout()->itemAt(column)->widget()->setVisible(checked);
+  m_header_item_properties[column].m_is_visible = checked;
 }
 
 void TimeAndSalesTableView::on_begin_loading() {
