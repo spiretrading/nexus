@@ -103,6 +103,7 @@ TimeAndSalesWindow::TimeAndSalesWindow(
   m_table_view = new TimeAndSalesTableView(
     std::make_shared<TimeAndSalesTableModel>(
       std::make_shared<NoneTimeAndSalesModel>(Security())));
+  m_table_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_transition_view = new TransitionView(m_table_view);
   m_transition_view->set_status(TransitionView::Status::NONE);
   m_security_view = new SecurityView(std::move(query_model),
@@ -129,15 +130,18 @@ TimeAndSalesWindow::TimeAndSalesWindow(
   make_context_menu();
 }
 
-const std::shared_ptr<TimeAndSalesModel>& TimeAndSalesWindow::get_model() const {
+const std::shared_ptr<TimeAndSalesModel>&
+    TimeAndSalesWindow::get_model() const {
   return m_table_view->get_table()->get_model();
 }
 
-const std::shared_ptr<ComboBox::QueryModel>& TimeAndSalesWindow::get_query_model() const {
+const std::shared_ptr<ComboBox::QueryModel>&
+    TimeAndSalesWindow::get_query_model() const {
   return m_security_view->get_query_model();
 }
 
-const std::shared_ptr<ValueModel<Nexus::Security>>& TimeAndSalesWindow::get_security() const {
+const std::shared_ptr<ValueModel<Nexus::Security>>&
+    TimeAndSalesWindow::get_security() const {
   return m_security_view->get_current();
 }
 
@@ -164,6 +168,16 @@ void TimeAndSalesWindow::mousePressEvent(QMouseEvent* event) {
       m_context_menu->show();
     }
   }
+}
+
+int TimeAndSalesWindow::get_row_height() const {
+  auto label = std::unique_ptr<TextBox>(make_label(""));
+  update_style(*label, [&] (auto& style) {
+    style.get(ReadOnly() && Disabled()).
+      set(Font(m_properties.get_style(BboIndicator::UNKNOWN).m_font)).
+      set(vertical_padding(scale_height(1.5)));
+  });
+  return label->sizeHint().height();
 }
 
 void TimeAndSalesWindow::make_context_menu() {
@@ -205,14 +219,18 @@ void TimeAndSalesWindow::on_current(const Security& security) {
   m_transition_view->set_status(TransitionView::Status::NONE);
   m_is_updating_model = true;
   m_table_view->get_table()->set_model(m_model_builder(security));
+  m_table_view->get_table()->load_history(
+    m_table_view->height() / get_row_height());
 }
 
-void TimeAndSalesWindow::on_table_operation(const TableModel::Operation& operation) {
+void TimeAndSalesWindow::on_table_operation(
+    const TableModel::Operation& operation) {
   visit(operation,
     [&] (const TableModel::AddOperation& operation) {
-      auto time_and_sale_style = m_properties.get_style(m_table_view->get_table()->get_bbo_indicator(operation.m_index));
-      for(auto column = 0; column < TimeAndSalesTableModel::COLUMN_SIZE + 1; ++column) {
-        auto item = m_table_view->get_item({operation.m_index, column});
+      auto& time_and_sale_style = m_properties.get_style(
+        m_table_view->get_table()->get_bbo_indicator(operation.m_index));
+      for(auto i = 0; i < TimeAndSalesTableModel::COLUMN_SIZE; ++i) {
+        auto item = m_table_view->get_item({operation.m_index, i});
         update_style(*item, [&] (auto& style) {
           style.get(Any() > is_a<TextBox>()).
             set(text_style(time_and_sale_style.m_font,
@@ -221,9 +239,9 @@ void TimeAndSalesWindow::on_table_operation(const TableModel::Operation& operati
         item->setDisabled(true);
       }
       auto row = m_table_view->get_item({operation.m_index, 0})->parentWidget();
+      row->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
       update_style(*row, [&] (auto& style) {
-        style.get(Any()).
-          set(BackgroundColor(time_and_sale_style.m_band_color));
+        style.get(Any()).set(BackgroundColor(time_and_sale_style.m_band_color));
       });
       update_export_menu_item();
     },
@@ -238,6 +256,7 @@ void TimeAndSalesWindow::on_export() {
       tr("/time_and_sales"), "CSV (*.csv)");
   if(!file_name.isEmpty()) {
     auto out = std::ofstream(file_name.toStdString());
-    export_table_as_csv(ExportTimeAndSalesTableMoel(m_table_view->get_table()), out);
+    export_table_as_csv(
+      ExportTimeAndSalesTableMoel(m_table_view->get_table()), out);
   }
 }

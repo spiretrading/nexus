@@ -59,10 +59,12 @@ namespace Styles {
       ContextMenu* m_table_columns_menu;
       std::vector<HeaderItemProperties> m_header_item_properties;
       bool m_is_loading;
+      int m_last_scroll_y;
       int m_resize_index;
       QPoint m_resize_position;
       boost::signals2::scoped_connection m_begin_loading_connection;
       boost::signals2::scoped_connection m_end_loading_connection;
+      boost::signals2::scoped_connection m_table_operation_connection;
 
       QWidget* table_view_builder(
         const std::shared_ptr<TableModel>& table, int row, int column);
@@ -74,6 +76,7 @@ namespace Styles {
       void resize_column_widths();
       void on_begin_loading();
       void on_end_loading();
+      void on_table_operation(const TableModel::Operation& operation);
       void on_scroll_position(int position);
       void on_timer_expired();
       void on_start_resize(int index);

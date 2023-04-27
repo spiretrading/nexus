@@ -103,8 +103,7 @@ namespace {
         set(TrailingZeros(0));
       style.get(Any()).
         set(PaddingLeft(scale_width(2))).
-        set(PaddingRight(0)).
-        set(vertical_padding(scale_height(1.5)));
+        set(PaddingRight(0));
     });
     auto& box = *static_cast<Box*>(time_box->layout()->itemAt(0)->widget());
     auto box_body = box.get_body();
@@ -114,7 +113,6 @@ namespace {
       field->setMaximumWidth(QWIDGETSIZE_MAX);
       static_cast<QHBoxLayout*>(box_body->layout())->setStretchFactor(field, 0);
     }
-    time_box->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
     return time_box;
   }
 
@@ -186,6 +184,7 @@ TimeAndSalesTableView::TimeAndSalesTableView(
     : m_table(std::make_shared<TimeAndSalesTableViewModel>(std::move(table))),
       m_timer(new QTimer(this)),
       m_is_loading(false),
+      m_last_scroll_y(0),
       m_resize_index(-1),
       m_begin_loading_connection(m_table->m_source->connect_begin_loading_signal(
         std::bind_front(&TimeAndSalesTableView::on_begin_loading, this))),
@@ -218,9 +217,12 @@ TimeAndSalesTableView::TimeAndSalesTableView(
     *static_cast<ScrollBox*>(table_view->layout()->itemAt(1)->widget());
   m_table_body = static_cast<TableBody*>(&old_scroll_box.get_body());
   auto body = new QWidget();
+  body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   auto body_layout = make_vbox_layout(body);
+  m_table_body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   body_layout->addWidget(m_table_body);
   m_pull_indicator = make_pull_indicator();
+  m_pull_indicator->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   m_pull_indicator->setVisible(false);
   body_layout->addWidget(m_pull_indicator);
   m_scroll_box = new ScrollBox(body);
@@ -234,9 +236,12 @@ TimeAndSalesTableView::TimeAndSalesTableView(
   connect(m_timer, &QTimer::timeout,
     std::bind_front(&TimeAndSalesTableView::on_timer_expired, this));
   make_table_columns_sub_menu();
+  m_table_operation_connection = m_table->connect_operation_signal(
+    std::bind_front(&TimeAndSalesTableView::on_table_operation, this));
 }
 
-const std::shared_ptr<TimeAndSalesTableModel>& TimeAndSalesTableView::get_table() const {
+const std::shared_ptr<TimeAndSalesTableModel>&
+    TimeAndSalesTableView::get_table() const {
   return m_table->m_source;
 }
 
@@ -293,6 +298,7 @@ QWidget* TimeAndSalesTableView::table_view_builder(
         set(vertical_padding(scale_height(1.5)));
     });
   }
+  //cell->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
   return cell;
 }
 
@@ -422,7 +428,6 @@ void TimeAndSalesTableView::resize_column_widths() {
     }
   }
   m_resize_position = position;
-
 }
 
 void TimeAndSalesTableView::on_begin_loading() {
@@ -439,15 +444,25 @@ void TimeAndSalesTableView::on_end_loading() {
   m_pull_indicator->setVisible(false);
 }
 
+void TimeAndSalesTableView::on_table_operation(
+    const TableModel::Operation& operation) {
+  visit(operation,
+    [&] (const TableModel::AddOperation& operation) {
+      get_item({operation.m_index, 0})->parentWidget()->show();
+      m_scroll_box->get_body().adjustSize();
+    });
+}
+
 void TimeAndSalesTableView::on_scroll_position(int position) {
-  if(m_is_loading) {
-    return;
+  if(!m_is_loading && position > m_last_scroll_y) {
+    auto& scroll_bar = m_scroll_box->get_vertical_scroll_bar();
+    if(scroll_bar.get_range().m_end - position <
+        scroll_bar.get_page_size() / 2) {
+      m_table->m_source->load_history(
+        height() / get_item(Index{0,0})->height());
+    }
   }
-  auto& scroll_bar = m_scroll_box->get_vertical_scroll_bar();
-  if(m_scroll_box->get_body().height() - position - m_scroll_box->get_vertical_scroll_bar().height() <
-      m_scroll_box->get_vertical_scroll_bar().height() / 2) {
-    m_table->m_source->load_history(10);
-  }
+  m_last_scroll_y = position;
 }
 
 void TimeAndSalesTableView::on_timer_expired() {

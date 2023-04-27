@@ -37,11 +37,10 @@ namespace {
 }
 
 TimeAndSalesTableModel::TimeAndSalesTableModel(
-  std::shared_ptr<TimeAndSalesModel> model)
-  : m_model(std::move(model)),
-    m_source_connection(m_model->connect_update_signal(
-      std::bind_front(&TimeAndSalesTableModel::on_update, this))) {
-  load_snapshot(Beam::Queries::Sequence::Present(), 20);
+    std::shared_ptr<TimeAndSalesModel> model)
+    : m_model(std::move(model)),
+      m_source_connection(m_model->connect_update_signal(
+        std::bind_front(&TimeAndSalesTableModel::on_update, this))) {
   m_entries.connect_operation_signal(
     std::bind_front(&TimeAndSalesTableModel::on_operation, this));
 }
@@ -55,15 +54,18 @@ void TimeAndSalesTableModel::set_model(
     std::shared_ptr<TimeAndSalesModel> model) {
   clear(m_entries);
   m_model = std::move(model);
-  load_snapshot(Beam::Queries::Sequence::Present(), 20);
   m_source_connection = m_model->connect_update_signal(
     std::bind_front(&TimeAndSalesTableModel::on_update, this));
 }
 
 void TimeAndSalesTableModel::load_history(int max_count) {
-  load_snapshot(
-    m_entries.get(m_entries.get_size() - 1).m_time_and_sale.GetSequence(),
+  if(m_entries.get_size() == 0) {
+    load_snapshot(Beam::Queries::Sequence::Present(), max_count);
+  } else {
+    load_snapshot(
+      m_entries.get(m_entries.get_size() - 1).m_time_and_sale.GetSequence(),
       max_count);
+  }
 }
 
 BboIndicator TimeAndSalesTableModel::get_bbo_indicator(int row) const {

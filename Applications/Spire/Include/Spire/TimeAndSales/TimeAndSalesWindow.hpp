@@ -64,6 +64,7 @@ namespace Spire {
       bool m_is_updating_model;
       boost::signals2::scoped_connection m_current_connection;
 
+      int get_row_height() const;
       void make_context_menu();
       void update_export_menu_item();
       void on_current(const Nexus::Security& security);
