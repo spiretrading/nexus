@@ -117,7 +117,9 @@ TimeAndSalesWindow::TimeAndSalesWindow(
   m_table_view->get_table()->connect_operation_signal(
     std::bind_front(&TimeAndSalesWindow::on_table_operation, this));
   m_table_view->get_table()->connect_begin_loading_signal([=] {
-    m_transition_view->set_status(TransitionView::Status::LOADING);
+    if(m_transition_view->get_status() == TransitionView::Status::NONE) {
+      m_transition_view->set_status(TransitionView::Status::LOADING);
+    }
   });
   m_table_view->get_table()->connect_end_loading_signal([=] {
     m_transition_view->set_status(TransitionView::Status::READY);
@@ -156,11 +158,10 @@ bool TimeAndSalesWindow::eventFilter(QObject* watched, QEvent* event) {
 void TimeAndSalesWindow::mousePressEvent(QMouseEvent* event) {
   if(event->button() == Qt::RightButton && !m_table_view->isHidden()) {
     auto table_view = m_table_view->layout()->itemAt(0)->widget();
-    auto& scroll_box =
-      *static_cast<ScrollBox*>(table_view->layout()->itemAt(1)->widget());
-    auto table_body = scroll_box.get_body().layout()->itemAt(0)->widget();
-    if(table_body->rect().contains(
-        table_body->mapFromGlobal(event->globalPos()))) {
+    auto table_header = table_view->layout()->itemAt(0)->widget();
+    auto body_rect = rect().adjusted(0,
+      m_title_bar->height() + table_header->height(), 0, 0);
+    if(body_rect.contains(event->pos())) {
       m_context_menu->window()->move(event->globalPos());
       m_context_menu->show();
     }

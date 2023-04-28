@@ -41,6 +41,10 @@ void TransitionView::set_status(Status status) {
   }
 }
 
+TransitionView::Status TransitionView::get_status() const {
+  return m_status;
+}
+
 void TransitionView::add_widget_to_layout(QWidget& widget) {
   layout()->addWidget(&widget);
   widget.show();

@@ -170,6 +170,9 @@ namespace {
       auto box = new IntegerBox(model);
       box->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
       model->connect_update_signal([=] (auto value) {
+        if(m_time_and_sales->get_query_duration() == pos_infin) {
+          return;
+        }
         if(value) {
           m_time_and_sales->set_query_duration(milliseconds(*value));
         }
