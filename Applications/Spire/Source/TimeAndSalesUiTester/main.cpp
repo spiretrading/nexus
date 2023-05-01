@@ -98,17 +98,37 @@ namespace {
       auto layout = new QGridLayout(this);
       layout->setHorizontalSpacing(scale_width(30));
       layout->addWidget(make_label(tr("Price:")), 0, 0);
-      layout->addWidget(make_money_box(), 0, 1);
+      auto money_box = make_money_box();
+      layout->addWidget(money_box, 0, 1);
       layout->addWidget(make_label(tr("Price Range:")), 1, 0);
-      layout->addWidget(make_indicator_box(), 1, 1);
+      auto indicator_box = make_indicator_box();
+      layout->addWidget(indicator_box, 1, 1);
       layout->addWidget(make_label(tr("Period (ms):")), 2, 0);
       layout->addWidget(make_period_box(), 2, 1);
       layout->addWidget(make_label(tr("Loading Time (ms):")), 3, 0);
       auto loading_time_box = make_loading_time_box();
       layout->addWidget(loading_time_box, 3, 1);
       layout->addWidget(make_label(tr("All Data Loaded")), 4, 0);
-      layout->addWidget(make_check_box(loading_time_box), 4, 1);
-      setFixedSize(scale(350, 200));
+      layout->addWidget(make_load_all_data_check_box(loading_time_box), 4, 1);
+      layout->addWidget(make_label(tr("Random data")), 5, 0);
+      auto random_check_box = make_random_check_box();
+      random_check_box->get_current()->connect_update_signal(
+        [=] (bool checked) {
+          if(checked) {
+            money_box->setEnabled(false);
+            indicator_box->setEnabled(false);
+            m_time_and_sales->set_data_random(true);
+          } else {
+            m_time_and_sales->set_data_random(false);
+            money_box->setEnabled(true);
+            indicator_box->setEnabled(true);
+            m_time_and_sales->set_price(*money_box->get_current()->get());
+            m_time_and_sales->set_bbo_indicator(
+              static_cast<BboIndicator>(*indicator_box->get_current()->get()));
+          }
+      });
+      layout->addWidget(random_check_box, 5, 1);
+      setFixedSize(scale(350, 250));
     }
 
     bool eventFilter(QObject* object, QEvent* event) override {
@@ -180,7 +200,7 @@ namespace {
       return box;
     }
 
-    CheckBox* make_check_box(IntegerBox* loading_time_box) {
+    CheckBox* make_load_all_data_check_box(IntegerBox* loading_time_box) {
       auto check_box = new CheckBox();
       check_box->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
       check_box->get_current()->connect_update_signal([=] (auto checked) {
@@ -190,6 +210,12 @@ namespace {
           m_time_and_sales->set_query_duration(milliseconds(*current));
         }
       });
+      return check_box;
+    }
+
+    CheckBox* make_random_check_box() {
+      auto check_box = new CheckBox();
+      check_box->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
       return check_box;
     }
   };
@@ -222,11 +248,13 @@ namespace {
       auto indicator = m_time_and_sales->get_bbo_indicator();
       auto period = m_time_and_sales->get_period();
       auto query_duration = m_time_and_sales->get_query_duration();
+      auto is_data_random = m_time_and_sales->is_data_random();
       m_time_and_sales = std::make_shared<DemoTimeAndSalesModel>(security);
       m_time_and_sales->set_price(price);
       m_time_and_sales->set_bbo_indicator(indicator);
       m_time_and_sales->set_period(period);
       m_time_and_sales->set_query_duration(query_duration);
+      m_time_and_sales->set_data_random(is_data_random);
       m_time_and_sales_test_window->m_time_and_sales = m_time_and_sales;
       return m_time_and_sales;
     }

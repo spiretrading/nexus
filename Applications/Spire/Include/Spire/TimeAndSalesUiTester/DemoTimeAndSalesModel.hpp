@@ -41,6 +41,12 @@ namespace Spire {
       /* Sets the amount of time needed to query time and sales. */
       void set_query_duration(boost::posix_time::time_duration duration);
 
+      /** Returns <code>true</code> iff data is randomly generted. */
+      bool is_data_random() const;
+
+      /** Sets whether data is randomly generted. */
+      void set_data_random(bool is_random);
+
       const Nexus::Security& get_security() const override;
 
       QtPromise<std::vector<Entry>> query_until(
@@ -56,8 +62,10 @@ namespace Spire {
       BboIndicator m_indicator;
       boost::posix_time::time_duration m_period;
       boost::posix_time::time_duration m_query_duration;
+      bool m_is_data_random;
       QTimer m_timer;
 
+      Entry make_entry(boost::posix_time::ptime timestamp) const;
       void on_timeout();
   };
 }

@@ -1,4 +1,5 @@
 #include "Spire/TimeAndSalesUiTester/DemoTimeAndSalesModel.hpp"
+#include <QRandomGenerator>
 #include <Beam/Threading/LiveTimer.hpp>
 
 using namespace Beam;
@@ -11,6 +12,8 @@ using namespace Nexus;
 using namespace Spire;
 
 namespace {
+   const double multiplier = std::pow(10.0, 2);
+
   ptime from_time_t_milliseconds(std::time_t t) {
     return ptime(gregorian::date(1970,1,1)) + milliseconds(t);
   }
@@ -19,8 +22,8 @@ namespace {
     return (pt - ptime(gregorian::date(1970,1,1))).total_milliseconds();
   }
 
-  auto make_time_and_sale(ptime timestamp, Money price) {
-    return TimeAndSale(timestamp, price, 100, TimeAndSale::Condition(
+  auto make_time_and_sale(ptime timestamp, Money price, Quantity size) {
+    return TimeAndSale(timestamp, price, size, TimeAndSale::Condition(
       TimeAndSale::Condition::Type::REGULAR, "@"), "XNYS");
   }
 }
@@ -30,7 +33,8 @@ DemoTimeAndSalesModel::DemoTimeAndSalesModel(Security security)
       m_price(Money::ONE),
       m_indicator(BboIndicator::UNKNOWN),
       m_period(seconds(1)),
-      m_query_duration(seconds(1)) {
+      m_query_duration(seconds(1)),
+      m_is_data_random(false) {
   QObject::connect(&m_timer, &QTimer::timeout,
     std::bind_front(&DemoTimeAndSalesModel::on_timeout, this));
 }
@@ -75,6 +79,14 @@ void DemoTimeAndSalesModel::set_query_duration(time_duration duration) {
   m_query_duration = duration;
 }
 
+bool DemoTimeAndSalesModel::is_data_random() const {
+  return m_is_data_random;
+}
+
+void DemoTimeAndSalesModel::set_data_random(bool is_random) {
+  m_is_data_random = is_random;
+}
+
 QtPromise<std::vector<TimeAndSalesModel::Entry>>
     DemoTimeAndSalesModel::query_until(Queries::Sequence sequence,
       int max_count) {
@@ -86,10 +98,7 @@ QtPromise<std::vector<TimeAndSalesModel::Entry>>
     auto populate = [&] (ptime timestamp) {
       auto count = max_count;
       while(count > 0) {
-        result.insert(std::begin(result),
-          {SequencedValue(make_time_and_sale(timestamp, m_price),
-            Queries::Sequence(to_time_t_milliseconds(timestamp))),
-          m_indicator});
+        result.insert(std::begin(result), make_entry(timestamp));
         --count;
         timestamp -= m_period;
       }
@@ -112,8 +121,21 @@ connection DemoTimeAndSalesModel::connect_update_signal(
   return m_update_signal.connect(slot);
 }
 
+DemoTimeAndSalesModel::Entry DemoTimeAndSalesModel::make_entry(
+    ptime timestamp) const {
+  if(m_is_data_random) {
+    auto random_generator = QRandomGenerator(to_time_t_milliseconds(timestamp));
+    return {SequencedValue(make_time_and_sale(timestamp,
+        Money(std::round(
+          random_generator.bounded(200.0) * multiplier) / multiplier),
+        random_generator.bounded(1, 10000)),
+        Queries::Sequence(to_time_t_milliseconds(timestamp))),
+      static_cast<BboIndicator>(random_generator.bounded(6))};
+  }
+  return {SequencedValue(make_time_and_sale(timestamp, m_price, 100),
+    Queries::Sequence(to_time_t_milliseconds(timestamp))), m_indicator};
+}
+
 void DemoTimeAndSalesModel::on_timeout() {
-  auto timestamp = microsec_clock::universal_time();
-  m_update_signal({SequencedValue(make_time_and_sale(timestamp, m_price),
-    Queries::Sequence(to_time_t_milliseconds(timestamp))), m_indicator});
+  m_update_signal(make_entry(microsec_clock::universal_time()));
 }
