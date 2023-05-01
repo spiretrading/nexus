@@ -40,9 +40,8 @@ namespace {
       set(BackgroundColor(QColor(0xFFFFFF)));
     style.get(Any() > is_a<TableBody>()).
       set(horizontal_padding(0)).
+      set(vertical_padding(0)).
       set(HorizontalSpacing(0)).
-      set(PaddingBottom(0)).
-      set(PaddingTop(scale_height(1))).
       set(VerticalSpacing(0));
     style.get(Any() > Current()).
       set(BackgroundColor(Qt::transparent)).
@@ -51,6 +50,13 @@ namespace {
     style.get(Any() > CurrentColumn()).set(BackgroundColor(Qt::transparent));
     style.get(Any() > is_a<TableHeaderItem>() > TableHeaderItem::Label()).
       set(TextStyle(font, QColor(0x595959)));
+    return style;
+  }
+
+  auto TABLE_HADER_STYLE(StyleSheet style) {
+    style.get(Any()).
+      set(BorderBottomSize(scale_height(1))).
+      set(BorderBottomColor(QColor(0xE0E0E0)));
     return style;
   }
 
@@ -211,6 +217,9 @@ TimeAndSalesTableView::TimeAndSalesTableView(
   enclose(*this, *m_table_view);
   auto header_box =
     static_cast<Box*>(m_table_view->layout()->itemAt(0)->widget());
+  update_style(*header_box, [] (auto& style) {
+    style = TABLE_HADER_STYLE(style);
+  });
   m_table_header = static_cast<TableHeader*>(header_box->get_body()->layout()->
       itemAt(0)->widget());
   m_table_header->installEventFilter(this);
@@ -323,10 +332,11 @@ void TimeAndSalesTableView::customize_table_header() {
     auto& item = *static_cast<TableHeaderItem*>(
       m_table_header->layout()->itemAt(i)->widget());
     auto item_layout = item.layout();
-    item_layout->setContentsMargins({0, scale_height(5), 0, scale_height(2)});
+    item_layout->setContentsMargins(
+      {scale_width(4), scale_height(5), 0, scale_height(2)});
     auto contents_layout =
       item_layout->itemAt(0)->layout()->itemAt(0)->widget()->layout();
-    contents_layout->setContentsMargins({scale_width(4), 0, 0, 0});
+    contents_layout->setContentsMargins({});
     auto labels = std::make_shared<ArrayListModel<QString>>();
     labels->push(m_table_header->get_items()->get(i).m_name);
     labels->push(m_table_header->get_items()->get(i).m_short_name);
