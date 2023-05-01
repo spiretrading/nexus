@@ -36,7 +36,7 @@ namespace Spire {
       void set_status(Status status);
 
       /**
-       * Returns the loading status of the component data.
+       * Returns the loading status of data.
        */
       Status get_status() const;
 

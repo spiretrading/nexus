@@ -33,7 +33,7 @@ DemoTimeAndSalesModel::DemoTimeAndSalesModel(Security security)
       m_price(Money::ONE),
       m_indicator(BboIndicator::UNKNOWN),
       m_period(seconds(1)),
-      m_query_duration(seconds(1)),
+      m_query_duration(seconds(5)),
       m_is_data_random(false) {
   QObject::connect(&m_timer, &QTimer::timeout,
     std::bind_front(&DemoTimeAndSalesModel::on_timeout, this));

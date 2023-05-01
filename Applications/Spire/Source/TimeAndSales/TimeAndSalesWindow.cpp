@@ -104,7 +104,6 @@ TimeAndSalesWindow::TimeAndSalesWindow(
       std::make_shared<NoneTimeAndSalesModel>(Security())));
   m_table_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_transition_view = new TransitionView(m_table_view);
-  m_transition_view->set_status(TransitionView::Status::NONE);
   m_security_view = new SecurityView(std::move(query_model),
     std::make_shared<LocalValueModel<Security>>(), *m_transition_view);
   m_current_connection = m_security_view->get_current()->connect_update_signal(
