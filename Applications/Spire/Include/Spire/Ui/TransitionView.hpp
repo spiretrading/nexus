@@ -29,6 +29,9 @@ namespace Spire {
        */
       explicit TransitionView(QWidget* body, QWidget* parent = nullptr);
 
+      /** Returns the loading status of data. */
+      Status get_status() const;
+
       /** Sets the loading status of the component data.
        *  @param status The status of data.
        */
