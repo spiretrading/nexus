@@ -341,7 +341,6 @@ void TimeAndSalesTableView::customize_table_header() {
     labels->push(m_table_header->get_items()->get(i).m_name);
     labels->push(m_table_header->get_items()->get(i).m_short_name);
     auto name_label = new ResponsiveLabel(labels);
-    name_label->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
     auto old_label = contents_layout->replaceWidget(
       contents_layout->itemAt(0)->widget(), name_label);
     delete old_label->widget();
