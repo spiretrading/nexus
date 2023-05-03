@@ -39,6 +39,7 @@ namespace {
     style.get(Any()).
       set(BackgroundColor(QColor(0xFFFFFF)));
     style.get(Any() > is_a<TableBody>()).
+      set(grid_color(QColor(Qt::transparent))).
       set(horizontal_padding(0)).
       set(vertical_padding(0)).
       set(HorizontalSpacing(0)).
@@ -46,10 +47,18 @@ namespace {
     style.get(Any() > Current()).
       set(BackgroundColor(Qt::transparent)).
       set(border_color(QColor(Qt::transparent)));
+    style.get(Any() > PullIndicator()).
+      set(Visibility::NONE);
     style.get(Any() > CurrentRow()).set(BackgroundColor(Qt::transparent));
     style.get(Any() > CurrentColumn()).set(BackgroundColor(Qt::transparent));
     style.get(Any() > is_a<TableHeaderItem>() > TableHeaderItem::Label()).
       set(TextStyle(font, QColor(0x595959)));
+    style.get(NoAdditionalEntries() > is_a<TableBody>()).
+      set(PaddingBottom(scale_height(44)));
+    style.get(PullDelayed() > is_a<TableBody>()).
+      set(PaddingBottom(0));
+    style.get(PullDelayed() > PullIndicator()).
+      set(Visibility::VISIBLE);
     return style;
   }
 
@@ -57,6 +66,16 @@ namespace {
     style.get(Any()).
       set(BorderBottomSize(scale_height(1))).
       set(BorderBottomColor(QColor(0xE0E0E0)));
+    return style;
+  }
+
+  auto PULL_INDICATOR_STYLE() {
+    auto style = StyleSheet();
+    style.get(Any()).
+      set(BodyAlign(Qt::AlignHCenter)).
+      set(horizontal_padding(scale_width(8))).
+      set(PaddingBottom(scale_height(20))).
+      set(PaddingTop(scale_height(8)));
     return style;
   }
 
@@ -84,13 +103,7 @@ namespace {
     auto spinner_widget = new QLabel();
     spinner_widget->setMovie(spinner);
     auto box = new Box(spinner_widget);
-    auto style = StyleSheet();
-    style.get(Any()).
-      set(BodyAlign(Qt::AlignHCenter)).
-      set(horizontal_padding(scale_width(8))).
-      set(PaddingBottom(scale_height(20))).
-      set(PaddingTop(scale_height(8)));
-    set_style(*box, std::move(style));
+    set_style(*box, PULL_INDICATOR_STYLE());
     return box;
   }
 
@@ -192,6 +205,7 @@ TimeAndSalesTableView::TimeAndSalesTableView(
       m_is_loading(false),
       m_last_scroll_y(0),
       m_resize_index(-1),
+      m_row_size(0),
       m_begin_loading_connection(
         m_table->m_source->connect_begin_loading_signal(
           std::bind_front(&TimeAndSalesTableView::on_begin_loading, this))),
@@ -376,10 +390,10 @@ void TimeAndSalesTableView::customize_table_body() {
   auto body_layout = make_vbox_layout(body);
   m_table_body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   body_layout->addWidget(m_table_body);
-  m_pull_indicator = make_pull_indicator();
-  m_pull_indicator->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-  m_pull_indicator->setVisible(false);
-  body_layout->addWidget(m_pull_indicator);
+  auto pull_indicator = make_pull_indicator();
+  pull_indicator->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+  match(*pull_indicator, PullIndicator());
+  body_layout->addWidget(pull_indicator);
   m_scroll_box = new ScrollBox(body);
   m_scroll_box->setFocusPolicy(Qt::NoFocus);
   m_scroll_box->get_vertical_scroll_bar().connect_position_signal(
@@ -452,13 +466,19 @@ void TimeAndSalesTableView::on_begin_loading() {
     return;
   }
   m_is_loading = true;
+  m_row_size = m_table->get_row_size();
   m_timer->start(1000);
 }
 
 void TimeAndSalesTableView::on_end_loading() {
   m_is_loading = false;
+  if(m_row_size == m_table->get_row_size()) {
+    match(*m_table_view, NoAdditionalEntries());
+  } else {
+    unmatch(*m_table_view, NoAdditionalEntries());
+  }
   m_timer->stop();
-  m_pull_indicator->setVisible(false);
+  unmatch(*m_table_view, PullDelayed());
 }
 
 void TimeAndSalesTableView::on_table_operation(
@@ -483,7 +503,7 @@ void TimeAndSalesTableView::on_scroll_position(int position) {
 }
 
 void TimeAndSalesTableView::on_timer_expired() {
-  m_pull_indicator->setVisible(true);
+  match(*m_table_view, PullDelayed());
   m_scroll_box->get_body().adjustSize();
   scroll_to_end(m_scroll_box->get_vertical_scroll_bar());
 }

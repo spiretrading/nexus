@@ -10,10 +10,15 @@
 namespace Spire {
 namespace Styles {
 
+  /** Selects an indicator to indicate the pull request is being delayed. */
   using PullIndicator = StateSelector<void, struct PullIndicatorSelectorTag>;
 
-  /** Selects a indicator to indicate the pull request is being delayed. */
+  /** Selects a widget whose pull request's data is delayed. */
   using PullDelayed = StateSelector<void, struct PullDelayedSelectorTag>;
+
+  /** Selects a widget where there is no additional entries to load. */
+  using NoAdditionalEntries =
+    StateSelector<void, struct NoAdditionalEntriesSelectorTag>;
 }
 
   /** Display the TableView to represent time and sales. */
@@ -28,7 +33,8 @@ namespace Styles {
        * @param table The time and sale to represent.
        * @param parent The parent widget.
        */
-      explicit TimeAndSalesTableView(std::shared_ptr<TimeAndSalesTableModel> table,
+      explicit TimeAndSalesTableView(
+        std::shared_ptr<TimeAndSalesTableModel> table,
         QWidget* parent = nullptr);
 
       /* Returns the table. */
@@ -54,7 +60,6 @@ namespace Styles {
       TableView* m_table_view;
       TableHeader* m_table_header;
       TableBody* m_table_body;
-      QWidget* m_pull_indicator;
       ScrollBox* m_scroll_box;
       QTimer* m_timer;
       ContextMenu* m_table_columns_menu;
@@ -62,6 +67,7 @@ namespace Styles {
       bool m_is_loading;
       int m_last_scroll_y;
       int m_resize_index;
+      int m_row_size;
       QPoint m_resize_position;
       boost::signals2::scoped_connection m_begin_loading_connection;
       boost::signals2::scoped_connection m_end_loading_connection;
