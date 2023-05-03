@@ -61,7 +61,6 @@ namespace Spire {
       ResponsiveLabel* m_title_label;
       ContextMenu* m_context_menu;
       QtPromise<void> m_promise;
-      boost::signals2::scoped_connection m_current_connection;
 
       int get_row_height() const;
       void make_context_menu();

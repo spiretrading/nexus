@@ -67,9 +67,9 @@ namespace {
         }
       }
       if(column_id == TimeAndSalesTableModel::Column::MARKET) {
-        static auto market_token =
+        static auto market =
           MarketToken(m_source->get<std::string>(row - 1, column));
-        return market_token;
+        return market;
       }
       return m_source->at(row - 1, column);
     }
@@ -88,7 +88,6 @@ TimeAndSalesWindow::TimeAndSalesWindow(
     : Window(parent),
       m_properties(std::move(properties)),
       m_model_builder(std::move(model_builder)) {
-  resize(scale(180, 410));
   auto labels = std::make_shared<ArrayListModel<QString>>();
   labels->push(TITLE_NAME);
   labels->push(TITLE_SHORT_NAME);
@@ -105,14 +104,14 @@ TimeAndSalesWindow::TimeAndSalesWindow(
   m_table_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_transition_view = new TransitionView(m_table_view);
   m_security_view = new SecurityView(std::move(query_model),
-    std::make_shared<LocalValueModel<Security>>(), *m_transition_view);
-  m_current_connection = m_security_view->get_current()->connect_update_signal(
+    *m_transition_view);
+  m_security_view->get_current()->connect_update_signal(
     std::bind_front(&TimeAndSalesWindow::on_current, this));
   auto box = new Box(m_security_view);
   update_style(*box, [] (auto& style) {
     style.get(Any()).set(BackgroundColor(QColor(0xFFFFFF)));
   });
-  layout()->addWidget(box);
+  set_body(box);
   m_table_view->get_table()->connect_operation_signal(
     std::bind_front(&TimeAndSalesWindow::on_table_operation, this));
   m_table_view->get_table()->connect_begin_loading_signal([=] {
@@ -124,6 +123,7 @@ TimeAndSalesWindow::TimeAndSalesWindow(
     m_transition_view->set_status(TransitionView::Status::READY);
   });
   make_context_menu();
+  resize(scale(180, 410));
 }
 
 const std::shared_ptr<TimeAndSalesModel>&
