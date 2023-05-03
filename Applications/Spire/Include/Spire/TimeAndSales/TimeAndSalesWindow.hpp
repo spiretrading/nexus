@@ -57,10 +57,8 @@ namespace Spire {
       TimeAndSalesTableView* m_table_view;
       TransitionView* m_transition_view;
       SecurityView* m_security_view;
-      QWidget* m_title_label;
       ResponsiveLabel* m_responsive_title_label;
       ContextMenu* m_context_menu;
-      QtPromise<void> m_promise;
 
       int get_row_height() const;
       void make_context_menu();

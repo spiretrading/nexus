@@ -96,8 +96,8 @@ TimeAndSalesWindow::TimeAndSalesWindow(
   m_responsive_title_label = new ResponsiveLabel(labels, this);
   setWindowTitle(m_responsive_title_label->get_current()->get());
   m_title_bar = static_cast<TitleBar*>(layout()->itemAt(0)->widget());
-  m_title_label = m_title_bar->layout()->itemAt(1)->widget();
-  m_title_label->installEventFilter(this);
+  auto title_label = m_title_bar->layout()->itemAt(1)->widget();
+  title_label->installEventFilter(this);
   m_responsive_title_label->stackUnder(m_title_bar);
   m_table_view = new TimeAndSalesTableView(
     std::make_shared<TimeAndSalesTableModel>(
@@ -112,7 +112,7 @@ TimeAndSalesWindow::TimeAndSalesWindow(
   update_style(*box, [] (auto& style) {
     style.get(Any()).set(BackgroundColor(QColor(0xFFFFFF)));
   });
-  set_body(box);
+  layout()->addWidget(box);
   m_table_view->get_table()->connect_operation_signal(
     std::bind_front(&TimeAndSalesWindow::on_table_operation, this));
   m_table_view->get_table()->connect_begin_loading_signal([=] {
@@ -147,7 +147,7 @@ const TimeAndSalesWindowProperties& TimeAndSalesWindow::get_properties() const {
 }
 
 bool TimeAndSalesWindow::eventFilter(QObject* watched, QEvent* event) {
-  if(watched == m_title_label && event->type() == QEvent::Resize) {
+  if(event->type() == QEvent::Resize) {
     auto& resize_event = *static_cast<QResizeEvent*>(event);
     m_responsive_title_label->resize(resize_event.size());
     setWindowTitle(m_responsive_title_label->get_current()->get());
