@@ -10,7 +10,6 @@
 #include "Spire/TimeAndSales/TimeAndSalesTableView.hpp"
 #include "Spire/Ui/ContextMenu.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
-#include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ResponsiveLabel.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
@@ -234,8 +233,11 @@ void TimeAndSalesWindow::on_current(const Security& security) {
   setWindowTitle(m_responsive_title_label->get_current()->get());
   m_transition_view->set_status(TransitionView::Status::NONE);
   m_table_view->get_table()->set_model(m_model_builder(security));
+  auto table_view = m_table_view->layout()->itemAt(0)->widget();
+  auto table_header = table_view->layout()->itemAt(0)->widget();
   m_table_view->get_table()->load_history(
-    m_table_view->height() / get_row_height());
+    (height() - m_title_bar->height() - table_header->sizeHint().height()) /
+      get_row_height());
 }
 
 void TimeAndSalesWindow::on_table_operation(
@@ -246,12 +248,12 @@ void TimeAndSalesWindow::on_table_operation(
         m_table_view->get_table()->get_bbo_indicator(operation.m_index));
       for(auto i = 0; i <= TimeAndSalesTableModel::COLUMN_SIZE; ++i) {
         auto item = m_table_view->get_item({operation.m_index, i});
+        item->setDisabled(true);
         update_style(*item, [&] (auto& style) {
           style.get(Any() > is_a<TextBox>()).
             set(text_style(time_and_sale_style.m_font,
               QColor(time_and_sale_style.m_text_color)));
         });
-        item->setDisabled(true);
       }
       auto row = m_table_view->get_item({operation.m_index, 0})->parentWidget();
       row->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
@@ -268,7 +270,7 @@ void TimeAndSalesWindow::on_table_operation(
 void TimeAndSalesWindow::on_export() {
   auto file_name = QFileDialog::getSaveFileName(this, tr("Export As"),
     QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) +
-      tr("/time_and_sales"), "CSV (*.csv)");
+      tr("/time_and_sales"), tr("CSV (*.csv)"));
   if(!file_name.isEmpty()) {
     auto out = std::ofstream(file_name.toStdString());
     export_table_as_csv(

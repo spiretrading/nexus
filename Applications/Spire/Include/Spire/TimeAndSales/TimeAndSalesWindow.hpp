@@ -2,7 +2,6 @@
 #define SPIRE_TIME_AND_SALES_WINDOW_HPP
 #include "Nexus/Definitions/Security.hpp"
 #include "Spire/Spire/TableModel.hpp"
-#include "Spire/TimeAndSales/TimeAndSales.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesModel.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesWindowProperties.hpp"
 #include "Spire/Ui/ComboBox.hpp"
