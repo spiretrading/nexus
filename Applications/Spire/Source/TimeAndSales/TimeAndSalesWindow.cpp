@@ -12,6 +12,7 @@
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ResponsiveLabel.hpp"
+#include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/SecurityView.hpp"
 #include "Spire/Ui/TableItem.hpp"
@@ -88,16 +89,17 @@ TimeAndSalesWindow::TimeAndSalesWindow(
     : Window(parent),
       m_properties(std::move(properties)),
       m_model_builder(std::move(model_builder)) {
+  set_svg_icon(":/Icons/time-sales.svg");
+  setWindowIcon(QIcon(":/Icons/taskbar_icons/time-sales.png"));
   auto labels = std::make_shared<ArrayListModel<QString>>();
   labels->push(TITLE_NAME);
   labels->push(TITLE_SHORT_NAME);
-  m_title_label = new ResponsiveLabel(labels, this);
-  setWindowTitle(m_title_label->get_current()->get());
+  m_responsive_title_label = new ResponsiveLabel(labels, this);
+  setWindowTitle(m_responsive_title_label->get_current()->get());
   m_title_bar = static_cast<TitleBar*>(layout()->itemAt(0)->widget());
-  m_title_bar->layout()->itemAt(1)->widget()->installEventFilter(this);
-  m_title_label->stackUnder(m_title_bar);
-  set_svg_icon(":/Icons/time-sales.svg");
-  setWindowIcon(QIcon(":/Icons/taskbar_icons/time-sales.png"));
+  m_title_label = m_title_bar->layout()->itemAt(1)->widget();
+  m_title_label->installEventFilter(this);
+  m_responsive_title_label->stackUnder(m_title_bar);
   m_table_view = new TimeAndSalesTableView(
     std::make_shared<TimeAndSalesTableModel>(
       std::make_shared<NoneTimeAndSalesModel>(Security())));
@@ -146,20 +148,36 @@ const TimeAndSalesWindowProperties& TimeAndSalesWindow::get_properties() const {
 }
 
 bool TimeAndSalesWindow::eventFilter(QObject* watched, QEvent* event) {
-  if(event->type() == QEvent::Resize) {
+  if(watched == m_title_label && event->type() == QEvent::Resize) {
     auto& resize_event = *static_cast<QResizeEvent*>(event);
-    m_title_label->resize(resize_event.size());
-    setWindowTitle(m_title_label->get_current()->get());
+    m_responsive_title_label->resize(resize_event.size());
+    setWindowTitle(m_responsive_title_label->get_current()->get());
   }
   return Window::eventFilter(watched, event);
 }
 
 void TimeAndSalesWindow::mousePressEvent(QMouseEvent* event) {
-  if(event->button() == Qt::RightButton && !m_table_view->isHidden()) {
+  if(event->button() == Qt::RightButton &&
+      m_transition_view->get_status() == TransitionView::Status::READY) {
     auto table_view = m_table_view->layout()->itemAt(0)->widget();
     auto table_header = table_view->layout()->itemAt(0)->widget();
+    auto& scroll_box =
+      *static_cast<ScrollBox*>(table_view->layout()->itemAt(1)->widget());
+    auto scroll_bar_width = [&] {
+      if(scroll_box.get_vertical_scroll_bar().isVisible()) {
+        return scroll_box.get_vertical_scroll_bar().width();
+      }
+      return 0;
+    }();
+    auto scroll_bar_height = [&] {
+      if(scroll_box.get_horizontal_scroll_bar().isVisible()) {
+        return scroll_box.get_horizontal_scroll_bar().height();
+      }
+      return 0;
+    }();
     auto body_rect = rect().adjusted(0,
-      m_title_bar->height() + table_header->height(), 0, 0);
+      m_title_bar->height() + table_header->height(), -scroll_bar_width,
+      -scroll_bar_height);
     if(body_rect.contains(event->pos())) {
       m_context_menu->window()->move(event->globalPos());
       m_context_menu->show();
@@ -210,9 +228,10 @@ void TimeAndSalesWindow::update_export_menu_item() {
 
 void TimeAndSalesWindow::on_current(const Security& security) {
   auto prefix_name = displayText(security) + " " + QString(0x2013) + " ";
-  m_title_label->get_labels()->set(0, prefix_name + TITLE_NAME);
-  m_title_label->get_labels()->set(1, prefix_name + TITLE_SHORT_NAME);
-  setWindowTitle(m_title_label->get_current()->get());
+  m_responsive_title_label->get_labels()->set(0, prefix_name + TITLE_NAME);
+  m_responsive_title_label->get_labels()->set(1,
+    prefix_name + TITLE_SHORT_NAME);
+  setWindowTitle(m_responsive_title_label->get_current()->get());
   m_transition_view->set_status(TransitionView::Status::NONE);
   m_table_view->get_table()->set_model(m_model_builder(security));
   m_table_view->get_table()->load_history(
