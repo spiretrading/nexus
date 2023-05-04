@@ -1,10 +1,8 @@
 #ifndef SPIRE_TIME_AND_SALES_TABLE_VIEW_HPP
 #define SPIRE_TIME_AND_SALES_TABLE_VIEW_HPP
 #include <QWidget>
-#include "Spire/Spire/ArrayTableModel.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesModel.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesTableModel.hpp"
-#include "Spire/TimeAndSales/TimeAndSalesWindowProperties.hpp"
 #include "Spire/Ui/TableView.hpp"
 
 namespace Spire {

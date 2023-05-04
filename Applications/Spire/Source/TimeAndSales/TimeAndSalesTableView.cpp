@@ -2,14 +2,11 @@
 #include <QMouseEvent>
 #include <QMovie>
 #include "Spire/Spire/ArrayListModel.hpp"
-#include "Spire/Spire/ColumnViewListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Spire/ListValueModel.hpp"
 #include "Spire/Ui/ComboBox.hpp"
 #include "Spire/Ui/ContextMenu.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DurationBox.hpp"
-#include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/MarketBox.hpp"
 #include "Spire/Ui/MoneyBox.hpp"
@@ -36,8 +33,7 @@ namespace {
     auto font = QFont("Roboto");
     font.setWeight(QFont::Medium);
     font.setPixelSize(scale_width(10));
-    style.get(Any()).
-      set(BackgroundColor(QColor(0xFFFFFF)));
+    style.get(Any()).set(BackgroundColor(QColor(0xFFFFFF)));
     style.get(Any() > is_a<TableBody>()).
       set(grid_color(QColor(Qt::transparent))).
       set(horizontal_padding(0)).
@@ -47,11 +43,10 @@ namespace {
     style.get(Any() > Current()).
       set(BackgroundColor(Qt::transparent)).
       set(border_color(QColor(Qt::transparent)));
-    style.get(Any() > PullIndicator()).
-      set(Visibility::NONE);
+    style.get(Any() > PullIndicator()).set(Visibility::NONE);
     style.get(Any() > CurrentRow()).set(BackgroundColor(Qt::transparent));
     style.get(Any() > CurrentColumn()).set(BackgroundColor(Qt::transparent));
-    style.get(Any() > is_a<TableHeaderItem>() > TableHeaderItem::Label()).
+    style.get(Any() > TableHeaderItem::Label()).
       set(TextStyle(font, QColor(0x595959)));
     style.get(NoAdditionalEntries() > is_a<TableBody>()).
       set(PaddingBottom(scale_height(44)));
@@ -81,18 +76,16 @@ namespace {
 
   auto make_header_model() {
     auto model = std::make_shared<ArrayListModel<TableHeaderItem::Model>>();
-    model->push({QObject::tr("Time"), QObject::tr("Time"),
-      TableHeaderItem::Order::UNORDERED, TableFilter::Filter::NONE});
-    model->push({QObject::tr("Price"), QObject::tr("Px"),
-      TableHeaderItem::Order::UNORDERED, TableFilter::Filter::NONE});
-    model->push({QObject::tr("Size"), QObject::tr("Sz"),
-      TableHeaderItem::Order::UNORDERED, TableFilter::Filter::NONE});
-    model->push({QObject::tr("Market"), QObject::tr("Mkt"),
-      TableHeaderItem::Order::UNORDERED, TableFilter::Filter::NONE});
-    model->push({QObject::tr("Condition"), QObject::tr("Cond"),
-      TableHeaderItem::Order::UNORDERED, TableFilter::Filter::NONE});
-    model->push({"", "", TableHeaderItem::Order::UNORDERED,
-      TableFilter::Filter::NONE});
+    auto push = [&] (const QString& name, const QString& short_name) {
+      model->push({name, short_name, TableHeaderItem::Order::UNORDERED,
+        TableFilter::Filter::NONE});
+    };
+    push(QObject::tr("Time"), QObject::tr("Time"));
+    push(QObject::tr("Price"), QObject::tr("Px"));
+    push(QObject::tr("Size"), QObject::tr("Sz"));
+    push(QObject::tr("Market"), QObject::tr("Mkt"));
+    push(QObject::tr("Condition"), QObject::tr("Cond"));
+    push("", "");
     return model;
   }
 
@@ -202,6 +195,7 @@ TimeAndSalesTableView::TimeAndSalesTableView(
     std::shared_ptr<TimeAndSalesTableModel> table, QWidget* parent)
     : m_table(std::make_shared<TimeAndSalesTableViewModel>(std::move(table))),
       m_timer(new QTimer(this)),
+      m_scroll_box(nullptr),
       m_is_loading(false),
       m_last_scroll_y(0),
       m_resize_index(-1),
@@ -212,15 +206,8 @@ TimeAndSalesTableView::TimeAndSalesTableView(
       m_end_loading_connection(m_table->m_source->connect_end_loading_signal(
         std::bind_front(&TimeAndSalesTableView::on_end_loading, this))) {
   make_header_item_properties();
-  auto current = std::make_shared<LocalValueModel<optional<Index>>>();
-  current->connect_update_signal([=] (const auto& value) {
-    if(value) {
-      current->set(none);
-    }
-  });
   m_table_view = TableViewBuilder(m_table).
     set_header(make_header_model()).
-    set_current(current).
     set_view_builder(
       std::bind_front(&TimeAndSalesTableView::table_view_builder, this)).
     make();
@@ -229,14 +216,6 @@ TimeAndSalesTableView::TimeAndSalesTableView(
     style = TABLE_VIEW_STYLE(style);
   });
   enclose(*this, *m_table_view);
-  auto header_box =
-    static_cast<Box*>(m_table_view->layout()->itemAt(0)->widget());
-  update_style(*header_box, [] (auto& style) {
-    style = TABLE_HADER_STYLE(style);
-  });
-  m_table_header = static_cast<TableHeader*>(header_box->get_body()->layout()->
-      itemAt(0)->widget());
-  m_table_header->installEventFilter(this);
   customize_table_header();
   customize_table_body();
   make_table_columns_sub_menu();
@@ -273,6 +252,18 @@ bool TimeAndSalesTableView::eventFilter(QObject* watched, QEvent* event) {
         resize_column_widths();
         return true;
       }
+    }
+  } else if(watched == m_table_body && event->type() == QEvent::KeyPress) {
+    auto& key_event = *static_cast<QKeyEvent*>(event);
+    switch(key_event.key()) {
+      case Qt::Key_Home:
+      case Qt::Key_End:
+      case Qt::Key_Up:
+      case Qt::Key_Down:
+      case Qt::Key_Left:
+      case Qt::Key_Right:
+        QCoreApplication::sendEvent(m_scroll_box, event);
+        return true;
     }
   }
   return QWidget::eventFilter(watched, event);
@@ -341,6 +332,14 @@ void TimeAndSalesTableView::make_table_columns_sub_menu() {
 }
 
 void TimeAndSalesTableView::customize_table_header() {
+  auto header_box =
+    static_cast<Box*>(m_table_view->layout()->itemAt(0)->widget());
+  update_style(*header_box, [] (auto& style) {
+    style = TABLE_HADER_STYLE(style);
+  });
+  m_table_header = static_cast<TableHeader*>(header_box->get_body()->layout()->
+      itemAt(0)->widget());
+  m_table_header->installEventFilter(this);
   auto layout = m_table_header->layout();
   for(auto i = 0; i < TimeAndSalesTableModel::COLUMN_SIZE; ++i) {
     auto& item = *static_cast<TableHeaderItem*>(
@@ -385,6 +384,7 @@ void TimeAndSalesTableView::customize_table_body() {
   auto& old_scroll_box =
     *static_cast<ScrollBox*>(m_table_view->layout()->itemAt(1)->widget());
   m_table_body = static_cast<TableBody*>(&old_scroll_box.get_body());
+  m_table_body->installEventFilter(this);
   auto body = new QWidget();
   body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   auto body_layout = make_vbox_layout(body);
