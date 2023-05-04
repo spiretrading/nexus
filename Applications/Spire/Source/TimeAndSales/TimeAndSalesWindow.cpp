@@ -122,6 +122,7 @@ TimeAndSalesWindow::TimeAndSalesWindow(
   });
   m_table_view->get_table()->connect_end_loading_signal([=] {
     m_transition_view->set_status(TransitionView::Status::READY);
+    m_table_view->setFocus();
   });
   make_context_menu();
   resize(scale(180, 410));

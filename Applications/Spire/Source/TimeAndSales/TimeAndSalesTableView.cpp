@@ -219,6 +219,7 @@ TimeAndSalesTableView::TimeAndSalesTableView(
   customize_table_header();
   customize_table_body();
   make_table_columns_sub_menu();
+  setFocusProxy(m_table_view);
   m_timer->setSingleShot(true);
   connect(m_timer, &QTimer::timeout,
     std::bind_front(&TimeAndSalesTableView::on_timer_expired, this));
@@ -255,16 +256,14 @@ bool TimeAndSalesTableView::eventFilter(QObject* watched, QEvent* event) {
     }
   } else if(watched == m_table_body && event->type() == QEvent::KeyPress) {
     auto& key_event = *static_cast<QKeyEvent*>(event);
-    switch(key_event.key()) {
-      case Qt::Key_Home:
-      case Qt::Key_End:
-      case Qt::Key_Up:
-      case Qt::Key_Down:
-      case Qt::Key_Left:
-      case Qt::Key_Right:
-        QCoreApplication::sendEvent(m_scroll_box, event);
-        return true;
+    if(key_event.key() == Qt::Key_Up || key_event.key() == Qt::Key_Down) {
+      if(m_table->get_row_size() > 0) {
+        m_scroll_box->get_vertical_scroll_bar().set_line_size(
+          get_item({0, 0})->height());
+      }
     }
+    event->ignore();
+    return true;
   }
   return QWidget::eventFilter(watched, event);
 }
@@ -402,6 +401,7 @@ void TimeAndSalesTableView::customize_table_body() {
     m_table_view->layout()->replaceWidget(&old_scroll_box, m_scroll_box);
   delete layout_item->widget();
   delete layout_item;
+  m_table_view->setFocusProxy(m_table_body);
 }
 
 void TimeAndSalesTableView::resize_column_widths() {
