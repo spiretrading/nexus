@@ -58,7 +58,8 @@ namespace Styles {
       TableView* m_table_view;
       TableHeader* m_table_header;
       TableBody* m_table_body;
-      ScrollBox* m_scroll_box;
+      ScrollBox* m_header_scroll_box;
+      ScrollBox* m_body_scroll_box;
       QTimer* m_timer;
       ContextMenu* m_table_columns_menu;
       std::vector<HeaderItemProperties> m_header_item_properties;
@@ -77,13 +78,15 @@ namespace Styles {
       void make_header_item_properties();
       void make_table_columns_sub_menu();
       void customize_table_header();
+      void customize_empty_header_cell();
       void customize_table_body();
       void resize_column_widths();
       void on_column_sub_menu_check(int column, bool checked);
       void on_begin_loading();
       void on_end_loading();
       void on_table_operation(const TableModel::Operation& operation);
-      void on_scroll_position(int position);
+      void on_horizontal_scroll_position(int position);
+      void on_vertical_scroll_position(int position);
       void on_timer_expired();
       void on_start_resize(int index);
       void on_end_resize(int index);
