@@ -48,7 +48,7 @@ void ScrollableLayer::keyPressEvent(QKeyEvent* event) {
   } else if(event->key() == Qt::Key_Right) {
     scroll_line_down(*m_horizontal_scroll_bar);
   } else if(event->key() == Qt::Key_Left) {
-    scroll_line_down(*m_horizontal_scroll_bar);
+    scroll_line_up(*m_horizontal_scroll_bar);
   } else if(event->key() == Qt::Key_PageUp) {
     scroll_page_up(*m_vertical_scroll_bar);
   } else if(event->key() == Qt::Key_PageDown) {
