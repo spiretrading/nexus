@@ -33,7 +33,6 @@ namespace {
     auto font = QFont("Roboto");
     font.setWeight(QFont::Medium);
     font.setPixelSize(scale_width(10));
-    style.get(Any()).set(BackgroundColor(QColor(0xFFFFFF)));
     style.get(Any() > is_a<TableBody>()).
       set(grid_color(QColor(Qt::transparent))).
       set(horizontal_padding(0)).
@@ -61,6 +60,14 @@ namespace {
     style.get(Any()).
       set(BorderBottomSize(scale_height(1))).
       set(BorderBottomColor(QColor(0xE0E0E0)));
+    return style;
+  }
+
+  auto TABLE_CELL_STYLE(StyleSheet style) {
+    style.get(Any()).
+      set(border_size(0)).
+      set(horizontal_padding(scale_width(2))).
+      set(vertical_padding(scale_height(1.5)));
     return style;
   }
 
@@ -145,7 +152,7 @@ namespace {
     auto query_model = std::make_shared<LocalComboBoxQueryModel>();
     auto market = GetDefaultMarketDatabase().FromCode(market_code);
     query_model->add(displayText(MarketToken(market.m_code)).toLower(), market);
-    query_model->add(QString::fromStdString(market_code).toLower(), market);
+    query_model->add(QString(market.m_code.GetData()).toLower(), market);
     auto market_box = new MarketBox(std::move(query_model),
       std::make_shared<LocalValueModel<MarketCode>>(market_code));
     market_box->set_read_only(true);
@@ -196,9 +203,9 @@ TimeAndSalesTableView::TimeAndSalesTableView(
     : m_table(std::make_shared<TimeAndSalesTableViewModel>(std::move(table))),
       m_timer(new QTimer(this)),
       m_is_loading(false),
+      m_has_additional_entries(false),
       m_last_scroll_y(0),
       m_resize_index(-1),
-      m_row_size(0),
       m_begin_loading_connection(
         m_table->m_source->connect_begin_loading_signal(
           std::bind_front(&TimeAndSalesTableView::on_begin_loading, this))),
@@ -253,21 +260,16 @@ bool TimeAndSalesTableView::eventFilter(QObject* watched, QEvent* event) {
         return true;
       }
     }
-  } else if(watched == m_table_body) {
-    if(event->type() == QEvent::KeyPress) {
-      auto& key_event = *static_cast<QKeyEvent*>(event);
-      if(key_event.key() == Qt::Key_Up || key_event.key() == Qt::Key_Down) {
-        if(m_table->get_row_size() > 0) {
-          m_body_scroll_box->get_vertical_scroll_bar().set_line_size(
-            get_item({0, 0})->height());
-        }
+  } else if(watched == m_table_body && event->type() == QEvent::KeyPress) {
+    auto& key_event = *static_cast<QKeyEvent*>(event);
+    if(key_event.key() == Qt::Key_Up || key_event.key() == Qt::Key_Down) {
+      if(m_table->get_row_size() > 0) {
+        m_body_scroll_box->get_vertical_scroll_bar().set_line_size(
+          get_item({0, 0})->height());
       }
-      event->ignore();
-      return true;
     }
-  } else if(event->type() == QEvent::Show || event->type() == QEvent::Hide) {
-    auto range = m_body_scroll_box->get_horizontal_scroll_bar().get_range();
-    m_header_scroll_box->get_horizontal_scroll_bar().set_range(0, range.m_end);
+    event->ignore();
+    return true;
   }
   return QWidget::eventFilter(watched, event);
 }
@@ -292,10 +294,7 @@ QWidget* TimeAndSalesTableView::table_view_builder(
   }();
   if(column_id != Column::TIME) {
     update_style(*cell, [] (auto& style) {
-      style.get(Any()).
-        set(border_size(0)).
-        set(horizontal_padding(scale_width(2))).
-        set(vertical_padding(scale_height(1.5)));
+      style = TABLE_CELL_STYLE(style);
     });
   }
   return cell;
@@ -305,10 +304,11 @@ int TimeAndSalesTableView::get_next_sibling_index(int index) const {
   if(index == m_table_header->get_widths()->get_size() - 1) {
     return index;
   }
-  if(!m_header_item_properties[index + 1].m_is_visible) {
-    return get_next_sibling_index(index + 1);
+  ++index;
+  if(!m_header_item_properties[index].m_is_visible) {
+    return get_next_sibling_index(index);
   }
-  return index + 1;
+  return index;
 }
 
 void TimeAndSalesTableView::make_header_item_properties() {
@@ -341,18 +341,18 @@ void TimeAndSalesTableView::customize_table_header() {
       itemAt(0)->widget());
   m_table_header->installEventFilter(this);
   m_header_scroll_box = new ScrollBox(m_table_header);
-  update_style(*m_header_scroll_box, [] (auto& style) {
-    style = TABLE_HADER_STYLE(style);
-  });
   m_header_scroll_box->setSizePolicy(QSizePolicy::Expanding,
     QSizePolicy::Fixed);
   m_header_scroll_box->setFocusPolicy(Qt::NoFocus);
   m_header_scroll_box->set_horizontal(ScrollBox::DisplayPolicy::NEVER);
   m_header_scroll_box->set_vertical(ScrollBox::DisplayPolicy::NEVER);
-  auto layout_item =
+  update_style(*m_header_scroll_box, [] (auto& style) {
+    style = TABLE_HADER_STYLE(style);
+  });
+  auto old_header_box =
     m_table_view->layout()->replaceWidget(&header_box, m_header_scroll_box);
-  delete layout_item->widget();
-  delete layout_item;
+  delete old_header_box->widget();
+  delete old_header_box;
   auto layout = m_table_header->layout();
   for(auto i = 0; i < TimeAndSalesTableModel::COLUMN_SIZE; ++i) {
     auto& item = *static_cast<TableHeaderItem*>(
@@ -395,19 +395,19 @@ void TimeAndSalesTableView::customize_table_header() {
 }
 
 void TimeAndSalesTableView::customize_empty_header_cell() {
-  auto& item = *static_cast<TableHeaderItem*>(
+  auto& empty_header_cell = *static_cast<TableHeaderItem*>(
     m_table_header->layout()->itemAt(
       TimeAndSalesTableModel::COLUMN_SIZE)->widget());
-  auto item_layout = item.layout();
-  item_layout->setContentsMargins(
+  auto layout = empty_header_cell.layout();
+  layout->setContentsMargins(
     {m_header_scroll_box->get_vertical_scroll_bar().sizeHint().width(),
       scale_height(5), 0, 0});
   auto contents_layout =
-    item_layout->itemAt(0)->layout()->itemAt(0)->widget()->layout();
+    layout->itemAt(0)->layout()->itemAt(0)->widget()->layout();
   contents_layout->setContentsMargins({});
   contents_layout->itemAt(2)->widget()->setFixedWidth(0);
   contents_layout->itemAt(3)->widget()->setFixedWidth(0);
-  auto bottom_layout = item_layout->itemAt(1)->layout();
+  auto bottom_layout = layout->itemAt(1)->layout();
   bottom_layout->setContentsMargins({0, scale_height(2), 0, 0});
   bottom_layout->itemAt(0)->widget()->setFixedWidth(0);
 }
@@ -416,11 +416,11 @@ void TimeAndSalesTableView::customize_table_body() {
   auto& old_scroll_box =
     *static_cast<ScrollBox*>(m_table_view->layout()->itemAt(1)->widget());
   m_table_body = static_cast<TableBody*>(&old_scroll_box.get_body());
+  m_table_body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_table_body->installEventFilter(this);
   auto body = new QWidget();
   body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto body_layout = make_vbox_layout(body);
-  m_table_body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   body_layout->addWidget(m_table_body);
   auto pull_indicator = make_pull_indicator();
   pull_indicator->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
@@ -431,7 +431,6 @@ void TimeAndSalesTableView::customize_table_body() {
   m_body_scroll_box->setSizePolicy(QSizePolicy::Expanding,
     QSizePolicy::Expanding);
   m_body_scroll_box->setFocusPolicy(Qt::NoFocus);
-  m_body_scroll_box->get_horizontal_scroll_bar().installEventFilter(this);
   m_body_scroll_box->get_horizontal_scroll_bar().connect_position_signal(
     std::bind_front(&TimeAndSalesTableView::on_horizontal_scroll_position,
       this));
@@ -469,7 +468,7 @@ void TimeAndSalesTableView::resize_column_widths() {
     auto sibling_width = [&] {
       if(sibling_index == m_table_header->get_widths()->get_size() - 1) {
         auto w = 0;
-        for(auto i = 0; i != m_table_header->get_widths()->get_size(); ++i) {
+        for(auto i = 0; i < m_table_header->get_widths()->get_size(); ++i) {
           w += m_table_header->get_widths()->get(i);
         }
         return m_table_header->width() - w;
@@ -492,15 +491,13 @@ void TimeAndSalesTableView::resize_column_widths() {
 }
 
 void TimeAndSalesTableView::on_column_sub_menu_check(int column, bool checked) {
-  if(column <= TimeAndSalesTableModel::COLUMN_SIZE) {
+  auto width = [&] {
     if(checked) {
-      m_table_header->get_widths()->set(column,
-        m_header_item_properties[column].m_width);
-    } else {
-      m_table_header->get_widths()->set(column, 0);
+      return m_header_item_properties[column].m_width;
     }
-  }
-  m_table_header->layout()->itemAt(column)->widget()->setVisible(checked);
+    return 0;
+  }();
+  m_table_header->get_widths()->set(column, width);
   m_header_item_properties[column].m_is_visible = checked;
 }
 
@@ -509,16 +506,16 @@ void TimeAndSalesTableView::on_begin_loading() {
     return;
   }
   m_is_loading = true;
-  m_row_size = m_table->get_row_size();
+  m_has_additional_entries = false;
   m_timer->start(1000);
 }
 
 void TimeAndSalesTableView::on_end_loading() {
   m_is_loading = false;
-  if(m_row_size == m_table->get_row_size()) {
-    match(*m_table_view, NoAdditionalEntries());
-  } else {
+  if(m_has_additional_entries) {
     unmatch(*m_table_view, NoAdditionalEntries());
+  } else {
+    match(*m_table_view, NoAdditionalEntries());
   }
   m_timer->stop();
   unmatch(*m_table_view, PullDelayed());
@@ -528,6 +525,7 @@ void TimeAndSalesTableView::on_table_operation(
     const TableModel::Operation& operation) {
   visit(operation,
     [&] (const TableModel::AddOperation& operation) {
+      m_has_additional_entries = true;
       get_item({operation.m_index, 0})->parentWidget()->show();
       m_body_scroll_box->get_body().adjustSize();
     });

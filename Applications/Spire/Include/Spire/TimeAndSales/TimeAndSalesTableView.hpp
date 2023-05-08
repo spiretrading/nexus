@@ -64,9 +64,9 @@ namespace Styles {
       ContextMenu* m_table_columns_menu;
       std::vector<HeaderItemProperties> m_header_item_properties;
       bool m_is_loading;
+      bool m_has_additional_entries;
       int m_last_scroll_y;
       int m_resize_index;
-      int m_row_size;
       QPoint m_resize_position;
       boost::signals2::scoped_connection m_begin_loading_connection;
       boost::signals2::scoped_connection m_end_loading_connection;
