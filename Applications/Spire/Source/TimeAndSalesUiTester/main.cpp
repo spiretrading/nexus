@@ -19,6 +19,7 @@
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Spire;
+using namespace Spire::Styles;
 
 namespace {
   std::shared_ptr<ComboBox::QueryModel> make_security_query_model() {
@@ -89,45 +90,33 @@ namespace {
 
   struct TimeAndSalesTestWindow : QWidget {
     std::shared_ptr<DemoTimeAndSalesModel> m_time_and_sales;
+    MoneyBox* m_money_box;
+    DropDownBox* m_indicator_box;
+    IntegerBox* m_loading_time_box;
 
     TimeAndSalesTestWindow(
         std::shared_ptr<DemoTimeAndSalesModel> time_and_sales,
         QWidget* parent = nullptr)
         : m_time_and_sales(std::move(time_and_sales)) {
       auto& markets = GetDefaultMarketDatabase();
-      auto layout = new QGridLayout(this);
+      auto layout = make_grid_layout(this);
+      layout->setContentsMargins({scale_width(15), 0, scale_width(15), 0});
       layout->setHorizontalSpacing(scale_width(30));
       layout->addWidget(make_label(tr("Price:")), 0, 0);
-      auto money_box = make_money_box();
-      layout->addWidget(money_box, 0, 1);
+      m_money_box = make_money_box();
+      layout->addWidget(m_money_box, 0, 1);
       layout->addWidget(make_label(tr("Price Range:")), 1, 0);
-      auto indicator_box = make_indicator_box();
-      layout->addWidget(indicator_box, 1, 1);
+      m_indicator_box = make_indicator_box();
+      layout->addWidget(m_indicator_box, 1, 1);
       layout->addWidget(make_label(tr("Period (ms):")), 2, 0);
       layout->addWidget(make_period_box(), 2, 1);
       layout->addWidget(make_label(tr("Loading Time (ms):")), 3, 0);
-      auto loading_time_box = make_loading_time_box();
-      layout->addWidget(loading_time_box, 3, 1);
+      m_loading_time_box = make_loading_time_box();
+      layout->addWidget(m_loading_time_box, 3, 1);
       layout->addWidget(make_label(tr("All Data Loaded")), 4, 0);
-      layout->addWidget(make_load_all_data_check_box(loading_time_box), 4, 1);
+      layout->addWidget(make_load_all_data_check_box(), 4, 1);
       layout->addWidget(make_label(tr("Random data")), 5, 0);
-      auto random_check_box = make_random_check_box();
-      random_check_box->get_current()->connect_update_signal(
-        [=] (bool checked) {
-          if(checked) {
-            money_box->setEnabled(false);
-            indicator_box->setEnabled(false);
-            m_time_and_sales->set_data_random(true);
-          } else {
-            m_time_and_sales->set_data_random(false);
-            money_box->setEnabled(true);
-            indicator_box->setEnabled(true);
-            m_time_and_sales->set_price(*money_box->get_current()->get());
-            m_time_and_sales->set_bbo_indicator(
-              static_cast<BboIndicator>(*indicator_box->get_current()->get()));
-          }
-      });
-      layout->addWidget(random_check_box, 5, 1);
+      layout->addWidget(make_random_check_box(), 5, 1);
       setFixedSize(scale(350, 250));
     }
 
@@ -200,13 +189,13 @@ namespace {
       return box;
     }
 
-    CheckBox* make_load_all_data_check_box(IntegerBox* loading_time_box) {
+    CheckBox* make_load_all_data_check_box() {
       auto check_box = new CheckBox();
       check_box->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
       check_box->get_current()->connect_update_signal([=] (auto checked) {
         if(checked) {
           m_time_and_sales->set_query_duration(pos_infin);
-        } else if(auto current = loading_time_box->get_current()->get()) {
+        } else if(auto current = m_loading_time_box->get_current()->get()) {
           m_time_and_sales->set_query_duration(milliseconds(*current));
         }
       });
@@ -216,31 +205,168 @@ namespace {
     CheckBox* make_random_check_box() {
       auto check_box = new CheckBox();
       check_box->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+      check_box->get_current()->connect_update_signal(
+        [=] (bool checked) {
+          if(checked) {
+            m_money_box->setEnabled(false);
+            m_indicator_box->setEnabled(false);
+            m_time_and_sales->set_data_random(true);
+          } else {
+            m_time_and_sales->set_data_random(false);
+            m_money_box->setEnabled(true);
+            m_indicator_box->setEnabled(true);
+            m_time_and_sales->set_price(*m_money_box->get_current()->get());
+            m_time_and_sales->set_bbo_indicator(static_cast<BboIndicator>(
+              *m_indicator_box->get_current()->get()));
+          }
+      });
       return check_box;
+    }
+  };
+
+  struct TimeAndSalesStyleTestWindow : QWidget {
+    std::shared_ptr<TimeAndSalesWindow> m_time_and_sales_window;
+    BboIndicator m_indicator;
+    TimeAndSalesWindowProperties::Styles m_style;
+    DropDownBox* m_indicator_box;
+    TextBox* m_text_color_box;
+    TextBox* m_band_color_box;
+    IntegerBox* m_font_size_box;
+
+    TimeAndSalesStyleTestWindow(
+        std::shared_ptr<TimeAndSalesWindow> time_and_sales_window)
+        : m_time_and_sales_window(std::move(time_and_sales_window)) {
+      m_text_color_box = make_color_box([=] (const auto& color) {
+        m_style.m_text_color = color;
+      });
+      m_band_color_box = make_color_box([=] (const auto& color) {
+        m_style.m_band_color = color;
+      });
+      m_font_size_box = make_font_size_box();
+      m_indicator_box = new DropDownBox(get_bbo_indicator_list());
+      m_indicator_box->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+      m_indicator_box->get_current()->connect_update_signal(
+        std::bind_front(&TimeAndSalesStyleTestWindow::on_indicator_current,
+          this));
+      m_indicator_box->get_current()->set(
+        static_cast<int>(BboIndicator::UNKNOWN));
+      auto layout = make_grid_layout(this);
+      layout->setContentsMargins({scale_width(15), 0, scale_width(15), 0});
+      layout->setHorizontalSpacing(scale_width(30));
+      layout->addWidget(make_label(tr("Price Range:")), 0, 0);
+      layout->addWidget(m_indicator_box, 0, 1);
+      layout->addWidget(make_label(tr("Text Color:")), 1, 0);
+      layout->addWidget(m_text_color_box, 1, 1);
+      layout->addWidget(make_label(tr("Band Color:")), 2, 0);
+      layout->addWidget(m_band_color_box, 2, 1);
+      layout->addWidget(make_label(tr("Font Size:")), 3, 0);
+      layout->addWidget(m_font_size_box, 3, 1);
+      setFixedSize(scale(350, 180));
+    }
+
+    TextBox* make_color_box(std::function<void(const QColor& color)> update) {
+      auto box = new TextBox();
+      box->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+      box->get_current()->connect_update_signal([=] (auto value) {
+        auto color = QColor(value);
+        if(!color.isValid()) {
+          return;
+        }
+        update(color);
+        update_time_and_sales_style();
+      });
+      return box;
+    }
+
+    IntegerBox* make_font_size_box() {
+      auto model = std::make_shared<LocalOptionalIntegerModel>();
+      model->set_minimum(1);
+      model->set_maximum(50);
+      auto box = new IntegerBox(model);
+      box->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+      box->get_current()->connect_update_signal([=] (auto value) {
+        if(!value) {
+          return;
+        }
+        m_style.m_font.setPixelSize(scale_width(*value));
+        update_time_and_sales_style();
+      });
+      return box;
+    }
+
+    void update_time_and_sales_style() {
+      const_cast<TimeAndSalesWindowProperties&>(
+        m_time_and_sales_window->get_properties()).set_style(m_indicator,
+          m_style);
+      auto selector = [&] () -> Selector {
+        switch(m_indicator) {
+          case BboIndicator::ABOVE_ASK:
+            return AboveAskRow();
+          case BboIndicator::AT_ASK:
+            return AtAskRow();
+          case BboIndicator::INSIDE:
+            return InsideRow();
+          case BboIndicator::AT_BID:
+            return AtBidRow();
+          case BboIndicator::BELOW_BID:
+            return BelowBidRow();
+          default:
+            return UnknownRow();
+        }
+      }();
+      update_style(*m_time_and_sales_window, [&] (auto& style) {
+        style.get(Any() > selector).
+          set(BackgroundColor(m_style.m_band_color));
+        style.get(Any() > selector > is_a<TextBox>()).
+          set(text_style(m_style.m_font, m_style.m_text_color));
+      });
+    }
+
+    void on_indicator_current(const boost::optional<int>& value) {
+      if(!value) {
+        return;
+      }
+      m_indicator = static_cast<BboIndicator>(*value);
+      m_style = m_time_and_sales_window->get_properties().get_style(m_indicator);
+      m_text_color_box->get_current()->set(m_style.m_text_color.name());
+      m_band_color_box->get_current()->set(m_style.m_band_color.name());
+      m_font_size_box->get_current()->set(
+        unscale_width(m_style.m_font.pixelSize()));
     }
   };
 
   struct TimeAndSalesWindowController {
     std::shared_ptr<DemoTimeAndSalesModel> m_time_and_sales;
-    std::unique_ptr<TimeAndSalesWindow> m_time_and_sales_window;
+    std::shared_ptr<TimeAndSalesWindow> m_time_and_sales_window;
     std::unique_ptr<TimeAndSalesTestWindow> m_time_and_sales_test_window;
+    std::unique_ptr<TimeAndSalesStyleTestWindow>
+      m_time_and_sales_style_test_window;
 
     TimeAndSalesWindowController() {
       m_time_and_sales = std::make_shared<DemoTimeAndSalesModel>(Security());
       m_time_and_sales_window =
-        std::make_unique<TimeAndSalesWindow>(make_security_query_model(),
+        std::make_shared<TimeAndSalesWindow>(make_security_query_model(),
           TimeAndSalesWindowProperties(),
           std::bind_front(&TimeAndSalesWindowController::model_builder, this));
       m_time_and_sales_test_window =
         std::make_unique<TimeAndSalesTestWindow>(m_time_and_sales);
+      m_time_and_sales_style_test_window =
+        std::make_unique<TimeAndSalesStyleTestWindow>(m_time_and_sales_window);
       m_time_and_sales_window->show();
       m_time_and_sales_window->installEventFilter(
         m_time_and_sales_test_window.get());
       m_time_and_sales_test_window->setAttribute(Qt::WA_ShowWithoutActivating);
       m_time_and_sales_test_window->show();
       m_time_and_sales_test_window->move(m_time_and_sales_window->pos().x() +
-        m_time_and_sales_window->frameGeometry().width() + scale_width(100),
+          m_time_and_sales_window->frameGeometry().width() + scale_width(100),
         m_time_and_sales_window->pos().y());
+      m_time_and_sales_style_test_window->setAttribute(
+        Qt::WA_ShowWithoutActivating);
+      m_time_and_sales_style_test_window->show();
+      m_time_and_sales_style_test_window->move(
+        m_time_and_sales_test_window->pos().x(),
+        m_time_and_sales_test_window->pos().y() +
+          m_time_and_sales_test_window->frameGeometry().height());
     }
 
     std::shared_ptr<TimeAndSalesModel> model_builder(const Security& security) {

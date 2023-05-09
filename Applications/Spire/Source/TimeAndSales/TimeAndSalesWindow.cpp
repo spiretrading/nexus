@@ -28,6 +28,15 @@ namespace {
   const auto TITLE_NAME = QObject::tr("Time and Sales");
   const auto TITLE_SHORT_NAME = QObject::tr("T&S");
 
+  auto update_row_style(StyleSheet& style, const Selector& selector,
+      const TimeAndSalesWindowProperties::Styles& styles) {
+    style.get(Any() > selector).
+      set(BackgroundColor(styles.m_band_color));
+    style.get(Any() > selector > is_a<TextBox>()).
+      set(text_style(styles.m_font, styles.m_text_color));
+    return style;
+  }
+
   struct ExportTimeAndSalesTableMoel : TableModel {
     std::shared_ptr<TimeAndSalesTableModel> m_source;
 
@@ -109,8 +118,20 @@ TimeAndSalesWindow::TimeAndSalesWindow(
   m_security_view->get_current()->connect_update_signal(
     std::bind_front(&TimeAndSalesWindow::on_current, this));
   auto box = new Box(m_security_view);
-  update_style(*box, [] (auto& style) {
+  update_style(*box, [&] (auto& style) {
     style.get(Any()).set(BackgroundColor(QColor(0xFFFFFF)));
+    update_row_style(style, UnknownRow(),
+      m_properties.get_style(BboIndicator::UNKNOWN));
+    update_row_style(style, AboveAskRow(),
+      m_properties.get_style(BboIndicator::ABOVE_ASK));
+    update_row_style(style, AtAskRow(),
+      m_properties.get_style(BboIndicator::AT_ASK));
+    update_row_style(style, InsideRow(),
+      m_properties.get_style(BboIndicator::INSIDE));
+    update_row_style(style, AtBidRow(),
+      m_properties.get_style(BboIndicator::AT_BID));
+    update_row_style(style, BelowBidRow(),
+      m_properties.get_style(BboIndicator::BELOW_BID));
   });
   layout()->addWidget(box);
   m_table_view->get_table()->connect_operation_signal(
@@ -245,22 +266,29 @@ void TimeAndSalesWindow::on_table_operation(
     const TableModel::Operation& operation) {
   visit(operation,
     [&] (const TableModel::AddOperation& operation) {
-      auto& time_and_sale_style = m_properties.get_style(
-        m_table_view->get_table()->get_bbo_indicator(operation.m_index));
-      for(auto i = 0; i <= TimeAndSalesTableModel::COLUMN_SIZE; ++i) {
-        auto item = m_table_view->get_item({operation.m_index, i});
-        item->setDisabled(true);
-        update_style(*item, [&] (auto& style) {
-          style.get(Any() > is_a<TextBox>()).
-            set(text_style(time_and_sale_style.m_font,
-              QColor(time_and_sale_style.m_text_color)));
-        });
-      }
       auto row = m_table_view->get_item({operation.m_index, 0})->parentWidget();
+      row->setDisabled(true);
       row->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-      update_style(*row, [&] (auto& style) {
-        style.get(Any()).set(BackgroundColor(time_and_sale_style.m_band_color));
-      });
+      switch(m_table_view->get_table()->get_bbo_indicator(operation.m_index)) {
+        case BboIndicator::UNKNOWN:
+          match(*row, UnknownRow());
+          break;
+        case BboIndicator::ABOVE_ASK:
+          match(*row, AboveAskRow());
+          break;
+        case BboIndicator::AT_ASK:
+          match(*row, AtAskRow());
+          break;
+        case BboIndicator::INSIDE:
+          match(*row, InsideRow());
+          break;
+        case BboIndicator::AT_BID:
+          match(*row, AtBidRow());
+          break;
+        case BboIndicator::BELOW_BID:
+          match(*row, BelowBidRow());
+          break;
+      }
       update_export_menu_item();
     },
     [&] (const TableModel::RemoveOperation& operation) {
