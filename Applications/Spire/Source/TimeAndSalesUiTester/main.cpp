@@ -14,9 +14,11 @@
 #include "Spire/Ui/DropDownBox.hpp"
 #include "Spire/Ui/IntegerBox.hpp"
 #include "Spire/Ui/MoneyBox.hpp"
+#include "Spire/Ui/TableView.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace boost::posix_time;
+using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 using namespace Spire::Styles;
@@ -227,77 +229,168 @@ namespace {
   struct TimeAndSalesStyleTestWindow : QWidget {
     std::shared_ptr<TimeAndSalesWindow> m_time_and_sales_window;
     BboIndicator m_indicator;
-    TimeAndSalesWindowProperties::Styles m_style;
-    DropDownBox* m_indicator_box;
+    TimeAndSalesWindowProperties::Styles m_styles;
     TextBox* m_text_color_box;
     TextBox* m_band_color_box;
-    IntegerBox* m_font_size_box;
+    scoped_connection m_text_color_connection;
+    scoped_connection m_band_color_connection;
 
     TimeAndSalesStyleTestWindow(
         std::shared_ptr<TimeAndSalesWindow> time_and_sales_window)
         : m_time_and_sales_window(std::move(time_and_sales_window)) {
-      m_text_color_box = make_color_box([=] (const auto& color) {
-        m_style.m_text_color = color;
-      });
-      m_band_color_box = make_color_box([=] (const auto& color) {
-        m_style.m_band_color = color;
-      });
-      m_font_size_box = make_font_size_box();
-      m_indicator_box = new DropDownBox(get_bbo_indicator_list());
-      m_indicator_box->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
-      m_indicator_box->get_current()->connect_update_signal(
-        std::bind_front(&TimeAndSalesStyleTestWindow::on_indicator_current,
-          this));
-      m_indicator_box->get_current()->set(
-        static_cast<int>(BboIndicator::UNKNOWN));
-      auto layout = make_grid_layout(this);
-      layout->setContentsMargins({scale_width(15), 0, scale_width(15), 0});
-      layout->setHorizontalSpacing(scale_width(30));
-      layout->addWidget(make_label(tr("Price Range:")), 0, 0);
-      layout->addWidget(m_indicator_box, 0, 1);
-      layout->addWidget(make_label(tr("Text Color:")), 1, 0);
-      layout->addWidget(m_text_color_box, 1, 1);
-      layout->addWidget(make_label(tr("Band Color:")), 2, 0);
-      layout->addWidget(m_band_color_box, 2, 1);
-      layout->addWidget(make_label(tr("Font Size:")), 3, 0);
-      layout->addWidget(m_font_size_box, 3, 1);
+      auto& font = m_time_and_sales_window->get_properties().get_font();
+      std::tie(m_text_color_box, m_text_color_connection) =
+        make_color_box([=] (const auto& color) {
+          m_styles.m_text_color = color;
+        });
+      std::tie(m_band_color_box, m_band_color_connection) =
+        make_color_box([=] (const auto& color) {
+          m_styles.m_band_color = color;
+        });
+      auto grid_layout = make_grid_layout(this);
+      grid_layout->setContentsMargins({scale_width(15), 0, scale_width(15), 0});
+      grid_layout->setHorizontalSpacing(scale_width(10));
+      grid_layout->addWidget(make_label(tr("Price Range:")), 0, 0);
+      grid_layout->addWidget(make_indicator_box(), 0, 1);
+      grid_layout->addWidget(make_label(tr("Text Color:")), 1, 0);
+      grid_layout->addWidget(m_text_color_box, 1, 1);
+      grid_layout->addWidget(make_label(tr("Band Color:")), 2, 0);
+      grid_layout->addWidget(m_band_color_box, 2, 1);
+      grid_layout->addItem(new QSpacerItem(
+        scale_width(15), 0, QSizePolicy::Fixed, QSizePolicy::Preferred), 0, 2);
+      grid_layout->addWidget(make_label(tr("Font Size:")), 0, 3);
+      grid_layout->addWidget(make_font_size_box(), 0, 4);
+      grid_layout->addItem(new QSpacerItem(
+        scale_width(15), 0, QSizePolicy::Fixed, QSizePolicy::Preferred), 1, 2);
+      grid_layout->addWidget(make_label(tr("Font Bold:")), 1, 3);
+      auto bold_check_box = make_font_style_check_box(
+        font.weight() == QFont::Bold, [] (QFont& font, bool checked) {
+          auto weight = [&] {
+            if(checked) {
+              return QFont::Bold;
+            }
+            return QFont::Medium;
+          }();
+          font.setWeight(weight);
+        });
+      grid_layout->addWidget(bold_check_box, 1, 4);
+      grid_layout->addItem(new QSpacerItem(
+        scale_width(15), 0, QSizePolicy::Fixed, QSizePolicy::Preferred), 2, 2);
+      grid_layout->addWidget(make_label(tr("Font Italics:")), 2, 3);
+      auto italics_check_box = make_font_style_check_box(font.italic(),
+        [] (QFont& font, bool checked) {
+          font.setItalic(checked);
+        });
+      grid_layout->addWidget(italics_check_box, 2, 4);
+      grid_layout->addWidget(make_label(tr("Show Grid:")), 3, 0);
+      grid_layout->addWidget(make_show_grid_check_box(), 3, 1);
       setFixedSize(scale(350, 180));
     }
 
-    TextBox* make_color_box(std::function<void(const QColor& color)> update) {
-      auto box = new TextBox();
+    DropDownBox* make_indicator_box() {
+      auto box = new DropDownBox(get_bbo_indicator_list());
       box->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
-      box->get_current()->connect_update_signal([=] (auto value) {
-        auto color = QColor(value);
-        if(!color.isValid()) {
+      box->get_current()->connect_update_signal([=] (auto& value) {
+        if(!value) {
           return;
         }
-        update(color);
-        update_time_and_sales_style();
+        m_indicator = static_cast<BboIndicator>(*value);
+        m_styles =
+          m_time_and_sales_window->get_properties().get_styles(m_indicator);
+        {
+          auto blocker = shared_connection_block(m_text_color_connection);
+          m_text_color_box->get_current()->set(m_styles.m_text_color.name());
+        }
+        {
+          auto blocker = shared_connection_block(m_band_color_connection);
+          m_band_color_box->get_current()->set(m_styles.m_band_color.name());
+        }
       });
+      box->get_current()->set(static_cast<int>(BboIndicator::UNKNOWN));
       return box;
+    }
+
+    std::tuple<TextBox*, connection> make_color_box(
+        std::function<void(const QColor& color)> update) {
+      auto box = new TextBox();
+      box->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+      auto connection = box->get_current()->connect_update_signal(
+        [=] (auto value) {
+          auto color = QColor(value);
+          if(!color.isValid()) {
+            return;
+          }
+          update(color);
+          update_bbo_indicator_style();
+        });
+      return {box, connection};
     }
 
     IntegerBox* make_font_size_box() {
       auto model = std::make_shared<LocalOptionalIntegerModel>();
       model->set_minimum(1);
       model->set_maximum(50);
+      model->set(unscale_width(
+        m_time_and_sales_window->get_properties().get_font().pixelSize()));
       auto box = new IntegerBox(model);
       box->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
       box->get_current()->connect_update_signal([=] (auto value) {
         if(!value) {
           return;
         }
-        m_style.m_font.setPixelSize(scale_width(*value));
-        update_time_and_sales_style();
+        auto font = m_time_and_sales_window->get_properties().get_font();
+        font.setPixelSize(scale_width(*value));
+        update_font_style(font);
       });
       return box;
     }
 
-    void update_time_and_sales_style() {
+    CheckBox* make_font_style_check_box(bool checked,
+        std::function<void(QFont& font, bool checked)> update) {
+      auto check_box = new CheckBox();
+      check_box->get_current()->set(checked);
+      check_box->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+      check_box->get_current()->connect_update_signal([=] (auto checked) {
+        auto font = m_time_and_sales_window->get_properties().get_font();
+        update(font, checked);
+        update_font_style(font);
+      });
+      return check_box;
+    }
+
+    CheckBox* make_show_grid_check_box() {
+      auto check_box = new CheckBox();
+      check_box->get_current()->set(
+        m_time_and_sales_window->get_properties().is_show_grid());
+      check_box->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+      check_box->get_current()->connect_update_signal([=] (auto checked) {
+        const_cast<TimeAndSalesWindowProperties&>(
+          m_time_and_sales_window->get_properties()).set_show_grid(checked);
+        if(checked) {
+          update_style(*m_time_and_sales_window, [] (auto& style) {
+            style.get(Any() > is_a<TableBody>()).
+              set(grid_color(QColor(0xE0E0E0))).
+              set(PaddingBottom(scale_width(1))).
+              set(HorizontalSpacing(scale_width(1))).
+              set(VerticalSpacing(scale_width(1)));
+          });
+        } else {
+          update_style(*m_time_and_sales_window, [] (auto& style) {
+            style.get(Any() > is_a<TableBody>()).
+              set(grid_color(Qt::transparent)).
+              set(PaddingBottom(0)).
+              set(HorizontalSpacing(0)).
+              set(VerticalSpacing(0));
+          });
+        }
+      });
+      return check_box;
+    }
+
+    void update_bbo_indicator_style() {
       const_cast<TimeAndSalesWindowProperties&>(
-        m_time_and_sales_window->get_properties()).set_style(m_indicator,
-          m_style);
+        m_time_and_sales_window->get_properties()).set_styles(m_indicator,
+          m_styles);
       auto selector = [&] () -> Selector {
         switch(m_indicator) {
           case BboIndicator::ABOVE_ASK:
@@ -316,22 +409,21 @@ namespace {
       }();
       update_style(*m_time_and_sales_window, [&] (auto& style) {
         style.get(Any() > selector).
-          set(BackgroundColor(m_style.m_band_color));
+          set(BackgroundColor(m_styles.m_band_color));
         style.get(Any() > selector > is_a<TextBox>()).
-          set(text_style(m_style.m_font, m_style.m_text_color));
+          set(TextColor(m_styles.m_text_color));
       });
     }
 
-    void on_indicator_current(const boost::optional<int>& value) {
-      if(!value) {
-        return;
-      }
-      m_indicator = static_cast<BboIndicator>(*value);
-      m_style = m_time_and_sales_window->get_properties().get_style(m_indicator);
-      m_text_color_box->get_current()->set(m_style.m_text_color.name());
-      m_band_color_box->get_current()->set(m_style.m_band_color.name());
-      m_font_size_box->get_current()->set(
-        unscale_width(m_style.m_font.pixelSize()));
+    void update_font_style(const QFont& font) {
+      const_cast<TimeAndSalesWindowProperties&>(
+        m_time_and_sales_window->get_properties()).set_font(font);
+      update_style(*m_time_and_sales_window, [&] (auto& style) {
+        style.get(Any() > is_a<TableBody>() > is_a<TextBox>()).
+          set(Font(font));
+        style.get(Any() > TableHeaderItem::Label()).
+          set(Font(font));
+      });
     }
   };
 

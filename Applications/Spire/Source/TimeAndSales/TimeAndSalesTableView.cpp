@@ -29,12 +29,14 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  using TimeAndSalesBody = StateSelector<void, struct TimeAndSalesBodyTag>;
+
   auto TABLE_VIEW_STYLE(StyleSheet style) {
     auto font = QFont("Roboto");
     font.setWeight(QFont::Medium);
     font.setPixelSize(scale_width(10));
     style.get(Any() > is_a<TableBody>()).
-      set(grid_color(QColor(Qt::transparent))).
+      set(grid_color(Qt::transparent)).
       set(horizontal_padding(0)).
       set(vertical_padding(0)).
       set(HorizontalSpacing(0)).
@@ -47,9 +49,9 @@ namespace {
     style.get(Any() > CurrentColumn()).set(BackgroundColor(Qt::transparent));
     style.get(Any() > TableHeaderItem::Label()).
       set(TextStyle(font, QColor(0x595959)));
-    style.get(NoAdditionalEntries() > is_a<TableBody>()).
+    style.get(NoAdditionalEntries() > TimeAndSalesBody()).
       set(PaddingBottom(scale_height(44)));
-    style.get(PullDelayed() > is_a<TableBody>()).
+    style.get(PullDelayed() > TimeAndSalesBody()).
       set(PaddingBottom(0));
     style.get(PullDelayed() > PullIndicator()).
       set(Visibility::VISIBLE);
@@ -418,10 +420,12 @@ void TimeAndSalesTableView::customize_table_body() {
   m_table_body = static_cast<TableBody*>(&old_scroll_box.get_body());
   m_table_body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_table_body->installEventFilter(this);
+  auto time_and_sales_body = new Box(m_table_body);
+  match(*time_and_sales_body, TimeAndSalesBody());
   auto body = new QWidget();
   body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto body_layout = make_vbox_layout(body);
-  body_layout->addWidget(m_table_body);
+  body_layout->addWidget(time_and_sales_body);
   auto pull_indicator = make_pull_indicator();
   pull_indicator->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   match(*pull_indicator, PullIndicator());
@@ -541,7 +545,7 @@ void TimeAndSalesTableView::on_vertical_scroll_position(int position) {
     if(scroll_bar.get_range().m_end - position <
         scroll_bar.get_page_size() / 2) {
       m_table->m_source->load_history(
-        height() / get_item(Index{0,0})->height());
+        m_body_scroll_box->height() / get_item(Index{0,0})->height());
     }
   }
   m_last_scroll_y = position;

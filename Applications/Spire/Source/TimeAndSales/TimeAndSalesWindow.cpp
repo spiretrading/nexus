@@ -33,7 +33,7 @@ namespace {
     style.get(Any() > selector).
       set(BackgroundColor(styles.m_band_color));
     style.get(Any() > selector > is_a<TextBox>()).
-      set(text_style(styles.m_font, styles.m_text_color));
+      set(TextColor(styles.m_text_color));
     return style;
   }
 
@@ -120,18 +120,22 @@ TimeAndSalesWindow::TimeAndSalesWindow(
   auto box = new Box(m_security_view);
   update_style(*box, [&] (auto& style) {
     style.get(Any()).set(BackgroundColor(QColor(0xFFFFFF)));
+    style.get(Any() > is_a<TableBody>() > is_a<TextBox>()).
+      set(Font(m_properties.get_font()));
+    style.get(Any() > TableHeaderItem::Label()).
+      set(Font(m_properties.get_font()));
     update_row_style(style, UnknownRow(),
-      m_properties.get_style(BboIndicator::UNKNOWN));
+      m_properties.get_styles(BboIndicator::UNKNOWN));
     update_row_style(style, AboveAskRow(),
-      m_properties.get_style(BboIndicator::ABOVE_ASK));
+      m_properties.get_styles(BboIndicator::ABOVE_ASK));
     update_row_style(style, AtAskRow(),
-      m_properties.get_style(BboIndicator::AT_ASK));
+      m_properties.get_styles(BboIndicator::AT_ASK));
     update_row_style(style, InsideRow(),
-      m_properties.get_style(BboIndicator::INSIDE));
+      m_properties.get_styles(BboIndicator::INSIDE));
     update_row_style(style, AtBidRow(),
-      m_properties.get_style(BboIndicator::AT_BID));
+      m_properties.get_styles(BboIndicator::AT_BID));
     update_row_style(style, BelowBidRow(),
-      m_properties.get_style(BboIndicator::BELOW_BID));
+      m_properties.get_styles(BboIndicator::BELOW_BID));
   });
   layout()->addWidget(box);
   m_table_view->get_table()->connect_operation_signal(
@@ -210,7 +214,7 @@ int TimeAndSalesWindow::get_row_height() const {
   auto label = std::unique_ptr<TextBox>(make_label(""));
   update_style(*label, [&] (auto& style) {
     style.get(ReadOnly() && Disabled()).
-      set(Font(m_properties.get_style(BboIndicator::UNKNOWN).m_font)).
+      set(Font(m_properties.get_font())).
       set(vertical_padding(scale_height(1.5)));
   });
   return label->sizeHint().height();

@@ -12,8 +12,6 @@ using namespace Nexus;
 using namespace Spire;
 
 namespace {
-   const double multiplier = std::pow(10.0, 2);
-
   ptime from_time_t_milliseconds(std::time_t t) {
     return ptime(gregorian::date(1970,1,1)) + milliseconds(t);
   }
@@ -126,8 +124,7 @@ DemoTimeAndSalesModel::Entry DemoTimeAndSalesModel::make_entry(
   if(m_is_data_random) {
     auto random_generator = QRandomGenerator(to_time_t_milliseconds(timestamp));
     return {SequencedValue(make_time_and_sale(timestamp,
-        Money(std::round(
-          random_generator.bounded(200.0) * multiplier) / multiplier),
+        Truncate(Money(random_generator.bounded(2000.0)), 2),
         random_generator.bounded(1, 10000)),
         Queries::Sequence(to_time_t_milliseconds(timestamp))),
       static_cast<BboIndicator>(random_generator.bounded(6))};
