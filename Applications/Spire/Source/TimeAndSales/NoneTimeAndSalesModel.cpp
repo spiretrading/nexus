@@ -8,7 +8,6 @@ using namespace Spire;
 NoneTimeAndSalesModel::NoneTimeAndSalesModel(Security security)
   : m_security(std::move(security)) {}
 
-
 const Security& NoneTimeAndSalesModel::get_security() const {
   return m_security;
 }
@@ -16,9 +15,7 @@ const Security& NoneTimeAndSalesModel::get_security() const {
 QtPromise<std::vector<TimeAndSalesModel::Entry>>
     NoneTimeAndSalesModel::query_until(Queries::Sequence sequence,
       int max_count) {
-  return QtPromise([] {
-    return std::vector<TimeAndSalesModel::Entry>();
-  });
+  return std::vector<TimeAndSalesModel::Entry>();
 }
 
 connection NoneTimeAndSalesModel::connect_update_signal(

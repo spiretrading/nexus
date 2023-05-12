@@ -96,7 +96,7 @@ namespace {
     DropDownBox* m_indicator_box;
     IntegerBox* m_loading_time_box;
 
-    TimeAndSalesTestWindow(
+    explicit TimeAndSalesTestWindow(
         std::shared_ptr<DemoTimeAndSalesModel> time_and_sales,
         QWidget* parent = nullptr)
         : m_time_and_sales(std::move(time_and_sales)) {
@@ -214,12 +214,9 @@ namespace {
             m_indicator_box->setEnabled(false);
             m_time_and_sales->set_data_random(true);
           } else {
-            m_time_and_sales->set_data_random(false);
             m_money_box->setEnabled(true);
             m_indicator_box->setEnabled(true);
-            m_time_and_sales->set_price(*m_money_box->get_current()->get());
-            m_time_and_sales->set_bbo_indicator(static_cast<BboIndicator>(
-              *m_indicator_box->get_current()->get()));
+            m_time_and_sales->set_data_random(false);
           }
       });
       return check_box;
@@ -235,7 +232,7 @@ namespace {
     scoped_connection m_text_color_connection;
     scoped_connection m_band_color_connection;
 
-    TimeAndSalesStyleTestWindow(
+    explicit TimeAndSalesStyleTestWindow(
         std::shared_ptr<TimeAndSalesWindow> time_and_sales_window)
         : m_time_and_sales_window(std::move(time_and_sales_window)) {
       auto& font = m_time_and_sales_window->get_properties().get_font();
@@ -262,7 +259,7 @@ namespace {
       grid_layout->addWidget(make_font_size_box(), 0, 4);
       grid_layout->addItem(new QSpacerItem(
         scale_width(15), 0, QSizePolicy::Fixed, QSizePolicy::Preferred), 1, 2);
-      grid_layout->addWidget(make_label(tr("Font Bold:")), 1, 3);
+      grid_layout->addWidget(make_label(tr("Font Bold")), 1, 3);
       auto bold_check_box = make_font_style_check_box(
         font.weight() == QFont::Bold, [] (QFont& font, bool checked) {
           auto weight = [&] {
@@ -276,13 +273,13 @@ namespace {
       grid_layout->addWidget(bold_check_box, 1, 4);
       grid_layout->addItem(new QSpacerItem(
         scale_width(15), 0, QSizePolicy::Fixed, QSizePolicy::Preferred), 2, 2);
-      grid_layout->addWidget(make_label(tr("Font Italics:")), 2, 3);
+      grid_layout->addWidget(make_label(tr("Font Italics")), 2, 3);
       auto italics_check_box = make_font_style_check_box(font.italic(),
         [] (QFont& font, bool checked) {
           font.setItalic(checked);
         });
       grid_layout->addWidget(italics_check_box, 2, 4);
-      grid_layout->addWidget(make_label(tr("Show Grid:")), 3, 0);
+      grid_layout->addWidget(make_label(tr("Show Grid")), 3, 0);
       grid_layout->addWidget(make_show_grid_check_box(), 3, 1);
       setFixedSize(scale(350, 180));
     }

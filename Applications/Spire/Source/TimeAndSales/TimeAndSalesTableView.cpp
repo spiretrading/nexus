@@ -319,7 +319,7 @@ void TimeAndSalesTableView::make_header_item_properties() {
   m_header_item_properties.emplace_back(true, Qt::AlignRight, scale_width(40));
   m_header_item_properties.emplace_back(true, Qt::AlignLeft, scale_width(38));
   m_header_item_properties.emplace_back(false, Qt::AlignLeft, scale_width(34));
-  m_header_item_properties.emplace_back(false, Qt::AlignLeft, 0);
+  m_header_item_properties.emplace_back(true, Qt::AlignLeft, 0);
 }
 
 void TimeAndSalesTableView::make_table_columns_sub_menu() {

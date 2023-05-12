@@ -11,7 +11,7 @@ namespace Spire {
 namespace Styles {
 
   /** Selects the row where the bbo indicator is unknown. */
-  using UnknownRow = StateSelector<void, struct UnknownSelectorTag>;
+  using UnknownRow = StateSelector<void, struct UnknownRowSelectorTag>;
 
   /** Selects the row where the bbo indicator is ABOVE_ASK. */
   using AboveAskRow = StateSelector<void, struct AboveAskRowSelectorTag>;
@@ -20,13 +20,13 @@ namespace Styles {
   using AtAskRow = StateSelector<void, struct AtAskRowSelectorTag>;
 
   /** Selects the row where the bbo indicator is INSIDE. */
-  using InsideRow = StateSelector<void, struct InsideSelectorTag>;
+  using InsideRow = StateSelector<void, struct InsideRowSelectorTag>;
 
   /** Selects the row where the bbo indicator is AT_BID. */
-  using AtBidRow = StateSelector<void, struct AtBidSelectorTag>;
+  using AtBidRow = StateSelector<void, struct AtBidRowSelectorTag>;
 
   /** Selects the row where the bbo indicator is BELOW_BID. */
-  using BelowBidRow = StateSelector<void, struct BelowBidSelectorTag>;
+  using BelowBidRow = StateSelector<void, struct BelowBidRowSelectorTag>;
 }
 
   /** Display the time and sales window for a security. */
@@ -48,10 +48,8 @@ namespace Styles {
        * @param properties The display properties of the window.
        * @param parent The parent widget.
        */
-      explicit TimeAndSalesWindow(
-        std::shared_ptr<ComboBox::QueryModel> query_model,
-        TimeAndSalesWindowProperties properties,
-        ModelBuilder model_builder,
+      TimeAndSalesWindow(std::shared_ptr<ComboBox::QueryModel> query_model,
+        TimeAndSalesWindowProperties properties, ModelBuilder model_builder,
         QWidget* parent = nullptr);
 
       /* Returns the time and sales model. */

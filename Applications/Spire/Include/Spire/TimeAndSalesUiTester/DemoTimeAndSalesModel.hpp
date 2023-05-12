@@ -41,10 +41,10 @@ namespace Spire {
       /* Sets the amount of time needed to query time and sales. */
       void set_query_duration(boost::posix_time::time_duration duration);
 
-      /** Returns <code>true</code> iff data is randomly generted. */
+      /** Returns <code>true</code> iff data is randomly generated. */
       bool is_data_random() const;
 
-      /** Sets whether data is randomly generted. */
+      /** Sets whether data is randomly generated. */
       void set_data_random(bool is_random);
 
       const Nexus::Security& get_security() const override;
