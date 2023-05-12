@@ -4,26 +4,34 @@
 using namespace Spire;
 
 TimeAndSalesWindowProperties::TimeAndSalesWindowProperties()
-    : m_show_grid(false) {
-  auto font = QFont("Roboto", scale_width(10), QFont::Medium);
-  set_style(BboIndicator::UNKNOWN, {QColor(Qt::black), QColor(0xFFFFFF), font});
-  set_style(BboIndicator::ABOVE_ASK,
-    {QColor(0x007735), QColor(0xEBFFF0), font});
-  set_style(BboIndicator::AT_ASK, {QColor(0x007735), QColor(0xEBFFF0), font});
-  set_style(BboIndicator::INSIDE, {QColor(Qt::black), QColor(0xFFFFFF), font});
-  set_style(BboIndicator::AT_BID, {QColor(0xB71C1C), QColor(0xFFF1F1), font});
-  set_style(BboIndicator::BELOW_BID,
-    {QColor(0xB71C1C), QColor(0xFFF1F1), font});
+    : m_font("Roboto"),
+      m_show_grid(false) {
+  m_font.setWeight(QFont::Medium);
+  m_font.setPixelSize(scale_width(10));
+  set_styles(BboIndicator::UNKNOWN, {QColor(Qt::black), QColor(0xFFFFFF)});
+  set_styles(BboIndicator::ABOVE_ASK, {QColor(0x007735), QColor(0xEBFFF0)});
+  set_styles(BboIndicator::AT_ASK, {QColor(0x007735), QColor(0xEBFFF0)});
+  set_styles(BboIndicator::INSIDE, {QColor(Qt::black), QColor(0xFFFFFF)});
+  set_styles(BboIndicator::AT_BID, {QColor(0xB71C1C), QColor(0xFFF1F1)});
+  set_styles(BboIndicator::BELOW_BID, {QColor(0xB71C1C), QColor(0xFFF1F1)});
 }
 
 const TimeAndSalesWindowProperties::Styles&
-    TimeAndSalesWindowProperties::get_style(BboIndicator indicator) const {
+    TimeAndSalesWindowProperties::get_styles(BboIndicator indicator) const {
   return m_styles[static_cast<int>(indicator)];
 }
 
-void TimeAndSalesWindowProperties::set_style(BboIndicator indicator,
+void TimeAndSalesWindowProperties::set_styles(BboIndicator indicator,
     const Styles& style) {
   m_styles[static_cast<int>(indicator)] = style;
+}
+
+const QFont& TimeAndSalesWindowProperties::get_font() const {
+  return m_font;
+}
+
+void TimeAndSalesWindowProperties::set_font(const QFont& font) {
+  m_font = font;
 }
 
 bool TimeAndSalesWindowProperties::is_show_grid() const {
