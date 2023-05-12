@@ -9,7 +9,8 @@ using namespace Spire::Styles;
 
 ResponsiveLabel::ResponsiveLabel(
     std::shared_ptr<ListModel<QString>> labels, QWidget* parent)
-    : m_labels(std::move(labels)),
+    : QWidget(parent),
+      m_labels(std::move(labels)),
       m_text_model(std::make_shared<LocalTextModel>()) {
   m_text_box = make_label(m_text_model, this);
   proxy_style(*this, *m_text_box);

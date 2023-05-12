@@ -19,7 +19,7 @@ using namespace Spire;
 using namespace Styles;
 
 namespace {
-  const auto MAX_WIDTH = 130;
+  const auto MIN_WIDTH = 130;
   const auto MARGIN_SIZE = 50;
 
   auto MARGIN_HEIGHT() {
@@ -43,7 +43,7 @@ ContextMenu::ContextMenu(QWidget& parent)
     : QWidget(&parent),
       m_active_menu_window(nullptr) {
   setAttribute(Qt::WA_Hover);
-  setMaximumWidth(scale_width(MAX_WIDTH));
+  setMinimumWidth(scale_width(MIN_WIDTH));
   m_list = std::make_shared<ArrayListModel<MenuItem>>();
   m_list_view = new ListView(
     m_list, std::make_shared<ListEmptySelectionModel>(),
@@ -68,6 +68,8 @@ ContextMenu::ContextMenu(QWidget& parent)
   on_window_style();
   m_window_style_connection =
     connect_style_signal(*m_window, [=] { on_window_style(); });
+  m_list->connect_operation_signal(
+    std::bind_front(&ContextMenu::on_list_operation, this));
 }
 
 void ContextMenu::add_menu(const QString& name, ContextMenu& menu) {
@@ -88,6 +90,10 @@ std::shared_ptr<BooleanModel> ContextMenu::add_check_box(const QString& name) {
 void ContextMenu::add_check_box(const QString& name,
     const std::shared_ptr<BooleanModel>& checked) {
   m_list->push(MenuItem(MenuItemType::CHECK, name, checked));
+}
+
+void ContextMenu::add_separator() {
+  m_list->push(MenuItem(MenuItemType::SEPARATOR));
 }
 
 connection ContextMenu::connect_submit_signal(
@@ -181,8 +187,18 @@ QWidget* ContextMenu::build_item(const std::shared_ptr<AnyListModel>& list,
   } else if(item.m_type == MenuItemType::CHECK) {
     auto check_box =
       new CheckBox(std::get<std::shared_ptr<BooleanModel>>(item.m_data));
+    check_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    check_box->setLayoutDirection(Qt::RightToLeft);
     check_box->set_label(item.m_name);
     return check_box;
+  } else if(item.m_type == MenuItemType::SEPARATOR) {
+    auto separator = new Box();
+    separator->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    separator->setFixedHeight(scale_height(1));
+    update_style(*separator, [] (auto& style) {
+      style.get(Any()).set(BackgroundColor(QColor(0xC8C8C8)));
+    });
+    return separator;
   }
   auto submenu = std::get<ContextMenu*>(item.m_data);
   auto submenu_item = new SubmenuItem(item.m_name, *submenu);
@@ -241,44 +257,6 @@ bool ContextMenu::handle_mouse_event(QMouseEvent* event) {
   return false;
 }
 
-void ContextMenu::on_submit(const std::any& submission) {
-  auto menu_item = std::any_cast<MenuItem&&>(
-    m_list->get(*m_list_view->get_current()->get()));
-  if(menu_item.m_type == MenuItemType::ACTION) {
-    std::get<Action>(menu_item.m_data)();
-    hide();
-    m_submit_signal(*this, menu_item.m_name);
-  }
-}
-
-void ContextMenu::on_window_style() {
-  m_window_border_size = QMargins();
-  auto& stylist = find_stylist(*m_window);
-  for(auto& property : stylist.get_computed_block()) {
-    property.visit(
-      [&] (const BorderTopSize& size) {
-        stylist.evaluate(size, [=] (auto size) {
-          m_window_border_size.setTop(size);
-        });
-      },
-      [&] (const BorderRightSize& size) {
-        stylist.evaluate(size, [=] (auto size) {
-          m_window_border_size.setRight(size);
-        });
-      },
-      [&] (const BorderBottomSize& size) {
-        stylist.evaluate(size, [=] (auto size) {
-          m_window_border_size.setBottom(size);
-        });
-      },
-      [&] (const BorderLeftSize& size) {
-        stylist.evaluate(size, [=] (auto size) {
-          m_window_border_size.setLeft(size);
-        });
-      });
-  }
-}
-
 void ContextMenu::position_menu(ListItem* item) {
   auto item_pos = m_list_view->mapToGlobal(item->pos());
   auto menu_geomerty = m_window->geometry();
@@ -316,7 +294,7 @@ void ContextMenu::hide_active_menu() {
 }
 
 void ContextMenu::show_submenu(int index) {
-  auto menu_item = std::any_cast<MenuItem&&>(m_list->get(index));
+  auto& menu_item = m_list->get(index);
   if(menu_item.m_type == MenuItemType::SUBMENU) {
     auto menu_window = m_submenus[index];
     if(m_active_menu_window == menu_window) {
@@ -327,5 +305,68 @@ void ContextMenu::show_submenu(int index) {
     m_active_menu_window->show();
     position_menu(m_list_view->get_list_item(index));
     m_active_menu_window->installEventFilter(this);
+  }
+}
+
+void ContextMenu::on_list_operation(
+    const ListModel<MenuItem>::Operation& operation) {
+  visit(operation,
+    [&] (const ListModel<MenuItem>::AddOperation& operation) {
+      if(auto item = m_list_view->get_list_item(operation.m_index)) {
+        switch(std::any_cast<const MenuItem&>(operation.m_value).m_type) {
+          case MenuItemType::SEPARATOR:
+            item->setEnabled(false);
+            update_style(*item, [] (auto& style) {
+              style.get(Any()).
+                set(border_size(0)).
+                set(horizontal_padding(0));
+            });
+            break;
+          case MenuItemType::CHECK:
+            update_style(*item, [] (auto& style) {
+              style.get(Any()).set(vertical_padding(scale_height(4)));
+            });
+            break;
+          default:
+            break;
+        }
+      }
+    });
+}
+
+void ContextMenu::on_submit(const std::any& submission) {
+  auto& menu_item = m_list->get(*m_list_view->get_current()->get());
+  if(menu_item.m_type == MenuItemType::ACTION) {
+    std::get<Action>(menu_item.m_data)();
+    hide();
+    m_submit_signal(*this, menu_item.m_name);
+  }
+}
+
+void ContextMenu::on_window_style() {
+  m_window_border_size = QMargins();
+  auto& stylist = find_stylist(*m_window);
+  for(auto& property : stylist.get_computed_block()) {
+    property.visit(
+      [&] (const BorderTopSize& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          m_window_border_size.setTop(size);
+        });
+      },
+      [&] (const BorderRightSize& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          m_window_border_size.setRight(size);
+        });
+      },
+      [&] (const BorderBottomSize& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          m_window_border_size.setBottom(size);
+        });
+      },
+      [&] (const BorderLeftSize& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          m_window_border_size.setLeft(size);
+        });
+      });
   }
 }

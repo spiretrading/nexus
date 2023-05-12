@@ -283,6 +283,8 @@ void TableBody::keyPressEvent(QKeyEvent* event) {
     case Qt::Key_A:
       if(event->modifiers() & Qt::Modifier::CTRL && !event->isAutoRepeat()) {
         m_selection_controller.select_all();
+      } else {
+        event->ignore();
       }
       break;
     case Qt::Key_Control:
@@ -377,7 +379,7 @@ void TableBody::paintEvent(QPaintEvent* event) {
     }
     if(m_styles.m_vertical_spacing != 0) {
       auto& row_layout = *static_cast<QBoxLayout*>(layout());
-      for(auto row = 1; row != row_layout.count(); ++row) {
+      for(auto row = 1; row < row_layout.count(); ++row) {
         draw_border(row_layout.itemAt(row)->geometry().top() -
           m_styles.m_vertical_spacing, m_styles.m_vertical_spacing);
       }
@@ -397,7 +399,7 @@ void TableBody::paintEvent(QPaintEvent* event) {
     }
     if(m_styles.m_horizontal_spacing != 0 && m_widths->get_size() > 0) {
       auto left = m_widths->get(0);
-      for(auto column = 1; column != m_table->get_column_size(); ++column) {
+      for(auto column = 1; column < m_table->get_column_size(); ++column) {
         draw_border(left, m_styles.m_horizontal_spacing);
         if(column != m_widths->get_size()) {
           left += m_widths->get(column);

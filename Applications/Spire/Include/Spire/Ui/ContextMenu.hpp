@@ -60,6 +60,9 @@ namespace Spire {
       void add_check_box(const QString& name,
         const std::shared_ptr<BooleanModel>& checked);
 
+      /** Adds a menu separator. */
+      void add_separator();
+
       /** Connects a slot to the Submit signal. */
       boost::signals2::connection connect_submit_signal(
         const SubmitSignal::slot_type& slot) const;
@@ -72,6 +75,7 @@ namespace Spire {
       enum class MenuItemType {
         ACTION,
         CHECK,
+        SEPARATOR,
         SUBMENU
       };
       struct MenuItem {
@@ -96,11 +100,12 @@ namespace Spire {
       void focus_first_item();
       void handle_right_or_enter_event(QEvent* event);
       bool handle_mouse_event(QMouseEvent* event);
-      void on_submit(const std::any& submission);
-      void on_window_style();
       void position_menu(ListItem* item);
       void hide_active_menu();
       void show_submenu(int index);
+      void on_list_operation(const ListModel<MenuItem>::Operation& operation);
+      void on_submit(const std::any& submission);
+      void on_window_style();
   };
 }
 

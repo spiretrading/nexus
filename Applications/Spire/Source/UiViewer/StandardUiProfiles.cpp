@@ -63,6 +63,8 @@
 #include "Spire/Ui/RegionBox.hpp"
 #include "Spire/Ui/RegionListItem.hpp"
 #include "Spire/Ui/ResponsiveLabel.hpp"
+#include "Spire/Ui/SaleConditionBox.hpp"
+#include "Spire/Ui/SaleConditionListItem.hpp"
 #include "Spire/Ui/ScalarFilterPanel.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
@@ -1014,6 +1016,7 @@ UiProfile Spire::make_context_menu_profile() {
         QString("Action:Medium")));
       view_menu->add_action("Small", profile.make_event_slot<>(
         QString("Action:Small")));
+      view_menu->add_separator();
       auto empty_menu = new ContextMenu(*static_cast<QWidget*>(view_menu));
       view_menu->add_menu("Empty", *empty_menu);
       menu->add_menu("View", *view_menu);
@@ -1029,11 +1032,13 @@ UiProfile Spire::make_context_menu_profile() {
         QString("Action:Side")));
       sort_menu->add_menu("Type", *type_menu);
       menu->add_menu("Sort by", *sort_menu);
+      menu->add_separator();
       menu->add_action("Cut", profile.make_event_slot<>(QString("Action:Cut")));
       menu->add_action("Copy", profile.make_event_slot<>(
         QString("Action:Copy")));
       menu->add_action("Paste", profile.make_event_slot<>(
         QString("Action:Paste")));
+      menu->add_separator();
       auto date_model = std::make_shared<LocalBooleanModel>();
       date_model->set(true);
       date_model->connect_update_signal(
@@ -1042,6 +1047,7 @@ UiProfile Spire::make_context_menu_profile() {
       auto time_model = menu->add_check_box("Time");
       time_model->connect_update_signal(
         profile.make_event_slot<bool>(QString("Time CheckedSignal")));
+      menu->add_separator();
       menu->add_action("This is a long name for test",
         profile.make_event_slot<>(
           QString("Action:This is a long name for test")));
@@ -2989,6 +2995,96 @@ UiProfile Spire::make_responsive_label_profile() {
       });
     });
     return label;
+  });
+  return profile;
+}
+
+UiProfile Spire::make_sale_condition_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_property<QString>("current", "@"));
+  properties.push_back(make_standard_property<QString>("placeholder"));
+  properties.push_back(make_standard_property("read_only", false));
+  auto profile = UiProfile("SaleConditionBox", properties, [] (auto& profile) {
+    auto condition_infos = std::vector<SaleConditionInfo>();
+    condition_infos.emplace_back(TimeAndSale::Condition(
+      TimeAndSale::Condition::Type::REGULAR, "@"), "Regular Settlement");
+    condition_infos.emplace_back(TimeAndSale::Condition(
+      TimeAndSale::Condition::Type::REGULAR, "C"), "Cash Settlement");
+    condition_infos.emplace_back(TimeAndSale::Condition(
+      TimeAndSale::Condition::Type::REGULAR, "N"), "Next Day Settlement");
+    condition_infos.emplace_back(TimeAndSale::Condition(
+      TimeAndSale::Condition::Type::REGULAR, "R"), "Seller Settlement");
+    condition_infos.emplace_back(TimeAndSale::Condition(
+      TimeAndSale::Condition::Type::REGULAR, "F"), "Intermarket Sweep");
+    condition_infos.emplace_back(TimeAndSale::Condition(
+      TimeAndSale::Condition::Type::REGULAR, "L"),
+      "Sold Last - Reported Late But In Sequence");
+    condition_infos.emplace_back(TimeAndSale::Condition(
+      TimeAndSale::Condition::Type::REGULAR, "Z"), "Sold - Out of Sequence");
+    auto model = std::make_shared<LocalComboBoxQueryModel>();
+    for(auto& info : condition_infos) {
+      auto name = (info.m_name % " " %
+        QString::fromStdString(info.m_condition.m_code)).toLower();
+      auto terms = name.splitRef(' ', Qt::SkipEmptyParts);
+      for(auto& term : terms) {
+        model->add(name.right(name.length() - term.position()), info);
+      }
+    }
+    auto& current_property = get<QString>("current", profile.get_properties());
+    auto current_model =
+      std::make_shared<LocalValueModel<TimeAndSale::Condition>>(
+        std::any_cast<SaleConditionInfo>(
+          model->parse(current_property.get())).m_condition);
+    auto box = new SaleConditionBox(model, current_model);
+    box->setFixedWidth(scale_width(112));
+    apply_widget_properties(box, profile.get_properties());
+    auto current_slot =
+      profile.make_event_slot<QString>(QString::fromUtf8("Current"));
+    auto current_connection = box->get_current()->connect_update_signal(
+      [=, &current_property] (const auto& current) {
+        auto code = QString::fromStdString(current.m_code);
+        current_slot(code);
+        if(code != current_property.get()) {
+          current_property.set(code);
+        }
+      });
+    current_property.connect_changed_signal([=] (const auto& current) {
+      if(auto value = model->parse(current); value.has_value()) {
+        auto& condition = std::any_cast<SaleConditionInfo&>(value).m_condition;
+        if(condition != box->get_current()->get()) {
+          box->get_current()->set(condition);
+        }
+      } else {
+        auto current_blocker = shared_connection_block(current_connection);
+        box->get_current()->set(TimeAndSale::Condition());
+      }
+    });
+    auto& placeholder = get<QString>("placeholder", profile.get_properties());
+    placeholder.connect_changed_signal([=] (const auto& placeholder) {
+      box->set_placeholder(placeholder);
+    });
+    auto& read_only = get<bool>("read_only", profile.get_properties());
+    read_only.connect_changed_signal(
+      std::bind_front(&SaleConditionBox::set_read_only, box));
+    box->connect_submit_signal(
+      profile.make_event_slot<TimeAndSale::Condition>("Submit"));
+    return box;
+  });
+  return profile;
+}
+
+UiProfile Spire::make_sale_condition_list_item_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto profile = UiProfile("SaleConditionListItem", properties,
+    [] (auto& profile) {
+      auto condition_info = SaleConditionInfo(
+        TimeAndSale::Condition(TimeAndSale::Condition::Type::REGULAR, "@"),
+        "Regular Settlement");
+      auto item = new SaleConditionListItem(condition_info);
+      apply_widget_properties(item, profile.get_properties());
+      return item;
   });
   return profile;
 }

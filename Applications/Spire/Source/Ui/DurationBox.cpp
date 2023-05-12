@@ -52,6 +52,18 @@ namespace {
       return update;
     }();
     auto blocker = shared_connection_block(model.m_source_connection);
+    auto blocker1 = [&] {
+      if(auto s1 = m1.lock()) {
+        return shared_connection_block(s1->m_source_connection);
+      }
+      return shared_connection_block();
+    }();
+    auto blocker2 = [&] {
+      if(auto s2 = m2.lock()) {
+        return shared_connection_block(s2->m_source_connection);
+      }
+      return shared_connection_block();
+    }();
     if(model.m_source->set(current) != QValidator::State::Invalid) {
       auto state = QValidator::State::Acceptable;
       model.m_state = state;
@@ -65,15 +77,23 @@ namespace {
   template<typename Model, typename F>
   void on_current(Model& model, const optional<time_duration>& current, F&& f) {
     if(current) {
-      auto field = std::forward<F>(f)(*current);
-      if(!field && !model.m_current) {
-        return;
-      }
-      model.m_current = field;
+      model.m_current = std::forward<F>(f)(*current);
     } else {
       model.m_current = none;
     }
     model.m_update_signal(model.m_current);
+  }
+
+  struct HourModel;
+  struct MinuteModel;
+  struct SecondModel;
+
+  template<typename T, typename M>
+  auto to_shared_model(std::weak_ptr<M> model) {
+    if(auto s = model.lock()) {
+      return std::static_pointer_cast<T>(s);
+    }
+    return std::shared_ptr<T>();
   }
 
   struct HourModel : ScalarValueModel<optional<int>> {
@@ -123,7 +143,9 @@ namespace {
     }
 
     QValidator::State set(const Type& value) {
-      return ::set(*this, value, m_minutes, m_seconds,
+      return ::set<HourModel, MinuteModel, SecondModel>(*this, value,
+        to_shared_model<MinuteModel>(m_minutes),
+        to_shared_model<SecondModel>(m_seconds),
         m_source->get().get_value_or(hours(0)) +
           hours(value.get_value_or(0)) - hours(m_current.get_value_or(0)));
     }
@@ -183,7 +205,9 @@ namespace {
     }
 
     QValidator::State set(const Type& value) {
-      return ::set(*this, value, m_hours, m_seconds,
+      return ::set<MinuteModel, HourModel, SecondModel>(*this, value,
+        to_shared_model<HourModel>(m_hours),
+        to_shared_model<SecondModel>(m_seconds),
         m_source->get().get_value_or(minutes(0)) +
           minutes(value.get_value_or(0)) - minutes(m_current.get_value_or(0)));
     }
@@ -249,7 +273,9 @@ namespace {
     }
 
     QValidator::State set(const Type& value) {
-      return ::set(*this, value, m_hours, m_minutes,
+      return ::set<SecondModel, HourModel, MinuteModel>(*this, value,
+        to_shared_model<HourModel>(m_hours),
+        to_shared_model<MinuteModel>(m_minutes),
         m_source->get().get_value_or(seconds(0)) +
           to_seconds(value.get_value_or(0)) -
             to_seconds(m_current.get_value_or(0)));
@@ -291,6 +317,10 @@ namespace {
         linear(QColor(0xFFF1F1), revert, milliseconds(300))))).
       set(border_color(
         chain(timeout(QColor(0xB71C1C), milliseconds(550)), revert)));
+    style.get(Any() > Colon()).
+      set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
+    style.get(Disabled() > Colon()).
+      set(TextColor(QColor(0xC8C8C8)));
     return style;
   }
 
@@ -323,15 +353,6 @@ namespace {
       set(LeadingZeros(2)).set(TrailingZeros(3)).
       set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
     style.get(Any() > is_a<Button>()).set(Visibility::NONE);
-    return style;
-  }
-
-  auto COLON_FIELD_STYLE(StyleSheet style) {
-    style.get(Any() > Colon()).
-      set(TextAlign(Qt::Alignment(Qt::AlignCenter))).
-      set(TextColor(QColor(Qt::black)));
-    style.get(Disabled() > Colon()).
-      set(TextColor(QColor(0xC8C8C8)));
     return style;
   }
 
@@ -373,10 +394,8 @@ namespace {
   }
 
   auto make_colon() {
-    auto colon = new TextBox(":");
+    auto colon = make_label(":");
     colon->setFixedWidth(scale_width(10));
-    colon->setEnabled(false);
-    colon->set_read_only(true);
     find_stylist(*colon).match(Colon());
     return colon;
   }
@@ -473,10 +492,6 @@ connection DurationBox::connect_reject_signal(
 connection DurationBox::connect_submit_signal(
     const SubmitSignal::slot_type& slot) const {
   return m_submit_signal.connect(slot);
-}
-
-QSize DurationBox::sizeHint() const {
-  return scale(126, 26);
 }
 
 bool DurationBox::eventFilter(QObject* watched, QEvent* event) {

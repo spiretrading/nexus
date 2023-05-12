@@ -80,8 +80,6 @@ namespace Styles {
       boost::signals2::connection connect_reject_signal(
         const RejectSignal::slot_type& slot) const;
 
-      QSize sizeHint() const override;
-
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
 

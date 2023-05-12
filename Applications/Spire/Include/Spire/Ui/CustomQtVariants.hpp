@@ -16,6 +16,7 @@
 #include "Nexus/Definitions/Region.hpp"
 #include "Nexus/Definitions/Security.hpp"
 #include "Nexus/Definitions/Side.hpp"
+#include "Nexus/Definitions/TimeAndSale.hpp"
 #include "Nexus/Definitions/TimeInForce.hpp"
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Ui/Ui.hpp"
@@ -97,6 +98,7 @@ Q_DECLARE_METATYPE(Nexus::Quantity);
 Q_DECLARE_METATYPE(Nexus::Region);
 Q_DECLARE_METATYPE(Nexus::Security);
 Q_DECLARE_METATYPE(Nexus::Side);
+Q_DECLARE_METATYPE(Nexus::TimeAndSale::Condition);
 Q_DECLARE_METATYPE(Nexus::TimeInForce);
 Q_DECLARE_METATYPE(Spire::MarketToken);
 Q_DECLARE_METATYPE(Spire::PositionSideToken);
@@ -154,6 +156,9 @@ namespace Spire {
 
   /** Returns the text representation of a Quantity value. */
   QString displayText(Nexus::Quantity value);
+
+  /** Returns the text representation of a TimeAndSale::Condition. */
+  QString displayText(const Nexus::TimeAndSale::Condition& condition);
 
   /** Returns the text representation of a TimeInForce. */
   const QString& displayText(Nexus::TimeInForce time_in_force);
