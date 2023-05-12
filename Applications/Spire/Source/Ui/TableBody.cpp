@@ -401,7 +401,7 @@ void TableBody::paintEvent(QPaintEvent* event) {
       auto left = m_widths->get(0);
       for(auto column = 1; column < m_table->get_column_size(); ++column) {
         draw_border(left, m_styles.m_horizontal_spacing);
-        if(column < m_widths->get_size()) {
+        if(column != m_widths->get_size()) {
           left += m_widths->get(column);
         }
       }
