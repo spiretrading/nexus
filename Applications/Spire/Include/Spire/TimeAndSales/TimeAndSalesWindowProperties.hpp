@@ -20,20 +20,23 @@ namespace Spire {
 
         /* The band color. */
         QColor m_band_color;
-
-        /* The font used. */
-        QFont m_font;
       };
 
       /* Constructs default properties. */
       TimeAndSalesWindowProperties();
 
-      /* Returns the style of the BBO indicator. */
-      const Styles& get_style(BboIndicator indicator) const;
+      /* Returns the styles of the BBO indicator. */
+      const Styles& get_styles(BboIndicator indicator) const;
 
-      /* Sets the style to a BBO indicator. */
-      void set_style(BboIndicator indicator, const Styles& style);
-      
+      /* Sets the styles to a BBO indicator. */
+      void set_styles(BboIndicator indicator, const Styles& styles);
+
+      /* Returns the font. */
+      const QFont& get_font() const;
+
+      /* Sets the font. */
+      void set_font(const QFont& font);
+
       /** Returns <code>true</code> iff the grid is shown. */
       bool is_show_grid() const;
 
@@ -42,6 +45,7 @@ namespace Spire {
 
     private:
       std::array<Styles, BBO_INDICATOR_COUNT> m_styles;
+      QFont m_font;
       bool m_show_grid;
   };
 }
