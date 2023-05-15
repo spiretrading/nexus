@@ -235,6 +235,7 @@ bool TableBody::event(QEvent* event) {
         }
         return this->width() - left;
       }();
+      width = std::max(0, width);
       cover->setFixedSize(width, height());
       left += width;
       cover->raise();
