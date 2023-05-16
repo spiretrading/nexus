@@ -173,10 +173,14 @@ struct DecimalBox::DecimalToTextModel : TextModel {
       return QValidator::State::Invalid;
     } else if(value.isEmpty()) {
       return QValidator::State::Intermediate;
-    } else if(value == "-" && (min && *min < 0 || !min)) {
-      return QValidator::State::Intermediate;
-    } else if(value == "+" && (max && *max > 0 || !max)) {
-      return QValidator::State::Intermediate;
+    } else if(value == "-") {
+      if(min && *min < 0 || !min) {
+        return QValidator::State::Intermediate;
+      }
+    } else if(value == "+") {
+      if(max && *max > 0 || !max) {
+        return QValidator::State::Intermediate;
+      }
     } else if(auto decimal = text_to_decimal(value)) {
       if(value.front() != '-' && max && *max < 0 ||
           value.front() == '-' && min && *min > 0) {
