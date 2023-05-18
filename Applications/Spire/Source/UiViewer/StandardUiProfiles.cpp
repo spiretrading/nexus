@@ -1672,8 +1672,8 @@ UiProfile Spire::make_editable_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
   auto test_widget_property = define_enum<int>(
-    {{"TextBox", 0}, {"DropDownBox", 1}, {"DecimalBox", 2}, {"KeyInputBox", 3},
-      {"RegionBox", 4}});
+    {{"TextBox", 0}, {"DropDownBox", 1}, {"DecimalBox", 2}, {"QuantityBox", 3},
+      {"KeyInputBox", 4}, {"RegionBox", 5}});
   properties.push_back(
     make_standard_enum_property("input_box", test_widget_property));
   auto profile = UiProfile("EditableBox", properties, [] (auto& profile) {
@@ -1692,6 +1692,13 @@ UiProfile Spire::make_editable_box_profile() {
         return new AnyInputBox((*new DecimalBox(
           std::make_shared<LocalOptionalDecimalModel>(Decimal(1)))));
       } else if(value == 3) {
+        auto modifiers = QHash<Qt::KeyboardModifier, Quantity>(
+          {{Qt::NoModifier, 1}, {Qt::AltModifier, 5}, {Qt::ControlModifier, 10},
+           {Qt::ShiftModifier, 20}});
+        return new AnyInputBox((*new QuantityBox(
+          std::make_shared<LocalOptionalQuantityModel>(Quantity(1)),
+          std::move(modifiers))));
+      } else if(value == 4) {
         return new AnyInputBox((*new KeyInputBox(populate_key_input_box_model(
           QKeySequence("F1")))));
       }
