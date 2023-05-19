@@ -3877,6 +3877,10 @@ UiProfile Spire::make_text_box_profile() {
   properties.push_back(make_standard_property<QString>("rejected", "deny"));
   properties.push_back(make_standard_property("horizontal_padding", 8));
   properties.push_back(make_standard_property("border_size", 1));
+  auto text_alignment_property = define_enum<Qt::Alignment>(
+    {{"LEFT", Qt::AlignLeft}, {"RIGHT", Qt::AlignRight}});
+  properties.push_back(make_standard_enum_property(
+    "text_align", text_alignment_property));
   auto profile = UiProfile("TextBox", properties, [] (auto& profile) {
     auto model = std::make_shared<RejectedTextModel>();
     auto text_box = new TextBox(model);
@@ -3906,6 +3910,13 @@ UiProfile Spire::make_text_box_profile() {
     border.connect_changed_signal([=] (const auto& value) {
       update_style(*text_box, [&] (auto& style) {
         style.get(Any()).set(border_size(scale_width(value)));
+      });
+    });
+    auto& text_alignment = get<Qt::Alignment>("text_align",
+      profile.get_properties());
+    text_alignment.connect_changed_signal([=] (auto alignment) {
+      update_style(*text_box, [&] (auto& style) {
+        style.get(Any()).set(TextAlign(Qt::Alignment(alignment)));
       });
     });
     text_box->get_current()->connect_update_signal(

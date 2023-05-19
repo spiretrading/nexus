@@ -119,7 +119,6 @@ class TextBox::LineEdit : public QLineEdit {
           m_has_update(false) {
       setObjectName(QString("0x%1").arg(reinterpret_cast<std::intptr_t>(this)));
       setFrame(false);
-      setTextMargins(-2, 0, -4, 0);
       setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
       auto& current_highlight = m_highlight->get();
       setCursorPosition(current_highlight.m_end);
@@ -189,6 +188,11 @@ class TextBox::LineEdit : public QLineEdit {
     }
 
     void setReadOnly(bool read_only) {
+      if(read_only) {
+        setTextMargins(-2, 0, -4, 0);
+      } else {
+        setTextMargins({});
+      }
       QLineEdit::setReadOnly(read_only);
       setCursorPosition(0);
     }
