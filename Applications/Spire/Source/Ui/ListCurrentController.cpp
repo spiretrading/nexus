@@ -32,7 +32,7 @@ void ListCurrentController::add(std::unique_ptr<ItemView> view, int index) {
   if(m_current->get() && *m_current->get() >= index &&
       *m_current->get() < std::ssize(m_views) - 1) {
     auto current = *m_current->get() + 1;
-    update(current);
+    m_last_current = current;
     auto blocker = shared_connection_block(m_connection);
     m_current->set(current);
   }
@@ -52,7 +52,7 @@ void ListCurrentController::remove(int index) {
       }
     } else if(m_current->get() > index) {
       auto current = *m_current->get() - 1;
-      update(current);
+      m_last_current = current;
       auto blocker = shared_connection_block(m_connection);
       m_current->set(current);
     }
@@ -88,7 +88,7 @@ void ListCurrentController::move(int source, int destination) {
   adjust(m_last_current);
   auto current = m_current->get();
   if(adjust(current)) {
-    update(current);
+    m_last_current = current;
     auto blocker = shared_connection_block(m_connection);
     m_current->set(current);
   }
@@ -158,15 +158,14 @@ void ListCurrentController::cross(int direction, Qt::Orientation orientation) {
     navigate_next();
     return;
   }
-  if(m_navigation_box.isNull()) {
+  auto current_navigation_box = [&] {
     if(m_current->get()) {
-      m_navigation_box = m_views[*m_current->get()]->get_geometry();
-    } else {
-      m_navigation_box = m_views.front()->get_geometry();
+      return m_views[*m_current->get()]->get_geometry();
     }
-  }
+    return m_views.front()->get_geometry();
+  }();
   auto i = *m_current->get() + direction;
-  auto navigation_box = m_navigation_box;
+  auto navigation_box = current_navigation_box;
   auto candidate = -1;
   while(i >= 0 && i != static_cast<int>(m_views.size())) {
     if(m_views[i]->is_selectable()) {
@@ -178,9 +177,11 @@ void ListCurrentController::cross(int direction, Qt::Orientation orientation) {
         }
       }
       if((orientation == Qt::Orientation::Horizontal &&
-          direction * m_navigation_box.y() < direction * navigation_box.y() ||
+          direction * current_navigation_box.y() <
+            direction * navigation_box.y() ||
           orientation == Qt::Orientation::Vertical &&
-          direction * m_navigation_box.x() < direction * navigation_box.x()) &&
+          direction * current_navigation_box.x() <
+            direction * navigation_box.x()) &&
           navigation_box.intersects(m_views[i]->get_geometry())) {
         candidate = i;
         if(direction == 1) {
@@ -195,11 +196,7 @@ void ListCurrentController::cross(int direction, Qt::Orientation orientation) {
   if(candidate == -1) {
     return;
   }
-  m_navigation_box = navigation_box;
   m_current->set(candidate);
-  if(candidate == m_current->get()) {
-    m_navigation_box = navigation_box;
-  }
 }
 
 connection ListCurrentController::connect_update_signal(
@@ -207,17 +204,8 @@ connection ListCurrentController::connect_update_signal(
   return m_update_signal.connect(slot);
 }
 
-void ListCurrentController::update(optional<int> current) {
-  m_last_current = current;
-  if(current) {
-    m_navigation_box = m_views[*current]->get_geometry();
-  } else {
-    m_navigation_box = QRect();
-  }
-}
-
 void ListCurrentController::on_current(optional<int> current) {
   auto previous = m_last_current;
-  update(current);
+  m_last_current = current;
   m_update_signal(previous, current);
 }
