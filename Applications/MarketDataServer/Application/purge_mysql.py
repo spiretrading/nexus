@@ -98,8 +98,8 @@ def main():
   username = data_store_config['username']
   password = data_store_config['password']
   schema = data_store_config['schema']
-  mysql_connection = pymysql.connect(address.host, username, password, schema,
-    address.port)
+  mysql_connection = pymysql.connect(host=address.host, user=username,
+    password=password, database=schema, port=address.port)
   securities = []
   with mysql_connection.cursor() as cursor:
     query = 'SELECT DISTINCT `symbol`, `country` FROM `bbo_quotes`'
@@ -119,8 +119,8 @@ def main():
       for thread in threads:
         thread.join()
       threads = []
-    connection = pymysql.connect(address.host, username, password, schema,
-      address.port)
+    connection = pymysql.connect(host=address.host, user=username,
+      password=password, database=schema, port=address.port)
     thread = threading.Thread(target = purge_all_security,
       args = (security, args.start, args.end, connection))
     threads.append(thread)
@@ -133,8 +133,8 @@ def main():
       for thread in threads:
         thread.join()
       threads = []
-    connection = pymysql.connect(address.host, username, password, schema,
-      address.port)
+    connection = pymysql.connect(host=address.host, user=username,
+      password=password, database=schema, port=address.port)
     thread = threading.Thread(target = purge_market,
       args = (market, args.start, args.end, connection, 'order_imbalances'))
     threads.append(thread)
