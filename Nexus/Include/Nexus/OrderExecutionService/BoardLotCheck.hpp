@@ -3,6 +3,7 @@
 #include <memory>
 #include <type_traits>
 #include <Beam/Collections/SynchronizedMap.hpp>
+#include <Beam/Collections/SynchronizedSet.hpp>
 #include <Beam/Queues/StateQueue.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Threading/Mutex.hpp>
@@ -57,9 +58,11 @@ namespace Nexus::OrderExecutionService {
           m_closingEntries;
       Beam::SynchronizedUnorderedMap<Security,
         std::shared_ptr<Beam::StateQueue<BboQuote>>> m_bboQuotes;
+      Beam::SynchronizedUnorderedSet<int> m_exemptions;
+      boost::posix_time::ptime m_lastExemptionCheck;
 
-      Money LoadPrice(const Security& security,
-        boost::posix_time::ptime timestamp);
+      Money LoadPrice(
+        const Security& security, boost::posix_time::ptime timestamp);
   };
 
   template<typename C>
@@ -82,7 +85,8 @@ namespace Nexus::OrderExecutionService {
     const boost::local_time::tz_database& timeZoneDatabase)
     : m_marketDataClient(std::forward<CF>(marketDataClient)),
       m_marketDatabase(marketDatabase),
-      m_timeZoneDatabase(timeZoneDatabase) {}
+      m_timeZoneDatabase(timeZoneDatabase),
+      m_lastExemptionCheck(boost::posix_time::neg_infin) {}
 
   template<typename C>
   void BoardLotCheck<C>::Submit(const OrderInfo& orderInfo) {
@@ -90,6 +94,26 @@ namespace Nexus::OrderExecutionService {
         orderInfo.m_fields.m_security.GetMarket() != DefaultMarkets::TSXV() &&
         orderInfo.m_fields.m_security.GetMarket() != DefaultMarkets::NEOE() &&
         orderInfo.m_fields.m_security.GetMarket() != DefaultMarkets::CSE()) {
+      return;
+    }
+    if(orderInfo.m_timestamp >
+        m_lastExemptionCheck + boost::posix_time::minutes(10)) {
+      m_lastExemptionCheck = orderInfo.m_timestamp;
+      try {
+        auto config = Beam::LoadFile("board_lot_exemptions.yml");
+        auto accountIds = config["accounts"];
+        if(accountIds) {
+          auto exemptions = std::unordered_set<int>();
+          for(auto item : config) {
+            exemptions.insert(item.as<int>());
+          }
+          m_exemptions.Swap(exemptions);
+        }
+      } catch(const std::exception&) {
+        std::cerr << "Failed to load board lot exemptions." << std::endl;
+      }
+    }
+    if(m_exemptions.Contains(orderInfo.m_fields.m_account.m_id)) {
       return;
     }
     auto currentPrice = LoadPrice(orderInfo.m_fields.m_security,

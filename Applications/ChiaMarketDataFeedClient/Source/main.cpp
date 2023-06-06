@@ -3,10 +3,8 @@
 #include <Beam/IO/WrapperChannel.hpp>
 #include <Beam/Network/IpAddress.hpp>
 #include <Beam/Network/MulticastSocketChannel.hpp>
-#include <Beam/Network/TcpSocketChannel.hpp>
 #include <Beam/ServiceLocator/ApplicationDefinitions.hpp>
 #include <Beam/Threading/LiveTimer.hpp>
-#include <Beam/TimeService/NtpTimeClient.hpp>
 #include <Beam/Utilities/ApplicationInterrupt.hpp>
 #include <Beam/Utilities/Expect.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
@@ -14,8 +12,7 @@
 #include <boost/optional/optional.hpp>
 #include "ChiaMarketDataFeedClient/ChiaConfiguration.hpp"
 #include "ChiaMarketDataFeedClient/ChiaMarketDataFeedClient.hpp"
-#include "ChiaMarketDataFeedClient/ChiaMdProtocolClient.hpp"
-#include "ChiaMarketDataFeedClient/ChiaMmdProtocolClient.hpp"
+#include "ChiaMarketDataFeedClient/PitchProtocolClient.hpp"
 #include "Nexus/DefinitionsService/ApplicationDefinitions.hpp"
 #include "Nexus/MarketDataService/ApplicationDefinitions.hpp"
 #include "Version.hpp"
@@ -35,42 +32,30 @@ using namespace Nexus::MarketDataService;
 namespace {
   using ApplicationFeedChannel = WrapperChannel<MulticastSocketChannel*,
     QueuedReader<SharedBuffer, MulticastSocketChannel::Reader*>>;
-  using ApplicationProtocolClient = ChiaMmdProtocolClient<
-    ApplicationFeedChannel*, TcpSocketChannel>;
+  using ApplicationProtocolClient =
+    PitchProtocolClient<ApplicationFeedChannel*>;
   using ApplicationChiaMarketDataFeedClient = ChiaMarketDataFeedClient<
     ApplicationMarketDataFeedClient::Client*, ApplicationProtocolClient*>;
 
   static constexpr auto DEFAULT_RECEIVE_BUFFER_SIZE = std::size_t(16777216);
 
-  ChiaConfiguration ParseConfiguration(const YAML::Node& config,
-      const MarketDatabase& marketDatabase, ptime currentTime,
-      const local_time::tz_database& timeZones) {
+  ChiaConfiguration ParseConfiguration(
+      const YAML::Node& config, const MarketDatabase& marketDatabase) {
     return TryOrNest([&] {
       auto chiaConfig = ChiaConfiguration();
-      chiaConfig.m_isLoggingMessages = Extract<bool>(config, "enable_logging",
-        false);
-      auto primaryMarketEntry = marketDatabase.FromDisplayName(
-        Extract<std::string>(config, "market"));
+      chiaConfig.m_isLoggingMessages =
+        Extract<bool>(config, "enable_logging", false);
+      auto primaryMarketEntry =
+        marketDatabase.FromDisplayName(Extract<std::string>(config, "market"));
       chiaConfig.m_country = primaryMarketEntry.m_countryCode;
       chiaConfig.m_primaryMarket = primaryMarketEntry.m_code;
       auto disseminatingMarketEntry = marketDatabase.FromDisplayName(
         Extract<std::string>(config, "disseminating_market"));
       chiaConfig.m_disseminatingMarket = disseminatingMarketEntry.m_code;
-      chiaConfig.m_mpid = Extract<std::string>(config, "mpid",
-        disseminatingMarketEntry.m_displayName);
-      auto configTimezone = Extract<std::string>(config, "time_zone",
-        "Australian_Eastern_Standard_Time");
-      auto timeZone = timeZones.time_zone_from_region(configTimezone);
-      if(timeZone == nullptr) {
-        BOOST_THROW_EXCEPTION(std::runtime_error("Time zone not found."));
-      }
-      auto serverDate = ptime(
-        AdjustDateTime(currentTime, "UTC", configTimezone, timeZones).date(),
-        seconds(0));
-      chiaConfig.m_timeOrigin = AdjustDateTime(serverDate, configTimezone,
-        "UTC", timeZones);
-      chiaConfig.m_isTimeAndSaleFeed = Extract<bool>(config, "is_time_and_sale",
-        false);
+      chiaConfig.m_mpid = Extract<std::string>(
+        config, "mpid", disseminatingMarketEntry.m_displayName);
+      chiaConfig.m_isTimeAndSaleFeed =
+        Extract<bool>(config, "is_time_and_sale", false);
       return chiaConfig;
     }, std::runtime_error("Unable to parse CHIA configuration."));
   }
@@ -81,22 +66,20 @@ int main(int argc, const char** argv) {
     auto config = ParseCommandLine(argc, argv,
       "1.0-r" CHIA_MARKET_DATA_FEED_CLIENT_VERSION
       "\nCopyright (C) 2020 Spire Trading Inc.");
-    auto serviceLocatorClient = MakeApplicationServiceLocatorClient(
-      GetNode(config, "service_locator"));
-    auto definitionsClient = ApplicationDefinitionsClient(
-      serviceLocatorClient.Get());
-    auto timeClient = MakeLiveNtpTimeClientFromServiceLocator(
-      *serviceLocatorClient);
+    auto serviceLocatorClient =
+      MakeApplicationServiceLocatorClient(GetNode(config, "service_locator"));
+    auto definitionsClient =
+      ApplicationDefinitionsClient(serviceLocatorClient.Get());
     auto samplingTime = Extract<time_duration>(config, "sampling");
     auto marketDataFeedClient = ApplicationMarketDataFeedClient(
       serviceLocatorClient.Get(), samplingTime, DefaultCountries::AU());
     auto host = Extract<IpAddress>(config, "host");
     auto interface = Extract<IpAddress>(config, "interface");
     auto options = MulticastSocketOptions();
-    options.m_receiveBufferSize = Extract<int>(config, "receive_buffer",
-      DEFAULT_RECEIVE_BUFFER_SIZE);
-    options.m_maxDatagramSize = Extract<int>(config, "mtu",
-      options.m_maxDatagramSize);
+    options.m_receiveBufferSize =
+      Extract<int>(config, "receive_buffer", DEFAULT_RECEIVE_BUFFER_SIZE);
+    options.m_maxDatagramSize =
+      Extract<int>(config, "mtu", options.m_maxDatagramSize);
     auto multicastSocketChannel = TryOrNest([&] {
       return MulticastSocketChannel(host, interface, options);
     }, std::runtime_error("Unable to join CHIA multicast group."));
@@ -110,22 +93,13 @@ int main(int argc, const char** argv) {
         }
         return std::tuple(optional<IpAddress>(), std::string(), std::string());
       }();
-    auto feedChannel = ApplicationFeedChannel(&multicastSocketChannel,
-      &multicastSocketChannel.GetReader());
-    auto protocolClient = ApplicationProtocolClient(&feedChannel,
-      retransmissionUsername, retransmissionPassword,
-      [&] () -> std::unique_ptr<TcpSocketChannel> {
-        if(retransmissionHost) {
-          return std::make_unique<TcpSocketChannel>(*retransmissionHost);
-        }
-        return nullptr;
-      });
+    auto feedChannel = ApplicationFeedChannel(
+      &multicastSocketChannel, &multicastSocketChannel.GetReader());
+    auto protocolClient = ApplicationProtocolClient(&feedChannel);
     auto marketDatabase = definitionsClient->LoadMarketDatabase();
-    auto timeZones = definitionsClient->LoadTimeZoneDatabase();
-    auto feedConfiguration = ParseConfiguration(config, marketDatabase,
-      timeClient->GetTime(), timeZones);
-    auto feedClient = ApplicationChiaMarketDataFeedClient(feedConfiguration,
-      marketDataFeedClient.Get(), &protocolClient);
+    auto feedConfiguration = ParseConfiguration(config, marketDatabase);
+    auto feedClient = ApplicationChiaMarketDataFeedClient(
+      feedConfiguration, marketDataFeedClient.Get(), &protocolClient);
     WaitForKillEvent();
     serviceLocatorClient->Close();
   } catch(...) {

@@ -10,6 +10,6 @@ disseminating_market: CXA
 mpid: CXA
 is_time_and_sale: true
 sampling: 100ms
-host: "233.218.133.80:30501"
-interface: "$local_interface:30501"
+host: "233.218.133.80:30502"
+interface: "$local_interface:30502"
 ...
