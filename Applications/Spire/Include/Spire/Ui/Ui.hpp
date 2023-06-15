@@ -10,6 +10,7 @@
 #include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
+  class AdaptiveBox;
   class AnyInputBox;
   class Box;
   class BoxGeometry;
