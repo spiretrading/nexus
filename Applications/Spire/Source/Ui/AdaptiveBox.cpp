@@ -231,7 +231,7 @@ namespace {
           layout.addItem(item.m_item, item.m_row, item.m_column,
             item.m_row_span, item.m_column_span);
         },
-        [&] (QGridLayout& layout, GridLayoutItem& item) {
+        [] (QGridLayout& layout, GridLayoutItem& item) {
           layout.addItem(item.m_item, item.m_row, item.m_column,
             item.m_row_span, item.m_column_span);
         });
@@ -253,7 +253,7 @@ namespace {
           layout.addItem(item.m_item);
           layout.setStretch(layout.count() - 1, item.m_stretch);
         },
-        [&] (QBoxLayout& layout, BoxLayoutItem& item) {
+        [] (QBoxLayout& layout, BoxLayoutItem& item) {
           layout.addItem(item.m_item);
           layout.setStretch(layout.count() - 1, item.m_stretch);
         });
@@ -272,7 +272,7 @@ namespace {
           replace_widget_with_placeholder(child_layout, parent);
           layout.addItem(item.m_item);
         },
-        [&] (QLayout& layout, LayoutItem& item) {
+        [] (QLayout& layout, LayoutItem& item) {
           layout.addItem(item.m_item);
         });
     }
