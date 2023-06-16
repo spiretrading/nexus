@@ -291,7 +291,7 @@ namespace {
   auto get_min_abs_value_index(const std::vector<std::tuple<bool, int>>& v) {
     auto candidates = v | std::views::filter([] (auto& value) {
       return !get<0>(value);
-      });
+    });
     if(std::ranges::empty(candidates)) {
       return std::distance(v.begin(), std::min_element(v.begin(), v.end(),
         [] (auto& value1, auto& value2) {
@@ -300,9 +300,9 @@ namespace {
     }
     return std::distance(v.begin(), std::find(v.begin(), v.end(),
       *std::ranges::min_element(candidates.begin(), candidates.end(),
-      [] (auto& value1, auto& value2) {
-        return get<1>(value1) < get<1>(value2);
-      })));
+        [] (auto& value1, auto& value2) {
+          return get<1>(value1) < get<1>(value2);
+        })));
   }
 }
 
