@@ -31,16 +31,16 @@ namespace {
       }
     }
 
-    bool take_control(PlaceholderLayoutItem* placeholder) {
-      if(m_controlling_placeholder || !m_items.contains(placeholder)) {
+    bool take_control(PlaceholderLayoutItem& placeholder) {
+      if(m_controlling_placeholder || !m_items.contains(&placeholder)) {
         return false;
       }
-      m_controlling_placeholder = placeholder;
+      m_controlling_placeholder = &placeholder;
       return true;
     }
 
-    bool release_control(PlaceholderLayoutItem* placeholder) {
-      if(m_controlling_placeholder != placeholder) {
+    bool release_control(PlaceholderLayoutItem& placeholder) {
+      if(m_controlling_placeholder != &placeholder) {
         return false;
       }
       m_controlling_placeholder = nullptr;
@@ -153,11 +153,11 @@ namespace {
 
       void take_control() {
         if(is_visible()) {
-          if(m_shared_widget->take_control(this)) {
+          if(m_shared_widget->take_control(*this)) {
             m_item.widget()->setParent(m_parent);
             m_item.widget()->show();
           }
-        } else if(m_shared_widget->release_control(this)) {
+        } else if(m_shared_widget->release_control(*this)) {
           m_item.widget()->setParent(nullptr);
         }
       }
