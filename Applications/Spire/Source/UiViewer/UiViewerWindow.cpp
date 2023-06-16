@@ -113,6 +113,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   connect(m_reset_button, &QPushButton::pressed, [this] { on_reset(); });
   m_rebuild_button = new QPushButton(QString::fromUtf8("Rebuild"));
   connect(m_rebuild_button, &QPushButton::pressed, [this] { on_rebuild(); });
+  add(make_adaptive_box_profile());
   add(make_box_profile());
   add(make_calendar_date_picker_profile());
   add(make_check_box_profile());
@@ -243,7 +244,7 @@ void UiViewerWindow::on_item_selected(const QListWidgetItem* current,
   update_table(profile);
   m_stage = new QSplitter(Qt::Vertical);
   m_center_stage = new QScrollArea();
-  if(profile.get_name() == "PopupBox") {
+  if(profile.get_name() == "PopupBox" || profile.get_name() == "AdaptiveBox") {
     m_center_stage->setWidget(profile.get_widget());
     m_center_stage->setMinimumSize(profile.get_widget()->minimumSize());
     m_center_stage->setWidgetResizable(true);
