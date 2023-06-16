@@ -20,12 +20,12 @@ namespace {
       : m_widget(&widget),
         m_controlling_placeholder(nullptr) {}
 
-    void register_placeholder(PlaceholderLayoutItem* placeholder) {
-      m_items.insert(placeholder);
+    void register_placeholder(PlaceholderLayoutItem& placeholder) {
+      m_items.insert(&placeholder);
     }
 
-    void release_placeholder(PlaceholderLayoutItem* placeholder) {
-      m_items.erase(placeholder);
+    void release_placeholder(PlaceholderLayoutItem& placeholder) {
+      m_items.erase(&placeholder);
       if(m_items.empty()) {
         delete m_widget;
       }
@@ -65,12 +65,12 @@ namespace {
             m_shared_widget(find_extension<SharedWidget>(widget)),
             m_is_visible(false),
             m_parent(nullptr) {
-        m_shared_widget->register_placeholder(this);
+        m_shared_widget->register_placeholder(*this);
         m_item.widget()->setParent(nullptr);
       }
 
       ~PlaceholderLayoutItem() {
-        m_shared_widget->release_placeholder(this);
+        m_shared_widget->release_placeholder(*this);
       }
 
       void set_parent(QWidget& parent) {
