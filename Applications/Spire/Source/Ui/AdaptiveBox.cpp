@@ -350,18 +350,16 @@ bool AdaptiveBox::eventFilter(QObject* watched, QEvent* event) {
   } else if(watched == parentWidget() &&
       event->type() == QEvent::LayoutRequest) {
     update_layout();
-  } else {
-    if(event->type() == QEvent::LayoutRequest) {
-      if(watched == m_stacked_layout->currentWidget()) {
-        auto index = m_stacked_layout->currentIndex();
-        for(auto i = 0; i < m_stacked_layout->count(); ++i) {
-          if(i != index) {
-            invalidate_layout(*m_stacked_layout->widget(i)->layout());
-          }
+  } else if(event->type() == QEvent::LayoutRequest) {
+    if(watched == m_stacked_layout->currentWidget()) {
+      auto index = m_stacked_layout->currentIndex();
+      for(auto i = 0; i < m_stacked_layout->count(); ++i) {
+        if(i != index) {
+          invalidate_layout(*m_stacked_layout->widget(i)->layout());
         }
       }
-      update_layout();
     }
+    update_layout();
   }
   return QWidget::eventFilter(watched, event);
 }
