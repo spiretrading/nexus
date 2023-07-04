@@ -5,6 +5,8 @@
 #include <doctest/doctest.h>
 #include "Spire/Spire/ListModel.hpp"
 
+using namespace boost;
+
 namespace Spire {
 
   /**
