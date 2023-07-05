@@ -1,5 +1,6 @@
 #ifndef SPIRE_DROP_DOWN_BOX_HPP
 #define SPIRE_DROP_DOWN_BOX_HPP
+#include <QTimer>
 #include <QWidget>
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/SingleSelectionModel.hpp"
@@ -138,20 +139,24 @@ namespace Styles {
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
+      void mousePressEvent(QMouseEvent* event) override;
 
     private:
       mutable SubmitSignal m_submit_signal;
+      std::shared_ptr<CurrentModel> m_current;
       ListView* m_list_view;
       TextBox* m_text_box;
       Button* m_button;
       DropDownList* m_drop_down_list;
+      QTimer m_timer;
       bool m_is_read_only;
       boost::optional<int> m_submission;
       bool m_is_modified;
+      bool m_is_ignore_button_release;
       boost::signals2::scoped_connection m_submit_connection;
       boost::signals2::scoped_connection m_current_connection;
 
-      void on_click();
+      int get_index_under_mouse(const QPoint& global_point) const;
       void on_current(const boost::optional<int>& current);
       void on_submit(const std::any& submission);
       void revert_current();
