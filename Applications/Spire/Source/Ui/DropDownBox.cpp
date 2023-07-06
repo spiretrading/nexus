@@ -1,7 +1,6 @@
 #include "Spire/Ui/DropDownBox.hpp"
 #include <boost/signals2/shared_connection_block.hpp>
 #include <QApplication>
-#include <QCoreApplication>
 #include <QKeyEvent>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
@@ -77,8 +76,7 @@ DropDownBox::DropDownBox(std::shared_ptr<AnyListModel> list,
       m_current(std::move(current)),
       m_timer(this),
       m_is_read_only(false),
-      m_is_modified(false),
-      m_is_ignore_button_release(false) {
+      m_is_modified(false) {
   m_list_view = new ListView(std::move(list),
     std::make_shared<LocalValueModel<optional<int>>>(m_current->get()),
     std::move(selection), std::move(view_builder));
@@ -202,30 +200,26 @@ bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
     } else if(event->type() == QEvent::MouseMove) {
       if(m_drop_down_list->isVisible()) {
         auto& mouse_event = *static_cast<QMouseEvent*>(event);
+        auto delta = mouse_event.globalPos() - m_mouse_press_position;
+        if(delta.manhattanLength() > 9 && m_timer.isActive()) {
+          m_timer.stop();
+        }
         if(auto index = get_index_under_mouse(mouse_event.globalPos());
             index >= 0) {
           auto blocker = shared_connection_block(m_current_connection);
           m_list_view->get_current()->set(index);
         }
       }
-    } else if(event->type() == QEvent::MouseButtonPress) {
-      auto& mouse_event = *static_cast<QMouseEvent*>(event);
-      if(mouse_event.button() == Qt::LeftButton) {
-        m_is_ignore_button_release = true;
-      }
     } else if(event->type() == QEvent::MouseButtonRelease) {
       if(m_drop_down_list->isVisible()) {
         auto& mouse_event = *static_cast<QMouseEvent*>(event);
         if(mouse_event.button() == Qt::LeftButton) {
           if(m_timer.isActive()) {
-            m_timer.stop();
             return true;
-          } else {
-            if(auto index = get_index_under_mouse(mouse_event.globalPos());
-                index >= 0) {
-              m_list_view->get_current()->set(index);
-              on_submit(index);
-            }
+          } else if(auto index = get_index_under_mouse(mouse_event.globalPos());
+              index >= 0) {
+            m_list_view->get_current()->set(index);
+            on_submit(index);
           }
         }
       }
@@ -247,18 +241,12 @@ bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
         m_drop_down_list->window()->setAttribute(Qt::WA_NoMouseReplay);
       }
     } else if(event->type() == QEvent::MouseButtonRelease) {
-      if(!m_is_ignore_button_release && m_drop_down_list->isVisible()) {
+      if(m_drop_down_list->isVisible()) {
         auto& mouse_event = *static_cast<QMouseEvent*>(event);
-        if(mouse_event.button() == Qt::LeftButton) {
-          if(m_timer.isActive()) {
-            m_timer.stop();
-            return true;
-          } else if(rect().contains(mapFromGlobal(mouse_event.globalPos()))) {
-            m_drop_down_list->hide();
-            submit();
-          } else {
-            m_drop_down_list->hide();
-          }
+        if(mouse_event.button() == Qt::LeftButton && !m_timer.isActive() &&
+            rect().contains(mapFromGlobal(mouse_event.globalPos()))) {
+          m_drop_down_list->hide();
+          submit();
         }
       }
     }
@@ -289,8 +277,8 @@ void DropDownBox::mousePressEvent(QMouseEvent* event) {
     if(m_drop_down_list->isVisible()) {
       m_drop_down_list->hide();
     } else {
-      m_is_ignore_button_release = false;
-      m_timer.start(200);
+      m_mouse_press_position = event->globalPos();
+      m_timer.start(QApplication::doubleClickInterval());
       m_drop_down_list->show();
       m_drop_down_list->setFocus();
     }

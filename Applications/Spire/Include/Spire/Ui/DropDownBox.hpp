@@ -152,7 +152,7 @@ namespace Styles {
       bool m_is_read_only;
       boost::optional<int> m_submission;
       bool m_is_modified;
-      bool m_is_ignore_button_release;
+      QPoint m_mouse_press_position;
       boost::signals2::scoped_connection m_submit_connection;
       boost::signals2::scoped_connection m_current_connection;
 
