@@ -151,7 +151,9 @@ namespace Styles {
       QTimer m_timer;
       bool m_is_read_only;
       boost::optional<int> m_submission;
+      boost::optional<PressObserver> m_button_press_observer;
       bool m_is_modified;
+      bool m_is_mouse_press_on_list;
       QPoint m_mouse_press_position;
       boost::signals2::scoped_connection m_submit_connection;
       boost::signals2::scoped_connection m_current_connection;
@@ -161,6 +163,7 @@ namespace Styles {
       void on_submit(const std::any& submission);
       void revert_current();
       void submit();
+      void on_button_press_end(PressObserver::Reason reason);
   };
 
   template<std::derived_from<AnyListModel> T>
