@@ -144,7 +144,6 @@ namespace Styles {
 
     private:
       mutable SubmitSignal m_submit_signal;
-      std::shared_ptr<CurrentModel> m_current;
       ListView* m_list_view;
       TextBox* m_text_box;
       Button* m_button;
