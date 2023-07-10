@@ -1,6 +1,7 @@
 #include "Spire/Ui/DropDownBox.hpp"
 #include <boost/signals2/shared_connection_block.hpp>
 #include <QApplication>
+#include <QEnterEvent>
 #include <QKeyEvent>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
@@ -201,12 +202,16 @@ bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
         }
       }
     } else if(event->type() == QEvent::MouseMove) {
-      if(m_drop_down_list->isVisible()) {
+      if(m_is_mouse_press_on_list) {
         auto& mouse_event = *static_cast<QMouseEvent*>(event);
         if(auto index = get_index_under_mouse(mouse_event.globalPos());
             index >= 0) {
-          auto blocker = shared_connection_block(m_current_connection);
-          m_list_view->get_current()->set(index);
+          auto item = m_list_view->get_list_item(index);
+          if(m_hovered_item != item) {
+            hover_leave();
+            m_hovered_item = item;
+            hover_enter(mouse_event);
+          }
         }
       }
     } else if(event->type() == QEvent::MouseButtonPress) {
@@ -220,11 +225,11 @@ bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
         if(mouse_event.button() == Qt::LeftButton) {
           auto delta = mouse_event.globalPos() - m_mouse_press_position;
           if(delta.manhattanLength() > 9 || m_timer.isActive()) {
-            if(m_list_view->rect().contains(
-                m_list_view->mapFromGlobal(mouse_event.globalPos()))) {
-              auto& current = m_list_view->get_current()->get();
-              on_current(current);
-              on_submit(current);
+            if(auto index = get_index_under_mouse(mouse_event.globalPos());
+                index >= 0) {
+              m_list_view->get_current()->set(index);
+              on_submit(index);
+              return true;
             }
           }
         }
@@ -240,7 +245,14 @@ bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
       m_list_view->get_current()->set(m_submission);
       match(*this, PopUp());
     } else if(event->type() == QEvent::Hide) {
+      hover_leave();
       unmatch(*this, PopUp());
+    } else if(event->type() == QEvent::MouseMove) {
+      auto& mouse_event = *static_cast<QMouseEvent*>(event);
+      if(!m_list_view->rect().contains(
+          m_list_view->mapFromGlobal(mouse_event.globalPos()))) {
+        hover_leave();
+      }
     } else if(event->type() == QEvent::MouseButtonPress) {
       auto& mouse_event = *static_cast<QMouseEvent*>(event);
       if(rect().contains(mapFromGlobal(mouse_event.globalPos()))) {
@@ -305,24 +317,23 @@ int DropDownBox::get_index_under_mouse(const QPoint& global_point) const {
   return -1;
 }
 
-void DropDownBox::on_current(const optional<int>& current) {
-  auto text = [&] {
-    if(current) {
-      return displayText(m_list_view->get_list()->get(*current));
-    }
-    return QString();
-  }();
-  m_is_modified = true;
-  m_text_box->get_current()->set(text);
-  m_current->set(current);
-}
-
-void DropDownBox::on_submit(const std::any& submission) {
-  if(is_read_only()) {
+void DropDownBox::hover_enter(const QMouseEvent& event) {
+  if(!m_hovered_item) {
     return;
   }
-  m_drop_down_list->hide();
-  submit();
+  auto local_position = m_hovered_item->mapFromGlobal(event.globalPos());
+  auto enter_event =
+    QEnterEvent(local_position, event.windowPos(), event.screenPos());
+  QCoreApplication::sendEvent(m_hovered_item, &enter_event);
+}
+
+void DropDownBox::hover_leave() {
+  if(!m_hovered_item) {
+    return;
+  }
+  auto leave_event = QEvent(QEvent::Type::Leave);
+  QCoreApplication::sendEvent(m_hovered_item, &leave_event);
+  m_hovered_item = nullptr;
 }
 
 void DropDownBox::revert_current() {
@@ -351,4 +362,24 @@ void DropDownBox::on_button_press_end(PressObserver::Reason reason) {
       m_drop_down_list->setFocus();
     }
   }
+}
+
+void DropDownBox::on_current(const optional<int>& current) {
+  auto text = [&] {
+    if(current) {
+      return displayText(m_list_view->get_list()->get(*current));
+    }
+    return QString();
+  }();
+  m_is_modified = true;
+  m_text_box->get_current()->set(text);
+  m_current->set(current);
+}
+
+void DropDownBox::on_submit(const std::any& submission) {
+  if(is_read_only()) {
+    return;
+  }
+  m_drop_down_list->hide();
+  submit();
 }

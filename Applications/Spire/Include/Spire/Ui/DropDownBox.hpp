@@ -1,5 +1,6 @@
 #ifndef SPIRE_DROP_DOWN_BOX_HPP
 #define SPIRE_DROP_DOWN_BOX_HPP
+#include <QPointer>
 #include <QTimer>
 #include <QWidget>
 #include "Spire/Ui/ListView.hpp"
@@ -155,15 +156,18 @@ namespace Styles {
       bool m_is_modified;
       bool m_is_mouse_press_on_list;
       QPoint m_mouse_press_position;
+      QPointer<QWidget> m_hovered_item;
       boost::signals2::scoped_connection m_submit_connection;
       boost::signals2::scoped_connection m_current_connection;
 
       int get_index_under_mouse(const QPoint& global_point) const;
-      void on_current(const boost::optional<int>& current);
-      void on_submit(const std::any& submission);
+      void hover_enter(const QMouseEvent& event);
+      void hover_leave();
       void revert_current();
       void submit();
       void on_button_press_end(PressObserver::Reason reason);
+      void on_current(const boost::optional<int>& current);
+      void on_submit(const std::any& submission);
   };
 
   template<std::derived_from<AnyListModel> T>
