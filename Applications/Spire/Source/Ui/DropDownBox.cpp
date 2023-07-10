@@ -204,14 +204,19 @@ bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
         auto& mouse_event = *static_cast<QMouseEvent*>(event);
         if(m_drop_down_list->rect().contains(
             m_drop_down_list->mapFromGlobal(mouse_event.globalPos()))) {
-          if(auto index = get_index_under_mouse(mouse_event.globalPos());
-              index >= 0) {
-            auto item = m_list_view->get_list_item(index);
-            if(m_hovered_item != item) {
-              hover_leave();
-              m_hovered_item = item;
-              hover_enter(mouse_event);
+          if(m_list_view->rect().contains(
+              m_list_view->mapFromGlobal(mouse_event.globalPos()))) {
+            if(auto index = get_index_under_mouse(mouse_event.globalPos());
+                index >= 0) {
+              auto item = m_list_view->get_list_item(index);
+              if(m_hovered_item != item) {
+                hover_leave();
+                m_hovered_item = item;
+                hover_enter(mouse_event);
+              }
             }
+          } else {
+            hover_leave();
           }
         } else {
           hover_leave();
@@ -250,12 +255,6 @@ bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
     } else if(event->type() == QEvent::Hide) {
       hover_leave();
       unmatch(*this, PopUp());
-    } else if(event->type() == QEvent::MouseMove) {
-      auto& mouse_event = *static_cast<QMouseEvent*>(event);
-      if(!m_list_view->rect().contains(
-          m_list_view->mapFromGlobal(mouse_event.globalPos()))) {
-        hover_leave();
-      }
     } else if(event->type() == QEvent::MouseButtonPress) {
       auto& mouse_event = *static_cast<QMouseEvent*>(event);
       if(rect().contains(mapFromGlobal(mouse_event.globalPos()))) {
@@ -267,9 +266,6 @@ bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
         if(mouse_event.button() == Qt::LeftButton) {
           if(!m_timer.isActive()) {
             m_drop_down_list->hide();
-            if(rect().contains(mapFromGlobal(mouse_event.globalPos()))) {
-              submit();
-            }
           }
         }
       }
