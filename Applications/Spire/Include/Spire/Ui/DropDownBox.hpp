@@ -160,8 +160,8 @@ namespace Styles {
       boost::signals2::scoped_connection m_current_connection;
 
       int get_index_under_mouse(const QPoint& global_point) const;
-      void hover_enter(const QMouseEvent& event);
-      void hover_leave();
+      void enter_hovered_item(const QMouseEvent& event);
+      void leave_hovered_item();
       void revert_current();
       void submit();
       void on_button_press_end(PressObserver::Reason reason);

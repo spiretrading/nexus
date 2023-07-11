@@ -210,16 +210,16 @@ bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
                 index >= 0) {
               auto item = m_list_view->get_list_item(index);
               if(m_hovered_item != item) {
-                hover_leave();
+                leave_hovered_item();
                 m_hovered_item = item;
-                hover_enter(mouse_event);
+                enter_hovered_item(mouse_event);
               }
             }
           } else {
-            hover_leave();
+            leave_hovered_item();
           }
         } else {
-          hover_leave();
+          leave_hovered_item();
         }
       }
     } else if(event->type() == QEvent::MouseButtonPress) {
@@ -253,7 +253,7 @@ bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
     } else if(event->type() == QEvent::Show) {
       match(*this, PopUp());
     } else if(event->type() == QEvent::Hide) {
-      hover_leave();
+      leave_hovered_item();
       unmatch(*this, PopUp());
     } else if(event->type() == QEvent::MouseButtonPress) {
       auto& mouse_event = *static_cast<QMouseEvent*>(event);
@@ -316,7 +316,7 @@ int DropDownBox::get_index_under_mouse(const QPoint& global_point) const {
   return -1;
 }
 
-void DropDownBox::hover_enter(const QMouseEvent& event) {
+void DropDownBox::enter_hovered_item(const QMouseEvent& event) {
   if(!m_hovered_item) {
     return;
   }
@@ -326,7 +326,7 @@ void DropDownBox::hover_enter(const QMouseEvent& event) {
   QCoreApplication::sendEvent(m_hovered_item, &enter_event);
 }
 
-void DropDownBox::hover_leave() {
+void DropDownBox::leave_hovered_item() {
   if(!m_hovered_item) {
     return;
   }
