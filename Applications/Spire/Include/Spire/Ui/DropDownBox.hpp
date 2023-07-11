@@ -1,5 +1,7 @@
 #ifndef SPIRE_DROP_DOWN_BOX_HPP
 #define SPIRE_DROP_DOWN_BOX_HPP
+#include <QPointer>
+#include <QTimer>
 #include <QWidget>
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/SingleSelectionModel.hpp"
@@ -138,6 +140,7 @@ namespace Styles {
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
+      void mousePressEvent(QMouseEvent* event) override;
 
     private:
       mutable SubmitSignal m_submit_signal;
@@ -145,17 +148,25 @@ namespace Styles {
       TextBox* m_text_box;
       Button* m_button;
       DropDownList* m_drop_down_list;
+      QTimer m_timer;
       bool m_is_read_only;
       boost::optional<int> m_submission;
+      boost::optional<PressObserver> m_button_press_observer;
       bool m_is_modified;
+      bool m_is_mouse_press_on_list;
+      QPoint m_mouse_press_position;
+      QPointer<QWidget> m_hovered_item;
       boost::signals2::scoped_connection m_submit_connection;
       boost::signals2::scoped_connection m_current_connection;
 
-      void on_click();
-      void on_current(const boost::optional<int>& current);
-      void on_submit(const std::any& submission);
+      int get_index_under_mouse(const QPoint& global_point) const;
+      void enter_hovered_item(const QMouseEvent& event);
+      void leave_hovered_item();
       void revert_current();
       void submit();
+      void on_button_press_end(PressObserver::Reason reason);
+      void on_current(const boost::optional<int>& current);
+      void on_submit(const std::any& submission);
   };
 
   template<std::derived_from<AnyListModel> T>

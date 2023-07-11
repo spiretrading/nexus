@@ -75,6 +75,9 @@ void Spire::populate_widget_properties(
 void Spire::apply_widget_properties(QWidget* widget,
     const std::vector<std::shared_ptr<UiProperty>>& properties) {
   auto& enabled = get<bool>("enabled", properties);
+  enabled.connect_changed_signal([=] (auto value) {
+    widget->setEnabled(value);
+  });
   apply_widget_size_properties(widget, "width", "height", properties);
 }
 
