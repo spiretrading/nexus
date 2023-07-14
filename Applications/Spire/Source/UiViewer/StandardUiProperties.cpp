@@ -203,6 +203,34 @@ std::shared_ptr<TypedUiProperty<Quantity>>
 }
 
 template<>
+std::shared_ptr<TypedUiProperty<Decimal>>
+    Spire::make_standard_property<Decimal>(QString name, Decimal value) {
+  return std::make_shared<StandardUiProperty<Decimal>>(std::move(name), value,
+    [] (QWidget* parent, StandardUiProperty<Decimal>& property) {
+      auto setter = new QDoubleSpinBox(parent);
+      setter->setMinimum(std::numeric_limits<double>::lowest());
+      setter->setMaximum(std::numeric_limits<double>::max());
+      auto parse_decimal = [] (auto decimal) -> std::optional<Decimal> {
+        try {
+          return Decimal(decimal.toStdString().c_str());
+        } catch(const std::exception&) {
+          return {};
+        }
+      };
+      property.connect_changed_signal([=] (auto value) {
+        setter->setValue(static_cast<double>(value));
+      });
+      QObject::connect(setter, &QDoubleSpinBox::textChanged,
+        [&] (const auto& value) {
+          if(auto decimal = parse_decimal(value)) {
+            property.set(*decimal);
+          }
+        });
+      return setter;
+    });
+}
+
+template<>
 std::shared_ptr<TypedUiProperty<QColor>>
     Spire::make_standard_property<QColor>(QString name) {
   return make_standard_property(std::move(name), QColorConstants::White);
