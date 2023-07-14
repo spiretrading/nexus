@@ -252,6 +252,7 @@ void UiViewerWindow::on_item_selected(const QListWidgetItem* current,
     m_rebuild_button->setDisabled(true);
   } else {
     m_center_stage->setWidget(new SizeAdjustedContainer(profile.get_widget()));
+    m_rebuild_button->setDisabled(false);
   }
   m_center_stage->setAlignment(Qt::AlignCenter);
   m_stage->addWidget(m_center_stage);
