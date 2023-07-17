@@ -23,7 +23,7 @@ namespace {
   }
 
   struct OptionalPercentModel : OptionalDecimalModel {
-    mutable typename UpdateSignal m_update_signal;
+    mutable UpdateSignal m_update_signal;
     std::shared_ptr<OptionalDecimalModel> m_model;
     optional<Decimal> m_value;
     scoped_connection m_connection;
