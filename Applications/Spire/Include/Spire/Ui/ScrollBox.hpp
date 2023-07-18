@@ -89,6 +89,7 @@ namespace Spire {
       void keyPressEvent(QKeyEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
       void wheelEvent(QWheelEvent* event) override;
+      void showEvent(QShowEvent* event) override;
 
     private:
       QWidget* m_body;
