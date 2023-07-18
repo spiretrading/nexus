@@ -64,7 +64,7 @@ namespace {
     }
 
     connection connect_update_signal(
-      const UpdateSignal::slot_type& slot) const override {
+        const UpdateSignal::slot_type& slot) const override {
       return m_update_signal.connect(slot);
     }
 
@@ -82,8 +82,8 @@ PercentBox::PercentBox(QWidget* parent)
 
 PercentBox::PercentBox(
     QHash<Qt::KeyboardModifier, Decimal> modifiers, QWidget* parent)
-  : PercentBox(std::make_shared<LocalOptionalDecimalModel>(),
-    std::move(modifiers), parent) {}
+    : PercentBox(std::make_shared<LocalOptionalDecimalModel>(),
+      std::move(modifiers), parent) {}
 
 PercentBox::PercentBox(std::shared_ptr<OptionalDecimalModel> model,
     QHash<Qt::KeyboardModifier, Decimal> modifiers, QWidget* parent)
