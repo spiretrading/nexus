@@ -160,6 +160,10 @@ QString Spire::displayText(int value) {
   return displayText(std::any(value));
 }
 
+QString Spire::displayText(const QString& value) {
+  return value;
+}
+
 QString Spire::displayText(const std::string& value) {
   return QString::fromStdString(value);
 }
