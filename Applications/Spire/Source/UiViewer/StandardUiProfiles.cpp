@@ -43,6 +43,7 @@
 #include "Spire/Ui/EditableBox.hpp"
 #include "Spire/Ui/FilterPanel.hpp"
 #include "Spire/Ui/FocusObserver.hpp"
+#include "Spire/Ui/FontFamilyBox.hpp"
 #include "Spire/Ui/HoverObserver.hpp"
 #include "Spire/Ui/InfoTip.hpp"
 #include "Spire/Ui/IntegerBox.hpp"
@@ -1976,6 +1977,32 @@ UiProfile Spire::make_focus_observer_profile() {
       observers.push_back(focus_observer);
     }
     return widget;
+  });
+  return profile;
+}
+
+UiProfile Spire::make_font_family_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto current_property = define_enum<QString>(
+    {{"Roboto", "Roboto"}, {"Source Sans Pro", "Source Sans Pro"},
+    {"Tahoma", "Tahoma"}, {"Times New Roman", "Times New Roman"}});
+  populate_enum_box_properties(properties, current_property);
+  auto profile = UiProfile("FontFamilyBox", properties, [] (auto& profile) {
+    auto box = make_font_family_box("Roboto");
+    box->setFixedWidth(scale_width(150));
+    apply_widget_properties(box, profile.get_properties());
+    auto& current = get<QString>("current", profile.get_properties());
+    current.connect_changed_signal([=] (auto value) {
+      box->get_current()->set(value);
+    });
+    auto& read_only = get<bool>("read_only", profile.get_properties());
+    read_only.connect_changed_signal(
+      std::bind_front(&FontFamilyBox::set_read_only, box));
+    box->get_current()->connect_update_signal(
+      profile.make_event_slot<QString>("Current"));
+    box->connect_submit_signal(profile.make_event_slot<QString>("Submit"));
+    return box;
   });
   return profile;
 }

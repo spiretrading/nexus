@@ -68,6 +68,9 @@ namespace Spire {
   /** Returns a UiProfile for the FocusObserver. */
   UiProfile make_focus_observer_profile();
 
+  /** Returns a UiProfile for the FontFamilyBox. */
+  UiProfile make_font_family_box_profile();
+
   /** Returns a UiProfile for the HoverObserver. */
   UiProfile make_hover_observer_profile();
 
