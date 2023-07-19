@@ -133,7 +133,7 @@ namespace Spire {
   /** Returns the text representation of an std::string. */
   QString displayText(const std::string& value);
 
-  /** Returns the text representation of an std::string. */
+  /** Returns the text representation of a QString. */
   QString displayText(const QString& value);
 
   /** Returns the text representation of a date. */

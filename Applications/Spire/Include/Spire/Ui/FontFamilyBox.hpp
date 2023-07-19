@@ -19,7 +19,7 @@ namespace Spire {
 
   /**
    * Returns a FontFamilyBox.
-   * @param families A set of all available font families.
+   * @param families A set of available font families.
    * @param current The current font family.
    * @param parent The parent widget.
    */
