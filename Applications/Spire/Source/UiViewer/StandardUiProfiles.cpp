@@ -1,5 +1,6 @@
 #include "Spire/UiViewer/StandardUiProfiles.hpp"
 #include <stack>
+#include <QFontDatabase>
 #include <QImageReader>
 #include <QLabel>
 #include <QPainter>
@@ -44,6 +45,7 @@
 #include "Spire/Ui/FilterPanel.hpp"
 #include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/FontFamilyBox.hpp"
+#include "Spire/Ui/FontStyleBox.hpp"
 #include "Spire/Ui/HoverObserver.hpp"
 #include "Spire/Ui/InfoTip.hpp"
 #include "Spire/Ui/IntegerBox.hpp"
@@ -2002,6 +2004,47 @@ UiProfile Spire::make_font_family_box_profile() {
     box->get_current()->connect_update_signal(
       profile.make_event_slot<QString>("Current"));
     box->connect_submit_signal(profile.make_event_slot<QString>("Submit"));
+    return box;
+  });
+  return profile;
+}
+
+UiProfile Spire::make_font_style_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto font_family_property = define_enum<QString>(
+    {{"Roboto", "Roboto"}, {"Source Sans Pro", "Source Sans Pro"},
+    {"Tahoma", "Tahoma"}, {"Times New Roman", "Times New Roman"},
+    {"System", "System"}, {"Cambria Math", "Cambria Math"}});
+  properties.push_back(
+    make_standard_enum_property("font_family", font_family_property));
+  auto font_style_property = define_enum<QString>(
+    {{"Thin", "Thin"}, {"Regular", "Regular"}, {"Bold", "Bold"}});
+  properties.push_back(
+    make_standard_enum_property("font_style", font_style_property));
+  properties.push_back(make_standard_property("read_only", false));
+  auto profile = UiProfile("FontStyleBox", properties, [] (auto& profile) {
+    auto family_model = std::make_shared<LocalValueModel<QString>>("Roboto");
+    auto box = make_font_style_box(family_model);
+    box->setFixedWidth(scale_width(150));
+    apply_widget_properties(box, profile.get_properties());
+    auto& font_family = get<QString>("font_family", profile.get_properties());
+    font_family.connect_changed_signal([=] (auto& value) {
+      family_model->set(value);
+    });
+    auto& font_style = get<QString>("font_style", profile.get_properties());
+    font_style.connect_changed_signal([=] (auto& value) {
+      auto styles = QFontDatabase().styles(family_model->get());
+      if(styles.contains(value)) {
+        box->get_current()->set(value);
+      }
+    });
+    auto& read_only = get<bool>("read_only", profile.get_properties());
+    read_only.connect_changed_signal(
+      std::bind_front(&FontStyleBox::set_read_only, box));
+    box->get_current()->connect_update_signal(
+      profile.make_event_slot<std::any>("Current"));
+    box->connect_submit_signal(profile.make_event_slot<std::any>("Submit"));
     return box;
   });
   return profile;
