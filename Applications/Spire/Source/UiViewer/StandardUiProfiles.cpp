@@ -2018,10 +2018,7 @@ UiProfile Spire::make_font_style_box_profile() {
     {"System", "System"}, {"Cambria Math", "Cambria Math"}});
   properties.push_back(
     make_standard_enum_property("font_family", font_family_property));
-  auto font_style_property = define_enum<QString>(
-    {{"Thin", "Thin"}, {"Regular", "Regular"}, {"Bold", "Bold"}});
-  properties.push_back(
-    make_standard_enum_property("font_style", font_style_property));
+  properties.push_back(make_standard_property<QString>("current", "Regular"));
   properties.push_back(make_standard_property("read_only", false));
   auto profile = UiProfile("FontStyleBox", properties, [] (auto& profile) {
     auto family_model = std::make_shared<LocalValueModel<QString>>("Roboto");
@@ -2032,11 +2029,15 @@ UiProfile Spire::make_font_style_box_profile() {
     font_family.connect_changed_signal([=] (auto& value) {
       family_model->set(value);
     });
-    auto& font_style = get<QString>("font_style", profile.get_properties());
-    font_style.connect_changed_signal([=] (auto& value) {
+    auto& current = get<QString>("current", profile.get_properties());
+    current.connect_changed_signal([=] (auto& value) {
       auto styles = QFontDatabase().styles(family_model->get());
-      if(styles.contains(value)) {
-        box->get_current()->set(value);
+      if(styles.contains(value, Qt::CaseInsensitive)) {
+        auto style = value.toLower();
+        style[0] = style[0].toUpper();
+        if(box->get_current()->get() != style) {
+          box->get_current()->set(style);
+        }
       }
     });
     auto& read_only = get<bool>("read_only", profile.get_properties());
@@ -2044,6 +2045,9 @@ UiProfile Spire::make_font_style_box_profile() {
       std::bind_front(&FontStyleBox::set_read_only, box));
     box->get_current()->connect_update_signal(
       profile.make_event_slot<std::any>("Current"));
+    box->get_current()->connect_update_signal([&current] (const auto& value) {
+      current.set(value);
+    });
     box->connect_submit_signal(profile.make_event_slot<std::any>("Submit"));
     return box;
   });

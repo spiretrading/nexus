@@ -3,8 +3,8 @@
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
+#include "Spire/Ui/ListItem.hpp"
 
-using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::Styles;
 
@@ -55,16 +55,22 @@ FontStyleBox* Spire::make_font_style_box(
   settings.m_current = std::move(current);
   settings.m_view_builder = [=] (auto& font_style) {
     auto label = make_label(font_style);
+    auto family = font_family->get();
+    auto font = QFont(family);
+    font.setWeight(font_database.weight(family, font_style));
+    font.setPixelSize(scale_width(12));
     update_style(*label, [&] (auto& style) {
-      auto family = font_family->get();
-      auto font = QFont(family);
-      font.setWeight(font_database.weight(family, font_style));
-      font.setPixelSize(scale_width(12));
       style.get(Any()).set(Font(font));
     });
+    label->setFixedHeight(scale_height(26));
     return label;
   };
   auto box = new FontStyleBox(std::move(settings), parent);
+  update_style(*box, [&] (auto& style) {
+    style.get(Any() > is_a<ListItem>()).
+      set(border_size(0)).
+      set(vertical_padding(0));
+  });
   font_family->connect_update_signal([=] (auto& family) {
     box->get_current()->set("");
     clear(*font_styles);
