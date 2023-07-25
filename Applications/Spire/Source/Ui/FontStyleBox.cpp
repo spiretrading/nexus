@@ -12,12 +12,9 @@ namespace {
   const auto INITIAL_STYLE = QString("Regular");
 
   auto get_font_styles(const QString& font_family) {
-    auto sorted_styles = std::vector<QString>();
     auto font_database = QFontDatabase();
-    for(auto& style : font_database.styles(font_family)) {
-      sorted_styles.push_back(style);
-    }
-    std::sort(sorted_styles.begin(), sorted_styles.end(),
+    auto styles = font_database.styles(font_family);
+    std::sort(styles.begin(), styles.end(),
       [&] (auto& style1, auto& style2) {
         auto weight1 = font_database.weight(font_family, style1);
         auto weight2 = font_database.weight(font_family, style2);
@@ -26,7 +23,7 @@ namespace {
         }
         return weight1 < weight2;
       });
-    return sorted_styles;
+    return std::vector<QString>(styles.begin(), styles.end());
   }
 
   auto get_initial_style(const QString& font_family) {
@@ -56,7 +53,7 @@ FontStyleBox* Spire::make_font_style_box(
   settings.m_view_builder = [=] (auto& font_style) {
     auto font_database = QFontDatabase();
     auto label = make_label(font_style);
-    auto family = font_family->get();
+    auto& family = font_family->get();
     auto font = QFont(family);
     font.setWeight(font_database.weight(family, font_style));
     font.setItalic(font_database.italic(family, font_style));
