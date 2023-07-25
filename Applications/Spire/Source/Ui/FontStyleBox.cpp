@@ -9,11 +9,12 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  const auto INITIAL_STYLE = QString("Regular");
+
   auto get_font_styles(const QString& font_family) {
-    auto font_database = QFontDatabase();
-    auto styles = font_database.styles(font_family);
     auto sorted_styles = std::vector<QString>();
-    for(auto& style : styles) {
+    auto font_database = QFontDatabase();
+    for(auto& style : font_database.styles(font_family)) {
       sorted_styles.push_back(style);
     }
     std::sort(sorted_styles.begin(), sorted_styles.end(),
@@ -28,17 +29,17 @@ namespace {
     return sorted_styles;
   }
 
-  QString get_initial_style(const QString& font_family) {
+  auto get_initial_style(const QString& font_family) {
     auto styles = QFontDatabase().styles(font_family);
-    if(styles.contains("Regular")) {
-      return "Regular";
+    if(styles.contains(INITIAL_STYLE)) {
+      return INITIAL_STYLE;
     }
     return styles[0];
   }
 }
 
 FontStyleBox* Spire::make_font_style_box(
-    std::shared_ptr<ValueModel<QString>> font_family,  QWidget* parent) {
+    std::shared_ptr<ValueModel<QString>> font_family, QWidget* parent) {
   return make_font_style_box(std::move(font_family),
     std::make_shared<LocalValueModel<QString>>(
       get_initial_style(font_family->get())), parent);
@@ -47,17 +48,18 @@ FontStyleBox* Spire::make_font_style_box(
 FontStyleBox* Spire::make_font_style_box(
     std::shared_ptr<ValueModel<QString>> font_family,
     std::shared_ptr<ValueModel<QString>> current, QWidget* parent) {
-  auto font_database = QFontDatabase();
   auto settings = FontStyleBox::Settings();
   auto font_styles = std::make_shared<ArrayListModel<QString>>(
     get_font_styles(font_family->get()));
   settings.m_cases = font_styles;
   settings.m_current = std::move(current);
   settings.m_view_builder = [=] (auto& font_style) {
+    auto font_database = QFontDatabase();
     auto label = make_label(font_style);
     auto family = font_family->get();
     auto font = QFont(family);
     font.setWeight(font_database.weight(family, font_style));
+    font.setItalic(font_database.italic(family, font_style));
     font.setPixelSize(scale_width(12));
     update_style(*label, [&] (auto& style) {
       style.get(Any()).set(Font(font));
@@ -66,11 +68,14 @@ FontStyleBox* Spire::make_font_style_box(
     return label;
   };
   auto box = new FontStyleBox(std::move(settings), parent);
-  update_style(*box, [&] (auto& style) {
-    style.get(Any() > is_a<ListItem>()).
-      set(border_size(0)).
-      set(vertical_padding(0));
-  });
+  auto update_box_style = [=] {
+    update_style(*box, [] (auto& style) {
+      style.get(Any() > is_a<ListItem>()).
+        set(border_size(0)).
+        set(vertical_padding(0));
+    });
+  };
+  update_box_style();
   font_family->connect_update_signal([=] (auto& family) {
     box->get_current()->set("");
     clear(*font_styles);
@@ -78,6 +83,7 @@ FontStyleBox* Spire::make_font_style_box(
       font_styles->push(style);
     }
     box->get_current()->set(get_initial_style(family));
+    update_box_style();
   });
   return box;
 }
