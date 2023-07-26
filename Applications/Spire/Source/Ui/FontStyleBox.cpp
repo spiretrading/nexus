@@ -11,14 +11,61 @@ using namespace Spire::Styles;
 namespace {
   const auto INITIAL_STYLE = QString("Regular");
 
+  auto get_font_weight(const QString& style) {
+    auto s = style.toLower();
+    if(s == "normal" || s == "regular") {
+      return QFont::Normal;
+    } else if(s == "bold") {
+      return QFont::Bold;
+    } else if(s == "medium") {
+      return QFont::Medium;
+    } else if(s == "black") {
+      return QFont::Black;
+    } else if(s == "light") {
+      return QFont::Light;
+    } else if(s == "thin") {
+      return QFont::Thin;
+    } else if(s == "semibold" || s == "semi bold" ||
+        s == "demibold" || s == "demi bold") {
+      return QFont::DemiBold;
+    }
+    auto s2 = s.midRef(2);
+    if(s.startsWith("ex") || s.startsWith("ul")) {
+      if(s2 == "tralight" || s2 == "tra light") {
+        return QFont::ExtraLight;
+      } else if(s2 == "trabold" || s2 == "tra bold") {
+        return QFont::ExtraBold;
+      }
+    }
+    if(s.contains("bold")) {
+      return QFont::Bold;
+    } else if(s.contains("medium")) {
+      return QFont::Medium;
+    } else if(s.contains("black")) {
+      return QFont::Black;
+    } else if(s.contains("light")) {
+      return QFont::Light;
+    } else if(s.contains("thin")) {
+      return QFont::Thin;
+    }
+    return QFont::Normal;
+  }
+
   auto get_font_styles(const QString& font_family) {
     auto font_database = QFontDatabase();
     auto styles = font_database.styles(font_family);
     std::sort(styles.begin(), styles.end(),
       [&] (auto& style1, auto& style2) {
-        auto weight1 = font_database.weight(font_family, style1);
-        auto weight2 = font_database.weight(font_family, style2);
+        auto weight1 = get_font_weight(style1);
+        auto weight2 = get_font_weight(style2);
         if(weight1 == weight2) {
+          auto is_italic1 = style1.contains("italic", Qt::CaseInsensitive);
+          auto is_italic2 = style2.contains("italic", Qt::CaseInsensitive);
+          if(!is_italic1 && is_italic2) {
+            return true;
+          } else if(is_italic1 && !is_italic2) {
+            return false;
+          }
           return style1 < style2;
         }
         return weight1 < weight2;
