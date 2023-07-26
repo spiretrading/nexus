@@ -2015,7 +2015,8 @@ UiProfile Spire::make_font_style_box_profile() {
   auto font_family_property = define_enum<QString>(
     {{"Roboto", "Roboto"}, {"Source Sans Pro", "Source Sans Pro"},
     {"Tahoma", "Tahoma"}, {"Times New Roman", "Times New Roman"},
-    {"System", "System"}, {"Cambria Math", "Cambria Math"}});
+    {"System", "System"}, {"Cambria Math", "Cambria Math"},
+    {"Webdings", "Webdings"}});
   properties.push_back(
     make_standard_enum_property("font_family", font_family_property));
   properties.push_back(make_standard_property<QString>("current", "Regular"));

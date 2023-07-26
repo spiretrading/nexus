@@ -53,7 +53,13 @@ FontStyleBox* Spire::make_font_style_box(
   settings.m_view_builder = [=] (auto& font_style) {
     auto font_database = QFontDatabase();
     auto label = make_label(font_style);
-    auto& family = font_family->get();
+    auto family = [&] {
+      if(QFontDatabase().writingSystems(font_family->get()).contains(
+          QFontDatabase::Latin)) {
+        return font_family->get();
+      }
+      return QString("Roboto");
+    }();
     auto font = QFont(family);
     font.setWeight(font_database.weight(family, font_style));
     font.setItalic(font_database.italic(family, font_style));
