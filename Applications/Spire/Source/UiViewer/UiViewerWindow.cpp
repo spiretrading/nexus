@@ -134,6 +134,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_editable_box_profile());
   add(make_filter_panel_profile());
   add(make_focus_observer_profile());
+  add(make_font_box_profile());
   add(make_font_family_box_profile());
   add(make_font_style_box_profile());
   add(make_hover_observer_profile());
@@ -237,7 +238,7 @@ void UiViewerWindow::on_event(
 }
 
 void UiViewerWindow::on_item_selected(const QListWidgetItem* current,
-    const QListWidgetItem* previous) {
+  const QListWidgetItem* previous) {
   if(previous) {
     auto& profile = m_profiles.at(previous->text());
     profile.reset();
@@ -246,7 +247,8 @@ void UiViewerWindow::on_item_selected(const QListWidgetItem* current,
   update_table(profile);
   m_stage = new QSplitter(Qt::Vertical);
   m_center_stage = new QScrollArea();
-  if(profile.get_name() == "PopupBox" || profile.get_name() == "AdaptiveBox") {
+  if(profile.get_name() == "PopupBox" || profile.get_name() == "AdaptiveBox"/* ||
+      profile.get_name() == "FontBox"*/) {
     m_center_stage->setWidget(profile.get_widget());
     m_center_stage->setMinimumSize(profile.get_widget()->minimumSize());
     m_center_stage->setWidgetResizable(true);

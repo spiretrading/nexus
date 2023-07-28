@@ -154,8 +154,12 @@ namespace {
       void take_control() {
         if(is_visible()) {
           if(m_shared_widget->take_control(*this)) {
+            auto next = m_parent->nextInFocusChain();
             m_item.widget()->setParent(m_parent);
             m_item.widget()->show();
+            auto proxy = find_focus_proxy(*m_item.widget());
+            QWidget::setTabOrder(m_parent, proxy);
+            QWidget::setTabOrder(proxy, next);
           }
         } else if(m_shared_widget->release_control(*this)) {
           m_item.widget()->setParent(nullptr);
@@ -317,6 +321,7 @@ AdaptiveBox::AdaptiveBox(QWidget* parent)
 
 void AdaptiveBox::add(QLayout& layout) {
   auto widget = new QWidget();
+  widget->setFocusPolicy(Qt::ClickFocus);
   replace_widget_with_placeholder(layout, *widget);
   widget->setLayout(&layout);
   widget->installEventFilter(this);

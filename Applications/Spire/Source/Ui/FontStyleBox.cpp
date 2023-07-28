@@ -11,7 +11,7 @@ using namespace Spire::Styles;
 namespace {
   const auto INITIAL_STYLE = QString("Regular");
 
-  auto get_font_weight(const QString& style) {
+  int get_font_weight(const QString& style) {
     auto s = style.toLower();
     if(s == "normal" || s == "regular") {
       return QFont::Normal;
@@ -25,15 +25,18 @@ namespace {
       return QFont::Light;
     } else if(s == "thin") {
       return QFont::Thin;
-    } else if(s == "semibold" || s == "semi bold" ||
-        s == "demibold" || s == "demi bold") {
-      return QFont::DemiBold;
     }
     auto s2 = s.midRef(2);
-    if(s.startsWith("ex") || s.startsWith("ul")) {
-      if(s2 == "tralight" || s2 == "tra light") {
+    if(s.startsWith("se") || s.startsWith("de")) {
+      if(s2.contains("milight") || s2.contains("mi light")) {
+        return 35;
+      } else if(s2.contains("mibold") || s2.contains("mi bold")) {
+        return QFont::DemiBold;
+      }
+    } else if(s.startsWith("ex") || s.startsWith("ul")) {
+      if(s2.contains("tralight") || s2.contains("tra light")) {
         return QFont::ExtraLight;
-      } else if(s2 == "trabold" || s2 == "tra bold") {
+      } else if(s2.contains("trabold") || s2.contains("tra bold")) {
         return QFont::ExtraBold;
       }
     }
@@ -54,23 +57,32 @@ namespace {
   auto get_font_styles(const QString& font_family) {
     auto font_database = QFontDatabase();
     auto styles = font_database.styles(font_family);
-    std::sort(styles.begin(), styles.end(),
+    auto weight_styles = std::vector<std::tuple<int, QString>>();
+    for(auto& style : styles) {
+      weight_styles.push_back({get_font_weight(style), style});
+    }
+    std::sort(weight_styles.begin(), weight_styles.end(),
       [&] (auto& style1, auto& style2) {
-        auto weight1 = get_font_weight(style1);
-        auto weight2 = get_font_weight(style2);
+        auto weight1 = get<0>(style1);
+        auto weight2 = get<0>(style2);
         if(weight1 == weight2) {
-          auto is_italic1 = style1.contains("italic", Qt::CaseInsensitive);
-          auto is_italic2 = style2.contains("italic", Qt::CaseInsensitive);
+          auto is_italic1 = get<1>(style1).contains("italic", Qt::CaseInsensitive);
+          auto is_italic2 = get<1>(style2).contains("italic", Qt::CaseInsensitive);
           if(!is_italic1 && is_italic2) {
             return true;
           } else if(is_italic1 && !is_italic2) {
             return false;
           }
-          return style1 < style2;
+          return get<1>(style1) < get<1>(style2);
         }
         return weight1 < weight2;
       });
-    return std::vector<QString>(styles.begin(), styles.end());
+    auto result = std::vector<QString>();
+    for(auto& style : weight_styles) {
+      result.push_back(get<1>(style));
+    }
+    return result;
+    //return std::vector<QString>(styles.begin(), styles.end());
   }
 
   auto get_initial_style(const QString& font_family) {
@@ -107,10 +119,9 @@ FontStyleBox* Spire::make_font_style_box(
       }
       return QString("Roboto");
     }();
-    auto font = QFont(family);
-    font.setWeight(font_database.weight(family, font_style));
-    font.setItalic(font_database.italic(family, font_style));
+    auto font = font_database.font(family, font_style, -1);
     font.setPixelSize(scale_width(12));
+    auto italic = font.italic();
     update_style(*label, [&] (auto& style) {
       style.get(Any()).set(Font(font));
     });
