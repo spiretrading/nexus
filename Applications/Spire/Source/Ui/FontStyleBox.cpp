@@ -10,6 +10,7 @@ using namespace Spire::Styles;
 
 namespace {
   const auto INITIAL_STYLE = QString("Regular");
+  const auto DEMI_LIGHT = 35;
 
   int get_font_weight(const QString& style) {
     auto s = style.toLower();
@@ -29,7 +30,7 @@ namespace {
     auto s2 = s.midRef(2);
     if(s.startsWith("se") || s.startsWith("de")) {
       if(s2.contains("milight") || s2.contains("mi light")) {
-        return 35;
+        return DEMI_LIGHT;
       } else if(s2.contains("mibold") || s2.contains("mi bold")) {
         return QFont::DemiBold;
       }
@@ -66,8 +67,10 @@ namespace {
         auto weight1 = get<0>(style1);
         auto weight2 = get<0>(style2);
         if(weight1 == weight2) {
-          auto is_italic1 = get<1>(style1).contains("italic", Qt::CaseInsensitive);
-          auto is_italic2 = get<1>(style2).contains("italic", Qt::CaseInsensitive);
+          auto is_italic1 =
+            get<1>(style1).contains("italic", Qt::CaseInsensitive);
+          auto is_italic2 =
+            get<1>(style2).contains("italic", Qt::CaseInsensitive);
           if(!is_italic1 && is_italic2) {
             return true;
           } else if(is_italic1 && !is_italic2) {
@@ -82,11 +85,13 @@ namespace {
       result.push_back(get<1>(style));
     }
     return result;
-    //return std::vector<QString>(styles.begin(), styles.end());
   }
 
   auto get_initial_style(const QString& font_family) {
     auto styles = QFontDatabase().styles(font_family);
+    if(styles.isEmpty()) {
+      return QString();
+    }
     if(styles.contains(INITIAL_STYLE)) {
       return INITIAL_STYLE;
     }
@@ -111,9 +116,8 @@ FontStyleBox* Spire::make_font_style_box(
   settings.m_current = std::move(current);
   settings.m_view_builder = [=] (auto& font_style) {
     auto font_database = QFontDatabase();
-    auto label = make_label(font_style);
     auto family = [&] {
-      if(QFontDatabase().writingSystems(font_family->get()).contains(
+      if(font_database.writingSystems(font_family->get()).contains(
           QFontDatabase::Latin)) {
         return font_family->get();
       }
@@ -121,7 +125,7 @@ FontStyleBox* Spire::make_font_style_box(
     }();
     auto font = font_database.font(family, font_style, -1);
     font.setPixelSize(scale_width(12));
-    auto italic = font.italic();
+    auto label = make_label(font_style);
     update_style(*label, [&] (auto& style) {
       style.get(Any()).set(Font(font));
     });

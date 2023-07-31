@@ -218,6 +218,10 @@ namespace Spire {
     make_standard_property<Nexus::Quantity>(QString name,
       Nexus::Quantity value);
 
+  template<>
+  std::shared_ptr<TypedUiProperty<Decimal>>
+    make_standard_property<Decimal>(QString name, Decimal value);
+
   /**
    * Returns a standard TypedUiProperty<QColor> with an initial value of white.
    * @param name The name of the property.
