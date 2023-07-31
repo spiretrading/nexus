@@ -27,8 +27,6 @@ namespace {
     explicit CustomFontFamilyBox(FontFamilyBox& family_box,
         QWidget* parent = nullptr)
         : QWidget(parent) {
-      //setFocusPolicy(Qt::StrongFocus);
-      //setFocusPolicy(Qt::TabFocus);
       setFocusProxy(&family_box);
       enclose(*this, family_box);
     }
@@ -43,8 +41,6 @@ namespace {
     explicit CustomFontStyleBox(FontStyleBox& style_box,
         QWidget* parent = nullptr)
         : QWidget(parent) {
-      //setFocusPolicy(Qt::StrongFocus);
-      //setFocusPolicy(Qt::TabFocus);
       setFocusProxy(&style_box);
       enclose(*this, style_box);
     }
@@ -66,11 +62,16 @@ FontBox::FontBox(std::shared_ptr<ValueModel<QFont>> current, QWidget* parent)
   adaptive_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
   m_font_family_box = make_font_family_box(m_current->get().family());
   m_font_style_box = make_font_style_box(m_font_family_box->get_current());
-  auto size_model = std::make_shared<LocalScalarValueModel<optional<Decimal>>>();
-  size_model->set_minimum(Decimal(1));
-  size_model->set_increment(pow(Decimal(10), -2));
-  size_model->set(Decimal(m_current->get().pixelSize()));
-  m_font_size_box = new DecimalBox(std::move(size_model));
+  auto size_model = std::make_shared<LocalScalarValueModel<optional<int>>>();
+  size_model->set_minimum(1);
+  auto font_size = [&] {
+    if(m_current->get().pixelSize() < 1) {
+      return 1;
+    }
+    return m_current->get().pixelSize();
+  }();
+  size_model->set(font_size);
+  m_font_size_box = new IntegerBox(std::move(size_model));
   m_font_size_box->setFixedWidth(6 * get_character_width() + scale_width(22));
   auto custom_family_box = new CustomFontFamilyBox(*m_font_family_box);
   custom_family_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -99,24 +100,6 @@ FontBox::FontBox(std::shared_ptr<ValueModel<QFont>> current, QWidget* parent)
     std::bind_front(&FontBox::on_style_current, this));
   m_size_connection = m_font_size_box->get_current()->connect_update_signal(
     std::bind_front(&FontBox::on_size_current, this));
-  //auto next = nextInFocusChain();
-  //auto next = [&] () -> QWidget* {
-  //  auto widget = nextInFocusChain();
-  //  while(widget != this) {
-  //    if(!isAncestorOf(widget)) {
-  //      return widget;
-  //    }
-  //    widget = widget->nextInFocusChain();
-  //  }
-  //  return this;
-  //}();
-  //auto previous = previousInFocusChain();
-  //QWidget::setTabOrder(previous, find_focus_proxy(*m_font_family_box));
-  //QWidget::setTabOrder(find_focus_proxy(*m_font_family_box), find_focus_proxy(*m_font_style_box));
-  //QWidget::setTabOrder(find_focus_proxy(*m_font_style_box), find_focus_proxy(*m_font_size_box));
-  //QWidget::setTabOrder(find_focus_proxy(*m_font_size_box), this);
-
-  //auto children = std::queue<QWidget*>();
 }
 
 const std::shared_ptr<ValueModel<QFont>>& FontBox::get_current() const {
@@ -133,7 +116,7 @@ void FontBox::on_current(const QFont& font) {
     auto style_blocker = shared_connection_block(m_style_connection);
     m_font_style_box->get_current()->set(style);
   }
-  auto size = Decimal(unscale_width(font.pixelSize()));
+  auto size = unscale_width(font.pixelSize());
   if(size != m_font_size_box->get_current()->get()) {
     auto size_blocker = shared_connection_block(m_size_connection);
     m_font_size_box->get_current()->set(size);
@@ -155,7 +138,7 @@ void FontBox::on_style_current(const QString& style) {
   m_current->set(font);
 }
 
-void FontBox::on_size_current(const optional<Decimal>& value) {
+void FontBox::on_size_current(const optional<int>& value) {
   if(!value) {
     return;
   }
