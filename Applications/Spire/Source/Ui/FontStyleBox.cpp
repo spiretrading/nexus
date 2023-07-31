@@ -89,6 +89,9 @@ namespace {
 
   auto get_initial_style(const QString& font_family) {
     auto styles = QFontDatabase().styles(font_family);
+    if(styles.isEmpty()) {
+      return QString();
+    }
     if(styles.contains(INITIAL_STYLE)) {
       return INITIAL_STYLE;
     }
