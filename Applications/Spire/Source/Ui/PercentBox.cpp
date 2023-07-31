@@ -83,7 +83,7 @@ PercentBox::PercentBox(QWidget* parent)
 PercentBox::PercentBox(
     QHash<Qt::KeyboardModifier, Decimal> modifiers, QWidget* parent)
     : PercentBox(std::make_shared<LocalOptionalDecimalModel>(),
-      std::move(modifiers), parent) {}
+        std::move(modifiers), parent) {}
 
 PercentBox::PercentBox(std::shared_ptr<OptionalDecimalModel> model,
     QHash<Qt::KeyboardModifier, Decimal> modifiers, QWidget* parent)
