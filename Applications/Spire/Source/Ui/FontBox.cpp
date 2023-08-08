@@ -2,7 +2,6 @@
 #include <QFontDatabase>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalScalarValueModel.hpp"
-#include "Spire/Styles/Stylist.hpp"
 #include "Spire/Ui/AdaptiveBox.hpp"
 #include "Spire/Ui/Layouts.hpp"
 
@@ -38,7 +37,6 @@ namespace {
     explicit CustomFontFamilyBox(FontFamilyBox& family_box,
         QWidget* parent = nullptr)
         : QWidget(parent) {
-      setFocusProxy(&family_box);
       enclose(*this, family_box);
     }
 
@@ -52,7 +50,6 @@ namespace {
     explicit CustomFontStyleBox(FontStyleBox& style_box,
         QWidget* parent = nullptr)
         : QWidget(parent) {
-      setFocusProxy(&style_box);
       enclose(*this, style_box);
     }
 
@@ -69,8 +66,6 @@ FontBox::FontBox(QWidget* parent)
 FontBox::FontBox(std::shared_ptr<ValueModel<QFont>> current, QWidget* parent)
     : QWidget(parent),
       m_current(std::move(current)) {
-  auto adaptive_box = new AdaptiveBox();
-  adaptive_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
   m_font_family_box = make_font_family_box(m_current->get().family());
   m_font_style_box = make_font_style_box(m_font_family_box->get_current());
   auto size_model = std::make_shared<LocalScalarValueModel<optional<int>>>();
@@ -105,6 +100,8 @@ FontBox::FontBox(std::shared_ptr<ValueModel<QFont>> current, QWidget* parent)
   horizontal_layout->addSpacing(scale_width(8));
   horizontal_layout->addWidget(m_font_size_box);
   small_layout->addLayout(horizontal_layout);
+  auto adaptive_box = new AdaptiveBox();
+  adaptive_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
   adaptive_box->add(*medium_layout);
   adaptive_box->add(*small_layout);
   enclose(*this, *adaptive_box);
