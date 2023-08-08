@@ -44,6 +44,7 @@
 #include "Spire/Ui/EditableBox.hpp"
 #include "Spire/Ui/FilterPanel.hpp"
 #include "Spire/Ui/FocusObserver.hpp"
+#include "Spire/Ui/FontBox.hpp"
 #include "Spire/Ui/FontFamilyBox.hpp"
 #include "Spire/Ui/FontStyleBox.hpp"
 #include "Spire/Ui/HoverObserver.hpp"
@@ -515,7 +516,6 @@ namespace {
       std::vector<std::pair<QString, T>>& current_property) {
     properties.push_back(
       make_standard_enum_property("current", current_property));
-    properties.push_back(make_standard_property("read_only", false));
   }
 
   template<typename B>
@@ -1923,6 +1923,61 @@ UiProfile Spire::make_focus_observer_profile() {
   return profile;
 }
 
+UiProfile Spire::make_font_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_size_properties("parent_width", "parent_height", properties);
+  auto font_database = QFontDatabase();
+  auto font1 = font_database.font("Roboto", "Regular", -1);
+  font1.setPixelSize(scale_width(12));
+  auto font2 = font_database.font("Roboto", "Thin", -1);
+  font2.setPixelSize(scale_width(12));
+  auto font3 = font1;
+  font3.setPixelSize(scale_width(8));
+  auto font4 = font_database.font("Tahoma", "Bold", -1);
+  font4.setPixelSize(scale_width(16));
+  auto font5 = font_database.font("Segoe UI", "Light Italic", -1);
+  font5.setPixelSize(scale_width(10));
+  auto current_property = define_enum<QFont>(
+    {{"Roboto, Regular, 12", font1}, {"Roboto, Thin, 12", font2},
+    {"Roboto, Regular, 8", font3}, {"Tahoma, Bold, 16", font4},
+    {"Segoe UI, Light Italic, 10", font5}});
+  populate_enum_box_properties(properties, current_property);
+  auto profile = UiProfile("FontBox", properties, [] (auto& profile) {
+    auto font_box = new FontBox();
+    auto body_widget = new QWidget();
+    auto layout = make_vbox_layout(body_widget);
+    layout->addWidget(font_box);
+    layout->addSpacing(scale_height(20));
+    layout->addStretch(1);
+    auto label = make_label("Handgloves");
+    layout->addWidget(label);
+    auto box = new Box(body_widget);
+    update_style(*box, [] (auto& style) {
+      style.get(Any()).set(border(scale_width(1), QColor(0x4B23A0)));
+    });
+    apply_widget_size_properties(box, "parent_width", "parent_height",
+      profile.get_properties());
+    box->setFixedWidth(scale_width(200));
+    auto& current = get<QFont>("current", profile.get_properties());
+    current.connect_changed_signal([=] (auto& font) {
+      if(font_box->get_current()->get() != font) {
+        font_box->get_current()->set(font);
+      }
+    });
+    auto current_slot =
+      profile.make_event_slot<QString>(QString::fromUtf8("Current"));
+    font_box->get_current()->connect_update_signal([=] (auto& font) {
+      update_style(*label, [&] (auto& style) {
+        style.get(Any()).set(Font(font));
+      });
+      current_slot(QString("%1, %2, %3").arg(font.family()).
+        arg(font.styleName()).arg(font.pixelSize()));
+    });
+    return box;
+  });
+  return profile;
+}
+
 UiProfile Spire::make_font_family_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
@@ -1930,6 +1985,7 @@ UiProfile Spire::make_font_family_box_profile() {
     {{"Roboto", "Roboto"}, {"Source Sans Pro", "Source Sans Pro"},
     {"Tahoma", "Tahoma"}, {"Times New Roman", "Times New Roman"}});
   populate_enum_box_properties(properties, current_property);
+  properties.push_back(make_standard_property("read_only", false));
   auto profile = UiProfile("FontFamilyBox", properties, [] (auto& profile) {
     auto box = make_font_family_box("Roboto");
     box->setFixedWidth(scale_width(150));
@@ -2804,6 +2860,7 @@ UiProfile Spire::make_order_type_box_profile() {
      {"Pegged", OrderType::PEGGED},
      {"Stop", OrderType::STOP}});
   populate_enum_box_properties(properties, current_property);
+  properties.push_back(make_standard_property("read_only", false));
   auto profile = UiProfile("OrderTypeBox", properties,
     std::bind_front(setup_enum_box_profile<OrderTypeBox, make_order_type_box>));
   return profile;
@@ -3578,6 +3635,7 @@ UiProfile Spire::make_side_box_profile() {
   auto current_property = define_enum<Side>(
     {{"Buy", Side::BID}, {"Sell", Side::ASK}});
   populate_enum_box_properties(properties, current_property);
+  properties.push_back(make_standard_property("read_only", false));
   auto profile = UiProfile("SideBox", properties, std::bind_front(
     setup_enum_box_profile<SideBox, make_side_box>));
   return profile;
@@ -4162,6 +4220,7 @@ UiProfile Spire::make_time_in_force_box_profile() {
      {"GTD", TimeInForce(TimeInForce::Type::GTD)},
      {"MOC", TimeInForce(TimeInForce::Type::MOC)}});
   populate_enum_box_properties(properties, current_property);
+  properties.push_back(make_standard_property("read_only", false));
   auto profile = UiProfile("TimeInForceBox", properties, std::bind_front(
     setup_enum_box_profile<TimeInForceBox, make_time_in_force_box>));
   return profile;
