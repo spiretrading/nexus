@@ -2,6 +2,7 @@
 #include <QFontDatabase>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalScalarValueModel.hpp"
+#include "Spire/Styles/Stylist.hpp"
 #include "Spire/Ui/AdaptiveBox.hpp"
 #include "Spire/Ui/Layouts.hpp"
 
@@ -11,6 +12,16 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  auto DROP_DOWN_BOX_HORIZONTAL_PADDING() {
+    static auto padding = scale_width(22);
+    return padding;
+  }
+
+  auto INTEGER_BOX_HORIZONTAL_PADDING() {
+    static auto padding = scale_width(32);
+    return padding;
+  }
+
   auto get_character_width() {
     static auto width = optional<int>();
     if(width) {
@@ -32,8 +43,8 @@ namespace {
     }
 
     QSize sizeHint() const override {
-      auto size = QWidget::sizeHint();
-      return {20 * get_character_width() + scale_width(22), size.height()};
+      return {20 * get_character_width() + DROP_DOWN_BOX_HORIZONTAL_PADDING(),
+        QWidget::sizeHint().height()};
     }
   };
 
@@ -46,8 +57,8 @@ namespace {
     }
 
     QSize sizeHint() const override {
-      auto size = QWidget::sizeHint();
-      return {16 * get_character_width() + scale_width(22), size.height()};
+      return {16 * get_character_width() + DROP_DOWN_BOX_HORIZONTAL_PADDING(),
+        QWidget::sizeHint().height()};
     }
   };
 }
@@ -72,11 +83,14 @@ FontBox::FontBox(std::shared_ptr<ValueModel<QFont>> current, QWidget* parent)
   }();
   size_model->set(font_size);
   m_font_size_box = new IntegerBox(std::move(size_model));
-  m_font_size_box->setFixedWidth(6 * get_character_width() + scale_width(22));
+  m_font_size_box->setFixedWidth(
+    6 * get_character_width() + INTEGER_BOX_HORIZONTAL_PADDING());
   auto custom_family_box = new CustomFontFamilyBox(*m_font_family_box);
-  custom_family_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  custom_family_box->setSizePolicy(QSizePolicy::Expanding,
+    QSizePolicy::Expanding);
   auto custom_style_box = new CustomFontFamilyBox(*m_font_style_box);
-  custom_style_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  custom_style_box->setSizePolicy(QSizePolicy::Expanding,
+    QSizePolicy::Expanding);
   auto medium_layout = make_hbox_layout();
   medium_layout->addWidget(custom_family_box);
   medium_layout->addSpacing(scale_width(8));
@@ -108,17 +122,17 @@ const std::shared_ptr<ValueModel<QFont>>& FontBox::get_current() const {
 
 void FontBox::on_current(const QFont& font) {
   if(font.family() != m_font_family_box->get_current()->get()) {
-    auto style_blocker = shared_connection_block(m_style_connection);
+    auto blocker = shared_connection_block(m_style_connection);
     m_font_family_box->get_current()->set(font.family());
   }
   auto style = QFontDatabase().styleString(font);
   if(style != m_font_style_box->get_current()->get()) {
-    auto style_blocker = shared_connection_block(m_style_connection);
+    auto blocker = shared_connection_block(m_style_connection);
     m_font_style_box->get_current()->set(style);
   }
   auto size = unscale_width(font.pixelSize());
   if(size != m_font_size_box->get_current()->get()) {
-    auto size_blocker = shared_connection_block(m_size_connection);
+    auto blocker = shared_connection_block(m_size_connection);
     m_font_size_box->get_current()->set(size);
   }
 }
@@ -127,14 +141,15 @@ void FontBox::on_style_current(const QString& style) {
   if(style.isEmpty()) {
     return;
   }
-  if(m_font_family_box->get_current()->get() == m_current->get().family() &&
-      style == m_current->get().styleName()) {
+  auto& current_font = m_current->get();
+  if(m_font_family_box->get_current()->get() == current_font.family() &&
+      style == current_font.styleName()) {
     return;
   }
   auto font =
     QFontDatabase().font(m_font_family_box->get_current()->get(), style, -1);
-  font.setPixelSize(m_current->get().pixelSize());
-  auto font_blocker = shared_connection_block(m_font_connection);
+  font.setPixelSize(current_font.pixelSize());
+  auto blocker = shared_connection_block(m_font_connection);
   m_current->set(font);
 }
 
@@ -142,12 +157,12 @@ void FontBox::on_size_current(const optional<int>& value) {
   if(!value) {
     return;
   }
-  auto font = m_current->get();
+  auto current_font = m_current->get();
   auto size = scale_width(static_cast<int>(*value));
-  if(size == font.pixelSize()) {
+  if(size == current_font.pixelSize()) {
     return;
   }
-  font.setPixelSize(size);
-  auto font_blocker = shared_connection_block(m_font_connection);
-  m_current->set(font);
+  current_font.setPixelSize(size);
+  auto blocker = shared_connection_block(m_font_connection);
+  m_current->set(current_font);
 }
