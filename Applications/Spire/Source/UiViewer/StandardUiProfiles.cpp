@@ -47,6 +47,7 @@
 #include "Spire/Ui/FontBox.hpp"
 #include "Spire/Ui/FontFamilyBox.hpp"
 #include "Spire/Ui/FontStyleBox.hpp"
+#include "Spire/Ui/HighlightSwatch.hpp"
 #include "Spire/Ui/HoverObserver.hpp"
 #include "Spire/Ui/InfoTip.hpp"
 #include "Spire/Ui/IntegerBox.hpp"
@@ -2047,6 +2048,33 @@ UiProfile Spire::make_font_style_box_profile() {
     });
     box->connect_submit_signal(profile.make_event_slot<std::any>("Submit"));
     return box;
+  });
+  return profile;
+}
+
+UiProfile Spire::make_highlight_swatch_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(
+    make_standard_property("background_color", QColor(0xFFFFC4)));
+  properties.push_back(make_standard_property("text_color", QColor(0x521C00)));
+  auto profile = UiProfile("HighlightSwatch", properties, [] (auto& profile) {
+    auto swatch = new HighlightSwatch();
+    apply_widget_properties(swatch, profile.get_properties());
+    auto& background_color =
+      get<QColor>("background_color", profile.get_properties());
+    background_color.connect_changed_signal([=] (auto color) {
+      auto highlight_color = swatch->get_current()->get();
+      highlight_color.m_background_color = color;
+      swatch->get_current()->set(highlight_color);
+    });
+    auto& text_color = get<QColor>("text_color", profile.get_properties());
+    text_color.connect_changed_signal([=] (auto color) {
+      auto highlight = swatch->get_current()->get();
+      highlight.m_text_color = color;
+      swatch->get_current()->set(highlight);
+    });
+    return swatch;
   });
   return profile;
 }

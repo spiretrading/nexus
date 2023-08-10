@@ -39,6 +39,7 @@ namespace Spire {
   class FocusObserver;
   class GlobalPositionObserver;
   struct Highlight;
+  class HighlightSwatch;
   class HoverObserver;
   class Icon;
   class InfoTip;
