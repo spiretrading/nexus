@@ -2064,9 +2064,9 @@ UiProfile Spire::make_highlight_swatch_profile() {
     auto& background_color =
       get<QColor>("background_color", profile.get_properties());
     background_color.connect_changed_signal([=] (auto color) {
-      auto highlight_color = swatch->get_current()->get();
-      highlight_color.m_background_color = color;
-      swatch->get_current()->set(highlight_color);
+      auto highlight = swatch->get_current()->get();
+      highlight.m_background_color = color;
+      swatch->get_current()->set(highlight);
     });
     auto& text_color = get<QColor>("text_color", profile.get_properties());
     text_color.connect_changed_signal([=] (auto color) {

@@ -18,7 +18,6 @@ HighlightSwatch::HighlightSwatch(std::shared_ptr<ValueModel<Highlight>> current,
   label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   enclose(*this, *label);
   proxy_style(*this, *label);
-  auto style = StyleSheet();
   auto font = QFont("Roboto");
   font.setWeight(QFont::Medium);
   font.setPixelSize(scale_width(10));
