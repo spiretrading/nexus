@@ -47,6 +47,7 @@
 #include "Spire/Ui/FontBox.hpp"
 #include "Spire/Ui/FontFamilyBox.hpp"
 #include "Spire/Ui/FontStyleBox.hpp"
+#include "Spire/Ui/HighlightPicker.hpp"
 #include "Spire/Ui/HighlightSwatch.hpp"
 #include "Spire/Ui/HoverObserver.hpp"
 #include "Spire/Ui/InfoTip.hpp"
@@ -2048,6 +2049,41 @@ UiProfile Spire::make_font_style_box_profile() {
     });
     box->connect_submit_signal(profile.make_event_slot<std::any>("Submit"));
     return box;
+  });
+  return profile;
+}
+
+UiProfile Spire::make_highlight_picker_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  properties.push_back(
+    make_standard_property("background_color", QColor(0xFFFFC4)));
+  properties.push_back(make_standard_property("text_color", QColor(0x521C00)));
+  auto profile = UiProfile("HighlightPicker", properties, [] (auto& profile) {
+    auto button = make_label_button("HighlightPicker");
+    button->connect_click_signal([&, button] {
+      auto picker = new HighlightPicker(*button);
+      auto& background_color =
+        get<QColor>("background_color", profile.get_properties());
+      background_color.connect_changed_signal([=] (auto color) {
+        auto highlight = picker->get_current()->get();
+        highlight.m_background_color = color;
+        picker->get_current()->set(highlight);
+        });
+      auto& text_color = get<QColor>("text_color", profile.get_properties());
+      text_color.connect_changed_signal([=] (auto color) {
+        auto highlight = picker->get_current()->get();
+        highlight.m_text_color = color;
+        picker->get_current()->set(highlight);
+      });
+      auto current_slot = profile.make_event_slot<QString>("Current");
+      picker->get_current()->connect_update_signal(
+        [=] (const HighlightPicker::Highlight& highlight) {
+          current_slot(highlight.m_background_color.name() + " " + highlight.m_text_color.name());
+        });
+      picker->window()->setAttribute(Qt::WA_DeleteOnClose);
+      picker->show();
+    });
+    return button;
   });
   return profile;
 }
