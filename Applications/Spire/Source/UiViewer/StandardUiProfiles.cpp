@@ -49,6 +49,7 @@
 #include "Spire/Ui/FontStyleBox.hpp"
 #include "Spire/Ui/HighlightSwatch.hpp"
 #include "Spire/Ui/HoverObserver.hpp"
+#include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/InfoTip.hpp"
 #include "Spire/Ui/IntegerBox.hpp"
 #include "Spire/Ui/KeyFilterPanel.hpp"
@@ -83,6 +84,7 @@
 #include "Spire/Ui/SecurityView.hpp"
 #include "Spire/Ui/SideBox.hpp"
 #include "Spire/Ui/SideFilterPanel.hpp"
+#include "Spire/Ui/Slider.hpp"
 #include "Spire/Ui/SplitView.hpp"
 #include "Spire/Ui/SubmenuItem.hpp"
 #include "Spire/Ui/TabView.hpp"
@@ -3675,6 +3677,90 @@ UiProfile Spire::make_side_filter_panel_profile() {
   properties.push_back(make_standard_property<bool>("Sell"));
   auto profile = UiProfile("SideFilterPanel", properties, std::bind_front(
     setup_closed_filter_panel_profile<Side, make_side_filter_panel>));
+  return profile;
+}
+
+UiProfile Spire::make_slider_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto type_property = define_enum<int>({{"HueSlider", 0}, {"None", 1}});
+  properties.push_back(make_standard_enum_property("type", type_property));
+  properties.push_back(
+    make_standard_enum_property("orientation", get_orientation_property()));
+  properties.push_back(make_standard_property("minimum", 0));
+  properties.push_back(make_standard_property("maximum", 360));
+  properties.push_back(make_standard_property("default_increment", 1));
+  properties.push_back(make_standard_property("shift_increment", 10));
+  properties.push_back(make_standard_property("step_size", 0));
+  properties.push_back(make_standard_property("current", 0));
+  auto profile = UiProfile("Slider", properties, [] (auto& profile) {
+    auto model = std::make_shared<LocalScalarValueModel<int>>();
+    auto& default_increment =
+      get<int>("default_increment", profile.get_properties());
+    auto& shift_increment =
+      get<int>("shift_increment", profile.get_properties());
+    auto modifiers = QHash<Qt::KeyboardModifier, int>(
+      {{Qt::NoModifier, default_increment.get()},
+        {Qt::ShiftModifier, shift_increment.get()}});
+    auto slider = new Slider(model, modifiers);
+    apply_widget_properties(slider, profile.get_properties());
+    auto& type = get<int>("type", profile.get_properties());
+    type.connect_changed_signal([=] (auto value) {
+      if(value == 0) {
+        auto track_image = QImage(":/Icons/hue-spectrum.png");
+        auto thumb_image =
+          imageFromSvg(":/Icons/color-thumb.svg", scale(14, 14));
+        update_style(*slider, [&] (auto& style) {
+          style.get(Any()).
+            set(border(scale_width(1), QColor(0xC8C8C8)));
+          style.get(Any() > Track()).set(IconImage(track_image));
+          style.get(Any() > Thumb() > is_a<Icon>()).
+            set(Fill(boost::optional<QColor>())).
+            set(IconImage(thumb_image));
+          style.get(Focus() > Thumb() > is_a<Icon>()).
+            set(Fill(QColor(0x808080)));
+          });
+        model->set(model->get());
+      }
+    });
+    auto& orientation =
+      get<Qt::Orientation>("orientation", profile.get_properties());
+    orientation.connect_changed_signal([=] (auto value) {
+      update_style(*slider, [&] (auto& style) {
+        style.get(Any()).set(value);
+      });
+      if(value == Qt::Horizontal) {
+        slider->setFixedSize(scale(220, 16));
+      } else {
+        slider->setFixedSize(scale(16, 220));
+      }
+    });
+    auto& minimum = get<int>("minimum", profile.get_properties());
+    minimum.connect_changed_signal([=] (auto value) {
+      model->set_minimum(value);
+    });
+    auto& maximum = get<int>("maximum", profile.get_properties());
+    maximum.connect_changed_signal([=] (auto value) {
+      model->set_maximum(value);
+    });
+    auto& step_size = get<int>("step_size", profile.get_properties());
+    step_size.connect_changed_signal([=] (auto value) {
+      slider->set_step_size(value);
+    });
+    auto& current = get<int>("current", profile.get_properties());
+    current.connect_changed_signal([=] (auto value) {
+      if(value != model->get()) {
+        model->set(value);
+      }
+    });
+    auto current_slot = profile.make_event_slot<QString>("Current");
+    slider->get_current()->connect_update_signal([=, &current] (int value) {
+      current.set(value);
+      current_slot(displayText(value));
+    });
+    slider->connect_submit_signal(profile.make_event_slot<int>("Submit"));
+    return slider;
+  });
   return profile;
 }
 
