@@ -4,9 +4,10 @@
 #include <QMouseEvent>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalScalarValueModel.hpp"
-//#include "Spire/Styles/Stylist.hpp"
 #include "Spire/Ui/Box.hpp"
+#include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/Icon.hpp"
+#include "Spire/Ui/LayeredWidget.hpp"
 #include "Spire/Ui/Layouts.hpp"
 
 using namespace boost;
@@ -15,6 +16,90 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  using ImageTrack = StateSelector<void, struct ImageTrackSelectorTag>;
+  using ImageThumb = StateSelector<void, struct ImageThumbSelectorTag>;
+
+  auto DEFUALT_TRACK_WIDTH() {
+    static auto width = scale_width(4);
+    return width;
+  }
+
+  auto DEFUALT_TRACK_HEIGHT() {
+    static auto height = scale_height(4);
+    return height;
+  }
+
+  auto DEFAULT_THUMB_SIZE() {
+    static auto size = scale(10, 26);
+    return size;
+  }
+
+  auto HORIZONTAL_PADDING_SIZE() {
+    static auto size = scale_width(5);
+    return size;
+  }
+
+  auto VERTICAL_PADDING_SIZE() {
+    static auto size = scale_height(5);
+    return size;
+  }
+
+  auto DEFAULT_STYLE() {
+    auto style = StyleSheet();
+    style.get(Any() > TrackRail()).
+      set(BackgroundColor(QColor(0xA0A0A0)));
+    style.get(Disabled() > TrackRail()).
+      set(BackgroundColor(QColor(0xC8C8C8)));
+    style.get(Any() > TrackFill()).
+      set(BackgroundColor(QColor(0x8D78EC)));
+    style.get((Hover() || Press()) > TrackFill()).
+      set(BackgroundColor(QColor(0x4B23A0)));
+    style.get(Disabled() > TrackFill()).
+      set(BackgroundColor(QColor(0x808080)));
+    style.get(matches(EnumProperty<Qt::Orientation>(Qt::Vertical)) > Track()).
+      set(horizontal_padding(0)).
+      set(vertical_padding(VERTICAL_PADDING_SIZE()));
+    style.get(matches(EnumProperty<Qt::Orientation>(Qt::Horizontal)) > Track()).
+      set(horizontal_padding(HORIZONTAL_PADDING_SIZE())).
+      set(vertical_padding(0));
+    style.get(Any() > ImageTrack()).
+      set(horizontal_padding(0)).
+      set(vertical_padding(0));
+    style.get(Any() > Thumb()).
+      set(BackgroundColor(QColor(0xF5F5F5))).
+      set(border(scale_width(2), QColor(0x8D78EC))).
+      set(border_radius(scale_width(2)));
+    style.get(Focus() > Thumb()).
+      set(BackgroundColor(QColor(0x7E71B8))).
+      set(border_color(QColor(0x4B23A0)));
+    style.get(Any() > (Thumb() && Hover())).
+      set(BackgroundColor(QColor(0x8D78EC))).
+      set(border_color(QColor(0x4B23A0)));
+    style.get(Any() > (Thumb() && Press())).
+      set(BackgroundColor(QColor(0x7E71B8))).
+      set(border_color(QColor(0x4B23A0)));
+    style.get(Disabled() > Thumb()).
+      set(BackgroundColor(QColor(0xEBEBEB))).
+      set(border_color(QColor(0xA0A0A0)));
+    style.get(Any() > ImageThumb()).
+      set(BackgroundColor(Qt::transparent)).
+      set(border_size(0));
+    style.get(Focus() > ImageThumb()).
+      set(BackgroundColor(Qt::transparent));
+    style.get(Hover() > ImageThumb()).
+      set(BackgroundColor(Qt::transparent));
+    style.get(Any() > (ImageThumb() && Press())).
+      set(BackgroundColor(Qt::transparent));
+    style.get(Disabled() > ImageThumb()).
+      set(BackgroundColor(Qt::transparent));
+    return style;
+  }
+
+  void clear_fixed_size(QWidget& widget) {
+    widget.setMinimumSize(0, 0);
+    widget.setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
+  }
+
   auto make_modifiers(const ScalarValueModel<int>& current) {
     auto modifiers = QHash<Qt::KeyboardModifier, int>();
     modifiers[Qt::NoModifier] = current.get_increment();
@@ -57,6 +142,23 @@ namespace {
     }
     return size.width();
   }
+
+  auto get_padding(Qt::Orientation orientation, bool has_image) {
+    if(has_image) {
+      return 0;
+    }
+    if(orientation == Qt::Orientation::Vertical) {
+      return VERTICAL_PADDING_SIZE();
+    }
+    return HORIZONTAL_PADDING_SIZE();
+  }
+
+  auto get_thumb_size(Qt::Orientation orientation) {
+    if(orientation == Qt::Orientation::Vertical) {
+      return DEFAULT_THUMB_SIZE().transposed();
+    }
+    return DEFAULT_THUMB_SIZE();
+  }
 }
 
 Slider::Slider(QWidget* parent)
@@ -81,13 +183,23 @@ Slider::Slider(std::shared_ptr<ScalarValueModel<int>> current,
       m_is_dragging(false),
       m_is_modified(false) {
   setFocusPolicy(Qt::StrongFocus);
-  auto body = new QWidget();
-  m_track_body = new QLabel();
-  m_track_body->setScaledContents(true);
-  m_track_body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-  m_track = new Box(m_track_body);
+  m_track_label = new QLabel();
+  m_track_label->setScaledContents(true);
+  m_track_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+  auto track_body = new LayeredWidget();
+  track_body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  auto track_rail = new Box(m_track_label);
+  track_rail->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  match(*track_rail, TrackRail());
+  track_body->add(track_rail);
+  m_track_fill = new Box();
+  m_track_fill->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  match(*m_track_fill, TrackFill());
+  track_body->add(m_track_fill);
+  m_track = new Box(track_body);
   m_track->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   match(*m_track, Track());
+  auto body = new QWidget();
   m_track_layout = new QBoxLayout(get_layout_direction(m_orientation), body);
   m_track_layout->setContentsMargins({});
   m_track_layout->addStretch(1);
@@ -99,14 +211,15 @@ Slider::Slider(std::shared_ptr<ScalarValueModel<int>> current,
   auto box = new Box(body);
   enclose(*this, *box);
   proxy_style(*this, *box);
+  set_style(*this, DEFAULT_STYLE());
+  update_track();
+  update_thumb();
   m_focus_observer.connect_state_signal(
     std::bind_front(&Slider::on_focus, this));
   m_current_connection = m_current->connect_update_signal(
     std::bind_front(&Slider::on_current, this));
   m_track_style_connection = connect_style_signal(*m_track,
     std::bind_front(&Slider::on_track_style, this));
-  m_thumb_style_connection = connect_style_signal(*m_thumb,
-    std::bind_front(&Slider::on_thumb_style, this));
   m_thumb_icon_style_connection = connect_style_signal(*thumb_icon,
     std::bind_front(&Slider::on_thumb_icon_style, this));
   m_style_connection = connect_style_signal(*this,
@@ -173,7 +286,9 @@ void Slider::mousePressEvent(QMouseEvent* event) {
   if(event->button() == Qt::LeftButton) {
     if(m_thumb->rect().contains(m_thumb->mapFromGlobal(event->globalPos()))) {
       m_is_dragging = true;
+      match(*m_thumb, Press());
     } else {
+      match(*this, Press());
       set_current(to_value(::get_position(m_orientation,
         m_track->mapFromGlobal(event->globalPos()))));
     }
@@ -183,6 +298,8 @@ void Slider::mousePressEvent(QMouseEvent* event) {
 
 void Slider::mouseReleaseEvent(QMouseEvent* event) {
   m_is_dragging = false;
+  unmatch(*m_thumb, Press());
+  unmatch(*this, Press());
   QWidget::mouseReleaseEvent(event);
 }
 
@@ -198,7 +315,7 @@ void Slider::showEvent(QShowEvent* event) {
 
 void Slider::wheelEvent(QWheelEvent* event) {
   set_current(m_current->get() +
-    event->angleDelta().y() / 120.0 * m_current->get_increment());
+    event->angleDelta().y() / 120.0 * get_increment(Qt::NoModifier));
 }
 
 int Slider::get_increment(int modifier_flag) const {
@@ -216,8 +333,8 @@ double Slider::get_range() const {
 }
 
 double Slider::to_value(int position) const {
-  auto distance =
-    position * get_range() / get_size(m_orientation, m_track->size());
+  auto distance = position * get_range() /
+    get_size(m_orientation, m_track->get_body()->size());
   return get_value(m_orientation, distance, *m_current->get_minimum(),
     *m_current->get_maximum());
 }
@@ -225,8 +342,10 @@ double Slider::to_value(int position) const {
 int Slider::to_position(double value) const {
   auto distance = get_distance(m_orientation, value, *m_current->get_minimum(),
     *m_current->get_maximum());
-  return distance / get_range() * get_size(m_orientation, m_track->size()) -
-      get_size(m_orientation, m_thumb->size()) / 2;
+  return distance / get_range() *
+    get_size(m_orientation, m_track->get_body()->size()) -
+      get_size(m_orientation, m_thumb->size()) / 2.0 +
+        get_padding(m_orientation, !m_track_image.isNull());
 }
 
 void Slider::set_current(double value) {
@@ -236,6 +355,29 @@ void Slider::set_current(double value) {
   if(current != m_current->get()) {
     m_current->set(current);
   }
+}
+
+void Slider::update_track() {
+  clear_fixed_size(*m_track->get_body());
+  clear_fixed_size(*m_track_fill);
+  if(m_track_image.isNull()) {
+    m_track_fill->show();
+    if(m_orientation == Qt::Orientation::Vertical) {
+      m_track->get_body()->setFixedWidth(DEFUALT_TRACK_WIDTH());
+    } else {
+      m_track->get_body()->setFixedHeight(DEFUALT_TRACK_HEIGHT());
+    }
+  } else {
+    m_track_fill->hide();
+  }
+  on_current(m_current->get());
+}
+
+void Slider::update_thumb() {
+  if(m_thumb_image.isNull()) {
+    m_thumb->setFixedSize(get_thumb_size(m_orientation));
+  }
+  on_current(m_current->get());
 }
 
 void Slider::on_focus(FocusObserver::State state) {
@@ -252,53 +394,70 @@ void Slider::on_current(int current) {
   m_is_modified = true;
   if(m_orientation == Qt::Horizontal) {
     m_thumb->move(to_position(current), (height() - m_thumb->height()) / 2);
+    if(m_track_fill->isVisible()) {
+      m_track_fill->move(0, 0);
+      m_track_fill->setFixedWidth(m_thumb->x());
+    }
   } else {
     m_thumb->move((width() - m_thumb->width()) / 2, to_position(current));
+    if(m_track_fill->isVisible()) {
+      m_track_fill->move(0, m_thumb->y());
+      m_track_fill->setFixedHeight(
+        m_track->get_body()->height() - m_track_fill->y());
+    }
   }
 }
 
 void Slider::on_track_style() {
   auto& stylist = find_stylist(*m_track);
+  auto has_update = std::make_shared<bool>(false);
   for(auto& property : stylist.get_computed_block()) {
     property.visit(
       [&] (const IconImage& image) {
         stylist.evaluate(image, [=] (auto image) {
-          m_track_body->setPixmap(QPixmap::fromImage(image));
-          m_track_body->update();
+          if(image == m_track_image) {
+            return;
+          }
+          *has_update = true;
+          m_track_image = image;
         });
       });
   }
-}
-
-void Slider::on_thumb_style() {
-  auto& stylist = find_stylist(*m_thumb);
-  auto icon_image = std::make_shared<QImage>();
-  for(auto& property : stylist.get_computed_block()) {
-    property.visit(
-      [&] (const IconImage& image) {
-        stylist.evaluate(image, [=] (auto image) {
-          *icon_image = image;
-        });
-      });
-  }
-  if(icon_image) {
-    auto current_blocker = shared_connection_block(m_thumb_style_connection);
-    update_style(*m_thumb, [&] (auto& style) {
-      style.get(Any() > is_a<Icon>()).set(IconImage(*icon_image));
-    });
-    m_thumb->setFixedSize(icon_image->size());
+  if(*has_update) {
+    if(m_track_image.isNull()) {
+      unmatch(*m_track, ImageTrack());
+    } else {
+      match(*m_track, ImageTrack());
+    }
+    m_track_label->setPixmap(QPixmap::fromImage(m_track_image));
+    m_track_label->update();
+    update_track();
   }
 }
 
 void Slider::on_thumb_icon_style() {
   auto& stylist = find_stylist(*m_thumb->get_body());
+  auto has_update = std::make_shared<bool>(false);
   for(auto& property : stylist.get_computed_block()) {
     property.visit(
       [&] (const IconImage& image) {
         stylist.evaluate(image, [=] (auto image) {
-          m_thumb->setFixedSize(image.size());
+          if(m_thumb_image == image) {
+            return;
+          }
+          *has_update = true;
+          m_thumb_image = image;
         });
       });
+  }
+  if(*has_update) {
+    if(m_thumb_image.isNull()) {
+      unmatch(*m_thumb, ImageThumb());
+    } else {
+      m_thumb->setFixedSize(m_thumb_image.size());
+      match(*m_thumb, ImageThumb());
+    }
+    update_thumb();
   }
 }
 
@@ -312,9 +471,11 @@ void Slider::on_style() {
             return;
           }
           m_orientation = orientation;
-          m_track_body->setSizePolicy(m_track_body->sizePolicy().transposed());
+          m_track_label->setSizePolicy(
+            m_track_label->sizePolicy().transposed());
           m_track_layout->setDirection(get_layout_direction(m_orientation));
-          on_current(m_current->get());
+          m_thumb->setFixedSize(m_thumb->size().transposed());
+          update_track();
         });
       });
   }

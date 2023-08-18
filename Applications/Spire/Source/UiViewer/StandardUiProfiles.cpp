@@ -3683,7 +3683,7 @@ UiProfile Spire::make_side_filter_panel_profile() {
 UiProfile Spire::make_slider_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
-  auto type_property = define_enum<int>({{"HueSlider", 0}, {"None", 1}});
+  auto type_property = define_enum<int>({{"None", 0}, {"HueSlider", 1}});
   properties.push_back(make_standard_enum_property("type", type_property));
   properties.push_back(
     make_standard_enum_property("orientation", get_orientation_property()));
@@ -3707,12 +3707,15 @@ UiProfile Spire::make_slider_profile() {
     auto& type = get<int>("type", profile.get_properties());
     type.connect_changed_signal([=] (auto value) {
       if(value == 0) {
+        update_style(*slider, [&] (auto& style) {
+          style.get(Any() > Track()).set(IconImage(QImage()));
+          style.get(Any() > Thumb() > is_a<Icon>()).set(IconImage(QImage()));
+        });
+      } else if(value == 1) {
         auto track_image = QImage(":/Icons/hue-spectrum.png");
         auto thumb_image =
           imageFromSvg(":/Icons/color-thumb.svg", scale(14, 14));
         update_style(*slider, [&] (auto& style) {
-          style.get(Any()).
-            set(border(scale_width(1), QColor(0xC8C8C8)));
           style.get(Any() > Track()).set(IconImage(track_image));
           style.get(Any() > Thumb() > is_a<Icon>()).
             set(Fill(boost::optional<QColor>())).
@@ -3720,8 +3723,8 @@ UiProfile Spire::make_slider_profile() {
           style.get(Focus() > Thumb() > is_a<Icon>()).
             set(Fill(QColor(0x808080)));
           });
-        model->set(model->get());
       }
+      model->set(model->get());
     });
     auto& orientation =
       get<Qt::Orientation>("orientation", profile.get_properties());
@@ -3730,9 +3733,9 @@ UiProfile Spire::make_slider_profile() {
         style.get(Any()).set(value);
       });
       if(value == Qt::Horizontal) {
-        slider->setFixedSize(scale(220, 16));
+        slider->setFixedSize(scale(220, 26));
       } else {
-        slider->setFixedSize(scale(16, 220));
+        slider->setFixedSize(scale(26, 220));
       }
     });
     auto& minimum = get<int>("minimum", profile.get_properties());

@@ -1,6 +1,6 @@
 #ifndef SPIRE_SLIDER_HPP
 #define SPIRE_SLIDER_HPP
-#include <QGridLayout>
+#include <QBoxLayout>
 #include <QLabel>
 #include <QWidget>
 #include "Spire/Styles/StateSelector.hpp"
@@ -15,6 +15,12 @@ namespace Styles {
 
   /** Selects the thumb. */
   using Thumb = StateSelector<void, struct ThumbSelectorTag>;
+
+  /** Selects the rail of the track. */
+  using TrackRail = StateSelector<void, struct TrackRailSelectorTag>;
+
+  /** Selects the fill of the track. */
+  using TrackFill = StateSelector<void, struct TrackFillSelectorTag>;
 }
 
   /**
@@ -92,16 +98,18 @@ namespace Styles {
       Qt::Orientation m_orientation;
       int m_submission;
       int m_step_size;
-      QLabel* m_track_body;
+      QLabel* m_track_label;
+      Box* m_track_fill;
       Box* m_track;
       Box* m_thumb;
       QBoxLayout* m_track_layout;
+      QImage m_track_image;
+      QImage m_thumb_image;
       FocusObserver m_focus_observer;
       bool m_is_dragging;
       bool m_is_modified;
       boost::signals2::scoped_connection m_current_connection;
       boost::signals2::scoped_connection m_track_style_connection;
-      boost::signals2::scoped_connection m_thumb_style_connection;
       boost::signals2::scoped_connection m_thumb_icon_style_connection;
       boost::signals2::scoped_connection m_style_connection;
 
@@ -110,10 +118,11 @@ namespace Styles {
       double to_value(int position) const;
       int to_position(double value) const;
       void set_current(double value);
+      void update_track();
+      void update_thumb();
       void on_focus(FocusObserver::State state);
       void on_current(int current);
       void on_track_style();
-      void on_thumb_style();
       void on_thumb_icon_style();
       void on_style();
   };
