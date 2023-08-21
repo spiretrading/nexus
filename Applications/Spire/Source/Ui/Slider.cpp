@@ -84,14 +84,6 @@ namespace {
     style.get(Any() > ImageThumb()).
       set(BackgroundColor(Qt::transparent)).
       set(border_size(0));
-    style.get(Focus() > ImageThumb()).
-      set(BackgroundColor(Qt::transparent));
-    style.get(Hover() > ImageThumb()).
-      set(BackgroundColor(Qt::transparent));
-    style.get(Any() > (ImageThumb() && Press())).
-      set(BackgroundColor(Qt::transparent));
-    style.get(Disabled() > ImageThumb()).
-      set(BackgroundColor(Qt::transparent));
     return style;
   }
 
@@ -183,11 +175,11 @@ Slider::Slider(std::shared_ptr<ScalarValueModel<int>> current,
       m_is_dragging(false),
       m_is_modified(false) {
   setFocusPolicy(Qt::StrongFocus);
+  auto track_body = new LayeredWidget();
+  track_body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_track_label = new QLabel();
   m_track_label->setScaledContents(true);
   m_track_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-  auto track_body = new LayeredWidget();
-  track_body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto track_rail = new Box(m_track_label);
   track_rail->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   match(*track_rail, TrackRail());
@@ -261,9 +253,8 @@ void Slider::keyPressEvent(QKeyEvent* event) {
   } else if(event->key() == Qt::Key_Escape) {
     set_current(m_submission);
     m_is_modified = false;
-  } else {
-    event->ignore();
   }
+  QWidget::keyPressEvent(event);
 }
 
 void Slider::mouseMoveEvent(QMouseEvent* event) {
@@ -376,34 +367,34 @@ void Slider::update_track() {
 void Slider::update_thumb() {
   if(m_thumb_image.isNull()) {
     m_thumb->setFixedSize(get_thumb_size(m_orientation));
+  } else {
+    m_thumb->setFixedSize(m_thumb_image.size());
   }
   on_current(m_current->get());
 }
 
 void Slider::on_focus(FocusObserver::State state) {
-  if(state == FocusObserver::State::NONE) {
-    if(m_is_modified) {
-      m_is_modified = false;
-      m_submission = m_current->get();
-      m_submit_signal(m_submission);
-    }
+  if(state == FocusObserver::State::NONE && m_is_modified) {
+    m_is_modified = false;
+    m_submission = m_current->get();
+    m_submit_signal(m_submission);
   }
 }
 
 void Slider::on_current(int current) {
   m_is_modified = true;
-  if(m_orientation == Qt::Horizontal) {
-    m_thumb->move(to_position(current), (height() - m_thumb->height()) / 2);
-    if(m_track_fill->isVisible()) {
-      m_track_fill->move(0, 0);
-      m_track_fill->setFixedWidth(m_thumb->x());
-    }
-  } else {
+  if(m_orientation == Qt::Vertical) {
     m_thumb->move((width() - m_thumb->width()) / 2, to_position(current));
     if(m_track_fill->isVisible()) {
       m_track_fill->move(0, m_thumb->y());
       m_track_fill->setFixedHeight(
         m_track->get_body()->height() - m_track_fill->y());
+    }
+  } else {
+    m_thumb->move(to_position(current), (height() - m_thumb->height()) / 2);
+    if(m_track_fill->isVisible()) {
+      m_track_fill->move(0, 0);
+      m_track_fill->setFixedWidth(m_thumb->x());
     }
   }
 }
@@ -454,7 +445,6 @@ void Slider::on_thumb_icon_style() {
     if(m_thumb_image.isNull()) {
       unmatch(*m_thumb, ImageThumb());
     } else {
-      m_thumb->setFixedSize(m_thumb_image.size());
       match(*m_thumb, ImageThumb());
     }
     update_thumb();

@@ -3707,7 +3707,7 @@ UiProfile Spire::make_slider_profile() {
     auto& type = get<int>("type", profile.get_properties());
     type.connect_changed_signal([=] (auto value) {
       if(value == 0) {
-        update_style(*slider, [&] (auto& style) {
+        update_style(*slider, [] (auto& style) {
           style.get(Any() > Track()).set(IconImage(QImage()));
           style.get(Any() > Thumb() > is_a<Icon>()).set(IconImage(QImage()));
         });
