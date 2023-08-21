@@ -164,7 +164,7 @@ Slider::Slider(std::shared_ptr<ScalarValueModel<int>> current, QWidget* parent)
   : Slider(current, make_modifiers(*current), parent) {}
 
 Slider::Slider(std::shared_ptr<ScalarValueModel<int>> current,
-  QHash<Qt::KeyboardModifier, int> modifiers, QWidget* parent)
+    QHash<Qt::KeyboardModifier, int> modifiers, QWidget* parent)
     : QWidget(parent),
       m_current(std::move(current)),
       m_modifiers(std::move(modifiers)),
@@ -342,7 +342,7 @@ int Slider::to_position(double value) const {
 void Slider::set_current(double value) {
   auto current = static_cast<int>(std::clamp(value,
     static_cast<double>(*m_current->get_minimum()),
-    static_cast<double>(*m_current->get_maximum())));
+      static_cast<double>(*m_current->get_maximum())));
   if(current != m_current->get()) {
     m_current->set(current);
   }
