@@ -382,6 +382,10 @@ void Slider::on_focus(FocusObserver::State state) {
 }
 
 void Slider::on_current(int current) {
+  if(current < *m_current->get_minimum() ||
+      current > *m_current->get_maximum()) {
+    return;
+  }
   m_is_modified = true;
   if(m_orientation == Qt::Vertical) {
     m_thumb->move((width() - m_thumb->width()) / 2, to_position(current));
