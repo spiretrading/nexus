@@ -85,6 +85,7 @@
 #include "Spire/Ui/SideBox.hpp"
 #include "Spire/Ui/SideFilterPanel.hpp"
 #include "Spire/Ui/Slider.hpp"
+#include "Spire/Ui/Slider2D.hpp"
 #include "Spire/Ui/SplitView.hpp"
 #include "Spire/Ui/SubmenuItem.hpp"
 #include "Spire/Ui/TabView.hpp"
@@ -3762,6 +3763,141 @@ UiProfile Spire::make_slider_profile() {
       current_slot(displayText(value));
     });
     slider->connect_submit_signal(profile.make_event_slot<int>("Submit"));
+    return slider;
+  });
+  return profile;
+}
+
+UiProfile Spire::make_slider_2d_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto type_property = define_enum<int>({{"ColorSpectrum", 0}, {"None", 1}});
+  properties.push_back(make_standard_enum_property("type", type_property));
+  properties.push_back(make_standard_property("minimum_x", 0));
+  properties.push_back(make_standard_property("maximum_x", 100));
+  properties.push_back(make_standard_property("minimum_y", 0));
+  properties.push_back(make_standard_property("maximum_y", 100));
+  properties.push_back(make_standard_property("default_increment_x", 1));
+  properties.push_back(make_standard_property("default_increment_y", 1));
+  properties.push_back(make_standard_property("shift_increment_x", 10));
+  properties.push_back(make_standard_property("shift_increment_y", 10));
+  properties.push_back(make_standard_property("step_size_x", 0));
+  properties.push_back(make_standard_property("step_size_y", 0));
+  properties.push_back(make_standard_property("current_x", 0));
+  properties.push_back(make_standard_property("current_y", 0));
+  auto size = QSize(scale(264, 164));
+  auto brightness_image = QImage(size, QImage::Format_ARGB32_Premultiplied);
+  auto brightness_gradient = QLinearGradient(0, 0, 0, size.height());
+  brightness_gradient.setColorAt(0, Qt::transparent);
+  brightness_gradient.setColorAt(1, Qt::black);
+  auto brightness_painter = QPainter(&brightness_image);
+  brightness_painter.fillRect(QRect({0, 0}, size), brightness_gradient);
+  brightness_painter.end();
+  auto saturation_image = QImage(size, QImage::Format_ARGB32_Premultiplied);
+  auto saturation_gradient = QLinearGradient(0, 0, size.height(), 0);
+  saturation_gradient.setColorAt(0, QColor(0xFFFFFF));
+  saturation_gradient.setColorAt(1, QColor(0xFFDE00));
+  auto saturation_painter = QPainter(&saturation_image);
+  saturation_painter.fillRect(QRect({0, 0}, size), saturation_gradient);
+  saturation_painter.end();
+  auto track_image = QImage(size, QImage::Format_RGB32);
+  auto painter = QPainter(&track_image);
+  painter.drawImage(0, 0, saturation_image);
+  painter.setCompositionMode(QPainter::CompositionMode_Multiply);
+  painter.drawImage(0, 0, brightness_image);
+  painter.end();
+  auto profile = UiProfile("Slider2D", properties, [=] (auto& profile) {
+    auto current_x_model = std::make_shared<LocalScalarValueModel<int>>();
+    auto current_y_model = std::make_shared<LocalScalarValueModel<int>>();
+    auto& default_increment_x =
+      get<int>("default_increment_x", profile.get_properties());
+    auto& default_increment_y =
+      get<int>("default_increment_y", profile.get_properties());
+    auto& shift_increment_x =
+      get<int>("shift_increment_x", profile.get_properties());
+    auto& shift_increment_y =
+      get<int>("shift_increment_y", profile.get_properties());
+    auto modifiers = QHash<Qt::KeyboardModifier, QPoint>(
+      {{Qt::NoModifier, {default_increment_x.get(), default_increment_y.get()}},
+        {Qt::ShiftModifier, {shift_increment_x.get(), shift_increment_y.get()}}
+      });
+    auto slider = new Slider2D(current_x_model, current_y_model,
+      std::move(modifiers));
+    apply_widget_properties(slider, profile.get_properties());
+    slider->setFixedSize(size);
+    auto thumb_image =
+      imageFromSvg(":/Icons/color-thumb.svg", scale(14, 14));
+    auto& type = get<int>("type", profile.get_properties());
+    type.connect_changed_signal([=] (auto value) {
+      if(value == 0) {
+        update_style(*slider, [&] (auto& style) {
+          style.get(Any()).
+            set(border(scale_width(1), QColor(0xC8C8C8)));
+          style.get(Any() > Track()).set(IconImage(track_image));
+          style.get(Any() > Thumb() > is_a<Icon>()).
+            set(Fill(boost::optional<QColor>())).
+            set(IconImage(thumb_image));
+          style.get(Focus() > Thumb() > is_a<Icon>()).
+            set(Fill(QColor(0x808080)));
+          });
+      } else {
+        update_style(*slider, [] (auto& style) {
+          style.get(Any() > Track()).set(IconImage(QImage()));
+          style.get(Any() > Thumb() > is_a<Icon>()).set(IconImage(QImage()));
+        });
+      }
+    });
+    auto& minimum_x = get<int>("minimum_x", profile.get_properties());
+    minimum_x.connect_changed_signal([=] (auto value) {
+      current_x_model->set_minimum(value);
+    });
+    auto& maximum_x = get<int>("maximum_x", profile.get_properties());
+    maximum_x.connect_changed_signal([=] (auto value) {
+      current_x_model->set_maximum(value);
+    });
+    auto& minimum_y = get<int>("minimum_y", profile.get_properties());
+    minimum_y.connect_changed_signal([=] (auto value) {
+      current_y_model->set_minimum(value);
+    });
+    auto& maximum_y = get<int>("maximum_y", profile.get_properties());
+    maximum_y.connect_changed_signal([=] (auto value) {
+      current_y_model->set_maximum(value);
+    });
+    auto& step_size_x = get<int>("step_size_x", profile.get_properties());
+    step_size_x.connect_changed_signal([=] (auto value) {
+      slider->set_step_size({value, slider->get_step_size().y()});
+    });
+    auto& step_size_y = get<int>("step_size_y", profile.get_properties());
+    step_size_y.connect_changed_signal([=] (auto value) {
+      slider->set_step_size({slider->get_step_size().x(), value});
+    });
+    auto& current_x = get<int>("current_x", profile.get_properties());
+    current_x.connect_changed_signal([=] (auto value) {
+      if(value != current_x_model->get()) {
+        current_x_model->set(value);
+      }
+    });
+    auto& current_y = get<int>("current_y", profile.get_properties());
+    current_y.connect_changed_signal([=] (auto value) {
+      if(value != current_y_model->get()) {
+        current_y_model->set(value);
+      }
+    });
+    auto current_slot = profile.make_event_slot<QString>("Current");
+    slider->get_current_x()->connect_update_signal([=, &current_x] (int x) {
+      current_x.set(x);
+      current_slot(QString("[%1, %2]").
+        arg(x).arg(slider->get_current_y()->get()));
+    });
+    slider->get_current_y()->connect_update_signal([=, &current_y] (int y) {
+      current_y.set(y);
+      current_slot(QString("[%1, %2]").
+        arg(slider->get_current_x()->get()).arg(y));
+    });
+    auto submit_slot = profile.make_event_slot<QString>("Submit");
+    slider->connect_submit_signal([=] (const QPoint& submission) {
+      submit_slot(QString("[%1, %2]").arg(submission.x()).arg(submission.y()));
+    });
     return slider;
   });
   return profile;
