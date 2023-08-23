@@ -27,9 +27,9 @@ namespace {
   }
 
   auto get_value(double value, const ScalarValueModel<int>& model) {
-    return static_cast<int>(std::clamp(value,
+    return static_cast<int>(std::round(std::clamp(value,
       static_cast<double>(*model.get_minimum()),
-        static_cast<double>(*model.get_maximum())));
+        static_cast<double>(*model.get_maximum()))));
   }
 }
 
@@ -57,7 +57,7 @@ Slider2D::Slider2D(std::shared_ptr<ScalarValueModel<int>> current_x,
       m_modifiers(std::move(modifiers)),
       m_submission({m_current_x->get(), m_current_y->get()}),
       m_focus_observer(*this),
-      m_is_dragging(false),
+      m_is_mouse_down(false),
       m_is_modified(false) {
   setFocusPolicy(Qt::StrongFocus);
   auto body = new QWidget();
@@ -135,26 +135,16 @@ void Slider2D::keyPressEvent(QKeyEvent* event) {
 }
 
 void Slider2D::mouseMoveEvent(QMouseEvent* event) {
-  if(m_is_dragging) {
+  if(m_is_mouse_down) {
     auto pos = m_track->mapFromGlobal(event->globalPos());
     auto current_x = to_value_x(pos.x());
     auto current_y = to_value_y(pos.y());
-    auto change_x = current_x - m_current_x->get();
-    auto change_y = current_y - m_current_y->get();
-    if(change_x != 0 || change_y != 0) {
-      if(m_step_size != QPoint(0, 0)) {
-        if(change_x != 0) {
-          set_current_x(std::round(
-            current_x / m_step_size.x()) * m_step_size.x());
-        }
-        if(change_y != 0) {
-          set_current_y(std::round(
-            current_y / m_step_size.y()) * m_step_size.y());
-        }
-      } else {
-        set_current_x(current_x);
-        set_current_y(current_y);
-      }
+    if(m_step_size != QPoint(0, 0)) {
+      set_current_x(std::round(current_x / m_step_size.x()) * m_step_size.x());
+      set_current_y(std::round(current_y / m_step_size.y()) * m_step_size.y());
+    } else {
+      set_current_x(current_x);
+      set_current_y(current_y);
     }
   }
   QWidget::mouseMoveEvent(event);
@@ -162,19 +152,16 @@ void Slider2D::mouseMoveEvent(QMouseEvent* event) {
 
 void Slider2D::mousePressEvent(QMouseEvent* event) {
   if(event->button() == Qt::LeftButton) {
-    if(m_thumb->rect().contains(m_thumb->mapFromGlobal(event->globalPos()))) {
-      m_is_dragging = true;
-    } else {
-      auto pos = m_track->mapFromGlobal(event->globalPos());
-      set_current_x(to_value_x(pos.x()));
-      set_current_y(to_value_y(pos.y()));
-    }
+    m_is_mouse_down = true;
+    auto pos = m_track->mapFromGlobal(event->globalPos());
+    set_current_x(to_value_x(pos.x()));
+    set_current_y(to_value_y(pos.y()));
   }
   QWidget::mousePressEvent(event);
 }
 
 void Slider2D::mouseReleaseEvent(QMouseEvent* event) {
-  m_is_dragging = false;
+  m_is_mouse_down = false;
   QWidget::mouseReleaseEvent(event);
 }
 
@@ -208,21 +195,23 @@ QPoint Slider2D::get_increment(int modifier_flag) const {
 }
 
 double Slider2D::to_value_x(int x) const {
-  return *m_current_x->get_minimum() + x * get_range(*m_current_x) / width();
+  return *m_current_x->get_minimum() + x * get_range(*m_current_x) /
+    m_track_body->width();
 }
 
 double Slider2D::to_value_y(int y) const {
-  return *m_current_y->get_maximum() - y * get_range(*m_current_y) / height();
+  return *m_current_y->get_maximum() - y * get_range(*m_current_y) /
+    m_track_body->height();
 }
 
 int Slider2D::to_position_x(double x) const {
   return static_cast<int>((x - *m_current_x->get_minimum()) /
-    get_range(*m_current_x) * width() - m_thumb->width() / 2.0);
+    get_range(*m_current_x) * m_track_body->width() - m_thumb->width() / 2.0);
 }
 
 int Slider2D::to_position_y(double y) const {
   return static_cast<int>((*m_current_y->get_maximum() - y) /
-    get_range(*m_current_y) * height() - m_thumb->height() / 2.0);
+    get_range(*m_current_y) * m_track_body->height() - m_thumb->height() / 2.0);
 }
 
 void Slider2D::set_current_x(double x) {

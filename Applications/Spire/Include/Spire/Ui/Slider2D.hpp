@@ -92,7 +92,7 @@ namespace Spire {
       QImage m_track_image;
       QImage m_thumb_image;
       FocusObserver m_focus_observer;
-      bool m_is_dragging;
+      bool m_is_mouse_down;
       bool m_is_modified;
       boost::signals2::scoped_connection m_current_x_connection;
       boost::signals2::scoped_connection m_current_y_connection;
