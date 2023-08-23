@@ -3702,7 +3702,7 @@ UiProfile Spire::make_slider_profile() {
     auto modifiers = QHash<Qt::KeyboardModifier, int>(
       {{Qt::NoModifier, default_increment.get()},
         {Qt::ShiftModifier, shift_increment.get()}});
-    auto slider = new Slider(model, modifiers);
+    auto slider = new Slider(model, std::move(modifiers));
     apply_widget_properties(slider, profile.get_properties());
     auto& type = get<int>("type", profile.get_properties());
     type.connect_changed_signal([=] (auto value) {

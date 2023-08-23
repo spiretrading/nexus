@@ -75,7 +75,7 @@ namespace {
     style.get(Any() > (Thumb() && Hover())).
       set(BackgroundColor(QColor(0x8D78EC))).
       set(border_color(QColor(0x4B23A0)));
-    style.get(Any() > (Thumb() && Press())).
+    style.get(Press() > Thumb()).
       set(BackgroundColor(QColor(0x7E71B8))).
       set(border_color(QColor(0x4B23A0)));
     style.get(Disabled() > Thumb()).
@@ -135,16 +135,6 @@ namespace {
     return size.width();
   }
 
-  auto get_padding(Qt::Orientation orientation, bool has_image) {
-    if(has_image) {
-      return 0;
-    }
-    if(orientation == Qt::Orientation::Vertical) {
-      return VERTICAL_PADDING_SIZE();
-    }
-    return HORIZONTAL_PADDING_SIZE();
-  }
-
   auto get_thumb_size(Qt::Orientation orientation) {
     if(orientation == Qt::Orientation::Vertical) {
       return DEFAULT_THUMB_SIZE().transposed();
@@ -161,7 +151,7 @@ Slider::Slider(QHash<Qt::KeyboardModifier, int> modifiers, QWidget* parent)
       std::move(modifiers), parent) {}
 
 Slider::Slider(std::shared_ptr<ScalarValueModel<int>> current, QWidget* parent)
-  : Slider(current, make_modifiers(*current), parent) {}
+  : Slider(std::move(current), make_modifiers(*current), parent) {}
 
 Slider::Slider(std::shared_ptr<ScalarValueModel<int>> current,
     QHash<Qt::KeyboardModifier, int> modifiers, QWidget* parent)
@@ -172,7 +162,7 @@ Slider::Slider(std::shared_ptr<ScalarValueModel<int>> current,
       m_submission(m_current->get()),
       m_step_size(0),
       m_focus_observer(*this),
-      m_is_dragging(false),
+      m_is_mouse_down(false),
       m_is_modified(false) {
   setFocusPolicy(Qt::StrongFocus);
   auto track_body = new LayeredWidget();
@@ -191,16 +181,16 @@ Slider::Slider(std::shared_ptr<ScalarValueModel<int>> current,
   m_track = new Box(track_body);
   m_track->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   match(*m_track, Track());
-  auto body = new QWidget();
-  m_track_layout = new QBoxLayout(get_layout_direction(m_orientation), body);
+  m_body = new QWidget();
+  m_track_layout = new QBoxLayout(get_layout_direction(m_orientation), m_body);
   m_track_layout->setContentsMargins({});
   m_track_layout->addStretch(1);
   m_track_layout->addWidget(m_track);
   m_track_layout->addStretch(1);
   auto thumb_icon = new Icon(QImage());
-  m_thumb = new Box(thumb_icon, body);
+  m_thumb = new Box(thumb_icon, m_body);
   match(*m_thumb, Thumb());
-  auto box = new Box(body);
+  auto box = new Box(m_body);
   enclose(*this, *box);
   proxy_style(*this, *box);
   set_style(*this, DEFAULT_STYLE());
@@ -258,16 +248,13 @@ void Slider::keyPressEvent(QKeyEvent* event) {
 }
 
 void Slider::mouseMoveEvent(QMouseEvent* event) {
-  if(m_is_dragging) {
+  if(m_is_mouse_down) {
     auto current = to_value(::get_position(m_orientation,
-      m_track->mapFromGlobal(event->globalPos())));
-    if(auto change = current - m_current->get(); change != 0) {
-      if(m_step_size != 0) {
-        set_current(
-          std::round((m_current->get() + change) / m_step_size) * m_step_size);
-      } else {
-        set_current(current);
-      }
+      m_track->get_body()->mapFromGlobal(event->globalPos())));
+    if(m_step_size != 0) {
+      set_current(std::round(current / m_step_size) * m_step_size);
+    } else {
+      set_current(current);
     }
   }
   QWidget::mouseMoveEvent(event);
@@ -275,21 +262,16 @@ void Slider::mouseMoveEvent(QMouseEvent* event) {
 
 void Slider::mousePressEvent(QMouseEvent* event) {
   if(event->button() == Qt::LeftButton) {
-    if(m_thumb->rect().contains(m_thumb->mapFromGlobal(event->globalPos()))) {
-      m_is_dragging = true;
-      match(*m_thumb, Press());
-    } else {
-      match(*this, Press());
-      set_current(to_value(::get_position(m_orientation,
-        m_track->mapFromGlobal(event->globalPos()))));
-    }
+    m_is_mouse_down = true;
+    match(*this, Press());
+    set_current(to_value(::get_position(m_orientation,
+      m_track->get_body()->mapFromGlobal(event->globalPos()))));
   }
   QWidget::mousePressEvent(event);
 }
 
 void Slider::mouseReleaseEvent(QMouseEvent* event) {
-  m_is_dragging = false;
-  unmatch(*m_thumb, Press());
+  m_is_mouse_down = false;
   unmatch(*this, Press());
   QWidget::mouseReleaseEvent(event);
 }
@@ -333,16 +315,18 @@ double Slider::to_value(int position) const {
 int Slider::to_position(double value) const {
   auto distance = get_distance(m_orientation, value, *m_current->get_minimum(),
     *m_current->get_maximum());
+  auto track_body_pos =
+    m_body->mapFromGlobal(m_track->get_body()->mapToGlobal(QPoint(0, 0)));
   return distance / get_range() *
     get_size(m_orientation, m_track->get_body()->size()) -
       get_size(m_orientation, m_thumb->size()) / 2.0 +
-        get_padding(m_orientation, !m_track_image.isNull());
+        get_position(m_orientation, track_body_pos);
 }
 
 void Slider::set_current(double value) {
-  auto current = static_cast<int>(std::clamp(value,
+  auto current = static_cast<int>(std::round(std::clamp(value,
     static_cast<double>(*m_current->get_minimum()),
-      static_cast<double>(*m_current->get_maximum())));
+      static_cast<double>(*m_current->get_maximum()))));
   if(current != m_current->get()) {
     m_current->set(current);
   }
