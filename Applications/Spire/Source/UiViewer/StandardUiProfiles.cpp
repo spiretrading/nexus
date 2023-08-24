@@ -3771,7 +3771,7 @@ UiProfile Spire::make_slider_profile() {
 UiProfile Spire::make_slider_2d_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
-  auto type_property = define_enum<int>({{"ColorSpectrum", 0}, {"None", 1}});
+  auto type_property = define_enum<int>({{"None", 0}, {"ColorSpectrum", 1}});
   properties.push_back(make_standard_enum_property("type", type_property));
   properties.push_back(make_standard_property("minimum_x", 0));
   properties.push_back(make_standard_property("maximum_x", 100));
@@ -3830,22 +3830,22 @@ UiProfile Spire::make_slider_2d_profile() {
     auto& type = get<int>("type", profile.get_properties());
     type.connect_changed_signal([=] (auto value) {
       if(value == 0) {
+        update_style(*slider, [] (auto& style) {
+          style.get(Any() > Track()).set(IconImage(QImage()));
+          style.get(Any() > Thumb() > is_a<Icon>()).set(IconImage(QImage()));
+        });
+      } else {
         update_style(*slider, [&] (auto& style) {
-          style.get(Any()).
-            set(border(scale_width(1), QColor(0xC8C8C8)));
           style.get(Any() > Track()).set(IconImage(track_image));
           style.get(Any() > Thumb() > is_a<Icon>()).
             set(Fill(boost::optional<QColor>())).
             set(IconImage(thumb_image));
           style.get(Focus() > Thumb() > is_a<Icon>()).
             set(Fill(QColor(0x808080)));
-          });
-      } else {
-        update_style(*slider, [] (auto& style) {
-          style.get(Any() > Track()).set(IconImage(QImage()));
-          style.get(Any() > Thumb() > is_a<Icon>()).set(IconImage(QImage()));
         });
       }
+      current_x_model->set(current_x_model->get());
+      current_y_model->set(current_y_model->get());
     });
     auto& minimum_x = get<int>("minimum_x", profile.get_properties());
     minimum_x.connect_changed_signal([=] (auto value) {

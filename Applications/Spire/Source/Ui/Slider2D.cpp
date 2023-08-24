@@ -5,8 +5,8 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalScalarValueModel.hpp"
 #include "Spire/Ui/Box.hpp"
+#include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/Icon.hpp"
-#include "Spire/Ui/LayeredWidget.hpp"
 #include "Spire/Ui/Layouts.hpp"
 
 using namespace boost;
@@ -15,6 +15,48 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  using ImageTrack = StateSelector<void, struct ImageTrackSelectorTag>;
+  using ImageThumb = StateSelector<void, struct ImageThumbSelectorTag>;
+
+  auto DEFAULT_THUMB_SIZE() {
+    static auto size = scale(16, 16);
+    return size;
+  }
+
+  auto DEFAULT_STYLE() {
+    auto style = StyleSheet();
+    style.get(Any() > TrackPad()).
+      set(BackgroundColor(QColor(0xC8C8C8)));
+    style.get(Hover() > TrackPad()).
+      set(BackgroundColor(QColor(0xA0A0A0)));
+    style.get(Disabled() > TrackPad()).
+      set(BackgroundColor(QColor(0xEBEBEB)));
+    style.get(Any() > Track()).
+      set(horizontal_padding(scale_width(8))).
+      set(vertical_padding(scale_height(8)));
+    style.get(Any() > ImageTrack()).set(padding(0));
+    style.get(Any() > Thumb()).
+      set(BackgroundColor(QColor(0xF5F5F5))).
+      set(border(scale_width(2), QColor(0x8D78EC))).
+      set(border_radius(scale_width(2)));
+    style.get(Focus() > Thumb()).
+      set(BackgroundColor(QColor(0x7E71B8))).
+      set(border_color(QColor(0x4B23A0)));
+    style.get(Any() > (Thumb() && Hover())).
+      set(BackgroundColor(QColor(0x8D78EC))).
+      set(border_color(QColor(0x4B23A0)));
+    style.get(Any() > (Thumb() && Press())).
+      set(BackgroundColor(QColor(0x7E71B8))).
+      set(border_color(QColor(0x4B23A0)));
+    style.get(Disabled() > Thumb()).
+      set(BackgroundColor(QColor(0xEBEBEB))).
+      set(border_color(QColor(0xA0A0A0)));
+    style.get(Any() > ImageThumb()).
+      set(BackgroundColor(Qt::transparent)).
+      set(border_size(0));
+    return style;
+  }
+
   auto make_modifiers(const ScalarValueModel<int>& x,
       const ScalarValueModel<int>& y) {
     auto modifiers = QHash<Qt::KeyboardModifier, QPoint>();
@@ -61,19 +103,25 @@ Slider2D::Slider2D(std::shared_ptr<ScalarValueModel<int>> current_x,
       m_is_modified(false) {
   setFocusPolicy(Qt::StrongFocus);
   auto body = new QWidget();
-  m_track_body = new QLabel();
-  m_track_body->setScaledContents(true);
-  m_track_body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  m_track = new Box(m_track_body);
+  m_track_image_container = new QLabel();
+  m_track_image_container->setScaledContents(true);
+  m_track_image_container->setSizePolicy(
+    QSizePolicy::Expanding, QSizePolicy::Expanding);
+  auto track_pad = new Box(m_track_image_container);
+  track_pad->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  match(*track_pad, TrackPad());
+  m_track = new Box(track_pad);
   m_track->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   match(*m_track, Track());
   enclose(*body, *m_track);
   auto thumb_icon = new Icon(QImage());
   m_thumb = new Box(thumb_icon, m_track);
+  m_thumb->setFixedSize(DEFAULT_THUMB_SIZE());
   match(*m_thumb, Thumb());
   auto box = new Box(body);
   enclose(*this, *box);
   proxy_style(*this, *box);
+  set_style(*this, DEFAULT_STYLE());
   m_focus_observer.connect_state_signal(
     std::bind_front(&Slider2D::on_focus, this));
   m_current_x_connection = m_current_x->connect_update_signal(
@@ -136,7 +184,7 @@ void Slider2D::keyPressEvent(QKeyEvent* event) {
 
 void Slider2D::mouseMoveEvent(QMouseEvent* event) {
   if(m_is_mouse_down) {
-    auto pos = m_track->mapFromGlobal(event->globalPos());
+    auto pos = m_track->get_body()->mapFromGlobal(event->globalPos());
     auto current_x = to_value_x(pos.x());
     auto current_y = to_value_y(pos.y());
     if(m_step_size != QPoint(0, 0)) {
@@ -153,7 +201,7 @@ void Slider2D::mouseMoveEvent(QMouseEvent* event) {
 void Slider2D::mousePressEvent(QMouseEvent* event) {
   if(event->button() == Qt::LeftButton) {
     m_is_mouse_down = true;
-    auto pos = m_track->mapFromGlobal(event->globalPos());
+    auto pos = m_track->get_body()->mapFromGlobal(event->globalPos());
     set_current_x(to_value_x(pos.x()));
     set_current_y(to_value_y(pos.y()));
   }
@@ -196,22 +244,26 @@ QPoint Slider2D::get_increment(int modifier_flag) const {
 
 double Slider2D::to_value_x(int x) const {
   return *m_current_x->get_minimum() + x * get_range(*m_current_x) /
-    m_track_body->width();
+    m_track->get_body()->width();
 }
 
 double Slider2D::to_value_y(int y) const {
   return *m_current_y->get_maximum() - y * get_range(*m_current_y) /
-    m_track_body->height();
+    m_track->get_body()->height();
 }
 
 int Slider2D::to_position_x(double x) const {
+  auto track_body_pos = m_track->get_body()->mapTo(m_track, QPoint(0, 0));
   return static_cast<int>((x - *m_current_x->get_minimum()) /
-    get_range(*m_current_x) * m_track_body->width() - m_thumb->width() / 2.0);
+    get_range(*m_current_x) * m_track->get_body()->width() -
+      m_thumb->width() / 2.0) + track_body_pos.x();
 }
 
 int Slider2D::to_position_y(double y) const {
+  auto track_body_pos = m_track->get_body()->mapTo(m_track, QPoint(0, 0));
   return static_cast<int>((*m_current_y->get_maximum() - y) /
-    get_range(*m_current_y) * m_track_body->height() - m_thumb->height() / 2.0);
+    get_range(*m_current_y) * m_track->get_body()->height() -
+      m_thumb->height() / 2.0) + track_body_pos.y();
 }
 
 void Slider2D::set_current_x(double x) {
@@ -256,6 +308,7 @@ void Slider2D::on_current_y(int y) {
 
 void Slider2D::on_track_style() {
   auto& stylist = find_stylist(*m_track);
+  auto has_update = std::make_shared<bool>(false);
   for(auto& property : stylist.get_computed_block()) {
     property.visit(
       [&] (const IconImage& image) {
@@ -263,16 +316,25 @@ void Slider2D::on_track_style() {
           if(m_track_image == image) {
             return;
           }
+          *has_update = true;
           m_track_image = image;
-          m_track_body->setPixmap(QPixmap::fromImage(m_track_image));
-          m_track_body->update();
         });
       });
+  }
+  if(*has_update) {
+    if(m_track_image.isNull()) {
+      unmatch(*m_track, ImageTrack());
+    } else {
+      match(*m_track, ImageTrack());
+    }
+    m_track_image_container->setPixmap(QPixmap::fromImage(m_track_image));
+    m_track_image_container->update();
   }
 }
 
 void Slider2D::on_thumb_icon_style() {
   auto& stylist = find_stylist(*m_thumb->get_body());
+  auto has_update = std::make_shared<bool>(false);
   for(auto& property : stylist.get_computed_block()) {
     property.visit(
       [&] (const IconImage& image) {
@@ -280,10 +342,18 @@ void Slider2D::on_thumb_icon_style() {
           if(m_thumb_image == image) {
             return;
           }
+          *has_update = true;
           m_thumb_image = image;
-          m_thumb->setFixedSize(m_thumb_image.size());
-          m_thumb->show();
         });
       });
+  }
+  if(*has_update) {
+    if(m_thumb_image.isNull()) {
+      unmatch(*m_thumb, ImageThumb());
+      m_thumb->setFixedSize(DEFAULT_THUMB_SIZE());
+    } else {
+      match(*m_thumb, ImageThumb());
+      m_thumb->setFixedSize(m_thumb_image.size());
+    }
   }
 }

@@ -7,6 +7,11 @@
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+namespace Styles {
+
+  /** Selects the pad of the track. */
+  using TrackPad = StateSelector<void, struct TrackPadSelectorTag>;
+}
 
   /**
    * Represents a 2D slider.
@@ -86,7 +91,7 @@ namespace Spire {
       QHash<Qt::KeyboardModifier, QPoint> m_modifiers;
       QPoint m_submission;
       QPoint m_step_size;
-      QLabel* m_track_body;
+      QLabel* m_track_image_container;
       Box* m_track;
       Box* m_thumb;
       QImage m_track_image;
