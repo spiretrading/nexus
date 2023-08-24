@@ -98,7 +98,7 @@ namespace Styles {
       Qt::Orientation m_orientation;
       int m_submission;
       int m_step_size;
-      QLabel* m_track_label;
+      QLabel* m_track_image_container;
       Box* m_track_fill;
       Box* m_track;
       Box* m_thumb;

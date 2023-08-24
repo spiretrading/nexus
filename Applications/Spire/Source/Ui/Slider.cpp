@@ -47,15 +47,17 @@ namespace {
   auto DEFAULT_STYLE() {
     auto style = StyleSheet();
     style.get(Any() > TrackRail()).
+      set(BackgroundColor(QColor(0xC8C8C8)));
+    style.get(Any() > (Track() && Hover()) > TrackRail()).
       set(BackgroundColor(QColor(0xA0A0A0)));
     style.get(Disabled() > TrackRail()).
-      set(BackgroundColor(QColor(0xC8C8C8)));
+      set(BackgroundColor(QColor(0xEBEBEB)));
     style.get(Any() > TrackFill()).
       set(BackgroundColor(QColor(0x8D78EC)));
-    style.get((Hover() || Press()) > TrackFill()).
+    style.get(Any() > (Track() && (Hover() || Press())) > TrackFill()).
       set(BackgroundColor(QColor(0x4B23A0)));
     style.get(Disabled() > TrackFill()).
-      set(BackgroundColor(QColor(0x808080)));
+      set(BackgroundColor(QColor(0xA0A0A0)));
     style.get(matches(EnumProperty<Qt::Orientation>(Qt::Vertical)) > Track()).
       set(horizontal_padding(0)).
       set(vertical_padding(VERTICAL_PADDING_SIZE()));
@@ -167,10 +169,11 @@ Slider::Slider(std::shared_ptr<ScalarValueModel<int>> current,
   setFocusPolicy(Qt::StrongFocus);
   auto track_body = new LayeredWidget();
   track_body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  m_track_label = new QLabel();
-  m_track_label->setScaledContents(true);
-  m_track_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-  auto track_rail = new Box(m_track_label);
+  m_track_image_container = new QLabel();
+  m_track_image_container->setScaledContents(true);
+  m_track_image_container->setSizePolicy(
+    QSizePolicy::Expanding, QSizePolicy::Fixed);
+  auto track_rail = new Box(m_track_image_container);
   track_rail->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   match(*track_rail, TrackRail());
   track_body->add(track_rail);
@@ -315,8 +318,7 @@ double Slider::to_value(int position) const {
 int Slider::to_position(double value) const {
   auto distance = get_distance(m_orientation, value, *m_current->get_minimum(),
     *m_current->get_maximum());
-  auto track_body_pos =
-    m_body->mapFromGlobal(m_track->get_body()->mapToGlobal(QPoint(0, 0)));
+  auto track_body_pos = m_track->get_body()->mapTo(m_body, QPoint(0, 0));
   return distance / get_range() *
     get_size(m_orientation, m_track->get_body()->size()) -
       get_size(m_orientation, m_thumb->size()) / 2.0 +
@@ -345,7 +347,6 @@ void Slider::update_track() {
   } else {
     m_track_fill->hide();
   }
-  on_current(m_current->get());
 }
 
 void Slider::update_thumb() {
@@ -354,7 +355,6 @@ void Slider::update_thumb() {
   } else {
     m_thumb->setFixedSize(m_thumb_image.size());
   }
-  on_current(m_current->get());
 }
 
 void Slider::on_focus(FocusObserver::State state) {
@@ -408,8 +408,8 @@ void Slider::on_track_style() {
     } else {
       match(*m_track, ImageTrack());
     }
-    m_track_label->setPixmap(QPixmap::fromImage(m_track_image));
-    m_track_label->update();
+    m_track_image_container->setPixmap(QPixmap::fromImage(m_track_image));
+    m_track_image_container->update();
     update_track();
   }
 }
@@ -449,8 +449,8 @@ void Slider::on_style() {
             return;
           }
           m_orientation = orientation;
-          m_track_label->setSizePolicy(
-            m_track_label->sizePolicy().transposed());
+          m_track_image_container->setSizePolicy(
+            m_track_image_container->sizePolicy().transposed());
           m_track_layout->setDirection(get_layout_direction(m_orientation));
           m_thumb->setFixedSize(m_thumb->size().transposed());
           update_track();
