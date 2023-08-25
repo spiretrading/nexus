@@ -54,6 +54,7 @@ ScrollBar::ScrollBar(Qt::Orientation orientation, QWidget* parent)
   m_thumb = new Box();
   update_style(*m_thumb, [] (auto& style) {
     style.get(Any()).set(BackgroundColor(QColor(0xC8C8C8)));
+    style.get(Hover() || Drag()).set(BackgroundColor(QColor(0xA0A0A0)));
   });
   m_thumb->setSizePolicy(sizePolicy().transposed());
   m_track = new Box(m_thumb);
@@ -170,6 +171,7 @@ void ScrollBar::mousePressEvent(QMouseEvent* event) {
   if(m_thumb->rect().contains(m_thumb->mapFromGlobal(event->globalPos()))) {
     m_drag_position = ::get_position(m_orientation, event->windowPos());
     m_is_dragging = true;
+    match(*m_thumb, Drag());
   } else if(::get_position(m_orientation, event->globalPos()) < ::get_position(
       m_orientation, m_thumb->mapToGlobal(m_thumb->pos()))) {
     m_track_scroll_direction = -1;
@@ -187,6 +189,7 @@ void ScrollBar::mousePressEvent(QMouseEvent* event) {
 
 void ScrollBar::mouseReleaseEvent(QMouseEvent* event) {
   m_is_dragging = false;
+  unmatch(*m_thumb, Drag());
   if(m_track_scroll_direction != 0) {
     m_track_scroll_timer.stop();
     m_track_scroll_direction = 0;
