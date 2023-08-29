@@ -3430,8 +3430,8 @@ UiProfile Spire::make_scroll_box_profile() {
   properties.push_back(make_standard_property("vertical-padding", 10));
   properties.push_back(
     make_standard_property("border-color", QColor(0xC8C8C8)));
-  properties.push_back(make_standard_property("rows", 10));
-  properties.push_back(make_standard_property("columns", 10));
+  properties.push_back(make_standard_property("rows", 3));
+  properties.push_back(make_standard_property("columns", 3));
   auto profile = UiProfile("ScrollBox", properties, [] (auto& profile) {
     auto label = new QLabel();
     auto& columns = get<int>("columns", profile.get_properties());
@@ -3439,7 +3439,6 @@ UiProfile Spire::make_scroll_box_profile() {
     label->setPixmap(QPixmap::fromImage(
       make_grid_image(scale(100, 100), columns.get(), rows.get())));
     auto scroll_box = new ScrollBox(label);
-    scroll_box->setFixedSize(scale(320, 240));
     apply_widget_properties(scroll_box, profile.get_properties());
     auto& horizontal_display_policy = get<ScrollBox::DisplayPolicy>(
       "horizontal_display_policy", profile.get_properties());

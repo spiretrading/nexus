@@ -52,12 +52,14 @@ ScrollBar::ScrollBar(Qt::Orientation orientation, QWidget* parent)
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   }
   m_thumb = new Box();
+  match(*m_thumb, ScrollThumb());
   update_style(*m_thumb, [] (auto& style) {
     style.get(Any()).set(BackgroundColor(QColor(0xC8C8C8)));
     style.get(Hover() || Drag()).set(BackgroundColor(QColor(0xA0A0A0)));
   });
   m_thumb->setSizePolicy(sizePolicy().transposed());
   m_track = new Box(m_thumb);
+  match(*m_track, ScrollTrack());
   update_style(*m_track, [&] (auto& style) {
     style.get(Any()).
       set(border(0, QColor(Qt::black))).
@@ -140,9 +142,9 @@ connection ScrollBar::connect_position_signal(
 
 QSize ScrollBar::sizeHint() const {
   if(m_orientation == Qt::Orientation::Vertical) {
-    return scale(15, 1);
+    return scale(13, 1);
   } else {
-    return scale(1, 15);
+    return scale(1, 13);
   }
 }
 

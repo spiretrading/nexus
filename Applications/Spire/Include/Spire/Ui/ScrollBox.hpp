@@ -2,6 +2,7 @@
 #define SPIRE_SCROLL_BOX_HPP
 #include <QWidget>
 #include "Spire/Styles/StyleSheetMap.hpp"
+#include "Spire/Ui/HoverObserver.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -92,6 +93,7 @@ namespace Spire {
       void showEvent(QShowEvent* event) override;
 
     private:
+      struct ScrollBarAnimation;
       QWidget* m_body;
       DisplayPolicy m_horizontal_display_policy;
       DisplayPolicy m_vertical_display_policy;
@@ -99,10 +101,22 @@ namespace Spire {
       ScrollableLayer* m_scrollable_layer;
       QMargins m_padding;
       QMargins m_borders;
+      HoverObserver m_hover_observer;
+      boost::optional<HoverObserver> m_horizontal_bar_hover_observer;
+      boost::optional<HoverObserver> m_vertical_bar_hover_observer;
+      std::unique_ptr<ScrollBarAnimation> m_horizontal_bar_animation;
+      std::unique_ptr<ScrollBarAnimation> m_vertical_bar_animation;
       Styles::StyleSheetMap m_border_styles;
       Styles::StyleSheetMap m_padding_styles;
       boost::signals2::scoped_connection m_style_connection;
 
+      void ease(ScrollBarAnimation& animation, int size,
+        const boost::posix_time::time_duration& duration,
+        QEasingCurve::Type type);
+      void ease_in_horizontal_scroll_bar(int size);
+      void ease_in_vertical_scroll_bar(int size);
+      void ease_out_horizontal_scroll_bar(int size);
+      void ease_out_vertical_scroll_bar(int size);
       void commit_border_styles();
       void commit_padding_styles();
       void on_style();
@@ -110,6 +124,9 @@ namespace Spire {
       void on_horizontal_scroll(int position);
       void update_layout();
       void update_ranges();
+      void on_hover(HoverObserver::State state);
+      void on_horizontal_bar_hover(HoverObserver::State state);
+      void on_vertical_bar_hover(HoverObserver::State state);
   };
 }
 
