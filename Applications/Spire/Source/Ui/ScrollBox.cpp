@@ -210,6 +210,7 @@ ScrollBox::ScrollBox(QWidget* body, QWidget* parent)
       m_body(body),
       m_horizontal_display_policy(DisplayPolicy::ON_OVERFLOW),
       m_vertical_display_policy(DisplayPolicy::ON_OVERFLOW),
+      m_focus_observer(*this),
       m_hover_observer(*this),
       m_border_styles([=] { commit_border_styles(); }),
       m_padding_styles([=] { commit_padding_styles(); }) {
@@ -242,6 +243,8 @@ ScrollBox::ScrollBox(QWidget* body, QWidget* parent)
   layers->add(m_scrollable_layer);
   enclose(*this, *layers);
   m_style_connection = connect_style_signal(*this, [=] { on_style(); });
+  m_focus_observer.connect_state_signal(
+    std::bind_front(&ScrollBox::on_focus, this));
   m_hover_observer.connect_state_signal(
     std::bind_front(&ScrollBox::on_hover, this));
   m_horizontal_bar_hover_observer->connect_state_signal(
@@ -431,20 +434,30 @@ void ScrollBox::ease(ScrollBarAnimation& animation, int size,
 }
 
 void ScrollBox::ease_in_horizontal_scroll_bar(int size) {
-  ease(*m_horizontal_bar_animation, size, EASE_DURATION, QEasingCurve::InCubic);
+  if(m_horizontal_display_policy == DisplayPolicy::ON_ENGAGE) {
+    ease(*m_horizontal_bar_animation, size, EASE_DURATION,
+      QEasingCurve::InCubic);
+  }
 }
 
 void ScrollBox::ease_in_vertical_scroll_bar(int size) {
-  ease(*m_vertical_bar_animation, size, EASE_DURATION, QEasingCurve::InCubic);
+  if(m_vertical_display_policy == DisplayPolicy::ON_ENGAGE) {
+    ease(*m_vertical_bar_animation, size, EASE_DURATION, QEasingCurve::InCubic);
+  }
 }
 
 void ScrollBox::ease_out_horizontal_scroll_bar(int size) {
-  ease(*m_horizontal_bar_animation, size, EASE_DURATION,
-    QEasingCurve::OutCubic);
+  if(m_horizontal_display_policy == DisplayPolicy::ON_ENGAGE) {
+    ease(*m_horizontal_bar_animation, size, EASE_DURATION,
+      QEasingCurve::OutCubic);
+  }
 }
 
 void ScrollBox::ease_out_vertical_scroll_bar(int size) {
-  ease(*m_vertical_bar_animation, size, EASE_DURATION, QEasingCurve::OutCubic);
+  if(m_vertical_display_policy == DisplayPolicy::ON_ENGAGE) {
+    ease(*m_vertical_bar_animation, size, EASE_DURATION,
+      QEasingCurve::OutCubic);
+  }
 }
 
 void ScrollBox::commit_border_styles() {
@@ -689,21 +702,26 @@ void ScrollBox::update_ranges() {
     m_viewport->width());
 }
 
+void ScrollBox::on_focus(FocusObserver::State state) {
+  if(state != FocusObserver::State::NONE) {
+    ease_in_vertical_scroll_bar(NARROW_SCROLL_BAR_SIZE().width());
+    ease_in_horizontal_scroll_bar(NARROW_SCROLL_BAR_SIZE().height());
+  } else if(m_hover_observer.get_state() == HoverObserver::State::NONE) {
+    ease_out_vertical_scroll_bar(0);
+    ease_out_horizontal_scroll_bar(0);
+  }
+}
+
 void ScrollBox::on_hover(HoverObserver::State state) {
+  if(m_focus_observer.get_state() != FocusObserver::State::NONE) {
+    return;
+  }
   if(state == HoverObserver::State::NONE) {
-    if(m_vertical_display_policy == DisplayPolicy::ON_ENGAGE) {
-      ease_out_vertical_scroll_bar(0);
-    }
-    if(m_horizontal_display_policy == DisplayPolicy::ON_ENGAGE) {
-      ease_out_horizontal_scroll_bar(0);
-    }
+    ease_out_vertical_scroll_bar(0);
+    ease_out_horizontal_scroll_bar(0);
   } else {
-    if(m_vertical_display_policy == DisplayPolicy::ON_ENGAGE) {
-      ease_in_vertical_scroll_bar(NARROW_SCROLL_BAR_SIZE().width());
-    }
-    if(m_horizontal_display_policy == DisplayPolicy::ON_ENGAGE) {
-      ease_in_horizontal_scroll_bar(NARROW_SCROLL_BAR_SIZE().height());
-    }
+    ease_in_vertical_scroll_bar(NARROW_SCROLL_BAR_SIZE().width());
+    ease_in_horizontal_scroll_bar(NARROW_SCROLL_BAR_SIZE().height());
   }
 }
 

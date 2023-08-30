@@ -2,6 +2,7 @@
 #define SPIRE_SCROLL_BOX_HPP
 #include <QWidget>
 #include "Spire/Styles/StyleSheetMap.hpp"
+#include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/HoverObserver.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -101,6 +102,7 @@ namespace Spire {
       ScrollableLayer* m_scrollable_layer;
       QMargins m_padding;
       QMargins m_borders;
+      FocusObserver m_focus_observer;
       HoverObserver m_hover_observer;
       boost::optional<HoverObserver> m_horizontal_bar_hover_observer;
       boost::optional<HoverObserver> m_vertical_bar_hover_observer;
@@ -124,6 +126,7 @@ namespace Spire {
       void on_horizontal_scroll(int position);
       void update_layout();
       void update_ranges();
+      void on_focus(FocusObserver::State state);
       void on_hover(HoverObserver::State state);
       void on_horizontal_bar_hover(HoverObserver::State state);
       void on_vertical_bar_hover(HoverObserver::State state);
