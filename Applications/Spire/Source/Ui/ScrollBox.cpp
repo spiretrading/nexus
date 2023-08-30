@@ -241,7 +241,6 @@ ScrollBox::ScrollBox(QWidget* body, QWidget* parent)
     std::make_unique<ScrollBarAnimation>(vertical_scroll_bar);
   layers->add(m_scrollable_layer);
   enclose(*this, *layers);
-  update_layout();
   m_style_connection = connect_style_signal(*this, [=] { on_style(); });
   m_hover_observer.connect_state_signal(
     std::bind_front(&ScrollBox::on_hover, this));

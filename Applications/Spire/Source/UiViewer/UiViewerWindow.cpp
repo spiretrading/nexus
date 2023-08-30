@@ -90,9 +90,9 @@ namespace {
   void update_center_stage(QScrollArea& center_stage, UiProfile& profile) {
     if(profile.get_name() == "AdaptiveBox" ||
         profile.get_name() == "PopupBox" || profile.get_name() == "ScrollBox") {
+      profile.get_widget()->setMinimumSize(0, 0);
+      profile.get_widget()->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
       center_stage.setWidget(profile.get_widget());
-      center_stage.setMinimumSize(profile.get_widget()->minimumSize());
-      //center_stage.setWidgetResizable(true);
     } else {
       center_stage.setWidget(new SizeAdjustedContainer(profile.get_widget()));
     }
