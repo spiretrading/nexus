@@ -166,6 +166,20 @@ namespace {
     }
   }
 
+  bool is_thumb_dragging(const ScrollBar& scroll_bar) {
+    auto thumb =
+      static_cast<Box*>(scroll_bar.layout()->itemAt(0)->widget())->get_body();
+    return find_stylist(*thumb).is_match(Drag());
+  }
+
+  bool is_horizontal_thumb_dragging(ScrollableLayer& layer) {
+    return is_thumb_dragging(layer.get_horizontal_scroll_bar());
+  }
+
+  bool is_vertical_thumb_dragging(ScrollableLayer& layer) {
+    return is_thumb_dragging(layer.get_vertical_scroll_bar());
+  }
+
   struct Viewport : QWidget {
     QWidget* m_body;
 
@@ -390,6 +404,16 @@ bool ScrollBox::eventFilter(QObject* watched, QEvent* event) {
     }
   } else if(event->type() == QEvent::Show || event->type() == QEvent::Hide) {
     update_ranges();
+  } else if(event->type() == QEvent::MouseButtonRelease) {
+    if(watched == &m_scrollable_layer->get_vertical_scroll_bar() &&
+        m_vertical_bar_hover_observer->get_state() ==
+          HoverObserver::State::NONE) {
+      ease_out_vertical_scroll_bar(NARROW_SCROLL_BAR_SIZE().width());
+    } else if(watched == &m_scrollable_layer->get_horizontal_scroll_bar() &&
+        m_horizontal_bar_hover_observer->get_state() ==
+          HoverObserver::State::NONE) {
+      ease_out_horizontal_scroll_bar(NARROW_SCROLL_BAR_SIZE().height());
+    }
   }
   return QWidget::eventFilter(watched, event);
 }
@@ -717,11 +741,19 @@ void ScrollBox::on_hover(HoverObserver::State state) {
     return;
   }
   if(state == HoverObserver::State::NONE) {
-    ease_out_vertical_scroll_bar(0);
-    ease_out_horizontal_scroll_bar(0);
+    if(!is_vertical_thumb_dragging(*m_scrollable_layer)) {
+      ease_out_vertical_scroll_bar(0);
+    }
+    if(!is_horizontal_thumb_dragging(*m_scrollable_layer)) {
+      ease_out_horizontal_scroll_bar(0);
+    }
   } else {
-    ease_in_vertical_scroll_bar(NARROW_SCROLL_BAR_SIZE().width());
-    ease_in_horizontal_scroll_bar(NARROW_SCROLL_BAR_SIZE().height());
+    if(!is_vertical_thumb_dragging(*m_scrollable_layer)) {
+      ease_in_vertical_scroll_bar(NARROW_SCROLL_BAR_SIZE().width());
+    }
+    if(!is_horizontal_thumb_dragging(*m_scrollable_layer)) {
+      ease_in_horizontal_scroll_bar(NARROW_SCROLL_BAR_SIZE().height());
+    }
   }
 }
 
@@ -731,8 +763,9 @@ void ScrollBox::on_horizontal_bar_hover(HoverObserver::State state) {
   }
   if(state != HoverObserver::State::NONE) {
     ease_in_horizontal_scroll_bar(WIDE_SCROLL_BAR_SIZE().height());
-  } else if(m_hover_observer.get_state() != HoverObserver::State::NONE) {
-    ease_out_horizontal_scroll_bar(NARROW_SCROLL_BAR_SIZE().height());
+  } else if(m_hover_observer.get_state() != HoverObserver::State::NONE &&
+      !is_horizontal_thumb_dragging(*m_scrollable_layer)) {
+    ease_in_horizontal_scroll_bar(NARROW_SCROLL_BAR_SIZE().height());
   }
 }
 
@@ -742,7 +775,8 @@ void ScrollBox::on_vertical_bar_hover(HoverObserver::State state) {
   }
   if(state != HoverObserver::State::NONE) {
     ease_in_vertical_scroll_bar(WIDE_SCROLL_BAR_SIZE().width());
-  } else if(m_hover_observer.get_state() != HoverObserver::State::NONE) {
-    ease_out_vertical_scroll_bar(NARROW_SCROLL_BAR_SIZE().width());
+  } else if(m_hover_observer.get_state() != HoverObserver::State::NONE &&
+      !is_vertical_thumb_dragging(*m_scrollable_layer)) {
+    ease_in_vertical_scroll_bar(NARROW_SCROLL_BAR_SIZE().width());
   }
 }
