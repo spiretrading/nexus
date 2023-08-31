@@ -68,10 +68,29 @@ namespace {
     return static_cast<double>(*model.get_maximum()) - *model.get_minimum();
   }
 
-  auto get_value(double value, const ScalarValueModel<int>& model) {
-    return static_cast<int>(std::round(std::clamp(value,
+  void set_value(ScalarValueModel<int>& model, double value) {
+    auto new_value = static_cast<int>(std::clamp(std::round(value),
       static_cast<double>(*model.get_minimum()),
-        static_cast<double>(*model.get_maximum()))));
+      static_cast<double>(*model.get_maximum())));
+    if(new_value != model.get()) {
+      model.set(new_value);
+    }
+  }
+
+  auto ceil_value(double value, int step_size) {
+    if(step_size != 0) {
+      auto step = std::abs(step_size);
+      return std::ceil(value / step) * step;
+    }
+    return value;
+  }
+
+  auto round_value(double value, int step_size) {
+    if(step_size != 0) {
+      auto step = std::abs(step_size);
+      return std::round(value / step) * step;
+    }
+    return value;
   }
 }
 
@@ -157,17 +176,17 @@ connection Slider2D::connect_submit_signal(
 
 void Slider2D::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Right) {
-    set_current_x(static_cast<double>(m_current_x->get()) +
-      get_increment(static_cast<int>(event->modifiers())).x());
+    set_current_x(m_current_x->get() + ceil_value(get_increment(
+      static_cast<int>(event->modifiers())).x(), m_step_size.x()));
   } else if(event->key() == Qt::Key_Up) {
-    set_current_y(static_cast<double>(m_current_y->get()) +
-      get_increment(static_cast<int>(event->modifiers())).y());
+    set_current_y(m_current_y->get() + ceil_value(get_increment(
+      static_cast<int>(event->modifiers())).y(), m_step_size.y()));
   } else if(event->key() == Qt::Key_Left) {
-    set_current_x(static_cast<double>(m_current_x->get()) -
-      get_increment(static_cast<int>(event->modifiers())).x());
+    set_current_x(m_current_x->get() - ceil_value(get_increment(
+      static_cast<int>(event->modifiers())).x(), m_step_size.x()));
   } else if(event->key() == Qt::Key_Down) {
-    set_current_y(static_cast<double>(m_current_y->get()) -
-      get_increment(static_cast<int>(event->modifiers())).y());
+    set_current_y(m_current_y->get() - ceil_value(get_increment(
+      static_cast<int>(event->modifiers())).y(), m_step_size.y()));
   } else if(event->key() == Qt::Key_Home) {
     set_current_x(*m_current_x->get_minimum());
     set_current_y(*m_current_y->get_minimum());
@@ -185,15 +204,8 @@ void Slider2D::keyPressEvent(QKeyEvent* event) {
 void Slider2D::mouseMoveEvent(QMouseEvent* event) {
   if(m_is_mouse_down) {
     auto pos = m_track->get_body()->mapFromGlobal(event->globalPos());
-    auto current_x = to_value_x(pos.x());
-    auto current_y = to_value_y(pos.y());
-    if(m_step_size != QPoint(0, 0)) {
-      set_current_x(std::round(current_x / m_step_size.x()) * m_step_size.x());
-      set_current_y(std::round(current_y / m_step_size.y()) * m_step_size.y());
-    } else {
-      set_current_x(current_x);
-      set_current_y(current_y);
-    }
+    set_current_x(round_value(to_value_x(pos.x()), m_step_size.x()));
+    set_current_y(round_value(to_value_y(pos.y()), m_step_size.y()));
   }
   QWidget::mouseMoveEvent(event);
 }
@@ -202,8 +214,8 @@ void Slider2D::mousePressEvent(QMouseEvent* event) {
   if(event->button() == Qt::LeftButton) {
     m_is_mouse_down = true;
     auto pos = m_track->get_body()->mapFromGlobal(event->globalPos());
-    set_current_x(to_value_x(pos.x()));
-    set_current_y(to_value_y(pos.y()));
+    set_current_x(round_value(to_value_x(pos.x()), m_step_size.x()));
+    set_current_y(round_value(to_value_y(pos.y()), m_step_size.y()));
   }
   QWidget::mousePressEvent(event);
 }
@@ -226,11 +238,27 @@ void Slider2D::showEvent(QShowEvent* event) {
 }
 
 void Slider2D::wheelEvent(QWheelEvent* event) {
-  auto increment = get_increment(Qt::NoModifier);
-  set_current_x(
-    m_current_x->get() + increment.x() * event->angleDelta().x() / 120.0);
-  set_current_y(
-    m_current_y->get() + increment.y() * event->angleDelta().y() / 120.0);
+  auto get_direction = [] (int value) {
+    if(value < 0) {
+      return -1;
+    }
+    return 1;
+  };
+  auto [rotation_step_x, rotation_step_y, x_direction, y_direction] = [&] {
+    auto increment = get_increment(Qt::NoModifier);
+    if(event->modifiers().testFlag(Qt::ShiftModifier)) {
+      return std::tuple(increment.x() * event->angleDelta().y() / 120.0, 0.0,
+        get_direction(event->angleDelta().y()), 1);
+    }
+    return std::tuple(increment.x() * event->angleDelta().x() / 120.0,
+      increment.y() * event->angleDelta().y() / 120.0,
+      get_direction(event->angleDelta().x()),
+      get_direction(event->angleDelta().y()));
+  }();
+  set_current_x(m_current_x->get() +
+    x_direction * ceil_value(x_direction * rotation_step_x, m_step_size.x()));
+  set_current_y(m_current_y->get() +
+    y_direction * ceil_value(y_direction * rotation_step_y, m_step_size.y()));
 }
 
 QPoint Slider2D::get_increment(int modifier_flag) const {
@@ -267,17 +295,11 @@ int Slider2D::to_position_y(double y) const {
 }
 
 void Slider2D::set_current_x(double x) {
-  auto current_x = get_value(x, *m_current_x);
-  if(current_x != m_current_x->get()) {
-    m_current_x->set(current_x);
-  }
+  set_value(*m_current_x, x);
 }
 
 void Slider2D::set_current_y(double y) {
-  auto current_y = get_value(y, *m_current_y);
-  if(current_y != m_current_y->get()) {
-    m_current_y->set(current_y);
-  }
+  set_value(*m_current_y, y);
 }
 
 void Slider2D::on_focus(FocusObserver::State state) {
