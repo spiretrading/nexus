@@ -3786,25 +3786,17 @@ UiProfile Spire::make_slider_2d_profile() {
   properties.push_back(make_standard_property("current_x", 0));
   properties.push_back(make_standard_property("current_y", 0));
   auto size = QSize(scale(264, 164));
-  auto brightness_image = QImage(size, QImage::Format_ARGB32_Premultiplied);
   auto brightness_gradient = QLinearGradient(0, 0, 0, size.height());
   brightness_gradient.setColorAt(0, Qt::transparent);
   brightness_gradient.setColorAt(1, Qt::black);
-  auto brightness_painter = QPainter(&brightness_image);
-  brightness_painter.fillRect(QRect({0, 0}, size), brightness_gradient);
-  brightness_painter.end();
-  auto saturation_image = QImage(size, QImage::Format_ARGB32_Premultiplied);
   auto saturation_gradient = QLinearGradient(0, 0, size.height(), 0);
   saturation_gradient.setColorAt(0, QColor(0xFFFFFF));
   saturation_gradient.setColorAt(1, QColor(0xFFDE00));
-  auto saturation_painter = QPainter(&saturation_image);
-  saturation_painter.fillRect(QRect({0, 0}, size), saturation_gradient);
-  saturation_painter.end();
-  auto track_image = QImage(size, QImage::Format_RGB32);
+  auto track_image = QImage(size, QImage::Format_ARGB32_Premultiplied);
   auto painter = QPainter(&track_image);
-  painter.drawImage(0, 0, saturation_image);
+  painter.fillRect(QRect({0, 0}, size), saturation_gradient);
   painter.setCompositionMode(QPainter::CompositionMode_Multiply);
-  painter.drawImage(0, 0, brightness_image);
+  painter.fillRect(QRect({0, 0}, size), brightness_gradient);
   painter.end();
   auto profile = UiProfile("Slider2D", properties, [=] (auto& profile) {
     auto current_x_model = std::make_shared<LocalScalarValueModel<int>>();
