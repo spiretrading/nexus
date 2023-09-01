@@ -143,6 +143,22 @@ namespace {
     }
     return DEFAULT_THUMB_SIZE();
   }
+
+  auto ceil_value(double value, int step_size) {
+    if(step_size != 0) {
+      auto step = std::abs(step_size);
+      return std::ceil(value / step) * step;
+    }
+    return value;
+  }
+
+  auto round_value(double value, int step_size) {
+    if(step_size != 0) {
+      auto step = std::abs(step_size);
+      return std::round(value / step) * step;
+    }
+    return value;
+  }
 }
 
 Slider::Slider(QWidget* parent)
@@ -230,15 +246,17 @@ connection Slider::connect_submit_signal(
 
 void Slider::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Up || event->key() == Qt::Key_Right) {
-    set_current(m_current->get() +
-      get_increment(static_cast<int>(event->modifiers())));
+    set_current(m_current->get() + ceil_value(
+      get_increment(static_cast<int>(event->modifiers())), m_step_size));
   } else if(event->key() == Qt::Key_Down || event->key() == Qt::Key_Left) {
-    set_current(m_current->get() -
-      get_increment(static_cast<int>(event->modifiers())));
+    set_current(m_current->get() - ceil_value(
+      get_increment(static_cast<int>(event->modifiers())), m_step_size));
   } else if(event->key() == Qt::Key_PageUp) {
-    set_current(m_current->get() + get_increment(Qt::ShiftModifier));
+    set_current(m_current->get() +
+      ceil_value(get_increment(Qt::ShiftModifier), m_step_size));
   } else if(event->key() == Qt::Key_PageDown) {
-    set_current(m_current->get() - get_increment(Qt::ShiftModifier));
+    set_current(m_current->get() -
+      ceil_value(get_increment(Qt::ShiftModifier), m_step_size));
   } else if(event->key() == Qt::Key_Home) {
     m_current->set(*m_current->get_minimum());
   } else if(event->key() == Qt::Key_End) {
@@ -252,13 +270,8 @@ void Slider::keyPressEvent(QKeyEvent* event) {
 
 void Slider::mouseMoveEvent(QMouseEvent* event) {
   if(m_is_mouse_down) {
-    auto current = to_value(::get_position(m_orientation,
-      m_track->get_body()->mapFromGlobal(event->globalPos())));
-    if(m_step_size != 0) {
-      set_current(std::round(current / m_step_size) * m_step_size);
-    } else {
-      set_current(current);
-    }
+    set_current(round_value(to_value(::get_position(m_orientation,
+      m_track->get_body()->mapFromGlobal(event->globalPos()))), m_step_size));
   }
   QWidget::mouseMoveEvent(event);
 }
@@ -267,8 +280,8 @@ void Slider::mousePressEvent(QMouseEvent* event) {
   if(event->button() == Qt::LeftButton) {
     m_is_mouse_down = true;
     match(*this, Press());
-    set_current(to_value(::get_position(m_orientation,
-      m_track->get_body()->mapFromGlobal(event->globalPos()))));
+    set_current(round_value(to_value(::get_position(m_orientation,
+      m_track->get_body()->mapFromGlobal(event->globalPos()))), m_step_size));
   }
   QWidget::mousePressEvent(event);
 }
@@ -290,8 +303,16 @@ void Slider::showEvent(QShowEvent* event) {
 }
 
 void Slider::wheelEvent(QWheelEvent* event) {
-  set_current(m_current->get() +
-    event->angleDelta().y() / 120.0 * get_increment(Qt::NoModifier));
+  auto direction = [&] {
+    if(event->angleDelta().y() < 0) {
+      return -1;
+    }
+    return 1;
+  }();
+  auto increment = get_increment(Qt::NoModifier);
+  set_current(m_current->get() + direction *
+    ceil_value(increment * direction * event->angleDelta().y() / 120.0,
+      m_step_size));
 }
 
 int Slider::get_increment(int modifier_flag) const {
@@ -326,9 +347,9 @@ int Slider::to_position(double value) const {
 }
 
 void Slider::set_current(double value) {
-  auto current = static_cast<int>(std::round(std::clamp(value,
+  auto current = static_cast<int>(std::clamp(std::round(value),
     static_cast<double>(*m_current->get_minimum()),
-      static_cast<double>(*m_current->get_maximum()))));
+    static_cast<double>(*m_current->get_maximum())));
   if(current != m_current->get()) {
     m_current->set(current);
   }
