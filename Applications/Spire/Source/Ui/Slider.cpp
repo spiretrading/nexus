@@ -11,6 +11,7 @@
 #include "Spire/Ui/Layouts.hpp"
 
 using namespace boost;
+using namespace boost::multiprecision;
 using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::Styles;
@@ -94,9 +95,15 @@ namespace {
     widget.setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
   }
 
-  auto make_modifiers(const ScalarValueModel<int>& current) {
-    auto modifiers = QHash<Qt::KeyboardModifier, int>();
-    modifiers[Qt::NoModifier] = current.get_increment();
+  auto make_local_scalar_value_model() {
+    auto model = std::make_shared<LocalScalarValueModel<Decimal>>();
+    model->set_increment(std::numeric_limits<Decimal>::epsilon());
+    return model;
+  }
+
+  auto make_modifiers(const ScalarValueModel<Decimal>& current) {
+    auto modifiers = QHash<Qt::KeyboardModifier, Decimal>();
+    modifiers[Qt::NoModifier] = 1;
     return modifiers;
   }
 
@@ -107,16 +114,16 @@ namespace {
     return QBoxLayout::TopToBottom;
   }
 
-  auto get_distance(Qt::Orientation orientation, double value, double minimum,
-      double maximum) {
+  Decimal get_distance(Qt::Orientation orientation, const Decimal& value,
+      const Decimal& minimum, const Decimal& maximum) {
     if(orientation == Qt::Orientation::Vertical) {
       return maximum - value;
     }
     return value - minimum;
   }
 
-  auto get_value(Qt::Orientation orientation, double distance, double minimum,
-      double maximum) {
+  Decimal get_value(Qt::Orientation orientation, const Decimal& distance,
+      const Decimal& minimum, const Decimal& maximum) {
     if(orientation == Qt::Orientation::Vertical) {
       return maximum - distance;
     }
@@ -144,41 +151,99 @@ namespace {
     return DEFAULT_THUMB_SIZE();
   }
 
-  auto ceil_value(double value, int step_size) {
+  Decimal ceil_value(const Decimal& value, const Decimal& step_size) {
     if(step_size != 0) {
-      auto step = std::abs(step_size);
-      return std::ceil(value / step) * step;
+      auto step = abs(step_size);
+      return ceil(value / step) * step;
     }
     return value;
   }
 
-  auto round_value(double value, int step_size) {
+  Decimal round_value(const Decimal& value, const Decimal& step_size) {
     if(step_size != 0) {
-      auto step = std::abs(step_size);
-      return std::round(value / step) * step;
+      auto step = abs(step_size);
+      return round(value / step) * step;
     }
     return value;
   }
 }
 
+struct Slider::SliderValueModel : ScalarValueModel<Decimal> {
+  std::shared_ptr<ScalarValueModel<Decimal>> m_source;
+  scoped_connection m_current_connection;
+
+  SliderValueModel(std::shared_ptr<ScalarValueModel<Decimal>> source)
+    : m_source(std::move(source)),
+      m_current_connection(m_source->connect_update_signal(
+        std::bind_front(&SliderValueModel::on_current, this))) {}
+
+  optional<Decimal> get_minimum() const override {
+    if(!m_source->get_minimum()) {
+      return Decimal(0);
+    }
+    return *m_source->get_minimum();
+  }
+
+  optional<Decimal> get_maximum() const override {
+    if(!m_source->get_maximum()) {
+      return Decimal(100);
+    }
+    return *m_source->get_maximum();
+  }
+
+  Decimal get_increment() const override {
+    return m_source->get_increment();
+  }
+
+  QValidator::State get_state() const override {
+    return m_source->get_state();
+  }
+
+  const Decimal& get() const override {
+    return m_source->get();
+  }
+
+  QValidator::State test(const Decimal& value) const override {
+    return m_source->test(value);
+  }
+
+  QValidator::State set(const Decimal& value) override {
+    return m_source->set(value);
+  }
+
+  connection connect_update_signal(
+      const UpdateSignal::slot_type& slot) const override {
+    return m_source->connect_update_signal(slot);
+  }
+
+  void on_current(const Decimal& current) {
+    if(current < *get_minimum()) {
+      set(*get_minimum());
+    }
+    if(current > *get_maximum()) {
+      set(*get_maximum());
+    }
+  }
+};
+
 Slider::Slider(QWidget* parent)
-  : Slider(std::make_shared<LocalScalarValueModel<int>>(), parent) {}
+  : Slider(make_local_scalar_value_model(), parent) {}
 
-Slider::Slider(QHash<Qt::KeyboardModifier, int> modifiers, QWidget* parent)
-  : Slider(std::make_shared<LocalScalarValueModel<int>>(),
-      std::move(modifiers), parent) {}
+Slider::Slider(QHash<Qt::KeyboardModifier, Decimal> modifiers, QWidget* parent)
+  : Slider(make_local_scalar_value_model(), std::move(modifiers), parent) {}
 
-Slider::Slider(std::shared_ptr<ScalarValueModel<int>> current, QWidget* parent)
+Slider::Slider(std::shared_ptr<ScalarValueModel<Decimal>> current,
+  QWidget* parent)
   : Slider(std::move(current), make_modifiers(*current), parent) {}
 
-Slider::Slider(std::shared_ptr<ScalarValueModel<int>> current,
-    QHash<Qt::KeyboardModifier, int> modifiers, QWidget* parent)
+Slider::Slider(std::shared_ptr<ScalarValueModel<Decimal>> current,
+    QHash<Qt::KeyboardModifier, Decimal> modifiers, QWidget* parent)
     : QWidget(parent),
-      m_current(std::move(current)),
+      m_current(std::make_shared<SliderValueModel>(std::move(current))),
       m_modifiers(std::move(modifiers)),
       m_orientation(Qt::Horizontal),
       m_submission(m_current->get()),
-      m_step_size(0),
+      m_step(0),
       m_focus_observer(*this),
       m_is_mouse_down(false),
       m_is_modified(false) {
@@ -227,16 +292,16 @@ Slider::Slider(std::shared_ptr<ScalarValueModel<int>> current,
     std::bind_front(&Slider::on_style, this));
 }
 
-const std::shared_ptr<ScalarValueModel<int>>& Slider::get_current() const {
-  return m_current;
+const std::shared_ptr<ScalarValueModel<Decimal>>& Slider::get_current() const {
+  return m_current->m_source;
 }
 
-int Slider::get_step_size() const {
-  return m_step_size;
+Decimal Slider::get_step() const {
+  return m_step;
 }
 
-void Slider::set_step_size(int step_size) {
-  m_step_size = step_size;
+void Slider::set_step(const Decimal& step) {
+  m_step = step;
 }
 
 connection Slider::connect_submit_signal(
@@ -247,16 +312,16 @@ connection Slider::connect_submit_signal(
 void Slider::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Up || event->key() == Qt::Key_Right) {
     set_current(m_current->get() + ceil_value(
-      get_increment(static_cast<int>(event->modifiers())), m_step_size));
+      get_increment(static_cast<int>(event->modifiers())), m_step));
   } else if(event->key() == Qt::Key_Down || event->key() == Qt::Key_Left) {
     set_current(m_current->get() - ceil_value(
-      get_increment(static_cast<int>(event->modifiers())), m_step_size));
+      get_increment(static_cast<int>(event->modifiers())), m_step));
   } else if(event->key() == Qt::Key_PageUp) {
     set_current(m_current->get() +
-      ceil_value(get_increment(Qt::ShiftModifier), m_step_size));
+      ceil_value(get_increment(Qt::ShiftModifier), m_step));
   } else if(event->key() == Qt::Key_PageDown) {
     set_current(m_current->get() -
-      ceil_value(get_increment(Qt::ShiftModifier), m_step_size));
+      ceil_value(get_increment(Qt::ShiftModifier), m_step));
   } else if(event->key() == Qt::Key_Home) {
     m_current->set(*m_current->get_minimum());
   } else if(event->key() == Qt::Key_End) {
@@ -271,7 +336,7 @@ void Slider::keyPressEvent(QKeyEvent* event) {
 void Slider::mouseMoveEvent(QMouseEvent* event) {
   if(m_is_mouse_down) {
     set_current(round_value(to_value(::get_position(m_orientation,
-      m_track->get_body()->mapFromGlobal(event->globalPos()))), m_step_size));
+      m_track->get_body()->mapFromGlobal(event->globalPos()))), m_step));
   }
   QWidget::mouseMoveEvent(event);
 }
@@ -281,7 +346,7 @@ void Slider::mousePressEvent(QMouseEvent* event) {
     m_is_mouse_down = true;
     match(*this, Press());
     set_current(round_value(to_value(::get_position(m_orientation,
-      m_track->get_body()->mapFromGlobal(event->globalPos()))), m_step_size));
+      m_track->get_body()->mapFromGlobal(event->globalPos()))), m_step));
   }
   QWidget::mousePressEvent(event);
 }
@@ -312,10 +377,10 @@ void Slider::wheelEvent(QWheelEvent* event) {
   auto increment = get_increment(Qt::NoModifier);
   set_current(m_current->get() + direction *
     ceil_value(increment * direction * event->angleDelta().y() / 120.0,
-      m_step_size));
+      m_step));
 }
 
-int Slider::get_increment(int modifier_flag) const {
+Decimal Slider::get_increment(int modifier_flag) const {
   if(auto increment =
       m_modifiers.find(static_cast<Qt::KeyboardModifier>(modifier_flag));
       increment != m_modifiers.end()) {
@@ -324,32 +389,28 @@ int Slider::get_increment(int modifier_flag) const {
   return m_modifiers[Qt::NoModifier];
 }
 
-double Slider::get_range() const {
-  return static_cast<double>(*m_current->get_maximum()) -
-    *m_current->get_minimum();
-}
-
-double Slider::to_value(int position) const {
-  auto distance = position * get_range() /
-    get_size(m_orientation, m_track->get_body()->size());
+Decimal Slider::to_value(int position) const {
+  auto distance = position *
+    (*m_current->get_maximum() - *m_current->get_minimum()) /
+      get_size(m_orientation, m_track->get_body()->size());
   return get_value(m_orientation, distance, *m_current->get_minimum(),
     *m_current->get_maximum());
 }
 
-int Slider::to_position(double value) const {
+int Slider::to_position(const Decimal& value) const {
   auto distance = get_distance(m_orientation, value, *m_current->get_minimum(),
     *m_current->get_maximum());
   auto track_body_pos = m_track->get_body()->mapTo(m_body, QPoint(0, 0));
-  return distance / get_range() *
-    get_size(m_orientation, m_track->get_body()->size()) -
-      get_size(m_orientation, m_thumb->size()) / 2.0 +
-        get_position(m_orientation, track_body_pos);
+  return static_cast<int>(distance /
+    (*m_current->get_maximum() - *m_current->get_minimum()) *
+      get_size(m_orientation, m_track->get_body()->size()) -
+        get_size(m_orientation, m_thumb->size()) / 2.0 +
+          get_position(m_orientation, track_body_pos));
 }
 
-void Slider::set_current(double value) {
-  auto current = static_cast<int>(std::clamp(std::round(value),
-    static_cast<double>(*m_current->get_minimum()),
-    static_cast<double>(*m_current->get_maximum())));
+void Slider::set_current(const Decimal& value) {
+  auto current = fmin(fmax(value, *m_current->get_minimum()),
+    *m_current->get_maximum());
   if(current != m_current->get()) {
     m_current->set(current);
   }
@@ -386,7 +447,7 @@ void Slider::on_focus(FocusObserver::State state) {
   }
 }
 
-void Slider::on_current(int current) {
+void Slider::on_current(const Decimal& current) {
   if(current < *m_current->get_minimum() ||
       current > *m_current->get_maximum()) {
     return;

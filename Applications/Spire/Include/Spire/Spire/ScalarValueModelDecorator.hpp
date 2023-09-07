@@ -151,7 +151,8 @@ namespace Spire {
         }
       } else if constexpr(std::numeric_limits<Type>::is_specialized) {
         if(unwrapped_value != m_model->get() &&
-            fmod(unwrapped_value, m_increment) != 0) {
+            abs(fmod(unwrapped_value, m_increment)) >=
+              std::numeric_limits<Type>::epsilon()) {
           return QValidator::State::Invalid;
         }
       }
