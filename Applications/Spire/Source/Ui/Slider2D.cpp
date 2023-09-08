@@ -57,66 +57,144 @@ namespace {
     return style;
   }
 
-  auto make_modifiers(const ScalarValueModel<int>& x,
-      const ScalarValueModel<int>& y) {
-    auto modifiers = QHash<Qt::KeyboardModifier, QPoint>();
-    modifiers[Qt::NoModifier] = {x.get_increment(), y.get_increment()};
+  auto make_local_scalar_value_model() {
+    auto model = std::make_shared<LocalScalarValueModel<Decimal>>();
+    model->set_increment(std::numeric_limits<Decimal>::epsilon());
+    return model;
+  }
+
+  auto make_modifiers(const ScalarValueModel<Decimal>& model) {
+    auto modifiers = QHash<Qt::KeyboardModifier, Decimal>();
+    modifiers[Qt::NoModifier] = 1;
     return modifiers;
   }
 
-  auto get_range(const ScalarValueModel<int>& model) {
-    return static_cast<double>(*model.get_maximum()) - *model.get_minimum();
+  auto get_increment(int modifier_flag,
+      const QHash<Qt::KeyboardModifier, Decimal>& modifiers) {
+    if(auto increment =
+        modifiers.find(static_cast<Qt::KeyboardModifier>(modifier_flag));
+        increment != modifiers.end()) {
+      return increment.value();
+    }
+    return modifiers[Qt::NoModifier];
   }
 
-  void set_value(ScalarValueModel<int>& model, double value) {
-    auto new_value = static_cast<int>(std::clamp(std::round(value),
-      static_cast<double>(*model.get_minimum()),
-      static_cast<double>(*model.get_maximum())));
+  auto get_range(const ScalarValueModel<Decimal>& model) {
+    return *model.get_maximum() - *model.get_minimum();
+  }
+
+  void set_value(ScalarValueModel<Decimal>& model, const Decimal& value) {
+    auto new_value = fmin(fmax(value, *model.get_minimum()),
+      *model.get_maximum());
     if(new_value != model.get()) {
       model.set(new_value);
     }
   }
 
-  auto ceil_value(double value, int step_size) {
+  Decimal ceil_value(const Decimal& value, const Decimal& step_size) {
     if(step_size != 0) {
-      auto step = std::abs(step_size);
-      return std::ceil(value / step) * step;
+      auto step = abs(step_size);
+      auto result = ceil(abs(value) / step) * step;
+      if(value < 0) {
+        return -result;
+      }
+      return result;
     }
     return value;
   }
 
-  auto round_value(double value, int step_size) {
+  Decimal round_value(const Decimal& value, const Decimal& step_size) {
     if(step_size != 0) {
-      auto step = std::abs(step_size);
-      return std::round(value / step) * step;
+      auto step = abs(step_size);
+      return round(value / step) * step;
     }
     return value;
   }
 }
 
+struct Slider2D::SliderValueModel : ScalarValueModel<Decimal> {
+  std::shared_ptr<ScalarValueModel<Decimal>> m_source;
+  scoped_connection m_current_connection;
+
+  SliderValueModel(std::shared_ptr<ScalarValueModel<Decimal>> source)
+    : m_source(std::move(source)),
+      m_current_connection(m_source->connect_update_signal(
+        std::bind_front(&SliderValueModel::on_current, this))) {}
+
+  optional<Decimal> get_minimum() const override {
+    if(!m_source->get_minimum()) {
+      return Decimal(0);
+    }
+    return *m_source->get_minimum();
+  }
+
+  optional<Decimal> get_maximum() const override {
+    if(!m_source->get_maximum()) {
+      return Decimal(100);
+    }
+    return *m_source->get_maximum();
+  }
+
+  Decimal get_increment() const override {
+    return m_source->get_increment();
+  }
+
+  QValidator::State get_state() const override {
+    return m_source->get_state();
+  }
+
+  const Decimal& get() const override {
+    return m_source->get();
+  }
+
+  QValidator::State test(const Decimal& value) const override {
+    return m_source->test(value);
+  }
+
+  QValidator::State set(const Decimal& value) override {
+    return m_source->set(value);
+  }
+
+  connection connect_update_signal(
+      const UpdateSignal::slot_type& slot) const override {
+    return m_source->connect_update_signal(slot);
+  }
+
+  void on_current(const Decimal& current) {
+    if(current < *get_minimum()) {
+      set(*get_minimum());
+    }
+    if(current > *get_maximum()) {
+      set(*get_maximum());
+    }
+  }
+};
+
 Slider2D::Slider2D(QWidget* parent)
-  : Slider2D(std::make_shared<LocalScalarValueModel<int>>(),
-      std::make_shared<LocalScalarValueModel<int>>(), parent) {}
+  : Slider2D(make_local_scalar_value_model(), make_local_scalar_value_model(),
+    parent) {}
 
-Slider2D::Slider2D(QHash<Qt::KeyboardModifier, QPoint> modifiers,
-  QWidget* parent)
-  : Slider2D(std::make_shared<LocalScalarValueModel<int>>(),
-      std::make_shared<LocalScalarValueModel<int>>(),
-        std::move(modifiers), parent) {}
+Slider2D::Slider2D(QHash<Qt::KeyboardModifier, Decimal> x_modifiers,
+  QHash<Qt::KeyboardModifier, Decimal> y_modifiers, QWidget* parent)
+  : Slider2D(make_local_scalar_value_model(), make_local_scalar_value_model(),
+    std::move(x_modifiers), std::move(y_modifiers), parent) {}
 
-Slider2D::Slider2D(std::shared_ptr<ScalarValueModel<int>> current_x,
-  std::shared_ptr<ScalarValueModel<int>> current_y, QWidget* parent)
-  : Slider2D(std::move(current_x), std::move(current_y),
-      make_modifiers(*current_x, *current_y), parent) {}
+Slider2D::Slider2D(std::shared_ptr<ScalarValueModel<Decimal>> x_current,
+  std::shared_ptr<ScalarValueModel<Decimal>> y_current, QWidget* parent)
+  : Slider2D(std::move(x_current), std::move(y_current),
+      make_modifiers(*x_current), make_modifiers(*y_current), parent) {}
 
-Slider2D::Slider2D(std::shared_ptr<ScalarValueModel<int>> current_x,
-    std::shared_ptr<ScalarValueModel<int>> current_y,
-    QHash<Qt::KeyboardModifier, QPoint> modifiers, QWidget* parent)
+Slider2D::Slider2D(std::shared_ptr<ScalarValueModel<Decimal>> x_current,
+    std::shared_ptr<ScalarValueModel<Decimal>> y_current,
+    QHash<Qt::KeyboardModifier, Decimal> x_modifiers,
+    QHash<Qt::KeyboardModifier, Decimal> y_modifiers, QWidget* parent)
     : QWidget(parent),
-      m_current_x(std::move(current_x)),
-      m_current_y(std::move(current_y)),
-      m_modifiers(std::move(modifiers)),
-      m_submission({m_current_x->get(), m_current_y->get()}),
+      m_x_current(std::make_shared<SliderValueModel>(std::move(x_current))),
+      m_y_current(std::make_shared<SliderValueModel>(std::move(y_current))),
+      m_x_modifiers(std::move(x_modifiers)),
+      m_y_modifiers(std::move(y_modifiers)),
+      m_x_submission(m_x_current->get()),
+      m_y_submission(m_y_current->get()),
       m_focus_observer(*this),
       m_is_mouse_down(false),
       m_is_modified(false) {
@@ -143,30 +221,40 @@ Slider2D::Slider2D(std::shared_ptr<ScalarValueModel<int>> current_x,
   set_style(*this, DEFAULT_STYLE());
   m_focus_observer.connect_state_signal(
     std::bind_front(&Slider2D::on_focus, this));
-  m_current_x_connection = m_current_x->connect_update_signal(
-    std::bind_front(&Slider2D::on_current_x, this));
-  m_current_y_connection = m_current_y->connect_update_signal(
-    std::bind_front(&Slider2D::on_current_y, this));
+  m_x_current_connection = m_x_current->connect_update_signal(
+    std::bind_front(&Slider2D::on_x_current, this));
+  m_y_current_connection = m_y_current->connect_update_signal(
+    std::bind_front(&Slider2D::on_y_current, this));
   m_track_style_connection = connect_style_signal(*m_track,
     std::bind_front(&Slider2D::on_track_style, this));
   m_thumb_icon_style_connection = connect_style_signal(*thumb_icon,
     std::bind_front(&Slider2D::on_thumb_icon_style, this));
 }
 
-const std::shared_ptr<ScalarValueModel<int>>& Slider2D::get_current_x() const {
-  return m_current_x;
+const std::shared_ptr<ScalarValueModel<Decimal>>&
+    Slider2D::get_x_current() const {
+  return m_x_current->m_source;
 }
 
-const std::shared_ptr<ScalarValueModel<int>>& Slider2D::get_current_y() const {
-  return m_current_y;
+const std::shared_ptr<ScalarValueModel<Decimal>>&
+    Slider2D::get_y_current() const {
+  return m_y_current->m_source;
 }
 
-QPoint Slider2D::get_step_size() const {
-  return m_step_size;
+const Decimal& Slider2D::get_x_step() const {
+  return m_x_step;
 }
 
-void Slider2D::set_step_size(const QPoint& step_size) {
-  m_step_size = step_size;
+void Slider2D::set_x_step(const Decimal& step) {
+  m_x_step = step;
+}
+
+const Decimal& Slider2D::get_y_step() const {
+  return m_y_step;
+}
+
+void Slider2D::set_y_step(const Decimal& step) {
+  m_y_step = step;
 }
 
 connection Slider2D::connect_submit_signal(
@@ -176,26 +264,26 @@ connection Slider2D::connect_submit_signal(
 
 void Slider2D::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Right) {
-    set_current_x(m_current_x->get() + ceil_value(get_increment(
-      static_cast<int>(event->modifiers())).x(), m_step_size.x()));
+    set_x_current(m_x_current->get() + ceil_value(get_increment(
+      static_cast<int>(event->modifiers()), m_x_modifiers), m_x_step));
   } else if(event->key() == Qt::Key_Up) {
-    set_current_y(m_current_y->get() + ceil_value(get_increment(
-      static_cast<int>(event->modifiers())).y(), m_step_size.y()));
+    set_y_current(m_y_current->get() + ceil_value(get_increment(
+      static_cast<int>(event->modifiers()), m_y_modifiers), m_y_step));
   } else if(event->key() == Qt::Key_Left) {
-    set_current_x(m_current_x->get() - ceil_value(get_increment(
-      static_cast<int>(event->modifiers())).x(), m_step_size.x()));
+    set_x_current(m_x_current->get() - ceil_value(get_increment(
+      static_cast<int>(event->modifiers()), m_x_modifiers), m_x_step));
   } else if(event->key() == Qt::Key_Down) {
-    set_current_y(m_current_y->get() - ceil_value(get_increment(
-      static_cast<int>(event->modifiers())).y(), m_step_size.y()));
+    set_y_current(m_y_current->get() - ceil_value(get_increment(
+      static_cast<int>(event->modifiers()), m_y_modifiers), m_y_step));
   } else if(event->key() == Qt::Key_Home) {
-    set_current_x(*m_current_x->get_minimum());
-    set_current_y(*m_current_y->get_minimum());
+    set_x_current(*m_x_current->get_minimum());
+    set_y_current(*m_y_current->get_minimum());
   } else if(event->key() == Qt::Key_End) {
-    set_current_x(*m_current_x->get_maximum());
-    set_current_y(*m_current_y->get_maximum());
+    set_x_current(*m_x_current->get_maximum());
+    set_y_current(*m_y_current->get_maximum());
   } else if(event->key() == Qt::Key_Escape) {
-    set_current_x(m_submission.x());
-    set_current_y(m_submission.y());
+    set_x_current(m_x_submission);
+    set_y_current(m_y_submission);
     m_is_modified = false;
   }
   QWidget::keyPressEvent(event);
@@ -204,8 +292,8 @@ void Slider2D::keyPressEvent(QKeyEvent* event) {
 void Slider2D::mouseMoveEvent(QMouseEvent* event) {
   if(m_is_mouse_down) {
     auto pos = m_track->get_body()->mapFromGlobal(event->globalPos());
-    set_current_x(round_value(to_value_x(pos.x()), m_step_size.x()));
-    set_current_y(round_value(to_value_y(pos.y()), m_step_size.y()));
+    set_x_current(round_value(to_x_value(pos.x()), m_x_step));
+    set_y_current(round_value(to_y_value(pos.y()), m_y_step));
   }
   QWidget::mouseMoveEvent(event);
 }
@@ -214,8 +302,8 @@ void Slider2D::mousePressEvent(QMouseEvent* event) {
   if(event->button() == Qt::LeftButton) {
     m_is_mouse_down = true;
     auto pos = m_track->get_body()->mapFromGlobal(event->globalPos());
-    set_current_x(round_value(to_value_x(pos.x()), m_step_size.x()));
-    set_current_y(round_value(to_value_y(pos.y()), m_step_size.y()));
+    set_x_current(round_value(to_x_value(pos.x()), m_x_step));
+    set_y_current(round_value(to_y_value(pos.y()), m_y_step));
   }
   QWidget::mousePressEvent(event);
 }
@@ -226,106 +314,89 @@ void Slider2D::mouseReleaseEvent(QMouseEvent* event) {
 }
 
 void Slider2D::resizeEvent(QResizeEvent* event) {
-  on_current_x(m_current_x->get());
-  on_current_y(m_current_y->get());
+  on_x_current(m_x_current->get());
+  on_y_current(m_y_current->get());
   QWidget::resizeEvent(event);
 }
 
 void Slider2D::showEvent(QShowEvent* event) {
-  on_current_x(m_current_x->get());
-  on_current_y(m_current_y->get());
+  on_x_current(m_x_current->get());
+  on_y_current(m_y_current->get());
   QWidget::showEvent(event);
 }
 
 void Slider2D::wheelEvent(QWheelEvent* event) {
-  auto get_direction = [] (int value) {
-    if(value < 0) {
-      return -1;
-    }
-    return 1;
-  };
-  auto [rotation_step_x, rotation_step_y, x_direction, y_direction] = [&] {
-    auto increment = get_increment(Qt::NoModifier);
+  auto [x_change, y_change] = [&] {
+    auto x_increment = get_increment(Qt::NoModifier, m_x_modifiers);
+    auto y_increment = get_increment(Qt::NoModifier, m_y_modifiers);
     if(event->modifiers().testFlag(Qt::ShiftModifier)) {
-      return std::tuple(increment.x() * event->angleDelta().y() / 120.0, 0.0,
-        get_direction(event->angleDelta().y()), 1);
+      return std::tuple(Decimal(x_increment * event->angleDelta().y() / 120.0),
+        Decimal(0));
     }
-    return std::tuple(increment.x() * event->angleDelta().x() / 120.0,
-      increment.y() * event->angleDelta().y() / 120.0,
-      get_direction(event->angleDelta().x()),
-      get_direction(event->angleDelta().y()));
+    return std::tuple(Decimal(x_increment * event->angleDelta().x() / 120.0),
+      Decimal(y_increment * event->angleDelta().y() / 120.0));
   }();
-  set_current_x(m_current_x->get() +
-    x_direction * ceil_value(x_direction * rotation_step_x, m_step_size.x()));
-  set_current_y(m_current_y->get() +
-    y_direction * ceil_value(y_direction * rotation_step_y, m_step_size.y()));
+  set_x_current(m_x_current->get() + ceil_value(x_change, m_x_step));
+  set_y_current(m_y_current->get() + ceil_value(y_change, m_y_step));
 }
 
-QPoint Slider2D::get_increment(int modifier_flag) const {
-  if(auto increment =
-      m_modifiers.find(static_cast<Qt::KeyboardModifier>(modifier_flag));
-      increment != m_modifiers.end()) {
-    return increment.value();
-  }
-  return m_modifiers[Qt::NoModifier];
-}
-
-double Slider2D::to_value_x(int x) const {
-  return *m_current_x->get_minimum() + x * get_range(*m_current_x) /
+Decimal Slider2D::to_x_value(int x) const {
+  return *m_x_current->get_minimum() + x * get_range(*m_x_current) /
     m_track->get_body()->width();
 }
 
-double Slider2D::to_value_y(int y) const {
-  return *m_current_y->get_maximum() - y * get_range(*m_current_y) /
+Decimal Slider2D::to_y_value(int y) const {
+  return *m_y_current->get_maximum() - y * get_range(*m_y_current) /
     m_track->get_body()->height();
 }
 
-int Slider2D::to_position_x(double x) const {
+int Slider2D::to_x_position(const Decimal& x) const {
   auto track_body_pos = m_track->get_body()->mapTo(m_track, QPoint(0, 0));
-  return static_cast<int>((x - *m_current_x->get_minimum()) /
-    get_range(*m_current_x) * m_track->get_body()->width() -
+  return static_cast<int>((x - *m_x_current->get_minimum()) /
+    get_range(*m_x_current) * m_track->get_body()->width() -
       m_thumb->width() / 2.0) + track_body_pos.x();
 }
 
-int Slider2D::to_position_y(double y) const {
+int Slider2D::to_y_position(const Decimal& y) const {
   auto track_body_pos = m_track->get_body()->mapTo(m_track, QPoint(0, 0));
-  return static_cast<int>((*m_current_y->get_maximum() - y) /
-    get_range(*m_current_y) * m_track->get_body()->height() -
+  return static_cast<int>((*m_y_current->get_maximum() - y) /
+    get_range(*m_y_current) * m_track->get_body()->height() -
       m_thumb->height() / 2.0) + track_body_pos.y();
 }
 
-void Slider2D::set_current_x(double x) {
-  set_value(*m_current_x, x);
+void Slider2D::set_x_current(const Decimal& x) {
+  set_value(*m_x_current, x);
 }
 
-void Slider2D::set_current_y(double y) {
-  set_value(*m_current_y, y);
+void Slider2D::set_y_current(const Decimal& y) {
+  set_value(*m_y_current, y);
 }
 
 void Slider2D::on_focus(FocusObserver::State state) {
   if(state == FocusObserver::State::NONE) {
     if(m_is_modified) {
       m_is_modified = false;
-      m_submission = {m_current_x->get(), m_current_y->get()};
-      m_submit_signal(m_submission);
+      m_x_submission = m_x_current->get();
+      m_y_submission = m_y_current->get();
+      m_submit_signal(m_x_submission, m_y_submission);
     }
   }
 }
 
-void Slider2D::on_current_x(int x) {
-  if(x < *m_current_x->get_minimum() || x > *m_current_x->get_maximum()) {
+void Slider2D::on_x_current(const Decimal& x) {
+  if(x < *m_x_current->get_minimum() || x > *m_x_current->get_maximum()) {
     return;
   }
   m_is_modified = true;
-  m_thumb->move(to_position_x(x), m_thumb->y());
+  m_thumb->move(to_x_position(x), m_thumb->y());
 }
 
-void Slider2D::on_current_y(int y) {
-  if(y < *m_current_y->get_minimum() || y > *m_current_y->get_maximum()) {
+void Slider2D::on_y_current(const Decimal& y) {
+  if(y < *m_x_current->get_minimum() || y > *m_y_current->get_maximum()) {
     return;
   }
   m_is_modified = true;
-  m_thumb->move(m_thumb->x(), to_position_y(y));
+  m_thumb->move(m_thumb->x(), to_y_position(y));
 }
 
 void Slider2D::on_track_style() {

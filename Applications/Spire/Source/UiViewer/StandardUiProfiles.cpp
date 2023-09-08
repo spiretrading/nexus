@@ -166,6 +166,11 @@ namespace {
     return QString("None");
   }
 
+  auto to_string(const Decimal& value) {
+    return QString::fromStdString(value.str(
+      Decimal::backend_type::cpp_dec_float_digits10, std::ios_base::dec));
+  }
+
   template<typename T>
   struct DecimalBoxProfileProperties {
     using Type = T;
@@ -3773,18 +3778,22 @@ UiProfile Spire::make_slider_2d_profile() {
   populate_widget_properties(properties);
   auto type_property = define_enum<int>({{"None", 0}, {"ColorSpectrum", 1}});
   properties.push_back(make_standard_enum_property("type", type_property));
-  properties.push_back(make_standard_property("minimum_x", 0));
-  properties.push_back(make_standard_property("maximum_x", 100));
-  properties.push_back(make_standard_property("minimum_y", 0));
-  properties.push_back(make_standard_property("maximum_y", 100));
-  properties.push_back(make_standard_property("default_increment_x", 1));
-  properties.push_back(make_standard_property("default_increment_y", 1));
-  properties.push_back(make_standard_property("shift_increment_x", 10));
-  properties.push_back(make_standard_property("shift_increment_y", 10));
-  properties.push_back(make_standard_property("step_size_x", 0));
-  properties.push_back(make_standard_property("step_size_y", 0));
-  properties.push_back(make_standard_property("current_x", 0));
-  properties.push_back(make_standard_property("current_y", 0));
+  properties.push_back(make_standard_property<Decimal>("x_minimum", 0));
+  properties.push_back(make_standard_property<Decimal>("x_maximum", 100));
+  properties.push_back(make_standard_property<Decimal>("y_minimum", 0));
+  properties.push_back(make_standard_property<Decimal>("y_maximum", 100));
+  properties.push_back(
+    make_standard_property<Decimal>("default_x_increment", 1));
+  properties.push_back(
+    make_standard_property<Decimal>("default_y_increment", 1));
+  properties.push_back(
+    make_standard_property<Decimal>("shift_x_increment", 10));
+  properties.push_back(
+    make_standard_property<Decimal>("shift_y_increment", 10));
+  properties.push_back(make_standard_property<Decimal>("x_step_size", 0));
+  properties.push_back(make_standard_property<Decimal>("y_step_size", 0));
+  properties.push_back(make_standard_property<Decimal>("x_current", 0));
+  properties.push_back(make_standard_property<Decimal>("y_current", 0));
   auto size = QSize(scale(264, 164));
   auto brightness_gradient = QLinearGradient(0, 0, 0, size.height());
   brightness_gradient.setColorAt(0, Qt::transparent);
@@ -3797,24 +3806,27 @@ UiProfile Spire::make_slider_2d_profile() {
   painter.fillRect(QRect({0, 0}, size), saturation_gradient);
   painter.setCompositionMode(QPainter::CompositionMode_Multiply);
   painter.fillRect(QRect({0, 0}, size), brightness_gradient);
-  painter.end();
   auto profile = UiProfile("Slider2D", properties, [=] (auto& profile) {
-    auto current_x_model = std::make_shared<LocalScalarValueModel<int>>();
-    auto current_y_model = std::make_shared<LocalScalarValueModel<int>>();
-    auto& default_increment_x =
-      get<int>("default_increment_x", profile.get_properties());
-    auto& default_increment_y =
-      get<int>("default_increment_y", profile.get_properties());
-    auto& shift_increment_x =
-      get<int>("shift_increment_x", profile.get_properties());
-    auto& shift_increment_y =
-      get<int>("shift_increment_y", profile.get_properties());
-    auto modifiers = QHash<Qt::KeyboardModifier, QPoint>(
-      {{Qt::NoModifier, {default_increment_x.get(), default_increment_y.get()}},
-        {Qt::ShiftModifier, {shift_increment_x.get(), shift_increment_y.get()}}
-      });
-    auto slider = new Slider2D(current_x_model, current_y_model,
-      std::move(modifiers));
+    auto x_current_model = std::make_shared<LocalScalarValueModel<Decimal>>();
+    x_current_model->set_increment(std::numeric_limits<Decimal>::epsilon());
+    auto y_current_model = std::make_shared<LocalScalarValueModel<Decimal>>();
+    y_current_model->set_increment(std::numeric_limits<Decimal>::epsilon());
+    auto& default_x_increment =
+      get<Decimal>("default_x_increment", profile.get_properties());
+    auto& default_y_increment =
+      get<Decimal>("default_y_increment", profile.get_properties());
+    auto& shift_x_increment =
+      get<Decimal>("shift_x_increment", profile.get_properties());
+    auto& shift_y_increment =
+      get<Decimal>("shift_y_increment", profile.get_properties());
+    auto x_modifiers = QHash<Qt::KeyboardModifier, Decimal>(
+      {{Qt::NoModifier, default_x_increment.get()},
+        {Qt::ShiftModifier, shift_x_increment.get()}});
+    auto y_modifiers = QHash<Qt::KeyboardModifier, Decimal>(
+      {{Qt::NoModifier, default_y_increment.get()},
+        {Qt::ShiftModifier, shift_y_increment.get()}});
+    auto slider = new Slider2D(x_current_model, y_current_model,
+      std::move(x_modifiers), std::move(y_modifiers));
     apply_widget_properties(slider, profile.get_properties());
     slider->setFixedSize(size);
     auto thumb_image =
@@ -3836,59 +3848,53 @@ UiProfile Spire::make_slider_2d_profile() {
             set(Fill(QColor(0x808080)));
         });
       }
-      current_x_model->set(current_x_model->get());
-      current_y_model->set(current_y_model->get());
+      x_current_model->set(x_current_model->get());
+      y_current_model->set(y_current_model->get());
     });
-    auto& minimum_x = get<int>("minimum_x", profile.get_properties());
-    minimum_x.connect_changed_signal([=] (auto value) {
-      current_x_model->set_minimum(value);
+    auto& x_minimum = get<Decimal>("x_minimum", profile.get_properties());
+    x_minimum.connect_changed_signal([=] (auto value) {
+      x_current_model->set_minimum(value);
     });
-    auto& maximum_x = get<int>("maximum_x", profile.get_properties());
-    maximum_x.connect_changed_signal([=] (auto value) {
-      current_x_model->set_maximum(value);
+    auto& x_maximum = get<Decimal>("x_maximum", profile.get_properties());
+    x_maximum.connect_changed_signal([=] (auto value) {
+      x_current_model->set_maximum(value);
     });
-    auto& minimum_y = get<int>("minimum_y", profile.get_properties());
-    minimum_y.connect_changed_signal([=] (auto value) {
-      current_y_model->set_minimum(value);
+    auto& y_minimum = get<Decimal>("y_minimum", profile.get_properties());
+    y_minimum.connect_changed_signal([=] (auto value) {
+      y_current_model->set_minimum(value);
     });
-    auto& maximum_y = get<int>("maximum_y", profile.get_properties());
-    maximum_y.connect_changed_signal([=] (auto value) {
-      current_y_model->set_maximum(value);
+    auto& y_maximum = get<Decimal>("y_maximum", profile.get_properties());
+    y_maximum.connect_changed_signal([=] (auto value) {
+      y_current_model->set_maximum(value);
     });
-    auto& step_size_x = get<int>("step_size_x", profile.get_properties());
-    step_size_x.connect_changed_signal([=] (auto value) {
-      slider->set_step_size({value, slider->get_step_size().y()});
+    auto& x_step_size = get<Decimal>("x_step_size", profile.get_properties());
+    x_step_size.connect_changed_signal([=] (auto value) {
+      slider->set_x_step(value);
     });
-    auto& step_size_y = get<int>("step_size_y", profile.get_properties());
-    step_size_y.connect_changed_signal([=] (auto value) {
-      slider->set_step_size({slider->get_step_size().x(), value});
+    auto& y_step_size = get<Decimal>("y_step_size", profile.get_properties());
+    y_step_size.connect_changed_signal([=] (auto value) {
+      slider->set_y_step(value);
     });
-    auto& current_x = get<int>("current_x", profile.get_properties());
-    current_x.connect_changed_signal([=] (auto value) {
-      if(value != current_x_model->get()) {
-        current_x_model->set(value);
-      }
+    auto& x_current = get<Decimal>("x_current", profile.get_properties());
+    x_current.connect_changed_signal([=] (auto value) {
+      x_current_model->set(value);
     });
-    auto& current_y = get<int>("current_y", profile.get_properties());
-    current_y.connect_changed_signal([=] (auto value) {
-      if(value != current_y_model->get()) {
-        current_y_model->set(value);
-      }
+    auto& y_current = get<Decimal>("y_current", profile.get_properties());
+    y_current.connect_changed_signal([=] (auto value) {
+      y_current_model->set(value);
     });
     auto current_slot = profile.make_event_slot<QString>("Current");
-    slider->get_current_x()->connect_update_signal([=, &current_x] (int x) {
-      current_x.set(x);
-      current_slot(QString("[%1, %2]").
-        arg(x).arg(slider->get_current_y()->get()));
+    slider->get_x_current()->connect_update_signal([=] (const Decimal& x) {
+      current_slot(QString("%1, %2").
+        arg(to_string(x)).arg(to_string(slider->get_y_current()->get())));
     });
-    slider->get_current_y()->connect_update_signal([=, &current_y] (int y) {
-      current_y.set(y);
-      current_slot(QString("[%1, %2]").
-        arg(slider->get_current_x()->get()).arg(y));
+    slider->get_y_current()->connect_update_signal([=] (const Decimal& y) {
+      current_slot(QString("%1, %2").
+        arg(to_string(slider->get_x_current()->get())).arg(to_string(y)));
     });
     auto submit_slot = profile.make_event_slot<QString>("Submit");
-    slider->connect_submit_signal([=] (const QPoint& submission) {
-      submit_slot(QString("[%1, %2]").arg(submission.x()).arg(submission.y()));
+    slider->connect_submit_signal([=] (const Decimal& x, const Decimal& y) {
+      submit_slot(QString("%1, %2").arg(to_string(x)).arg(to_string(y)));
     });
     return slider;
   });
