@@ -47,6 +47,7 @@
 #include "Spire/Ui/FontBox.hpp"
 #include "Spire/Ui/FontFamilyBox.hpp"
 #include "Spire/Ui/FontStyleBox.hpp"
+#include "Spire/Ui/HexColorBox.hpp"
 #include "Spire/Ui/HighlightSwatch.hpp"
 #include "Spire/Ui/HoverObserver.hpp"
 #include "Spire/Ui/Icon.hpp"
@@ -2049,6 +2050,24 @@ UiProfile Spire::make_font_style_box_profile() {
       current.set(value);
     });
     box->connect_submit_signal(profile.make_event_slot<std::any>("Submit"));
+    return box;
+  });
+  return profile;
+}
+
+UiProfile Spire::make_hex_color_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_property<QString>("current"));
+  auto profile = UiProfile("HexColorBox", properties, [] (auto& profile) {
+    auto box = new HexColorBox();
+    box->setFixedWidth(scale_width(100));
+    apply_widget_properties(box, profile.get_properties());
+    link(box->get_current(), get<QString>("current", profile.get_properties()));
+    box->get_current()->connect_update_signal(
+      profile.make_event_slot<QString>("Current"));
+    box->connect_submit_signal(profile.make_event_slot<QString>("Submit"));
+    box->connect_reject_signal(profile.make_event_slot<QString>("Reject"));
     return box;
   });
   return profile;
