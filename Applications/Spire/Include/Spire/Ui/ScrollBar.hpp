@@ -83,6 +83,7 @@ namespace Styles {
       void mousePressEvent(QMouseEvent* event) override;
       void mouseReleaseEvent(QMouseEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
+      bool eventFilter(QObject* watched, QEvent* event) override;
 
     private:
       mutable PositionSignal m_position_signal;

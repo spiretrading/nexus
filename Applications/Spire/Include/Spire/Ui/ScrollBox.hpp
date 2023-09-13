@@ -95,6 +95,12 @@ namespace Spire {
 
     private:
       struct ScrollBarAnimation;
+      enum class ScrollBarSize {
+        ZERO,
+        NARROW,
+        WIDE,
+      };
+
       QWidget* m_body;
       DisplayPolicy m_horizontal_display_policy;
       DisplayPolicy m_vertical_display_policy;
@@ -112,13 +118,9 @@ namespace Spire {
       Styles::StyleSheetMap m_padding_styles;
       boost::signals2::scoped_connection m_style_connection;
 
-      void ease(ScrollBarAnimation& animation, int size,
-        const boost::posix_time::time_duration& duration,
-        QEasingCurve::Type type);
-      void ease_in_horizontal_scroll_bar(int size);
-      void ease_in_vertical_scroll_bar(int size);
-      void ease_out_horizontal_scroll_bar(int size);
-      void ease_out_vertical_scroll_bar(int size);
+      void ease(ScrollBarAnimation& animation, int end, QEasingCurve::Type type);
+      void ease_horizontal_scroll_bar(ScrollBarSize size, QEasingCurve::Type type);
+      void ease_vertical_scroll_bar(ScrollBarSize size, QEasingCurve::Type type);
       void commit_border_styles();
       void commit_padding_styles();
       void on_style();
