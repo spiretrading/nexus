@@ -58,7 +58,7 @@ ScrollBar::ScrollBar(Qt::Orientation orientation, QWidget* parent)
     style.get(Hover() || Drag()).set(BackgroundColor(QColor(0xA0A0A0)));
   });
   m_thumb->setSizePolicy(sizePolicy().transposed());
-  m_track = new Box(m_thumb);
+  m_track = new Box(m_thumb, this);
   match(*m_track, ScrollTrack());
   update_style(*m_track, [&] (auto& style) {
     style.get(Any()).
@@ -74,10 +74,6 @@ ScrollBar::ScrollBar(Qt::Orientation orientation, QWidget* parent)
     style.get(Any()).set(PaddingRight(0));
     style.get(Any()).set(PaddingBottom(0));
   });
-  m_track->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  m_track->installEventFilter(this);
-  auto body = new Box(m_track);
-  enclose(*this, *body);
   m_track_scroll_timer.setSingleShot(true);
   connect(
     &m_track_scroll_timer, &QTimer::timeout, this, &ScrollBar::scroll_page);
@@ -203,14 +199,8 @@ void ScrollBar::mouseReleaseEvent(QMouseEvent* event) {
 }
 
 void ScrollBar::resizeEvent(QResizeEvent* event) {
+  m_track->resize(event->size());
   update_thumb();
-}
-
-bool ScrollBar::eventFilter(QObject* watched, QEvent* event) {
-  if(event->type() == QEvent::Move) {
-    qDebug() << static_cast<int>(get_orientation()) << " " << event;
-  }
-  return QWidget::eventFilter(watched, event);
 }
 
 void ScrollBar::update_thumb() {

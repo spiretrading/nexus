@@ -94,13 +94,11 @@ namespace Spire {
       void showEvent(QShowEvent* event) override;
 
     private:
-      struct ScrollBarAnimation;
-      enum class ScrollBarSize {
+      enum class ScrollTrackSize {
         ZERO,
         NARROW,
         WIDE,
       };
-
       QWidget* m_body;
       DisplayPolicy m_horizontal_display_policy;
       DisplayPolicy m_vertical_display_policy;
@@ -112,15 +110,14 @@ namespace Spire {
       HoverObserver m_hover_observer;
       boost::optional<HoverObserver> m_horizontal_bar_hover_observer;
       boost::optional<HoverObserver> m_vertical_bar_hover_observer;
-      std::unique_ptr<ScrollBarAnimation> m_horizontal_bar_animation;
-      std::unique_ptr<ScrollBarAnimation> m_vertical_bar_animation;
+      boost::optional<QPropertyAnimation> m_horizontal_bar_animation;
+      boost::optional<QPropertyAnimation> m_vertical_bar_animation;
       Styles::StyleSheetMap m_border_styles;
       Styles::StyleSheetMap m_padding_styles;
       boost::signals2::scoped_connection m_style_connection;
 
-      void ease(ScrollBarAnimation& animation, int end, QEasingCurve::Type type);
-      void ease_horizontal_scroll_bar(ScrollBarSize size, QEasingCurve::Type type);
-      void ease_vertical_scroll_bar(ScrollBarSize size, QEasingCurve::Type type);
+      void ease_horizontal_scroll_bar(ScrollTrackSize size);
+      void ease_vertical_scroll_bar(ScrollTrackSize size);
       void commit_border_styles();
       void commit_padding_styles();
       void on_style();
