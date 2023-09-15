@@ -165,6 +165,11 @@ namespace {
     return QString("None");
   }
 
+  QString to_string(const Decimal& value) {
+    return QString::fromStdString(value.str(
+      Decimal::backend_type::cpp_dec_float_digits10, std::ios_base::dec));
+  }
+
   template<typename T>
   struct DecimalBoxProfileProperties {
     using Type = T;
@@ -290,9 +295,7 @@ namespace {
       [=, &current] (const optional<Decimal>& value) {
         auto text = [&] {
           if(value) {
-            return QString::fromStdString(value->str(
-              Decimal::backend_type::cpp_dec_float_digits10,
-              std::ios_base::dec));
+            return to_string(*value);
           }
           return QString("null");
         }();
@@ -305,9 +308,7 @@ namespace {
     box->connect_submit_signal(
       [=] (const optional<Decimal>& submission) {
         if(submission) {
-          submit_slot(QString::fromStdString(submission->str(
-            Decimal::backend_type::cpp_dec_float_digits10,
-            std::ios_base::dec)));
+          submit_slot(to_string(*submission));
         } else {
           submit_slot(QString("null"));
         }
@@ -316,9 +317,7 @@ namespace {
     box->connect_reject_signal(
       [=] (const optional<Decimal>& value) {
         if(value) {
-          reject_slot(QString::fromStdString(value->str(
-            Decimal::backend_type::cpp_dec_float_digits10,
-            std::ios_base::dec)));
+          submit_slot(to_string(*value));
         } else {
           reject_slot(QString("null"));
         }
@@ -1527,8 +1526,7 @@ UiProfile Spire::make_decimal_filter_panel_profile() {
       };
       auto to_string = [] (const auto& value) {
         if(value) {
-          return QString::fromStdString(value->str(
-            Decimal::backend_type::cpp_dec_float_digits10, std::ios_base::dec));
+          return ::to_string(*value);
         }
         return QString("null");
       };
@@ -3756,14 +3754,12 @@ UiProfile Spire::make_slider_profile() {
     auto current_slot = profile.make_event_slot<QString>("Current");
     slider->get_current()->connect_update_signal(
       [=] (const Decimal& value) {
-        current_slot(QString::fromStdString(value.str(
-          Decimal::backend_type::cpp_dec_float_digits10, std::ios_base::dec)));
+        current_slot(to_string(value));
       });
     auto submit_slot = profile.make_event_slot<QString>("Submit");
     slider->connect_submit_signal([=] (const Decimal& submission) {
-      submit_slot(QString::fromStdString(submission.str(
-        Decimal::backend_type::cpp_dec_float_digits10, std::ios_base::dec)));
-      });
+      submit_slot(to_string(submission));
+    });
     return slider;
   });
   return profile;

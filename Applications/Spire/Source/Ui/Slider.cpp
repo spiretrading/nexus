@@ -172,17 +172,11 @@ struct Slider::SliderValueModel : ScalarValueModel<Decimal> {
         std::bind_front(&SliderValueModel::on_current, this))) {}
 
   optional<Decimal> get_minimum() const override {
-    if(!m_source->get_minimum()) {
-      return Decimal(0);
-    }
-    return *m_source->get_minimum();
+    return m_source->get_minimum().get_value_or(0);
   }
 
   optional<Decimal> get_maximum() const override {
-    if(!m_source->get_maximum()) {
-      return Decimal(100);
-    }
-    return *m_source->get_maximum();
+    return m_source->get_maximum().get_value_or(100);
   }
 
   optional<Decimal> get_increment() const override {
