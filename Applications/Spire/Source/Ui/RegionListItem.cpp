@@ -46,6 +46,11 @@ namespace {
       set(vertical_padding(0));
     return style;
   }
+
+  auto to_three_letter_code(CountryCode code) {
+    auto& entry = GetDefaultCountryDatabase().FromCode(code);
+    return entry.m_threeLetterCode.GetData();
+  }
 }
 
 RegionListItem::RegionListItem(Region region, QWidget* parent)
@@ -117,7 +122,7 @@ Icon* RegionListItem::make_type_icon() const {
     return icon;
   } else if(m_type == Type::COUNTRY) {
     auto country_code =
-      to_three_letter_code(*m_region.GetCountries().begin()).toLower();
+      QString(to_three_letter_code(*m_region.GetCountries().begin())).toLower();
     auto flag_icon = new Icon(imageFromSvg(
       QString(":/Icons/flag_icons/%1.svg").arg(country_code), FLAG_SIZE()));
     flag_icon->setFixedSize(FLAG_SIZE());

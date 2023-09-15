@@ -1,7 +1,9 @@
 #ifndef SPIRE_TABLE_ITEM_HPP
 #define SPIRE_TABLE_ITEM_HPP
+#include <boost/optional/optional.hpp>
 #include <QWidget>
 #include "Spire/Ui/Button.hpp"
+#include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -29,8 +31,8 @@ namespace Spire {
         QColor m_border_left_color;
       };
 
-      /** Signals that this TableItem was click on. */
-      using ClickSignal = Button::ClickSignal;
+      /** Signals that this TableItem was activated. */
+      using ActiveSignal = Signal<void ()>;
 
       /**
        * Constructs a TableItem.
@@ -42,15 +44,18 @@ namespace Spire {
       /** Returns the styling applied to this item. */
       const Styles& get_styles() const;
 
-      /** Connects a slot to the ClickSignal. */
-      boost::signals2::connection connect_click_signal(
-        const ClickSignal::slot_type& slot) const;
+      /** Connects a slot to the ActiveSignal. */
+      boost::signals2::connection connect_active_signal(
+        const ActiveSignal::slot_type& slot) const;
 
     private:
+      mutable ActiveSignal m_active_signal;
       Button* m_button;
       Styles m_styles;
+      boost::optional<FocusObserver> m_focus_observer;
       boost::signals2::scoped_connection m_style_connection;
 
+      void on_focus(FocusObserver::State state);
       void on_style();
   };
 }

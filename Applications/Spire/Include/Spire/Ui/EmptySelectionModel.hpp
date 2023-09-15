@@ -25,6 +25,10 @@ namespace Spire {
 
       using UpdateOperation = typename ListModel<T>::UpdateOperation;
 
+      using StartTransaction = typename ListModel<T>::StartTransaction;
+
+      using EndTransaction = typename ListModel<T>::EndTransaction;
+
       /** The type of index to select. */
       using Index = T;
 

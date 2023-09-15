@@ -1,5 +1,6 @@
 #include "Spire/Ui/ComboBox.hpp"
 #include <boost/signals2/shared_connection_block.hpp>
+#include <QContextMenuEvent>
 #include <QKeyEvent>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
@@ -8,6 +9,7 @@
 #include "Spire/Ui/DropDownBox.hpp"
 #include "Spire/Ui/DropDownList.hpp"
 #include "Spire/Ui/Layouts.hpp"
+#include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace Beam;
@@ -29,7 +31,8 @@ ComboBox::ComboBox(std::shared_ptr<QueryModel> query_model,
   std::shared_ptr<CurrentModel> current, ViewBuilder view_builder,
   QWidget* parent)
   : ComboBox(std::move(query_model), std::move(current),
-      new AnyInputBox(*(new TextBox())), std::move(view_builder), parent) {}
+      new AnyInputBox(*(new TextBox(to_text(current->get())))),
+      std::move(view_builder), parent) {}
 
 ComboBox::ComboBox(std::shared_ptr<QueryModel> query_model,
     std::shared_ptr<CurrentModel> current, AnyInputBox* input_box,
@@ -41,6 +44,7 @@ ComboBox::ComboBox(std::shared_ptr<QueryModel> query_model,
       m_submission_text(to_text(m_submission)),
       m_is_read_only(false),
       m_input_box(input_box),
+      m_input_focus_proxy(nullptr),
       m_focus_observer(*this),
       m_matches(std::make_shared<ArrayListModel<std::any>>()),
       m_completion_tag(0),
@@ -59,7 +63,13 @@ ComboBox::ComboBox(std::shared_ptr<QueryModel> query_model,
     std::bind_front(&ComboBox::on_highlight, this));
   m_list_view = new ListView(
     std::static_pointer_cast<AnyListModel>(m_matches), std::move(view_builder));
+  m_list_view->setFocusPolicy(Qt::NoFocus);
   m_drop_down_list = new DropDownList(*m_list_view, *this);
+  m_drop_down_list->setFocusPolicy(Qt::NoFocus);
+  auto panel = m_drop_down_list->window();
+  panel->setFocusPolicy(Qt::NoFocus);
+  panel->setWindowFlags(Qt::Popup | (panel->windowFlags() & ~Qt::Tool));
+  panel->installEventFilter(this);
   m_drop_down_list->installEventFilter(this);
   m_drop_down_current_connection =
     m_drop_down_list->get_list_view().get_current()->connect_update_signal(
@@ -122,10 +132,48 @@ bool ComboBox::eventFilter(QObject* watched, QEvent* event) {
         if(m_drop_down_list->isVisible()) {
           m_drop_down_list->hide();
           revert_current();
-        } else {
+        } else if(any_cast<QString>(m_input_box->get_current()->get()) !=
+            m_submission_text &&
+            m_query_model->parse(m_submission_text).has_value()) {
           revert_to(m_submission_text, false);
+        } else {
+          event->ignore();
         }
         return true;
+      }
+    } else if(event->type() == QEvent::Show) {
+      m_input_focus_proxy = find_focus_proxy(*m_input_box);
+      if(m_input_focus_proxy) {
+        m_input_focus_proxy->installEventFilter(this);
+      }
+    }
+  } else if(watched == m_input_focus_proxy) {
+    if(event->type() == QEvent::FocusOut && m_drop_down_list->isVisible()) {
+      return true;
+    }
+  } else if(watched == m_drop_down_list->window()) {
+    if(event->type() == QEvent::KeyPress) {
+      return QCoreApplication::sendEvent(m_input_focus_proxy, event);
+    } else if(event->type() == QEvent::ContextMenu) {
+      auto& menu_event = *static_cast<QContextMenuEvent*>(event);
+      if(rect().contains(mapFromGlobal(menu_event.globalPos()))) {
+        auto new_event = QContextMenuEvent(menu_event.reason(),
+          m_input_focus_proxy->mapFromGlobal(menu_event.globalPos()),
+          menu_event.globalPos(), menu_event.modifiers());
+        return QCoreApplication::sendEvent(m_input_focus_proxy, &new_event);
+      }
+    } else if(event->type() == QEvent::MouseButtonPress ||
+        event->type() == QEvent::MouseButtonRelease ||
+        event->type() == QEvent::MouseButtonDblClick ||
+        event->type() == QEvent::MouseMove) {
+      auto& mouse_event = *static_cast<QMouseEvent*>(event);
+      if(rect().contains(mapFromGlobal(mouse_event.globalPos()))) {
+        auto new_event = QMouseEvent(mouse_event.type(),
+          m_input_focus_proxy->mapFromGlobal(mouse_event.globalPos()),
+          mouse_event.windowPos(), mouse_event.screenPos(),
+          mouse_event.button(), mouse_event.buttons(), mouse_event.modifiers(),
+          mouse_event.source());
+        return QCoreApplication::sendEvent(m_input_focus_proxy, &new_event);
       }
     }
   }
@@ -312,6 +360,10 @@ void ComboBox::on_query(
     }
     for(auto& item : selection) {
       m_matches->push(item);
+      auto list_item =
+        m_list_view->get_list_item(m_list_view->get_list()->get_size() - 1);
+      list_item->setFocusPolicy(Qt::NoFocus);
+      list_item->layout()->itemAt(0)->widget()->setFocusPolicy(Qt::NoFocus);
     }
   }
   update_completion();
@@ -320,9 +372,6 @@ void ComboBox::on_query(
       m_drop_down_list->hide();
     } else if(m_focus_observer.get_state() != FocusObserver::State::NONE &&
         !m_drop_down_list->isVisible()) {
-      auto blocker = shared_connection_block(m_drop_down_current_connection);
-      m_drop_down_list->get_list_view().get_current()->set(none);
-      clear(*m_drop_down_list->get_list_view().get_selection());
       m_drop_down_list->show();
     }
   }

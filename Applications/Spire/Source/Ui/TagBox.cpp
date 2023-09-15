@@ -23,8 +23,7 @@ using namespace Spire::Styles;
 namespace {
   auto INPUT_BOX_STYLE(StyleSheet style) {
     style.get(Any()).
-      set(PaddingLeft(scale_width(8))).
-      set(PaddingRight(0)).
+      set(horizontal_padding(scale_width(8))).
       set(vertical_padding(0));
     style.get(Any() > is_a<ScrollableListBox>()).
       set(BackgroundColor(QColor(Qt::transparent))).
@@ -36,9 +35,8 @@ namespace {
     style.get(Any()).
       set(ListItemGap(scale_width(4))).
       set(ListOverflowGap(scale_width(3))).
-      set(Overflow::WRAP).
       set(Qt::Horizontal).
-      set(PaddingRight(scale_width(8))).
+      set(PaddingRight(0)).
       set(vertical_padding(scale_height(3)));
     style.get(Any() > is_a<ListItem>()).
       set(BackgroundColor(QColor(Qt::transparent))).
@@ -72,6 +70,42 @@ namespace {
 
   int vertical_length(const QMargins& margins) {
     return margins.top() + margins.bottom();
+  }
+
+  int get_maximum_width(QWidget& widget) {
+    if(widget.maximumWidth() != QWIDGETSIZE_MAX) {
+      return widget.maximumWidth();
+    }
+    auto child = &widget;
+    auto parent = child->parentWidget();
+    while(parent && parent->layout() && parent->layout()->count() == 1 &&
+        parent->layout()->indexOf(child) == 0 &&
+        parent->layout()->contentsMargins().isNull()) {
+      if(parent->maximumWidth() != QWIDGETSIZE_MAX) {
+        return parent->maximumWidth();
+      }
+      child = parent;
+      parent = parent->parentWidget();
+    }
+    return QWIDGETSIZE_MAX;
+  }
+
+  int get_maximum_height(QWidget& widget) {
+    if(widget.maximumHeight() != QWIDGETSIZE_MAX) {
+      return widget.maximumHeight();
+    }
+    auto child = &widget;
+    auto parent = child->parentWidget();
+    while(parent && parent->layout() && parent->layout()->count() == 1 &&
+        parent->layout()->indexOf(child) == 0 &&
+        parent->layout()->contentsMargins().isNull()) {
+      if(parent->maximumHeight() != QWIDGETSIZE_MAX) {
+        return parent->maximumHeight();
+      }
+      child = parent;
+      parent = parent->parentWidget();
+    }
+    return QWIDGETSIZE_MAX;
   }
 }
 
@@ -137,6 +171,7 @@ TagBox::TagBox(std::shared_ptr<AnyListModel> list,
     std::shared_ptr<TextModel> current, QWidget* parent)
     : QWidget(parent),
       m_model(std::make_shared<PartialListModel>(std::move(list))),
+      m_text_focus_proxy(nullptr),
       m_focus_observer(*this),
       m_list_view_overflow(Overflow::NONE),
       m_is_read_only(false),
@@ -152,6 +187,7 @@ TagBox::TagBox(std::shared_ptr<AnyListModel> list,
     std::bind_front(&TagBox::on_text_box_current, this));
   m_list_view = new ListView(m_model,
     std::bind_front(&TagBox::make_tag, this));
+  m_list_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_list_view->set_item_size_policy(QSizePolicy::Fixed, QSizePolicy::Preferred);
   update_style(*m_list_view, [] (auto& style) {
     style = LIST_VIEW_STYLE(style);
@@ -162,6 +198,8 @@ TagBox::TagBox(std::shared_ptr<AnyListModel> list,
     std::bind_front(&TagBox::on_operation, this));
   m_list_view->connect_submit_signal(
     std::bind_front(&TagBox::on_list_view_submit, this));
+  m_list_view->get_current()->connect_update_signal(
+    std::bind_front(&TagBox::on_list_view_current, this));
   m_list_view->setFocusPolicy(Qt::NoFocus);
   m_list_view->installEventFilter(this);
   m_scrollable_list_box = new ScrollableListBox(*m_list_view);
@@ -206,6 +244,11 @@ TagBox::TagBox(std::shared_ptr<AnyListModel> list,
       update_tooltip();
     }
   });
+  m_text_item_button = m_list_view->get_list_item(
+    m_list_view->get_list()->get_size() - 1)->findChild<Button*>();
+  m_text_item_button->installEventFilter(this);
+  update_tag_size_policy();
+  update_size_constraint();
 }
 
 const std::shared_ptr<AnyListModel>& TagBox::get_tags() const {
@@ -239,6 +282,7 @@ void TagBox::set_read_only(bool is_read_only) {
   if(m_is_read_only) {
     match(*this, ReadOnly());
   } else {
+    install_text_proxy_event_filter();
     unmatch(*this, ReadOnly());
   }
 }
@@ -248,10 +292,33 @@ connection TagBox::connect_submit_signal(
   return m_text_box->connect_submit_signal(slot);
 }
 
+QSize TagBox::minimumSizeHint() const {
+  return {QWidget::minimumSizeHint().width(), m_min_scroll_height};
+}
+
+QSize TagBox::sizeHint() const {
+  if(m_size_hint) {
+    return *m_size_hint;
+  }
+  auto list_view_size_hint = m_list_view->sizeHint();
+  auto scroll_bar_size = [&] {
+    if(m_vertical_scroll_bar->isVisible()) {
+      return m_vertical_scroll_bar->sizeHint().width();
+    }
+    return 0;
+  }();
+  m_size_hint.emplace(
+    list_view_size_hint.width() + horizontal_length(m_input_box_border) +
+      horizontal_length(m_input_box_padding) + scroll_bar_size,
+    list_view_size_hint.height() + vertical_length(m_input_box_border) +
+      vertical_length(m_input_box_padding));
+  return *m_size_hint;
+}
+
 bool TagBox::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::KeyPress) {
     auto& key_event = *static_cast<QKeyEvent*>(event);
-    if(watched == m_text_box->focusProxy() &&
+    if(watched == m_text_focus_proxy && !is_read_only() &&
         key_event.key() == Qt::Key_Backspace &&
         get_tags()->get_size() > 0 &&
         (m_text_box->get_highlight()->get().m_start == 0 &&
@@ -259,9 +326,7 @@ bool TagBox::eventFilter(QObject* watched, QEvent* event) {
         m_text_box->get_current()->get().isEmpty())) {
       get_tags()->remove(get_tags()->get_size() - 1);
       return true;
-    } else if(watched == m_list_view && (key_event.key() == Qt::Key_Down ||
-        key_event.key() == Qt::Key_Up || key_event.key() == Qt::Key_PageDown ||
-        key_event.key() == Qt::Key_PageUp)) {
+    } else if(watched == m_list_view || watched == m_text_item_button) {
       event->ignore();
       return true;
     }
@@ -272,18 +337,20 @@ bool TagBox::eventFilter(QObject* watched, QEvent* event) {
       m_horizontal_scroll_bar_end_range);
     update_scroll_bar_end_range(*m_vertical_scroll_bar,
       m_vertical_scroll_bar_end_range);
-  } else if(watched == m_list_view && event->type() == QEvent::Resize) {
-    update_tooltip();
-  } else if(watched == m_list_view && event->type() == QEvent::LayoutRequest) {
-    update_vertical_scroll_bar_visible();
+  } else if(watched == m_list_view) {
+    if(event->type() == QEvent::Resize) {
+      update_tooltip();
+    } else if(event->type() == QEvent::LayoutRequest) {
+      update_vertical_scroll_bar_visible();
+    }
   }
   return QWidget::eventFilter(watched, event);
 }
 
 bool TagBox::event(QEvent* event) {
   if(event->type() == QEvent::LayoutRequest) {
+    m_size_hint = none;
     update_overflow();
-    update_tooltip();
   }
   return QWidget::event(event);
 }
@@ -298,6 +365,7 @@ void TagBox::changeEvent(QEvent* event) {
 }
 
 void TagBox::resizeEvent(QResizeEvent* event) {
+  update_size_constraint();
   update_overflow();
   update_tooltip();
   update_vertical_scroll_bar_visible();
@@ -305,7 +373,7 @@ void TagBox::resizeEvent(QResizeEvent* event) {
 }
 
 void TagBox::showEvent(QShowEvent* event) {
-  m_text_box->focusProxy()->installEventFilter(this);
+  install_text_proxy_event_filter();
   QWidget::showEvent(event);
 }
 
@@ -335,8 +403,16 @@ QWidget* TagBox::make_tag(
       setFocus();
     }
   });
-  m_tags.insert(m_tags.begin() + index, tag);
   return tag;
+}
+
+void TagBox::install_text_proxy_event_filter() {
+  if(!m_text_focus_proxy) {
+    m_text_focus_proxy = m_text_box->focusProxy();
+    if(m_text_focus_proxy) {
+      m_text_focus_proxy->installEventFilter(this);
+    }
+  }
 }
 
 void TagBox::scroll_to_text_box() {
@@ -346,7 +422,7 @@ void TagBox::scroll_to_text_box() {
 
 void TagBox::update_placeholder() {
   update_tag_size_policy();
-  if(m_tags.empty()) {
+  if(m_model->m_source->get_size() == 0) {
     m_text_box->set_placeholder(m_placeholder);
   } else {
     m_text_box->set_placeholder("");
@@ -362,22 +438,32 @@ void TagBox::update_scroll_bar_end_range(ScrollBar& scroll_bar,
 }
 
 void TagBox::update_tag_size_policy() {
-  if(m_tags.empty()) {
+  if(m_model->m_source->get_size() == 0) {
     m_list_view->set_direction_size_policy(QSizePolicy::Expanding);
   } else {
+    auto set_tag_text_size_policy = [&] (QSizePolicy::Policy horizontal) {
+      for(auto i = 0; i < m_list_view->get_list()->get_size() - 1; ++i) {
+        auto& box = *static_cast<Box*>(m_list_view->get_list_item(i)->
+          get_body().layout()->itemAt(0)->widget());
+        auto& label = *box.get_body()->layout()->itemAt(0)->widget();
+        label.setSizePolicy(horizontal, QSizePolicy::Expanding);
+      }
+    };
     if(m_list_view_overflow == Overflow::WRAP) {
+      set_tag_text_size_policy(QSizePolicy::Expanding);
       m_list_view->set_direction_size_policy(QSizePolicy::Preferred);
     } else {
+      set_tag_text_size_policy(QSizePolicy::Fixed);
       m_list_view->set_direction_size_policy(QSizePolicy::Fixed);
     }
   }
-  m_list_view->updateGeometry();
 }
 
 void TagBox::update_tags_read_only() {
   auto is_read_only = m_is_read_only || !isEnabled();
-  for(auto tag : m_tags) {
-    tag->set_read_only(is_read_only);
+  for(auto i = 0; i < m_model->m_source->get_size(); ++i) {
+    static_cast<Tag*>(&(m_list_view->get_list_item(i)->get_body()))->
+      set_read_only(is_read_only);
   }
 }
 
@@ -400,7 +486,7 @@ void TagBox::update_tooltip() {
         }
         return 0;
       }();
-      if(!m_tags.empty()) {
+      if(m_model->m_source->get_size() > 0) {
         auto first_tag_left =
           m_list_view->get_list_item(0)->mapToGlobal(QPoint(0, 0)).x();
         auto last_tag = m_list_view->get_list_item(m_model->get_size() - 2);
@@ -415,7 +501,9 @@ void TagBox::update_tooltip() {
     } else {
       auto list_view_content_width =
         m_list_view->width() - horizontal_length(m_list_view_padding);
-      for(auto tag : m_tags) {
+      for(auto i = 0; i < m_model->m_source->get_size(); ++i) {
+        auto tag =
+          static_cast<Tag*>(&(m_list_view->get_list_item(i)->get_body()));
         if(tag->sizeHint().width() > list_view_content_width) {
           return true;
         }
@@ -436,28 +524,30 @@ void TagBox::update_tooltip() {
 void TagBox::update_overflow() {
   auto old_overflow = m_list_view_overflow;
   m_list_view_overflow = [&] {
-    if(height() <= m_min_scroll_height && minimumHeight() == maximumHeight()) {
+    if(width() < get_maximum_width(*this)) {
+      if(height() <= m_min_scroll_height) {
+        return Overflow::NONE;
+      }
+      return Overflow::WRAP;
+    } else if(height() <= m_min_scroll_height &&
+        height() >= get_maximum_height(*this)) {
       return Overflow::NONE;
     }
     return Overflow::WRAP;
   }();
   if(old_overflow != m_list_view_overflow) {
     if(m_list_view_overflow == Overflow::NONE) {
-      update_style(*m_list_view, [] (auto& style) {
-        style.get(Any()).
+      update_style(*this, [] (auto& style) {
+        style.get(Any() > is_a<ListView>()).
           set(Overflow::NONE).
           set(PaddingRight(0));
-      });
-      update_style(*this, [] (auto& style) {
         style.get(Any()).set(PaddingRight(scale_width(8)));
       });
     } else {
-      update_style(*m_list_view, [] (auto& style) {
-        style.get(Any()).
+      update_style(*this, [] (auto& style) {
+        style.get(Any() > is_a<ListView>()).
           set(Overflow::WRAP).
           set(PaddingRight(scale_width(8)));
-      });
-      update_style(*this, [] (auto& style) {
         style.get(Any()).set(PaddingRight(0));
       });
     }
@@ -468,37 +558,52 @@ void TagBox::update_overflow() {
 void TagBox::update_vertical_scroll_bar_visible() {
   if(m_list_view_overflow == Overflow::WRAP &&
       m_list_view->sizeHint().height() + vertical_length(m_input_box_padding) +
-      vertical_length(m_input_box_border) > maximumHeight()) {
-    if(m_scrollable_list_box->get_scroll_box().get_vertical_display_policy() !=
-        ScrollBox::DisplayPolicy::ON_OVERFLOW) {
-      m_scrollable_list_box->get_scroll_box().set_vertical(
-        ScrollBox::DisplayPolicy::ON_OVERFLOW);
-    }
+      vertical_length(m_input_box_border) > get_maximum_height(*this)) {
+    m_scrollable_list_box->get_scroll_box().set_vertical(
+      ScrollBox::DisplayPolicy::ON_OVERFLOW);
   } else {
-    if(m_scrollable_list_box->get_scroll_box().get_vertical_display_policy() !=
-        ScrollBox::DisplayPolicy::NEVER) {
-      m_scrollable_list_box->get_scroll_box().set_vertical(
-        ScrollBox::DisplayPolicy::NEVER);
-    }
+    m_scrollable_list_box->get_scroll_box().set_vertical(
+      ScrollBox::DisplayPolicy::NEVER);
+  }
+}
+
+void TagBox::update_size_constraint() {
+  auto& list_view_body =
+    *static_cast<Box*>(m_list_view->layout()->itemAt(0)->widget())->get_body();
+  auto max_width = get_maximum_width(*this);
+  if(height() <= m_min_scroll_height && max_width != QWIDGETSIZE_MAX &&
+      width() < max_width) {
+    list_view_body.layout()->setSizeConstraint(QLayout::SetFixedSize);
+    m_scrollable_list_box->layout()->setSizeConstraint(QLayout::SetFixedSize);
+  } else if(m_scrollable_list_box->layout()->sizeConstraint() !=
+      QLayout::SetDefaultConstraint) {
+    list_view_body.layout()->setSizeConstraint(QLayout::SetDefaultConstraint);
+    list_view_body.setMinimumSize(0, 0);
+    list_view_body.setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
+    m_scrollable_list_box->layout()->setSizeConstraint(
+      QLayout::SetDefaultConstraint);
+    m_scrollable_list_box->setMinimumSize(0, 0);
+    m_scrollable_list_box->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
   }
 }
 
 void TagBox::on_focus(FocusObserver::State state) {
-  if(state != FocusObserver::State::NONE) {
-    m_text_box->setFocusPolicy(Qt::StrongFocus);
-    setFocus();
-    scroll_to_text_box();
-  } else {
+  if(state == FocusObserver::State::NONE) {
     scroll_to_start(*m_horizontal_scroll_bar);
+  } else {
+    m_text_box->setFocusPolicy(focusPolicy());
+    setFocus();
+    if(!is_read_only()) {
+      update_size_constraint();
+      scroll_to_text_box();
+    }
   }
 }
 
 void TagBox::on_operation(const AnyListModel::Operation& operation) {
   auto update_all = [=] {
     m_list_view->setFocusPolicy(Qt::NoFocus);
-    if(m_text_box->focusPolicy() != Qt::StrongFocus) {
-      m_text_box->setFocusPolicy(Qt::StrongFocus);
-    }
+    m_text_box->setFocusPolicy(focusPolicy());
     update_placeholder();
     update_tip();
     update_tooltip();
@@ -508,14 +613,23 @@ void TagBox::on_operation(const AnyListModel::Operation& operation) {
       update_all();
     },
     [&] (const AnyListModel::RemoveOperation& operation) {
-      m_tags.erase(m_tags.begin() + operation.m_index);
       update_all();
+    },
+    [&] (const AnyListModel::MoveOperation& operation) {
+      update_tip();
+      update_tooltip();
     });
 }
 
 void TagBox::on_text_box_current(const QString& current) {
   m_list_view->adjustSize();
   scroll_to_text_box();
+}
+
+void TagBox::on_list_view_current(const optional<int>& current) {
+  if(current) {
+    m_list_view->get_current()->set(none);
+  }
 }
 
 void TagBox::on_list_view_submit(const std::any& submission) {

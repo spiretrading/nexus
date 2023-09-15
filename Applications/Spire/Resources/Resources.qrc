@@ -120,5 +120,7 @@
     <file>Icons/filter.svg</file>
     <file>Icons/menu-arrow.svg</file>
     <file>Icons/spinner.gif</file>
+    <file>Icons/hue-spectrum.png</file>
+    <file>Icons/color-thumb.svg</file>
   </qresource>
 </RCC>

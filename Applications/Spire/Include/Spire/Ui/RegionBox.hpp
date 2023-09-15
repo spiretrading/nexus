@@ -59,10 +59,6 @@ namespace Spire {
       boost::signals2::connection connect_submit_signal(
         const SubmitSignal::slot_type& slot) const;
 
-    protected:
-      bool event(QEvent* event) override;
-      void resizeEvent(QResizeEvent* event) override;
-
     private:
       struct RegionQueryModel;
       mutable SubmitSignal m_submit_signal;
@@ -70,8 +66,8 @@ namespace Spire {
       std::shared_ptr<CurrentModel> m_current;
       TagComboBox* m_tag_combo_box;
       boost::signals2::scoped_connection m_current_connection;
+      boost::signals2::scoped_connection m_tag_operation_connection;
 
-      void update_min_max_size();
       void on_current(const Nexus::Region& region);
       void on_submit(const std::shared_ptr<AnyListModel>& submission);
       void on_tags_operation(const AnyListModel::Operation& operation);

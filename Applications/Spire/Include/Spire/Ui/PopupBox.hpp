@@ -44,18 +44,19 @@ namespace Spire {
       FocusObserver m_focus_observer;
       GlobalPositionObserver m_position_observer;
       Alignment m_alignment;
-      QPoint m_position;
       QSize m_last_size;
       int m_min_height;
       int m_max_height;
       int m_above_space;
       int m_below_space;
       int m_right_space;
+      boost::signals2::scoped_connection m_focus_connection;
 
       bool has_popped_up() const;
       void align();
       void adjust_size();
       void set_position(const QPoint& pos);
+      void update_window();
       void update_space();
       void on_body_focus(FocusObserver::State state);
       void on_focus(FocusObserver::State state);

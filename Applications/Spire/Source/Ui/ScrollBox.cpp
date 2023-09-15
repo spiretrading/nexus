@@ -312,6 +312,10 @@ void ScrollBox::wheelEvent(QWheelEvent* event) {
   m_scrollable_layer->wheelEvent(event);
 }
 
+void ScrollBox::showEvent(QShowEvent* event) {
+  update_ranges();
+}
+
 void ScrollBox::commit_border_styles() {
   auto stylesheet = QString(
     R"(#0x%1 {

@@ -44,7 +44,7 @@ ClosedFilterPanel::ClosedFilterPanel(std::shared_ptr<TableModel> table,
         std::bind_front(&ClosedFilterPanel::on_table_model_operation, this))) {
   for(auto i = 0; i < m_table->get_row_size(); ++i) {
     if(m_table->get<bool>(i, 1)) {
-      m_submission->push(m_table->at(i, 0));
+      m_submission->push(to_any(m_table->at(i, 0)));
     }
   }
   m_list_view = new ListView(
@@ -110,7 +110,7 @@ void ClosedFilterPanel::on_list_model_operation(
     [&] (const AnyListModel::AddOperation& operation) {
       invalidate_descendant_layouts(*window());
       if(m_table->get<bool>(operation.m_index, 1)) {
-        m_submission->push(m_table->at(operation.m_index, 0));
+        m_submission->push(to_any(m_table->at(operation.m_index, 0)));
       }
     },
     [&] (const AnyListModel::RemoveOperation& operation) {
@@ -121,7 +121,7 @@ void ClosedFilterPanel::on_list_model_operation(
       }
       for(auto i = 0; i < m_table->get_row_size(); ++i) {
         if(m_table->get<bool>(i, 1)) {
-          m_submission->push(m_table->at(i, 0));
+          m_submission->push(to_any(m_table->at(i, 0)));
         }
       }
     });
@@ -144,7 +144,7 @@ void ClosedFilterPanel::on_table_model_operation(
         m_submission->remove(index);
         m_submit_signal(m_submission);
       } else if(index == -1 && m_table->get<bool>(operation.m_row, 1)) {
-        m_submission->push(m_table->at(operation.m_row, 0));
+        m_submission->push(to_any(m_table->at(operation.m_row, 0)));
         m_submit_signal(m_submission);
       }
     });
@@ -155,7 +155,7 @@ void ClosedFilterPanel::on_reset() {
   for(auto i = 0; i < m_table->get_row_size(); ++i) {
     if(!m_table->get<bool>(i, 1)) {
       m_table->set(i, 1, true);
-      m_submission->push(m_table->at(i, 0));
+      m_submission->push(to_any(m_table->at(i, 0)));
     }
   }
   m_submit_signal(m_submission);

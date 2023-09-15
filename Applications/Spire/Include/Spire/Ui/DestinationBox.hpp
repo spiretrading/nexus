@@ -61,12 +61,24 @@ namespace Spire {
       boost::signals2::connection connect_submit_signal(
         const SubmitSignal::slot_type& slot) const;
 
+    protected:
+      bool eventFilter(QObject* watched, QEvent* event) override;
+      void showEvent(QShowEvent* event) override;
+
     private:
       struct DestinationQueryModel;
       mutable SubmitSignal m_submit_signal;
       std::shared_ptr<DestinationQueryModel> m_query_model;
       std::shared_ptr<CurrentModel> m_current;
+      Nexus::Destination m_submission;
       ComboBox* m_combo_box;
+      AnyInputBox* m_input_box;
+      bool m_is_rejected;
+      boost::signals2::scoped_connection m_current_connection;
+
+      void on_current(const Nexus::Destination& current);
+      void on_input_submit(const AnyRef& submission);
+      void on_submit(const std::any& submission);
   };
 }
 

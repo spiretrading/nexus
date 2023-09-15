@@ -403,19 +403,27 @@ void Nexus::Python::ExportNeoeFeeTable(module& module) {
     .def_readwrite("general_fee_table", &NeoeFeeTable::m_generalFeeTable)
     .def_readwrite("interlisted_fee_table",
       &NeoeFeeTable::m_interlistedFeeTable)
+    .def_readwrite("etf_fee_table", &NeoeFeeTable::m_etfFeeTable)
     .def_readwrite("neoe_book_fee_table", &NeoeFeeTable::m_neoBookFeeTable);
   enum_<NeoeFeeTable::PriceClass>(outer, "PriceClass")
     .value("NONE", NeoeFeeTable::PriceClass::NONE)
     .value("DEFAULT", NeoeFeeTable::PriceClass::DEFAULT)
     .value("SUBDOLLAR", NeoeFeeTable::PriceClass::SUBDOLLAR);
+  enum_<NeoeFeeTable::Classification>(outer, "Classification")
+    .value("GENERAL", NeoeFeeTable::Classification::GENERAL)
+    .value("INTERLISTED", NeoeFeeTable::Classification::INTERLISTED)
+    .value("ETF", NeoeFeeTable::Classification::ETF);
   module.def("parse_neoe_fee_table", &ParseNeoeFeeTable);
   module.def("is_neo_book_order", &IsNeoBookOrder);
   module.def("lookup_general_fee", static_cast<Money (*)(const NeoeFeeTable&,
     LiquidityFlag, NeoeFeeTable::PriceClass)>(&LookupGeneralFee));
   module.def("lookup_interlisted_fee", &LookupInterlistedFee);
+  module.def("lookup_etf_fee", static_cast<Money (*)(const NeoeFeeTable&,
+    LiquidityFlag, NeoeFeeTable::PriceClass)>(&LookupEtfFee));
   module.def("lookup_neo_book_fee", &LookupNeoBookFee);
-  module.def("calculate_fee", static_cast<Money (*)(const NeoeFeeTable&, bool,
-    const OrderFields&, const ExecutionReport&)>(&CalculateFee));
+  module.def("calculate_fee", static_cast<Money (*)(const NeoeFeeTable&,
+    NeoeFeeTable::Classification, const OrderFields&, const ExecutionReport&)>(
+      &CalculateFee));
 }
 
 void Nexus::Python::ExportNexFeeTable(module& module) {
@@ -590,10 +598,13 @@ void Nexus::Python::ExportXcx2FeeTable(module& module) {
     .def(init<const Xcx2FeeTable&>())
     .def_readwrite("default_table", &Xcx2FeeTable::m_defaultTable)
     .def_readwrite("tsx_table", &Xcx2FeeTable::m_tsxTable)
-    .def_readwrite("large_trade_size", &Xcx2FeeTable::m_largeTradeSize);
+    .def_readwrite("large_trade_size", &Xcx2FeeTable::m_largeTradeSize)
+    .def_readwrite("etfs", &Xcx2FeeTable::m_etfs);
   enum_<Xcx2FeeTable::PriceClass>(outer, "PriceClass")
     .value("NONE", Xcx2FeeTable::PriceClass::NONE)
     .value("DEFAULT", Xcx2FeeTable::PriceClass::DEFAULT)
+    .value("ETF", Xcx2FeeTable::PriceClass::ETF)
+    .value("SUB_FIVE_DOLLAR", Xcx2FeeTable::PriceClass::SUB_FIVE_DOLLAR)
     .value("SUBDOLLAR", Xcx2FeeTable::PriceClass::SUBDOLLAR)
     .value("SUBDIME", Xcx2FeeTable::PriceClass::SUBDIME);
   enum_<Xcx2FeeTable::Type>(outer, "Type")

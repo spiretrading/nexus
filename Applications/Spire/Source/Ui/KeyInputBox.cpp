@@ -84,7 +84,9 @@ KeyInputBox::KeyInputBox(
     std::shared_ptr<KeySequenceValueModel> current, QWidget* parent)
     : QWidget(parent),
       m_current(std::move(current)),
+      m_submission(m_current->get()),
       m_status(Status::UNINITIALIZED),
+      m_is_read_only(false),
       m_is_modified(false) {
   setFocusPolicy(Qt::StrongFocus);
   m_body = new QWidget();
@@ -93,7 +95,8 @@ KeyInputBox::KeyInputBox(
   auto layers = new LayeredWidget();
   layers->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
   layers->add(m_body);
-  layers->add(new Caret(this));
+  m_caret = new Caret(this);
+  layers->add(m_caret);
   m_input_box = make_input_box(layers);
   proxy_style(*this, *m_input_box);
   enclose(*this, *m_input_box);
@@ -110,6 +113,22 @@ KeyInputBox::KeyInputBox(QWidget* parent)
 
 const std::shared_ptr<KeySequenceValueModel>& KeyInputBox::get_current() const {
   return m_current;
+}
+
+bool KeyInputBox::is_read_only() const {
+  return m_is_read_only;
+}
+
+void KeyInputBox::set_read_only(bool is_read_only) {
+  m_is_read_only = is_read_only;
+  if(m_is_read_only) {
+    m_caret->hide();
+    match(*m_input_box, ReadOnly());
+  } else {
+    m_caret->show();
+    unmatch(*m_input_box, ReadOnly());
+  }
+  transition_status();
 }
 
 connection KeyInputBox::connect_submit_signal(
@@ -139,6 +158,9 @@ void KeyInputBox::focusOutEvent(QFocusEvent* event) {
 }
 
 void KeyInputBox::keyPressEvent(QKeyEvent* event) {
+  if(is_read_only()) {
+    return QWidget::keyPressEvent(event);
+  }
   auto key = event->key();
   if(key == Qt::Key_Shift ||
       key == Qt::Key_Meta || key == Qt::Key_Control || key == Qt::Key_Alt) {
@@ -159,29 +181,32 @@ void KeyInputBox::keyPressEvent(QKeyEvent* event) {
     } else if(key == Qt::Key_Enter || key == Qt::Key_Return) {
       m_is_modified = true;
       transition_submission();
-    } else {
-      m_current->set(key);
+    } else if(m_current->set(key) == QValidator::Invalid) {
+      return QWidget::keyPressEvent(event);
     }
-  } else {
-    m_current->set(event->modifiers() + key);
+  } else if(m_current->set(event->modifiers() + key) == QValidator::Invalid) {
+    return QWidget::keyPressEvent(event);
   }
 }
 
 void KeyInputBox::layout_key_sequence() {
   if(m_status == Status::NONE) {
-    auto& layout = *m_body->layout();
-    clear(layout);
-    layout.setSpacing(scale_width(4));
+    clear(*m_body->layout());
+    auto key_sequence = new QWidget();
+    auto layout = make_hbox_layout(key_sequence);
+    layout->setSizeConstraint(QLayout::SetFixedSize);
+    layout->setSpacing(scale_width(4));
     for(auto key : split(m_current->get())) {
       auto tag = new KeyTag(make_constant_value_model(key));
       tag->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-      layout.addWidget(tag);
+      layout->addWidget(tag);
     }
+    m_body->layout()->addWidget(key_sequence);
   }
 }
 
 void KeyInputBox::transition_status() {
-  if(m_current->get().count() == 0) {
+  if(!is_read_only() && m_current->get().count() == 0) {
     set_status(Status::PROMPT);
   } else {
     set_status(Status::NONE);

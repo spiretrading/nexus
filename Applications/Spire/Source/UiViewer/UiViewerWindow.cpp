@@ -113,6 +113,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   connect(m_reset_button, &QPushButton::pressed, [this] { on_reset(); });
   m_rebuild_button = new QPushButton(QString::fromUtf8("Rebuild"));
   connect(m_rebuild_button, &QPushButton::pressed, [this] { on_rebuild(); });
+  add(make_adaptive_box_profile());
   add(make_box_profile());
   add(make_calendar_date_picker_profile());
   add(make_check_box_profile());
@@ -130,8 +131,13 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_drop_down_list_profile());
   add(make_duration_box_profile());
   add(make_duration_filter_panel_profile());
+  add(make_editable_box_profile());
   add(make_filter_panel_profile());
   add(make_focus_observer_profile());
+  add(make_font_box_profile());
+  add(make_font_family_box_profile());
+  add(make_font_style_box_profile());
+  add(make_highlight_swatch_profile());
   add(make_hover_observer_profile());
   add(make_icon_button_profile());
   add(make_icon_toggle_button_profile());
@@ -155,6 +161,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_order_type_box_profile());
   add(make_order_type_filter_panel_profile());
   add(make_overlay_panel_profile());
+  add(make_percent_box_profile());
   add(make_popup_box_profile());
   add(make_quantity_box_profile());
   add(make_quantity_filter_panel_profile());
@@ -162,6 +169,8 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_region_box_profile());
   add(make_region_list_item_profile());
   add(make_responsive_label_profile());
+  add(make_sale_condition_box_profile());
+  add(make_sale_condition_list_item_profile());
   add(make_scroll_bar_profile());
   add(make_scroll_box_profile());
   add(make_scrollable_list_box_profile());
@@ -172,6 +181,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_security_view_profile());
   add(make_side_box_profile());
   add(make_side_filter_panel_profile());
+  add(make_slider_profile());
   add(make_split_view_profile());
   add(make_tab_view_profile());
   add(make_table_header_profile());
@@ -240,13 +250,14 @@ void UiViewerWindow::on_item_selected(const QListWidgetItem* current,
   update_table(profile);
   m_stage = new QSplitter(Qt::Vertical);
   m_center_stage = new QScrollArea();
-  if(profile.get_name() == "PopupBox") {
+  if(profile.get_name() == "PopupBox" || profile.get_name() == "AdaptiveBox") {
     m_center_stage->setWidget(profile.get_widget());
     m_center_stage->setMinimumSize(profile.get_widget()->minimumSize());
     m_center_stage->setWidgetResizable(true);
     m_rebuild_button->setDisabled(true);
   } else {
     m_center_stage->setWidget(new SizeAdjustedContainer(profile.get_widget()));
+    m_rebuild_button->setDisabled(false);
   }
   m_center_stage->setAlignment(Qt::AlignCenter);
   m_stage->addWidget(m_center_stage);

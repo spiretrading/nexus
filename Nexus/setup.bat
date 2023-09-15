@@ -20,7 +20,7 @@ FOR /f "usebackq delims=" %%i IN (`!VSWHERE! -prerelease -latest -property insta
   )
 )
 SET BUILD_BEAM=
-SET BEAM_COMMIT="4a3bf619be44b1342c56d87fecc88537fecb55cc"
+SET BEAM_COMMIT="caf2dc475d9656669d587671f99fc5d11c9f666a"
 IF NOT EXIST Beam (
   git clone https://www.github.com/spiretrading/beam Beam
   IF !ERRORLEVEL! EQU 0 (
@@ -72,11 +72,11 @@ IF NOT EXIST qt-5.15.2 (
     SET EXIT_STATUS=1
   )
 )
-IF NOT EXIST lua-5.4.2 (
-  wget http://www.lua.org/ftp/lua-5.4.2.tar.gz --no-check-certificate
+IF NOT EXIST lua-5.4.4 (
+  wget http://www.lua.org/ftp/lua-5.4.4.tar.gz --no-check-certificate
   IF !ERRORLEVEL! LEQ 0 (
-    gzip -d -c lua-5.4.2.tar.gz | tar -xf -
-    PUSHD lua-5.4.2\src
+    gzip -d -c lua-5.4.4.tar.gz | tar -xf -
+    PUSHD lua-5.4.4\src
     COPY %~dp0\Config\lua.cmake CMakeLists.txt
     cmake -A Win32 .
     cmake --build . --target ALL_BUILD --config Debug
@@ -85,7 +85,7 @@ IF NOT EXIST lua-5.4.2 (
   ) ELSE (
     SET EXIT_STATUS=1
   )
-  DEL /F /Q lua-5.4.2.tar.gz
+  DEL /F /Q lua-5.4.4.tar.gz
 )
 IF NOT EXIST quickfix-v.1.15.1 (
   wget https://github.com/quickfix/quickfix/archive/49b3508e48f0bbafbab13b68be72250bdd971ac2.zip -O quickfix-v.1.15.1.zip --no-check-certificate
@@ -102,9 +102,9 @@ IF NOT EXIST quickfix-v.1.15.1 (
     sed -i "s/pGroup\.release()/new Group(\*pGroup)/" Message.cpp
     POPD
     devenv /Upgrade quickfix_vs12.sln
-    msbuild quickfix_vs12.sln /p:PlatformToolset=v142 /p:configuration=Debug ^
+    msbuild quickfix_vs12.sln /p:PlatformToolset=v143 /p:configuration=Debug ^
       /p:UseEnv=true
-    msbuild quickfix_vs12.sln /p:PlatformToolset=v142 /p:configuration=Release ^
+    msbuild quickfix_vs12.sln /p:PlatformToolset=v143 /p:configuration=Release ^
       /p:UseEnv=true
     POPD
   ) ELSE (

@@ -4,6 +4,9 @@
 #include <boost/date_time/gregorian/greg_date.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/optional/optional.hpp>
+#include <QDate>
+#include <QDateTime>
+#include <QLocale>
 #include "Nexus/Definitions/Currency.hpp"
 #include "Nexus/Definitions/Market.hpp"
 #include "Nexus/Definitions/Money.hpp"
@@ -13,6 +16,7 @@
 #include "Nexus/Definitions/Region.hpp"
 #include "Nexus/Definitions/Security.hpp"
 #include "Nexus/Definitions/Side.hpp"
+#include "Nexus/Definitions/TimeAndSale.hpp"
 #include "Nexus/Definitions/TimeInForce.hpp"
 #include "Spire/Spire/AnyRef.hpp"
 #include "Spire/Ui/Ui.hpp"
@@ -37,68 +41,160 @@ namespace Spire {
     auto operator <=>(const MarketToken& token) const = default;
   };
 
-  /** Returns a CountryCode's three letter code. */
-  QString to_three_letter_code(Nexus::CountryCode code);
+  /**
+   * Wraps a Side so that it can be displayed within the context of a
+   * position.
+   */
+  struct PositionSideToken {
+
+    /** Wraps the Side. */
+    Nexus::Side m_side;
+
+    /** Constructs a default token. */
+    PositionSideToken() = default;
+
+    /**
+     * Wraps a Side.
+     * @param side The Side to wrap.
+     */
+    PositionSideToken(Nexus::Side side);
+
+    /** Returns the string representation of this Side. */
+    QString to_string() const;
+
+    /**
+     * Returns <code>true</code> iff <i>token</i> has the same <i>side</i> as
+     * <code>this</code>.
+     */
+    bool operator ==(const PositionSideToken& token) const = default;
+
+    /**
+     * Returns <code>true</code> iff <i>token</i> has a different <i>side</i>
+     * from <code>this</code>.
+     */
+    bool operator !=(const PositionSideToken& token) const = default;
+  };
+}
+
+Q_DECLARE_METATYPE(boost::gregorian::date);
+Q_DECLARE_METATYPE(boost::posix_time::ptime);
+Q_DECLARE_METATYPE(boost::posix_time::time_duration);
+Q_DECLARE_METATYPE(Nexus::CountryCode);
+Q_DECLARE_METATYPE(Nexus::CurrencyId);
+Q_DECLARE_METATYPE(Nexus::Money);
+Q_DECLARE_METATYPE(Nexus::OrderStatus);
+Q_DECLARE_METATYPE(Nexus::OrderType);
+Q_DECLARE_METATYPE(Nexus::Quantity);
+Q_DECLARE_METATYPE(Nexus::Region);
+Q_DECLARE_METATYPE(Nexus::Security);
+Q_DECLARE_METATYPE(Nexus::Side);
+Q_DECLARE_METATYPE(Nexus::TimeAndSale::Condition);
+Q_DECLARE_METATYPE(Nexus::TimeInForce);
+Q_DECLARE_METATYPE(Spire::MarketToken);
+Q_DECLARE_METATYPE(Spire::PositionSideToken);
+
+/** Add back this style when charting is implemented. */
+//Q_DECLARE_METATYPE(Spire::TrendLineStyle);
+Q_DECLARE_METATYPE(std::any);
+
+namespace Spire {
+
+  /** Converts a posix time duration into a QTime. */
+  QTime to_qtime(boost::posix_time::time_duration time);
+
+  /** Converts a QTime into a posix time duration. */
+  boost::posix_time::time_duration to_time_duration(const QTime& time);
+
+  /** Converts a QDateTime into a posix timestamp. */
+  QDateTime to_qdate_time(boost::posix_time::ptime time);
+
+  /** Converts a posix timestamp into a QDateTime. */
+  boost::posix_time::ptime to_ptime(const QDateTime& time);
+
+  /** Converts an std::any to a QVariant. */
+  QVariant to_qvariant(const std::any& value);
+
+  /** Registers the custom QVariant types. */
+  void register_custom_qt_variants();
 
   /** Returns the text representation of an int. */
-  QString to_text(int value);
+  QString to_text(int value, const QLocale& = QLocale());
 
   /** Returns the text representation of an std::string. */
-  QString to_text(const std::string& value);
+  QString to_text(const std::string& value, const QLocale& locale = QLocale());
+
+  /** Returns the text representation of a QString. */
+  QString to_text(const QString& value, const QLocale& locale = QLocale());
 
   /** Returns the text representation of a date. */
-  QString to_text(boost::gregorian::date date);
+  QString to_text(
+    boost::gregorian::date date, const QLocale& locale = QLocale());
 
   /** Returns the text representation of a ptime. */
-  QString to_text(boost::posix_time::ptime time);
+  QString to_text(
+    boost::posix_time::ptime time, const QLocale& locale = QLocale());
 
   /** Returns the text representation of a time_duration. */
-  QString to_text(boost::posix_time::time_duration time);
+  QString to_text(
+    boost::posix_time::time_duration time, const QLocale& locale = QLocale());
 
   /** Returns the text representation of a CountryCode. */
-  QString to_text(Nexus::CountryCode code);
+  QString to_text(Nexus::CountryCode code, const QLocale& locale = QLocale());
 
   /** Returns the text representation of a CurrencyId. */
-  QString to_text(Nexus::CurrencyId currency);
+  QString to_text(
+    Nexus::CurrencyId currency, const QLocale& locale = QLocale());
 
   /** Returns the text representation of a MarketToken. */
-  QString to_text(MarketToken market);
+  QString to_text(MarketToken market, const QLocale& locale = QLocale());
 
   /** Returns the text representation of a Money value. */
-  QString to_text(Nexus::Money value);
+  QString to_text(Nexus::Money value, const QLocale& locale = QLocale());
 
   /** Returns the text representation of a Quantity value. */
-  QString to_text(Nexus::Quantity value);
+  QString to_text(Nexus::Quantity value, const QLocale& locale = QLocale());
+
+  /** Returns the text representation of a TimeAndSale::Condition. */
+  QString to_text(const Nexus::TimeAndSale::Condition& condition,
+    const QLocale& locale = QLocale());
 
   /** Returns the text representation of a TimeInForce. */
-  const QString& to_text(Nexus::TimeInForce time_in_force);
+  const QString& to_text(Nexus::TimeInForce time_in_force,
+    const QLocale& locale = QLocale());
 
   /** Returns the text representation of a Side. */
-  const QString& to_text(Nexus::Side side);
+  const QString& to_text(Nexus::Side side, const QLocale& locale = QLocale());
 
   /** Returns the text representation of an OrderStatus. */
-  const QString& to_text(Nexus::OrderStatus status);
+  const QString& to_text(
+    Nexus::OrderStatus status, const QLocale& locale = QLocale());
 
   /** Returns the text representation of an OrderType. */
-  const QString& to_text(Nexus::OrderType type);
+  const QString& to_text(
+    Nexus::OrderType type, const QLocale& locale = QLocale());
+
+  /** Returns the text representation of a PositionSideToken. */
+  QString to_text(PositionSideToken token, const QLocale& locale = QLocale());
 
   /** Returns the text representation of a Region. */
-  QString to_text(const Nexus::Region& region);
+  QString to_text(
+    const Nexus::Region& region, const QLocale& locale = QLocale());
 
   /** Returns the text representation of a Security. */
-  QString to_text(const Nexus::Security& security);
+  QString to_text(
+    const Nexus::Security& security, const QLocale& locale = QLocale());
 
   /** Returns the text representation of a QKeySequence. */
-  QString to_text(const QKeySequence& value);
+  QString to_text(const QKeySequence& value, const QLocale& locale = QLocale());
 
   /** Returns the text representation of the value stored within an AnyRef. */
-  QString to_text(const AnyRef& value);
+  QString to_text(const AnyRef& value, const QLocale& locale = QLocale());
 
   /** Returns the text representation of the value stored within an std::any. */
-  QString to_text(const std::any& value);
+  QString to_text(const std::any& value, const QLocale& locale = QLocale());
 
   template<typename T>
-  QString to_text(const T&) = delete;
+  QString to_text(const T&, const QLocale& locale = QLocale()) = delete;
 
   /**
    * Returns <code>true</code> iff the <i>left</i> value comes before the

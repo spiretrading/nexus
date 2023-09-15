@@ -1,5 +1,6 @@
 #include "Spire/Ui/TableView.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/FilteredTableModel.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Spire/SortedTableModel.hpp"
@@ -57,6 +58,7 @@ TableView::TableView(
   }
   m_header_view = new TableHeader(m_header);
   m_header_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+  m_header_view->setContentsMargins({scale_width(1), 0, 0, 0});
   auto box_body = new QWidget();
   enclose(*box_body, *m_header_view);
   auto box = new Box(box_body);
@@ -123,8 +125,10 @@ void TableView::on_order_update(int index, TableHeaderItem::Order order) {
       m_header->set(i, header_item);
     } else {
       auto item = m_header->get(i);
-      item.m_order = TableHeaderItem::Order::NONE;
-      m_header->set(i, item);
+      if(item.m_order != TableHeaderItem::Order::UNORDERED) {
+        item.m_order = TableHeaderItem::Order::NONE;
+        m_header->set(i, item);
+      }
     }
   }
   m_sort_signal(index, order);

@@ -60,7 +60,6 @@ namespace {
       style.get(Disabled() > Body()).
         set(BackgroundColor(QColor(Qt::transparent))).
         set(Fill(QColor(0xC8C8C8)));
-      style.get(+Any() < ReadOnly()).set(Visibility::NONE);
     });
     button->setFocusPolicy(Qt::NoFocus);
     button->setFixedSize(BUTTON_SIZE());
@@ -175,10 +174,14 @@ struct DecimalBox::DecimalToTextModel : TextModel {
       return QValidator::State::Invalid;
     } else if(value.isEmpty()) {
       return QValidator::State::Intermediate;
-    } else if(value == "-" && (min && *min < 0 || !min)) {
-      return QValidator::State::Intermediate;
-    } else if(value == "+" && (max && *max > 0 || !max)) {
-      return QValidator::State::Intermediate;
+    } else if(value == "-") {
+      if(min && *min < 0 || !min) {
+        return QValidator::State::Intermediate;
+      }
+    } else if(value == "+") {
+      if(max && *max > 0 || !max) {
+        return QValidator::State::Intermediate;
+      }
     } else if(auto decimal = text_to_decimal(value)) {
       if(value.front() != '-' && max && *max < 0 ||
           value.front() == '-' && min && *min > 0) {
@@ -222,16 +225,7 @@ struct DecimalBox::DecimalToTextModel : TextModel {
   }
 
   QValidator::State set(const QString& value) override {
-    auto decimal_places = 0;
-    auto i = m_model->get_increment().get_value_or(1);
-    while(i < 1) {
-      i *= 10;
-      ++decimal_places;
-    }
-    if(decimal_places != m_decimal_places) {
-      m_decimal_places = decimal_places;
-      update_validator();
-    }
+    update_decimal_places();
     if(!m_validator.exactMatch(value)) {
       m_is_rejected = false;
       return QValidator::State::Invalid;
@@ -283,6 +277,19 @@ struct DecimalBox::DecimalToTextModel : TextModel {
     }
   }
 
+  void update_decimal_places() {
+    auto decimal_places = 0;
+    auto i = m_model->get_increment().get_value_or(1);
+    while(i < 1) {
+      i *= 10;
+      ++decimal_places;
+    }
+    if(decimal_places != m_decimal_places) {
+      m_decimal_places = decimal_places;
+      update_validator();
+    }
+  }
+
   void update_validator() {
     m_validator = make_validator(m_decimal_places);
   }
@@ -330,7 +337,19 @@ struct DecimalBox::DecimalToTextModel : TextModel {
       return {};
     }
     auto s = QString::fromStdString(value->str(
-      Decimal::backend_type::cpp_dec_float_digits10, std::ios_base::dec));
+      Decimal::backend_type::cpp_dec_float_digits10, std::ios_base::fixed));
+    auto decimal_point_pos = s.indexOf(".");
+    if(decimal_point_pos >= 0) {
+      auto trailing_zeros = 0;
+      for(auto pos = s.rbegin(); pos != s.rend() - decimal_point_pos; ++pos) {
+        if(*pos == '0' || *pos == '.') {
+          ++trailing_zeros;
+        } else {
+          break;
+        }
+      }
+      s.chop(trailing_zeros);
+    }
     if(DECIMAL_PATTERN.indexIn(s, 0) != -1) {
       auto captures = DECIMAL_PATTERN.capturedTexts();
       if(m_trailing_zeros != 0) {
@@ -347,6 +366,7 @@ struct DecimalBox::DecimalToTextModel : TextModel {
   }
 
   void on_current(const optional<Decimal>& current) {
+    update_decimal_places();
     m_current = to_string(current);
     m_update_signal(m_current);
   }
@@ -423,12 +443,15 @@ DecimalBox::DecimalBox(std::shared_ptr<OptionalDecimalModel> current,
       m_modifiers(std::move(modifiers)),
       m_tick(TickIndicator::NONE) {
   m_text_box = new TextBox(m_adaptor_model, this);
-  update_style(*m_text_box, [&] (auto& style) {
-    style.get(+Any() % (is_a<Button>() && !matches(Visibility::NONE))).set(
-      PaddingRight(scale_width(26)));
-  });
   enclose(*this, *m_text_box);
   proxy_style(*this, *m_text_box);
+  update_style(*this, [] (auto& style) {
+    style.get(Any() > is_a<Button>()).set(Visibility::VISIBLE);
+    style.get(ReadOnly() > is_a<Button>()).set(Visibility::NONE);
+    style.get(+(Any() > is_a<TextBox>()) %
+        (is_a<Button>() && matches(Visibility::VISIBLE))).
+      set(PaddingRight(scale_width(24)));
+  });
   m_style_connection = connect_style_signal(*this, [=] { on_style(); });
   setFocusProxy(m_text_box);
   if(auto current = m_current->get()) {

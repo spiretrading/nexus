@@ -22,6 +22,10 @@ TransitionView::TransitionView(QWidget* body, QWidget* parent)
     std::bind_front(&TransitionView::on_timer_expired, this));
 }
 
+TransitionView::Status TransitionView::get_status() const {
+  return m_status;
+}
+
 void TransitionView::set_status(Status status) {
   if(m_status == status) {
     return;

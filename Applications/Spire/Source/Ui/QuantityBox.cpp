@@ -12,6 +12,10 @@ namespace {
   struct QuantityToDecimalModel : ToDecimalModel<Quantity> {
     using ToDecimalModel<Quantity>::ToDecimalModel;
 
+    optional<Decimal> get_minimum() const override {
+      return Decimal(0);
+    }
+
     optional<Decimal> get_increment() const override {
       return Decimal("0.000001");
     }
@@ -41,8 +45,7 @@ QuantityBox::QuantityBox(std::shared_ptr<OptionalQuantityModel> model,
 
 bool QuantityBox::eventFilter(QObject* watched, QEvent* event) {
   if(watched == &get_decimal_box() && event->type() == QEvent::Show) {
-    auto proxy = find_focus_proxy(get_decimal_box());
-    if(proxy) {
+    if(auto proxy = find_focus_proxy(get_decimal_box())) {
       proxy->installEventFilter(this);
     }
   } else if(event->type() == QEvent::KeyPress && !is_read_only()) {
@@ -66,12 +69,13 @@ bool QuantityBox::eventFilter(QObject* watched, QEvent* event) {
         }
         return *current;
       }();
-      auto min = get_current()->get_minimum();
-      auto max = get_current()->get_maximum();
-      if(min && value < *min) {
-        value = *min;
-      } else if(max && value > *max) {
-        value = *max;
+      auto decimal_min = get_decimal_box().get_current()->get_minimum();
+      auto decimal_max = get_decimal_box().get_current()->get_maximum();
+      auto decimal_value = to_decimal(value);
+      if(decimal_min && decimal_value <= *decimal_min) {
+        value = from_decimal<Quantity>(*decimal_min);
+      } else if(decimal_max && decimal_value >= *decimal_max) {
+        value = from_decimal<Quantity>(*decimal_max);
       }
       if(value != *current) {
         get_current()->set(value);

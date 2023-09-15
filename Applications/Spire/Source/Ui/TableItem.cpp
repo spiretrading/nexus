@@ -8,10 +8,15 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 TableItem::TableItem(QWidget& component, QWidget* parent)
-    : QWidget(parent) {
-  m_styles.m_background_color = Qt::transparent;
+    : QWidget(parent),
+      m_styles{Qt::transparent, Qt::transparent, Qt::transparent,
+        Qt::transparent, Qt::transparent} {
   m_button = new Button(&component);
+  m_button->connect_click_signal(m_active_signal);
   enclose(*this, *m_button);
+  m_focus_observer.emplace(*m_button);
+  m_focus_observer->connect_state_signal(
+    std::bind_front(&TableItem::on_focus, this));
   m_style_connection =
     connect_style_signal(*this, std::bind_front(&TableItem::on_style, this));
 }
@@ -20,15 +25,21 @@ const TableItem::Styles& TableItem::get_styles() const {
   return m_styles;
 }
 
-connection TableItem::connect_click_signal(
-    const ClickSignal::slot_type& slot) const {
-  return m_button->connect_click_signal(slot);
+connection TableItem::connect_active_signal(
+    const ActiveSignal::slot_type& slot) const {
+  return m_active_signal.connect(slot);
+}
+
+void TableItem::on_focus(FocusObserver::State state) {
+  if(state == FocusObserver::State::FOCUS_IN) {
+    m_active_signal();
+  }
 }
 
 void TableItem::on_style() {
   auto& stylist = find_stylist(*this);
-  m_styles = {};
-  m_styles.m_background_color = Qt::transparent;
+  m_styles = {Qt::transparent, Qt::transparent, Qt::transparent,
+    Qt::transparent, Qt::transparent};
   for(auto& property : stylist.get_computed_block()) {
     property.visit(
       [&] (const BackgroundColor& color) {

@@ -30,6 +30,10 @@ namespace Spire {
 
       using UpdateOperation = typename ListModel<T>::UpdateOperation;
 
+      using StartTransaction = typename ListModel<T>::StartTransaction;
+
+      using EndTransaction = typename ListModel<T>::EndTransaction;
+
       /**
        * Constructs a ColumnViewListModel from a specified column of
        * the table model.
@@ -115,27 +119,31 @@ namespace Spire {
   template<typename T>
   void ColumnViewListModel<T>::on_operation(
       const TableModel::Operation& operation) {
-    m_transaction.transact([&] {
-      visit(operation,
-        [&] (const TableModel::AddOperation& operation) {
-          m_transaction.push(AddOperation(operation.m_index,
-            std::any_cast<const Type&>(operation.m_row->get(m_column))));
-        },
-        [&] (const TableModel::MoveOperation& operation) {
-          m_transaction.push(
-            MoveOperation(operation.m_source, operation.m_destination));
-        },
-        [&] (const TableModel::RemoveOperation& operation) {
-          m_transaction.push(RemoveOperation(operation.m_index,
-            std::any_cast<const Type&>(operation.m_row->get(m_column))));
-        },
-        [&] (const TableModel::UpdateOperation& operation) {
-          if(m_column == operation.m_column) {
-            m_transaction.push(UpdateOperation(operation.m_row,
-              std::any_cast<const Type&>(operation.m_previous),
-              std::any_cast<const Type&>(operation.m_value)));
-          }
-        });
+    visit(operation,
+      [&] (const TableModel::StartTransaction) {
+        m_transaction.start();
+      },
+      [&] (const TableModel::EndTransaction) {
+        m_transaction.end();
+      },
+      [&] (const TableModel::AddOperation& operation) {
+        m_transaction.push(AddOperation(operation.m_index,
+          std::any_cast<const Type&>(operation.m_row->get(m_column))));
+      },
+      [&] (const TableModel::MoveOperation& operation) {
+        m_transaction.push(
+          MoveOperation(operation.m_source, operation.m_destination));
+      },
+      [&] (const TableModel::RemoveOperation& operation) {
+        m_transaction.push(RemoveOperation(operation.m_index,
+          std::any_cast<const Type&>(operation.m_row->get(m_column))));
+      },
+      [&] (const TableModel::UpdateOperation& operation) {
+        if(m_column == operation.m_column) {
+          m_transaction.push(UpdateOperation(operation.m_row,
+            std::any_cast<const Type&>(operation.m_previous),
+            std::any_cast<const Type&>(operation.m_value)));
+        }
       });
   }
 }

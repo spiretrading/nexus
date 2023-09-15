@@ -37,21 +37,18 @@ namespace {
   };
 }
 
-void Spire::populate_widget_properties(
+void Spire::populate_widget_size_properties(const QString& width_name,
+    const QString& height_name,
     std::vector<std::shared_ptr<UiProperty>>& properties) {
-  properties.push_back(make_standard_property("enabled", true));
-  properties.push_back(make_standard_property<int>("width"));
-  properties.push_back(make_standard_property<int>("height"));
+  properties.push_back(make_standard_property<int>(width_name));
+  properties.push_back(make_standard_property<int>(height_name));
 }
 
-void Spire::apply_widget_properties(QWidget* widget,
+void Spire::apply_widget_size_properties(QWidget* widget,
+    const QString& width_name, const QString& height_name,
     const std::vector<std::shared_ptr<UiProperty>>& properties) {
-  auto& enabled = get<bool>("enabled", properties);
-  auto& width = get<int>("width", properties);
-  auto& height = get<int>("height", properties);
-  enabled.connect_changed_signal([=] (auto value) {
-    widget->setEnabled(value);
-  });
+  auto& width = get<int>(width_name, properties);
+  auto& height = get<int>(height_name, properties);
   width.connect_changed_signal([=] (auto value) {
     if(value != 0) {
       if(unscale_width(widget->width()) != value) {
@@ -67,6 +64,21 @@ void Spire::apply_widget_properties(QWidget* widget,
     }
   });
   widget->installEventFilter(new SizeFilter(&width, &height, widget));
+}
+
+void Spire::populate_widget_properties(
+    std::vector<std::shared_ptr<UiProperty>>& properties) {
+  properties.push_back(make_standard_property("enabled", true));
+  populate_widget_size_properties("width", "height", properties);
+}
+
+void Spire::apply_widget_properties(QWidget* widget,
+    const std::vector<std::shared_ptr<UiProperty>>& properties) {
+  auto& enabled = get<bool>("enabled", properties);
+  enabled.connect_changed_signal([=] (auto value) {
+    widget->setEnabled(value);
+  });
+  apply_widget_size_properties(widget, "width", "height", properties);
 }
 
 template<>
@@ -187,6 +199,34 @@ std::shared_ptr<TypedUiProperty<Quantity>>
         [&] (const auto& value) {
           if(auto quantity = Quantity::FromValue(value.toStdString())) {
             property.set(*quantity);
+          }
+        });
+      return setter;
+    });
+}
+
+template<>
+std::shared_ptr<TypedUiProperty<Decimal>>
+    Spire::make_standard_property<Decimal>(QString name, Decimal value) {
+  return std::make_shared<StandardUiProperty<Decimal>>(std::move(name), value,
+    [] (QWidget* parent, StandardUiProperty<Decimal>& property) {
+      auto setter = new QDoubleSpinBox(parent);
+      setter->setMinimum(std::numeric_limits<double>::lowest());
+      setter->setMaximum(std::numeric_limits<double>::max());
+      auto parse_decimal = [] (auto decimal) -> std::optional<Decimal> {
+        try {
+          return Decimal(decimal.toStdString().c_str());
+        } catch(const std::exception&) {
+          return {};
+        }
+      };
+      property.connect_changed_signal([=] (auto value) {
+        setter->setValue(static_cast<double>(value));
+      });
+      QObject::connect(setter, &QDoubleSpinBox::textChanged,
+        [&] (const auto& value) {
+          if(auto decimal = parse_decimal(value)) {
+            property.set(*decimal);
           }
         });
       return setter;

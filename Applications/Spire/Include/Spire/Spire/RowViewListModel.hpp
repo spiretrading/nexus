@@ -38,6 +38,10 @@ namespace Details {
 
       using UpdateOperation = typename ListModel<T>::UpdateOperation;
 
+      using StartTransaction = typename ListModel<T>::StartTransaction;
+
+      using EndTransaction = typename ListModel<T>::EndTransaction;
+
       /**
        * Constructs a RowViewListModel from a specified row of the table model.
        * @param source The table model.
@@ -127,46 +131,50 @@ namespace Details {
   template<typename T>
   void RowViewListModel<T>::on_operation(
       const TableModel::Operation& operation) {
-    m_transaction.transact([&] {
-      visit(operation,
-        [&] (const TableModel::AddOperation& operation) {
-          if(m_row >= operation.m_index) {
-            ++m_row;
-          }
-        },
-        [&] (const TableModel::MoveOperation& operation) {
-          if(m_row == operation.m_source) {
-            m_row = operation.m_destination;
-          } else if(operation.m_source < operation.m_destination) {
-            if(m_row > operation.m_source && m_row <= operation.m_destination) {
-              --m_row;
-            }
-          } else if(m_row >= operation.m_destination &&
-              m_row < operation.m_source) {
-            ++m_row;
-          }
-        },
-        [&] (const TableModel::RemoveOperation& operation) {
-          if(m_row == operation.m_index) {
-            m_source_connection.disconnect();
-            m_row = -1;
-            m_source = nullptr;
-          } else if(m_row > operation.m_index) {
+    visit(operation,
+      [&] (const TableModel::StartTransaction) {
+        m_transaction.start();
+      },
+      [&] (const TableModel::EndTransaction) {
+        m_transaction.end();
+      },
+      [&] (const TableModel::AddOperation& operation) {
+        if(m_row >= operation.m_index) {
+          ++m_row;
+        }
+      },
+      [&] (const TableModel::MoveOperation& operation) {
+        if(m_row == operation.m_source) {
+          m_row = operation.m_destination;
+        } else if(operation.m_source < operation.m_destination) {
+          if(m_row > operation.m_source && m_row <= operation.m_destination) {
             --m_row;
           }
-        },
-        [&] (const TableModel::UpdateOperation& operation) {
-          if(m_row == operation.m_row) {
-            if constexpr(std::is_same_v<Type, AnyRef>) {
-              m_transaction.push(UpdateOperation(operation.m_column,
-                AnyRef(operation.m_previous), AnyRef(operation.m_value)));
-            } else {
-              m_transaction.push(UpdateOperation(operation.m_column,
-                std::any_cast<const Type&>(operation.m_previous),
-                std::any_cast<const Type&>(operation.m_value)));
-            }
+        } else if(m_row >= operation.m_destination &&
+            m_row < operation.m_source) {
+          ++m_row;
+        }
+      },
+      [&] (const TableModel::RemoveOperation& operation) {
+        if(m_row == operation.m_index) {
+          m_source_connection.disconnect();
+          m_row = -1;
+          m_source = nullptr;
+        } else if(m_row > operation.m_index) {
+          --m_row;
+        }
+      },
+      [&] (const TableModel::UpdateOperation& operation) {
+        if(m_row == operation.m_row) {
+          if constexpr(std::is_same_v<Type, AnyRef>) {
+            m_transaction.push(UpdateOperation(operation.m_column,
+              AnyRef(operation.m_previous), AnyRef(operation.m_value)));
+          } else {
+            m_transaction.push(UpdateOperation(operation.m_column,
+              std::any_cast<const Type&>(operation.m_previous),
+              std::any_cast<const Type&>(operation.m_value)));
           }
-        });
+        }
       });
   }
 }

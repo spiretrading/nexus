@@ -29,10 +29,12 @@ int TableCurrentController::get_column_size() const {
 
 void TableCurrentController::add_row(int index) {
   ++m_row_size;
-  if(m_current->get() && m_current->get()->m_row >= index) {
+  if(m_current->get() && m_current->get()->m_row >= index &&
+      m_current->get()->m_row < m_row_size - 1) {
     auto blocker = shared_connection_block(m_connection);
-    m_current->set(
-      Index(m_current->get()->m_row + 1, m_current->get()->m_column));
+    m_last_current =
+      Index(m_current->get()->m_row + 1, m_current->get()->m_column);
+    m_current->set(m_last_current);
   }
 }
 
@@ -40,11 +42,23 @@ void TableCurrentController::remove_row(int index) {
   --m_row_size;
   if(m_current->get()) {
     if(m_current->get()->m_row == index) {
-      m_current->set(Index(index, m_current->get()->m_column));
+      if(m_row_size == index) {
+        if(m_last_current && m_last_current->m_row == m_row_size) {
+          m_last_current = none;
+        }
+        if(m_row_size > 0) {
+          m_current->set(Index(index - 1, m_current->get()->m_column));
+        } else {
+          m_current->set(none);
+        }
+      } else {
+        m_current->set(Index(index, m_current->get()->m_column));
+      }
     } else if(m_current->get()->m_row > index) {
       auto blocker = shared_connection_block(m_connection);
-      m_current->set(
-        Index(m_current->get()->m_row - 1, m_current->get()->m_column));
+      m_last_current =
+        Index(m_current->get()->m_row - 1, m_current->get()->m_column);
+      m_current->set(m_last_current);
     }
   }
 }
@@ -60,9 +74,16 @@ void TableCurrentController::move_row(int source, int destination) {
     return 1;
   }();
   auto adjust = [&] (auto& value) {
-    if(value && (value->m_row >= source || value->m_row <= destination)) {
-      value->m_row += direction;
-      return true;
+    if(value) {
+      if(value->m_row == source) {
+        value->m_row = destination;
+        return true;
+      } else if(direction == 1 && value->m_row >= destination &&
+          value->m_row < source || direction == -1 && value->m_row > source &&
+          value->m_row <= destination) {
+        value->m_row += direction;
+        return true;
+      }
     }
     return false;
   };

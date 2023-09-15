@@ -95,6 +95,12 @@ NavigationView::NavigationView(
       return new NavigationTab(
         std::any_cast<const QString&>(model->get(index)));
     });
+  update_style(*m_navigation_view, [] (auto& style) {
+    style.get(Any()).
+      set(EdgeNavigation::CONTAIN).
+      set(Overflow::NONE).
+      set(Qt::Horizontal);
+  });
   m_navigation_view->setFixedHeight(scale_height(28));
   auto navigation_list_layout = make_hbox_layout();
   navigation_list_layout->addWidget(m_navigation_view);
@@ -109,18 +115,8 @@ NavigationView::NavigationView(
   layout->addWidget(navigation_menu);
   m_stacked_widget = new QStackedWidget();
   m_stacked_widget->setContentsMargins({});
-  auto content_layout = make_vbox_layout();
-  content_layout->addWidget(m_stacked_widget);
-  content_layout->addStretch();
-  auto content_block_layout = make_hbox_layout();
-  content_block_layout->addLayout(content_layout);
-  content_block_layout->addStretch();
-  layout->addLayout(content_block_layout);
+  layout->addWidget(m_stacked_widget);
   auto style = StyleSheet();
-  style.get(Any() > is_a<ListView>()).
-    set(EdgeNavigation::CONTAIN).
-    set(Overflow::NONE).
-    set(Qt::Horizontal);
   style.get(Any() > is_a<Separator>()).
     set(BorderTopSize(scale_height(1))).
     set(BorderTopColor(QColor(0xD0D0D0)));
@@ -152,6 +148,8 @@ void NavigationView::insert_tab(int index, QWidget& page,
     set(border_color(QColor(Qt::transparent))).
     set(border_size(0)).
     set(padding(0));
+  style.get(Any() > is_a<SelectLine>()).
+    set(BackgroundColor(QColor(Qt::transparent)));
   style.get((Checked() || Hover()) > is_a<TextBox>()).
     set(TextColor(QColor(0x4B23A0)));
   style.get(Disabled() > is_a<TextBox>()).
@@ -161,7 +159,20 @@ void NavigationView::insert_tab(int index, QWidget& page,
   style.get((Checked() && Disabled()) > is_a<SelectLine>()).
     set(BackgroundColor(QColor(0xC8C8C8)));
   set_style(*m_navigation_view->get_list_item(index), std::move(style));
-  m_stacked_widget->insertWidget(index, &page);
+  auto content_block = new QWidget();
+  auto size_policy = page.sizePolicy();
+  auto aligment = Qt::Alignment();
+  if(size_policy.horizontalPolicy() == QSizePolicy::Preferred ||
+      size_policy.horizontalPolicy() == QSizePolicy::Fixed) {
+    aligment |= Qt::AlignLeft;
+  }
+  if(size_policy.verticalPolicy() == QSizePolicy::Preferred ||
+      size_policy.verticalPolicy() == QSizePolicy::Fixed) {
+    aligment |= Qt::AlignTop;
+  }
+  auto layout = make_vbox_layout(content_block);
+  layout->addWidget(&page, 0, aligment);
+  m_stacked_widget->insertWidget(index, content_block);
   m_associative_model.get_association(label)->connect_update_signal(
     std::bind_front(&NavigationView::on_associative_value_current, this, index));
   if(index == m_current->get()) {

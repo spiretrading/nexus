@@ -1,6 +1,7 @@
 #include <deque>
 #include <doctest/doctest.h>
 #include "Spire/Spire/ArrayListModel.hpp"
+#include "Spire/SpireTester/ListModelTester.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -20,7 +21,7 @@ TEST_SUITE("ArrayListModel") {
     REQUIRE(model.get_size() == 0);
     auto operations = std::deque<ListModel<int>::Operation>();
     auto connection = scoped_connection(model.connect_operation_signal(
-      [&] (const ListModel<int>::Operation& operation) {
+      [&] (const auto& operation) {
         operations.push_back(operation);
       }));
     REQUIRE_NOTHROW(model.push(3));
@@ -242,23 +243,9 @@ TEST_SUITE("ArrayListModel") {
   TEST_CASE("transactions") {
     auto model = ArrayListModel<int>();
     auto operations = std::deque<ListModel<int>::Operation>();
-    auto connection = scoped_connection(model.connect_operation_signal(
-      [&] (const ListModel<int>::Operation& operation) {
-        operations.push_back(operation);
-        auto transaction = operation.get<ListModel<int>::Transaction>();
-        REQUIRE((transaction != none));
-        REQUIRE(transaction->size() == 5);
-        REQUIRE(
-          ((*transaction)[0].get<ListModel<int>::AddOperation>() != none));
-        REQUIRE(
-          ((*transaction)[1].get<ListModel<int>::UpdateOperation>() != none));
-        REQUIRE(
-          ((*transaction)[2].get<ListModel<int>::AddOperation>() != none));
-        REQUIRE(
-          ((*transaction)[3].get<ListModel<int>::RemoveOperation>() != none));
-        REQUIRE(
-          ((*transaction)[4].get<ListModel<int>::AddOperation>() != none));
-      }));
+    model.connect_operation_signal([&] (const auto& operation) {
+      operations.push_back(operation);
+    });
     model.transact([&] {
       model.push(1);
       model.transact([&] {
@@ -270,42 +257,13 @@ TEST_SUITE("ArrayListModel") {
         model.push(8);
       });
     });
-    REQUIRE(operations.size() == 1);
-    operations.clear();
-    connection = model.connect_operation_signal(
-      [&] (const ListModel<int>::Operation& operation) {
-        operations.push_back(operation);
-        connection.disconnect();
-        model.transact([&] {
-          model.push(7);
-        });
-        auto transaction = operation.get<ListModel<int>::Transaction>();
-        REQUIRE((transaction != none));
-        REQUIRE(transaction->size() == 2);
-        REQUIRE(
-          ((*transaction)[0].get<ListModel<int>::AddOperation>() != none));
-        REQUIRE(
-          ((*transaction)[1].get<ListModel<int>::AddOperation>() != none));
-      });
-    model.transact([&] {
-      model.push(1);
-      model.push(4);
-    });
-    REQUIRE(operations.size() == 1);
-    operations.clear();
-    connection = model.connect_operation_signal(
-      [&] (const ListModel<int>::Operation& operation) {
-        operations.push_back(operation);
-      });
-    model.transact([&] {
-      model.push(1);
-    });
-    REQUIRE(operations.size() == 1);
-    auto operation = operations.front();
-    operations.pop_front();
-    test_operation(operation,
-      [&] (const ListModel<int>::AddOperation& operation) {
-        REQUIRE(operation.m_index == model.get_size() - 1);
+    require_list_transaction<int>(operations,
+      {
+        ListModel<int>::AddOperation(0, 1),
+        ListModel<int>::UpdateOperation(0, 1, 10),
+        ListModel<int>::AddOperation(1, 9),
+        ListModel<int>::RemoveOperation(1, 9),
+        ListModel<int>::AddOperation(1, 8)
       });
   }
 }

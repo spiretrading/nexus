@@ -18,6 +18,16 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  auto TEXT_BOX_TEXT_MARGINS() {
+    static auto margins = QMargins(-2, 0, -2, 0);
+    return margins;
+  }
+
+  auto READ_ONLY_TEXT_BOX_TEXT_MARGINS() {
+    static auto margins = QMargins(-2, 0, -3, 0);
+    return margins;
+  }
+
   void apply_label_style(TextBox& text_box) {
     Spire::apply_label_style(text_box);
     text_box.set_read_only(true);
@@ -112,7 +122,7 @@ class TextBox::LineEdit : public QLineEdit {
           m_has_update(false) {
       setObjectName(QString("0x%1").arg(reinterpret_cast<std::intptr_t>(this)));
       setFrame(false);
-      setTextMargins(-2, 0, -4, 0);
+      setTextMargins(TEXT_BOX_TEXT_MARGINS());
       setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
       auto& current_highlight = m_highlight->get();
       setCursorPosition(current_highlight.m_end);
@@ -131,7 +141,8 @@ class TextBox::LineEdit : public QLineEdit {
       m_highlight_connection = m_highlight->connect_update_signal(
         std::bind_front(&LineEdit::on_highlight, this));
       m_text_box->setCursor(cursor());
-      m_text_box->setFocusPolicy(focusPolicy());
+      setFocusPolicy(m_text_box->focusPolicy());
+      QWidget::setTabOrder(m_text_box, this);
       m_text_box->setFocusProxy(this);
       enclose(*m_text_box, *this);
       m_placeholder_style_connection = connect_style_signal(
@@ -181,6 +192,11 @@ class TextBox::LineEdit : public QLineEdit {
     }
 
     void setReadOnly(bool read_only) {
+      if(read_only) {
+        setTextMargins(READ_ONLY_TEXT_BOX_TEXT_MARGINS());
+      } else {
+        setTextMargins(TEXT_BOX_TEXT_MARGINS());
+      }
       QLineEdit::setReadOnly(read_only);
       setCursorPosition(0);
     }
@@ -206,6 +222,9 @@ class TextBox::LineEdit : public QLineEdit {
     }
 
     void keyPressEvent(QKeyEvent* event) override {
+      if(isReadOnly()) {
+        return QLineEdit::keyPressEvent(event);
+      }
       if(event->key() == Qt::Key_Escape) {
         if(m_submission->get() != m_current->get()) {
           m_current->set(m_submission->get());
@@ -385,6 +404,7 @@ TextBox::TextBox(std::shared_ptr<TextModel> current, QWidget* parent)
       m_is_read_only(false),
       m_highlight(std::make_shared<LocalValueModel<Highlight>>()),
       m_line_edit(nullptr) {
+  setFocusPolicy(Qt::StrongFocus);
   add_pseudo_element(*this, Placeholder());
   m_style_connection = connect_style_signal(*this, [=] { on_style(); });
   set_style(*this, DEFAULT_STYLE());
