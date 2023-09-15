@@ -138,6 +138,7 @@ ListView::ListView(
     std::bind_front(&ListView::on_current, this));
   m_selection_connection = m_selection_controller.connect_operation_signal(
     std::bind_front(&ListView::on_selection, this));
+  on_current(none, m_current_controller.get_current()->get());
 }
 
 const std::shared_ptr<AnyListModel>& ListView::get_list() const {

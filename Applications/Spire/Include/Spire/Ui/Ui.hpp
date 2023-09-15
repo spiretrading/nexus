@@ -39,6 +39,7 @@ namespace Spire {
   class FocusObserver;
   class GlobalPositionObserver;
   struct Highlight;
+  class HighlightSwatch;
   class HoverObserver;
   class Icon;
   class InfoTip;
@@ -53,6 +54,7 @@ namespace Spire {
   class OpenFilterPanel;
   template<typename T> class OpenFilterPanelTemplate;
   class OverlayPanel;
+  class PercentBox;
   class PopupBox;
   class PressObserver;
   class RegionBox;
@@ -69,6 +71,7 @@ namespace Spire {
   class SecurityStack;
   class SecurityView;
   template<typename T> class SingleSelectionModel;
+  class Slider;
   class SortedTableModel;
   template<typename T> class StagingValueModel;
   class StandardTableFilter;

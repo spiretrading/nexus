@@ -2,6 +2,7 @@
 #include <queue>
 #include <ranges>
 #include <unordered_set>
+#include <QApplication>
 #include <QResizeEvent>
 #include "Spire/Spire/ExtensionCache.hpp"
 #include "Spire/Ui/Layouts.hpp"
@@ -61,10 +62,7 @@ namespace {
     public:
       PlaceholderLayoutItem(QWidget& widget)
           : m_item(widget),
-            m_filter(std::make_unique<EventFilter>(*this)),
-            m_shared_widget(find_extension<SharedWidget>(widget)),
-            m_is_visible(false),
-            m_parent(nullptr) {
+            m_shared_widget(find_extension<SharedWidget>(widget)) {
         m_shared_widget->register_placeholder(*this);
         m_item.widget()->setParent(nullptr);
       }
@@ -73,21 +71,17 @@ namespace {
         m_shared_widget->release_placeholder(*this);
       }
 
-      void set_parent(QWidget& parent) {
-        if(m_parent) {
-          m_parent->removeEventFilter(m_filter.get());
+      void take_control(QWidget& parent) {
+        if(m_shared_widget->take_control(*this)) {
+          m_item.widget()->setParent(&parent);
+          m_item.widget()->show();
         }
-        m_parent = &parent;
-        m_parent->installEventFilter(m_filter.get());
       }
 
-      bool is_visible() const {
-        return m_is_visible;
-      }
-
-      void set_visible(bool visible) {
-        m_is_visible = visible;
-        take_control();
+      void release_control() {
+        if(m_shared_widget->release_control(*this)) {
+          m_item.widget()->setParent(nullptr);
+        }
       }
 
       QSize sizeHint() const {
@@ -127,40 +121,8 @@ namespace {
       }
 
     private:
-      struct EventFilter : QObject {
-        PlaceholderLayoutItem* m_item;
-
-        EventFilter(PlaceholderLayoutItem& item)
-          : m_item(&item) {}
-
-        bool eventFilter(QObject* watched, QEvent* event) override {
-          if(event->type() == QEvent::Show ||
-              event->type() == QEvent::ShowToParent) {
-            m_item->set_visible(true);
-          } else if(event->type() == QEvent::Hide ||
-              event->type() == QEvent::HideToParent) {
-            m_item->set_visible(false);
-          }
-          return QObject::eventFilter(watched, event);
-        }
-      };
-
       WidgetItem m_item;
-      std::unique_ptr<EventFilter> m_filter;
       std::shared_ptr<SharedWidget> m_shared_widget;
-      bool m_is_visible;
-      QWidget* m_parent;
-
-      void take_control() {
-        if(is_visible()) {
-          if(m_shared_widget->take_control(*this)) {
-            m_item.widget()->setParent(m_parent);
-            m_item.widget()->show();
-          }
-        } else if(m_shared_widget->release_control(*this)) {
-          m_item.widget()->setParent(nullptr);
-        }
-      }
   };
 
   struct GridLayoutItem {
@@ -180,17 +142,14 @@ namespace {
     QLayoutItem* m_item;
   };
 
-  auto make_placeholder(QWidget& widget, QWidget& parent,
-      const QLayoutItem& item) {
+  auto make_placeholder(QWidget& widget, const QLayoutItem& item) {
     auto placeholder = new PlaceholderLayoutItem(widget);
-    placeholder->set_parent(parent);
     placeholder->setAlignment(item.alignment());
     return placeholder;
   }
 
   template<typename L, typename T>
-  void replace(L& layout, QWidget& parent,
-      std::function<T(L& layout)> remove,
+  void replace(L& layout, std::function<T(L& layout)> remove,
       std::function<void(L& layout, T& item, QWidget& widget)> add_widget,
       std::function<void(L& layout, T& item, QLayout& child_layout)> add_layout,
       std::function<void(L& layout, T& item)> add_others) {
@@ -211,9 +170,10 @@ namespace {
     }
   }
 
-  void replace_widget_with_placeholder(QLayout& layout, QWidget& parent) {
+  std::vector<QLayoutItem*> replace_widget_with_placeholder(QLayout& layout) {
+    auto placeholders = std::vector<QLayoutItem*>();
     if(auto grid_layout = dynamic_cast<QGridLayout*>(&layout)) {
-      replace<QGridLayout, GridLayoutItem>(*grid_layout, parent,
+      replace<QGridLayout, GridLayoutItem>(*grid_layout,
         [] (QGridLayout& layout) {
           auto item = GridLayoutItem();
           layout.getItemPosition(0, &item.m_row, &item.m_column,
@@ -222,21 +182,26 @@ namespace {
           return item;
         },
         [&] (QGridLayout& layout, GridLayoutItem& item, QWidget& widget) {
-          layout.addItem(make_placeholder(widget, parent, *item.m_item),
+          auto placeholder = make_placeholder(widget, *item.m_item);
+          placeholders.push_back(placeholder);
+          layout.addItem(placeholder,
             item.m_row, item.m_column, item.m_row_span, item.m_column_span);
           delete item.m_item;
         },
         [&] (QGridLayout& layout, GridLayoutItem& item, QLayout& child_layout) {
-          replace_widget_with_placeholder(child_layout, parent);
+          auto child_placeholders =
+            replace_widget_with_placeholder(child_layout);
           layout.addItem(item.m_item, item.m_row, item.m_column,
             item.m_row_span, item.m_column_span);
+          placeholders.insert(placeholders.end(), child_placeholders.begin(),
+            child_placeholders.end());
         },
         [] (QGridLayout& layout, GridLayoutItem& item) {
           layout.addItem(item.m_item, item.m_row, item.m_column,
             item.m_row_span, item.m_column_span);
         });
     } else if(auto box_layout = dynamic_cast<QBoxLayout*>(&layout)) {
-      replace<QBoxLayout, BoxLayoutItem>(*box_layout, parent,
+      replace<QBoxLayout, BoxLayoutItem>(*box_layout,
         [] (QBoxLayout& layout) {
           auto item = BoxLayoutItem();
           item.m_stretch = layout.stretch(0);
@@ -244,38 +209,49 @@ namespace {
           return item;
         },
         [&] (QBoxLayout& layout, BoxLayoutItem& item, QWidget& widget) {
-          layout.addItem(make_placeholder(widget, parent, *item.m_item));
+          auto placeholder = make_placeholder(widget, *item.m_item);
+          placeholders.push_back(placeholder);
+          layout.addItem(placeholder);
           layout.setStretch(layout.count() - 1, item.m_stretch);
           delete item.m_item;
         },
         [&] (QBoxLayout& layout, BoxLayoutItem& item, QLayout& child_layout) {
-          replace_widget_with_placeholder(child_layout, parent);
+          auto child_placeholders =
+            replace_widget_with_placeholder(child_layout);
           layout.addItem(item.m_item);
           layout.setStretch(layout.count() - 1, item.m_stretch);
+          placeholders.insert(placeholders.end(), child_placeholders.begin(),
+            child_placeholders.end());
         },
         [] (QBoxLayout& layout, BoxLayoutItem& item) {
           layout.addItem(item.m_item);
           layout.setStretch(layout.count() - 1, item.m_stretch);
         });
     } else {
-      replace<QLayout, LayoutItem>(layout, parent,
+      replace<QLayout, LayoutItem>(layout,
         [] (QLayout& layout) {
           auto item = LayoutItem();
           item.m_item = layout.takeAt(0);
           return item;
         },
         [&] (QLayout& layout, LayoutItem& item, QWidget& widget) {
-          layout.addItem(make_placeholder(widget, parent, *item.m_item));
+          auto placeholder = make_placeholder(widget, *item.m_item);
+          placeholders.push_back(placeholder);
+          layout.addItem(placeholder);
           delete item.m_item;
         },
         [&] (QLayout& layout, LayoutItem& item, QLayout& child_layout) {
-          replace_widget_with_placeholder(child_layout, parent);
+          auto child_placeholders =
+            replace_widget_with_placeholder(child_layout);
           layout.addItem(item.m_item);
+          placeholders.insert(placeholders.end(), child_placeholders.begin(),
+            child_placeholders.end());
         },
         [] (QLayout& layout, LayoutItem& item) {
           layout.addItem(item.m_item);
         });
     }
+    return placeholders;
   }
 
   void invalidate_layout(QLayout& layout) {
@@ -317,13 +293,13 @@ AdaptiveBox::AdaptiveBox(QWidget* parent)
 
 void AdaptiveBox::add(QLayout& layout) {
   auto widget = new QWidget();
-  replace_widget_with_placeholder(layout, *widget);
+  m_placeholders[widget] = replace_widget_with_placeholder(layout);
   widget->setLayout(&layout);
   widget->installEventFilter(this);
+  release_control_placeholders(m_stacked_layout->currentWidget());
   m_stacked_layout->addWidget(widget);
+  take_control_placeholders(m_stacked_layout->currentWidget());
   update_layout();
-  m_stacked_layout->currentWidget()->hide();
-  m_stacked_layout->currentWidget()->show();
 }
 
 QSize AdaptiveBox::sizeHint() const {
@@ -371,6 +347,22 @@ void AdaptiveBox::resizeEvent(QResizeEvent* event) {
   update_layout();
 }
 
+void AdaptiveBox::take_control_placeholders(QWidget* owner) {
+  if(m_placeholders.contains(owner)) {
+    for(auto placeholder : m_placeholders[owner]) {
+      static_cast<PlaceholderLayoutItem*>(placeholder)->take_control(*owner);
+    }
+  }
+}
+
+void AdaptiveBox::release_control_placeholders(QWidget* owner) {
+  if(m_placeholders.contains(owner)) {
+    for(auto placeholder : m_placeholders[owner]) {
+      static_cast<PlaceholderLayoutItem*>(placeholder)->release_control();
+    }
+  }
+}
+
 void AdaptiveBox::update_layout() {
   auto size_policy = sizePolicy();
   auto is_horizontal_driven = [&] {
@@ -411,5 +403,14 @@ void AdaptiveBox::update_layout() {
     std::get<1>(overflows[i]) =
       width * height - size_hint.width() * size_hint.height();
   }
-  m_stacked_layout->setCurrentIndex(get_min_abs_value_index(overflows));
+  auto index = get_min_abs_value_index(overflows);
+  if(m_stacked_layout->currentIndex() != index) {
+    auto focus_widget = qApp->focusWidget();
+    release_control_placeholders(m_stacked_layout->currentWidget());
+    m_stacked_layout->setCurrentIndex(index);
+    take_control_placeholders(m_stacked_layout->currentWidget());
+    if(focus_widget && isAncestorOf(focus_widget)) {
+      focus_widget->setFocus();
+    }
+  }
 }

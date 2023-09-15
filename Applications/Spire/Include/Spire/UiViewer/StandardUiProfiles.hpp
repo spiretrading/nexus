@@ -68,6 +68,18 @@ namespace Spire {
   /** Returns a UiProfile for the FocusObserver. */
   UiProfile make_focus_observer_profile();
 
+  /** Returns a UiProfile for the FontBox. */
+  UiProfile make_font_box_profile();
+
+  /** Returns a UiProfile for the FontFamilyBox. */
+  UiProfile make_font_family_box_profile();
+
+  /** Returns a UiProfile for the FontStyleBox. */
+  UiProfile make_font_style_box_profile();
+
+  /** Returns a UiProfile for the HighlightSwatch. */
+  UiProfile make_highlight_swatch_profile();
+
   /** Returns a UiProfile for the HoverObserver. */
   UiProfile make_hover_observer_profile();
 
@@ -137,6 +149,9 @@ namespace Spire {
   /** Returns a UiProfile for the OverlayPanel. */
   UiProfile make_overlay_panel_profile();
 
+  /** Returns a UiProfile for the PercentBox. */
+  UiProfile make_percent_box_profile();
+
   /** Returns a UiProfile for the PopupBox. */
   UiProfile make_popup_box_profile();
 
@@ -193,6 +208,9 @@ namespace Spire {
 
   /** Returns a UiProfile for the SideFilterPanel. */
   UiProfile make_side_filter_panel_profile();
+
+  /** Returns a UiProfile for the Slider. */
+  UiProfile make_slider_profile();
 
   /** Returns a UiProfile for the SplitView. */
   UiProfile make_split_view_profile();

@@ -49,6 +49,10 @@ ScrollBox& ScrollableListBox::get_scroll_box() {
   return *m_scroll_box;
 }
 
+void ScrollableListBox::showEvent(QShowEvent* event) {
+  on_current(m_list_view->get_current()->get());
+}
+
 void ScrollableListBox::on_current(const optional<int>& current) {
   if(!current) {
     return;

@@ -134,6 +134,10 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_editable_box_profile());
   add(make_filter_panel_profile());
   add(make_focus_observer_profile());
+  add(make_font_box_profile());
+  add(make_font_family_box_profile());
+  add(make_font_style_box_profile());
+  add(make_highlight_swatch_profile());
   add(make_hover_observer_profile());
   add(make_icon_button_profile());
   add(make_icon_toggle_button_profile());
@@ -157,6 +161,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_order_type_box_profile());
   add(make_order_type_filter_panel_profile());
   add(make_overlay_panel_profile());
+  add(make_percent_box_profile());
   add(make_popup_box_profile());
   add(make_quantity_box_profile());
   add(make_quantity_filter_panel_profile());
@@ -176,6 +181,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_security_view_profile());
   add(make_side_box_profile());
   add(make_side_filter_panel_profile());
+  add(make_slider_profile());
   add(make_split_view_profile());
   add(make_tab_view_profile());
   add(make_table_header_profile());
@@ -251,6 +257,7 @@ void UiViewerWindow::on_item_selected(const QListWidgetItem* current,
     m_rebuild_button->setDisabled(true);
   } else {
     m_center_stage->setWidget(new SizeAdjustedContainer(profile.get_widget()));
+    m_rebuild_button->setDisabled(false);
   }
   m_center_stage->setAlignment(Qt::AlignCenter);
   m_stage->addWidget(m_center_stage);

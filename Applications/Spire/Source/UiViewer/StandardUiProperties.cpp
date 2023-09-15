@@ -75,6 +75,9 @@ void Spire::populate_widget_properties(
 void Spire::apply_widget_properties(QWidget* widget,
     const std::vector<std::shared_ptr<UiProperty>>& properties) {
   auto& enabled = get<bool>("enabled", properties);
+  enabled.connect_changed_signal([=] (auto value) {
+    widget->setEnabled(value);
+  });
   apply_widget_size_properties(widget, "width", "height", properties);
 }
 
@@ -196,6 +199,34 @@ std::shared_ptr<TypedUiProperty<Quantity>>
         [&] (const auto& value) {
           if(auto quantity = Quantity::FromValue(value.toStdString())) {
             property.set(*quantity);
+          }
+        });
+      return setter;
+    });
+}
+
+template<>
+std::shared_ptr<TypedUiProperty<Decimal>>
+    Spire::make_standard_property<Decimal>(QString name, Decimal value) {
+  return std::make_shared<StandardUiProperty<Decimal>>(std::move(name), value,
+    [] (QWidget* parent, StandardUiProperty<Decimal>& property) {
+      auto setter = new QDoubleSpinBox(parent);
+      setter->setMinimum(std::numeric_limits<double>::lowest());
+      setter->setMaximum(std::numeric_limits<double>::max());
+      auto parse_decimal = [] (auto decimal) -> std::optional<Decimal> {
+        try {
+          return Decimal(decimal.toStdString().c_str());
+        } catch(const std::exception&) {
+          return {};
+        }
+      };
+      property.connect_changed_signal([=] (auto value) {
+        setter->setValue(static_cast<double>(value));
+      });
+      QObject::connect(setter, &QDoubleSpinBox::textChanged,
+        [&] (const auto& value) {
+          if(auto decimal = parse_decimal(value)) {
+            property.set(*decimal);
           }
         });
       return setter;
