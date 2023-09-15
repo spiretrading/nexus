@@ -77,7 +77,7 @@ namespace Styles {
       Decimal get_step() const;
 
       /** Sets the size of a step. */
-      void set_step(const Decimal& step_size);
+      void set_step(const Decimal& step);
 
       /** Connects a slot to the value submission signal. */
       boost::signals2::connection connect_submit_signal(
