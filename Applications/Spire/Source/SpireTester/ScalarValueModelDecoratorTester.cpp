@@ -14,7 +14,7 @@ TEST_SUITE("ScalarValueModelDecorator") {
     REQUIRE(model.get() == 47);
     REQUIRE(model.get_minimum() == std::numeric_limits<int>::lowest());
     REQUIRE(model.get_maximum() == std::numeric_limits<int>::max());
-    REQUIRE(model.get_increment() == 1);
+    REQUIRE(model.get_increment() == none);
     model.set_minimum(39);
     model.set_maximum(41);
     REQUIRE(model.get_minimum() == 39);
@@ -30,7 +30,7 @@ TEST_SUITE("ScalarValueModelDecorator") {
     auto model = ScalarValueModelDecorator(source);
     REQUIRE(model.get_state() == QValidator::State::Acceptable);
     REQUIRE(model.get() == none);
-    REQUIRE(model.get_increment() == 1);
+    REQUIRE(model.get_increment() == none);
     REQUIRE(model.set(3) == QValidator::State::Acceptable);
     REQUIRE(model.get() == 3);
     REQUIRE(model.set(none) == QValidator::State::Acceptable);

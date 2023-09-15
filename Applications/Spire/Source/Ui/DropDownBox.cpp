@@ -366,7 +366,7 @@ void DropDownBox::on_button_press_end(PressObserver::Reason reason) {
 void DropDownBox::on_current(const optional<int>& current) {
   auto text = [&] {
     if(current) {
-      return displayText(m_list_view->get_list()->get(*current));
+      return to_text(m_list_view->get_list()->get(*current));
     }
     return QString();
   }();

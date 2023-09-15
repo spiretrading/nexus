@@ -57,15 +57,9 @@ namespace {
     return style;
   }
 
-  auto make_local_scalar_value_model() {
-    auto model = std::make_shared<LocalScalarValueModel<Decimal>>();
-    model->set_increment(std::numeric_limits<Decimal>::epsilon());
-    return model;
-  }
-
   auto make_modifiers(const ScalarValueModel<Decimal>& model) {
     auto modifiers = QHash<Qt::KeyboardModifier, Decimal>();
-    modifiers[Qt::NoModifier] = 1;
+    modifiers[Qt::NoModifier] = model.get_increment().get_value_or(1);;
     return modifiers;
   }
 
@@ -122,20 +116,14 @@ struct Slider2D::SliderValueModel : ScalarValueModel<Decimal> {
         std::bind_front(&SliderValueModel::on_current, this))) {}
 
   optional<Decimal> get_minimum() const override {
-    if(!m_source->get_minimum()) {
-      return Decimal(0);
-    }
-    return *m_source->get_minimum();
+    return m_source->get_minimum().get_value_or(0);
   }
 
   optional<Decimal> get_maximum() const override {
-    if(!m_source->get_maximum()) {
-      return Decimal(100);
-    }
-    return *m_source->get_maximum();
+    return m_source->get_maximum().get_value_or(100);
   }
 
-  Decimal get_increment() const override {
+  optional<Decimal> get_increment() const override {
     return m_source->get_increment();
   }
 
@@ -171,13 +159,14 @@ struct Slider2D::SliderValueModel : ScalarValueModel<Decimal> {
 };
 
 Slider2D::Slider2D(QWidget* parent)
-  : Slider2D(make_local_scalar_value_model(), make_local_scalar_value_model(),
-    parent) {}
+  : Slider2D(std::make_shared<LocalScalarValueModel<Decimal>>(),
+      std::make_shared<LocalScalarValueModel<Decimal>>(), parent) {}
 
 Slider2D::Slider2D(QHash<Qt::KeyboardModifier, Decimal> x_modifiers,
   QHash<Qt::KeyboardModifier, Decimal> y_modifiers, QWidget* parent)
-  : Slider2D(make_local_scalar_value_model(), make_local_scalar_value_model(),
-    std::move(x_modifiers), std::move(y_modifiers), parent) {}
+  : Slider2D(std::make_shared<LocalScalarValueModel<Decimal>>(),
+      std::make_shared<LocalScalarValueModel<Decimal>>(),
+      std::move(x_modifiers), std::move(y_modifiers), parent) {}
 
 Slider2D::Slider2D(std::shared_ptr<ScalarValueModel<Decimal>> x_current,
   std::shared_ptr<ScalarValueModel<Decimal>> y_current, QWidget* parent)
