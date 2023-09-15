@@ -25,7 +25,7 @@ optional<Quantity> UnsignedQuantityModel::get_maximum() const {
   return maximum;
 }
 
-Quantity UnsignedQuantityModel::get_increment() const {
+optional<Quantity> UnsignedQuantityModel::get_increment() const {
   return m_model->get_increment();
 }
 

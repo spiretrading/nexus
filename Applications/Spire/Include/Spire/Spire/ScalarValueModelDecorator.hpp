@@ -35,7 +35,7 @@ namespace Spire {
        */
       ScalarValueModelDecorator(std::shared_ptr<ValueModel<Type>> model,
         boost::optional<Scalar> minimum, boost::optional<Scalar> maximum,
-        Scalar increment);
+        boost::optional<Scalar> increment);
 
       /** Sets the minimum value. */
       void set_minimum(const boost::optional<Scalar>& minimum);
@@ -44,7 +44,7 @@ namespace Spire {
       void set_maximum(const boost::optional<Scalar>& maximum);
 
       /** Sets the increment. */
-      void set_increment(Scalar increment);
+      void set_increment(const boost::optional<Scalar>& increment);
 
       QValidator::State get_state() const override;
 
@@ -61,14 +61,14 @@ namespace Spire {
 
       boost::optional<Scalar> get_maximum() const override;
 
-      Scalar get_increment() const override;
+      boost::optional<Scalar> get_increment() const override;
 
     private:
       std::shared_ptr<ValueModel<Type>> m_model;
       QValidator::State m_state;
       boost::optional<Scalar> m_minimum;
       boost::optional<Scalar> m_maximum;
-      Scalar m_increment;
+      boost::optional<Scalar> m_increment;
       boost::signals2::scoped_connection m_connection;
 
       void on_update(const Type& value);
@@ -88,7 +88,7 @@ namespace Spire {
   template<typename T>
   ScalarValueModelDecorator<T>::ScalarValueModelDecorator(
     std::shared_ptr<ValueModel<Type>> model, boost::optional<Scalar> minimum,
-    boost::optional<Scalar> maximum, Scalar increment)
+    boost::optional<Scalar> maximum, boost::optional<Scalar> increment)
     : m_model(std::move(model)),
       m_state(m_model->get_state()),
       m_minimum(std::move(minimum)),
@@ -110,7 +110,8 @@ namespace Spire {
   }
 
   template<typename T>
-  void ScalarValueModelDecorator<T>::set_increment(Scalar increment) {
+  void ScalarValueModelDecorator<T>::set_increment(
+      const boost::optional<Scalar>& increment) {
     m_increment = increment;
   }
 
@@ -144,16 +145,17 @@ namespace Spire {
           return *value;
         }
       }();
-      if constexpr(std::numeric_limits<Type>::is_integer) {
-        if(unwrapped_value != m_model->get() &&
-            (unwrapped_value % m_increment) != 0) {
-          return QValidator::State::Invalid;
-        }
-      } else if constexpr(std::numeric_limits<Type>::is_specialized) {
-        if(unwrapped_value != m_model->get() &&
-            abs(fmod(unwrapped_value, m_increment)) >=
-              std::numeric_limits<Type>::epsilon()) {
-          return QValidator::State::Invalid;
+      if(m_increment) {
+        if constexpr(std::numeric_limits<Type>::is_integer) {
+          if(unwrapped_value != m_model->get() &&
+              (unwrapped_value % *m_increment) != 0) {
+            return QValidator::State::Invalid;
+          }
+        } else if constexpr(std::numeric_limits<Type>::is_specialized) {
+          if(unwrapped_value != m_model->get() &&
+              fmod(unwrapped_value, *m_increment) != static_cast<Type>(0)) {
+            return QValidator::State::Invalid;
+          }
         }
       }
     }
@@ -210,7 +212,7 @@ namespace Spire {
   }
 
   template<typename T>
-  typename ScalarValueModelDecorator<T>::Scalar
+  boost::optional<typename ScalarValueModelDecorator<T>::Scalar>
       ScalarValueModelDecorator<T>::get_increment() const {
     return m_increment;
   }

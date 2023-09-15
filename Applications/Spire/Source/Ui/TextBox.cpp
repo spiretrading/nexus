@@ -18,15 +18,18 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  auto TEXT_BOX_TEXT_MARGINS() {
+    static auto margins = QMargins(-2, 0, -2, 0);
+    return margins;
+  }
+
+  auto READ_ONLY_TEXT_BOX_TEXT_MARGINS() {
+    static auto margins = QMargins(-2, 0, -3, 0);
+    return margins;
+  }
+
   void apply_label_style(TextBox& text_box) {
-    update_style(text_box, [&] (auto& style) {
-      style.get(Any()).
-        set(border_size(0)).
-        set(vertical_padding(0));
-      style.get(ReadOnly() && Disabled()).
-        set(TextColor(QColor(Qt::black)));
-    });
-    text_box.setDisabled(true);
+    Spire::apply_label_style(text_box);
     text_box.set_read_only(true);
   }
 
@@ -119,6 +122,7 @@ class TextBox::LineEdit : public QLineEdit {
           m_has_update(false) {
       setObjectName(QString("0x%1").arg(reinterpret_cast<std::intptr_t>(this)));
       setFrame(false);
+      setTextMargins(TEXT_BOX_TEXT_MARGINS());
       setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
       auto& current_highlight = m_highlight->get();
       setCursorPosition(current_highlight.m_end);
@@ -189,9 +193,9 @@ class TextBox::LineEdit : public QLineEdit {
 
     void setReadOnly(bool read_only) {
       if(read_only) {
-        setTextMargins(-2, 0, -4, 0);
+        setTextMargins(READ_ONLY_TEXT_BOX_TEXT_MARGINS());
       } else {
-        setTextMargins({});
+        setTextMargins(TEXT_BOX_TEXT_MARGINS());
       }
       QLineEdit::setReadOnly(read_only);
       setCursorPosition(0);
@@ -608,14 +612,25 @@ void TextBox::on_submission(const QString& submission) {
   m_submit_signal(submission);
 }
 
+void Spire::apply_label_style(QWidget& widget) {
+  update_style(widget, [] (auto& style) {
+    style.get(Any()).
+      set(border_size(0)).
+      set(vertical_padding(0));
+    style.get(ReadOnly() && Disabled()).
+      set(TextColor(QColor(Qt::black)));
+  });
+  widget.setDisabled(true);
+}
+
 TextBox* Spire::make_label(QString label, QWidget* parent) {
   auto text_box = new TextBox(std::move(label), parent);
-  apply_label_style(*text_box);
+  ::apply_label_style(*text_box);
   return text_box;
 }
 
 TextBox* Spire::make_label(std::shared_ptr<TextModel> model, QWidget* parent) {
   auto text_box = new TextBox(std::move(model), parent);
-  apply_label_style(*text_box);
+  ::apply_label_style(*text_box);
   return text_box;
 }

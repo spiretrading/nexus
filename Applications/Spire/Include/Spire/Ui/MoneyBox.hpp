@@ -1,6 +1,7 @@
 #ifndef SPIRE_MONEY_BOX_HPP
 #define SPIRE_MONEY_BOX_HPP
 #include "Nexus/Definitions/Money.hpp"
+#include "Spire/Spire/ScalarValueModel.hpp"
 #include "Spire/Ui/DecimalBoxAdaptor.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -31,6 +32,14 @@ namespace Spire {
       explicit MoneyBox(QWidget* parent = nullptr);
 
       /**
+       * Constructs a MoneyBox.
+       * @param current The current value model.
+       * @param parent The parent widget.
+       */
+      explicit MoneyBox(std::shared_ptr<OptionalMoneyModel> current,
+        QWidget* parent = nullptr);
+
+      /**
        * Constructs a MoneyBox with a LocalOptionalValueModel.
        * @param modifiers The keyboard modifier increments.
        * @param parent The parent widget.
@@ -48,6 +57,14 @@ namespace Spire {
         QHash<Qt::KeyboardModifier, Nexus::Money> modifiers,
         QWidget* parent = nullptr);
   };
+
+  /**
+   * Makes a MoneyBox used as a disabled and read-only label.
+   * @param current The current value to represent.
+   * @param parent The parent widget.
+   */
+  MoneyBox* make_money_label(
+    std::shared_ptr<MoneyModel> current, QWidget* parent = nullptr);
 }
 
 #endif

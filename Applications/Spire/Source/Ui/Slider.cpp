@@ -95,15 +95,9 @@ namespace {
     widget.setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
   }
 
-  auto make_local_scalar_value_model() {
-    auto model = std::make_shared<LocalScalarValueModel<Decimal>>();
-    model->set_increment(std::numeric_limits<Decimal>::epsilon());
-    return model;
-  }
-
   auto make_modifiers(const ScalarValueModel<Decimal>& current) {
     auto modifiers = QHash<Qt::KeyboardModifier, Decimal>();
-    modifiers[Qt::NoModifier] = 1;
+    modifiers[Qt::NoModifier] = current.get_increment().get_value_or(1);
     return modifiers;
   }
 
@@ -191,7 +185,7 @@ struct Slider::SliderValueModel : ScalarValueModel<Decimal> {
     return *m_source->get_maximum();
   }
 
-  Decimal get_increment() const override {
+  optional<Decimal> get_increment() const override {
     return m_source->get_increment();
   }
 
@@ -227,10 +221,11 @@ struct Slider::SliderValueModel : ScalarValueModel<Decimal> {
 };
 
 Slider::Slider(QWidget* parent)
-  : Slider(make_local_scalar_value_model(), parent) {}
+  : Slider(std::make_shared<LocalScalarValueModel<Decimal>>(), parent) {}
 
 Slider::Slider(QHash<Qt::KeyboardModifier, Decimal> modifiers, QWidget* parent)
-  : Slider(make_local_scalar_value_model(), std::move(modifiers), parent) {}
+  : Slider(std::make_shared<LocalScalarValueModel<Decimal>>(),
+      std::move(modifiers), parent) {}
 
 Slider::Slider(std::shared_ptr<ScalarValueModel<Decimal>> current,
   QWidget* parent)

@@ -108,7 +108,7 @@ void TabView::add(const QString& label, QWidget& body) {
 }
 
 void TabView::add(std::vector<QString> labels, QWidget& body) {
-  m_bodies.push_back(&body);
+  m_bodies.emplace_back(&body);
   m_labels->push(labels);
   if(!m_tab_list->get_current()->get()) {
     m_tab_list->get_current()->set(0);
@@ -118,7 +118,7 @@ void TabView::add(std::vector<QString> labels, QWidget& body) {
 
 QSize TabView::sizeHint() const {
   auto max_hint = QSize(0, 0);
-  for(auto body : m_bodies) {
+  for(auto& body : m_bodies) {
     max_hint.rwidth() = std::max(max_hint.width(), body->sizeHint().width());
     max_hint.rheight() = std::max(max_hint.height(), body->sizeHint().height());
   }
@@ -170,7 +170,7 @@ void TabView::on_current(optional<int> current) {
     delete item;
   }
   if(current) {
-    layout->addWidget(m_bodies[*current], 0, Qt::AlignTop | Qt::AlignLeft);
+    layout->addWidget(m_bodies[*current].get());
     m_bodies[*current]->show();
     if(*current > 0) {
       match(*m_tab_list->get_list_item(*m_current - 1), PrecedesCurrent());

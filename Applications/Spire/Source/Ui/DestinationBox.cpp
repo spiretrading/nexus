@@ -63,7 +63,7 @@ DestinationBox::DestinationBox(
         std::bind_front(&DestinationBox::on_current, this))) {
   auto combo_box_current = make_transform_value_model(m_current,
     [=] (const Destination& current) {
-      if(m_query_model->parse(displayText(current)).has_value()) {
+      if(m_query_model->parse(to_text(current)).has_value()) {
         return std::any(current);
       }
       return std::any();
@@ -78,7 +78,7 @@ DestinationBox::DestinationBox(
     [=] (const auto& list, auto index) {
       return new DestinationListItem(
         std::any_cast<DestinationDatabase::Entry&&>(
-          m_query_model->m_source->parse(displayText(list->get(index)))));
+          m_query_model->m_source->parse(to_text(list->get(index)))));
     });
   m_combo_box->connect_submit_signal(
     std::bind_front(&DestinationBox::on_submit, this));
