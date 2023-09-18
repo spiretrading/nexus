@@ -3429,8 +3429,8 @@ UiProfile Spire::make_scroll_box_profile() {
   properties.push_back(make_standard_property("vertical-padding", 10));
   properties.push_back(
     make_standard_property("border-color", QColor(0xC8C8C8)));
-  properties.push_back(make_standard_property("rows", 10));
-  properties.push_back(make_standard_property("columns", 10));
+  properties.push_back(make_standard_property("rows", 3));
+  properties.push_back(make_standard_property("columns", 3));
   auto profile = UiProfile("ScrollBox", properties, [] (auto& profile) {
     auto label = new QLabel();
     auto& columns = get<int>("columns", profile.get_properties());
@@ -3438,7 +3438,6 @@ UiProfile Spire::make_scroll_box_profile() {
     label->setPixmap(QPixmap::fromImage(
       make_grid_image(scale(100, 100), columns.get(), rows.get())));
     auto scroll_box = new ScrollBox(label);
-    scroll_box->setFixedSize(scale(320, 240));
     apply_widget_properties(scroll_box, profile.get_properties());
     auto& horizontal_display_policy = get<ScrollBox::DisplayPolicy>(
       "horizontal_display_policy", profile.get_properties());
@@ -3485,6 +3484,13 @@ UiProfile Spire::make_scrollable_list_box_profile() {
     {{"NONE", Overflow::NONE}, {"WRAP", Overflow::WRAP}});
   properties.push_back(
     make_standard_enum_property("overflow", overflow_property));
+  auto display_policy_property = define_enum<ScrollBox::DisplayPolicy>(
+    {{"ON_OVERFLOW", ScrollBox::DisplayPolicy::ON_OVERFLOW},
+     {"ON_ENGAGE", ScrollBox::DisplayPolicy::ON_ENGAGE}});
+  properties.push_back(make_standard_enum_property(
+    "horizontal_display_policy", display_policy_property));
+  properties.push_back(make_standard_enum_property(
+    "vertical_display_policy", display_policy_property));
   auto profile = UiProfile("ScrollableListBox", properties, [] (auto& profile) {
     auto list_model = std::make_shared<ArrayListModel<QString>>();
     for(auto i = 0; i < 15; ++i) {
@@ -3508,6 +3514,16 @@ UiProfile Spire::make_scrollable_list_box_profile() {
       update_style(*list_view, [&] (auto& style) {
         style.get(Any()).set(value);
       });
+    });
+    auto& horizontal_display_policy = get<ScrollBox::DisplayPolicy>(
+      "horizontal_display_policy", profile.get_properties());
+    horizontal_display_policy.connect_changed_signal([=] (auto value) {
+      scrollable_list_box->get_scroll_box().set_horizontal(value);
+    });
+    auto& vertical_display_policy = get<ScrollBox::DisplayPolicy>(
+      "vertical_display_policy", profile.get_properties());
+    vertical_display_policy.connect_changed_signal([=] (auto value) {
+      scrollable_list_box->get_scroll_box().set_vertical(value);
     });
     return scrollable_list_box;
   });

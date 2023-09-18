@@ -14,8 +14,6 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  using Drag = StateSelector<void, struct DragTag>;
-
   QBoxLayout::Direction to_direction(Qt::Orientation orientation) {
     if(orientation == Qt::Orientation::Horizontal) {
       return QBoxLayout::Direction::LeftToRight;

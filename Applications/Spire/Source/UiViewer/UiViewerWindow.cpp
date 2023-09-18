@@ -86,6 +86,17 @@ namespace {
       return QWidget::event(event);
     }
   };
+
+  void update_center_stage(QScrollArea& center_stage, UiProfile& profile) {
+    if(profile.get_name() == "AdaptiveBox" ||
+        profile.get_name() == "PopupBox" || profile.get_name() == "ScrollBox") {
+      profile.get_widget()->setMinimumSize(0, 0);
+      profile.get_widget()->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
+      center_stage.setWidget(profile.get_widget());
+    } else {
+      center_stage.setWidget(new SizeAdjustedContainer(profile.get_widget()));
+    }
+  }
 }
 
 UiViewerWindow::UiViewerWindow(QWidget* parent)
@@ -250,15 +261,7 @@ void UiViewerWindow::on_item_selected(const QListWidgetItem* current,
   update_table(profile);
   m_stage = new QSplitter(Qt::Vertical);
   m_center_stage = new QScrollArea();
-  if(profile.get_name() == "PopupBox" || profile.get_name() == "AdaptiveBox") {
-    m_center_stage->setWidget(profile.get_widget());
-    m_center_stage->setMinimumSize(profile.get_widget()->minimumSize());
-    m_center_stage->setWidgetResizable(true);
-    m_rebuild_button->setDisabled(true);
-  } else {
-    m_center_stage->setWidget(new SizeAdjustedContainer(profile.get_widget()));
-    m_rebuild_button->setDisabled(false);
-  }
+  update_center_stage(*m_center_stage, profile);
   m_center_stage->setAlignment(Qt::AlignCenter);
   m_stage->addWidget(m_center_stage);
   m_event_log = new QTextEdit();
@@ -284,7 +287,7 @@ void UiViewerWindow::on_rebuild() {
   profile.remove_widget();
   update_table(profile);
   auto previous_widget = m_center_stage->takeWidget();
-  m_center_stage->setWidget(new SizeAdjustedContainer(profile.get_widget()));
+  update_center_stage(*m_center_stage, profile);
   delete previous_widget;
   m_stage->replaceWidget(0, new QWidget(this));
   auto previous_stage = m_stage->replaceWidget(0, m_center_stage);
