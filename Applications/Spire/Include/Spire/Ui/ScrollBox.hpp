@@ -97,7 +97,7 @@ namespace Spire {
       enum class ScrollTrackSize {
         ZERO,
         NARROW,
-        WIDE,
+        WIDE
       };
       QWidget* m_body;
       DisplayPolicy m_horizontal_display_policy;

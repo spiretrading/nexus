@@ -45,7 +45,7 @@ namespace Spire {
       boost::signals2::scoped_connection m_vertical_scroll_bar_style_connection;
 
       void update_mask();
-      void update_layout();
+      void update_scroll_bar_position();
       void on_horizontal_scroll_track_style();
       void on_vertical_scroll_track_style();
   };

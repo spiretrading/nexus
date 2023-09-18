@@ -205,7 +205,7 @@ namespace {
   }
 
   void ease(QPropertyAnimation& animation, Qt::Orientation orientation,
-      int end) {
+      int end_value) {
     auto target = static_cast<QWidget*>(animation.targetObject());
     if(!target->isVisible()) {
       return;
@@ -213,9 +213,9 @@ namespace {
     animation.stop();
     animation.setStartValue(target->pos());
     if(orientation == Qt::Vertical) {
-      animation.setEndValue(QPoint(end, 0));
+      animation.setEndValue(QPoint(end_value, 0));
     } else {
-      animation.setEndValue(QPoint(0, end));
+      animation.setEndValue(QPoint(0, end_value));
     }
     animation.start();
   }
@@ -459,10 +459,10 @@ void ScrollBox::ease_horizontal_scroll_bar(ScrollTrackSize size) {
   }
   if(size == ScrollTrackSize::ZERO) {
     ease(*m_horizontal_bar_animation, Qt::Horizontal,
-      m_scrollable_layer->get_horizontal_scroll_bar().height());
+      m_scrollable_layer->get_horizontal_scroll_bar().sizeHint().height());
   } else if(size == ScrollTrackSize::NARROW) {
     ease(*m_horizontal_bar_animation, Qt::Horizontal,
-      m_scrollable_layer->get_horizontal_scroll_bar().height() -
+      m_scrollable_layer->get_horizontal_scroll_bar().sizeHint().height() -
         NARROW_SCROLL_BAR_SIZE().height());
   } else {
     ease(*m_horizontal_bar_animation, Qt::Horizontal, 0);
@@ -475,10 +475,10 @@ void ScrollBox::ease_vertical_scroll_bar(ScrollTrackSize size) {
   }
   if(size == ScrollTrackSize::ZERO) {
     ease(*m_vertical_bar_animation, Qt::Vertical,
-      m_scrollable_layer->get_vertical_scroll_bar().width());
+      m_scrollable_layer->get_vertical_scroll_bar().sizeHint().width());
   } else if(size == ScrollTrackSize::NARROW) {
     ease(*m_vertical_bar_animation, Qt::Vertical,
-      m_scrollable_layer->get_vertical_scroll_bar().width() -
+      m_scrollable_layer->get_vertical_scroll_bar().sizeHint().width() -
         NARROW_SCROLL_BAR_SIZE().width());
   } else {
     ease(*m_vertical_bar_animation, Qt::Vertical, 0);

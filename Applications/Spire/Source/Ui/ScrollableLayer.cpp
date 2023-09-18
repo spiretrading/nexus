@@ -100,14 +100,14 @@ bool ScrollableLayer::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::Resize || event->type() == QEvent::Move) {
     update_mask();
   } if(event->type() == QEvent::Show || event->type() == QEvent::Hide) {
-    update_layout();
+    update_scroll_bar_position();
     update_mask();
   }
   return QWidget::eventFilter(watched, event);
 }
 
 void ScrollableLayer::resizeEvent(QResizeEvent* event) {
-  update_layout();
+  update_scroll_bar_position();
   update_mask();
 }
 
@@ -134,7 +134,7 @@ void ScrollableLayer::update_mask() {
   }
 }
 
-void ScrollableLayer::update_layout() {
+void ScrollableLayer::update_scroll_bar_position() {
   if(!m_is_horizontal_scroll_bar_opaque && !m_is_vertical_scroll_bar_opaque) {
     m_horizontal_scroll_bar->setGeometry(
       0, height() - m_horizontal_scroll_bar->sizeHint().height(),
@@ -190,7 +190,7 @@ void ScrollableLayer::on_horizontal_scroll_track_style() {
             m_layout->removeWidget(m_horizontal_scroll_bar);
             m_corner_box->setVisible(false);
           }
-          update_layout();
+          update_scroll_bar_position();
         });
       });
   }
@@ -221,7 +221,7 @@ void ScrollableLayer::on_vertical_scroll_track_style() {
             m_layout->removeWidget(m_vertical_scroll_bar);
             m_corner_box->setVisible(false);
           }
-          update_layout();
+          update_scroll_bar_position();
         });
       });
   }
