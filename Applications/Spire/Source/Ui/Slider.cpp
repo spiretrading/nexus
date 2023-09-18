@@ -94,7 +94,7 @@ namespace {
 
   auto make_modifiers(const ScalarValueModel<int>& current) {
     auto modifiers = QHash<Qt::KeyboardModifier, int>();
-    modifiers[Qt::NoModifier] = current.get_increment();
+    modifiers[Qt::NoModifier] = current.get_increment().get_value_or(1);
     return modifiers;
   }
 

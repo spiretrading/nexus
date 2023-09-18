@@ -243,7 +243,7 @@ void UiViewerWindow::on_event(
       } else if(auto value = std::any_cast<HoverObserver::State>(&argument)) {
         log += to_string(*value);
       } else {
-        log += displayText(argument);
+        log += to_text(argument);
       }
     }
     log += ")";

@@ -46,6 +46,7 @@ namespace Spire {
   class KeyInputBox;
   class LayeredWidget;
   class ListItem;
+  template<typename T> class ListSelectionValueModel;
   class ListView;
   class MarketBox;
   class MoneyBox;

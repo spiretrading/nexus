@@ -22,7 +22,7 @@ namespace Spire {
 
       boost::optional<Nexus::Quantity> get_maximum() const override;
 
-      Nexus::Quantity get_increment() const override;
+      boost::optional<Nexus::Quantity> get_increment() const override;
 
       QValidator::State get_state() const override;
 

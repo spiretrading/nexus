@@ -92,7 +92,7 @@ namespace Spire {
 
       boost::optional<Decimal> get_maximum() const override;
 
-      Decimal get_increment() const override;
+      boost::optional<Decimal> get_increment() const override;
 
       QValidator::State get_state() const override;
 
@@ -133,8 +133,11 @@ namespace Spire {
   }
 
   template<typename T>
-  Decimal ToDecimalModel<T>::get_increment() const {
-    return Decimal(1);
+  boost::optional<Decimal> ToDecimalModel<T>::get_increment() const {
+    if(auto increment = m_model->get_increment()) {
+      return to_decimal(*increment);
+    }
+    return boost::none;
   }
 
   template<typename T>

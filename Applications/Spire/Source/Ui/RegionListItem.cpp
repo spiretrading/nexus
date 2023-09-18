@@ -1,5 +1,4 @@
 #include "Spire/Ui/RegionListItem.hpp"
-#include "Nexus/Definitions/DefaultCountryDatabase.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/Icon.hpp"
@@ -46,6 +45,11 @@ namespace {
       set(PaddingRight(scale_width(8))).
       set(vertical_padding(0));
     return style;
+  }
+
+  auto to_three_letter_code(CountryCode code) {
+    auto& entry = GetDefaultCountryDatabase().FromCode(code);
+    return entry.m_threeLetterCode.GetData();
   }
 }
 
@@ -96,11 +100,11 @@ RegionListItem::Type RegionListItem::get_type() const {
 
 TextBox* RegionListItem::make_value_label() const {
   if(m_type == Type::SECURITY) {
-    return make_label(displayText(*m_region.GetSecurities().begin()));
+    return make_label(to_text(*m_region.GetSecurities().begin()));
   } else if(m_type == Type::MARKET) {
-    return make_label(displayText(MarketToken(*m_region.GetMarkets().begin())));
+    return make_label(to_text(MarketToken(*m_region.GetMarkets().begin())));
   } else if(m_type == Type::COUNTRY) {
-    return make_label(displayText(*m_region.GetCountries().begin()));
+    return make_label(to_three_letter_code(*m_region.GetCountries().begin()));
   }
   return make_label("");
 }
@@ -117,8 +121,8 @@ Icon* RegionListItem::make_type_icon() const {
     icon->setFixedSize(ICON_SIZE());
     return icon;
   } else if(m_type == Type::COUNTRY) {
-    auto country_code = QString(GetDefaultCountryDatabase().FromCode(
-      *m_region.GetCountries().begin()).m_threeLetterCode.GetData()).toLower();
+    auto country_code =
+      QString(to_three_letter_code(*m_region.GetCountries().begin())).toLower();
     auto flag_icon = new Icon(imageFromSvg(
       QString(":/Icons/flag_icons/%1.svg").arg(country_code), FLAG_SIZE()));
     flag_icon->setFixedSize(FLAG_SIZE());

@@ -133,7 +133,8 @@ def main():
   if args.output is not None:
     sqlite_path = args.output
     connection = pymysql.connect(
-      address.host, username, password, schema, address.port)
+      host=address.host, user=username, password=password, database=schema,
+      port=address.port)
   else:
     sqlite_path = args.input
     connection = sqlite3.connect(sqlite_path)
