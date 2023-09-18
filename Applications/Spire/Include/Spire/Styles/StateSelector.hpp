@@ -68,7 +68,7 @@ namespace Spire::Styles {
   using FocusVisible = StateSelector<void, struct FocusVisibleSelectorTag>;
 
   /** Selects the Dragged widget. */
-  using Drag = StateSelector<void, struct DragTag>;
+  using Drag = StateSelector<void, struct DragSelectorTag>;
 
   template<typename T, typename G>
   SelectConnection select(const StateSelector<T, G>& selector,

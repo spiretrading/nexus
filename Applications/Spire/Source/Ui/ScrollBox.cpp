@@ -141,25 +141,23 @@ namespace {
 
   void update_scroll_bar_style(ScrollBar& scroll_bar,
       ScrollBox::DisplayPolicy policy) {
-    if(policy == ScrollBox::DisplayPolicy::ON_ENGAGE) {
-      update_style(scroll_bar, [] (auto& style) {
+    update_style(scroll_bar, [&] (auto& style) {
+      if(policy == ScrollBox::DisplayPolicy::ON_ENGAGE) {
         style.get(Any() > ScrollThumb()).
           set(BackgroundColor(QColor("#CCC8C8C8")));
         style.get(Any() > (ScrollThumb() && (Hover() || Drag()))).
           set(BackgroundColor(QColor("#CCA0A0A0")));
         style.get(Any() > ScrollTrack()).
           set(BackgroundColor(QColor("#CCFFFFFF")));
-      });
-    } else {
-      update_style(scroll_bar, [] (auto& style) {
+      } else {
         style.get(Any() > ScrollThumb()).
           set(BackgroundColor(QColor(0xC8C8C8)));
         style.get(Any() > (ScrollThumb() && (Hover() || Drag()))).
           set(BackgroundColor(QColor(0xA0A0A0)));
         style.get(Any() > ScrollTrack()).
           set(BackgroundColor(QColor(0xFFFFFF)));
-      });
-    }
+      }
+    });
   }
 
   auto get_scroll_track(const ScrollBar& scroll_bar) {
@@ -175,7 +173,7 @@ namespace {
   }
 
   bool is_thumb_dragging(const ScrollBar& scroll_bar) {
-    auto thumb = static_cast<Box*>(get_scroll_track(scroll_bar))->get_body();
+    auto thumb = get_scroll_track(scroll_bar)->get_body();
     return find_stylist(*thumb).is_match(Drag());
   }
 
@@ -185,6 +183,25 @@ namespace {
 
   bool is_vertical_thumb_dragging(ScrollableLayer& layer) {
     return is_thumb_dragging(layer.get_vertical_scroll_bar());
+  }
+
+  QPoint get_scroll_track_position(ScrollableLayer& layer,
+      Qt::Orientation orientation, ScrollBox::DisplayPolicy display_policy,
+      HoverObserver::State hover_state) {
+    if(display_policy == ScrollBox::DisplayPolicy::ON_ENGAGE) {
+      if(hover_state == HoverObserver::State::NONE) {
+        if(orientation == Qt::Vertical) {
+          return {layer.get_vertical_scroll_bar().sizeHint().width(), 0};
+        }
+        return {0, layer.get_horizontal_scroll_bar().sizeHint().height()};
+      } else {
+        if(orientation == Qt::Vertical) {
+          return {NARROW_SCROLL_BAR_SIZE().width(), 0};
+        }
+        return {0, NARROW_SCROLL_BAR_SIZE().height()};
+      }
+    }
+    return {0, 0};
   }
 
   void ease(QPropertyAnimation& animation, Qt::Orientation orientation,
@@ -298,16 +315,9 @@ void ScrollBox::set_horizontal(DisplayPolicy policy) {
   update_scroll_bar_style(m_scrollable_layer->get_horizontal_scroll_bar(),
     m_horizontal_display_policy);
   update_layout();
-  if(m_horizontal_display_policy == DisplayPolicy::ON_ENGAGE) {
-    if(m_hover_observer.get_state() == HoverObserver::State::NONE) {
-      get_horizontal_scroll_track(*m_scrollable_layer)->move(
-        0, m_scrollable_layer->get_horizontal_scroll_bar().sizeHint().height());
-    } else {
-      ease_horizontal_scroll_bar(ScrollTrackSize::NARROW);
-    }
-  } else {
-    get_horizontal_scroll_track(*m_scrollable_layer)->move(0, 0);
-  }
+  get_horizontal_scroll_track(*m_scrollable_layer)->move(
+    get_scroll_track_position(*m_scrollable_layer, Qt::Horizontal,
+      m_horizontal_display_policy, m_hover_observer.get_state()));
 }
 
 ScrollBox::DisplayPolicy ScrollBox::get_vertical_display_policy() const {
@@ -322,16 +332,9 @@ void ScrollBox::set_vertical(DisplayPolicy policy) {
   update_scroll_bar_style(m_scrollable_layer->get_vertical_scroll_bar(),
     m_vertical_display_policy);
   update_layout();
-  if(m_vertical_display_policy == DisplayPolicy::ON_ENGAGE) {
-    if(m_hover_observer.get_state() == HoverObserver::State::NONE) {
-      get_vertical_scroll_track(*m_scrollable_layer)->move(
-        m_scrollable_layer->get_vertical_scroll_bar().sizeHint().width(), 0);
-    } else {
-      ease_vertical_scroll_bar(ScrollTrackSize::NARROW);
-    }
-  } else {
-    get_vertical_scroll_track(*m_scrollable_layer)->move(0, 0);
-  }
+  get_vertical_scroll_track(*m_scrollable_layer)->move(
+    get_scroll_track_position(*m_scrollable_layer, Qt::Vertical,
+      m_vertical_display_policy, m_hover_observer.get_state()));
 }
 
 void ScrollBox::set(DisplayPolicy policy) {

@@ -46,8 +46,8 @@ namespace Spire {
 
       void update_mask();
       void update_layout();
-      void on_horizontal_scroll_bar_style();
-      void on_vertical_scroll_bar_style();
+      void on_horizontal_scroll_track_style();
+      void on_vertical_scroll_track_style();
   };
 }
 

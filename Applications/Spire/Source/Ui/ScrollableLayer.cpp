@@ -40,10 +40,10 @@ ScrollableLayer::ScrollableLayer(QWidget* parent)
   m_corner_box->installEventFilter(this);
   m_horizontal_scroll_bar_style_connection =
     connect_style_signal(*get_scroll_track(*m_horizontal_scroll_bar),
-      std::bind_front(&ScrollableLayer::on_horizontal_scroll_bar_style, this));
+      std::bind_front(&ScrollableLayer::on_horizontal_scroll_track_style, this));
   m_vertical_scroll_bar_style_connection =
     connect_style_signal(*get_scroll_track(*m_vertical_scroll_bar),
-      std::bind_front(&ScrollableLayer::on_vertical_scroll_bar_style, this));
+      std::bind_front(&ScrollableLayer::on_vertical_scroll_track_style, this));
 }
 
 ScrollBar& ScrollableLayer::get_vertical_scroll_bar() {
@@ -165,9 +165,8 @@ void ScrollableLayer::update_layout() {
   }
 }
 
-void ScrollableLayer::on_horizontal_scroll_bar_style() {
+void ScrollableLayer::on_horizontal_scroll_track_style() {
   auto& stylist = find_stylist(*get_scroll_track(*m_horizontal_scroll_bar));
-  auto has_update = std::make_shared<bool>(false);
   for(auto& property : stylist.get_computed_block()) {
     property.visit(
       [&] (const BackgroundColor& color) {
@@ -182,14 +181,14 @@ void ScrollableLayer::on_horizontal_scroll_bar_style() {
             return;
           }
           m_is_horizontal_scroll_bar_opaque = is_opaque;
-          if(!m_is_horizontal_scroll_bar_opaque) {
-            m_layout->removeWidget(m_horizontal_scroll_bar);
-            m_corner_box->setVisible(false);
-          } else {
+          if(m_is_horizontal_scroll_bar_opaque) {
             m_layout->addWidget(m_horizontal_scroll_bar, 1, 0);
             if(m_is_vertical_scroll_bar_opaque) {
               m_corner_box->setVisible(true);
             }
+          } else {
+            m_layout->removeWidget(m_horizontal_scroll_bar);
+            m_corner_box->setVisible(false);
           }
           update_layout();
         });
@@ -197,7 +196,7 @@ void ScrollableLayer::on_horizontal_scroll_bar_style() {
   }
 }
 
-void ScrollableLayer::on_vertical_scroll_bar_style() {
+void ScrollableLayer::on_vertical_scroll_track_style() {
   auto& stylist = find_stylist(*get_scroll_track(*m_vertical_scroll_bar));
   for(auto& property : stylist.get_computed_block()) {
     property.visit(
@@ -213,14 +212,14 @@ void ScrollableLayer::on_vertical_scroll_bar_style() {
             return;
           }
           m_is_vertical_scroll_bar_opaque = is_opaque;
-          if(!m_is_vertical_scroll_bar_opaque) {
-            m_layout->removeWidget(m_vertical_scroll_bar);
-            m_corner_box->setVisible(false);
-          } else {
+          if(m_is_vertical_scroll_bar_opaque) {
             m_layout->addWidget(m_vertical_scroll_bar, 0, 1);
             if(m_is_horizontal_scroll_bar_opaque) {
               m_corner_box->setVisible(true);
             }
+          } else {
+            m_layout->removeWidget(m_vertical_scroll_bar);
+            m_corner_box->setVisible(false);
           }
           update_layout();
         });
