@@ -47,6 +47,7 @@
 #include "Spire/Ui/FontBox.hpp"
 #include "Spire/Ui/FontFamilyBox.hpp"
 #include "Spire/Ui/FontStyleBox.hpp"
+#include "Spire/Ui/HexColorBox.hpp"
 #include "Spire/Ui/HighlightSwatch.hpp"
 #include "Spire/Ui/HoverObserver.hpp"
 #include "Spire/Ui/Icon.hpp"
@@ -815,19 +816,24 @@ namespace {
     });
   }
 
-  class RejectedTextModel : public LocalTextModel {
+  template<typename T>
+  class RejectedValueModel : public LocalValueModel<T> {
     public:
-      void set_rejected(const QString& rejected) {
+      using Type = typename LocalValueModel<T>::Type;
+
+      void set_rejected(const Type& rejected) {
         m_rejected = rejected;
       }
+
       QValidator::State get_state() const {
-        if(get() == m_rejected) {
+        if(this->get() == m_rejected) {
           return QValidator::Invalid;
         }
         return QValidator::Acceptable;
       }
+
     private:
-      QString m_rejected;
+      Type m_rejected;
   };
 }
 
@@ -2049,6 +2055,30 @@ UiProfile Spire::make_font_style_box_profile() {
       current.set(value);
     });
     box->connect_submit_signal(profile.make_event_slot<std::any>("Submit"));
+    return box;
+  });
+  return profile;
+}
+
+UiProfile Spire::make_hex_color_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_property<QColor>("current"));
+  properties.push_back(make_standard_property<QColor>("rejected", Qt::red));
+  auto profile = UiProfile("HexColorBox", properties, [] (auto& profile) {
+    auto model = std::make_shared<RejectedValueModel<QColor>>();
+    auto box = new HexColorBox(model);
+    box->setFixedWidth(scale_width(120));
+    apply_widget_properties(box, profile.get_properties());
+    link(box->get_current(), get<QColor>("current", profile.get_properties()));
+    auto& rejected = get<QColor>("rejected", profile.get_properties());
+    rejected.connect_changed_signal([=] (const auto& value) {
+      model->set_rejected(value);
+    });
+    box->get_current()->connect_update_signal(
+      profile.make_event_slot<QColor>("Current"));
+    box->connect_submit_signal(profile.make_event_slot<QColor>("Submit"));
+    box->connect_reject_signal(profile.make_event_slot<QColor>("Reject"));
     return box;
   });
   return profile;
@@ -4239,7 +4269,7 @@ UiProfile Spire::make_text_box_profile() {
   properties.push_back(make_standard_enum_property(
     "text_align", text_alignment_property));
   auto profile = UiProfile("TextBox", properties, [] (auto& profile) {
-    auto model = std::make_shared<RejectedTextModel>();
+    auto model = std::make_shared<RejectedValueModel<QString>>();
     auto text_box = new TextBox(model);
     text_box->setFixedWidth(scale_width(100));
     apply_widget_properties(text_box, profile.get_properties());
