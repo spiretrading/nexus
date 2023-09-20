@@ -33,13 +33,13 @@ namespace {
   void to_tag_list(const Region& region, ComboBox::QueryModel& query_model,
       AnyListModel& list) {
     for(auto& country : region.GetCountries()) {
-      list.push(query_model.parse(displayText(country)));
+      list.push(query_model.parse(to_text(country)));
     }
     for(auto& market : region.GetMarkets()) {
-      list.push(query_model.parse(displayText(MarketToken(market))));
+      list.push(query_model.parse(to_text(MarketToken(market))));
     }
     for(auto& security : region.GetSecurities()) {
-      list.push(query_model.parse(displayText(security)));
+      list.push(query_model.parse(to_text(security)));
     }
   }
 
@@ -49,16 +49,16 @@ namespace {
       auto rhs_region = std::any_cast<Region&&>(list.get(rhs));
       if(!lhs_region.GetCountries().empty() &&
           !rhs_region.GetCountries().empty()) {
-        return displayText(*lhs_region.GetCountries().begin()) <
-          displayText(*rhs_region.GetCountries().begin());
+        return to_text(*lhs_region.GetCountries().begin()) <
+          to_text(*rhs_region.GetCountries().begin());
       } else if(!lhs_region.GetMarkets().empty() &&
           !rhs_region.GetMarkets().empty()) {
-        return displayText(MarketToken(*lhs_region.GetMarkets().begin())) <
-          displayText(MarketToken(*rhs_region.GetMarkets().begin()));
+        return to_text(MarketToken(*lhs_region.GetMarkets().begin())) <
+          to_text(MarketToken(*rhs_region.GetMarkets().begin()));
       } else if(!lhs_region.GetSecurities().empty() &&
           !rhs_region.GetSecurities().empty()) {
-        return displayText(*lhs_region.GetSecurities().begin()) <
-          displayText(*rhs_region.GetSecurities().begin());
+        return to_text(*lhs_region.GetSecurities().begin()) <
+          to_text(*rhs_region.GetSecurities().begin());
       }
       if(!lhs_region.GetCountries().empty() ||
           !rhs_region.GetCountries().empty()) {

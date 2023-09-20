@@ -3,6 +3,7 @@
 #include <QResizeEvent>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Layouts.hpp"
+#include "Spire/Ui/TextBox.hpp"
 
 using namespace boost;
 using namespace Spire;

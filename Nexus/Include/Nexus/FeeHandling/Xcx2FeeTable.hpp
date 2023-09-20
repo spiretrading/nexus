@@ -19,8 +19,14 @@ namespace Nexus {
       /** Unknown. */
       NONE = -1,
 
-      /** Price >= $1.00. */
+      /** Price >= $5.00. */
       DEFAULT,
+
+      /** ETFs ($1.00 or over). */
+      ETF,
+
+      /** Price < $5.00. */
+      SUB_FIVE_DOLLAR,
 
       /** Price < $1.00. */
       SUBDOLLAR,
@@ -30,7 +36,7 @@ namespace Nexus {
     };
 
     /** The number of price classes enumerated. */
-    static constexpr auto PRICE_CLASS_COUNT = std::size_t(3);
+    static constexpr auto PRICE_CLASS_COUNT = std::size_t(5);
 
     /** Enumerates the types of trades. */
     enum class Type {
@@ -71,20 +77,26 @@ namespace Nexus {
 
     /** The large trade size threshold. */
     Quantity m_largeTradeSize;
+
+    /** The set of ETFs. */
+    std::unordered_set<Security> m_etfs;
   };
 
   /**
    * Parses an Xcx2FeeTable from a YAML configuration.
    * @param config The configuration to parse the Xcx2FeeTable from.
+   * @param etfs The set of ETF Securities.
    * @return The Xcx2FeeTable represented by the <i>config</i>.
    */
-  inline Xcx2FeeTable ParseXcx2FeeTable(const YAML::Node& config) {
+  inline Xcx2FeeTable ParseXcx2FeeTable(const YAML::Node& config,
+      std::unordered_set<Security> etfs) {
     auto feeTable = Xcx2FeeTable();
     ParseFeeTable(config, "default_table",
       Beam::Store(feeTable.m_defaultTable));
     ParseFeeTable(config, "tsx_table", Beam::Store(feeTable.m_tsxTable));
-    feeTable.m_largeTradeSize = Beam::Extract<Quantity>(config,
-      "large_trade_size");
+    feeTable.m_largeTradeSize =
+      Beam::Extract<Quantity>(config, "large_trade_size");
+    feeTable.m_etfs = std::move(etfs);
     return feeTable;
   }
 
@@ -123,10 +135,14 @@ namespace Nexus {
       return Money::ZERO;
     }
     auto priceClass = [&] {
-      if(executionReport.m_lastPrice < 10 * Money::CENT) {
+      if(feeTable.m_etfs.count(fields.m_security) == 1) {
+        return Xcx2FeeTable::PriceClass::ETF;
+      } else if(executionReport.m_lastPrice < 10 * Money::CENT) {
         return Xcx2FeeTable::PriceClass::SUBDIME;
       } else if(executionReport.m_lastPrice < Money::ONE) {
         return Xcx2FeeTable::PriceClass::SUBDOLLAR;
+      } else if (executionReport.m_lastPrice < 5 * Money::ONE) {
+        return Xcx2FeeTable::PriceClass::SUB_FIVE_DOLLAR;
       } else {
         return Xcx2FeeTable::PriceClass::DEFAULT;
       }

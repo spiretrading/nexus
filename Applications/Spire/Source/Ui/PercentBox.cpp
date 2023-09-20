@@ -46,7 +46,7 @@ namespace {
       return to_percentage(m_model->get_maximum());
     }
 
-    Decimal get_increment() const {
+    optional<Decimal> get_increment() const {
       return m_model->get_increment();
     }
 

@@ -110,6 +110,36 @@ namespace Spire {
       TableViewBuilder& set_header(
         const std::shared_ptr<TableView::HeaderModel>& header);
 
+      /**
+       * Adds a header item.
+       * @param name The name of the column.
+       */
+      TableViewBuilder& add_header_item(QString name);
+
+      /**
+       * Adds a header item.
+       * @param name The name of the column.
+       * @param short_name The short form name of the column.
+       */
+      TableViewBuilder& add_header_item(QString name, QString short_name);
+
+      /**
+       * Adds a header item.
+       * @param name The name of the column.
+       * @param short_name The short form name of the column.
+       * @param filter How the column is filtered.
+       */
+      TableViewBuilder& add_header_item(
+        QString name, QString short_name, TableFilter::Filter filter);
+
+      /**
+       * Adds a header item.
+       * @param name The name of the column.
+       * @param filter How the column is filtered.
+       */
+      TableViewBuilder& add_header_item(
+        QString name, TableFilter::Filter filter);
+
       /** Sets the filter to apply. */
       TableViewBuilder& set_filter(const std::shared_ptr<TableFilter>& filter);
 

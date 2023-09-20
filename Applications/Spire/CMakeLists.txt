@@ -85,6 +85,7 @@ macro(find_cpp_qobject output)
   endforeach()
 endmacro()
 
+add_subdirectory(Config/BlotterUiTester)
 add_subdirectory(Config/Library)
 add_subdirectory(Config/LoginUiTester)
 add_subdirectory(Config/Resources)

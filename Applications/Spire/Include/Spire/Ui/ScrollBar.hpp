@@ -2,9 +2,18 @@
 #define SPIRE_SCROLL_BAR_HPP
 #include <QTimer>
 #include <QWidget>
+#include "Spire/Styles/StateSelector.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+namespace Styles {
+
+  /** Selects the track in a ScrollBar. */
+  using ScrollTrack = StateSelector<void, struct ScrollTrackSelectorTag>;
+
+  /** Selects the thumb in a ScrollBar. */
+  using ScrollThumb = StateSelector<void, struct ScrollThumbSelectorTag>;
+}
 
   /** Implements a scroll bar. */
   class ScrollBar : public QWidget {
