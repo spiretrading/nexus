@@ -1,10 +1,6 @@
 #ifndef SPIRE_COLOR_CODE_PANEL_HPP
 #define SPIRE_COLOR_CODE_PANEL_HPP
-#include <QBoxLayout>
-#include <QLabel>
-#include <QWidget>
-#include "Spire/Styles/StateSelector.hpp"
-#include "Spire/Ui/FocusObserver.hpp"
+#include <QStackedWidget>
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -52,9 +48,17 @@ namespace Spire {
       /** Sets the display mode. */
       void set_mode(Mode mode);
 
+    protected:
+      bool eventFilter(QObject* watched, QEvent* event) override;
+
     private:
-      std::shared_ptr<ValueModel<QColor>> m_current;
-      Mode m_mode;
+      struct ColorCodeValueModel;
+      std::shared_ptr<ColorCodeValueModel> m_current;
+      QStackedWidget* m_component;
+      DropDownBox* m_color_format_box;
+      PercentBox* m_alpha_box;
+
+      void on_mode_current(const boost::optional<int>& current);
   };
 }
 

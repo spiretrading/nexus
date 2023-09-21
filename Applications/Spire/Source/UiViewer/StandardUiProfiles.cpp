@@ -30,6 +30,7 @@
 #include "Spire/Ui/CalendarDatePicker.hpp"
 #include "Spire/Ui/Checkbox.hpp"
 #include "Spire/Ui/ClosedFilterPanel.hpp"
+#include "Spire/Ui/ColorCodePanel.hpp"
 #include "Spire/Ui/ComboBox.hpp"
 #include "Spire/Ui/ContextMenu.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
@@ -1238,6 +1239,37 @@ UiProfile Spire::make_closed_filter_panel_profile() {
       });
     button->connect_click_signal([=] { panel->show(); });
     return button;
+  });
+  return profile;
+}
+
+UiProfile Spire::make_color_code_panel_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_property<QColor>("current"));
+  auto mode_property = define_enum<ColorCodePanel::Mode>(
+    {{"HEX", ColorCodePanel::Mode::HEX}, {"RGB", ColorCodePanel::Mode::RGB},
+      {"HSB", ColorCodePanel::Mode::HSB}});
+  properties.push_back(make_standard_enum_property("mode", mode_property));
+  auto profile = UiProfile("ColorCodePanel", properties, [] (auto& profile) {
+    auto panel = new ColorCodePanel();
+    panel->setFixedWidth(scale_width(260));
+    apply_widget_properties(panel, profile.get_properties());
+    auto& current = get<QColor>("current", profile.get_properties());
+    current.connect_changed_signal([=] (const auto& color) {
+      if(color.isValid()) {
+        panel->get_current()->set(color);
+      }
+    });
+    auto& mode = get<ColorCodePanel::Mode>("mode", profile.get_properties());
+    mode.connect_changed_signal([=] (auto value) {
+      panel->set_mode(value);
+    });
+    auto current_slot = profile.make_event_slot<QString>("Current");
+    panel->get_current()->connect_update_signal([=] (const auto& current) {
+      current_slot(current.name(QColor::HexArgb));
+    });
+    return panel;
   });
   return profile;
 }
