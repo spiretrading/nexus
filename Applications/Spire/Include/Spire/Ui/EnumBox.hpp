@@ -95,7 +95,7 @@ namespace Spire {
 
   template<typename T>
   QWidget* EnumBox<T>::default_view_builder(const Type& value) {
-    return make_label(displayText(value));
+    return make_label(to_text(value));
   }
 
   template<typename T>

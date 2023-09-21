@@ -1,11 +1,25 @@
 #include "Spire/Ui/ResponsiveLabel.hpp"
 #include <tuple>
+#include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Ui/Layouts.hpp"
 
 using namespace boost;
 using namespace Spire;
 using namespace Spire::Styles;
+
+namespace {
+  auto to_list(std::vector<QString> labels) {
+    auto list = std::make_shared<ArrayListModel<QString>>();
+    for(auto& label : labels) {
+      list->push(std::move(label));
+    }
+    return list;
+  }
+}
+
+ResponsiveLabel::ResponsiveLabel(std::vector<QString> labels, QWidget* parent)
+  : ResponsiveLabel(to_list(std::move(labels)), parent) {}
 
 ResponsiveLabel::ResponsiveLabel(
     std::shared_ptr<ListModel<QString>> labels, QWidget* parent)

@@ -4,7 +4,7 @@
 
 namespace Spire {
 
-  //! Loads all custom resources.
+  /** Loads all custom resources. */
   void initialize_resources();
 }
 

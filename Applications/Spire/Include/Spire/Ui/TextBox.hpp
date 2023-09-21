@@ -201,6 +201,12 @@ namespace Styles {
   };
 
   /**
+   * Applies a label styling to a widget.
+   * @param widget The widget to apply the styling to.
+   */
+  void apply_label_style(QWidget& widget);
+
+  /**
    * Returns a TextBox as a label.
    * @param label The text displayed on the label.
    * @param parent The parent widget.

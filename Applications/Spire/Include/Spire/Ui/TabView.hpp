@@ -47,7 +47,7 @@ namespace Spire {
     private:
       std::shared_ptr<ArrayListModel<std::vector<QString>>> m_labels;
       ListView* m_tab_list;
-      std::vector<QWidget*> m_bodies;
+      std::vector<std::unique_ptr<QWidget>> m_bodies;
       boost::optional<int> m_current;
 
       void on_current(boost::optional<int> current);

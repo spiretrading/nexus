@@ -2,6 +2,8 @@
 #define SPIRE_SCROLL_BOX_HPP
 #include <QWidget>
 #include "Spire/Styles/StyleSheetMap.hpp"
+#include "Spire/Ui/FocusObserver.hpp"
+#include "Spire/Ui/HoverObserver.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -92,6 +94,11 @@ namespace Spire {
       void showEvent(QShowEvent* event) override;
 
     private:
+      enum class ScrollTrackSize {
+        ZERO,
+        NARROW,
+        WIDE
+      };
       QWidget* m_body;
       DisplayPolicy m_horizontal_display_policy;
       DisplayPolicy m_vertical_display_policy;
@@ -99,10 +106,18 @@ namespace Spire {
       ScrollableLayer* m_scrollable_layer;
       QMargins m_padding;
       QMargins m_borders;
+      FocusObserver m_focus_observer;
+      HoverObserver m_hover_observer;
+      boost::optional<HoverObserver> m_horizontal_bar_hover_observer;
+      boost::optional<HoverObserver> m_vertical_bar_hover_observer;
+      boost::optional<QPropertyAnimation> m_horizontal_bar_animation;
+      boost::optional<QPropertyAnimation> m_vertical_bar_animation;
       Styles::StyleSheetMap m_border_styles;
       Styles::StyleSheetMap m_padding_styles;
       boost::signals2::scoped_connection m_style_connection;
 
+      void ease_horizontal_scroll_bar(ScrollTrackSize size);
+      void ease_vertical_scroll_bar(ScrollTrackSize size);
       void commit_border_styles();
       void commit_padding_styles();
       void on_style();
@@ -110,6 +125,10 @@ namespace Spire {
       void on_horizontal_scroll(int position);
       void update_layout();
       void update_ranges();
+      void on_focus(FocusObserver::State state);
+      void on_hover(HoverObserver::State state);
+      void on_horizontal_bar_hover(HoverObserver::State state);
+      void on_vertical_bar_hover(HoverObserver::State state);
   };
 }
 
