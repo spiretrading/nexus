@@ -1267,7 +1267,13 @@ UiProfile Spire::make_color_code_panel_profile() {
     });
     auto current_slot = profile.make_event_slot<QString>("Current");
     panel->get_current()->connect_update_signal([=] (const auto& current) {
-      current_slot(current.name(QColor::HexArgb));
+      current_slot(
+        QString("Hex:%1 Hue:%2 Saturation:%3 Brightness:%4 Alpha:%5").
+          arg(current.name()).
+          arg(std::round(current.hueF() * 360)).
+          arg(std::round(current.saturationF() * 100)).
+          arg(std::round(current.valueF() * 100)).
+          arg(std::round(current.alphaF() * 100)));
     });
     return panel;
   });

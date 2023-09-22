@@ -106,7 +106,15 @@ struct ColorCodePanel::ColorCodeValueModel {
   std::shared_ptr<LocalOptionalDecimalModel> m_saturation_model;
   std::shared_ptr<LocalOptionalDecimalModel> m_brightness_model;
   std::shared_ptr<LocalOptionalDecimalModel> m_alpha_model;
-  scoped_connection m_connection;
+  scoped_connection m_source_connection;
+  scoped_connection m_hex_connection;
+  scoped_connection m_red_connection;
+  scoped_connection m_green_connection;
+  scoped_connection m_blue_connection;
+  scoped_connection m_hue_connection;
+  scoped_connection m_saturation_connection;
+  scoped_connection m_brightness_connection;
+  scoped_connection m_alpha_connection;
 
   ColorCodeValueModel(std::shared_ptr<ValueModel<QColor>> source)
     : m_source(std::move(source)),
@@ -118,7 +126,7 @@ struct ColorCodePanel::ColorCodeValueModel {
       m_saturation_model(std::make_shared<LocalOptionalDecimalModel>()),
       m_brightness_model(std::make_shared<LocalOptionalDecimalModel>()),
       m_alpha_model(std::make_shared<LocalOptionalDecimalModel>()),
-      m_connection(m_source->connect_update_signal(
+      m_source_connection(m_source->connect_update_signal(
         std::bind_front(&ColorCodeValueModel::on_current, this))) {
     set_color_value_range(*m_red_model);
     set_color_value_range(*m_green_model);
@@ -129,104 +137,150 @@ struct ColorCodePanel::ColorCodeValueModel {
     m_hue_model->set_minimum(0);
     m_hue_model->set_maximum(360);
     on_current(m_source->get());
-    m_hex_model->connect_update_signal(
+    m_hex_connection = m_hex_model->connect_update_signal(
       std::bind_front(&ColorCodeValueModel::on_hex_current, this));
-    m_red_model->connect_update_signal(
+    m_red_connection = m_red_model->connect_update_signal(
       std::bind_front(&ColorCodeValueModel::on_red_current, this));
-    m_green_model->connect_update_signal(
+    m_green_connection = m_green_model->connect_update_signal(
       std::bind_front(&ColorCodeValueModel::on_green_current, this));
-    m_blue_model->connect_update_signal(
+    m_blue_connection = m_blue_model->connect_update_signal(
       std::bind_front(&ColorCodeValueModel::on_blue_current, this));
-    m_hue_model->connect_update_signal(
+    m_hue_connection = m_hue_model->connect_update_signal(
       std::bind_front(&ColorCodeValueModel::on_hue_current, this));
-    m_saturation_model->connect_update_signal(
+    m_saturation_connection = m_saturation_model->connect_update_signal(
       std::bind_front(&ColorCodeValueModel::on_saturation_current, this));
-    m_brightness_model->connect_update_signal(
+    m_brightness_connection = m_brightness_model->connect_update_signal(
       std::bind_front(&ColorCodeValueModel::on_brightness_current, this));
-    m_alpha_model->connect_update_signal(
+    m_alpha_connection = m_alpha_model->connect_update_signal(
       std::bind_front(&ColorCodeValueModel::on_alpha_current, this));
   }
 
   void on_current(const QColor& current) {
-    m_hex_model->set(current);
-    m_red_model->set(current.red());
-    m_green_model->set(current.green());
-    m_blue_model->set(current.blue());
-    m_hue_model->set(to_hue(current.hslHueF()));
-    m_saturation_model->set(round_value(Decimal(current.hsvSaturationF())));
-    m_brightness_model->set(round_value(Decimal(current.valueF())));
+    update_hex(current);
+    update_rgb(current);
+    update_hsv(current);
+    auto blocker = shared_connection_block(m_alpha_connection);
     m_alpha_model->set(round_value(Decimal(current.alphaF())));
   }
 
   void on_hex_current(const QColor& value) {
-    if(value.rgb() != m_source->get().rgb()) {
-      m_source->set(value);
-    }
+    auto color = QColor(value.red(), value.green(), value.blue(),
+      m_source->get().alpha());
+    update_rgb(color);
+    update_hsv(color);
+    update_source(color);
   }
 
   void on_red_current(const optional<int>& value) {
-    if(value && *value != m_source->get().red()) {
-      auto color = m_source->get();
-      color.setRed(*value);
-      m_source->set(color);
+    if(!value) {
+      return;
     }
+    auto color = m_source->get();
+    color.setRed(*value);
+    update_hex(color);
+    update_hsv(color);
+    update_source(color);
   }
 
   void on_green_current(const optional<int>& value) {
-    if(value && *value != m_source->get().green()) {
-      auto color = m_source->get();
-      color.setGreen(*value);
-      m_source->set(color);
+    if(!value) {
+      return;
     }
+    auto color = m_source->get();
+    color.setGreen(*value);
+    update_hex(color);
+    update_hsv(color);
+    update_source(color);
   }
 
   void on_blue_current(const optional<int>& value) {
-    if(value && *value != m_source->get().blue()) {
-      auto color = m_source->get();
-      color.setBlue(*value);
-      m_source->set(color);
+    if(!value) {
+      return;
     }
+    auto color = m_source->get();
+    color.setBlue(*value);
+    update_hex(color);
+    update_hsv(color);
+    update_source(color);
   }
 
   void on_hue_current(const optional<int>& value) {
-    if(value && *value != to_hue(m_source->get().hslHueF())) {
-      auto color = m_source->get();
-      color.setHsvF(*value / 360.0, color.hsvSaturationF(), color.valueF(),
-        color.alphaF());
-      m_source->set(color);
+    if(!value) {
+      return;
     }
+    auto color = QColor::fromHsvF(*value / 360.0,
+      m_source->get().hsvSaturationF(), m_source->get().valueF(),
+      m_source->get().alphaF());
+    update_hex(color);
+    update_rgb(color);
+    update_source(color);
   }
 
   void on_saturation_current(const optional<Decimal>& value) {
-    if(value &&
-        *value != round_value(Decimal(m_source->get().hsvSaturationF()))) {
-      auto color = m_source->get();
-      color.setHsvF(color.hsvHueF(), static_cast<qreal>(*value), color.valueF(),
-        color.alphaF());
-      m_source->set(color);
+    if(!value) {
+      return;
     }
+    auto color = QColor::fromHsvF(m_source->get().hsvHueF(),
+      static_cast<qreal>(*value), m_source->get().valueF(),
+      m_source->get().alphaF());
+    update_hex(color);
+    update_rgb(color);
+    update_source(color);
   }
 
   void on_brightness_current(const optional<Decimal>& value) {
-    if(value && *value != round_value(Decimal(m_source->get().valueF()))) {
-      auto color = m_source->get();
-      color.setHsvF(color.hsvHueF(), color.hsvSaturationF(),
-        static_cast<qreal>(*value), color.alphaF());
-      m_source->set(color);
+    if(!value) {
+      return;
     }
+    auto color = QColor::fromHsvF(m_source->get().hsvHueF(),
+      m_source->get().hsvSaturationF(), static_cast<qreal>(*value),
+      m_source->get().alphaF());
+    update_hex(color);
+    update_rgb(color);
+    update_source(color);
   }
 
   void on_alpha_current(const optional<Decimal>& value) {
-    if(value && *value != round_value(Decimal(m_source->get().alphaF()))) {
-      auto color = m_source->get();
-      color.setAlphaF(static_cast<qreal>(*value));
-      m_source->set(color);
+    if(!value) {
+      return;
     }
+    auto color = m_source->get();
+    color.setAlphaF(static_cast<qreal>(*value));
+    update_source(color);
+  }
+
+  void update_source(const QColor& color) {
+    auto blocker = shared_connection_block(m_source_connection);
+    m_source->set(color);
+  }
+
+  void update_hex(const QColor& color) {
+    auto blocker = shared_connection_block(m_hex_connection);
+    m_hex_model->set(color);
+  }
+
+  void update_rgb(const QColor& color) {
+    auto red_blocker = shared_connection_block(m_red_connection);
+    m_red_model->set(color.red());
+    auto green_blocker = shared_connection_block(m_green_connection);
+    m_green_model->set(color.green());
+    auto blue_blocker = shared_connection_block(m_blue_connection);
+    m_blue_model->set(color.blue());
+  }
+
+  void update_hsv(const QColor& color) {
+    auto hue_blocker = shared_connection_block(m_hue_connection);
+    m_hue_model->set(to_hue(color.hslHueF()));
+    auto saturation_blocker = shared_connection_block(m_saturation_connection);
+    m_saturation_model->set(round_value(Decimal(color.hsvSaturationF())));
+    auto brightness_blocker = shared_connection_block(m_brightness_connection);
+    m_brightness_model->set(round_value(Decimal(color.valueF())));
   }
 };
 
 ColorCodePanel::ColorCodePanel(QWidget* parent)
-  : ColorCodePanel(std::make_shared<LocalValueModel<QColor>>(), parent) {}
+  : ColorCodePanel(
+      std::make_shared<LocalValueModel<QColor>>(QColor("#FF000000")), parent) {}
 
 ColorCodePanel::ColorCodePanel(std::shared_ptr<ValueModel<QColor>> current,
     QWidget* parent)
