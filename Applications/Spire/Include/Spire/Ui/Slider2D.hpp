@@ -1,7 +1,6 @@
 #ifndef SPIRE_SLIDER_2D_HPP
 #define SPIRE_SLIDER_2D_HPP
 #include <QLabel>
-#include "Spire/Spire/Decimal.hpp"
 #include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/Slider.hpp"
 #include "Spire/Ui/Ui.hpp"

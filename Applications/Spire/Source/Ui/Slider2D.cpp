@@ -340,17 +340,17 @@ Decimal Slider2D::to_y_value(int y) const {
 }
 
 int Slider2D::to_x_position(const Decimal& x) const {
-  auto track_body_pos = m_track->get_body()->mapTo(m_track, QPoint(0, 0));
+  auto track_pad_pos = m_track->get_body()->mapTo(m_track, QPoint(0, 0));
   return static_cast<int>((x - *m_x_current->get_minimum()) /
     get_range(*m_x_current) * m_track->get_body()->width() -
-      m_thumb->width() / 2.0) + track_body_pos.x();
+      m_thumb->width() / 2.0) + track_pad_pos.x();
 }
 
 int Slider2D::to_y_position(const Decimal& y) const {
-  auto track_body_pos = m_track->get_body()->mapTo(m_track, QPoint(0, 0));
+  auto track_pad_pos = m_track->get_body()->mapTo(m_track, QPoint(0, 0));
   return static_cast<int>((*m_y_current->get_maximum() - y) /
     get_range(*m_y_current) * m_track->get_body()->height() -
-      m_thumb->height() / 2.0) + track_body_pos.y();
+      m_thumb->height() / 2.0) + track_pad_pos.y();
 }
 
 void Slider2D::set_x_current(const Decimal& x) {
@@ -381,7 +381,7 @@ void Slider2D::on_x_current(const Decimal& x) {
 }
 
 void Slider2D::on_y_current(const Decimal& y) {
-  if(y < *m_x_current->get_minimum() || y > *m_y_current->get_maximum()) {
+  if(y < *m_y_current->get_minimum() || y > *m_y_current->get_maximum()) {
     return;
   }
   m_is_modified = true;
