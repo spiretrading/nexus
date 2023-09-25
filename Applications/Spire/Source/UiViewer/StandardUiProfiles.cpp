@@ -3803,7 +3803,7 @@ UiProfile Spire::make_slider_2d_profile() {
   properties.push_back(make_standard_property<Decimal>("y_step_size", 0));
   properties.push_back(make_standard_property<Decimal>("x_current", 0));
   properties.push_back(make_standard_property<Decimal>("y_current", 0));
-  auto size = QSize(scale(264, 164));
+  auto size = scale(264, 164);
   auto brightness_gradient = QLinearGradient(0, 0, 0, size.height());
   brightness_gradient.setColorAt(0, Qt::transparent);
   brightness_gradient.setColorAt(1, Qt::black);

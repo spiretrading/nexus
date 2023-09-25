@@ -1,6 +1,5 @@
 #include "Spire/Ui/Slider2D.hpp"
 #include <QKeyEvent>
-#include <QLabel>
 #include <QMouseEvent>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalScalarValueModel.hpp"
