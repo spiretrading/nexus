@@ -32,6 +32,9 @@ QSize Icon::sizeHint() const {
 }
 
 void Icon::paintEvent(QPaintEvent* event) {
+  if(m_icon.isNull()) {
+    return;
+  }
   auto painter = QPainter(this);
   m_painter.paint(painter);
   auto icon = QPixmap::fromImage(m_icon);
