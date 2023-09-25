@@ -166,7 +166,7 @@ namespace {
     return QString("None");
   }
 
-  auto to_string(const Decimal& value) {
+  QString to_string(const Decimal& value) {
     return QString::fromStdString(value.str(
       Decimal::backend_type::cpp_dec_float_digits10, std::ios_base::dec));
   }
@@ -296,9 +296,7 @@ namespace {
       [=, &current] (const optional<Decimal>& value) {
         auto text = [&] {
           if(value) {
-            return QString::fromStdString(value->str(
-              Decimal::backend_type::cpp_dec_float_digits10,
-              std::ios_base::dec));
+            return to_string(*value);
           }
           return QString("null");
         }();
@@ -311,9 +309,7 @@ namespace {
     box->connect_submit_signal(
       [=] (const optional<Decimal>& submission) {
         if(submission) {
-          submit_slot(QString::fromStdString(submission->str(
-            Decimal::backend_type::cpp_dec_float_digits10,
-            std::ios_base::dec)));
+          submit_slot(to_string(*submission));
         } else {
           submit_slot(QString("null"));
         }
@@ -322,9 +318,7 @@ namespace {
     box->connect_reject_signal(
       [=] (const optional<Decimal>& value) {
         if(value) {
-          reject_slot(QString::fromStdString(value->str(
-            Decimal::backend_type::cpp_dec_float_digits10,
-            std::ios_base::dec)));
+          submit_slot(to_string(*value));
         } else {
           reject_slot(QString("null"));
         }
@@ -1533,8 +1527,7 @@ UiProfile Spire::make_decimal_filter_panel_profile() {
       };
       auto to_string = [] (const auto& value) {
         if(value) {
-          return QString::fromStdString(value->str(
-            Decimal::backend_type::cpp_dec_float_digits10, std::ios_base::dec));
+          return ::to_string(*value);
         }
         return QString("null");
       };
@@ -3435,8 +3428,8 @@ UiProfile Spire::make_scroll_box_profile() {
   properties.push_back(make_standard_property("vertical-padding", 10));
   properties.push_back(
     make_standard_property("border-color", QColor(0xC8C8C8)));
-  properties.push_back(make_standard_property("rows", 10));
-  properties.push_back(make_standard_property("columns", 10));
+  properties.push_back(make_standard_property("rows", 3));
+  properties.push_back(make_standard_property("columns", 3));
   auto profile = UiProfile("ScrollBox", properties, [] (auto& profile) {
     auto label = new QLabel();
     auto& columns = get<int>("columns", profile.get_properties());
@@ -3444,7 +3437,6 @@ UiProfile Spire::make_scroll_box_profile() {
     label->setPixmap(QPixmap::fromImage(
       make_grid_image(scale(100, 100), columns.get(), rows.get())));
     auto scroll_box = new ScrollBox(label);
-    scroll_box->setFixedSize(scale(320, 240));
     apply_widget_properties(scroll_box, profile.get_properties());
     auto& horizontal_display_policy = get<ScrollBox::DisplayPolicy>(
       "horizontal_display_policy", profile.get_properties());
@@ -3491,6 +3483,13 @@ UiProfile Spire::make_scrollable_list_box_profile() {
     {{"NONE", Overflow::NONE}, {"WRAP", Overflow::WRAP}});
   properties.push_back(
     make_standard_enum_property("overflow", overflow_property));
+  auto display_policy_property = define_enum<ScrollBox::DisplayPolicy>(
+    {{"ON_OVERFLOW", ScrollBox::DisplayPolicy::ON_OVERFLOW},
+     {"ON_ENGAGE", ScrollBox::DisplayPolicy::ON_ENGAGE}});
+  properties.push_back(make_standard_enum_property(
+    "horizontal_display_policy", display_policy_property));
+  properties.push_back(make_standard_enum_property(
+    "vertical_display_policy", display_policy_property));
   auto profile = UiProfile("ScrollableListBox", properties, [] (auto& profile) {
     auto list_model = std::make_shared<ArrayListModel<QString>>();
     for(auto i = 0; i < 15; ++i) {
@@ -3514,6 +3513,16 @@ UiProfile Spire::make_scrollable_list_box_profile() {
       update_style(*list_view, [&] (auto& style) {
         style.get(Any()).set(value);
       });
+    });
+    auto& horizontal_display_policy = get<ScrollBox::DisplayPolicy>(
+      "horizontal_display_policy", profile.get_properties());
+    horizontal_display_policy.connect_changed_signal([=] (auto value) {
+      scrollable_list_box->get_scroll_box().set_horizontal(value);
+    });
+    auto& vertical_display_policy = get<ScrollBox::DisplayPolicy>(
+      "vertical_display_policy", profile.get_properties());
+    vertical_display_policy.connect_changed_signal([=] (auto value) {
+      scrollable_list_box->get_scroll_box().set_vertical(value);
     });
     return scrollable_list_box;
   });
@@ -3692,22 +3701,22 @@ UiProfile Spire::make_slider_profile() {
   properties.push_back(make_standard_enum_property("type", type_property));
   properties.push_back(
     make_standard_enum_property("orientation", get_orientation_property()));
-  properties.push_back(make_standard_property("minimum", 0));
-  properties.push_back(make_standard_property("maximum", 360));
-  properties.push_back(make_standard_property("default_increment", 1));
-  properties.push_back(make_standard_property("shift_increment", 10));
-  properties.push_back(make_standard_property("step_size", 0));
-  properties.push_back(make_standard_property("current", 0));
+  properties.push_back(make_standard_property<Decimal>("minimum", 0));
+  properties.push_back(make_standard_property<Decimal>("maximum", 360));
+  properties.push_back(make_standard_property<Decimal>("default_increment", 1));
+  properties.push_back(make_standard_property<Decimal>("shift_increment", 10));
+  properties.push_back(make_standard_property<Decimal>("step_size", 0));
+  properties.push_back(make_standard_property<Decimal>("current", 0));
   auto profile = UiProfile("Slider", properties, [] (auto& profile) {
-    auto model = std::make_shared<LocalScalarValueModel<int>>();
+    auto model = std::make_shared<LocalScalarValueModel<Decimal>>();
     auto& default_increment =
-      get<int>("default_increment", profile.get_properties());
+      get<Decimal>("default_increment", profile.get_properties());
     auto& shift_increment =
-      get<int>("shift_increment", profile.get_properties());
-    auto modifiers = QHash<Qt::KeyboardModifier, int>(
+      get<Decimal>("shift_increment", profile.get_properties());
+    auto modifiers = QHash<Qt::KeyboardModifier, Decimal>(
       {{Qt::NoModifier, default_increment.get()},
         {Qt::ShiftModifier, shift_increment.get()}});
-    auto slider = new Slider(model, modifiers);
+    auto slider = new Slider(model, std::move(modifiers));
     apply_widget_properties(slider, profile.get_properties());
     auto& type = get<int>("type", profile.get_properties());
     type.connect_changed_signal([=] (auto value) {
@@ -3743,30 +3752,31 @@ UiProfile Spire::make_slider_profile() {
         slider->setFixedSize(scale(26, 220));
       }
     });
-    auto& minimum = get<int>("minimum", profile.get_properties());
+    auto& minimum = get<Decimal>("minimum", profile.get_properties());
     minimum.connect_changed_signal([=] (auto value) {
       model->set_minimum(value);
     });
-    auto& maximum = get<int>("maximum", profile.get_properties());
+    auto& maximum = get<Decimal>("maximum", profile.get_properties());
     maximum.connect_changed_signal([=] (auto value) {
       model->set_maximum(value);
     });
-    auto& step_size = get<int>("step_size", profile.get_properties());
+    auto& step_size = get<Decimal>("step_size", profile.get_properties());
     step_size.connect_changed_signal([=] (auto value) {
-      slider->set_step_size(value);
+      slider->set_step(value);
     });
-    auto& current = get<int>("current", profile.get_properties());
+    auto& current = get<Decimal>("current", profile.get_properties());
     current.connect_changed_signal([=] (auto value) {
-      if(value != model->get()) {
-        model->set(value);
-      }
+      slider->get_current()->set(value);
     });
     auto current_slot = profile.make_event_slot<QString>("Current");
-    slider->get_current()->connect_update_signal([=, &current] (int value) {
-      current.set(value);
-      current_slot(to_text(value));
+    slider->get_current()->connect_update_signal(
+      [=] (const Decimal& value) {
+        current_slot(to_string(value));
+      });
+    auto submit_slot = profile.make_event_slot<QString>("Submit");
+    slider->connect_submit_signal([=] (const Decimal& submission) {
+      submit_slot(to_string(submission));
     });
-    slider->connect_submit_signal(profile.make_event_slot<int>("Submit"));
     return slider;
   });
   return profile;
