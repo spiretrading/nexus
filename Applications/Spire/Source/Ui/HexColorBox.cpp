@@ -17,8 +17,7 @@ namespace {
       if(length == 1 || length == 2) {
         return name.repeated(6 / length);
       } else if(length == 3) {
-        return QString(name[0]).repeated(2) + QString(name[1]).repeated(2) +
-          QString(name[2]).repeated(2);
+        return QString("%1%1%2%2%3%3").arg(name[0]).arg(name[1]).arg(name[2]);
       } else if(length == 4 || length == 5) {
         return QString("0").repeated(6 - length) + name;
       } else if(length == 6) {
@@ -62,7 +61,7 @@ struct HexColorBox::ColorToTextModel : TextModel {
     return m_source->get_state();
   }
 
-  const QString& get() const {
+  const QString& get() const override {
     return m_current;
   }
 
