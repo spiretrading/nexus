@@ -373,6 +373,8 @@ QString Spire::to_text(const std::any& value, const QLocale& locale) {
     return to_text(std::any_cast<TimeInForce>(value), locale);
   } else if(value.type() == typeid(std::string)) {
     return QString::fromStdString(std::any_cast<std::string>(value));
+  } else if(value.type() == typeid(QColor)) {
+    return std::any_cast<QColor>(value).name();
   } else if(value.type() == typeid(QString)) {
     return std::any_cast<QString>(value);
   } else if(value.type() == typeid(const char*)) {

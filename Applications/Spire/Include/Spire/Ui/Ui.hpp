@@ -38,6 +38,7 @@ namespace Spire {
   class FilterPanel;
   class FocusObserver;
   class GlobalPositionObserver;
+  class HexColorBox;
   struct Highlight;
   class HighlightSwatch;
   class HoverObserver;

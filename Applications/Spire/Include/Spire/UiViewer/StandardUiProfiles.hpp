@@ -77,6 +77,9 @@ namespace Spire {
   /** Returns a UiProfile for the FontStyleBox. */
   UiProfile make_font_style_box_profile();
 
+  /** Returns a UiProfile for the HexColorBox. */
+  UiProfile make_hex_color_box_profile();
+
   /** Returns a UiProfile for the HighlightSwatch. */
   UiProfile make_highlight_swatch_profile();
 
