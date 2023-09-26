@@ -1,6 +1,5 @@
 #ifndef SPIRE_HEX_COLOR_BOX_HPP
 #define SPIRE_HEX_COLOR_BOX_HPP
-#include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
