@@ -3,6 +3,7 @@
 #include <QBoxLayout>
 #include <QLabel>
 #include <QWidget>
+#include "Spire/Spire/Decimal.hpp"
 #include "Spire/Styles/StateSelector.hpp"
 #include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/Ui.hpp"
@@ -34,10 +35,10 @@ namespace Styles {
        * Signals that the current value is being submitted.
        * @param submission The submitted value.
        */
-      using SubmitSignal = Signal<void (int submission)>;
+      using SubmitSignal = Signal<void (const Decimal& submission)>;
 
       /**
-       * Constructs a Slider using a LocalValueModel with an increment of 1.
+       * Constructs a Slider with a LocalValueModel.
        * @param parent The parent widget.
        */
       explicit Slider(QWidget* parent = nullptr);
@@ -47,7 +48,7 @@ namespace Styles {
        * @param modifiers The initial keyboard modifier increments.
        * @param parent The parent widget.
        */
-      explicit Slider(QHash<Qt::KeyboardModifier, int> modifiers,
+      explicit Slider(QHash<Qt::KeyboardModifier, Decimal> modifiers,
         QWidget* parent = nullptr);
 
       /**
@@ -56,7 +57,7 @@ namespace Styles {
        * @param current The model used for the current value.
        * @param parent The parent widget.
        */
-      explicit Slider(std::shared_ptr<ScalarValueModel<int>> current,
+      explicit Slider(std::shared_ptr<ScalarValueModel<Decimal>> current,
         QWidget* parent = nullptr);
 
       /**
@@ -65,18 +66,18 @@ namespace Styles {
        * @param modifiers The initial keyboard modifier increments.
        * @param parent The parent widget.
        */
-      Slider(std::shared_ptr<ScalarValueModel<int>> current,
-        QHash<Qt::KeyboardModifier, int> modifiers,
+      Slider(std::shared_ptr<ScalarValueModel<Decimal>> current,
+        QHash<Qt::KeyboardModifier, Decimal> modifiers,
         QWidget* parent = nullptr);
 
       /** Returns the current value model. */
-      const std::shared_ptr<ScalarValueModel<int>>& get_current() const;
+      const std::shared_ptr<ScalarValueModel<Decimal>>& get_current() const;
 
       /** Returns the size of a step. */
-      int get_step_size() const;
+      Decimal get_step() const;
 
       /** Sets the size of a step. */
-      void set_step_size(int step_size);
+      void set_step(const Decimal& step);
 
       /** Connects a slot to the value submission signal. */
       boost::signals2::connection connect_submit_signal(
@@ -92,36 +93,37 @@ namespace Styles {
       void wheelEvent(QWheelEvent* event) override;
 
     private:
+      struct SliderValueModel;
       mutable SubmitSignal m_submit_signal;
-      std::shared_ptr<ScalarValueModel<int>> m_current;
-      QHash<Qt::KeyboardModifier, int> m_modifiers;
+      std::shared_ptr<SliderValueModel> m_current;
+      QHash<Qt::KeyboardModifier, Decimal> m_modifiers;
       Qt::Orientation m_orientation;
-      int m_submission;
-      int m_step_size;
-      QLabel* m_track_label;
+      Decimal m_submission;
+      Decimal m_step;
+      QLabel* m_track_image_container;
       Box* m_track_fill;
       Box* m_track;
       Box* m_thumb;
+      QWidget* m_body;
       QBoxLayout* m_track_layout;
       QImage m_track_image;
       QImage m_thumb_image;
       FocusObserver m_focus_observer;
-      bool m_is_dragging;
+      bool m_is_mouse_down;
       bool m_is_modified;
       boost::signals2::scoped_connection m_current_connection;
       boost::signals2::scoped_connection m_track_style_connection;
       boost::signals2::scoped_connection m_thumb_icon_style_connection;
       boost::signals2::scoped_connection m_style_connection;
 
-      int get_increment(int modifier_flag) const;
-      double get_range() const;
-      double to_value(int position) const;
-      int to_position(double value) const;
-      void set_current(double value);
+      Decimal get_increment(int modifier_flag) const;
+      Decimal to_value(int position) const;
+      int to_position(const Decimal& value) const;
+      void set_current(const Decimal& value);
       void update_track();
       void update_thumb();
       void on_focus(FocusObserver::State state);
-      void on_current(int current);
+      void on_current(const Decimal& current);
       void on_track_style();
       void on_thumb_icon_style();
       void on_style();

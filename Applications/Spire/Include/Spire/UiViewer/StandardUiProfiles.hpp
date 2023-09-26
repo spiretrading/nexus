@@ -218,6 +218,9 @@ namespace Spire {
   /** Returns a UiProfile for the Slider. */
   UiProfile make_slider_profile();
 
+  /** Returns a UiProfile for the Slider2D. */
+  UiProfile make_slider_2d_profile();
+
   /** Returns a UiProfile for the SplitView. */
   UiProfile make_split_view_profile();
 

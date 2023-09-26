@@ -1,6 +1,9 @@
 #ifndef SPIRE_HEX_COLOR_BOX_HPP
 #define SPIRE_HEX_COLOR_BOX_HPP
-#include "Spire/Ui/TextBox.hpp"
+#include <memory>
+#include <QColor>
+#include <QWidget>
+#include "Spire/Spire/ValueModel.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
