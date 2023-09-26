@@ -270,7 +270,7 @@ struct ColorCodePanel::ColorCodeValueModel {
 
   void update_hsv(const QColor& color) {
     auto hue_blocker = shared_connection_block(m_hue_connection);
-    m_hue_model->set(to_hue(color.hslHueF()));
+    m_hue_model->set(to_hue(color.hsvHueF()));
     auto saturation_blocker = shared_connection_block(m_saturation_connection);
     m_saturation_model->set(round_value(Decimal(color.hsvSaturationF())));
     auto brightness_blocker = shared_connection_block(m_brightness_connection);
