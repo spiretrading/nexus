@@ -418,6 +418,7 @@ struct ColorCodePanel::ColorCodeValueModel {
   }
 
   void update_rgb(const QColor& color) {
+    //qDebug() << "red:" << color.red() << " green:" << color.green();
     auto red_blocker = shared_connection_block(m_red_connection);
     m_red_model->set(color.red());
     auto green_blocker = shared_connection_block(m_green_connection);
@@ -480,15 +481,26 @@ QSize ColorCodePanel::sizeHint() const {
   if(m_size_hint) {
     return *m_size_hint;
   }
-  m_size_hint.emplace(m_color_format_box->sizeHint().width() + scale_width(8) +
-    m_color_input->sizeHint().width() + scale_width(4) +
-      m_alpha_box->sizeHint().width(), m_color_format_box->sizeHint().height());
+  auto color_format_width = std::max(m_color_format_box->sizeHint().width(),
+    m_color_format_box->minimumWidth());
+  auto color_input_width = std::max(m_color_input->sizeHint().width(),
+    m_color_input->minimumWidth());
+  auto alpha_width = [&] {
+    if(m_alpha_box->isVisible()) {
+      return m_alpha_box->sizeHint().width();
+    }
+    return 0;
+  }();
+  m_size_hint.emplace(color_format_width + scale_width(8) + color_input_width +
+    scale_width(4) + alpha_width, m_color_format_box->sizeHint().height());
   return *m_size_hint;
 }
 
 bool ColorCodePanel::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::Show || event->type() == QEvent::Hide) {
+    m_size_hint = none;
     update_layout();
+    updateGeometry();
   }
   return QWidget::eventFilter(watched, event);
 }
