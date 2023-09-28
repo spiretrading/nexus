@@ -31,6 +31,7 @@
 #include "Spire/Ui/Checkbox.hpp"
 #include "Spire/Ui/ClosedFilterPanel.hpp"
 #include "Spire/Ui/ColorCodePanel.hpp"
+#include "Spire/Ui/ColorPicker.hpp"
 #include "Spire/Ui/ComboBox.hpp"
 #include "Spire/Ui/ContextMenu.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
@@ -1291,6 +1292,30 @@ UiProfile Spire::make_color_code_panel_profile() {
           arg(std::round(current.alphaF() * 100)));
     });
     return panel;
+  });
+  return profile;
+}
+
+UiProfile Spire::make_color_picker_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_property<QColor>("current"));
+  auto profile = UiProfile("ColorPicker", properties, [] (auto& profile) {
+    auto button = make_label_button("ColorPicer");
+    auto picker = new ColorPicker(*button);
+    apply_widget_properties(picker, profile.get_properties());
+    auto& current = get<QColor>("current", profile.get_properties());
+    current.connect_changed_signal([=] (const auto& color) {
+      //if(color.isValid()) {
+      //  panel->get_current()->set(color);
+      //}
+      });
+    auto current_slot = profile.make_event_slot<QString>("Current");
+    picker->get_current()->connect_update_signal([=] (const auto& current) {
+      current_slot(current.name(QColor::HexArgb));
+    });
+    button->connect_click_signal([=] { picker->show(); });
+    return button;
   });
   return profile;
 }
