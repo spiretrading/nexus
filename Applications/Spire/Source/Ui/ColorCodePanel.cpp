@@ -16,60 +16,39 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  auto make_modifiers() {
-    return QHash<Qt::KeyboardModifier, Decimal>(
-      {{Qt::NoModifier, 1}, {Qt::AltModifier, 5}, {Qt::ControlModifier, 10},
-        {Qt::ShiftModifier, 20}});
+  auto get_character_width() {
+    static auto width = optional<int>();
+    if(width) {
+      return *width;
+    }
+    auto font = QFont("Roboto");
+    font.setWeight(QFont::Normal);
+    font.setPixelSize(scale_width(12));
+    width = QFontMetrics(font).averageCharWidth();
+    return *width;
   }
 
-  void update_component_style(QWidget& component) {
-    update_style(component, [] (auto& style) {
-      style.get(Any()).set(TextAlign(Qt::AlignCenter));
-      style.get(Any() > is_a<Button>()).set(Visibility::NONE);
-    });
+  auto get_component_minimum_width() {
+    static auto width = optional<int>();
+    if(width) {
+      return *width;
+    }
+    width = get_character_width() * 3 + scale_width(18);
+    return *width;
   }
 
-  auto make_rgb_color_box(std::shared_ptr<OptionalIntegerModel> red_model,
-      std::shared_ptr<OptionalIntegerModel> green_model,
-      std::shared_ptr<OptionalIntegerModel> blue_model) {
-    auto widget = new QWidget();
-    auto layout = make_hbox_layout(widget);
-    auto red_box = new IntegerBox(std::move(red_model));
-    update_component_style(*red_box);
-    red_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-    layout->addWidget(red_box);
-    layout->addSpacing(scale_width(4));
-    auto green_box = new IntegerBox(std::move(green_model));
-    update_component_style(*green_box);
-    green_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-    layout->addWidget(green_box);
-    layout->addSpacing(scale_width(4));
-    auto blue_box = new IntegerBox(std::move(blue_model));
-    update_component_style(*blue_box);
-    blue_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-    layout->addWidget(blue_box);
-    return widget;
+  auto get_component_maximum_width() {
+    static auto width = optional<int>();
+    if(width) {
+      return *width;
+    }
+    width = get_character_width() * 6 + scale_width(18);
+    return *width;
   }
 
-  auto make_hsb_color_box(std::shared_ptr<OptionalIntegerModel> hue_model,
-      std::shared_ptr<OptionalDecimalModel> saturation_model,
-      std::shared_ptr<OptionalDecimalModel> brightness_model) {
-    auto widget = new QWidget();
-    auto layout = make_hbox_layout(widget);
-    auto hue_box = new IntegerBox(std::move(hue_model));
-    update_component_style(*hue_box);
-    layout->addWidget(hue_box);
-    layout->addSpacing(scale_width(4));
-    auto saturation_box = new PercentBox(std::move(saturation_model),
-      make_modifiers());
-    update_component_style(*saturation_box);
-    layout->addWidget(saturation_box);
-    layout->addSpacing(scale_width(4));
-    auto brightness_box = new PercentBox(std::move(brightness_model),
-      make_modifiers());
-    update_component_style(*brightness_box);
-    layout->addWidget(brightness_box);
-    return widget;
+  void set_width_range(QWidget& widget) {
+    widget.setMinimumWidth(get_component_minimum_width());
+    widget.setMaximumWidth(get_component_maximum_width());
   }
 
   void set_color_value_range(LocalOptionalIntegerModel& model) {
@@ -93,6 +72,73 @@ namespace {
       return 0;
     }
     return std::round(hue * 360);
+  }
+
+  auto make_modifiers() {
+    return QHash<Qt::KeyboardModifier, Decimal>(
+      {{Qt::NoModifier, 1}, {Qt::AltModifier, 5}, {Qt::ControlModifier, 10},
+        {Qt::ShiftModifier, 20}});
+  }
+
+  void update_component_style(QWidget& component) {
+    update_style(component, [] (auto& style) {
+      style.get(Any()).set(TextAlign(Qt::AlignCenter));
+      style.get(Any() > is_a<Button>()).set(Visibility::NONE);
+    });
+  }
+
+  auto make_rgb_color_box(std::shared_ptr<OptionalIntegerModel> red_model,
+      std::shared_ptr<OptionalIntegerModel> green_model,
+      std::shared_ptr<OptionalIntegerModel> blue_model) {
+    auto rgb_color_box = new QWidget();
+    rgb_color_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    auto layout = make_hbox_layout(rgb_color_box);
+    auto red_box = new IntegerBox(std::move(red_model));
+    red_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    set_width_range(*red_box);
+    update_component_style(*red_box);
+    layout->addWidget(red_box);
+    layout->addSpacing(scale_width(4));
+    auto green_box = new IntegerBox(std::move(green_model));
+    green_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    set_width_range(*green_box);
+    update_component_style(*green_box);
+    layout->addWidget(green_box);
+    layout->addSpacing(scale_width(4));
+    auto blue_box = new IntegerBox(std::move(blue_model));
+    blue_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    set_width_range(*blue_box);
+    update_component_style(*blue_box);
+    layout->addWidget(blue_box);
+    return rgb_color_box;
+  }
+
+  auto make_hsb_color_box(std::shared_ptr<OptionalIntegerModel> hue_model,
+      std::shared_ptr<OptionalDecimalModel> saturation_model,
+      std::shared_ptr<OptionalDecimalModel> brightness_model) {
+    auto hsb_color_box = new QWidget();
+    hsb_color_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    auto layout = make_hbox_layout(hsb_color_box);
+    auto hue_box = new IntegerBox(std::move(hue_model));
+    hue_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    set_width_range(*hue_box);
+    update_component_style(*hue_box);
+    layout->addWidget(hue_box);
+    layout->addSpacing(scale_width(4));
+    auto saturation_box = new PercentBox(std::move(saturation_model),
+      make_modifiers());
+    saturation_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    set_width_range(*saturation_box);
+    update_component_style(*saturation_box);
+    layout->addWidget(saturation_box);
+    layout->addSpacing(scale_width(4));
+    auto brightness_box = new PercentBox(std::move(brightness_model),
+      make_modifiers());
+    brightness_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    set_width_range(*brightness_box);
+    update_component_style(*brightness_box);
+    layout->addWidget(brightness_box);
+    return hsb_color_box;
   }
 }
 
@@ -279,39 +325,39 @@ struct ColorCodePanel::ColorCodeValueModel {
 };
 
 ColorCodePanel::ColorCodePanel(QWidget* parent)
-  : ColorCodePanel(
-      std::make_shared<LocalValueModel<QColor>>(QColor("#FF000000")), parent) {}
+  : ColorCodePanel(std::make_shared<LocalValueModel<QColor>>(), parent) {}
 
 ColorCodePanel::ColorCodePanel(std::shared_ptr<ValueModel<QColor>> current,
     QWidget* parent)
     : QWidget(parent),
       m_current(std::make_shared<ColorCodeValueModel>(std::move(current))) {
-  m_component = new QStackedWidget();
-  m_component->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-  m_component->addWidget(new HexColorBox(m_current->m_hex_model));
-  m_component->addWidget(make_rgb_color_box(m_current->m_red_model,
-    m_current->m_green_model, m_current->m_blue_model));
-  m_component->addWidget(make_hsb_color_box(m_current->m_hue_model,
-    m_current->m_saturation_model, m_current->m_brightness_model));
   auto list_model = std::make_shared<ArrayListModel<QString>>();
   list_model->push("HEX");
   list_model->push("RGB");
   list_model->push("HSB");
-  m_color_format_box = new DropDownBox(std::move(list_model));
-  m_color_format_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+  m_color_format_box = new DropDownBox(std::move(list_model), this);
+  m_color_format_box->setMinimumWidth(
+    get_character_width() * 6 + scale_width(10));
   m_color_format_box->get_current()->set(0);
   m_color_format_box->get_current()->connect_update_signal(
     std::bind_front(&ColorCodePanel::on_mode_current, this));
-  m_alpha_box = new PercentBox(m_current->m_alpha_model, make_modifiers());
-  m_alpha_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+  m_color_input = new QStackedWidget(this);
+  m_color_input->setMinimumWidth(
+    3 * get_component_minimum_width() + scale_width(8));
+  m_color_input->setMaximumWidth(
+    3 * get_component_maximum_width() + scale_width(8));
+  auto hex_color_box = new HexColorBox(m_current->m_hex_model);
+  hex_color_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+  m_color_input->addWidget(hex_color_box);
+  m_color_input->addWidget(make_rgb_color_box(m_current->m_red_model,
+    m_current->m_green_model, m_current->m_blue_model));
+  m_color_input->addWidget(make_hsb_color_box(m_current->m_hue_model,
+    m_current->m_saturation_model, m_current->m_brightness_model));
+  m_alpha_box = new PercentBox(
+    m_current->m_alpha_model, make_modifiers(), this);
   update_component_style(*m_alpha_box);
-  auto layout = make_hbox_layout(this);
-  layout->addWidget(m_color_format_box);
-  layout->addSpacing(scale_width(8));
-  layout->addWidget(m_component);
-  layout->addSpacing(scale_width(4));
-  layout->addWidget(m_alpha_box);
-  m_component->installEventFilter(this);
+  match(*m_alpha_box, Alpha());
+  m_alpha_box->installEventFilter(this);
 }
 
 const std::shared_ptr<ValueModel<QColor>>& ColorCodePanel::get_current() const {
@@ -326,18 +372,50 @@ void ColorCodePanel::set_mode(Mode mode) {
   m_color_format_box->get_current()->set(static_cast<int>(mode));
 }
 
+QSize ColorCodePanel::sizeHint() const {
+  if(m_size_hint) {
+    return *m_size_hint;
+  }
+  m_size_hint.emplace(m_color_format_box->sizeHint().width() + scale_width(8) +
+    m_color_input->sizeHint().width() + scale_width(4) +
+      m_alpha_box->sizeHint().width(), m_color_format_box->sizeHint().height());
+  return *m_size_hint;
+}
+
 bool ColorCodePanel::eventFilter(QObject* watched, QEvent* event) {
-  if(event->type() == QEvent::Resize) {
-    auto& resize_event = *static_cast<QResizeEvent*>(event);
-    m_alpha_box->setFixedWidth(
-      (resize_event.size().width() - scale_width(8)) / 3);
+  if(event->type() == QEvent::Show || event->type() == QEvent::Hide) {
+    update_layout();
   }
   return QWidget::eventFilter(watched, event);
+}
+
+void ColorCodePanel::resizeEvent(QResizeEvent* event) {
+  update_layout();
+}
+
+void ColorCodePanel::update_layout() {
+  m_color_format_box->adjustSize();
+  auto y = (height() - m_color_format_box->height()) / 2.0;
+  auto height = m_color_format_box->height();
+  m_color_format_box->move(0, y);
+  auto color_input_width = [&] {
+    if(m_alpha_box->isVisible()) {
+      return (3 * (width() - m_color_format_box->width() - scale_width(12)) +
+        scale_width(8)) / 4;
+    }
+    return width() - m_color_format_box->width() - scale_width(8);
+  }();
+  m_color_input->setGeometry(m_color_format_box->width() + scale_width(8), y,
+    color_input_width, height);
+  if(m_alpha_box->isVisible()) {
+    m_alpha_box->setGeometry(m_color_input->geometry().right() + scale_width(4),
+      y, (m_color_input->width() - scale_width(8)) / 3, height);
+  }
 }
 
 void ColorCodePanel::on_mode_current(const optional<int>& current) {
   if(!current) {
     return;
   }
-  m_component->setCurrentIndex(*current);
+  m_color_input->setCurrentIndex(*current);
 }
