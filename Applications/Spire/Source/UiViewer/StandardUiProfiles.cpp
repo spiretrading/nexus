@@ -1254,7 +1254,6 @@ UiProfile Spire::make_color_code_panel_profile() {
   properties.push_back(make_standard_property("alpha_visible", true));
   auto profile = UiProfile("ColorCodePanel", properties, [] (auto& profile) {
     auto panel = new ColorCodePanel();
-    panel->setFixedWidth(scale_width(260));
     apply_widget_properties(panel, profile.get_properties());
     auto& current = get<QColor>("current", profile.get_properties());
     current.connect_changed_signal([=] (const auto& color) {
