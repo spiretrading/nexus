@@ -11,22 +11,21 @@ using namespace Spire::Styles;
 namespace {
   QColor to_color(const QString& text) {
     auto color = [&] {
-      auto value = text;
-      value = value.replace("#", "");
-      auto length = value.length();
+      auto name = text;
+      name = name.replace("#", "");
+      auto length = name.length();
       if(length == 1 || length == 2) {
-        return value.repeated(6 / length);
+        return name.repeated(6 / length);
       } else if(length == 3) {
-        return QString(value[0]).repeated(2) + QString(value[1]).repeated(2) +
-          QString(value[2]).repeated(2);
+        return QString("%1%1%2%2%3%3").arg(name[0]).arg(name[1]).arg(name[2]);
       } else if(length == 4 || length == 5) {
-        return QString("0").repeated(6 - length) + value;
+        return QString("0").repeated(6 - length) + name;
       } else if(length == 6) {
-        return value;
+        return name;
       }
       return QString("000000");
-      }();
-      return "#" + color;
+    }();
+    return "#" + color;
   }
 }
 
@@ -62,7 +61,7 @@ struct HexColorBox::ColorToTextModel : TextModel {
     return m_source->get_state();
   }
 
-  const QString& get() const {
+  const QString& get() const override {
     return m_current;
   }
 
@@ -78,16 +77,15 @@ struct HexColorBox::ColorToTextModel : TextModel {
       m_is_rejected = false;
       return QValidator::Invalid;
     }
-    auto blocker = shared_connection_block(m_current_connection);
-    auto color = to_color(value);
-    if(color != m_source->get()) {
+    if(auto color = to_color(value); color != m_source->get()) {
+      auto blocker = shared_connection_block(m_current_connection);
       if(m_source->set(color) == QValidator::Invalid) {
         m_is_rejected = false;
         return QValidator::Invalid;
       }
     }
     if(m_is_rejected) {
-      m_current = color.name();
+      m_current = m_source->get().name();
     } else {
       m_current = value;
     }
@@ -117,7 +115,7 @@ HexColorBox::HexColorBox(std::shared_ptr<ValueModel<QColor>> current,
     QWidget* parent)
     : QWidget(parent),
       m_adaptor_model(std::make_shared<ColorToTextModel>(std::move(current))),
-      m_submission(m_adaptor_model->m_source->get()) {
+      m_submission(m_adaptor_model->get()) {
   m_text_box = new TextBox(m_adaptor_model);
   enclose(*this, *m_text_box);
   m_submit_connection = m_text_box->connect_submit_signal(

@@ -1251,6 +1251,7 @@ UiProfile Spire::make_color_code_panel_profile() {
     {{"HEX", ColorCodePanel::Mode::HEX}, {"RGB", ColorCodePanel::Mode::RGB},
       {"HSB", ColorCodePanel::Mode::HSB}});
   properties.push_back(make_standard_enum_property("mode", mode_property));
+  properties.push_back(make_standard_property("alpha_visible", true));
   auto profile = UiProfile("ColorCodePanel", properties, [] (auto& profile) {
     auto panel = new ColorCodePanel();
     panel->setFixedWidth(scale_width(260));
@@ -1265,12 +1266,27 @@ UiProfile Spire::make_color_code_panel_profile() {
     mode.connect_changed_signal([=] (auto value) {
       panel->set_mode(value);
     });
+    auto& alpha_visible = get<bool>("alpha_visible", profile.get_properties());
+    alpha_visible.connect_changed_signal([=] (auto value) {
+      update_style(*panel, [&] (auto& style) {
+        if(value) {
+          style.get(Any() > Alpha()).set(Visibility::VISIBLE);
+        } else {
+          style.get(Any() > Alpha()).set(Visibility::NONE);
+        }
+      });
+    });
     auto current_slot = profile.make_event_slot<QString>("Current");
     panel->get_current()->connect_update_signal([=] (const auto& current) {
+      auto hue = [&] {
+        if(current.hueF() < 0) {
+          return 0.0;
+        }
+        return std::round(current.hueF() * 360);
+      }();
       current_slot(
         QString("Hex:%1 Hue:%2 Saturation:%3 Brightness:%4 Alpha:%5").
-          arg(current.name()).
-          arg(std::round(current.hueF() * 360)).
+          arg(current.name()).arg(hue).
           arg(std::round(current.saturationF() * 100)).
           arg(std::round(current.valueF() * 100)).
           arg(std::round(current.alphaF() * 100)));
