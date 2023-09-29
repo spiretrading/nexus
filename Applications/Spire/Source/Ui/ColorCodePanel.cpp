@@ -148,7 +148,7 @@ namespace {
     list_model->push("HSB");
     auto color_format_box = new DropDownBox(std::move(list_model), parent);
     color_format_box->setMinimumWidth(
-      get_character_width() * 6 + scale_width(10));
+      get_character_width() * 6 + scale_width(28));
     color_format_box->get_current()->set(0);
     return color_format_box;
   }
