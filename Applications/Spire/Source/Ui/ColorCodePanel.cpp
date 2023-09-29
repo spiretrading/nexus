@@ -1,5 +1,5 @@
 #include "Spire/Ui/ColorCodePanel.hpp"
-#include <QResizeEvent>
+#include <QKeyEvent>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
@@ -16,19 +16,20 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  template<typename T>
   auto make_modifiers() {
-    return QHash<Qt::KeyboardModifier, Decimal>(
+    return QHash<Qt::KeyboardModifier, T>(
       {{Qt::NoModifier, 1}, {Qt::AltModifier, 5}, {Qt::ControlModifier, 10},
         {Qt::ShiftModifier, 20}});
   }
 
   struct CustomIntegerBox : IntegerBox {
-    using EditingFinishSignal = Signal<void(const optional<int>& value)>;
+    using EditingFinishSignal = Signal<void (const optional<int>& value)>;
     mutable EditingFinishSignal m_editing_finish_signal;
 
     CustomIntegerBox(std::shared_ptr<OptionalIntegerModel> current,
       QWidget* parent = nullptr)
-      : IntegerBox(std::move(current), parent) {}
+      : IntegerBox(std::move(current), ::make_modifiers<int>(), parent) {}
 
     bool eventFilter(QObject* watched, QEvent* event) override {
       if(event->type() == QEvent::KeyPress) {
@@ -50,12 +51,12 @@ namespace {
   };
 
   struct CustomPercentBox : PercentBox {
-    using EditingFinishSignal = Signal<void(const optional<Decimal>& value)>;
+    using EditingFinishSignal = Signal<void (const optional<Decimal>& value)>;
     mutable EditingFinishSignal m_editing_finish_signal;
 
     CustomPercentBox(std::shared_ptr<OptionalDecimalModel> current,
       QWidget* parent = nullptr)
-      : PercentBox(std::move(current), make_modifiers(), parent) {}
+      : PercentBox(std::move(current), ::make_modifiers<Decimal>(), parent) {}
 
     bool eventFilter(QObject* watched, QEvent* event) override {
       if(event->type() == QEvent::KeyPress) {
@@ -114,24 +115,35 @@ namespace {
   void set_color_value_range(LocalOptionalIntegerModel& model) {
     model.set_minimum(0);
     model.set_maximum(255);
-    model.set_increment(1);
   }
 
   void set_percent_value_range(LocalOptionalDecimalModel& model) {
     model.set_minimum(Decimal(0));
     model.set_maximum(Decimal(1));
-    model.set_increment(Decimal(1));
   }
 
   Decimal round_value(const Decimal& value) {
     return round(value * 100.0) / 100;
   }
 
-  int to_hue(qreal hue) {
+  int to_hue(const QColor& color) {
+    auto hue = color.hsvHueF();
     if(hue < 0.0) {
       return 0;
     }
     return std::round(hue * 360);
+  }
+
+  Decimal to_saturation(const QColor& color) {
+    return round_value(Decimal(color.hsvSaturationF()));
+  }
+
+  Decimal to_brightness(const QColor& color) {
+    return round_value(Decimal(color.valueF()));
+  }
+
+  Decimal to_alpha(const QColor& color) {
+    return round_value(Decimal(color.alphaF()));
   }
 
   void update_component_style(QWidget& component) {
@@ -139,6 +151,11 @@ namespace {
       style.get(Any()).set(TextAlign(Qt::AlignCenter));
       style.get(Any() > is_a<Button>()).set(Visibility::NONE);
     });
+  }
+
+  void initialize_color_component(QWidget& component) {
+    set_width_range(component);
+    update_component_style(component);
   }
 
   auto make_color_format_box(QWidget* parent) {
@@ -157,9 +174,6 @@ namespace {
       std::shared_ptr<OptionalIntegerModel> red_model,
       std::shared_ptr<OptionalIntegerModel> green_model,
       std::shared_ptr<OptionalIntegerModel> blue_model) {
-    auto rgb_color_box = new QWidget();
-    rgb_color_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-    auto layout = make_hbox_layout(rgb_color_box);
     auto red_box = new CustomIntegerBox(std::move(red_model));
     red_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     red_box->m_editing_finish_signal.connect([=] (const auto& value) {
@@ -167,10 +181,7 @@ namespace {
         red_box->get_current()->set(color_model->get().red());
       }
     });
-    set_width_range(*red_box);
-    update_component_style(*red_box);
-    layout->addWidget(red_box);
-    layout->addSpacing(scale_width(4));
+    initialize_color_component(*red_box);
     auto green_box = new CustomIntegerBox(std::move(green_model));
     green_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     green_box->m_editing_finish_signal.connect([=] (const auto& value) {
@@ -178,10 +189,7 @@ namespace {
         green_box->get_current()->set(color_model->get().green());
       }
     });
-    set_width_range(*green_box);
-    update_component_style(*green_box);
-    layout->addWidget(green_box);
-    layout->addSpacing(scale_width(4));
+    initialize_color_component(*green_box);
     auto blue_box = new CustomIntegerBox(std::move(blue_model));
     blue_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     blue_box->m_editing_finish_signal.connect([=] (const auto& value) {
@@ -189,8 +197,14 @@ namespace {
         blue_box->get_current()->set(color_model->get().blue());
       }
     });
-    set_width_range(*blue_box);
-    update_component_style(*blue_box);
+    initialize_color_component(*blue_box);
+    auto rgb_color_box = new QWidget();
+    rgb_color_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    auto layout = make_hbox_layout(rgb_color_box);
+    layout->addWidget(red_box);
+    layout->addSpacing(scale_width(4));
+    layout->addWidget(green_box);
+    layout->addSpacing(scale_width(4));
     layout->addWidget(blue_box);
     return rgb_color_box;
   }
@@ -199,42 +213,37 @@ namespace {
       std::shared_ptr<OptionalIntegerModel> hue_model,
       std::shared_ptr<OptionalDecimalModel> saturation_model,
       std::shared_ptr<OptionalDecimalModel> brightness_model) {
-    auto hsb_color_box = new QWidget();
-    hsb_color_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-    auto layout = make_hbox_layout(hsb_color_box);
     auto hue_box = new CustomIntegerBox(std::move(hue_model));
     hue_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     hue_box->m_editing_finish_signal.connect([=] (const auto& value) {
       if(!value) {
-        hue_box->get_current()->set(to_hue(color_model->get().hsvHueF()));
+        hue_box->get_current()->set(to_hue(color_model->get()));
       }
     });
-    set_width_range(*hue_box);
-    update_component_style(*hue_box);
-    layout->addWidget(hue_box);
-    layout->addSpacing(scale_width(4));
+    initialize_color_component(*hue_box);
     auto saturation_box = new CustomPercentBox(std::move(saturation_model));
     saturation_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     saturation_box->m_editing_finish_signal.connect([=] (const auto& value) {
       if(!value) {
-        saturation_box->get_current()->set(
-          round_value(Decimal(color_model->get().hsvSaturationF())));
+        saturation_box->get_current()->set(to_saturation(color_model->get()));
       }
     });
-    set_width_range(*saturation_box);
-    update_component_style(*saturation_box);
-    layout->addWidget(saturation_box);
-    layout->addSpacing(scale_width(4));
+    initialize_color_component(*saturation_box);
     auto brightness_box = new CustomPercentBox(std::move(brightness_model));
     brightness_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     brightness_box->m_editing_finish_signal.connect([=] (const auto& value) {
       if(!value) {
-        brightness_box->get_current()->set(
-          round_value(Decimal(color_model->get().valueF())));
+        brightness_box->get_current()->set(to_brightness(color_model->get()));
       }
     });
-    set_width_range(*brightness_box);
-    update_component_style(*brightness_box);
+    initialize_color_component(*brightness_box);
+    auto hsb_color_box = new QWidget();
+    hsb_color_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    auto layout = make_hbox_layout(hsb_color_box);
+    layout->addWidget(hue_box);
+    layout->addSpacing(scale_width(4));
+    layout->addWidget(saturation_box);
+    layout->addSpacing(scale_width(4));
     layout->addWidget(brightness_box);
     return hsb_color_box;
   }
@@ -244,10 +253,9 @@ namespace {
     auto alpha_box = new CustomPercentBox(alpha_model, parent);
     alpha_box->m_editing_finish_signal.connect([=] (const auto& value) {
       if(!value) {
-        alpha_box->get_current()->set(
-          round_value(Decimal(color_model->get().alphaF())));
+        alpha_box->get_current()->set(to_alpha(color_model->get()));
       }
-      });
+    });
     update_component_style(*alpha_box);
     match(*alpha_box, Alpha());
     return alpha_box;
@@ -275,7 +283,7 @@ struct ColorCodePanel::ColorCodeValueModel {
   scoped_connection m_alpha_connection;
 
   ColorCodeValueModel(std::shared_ptr<ValueModel<QColor>> source)
-    : m_source(std::move(source)),
+      : m_source(std::move(source)),
       m_hex_model(std::make_shared<LocalValueModel<QColor>>()),
       m_red_model(std::make_shared<LocalOptionalIntegerModel>()),
       m_green_model(std::make_shared<LocalOptionalIntegerModel>()),
@@ -283,9 +291,7 @@ struct ColorCodePanel::ColorCodeValueModel {
       m_hue_model(std::make_shared<LocalOptionalIntegerModel>()),
       m_saturation_model(std::make_shared<LocalOptionalDecimalModel>()),
       m_brightness_model(std::make_shared<LocalOptionalDecimalModel>()),
-      m_alpha_model(std::make_shared<LocalOptionalDecimalModel>()),
-      m_source_connection(m_source->connect_update_signal(
-        std::bind_front(&ColorCodeValueModel::on_current, this))) {
+      m_alpha_model(std::make_shared<LocalOptionalDecimalModel>()) {
     set_color_value_range(*m_red_model);
     set_color_value_range(*m_green_model);
     set_color_value_range(*m_blue_model);
@@ -295,6 +301,8 @@ struct ColorCodePanel::ColorCodeValueModel {
     m_hue_model->set_minimum(0);
     m_hue_model->set_maximum(360);
     on_current(m_source->get());
+    m_source_connection = m_source->connect_update_signal(
+      std::bind_front(&ColorCodeValueModel::on_current, this));
     m_hex_connection = m_hex_model->connect_update_signal(
       std::bind_front(&ColorCodeValueModel::on_hex_current, this));
     m_red_connection = m_red_model->connect_update_signal(
@@ -318,7 +326,7 @@ struct ColorCodePanel::ColorCodeValueModel {
     update_rgb(current);
     update_hsv(current);
     auto blocker = shared_connection_block(m_alpha_connection);
-    m_alpha_model->set(round_value(Decimal(current.alphaF())));
+    m_alpha_model->set(to_alpha(current));
   }
 
   void on_hex_current(const QColor& value) {
@@ -418,7 +426,6 @@ struct ColorCodePanel::ColorCodeValueModel {
   }
 
   void update_rgb(const QColor& color) {
-    //qDebug() << "red:" << color.red() << " green:" << color.green();
     auto red_blocker = shared_connection_block(m_red_connection);
     m_red_model->set(color.red());
     auto green_blocker = shared_connection_block(m_green_connection);
@@ -429,11 +436,11 @@ struct ColorCodePanel::ColorCodeValueModel {
 
   void update_hsv(const QColor& color) {
     auto hue_blocker = shared_connection_block(m_hue_connection);
-    m_hue_model->set(to_hue(color.hsvHueF()));
+    m_hue_model->set(to_hue(color));
     auto saturation_blocker = shared_connection_block(m_saturation_connection);
-    m_saturation_model->set(round_value(Decimal(color.hsvSaturationF())));
+    m_saturation_model->set(to_saturation(color));
     auto brightness_blocker = shared_connection_block(m_brightness_connection);
-    m_brightness_model->set(round_value(Decimal(color.valueF())));
+    m_brightness_model->set(to_brightness(color));
   }
 };
 
@@ -483,11 +490,11 @@ QSize ColorCodePanel::sizeHint() const {
   }
   auto color_format_width = std::max(m_color_format_box->sizeHint().width(),
     m_color_format_box->minimumWidth());
-  auto color_input_width = std::max(m_color_input->sizeHint().width(),
-    m_color_input->minimumWidth());
+  auto color_input_width = std::clamp(m_color_input->sizeHint().width(),
+    m_color_input->minimumWidth(), m_color_input->maximumWidth());
   auto alpha_width = [&] {
     if(m_alpha_box->isVisible()) {
-      return m_alpha_box->sizeHint().width();
+      return (color_input_width - scale_width(8)) / 3;
     }
     return 0;
   }();
