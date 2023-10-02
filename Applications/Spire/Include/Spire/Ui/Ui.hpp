@@ -20,6 +20,7 @@ namespace Spire {
   class CheckBox;
   class ClickObserver;
   class ClosedFilterPanel;
+  class ColorCodePanel;
   class ComboBox;
   class ContextMenu;
   class DateBox;
