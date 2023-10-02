@@ -113,7 +113,7 @@ namespace {
   }
 
   Decimal round_value(const Decimal& value) {
-    return round(value * 100.0) / 100;
+    return round(100.0 * value) / 100.0;
   }
 
   int to_hue(const QColor& color) {
@@ -121,7 +121,7 @@ namespace {
     if(hue < 0.0) {
       return 0;
     }
-    return std::round(hue * 360);
+    return std::round(360 * hue);
   }
 
   Decimal to_saturation(const QColor& color) {
@@ -155,7 +155,7 @@ namespace {
     list_model->push("HSB");
     auto color_format_box = new DropDownBox(std::move(list_model), parent);
     color_format_box->setMinimumWidth(
-      get_character_width() * 6 + scale_width(28));
+      6 * get_character_width() + scale_width(28));
     color_format_box->get_current()->set(0);
     return color_format_box;
   }
