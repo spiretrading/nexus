@@ -66,8 +66,8 @@ namespace Styles {
     private:
       struct ColorCodeValueModel;
       std::shared_ptr<ColorCodeValueModel> m_current;
-      QStackedWidget* m_color_input;
       DropDownBox* m_color_format_box;
+      QStackedWidget* m_color_input;
       PercentBox* m_alpha_box;
       mutable boost::optional<QSize> m_size_hint;
 
