@@ -78,33 +78,23 @@ namespace {
   };
 
   auto get_character_width() {
-    static auto width = optional<int>();
-    if(width) {
-      return *width;
-    }
-    auto font = QFont("Roboto");
-    font.setWeight(QFont::Normal);
-    font.setPixelSize(scale_width(12));
-    width = QFontMetrics(font).averageCharWidth();
-    return *width;
+    static auto width = [] {
+      auto font = QFont("Roboto");
+      font.setWeight(QFont::Normal);
+      font.setPixelSize(scale_width(12));
+      return QFontMetrics(font).averageCharWidth();
+    }();
+    return width;
   }
 
   auto get_component_minimum_width() {
-    static auto width = optional<int>();
-    if(width) {
-      return *width;
-    }
-    width = get_character_width() * 3 + scale_width(18);
-    return *width;
+    static auto width = 3 * get_character_width() + scale_width(18);
+    return width;
   }
 
   auto get_component_maximum_width() {
-    static auto width = optional<int>();
-    if(width) {
-      return *width;
-    }
-    width = get_character_width() * 6 + scale_width(18);
-    return *width;
+    static auto width = 6 * get_character_width() + scale_width(18);
+    return width;
   }
 
   void set_width_range(QWidget& widget) {
