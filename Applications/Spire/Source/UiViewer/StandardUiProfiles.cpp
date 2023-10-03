@@ -1299,20 +1299,33 @@ UiProfile Spire::make_color_code_panel_profile() {
 UiProfile Spire::make_color_picker_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
-  properties.push_back(make_standard_property<QColor>("current"));
+  properties.push_back(make_standard_property("current", QColor()));
+  properties.push_back(make_standard_property("alpha_visible", true));
   auto profile = UiProfile("ColorPicker", properties, [] (auto& profile) {
-    auto button = make_label_button("ColorPicer");
+    auto button = make_label_button("ColorPicker");
     auto picker = new ColorPicker(*button);
     apply_widget_properties(picker, profile.get_properties());
     auto& current = get<QColor>("current", profile.get_properties());
     current.connect_changed_signal([=] (const auto& color) {
-      //if(color.isValid()) {
-      //  panel->get_current()->set(color);
-      //}
+      if(color.isValid()) {
+        picker->get_current()->set(color);
+      }
+    });
+    auto& alpha_visible = get<bool>("alpha_visible", profile.get_properties());
+    alpha_visible.connect_changed_signal([=] (auto value) {
+      update_style(*picker, [&] (auto& style) {
+        if(value) {
+          style.get(Any() >> Alpha()).set(Visibility::VISIBLE);
+        } else {
+          style.get(Any() >> Alpha()).set(Visibility::NONE);
+        }
       });
+      picker->hide();
+    });
     auto current_slot = profile.make_event_slot<QString>("Current");
     picker->get_current()->connect_update_signal([=] (const auto& current) {
-      current_slot(current.name(QColor::HexArgb));
+      current_slot(QString("Hex:%1 Alpha:%5").
+        arg(current.name()).arg(std::round(current.alphaF() * 100)));
     });
     button->connect_click_signal([=] { picker->show(); });
     return button;

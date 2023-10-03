@@ -416,6 +416,7 @@ struct ColorCodePanel::ColorCodeValueModel {
   }
 
   void update_rgb(const QColor& color) {
+    //qDebug() << "red:" << color.red() << " green:" << color.green();
     auto red_blocker = shared_connection_block(m_red_connection);
     m_red_model->set(color.red());
     auto green_blocker = shared_connection_block(m_green_connection);

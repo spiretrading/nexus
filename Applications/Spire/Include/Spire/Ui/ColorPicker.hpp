@@ -46,26 +46,20 @@ namespace Spire {
       bool event(QEvent* event) override;
 
     private:
-      //struct ColorPickerModel;
-      std::shared_ptr<ValueModel<QColor>> m_current;
+      struct ColorPickerModel;
+      std::shared_ptr<ColorPickerModel> m_model;
       std::shared_ptr<ListModel<QColor>> m_palette;
       OverlayPanel* m_panel;
       Slider2D* m_color_spectrum;
-      Slider* m_hue_slider;
       Slider* m_alpha_slider;
       ColorCodePanel* m_color_code_panel;
-      QColor m_pure_color;
-      boost::signals2::scoped_connection m_hue_connection;
-      boost::signals2::scoped_connection m_alpha_connection;
-      boost::signals2::scoped_connection m_spectrum_x_connection;
-      boost::signals2::scoped_connection m_spectrum_y_connection;
+      QColor m_last_color;
+      int m_panel_horizontal_spacing;
       boost::signals2::scoped_connection m_current_connection;
+      boost::signals2::scoped_connection m_panel_style_connection;
 
-      void on_hue_current(const Decimal& value);
-      void on_alpha_current(const Decimal& value);
-      void on_color_spectrum_x_current(const Decimal& value);
-      void on_color_spectrum_y_current(const Decimal& value);
       void on_current(const QColor& current);
+      void on_panel_style();
   };
 }
 
