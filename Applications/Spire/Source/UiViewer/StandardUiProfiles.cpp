@@ -1298,13 +1298,11 @@ UiProfile Spire::make_color_code_panel_profile() {
 
 UiProfile Spire::make_color_picker_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
-  populate_widget_properties(properties);
   properties.push_back(make_standard_property("current", QColor()));
   properties.push_back(make_standard_property("alpha_visible", true));
   auto profile = UiProfile("ColorPicker", properties, [] (auto& profile) {
     auto button = make_label_button("ColorPicker");
     auto picker = new ColorPicker(*button);
-    apply_widget_properties(picker, profile.get_properties());
     auto& current = get<QColor>("current", profile.get_properties());
     current.connect_changed_signal([=] (const auto& color) {
       if(color.isValid()) {
@@ -1320,6 +1318,11 @@ UiProfile Spire::make_color_picker_profile() {
           style.get(Any() >> Alpha()).set(Visibility::NONE);
         }
       });
+      if(value) {
+        picker->setFixedWidth(12 * scale_width(22));
+      } else {
+        picker->setFixedWidth(scale_width(220));
+      }
     });
     auto current_slot = profile.make_event_slot<QString>("Current");
     picker->get_current()->connect_update_signal([=] (const auto& current) {

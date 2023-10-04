@@ -254,7 +254,9 @@ bool ColorPicker::eventFilter(QObject* watched, QEvent* event) {
 bool ColorPicker::event(QEvent* event) {
   if(event->type() == QEvent::ShowToParent) {
     m_panel->show();
-    m_panel->setFixedWidth(12 * scale_width(22) + m_panel_horizontal_spacing);
+    auto margins = m_panel->layout()->contentsMargins();
+    m_panel->setFixedWidth(m_panel->get_body().width() + margins.left() +
+      margins.right() + m_panel_horizontal_spacing);
   } else if(event->type() == QEvent::HideToParent) {
     m_panel->hide();
   }
