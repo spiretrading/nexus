@@ -26,6 +26,11 @@ namespace {
     return QColor::fromHsvF(color.hsvHueF(), 1.0, 1.0);
   }
 
+  auto make_modifiers() {
+    return QHash<Qt::KeyboardModifier, Decimal>(
+      {{Qt::NoModifier, 1}, {Qt::ShiftModifier, 10}});
+  }
+
   void update_color_spectrum_track(Slider2D& color_spectrum,
       const QColor& pure_color) {
     auto track_size = color_spectrum.size().shrunkBy(
@@ -69,14 +74,16 @@ namespace {
   auto make_color_spectrum(std::shared_ptr<DecimalModel> x_model,
       std::shared_ptr<DecimalModel> y_model, const QImage& thumb_image,
       const QImage& thumb_invert_image) {
-    auto color_spectrum = new Slider2D(std::move(x_model), std::move(y_model));
+    auto color_spectrum = new Slider2D(std::move(x_model), std::move(y_model),
+      make_modifiers(), make_modifiers());
     color_spectrum->setFixedHeight(scale_height(164));
+    color_spectrum->findChild<QLabel*>()->setScaledContents(false);
     update_style(*color_spectrum, [&] (auto& style) {
       style.get(Any()).set(border(scale_width(1), QColor(0xC8C8C8)));
       style.get(Any() > Thumb() > is_a<Icon>()).
         set(Fill(optional<QColor>())).
         set(IconImage(thumb_image));
-      style.get(Focus() > Thumb() > is_a<Icon>()).
+      style.get(FocusVisible() > Thumb() > is_a<Icon>()).
         set(IconImage(thumb_invert_image));
     });
     return color_spectrum;
@@ -84,7 +91,7 @@ namespace {
 
   auto make_hue_slider(std::shared_ptr<DecimalModel> model,
       const QImage& thumb_image, const QImage& thumb_invert_image) {
-    auto hue_slider = new Slider(std::move(model));
+    auto hue_slider = new Slider(std::move(model), make_modifiers());
     hue_slider->setFixedHeight(scale_height(16));
     auto hue_track_image = QImage(":/Icons/hue-spectrum.png");
     update_style(*hue_slider, [&] (auto& style) {
@@ -93,7 +100,7 @@ namespace {
       style.get(Any() > Thumb() > is_a<Icon>()).
         set(Fill(optional<QColor>())).
         set(IconImage(thumb_image));
-      style.get(Focus() > Thumb() > is_a<Icon>()).
+      style.get(FocusVisible() > Thumb() > is_a<Icon>()).
         set(IconImage(thumb_invert_image));
     });
     return hue_slider;
@@ -101,7 +108,7 @@ namespace {
 
   auto make_alpha_slider(std::shared_ptr<DecimalModel> model,
       const QImage& thumb_image, const QImage& thumb_invert_image) {
-    auto alpha_slider = new Slider(std::move(model));
+    auto alpha_slider = new Slider(std::move(model), make_modifiers());
     alpha_slider->setFixedHeight(scale_height(16));
     alpha_slider->findChild<QLabel*>()->setScaledContents(false);
     match(*alpha_slider, Alpha());
@@ -110,7 +117,7 @@ namespace {
       style.get(Any() > Thumb() > is_a<Icon>()).
         set(Fill(boost::optional<QColor>())).
         set(IconImage(thumb_image));
-      style.get(Focus() > Thumb() > is_a<Icon>()).
+      style.get(FocusVisible() > Thumb() > is_a<Icon>()).
         set(IconImage(thumb_invert_image));
     });
     return alpha_slider;
