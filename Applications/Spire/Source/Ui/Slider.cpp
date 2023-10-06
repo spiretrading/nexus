@@ -443,14 +443,14 @@ void Slider::on_current(const Decimal& current) {
   }
   m_is_modified = true;
   if(m_orientation == Qt::Vertical) {
-    m_thumb->move((width() - m_thumb->width()) / 2, to_position(current));
+    m_thumb->move((m_body->width() - m_thumb->width()) / 2, to_position(current));
     if(m_track_fill->isVisible()) {
       m_track_fill->move(0, m_thumb->y());
       m_track_fill->setFixedHeight(
         m_track->get_body()->height() - m_track_fill->y());
     }
   } else {
-    m_thumb->move(to_position(current), (height() - m_thumb->height()) / 2);
+    m_thumb->move(to_position(current), (m_body->height() - m_thumb->height()) / 2);
     if(m_track_fill->isVisible()) {
       m_track_fill->move(0, 0);
       m_track_fill->setFixedWidth(m_thumb->x());
