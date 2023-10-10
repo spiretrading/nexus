@@ -2,6 +2,7 @@
 #define SPIRE_COLOR_PICKER_HPP
 #include <memory>
 #include <QColor>
+#include <QWidget>
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Spire/ValueModel.hpp"
 #include "Spire/Ui/Ui.hpp"
@@ -56,7 +57,6 @@ namespace Spire {
       OverlayPanel* m_panel;
       Slider2D* m_color_spectrum;
       Slider* m_alpha_slider;
-      ColorCodePanel* m_color_code_panel;
       QColor m_last_color;
       int m_panel_horizontal_spacing;
       boost::signals2::scoped_connection m_current_connection;

@@ -2,8 +2,8 @@
 #include <QEvent>
 #include <QPainter>
 #include <QPixmap>
-#include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalScalarValueModel.hpp"
 #include "Spire/Ui/ColorCodePanel.hpp"
 #include "Spire/Ui/Icon.hpp"
@@ -22,14 +22,31 @@ namespace {
     return image;
   }
 
+  auto get_hue_spectrum_image() {
+    static auto image = QImage(":/Icons/hue-spectrum.png");
+    return image;
+  }
+
+  auto get_thumb_icon() {
+    static auto icon = imageFromSvg(":/Icons/color-thumb.svg", scale(14, 14));
+    return icon;
+  }
+
+  auto get_thumb_invert_icon() {
+    static auto icon =
+      imageFromSvg(":/Icons/color-thumb-invert.svg", scale(14, 14));
+    return icon;
+  }
+
+  auto get_hue(const QColor& color) {
+    if(auto hue = color.hsvHueF(); hue >= 0) {
+      return hue;
+    }
+    return 0.0;
+  }
+
   auto get_pure_color(const QColor& color) {
-    auto hue = [&] {
-      if(auto hue = color.hsvHueF(); hue >= 0) {
-        return hue;
-      }
-      return 0.0;
-    }();
-    return QColor::fromHsvF(hue, 1.0, 1.0);
+    return QColor::fromHsvF(get_hue(color), 1.0, 1.0);
   }
 
   auto make_modifiers() {
@@ -66,8 +83,8 @@ namespace {
     alpha_gradient.setColorAt(1, color.rgb());
     auto alpha_image = QImage(track_size, QImage::Format_ARGB32_Premultiplied);
     auto alpha_painter = QPainter(&alpha_image);
-    auto board_image = get_board_image();
     auto track_area = QRect{QPoint(0, 0), track_size};
+    auto board_image = get_board_image();
     alpha_painter.drawTiledPixmap(track_area, QPixmap::fromImage(
       board_image.scaled(QSize(board_image.width(), track_size.height()))));
     alpha_painter.setCompositionMode(QPainter::CompositionMode_Multiply);
@@ -78,8 +95,7 @@ namespace {
   }
 
   auto make_color_spectrum(std::shared_ptr<DecimalModel> x_model,
-      std::shared_ptr<DecimalModel> y_model, const QImage& thumb_image,
-      const QImage& thumb_invert_image) {
+      std::shared_ptr<DecimalModel> y_model) {
     auto color_spectrum = new Slider2D(std::move(x_model), std::move(y_model),
       make_modifiers(), make_modifiers());
     color_spectrum->setFixedHeight(scale_height(164));
@@ -88,32 +104,29 @@ namespace {
       style.get(Any()).set(border(scale_width(1), QColor(0xC8C8C8)));
       style.get(Any() > Thumb() > is_a<Icon>()).
         set(Fill(optional<QColor>())).
-        set(IconImage(thumb_image));
+        set(IconImage(get_thumb_icon()));
       style.get(FocusVisible() > Thumb() > is_a<Icon>()).
-        set(IconImage(thumb_invert_image));
+        set(IconImage(get_thumb_invert_icon()));
     });
     return color_spectrum;
   }
 
-  auto make_hue_slider(std::shared_ptr<DecimalModel> model,
-      const QImage& thumb_image, const QImage& thumb_invert_image) {
+  auto make_hue_slider(std::shared_ptr<DecimalModel> model) {
     auto hue_slider = new Slider(std::move(model), make_modifiers());
     hue_slider->setFixedHeight(scale_height(16));
-    auto hue_track_image = QImage(":/Icons/hue-spectrum.png");
     update_style(*hue_slider, [&] (auto& style) {
       style.get(Any()).set(border(scale_width(1), QColor(0xC8C8C8)));
-      style.get(Any() > Track()).set(IconImage(hue_track_image));
+      style.get(Any() > Track()).set(IconImage(get_hue_spectrum_image()));
       style.get(Any() > Thumb() > is_a<Icon>()).
         set(Fill(optional<QColor>())).
-        set(IconImage(thumb_image));
+        set(IconImage(get_thumb_icon()));
       style.get(FocusVisible() > Thumb() > is_a<Icon>()).
-        set(IconImage(thumb_invert_image));
+        set(IconImage(get_thumb_invert_icon()));
     });
     return hue_slider;
   }
 
-  auto make_alpha_slider(std::shared_ptr<DecimalModel> model,
-      const QImage& thumb_image, const QImage& thumb_invert_image) {
+  auto make_alpha_slider(std::shared_ptr<DecimalModel> model) {
     auto alpha_slider = new Slider(std::move(model), make_modifiers());
     alpha_slider->setFixedHeight(scale_height(16));
     alpha_slider->findChild<QLabel*>()->setScaledContents(false);
@@ -122,9 +135,9 @@ namespace {
       style.get(Any()).set(border(scale_width(1), QColor(0xC8C8C8)));
       style.get(Any() > Thumb() > is_a<Icon>()).
         set(Fill(boost::optional<QColor>())).
-        set(IconImage(thumb_image));
+        set(IconImage(get_thumb_icon()));
       style.get(FocusVisible() > Thumb() > is_a<Icon>()).
-        set(IconImage(thumb_invert_image));
+        set(IconImage(get_thumb_invert_icon()));
     });
     return alpha_slider;
   }
@@ -136,11 +149,11 @@ struct ColorPicker::ColorPickerModel {
   std::shared_ptr<LocalDecimalModel> m_alpha_slider_model;
   std::shared_ptr<LocalDecimalModel> m_spectrum_x_model;
   std::shared_ptr<LocalDecimalModel> m_spectrum_y_model;
+  scoped_connection m_source_connection;
   scoped_connection m_hue_connection;
   scoped_connection m_alpha_connection;
   scoped_connection m_spectrum_x_connection;
   scoped_connection m_spectrum_y_connection;
-  scoped_connection m_current_connection;
 
   ColorPickerModel(std::shared_ptr<ValueModel<QColor>> source)
       : m_source(std::move(source)),
@@ -157,6 +170,8 @@ struct ColorPicker::ColorPickerModel {
     m_spectrum_y_model->set_minimum(Decimal(0));
     m_spectrum_y_model->set_maximum(Decimal(100));
     on_current(m_source->get());
+    m_source_connection = m_source->connect_update_signal(
+      std::bind_front(&ColorPickerModel::on_current, this));
     m_hue_connection = m_hue_slider_model->connect_update_signal(
       std::bind_front(&ColorPickerModel::on_hue_current, this));
     m_alpha_connection = m_alpha_slider_model->connect_update_signal(
@@ -165,12 +180,11 @@ struct ColorPicker::ColorPickerModel {
       std::bind_front(&ColorPickerModel::on_color_spectrum_x_current, this));
     m_spectrum_y_connection = m_spectrum_y_model->connect_update_signal(
       std::bind_front(&ColorPickerModel::on_color_spectrum_y_current, this));
-    m_current_connection = m_source->connect_update_signal(
-      std::bind_front(&ColorPickerModel::on_current, this));
   }
 
   void on_hue_current(const Decimal& value) {
     auto& color = m_source->get();
+    auto blocker = shared_connection_block(m_source_connection);
     m_source->set(QColor::fromHsvF(static_cast<double>(value) / 360.0,
       color.hsvSaturationF(), color.valueF(), color.alphaF()));
   }
@@ -178,27 +192,27 @@ struct ColorPicker::ColorPickerModel {
   void on_alpha_current(const Decimal& value) {
     auto color = m_source->get();
     color.setAlphaF(static_cast<qreal>(value / 100.0));
-    auto blocker = shared_connection_block(m_current_connection);
+    auto blocker = shared_connection_block(m_source_connection);
     m_source->set(color);
   }
 
   void on_color_spectrum_x_current(const Decimal& value) {
     auto& color = m_source->get();
-    auto blocker = shared_connection_block(m_current_connection);
+    auto blocker = shared_connection_block(m_source_connection);
     m_source->set(QColor::fromHsvF(color.hsvHueF(),
       static_cast<qreal>(value / 100.0), color.valueF(), color.alphaF()));
   }
 
   void on_color_spectrum_y_current(const Decimal& value) {
     auto& color = m_source->get();
-    auto blocker = shared_connection_block(m_current_connection);
+    auto blocker = shared_connection_block(m_source_connection);
     m_source->set(QColor::fromHsvF(color.hsvHueF(), color.hsvSaturationF(),
       static_cast<qreal>(value / 100.0), color.alphaF()));
   }
 
   void on_current(const QColor& current) {
     auto hue_blocker = shared_connection_block(m_hue_connection);
-    m_hue_slider_model->set(360 * current.hsvHueF());
+    m_hue_slider_model->set(360 * get_hue(current));
     auto alpha_blocker = shared_connection_block(m_alpha_connection);
     m_alpha_slider_model->set(100 * current.alphaF());
     auto spectrum_x_blocker = shared_connection_block(m_spectrum_x_connection);
@@ -222,29 +236,22 @@ ColorPicker::ColorPicker(std::shared_ptr<ValueModel<QColor>> current,
       m_model(std::make_shared<ColorPickerModel>(std::move(current))),
       m_palette(std::move(palette)),
       m_panel_horizontal_spacing(0) {
-  auto thumb_image =
-    imageFromSvg(":/Icons/color-thumb.svg", scale(14, 14));
-  auto thumb_invert_image =
-    imageFromSvg(":/Icons/color-thumb-invert.svg", scale(14, 14));
   m_color_spectrum = make_color_spectrum(m_model->m_spectrum_x_model,
-    m_model->m_spectrum_y_model, thumb_image, thumb_invert_image);
-  auto hue_slider = make_hue_slider(m_model->m_hue_slider_model, thumb_image,
-    thumb_invert_image);
-  m_alpha_slider = make_alpha_slider(m_model->m_alpha_slider_model, thumb_image,
-    thumb_invert_image);
-  m_color_code_panel = new ColorCodePanel(get_current());
+    m_model->m_spectrum_y_model);
+  m_alpha_slider = make_alpha_slider(m_model->m_alpha_slider_model);
   auto layout = make_vbox_layout(this);
   layout->setSpacing(scale_height(8));
   layout->addWidget(m_color_spectrum);
-  layout->addWidget(hue_slider);
+  layout->addWidget(make_hue_slider(m_model->m_hue_slider_model));
   layout->addWidget(m_alpha_slider);
   layout->addSpacing(scale_height(10));
-  layout->addWidget(m_color_code_panel);
+  layout->addWidget(new ColorCodePanel(get_current()));
   m_panel = new OverlayPanel(*this, parent);
   m_panel->setWindowFlags(Qt::Popup | (m_panel->windowFlags() & ~Qt::Tool));
+  m_panel->installEventFilter(this);
   m_panel_style_connection = connect_style_signal(*m_panel,
     std::bind_front(&ColorPicker::on_panel_style, this));
-  update_style(*m_panel, [&] (auto& style) {
+  update_style(*m_panel, [] (auto& style) {
     style.get(Any()).
       set(horizontal_padding(scale_width(8))).
       set(vertical_padding(scale_height(18)));
@@ -252,7 +259,6 @@ ColorPicker::ColorPicker(std::shared_ptr<ValueModel<QColor>> current,
   on_current(get_current()->get());
   m_current_connection = get_current()->connect_update_signal(
     std::bind_front(&ColorPicker::on_current, this));
-  m_panel->installEventFilter(this);
 }
 
 const std::shared_ptr<ValueModel<QColor>>& ColorPicker::get_current() const {
