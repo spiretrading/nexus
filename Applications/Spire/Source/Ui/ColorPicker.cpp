@@ -22,6 +22,11 @@ namespace {
     return image;
   }
 
+  auto get_hue_spectrum_image() {
+    static auto image = QImage(":/Icons/hue-spectrum.png");
+    return image;
+  }
+
   auto get_thumb_icon() {
     static auto icon = imageFromSvg(":/Icons/color-thumb.svg", scale(14, 14));
     return icon;
@@ -109,10 +114,9 @@ namespace {
   auto make_hue_slider(std::shared_ptr<DecimalModel> model) {
     auto hue_slider = new Slider(std::move(model), make_modifiers());
     hue_slider->setFixedHeight(scale_height(16));
-    auto hue_track_image = QImage(":/Icons/hue-spectrum.png");
     update_style(*hue_slider, [&] (auto& style) {
       style.get(Any()).set(border(scale_width(1), QColor(0xC8C8C8)));
-      style.get(Any() > Track()).set(IconImage(hue_track_image));
+      style.get(Any() > Track()).set(IconImage(get_hue_spectrum_image()));
       style.get(Any() > Thumb() > is_a<Icon>()).
         set(Fill(optional<QColor>())).
         set(IconImage(get_thumb_icon()));
