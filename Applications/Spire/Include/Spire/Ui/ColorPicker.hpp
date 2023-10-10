@@ -2,6 +2,7 @@
 #define SPIRE_COLOR_PICKER_HPP
 #include <memory>
 #include <QColor>
+#include <QWidget>
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Spire/ValueModel.hpp"
 #include "Spire/Ui/Ui.hpp"

@@ -1326,7 +1326,7 @@ UiProfile Spire::make_color_picker_profile() {
     });
     auto current_slot = profile.make_event_slot<QString>("Current");
     picker->get_current()->connect_update_signal([=] (const auto& current) {
-      current_slot(QString("Hex:%1 Alpha:%5").
+      current_slot(QString("Hex:%1 Alpha:%2").
         arg(current.name()).arg(std::round(current.alphaF() * 100)));
     });
     button->connect_click_signal([=] { picker->show(); });
