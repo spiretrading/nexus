@@ -238,16 +238,14 @@ ColorPicker::ColorPicker(std::shared_ptr<ValueModel<QColor>> current,
       m_panel_horizontal_spacing(0) {
   m_color_spectrum = make_color_spectrum(m_model->m_spectrum_x_model,
     m_model->m_spectrum_y_model);
-  auto hue_slider = make_hue_slider(m_model->m_hue_slider_model);
   m_alpha_slider = make_alpha_slider(m_model->m_alpha_slider_model);
-  m_color_code_panel = new ColorCodePanel(get_current());
   auto layout = make_vbox_layout(this);
   layout->setSpacing(scale_height(8));
   layout->addWidget(m_color_spectrum);
-  layout->addWidget(hue_slider);
+  layout->addWidget(make_hue_slider(m_model->m_hue_slider_model));
   layout->addWidget(m_alpha_slider);
   layout->addSpacing(scale_height(10));
-  layout->addWidget(m_color_code_panel);
+  layout->addWidget(new ColorCodePanel(get_current()));
   m_panel = new OverlayPanel(*this, parent);
   m_panel->setWindowFlags(Qt::Popup | (m_panel->windowFlags() & ~Qt::Tool));
   m_panel->installEventFilter(this);
