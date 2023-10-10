@@ -23,7 +23,13 @@ namespace {
   }
 
   auto get_pure_color(const QColor& color) {
-    return QColor::fromHsvF(color.hsvHueF(), 1.0, 1.0);
+    auto hue = [&] {
+      if(auto hue = color.hsvHueF(); hue >= 0) {
+        return hue;
+      }
+      return 0.0;
+    }();
+    return QColor::fromHsvF(hue, 1.0, 1.0);
   }
 
   auto make_modifiers() {
