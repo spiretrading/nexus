@@ -1,6 +1,9 @@
 #ifndef SPIRE_COLOR_PICKER_HPP
 #define SPIRE_COLOR_PICKER_HPP
-#include "Spire/Spire/Decimal.hpp"
+#include <memory>
+#include <QColor>
+#include "Spire/Spire/ListModel.hpp"
+#include "Spire/Spire/ValueModel.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -44,6 +47,7 @@ namespace Spire {
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
       bool event(QEvent* event) override;
+      void resizeEvent(QResizeEvent* event) override;
 
     private:
       struct ColorPickerModel;

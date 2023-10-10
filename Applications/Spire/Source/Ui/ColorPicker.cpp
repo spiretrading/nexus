@@ -1,16 +1,14 @@
 #include "Spire/Ui/ColorPicker.hpp"
 #include <QEvent>
-#include <QImage>
 #include <QPainter>
+#include <QPixmap>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/LocalScalarValueModel.hpp"
 #include "Spire/Ui/ColorCodePanel.hpp"
 #include "Spire/Ui/Icon.hpp"
-#include "Spire/Ui/IntegerBox.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
-#include "Spire/Ui/Slider.hpp"
 #include "Spire/Ui/Slider2D.hpp"
 
 using namespace boost;
@@ -25,62 +23,81 @@ namespace {
   }
 
   auto get_pure_color(const QColor& color) {
-    return QColor::fromHsvF(color.hsvHueF(), 1.0, 1.0);
+    auto hue = [&] {
+      if(auto hue = color.hsvHueF(); hue >= 0) {
+        return hue;
+      }
+      return 0.0;
+    }();
+    return QColor::fromHsvF(hue, 1.0, 1.0);
   }
 
-  void update_color_spectrum_track(QWidget& color_spectrum,
+  auto make_modifiers() {
+    return QHash<Qt::KeyboardModifier, Decimal>(
+      {{Qt::NoModifier, 1}, {Qt::ShiftModifier, 10}});
+  }
+
+  void update_color_spectrum_track(Slider2D& color_spectrum,
       const QColor& pure_color) {
-    auto saturation_gradient = QLinearGradient(0, 0, color_spectrum.width(), 0);
+    auto track_size = color_spectrum.size().shrunkBy(
+      QMargins{scale_width(1), scale_width(1), scale_width(1), scale_width(1)});
+    auto saturation_gradient = QLinearGradient(0, 0, track_size.width(), 0);
     saturation_gradient.setColorAt(0, QColor(0xFFFFFF));
     saturation_gradient.setColorAt(1, pure_color);
-    auto brightness_gradient =
-      QLinearGradient(0, 0, 0, color_spectrum.height());
+    auto brightness_gradient = QLinearGradient(0, 0, 0, track_size.height());
     brightness_gradient.setColorAt(0, Qt::transparent);
     brightness_gradient.setColorAt(1, Qt::black);
-    auto track_image =
-      QImage(color_spectrum.size(), QImage::Format_ARGB32_Premultiplied);
+    auto track_image = QImage(track_size, QImage::Format_ARGB32_Premultiplied);
     auto painter = QPainter(&track_image);
-    painter.fillRect(QRect({0, 0}, color_spectrum.size()), saturation_gradient);
+    auto track_area = QRect(QPoint(0, 0), track_size);
+    painter.fillRect(track_area, saturation_gradient);
     painter.setCompositionMode(QPainter::CompositionMode_Multiply);
-    painter.fillRect(QRect({0, 0}, color_spectrum.size()), brightness_gradient);
+    painter.fillRect(track_area, brightness_gradient);
     update_style(color_spectrum, [&] (auto& style) {
       style.get(Any() > Track()).set(IconImage(track_image));
     });
   }
 
-  void update_alpha_slider_track(QWidget& alpha_slider, const QColor& color) {
-    auto alpha_gradient = QLinearGradient(0, 0, alpha_slider.width(), 0);
+  void update_alpha_slider_track(Slider& alpha_slider, const QColor& color) {
+    auto track_size = alpha_slider.size().shrunkBy(
+      QMargins{scale_width(1), scale_width(1), scale_width(1), scale_width(1)});
+    auto alpha_gradient = QLinearGradient(0, 0, track_size.width(), 0);
     alpha_gradient.setColorAt(0, Qt::transparent);
     alpha_gradient.setColorAt(1, color.rgb());
-    auto alpha_image =
-      QImage(alpha_slider.size(), QImage::Format_ARGB32_Premultiplied);
+    auto alpha_image = QImage(track_size, QImage::Format_ARGB32_Premultiplied);
     auto alpha_painter = QPainter(&alpha_image);
-    alpha_painter.fillRect(
-      QRect({0, 0}, alpha_slider.size()), get_board_image());
+    auto board_image = get_board_image();
+    auto track_area = QRect{QPoint(0, 0), track_size};
+    alpha_painter.drawTiledPixmap(track_area, QPixmap::fromImage(
+      board_image.scaled(QSize(board_image.width(), track_size.height()))));
     alpha_painter.setCompositionMode(QPainter::CompositionMode_Multiply);
-    alpha_painter.fillRect(QRect({0, 0}, alpha_slider.size()), alpha_gradient);
+    alpha_painter.fillRect(track_area, alpha_gradient);
     update_style(alpha_slider, [&] (auto& style) {
       style.get(Any() > Track()).set(IconImage(alpha_image));
     });
   }
 
   auto make_color_spectrum(std::shared_ptr<DecimalModel> x_model,
-      std::shared_ptr<DecimalModel> y_model, const QImage& thumb_image) {
-    auto color_spectrum = new Slider2D(std::move(x_model), std::move(y_model));
+      std::shared_ptr<DecimalModel> y_model, const QImage& thumb_image,
+      const QImage& thumb_invert_image) {
+    auto color_spectrum = new Slider2D(std::move(x_model), std::move(y_model),
+      make_modifiers(), make_modifiers());
     color_spectrum->setFixedHeight(scale_height(164));
+    color_spectrum->findChild<QLabel*>()->setScaledContents(false);
     update_style(*color_spectrum, [&] (auto& style) {
+      style.get(Any()).set(border(scale_width(1), QColor(0xC8C8C8)));
       style.get(Any() > Thumb() > is_a<Icon>()).
         set(Fill(optional<QColor>())).
         set(IconImage(thumb_image));
-      style.get(Focus() > Thumb() > is_a<Icon>()).
-        set(Fill(QColor(0x808080)));
+      style.get(FocusVisible() > Thumb() > is_a<Icon>()).
+        set(IconImage(thumb_invert_image));
     });
     return color_spectrum;
   }
 
   auto make_hue_slider(std::shared_ptr<DecimalModel> model,
-      const QImage& thumb_image) {
-    auto hue_slider = new Slider(std::move(model));
+      const QImage& thumb_image, const QImage& thumb_invert_image) {
+    auto hue_slider = new Slider(std::move(model), make_modifiers());
     hue_slider->setFixedHeight(scale_height(16));
     auto hue_track_image = QImage(":/Icons/hue-spectrum.png");
     update_style(*hue_slider, [&] (auto& style) {
@@ -89,24 +106,25 @@ namespace {
       style.get(Any() > Thumb() > is_a<Icon>()).
         set(Fill(optional<QColor>())).
         set(IconImage(thumb_image));
-      style.get(Focus() > Thumb() > is_a<Icon>()).
-        set(Fill(QColor(0x808080)));
+      style.get(FocusVisible() > Thumb() > is_a<Icon>()).
+        set(IconImage(thumb_invert_image));
     });
     return hue_slider;
   }
 
   auto make_alpha_slider(std::shared_ptr<DecimalModel> model,
-      const QImage& thumb_image) {
-    auto alpha_slider = new Slider(std::move(model));
+      const QImage& thumb_image, const QImage& thumb_invert_image) {
+    auto alpha_slider = new Slider(std::move(model), make_modifiers());
     alpha_slider->setFixedHeight(scale_height(16));
+    alpha_slider->findChild<QLabel*>()->setScaledContents(false);
     match(*alpha_slider, Alpha());
     update_style(*alpha_slider, [&] (auto& style) {
       style.get(Any()).set(border(scale_width(1), QColor(0xC8C8C8)));
       style.get(Any() > Thumb() > is_a<Icon>()).
         set(Fill(boost::optional<QColor>())).
         set(IconImage(thumb_image));
-      style.get(Focus() > Thumb() > is_a<Icon>()).
-        set(Fill(QColor(0x808080)));
+      style.get(FocusVisible() > Thumb() > is_a<Icon>()).
+        set(IconImage(thumb_invert_image));
     });
     return alpha_slider;
   }
@@ -206,14 +224,14 @@ ColorPicker::ColorPicker(std::shared_ptr<ValueModel<QColor>> current,
       m_panel_horizontal_spacing(0) {
   auto thumb_image =
     imageFromSvg(":/Icons/color-thumb.svg", scale(14, 14));
+  auto thumb_invert_image =
+    imageFromSvg(":/Icons/color-thumb-invert.svg", scale(14, 14));
   m_color_spectrum = make_color_spectrum(m_model->m_spectrum_x_model,
-    m_model->m_spectrum_y_model, thumb_image);
-  update_color_spectrum_track(*m_color_spectrum,
-    get_pure_color(get_current()->get()));
-  auto hue_slider = make_hue_slider(m_model->m_hue_slider_model, thumb_image);
-  m_alpha_slider =
-    make_alpha_slider(m_model->m_alpha_slider_model, thumb_image);
-  update_alpha_slider_track(*m_alpha_slider, m_model->m_source->get());
+    m_model->m_spectrum_y_model, thumb_image, thumb_invert_image);
+  auto hue_slider = make_hue_slider(m_model->m_hue_slider_model, thumb_image,
+    thumb_invert_image);
+  m_alpha_slider = make_alpha_slider(m_model->m_alpha_slider_model, thumb_image,
+    thumb_invert_image);
   m_color_code_panel = new ColorCodePanel(get_current());
   auto layout = make_vbox_layout(this);
   layout->setSpacing(scale_height(8));
@@ -223,7 +241,7 @@ ColorPicker::ColorPicker(std::shared_ptr<ValueModel<QColor>> current,
   layout->addSpacing(scale_height(10));
   layout->addWidget(m_color_code_panel);
   m_panel = new OverlayPanel(*this, parent);
-  m_panel->installEventFilter(this);
+  m_panel->setWindowFlags(Qt::Popup | (m_panel->windowFlags() & ~Qt::Tool));
   m_panel_style_connection = connect_style_signal(*m_panel,
     std::bind_front(&ColorPicker::on_panel_style, this));
   update_style(*m_panel, [&] (auto& style) {
@@ -234,6 +252,7 @@ ColorPicker::ColorPicker(std::shared_ptr<ValueModel<QColor>> current,
   on_current(get_current()->get());
   m_current_connection = get_current()->connect_update_signal(
     std::bind_front(&ColorPicker::on_current, this));
+  m_panel->installEventFilter(this);
 }
 
 const std::shared_ptr<ValueModel<QColor>>& ColorPicker::get_current() const {
@@ -255,11 +274,20 @@ bool ColorPicker::eventFilter(QObject* watched, QEvent* event) {
 bool ColorPicker::event(QEvent* event) {
   if(event->type() == QEvent::ShowToParent) {
     m_panel->show();
-    m_panel->setFixedWidth(12 * scale_width(22) + m_panel_horizontal_spacing);
+    auto margins = m_panel->layout()->contentsMargins();
+    m_panel->setFixedWidth(m_panel->get_body().width() + margins.left() +
+      margins.right() + m_panel_horizontal_spacing);
   } else if(event->type() == QEvent::HideToParent) {
     m_panel->hide();
   }
   return QWidget::event(event);
+}
+
+void ColorPicker::resizeEvent(QResizeEvent* event) {
+  auto& color = get_current()->get();
+  update_color_spectrum_track(*m_color_spectrum, get_pure_color(color));
+  update_alpha_slider_track(*m_alpha_slider, color);
+  return QWidget::resizeEvent(event);
 }
 
 void ColorPicker::on_current(const QColor& current) {
