@@ -18,7 +18,7 @@ using namespace Spire::Styles;
 
 namespace {
   auto get_board_image() {
-    static auto image = QImage(":/Icons/chequered-board.png");
+    static auto image = QPixmap(":/Icons/chequered-board.png");
     return image;
   }
 
@@ -85,8 +85,8 @@ namespace {
     auto alpha_painter = QPainter(&alpha_image);
     auto track_area = QRect{QPoint(0, 0), track_size};
     auto board_image = get_board_image();
-    alpha_painter.drawTiledPixmap(track_area, QPixmap::fromImage(
-      board_image.scaled(QSize(board_image.width(), track_size.height()))));
+    alpha_painter.drawTiledPixmap(track_area,
+      board_image.scaled(QSize(board_image.width(), track_size.height())));
     alpha_painter.setCompositionMode(QPainter::CompositionMode_Multiply);
     alpha_painter.fillRect(track_area, alpha_gradient);
     update_style(alpha_slider, [&] (auto& style) {
