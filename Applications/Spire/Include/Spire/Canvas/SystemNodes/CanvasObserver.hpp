@@ -20,28 +20,28 @@ namespace Spire {
   class CanvasObserver : private boost::noncopyable {
     public:
 
-      //! Signals an update to a CanvasNode.
-      /*!
-        \param value The CanvasNode's updated value.
-      */
-      using UpdateSignal = boost::signals2::signal<
-        void (const boost::any& value)>;
+      /**
+       * Signals an update to a CanvasNode.
+       * @param value The CanvasNode's updated value.
+       */
+      using UpdateSignal =
+        boost::signals2::signal<void (const boost::any& value)>;
 
-      //! Constructs a CanvasObserver.
-      /*!
-        \param task The task the <i>target</i> belongs to.
-        \param observer The operation to perform on the <i>target</i>.
-      */
+      /**
+       * Constructs a CanvasObserver.
+       * @param task The task the <i>target</i> belongs to.
+       * @param observer The operation to perform on the <i>target</i>.
+       */
       CanvasObserver(std::shared_ptr<Task> task, const CanvasNode& observer);
 
-      //! Returns the current value of the CanvasNode.
+      /** Returns the current value of the CanvasNode. */
       const boost::any& GetValue() const;
 
-      //! Connects a slot to the UpdateSignal.
-      /*!
-        \param slot The slot to connect to the signal.
-        \return A connection to the signal.
-      */
+      /**
+       * Connects a slot to the UpdateSignal.
+       * @param slot The slot to connect to the signal.
+       * @return A connection to the signal.
+       */
       boost::signals2::connection ConnectUpdateSignal(
         const UpdateSignal::slot_type& slot) const;
 

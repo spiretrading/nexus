@@ -12,7 +12,6 @@
 using namespace Beam;
 using namespace Spire;
 using namespace Spire::UI;
-using namespace std;
 
 BlotterMonitorsDialog::BlotterMonitorsDialog(Ref<UserProfile> userProfile,
     const BlotterTaskProperties& properties, Ref<BlotterModel> model,
@@ -32,13 +31,13 @@ BlotterMonitorsDialog::BlotterMonitorsDialog(Ref<UserProfile> userProfile,
     m_ui->m_monitorTable->minimumWidth() <<
     m_ui->m_splitter->widget(1)->width());
   m_ui->m_monitorTable->setRowCount(m_propeties.GetMonitors().size());
-  QFontMetrics metrics(m_ui->m_monitorTable->font());
+  auto metrics = QFontMetrics(m_ui->m_monitorTable->font());
   m_ui->m_monitorTable->verticalHeader()->setDefaultSectionSize(
     metrics.height() + 4);
   for(auto i = m_propeties.GetMonitors().begin();
       i != m_propeties.GetMonitors().end(); ++i) {
-    auto monitorItem = new QTableWidgetItem(QString::fromStdString(
-      i->GetName()));
+    auto monitorItem =
+      new QTableWidgetItem(QString::fromStdString(i->GetName()));
     m_ui->m_monitorTable->setItem(
       std::distance(m_propeties.GetMonitors().begin(), i), 0, monitorItem);
   }
@@ -66,7 +65,7 @@ BlotterMonitorsDialog::BlotterMonitorsDialog(Ref<UserProfile> userProfile,
     &BlotterMonitorsDialog::OnApplyToAll);
 }
 
-BlotterMonitorsDialog::~BlotterMonitorsDialog() {}
+BlotterMonitorsDialog::~BlotterMonitorsDialog() = default;
 
 const BlotterTaskProperties& BlotterMonitorsDialog::GetProperties() const {
   return m_propeties;
@@ -77,15 +76,15 @@ void BlotterMonitorsDialog::Commit() {
       m_currentRow >= static_cast<int>(m_propeties.GetMonitors().size())) {
     return;
   }
-  auto canvasWindow = dynamic_cast<CanvasWindow*>(
-    m_ui->m_canvasScrollArea->widget());
-  if(canvasWindow == nullptr) {
+  auto canvasWindow =
+    dynamic_cast<CanvasWindow*>(m_ui->m_canvasScrollArea->widget());
+  if(!canvasWindow) {
     return;
   }
   auto roots = canvasWindow->GetCanvasNodeModel().GetRoots();
-  for(const auto& root : roots) {
-    if(dynamic_cast<const BlotterTaskMonitorNode*>(root) != nullptr) {
-      BlotterTaskMonitor monitor(
+  for(auto& root : roots) {
+    if(dynamic_cast<const BlotterTaskMonitorNode*>(root)) {
+      auto monitor = BlotterTaskMonitor(
         m_propeties.GetMonitors()[m_currentRow].GetName(), *root);
       m_propeties.Replace(m_currentRow, monitor);
       return;
@@ -98,14 +97,14 @@ void BlotterMonitorsDialog::OnMonitorItemDataChanged(int row, int column) {
     return;
   }
   Commit();
-  BlotterTaskMonitor monitor(m_ui->m_monitorTable->item(row,
-    column)->data(Qt::DisplayRole).value<QString>().toStdString(),
+  auto monitor = BlotterTaskMonitor(m_ui->m_monitorTable->item(
+    row, column)->data(Qt::DisplayRole).value<QString>().toStdString(),
     m_propeties.GetMonitors()[row].GetMonitor());
   m_propeties.Replace(row, monitor);
 }
 
-void BlotterMonitorsDialog::OnMonitorItemSelectionChanged(int currentRow,
-    int currentColumn, int previousRow, int previousColumn) {
+void BlotterMonitorsDialog::OnMonitorItemSelectionChanged(
+    int currentRow, int currentColumn, int previousRow, int previousColumn) {
   Commit();
   m_currentRow = currentRow;
   auto canvas = new CanvasWindow(Ref(*m_userProfile));
@@ -120,13 +119,13 @@ void BlotterMonitorsDialog::OnMonitorItemSelectionChanged(int currentRow,
 
 void BlotterMonitorsDialog::OnAddMonitor() {
   Commit();
-  BlotterTaskMonitor newMonitor("New Monitor", BlotterTaskMonitorNode());
-  auto monitorItem = new QTableWidgetItem(QString::fromStdString(
-    newMonitor.GetName()));
+  auto newMonitor = BlotterTaskMonitor("New Monitor", BlotterTaskMonitorNode());
+  auto monitorItem =
+    new QTableWidgetItem(QString::fromStdString(newMonitor.GetName()));
   m_propeties.Add(newMonitor);
   m_ui->m_monitorTable->setRowCount(m_propeties.GetMonitors().size());
-  m_ui->m_monitorTable->setItem(m_propeties.GetMonitors().size() - 1, 0,
-    monitorItem);
+  m_ui->m_monitorTable->setItem(
+    m_propeties.GetMonitors().size() - 1, 0, monitorItem);
   m_ui->m_monitorTable->setCurrentItem(monitorItem);
   monitorItem->setSelected(true);
   m_ui->m_monitorTable->setFocus();
@@ -153,8 +152,8 @@ void BlotterMonitorsDialog::OnLoadDefault() {
   m_ui->m_monitorTable->setRowCount(m_propeties.GetMonitors().size());
   for(auto i = m_propeties.GetMonitors().begin();
       i != m_propeties.GetMonitors().end(); ++i) {
-    auto monitorItem = new QTableWidgetItem(QString::fromStdString(
-      i->GetName()));
+    auto monitorItem =
+      new QTableWidgetItem(QString::fromStdString(i->GetName()));
     m_ui->m_monitorTable->setItem(
       std::distance(m_propeties.GetMonitors().begin(), i), 0, monitorItem);
   }
@@ -189,8 +188,7 @@ void BlotterMonitorsDialog::OnApply() {
 
 void BlotterMonitorsDialog::OnApplyToAll() {
   Commit();
-  for(const auto& blotter :
-      m_userProfile->GetBlotterSettings().GetAllBlotters()) {
+  for(auto& blotter : m_userProfile->GetBlotterSettings().GetAllBlotters()) {
     blotter->GetTasksModel().SetProperties(m_propeties);
   }
 }

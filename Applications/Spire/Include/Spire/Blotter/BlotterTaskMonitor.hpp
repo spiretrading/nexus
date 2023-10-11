@@ -1,5 +1,5 @@
-#ifndef SPIRE_BLOTTERTASKMONITOR_HPP
-#define SPIRE_BLOTTERTASKMONITOR_HPP
+#ifndef SPIRE_BLOTTER_TASK_MONITOR_HPP
+#define SPIRE_BLOTTER_TASK_MONITOR_HPP
 #include <memory>
 #include <string>
 #include <Beam/Serialization/DataShuttle.hpp>
@@ -9,41 +9,39 @@
 
 namespace Spire {
 
-  /*! \class BlotterTaskMonitor
-      \brief Stores a single entry used to monitor a Task from a BlotterWindow.
-   */
+  /** Stores a single entry used to monitor a Task from a BlotterWindow. */
   class BlotterTaskMonitor {
     public:
 
-      //! Constructs an empty BlotterTaskModel.
+      /** Constructs an empty BlotterTaskModel. */
       BlotterTaskMonitor();
 
-      //! Constructs a BlotterTaskMonitor.
-      /*!
-        \param name The name of the monitor.
-        \param monitor The monitor to attach to a Task.
-      */
+      /**
+       * Constructs a BlotterTaskMonitor.
+       * @param name The name of the monitor.
+       * @param monitor The monitor to attach to a Task.
+       */
       BlotterTaskMonitor(const std::string& name, const CanvasNode& monitor);
 
-      //! Copies a BlotterTaskMonitor.
-      /*!
-        \param monitor The BlotterTaskMonitor to copy.
-      */
+      /**
+       * Copies a BlotterTaskMonitor.
+       * @param monitor The BlotterTaskMonitor to copy.
+       */
       BlotterTaskMonitor(const BlotterTaskMonitor& monitor);
 
-      ~BlotterTaskMonitor();
+      ~BlotterTaskMonitor() = default;
 
-      //! Assigns a BlotterTaskMonitor.
-      /*!
-        \param monitor The BlotterTaskMonitor to assign from.
-        \return A reference to <i>*this</i>.
-      */
+      /**
+       * Assigns a BlotterTaskMonitor.
+       * @param monitor The BlotterTaskMonitor to assign from.
+       * @return A reference to <i>*this</i>.
+       */
       BlotterTaskMonitor& operator =(const BlotterTaskMonitor& monitor);
 
-      //! Returns the name of this monitor.
+      /** Returns the name of this monitor. */
       const std::string& GetName() const;
 
-      //! Returns the monitor to attach to a Task.
+      /** Returns the monitor to attach to a Task. */
       const CanvasNode& GetMonitor() const;
 
     private:

@@ -49,8 +49,8 @@ BlotterTaskProperties BlotterTaskProperties::GetDefault() {
   return properties;
 }
 
-const std::vector<BlotterTaskMonitor>& BlotterTaskProperties::GetMonitors()
-    const {
+const std::vector<BlotterTaskMonitor>&
+    BlotterTaskProperties::GetMonitors() const {
   return m_taskMonitors;
 }
 

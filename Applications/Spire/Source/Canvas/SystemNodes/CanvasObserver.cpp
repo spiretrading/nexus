@@ -20,7 +20,6 @@ using namespace Beam::ServiceLocator;
 using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
-using namespace std;
 
 namespace {
   constexpr auto UPDATE_INTERVAL = 100;
@@ -29,27 +28,26 @@ namespace {
     template<typename T>
     static Aspen::Box<void> Template(const Translation& translation,
         const std::function<void (const any& value)>& callback) {
-      return Aspen::box(Aspen::lift(
-        [=] (const T& value) {
-          callback(value);
-        }, translation.Extract<Aspen::SharedBox<T>>()));
+      return Aspen::box(Aspen::lift([=] (const T& value) {
+        callback(value);
+      }, translation.Extract<Aspen::SharedBox<T>>()));
     }
 
     using SupportedTypes = ValueTypes;
   };
 }
 
-CanvasObserver::CanvasObserver(std::shared_ptr<Task> task,
-    const CanvasNode& observer)
+CanvasObserver::CanvasObserver(
+    std::shared_ptr<Task> task, const CanvasNode& observer)
     : m_task(std::move(task)),
       m_isTranslated(false) {
   auto children = std::vector<CustomNode::Child>();
   children.push_back(CustomNode::Child("target", m_task->GetNode().GetType()));
   children.push_back(CustomNode::Child("observer", observer.GetType()));
-  auto customObserver = Refresh(std::make_unique<CustomNode>(
-    "Observer", std::move(children))->Replace(
-    "target", CanvasNode::Clone(m_task->GetNode()))->Replace("observer",
-    CanvasNode::Clone(observer)));
+  auto customObserver = Refresh(
+    std::make_unique<CustomNode>("Observer", std::move(children))->Replace(
+      "target", CanvasNode::Clone(m_task->GetNode()))->Replace(
+      "observer", CanvasNode::Clone(observer)));
   auto validationErrors = Validate(*customObserver);
   if(!validationErrors.empty()) {
     return;
@@ -67,12 +65,11 @@ CanvasObserver::CanvasObserver(std::shared_ptr<Task> task,
     }
   }
   m_observer = std::move(customObserver);
-  auto translatedNode = PreprocessTranslation(*m_observer);
-  if(translatedNode != nullptr) {
+  if(auto translatedNode = PreprocessTranslation(*m_observer)) {
     m_observer = std::move(translatedNode);
   }
   QObject::connect(&m_updateTimer, &QTimer::timeout,
-    std::bind(&CanvasObserver::OnUpdateTimer, this));
+    std::bind_front(&CanvasObserver::OnUpdateTimer, this));
   m_updateTimer.start(UPDATE_INTERVAL);
 }
 
@@ -90,11 +87,9 @@ void CanvasObserver::Translate() {
     return;
   }
   try {
-    bool monitorTranslated = false;
     while(!m_remainingDependencies.empty()) {
       auto dependency = m_remainingDependencies.back();
-      if(m_task->GetContext().FindSubTranslation(
-          *dependency).is_initialized()) {
+      if(m_task->GetContext().FindSubTranslation(*dependency)) {
         m_remainingDependencies.pop_back();
       } else {
         break;
@@ -104,20 +99,18 @@ void CanvasObserver::Translate() {
       auto context = CanvasNodeTranslationContext(
         Ref(m_task->GetContext().GetUserProfile()), Ref(m_task->GetExecutor()),
         m_task->GetContext().GetExecutingAccount());
-      for(const auto& rootDependency : m_dependencies) {
+      for(auto& rootDependency : m_dependencies) {
         auto monitorDependency = &*m_observer->GetChildren().front().FindNode(
           GetFullName(*rootDependency));
         Mirror(*rootDependency, m_task->GetContext(), *monitorDependency,
           Store(context));
       }
-      auto observer = Spire::Translate(context,
-        m_observer->GetChildren().back());
-      auto reactor = Instantiate<ObserverTranslator>(observer.GetTypeInfo())(
-        observer, m_callbacks.MakeSlot([=] (const any& value) {
-          OnReactorUpdate(value);
-        }));
+      auto observer =
+        Spire::Translate(context, m_observer->GetChildren().back());
+      auto reactor = Instantiate<ObserverTranslator>(
+        observer.GetTypeInfo())(observer, m_callbacks.MakeSlot(
+          std::bind_front(&CanvasObserver::OnReactorUpdate, this)));
       m_task->GetExecutor().Add(std::move(reactor));
-      monitorTranslated = true;
       m_isTranslated = true;
     }
   } catch(const std::exception&) {
@@ -126,11 +119,10 @@ void CanvasObserver::Translate() {
 }
 
 void CanvasObserver::OnReactorUpdate(const any& value) {
-  m_tasks.Push(
-    [=] {
-      m_value = value;
-      m_updateSignal(m_value);
-    });
+  m_tasks.Push([=] {
+    m_value = value;
+    m_updateSignal(m_value);
+  });
 }
 
 void CanvasObserver::OnUpdateTimer() {
