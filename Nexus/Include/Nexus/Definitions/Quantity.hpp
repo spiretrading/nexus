@@ -79,49 +79,6 @@ namespace Nexus {
       explicit constexpr operator unsigned long long() const;
 
       /**
-       * Less than test.
-       * @param rhs The right hand side of the operation.
-       * @return <code>true</code> iff this is less than <i>rhs</i>.
-       */
-      constexpr bool operator <(Quantity rhs) const;
-
-      /**
-       * Less than or equal test.
-       * @param rhs The right hand side of the operation.
-       * @return <code>true</code> iff this is less than or equal to <i>rhs</i>.
-       */
-      constexpr bool operator <=(Quantity rhs) const;
-
-      /**
-       * Tests for equality.
-       * @param rhs The right hand side of the operation.
-       * @return <code>true</code> iff this is equal to <i>rhs</i>.
-       */
-      constexpr bool operator ==(Quantity rhs) const;
-
-      /**
-       * Tests for inequality.
-       * @param rhs The right hand side of the operation.
-       * @return <code>true</code> iff this is not equal to <i>rhs</i>.
-       */
-      constexpr bool operator !=(Quantity rhs) const;
-
-      /**
-       * Greater than or equal test.
-       * @param rhs The right hand side of the operation.
-       * @return <code>true</code> iff this is greater than or equal to
-       *         <i>rhs</i>.
-       */
-      constexpr bool operator >=(Quantity rhs) const;
-
-      /**
-       * Greater than test.
-       * @param rhs The right hand side of the operation.
-       * @return <code>true</code> iff this is greater than <i>rhs</i>.
-       */
-      constexpr bool operator >(Quantity rhs) const;
-
-      /**
        * Adds two Quantities together.
        * @param rhs The right hand side of the operation.
        * @return <i>this</i> + <i>rhs</i>.
@@ -197,6 +154,8 @@ namespace Nexus {
 
       /** Returns the raw representation of this Quantity. */
       constexpr boost::float64_t GetRepresentation() const;
+
+      constexpr auto operator<=>(const Quantity&) const = default;
 
     private:
       template<typename, typename> friend struct Beam::Serialization::Send;
@@ -487,30 +446,6 @@ namespace Nexus {
 
   inline constexpr Quantity::operator unsigned long long() const {
     return static_cast<unsigned long long>(m_value / MULTIPLIER);
-  }
-
-  inline constexpr bool Quantity::operator <(Quantity rhs) const {
-    return m_value < rhs.m_value;
-  }
-
-  inline constexpr bool Quantity::operator <=(Quantity rhs) const {
-    return m_value <= rhs.m_value;
-  }
-
-  inline constexpr bool Quantity::operator ==(Quantity rhs) const {
-    return m_value == rhs.m_value;
-  }
-
-  inline constexpr bool Quantity::operator !=(Quantity rhs) const {
-    return m_value != rhs.m_value;
-  }
-
-  inline constexpr bool Quantity::operator >=(Quantity rhs) const {
-    return m_value >= rhs.m_value;
-  }
-
-  inline constexpr bool Quantity::operator >(Quantity rhs) const {
-    return m_value > rhs.m_value;
   }
 
   inline constexpr Quantity Quantity::operator +(Quantity rhs) const {
