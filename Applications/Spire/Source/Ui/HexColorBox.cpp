@@ -118,6 +118,7 @@ HexColorBox::HexColorBox(std::shared_ptr<ValueModel<QColor>> current,
       m_submission(m_adaptor_model->get()) {
   m_text_box = new TextBox(m_adaptor_model);
   enclose(*this, *m_text_box);
+  setFocusProxy(m_text_box);
   m_submit_connection = m_text_box->connect_submit_signal(
     std::bind_front(&HexColorBox::on_submit, this));
   m_reject_connection = m_text_box->connect_reject_signal(

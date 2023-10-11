@@ -1,0 +1,227 @@
+#include "Spire/Ui/ColorBox.hpp"
+#include <boost/signals2/shared_connection_block.hpp>
+#include <QChildEvent>
+#include <QKeyEvent>
+#include <QLineEdit>
+#include <QPainter>
+#include <QStackedWidget>
+#include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/LocalValueModel.hpp"
+#include "Spire/Styles/Stylist.hpp"
+#include "Spire/Ui/Box.hpp"
+#include "Spire/Ui/ColorPicker.hpp"
+#include "Spire/Ui/Icon.hpp"
+#include "Spire/Ui/LayeredWidget.hpp"
+#include "Spire/Ui/Layouts.hpp"
+
+using namespace boost;
+using namespace boost::signals2;
+using namespace Spire;
+using namespace Spire::Styles;
+
+namespace {
+  auto get_color_code_panel(ColorPicker& color_picker) {
+    return color_picker.layout()->itemAt(4)->widget();
+  }
+
+  auto get_input_boxes(ColorPicker& color_picker) {
+    auto input_boxes = std::vector<QWidget*>();
+    auto color_code_panel = get_color_code_panel(color_picker);
+    auto c = color_code_panel->children();
+    for(auto v : c) {
+      if(v->isWidgetType()) {
+        if(v->metaObject()->className() == QString("QStackedWidget")) {
+          auto stacked_widget = static_cast<QStackedWidget*>(v);
+          input_boxes.push_back(stacked_widget->widget(0));
+          auto rgb_color_box = stacked_widget->widget(1);
+          input_boxes.push_back(rgb_color_box->layout()->itemAt(0)->widget());
+          input_boxes.push_back(rgb_color_box->layout()->itemAt(2)->widget());
+          input_boxes.push_back(rgb_color_box->layout()->itemAt(4)->widget());
+          auto hsv_color_box = stacked_widget->widget(2);
+          input_boxes.push_back(hsv_color_box->layout()->itemAt(0)->widget());
+          input_boxes.push_back(hsv_color_box->layout()->itemAt(2)->widget());
+          input_boxes.push_back(hsv_color_box->layout()->itemAt(4)->widget());
+        } else {
+          input_boxes.push_back(static_cast<QWidget*>(v));
+        }
+      }
+    }
+    return input_boxes;
+  }
+}
+struct CheckerBoard : QWidget {
+  QPixmap m_checker_board_image;
+
+  CheckerBoard(QWidget* parent = nullptr)
+    : QWidget(parent),
+      m_checker_board_image(":/Icons/chequered-board.png") {}
+
+  void paintEvent(QPaintEvent* event) override {
+    auto painter = QPainter(this);
+    painter.drawTiledPixmap(rect(), m_checker_board_image);
+  }
+};
+
+ColorBox::ColorBox(QWidget* parent)
+  : ColorBox(std::make_shared<LocalValueModel<QColor>>(), parent) {}
+
+ColorBox::ColorBox(std::shared_ptr<ValueModel<QColor>> current, QWidget* parent)
+    : QWidget(parent),
+      m_current(std::move(current)),
+      m_submission(m_current->get()),
+      m_is_read_only(false),
+      m_is_modified(false),
+      m_focus_observer(*this),
+      m_press_observer(*this) {
+  setFocusPolicy(Qt::StrongFocus);
+  auto checker_board = new CheckerBoard();
+  checker_board->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  m_color_display = new Box();
+  m_color_display->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  update_style(*m_color_display, [&] (auto& style) {
+    style.get(Any()).
+      set(BackgroundColor(m_current->get()));
+    style.get(Disabled()).
+      set(BackgroundColor(QColor(0xF5F5F5)));
+  });
+  auto body = new LayeredWidget();
+  body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  body->add(checker_board);
+  body->add(m_color_display);
+  m_input_box = make_input_box(body);
+  m_input_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  enclose(*this, *m_input_box);
+  proxy_style(*this, *m_input_box);
+  update_style(*this, [] (auto& style) {
+    style.get(Any()).set(padding(scale_width(1)));
+  });
+  m_color_picker = new ColorPicker(m_current, *this);
+  auto input_boxes = get_input_boxes(*m_color_picker);
+  for(auto input_box : input_boxes) {
+    find_focus_proxy(*input_box)->installEventFilter(this);
+  }
+  m_current_connection = m_current->connect_update_signal(
+    std::bind_front(&ColorBox::on_current, this));
+  m_focus_observer.connect_state_signal(
+    std::bind_front(&ColorBox::on_focus, this));
+  m_press_observer.connect_press_end_signal(
+    std::bind_front(&ColorBox::on_press_end, this));
+  m_color_picker->installEventFilter(this);
+}
+
+const std::shared_ptr<ValueModel<QColor>>& ColorBox::get_current() const {
+  return m_current;
+}
+
+bool ColorBox::is_read_only() const {
+  return m_is_read_only;
+}
+
+void ColorBox::set_read_only(bool is_read_only) {
+  if(m_is_read_only == is_read_only) {
+    return;
+  }
+  m_is_read_only = is_read_only;
+  if(m_is_read_only) {
+    match(*m_input_box, ReadOnly());
+  } else {
+    unmatch(*m_input_box, ReadOnly());
+  }
+}
+
+connection ColorBox::connect_submit_signal(
+    const SubmitSignal::slot_type& slot) const {
+  return m_submit_signal.connect(slot);
+}
+
+bool ColorBox::eventFilter(QObject* watched, QEvent* event) {
+  if(event->type() == QEvent::KeyPress) {
+    auto& key_event = *static_cast<QKeyEvent*>(event);
+    if(key_event.key() == Qt::Key_Enter ||
+        key_event.key() == Qt::Key_Return) {
+      if(is_read_only()) {
+        event->ignore();
+      }
+      if(m_color_picker->isVisible()) {
+        submit();
+        m_color_picker->hide();
+      } else {
+        show_color_picker();
+      }
+    }
+  } else if(event->type() == QEvent::ChildAdded) {
+    auto& child_event = *static_cast<QChildEvent*>(event);
+    if(child_event.child()->isWidgetType()) {
+      child_event.child()->installEventFilter(this);
+    }
+  }
+  return QWidget::eventFilter(watched, event);
+}
+
+void ColorBox::keyPressEvent(QKeyEvent* event) {
+  if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return ||
+      event->key() == Qt::Key_Up || event->key() == Qt::Key_Down) {
+    if(!is_read_only() && !event->isAutoRepeat()) {
+      show_color_picker();
+    }
+  } else if(event->key() == Qt::Key_Escape) {
+    auto blocker = shared_connection_block(m_current_connection);
+    m_current->set(m_submission);
+    m_is_modified = false;
+  }
+  QWidget::keyPressEvent(event);
+}
+
+void ColorBox::submit() {
+  if(!m_is_modified) {
+    return;
+  }
+  m_is_modified = false;
+  m_submission = m_current->get();
+  m_submit_signal(m_submission);
+}
+
+void ColorBox::on_current(const QColor& current) {
+  m_is_modified = true;
+  update_style(*m_color_display, [&] (auto& style) {
+    style.get(Any()).set(BackgroundColor(current));
+  });
+}
+
+void ColorBox::show_color_picker() {
+  if(!m_color_picker->isVisible()) {
+    m_color_picker->show();
+    get_color_code_panel(*m_color_picker)->nextInFocusChain()->setFocus();
+    //auto line_edit = m_color_picker->findChildren<TextBox>();
+  }
+}
+
+void ColorBox::on_focus(FocusObserver::State state) {
+  if(state == FocusObserver::State::NONE) {
+    unmatch(*m_input_box, FocusIn());
+    submit();
+  } else {
+    match(*m_input_box, FocusIn());
+  }
+}
+
+//void ColorBox::on_color_format(const optional<int>& current) {
+//  auto line_edits = m_color_picker->findChildren<QLineEdit*>();
+//  for(auto line_edit : line_edits) {
+//    m_input_boxes.insert(line_edit);
+//  }
+//}
+
+void ColorBox::on_press_end(PressObserver::Reason reason) {
+  if(is_read_only()) {
+    return;
+  }
+  //if(reason == PressObserver::Reason::KEYBOARD) {
+  show_color_picker();
+  //}
+}
+
+//void ColorBox::on_input_box_submit(const AnyRef& submission) {
+//  submit();
+//  m_color_picker->hide();
+//}

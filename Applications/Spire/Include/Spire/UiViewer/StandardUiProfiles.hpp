@@ -20,6 +20,9 @@ namespace Spire {
   /** Returns a UiProfile for the ClosedFilterPanel. */
   UiProfile make_closed_filter_panel_profile();
 
+  /** Returns a UiProfile for the ColorBox. */
+  UiProfile make_color_box_profile();
+
   /** Returns a UiProfile for the ColorCodePanel. */
   UiProfile make_color_code_panel_profile();
 
