@@ -21,6 +21,7 @@ namespace Spire {
   class ClickObserver;
   class ClosedFilterPanel;
   class ColorCodePanel;
+  class ColorPicker;
   class ComboBox;
   class ContextMenu;
   class DateBox;

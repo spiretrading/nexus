@@ -122,5 +122,7 @@
     <file>Icons/spinner.gif</file>
     <file>Icons/hue-spectrum.png</file>
     <file>Icons/color-thumb.svg</file>
+    <file>Icons/chequered-board.png</file>
+    <file>Icons/color-thumb-invert.svg</file>
   </qresource>
 </RCC>
