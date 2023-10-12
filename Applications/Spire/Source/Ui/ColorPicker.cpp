@@ -17,22 +17,22 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  auto get_board_image() {
+  const auto& CHEQUERED_BOARD_IMAGE() {
     static auto image = QPixmap(":/Icons/chequered-board.png");
     return image;
   }
 
-  auto get_hue_spectrum_image() {
+  const auto& HUE_SPECTRUM_IMAGE() {
     static auto image = QImage(":/Icons/hue-spectrum.png");
     return image;
   }
 
-  auto get_thumb_icon() {
+  const auto& THUMB_ICON() {
     static auto icon = imageFromSvg(":/Icons/color-thumb.svg", scale(14, 14));
     return icon;
   }
 
-  auto get_thumb_invert_icon() {
+  const auto& THUMB_INVERT_ICON() {
     static auto icon =
       imageFromSvg(":/Icons/color-thumb-invert.svg", scale(14, 14));
     return icon;
@@ -84,7 +84,7 @@ namespace {
     auto alpha_image = QImage(track_size, QImage::Format_ARGB32_Premultiplied);
     auto alpha_painter = QPainter(&alpha_image);
     auto track_area = QRect{QPoint(0, 0), track_size};
-    auto board_image = get_board_image();
+    auto board_image = CHEQUERED_BOARD_IMAGE();
     alpha_painter.drawTiledPixmap(track_area,
       board_image.scaled(QSize(board_image.width(), track_size.height())));
     alpha_painter.setCompositionMode(QPainter::CompositionMode_Multiply);
@@ -104,9 +104,9 @@ namespace {
       style.get(Any()).set(border(scale_width(1), QColor(0xC8C8C8)));
       style.get(Any() > Thumb() > is_a<Icon>()).
         set(Fill(optional<QColor>())).
-        set(IconImage(get_thumb_icon()));
+        set(IconImage(THUMB_ICON()));
       style.get(FocusVisible() > Thumb() > is_a<Icon>()).
-        set(IconImage(get_thumb_invert_icon()));
+        set(IconImage(THUMB_INVERT_ICON()));
     });
     return color_spectrum;
   }
@@ -116,12 +116,12 @@ namespace {
     hue_slider->setFixedHeight(scale_height(16));
     update_style(*hue_slider, [&] (auto& style) {
       style.get(Any()).set(border(scale_width(1), QColor(0xC8C8C8)));
-      style.get(Any() > Track()).set(IconImage(get_hue_spectrum_image()));
+      style.get(Any() > Track()).set(IconImage(HUE_SPECTRUM_IMAGE()));
       style.get(Any() > Thumb() > is_a<Icon>()).
         set(Fill(optional<QColor>())).
-        set(IconImage(get_thumb_icon()));
+        set(IconImage(THUMB_ICON()));
       style.get(FocusVisible() > Thumb() > is_a<Icon>()).
-        set(IconImage(get_thumb_invert_icon()));
+        set(IconImage(THUMB_INVERT_ICON()));
     });
     return hue_slider;
   }
@@ -135,9 +135,9 @@ namespace {
       style.get(Any()).set(border(scale_width(1), QColor(0xC8C8C8)));
       style.get(Any() > Thumb() > is_a<Icon>()).
         set(Fill(boost::optional<QColor>())).
-        set(IconImage(get_thumb_icon()));
+        set(IconImage(THUMB_ICON()));
       style.get(FocusVisible() > Thumb() > is_a<Icon>()).
-        set(IconImage(get_thumb_invert_icon()));
+        set(IconImage(THUMB_INVERT_ICON()));
     });
     return alpha_slider;
   }
