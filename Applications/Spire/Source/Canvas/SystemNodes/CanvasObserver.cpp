@@ -30,7 +30,7 @@ namespace {
         const std::function<void (const any& value)>& callback) {
       return Aspen::box(Aspen::lift([=] (const T& value) {
         callback(value);
-      }, translation.Extract<Aspen::SharedBox<T>>()));
+      }, translation.Extract<Aspen::Box<T>>()));
     }
 
     using SupportedTypes = ValueTypes;
