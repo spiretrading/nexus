@@ -17,22 +17,22 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  auto get_board_image() {
-    static auto image = QImage(":/Icons/chequered-board.png");
+  const auto& CHEQUERED_BOARD_IMAGE() {
+    static auto image = QPixmap(":/Icons/chequered-board.png");
     return image;
   }
 
-  auto get_hue_spectrum_image() {
+  const auto& HUE_SPECTRUM_IMAGE() {
     static auto image = QImage(":/Icons/hue-spectrum.png");
     return image;
   }
 
-  auto get_thumb_icon() {
+  const auto& THUMB_ICON() {
     static auto icon = imageFromSvg(":/Icons/color-thumb.svg", scale(14, 14));
     return icon;
   }
 
-  auto get_thumb_invert_icon() {
+  const auto& THUMB_INVERT_ICON() {
     static auto icon =
       imageFromSvg(":/Icons/color-thumb-invert.svg", scale(14, 14));
     return icon;
@@ -84,9 +84,9 @@ namespace {
     auto alpha_image = QImage(track_size, QImage::Format_ARGB32_Premultiplied);
     auto alpha_painter = QPainter(&alpha_image);
     auto track_area = QRect{QPoint(0, 0), track_size};
-    auto board_image = get_board_image();
-    alpha_painter.drawTiledPixmap(track_area, QPixmap::fromImage(
-      board_image.scaled(QSize(board_image.width(), track_size.height()))));
+    auto board_image = CHEQUERED_BOARD_IMAGE();
+    alpha_painter.drawTiledPixmap(track_area,
+      board_image.scaled(QSize(board_image.width(), track_size.height())));
     alpha_painter.setCompositionMode(QPainter::CompositionMode_Multiply);
     alpha_painter.fillRect(track_area, alpha_gradient);
     update_style(alpha_slider, [&] (auto& style) {
@@ -104,9 +104,9 @@ namespace {
       style.get(Any()).set(border(scale_width(1), QColor(0xC8C8C8)));
       style.get(Any() > Thumb() > is_a<Icon>()).
         set(Fill(optional<QColor>())).
-        set(IconImage(get_thumb_icon()));
+        set(IconImage(THUMB_ICON()));
       style.get(FocusVisible() > Thumb() > is_a<Icon>()).
-        set(IconImage(get_thumb_invert_icon()));
+        set(IconImage(THUMB_INVERT_ICON()));
     });
     return color_spectrum;
   }
@@ -116,12 +116,12 @@ namespace {
     hue_slider->setFixedHeight(scale_height(16));
     update_style(*hue_slider, [&] (auto& style) {
       style.get(Any()).set(border(scale_width(1), QColor(0xC8C8C8)));
-      style.get(Any() > Track()).set(IconImage(get_hue_spectrum_image()));
+      style.get(Any() > Track()).set(IconImage(HUE_SPECTRUM_IMAGE()));
       style.get(Any() > Thumb() > is_a<Icon>()).
         set(Fill(optional<QColor>())).
-        set(IconImage(get_thumb_icon()));
+        set(IconImage(THUMB_ICON()));
       style.get(FocusVisible() > Thumb() > is_a<Icon>()).
-        set(IconImage(get_thumb_invert_icon()));
+        set(IconImage(THUMB_INVERT_ICON()));
     });
     return hue_slider;
   }
@@ -135,9 +135,9 @@ namespace {
       style.get(Any()).set(border(scale_width(1), QColor(0xC8C8C8)));
       style.get(Any() > Thumb() > is_a<Icon>()).
         set(Fill(boost::optional<QColor>())).
-        set(IconImage(get_thumb_icon()));
+        set(IconImage(THUMB_ICON()));
       style.get(FocusVisible() > Thumb() > is_a<Icon>()).
-        set(IconImage(get_thumb_invert_icon()));
+        set(IconImage(THUMB_INVERT_ICON()));
     });
     return alpha_slider;
   }
@@ -235,6 +235,7 @@ ColorPicker::ColorPicker(std::shared_ptr<ValueModel<QColor>> current,
     : QWidget(&parent),
       m_model(std::make_shared<ColorPickerModel>(std::move(current))),
       m_palette(std::move(palette)),
+      m_is_alpha_visible(true),
       m_panel_horizontal_spacing(0) {
   m_color_spectrum = make_color_spectrum(m_model->m_spectrum_x_model,
     m_model->m_spectrum_y_model);
@@ -259,6 +260,8 @@ ColorPicker::ColorPicker(std::shared_ptr<ValueModel<QColor>> current,
   on_current(get_current()->get());
   m_current_connection = get_current()->connect_update_signal(
     std::bind_front(&ColorPicker::on_current, this));
+  m_style_connection = connect_style_signal(*this,
+    std::bind_front(&ColorPicker::on_style, this));
 }
 
 const std::shared_ptr<ValueModel<QColor>>& ColorPicker::get_current() const {
@@ -301,10 +304,23 @@ void ColorPicker::on_current(const QColor& current) {
       get_pure_color(m_last_color) != pure_color) {
     update_color_spectrum_track(*m_color_spectrum, pure_color);
   }
-  if(m_alpha_slider->isVisible() && m_last_color.rgb() != current.rgb()) {
+  if(m_is_alpha_visible && m_last_color.rgb() != current.rgb()) {
     update_alpha_slider_track(*m_alpha_slider, current);
   }
   m_last_color = current;
+}
+
+void ColorPicker::on_style() {
+  auto& stylist = find_stylist(*this);
+  if(auto visibility = Styles::find<Visibility>(stylist.get_computed_block())) {
+    stylist.evaluate(*visibility, [=] (auto visibility) {
+      if(visibility == Visibility::VISIBLE) {
+        m_is_alpha_visible = true;
+      } else {
+        m_is_alpha_visible = false;
+      }
+    });
+  }
 }
 
 void ColorPicker::on_panel_style() {
