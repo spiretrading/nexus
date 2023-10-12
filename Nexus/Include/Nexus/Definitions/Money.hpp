@@ -25,6 +25,8 @@ namespace Details {
 
     /** Stores a value of 0.0001. */
     static const T BIP;
+
+    auto operator <=>(const MoneyDefinitions& rhs) const = default;
   };
 }
 
@@ -53,49 +55,6 @@ namespace Details {
 
       /** Converts this Money to a Quantity. */
       explicit constexpr operator Quantity() const;
-
-      /**
-       * Less than test.
-       * @param rhs The right hand side of the operation.
-       * @return <code>true</code> iff this is less than <i>rhs</i>.
-       */
-      constexpr bool operator <(Money rhs) const;
-
-      /**
-       * Less than or equal test.
-       * @param rhs The right hand side of the operation.
-       * @return <code>true</code> iff this is less than or equal to <i>rhs</i>.
-       */
-      constexpr bool operator <=(Money rhs) const;
-
-      /**
-       * Tests for equality.
-       * @param rhs The right hand side of the operation.
-       * @return <code>true</code> iff this is equal to <i>rhs</i>.
-       */
-      constexpr bool operator ==(Money rhs) const;
-
-      /**
-       * Tests for inequality.
-       * @param rhs The right hand side of the operation.
-       * @return <code>true</code> iff this is not equal to <i>rhs</i>.
-       */
-      constexpr bool operator !=(Money rhs) const;
-
-      /**
-       * Greater than or equal test.
-       * @param rhs The right hand side of the operation.
-       * @return <code>true</code> iff this is greater than or equal to
-       *         <i>rhs</i>.
-       */
-      constexpr bool operator >=(Money rhs) const;
-
-      /**
-       * Greater than test.
-       * @param rhs The right hand side of the operation.
-       * @return <code>true</code> iff this is greater than <i>rhs</i>.
-       */
-      constexpr bool operator >(Money rhs) const;
 
       /**
        * Assignment operator.
@@ -160,6 +119,8 @@ namespace Details {
        * @return -<i>this</i>.
        */
       constexpr Money operator -() const;
+
+      auto operator <=>(const Money& rhs) const = default;
 
       using Details::MoneyDefinitions<Money>::ZERO;
       using Details::MoneyDefinitions<Money>::ONE;
@@ -306,30 +267,6 @@ namespace Details {
 
   inline constexpr Money::operator Quantity() const {
     return m_value;
-  }
-
-  inline constexpr bool Money::operator <(Money rhs) const {
-    return m_value < rhs.m_value;
-  }
-
-  inline constexpr bool Money::operator <=(Money rhs) const {
-    return m_value <= rhs.m_value;
-  }
-
-  inline constexpr bool Money::operator ==(Money rhs) const {
-    return m_value == rhs.m_value;
-  }
-
-  inline constexpr bool Money::operator !=(Money rhs) const {
-    return m_value != rhs.m_value;
-  }
-
-  inline constexpr bool Money::operator >=(Money rhs) const {
-    return m_value >= rhs.m_value;
-  }
-
-  inline constexpr bool Money::operator >(Money rhs) const {
-    return m_value > rhs.m_value;
   }
 
   inline constexpr Money& Money::operator =(Money rhs) {

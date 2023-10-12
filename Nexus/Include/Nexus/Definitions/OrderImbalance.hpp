@@ -27,33 +27,7 @@ namespace Nexus {
     /** The timestamp. */
     boost::posix_time::ptime m_timestamp;
 
-    /** Constructs an uninitialized OrderImbalance. */
-    OrderImbalance() = default;
-
-    /**
-     * Constructs an OrderImbalance.
-     * @param security The Security with the order imbalance.
-     * @param side The Side of the imbalance.
-     * @param size The size of the imbalance.
-     * @param referencePrice The price of the imbalance.
-     * @param timestamp The imbalance's time stamp.
-     */
-    OrderImbalance(Security security, Side side, Quantity size,
-      Money referencePrice, boost::posix_time::ptime timestamp);
-
-    /**
-     * Returns <code>true</code> iff two OrderImbalances are equal.
-     * @param orderImbalance The OrderImbalance to compare for equality.
-     * @return <code>true</code> iff the two OrderImbalances are equal.
-     */
-    bool operator ==(const OrderImbalance& orderImbalance) const;
-
-    /**
-     * Returns <code>true</code> iff two OrderImbalances are not equal.
-     * @param orderImbalance The OrderImbalance to compare for inequality.
-     * @return <code>true</code> iff the two OrderImbalances are not equal.
-     */
-    bool operator !=(const OrderImbalance& orderImbalance) const;
+    bool operator ==(const OrderImbalance& orderImbalance) const = default;
   };
 
   inline std::ostream& operator <<(std::ostream& out,
@@ -61,28 +35,6 @@ namespace Nexus {
     return out << "(" << value.m_security << " " << value.m_side << " " <<
       value.m_size << " " << value.m_referencePrice << " " <<
       value.m_timestamp << ")";
-  }
-
-  inline OrderImbalance::OrderImbalance(Security security, Side side,
-    Quantity size, Money referencePrice, boost::posix_time::ptime timestamp)
-    : m_security(std::move(security)),
-      m_side(side),
-      m_size(size),
-      m_referencePrice(referencePrice),
-      m_timestamp(timestamp) {}
-
-  inline bool OrderImbalance::operator ==(
-      const OrderImbalance& orderImbalance) const {
-    return m_security == orderImbalance.m_security &&
-      m_side == orderImbalance.m_side &&
-      m_size == orderImbalance.m_size &&
-      m_referencePrice == orderImbalance.m_referencePrice &&
-      m_timestamp == orderImbalance.m_timestamp;
-  }
-
-  inline bool OrderImbalance::operator !=(
-      const OrderImbalance& orderImbalance) const {
-    return !(*this == orderImbalance);
   }
 }
 

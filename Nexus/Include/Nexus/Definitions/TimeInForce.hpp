@@ -60,27 +60,13 @@ namespace Details {
        */
       TimeInForce(Type type, boost::posix_time::ptime expiry);
 
-      /**
-       * Tests if two TimeInForces are equal.
-       * @param timeInForce The TimeInForce to compare to.
-       * @return <code>true</code> iff the Type's are equal and the expiries are
-       *         equal.
-       */
-      bool operator ==(const TimeInForce& timeInForce) const;
-
-      /**
-       * Tests if two TimeInForces are not equal.
-       * @param timeInForce The TimeInForce to compare to.
-       * @return <code>true</code> iff the Type's are not equal or the expiries
-       *         are not equal.
-       */
-      bool operator !=(const TimeInForce& timeInForce) const;
-
       /** Returns the Type. */
       Type GetType() const;
 
       /** Returns the expiry. */
       boost::posix_time::ptime GetExpiry() const;
+
+      bool operator ==(const TimeInForce& timeInForce) const = default;
 
     private:
       friend struct Beam::Serialization::Shuttle<TimeInForce>;
@@ -125,14 +111,6 @@ namespace Details {
   inline TimeInForce::TimeInForce(Type type, boost::posix_time::ptime expiry)
     : m_type(type),
       m_expiry(expiry) {}
-
-  inline bool TimeInForce::operator ==(const TimeInForce& timeInForce) const {
-    return m_type == timeInForce.m_type && m_expiry == timeInForce.m_expiry;
-  }
-
-  inline bool TimeInForce::operator !=(const TimeInForce& timeInForce) const {
-    return !(*this == timeInForce);
-  }
 
   inline TimeInForce::Type TimeInForce::GetType() const {
     return m_type;
