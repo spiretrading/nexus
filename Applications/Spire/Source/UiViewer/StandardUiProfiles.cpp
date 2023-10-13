@@ -1250,6 +1250,7 @@ UiProfile Spire::make_color_box_profile() {
   populate_widget_properties(properties);
   properties.push_back(make_standard_property("read_only", false));
   properties.push_back(make_standard_property<QColor>("current"));
+  properties.push_back(make_standard_property("alpha_visible", true));
   auto profile = UiProfile("ColorBox", properties, [] (auto& profile) {
     auto color_box = new ColorBox();
     color_box->setFixedSize(scale(100, 26));
@@ -1261,6 +1262,33 @@ UiProfile Spire::make_color_box_profile() {
     current.connect_changed_signal([=] (const auto& color) {
       if(color.isValid()) {
         color_box->get_current()->set(color);
+      }
+    });
+    auto color_picker = [&] () -> OverlayPanel* {
+      auto children = color_box->children();
+      for(auto child : children) {
+        if(child->isWidgetType()) {
+          auto widget = static_cast<QWidget*>(child);
+          if(widget->windowFlags() & Qt::Popup) {
+            return static_cast<OverlayPanel*>(widget);
+          }
+        }
+      }
+      return nullptr;
+    }();
+    auto& alpha_visible = get<bool>("alpha_visible", profile.get_properties());
+    alpha_visible.connect_changed_signal([=] (auto value) {
+      update_style(*color_box, [&] (auto& style) {
+        if(value) {
+          style.get(Any() > Alpha()).set(Visibility::VISIBLE);
+        } else {
+          style.get(Any() > Alpha()).set(Visibility::NONE);
+        }
+      });
+      if(value) {
+        color_picker->get_body().setFixedWidth(12 * scale_width(22));
+      } else {
+        color_picker->get_body().setFixedWidth(scale_width(220));
       }
     });
     auto current_slot = profile.make_event_slot<QString>("Current");
@@ -1332,7 +1360,7 @@ UiProfile Spire::make_color_code_panel_profile() {
 
 UiProfile Spire::make_color_picker_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
-  properties.push_back(make_standard_property("current", QColor()));
+  properties.push_back(make_standard_property<QColor>("current"));
   properties.push_back(make_standard_property("alpha_visible", true));
   auto profile = UiProfile("ColorPicker", properties, [] (auto& profile) {
     auto button = make_label_button("ColorPicker");

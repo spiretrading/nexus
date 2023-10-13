@@ -1,5 +1,4 @@
 #include "Spire/Ui/ColorBox.hpp"
-#include <boost/signals2/shared_connection_block.hpp>
 #include <QChildEvent>
 #include <QKeyEvent>
 #include <QLineEdit>
@@ -20,18 +19,23 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  const auto& CHEQUERED_BOARD_IMAGE() {
+    static auto image = QPixmap(":/Icons/chequered-board.png");
+    return image;
+  }
+
   auto get_color_code_panel(ColorPicker& color_picker) {
-    return color_picker.layout()->itemAt(4)->widget();
+    auto index = color_picker.layout()->count() - 1;
+    return color_picker.layout()->itemAt(index)->widget();
   }
 
   auto get_input_boxes(ColorPicker& color_picker) {
     auto input_boxes = std::vector<QWidget*>();
     auto color_code_panel = get_color_code_panel(color_picker);
-    auto c = color_code_panel->children();
-    for(auto v : c) {
-      if(v->isWidgetType()) {
-        if(v->metaObject()->className() == QString("QStackedWidget")) {
-          auto stacked_widget = static_cast<QStackedWidget*>(v);
+    auto& children = color_code_panel->children();
+    for(auto i = 1; i < children.count(); ++i) {
+      if(children[i]->isWidgetType()) {
+        if(auto stacked_widget = dynamic_cast<const QStackedWidget*>(children[i])) {
           input_boxes.push_back(stacked_widget->widget(0));
           auto rgb_color_box = stacked_widget->widget(1);
           input_boxes.push_back(rgb_color_box->layout()->itemAt(0)->widget());
@@ -42,7 +46,7 @@ namespace {
           input_boxes.push_back(hsv_color_box->layout()->itemAt(2)->widget());
           input_boxes.push_back(hsv_color_box->layout()->itemAt(4)->widget());
         } else {
-          input_boxes.push_back(static_cast<QWidget*>(v));
+          input_boxes.push_back(static_cast<QWidget*>(children[i]));
         }
       }
     }
@@ -50,15 +54,11 @@ namespace {
   }
 }
 struct CheckerBoard : QWidget {
-  QPixmap m_checker_board_image;
-
-  CheckerBoard(QWidget* parent = nullptr)
-    : QWidget(parent),
-      m_checker_board_image(":/Icons/chequered-board.png") {}
+  using QWidget::QWidget;
 
   void paintEvent(QPaintEvent* event) override {
     auto painter = QPainter(this);
-    painter.drawTiledPixmap(rect(), m_checker_board_image);
+    painter.drawTiledPixmap(rect(), CHEQUERED_BOARD_IMAGE());
   }
 };
 
@@ -96,16 +96,17 @@ ColorBox::ColorBox(std::shared_ptr<ValueModel<QColor>> current, QWidget* parent)
     style.get(Any()).set(padding(scale_width(1)));
   });
   m_color_picker = new ColorPicker(m_current, *this);
-  auto input_boxes = get_input_boxes(*m_color_picker);
-  for(auto input_box : input_boxes) {
-    find_focus_proxy(*input_box)->installEventFilter(this);
-  }
   m_current_connection = m_current->connect_update_signal(
     std::bind_front(&ColorBox::on_current, this));
   m_focus_observer.connect_state_signal(
     std::bind_front(&ColorBox::on_focus, this));
   m_press_observer.connect_press_end_signal(
     std::bind_front(&ColorBox::on_press_end, this));
+  m_color_picker->window()->installEventFilter(this);
+  auto input_boxes = get_input_boxes(*m_color_picker);
+  for(auto input_box : input_boxes) {
+    find_focus_proxy(*input_box)->installEventFilter(this);
+  }
   m_color_picker->installEventFilter(this);
 }
 
@@ -135,7 +136,16 @@ connection ColorBox::connect_submit_signal(
 }
 
 bool ColorBox::eventFilter(QObject* watched, QEvent* event) {
-  if(event->type() == QEvent::KeyPress) {
+  if(watched == m_color_picker->window()) {
+    if(event->type() == QEvent::MouseButtonPress ||
+        event->type() == QEvent::MouseButtonRelease ||
+        event->type() == QEvent::MouseButtonDblClick) {
+      auto& mouse_event = *static_cast<QMouseEvent*>(event);
+      if(rect().contains(mapFromGlobal(mouse_event.globalPos()))) {
+        return true;
+      }
+    }
+  } else if(event->type() == QEvent::KeyPress) {
     auto& key_event = *static_cast<QKeyEvent*>(event);
     if(key_event.key() == Qt::Key_Enter ||
         key_event.key() == Qt::Key_Return) {
@@ -153,6 +163,7 @@ bool ColorBox::eventFilter(QObject* watched, QEvent* event) {
     auto& child_event = *static_cast<QChildEvent*>(event);
     if(child_event.child()->isWidgetType()) {
       child_event.child()->installEventFilter(this);
+      watched->removeEventFilter(this);
     }
   }
   return QWidget::eventFilter(watched, event);
@@ -165,8 +176,9 @@ void ColorBox::keyPressEvent(QKeyEvent* event) {
       show_color_picker();
     }
   } else if(event->key() == Qt::Key_Escape) {
-    auto blocker = shared_connection_block(m_current_connection);
-    m_current->set(m_submission);
+    if(m_submission != m_current->get()) {
+      m_current->set(m_submission);
+    }
     m_is_modified = false;
   }
   QWidget::keyPressEvent(event);
