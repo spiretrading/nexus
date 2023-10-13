@@ -3,12 +3,24 @@
 #include <memory>
 #include <QColor>
 #include <QWidget>
-#include "Spire/Spire/ValueModel.hpp"
+#include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/PressObserver.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+
+  /** A ValueModel over a QColor. */
+  using ColorModel = ValueModel<QColor>;
+
+  /** A ValueModel over an optional QColor. */
+  using OptionalColorModel = ValueModel<boost::optional<QColor>>;
+
+  /** A LocalValueModel over a QColor. */
+  using LocalColorModel = LocalValueModel<QColor>;
+
+  /** A LocalValueModel over an optional QColor. */
+  using LocalOptionalColorModel = LocalValueModel<boost::optional<QColor>>;
 
   /**
    * Presents a color to the user.
@@ -33,11 +45,11 @@ namespace Spire {
        * @param current The model used for the current color.
        * @param parent The parent widget.
        */
-      explicit ColorBox(std::shared_ptr<ValueModel<QColor>> current,
+      explicit ColorBox(std::shared_ptr<ColorModel> current,
         QWidget* parent = nullptr);
 
       /** Returns the current color model. */
-      const std::shared_ptr<ValueModel<QColor>>& get_current() const;
+      const std::shared_ptr<ColorModel>& get_current() const;
 
       /** Returns <code>true</code> iff this DropDownBox is read-only. */
       bool is_read_only() const;
@@ -59,7 +71,7 @@ namespace Spire {
 
     private:
       mutable SubmitSignal m_submit_signal;
-      std::shared_ptr<ValueModel<QColor>> m_current;
+      std::shared_ptr<ColorModel> m_current;
       Box* m_color_display;
       Box* m_input_box;
       ColorPicker* m_color_picker;

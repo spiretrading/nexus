@@ -1249,16 +1249,17 @@ UiProfile Spire::make_color_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
   properties.push_back(make_standard_property("read_only", false));
-  properties.push_back(make_standard_property<QColor>("current"));
+  properties.push_back(make_standard_property("current", QColor(0xF0D109)));
   properties.push_back(make_standard_property("alpha_visible", true));
   auto profile = UiProfile("ColorBox", properties, [] (auto& profile) {
-    auto color_box = new ColorBox();
+    auto& current = get<QColor>("current", profile.get_properties());
+    auto color_box = new ColorBox(
+      std::make_shared<LocalColorModel>(current.get()));
     color_box->setFixedSize(scale(100, 26));
     apply_widget_properties(color_box, profile.get_properties());
     auto& read_only = get<bool>("read_only", profile.get_properties());
     read_only.connect_changed_signal(
       std::bind_front(&ColorBox::set_read_only, color_box));
-    auto& current = get<QColor>("current", profile.get_properties());
     current.connect_changed_signal([=] (const auto& color) {
       if(color.isValid()) {
         color_box->get_current()->set(color);
@@ -1268,8 +1269,8 @@ UiProfile Spire::make_color_box_profile() {
       auto children = color_box->children();
       for(auto child : children) {
         if(child->isWidgetType()) {
-          auto widget = static_cast<QWidget*>(child);
-          if(widget->windowFlags() & Qt::Popup) {
+          if(auto widget = static_cast<QWidget*>(child);
+              widget->windowFlags() & Qt::Popup) {
             return static_cast<OverlayPanel*>(widget);
           }
         }

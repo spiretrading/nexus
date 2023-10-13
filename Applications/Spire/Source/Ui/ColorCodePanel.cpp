@@ -532,5 +532,7 @@ void ColorCodePanel::update_layout() {
 void ColorCodePanel::on_mode_current(const optional<int>& current) {
   if(current) {
     m_color_input->setCurrentIndex(*current);
+  } else {
+    m_color_format_box->get_current()->set(0);
   }
 }
