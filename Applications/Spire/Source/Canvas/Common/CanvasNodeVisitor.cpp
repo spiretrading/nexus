@@ -29,6 +29,7 @@
 #include "Spire/Canvas/StandardNodes/AdditionNode.hpp"
 #include "Spire/Canvas/StandardNodes/AlarmNode.hpp"
 #include "Spire/Canvas/StandardNodes/CeilNode.hpp"
+#include "Spire/Canvas/StandardNodes/CountNode.hpp"
 #include "Spire/Canvas/StandardNodes/CurrentDateNode.hpp"
 #include "Spire/Canvas/StandardNodes/CurrentDateTimeNode.hpp"
 #include "Spire/Canvas/StandardNodes/CurrentTimeNode.hpp"
@@ -118,6 +119,10 @@ void CanvasNodeVisitor::Visit(const CeilNode& node) {
 
 void CanvasNodeVisitor::Visit(const ChainNode& node) {
   Visit(static_cast<const CanvasNode&>(node));
+}
+
+void CanvasNodeVisitor::Visit(const CountNode& node) {
+  Visit(static_cast<const SignatureNode&>(node));
 }
 
 void CanvasNodeVisitor::Visit(const CurrencyNode& node) {

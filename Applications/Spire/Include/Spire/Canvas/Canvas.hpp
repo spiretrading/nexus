@@ -30,6 +30,7 @@ namespace Spire {
   class CanvasTypeVisitor;
   class CeilNode;
   class ChainNode;
+  class CountNode;
   class CurrencyNode;
   class CurrencyType;
   class CurrentDateNode;

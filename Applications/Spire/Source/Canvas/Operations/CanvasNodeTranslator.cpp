@@ -65,6 +65,7 @@
 #include "Spire/Canvas/StandardNodes/AlarmNode.hpp"
 #include "Spire/Canvas/StandardNodes/CeilNode.hpp"
 #include "Spire/Canvas/StandardNodes/ComparisonSignatures.hpp"
+#include "Spire/Canvas/StandardNodes/CountNode.hpp"
 #include "Spire/Canvas/StandardNodes/CurrentDateNode.hpp"
 #include "Spire/Canvas/StandardNodes/CurrentDateTimeNode.hpp"
 #include "Spire/Canvas/StandardNodes/CurrentTimeNode.hpp"
@@ -151,6 +152,7 @@ namespace {
       void Visit(const CanvasNode& node) override;
       void Visit(const CeilNode& node) override;
       void Visit(const ChainNode& node) override;
+      void Visit(const CountNode& node) override;
       void Visit(const CurrencyNode& node) override;
       void Visit(const CurrentDateNode& node) override;
       void Visit(const CurrentDateTimeNode& node) override;
@@ -1197,6 +1199,11 @@ void CanvasNodeTranslationVisitor::Visit(const ChainNode& node) {
   auto& nativeType = static_cast<const NativeType&>(node.GetType());
   m_translation =
     Instantiate<ChainTranslator>(nativeType.GetNativeType())(translations);
+}
+
+void CanvasNodeTranslationVisitor::Visit(const CountNode& node) {
+  auto source = InternalTranslation(node.GetChildren().back());
+  m_translation = Aspen::count(source.Extract<Aspen::Box<void>>());
 }
 
 void CanvasNodeTranslationVisitor::Visit(const CurrencyNode& node) {

@@ -32,6 +32,7 @@
 #include "Spire/Canvas/StandardNodes/AdditionNode.hpp"
 #include "Spire/Canvas/StandardNodes/AlarmNode.hpp"
 #include "Spire/Canvas/StandardNodes/CeilNode.hpp"
+#include "Spire/Canvas/StandardNodes/CountNode.hpp"
 #include "Spire/Canvas/StandardNodes/CurrentDateNode.hpp"
 #include "Spire/Canvas/StandardNodes/CurrentDateTimeNode.hpp"
 #include "Spire/Canvas/StandardNodes/CurrentTimeNode.hpp"
@@ -167,6 +168,7 @@ namespace Spire {
     (AdditionNode, "Spire.AdditionNode"),
     (AlarmNode, "Spire.AlarmNode"),
     (CeilNode, "Spire.CeilNode"),
+    (CountNode, "Spire.CountNode"),
     (CurrentDateNode, "Spire.CurrentDateNode"),
     (CurrentDateTimeNode, "Spire.CurrentDateTimeNode"),
     (CurrentTimeNode, "Spire.CurrentTimeNode"),

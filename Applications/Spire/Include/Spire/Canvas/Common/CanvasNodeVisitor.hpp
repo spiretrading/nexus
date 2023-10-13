@@ -33,6 +33,8 @@ namespace Spire {
 
       virtual void Visit(const ChainNode& node);
 
+      virtual void Visit(const CountNode& node);
+
       virtual void Visit(const CurrencyNode& node);
 
       virtual void Visit(const CurrentDateNode& node);

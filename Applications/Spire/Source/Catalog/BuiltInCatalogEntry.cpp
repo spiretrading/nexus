@@ -33,6 +33,7 @@
 #include "Spire/Canvas/StandardNodes/AdditionNode.hpp"
 #include "Spire/Canvas/StandardNodes/AlarmNode.hpp"
 #include "Spire/Canvas/StandardNodes/CeilNode.hpp"
+#include "Spire/Canvas/StandardNodes/CountNode.hpp"
 #include "Spire/Canvas/StandardNodes/CurrentDateNode.hpp"
 #include "Spire/Canvas/StandardNodes/CurrentDateTimeNode.hpp"
 #include "Spire/Canvas/StandardNodes/CurrentTimeNode.hpp"
@@ -113,6 +114,8 @@ const uuid BuiltInCatalogEntry::CEIL_UUID = stringUuidGenerator(
   "{8abe970b-8673-4112-a565-a348233f2f88}");
 const uuid BuiltInCatalogEntry::CHAIN_UUID = stringUuidGenerator(
   "{8b557053-8eaf-4fc8-b549-e06d4c5380a2}");
+const uuid BuiltInCatalogEntry::COUNT_UUID = stringUuidGenerator(
+  "{91c14acf-b15e-4056-aed6-f8959cd000ce}");
 const uuid BuiltInCatalogEntry::CURRENCY_UUID = stringUuidGenerator(
   "{a21f3f70-3db8-42f6-bc90-5915e978a20f}");
 const uuid BuiltInCatalogEntry::CURRENT_DATE_UUID = stringUuidGenerator(
@@ -275,6 +278,8 @@ vector<unique_ptr<CatalogEntry>> BuiltInCatalogEntry::
     ":/icons/chart_line.png", "", CeilNode()));
   entries.push_back(std::make_unique<BuiltInCatalogEntry>(CHAIN_UUID,
     ":/icons/link.png", "", ChainNode()));
+  entries.push_back(std::make_unique<BuiltInCatalogEntry>(
+    COUNT_UUID, ":/icons/calculator.png", "", CountNode()));
   entries.push_back(std::make_unique<BuiltInCatalogEntry>("Currency",
     CURRENCY_UUID, ":/icons/currency_euro.png", "", CurrencyNode()));
   entries.push_back(std::make_unique<BuiltInCatalogEntry>(CURRENT_DATE_UUID,

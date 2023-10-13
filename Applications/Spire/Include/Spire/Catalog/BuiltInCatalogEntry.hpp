@@ -20,6 +20,7 @@ namespace Spire {
       static const boost::uuids::uuid BOOLEAN_UUID;
       static const boost::uuids::uuid CEIL_UUID;
       static const boost::uuids::uuid CHAIN_UUID;
+      static const boost::uuids::uuid COUNT_UUID;
       static const boost::uuids::uuid CURRENCY_UUID;
       static const boost::uuids::uuid CURRENT_DATE_UUID;
       static const boost::uuids::uuid CURRENT_DATE_TIME_UUID;
