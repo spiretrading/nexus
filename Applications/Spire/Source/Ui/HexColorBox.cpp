@@ -123,6 +123,7 @@ HexColorBox::HexColorBox(std::shared_ptr<ValueModel<QColor>> current,
     std::bind_front(&HexColorBox::on_submit, this));
   m_reject_connection = m_text_box->connect_reject_signal(
     std::bind_front(&HexColorBox::on_reject, this));
+  m_text_box->installEventFilter(this);
 }
 
 const std::shared_ptr<ValueModel<QColor>>& HexColorBox::get_current() const {
@@ -140,7 +141,13 @@ connection HexColorBox::connect_reject_signal(
 }
 
 bool HexColorBox::eventFilter(QObject* watched, QEvent* event) {
-  if(event->type() == QEvent::KeyPress) {
+  if(m_text_box == watched && event->type() == QEvent::ChildAdded) {
+    auto& child_event = static_cast<QChildEvent&>(*event);
+    if(child_event.child()->isWidgetType()) {
+      child_event.child()->installEventFilter(this);
+      m_text_box->removeEventFilter(this);
+    }
+  } else if(event->type() == QEvent::KeyPress) {
     auto& key_event = static_cast<QKeyEvent&>(*event);
     if(key_event.key() == Qt::Key_Escape) {
       m_adaptor_model->set(m_submission.name());
@@ -148,11 +155,6 @@ bool HexColorBox::eventFilter(QObject* watched, QEvent* event) {
     }
   }
   return QWidget::eventFilter(watched, event);
-}
-
-void HexColorBox::showEvent(QShowEvent* event) {
-  m_text_box->focusProxy()->installEventFilter(this);
-  QWidget::showEvent(event);
 }
 
 void HexColorBox::on_submit(const QString& submission) {
