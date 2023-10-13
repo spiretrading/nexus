@@ -14,14 +14,6 @@ CountNode::CountNode() {
   AddChild("source", std::make_unique<NoneNode>(UnionType::GetAnyValueType()));
 }
 
-std::unique_ptr<CanvasNode> CountNode::Replace(
-    const CanvasNode& child, std::unique_ptr<CanvasNode> replacement) const {
-  auto clone = StaticCast<std::unique_ptr<CountNode>>(
-    SignatureNode::Replace(child, std::move(replacement)));
-  clone->SetType(clone->GetChildren().front().GetType());
-  return std::move(clone);
-}
-
 void CountNode::Apply(CanvasNodeVisitor& visitor) const {
   visitor.Visit(*this);
 }

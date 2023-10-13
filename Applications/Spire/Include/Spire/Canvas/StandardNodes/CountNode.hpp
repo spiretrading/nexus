@@ -12,9 +12,6 @@ namespace Spire {
       /** Constructs a CountNode. */
       CountNode();
 
-      std::unique_ptr<CanvasNode> Replace(const CanvasNode& child,
-        std::unique_ptr<CanvasNode> replacement) const override;
-
       void Apply(CanvasNodeVisitor& visitor) const override;
 
     protected:

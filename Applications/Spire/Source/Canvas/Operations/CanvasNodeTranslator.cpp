@@ -1202,8 +1202,9 @@ void CanvasNodeTranslationVisitor::Visit(const ChainNode& node) {
 }
 
 void CanvasNodeTranslationVisitor::Visit(const CountNode& node) {
-  auto source = InternalTranslation(node.GetChildren().back());
-  m_translation = Aspen::count(source.Extract<Aspen::Box<void>>());
+  auto source = InternalTranslation(node.GetChildren().front());
+  m_translation = Aspen::static_reactor_cast<Quantity>(
+    Aspen::count(source.Extract<Aspen::Box<void>>()));
 }
 
 void CanvasNodeTranslationVisitor::Visit(const CurrencyNode& node) {
