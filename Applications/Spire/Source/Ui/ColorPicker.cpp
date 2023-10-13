@@ -199,14 +199,14 @@ struct ColorPicker::ColorPickerModel {
   void on_color_spectrum_x_current(const Decimal& value) {
     auto& color = m_source->get();
     auto blocker = shared_connection_block(m_source_connection);
-    m_source->set(QColor::fromHsvF(color.hsvHueF(),
+    m_source->set(QColor::fromHsvF(get_hue(color),
       static_cast<qreal>(value / 100.0), color.valueF(), color.alphaF()));
   }
 
   void on_color_spectrum_y_current(const Decimal& value) {
     auto& color = m_source->get();
     auto blocker = shared_connection_block(m_source_connection);
-    m_source->set(QColor::fromHsvF(color.hsvHueF(), color.hsvSaturationF(),
+    m_source->set(QColor::fromHsvF(get_hue(color), color.hsvSaturationF(),
       static_cast<qreal>(value / 100.0), color.alphaF()));
   }
 
