@@ -1,8 +1,5 @@
 #ifndef SPIRE_COLOR_PICKER_HPP
 #define SPIRE_COLOR_PICKER_HPP
-#include <memory>
-#include <QColor>
-#include <QWidget>
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Ui/ColorBox.hpp"
 #include "Spire/Ui/Ui.hpp"

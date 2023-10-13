@@ -51,12 +51,12 @@ namespace Spire {
       /** Returns the current color model. */
       const std::shared_ptr<ColorModel>& get_current() const;
 
-      /** Returns <code>true</code> iff this DropDownBox is read-only. */
+      /** Returns <code>true</code> iff this ColorBox is read-only. */
       bool is_read_only() const;
 
       /**
        * Sets the read-only state.
-       * @param is_read_only True iff the DropDownBox should be read-only.
+       * @param is_read_only True iff the ColorBox should be read-only.
        */
       void set_read_only(bool is_read_only);
 
@@ -66,7 +66,6 @@ namespace Spire {
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
-      //void focusOutEvent(QFocusEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
 
     private:
@@ -75,6 +74,7 @@ namespace Spire {
       Box* m_color_display;
       Box* m_input_box;
       ColorPicker* m_color_picker;
+      QWidget* m_color_picker_panel;
       QColor m_submission;
       bool m_is_read_only;
       bool m_is_modified;

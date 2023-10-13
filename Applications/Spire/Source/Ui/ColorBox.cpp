@@ -1,14 +1,12 @@
 #include "Spire/Ui/ColorBox.hpp"
 #include <QChildEvent>
 #include <QKeyEvent>
-#include <QLineEdit>
 #include <QPainter>
 #include <QStackedWidget>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Styles/Stylist.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/ColorPicker.hpp"
-#include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/LayeredWidget.hpp"
 #include "Spire/Ui/Layouts.hpp"
 
@@ -34,7 +32,7 @@ namespace {
     auto& children = color_code_panel->children();
     for(auto i = 1; i < children.count(); ++i) {
       if(children[i]->isWidgetType()) {
-        if(auto stacked_widget = dynamic_cast<const QStackedWidget*>(children[i])) {
+        if(auto stacked_widget = dynamic_cast<QStackedWidget*>(children[i])) {
           input_boxes.push_back(stacked_widget->widget(0));
           auto rgb_color_box = stacked_widget->widget(1);
           input_boxes.push_back(rgb_color_box->layout()->itemAt(0)->widget());
@@ -52,6 +50,7 @@ namespace {
     return input_boxes;
   }
 }
+
 struct CheckerBoard : QWidget {
   using QWidget::QWidget;
 
@@ -76,7 +75,8 @@ ColorBox::ColorBox(std::shared_ptr<ColorModel> current, QWidget* parent)
   auto checker_board = new CheckerBoard();
   checker_board->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_color_display = new Box();
-  m_color_display->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  m_color_display->setSizePolicy(QSizePolicy::Expanding,
+    QSizePolicy::Expanding);
   update_style(*m_color_display, [&] (auto& style) {
     style.get(Any()).
       set(BackgroundColor(m_current->get()));
@@ -95,18 +95,19 @@ ColorBox::ColorBox(std::shared_ptr<ColorModel> current, QWidget* parent)
     style.get(Any()).set(padding(scale_width(1)));
   });
   m_color_picker = new ColorPicker(m_current, *this);
+  m_color_picker_panel = m_color_picker->window();
   m_current_connection = m_current->connect_update_signal(
     std::bind_front(&ColorBox::on_current, this));
   m_focus_observer.connect_state_signal(
     std::bind_front(&ColorBox::on_focus, this));
   m_press_observer.connect_press_end_signal(
     std::bind_front(&ColorBox::on_press_end, this));
-  m_color_picker->window()->installEventFilter(this);
   auto input_boxes = get_input_boxes(*m_color_picker);
   for(auto input_box : input_boxes) {
     find_focus_proxy(*input_box)->installEventFilter(this);
   }
   m_color_picker->installEventFilter(this);
+  m_color_picker_panel->installEventFilter(this);
 }
 
 const std::shared_ptr<ColorModel>& ColorBox::get_current() const {
@@ -124,6 +125,7 @@ void ColorBox::set_read_only(bool is_read_only) {
   m_is_read_only = is_read_only;
   if(m_is_read_only) {
     match(*m_input_box, ReadOnly());
+    m_color_picker->hide();
   } else {
     unmatch(*m_input_box, ReadOnly());
   }
@@ -135,7 +137,7 @@ connection ColorBox::connect_submit_signal(
 }
 
 bool ColorBox::eventFilter(QObject* watched, QEvent* event) {
-  if(watched == m_color_picker->window()) {
+  if(m_color_picker_panel == watched) {
     if(event->type() == QEvent::MouseButtonPress ||
         event->type() == QEvent::MouseButtonRelease ||
         event->type() == QEvent::MouseButtonDblClick) {
@@ -146,17 +148,9 @@ bool ColorBox::eventFilter(QObject* watched, QEvent* event) {
     }
   } else if(event->type() == QEvent::KeyPress) {
     auto& key_event = *static_cast<QKeyEvent*>(event);
-    if(key_event.key() == Qt::Key_Enter ||
-        key_event.key() == Qt::Key_Return) {
-      if(is_read_only()) {
-        event->ignore();
-      }
-      if(m_color_picker->isVisible()) {
-        submit();
-        m_color_picker->hide();
-      } else {
-        show_color_picker();
-      }
+    if(key_event.key() == Qt::Key_Enter || key_event.key() == Qt::Key_Return) {
+      submit();
+      m_color_picker->hide();
     } else if(key_event.key() == Qt::Key_Escape) {
       if(m_submission != m_current->get()) {
         m_current->set(m_submission);
@@ -178,7 +172,7 @@ bool ColorBox::eventFilter(QObject* watched, QEvent* event) {
 void ColorBox::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return ||
       event->key() == Qt::Key_Up || event->key() == Qt::Key_Down) {
-    if(!is_read_only() && !event->isAutoRepeat()) {
+    if(!is_read_only()) {
       show_color_picker();
     }
   }
@@ -186,9 +180,6 @@ void ColorBox::keyPressEvent(QKeyEvent* event) {
 }
 
 void ColorBox::submit() {
-  if(!m_is_modified) {
-    return;
-  }
   m_is_modified = false;
   m_submission = m_current->get();
   m_submit_signal(m_submission);
@@ -209,17 +200,21 @@ void ColorBox::show_color_picker() {
 }
 
 void ColorBox::on_focus(FocusObserver::State state) {
+  if(is_read_only()) {
+    return;
+  }
   if(state == FocusObserver::State::NONE) {
     unmatch(*m_input_box, FocusIn());
-    submit();
+    if(m_is_modified) {
+      submit();
+    }
   } else {
     match(*m_input_box, FocusIn());
   }
 }
 
 void ColorBox::on_press_end(PressObserver::Reason reason) {
-  if(is_read_only()) {
-    return;
+  if(!is_read_only()) {
+    show_color_picker();
   }
-  show_color_picker();
 }
