@@ -1,5 +1,6 @@
 #include "Spire/CanvasView/CanvasNodeModel.hpp"
 #include <Beam/Utilities/AssertionException.hpp>
+#include <boost/functional/hash.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/variant.hpp>
 #include "Spire/Canvas/Common/BreadthFirstCanvasNodeIterator.hpp"
@@ -135,4 +136,17 @@ void CanvasNodeModel::Remove(const Coordinate& coordinate) {
   auto node = GetNode(coordinate);
   BEAM_ASSERT(node);
   Remove(*node);
+}
+
+std::ostream& Spire::operator <<(
+    std::ostream& out, const CanvasNodeModel::Coordinate& coordinate) {
+  return out << '(' << coordinate.m_row << ", " << coordinate.m_column << ')';
+}
+
+size_t std::hash<CanvasNodeModel::Coordinate>::operator()(
+    const CanvasNodeModel::Coordinate& value) const {
+  auto seed = std::size_t(0);
+  hash_combine(seed, value.m_row);
+  hash_combine(seed, value.m_column);
+  return seed;
 }

@@ -2,6 +2,7 @@
 #define SPIRE_CANVAS_NODE_MODEL_HPP
 #include <functional>
 #include <memory>
+#include <ostream>
 #include <tuple>
 #include <vector>
 #include <Beam/Collections/View.hpp>
@@ -170,6 +171,9 @@ namespace Spire {
        */
       virtual void Remove(const Coordinate& coordinate);
   };
+
+  std::ostream& operator <<(
+    std::ostream& out, const CanvasNodeModel::Coordinate& coordinate);
 }
 
 namespace Beam::Serialization {

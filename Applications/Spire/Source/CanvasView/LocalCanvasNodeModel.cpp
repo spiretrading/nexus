@@ -51,7 +51,7 @@ const CanvasNode& LocalCanvasNodeModel::Add(
 
 void LocalCanvasNodeModel::Remove(const CanvasNode& node) {
   auto coordinate = GetCoordinate(node);
-  if(coordinate.m_row == -1 || coordinate.m_column == -1 || !node.GetParent()) {
+  if(coordinate.m_row == -1 || coordinate.m_column == -1 || node.GetParent()) {
     return;
   }
   InternalRemove(node);
@@ -74,7 +74,7 @@ void LocalCanvasNodeModel::InternalAdd(
 
 void LocalCanvasNodeModel::InternalRemove(const CanvasNode& node) {
   for(auto& child : node.GetChildren()) {
-    Remove(child);
+    InternalRemove(child);
   }
   auto i = m_nodeToCoordinate.find(&node);
   m_coordinateToNode.erase(i->second);
