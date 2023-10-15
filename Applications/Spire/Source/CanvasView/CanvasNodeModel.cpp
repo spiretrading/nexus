@@ -11,106 +11,83 @@
 using namespace Beam;
 using namespace boost;
 using namespace Spire;
-using namespace std;
 
 CanvasNodeModel::Identity::Identity()
-    : m_modelId(0),
-      m_canvasNodeId(0) {}
+  : m_modelId(0),
+    m_canvasNodeId(0) {}
 
 CanvasNodeModel::Identity::Identity(int modelId, int canvasNodeId)
-    : m_modelId(modelId),
-      m_canvasNodeId(canvasNodeId) {}
+  : m_modelId(modelId),
+    m_canvasNodeId(canvasNodeId) {}
 
-string CanvasNodeModel::GetIdentityKey() {
+std::string CanvasNodeModel::GetIdentityKey() {
   return "spire.identity";
 }
 
-boost::optional<CanvasNodeModel::Identity> CanvasNodeModel::FindIdentity(
-    const CanvasNode& node) {
-  auto identity = node.FindMetaData(GetIdentityKey());
-  if(identity.is_initialized()) {
-    auto value = get<const string>(&*identity);
-    if(value == nullptr) {
+optional<CanvasNodeModel::Identity>
+    CanvasNodeModel::FindIdentity(const CanvasNode& node) {
+  if(auto identity = node.FindMetaData(GetIdentityKey())) {
+    auto value = get<const std::string>(&*identity);
+    if(!value) {
       return none;
     }
     auto separator = value->find('-');
-    if(separator == string::npos) {
+    if(separator == std::string::npos) {
       return none;
     }
-    int modelId;
-    int canvasNodeId;
     try {
-      modelId = lexical_cast<int>(value->substr(0, separator));
-      canvasNodeId = lexical_cast<int>(value->substr(separator + 1));
+      auto modelId = lexical_cast<int>(value->substr(0, separator));
+      auto canvasNodeId = lexical_cast<int>(value->substr(separator + 1));
+      return Identity(modelId, canvasNodeId);
     } catch(const std::exception&) {
       return none;
     }
-    return Identity(modelId, canvasNodeId);
   }
   return none;
 }
 
-string CanvasNodeModel::ToMetaData(const Identity& identity) {
-  return lexical_cast<string>(identity.m_modelId) + "-" +
-    lexical_cast<string>(identity.m_canvasNodeId);
+std::string CanvasNodeModel::ToMetaData(const Identity& identity) {
+  return lexical_cast<std::string>(identity.m_modelId) + "-" +
+    lexical_cast<std::string>(identity.m_canvasNodeId);
 }
 
-string CanvasNodeModel::GetReferentKey() {
+std::string CanvasNodeModel::GetReferentKey() {
   return "spire.referent";
 }
 
-boost::optional<const CanvasNode&> CanvasNodeModel::FindReferent(
-    const ReferenceNode& node) {
+optional<const CanvasNode&>
+    CanvasNodeModel::FindReferent(const ReferenceNode& node) {
   auto referentKey = node.FindMetaData(GetReferentKey());
-  if(!referentKey.is_initialized()) {
+  if(!referentKey) {
     return none;
   }
-  auto referentValue = get<const string>(&*referentKey);
-  if(referentValue == nullptr) {
+  auto referentValue = get<const std::string>(&*referentKey);
+  if(!referentValue) {
     return none;
   }
-  for(const auto& referent : BreadthFirstView(GetRoot(node))) {
+  for(auto& referent : BreadthFirstView(GetRoot(node))) {
     auto identity = FindIdentity(referent);
-    if(identity.is_initialized() && ToMetaData(*identity) == *referentValue) {
+    if(identity && ToMetaData(*identity) == *referentValue) {
       return referent;
     }
   }
   return none;
 }
 
-unique_ptr<CanvasNode> CanvasNodeModel::StripIdentity(const CanvasNode& node) {
-  CanvasNodeBuilder builder(node);
-  for(const auto& stripNode : BreadthFirstView(node)) {
+std::unique_ptr<CanvasNode>
+    CanvasNodeModel::StripIdentity(const CanvasNode& node) {
+  auto builder = CanvasNodeBuilder(node);
+  for(auto& stripNode : BreadthFirstView(node)) {
     builder.DeleteMetaData(stripNode, CanvasNodeModel::GetIdentityKey());
   }
   return builder.Make();
 }
 
-CanvasNodeModel::Coordinate::Coordinate(int row, int column)
-    : m_row(row),
-      m_column(column) {}
-
-bool CanvasNodeModel::Coordinate::operator <(
-    const Coordinate& coordinate) const {
-  return std::tie(m_row, m_column) <
-    std::tie(coordinate.m_row, coordinate.m_column);
-}
-
-bool CanvasNodeModel::Coordinate::operator ==(
-    const Coordinate& coordinate) const {
-  return m_row == coordinate.m_row && m_column == coordinate.m_column;
-}
-
-bool CanvasNodeModel::Coordinate::operator !=(
-    const Coordinate& coordinate) const {
-  return !(*this == coordinate);
-}
-
 void CanvasNodeModel::Snapshot::Save(const CanvasNodeModel& model) {
   m_roots.clear();
-  for(const auto& node : model.GetRoots()) {
+  for(auto& node : model.GetRoots()) {
     auto coordinate = model.GetCoordinate(*node);
-    auto root = std::make_tuple(coordinate, CanvasNode::Clone(*node));
+    auto root = std::tuple(coordinate, CanvasNode::Clone(*node));
     m_roots.emplace_back(std::move(root));
   }
 }
@@ -120,31 +97,28 @@ void CanvasNodeModel::Snapshot::Restore(Out<CanvasNodeModel> model) {
     auto root = model->GetRoots().back();
     model->Remove(*root);
   }
-  for(const auto& root : m_roots) {
-    model->Add(get<0>(root), *get<1>(root));
+  for(auto& root : m_roots) {
+    model->Add(std::get<0>(root), *std::get<1>(root));
   }
 }
 
-boost::optional<const CanvasNode&> CanvasNodeModel::GetCurrentNode() const {
-  auto coordinate = GetCurrentCoordinate();
-  if(!coordinate) {
-    return none;
+optional<const CanvasNode&> CanvasNodeModel::GetCurrentNode() const {
+  if(auto coordinate = GetCurrentCoordinate()) {
+    return GetNode(*coordinate);
   }
-  return GetNode(*coordinate);
+  return none;
 }
 
-boost::optional<CanvasNodeModel::Coordinate> CanvasNodeModel::
-    GetCurrentCoordinate() const {
-  auto node = GetCurrentNode();
-  if(!node.is_initialized()) {
-    return none;
+optional<CanvasNodeModel::Coordinate>
+    CanvasNodeModel::GetCurrentCoordinate() const {
+  if(auto node = GetCurrentNode()) {
+    return GetCoordinate(*node);
   }
-  return GetCoordinate(*node);
+  return none;
 }
 
 void CanvasNodeModel::SetCurrent(const CanvasNode& node) {
-  auto coordinate = GetCoordinate(node);
-  SetCurrent(coordinate);
+  SetCurrent(GetCoordinate(node));
 }
 
 void CanvasNodeModel::SetCurrent(const Coordinate& coordinate) {
@@ -154,8 +128,7 @@ void CanvasNodeModel::SetCurrent(const Coordinate& coordinate) {
 }
 
 void CanvasNodeModel::Remove(const CanvasNode& node) {
-  auto coordinate = GetCoordinate(node);
-  Remove(coordinate);
+  Remove(GetCoordinate(node));
 }
 
 void CanvasNodeModel::Remove(const Coordinate& coordinate) {

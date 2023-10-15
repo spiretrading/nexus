@@ -20,6 +20,7 @@ namespace Spire {
   class FileReaderNodeStructureTable;
   class LabelCell;
   class LinkCell;
+  class LocalCanvasNodeModel;
   class LuaScriptDialog;
   class LuaScriptParametersTable;
   class MoveNodeCommand;
