@@ -6,6 +6,10 @@
 #include "Spire/CanvasView/AddRootCommand.hpp"
 #include "Spire/CanvasView/LocalCanvasNodeModel.hpp"
 
+#include "Spire/Canvas/OrderExecutionNodes/SingleOrderTaskNode.hpp"
+#include "Spire/Canvas/StandardNodes/MultiplicationNode.hpp"
+#include "Spire/Canvas/StandardNodes/TimerNode.hpp"
+
 using namespace Beam;
 using namespace Spire;
 
@@ -56,5 +60,17 @@ TEST_SUITE("AddRootCommand") {
     REQUIRE(model.GetCurrentCoordinate() == CanvasNodeModel::Coordinate(6, 22));
     command.undo();
     REQUIRE(model.GetRoots().empty());
+  }
+
+  TEST_CASE("m") {
+    auto model = LocalCanvasNodeModel();
+    auto root =
+      std::unique_ptr<CanvasNode>(std::make_unique<SingleOrderTaskNode>());
+    auto timer = std::make_unique<TimerNode>();
+    auto expression =
+      std::unique_ptr<CanvasNode>(std::make_unique<MultiplicationNode>());
+    expression = expression->Replace("left", std::make_unique<IntegerNode>(0));
+    expression = expression->Replace("right", std::move(timer));
+    root = root->Replace("price", std::move(expression));
   }
 }
