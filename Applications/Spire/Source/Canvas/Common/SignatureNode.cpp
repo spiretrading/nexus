@@ -9,14 +9,12 @@
 
 using namespace Beam;
 using namespace Spire;
-using namespace std;
 
 namespace {
-  std::shared_ptr<CanvasType> GetSignatureType(
-      const vector<SignatureNode::Signature>& signatures,
+  auto GetSignatureType(const std::vector<SignatureNode::Signature>& signatures,
       const CanvasType& returnType, size_t index) {
-    vector<std::shared_ptr<NativeType>> compatibleTypes;
-    for(const auto& signature : signatures) {
+    auto compatibleTypes = std::vector<std::shared_ptr<NativeType>>();
+    for(auto& signature : signatures) {
       if(IsCompatible(returnType, *signature.back())) {
         compatibleTypes.push_back(signature[index]);
       }
@@ -24,17 +22,17 @@ namespace {
     return UnionType::Create(MakeDereferenceView(compatibleTypes));
   }
 
-  std::shared_ptr<CanvasType> GetReturnType(const CanvasNode& node,
-      const vector<SignatureNode::Signature>& signatures) {
-    vector<std::shared_ptr<NativeType>> returnTypes;
-    for(const auto& signature : signatures) {
-      bool validSignature = true;
-      for(const auto& child : MakeIndexView(node.GetChildren())) {
-        if(!IsCompatible(child.GetValue().GetType(),
-            *signature[child.GetIndex()]) &&
-            (dynamic_cast<const RecordType*>(&child.GetValue().GetType()) ==
-            nullptr || std::dynamic_pointer_cast<const RecordType>(
-            signature[child.GetIndex()]) == nullptr)) {
+  auto GetReturnType(const CanvasNode& node,
+      const std::vector<SignatureNode::Signature>& signatures) {
+    auto returnTypes = std::vector<std::shared_ptr<NativeType>>();
+    for(auto& signature : signatures) {
+      auto validSignature = true;
+      for(auto& child : MakeIndexView(node.GetChildren())) {
+        if(!IsCompatible(
+            child.GetValue().GetType(), *signature[child.GetIndex()]) &&
+              (dynamic_cast<const RecordType*>(&child.GetValue().GetType()) ==
+                nullptr || std::dynamic_pointer_cast<const RecordType>(
+                  signature[child.GetIndex()]) == nullptr)) {
           validSignature = false;
           break;
         }
@@ -47,10 +45,11 @@ namespace {
   }
 }
 
-unique_ptr<CanvasNode> SignatureNode::Convert(const CanvasType& type) const {
-  vector<SignatureNode::Signature> signatureEntries(
-    GetSignatures().front().size());
-  for(const auto& signature : GetSignatures()) {
+std::unique_ptr<CanvasNode>
+    SignatureNode::Convert(const CanvasType& type) const {
+  auto signatureEntries =
+    std::vector<SignatureNode::Signature>(GetSignatures().front().size());
+  for(auto& signature : GetSignatures()) {
     if(IsCompatible(type, *signature.back())) {
       for(const auto& type : MakeIndexView(signature)) {
         signatureEntries[type.GetIndex()].push_back(type.GetValue());
@@ -61,14 +60,14 @@ unique_ptr<CanvasNode> SignatureNode::Convert(const CanvasType& type) const {
     BOOST_THROW_EXCEPTION(CanvasTypeCompatibilityException());
   }
   auto clone = Clone(*this);
-  for(const auto& signature : DropLast(MakeIndexView(signatureEntries))) {
-    auto parameterType = UnionType::Create(
-      MakeDereferenceView(signature.GetValue()));
+  for(auto& signature : DropLast(MakeIndexView(signatureEntries))) {
+    auto parameterType =
+      UnionType::Create(MakeDereferenceView(signature.GetValue()));
     auto& child = clone->GetChildren()[signature.GetIndex()];
     clone->SetChild(child, ForceConversion(Clone(child), *parameterType));
   }
-  auto returnType = UnionType::Create(MakeDereferenceView(
-    signatureEntries.back()));
+  auto returnType =
+    UnionType::Create(MakeDereferenceView(signatureEntries.back()));
   if(!IsCompatible(*returnType, clone->GetType())) {
     clone->SetType(*returnType);
   }
@@ -76,35 +75,36 @@ unique_ptr<CanvasNode> SignatureNode::Convert(const CanvasType& type) const {
   return std::move(clone);
 }
 
-unique_ptr<CanvasNode> SignatureNode::Replace(const CanvasNode& child,
-    unique_ptr<CanvasNode> replacement) const {
-  size_t replacementIndex;
-  for(const auto& selfChild : MakeIndexView(GetChildren())) {
-    if(&selfChild.GetValue() == &child) {
-      replacementIndex = selfChild.GetIndex();
-      break;
+std::unique_ptr<CanvasNode> SignatureNode::Replace(
+    const CanvasNode& child, std::unique_ptr<CanvasNode> replacement) const {
+  auto replacementIndex = [&] {
+    for(auto& selfChild : MakeIndexView(GetChildren())) {
+      if(&selfChild.GetValue() == &child) {
+        return selfChild.GetIndex();
+      }
     }
-  }
-  auto replacementParameterType = GetSignatureType(GetSignatures(), *m_type,
-    replacementIndex);
+    BOOST_THROW_EXCEPTION(CanvasOperationException("Child not found."));
+  }();
+  auto replacementParameterType =
+    GetSignatureType(GetSignatures(), *m_type, replacementIndex);
   if(!IsCompatible(*replacementParameterType, replacement->GetType())) {
-    auto convertedReplacement = Spire::Convert(std::move(replacement),
-      *replacementParameterType);
+    auto convertedReplacement =
+      Spire::Convert(std::move(replacement), *replacementParameterType);
     return Replace(child, std::move(convertedReplacement));
   }
   auto clone = CanvasNode::Clone(*this);
   auto& replacementType = replacement->GetType();
   clone->SetChild(child, std::move(replacement));
-  vector<Signature> remainingSignatures;
-  for(const auto& signature : GetSignatures()) {
+  auto remainingSignatures = std::vector<Signature>();
+  for(auto& signature : GetSignatures()) {
     if(IsCompatible(replacementType, *signature[replacementIndex]) ||
         dynamic_cast<const RecordType*>(&replacementType) &&
-        std::dynamic_pointer_cast<const RecordType>(
-        signature[replacementIndex])) {
+          std::dynamic_pointer_cast<const RecordType>(
+            signature[replacementIndex])) {
       remainingSignatures.push_back(signature);
     }
   }
-  for(size_t i = 0; i < GetChildren().size(); ++i) {
+  for(auto i = std::size_t(0); i < GetChildren().size(); ++i) {
     if(i == replacementIndex) {
       continue;
     }
@@ -121,4 +121,4 @@ unique_ptr<CanvasNode> SignatureNode::Replace(const CanvasNode& child,
 }
 
 SignatureNode::SignatureNode()
-    : m_type(UnionType::GetAnyType()) {}
+  : m_type(UnionType::GetAnyType()) {}

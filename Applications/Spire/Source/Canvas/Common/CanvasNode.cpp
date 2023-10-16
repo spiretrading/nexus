@@ -133,8 +133,10 @@ unique_ptr<CanvasNode> CanvasNode::Convert(const CanvasType& type) const {
 
 unique_ptr<CanvasNode> CanvasNode::Replace(const string& child,
     unique_ptr<CanvasNode> replacement) const {
-  auto childNode = FindChild(child);
-  return Replace(*childNode, std::move(replacement));
+  if(auto childNode = FindChild(child)) {
+    return Replace(*childNode, std::move(replacement));
+  }
+  BOOST_THROW_EXCEPTION(CanvasOperationException("Child not found."));
 }
 
 unique_ptr<CanvasNode> CanvasNode::Replace(const CanvasNode& child,
