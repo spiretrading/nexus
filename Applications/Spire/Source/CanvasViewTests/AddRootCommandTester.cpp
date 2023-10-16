@@ -2,6 +2,7 @@
 #include <boost/optional/optional_io.hpp>
 #include "Spire/Canvas/ControlNodes/AggregateNode.hpp"
 #include "Spire/Canvas/Operations/CanvasNodeStructuralEquality.hpp"
+#include "Spire/Canvas/Types/MoneyType.hpp"
 #include "Spire/Canvas/ValueNodes/IntegerNode.hpp"
 #include "Spire/CanvasView/AddRootCommand.hpp"
 #include "Spire/CanvasView/LocalCanvasNodeModel.hpp"
@@ -71,6 +72,7 @@ TEST_SUITE("AddRootCommand") {
       std::unique_ptr<CanvasNode>(std::make_unique<MultiplicationNode>());
     expression = expression->Replace("left", std::make_unique<IntegerNode>(0));
     expression = expression->Replace("right", std::move(timer));
-    root = root->Replace("price", std::move(expression));
+    expression = expression->Convert(MoneyType::GetInstance());
+//    root = root->Replace("price", std::move(expression));
   }
 }
