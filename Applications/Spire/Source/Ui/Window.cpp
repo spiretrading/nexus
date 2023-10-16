@@ -46,6 +46,7 @@ Window::Window(QWidget* parent)
   setWindowFlags(windowFlags() | Qt::Window | Qt::WindowSystemMenuHint);
   m_title_bar = new TitleBar(make_svg_window_icon(":/Icons/spire.svg"), this);
   auto layout = make_vbox_layout(this);
+  layout->setAlignment(Qt::AlignTop);
   layout->setContentsMargins(
     scale_width(1), scale_height(1), scale_width(1), scale_height(1));
   layout->addWidget(m_title_bar);

@@ -17,6 +17,13 @@ namespace Nexus {
   class ExchangeRateTable {
     public:
 
+      /** Constructs an empty ExchangeRateTable. */
+      ExchangeRateTable() = default;
+
+      ExchangeRateTable(const ExchangeRateTable& table);
+
+      ExchangeRateTable(ExchangeRateTable&& table);
+
       /**
        * Finds an ExchangeRate.
        * @param pair The ExchangeRate's CurrencyPair.
@@ -40,12 +47,26 @@ namespace Nexus {
        */
       void Add(const ExchangeRate& exchangeRate);
 
+      ExchangeRateTable& operator =(const ExchangeRateTable& table);
+
+      ExchangeRateTable& operator =(ExchangeRateTable&& table);
+
     private:
       mutable boost::mutex m_mutex;
       mutable std::vector<ExchangeRate> m_exchangeRates;
 
       void ImmutableAdd(const ExchangeRate& exchangeRate) const;
   };
+
+  inline ExchangeRateTable::ExchangeRateTable(const ExchangeRateTable& table) {
+    auto lock = boost::lock_guard(table.m_mutex);
+    m_exchangeRates = table.m_exchangeRates;
+  }
+
+  inline ExchangeRateTable::ExchangeRateTable(ExchangeRateTable&& table) {
+    auto lock = boost::lock_guard(table.m_mutex);
+    m_exchangeRates = std::move(table.m_exchangeRates);
+  }
 
   inline boost::optional<ExchangeRate> ExchangeRateTable::Find(
       CurrencyPair pair) const {
@@ -95,6 +116,22 @@ namespace Nexus {
     auto lock = boost::lock_guard(m_mutex);
     ImmutableAdd(exchangeRate);
     ImmutableAdd(Invert(exchangeRate));
+  }
+
+  inline ExchangeRateTable& ExchangeRateTable::operator =(
+      const ExchangeRateTable& table) {
+    auto lockA = boost::lock_guard(table.m_mutex);
+    auto lockB = boost::lock_guard(m_mutex);
+    m_exchangeRates = table.m_exchangeRates;
+    return *this;
+  }
+
+  inline ExchangeRateTable& ExchangeRateTable::operator =(
+      ExchangeRateTable&& table) {
+    auto lock = boost::lock_guard(table.m_mutex);
+    auto lockB = boost::lock_guard(m_mutex);
+    m_exchangeRates = std::move(table.m_exchangeRates);
+    return *this;
   }
 
   inline void ExchangeRateTable::ImmutableAdd(

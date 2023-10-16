@@ -20,6 +20,9 @@ namespace Spire {
   class CheckBox;
   class ClickObserver;
   class ClosedFilterPanel;
+  class ColorBox;
+  class ColorCodePanel;
+  class ColorPicker;
   class ComboBox;
   class ContextMenu;
   class DateBox;
@@ -38,6 +41,7 @@ namespace Spire {
   class FilterPanel;
   class FocusObserver;
   class GlobalPositionObserver;
+  class HexColorBox;
   struct Highlight;
   class HighlightPicker;
   class HighlightSwatch;
@@ -47,6 +51,7 @@ namespace Spire {
   class KeyInputBox;
   class LayeredWidget;
   class ListItem;
+  template<typename T> class ListSelectionValueModel;
   class ListView;
   class MarketBox;
   class MoneyBox;
@@ -72,6 +77,8 @@ namespace Spire {
   class SecurityStack;
   class SecurityView;
   template<typename T> class SingleSelectionModel;
+  class Slider;
+  class Slider2D;
   class SortedTableModel;
   template<typename T> class StagingValueModel;
   class StandardTableFilter;

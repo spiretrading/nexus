@@ -20,6 +20,15 @@ namespace Spire {
   /** Returns a UiProfile for the ClosedFilterPanel. */
   UiProfile make_closed_filter_panel_profile();
 
+  /** Returns a UiProfile for the ColorBox. */
+  UiProfile make_color_box_profile();
+
+  /** Returns a UiProfile for the ColorCodePanel. */
+  UiProfile make_color_code_panel_profile();
+
+  /** Returns a UiProfile for the ColorPicker. */
+  UiProfile make_color_picker_profile();
+
   /** Returns a UiProfile for the ComboBox. */
   UiProfile make_combo_box_profile();
 
@@ -76,6 +85,9 @@ namespace Spire {
 
   /** Returns a UiProfile for the FontStyleBox. */
   UiProfile make_font_style_box_profile();
+
+  /** Returns a UiProfile for the HexColorBox. */
+  UiProfile make_hex_color_box_profile();
 
   /** Returns a UiProfile for the HighlightPicker. */
   UiProfile make_highlight_picker_profile();
@@ -211,6 +223,12 @@ namespace Spire {
 
   /** Returns a UiProfile for the SideFilterPanel. */
   UiProfile make_side_filter_panel_profile();
+
+  /** Returns a UiProfile for the Slider. */
+  UiProfile make_slider_profile();
+
+  /** Returns a UiProfile for the Slider2D. */
+  UiProfile make_slider_2d_profile();
 
   /** Returns a UiProfile for the SplitView. */
   UiProfile make_split_view_profile();

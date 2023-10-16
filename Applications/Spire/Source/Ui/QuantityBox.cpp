@@ -16,7 +16,7 @@ namespace {
       return Decimal(0);
     }
 
-    Decimal get_increment() const override {
+    optional<Decimal> get_increment() const override {
       return Decimal("0.000001");
     }
   };

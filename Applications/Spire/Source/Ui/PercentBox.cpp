@@ -30,7 +30,7 @@ namespace {
 
     OptionalPercentModel(std::shared_ptr<OptionalDecimalModel> model)
       : m_model(std::move(model)),
-        m_value(m_model->get()),
+        m_value(to_percentage(m_model->get())),
         m_connection(m_model->connect_update_signal(
           std::bind_front(&OptionalPercentModel::on_update, this))) {}
 
@@ -46,7 +46,7 @@ namespace {
       return to_percentage(m_model->get_maximum());
     }
 
-    Decimal get_increment() const {
+    optional<Decimal> get_increment() const {
       return m_model->get_increment();
     }
 

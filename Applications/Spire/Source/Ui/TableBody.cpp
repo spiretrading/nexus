@@ -6,8 +6,11 @@
 #include <QPointer>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/ListValueModel.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
+#include "Spire/Spire/RowViewListModel.hpp"
 #include "Spire/Spire/TableModel.hpp"
+#include "Spire/Spire/ToTextModel.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TableItem.hpp"
@@ -29,7 +32,12 @@ GridColor Spire::Styles::grid_color(QColor color) {
 
 QWidget* TableBody::default_view_builder(
     const std::shared_ptr<TableModel>& table, int row, int column) {
-  return make_label(displayText(table->at(row, column)));
+  auto text = std::make_shared<ToTextModel<AnyRef>>(
+    std::make_shared<ListValueModel<AnyRef>>(
+      std::make_shared<RowViewListModel<AnyRef>>(table, row), column),
+    [] (const AnyRef& value) { return to_text(value); },
+    [] (const QString&) { return none; });
+  return make_label(text);
 }
 
 struct TableBody::Cover : QWidget {

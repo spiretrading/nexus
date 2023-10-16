@@ -22,7 +22,7 @@ namespace Spire {
        * @param current The current value model.
        * @param parent The parent widget.
        */
-      explicit HighlightPicker(std::shared_ptr<ValueModel<Highlight>> current,
+      HighlightPicker(std::shared_ptr<ValueModel<Highlight>> current,
         QWidget& parent);
 
       /** Returns the current value model. */
@@ -32,7 +32,8 @@ namespace Spire {
       bool event(QEvent* event) override;
 
     private:
-      std::shared_ptr<ValueModel<Highlight>> m_current;
+      struct HighlightPickerModel;
+      std::shared_ptr<HighlightPickerModel> m_model;
       ListView* m_palette;
       OverlayPanel* m_panel;
       boost::signals2::scoped_connection m_current_connection;

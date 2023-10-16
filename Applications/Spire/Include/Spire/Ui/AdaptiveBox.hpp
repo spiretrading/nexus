@@ -34,7 +34,10 @@ namespace Spire {
 
     private:
       QStackedLayout* m_stacked_layout;
+      std::unordered_map<QWidget*, std::vector<QLayoutItem*>> m_placeholders;
 
+      void take_control_placeholders(QWidget* owner);
+      void release_control_placeholders(QWidget* owner);
       void update_layout();
   };
 }
