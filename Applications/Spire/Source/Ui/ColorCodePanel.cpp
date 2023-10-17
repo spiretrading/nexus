@@ -116,12 +116,15 @@ namespace {
     return round(100.0 * value) / 100.0;
   }
 
-  int to_hue(const QColor& color) {
-    auto hue = color.hsvHueF();
-    if(hue < 0.0) {
-      return 0;
+  auto get_hue(const QColor& color) {
+    if(auto hue = color.hsvHueF(); hue >= 0.0) {
+      return hue;
     }
-    return std::round(360 * hue);
+    return 0.0;
+  }
+
+  int to_hue(const QColor& color) {
+    return std::round(360 * get_hue(color));
   }
 
   Decimal to_saturation(const QColor& color) {
@@ -376,7 +379,7 @@ struct ColorCodePanel::ColorCodeValueModel {
     if(!value) {
       return;
     }
-    auto color = QColor::fromHsvF(m_source->get().hsvHueF(),
+    auto color = QColor::fromHsvF(get_hue(m_source->get()),
       static_cast<qreal>(*value), m_source->get().valueF(),
       m_source->get().alphaF());
     update_hex(color);
@@ -388,7 +391,7 @@ struct ColorCodePanel::ColorCodeValueModel {
     if(!value) {
       return;
     }
-    auto color = QColor::fromHsvF(m_source->get().hsvHueF(),
+    auto color = QColor::fromHsvF(get_hue(m_source->get()),
       m_source->get().hsvSaturationF(), static_cast<qreal>(*value),
       m_source->get().alphaF());
     update_hex(color);
