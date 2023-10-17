@@ -72,10 +72,10 @@ std::unique_ptr<CanvasNode>
   for(auto& signature : GetSignatures()) {
     if(returnType->GetCompatibility(*signature.back()) ==
         CanvasType::Compatibility::EQUAL) {
-      auto isCompatible = false;
+      auto isCompatible = true;
       for(const auto& parameter : DropLast(MakeIndexView(signature))) {
         auto& child = clone->GetChildren()[parameter.GetIndex()];
-        if(!IsCompatible(*parameter.GetValue(), child.GetType())) {
+        if(!IsCompatible(child.GetType(), *parameter.GetValue())) {
           isCompatible = false;
           break;
         }
