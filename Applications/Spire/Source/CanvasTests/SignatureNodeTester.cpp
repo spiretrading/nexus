@@ -2,6 +2,7 @@
 #include "Spire/Canvas/Common/CanvasNodeVisitor.hpp"
 #include "Spire/Canvas/Common/SignatureNode.hpp"
 #include "Spire/Canvas/StandardNodes/TimerNode.hpp"
+#include "Spire/Canvas/Operations/CanvasTypeCompatibilityException.hpp"
 #include "Spire/Canvas/Operations/DefaultCanvasNodeFromCanvasTypeVisitor.hpp"
 #include "Spire/Canvas/Types/MoneyType.hpp"
 #include "Spire/Canvas/ValueNodes/IntegerNode.hpp"
@@ -51,6 +52,7 @@ TEST_SUITE("SignatureNode") {
       std::unique_ptr<CanvasNode>(std::make_unique<TestSignatureNode>());
     node = node->Replace("p1", std::make_unique<IntegerNode>(0));
     node = node->Replace("p2", std::move(timer));
-//    node = node->Convert(MoneyType::GetInstance());
+    REQUIRE_THROWS_AS(node->Convert(MoneyType::GetInstance()),
+      CanvasTypeCompatibilityException);
   }
 }
