@@ -68,6 +68,27 @@ std::unique_ptr<CanvasNode>
   }
   auto returnType =
     UnionType::Create(MakeDereferenceView(signatureEntries.back()));
+  auto hasCompatibility = false;
+  for(auto& signature : GetSignatures()) {
+    if(returnType->GetCompatibility(*signature.back()) ==
+        CanvasType::Compatibility::EQUAL) {
+      auto isCompatible = false;
+      for(const auto& parameter : DropLast(MakeIndexView(signature))) {
+        auto& child = clone->GetChildren()[parameter.GetIndex()];
+        if(!IsCompatible(*parameter.GetValue(), child.GetType())) {
+          isCompatible = false;
+          break;
+        }
+      }
+      if(isCompatible) {
+        hasCompatibility = true;
+        break;
+      }
+    }
+  }
+  if(!hasCompatibility) {
+    BOOST_THROW_EXCEPTION(CanvasTypeCompatibilityException());
+  }
   if(!IsCompatible(*returnType, clone->GetType())) {
     clone->SetType(*returnType);
   }

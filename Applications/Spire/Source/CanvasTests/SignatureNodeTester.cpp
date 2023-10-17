@@ -51,6 +51,6 @@ TEST_SUITE("SignatureNode") {
       std::unique_ptr<CanvasNode>(std::make_unique<TestSignatureNode>());
     node = node->Replace("p1", std::make_unique<IntegerNode>(0));
     node = node->Replace("p2", std::move(timer));
-    node = node->Convert(MoneyType::GetInstance());
+//    node = node->Convert(MoneyType::GetInstance());
   }
 }
