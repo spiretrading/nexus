@@ -10,19 +10,18 @@ using namespace Beam;
 using namespace Beam::Serialization;
 using namespace boost;
 using namespace Spire;
-using namespace std;
 
 ChainNode::ChainNode() {
-  AddChild("i0", make_unique<NoneNode>(UnionType::GetAnyType()));
+  AddChild("i0", std::make_unique<NoneNode>(UnionType::GetAnyType()));
   SetType(UnionType::GetAnyType());
   SetText("Chain");
 }
 
-ChainNode::ChainNode(vector<unique_ptr<CanvasNode>> nodes) {
+ChainNode::ChainNode(std::vector<std::unique_ptr<CanvasNode>> nodes) {
   auto index = 0;
   for(auto& node : nodes) {
     if(dynamic_cast<const NoneNode*>(node.get()) == nullptr) {
-      AddChild("i" + boost::lexical_cast<std::string>(index), std::move(node));
+      AddChild("i" + lexical_cast<std::string>(index), std::move(node));
     }
     ++index;
   }
@@ -33,13 +32,13 @@ ChainNode::ChainNode(vector<unique_ptr<CanvasNode>> nodes) {
       return &GetChildren().front().GetType();
     }
   }();
-  AddChild("i" + boost::lexical_cast<std::string>(GetChildren().size()),
-    make_unique<NoneNode>(*type));
+  AddChild("i" + lexical_cast<std::string>(GetChildren().size()),
+    std::make_unique<NoneNode>(*type));
   SetType(*type);
   SetText("Chain");
 }
 
-unique_ptr<CanvasNode> ChainNode::Convert(const CanvasType& type) const {
+std::unique_ptr<CanvasNode> ChainNode::Convert(const CanvasType& type) const {
   auto clone = CanvasNode::Clone(*this);
   for(auto& child : clone->GetChildren()) {
     clone->SetChild(child, child.Convert(type));
@@ -48,8 +47,8 @@ unique_ptr<CanvasNode> ChainNode::Convert(const CanvasType& type) const {
   return clone;
 }
 
-unique_ptr<CanvasNode> ChainNode::Replace(const CanvasNode& child,
-    unique_ptr<CanvasNode> replacement) const {
+std::unique_ptr<CanvasNode> ChainNode::Replace(
+    const CanvasNode& child, std::unique_ptr<CanvasNode> replacement) const {
   if(dynamic_cast<const NoneNode*>(replacement.get())) {
     if(&child == &GetChildren().back()) {
       return CanvasNode::Clone(*this);
@@ -58,8 +57,7 @@ unique_ptr<CanvasNode> ChainNode::Replace(const CanvasNode& child,
     clone->RemoveChild(child);
     auto index = 0;
     for(auto& selfChild : clone->GetChildren()) {
-      clone->RenameChild(selfChild,
-        "i" + boost::lexical_cast<std::string>(index));
+      clone->RenameChild(selfChild, "i" + lexical_cast<std::string>(index));
       ++index;
     }
     return std::move(clone);
@@ -71,8 +69,9 @@ unique_ptr<CanvasNode> ChainNode::Replace(const CanvasNode& child,
       replacement = Spire::Convert(std::move(replacement), clone->GetType());
     }
     clone->SetChild(child, std::move(replacement));
-    clone->AddChild("i" + lexical_cast<string>(clone->GetChildren().size()),
-      make_unique<NoneNode>(clone->GetType()));
+    clone->AddChild(
+      "i" + lexical_cast<std::string>(clone->GetChildren().size()),
+      std::make_unique<NoneNode>(clone->GetType()));
     return std::move(clone);
   }
   return CanvasNode::Replace(child, std::move(replacement));
@@ -82,8 +81,8 @@ void ChainNode::Apply(CanvasNodeVisitor& visitor) const {
   visitor.Visit(*this);
 }
 
-unique_ptr<CanvasNode> ChainNode::Clone() const {
-  return make_unique<ChainNode>(*this);
+std::unique_ptr<CanvasNode> ChainNode::Clone() const {
+  return std::make_unique<ChainNode>(*this);
 }
 
 ChainNode::ChainNode(ReceiveBuilder) {}

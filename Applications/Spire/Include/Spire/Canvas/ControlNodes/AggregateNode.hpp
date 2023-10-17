@@ -17,7 +17,7 @@ namespace Spire {
        * Constructs an AggregateNode.
        * @param nodes The list of CanvasNodes to aggregate.
        */
-      AggregateNode(std::vector<std::unique_ptr<CanvasNode>> nodes);
+      explicit AggregateNode(std::vector<std::unique_ptr<CanvasNode>> nodes);
 
       std::unique_ptr<CanvasNode>
         Convert(const CanvasType& type) const override;
