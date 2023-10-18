@@ -23,7 +23,7 @@ namespace Spire {
   using LocalOptionalColorModel = LocalValueModel<boost::optional<QColor>>;
 
   /**
-   * Presents a color to the user.
+   * Presents a color.
    */
   class ColorBox : public QWidget {
     public:

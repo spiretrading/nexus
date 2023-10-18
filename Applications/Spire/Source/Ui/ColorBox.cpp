@@ -78,10 +78,8 @@ ColorBox::ColorBox(std::shared_ptr<ColorModel> current, QWidget* parent)
   m_color_display->setSizePolicy(QSizePolicy::Expanding,
     QSizePolicy::Expanding);
   update_style(*m_color_display, [&] (auto& style) {
-    style.get(Any()).
-      set(BackgroundColor(m_current->get()));
-    style.get(Disabled()).
-      set(BackgroundColor(QColor(0xF5F5F5)));
+    style.get(Any()).set(BackgroundColor(m_current->get()));
+    style.get(Disabled()).set(BackgroundColor(QColor(0xF5F5F5)));
   });
   auto body = new LayeredWidget();
   body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
