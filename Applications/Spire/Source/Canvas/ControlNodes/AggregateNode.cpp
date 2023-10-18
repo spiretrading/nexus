@@ -10,18 +10,17 @@ using namespace Beam;
 using namespace Beam::Serialization;
 using namespace boost;
 using namespace Spire;
-using namespace std;
 
 AggregateNode::AggregateNode() {
-  AddChild("i0", make_unique<NoneNode>(UnionType::GetAnyType()));
+  AddChild("i0", std::make_unique<NoneNode>(UnionType::GetAnyType()));
   SetType(UnionType::GetAnyType());
   SetText("Aggregate");
 }
 
-AggregateNode::AggregateNode(vector<unique_ptr<CanvasNode>> nodes) {
+AggregateNode::AggregateNode(std::vector<std::unique_ptr<CanvasNode>> nodes) {
   auto index = 0;
   for(auto& node : nodes) {
-    if(dynamic_cast<const NoneNode*>(node.get()) == nullptr) {
+    if(!dynamic_cast<const NoneNode*>(node.get())) {
       AddChild("i" + boost::lexical_cast<std::string>(index), std::move(node));
     }
     ++index;
@@ -39,7 +38,8 @@ AggregateNode::AggregateNode(vector<unique_ptr<CanvasNode>> nodes) {
   SetText("Aggregate");
 }
 
-unique_ptr<CanvasNode> AggregateNode::Convert(const CanvasType& type) const {
+std::unique_ptr<CanvasNode>
+    AggregateNode::Convert(const CanvasType& type) const {
   auto clone = CanvasNode::Clone(*this);
   for(auto& child : clone->GetChildren()) {
     clone->SetChild(child, child.Convert(type));
@@ -48,8 +48,8 @@ unique_ptr<CanvasNode> AggregateNode::Convert(const CanvasType& type) const {
   return clone;
 }
 
-unique_ptr<CanvasNode> AggregateNode::Replace(const CanvasNode& child,
-    unique_ptr<CanvasNode> replacement) const {
+std::unique_ptr<CanvasNode> AggregateNode::Replace(
+    const CanvasNode& child, std::unique_ptr<CanvasNode> replacement) const {
   if(dynamic_cast<const NoneNode*>(replacement.get())) {
     if(&child == &GetChildren().back()) {
       return CanvasNode::Clone(*this);
@@ -58,8 +58,7 @@ unique_ptr<CanvasNode> AggregateNode::Replace(const CanvasNode& child,
     clone->RemoveChild(child);
     auto index = 0;
     for(auto& selfChild : clone->GetChildren()) {
-      clone->RenameChild(selfChild,
-        "i" + boost::lexical_cast<std::string>(index));
+      clone->RenameChild(selfChild, "i" + lexical_cast<std::string>(index));
       ++index;
     }
     return std::move(clone);
@@ -71,19 +70,21 @@ unique_ptr<CanvasNode> AggregateNode::Replace(const CanvasNode& child,
       replacement = Spire::Convert(std::move(replacement), clone->GetType());
     }
     clone->SetChild(child, std::move(replacement));
-    clone->AddChild("i" + lexical_cast<string>(clone->GetChildren().size()),
-      make_unique<NoneNode>(clone->GetType()));
+    clone->AddChild(
+      "i" + lexical_cast<std::string>(clone->GetChildren().size()),
+      std::make_unique<NoneNode>(clone->GetType()));
     return std::move(clone);
   }
-  return CanvasNode::Replace(child, std::move(replacement));
+  auto type = std::shared_ptr<CanvasType>(replacement->GetType());
+  return CanvasNode::Replace(child, std::move(replacement))->Convert(*type);
 }
 
 void AggregateNode::Apply(CanvasNodeVisitor& visitor) const {
   visitor.Visit(*this);
 }
 
-unique_ptr<CanvasNode> AggregateNode::Clone() const {
-  return make_unique<AggregateNode>(*this);
+std::unique_ptr<CanvasNode> AggregateNode::Clone() const {
+  return std::make_unique<AggregateNode>(*this);
 }
 
 AggregateNode::AggregateNode(ReceiveBuilder) {}

@@ -20,7 +20,7 @@ ChainNode::ChainNode() {
 ChainNode::ChainNode(std::vector<std::unique_ptr<CanvasNode>> nodes) {
   auto index = 0;
   for(auto& node : nodes) {
-    if(dynamic_cast<const NoneNode*>(node.get()) == nullptr) {
+    if(!dynamic_cast<const NoneNode*>(node.get())) {
       AddChild("i" + lexical_cast<std::string>(index), std::move(node));
     }
     ++index;
@@ -74,7 +74,8 @@ std::unique_ptr<CanvasNode> ChainNode::Replace(
       std::make_unique<NoneNode>(clone->GetType()));
     return std::move(clone);
   }
-  return CanvasNode::Replace(child, std::move(replacement));
+  auto type = std::shared_ptr<CanvasType>(replacement->GetType());
+  return CanvasNode::Replace(child, std::move(replacement))->Convert(*type);
 }
 
 void ChainNode::Apply(CanvasNodeVisitor& visitor) const {

@@ -47,6 +47,9 @@ namespace {
 
 std::unique_ptr<CanvasNode>
     SignatureNode::Convert(const CanvasType& type) const {
+  if(type.GetCompatibility(GetType()) == CanvasType::Compatibility::EQUAL) {
+    return Clone(*this);
+  }
   auto signatureEntries =
     std::vector<SignatureNode::Signature>(GetSignatures().front().size());
   for(auto& signature : GetSignatures()) {
