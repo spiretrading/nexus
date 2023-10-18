@@ -33,7 +33,7 @@ AggregateNode::AggregateNode(std::vector<std::unique_ptr<CanvasNode>> nodes) {
     }
   }();
   AddChild("i" + boost::lexical_cast<std::string>(GetChildren().size()),
-    make_unique<NoneNode>(*type));
+    std::make_unique<NoneNode>(*type));
   SetType(*type);
   SetText("Aggregate");
 }
