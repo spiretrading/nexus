@@ -1,10 +1,7 @@
 #ifndef SPIRE_COLOR_PICKER_HPP
 #define SPIRE_COLOR_PICKER_HPP
-#include <memory>
-#include <QColor>
-#include <QWidget>
 #include "Spire/Spire/ListModel.hpp"
-#include "Spire/Spire/ValueModel.hpp"
+#include "Spire/Ui/ColorBox.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -27,8 +24,7 @@ namespace Spire {
        * @param current The model used for the current color.
        * @param parent The parent widget.
        */
-      ColorPicker(std::shared_ptr<ValueModel<QColor>> current,
-        QWidget& parent);
+      ColorPicker(std::shared_ptr<ColorModel> current, QWidget& parent);
 
       /**
        * Constructs a ColorPicker.
@@ -36,11 +32,11 @@ namespace Spire {
        * @param palette The list model which holds a list of colors.
        * @param parent The parent widget.
        */
-      ColorPicker(std::shared_ptr<ValueModel<QColor>> current,
+      ColorPicker(std::shared_ptr<ColorModel> current,
         std::shared_ptr<ListModel<QColor>> palette, QWidget& parent);
 
       /** Returns the current color model. */
-      const std::shared_ptr<ValueModel<QColor>>& get_current() const;
+      const std::shared_ptr<ColorModel>& get_current() const;
 
       /** Returns the list of colors. */
       const std::shared_ptr<ListModel<QColor>>& get_palette() const;

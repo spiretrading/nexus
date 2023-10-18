@@ -144,7 +144,7 @@ namespace {
 }
 
 struct ColorPicker::ColorPickerModel {
-  std::shared_ptr<ValueModel<QColor>> m_source;
+  std::shared_ptr<ColorModel> m_source;
   std::shared_ptr<LocalDecimalModel> m_hue_slider_model;
   std::shared_ptr<LocalDecimalModel> m_alpha_slider_model;
   std::shared_ptr<LocalDecimalModel> m_spectrum_x_model;
@@ -155,7 +155,7 @@ struct ColorPicker::ColorPickerModel {
   scoped_connection m_spectrum_x_connection;
   scoped_connection m_spectrum_y_connection;
 
-  ColorPickerModel(std::shared_ptr<ValueModel<QColor>> source)
+  ColorPickerModel(std::shared_ptr<ColorModel> source)
       : m_source(std::move(source)),
         m_hue_slider_model(std::make_shared<LocalDecimalModel>()),
         m_alpha_slider_model(std::make_shared<LocalDecimalModel>()),
@@ -199,14 +199,14 @@ struct ColorPicker::ColorPickerModel {
   void on_color_spectrum_x_current(const Decimal& value) {
     auto& color = m_source->get();
     auto blocker = shared_connection_block(m_source_connection);
-    m_source->set(QColor::fromHsvF(color.hsvHueF(),
+    m_source->set(QColor::fromHsvF(get_hue(color),
       static_cast<qreal>(value / 100.0), color.valueF(), color.alphaF()));
   }
 
   void on_color_spectrum_y_current(const Decimal& value) {
     auto& color = m_source->get();
     auto blocker = shared_connection_block(m_source_connection);
-    m_source->set(QColor::fromHsvF(color.hsvHueF(), color.hsvSaturationF(),
+    m_source->set(QColor::fromHsvF(get_hue(color), color.hsvSaturationF(),
       static_cast<qreal>(value / 100.0), color.alphaF()));
   }
 
@@ -223,14 +223,14 @@ struct ColorPicker::ColorPickerModel {
 };
 
 ColorPicker::ColorPicker(QWidget& parent)
-  : ColorPicker(std::make_shared<LocalValueModel<QColor>>(), parent) {}
+  : ColorPicker(std::make_shared<LocalColorModel>(), parent) {}
 
-ColorPicker::ColorPicker(std::shared_ptr<ValueModel<QColor>> current,
+ColorPicker::ColorPicker(std::shared_ptr<ColorModel> current,
   QWidget& parent)
   : ColorPicker(std::move(current), std::make_shared<ArrayListModel<QColor>>(),
       parent) {}
 
-ColorPicker::ColorPicker(std::shared_ptr<ValueModel<QColor>> current,
+ColorPicker::ColorPicker(std::shared_ptr<ColorModel> current,
     std::shared_ptr<ListModel<QColor>> palette, QWidget& parent)
     : QWidget(&parent),
       m_model(std::make_shared<ColorPickerModel>(std::move(current))),
@@ -264,7 +264,7 @@ ColorPicker::ColorPicker(std::shared_ptr<ValueModel<QColor>> current,
     std::bind_front(&ColorPicker::on_style, this));
 }
 
-const std::shared_ptr<ValueModel<QColor>>& ColorPicker::get_current() const {
+const std::shared_ptr<ColorModel>& ColorPicker::get_current() const {
   return m_model->m_source;
 }
 

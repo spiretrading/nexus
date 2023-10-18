@@ -30,6 +30,7 @@
 #include "Spire/Ui/CalendarDatePicker.hpp"
 #include "Spire/Ui/Checkbox.hpp"
 #include "Spire/Ui/ClosedFilterPanel.hpp"
+#include "Spire/Ui/ColorBox.hpp"
 #include "Spire/Ui/ColorCodePanel.hpp"
 #include "Spire/Ui/ColorPicker.hpp"
 #include "Spire/Ui/ComboBox.hpp"
@@ -1240,6 +1241,68 @@ UiProfile Spire::make_closed_filter_panel_profile() {
       });
     button->connect_click_signal([=] { panel->show(); });
     return button;
+  });
+  return profile;
+}
+
+UiProfile Spire::make_color_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_property("read_only", false));
+  properties.push_back(make_standard_property("current", QColor(0xF0D109)));
+  properties.push_back(make_standard_property("alpha_visible", true));
+  auto profile = UiProfile("ColorBox", properties, [] (auto& profile) {
+    auto& current = get<QColor>("current", profile.get_properties());
+    auto color_box = new ColorBox(
+      std::make_shared<LocalColorModel>(current.get()));
+    color_box->setFixedSize(scale(100, 26));
+    apply_widget_properties(color_box, profile.get_properties());
+    auto& read_only = get<bool>("read_only", profile.get_properties());
+    read_only.connect_changed_signal(
+      std::bind_front(&ColorBox::set_read_only, color_box));
+    current.connect_changed_signal([=] (const auto& color) {
+      if(color.isValid()) {
+        color_box->get_current()->set(color);
+      }
+    });
+    auto color_picker = [&] () -> OverlayPanel* {
+      auto children = color_box->children();
+      for(auto child : children) {
+        if(child->isWidgetType()) {
+          if(auto widget = static_cast<QWidget*>(child);
+              widget->windowFlags() & Qt::Popup) {
+            return static_cast<OverlayPanel*>(widget);
+          }
+        }
+      }
+      return nullptr;
+    }();
+    auto& alpha_visible = get<bool>("alpha_visible", profile.get_properties());
+    alpha_visible.connect_changed_signal([=] (auto value) {
+      update_style(*color_box, [&] (auto& style) {
+        if(value) {
+          style.get(Any() > Alpha()).set(Visibility::VISIBLE);
+        } else {
+          style.get(Any() > Alpha()).set(Visibility::NONE);
+        }
+      });
+      if(value) {
+        color_picker->get_body().setFixedWidth(12 * scale_width(22));
+      } else {
+        color_picker->get_body().setFixedWidth(scale_width(220));
+      }
+    });
+    auto current_slot = profile.make_event_slot<QString>("Current");
+    color_box->get_current()->connect_update_signal([=] (const auto& current) {
+      current_slot(QString("Hex:%1 Alpha:%2").
+        arg(current.name()).arg(std::round(current.alphaF() * 100)));
+    });
+    auto submit_slot = profile.make_event_slot<QString>("Submit");
+    color_box->connect_submit_signal([=] (const auto& submission) {
+      submit_slot(QString("Hex:%1 Alpha:%2").
+        arg(submission.name()).arg(std::round(submission.alphaF() * 100)));
+    });
+    return color_box;
   });
   return profile;
 }

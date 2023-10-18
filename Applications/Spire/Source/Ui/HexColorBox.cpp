@@ -151,7 +151,6 @@ bool HexColorBox::eventFilter(QObject* watched, QEvent* event) {
     auto& key_event = static_cast<QKeyEvent&>(*event);
     if(key_event.key() == Qt::Key_Escape) {
       m_adaptor_model->set(m_submission.name());
-      return true;
     }
   }
   return QWidget::eventFilter(watched, event);
