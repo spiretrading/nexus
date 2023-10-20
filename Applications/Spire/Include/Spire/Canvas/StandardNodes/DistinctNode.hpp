@@ -1,16 +1,16 @@
-#ifndef SPIRE_FILTER_NODE_HPP
-#define SPIRE_FILTER_NODE_HPP
+#ifndef SPIRE_DISTINCT_NODE_HPP
+#define SPIRE_DISTINCT_NODE_HPP
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Canvas/Common/SignatureNode.hpp"
 
 namespace Spire {
 
-  /** Used to filter out values produced by a CanvasNode. */
-  class FilterNode : public SignatureNode {
+  /** Used to produce only distinct values. */
+  class DistinctNode : public SignatureNode {
     public:
 
-      /** Constructs a FilterNode. */
-      FilterNode();
+      /** Constructs a DistinctNode. */
+      DistinctNode();
 
       std::unique_ptr<CanvasNode> Replace(const CanvasNode& child,
         std::unique_ptr<CanvasNode> replacement) const override;
@@ -25,20 +25,20 @@ namespace Spire {
     private:
       friend struct Beam::Serialization::DataShuttle;
 
-      FilterNode(Beam::Serialization::ReceiveBuilder);
+      DistinctNode(Beam::Serialization::ReceiveBuilder);
       template<typename Shuttler>
       void Shuttle(Shuttler& shuttle, unsigned int version);
   };
 
   template<typename Shuttler>
-  void FilterNode::Shuttle(Shuttler& shuttle, unsigned int version) {
+  void DistinctNode::Shuttle(Shuttler& shuttle, unsigned int version) {
     SignatureNode::Shuttle(shuttle, version);
   }
 }
 
 namespace Beam::Serialization {
   template<>
-  struct IsDefaultConstructable<Spire::FilterNode> : std::false_type {};
+  struct IsDefaultConstructable<Spire::DistinctNode> : std::false_type {};
 }
 
 #endif

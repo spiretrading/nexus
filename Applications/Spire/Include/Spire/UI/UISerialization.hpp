@@ -1,5 +1,5 @@
-#ifndef SPIRE_UISERIALIZATION_HPP
-#define SPIRE_UISERIALIZATION_HPP
+#ifndef SPIRE_UI_SERIALIZATION_HPP
+#define SPIRE_UI_SERIALIZATION_HPP
 #include <Beam/Serialization/TypeRegistry.hpp>
 #include "Spire/Blotter/BlotterWindowSettings.hpp"
 #include "Spire/BookView/BookViewWindowSettings.hpp"
@@ -36,6 +36,7 @@
 #include "Spire/Canvas/StandardNodes/CurrentDateNode.hpp"
 #include "Spire/Canvas/StandardNodes/CurrentDateTimeNode.hpp"
 #include "Spire/Canvas/StandardNodes/CurrentTimeNode.hpp"
+#include "Spire/Canvas/StandardNodes/DistinctNode.hpp"
 #include "Spire/Canvas/StandardNodes/DivisionNode.hpp"
 #include "Spire/Canvas/StandardNodes/EqualsNode.hpp"
 #include "Spire/Canvas/StandardNodes/FilterNode.hpp"
@@ -53,6 +54,7 @@
 #include "Spire/Canvas/StandardNodes/MinNode.hpp"
 #include "Spire/Canvas/StandardNodes/MultiplicationNode.hpp"
 #include "Spire/Canvas/StandardNodes/NotNode.hpp"
+#include "Spire/Canvas/StandardNodes/PreviousNode.hpp"
 #include "Spire/Canvas/StandardNodes/RangeNode.hpp"
 #include "Spire/Canvas/StandardNodes/RoundNode.hpp"
 #include "Spire/Canvas/StandardNodes/SubtractionNode.hpp"
@@ -172,6 +174,7 @@ namespace Spire {
     (CurrentDateNode, "Spire.CurrentDateNode"),
     (CurrentDateTimeNode, "Spire.CurrentDateTimeNode"),
     (CurrentTimeNode, "Spire.CurrentTimeNode"),
+    (DistinctNode, "Spire.DistinctNode"),
     (DivisionNode, "Spire.DivisionNode"),
     (EqualsNode, "Spire.EqualsNode"),
     (FilterNode, "Spire.FilterNode"),
@@ -189,6 +192,7 @@ namespace Spire {
     (MinNode, "Spire.MinNode"),
     (MultiplicationNode, "Spire.MultiplicationNode"),
     (NotNode, "Spire.NotNode"),
+    (NotNode, "Spire.PreviousNode"),
     (RangeNode, "Spire.RangeNode"),
     (RoundNode, "Spire.RoundNode"),
     (SubtractionNode, "Spire.SubtractionNode"),
@@ -276,8 +280,8 @@ namespace Spire {
     (UI::ToolbarWindowSettings, "Spire.UI.ToolbarWindowSettings"));
 
   template<typename SenderType>
-  void RegisterSpireTypes(Beam::Out<Beam::Serialization::TypeRegistry<
-      SenderType>> registry) {
+  void RegisterSpireTypes(
+      Beam::Out<Beam::Serialization::TypeRegistry<SenderType>> registry) {
     RegisterCanvasCommonTypes(Beam::Store(registry));
     RegisterCanvasControlNodeTypes(Beam::Store(registry));
     RegisterCanvasIONodeTypes(Beam::Store(registry));

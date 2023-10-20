@@ -1,13 +1,11 @@
-#ifndef SPIRE_BUILTINCATALOGENTRY_HPP
-#define SPIRE_BUILTINCATALOGENTRY_HPP
+#ifndef SPIRE_BUILT_IN_CATALOG_ENTRY_HPP
+#define SPIRE_BUILT_IN_CATALOG_ENTRY_HPP
 #include <vector>
 #include "Spire/Catalog/CatalogEntry.hpp"
 
 namespace Spire {
 
-  /*! \class BuiltInCatalogEntry
-      \brief CatalogEntry for a built-in CanvasNode.
-   */
+  /** CatalogEntry for a built-in CanvasNode. */
   class BuiltInCatalogEntry : public CatalogEntry {
     public:
       static const boost::uuids::uuid ABS_UUID;
@@ -29,6 +27,7 @@ namespace Spire {
       static const boost::uuids::uuid DECIMAL_UUID;
       static const boost::uuids::uuid DEFAULT_CURRENCY_UUID;
       static const boost::uuids::uuid DESTINATION_UUID;
+      static const boost::uuids::uuid DISTINCT_UUID;
       static const boost::uuids::uuid DIVISION_UUID;
       static const boost::uuids::uuid DURATION_UUID;
       static const boost::uuids::uuid EQUAL_UUID;
@@ -70,6 +69,7 @@ namespace Spire {
       static const boost::uuids::uuid ORDER_STATUS_UUID;
       static const boost::uuids::uuid ORDER_TYPE_UUID;
       static const boost::uuids::uuid PORTFOLIO_ENTRY_RECORD_UUID;
+      static const boost::uuids::uuid PREVIOUS_UUID;
       static const boost::uuids::uuid QUERY_UUID;
       static const boost::uuids::uuid QUOTE_RECORD_UUID;
       static const boost::uuids::uuid RANGE_UUID;
@@ -91,56 +91,58 @@ namespace Spire {
       static const boost::uuids::uuid UNTIL_TASK_UUID;
       static const boost::uuids::uuid WHEN_TASK_UUID;
 
-      //! Loads the list of BuiltInCatalogEntries.
+      /** Loads the list of BuiltInCatalogEntries. */
       static std::vector<std::unique_ptr<CatalogEntry>>
         LoadBuiltInCatalogEntries();
 
-      //! Returns the meta-data value used to indicate the CanvasNode's source.
+      /**
+       * Returns the meta-data value used to indicate the CanvasNode's source.
+       */
       static const std::string& GetBuiltInSourceValue();
 
-      //! Constructs a BuiltInCatalogEntry.
-      /*!
-        \param name The name of the entry.
-        \param uid The entry's unique id.
-        \param iconPath The path to the entry's icon.
-        \param description The description of the entry.
-        \param node The CanvasNode this entry represents.
-      */
+      /**
+       * Constructs a BuiltInCatalogEntry.
+       * @param name The name of the entry.
+       * @param uid The entry's unique id.
+       * @param iconPath The path to the entry's icon.
+       * @param description The description of the entry.
+       * @param node The CanvasNode this entry represents.
+       */
       BuiltInCatalogEntry(const std::string& name,
         const boost::uuids::uuid& uid, const std::string& iconPath,
         const std::string& description, const CanvasNode& node);
 
-      //! Constructs a BuiltInCatalogEntry.
-      /*!
-        \param uid The entry's unique id.
-        \param iconPath The path to the entry's icon.
-        \param description The description of the entry.
-        \param node The CanvasNode this entry represents.
-      */
+      /**
+       * Constructs a BuiltInCatalogEntry.
+       * @param uid The entry's unique id.
+       * @param iconPath The path to the entry's icon.
+       * @param description The description of the entry.
+       * @param node The CanvasNode this entry represents.
+       */
       BuiltInCatalogEntry(const boost::uuids::uuid& uid,
         const std::string& iconPath, const std::string& description,
         const CanvasNode& node);
 
-      virtual std::string GetName() const;
+      std::string GetName() const override;
 
-      virtual std::unique_ptr<CatalogEntry> SetName(
-        const std::string& name) const;
+      std::unique_ptr<CatalogEntry>
+        SetName(const std::string& name) const override;
 
-      virtual const std::string& GetIconPath() const;
+      const std::string& GetIconPath() const override;
 
-      virtual std::unique_ptr<CatalogEntry> SetIconPath(
-        const std::string& iconPath) const;
+      std::unique_ptr<CatalogEntry>
+        SetIconPath(const std::string& iconPath) const override;
 
-      virtual QIcon GetIcon() const;
+      QIcon GetIcon() const override;
 
-      virtual std::string GetDescription() const;
+      std::string GetDescription() const override;
 
-      virtual const CanvasNode& GetNode() const;
+      const CanvasNode& GetNode() const override;
 
-      virtual std::unique_ptr<CatalogEntry> SetNode(
-        const CanvasNode& node) const;
+      std::unique_ptr<CatalogEntry>
+        SetNode(const CanvasNode& node) const override;
 
-      virtual bool IsReadOnly() const;
+      bool IsReadOnly() const override;
 
     private:
       std::string m_name;

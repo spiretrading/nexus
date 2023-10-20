@@ -37,6 +37,7 @@
 #include "Spire/Canvas/StandardNodes/CurrentDateNode.hpp"
 #include "Spire/Canvas/StandardNodes/CurrentDateTimeNode.hpp"
 #include "Spire/Canvas/StandardNodes/CurrentTimeNode.hpp"
+#include "Spire/Canvas/StandardNodes/DistinctNode.hpp"
 #include "Spire/Canvas/StandardNodes/DivisionNode.hpp"
 #include "Spire/Canvas/StandardNodes/EqualsNode.hpp"
 #include "Spire/Canvas/StandardNodes/FilterNode.hpp"
@@ -53,6 +54,7 @@
 #include "Spire/Canvas/StandardNodes/MinNode.hpp"
 #include "Spire/Canvas/StandardNodes/MultiplicationNode.hpp"
 #include "Spire/Canvas/StandardNodes/NotNode.hpp"
+#include "Spire/Canvas/StandardNodes/PreviousNode.hpp"
 #include "Spire/Canvas/StandardNodes/RangeNode.hpp"
 #include "Spire/Canvas/StandardNodes/RoundNode.hpp"
 #include "Spire/Canvas/StandardNodes/SubtractionNode.hpp"
@@ -132,6 +134,8 @@ const uuid BuiltInCatalogEntry::DEFAULT_CURRENCY_UUID = stringUuidGenerator(
   "{ca3d8ed5-83cd-4401-ad21-5871d8aa3f64}");
 const uuid BuiltInCatalogEntry::DESTINATION_UUID = stringUuidGenerator(
   "{57fe8798-49ad-48ce-b8a7-e61d38abc542}");
+const uuid BuiltInCatalogEntry::DISTINCT_UUID = stringUuidGenerator(
+  "{2308791f-2b74-4730-a281-b594e16400b4}");
 const uuid BuiltInCatalogEntry::DIVISION_UUID = stringUuidGenerator(
   "{f34c2004-02eb-4aec-871a-5d852e0659f7}");
 const uuid BuiltInCatalogEntry::DURATION_UUID = stringUuidGenerator(
@@ -214,6 +218,8 @@ const uuid BuiltInCatalogEntry::ORDER_TYPE_UUID = stringUuidGenerator(
   "{13b1bf30-6efe-11e1-b0c4-0800200c9a66}");
 const uuid BuiltInCatalogEntry::PORTFOLIO_ENTRY_RECORD_UUID =
   stringUuidGenerator("{01d81d17-e13c-4af2-a62d-8d0fa909c801}");
+const uuid BuiltInCatalogEntry::PREVIOUS_UUID = stringUuidGenerator(
+  "{528a357e-9997-4abf-8bfe-e981110badbd}");
 const uuid BuiltInCatalogEntry::QUERY_UUID = stringUuidGenerator(
   "{42217a60-7ce9-11e1-b0c4-0800200c9a66}");
 const uuid BuiltInCatalogEntry::QUOTE_RECORD_UUID = stringUuidGenerator(
@@ -297,6 +303,8 @@ vector<unique_ptr<CatalogEntry>> BuiltInCatalogEntry::
     ":/icons/currency_euro.png", "", DefaultCurrencyNode()));
   entries.push_back(std::make_unique<BuiltInCatalogEntry>("Destination",
     DESTINATION_UUID, ":/icons/target2.png", "", DestinationNode()));
+  entries.push_back(std::make_unique<BuiltInCatalogEntry>(
+    DISTINCT_UUID, ":/icons/calculator.png", "", DistinctNode()));
   entries.push_back(std::make_unique<BuiltInCatalogEntry>(DIVISION_UUID,
     ":/icons/calculator.png", "", DivisionNode()));
   entries.push_back(std::make_unique<BuiltInCatalogEntry>("Duration",
@@ -388,6 +396,8 @@ vector<unique_ptr<CatalogEntry>> BuiltInCatalogEntry::
   entries.push_back(std::make_unique<BuiltInCatalogEntry>(
     PORTFOLIO_ENTRY_RECORD_UUID, ":/icons/chart_line.png", "",
     RecordNode(GetPortfolioEntryRecordType())));
+  entries.push_back(std::make_unique<BuiltInCatalogEntry>(
+    PREVIOUS_UUID, ":/icons/calculator.png", "", PreviousNode()));
   entries.push_back(std::make_unique<BuiltInCatalogEntry>(QUERY_UUID,
     ":/icons/chart_line.png", "", QueryNode()));
   entries.push_back(std::make_unique<BuiltInCatalogEntry>(QUOTE_RECORD_UUID,

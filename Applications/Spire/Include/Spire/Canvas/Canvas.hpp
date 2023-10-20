@@ -44,6 +44,7 @@ namespace Spire {
   class DefaultCurrencyNode;
   class DestinationNode;
   class DestinationType;
+  class DistinctNode;
   class DivisionNode;
   class DurationNode;
   class DurationType;
@@ -89,6 +90,7 @@ namespace Spire {
   class OrderTypeNode;
   class OrderTypeType;
   class OrderWrapperTaskNode;
+  class PreviousNode;
   class ProxyNode;
   class QueryNode;
   class RangeNode;

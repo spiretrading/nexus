@@ -1,12 +1,10 @@
-#ifndef SPIRE_CANVASNODEVISITOR_HPP
-#define SPIRE_CANVASNODEVISITOR_HPP
+#ifndef SPIRE_CANVAS_NODE_VISITOR_HPP
+#define SPIRE_CANVAS_NODE_VISITOR_HPP
 #include "Spire/Canvas/Canvas.hpp"
 
 namespace Spire {
 
-  /*! \class CanvasNodeVisitor
-      \brief Implements the visitor pattern for CanvasNodes.
-   */
+  /** Implements the visitor pattern for CanvasNodes. */
   class CanvasNodeVisitor {
     public:
       virtual ~CanvasNodeVisitor() = default;
@@ -52,6 +50,8 @@ namespace Spire {
       virtual void Visit(const DefaultCurrencyNode& node);
 
       virtual void Visit(const DestinationNode& node);
+
+      virtual void Visit(const DistinctNode& node);
 
       virtual void Visit(const DivisionNode& node);
 
@@ -120,6 +120,8 @@ namespace Spire {
       virtual void Visit(const OrderTypeNode& node);
 
       virtual void Visit(const OrderWrapperTaskNode& node);
+
+      virtual void Visit(const PreviousNode& node);
 
       virtual void Visit(const ProxyNode& node);
 

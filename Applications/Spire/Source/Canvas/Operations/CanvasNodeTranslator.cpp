@@ -69,6 +69,7 @@
 #include "Spire/Canvas/StandardNodes/CurrentDateNode.hpp"
 #include "Spire/Canvas/StandardNodes/CurrentDateTimeNode.hpp"
 #include "Spire/Canvas/StandardNodes/CurrentTimeNode.hpp"
+#include "Spire/Canvas/StandardNodes/DistinctNode.hpp"
 #include "Spire/Canvas/StandardNodes/DivisionNode.hpp"
 #include "Spire/Canvas/StandardNodes/EqualsNode.hpp"
 #include "Spire/Canvas/StandardNodes/FilterNode.hpp"
@@ -87,6 +88,7 @@
 #include "Spire/Canvas/StandardNodes/MinNode.hpp"
 #include "Spire/Canvas/StandardNodes/MultiplicationNode.hpp"
 #include "Spire/Canvas/StandardNodes/NotNode.hpp"
+#include "Spire/Canvas/StandardNodes/PreviousNode.hpp"
 #include "Spire/Canvas/StandardNodes/RangeNode.hpp"
 #include "Spire/Canvas/StandardNodes/RoundNode.hpp"
 #include "Spire/Canvas/StandardNodes/SubtractionNode.hpp"
@@ -162,6 +164,7 @@ namespace {
       void Visit(const DecimalNode& node) override;
       void Visit(const DefaultCurrencyNode& node) override;
       void Visit(const DestinationNode& node) override;
+      void Visit(const DistinctNode& node) override;
       void Visit(const DivisionNode& node) override;
       void Visit(const DurationNode& node) override;
       void Visit(const EqualsNode& node) override;
@@ -194,6 +197,7 @@ namespace {
       void Visit(const OrderStatusNode& node) override;
       void Visit(const OrderTypeNode& node) override;
       void Visit(const OrderWrapperTaskNode& node) override;
+      void Visit(const PreviousNode& node) override;
       void Visit(const QueryNode& node) override;
       void Visit(const RangeNode& node) override;
       void Visit(const ReferenceNode& node) override;
@@ -391,6 +395,15 @@ namespace {
         }
         return Translation(std::move(reactor));
       }
+    }
+
+    using SupportedTypes = NativeTypes;
+  };
+
+  struct DistinctTranslator {
+    template<typename T>
+    static Translation Template(const Translation& source) {
+      return Aspen::distinct(source.Extract<Aspen::Box<T>>());
     }
 
     using SupportedTypes = NativeTypes;
@@ -902,6 +915,15 @@ namespace {
     using SupportedTypes = NotNodeSignatures::type;
   };
 
+  struct PreviousTranslator {
+    template<typename T>
+    static Translation Template(const Translation& source) {
+      return Aspen::previous(source.Extract<Aspen::Box<T>>());
+    }
+
+    using SupportedTypes = NativeTypes;
+  };
+
   struct ProxyBuilder {
     template<typename T>
     static std::any Template() {
@@ -1258,6 +1280,12 @@ void CanvasNodeTranslationVisitor::Visit(const DestinationNode& node) {
   m_translation = Aspen::constant(node.GetValue());
 }
 
+void CanvasNodeTranslationVisitor::Visit(const DistinctNode& node) {
+  m_translation = Instantiate<DistinctTranslator>(
+    static_cast<const NativeType&>(node.GetType()).GetNativeType())(
+      InternalTranslation(node.GetChildren().front()));
+}
+
 void CanvasNodeTranslationVisitor::Visit(const DivisionNode& node) {
   m_translation = TranslateFunction<DivisionTranslator>(node);
 }
@@ -1465,6 +1493,12 @@ void CanvasNodeTranslationVisitor::Visit(const OrderWrapperTaskNode& node) {
     Aspen::constant(node.GetOrder().GetInfo().m_fields.m_timeInForce));
   m_translation = OrderPublisherReactor(m_context->GetOrderPublisher(),
     OrderWrapperReactor(Ref(node.GetOrder())));
+}
+
+void CanvasNodeTranslationVisitor::Visit(const PreviousNode& node) {
+  m_translation = Instantiate<PreviousTranslator>(
+    static_cast<const NativeType&>(node.GetType()).GetNativeType())(
+      InternalTranslation(node.GetChildren().front()));
 }
 
 void CanvasNodeTranslationVisitor::Visit(const QueryNode& node) {

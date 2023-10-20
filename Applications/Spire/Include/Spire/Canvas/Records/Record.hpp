@@ -23,46 +23,33 @@ namespace Spire {
   class Record {
     public:
 
-      //! Defines the types allowed for a member of a Record.
+      /** Defines the types allowed for a member of a Record. */
       using Field = boost::variant<Record, bool, Nexus::Quantity, double,
         boost::posix_time::ptime, boost::posix_time::time_duration, std::string,
         Nexus::CurrencyId, Nexus::MarketCode, Nexus::Money, Nexus::OrderStatus,
         Nexus::OrderType, Nexus::Security, Nexus::Side, Nexus::TimeInForce,
         Beam::Queries::Range, Beam::Queries::Sequence>;
 
-      //! Constructs an empty Record.
+      /** Constructs an empty Record. */
       Record() = default;
 
-      //! Constructs a Record.
-      /*!
-        \param fields The Fields of this Record.
-      */
+      /**
+       * Constructs a Record.
+       * @param fields The Fields of this Record.
+       */
       explicit Record(std::vector<Field> fields);
 
-      //! Constructs a Record from a tuple.
-      /*!
-        \param fields The tuple containing the Fields of this Record.
-      */
+      /**
+       * Constructs a Record from a tuple.
+       * @param fields The tuple containing the Fields of this Record.
+       */
       template<typename... T>
       explicit Record(const std::tuple<T...>& fields);
 
-      //! Returns the Fields.
+      /** Returns the Fields. */
       const std::vector<Field>& GetFields() const;
 
-      //! Tests two Records for equality.
-      /*!
-        \param rhs The right hand side of the equality test.
-        \return <code>true</code> iff the number of Fields are equal and each
-                individual Field is equal.
-      */
-      bool operator ==(const Record& rhs) const;
-
-      //! Tests two Records for inequality.
-      /*!
-        \param rhs The right hand side of the inequality test.
-        \return <code>!(*this == rhs)</code>.
-      */
-      bool operator !=(const Record& rhs) const;
+      bool operator ==(const Record& rhs) const = default;
 
     private:
       struct AddField {
@@ -75,9 +62,6 @@ namespace Spire {
       std::vector<Field> m_fields;
   };
 
-  inline Record::AddField::AddField(std::vector<Field>& fields)
-      : m_fields(fields) {}
-
   template<typename T>
   void Record::AddField::operator()(T& t) const {
     m_fields.push_back(t);
@@ -87,6 +71,13 @@ namespace Spire {
   Record::Record(const std::tuple<T...>& fields) {
     boost::fusion::for_each(fields, AddField(m_fields));
   }
+}
+
+namespace std {
+  template<>
+  struct std::hash<Spire::Record> {
+    size_t operator()(const Spire::Record& record) const noexcept;
+  };
 }
 
 #endif
