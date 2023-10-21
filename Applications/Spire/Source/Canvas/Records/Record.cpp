@@ -14,6 +14,7 @@ const std::vector<Record::Field>& Record::GetFields() const {
 Record::AddField::AddField(std::vector<Field>& fields)
   : m_fields(fields) {}
 
+template<>
 struct std::hash<Record> {
   std::size_t operator()(const Record& record) const noexcept {
     auto seed = std::size_t(0);

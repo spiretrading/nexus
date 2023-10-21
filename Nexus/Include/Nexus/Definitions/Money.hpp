@@ -1,10 +1,12 @@
 #ifndef NEXUS_MONEY_HPP
 #define NEXUS_MONEY_HPP
+#include <functional>
 #include <istream>
 #include <ostream>
 #include <string>
 #include <Beam/Serialization/Receiver.hpp>
 #include <Beam/Serialization/Sender.hpp>
+#include <boost/functional/hash.hpp>
 #include <boost/optional/optional.hpp>
 #include "Nexus/Definitions/Definitions.hpp"
 #include "Nexus/Definitions/Quantity.hpp"
@@ -216,6 +218,10 @@ namespace Details {
     return Money{Round(value.m_value, decimalPlaces)};
   }
 
+  inline std::size_t hash_value(Money money) noexcept {
+    return std::hash<Quantity>()(static_cast<Quantity>(money));
+  }
+
   inline std::ostream& operator <<(std::ostream& out, Money value) {
     auto fraction = value.m_value - Floor(value.m_value, 0);
     auto s = boost::lexical_cast<std::string>(value.m_value);
@@ -353,6 +359,13 @@ namespace Beam::Serialization {
 }
 
 namespace std {
+  template<>
+  struct hash<Nexus::Money> {
+    std::size_t operator ()(Nexus::Money value) const noexcept {
+      return Nexus::hash_value(value);
+    }
+  };
+
   template<>
   class numeric_limits<Nexus::Money> {
     public:

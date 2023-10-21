@@ -1,10 +1,13 @@
 #ifndef NEXUS_TIME_IN_FORCE_HPP
 #define NEXUS_TIME_IN_FORCE_HPP
+#include <functional>
 #include <ostream>
 #include <Beam/Collections/Enum.hpp>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <Beam/Serialization/ShuttleDateTime.hpp>
+#include <Beam/Utilities/HashPtime.hpp>
 #include <boost/date_time/posix_time/ptime.hpp>
+#include <boost/functional/hash.hpp>
 #include <boost/lexical_cast.hpp>
 #include "Nexus/Definitions/Definitions.hpp"
 
@@ -105,6 +108,13 @@ namespace Details {
     }
   }
 
+  inline std::size_t hash_value(const TimeInForce& timeInForce) noexcept {
+    auto seed = std::size_t(0);
+    boost::hash_combine(seed, timeInForce.GetType());
+    boost::hash_combine(seed, timeInForce.GetExpiry());
+    return seed;
+  }
+
   inline TimeInForce::TimeInForce(Type type)
     : m_type(type) {}
 
@@ -129,6 +139,15 @@ namespace Beam::Serialization {
         unsigned int version) {
       shuttle.Shuttle("type", value.m_type);
       shuttle.Shuttle("expiry", value.m_expiry);
+    }
+  };
+}
+
+namespace std {
+  template<>
+  struct hash<Nexus::TimeInForce> {
+    std::size_t operator ()(const Nexus::TimeInForce& value) const noexcept {
+      return Nexus::hash_value(value);
     }
   };
 }

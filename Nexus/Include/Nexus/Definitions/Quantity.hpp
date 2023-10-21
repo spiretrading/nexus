@@ -2,6 +2,7 @@
 #define NEXUS_QUANTITY_HPP
 #include <cstdint>
 #include <cstdlib>
+#include <functional>
 #include <istream>
 #include <limits>
 #include <ostream>
@@ -11,6 +12,7 @@
 #include <Beam/Serialization/Sender.hpp>
 #include <Beam/Utilities/Math.hpp>
 #include <boost/cstdfloat.hpp>
+#include <boost/functional/hash.hpp>
 #include <boost/io/ios_state.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/optional/optional.hpp>
@@ -337,6 +339,11 @@ namespace Nexus {
     }
   }
 
+  inline std::size_t hash_value(Quantity quantity) noexcept {
+    auto source = static_cast<boost::float64_t>(quantity);
+    return std::hash<decltype(source)>()(source);
+  }
+
   inline boost::optional<Quantity> Quantity::FromValue(
       const std::string& value) {
     if(value.empty()) {
@@ -541,6 +548,13 @@ namespace Beam::Serialization {
 }
 
 namespace std {
+  template<>
+  struct hash<Nexus::Quantity> {
+    std::size_t operator ()(Nexus::Quantity value) const noexcept {
+      return Nexus::hash_value(value);
+    }
+  };
+
   template<>
   class numeric_limits<Nexus::Quantity> {
     public:
