@@ -62,6 +62,8 @@ namespace Spire {
       std::vector<Field> m_fields;
   };
 
+  std::size_t hash_value(const Record& record) noexcept;
+
   template<typename T>
   void Record::AddField::operator()(T& t) const {
     m_fields.push_back(t);
