@@ -2245,30 +2245,47 @@ UiProfile Spire::make_highlight_picker_profile() {
     make_standard_property("background_color", QColor(0xFFFFC4)));
   properties.push_back(make_standard_property("text_color", QColor(0x521C00)));
   auto profile = UiProfile("HighlightPicker", properties, [] (auto& profile) {
+    auto& background_color =
+      get<QColor>("background_color", profile.get_properties());
+    auto& text_color = get<QColor>("text_color", profile.get_properties());
     auto button = make_label_button("HighlightPicker");
-    button->connect_click_signal([&, button] {
-      auto picker = new HighlightPicker(*button);
-      auto& background_color =
-        get<QColor>("background_color", profile.get_properties());
-      background_color.connect_changed_signal([=] (auto color) {
-        auto highlight = picker->get_current()->get();
+    update_style(*button, [&] (auto& style) {
+      style.get(Any() > Body()).
+        set(BackgroundColor(background_color.get())).
+        set(TextColor(text_color.get()));
+    });
+    auto picker = new HighlightPicker(
+      std::make_shared<LocalValueModel<HighlightPicker::Highlight>>(
+        HighlightPicker::Highlight{background_color.get(), text_color.get()}),
+      *button);
+    background_color.connect_changed_signal([=] (auto color) {
+      auto highlight = picker->get_current()->get();
+      if(highlight.m_background_color != color) {
         highlight.m_background_color = color;
         picker->get_current()->set(highlight);
-        });
-      auto& text_color = get<QColor>("text_color", profile.get_properties());
-      text_color.connect_changed_signal([=] (auto color) {
-        auto highlight = picker->get_current()->get();
+      }
+    });
+    text_color.connect_changed_signal([=] (auto color) {
+      auto highlight = picker->get_current()->get();
+      if(highlight.m_text_color != color) {
         highlight.m_text_color = color;
         picker->get_current()->set(highlight);
-      });
-      auto current_slot = profile.make_event_slot<QString>("Current");
-      picker->get_current()->connect_update_signal(
-        [=] (const HighlightPicker::Highlight& highlight) {
-          current_slot(highlight.m_background_color.name() + " " + highlight.m_text_color.name());
-        });
-      picker->window()->setAttribute(Qt::WA_DeleteOnClose);
-      picker->show();
+      }
     });
+    auto current_slot = profile.make_event_slot<QString>("Current");
+    picker->get_current()->connect_update_signal(
+      [=, &background_color, &text_color] (const auto& highlight) {
+      current_slot(highlight.m_background_color.name() + " " +
+        highlight.m_text_color.name());
+      background_color.set(highlight.m_background_color);
+      text_color.set(highlight.m_text_color);
+      update_style(*button, [&] (auto& style) {
+        style.get(Any() > Body()).
+          set(BackgroundColor(highlight.m_background_color)).
+          set(TextColor(highlight.m_text_color));
+      });
+    });
+    button->connect_click_signal([=] { picker->show(); });
     return button;
   });
   return profile;

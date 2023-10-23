@@ -1,12 +1,14 @@
 #include "Spire/Ui/HighlightPicker.hpp"
 #include <boost/signals2/shared_connection_block.hpp>
-#include <QEvent>
+#include <QCoreApplication>
+#include <QMouseEvent>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Styles/Any.hpp"
 #include "Spire/Styles/Stylist.hpp"
 #include "Spire/Ui/ColorBox.hpp"
+#include "Spire/Ui/ColorConversion.hpp"
 #include "Spire/Ui/ColorCodePanel.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ListItem.hpp"
@@ -19,17 +21,102 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  auto PALETTE_STYLE(StyleSheet style) {
+    style.get(Any()).
+      set(Overflow::WRAP).
+      set(Qt::Horizontal);
+    style.get(Any() > is_a<ListItem>()).
+      set(border(scale_width(1), QColor(Qt::transparent))).
+      set(BackgroundColor(Qt::transparent)).
+      set(horizontal_padding(scale_width(1))).
+      set(vertical_padding(scale_height(1)));
+    style.get(Any() > (is_a<ListItem>() && (Hover() || Current()))).
+      set(border_color(QColor(0x4B23A0)));
+    return style;
+  }
+
+  std::shared_ptr<ArrayListModel<HighlightPicker::Highlight>>
+      DEFUALT_HIGHLIGHT_LIST() {
+    static auto highlight_list =
+      std::weak_ptr<ArrayListModel<HighlightPicker::Highlight>>();
+    if(auto highlights = highlight_list.lock()) {
+      return highlights;
+    }
+    auto highlights =
+      std::make_shared<ArrayListModel<HighlightPicker::Highlight>>();
+    highlight_list = highlights;
+    highlights->push({"#FFF1F1", "#B71C1C"});
+    highlights->push({"#FFECFF", "#76008A"});
+    highlights->push({"#F4F4FF", "#4C00DA"});
+    highlights->push({"#DDF9FF", "#003698"});
+    highlights->push({"#EBFFF0", "#007735"});
+    highlights->push({"#FFFFC4", "#834A2D"});
+    highlights->push({"#FFE6C9", "#A00000"});
+    highlights->push({"#FFFFFF", "#000000"});
+    highlights->push({"#FFABAA", "#A00000"});
+    highlights->push({"#F1A6F1", "#770088"});
+    highlights->push({"#C1BAFF", "#4F00D7"});
+    highlights->push({"#92CFE9", "#0000C6"});
+    highlights->push({"#96D8A8", "#004E00"});
+    highlights->push({"#FEEE7F", "#630000"});
+    highlights->push({"#FFBF76", "#A00000"});
+    highlights->push({"#C6C6C6", "#000000"});
+    highlights->push({"#C33A39", "#FFFFFF"});
+    highlights->push({"#A937B2", "#FFFFFF"});
+    highlights->push({"#6F53C5", "#FFFFFF"});
+    highlights->push({"#246FBC", "#FFFFFF"});
+    highlights->push({"#218542", "#FFFFFF"});
+    highlights->push({"#8A6729", "#FFFFFF"});
+    highlights->push({"#AE4D1F", "#FFFFFF"});
+    highlights->push({"#6E6E6E", "#FFFFFF"});
+    highlights->push({"#780000", "#FFFFFF"});
+    highlights->push({"#5F006F", "#FFFFFF"});
+    highlights->push({"#361976", "#FFFFFF"});
+    highlights->push({"#21148C", "#FFFFFF"});
+    highlights->push({"#004516", "#FFFFFF"});
+    highlights->push({"#4D2A00", "#FFFFFF"});
+    highlights->push({"#680000", "#FFFFFF"});
+    highlights->push({"#000000", "#FFFFFF"});
+    return highlights;
+  }
+
   OverlayPanel* get_color_picker(const ColorBox& color_box) {
     auto children = color_box.children();
     for(auto child : children) {
       if(child->isWidgetType()) {
         if(auto widget = static_cast<QWidget*>(child);
-          widget->windowFlags() & Qt::Popup) {
+            widget->windowFlags() & Qt::Popup) {
           return static_cast<OverlayPanel*>(widget);
         }
       }
     }
     return nullptr;
+  }
+
+  auto make_highlight_swatch(const std::shared_ptr<AnyListModel>& list,
+      int index) {
+    auto current =
+      std::make_shared<LocalValueModel<HighlightPicker::Highlight>>(
+        std::any_cast<HighlightPicker::Highlight>(list->get(index)));
+    auto swatch = new HighlightSwatch(current);
+    swatch->setFixedSize(scale(22, 18));
+    return swatch;
+  }
+
+  auto make_color_box(std::shared_ptr<ColorModel> model) {
+    auto color_box = new ColorBox(std::move(model));
+    color_box->setFixedHeight(scale_height(26));
+    get_color_picker(*color_box)->get_body().setFixedWidth(scale_width(220));
+    update_style(*color_box, [] (auto& style) {
+      style.get(Any() > Alpha()).set(Visibility::NONE);
+    });
+    return color_box;
+  }
+
+  void update_color_box_border_color(ColorBox& color_box) {
+    update_style(*color_box.layout()->itemAt(0)->widget(), [] (auto& style) {
+      style.get(Any()).set(border_color(QColor(0xC8C8C8)));
+    });
   }
 }
 
@@ -41,33 +128,67 @@ struct HighlightPicker::HighlightPickerModel {
   scoped_connection m_background_color_connection;
   scoped_connection m_text_color_connection;
 
-  explicit HighlightPickerModel(std::shared_ptr<ValueModel<HighlightSwatch::Highlight>> highlight_model)
+  explicit HighlightPickerModel(
+    std::shared_ptr<ValueModel<HighlightSwatch::Highlight>> highlight_model)
     : m_highlight_model(std::move(highlight_model)),
-      m_background_color_model(std::make_shared<LocalColorModel>()),
-      m_text_color_model(std::make_shared<LocalColorModel>()),
+      m_background_color_model(std::make_shared<LocalColorModel>(
+        m_highlight_model->get().m_background_color)),
+      m_text_color_model(std::make_shared<LocalColorModel>(
+        m_highlight_model->get().m_text_color)),
       m_highlight_connection(m_highlight_model->connect_update_signal(
         std::bind_front(&HighlightPickerModel::on_highlight_color, this))),
-      m_background_color_connection(m_background_color_model->connect_update_signal(
-        std::bind_front(&HighlightPickerModel::on_background_color, this))),
+      m_background_color_connection(
+        m_background_color_model->connect_update_signal(
+          std::bind_front(&HighlightPickerModel::on_background_color, this))),
       m_text_color_connection(m_text_color_model->connect_update_signal(
-        std::bind_front(&HighlightPickerModel::on_text_color, this))) {
-  }
+        std::bind_front(&HighlightPickerModel::on_text_color, this))) {}
 
-  void on_highlight_color(const HighlightSwatch::Highlight& highlight) {
-    auto background_blocker = shared_connection_block(m_background_color_connection);
+  void on_highlight_color(const HighlightPicker::Highlight& highlight) {
+    auto background_blocker =
+      shared_connection_block(m_background_color_connection);
     m_background_color_model->set(highlight.m_background_color);
     auto text_blocker = shared_connection_block(m_text_color_connection);
     m_text_color_model->set(highlight.m_text_color);
   }
 
   void on_background_color(const QColor& background_color) {
-    auto blocker = shared_connection_block(m_highlight_connection);
-    m_highlight_model->set({background_color, m_highlight_model->get().m_text_color});
+    auto background_lch_color = to_oklch(background_color);
+    auto lightness = [&] {
+      if(background_lch_color.m_l > 0.5) {
+        return 0.3;
+      }
+      return 0.5;
+    }();
+    auto chroma = [&] {
+      if(background_lch_color.m_c > 0.19) {
+        return 0.1;
+      }
+      return 0.37;
+    }();
+    auto text_color_candidate =
+      OklchColor{true, lightness, chroma, background_lch_color.m_h};
+    auto candidate_contrast = apca(to_rgb(text_color_candidate),
+      background_color);
+    auto text_color = [&] {
+      if(std::abs(candidate_contrast) > 75 && background_lch_color.m_c > 0.01) {
+        return to_rgb(text_color_candidate);
+      }
+      if(std::abs(apca(Qt::black, background_color)) >
+          std::abs(apca(Qt::white, background_color))) {
+        return QColor(Qt::black);
+      }
+      return QColor(Qt::white);
+    }();
+    auto highlight_blocker = shared_connection_block(m_highlight_connection);
+    m_highlight_model->set({background_color, text_color});
+    auto text_blocker = shared_connection_block(m_text_color_connection);
+    m_text_color_model->set(text_color);
   }
 
   void on_text_color(const QColor& text_color) {
     auto blocker = shared_connection_block(m_highlight_connection);
-    m_highlight_model->set({m_highlight_model->get().m_background_color, text_color});
+    m_highlight_model->set(
+      {m_highlight_model->get().m_background_color, text_color});
   }
 };
 
@@ -78,93 +199,35 @@ HighlightPicker::HighlightPicker(std::shared_ptr<ValueModel<Highlight>> current,
     QWidget& parent)
     : QWidget(&parent),
       m_model(std::make_shared<HighlightPickerModel>(std::move(current))) {
-  auto list_model = std::make_shared<ArrayListModel<Highlight>>();
-  list_model->push({"#FFF1F1", "#B71C1C"});
-  list_model->push({"#FFECFF", "#76008A"});
-  list_model->push({"#F4F4FF", "#4C00DA"});
-  list_model->push({"#DDF9FF", "#003698"});
-  list_model->push({"#EBFFF0", "#007735"});
-  list_model->push({"#FFFFC4", "#834A2D"});
-  list_model->push({"#FFE6C9", "#A00000"});
-  list_model->push({"#FFFFFF", "#000000"});
-
-  list_model->push({"#FFABAA", "#FFFFFF"});
-  list_model->push({"#F1A6F1", "#770088"});
-  list_model->push({"#C1BAFF", "#4F00D7"});
-  list_model->push({"#92CFE9", "#0000C6"});
-  list_model->push({"#96D8A8", "#004E00"});
-  list_model->push({"#FEEE7F", "#630000"});
-  list_model->push({"#FFBF76", "#A00000"});
-  list_model->push({"#C6C6C6", "#000000"});
-
-  list_model->push({"#C33A39", "#FFFFFF"});
-  list_model->push({"#A937B2", "#FFFFFF"});
-  list_model->push({"#6F53C5", "#FFFFFF"});
-  list_model->push({"#246FBC", "#FFFFFF"});
-  list_model->push({"#218542", "#FFFFFF"});
-  list_model->push({"#8A6729", "#FFFFFF"});
-  list_model->push({"#AE4D1F", "#FFFFFF"});
-  list_model->push({"#6E6E6E", "#FFFFFF"});
-
-  list_model->push({"#780000", "#FFFFFF"});
-  list_model->push({"#5F006F", "#FFFFFF"});
-  list_model->push({"#361976", "#FFFFFF"});
-  list_model->push({"#21148C", "#FFFFFF"});
-  list_model->push({"#004516", "#FFFFFF"});
-  list_model->push({"#4D2A00", "#FFFFFF"});
-  list_model->push({"#680000", "#FFFFFF"});
-  list_model->push({"#000000", "#FFFFFF"});
-  m_palette = new ListView(std::move(list_model), [] (const std::shared_ptr<AnyListModel>& list, int index) {
-    auto current = std::make_shared<LocalValueModel<HighlightSwatch::Highlight>>(std::any_cast<Highlight>(list->get(index)));
-    auto swatch = new HighlightSwatch(current);
-    swatch->setFixedSize(scale(22, 18));
-    return swatch;
-  });
+  m_palette = new ListView(DEFUALT_HIGHLIGHT_LIST(), make_highlight_swatch);
   update_style(*m_palette, [] (auto& style) {
-    style.get(Any()).
-      set(Overflow::WRAP).
-      set(Qt::Horizontal);
-    style.get(Any() > is_a<ListItem>()).
-      set(border(scale_width(1), QColor(Qt::transparent))).
-      set(BackgroundColor(Qt::transparent)).
-      set(horizontal_padding(scale_width(1))).
-      set(vertical_padding(scale_height(1)));
-    style.get(Any() > (is_a<ListItem>() && (Hover() || Current()))).
-      set(border_color(QColor(0x4B23A0)));
+    style = PALETTE_STYLE(style);
   });
-  //enclose(*this, *m_palette);
-  //setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-  auto layout = make_vbox_layout(this);
-  layout->addWidget(m_palette);
-  layout->addSpacing(scale_height(18));
+  auto vbox_layout = make_vbox_layout();
+  vbox_layout->addWidget(m_palette);
+  vbox_layout->addSpacing(scale_height(18));
   auto color_layout = make_hbox_layout();
-  auto background_color_box = new ColorBox(m_model->m_background_color_model);
-  background_color_box->setFixedSize(scale(100, 26));
-  get_color_picker(*background_color_box)->get_body().setFixedWidth(scale_width(220));
-  update_style(*background_color_box, [&] (auto& style) {
-    style.get(Any() > Alpha()).set(Visibility::NONE);
-  });
-  color_layout->addWidget(background_color_box);
+  m_background_color_box = make_color_box(m_model->m_background_color_model);
+  color_layout->addWidget(m_background_color_box);
   color_layout->addSpacing(scale_width(8));
-  auto text_color_box = new ColorBox(m_model->m_text_color_model);
-  color_layout->addWidget(text_color_box);
-  text_color_box->setFixedSize(scale(100, 26));
-  get_color_picker(*text_color_box)->get_body().setFixedWidth(scale_width(220));
-  update_style(*text_color_box, [&] (auto& style) {
-    style.get(Any() > Alpha()).set(Visibility::NONE);
-  });
-  layout->addLayout(color_layout);
+  m_text_color_box = make_color_box(m_model->m_text_color_model);
+  color_layout->addWidget(m_text_color_box);
+  vbox_layout->addLayout(color_layout);
+  auto layout = make_hbox_layout(this);
+  layout->addLayout(vbox_layout);
+  layout->addStretch();
   m_panel = new OverlayPanel(*this, parent);
+  m_panel->setWindowFlags(Qt::Popup | (m_panel->windowFlags() & ~Qt::Tool));
+  m_panel->installEventFilter(this);
   update_style(*m_panel, [] (auto& style) {
     style.get(Any()).
       set(horizontal_padding(scale_width(8))).
       set(vertical_padding(scale_height(8)));
   });
-  on_current(get_current()->get());
-  //m_current_connection = get_current()->connect_update_signal(
-  //  std::bind_front(&HighlightPicker::on_current, this));
   m_palette->get_current()->connect_update_signal(
     std::bind_front(&HighlightPicker::on_palette_current, this));
+  get_color_picker(*m_background_color_box)->installEventFilter(this);
+  get_color_picker(*m_text_color_box)->installEventFilter(this);
 }
 
 const std::shared_ptr<ValueModel<HighlightPicker::Highlight>>&
@@ -172,22 +235,82 @@ const std::shared_ptr<ValueModel<HighlightPicker::Highlight>>&
   return m_model->m_highlight_model;
 }
 
+bool HighlightPicker::eventFilter(QObject* watched, QEvent* event) {
+  if(get_color_picker(*m_background_color_box) == watched) {
+    if(event->type() == QEvent::MouseButtonPress) {
+      auto& mouse_event = *static_cast<QMouseEvent*>(event);
+      if(handle_mouse_press(*m_background_color_box, *m_text_color_box,
+          mouse_event)) {
+        return true;
+      }
+    }
+  } else if(get_color_picker(*m_text_color_box) == watched) {
+    if(event->type() == QEvent::MouseButtonPress) {
+      auto& mouse_event = *static_cast<QMouseEvent*>(event);
+      if(handle_mouse_press(*m_text_color_box, *m_background_color_box,
+          mouse_event)) {
+        return true;
+      }
+    }
+  } else if(event->type() == QEvent::Close) {
+    m_panel->hide();
+    hide();
+  }
+  return QWidget::eventFilter(watched, event);
+}
+
 bool HighlightPicker::event(QEvent* event) {
   if(event->type() == QEvent::ShowToParent) {
-    m_palette->setFixedWidth(m_palette->get_list_item(0)->sizeHint().width() * 8);
     m_panel->show();
+    m_palette->setFixedWidth(m_palette->get_list_item(0)->width() * 8);
   } else if(event->type() == QEvent::HideToParent) {
     m_panel->hide();
   }
   return QWidget::event(event);
 }
 
-void HighlightPicker::on_current(const Highlight& highlight) {
+bool HighlightPicker::handle_mouse_press(ColorBox& source,
+    ColorBox& destination, const QMouseEvent& mouse_event) {
+  auto post_mouse_event = [&] (QWidget& widget, const QPoint& position) {
+    QCoreApplication::postEvent(&widget, new QMouseEvent(mouse_event.type(),
+      position, mouse_event.windowPos(), mouse_event.screenPos(),
+      mouse_event.button(), mouse_event.buttons(), mouse_event.modifiers(),
+      mouse_event.source()));
+  };
+  if(!get_color_picker(source)->rect().contains(mouse_event.pos())) {
+    auto position_in_destination =
+      destination.mapFromGlobal(mouse_event.globalPos());
+    if(destination.rect().contains(position_in_destination)) {
+      destination.setFocus(Qt::MouseFocusReason);
+      post_mouse_event(destination, position_in_destination);
+      update_color_box_border_color(source);
+      return true;
+    } else if(m_palette->rect().contains(
+        m_palette->mapFromGlobal(mouse_event.globalPos()))) {
+      m_palette->setFocus(Qt::MouseFocusReason);
+      for(auto i = 0; i < m_palette->get_list()->get_size(); ++i) {
+        auto& item = m_palette->get_list_item(i)->get_body();
+        auto position_in_item = item.mapFromGlobal(mouse_event.globalPos());
+        if(item.rect().contains(position_in_item)) {
+          post_mouse_event(item, position_in_item);
+          break;
+        }
+      }
+      update_color_box_border_color(source);
+      return true;
+    } else if(m_panel->rect().contains(
+        m_panel->mapFromGlobal(mouse_event.globalPos()))) {
+      update_color_box_border_color(source);
+    } else {
+      hide();
+    }
+  }
+  return false;
 }
 
 void HighlightPicker::on_palette_current(optional<int> current) {
-  if(!current) {
-    return;
+  if(current) {
+    get_current()->set(
+      std::any_cast<Highlight>(m_palette->get_list()->get(*current)));
   }
-  get_current()->set(std::any_cast<Highlight>(m_palette->get_list()->get(*current)));
 }
