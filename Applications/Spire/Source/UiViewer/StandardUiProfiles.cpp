@@ -1362,7 +1362,7 @@ UiProfile Spire::make_color_code_panel_profile() {
 
 UiProfile Spire::make_color_picker_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
-  properties.push_back(make_standard_property<QColor>("current"));
+  properties.push_back(make_standard_property("current", QColor()));
   properties.push_back(make_standard_property("alpha_visible", true));
   auto profile = UiProfile("ColorPicker", properties, [] (auto& profile) {
     auto button = make_label_button("ColorPicker");

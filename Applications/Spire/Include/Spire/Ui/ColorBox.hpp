@@ -13,17 +13,11 @@ namespace Spire {
   /** A ValueModel over a QColor. */
   using ColorModel = ValueModel<QColor>;
 
-  /** A ValueModel over an optional QColor. */
-  using OptionalColorModel = ValueModel<boost::optional<QColor>>;
-
   /** A LocalValueModel over a QColor. */
   using LocalColorModel = LocalValueModel<QColor>;
 
-  /** A LocalValueModel over an optional QColor. */
-  using LocalOptionalColorModel = LocalValueModel<boost::optional<QColor>>;
-
   /**
-   * Presents a color to the user.
+   * Presents a color.
    */
   class ColorBox : public QWidget {
     public:
