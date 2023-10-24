@@ -96,17 +96,14 @@ void CanvasObserver::Translate() {
       }
     }
     if(m_remainingDependencies.empty()) {
-      auto context = CanvasNodeTranslationContext(
-        Ref(m_task->GetContext().GetUserProfile()), Ref(m_task->GetExecutor()),
-        m_task->GetContext().GetExecutingAccount());
       for(auto& rootDependency : m_dependencies) {
         auto monitorDependency = &*m_observer->GetChildren().front().FindNode(
           GetFullName(*rootDependency));
         Mirror(*rootDependency, m_task->GetContext(), *monitorDependency,
-          Store(context));
+          Store(m_task->GetContext()));
       }
-      auto observer =
-        Spire::Translate(context, m_observer->GetChildren().back());
+      auto observer = Spire::Translate(
+        m_task->GetContext(), m_observer->GetChildren().back());
       auto reactor = Instantiate<ObserverTranslator>(
         observer.GetTypeInfo())(observer, m_callbacks.MakeSlot(
           std::bind_front(&CanvasObserver::OnReactorUpdate, this)));
