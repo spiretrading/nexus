@@ -4,24 +4,12 @@
 using namespace Spire;
 
 namespace {
-  auto round_value(double value) {
-    return std::round(value * 10) / 10;
-  }
-
-  //void require_oklab(const OklabColor& lhs, const OklabColor& rhs) {
-  //  REQUIRE(lhs.m_is_valid == rhs.m_is_valid);
-  //  REQUIRE(round_value(lhs.m_l) == round_value(rhs.m_l));
-  //  REQUIRE(round_value(lhs.m_a) == round_value(rhs.m_a));
-  //  REQUIRE(round_value(lhs.m_b) == round_value(rhs.m_b));
-  //}
-
-  //void require_oklch(const OklchColor& lhs, const OklchColor& rhs) {
-  //  REQUIRE(lhs.m_is_valid == rhs.m_is_valid);
-  //  REQUIRE(round_value(lhs.m_l) == round_value(rhs.m_l));
-  //  REQUIRE(round_value(lhs.m_c) == round_value(rhs.m_c));
-  //  REQUIRE(round_value(lhs.m_h) == round_value(rhs.m_h));
-  //}
   const auto EPSILON = 0.001;
+
+  void require_rgb(const QColor& lhs, const QColor& rhs) {
+    REQUIRE(lhs.isValid() == rhs.isValid());
+    REQUIRE(lhs.name() == rhs.name());
+  }
 
   void require_oklab(const OklabColor& lhs, const OklabColor& rhs) {
     REQUIRE(lhs.m_is_valid == rhs.m_is_valid);
@@ -57,8 +45,16 @@ TEST_SUITE("ColorConversion") {
   }
 
   TEST_CASE("oklab_to_rgb") {
+    auto oklab = OklabColor{false, 0, 0, 0};
+    require_rgb(to_rgb(oklab), QColor());
+    oklab = OklabColor{true, 1, 0, 0};
+    require_rgb(to_rgb(oklab), QColor(0xFFFFFF));
+    oklab = OklabColor{true, 0.45201, -0.03246, -0.31153};
+    require_rgb(to_rgb(oklab), QColor(0x0000FF));
+    oklab = OklabColor{true, 0.86644, -0.23389, 0.1795};
+    require_rgb(to_rgb(oklab), QColor(0x00FF00));
     auto rgb = QColor(0xFFFF00);
-    REQUIRE(to_rgb(to_oklab(rgb)) == rgb);
+    require_rgb(to_rgb(to_oklab(rgb)), rgb);
   }
 
   TEST_CASE("rgb_to_oklch") {
@@ -75,13 +71,21 @@ TEST_SUITE("ColorConversion") {
   }
 
   TEST_CASE("oklch_to_rgb") {
+    auto oklab = OklchColor{false, 0, 0, 0};
+    require_rgb(to_rgb(oklab), QColor());
+    oklab = OklchColor{true, 1, 0, 0};
+    require_rgb(to_rgb(oklab), QColor(0xFFFFFF));
+    oklab = OklchColor{true, 0.45201, 0.31321, 264.05203};
+    require_rgb(to_rgb(oklab), QColor(0x0000FF));
+    oklab = OklchColor{true, 0.86644, 0.29483, 142.49535};
+    require_rgb(to_rgb(oklab), QColor(0x00FF00));
     auto rgb = QColor(0xFFFF00);
-    REQUIRE(to_rgb(to_oklch(rgb)) == rgb);
+    require_rgb(to_rgb(to_oklch(rgb)), rgb);
   }
 
   TEST_CASE("full_conversion") {
-    auto rgb = QColor(0xF00F00);
-    REQUIRE(to_rgb(to_oklab(to_rgb(to_oklch(rgb)))) == rgb);
+    auto rgb = QColor(0xABCD12);
+    require_rgb(to_rgb(to_oklab(to_rgb(to_oklch(rgb)))), rgb);
   }
 
   TEST_CASE("APCA") {

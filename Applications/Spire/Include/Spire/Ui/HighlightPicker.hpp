@@ -36,12 +36,13 @@ namespace Spire {
       struct HighlightPickerModel;
       std::shared_ptr<HighlightPickerModel> m_model;
       ListView* m_palette;
-      OverlayPanel* m_panel;
       ColorBox* m_background_color_box;
       ColorBox* m_text_color_box;
+      OverlayPanel* m_panel;
       boost::signals2::scoped_connection m_current_connection;
 
-      bool handle_mouse_press(ColorBox& source, ColorBox& destination, const QMouseEvent& mouse_event);
+      bool on_mouse_press(ColorBox& source, ColorBox& destination,
+        const QMouseEvent& mouse_event);
       void on_palette_current(boost::optional<int> current);
   };
 }
