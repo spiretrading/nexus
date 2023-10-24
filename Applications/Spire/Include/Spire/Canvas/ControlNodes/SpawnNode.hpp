@@ -1,28 +1,35 @@
-#ifndef SPIRE_SPAWNNODE_HPP
-#define SPIRE_SPAWNNODE_HPP
+#ifndef SPIRE_SPAWN_NODE_HPP
+#define SPIRE_SPAWN_NODE_HPP
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Canvas/Common/CanvasNode.hpp"
 
 namespace Spire {
 
-  /*! \class SpawnNode
-      \brief Spawns CanvasNodes upon a trigger.
-   */
+  /** Spawns CanvasNodes upon a trigger. */
   class SpawnNode : public CanvasNode {
     public:
 
-      //! Constructs a SpawnNode.
+      /** The name of the property used to specify the trigger. */
+      static const std::string TRIGGER_PROPERTY;
+
+      /** The name of the property used to specify the series. */
+      static const std::string SERIES_PROPERTY;
+
+      /** Constructs a SpawnNode. */
       SpawnNode();
 
-      virtual std::unique_ptr<CanvasNode> Convert(const CanvasType& type) const;
+      std::unique_ptr<CanvasNode>
+        Convert(const CanvasType& type) const override;
 
-      virtual std::unique_ptr<CanvasNode> Replace(const CanvasNode& child,
-        std::unique_ptr<CanvasNode> replacement) const;
+      std::unique_ptr<CanvasNode> Replace(const CanvasNode& child,
+        std::unique_ptr<CanvasNode> replacement) const override;
 
-      virtual void Apply(CanvasNodeVisitor& visitor) const;
+      void Apply(CanvasNodeVisitor& visitor) const override;
+
+      using CanvasNode::Replace;
 
     protected:
-      virtual std::unique_ptr<CanvasNode> Clone() const;
+      std::unique_ptr<CanvasNode> Clone() const override;
 
     private:
       friend struct Beam::Serialization::DataShuttle;
@@ -38,11 +45,9 @@ namespace Spire {
   }
 }
 
-namespace Beam {
-namespace Serialization {
+namespace Beam::Serialization {
   template<>
   struct IsDefaultConstructable<Spire::SpawnNode> : std::false_type {};
-}
 }
 
 #endif

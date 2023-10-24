@@ -5,6 +5,7 @@
 #include "Nexus/ServiceClients/TestServiceClients.hpp"
 #include "Nexus/TelemetryServiceTests/TelemetryServiceTestEnvironment.hpp"
 #include "Spire/Canvas/ControlNodes/ChainNode.hpp"
+#include "Spire/Canvas/ControlNodes/SpawnNode.hpp"
 #include "Spire/Canvas/ControlNodes/UntilNode.hpp"
 #include "Spire/Canvas/Operations/CanvasNodeTranslator.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/SingleOrderTaskNode.hpp"
@@ -189,5 +190,20 @@ TEST_SUITE("Translation") {
     REQUIRE(executionReports->Pop().m_status == OrderStatus::PENDING_CANCEL);
     environment.m_environment.Cancel(*receivedOrder1);
     REQUIRE(taskState->Pop().m_state == Task::State::CANCELED);
+  }
+
+  TEST_CASE("translating_spawn") {
+    auto environment = Environment();
+    auto spawnNode = std::make_unique<SpawnNode>()->Replace(
+      SpawnNode::TRIGGER_PROPERTY, std::make_unique<IntegerNode>())->Replace(
+      SpawnNode::SERIES_PROPERTY, std::make_unique<IntegerNode>());
+    auto task = std::make_shared<Task>(
+      *spawnNode, DirectoryEntry(), Ref(environment.m_userProfile));
+    auto taskState = std::make_shared<Queue<Task::StateEntry>>();
+    task->GetPublisher().Monitor(taskState);
+    task->Execute();
+    REQUIRE(taskState->Pop().m_state == Task::State::INITIALIZING);
+    REQUIRE(taskState->Pop().m_state == Task::State::ACTIVE);
+    REQUIRE(taskState->Pop().m_state == Task::State::COMPLETE);
   }
 }

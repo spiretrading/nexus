@@ -7,7 +7,6 @@ using namespace boost;
 using namespace Nexus;
 using namespace Nexus::OrderExecutionService;
 using namespace Spire;
-using namespace std;
 
 CanvasNodeTranslationContext::CanvasNodeTranslationContext(
   Ref<UserProfile> userProfile, Ref<Executor> executor,
@@ -42,8 +41,8 @@ Executor& CanvasNodeTranslationContext::GetExecutor() {
   return *m_executor;
 }
 
-const DirectoryEntry& CanvasNodeTranslationContext::
-    GetExecutingAccount() const {
+const DirectoryEntry&
+    CanvasNodeTranslationContext::GetExecutingAccount() const {
   return m_executingAccount;
 }
 
@@ -57,21 +56,21 @@ SequencePublisher<const Order*>&
   return *m_orderPublisher;
 }
 
-void CanvasNodeTranslationContext::Add(Ref<const CanvasNode> node,
-    const Translation& translation) {
-  auto lock = boost::lock_guard(m_mutex);
+void CanvasNodeTranslationContext::Add(
+    Ref<const CanvasNode> node, const Translation& translation) {
+  auto lock = lock_guard(m_mutex);
   m_translations.insert(std::make_pair(node.Get(), translation));
-  if(m_parent != nullptr) {
+  if(m_parent) {
     m_parent->AddSubtranslation(Ref(node), translation);
   }
 }
 
-boost::optional<Translation> CanvasNodeTranslationContext::FindTranslation(
+optional<Translation> CanvasNodeTranslationContext::FindTranslation(
     const CanvasNode& node) const {
-  auto lock = boost::lock_guard(m_mutex);
+  auto lock = lock_guard(m_mutex);
   auto translationIterator = m_translations.find(&node);
   if(translationIterator == m_translations.end()) {
-    if(m_parent == nullptr) {
+    if(!m_parent) {
       return none;
     }
     return m_parent->FindTranslation(node);
@@ -79,14 +78,14 @@ boost::optional<Translation> CanvasNodeTranslationContext::FindTranslation(
   return translationIterator->second;
 }
 
-boost::optional<Translation> CanvasNodeTranslationContext::FindSubTranslation(
+optional<Translation> CanvasNodeTranslationContext::FindSubTranslation(
     const CanvasNode& node) const {
-  auto lock = boost::lock_guard(m_mutex);
+  auto lock = lock_guard(m_mutex);
   auto translationIterator = m_translations.find(&node);
   if(translationIterator == m_translations.end()) {
     auto subTranslationIterator = m_subTranslations.find(&node);
     if(subTranslationIterator == m_subTranslations.end()) {
-      if(m_parent == nullptr) {
+      if(!m_parent) {
         return none;
       }
       return m_parent->FindSubTranslation(node);
@@ -98,9 +97,9 @@ boost::optional<Translation> CanvasNodeTranslationContext::FindSubTranslation(
 
 void CanvasNodeTranslationContext::AddSubtranslation(
     Beam::Ref<const CanvasNode> node, const Translation& translation) {
-  auto lock = boost::lock_guard(m_mutex);
-  m_subTranslations.insert(std::make_pair(node.Get(), translation));
-  if(m_parent != nullptr) {
+  auto lock = lock_guard(m_mutex);
+  m_subTranslations.insert(std::pair(node.Get(), translation));
+  if(m_parent) {
     m_parent->AddSubtranslation(Ref(node), translation);
   }
 }
@@ -109,8 +108,7 @@ void Spire::Mirror(const CanvasNode& sourceNode,
     const CanvasNodeTranslationContext& sourceContext,
     const CanvasNode& mirrorNode,
     Out<CanvasNodeTranslationContext> mirrorContext) {
-  auto translation = sourceContext.FindSubTranslation(sourceNode);
-  if(translation.is_initialized()) {
+  if(auto translation = sourceContext.FindSubTranslation(sourceNode)) {
     mirrorContext->Add(Ref(mirrorNode), *translation);
   }
 }

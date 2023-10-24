@@ -1021,13 +1021,13 @@ namespace {
     template<typename T>
     static Translation Template(CanvasNodeTranslationContext& context,
         Aspen::Box<void> trigger, const CanvasNode& series) {
-      return Aspen::concur(Aspen::lift(
-        [context = &context, series = &series] (
-            const Aspen::Maybe<void>& value) {
-          auto localContext = new CanvasNodeTranslationContext(Ref(*context));
-          auto translation = Spire::Translate(*localContext, *series);
-          return Aspen::Shared(translation.Extract<Aspen::Box<T>>());
-        }, std::move(trigger)));
+      return Aspen::concur(Aspen::lift([&] (const Aspen::Maybe<void>& value) {
+
+        /** TODO: memory leak. */
+        auto localContext = new CanvasNodeTranslationContext(Ref(context));
+        auto translation = Spire::Translate(*localContext, series);
+        return Aspen::Shared(translation.Extract<Aspen::Box<T>>());
+      }, std::move(trigger)));
     }
 
     using SupportedTypes = NativeTypes;

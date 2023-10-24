@@ -6,21 +6,20 @@ using namespace Beam;
 using namespace boost;
 using namespace Nexus;
 using namespace Spire;
-using namespace std;
 
 IntegerNode::IntegerNode() {
-  SetText(lexical_cast<string>(GetValue()));
+  SetText(lexical_cast<std::string>(GetValue()));
 }
 
 IntegerNode::IntegerNode(Quantity value)
     : ValueNode(value) {
-  SetText(lexical_cast<string>(GetValue()));
+  SetText(lexical_cast<std::string>(GetValue()));
 }
 
-unique_ptr<IntegerNode> IntegerNode::SetValue(int value) const {
+std::unique_ptr<IntegerNode> IntegerNode::SetValue(int value) const {
   auto clone = CanvasNode::Clone(*this);
   clone->SetInternalValue(value);
-  clone->SetText(lexical_cast<string>(clone->GetValue()));
+  clone->SetText(lexical_cast<std::string>(clone->GetValue()));
   return clone;
 }
 
@@ -28,20 +27,21 @@ void IntegerNode::Apply(CanvasNodeVisitor& visitor) const {
   visitor.Visit(*this);
 }
 
-const string& IntegerNode::GetReferent() const {
+const std::string& IntegerNode::GetReferent() const {
   return m_referent;
 }
 
-unique_ptr<CanvasNode> IntegerNode::SetReferent(const string& referent) const {
+std::unique_ptr<CanvasNode>
+    IntegerNode::SetReferent(const std::string& referent) const {
   auto clone = CanvasNode::Clone(*this);
   clone->m_referent = referent;
-  return std::move(clone);
+  return clone;
 }
 
-unique_ptr<CanvasNode> IntegerNode::Clone() const {
-  return make_unique<IntegerNode>(*this);
+std::unique_ptr<CanvasNode> IntegerNode::Clone() const {
+  return std::make_unique<IntegerNode>(*this);
 }
 
-unique_ptr<CanvasNode> IntegerNode::Reset() const {
-  return make_unique<IntegerNode>();
+std::unique_ptr<CanvasNode> IntegerNode::Reset() const {
+  return std::make_unique<IntegerNode>();
 }
