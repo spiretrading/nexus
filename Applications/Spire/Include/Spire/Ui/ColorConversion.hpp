@@ -38,7 +38,7 @@ namespace Spire {
 
   /**
    * Converts a RGB color into a Oklab color.
-   * @param color The RGG color.
+   * @param color The RGB color.
    */
   OklabColor to_oklab(const QColor& color);
 
@@ -50,7 +50,7 @@ namespace Spire {
 
   /**
    * Converts a RGB color into a Oklch color.
-   * @param color The RGG color.
+   * @param color The RGB color.
    */
   OklchColor to_oklch(const QColor& color);
 
