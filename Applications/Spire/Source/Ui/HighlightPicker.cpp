@@ -5,7 +5,6 @@
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
-#include "Spire/Styles/Any.hpp"
 #include "Spire/Styles/Stylist.hpp"
 #include "Spire/Ui/ColorBox.hpp"
 #include "Spire/Ui/ColorConversion.hpp"
@@ -24,7 +23,8 @@ namespace {
   auto PALETTE_STYLE(StyleSheet style) {
     style.get(Any()).
       set(Overflow::WRAP).
-      set(Qt::Horizontal);
+      set(Qt::Horizontal).
+      set(EdgeNavigation::CONTAIN);
     style.get(Any() > is_a<ListItem>()).
       set(border(scale_width(1), QColor(Qt::transparent))).
       set(BackgroundColor(Qt::transparent)).
@@ -111,12 +111,6 @@ namespace {
       style.get(Any() > Alpha()).set(Visibility::NONE);
     });
     return color_box;
-  }
-
-  void update_color_box_border_color(ColorBox& color_box) {
-    update_style(*color_box.layout()->itemAt(0)->widget(), [] (auto& style) {
-      style.get(Any()).set(border_color(QColor(0xC8C8C8)));
-    });
   }
 }
 
@@ -277,13 +271,18 @@ bool HighlightPicker::handle_mouse_press(ColorBox& source,
       mouse_event.button(), mouse_event.buttons(), mouse_event.modifiers(),
       mouse_event.source()));
   };
+  auto update_source_border_color = [&] {
+    update_style(*source.layout()->itemAt(0)->widget(), [] (auto& style) {
+      style.get(Any()).set(border_color(QColor(0xC8C8C8)));
+    });
+  };
   if(!get_color_picker(source)->rect().contains(mouse_event.pos())) {
     auto position_in_destination =
       destination.mapFromGlobal(mouse_event.globalPos());
     if(destination.rect().contains(position_in_destination)) {
       destination.setFocus(Qt::MouseFocusReason);
       post_mouse_event(destination, position_in_destination);
-      update_color_box_border_color(source);
+      update_source_border_color();
       return true;
     } else if(m_palette->rect().contains(
         m_palette->mapFromGlobal(mouse_event.globalPos()))) {
@@ -296,11 +295,11 @@ bool HighlightPicker::handle_mouse_press(ColorBox& source,
           break;
         }
       }
-      update_color_box_border_color(source);
+      update_source_border_color();
       return true;
     } else if(m_panel->rect().contains(
         m_panel->mapFromGlobal(mouse_event.globalPos()))) {
-      update_color_box_border_color(source);
+      update_source_border_color();
     } else {
       hide();
     }
