@@ -220,7 +220,6 @@ void BlotterWindow::showEvent(QShowEvent* event) {
     account["id"] = static_cast<int>(m_model->GetExecutingAccount().m_id);
     return account;
   }();
-  m_userProfile->GetTelemetryClient().Record("spire.blotter.show", showData);
   for(auto i = 0; i != m_model->GetTasksModel().rowCount(); ++i) {
     auto& entry = m_model->GetTasksModel().GetEntry(i);
     if(entry.m_sticky) {
@@ -228,7 +227,6 @@ void BlotterWindow::showEvent(QShowEvent* event) {
       pinData["blotter_id"] = reinterpret_cast<std::intptr_t>(this);
       pinData["task_id"] = entry.m_task->GetId();
       pinData["is_pinned"] = entry.m_sticky;
-      m_userProfile->GetTelemetryClient().Record("spire.blotter.pin", pinData);
     }
   }
 }
@@ -236,7 +234,6 @@ void BlotterWindow::showEvent(QShowEvent* event) {
 void BlotterWindow::closeEvent(QCloseEvent* event) {
   auto closeData = JsonObject();
   closeData["id"] = reinterpret_cast<std::intptr_t>(this);
-  m_userProfile->GetTelemetryClient().Record("spire.blotter.close", closeData);
   blotterWindows.erase(m_model);
   if(m_model->IsPersistent()) {
     m_userProfile->GetBlotterSettings().AddRecentlyClosedWindow(*this);
@@ -439,8 +436,6 @@ void BlotterWindow::OnPositionsAdded(
         m_userProfile->GetMarketDatabase());
       return security;
     }();
-    m_userProfile->GetTelemetryClient().Record(
-      "spire.blotter.position_added", positionData);
   }
 }
 
@@ -450,8 +445,6 @@ void BlotterWindow::OnPositionsRemoved(
     auto positionData = JsonObject();
     positionData["blotter_id"] = reinterpret_cast<std::intptr_t>(this);
     positionData["index"] = i;
-    m_userProfile->GetTelemetryClient().Record(
-      "spire.blotter.position_removed", positionData);
   }
 }
 
@@ -463,8 +456,6 @@ void BlotterWindow::OnTasksAdded(
     taskData["blotter_id"] = reinterpret_cast<std::intptr_t>(this);
     taskData["task_id"] = entry.m_task->GetId();
     taskData["index"] = i;
-    m_userProfile->GetTelemetryClient().Record(
-      "spire.blotter.task_added", taskData);
   }
 }
 
@@ -474,8 +465,6 @@ void BlotterWindow::OnTasksRemoved(
     auto taskData = JsonObject();
     taskData["blotter_id"] = reinterpret_cast<std::intptr_t>(this);
     taskData["index"] = i;
-    m_userProfile->GetTelemetryClient().Record(
-      "spire.blotter.task_removed", taskData);
   }
 }
 
@@ -490,7 +479,6 @@ void BlotterWindow::OnPinTaskToggled(const QModelIndex& topLeft,
   pinData["blotter_id"] = reinterpret_cast<std::intptr_t>(this);
   pinData["task_id"] = entry.m_task->GetId();
   pinData["is_pinned"] = entry.m_sticky;
-  m_userProfile->GetTelemetryClient().Record("spire.blotter.pin", pinData);
 }
 
 void BlotterWindow::OnUpdateTimer() {

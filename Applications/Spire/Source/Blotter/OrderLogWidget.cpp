@@ -166,8 +166,6 @@ void OrderLogWidget::OnProxyOrderAdded(
     orderData["blotter_id"] = reinterpret_cast<std::intptr_t>(parentWidget());
     orderData["order_id"] =
       static_cast<double>(entry.m_order->GetInfo().m_orderId);
-    m_userProfile->GetTelemetryClient().Record(
-      "spire.blotter.order_added", orderData);
   }
 }
 
@@ -180,8 +178,6 @@ void OrderLogWidget::OnProxyOrderRemoved(
     orderData["blotter_id"] = reinterpret_cast<std::intptr_t>(parentWidget());
     orderData["order_id"] =
       static_cast<double>(entry.m_order->GetInfo().m_orderId);
-    m_userProfile->GetTelemetryClient().Record(
-      "spire.blotter.order_removed", orderData);
   }
 }
 
