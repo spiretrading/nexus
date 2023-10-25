@@ -4,11 +4,8 @@
 
 namespace Spire {
 
-  /** Represents a Oklab color. */
+  /** Represents an Oklab color. */
   struct OklabColor {
-
-    /** Specifies if the color is valid. */
-    bool m_is_valid;
 
     /** Specifies the perceived lightness. */
     double m_l;
@@ -18,13 +15,19 @@ namespace Spire {
 
     /** Specifies the distance along the b axis in the Oklab colorspace. */
     double m_b;
+
+    /** Constructs an invalid OklabColor with the lab value (-1, -1, -1) */
+    OklabColor();
+
+    /** Constructs an OklabColor. */
+    OklabColor(double l, double a, double b);
+
+    /** Returns <code>true</code> iff the OklabColor is valid. */
+    bool is_valid() const;
   };
 
-  /** Represents a Oklch color. */
+  /** Represents an Oklch color. */
   struct OklchColor {
-
-    /** Specifies if the color is valid. */
-    bool m_is_valid;
 
     /** Specifies the perceived lightness. */
     double m_l;
@@ -34,6 +37,15 @@ namespace Spire {
 
     /** Represents the hue angle. */
     double m_h;
+
+    /** Constructs an invalid OklchColor with the lch value (-1, -1, 0) */
+    OklchColor();
+
+    /** Constructs an OklchColor. */
+    OklchColor(double l, double c, double h);
+
+    /** Returns <code>true</code> iff the OklchColor is valid. */
+    bool is_valid() const;
   };
 
   /**

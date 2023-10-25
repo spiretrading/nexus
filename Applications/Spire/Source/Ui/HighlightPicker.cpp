@@ -159,7 +159,7 @@ struct HighlightPicker::HighlightPickerModel {
       return 0.37;
     }();
     auto text_color_candidate =
-      OklchColor{true, lightness, chroma, background_lch_color.m_h};
+      OklchColor(lightness, chroma, background_lch_color.m_h);
     auto text_color = [&] {
       auto candidate_contrast = apca(to_rgb(text_color_candidate),
         background_color);
