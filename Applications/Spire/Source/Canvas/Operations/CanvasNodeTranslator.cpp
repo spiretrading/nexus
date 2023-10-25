@@ -1019,14 +1019,31 @@ namespace {
 
   struct SpawnTranslator {
     template<typename T>
+    struct SpawnReactor {
+      using Type = Aspen::Box<T>::Type;
+      using Result = Aspen::Box<T>::Result;
+      CanvasNodeTranslationContext m_context;
+      Aspen::Box<T> m_reactor;
+
+      explicit SpawnReactor(
+        CanvasNodeTranslationContext& context, const CanvasNode& series)
+        : m_context(Ref(context)),
+          m_reactor(Translate(m_context, series).Extract<Aspen::Box<T>>()) {}
+
+      Aspen::State commit(int sequence) noexcept {
+        return m_reactor.commit(sequence);
+      }
+
+      Result eval() const {
+        return m_reactor.eval();
+      }
+    };
+
+    template<typename T>
     static Translation Template(CanvasNodeTranslationContext& context,
         Aspen::Box<void> trigger, const CanvasNode& series) {
       return Aspen::concur(Aspen::lift([&] (const Aspen::Maybe<void>& value) {
-
-        /** TODO: memory leak. */
-        auto localContext = new CanvasNodeTranslationContext(Ref(context));
-        auto translation = Spire::Translate(*localContext, series);
-        return Aspen::Shared(translation.Extract<Aspen::Box<T>>());
+        return Aspen::Shared<SpawnReactor<T>>(context, series);
       }, std::move(trigger)));
     }
 
