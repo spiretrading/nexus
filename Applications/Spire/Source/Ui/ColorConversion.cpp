@@ -50,13 +50,46 @@ namespace {
   }
 }
 
+OklabColor::OklabColor()
+  : m_l(-1),
+    m_a(-1),
+    m_b(-1) {}
+
+OklabColor::OklabColor(double l, double a, double b)
+  : m_l(l),
+    m_a(a),
+    m_b(b) {}
+
+bool OklabColor::is_valid() const {
+  if(m_l < 0 || m_l > 1.0 || m_a < -0.4 || m_a > 0.4 ||
+      m_b < -0.4 || m_b > 0.4) {
+    return false;
+  }
+  return true;
+}
+
+OklchColor::OklchColor()
+  : m_l(-1),
+    m_c(-1),
+    m_h(0) {}
+
+OklchColor::OklchColor(double l, double c, double h)
+  : m_l(l),
+    m_c(c),
+    m_h(h) {}
+
+bool OklchColor::is_valid() const {
+  if(m_l < 0 || m_l > 1.0 || m_c < 0 || m_c > 0.4) {
+    return false;
+  }
+  return true;
+}
+
 OklabColor Spire::to_oklab(const QColor& color) {
   auto lab = OklabColor();
   if(!color.isValid()) {
-    lab.m_is_valid = false;
     return lab;
   }
-  lab.m_is_valid = true;
   auto gamma_to_linear = [] (auto value) {
     if(value > 0.04045) {
       return std::pow((value + 0.055) / 1.055, 2.4);
@@ -73,18 +106,19 @@ OklabColor Spire::to_oklab(const QColor& color) {
   m = std::cbrt(m);
   s = std::cbrt(s);
   lab.m_l = 0.2104542553 * l + 0.7936177850 * m - 0.0040720468 * s;
-  lab.m_a = 1.9779984951 * l - 2.4285922050 * m + 0.4505937099 * s;
-  lab.m_b = 0.0259040371 * l + 0.7827717662 * m - 0.8086757660 * s;
   if(color.redF() == color.greenF() && color.greenF() == color.blueF()) {
     lab.m_a = 0.0;
     lab.m_b = 0.0;
+  } else {
+    lab.m_a = 1.9779984951 * l - 2.4285922050 * m + 0.4505937099 * s;
+    lab.m_b = 0.0259040371 * l + 0.7827717662 * m - 0.8086757660 * s;
   }
   return lab;
 }
 
 QColor Spire::to_rgb(const OklabColor& color) {
   auto rgb = QColor();
-  if(!color.m_is_valid) {
+  if(!color.is_valid()) {
     return rgb;
   }
   auto l = color.m_l + 0.3963377774 * color.m_a + 0.2158037573 * color.m_b;
@@ -111,10 +145,8 @@ QColor Spire::to_rgb(const OklabColor& color) {
 OklchColor Spire::to_oklch(const QColor& color) {
   auto lch = OklchColor();
   if(!color.isValid()) {
-    lch.m_is_valid = false;
     return lch;
   }
-  lch.m_is_valid = true;
   auto lab = to_oklab(color);
   lch.m_l = lab.m_l;
   lch.m_c = std::sqrt(lab.m_a * lab.m_a + lab.m_b * lab.m_b);
@@ -130,12 +162,11 @@ OklchColor Spire::to_oklch(const QColor& color) {
 
 QColor Spire::to_rgb(const OklchColor& color) {
   auto rgb = QColor();
-  if(!color.m_is_valid) {
+  if(!color.is_valid()) {
     return rgb;
   }
   auto h = color.m_h * std::numbers::pi / 180;
   auto lab = OklabColor();
-  lab.m_is_valid = true;
   lab.m_l = color.m_l;
   lab.m_a = std::cos(h) * color.m_c;
   lab.m_b = std::sin(h) * color.m_c;
@@ -161,14 +192,16 @@ double Spire::apca(double text_luminance, double background_luminance) {
   auto output_contrast = [&] {
     if(background_luminance > text_luminance) {
       auto SAPC = (std::pow(background_luminance, SA98G::NORMAL_BLACKGROUND) -
-        std::pow(text_luminance, SA98G::NORMAL_TEXT)) * SA98G::SCALE_BLACK_ON_WHITE;
+        std::pow(text_luminance, SA98G::NORMAL_TEXT)) *
+          SA98G::SCALE_BLACK_ON_WHITE;
       if(SAPC < SA98G::LOW_CLIP) {
         return 0.0;
       }
       return SAPC - SA98G::LOW_BLACK_ON_WHITE_OFFSET;
     } else {
       auto SAPC = (std::pow(background_luminance, SA98G::REVERT_BLACKGROUND) -
-        std::pow(text_luminance, SA98G::REVERT_TEXT)) * SA98G::SCALE_WHITE_ON_BLACK;
+        std::pow(text_luminance, SA98G::REVERT_TEXT)) *
+          SA98G::SCALE_WHITE_ON_BLACK;
       if(SAPC > -SA98G::LOW_CLIP) {
         return 0.0;
       }

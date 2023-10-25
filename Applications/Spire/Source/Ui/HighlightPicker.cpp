@@ -7,8 +7,8 @@
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Styles/Stylist.hpp"
 #include "Spire/Ui/ColorBox.hpp"
-#include "Spire/Ui/ColorConversion.hpp"
 #include "Spire/Ui/ColorCodePanel.hpp"
+#include "Spire/Ui/ColorConversion.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/ListView.hpp"
@@ -22,9 +22,9 @@ using namespace Spire::Styles;
 namespace {
   auto PALETTE_STYLE(StyleSheet style) {
     style.get(Any()).
+      set(EdgeNavigation::CONTAIN).
       set(Overflow::WRAP).
-      set(Qt::Horizontal).
-      set(EdgeNavigation::CONTAIN);
+      set(Qt::Horizontal);
     style.get(Any() > is_a<ListItem>()).
       set(border(scale_width(1), QColor(Qt::transparent))).
       set(BackgroundColor(Qt::transparent)).
@@ -95,10 +95,9 @@ namespace {
 
   auto make_highlight_swatch(const std::shared_ptr<AnyListModel>& list,
       int index) {
-    auto current =
+    auto swatch = new HighlightSwatch(
       std::make_shared<LocalValueModel<HighlightPicker::Highlight>>(
-        std::any_cast<HighlightPicker::Highlight>(list->get(index)));
-    auto swatch = new HighlightSwatch(current);
+        std::any_cast<HighlightPicker::Highlight>(list->get(index))));
     swatch->setFixedSize(scale(22, 18));
     return swatch;
   }
@@ -160,10 +159,10 @@ struct HighlightPicker::HighlightPickerModel {
       return 0.37;
     }();
     auto text_color_candidate =
-      OklchColor{true, lightness, chroma, background_lch_color.m_h};
-    auto candidate_contrast = apca(to_rgb(text_color_candidate),
-      background_color);
+      OklchColor(lightness, chroma, background_lch_color.m_h);
     auto text_color = [&] {
+      auto candidate_contrast = apca(to_rgb(text_color_candidate),
+        background_color);
       if(std::abs(candidate_contrast) > 75 && background_lch_color.m_c > 0.01) {
         return to_rgb(text_color_candidate);
       }
@@ -230,25 +229,24 @@ const std::shared_ptr<ValueModel<HighlightPicker::Highlight>>&
 }
 
 bool HighlightPicker::eventFilter(QObject* watched, QEvent* event) {
-  if(get_color_picker(*m_background_color_box) == watched) {
-    if(event->type() == QEvent::MouseButtonPress) {
-      auto& mouse_event = *static_cast<QMouseEvent*>(event);
-      if(handle_mouse_press(*m_background_color_box, *m_text_color_box,
+  if(m_panel == watched) {
+    if(event->type() == QEvent::Close) {
+      m_panel->hide();
+      hide();
+    }
+  } else if(event->type() == QEvent::MouseButtonPress) {
+    auto& mouse_event = *static_cast<QMouseEvent*>(event);
+    if(get_color_picker(*m_background_color_box) == watched) {
+      if(on_mouse_press(*m_background_color_box, *m_text_color_box,
+          mouse_event)) {
+        return true;
+      }
+    } else if(get_color_picker(*m_text_color_box) == watched) {
+      if(on_mouse_press(*m_text_color_box, *m_background_color_box,
           mouse_event)) {
         return true;
       }
     }
-  } else if(get_color_picker(*m_text_color_box) == watched) {
-    if(event->type() == QEvent::MouseButtonPress) {
-      auto& mouse_event = *static_cast<QMouseEvent*>(event);
-      if(handle_mouse_press(*m_text_color_box, *m_background_color_box,
-          mouse_event)) {
-        return true;
-      }
-    }
-  } else if(event->type() == QEvent::Close) {
-    m_panel->hide();
-    hide();
   }
   return QWidget::eventFilter(watched, event);
 }
@@ -263,13 +261,13 @@ bool HighlightPicker::event(QEvent* event) {
   return QWidget::event(event);
 }
 
-bool HighlightPicker::handle_mouse_press(ColorBox& source,
-    ColorBox& destination, const QMouseEvent& mouse_event) {
+bool HighlightPicker::on_mouse_press(ColorBox& source, ColorBox& destination,
+    const QMouseEvent& mouse_event) {
   auto post_mouse_event = [&] (QWidget& widget, const QPoint& position) {
-    QCoreApplication::postEvent(&widget, new QMouseEvent(mouse_event.type(),
-      position, mouse_event.windowPos(), mouse_event.screenPos(),
-      mouse_event.button(), mouse_event.buttons(), mouse_event.modifiers(),
-      mouse_event.source()));
+    auto event = new QMouseEvent(mouse_event.type(), position,
+      mouse_event.windowPos(), mouse_event.screenPos(), mouse_event.button(),
+      mouse_event.buttons(), mouse_event.modifiers(), mouse_event.source());
+    QCoreApplication::postEvent(&widget, event);
   };
   auto update_source_border_color = [&] {
     update_style(*source.layout()->itemAt(0)->widget(), [] (auto& style) {

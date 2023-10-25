@@ -2306,42 +2306,43 @@ UiProfile Spire::make_highlight_picker_profile() {
       get<QColor>("background_color", profile.get_properties());
     auto& text_color = get<QColor>("text_color", profile.get_properties());
     auto button = make_label_button("HighlightPicker");
-    update_style(*button, [&] (auto& style) {
-      style.get(Any() > Body()).
-        set(BackgroundColor(background_color.get())).
-        set(TextColor(text_color.get()));
-    });
     auto picker = new HighlightPicker(
       std::make_shared<LocalValueModel<HighlightPicker::Highlight>>(
         HighlightPicker::Highlight{background_color.get(), text_color.get()}),
       *button);
-    background_color.connect_changed_signal([=] (auto color) {
+    background_color.connect_changed_signal([=] (const auto& color) {
       auto highlight = picker->get_current()->get();
-      if(highlight.m_background_color != color) {
+      if(highlight.m_background_color.name() != color.name()) {
         highlight.m_background_color = color;
         picker->get_current()->set(highlight);
       }
+      update_style(*button, [&] (auto& style) {
+        style.get(Any() > Body()).set(BackgroundColor(color));
+      });
     });
-    text_color.connect_changed_signal([=] (auto color) {
+    text_color.connect_changed_signal([=] (const auto& color) {
       auto highlight = picker->get_current()->get();
-      if(highlight.m_text_color != color) {
+      if(highlight.m_text_color.name() != color.name()) {
         highlight.m_text_color = color;
         picker->get_current()->set(highlight);
       }
+      update_style(*button, [&] (auto& style) {
+        style.get(Any() > Body()).set(TextColor(color));
+      });
     });
     auto current_slot = profile.make_event_slot<QString>("Current");
     picker->get_current()->connect_update_signal(
       [=, &background_color, &text_color] (const auto& highlight) {
-      current_slot(highlight.m_background_color.name() + " " +
-        highlight.m_text_color.name());
-      background_color.set(highlight.m_background_color);
-      text_color.set(highlight.m_text_color);
-      update_style(*button, [&] (auto& style) {
-        style.get(Any() > Body()).
-          set(BackgroundColor(highlight.m_background_color)).
-          set(TextColor(highlight.m_text_color));
+        if(background_color.get().name() !=
+            highlight.m_background_color.name()) {
+          background_color.set(highlight.m_background_color);
+        }
+        if(text_color.get().name() != highlight.m_text_color.name()) {
+          text_color.set(highlight.m_text_color);
+        }
+        current_slot(highlight.m_background_color.name() + " " +
+          highlight.m_text_color.name());
       });
-    });
     button->connect_click_signal([=] { picker->show(); });
     return button;
   });
