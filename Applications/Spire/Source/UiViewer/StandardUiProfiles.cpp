@@ -51,6 +51,7 @@
 #include "Spire/Ui/FontFamilyBox.hpp"
 #include "Spire/Ui/FontStyleBox.hpp"
 #include "Spire/Ui/HexColorBox.hpp"
+#include "Spire/Ui/HighlightBox.hpp"
 #include "Spire/Ui/HighlightPicker.hpp"
 #include "Spire/Ui/HighlightSwatch.hpp"
 #include "Spire/Ui/HoverObserver.hpp"
@@ -2235,6 +2236,62 @@ UiProfile Spire::make_hex_color_box_profile() {
     box->connect_submit_signal(profile.make_event_slot<QColor>("Submit"));
     box->connect_reject_signal(profile.make_event_slot<QColor>("Reject"));
     return box;
+  });
+  return profile;
+}
+
+UiProfile Spire::make_highlight_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_property("read_only", false));
+  properties.push_back(
+    make_standard_property("background_color", QColor(0xFFFFC4)));
+  properties.push_back(make_standard_property("text_color", QColor(0x521C00)));
+  auto profile = UiProfile("HightlightBox", properties, [] (auto& profile) {
+    auto& background_color =
+      get<QColor>("background_color", profile.get_properties());
+    auto& text_color = get<QColor>("text_color", profile.get_properties());
+    auto highlight_box = new HighlightBox(
+      std::make_shared<LocalHighlightColorModel>(
+        HighlightColor{background_color.get(), text_color.get()}));
+    highlight_box->setFixedSize(scale(100, 26));
+    apply_widget_properties(highlight_box, profile.get_properties());
+    auto& read_only = get<bool>("read_only", profile.get_properties());
+    read_only.connect_changed_signal(
+      std::bind_front(&HighlightBox::set_read_only, highlight_box));
+    background_color.connect_changed_signal([=] (auto color) {
+      auto highlight = highlight_box->get_current()->get();
+      if(highlight.m_background_color != color) {
+        highlight.m_background_color = color;
+        highlight_box->get_current()->set(highlight);
+      }
+    });
+    text_color.connect_changed_signal([=] (auto color) {
+      auto highlight = highlight_box->get_current()->get();
+      if(highlight.m_text_color != color) {
+        highlight.m_text_color = color;
+        highlight_box->get_current()->set(highlight);
+      }
+    });
+    auto current_slot = profile.make_event_slot<QString>("Current");
+    highlight_box->get_current()->connect_update_signal(
+      [=, &background_color, &text_color] (const auto& highlight) {
+        if(background_color.get().name() !=
+          highlight.m_background_color.name()) {
+          background_color.set(highlight.m_background_color);
+        }
+        if(text_color.get().name() != highlight.m_text_color.name()) {
+          text_color.set(highlight.m_text_color);
+        }
+        current_slot(highlight.m_background_color.name() + " " +
+          highlight.m_text_color.name());
+      });
+    auto submit_slot = profile.make_event_slot<QString>("Submit");
+    highlight_box->connect_submit_signal([=] (const auto& submission) {
+      submit_slot(submission.m_background_color.name() + " " +
+        submission.m_text_color.name());
+    });
+    return highlight_box;
   });
   return profile;
 }

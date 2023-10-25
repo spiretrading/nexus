@@ -1,5 +1,6 @@
 #ifndef SPIRE_HIGHLIGHT_BOX_HPP
 #define SPIRE_HIGHLIGHT_BOX_HPP
+#include <any>
 #include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/HighlightSwatch.hpp"
 #include "Spire/Ui/PressObserver.hpp"
@@ -59,24 +60,28 @@ namespace Spire {
         const SubmitSignal::slot_type& slot) const;
 
     protected:
-      //bool eventFilter(QObject* watched, QEvent* event) override;
-      //void keyPressEvent(QKeyEvent* event) override;
+      bool eventFilter(QObject* watched, QEvent* event) override;
+      void keyPressEvent(QKeyEvent* event) override;
 
     private:
       mutable SubmitSignal m_submit_signal;
       std::shared_ptr<HighlightColorModel> m_current;
       HighlightColor m_submission;
+      HighlightPicker* m_highlight_picker;
+      QWidget* m_highlight_picker_panel;
+      TextBox* m_label;
+      Box* m_input_box;
       bool m_is_read_only;
       bool m_is_modified;
       FocusObserver m_focus_observer;
       PressObserver m_press_observer;
       boost::signals2::scoped_connection m_current_connection;
 
-      //void show_color_picker();
-      //void submit();
-      //void on_current(const QColor& current);
-      //void on_focus(FocusObserver::State state);
-      //void on_press_end(PressObserver::Reason reason);
+      void show_highlight_picker();
+      void submit();
+      void on_current(const HighlightColor& current);
+      void on_focus(FocusObserver::State state);
+      void on_press_end(PressObserver::Reason reason);
   };
 }
 
