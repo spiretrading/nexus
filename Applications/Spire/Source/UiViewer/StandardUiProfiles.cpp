@@ -520,11 +520,32 @@ namespace {
   }
 
   template<typename T>
-  void populate_enum_box_properties(
+  void populate_enum_properties(
       std::vector<std::shared_ptr<UiProperty>>& properties,
-      std::vector<std::pair<QString, T>>& current_property) {
-    properties.push_back(
-      make_standard_enum_property("current", current_property));
+      const QString& property_name,
+      std::vector<std::pair<QString, T>>& property) {
+    properties.push_back(make_standard_enum_property(property_name, property));
+  }
+
+  void populate_font_properties(
+      std::vector<std::shared_ptr<UiProperty>>& properties,
+      const QString& property_name) {
+    auto font_database = QFontDatabase();
+    auto font1 = font_database.font("Roboto", "Regular", -1);
+    font1.setPixelSize(scale_width(12));
+    auto font2 = font_database.font("Roboto", "Thin", -1);
+    font2.setPixelSize(scale_width(12));
+    auto font3 = font1;
+    font3.setPixelSize(scale_width(8));
+    auto font4 = font_database.font("Tahoma", "Bold", -1);
+    font4.setPixelSize(scale_width(16));
+    auto font5 = font_database.font("Segoe UI", "Light Italic", -1);
+    font5.setPixelSize(scale_width(10));
+    auto font_property = define_enum<QFont>(
+      {{"Roboto, Regular, 12", font1}, {"Roboto, Thin, 12", font2},
+      {"Roboto, Regular, 8", font3}, {"Tahoma, Bold, 16", font4},
+      {"Segoe UI, Light Italic, 10", font5}});
+    populate_enum_properties(properties, property_name, font_property);
   }
 
   template<typename B>
@@ -2091,22 +2112,7 @@ UiProfile Spire::make_focus_observer_profile() {
 UiProfile Spire::make_font_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_size_properties("parent_width", "parent_height", properties);
-  auto font_database = QFontDatabase();
-  auto font1 = font_database.font("Roboto", "Regular", -1);
-  font1.setPixelSize(scale_width(12));
-  auto font2 = font_database.font("Roboto", "Thin", -1);
-  font2.setPixelSize(scale_width(12));
-  auto font3 = font1;
-  font3.setPixelSize(scale_width(8));
-  auto font4 = font_database.font("Tahoma", "Bold", -1);
-  font4.setPixelSize(scale_width(16));
-  auto font5 = font_database.font("Segoe UI", "Light Italic", -1);
-  font5.setPixelSize(scale_width(10));
-  auto current_property = define_enum<QFont>(
-    {{"Roboto, Regular, 12", font1}, {"Roboto, Thin, 12", font2},
-    {"Roboto, Regular, 8", font3}, {"Tahoma, Bold, 16", font4},
-    {"Segoe UI, Light Italic, 10", font5}});
-  populate_enum_box_properties(properties, current_property);
+  populate_font_properties(properties, "current");
   auto profile = UiProfile("FontBox", properties, [] (auto& profile) {
     auto font_box = new FontBox();
     auto body_widget = new QWidget();
@@ -2149,7 +2155,7 @@ UiProfile Spire::make_font_family_box_profile() {
   auto current_property = define_enum<QString>(
     {{"Roboto", "Roboto"}, {"Source Sans Pro", "Source Sans Pro"},
     {"Tahoma", "Tahoma"}, {"Times New Roman", "Times New Roman"}});
-  populate_enum_box_properties(properties, current_property);
+  populate_enum_properties(properties, "current", current_property);
   properties.push_back(make_standard_property("read_only", false));
   auto profile = UiProfile("FontFamilyBox", properties, [] (auto& profile) {
     auto box = make_font_family_box("Roboto");
@@ -2178,8 +2184,7 @@ UiProfile Spire::make_font_style_box_profile() {
     {"Tahoma", "Tahoma"}, {"Times New Roman", "Times New Roman"},
     {"System", "System"}, {"Cambria Math", "Cambria Math"},
     {"Webdings", "Webdings"}});
-  properties.push_back(
-    make_standard_enum_property("font_family", font_family_property));
+  populate_enum_properties(properties, "font_family", font_family_property);
   properties.push_back(make_standard_property<QString>("current", "Regular"));
   properties.push_back(make_standard_property("read_only", false));
   auto profile = UiProfile("FontStyleBox", properties, [] (auto& profile) {
@@ -2245,8 +2250,9 @@ UiProfile Spire::make_highlight_box_profile() {
   populate_widget_properties(properties);
   properties.push_back(make_standard_property("read_only", false));
   properties.push_back(
-    make_standard_property("background_color", QColor(0xFFFFC4)));
-  properties.push_back(make_standard_property("text_color", QColor(0x521C00)));
+    make_standard_property("background_color", QColor(0xFFFFFF)));
+  properties.push_back(make_standard_property("text_color", QColor(Qt::black)));
+  populate_font_properties(properties, "font");
   auto profile = UiProfile("HightlightBox", properties, [] (auto& profile) {
     auto& background_color =
       get<QColor>("background_color", profile.get_properties());
@@ -2259,25 +2265,33 @@ UiProfile Spire::make_highlight_box_profile() {
     auto& read_only = get<bool>("read_only", profile.get_properties());
     read_only.connect_changed_signal(
       std::bind_front(&HighlightBox::set_read_only, highlight_box));
-    background_color.connect_changed_signal([=] (auto color) {
+    background_color.connect_changed_signal([=] (const auto& color) {
       auto highlight = highlight_box->get_current()->get();
-      if(highlight.m_background_color != color) {
+      if(highlight.m_background_color.name() != color.name()) {
         highlight.m_background_color = color;
         highlight_box->get_current()->set(highlight);
       }
     });
-    text_color.connect_changed_signal([=] (auto color) {
+    text_color.connect_changed_signal([=] (const auto& color) {
       auto highlight = highlight_box->get_current()->get();
-      if(highlight.m_text_color != color) {
+      if(highlight.m_text_color.name() != color.name()) {
         highlight.m_text_color = color;
         highlight_box->get_current()->set(highlight);
       }
+    });
+    auto& font = get<QFont>("font", profile.get_properties());
+    font.connect_changed_signal([=] (const auto& value) {
+      update_style(*highlight_box, [&] (auto& style) {
+        style.get(Any() > (is_a<TextBox>() &&
+            !(+Any() << is_a<HighlightPicker>()))).
+          set(Font(value));
+      });
     });
     auto current_slot = profile.make_event_slot<QString>("Current");
     highlight_box->get_current()->connect_update_signal(
       [=, &background_color, &text_color] (const auto& highlight) {
         if(background_color.get().name() !=
-          highlight.m_background_color.name()) {
+            highlight.m_background_color.name()) {
           background_color.set(highlight.m_background_color);
         }
         if(text_color.get().name() != highlight.m_text_color.name()) {
@@ -3184,7 +3198,7 @@ UiProfile Spire::make_order_type_box_profile() {
      {"Market", OrderType::MARKET},
      {"Pegged", OrderType::PEGGED},
      {"Stop", OrderType::STOP}});
-  populate_enum_box_properties(properties, current_property);
+  populate_enum_properties(properties, "current", current_property);
   properties.push_back(make_standard_property("read_only", false));
   auto profile = UiProfile("OrderTypeBox", properties,
     std::bind_front(setup_enum_box_profile<OrderTypeBox, make_order_type_box>));
@@ -3975,7 +3989,7 @@ UiProfile Spire::make_side_box_profile() {
   populate_widget_properties(properties);
   auto current_property = define_enum<Side>(
     {{"Buy", Side::BID}, {"Sell", Side::ASK}});
-  populate_enum_box_properties(properties, current_property);
+  populate_enum_properties(properties, "current", current_property);
   properties.push_back(make_standard_property("read_only", false));
   auto profile = UiProfile("SideBox", properties, std::bind_front(
     setup_enum_box_profile<SideBox, make_side_box>));
@@ -4774,7 +4788,7 @@ UiProfile Spire::make_time_in_force_box_profile() {
      {"GTX", TimeInForce(TimeInForce::Type::GTX)},
      {"GTD", TimeInForce(TimeInForce::Type::GTD)},
      {"MOC", TimeInForce(TimeInForce::Type::MOC)}});
-  populate_enum_box_properties(properties, current_property);
+  populate_enum_properties(properties, "current", current_property);
   properties.push_back(make_standard_property("read_only", false));
   auto profile = UiProfile("TimeInForceBox", properties, std::bind_front(
     setup_enum_box_profile<TimeInForceBox, make_time_in_force_box>));
