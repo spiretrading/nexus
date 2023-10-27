@@ -1739,6 +1739,12 @@ Translation CanvasNodeTranslationVisitor::InternalTranslation(
     }
     if(dynamic_cast<const SingleOrderTaskNode*>(&node)) {
       m_context->Add(Ref(node), m_translation->ToWeak());
+    } else if(auto type = dynamic_cast<const NativeType*>(&node.GetType())) {
+      if(type->GetCompatibility(OrderReferenceType::GetInstance()) == CanvasType::Compatibility::EQUAL) {
+        m_context->Add(Ref(node), m_translation->ToWeak());
+      } else {
+      m_context->Add(Ref(node), *m_translation);
+      }
     } else {
       m_context->Add(Ref(node), *m_translation);
     }

@@ -112,6 +112,7 @@ void Task::Execute() {
           m_state = State::COMPLETE;
         }
         m_publisher.Push(StateEntry(m_state));
+        m_executor.Close();
       }))));
   m_executor.Open();
 }
