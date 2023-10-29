@@ -1737,7 +1737,9 @@ Translation CanvasNodeTranslationVisitor::InternalTranslation(
     } else {
       node.Apply(*this);
     }
-    if(dynamic_cast<const SingleOrderTaskNode*>(&node)) {
+    auto type = dynamic_cast<const NativeType*>(&node.GetType());
+    if(type && type->GetCompatibility(OrderReferenceType::GetInstance()) ==
+        CanvasType::Compatibility::EQUAL) {
       m_context->Add(Ref(node), m_translation->ToWeak());
     } else {
       m_context->Add(Ref(node), *m_translation);
