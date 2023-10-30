@@ -23,7 +23,10 @@ void SecurityInfoModel::Search(const std::string& prefix) {
       GetMarketDataClient().LoadSecurityInfoFromPrefix(uppercasePrefix);
   }, LaunchPolicy::ASYNC).then([=] (auto&& securityInfoItems) {
     if(securityInfoItems.IsValue()) {
-      AddSecurityInfoItems(std::move(securityInfoItems.Get()));
+      QTimer::singleShot(0,
+        [=, securityInfoItems = std::move(securityInfoItems.Get())] () mutable {
+          AddSecurityInfoItems(std::move(securityInfoItems));
+        });
     }
   });
 }
