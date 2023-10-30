@@ -177,6 +177,11 @@ namespace {
       Decimal::backend_type::cpp_dec_float_digits10, std::ios_base::dec));
   }
 
+  QString to_string(const HighlightColor& highlight) {
+    return highlight.m_background_color.name() + " " +
+      highlight.m_text_color.name();
+  }
+
   template<typename T>
   struct DecimalBoxProfileProperties {
     using Type = T;
@@ -2253,7 +2258,7 @@ UiProfile Spire::make_highlight_box_profile() {
     make_standard_property("background_color", QColor(0xFFFFFF)));
   properties.push_back(make_standard_property("text_color", QColor(Qt::black)));
   populate_font_properties(properties, "font");
-  auto profile = UiProfile("HightlightBox", properties, [] (auto& profile) {
+  auto profile = UiProfile("HighlightBox", properties, [] (auto& profile) {
     auto& background_color =
       get<QColor>("background_color", profile.get_properties());
     auto& text_color = get<QColor>("text_color", profile.get_properties());
@@ -2297,13 +2302,11 @@ UiProfile Spire::make_highlight_box_profile() {
         if(text_color.get().name() != highlight.m_text_color.name()) {
           text_color.set(highlight.m_text_color);
         }
-        current_slot(highlight.m_background_color.name() + " " +
-          highlight.m_text_color.name());
+        current_slot(to_string(highlight));
       });
     auto submit_slot = profile.make_event_slot<QString>("Submit");
     highlight_box->connect_submit_signal([=] (const auto& submission) {
-      submit_slot(submission.m_background_color.name() + " " +
-        submission.m_text_color.name());
+      submit_slot(to_string(submission));
     });
     return highlight_box;
   });
@@ -2354,8 +2357,7 @@ UiProfile Spire::make_highlight_picker_profile() {
         if(text_color.get().name() != highlight.m_text_color.name()) {
           text_color.set(highlight.m_text_color);
         }
-        current_slot(highlight.m_background_color.name() + " " +
-          highlight.m_text_color.name());
+        current_slot(to_string(highlight));
       });
     button->connect_click_signal([=] { picker->show(); });
     return button;

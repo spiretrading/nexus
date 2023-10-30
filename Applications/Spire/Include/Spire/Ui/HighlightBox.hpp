@@ -69,7 +69,6 @@ namespace Spire {
       HighlightColor m_submission;
       HighlightPicker* m_highlight_picker;
       QWidget* m_highlight_picker_panel;
-      TextBox* m_label;
       Box* m_input_box;
       bool m_is_read_only;
       bool m_is_modified;
@@ -79,6 +78,8 @@ namespace Spire {
 
       void show_highlight_picker();
       void submit();
+      void update_label_color(const HighlightColor& highlight);
+      void on_palette_submit(const std::any& submission);
       void on_current(const HighlightColor& current);
       void on_focus(FocusObserver::State state);
       void on_press_end(PressObserver::Reason reason);
