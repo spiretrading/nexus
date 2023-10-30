@@ -22,7 +22,7 @@ install(TARGETS CanvasView CONFIGURATIONS Release
   DESTINATION ${SPIRE_LIBRARY_INSTALL_DIRECTORY}/Release)
 file(GLOB test_source_files ${SPIRE_SOURCE_PATH}/CanvasViewTests/*.cpp)
 add_executable(CanvasViewTests ${test_source_files})
-target_link_libraries(CanvasViewTests Dashboard Charting PortfolioViewer
+target_link_libraries(CanvasViewTests Async Dashboard Charting PortfolioViewer
   Utilities RiskTimer AccountViewer KeyBindings Blotter Catalog BookView
   TimeAndSales OrderImbalanceIndicator InputWidgets CanvasView Canvas UI
   Resources

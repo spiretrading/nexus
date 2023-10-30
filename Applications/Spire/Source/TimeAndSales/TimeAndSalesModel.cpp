@@ -13,39 +13,30 @@ using namespace Nexus;
 using namespace Nexus::MarketDataService;
 using namespace Spire;
 using namespace Spire::UI;
-using namespace std;
-
-namespace {
-  const unsigned int UPDATE_INTERVAL = 100;
-}
 
 TimeAndSalesModel::TimeAndSalesModel(Ref<UserProfile> userProfile,
     const TimeAndSalesProperties& properties, const Security& security)
     : m_userProfile(userProfile.Get()),
-      m_properties(properties),
-      m_slotHandler(std::make_shared<TaskQueue>()) {
-  connect(&m_updateTimer, &QTimer::timeout, this,
-    &TimeAndSalesModel::OnUpdateTimer);
-  m_updateTimer.start(UPDATE_INTERVAL);
+      m_properties(properties) {
   if(security == Security()) {
     return;
   }
-  ptime marketStartOfDay = MarketDateToUtc(security.GetMarket(),
+  auto marketStartOfDay = MarketDateToUtc(security.GetMarket(),
     m_userProfile->GetServiceClients().GetTimeClient().GetTime(),
     m_userProfile->GetMarketDatabase(), m_userProfile->GetTimeZoneDatabase());
-  SecurityMarketDataQuery query;
+  auto query = SecurityMarketDataQuery();
   query.SetIndex(security);
   query.SetRange(marketStartOfDay, Beam::Queries::Sequence::Last());
   query.SetSnapshotLimit(SnapshotLimit::Type::TAIL, 50);
   query.SetInterruptionPolicy(InterruptionPolicy::RECOVER_DATA);
   m_userProfile->GetServiceClients().GetMarketDataClient().QueryTimeAndSales(
-    query, m_slotHandler->GetSlot<TimeAndSale>(
-    std::bind(&TimeAndSalesModel::OnTimeAndSale, this, std::placeholders::_1)));
+    query, m_eventHandler.get_slot<TimeAndSale>(
+    std::bind_front(&TimeAndSalesModel::OnTimeAndSale, this)));
   auto bboQuery = MakeCurrentQuery(security);
   bboQuery.SetInterruptionPolicy(InterruptionPolicy::IGNORE_CONTINUE);
   m_userProfile->GetServiceClients().GetMarketDataClient().QueryBboQuotes(
-    bboQuery, m_slotHandler->GetSlot<BboQuote>(
-    std::bind(&TimeAndSalesModel::OnBbo, this, std::placeholders::_1)));
+    bboQuery, m_eventHandler.get_slot<BboQuote>(
+    std::bind_front(&TimeAndSalesModel::OnBbo, this)));
 }
 
 void TimeAndSalesModel::SetProperties(
@@ -72,8 +63,7 @@ QVariant TimeAndSalesModel::data(const QModelIndex& index, int role) const {
   if(!index.isValid()) {
     return QVariant();
   }
-  const pair<TimeAndSale, PriceRange>& entry = m_entries[
-    m_entries.size() - index.row() - 1];
+  auto& entry = m_entries[m_entries.size() - index.row() - 1];
   if(role == Qt::TextAlignmentRole) {
     if(index.column() == MARKET_COLUMN || index.column() == CONDITION_COLUMN) {
       return static_cast<int>(Qt::AlignHCenter | Qt::AlignVCenter);
@@ -84,7 +74,7 @@ QVariant TimeAndSalesModel::data(const QModelIndex& index, int role) const {
   } else if(role == Qt::ForegroundRole) {
     return m_properties.GetPriceRangeForegroundColor()[entry.second];
   } else if(role == Qt::DisplayRole) {
-    const TimeAndSale& timeAndSale = entry.first;
+    auto& timeAndSale = entry.first;
     if(index.column() == TIME_COLUMN) {
       return QVariant::fromValue(timeAndSale.m_timestamp);
     } else if(index.column() == PRICE_COLUMN) {
@@ -100,8 +90,8 @@ QVariant TimeAndSalesModel::data(const QModelIndex& index, int role) const {
   return QVariant();
 }
 
-QVariant TimeAndSalesModel::headerData(int section, Qt::Orientation orientation,
-    int role) const {
+QVariant TimeAndSalesModel::headerData(
+    int section, Qt::Orientation orientation, int role) const {
   if(role == Qt::TextAlignmentRole) {
     return static_cast<int>(Qt::AlignLeft | Qt::AlignVCenter);
   } else if(role == Qt::DisplayRole) {
@@ -125,35 +115,21 @@ void TimeAndSalesModel::OnBbo(const BboQuote& bbo) {
 }
 
 void TimeAndSalesModel::OnTimeAndSale(const TimeAndSale& timeAndSale) {
-  PriceRange priceRange;
-  if(m_bbo.m_ask.m_side == Side::NONE) {
-    priceRange = UNKNOWN;
-  } else if(timeAndSale.m_price == m_bbo.m_bid.m_price) {
-    priceRange = AT_BID;
-  } else if(timeAndSale.m_price < m_bbo.m_bid.m_price) {
-    priceRange = BELOW_BID;
-  } else if(timeAndSale.m_price == m_bbo.m_ask.m_price) {
-    priceRange = AT_ASK;
-  } else if(timeAndSale.m_price > m_bbo.m_ask.m_price) {
-    priceRange = ABOVE_ASK;
-  } else {
-    priceRange = INSIDE;
-  }
-  beginInsertRows(QModelIndex(), 0, 0);
-  m_entries.push_back(make_pair(timeAndSale, priceRange));
-  endInsertRows();
-}
-
-void TimeAndSalesModel::OnUpdateTimer() {
-  auto startTime = boost::posix_time::microsec_clock::universal_time();
-  auto slotHandler = m_slotHandler;
-  for(auto task = slotHandler->TryPop(); task && slotHandler.use_count() != 1;
-      task = slotHandler->TryPop()) {
-    (*task)();
-    auto frameTime = boost::posix_time::microsec_clock::universal_time();
-    if(frameTime - startTime > boost::posix_time::seconds(1) / 10) {
-      QCoreApplication::instance()->processEvents();
-      startTime = boost::posix_time::microsec_clock::universal_time();
+  auto priceRange = [&] {
+    if(m_bbo.m_ask.m_side == Side::NONE) {
+      return UNKNOWN;
+    } else if(timeAndSale.m_price == m_bbo.m_bid.m_price) {
+      return AT_BID;
+    } else if(timeAndSale.m_price < m_bbo.m_bid.m_price) {
+      return BELOW_BID;
+    } else if(timeAndSale.m_price == m_bbo.m_ask.m_price) {
+      return AT_ASK;
+    } else if(timeAndSale.m_price > m_bbo.m_ask.m_price) {
+      return ABOVE_ASK;
     }
-  }
+    return INSIDE;
+  }();
+  beginInsertRows(QModelIndex(), 0, 0);
+  m_entries.push_back(std::pair(timeAndSale, priceRange));
+  endInsertRows();
 }

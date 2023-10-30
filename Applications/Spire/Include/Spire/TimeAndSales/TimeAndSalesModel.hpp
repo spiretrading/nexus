@@ -1,103 +1,96 @@
-#ifndef SPIRE_TIMEANDSALESMODEL_HPP
-#define SPIRE_TIMEANDSALESMODEL_HPP
+#ifndef SPIRE_TIME_AND_SALES_MODEL_HPP
+#define SPIRE_TIME_AND_SALES_MODEL_HPP
 #include <Beam/Queues/TaskQueue.hpp>
 #include <QAbstractItemModel>
 #include <QTimer>
 #include "Nexus/Definitions/BboQuote.hpp"
 #include "Nexus/Definitions/Security.hpp"
 #include "Nexus/Definitions/TimeAndSale.hpp"
+#include "Spire/Async/EventHandler.hpp"
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesProperties.hpp"
 
 namespace Spire {
 
-  /*! \class TimeAndSalesModel
-      \brief Models a Security's TimeAndSales.
-   */
+  /** Models a Security's TimeAndSales. */
   class TimeAndSalesModel : public QAbstractTableModel {
     public:
 
-      /*! \enum PriceRange
-          \brief The position of a TimeAndSale print to a BboQuote.
-       */
+      /** The position of a TimeAndSale print to a BboQuote. */
       enum PriceRange {
 
-        //! The BboQuote was/is not known.
+        /** The BboQuote was/is not known. */
         UNKNOWN,
 
-        //! The TimeAndSale print was greater than the BBO ask.
+        /** The TimeAndSale print was greater than the BBO ask. */
         ABOVE_ASK,
 
-        //! The TimeAndSale print was equal to the BBO ask.
+        /** The TimeAndSale print was equal to the BBO ask. */
         AT_ASK,
 
-        //! The TimeAndSale print is inbetween the BBO.
+        /** The TimeAndSale print is inbetween the BBO. */
         INSIDE,
 
-        //! The TimeAndSale print is equal to the BBO bid.
+        /** The TimeAndSale print is equal to the BBO bid. */
         AT_BID,
 
-        //! The TimeAndSale print is less than the BBO bid.
-        BELOW_BID,
+        /** The TimeAndSale print is less than the BBO bid. */
+        BELOW_BID
       };
 
-      /*! \enum Columns
-       *  \brief The available columns to display.
-       */
+      /** The available columns to display. */
       enum Columns {
 
-        //! The time column.
+        /** The time column. */
         TIME_COLUMN,
 
-        //! The price column.
+        /** The price column. */
         PRICE_COLUMN,
 
-        //! The size column.
+        /** The size column. */
         SIZE_COLUMN,
 
-        //! The market column.
+        /** The market column. */
         MARKET_COLUMN,
 
-        //! The sales condition column.
+        /** The sales condition column. */
         CONDITION_COLUMN,
       };
 
-      //! The number of columns in this model.
-      static const int COLUMN_COUNT = 5;
+      /** The number of columns in this model. */
+      static const auto COLUMN_COUNT = 5;
 
-      //! Constructs a TimeAndSalesModel.
-      /*!
-        \param userProfile The user's profile.
-        \param properties The TimeAndSalesProperties used.
-        \param security The Security whose TimeAndSales is to be modeled.
-      */
+      /**
+       * Constructs a TimeAndSalesModel.
+       * @param userProfile The user's profile.
+       * @param properties The TimeAndSalesProperties used.
+       * @param security The Security whose TimeAndSales is to be modeled.
+       */
       TimeAndSalesModel(Beam::Ref<UserProfile> userProfile,
         const TimeAndSalesProperties& properties,
         const Nexus::Security& security);
 
-      //! Sets the TimeAndSalesProperties.
+      /** Sets the TimeAndSalesProperties. */
       void SetProperties(const TimeAndSalesProperties& properties);
 
-      virtual int rowCount(const QModelIndex& parent) const;
+      int rowCount(const QModelIndex& parent) const override;
 
-      virtual int columnCount(const QModelIndex& parent) const;
+      int columnCount(const QModelIndex& parent) const override;
 
-      virtual QVariant data(const QModelIndex& index, int role) const;
+      QVariant data(const QModelIndex& index, int role) const override;
 
-      virtual QVariant headerData(int section, Qt::Orientation orientation,
-        int role) const;
+      QVariant headerData(
+        int section, Qt::Orientation orientation, int role) const override;
 
     private:
       UserProfile* m_userProfile;
       TimeAndSalesProperties m_properties;
       Nexus::BboQuote m_bbo;
       std::vector<std::pair<Nexus::TimeAndSale, PriceRange>> m_entries;
-      QTimer m_updateTimer;
-      std::shared_ptr<Beam::TaskQueue> m_slotHandler;
+      EventHandler m_eventHandler;
 
       void OnBbo(const Nexus::BboQuote& bbo);
       void OnTimeAndSale(const Nexus::TimeAndSale& timeAndSale);
-      void OnUpdateTimer();
   };
 }
 
