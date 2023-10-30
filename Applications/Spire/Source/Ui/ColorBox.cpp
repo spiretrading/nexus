@@ -30,7 +30,7 @@ namespace {
     auto input_boxes = std::vector<QWidget*>();
     auto color_code_panel = get_color_code_panel(color_picker);
     auto& children = color_code_panel->children();
-    for(auto i = 1; i < children.count(); ++i) {
+    for(auto i = 0; i < children.count(); ++i) {
       if(children[i]->isWidgetType()) {
         if(auto stacked_widget = dynamic_cast<QStackedWidget*>(children[i])) {
           input_boxes.push_back(stacked_widget->widget(0));
@@ -168,10 +168,9 @@ bool ColorBox::eventFilter(QObject* watched, QEvent* event) {
 }
 
 void ColorBox::keyPressEvent(QKeyEvent* event) {
-  if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return ||
-      event->key() == Qt::Key_Up || event->key() == Qt::Key_Down) {
+  if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
     if(!is_read_only()) {
-      show_color_picker();
+      submit();
     }
   }
   QWidget::keyPressEvent(event);
