@@ -1,5 +1,5 @@
-#ifndef SPIRE_BOOKVIEWMODEL_HPP
-#define SPIRE_BOOKVIEWMODEL_HPP
+#ifndef SPIRE_BOOK_VIEW_MODEL_HPP
+#define SPIRE_BOOK_VIEW_MODEL_HPP
 #include <map>
 #include <unordered_map>
 #include <Beam/Pointers/Ref.hpp>
@@ -11,62 +11,59 @@
 #include "Nexus/Definitions/Side.hpp"
 #include "Nexus/MarketDataService/MarketDataService.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
+#include "Spire/Async/EventHandler.hpp"
 #include "Spire/BookView/BookViewProperties.hpp"
 #include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
 
-  /*! \class BookViewModel
-      \brief Models a single Side of a Security's book.
-   */
+  /** Models a single Side of a Security's book. */
   class BookViewModel : public QAbstractTableModel {
     public:
 
-      /*! \enum Columns
-          \brief Enumerates the model's columns.
-       */
+      /** Enumerates the model's columns. */
       enum Columns {
 
-        //! The MPID column.
+        /** The MPID column. */
         MPID_COLUMN,
 
-        //! The price column.
+        /** The price column. */
         PRICE_COLUMN,
 
-        //! The size column.
+        /** The size column. */
         SIZE_COLUMN,
       };
 
-      //! The number of columns available.
-      static const unsigned int COLUMN_COUNT = 3;
+      /** The number of columns available. */
+      static const auto COLUMN_COUNT = 3;
 
-      //! Constructs a BookViewModel.
-      /*!
-        \param userProfile The user's profile.
-        \param properties The BookViewProperties used to display the Quotes.
-        \param security The Security whose book is to be modeled.
-        \param side The Side of the book to model.
-      */
+      /**
+       * Constructs a BookViewModel.
+       * @param userProfile The user's profile.
+       * @param properties The BookViewProperties used to display the Quotes.
+       * @param security The Security whose book is to be modeled.
+       * @param side The Side of the book to model.
+       */
       BookViewModel(Beam::Ref<UserProfile> userProfile,
         const BookViewProperties& properties, const Nexus::Security& security,
         Nexus::Side side);
 
-      ~BookViewModel() override;
+      ~BookViewModel() override = default;
 
-      //! Sets the properties.
-      /*!
-        \param properties The display properties.
-      */
+      /**
+       * Sets the properties.
+       * @param properties The display properties.
+       */
       void SetProperties(const BookViewProperties& properties);
 
-      int rowCount(const QModelIndex& parent) const;
+      int rowCount(const QModelIndex& parent) const override;
 
-      int columnCount(const QModelIndex& parent) const;
+      int columnCount(const QModelIndex& parent) const override;
 
-      QVariant data(const QModelIndex& index, int role) const;
+      QVariant data(const QModelIndex& index, int role) const override;
 
-      QVariant headerData(int section, Qt::Orientation orientation,
-        int role) const;
+      QVariant headerData(
+        int section, Qt::Orientation orientation, int role) const override;
 
     private:
       struct OrderKey {
@@ -90,8 +87,7 @@ namespace Spire {
       std::map<OrderKey, Nexus::Quantity> m_orderQuantities;
       std::unordered_map<const Nexus::OrderExecutionService::Order*,
         Nexus::Quantity> m_remainingOrderQuantities;
-      QTimer m_updateTimer;
-      std::shared_ptr<Beam::TaskQueue> m_slotHandler;
+      EventHandler m_eventHandler;
 
       bool TestHighlight(const BookViewProperties::MarketHighlight& highlight,
         const Nexus::BookQuote& quote) const;
@@ -105,7 +101,6 @@ namespace Spire {
         const Nexus::OrderExecutionService::ExecutionReport& executionReport);
       void OnBookQuoteInterruption(const std::exception_ptr& e);
       void OnMarketQuoteInterruption(const std::exception_ptr& e);
-      void OnUpdateTimer();
   };
 }
 

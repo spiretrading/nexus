@@ -19,46 +19,34 @@ using namespace Nexus::MarketDataService;
 using namespace Nexus::OrderExecutionService;
 using namespace Nexus::Queries;
 using namespace Spire;
-using namespace std;
-
-namespace {
-  constexpr auto UPDATE_INTERVAL = 100;
-}
 
 BookViewModel::BookViewModel(Ref<UserProfile> userProfile,
     const BookViewProperties& properties, const Security& security, Side side)
     : m_userProfile(userProfile.Get()),
       m_properties(properties),
       m_security(security),
-      m_side(side),
-      m_slotHandler(std::make_shared<TaskQueue>()) {
-  connect(&m_updateTimer, &QTimer::timeout, this,
-    &BookViewModel::OnUpdateTimer);
-  m_updateTimer.start(UPDATE_INTERVAL);
+      m_side(side) {
   if(m_security == Security()) {
     return;
   }
   QueryRealTimeBookQuotesWithSnapshot(
-    m_userProfile->GetServiceClients().GetMarketDataClient(),
-    m_security, m_slotHandler->GetSlot<BookQuote>(
-      std::bind(&BookViewModel::OnBookQuote, this, std::placeholders::_1),
-      std::bind(&BookViewModel::OnBookQuoteInterruption, this,
-        std::placeholders::_1)), InterruptionPolicy::BREAK_QUERY);
+    m_userProfile->GetServiceClients().GetMarketDataClient(), m_security,
+    m_eventHandler.get_slot<BookQuote>(
+      std::bind_front(&BookViewModel::OnBookQuote, this),
+      std::bind_front(&BookViewModel::OnBookQuoteInterruption, this)),
+    InterruptionPolicy::BREAK_QUERY);
   QueryRealTimeMarketQuotesWithSnapshot(
-    m_userProfile->GetServiceClients().GetMarketDataClient(),
-    m_security, m_slotHandler->GetSlot<MarketQuote>(
-      std::bind(&BookViewModel::OnMarketQuote, this, std::placeholders::_1),
-      std::bind(&BookViewModel::OnMarketQuoteInterruption, this,
-        std::placeholders::_1)), InterruptionPolicy::BREAK_QUERY);
+    m_userProfile->GetServiceClients().GetMarketDataClient(), m_security,
+    m_eventHandler.get_slot<MarketQuote>(
+      std::bind_front(&BookViewModel::OnMarketQuote, this),
+      std::bind_front(&BookViewModel::OnMarketQuoteInterruption, this)),
+    InterruptionPolicy::BREAK_QUERY);
   m_userProfile->GetBlotterSettings().GetConsolidatedBlotter(
     m_userProfile->GetServiceClients().GetServiceLocatorClient().GetAccount()).
-    GetTasksModel().GetOrderExecutionPublisher().Monitor(
-      m_slotHandler->GetSlot<const Order*>(
-        std::bind(&BookViewModel::OnOrderExecuted, this,
-          std::placeholders::_1)));
+      GetTasksModel().GetOrderExecutionPublisher().Monitor(
+        m_eventHandler.get_slot<const Order*>(
+          std::bind_front(&BookViewModel::OnOrderExecuted, this)));
 }
-
-BookViewModel::~BookViewModel() = default;
 
 void BookViewModel::SetProperties(const BookViewProperties& properties) {
   m_properties = properties;
@@ -119,8 +107,8 @@ QVariant BookViewModel::data(const QModelIndex& index, int role) const {
     if(highlight && TestHighlight(*highlight, entry.m_quote)) {
       return highlight->m_color;
     }
-    if(entry.m_level < static_cast<int>(
-        m_properties.GetBookQuoteBackgroundColors().size())) {
+    if(entry.m_level <
+        static_cast<int>(m_properties.GetBookQuoteBackgroundColors().size())) {
       return m_properties.GetBookQuoteBackgroundColors()[entry.m_level];
     } else if(!m_properties.GetBookQuoteBackgroundColors().empty()) {
       return m_properties.GetBookQuoteBackgroundColors().back();
@@ -168,15 +156,15 @@ bool BookViewModel::TestHighlight(
     return false;
   }
   auto& topQuote = topLevelIterator->second;
-  return topQuote.m_mpid == quote.m_mpid && topQuote.m_quote.m_price ==
-    quote.m_quote.m_price;
+  return topQuote.m_mpid == quote.m_mpid &&
+    topQuote.m_quote.m_price == quote.m_quote.m_price;
 }
 
 void BookViewModel::HighlightQuote(const BookQuote& quote) {
   auto topQuoteIterator = m_topLevels.find(quote.m_market);
   if(topQuoteIterator == m_topLevels.end()) {
     if(quote.m_quote.m_size != 0) {
-      m_topLevels.insert(pair(quote.m_market, quote));
+      m_topLevels.insert(std::pair(quote.m_market, quote));
     }
   } else {
     auto& topQuote = topQuoteIterator->second;
@@ -185,23 +173,23 @@ void BookViewModel::HighlightQuote(const BookQuote& quote) {
       auto newTopQuoteIndex = -1;
       auto previousTopQuoteIndex = -1;
       auto i = m_bookQuotes.rbegin();
-      while(i != m_bookQuotes.rend() && (newTopQuoteIndex == -1 ||
-          previousTopQuoteIndex == -1)) {
+      while(i != m_bookQuotes.rend() &&
+          (newTopQuoteIndex == -1 || previousTopQuoteIndex == -1)) {
         auto& entry = **i;
         if(newTopQuoteIndex == -1 && entry.m_quote.m_market == quote.m_market &&
             entry.m_quote != topQuote) {
-          newTopQuoteIndex = static_cast<int>(std::distance(
-            m_bookQuotes.rbegin(), i));
+          newTopQuoteIndex =
+            static_cast<int>(std::distance(m_bookQuotes.rbegin(), i));
         }
         if(previousTopQuoteIndex == -1 && entry.m_quote == topQuote) {
-          previousTopQuoteIndex = static_cast<int>(std::distance(
-            m_bookQuotes.rbegin(), i));
+          previousTopQuoteIndex =
+            static_cast<int>(std::distance(m_bookQuotes.rbegin(), i));
         }
         ++i;
       }
       if(newTopQuoteIndex != -1) {
-        topQuote = m_bookQuotes[
-          m_bookQuotes.size() - 1 - newTopQuoteIndex]->m_quote;
+        topQuote =
+          m_bookQuotes[m_bookQuotes.size() - 1 - newTopQuoteIndex]->m_quote;
         dataChanged(index(newTopQuoteIndex, 0),
           index(newTopQuoteIndex, COLUMN_COUNT - 1));
       } else {
@@ -220,17 +208,17 @@ void BookViewModel::HighlightQuote(const BookQuote& quote) {
         m_bookQuotes.rend(), [&] (const auto& quote) {
           return quote->m_quote == topQuote;
         });
-      auto topQuoteIndex = static_cast<int>(std::distance(m_bookQuotes.rbegin(),
-        bookQuoteIterator));
+      auto topQuoteIndex = static_cast<int>(
+        std::distance(m_bookQuotes.rbegin(), bookQuoteIterator));
       topQuote = quote;
-      dataChanged(index(topQuoteIndex, 0),
-        index(topQuoteIndex, COLUMN_COUNT - 1));
+      dataChanged(
+        index(topQuoteIndex, 0), index(topQuoteIndex, COLUMN_COUNT - 1));
     }
   }
 }
 
 void BookViewModel::AddQuote(const BookQuote& quote, int quoteIndex) {
-  auto entry = std::make_unique<BookQuoteEntry>(BookQuoteEntry{quote, 0});
+  auto entry = std::make_unique<BookQuoteEntry>(BookQuoteEntry(quote, 0));
   auto i = m_bookQuotes.rbegin() + quoteIndex;
   beginInsertRows(QModelIndex(), quoteIndex, quoteIndex);
   if(m_bookQuotes.empty()) {
@@ -284,12 +272,12 @@ void BookViewModel::RemoveQuote(int quoteIndex) {
 
 void BookViewModel::OnMarketQuote(const MarketQuote& quote) {
   auto& previousMarketQuote = m_marketQuotes[quote.m_market];
-  auto mpid = m_userProfile->GetMarketDatabase().FromCode(
-    quote.m_market).m_displayName;
+  auto mpid =
+    m_userProfile->GetMarketDatabase().FromCode(quote.m_market).m_displayName;
   if(!previousMarketQuote.m_market.IsEmpty()) {
     auto previousBookQuotes = ToBookQuotePair(previousMarketQuote);
-    auto& previousBookQuote = Pick(m_side, previousBookQuotes.m_ask,
-      previousBookQuotes.m_bid);
+    auto& previousBookQuote =
+      Pick(m_side, previousBookQuotes.m_ask, previousBookQuotes.m_bid);
     previousBookQuote.m_quote.m_size = 0;
     previousBookQuote.m_mpid = mpid;
     OnBookQuote(previousBookQuote);
@@ -375,9 +363,8 @@ void BookViewModel::OnOrderExecuted(const Order* order) {
       order->GetInfo().m_fields.m_type != OrderType::LIMIT) {
     return;
   }
-  order->GetPublisher().Monitor(m_slotHandler->GetSlot<ExecutionReport>(
-    std::bind(&BookViewModel::OnExecutionReport, this, order,
-      std::placeholders::_1)));
+  order->GetPublisher().Monitor(m_eventHandler.get_slot<ExecutionReport>(
+    std::bind_front(&BookViewModel::OnExecutionReport, this, order)));
 }
 
 void BookViewModel::OnExecutionReport(const Order* order,
@@ -387,7 +374,7 @@ void BookViewModel::OnExecutionReport(const Order* order,
   key.m_destination = order->GetInfo().m_fields.m_destination;
   if(executionReport.m_status == OrderStatus::PENDING_NEW) {
     m_remainingOrderQuantities.insert(
-      pair(order, order->GetInfo().m_fields.m_quantity));
+      std::pair(order, order->GetInfo().m_fields.m_quantity));
     auto& quantity = m_orderQuantities[key];
     quantity += order->GetInfo().m_fields.m_quantity;
     if(m_properties.GetOrderHighlight() != BookViewProperties::HIDE_ORDERS) {
@@ -421,10 +408,10 @@ void BookViewModel::OnBookQuoteInterruption(const std::exception_ptr& e) {
   for(auto& bookQuote : m_bookQuotes) {
     bookQuotes.push_back(bookQuote->m_quote);
   }
-  auto marketQuoteMpids = unordered_set<string>();
+  auto marketQuoteMpids = std::unordered_set<std::string>();
   for(auto& marketCode : m_marketQuotes | adaptors::map_keys) {
-    auto mpid = m_userProfile->GetMarketDatabase().FromCode(
-      marketCode).m_displayName;
+    auto mpid =
+      m_userProfile->GetMarketDatabase().FromCode(marketCode).m_displayName;
     marketQuoteMpids.insert(mpid);
   }
   for(auto& bookQuote : bookQuotes) {
@@ -437,10 +424,10 @@ void BookViewModel::OnBookQuoteInterruption(const std::exception_ptr& e) {
   }
   QueryRealTimeBookQuotesWithSnapshot(
     m_userProfile->GetServiceClients().GetMarketDataClient(), m_security,
-    m_slotHandler->GetSlot<BookQuote>(
-      std::bind(&BookViewModel::OnBookQuote, this, std::placeholders::_1),
-      std::bind(&BookViewModel::OnBookQuoteInterruption, this,
-        std::placeholders::_1)), InterruptionPolicy::BREAK_QUERY);
+    m_eventHandler.get_slot<BookQuote>(
+      std::bind_front(&BookViewModel::OnBookQuote, this),
+      std::bind_front(&BookViewModel::OnBookQuoteInterruption, this)),
+    InterruptionPolicy::BREAK_QUERY);
 }
 
 void BookViewModel::OnMarketQuoteInterruption(const std::exception_ptr& e) {
@@ -452,25 +439,11 @@ void BookViewModel::OnMarketQuoteInterruption(const std::exception_ptr& e) {
     OnMarketQuote(clearQuote);
   }
   QueryRealTimeMarketQuotesWithSnapshot(
-    m_userProfile->GetServiceClients().GetMarketDataClient(),
-    m_security, m_slotHandler->GetSlot<MarketQuote>(
-      std::bind(&BookViewModel::OnMarketQuote, this, std::placeholders::_1),
-      std::bind(&BookViewModel::OnMarketQuoteInterruption, this,
-        std::placeholders::_1)), InterruptionPolicy::BREAK_QUERY);
-}
-
-void BookViewModel::OnUpdateTimer() {
-  auto startTime = boost::posix_time::microsec_clock::universal_time();
-  auto slotHandler = m_slotHandler;
-  for(auto task = slotHandler->TryPop(); task && slotHandler.use_count() != 1;
-      task = slotHandler->TryPop()) {
-    (*task)();
-    auto frameTime = boost::posix_time::microsec_clock::universal_time();
-    if(frameTime - startTime > boost::posix_time::seconds(1) / 10) {
-      QCoreApplication::instance()->processEvents();
-      startTime = boost::posix_time::microsec_clock::universal_time();
-    }
-  }
+    m_userProfile->GetServiceClients().GetMarketDataClient(), m_security,
+    m_eventHandler.get_slot<MarketQuote>(
+      std::bind_front(&BookViewModel::OnMarketQuote, this),
+      std::bind_front(&BookViewModel::OnMarketQuoteInterruption, this)),
+    InterruptionPolicy::BREAK_QUERY);
 }
 
 bool BookViewModel::OrderKey::operator <(const OrderKey& value) const {
