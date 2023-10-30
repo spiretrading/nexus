@@ -3,7 +3,6 @@
 #include <map>
 #include <unordered_map>
 #include <Beam/Pointers/Ref.hpp>
-#include <Beam/Queues/TaskQueue.hpp>
 #include <QAbstractItemModel>
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/SecurityInfo.hpp"

@@ -1,60 +1,31 @@
 #include "Spire/Utilities/SecurityInfoModel.hpp"
-#include <Beam/Queues/RoutineTaskQueue.hpp>
-#include <Beam/Threading/Sync.hpp>
 #include <boost/algorithm/string/case_conv.hpp>
-#include "Spire/UI/CustomQtVariants.hpp"
 #include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
-using namespace Beam::Routines;
-using namespace Beam::Threading;
 using namespace boost;
 using namespace Nexus;
 using namespace Spire;
-using namespace std;
-
-namespace {
-  int UPDATE_INTERVAL = 50;
-}
 
 SecurityInfoModel::SecurityInfoModel(Ref<UserProfile> userProfile)
-    : m_userProfile(userProfile.Get()),
-      m_isAliveFlag(std::make_shared<Sync<bool>>(true)) {
-  connect(&m_updateTimer, &QTimer::timeout, this,
-    &SecurityInfoModel::OnUpdateTimer);
-  m_updateTimer.start(UPDATE_INTERVAL);
-}
+  : m_userProfile(userProfile.Get()) {}
 
-SecurityInfoModel::~SecurityInfoModel() {
-  *m_isAliveFlag = false;
-}
-
-void SecurityInfoModel::Search(const string& prefix) {
+void SecurityInfoModel::Search(const std::string& prefix) {
   if(prefix.empty()) {
     return;
   }
-  string uppercasePrefix = to_upper_copy(prefix);
+  auto uppercasePrefix = to_upper_copy(prefix);
   if(!m_prefixes.insert(uppercasePrefix).second) {
     return;
   }
-  auto selfUserProfile = m_userProfile;
-  auto isAliveFlag = m_isAliveFlag;
-  Spawn(
-    [=] {
-      vector<SecurityInfo> securityInfoItems =
-        selfUserProfile->GetServiceClients().GetMarketDataClient().
-        LoadSecurityInfoFromPrefix(uppercasePrefix);
-      With(*isAliveFlag,
-        [&] (bool isAliveFlag) {
-          if(!isAliveFlag) {
-            return;
-          }
-          m_slotHandler.Push(
-            [=] {
-              this->AddSecurityInfoItems(securityInfoItems);
-            });
-        });
-    });
+  m_queryPromise = QtPromise([=] {
+    return m_userProfile->GetServiceClients().
+      GetMarketDataClient().LoadSecurityInfoFromPrefix(uppercasePrefix);
+  }, LaunchPolicy::ASYNC).then([=] (auto&& securityInfoItems) {
+    if(securityInfoItems.IsValue()) {
+      AddSecurityInfoItems(securityInfoItems.Get());
+    }
+  });
 }
 
 int SecurityInfoModel::rowCount(const QModelIndex& parent) const {
@@ -69,11 +40,11 @@ QVariant SecurityInfoModel::data(const QModelIndex& index, int role) const {
   if(!index.isValid()) {
     return QVariant();
   }
-  const SecurityInfo& item = m_securityInfoItems[index.row()];
+  auto& item = m_securityInfoItems[index.row()];
   if(role == Qt::DisplayRole) {
     if(index.column() == SECURITY_COLUMN) {
-      return QString::fromStdString(ToString(item.m_security,
-        m_userProfile->GetMarketDatabase()));
+      return QString::fromStdString(
+        ToString(item.m_security, m_userProfile->GetMarketDatabase()));
     } else if(index.column() == NAME_COLUMN) {
       return QString::fromStdString(item.m_name);
     } else if(index.column() == SECTOR_COLUMN) {
@@ -98,12 +69,11 @@ QVariant SecurityInfoModel::headerData(int section, Qt::Orientation orientation,
 }
 
 void SecurityInfoModel::AddSecurityInfoItems(
-    vector<SecurityInfo> securityInfoItems) {
+    std::vector<SecurityInfo> securityInfoItems) {
   auto i = securityInfoItems.begin();
   while(i != securityInfoItems.end()) {
     auto searchIterator = find_if(m_securityInfoItems.begin(),
-      m_securityInfoItems.end(),
-      [&] (const SecurityInfo& securityInfo) {
+      m_securityInfoItems.end(), [&] (const auto& securityInfo) {
         return securityInfo.m_security == i->m_security;
       });
     if(searchIterator != m_securityInfoItems.end()) {
@@ -121,8 +91,4 @@ void SecurityInfoModel::AddSecurityInfoItems(
   m_securityInfoItems.insert(m_securityInfoItems.end(),
     securityInfoItems.begin(), securityInfoItems.end());
   endInsertRows();
-}
-
-void SecurityInfoModel::OnUpdateTimer() {
-  HandleTasks(m_slotHandler);
 }

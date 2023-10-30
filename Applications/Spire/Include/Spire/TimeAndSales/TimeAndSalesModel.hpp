@@ -1,6 +1,5 @@
 #ifndef SPIRE_TIME_AND_SALES_MODEL_HPP
 #define SPIRE_TIME_AND_SALES_MODEL_HPP
-#include <Beam/Queues/TaskQueue.hpp>
 #include <QAbstractItemModel>
 #include "Nexus/Definitions/BboQuote.hpp"
 #include "Nexus/Definitions/Security.hpp"

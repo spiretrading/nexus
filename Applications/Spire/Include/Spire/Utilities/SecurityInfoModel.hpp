@@ -1,75 +1,64 @@
-#ifndef SPIRE_SECURITYINFOMODEL_HPP
-#define SPIRE_SECURITYINFOMODEL_HPP
+#ifndef SPIRE_SECURITY_INFO_MODEL_HPP
+#define SPIRE_SECURITY_INFO_MODEL_HPP
 #include <unordered_set>
 #include <vector>
 #include <Beam/Pointers/Ref.hpp>
-#include <Beam/Queues/TaskQueue.hpp>
-#include <Beam/Threading/Sync.hpp>
 #include <QAbstractTableModel>
-#include <QTimer>
 #include "Nexus/Definitions/SecurityInfo.hpp"
+#include "Spire/Async/QtPromise.hpp"
 #include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
 
-  /*! \class SecurityInfoModel
-      \brief Models the SecurityInfo's available on the MarketDataServer.
-   */
+  /** Models the SecurityInfo's available on the MarketDataServer. */
   class SecurityInfoModel : public QAbstractTableModel {
     public:
 
-      /*! \enum Columns
-          \brief Enumerates the model's columns.
-       */
+      /** Enumerates the model's columns. */
       enum Columns {
 
-        //! The Security column.
+        /** The Security column. */
         SECURITY_COLUMN,
 
-        //! The name column.
+        /** The name column. */
         NAME_COLUMN,
 
-        //! The sector column.
+        /** The sector column. */
         SECTOR_COLUMN,
       };
 
-      //! The number of columns available.
-      static const unsigned int COLUMN_COUNT = 3;
+      /** The number of columns available. */
+      static const auto COLUMN_COUNT = 3;
 
-      //! Constructs a SecurityInfoModel.
-      /*!
-        \param userProfile The user's profile.
-      */
-      SecurityInfoModel(Beam::Ref<UserProfile> userProfile);
+      /**
+       * Constructs a SecurityInfoModel.
+       * @param userProfile The user's profile.
+       */
+      explicit SecurityInfoModel(Beam::Ref<UserProfile> userProfile);
 
-      virtual ~SecurityInfoModel();
-
-      //! Searches for SecurityInfo objects matching a prefix.
-      /*!
-        \param prefix The prefix to search for.
-      */
+      /**
+       * Searches for SecurityInfo objects matching a prefix.
+       * @param prefix The prefix to search for.
+       */
       void Search(const std::string& prefix);
 
-      int rowCount(const QModelIndex& parent) const;
+      int rowCount(const QModelIndex& parent) const override;
 
-      int columnCount(const QModelIndex& parent) const;
+      int columnCount(const QModelIndex& parent) const override;
 
-      QVariant data(const QModelIndex& index, int role) const;
+      QVariant data(const QModelIndex& index, int role) const override;
 
-      QVariant headerData(int section, Qt::Orientation orientation,
-        int role) const;
+      QVariant headerData(
+        int section, Qt::Orientation orientation, int role) const override;
 
     private:
       UserProfile* m_userProfile;
       std::vector<Nexus::SecurityInfo> m_securityInfoItems;
       std::unordered_set<std::string> m_prefixes;
-      std::shared_ptr<Beam::Threading::Sync<bool>> m_isAliveFlag;
-      QTimer m_updateTimer;
-      Beam::TaskQueue m_slotHandler;
+      QtPromise<void> m_queryPromise;
 
       void AddSecurityInfoItems(
         std::vector<Nexus::SecurityInfo> securityInfoItems);
-      void OnUpdateTimer();
   };
 }
 
