@@ -2,7 +2,6 @@
 #define SPIRE_TIME_AND_SALES_MODEL_HPP
 #include <Beam/Queues/TaskQueue.hpp>
 #include <QAbstractItemModel>
-#include <QTimer>
 #include "Nexus/Definitions/BboQuote.hpp"
 #include "Nexus/Definitions/Security.hpp"
 #include "Nexus/Definitions/TimeAndSale.hpp"

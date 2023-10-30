@@ -5,7 +5,6 @@
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/Queues/TaskQueue.hpp>
 #include <QAbstractItemModel>
-#include <QTimer>
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/SecurityInfo.hpp"
 #include "Nexus/Definitions/Side.hpp"

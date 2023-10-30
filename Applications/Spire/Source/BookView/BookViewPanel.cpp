@@ -12,13 +12,11 @@ using namespace Nexus;
 using namespace Nexus::MarketDataService;
 using namespace Spire;
 using namespace Spire::UI;
-using namespace std;
 
 namespace {
-  const int UPDATE_INTERVAL = 100;
-  const int MPID_WIDTH = 60;
-  const int PRICE_WIDTH = 60;
-  const int SIZE_WIDTH = 40;
+  const auto MPID_WIDTH = 60;
+  const auto PRICE_WIDTH = 60;
+  const auto SIZE_WIDTH = 40;
 }
 
 BookViewPanel::BookViewPanel(QWidget* parent, Qt::WindowFlags flags)
@@ -26,21 +24,16 @@ BookViewPanel::BookViewPanel(QWidget* parent, Qt::WindowFlags flags)
       m_ui(std::make_unique<Ui_BookViewPanel>()),
       m_topRow(-1),
       m_currentRow(-1) {
-  m_slotHandler.emplace();
+  m_eventHandler.emplace();
   m_ui->setupUi(this);
   m_ui->m_bookView->horizontalHeader()->setSectionsMovable(true);
   m_ui->m_bookView->verticalHeader()->setMinimumSectionSize(0);
-  m_ui->m_bookView->setItemDelegate(new CustomVariantItemDelegate(
-    Ref(*m_userProfile)));
-  connect(&m_updateTimer, &QTimer::timeout, this,
-    &BookViewPanel::OnUpdateTimer);
-  m_updateTimer.start(UPDATE_INTERVAL);
+  m_ui->m_bookView->setItemDelegate(
+    new CustomVariantItemDelegate(Ref(*m_userProfile)));
   m_ui->m_bookView->horizontalHeader()->setSectionResizeMode(
     QHeaderView::ResizeToContents);
   m_ui->m_bboSeparatorLabel->setText(tr("N/A"));
 }
-
-BookViewPanel::~BookViewPanel() {}
 
 void BookViewPanel::Initialize(Ref<UserProfile> userProfile,
     const BookViewProperties& properties, Side side) {
@@ -49,8 +42,8 @@ void BookViewPanel::Initialize(Ref<UserProfile> userProfile,
   SetProperties(properties);
   m_side = side;
   DisconnectModel();
-  m_model = std::make_unique<BookViewModel>(Ref(*m_userProfile), m_properties,
-    Security(), side);
+  m_model = std::make_unique<BookViewModel>(
+    Ref(*m_userProfile), m_properties, Security(), side);
   m_ui->m_bookView->setModel(m_model.get());
   ConnectModel();
 }
@@ -66,9 +59,9 @@ QTableView& BookViewPanel::GetQuoteList() {
 void BookViewPanel::SetProperties(const BookViewProperties& properties) {
   m_properties = properties;
   m_ui->m_bookView->setFont(m_properties.GetBookQuoteFont());
-  QFontMetrics metrics(m_properties.GetBookQuoteFont());
+  auto metrics = QFontMetrics(m_properties.GetBookQuoteFont());
   m_ui->m_bookView->verticalHeader()->setDefaultSectionSize(metrics.height());
-  if(m_model != nullptr) {
+  if(m_model) {
     m_model->SetProperties(m_properties);
   }
   m_ui->m_bookView->setShowGrid(properties.GetShowGrid());
@@ -82,32 +75,32 @@ void BookViewPanel::SetProperties(const BookViewProperties& properties) {
 void BookViewPanel::DisplaySecurity(const Security& security) {
   m_security = security;
   m_bestQuote = Quote();
-  vector<int> widths;
-  for(int i = 0; i < BookViewModel::COLUMN_COUNT; ++i) {
+  auto widths = std::vector<int>();
+  for(auto i = 0; i < BookViewModel::COLUMN_COUNT; ++i) {
     widths.push_back(m_ui->m_bookView->columnWidth(i));
   }
   DisconnectModel();
   m_ui->m_bboSeparatorLabel->setText(tr("N/A"));
   m_ui->m_bboPriceLabel->clear();
   m_ui->m_bboQuantityLabel->clear();
-  auto newModel = std::make_unique<BookViewModel>(Ref(*m_userProfile),
-    m_properties, security, m_side);
+  auto newModel = std::make_unique<BookViewModel>(
+    Ref(*m_userProfile), m_properties, security, m_side);
   m_ui->m_bookView->setModel(newModel.get());
   m_model.swap(newModel);
   m_ui->m_bookView->setModel(m_model.get());
-  for(int i = 0; i < BookViewModel::COLUMN_COUNT; ++i) {
+  for(auto i = 0; i < BookViewModel::COLUMN_COUNT; ++i) {
     m_ui->m_bookView->setColumnWidth(i, widths[i]);
   }
   ConnectModel();
-  m_slotHandler.emplace();
+  m_eventHandler.emplace();
   if(m_security == Security()) {
     return;
   }
   auto bboQuery = MakeCurrentQuery(security);
   bboQuery.SetInterruptionPolicy(InterruptionPolicy::IGNORE_CONTINUE);
   m_userProfile->GetServiceClients().GetMarketDataClient().QueryBboQuotes(
-    bboQuery, m_slotHandler->GetSlot<BboQuote>(
-      std::bind(&BookViewPanel::OnBbo, this, security, std::placeholders::_1)));
+    bboQuery, m_eventHandler->get_slot<BboQuote>(
+      std::bind_front(&BookViewPanel::OnBbo, this, security)));
 }
 
 void BookViewPanel::resizeEvent(QResizeEvent* event) {
@@ -131,7 +124,7 @@ void BookViewPanel::ConnectModel() {
 }
 
 void BookViewPanel::DisconnectModel() {
-  if(m_model == nullptr) {
+  if(!m_model) {
     return;
   }
   disconnect(m_rowsRemovedConnection);
@@ -158,24 +151,20 @@ void BookViewPanel::OnBbo(const Security& security, const BboQuote& bbo) {
   m_ui->m_bboPriceLabel->setText(m_itemDelegate->displayText(
     QVariant::fromValue(m_bestQuote.m_price), QLocale()));
   m_ui->m_bboSeparatorLabel->setText("/");
-  Quantity quantity = m_bestQuote.m_size;
+  auto quantity = m_bestQuote.m_size;
   if(m_bestQuote.m_size == 0) {
     quantity = 0;
   } else {
     quantity = std::max<Quantity>(1, Floor(m_bestQuote.m_size / 100, 0));
   }
-  m_ui->m_bboQuantityLabel->setText(QString::number(
-    static_cast<int>(quantity)));
+  m_ui->m_bboQuantityLabel->setText(
+    QString::number(static_cast<int>(quantity)));
 }
 
-void BookViewPanel::OnUpdateTimer() {
-  HandleTasks(*m_slotHandler);
-}
-
-void BookViewPanel::OnRowsAboutToBeModified(const QModelIndex& parent,
-    int start, int end) {
+void BookViewPanel::OnRowsAboutToBeModified(
+    const QModelIndex& parent, int start, int end) {
   m_topRow = m_ui->m_bookView->rowAt(0);
-  QModelIndex currentIndex = m_ui->m_bookView->currentIndex();
+  auto currentIndex = m_ui->m_bookView->currentIndex();
   if(currentIndex.isValid()) {
     m_currentRow = currentIndex.row();
   } else {
@@ -183,16 +172,16 @@ void BookViewPanel::OnRowsAboutToBeModified(const QModelIndex& parent,
   }
 }
 
-void BookViewPanel::OnRowsModified(const QModelIndex& parent, int start,
-    int end) {
+void BookViewPanel::OnRowsModified(
+    const QModelIndex& parent, int start, int end) {
   if(m_currentRow != -1) {
-    QModelIndex index = m_ui->m_bookView->model()->index(m_currentRow, 0);
+    auto index = m_ui->m_bookView->model()->index(m_currentRow, 0);
     if(index.isValid() && index != m_ui->m_bookView->currentIndex()) {
       m_ui->m_bookView->setCurrentIndex(index);
     }
   }
   if(m_topRow != -1) {
-    QModelIndex index = m_ui->m_bookView->model()->index(m_topRow, 0);
+    auto index = m_ui->m_bookView->model()->index(m_topRow, 0);
     if(index.isValid() && m_ui->m_bookView->rowAt(0) != m_topRow) {
       m_ui->m_bookView->scrollTo(index, QAbstractItemView::PositionAtTop);
     }
