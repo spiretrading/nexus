@@ -12,19 +12,11 @@ using namespace Nexus::AdministrationService;
 using namespace Nexus::RiskService;
 using namespace Spire;
 
-namespace {
-  const unsigned int UPDATE_INTERVAL = 100;
-}
-
 RiskTimerMonitor::RiskTimerMonitor(Ref<UserProfile> userProfile)
-    : m_userProfile(userProfile.Get()) {
-  connect(&m_updateTimer, &QTimer::timeout, this,
-    &RiskTimerMonitor::OnUpdateTimer);
-  m_updateTimer.start(UPDATE_INTERVAL);
-}
+  : m_userProfile(userProfile.Get()) {}
 
 RiskTimerMonitor::~RiskTimerMonitor() {
-  if(m_dialog != nullptr) {
+  if(m_dialog) {
     m_userProfile->GetRiskTimerProperties().SetRiskTimerDialogInitialPosition(
       m_dialog->pos());
   }
@@ -34,8 +26,8 @@ void RiskTimerMonitor::Load() {
   auto account =
     m_userProfile->GetServiceClients().GetServiceLocatorClient().GetAccount();
   m_userProfile->GetServiceClients().GetAdministrationClient().
-    GetRiskStatePublisher(account).Monitor(m_slotHandler.GetSlot<RiskState>(
-    std::bind(&RiskTimerMonitor::OnRiskState, this, std::placeholders::_1)));
+    GetRiskStatePublisher(account).Monitor(m_eventHandler.get_slot<RiskState>(
+      std::bind_front(&RiskTimerMonitor::OnRiskState, this)));
 }
 
 void RiskTimerMonitor::OnRiskState(const RiskState& riskState) {
@@ -69,8 +61,4 @@ void RiskTimerMonitor::OnRiskState(const RiskState& riskState) {
       m_dialog->show();
     }
   }
-}
-
-void RiskTimerMonitor::OnUpdateTimer() {
-  HandleTasks(m_slotHandler);
 }
