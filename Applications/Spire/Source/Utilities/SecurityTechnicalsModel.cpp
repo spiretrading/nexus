@@ -25,16 +25,10 @@ namespace {
     pendingExpiryModels;
   std::unordered_map<Security, std::unique_ptr<SecurityTechnicalsModel>>
     expiringModels;
-  std::unique_ptr<QTimer> expiryTimer;
 
   void ModelDeleter(const Security& security, SecurityTechnicalsModel* model) {
-    pendingExpiryModels.insert(std::pair(
-      security, std::unique_ptr<SecurityTechnicalsModel>{model}));
-  }
-
-  void OnExpiryTimer() {
-    expiringModels = std::move(pendingExpiryModels);
-    pendingExpiryModels.clear();
+    pendingExpiryModels.insert(
+      std::pair(security, std::unique_ptr<SecurityTechnicalsModel>(model)));
   }
 
   std::shared_ptr<SecurityTechnicalsModel> FindModel(const Security& security) {
@@ -68,11 +62,15 @@ namespace {
 
 std::shared_ptr<SecurityTechnicalsModel> SecurityTechnicalsModel::GetModel(
     Ref<UserProfile> userProfile, const Security& security) {
-  if(!expiryTimer) {
-    expiryTimer = std::make_unique<QTimer>();
+  static auto expiryTimer = [] {
+    auto expiryTimer = std::make_unique<QTimer>();
     expiryTimer->start(EXPIRY_INTERVAL);
-    QObject::connect(expiryTimer.get(), &QTimer::timeout, &OnExpiryTimer);
-  }
+    QObject::connect(expiryTimer.get(), &QTimer::timeout, [] {
+      expiringModels = std::move(pendingExpiryModels);
+      pendingExpiryModels.clear();
+    });
+    return expiryTimer;
+  }();
   auto model = FindModel(security);
   if(!model) {
     model.reset(new SecurityTechnicalsModel(Ref(userProfile), security),
@@ -127,51 +125,37 @@ SecurityTechnicalsModel::SecurityTechnicalsModel(
   if(security == Security()) {
     return;
   }
-  SecurityMarketDataQuery timeAndSaleQuery;
-  timeAndSaleQuery.SetIndex(security);
-  timeAndSaleQuery.SetRange(Beam::Queries::Range::RealTime());
+  auto timeAndSaleQuery = MakeRealTimeQuery(security);
   timeAndSaleQuery.SetInterruptionPolicy(InterruptionPolicy::RECOVER_DATA);
   m_userProfile->GetServiceClients().GetMarketDataClient().QueryTimeAndSales(
-    timeAndSaleQuery, m_slotHandler.GetSlot<TimeAndSale>(std::bind(
-    &SecurityTechnicalsModel::OnTimeAndSale, this, std::placeholders::_1)));
-  Spawn(
-    [=, userProfile = m_userProfile,
-        loadTechnicalsFlag = m_loadTechnicalsFlag] {
-      auto securityTechnicals = userProfile->GetServiceClients().
-        GetMarketDataClient().LoadSecurityTechnicals(security);
-      With(*loadTechnicalsFlag,
-        [=] (bool loadTechnicalsFlag) {
-          if(!loadTechnicalsFlag) {
-            return;
-          }
-          m_slotHandler.Push(
-            [=] {
-              if(securityTechnicals.m_open != Money::ZERO) {
-                m_open = securityTechnicals.m_open;
-                m_openSignal(m_open);
-              }
-              if(securityTechnicals.m_close != Money::ZERO) {
-                m_close = securityTechnicals.m_close;
-                m_closeSignal(m_close);
-              }
-              if(securityTechnicals.m_high != Money::ZERO) {
-                m_high = securityTechnicals.m_high;
-                m_highSignal(m_high);
-              }
-              if(securityTechnicals.m_low != Money::ZERO) {
-                m_low = securityTechnicals.m_low;
-                m_lowSignal(m_low);
-              }
-              if(securityTechnicals.m_volume != 0) {
-                m_volume = securityTechnicals.m_volume;
-                m_volumeSignal(m_volume);
-              }
-            });
-        });
-    });
-  connect(&m_updateTimer, &QTimer::timeout, this,
-    &SecurityTechnicalsModel::OnUpdateTimer);
-  m_updateTimer.start(UPDATE_INTERVAL);
+    timeAndSaleQuery, m_eventHandler.get_slot<TimeAndSale>(
+      std::bind_front(&SecurityTechnicalsModel::OnTimeAndSale, this)));
+  m_loadPromise = std::make_shared<QtPromise<void>>(QtPromise([=] {
+    return userProfile->GetServiceClients().GetMarketDataClient().
+      LoadSecurityTechnicals(security);
+  }, LaunchPolicy::ASYNC).then([=] (const SecurityTechnicals& technicals) {
+    if(technicals.m_open != Money::ZERO) {
+      m_open = technicals.m_open;
+      m_openSignal(m_open);
+    }
+    if(technicals.m_close != Money::ZERO) {
+      m_close = technicals.m_close;
+      m_closeSignal(m_close);
+    }
+    if(technicals.m_high != Money::ZERO) {
+      m_high = technicals.m_high;
+      m_highSignal(m_high);
+    }
+    if(technicals.m_low != Money::ZERO) {
+      m_low = technicals.m_low;
+      m_lowSignal(m_low);
+    }
+    if(technicals.m_volume != 0) {
+      m_volume = technicals.m_volume;
+      m_volumeSignal(m_volume);
+    }
+    m_loadPromise = nullptr;
+  }));
 }
 
 void SecurityTechnicalsModel::OnTimeAndSale(const TimeAndSale& timeAndSale) {
@@ -189,8 +173,4 @@ void SecurityTechnicalsModel::OnTimeAndSale(const TimeAndSale& timeAndSale) {
     m_low = timeAndSale.m_price;
     m_lowSignal(m_low);
   }
-}
-
-void SecurityTechnicalsModel::OnUpdateTimer() {
-  HandleTasks(m_slotHandler);
 }

@@ -21,14 +21,12 @@ void SecurityInfoModel::Search(const std::string& prefix) {
   m_queryPromise = QtPromise([=] {
     return m_userProfile->GetServiceClients().
       GetMarketDataClient().LoadSecurityInfoFromPrefix(uppercasePrefix);
-  }, LaunchPolicy::ASYNC).then([=] (auto&& securityInfoItems) {
-    if(securityInfoItems.IsValue()) {
-      QTimer::singleShot(0,
-        [=, securityInfoItems = std::move(securityInfoItems.Get())] () mutable {
-          AddSecurityInfoItems(std::move(securityInfoItems));
-        });
-    }
-  });
+  }, LaunchPolicy::ASYNC).then(
+    [=] (const std::vector<SecurityInfo>& securityInfoItems) {
+      QTimer::singleShot(0, [=] {
+        AddSecurityInfoItems(securityInfoItems);
+      });
+    });
 }
 
 int SecurityInfoModel::rowCount(const QModelIndex& parent) const {
