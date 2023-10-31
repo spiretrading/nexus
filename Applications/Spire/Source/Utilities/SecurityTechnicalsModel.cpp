@@ -15,23 +15,21 @@ using namespace Nexus::MarketDataService;
 using namespace Nexus::Queries;
 using namespace Nexus::TechnicalAnalysis;
 using namespace Spire;
-using namespace std;
 
 namespace {
-  const auto UPDATE_INTERVAL = 100;
   const auto EXPIRY_INTERVAL = 3000;
 
-  unordered_map<Security, std::weak_ptr<SecurityTechnicalsModel>>
+  std::unordered_map<Security, std::weak_ptr<SecurityTechnicalsModel>>
     existingModels;
-  unordered_map<Security, std::unique_ptr<SecurityTechnicalsModel>>
+  std::unordered_map<Security, std::unique_ptr<SecurityTechnicalsModel>>
     pendingExpiryModels;
-  unordered_map<Security, std::unique_ptr<SecurityTechnicalsModel>>
+  std::unordered_map<Security, std::unique_ptr<SecurityTechnicalsModel>>
     expiringModels;
-  unique_ptr<QTimer> expiryTimer;
+  std::unique_ptr<QTimer> expiryTimer;
 
   void ModelDeleter(const Security& security, SecurityTechnicalsModel* model) {
-    pendingExpiryModels.insert(std::make_pair(security,
-      std::unique_ptr<SecurityTechnicalsModel>{model}));
+    pendingExpiryModels.insert(std::pair(
+      security, std::unique_ptr<SecurityTechnicalsModel>{model}));
   }
 
   void OnExpiryTimer() {
@@ -40,15 +38,15 @@ namespace {
   }
 
   std::shared_ptr<SecurityTechnicalsModel> FindModel(const Security& security) {
-    std::shared_ptr<SecurityTechnicalsModel> model;
+    auto model = std::shared_ptr<SecurityTechnicalsModel>();
     auto existingModelIterator = existingModels.find(security);
     if(existingModelIterator != existingModels.end()) {
       model = existingModelIterator->second.lock();
-      if(model == nullptr) {
+      if(!model) {
         existingModels.erase(security);
       }
     }
-    if(model == nullptr) {
+    if(!model) {
       auto pendingExpiryModelIterator = pendingExpiryModels.find(security);
       if(pendingExpiryModelIterator != pendingExpiryModels.end()) {
         model = std::move(pendingExpiryModelIterator->second);
@@ -56,7 +54,7 @@ namespace {
         existingModels.insert(std::make_pair(security, model));
       }
     }
-    if(model == nullptr) {
+    if(!model) {
       auto expiringModelIterator = expiringModels.find(security);
       if(expiringModelIterator != expiringModels.end()) {
         model = std::move(expiringModelIterator->second);
@@ -70,22 +68,18 @@ namespace {
 
 std::shared_ptr<SecurityTechnicalsModel> SecurityTechnicalsModel::GetModel(
     Ref<UserProfile> userProfile, const Security& security) {
-  if(expiryTimer == nullptr) {
-    expiryTimer = make_unique<QTimer>();
+  if(!expiryTimer) {
+    expiryTimer = std::make_unique<QTimer>();
     expiryTimer->start(EXPIRY_INTERVAL);
     QObject::connect(expiryTimer.get(), &QTimer::timeout, &OnExpiryTimer);
   }
   auto model = FindModel(security);
-  if(model == nullptr) {
-    model.reset(new SecurityTechnicalsModel{Ref(userProfile), security},
-      std::bind(&ModelDeleter, security, std::placeholders::_1));
+  if(!model) {
+    model.reset(new SecurityTechnicalsModel(Ref(userProfile), security),
+      std::bind_front(&ModelDeleter, security));
     existingModels.insert(std::make_pair(security, model));
   }
   return model;
-}
-
-SecurityTechnicalsModel::~SecurityTechnicalsModel() {
-  *m_loadTechnicalsFlag = false;
 }
 
 connection SecurityTechnicalsModel::ConnectOpenSignal(
@@ -129,7 +123,6 @@ connection SecurityTechnicalsModel::ConnectVolumeSignal(
 SecurityTechnicalsModel::SecurityTechnicalsModel(
     Ref<UserProfile> userProfile, const Security& security)
     : m_userProfile(userProfile.Get()),
-      m_loadTechnicalsFlag(std::make_shared<Sync<bool>>(true)),
       m_volume(0) {
   if(security == Security()) {
     return;
