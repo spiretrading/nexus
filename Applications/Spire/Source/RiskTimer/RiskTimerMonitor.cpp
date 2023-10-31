@@ -32,16 +32,16 @@ void RiskTimerMonitor::Load() {
 
 void RiskTimerMonitor::OnRiskState(const RiskState& riskState) {
   if(riskState.m_type == RiskState::Type::ACTIVE) {
-    if(m_dialog != nullptr) {
+    if(m_dialog) {
       m_userProfile->GetRiskTimerProperties().SetRiskTimerDialogInitialPosition(
         m_dialog->pos());
       m_dialog->close();
-      m_dialog.reset();
-      m_model.reset();
+      m_dialog = nullptr;
+      m_model = nullptr;
     }
   } else if(riskState.m_type == RiskState::Type::CLOSE_ORDERS ||
       riskState.m_type == RiskState::Type::DISABLED) {
-    if(m_dialog == nullptr) {
+    if(!m_dialog) {
       m_model = std::make_shared<RiskTimerModel>(Ref(*m_userProfile));
       if(riskState.m_expiry == pos_infin) {
         m_model->SetTimeRemaining(seconds(0));
