@@ -14,11 +14,8 @@ using namespace Nexus;
 using namespace Nexus::OrderExecutionService;
 using namespace Spire;
 using namespace Spire::UI;
-using namespace std;
 
 namespace {
-  const unsigned int UPDATE_INTERVAL = 100;
-
   class OrderLogFilterProxyModel : public CustomVariantSortFilterProxyModel {
     public:
       OrderLogFilterProxyModel(Ref<UserProfile> userProfile,
@@ -29,15 +26,15 @@ namespace {
       }
 
     protected:
-      virtual bool filterAcceptsRow(int sourceRow,
-          const QModelIndex& sourceParent) const {
-        QModelIndex index = m_sourceModel->index(sourceRow, 0);
+      bool filterAcceptsRow(
+          int sourceRow, const QModelIndex& sourceParent) const override {
+        auto index = m_sourceModel->index(sourceRow, 0);
         if(!index.isValid()) {
           return CustomVariantSortFilterProxyModel::filterAcceptsRow(
             sourceRow, sourceParent);
         }
-        const OrderLogModel::OrderEntry& entry = m_sourceModel->GetEntry(index);
-        const OrderLogProperties& properties = m_sourceModel->GetProperties();
+        auto& entry = m_sourceModel->GetEntry(index);
+        auto& properties = m_sourceModel->GetProperties();
         if(properties.m_orderStatusFilterType ==
             OrderLogProperties::OrderStatusFilterType::LIVE_ORDERS &&
             IsTerminal(entry.m_status) || properties.m_orderStatusFilterType ==
@@ -47,8 +44,8 @@ namespace {
             !properties.m_orderStatusFilter.Test(entry.m_status)) {
           return false;
         }
-        return CustomVariantSortFilterProxyModel::filterAcceptsRow(sourceRow,
-          sourceParent);
+        return CustomVariantSortFilterProxyModel::filterAcceptsRow(
+          sourceRow, sourceParent);
       }
 
     private:
@@ -64,15 +61,10 @@ OrderLogWidget::OrderLogWidget(QWidget* parent, Qt::WindowFlags flags)
   m_ui->m_orderLogTable->installEventFilter(this);
   connect(m_ui->m_orderLogTable, &QTableView::customContextMenuRequested, this,
     &OrderLogWidget::OnContextMenu);
-  connect(&m_updateTimer, &QTimer::timeout, this,
-    &OrderLogWidget::OnUpdateTimer);
-  m_updateTimer.start(UPDATE_INTERVAL);
 }
 
-OrderLogWidget::~OrderLogWidget() {}
-
 OrderLogWidget::UIState OrderLogWidget::GetUIState() const {
-  UIState state;
+  auto state = UIState();
   state.m_tableGeometry =
     m_ui->m_orderLogTable->horizontalHeader()->saveGeometry();
   state.m_tableState = m_ui->m_orderLogTable->horizontalHeader()->saveState();
@@ -85,30 +77,31 @@ void OrderLogWidget::SetUIState(const UIState& state) {
   m_ui->m_orderLogTable->horizontalHeader()->restoreState(state.m_tableState);
 }
 
-void OrderLogWidget::SetModel(Ref<UserProfile> userProfile,
-    Ref<BlotterModel> model) {
+void OrderLogWidget::SetModel(
+    Ref<UserProfile> userProfile, Ref<BlotterModel> model) {
   m_userProfile = userProfile.Get();
   m_orderEntries.clear();
   m_ui->m_orderLogTable->reset();
   m_model = model.Get();
-  m_proxyModel = std::make_unique<OrderLogFilterProxyModel>(Ref(userProfile),
-    Ref(m_model->GetOrderLogModel()));
+  m_proxyModel = std::make_unique<OrderLogFilterProxyModel>(
+    Ref(userProfile), Ref(m_model->GetOrderLogModel()));
   m_ui->m_orderLogTable->setModel(m_proxyModel.get());
-  m_ui->m_orderLogTable->setItemDelegate(new CustomVariantItemDelegate(
-    Ref(userProfile)));
+  m_ui->m_orderLogTable->setItemDelegate(
+    new CustomVariantItemDelegate(Ref(userProfile)));
   m_ui->m_orderLogTable->horizontalHeader()->setSectionsMovable(true);
-  QFontMetrics metrics(m_ui->m_orderLogTable->font());
+  auto metrics = QFontMetrics(m_ui->m_orderLogTable->font());
   m_ui->m_orderLogTable->verticalHeader()->setDefaultSectionSize(
     metrics.height() + 4);
-  for(int i = 0; i < m_model->GetOrderLogModel().rowCount(QModelIndex()); ++i) {
-    QModelIndex index = m_model->GetOrderLogModel().index(i, 0);
+  for(auto i = 0;
+      i < m_model->GetOrderLogModel().rowCount(QModelIndex()); ++i) {
+    auto index = m_model->GetOrderLogModel().index(i, 0);
     OnOrderAdded(m_model->GetOrderLogModel().GetEntry(index));
   }
   m_orderAddedConnection = m_model->GetOrderLogModel().ConnectOrderAddedSignal(
-    std::bind(&OrderLogWidget::OnOrderAdded, this, std::placeholders::_1));
+    std::bind_front(&OrderLogWidget::OnOrderAdded, this));
   m_orderRemovedConnection =
     m_model->GetOrderLogModel().ConnectOrderRemovedSignal(
-    std::bind(&OrderLogWidget::OnOrderRemoved, this, std::placeholders::_1));
+      std::bind_front(&OrderLogWidget::OnOrderRemoved, this));
   connect(m_proxyModel.get(), &OrderLogFilterProxyModel::rowsInserted, this,
     &OrderLogWidget::OnProxyOrderAdded);
   connect(m_proxyModel.get(), &OrderLogFilterProxyModel::rowsAboutToBeRemoved,
@@ -117,20 +110,19 @@ void OrderLogWidget::SetModel(Ref<UserProfile> userProfile,
 
 bool OrderLogWidget::eventFilter(QObject* object, QEvent* event) {
   if(object == m_ui->m_orderLogTable) {
-    QKeyEvent* keyEvent = dynamic_cast<QKeyEvent*>(event);
-    if(keyEvent != nullptr) {
+    if(auto keyEvent = dynamic_cast<QKeyEvent*>(event)) {
       if(!m_ui->m_orderLogTable->selectionModel()->selectedRows().empty() &&
           keyEvent->modifiers() == 0 && keyEvent->key() == Qt::Key_Escape) {
         OnCancel();
         return true;
       }
-      QKeySequence key(keyEvent->modifiers() + keyEvent->key());
-      auto cancelBinding = m_userProfile->GetKeyBindings().GetCancelFromBinding(
-        key);
-      if(cancelBinding.is_initialized()) {
+      auto key = QKeySequence(keyEvent->modifiers() + keyEvent->key());
+      auto cancelBinding =
+        m_userProfile->GetKeyBindings().GetCancelFromBinding(key);
+      if(cancelBinding) {
         KeyBindings::CancelBinding::HandleCancel(*cancelBinding,
-          m_userProfile->GetServiceClients().GetOrderExecutionClient(), Store(
-          m_orderEntries));
+          m_userProfile->GetServiceClients().GetOrderExecutionClient(),
+          Store(m_orderEntries));
         return true;
       }
     }
@@ -140,15 +132,15 @@ bool OrderLogWidget::eventFilter(QObject* object, QEvent* event) {
 
 void OrderLogWidget::OnOrderAdded(const OrderLogModel::OrderEntry& entry) {
   m_orderEntries.push_back(entry);
-  entry.m_order->GetPublisher().Monitor(m_slotHandler.GetSlot<ExecutionReport>(
-    std::bind(&OrderLogWidget::OnExecutionReport, this, entry.m_order,
-    std::placeholders::_1)));
+  entry.m_order->GetPublisher().Monitor(
+    m_eventHandler.get_slot<ExecutionReport>(
+      std::bind_front(
+        &OrderLogWidget::OnExecutionReport, this, entry.m_order)));
 }
 
 void OrderLogWidget::OnOrderRemoved(const OrderLogModel::OrderEntry& entry) {
   auto orderIterator = std::find_if(m_orderEntries.begin(),
-    m_orderEntries.end(),
-    [&] (const OrderLogModel::OrderEntry& e) {
+    m_orderEntries.end(), [&] (const auto& e) {
       return entry.m_order == e.m_order;
     });
   if(orderIterator == m_orderEntries.end()) {
@@ -182,22 +174,19 @@ void OrderLogWidget::OnProxyOrderRemoved(
 }
 
 void OrderLogWidget::OnCancel() {
-  QModelIndexList indexes =
-    m_ui->m_orderLogTable->selectionModel()->selectedRows();
-  for(QModelIndexList::const_iterator i = indexes.begin();
-      i != indexes.end(); ++i) {
-    const OrderLogModel::OrderEntry& entry =
-      m_model->GetOrderLogModel().GetEntry(m_proxyModel->mapToSource(*i));
+  auto indexes = m_ui->m_orderLogTable->selectionModel()->selectedRows();
+  for(auto& index : indexes) {
+    auto& entry =
+      m_model->GetOrderLogModel().GetEntry(m_proxyModel->mapToSource(index));
     m_userProfile->GetServiceClients().GetOrderExecutionClient().Cancel(
       *entry.m_order);
   }
 }
 
-void OrderLogWidget::OnExecutionReport(const Order* order,
-    const ExecutionReport& executionReport) {
+void OrderLogWidget::OnExecutionReport(
+    const Order* order, const ExecutionReport& executionReport) {
   auto orderIterator = std::find_if(m_orderEntries.begin(),
-    m_orderEntries.end(),
-    [&] (const OrderLogModel::OrderEntry& entry) {
+    m_orderEntries.end(), [&] (const auto& entry) {
       return entry.m_order == order;
     });
   if(orderIterator == m_orderEntries.end()) {
@@ -211,11 +200,7 @@ void OrderLogWidget::OnExecutionReport(const Order* order,
 }
 
 void OrderLogWidget::OnContextMenu(const QPoint& point) {
-  OrderLogPropertiesDialog propertiesDialog(Ref(*m_userProfile), Ref(*m_model),
-    this);
-  propertiesDialog.exec();
-}
-
-void OrderLogWidget::OnUpdateTimer() {
-  HandleTasks(m_slotHandler);
+  auto dialog =
+    OrderLogPropertiesDialog(Ref(*m_userProfile), Ref(*m_model), this);
+  dialog.exec();
 }

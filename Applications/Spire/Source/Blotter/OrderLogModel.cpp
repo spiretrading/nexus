@@ -10,26 +10,16 @@ using namespace Nexus;
 using namespace Nexus::OrderExecutionService;
 using namespace Spire;
 using namespace Spire::UI;
-using namespace std;
-
-namespace {
-  const unsigned int UPDATE_INTERVAL = 100;
-}
 
 OrderLogModel::OrderEntry::OrderEntry(const Order* order)
-    : m_order(order),
-      m_status(OrderStatus::PENDING_NEW) {}
+  : m_order(order),
+    m_status(OrderStatus::PENDING_NEW) {}
 
 OrderLogModel::OrderLogModel(const OrderLogProperties& properties)
     : m_properties(properties),
       m_orderExecutionPublisher(nullptr) {
-  m_slotHandler.emplace();
-  connect(&m_updateTimer, &QTimer::timeout, this,
-    &OrderLogModel::OnUpdateTimer);
-  m_updateTimer.start(UPDATE_INTERVAL);
+  m_eventHandler.emplace();
 }
-
-OrderLogModel::~OrderLogModel() {}
 
 const OrderLogProperties& OrderLogModel::GetProperties() const {
   return m_properties;
@@ -50,18 +40,18 @@ void OrderLogModel::SetOrderExecutionPublisher(
     Ref<const OrderExecutionPublisher> orderExecutionPublisher) {
   if(!m_entries.empty()) {
     beginRemoveRows(QModelIndex(), 0, m_entries.size() - 1);
-    vector<OrderEntry> entries;
+    auto entries = std::vector<OrderEntry>();
     entries.swap(m_entries);
     endRemoveRows();
-    for(const OrderEntry& entry : entries) {
+    for(auto& entry : entries) {
       m_orderRemovedSignal(entry);
     }
   }
-  m_slotHandler = std::nullopt;
-  m_slotHandler.emplace();
+  m_eventHandler = std::nullopt;
+  m_eventHandler.emplace();
   m_orderExecutionPublisher = orderExecutionPublisher.Get();
-  m_orderExecutionPublisher->Monitor(m_slotHandler->GetSlot<const Order*>(
-    std::bind(&OrderLogModel::OnOrderExecuted, this, std::placeholders::_1)));
+  m_orderExecutionPublisher->Monitor(m_eventHandler->get_slot<const Order*>(
+    std::bind_front(&OrderLogModel::OnOrderExecuted, this)));
 }
 
 connection OrderLogModel::ConnectOrderAddedSignal(
@@ -86,8 +76,8 @@ QVariant OrderLogModel::data(const QModelIndex& index, int role) const {
   if(!index.isValid()) {
     return QVariant();
   }
-  const OrderEntry& entry = m_entries[index.row()];
-  const OrderFields& fields = entry.m_order->GetInfo().m_fields;
+  auto& entry = m_entries[index.row()];
+  auto& fields = entry.m_order->GetInfo().m_fields;
   if(role == Qt::TextAlignmentRole) {
     return static_cast<int>(Qt::AlignHCenter | Qt::AlignVCenter);
   } else if(role == Qt::DisplayRole) {
@@ -155,24 +145,19 @@ QVariant OrderLogModel::headerData(int section, Qt::Orientation orientation,
   return QVariant();
 }
 
-void OrderLogModel::OnUpdateTimer() {
-  HandleTasks(*m_slotHandler);
-}
-
 void OrderLogModel::OnOrderExecuted(const Order* order) {
-  size_t index = m_entries.size();
+  auto index = m_entries.size();
   beginInsertRows(QModelIndex(), m_entries.size(), m_entries.size());
-  order->GetPublisher().Monitor(m_slotHandler->GetSlot<ExecutionReport>(
-    std::bind(&OrderLogModel::OnExecutionReport, this, index,
-    std::placeholders::_1)));
-  OrderEntry entry(order);
+  order->GetPublisher().Monitor(m_eventHandler->get_slot<ExecutionReport>(
+    std::bind_front(&OrderLogModel::OnExecutionReport, this, index)));
+  auto entry = OrderEntry(order);
   m_entries.push_back(entry);
   endInsertRows();
   m_orderAddedSignal(entry);
 }
 
-void OrderLogModel::OnExecutionReport(size_t entryIndex,
-    const ExecutionReport& report) {
+void OrderLogModel::OnExecutionReport(
+    std::size_t entryIndex, const ExecutionReport& report) {
   m_entries[entryIndex].m_status = report.m_status;
   Q_EMIT dataChanged(index(entryIndex, STATUS_COLUMN),
     index(entryIndex, STATUS_COLUMN));

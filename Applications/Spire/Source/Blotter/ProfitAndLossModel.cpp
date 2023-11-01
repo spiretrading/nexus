@@ -9,11 +9,6 @@ using namespace boost::signals2;
 using namespace Nexus;
 using namespace Nexus::Accounting;
 using namespace Spire;
-using namespace std;
-
-namespace {
-  const auto UPDATE_INTERVAL = 100;
-}
 
 ProfitAndLossModel::ProfitAndLossModel(
     Ref<const CurrencyDatabase> currencyDatabase,
@@ -22,13 +17,10 @@ ProfitAndLossModel::ProfitAndLossModel(
       m_exchangeRates(exchangeRates.Get()),
       m_showUnrealized{showUnrealized},
       m_portfolioController(nullptr) {
-  m_slotHandler.emplace();
-  connect(&m_updateTimer, &QTimer::timeout, this,
-    &ProfitAndLossModel::OnUpdateTimer);
-  m_updateTimer.start(UPDATE_INTERVAL);
+  m_eventHandler.emplace();
 }
 
-ProfitAndLossModel::~ProfitAndLossModel() {}
+ProfitAndLossModel::~ProfitAndLossModel() = default;
 
 void ProfitAndLossModel::SetPortfolioController(
     Ref<SpirePortfolioController> portfolioController) {
@@ -40,13 +32,12 @@ void ProfitAndLossModel::SetPortfolioController(
   m_update = SpirePortfolioController::UpdateEntry();
   m_update.m_currencyInventory.m_position.m_key.m_currency = m_currency;
   m_update.m_securityInventory.m_position.m_key.m_currency = m_currency;
-  m_slotHandler = std::nullopt;
-  m_slotHandler.emplace();
+  m_eventHandler = std::nullopt;
+  m_eventHandler.emplace();
   m_portfolioController = portfolioController.Get();
   m_portfolioController->GetPublisher().Monitor(
-    m_slotHandler->GetSlot<SpirePortfolioController::UpdateEntry>(
-    std::bind(&ProfitAndLossModel::OnPortfolioUpdate, this,
-    std::placeholders::_1)));
+    m_eventHandler->get_slot<SpirePortfolioController::UpdateEntry>(
+      std::bind_front(&ProfitAndLossModel::OnPortfolioUpdate, this)));
   m_profitAndLossUpdateSignal(m_update);
 }
 
@@ -55,7 +46,7 @@ void ProfitAndLossModel::SetCurrency(CurrencyId currency) {
     return;
   }
   m_currency = currency;
-  if(m_portfolioController != nullptr) {
+  if(m_portfolioController) {
     SetPortfolioController(Ref(*m_portfolioController));
   } else {
     m_update = SpirePortfolioController::UpdateEntry();
@@ -84,11 +75,11 @@ void ProfitAndLossModel::OnPortfolioUpdate(
     const SpirePortfolioController::UpdateEntry& update) {
   auto& key = update.m_securityInventory.m_position.m_key;
   auto& model = m_currencyToModel[key.m_currency];
-  if(model == nullptr) {
+  if(!model) {
     model = std::make_unique<ProfitAndLossEntryModel>(
       m_currencyDatabase->FromId(key.m_currency), m_showUnrealized);
     m_profitAndLossEntryModelAddedSignal(*model);
-    m_currencyToPortfolio.insert(std::make_pair(key.m_currency, update));
+    m_currencyToPortfolio.insert(std::pair(key.m_currency, update));
   } else {
     auto& previous = m_currencyToPortfolio[key.m_currency];
     if(m_currency != CurrencyId::NONE) {
@@ -96,12 +87,12 @@ void ProfitAndLossModel::OnPortfolioUpdate(
         previous.m_currencyInventory.m_position.m_quantity;
       m_update.m_currencyInventory.m_position.m_costBasis -=
         m_exchangeRates->Convert(
-        previous.m_currencyInventory.m_position.m_costBasis, key.m_currency,
-        m_currency);
+          previous.m_currencyInventory.m_position.m_costBasis, key.m_currency,
+          m_currency);
       m_update.m_currencyInventory.m_grossProfitAndLoss -=
         m_exchangeRates->Convert(
-        previous.m_currencyInventory.m_grossProfitAndLoss, key.m_currency,
-        m_currency);
+          previous.m_currencyInventory.m_grossProfitAndLoss, key.m_currency,
+          m_currency);
       m_update.m_currencyInventory.m_fees -= m_exchangeRates->Convert(
         previous.m_currencyInventory.m_fees, key.m_currency, m_currency);
       m_update.m_currencyInventory.m_volume -=
@@ -119,11 +110,11 @@ void ProfitAndLossModel::OnPortfolioUpdate(
       update.m_currencyInventory.m_position.m_quantity;
     m_update.m_currencyInventory.m_position.m_costBasis +=
       m_exchangeRates->Convert(
-      update.m_currencyInventory.m_position.m_costBasis,
-      key.m_currency, m_currency);
+        update.m_currencyInventory.m_position.m_costBasis,
+        key.m_currency, m_currency);
     m_update.m_currencyInventory.m_grossProfitAndLoss +=
       m_exchangeRates->Convert(update.m_currencyInventory.m_grossProfitAndLoss,
-      key.m_currency, m_currency);
+        key.m_currency, m_currency);
     m_update.m_currencyInventory.m_fees += m_exchangeRates->Convert(
       update.m_currencyInventory.m_fees, key.m_currency, m_currency);
     m_update.m_currencyInventory.m_volume +=
@@ -134,8 +125,4 @@ void ProfitAndLossModel::OnPortfolioUpdate(
       update.m_unrealizedCurrency, key.m_currency, m_currency);
     m_profitAndLossUpdateSignal(m_update);
   }
-}
-
-void ProfitAndLossModel::OnUpdateTimer() {
-  HandleTasks(*m_slotHandler);
 }
