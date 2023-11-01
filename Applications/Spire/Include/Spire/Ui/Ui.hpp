@@ -43,6 +43,7 @@ namespace Spire {
   class GlobalPositionObserver;
   class HexColorBox;
   struct Highlight;
+  class HighlightPicker;
   class HighlightSwatch;
   class HoverObserver;
   class Icon;
