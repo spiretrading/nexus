@@ -10,13 +10,8 @@ using namespace Nexus;
 using namespace Nexus::OrderExecutionService;
 using namespace Nexus::RiskService;
 using namespace Spire;
-using namespace std;
 
-namespace {
-  const auto UPDATE_INTERVAL = 100;
-}
-
-BlotterModel::BlotterModel(const string& name,
+BlotterModel::BlotterModel(const std::string& name,
     const DirectoryEntry& executingAccount, bool isConsolidated,
     Ref<UserProfile> userProfile, const BlotterTaskProperties& taskProperties,
     const OrderLogProperties& orderLogProperties)
@@ -32,13 +27,9 @@ BlotterModel::BlotterModel(const string& name,
         Ref(userProfile->GetExchangeRates()), true) {
   m_userProfile->GetServiceClients().GetAdministrationClient().
     GetRiskParametersPublisher(m_executingAccount).Monitor(
-    m_slotHandler.GetSlot<RiskParameters>(
-    std::bind(&BlotterModel::OnRiskParametersChanged, this,
-    std::placeholders::_1)));
+      m_eventHandler.get_slot<RiskParameters>(
+        std::bind_front(&BlotterModel::OnRiskParametersChanged, this)));
   InitializeModels();
-  QObject::connect(&m_updateTimer, &QTimer::timeout,
-    std::bind(&BlotterModel::OnUpdateTimer, this));
-  m_updateTimer.start(UPDATE_INTERVAL);
 }
 
 BlotterModel::~BlotterModel() {
@@ -50,7 +41,7 @@ BlotterModel::~BlotterModel() {
   }
 }
 
-const string& BlotterModel::GetName() const {
+const std::string& BlotterModel::GetName() const {
   return m_name;
 }
 
@@ -110,7 +101,7 @@ ActivityLogModel& BlotterModel::GetActivityLogModel() {
   return m_activityLogModel;
 }
 
-const vector<BlotterModel*>& BlotterModel::GetLinkedBlotters() const {
+const std::vector<BlotterModel*>& BlotterModel::GetLinkedBlotters() const {
   return m_incomingLinks;
 }
 
@@ -149,7 +140,7 @@ void BlotterModel::InitializeModels() {
   if(m_isConsolidated) {
     auto [portfolio, sequence, excludedOrders] = MakePortfolio(
       m_userProfile->GetServiceClients().GetRiskClient().LoadInventorySnapshot(
-      m_executingAccount), m_executingAccount,
+        m_executingAccount), m_executingAccount,
       m_userProfile->GetMarketDatabase(),
       m_userProfile->GetServiceClients().GetOrderExecutionClient());
     auto orders = std::make_shared<Queue<const Order*>>();
@@ -181,8 +172,8 @@ void BlotterModel::InitializeModels() {
   auto currentAccount =
     m_userProfile->GetServiceClients().GetServiceLocatorClient().GetAccount();
   if(m_isConsolidated && m_executingAccount == currentAccount) {
-    m_cancelOnFillController = std::make_unique<CancelOnFillController>(
-      Ref(*m_userProfile));
+    m_cancelOnFillController =
+      std::make_unique<CancelOnFillController>(Ref(*m_userProfile));
     m_cancelOnFillController->SetOrderExecutionPublisher(
       Ref(orderExecutionPublisher));
   }
@@ -191,8 +182,4 @@ void BlotterModel::InitializeModels() {
 void BlotterModel::OnRiskParametersChanged(
     const RiskParameters& riskParameters) {
   m_profitAndLossModel.SetCurrency(riskParameters.m_currency);
-}
-
-void BlotterModel::OnUpdateTimer() {
-  HandleTasks(m_slotHandler);
 }

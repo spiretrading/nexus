@@ -1,110 +1,100 @@
-#ifndef SPIRE_ACTIVITYLOGMODEL_HPP
-#define SPIRE_ACTIVITYLOGMODEL_HPP
+#ifndef SPIRE_ACTIVITY_LOG_MODEL_HPP
+#define SPIRE_ACTIVITY_LOG_MODEL_HPP
 #include <optional>
 #include <Beam/Pointers/Ref.hpp>
-#include <Beam/Queues/TaskQueue.hpp>
 #include <QAbstractItemModel>
-#include <QTimer>
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
+#include "Spire/Async/EventHandler.hpp"
 #include "Spire/Blotter/Blotter.hpp"
 
 namespace Spire {
 
-  /*! \class ActivityLogModel
-      \brief Keeps track of Order activity.
-   */
+  /** Keeps track of Order activity. */
   class ActivityLogModel : public QAbstractTableModel {
     public:
 
-      /*! \enum Columns
-          \brief Enumerates the model's columns.
-       */
+      /** Enumerates the model's columns. */
       enum Columns {
 
-        //! The time of the action.
+        /** The time of the action. */
         TIME_COLUMN,
 
-        //! The order id.
+        /** The order id. */
         ID_COLUMN,
 
-        //! The side.
+        /** The side. */
         SIDE_COLUMN,
 
-        //! The Security acted upon.
+        /** The Security acted upon. */
         SECURITY_COLUMN,
 
-        //! The Order status.
+        /** The Order status. */
         STATUS_COLUMN,
 
-        //! The last quantity.
+        /** The last quantity. */
         LAST_QUANTITY_COLUMN,
 
-        //! The last price.
+        /** The last price. */
         LAST_PRICE_COLUMN,
 
-        //! The last market.
+        /** The last market. */
         LAST_MARKET_COLUMN,
 
-        //! The liquidity flag.
+        /** The liquidity flag. */
         LIQUIDITY_FLAG_COLUMN,
 
-        //! The execution fee paid/received.
+        /** The execution fee paid/received. */
         EXECUTION_FEE_COLUMN,
 
-        //! The processing fee paid/received.
+        /** The processing fee paid/received. */
         PROCESSING_FEE_COLUMN,
 
-        //! The commission paid/received.
+        /** The commission paid/received. */
         COMMISSION_COLUMN,
 
-        //! The message.
-        MESSAGE_COLUMN,
+        /** The message. */
+        MESSAGE_COLUMN
       };
 
-      //! The number of columns.
-      static const unsigned int COLUMN_COUNT = 13;
+      /** The number of columns. */
+      static const auto COLUMN_COUNT = 13;
 
-      //! Constructs an ActivityLogModel.
+      /** Constructs an empty ActivityLogModel. */
       ActivityLogModel();
 
-      virtual ~ActivityLogModel();
+      ~ActivityLogModel() override = default;
 
-      //! Sets the Publisher whose Orders are to be modeled.
-      /*!
-        \param publisher Publishes the Orders to model.
-      */
+      /**
+       * Sets the Publisher whose Orders are to be modeled.
+       * @param publisher Publishes the Orders to model.
+       */
       void SetOrderExecutionPublisher(
         Beam::Ref<const Nexus::OrderExecutionService::OrderExecutionPublisher>
         publisher);
 
-      int rowCount(const QModelIndex& parent) const;
+      int rowCount(const QModelIndex& parent) const override;
 
-      int columnCount(const QModelIndex& parent) const;
+      int columnCount(const QModelIndex& parent) const override;
 
-      QVariant data(const QModelIndex& index, int role) const;
+      QVariant data(const QModelIndex& index, int role) const override;
 
-      QVariant headerData(int section, Qt::Orientation orientation,
-        int role) const;
+      QVariant headerData(
+        int section, Qt::Orientation orientation, int role) const override;
 
     private:
       struct UpdateEntry {
         const Nexus::OrderExecutionService::Order* m_order;
         Nexus::OrderExecutionService::ExecutionReport m_report;
-
-        UpdateEntry(const Nexus::OrderExecutionService::Order* order,
-          const Nexus::OrderExecutionService::ExecutionReport& report);
       };
-      QTimer m_updateTimer;
       const Nexus::OrderExecutionService::OrderExecutionPublisher*
         m_orderExecutionPublisher;
       std::vector<UpdateEntry> m_entries;
-      std::optional<Beam::TaskQueue> m_slotHandler;
+      std::optional<EventHandler> m_eventHandler;
 
       void OnOrderExecuted(const Nexus::OrderExecutionService::Order* order);
       void OnExecutionReport(const Nexus::OrderExecutionService::Order* order,
         const Nexus::OrderExecutionService::ExecutionReport& report);
-      void OnUpdateTimer();
   };
 }
 

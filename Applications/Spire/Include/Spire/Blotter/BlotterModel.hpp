@@ -3,10 +3,9 @@
 #include <optional>
 #include <string>
 #include <Beam/Pointers/Ref.hpp>
-#include <boost/noncopyable.hpp>
-#include <QTimer>
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
 #include "Nexus/RiskService/RiskService.hpp"
+#include "Spire/Async/EventHandler.hpp"
 #include "Spire/Blotter/ActivityLogModel.hpp"
 #include "Spire/Blotter/BlotterTasksModel.hpp"
 #include "Spire/Blotter/OpenPositionsModel.hpp"
@@ -17,22 +16,20 @@
 
 namespace Spire {
 
-  /*! \class BlotterModel
-      \brief Stores a single blotter for display in a BlotterWindow.
-   */
-  class BlotterModel : private boost::noncopyable {
+  /** Stores a single blotter for display in a BlotterWindow. */
+  class BlotterModel {
     public:
 
-      //! Constructs a BlotterModel.
-      /*!
-        \param name The name of the blotter.
-        \param executingAccount The account used to execute new Orders.
-        \param isConsolidated Whether this is the <i>executingAccount</i>'s
-               consolidated blotter.
-        \param userProfile The user's profile.
-        \param taskProperties Used to display the properties of a Task.
-        \param orderLogProperties The Order log's display properties.
-      */
+      /**
+       * Constructs a BlotterModel.
+       * @param name The name of the blotter.
+       * @param executingAccount The account used to execute new Orders.
+       * @param isConsolidated Whether this is the <i>executingAccount</i>'s
+       *        consolidated blotter.
+       * @param userProfile The user's profile.
+       * @param taskProperties Used to display the properties of a Task.
+       * @param orderLogProperties The Order log's display properties.
+       */
       BlotterModel(const std::string& name,
         const Beam::ServiceLocator::DirectoryEntry& executingAccount,
         bool isConsolidated, Beam::Ref<UserProfile> userProfile,
@@ -41,65 +38,69 @@ namespace Spire {
 
       ~BlotterModel();
 
-      //! Returns the name of this blotter.
+      /** Returns the name of this blotter. */
       const std::string& GetName() const;
 
-      //! Returns the account used to execute new Orders.
+      /** Returns the account used to execute new Orders. */
       const Beam::ServiceLocator::DirectoryEntry& GetExecutingAccount() const;
 
-      //! Returns <code>true</code> iff this is the executing account's
-      //! consolidated blotter.
+      /**
+       * Returns <code>true</code> iff this is the executing account's
+       * consolidated blotter.
+       */
       bool IsConsolidated() const;
 
-      //! Returns <code>true</code> iff this blotter is to be saved upon exit.
+      /**
+       * Returns <code>true</code> iff this blotter is to be saved upon exit.
+       */
       bool IsPersistent() const;
 
-      //! Sets whether this blotter is to be saved upon exit.
+      /** Sets whether this blotter is to be saved upon exit. */
       void SetPersistent(bool value);
 
-      //! Returns the Tasks model.
+      /** Returns the Tasks model. */
       const BlotterTasksModel& GetTasksModel() const;
 
-      //! Returns the Tasks model.
+      /** Returns the Tasks model. */
       BlotterTasksModel& GetTasksModel();
 
-      //! Returns the order log model.
+      /** Returns the order log model. */
       const OrderLogModel& GetOrderLogModel() const;
 
-      //! Returns the order log model.
+      /** Returns the order log model. */
       OrderLogModel& GetOrderLogModel();
 
-      //! Returns the open positions model.
+      /** Returns the open positions model. */
       const OpenPositionsModel& GetOpenPositionsModel() const;
 
-      //! Returns the open positions model.
+      /** Returns the open positions model. */
       OpenPositionsModel& GetOpenPositionsModel();
 
-      //! Returns the profit and loss model.
+      /** Returns the profit and loss model. */
       const ProfitAndLossModel& GetProfitAndLossModel() const;
 
-      //! Returns the profit and loss model.
+      /** Returns the profit and loss model. */
       ProfitAndLossModel& GetProfitAndLossModel();
 
-      //! Returns the activity log model.
+      /** Returns the activity log model. */
       const ActivityLogModel& GetActivityLogModel() const;
 
-      //! Returns the activity log model.
+      /** Returns the activity log model. */
       ActivityLogModel& GetActivityLogModel();
 
-      //! Returns the list of linked Blotters.
+      /** Returns the list of linked Blotters. */
       const std::vector<BlotterModel*>& GetLinkedBlotters() const;
 
-      //! Links this blotter to another.
-      /*!
-        \param blotter The blotter to link to.
-      */
+      /**
+       * Links this blotter to another.
+       * @param blotter The blotter to link to.
+       */
       void Link(Beam::Ref<BlotterModel> blotter);
 
-      //! Unlinks this blotter from another.
-      /*!
-        \param blotter The blotter to unlink from.
-      */
+      /**
+       * Unlinks this blotter from another.
+       * @param blotter The blotter to unlink from.
+       */
       void Unlink(BlotterModel& blotter);
 
     private:
@@ -117,13 +118,13 @@ namespace Spire {
       std::unique_ptr<CancelOnFillController> m_cancelOnFillController;
       std::vector<BlotterModel*> m_incomingLinks;
       std::vector<BlotterModel*> m_outgoingLinks;
-      QTimer m_updateTimer;
-      Beam::TaskQueue m_slotHandler;
+      EventHandler m_eventHandler;
 
+      BlotterModel(const BlotterModel&) = delete;
+      BlotterModel& operator =(const BlotterModel&) = delete;
       void InitializeModels();
       void OnRiskParametersChanged(
         const Nexus::RiskService::RiskParameters& riskParameters);
-      void OnUpdateTimer();
   };
 }
 

@@ -25,7 +25,6 @@ using namespace Nexus::OrderExecutionService;
 using namespace Spire;
 
 namespace {
-  const auto UPDATE_INTERVAL = 100;
   const auto EXPIRY_INTERVAL = 500;
 
   RoutineHandler QueryDailyOrderSubmissions(const UserProfile& userProfile,
@@ -86,7 +85,7 @@ BlotterTasksModel::BlotterTasksModel(Ref<UserProfile> userProfile,
       m_executingAccount(executingAccount),
       m_properties(properties),
       m_isRefreshing(false) {
-  m_taskSlotHandler.emplace();
+  m_taskEventHandler.emplace();
   if(isConsolidated) {
     auto orderQueue = std::make_shared<Queue<const Order*>>();
     m_pendingRoutines.Add(QueryDailyOrderSubmissions(*m_userProfile,
@@ -97,12 +96,9 @@ BlotterTasksModel::BlotterTasksModel(Ref<UserProfile> userProfile,
     m_accountOrderPublisher =
       std::make_shared<SequencePublisher<const Order*>>();
   }
-  m_accountOrderPublisher->Monitor(m_orderSlotHandler.GetSlot<const Order*>(
-    [=] (const Order* order) { OnOrderSubmitted(order); }));
+  m_accountOrderPublisher->Monitor(m_orderEventHandler.get_slot<const Order*>(
+    std::bind_front(&BlotterTasksModel::OnOrderSubmitted, this)));
   SetupLinkedOrderExecutionMonitor();
-  connect(&m_updateTimer, &QTimer::timeout, this,
-    &BlotterTasksModel::OnUpdateTimer);
-  m_updateTimer.start(UPDATE_INTERVAL);
   connect(&m_expiryTimer, &QTimer::timeout, this,
     &BlotterTasksModel::OnExpiryTimer);
   m_expiryTimer.start(EXPIRY_INTERVAL);
@@ -148,11 +144,11 @@ const BlotterTasksModel::TaskEntry& BlotterTasksModel::Add(
   entry->m_sticky = false;
   entry->m_task = std::move(task);
   entry->m_task->GetPublisher().Monitor(
-    m_taskSlotHandler->GetSlot<Task::StateEntry>(
-      [=, entry = entry.get()] (const Task::StateEntry& state) {
+    m_taskEventHandler->get_slot<Task::StateEntry>(
+      [=, entry = entry.get()] (const auto& state) {
         OnTaskState(*entry, state);
       }));
-  m_taskIds.insert(std::make_pair(entry->m_task->GetId(), entry.get()));
+  m_taskIds.insert(std::pair(entry->m_task->GetId(), entry.get()));
   for(auto& taskMonitor : m_taskMonitors) {
     auto observer =
       std::make_unique<CanvasObserver>(entry->m_task, taskMonitor.GetMonitor());
@@ -176,8 +172,8 @@ const BlotterTasksModel::TaskEntry& BlotterTasksModel::Add(
   entryReference.m_task->GetContext().GetOrderPublisher().Monitor(
     m_orders->GetWriter());
   entryReference.m_task->GetContext().GetOrderPublisher().Monitor(
-    m_orderSlotHandler.GetSlot<const Order*>(
-      [=] (const Order* order) { OnTaskOrderSubmitted(order); }));
+    m_orderEventHandler.get_slot<const Order*>(
+      std::bind_front(&BlotterTasksModel::OnTaskOrderSubmitted, this)));
   return entryReference;
 }
 
@@ -198,8 +194,8 @@ void BlotterTasksModel::Refresh() {
     entries.swap(m_entries);
     m_pendingExpiryEntries.clear();
     m_expiredEntries.clear();
-    m_taskSlotHandler = std::nullopt;
-    m_taskSlotHandler.emplace();
+    m_taskEventHandler = std::nullopt;
+    m_taskEventHandler.emplace();
     m_taskIds.clear();
     m_submittedOrders.clear();
     m_taskOrders.clear();
@@ -240,16 +236,16 @@ void BlotterTasksModel::Link(Ref<BlotterTasksModel> model) {
 }
 
 void BlotterTasksModel::Unlink(BlotterTasksModel& model) {
-  m_incomingLinks.erase(find(m_incomingLinks.begin(), m_incomingLinks.end(),
-    &model));
+  m_incomingLinks.erase(
+    find(m_incomingLinks.begin(), m_incomingLinks.end(), &model));
   model.m_outgoingLinks.erase(find(model.m_outgoingLinks.begin(),
     model.m_outgoingLinks.end(), this));
   SetupLinkedOrderExecutionMonitor();
   Refresh();
 }
 
-const BlotterTasksModel::TaskEntry& BlotterTasksModel::GetEntry(
-    int index) const {
+const BlotterTasksModel::TaskEntry&
+    BlotterTasksModel::GetEntry(int index) const {
   return *m_entries[index];
 }
 
@@ -368,7 +364,7 @@ void BlotterTasksModel::OnOrderSubmitted(const Order* order) {
     m_taskOrders.erase(order);
     return;
   } else if(m_submittedOrders.insert(order).second) {
-    m_orderSlotHandler.Push([=] {
+    m_orderEventHandler.push([=] {
       OnOrderSubmitted(order);
     });
     return;
@@ -386,11 +382,6 @@ void BlotterTasksModel::OnOrderSubmitted(const Order* order) {
 
 void BlotterTasksModel::OnTaskOrderSubmitted(const Order* order) {
   m_taskOrders.insert(order);
-}
-
-void BlotterTasksModel::OnUpdateTimer() {
-  HandleTasks(m_orderSlotHandler);
-  HandleTasks(*m_taskSlotHandler);
 }
 
 void BlotterTasksModel::OnExpiryTimer() {

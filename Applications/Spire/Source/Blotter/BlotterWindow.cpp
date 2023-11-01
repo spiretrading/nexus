@@ -24,10 +24,8 @@ using namespace boost;
 using namespace Nexus;
 using namespace Spire;
 using namespace Spire::UI;
-using namespace std;
 
 namespace {
-  constexpr auto UPDATE_INTERVAL = 100;
   std::unordered_map<BlotterModel*, BlotterWindow*> blotterWindows;
 
   class LinkBlotterAction : public QAction {
@@ -41,8 +39,8 @@ namespace {
   };
 }
 
-LinkBlotterAction::LinkBlotterAction(Ref<BlotterModel> blotterModel,
-  QObject* parent)
+LinkBlotterAction::LinkBlotterAction(
+  Ref<BlotterModel> blotterModel, QObject* parent)
   : QAction(parent),
     m_blotterModel(blotterModel.Get()) {}
 
@@ -50,8 +48,8 @@ BlotterModel& LinkBlotterAction::GetBlotterModel() {
   return *m_blotterModel;
 }
 
-BlotterWindow& BlotterWindow::GetBlotterWindow(Ref<UserProfile> userProfile,
-    Ref<BlotterModel> model) {
+BlotterWindow& BlotterWindow::GetBlotterWindow(
+    Ref<UserProfile> userProfile, Ref<BlotterModel> model) {
   return GetBlotterWindow(Ref(userProfile), Ref(model), nullptr);
 }
 
@@ -59,11 +57,11 @@ BlotterWindow& BlotterWindow::GetBlotterWindow(Ref<UserProfile> userProfile,
     Ref<BlotterModel> model, QWidget* parent, Qt::WindowFlags flags) {
   auto windowIterator = blotterWindows.find(model.Get());
   if(windowIterator == blotterWindows.end()) {
-    auto window = new BlotterWindow(userProfile.Get(), model.Get(), parent,
-      flags);
+    auto window =
+      new BlotterWindow(userProfile.Get(), model.Get(), parent, flags);
     window->setAttribute(Qt::WA_DeleteOnClose);
-    windowIterator = blotterWindows.insert(
-      make_pair(model.Get(), window)).first;
+    windowIterator =
+      blotterWindows.insert(std::pair(model.Get(), window)).first;
   }
   return *windowIterator->second;
 }
@@ -76,7 +74,7 @@ BlotterModel& BlotterWindow::GetModel() {
   return *m_model;
 }
 
-unique_ptr<WindowSettings> BlotterWindow::GetWindowSettings() const {
+std::unique_ptr<WindowSettings> BlotterWindow::GetWindowSettings() const {
   return std::make_unique<BlotterWindowSettings>(*this);
 }
 
@@ -93,8 +91,8 @@ BlotterWindow::BlotterWindow(UserProfile* userProfile, BlotterModel* model,
     this, &BlotterWindow::OnPositionsAdded);
   connect(&m_model->GetOpenPositionsModel(), &OpenPositionsModel::rowsRemoved,
     this, &BlotterWindow::OnPositionsRemoved);
-  m_ui->m_profitAndLossTab->SetModel(Ref(*m_userProfile),
-    Ref(m_model->GetProfitAndLossModel()));
+  m_ui->m_profitAndLossTab->SetModel(
+    Ref(*m_userProfile), Ref(m_model->GetProfitAndLossModel()));
   m_ui->m_orderLogTab->SetModel(Ref(*m_userProfile), Ref(*m_model));
   m_ui->m_activityLogTab->SetModel(Ref(*m_userProfile), Ref(*m_model));
   m_proxyModel = new CustomVariantSortFilterProxyModel(Ref(*m_userProfile));
@@ -106,8 +104,8 @@ BlotterWindow::BlotterWindow(UserProfile* userProfile, BlotterModel* model,
   connect(&m_model->GetTasksModel(), &BlotterTasksModel::dataChanged, this,
     &BlotterWindow::OnPinTaskToggled);
   m_ui->m_taskTable->setModel(m_proxyModel);
-  m_ui->m_taskTable->setItemDelegate(new BlotterTaskEntryItemDelegate(
-    Ref(*m_userProfile)));
+  m_ui->m_taskTable->setItemDelegate(
+    new BlotterTaskEntryItemDelegate(Ref(*m_userProfile)));
   m_ui->m_taskTable->horizontalHeader()->setSectionsMovable(true);
   m_statusBar = new QStatusBar(this);
   QSizePolicy sizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
@@ -118,20 +116,20 @@ BlotterWindow::BlotterWindow(UserProfile* userProfile, BlotterModel* model,
   m_ui->verticalLayout->addWidget(m_statusBar);
   m_statusBar->setStyleSheet("QStatusBar::item { border: 0px solid black };");
   auto spacer = new QLabel("");
-  QSizePolicy spacerSizePolicy(QSizePolicy::MinimumExpanding,
-    QSizePolicy::Minimum);
+  auto spacerSizePolicy =
+    QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Minimum);
   spacerSizePolicy.setHorizontalStretch(1);
   spacer->setSizePolicy(spacerSizePolicy);
   m_statusBar->addWidget(spacer);
   m_totalProfitAndLossLabel = new ValueLabel("Total P/L", Ref(*m_userProfile));
   m_totalProfitAndLossLabel->AdjustSize("9999999.99 USD");
   m_statusBar->addWidget(m_totalProfitAndLossLabel);
-  m_unrealizedProfitAndLossLabel = new ValueLabel("Unrealized P/L",
-    Ref(*m_userProfile));
+  m_unrealizedProfitAndLossLabel =
+    new ValueLabel("Unrealized P/L", Ref(*m_userProfile));
   m_unrealizedProfitAndLossLabel->AdjustSize("9999999.99 USD");
   m_statusBar->addWidget(m_unrealizedProfitAndLossLabel);
-  m_realizedProfitAndLossLabel = new ValueLabel("Realized P/L",
-    Ref(*m_userProfile));
+  m_realizedProfitAndLossLabel =
+    new ValueLabel("Realized P/L", Ref(*m_userProfile));
   m_realizedProfitAndLossLabel->AdjustSize("9999999.99 USD");
   m_statusBar->addWidget(m_realizedProfitAndLossLabel);
   m_feesLabel = new ValueLabel("Fees", Ref(*m_userProfile));
@@ -141,8 +139,8 @@ BlotterWindow::BlotterWindow(UserProfile* userProfile, BlotterModel* model,
   m_costBasisLabel->AdjustSize("99999999.99 USD");
   m_statusBar->addWidget(m_costBasisLabel);
   m_toolbar = new QToolBar(this);
-  static_cast<QVBoxLayout*>(m_ui->m_tasks->layout())->insertWidget(0,
-    m_toolbar);
+  static_cast<QVBoxLayout*>(m_ui->m_tasks->layout())->insertWidget(
+    0, m_toolbar);
   m_executeAction = new QAction(this);
   m_executeAction->setText(tr("Execute"));
   m_executeAction->setToolTip(tr("Execute selected tasks."));
@@ -159,8 +157,8 @@ BlotterWindow::BlotterWindow(UserProfile* userProfile, BlotterModel* model,
   m_cancelAction->setIcon(QIcon(":/icons/delete.png"));
   addAction(m_cancelAction);
   m_toolbar->addAction(m_cancelAction);
-  connect(m_cancelAction, &QAction::triggered, this,
-    &BlotterWindow::OnCancelAction);
+  connect(
+    m_cancelAction, &QAction::triggered, this, &BlotterWindow::OnCancelAction);
   m_toolbar->addSeparator();
   m_pinBlotterAction = new QAction(this);
   m_pinBlotterAction->setText(tr("Pin"));
@@ -178,35 +176,30 @@ BlotterWindow::BlotterWindow(UserProfile* userProfile, BlotterModel* model,
   SetActive(&m_userProfile->GetBlotterSettings().GetActiveBlotter() == m_model);
   m_activeBlotterChangedConnection =
     m_userProfile->GetBlotterSettings().ConnectActiveBlotterChangedSignal(
-    std::bind(&BlotterWindow::OnActiveBlotterChanged, this,
-    std::placeholders::_1));
+      std::bind_front(&BlotterWindow::OnActiveBlotterChanged, this));
   addAction(m_toggleActiveBlotterAction);
   m_toolbar->addAction(m_toggleActiveBlotterAction);
   connect(m_toggleActiveBlotterAction, &QAction::toggled, this,
     &BlotterWindow::OnActiveBlotterToggled);
-  QFontMetrics metrics(m_ui->m_taskTable->font());
+  auto metrics = QFontMetrics(m_ui->m_taskTable->font());
   m_ui->m_taskTable->verticalHeader()->setDefaultSectionSize(
     metrics.height() + 4);
   connect(m_ui->m_taskTable->selectionModel(),
     &QItemSelectionModel::currentChanged, this,
     &BlotterWindow::OnCurrentChanged);
   const auto STICKY_WIDTH = 24;
-  m_ui->m_taskTable->setColumnWidth(BlotterTasksModel::STICKY_COLUMN,
-    STICKY_WIDTH);
+  m_ui->m_taskTable->setColumnWidth(
+    BlotterTasksModel::STICKY_COLUMN, STICKY_WIDTH);
   m_ui->m_taskTable->installEventFilter(this);
   connect(m_ui->m_taskTable, &QTableView::customContextMenuRequested, this,
     &BlotterWindow::OnTaskContextMenu);
-  connect(
-    &m_updateTimer, &QTimer::timeout, this, &BlotterWindow::OnUpdateTimer);
-  m_updateTimer.start(UPDATE_INTERVAL);
   m_profitAndLossUpdateConnection =
     m_model->GetProfitAndLossModel().ConnectProfitAndLossUpdateSignal(
-    std::bind(&BlotterWindow::OnProfitAndLossUpdate, this,
-    std::placeholders::_1));
+      std::bind_front(&BlotterWindow::OnProfitAndLossUpdate, this));
   m_taskAddedConnection = m_model->GetTasksModel().ConnectTaskAddedSignal(
-    std::bind(&BlotterWindow::OnTaskAdded, this, std::placeholders::_1));
+    std::bind_front(&BlotterWindow::OnTaskAdded, this));
   m_taskRemovedConnection = m_model->GetTasksModel().ConnectTaskRemovedSignal(
-    std::bind(&BlotterWindow::OnTaskRemoved, this, std::placeholders::_1));
+    std::bind_front(&BlotterWindow::OnTaskRemoved, this));
 }
 
 void BlotterWindow::showEvent(QShowEvent* event) {
@@ -250,12 +243,12 @@ bool BlotterWindow::eventFilter(QObject* object, QEvent* event) {
           keyEvent->modifiers() == 0 && keyEvent->key() == Qt::Key_Escape) {
         return QWidget::eventFilter(object, event);
       }
-      QKeySequence key(keyEvent->modifiers() + keyEvent->key());
+      auto key = QKeySequence(keyEvent->modifiers() + keyEvent->key());
       auto cancelBinding =
         m_userProfile->GetKeyBindings().GetCancelFromBinding(key);
-      if(cancelBinding.is_initialized()) {
-        KeyBindings::CancelBinding::HandleCancel(*cancelBinding,
-          Store(m_tasksExecuted));
+      if(cancelBinding) {
+        KeyBindings::CancelBinding::HandleCancel(
+          *cancelBinding, Store(m_tasksExecuted));
         return true;
       }
     }
@@ -265,8 +258,8 @@ bool BlotterWindow::eventFilter(QObject* object, QEvent* event) {
 
 void BlotterWindow::OnTaskAdded(const BlotterTasksModel::TaskEntry& entry) {
   m_tasksExecuted.push_back(entry.m_task);
-  auto index = m_model->GetTasksModel().index(entry.m_index,
-    BlotterTasksModel::STICKY_COLUMN);
+  auto index = m_model->GetTasksModel().index(
+    entry.m_index, BlotterTasksModel::STICKY_COLUMN);
   auto editorTimer = std::make_shared<QTimer>();
   editorTimer->setSingleShot(true);
   connect(editorTimer.get(), &QTimer::timeout,
@@ -276,10 +269,11 @@ void BlotterWindow::OnTaskAdded(const BlotterTasksModel::TaskEntry& entry) {
       editorTimer.reset();
     });
   editorTimer->start(0);
-  entry.m_task->GetPublisher().Monitor(m_slotHandler.GetSlot<Task::StateEntry>(
-    [=, task = entry.m_task] (const Task::StateEntry& update) {
-      OnTaskState(task, update);
-    }));
+  entry.m_task->GetPublisher().Monitor(
+    m_eventHandler.get_slot<Task::StateEntry>(
+      [=, task = entry.m_task] (const Task::StateEntry& update) {
+        OnTaskState(task, update);
+      }));
 }
 
 void BlotterWindow::OnTaskRemoved(const BlotterTasksModel::TaskEntry& entry) {
@@ -323,8 +317,8 @@ void BlotterWindow::OnProfitAndLossUpdate(
     update.m_currencyInventory.m_position.m_costBasis));
 }
 
-void BlotterWindow::OnTaskState(const std::shared_ptr<Task>& task,
-    const Task::StateEntry& update) {
+void BlotterWindow::OnTaskState(
+    const std::shared_ptr<Task>& task, const Task::StateEntry& update) {
   if(IsTerminal(update.m_state)) {
     RemoveFirst(m_tasksExecuted, task);
   }
@@ -368,13 +362,13 @@ void BlotterWindow::OnCurrentChanged(const QModelIndex& current,
 }
 
 void BlotterWindow::OnTaskContextMenu(const QPoint& position) {
-  QMenu contextMenu;
-  QAction propertiesAction(&contextMenu);
+  auto contextMenu = QMenu();
+  auto propertiesAction = QAction(&contextMenu);
   propertiesAction.setText(tr("Properties"));
   propertiesAction.setToolTip(tr("Opens the properties for this blotter."));
   contextMenu.addAction(&propertiesAction);
-  QMenu linkMenu("Links");
-  vector<unique_ptr<QAction>> linkActions;
+  auto linkMenu = QMenu("Links");
+  auto linkActions = std::vector<std::unique_ptr<QAction>>();
   for(auto& model : m_userProfile->GetBlotterSettings().GetAllBlotters()) {
     if(model.get() != m_model) {
       auto linkAction = new LinkBlotterAction(Ref(*model), &linkMenu);
@@ -397,10 +391,10 @@ void BlotterWindow::OnTaskContextMenu(const QPoint& position) {
   if(!linkActions.empty()) {
     contextMenu.addMenu(&linkMenu);
   }
-  auto selectedAction = contextMenu.exec(static_cast<QWidget*>(
-    sender())->mapToGlobal(position));
+  auto selectedAction =
+    contextMenu.exec(static_cast<QWidget*>(sender())->mapToGlobal(position));
   if(selectedAction == &propertiesAction) {
-    BlotterMonitorsDialog blotterMonitorsDialog(Ref(*m_userProfile),
+    auto blotterMonitorsDialog = BlotterMonitorsDialog(Ref(*m_userProfile),
       m_model->GetTasksModel().GetProperties(), Ref(*m_model), this);
     if(blotterMonitorsDialog.exec() == QDialog::Rejected) {
       return;
@@ -409,7 +403,7 @@ void BlotterWindow::OnTaskContextMenu(const QPoint& position) {
       blotterMonitorsDialog.GetProperties());
   } else {
     auto linkAction = dynamic_cast<LinkBlotterAction*>(selectedAction);
-    if(linkAction == nullptr) {
+    if(!linkAction) {
       return;
     }
     auto& blotter = linkAction->GetBlotterModel();
@@ -479,8 +473,4 @@ void BlotterWindow::OnPinTaskToggled(const QModelIndex& topLeft,
   pinData["blotter_id"] = reinterpret_cast<std::intptr_t>(this);
   pinData["task_id"] = entry.m_task->GetId();
   pinData["is_pinned"] = entry.m_sticky;
-}
-
-void BlotterWindow::OnUpdateTimer() {
-  HandleTasks(m_slotHandler);
 }

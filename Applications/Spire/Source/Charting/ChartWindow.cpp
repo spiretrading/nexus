@@ -24,14 +24,9 @@ using namespace Nexus;
 using namespace Nexus::TechnicalAnalysis;
 using namespace Spire;
 using namespace Spire::UI;
-using namespace std;
-
-namespace {
-  const unsigned int UPDATE_INTERVAL = 100;
-}
 
 ChartWindow::ChartWindow(Ref<UserProfile> userProfile,
-    const string& identifier, QWidget* parent, Qt::WindowFlags flags)
+    const std::string& identifier, QWidget* parent, Qt::WindowFlags flags)
     : QMainWindow(parent, flags),
       SecurityContext(identifier),
       m_ui(std::make_unique<Ui_ChartWindow>()),
@@ -46,44 +41,37 @@ ChartWindow::ChartWindow(Ref<UserProfile> userProfile,
   m_ui->m_verticalScrollBar->SetSingleStep(2);
   m_ui->m_horizontalScrollBar->SetOrientation(Qt::Horizontal);
   m_ui->m_horizontalScrollBar->SetSingleStep(2);
-  m_ui->m_chart->Initialize(Ref(*m_userProfile),
-    ChartPlotView::Properties::GetDefault());
+  m_ui->m_chart->Initialize(
+    Ref(*m_userProfile), ChartPlotView::Properties::GetDefault());
   auto currentTime =
     m_userProfile->GetServiceClients().GetTimeClient().GetTime();
-  ChartPlotView::AxisParameters xAxisParameters(DateTimeType::GetInstance(),
-    ChartValue(currentTime - hours(1)), ChartValue(currentTime + hours(1)),
-    ChartValue(minutes(1)));
+  auto xAxisParameters = ChartPlotView::AxisParameters(
+    DateTimeType::GetInstance(), ChartValue(currentTime - hours(1)),
+    ChartValue(currentTime + hours(1)), ChartValue(minutes(1)));
   m_ui->m_chart->SetXAxisParameters(xAxisParameters);
-  ChartPlotView::AxisParameters yAxisParameters(MoneyType::GetInstance(),
+  auto yAxisParameters = ChartPlotView::AxisParameters(MoneyType::GetInstance(),
     ChartValue(Money::ONE), ChartValue(Money::ONE + 10 * Money::CENT),
     ChartValue(Money::CENT));
   m_ui->m_chart->SetYAxisParameters(yAxisParameters);
-  connect(&m_updateTimer, &QTimer::timeout, this, &ChartWindow::OnUpdateTimer);
-  m_updateTimer.start(UPDATE_INTERVAL);
   m_controller.emplace();
   m_controller->SetView(Ref(*m_ui->m_chart));
   m_verticalSliderConnection =
     m_ui->m_verticalScrollBar->ConnectSliderChangedSignal(
-    std::bind(&ChartWindow::OnVerticalSliderChanged, this,
-    std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
-    std::placeholders::_4));
+      std::bind_front(&ChartWindow::OnVerticalSliderChanged, this));
   m_ui->m_verticalScrollBar->SetSliderRange(33, 66);
   m_horizontalSliderConnection =
     m_ui->m_horizontalScrollBar->ConnectSliderChangedSignal(
-    std::bind(&ChartWindow::OnHorizontalSliderChanged, this,
-    std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
-    std::placeholders::_4));
+      std::bind_front(&ChartWindow::OnHorizontalSliderChanged, this));
   m_ui->m_horizontalScrollBar->SetSliderRange(33, 66);
-  m_beginPanConnection = m_ui->m_chart->ConnectBeginPanSignal(std::bind(
-    &ChartWindow::OnBeginPan, this));
-  m_endPanConnection = m_ui->m_chart->ConnectEndPanSignal(std::bind(
-    &ChartWindow::OnEndPan, this));
+  m_beginPanConnection = m_ui->m_chart->ConnectBeginPanSignal(
+    std::bind_front(&ChartWindow::OnBeginPan, this));
+  m_endPanConnection = m_ui->m_chart->ConnectEndPanSignal(
+    std::bind_front(&ChartWindow::OnEndPan, this));
   m_linkMenu = new QMenu("Links", this);
   m_ui->m_linkAction->setMenu(m_linkMenu);
   auto linkMenuButton = dynamic_cast<QToolButton*>(
     m_ui->m_toolBar->widgetForAction(m_ui->m_linkAction));
-  linkMenuButton->setStyleSheet(
-    "QToolButton::menu-indicator { image: none; }");
+  linkMenuButton->setStyleSheet("QToolButton::menu-indicator { image: none; }");
   connect(m_ui->m_panAction, &QAction::toggled, this,
     &ChartWindow::OnPanActionToggled);
   connect(m_ui->m_zoomAction, &QAction::toggled, this,
@@ -94,21 +82,18 @@ ChartWindow::ChartWindow(Ref<UserProfile> userProfile,
     &ChartWindow::OnLockGridActionToggled);
   connect(m_ui->m_linkAction, &QAction::triggered, this,
     &ChartWindow::OnLinkMenuActionTriggered);
-  connect(m_linkMenu, &QMenu::triggered, this,
-    &ChartWindow::OnLinkActionTriggered);
+  connect(
+    m_linkMenu, &QMenu::triggered, this, &ChartWindow::OnLinkActionTriggered);
   m_ui->m_chart->setFocus();
   m_intervalChangedConnection =
-    m_intervalComboBox->ConnectIntervalChangedSignal(std::bind(
-    &ChartWindow::OnIntervalChanged, this, std::placeholders::_1,
-    std::placeholders::_2));
-  OnIntervalChanged(m_intervalComboBox->GetType(),
-    m_intervalComboBox->GetValue());
+    m_intervalComboBox->ConnectIntervalChangedSignal(
+      std::bind_front(&ChartWindow::OnIntervalChanged, this));
+  OnIntervalChanged(
+    m_intervalComboBox->GetType(), m_intervalComboBox->GetValue());
   SetInteractionMode(ChartInteractionMode::PAN);
   SetAutoScale(true);
   SetLockGrid(true);
 }
-
-ChartWindow::~ChartWindow() {}
 
 ChartInteractionMode ChartWindow::GetInteractionMode() const {
   return m_interactionMode;
@@ -149,8 +134,8 @@ void ChartWindow::DisplaySecurity(const Security& security) {
     setWindowTitle(QString::fromStdString(
       ToString(m_security, m_userProfile->GetMarketDatabase())) +
       tr(" - Chart"));
-    OnIntervalChanged(m_intervalComboBox->GetType(),
-      m_intervalComboBox->GetValue());
+    OnIntervalChanged(
+      m_intervalComboBox->GetType(), m_intervalComboBox->GetValue());
   }
   SetDisplayedSecurity(m_security);
 }
@@ -161,7 +146,7 @@ std::unique_ptr<WindowSettings> ChartWindow::GetWindowSettings() const {
 
 void ChartWindow::showEvent(QShowEvent* event) {
   auto context = SecurityContext::FindSecurityContext(m_linkIdentifier);
-  if(context.is_initialized()) {
+  if(context) {
     Link(*context);
   } else {
     m_linkConnection.disconnect();
@@ -189,7 +174,7 @@ void ChartWindow::keyPressEvent(QKeyEvent* event) {
   } else if(key == Qt::Key_PageDown) {
     m_securityViewStack.PushDown(m_security,
       [&] (const Security& security) {
-        this->DisplaySecurity(security);
+        DisplaySecurity(security);
       });
     return;
   }
@@ -197,7 +182,8 @@ void ChartWindow::keyPressEvent(QKeyEvent* event) {
   if(text.isEmpty() || !text[0].isLetterOrNumber()) {
     return;
   }
-  SecurityInputDialog dialog(Ref(*m_userProfile), text.toStdString(), this);
+  auto dialog =
+    SecurityInputDialog(Ref(*m_userProfile), text.toStdString(), this);
   if(dialog.exec() == QDialog::Rejected) {
     return;
   }
@@ -212,7 +198,7 @@ void ChartWindow::keyPressEvent(QKeyEvent* event) {
 void ChartWindow::HandleLink(SecurityContext& context) {
   m_linkIdentifier = context.GetIdentifier();
   m_linkConnection = context.ConnectSecurityDisplaySignal(
-    std::bind(&ChartWindow::DisplaySecurity, this, std::placeholders::_1));
+    std::bind_front(&ChartWindow::DisplaySecurity, this));
   DisplaySecurity(context.GetDisplayedSecurity());
 }
 
@@ -223,12 +209,13 @@ void ChartWindow::HandleUnlink() {
 
 void ChartWindow::AdjustSlider(int previousMinimum, int previousMaximum,
     int minimum, int maximum, ScalableScrollBar* scrollBar) {
-  const ChartPlotView::AxisParameters* axisParameters;
-  if(scrollBar == m_ui->m_horizontalScrollBar) {
-    axisParameters = &m_ui->m_chart->GetXAxisParameters();
-  } else {
-    axisParameters = &m_ui->m_chart->GetYAxisParameters();
-  }
+  auto axisParameters = [&] {
+    if(scrollBar == m_ui->m_horizontalScrollBar) {
+      return &m_ui->m_chart->GetXAxisParameters();
+    } else {
+      return &m_ui->m_chart->GetYAxisParameters();
+    }
+  }();
   auto updatedAxisParameters = *axisParameters;
   auto scrollRange = scrollBar->GetMaximum() - scrollBar->GetMinimum();
   auto chartRange = axisParameters->m_max - axisParameters->m_min;
@@ -247,8 +234,8 @@ void ChartWindow::AdjustSlider(int previousMinimum, int previousMaximum,
   auto isSliderAtMinimum = minimum <= scrollBar->GetMinimum();
   if(isSliderAtMaximum || isSliderAtMinimum) {
     auto sliderDelta = maximum - minimum;
-    int sliderMinimum;
-    int sliderMaximum;
+    auto sliderMinimum = 0;
+    auto sliderMaximum = 0;
     if(isSliderAtMaximum) {
       if(previousMinimum == minimum) {
         sliderMaximum = 34;
@@ -264,25 +251,21 @@ void ChartWindow::AdjustSlider(int previousMinimum, int previousMaximum,
       }
       sliderMaximum = scrollBar->GetMaximum() - 1;
     }
-    scoped_connection* blockedConnection;
-    if(scrollBar == m_ui->m_horizontalScrollBar) {
-      blockedConnection = &m_horizontalSliderConnection;
-    } else {
-      blockedConnection = &m_verticalSliderConnection;
-    }
-    shared_connection_block block(*blockedConnection);
+    auto blockedConnection = [&] {
+      if(scrollBar == m_ui->m_horizontalScrollBar) {
+        return &m_horizontalSliderConnection;
+      }
+      return &m_verticalSliderConnection;
+    }();
+    auto block = shared_connection_block(*blockedConnection);
     scrollBar->SetSliderRange(sliderMinimum, sliderMaximum);
   }
 }
 
 void ChartWindow::UpdateInteractionMode() {
   m_ui->m_panAction->setChecked(m_interactionMode == ChartInteractionMode::PAN);
-  m_ui->m_zoomAction->setChecked(m_interactionMode ==
-    ChartInteractionMode::ZOOM);
-}
-
-void ChartWindow::OnUpdateTimer() {
-  HandleTasks(m_slotHandler);
+  m_ui->m_zoomAction->setChecked(
+    m_interactionMode == ChartInteractionMode::ZOOM);
 }
 
 void ChartWindow::OnVerticalSliderChanged(int previousMinimum,
@@ -307,15 +290,16 @@ void ChartWindow::OnIntervalChanged(const std::shared_ptr<NativeType>& type,
   }
   m_controller->Clear();
   auto axisParameters = m_ui->m_chart->GetXAxisParameters();
-  double scaleFactor;
-  if(axisParameters.m_increment != ChartValue() &&
-      axisParameters.m_type->GetCompatibility(DateTimeType::GetInstance()) ==
-      CanvasType::Compatibility::EQUAL && type->GetCompatibility(
-      DurationType::GetInstance()) == CanvasType::Compatibility::EQUAL) {
-    scaleFactor = value / axisParameters.m_increment;
-  } else {
-    scaleFactor = 1.0;
-  }
+  auto scaleFactor = [&] {
+    if(axisParameters.m_increment != ChartValue() &&
+        axisParameters.m_type->GetCompatibility(DateTimeType::GetInstance()) ==
+        CanvasType::Compatibility::EQUAL && type->GetCompatibility(
+        DurationType::GetInstance()) == CanvasType::Compatibility::EQUAL) {
+      return value / axisParameters.m_increment;
+    } else {
+      return 1.0;
+    }
+  }();
   axisParameters.m_increment = value;
   if(scaleFactor != 1.0) {
     auto range = axisParameters.m_max - axisParameters.m_min;
@@ -323,13 +307,10 @@ void ChartWindow::OnIntervalChanged(const std::shared_ptr<NativeType>& type,
     axisParameters.m_min = axisParameters.m_max - newRange;
   }
   m_ui->m_chart->SetXAxisParameters(axisParameters);
-  std::shared_ptr<ChartPlotSeries> chartPlotSeries;
   if(type->GetCompatibility(DurationType::GetInstance()) ==
       CanvasType::Compatibility::EQUAL) {
-    chartPlotSeries = std::make_shared<SecurityTimePriceChartPlotSeries>(
+    auto chartPlotSeries = std::make_shared<SecurityTimePriceChartPlotSeries>(
       Ref(*m_userProfile), m_security, value.ToTimeDuration());
-  }
-  if(chartPlotSeries != nullptr) {
     m_controller->Add(chartPlotSeries);
   }
 }
@@ -341,8 +322,8 @@ void ChartWindow::OnBeginPan() {
 }
 
 void ChartWindow::OnEndPan() {
-  const auto& xParameters = m_ui->m_chart->GetXAxisParameters();
-  const auto& yParameters = m_ui->m_chart->GetYAxisParameters();
+  auto& xParameters = m_ui->m_chart->GetXAxisParameters();
+  auto& yParameters = m_ui->m_chart->GetYAxisParameters();
   auto ChartValueAbs =
     [] (ChartValue value) {
       if(value >= ChartValue()) {
@@ -385,13 +366,13 @@ void ChartWindow::OnLockGridActionToggled(bool toggled) {
 void ChartWindow::OnLinkMenuActionTriggered(bool triggered) {
   auto actions = m_linkMenu->actions();
   for(auto& i : actions) {
-    std::unique_ptr<QAction> action(i);
+    auto action = std::unique_ptr<QAction>(i);
     m_linkMenu->removeAction(action.get());
   }
   m_linkMenu->clear();
-  auto linkActions = LinkSecurityContextAction::MakeActions(this,
-    m_linkIdentifier, m_linkMenu, *m_userProfile);
-  for(const auto& linkAction : linkActions) {
+  auto linkActions = LinkSecurityContextAction::MakeActions(
+    this, m_linkIdentifier, m_linkMenu, *m_userProfile);
+  for(auto& linkAction : linkActions) {
     m_linkMenu->addAction(linkAction.get());
   }
   if(m_linkMenu->isEmpty()) {
@@ -405,7 +386,7 @@ void ChartWindow::OnLinkMenuActionTriggered(bool triggered) {
 
 void ChartWindow::OnLinkActionTriggered(QAction* action) {
   auto linkAction = dynamic_cast<LinkSecurityContextAction*>(action);
-  if(linkAction == nullptr) {
+  if(!linkAction) {
     return;
   }
   linkAction->Execute(Store(*this));

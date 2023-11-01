@@ -3,21 +3,20 @@
 #include <memory>
 #include <vector>
 #include <Beam/Pointers/Ref.hpp>
-#include <Beam/Queues/TaskQueue.hpp>
 #include <Beam/Reactors/Reactors.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <Beam/SignalHandling/ScopedSlotAdaptor.hpp>
 #include <boost/any.hpp>
-#include <boost/noncopyable.hpp>
 #include <boost/signals2/signal.hpp>
 #include <QTimer>
+#include "Spire/Async/EventHandler.hpp"
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
 
   /** Emits changes produced from a translated CanvasNode. */
-  class CanvasObserver : private boost::noncopyable {
+  class CanvasObserver {
     public:
 
       /**
@@ -53,13 +52,14 @@ namespace Spire {
       bool m_isTranslated;
       boost::any m_value;
       mutable UpdateSignal m_updateSignal;
-      QTimer m_updateTimer;
-      Beam::TaskQueue m_tasks;
+      QTimer m_translateTimer;
+      EventHandler m_eventHandler;
       Beam::SignalHandling::ScopedSlotAdaptor m_callbacks;
 
+      CanvasObserver(const CanvasObserver&) = delete;
+      CanvasObserver& operator =(const CanvasObserver&) = delete;
       void Translate();
       void OnReactorUpdate(const boost::any& value);
-      void OnUpdateTimer();
   };
 }
 

@@ -37,6 +37,14 @@ namespace Spire {
       template<typename T, typename F, typename B>
       auto get_slot(F&& slot, B&& break_slot);
 
+      /**
+       * Pushes a task onto this event handler to be executed within the main
+       * Qt event-loop.
+       * @param f The task to push.
+       */
+      template<typename F>
+      void push(F&& f);
+
     private:
       QTimer m_update_timer;
       std::shared_ptr<Beam::TaskQueue> m_tasks;
@@ -55,6 +63,11 @@ namespace Spire {
   auto EventHandler::get_slot(F&& slot, B&& break_slot) {
     return m_tasks->GetSlot<T>(std::forward<F>(slot),
       std::forward<B>(break_slot));
+  }
+
+  template<typename F>
+  void EventHandler::push(F&& f) {
+    m_tasks->Push(std::forward<F>(f));
   }
 }
 

@@ -2,10 +2,9 @@
 #define SPIRE_CHARTWINDOW_HPP
 #include <optional>
 #include <Beam/Pointers/Ref.hpp>
-#include <Beam/Queues/TaskQueue.hpp>
 #include <boost/signals2/connection.hpp>
 #include <QMainWindow>
-#include <QTimer>
+#include "Spire/Async/EventHandler.hpp"
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Charting/Charting.hpp"
 #include "Spire/Charting/ChartInteractions.hpp"
@@ -23,58 +22,54 @@ class Ui_ChartWindow;
 
 namespace Spire {
 
-  /*! \class ChartWindow
-      \brief Displays a chart.
-   */
+  /** Displays a chart. */
   class ChartWindow : public QMainWindow, public UI::PersistentWindow,
       public UI::SecurityContext {
     public:
 
-      //! Constructs a ChartWindow.
-      /*!
-        \param userProfile The user's profile.
-        \param identifier The SecurityContext's identifier.
-        \param parent The parent widget.
-        \param flags Qt flags passed to the parent widget.
-      */
-      ChartWindow(Beam::Ref<UserProfile> userProfile,
+      /**
+       * Constructs a ChartWindow.
+       * @param userProfile The user's profile.
+       * @param identifier The SecurityContext's identifier.
+       * @param parent The parent widget.
+       * @param flags Qt flags passed to the parent widget.
+       */
+      explicit ChartWindow(Beam::Ref<UserProfile> userProfile,
         const std::string& identifier = "", QWidget* parent = nullptr,
         Qt::WindowFlags flags = Qt::WindowFlags());
 
-      virtual ~ChartWindow();
-
-      //! Returns the ChartInteractionMode.
+      /** Returns the ChartInteractionMode. */
       ChartInteractionMode GetInteractionMode() const;
 
-      //! Sets the interaction mode.
+      /** Sets the interaction mode. */
       void SetInteractionMode(ChartInteractionMode interactionMode);
 
-      //! Returns <code>true</code> iff auto-scale is enabled.
+      /** Returns <code>true</code> iff auto-scale is enabled. */
       bool IsAutoScaleEnabled() const;
 
-      //! Sets whether auto-scale is enabled.
+      /** Sets whether auto-scale is enabled. */
       void SetAutoScale(bool autoScale);
 
-      //! Returns <code>true</code> iff the grid is locked.
+      /** Returns <code>true</code> iff the grid is locked. */
       bool IsLockGridEnabled() const;
 
-      //! Sets whether the grid is locked.
+      /** Sets whether the grid is locked. */
       void SetLockGrid(bool lockGrid);
 
-      //! Sets the Security to display.
-      /*!
-        \param security The Security to display.
-      */
+      /**
+       * Sets the Security to display.
+       * \param security The Security to display.
+       */
       void DisplaySecurity(const Nexus::Security& security);
 
-      virtual std::unique_ptr<UI::WindowSettings> GetWindowSettings() const;
+      std::unique_ptr<UI::WindowSettings> GetWindowSettings() const override;
 
     protected:
-      virtual void showEvent(QShowEvent* event);
-      virtual void closeEvent(QCloseEvent* event);
-      virtual void keyPressEvent(QKeyEvent* event);
-      virtual void HandleLink(SecurityContext& context);
-      virtual void HandleUnlink();
+      void showEvent(QShowEvent* event) override;
+      void closeEvent(QCloseEvent* event) override;
+      void keyPressEvent(QKeyEvent* event) override;
+      void HandleLink(SecurityContext& context) override;
+      void HandleUnlink() override;
 
     private:
       friend class ChartWindowSettings;
@@ -89,8 +84,7 @@ namespace Spire {
       UI::SecurityViewStack m_securityViewStack;
       ChartValue m_xPan;
       ChartValue m_yPan;
-      QTimer m_updateTimer;
-      Beam::TaskQueue m_slotHandler;
+      EventHandler m_eventHandler;
       boost::signals2::scoped_connection m_linkConnection;
       boost::signals2::scoped_connection m_verticalSliderConnection;
       boost::signals2::scoped_connection m_horizontalSliderConnection;
@@ -101,13 +95,12 @@ namespace Spire {
       void AdjustSlider(int previousMinimum, int previousMaximum, int minimum,
         int maximum, UI::ScalableScrollBar* scrollBar);
       void UpdateInteractionMode();
-      void OnUpdateTimer();
-      void OnVerticalSliderChanged(int previousMinimum, int previousMaximum,
-        int minimum, int maximum);
-      void OnHorizontalSliderChanged(int previousMinimum, int previousMaximum,
-        int minimum, int maximum);
-      void OnIntervalChanged(const std::shared_ptr<NativeType>& type,
-        ChartValue value);
+      void OnVerticalSliderChanged(
+        int previousMinimum, int previousMaximum, int minimum, int maximum);
+      void OnHorizontalSliderChanged(
+        int previousMinimum, int previousMaximum, int minimum, int maximum);
+      void OnIntervalChanged(
+        const std::shared_ptr<NativeType>& type, ChartValue value);
       void OnBeginPan();
       void OnEndPan();
       void OnPanActionToggled(bool toggled);

@@ -22,7 +22,7 @@ using namespace boost::signals2;
 using namespace Spire;
 
 namespace {
-  constexpr auto UPDATE_INTERVAL = 100;
+  constexpr auto TRANSLATE_INTERVAL = 100;
 
   struct ObserverTranslator {
     template<typename T>
@@ -68,9 +68,9 @@ CanvasObserver::CanvasObserver(
   if(auto translatedNode = PreprocessTranslation(*m_observer)) {
     m_observer = std::move(translatedNode);
   }
-  QObject::connect(&m_updateTimer, &QTimer::timeout,
-    std::bind_front(&CanvasObserver::OnUpdateTimer, this));
-  m_updateTimer.start(UPDATE_INTERVAL);
+  QObject::connect(&m_translateTimer, &QTimer::timeout,
+    std::bind_front(&CanvasObserver::Translate, this));
+  m_translateTimer.start(TRANSLATE_INTERVAL);
 }
 
 const any& CanvasObserver::GetValue() const {
@@ -116,13 +116,8 @@ void CanvasObserver::Translate() {
 }
 
 void CanvasObserver::OnReactorUpdate(const any& value) {
-  m_tasks.Push([=] {
+  m_eventHandler.push([=] {
     m_value = value;
     m_updateSignal(m_value);
   });
-}
-
-void CanvasObserver::OnUpdateTimer() {
-  Translate();
-  HandleTasks(m_tasks);
 }
