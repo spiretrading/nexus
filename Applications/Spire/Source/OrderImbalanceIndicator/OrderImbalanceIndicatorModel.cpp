@@ -12,32 +12,23 @@ using namespace Nexus;
 using namespace Nexus::MarketDataService;
 using namespace Spire;
 using namespace Spire::UI;
-using namespace std;
-
-namespace {
-  const unsigned int UPDATE_INTERVAL = 100;
-}
 
 OrderImbalanceIndicatorModel::OrderImbalanceIndicatorModel(
     Ref<UserProfile> userProfile,
     const OrderImbalanceIndicatorProperties& properties)
     : m_userProfile(userProfile.Get()),
       m_properties(properties) {
-  connect(&m_updateTimer, &QTimer::timeout, this,
-    &OrderImbalanceIndicatorModel::OnUpdateTimer);
-  m_updateTimer.start(UPDATE_INTERVAL);
   InitializePublishers();
 }
 
-const OrderImbalanceIndicatorProperties& OrderImbalanceIndicatorModel::
-    GetProperties() const {
+const OrderImbalanceIndicatorProperties&
+    OrderImbalanceIndicatorModel::GetProperties() const {
   return m_properties;
 }
 
-void OrderImbalanceIndicatorModel::SetMarketFilter(MarketCode market,
-    bool filter) {
-  bool isCurrentlyFiltered = m_properties.IsFiltered(market);
-  if(isCurrentlyFiltered == filter) {
+void OrderImbalanceIndicatorModel::SetMarketFilter(
+    MarketCode market, bool filter) {
+  if(m_properties.IsFiltered(market) == filter) {
     return;
   }
   beginResetModel();
@@ -48,7 +39,7 @@ void OrderImbalanceIndicatorModel::SetMarketFilter(MarketCode market,
   }
   m_displayedIndicies.clear();
   m_displayedOrderImbalances.clear();
-  for(const MarketOrderImbalance& orderImbalance : m_orderImbalances) {
+  for(auto& orderImbalance : m_orderImbalances) {
     if(IsDisplayed(orderImbalance)) {
       m_displayedIndicies.insert(std::pair(
         std::pair(orderImbalance.GetIndex(), orderImbalance->m_security),
@@ -80,8 +71,7 @@ QVariant OrderImbalanceIndicatorModel::data(
   if(!index.isValid()) {
     return QVariant();
   }
-  const MarketOrderImbalance& orderImbalance =
-    m_displayedOrderImbalances[index.row()];
+  auto& orderImbalance = m_displayedOrderImbalances[index.row()];
   if(role == Qt::TextAlignmentRole) {
     return static_cast<int>(Qt::AlignLeft | Qt::AlignVCenter);
   } else if(role == Qt::DisplayRole) {
@@ -136,8 +126,8 @@ bool OrderImbalanceIndicatorModel::IsDisplayed(
 
 void OrderImbalanceIndicatorModel::Reset() {
   beginResetModel();
-  m_slotHandler = std::nullopt;
-  m_slotHandler.emplace();
+  m_eventHandler = std::nullopt;
+  m_eventHandler.emplace();
   m_displayedIndicies.clear();
   m_imbalanceIndicies.clear();
   m_displayedOrderImbalances.clear();
@@ -146,26 +136,25 @@ void OrderImbalanceIndicatorModel::Reset() {
 }
 
 void OrderImbalanceIndicatorModel::InitializePublishers() {
-  m_slotHandler.emplace();
-  Beam::Queries::Range timeRange = m_properties.GetTimeRange(
+  m_eventHandler.emplace();
+  auto timeRange = m_properties.GetTimeRange(
     m_userProfile->GetServiceClients().GetTimeClient());
-  for(const MarketDatabase::Entry& market :
-      m_userProfile->GetMarketDatabase().GetEntries()) {
-    MarketWideDataQuery orderImbalanceQuery;
+  for(auto& market : m_userProfile->GetMarketDatabase().GetEntries()) {
+    auto orderImbalanceQuery = MarketWideDataQuery();
     orderImbalanceQuery.SetIndex(market.m_code);
     orderImbalanceQuery.SetRange(timeRange);
     orderImbalanceQuery.SetSnapshotLimit(SnapshotLimit::Unlimited());
     m_userProfile->GetServiceClients().GetMarketDataClient().
       QueryOrderImbalances(orderImbalanceQuery,
-      m_slotHandler->GetSlot<OrderImbalance>(
-      std::bind(&OrderImbalanceIndicatorModel::OnOrderImbalance, this,
-      market.m_code, std::placeholders::_1)));
+        m_eventHandler->get_slot<OrderImbalance>(
+          std::bind_front(&OrderImbalanceIndicatorModel::OnOrderImbalance, this,
+            market.m_code)));
   }
 }
 
-void OrderImbalanceIndicatorModel::OnOrderImbalance(MarketCode market,
-    const OrderImbalance& orderImbalance) {
-  MarketOrderImbalance marketOrderImbalance(orderImbalance, market);
+void OrderImbalanceIndicatorModel::OnOrderImbalance(
+    MarketCode market, const OrderImbalance& orderImbalance) {
+  auto marketOrderImbalance = MarketOrderImbalance(orderImbalance, market);
   auto key = std::pair(market, orderImbalance.m_security);
   auto i = m_imbalanceIndicies.find(key);
   auto isReplacing = false;
@@ -198,8 +187,4 @@ void OrderImbalanceIndicatorModel::OnOrderImbalance(MarketCode market,
     m_displayedOrderImbalances[j->second] = marketOrderImbalance;
     dataChanged(index(j->second, 0), index(j->second, COLUMN_COUNT - 1));
   }
-}
-
-void OrderImbalanceIndicatorModel::OnUpdateTimer() {
-  HandleTasks(*m_slotHandler);
 }
