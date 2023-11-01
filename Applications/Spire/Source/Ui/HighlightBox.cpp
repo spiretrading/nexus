@@ -46,7 +46,8 @@ HighlightBox::HighlightBox(std::shared_ptr<HighlightColorModel> current,
   setFocusPolicy(Qt::StrongFocus);
   auto label = make_label("123.45");
   label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  update_style(*label, [&] (auto& style) {
+  label->setFocusPolicy(Qt::NoFocus);
+  update_style(*label, [] (auto& style) {
     style.get(Any()).set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
   });
   m_input_box = make_input_box(label);
@@ -103,8 +104,8 @@ connection HighlightBox::connect_submit_signal(
 bool HighlightBox::eventFilter(QObject* watched, QEvent* event) {
   if(m_highlight_picker_panel == watched) {
     if(event->type() == QEvent::MouseButtonPress ||
-      event->type() == QEvent::MouseButtonRelease ||
-      event->type() == QEvent::MouseButtonDblClick) {
+        event->type() == QEvent::MouseButtonRelease ||
+        event->type() == QEvent::MouseButtonDblClick) {
       auto& mouse_event = *static_cast<QMouseEvent*>(event);
       if(rect().contains(mapFromGlobal(mouse_event.globalPos()))) {
         return true;

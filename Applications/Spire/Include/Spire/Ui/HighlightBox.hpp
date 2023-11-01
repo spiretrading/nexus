@@ -37,7 +37,7 @@ namespace Spire {
 
       /**
        * Constructs a HighlightBox.
-       * @param current The model used for the current color.
+       * @param current The model used for the current highlight.
        * @param parent The parent widget.
        */
       explicit HighlightBox(std::shared_ptr<HighlightColorModel> current,
