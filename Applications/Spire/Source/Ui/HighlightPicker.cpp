@@ -254,7 +254,8 @@ bool HighlightPicker::eventFilter(QObject* watched, QEvent* event) {
 bool HighlightPicker::event(QEvent* event) {
   if(event->type() == QEvent::ShowToParent) {
     m_panel->show();
-    m_palette->setFixedWidth(m_palette->get_list_item(0)->width() * 8);
+    m_palette->setFixedWidth(
+      m_palette->get_list_item(0)->sizeHint().width() * 8);
   } else if(event->type() == QEvent::HideToParent) {
     m_panel->hide();
   }

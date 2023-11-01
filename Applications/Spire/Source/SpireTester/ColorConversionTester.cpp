@@ -12,8 +12,8 @@ namespace {
   }
 
   void require_oklab(const OklabColor& lhs, const OklabColor& rhs) {
-    REQUIRE(lhs.is_valid() == rhs.is_valid());
-    if(!lhs.is_valid()) {
+    REQUIRE(is_valid(lhs) == is_valid(rhs));
+    if(!is_valid(lhs)) {
       return;
     }
     REQUIRE(std::abs(lhs.m_l - rhs.m_l) < EPSILON);
@@ -22,8 +22,8 @@ namespace {
   }
 
   void require_oklch(const OklchColor& lhs, const OklchColor& rhs) {
-    REQUIRE(lhs.is_valid() == rhs.is_valid());
-    if(!lhs.is_valid()) {
+    REQUIRE(is_valid(lhs) == is_valid(rhs));
+    if(!is_valid(lhs)) {
       return;
     }
     REQUIRE(std::abs(lhs.m_l - rhs.m_l) < EPSILON);
@@ -75,7 +75,13 @@ TEST_SUITE("ColorConversion") {
     require_rgb(to_rgb(OklchColor(1, 0, 0)), QColor(0xFFFFFF));
     require_rgb(to_rgb(OklchColor(0.45201, 0.31321, 264.05203)),
       QColor(0x0000FF));
+    require_rgb(to_rgb(OklchColor(0.45201, 0.31321, 264.05203 + 360 * 2)),
+      QColor(0x0000FF));
+    require_rgb(to_rgb(OklchColor(0.45201, 0.31321, 264.05203 - 360 * 3)),
+      QColor(0x0000FF));
     require_rgb(to_rgb(OklchColor(0.86644, 0.29483, 142.49535)),
+      QColor(0x00FF00));
+    require_rgb(to_rgb(OklchColor(0.86644, 0.29483, 142.49535 + 360)),
       QColor(0x00FF00));
     auto rgb = QColor(0xFFFF00);
     require_rgb(to_rgb(to_oklch(rgb)), rgb);
