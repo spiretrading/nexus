@@ -51,6 +51,27 @@ namespace Spire {
   };
 
   /**
+   * Populates width and height properties.
+   * @param width_name The name of the width property.
+   * @param height_name The name of the height property.
+   * @param properties The size properties to populate.
+   */
+  void populate_widget_size_properties(const QString& width_name,
+    const QString& height_name,
+    std::vector<std::shared_ptr<UiProperty>>& properties);
+
+  /**
+   * Applies the width and height properties to a given QWidget.
+   * @param widget The QWidget having the properties applied to it.
+   * @param width_name The name of the width property.
+   * @param height_name The name of the height property.
+   * @param properties The size properties to apply to the <i>widget</i>.
+   */
+  void apply_widget_size_properties(QWidget* widget,
+    const QString& width_name, const QString& height_name,
+    const std::vector<std::shared_ptr<UiProperty>>& properties);
+
+  /**
    * Populates a list of properties with the basic QWidget properties.
    * @param properties The list of properties to populate.
    */
@@ -196,6 +217,10 @@ namespace Spire {
   std::shared_ptr<TypedUiProperty<Nexus::Quantity>>
     make_standard_property<Nexus::Quantity>(QString name,
       Nexus::Quantity value);
+
+  template<>
+  std::shared_ptr<TypedUiProperty<Decimal>>
+    make_standard_property<Decimal>(QString name, Decimal value);
 
   /**
    * Returns a standard TypedUiProperty<QColor> with an initial value of white.

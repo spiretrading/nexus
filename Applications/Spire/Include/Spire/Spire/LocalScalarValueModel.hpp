@@ -35,13 +35,13 @@ namespace Spire {
       void set_maximum(const boost::optional<Scalar>& maximum);
 
       /** Sets the increment. */
-      void set_increment(const Scalar& increment);
+      void set_increment(const boost::optional<Scalar>& increment);
 
       boost::optional<Scalar> get_minimum() const override;
 
       boost::optional<Scalar> get_maximum() const override;
 
-      Scalar get_increment() const override;
+      boost::optional<Scalar> get_increment() const override;
 
       QValidator::State get_state() const override;
 
@@ -79,7 +79,8 @@ namespace Spire {
   }
 
   template<typename T>
-  void LocalScalarValueModel<T>::set_increment(const Scalar& increment) {
+  void LocalScalarValueModel<T>::set_increment(
+      const boost::optional<Scalar>& increment) {
     m_model.set_increment(increment);
   }
 
@@ -96,7 +97,7 @@ namespace Spire {
   }
 
   template<typename T>
-  typename LocalScalarValueModel<T>::Scalar
+  boost::optional<typename LocalScalarValueModel<T>::Scalar>
       LocalScalarValueModel<T>::get_increment() const {
     return m_model.get_increment();
   }

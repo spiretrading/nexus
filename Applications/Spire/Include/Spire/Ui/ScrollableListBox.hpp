@@ -26,6 +26,9 @@ namespace Spire {
       /** Returns the ScrollBox. */
       ScrollBox& get_scroll_box();
 
+    protected:
+      void showEvent(QShowEvent* event) override;
+
     private:
       ListView* m_list_view;
       QSizePolicy m_size_policy;

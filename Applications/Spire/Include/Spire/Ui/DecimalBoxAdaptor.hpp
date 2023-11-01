@@ -69,6 +69,9 @@ namespace Spire {
       const std::shared_ptr<ScalarValueModel<boost::optional<Type>>>&
         get_current() const;
 
+      /** Returns the text displayed. */
+      std::shared_ptr<const TextModel> get_text() const;
+
       /** Sets the placeholder value. */
       void set_placeholder(const QString& value);
 
@@ -170,6 +173,11 @@ namespace Spire {
   }
 
   template<typename T>
+  std::shared_ptr<const TextModel> DecimalBoxAdaptor<T>::get_text() const {
+    return m_decimal_box->get_text();
+  }
+
+  template<typename T>
   void DecimalBoxAdaptor<T>::set_placeholder(const QString& value) {
     m_decimal_box->set_placeholder(value);
   }
@@ -237,7 +245,8 @@ namespace Spire {
   auto DecimalBoxAdaptor<T>::make_modifiers(
       const ScalarValueModel<boost::optional<Type>>& model) {
     auto modifiers = QHash<Qt::KeyboardModifier, Type>();
-    modifiers[Qt::NoModifier] = model.get_increment();
+    modifiers[Qt::NoModifier] =
+      model.get_increment().get_value_or(static_cast<Type>(1));
     return modifiers;
   }
 

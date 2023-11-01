@@ -67,10 +67,23 @@ ToggleButton* Spire::make_icon_toggle_button(QImage icon, QWidget* parent) {
 }
 
 ToggleButton* Spire::make_icon_toggle_button(
-    QImage icon, QString tooltip, QWidget* parent) {
-  auto button_icon = new Icon(std::move(icon));
+    QImage icon, std::shared_ptr<BooleanModel> current, QWidget* parent) {
+  return make_icon_toggle_button(
+    std::move(icon), std::move(current), "", parent);
+}
+
+ToggleButton* Spire::make_icon_toggle_button(QImage icon, QString tooltip,
+    QWidget* parent) {
+  return make_icon_toggle_button(std::move(icon),
+    std::make_shared<LocalBooleanModel>(), std::move(tooltip), parent);
+}
+
+ToggleButton* Spire::make_icon_toggle_button(QImage icon,
+    std::shared_ptr<BooleanModel> current, QString tooltip, QWidget* parent) {
+  auto button_icon = new Icon(icon);
   button_icon->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  auto button = new ToggleButton(new Box(button_icon), parent);
+  auto button =
+    new ToggleButton(new Box(button_icon), std::move(current), parent);
   add_tooltip(std::move(tooltip), *button);
   auto style = StyleSheet();
   style.get(Any() > Body()).
@@ -80,7 +93,9 @@ ToggleButton* Spire::make_icon_toggle_button(
     set(BackgroundColor(QColor(0xE0E0E0)));
   style.get(Any() > (is_a<Button>() && FocusVisible()) > Body()).
     set(border_color(QColor(0x4B23A0)));
-  style.get(Any() > is_a<Icon>()).set(Fill(QColor(0x535353)));
+  style.get(Any() > is_a<Icon>()).
+    set(Fill(QColor(0x535353))).
+    set(IconImage(std::move(icon)));
   style.get(Hover() > is_a<Icon>()).set(Fill(QColor(0x4B23A0)));
   style.get(Press() > is_a<Icon>()).set(Fill(QColor(0x7E71B8)));
   style.get(Disabled() > is_a<Icon>()).set(Fill(QColor(0xC8C8C8)));
@@ -89,5 +104,16 @@ ToggleButton* Spire::make_icon_toggle_button(
   style.get((Checked() && Disabled()) > is_a<Icon>()).
     set(Fill(QColor(0xBAB3D9)));
   set_style(*button, std::move(style));
+  return button;
+}
+
+ToggleButton* Spire::make_icon_toggle_button(QImage icon, QImage checked_icon,
+    std::shared_ptr<BooleanModel> current, QWidget* parent) {
+  auto button =
+    make_icon_toggle_button(std::move(icon), std::move(current), "", parent);
+  update_style(*button, [&] (auto& style) {
+    style.get(Checked() > is_a<Icon>()).
+      set(IconImage(std::move(checked_icon)));
+  });
   return button;
 }

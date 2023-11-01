@@ -68,7 +68,7 @@ namespace {
 
   auto make_modifiers(const OptionalDecimalModel& current) {
     auto modifiers = QHash<Qt::KeyboardModifier, Decimal>();
-    modifiers[Qt::NoModifier] = current.get_increment();
+    modifiers[Qt::NoModifier] = current.get_increment().get_value_or(1);
     return modifiers;
   }
 }
@@ -86,7 +86,8 @@ struct DecimalBox::DecimalToTextModel : TextModel {
 
   DecimalToTextModel(std::shared_ptr<OptionalDecimalModel> model)
       : m_model(std::move(model)),
-        m_decimal_places(-log10(m_model->get_increment()).convert_to<int>()),
+        m_decimal_places(
+          -log10(m_model->get_increment().get_value_or(1)).convert_to<int>()),
         m_leading_zeros(0),
         m_trailing_zeros(0),
         m_current(to_string(m_model->get())),
@@ -153,7 +154,7 @@ struct DecimalBox::DecimalToTextModel : TextModel {
 
   QValidator::State test(const QString& value) const override {
     auto decimal_places = 0;
-    auto i = m_model->get_increment();
+    auto i = m_model->get_increment().get_value_or(1);
     while(i < 1) {
       i *= 10;
       ++decimal_places;
@@ -173,10 +174,14 @@ struct DecimalBox::DecimalToTextModel : TextModel {
       return QValidator::State::Invalid;
     } else if(value.isEmpty()) {
       return QValidator::State::Intermediate;
-    } else if(value == "-" && (min && *min < 0 || !min)) {
-      return QValidator::State::Intermediate;
-    } else if(value == "+" && (max && *max > 0 || !max)) {
-      return QValidator::State::Intermediate;
+    } else if(value == "-") {
+      if(min && *min < 0 || !min) {
+        return QValidator::State::Intermediate;
+      }
+    } else if(value == "+") {
+      if(max && *max > 0 || !max) {
+        return QValidator::State::Intermediate;
+      }
     } else if(auto decimal = text_to_decimal(value)) {
       if(value.front() != '-' && max && *max < 0 ||
           value.front() == '-' && min && *min > 0) {
@@ -274,7 +279,7 @@ struct DecimalBox::DecimalToTextModel : TextModel {
 
   void update_decimal_places() {
     auto decimal_places = 0;
-    auto i = m_model->get_increment();
+    auto i = m_model->get_increment().get_value_or(1);
     while(i < 1) {
       i *= 10;
       ++decimal_places;
@@ -475,6 +480,10 @@ DecimalBox::DecimalBox(std::shared_ptr<OptionalDecimalModel> current,
 
 const std::shared_ptr<OptionalDecimalModel>& DecimalBox::get_current() const {
   return m_current;
+}
+
+std::shared_ptr<const TextModel> DecimalBox::get_text() const {
+  return m_text_box->get_current();
 }
 
 void DecimalBox::set_placeholder(const QString& value) {

@@ -98,6 +98,9 @@ namespace Styles {
       /** Returns the current value model. */
       const std::shared_ptr<OptionalDecimalModel>& get_current() const;
 
+      /** Returns the text displayed. */
+      std::shared_ptr<const TextModel> get_text() const;
+
       /** Sets the placeholder value. */
       void set_placeholder(const QString& value);
 
