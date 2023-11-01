@@ -152,6 +152,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_font_family_box_profile());
   add(make_font_style_box_profile());
   add(make_hex_color_box_profile());
+  add(make_highlight_box_profile());
   add(make_highlight_picker_profile());
   add(make_highlight_swatch_profile());
   add(make_hover_observer_profile());

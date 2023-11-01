@@ -17,6 +17,8 @@ namespace Spire {
 
         /** The text color for the Highlight. */
         QColor m_text_color;
+
+        auto operator <=>(const Highlight&) const = default;
       };
 
       /**
