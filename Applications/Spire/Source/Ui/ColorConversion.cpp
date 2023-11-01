@@ -60,14 +60,6 @@ OklabColor::OklabColor(double l, double a, double b)
     m_a(a),
     m_b(b) {}
 
-bool OklabColor::is_valid() const {
-  if(m_l < 0 || m_l > 1.0 || m_a < -0.4 || m_a > 0.4 ||
-      m_b < -0.4 || m_b > 0.4) {
-    return false;
-  }
-  return true;
-}
-
 OklchColor::OklchColor()
   : m_l(-1),
     m_c(-1),
@@ -78,11 +70,15 @@ OklchColor::OklchColor(double l, double c, double h)
     m_c(c),
     m_h(h) {}
 
-bool OklchColor::is_valid() const {
-  if(m_l < 0 || m_l > 1.0 || m_c < 0 || m_c > 0.4) {
-    return false;
-  }
-  return true;
+bool Spire::is_valid(const OklabColor& color) {
+  return color.m_l >= 0. && color.m_l <= 1. &&
+    color.m_a >= -0.4 && color.m_a <= 0.4 &&
+    color.m_b >= -0.4 && color.m_b <= 0.4;
+}
+
+bool Spire::is_valid(const OklchColor& color) {
+  return color.m_l >= 0. && color.m_l <= 1.0 &&
+    color.m_c >= 0. && color.m_c <= 0.5;
 }
 
 OklabColor Spire::to_oklab(const QColor& color) {
@@ -118,7 +114,7 @@ OklabColor Spire::to_oklab(const QColor& color) {
 
 QColor Spire::to_rgb(const OklabColor& color) {
   auto rgb = QColor();
-  if(!color.is_valid()) {
+  if(!is_valid(color)) {
     return rgb;
   }
   auto l = color.m_l + 0.3963377774 * color.m_a + 0.2158037573 * color.m_b;
@@ -162,7 +158,7 @@ OklchColor Spire::to_oklch(const QColor& color) {
 
 QColor Spire::to_rgb(const OklchColor& color) {
   auto rgb = QColor();
-  if(!color.is_valid()) {
+  if(!is_valid(color)) {
     return rgb;
   }
   auto h = color.m_h * std::numbers::pi / 180;

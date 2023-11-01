@@ -21,9 +21,6 @@ namespace Spire {
 
     /** Constructs an OklabColor. */
     OklabColor(double l, double a, double b);
-
-    /** Returns <code>true</code> iff the OklabColor is valid. */
-    bool is_valid() const;
   };
 
   /** Represents an Oklch color. */
@@ -43,10 +40,13 @@ namespace Spire {
 
     /** Constructs an OklchColor. */
     OklchColor(double l, double c, double h);
-
-    /** Returns <code>true</code> iff the OklchColor is valid. */
-    bool is_valid() const;
   };
+
+  /** Returns <code>true</code> iff the OklabColor is valid. */
+  bool is_valid(const OklabColor& color);
+
+  /** Returns <code>true</code> iff the OklchColor is valid. */
+  bool is_valid(const OklchColor& color);
 
   /**
    * Converts a RGB color into a Oklab color.
