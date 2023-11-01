@@ -5,7 +5,6 @@
 
 using namespace Beam;
 using namespace Beam::Queries;
-using namespace Beam::Routines;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;

@@ -6,8 +6,6 @@
 #include "Spire/UI/WindowSettings.hpp"
 
 using namespace Beam;
-using namespace Beam::Routines;
-using namespace Beam::Threading;
 using namespace boost;
 using namespace boost::local_time;
 using namespace Nexus;

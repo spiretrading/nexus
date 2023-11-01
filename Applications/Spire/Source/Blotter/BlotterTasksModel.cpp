@@ -16,7 +16,6 @@ using namespace Beam::Queries;
 using namespace Beam::Reactors;
 using namespace Beam::Routines;
 using namespace Beam::ServiceLocator;
-using namespace Beam::Threading;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace boost::signals2;

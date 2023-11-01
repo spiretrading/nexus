@@ -12,7 +12,6 @@
 
 using namespace Beam;
 using namespace Beam::Queries;
-using namespace Beam::Routines;
 using namespace boost;
 using namespace Nexus;
 using namespace Nexus::MarketDataService;
@@ -444,9 +443,4 @@ void BookViewModel::OnMarketQuoteInterruption(const std::exception_ptr& e) {
       std::bind_front(&BookViewModel::OnMarketQuote, this),
       std::bind_front(&BookViewModel::OnMarketQuoteInterruption, this)),
     InterruptionPolicy::BREAK_QUERY);
-}
-
-bool BookViewModel::OrderKey::operator <(const OrderKey& value) const {
-  return std::tie(m_price, m_destination) <
-    std::tie(value.m_price, value.m_destination);
 }

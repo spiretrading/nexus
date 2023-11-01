@@ -5,7 +5,6 @@
 
 using namespace Beam;
 using namespace Beam::Queries;
-using namespace Beam::Routines;
 using namespace Beam::TimeService;
 using namespace boost;
 using namespace boost::posix_time;
@@ -31,12 +30,12 @@ TimeAndSalesModel::TimeAndSalesModel(Ref<UserProfile> userProfile,
   query.SetInterruptionPolicy(InterruptionPolicy::RECOVER_DATA);
   m_userProfile->GetServiceClients().GetMarketDataClient().QueryTimeAndSales(
     query, m_eventHandler.get_slot<TimeAndSale>(
-    std::bind_front(&TimeAndSalesModel::OnTimeAndSale, this)));
+      std::bind_front(&TimeAndSalesModel::OnTimeAndSale, this)));
   auto bboQuery = MakeCurrentQuery(security);
   bboQuery.SetInterruptionPolicy(InterruptionPolicy::IGNORE_CONTINUE);
   m_userProfile->GetServiceClients().GetMarketDataClient().QueryBboQuotes(
     bboQuery, m_eventHandler.get_slot<BboQuote>(
-    std::bind_front(&TimeAndSalesModel::OnBbo, this)));
+      std::bind_front(&TimeAndSalesModel::OnBbo, this)));
 }
 
 void TimeAndSalesModel::SetProperties(

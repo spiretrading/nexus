@@ -68,7 +68,7 @@ namespace Spire {
         Nexus::Money m_price;
         std::string m_destination;
 
-        bool operator <(const OrderKey& value) const;
+        auto operator <=>(const OrderKey&) const = default;
       };
       struct BookQuoteEntry {
         Nexus::BookQuote m_quote;
