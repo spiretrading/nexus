@@ -1,29 +1,18 @@
 #include "Spire/Spire/SpireServiceClients.hpp"
 #include <stdexcept>
 #include <Beam/IO/ConnectException.hpp>
-#include <Beam/ServiceLocator/ApplicationDefinitions.hpp>
-#include <Beam/ServiceLocator/ServiceLocatorClientBox.hpp>
 #include <Beam/RegistryService/ApplicationDefinitions.hpp>
-#include <Beam/RegistryService/RegistryClientBox.hpp>
-#include <Beam/Threading/TimerBox.hpp>
+#include <Beam/ServiceLocator/ApplicationDefinitions.hpp>
 #include <Beam/TimeService/NtpTimeClient.hpp>
-#include <Beam/TimeService/TimeClientBox.hpp>
 #include <Beam/Utilities/BeamWorkaround.hpp>
 #include <boost/throw_exception.hpp>
 #include "Nexus/AdministrationService/ApplicationDefinitions.hpp"
-#include "Nexus/AdministrationService/AdministrationClientBox.hpp"
 #include "Nexus/ChartingService/ApplicationDefinitions.hpp"
-#include "Nexus/ChartingService/ChartingClientBox.hpp"
 #include "Nexus/Compliance/ApplicationDefinitions.hpp"
-#include "Nexus/Compliance/ComplianceClientBox.hpp"
 #include "Nexus/DefinitionsService/ApplicationDefinitions.hpp"
-#include "Nexus/DefinitionsService/DefinitionsClientBox.hpp"
 #include "Nexus/MarketDataService/ApplicationDefinitions.hpp"
-#include "Nexus/MarketDataService/MarketDataClientBox.hpp"
 #include "Nexus/OrderExecutionService/ApplicationDefinitions.hpp"
-#include "Nexus/OrderExecutionService/OrderExecutionClientBox.hpp"
 #include "Nexus/RiskService/ApplicationDefinitions.hpp"
-#include "Nexus/RiskService/RiskClientBox.hpp"
 #include "Version.hpp"
 
 using namespace Beam;

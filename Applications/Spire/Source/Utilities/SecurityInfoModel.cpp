@@ -23,7 +23,7 @@ void SecurityInfoModel::Search(const std::string& prefix) {
       GetMarketDataClient().LoadSecurityInfoFromPrefix(uppercasePrefix);
   }, LaunchPolicy::ASYNC).then(
     [=] (const std::vector<SecurityInfo>& securityInfoItems) {
-      QTimer::singleShot(0, [=] {
+      QTimer::singleShot(0, this, [=] {
         AddSecurityInfoItems(securityInfoItems);
       });
     });
