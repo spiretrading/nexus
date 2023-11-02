@@ -47,13 +47,13 @@ namespace {
   void CreateTasksTab(CatalogSettings& settings) {
     auto tab = std::make_unique<CatalogTabModel>();
     tab->SetName("Tasks");
-    tab->Add(Ref(*settings.FindEntry(
-      BuiltInCatalogEntry::LIMIT_ORDER_TASK_UUID)));
-    tab->Add(Ref(*settings.FindEntry(
-      BuiltInCatalogEntry::MARKET_ORDER_TASK_UUID)));
+    tab->Add(
+      Ref(*settings.FindEntry(BuiltInCatalogEntry::LIMIT_ORDER_TASK_UUID)));
+    tab->Add(
+      Ref(*settings.FindEntry(BuiltInCatalogEntry::MARKET_ORDER_TASK_UUID)));
     tab->Add(Ref(*settings.FindEntry(BuiltInCatalogEntry::NONE_UUID)));
-    tab->Add(Ref(*settings.FindEntry(
-      BuiltInCatalogEntry::SINGLE_ORDER_TASK_UUID)));
+    tab->Add(
+      Ref(*settings.FindEntry(BuiltInCatalogEntry::SINGLE_ORDER_TASK_UUID)));
     settings.Add(std::move(tab));
   }
 
@@ -68,7 +68,8 @@ namespace {
     auto warnings = QString();
     for(auto i = std::filesystem::directory_iterator(catalogDirectoryPath);
         i != std::filesystem::directory_iterator(); ++i) {
-      if(!is_regular_file(*i) || i->path().extension() != ".cat") {
+      if(!std::filesystem::is_regular_file(*i) ||
+          i->path().extension() != ".cat") {
         continue;
       }
       try {
@@ -83,8 +84,8 @@ namespace {
         auto entry =
           std::make_unique<UserCatalogEntry>(settings.GetSettingsPath());
         receiver.Shuttle(*entry);
-        settings.Add(StaticCast<std::unique_ptr<CatalogEntry>>(
-          std::move(entry)));
+        settings.Add(
+          StaticCast<std::unique_ptr<CatalogEntry>>(std::move(entry)));
       } catch(const std::exception&) {
         warnings += QObject::tr("Failed to load: ") +
           QString::fromStdString(std::filesystem::path(*i).string()) + "\n";
@@ -113,16 +114,16 @@ namespace {
         receiver.SetSource(Ref(buffer));
         auto entry =
           std::make_unique<RegistryCatalogEntry>(settings.HasRegistryAccess(),
-          CatalogSettings::GetCatalogLibraryRegistryPath(), registryClient);
+            CatalogSettings::GetCatalogLibraryRegistryPath(), registryClient);
         receiver.Shuttle(*entry);
-        settings.Add(StaticCast<std::unique_ptr<CatalogEntry>>(
-          std::move(entry)));
+        settings.Add(
+          StaticCast<std::unique_ptr<CatalogEntry>>(std::move(entry)));
       } catch(const std::exception&) {}
     }
   }
 
-  void CreateDefaultCatalog(CatalogSettings& settings,
-      RegistryClientBox& registryClient) {
+  void CreateDefaultCatalog(
+      CatalogSettings& settings, RegistryClientBox& registryClient) {
     CreateValuesTab(settings);
     CreateTasksTab(settings);
     CreateKeyBindingsTab(settings);
@@ -205,15 +206,15 @@ void CatalogSettings::Load(Out<UserProfile> userProfile) {
     settings.Add(std::move(entry));
   }
   auto catalogDirectoryPath = userProfile->GetProfilePath() / "catalog";
-  if(!exists(catalogDirectoryPath)) {
-    create_directory(catalogDirectoryPath);
-    CreateDefaultCatalog(settings,
-      userProfile->GetServiceClients().GetRegistryClient());
+  if(!std::filesystem::exists(catalogDirectoryPath)) {
+    std::filesystem::create_directory(catalogDirectoryPath);
+    CreateDefaultCatalog(
+      settings, userProfile->GetServiceClients().GetRegistryClient());
     return;
   }
   LoadCatalogEntries(catalogDirectoryPath, settings);
-  LoadRemoteCatalogEntries(userProfile->GetServiceClients().GetRegistryClient(),
-    settings);
+  LoadRemoteCatalogEntries(
+    userProfile->GetServiceClients().GetRegistryClient(), settings);
   LoadCatalogTabs(catalogDirectoryPath, settings,
     userProfile->GetServiceClients().GetRegistryClient());
 }
@@ -236,8 +237,6 @@ CatalogSettings::CatalogSettings(const std::filesystem::path& settingsPath,
   tab->SetName("All");
   Add(std::move(tab));
 }
-
-CatalogSettings::~CatalogSettings() {}
 
 const std::filesystem::path& CatalogSettings::GetSettingsPath() const {
   return m_settingsPath;
@@ -278,7 +277,7 @@ CatalogTabModel& CatalogSettings::GetAllTab() {
 }
 
 void CatalogSettings::Add(std::unique_ptr<CatalogEntry>&& entry) {
-  if(dynamic_cast<PersistentCatalogEntry*>(entry.get()) != nullptr) {
+  if(dynamic_cast<PersistentCatalogEntry*>(entry.get())) {
     static_cast<PersistentCatalogEntry&>(*entry).Save();
   }
   m_catalogEntries.emplace_back(std::move(entry));
@@ -299,7 +298,7 @@ void CatalogSettings::Remove(const CatalogEntry& entry) {
   auto selfEntry = std::move(*entryIterator);
   m_catalogEntries.erase(entryIterator);
   m_uuidToEntry.erase(selfEntry->GetUid());
-  if(dynamic_cast<const PersistentCatalogEntry*>(selfEntry.get()) != nullptr) {
+  if(dynamic_cast<const PersistentCatalogEntry*>(selfEntry.get())) {
     static_cast<const PersistentCatalogEntry&>(*selfEntry).Delete();
   }
   m_catalogEntryRemovedSignal(*selfEntry);
@@ -314,7 +313,7 @@ void CatalogSettings::Replace(const CatalogEntry& oldEntry,
       }
     }
   }
-  if(dynamic_cast<const PersistentCatalogEntry*>(newEntry.get()) != nullptr) {
+  if(dynamic_cast<const PersistentCatalogEntry*>(newEntry.get())) {
     static_cast<const PersistentCatalogEntry&>(*newEntry).Save();
   }
   Remove(oldEntry);

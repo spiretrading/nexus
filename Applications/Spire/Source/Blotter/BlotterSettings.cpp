@@ -19,17 +19,14 @@ using namespace Beam;
 using namespace Beam::IO;
 using namespace Beam::Serialization;
 using namespace Beam::ServiceLocator;
-using namespace Beam::Threading;
 using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::UI;
-using namespace std;
-using namespace std::filesystem;
 
 namespace {
   void LoadDefaultBlotter(Out<UserProfile> userProfile) {
-    BlotterSettings& settings = userProfile->GetBlotterSettings();
+    auto& settings = userProfile->GetBlotterSettings();
     settings.SetActiveBlotter(settings.GetConsolidatedBlotter());
     settings.SetDefaultBlotterTaskProperties(
       BlotterTaskProperties::GetDefault());
@@ -37,14 +34,14 @@ namespace {
   }
 
   struct BlotterModelProperties {
-    string m_name;
+    std::string m_name;
     DirectoryEntry m_account;
     bool m_isConsolidated;
-    vector<string> m_links;
+    std::vector<std::string> m_links;
     BlotterTaskProperties m_taskProperties;
     OrderLogProperties m_orderLogProperties;
 
-    BlotterModelProperties();
+    BlotterModelProperties() = default;
     BlotterModelProperties(const BlotterModel& model);
 
     template<typename Shuttler>
@@ -52,8 +49,8 @@ namespace {
   };
 
   struct BlotterSettingsData {
-    vector<BlotterModelProperties> m_blotters;
-    string m_activeBlotter;
+    std::vector<BlotterModelProperties> m_blotters;
+    std::string m_activeBlotter;
     BlotterTaskProperties m_defaultTaskProperties;
 
     template<typename Shuttler>
@@ -67,8 +64,6 @@ namespace {
     shuttle.Shuttle("default_task_properties", m_defaultTaskProperties);
   }
 
-  BlotterModelProperties::BlotterModelProperties() {}
-
   BlotterModelProperties::BlotterModelProperties(const BlotterModel& model)
       : m_name(model.GetName()),
         m_account(model.GetExecutingAccount()),
@@ -81,8 +76,8 @@ namespace {
   }
 
   template<typename Shuttler>
-  void BlotterModelProperties::Shuttle(Shuttler& shuttle,
-      unsigned int version) {
+  void BlotterModelProperties::Shuttle(
+      Shuttler& shuttle, unsigned int version) {
     shuttle.Shuttle("name", m_name);
     shuttle.Shuttle("account", m_account);
     shuttle.Shuttle("is_consolidated", m_isConsolidated);
@@ -93,50 +88,50 @@ namespace {
 }
 
 void BlotterSettings::Load(Out<UserProfile> userProfile) {
-  path blottersFilePath = userProfile->GetProfilePath() / "blotters.dat";
-  if(!exists(blottersFilePath)) {
+  auto blottersFilePath = userProfile->GetProfilePath() / "blotters.dat";
+  if(!std::filesystem::exists(blottersFilePath)) {
     LoadDefaultBlotter(Store(userProfile));
     return;
   }
-  BlotterSettingsData data;
+  auto data = BlotterSettingsData();
   try {
-    BasicIStreamReader<ifstream> reader(
-      Initialize(blottersFilePath, ios::binary));
-    SharedBuffer buffer;
+    auto reader = BasicIStreamReader<std::ifstream>(
+      Initialize(blottersFilePath, std::ios::binary));
+    auto buffer = SharedBuffer();
     reader.Read(Store(buffer));
-    TypeRegistry<BinarySender<SharedBuffer>> typeRegistry;
+    auto typeRegistry = TypeRegistry<BinarySender<SharedBuffer>>();
     RegisterSpireTypes(Store(typeRegistry));
     auto receiver = BinaryReceiver<SharedBuffer>(Ref(typeRegistry));
     receiver.SetSource(Ref(buffer));
     receiver.Shuttle(data);
-  } catch(std::exception&) {
+  } catch(const std::exception&) {
     QMessageBox::warning(nullptr, QObject::tr("Warning"),
       QObject::tr("Unable to load blotters, using defaults."));
     LoadDefaultBlotter(Store(userProfile));
     return;
   }
-  BlotterSettings& settings = userProfile->GetBlotterSettings();
-  std::unordered_map<string, BlotterModel*> nameToBlotter;
-  for(auto i = data.m_blotters.begin(); i != data.m_blotters.end(); ++i) {
-    boost::optional<DirectoryEntry> account =
+  auto& settings = userProfile->GetBlotterSettings();
+  auto nameToBlotter = std::unordered_map<std::string, BlotterModel*>();
+  for(auto& setting : data.m_blotters) {
+    auto account =
       userProfile->GetServiceClients().GetServiceLocatorClient().FindAccount(
-      i->m_account.m_name);
-    if(!account.is_initialized()) {
+        setting.m_account.m_name);
+    if(!account) {
 
       // TODO: Account doesn't exist.
-      account = i->m_account;
+      account = setting.m_account;
     }
-    unique_ptr<BlotterModel> blotter = std::make_unique<BlotterModel>(i->m_name,
-      *account, i->m_isConsolidated, Ref(*userProfile), i->m_taskProperties,
-      i->m_orderLogProperties);
+    auto blotter = std::make_unique<BlotterModel>(setting.m_name, *account,
+      setting.m_isConsolidated, Ref(*userProfile), setting.m_taskProperties,
+      setting.m_orderLogProperties);
     blotter->SetPersistent(true);
-    nameToBlotter.insert(std::make_pair(i->m_name, blotter.get()));
+    nameToBlotter.insert(std::pair(setting.m_name, blotter.get()));
     settings.AddBlotter(std::move(blotter));
   }
-  for(auto i = data.m_blotters.begin(); i != data.m_blotters.end(); ++i) {
-    BlotterModel& model = *nameToBlotter[i->m_name];
-    for(auto j = i->m_links.begin(); j != i->m_links.end(); ++j) {
-      auto blotterIterator = nameToBlotter.find(*j);
+  for(auto& setting : data.m_blotters) {
+    auto& model = *nameToBlotter[setting.m_name];
+    for(auto& link : setting.m_links) {
+      auto blotterIterator = nameToBlotter.find(link);
       if(blotterIterator != nameToBlotter.end()) {
         model.Link(Ref(*blotterIterator->second));
       }
@@ -152,45 +147,42 @@ void BlotterSettings::Load(Out<UserProfile> userProfile) {
 }
 
 void BlotterSettings::Save(const UserProfile& userProfile) {
-  path blottersFilePath = userProfile.GetProfilePath() / "blotters.dat";
+  auto blottersFilePath = userProfile.GetProfilePath() / "blotters.dat";
   try {
-    TypeRegistry<BinarySender<SharedBuffer>> typeRegistry;
+    auto typeRegistry = TypeRegistry<BinarySender<SharedBuffer>>();
     RegisterSpireTypes(Store(typeRegistry));
     auto sender = BinarySender<SharedBuffer>(Ref(typeRegistry));
-    SharedBuffer buffer;
+    auto buffer = SharedBuffer();
     sender.SetSink(Ref(buffer));
-    const BlotterSettings& settings = userProfile.GetBlotterSettings();
-    BlotterSettingsData data;
-    for(auto i = settings.GetAllBlotters().begin();
-        i != settings.GetAllBlotters().end(); ++i) {
-      if((*i)->IsPersistent()) {
-        data.m_blotters.push_back(BlotterModelProperties(**i));
+    auto& settings = userProfile.GetBlotterSettings();
+    auto data = BlotterSettingsData();
+    for(auto& setting : settings.GetAllBlotters()) {
+      if(setting->IsPersistent()) {
+        data.m_blotters.push_back(BlotterModelProperties(*setting));
       }
     }
     data.m_activeBlotter = settings.GetActiveBlotter().GetName();
     data.m_defaultTaskProperties = settings.GetDefaultBlotterTaskProperties();
     sender.Shuttle(data);
-    BasicOStreamWriter<ofstream> writer(
-      Initialize(blottersFilePath, ios::binary));
+    auto writer = BasicOStreamWriter<std::ofstream>(
+      Initialize(blottersFilePath, std::ios::binary));
     writer.Write(buffer);
-  } catch(std::exception&) {
+  } catch(const std::exception&) {
     QMessageBox::warning(nullptr, QObject::tr("Warning"),
       QObject::tr("Unable to save blotters."));
   }
 }
 
 BlotterSettings::BlotterSettings(Ref<UserProfile> userProfile)
-    : m_userProfile(userProfile.Get()) {}
+  : m_userProfile(userProfile.Get()) {}
 
-BlotterSettings::~BlotterSettings() {}
-
-const vector<unique_ptr<BlotterModel>>&
+const std::vector<std::unique_ptr<BlotterModel>>&
     BlotterSettings::GetAllBlotters() const {
   return m_blotters;
 }
 
-const BlotterTaskProperties& BlotterSettings::
-    GetDefaultBlotterTaskProperties() const {
+const BlotterTaskProperties&
+    BlotterSettings::GetDefaultBlotterTaskProperties() const {
   return m_defaultBlotterTaskProperties;
 }
 
@@ -199,8 +191,8 @@ void BlotterSettings::SetDefaultBlotterTaskProperties(
   m_defaultBlotterTaskProperties = properties;
 }
 
-const OrderLogProperties& BlotterSettings::
-    GetDefaultOrderLogProperties() const {
+const OrderLogProperties&
+    BlotterSettings::GetDefaultOrderLogProperties() const {
   return m_defaultOrderLogProperties;
 }
 
@@ -209,22 +201,22 @@ void BlotterSettings::SetDefaultOrderLogProperties(
   m_defaultOrderLogProperties = properties;
 }
 
-void BlotterSettings::AddBlotter(unique_ptr<BlotterModel>&& blotter) {
+void BlotterSettings::AddBlotter(std::unique_ptr<BlotterModel>&& blotter) {
   if(blotter->IsConsolidated()) {
-    auto consolidatedBlotterIterator = m_consolidatedBlotters.find(
-      blotter->GetExecutingAccount());
+    auto consolidatedBlotterIterator =
+      m_consolidatedBlotters.find(blotter->GetExecutingAccount());
     if(consolidatedBlotterIterator != m_consolidatedBlotters.end()) {
       RemoveBlotter(*consolidatedBlotterIterator->second);
     }
   }
-  BlotterModel* selfBlotter = blotter.get();
+  auto selfBlotter = blotter.get();
   m_blotters.emplace_back(std::move(blotter));
   if(selfBlotter->IsConsolidated()) {
     m_consolidatedBlotters.insert(
-      std::make_pair(selfBlotter->GetExecutingAccount(), selfBlotter));
+      std::pair(selfBlotter->GetExecutingAccount(), selfBlotter));
   } else {
-    BlotterModel& consolidatedBlotter = GetConsolidatedBlotter(
-      selfBlotter->GetExecutingAccount());
+    auto& consolidatedBlotter =
+      GetConsolidatedBlotter(selfBlotter->GetExecutingAccount());
     consolidatedBlotter.Link(Ref(*selfBlotter));
   }
   m_blotterAddedSignal(*m_blotters.back());
@@ -233,7 +225,7 @@ void BlotterSettings::AddBlotter(unique_ptr<BlotterModel>&& blotter) {
 void BlotterSettings::RemoveBlotter(const BlotterModel& blotter) {
   for(auto i = m_blotters.begin(); i != m_blotters.end(); ++i) {
     if(i->get() == &blotter) {
-      unique_ptr<BlotterModel> selfBlotter = std::move(*i);
+      auto selfBlotter = std::move(*i);
       m_blotters.erase(i);
       if(selfBlotter->IsConsolidated()) {
         m_consolidatedBlotters.erase(selfBlotter->GetExecutingAccount());
@@ -242,7 +234,7 @@ void BlotterSettings::RemoveBlotter(const BlotterModel& blotter) {
       if(selfBlotter.get() == m_activeBlotter) {
         SetActiveBlotter(GetConsolidatedBlotter());
       }
-      return;
+      break;
     }
   }
 }
@@ -262,22 +254,21 @@ const BlotterModel& BlotterSettings::GetConsolidatedBlotter(
   return const_cast<BlotterSettings&>(*this).GetConsolidatedBlotter(account);
 }
 
-BlotterModel& BlotterSettings::GetConsolidatedBlotter(
-    const DirectoryEntry& account) {
+BlotterModel&
+    BlotterSettings::GetConsolidatedBlotter(const DirectoryEntry& account) {
   auto blotterIterator = m_consolidatedBlotters.find(account);
   if(blotterIterator == m_consolidatedBlotters.end()) {
-    bool isUserConsolidatedBlotter =
-      account == m_userProfile->GetServiceClients().GetServiceLocatorClient().
-      GetAccount();
-    string name;
-    if(isUserConsolidatedBlotter) {
-      name = "Global";
-    } else {
-      name = "Account " + account.m_name;
-    }
-    unique_ptr<BlotterModel> consolidatedBlotter =
-      std::make_unique<BlotterModel>(name, account, true, Ref(*m_userProfile),
-      BlotterTaskProperties::GetDefault(), OrderLogProperties::GetDefault());
+    auto isUserConsolidatedBlotter = account ==
+      m_userProfile->GetServiceClients().GetServiceLocatorClient().GetAccount();
+    auto name = [&] {
+      if(isUserConsolidatedBlotter) {
+        return std::string("Global");
+      }
+      return "Account " + account.m_name;
+    }();
+    auto consolidatedBlotter = std::make_unique<BlotterModel>(name, account,
+      true, Ref(*m_userProfile), BlotterTaskProperties::GetDefault(),
+      OrderLogProperties::GetDefault());
     consolidatedBlotter->SetPersistent(isUserConsolidatedBlotter);
     AddBlotter(std::move(consolidatedBlotter));
     return GetConsolidatedBlotter(account);
@@ -294,32 +285,32 @@ BlotterModel& BlotterSettings::GetActiveBlotter() {
 }
 
 void BlotterSettings::SetActiveBlotter(const BlotterModel& blotter) {
-  for(auto i = m_blotters.begin(); i != m_blotters.end(); ++i) {
-    if(i->get() == &blotter && m_activeBlotter != &blotter) {
-      m_activeBlotter = i->get();
+  for(auto& setting : m_blotters) {
+    if(setting.get() == &blotter && m_activeBlotter != &blotter) {
+      m_activeBlotter = setting.get();
       m_activeBlotterChangedSignal(*m_activeBlotter);
-      return;
+      break;
     }
   }
 }
 
 void BlotterSettings::AddRecentlyClosedWindow(const BlotterWindow& window) {
-  const BlotterModel& model = window.GetModel();
+  auto& model = window.GetModel();
   if(m_recentlyClosedBlotters.find(&model) != m_recentlyClosedBlotters.end()) {
     return;
   }
-  unique_ptr<WindowSettings> settings = window.GetWindowSettings();
+  auto settings = window.GetWindowSettings();
   m_recentlyClosedBlotters[&model] = settings.get();
   m_userProfile->AddRecentlyClosedWindow(std::move(settings));
 }
 
 void BlotterSettings::RemoveRecentlyClosedWindow(const BlotterWindow& window) {
-  const BlotterModel& model = window.GetModel();
+  auto& model = window.GetModel();
   auto settingsIterator = m_recentlyClosedBlotters.find(&model);
   if(settingsIterator == m_recentlyClosedBlotters.end()) {
     return;
   }
-  WindowSettings* settings = settingsIterator->second;
+  auto settings = settingsIterator->second;
   m_recentlyClosedBlotters.erase(&model);
   m_userProfile->RemoveRecentlyClosedWindow(*settings);
 }

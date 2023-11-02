@@ -18,58 +18,58 @@ using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::UI;
-using namespace std;
-using namespace std::filesystem;
 
-SavedDashboards::Entry::Entry(string name, DashboardModelSchema schema,
-    std::shared_ptr<WindowSettings> settings)
-    : m_name(std::move(name)),
-      m_schema{std::move(schema)},
-      m_settings(std::move(settings)) {}
+SavedDashboards::Entry::Entry(std::string name, DashboardModelSchema schema,
+  std::shared_ptr<WindowSettings> settings)
+  : m_name(std::move(name)),
+    m_schema(std::move(schema)),
+    m_settings(std::move(settings)) {}
 
 void SavedDashboards::Load(Out<UserProfile> userProfile) {
-  path filePath = userProfile->GetProfilePath() / "dashboards.dat";
-  SavedDashboards savedDashboards;
-  if(!exists(filePath)) {
+  auto filePath = userProfile->GetProfilePath() / "dashboards.dat";
+  auto savedDashboards = SavedDashboards();
+  if(!std::filesystem::exists(filePath)) {
     userProfile->GetSavedDashboards() = savedDashboards;
     return;
   }
   try {
-    BasicIStreamReader<ifstream> reader(Initialize(filePath, ios::binary));
-    SharedBuffer buffer;
+    auto reader =
+      BasicIStreamReader<std::ifstream>(Initialize(filePath, std::ios::binary));
+    auto buffer = SharedBuffer();
     reader.Read(Store(buffer));
-    TypeRegistry<BinarySender<SharedBuffer>> typeRegistry;
+    auto typeRegistry = TypeRegistry<BinarySender<SharedBuffer>>();
     RegisterSpireTypes(Store(typeRegistry));
     auto receiver = BinaryReceiver<SharedBuffer>(Ref(typeRegistry));
     receiver.SetSource(Ref(buffer));
     receiver.Shuttle(savedDashboards);
-  } catch(std::exception&) {
+  } catch(const std::exception&) {
     QMessageBox::warning(nullptr, QObject::tr("Warning"),
       QObject::tr("Unable to load dashboards, using defaults."));
-    savedDashboards = SavedDashboards{};
+    savedDashboards = SavedDashboards();
   }
   userProfile->GetSavedDashboards() = savedDashboards;
 }
 
 void SavedDashboards::Save(const UserProfile& userProfile) {
-  path filePath = userProfile.GetProfilePath() / "dashboards.dat";
+  auto filePath = userProfile.GetProfilePath() / "dashboards.dat";
   try {
-    TypeRegistry<BinarySender<SharedBuffer>> typeRegistry;
+    auto typeRegistry = TypeRegistry<BinarySender<SharedBuffer>>();
     RegisterSpireTypes(Store(typeRegistry));
     auto sender = BinarySender<SharedBuffer>(Ref(typeRegistry));
-    SharedBuffer buffer;
+    auto buffer = SharedBuffer();
     sender.SetSink(Ref(buffer));
     sender.Shuttle(userProfile.GetSavedDashboards());
-    BasicOStreamWriter<ofstream> writer(Initialize(filePath, ios::binary));
+    auto writer =
+      BasicOStreamWriter<std::ofstream>(Initialize(filePath, std::ios::binary));
     writer.Write(buffer);
-  } catch(std::exception&) {
+  } catch(const std::exception&) {
     QMessageBox::warning(nullptr, QObject::tr("Warning"),
       QObject::tr("Unable to save dashboards."));
   }
 }
 
 SavedDashboards::SavedDashboards(const SavedDashboards& savedDashboards)
-    : m_dashboards(savedDashboards.m_dashboards) {}
+  : m_dashboards(savedDashboards.m_dashboards) {}
 
 SavedDashboards& SavedDashboards::operator =(
     const SavedDashboards& savedDashboards) {
@@ -82,13 +82,14 @@ SavedDashboards& SavedDashboards::operator =(
   return *this;
 }
 
-const vector<SavedDashboards::Entry>& SavedDashboards::GetDashboards() const {
+const std::vector<SavedDashboards::Entry>&
+    SavedDashboards::GetDashboards() const {
   return m_dashboards;
 }
 
 void SavedDashboards::Save(const Entry& entry) {
   auto i = find_if(m_dashboards.begin(), m_dashboards.end(),
-    [&] (const Entry& dashboard) {
+    [&] (const auto& dashboard) {
       return dashboard.m_name == entry.m_name;
     });
   if(i == m_dashboards.end()) {
@@ -99,9 +100,9 @@ void SavedDashboards::Save(const Entry& entry) {
   *i = entry;
 }
 
-void SavedDashboards::Delete(const string& name) {
+void SavedDashboards::Delete(const std::string& name) {
   auto i = find_if(m_dashboards.begin(), m_dashboards.end(),
-    [&] (const Entry& entry) {
+    [&] (const auto& entry) {
       return entry.m_name == name;
     });
   if(i == m_dashboards.end()) {
