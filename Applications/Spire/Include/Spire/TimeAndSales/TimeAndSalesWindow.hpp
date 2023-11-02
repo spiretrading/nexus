@@ -1,5 +1,5 @@
-#ifndef SPIRE_TIMEANDSALESWINDOW_HPP
-#define SPIRE_TIMEANDSALESWINDOW_HPP
+#ifndef SPIRE_TIME_AND_SALES_WINDOW_HPP
+#define SPIRE_TIME_AND_SALES_WINDOW_HPP
 #include <QFrame>
 #include "Nexus/Definitions/Quote.hpp"
 #include "Nexus/Definitions/Security.hpp"
@@ -16,48 +16,44 @@ class Ui_TimeAndSalesWindow;
 
 namespace Spire {
 
-  /*! \class TimeAndSalesWindow
-      \brief Displays TimeAndSale prints.
-   */
+  /** Displays TimeAndSale prints. */
   class TimeAndSalesWindow : public QFrame, public UI::PersistentWindow,
       public UI::SecurityContext {
     public:
 
-      //! Constructs a TimeAndSalesWindow.
-      /*!
-        \param userProfile The user's profile.
-        \param properties The properties used to display this window.
-        \param identifier The SecurityContext's identifier.
-        \param parent The parent widget.
-        \param flags Qt flags passed to the parent widget.
-      */
+      /**
+       * Constructs a TimeAndSalesWindow.
+       * @param userProfile The user's profile.
+       * @param properties The properties used to display this window.
+       * @param identifier The SecurityContext's identifier.
+       * @param parent The parent widget.
+       * @param flags Qt flags passed to the parent widget.
+       */
       TimeAndSalesWindow(Beam::Ref<UserProfile> userProfile,
         const TimeAndSalesProperties& properties,
         const std::string& identifier = "", QWidget* parent = nullptr,
         Qt::WindowFlags flags = Qt::WindowFlags());
 
-      virtual ~TimeAndSalesWindow();
-
-      //! Returns the properties used to display this window.
+      /** Returns the properties used to display this window. */
       const TimeAndSalesProperties& GetProperties() const;
 
-      //! Sets the properties used to display this window.
+      /** Sets the properties used to display this window. */
       void SetProperties(const TimeAndSalesProperties& properties);
 
-      //! Sets the Security to display.
-      /*!
-        \param security The Security to display.
-      */
+      /**
+       * Sets the Security to display.
+       * @param security The Security to display.
+       */
       void DisplaySecurity(const Nexus::Security& security);
 
-      virtual std::unique_ptr<UI::WindowSettings> GetWindowSettings() const;
+      std::unique_ptr<UI::WindowSettings> GetWindowSettings() const override;
 
     protected:
-      virtual void showEvent(QShowEvent* event);
-      virtual void closeEvent(QCloseEvent* event);
-      virtual void keyPressEvent(QKeyEvent* event);
-      virtual void HandleLink(SecurityContext& context);
-      virtual void HandleUnlink();
+      void showEvent(QShowEvent* event) override;
+      void closeEvent(QCloseEvent* event) override;
+      void keyPressEvent(QKeyEvent* event) override;
+      void HandleLink(SecurityContext& context) override;
+      void HandleUnlink() override;
 
     private:
       friend class TimeAndSalesWindowSettings;
@@ -77,8 +73,8 @@ namespace Spire {
       void SetupSecurityTechnicals();
       void OnVolumeUpdate(Nexus::Quantity volume);
       void OnContextMenu(const QPoint& position);
-      void OnSectionMoved(int logicalIndex, int oldVisualIndex,
-        int newVisualIndex);
+      void OnSectionMoved(
+        int logicalIndex, int oldVisualIndex, int newVisualIndex);
       void OnSectionResized(int logicalIndex, int oldSize, int newSize);
   };
 }

@@ -51,10 +51,10 @@ namespace {
     std::unique_ptr<T> m_value;
 
     ByPassPtr(std::unique_ptr<T> value)
-        : m_value{std::move(value)} {}
+      : m_value(std::move(value)) {}
 
     ByPassPtr(ByPassPtr&& ptr)
-        : m_value{std::move(ptr.m_value)} {}
+      : m_value(std::move(ptr.m_value)) {}
 
     Type& operator *() const {
       return **m_value;
@@ -146,8 +146,7 @@ TimeClientBox& SpireServiceClients::GetTimeClient() {
   return m_timeClient;
 }
 
-std::unique_ptr<TimerBox> SpireServiceClients::MakeTimer(
-    time_duration expiry) {
+std::unique_ptr<TimerBox> SpireServiceClients::MakeTimer(time_duration expiry) {
   return std::make_unique<TimerBox>(std::make_unique<LiveTimer>(expiry));
 }
 

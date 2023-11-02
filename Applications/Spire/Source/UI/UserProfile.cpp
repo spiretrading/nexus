@@ -13,14 +13,12 @@ using namespace Nexus::MarketDataService;
 using namespace Nexus::TelemetryService;
 using namespace Spire;
 using namespace Spire::UI;
-using namespace std;
-using namespace std::filesystem;
 
-UserProfile::UserProfile(const string& username, bool isAdministrator,
+UserProfile::UserProfile(const std::string& username, bool isAdministrator,
     bool isManager, const CountryDatabase& countryDatabase,
     const tz_database& timeZoneDatabase,
     const CurrencyDatabase& currencyDatabase,
-    const vector<ExchangeRate>& exchangeRates,
+    const std::vector<ExchangeRate>& exchangeRates,
     const MarketDatabase& marketDatabase,
     const DestinationDatabase& destinationDatabase,
     const EntitlementDatabase& entitlementDatabase,
@@ -36,7 +34,7 @@ UserProfile::UserProfile(const string& username, bool isAdministrator,
       m_entitlementDatabase(entitlementDatabase),
       m_serviceClients(std::move(serviceClients)),
       m_telemetryClient(std::move(telemetryClient)),
-      m_profilePath(path(QStandardPaths::writableLocation(
+      m_profilePath(std::filesystem::path(QStandardPaths::writableLocation(
         QStandardPaths::DataLocation).toStdString()) / "Profiles" / m_username),
       m_catalogSettings(m_profilePath / "Catalog", isAdministrator),
       m_interactionProperties(InteractionsProperties::GetDefaultProperties()) {
@@ -48,7 +46,7 @@ UserProfile::UserProfile(const string& username, bool isAdministrator,
 
 UserProfile::~UserProfile() = default;
 
-const string& UserProfile::GetUsername() const {
+const std::string& UserProfile::GetUsername() const {
   return m_username;
 }
 
@@ -97,35 +95,36 @@ TelemetryClientBox& UserProfile::GetTelemetryClient() const {
 }
 
 void UserProfile::CreateProfilePath() const {
-  if(is_directory(m_profilePath)) {
+  if(std::filesystem::is_directory(m_profilePath)) {
     return;
   }
-  if(exists(m_profilePath)) {
-    remove(m_profilePath);
+  if(std::filesystem::exists(m_profilePath)) {
+    std::filesystem::remove(m_profilePath);
   }
-  create_directories(m_profilePath);
+  std::filesystem::create_directories(m_profilePath);
 }
 
-const path& UserProfile::GetProfilePath() const {
+const std::filesystem::path& UserProfile::GetProfilePath() const {
   return m_profilePath;
 }
 
-const vector<unique_ptr<WindowSettings>>&
+const std::vector<std::unique_ptr<WindowSettings>>&
     UserProfile::GetRecentlyClosedWindows() const {
   return m_recentlyClosedWindows;
 }
 
-void UserProfile::AddRecentlyClosedWindow(unique_ptr<WindowSettings> window) {
+void UserProfile::AddRecentlyClosedWindow(
+    std::unique_ptr<WindowSettings> window) {
   m_recentlyClosedWindows.push_back(std::move(window));
 }
 
 void UserProfile::RemoveRecentlyClosedWindow(const WindowSettings& window) {
-  for(auto i = m_recentlyClosedWindows.begin();
-      i != m_recentlyClosedWindows.end(); ++i) {
-    if(i->get() == &window) {
-      m_recentlyClosedWindows.erase(i);
-      return;
-    }
+  auto i = std::find_if(m_recentlyClosedWindows.begin(),
+    m_recentlyClosedWindows.end(), [&] (const auto& closedWindow) {
+      return closedWindow.get() == &window;
+    });
+  if(i != m_recentlyClosedWindows.end()) {
+    m_recentlyClosedWindows.erase(i);
   }
 }
 
@@ -182,8 +181,8 @@ void UserProfile::SetDefaultBookViewProperties(
   m_defaultBookViewProperties = properties;
 }
 
-const OrderImbalanceIndicatorProperties& UserProfile::
-    GetDefaultOrderImbalanceIndicatorProperties() const {
+const OrderImbalanceIndicatorProperties&
+    UserProfile::GetDefaultOrderImbalanceIndicatorProperties() const {
   return m_defaultOrderImbalanceIndicatorProperties;
 }
 
@@ -192,8 +191,8 @@ void UserProfile::SetDefaultOrderImbalanceIndicatorProperties(
   m_defaultOrderImbalanceIndicatorProperties = properties;
 }
 
-const boost::optional<OrderImbalanceIndicatorWindowSettings>& UserProfile::
-    GetInitialOrderImbalanceIndicatorWindowSettings() const {
+const optional<OrderImbalanceIndicatorWindowSettings>&
+    UserProfile::GetInitialOrderImbalanceIndicatorWindowSettings() const {
   return m_initialOrderImbalanceIndicatorWindowSettings;
 }
 
@@ -210,8 +209,8 @@ RiskTimerProperties& UserProfile::GetRiskTimerProperties() {
   return m_riskTimerProperties;
 }
 
-const TimeAndSalesProperties& UserProfile::
-    GetDefaultTimeAndSalesProperties() const {
+const TimeAndSalesProperties&
+    UserProfile::GetDefaultTimeAndSalesProperties() const {
   return m_defaultTimeAndSalesProperties;
 }
 
@@ -220,8 +219,8 @@ void UserProfile::SetDefaultTimeAndSalesProperties(
   m_defaultTimeAndSalesProperties = properties;
 }
 
-const PortfolioViewerProperties& UserProfile::
-    GetDefaultPortfolioViewerProperties() const {
+const PortfolioViewerProperties&
+    UserProfile::GetDefaultPortfolioViewerProperties() const {
   return m_defaultPortfolioViewerProperties;
 }
 
@@ -239,33 +238,31 @@ const RegionMap<InteractionsProperties>&
   return m_interactionProperties;
 }
 
-Quantity UserProfile::GetDefaultQuantity(const Security& security,
-    Side side) const {
-  auto baseQuantity = GetInteractionProperties().Get(
-    security).m_defaultQuantity;
+Quantity
+    UserProfile::GetDefaultQuantity(const Security& security, Side side) const {
+  auto baseQuantity =
+    GetInteractionProperties().Get(security).m_defaultQuantity;
   if(baseQuantity <= 0) {
     return 0;
   }
   auto& activeBlotter = GetBlotterSettings().GetActiveBlotter();
-  auto position = activeBlotter.GetOpenPositionsModel().GetOpenPosition(
-    security);
-  Quantity defaultQuantity;
-  Quantity currentQuantity;
-  if(!position.is_initialized()) {
-    currentQuantity = 0;
-  } else {
-    currentQuantity = position->m_inventory.m_position.m_quantity;
-  }
+  auto position =
+    activeBlotter.GetOpenPositionsModel().GetOpenPosition(security);
+  auto currentQuantity = [&] {
+    if(position) {
+      return position->m_inventory.m_position.m_quantity;
+    }
+    return Quantity(0);
+  }();
   if(side == Side::BID && currentQuantity < 0 ||
       side == Side::ASK && currentQuantity > 0) {
-    defaultQuantity = std::min(baseQuantity, Abs(currentQuantity));
+    return std::min(baseQuantity, Abs(currentQuantity));
   } else {
-    defaultQuantity = baseQuantity - Abs(currentQuantity) % baseQuantity;
+    return baseQuantity - Abs(currentQuantity) % baseQuantity;
   }
-  return defaultQuantity;
 }
 
-const boost::optional<PortfolioViewerWindowSettings>&
+const optional<PortfolioViewerWindowSettings>&
     UserProfile::GetInitialPortfolioViewerWindowSettings() const {
   return m_initialPortfolioViewerWindowSettings;
 }

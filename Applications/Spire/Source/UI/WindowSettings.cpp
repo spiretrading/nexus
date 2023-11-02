@@ -15,32 +15,30 @@
 using namespace Beam;
 using namespace Beam::IO;
 using namespace Beam::Serialization;
-using namespace Beam::Threading;
 using namespace boost;
 using namespace Spire;
 using namespace Spire::UI;
-using namespace std;
 
-vector<unique_ptr<WindowSettings>> WindowSettings::Load(
-    const UserProfile& userProfile) {
+std::vector<std::unique_ptr<WindowSettings>>
+    WindowSettings::Load(const UserProfile& userProfile) {
   auto windowSettingsPath = userProfile.GetProfilePath() / "layout.dat";
-  vector<unique_ptr<WindowSettings>> windowSettings;
+  auto windowSettings = std::vector<std::unique_ptr<WindowSettings>>();
   if(!exists(windowSettingsPath)) {
     return windowSettings;
   }
   try {
-    BasicIStreamReader<ifstream> reader(
-      Initialize(windowSettingsPath, ios::binary));
-    SharedBuffer buffer;
+    auto reader = BasicIStreamReader<std::ifstream>(
+      Initialize(windowSettingsPath, std::ios::binary));
+    auto buffer = SharedBuffer();
     reader.Read(Store(buffer));
-    TypeRegistry<BinarySender<SharedBuffer>> typeRegistry;
+    auto typeRegistry = TypeRegistry<BinarySender<SharedBuffer>>();
     RegisterSpireTypes(Store(typeRegistry));
     auto receiver = BinaryReceiver<SharedBuffer>(Ref(typeRegistry));
     receiver.SetSource(Ref(buffer));
     receiver.Shuttle(windowSettings);
-  } catch(std::exception&) {
-    QMessageBox::warning(nullptr, QObject::tr("Warning"),
-      QObject::tr("Unable to load layout."));
+  } catch(const std::exception&) {
+    QMessageBox::warning(
+      nullptr, QObject::tr("Warning"), QObject::tr("Unable to load layout."));
     windowSettings.clear();
   }
   return windowSettings;
@@ -48,39 +46,34 @@ vector<unique_ptr<WindowSettings>> WindowSettings::Load(
 
 void WindowSettings::Save(const UserProfile& userProfile) {
   auto windowSettingsPath = userProfile.GetProfilePath() / "layout.dat";
-  vector<unique_ptr<WindowSettings>> windowSettings;
+  auto windowSettings = std::vector<std::unique_ptr<WindowSettings>>();
   auto widgets = QApplication::topLevelWidgets();
-  for(const auto& widget : widgets) {
-    auto window = dynamic_cast<PersistentWindow*>(widget);
-    if(window != nullptr) {
-      if(dynamic_cast<Toolbar*>(window) != nullptr) {
-        windowSettings.insert(windowSettings.begin(),
-          window->GetWindowSettings());
-      } else {
-        if(widget->isVisible()) {
-          windowSettings.push_back(window->GetWindowSettings());
-        }
+  for(auto& widget : widgets) {
+    if(auto window = dynamic_cast<PersistentWindow*>(widget)) {
+      if(dynamic_cast<Toolbar*>(window)) {
+        windowSettings.insert(
+          windowSettings.begin(), window->GetWindowSettings());
+      } else if(widget->isVisible()) {
+        windowSettings.push_back(window->GetWindowSettings());
       }
     }
   }
   try {
-    TypeRegistry<BinarySender<SharedBuffer>> typeRegistry;
+    auto typeRegistry = TypeRegistry<BinarySender<SharedBuffer>>();
     RegisterSpireTypes(Store(typeRegistry));
     auto sender = BinarySender<SharedBuffer>(Ref(typeRegistry));
-    SharedBuffer buffer;
+    auto buffer = SharedBuffer();
     sender.SetSink(Ref(buffer));
     sender.Shuttle(windowSettings);
-    BasicOStreamWriter<ofstream> writer(
-      Initialize(windowSettingsPath, ios::binary));
+    auto writer = BasicOStreamWriter<std::ofstream>(
+      Initialize(windowSettingsPath, std::ios::binary));
     writer.Write(buffer);
-  } catch(std::exception&) {
-    QMessageBox::warning(nullptr, QObject::tr("Warning"),
-      QObject::tr("Unable to save layout."));
+  } catch(const std::exception&) {
+    QMessageBox::warning(
+      nullptr, QObject::tr("Warning"), QObject::tr("Unable to save layout."));
   }
 }
 
-WindowSettings::~WindowSettings() {}
-
-string WindowSettings::GetName() const {
+std::string WindowSettings::GetName() const {
   return "";
 }

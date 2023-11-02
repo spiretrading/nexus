@@ -22,31 +22,29 @@
 #include "ui_TimeAndSalesWindow.h"
 
 using namespace Beam;
-using namespace Beam::Threading;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Spire;
 using namespace Spire::UI;
-using namespace std;
 
 namespace {
-  std::array<int, TimeAndSalesModel::COLUMN_COUNT> DEFAULT_COLUMN_SIZES =
-    {60, 60, 40, 60, 60};
+  auto DEFAULT_COLUMN_SIZES =
+    std::array<int, TimeAndSalesModel::COLUMN_COUNT>{60, 60, 40, 60, 60};
 }
 
 TimeAndSalesWindow::TimeAndSalesWindow(Ref<UserProfile> userProfile,
-    const TimeAndSalesProperties& properties, const string& identifier,
+    const TimeAndSalesProperties& properties, const std::string& identifier,
     QWidget* parent, Qt::WindowFlags flags)
     : QFrame(parent, flags),
       SecurityContext(identifier),
       m_ui(std::make_unique<Ui_TimeAndSalesWindow>()),
       m_userProfile(userProfile.Get()) {
   m_ui->setupUi(this);
-  m_ui->m_timeAndSalesView->setItemDelegate(new CustomVariantItemDelegate(
-    Ref(*m_userProfile)));
-  m_ui->m_snapshotView->setItemDelegate(new CustomVariantItemDelegate(
-    Ref(*m_userProfile)));
+  m_ui->m_timeAndSalesView->setItemDelegate(
+    new CustomVariantItemDelegate(Ref(*m_userProfile)));
+  m_ui->m_snapshotView->setItemDelegate(
+    new CustomVariantItemDelegate(Ref(*m_userProfile)));
   connect(m_ui->m_timeAndSalesView, &QTableView::customContextMenuRequested,
     this, &TimeAndSalesWindow::OnContextMenu);
   connect(m_ui->m_timeAndSalesView->horizontalHeader(),
@@ -55,8 +53,8 @@ TimeAndSalesWindow::TimeAndSalesWindow(Ref<UserProfile> userProfile,
     &TimeAndSalesWindow::OnContextMenu);
   connect(m_ui->m_timeAndSalesView->horizontalHeader(),
     &QHeaderView::sectionResized, this, &TimeAndSalesWindow::OnSectionResized);
-  m_model = std::make_unique<TimeAndSalesModel>(Ref(*m_userProfile), properties,
-    Security());
+  m_model = std::make_unique<TimeAndSalesModel>(
+    Ref(*m_userProfile), properties, Security());
   m_ui->m_timeAndSalesView->horizontalHeader()->setSectionsMovable(true);
   m_ui->m_timeAndSalesView->horizontalHeader()->setMinimumSectionSize(1);
   m_ui->m_timeAndSalesView->verticalHeader()->setMinimumSectionSize(0);
@@ -65,11 +63,11 @@ TimeAndSalesWindow::TimeAndSalesWindow(Ref<UserProfile> userProfile,
   m_ui->m_snapshotView->horizontalHeader()->setMinimumSectionSize(1);
   m_ui->m_snapshotView->verticalHeader()->setMinimumSectionSize(0);
   m_ui->m_snapshotView->setModel(m_model.get());
-  QList<int> splitterSizes = m_ui->m_splitter->sizes();
+  auto splitterSizes = m_ui->m_splitter->sizes();
   splitterSizes.back() = 0;
   m_ui->m_splitter->setSizes(splitterSizes);
   m_statusBar = new QStatusBar(this);
-  QSizePolicy sizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+  auto sizePolicy = QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   sizePolicy.setHorizontalStretch(0);
   sizePolicy.setVerticalStretch(0);
   sizePolicy.setHeightForWidth(m_statusBar->sizePolicy().hasHeightForWidth());
@@ -81,13 +79,11 @@ TimeAndSalesWindow::TimeAndSalesWindow(Ref<UserProfile> userProfile,
   m_statusBar->addWidget(m_volumeLabel);
   setWindowTitle(tr("Time and Sales"));
   SetProperties(properties);
-  for(int i = 0; i < TimeAndSalesModel::COLUMN_COUNT; ++i) {
+  for(auto i = 0; i < TimeAndSalesModel::COLUMN_COUNT; ++i) {
     m_ui->m_timeAndSalesView->setColumnWidth(i, DEFAULT_COLUMN_SIZES[i]);
   }
   SetupSecurityTechnicals();
 }
-
-TimeAndSalesWindow::~TimeAndSalesWindow() {}
 
 const TimeAndSalesProperties& TimeAndSalesWindow::GetProperties() const {
   return m_properties;
@@ -114,23 +110,23 @@ void TimeAndSalesWindow::SetProperties(
       Qt::ScrollBarAlwaysOff);
     m_ui->m_snapshotView->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   }
-  for(int i = 0; i < TimeAndSalesProperties::COLUMN_COUNT; ++i) {
+  for(auto i = 0; i < TimeAndSalesProperties::COLUMN_COUNT; ++i) {
     if(m_ui->m_timeAndSalesView->isColumnHidden(i) &&
         m_properties.GetVisibleColumns()[i]) {
       m_ui->m_timeAndSalesView->setColumnWidth(i,
         std::max(DEFAULT_COLUMN_SIZES[i],
         m_ui->m_timeAndSalesView->columnWidth(i)));
     }
-    m_ui->m_timeAndSalesView->setColumnHidden(i,
-      !m_properties.GetVisibleColumns()[i]);
-    m_ui->m_snapshotView->setColumnHidden(i,
-      !m_properties.GetVisibleColumns()[i]);
-    m_ui->m_snapshotView->setColumnWidth(i,
-      m_ui->m_timeAndSalesView->columnWidth(i));
+    m_ui->m_timeAndSalesView->setColumnHidden(
+      i, !m_properties.GetVisibleColumns()[i]);
+    m_ui->m_snapshotView->setColumnHidden(
+      i, !m_properties.GetVisibleColumns()[i]);
+    m_ui->m_snapshotView->setColumnWidth(
+      i, m_ui->m_timeAndSalesView->columnWidth(i));
   }
   m_ui->m_timeAndSalesView->setFont(m_properties.GetFont());
   m_ui->m_snapshotView->setFont(m_properties.GetFont());
-  QFontMetrics metrics(m_properties.GetFont());
+  auto metrics = QFontMetrics(m_properties.GetFont());
   m_ui->m_timeAndSalesView->verticalHeader()->setDefaultSectionSize(
     metrics.height());
   m_ui->m_snapshotView->verticalHeader()->setDefaultSectionSize(
@@ -145,32 +141,30 @@ void TimeAndSalesWindow::DisplaySecurity(const Security& security) {
   setWindowTitle(QString::fromStdString(
     ToString(m_security, m_userProfile->GetMarketDatabase())) +
     tr(" - Time and Sales"));
-  vector<int> widths;
-  for(int i = 0; i < TimeAndSalesProperties::COLUMN_COUNT; ++i) {
+  auto widths = std::vector<int>();
+  for(auto i = 0; i < TimeAndSalesProperties::COLUMN_COUNT; ++i) {
     widths.push_back(m_ui->m_timeAndSalesView->columnWidth(i));
   }
-  unique_ptr<TimeAndSalesModel> newModel = std::make_unique<TimeAndSalesModel>(
+  auto newModel = std::make_unique<TimeAndSalesModel>(
     Ref(*m_userProfile), m_properties, m_security);
   m_ui->m_timeAndSalesView->setModel(newModel.get());
   m_model = std::move(newModel);
   m_ui->m_timeAndSalesView->setModel(m_model.get());
   m_ui->m_snapshotView->setModel(m_model.get());
-  for(int i = 0; i < TimeAndSalesProperties::COLUMN_COUNT; ++i) {
+  for(auto i = 0; i < TimeAndSalesProperties::COLUMN_COUNT; ++i) {
     m_ui->m_timeAndSalesView->setColumnWidth(i, widths[i]);
   }
   SetupSecurityTechnicals();
   SetDisplayedSecurity(m_security);
 }
 
-unique_ptr<WindowSettings> TimeAndSalesWindow::GetWindowSettings() const {
-  unique_ptr<WindowSettings> settings(new TimeAndSalesWindowSettings(*this,
-    Ref(*m_userProfile)));
-  return settings;
+std::unique_ptr<WindowSettings> TimeAndSalesWindow::GetWindowSettings() const {
+  return std::unique_ptr<WindowSettings>(
+    new TimeAndSalesWindowSettings(*this, Ref(*m_userProfile)));
 }
 
 void TimeAndSalesWindow::showEvent(QShowEvent* event) {
-  auto context = SecurityContext::FindSecurityContext(m_linkIdentifier);
-  if(context.is_initialized()) {
+  if(auto context = SecurityContext::FindSecurityContext(m_linkIdentifier)) {
     Link(*context);
   } else {
     m_linkConnection.disconnect();
@@ -183,37 +177,36 @@ void TimeAndSalesWindow::showEvent(QShowEvent* event) {
 
 void TimeAndSalesWindow::closeEvent(QCloseEvent* event) {
   if(m_security != Security()) {
-    unique_ptr<WindowSettings> window(new TimeAndSalesWindowSettings(*this,
-      Ref(*m_userProfile)));
+    auto window = std::unique_ptr<WindowSettings>(
+      new TimeAndSalesWindowSettings(*this, Ref(*m_userProfile)));
     m_userProfile->AddRecentlyClosedWindow(std::move(window));
   }
   QFrame::closeEvent(event);
 }
 
 void TimeAndSalesWindow::keyPressEvent(QKeyEvent* event) {
-  int key = event->key();
+  auto key = event->key();
   if(key == Qt::Key_PageUp) {
-    m_securityViewStack.PushUp(m_security,
-      [&] (const Security& security) {
-        this->DisplaySecurity(security);
-      });
+    m_securityViewStack.PushUp(m_security, [&] (const auto& security) {
+      DisplaySecurity(security);
+    });
     return;
   } else if(key == Qt::Key_PageDown) {
-    m_securityViewStack.PushDown(m_security,
-      [&] (const Security& security) {
-        this->DisplaySecurity(security);
-      });
+    m_securityViewStack.PushDown(m_security, [&] (const auto& security) {
+      DisplaySecurity(security);
+    });
     return;
   }
-  QString text = event->text();
+  auto text = event->text();
   if(text.isEmpty() || !text[0].isLetterOrNumber()) {
     return;
   }
-  SecurityInputDialog dialog(Ref(*m_userProfile), text.toStdString(), this);
+  auto dialog =
+    SecurityInputDialog(Ref(*m_userProfile), text.toStdString(), this);
   if(dialog.exec() == QDialog::Rejected) {
     return;
   }
-  Security security = dialog.GetSecurity();
+  auto security = dialog.GetSecurity();
   if(security == Security() || security == m_security) {
     return;
   }
@@ -224,8 +217,7 @@ void TimeAndSalesWindow::keyPressEvent(QKeyEvent* event) {
 void TimeAndSalesWindow::HandleLink(SecurityContext& context) {
   m_linkIdentifier = context.GetIdentifier();
   m_linkConnection = context.ConnectSecurityDisplaySignal(
-    std::bind(&TimeAndSalesWindow::DisplaySecurity, this,
-    std::placeholders::_1));
+    std::bind_front(&TimeAndSalesWindow::DisplaySecurity, this));
   DisplaySecurity(context.GetDisplayedSecurity());
 }
 
@@ -237,10 +229,10 @@ void TimeAndSalesWindow::HandleUnlink() {
 void TimeAndSalesWindow::SetupSecurityTechnicals() {
   m_volumeLabel->Reset();
   m_volumeConnection.disconnect();
-  m_securityTechnicalsModel = SecurityTechnicalsModel::GetModel(
-    Ref(*m_userProfile), m_security);
-  m_volumeConnection = m_securityTechnicalsModel->ConnectVolumeSignal(std::bind(
-    &TimeAndSalesWindow::OnVolumeUpdate, this, std::placeholders::_1));
+  m_securityTechnicalsModel =
+    SecurityTechnicalsModel::GetModel(Ref(*m_userProfile), m_security);
+  m_volumeConnection = m_securityTechnicalsModel->ConnectVolumeSignal(
+    std::bind_front(&TimeAndSalesWindow::OnVolumeUpdate, this));
 }
 
 void TimeAndSalesWindow::OnVolumeUpdate(Quantity volume) {
@@ -248,58 +240,57 @@ void TimeAndSalesWindow::OnVolumeUpdate(Quantity volume) {
 }
 
 void TimeAndSalesWindow::OnContextMenu(const QPoint& position) {
-  QMenu contextMenu;
-  QAction propertiesAction(&contextMenu);
+  auto contextMenu = QMenu();
+  auto propertiesAction = QAction(&contextMenu);
   propertiesAction.setText(tr("Properties"));
   propertiesAction.setToolTip(tr("Opens the Time and Sales properties."));
   contextMenu.addAction(&propertiesAction);
-  QMenu linkMenu("Links");
-  vector<unique_ptr<LinkSecurityContextAction>> linkActions =
-    LinkSecurityContextAction::MakeActions(this, m_linkIdentifier, &linkMenu,
-    *m_userProfile);
-  for(auto i = linkActions.begin(); i != linkActions.end(); ++i) {
-    linkMenu.addAction(i->get());
+  auto linkMenu = QMenu("Links");
+  auto linkActions = LinkSecurityContextAction::MakeActions(
+    this, m_linkIdentifier, &linkMenu, *m_userProfile);
+  for(auto& action : linkActions) {
+    linkMenu.addAction(action.get());
   }
   if(!linkMenu.isEmpty()) {
     contextMenu.addMenu(&linkMenu);
   }
-  QAction exportAction(&contextMenu);
+  auto exportAction = QAction(&contextMenu);
   exportAction.setEnabled(m_model->rowCount(QModelIndex()) != 0);
   exportAction.setText(tr("Export To File"));
   contextMenu.addAction(&exportAction);
-  QAction* selectedAction = contextMenu.exec(
-    static_cast<QWidget*>(sender())->mapToGlobal(position));
+  auto selectedAction =
+    contextMenu.exec(static_cast<QWidget*>(sender())->mapToGlobal(position));
   if(selectedAction == &propertiesAction) {
-    TimeAndSalesPropertiesDialog propertiesWidget(Ref(*m_userProfile),
-      m_properties, this);
+    auto propertiesWidget =
+      TimeAndSalesPropertiesDialog(Ref(*m_userProfile), m_properties, this);
     if(propertiesWidget.exec() == QDialog::Rejected) {
       return;
     }
     SetProperties(propertiesWidget.GetProperties());
   } else if(selectedAction == &exportAction) {
-    QString path = QFileDialog::getSaveFileName(this,
-      tr("Select file to export to."), QStandardPaths::writableLocation(
-      QStandardPaths::DocumentsLocation) + "/time_and_sales.csv",
+    auto path = QFileDialog::getSaveFileName(
+      this, tr("Select file to export to."), QStandardPaths::writableLocation(
+        QStandardPaths::DocumentsLocation) + "/time_and_sales.csv",
       "CSV (*.csv)");
     if(path.isNull()) {
       return;
     }
-    ofstream exportFile(path.toStdString());
+    auto exportFile = std::ofstream(path.toStdString());
     ExportModelAsCsv(*m_userProfile, *m_model, exportFile);
-  } else if(LinkSecurityContextAction* linkAction =
+  } else if(auto linkAction =
       dynamic_cast<LinkSecurityContextAction*>(selectedAction)) {
     linkAction->Execute(Store(*this));
   }
 }
 
-void TimeAndSalesWindow::OnSectionMoved(int logicalIndex, int oldVisualIndex,
-    int newVisualIndex) {
-  m_ui->m_snapshotView->horizontalHeader()->moveSection(oldVisualIndex,
-    newVisualIndex);
+void TimeAndSalesWindow::OnSectionMoved(
+    int logicalIndex, int oldVisualIndex, int newVisualIndex) {
+  m_ui->m_snapshotView->horizontalHeader()->moveSection(
+    oldVisualIndex, newVisualIndex);
 }
 
-void TimeAndSalesWindow::OnSectionResized(int logicalIndex, int oldSize,
-    int newSize) {
-  m_ui->m_snapshotView->horizontalHeader()->resizeSection(logicalIndex,
-    newSize);
+void TimeAndSalesWindow::OnSectionResized(
+    int logicalIndex, int oldSize, int newSize) {
+  m_ui->m_snapshotView->horizontalHeader()->resizeSection(
+    logicalIndex, newSize);
 }

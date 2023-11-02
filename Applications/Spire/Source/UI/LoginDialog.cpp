@@ -12,7 +12,6 @@
 using namespace Beam;
 using namespace Beam::Network;
 using namespace Beam::ServiceLocator;
-using namespace Beam::Threading;
 using namespace boost;
 using namespace Spire;
 using namespace Spire::UI;
