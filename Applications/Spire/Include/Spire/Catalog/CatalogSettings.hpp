@@ -68,6 +68,8 @@ namespace Spire {
       CatalogSettings(
         const std::filesystem::path& settingsPath, bool hasRegistryAccess);
 
+      ~CatalogSettings();
+
       /** Returns the path to the catalog settings. */
       const std::filesystem::path& GetSettingsPath() const;
 

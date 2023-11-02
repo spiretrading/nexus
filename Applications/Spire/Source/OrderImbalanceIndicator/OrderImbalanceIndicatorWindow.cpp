@@ -8,7 +8,6 @@
 #include "ui_OrderImbalanceIndicatorWindow.h"
 
 using namespace Beam;
-using namespace Beam::Threading;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;

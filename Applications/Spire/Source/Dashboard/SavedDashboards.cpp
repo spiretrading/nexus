@@ -13,7 +13,6 @@
 using namespace Beam;
 using namespace Beam::IO;
 using namespace Beam::Serialization;
-using namespace Beam::Threading;
 using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;

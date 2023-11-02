@@ -20,7 +20,6 @@ using namespace Beam;
 using namespace Beam::IO;
 using namespace Beam::RegistryService;
 using namespace Beam::Serialization;
-using namespace Beam::Threading;
 using namespace boost;
 using namespace boost::signals2;
 using namespace boost::uuids;
@@ -237,6 +236,8 @@ CatalogSettings::CatalogSettings(const std::filesystem::path& settingsPath,
   tab->SetName("All");
   Add(std::move(tab));
 }
+
+CatalogSettings::~CatalogSettings() = default;
 
 const std::filesystem::path& CatalogSettings::GetSettingsPath() const {
   return m_settingsPath;
