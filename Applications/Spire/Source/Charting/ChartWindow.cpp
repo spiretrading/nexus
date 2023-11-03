@@ -182,17 +182,14 @@ void ChartWindow::keyPressEvent(QKeyEvent* event) {
   if(text.isEmpty() || !text[0].isLetterOrNumber()) {
     return;
   }
-  auto dialog =
-    SecurityInputDialog(Ref(*m_userProfile), text.toStdString(), this);
-  if(dialog.exec() == QDialog::Rejected) {
-    return;
-  }
-  auto security = dialog.GetSecurity();
-  if(security == Security() || security == m_security) {
-    return;
-  }
-  m_securityViewStack.Push(m_security);
-  DisplaySecurity(security);
+  ShowSecurityInputDialog(Ref(*m_userProfile), text.toStdString(), this,
+    [=] (auto security) {
+      if(!security || security == Security() || security == m_security) {
+        return;
+      }
+      m_securityViewStack.Push(m_security);
+      DisplaySecurity(*security);
+    });
 }
 
 void ChartWindow::HandleLink(SecurityContext& context) {

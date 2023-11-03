@@ -1,8 +1,9 @@
-#ifndef SPIRE_SECURITYINPUTDIALOG_HPP
-#define SPIRE_SECURITYINPUTDIALOG_HPP
+#ifndef SPIRE_SECURITY_INPUT_DIALOG_HPP
+#define SPIRE_SECURITY_INPUT_DIALOG_HPP
+#include <functional>
 #include <Beam/Pointers/Ref.hpp>
+#include <boost/optional/optional.hpp>
 #include <QDialog>
-#include <QTimer>
 #include "Nexus/Definitions/Security.hpp"
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Utilities/Utilities.hpp"
@@ -14,44 +15,45 @@ class Ui_SecurityInputDialog;
 
 namespace Spire {
 
-  /*! \class SecurityInputDialog
-      \brief Prompts the user for a Security.
-   */
+  /** Prompts the user for a Security. */
   class SecurityInputDialog : public QDialog {
     public:
 
-      //! Constructs a SecurityInputDialog.
-      /*!
-        \param userProfile The user's profile.
-        \param initial The Security to initially display to the user.
-        \param parent The parent widget.
-        \param flags Qt flags passed to the parent widget.
-      */
+      /**
+       * Constructs a SecurityInputDialog.
+       * @param userProfile The user's profile.
+       * @param initial The Security to initially display to the user.
+       * @param parent The parent widget.
+       * @param flags Qt flags passed to the parent widget.
+       */
       SecurityInputDialog(Beam::Ref<UserProfile> userProfile,
         const Nexus::Security& initial, QWidget* parent = nullptr,
         Qt::WindowFlags flags = Qt::WindowFlags());
 
-      //! Constructs a SecurityInputDialog.
-      /*!
-        \param userProfile The user's profile.
-        \param text The text that triggered this dialog.
-        \param parent The parent widget.
-        \param flags Qt flags passed to the parent widget.
-      */
+      /**
+       * Constructs a SecurityInputDialog.
+       * @param userProfile The user's profile.
+       * @param text The text that triggered this dialog.
+       * @param parent The parent widget.
+       * @param flags Qt flags passed to the parent widget.
+       */
       SecurityInputDialog(Beam::Ref<UserProfile> userProfile,
         const std::string& text, QWidget* parent = nullptr,
         Qt::WindowFlags flags = Qt::WindowFlags());
 
-      virtual ~SecurityInputDialog();
+      ~SecurityInputDialog() override;
 
-      //! Returns the Security represented by this dialog.
-      /*!
-        \param supportWildCards Whether wild-cards should be supported.
-      */
+      /**
+       * Returns the Security represented by this dialog.
+       * @param supportWildCards Whether wild-cards should be supported.
+       */
       Nexus::Security GetSecurity(bool supportWildCards = false) const;
 
-      //! Returns the line edit widget being used by this dialog.
+      /** Returns the line edit widget being used by this dialog. */
       QLineEdit& GetSymbolInput();
+
+    protected:
+      bool eventFilter(QObject* receiver, QEvent* event) override;
 
     private:
       std::unique_ptr<Ui_SecurityInputDialog> m_ui;
@@ -64,9 +66,33 @@ namespace Spire {
       void AdjustCompleterSize();
       void OnInputEdited(const QString& text);
       void OnRowsAddedRemoved(const QModelIndex& parent, int start, int end);
-      void OnDataChanged(const QModelIndex& topLeft,
-        const QModelIndex& bottomRight);
+      void OnDataChanged(
+        const QModelIndex& topLeft, const QModelIndex& bottomRight);
   };
+
+  /**
+   * Pops up a SecurityInputDialog.
+   * @param userProfile The user's profile.
+   * @param initialValue The initial value to display in the text field.
+   * @param parent The parent widget.
+   * @param resultSlot The slot to call when the dialog finishes.
+   */
+  void ShowSecurityInputDialog(Beam::Ref<UserProfile> userProfile,
+    const boost::variant<std::string, Nexus::Security>& initialValue,
+    QWidget* parent,
+    std::function<void (boost::optional<Nexus::Security> security)> onResult);
+
+  /**
+   * Pops up a SecurityInputDialog with support for wild cards.
+   * @param userProfile The user's profile.
+   * @param initialValue The initial value to display in the text field.
+   * @param parent The parent widget.
+   * @param resultSlot The slot to call when the dialog finishes.
+   */
+  void ShowWildCardSecurityInputDialog(Beam::Ref<UserProfile> userProfile,
+    const boost::variant<std::string, Nexus::Security>& initialValue,
+    QWidget* parent,
+    std::function<void (boost::optional<Nexus::Security> security)> onResult);
 }
 
 #endif

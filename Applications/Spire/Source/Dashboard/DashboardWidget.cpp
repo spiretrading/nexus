@@ -22,17 +22,16 @@ using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 using namespace Spire::UI;
-using namespace std;
 
 namespace {
   const auto REPAINT_INTERVAL = 300;
 }
 
 struct DashboardWidget::RowComparator {
-  vector<SortOrder>* m_columnSortOrder;
+  std::vector<SortOrder>* m_columnSortOrder;
 
-  RowComparator(vector<SortOrder>* columnSortOrder)
-      : m_columnSortOrder(columnSortOrder) {}
+  RowComparator(std::vector<SortOrder>* columnSortOrder)
+    : m_columnSortOrder(columnSortOrder) {}
 
   bool operator ()(const DashboardRow& lhs, const DashboardRow& rhs) const {
     for(auto& sortOrder : *m_columnSortOrder) {
@@ -65,10 +64,10 @@ struct DashboardWidget::RendererComparator {
   DashboardRenderer* m_renderer;
   RowComparator m_comparator;
 
-  RendererComparator(DashboardRenderer* renderer,
-      vector<SortOrder>* columnSortOrder)
-      : m_renderer{renderer},
-        m_comparator(columnSortOrder) {}
+  RendererComparator(
+    DashboardRenderer* renderer, std::vector<SortOrder>* columnSortOrder)
+    : m_renderer(renderer),
+      m_comparator(columnSortOrder) {}
 
   bool operator ()(int lhs, int rhs) const {
     if(!m_renderer->GetRow(lhs).is_initialized()) {
@@ -83,22 +82,20 @@ struct DashboardWidget::RendererComparator {
 };
 
 DashboardWidget::DashboardWidget(QWidget* parent, Qt::WindowFlags flags)
-    : QWidget{parent, flags},
-      m_model{nullptr},
-      m_userProfile{nullptr},
-      m_selectionModel{std::make_unique<DashboardSelectionModel>()},
-      m_selectionController{std::make_unique<DashboardSelectionController>(
-        Ref(*m_selectionModel))},
-      m_isHoveringOverColumnResize{false},
-      m_mouseState{MouseState::NONE} {
+    : QWidget(parent, flags),
+      m_model(nullptr),
+      m_userProfile(nullptr),
+      m_selectionModel(std::make_unique<DashboardSelectionModel>()),
+      m_selectionController(
+        std::make_unique<DashboardSelectionController>(Ref(*m_selectionModel))),
+      m_isHoveringOverColumnResize(false),
+      m_mouseState(MouseState::NONE) {
   setMouseTracking(true);
   setFocusPolicy(Qt::StrongFocus);
-  connect(&m_repaintTimer, &QTimer::timeout, this,
-    &DashboardWidget::OnRepaintTimer);
+  connect(
+    &m_repaintTimer, &QTimer::timeout, this, &DashboardWidget::OnRepaintTimer);
   m_repaintTimer.start(REPAINT_INTERVAL);
 }
-
-DashboardWidget::~DashboardWidget() {}
 
 void DashboardWidget::Initialize(Ref<DashboardModel> model,
     const DashboardRowBuilder& rowBuilder, Ref<UserProfile> userProfile) {
@@ -112,7 +109,7 @@ void DashboardWidget::Initialize(Ref<DashboardModel> model,
         if(&cell == &row.GetCell(2)) {
           auto cellRenderer =
             std::make_unique<DirectionalDashboardCellRenderer>(Ref(cell),
-            Ref(*m_userProfile));
+              Ref(*m_userProfile));
           auto font = cellRenderer->GetFont();
           if(&cell == &row.GetIndex()) {
             font.setPointSize(12);
@@ -124,7 +121,7 @@ void DashboardWidget::Initialize(Ref<DashboardModel> model,
         } else if(&cell == &row.GetCell(3)) {
           auto cellRenderer =
             std::make_unique<PercentageDashboardCellRenderer>(Ref(cell),
-            Ref(*m_userProfile));
+              Ref(*m_userProfile));
           auto font = cellRenderer->GetFont();
           if(&cell == &row.GetIndex()) {
             font.setPointSize(12);
@@ -132,7 +129,7 @@ void DashboardWidget::Initialize(Ref<DashboardModel> model,
             font.setPointSize(11);
           }
           cellRenderer->SetFont(font);
-          return std::move(cellRenderer);
+          return cellRenderer;
         } else {
           auto cellRenderer = std::make_unique<TextDashboardCellRenderer>(
             Ref(cell), Ref(*m_userProfile));
@@ -143,26 +140,25 @@ void DashboardWidget::Initialize(Ref<DashboardModel> model,
             font.setPointSize(11);
           }
           cellRenderer->SetFont(font);
-          return std::move(cellRenderer);
+          return cellRenderer;
         }
       });
     return renderer;
   };
-  m_renderer = std::make_unique<DashboardRenderer>(Ref(*m_model),
-    Ref(*m_selectionModel), rowRenderer, Ref(*m_userProfile));
-  QPalette p{palette()};
+  m_renderer = std::make_unique<DashboardRenderer>(
+    Ref(*m_model), Ref(*m_selectionModel), rowRenderer, Ref(*m_userProfile));
+  auto p = QPalette(palette());
   p.setColor(QPalette::Window, QColor{13, 13, 13});
   setPalette(p);
   resizeEvent(nullptr);
   m_drawConnection = m_renderer->ConnectDrawSignal(
-    std::bind(&DashboardWidget::OnDrawSignal, this));
+    std::bind_front(&DashboardWidget::OnDrawSignal, this));
   m_selectedRowsConnection = m_selectionModel->ConnectSelectedRowsUpdatedSignal(
-    std::bind(&DashboardWidget::OnSelectedRowsUpdatedSignal, this));
+    std::bind_front(&DashboardWidget::OnSelectedRowsUpdatedSignal, this));
   m_activeRowConnection = m_selectionModel->ConnectActiveRowUpdatedSignal(
-    std::bind(&DashboardWidget::OnActiveRowUpdatedSignal, this,
-    std::placeholders::_1));
+    std::bind_front(&DashboardWidget::OnActiveRowUpdatedSignal, this));
   m_rowAddedConnection = m_model->ConnectRowAddedSignal(
-    std::bind(&DashboardWidget::OnRowAddedSignal, this, std::placeholders::_1));
+    std::bind_front(&DashboardWidget::OnRowAddedSignal, this));
   for(auto i = 0; i < m_model->GetRowCount(); ++i) {
     OnRowAddedSignal(m_model->GetRow(i));
   }
@@ -184,7 +180,7 @@ const DashboardRenderer& DashboardWidget::GetRenderer() const {
   return *m_renderer;
 }
 
-boost::optional<int> DashboardWidget::GetRowDisplayIndex(
+optional<int> DashboardWidget::GetRowDisplayIndex(
     const QPoint& position) const {
   if(position.y() < m_renderer->GetMaxRowHeight()) {
     return none;
@@ -203,7 +199,7 @@ void DashboardWidget::keyPressEvent(QKeyEvent* event) {
     DeleteSelectedRows();
   } else {
     auto activeRow = m_selectionModel->GetActiveRow();
-    if(!activeRow.is_initialized()) {
+    if(!activeRow) {
       return QWidget::keyPressEvent(event);
     }
     auto text = event->text();
@@ -245,12 +241,8 @@ void DashboardWidget::mousePressEvent(QMouseEvent* event) {
       return;
     }
   }
-  auto rowIndex = GetRowDisplayIndex(position);
-  if(!rowIndex.is_initialized()) {
-    return;
-  }
-  if(m_selectionController->HandleMouseEvent(*event, *rowIndex)) {
-    return;
+  if(auto rowIndex = GetRowDisplayIndex(position)) {
+    m_selectionController->HandleMouseEvent(*event, *rowIndex);
   }
 }
 
@@ -271,20 +263,15 @@ void DashboardWidget::mouseReleaseEvent(QMouseEvent* event) {
     }
     return;
   }
-  auto position = event->pos();
-  auto rowIndex = GetRowDisplayIndex(position);
-  if(!rowIndex.is_initialized()) {
-    return;
-  }
-  if(m_selectionController->HandleMouseEvent(*event, *rowIndex)) {
-    return;
+  if(auto rowIndex = GetRowDisplayIndex(event->pos())) {
+    m_selectionController->HandleMouseEvent(*event, *rowIndex);
   }
 }
 
 void DashboardWidget::mouseDoubleClickEvent(QMouseEvent* event) {
   auto position = event->pos();
   auto rowIndex = GetRowDisplayIndex(position);
-  if(!rowIndex.is_initialized()) {
+  if(!rowIndex) {
     return;
   }
   if(m_selectionController->HandleMouseEvent(*event, *rowIndex)) {
@@ -294,10 +281,10 @@ void DashboardWidget::mouseDoubleClickEvent(QMouseEvent* event) {
 }
 
 void DashboardWidget::paintEvent(QPaintEvent* event) {
-  if(m_model == nullptr) {
+  if(!m_model) {
     return;
   }
-  QRect region{0, 0, width(), height()};
+  auto region = QRect(0, 0, width(), height());
   m_renderer->Draw(*this, region);
 }
 
@@ -313,8 +300,8 @@ void DashboardWidget::resizeEvent(QResizeEvent* event) {
       m_renderer->GetColumnWidth(lastColumnIndex) + emptySpace);
   } else if(emptySpace < 0) {
     auto width = m_renderer->GetColumnWidth(lastColumnIndex);
-    auto adjustedWidth = std::max(m_renderer->GetDefaultColumnWidth() / 2,
-      width + emptySpace);
+    auto adjustedWidth =
+      std::max(m_renderer->GetDefaultColumnWidth() / 2, width + emptySpace);
     if(width != adjustedWidth) {
       m_renderer->SetColumnWidth(lastColumnIndex, adjustedWidth);
     }
@@ -336,7 +323,7 @@ void DashboardWidget::ModifyColumnSortOrder(int index) {
       return;
     }
   }
-  SortOrder sortOrder;
+  auto sortOrder = SortOrder();
   sortOrder.m_index = modelIndex;
   sortOrder.m_direction = DashboardWidget::SortOrder::Order::DESCENDING;
   m_columnSortOrder.insert(m_columnSortOrder.begin(), sortOrder);
@@ -347,45 +334,41 @@ void DashboardWidget::SortRows() {
   if(m_columnSortOrder.empty()) {
     return;
   }
-  vector<int> indicies;
+  auto indicies = std::vector<int>();
   for(auto i = 0; i < static_cast<int>(m_renderer->GetSize()); ++i) {
     indicies.push_back(i);
   }
   auto comparator = RowComparator{&m_columnSortOrder};
   std::sort(indicies.begin(), indicies.end(),
-    RendererComparator{&*m_renderer, &m_columnSortOrder});
+    RendererComparator(&*m_renderer, &m_columnSortOrder));
   m_renderer->ReorderRows(indicies);
 }
 
-void DashboardWidget::ActivateRow(int index, const string& prefix) {
-  SecurityInputDialog dialog{Ref(*m_userProfile), prefix, this};
-  if(dialog.exec() == QDialog::Rejected) {
-    return;
-  }
-  auto security = dialog.GetSecurity();
-  if(security == Security{}) {
-    return;
-  }
-  for(auto i = m_renderer->GetSize(); i < index; ++i) {
-    m_renderer->InsertEmptyRow(i);
-  }
-  setUpdatesEnabled(false);
-  auto existingRow = m_renderer->GetRow(index);
-  if(existingRow.is_initialized()) {
-    m_model->Remove(*existingRow);
-  }
-  auto row = m_rowBuilder->Make(security, Ref(*m_userProfile));
-  m_model->Add(std::move(row));
-  auto insertIndex = m_renderer->GetSize() - 1;
-  m_renderer->MoveRow(insertIndex, index);
-  setUpdatesEnabled(true);
+void DashboardWidget::ActivateRow(int index, const std::string& prefix) {
+  ShowSecurityInputDialog(Ref(*m_userProfile), prefix, this,
+    [=] (auto security) {
+      if(!security || security == Security()) {
+        return;
+      }
+      for(auto i = m_renderer->GetSize(); i < index; ++i) {
+        m_renderer->InsertEmptyRow(i);
+      }
+      setUpdatesEnabled(false);
+      if(auto existingRow = m_renderer->GetRow(index)) {
+        m_model->Remove(*existingRow);
+      }
+      auto row = m_rowBuilder->Make(*security, Ref(*m_userProfile));
+      m_model->Add(std::move(row));
+      auto insertIndex = m_renderer->GetSize() - 1;
+      m_renderer->MoveRow(insertIndex, index);
+      setUpdatesEnabled(true);
+    });
 }
 
 void DashboardWidget::DeleteSelectedRows() {
-  vector<const DashboardRow*> selectedRows;
+  auto selectedRows = std::vector<const DashboardRow*>();
   for(auto& index : m_selectionModel->GetSelectedRows()) {
-    auto row = m_renderer->GetRow(index);
-    if(row.is_initialized()) {
+    if(auto row = m_renderer->GetRow(index)) {
       selectedRows.push_back(&*row);
     }
   }
@@ -406,7 +389,7 @@ void DashboardWidget::TestHoveringColumnExpansion(const QMouseEvent& event) {
   }
   auto columnWidthAccumulator = 0;
   auto isHovering = false;
-  int resizeColumnIndex;
+  auto resizeColumnIndex = 0;
   for(auto i = 0; i < m_renderer->GetModel().GetColumnCount(); ++i) {
     columnWidthAccumulator += m_renderer->GetColumnWidth(i);
     if(columnWidthAccumulator > position.x() + WIDTH_ADJUSTMENT_THRESHOLD) {
@@ -458,24 +441,24 @@ void DashboardWidget::ResizeColumn(const QMouseEvent& event) {
       m_renderer->GetMinimunColumnWidth());
     auto leftColumnDelta = currentLeftColumnSize - updatedLeftColumnSize;
     if(leftColumnDelta != 0) {
-      shared_connection_block block{m_drawConnection};
+      auto block = shared_connection_block(m_drawConnection);
       m_renderer->SetColumnWidth(m_activeColumnIndex, updatedLeftColumnSize);
       m_renderer->SetColumnWidth(m_activeColumnIndex + 1,
         m_renderer->GetColumnWidth(m_activeColumnIndex + 1) + leftColumnDelta);
     }
     repaint();
   } else if(delta > 0) {
-    auto currentRightColumnSize = m_renderer->GetColumnWidth(
-      m_activeColumnIndex + 1);
-    auto updatedRightColumnSize = std::max(currentRightColumnSize - delta,
-      m_renderer->GetMinimunColumnWidth());
+    auto currentRightColumnSize =
+      m_renderer->GetColumnWidth(m_activeColumnIndex + 1);
+    auto updatedRightColumnSize = std::max(
+      currentRightColumnSize - delta, m_renderer->GetMinimunColumnWidth());
     auto rightColumnDelta = currentRightColumnSize - updatedRightColumnSize;
     if(rightColumnDelta != 0) {
-      shared_connection_block block{m_drawConnection};
+      auto block = shared_connection_block(m_drawConnection);
       m_renderer->SetColumnWidth(m_activeColumnIndex,
         m_renderer->GetColumnWidth(m_activeColumnIndex) + rightColumnDelta);
-      m_renderer->SetColumnWidth(m_activeColumnIndex + 1,
-        updatedRightColumnSize);
+      m_renderer->SetColumnWidth(
+        m_activeColumnIndex + 1, updatedRightColumnSize);
     }
     repaint();
   }
@@ -487,32 +470,29 @@ void DashboardWidget::MoveColumn(const QMouseEvent& event) {
   if(currentIndex != m_activeColumnIndex) {
     m_renderer->MoveColumn(m_activeColumnIndex, currentIndex);
     m_activeColumnIndex = currentIndex;
-    return;
   }
 }
 
 void DashboardWidget::OnRowAddedSignal(const DashboardRow& row) {
   for(auto i = 0; i < row.GetSize(); ++i) {
-    m_cellUpdateConnections.AddConnection(row.GetCell(i).ConnectUpdateSignal(
-      std::bind(&DashboardWidget::OnCellUpdatedSignal, this, std::ref(row),
-      std::placeholders::_1)));
+    m_cellUpdateConnections.AddConnection(
+      row.GetCell(i).ConnectUpdateSignal(std::bind_front(
+        &DashboardWidget::OnCellUpdatedSignal, this, std::ref(row))));
   }
 }
 
-void DashboardWidget::OnCellUpdatedSignal(const DashboardRow& row,
-    const DashboardCell::Value& value) {
+void DashboardWidget::OnCellUpdatedSignal(
+    const DashboardRow& row, const DashboardCell::Value& value) {
   if(m_columnSortOrder.empty()) {
     return;
   }
   auto rowIndex = m_renderer->GetRowDisplayIndex(row);
-  auto previousRow = m_renderer->GetRow(rowIndex - 1);
-  RowComparator comparator{&m_columnSortOrder};
-  if(previousRow.is_initialized()) {
+  auto comparator = RowComparator(&m_columnSortOrder);
+  if(auto previousRow = m_renderer->GetRow(rowIndex - 1)) {
     if(!comparator(*previousRow, row)) {
       auto i = rowIndex - 1;
       while(i >= 0) {
-        auto r = m_renderer->GetRow(i);
-        if(r.is_initialized()) {
+        if(auto r = m_renderer->GetRow(i)) {
           if(comparator(*r, row)) {
             m_renderer->MoveRow(rowIndex, i);
             return;
@@ -524,13 +504,11 @@ void DashboardWidget::OnCellUpdatedSignal(const DashboardRow& row,
       return;
     }
   }
-  auto followingRow = m_renderer->GetRow(rowIndex + 1);
-  if(followingRow.is_initialized()) {
+  if(auto followingRow = m_renderer->GetRow(rowIndex + 1)) {
     if(!comparator(row, *followingRow)) {
       auto i = rowIndex + 1;
       while(i < m_renderer->GetSize()) {
-        auto r = m_renderer->GetRow(i);
-        if(r.is_initialized()) {
+        if(auto r = m_renderer->GetRow(i)) {
           if(comparator(row, *r)) {
             m_renderer->MoveRow(rowIndex, i);
             return;
@@ -544,7 +522,7 @@ void DashboardWidget::OnCellUpdatedSignal(const DashboardRow& row,
   }
 }
 
-void DashboardWidget::OnActiveRowUpdatedSignal(boost::optional<int> activeRow) {
+void DashboardWidget::OnActiveRowUpdatedSignal(optional<int> activeRow) {
   repaint();
 }
 

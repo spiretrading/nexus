@@ -1,5 +1,5 @@
-#ifndef SPIRE_CHARTWINDOW_HPP
-#define SPIRE_CHARTWINDOW_HPP
+#ifndef SPIRE_CHART_WINDOW_HPP
+#define SPIRE_CHART_WINDOW_HPP
 #include <optional>
 #include <Beam/Pointers/Ref.hpp>
 #include <boost/signals2/connection.hpp>

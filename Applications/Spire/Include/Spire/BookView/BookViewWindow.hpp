@@ -26,7 +26,6 @@ class QStatusBar;
 class Ui_BookViewWindow;
 
 namespace Spire {
-  class SecurityInputDialog;
 
   /** Displays a Security's BookQuotes. */
   class BookViewWindow : public QFrame, public UI::PersistentWindow,
@@ -84,7 +83,6 @@ namespace Spire {
         m_tasksExecuted;
       bool m_bidPanelGuard;
       bool m_askPanelGuard;
-      SecurityInputDialog* m_securityInputDialog;
       EventHandler m_eventHandler;
       QTimer m_updateTimer;
 
@@ -107,7 +105,6 @@ namespace Spire {
       void OnTaskState(
         const std::shared_ptr<Task>& task, const Task::StateEntry& update);
       void OnContextMenu(const QPoint& position);
-      void OnSecurityUpdate(int result);
       void OnUpdateTimer();
   };
 }
