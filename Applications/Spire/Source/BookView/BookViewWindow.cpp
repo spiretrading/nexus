@@ -114,7 +114,7 @@ BookViewWindow::BookViewWindow(Ref<UserProfile> userProfile,
       m_isTaskEntryWidgetForInteractionsProperties(false),
       m_bidPanelGuard(false),
       m_askPanelGuard(false),
-      m_hasSecurityInputDialog(false) {
+      m_securityInputDialog(nullptr) {
   m_ui->setupUi(this);
   m_ui->m_highValue->Initialize("", Ref(*m_userProfile));
   m_ui->m_lowValue->Initialize("", Ref(*m_userProfile));
@@ -361,6 +361,12 @@ void BookViewWindow::ExecuteTask(const CanvasNode& node) {
 }
 
 void BookViewWindow::HandleSecurityInputEvent(QKeyEvent* event) {
+  if(m_securityInputDialog) {
+    auto lineEdit = m_securityInputDialog->findChild<QLineEdit*>();
+    auto forwardEvent = QKeyEvent(*event);
+    QCoreApplication::sendEvent(lineEdit, &forwardEvent);
+    return;
+  }
   auto key = event->key();
   if(key == Qt::Key_PageUp) {
     m_securityViewStack.PushUp(m_security, [&] (const auto& security) {
@@ -377,15 +383,12 @@ void BookViewWindow::HandleSecurityInputEvent(QKeyEvent* event) {
   if(text.isEmpty() || !text[0].isLetterOrNumber()) {
     return;
   }
-  if(m_hasSecurityInputDialog) {
-    return;
-  }
-  auto securityInputDialog =
+  m_securityInputDialog =
     new SecurityInputDialog(Ref(*m_userProfile), text.toStdString(), this);
-  securityInputDialog->setAttribute(Qt::WA_DeleteOnClose);
-  connect(securityInputDialog, &SecurityInputDialog::finished, this,
+  m_securityInputDialog->setAttribute(Qt::WA_DeleteOnClose);
+  connect(m_securityInputDialog, &SecurityInputDialog::finished, this,
     &BookViewWindow::OnSecurityUpdate);
-  securityInputDialog->open();
+  m_securityInputDialog->show();
 }
 
 void BookViewWindow::HandleKeyBindingEvent(
@@ -534,11 +537,11 @@ void BookViewWindow::OnContextMenu(const QPoint& position) {
 }
 
 void BookViewWindow::OnSecurityUpdate(int result) {
-  m_hasSecurityInputDialog = false;
+  auto dialog = m_securityInputDialog;
+  m_securityInputDialog = nullptr;
   if(result == QDialog::Rejected) {
     return;
   }
-  auto dialog = static_cast<SecurityInputDialog*>(sender());
   auto security = dialog->GetSecurity();
   if(security == Security() || security == m_security) {
     return;
