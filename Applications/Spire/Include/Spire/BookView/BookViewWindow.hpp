@@ -83,6 +83,7 @@ namespace Spire {
         m_tasksExecuted;
       bool m_bidPanelGuard;
       bool m_askPanelGuard;
+      bool m_hasSecurityInputDialog;
       EventHandler m_eventHandler;
       QTimer m_updateTimer;
 
@@ -105,6 +106,7 @@ namespace Spire {
       void OnTaskState(
         const std::shared_ptr<Task>& task, const Task::StateEntry& update);
       void OnContextMenu(const QPoint& position);
+      void OnSecurityUpdate(int result);
       void OnUpdateTimer();
   };
 }

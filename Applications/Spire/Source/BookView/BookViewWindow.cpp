@@ -113,7 +113,8 @@ BookViewWindow::BookViewWindow(Ref<UserProfile> userProfile,
       m_taskEntryWidget(nullptr),
       m_isTaskEntryWidgetForInteractionsProperties(false),
       m_bidPanelGuard(false),
-      m_askPanelGuard(false) {
+      m_askPanelGuard(false),
+      m_hasSecurityInputDialog(false) {
   m_ui->setupUi(this);
   m_ui->m_highValue->Initialize("", Ref(*m_userProfile));
   m_ui->m_lowValue->Initialize("", Ref(*m_userProfile));
@@ -376,17 +377,15 @@ void BookViewWindow::HandleSecurityInputEvent(QKeyEvent* event) {
   if(text.isEmpty() || !text[0].isLetterOrNumber()) {
     return;
   }
-  auto dialog =
-    SecurityInputDialog(Ref(*m_userProfile), text.toStdString(), this);
-  if(dialog.exec() == QDialog::Rejected) {
+  if(m_hasSecurityInputDialog) {
     return;
   }
-  auto security = dialog.GetSecurity();
-  if(security == Security() || security == m_security) {
-    return;
-  }
-  m_securityViewStack.Push(m_security);
-  DisplaySecurity(security);
+  auto securityInputDialog =
+    new SecurityInputDialog(Ref(*m_userProfile), text.toStdString(), this);
+  securityInputDialog->setAttribute(Qt::WA_DeleteOnClose);
+  connect(securityInputDialog, &SecurityInputDialog::finished, this,
+    &BookViewWindow::OnSecurityUpdate);
+  securityInputDialog->open();
 }
 
 void BookViewWindow::HandleKeyBindingEvent(
@@ -532,6 +531,20 @@ void BookViewWindow::OnContextMenu(const QPoint& position) {
       dynamic_cast<LinkSecurityContextAction*>(selectedAction)) {
     linkAction->Execute(Store(*this));
   }
+}
+
+void BookViewWindow::OnSecurityUpdate(int result) {
+  m_hasSecurityInputDialog = false;
+  if(result == QDialog::Rejected) {
+    return;
+  }
+  auto dialog = static_cast<SecurityInputDialog*>(sender());
+  auto security = dialog->GetSecurity();
+  if(security == Security() || security == m_security) {
+    return;
+  }
+  m_securityViewStack.Push(m_security);
+  DisplaySecurity(security);
 }
 
 void BookViewWindow::OnUpdateTimer() {
