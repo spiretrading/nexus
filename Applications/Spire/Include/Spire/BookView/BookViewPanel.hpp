@@ -1,5 +1,5 @@
-#ifndef SPIRE_BOOKVIEWPANEL_HPP
-#define SPIRE_BOOKVIEWPANEL_HPP
+#ifndef SPIRE_BOOK_VIEW_PANEL_HPP
+#define SPIRE_BOOK_VIEW_PANEL_HPP
 #include <optional>
 #include <QMetaObject>
 #include <QWidget>
@@ -27,8 +27,6 @@ namespace Spire {
        */
       explicit BookViewPanel(QWidget* parent = nullptr,
         Qt::WindowFlags flags = Qt::WindowFlags());
-
-      ~BookViewPanel() override = default;
 
       /**
        * Initializes this BookViewPanel.

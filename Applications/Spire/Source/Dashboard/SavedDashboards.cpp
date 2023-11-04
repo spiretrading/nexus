@@ -87,7 +87,7 @@ const std::vector<SavedDashboards::Entry>&
 }
 
 void SavedDashboards::Save(const Entry& entry) {
-  auto i = find_if(m_dashboards.begin(), m_dashboards.end(),
+  auto i = std::find_if(m_dashboards.begin(), m_dashboards.end(),
     [&] (const auto& dashboard) {
       return dashboard.m_name == entry.m_name;
     });
@@ -100,7 +100,7 @@ void SavedDashboards::Save(const Entry& entry) {
 }
 
 void SavedDashboards::Delete(const std::string& name) {
-  auto i = find_if(m_dashboards.begin(), m_dashboards.end(),
+  auto i = std::find_if(m_dashboards.begin(), m_dashboards.end(),
     [&] (const auto& entry) {
       return entry.m_name == name;
     });

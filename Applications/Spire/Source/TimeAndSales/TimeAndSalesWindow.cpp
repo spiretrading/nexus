@@ -159,8 +159,8 @@ void TimeAndSalesWindow::DisplaySecurity(const Security& security) {
 }
 
 std::unique_ptr<WindowSettings> TimeAndSalesWindow::GetWindowSettings() const {
-  return std::unique_ptr<WindowSettings>(
-    new TimeAndSalesWindowSettings(*this, Ref(*m_userProfile)));
+  return std::make_unique<TimeAndSalesWindowSettings>(
+    *this, Ref(*m_userProfile));
 }
 
 void TimeAndSalesWindow::showEvent(QShowEvent* event) {
@@ -177,8 +177,8 @@ void TimeAndSalesWindow::showEvent(QShowEvent* event) {
 
 void TimeAndSalesWindow::closeEvent(QCloseEvent* event) {
   if(m_security != Security()) {
-    auto window = std::unique_ptr<WindowSettings>(
-      new TimeAndSalesWindowSettings(*this, Ref(*m_userProfile)));
+    auto window =
+      std::make_unique<TimeAndSalesWindowSettings>(*this, Ref(*m_userProfile));
     m_userProfile->AddRecentlyClosedWindow(std::move(window));
   }
   QFrame::closeEvent(event);

@@ -473,7 +473,7 @@ void OpenEditorCanvasNodeVisitor::Visit(const SecurityNode& node) {
       &dialog->GetSymbolInput(), static_cast<QKeyEvent*>(m_event));
   }
   QObject::connect(dialog, &SecurityInputDialog::finished, widget,
-    [=] (int result) {
+    [=] (auto result) {
       if(result == QDialog::Rejected) {
         return;
       }

@@ -51,7 +51,7 @@ namespace Spire {
         Beam::Ref<const Nexus::ExchangeRateTable> exchangeRates,
         bool showUnrealized);
 
-      ~ProfitAndLossModel();
+      ~ProfitAndLossModel() override;
 
       /**
        * Sets the PortfolioController whose profit and loss is to be modeled.

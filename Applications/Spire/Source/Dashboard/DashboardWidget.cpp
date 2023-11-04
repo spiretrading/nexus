@@ -108,8 +108,8 @@ void DashboardWidget::Initialize(Ref<DashboardModel> model,
           std::unique_ptr<DashboardCellRenderer> {
         if(&cell == &row.GetCell(2)) {
           auto cellRenderer =
-            std::make_unique<DirectionalDashboardCellRenderer>(Ref(cell),
-              Ref(*m_userProfile));
+            std::make_unique<DirectionalDashboardCellRenderer>(
+              Ref(cell), Ref(*m_userProfile));
           auto font = cellRenderer->GetFont();
           if(&cell == &row.GetIndex()) {
             font.setPointSize(12);
@@ -119,9 +119,8 @@ void DashboardWidget::Initialize(Ref<DashboardModel> model,
           cellRenderer->SetFont(font);
           return std::move(cellRenderer);
         } else if(&cell == &row.GetCell(3)) {
-          auto cellRenderer =
-            std::make_unique<PercentageDashboardCellRenderer>(Ref(cell),
-              Ref(*m_userProfile));
+          auto cellRenderer = std::make_unique<PercentageDashboardCellRenderer>(
+            Ref(cell), Ref(*m_userProfile));
           auto font = cellRenderer->GetFont();
           if(&cell == &row.GetIndex()) {
             font.setPointSize(12);

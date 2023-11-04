@@ -236,7 +236,7 @@ void BlotterTasksModel::Link(Ref<BlotterTasksModel> model) {
 
 void BlotterTasksModel::Unlink(BlotterTasksModel& model) {
   m_incomingLinks.erase(
-    find(m_incomingLinks.begin(), m_incomingLinks.end(), &model));
+    std::find(m_incomingLinks.begin(), m_incomingLinks.end(), &model));
   model.m_outgoingLinks.erase(find(model.m_outgoingLinks.begin(),
     model.m_outgoingLinks.end(), this));
   SetupLinkedOrderExecutionMonitor();

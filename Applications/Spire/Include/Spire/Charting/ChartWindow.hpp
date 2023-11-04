@@ -58,7 +58,7 @@ namespace Spire {
 
       /**
        * Sets the Security to display.
-       * \param security The Security to display.
+       * @param security The Security to display.
        */
       void DisplaySecurity(const Nexus::Security& security);
 

@@ -32,6 +32,8 @@ namespace Spire {
       std::unique_ptr<RiskTimerDialog> m_dialog;
       EventHandler m_eventHandler;
 
+      RiskTimerMonitor(const RiskTimerMonitor&) = delete;
+      RiskTimerMonitor& operator =(const RiskTimerMonitor&) = delete;
       void OnRiskState(const Nexus::RiskService::RiskState& riskState);
   };
 }

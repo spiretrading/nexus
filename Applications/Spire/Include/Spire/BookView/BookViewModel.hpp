@@ -46,8 +46,6 @@ namespace Spire {
         const BookViewProperties& properties, const Nexus::Security& security,
         Nexus::Side side);
 
-      ~BookViewModel() override = default;
-
       /**
        * Sets the properties.
        * @param properties The display properties.
