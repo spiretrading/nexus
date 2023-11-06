@@ -14,6 +14,11 @@
 #include "Spire/Canvas/ValueNodes/IntegerNode.hpp"
 #include "Spire/Canvas/ValueNodes/MoneyNode.hpp"
 
+/*
+#include "Spire/Canvas/StandardNodes/AdditionNode.hpp"
+#include "Spire/Canvas/StandardNodes/MultiplicationNode.hpp"
+*/
+
 using namespace Beam;
 using namespace Nexus;
 using namespace Spire;
@@ -60,13 +65,27 @@ TEST_SUITE("SignatureNode") {
   TEST_CASE("convert") {
     auto node =
       std::unique_ptr<CanvasNode>(std::make_unique<TestSignatureNode>());
-    node = node->Replace("p1", std::make_unique<IntegerNode>(0));
-    node = node->Replace("p2", std::make_unique<TimerNode>());
-    REQUIRE_THROWS_AS(node->Convert(MoneyType::GetInstance()),
-      CanvasTypeCompatibilityException);
+    node->Convert(IntegerType::GetInstance());
+    auto childP1 = node->FindChild("p1");
+    REQUIRE(childP1.has_value());
+    REQUIRE(childP1->GetType().GetCompatibility(IntegerType::GetInstance()) ==
+      CanvasType::Compatibility::EQUAL);
+    auto childP2 = node->FindChild("p2");
+    REQUIRE(childP2.has_value());
+    REQUIRE(childP2->GetType().GetCompatibility(IntegerType::GetInstance()) ==
+      CanvasType::Compatibility::EQUAL);
   }
 
-  TEST_CASE("convert_polymorphic") {
+  TEST_CASE("replace") {
+    auto node =
+      std::unique_ptr<CanvasNode>(std::make_unique<TestSignatureNode>());
+    node = node->Replace("p1", std::make_unique<IntegerNode>(0));
+    node = node->Replace("p2", std::make_unique<TimerNode>());
+    REQUIRE_THROWS_AS(node->Convert(
+      MoneyType::GetInstance()), CanvasTypeCompatibilityException);
+  }
+
+  TEST_CASE("replace_polymorphic") {
     auto node =
       std::unique_ptr<CanvasNode>(std::make_unique<TestSignatureNode>());
     node = node->Replace("p1", std::make_unique<MoneyNode>(3 * Money::CENT));
@@ -83,4 +102,13 @@ TEST_SUITE("SignatureNode") {
       IsStructurallyEqual(node->GetChildren()[0], MoneyNode(3 * Money::CENT)));
     REQUIRE(IsStructurallyEqual(node->GetChildren()[1], IntegerNode(0)));
   }
+
+/*
+  TEST_CASE("add") {
+    auto node =
+      std::unique_ptr<CanvasNode>(std::make_unique<AdditionNode>());
+    node = node->Replace("left", std::make_unique<IntegerNode>(711));
+    node = node->Replace("right", std::make_unique<MultiplicationNode>());
+  }
+*/
 }
