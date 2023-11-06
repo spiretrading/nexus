@@ -263,6 +263,9 @@ namespace Spire {
   /** Returns a UiProfile for the TextBox. */
   UiProfile make_text_box_profile();
 
+  /** Returns a UiProfile for the TimeAndSalesPropertiesWindow. */
+  UiProfile make_time_and_sales_properties_window_profile();
+
   /** Returns a UiProfile for the TimeBox. */
   UiProfile make_time_box_profile();
 
