@@ -1,13 +1,13 @@
-#ifndef SPIRE_ADDITIONNODE_HPP
-#define SPIRE_ADDITIONNODE_HPP
+#ifndef SPIRE_ADDITION_NODE_HPP
+#define SPIRE_ADDITION_NODE_HPP
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Canvas/Common/FunctionNode.hpp"
 
 namespace Spire {
 
-  //! Specifies an AdditionNode's signatures.
+  /** Specifies an AdditionNode's signatures. */
   struct AdditionNodeSignatures {
-    typedef boost::mpl::list<
+    using type = boost::mpl::list<
       boost::mpl::vector<Nexus::Quantity, Nexus::Quantity, Nexus::Quantity>,
       boost::mpl::vector<double, double, double>,
       boost::mpl::vector<boost::posix_time::time_duration,
@@ -16,22 +16,21 @@ namespace Spire {
         boost::posix_time::time_duration, boost::posix_time::ptime>,
       boost::mpl::vector<Nexus::Money, Nexus::Money, Nexus::Money>,
       boost::mpl::vector<Nexus::Quantity, double, double>,
-      boost::mpl::vector<double, Nexus::Quantity, double>> type;
+      boost::mpl::vector<double, Nexus::Quantity, double>>;
   };
 
-  /*! \class AdditionNode
-      \brief Adds two CanvasNodes together.
-   */
+  /** Adds two CanvasNodes together. */
   class AdditionNode : public FunctionNode {
     public:
 
-      //! Constructs an AdditionNode.
+      /** Constructs an AdditionNode. */
       AdditionNode();
 
-      virtual void Apply(CanvasNodeVisitor& visitor) const;
+      void Apply(CanvasNodeVisitor& visitor) const override;
 
+      using FunctionNode::Replace;
     protected:
-      virtual std::unique_ptr<CanvasNode> Clone() const;
+      std::unique_ptr<CanvasNode> Clone() const override;
 
     private:
       friend struct Beam::Serialization::DataShuttle;
@@ -47,11 +46,9 @@ namespace Spire {
   }
 }
 
-namespace Beam {
-namespace Serialization {
+namespace Beam::Serialization {
   template<>
   struct IsDefaultConstructable<Spire::AdditionNode> : std::false_type {};
-}
 }
 
 #endif

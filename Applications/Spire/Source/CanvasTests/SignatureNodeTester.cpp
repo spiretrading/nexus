@@ -1,12 +1,20 @@
 #include <doctest/doctest.h>
+#include <Beam/Collections/DereferenceIterator.hpp>
+#include <boost/optional/optional_io.hpp>
 #include "Spire/Canvas/Common/CanvasNodeVisitor.hpp"
+#include "Spire/Canvas/Common/NoneNode.hpp"
 #include "Spire/Canvas/Common/SignatureNode.hpp"
 #include "Spire/Canvas/StandardNodes/TimerNode.hpp"
+#include "Spire/Canvas/Operations/CanvasNodeStructuralEquality.hpp"
 #include "Spire/Canvas/Operations/CanvasTypeCompatibilityException.hpp"
 #include "Spire/Canvas/Operations/DefaultCanvasNodeFromCanvasTypeVisitor.hpp"
+#include "Spire/Canvas/Types/IntegerType.hpp"
 #include "Spire/Canvas/Types/MoneyType.hpp"
+#include "Spire/Canvas/Types/UnionType.hpp"
 #include "Spire/Canvas/ValueNodes/IntegerNode.hpp"
+#include "Spire/Canvas/ValueNodes/MoneyNode.hpp"
 
+using namespace Beam;
 using namespace Nexus;
 using namespace Spire;
 
@@ -22,8 +30,11 @@ namespace {
         };
         m_signatures = MakeSignatures<Signatures>();
         SetText("TestSignature");
-        AddChild("p1", MakeDefaultCanvasNode(IntegerType::GetInstance()));
-        AddChild("p2", MakeDefaultCanvasNode(MoneyType::GetInstance()));
+        auto childType = UnionType::Create(
+          MakeDereferenceView(std::vector<std::shared_ptr<NativeType>>{
+            MoneyType::GetInstance(), IntegerType::GetInstance()}));
+        AddChild("p1", MakeDefaultCanvasNode(*childType));
+        AddChild("p2", MakeDefaultCanvasNode(*childType));
         SetType(MoneyType::GetInstance());
       }
 
@@ -47,12 +58,29 @@ namespace {
 
 TEST_SUITE("SignatureNode") {
   TEST_CASE("convert") {
-    auto timer = std::make_unique<TimerNode>();
     auto node =
       std::unique_ptr<CanvasNode>(std::make_unique<TestSignatureNode>());
     node = node->Replace("p1", std::make_unique<IntegerNode>(0));
-    node = node->Replace("p2", std::move(timer));
+    node = node->Replace("p2", std::make_unique<TimerNode>());
     REQUIRE_THROWS_AS(node->Convert(MoneyType::GetInstance()),
       CanvasTypeCompatibilityException);
+  }
+
+  TEST_CASE("convert_polymorphic") {
+    auto node =
+      std::unique_ptr<CanvasNode>(std::make_unique<TestSignatureNode>());
+    node = node->Replace("p1", std::make_unique<MoneyNode>(3 * Money::CENT));
+    auto p2 = NoneNode().Convert(*UnionType::Create(
+      MakeDereferenceView(std::vector<std::shared_ptr<NativeType>>{
+        MoneyType::GetInstance(), IntegerType::GetInstance()})));
+    node = node->Replace("p2", std::move(p2));
+    auto childP2 = node->FindChild("p2");
+    REQUIRE(childP2.has_value());
+    REQUIRE(childP2->GetType().GetCompatibility(IntegerType::GetInstance()) ==
+      CanvasType::Compatibility::EQUAL);
+    REQUIRE(node->GetChildren().size() == 2);
+    REQUIRE(
+      IsStructurallyEqual(node->GetChildren()[0], MoneyNode(3 * Money::CENT)));
+    REQUIRE(IsStructurallyEqual(node->GetChildren()[1], IntegerNode(0)));
   }
 }

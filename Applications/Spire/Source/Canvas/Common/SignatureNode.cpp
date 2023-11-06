@@ -12,7 +12,7 @@ using namespace Spire;
 
 namespace {
   auto GetSignatureType(const std::vector<SignatureNode::Signature>& signatures,
-      const CanvasType& returnType, size_t index) {
+      const CanvasType& returnType, std::size_t index) {
     auto compatibleTypes = std::vector<std::shared_ptr<NativeType>>();
     for(auto& signature : signatures) {
       if(IsCompatible(returnType, *signature.back())) {
@@ -96,7 +96,7 @@ std::unique_ptr<CanvasNode>
     clone->SetType(*returnType);
   }
   clone->m_type = returnType;
-  return std::move(clone);
+  return clone;
 }
 
 std::unique_ptr<CanvasNode> SignatureNode::Replace(
@@ -121,19 +121,21 @@ std::unique_ptr<CanvasNode> SignatureNode::Replace(
   clone->SetChild(child, std::move(replacement));
   auto remainingSignatures = std::vector<Signature>();
   for(auto& signature : GetSignatures()) {
-    if(IsCompatible(replacementType, *signature[replacementIndex]) ||
-        dynamic_cast<const RecordType*>(&replacementType) &&
-          std::dynamic_pointer_cast<const RecordType>(
-            signature[replacementIndex])) {
+    auto isCompatible = true;
+    for(auto i = std::size_t(0); i != signature.size() - 1; ++i) {
+      if(!IsCompatible(clone->GetChildren()[i].GetType(), *signature[i])) {
+        isCompatible = false;
+        break;
+      }
+    }
+    if(isCompatible) {
       remainingSignatures.push_back(signature);
     }
   }
   for(auto i = std::size_t(0); i < GetChildren().size(); ++i) {
-    if(i == replacementIndex) {
-      continue;
-    }
-    auto& arg = GetChildren()[i];
-    auto argParameterType = GetSignatureType(remainingSignatures, *m_type, i);
+    auto& arg = clone->GetChildren()[i];
+    auto argParameterType =
+      GetSignatureType(remainingSignatures, *clone->m_type, i);
     if(!IsCompatible(*argParameterType, arg.GetType())) {
       auto convertedArg = ForceConversion(Clone(arg), *argParameterType);
       clone->SetChild(arg, std::move(convertedArg));
@@ -141,7 +143,7 @@ std::unique_ptr<CanvasNode> SignatureNode::Replace(
   }
   auto returnType = GetReturnType(*clone, GetSignatures());
   clone->SetType(*returnType);
-  return std::move(clone);
+  return clone;
 }
 
 SignatureNode::SignatureNode()

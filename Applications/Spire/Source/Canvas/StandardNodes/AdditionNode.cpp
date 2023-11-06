@@ -4,7 +4,6 @@
 using namespace Beam;
 using namespace Beam::Serialization;
 using namespace Spire;
-using namespace std;
 
 AdditionNode::AdditionNode() {
   DefineFunction("Add", { "left", "right" },
@@ -15,8 +14,8 @@ void AdditionNode::Apply(CanvasNodeVisitor& visitor) const {
   visitor.Visit(*this);
 }
 
-unique_ptr<CanvasNode> AdditionNode::Clone() const {
-  return make_unique<AdditionNode>(*this);
+std::unique_ptr<CanvasNode> AdditionNode::Clone() const {
+  return std::make_unique<AdditionNode>(*this);
 }
 
 AdditionNode::AdditionNode(ReceiveBuilder) {}
