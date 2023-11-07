@@ -14,10 +14,8 @@
 #include "Spire/Canvas/ValueNodes/IntegerNode.hpp"
 #include "Spire/Canvas/ValueNodes/MoneyNode.hpp"
 
-/*
 #include "Spire/Canvas/StandardNodes/AdditionNode.hpp"
 #include "Spire/Canvas/StandardNodes/MultiplicationNode.hpp"
-*/
 
 using namespace Beam;
 using namespace Nexus;
@@ -35,12 +33,12 @@ namespace {
         };
         m_signatures = MakeSignatures<Signatures>();
         SetText("TestSignature");
-        auto childType = UnionType::Create(
+        auto type = UnionType::Create(
           MakeDereferenceView(std::vector<std::shared_ptr<NativeType>>{
             MoneyType::GetInstance(), IntegerType::GetInstance()}));
-        AddChild("p1", MakeDefaultCanvasNode(*childType));
-        AddChild("p2", MakeDefaultCanvasNode(*childType));
-        SetType(MoneyType::GetInstance());
+        AddChild("p1", MakeDefaultCanvasNode(*type));
+        AddChild("p2", MakeDefaultCanvasNode(*type));
+        SetType(*type);
       }
 
       void Apply(CanvasNodeVisitor& visitor) const override {
@@ -65,15 +63,13 @@ TEST_SUITE("SignatureNode") {
   TEST_CASE("convert") {
     auto node =
       std::unique_ptr<CanvasNode>(std::make_unique<TestSignatureNode>());
-    node->Convert(IntegerType::GetInstance());
+    node = node->Convert(IntegerType::GetInstance());
     auto childP1 = node->FindChild("p1");
     REQUIRE(childP1.has_value());
-    REQUIRE(childP1->GetType().GetCompatibility(IntegerType::GetInstance()) ==
-      CanvasType::Compatibility::EQUAL);
+    REQUIRE(IsStructurallyEqual(*childP1, IntegerNode(0)));
     auto childP2 = node->FindChild("p2");
     REQUIRE(childP2.has_value());
-    REQUIRE(childP2->GetType().GetCompatibility(IntegerType::GetInstance()) ==
-      CanvasType::Compatibility::EQUAL);
+    REQUIRE(IsStructurallyEqual(*childP2, IntegerNode(0)));
   }
 
   TEST_CASE("replace") {
@@ -103,12 +99,10 @@ TEST_SUITE("SignatureNode") {
     REQUIRE(IsStructurallyEqual(node->GetChildren()[1], IntegerNode(0)));
   }
 
-/*
   TEST_CASE("add") {
     auto node =
       std::unique_ptr<CanvasNode>(std::make_unique<AdditionNode>());
     node = node->Replace("left", std::make_unique<IntegerNode>(711));
     node = node->Replace("right", std::make_unique<MultiplicationNode>());
   }
-*/
 }

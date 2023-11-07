@@ -43,6 +43,16 @@ namespace {
     }
     return UnionType::Create(MakeDereferenceView(returnTypes));
   }
+
+  auto MergeSignatureTypes(
+      const std::vector<SignatureNode::Signature>& signatures,
+      std::size_t index) {
+    auto types = std::vector<std::shared_ptr<NativeType>>();
+    for(auto& signature : signatures) {
+      types.push_back(signature[index]);
+    }
+    return UnionType::Create(MakeDereferenceView(types));
+  }
 }
 
 std::unique_ptr<CanvasNode>
@@ -50,27 +60,23 @@ std::unique_ptr<CanvasNode>
   if(type.GetCompatibility(GetType()) == CanvasType::Compatibility::EQUAL) {
     return Clone(*this);
   }
-  auto signatureEntries =
-    std::vector<SignatureNode::Signature>(GetSignatures().front().size());
+  auto compatibleSignatures = std::vector<Signature>();
   for(auto& signature : GetSignatures()) {
     if(IsCompatible(type, *signature.back())) {
-      for(const auto& type : MakeIndexView(signature)) {
-        signatureEntries[type.GetIndex()].push_back(type.GetValue());
-      }
+      compatibleSignatures.push_back(signature);
     }
   }
-  if(signatureEntries.front().empty()) {
+  if(compatibleSignatures.empty()) {
     BOOST_THROW_EXCEPTION(CanvasTypeCompatibilityException());
   }
   auto clone = Clone(*this);
-  for(auto& signature : DropLast(MakeIndexView(signatureEntries))) {
-    auto parameterType =
-      UnionType::Create(MakeDereferenceView(signature.GetValue()));
-    auto& child = clone->GetChildren()[signature.GetIndex()];
+  for(auto i = 0; i != compatibleSignatures.front().size() - 1; ++i) {
+    auto parameterType = MergeSignatureTypes(compatibleSignatures, i);
+    auto& child = clone->GetChildren()[i];
     clone->SetChild(child, ForceConversion(Clone(child), *parameterType));
   }
-  auto returnType =
-    UnionType::Create(MakeDereferenceView(signatureEntries.back()));
+  auto returnType = MergeSignatureTypes(
+    compatibleSignatures, compatibleSignatures.front().size() - 1);
   auto hasCompatibility = false;
   for(auto& signature : GetSignatures()) {
     if(returnType->GetCompatibility(*signature.back()) ==
