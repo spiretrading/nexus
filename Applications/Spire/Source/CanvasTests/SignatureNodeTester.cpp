@@ -8,15 +8,14 @@
 #include "Spire/Canvas/Operations/CanvasNodeStructuralEquality.hpp"
 #include "Spire/Canvas/Operations/CanvasTypeCompatibilityException.hpp"
 #include "Spire/Canvas/Operations/DefaultCanvasNodeFromCanvasTypeVisitor.hpp"
+#include "Spire/Canvas/StandardNodes/AdditionNode.hpp"
+#include "Spire/Canvas/StandardNodes/MultiplicationNode.hpp"
 #include "Spire/Canvas/Types/DecimalType.hpp"
 #include "Spire/Canvas/Types/IntegerType.hpp"
 #include "Spire/Canvas/Types/MoneyType.hpp"
 #include "Spire/Canvas/Types/UnionType.hpp"
 #include "Spire/Canvas/ValueNodes/IntegerNode.hpp"
 #include "Spire/Canvas/ValueNodes/MoneyNode.hpp"
-
-#include "Spire/Canvas/StandardNodes/AdditionNode.hpp"
-#include "Spire/Canvas/StandardNodes/MultiplicationNode.hpp"
 
 using namespace Beam;
 using namespace Nexus;
