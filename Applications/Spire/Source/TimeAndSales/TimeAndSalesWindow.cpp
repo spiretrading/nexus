@@ -252,7 +252,7 @@ void TimeAndSalesWindow::update_export_menu_item() {
 }
 
 void TimeAndSalesWindow::on_current(const Security& security) {
-  auto prefix_name = displayText(security) + " " + QString(0x2013) + " ";
+  auto prefix_name = to_text(security) + " " + QString(0x2013) + " ";
   m_responsive_title_label->get_labels()->set(0, prefix_name + TITLE_NAME);
   m_responsive_title_label->get_labels()->set(1,
     prefix_name + TITLE_SHORT_NAME);

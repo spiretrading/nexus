@@ -50,7 +50,7 @@ namespace {
     auto model = std::make_shared<LocalComboBoxQueryModel>();
     for(auto security_info : security_infos) {
       model->add(
-        displayText(security_info.m_security).toLower(), security_info);
+        to_text(security_info.m_security).toLower(), security_info);
       model->add(
         QString::fromStdString(security_info.m_name).toLower(), security_info);
     }

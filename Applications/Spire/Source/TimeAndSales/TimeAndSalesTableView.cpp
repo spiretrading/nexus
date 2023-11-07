@@ -110,7 +110,7 @@ namespace {
   }
 
   auto make_time_cell(const ptime& time) {
-    auto ts = displayText(time);
+    auto ts = to_text(time);
     ts = ts.left(ts.lastIndexOf('.'));
     auto time_box = make_time_box(duration_from_string(ts.toStdString()));
     time_box->set_read_only(true);
@@ -153,7 +153,7 @@ namespace {
   auto make_market_cell(const std::string& market_code) {
     auto query_model = std::make_shared<LocalComboBoxQueryModel>();
     auto market = GetDefaultMarketDatabase().FromCode(market_code);
-    query_model->add(displayText(MarketToken(market.m_code)).toLower(), market);
+    query_model->add(to_text(MarketToken(market.m_code)).toLower(), market);
     query_model->add(QString(market.m_code.GetData()).toLower(), market);
     auto market_box = new MarketBox(std::move(query_model),
       std::make_shared<LocalValueModel<MarketCode>>(market_code));
