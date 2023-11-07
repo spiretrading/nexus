@@ -87,6 +87,12 @@ std::unique_ptr<CanvasNode>
 
 std::unique_ptr<CanvasNode> SignatureNode::Replace(
     const CanvasNode& child, std::unique_ptr<CanvasNode> replacement) const {
+  auto clone = CanvasNode::Clone(*this);
+  if(child.GetType().GetCompatibility(replacement->GetType()) ==
+      CanvasType::Compatibility::EQUAL) {
+    clone->SetChild(child, std::move(replacement));
+    return clone;
+  }
   auto replacementIndex = [&] {
     for(auto& selfChild : MakeIndexView(GetChildren())) {
       if(&selfChild.GetValue() == &child) {
@@ -102,7 +108,6 @@ std::unique_ptr<CanvasNode> SignatureNode::Replace(
       Spire::Convert(std::move(replacement), *replacementParameterType);
     return Replace(child, std::move(convertedReplacement));
   }
-  auto clone = CanvasNode::Clone(*this);
   auto& replacementType = replacement->GetType();
   clone->SetChild(child, std::move(replacement));
   auto remainingSignatures = std::vector<Signature>();
