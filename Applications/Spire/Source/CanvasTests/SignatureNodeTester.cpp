@@ -112,19 +112,36 @@ TEST_SUITE("SignatureNode") {
     REQUIRE(IsStructurallyEqual(node->GetChildren()[1], IntegerNode(0)));
   }
 
-  TEST_CASE("add") {
+  TEST_CASE("addition_node_subchildren") {
     auto node =
       std::unique_ptr<CanvasNode>(std::make_unique<AdditionNode>());
     node = node->Replace("left", std::make_unique<IntegerNode>(711));
-    node = node->Replace("right", std::make_unique<MultiplicationNode>());
     auto expectedType = UnionType::Create(
       MakeDereferenceView(std::vector<std::shared_ptr<NativeType>>{
         DecimalType::GetInstance(), IntegerType::GetInstance()}));
     REQUIRE(node->GetType().GetCompatibility(*expectedType) ==
-        CanvasType::Compatibility::EQUAL);
+      CanvasType::Compatibility::EQUAL);
+    node = node->Replace("right", std::make_unique<MultiplicationNode>());
+    REQUIRE(node->GetType().GetCompatibility(*expectedType) ==
+      CanvasType::Compatibility::EQUAL);
     REQUIRE(node->GetChildren().size() == 2);
     REQUIRE(
       IsStructurallyEqual(node->GetChildren()[0], IntegerNode(711)));
     REQUIRE(node->GetChildren()[1].GetChildren().size() == 2);
+  }
+
+  TEST_CASE("addition_node_conversion") {
+    auto node =
+      std::unique_ptr<CanvasNode>(std::make_unique<AdditionNode>());
+    auto initialType = std::shared_ptr<CanvasType>(node->GetType());
+    node = node->Replace("left", std::make_unique<IntegerNode>(711));
+    auto expectedType = UnionType::Create(
+      MakeDereferenceView(std::vector<std::shared_ptr<NativeType>>{
+        DecimalType::GetInstance(), IntegerType::GetInstance()}));
+    REQUIRE(node->GetType().GetCompatibility(*expectedType) ==
+      CanvasType::Compatibility::EQUAL);
+    node = node->Replace("left", std::make_unique<NoneNode>());
+    REQUIRE(node->GetType().GetCompatibility(*initialType) ==
+      CanvasType::Compatibility::EQUAL);
   }
 }
