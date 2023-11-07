@@ -1,42 +1,35 @@
-#ifndef SPIRE_TIME_AND_SALES_WINDOW_PROPERTIES_HPP
-#define SPIRE_TIME_AND_SALES_WINDOW_PROPERTIES_HPP
+#ifndef SPIRE_TIME_AND_SALES_PROPERTIES_HPP
+#define SPIRE_TIME_AND_SALES_PROPERTIES_HPP
 #include <array>
 #include <QColor>
 #include <QFont>
 #include "Spire/TimeAndSales/BboIndicator.hpp"
 #include "Spire/TimeAndSales/TimeAndSales.hpp"
+#include "Spire/Ui/HighlightBox.hpp"
 
 namespace Spire {
 
   /** Represents the properties used to in the time and sales window. */
-  class TimeAndSalesWindowProperties {
+  class TimeAndSalesProperties {
     public:
 
-      /* The style properties of the BBO indicator. */
-      struct Styles {
-
-        /* The text color. */
-        QColor m_text_color;
-
-        /* The band color. */
-        QColor m_band_color;
-      };
+      using Highlight = HighlightColor;
 
       /* Constructs default properties. */
-      TimeAndSalesWindowProperties();
+      TimeAndSalesProperties();
 
-      /* Returns the styles of the BBO indicator. */
-      const Styles& get_styles(BboIndicator indicator) const;
+      /* Returns the highlight of a specific BBO indicator. */
+      const Highlight& get_highlight(BboIndicator indicator) const;
 
-      /* Sets the styles to a BBO indicator. */
-      void set_styles(BboIndicator indicator, const Styles& styles);
-
+      /* Sets the highlight to a specific BBO indicator. */
+      void set_highlight(BboIndicator indicator, const Highlight& highlight);
+    
       /* Returns the font. */
       const QFont& get_font() const;
-
+    
       /* Sets the font. */
       void set_font(const QFont& font);
-
+    
       /** Returns <code>true</code> iff the grid is shown. */
       bool is_show_grid() const;
 
@@ -44,7 +37,7 @@ namespace Spire {
       void set_show_grid(bool show_grid);
 
     private:
-      std::array<Styles, BBO_INDICATOR_COUNT> m_styles;
+      std::array<Highlight, BBO_INDICATOR_COUNT> m_highlights;
       QFont m_font;
       bool m_show_grid;
   };

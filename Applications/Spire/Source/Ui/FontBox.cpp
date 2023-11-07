@@ -74,7 +74,7 @@ FontBox::FontBox(std::shared_ptr<ValueModel<QFont>> current, QWidget* parent)
     if(m_current->get().pixelSize() < 1) {
       return 1;
     }
-    return m_current->get().pixelSize();
+    return unscale_width(m_current->get().pixelSize());
   }();
   size_model->set(font_size);
   m_font_size_box = new IntegerBox(std::move(size_model));
