@@ -137,7 +137,7 @@ void FocusObserver::ApplicationFocusFilter::on_focus_changed(
     } else if(is_ancestor(entry->m_filter->m_widget, now)) {
       entry->m_filter->m_state = State::FOCUS_IN;
     } else if(entry->m_filter->m_widget == old ||
-        entry->m_filter->m_widget->isAncestorOf(old)) {
+        is_ancestor(entry->m_filter->m_widget, old)) {
       entry->m_filter->m_state = State::NONE;
     }
     if(state != entry->m_filter->m_state) {

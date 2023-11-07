@@ -52,11 +52,14 @@ ScrollBar::ScrollBar(Qt::Orientation orientation, QWidget* parent)
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   }
   m_thumb = new Box();
+  match(*m_thumb, ScrollThumb());
   update_style(*m_thumb, [] (auto& style) {
     style.get(Any()).set(BackgroundColor(QColor(0xC8C8C8)));
+    style.get(Hover() || Drag()).set(BackgroundColor(QColor(0xA0A0A0)));
   });
   m_thumb->setSizePolicy(sizePolicy().transposed());
-  m_track = new Box(m_thumb);
+  m_track = new Box(m_thumb, this);
+  match(*m_track, ScrollTrack());
   update_style(*m_track, [&] (auto& style) {
     style.get(Any()).
       set(border(0, QColor(Qt::black))).
@@ -71,7 +74,6 @@ ScrollBar::ScrollBar(Qt::Orientation orientation, QWidget* parent)
     style.get(Any()).set(PaddingRight(0));
     style.get(Any()).set(PaddingBottom(0));
   });
-  enclose(*this, *m_track);
   m_track_scroll_timer.setSingleShot(true);
   connect(
     &m_track_scroll_timer, &QTimer::timeout, this, &ScrollBar::scroll_page);
@@ -139,9 +141,9 @@ connection ScrollBar::connect_position_signal(
 
 QSize ScrollBar::sizeHint() const {
   if(m_orientation == Qt::Orientation::Vertical) {
-    return scale(15, 1);
+    return scale(13, 1);
   } else {
-    return scale(1, 15);
+    return scale(1, 13);
   }
 }
 
@@ -170,6 +172,7 @@ void ScrollBar::mousePressEvent(QMouseEvent* event) {
   if(m_thumb->rect().contains(m_thumb->mapFromGlobal(event->globalPos()))) {
     m_drag_position = ::get_position(m_orientation, event->windowPos());
     m_is_dragging = true;
+    match(*m_thumb, Drag());
   } else if(::get_position(m_orientation, event->globalPos()) < ::get_position(
       m_orientation, m_thumb->mapToGlobal(m_thumb->pos()))) {
     m_track_scroll_direction = -1;
@@ -187,6 +190,7 @@ void ScrollBar::mousePressEvent(QMouseEvent* event) {
 
 void ScrollBar::mouseReleaseEvent(QMouseEvent* event) {
   m_is_dragging = false;
+  unmatch(*m_thumb, Drag());
   if(m_track_scroll_direction != 0) {
     m_track_scroll_timer.stop();
     m_track_scroll_direction = 0;
@@ -195,6 +199,7 @@ void ScrollBar::mouseReleaseEvent(QMouseEvent* event) {
 }
 
 void ScrollBar::resizeEvent(QResizeEvent* event) {
+  m_track->resize(event->size());
   update_thumb();
 }
 

@@ -185,8 +185,18 @@ namespace Details {
    * @param rhs The right hand side.
    * @return <i>lhs</i> % <i>rhs</i>
    */
-  inline Money operator %(Money lhs, Money rhs) {
+  inline Money fmod(Money lhs, Money rhs) {
     return Money(static_cast<Quantity>(lhs) % static_cast<Quantity>(rhs));
+  }
+
+  /**
+   * Returns the modulus of two Money objects.
+   * @param lhs The left hand side.
+   * @param rhs The right hand side.
+   * @return <i>lhs</i> % <i>rhs</i>
+   */
+  inline Money operator %(Money lhs, Money rhs) {
+    return fmod(lhs, rhs);
   }
 
   /**

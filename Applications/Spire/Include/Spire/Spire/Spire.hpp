@@ -29,6 +29,7 @@ namespace Spire {
   class LocalTechnicalsModel;
   template<typename T> class LocalValueModel;
   template<typename T> class ModelTransactionLog;
+  template<typename T> class OptionalScalarValueModelDecorator;
   template<typename T> class QtFuture;
   template<typename T> class QtPromise;
   class QtTaskQueue;

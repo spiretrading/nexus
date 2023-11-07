@@ -147,10 +147,8 @@ namespace Spire {
       std::shared_ptr<CurrentModel> m_current;
       EdgeNavigation m_edge_navigation;
       boost::optional<int> m_last_current;
-      QRect m_navigation_box;
       boost::signals2::scoped_connection m_connection;
 
-      void update(boost::optional<int> current);
       void on_current(boost::optional<int> current);
   };
 }
