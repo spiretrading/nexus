@@ -45,6 +45,8 @@ namespace Nexus {
 
         /** The common display name. */
         std::string m_displayName;
+
+        bool operator ==(const Entry& rhs) const = default;
       };
 
       /** Returns an Entry representing no market. */
@@ -213,31 +215,6 @@ namespace Nexus {
       }
       return marketDatabase;
     }, std::runtime_error("Failed to parse market database."));
-  }
-
-  /**
-   * Tests two MarketDatabase Entries for equality.
-   * @param lhs The left hand side of the equality.
-   * @param rhs The right hand side of the equality.
-   * @return <code>true</code> iff the two MarketDatabase Entries are equal.
-   */
-  inline bool operator ==(const MarketDatabase::Entry& lhs,
-      const MarketDatabase::Entry& rhs) {
-    return lhs.m_code == rhs.m_code && lhs.m_countryCode == rhs.m_countryCode &&
-      lhs.m_timeZone == rhs.m_timeZone && lhs.m_currency == rhs.m_currency &&
-      lhs.m_description == rhs.m_description &&
-      lhs.m_displayName == rhs.m_displayName;
-  }
-
-  /**
-   * Tests two MarketDatabase Entries for equality.
-   * @param lhs The left hand side of the equality.
-   * @param rhs The right hand side of the equality.
-   * @return <code>true</code> iff the two MarketDatabase Entries are equal.
-   */
-  inline bool operator !=(const MarketDatabase::Entry& lhs,
-      const MarketDatabase::Entry& rhs) {
-    return !(lhs == rhs);
   }
 
   inline std::string ToString(

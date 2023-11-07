@@ -53,11 +53,7 @@ namespace Nexus::Accounting {
     Inventory(Position position, Money grossProfitAndLoss, Money fees,
       Quantity volume, int transactionCount);
 
-    /** Tests if two inventories are equal. */
-    bool operator ==(const Inventory& inventory) const;
-
-    /** Tests if two inventories are not equal. */
-    bool operator !=(const Inventory& inventory) const;
+    bool operator ==(const Inventory& inventory) const = default;
   };
 
   /**
@@ -91,22 +87,9 @@ namespace Nexus::Accounting {
       m_volume(volume),
       m_transactionCount(transactionCount) {}
 
-  template<typename P>
-  bool Inventory<P>::operator ==(const Inventory& inventory) const {
-    return m_position == inventory.m_position &&
-      m_grossProfitAndLoss == inventory.m_grossProfitAndLoss &&
-      m_fees == inventory.m_fees && m_volume == inventory.m_volume &&
-      m_transactionCount == inventory.m_transactionCount;
-  }
-
-  template<typename P>
-  bool Inventory<P>::operator !=(const Inventory& inventory) const {
-    return !(*this == inventory);
-  }
-
   template<typename Position>
-  std::ostream& operator <<(std::ostream& out,
-      const Inventory<Position>& inventory) {
+  std::ostream& operator <<(
+      std::ostream& out, const Inventory<Position>& inventory) {
     return out << '(' << inventory.m_position << ' ' <<
       inventory.m_grossProfitAndLoss << ' ' << inventory.m_fees << ' ' <<
       inventory.m_volume << ' ' << inventory.m_transactionCount << ')';
