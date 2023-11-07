@@ -4,7 +4,6 @@
 #include "Spire/Canvas/Common/CustomNode.hpp"
 #include "Spire/Canvas/Common/FunctionNode.hpp"
 #include "Spire/Canvas/Common/NoneNode.hpp"
-#include "Spire/Canvas/Common/SignatureNode.hpp"
 #include "Spire/Canvas/ControlNodes/AggregateNode.hpp"
 #include "Spire/Canvas/ControlNodes/ChainNode.hpp"
 #include "Spire/Canvas/ControlNodes/SpawnNode.hpp"
