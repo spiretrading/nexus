@@ -22,28 +22,6 @@ namespace {
     return UnionType::Create(MakeDereferenceView(compatibleTypes));
   }
 
-  auto GetReturnType(const CanvasNode& node,
-      const std::vector<SignatureNode::Signature>& signatures) {
-    auto returnTypes = std::vector<std::shared_ptr<NativeType>>();
-    for(auto& signature : signatures) {
-      auto validSignature = true;
-      for(auto& child : MakeIndexView(node.GetChildren())) {
-        if(!IsCompatible(
-            child.GetValue().GetType(), *signature[child.GetIndex()]) &&
-              (dynamic_cast<const RecordType*>(&child.GetValue().GetType()) ==
-                nullptr || std::dynamic_pointer_cast<const RecordType>(
-                  signature[child.GetIndex()]) == nullptr)) {
-          validSignature = false;
-          break;
-        }
-      }
-      if(validSignature) {
-        returnTypes.emplace_back(signature.back());
-      }
-    }
-    return UnionType::Create(MakeDereferenceView(returnTypes));
-  }
-
   auto MergeSignatureTypes(
       const std::vector<SignatureNode::Signature>& signatures,
       std::size_t index) {
@@ -99,14 +77,15 @@ std::unique_ptr<CanvasNode>
   if(!IsCompatible(*returnType, clone->GetType())) {
     clone->SetType(*returnType);
   }
+  clone->m_type = std::move(returnType);
   return clone;
 }
 
 std::unique_ptr<CanvasNode> SignatureNode::Replace(
     const CanvasNode& child, std::unique_ptr<CanvasNode> replacement) const {
-  auto clone = CanvasNode::Clone(*this);
   if(child.GetType().GetCompatibility(replacement->GetType()) ==
       CanvasType::Compatibility::EQUAL) {
+    auto clone = Clone(*this);
     clone->SetChild(child, std::move(replacement));
     return clone;
   }
@@ -125,31 +104,40 @@ std::unique_ptr<CanvasNode> SignatureNode::Replace(
       Spire::Convert(std::move(replacement), *replacementParameterType);
     return Replace(child, std::move(convertedReplacement));
   }
-  auto& replacementType = replacement->GetType();
-  clone->SetChild(child, std::move(replacement));
-  auto remainingSignatures = std::vector<Signature>();
+  auto compatibleSignatures = std::vector<Signature>();
   for(auto& signature : GetSignatures()) {
+    auto clone = Clone(*this);
+    clone->SetChild(child, Clone(*replacement));
     auto isCompatible = true;
     for(auto i = std::size_t(0); i != signature.size() - 1; ++i) {
-      if(!IsCompatible(clone->GetChildren()[i].GetType(), *signature[i])) {
-        isCompatible = false;
-        break;
+      auto& parameterType = signature[i];
+      auto& child = clone->GetChildren()[i];
+      if(!IsCompatible(*parameterType, clone->GetChildren()[i].GetType())) {
+        try {
+          clone->SetChild(child, Spire::Convert(Clone(child), *parameterType));
+        } catch(const CanvasOperationException&) {
+          isCompatible = false;
+          break;
+        }
       }
     }
     if(isCompatible) {
-      remainingSignatures.push_back(signature);
+      compatibleSignatures.push_back(signature);
     }
   }
+  auto clone = Clone(*this);
+  clone->SetChild(child, std::move(replacement));
   for(auto i = std::size_t(0); i < GetChildren().size(); ++i) {
     auto& arg = clone->GetChildren()[i];
     auto argParameterType =
-      GetSignatureType(remainingSignatures, *clone->m_type, i);
+      GetSignatureType(compatibleSignatures, *clone->m_type, i);
     if(!IsCompatible(*argParameterType, arg.GetType())) {
       auto convertedArg = ForceConversion(Clone(arg), *argParameterType);
       clone->SetChild(arg, std::move(convertedArg));
     }
   }
-  auto returnType = GetReturnType(*clone, GetSignatures());
+  auto returnType = MergeSignatureTypes(
+    compatibleSignatures, compatibleSignatures.front().size() - 1);
   clone->SetType(*returnType);
   return clone;
 }
