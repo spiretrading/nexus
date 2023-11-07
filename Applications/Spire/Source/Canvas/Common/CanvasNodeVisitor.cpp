@@ -29,9 +29,11 @@
 #include "Spire/Canvas/StandardNodes/AdditionNode.hpp"
 #include "Spire/Canvas/StandardNodes/AlarmNode.hpp"
 #include "Spire/Canvas/StandardNodes/CeilNode.hpp"
+#include "Spire/Canvas/StandardNodes/CountNode.hpp"
 #include "Spire/Canvas/StandardNodes/CurrentDateNode.hpp"
 #include "Spire/Canvas/StandardNodes/CurrentDateTimeNode.hpp"
 #include "Spire/Canvas/StandardNodes/CurrentTimeNode.hpp"
+#include "Spire/Canvas/StandardNodes/DistinctNode.hpp"
 #include "Spire/Canvas/StandardNodes/DivisionNode.hpp"
 #include "Spire/Canvas/StandardNodes/EqualsNode.hpp"
 #include "Spire/Canvas/StandardNodes/FilterNode.hpp"
@@ -49,6 +51,7 @@
 #include "Spire/Canvas/StandardNodes/MinNode.hpp"
 #include "Spire/Canvas/StandardNodes/MultiplicationNode.hpp"
 #include "Spire/Canvas/StandardNodes/NotNode.hpp"
+#include "Spire/Canvas/StandardNodes/PreviousNode.hpp"
 #include "Spire/Canvas/StandardNodes/RangeNode.hpp"
 #include "Spire/Canvas/StandardNodes/RoundNode.hpp"
 #include "Spire/Canvas/StandardNodes/SubtractionNode.hpp"
@@ -120,6 +123,10 @@ void CanvasNodeVisitor::Visit(const ChainNode& node) {
   Visit(static_cast<const CanvasNode&>(node));
 }
 
+void CanvasNodeVisitor::Visit(const CountNode& node) {
+  Visit(static_cast<const SignatureNode&>(node));
+}
+
 void CanvasNodeVisitor::Visit(const CurrencyNode& node) {
   Visit(static_cast<const BaseValueNode&>(node));
 }
@@ -154,6 +161,10 @@ void CanvasNodeVisitor::Visit(const DefaultCurrencyNode& node) {
 
 void CanvasNodeVisitor::Visit(const DestinationNode& node) {
   Visit(static_cast<const BaseValueNode&>(node));
+}
+
+void CanvasNodeVisitor::Visit(const DistinctNode& node) {
+  Visit(static_cast<const SignatureNode&>(node));
 }
 
 void CanvasNodeVisitor::Visit(const DivisionNode& node) {
@@ -290,6 +301,10 @@ void CanvasNodeVisitor::Visit(const OrderTypeNode& node) {
 
 void CanvasNodeVisitor::Visit(const OrderWrapperTaskNode& node) {
   Visit(static_cast<const CanvasNode&>(node));
+}
+
+void CanvasNodeVisitor::Visit(const PreviousNode& node) {
+  Visit(static_cast<const SignatureNode&>(node));
 }
 
 void CanvasNodeVisitor::Visit(const ProxyNode& node) {

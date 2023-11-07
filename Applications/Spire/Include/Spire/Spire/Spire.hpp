@@ -6,6 +6,9 @@
 #include "Nexus/Definitions/Security.hpp"
 #include "Nexus/MarketDataService/MarketDataClientBox.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
+#ifdef _DEBUG
+  #include <QDebug>
+#endif
 
 namespace Spire {
   class SpireServiceClients;

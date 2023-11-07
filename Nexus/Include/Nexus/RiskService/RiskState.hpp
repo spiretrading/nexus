@@ -58,19 +58,7 @@ namespace Details {
      */
     RiskState(Type type, boost::posix_time::ptime expiry);
 
-    /**
-     * Tests a RiskState for equality.
-     * @param rhs The right hand side of the equality.
-     * @return <code>true</code> if the Types and expiries are equal.
-     */
-    bool operator ==(const RiskState& rhs) const;
-
-    /**
-     * Tests a RiskState for inequality.
-     * @param rhs The right hand side of the equality.
-     * @return <code>true</code> if the Types or expiries are not equal.
-     */
-    bool operator !=(const RiskState& rhs) const;
+    bool operator ==(const RiskState& rhs) const = default;
   };
 
   inline std::ostream& operator <<(std::ostream& out, RiskState::Type type) {
@@ -101,14 +89,6 @@ namespace Details {
   inline RiskState::RiskState(Type type, boost::posix_time::ptime expiry)
     : m_type(type),
       m_expiry(expiry) {}
-
-  inline bool RiskState::operator ==(const RiskState& rhs) const {
-    return m_type == rhs.m_type && m_expiry == rhs.m_expiry;
-  }
-
-  inline bool RiskState::operator !=(const RiskState& rhs) const {
-    return !(*this == rhs);
-  }
 }
 
 namespace Beam::Serialization {

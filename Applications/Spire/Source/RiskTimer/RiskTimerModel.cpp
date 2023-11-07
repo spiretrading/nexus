@@ -7,32 +7,22 @@ using namespace boost;
 using namespace boost::posix_time;
 using namespace boost::signals2;
 using namespace Spire;
-using namespace std;
-
-namespace {
-  const unsigned int UPDATE_INTERVAL = 100;
-}
 
 RiskTimerModel::RiskTimerModel(Ref<UserProfile> userProfile)
     : m_userProfile(userProfile.Get()),
       m_timeRemaining(seconds(0)),
-      m_timeRemainingTimer(milliseconds(UPDATE_INTERVAL)) {
-  connect(&m_updateTimer, &QTimer::timeout, this,
-    &RiskTimerModel::OnUpdateTimer);
-  m_updateTimer.start(UPDATE_INTERVAL);
-  std::function<void (const Timer::Result&)> expiredSlot =
-    std::bind(&RiskTimerModel::OnTimeRemainingExpired, this,
-    std::placeholders::_1);
+      m_timeRemainingTimer(seconds(1)) {
   m_timeRemainingTimer.GetPublisher().Monitor(
-    m_slotHandler.GetSlot(expiredSlot));
+    m_eventHandler.get_slot<Timer::Result>(
+      std::bind_front(&RiskTimerModel::OnTimeRemainingExpired, this)));
   m_timeRemainingTimer.Start();
 }
 
-const time_duration& RiskTimerModel::GetTimeRemaining() const {
+time_duration RiskTimerModel::GetTimeRemaining() const {
   return m_timeRemaining;
 }
 
-void RiskTimerModel::SetTimeRemaining(const time_duration& timeRemaining) {
+void RiskTimerModel::SetTimeRemaining(time_duration timeRemaining) {
   m_timeRemaining = timeRemaining;
   m_lastTimeCheck =
     m_userProfile->GetServiceClients().GetTimeClient().GetTime();
@@ -45,7 +35,7 @@ connection RiskTimerModel::ConnectTimeRemainingSignal(
 
 void RiskTimerModel::OnTimeRemainingExpired(const Timer::Result& result) {
   if(m_timeRemaining != seconds(0)) {
-    ptime currentTime =
+    auto currentTime =
       m_userProfile->GetServiceClients().GetTimeClient().GetTime();
     m_timeRemaining -= (currentTime - m_lastTimeCheck);
     m_lastTimeCheck = currentTime;
@@ -55,8 +45,4 @@ void RiskTimerModel::OnTimeRemainingExpired(const Timer::Result& result) {
     m_timeRemainingSignal(m_timeRemaining);
   }
   m_timeRemainingTimer.Start();
-}
-
-void RiskTimerModel::OnUpdateTimer() {
-  HandleTasks(m_slotHandler);
 }

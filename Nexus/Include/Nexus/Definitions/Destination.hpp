@@ -31,6 +31,8 @@ namespace Nexus {
 
         /** The destination's description. */
         std::string m_description;
+
+        bool operator ==(const Entry& rhs) const = default;
       };
 
       /** Constructs an empty DestinationDatabase. */
@@ -171,31 +173,6 @@ namespace Nexus {
       destinationDatabase.SetManualOrderEntryDestination(manualOrderEntry);
       return destinationDatabase;
     }, std::runtime_error("Failed to parse destination database."));
-  }
-
-  /**
-   * Tests two DestinationDatabase Entries for equality.
-   * @param lhs The left hand side of the equality.
-   * @param rhs The right hand side of the equality.
-   * @return <code>true</code> iff the two DestinationDatabase Entries are
-   *         equal.
-   */
-  inline bool operator ==(const DestinationDatabase::Entry& lhs,
-      const DestinationDatabase::Entry& rhs) {
-    return lhs.m_id == rhs.m_id && lhs.m_markets == rhs.m_markets &&
-      lhs.m_description == rhs.m_description;
-  }
-
-  /**
-   * Tests two DestinationDatabase Entries for inequality.
-   * @param lhs The left hand side of the inequality.
-   * @param rhs The right hand side of the inequality.
-   * @return <code>true</code> iff the two DestinationDatabase Entries are not
-   *         equal.
-   */
-  inline bool operator !=(const DestinationDatabase::Entry& lhs,
-      const DestinationDatabase::Entry& rhs) {
-    return !(lhs == rhs);
   }
 
   inline const DestinationDatabase::Entry& DestinationDatabase::FromId(

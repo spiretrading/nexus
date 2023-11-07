@@ -6,7 +6,6 @@
 #include <Beam/ServiceLocator/ServiceLocatorClientBox.hpp>
 #include <Beam/Threading/TimerBox.hpp>
 #include <Beam/TimeService/TimeClientBox.hpp>
-#include <boost/noncopyable.hpp>
 #include "Nexus/AdministrationService/AdministrationClientBox.hpp"
 #include "Nexus/ChartingService/ChartingClientBox.hpp"
 #include "Nexus/Compliance/ComplianceClientBox.hpp"
@@ -19,56 +18,56 @@
 namespace Spire {
 
   /* Manages the set of clients connected to Spire services. */
-  class SpireServiceClients : private boost::noncopyable {
+  class SpireServiceClients {
     public:
 
-      //! Constructs a SpireServiceClients instance.
-      /*!
-        \param serviceLocatorClient The ServiceLocatorClient logged into the
-               Spire services.
-      */
-      SpireServiceClients(
+      /**
+       * Constructs a SpireServiceClients instance.
+       * @param serviceLocatorClient The ServiceLocatorClient logged into the
+       *        Spire services.
+       */
+      explicit SpireServiceClients(
         std::unique_ptr<Beam::ServiceLocator::ApplicationServiceLocatorClient>
-        serviceLocatorClient);
+          serviceLocatorClient);
 
       ~SpireServiceClients();
 
-      //! Returns the ServiceLocatorClient.
+      /** Returns the ServiceLocatorClient. */
       Beam::ServiceLocator::ServiceLocatorClientBox& GetServiceLocatorClient();
 
-      //! Returns the RegistryClient.
+      /** Returns the RegistryClient. */
       Beam::RegistryService::RegistryClientBox& GetRegistryClient();
 
-      //! Returns the AdministrationClient.
+      /** Returns the AdministrationClient. */
       Nexus::AdministrationService::AdministrationClientBox&
         GetAdministrationClient();
 
-      //! Returns the DefinitionsClient.
+      /** Returns the DefinitionsClient. */
       Nexus::DefinitionsService::DefinitionsClientBox& GetDefinitionsClient();
 
-      //! Returns the MarketDataClient.
+      /** Returns the MarketDataClient. */
       Nexus::MarketDataService::MarketDataClientBox& GetMarketDataClient();
 
-      //! Returns the ChartingClient.
+      /** Returns the ChartingClient. */
       Nexus::ChartingService::ChartingClientBox& GetChartingClient();
 
-      //! Returns the ComplianceClient.
+      /** Returns the ComplianceClient. */
       Nexus::Compliance::ComplianceClientBox& GetComplianceClient();
 
-      //! Returns the OrderExecutionClient.
+      /** Returns the OrderExecutionClient. */
       Nexus::OrderExecutionService::OrderExecutionClientBox&
         GetOrderExecutionClient();
 
-      //! Returns the RiskClient.
+      /** Returns the RiskClient. */
       Nexus::RiskService::RiskClientBox& GetRiskClient();
 
-      //! Returns the TimeClient.
+      /** Returns the TimeClient. */
       Beam::TimeService::TimeClientBox& GetTimeClient();
 
       std::unique_ptr<Beam::Threading::TimerBox> MakeTimer(
         boost::posix_time::time_duration expiry);
 
-      //! Closes all the clients.
+      /** Closes all the clients. */
       void Close();
 
     private:
@@ -86,6 +85,9 @@ namespace Spire {
         m_orderExecutionClient;
       Nexus::RiskService::RiskClientBox m_riskClient;
       Beam::TimeService::TimeClientBox m_timeClient;
+
+      SpireServiceClients(const SpireServiceClients&) = delete;
+      SpireServiceClients& operator =(const SpireServiceClients&) = delete;
   };
 }
 

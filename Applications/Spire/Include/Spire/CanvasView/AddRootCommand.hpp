@@ -1,5 +1,5 @@
-#ifndef SPIRE_ADDROOTCOMMAND_HPP
-#define SPIRE_ADDROOTCOMMAND_HPP
+#ifndef SPIRE_ADD_ROOT_COMMAND_HPP
+#define SPIRE_ADD_ROOT_COMMAND_HPP
 #include <memory>
 #include <Beam/Pointers/Ref.hpp>
 #include <QUndoStack>
@@ -9,24 +9,22 @@
 
 namespace Spire {
 
-  /*! \class AddRootCommand
-      \brief Adds a CanvasNode into a CanvasNodeModel as a root.
-   */
+  /** Adds a CanvasNode into a CanvasNodeModel as a root. */
   class AddRootCommand : public QUndoCommand {
     public:
 
-      //! Constructs an AddRootCommand.
-      /*!
-        \param view The CanvasNodeModel to perform the command to.
-        \param coordinate The Coordinate to add the root at.
-        \param node The node to add.
-      */
+      /**
+       * Constructs an AddRootCommand.
+       * @param view The CanvasNodeModel to perform the command to.
+       * @param coordinate The Coordinate to add the root at.
+       * @param node The node to add.
+       */
       AddRootCommand(Beam::Ref<CanvasNodeModel> view,
         const CanvasNodeModel::Coordinate& coordinate, const CanvasNode& node);
 
-      virtual void undo();
+      void undo() override;
 
-      virtual void redo();
+      void redo() override;
 
     private:
       CanvasNodeModel* m_view;

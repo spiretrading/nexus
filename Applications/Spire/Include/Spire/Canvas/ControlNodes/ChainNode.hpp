@@ -1,35 +1,34 @@
-#ifndef SPIRE_CHAINNODE_HPP
-#define SPIRE_CHAINNODE_HPP
+#ifndef SPIRE_CHAIN_NODE_HPP
+#define SPIRE_CHAIN_NODE_HPP
 #include <vector>
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Canvas/Common/CanvasNode.hpp"
 
 namespace Spire {
 
-  /*! \class ChainNode
-      \brief Evaluates a series of CanvasNodes in order.
-   */
+  /** Evaluates a series of CanvasNodes in order. */
   class ChainNode : public CanvasNode {
     public:
 
-      //! Constructs a ChainNode.
+      /** Constructs an empty ChainNode. */
       ChainNode();
 
-      //! Constructs a ChainNode.
-      /*!
-        \param nodes The list of CanvasNodes to chain.
-      */
-      ChainNode(std::vector<std::unique_ptr<CanvasNode>> nodes);
+      /**
+       * Constructs a ChainNode.
+       * @param nodes The list of CanvasNodes to chain.
+       */
+      explicit ChainNode(std::vector<std::unique_ptr<CanvasNode>> nodes);
 
-      virtual std::unique_ptr<CanvasNode> Convert(const CanvasType& type) const;
+      std::unique_ptr<CanvasNode>
+        Convert(const CanvasType& type) const override;
 
-      virtual std::unique_ptr<CanvasNode> Replace(const CanvasNode& child,
-        std::unique_ptr<CanvasNode> replacement) const;
+      std::unique_ptr<CanvasNode> Replace(const CanvasNode& child,
+        std::unique_ptr<CanvasNode> replacement) const override;
 
-      virtual void Apply(CanvasNodeVisitor& visitor) const;
+      void Apply(CanvasNodeVisitor& visitor) const override;
 
     protected:
-      virtual std::unique_ptr<CanvasNode> Clone() const;
+      std::unique_ptr<CanvasNode> Clone() const override;
 
     private:
       friend struct Beam::Serialization::DataShuttle;
@@ -45,11 +44,9 @@ namespace Spire {
   }
 }
 
-namespace Beam {
-namespace Serialization {
+namespace Beam::Serialization {
   template<>
   struct IsDefaultConstructable<Spire::ChainNode> : std::false_type {};
-}
 }
 
 #endif

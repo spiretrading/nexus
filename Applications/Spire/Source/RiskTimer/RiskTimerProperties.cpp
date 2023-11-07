@@ -15,14 +15,11 @@
 using namespace Beam;
 using namespace Beam::IO;
 using namespace Beam::Serialization;
-using namespace Beam::Threading;
 using namespace boost;
 using namespace Spire;
-using namespace std;
-using namespace std::filesystem;
 
 namespace {
-  const int RISK_TIMER_DIALOG_WIDTH = 309;
+  const auto RISK_TIMER_DIALOG_WIDTH = 309;
 
   void LoadDefault(Out<UserProfile> userProfile) {
     userProfile->GetRiskTimerProperties() = RiskTimerProperties::GetDefault();
@@ -30,27 +27,28 @@ namespace {
 }
 
 RiskTimerProperties RiskTimerProperties::GetDefault() {
-  RiskTimerProperties properties;
+  auto properties = RiskTimerProperties();
   auto availableGeometry =
     QGuiApplication::primaryScreen()->availableGeometry();
-  QPoint riskTimerDialogInitialPosition((availableGeometry.width() -
+  auto riskTimerDialogInitialPosition = QPoint((availableGeometry.width() -
     RISK_TIMER_DIALOG_WIDTH) / 2, (14 * availableGeometry.height()) / 100);
   properties.SetRiskTimerDialogInitialPosition(riskTimerDialogInitialPosition);
   return properties;
 }
 
 void RiskTimerProperties::Load(Out<UserProfile> userProfile) {
-  path filePath = userProfile->GetProfilePath() / "risk_timer.dat";
-  if(!exists(filePath)) {
+  auto filePath = userProfile->GetProfilePath() / "risk_timer.dat";
+  if(!std::filesystem::exists(filePath)) {
     LoadDefault(Store(userProfile));
     return;
   }
-  RiskTimerProperties properties;
+  auto properties = RiskTimerProperties();
   try {
-    BasicIStreamReader<ifstream> reader(Initialize(filePath, ios::binary));
-    SharedBuffer buffer;
+    auto reader =
+      BasicIStreamReader<std::ifstream>(Initialize(filePath, std::ios::binary));
+    auto buffer = SharedBuffer();
     reader.Read(Store(buffer));
-    TypeRegistry<BinarySender<SharedBuffer>> typeRegistry;
+    auto typeRegistry = TypeRegistry<BinarySender<SharedBuffer>>();
     RegisterSpireTypes(Store(typeRegistry));
     auto receiver = BinaryReceiver<SharedBuffer>(Ref(typeRegistry));
     receiver.SetSource(Ref(buffer));
@@ -65,23 +63,22 @@ void RiskTimerProperties::Load(Out<UserProfile> userProfile) {
 }
 
 void RiskTimerProperties::Save(const UserProfile& userProfile) {
-  path filePath = userProfile.GetProfilePath() / "risk_timer.dat";
+  auto filePath = userProfile.GetProfilePath() / "risk_timer.dat";
   try {
-    TypeRegistry<BinarySender<SharedBuffer>> typeRegistry;
+    auto typeRegistry = TypeRegistry<BinarySender<SharedBuffer>>();
     RegisterSpireTypes(Store(typeRegistry));
     auto sender = BinarySender<SharedBuffer>(Ref(typeRegistry));
-    SharedBuffer buffer;
+    auto buffer = SharedBuffer();
     sender.SetSink(Ref(buffer));
     sender.Shuttle(userProfile.GetRiskTimerProperties());
-    BasicOStreamWriter<ofstream> writer(Initialize(filePath, ios::binary));
+    auto writer =
+      BasicOStreamWriter<std::ofstream>(Initialize(filePath, std::ios::binary));
     writer.Write(buffer);
   } catch(const std::exception&) {
     QMessageBox::warning(nullptr, QObject::tr("Warning"),
       QObject::tr("Unable to save time and sales properties."));
   }
 }
-
-RiskTimerProperties::RiskTimerProperties() {}
 
 const QPoint& RiskTimerProperties::GetRiskTimerDialogInitialPosition() const {
   return m_riskTimerDialogInitialPosition;

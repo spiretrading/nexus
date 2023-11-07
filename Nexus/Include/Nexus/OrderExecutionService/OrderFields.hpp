@@ -264,13 +264,7 @@ namespace Nexus::OrderExecutionService {
      */
     bool operator <(const OrderFields& rhs) const;
 
-    /**
-     * Returns <code>true</code> iff <code>this</code> is equal to another
-     * OrderFields object.
-     * @param rhs The right hand side of the comparison.
-     * @return <code>true</code> iff <code>this</code> is equal to <i>rhs</i>.
-     */
-    bool operator ==(const OrderFields& rhs) const;
+    bool operator ==(const OrderFields& rhs) const = default;
   };
 
   /**
@@ -437,14 +431,6 @@ namespace Nexus::OrderExecutionService {
     return m_type < rhs.m_type || (m_type == rhs.m_type &&
       ((m_side == Side::BID && m_price < rhs.m_price) ||
        (m_side == Side::ASK && rhs.m_price < m_price)));
-  }
-
-  inline bool OrderFields::operator ==(const OrderFields& rhs) const {
-    return std::tie(m_account, m_security, m_currency, m_type, m_side,
-      m_destination, m_quantity, m_price, m_timeInForce, m_additionalFields) ==
-      std::tie(rhs.m_account, rhs.m_security, rhs.m_currency, rhs.m_type,
-      rhs.m_side, rhs.m_destination, rhs.m_quantity, rhs.m_price,
-      rhs.m_timeInForce, rhs.m_additionalFields);
   }
 }
 

@@ -3,13 +3,12 @@
 
 using namespace Beam;
 using namespace Spire;
-using namespace std;
 
 AddRootCommand::AddRootCommand(Ref<CanvasNodeModel> view,
-    const CanvasNodeModel::Coordinate& coordinate, const CanvasNode& node)
-    : m_view(view.Get()),
-      m_coordinate(coordinate),
-      m_node(CanvasNode::Clone(node)) {}
+  const CanvasNodeModel::Coordinate& coordinate, const CanvasNode& node)
+  : m_view(view.Get()),
+    m_coordinate(coordinate),
+    m_node(CanvasNode::Clone(node)) {}
 
 void AddRootCommand::undo() {
   m_snapshot.Restore(Store(*m_view));

@@ -1,5 +1,5 @@
-#ifndef SPIRE_RISKTIMERPROPERTIES_HPP
-#define SPIRE_RISKTIMERPROPERTIES_HPP
+#ifndef SPIRE_RISK_TIMER_PROPERTIES_HPP
+#define SPIRE_RISK_TIMER_PROPERTIES_HPP
 #include <Beam/Pointers/Out.hpp>
 #include <QPoint>
 #include "Spire/RiskTimer/RiskTimer.hpp"
@@ -8,37 +8,35 @@
 
 namespace Spire {
 
-  /*! \class RiskTimerProperties
-      \brief Stores the properties used across RiskTimer classes.
-    */
+  /** Stores the properties used across RiskTimer classes. */
   class RiskTimerProperties {
     public:
 
-      //! Returns the default RiskTimerProperties.
+      /** Returns the default RiskTimerProperties. */
       static RiskTimerProperties GetDefault();
 
-      //! Loads the RiskTimerProperties from a UserProfile.
-      /*!
-        \param userProfile The UserProfile to load the properties from.
-      */
+      /**
+       * Loads the RiskTimerProperties from a UserProfile.
+       * @param userProfile The UserProfile to load the properties from.
+       */
       static void Load(Beam::Out<UserProfile> userProfile);
 
-      //! Saves a UserProfile's RiskTimerProperties.
-      /*!
-        \param userProfile The UserProfile's properties to save.
-      */
+      /**
+       * Saves a UserProfile's RiskTimerProperties.
+       * @param userProfile The UserProfile's properties to save.
+       */
       static void Save(const UserProfile& userProfile);
 
-      //! Constructs an uninitialized RiskTimerProperties.
-      RiskTimerProperties();
+      /** Constructs an uninitialized RiskTimerProperties. */
+      RiskTimerProperties() = default;
 
-      //! Returns the initial position of the RiskTimerDialog.
+      /** Returns the initial position of the RiskTimerDialog. */
       const QPoint& GetRiskTimerDialogInitialPosition() const;
 
-      //! Sets the initial position of the RiskTimerDialog.
-      /*!
-        \param position The initial position to use for the RiskTimerDialog.
-      */
+      /**
+       * Sets the initial position of the RiskTimerDialog.
+       * @param position The initial position to use for the RiskTimerDialog.
+       */
       void SetRiskTimerDialogInitialPosition(const QPoint& position);
 
     private:

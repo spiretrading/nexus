@@ -24,14 +24,7 @@ namespace Nexus::RiskService {
     /** The list of Order ids excluded from this snapshot. */
     std::vector<OrderExecutionService::OrderId> m_excludedOrders;
 
-    /**
-     * Tests if two snapshots have identical structure, including order of
-     * inventories and excluded orders.
-     */
-    bool operator ==(const InventorySnapshot& snapshot) const;
-
-    /** Tests if two snapshots have different structures. */
-    bool operator !=(const InventorySnapshot& snapshot) const;
+    bool operator ==(const InventorySnapshot& snapshot) const = default;
   };
 
   /**
@@ -69,18 +62,6 @@ namespace Nexus::RiskService {
     auto portfolio = RiskPortfolio(std::move(markets),
       RiskPortfolio::Bookkeeper(snapshot.m_inventories));
     return {std::move(portfolio), sequence, std::move(excludedOrders)};
-  }
-
-  inline bool InventorySnapshot::operator ==(
-      const InventorySnapshot& snapshot) const {
-    return m_inventories == snapshot.m_inventories &&
-      m_sequence == snapshot.m_sequence &&
-      m_excludedOrders == snapshot.m_excludedOrders;
-  }
-
-  inline bool InventorySnapshot::operator !=(
-      const InventorySnapshot& snapshot) const {
-    return !(*this == snapshot);
   }
 }
 

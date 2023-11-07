@@ -14,12 +14,12 @@ using namespace Nexus;
 using namespace Spire;
 
 SecurityInputWidget::SecurityInputWidget(QWidget* parent, Qt::WindowFlags flags)
-    : QWidget{parent, flags},
-      m_isReadOnly{false} {
-  auto layout = new QVBoxLayout{this};
+    : QWidget(parent, flags),
+      m_isReadOnly(false) {
+  auto layout = new QVBoxLayout(this);
   layout->setContentsMargins(0, 0, 0, 0);
   setLayout(layout);
-  m_lineEdit = new QLineEdit{this};
+  m_lineEdit = new QLineEdit(this);
   m_lineEdit->installEventFilter(this);
   layout->addWidget(m_lineEdit);
 }
@@ -29,8 +29,6 @@ SecurityInputWidget::SecurityInputWidget(Ref<UserProfile> userProfile,
     : SecurityInputWidget{parent, flags} {
   Initialize(Ref(userProfile));
 }
-
-SecurityInputWidget::~SecurityInputWidget() {}
 
 void SecurityInputWidget::Initialize(Ref<UserProfile> userProfile) {
   m_userProfile = userProfile.Get();
@@ -79,29 +77,26 @@ void SecurityInputWidget::keyPressEvent(QKeyEvent* event) {
   if(m_isReadOnly) {
     return;
   }
-  SecurityInputDialog dialog{Ref(*m_userProfile), text.toStdString(), this};
-  dialog.GetSymbolInput().selectAll();
-  if(dialog.exec() == QDialog::Rejected) {
-    return;
-  }
-  auto newValue = dialog.GetSecurity(true);
-  if(newValue == Security{}) {
-    return;
-  }
-  SetSecurity(newValue);
+  ShowWildCardSecurityInputDialog(Ref(*m_userProfile), text.toStdString(), this,
+    [=] (auto security) {
+      if(!security || security == Security()) {
+        return;
+      }
+      SetSecurity(std::move(*security));
+    });
 }
 
 void SecurityInputWidget::mouseDoubleClickEvent(QMouseEvent* event) {
   if(m_isReadOnly) {
     return;
   }
-  SecurityInputDialog dialog{Ref(*m_userProfile), m_security, this};
+  auto dialog = SecurityInputDialog(Ref(*m_userProfile), m_security, this);
   dialog.GetSymbolInput().selectAll();
   if(dialog.exec() == QDialog::Rejected) {
     return;
   }
   auto newValue = dialog.GetSecurity(true);
-  if(newValue == Security{}) {
+  if(newValue == Security()) {
     return;
   }
   SetSecurity(newValue);

@@ -9,42 +9,29 @@ using namespace Nexus;
 using namespace Nexus::OrderExecutionService;
 using namespace Spire;
 using namespace Spire::UI;
-using namespace std;
 
 namespace {
-  const unsigned int UPDATE_INTERVAL = 100;
-  const unsigned int MAX_LOWER_BOUND = 2000;
-  const unsigned int MAX_UPPER_BOUND = 4000;
+  const auto MAX_LOWER_BOUND = 2000;
+  const auto MAX_UPPER_BOUND = 4000;
 }
-
-ActivityLogModel::UpdateEntry::UpdateEntry(const Order* order,
-    const ExecutionReport& report)
-    : m_order(order),
-      m_report(report) {}
 
 ActivityLogModel::ActivityLogModel()
     : m_orderExecutionPublisher(nullptr) {
-  m_slotHandler.emplace();
-  connect(&m_updateTimer, &QTimer::timeout, this,
-    &ActivityLogModel::OnUpdateTimer);
-  m_updateTimer.start(UPDATE_INTERVAL);
+  m_eventHandler.emplace();
 }
-
-ActivityLogModel::~ActivityLogModel() {}
 
 void ActivityLogModel::SetOrderExecutionPublisher(
     Ref<const OrderExecutionPublisher> orderExecutionPublisher) {
-  m_slotHandler = std::nullopt;
-  m_slotHandler.emplace();
+  m_eventHandler = std::nullopt;
+  m_eventHandler.emplace();
   if(!m_entries.empty()) {
     beginRemoveRows(QModelIndex(), 0, m_entries.size() - 1);
     m_entries.clear();
     endRemoveRows();
   }
   m_orderExecutionPublisher = orderExecutionPublisher.Get();
-  m_orderExecutionPublisher->Monitor(m_slotHandler->GetSlot<const Order*>(
-    std::bind(&ActivityLogModel::OnOrderExecuted, this,
-    std::placeholders::_1)));
+  m_orderExecutionPublisher->Monitor(m_eventHandler->get_slot<const Order*>(
+    std::bind_front(&ActivityLogModel::OnOrderExecuted, this)));
 }
 
 int ActivityLogModel::rowCount(const QModelIndex& parent) const {
@@ -59,8 +46,8 @@ QVariant ActivityLogModel::data(const QModelIndex& index, int role) const {
   if(!index.isValid()) {
     return QVariant();
   }
-  const UpdateEntry& entry = m_entries[index.row()];
-  const OrderFields& fields = entry.m_order->GetInfo().m_fields;
+  auto& entry = m_entries[index.row()];
+  auto& fields = entry.m_order->GetInfo().m_fields;
   if(role == Qt::TextAlignmentRole) {
     return static_cast<int>(Qt::AlignHCenter | Qt::AlignVCenter);
   } else if(role == Qt::DisplayRole) {
@@ -98,8 +85,8 @@ QVariant ActivityLogModel::data(const QModelIndex& index, int role) const {
   return QVariant();
 }
 
-QVariant ActivityLogModel::headerData(int section, Qt::Orientation orientation,
-    int role) const {
+QVariant ActivityLogModel::headerData(
+    int section, Qt::Orientation orientation, int role) const {
   if(role == Qt::TextAlignmentRole) {
     return static_cast<int>(Qt::AlignHCenter | Qt::AlignVCenter);
   } else if(role == Qt::DisplayRole) {
@@ -134,14 +121,14 @@ QVariant ActivityLogModel::headerData(int section, Qt::Orientation orientation,
   return QVariant();
 }
 
-void ActivityLogModel::OnExecutionReport(const Order* order,
-    const ExecutionReport& report) {
+void ActivityLogModel::OnExecutionReport(
+    const Order* order, const ExecutionReport& report) {
   beginInsertRows(QModelIndex(), static_cast<int>(m_entries.size()),
     static_cast<int>(m_entries.size()));
   m_entries.push_back(UpdateEntry(order, report));
   endInsertRows();
   if(m_entries.size() >= MAX_UPPER_BOUND) {
-    int pruneCount = static_cast<int>(m_entries.size() - MAX_LOWER_BOUND);
+    auto pruneCount = static_cast<int>(m_entries.size() - MAX_LOWER_BOUND);
     beginRemoveRows(QModelIndex(), 0, pruneCount - 1);
     m_entries.erase(m_entries.begin(), m_entries.begin() + pruneCount);
     endRemoveRows();
@@ -149,11 +136,6 @@ void ActivityLogModel::OnExecutionReport(const Order* order,
 }
 
 void ActivityLogModel::OnOrderExecuted(const Order* order) {
-  order->GetPublisher().Monitor(m_slotHandler->GetSlot<ExecutionReport>(
-    std::bind(&ActivityLogModel::OnExecutionReport, this, order,
-    std::placeholders::_1)));
-}
-
-void ActivityLogModel::OnUpdateTimer() {
-  HandleTasks(*m_slotHandler);
+  order->GetPublisher().Monitor(m_eventHandler->get_slot<ExecutionReport>(
+    std::bind_front(&ActivityLogModel::OnExecutionReport, this, order)));
 }

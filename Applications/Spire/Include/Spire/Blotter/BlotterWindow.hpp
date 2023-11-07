@@ -1,9 +1,8 @@
 #ifndef SPIRE_BLOTTER_WINDOW_HPP
 #define SPIRE_BLOTTER_WINDOW_HPP
-#include <Beam/Queues/TaskQueue.hpp>
 #include <boost/signals2/signal.hpp>
 #include <QFrame>
-#include <QTimer>
+#include "Spire/Async/EventHandler.hpp"
 #include "Spire/Blotter/Blotter.hpp"
 #include "Spire/Blotter/BlotterTasksModel.hpp"
 #include "Spire/Canvas/Canvas.hpp"
@@ -42,7 +41,7 @@ namespace Spire {
         Beam::Ref<BlotterModel> model, QWidget* parent,
         Qt::WindowFlags flags = Qt::WindowFlags());
 
-      ~BlotterWindow() = default;
+      ~BlotterWindow() override = default;
 
       /** Returns the blotter model being displayed. */
       const BlotterModel& GetModel() const;
@@ -79,8 +78,7 @@ namespace Spire {
       std::vector<std::shared_ptr<Task>> m_tasksExecuted;
       boost::signals2::scoped_connection m_taskAddedConnection;
       boost::signals2::scoped_connection m_taskRemovedConnection;
-      QTimer m_updateTimer;
-      Beam::TaskQueue m_slotHandler;
+      EventHandler m_eventHandler;
 
       BlotterWindow(UserProfile* userProfile, BlotterModel* model,
         QWidget* parent = nullptr, Qt::WindowFlags flags = 0);
@@ -105,7 +103,6 @@ namespace Spire {
       void OnTasksRemoved(const QModelIndex& parent, int first, int last);
       void OnPinTaskToggled(const QModelIndex& topLeft,
         const QModelIndex& bottomRight, const QVector<int>& roles);
-      void OnUpdateTimer();
   };
 }
 

@@ -1,28 +1,26 @@
-#ifndef SPIRE_FILTERNODE_HPP
-#define SPIRE_FILTERNODE_HPP
+#ifndef SPIRE_FILTER_NODE_HPP
+#define SPIRE_FILTER_NODE_HPP
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Canvas/Common/SignatureNode.hpp"
 
 namespace Spire {
 
-  /*! \class FilterNode
-      \brief Used to filter out values produced by a CanvasNode.
-   */
+  /** Used to filter out values produced by a CanvasNode. */
   class FilterNode : public SignatureNode {
     public:
 
-      //! Constructs a FilterNode.
+      /** Constructs a FilterNode. */
       FilterNode();
 
-      virtual std::unique_ptr<CanvasNode> Replace(const CanvasNode& child,
-        std::unique_ptr<CanvasNode> replacement) const;
+      std::unique_ptr<CanvasNode> Replace(const CanvasNode& child,
+        std::unique_ptr<CanvasNode> replacement) const override;
 
-      virtual void Apply(CanvasNodeVisitor& visitor) const;
+      void Apply(CanvasNodeVisitor& visitor) const override;
 
     protected:
-      virtual std::unique_ptr<CanvasNode> Clone() const;
+      std::unique_ptr<CanvasNode> Clone() const override;
 
-      virtual const std::vector<Signature>& GetSignatures() const;
+      const std::vector<Signature>& GetSignatures() const override;
 
     private:
       friend struct Beam::Serialization::DataShuttle;
@@ -38,11 +36,9 @@ namespace Spire {
   }
 }
 
-namespace Beam {
-namespace Serialization {
+namespace Beam::Serialization {
   template<>
   struct IsDefaultConstructable<Spire::FilterNode> : std::false_type {};
-}
 }
 
 #endif

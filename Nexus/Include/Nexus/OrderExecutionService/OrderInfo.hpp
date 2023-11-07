@@ -67,31 +67,9 @@ namespace Nexus::OrderExecutionService {
      */
     OrderInfo(OrderFields fields, OrderId orderId,
       boost::posix_time::ptime timestamp);
+
+    bool operator ==(const OrderInfo& rhs) const = default;
   };
-
-  /**
-   * Tests if two OrderInfos are equal.
-   * @param lhs The left hand side of the equality.
-   * @param rhs The right hand side of the equality.
-   * @return <code>true</code> iff <code>lhs</code> is equal to
-   *         <code>rhs</code>.
-   */
-  inline bool operator ==(const OrderInfo& lhs, const OrderInfo& rhs) {
-    return std::tie(lhs.m_fields, lhs.m_submissionAccount, lhs.m_orderId,
-      lhs.m_shortingFlag, lhs.m_timestamp) == std::tie(rhs.m_fields,
-      rhs.m_submissionAccount, rhs.m_orderId, rhs.m_shortingFlag,
-      rhs.m_timestamp);
-  }
-
-  /**
-   * Tests if two OrderInfos are not equal.
-   * @param lhs The left hand side of the inequality.
-   * @param rhs The right hand side of the inequality.
-   * @return <code>true</code> iff <i>lhs</i> is not equal to <i>rhs</i>.
-   */
-  inline bool operator !=(const OrderInfo& lhs, const OrderInfo& rhs) {
-    return !(lhs == rhs);
-  }
 
   inline std::ostream& operator <<(std::ostream& out, const OrderInfo& value) {
     return out << "(" << value.m_fields << " " << value.m_submissionAccount <<

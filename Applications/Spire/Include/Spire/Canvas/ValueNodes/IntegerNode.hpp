@@ -1,5 +1,5 @@
-#ifndef SPIRE_INTEGERNODE_HPP
-#define SPIRE_INTEGERNODE_HPP
+#ifndef SPIRE_INTEGER_NODE_HPP
+#define SPIRE_INTEGER_NODE_HPP
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Canvas/Common/LinkedNode.hpp"
 #include "Spire/Canvas/Types/IntegerType.hpp"
@@ -7,39 +7,37 @@
 
 namespace Spire {
 
-  /*! \class IntegerNode
-      \brief Implements the CanvasNode for a Quantity value.
-   */
+  /** Implements the CanvasNode for a Quantity value. */
   class IntegerNode : public ValueNode<IntegerType>, public LinkedNode {
     public:
 
-      //! Constructs an IntegerNode.
+      /** Constructs an IntegerNode representing the value 0. */
       IntegerNode();
 
-      //! Constructs an IntegerNode.
-      /*!
-        \param value The initial value.
-      */
+      /**
+       * Constructs an IntegerNode.
+       * @param value The initial value.
+       */
       IntegerNode(Nexus::Quantity value);
 
-      //! Clones this CanvasNode with a new value.
-      /*!
-        \param value The new value.
-        \return A clone of this CanvasNode with the specified <i>value</i>.
-      */
+      /**
+       * Clones this CanvasNode with a new value.
+       * \param value The new value.
+       * @return A clone of this CanvasNode with the specified <i>value</i>.
+       */
       std::unique_ptr<IntegerNode> SetValue(int value) const;
 
-      virtual void Apply(CanvasNodeVisitor& visitor) const;
+      void Apply(CanvasNodeVisitor& visitor) const override;
 
-      virtual const std::string& GetReferent() const;
+      const std::string& GetReferent() const override;
 
-      virtual std::unique_ptr<CanvasNode> SetReferent(
-        const std::string& referent) const;
+      std::unique_ptr<CanvasNode>
+        SetReferent(const std::string& referent) const override;
 
     protected:
-      virtual std::unique_ptr<CanvasNode> Clone() const;
+      std::unique_ptr<CanvasNode> Clone() const override;
 
-      virtual std::unique_ptr<CanvasNode> Reset() const;
+      std::unique_ptr<CanvasNode> Reset() const override;
 
     private:
       friend struct Beam::Serialization::DataShuttle;

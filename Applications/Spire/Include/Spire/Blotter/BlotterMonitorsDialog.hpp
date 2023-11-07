@@ -1,5 +1,5 @@
-#ifndef SPIRE_BLOTTERMONITORSDIALOG_HPP
-#define SPIRE_BLOTTERMONITORSDIALOG_HPP
+#ifndef SPIRE_BLOTTER_MONITORS_DIALOG_HPP
+#define SPIRE_BLOTTER_MONITORS_DIALOG_HPP
 #include <Beam/Pointers/Ref.hpp>
 #include <QDialog>
 #include "Spire/Blotter/Blotter.hpp"
@@ -10,20 +10,18 @@ class Ui_BlotterMonitorsDialog;
 
 namespace Spire {
 
-  /*! \class BlotterMonitorsDialog
-      \brief Displays the monitors installed for a Blotter.
-   */
+  /** Displays the monitors installed for a Blotter. */
   class BlotterMonitorsDialog : public QDialog {
     public:
 
-      //! Constructs a BlotterMonitorsDialog.
-      /*!
-        \param userProfile The user's profile.
-        \param properties The BlotterTaskProperties to display.
-        \param model The BlotterModel to apply the changes to.
-        \param parent The parent widget.
-        \param flags Qt flags passed to the parent widget.
-      */
+      /**
+       * Constructs a BlotterMonitorsDialog.
+       * @param userProfile The user's profile.
+       * @param properties The BlotterTaskProperties to display.
+       * @param model The BlotterModel to apply the changes to.
+       * @param parent The parent widget.
+       * @param flags Qt flags passed to the parent widget.
+       */
       BlotterMonitorsDialog(Beam::Ref<UserProfile> userProfile,
         const BlotterTaskProperties& properties,
         Beam::Ref<BlotterModel> model, QWidget* parent = nullptr,
@@ -31,7 +29,7 @@ namespace Spire {
 
       virtual ~BlotterMonitorsDialog();
 
-      //! Returns the BlotterTaskProperties represented by this dialog.
+      /** Returns the BlotterTaskProperties represented by this dialog. */
       const BlotterTaskProperties& GetProperties() const;
 
     private:

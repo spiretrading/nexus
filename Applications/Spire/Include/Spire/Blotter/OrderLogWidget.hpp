@@ -1,11 +1,10 @@
 #ifndef SPIRE_ORDERLOGWIDGET_HPP
 #define SPIRE_ORDERLOGWIDGET_HPP
 #include <Beam/Pointers/Ref.hpp>
-#include <Beam/Queues/TaskQueue.hpp>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <boost/signals2/connection.hpp>
-#include <QTimer>
 #include <QWidget>
+#include "Spire/Async/EventHandler.hpp"
 #include "Spire/Blotter/Blotter.hpp"
 #include "Spire/Blotter/OrderLogModel.hpp"
 #include "Spire/Spire/Spire.hpp"
@@ -15,56 +14,50 @@ class Ui_OrderLogWidget;
 
 namespace Spire {
 
-  /*! \class OrderLogWidget
-      \brief Displays a blotter's Order log.
-   */
+  /** Displays a blotter's Order log. */
   class OrderLogWidget : public QWidget {
     public:
 
-      /*! \struct UIState
-          \brief Stores the user interface state of this widget.
-       */
+      /** Stores the user interface state of this widget. */
       struct UIState {
 
-        //! The geometry of the order log table header.
+        /** The geometry of the order log table header. */
         QByteArray m_tableGeometry;
 
-        //! The state of the order log table header.
+        /** The state of the order log table header. */
         QByteArray m_tableState;
 
         template<typename Shuttler>
         void Shuttle(Shuttler& shuttle, unsigned int version);
       };
 
-      //! Constructs an OrderLogWidget.
-      /*!
-        \param parent The parent widget.
-        \param flags Qt flags passed to the parent widget.
-      */
-      OrderLogWidget(QWidget* parent = nullptr,
-        Qt::WindowFlags flags = Qt::WindowFlags());
+      /**
+       * Constructs an OrderLogWidget.
+       * @param parent The parent widget.
+       * @param flags Qt flags passed to the parent widget.
+       */
+      explicit OrderLogWidget(
+        QWidget* parent = nullptr, Qt::WindowFlags flags = Qt::WindowFlags());
 
-      virtual ~OrderLogWidget();
-
-      //! Returns the current UI state.
+      /** Returns the current UI state. */
       UIState GetUIState() const;
 
-      //! Sets the UI state.
-      /*!
-        \param state The UIState to set.
-      */
+      /**
+       * Sets the UI state.
+       * @param state The UIState to set.
+       */
       void SetUIState(const UIState& state);
 
-      //! Sets the BlotterModel this widget is representing.
-      /*!
-        \param userProfile The user's profile.
-        \param model The model to represent.
-      */
-      void SetModel(Beam::Ref<UserProfile> userProfile,
-        Beam::Ref<BlotterModel> model);
+      /**
+       * Sets the BlotterModel this widget is representing.
+       * @param userProfile The user's profile.
+       * @param model The model to represent.
+       */
+      void SetModel(
+        Beam::Ref<UserProfile> userProfile, Beam::Ref<BlotterModel> model);
 
     protected:
-      virtual bool eventFilter(QObject* object, QEvent* event);
+      bool eventFilter(QObject* object, QEvent* event) override;
 
     private:
       std::unique_ptr<Ui_OrderLogWidget> m_ui;
@@ -74,8 +67,7 @@ namespace Spire {
       std::vector<OrderLogModel::OrderEntry> m_orderEntries;
       boost::signals2::scoped_connection m_orderAddedConnection;
       boost::signals2::scoped_connection m_orderRemovedConnection;
-      QTimer m_updateTimer;
-      Beam::TaskQueue m_slotHandler;
+      EventHandler m_eventHandler;
 
       void OnOrderAdded(const OrderLogModel::OrderEntry& entry);
       void OnOrderRemoved(const OrderLogModel::OrderEntry& entry);
@@ -85,7 +77,6 @@ namespace Spire {
       void OnExecutionReport(const Nexus::OrderExecutionService::Order* order,
         const Nexus::OrderExecutionService::ExecutionReport& executionReport);
       void OnContextMenu(const QPoint& point);
-      void OnUpdateTimer();
   };
 
   template<typename Shuttler>

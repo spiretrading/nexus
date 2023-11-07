@@ -1,78 +1,76 @@
-#ifndef SPIRE_USERCATALOGENTRY_HPP
-#define SPIRE_USERCATALOGENTRY_HPP
+#ifndef SPIRE_USER_CATALOG_ENTRY_HPP
+#define SPIRE_USER_CATALOG_ENTRY_HPP
 #include <filesystem>
 #include "Spire/Canvas/Common/CanvasNode.hpp"
 #include "Spire/Catalog/PersistentCatalogEntry.hpp"
 
 namespace Spire {
 
-  /*! \class UserCatalogEntry
-      \brief CatalogEntry defined by the user.
-   */
+  /** CatalogEntry defined by the user. */
   class UserCatalogEntry : public PersistentCatalogEntry {
     public:
 
-      //! Returns the meta-data value used to indicate the CanvasNode's source.
+      /**
+       * Returns the meta-data value used to indicate the CanvasNode's source.
+       */
       static const std::string& GetUserSourceValue();
 
-      //! Constructs a UserCatalogEntry.
-      /*!
-        \param catalogPath The path to save this entry to.
-      */
-      UserCatalogEntry(const std::filesystem::path& catalogPath);
+      /**
+       * Constructs a UserCatalogEntry.
+       * @param catalogPath The path to save this entry to.
+       */
+      explicit UserCatalogEntry(const std::filesystem::path& catalogPath);
 
-      //! Constructs a UserCatalogEntry.
-      /*!
-        \param name The name of the entry.
-        \param node The CanvasNode to represent.
-        \param iconPath The file path to the entry's icon.
-        \param description The description of the entry.
-        \param catalogPath The path to save this entry to.
-      */
+      /**
+       * Constructs a UserCatalogEntry.
+       * @param name The name of the entry.
+       * @param node The CanvasNode to represent.
+       * @param iconPath The file path to the entry's icon.
+       * @param description The description of the entry.
+       * @param catalogPath The path to save this entry to.
+       */
       UserCatalogEntry(const std::string& name, const CanvasNode& node,
         const std::string& iconPath, const std::string& description,
         const std::filesystem::path& catalogPath);
 
-      //! Constructs a UserCatalogEntry.
-      /*!
-        \param name The name of the entry.
-        \param node The CanvasNode to represent.
-        \param uuid The entry's UUID.
-        \param iconPath The file path to the entry's icon.
-        \param description The description of the entry.
-        \param catalogPath The path to save this entry to.
-      */
+      /**
+       * Constructs a UserCatalogEntry.
+       * @param name The name of the entry.
+       * @param node The CanvasNode to represent.
+       * @param uuid The entry's UUID.
+       * @param iconPath The file path to the entry's icon.
+       * @param description The description of the entry.
+       * @param catalogPath The path to save this entry to.
+       */
       UserCatalogEntry(const std::string& name, const CanvasNode& node,
         const boost::uuids::uuid& uuid, const std::string& iconPath,
         const std::string& description,
         const std::filesystem::path& catalogPath);
 
-      virtual ~UserCatalogEntry();
+      void Save() const override;
 
-      virtual void Save() const;
+      void Delete() const override;
 
-      virtual void Delete() const;
+      std::string GetName() const override;
 
-      virtual std::string GetName() const;
+      std::unique_ptr<CatalogEntry>
+        SetName(const std::string& name) const override;
 
-      virtual std::unique_ptr<CatalogEntry> SetName(
-        const std::string& name) const;
+      const std::string& GetIconPath() const override;
 
-      virtual const std::string& GetIconPath() const;
+      std::unique_ptr<CatalogEntry>
+        SetIconPath(const std::string& iconPath) const override;
 
-      virtual std::unique_ptr<CatalogEntry> SetIconPath(
-        const std::string& iconPath) const;
+      QIcon GetIcon() const override;
 
-      virtual QIcon GetIcon() const;
+      std::string GetDescription() const override;
 
-      virtual std::string GetDescription() const;
+      const CanvasNode& GetNode() const override;
 
-      virtual const CanvasNode& GetNode() const;
+      std::unique_ptr<CatalogEntry>
+        SetNode(const CanvasNode& node) const override;
 
-      virtual std::unique_ptr<CatalogEntry> SetNode(
-        const CanvasNode& node) const;
-
-      virtual bool IsReadOnly() const;
+      bool IsReadOnly() const override;
 
     private:
       friend struct Beam::Serialization::DataShuttle;

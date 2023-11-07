@@ -4,21 +4,18 @@
 #include "Spire/Canvas/Types/IntegerType.hpp"
 
 using namespace Spire;
-using namespace std;
 
 BlotterTaskMonitor::BlotterTaskMonitor()
-    : BlotterTaskMonitor("", NoneNode(IntegerType::GetInstance())) {}
+  : BlotterTaskMonitor("", NoneNode(IntegerType::GetInstance())) {}
 
-BlotterTaskMonitor::BlotterTaskMonitor(const string& name,
-    const CanvasNode& monitor)
-    : m_name(name),
-      m_monitor(CanvasNode::Clone(monitor)) {}
+BlotterTaskMonitor::BlotterTaskMonitor(
+    const std::string& name, const CanvasNode& monitor)
+  : m_name(name),
+    m_monitor(CanvasNode::Clone(monitor)) {}
 
 BlotterTaskMonitor::BlotterTaskMonitor(const BlotterTaskMonitor& monitor)
-    : m_name(monitor.m_name),
-      m_monitor(CanvasNode::Clone(*monitor.m_monitor)) {}
-
-BlotterTaskMonitor::~BlotterTaskMonitor() {}
+  : m_name(monitor.m_name),
+    m_monitor(CanvasNode::Clone(*monitor.m_monitor)) {}
 
 BlotterTaskMonitor& BlotterTaskMonitor::operator =(
     const BlotterTaskMonitor& monitor) {
@@ -27,7 +24,7 @@ BlotterTaskMonitor& BlotterTaskMonitor::operator =(
   return *this;
 }
 
-const string& BlotterTaskMonitor::GetName() const {
+const std::string& BlotterTaskMonitor::GetName() const {
   return m_name;
 }
 

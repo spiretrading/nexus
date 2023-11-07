@@ -1,5 +1,5 @@
-#ifndef SPIRE_SAVEDDASHBOARDS_HPP
-#define SPIRE_SAVEDDASHBOARDS_HPP
+#ifndef SPIRE_SAVED_DASHBOARDS_HPP
+#define SPIRE_SAVED_DASHBOARDS_HPP
 #include <memory>
 #include <string>
 #include <vector>
@@ -14,108 +14,104 @@
 
 namespace Spire {
 
-  /*! \class SavedDashboards
-      \brief Stores the user's list of saved dashboards.
-   */
+  /** Stores the user's list of saved dashboards. */
   class SavedDashboards {
     public:
 
-      /*! \struct Entry
-          \brief Stores a single saved dashboard.
-       */
+      /** Stores a single saved dashboard. */
       struct Entry {
 
-        //! The name of the dashboard.
+        /** The name of the dashboard. */
         std::string m_name;
 
-        //! The dashboard's schema.
+        /** The dashboard's schema. */
         DashboardModelSchema m_schema;
 
-        //! The settings used to display the dashboard.
+        /** The settings used to display the dashboard. */
         std::shared_ptr<UI::WindowSettings> m_settings;
 
-        //! Constructs an uninitialized Entry.
+        /** Constructs an uninitialized Entry. */
         Entry() = default;
 
-        //! Constructs an Entry.
-        /*!
-          \param name The name of the dashboard.
-          \param schema The dashboard's schema.
-          \param settings The settings used to display the dashboard.
-        */
+        /**
+         * Constructs an Entry.
+         * @param name The name of the dashboard.
+         * @param schema The dashboard's schema.
+         * @param settings The settings used to display the dashboard.
+         */
         Entry(std::string name, DashboardModelSchema schema,
           std::shared_ptr<UI::WindowSettings> settings);
       };
 
-      //! Signals a dashboard was added.
-      /*!
-        \param entry The dashboard that was added.
-      */
+      /**
+       * Signals a dashboard was added.
+       * @param entry The dashboard that was added.
+       */
       using DashboardAddedSignal =
         boost::signals2::signal<void (const Entry& entry)>;
 
-      //! Signals a dashboard was removed.
-      /*!
-        \param entry The dashboard that was removed.
-      */
-      using DashboardRemovedSignal = boost::signals2::signal<
-        void (const Entry& entry)>;
+      /**
+       * Signals a dashboard was removed.
+       * @param entry The dashboard that was removed.
+       */
+      using DashboardRemovedSignal =
+        boost::signals2::signal<void (const Entry& entry)>;
 
-      //! Loads the SavedDashboards from a UserProfile.
-      /*!
-        \param userProfile The UserProfile to load from.
-      */
+      /**
+       * Loads the SavedDashboards from a UserProfile.
+       * @param userProfile The UserProfile to load from.
+       */
       static void Load(Beam::Out<UserProfile> userProfile);
 
-      //! Saves a UserProfile's SavedDashboards.
-      /*!
-        \param userProfile The UserProfile to save.
-      */
+      /**
+       * Saves a UserProfile's SavedDashboards.
+       * @param userProfile The UserProfile to save.
+       */
       static void Save(const UserProfile& userProfile);
 
-      //! Constructs an empty set of dashboards.
+      /** Constructs an empty set of dashboards. */
       SavedDashboards() = default;
 
-      //! Copies the SavedDashboards.
-      /*!
-        \param savedDashboards The SavedDashboards to copy.
-      */
+      /**
+       * Copies the SavedDashboards.
+       * @param savedDashboards The SavedDashboards to copy.
+       */
       SavedDashboards(const SavedDashboards& savedDashboards);
 
-      //! Assigns the SavedDashboards.
-      /*!
-        \param savedDashboards The SavedDashboards to copy.
-      */
+      /**
+       * Assigns the SavedDashboards.
+       * @param savedDashboards The SavedDashboards to copy.
+       */
       SavedDashboards& operator =(const SavedDashboards& savedDashboards);
 
-      //! Returns the list of saved dashboards.
+      /** Returns the list of saved dashboards. */
       const std::vector<Entry>& GetDashboards() const;
 
-      //! Saves a dashboard.
-      /*!
-        \param entry The dashboard to save.
-      */
+      /**
+       * Saves a dashboard.
+       * @param entry The dashboard to save.
+       */
       void Save(const Entry& entry);
 
-      //! Deletes a dashboard.
-      /*!
-        \param name The name of the dashboard to delete.
-      */
+      /**
+       * Deletes a dashboard.
+       * @param name The name of the dashboard to delete.
+       */
       void Delete(const std::string& name);
 
-      //! Connects a slot to the DashboardAddedSignal.
-      /*!
-        \param slot The slot to connect.
-        \return A connection to the DashboardAddedSignal.
-      */
+      /**
+       * Connects a slot to the DashboardAddedSignal.
+       * @param slot The slot to connect.
+       * @return A connection to the DashboardAddedSignal.
+       */
       boost::signals2::connection ConnectDashboardAddedSignal(
         const DashboardAddedSignal::slot_type& slot) const;
 
-      //! Connects a slot to the DashboardRemovedSignal.
-      /*!
-        \param slot The slot to connect.
-        \return A connection to the DashboardRemovedSignal.
-      */
+      /**
+       * Connects a slot to the DashboardRemovedSignal.
+       * @param slot The slot to connect.
+       * @return A connection to the DashboardRemovedSignal.
+       */
       boost::signals2::connection ConnectDashboardRemovedSignal(
         const DashboardRemovedSignal::slot_type& slot) const;
 
@@ -127,8 +123,7 @@ namespace Spire {
   };
 }
 
-namespace Beam {
-namespace Serialization {
+namespace Beam::Serialization {
   template<>
   struct Shuttle<Spire::SavedDashboards::Entry> {
     template<typename Shuttler>
@@ -148,7 +143,6 @@ namespace Serialization {
       shuttle.Shuttle("dashboards", value.m_dashboards);
     }
   };
-}
 }
 
 #endif

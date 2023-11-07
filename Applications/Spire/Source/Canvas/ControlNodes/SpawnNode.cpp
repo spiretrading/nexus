@@ -7,13 +7,17 @@ using namespace Beam;
 using namespace Beam::Serialization;
 using namespace boost;
 using namespace Spire;
-using namespace std;
+
+const std::string SpawnNode::TRIGGER_PROPERTY = "trigger";
+const std::string SpawnNode::SERIES_PROPERTY = "series";
 
 SpawnNode::SpawnNode() {
   SetText("Spawn");
   SetType(UnionType::GetAnyType());
-  AddChild("trigger", make_unique<NoneNode>(UnionType::GetAnyType()));
-  AddChild("series", make_unique<NoneNode>(UnionType::GetAnyType()));
+  AddChild(
+    TRIGGER_PROPERTY, std::make_unique<NoneNode>(UnionType::GetAnyType()));
+  AddChild(
+    SERIES_PROPERTY, std::make_unique<NoneNode>(UnionType::GetAnyType()));
 }
 
 std::unique_ptr<CanvasNode> SpawnNode::Convert(const CanvasType& type) const {
@@ -24,8 +28,8 @@ std::unique_ptr<CanvasNode> SpawnNode::Convert(const CanvasType& type) const {
   return clone;
 }
 
-std::unique_ptr<CanvasNode> SpawnNode::Replace(const CanvasNode& child,
-    std::unique_ptr<CanvasNode> replacement) const {
+std::unique_ptr<CanvasNode> SpawnNode::Replace(
+    const CanvasNode& child, std::unique_ptr<CanvasNode> replacement) const {
   if(&child == &GetChildren().back()) {
     auto clone = CanvasNode::Clone(*this);
     clone->SetChild(clone->GetChildren().back(), std::move(replacement));
@@ -39,8 +43,8 @@ void SpawnNode::Apply(CanvasNodeVisitor& visitor) const {
   visitor.Visit(*this);
 }
 
-unique_ptr<CanvasNode> SpawnNode::Clone() const {
-  return make_unique<SpawnNode>(*this);
+std::unique_ptr<CanvasNode> SpawnNode::Clone() const {
+  return std::make_unique<SpawnNode>(*this);
 }
 
 SpawnNode::SpawnNode(ReceiveBuilder) {}

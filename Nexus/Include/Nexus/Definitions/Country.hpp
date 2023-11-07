@@ -21,6 +21,9 @@ namespace Details {
 
     /** Stores an invalid country code. */
     static const T NONE;
+
+    constexpr auto operator <=>(const CountryCodeDefinitions& other) const =
+      default;
   };
 }
 
@@ -40,14 +43,7 @@ namespace Details {
       /** Returns the integral representation of this code. */
       constexpr explicit operator std::uint16_t() const;
 
-      /** Tests if this code is less than another code. */
-      constexpr bool operator <(CountryCode other) const;
-
-      /** Tests if two codes are equal. */
-      constexpr bool operator ==(CountryCode other) const;
-
-      /** Tests if two codes are not equal. */
-      constexpr bool operator !=(CountryCode other) const;
+      constexpr auto operator <=>(const CountryCode& other) const = default;
 
       using Details::CountryCodeDefinitions<CountryCode>::NONE;
 
@@ -73,6 +69,8 @@ namespace Details {
 
         /** The country's three letter code. */
         Beam::FixedString<3> m_threeLetterCode;
+
+        bool operator ==(const Entry& rhs) const = default;
       };
 
       /** Constructs an empty CountryDatabase. */
@@ -114,30 +112,6 @@ namespace Details {
       };
       std::vector<Entry> m_entries;
   };
-
-  /**
-   * Tests two CountryDatabase Entries for equality.
-   * @param lhs The left hand side of the equality.
-   * @param rhs The right hand side of the equality.
-   * @return <code>true</code> iff the two CountryDatabase Entries are equal.
-   */
-  inline bool operator ==(const CountryDatabase::Entry& lhs,
-      const CountryDatabase::Entry& rhs) {
-    return lhs.m_code == rhs.m_code && lhs.m_name == rhs.m_name &&
-      lhs.m_twoLetterCode == rhs.m_twoLetterCode && lhs.m_threeLetterCode ==
-      rhs.m_threeLetterCode;
-  }
-
-  /**
-   * Tests two CountryDatabase Entries for equality.
-   * @param lhs The left hand side of the equality.
-   * @param rhs The right hand side of the equality.
-   * @return <code>true</code> iff the two CountryDatabase Entries are equal.
-   */
-  inline bool operator !=(const CountryDatabase::Entry& lhs,
-      const CountryDatabase::Entry& rhs) {
-    return !(lhs == rhs);
-  }
 
   /**
    * Parses a CountryCode from a string.
@@ -215,18 +189,6 @@ namespace Details {
 
   constexpr CountryCode::operator std::uint16_t() const {
     return m_value;
-  }
-
-  constexpr bool CountryCode::operator <(CountryCode other) const {
-    return m_value < other.m_value;
-  }
-
-  constexpr bool CountryCode::operator ==(CountryCode other) const {
-    return m_value == other.m_value;
-  }
-
-  constexpr bool CountryCode::operator !=(CountryCode other) const {
-    return !(*this == other);
   }
 
   inline const std::vector<CountryDatabase::Entry>&

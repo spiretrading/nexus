@@ -36,19 +36,7 @@ namespace Nexus {
     MarketQuote(MarketCode market, Quote bid, Quote ask,
       boost::posix_time::ptime timestamp);
 
-    /**
-     * Tests if two MarketQuote are equal.
-     * @param rhs The right hand side of the equality.
-     * @return <code>true</code> iff <i>this</i> is equal to <i>rhs</i>.
-     */
-    bool operator ==(const MarketQuote& rhs) const;
-
-    /**
-     * Tests if two MarketQuote are not equal.
-     * @param rhs The right hand side of the equality.
-     * @return <code>true</code> iff <i>this</i> is not equal to <i>rhs</i>.
-     */
-    bool operator !=(const MarketQuote& rhs) const;
+    bool operator ==(const MarketQuote& rhs) const = default;
   };
 
   inline std::ostream& operator <<(std::ostream& out,
@@ -70,15 +58,6 @@ namespace Nexus {
         m_timestamp(timestamp) {
     assert(m_bid.m_side == Side::BID);
     assert(m_ask.m_side == Side::ASK);
-  }
-
-  inline bool MarketQuote::operator ==(const MarketQuote& rhs) const {
-    return m_market == rhs.m_market && m_bid == rhs.m_bid &&
-      m_ask == rhs.m_ask && m_timestamp == rhs.m_timestamp;
-  }
-
-  inline bool MarketQuote::operator !=(const MarketQuote& rhs) const {
-    return !(*this == rhs);
   }
 }
 

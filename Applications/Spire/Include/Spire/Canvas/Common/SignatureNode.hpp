@@ -1,5 +1,5 @@
-#ifndef SPIRE_SIGNATURENODE_HPP
-#define SPIRE_SIGNATURENODE_HPP
+#ifndef SPIRE_SIGNATURE_NODE_HPP
+#define SPIRE_SIGNATURE_NODE_HPP
 #include <vector>
 #include <boost/mpl/for_each.hpp>
 #include "Spire/Canvas/Canvas.hpp"
@@ -14,9 +14,9 @@ namespace Details {
     std::vector<std::shared_ptr<NativeType>>* m_signature;
 
     SignatureInnerLoop(const CanvasTypeRegistry& typeRegistry,
-        std::vector<std::shared_ptr<NativeType>>& signature)
-        : m_typeRegistry(&typeRegistry),
-          m_signature(&signature) {}
+      std::vector<std::shared_ptr<NativeType>>& signature)
+      : m_typeRegistry(&typeRegistry),
+        m_signature(&signature) {}
 
     template<typename T>
     void operator ()(T) {
@@ -29,44 +29,48 @@ namespace Details {
     std::vector<std::vector<std::shared_ptr<NativeType>>>* m_signatures;
 
     SignatureOuterLoop(
-        std::vector<std::vector<std::shared_ptr<NativeType>>>& signatures)
-        : m_signatures(&signatures) {}
+      std::vector<std::vector<std::shared_ptr<NativeType>>>& signatures)
+      : m_signatures(&signatures) {}
 
     template<typename T>
     void operator ()(T) {
-      std::vector<std::shared_ptr<NativeType>> signature;
-      boost::mpl::for_each<T>(Details::SignatureInnerLoop(m_typeRegistry,
-        signature));
+      auto signature = std::vector<std::shared_ptr<NativeType>>();
+      boost::mpl::for_each<T>(
+        Details::SignatureInnerLoop(m_typeRegistry, signature));
       m_signatures->push_back(std::move(signature));
     }
   };
 }
 
-  /*! \class SignatureNode
-      \brief Base class for a CanvasNode with a finite set of parameter/return
-             type signatures.
+  /**
+   * Base class for a CanvasNode with a finite set of parameter/return type
+   * signatures.
    */
   class SignatureNode : public CanvasNode {
     public:
 
-      //! Defines the type of a single signature.  The vector must be non-empty
-      //! and contain as its last element the signature's return type.
-      typedef std::vector<std::shared_ptr<NativeType>> Signature;
+      /**
+       * Defines the type of a single signature.  The vector must be non-empty
+       * and contain as its last element the signature's return type.
+       */
+      using Signature = std::vector<std::shared_ptr<NativeType>>;
 
-      virtual std::unique_ptr<CanvasNode> Convert(const CanvasType& type) const;
+      std::unique_ptr<CanvasNode>
+        Convert(const CanvasType& type) const override;
 
-      virtual std::unique_ptr<CanvasNode> Replace(const CanvasNode& child,
-        std::unique_ptr<CanvasNode> replacement) const;
+      std::unique_ptr<CanvasNode> Replace(const CanvasNode& child,
+        std::unique_ptr<CanvasNode> replacement) const override;
 
+      using CanvasNode::Replace;
     protected:
 
-      //! Constructs an empty SignatureNode.
+      /** Constructs an empty SignatureNode. */
       SignatureNode();
 
-      //! Copies a SignatureNode.
+      /** Copies a SignatureNode. */
       SignatureNode(const SignatureNode& node) = default;
 
-      //! Returns the signatures supported by this CanvasNode.
+      /** Returns the signatures supported by this CanvasNode. */
       virtual const std::vector<Signature>& GetSignatures() const = 0;
 
       template<typename Shuttler>
@@ -76,10 +80,10 @@ namespace Details {
       std::shared_ptr<CanvasType> m_type;
   };
 
-  //! Returns a list of signatures from a compile time list of types.
+  /** Returns a list of signatures from a compile time list of types. */
   template<typename Signatures>
   std::vector<SignatureNode::Signature> MakeSignatures() {
-    std::vector<SignatureNode::Signature> signatures;
+    auto signatures = std::vector<SignatureNode::Signature>();
     boost::mpl::for_each<typename Signatures::type>(
       Details::SignatureOuterLoop(signatures));
     return signatures;

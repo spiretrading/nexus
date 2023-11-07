@@ -13,6 +13,7 @@
 #include <QAbstractItemModel>
 #include <QTimer>
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
+#include "Spire/Async/EventHandler.hpp"
 #include "Spire/Blotter/Blotter.hpp"
 #include "Spire/Blotter/BlotterTaskProperties.hpp"
 #include "Spire/Canvas/SystemNodes/CanvasObserver.hpp"
@@ -196,7 +197,6 @@ namespace Spire {
       UserProfile* m_userProfile;
       Beam::ServiceLocator::DirectoryEntry m_executingAccount;
       BlotterTaskProperties m_properties;
-      QTimer m_updateTimer;
       QTimer m_expiryTimer;
       bool m_isRefreshing;
       std::shared_ptr<Beam::MultiQueueWriter<
@@ -216,8 +216,8 @@ namespace Spire {
       std::set<const Nexus::OrderExecutionService::Order*> m_taskOrders;
       mutable TaskAddedSignal m_taskAddedSignal;
       mutable TaskRemovedSignal m_taskRemovedSignal;
-      Beam::TaskQueue m_orderSlotHandler;
-      std::optional<Beam::TaskQueue> m_taskSlotHandler;
+      EventHandler m_orderEventHandler;
+      std::optional<EventHandler> m_taskEventHandler;
       Beam::Routines::RoutineHandlerGroup m_pendingRoutines;
 
       void SetupLinkedOrderExecutionMonitor();
@@ -227,7 +227,6 @@ namespace Spire {
       void OnOrderSubmitted(const Nexus::OrderExecutionService::Order* order);
       void OnTaskOrderSubmitted(
         const Nexus::OrderExecutionService::Order* order);
-      void OnUpdateTimer();
       void OnExpiryTimer();
   };
 }

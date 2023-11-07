@@ -1,10 +1,9 @@
-#ifndef SPIRE_USERPROFILE_HPP
-#define SPIRE_USERPROFILE_HPP
+#ifndef SPIRE_USER_PROFILE_HPP
+#define SPIRE_USER_PROFILE_HPP
 #include <filesystem>
 #include <optional>
 #include <string>
 #include <vector>
-#include <Beam/Threading/Threading.hpp>
 #include <boost/date_time/local_time/tz_database.hpp>
 #include "Nexus/Definitions/Country.hpp"
 #include "Nexus/Definitions/Currency.hpp"
@@ -33,28 +32,27 @@
 
 namespace Spire {
 
-  /*! \class UserProfile
-      \brief Stores the user's preferences and application data.
-   */
+  /** Stores the user's preferences and application data. */
   class UserProfile {
     public:
 
-      //! Constructs a UserProfile.
-      /*!
-        \param username The username.
-        \param isAdministrator Whether the account is a system administrator.
-        \param isManager Whether the account manages at least one trading group.
-        \param countryDatabase Stores the database of all countries.
-        \param timeZoneDatabase Stores the database of all time zones.
-        \param currencyDatabase Stores the database of all currencies.
-        \param exchangeRates The list of ExchangeRates to use.
-        \param marketDatabase Stores the database of all markets.
-        \param destinationDatabase Stores the database of all destinations.
-        \param entitlementDatabase Stores the database of market data
-               entitlements.
-        \param serviceClients The set of clients connected to Spire services.
-        \param telemetryClient The client used to submit telemetry data.
-      */
+      /**
+       * Constructs a UserProfile.
+       * @param username The username.
+       * @param isAdministrator Whether the account is a system administrator.
+       * @param isManager Whether the account manages at least one trading
+       *        group.
+       * @param countryDatabase Stores the database of all countries.
+       * @param timeZoneDatabase Stores the database of all time zones.
+       * @param currencyDatabase Stores the database of all currencies.
+       * @param exchangeRates The list of ExchangeRates to use.
+       * @param marketDatabase Stores the database of all markets.
+       * @param destinationDatabase Stores the database of all destinations.
+       * @param entitlementDatabase Stores the database of market data
+       *        entitlements.
+       * @param serviceClients The set of clients connected to Spire services.
+       * @param telemetryClient The client used to submit telemetry data.
+       */
       UserProfile(const std::string& username, bool isAdministrator,
         bool isManager, const Nexus::CountryDatabase& countryDatabase,
         const boost::local_time::tz_database& timeZoneDatabase,
@@ -68,179 +66,181 @@ namespace Spire {
 
       ~UserProfile();
 
-      //! Returns the username.
+      /** Returns the username. */
       const std::string& GetUsername() const;
 
-      //! Returns <code>true</code> iff the account is an administrator.
+      /** Returns <code>true</code> iff the account is an administrator. */
       bool IsAdministrator() const;
 
-      //! Returns <code>true</code> iff the account manages at least one trading
-      //! group.
+      /**
+       * Returns <code>true</code> iff the account manages at least one trading
+       * group.
+       */
       bool IsManager() const;
 
-      //! Returns the CountryDatabase.
+      /** Returns the CountryDatabase. */
       const Nexus::CountryDatabase& GetCountryDatabase() const;
 
-      //! Returns the time zone database.
+      /** Returns the time zone database. */
       const boost::local_time::tz_database& GetTimeZoneDatabase() const;
 
-      //! Returns the CurrencyDatabase.
+      /** Returns the CurrencyDatabase. */
       const Nexus::CurrencyDatabase& GetCurrencyDatabase() const;
 
-      //! Returns the ExchangeRates.
+      /** Returns the ExchangeRates. */
       const Nexus::ExchangeRateTable& GetExchangeRates() const;
 
-      //! Returns the MarketDatabase.
+      /** Returns the MarketDatabase. */
       const Nexus::MarketDatabase& GetMarketDatabase() const;
 
-      //! Returns the DestinationDatabase.
+      /** Returns the DestinationDatabase. */
       const Nexus::DestinationDatabase& GetDestinationDatabase() const;
 
-      //! Returns the EntitlementDatabase.
+      /** Returns the EntitlementDatabase. */
       const Nexus::MarketDataService::EntitlementDatabase&
         GetEntitlementDatabase() const;
 
-      //! Returns the set of clients connected to Spire services.
+      /** Returns the set of clients connected to Spire services. */
       Nexus::ServiceClientsBox& GetServiceClients() const;
 
-      //! Returns the telemetry client.
+      /** Returns the telemetry client. */
       Nexus::TelemetryService::TelemetryClientBox& GetTelemetryClient() const;
 
-      //! Creates the profile path.
+      /** Creates the profile path. */
       void CreateProfilePath() const;
 
-      //! Returns the path to this user's profile directory.
+      /** Returns the path to this user's profile directory. */
       const std::filesystem::path& GetProfilePath() const;
 
-      //! Returns the list of recently closed windows.
+      /** Returns the list of recently closed windows. */
       const std::vector<std::unique_ptr<UI::WindowSettings>>&
         GetRecentlyClosedWindows() const;
 
-      //! Adds a window to the list of recently closed windows.
-      /*!
-        \param window The recently closed window to add.
-      */
+      /**
+       * Adds a window to the list of recently closed windows.
+       * @param window The recently closed window to add.
+       */
       void AddRecentlyClosedWindow(std::unique_ptr<UI::WindowSettings> window);
 
-      //! Removes a window from the list of recently closed windows.
-      /*!
-        \param window The recently closed window to remove.
-      */
+      /**
+       * Removes a window from the list of recently closed windows.
+       * @param window The recently closed window to remove.
+       */
       void RemoveRecentlyClosedWindow(const UI::WindowSettings& window);
 
-      //! Returns the BlotterSettings.
+      /** Returns the BlotterSettings. */
       const BlotterSettings& GetBlotterSettings() const;
 
-      //! Returns the BlotterSettings.
+      /** Returns the BlotterSettings. */
       BlotterSettings& GetBlotterSettings();
 
-      //! Returns the SavedDashboards.
+      /** Returns the SavedDashboards. */
       SavedDashboards& GetSavedDashboards();
 
-      //! Returns the SavedDashboards.
+      /** Returns the SavedDashboards. */
       const SavedDashboards& GetSavedDashboards() const;
 
-      //! Returns the KeyBindings.
+      /** Returns the KeyBindings. */
       const KeyBindings& GetKeyBindings() const;
 
-      //! Returns the KeyBindings.
+      /** Returns the KeyBindings. */
       KeyBindings& GetKeyBindings();
 
-      //! Sets the KeyBindings.
-      /*!
-        \param keyBindings The new KeyBindings to use for this profile.
-      */
+      /**
+       * Sets the KeyBindings.
+       * @param keyBindings The new KeyBindings to use for this profile.
+       */
       void SetKeyBindings(const KeyBindings& keyBindings);
 
-      //! Returns the CatalogSettings.
+      /** Returns the CatalogSettings. */
       const CatalogSettings& GetCatalogSettings() const;
 
-      //! Returns the CatalogSettings.
+      /** Returns the CatalogSettings. */
       CatalogSettings& GetCatalogSettings();
 
-      //! Returns the CanvasTypeRegistry.
+      /** Returns the CanvasTypeRegistry. */
       const CanvasTypeRegistry& GetCanvasTypeRegistry() const;
 
-      //! Returns the CanvasTypeRegistry.
+      /** Returns the CanvasTypeRegistry. */
       CanvasTypeRegistry& GetCanvasTypeRegistry();
 
-      //! Returns the default BookViewProperties.
+      /** Returns the default BookViewProperties. */
       const BookViewProperties& GetDefaultBookViewProperties() const;
 
-      //! Sets the default BookViewProperties.
-      /*!
-        \param properties The BookViewProperties to use as the defaults.
-      */
+      /**
+       * Sets the default BookViewProperties.
+       * @param properties The BookViewProperties to use as the defaults.
+       */
       void SetDefaultBookViewProperties(const BookViewProperties& properties);
 
-      //! Returns the default OrderImbalanceIndicatorProperties.
+      /** Returns the default OrderImbalanceIndicatorProperties. */
       const OrderImbalanceIndicatorProperties&
         GetDefaultOrderImbalanceIndicatorProperties() const;
 
-      //! Sets the default OrderImbalanceIndicatorProperties.
-      /*!
-        \param properties The OrderImbalanceIndicatorProperties to use as the
-               defaults.
-      */
+      /**
+       * Sets the default OrderImbalanceIndicatorProperties.
+       * @param properties The OrderImbalanceIndicatorProperties to use as the
+       *        defaults.
+       */
       void SetDefaultOrderImbalanceIndicatorProperties(
         const OrderImbalanceIndicatorProperties& properties);
 
-      //! Returns the initial OrderImbalanceIndicatorWindowSettings.
+      /** Returns the initial OrderImbalanceIndicatorWindowSettings. */
       const boost::optional<OrderImbalanceIndicatorWindowSettings>&
         GetInitialOrderImbalanceIndicatorWindowSettings() const;
 
-      //! Sets the initial OrderImbalanceIndicatorWindowSettings.
+      /** Sets the initial OrderImbalanceIndicatorWindowSettings. */
       void SetInitialOrderImbalanceIndicatorWindowSettings(
         const OrderImbalanceIndicatorWindowSettings& settings);
 
-      //! Returns the RiskTimerProperties.
+      /** Returns the RiskTimerProperties. */
       const RiskTimerProperties& GetRiskTimerProperties() const;
 
-      //! Returns the RiskTimerProperties.
+      /** Returns the RiskTimerProperties. */
       RiskTimerProperties& GetRiskTimerProperties();
 
-      //! Returns the default TimeAndSalesProperties.
+      /** Returns the default TimeAndSalesProperties. */
       const TimeAndSalesProperties& GetDefaultTimeAndSalesProperties() const;
 
-      //! Sets the default TimeAndSalesProperties.
-      /*!
-        \param properties The TimeAndSalesProperties to use as defaults.
-      */
+      /**
+       * Sets the default TimeAndSalesProperties.
+       * @param properties The TimeAndSalesProperties to use as defaults.
+       */
       void SetDefaultTimeAndSalesProperties(
         const TimeAndSalesProperties& properties);
 
-      //! Returns the default PortfolioViewerProperties.
-      const PortfolioViewerProperties& GetDefaultPortfolioViewerProperties()
-        const;
+      /** Returns the default PortfolioViewerProperties. */
+      const PortfolioViewerProperties&
+        GetDefaultPortfolioViewerProperties() const;
 
-      //! Sets the default PortfolioViewerProperties.
-      /*!
-        \param properties The PortfolioViewerProperties to use as defaults.
-      */
+      /**
+       * Sets the default PortfolioViewerProperties.
+       * @param properties The PortfolioViewerProperties to use as defaults.
+       */
       void SetDefaultPortfolioViewerProperties(
         const PortfolioViewerProperties& properties);
 
-      //! Returns the RegionMap storing the InteractionProperties.
+      /** Returns the RegionMap storing the InteractionProperties. */
       Nexus::RegionMap<InteractionsProperties>& GetInteractionProperties();
 
-      //! Returns the RegionMap storing the InteractionProperties.
+      /** Returns the RegionMap storing the InteractionProperties. */
       const Nexus::RegionMap<InteractionsProperties>&
         GetInteractionProperties() const;
 
-      //! Returns the default Quantity.
-      /*!
-        \param security The Security to lookup the default Quantity for.
-        \param side The Side to get the default Quantity on.
-        \return The default Quantity used for Tasks.
-      */
-      Nexus::Quantity GetDefaultQuantity(const Nexus::Security& security,
-        Nexus::Side side) const;
+      /**
+       * Returns the default Quantity.
+       * @param security The Security to lookup the default Quantity for.
+       * @param side The Side to get the default Quantity on.
+       * @return The default Quantity used for Tasks.
+       */
+      Nexus::Quantity GetDefaultQuantity(
+        const Nexus::Security& security, Nexus::Side side) const;
 
-      //! Returns the initial PortfolioViewerWindowSettings.
+      /** Returns the initial PortfolioViewerWindowSettings. */
       const boost::optional<PortfolioViewerWindowSettings>&
         GetInitialPortfolioViewerWindowSettings() const;
 
-      //! Sets the initial PortfolioViewerWindowSettings.
+      /** Sets the initial PortfolioViewerWindowSettings. */
       void SetInitialPortfolioViewerWindowSettings(
         const PortfolioViewerWindowSettings& settings);
 

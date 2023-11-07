@@ -37,21 +37,7 @@ namespace Details {
       /** The condition's code. */
       std::string m_code;
 
-      /** Constructs a default Condition. */
-      Condition() = default;
-
-      /**
-       * Constructs a Condition.
-       * @param type The type of condition.
-       * @param code The condition's code.
-       */
-      Condition(Type type, std::string code);
-
-      /** Tests a Condition for equality. */
-      bool operator ==(const Condition& condition) const;
-
-      /** Tests a Condition for inequality. */
-      bool operator !=(const Condition& condition) const;
+      bool operator ==(const Condition& condition) const = default;
     };
 
     /** The time of the transaction. */
@@ -69,25 +55,7 @@ namespace Details {
     /** The market center. */
     std::string m_marketCenter;
 
-    /** Constructs an uninitialized TimeAndSale. */
-    TimeAndSale() = default;
-
-    /**
-     * Constructs a TimeAndSale.
-     * @param timestamp The time of the transaction.
-     * @param price The transaction's price.
-     * @param size The size of the transaction.
-     * @param condition The sale condition.
-     * @param marketCenter The market center.
-     */
-    TimeAndSale(boost::posix_time::ptime timestamp, Money price,
-      Quantity size, Condition condition, std::string marketCenter);
-
-    /** Tests a TimeAndSale for equality. */
-    bool operator ==(const TimeAndSale& timeAndSale) const;
-
-    /** Tests a TimeAndSale for inequality. */
-    bool operator !=(const TimeAndSale& timeAndSale) const;
+    bool operator ==(const TimeAndSale& timeAndSale) const = default;
   };
 
   inline std::ostream& operator <<(std::ostream& out,
@@ -112,39 +80,6 @@ namespace Details {
     return out << "(" << value.m_timestamp << " " << value.m_price << " " <<
       value.m_size << " " << value.m_condition << " " << value.m_marketCenter <<
       ")";
-  }
-
-  inline TimeAndSale::Condition::Condition(Type type, std::string code)
-    : m_type(type),
-      m_code(std::move(code)) {}
-
-  inline TimeAndSale::TimeAndSale(boost::posix_time::ptime timestamp,
-    Money price, Quantity size, Condition condition, std::string marketCenter)
-    : m_timestamp(timestamp),
-      m_price(price),
-      m_size(size),
-      m_condition(std::move(condition)),
-      m_marketCenter(std::move(marketCenter)) {}
-
-  inline bool TimeAndSale::operator ==(const TimeAndSale& timeAndSale) const {
-    return m_timestamp == timeAndSale.m_timestamp &&
-      m_price == timeAndSale.m_price && m_size == timeAndSale.m_size &&
-      m_condition == timeAndSale.m_condition &&
-      m_marketCenter == timeAndSale.m_marketCenter;
-  }
-
-  inline bool TimeAndSale::operator !=(const TimeAndSale& timeAndSale) const {
-    return !(*this == timeAndSale);
-  }
-
-  inline bool TimeAndSale::Condition::operator ==(
-      const Condition& condition) const {
-    return m_type == condition.m_type && m_code == condition.m_code;
-  }
-
-  inline bool TimeAndSale::Condition::operator !=(
-      const Condition& condition) const {
-    return !(*this == condition);
   }
 }
 

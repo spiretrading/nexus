@@ -4,6 +4,11 @@ const PROD = JSON.parse(process.env.PROD_ENV || '0');
 module.exports = {
   devtool: PROD ? false : 'source-map',
   entry: path.resolve(process.cwd(), 'source/index.tsx'),
+  ignoreWarnings: [
+    {
+      message: /Failed to parse source map/,
+    }
+  ],
   mode: PROD ? 'production' : 'development',
   module: {
     rules: [

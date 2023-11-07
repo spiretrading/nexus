@@ -1,5 +1,6 @@
 #include "Spire/InputWidgets/SecurityInputDialog.hpp"
 #include <QHeaderView>
+#include <QKeyEvent>
 #include <QScrollBar>
 #include <QTableView>
 #include "Nexus/Definitions/SecuritySet.hpp"
@@ -13,7 +14,50 @@ using namespace boost;
 using namespace Nexus;
 using namespace Spire;
 using namespace Spire::UI;
-using namespace std;
+
+void Spire::ShowSecurityInputDialog(Ref<UserProfile> userProfile,
+    const variant<std::string, Security>& initialValue, QWidget* parent,
+    std::function<void (optional<Security>)> onResult) {
+  auto dialog = [&] {
+    if(auto text = get<std::string>(&initialValue)) {
+      return new SecurityInputDialog(Ref(userProfile), *text, parent);
+    }
+    return new SecurityInputDialog(
+      Ref(userProfile), get<Security>(initialValue), parent);
+  }();
+  dialog->setAttribute(Qt::WA_DeleteOnClose);
+  QObject::connect(dialog, &SecurityInputDialog::finished, parent,
+    [=] (auto result) {
+      if(result == QDialog::Rejected) {
+        onResult(none);
+      } else {
+        onResult(dialog->GetSecurity());
+      }
+    });
+  dialog->show();
+}
+
+void Spire::ShowWildCardSecurityInputDialog(Ref<UserProfile> userProfile,
+    const variant<std::string, Security>& initialValue, QWidget* parent,
+    std::function<void (optional<Security>)> onResult) {
+  auto dialog = [&] {
+    if(auto text = get<std::string>(&initialValue)) {
+      return new SecurityInputDialog(Ref(userProfile), *text, parent);
+    }
+    return new SecurityInputDialog(
+      Ref(userProfile), get<Security>(initialValue), parent);
+  }();
+  dialog->setAttribute(Qt::WA_DeleteOnClose);
+  QObject::connect(dialog, &SecurityInputDialog::finished, parent,
+    [=] (auto result) {
+      if(result == QDialog::Rejected) {
+        onResult(none);
+      } else {
+        onResult(dialog->GetSecurity(true));
+      }
+    });
+  dialog->show();
+}
 
 SecurityInputDialog::SecurityInputDialog(Ref<UserProfile> userProfile,
     const Security& initial, QWidget* parent, Qt::WindowFlags flags)
@@ -24,40 +68,50 @@ SecurityInputDialog::SecurityInputDialog(Ref<UserProfile> userProfile,
   auto text = ToWildCardString(initial, m_userProfile->GetMarketDatabase(),
     m_userProfile->GetCountryDatabase());
   m_ui->m_input->setText(QString::fromStdString(text));
+  if(parent) {
+    parent->installEventFilter(this);
+  }
 }
 
 SecurityInputDialog::SecurityInputDialog(Ref<UserProfile> userProfile,
-    const string& text, QWidget* parent, Qt::WindowFlags flags)
+    const std::string& text, QWidget* parent, Qt::WindowFlags flags)
     : QDialog(parent, flags),
       m_ui(std::make_unique<Ui_SecurityInputDialog>()),
       m_userProfile(userProfile.Get()) {
   Initialize();
   m_ui->m_input->setText(QString::fromStdString(text));
+  if(parent) {
+    parent->installEventFilter(this);
+  }
 }
 
-SecurityInputDialog::~SecurityInputDialog() {}
+SecurityInputDialog::~SecurityInputDialog() = default;
 
 Security SecurityInputDialog::GetSecurity(bool supportWildCards) const {
   auto source = m_ui->m_input->text().toUpper().toStdString();
-  auto security =
-    [&] {
-      if(supportWildCards) {
-        auto optionalSecurity = ParseWildCardSecurity(source,
-          m_userProfile->GetMarketDatabase(),
-          m_userProfile->GetCountryDatabase());
-        if(optionalSecurity.is_initialized()) {
-          return *optionalSecurity;
-        }
-        return Security{};
-      } else {
-        return ParseSecurity(source, m_userProfile->GetMarketDatabase());
-      }
-    }();
-  return security;
+  if(supportWildCards) {
+    auto optionalSecurity =
+      ParseWildCardSecurity(source, m_userProfile->GetMarketDatabase(),
+        m_userProfile->GetCountryDatabase());
+    if(optionalSecurity) {
+      return *optionalSecurity;
+    }
+    return Security();
+  }
+  return ParseSecurity(source, m_userProfile->GetMarketDatabase());
 }
 
 QLineEdit& SecurityInputDialog::GetSymbolInput() {
   return *m_ui->m_input;
+}
+
+bool SecurityInputDialog::eventFilter(QObject* receiver, QEvent* event) {
+  if(isVisible() && event->type() == QEvent::KeyPress) {
+    auto forwardEvent = QKeyEvent(static_cast<QKeyEvent&>(*event));
+    QCoreApplication::sendEvent(m_ui->m_input, &forwardEvent);
+    return true;
+  }
+  return QDialog::eventFilter(receiver, event);
 }
 
 void SecurityInputDialog::Initialize() {
@@ -71,7 +125,7 @@ void SecurityInputDialog::Initialize() {
   m_completerPopup->verticalHeader()->hide();
   m_completerPopup->horizontalHeader()->hide();
   m_completerPopup->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-  QFontMetrics metrics(m_completerPopup->font());
+  auto metrics = QFontMetrics(m_completerPopup->font());
   m_completerPopup->verticalHeader()->setDefaultSectionSize(
     metrics.height() + 4);
   m_completerPopup->setSelectionBehavior(QAbstractItemView::SelectRows);
@@ -97,15 +151,15 @@ void SecurityInputDialog::Initialize() {
 
 void SecurityInputDialog::AdjustCompleterSize() {
   m_completerPopup->resizeColumnsToContents();
-  int width = 2 + m_completerPopup->verticalHeader()->width();
-  for(int i = 0; i < SecurityInfoModel::COLUMN_COUNT; ++i) {
+  auto width = 2 + m_completerPopup->verticalHeader()->width();
+  for(auto i = 0; i < SecurityInfoModel::COLUMN_COUNT; ++i) {
     width += 4 + m_completerPopup->columnWidth(i);
   }
-  width = max(width, m_ui->m_input->width());
+  width = std::max(width, m_ui->m_input->width());
   m_completerPopup->setMinimumWidth(width);
   m_completerPopup->setMaximumWidth(width);
-  int height = 4 + m_completerPopup->horizontalHeader()->height();
-  for(int i = 0; i < min(7, m_model->rowCount(QModelIndex())); ++i) {
+  auto height = 4 + m_completerPopup->horizontalHeader()->height();
+  for(auto i = 0; i < std::min(7, m_model->rowCount(QModelIndex())); ++i) {
     height += m_completerPopup->rowHeight(i);
   }
   m_completerPopup->setMinimumHeight(height);
@@ -116,14 +170,14 @@ void SecurityInputDialog::OnInputEdited(const QString& text) {
   m_model->Search(text.toStdString());
 }
 
-void SecurityInputDialog::OnRowsAddedRemoved(const QModelIndex& parent,
-    int start, int end) {
+void SecurityInputDialog::OnRowsAddedRemoved(
+    const QModelIndex& parent, int start, int end) {
   m_completer->complete();
   AdjustCompleterSize();
 }
 
-void SecurityInputDialog::OnDataChanged(const QModelIndex& topLeft,
-    const QModelIndex& bottomRight) {
+void SecurityInputDialog::OnDataChanged(
+    const QModelIndex& topLeft, const QModelIndex& bottomRight) {
   m_completer->complete();
   AdjustCompleterSize();
 }

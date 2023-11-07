@@ -1,5 +1,5 @@
-#ifndef NEXUS_EXECUTIONREPORT_HPP
-#define NEXUS_EXECUTIONREPORT_HPP
+#ifndef NEXUS_EXECUTION_REPORT_HPP
+#define NEXUS_EXECUTION_REPORT_HPP
 #include <ostream>
 #include <string>
 #include <vector>
@@ -63,8 +63,8 @@ namespace Nexus::OrderExecutionService {
      * @param id The id of the Order this ExecutionReport belongs to.
      * @param timestamp The timestamp.
      */
-    static ExecutionReport MakeInitialReport(OrderId id,
-      boost::posix_time::ptime timestamp);
+    static ExecutionReport MakeInitialReport(
+      OrderId id, boost::posix_time::ptime timestamp);
 
     /**
      * Returns an ExecutionReport updating the OrderStatus of a previous
@@ -75,10 +75,12 @@ namespace Nexus::OrderExecutionService {
      */
     static ExecutionReport MakeUpdatedReport(const ExecutionReport& report,
       OrderStatus status, boost::posix_time::ptime timestamp);
+
+    bool operator ==(const ExecutionReport& rhs) const = default;
   };
 
-  inline std::ostream& operator <<(std::ostream& out,
-      const ExecutionReport& report) {
+  inline std::ostream& operator <<(
+      std::ostream& out, const ExecutionReport& report) {
     out << '(' << report.m_id << ' ' << report.m_timestamp << ' ' <<
       report.m_sequence << ' ' << report.m_status << ' ' <<
       report.m_lastQuantity << ' ' << report.m_lastPrice << ' ' <<
@@ -99,36 +101,6 @@ namespace Nexus::OrderExecutionService {
   }
 
   /**
-   * Tests if two ExecutionReports are equal.
-   * @param lhs The left hand side of the equality.
-   * @param rhs The right hand side of the equality.
-   * @return <code>true</code> iff <code>lhs</code> is equal to
-   *         <code>rhs</code>.
-   */
-  inline bool operator ==(const ExecutionReport& lhs,
-      const ExecutionReport& rhs) {
-    return std::tie(lhs.m_id, lhs.m_timestamp, lhs.m_sequence, lhs.m_status,
-      lhs.m_lastQuantity, lhs.m_lastPrice, lhs.m_liquidityFlag,
-      lhs.m_lastMarket, lhs.m_executionFee, lhs.m_processingFee,
-      lhs.m_commission, lhs.m_text, lhs.m_additionalTags) ==
-      std::tie(rhs.m_id, rhs.m_timestamp, rhs.m_sequence, rhs.m_status,
-      rhs.m_lastQuantity, rhs.m_lastPrice, rhs.m_liquidityFlag,
-      rhs.m_lastMarket, rhs.m_executionFee, rhs.m_processingFee,
-      rhs.m_commission, rhs.m_text, rhs.m_additionalTags);
-  }
-
-  /**
-   * Tests if two ExecutionReports are not equal.
-   * @param lhs The left hand side of the inequality.
-   * @param rhs The right hand side of the inequality.
-   * @return <code>true</code> iff <i>lhs</i> is not equal to <i>rhs</i>.
-   */
-  inline bool operator !=(const ExecutionReport& lhs,
-      const ExecutionReport& rhs) {
-    return !(lhs == rhs);
-  }
-
-  /**
    * Returns the sum of all fees.
    * @param report The ExecutionReport to calculate.
    * @return The sum of all of the <i>report</i>'s fees.
@@ -141,8 +113,8 @@ namespace Nexus::OrderExecutionService {
     : m_id(0),
       m_lastQuantity(0) {}
 
-  inline ExecutionReport ExecutionReport::MakeInitialReport(OrderId id,
-      boost::posix_time::ptime timestamp) {
+  inline ExecutionReport ExecutionReport::MakeInitialReport(
+      OrderId id, boost::posix_time::ptime timestamp) {
     auto report = ExecutionReport();
     report.m_id = id;
     report.m_timestamp = timestamp;

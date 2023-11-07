@@ -30,43 +30,8 @@ namespace Nexus::Compliance {
     /** The parameter's value. */
     ComplianceValue m_value;
 
-    /** Constructs an empty parameter. */
-    ComplianceParameter() = default;
-
-    /**
-     * Constructs a ComplianceParameter.
-     * @param name The parameter's name.
-     * @param value The parameter's value.
-     */
-    ComplianceParameter(std::string name, ComplianceValue value);
+    bool operator ==(const ComplianceParameter& rhs) const = default;
   };
-
-  /**
-   * Tests if two ComplianceParameter's are equal.
-   * @param lhs The left hand side of the comparison.
-   * @param rhs The right hand side of the comparison.
-   * @return <code>true</code> iff the two ComplianceParameter's are equal.
-   */
-  inline bool operator ==(const ComplianceParameter& lhs,
-      const ComplianceParameter& rhs) {
-    return lhs.m_name == rhs.m_name && lhs.m_value == rhs.m_value;
-  }
-
-  /**
-   * Tests if two ComplianceParameter's are not equal.
-   * @param lhs The left hand side of the comparison.
-   * @param rhs The right hand side of the comparison.
-   * @return <code>true</code> iff the two ComplianceParameter's are not equal.
-   */
-  inline bool operator !=(const ComplianceParameter& lhs,
-      const ComplianceParameter& rhs) {
-    return !(lhs == rhs);
-  }
-
-  inline ComplianceParameter::ComplianceParameter(std::string name,
-    ComplianceValue value)
-    : m_name(std::move(name)),
-      m_value(std::move(value)) {}
 }
 
 namespace Beam::Serialization {

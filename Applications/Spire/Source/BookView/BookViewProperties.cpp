@@ -13,20 +13,17 @@
 using namespace Beam;
 using namespace Beam::IO;
 using namespace Beam::Serialization;
-using namespace Beam::Threading;
 using namespace boost;
 using namespace Nexus;
 using namespace Spire;
 using namespace Spire::UI;
-using namespace std;
-using namespace std::filesystem;
 
 BookViewProperties BookViewProperties::GetDefault() {
-  BookViewProperties properties;
+  auto properties = BookViewProperties();
   properties.SetBboQuoteFont(QFont("Arial", 14, QFont::Bold));
   properties.SetBookQuoteFont(QFont("Arial", 8, QFont::Bold));
-  QColor baseColor(0, 84, 168);
-  for(int i = 0; i < 7; ++i) {
+  auto baseColor = QColor(0, 84, 168);
+  for(auto i = 0; i < 7; ++i) {
     properties.GetBookQuoteBackgroundColors().push_back(
       baseColor.lighter(300 - i * (200 / 7)));
   }
@@ -38,22 +35,23 @@ BookViewProperties BookViewProperties::GetDefault() {
 }
 
 void BookViewProperties::Load(Out<UserProfile> userProfile) {
-  path bookFilePath = userProfile->GetProfilePath() / "book_view.dat";
-  if(!exists(bookFilePath)) {
+  auto bookFilePath = userProfile->GetProfilePath() / "book_view.dat";
+  if(!std::filesystem::exists(bookFilePath)) {
     userProfile->SetDefaultBookViewProperties(GetDefault());
     return;
   }
-  BookViewProperties properties;
+  auto properties = BookViewProperties();
   try {
-    BasicIStreamReader<ifstream> reader(Initialize(bookFilePath, ios::binary));
-    SharedBuffer buffer;
+    auto reader = BasicIStreamReader<std::ifstream>(
+      Initialize(bookFilePath, std::ios::binary));
+    auto buffer = SharedBuffer();
     reader.Read(Store(buffer));
-    TypeRegistry<BinarySender<SharedBuffer>> typeRegistry;
+    auto typeRegistry = TypeRegistry<BinarySender<SharedBuffer>>();
     RegisterSpireTypes(Store(typeRegistry));
     auto receiver = BinaryReceiver<SharedBuffer>(Ref(typeRegistry));
     receiver.SetSource(Ref(buffer));
     receiver.Shuttle(properties);
-  } catch(std::exception&) {
+  } catch(const std::exception&) {
     QMessageBox::warning(nullptr, QObject::tr("Warning"),
       QObject::tr("Unable to load book view properties, using defaults."));
     properties = GetDefault();
@@ -62,25 +60,26 @@ void BookViewProperties::Load(Out<UserProfile> userProfile) {
 }
 
 void BookViewProperties::Save(const UserProfile& userProfile) {
-  path bookFilePath = userProfile.GetProfilePath() / "book_view.dat";
+  auto bookFilePath = userProfile.GetProfilePath() / "book_view.dat";
   try {
-    TypeRegistry<BinarySender<SharedBuffer>> typeRegistry;
+    auto typeRegistry = TypeRegistry<BinarySender<SharedBuffer>>();
     RegisterSpireTypes(Store(typeRegistry));
     auto sender = BinarySender<SharedBuffer>(Ref(typeRegistry));
-    SharedBuffer buffer;
+    auto buffer = SharedBuffer();
     sender.SetSink(Ref(buffer));
     sender.Shuttle(userProfile.GetDefaultBookViewProperties());
-    BasicOStreamWriter<ofstream> writer(Initialize(bookFilePath, ios::binary));
+    auto writer = BasicOStreamWriter<std::ofstream>(
+      Initialize(bookFilePath, std::ios::binary));
     writer.Write(buffer);
-  } catch(std::exception&) {
+  } catch(const std::exception&) {
     QMessageBox::warning(nullptr, QObject::tr("Warning"),
       QObject::tr("Unable to save book view properties."));
   }
 }
 
 BookViewProperties::BookViewProperties()
-    : m_showGrid(false),
-      m_showBbo(false) {}
+  : m_showGrid(false),
+    m_showBbo(false) {}
 
 const QColor& BookViewProperties::GetBookQuoteForegroundColor() const {
   return m_bookQuoteForegroundColor;
@@ -90,11 +89,12 @@ void BookViewProperties::SetBookQuoteForegroundColor(const QColor& color) {
   m_bookQuoteForegroundColor = color;
 }
 
-const vector<QColor>& BookViewProperties::GetBookQuoteBackgroundColors() const {
+const std::vector<QColor>&
+    BookViewProperties::GetBookQuoteBackgroundColors() const {
   return m_bookQuoteBackgroundColors;
 }
 
-vector<QColor>& BookViewProperties::GetBookQuoteBackgroundColors() {
+std::vector<QColor>& BookViewProperties::GetBookQuoteBackgroundColors() {
   return m_bookQuoteBackgroundColors;
 }
 
@@ -114,8 +114,8 @@ void BookViewProperties::SetBookQuoteFont(const QFont& font) {
   m_bookQuoteFont = font;
 }
 
-boost::optional<const BookViewProperties::MarketHighlight&> BookViewProperties::
-    GetMarketHighlight(MarketCode market) const {
+optional<const BookViewProperties::MarketHighlight&>
+    BookViewProperties::GetMarketHighlight(MarketCode market) const {
   auto marketIterator = m_marketHighlights.find(market);
   if(marketIterator == m_marketHighlights.end()) {
     return none;
@@ -123,8 +123,8 @@ boost::optional<const BookViewProperties::MarketHighlight&> BookViewProperties::
   return marketIterator->second;
 }
 
-void BookViewProperties::SetMarketHighlight(MarketCode market,
-    const MarketHighlight& highlight) {
+void BookViewProperties::SetMarketHighlight(
+    MarketCode market, const MarketHighlight& highlight) {
   m_marketHighlights[market] = highlight;
 }
 
@@ -132,8 +132,8 @@ void BookViewProperties::RemoveMarketHighlight(MarketCode market) {
   m_marketHighlights.erase(market);
 }
 
-BookViewProperties::OrderHighlight BookViewProperties::
-    GetOrderHighlight() const {
+BookViewProperties::OrderHighlight
+    BookViewProperties::GetOrderHighlight() const {
   return m_orderHighlight;
 }
 

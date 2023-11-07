@@ -1,29 +1,18 @@
 #include "Spire/Spire/SpireServiceClients.hpp"
 #include <stdexcept>
 #include <Beam/IO/ConnectException.hpp>
-#include <Beam/ServiceLocator/ApplicationDefinitions.hpp>
-#include <Beam/ServiceLocator/ServiceLocatorClientBox.hpp>
 #include <Beam/RegistryService/ApplicationDefinitions.hpp>
-#include <Beam/RegistryService/RegistryClientBox.hpp>
-#include <Beam/Threading/TimerBox.hpp>
+#include <Beam/ServiceLocator/ApplicationDefinitions.hpp>
 #include <Beam/TimeService/NtpTimeClient.hpp>
-#include <Beam/TimeService/TimeClientBox.hpp>
 #include <Beam/Utilities/BeamWorkaround.hpp>
 #include <boost/throw_exception.hpp>
 #include "Nexus/AdministrationService/ApplicationDefinitions.hpp"
-#include "Nexus/AdministrationService/AdministrationClientBox.hpp"
 #include "Nexus/ChartingService/ApplicationDefinitions.hpp"
-#include "Nexus/ChartingService/ChartingClientBox.hpp"
 #include "Nexus/Compliance/ApplicationDefinitions.hpp"
-#include "Nexus/Compliance/ComplianceClientBox.hpp"
 #include "Nexus/DefinitionsService/ApplicationDefinitions.hpp"
-#include "Nexus/DefinitionsService/DefinitionsClientBox.hpp"
 #include "Nexus/MarketDataService/ApplicationDefinitions.hpp"
-#include "Nexus/MarketDataService/MarketDataClientBox.hpp"
 #include "Nexus/OrderExecutionService/ApplicationDefinitions.hpp"
-#include "Nexus/OrderExecutionService/OrderExecutionClientBox.hpp"
 #include "Nexus/RiskService/ApplicationDefinitions.hpp"
-#include "Nexus/RiskService/RiskClientBox.hpp"
 #include "Version.hpp"
 
 using namespace Beam;
@@ -51,10 +40,10 @@ namespace {
     std::unique_ptr<T> m_value;
 
     ByPassPtr(std::unique_ptr<T> value)
-        : m_value{std::move(value)} {}
+      : m_value(std::move(value)) {}
 
     ByPassPtr(ByPassPtr&& ptr)
-        : m_value{std::move(ptr.m_value)} {}
+      : m_value(std::move(ptr.m_value)) {}
 
     Type& operator *() const {
       return **m_value;
@@ -146,8 +135,7 @@ TimeClientBox& SpireServiceClients::GetTimeClient() {
   return m_timeClient;
 }
 
-std::unique_ptr<TimerBox> SpireServiceClients::MakeTimer(
-    time_duration expiry) {
+std::unique_ptr<TimerBox> SpireServiceClients::MakeTimer(time_duration expiry) {
   return std::make_unique<TimerBox>(std::make_unique<LiveTimer>(expiry));
 }
 

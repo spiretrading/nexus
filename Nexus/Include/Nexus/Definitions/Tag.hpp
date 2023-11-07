@@ -57,18 +57,13 @@ namespace Nexus {
        */
       Tag(int key, Type value);
 
-      /**
-       * Returns <code>true</code> iff this Tag is equal to another.
-       * @param tag The tag to test for equality.
-       * @return <code>true</code> iff this Tag is equal to <code>rhs</code>.
-       */
-      bool operator ==(const Tag& tag) const;
-
       /** Returns the key. */
       int GetKey() const;
 
       /** Returns the value. */
       const Type& GetValue() const;
+
+      bool operator ==(const Tag& tag) const = default;
 
     private:
       friend struct Beam::Serialization::Shuttle<Tag>;
@@ -83,10 +78,6 @@ namespace Nexus {
   inline Tag::Tag(int key, Type value)
     : m_key(key),
       m_value(std::move(value)) {}
-
-  inline bool Tag::operator ==(const Tag& tag) const {
-    return std::tie(m_key, m_value) == std::tie(tag.m_key, tag.m_value);
-  }
 
   inline int Tag::GetKey() const {
     return m_key;
