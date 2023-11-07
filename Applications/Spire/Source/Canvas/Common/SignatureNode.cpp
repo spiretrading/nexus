@@ -73,35 +73,15 @@ std::unique_ptr<CanvasNode>
   for(auto i = 0; i != compatibleSignatures.front().size() - 1; ++i) {
     auto parameterType = MergeSignatureTypes(compatibleSignatures, i);
     auto& child = clone->GetChildren()[i];
-    clone->SetChild(child, ForceConversion(Clone(child), *parameterType));
+    if(!IsCompatible(*parameterType, child.GetType())) {
+      clone->SetChild(child, ForceConversion(Clone(child), *parameterType));
+    }
   }
   auto returnType = MergeSignatureTypes(
     compatibleSignatures, compatibleSignatures.front().size() - 1);
-  auto hasCompatibility = false;
-  for(auto& signature : GetSignatures()) {
-    if(returnType->GetCompatibility(*signature.back()) ==
-        CanvasType::Compatibility::EQUAL) {
-      auto isCompatible = true;
-      for(const auto& parameter : DropLast(MakeIndexView(signature))) {
-        auto& child = clone->GetChildren()[parameter.GetIndex()];
-        if(!IsCompatible(child.GetType(), *parameter.GetValue())) {
-          isCompatible = false;
-          break;
-        }
-      }
-      if(isCompatible) {
-        hasCompatibility = true;
-        break;
-      }
-    }
-  }
-  if(!hasCompatibility) {
-    BOOST_THROW_EXCEPTION(CanvasTypeCompatibilityException());
-  }
   if(!IsCompatible(*returnType, clone->GetType())) {
     clone->SetType(*returnType);
   }
-  clone->m_type = returnType;
   return clone;
 }
 
