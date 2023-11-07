@@ -69,16 +69,48 @@ std::unique_ptr<CanvasNode>
   if(compatibleSignatures.empty()) {
     BOOST_THROW_EXCEPTION(CanvasTypeCompatibilityException());
   }
-  auto clone = Clone(*this);
-  for(auto i = 0; i != compatibleSignatures.front().size() - 1; ++i) {
-    auto parameterType = MergeSignatureTypes(compatibleSignatures, i);
-    auto& child = clone->GetChildren()[i];
-    if(!IsCompatible(*parameterType, child.GetType())) {
-      clone->SetChild(child, ForceConversion(Clone(child), *parameterType));
+  auto returnType = std::shared_ptr<CanvasType>();
+  for(auto& signature : compatibleSignatures) {
+    auto isExactMatch = true;
+    for(auto i = std::size_t(0); i != signature.size() - 1; ++i) {
+      if(!IsCompatible(*signature[i], GetChildren()[i].GetType())) {
+        isExactMatch = false;
+        break;
+      }
+    }
+    if(isExactMatch) {
+      returnType = signature.back();
+      break;
     }
   }
-  auto returnType = MergeSignatureTypes(
-    compatibleSignatures, compatibleSignatures.front().size() - 1);
+  auto clone = [&] {
+    if(returnType) {
+      return Clone(*this);
+    } else {
+      for(auto& signature : compatibleSignatures) {
+        auto clone = Clone(*this);
+        auto isCompatible = true;
+        for(auto i = std::size_t(0); i != signature.size() - 1; ++i) {
+          auto& parameterType = signature[i];
+          auto& child = clone->GetChildren()[i];
+          if(!IsCompatible(*parameterType, clone->GetChildren()[i].GetType())) {
+            try {
+              clone->SetChild(
+                child, Spire::Convert(Clone(child), *parameterType));
+            } catch(const CanvasOperationException&) {
+              isCompatible = false;
+              break;
+            }
+          }
+        }
+        if(isCompatible) {
+          returnType = signature.back();
+          return clone;
+        }
+      }
+      BOOST_THROW_EXCEPTION(CanvasTypeCompatibilityException());
+    }
+  }();
   if(!IsCompatible(*returnType, clone->GetType())) {
     clone->SetType(*returnType);
   }

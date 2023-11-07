@@ -62,6 +62,8 @@ unique_ptr<CanvasNode> Spire::Convert(unique_ptr<CanvasNode> node,
     const CanvasType& type) {
   if(IsCompatible(type, node->GetType())) {
     return node;
+  } else if(dynamic_cast<const NoneNode*>(node.get())) {
+    return MakeDefaultCanvasNode(type);
   }
   return node->Convert(type);
 }
