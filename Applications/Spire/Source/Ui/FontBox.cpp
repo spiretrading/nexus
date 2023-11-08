@@ -83,7 +83,7 @@ FontBox::FontBox(std::shared_ptr<ValueModel<QFont>> current, QWidget* parent)
   auto custom_family_box = new CustomFontFamilyBox(*m_font_family_box);
   custom_family_box->setSizePolicy(QSizePolicy::Expanding,
     QSizePolicy::Expanding);
-  auto custom_style_box = new CustomFontFamilyBox(*m_font_style_box);
+  auto custom_style_box = new CustomFontStyleBox(*m_font_style_box);
   custom_style_box->setSizePolicy(QSizePolicy::Expanding,
     QSizePolicy::Expanding);
   auto medium_layout = make_hbox_layout();
