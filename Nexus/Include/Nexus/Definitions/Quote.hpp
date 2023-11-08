@@ -30,19 +30,7 @@ namespace Nexus {
      */
     Quote(Money price, Quantity size, Side side);
 
-    /**
-     * Tests if two Quotes are equal.
-     * @param rhs The right hand side of the equality.
-     * @return <code>true</code> iff <i>this</i> is equal to <i>rhs</i>.
-     */
-    bool operator ==(const Quote& rhs) const;
-
-    /**
-     * Tests if two Quotes are not equal.
-     * @param rhs The right hand side of the equality.
-     * @return <code>true</code> iff <i>this</i> is not equal to <i>rhs</i>.
-     */
-    bool operator !=(const Quote& rhs) const;
+    bool operator ==(const Quote& rhs) const = default;
   };
 
   /**
@@ -96,15 +84,6 @@ namespace Nexus {
       m_size(size),
       m_side(side) {}
 
-  inline bool Quote::operator ==(const Quote& rhs) const {
-    return m_price == rhs.m_price && m_size == rhs.m_size &&
-      m_side == rhs.m_side;
-  }
-
-  inline bool Quote::operator !=(const Quote& rhs) const {
-    return !(*this == rhs);
-  }
-
   inline std::ostream& operator <<(std::ostream& out, const Quote& quote) {
     return out << "(" << quote.m_price << " " << quote.m_size << " " <<
       quote.m_side << ")";
@@ -115,8 +94,8 @@ namespace Beam::Serialization {
   template<>
   struct Shuttle<Nexus::Quote> {
     template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::Quote& value,
-        unsigned int version) {
+    void operator ()(
+        Shuttler& shuttle, Nexus::Quote& value, unsigned int version) {
       shuttle.Shuttle("price", value.m_price);
       shuttle.Shuttle("size", value.m_size);
       shuttle.Shuttle("side", value.m_side);

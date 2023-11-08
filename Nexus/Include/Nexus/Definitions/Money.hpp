@@ -1,10 +1,12 @@
 #ifndef NEXUS_MONEY_HPP
 #define NEXUS_MONEY_HPP
+#include <functional>
 #include <istream>
 #include <ostream>
 #include <string>
 #include <Beam/Serialization/Receiver.hpp>
 #include <Beam/Serialization/Sender.hpp>
+#include <boost/functional/hash.hpp>
 #include <boost/optional/optional.hpp>
 #include "Nexus/Definitions/Definitions.hpp"
 #include "Nexus/Definitions/Quantity.hpp"
@@ -25,6 +27,8 @@ namespace Details {
 
     /** Stores a value of 0.0001. */
     static const T BIP;
+
+    auto operator <=>(const MoneyDefinitions& rhs) const = default;
   };
 }
 
@@ -53,49 +57,6 @@ namespace Details {
 
       /** Converts this Money to a Quantity. */
       explicit constexpr operator Quantity() const;
-
-      /**
-       * Less than test.
-       * @param rhs The right hand side of the operation.
-       * @return <code>true</code> iff this is less than <i>rhs</i>.
-       */
-      constexpr bool operator <(Money rhs) const;
-
-      /**
-       * Less than or equal test.
-       * @param rhs The right hand side of the operation.
-       * @return <code>true</code> iff this is less than or equal to <i>rhs</i>.
-       */
-      constexpr bool operator <=(Money rhs) const;
-
-      /**
-       * Tests for equality.
-       * @param rhs The right hand side of the operation.
-       * @return <code>true</code> iff this is equal to <i>rhs</i>.
-       */
-      constexpr bool operator ==(Money rhs) const;
-
-      /**
-       * Tests for inequality.
-       * @param rhs The right hand side of the operation.
-       * @return <code>true</code> iff this is not equal to <i>rhs</i>.
-       */
-      constexpr bool operator !=(Money rhs) const;
-
-      /**
-       * Greater than or equal test.
-       * @param rhs The right hand side of the operation.
-       * @return <code>true</code> iff this is greater than or equal to
-       *         <i>rhs</i>.
-       */
-      constexpr bool operator >=(Money rhs) const;
-
-      /**
-       * Greater than test.
-       * @param rhs The right hand side of the operation.
-       * @return <code>true</code> iff this is greater than <i>rhs</i>.
-       */
-      constexpr bool operator >(Money rhs) const;
 
       /**
        * Assignment operator.
@@ -161,6 +122,8 @@ namespace Details {
        */
       constexpr Money operator -() const;
 
+      auto operator <=>(const Money& rhs) const = default;
+
       using Details::MoneyDefinitions<Money>::ZERO;
       using Details::MoneyDefinitions<Money>::ONE;
       using Details::MoneyDefinitions<Money>::CENT;
@@ -185,8 +148,18 @@ namespace Details {
    * @param rhs The right hand side.
    * @return <i>lhs</i> % <i>rhs</i>
    */
-  inline Money operator %(Money lhs, Money rhs) {
+  inline Money fmod(Money lhs, Money rhs) {
     return Money(static_cast<Quantity>(lhs) % static_cast<Quantity>(rhs));
+  }
+
+  /**
+   * Returns the modulus of two Money objects.
+   * @param lhs The left hand side.
+   * @param rhs The right hand side.
+   * @return <i>lhs</i> % <i>rhs</i>
+   */
+  inline Money operator %(Money lhs, Money rhs) {
+    return fmod(lhs, rhs);
   }
 
   /**
@@ -255,6 +228,10 @@ namespace Details {
     return Money{Round(value.m_value, decimalPlaces)};
   }
 
+  inline std::size_t hash_value(Money money) noexcept {
+    return std::hash<Quantity>()(static_cast<Quantity>(money));
+  }
+
   inline std::ostream& operator <<(std::ostream& out, Money value) {
     auto fraction = value.m_value - Floor(value.m_value, 0);
     auto s = boost::lexical_cast<std::string>(value.m_value);
@@ -306,30 +283,6 @@ namespace Details {
 
   inline constexpr Money::operator Quantity() const {
     return m_value;
-  }
-
-  inline constexpr bool Money::operator <(Money rhs) const {
-    return m_value < rhs.m_value;
-  }
-
-  inline constexpr bool Money::operator <=(Money rhs) const {
-    return m_value <= rhs.m_value;
-  }
-
-  inline constexpr bool Money::operator ==(Money rhs) const {
-    return m_value == rhs.m_value;
-  }
-
-  inline constexpr bool Money::operator !=(Money rhs) const {
-    return m_value != rhs.m_value;
-  }
-
-  inline constexpr bool Money::operator >=(Money rhs) const {
-    return m_value >= rhs.m_value;
-  }
-
-  inline constexpr bool Money::operator >(Money rhs) const {
-    return m_value > rhs.m_value;
   }
 
   inline constexpr Money& Money::operator =(Money rhs) {
@@ -416,6 +369,13 @@ namespace Beam::Serialization {
 }
 
 namespace std {
+  template<>
+  struct hash<Nexus::Money> {
+    std::size_t operator ()(Nexus::Money value) const noexcept {
+      return Nexus::hash_value(value);
+    }
+  };
+
   template<>
   class numeric_limits<Nexus::Money> {
     public:

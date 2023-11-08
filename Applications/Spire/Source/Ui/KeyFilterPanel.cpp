@@ -63,7 +63,7 @@ struct KeyInputBoxValueModel : ValueModel<QKeySequence> {
   }
 
   void add_match(int index) {
-    auto value = displayText(m_matches->get(index));
+    auto value = to_text(m_matches->get(index));
     m_matches_set.insert(value);
     m_matches_list.insert(m_matches_list.begin() + index, value);
   }

@@ -22,22 +22,7 @@ namespace Nexus::RiskService {
     /** The Security being indexed. */
     Security m_security;
 
-    /** Constructs a RiskPortfolioKey. */
-    RiskPortfolioKey() = default;
-
-    /**
-     * Constructs a RiskPortfolioKey.
-     * @param account The portfolio's account.
-     * @param security The Security being indexed.
-     */
-    RiskPortfolioKey(Beam::ServiceLocator::DirectoryEntry account,
-      Security security);
-
-    /** Tests for equality. */
-    bool operator ==(const RiskPortfolioKey& key) const;
-
-    /** Tests for equality. */
-    bool operator !=(const RiskPortfolioKey& key) const;
+    bool operator ==(const RiskPortfolioKey& key) const = default;
   };
 
   /** The type used to represent a portfolio's position. */
@@ -66,19 +51,6 @@ namespace Nexus::RiskService {
     boost::hash_combine(seed, value.m_account);
     boost::hash_combine(seed, value.m_security);
     return seed;
-  }
-
-  inline RiskPortfolioKey::RiskPortfolioKey(
-    Beam::ServiceLocator::DirectoryEntry account, Security security)
-    : m_account(std::move(account)),
-      m_security(std::move(security)) {}
-
-  inline bool RiskPortfolioKey::operator ==(const RiskPortfolioKey& key) const {
-    return m_account == key.m_account && m_security == key.m_security;
-  }
-
-  inline bool RiskPortfolioKey::operator !=(const RiskPortfolioKey& key) const {
-    return !(*this == key);
   }
 }
 

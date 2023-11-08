@@ -36,30 +36,7 @@ namespace Nexus::AdministrationService {
          */
         static Body MakePlainText(std::string message);
 
-        /** Constructs a Body. */
-        Body() = default;
-
-        /**
-         * Constructs a Body.
-         * @param contentType The MIME type of the message.
-         * @param message The contents of the message.
-         */
-        Body(std::string contentType, std::string message);
-
-        /**
-         * Returns <code>true</code> iff two Message Bodies are equal.
-         * @param rhs The right hand side of the comparison.
-         * @return <code>true</code> iff the content type and message are equal.
-         */
-        bool operator ==(const Body& rhs) const;
-
-        /**
-         * Returns <code>true</code> iff two Message Bodies are not equal.
-         * @param rhs The right hand side of the comparison.
-         * @return <code>true</code> iff either the content type and message are
-         *         not equal.
-         */
-        bool operator !=(const Body& rhs) const;
+        bool operator ==(const Body& rhs) const = default;
       };
 
       /** Constructs an empty Message. */
@@ -105,18 +82,6 @@ namespace Nexus::AdministrationService {
 
   inline Message::Body Message::Body::MakePlainText(std::string message) {
     return {"text/plain", std::move(message)};
-  }
-
-  inline Message::Body::Body(std::string contentType, std::string message)
-    : m_contentType(std::move(contentType)),
-      m_message(std::move(message)) {}
-
-  inline bool Message::Body::operator ==(const Body& rhs) const {
-    return m_contentType == rhs.m_contentType && m_message == rhs.m_message;
-  }
-
-  inline bool Message::Body::operator !=(const Body& rhs) const {
-    return !(*this == rhs);
   }
 
   inline Message::Message()

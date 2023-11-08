@@ -7,6 +7,15 @@
 #include "Spire/Spire/TableModel.hpp"
 
 namespace Spire {
+namespace Details {
+  template<typename T>
+  struct AnyRefRowViewListModel {};
+
+  template<>
+  struct AnyRefRowViewListModel<AnyRef> {
+    mutable AnyRef m_reference;
+  };
+}
 
   /**
    * Implements a ListModel that provides a view into a single row of a source
@@ -14,7 +23,8 @@ namespace Spire {
    * @param <T> The type of values stored in the row to view.
    */
   template<typename T>
-  class RowViewListModel : public ListModel<T> {
+  class RowViewListModel :
+      public ListModel<T>, private Details::AnyRefRowViewListModel<T> {
     public:
       using Type = typename ListModel<T>::Type;
 
@@ -90,7 +100,12 @@ namespace Spire {
     if(m_row == -1) {
       throw std::out_of_range("The row is out of range.");
     }
-    return m_source->get<Type>(m_row, index);
+    if constexpr(std::is_same_v<Type, AnyRef>) {
+      this->m_reference = m_source->at(m_row, index);
+      return this->m_reference;
+    } else {
+      return m_source->get<Type>(m_row, index);
+    }
   }
 
   template<typename T>
@@ -151,13 +166,17 @@ namespace Spire {
       },
       [&] (const TableModel::UpdateOperation& operation) {
         if(m_row == operation.m_row) {
-          m_transaction.push(UpdateOperation(operation.m_column,
-            std::any_cast<const Type&>(operation.m_previous),
-            std::any_cast<const Type&>(operation.m_value)));
+          if constexpr(std::is_same_v<Type, AnyRef>) {
+            m_transaction.push(UpdateOperation(operation.m_column,
+              AnyRef(operation.m_previous), AnyRef(operation.m_value)));
+          } else {
+            m_transaction.push(UpdateOperation(operation.m_column,
+              std::any_cast<const Type&>(operation.m_previous),
+              std::any_cast<const Type&>(operation.m_value)));
+          }
         }
       });
   }
-
 }
 
 #endif

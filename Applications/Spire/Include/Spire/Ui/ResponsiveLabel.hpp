@@ -26,8 +26,16 @@ namespace Spire {
        * @param list The list of labels to display.
        * @param parent The parent widget.
        */
-      explicit ResponsiveLabel(std::shared_ptr<ListModel<QString>> labels,
-        QWidget* parent = nullptr);
+      explicit ResponsiveLabel(
+        std::vector<QString> labels, QWidget* parent = nullptr);
+
+      /**
+       * Constructs a ResponsiveLabel.
+       * @param list The list of labels to display.
+       * @param parent The parent widget.
+       */
+      explicit ResponsiveLabel(
+        std::shared_ptr<ListModel<QString>> labels, QWidget* parent = nullptr);
 
       /** Returns the list of labels to display. */
       const std::shared_ptr<ListModel<QString>>& get_labels() const;

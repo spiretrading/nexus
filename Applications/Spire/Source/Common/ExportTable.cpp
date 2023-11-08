@@ -12,11 +12,11 @@ void Spire::export_table_as_csv(const TableModel& table, std::ostream& out) {
   locale.setNumberOptions(QLocale::OmitGroupSeparator);
   for(auto i = 0; i < table.get_row_size(); ++i) {
     if(i != 0) {
-      out << std::endl;
+      out << '\n';
     }
     for(auto j = 0; j < table.get_column_size(); ++j) {
       if(j != 0) {
-        out << ",";
+        out << ',';
       }
       auto value = table.at(i, j);
       auto& value_type = value.get_type();
@@ -30,10 +30,9 @@ void Spire::export_table_as_csv(const TableModel& table, std::ostream& out) {
         if(value_type == typeid(Quantity)) {
           value = static_cast<double>(std::any_cast<Quantity>(to_any(value)));
         }
-        out << CustomVariantItemDelegate().displayText(
-          to_qvariant(to_any(value)), locale).toStdString();
+        out << to_text(value, locale).toStdString();
       } else {
-        out << "\"" << displayText(value).toStdString() << "\"";
+        out << '\"' << to_text(value, locale).toStdString() << '\"';
       }
     }
   }

@@ -10,6 +10,7 @@
 #include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
+  class AdaptiveBox;
   class AnyInputBox;
   class Box;
   class BoxGeometry;
@@ -19,6 +20,9 @@ namespace Spire {
   class CheckBox;
   class ClickObserver;
   class ClosedFilterPanel;
+  class ColorBox;
+  class ColorCodePanel;
+  class ColorPicker;
   class ComboBox;
   class ContextMenu;
   class DateBox;
@@ -37,13 +41,18 @@ namespace Spire {
   class FilterPanel;
   class FocusObserver;
   class GlobalPositionObserver;
+  class HexColorBox;
   struct Highlight;
+  class HighlightBox;
+  class HighlightPicker;
+  class HighlightSwatch;
   class HoverObserver;
   class Icon;
   class InfoTip;
   class KeyInputBox;
   class LayeredWidget;
   class ListItem;
+  template<typename T> class ListSelectionValueModel;
   class ListView;
   class MarketBox;
   class MoneyBox;
@@ -52,6 +61,7 @@ namespace Spire {
   class OpenFilterPanel;
   template<typename T> class OpenFilterPanelTemplate;
   class OverlayPanel;
+  class PercentBox;
   class PopupBox;
   class PressObserver;
   class RegionBox;
@@ -68,6 +78,8 @@ namespace Spire {
   class SecurityStack;
   class SecurityView;
   template<typename T> class SingleSelectionModel;
+  class Slider;
+  class Slider2D;
   class SortedTableModel;
   template<typename T> class StagingValueModel;
   class StandardTableFilter;

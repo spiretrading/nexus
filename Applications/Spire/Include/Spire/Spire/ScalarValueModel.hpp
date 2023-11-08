@@ -46,7 +46,7 @@ namespace Details {
       virtual boost::optional<Scalar> get_maximum() const;
 
       /** Returns the smallest value by which a value can be increased. */
-      virtual Scalar get_increment() const;
+      virtual boost::optional<Scalar> get_increment() const;
   };
 
   template<typename T>
@@ -70,14 +70,9 @@ namespace Details {
   }
 
   template<typename T>
-  typename ScalarValueModel<T>::Scalar
+  boost::optional<typename ScalarValueModel<T>::Scalar>
       ScalarValueModel<T>::get_increment() const {
-    if constexpr(std::numeric_limits<Scalar>::is_specialized) {
-      return Scalar(std::numeric_limits<Scalar>::max() /
-        std::numeric_limits<Scalar>::max());
-    } else {
-      return Scalar();
-    }
+    return boost::none;
   }
 }
 
