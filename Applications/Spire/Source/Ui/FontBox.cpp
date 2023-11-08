@@ -138,13 +138,14 @@ void FontBox::on_style_current(const QString& style) {
   if(style.isEmpty()) {
     return;
   }
+  auto font_database = QFontDatabase();
   auto& current_font = m_current->get();
   if(m_font_family_box->get_current()->get() == current_font.family() &&
-      style == current_font.styleName()) {
+      style == font_database.styleString(current_font)) {
     return;
   }
   auto font =
-    QFontDatabase().font(m_font_family_box->get_current()->get(), style, -1);
+    font_database.font(m_font_family_box->get_current()->get(), style, -1);
   font.setPixelSize(current_font.pixelSize());
   auto blocker = shared_connection_block(m_font_connection);
   m_current->set(font);
