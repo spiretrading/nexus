@@ -26,12 +26,12 @@ file(GLOB ui_header_files ../../Include/Spire/Ui/*.hpp)
 file(GLOB ui_source_files ../../Source/Ui/*.cpp)
 source_group("Ui\\Header Files" FILES ${ui_header_files})
 source_group("Ui\\Source Files" FILES ${ui_source_files})
-file(GLOB header_files ${blotter_header_files} ${canvas_header_files}
-  ${common_header_files} ${key_bindings_header_files} ${login_header_files}
-  ${styles_header_files} ${ui_header_files})
-file(GLOB source_files ${blotter_source_files} ${canvas_source_files}
-  ${common_source_files} ${key_bindings_source_files} ${login_source_files}
-  ${styles_source_files} ${ui_source_files})
+file(GLOB header_files ${common_header_files} ${key_bindings_header_files}
+  ${login_header_files} ${styles_header_files} ${time_and_sales_header_files}
+  ${ui_header_files})
+file(GLOB source_files ${common_source_files} ${key_bindings_source_files}
+  ${login_source_files} ${styles_source_files} ${time_and_sales_source_files}
+  ${ui_source_files})
 if(MSVC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
 endif()
