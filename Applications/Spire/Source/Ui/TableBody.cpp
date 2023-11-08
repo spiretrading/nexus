@@ -518,8 +518,8 @@ void TableBody::move_row(int source, int destination) {
   m_selection_controller.move_row(source, destination);
 }
 
-void TableBody::draw_item_borders(const boost::optional<Index>& index,
-    QPainter& painter) {
+void TableBody::draw_item_borders(
+    const optional<Index>& index, QPainter& painter) {
   auto item = find_item(index);
   if(!item) {
     return;
