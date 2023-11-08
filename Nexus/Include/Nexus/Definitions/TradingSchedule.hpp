@@ -33,11 +33,7 @@ namespace Nexus {
          */
         boost::posix_time::ptime m_timestamp;
 
-        /** Tests if two objects denote the same event. */
-        bool operator ==(const Event& event) const;
-
-        /** Tests if two objects denote different events. */
-        bool operator !=(const Event& event) const;
+        bool operator ==(const Event& event) const = default;
       };
 
       /**
@@ -67,11 +63,7 @@ namespace Nexus {
          */
         std::vector<Event> m_events;
 
-        /** Tests if two objects specify the same rule. */
-        bool operator ==(const Rule& rule) const;
-
-        /** Tests if two objects specify different rules. */
-        bool operator !=(const Rule& rule) const;
+        bool operator ==(const Rule& rule) const = default;
       };
 
       /** Constructs an empty TradingSchedule. */
@@ -250,24 +242,6 @@ namespace Nexus {
   inline std::ostream& operator <<(std::ostream& out,
       const TradingSchedule::Event& event) {
     return out << '(' << " " << event.m_code << " " << event.m_timestamp << ')';
-  }
-
-  inline bool TradingSchedule::Event::operator ==(const Event& event) const {
-    return m_code == event.m_code && m_timestamp == event.m_timestamp;
-  }
-
-  inline bool TradingSchedule::Event::operator !=(const Event& event) const {
-    return !(*this == event);
-  }
-
-  inline bool TradingSchedule::Rule::operator ==(const Rule& rule) const {
-    return m_markets == rule.m_markets && m_weekdays == rule.m_weekdays &&
-      m_days == rule.m_days && m_months == rule.m_months &&
-      m_years == rule.m_years && m_events == rule.m_events;
-  }
-
-  inline bool TradingSchedule::Rule::operator !=(const Rule& rule) const {
-    return !(*this == rule);
   }
 
   inline TradingSchedule::TradingSchedule(std::vector<Rule> rules)

@@ -20,6 +20,8 @@ namespace Details {
 
     /** Stores an invalid id. */
     static const T NONE;
+
+    auto operator <=>(const CurrencyIdDefinitions& rhs) const = default;
   };
 }
 
@@ -39,14 +41,7 @@ namespace Details {
       /** Returns the integral representation of this id. */
       constexpr explicit operator std::uint16_t() const;
 
-      /** Tests if this id is less than another id. */
-      constexpr bool operator <(CurrencyId other) const;
-
-      /** Tests if two ids are equal. */
-      constexpr bool operator ==(CurrencyId other) const;
-
-      /** Tests if two ids are not equal. */
-      constexpr bool operator !=(CurrencyId other) const;
+      auto operator <=>(const CurrencyId& rhs) const = default;
 
       using Details::CurrencyIdDefinitions<CurrencyId>::NONE;
 
@@ -69,6 +64,8 @@ namespace Details {
 
         /** The currency's sign. */
         std::string m_sign;
+
+        bool operator ==(const Entry& rhs) const = default;
       };
 
       /** Constructs an empty CurrencyDatabase. */
@@ -112,29 +109,6 @@ namespace Details {
       };
       std::vector<Entry> m_entries;
   };
-
-  /**
-   * Tests two CurrencyDatabase Entries for equality.
-   * @param lhs The left hand side of the equality.
-   * @param rhs The right hand side of the equality.
-   * @return <code>true</code> iff the two CurrencyDatabase Entries are equal.
-   */
-  inline bool operator ==(const CurrencyDatabase::Entry& lhs,
-      const CurrencyDatabase::Entry& rhs) {
-    return lhs.m_id == rhs.m_id && lhs.m_code == rhs.m_code &&
-      lhs.m_sign == rhs.m_sign;
-  }
-
-  /**
-   * Tests two CurrencyDatabase Entries for equality.
-   * @param lhs The left hand side of the equality.
-   * @param rhs The right hand side of the equality.
-   * @return <code>true</code> iff the two CurrencyDatabase Entries are equal.
-   */
-  inline bool operator !=(const CurrencyDatabase::Entry& lhs,
-      const CurrencyDatabase::Entry& rhs) {
-    return !(lhs == rhs);
-  }
 
   /**
    * Parses a CurrencyId from a string.
@@ -201,18 +175,6 @@ namespace Details {
 
   constexpr CurrencyId::operator std::uint16_t() const {
     return m_value;
-  }
-
-  constexpr bool CurrencyId::operator <(CurrencyId other) const {
-    return m_value < other.m_value;
-  }
-
-  constexpr bool CurrencyId::operator ==(CurrencyId other) const {
-    return m_value == other.m_value;
-  }
-
-  constexpr bool CurrencyId::operator !=(CurrencyId other) const {
-    return !(*this == other);
   }
 
   inline const std::vector<CurrencyDatabase::Entry>&

@@ -31,19 +31,7 @@ namespace Nexus {
      */
     BboQuote(Quote bid, Quote ask, boost::posix_time::ptime timestamp);
 
-    /**
-     * Tests if two BboQuotes are equal.
-     * @param rhs The right hand side of the equality.
-     * @return <code>true</code> iff <i>this</i> is equal to <i>rhs</i>.
-     */
-    bool operator ==(const BboQuote& rhs) const;
-
-    /**
-     * Tests if two BboQuotes are not equal.
-     * @param rhs The right hand side of the equality.
-     * @return <code>true</code> iff <i>this</i> is not equal to <i>rhs</i>.
-     */
-    bool operator !=(const BboQuote& rhs) const;
+    bool operator ==(const BboQuote& rhs) const = default;
   };
 
   inline std::ostream& operator <<(std::ostream& out, const BboQuote& value) {
@@ -63,15 +51,6 @@ namespace Nexus {
         m_timestamp(timestamp) {
     assert(m_bid.m_side == Side::BID);
     assert(m_ask.m_side == Side::ASK);
-  }
-
-  inline bool BboQuote::operator ==(const BboQuote& rhs) const {
-    return m_bid == rhs.m_bid && m_ask == rhs.m_ask &&
-      m_timestamp == rhs.m_timestamp;
-  }
-
-  inline bool BboQuote::operator !=(const BboQuote& rhs) const {
-    return !(*this == rhs);
   }
 }
 

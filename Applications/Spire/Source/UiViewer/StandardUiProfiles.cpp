@@ -2167,7 +2167,8 @@ UiProfile Spire::make_font_box_profile() {
         style.get(Any()).set(Font(font));
       });
       current_slot(QString("%1, %2, %3").arg(font.family()).
-        arg(font.styleName()).arg(font.pixelSize()));
+        arg(QFontDatabase().styleString(font)).
+        arg(unscale_width(font.pixelSize())));
     });
     return box;
   });

@@ -28,46 +28,8 @@ namespace Details {
     /** The Currency used to value the inventory. */
     CurrencyId m_currency;
 
-    /** Constructs an empty Key. */
-    Key() = default;
-
-    /**
-     * Constructs a Key.
-     * @param index The inventory's index.
-     * @param currency The Currency used to value the inventory.
-     */
-    Key(Index index, CurrencyId currency);
-
-    /**
-     * Tests two Keys for equality.
-     * @param key The Key to test for equality.
-     * @return <code>true</code> iff <i>key</i> has the same Index and Currency.
-     */
-    bool operator ==(const Key& key) const;
-
-    /**
-     * Tests two Keys for inequality.
-     * @param key The Key to test for inequality.
-     * @return <code>true</code> iff <i>key</i> has a different Index or
-     *         Currency.
-     */
-    bool operator !=(const Key& key) const;
+    bool operator ==(const Key& key) const = default;
   };
-
-  template<typename I>
-  Key<I>::Key(Index index, CurrencyId currency)
-    : m_index(std::move(index)),
-      m_currency(currency) {}
-
-  template<typename I>
-  bool Key<I>::operator ==(const Key& key) const {
-    return m_index == key.m_index && m_currency == key.m_currency;
-  }
-
-  template<typename I>
-  bool Key<I>::operator !=(const Key& key) const {
-    return !(*this == key);
-  }
 
   template<typename Index>
   std::ostream& operator <<(std::ostream& out, const Key<Index>& key) {
@@ -97,25 +59,7 @@ namespace Details {
     /** The total cost of the currently held inventory. */
     Money m_costBasis;
 
-    /** Constructs a default Position. */
-    Position() = default;
-
-    /** Constructs a Position. */
-    explicit Position(Key key);
-
-    /**
-     * Constructs a Position.
-     * @param key Uniquely identifies this Position.
-     * @param quantity The quantity of inventory held.
-     * @param costBasis The total cost of the currently held inventory.
-     */
-    Position(Key key, Quantity quantity, Money costBasis);
-
-    /** Tests if two Positions are equal */
-    bool operator ==(const Position& position) const;
-
-    /** Tests if two Positions are not equal. */
-    bool operator !=(const Position& position) const;
+    bool operator ==(const Position& position) const = default;
   };
 
   template<typename Index>
@@ -151,27 +95,6 @@ namespace Details {
       return Side::BID;
     }
     return Side::ASK;
-  }
-
-  template<typename I>
-  Position<I>::Position(Key key)
-    : m_key(std::move(key)) {}
-
-  template<typename I>
-  Position<I>::Position(Key key, Quantity quantity, Money costBasis)
-    : m_key(std::move(key)),
-      m_quantity(quantity),
-      m_costBasis(costBasis) {}
-
-  template<typename I>
-  bool Position<I>::operator ==(const Position& position) const {
-    return m_key == position.m_key && m_quantity == position.m_quantity &&
-      m_costBasis == position.m_costBasis;
-  }
-
-  template<typename I>
-  bool Position<I>::operator !=(const Position& position) const {
-    return !(*this == position);
   }
 }
 

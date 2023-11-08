@@ -14,24 +14,6 @@ namespace Nexus::RiskService {
   /** Stores the list of parameters used to measure an account's risk. */
   struct RiskParameters {
 
-    /** Constructs default RiskParameters. */
-    RiskParameters();
-
-    /**
-     * Constructs RiskParameters.
-     * @param currency The currency used for risk calculations.
-     * @param buyingPower The maximum amount of buying power.
-     * @param allowedState The state that the account is allowed to be in.
-     * @param netLoss The max net loss before entering closed orders mode.
-     * @param lossFromTop The percentage lost from the top before entering
-     *        closed orders mode.
-     * @param transitionTime The amount of time allowed to transition from
-     *        closed orders mode to disabled mode.
-     */
-    RiskParameters(CurrencyId currency, Money buyingPower,
-      RiskState allowedState, Money netLoss, int lossFromTop,
-      boost::posix_time::time_duration transitionTime);
-
     /** The currency used for risk calculations. */
     CurrencyId m_currency;
 
@@ -53,11 +35,25 @@ namespace Nexus::RiskService {
      */
     boost::posix_time::time_duration m_transitionTime;
 
-    /** Tests two RiskParameters for equality. */
-    bool operator ==(const RiskParameters& riskParameters) const;
+    /** Constructs default RiskParameters. */
+    RiskParameters();
 
-    /** Tests two RiskParameters for inequality. */
-    bool operator !=(const RiskParameters& riskParameters) const;
+    /**
+     * Constructs RiskParameters.
+     * @param currency The currency used for risk calculations.
+     * @param buyingPower The maximum amount of buying power.
+     * @param allowedState The state that the account is allowed to be in.
+     * @param netLoss The max net loss before entering closed orders mode.
+     * @param lossFromTop The percentage lost from the top before entering
+     *        closed orders mode.
+     * @param transitionTime The amount of time allowed to transition from
+     *        closed orders mode to disabled mode.
+     */
+    RiskParameters(CurrencyId currency, Money buyingPower,
+      RiskState allowedState, Money netLoss, int lossFromTop,
+      boost::posix_time::time_duration transitionTime);
+
+    bool operator ==(const RiskParameters& riskParameters) const = default;
   };
 
   inline std::ostream& operator <<(std::ostream& out,
@@ -80,20 +76,6 @@ namespace Nexus::RiskService {
       m_netLoss(netLoss),
       m_lossFromTop(lossFromTop),
       m_transitionTime(transitionTime) {}
-
-  inline bool RiskParameters::operator ==(
-      const RiskParameters& riskParameters) const {
-    return m_currency == riskParameters.m_currency &&
-      m_buyingPower == riskParameters.m_buyingPower && m_allowedState ==
-      riskParameters.m_allowedState && m_netLoss == riskParameters.m_netLoss &&
-      m_lossFromTop == riskParameters.m_lossFromTop && m_transitionTime ==
-      riskParameters.m_transitionTime;
-  }
-
-  inline bool RiskParameters::operator !=(
-      const RiskParameters& riskParameters) const {
-    return !(*this == riskParameters);
-  }
 }
 
 namespace Beam::Serialization {

@@ -21,49 +21,14 @@ namespace Nexus::OrderExecutionService {
     /** The list of ExecutionReports. */
     std::vector<ExecutionReport> m_executionReports;
 
-    /** Constructs an empty OrderRecord. */
-    OrderRecord() = default;
-
-    /**
-     * Constructs an OrderRecord.
-     * @param info The Order's submission info.
-     * @param executionReports The list of ExecutionReports.
-     */
-    OrderRecord(OrderInfo info, std::vector<ExecutionReport> executionReports);
+    bool operator ==(const OrderRecord& rhs) const = default;
   };
-
-  /**
-   * Tests if two OrderRecords are equal.
-   * @param lhs The left hand side of the equality.
-   * @param rhs The right hand side of the equality.
-   * @return <code>true</code> iff <code>lhs</code> is equal to
-   *         <code>rhs</code>.
-   */
-  inline bool operator ==(const OrderRecord& lhs, const OrderRecord& rhs) {
-    return std::tie(lhs.m_info, lhs.m_executionReports) ==
-      std::tie(rhs.m_info, rhs.m_executionReports);
-  }
-
-  /**
-   * Tests if two OrderRecords are not equal.
-   * @param lhs The left hand side of the inequality.
-   * @param rhs The right hand side of the inequality.
-   * @return <code>true</code> iff <i>lhs</i> is not equal to <i>rhs</i>.
-   */
-  inline bool operator !=(const OrderRecord& lhs, const OrderRecord& rhs) {
-    return !(lhs == rhs);
-  }
 
   inline std::ostream& operator <<(std::ostream& out,
       const OrderRecord& value) {
     return out << '(' << value.m_info << ' ' <<
       Beam::Stream(value.m_executionReports) << ')';
   }
-
-  inline OrderRecord::OrderRecord(OrderInfo info,
-    std::vector<ExecutionReport> executionReports)
-    : m_info(std::move(info)),
-      m_executionReports(std::move(executionReports)) {}
 }
 
 namespace Beam::Serialization {

@@ -71,6 +71,8 @@ namespace Details {
       /** Returns the schema. */
       const ComplianceRuleSchema& GetSchema() const;
 
+      bool operator ==(const ComplianceRuleEntry& rhs) const = default;
+
     private:
       friend struct Beam::Serialization::Shuttle<ComplianceRuleEntry>;
       ComplianceRuleId m_id;
@@ -78,30 +80,6 @@ namespace Details {
       State m_state;
       ComplianceRuleSchema m_schema;
   };
-
-  /**
-   * Tests if two ComplianceRuleEntry's are equal.
-   * @param lhs The left hand side of the comparison.
-   * @param rhs The right hand side of the comparison.
-   * @return <code>true</code> iff the two ComplianceRuleEntry's are equal.
-   */
-  inline bool operator ==(const ComplianceRuleEntry& lhs,
-      const ComplianceRuleEntry& rhs) {
-    return lhs.GetId() == rhs.GetId() && lhs.GetDirectoryEntry() ==
-      rhs.GetDirectoryEntry() && lhs.GetState() == rhs.GetState() &&
-      lhs.GetSchema() == rhs.GetSchema();
-  }
-
-  /**
-   * Tests if two ComplianceRuleEntry's are not equal.
-   * @param lhs The left hand side of the comparison.
-   * @param rhs The right hand side of the comparison.
-   * @return <code>true</code> iff the two ComplianceRuleEntry's are not equal.
-   */
-  inline bool operator !=(const ComplianceRuleEntry& lhs,
-      const ComplianceRuleEntry& rhs) {
-    return !(lhs == rhs);
-  }
 
   inline ComplianceRuleEntry::ComplianceRuleEntry()
     : m_id(0),
