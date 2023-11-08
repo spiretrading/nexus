@@ -28,12 +28,17 @@ namespace {
   const auto TITLE_NAME = QObject::tr("Time and Sales");
   const auto TITLE_SHORT_NAME = QObject::tr("T&S");
 
+  bool is_equal(const TimeAndSalesProperties& lhs,
+      const TimeAndSalesProperties& rhs, BboIndicator indicator) {
+    return lhs.get_highlight(indicator) == rhs.get_highlight(indicator);
+  }
+
   auto update_row_style(StyleSheet& style, const Selector& selector,
-      const TimeAndSalesWindowProperties::Styles& styles) {
+      const TimeAndSalesProperties::Highlight& highlight) {
     style.get(Any() > selector).
-      set(BackgroundColor(styles.m_band_color));
+      set(BackgroundColor(highlight.m_background_color));
     style.get(Any() > selector > is_a<TextBox>()).
-      set(TextColor(styles.m_text_color));
+      set(TextColor(highlight.m_text_color));
     return style;
   }
 
@@ -92,10 +97,11 @@ namespace {
 
 TimeAndSalesWindow::TimeAndSalesWindow(
     std::shared_ptr<ComboBox::QueryModel> query_model,
-    TimeAndSalesWindowProperties properties, ModelBuilder model_builder,
+    std::shared_ptr<TimeAndSalesPropertiesWindowFactory> factory,
+    ModelBuilder model_builder,
     QWidget* parent)
     : Window(parent),
-      m_properties(std::move(properties)),
+      m_factory(std::move(factory)),
       m_model_builder(std::move(model_builder)) {
   set_svg_icon(":/Icons/time-sales.svg");
   setWindowIcon(QIcon(":/Icons/taskbar_icons/time-sales.png"));
@@ -105,8 +111,8 @@ TimeAndSalesWindow::TimeAndSalesWindow(
   m_responsive_title_label = new ResponsiveLabel(labels, this);
   setWindowTitle(m_responsive_title_label->get_current()->get());
   m_title_bar = static_cast<TitleBar*>(layout()->itemAt(0)->widget());
-  auto title_label = m_title_bar->layout()->itemAt(1)->widget();
-  title_label->installEventFilter(this);
+  m_title_label = m_title_bar->layout()->itemAt(1)->widget();
+  m_title_label->installEventFilter(this);
   m_responsive_title_label->stackUnder(m_title_bar);
   m_table_view = new TimeAndSalesTableView(
     std::make_shared<TimeAndSalesTableModel>(
@@ -118,26 +124,12 @@ TimeAndSalesWindow::TimeAndSalesWindow(
   m_security_view->get_current()->connect_update_signal(
     std::bind_front(&TimeAndSalesWindow::on_current, this));
   auto box = new Box(m_security_view);
-  update_style(*box, [&] (auto& style) {
+  box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  update_style(*box, [] (auto& style) {
     style.get(Any()).set(BackgroundColor(QColor(0xFFFFFF)));
-    style.get(Any() > is_a<TableBody>() > is_a<TextBox>()).
-      set(Font(m_properties.get_font()));
-    style.get(Any() > TableHeaderItem::Label()).
-      set(Font(m_properties.get_font()));
-    update_row_style(style, UnknownRow(),
-      m_properties.get_styles(BboIndicator::UNKNOWN));
-    update_row_style(style, AboveAskRow(),
-      m_properties.get_styles(BboIndicator::ABOVE_ASK));
-    update_row_style(style, AtAskRow(),
-      m_properties.get_styles(BboIndicator::AT_ASK));
-    update_row_style(style, InsideRow(),
-      m_properties.get_styles(BboIndicator::INSIDE));
-    update_row_style(style, AtBidRow(),
-      m_properties.get_styles(BboIndicator::AT_BID));
-    update_row_style(style, BelowBidRow(),
-      m_properties.get_styles(BboIndicator::BELOW_BID));
   });
-  layout()->addWidget(box);
+  set_body(box);
+  make_context_menu();
   m_table_view->get_table()->connect_operation_signal(
     std::bind_front(&TimeAndSalesWindow::on_table_operation, this));
   m_table_view->get_table()->connect_begin_loading_signal([=] {
@@ -149,7 +141,8 @@ TimeAndSalesWindow::TimeAndSalesWindow(
     m_transition_view->set_status(TransitionView::Status::READY);
     m_table_view->setFocus();
   });
-  make_context_menu();
+  get_properties()->connect_update_signal(
+    std::bind_front(&TimeAndSalesWindow::update_properties, this));
   resize(scale(180, 410));
 }
 
@@ -168,12 +161,13 @@ const std::shared_ptr<ValueModel<Nexus::Security>>&
   return m_security_view->get_current();
 }
 
-const TimeAndSalesWindowProperties& TimeAndSalesWindow::get_properties() const {
-  return m_properties;
+const std::shared_ptr<ValueModel<TimeAndSalesProperties>>&
+    TimeAndSalesWindow::get_properties() const {
+  return m_factory->get_properties();
 }
 
 bool TimeAndSalesWindow::eventFilter(QObject* watched, QEvent* event) {
-  if(event->type() == QEvent::Resize) {
+  if(watched == m_title_label && event->type() == QEvent::Resize) {
     auto& resize_event = *static_cast<QResizeEvent*>(event);
     m_responsive_title_label->resize(resize_event.size());
     setWindowTitle(m_responsive_title_label->get_current()->get());
@@ -214,7 +208,7 @@ int TimeAndSalesWindow::get_row_height() const {
   auto label = std::unique_ptr<TextBox>(make_label(""));
   update_style(*label, [&] (auto& style) {
     style.get(ReadOnly() && Disabled()).
-      set(Font(m_properties.get_font())).
+      set(Font(get_properties()->get().get_font())).
       set(vertical_padding(scale_height(1.5)));
   });
   return label->sizeHint().height();
@@ -222,7 +216,13 @@ int TimeAndSalesWindow::get_row_height() const {
 
 void TimeAndSalesWindow::make_context_menu() {
   m_context_menu = new ContextMenu(*this);
-  m_context_menu->add_action(tr("Properties"), [] {});
+  m_context_menu->add_action(tr("Properties"), [=] {
+    auto properties_window = m_factory->create();
+    if(!properties_window->isVisible()) {
+      properties_window->show();
+    }
+    properties_window->activateWindow();
+  });
   auto link_menu = new ContextMenu(*static_cast<QWidget*>(m_context_menu));
   m_context_menu->add_menu(tr("Link to"), *link_menu);
   m_context_menu->add_separator();
@@ -251,6 +251,62 @@ void TimeAndSalesWindow::update_export_menu_item() {
   }
 }
 
+void TimeAndSalesWindow::update_properties(
+    const TimeAndSalesProperties& properties) {
+  update_style(*m_table_view, [&] (auto& style) {
+    if(!m_properties || properties.get_font() != m_properties->get_font()) {
+      style.get(Any() > is_a<TableBody>() > is_a<TextBox>()).
+        set(Font(properties.get_font()));
+      //style.get(Any() > TableHeaderItem::Label()).
+      //  set(Font(properties.get_font()));
+    }
+    if(!m_properties || !::is_equal(properties, *m_properties, BboIndicator::UNKNOWN)) {
+      update_row_style(style, UnknownRow(),
+        properties.get_highlight(BboIndicator::UNKNOWN));
+    }
+    if(!m_properties || !::is_equal(properties, *m_properties, BboIndicator::ABOVE_ASK)) {
+      update_row_style(style, AboveAskRow(),
+        properties.get_highlight(BboIndicator::ABOVE_ASK));
+    }
+    if(!m_properties || !::is_equal(properties, *m_properties, BboIndicator::AT_ASK)) {
+      update_row_style(style, AtAskRow(),
+        properties.get_highlight(BboIndicator::AT_ASK));
+    }
+    if(!m_properties || !::is_equal(properties, *m_properties, BboIndicator::INSIDE)) {
+      update_row_style(style, InsideRow(),
+        properties.get_highlight(BboIndicator::INSIDE));
+    }
+    if(!m_properties || !::is_equal(properties, *m_properties, BboIndicator::AT_BID)) {
+      update_row_style(style, AtBidRow(),
+        properties.get_highlight(BboIndicator::AT_BID));
+    }
+    if(!m_properties || !::is_equal(properties, *m_properties, BboIndicator::BELOW_BID)) {
+      update_row_style(style, BelowBidRow(),
+        properties.get_highlight(BboIndicator::BELOW_BID));
+    }
+  });
+  if(!m_properties || properties.is_show_grid() != m_properties->is_show_grid()) {
+    if(properties.is_show_grid()) {
+      update_style(*m_table_view, [] (auto& style) {
+        style.get(Any() > is_a<TableBody>()).
+          set(grid_color(QColor(0xE0E0E0))).
+          set(PaddingBottom(scale_width(1))).
+          set(HorizontalSpacing(scale_width(1))).
+          set(VerticalSpacing(scale_width(1)));
+      });
+    } else {
+      update_style(*m_table_view, [] (auto& style) {
+        style.get(Any() > is_a<TableBody>()).
+          set(grid_color(Qt::transparent)).
+          set(PaddingBottom(0)).
+          set(HorizontalSpacing(0)).
+          set(VerticalSpacing(0));
+      });
+    }
+  }
+  m_properties = properties;
+}
+
 void TimeAndSalesWindow::on_current(const Security& security) {
   auto prefix_name = to_text(security) + " " + QString(0x2013) + " ";
   m_responsive_title_label->get_labels()->set(0, prefix_name + TITLE_NAME);
@@ -264,6 +320,7 @@ void TimeAndSalesWindow::on_current(const Security& security) {
   m_table_view->get_table()->load_history(
     (height() - m_title_bar->height() - table_header->sizeHint().height()) /
       get_row_height());
+  update_properties(m_factory->get_properties()->get());
 }
 
 void TimeAndSalesWindow::on_table_operation(

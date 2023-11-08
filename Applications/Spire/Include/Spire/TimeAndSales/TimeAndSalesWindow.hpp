@@ -3,7 +3,9 @@
 #include "Nexus/Definitions/Security.hpp"
 #include "Spire/Spire/TableModel.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesModel.hpp"
-#include "Spire/TimeAndSales/TimeAndSalesWindowProperties.hpp"
+#include "Spire/TimeAndSales/TimeAndSalesProperties.hpp"
+#include "Spire/TimeAndSales/TimeAndSalesPropertiesWindow.hpp"
+#include "Spire/TimeAndSales/TimeAndSalesPropertiesWindowFactory.hpp"
 #include "Spire/Ui/ComboBox.hpp"
 #include "Spire/Ui/Window.hpp"
 
@@ -45,12 +47,13 @@ namespace Styles {
       /**
        * Constructs a TimeAndSalesWindow.
        * @param query_model The model used to query security.
-       * @param properties The display properties of the window.
+       * @param factory The factory used to create a
+       *        TimeAndSalesPropertiesWindow.
        * @param parent The parent widget.
        */
       TimeAndSalesWindow(std::shared_ptr<ComboBox::QueryModel> query_model,
-        TimeAndSalesWindowProperties properties, ModelBuilder model_builder,
-        QWidget* parent = nullptr);
+        std::shared_ptr<TimeAndSalesPropertiesWindowFactory> factory,
+        ModelBuilder model_builder, QWidget* parent = nullptr);
 
       /* Returns the time and sales model. */
       const std::shared_ptr<TimeAndSalesModel>& get_model() const;
@@ -58,8 +61,9 @@ namespace Styles {
       /* Returns the query model. */
       const std::shared_ptr<ComboBox::QueryModel>& get_query_model() const;
 
-      /* Returns the properties. */
-      const TimeAndSalesWindowProperties& get_properties() const;
+      /* Returns the properties model. */
+      const std::shared_ptr<TimeAndSalesPropertiesModel>&
+        get_properties() const;
 
       /* Returns the security that the window represents. */
       const std::shared_ptr<ValueModel<Nexus::Security>>& get_security() const;
@@ -69,18 +73,21 @@ namespace Styles {
       void mousePressEvent(QMouseEvent* event) override;
 
     private:
-      TimeAndSalesWindowProperties m_properties;
+      std::shared_ptr<TimeAndSalesPropertiesWindowFactory> m_factory;
       ModelBuilder m_model_builder;
       TitleBar* m_title_bar;
+      QWidget* m_title_label;
       TimeAndSalesTableView* m_table_view;
       TransitionView* m_transition_view;
       SecurityView* m_security_view;
       ResponsiveLabel* m_responsive_title_label;
       ContextMenu* m_context_menu;
+      boost::optional<TimeAndSalesProperties> m_properties;
 
       int get_row_height() const;
       void make_context_menu();
       void update_export_menu_item();
+      void update_properties(const TimeAndSalesProperties& properties);
       void on_current(const Nexus::Security& security);
       void on_table_operation(const TableModel::Operation& operation);
       void on_export();
