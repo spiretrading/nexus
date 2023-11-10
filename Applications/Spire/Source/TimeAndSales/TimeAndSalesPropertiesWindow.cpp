@@ -143,7 +143,7 @@ TimeAndSalesPropertiesWindow::TimeAndSalesPropertiesWindow(
   font_box->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
   grid_check_box->set_label(tr("Show Grid"));
   grid_check_box->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
-  body_layout->addWidget(grid_check_box);
+  body_layout->addWidget(grid_check_box, 0, Qt::AlignLeft);
   body_layout->addSpacing(scale_height(24));
   auto bbo_indicator_header = make_label(tr("BBO Indicators"));
   bbo_indicator_header->setSizePolicy(QSizePolicy::Expanding,
