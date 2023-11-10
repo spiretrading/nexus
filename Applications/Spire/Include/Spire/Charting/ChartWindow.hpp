@@ -84,13 +84,13 @@ namespace Spire {
       UI::SecurityViewStack m_securityViewStack;
       ChartValue m_xPan;
       ChartValue m_yPan;
-      EventHandler m_eventHandler;
       boost::signals2::scoped_connection m_linkConnection;
       boost::signals2::scoped_connection m_verticalSliderConnection;
       boost::signals2::scoped_connection m_horizontalSliderConnection;
       boost::signals2::scoped_connection m_intervalChangedConnection;
       boost::signals2::scoped_connection m_beginPanConnection;
       boost::signals2::scoped_connection m_endPanConnection;
+      EventHandler m_eventHandler;
 
       void AdjustSlider(int previousMinimum, int previousMaximum, int minimum,
         int maximum, UI::ScalableScrollBar* scrollBar);

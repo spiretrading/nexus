@@ -53,8 +53,8 @@ namespace Spire {
       boost::any m_value;
       mutable UpdateSignal m_updateSignal;
       QTimer m_translateTimer;
-      EventHandler m_eventHandler;
       Beam::SignalHandling::ScopedSlotAdaptor m_callbacks;
+      EventHandler m_eventHandler;
 
       CanvasObserver(const CanvasObserver&) = delete;
       CanvasObserver& operator =(const CanvasObserver&) = delete;
