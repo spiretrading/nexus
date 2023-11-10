@@ -554,7 +554,7 @@ namespace {
 
   void populate_font_properties(
       std::vector<std::shared_ptr<UiProperty>>& properties,
-      const QString& property_name) {
+      const QString& property_name, bool has_none = false) {
     auto font_database = QFontDatabase();
     auto font1 = font_database.font("Roboto", "Regular", -1);
     font1.setPixelSize(scale_width(12));
@@ -570,6 +570,9 @@ namespace {
       {{"Roboto, Regular, 12", font1}, {"Roboto, Thin, 12", font2},
       {"Roboto, Regular, 8", font3}, {"Tahoma, Bold, 16", font4},
       {"Segoe UI, Light Italic, 10", font5}});
+    if(has_none) {
+      font_property.insert(font_property.begin(), {"None", QFont()});
+    }
     populate_enum_properties(properties, property_name, font_property);
   }
 
@@ -4762,7 +4765,7 @@ UiProfile Spire::make_text_box_profile() {
 
 UiProfile Spire::make_time_and_sales_properties_window_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
-  populate_font_properties(properties, "font");
+  populate_font_properties(properties, "font", true);
   properties.push_back(make_standard_property<bool>("show_grid"));
   for(auto i = 0; i < BBO_INDICATOR_COUNT; ++i) {
     auto time_and_sales_properties = TimeAndSalesProperties();
@@ -4789,6 +4792,9 @@ UiProfile Spire::make_time_and_sales_properties_window_profile() {
       static auto properties = window->get_properties()->get();
       auto& font = get<QFont>("font", profile.get_properties());
       font.connect_changed_signal([=] (const auto& font) {
+        if(font == QFont()) {
+          return;
+        }
         properties.set_font(font);
         window->get_properties()->set(properties);
       });

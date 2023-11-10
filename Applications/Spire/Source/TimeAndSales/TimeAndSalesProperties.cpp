@@ -5,7 +5,7 @@
 using namespace Spire;
 
 TimeAndSalesProperties::TimeAndSalesProperties()
-    : m_font(QFontDatabase().font("Roboto", "Regular", -1)),
+    : m_font(QFontDatabase().font("Roboto", "Medium", -1)),
       m_show_grid(false) {
   m_font.setPixelSize(scale_width(10));
   set_highlight(BboIndicator::UNKNOWN, {QColor(0xFFFFFF), QColor(Qt::black)});
