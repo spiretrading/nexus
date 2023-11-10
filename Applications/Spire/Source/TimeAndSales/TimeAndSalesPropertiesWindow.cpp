@@ -164,6 +164,7 @@ TimeAndSalesPropertiesWindow::TimeAndSalesPropertiesWindow(
   box->setFixedWidth(scale_width(256));
   update_style(*box, [] (auto& style) {
     style.get(Any()).
+      set(BackgroundColor(QColor(0xFFFFFF))).
       set(horizontal_padding(scale_width(8))).
       set(vertical_padding(scale_height(18)));
   });
