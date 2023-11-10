@@ -465,19 +465,19 @@ void OpenEditorCanvasNodeVisitor::Visit(const ReferenceNode& node) {
 void OpenEditorCanvasNodeVisitor::Visit(const SecurityNode& node) {
   auto widget = dynamic_cast<QWidget*>(m_model);
   auto dialog =
-    new SecurityInputDialog(Ref(*m_userProfile), node.GetValue(), widget);
-  dialog->setAttribute(Qt::WA_DeleteOnClose);
+    SecurityInputDialog(Ref(*m_userProfile), node.GetValue(), widget);
   if(m_event && m_event->type() == QEvent::KeyPress) {
-    dialog->GetSymbolInput().selectAll();
+    dialog.GetSymbolInput().selectAll();
     QApplication::sendEvent(
-      &dialog->GetSymbolInput(), static_cast<QKeyEvent*>(m_event));
+      &dialog.GetSymbolInput(), static_cast<QKeyEvent*>(m_event));
   }
-  QObject::connect(dialog, &SecurityInputDialog::finished, widget,
-    [=] (auto result) {
+  auto coordinate = m_model->GetCoordinate(node);
+  QObject::connect(&dialog, &SecurityInputDialog::finished, widget,
+    [&] (auto result) {
       if(result == QDialog::Rejected) {
         return;
       }
-      auto newValue = dialog->GetSecurity();
+      auto newValue = dialog.GetSecurity();
       if(newValue == Security()) {
         return;
       }
@@ -485,11 +485,13 @@ void OpenEditorCanvasNodeVisitor::Visit(const SecurityNode& node) {
       if(previousValue == newValue) {
         return;
       }
-      auto coordinate = m_model->GetCoordinate(node);
       m_editVariant = new ReplaceNodeCommand(Ref(*m_model), coordinate,
         *node.SetValue(newValue, m_userProfile->GetMarketDatabase()));
     });
-  dialog->show();
+  dialog.show();
+  while(dialog.isVisible()) {
+    QCoreApplication::instance()->processEvents(QEventLoop::WaitForMoreEvents);
+  }
 }
 
 void OpenEditorCanvasNodeVisitor::Visit(const SideNode& node) {
