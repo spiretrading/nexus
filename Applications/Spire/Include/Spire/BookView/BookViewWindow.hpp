@@ -83,8 +83,8 @@ namespace Spire {
         m_tasksExecuted;
       bool m_bidPanelGuard;
       bool m_askPanelGuard;
-      EventHandler m_eventHandler;
       QTimer m_updateTimer;
+      EventHandler m_eventHandler;
 
       void SetupSecurityTechnicalsModel();
       std::unique_ptr<CanvasNode> PrepareTaskNode(const CanvasNode& node);

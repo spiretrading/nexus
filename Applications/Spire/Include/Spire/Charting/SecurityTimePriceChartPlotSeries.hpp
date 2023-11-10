@@ -48,8 +48,8 @@ namespace Spire {
       std::unordered_map<boost::posix_time::ptime, CandlestickEntry,
         TimestampHash> m_candlestickEntries;
       mutable ChartPlotAddedSignal m_chartPlotAddedSignal;
-      Beam::RoutineTaskQueue m_taskQueue;
       EventHandler m_eventHandler;
+      Beam::RoutineTaskQueue m_taskQueue;
 
       CandlestickEntry& LoadCandlestick(boost::posix_time::ptime timestamp);
       void OnCandlestickLoaded(const Nexus::TechnicalAnalysis::Candlestick<
