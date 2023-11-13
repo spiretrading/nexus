@@ -144,7 +144,7 @@ void Stylist::set_style(StyleSheet style) {
   }
   m_rules.clear();
   m_style = std::move(style);
-  for_each_proxy([&] (auto& proxy) { proxy.apply(m_style); });
+  apply(m_style);
 }
 
 bool Stylist::is_match(const Selector& selector) const {
