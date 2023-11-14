@@ -40,6 +40,7 @@ namespace Spire {
   template<typename T> class EnumBox;
   class FilterPanel;
   class FocusObserver;
+  class FontBox;
   class GlobalPositionObserver;
   class HexColorBox;
   struct Highlight;

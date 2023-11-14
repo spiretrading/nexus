@@ -1,4 +1,5 @@
 #include "Spire/TimeAndSales/TimeAndSalesPropertiesWindow.hpp"
+#include <QStackedLayout>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/FontBox.hpp"
@@ -133,17 +134,16 @@ TimeAndSalesPropertiesWindow::TimeAndSalesPropertiesWindow(
     style = HEADER_LABEL_STYLE(style, header_font);
   });
   body_layout->addWidget(text_header);
-  auto font_box = new FontBox(m_model->m_font_model);
-  font_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
-  font_box->get_current()->connect_update_signal(
+  m_font_box = new FontBox(m_model->m_font_model);
+  m_font_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
+  m_font_box->get_current()->connect_update_signal(
     std::bind_front(&TimeAndSalesPropertiesWindow::on_font, this));
-  body_layout->addWidget(font_box);
+  body_layout->addWidget(m_font_box);
   body_layout->addSpacing(scale_height(24));
-  auto grid_check_box = new CheckBox(m_model->m_show_grid_model);
-  font_box->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
-  grid_check_box->set_label(tr("Show Grid"));
-  grid_check_box->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
-  body_layout->addWidget(grid_check_box, 0, Qt::AlignLeft);
+  m_grid_check_box = new CheckBox(m_model->m_show_grid_model);
+  m_grid_check_box->set_label(tr("Show Grid"));
+  m_grid_check_box->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+  body_layout->addWidget(m_grid_check_box, 0, Qt::AlignLeft);
   body_layout->addSpacing(scale_height(24));
   auto bbo_indicator_header = make_label(tr("BBO Indicators"));
   bbo_indicator_header->setSizePolicy(QSizePolicy::Expanding,
@@ -152,14 +152,14 @@ TimeAndSalesPropertiesWindow::TimeAndSalesPropertiesWindow(
     style = HEADER_LABEL_STYLE(style, header_font);
   });
   body_layout->addWidget(bbo_indicator_header);
-  auto indicators_layout = make_vbox_layout();
-  indicators_layout->setSpacing(scale_height(8));
+  m_indicators_layout = make_vbox_layout();
+  m_indicators_layout->setSpacing(scale_height(8));
   for(auto i = 0; i < BBO_INDICATOR_COUNT; ++i) {
-    indicators_layout->addLayout(
+    m_indicators_layout->addLayout(
       make_bbo_indicator_row(get_bbo_indicator_name(i),
         m_model->m_highlight_models[i]));
   }
-  body_layout->addLayout(indicators_layout);
+  body_layout->addLayout(m_indicators_layout);
   auto box = new Box(m_body);
   box->setFixedWidth(scale_width(256));
   update_style(*box, [] (auto& style) {
@@ -175,6 +175,32 @@ TimeAndSalesPropertiesWindow::TimeAndSalesPropertiesWindow(
 const std::shared_ptr<TimeAndSalesPropertiesModel>&
     TimeAndSalesPropertiesWindow::get_properties() const {
   return m_model->m_properties_model;
+}
+
+void TimeAndSalesPropertiesWindow::showEvent(QShowEvent* event) {
+  auto font_size_box = [&] () -> QWidget* {
+    auto stacked_layout = static_cast<QStackedLayout*>(
+      m_font_box->layout()->itemAt(0)->widget()->layout());
+    auto children = stacked_layout->currentWidget()->children();
+    for(auto i = children.rbegin(); i != children.rend(); ++i) {
+      if((*i)->isWidgetType()) {
+        return static_cast<QWidget*>(*i);
+      }
+    }
+    return nullptr;
+  }();
+  if(font_size_box) {
+    auto check_box_proxy = find_focus_proxy(*m_grid_check_box);
+    QWidget::setTabOrder(find_focus_proxy(*font_size_box), check_box_proxy);
+    auto previous = check_box_proxy;
+    for(auto i = 0; i < BBO_INDICATOR_COUNT; ++i) {
+      auto highlight_box =
+        m_indicators_layout->itemAt(i)->layout()->itemAt(1)->widget();
+      QWidget::setTabOrder(previous, highlight_box);
+      previous = highlight_box;
+    }
+  }
+  Window::showEvent(event);
 }
 
 void TimeAndSalesPropertiesWindow::on_font(const QFont& font) {
