@@ -36,7 +36,7 @@ namespace {
     });
     layout->addWidget(label);
     auto highlight_box = new HighlightBox(std::move(color_model));
-    highlight_box->setFixedHeight(scale_height(20));
+    highlight_box->setFixedSize(scale(120, 20));
     layout->addWidget(highlight_box);
     return layout;
   }
