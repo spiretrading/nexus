@@ -3,6 +3,8 @@
 #include "Spire/Styles/FlipSelector.hpp"
 #include "Spire/Styles/Stylist.hpp"
 
+using namespace boost;
+using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::Styles;
 
@@ -47,8 +49,9 @@ SelectConnection Spire::Styles::select(const CombinatorSelector& selector,
   struct Executor {
     struct MatchEntry {
       int m_count;
-      SelectConnection m_connection;
       std::unordered_set<const Stylist*> m_selection;
+      SelectConnection m_select_connection;
+      scoped_connection m_delete_connection;
 
       MatchEntry()
         : m_count(0) {}
@@ -76,6 +79,14 @@ SelectConnection Spire::Styles::select(const CombinatorSelector& selector,
         m_matches(0),
         m_base_connection(select(selector.get_base(), *m_base,
           std::bind_front(&Executor::on_base, this))) {}
+
+    void remove(const Stylist& stylist) {
+      for(auto selection : m_selection) {
+        if(selection.second.contains(&stylist)) {
+          on_selection(*selection.first, {}, {&stylist});
+        }
+      }
+    }
 
     void on_base(std::unordered_set<const Stylist*>&& additions,
         std::unordered_set<const Stylist*>&& removals) {
@@ -107,8 +118,10 @@ SelectConnection Spire::Styles::select(const CombinatorSelector& selector,
         auto& entry = m_match_entries[stylist];
         ++entry.m_count;
         if(entry.m_count == 1) {
-          entry.m_connection = select(m_match_selector, *stylist,
+          entry.m_select_connection = select(m_match_selector, *stylist,
             std::bind_front(&Executor::on_match, this, std::ref(entry)));
+          entry.m_delete_connection = stylist->connect_delete_signal(
+            std::bind_front(&Executor::remove, this, std::ref(*stylist)));
         }
       }
       for(auto stylist : removals) {
