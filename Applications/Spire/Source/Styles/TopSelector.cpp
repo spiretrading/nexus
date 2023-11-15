@@ -44,7 +44,6 @@ namespace {
     std::unordered_set<const Stylist*> m_children_selection;
     std::unordered_map<const Stylist*, int> m_selection_count;
     std::unordered_map<const Stylist*, Match> m_matches;
-    ConnectionGroup m_delete_connections;
 
     TopObserver(const Selector& selector, const Stylist& stylist,
         const SelectionUpdateSignal& on_update)
@@ -118,6 +117,7 @@ namespace {
           auto& count = m_selection_count[removal];
           --count;
           if(count == 0) {
+            m_selection_count.erase(removal);
             m_children_selection.erase(removal);
             return false;
           }
@@ -129,6 +129,7 @@ namespace {
           auto& count = m_selection_count[removal];
           --count;
           if(count == 0) {
+            m_selection_count.erase(removal);
             m_children_selection.erase(removal);
           }
         }
@@ -136,9 +137,6 @@ namespace {
     }
 
     void add(const Stylist& stylist) {
-      auto connection = stylist.connect_delete_signal(
-        std::bind_front(&TopObserver::remove, this, std::ref(stylist)));
-      m_delete_connections.AddConnection(&stylist, connection);
       auto& match = m_matches[&stylist];
       match.m_connection = select(TopSelector(Any(), m_selector), stylist,
         std::bind_front(&TopObserver::on_child_update, this, std::ref(match)));
