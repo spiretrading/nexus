@@ -1,6 +1,7 @@
 #include "Spire/Ui/TableItem.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Layouts.hpp"
+#include "Spire/Ui/ListItem.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -19,6 +20,11 @@ TableItem::TableItem(QWidget& component, QWidget* parent)
     std::bind_front(&TableItem::on_focus, this));
   m_style_connection =
     connect_style_signal(*this, std::bind_front(&TableItem::on_style, this));
+  update_style(*this, [] (auto& style) {
+    style.get(Current()).
+      set(BackgroundColor(QColor(0xFFFFFF))).
+      set(border_color(QColor(0x4B23A0)));
+  });
 }
 
 const TableItem::Styles& TableItem::get_styles() const {
