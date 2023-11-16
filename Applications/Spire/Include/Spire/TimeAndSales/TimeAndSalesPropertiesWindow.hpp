@@ -43,6 +43,7 @@ namespace Spire {
       FontBox* m_font_box;
       CheckBox* m_grid_check_box;
       QVBoxLayout* m_indicators_layout;
+      QFont m_font;
 
       void on_font(const QFont& font);
   };

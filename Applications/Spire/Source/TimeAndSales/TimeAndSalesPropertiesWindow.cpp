@@ -1,4 +1,5 @@
 #include "Spire/TimeAndSales/TimeAndSalesPropertiesWindow.hpp"
+#include <QFontDatabase>
 #include <QStackedLayout>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
@@ -39,6 +40,10 @@ namespace {
     highlight_box->setFixedSize(scale(120, 20));
     layout->addWidget(highlight_box);
     return layout;
+  }
+
+  auto get_highlight_box(const QLayout& layout, int index) {
+    return layout.itemAt(index)->layout()->itemAt(1)->widget();
   }
 }
 
@@ -204,9 +209,23 @@ void TimeAndSalesPropertiesWindow::showEvent(QShowEvent* event) {
 }
 
 void TimeAndSalesPropertiesWindow::on_font(const QFont& font) {
-  update_style(*m_body, [&] (auto& style) {
-    style.get(Any() > is_a<HighlightBox>() >
-        (is_a<TextBox>() && !(+Any() << is_a<HighlightPicker>()))).
-      set(Font(font));
-  });
+  auto property = [&] () -> Property {
+    auto font_database = QFontDatabase();
+    if(m_font.family() != font.family() ||
+        font_database.styleString(m_font) != font_database.styleString(font)) {
+      return Font(font);
+    } else if(m_font.pixelSize() != font.pixelSize()) {
+      return FontSize(font.pixelSize());
+    }
+    return Font(font);
+  }();
+  for(auto i = 0; i < BBO_INDICATOR_COUNT; ++i) {
+    auto highlight_box = get_highlight_box(*m_indicators_layout, i);
+    auto highlight_label = static_cast<Box*>(
+      highlight_box->layout()->itemAt(0)->widget())->get_body();
+    update_style(*highlight_label, [&] (auto& style) {
+      style.get(Any()).set(property);
+    });
+  }
+  m_font = font;
 }
