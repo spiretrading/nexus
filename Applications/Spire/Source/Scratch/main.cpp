@@ -18,6 +18,7 @@ int main(int argc, char** argv) {
   application->setOrganizationName(QObject::tr("Spire Trading Inc"));
   application->setApplicationName(QObject::tr("Scratch"));
   initialize_resources();
+
 /*
    QTableWidget tableWidget(100, 10); // 10 rows and 10 columns
 
@@ -35,12 +36,15 @@ int main(int argc, char** argv) {
         for (int col = 0; col < tableWidget.columnCount(); ++col) {
             // Generate a random integer between 0 and 99
             int randomValue = std::rand() % 100;
-//            QLineEdit *lineEdit = new QLineEdit(QString::number(randomValue));
-//            lineEdit->setReadOnly(true); // Set the QLineEdit to read-only
-//            tableWidget.setCellWidget(row, col, lineEdit);
+
+            QLineEdit *lineEdit = new QLineEdit(QString::number(randomValue));
+            lineEdit->setReadOnly(true); // Set the QLineEdit to read-only
 
 
-            tableWidget.setCellWidget(row, col, make_label(QString::number(randomValue)));
+            auto widget = make_label(QString::number(randomValue));
+
+            auto widget = new QWidget();
+            tableWidget.setCellWidget(row, col, widget);
         }
     }
 
@@ -50,6 +54,7 @@ int main(int argc, char** argv) {
 
     tableWidget.show();
 */
+
   auto model = std::make_shared<ArrayTableModel>();
   auto view = TableViewBuilder(model).
     add_header_item("A0").
