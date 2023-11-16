@@ -156,7 +156,7 @@ TableBody::TableBody(
     add_row(row);
   }
   auto left = 0;
-  for(auto column = 0; column != m_table->get_column_size(); ++column) {
+  for(auto column = 0; column != m_widths->get_size() + 1; ++column) {
     auto width = [&] {
       if(column != m_widths->get_size()) {
         return m_widths->get(column);
