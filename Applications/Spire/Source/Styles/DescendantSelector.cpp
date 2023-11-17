@@ -11,6 +11,24 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  auto build_descendants(const QWidget& root) {
+    auto descendants = std::unordered_set<const Stylist*>();
+    auto breadth_traversal = std::deque<const QWidget*>();
+    breadth_traversal.push_back(&root);
+    while(!breadth_traversal.empty()) {
+      auto widget = breadth_traversal.front();
+      breadth_traversal.pop_front();
+      for(auto child : widget->children()) {
+        if(child->isWidgetType()) {
+          auto& child_widget = static_cast<QWidget&>(*child);
+          breadth_traversal.push_back(&child_widget);
+          descendants.insert(&find_stylist(child_widget));
+        }
+      }
+    }
+    return descendants;
+  }
+
   struct DescendantObserver : public QObject {
     SelectionUpdateSignal m_on_update;
     ConnectionGroup m_delete_connections;
@@ -27,25 +45,6 @@ namespace {
         descendant->get_widget().installEventFilter(this);
       }
       m_on_update(std::move(descendants), {});
-    }
-
-    std::unordered_set<const Stylist*> build_descendants(
-        const QWidget& root) const {
-      auto descendants = std::unordered_set<const Stylist*>();
-      auto breadth_traversal = std::deque<const QWidget*>();
-      breadth_traversal.push_back(&root);
-      while(!breadth_traversal.empty()) {
-        auto widget = breadth_traversal.front();
-        breadth_traversal.pop_front();
-        for(auto child : widget->children()) {
-          if(child->isWidgetType()) {
-            auto& child_widget = static_cast<QWidget&>(*child);
-            breadth_traversal.push_back(&child_widget);
-            descendants.insert(&find_stylist(child_widget));
-          }
-        }
-      }
-      return descendants;
     }
 
     bool eventFilter(QObject* watched, QEvent* event) override {
