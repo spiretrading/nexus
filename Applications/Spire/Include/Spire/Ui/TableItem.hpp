@@ -1,8 +1,7 @@
 #ifndef SPIRE_TABLE_ITEM_HPP
 #define SPIRE_TABLE_ITEM_HPP
-#include <boost/optional/optional.hpp>
 #include <QWidget>
-#include "Spire/Ui/Button.hpp"
+#include "Spire/Ui/ClickObserver.hpp"
 #include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -50,9 +49,9 @@ namespace Spire {
 
     private:
       mutable ActiveSignal m_active_signal;
-      Button* m_button;
       Styles m_styles;
-      boost::optional<FocusObserver> m_focus_observer;
+      ClickObserver m_click_observer;
+      FocusObserver m_focus_observer;
       boost::signals2::scoped_connection m_style_connection;
 
       void on_focus(FocusObserver::State state);
