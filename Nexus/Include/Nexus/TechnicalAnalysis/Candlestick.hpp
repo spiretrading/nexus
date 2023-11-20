@@ -44,21 +44,6 @@ namespace Nexus::TechnicalAnalysis {
       Candlestick(Domain start, Domain end, Range open, Range close, Range high,
         Range low);
 
-      /**
-       * Returns <code>true</code> iff this Candlestick is equal to another.
-       * @param candlestick The Candlestick to compare to.
-       * @return <code>true</code> iff the two values are equal.
-       */
-      bool operator ==(const Candlestick& candlestick) const;
-
-      /**
-       * Returns <code>true</code> iff this Candlestick is not equal to
-       * another.
-       * @param candlestick The Candlestick to compare to.
-       * @return <code>true</code> iff the two values are not equal.
-       */
-      bool operator !=(const Candlestick& candlestick) const;
-
       /** Returns the start of the domain represented. */
       Domain GetStart() const;
 
@@ -88,6 +73,8 @@ namespace Nexus::TechnicalAnalysis {
        * @param value The value to update this Candlestick with.
        */
       void Update(Range value);
+
+      bool operator ==(const Candlestick& candlestick) const = default;
 
     private:
       friend struct Beam::Serialization::Shuttle<Candlestick>;
@@ -126,19 +113,6 @@ namespace Nexus::TechnicalAnalysis {
       m_close(std::move(close)),
       m_high(std::move(high)),
       m_low(std::move(low)) {}
-
-  template<typename D, typename R>
-  bool Candlestick<D, R>::operator ==(const Candlestick& candlestick) const {
-    return std::tie(m_hasOpen, m_start, m_end, m_open, m_close, m_high,
-      m_low) == std::tie(candlestick.m_hasOpen, candlestick.m_start,
-        candlestick.m_end, candlestick.m_open, candlestick.m_close,
-        candlestick.m_high, candlestick.m_low);
-  }
-
-  template<typename D, typename R>
-  bool Candlestick<D, R>::operator !=(const Candlestick& candlestick) const {
-    return !(*this == candlestick);
-  }
 
   template<typename D, typename R>
   typename Candlestick<D, R>::Domain Candlestick<D, R>::GetStart() const {

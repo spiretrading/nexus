@@ -20,15 +20,7 @@ namespace Nexus {
     /** The counter currency. */
     CurrencyId m_counter;
 
-    /** Constructs a CurrencyPair between two NONE currencies. */
-    CurrencyPair() = default;
-
-    /**
-     * Constructs a CurrencyPair.
-     * @param base The base currency.
-     * @param counter The counter currency.
-     */
-    CurrencyPair(CurrencyId base, CurrencyId counter);
+    auto operator <=>(const CurrencyPair& rhs) const = default;
   };
 
   /**
@@ -75,26 +67,6 @@ namespace Nexus {
   inline CurrencyPair Invert(const CurrencyPair& pair) {
     return {pair.m_counter, pair.m_base};
   }
-
-  /** Tests if two CurrencyPairs represent the same base and counter. */
-  inline bool operator ==(const CurrencyPair& lhs, const CurrencyPair& rhs) {
-    return lhs.m_base == rhs.m_base && lhs.m_counter == rhs.m_counter;
-  }
-
-  /** Tests if two CurrencyPairs represent a different base or counter. */
-  inline bool operator !=(const CurrencyPair& lhs, const CurrencyPair& rhs) {
-    return !(lhs == rhs);
-  }
-
-  /** Provides a comparator for CurrencyPairs. */
-  inline bool operator <(const CurrencyPair& lhs, const CurrencyPair& rhs) {
-    return std::tie(lhs.m_base, lhs.m_counter) <
-      std::tie(rhs.m_base, rhs.m_counter);
-  }
-
-  inline CurrencyPair::CurrencyPair(CurrencyId base, CurrencyId counter)
-    : m_base(base),
-      m_counter(counter) {}
 }
 
 namespace Beam::Serialization {

@@ -32,12 +32,7 @@ namespace Nexus::Accounting {
         /** The position's quantity. */
         Quantity m_quantity;
 
-        /**
-         * Constructs a PositionEntry.
-         * @param security The position's Security.
-         * @param quantity The position's quantity.
-         */
-        PositionEntry(Security security, Quantity quantity);
+        bool operator ==(const PositionEntry& rhs) const = default;
       };
 
       /** Constructs a PositionOrderBook. */
@@ -117,21 +112,6 @@ namespace Nexus::Accounting {
         m_openingOrders;
       Beam::CachedValue<std::vector<PositionEntry>> m_positions;
   };
-
-  inline bool operator ==(const PositionOrderBook::PositionEntry& lhs,
-      const PositionOrderBook::PositionEntry& rhs) {
-    return lhs.m_security == rhs.m_security && lhs.m_quantity == rhs.m_quantity;
-  }
-
-  inline bool operator !=(const PositionOrderBook::PositionEntry& lhs,
-      const PositionOrderBook::PositionEntry& rhs) {
-    return !(rhs == lhs);
-  }
-
-  inline PositionOrderBook::PositionEntry::PositionEntry(Security security,
-    Quantity quantity)
-    : m_security(std::move(security)),
-      m_quantity(quantity) {}
 
   inline PositionOrderBook::OrderEntry::OrderEntry(
     const OrderExecutionService::Order& order, int sequenceNumber)

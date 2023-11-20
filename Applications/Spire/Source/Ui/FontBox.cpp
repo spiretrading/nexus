@@ -38,6 +38,7 @@ namespace {
         QWidget* parent = nullptr)
         : QWidget(parent) {
       enclose(*this, family_box);
+      setFocusProxy(&family_box);
     }
 
     QSize sizeHint() const override {
@@ -51,6 +52,7 @@ namespace {
         QWidget* parent = nullptr)
         : QWidget(parent) {
       enclose(*this, style_box);
+      setFocusProxy(&style_box);
     }
 
     QSize sizeHint() const override {
@@ -67,7 +69,9 @@ FontBox::FontBox(std::shared_ptr<ValueModel<QFont>> current, QWidget* parent)
     : QWidget(parent),
       m_current(std::move(current)) {
   m_font_family_box = make_font_family_box(m_current->get().family());
-  m_font_style_box = make_font_style_box(m_font_family_box->get_current());
+  m_font_style_box = make_font_style_box(m_font_family_box->get_current(),
+    std::make_shared<LocalValueModel<QString>>(
+      QFontDatabase().styleString(m_current->get())));
   auto size_model = std::make_shared<LocalScalarValueModel<optional<int>>>();
   size_model->set_minimum(1);
   auto font_size = [&] {
@@ -83,7 +87,7 @@ FontBox::FontBox(std::shared_ptr<ValueModel<QFont>> current, QWidget* parent)
   auto custom_family_box = new CustomFontFamilyBox(*m_font_family_box);
   custom_family_box->setSizePolicy(QSizePolicy::Expanding,
     QSizePolicy::Expanding);
-  auto custom_style_box = new CustomFontFamilyBox(*m_font_style_box);
+  auto custom_style_box = new CustomFontStyleBox(*m_font_style_box);
   custom_style_box->setSizePolicy(QSizePolicy::Expanding,
     QSizePolicy::Expanding);
   auto medium_layout = make_hbox_layout();
@@ -111,6 +115,7 @@ FontBox::FontBox(std::shared_ptr<ValueModel<QFont>> current, QWidget* parent)
     std::bind_front(&FontBox::on_style_current, this));
   m_size_connection = m_font_size_box->get_current()->connect_update_signal(
     std::bind_front(&FontBox::on_size_current, this));
+  setFocusProxy(m_font_family_box);
 }
 
 const std::shared_ptr<ValueModel<QFont>>& FontBox::get_current() const {
@@ -138,13 +143,14 @@ void FontBox::on_style_current(const QString& style) {
   if(style.isEmpty()) {
     return;
   }
+  auto font_database = QFontDatabase();
   auto& current_font = m_current->get();
   if(m_font_family_box->get_current()->get() == current_font.family() &&
-      style == current_font.styleName()) {
+      style == font_database.styleString(current_font)) {
     return;
   }
   auto font =
-    QFontDatabase().font(m_font_family_box->get_current()->get(), style, -1);
+    font_database.font(m_font_family_box->get_current()->get(), style, -1);
   font.setPixelSize(current_font.pixelSize());
   auto blocker = shared_connection_block(m_font_connection);
   m_current->set(font);
