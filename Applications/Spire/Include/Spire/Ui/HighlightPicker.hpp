@@ -39,11 +39,14 @@ namespace Spire {
       ColorBox* m_background_color_box;
       ColorBox* m_text_color_box;
       OverlayPanel* m_panel;
+      QSize m_panel_spacing;
       boost::signals2::scoped_connection m_current_connection;
+      boost::signals2::scoped_connection m_panel_style_connection;
 
       bool on_mouse_press(ColorBox& source, ColorBox& destination,
         const QMouseEvent& mouse_event);
       void on_palette_current(boost::optional<int> current);
+      void on_panel_style();
   };
 }
 

@@ -38,6 +38,7 @@ namespace {
         QWidget* parent = nullptr)
         : QWidget(parent) {
       enclose(*this, family_box);
+      setFocusProxy(&family_box);
     }
 
     QSize sizeHint() const override {
@@ -51,6 +52,7 @@ namespace {
         QWidget* parent = nullptr)
         : QWidget(parent) {
       enclose(*this, style_box);
+      setFocusProxy(&style_box);
     }
 
     QSize sizeHint() const override {
@@ -67,14 +69,16 @@ FontBox::FontBox(std::shared_ptr<ValueModel<QFont>> current, QWidget* parent)
     : QWidget(parent),
       m_current(std::move(current)) {
   m_font_family_box = make_font_family_box(m_current->get().family());
-  m_font_style_box = make_font_style_box(m_font_family_box->get_current());
+  m_font_style_box = make_font_style_box(m_font_family_box->get_current(),
+    std::make_shared<LocalValueModel<QString>>(
+      QFontDatabase().styleString(m_current->get())));
   auto size_model = std::make_shared<LocalScalarValueModel<optional<int>>>();
   size_model->set_minimum(1);
   auto font_size = [&] {
     if(m_current->get().pixelSize() < 1) {
       return 1;
     }
-    return m_current->get().pixelSize();
+    return unscale_width(m_current->get().pixelSize());
   }();
   size_model->set(font_size);
   m_font_size_box = new IntegerBox(std::move(size_model));
@@ -111,6 +115,7 @@ FontBox::FontBox(std::shared_ptr<ValueModel<QFont>> current, QWidget* parent)
     std::bind_front(&FontBox::on_style_current, this));
   m_size_connection = m_font_size_box->get_current()->connect_update_signal(
     std::bind_front(&FontBox::on_size_current, this));
+  setFocusProxy(m_font_family_box);
 }
 
 const std::shared_ptr<ValueModel<QFont>>& FontBox::get_current() const {

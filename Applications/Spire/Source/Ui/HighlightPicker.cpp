@@ -20,6 +20,9 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  const auto COLOR_BOX_HEIHGT = 26;
+  const auto VERTICAL_GAP = 18;
+
   auto PALETTE_STYLE(StyleSheet style) {
     style.get(Any()).
       set(EdgeNavigation::CONTAIN).
@@ -104,7 +107,7 @@ namespace {
 
   auto make_color_box(std::shared_ptr<ColorModel> model) {
     auto color_box = new ColorBox(std::move(model));
-    color_box->setFixedHeight(scale_height(26));
+    color_box->setFixedHeight(scale_height(COLOR_BOX_HEIHGT));
     get_color_picker(*color_box)->get_body().setFixedWidth(scale_width(220));
     update_style(*color_box, [] (auto& style) {
       style.get(Any() > Alpha()).set(Visibility::NONE);
@@ -198,7 +201,7 @@ HighlightPicker::HighlightPicker(std::shared_ptr<ValueModel<Highlight>> current,
   });
   auto vbox_layout = make_vbox_layout();
   vbox_layout->addWidget(m_palette);
-  vbox_layout->addSpacing(scale_height(18));
+  vbox_layout->addSpacing(scale_height(VERTICAL_GAP));
   auto color_layout = make_hbox_layout();
   m_background_color_box = make_color_box(m_model->m_background_color_model);
   color_layout->addWidget(m_background_color_box);
@@ -212,6 +215,8 @@ HighlightPicker::HighlightPicker(std::shared_ptr<ValueModel<Highlight>> current,
   m_panel = new OverlayPanel(*this, parent);
   m_panel->setWindowFlags(Qt::Popup | (m_panel->windowFlags() & ~Qt::Tool));
   m_panel->installEventFilter(this);
+  m_panel_style_connection = connect_style_signal(*m_panel,
+    std::bind_front(&HighlightPicker::on_panel_style, this));
   update_style(*m_panel, [] (auto& style) {
     style.get(Any()).
       set(horizontal_padding(scale_width(8))).
@@ -254,8 +259,13 @@ bool HighlightPicker::eventFilter(QObject* watched, QEvent* event) {
 bool HighlightPicker::event(QEvent* event) {
   if(event->type() == QEvent::ShowToParent) {
     m_panel->show();
-    m_palette->setFixedWidth(
-      m_palette->get_list_item(0)->sizeHint().width() * 8);
+    auto palette_item_size = m_palette->get_list_item(0)->sizeHint();
+    auto margins = m_panel->layout()->contentsMargins();
+    m_panel->setFixedSize(palette_item_size.width() * 8 + margins.left() +
+      margins.right() + m_panel_spacing.width(),
+      palette_item_size.height() * 4 + scale_height(VERTICAL_GAP) +
+      scale_height(COLOR_BOX_HEIHGT) + margins.top() +  margins.bottom() +
+      m_panel_spacing.height());
   } else if(event->type() == QEvent::HideToParent) {
     m_panel->hide();
   }
@@ -310,5 +320,53 @@ void HighlightPicker::on_palette_current(optional<int> current) {
   if(current) {
     get_current()->set(
       std::any_cast<Highlight>(m_palette->get_list()->get(*current)));
+  }
+}
+
+void HighlightPicker::on_panel_style() {
+  m_panel_spacing = {0, 0};
+  auto& stylist = find_stylist(*m_panel);
+  for(auto& property : stylist.get_computed_block()) {
+    property.visit(
+      [&] (const BorderTopSize& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          m_panel_spacing.rheight() += size;
+        });
+      },
+      [&] (const BorderRightSize& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          m_panel_spacing.rwidth() += size;
+        });
+      },
+      [&] (const BorderBottomSize& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          m_panel_spacing.rheight() += size;
+        });
+      },
+      [&] (const BorderLeftSize& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          m_panel_spacing.rwidth() += size;
+        });
+      },
+      [&] (const PaddingTop& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          m_panel_spacing.rheight() += size;
+        });
+      },
+      [&] (const PaddingRight& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          m_panel_spacing.rwidth() += size;
+        });
+      },
+      [&] (const PaddingBottom& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          m_panel_spacing.rheight() += size;
+        });
+      },
+      [&] (const PaddingLeft& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          m_panel_spacing.rwidth() += size;
+        });
+      });
   }
 }

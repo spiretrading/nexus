@@ -24,6 +24,7 @@
 #include "Spire/Styles/LinearExpression.hpp"
 #include "Spire/Styles/RevertExpression.hpp"
 #include "Spire/Styles/TimeoutExpression.hpp"
+#include "Spire/TimeAndSales/TimeAndSalesPropertiesWindow.hpp"
 #include "Spire/Ui/AdaptiveBox.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
@@ -180,6 +181,25 @@ namespace {
   QString to_string(const HighlightColor& highlight) {
     return highlight.m_background_color.name() + " " +
       highlight.m_text_color.name();
+  }
+
+  QString to_string(BboIndicator indicator) {
+    switch(indicator) {
+      case BboIndicator::UNKNOWN:
+        return "None";
+      case BboIndicator::ABOVE_ASK:
+        return "Above_Ask";
+      case BboIndicator::AT_ASK:
+        return "At_Ask";
+      case BboIndicator::INSIDE:
+        return "Inside";
+      case BboIndicator::AT_BID:
+        return "At_Bid";
+      case BboIndicator::BELOW_BID:
+        return "Below_Bid";
+      default:
+        return "";
+    }
   }
 
   template<typename T>
@@ -534,7 +554,7 @@ namespace {
 
   void populate_font_properties(
       std::vector<std::shared_ptr<UiProperty>>& properties,
-      const QString& property_name) {
+      const QString& property_name, bool has_none = false) {
     auto font_database = QFontDatabase();
     auto font1 = font_database.font("Roboto", "Regular", -1);
     font1.setPixelSize(scale_width(12));
@@ -550,6 +570,9 @@ namespace {
       {{"Roboto, Regular, 12", font1}, {"Roboto, Thin, 12", font2},
       {"Roboto, Regular, 8", font3}, {"Tahoma, Bold, 16", font4},
       {"Segoe UI, Light Italic, 10", font5}});
+    if(has_none) {
+      font_property.insert(font_property.begin(), {"None", QFont()});
+    }
     populate_enum_properties(properties, property_name, font_property);
   }
 
@@ -4737,6 +4760,90 @@ UiProfile Spire::make_text_box_profile() {
     text_box->connect_reject_signal(profile.make_event_slot<QString>("Reject"));
     return text_box;
   });
+  return profile;
+}
+
+UiProfile Spire::make_time_and_sales_properties_window_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_font_properties(properties, "font", true);
+  properties.push_back(make_standard_property<bool>("show_grid"));
+  for(auto i = 0; i < BBO_INDICATOR_COUNT; ++i) {
+    auto time_and_sales_properties = TimeAndSalesProperties();
+    auto indicator = static_cast<BboIndicator>(i);
+    auto highlight = time_and_sales_properties.get_highlight(indicator);
+    properties.push_back(make_standard_property(
+      to_string(indicator) + "_background_color", highlight.m_background_color));
+    properties.push_back(make_standard_property(
+      to_string(indicator) + "_text_color", highlight.m_text_color));
+  }
+  auto profile = UiProfile("TimeAndSalesPropertiesWindow", properties,
+    [] (auto& profile) {
+      auto button = make_label_button("Properties");
+      auto window = new TimeAndSalesPropertiesWindow(
+        std::make_shared<LocalTimeAndSalesPropertiesModel>());
+      button->connect_click_signal([=] {
+        if(!window->isVisible()) {
+          window->show();
+          auto pos = button->mapToGlobal(QPoint(0, 0));
+          window->move(pos.x() + button->geometry().width(), pos.y());
+        }
+        window->activateWindow();
+      });
+      static auto properties = window->get_properties()->get();
+      auto& font = get<QFont>("font", profile.get_properties());
+      font.connect_changed_signal([=] (const auto& font) {
+        if(font == QFont()) {
+          return;
+        }
+        properties.set_font(font);
+        window->get_properties()->set(properties);
+      });
+      auto& show_grid = get<bool>("show_grid", profile.get_properties());
+      show_grid.connect_changed_signal([=] (auto value) {
+        properties.set_show_grid(value);
+        window->get_properties()->set(properties);
+      });
+      for(auto i = 0; i < BBO_INDICATOR_COUNT; ++i) {
+        auto indicator = static_cast<BboIndicator>(i);
+        auto& background_color = get<QColor>(
+          to_string(indicator) + "_background_color", profile.get_properties());
+        background_color.connect_changed_signal([=] (const auto& color) {
+          auto highlight = properties.get_highlight(indicator);
+          highlight.m_background_color = color;
+          properties.set_highlight(indicator, highlight);
+          window->get_properties()->set(properties);
+        });
+        auto& text_color = get<QColor>(
+          to_string(indicator) + "_text_color", profile.get_properties());
+        text_color.connect_changed_signal([=] (const auto& color) {
+          auto highlight = properties.get_highlight(indicator);
+          highlight.m_text_color = color;
+          properties.set_highlight(indicator, highlight);
+          window->get_properties()->set(properties);
+        });
+      }
+      auto current_slot = profile.make_event_slot<QString>("Current");
+      window->get_properties()->connect_update_signal(
+        [=] (const auto& value) {
+          if(auto font = value.get_font(); font != properties.get_font()) {
+            current_slot(QString("Font: %1, %2, %3").arg(font.family()).
+              arg(font.styleName()).arg(unscale_width(font.pixelSize())));
+          }
+          for(auto i = 0; i < BBO_INDICATOR_COUNT; ++i) {
+            auto indicator = static_cast<BboIndicator>(i);
+            if(auto highlight = value.get_highlight(indicator);
+                highlight != properties.get_highlight(indicator)) {
+              current_slot(QString("%1: %2").
+                arg(to_string(indicator)).arg(to_string(highlight)));
+            }
+          }
+          if(value.is_show_grid() != properties.is_show_grid()) {
+            current_slot(QString("Show grid: %1").arg(value.is_show_grid()));
+          }
+          properties = value;
+        });
+      return button;
+    });
   return profile;
 }
 
