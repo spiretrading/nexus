@@ -231,6 +231,8 @@ void ListView::keyPressEvent(QKeyEvent* event) {
     case Qt::Key_A:
       if(event->modifiers() & Qt::Modifier::CTRL && !event->isAutoRepeat()) {
         m_selection_controller.select_all();
+      } else {
+        append_query(event->text());
       }
       break;
     case Qt::Key_Control:
