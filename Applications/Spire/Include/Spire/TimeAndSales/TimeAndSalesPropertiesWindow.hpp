@@ -1,9 +1,9 @@
 #ifndef SPIRE_TIME_AND_SALES_PROPERTIES_WINDOW_HPP
 #define SPIRE_TIME_AND_SALES_PROPERTIES_WINDOW_HPP
-#include <QVBoxLayout>
-#include "Spire/TimeAndSales/TimeAndSalesProperties.hpp"
+#include <QFont>
+#include <QLayout>
 #include "Spire/TimeAndSales/TimeAndSales.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/TimeAndSales/TimeAndSalesProperties.hpp"
 #include "Spire/Ui/Window.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -39,10 +39,9 @@ namespace Spire {
     private:
       struct PropertiesWindowModel;
       std::unique_ptr<PropertiesWindowModel> m_model;
-      QWidget* m_body;
       FontBox* m_font_box;
       CheckBox* m_grid_check_box;
-      QVBoxLayout* m_indicators_layout;
+      QLayout* m_indicators_layout;
       QFont m_font;
 
       void on_font(const QFont& font);

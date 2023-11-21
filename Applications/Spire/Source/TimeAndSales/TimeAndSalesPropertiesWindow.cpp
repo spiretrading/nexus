@@ -14,7 +14,10 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  auto HEADER_LABEL_STYLE(StyleSheet style, const QFont& font) {
+  auto HEADER_LABEL_STYLE(StyleSheet style) {
+    auto font = QFont("Roboto");
+    font.setWeight(QFont::Medium);
+    font.setPixelSize(scale_width(12));
     style.get(Any()).
       set(Font(font)).
       set(PaddingBottom(scale_height(8)));
@@ -65,12 +68,12 @@ struct TimeAndSalesPropertiesWindow::PropertiesWindowModel {
           m_properties_model->get().get_font())),
         m_show_grid_model(std::make_shared<LocalBooleanModel>(
           m_properties_model->get().is_show_grid())) {
-    m_properties_model->connect_update_signal(std::bind_front(
-      &PropertiesWindowModel::on_properties, this));
-    m_font_model->connect_update_signal(std::bind_front(
-      &PropertiesWindowModel::on_font, this));
-    m_show_grid_model->connect_update_signal(std::bind_front(
-      &PropertiesWindowModel::on_show_grid, this));
+    m_properties_connection = m_properties_model->connect_update_signal(
+      std::bind_front(&PropertiesWindowModel::on_properties, this));
+    m_font_connection = m_font_model->connect_update_signal(
+      std::bind_front(&PropertiesWindowModel::on_font, this));
+    m_show_grid_connection = m_show_grid_model->connect_update_signal(
+      std::bind_front(&PropertiesWindowModel::on_show_grid, this));
     for(auto i = 0; i < BBO_INDICATOR_COUNT; ++i) {
       m_highlight_models[i] = std::make_shared<LocalHighlightColorModel>(
         m_properties_model->get().get_highlight(static_cast<BboIndicator>(i)));
@@ -92,7 +95,7 @@ struct TimeAndSalesPropertiesWindow::PropertiesWindowModel {
     for(auto i = 0; i < BBO_INDICATOR_COUNT; ++i) {
       auto indicator = static_cast<BboIndicator>(i);
       if(properties.get_highlight(indicator) != m_highlight_models[i]->get()) {
-        auto blocker = shared_connection_block(m_show_grid_connection);
+        auto blocker = shared_connection_block(m_highlight_connections[i]);
         m_highlight_models[i]->set(properties.get_highlight(indicator));
       }
     }
@@ -127,16 +130,13 @@ TimeAndSalesPropertiesWindow::TimeAndSalesPropertiesWindow(
   set_svg_icon(":/Icons/time-sales.svg");
   setWindowTitle(tr("Time and Sales Properties"));
   setWindowFlags(windowFlags() & ~Qt::WindowMinimizeButtonHint);
-  auto header_font = QFont("Roboto");
-  header_font.setWeight(QFont::Medium);
-  header_font.setPixelSize(scale_width(12));
-  m_body = new QWidget();
-  m_body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  auto body_layout = make_vbox_layout(m_body);
+  auto body = new QWidget();
+  body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  auto body_layout = make_vbox_layout(body);
   auto text_header = make_label(tr("Text"));
   text_header->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
-  update_style(*text_header, [&] (auto& style) {
-    style = HEADER_LABEL_STYLE(style, header_font);
+  update_style(*text_header, [] (auto& style) {
+    style = HEADER_LABEL_STYLE(style);
   });
   body_layout->addWidget(text_header);
   m_font_box = new FontBox(m_model->m_font_model);
@@ -147,25 +147,26 @@ TimeAndSalesPropertiesWindow::TimeAndSalesPropertiesWindow(
   body_layout->addSpacing(scale_height(24));
   m_grid_check_box = new CheckBox(m_model->m_show_grid_model);
   m_grid_check_box->set_label(tr("Show Grid"));
-  m_grid_check_box->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+  m_grid_check_box->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Minimum);
   body_layout->addWidget(m_grid_check_box, 0, Qt::AlignLeft);
   body_layout->addSpacing(scale_height(24));
   auto bbo_indicator_header = make_label(tr("BBO Indicators"));
   bbo_indicator_header->setSizePolicy(QSizePolicy::Expanding,
     QSizePolicy::Minimum);
-  update_style(*bbo_indicator_header, [&] (auto& style) {
-    style = HEADER_LABEL_STYLE(style, header_font);
+  update_style(*bbo_indicator_header, [] (auto& style) {
+    style = HEADER_LABEL_STYLE(style);
   });
   body_layout->addWidget(bbo_indicator_header);
-  m_indicators_layout = make_vbox_layout();
-  m_indicators_layout->setSpacing(scale_height(8));
+  auto indicators_layout = make_vbox_layout();
+  indicators_layout->setSpacing(scale_height(8));
   for(auto i = 0; i < BBO_INDICATOR_COUNT; ++i) {
-    m_indicators_layout->addLayout(
+    indicators_layout->addLayout(
       make_bbo_indicator_row(get_bbo_indicator_name(i),
         m_model->m_highlight_models[i]));
   }
+  m_indicators_layout = indicators_layout;
   body_layout->addLayout(m_indicators_layout);
-  auto box = new Box(m_body);
+  auto box = new Box(body);
   box->setFixedWidth(scale_width(256));
   update_style(*box, [] (auto& style) {
     style.get(Any()).
@@ -199,8 +200,7 @@ void TimeAndSalesPropertiesWindow::showEvent(QShowEvent* event) {
     QWidget::setTabOrder(find_focus_proxy(*font_size_box), check_box_proxy);
     auto previous = check_box_proxy;
     for(auto i = 0; i < BBO_INDICATOR_COUNT; ++i) {
-      auto highlight_box =
-        m_indicators_layout->itemAt(i)->layout()->itemAt(1)->widget();
+      auto highlight_box = get_highlight_box(*m_indicators_layout, i);
       QWidget::setTabOrder(previous, highlight_box);
       previous = highlight_box;
     }
