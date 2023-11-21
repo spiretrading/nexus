@@ -1,5 +1,4 @@
 #include "Spire/Styles/TopSelector.hpp"
-#include <Beam/SignalHandling/ConnectionGroup.hpp>
 #include <QChildEvent>
 #include <QWidget>
 #include "Spire/Styles/Any.hpp"
@@ -7,7 +6,6 @@
 #include "Spire/Styles/FlipSelector.hpp"
 #include "Spire/Styles/Stylist.hpp"
 
-using namespace Beam::SignalHandling;
 using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
