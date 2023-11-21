@@ -23,13 +23,13 @@ namespace Spire {
 
       /* Sets the highlight to a specific BBO indicator. */
       void set_highlight(BboIndicator indicator, const Highlight& highlight);
-    
+
       /* Returns the font. */
       const QFont& get_font() const;
-    
+
       /* Sets the font. */
       void set_font(const QFont& font);
-    
+
       /** Returns <code>true</code> iff the grid is shown. */
       bool is_show_grid() const;
 
