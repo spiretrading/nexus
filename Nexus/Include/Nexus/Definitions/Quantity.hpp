@@ -2,6 +2,7 @@
 #define NEXUS_QUANTITY_HPP
 #include <cstdint>
 #include <cstdlib>
+#include <functional>
 #include <istream>
 #include <limits>
 #include <ostream>
@@ -11,6 +12,7 @@
 #include <Beam/Serialization/Sender.hpp>
 #include <Beam/Utilities/Math.hpp>
 #include <boost/cstdfloat.hpp>
+#include <boost/functional/hash.hpp>
 #include <boost/io/ios_state.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/optional/optional.hpp>
@@ -77,49 +79,6 @@ namespace Nexus {
 
       /** Converts this Quantity into an unsigned long long. */
       explicit constexpr operator unsigned long long() const;
-
-      /**
-       * Less than test.
-       * @param rhs The right hand side of the operation.
-       * @return <code>true</code> iff this is less than <i>rhs</i>.
-       */
-      constexpr bool operator <(Quantity rhs) const;
-
-      /**
-       * Less than or equal test.
-       * @param rhs The right hand side of the operation.
-       * @return <code>true</code> iff this is less than or equal to <i>rhs</i>.
-       */
-      constexpr bool operator <=(Quantity rhs) const;
-
-      /**
-       * Tests for equality.
-       * @param rhs The right hand side of the operation.
-       * @return <code>true</code> iff this is equal to <i>rhs</i>.
-       */
-      constexpr bool operator ==(Quantity rhs) const;
-
-      /**
-       * Tests for inequality.
-       * @param rhs The right hand side of the operation.
-       * @return <code>true</code> iff this is not equal to <i>rhs</i>.
-       */
-      constexpr bool operator !=(Quantity rhs) const;
-
-      /**
-       * Greater than or equal test.
-       * @param rhs The right hand side of the operation.
-       * @return <code>true</code> iff this is greater than or equal to
-       *         <i>rhs</i>.
-       */
-      constexpr bool operator >=(Quantity rhs) const;
-
-      /**
-       * Greater than test.
-       * @param rhs The right hand side of the operation.
-       * @return <code>true</code> iff this is greater than <i>rhs</i>.
-       */
-      constexpr bool operator >(Quantity rhs) const;
 
       /**
        * Adds two Quantities together.
@@ -197,6 +156,8 @@ namespace Nexus {
 
       /** Returns the raw representation of this Quantity. */
       constexpr boost::float64_t GetRepresentation() const;
+
+      constexpr auto operator<=>(const Quantity&) const = default;
 
     private:
       template<typename, typename> friend struct Beam::Serialization::Send;
@@ -378,6 +339,11 @@ namespace Nexus {
     }
   }
 
+  inline std::size_t hash_value(Quantity quantity) noexcept {
+    auto source = static_cast<boost::float64_t>(quantity);
+    return std::hash<decltype(source)>()(source);
+  }
+
   inline boost::optional<Quantity> Quantity::FromValue(
       const std::string& value) {
     if(value.empty()) {
@@ -489,30 +455,6 @@ namespace Nexus {
     return static_cast<unsigned long long>(m_value / MULTIPLIER);
   }
 
-  inline constexpr bool Quantity::operator <(Quantity rhs) const {
-    return m_value < rhs.m_value;
-  }
-
-  inline constexpr bool Quantity::operator <=(Quantity rhs) const {
-    return m_value <= rhs.m_value;
-  }
-
-  inline constexpr bool Quantity::operator ==(Quantity rhs) const {
-    return m_value == rhs.m_value;
-  }
-
-  inline constexpr bool Quantity::operator !=(Quantity rhs) const {
-    return m_value != rhs.m_value;
-  }
-
-  inline constexpr bool Quantity::operator >=(Quantity rhs) const {
-    return m_value >= rhs.m_value;
-  }
-
-  inline constexpr bool Quantity::operator >(Quantity rhs) const {
-    return m_value > rhs.m_value;
-  }
-
   inline constexpr Quantity Quantity::operator +(Quantity rhs) const {
     return FromRepresentation(m_value + rhs.m_value);
   }
@@ -606,6 +548,13 @@ namespace Beam::Serialization {
 }
 
 namespace std {
+  template<>
+  struct hash<Nexus::Quantity> {
+    std::size_t operator ()(Nexus::Quantity value) const noexcept {
+      return Nexus::hash_value(value);
+    }
+  };
+
   template<>
   class numeric_limits<Nexus::Quantity> {
     public:

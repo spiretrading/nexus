@@ -1,10 +1,13 @@
 #ifndef NEXUS_TIME_IN_FORCE_HPP
 #define NEXUS_TIME_IN_FORCE_HPP
+#include <functional>
 #include <ostream>
 #include <Beam/Collections/Enum.hpp>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <Beam/Serialization/ShuttleDateTime.hpp>
+#include <Beam/Utilities/HashPtime.hpp>
 #include <boost/date_time/posix_time/ptime.hpp>
+#include <boost/functional/hash.hpp>
 #include <boost/lexical_cast.hpp>
 #include "Nexus/Definitions/Definitions.hpp"
 
@@ -60,27 +63,13 @@ namespace Details {
        */
       TimeInForce(Type type, boost::posix_time::ptime expiry);
 
-      /**
-       * Tests if two TimeInForces are equal.
-       * @param timeInForce The TimeInForce to compare to.
-       * @return <code>true</code> iff the Type's are equal and the expiries are
-       *         equal.
-       */
-      bool operator ==(const TimeInForce& timeInForce) const;
-
-      /**
-       * Tests if two TimeInForces are not equal.
-       * @param timeInForce The TimeInForce to compare to.
-       * @return <code>true</code> iff the Type's are not equal or the expiries
-       *         are not equal.
-       */
-      bool operator !=(const TimeInForce& timeInForce) const;
-
       /** Returns the Type. */
       Type GetType() const;
 
       /** Returns the expiry. */
       boost::posix_time::ptime GetExpiry() const;
+
+      bool operator ==(const TimeInForce& timeInForce) const = default;
 
     private:
       friend struct Beam::Serialization::Shuttle<TimeInForce>;
@@ -119,20 +108,19 @@ namespace Details {
     }
   }
 
+  inline std::size_t hash_value(const TimeInForce& timeInForce) noexcept {
+    auto seed = std::size_t(0);
+    boost::hash_combine(seed, timeInForce.GetType());
+    boost::hash_combine(seed, timeInForce.GetExpiry());
+    return seed;
+  }
+
   inline TimeInForce::TimeInForce(Type type)
     : m_type(type) {}
 
   inline TimeInForce::TimeInForce(Type type, boost::posix_time::ptime expiry)
     : m_type(type),
       m_expiry(expiry) {}
-
-  inline bool TimeInForce::operator ==(const TimeInForce& timeInForce) const {
-    return m_type == timeInForce.m_type && m_expiry == timeInForce.m_expiry;
-  }
-
-  inline bool TimeInForce::operator !=(const TimeInForce& timeInForce) const {
-    return !(*this == timeInForce);
-  }
 
   inline TimeInForce::Type TimeInForce::GetType() const {
     return m_type;
@@ -151,6 +139,15 @@ namespace Beam::Serialization {
         unsigned int version) {
       shuttle.Shuttle("type", value.m_type);
       shuttle.Shuttle("expiry", value.m_expiry);
+    }
+  };
+}
+
+namespace std {
+  template<>
+  struct hash<Nexus::TimeInForce> {
+    std::size_t operator ()(const Nexus::TimeInForce& value) const noexcept {
+      return Nexus::hash_value(value);
     }
   };
 }

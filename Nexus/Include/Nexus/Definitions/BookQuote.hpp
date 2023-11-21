@@ -28,34 +28,7 @@ namespace Nexus {
     /** The timestamp. */
     boost::posix_time::ptime m_timestamp;
 
-    /** Constructs an uninitialized BookQuote. */
-    BookQuote() = default;
-
-    /**
-     * Constructs a BookQuote.
-     * @param mpid The market's MPID.
-     * @param isPrimaryMpid Whether the MPID is the Market's primary
-     *        participant.
-     * @param market The Market this Quote comes from.
-     * @param quote The Quote.
-     * @param timestamp The timestamp.
-     */
-    BookQuote(std::string mpid, bool isPrimaryMpid, MarketCode market,
-      Quote quote, boost::posix_time::ptime timestamp);
-
-    /**
-     * Tests if two BookQuotes represent the same quote.
-     * @param quote The BookQuote to test.
-     * @return <code>true</code> iff all but the time stamps are equal.
-     */
-    bool operator ==(const BookQuote& quote) const;
-
-    /**
-     * Tests if two BookQuotes represent different quotes.
-     * @param quote The BookQuote to test.
-     * @return <code>!(*this == quote)</code>.
-     */
-    bool operator !=(const BookQuote& quote) const;
+    bool operator ==(const BookQuote& quote) const = default;
   };
 
   /**
@@ -71,24 +44,6 @@ namespace Nexus {
       return QuoteListingComparator(lhs.m_quote, rhs.m_quote);
     }
     return lhs.m_mpid < rhs.m_mpid;
-  }
-
-  inline BookQuote::BookQuote(std::string mpid, bool isPrimaryMpid,
-    MarketCode market, Quote quote, boost::posix_time::ptime timestamp)
-    : m_mpid(std::move(mpid)),
-      m_isPrimaryMpid(isPrimaryMpid),
-      m_market(market),
-      m_quote(std::move(quote)),
-      m_timestamp(timestamp) {}
-
-  inline bool BookQuote::operator ==(const BookQuote& quote) const {
-    return m_mpid == quote.m_mpid && m_isPrimaryMpid == quote.m_isPrimaryMpid &&
-      m_market == quote.m_market && m_quote == quote.m_quote && m_timestamp ==
-      quote.m_timestamp;
-  }
-
-  inline bool BookQuote::operator !=(const BookQuote& quote) const {
-    return !(*this == quote);
   }
 
   inline std::ostream& operator <<(std::ostream& out, const BookQuote& quote) {

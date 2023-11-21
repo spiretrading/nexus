@@ -395,6 +395,9 @@ void Nexus::Python::ExportMoney(module& module) {
     def("__abs__", static_cast<Money (*)(Money)>(&Abs)).
     def("__floor__", BindIntegerPrecision(
       static_cast<Money (*)(Money, int)>(&Floor))).
+    def("__hash__", [] (Money self) {
+      return std::hash<Money>()(self);
+    }).
     def("__ceil__", BindIntegerPrecision(
       static_cast<Money (*)(Money, int)>(&Ceil))).
     def("__trunc__", BindIntegerPrecision(
@@ -489,6 +492,9 @@ void Nexus::Python::ExportQuantity(module& module) {
       static_cast<Quantity (*)(Quantity, int)>(&Floor))).
     def("__ceil__", BindIntegerPrecision(
       static_cast<Quantity (*)(Quantity, int)>(&Ceil))).
+    def("__hash__", [] (Quantity self) {
+      return std::hash<Quantity>()(self);
+    }).
     def("__trunc__", BindIntegerPrecision(
       static_cast<Quantity (*)(Quantity, int)>(&Truncate))).
     def("__round__", BindIntegerPrecision(
@@ -719,6 +725,9 @@ void Nexus::Python::ExportTimeInForce(module& module) {
     def(init<const TimeInForce&>()).
     def_property_readonly("type", &TimeInForce::GetType).
     def_property_readonly("expiry", &TimeInForce::GetExpiry).
+    def("__hash__", [] (const TimeInForce& self) {
+      return std::hash<TimeInForce>()(self);
+    }).
     def("__str__", &lexical_cast<std::string, TimeInForce>).
     def(self == self).
     def(self != self);

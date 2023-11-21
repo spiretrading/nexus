@@ -44,8 +44,12 @@ struct TableBody::Cover : QWidget {
   QColor m_background_color;
 
   Cover(QWidget* parent)
-    : QWidget(parent),
-      m_background_color(Qt::transparent) {}
+      : QWidget(parent),
+        m_background_color(Qt::transparent) {
+    update_style(*this, [] (auto& style) {
+      style.get(CurrentRow()).set(BackgroundColor(QColor(0xE2E0FF)));
+    });
+  }
 };
 
 struct TableBody::ColumnCover : Cover {
@@ -54,6 +58,9 @@ struct TableBody::ColumnCover : Cover {
   ColumnCover(QWidget* parent)
       : Cover(parent) {
     setMouseTracking(true);
+    update_style(*this, [] (auto& style) {
+      style.get(CurrentColumn()).set(BackgroundColor(QColor(0xE2E0FF)));
+    });
   }
 
   bool event(QEvent* event) override {
@@ -144,17 +151,12 @@ TableBody::TableBody(
       set(horizontal_padding(scale_width(1))).
       set(vertical_padding(scale_height(1))).
       set(grid_color(QColor(0xE0E0E0)));
-    style.get(Any() > Current()).
-      set(BackgroundColor(QColor(0xFFFFFF))).
-      set(border_color(QColor(0x4B23A0)));
-    style.get(Any() > CurrentRow()).set(BackgroundColor(QColor(0xE2E0FF)));
-    style.get(Any() > CurrentColumn()).set(BackgroundColor(QColor(0xE2E0FF)));
   });
   for(auto row = 0; row != m_table->get_row_size(); ++row) {
     add_row(row);
   }
   auto left = 0;
-  for(auto column = 0; column != m_table->get_column_size(); ++column) {
+  for(auto column = 0; column != m_widths->get_size() + 1; ++column) {
     auto width = [&] {
       if(column != m_widths->get_size()) {
         return m_widths->get(column);
