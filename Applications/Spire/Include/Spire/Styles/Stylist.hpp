@@ -125,7 +125,7 @@ namespace Spire::Styles {
         std::size_t operator ()(const Selector& selector) const;
       };
       struct RuleEntry {
-        Rule m_rule;
+        Block m_block;
         int m_priority;
         std::unordered_set<const Stylist*> m_selection;
         SelectConnection m_connection;

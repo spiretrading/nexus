@@ -161,7 +161,7 @@ const Block& Stylist::get_computed_block() const {
   }
   m_computed_block.emplace();
   for(auto& source : m_sources) {
-    merge(*m_computed_block, source.m_rule->m_rule.get_block());
+    merge(*m_computed_block, source.m_rule->m_block);
   }
   for(auto principal : m_principals) {
     merge(*m_computed_block, principal->get_computed_block());
@@ -282,8 +282,8 @@ void Stylist::apply(const StyleSheet& style) {
     auto entry = std::make_unique<RuleEntry>();
     entry->m_priority = priority;
     ++priority;
-    entry->m_rule = rule;
-    entry->m_connection = select(entry->m_rule.get_selector(), *this,
+    entry->m_block = rule.get_block();
+    entry->m_connection = select(rule.get_selector(), *this,
       std::bind_front(&Stylist::on_selection_update, this, std::ref(*entry)));
     m_rules.push_back(std::move(entry));
   }
@@ -384,7 +384,7 @@ optional<Property> Stylist::find_reverted_property(std::type_index type) const {
   auto reverted_property = optional<Property>();
   for_each_principal([&] (auto& principal) {
     for(auto& source : principal.m_sources) {
-      if(auto p = find(source.m_rule->m_rule.get_block(), type)) {
+      if(auto p = find(source.m_rule->m_block, type)) {
         reverted_property = std::move(property);
         property.emplace(*p);
       }
