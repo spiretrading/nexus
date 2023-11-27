@@ -128,32 +128,39 @@ namespace Spire {
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
+      void showEvent(QShowEvent *event) override;
 
     private:
-      mutable SubmitSignal m_submit_signal;
+      struct DeferredData {
+        mutable SubmitSignal m_submit_signal;
+        std::any m_submission;
+        QString m_submission_text;
+        QWidget* m_input_focus_proxy;
+        ListView* m_list_view;
+        FocusObserver m_focus_observer;
+        std::shared_ptr<ArrayListModel<std::any>> m_matches;
+        DropDownList* m_drop_down_list;
+        boost::optional<QString> m_user_query;
+        std::uint32_t m_completion_tag;
+        QtPromise<void> m_query_result;
+        QString m_prefix;
+        QString m_completion;
+        QString m_last_completion;
+        bool m_has_autocomplete_selection;
+        boost::signals2::scoped_connection m_current_connection;
+        boost::signals2::scoped_connection m_input_connection;
+        boost::signals2::scoped_connection m_highlight_connection;
+        boost::signals2::scoped_connection m_drop_down_current_connection;
+
+        DeferredData(ComboBox& box);
+      };
       std::shared_ptr<QueryModel> m_query_model;
       std::shared_ptr<CurrentModel> m_current;
-      std::any m_submission;
-      QString m_submission_text;
-      bool m_is_read_only;
       AnyInputBox* m_input_box;
-      QWidget* m_input_focus_proxy;
-      ListView* m_list_view;
-      FocusObserver m_focus_observer;
-      std::shared_ptr<ArrayListModel<std::any>> m_matches;
-      DropDownList* m_drop_down_list;
-      boost::optional<QString> m_user_query;
-      std::uint32_t m_completion_tag;
-      QtPromise<void> m_query_result;
-      QString m_prefix;
-      QString m_completion;
-      QString m_last_completion;
-      bool m_has_autocomplete_selection;
-      boost::signals2::scoped_connection m_current_connection;
-      boost::signals2::scoped_connection m_input_connection;
-      boost::signals2::scoped_connection m_highlight_connection;
-      boost::signals2::scoped_connection m_drop_down_current_connection;
+      ViewBuilder m_view_builder;
+      mutable std::unique_ptr<DeferredData> m_data;
 
+      void initialize_deferred_data() const;
       void update_completion();
       void revert_to(const QString& query, bool autocomplete);
       void revert_current();
