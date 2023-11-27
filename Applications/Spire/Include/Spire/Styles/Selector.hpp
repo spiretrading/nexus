@@ -3,6 +3,7 @@
 #include <any>
 #include <typeindex>
 #include <type_traits>
+#include <unordered_map>
 #include <Beam/Utilities/Functional.hpp>
 #include "Spire/Styles/SelectConnection.hpp"
 #include "Spire/Styles/Styles.hpp"
@@ -71,11 +72,14 @@ namespace Spire::Styles {
       };
       friend SelectConnection select(
         const Selector&, const Stylist&, const SelectionUpdateSignal&);
+      struct Operations {
+        std::function<bool (const Selector&, const Selector&)> m_is_equal;
+        std::function<SelectConnection (
+          const Selector&, const Stylist&, const SelectionUpdateSignal&)>
+          m_select;
+      };
+      static std::unordered_map<std::type_index, Operations> m_operations;
       std::any m_selector;
-      std::function<bool (const Selector&, const Selector&)> m_is_equal;
-      std::function<SelectConnection (
-        const Selector&, const Stylist&, const SelectionUpdateSignal&)>
-        m_select;
   };
 
   /**
@@ -91,15 +95,20 @@ namespace Spire::Styles {
 
   template<typename T, typename>
   Selector::Selector(T selector)
-    : m_selector(std::move(selector)),
-      m_is_equal([] (const Selector& self, const Selector& selector) {
-        return selector.get_type() == typeid(T) &&
-          self.as<T>() == selector.as<T>();
-      }),
-      m_select([] (const Selector& self, const Stylist& base,
-          const SelectionUpdateSignal& on_update) {
-        return select(self.as<T>(), base, on_update);
-      }) {}
+      : m_selector(std::move(selector)) {
+    auto operations = m_operations.find(typeid(T));
+    if(operations == m_operations.end()) {
+      m_operations.emplace_hint(operations, typeid(T), Operations(
+        [] (const Selector& self, const Selector& selector) {
+          return selector.get_type() == typeid(T) &&
+            self.as<T>() == selector.as<T>();
+        },
+        [] (const Selector& self, const Stylist& base,
+            const SelectionUpdateSignal& on_update) {
+          return select(self.as<T>(), base, on_update);
+        }));
+    }
+  }
 
   template<typename U>
   const U& Selector::as() const {

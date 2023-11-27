@@ -3,12 +3,16 @@
 using namespace Spire;
 using namespace Spire::Styles;
 
+std::unordered_map<std::type_index, Selector::Operations>
+  Selector::m_operations;
+
 std::type_index Selector::get_type() const {
   return m_selector.type();
 }
 
 bool Selector::operator ==(const Selector& selector) const {
-  return m_is_equal(*this, selector);
+  auto& operations = m_operations.at(m_selector.type());
+  return operations.m_is_equal(*this, selector);
 }
 
 bool Selector::operator !=(const Selector& selector) const {
@@ -17,5 +21,6 @@ bool Selector::operator !=(const Selector& selector) const {
 
 SelectConnection Spire::Styles::select(const Selector& selector,
     const Stylist& base, const SelectionUpdateSignal& on_update) {
-  return selector.m_select(selector, base, on_update);
+  auto& operations = Selector::m_operations.at(selector.get_type());
+  return operations.m_select(selector, base, on_update);
 }
