@@ -2,7 +2,9 @@
 #define SPIRE_STYLES_EXPRESSION_HPP
 #include <any>
 #include <functional>
+#include <typeindex>
 #include <type_traits>
+#include <unordered_map>
 #include <utility>
 #include "Spire/Styles/ConstantExpression.hpp"
 #include "Spire/Styles/Evaluator.hpp"
@@ -72,10 +74,14 @@ namespace Spire::Styles {
       template<typename U>
       friend Evaluator<typename Expression<U>::Type>
         make_evaluator(const Expression<U>& expression, const Stylist& stylist);
+      struct Operations {
+        std::function<bool (const Expression&, const Expression&)> m_is_equal;
+        std::function<Evaluator<Type> (const Expression&, const Stylist&)>
+          m_make_evaluator;
+      };
+      static inline std::unordered_map<std::type_index, Operations>
+        m_operations;
       std::any m_expression;
-      std::function<bool (const Expression&, const Expression&)> m_is_equal;
-      std::function<Evaluator<Type> (const Expression&, const Stylist&)>
-        m_make_evaluator;
 
       Evaluator<Type> make_evaluator(const Stylist& stylist) const;
   };
@@ -105,15 +111,19 @@ namespace Spire::Styles {
   template<typename T>
   template<typename E, typename>
   Expression<T>::Expression(E expression)
-    : m_expression(std::move(expression)),
-      m_is_equal([] (const Expression& left, const Expression& right) {
-        return left.m_expression.type() == right.m_expression.type() &&
-          left.as<E>() == right.as<E>();
-      }),
-      m_make_evaluator(
+      : m_expression(std::move(expression)) {
+    auto operations = m_operations.find(typeid(E));
+    if(operations == m_operations.end()) {
+      m_operations.emplace_hint(operations, typeid(E), Operations(
+        [] (const Expression& left, const Expression& right) {
+          return left.m_expression.type() == right.m_expression.type() &&
+            left.as<E>() == right.as<E>();
+        },
         [] (const Expression& expression, const Stylist& stylist) {
           return Spire::Styles::make_evaluator(expression.as<E>(), stylist);
-        }) {}
+        }));
+    }
+  }
 
   template<typename T>
   const std::type_info& Expression<T>::get_type() const {
@@ -128,7 +138,8 @@ namespace Spire::Styles {
 
   template<typename T>
   bool Expression<T>::operator ==(const Expression& expression) const {
-    return m_is_equal(*this, expression);
+    auto& operations = m_operations.at(m_expression.type());
+    return operations.m_is_equal(*this, expression);
   }
 
   template<typename T>
@@ -139,7 +150,8 @@ namespace Spire::Styles {
   template<typename T>
   Evaluator<typename Expression<T>::Type>
       Expression<T>::make_evaluator(const Stylist& stylist) const {
-    return m_make_evaluator(*this, stylist);
+    auto& operations = m_operations.at(m_expression.type());
+    return operations.m_make_evaluator(*this, stylist);
   }
 }
 
