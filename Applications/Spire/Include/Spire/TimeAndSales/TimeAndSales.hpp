@@ -3,7 +3,8 @@
 
 namespace Spire {
   class TimeAndSalesModel;
-  class TimeAndSalesWindowProperties;
+  class TimeAndSalesProperties;
+  class TimeAndSalesPropertiesWindow;
 }
 
 #endif
