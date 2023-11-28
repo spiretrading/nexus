@@ -1,5 +1,7 @@
 #include "Spire/Styles/Property.hpp"
+#include <boost/functional/hash.hpp>
 
+using namespace boost;
 using namespace Spire;
 using namespace Spire::Styles;
 
@@ -20,5 +22,8 @@ bool Property::BaseEntry::operator !=(const BaseEntry& entry) const {
 }
 
 std::size_t std::hash<Property>::operator ()(const Property& property) {
-  return property.m_entry->hash();
+  auto seed = std::size_t(0);
+  hash_combine(seed, std::hash<std::typeindex>()(property.get_type()));
+  hash_combine(seed, property.m_entry->hash());
+  return seed;
 }

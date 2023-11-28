@@ -6,6 +6,7 @@
 #include <type_traits>
 #include <unordered_map>
 #include <utility>
+#include <boost/functional/hash.hpp>
 #include "Spire/Styles/ConstantExpression.hpp"
 #include "Spire/Styles/Evaluator.hpp"
 #include "Spire/Styles/Styles.hpp"
@@ -74,10 +75,12 @@ namespace Spire::Styles {
       template<typename U>
       friend Evaluator<typename Expression<U>::Type>
         make_evaluator(const Expression<U>& expression, const Stylist& stylist);
+      friend struct std::hash<Expression>;
       struct Operations {
         std::function<bool (const Expression&, const Expression&)> m_is_equal;
         std::function<Evaluator<Type> (const Expression&, const Stylist&)>
           m_make_evaluator;
+        std::function<std::size_t (const Expression&)> m_hash;
       };
       static inline std::unordered_map<std::type_index, Operations>
         m_operations;
@@ -153,6 +156,21 @@ namespace Spire::Styles {
     auto& operations = m_operations.at(m_expression.type());
     return operations.m_make_evaluator(*this, stylist);
   }
+}
+
+namespace std {
+  template<typename T>
+  struct hash<Spire::Styles::Expression<T>> {
+    std::size_t operator ()(const Spire::Styles::Expression<T>& expression) {
+      auto& operations =
+        Spire::Styles::Expression<T>::m_operations.at(expression.get_type());
+      auto seed = std::size_t(0);
+      boost::hash_combine(
+        seed, std::hash<std::type_index>()(expression.get_type()));
+      boost::hash_combine(seed, operations.m_hash(expression));
+      return seed;
+    }
+  };
 }
 
 #endif

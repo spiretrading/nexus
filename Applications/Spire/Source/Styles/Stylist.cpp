@@ -25,8 +25,18 @@ namespace {
     return *timer;
   }
 
+  struct PseudoStylistHash {
+    std::size_t operator ()(
+        const std::pair<QWidget*, PseudoElement>& element) const {
+      auto seed = std::size_t(0);
+      hash_combine(seed, std::hash<QWidget*>()(element.first));
+      hash_combine(seed, std::hash<PseudoElement>()(element.second));
+      return seed;
+    }
+  };
+
   std::unordered_map<std::pair<QWidget*, PseudoElement>, Stylist*,
-    boost::hash<std::pair<QWidget*, PseudoElement>>> pseudo_stylists;
+    PseudoStylistHash> pseudo_stylists;
 
   bool contains(QWidget& container, QWidget& widget) {
     if(&container == &widget) {

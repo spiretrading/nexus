@@ -65,9 +65,8 @@ namespace std {
   struct hash<Spire::Styles::BasicProperty<T, G>> {
     std::size_t operator ()(
         const Spire::Styles::BasicProperty<T, G>& property) {
-      return std::hash<
-        typename Spire::Styles::BasicProperty<T, G>::Expression>()(
-          property.get_expression());
+      return std::hash<Spire::Styles::BasicProperty<T, G>::Expression>()(
+        property.get_expression());
     }
   };
 }
