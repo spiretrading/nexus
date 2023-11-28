@@ -58,3 +58,8 @@ SelectConnection Spire::Styles::select(const PropertyMatchSelector& selector,
   return SelectConnection(
     std::make_unique<Executor>(selector, base, on_update));
 }
+
+std::size_t std::hash<PropertyMatchSelector>::operator ()(
+    const PropertyMatchSelector& selector) {
+  return std::hash<Property>()(selector.get_property());
+}

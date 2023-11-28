@@ -39,9 +39,7 @@ namespace Spire::Styles {
       /** Returns the property's Expression. */
       const Expression& get_expression() const;
 
-      bool operator ==(const BasicProperty& property) const;
-
-      bool operator !=(const BasicProperty& property) const;
+      bool operator ==(const BasicProperty& property) const = default;
 
     private:
       Expression m_expression;
@@ -60,16 +58,18 @@ namespace Spire::Styles {
       BasicProperty<T, G>::get_expression() const {
     return m_expression;
   }
+}
 
+namespace std {
   template<typename T, typename G>
-  bool BasicProperty<T, G>::operator ==(const BasicProperty& property) const {
-    return m_expression == property.get_expression();
-  }
-
-  template<typename T, typename G>
-  bool BasicProperty<T, G>::operator !=(const BasicProperty& property) const {
-    return !(*this == property);
-  }
+  struct hash<Spire::Styles::BasicProperty<T, G>> {
+    std::size_t operator ()(
+        const Spire::Styles::BasicProperty<T, G>& property) {
+      return std::hash<
+        typename Spire::Styles::BasicProperty<T, G>::Expression>()(
+          property.get_expression());
+    }
+  };
 }
 
 #endif

@@ -18,3 +18,7 @@ bool Property::operator !=(const Property& property) const {
 bool Property::BaseEntry::operator !=(const BaseEntry& entry) const {
   return !(*this == entry);
 }
+
+std::size_t std::hash<Property>::operator ()(const Property& property) {
+  return property.m_entry->hash();
+}
