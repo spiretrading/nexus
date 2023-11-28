@@ -43,7 +43,7 @@ namespace Spire::Styles {
 namespace std {
   template<>
   struct hash<Spire::Styles::TopSelector> {
-    std::size_t operator ()(const Spire::Styles::TopSelector& selector);
+    std::size_t operator ()(const Spire::Styles::TopSelector& selector) const;
   };
 }
 

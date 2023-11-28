@@ -43,7 +43,8 @@ namespace Spire::Styles {
 namespace std {
   template<>
   struct hash<Spire::Styles::DescendantSelector> {
-    std::size_t operator ()(const Spire::Styles::DescendantSelector& selector);
+    std::size_t operator ()(
+      const Spire::Styles::DescendantSelector& selector) const;
   };
 }
 

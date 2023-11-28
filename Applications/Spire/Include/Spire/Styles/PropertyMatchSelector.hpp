@@ -40,7 +40,7 @@ namespace std {
   template<>
   struct hash<Spire::Styles::PropertyMatchSelector> {
     std::size_t operator ()(
-      const Spire::Styles::PropertyMatchSelector& selector);
+      const Spire::Styles::PropertyMatchSelector& selector) const;
   };
 }
 

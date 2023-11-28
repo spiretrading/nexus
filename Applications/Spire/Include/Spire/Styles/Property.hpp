@@ -164,7 +164,7 @@ namespace Spire::Styles {
 namespace std {
   template<>
   struct hash<Spire::Styles::Property> {
-    std::size_t operator ()(const Spire::Styles::Property& property);
+    std::size_t operator ()(const Spire::Styles::Property& property) const;
   };
 }
 

@@ -27,7 +27,7 @@ SelectConnection Spire::Styles::select(const Selector& selector,
   return operations.m_select(selector, base, on_update);
 }
 
-std::size_t std::hash<Selector>::operator ()(const Selector& selector) {
+std::size_t std::hash<Selector>::operator ()(const Selector& selector) const {
   auto seed = std::size_t(0);
   hash_combine(seed, std::hash<std::type_index>()(selector.get_type()));
   auto& operations = Selector::m_operations.at(selector.get_type());

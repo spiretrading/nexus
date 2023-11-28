@@ -149,7 +149,7 @@ namespace Spire::Styles {
 namespace std {
   template<>
   struct hash<Spire::Styles::Selector> {
-    std::size_t operator ()(const Spire::Styles::Selector& selector);
+    std::size_t operator ()(const Spire::Styles::Selector& selector) const;
   };
 }
 

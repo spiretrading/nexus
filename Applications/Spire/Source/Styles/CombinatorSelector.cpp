@@ -200,7 +200,7 @@ SelectConnection Spire::Styles::select(const CombinatorSelector& selector,
 }
 
 std::size_t std::hash<CombinatorSelector>::operator ()(
-    const CombinatorSelector& selector) {
+    const CombinatorSelector& selector) const {
   auto seed = std::size_t(0);
   hash_combine(seed, std::hash<Selector>()(selector.get_base()));
   hash_combine(seed, std::hash<Selector>()(selector.get_match()));

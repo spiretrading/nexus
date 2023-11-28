@@ -37,7 +37,7 @@ namespace Spire::Styles {
 namespace std {
   template<>
   struct hash<Spire::Styles::FlipSelector> {
-    std::size_t operator ()(const Spire::Styles::FlipSelector& selector);
+    std::size_t operator ()(const Spire::Styles::FlipSelector& selector) const;
   };
 }
 

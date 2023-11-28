@@ -53,6 +53,7 @@ SelectConnection Spire::Styles::select(const NotSelector& selector,
     std::make_unique<Executor>(selector, base, on_update));
 }
 
-std::size_t std::hash<NotSelector>::operator ()(const NotSelector& selector) {
+std::size_t std::hash<NotSelector>::operator ()(
+    const NotSelector& selector) const {
   return std::hash<Selector>()(selector.get_selector());
 }

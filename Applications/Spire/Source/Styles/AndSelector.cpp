@@ -67,7 +67,8 @@ SelectConnection Spire::Styles::select(const AndSelector& selector,
     std::make_unique<Executor>(selector, base, on_update));
 }
 
-std::size_t std::hash<AndSelector>::operator ()(const AndSelector& selector) {
+std::size_t std::hash<AndSelector>::operator ()(
+    const AndSelector& selector) const {
   auto seed = std::size_t(0);
   hash_combine(seed, std::hash<Selector>()(selector.get_left()));
   hash_combine(seed, std::hash<Selector>()(selector.get_right()));

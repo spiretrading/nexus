@@ -79,7 +79,8 @@ namespace Spire::Styles {
 namespace std {
   template<>
   struct hash<Spire::Styles::CombinatorSelector> {
-    std::size_t operator ()(const Spire::Styles::CombinatorSelector& selector);
+    std::size_t operator ()(
+      const Spire::Styles::CombinatorSelector& selector) const;
   };
 }
 

@@ -64,7 +64,7 @@ SelectConnection Spire::Styles::select(const ParentSelector& selector,
 }
 
 std::size_t std::hash<ParentSelector>::operator ()(
-    const ParentSelector& selector) {
+    const ParentSelector& selector) const {
   auto seed = std::size_t(0);
   hash_combine(seed, std::hash<Selector>()(selector.get_base()));
   hash_combine(seed, std::hash<Selector>()(selector.get_parent()));

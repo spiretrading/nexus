@@ -176,7 +176,8 @@ SelectConnection Spire::Styles::select(const TopSelector& selector,
     }), base, on_update);
 }
 
-std::size_t std::hash<TopSelector>::operator ()(const TopSelector& selector) {
+std::size_t std::hash<TopSelector>::operator ()(
+    const TopSelector& selector) const {
   auto seed = std::size_t(0);
   hash_combine(seed, std::hash<Selector>()(selector.get_base()));
   hash_combine(seed, std::hash<Selector>()(selector.get_descendant()));

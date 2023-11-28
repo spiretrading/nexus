@@ -118,7 +118,7 @@ namespace std {
   template<typename G>
   struct hash<Spire::Styles::StateSelector<void, G>> {
     std::size_t operator ()(
-        const Spire::Styles::StateSelector<void, G>& selector) {
+        const Spire::Styles::StateSelector<void, G>& selector) const {
       return 1;
     }
   };

@@ -124,6 +124,9 @@ namespace Spire::Styles {
         },
         [] (const Expression& expression, const Stylist& stylist) {
           return Spire::Styles::make_evaluator(expression.as<E>(), stylist);
+        },
+        [] (const Expression& expression) {
+          return std::hash<E>()(expression.as<E>());
         }));
     }
   }
@@ -161,7 +164,8 @@ namespace Spire::Styles {
 namespace std {
   template<typename T>
   struct hash<Spire::Styles::Expression<T>> {
-    std::size_t operator ()(const Spire::Styles::Expression<T>& expression) {
+    std::size_t operator ()(
+        const Spire::Styles::Expression<T>& expression) const {
       auto& operations =
         Spire::Styles::Expression<T>::m_operations.at(expression.get_type());
       auto seed = std::size_t(0);
