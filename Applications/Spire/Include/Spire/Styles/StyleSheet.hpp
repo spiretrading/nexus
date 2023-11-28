@@ -32,6 +32,8 @@ namespace Spire::Styles {
        */
       Rule& get(const Selector& selector);
 
+      bool operator ==(const StyleSheet&) const = default;
+
     private:
       std::vector<Rule> m_rules;
   };

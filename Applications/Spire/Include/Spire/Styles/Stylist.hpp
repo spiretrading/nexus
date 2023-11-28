@@ -1,6 +1,7 @@
 #ifndef SPIRE_STYLES_STYLIST_HPP
 #define SPIRE_STYLES_STYLIST_HPP
 #include <chrono>
+#include <memory>
 #include <type_traits>
 #include <unordered_set>
 #include <vector>
@@ -166,7 +167,7 @@ namespace Spire::Styles {
       mutable DeleteSignal m_delete_signal;
       QWidget* m_widget;
       boost::optional<PseudoElement> m_pseudo_element;
-      StyleSheet m_style;
+      std::shared_ptr<StyleSheet> m_style;
       std::vector<Source> m_sources;
       std::vector<std::unique_ptr<RuleEntry>> m_rules;
       boost::optional<EvaluatedBlock> m_evaluated_block;

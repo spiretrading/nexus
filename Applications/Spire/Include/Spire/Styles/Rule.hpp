@@ -56,6 +56,8 @@ namespace Spire::Styles {
       template<typename... T>
       Rule& set(CompositeProperty<T...> property);
 
+      bool operator ==(const Rule&) const = default;
+
     private:
       Selector m_selector;
       Block m_block;

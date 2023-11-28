@@ -37,14 +37,6 @@ void Block::clear() {
   m_properties.clear();
 }
 
-bool Block::operator ==(const Block& block) const {
-  return m_properties == block.m_properties;
-}
-
-bool Block::operator !=(const Block& block) const {
-  return !(*this == block);
-}
-
 optional<Property>
     Spire::Styles::find(const Block& block, const std::type_index& type) {
   for(auto& property : block) {

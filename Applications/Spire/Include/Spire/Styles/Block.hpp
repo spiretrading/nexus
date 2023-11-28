@@ -50,10 +50,7 @@ namespace Spire::Styles {
       /** Removes all properties. */
       void clear();
 
-      /** Tests if two Block's contain the same Properties in the same order. */
-      bool operator ==(const Block& block) const;
-
-      bool operator !=(const Block& block) const;
+      bool operator ==(const Block& block) const = default;
 
     private:
       std::vector<Property> m_properties;
