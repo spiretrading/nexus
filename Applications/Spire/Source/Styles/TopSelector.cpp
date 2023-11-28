@@ -1,4 +1,5 @@
 #include "Spire/Styles/TopSelector.hpp"
+#include <boost/functional/hash.hpp>
 #include <QChildEvent>
 #include <QWidget>
 #include "Spire/Styles/Any.hpp"
@@ -173,4 +174,11 @@ SelectConnection Spire::Styles::select(const TopSelector& selector,
       return SelectConnection(std::make_unique<TopObserver>(
         selector.get_descendant(), stylist, on_update));
     }), base, on_update);
+}
+
+std::size_t std::hash<TopSelector>::operator ()(const TopSelector& selector) {
+  auto seed = std::size_t(0);
+  hash_combine(seed, std::hash<Selector>()(selector.get_base()));
+  hash_combine(seed, std::hash<Selector>()(selector.get_descendant()));
+  return seed;
 }

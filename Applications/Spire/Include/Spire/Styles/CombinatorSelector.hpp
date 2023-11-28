@@ -64,9 +64,7 @@ namespace Spire::Styles {
       /** Returns the selection builder. */
       const SelectionBuilder& get_selection_builder() const;
 
-      bool operator ==(const CombinatorSelector& selector) const;
-
-      bool operator !=(const CombinatorSelector& selector) const;
+      bool operator ==(const CombinatorSelector& selector) const = default;
 
     private:
       Selector m_base;
@@ -76,6 +74,13 @@ namespace Spire::Styles {
 
   SelectConnection select(const CombinatorSelector& selector,
     const Stylist& base, const SelectionUpdateSignal& on_update);
+}
+
+namespace std {
+  template<>
+  struct hash<Spire::Styles::CombinatorSelector> {
+    std::size_t operator ()(const Spire::Styles::CombinatorSelector& selector);
+  };
 }
 
 #endif

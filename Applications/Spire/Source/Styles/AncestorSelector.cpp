@@ -1,9 +1,11 @@
 #include "Spire/Styles/AncestorSelector.hpp"
+#include <boost/functional/hash.hpp>
 #include <QEvent>
 #include <QWidget>
 #include "Spire/Styles/CombinatorSelector.hpp"
 #include "Spire/Styles/Stylist.hpp"
 
+using namespace boost;
 using namespace Spire;
 using namespace Spire::Styles;
 
@@ -99,14 +101,6 @@ const Selector& AncestorSelector::get_ancestor() const {
   return m_ancestor;
 }
 
-bool AncestorSelector::operator ==(const AncestorSelector& selector) const {
-  return m_base == selector.get_base() && m_ancestor == selector.get_ancestor();
-}
-
-bool AncestorSelector::operator !=(const AncestorSelector& selector) const {
-  return !(*this == selector);
-}
-
 AncestorSelector Spire::Styles::operator <<(Selector base, Selector ancestor) {
   return AncestorSelector(std::move(base), std::move(ancestor));
 }
@@ -118,4 +112,12 @@ SelectConnection Spire::Styles::select(const AncestorSelector& selector,
       return SelectConnection(
         std::make_unique<AncestorObserver>(stylist, on_update));
     }), base, on_update);
+}
+
+std::size_t std::hash<AncestorSelector>::operator ()(
+    const AncestorSelector& selector) {
+  auto seed = std::size_t(0);
+  hash_combine(seed, std::hash<Selector>()(selector.get_base()));
+  hash_combine(seed, std::hash<Selector>()(selector.get_ancestor()));
+  return seed;
 }

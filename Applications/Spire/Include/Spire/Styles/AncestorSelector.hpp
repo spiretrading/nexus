@@ -22,9 +22,7 @@ namespace Spire::Styles {
       /** Returns the ancestor selector. */
       const Selector& get_ancestor() const;
 
-      bool operator ==(const AncestorSelector& selector) const;
-
-      bool operator !=(const AncestorSelector& selector) const;
+      bool operator ==(const AncestorSelector& selector) const = default;
 
     private:
       Selector m_base;
@@ -40,6 +38,13 @@ namespace Spire::Styles {
 
   SelectConnection select(const AncestorSelector& selector, const Stylist& base,
     const SelectionUpdateSignal& on_update);
+}
+
+namespace std {
+  template<>
+  struct hash<Spire::Styles::AncestorSelector> {
+    std::size_t operator ()(const Spire::Styles::AncestorSelector& selector);
+  };
 }
 
 #endif

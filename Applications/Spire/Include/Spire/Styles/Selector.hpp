@@ -1,6 +1,7 @@
 #ifndef SPIRE_STYLES_SELECTOR_HPP
 #define SPIRE_STYLES_SELECTOR_HPP
 #include <any>
+#include <functional>
 #include <typeindex>
 #include <type_traits>
 #include <unordered_map>
@@ -70,6 +71,7 @@ namespace Spire::Styles {
       struct TypeExtractor<Beam::TypeSequence<T, U>> {
         using type = std::decay_t<U>;
       };
+      friend struct std::hash<Selector>;
       friend SelectConnection select(
         const Selector&, const Stylist&, const SelectionUpdateSignal&);
       struct Operations {
@@ -77,6 +79,7 @@ namespace Spire::Styles {
         std::function<SelectConnection (
           const Selector&, const Stylist&, const SelectionUpdateSignal&)>
           m_select;
+        std::function<std::size_t (const Selector&)> m_hash;
       };
       static std::unordered_map<std::type_index, Operations> m_operations;
       std::any m_selector;
@@ -106,6 +109,9 @@ namespace Spire::Styles {
         [] (const Selector& self, const Stylist& base,
             const SelectionUpdateSignal& on_update) {
           return select(self.as<T>(), base, on_update);
+        },
+        [] (const Selector& self) {
+          return std::hash<T>()(self.as<T>());
         }));
     }
   }
@@ -138,6 +144,13 @@ namespace Spire::Styles {
     }
     return visit(std::forward<G>(g)...);
   }
+}
+
+namespace std {
+  template<>
+  struct hash<Spire::Styles::Selector> {
+    std::size_t operator ()(const Spire::Styles::Selector& selector);
+  };
 }
 
 #endif

@@ -19,9 +19,7 @@ namespace Spire::Styles {
       /** Returns the property that must match. */
       const Property& get_property() const;
 
-      bool operator ==(const PropertyMatchSelector& selector) const;
-
-      bool operator !=(const PropertyMatchSelector& selector) const;
+      bool operator ==(const PropertyMatchSelector& selector) const = default;
 
     private:
       Property m_property;

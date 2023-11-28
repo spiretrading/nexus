@@ -22,9 +22,7 @@ namespace Spire::Styles {
       /** Returns the descendant selector. */
       const Selector& get_descendant() const;
 
-      bool operator ==(const DescendantSelector& selector) const;
-
-      bool operator !=(const DescendantSelector& selector) const;
+      bool operator ==(const DescendantSelector& selector) const = default;
 
     private:
       Selector m_base;
@@ -40,6 +38,13 @@ namespace Spire::Styles {
 
   SelectConnection select(const DescendantSelector& selector,
     const Stylist& base, const SelectionUpdateSignal& on_update);
+}
+
+namespace std {
+  template<>
+  struct hash<Spire::Styles::DescendantSelector> {
+    std::size_t operator ()(const Spire::Styles::DescendantSelector& selector);
+  };
 }
 
 #endif

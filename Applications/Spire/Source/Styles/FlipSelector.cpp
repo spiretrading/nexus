@@ -10,14 +10,6 @@ const Selector& FlipSelector::get_selector() const {
   return m_selector;
 }
 
-bool FlipSelector::operator ==(const FlipSelector& selector) const {
-  return m_selector == selector.get_selector();
-}
-
-bool FlipSelector::operator !=(const FlipSelector& selector) const {
-  return !(*this == selector);
-}
-
 FlipSelector Spire::Styles::operator +(Selector selector) {
   return FlipSelector(std::move(selector));
 }
@@ -25,4 +17,8 @@ FlipSelector Spire::Styles::operator +(Selector selector) {
 SelectConnection Spire::Styles::select(const FlipSelector& selector,
     const Stylist& base, const SelectionUpdateSignal& on_update) {
   return select(selector.get_selector(), base, on_update);
+}
+
+std::size_t std::hash<FlipSelector>::operator ()(const FlipSelector& selector) {
+  return std::hash<Selector>()(selector.get_selector());
 }

@@ -1,11 +1,13 @@
 #include "Spire/Styles/DescendantSelector.hpp"
-#include <Beam/SignalHandling/ConnectionGroup.hpp>
 #include <deque>
+#include <Beam/SignalHandling/ConnectionGroup.hpp>
+#include <boost/functional/hash.hpp>
 #include <QChildEvent>
 #include <QWidget>
 #include "Spire/Styles/CombinatorSelector.hpp"
 #include "Spire/Styles/Stylist.hpp"
 
+using namespace boost;
 using namespace Beam::SignalHandling;
 using namespace Spire;
 using namespace Spire::Styles;
@@ -103,15 +105,6 @@ const Selector& DescendantSelector::get_descendant() const {
   return m_descendant;
 }
 
-bool DescendantSelector::operator ==(const DescendantSelector& selector) const {
-  return m_base == selector.get_base() &&
-    m_descendant == selector.get_descendant();
-}
-
-bool DescendantSelector::operator !=(const DescendantSelector& selector) const {
-  return !(*this == selector);
-}
-
 DescendantSelector Spire::Styles::operator >>(
     Selector base, Selector descendant) {
   return DescendantSelector(std::move(base), std::move(descendant));
@@ -124,4 +117,12 @@ SelectConnection Spire::Styles::select(const DescendantSelector& selector,
       return SelectConnection(
         std::make_unique<DescendantObserver>(stylist, on_update));
     }), base, on_update);
+}
+
+std::size_t std::hash<DescendantSelector>::operator ()(
+    const DescendantSelector& selector) {
+  auto seed = std::size_t(0);
+  hash_combine(seed, std::hash<Selector>()(selector.get_base()));
+  hash_combine(seed, std::hash<Selector>()(selector.get_descendant()));
+  return seed;
 }

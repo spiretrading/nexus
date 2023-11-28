@@ -1,4 +1,5 @@
 #include "Spire/Styles/SiblingSelector.hpp"
+#include <boost/functional/hash.hpp>
 #include <QEvent>
 #include <QWidget>
 #include "Spire/Styles/Any.hpp"
@@ -6,6 +7,7 @@
 #include "Spire/Styles/CombinatorSelector.hpp"
 #include "Spire/Styles/Stylist.hpp"
 
+using namespace boost;
 using namespace Spire;
 using namespace Spire::Styles;
 
@@ -78,14 +80,6 @@ const Selector& SiblingSelector::get_sibling() const {
   return m_sibling;
 }
 
-bool SiblingSelector::operator ==(const SiblingSelector& selector) const {
-  return m_base == selector.get_base() && m_sibling == selector.get_sibling();
-}
-
-bool SiblingSelector::operator !=(const SiblingSelector& selector) const {
-  return !(*this == selector);
-}
-
 SiblingSelector Spire::Styles::operator %(Selector base, Selector sibling) {
   return SiblingSelector(std::move(base), std::move(sibling));
 }
@@ -97,4 +91,12 @@ SelectConnection Spire::Styles::select(const SiblingSelector& selector,
       return SelectConnection(
         std::make_unique<SiblingObserver>(stylist, on_update));
     }), base, on_update);
+}
+
+std::size_t std::hash<SiblingSelector>::operator ()(
+    const SiblingSelector& selector) {
+  auto seed = std::size_t(0);
+  hash_combine(seed, std::hash<Selector>()(selector.get_base()));
+  hash_combine(seed, std::hash<Selector>()(selector.get_sibling()));
+  return seed;
 }

@@ -13,16 +13,6 @@ const Property& PropertyMatchSelector::get_property() const {
   return m_property;
 }
 
-bool PropertyMatchSelector::operator ==(
-    const PropertyMatchSelector& selector) const {
-  return m_property == selector.m_property;
-}
-
-bool PropertyMatchSelector::operator !=(
-    const PropertyMatchSelector& selector) const {
-  return !(*this == selector);
-}
-
 PropertyMatchSelector Spire::Styles::matches(Property property) {
   return PropertyMatchSelector(std::move(property));
 }

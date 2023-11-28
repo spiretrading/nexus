@@ -1,4 +1,5 @@
 #include "Spire/Styles/ChildSelector.hpp"
+#include <boost/functional/hash.hpp>
 #include <QChildEvent>
 #include <QWidget>
 #include "Spire/Styles/CombinatorSelector.hpp"
@@ -60,14 +61,6 @@ const Selector& ChildSelector::get_child() const {
   return m_child;
 }
 
-bool ChildSelector::operator ==(const ChildSelector& selector) const {
-  return m_base == selector.get_base() && m_child == selector.get_child();
-}
-
-bool ChildSelector::operator !=(const ChildSelector& selector) const {
-  return !(*this == selector);
-}
-
 SelectConnection Spire::Styles::select(const ChildSelector& selector,
     const Stylist& base, const SelectionUpdateSignal& on_update) {
   return select(CombinatorSelector(selector.get_base(), selector.get_child(),
@@ -75,4 +68,12 @@ SelectConnection Spire::Styles::select(const ChildSelector& selector,
       return SelectConnection(
         std::make_unique<ChildObserver>(stylist, on_update));
     }), base, on_update);
+}
+
+std::size_t std::hash<ChildSelector>::operator ()(
+    const ChildSelector& selector) {
+  auto seed = std::size_t(0);
+  hash_combine(seed, std::hash<Selector>()(selector.get_base()));
+  hash_combine(seed, std::hash<Selector>()(selector.get_child()));
+  return seed;
 }

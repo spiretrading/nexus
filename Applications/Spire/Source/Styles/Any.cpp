@@ -3,16 +3,12 @@
 using namespace Spire;
 using namespace Spire::Styles;
 
-bool Any::operator ==(const Any& selector) const {
-  return true;
-}
-
-bool Any::operator !=(const Any& selector) const {
-  return !(*this == selector);
-}
-
 SelectConnection Spire::Styles::select(const Any& selector, const Stylist& base,
     const SelectionUpdateSignal& on_update) {
   on_update({&base}, {});
   return {};
+}
+
+std::size_t std::hash<Any>::operator ()(const Any& selector) {
+  return 1;
 }

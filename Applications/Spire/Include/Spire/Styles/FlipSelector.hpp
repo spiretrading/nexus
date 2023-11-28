@@ -13,14 +13,12 @@ namespace Spire::Styles {
        * Constructs a FlipSelector.
        * @param selector The selector to apply.
        */
-      FlipSelector(Selector selector);
+      explicit FlipSelector(Selector selector);
 
       /** Returns the selector. */
       const Selector& get_selector() const;
 
-      bool operator ==(const FlipSelector& selector) const;
-
-      bool operator !=(const FlipSelector& selector) const;
+      bool operator ==(const FlipSelector& selector) const = default;
 
     private:
       Selector m_selector;
@@ -34,6 +32,13 @@ namespace Spire::Styles {
 
   SelectConnection select(const FlipSelector& selector, const Stylist& base,
     const SelectionUpdateSignal& on_update);
+}
+
+namespace std {
+  template<>
+  struct hash<Spire::Styles::FlipSelector> {
+    std::size_t operator ()(const Spire::Styles::FlipSelector& selector);
+  };
 }
 
 #endif

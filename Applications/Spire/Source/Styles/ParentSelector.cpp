@@ -1,9 +1,11 @@
 #include "Spire/Styles/ParentSelector.hpp"
+#include <boost/functional/hash.hpp>
 #include <QEvent>
 #include <QWidget>
 #include "Spire/Styles/CombinatorSelector.hpp"
 #include "Spire/Styles/Stylist.hpp"
 
+using namespace boost;
 using namespace Spire;
 using namespace Spire::Styles;
 
@@ -52,14 +54,6 @@ const Selector& ParentSelector::get_parent() const {
   return m_parent;
 }
 
-bool ParentSelector::operator ==(const ParentSelector& selector) const {
-  return m_base == selector.get_base() && m_parent == selector.get_parent();
-}
-
-bool ParentSelector::operator !=(const ParentSelector& selector) const {
-  return !(*this == selector);
-}
-
 SelectConnection Spire::Styles::select(const ParentSelector& selector,
     const Stylist& base, const SelectionUpdateSignal& on_update) {
   return select(CombinatorSelector(selector.get_base(), selector.get_parent(),
@@ -67,4 +61,12 @@ SelectConnection Spire::Styles::select(const ParentSelector& selector,
       return SelectConnection(
         std::make_unique<ParentObserver>(stylist, on_update));
     }), base, on_update);
+}
+
+std::size_t std::hash<ParentSelector>::operator ()(
+    const ParentSelector& selector) {
+  auto seed = std::size_t(0);
+  hash_combine(seed, std::hash<Selector>()(selector.get_base()));
+  hash_combine(seed, std::hash<Selector>()(selector.get_parent()));
+  return seed;
 }

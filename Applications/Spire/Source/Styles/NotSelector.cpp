@@ -10,14 +10,6 @@ const Selector& NotSelector::get_selector() const {
   return m_selector;
 }
 
-bool NotSelector::operator ==(const NotSelector& selector) const {
-  return m_selector == selector.get_selector();
-}
-
-bool NotSelector::operator !=(const NotSelector& selector) const {
-  return !(*this == selector);
-}
-
 NotSelector Spire::Styles::operator !(Selector selector) {
   return NotSelector(std::move(selector));
 }
@@ -59,4 +51,8 @@ SelectConnection Spire::Styles::select(const NotSelector& selector,
   };
   return SelectConnection(
     std::make_unique<Executor>(selector, base, on_update));
+}
+
+std::size_t std::hash<NotSelector>::operator ()(const NotSelector& selector) {
+  return std::hash<Selector>()(selector.get_selector());
 }
