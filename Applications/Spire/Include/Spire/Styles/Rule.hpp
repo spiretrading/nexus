@@ -1,5 +1,6 @@
 #ifndef SPIRE_STYLES_RULE_HPP
 #define SPIRE_STYLES_RULE_HPP
+#include <functional>
 #include "Spire/Styles/Block.hpp"
 #include "Spire/Styles/Selector.hpp"
 #include "Spire/Styles/Styles.hpp"
@@ -65,6 +66,13 @@ namespace Spire::Styles {
     m_block.set(std::move(property));
     return *this;
   }
+}
+
+namespace std {
+  template<>
+  struct hash<Spire::Styles::Rule> {
+    std::size_t operator ()(const Spire::Styles::Rule& rule) const;
+  };
 }
 
 #endif

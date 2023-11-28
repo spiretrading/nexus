@@ -1,5 +1,6 @@
 #ifndef SPIRE_STYLES_BLOCK_HPP
 #define SPIRE_STYLES_BLOCK_HPP
+#include <functional>
 #include <utility>
 #include <vector>
 #include <boost/optional/optional.hpp>
@@ -146,6 +147,13 @@ namespace Spire::Styles {
       remove(property);
     });
   }
+}
+
+namespace std {
+  template<>
+  struct hash<Spire::Styles::Block> {
+    std::size_t operator ()(const Spire::Styles::Block& block) const;
+  };
 }
 
 #endif
