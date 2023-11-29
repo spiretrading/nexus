@@ -55,7 +55,7 @@ namespace {
     auto i = cache.find(styles);
     if(i == cache.end()) {
       auto cached_styles = std::make_shared<StyleSheet>(std::move(styles));
-      cache.emplace_hint(i, styles, cached_styles);
+      cache.emplace_hint(i, *cached_styles, cached_styles);
       return cached_styles;
     }
     return i->second;
@@ -98,10 +98,6 @@ struct Stylist::StyleEventFilter : QObject {
     return QObject::eventFilter(watched, event);
   }
 };
-
-std::size_t Stylist::SelectorHash::operator ()(const Selector& selector) const {
-  return selector.get_type().hash_code();
-}
 
 Stylist::~Stylist() {
   while(!m_matches.empty()) {

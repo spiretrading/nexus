@@ -122,9 +122,6 @@ namespace Spire::Styles {
 
     private:
       struct StyleEventFilter;
-      struct SelectorHash {
-        std::size_t operator ()(const Selector& selector) const;
-      };
       struct RuleEntry {
         Block m_block;
         int m_priority;
@@ -174,9 +171,8 @@ namespace Spire::Styles {
       mutable boost::optional<Block> m_computed_block;
       std::vector<Stylist*> m_proxies;
       std::vector<Stylist*> m_principals;
-      std::unordered_set<Selector, SelectorHash> m_matches;
-      mutable std::unordered_map<Selector, MatchSignal, SelectorHash>
-        m_match_signals;
+      std::unordered_set<Selector> m_matches;
+      mutable std::unordered_map<Selector, MatchSignal> m_match_signals;
       std::unordered_map<
         std::type_index, std::unique_ptr<BaseEvaluatorEntry>> m_evaluators;
       std::type_index m_evaluated_property;
