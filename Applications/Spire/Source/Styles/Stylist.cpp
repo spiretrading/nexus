@@ -108,21 +108,6 @@ Stylist::~Stylist() {
   get_animation_timer().disconnect(m_animation_connection);
   for(auto& rule : m_rules) {
     auto selection = std::move(rule->m_selection);
-    rule->m_selection.clear();
-    for(auto i = selection.begin(); i != selection.end();) {
-      auto& selected = const_cast<Stylist&>(**i);
-      if(selected.m_widget == m_widget) {
-        if(&selected != this) {
-          selected.m_sources.erase(std::remove_if(selected.m_sources.begin(),
-            selected.m_sources.end(), [&] (const auto& entry) {
-              return entry.m_source == this;
-            }));
-        }
-        i = selection.erase(i);
-      } else {
-        ++i;
-      }
-    }
     if(!selection.empty()) {
       on_selection_update(*rule, {}, std::move(selection));
     }
@@ -159,7 +144,6 @@ const StyleSheet& Stylist::get_style() const {
 void Stylist::set_style(StyleSheet style) {
   for(auto& rule : m_rules) {
     auto selection = std::move(rule->m_selection);
-    rule->m_selection.clear();
     if(!selection.empty()) {
       on_selection_update(*rule, {}, std::move(selection));
     }
