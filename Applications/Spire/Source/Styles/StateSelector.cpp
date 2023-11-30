@@ -85,17 +85,16 @@ namespace {
     Stylist* m_stylist;
     SelectionUpdateSignal m_on_update;
     HoverObserver m_observer;
-    scoped_connection m_connection;
     bool m_is_match;
 
     HoverExecutor(const Stylist& base, const SelectionUpdateSignal& on_update)
         : m_stylist(const_cast<Stylist*>(&base)),
           m_on_update(on_update),
           m_observer(m_stylist->get_widget()),
-          m_connection(m_observer.connect_state_signal(
-            std::bind_front(&HoverExecutor::on_state, this))),
           m_is_match(
             is_set(m_observer.get_state(), HoverObserver::State::MOUSE_OVER)) {
+      m_observer.connect_state_signal(
+        std::bind_front(&HoverExecutor::on_state, this));
       if(m_is_match) {
         m_on_update({m_stylist}, {});
       }
