@@ -29,11 +29,11 @@ namespace {
   const auto TITLE_SHORT_NAME = QObject::tr("T&S");
 
   auto update_row_style(StyleSheet& style, const Selector& selector,
-      const TimeAndSalesWindowProperties::Styles& styles) {
+      const TimeAndSalesProperties::Highlight& highlight) {
     style.get(Any() > selector).
-      set(BackgroundColor(styles.m_band_color));
+      set(BackgroundColor(highlight.m_background_color));
     style.get(Any() > selector > is_a<TextBox>()).
-      set(TextColor(styles.m_text_color));
+      set(TextColor(highlight.m_text_color));
     return style;
   }
 
@@ -92,7 +92,7 @@ namespace {
 
 TimeAndSalesWindow::TimeAndSalesWindow(
     std::shared_ptr<ComboBox::QueryModel> query_model,
-    TimeAndSalesWindowProperties properties, ModelBuilder model_builder,
+    TimeAndSalesProperties properties, ModelBuilder model_builder,
     QWidget* parent)
     : Window(parent),
       m_properties(std::move(properties)),
@@ -125,17 +125,17 @@ TimeAndSalesWindow::TimeAndSalesWindow(
     style.get(Any() > TableHeaderItem::Label()).
       set(Font(m_properties.get_font()));
     update_row_style(style, UnknownRow(),
-      m_properties.get_styles(BboIndicator::UNKNOWN));
+      m_properties.get_highlight(BboIndicator::UNKNOWN));
     update_row_style(style, AboveAskRow(),
-      m_properties.get_styles(BboIndicator::ABOVE_ASK));
+      m_properties.get_highlight(BboIndicator::ABOVE_ASK));
     update_row_style(style, AtAskRow(),
-      m_properties.get_styles(BboIndicator::AT_ASK));
+      m_properties.get_highlight(BboIndicator::AT_ASK));
     update_row_style(style, InsideRow(),
-      m_properties.get_styles(BboIndicator::INSIDE));
+      m_properties.get_highlight(BboIndicator::INSIDE));
     update_row_style(style, AtBidRow(),
-      m_properties.get_styles(BboIndicator::AT_BID));
+      m_properties.get_highlight(BboIndicator::AT_BID));
     update_row_style(style, BelowBidRow(),
-      m_properties.get_styles(BboIndicator::BELOW_BID));
+      m_properties.get_highlight(BboIndicator::BELOW_BID));
   });
   layout()->addWidget(box);
   m_table_view->get_table()->connect_operation_signal(
@@ -168,7 +168,7 @@ const std::shared_ptr<ValueModel<Nexus::Security>>&
   return m_security_view->get_current();
 }
 
-const TimeAndSalesWindowProperties& TimeAndSalesWindow::get_properties() const {
+const TimeAndSalesProperties& TimeAndSalesWindow::get_properties() const {
   return m_properties;
 }
 

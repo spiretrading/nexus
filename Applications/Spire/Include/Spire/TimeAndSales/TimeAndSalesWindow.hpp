@@ -3,7 +3,7 @@
 #include "Nexus/Definitions/Security.hpp"
 #include "Spire/Spire/TableModel.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesModel.hpp"
-#include "Spire/TimeAndSales/TimeAndSalesWindowProperties.hpp"
+#include "Spire/TimeAndSales/TimeAndSalesProperties.hpp"
 #include "Spire/Ui/ComboBox.hpp"
 #include "Spire/Ui/Window.hpp"
 
@@ -49,7 +49,7 @@ namespace Styles {
        * @param parent The parent widget.
        */
       TimeAndSalesWindow(std::shared_ptr<ComboBox::QueryModel> query_model,
-        TimeAndSalesWindowProperties properties, ModelBuilder model_builder,
+        TimeAndSalesProperties properties, ModelBuilder model_builder,
         QWidget* parent = nullptr);
 
       /* Returns the time and sales model. */
@@ -59,7 +59,7 @@ namespace Styles {
       const std::shared_ptr<ComboBox::QueryModel>& get_query_model() const;
 
       /* Returns the properties. */
-      const TimeAndSalesWindowProperties& get_properties() const;
+      const TimeAndSalesProperties& get_properties() const;
 
       /* Returns the security that the window represents. */
       const std::shared_ptr<ValueModel<Nexus::Security>>& get_security() const;
@@ -69,7 +69,7 @@ namespace Styles {
       void mousePressEvent(QMouseEvent* event) override;
 
     private:
-      TimeAndSalesWindowProperties m_properties;
+      TimeAndSalesProperties m_properties;
       ModelBuilder m_model_builder;
       TitleBar* m_title_bar;
       TimeAndSalesTableView* m_table_view;

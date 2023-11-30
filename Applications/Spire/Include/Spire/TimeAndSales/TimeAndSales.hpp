@@ -4,10 +4,11 @@
 namespace Spire {
   class NoneTimeAndSalesModel;
   class TimeAndSalesModel;
+  class TimeAndSalesProperties;
+  class TimeAndSalesPropertiesWindow;
   class TimeAndSalesTableModel;
   class TimeAndSalesTableView;
   class TimeAndSalesWindow;
-  class TimeAndSalesWindowProperties;
 }
 
 #endif

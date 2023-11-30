@@ -225,7 +225,7 @@ namespace {
   struct TimeAndSalesStyleTestWindow : QWidget {
     std::shared_ptr<TimeAndSalesWindow> m_time_and_sales_window;
     BboIndicator m_indicator;
-    TimeAndSalesWindowProperties::Styles m_styles;
+    TimeAndSalesProperties::Highlight m_styles;
     TextBox* m_text_color_box;
     TextBox* m_band_color_box;
     scoped_connection m_text_color_connection;
@@ -241,7 +241,7 @@ namespace {
         });
       std::tie(m_band_color_box, m_band_color_connection) =
         make_color_box([=] (const auto& color) {
-          m_styles.m_band_color = color;
+          m_styles.m_background_color = color;
         });
       auto grid_layout = make_grid_layout(this);
       grid_layout->setContentsMargins({scale_width(15), 0, scale_width(15), 0});
@@ -292,14 +292,14 @@ namespace {
         }
         m_indicator = static_cast<BboIndicator>(*value);
         m_styles =
-          m_time_and_sales_window->get_properties().get_styles(m_indicator);
+          m_time_and_sales_window->get_properties().get_highlight(m_indicator);
         {
           auto blocker = shared_connection_block(m_text_color_connection);
           m_text_color_box->get_current()->set(m_styles.m_text_color.name());
         }
         {
           auto blocker = shared_connection_block(m_band_color_connection);
-          m_band_color_box->get_current()->set(m_styles.m_band_color.name());
+          m_band_color_box->get_current()->set(m_styles.m_background_color.name());
         }
       });
       box->get_current()->set(static_cast<int>(BboIndicator::UNKNOWN));
@@ -360,7 +360,7 @@ namespace {
         m_time_and_sales_window->get_properties().is_show_grid());
       check_box->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
       check_box->get_current()->connect_update_signal([=] (auto checked) {
-        const_cast<TimeAndSalesWindowProperties&>(
+        const_cast<TimeAndSalesProperties&>(
           m_time_and_sales_window->get_properties()).set_show_grid(checked);
         if(checked) {
           update_style(*m_time_and_sales_window, [] (auto& style) {
@@ -384,8 +384,8 @@ namespace {
     }
 
     void update_bbo_indicator_style() {
-      const_cast<TimeAndSalesWindowProperties&>(
-        m_time_and_sales_window->get_properties()).set_styles(m_indicator,
+      const_cast<TimeAndSalesProperties&>(
+        m_time_and_sales_window->get_properties()).set_highlight(m_indicator,
           m_styles);
       auto selector = [&] () -> Selector {
         switch(m_indicator) {
@@ -405,14 +405,14 @@ namespace {
       }();
       update_style(*m_time_and_sales_window, [&] (auto& style) {
         style.get(Any() > selector).
-          set(BackgroundColor(m_styles.m_band_color));
+          set(BackgroundColor(m_styles.m_background_color));
         style.get(Any() > selector > is_a<TextBox>()).
           set(TextColor(m_styles.m_text_color));
       });
     }
 
     void update_font_style(const QFont& font) {
-      const_cast<TimeAndSalesWindowProperties&>(
+      const_cast<TimeAndSalesProperties&>(
         m_time_and_sales_window->get_properties()).set_font(font);
       update_style(*m_time_and_sales_window, [&] (auto& style) {
         style.get(Any() > is_a<TableBody>() > is_a<TextBox>()).
@@ -434,7 +434,7 @@ namespace {
       m_time_and_sales = std::make_shared<DemoTimeAndSalesModel>(Security());
       m_time_and_sales_window =
         std::make_shared<TimeAndSalesWindow>(make_security_query_model(),
-          TimeAndSalesWindowProperties(),
+          TimeAndSalesProperties(),
           std::bind_front(&TimeAndSalesWindowController::model_builder, this));
       m_time_and_sales_test_window =
         std::make_unique<TimeAndSalesTestWindow>(m_time_and_sales);

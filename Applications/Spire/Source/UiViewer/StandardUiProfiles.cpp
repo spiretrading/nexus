@@ -2806,7 +2806,13 @@ UiProfile Spire::make_list_view_profile() {
     auto random_generator = QRandomGenerator(random_height_seed.get());
     auto list_model = std::make_shared<ArrayListModel<QString>>();
     for(auto i = 0; i < 66; ++i) {
-      if(i == 10) {
+      if(i == 1) {
+        list_model->push("ala");
+      } else if(i == 5) {
+        list_model->push("alb");
+      } else if(i == 6) {
+        list_model->push("abc");
+      } else if(i == 10) {
         list_model->push("llama");
       } else if(i == 11) {
         list_model->push("llamb");
