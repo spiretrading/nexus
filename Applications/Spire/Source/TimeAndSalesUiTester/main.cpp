@@ -225,18 +225,17 @@ namespace {
   };
 
   struct TimeAndSalesWindowController {
-    std::shared_ptr<DemoTimeAndSalesModel> m_time_and_sales;
     std::shared_ptr<TimeAndSalesWindow> m_time_and_sales_window;
     std::unique_ptr<TimeAndSalesTestWindow> m_time_and_sales_test_window;
 
-    TimeAndSalesWindowController() {
-      m_time_and_sales = std::make_shared<DemoTimeAndSalesModel>(Security());
-      m_time_and_sales_window =
-         std::make_shared<TimeAndSalesWindow>(make_security_query_model(),
-          std::make_shared<TimeAndSalesPropertiesWindowFactory>(),
-          std::bind_front(&TimeAndSalesWindowController::model_builder, this));
-      m_time_and_sales_test_window =
-        std::make_unique<TimeAndSalesTestWindow>(m_time_and_sales);
+    TimeAndSalesWindowController()
+        : m_time_and_sales_window(std::make_shared<TimeAndSalesWindow>(
+            make_security_query_model(),
+            std::make_shared<TimeAndSalesPropertiesWindowFactory>(),
+            std::bind_front(&TimeAndSalesWindowController::model_builder,
+              this))),
+          m_time_and_sales_test_window(std::make_unique<TimeAndSalesTestWindow>(
+            std::make_shared<DemoTimeAndSalesModel>(Security()))) {
       m_time_and_sales_window->show();
       m_time_and_sales_window->installEventFilter(
         m_time_and_sales_test_window.get());
@@ -248,19 +247,18 @@ namespace {
     }
 
     std::shared_ptr<TimeAndSalesModel> model_builder(const Security& security) {
-      auto price = m_time_and_sales->get_price();
-      auto indicator = m_time_and_sales->get_bbo_indicator();
-      auto period = m_time_and_sales->get_period();
-      auto query_duration = m_time_and_sales->get_query_duration();
-      auto is_data_random = m_time_and_sales->is_data_random();
-      m_time_and_sales = std::make_shared<DemoTimeAndSalesModel>(security);
-      m_time_and_sales->set_price(price);
-      m_time_and_sales->set_bbo_indicator(indicator);
-      m_time_and_sales->set_period(period);
-      m_time_and_sales->set_query_duration(query_duration);
-      m_time_and_sales->set_data_random(is_data_random);
-      m_time_and_sales_test_window->m_time_and_sales = m_time_and_sales;
-      return m_time_and_sales;
+      auto time_and_sales = m_time_and_sales_test_window->m_time_and_sales;
+      auto new_time_and_sales =
+        std::make_shared<DemoTimeAndSalesModel>(security);
+      new_time_and_sales->set_price(time_and_sales->get_price());
+      new_time_and_sales->set_bbo_indicator(
+        time_and_sales->get_bbo_indicator());
+      new_time_and_sales->set_period(time_and_sales->get_period());
+      new_time_and_sales->set_query_duration(
+        time_and_sales->get_query_duration());
+      new_time_and_sales->set_data_random(time_and_sales->is_data_random());
+      m_time_and_sales_test_window->m_time_and_sales = new_time_and_sales;
+      return new_time_and_sales;
     }
   };
 }

@@ -5,7 +5,7 @@
 
 namespace Spire {
 
-  /** Creates a TimeAndSalesPropertiesWindow. */
+  /** A factory used to create the TimeAndSalesPropertiesWindow. */
   class TimeAndSalesPropertiesWindowFactory {
     public:
 
@@ -23,7 +23,8 @@ namespace Spire {
         std::shared_ptr<TimeAndSalesPropertiesModel> properties);
 
       /* Returns the properties model. */
-      const std::shared_ptr<TimeAndSalesPropertiesModel>& get_properties() const;
+      const std::shared_ptr<TimeAndSalesPropertiesModel>&
+        get_properties() const;
 
       /* Creates a TimeAndSalesPropertiesWindow. */
       TimeAndSalesPropertiesWindow* create();

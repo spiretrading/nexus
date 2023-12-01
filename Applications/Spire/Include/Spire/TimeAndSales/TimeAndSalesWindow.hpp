@@ -1,10 +1,7 @@
 #ifndef SPIRE_TIME_AND_SALES_WINDOW_HPP
 #define SPIRE_TIME_AND_SALES_WINDOW_HPP
-#include "Nexus/Definitions/Security.hpp"
 #include "Spire/Spire/TableModel.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesModel.hpp"
-#include "Spire/TimeAndSales/TimeAndSalesProperties.hpp"
-#include "Spire/TimeAndSales/TimeAndSalesPropertiesWindow.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesPropertiesWindowFactory.hpp"
 #include "Spire/Ui/ComboBox.hpp"
 #include "Spire/Ui/Window.hpp"
@@ -41,7 +38,7 @@ namespace Styles {
        * @param security The security that the window is representing.
        * @return A TimeAndSalesModel.
        */
-      using ModelBuilder = std::function<std::shared_ptr<TimeAndSalesModel> (
+      using ModelBuilder = std::function<std::shared_ptr<TimeAndSalesModel>(
         const Nexus::Security& security)>;
 
       /**
@@ -49,6 +46,7 @@ namespace Styles {
        * @param query_model The model used to query security.
        * @param factory The factory used to create a
        *        TimeAndSalesPropertiesWindow.
+       * @param model_builder The ModelBuilder to use.
        * @param parent The parent widget.
        */
       TimeAndSalesWindow(std::shared_ptr<ComboBox::QueryModel> query_model,

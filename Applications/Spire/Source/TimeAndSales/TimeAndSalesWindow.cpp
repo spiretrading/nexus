@@ -1,6 +1,7 @@
 #include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
 #include <fstream>
 #include <QFileDialog>
+#include <QFontDatabase>
 #include <QResizeEvent>
 #include <QStandardPaths>
 #include "Spire/Spire/Dimensions.hpp"
@@ -254,45 +255,61 @@ void TimeAndSalesWindow::update_export_menu_item() {
 void TimeAndSalesWindow::update_properties(
     const TimeAndSalesProperties& properties) {
   update_style(*m_table_view, [&] (auto& style) {
-    if(!m_properties || properties.get_font() != m_properties->get_font()) {
+    auto font_database = QFontDatabase();
+    bool has_updated_font = false;
+    auto& font = properties.get_font();
+    if(!m_properties || font.family() != m_properties->get_font().family() ||
+        font_database.styleString(font) !=
+          font_database.styleString(m_properties->get_font())) {
       style.get(Any() > is_a<TableBody>() > is_a<TextBox>()).
-        set(Font(properties.get_font()));
-      //style.get(Any() > TableHeaderItem::Label()).
-      //  set(Font(properties.get_font()));
+        set(Font(font));
+      has_updated_font = true;
     }
-    if(!m_properties || !::is_equal(properties, *m_properties, BboIndicator::UNKNOWN)) {
+    if(!has_updated_font && (!m_properties ||
+        font.pixelSize() != m_properties->get_font().pixelSize())) {
+      style.get(Any() > is_a<TableBody>() > is_a<TextBox>()).
+        set(FontSize(font.pixelSize()));
+    }
+    if(!m_properties ||
+        !::is_equal(properties, *m_properties, BboIndicator::UNKNOWN)) {
       update_row_style(style, UnknownRow(),
         properties.get_highlight(BboIndicator::UNKNOWN));
     }
-    if(!m_properties || !::is_equal(properties, *m_properties, BboIndicator::ABOVE_ASK)) {
+    if(!m_properties ||
+        !::is_equal(properties, *m_properties, BboIndicator::ABOVE_ASK)) {
       update_row_style(style, AboveAskRow(),
         properties.get_highlight(BboIndicator::ABOVE_ASK));
     }
-    if(!m_properties || !::is_equal(properties, *m_properties, BboIndicator::AT_ASK)) {
+    if(!m_properties ||
+        !::is_equal(properties, *m_properties, BboIndicator::AT_ASK)) {
       update_row_style(style, AtAskRow(),
         properties.get_highlight(BboIndicator::AT_ASK));
     }
-    if(!m_properties || !::is_equal(properties, *m_properties, BboIndicator::INSIDE)) {
+    if(!m_properties ||
+        !::is_equal(properties, *m_properties, BboIndicator::INSIDE)) {
       update_row_style(style, InsideRow(),
         properties.get_highlight(BboIndicator::INSIDE));
     }
-    if(!m_properties || !::is_equal(properties, *m_properties, BboIndicator::AT_BID)) {
+    if(!m_properties ||
+        !::is_equal(properties, *m_properties, BboIndicator::AT_BID)) {
       update_row_style(style, AtBidRow(),
         properties.get_highlight(BboIndicator::AT_BID));
     }
-    if(!m_properties || !::is_equal(properties, *m_properties, BboIndicator::BELOW_BID)) {
+    if(!m_properties ||
+        !::is_equal(properties, *m_properties, BboIndicator::BELOW_BID)) {
       update_row_style(style, BelowBidRow(),
         properties.get_highlight(BboIndicator::BELOW_BID));
     }
   });
-  if(!m_properties || properties.is_show_grid() != m_properties->is_show_grid()) {
+  if(!m_properties ||
+      properties.is_show_grid() != m_properties->is_show_grid()) {
     if(properties.is_show_grid()) {
       update_style(*m_table_view, [] (auto& style) {
         style.get(Any() > is_a<TableBody>()).
           set(grid_color(QColor(0xE0E0E0))).
-          set(PaddingBottom(scale_width(1))).
+          set(PaddingBottom(scale_height(1))).
           set(HorizontalSpacing(scale_width(1))).
-          set(VerticalSpacing(scale_width(1)));
+          set(VerticalSpacing(scale_height(1)));
       });
     } else {
       update_style(*m_table_view, [] (auto& style) {
