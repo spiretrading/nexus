@@ -617,13 +617,16 @@ void TextBox::on_style() {
 }
 
 void Spire::apply_label_style(QWidget& widget) {
-  update_style(widget, [] (auto& style) {
-    style.get(Any()).
-      set(border_size(0)).
-      set(vertical_padding(0));
-    style.get(ReadOnly() && Disabled()).
-      set(TextColor(QColor(Qt::black)));
-  });
+  auto original_style = get_style(widget);
+  auto style = StyleSheet();
+  style.get(Any()) = original_style.get(Any());
+  style.get(Any()).
+    set(BackgroundColor(QColor(Qt::transparent))).
+    set(border_size(0)).
+    set(TextAlign(Qt::Alignment(Qt::AlignLeft) | Qt::AlignVCenter)).
+    set(TextColor(QColor(Qt::black))).
+    set(padding(0));
+  set_style(widget, std::move(style));
   widget.setDisabled(true);
 }
 
