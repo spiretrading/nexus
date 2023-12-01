@@ -3,6 +3,7 @@
 #include <QFileDialog>
 #include <QFontDatabase>
 #include <QResizeEvent>
+#include <QScreen>
 #include <QStandardPaths>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ExportTable.hpp"
@@ -217,13 +218,8 @@ int TimeAndSalesWindow::get_row_height() const {
 
 void TimeAndSalesWindow::make_context_menu() {
   m_context_menu = new ContextMenu(*this);
-  m_context_menu->add_action(tr("Properties"), [=] {
-    auto properties_window = m_factory->create();
-    if(!properties_window->isVisible()) {
-      properties_window->show();
-    }
-    properties_window->activateWindow();
-  });
+  m_context_menu->add_action(tr("Properties"),
+    std::bind_front(&TimeAndSalesWindow::on_properties, this));
   auto link_menu = new ContextMenu(*static_cast<QWidget*>(m_context_menu));
   m_context_menu->add_menu(tr("Link to"), *link_menu);
   m_context_menu->add_separator();
@@ -383,4 +379,19 @@ void TimeAndSalesWindow::on_export() {
     export_table_as_csv(
       ExportTimeAndSalesTableMoel(m_table_view->get_table()), out);
   }
+}
+
+void TimeAndSalesWindow::on_properties() {
+  auto properties_window = m_factory->create();
+  if(!properties_window->isVisible()) {
+    properties_window->show();
+    if(screen()->geometry().right() - frameGeometry().right() >=
+        properties_window->frameGeometry().width()) {
+      properties_window->move(frameGeometry().right(), y());
+    } else {
+      properties_window->move(x() - properties_window->frameGeometry().width(),
+        y());
+    }
+  }
+  properties_window->activateWindow();
 }

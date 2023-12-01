@@ -205,7 +205,7 @@ namespace {
     }
 
     CheckBox* make_random_check_box() {
-      auto check_box = new CheckBox(std::make_shared<LocalBooleanModel>(true));
+      auto check_box = new CheckBox(std::make_shared<LocalBooleanModel>());
       m_time_and_sales->set_data_random(check_box->get_current()->get());
       check_box->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
       check_box->get_current()->connect_update_signal(
@@ -220,6 +220,7 @@ namespace {
             m_time_and_sales->set_data_random(false);
           }
       });
+      check_box->get_current()->set(true);
       return check_box;
     }
   };

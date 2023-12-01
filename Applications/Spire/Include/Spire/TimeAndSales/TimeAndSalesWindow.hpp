@@ -89,6 +89,7 @@ namespace Styles {
       void on_current(const Nexus::Security& security);
       void on_table_operation(const TableModel::Operation& operation);
       void on_export();
+      void on_properties();
   };
 }
 
