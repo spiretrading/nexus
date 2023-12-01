@@ -435,6 +435,7 @@ void TimeAndSalesTableView::customize_table_body() {
   m_body_scroll_box->setSizePolicy(QSizePolicy::Expanding,
     QSizePolicy::Expanding);
   m_body_scroll_box->setFocusPolicy(Qt::NoFocus);
+  m_body_scroll_box->set(ScrollBox::DisplayPolicy::ON_ENGAGE);
   m_body_scroll_box->get_horizontal_scroll_bar().connect_position_signal(
     std::bind_front(&TimeAndSalesTableView::on_horizontal_scroll_position,
       this));
