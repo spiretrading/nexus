@@ -454,9 +454,7 @@ void TextBox::set_read_only(bool read_only) {
     match(*this, ReadOnly());
   } else {
     unmatch(*this, ReadOnly());
-    if(!m_line_edit && isVisible()) {
-      initialize_line_edit();
-    }
+    initialize_line_edit();
   }
   if(m_line_edit) {
     m_line_edit->setReadOnly(read_only);
@@ -498,7 +496,7 @@ QSize TextBox::sizeHint() const {
 
 void TextBox::changeEvent(QEvent* event) {
   if(event->type() == QEvent::EnabledChange) {
-    if(!m_line_edit && isEnabled()) {
+    if(isEnabled()) {
       initialize_line_edit();
     }
     update_display_text();
@@ -532,7 +530,7 @@ void TextBox::resizeEvent(QResizeEvent* event) {
 }
 
 void TextBox::showEvent(QShowEvent* event) {
-  if(!m_line_edit && (!is_read_only() || isEnabled())) {
+  if(!is_read_only() || isEnabled()) {
     initialize_line_edit();
   }
   QWidget::showEvent(event);
@@ -548,6 +546,9 @@ void TextBox::elide_text() {
 }
 
 void TextBox::initialize_line_edit() const {
+  if(m_line_edit) {
+    return;
+  }
   auto self = const_cast<TextBox*>(this);
   add_pseudo_element(*self, Placeholder());
   self->m_line_edit = new LineEdit(m_current, self);

@@ -158,7 +158,7 @@ namespace Spire {
       std::shared_ptr<CurrentModel> m_current;
       AnyInputBox* m_input_box;
       ViewBuilder m_view_builder;
-      mutable std::unique_ptr<DeferredData> m_data;
+      std::unique_ptr<DeferredData> m_data;
 
       void initialize_deferred_data() const;
       void update_completion();

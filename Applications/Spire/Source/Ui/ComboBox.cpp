@@ -197,7 +197,7 @@ void ComboBox::initialize_deferred_data() const {
     return;
   }
   auto self = const_cast<ComboBox*>(this);
-  m_data = std::make_unique<DeferredData>(*self);
+  self->m_data = std::make_unique<DeferredData>(*self);
   m_input_box->installEventFilter(self);
   m_input_box->connect_submit_signal(
     std::bind_front(&ComboBox::on_submit, self));
