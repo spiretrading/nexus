@@ -13,11 +13,7 @@ bool IsASelector::is_instance(const QWidget& widget) const {
 }
 
 bool IsASelector::operator ==(const IsASelector& selector) const {
-  return get_type() == selector.get_type();
-}
-
-bool IsASelector::operator !=(const IsASelector& selector) const {
-  return !(*this == selector);
+  return m_type == selector.get_type();
 }
 
 SelectConnection Spire::Styles::select(const IsASelector& selector,
@@ -26,4 +22,9 @@ SelectConnection Spire::Styles::select(const IsASelector& selector,
     on_update({&base}, {});
   }
   return {};
+}
+
+std::size_t std::hash<IsASelector>::operator ()(
+    const IsASelector& selector) const {
+  return std::hash<std::type_index>()(selector.get_type());
 }

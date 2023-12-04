@@ -1,5 +1,7 @@
 #include "Spire/Styles/OrSelector.hpp"
+#include <boost/functional/hash.hpp>
 
+using namespace boost;
 using namespace Spire;
 using namespace Spire::Styles;
 
@@ -13,14 +15,6 @@ const Selector& OrSelector::get_left() const {
 
 const Selector& OrSelector::get_right() const {
   return m_right;
-}
-
-bool OrSelector::operator ==(const OrSelector& selector) const {
-  return m_left == selector.get_left() && m_right == selector.get_right();
-}
-
-bool OrSelector::operator !=(const OrSelector& selector) const {
-  return !(*this == selector);
 }
 
 OrSelector Spire::Styles::operator ||(Selector left, Selector right) {
@@ -70,4 +64,12 @@ SelectConnection Spire::Styles::select(const OrSelector& selector,
   };
   return SelectConnection(
     std::make_unique<Executor>(selector, base, on_update));
+}
+
+std::size_t std::hash<OrSelector>::operator ()(
+    const OrSelector& selector) const {
+  auto seed = std::size_t(0);
+  hash_combine(seed, std::hash<Selector>()(selector.get_left()));
+  hash_combine(seed, std::hash<Selector>()(selector.get_right()));
+  return seed;
 }

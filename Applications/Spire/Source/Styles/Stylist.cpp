@@ -25,8 +25,18 @@ namespace {
     return *timer;
   }
 
+  struct PseudoStylistHash {
+    std::size_t operator ()(
+        const std::pair<QWidget*, PseudoElement>& element) const {
+      auto seed = std::size_t(0);
+      hash_combine(seed, std::hash<QWidget*>()(element.first));
+      hash_combine(seed, std::hash<PseudoElement>()(element.second));
+      return seed;
+    }
+  };
+
   std::unordered_map<std::pair<QWidget*, PseudoElement>, Stylist*,
-    boost::hash<std::pair<QWidget*, PseudoElement>>> pseudo_stylists;
+    PseudoStylistHash> pseudo_stylists;
 
   bool contains(QWidget& container, QWidget& widget) {
     if(&container == &widget) {
@@ -37,6 +47,18 @@ namespace {
     auto widget_rect =
       QRect(widget.mapToGlobal(QPoint(0, 0)), widget.frameSize());
     return container_rect.contains(widget_rect, true);
+  }
+
+  std::shared_ptr<StyleSheet> load_styles(StyleSheet styles) {
+    static auto cache =
+      std::unordered_map<StyleSheet, std::shared_ptr<StyleSheet>>();
+    auto i = cache.find(styles);
+    if(i == cache.end()) {
+      auto cached_styles = std::make_shared<StyleSheet>(std::move(styles));
+      cache.emplace_hint(i, *cached_styles, cached_styles);
+      return cached_styles;
+    }
+    return i->second;
   }
 }
 
@@ -77,10 +99,6 @@ struct Stylist::StyleEventFilter : QObject {
   }
 };
 
-std::size_t Stylist::SelectorHash::operator ()(const Selector& selector) const {
-  return selector.get_type().hash_code();
-}
-
 Stylist::~Stylist() {
   while(!m_matches.empty()) {
     auto selector = *m_matches.begin();
@@ -90,21 +108,6 @@ Stylist::~Stylist() {
   get_animation_timer().disconnect(m_animation_connection);
   for(auto& rule : m_rules) {
     auto selection = std::move(rule->m_selection);
-    rule->m_selection.clear();
-    for(auto i = selection.begin(); i != selection.end();) {
-      auto& selected = const_cast<Stylist&>(**i);
-      if(selected.m_widget == m_widget) {
-        if(&selected != this) {
-          selected.m_sources.erase(std::remove_if(selected.m_sources.begin(),
-            selected.m_sources.end(), [&] (const auto& entry) {
-              return entry.m_source == this;
-            }));
-        }
-        i = selection.erase(i);
-      } else {
-        ++i;
-      }
-    }
     if(!selection.empty()) {
       on_selection_update(*rule, {}, std::move(selection));
     }
@@ -135,20 +138,19 @@ const optional<PseudoElement>& Stylist::get_pseudo_element() const {
 }
 
 const StyleSheet& Stylist::get_style() const {
-  return m_style;
+  return *m_style;
 }
 
 void Stylist::set_style(StyleSheet style) {
   for(auto& rule : m_rules) {
     auto selection = std::move(rule->m_selection);
-    rule->m_selection.clear();
     if(!selection.empty()) {
       on_selection_update(*rule, {}, std::move(selection));
     }
   }
   m_rules.clear();
-  m_style = std::move(style);
-  apply(m_style);
+  m_style = load_styles(std::move(style));
+  apply(*m_style);
 }
 
 bool Stylist::is_match(const Selector& selector) const {
@@ -161,7 +163,7 @@ const Block& Stylist::get_computed_block() const {
   }
   m_computed_block.emplace();
   for(auto& source : m_sources) {
-    merge(*m_computed_block, source.m_rule->m_rule.get_block());
+    merge(*m_computed_block, source.m_rule->m_block);
   }
   for(auto principal : m_principals) {
     merge(*m_computed_block, principal->get_computed_block());
@@ -179,7 +181,7 @@ void Stylist::add_proxy(QWidget& widget) {
   if(i == m_proxies.end()) {
     m_proxies.push_back(&stylist);
     stylist.m_principals.push_back(this);
-    stylist.apply(m_style);
+    stylist.apply(*m_style);
   }
 }
 
@@ -231,6 +233,7 @@ connection Stylist::connect_delete_signal(
 Stylist::Stylist(QWidget& widget, boost::optional<PseudoElement> pseudo_element)
     : m_widget(&widget),
       m_pseudo_element(std::move(pseudo_element)),
+      m_style(load_styles(StyleSheet())),
       m_visibility(Visibility::VISIBLE),
       m_evaluated_block(in_place_init),
       m_evaluated_property(typeid(void)) {
@@ -282,8 +285,8 @@ void Stylist::apply(const StyleSheet& style) {
     auto entry = std::make_unique<RuleEntry>();
     entry->m_priority = priority;
     ++priority;
-    entry->m_rule = rule;
-    entry->m_connection = select(entry->m_rule.get_selector(), *this,
+    entry->m_block = rule.get_block();
+    entry->m_connection = select(rule.get_selector(), *this,
       std::bind_front(&Stylist::on_selection_update, this, std::ref(*entry)));
     m_rules.push_back(std::move(entry));
   }
@@ -384,7 +387,7 @@ optional<Property> Stylist::find_reverted_property(std::type_index type) const {
   auto reverted_property = optional<Property>();
   for_each_principal([&] (auto& principal) {
     for(auto& source : principal.m_sources) {
-      if(auto p = find(source.m_rule->m_rule.get_block(), type)) {
+      if(auto p = find(source.m_rule->m_block, type)) {
         reverted_property = std::move(property);
         property.emplace(*p);
       }

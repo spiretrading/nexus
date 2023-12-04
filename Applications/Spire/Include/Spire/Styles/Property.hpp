@@ -3,6 +3,7 @@
 #include <any>
 #include <typeindex>
 #include <type_traits>
+#include <utility>
 #include <Beam/Utilities/Functional.hpp>
 #include "Spire/Styles/BasicProperty.hpp"
 #include "Spire/Styles/EnumProperty.hpp"
@@ -59,9 +60,11 @@ namespace Spire::Styles {
       struct TypeExtractor<Beam::TypeSequence<T, U>> {
         using type = std::decay_t<U>;
       };
+      friend struct std::hash<Property>;
       struct BaseEntry {
         virtual ~BaseEntry() = default;
         virtual std::type_index get_type() const = 0;
+        virtual std::size_t hash() const = 0;
         virtual const void* expression_as(std::type_index type) const = 0;
         virtual bool operator ==(const BaseEntry& entry) const = 0;
         bool operator !=(const BaseEntry& entry) const;
@@ -73,6 +76,7 @@ namespace Spire::Styles {
 
         Entry(Type property);
         std::type_index get_type() const override;
+        virtual std::size_t hash() const override;
         const void* expression_as(std::type_index type) const override;
         bool operator ==(const BaseEntry& entry) const override;
       };
@@ -138,6 +142,11 @@ namespace Spire::Styles {
   }
 
   template<typename T>
+  std::size_t Property::Entry<T>::hash() const {
+    return std::hash<Type>()(m_property);
+  }
+
+  template<typename T>
   const void* Property::Entry<T>::expression_as(std::type_index type) const {
     if(type != typeid(typename Type::Type)) {
       throw std::bad_any_cast();
@@ -150,6 +159,13 @@ namespace Spire::Styles {
     return entry.get_type() == typeid(Type) &&
       m_property == static_cast<const Entry<Type>&>(entry).m_property;
   }
+}
+
+namespace std {
+  template<>
+  struct hash<Spire::Styles::Property> {
+    std::size_t operator ()(const Spire::Styles::Property& property) const;
+  };
 }
 
 #endif

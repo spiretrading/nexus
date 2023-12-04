@@ -22,9 +22,7 @@ namespace Spire::Styles {
       /** Returns the parent selector. */
       const Selector& get_parent() const;
 
-      bool operator ==(const ParentSelector& selector) const;
-
-      bool operator !=(const ParentSelector& selector) const;
+      bool operator ==(const ParentSelector& selector) const = default;
 
     private:
       Selector m_base;
@@ -45,6 +43,14 @@ namespace Spire::Styles {
 
   SelectConnection select(const ParentSelector& selector,
     const Stylist& base, const SelectionUpdateSignal& on_update);
+}
+
+namespace std {
+  template<>
+  struct hash<Spire::Styles::ParentSelector> {
+    std::size_t operator ()(
+      const Spire::Styles::ParentSelector& selector) const;
+  };
 }
 
 #endif

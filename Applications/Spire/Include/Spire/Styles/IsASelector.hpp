@@ -27,8 +27,6 @@ namespace Spire::Styles {
 
       bool operator ==(const IsASelector& selector) const;
 
-      bool operator !=(const IsASelector& selector) const;
-
     private:
       std::type_index m_type;
       std::function<bool (const QWidget&)> m_is_instance;
@@ -52,6 +50,13 @@ namespace Spire::Styles {
       m_is_instance([] (const QWidget& widget) {
         return dynamic_cast<const T*>(&widget) != nullptr;
       }) {}
+}
+
+namespace std {
+  template<>
+  struct hash<Spire::Styles::IsASelector> {
+    std::size_t operator ()(const Spire::Styles::IsASelector& selector) const;
+  };
 }
 
 #endif

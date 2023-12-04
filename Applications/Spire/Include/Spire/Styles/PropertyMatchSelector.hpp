@@ -1,7 +1,7 @@
 #ifndef SPIRE_STYLES_PROPERTY_MATCH_SELECTOR_HPP
 #define SPIRE_STYLES_PROPERTY_MATCH_SELECTOR_HPP
 #include "Spire/Styles/Property.hpp"
-#include "Spire/Styles/SelectConnection.hpp"
+#include "Spire/Styles/Selector.hpp"
 #include "Spire/Styles/Styles.hpp"
 
 namespace Spire::Styles {
@@ -19,9 +19,7 @@ namespace Spire::Styles {
       /** Returns the property that must match. */
       const Property& get_property() const;
 
-      bool operator ==(const PropertyMatchSelector& selector) const;
-
-      bool operator !=(const PropertyMatchSelector& selector) const;
+      bool operator ==(const PropertyMatchSelector& selector) const = default;
 
     private:
       Property m_property;
@@ -36,6 +34,14 @@ namespace Spire::Styles {
 
   SelectConnection select(const PropertyMatchSelector& selector,
     const Stylist& base, const SelectionUpdateSignal& on_update);
+}
+
+namespace std {
+  template<>
+  struct hash<Spire::Styles::PropertyMatchSelector> {
+    std::size_t operator ()(
+      const Spire::Styles::PropertyMatchSelector& selector) const;
+  };
 }
 
 #endif

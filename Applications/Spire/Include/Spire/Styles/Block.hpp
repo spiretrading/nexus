@@ -1,5 +1,6 @@
 #ifndef SPIRE_STYLES_BLOCK_HPP
 #define SPIRE_STYLES_BLOCK_HPP
+#include <functional>
 #include <utility>
 #include <vector>
 #include <boost/optional/optional.hpp>
@@ -49,10 +50,7 @@ namespace Spire::Styles {
       /** Removes all properties. */
       void clear();
 
-      /** Tests if two Block's contain the same Properties in the same order. */
-      bool operator ==(const Block& block) const;
-
-      bool operator !=(const Block& block) const;
+      bool operator ==(const Block& block) const = default;
 
     private:
       std::vector<Property> m_properties;
@@ -146,6 +144,13 @@ namespace Spire::Styles {
       remove(property);
     });
   }
+}
+
+namespace std {
+  template<>
+  struct hash<Spire::Styles::Block> {
+    std::size_t operator ()(const Spire::Styles::Block& block) const;
+  };
 }
 
 #endif

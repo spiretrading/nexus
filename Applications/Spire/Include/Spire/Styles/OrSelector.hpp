@@ -22,9 +22,7 @@ namespace Spire::Styles {
       /** Returns the right hand selector. */
       const Selector& get_right() const;
 
-      bool operator ==(const OrSelector& selector) const;
-
-      bool operator !=(const OrSelector& selector) const;
+      bool operator ==(const OrSelector& selector) const = default;
 
     private:
       Selector m_left;
@@ -40,6 +38,13 @@ namespace Spire::Styles {
 
   SelectConnection select(const OrSelector& selector, const Stylist& base,
     const SelectionUpdateSignal& on_update);
+}
+
+namespace std {
+  template<>
+  struct hash<Spire::Styles::OrSelector> {
+    std::size_t operator ()(const Spire::Styles::OrSelector& selector) const;
+  };
 }
 
 #endif
