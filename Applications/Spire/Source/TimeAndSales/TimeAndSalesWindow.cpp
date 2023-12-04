@@ -259,11 +259,15 @@ void TimeAndSalesWindow::update_properties(
           font_database.styleString(m_properties->get_font())) {
       style.get(Any() > is_a<TableBody>() > is_a<TextBox>()).
         set(Font(font));
+      style.get(Any() > TableHeaderItem::Label()).
+        set(Font(font));
       has_updated_font = true;
     }
     if(!has_updated_font && (!m_properties ||
         font.pixelSize() != m_properties->get_font().pixelSize())) {
       style.get(Any() > is_a<TableBody>() > is_a<TextBox>()).
+        set(FontSize(font.pixelSize()));
+      style.get(Any() > TableHeaderItem::Label()).
         set(FontSize(font.pixelSize()));
     }
     if(!m_properties ||
