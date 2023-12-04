@@ -22,9 +22,7 @@ namespace Spire::Styles {
       /** Returns the sibling selector. */
       const Selector& get_sibling() const;
 
-      bool operator ==(const SiblingSelector& selector) const;
-
-      bool operator !=(const SiblingSelector& selector) const;
+      bool operator ==(const SiblingSelector& selector) const = default;
 
     private:
       Selector m_base;
@@ -40,6 +38,14 @@ namespace Spire::Styles {
 
   SelectConnection select(const SiblingSelector& selector, const Stylist& base,
     const SelectionUpdateSignal& on_update);
+}
+
+namespace std {
+  template<>
+  struct hash<Spire::Styles::SiblingSelector> {
+    std::size_t operator ()(
+      const Spire::Styles::SiblingSelector& selector) const;
+  };
 }
 
 #endif

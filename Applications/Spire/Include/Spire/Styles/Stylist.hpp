@@ -1,6 +1,7 @@
 #ifndef SPIRE_STYLES_STYLIST_HPP
 #define SPIRE_STYLES_STYLIST_HPP
 #include <chrono>
+#include <memory>
 #include <type_traits>
 #include <unordered_set>
 #include <vector>
@@ -121,11 +122,8 @@ namespace Spire::Styles {
 
     private:
       struct StyleEventFilter;
-      struct SelectorHash {
-        std::size_t operator ()(const Selector& selector) const;
-      };
       struct RuleEntry {
-        Rule m_rule;
+        Block m_block;
         int m_priority;
         std::unordered_set<const Stylist*> m_selection;
         SelectConnection m_connection;
@@ -166,16 +164,15 @@ namespace Spire::Styles {
       mutable DeleteSignal m_delete_signal;
       QWidget* m_widget;
       boost::optional<PseudoElement> m_pseudo_element;
-      StyleSheet m_style;
+      std::shared_ptr<StyleSheet> m_style;
       std::vector<Source> m_sources;
       std::vector<std::unique_ptr<RuleEntry>> m_rules;
       boost::optional<EvaluatedBlock> m_evaluated_block;
       mutable boost::optional<Block> m_computed_block;
       std::vector<Stylist*> m_proxies;
       std::vector<Stylist*> m_principals;
-      std::unordered_set<Selector, SelectorHash> m_matches;
-      mutable std::unordered_map<Selector, MatchSignal, SelectorHash>
-        m_match_signals;
+      std::unordered_set<Selector> m_matches;
+      mutable std::unordered_map<Selector, MatchSignal> m_match_signals;
       std::unordered_map<
         std::type_index, std::unique_ptr<BaseEvaluatorEntry>> m_evaluators;
       std::type_index m_evaluated_property;

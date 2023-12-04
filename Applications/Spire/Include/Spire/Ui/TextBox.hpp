@@ -176,14 +176,9 @@ namespace Styles {
       };
       struct TextValidator;
       class LineEdit;
-      mutable SubmitSignal m_submit_signal;
-      mutable RejectSignal m_reject_signal;
       std::shared_ptr<TextModel> m_current;
-      std::shared_ptr<TextModel> m_submission;
       QString m_display_text;
-      QString m_placeholder;
       bool m_is_read_only;
-      std::shared_ptr<HighlightModel> m_highlight;
       TextStyleProperties m_text_style;
       LineEdit* m_line_edit;
       BoxGeometry m_geometry;
@@ -193,11 +188,10 @@ namespace Styles {
       mutable boost::optional<QSize> m_size_hint;
 
       void elide_text();
-      void initialize_line_edit();
+      void initialize_line_edit() const;
       void update_display_text();
       void on_current(const QString& current);
       void on_style();
-      void on_submission(const QString& submission);
   };
 
   /**

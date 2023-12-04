@@ -1,8 +1,13 @@
 #include "Spire/Styles/PseudoElement.hpp"
+#include <boost/functional/hash.hpp>
 #include "Spire/Styles/Stylist.hpp"
 
+using namespace boost;
 using namespace Spire;
 using namespace Spire::Styles;
+
+std::unordered_map<std::type_index, PseudoElement::Operations>
+  PseudoElement::m_operations;
 
 SelectConnection Spire::Styles::Details::select_pseudo_element(
     const PseudoElement& selector, const Stylist& base,
@@ -18,7 +23,8 @@ std::type_index PseudoElement::get_type() const {
 }
 
 bool PseudoElement::operator ==(const PseudoElement& element) const {
-  return m_is_equal(*this, element);
+  auto& operations = m_operations.at(m_pseudo_element.type());
+  return operations.m_is_equal(*this, element);
 }
 
 bool PseudoElement::operator !=(const PseudoElement& element) const {
@@ -27,14 +33,15 @@ bool PseudoElement::operator !=(const PseudoElement& element) const {
 
 SelectConnection Spire::Styles::select(const PseudoElement& element,
     const Stylist& base, const SelectionUpdateSignal& on_update) {
-  return element.m_select(element, base, on_update);
-}
-
-std::size_t Spire::Styles::hash_value(const PseudoElement& element) {
-  return std::hash<std::type_index>()(element.get_type());
+  auto& operations = PseudoElement::m_operations.at(element.get_type());
+  return operations.m_select(element, base, on_update);
 }
 
 std::size_t std::hash<PseudoElement>::operator ()(
     const PseudoElement& element) const {
-  return hash_value(element);
+  auto seed = std::size_t(0);
+  hash_combine(seed, std::hash<std::type_index>()(element.get_type()));
+  auto& operations = PseudoElement::m_operations.at(element.get_type());
+  hash_combine(seed, operations.m_hash(element));
+  return seed;
 }

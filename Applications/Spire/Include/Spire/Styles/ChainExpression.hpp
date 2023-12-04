@@ -1,7 +1,9 @@
 #ifndef SPIRE_STYLES_CHAIN_EXPRESSION_HPP
 #define SPIRE_STYLES_CHAIN_EXPRESSION_HPP
+#include <functional>
 #include <memory>
 #include <utility>
+#include <boost/functional/hash.hpp>
 #include "Spire/Styles/Expression.hpp"
 #include "Spire/Styles/Styles.hpp"
 
@@ -33,9 +35,7 @@ namespace Spire::Styles {
       /** Returns the second Expression to evaluate to. */
       const Expression<Type>& get_second() const;
 
-      bool operator ==(const ChainExpression& expression) const;
-
-      bool operator !=(const ChainExpression& expression) const;
+      bool operator ==(const ChainExpression& expression) const = default;
 
     private:
       Expression<Type> m_first;
@@ -103,18 +103,21 @@ namespace Spire::Styles {
       ChainExpression<T>::get_second() const {
     return m_second;
   }
+}
 
+namespace std {
   template<typename T>
-  bool ChainExpression<T>::operator ==(
-      const ChainExpression& expression) const {
-    return m_first == expression.m_first && m_second == expression.m_second;
-  }
-
-  template<typename T>
-  bool ChainExpression<T>::operator !=(
-      const ChainExpression& expression) const {
-    return !(*this == expression);
-  }
+  struct hash<Spire::Styles::ChainExpression<T>> {
+    std::size_t operator ()(
+        const Spire::Styles::ChainExpression<T>& expression) const {
+      auto seed = std::size_t(0);
+      boost::hash_combine(seed,
+        std::hash<Spire::Styles::Expression<T>>()(expression.get_first()));
+      boost::hash_combine(seed,
+        std::hash<Spire::Styles::Expression<T>>()(expression.get_second()));
+      return seed;
+    }
+  };
 }
 
 #endif

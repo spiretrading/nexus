@@ -119,12 +119,21 @@ void ScrollableLayer::update_mask() {
   auto region = [&] {
     if(m_vertical_scroll_bar->isVisible() &&
         m_horizontal_scroll_bar->isVisible()) {
+      auto corner_box_geometry = [&] {
+        if(m_corner_box->isVisible()) {
+          return m_corner_box->geometry();
+        }
+        return QRect(0, 0, 0, 0);
+      }();
       return QPolygon(m_vertical_scroll_bar->geometry()).united(
-        m_horizontal_scroll_bar->geometry()).united(m_corner_box->geometry());
+        m_horizontal_scroll_bar->geometry()).united(corner_box_geometry);
     } else if(m_vertical_scroll_bar->isVisible()) {
       return QPolygon(m_vertical_scroll_bar->geometry());
+    } else if(m_horizontal_scroll_bar->isVisible()) {
+      return QPolygon(m_horizontal_scroll_bar->geometry());
+    } else {
+      return QPolygon();
     }
-    return QPolygon(m_horizontal_scroll_bar->geometry());
   }();
   if(region.isEmpty()) {
     setAttribute(Qt::WA_TransparentForMouseEvents);

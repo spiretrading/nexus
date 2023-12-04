@@ -3,6 +3,7 @@
 #include <any>
 #include <functional>
 #include <typeindex>
+#include <unordered_map>
 #include <utility>
 #include "Spire/Styles/SelectConnection.hpp"
 #include "Spire/Styles/Styles.hpp"
@@ -35,12 +36,17 @@ namespace Details {
     private:
       friend SelectConnection select(
         const PseudoElement&, const Stylist&, const SelectionUpdateSignal&);
+      friend struct std::hash<PseudoElement>;
+      struct Operations {
+        std::function<bool (const PseudoElement&, const PseudoElement&)>
+          m_is_equal;
+        std::function<SelectConnection (
+          const PseudoElement&, const Stylist&, const SelectionUpdateSignal&)>
+          m_select;
+        std::function<std::size_t (const PseudoElement&)> m_hash;
+      };
+      static std::unordered_map<std::type_index, Operations> m_operations;
       std::any m_pseudo_element;
-      std::function<bool (const PseudoElement&, const PseudoElement&)>
-        m_is_equal;
-      std::function<SelectConnection (
-        const PseudoElement&, const Stylist&, const SelectionUpdateSignal&)>
-        m_select;
   };
 
   /**
@@ -67,9 +73,7 @@ namespace Details {
       /** Returns the associated data. */
       const Type& get_data() const;
 
-      bool operator ==(const PseudoElementSelector& selector) const;
-
-      bool operator !=(const PseudoElementSelector& selector) const;
+      bool operator ==(const PseudoElementSelector& selector) const = default;
 
     private:
       Type m_data;
@@ -80,13 +84,8 @@ namespace Details {
     public:
       using Tag = G;
 
-      bool operator ==(const PseudoElementSelector& selector) const;
-
-      bool operator !=(const PseudoElementSelector& selector) const;
+      bool operator ==(const PseudoElementSelector& selector) const = default;
   };
-
-  /** Returns the hash value of a PseudoElement. */
-  std::size_t hash_value(const PseudoElement& element);
 
   SelectConnection select(const PseudoElement& element, const Stylist& base,
     const SelectionUpdateSignal& on_update);
@@ -100,17 +99,27 @@ namespace Details {
 
   template<typename T, typename G>
   PseudoElement::PseudoElement(PseudoElementSelector<T, G> element)
-    : m_pseudo_element(std::move(element)),
-      m_is_equal([] (const PseudoElement& left, const PseudoElement& right) {
-        return left.get_type() == right.get_type() &&
-          left.as<PseudoElementSelector<T, G>>() ==
-            right.as<PseudoElementSelector<T, G>>();
-      }),
-      m_select([] (const PseudoElement& element, const Stylist& base,
-          const SelectionUpdateSignal& on_update) {
-        return select(
-          element.as<PseudoElementSelector<T, G>>(), base, on_update);
-      }) {}
+      : m_pseudo_element(std::move(element)) {
+    auto operations = m_operations.find(typeid(PseudoElementSelector<T, G>));
+    if(operations == m_operations.end()) {
+      m_operations.emplace_hint(operations, typeid(PseudoElementSelector<T, G>),
+        Operations(
+          [] (const PseudoElement& left, const PseudoElement& right) {
+            return left.get_type() == right.get_type() &&
+              left.as<PseudoElementSelector<T, G>>() ==
+                right.as<PseudoElementSelector<T, G>>();
+          },
+          [] (const PseudoElement& element, const Stylist& base,
+              const SelectionUpdateSignal& on_update) {
+            return select(
+              element.as<PseudoElementSelector<T, G>>(), base, on_update);
+          },
+          [] (const PseudoElement& element) {
+            return std::hash<PseudoElementSelector<T, G>>()(
+              element.as<PseudoElementSelector<T, G>>());
+          }));
+    }
+  }
 
   template<typename U>
   const U& PseudoElement::as() const {
@@ -126,36 +135,28 @@ namespace Details {
       PseudoElementSelector<T, G>::get_data() const {
     return m_data;
   }
-
-  template<typename T, typename G>
-  bool PseudoElementSelector<T, G>::operator ==(
-      const PseudoElementSelector& element) const {
-    return m_data == element.m_data;
-  }
-
-  template<typename T, typename G>
-  bool PseudoElementSelector<T, G>::operator !=(
-      const PseudoElementSelector& element) const {
-    return !(*this == element);
-  }
-
-  template<typename G>
-  bool PseudoElementSelector<void, G>::operator ==(
-      const PseudoElementSelector& element) const {
-    return true;
-  }
-
-  template<typename G>
-  bool PseudoElementSelector<void, G>::operator !=(
-      const PseudoElementSelector& element) const {
-    return !(*this == element);
-  }
 }
 
 namespace std {
   template<>
   struct hash<Spire::Styles::PseudoElement> {
     std::size_t operator ()(const Spire::Styles::PseudoElement& element) const;
+  };
+
+  template<typename T, typename G>
+  struct hash<Spire::Styles::PseudoElementSelector<T, G>> {
+    std::size_t operator ()(
+        const Spire::Styles::PseudoElementSelector<T, G>& selector) {
+      return std::hash<T>()(selector.get_data());
+    }
+  };
+
+  template<typename G>
+  struct hash<Spire::Styles::PseudoElementSelector<void, G>> {
+    std::size_t operator ()(
+        const Spire::Styles::PseudoElementSelector<void, G>& selector) {
+      return 1;
+    }
   };
 }
 

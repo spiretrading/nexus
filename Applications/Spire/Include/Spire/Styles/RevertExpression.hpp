@@ -17,9 +17,7 @@ namespace Spire::Styles {
       /** The type to evaluate to. */
       using Type = T;
 
-      bool operator ==(const RevertExpression& expression) const;
-
-      bool operator !=(const RevertExpression& expression) const;
+      bool operator ==(const RevertExpression& expression) const = default;
   };
 
   /**
@@ -57,18 +55,6 @@ namespace Spire::Styles {
   }
 
   template<typename T>
-  bool RevertExpression<T>::operator ==(
-      const RevertExpression& expression) const {
-    return true;
-  }
-
-  template<typename T>
-  bool RevertExpression<T>::operator !=(
-      const RevertExpression& expression) const {
-    return !(*this == expression);
-  }
-
-  template<typename T>
   RevertPolymorph::operator RevertExpression<T>() const {
     return RevertExpression<T>();
   }
@@ -77,6 +63,16 @@ namespace Spire::Styles {
   RevertPolymorph::operator Expression<T>() const {
     return Expression<T>(RevertExpression<T>());
   }
+}
+
+namespace std {
+  template<typename T>
+  struct hash<Spire::Styles::RevertExpression<T>> {
+    std::size_t operator ()(
+        const Spire::Styles::RevertExpression<T>& expression) const {
+      return 1;
+    }
+  };
 }
 
 #endif
