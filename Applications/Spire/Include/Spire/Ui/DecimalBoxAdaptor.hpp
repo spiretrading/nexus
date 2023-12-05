@@ -129,7 +129,6 @@ namespace Spire {
         mutable RejectSignal m_reject_signal;
       };
       std::shared_ptr<ScalarValueModel<boost::optional<Type>>> m_current;
-      std::shared_ptr<ToDecimalModel<Type>> m_adaptor_model;
       DecimalBox m_decimal_box;
       std::unique_ptr<EditableData> m_data;
       boost::signals2::scoped_connection m_current_connection;
@@ -229,9 +228,8 @@ namespace Spire {
       QHash<Qt::KeyboardModifier, Type> modifiers, QWidget* parent)
       : QWidget(parent),
         m_current(std::move(current)),
-        m_adaptor_model(std::move(adaptor_model)),
         m_decimal_box(
-          m_adaptor_model, make_adapted_modifiers(modifiers), this) {
+          std::move(adaptor_model), make_adapted_modifiers(modifiers), this) {
     Styles::proxy_style(*this, m_decimal_box);
     setFocusProxy(&m_decimal_box);
     enclose(*this, m_decimal_box);
