@@ -103,9 +103,7 @@ struct DecimalBox::DecimalToTextModel : TextModel {
         m_current(to_string(m_model->get())),
         m_is_rejected(false),
         m_current_connection(m_model->connect_update_signal(
-          [=] (const auto& current) {
-            on_current(current);
-          })) {
+          std::bind_front(&DecimalToTextModel::on_current, this))) {
     update_validator();
   }
 
@@ -450,10 +448,10 @@ DecimalBox::DecimalBox(std::shared_ptr<OptionalDecimalModel> current,
       m_current(std::move(current)),
       m_adaptor_model(std::make_shared<DecimalToTextModel>(m_current)),
       m_modifiers(std::move(modifiers)),
+      m_text_box(m_adaptor_model, this),
       m_tick(TickIndicator::NONE) {
-  m_text_box = new TextBox(m_adaptor_model, this);
-  enclose(*this, *m_text_box);
-  proxy_style(*this, *m_text_box);
+  enclose(*this, m_text_box);
+  proxy_style(*this, m_text_box);
   update_style(*this, [] (auto& style) {
     style.get(Any() > is_a<Button>()).set(Visibility::VISIBLE);
     style.get(ReadOnly() > is_a<Button>()).set(Visibility::NONE);
@@ -463,7 +461,7 @@ DecimalBox::DecimalBox(std::shared_ptr<OptionalDecimalModel> current,
   });
   m_style_connection =
     connect_style_signal(*this, std::bind_front(&DecimalBox::on_style, this));
-  setFocusProxy(m_text_box);
+  setFocusProxy(&m_text_box);
   if(auto current = m_current->get()) {
     if(*current > 0) {
       m_sign = SignIndicator::POSITIVE;
@@ -477,11 +475,6 @@ DecimalBox::DecimalBox(std::shared_ptr<OptionalDecimalModel> current,
   }
   m_current_connection = m_current->connect_update_signal(
     std::bind_front(&DecimalBox::on_current, this));
-  m_text_box->connect_submit_signal(
-    std::bind_front(&DecimalBox::on_submit, this));
-  m_text_box->connect_reject_signal(
-    std::bind_front(&DecimalBox::on_reject, this));
-  update_button_positions();
 }
 
 const std::shared_ptr<OptionalDecimalModel>& DecimalBox::get_current() const {
@@ -489,22 +482,22 @@ const std::shared_ptr<OptionalDecimalModel>& DecimalBox::get_current() const {
 }
 
 std::shared_ptr<const TextModel> DecimalBox::get_text() const {
-  return m_text_box->get_current();
+  return m_text_box.get_current();
 }
 
 void DecimalBox::set_placeholder(const QString& value) {
-  m_text_box->set_placeholder(value);
+  m_text_box.set_placeholder(value);
 }
 
 bool DecimalBox::is_read_only() const {
-  return m_text_box->is_read_only();
+  return m_text_box.is_read_only();
 }
 
 void DecimalBox::set_read_only(bool is_read_only) {
   if(is_read_only == this->is_read_only()) {
     return;
   }
-  m_text_box->set_read_only(is_read_only);
+  m_text_box.set_read_only(is_read_only);
   if(is_read_only) {
     match(*this, ReadOnly());
   } else {
@@ -581,6 +574,10 @@ void DecimalBox::initialize_editable_data() const {
   m_data->m_down_button = make_down_button(*self);
   m_data->m_down_button->connect_click_signal(
     std::bind_front(&DecimalBox::decrement, self));
+  m_text_box.connect_submit_signal(
+    std::bind_front(&DecimalBox::on_submit, self));
+  m_text_box.connect_reject_signal(
+    std::bind_front(&DecimalBox::on_reject, self));
 }
 
 void DecimalBox::decrement() {

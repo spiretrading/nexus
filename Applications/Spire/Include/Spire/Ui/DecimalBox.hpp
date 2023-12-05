@@ -149,7 +149,7 @@ namespace Styles {
       std::shared_ptr<OptionalDecimalModel> m_current;
       std::shared_ptr<DecimalToTextModel> m_adaptor_model;
       QHash<Qt::KeyboardModifier, Decimal> m_modifiers;
-      TextBox* m_text_box;
+      TextBox m_text_box;
       boost::optional<Decimal> m_last_current;
       TickIndicator m_tick;
       SignIndicator m_sign;
