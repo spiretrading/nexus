@@ -35,11 +35,11 @@ namespace {
     return lhs.get_highlight(indicator) == rhs.get_highlight(indicator);
   }
 
-  auto update_row_style(StyleSheet& style, const Selector& selector,
+  auto update_row_style(StyleSheet& style,
       const TimeAndSalesProperties::Highlight& highlight) {
-    style.get(Any() > selector).
+    style.get(Any()).
       set(BackgroundColor(highlight.m_background_color));
-    style.get(Any() > selector > is_a<TextBox>()).
+    style.get(Any() > is_a<TextBox>()).
       set(TextColor(highlight.m_text_color));
     return style;
   }
@@ -104,7 +104,8 @@ TimeAndSalesWindow::TimeAndSalesWindow(
     QWidget* parent)
     : Window(parent),
       m_factory(std::move(factory)),
-      m_model_builder(std::move(model_builder)) {
+      m_model_builder(std::move(model_builder)),
+      m_timer(this) {
   set_svg_icon(":/Icons/time-sales.svg");
   setWindowIcon(QIcon(":/Icons/taskbar_icons/time-sales.png"));
   auto labels = std::make_shared<ArrayListModel<QString>>();
@@ -145,6 +146,9 @@ TimeAndSalesWindow::TimeAndSalesWindow(
   });
   get_properties()->connect_update_signal(
     std::bind_front(&TimeAndSalesWindow::update_properties, this));
+  m_timer.setSingleShot(true);
+  connect(&m_timer, &QTimer::timeout, std::bind_front(
+    &TimeAndSalesWindow::on_timeout, this));
   resize(scale(180, 410));
 }
 
@@ -250,59 +254,7 @@ void TimeAndSalesWindow::update_export_menu_item() {
 
 void TimeAndSalesWindow::update_properties(
     const TimeAndSalesProperties& properties) {
-  update_style(*m_table_view, [&] (auto& style) {
-    auto font_database = QFontDatabase();
-    bool has_updated_font = false;
-    auto& font = properties.get_font();
-    if(!m_properties || font.family() != m_properties->get_font().family() ||
-        font_database.styleString(font) !=
-          font_database.styleString(m_properties->get_font())) {
-      style.get(Any() > is_a<TableBody>() > is_a<TextBox>()).
-        set(Font(font));
-      style.get(Any() > TableHeaderItem::Label()).
-        set(Font(font));
-      has_updated_font = true;
-    }
-    if(!has_updated_font && (!m_properties ||
-        font.pixelSize() != m_properties->get_font().pixelSize())) {
-      style.get(Any() > is_a<TableBody>() > is_a<TextBox>()).
-        set(FontSize(font.pixelSize()));
-      style.get(Any() > TableHeaderItem::Label()).
-        set(FontSize(font.pixelSize()));
-    }
-    if(!m_properties ||
-        !::is_equal(properties, *m_properties, BboIndicator::UNKNOWN)) {
-      update_row_style(style, UnknownRow(),
-        properties.get_highlight(BboIndicator::UNKNOWN));
-    }
-    if(!m_properties ||
-        !::is_equal(properties, *m_properties, BboIndicator::ABOVE_ASK)) {
-      update_row_style(style, AboveAskRow(),
-        properties.get_highlight(BboIndicator::ABOVE_ASK));
-    }
-    if(!m_properties ||
-        !::is_equal(properties, *m_properties, BboIndicator::AT_ASK)) {
-      update_row_style(style, AtAskRow(),
-        properties.get_highlight(BboIndicator::AT_ASK));
-    }
-    if(!m_properties ||
-        !::is_equal(properties, *m_properties, BboIndicator::INSIDE)) {
-      update_row_style(style, InsideRow(),
-        properties.get_highlight(BboIndicator::INSIDE));
-    }
-    if(!m_properties ||
-        !::is_equal(properties, *m_properties, BboIndicator::AT_BID)) {
-      update_row_style(style, AtBidRow(),
-        properties.get_highlight(BboIndicator::AT_BID));
-    }
-    if(!m_properties ||
-        !::is_equal(properties, *m_properties, BboIndicator::BELOW_BID)) {
-      update_row_style(style, BelowBidRow(),
-        properties.get_highlight(BboIndicator::BELOW_BID));
-    }
-  });
-  if(!m_properties ||
-      properties.is_show_grid() != m_properties->is_show_grid()) {
+  if(properties.is_show_grid() != m_properties.is_show_grid()) {
     if(properties.is_show_grid()) {
       update_style(*m_table_view, [] (auto& style) {
         style.get(Any() > is_a<TableBody>()).
@@ -320,8 +272,11 @@ void TimeAndSalesWindow::update_properties(
           set(VerticalSpacing(0));
       });
     }
+    m_properties = properties;
+  } else {
+    m_current_properties = properties;
+    m_timer.start(100);
   }
-  m_properties = properties;
 }
 
 void TimeAndSalesWindow::on_current(const Security& security) {
@@ -337,7 +292,6 @@ void TimeAndSalesWindow::on_current(const Security& security) {
   m_table_view->get_table()->load_history(
     (height() - m_title_bar->height() - table_header->sizeHint().height()) /
       get_row_height());
-  update_properties(m_factory->get_properties()->get());
 }
 
 void TimeAndSalesWindow::on_table_operation(
@@ -347,26 +301,13 @@ void TimeAndSalesWindow::on_table_operation(
       auto row = m_table_view->get_item({operation.m_index, 0})->parentWidget();
       row->setDisabled(true);
       row->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-      switch(m_table_view->get_table()->get_bbo_indicator(operation.m_index)) {
-        case BboIndicator::UNKNOWN:
-          match(*row, UnknownRow());
-          break;
-        case BboIndicator::ABOVE_ASK:
-          match(*row, AboveAskRow());
-          break;
-        case BboIndicator::AT_ASK:
-          match(*row, AtAskRow());
-          break;
-        case BboIndicator::INSIDE:
-          match(*row, InsideRow());
-          break;
-        case BboIndicator::AT_BID:
-          match(*row, AtBidRow());
-          break;
-        case BboIndicator::BELOW_BID:
-          match(*row, BelowBidRow());
-          break;
-      }
+      auto indicator =
+        m_table_view->get_table()->get_bbo_indicator(operation.m_index);
+      update_style(*row, [&] (auto& style) {
+        update_row_style(style, m_properties.get_highlight(indicator));
+        style.get(Any() > is_a<TextBox>()).set(Font(m_properties.get_font()));
+      });
+      m_rows[static_cast<int>(indicator)].push_back(row);
       update_export_menu_item();
     },
     [&] (const TableModel::RemoveOperation& operation) {
@@ -398,4 +339,55 @@ void TimeAndSalesWindow::on_properties() {
     }
   }
   properties_window->activateWindow();
+}
+
+void TimeAndSalesWindow::on_timeout() {
+  auto font_database = QFontDatabase();
+  auto& font = m_current_properties.get_font();
+  if(font.family() != m_properties.get_font().family() ||
+      font_database.styleString(font) !=
+        font_database.styleString(m_properties.get_font())) {
+    auto promise = QtPromise([=] {
+      update_style(*m_table_view, [&] (auto& style) {
+        style.get(Any() > TableHeaderItem::Label()).set(Font(font));
+      });
+      for(auto& indicator_rows : m_rows) {
+        for(auto row : indicator_rows) {
+          update_style(*row, [&] (auto& style) {
+            style.get(Any() > is_a<TextBox>()).set(Font(font));
+          });
+        }
+      }
+    });
+  } else if(font.pixelSize() != m_properties.get_font().pixelSize()) {
+    auto promise = QtPromise([=] {
+      update_style(*m_table_view, [&] (auto& style) {
+        style.get(Any() > TableHeaderItem::Label()).
+          set(FontSize(font.pixelSize()));
+      });
+      for(auto& indicator_rows : m_rows) {
+        for(auto row : indicator_rows) {
+          update_style(*row, [&] (auto& style) {
+            style.get(Any() > is_a<TextBox>()).
+              set(FontSize(font.pixelSize()));
+          });
+        }
+      }
+    });
+  } else {
+    for(auto i = 0; i < BBO_INDICATOR_COUNT; ++i) {
+      auto indicator = static_cast<BboIndicator>(i);
+      if(!::is_equal(m_current_properties, m_properties, indicator)) {
+        auto& highlight = m_current_properties.get_highlight(indicator);
+        auto promise = QtPromise([=] {
+          for(auto row : m_rows[i]) {
+            update_style(*row, [&] (auto& style) {
+              update_row_style(style, highlight);
+            });
+          }
+        });
+      }
+    }
+  }
+  m_properties = m_current_properties;
 }

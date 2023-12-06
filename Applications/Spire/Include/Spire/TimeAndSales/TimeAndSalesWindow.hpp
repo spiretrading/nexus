@@ -1,5 +1,6 @@
 #ifndef SPIRE_TIME_AND_SALES_WINDOW_HPP
 #define SPIRE_TIME_AND_SALES_WINDOW_HPP
+#include <QTimer>
 #include "Spire/Spire/TableModel.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesModel.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesPropertiesWindowFactory.hpp"
@@ -80,7 +81,10 @@ namespace Styles {
       SecurityView* m_security_view;
       ResponsiveLabel* m_responsive_title_label;
       ContextMenu* m_context_menu;
-      boost::optional<TimeAndSalesProperties> m_properties;
+      TimeAndSalesProperties m_properties;
+      TimeAndSalesProperties m_current_properties;
+      QTimer m_timer;
+      std::array<std::vector<QWidget*>, BBO_INDICATOR_COUNT> m_rows;
 
       int get_row_height() const;
       void make_context_menu();
@@ -90,6 +94,7 @@ namespace Styles {
       void on_table_operation(const TableModel::Operation& operation);
       void on_export();
       void on_properties();
+      void on_timeout();
   };
 }
 
