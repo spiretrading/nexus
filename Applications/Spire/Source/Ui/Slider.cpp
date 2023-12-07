@@ -469,7 +469,7 @@ void Slider::on_track_style() {
             return;
           }
           *has_update = true;
-          m_track_image = image;
+          m_track_image = std::move(image);
         });
       });
   }
@@ -496,7 +496,7 @@ void Slider::on_thumb_icon_style() {
             return;
           }
           *has_update = true;
-          m_thumb_image = image;
+          m_thumb_image = std::move(image);
         });
       });
   }
