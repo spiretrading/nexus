@@ -323,6 +323,7 @@ class TextBox::LineEdit : public QLineEdit {
         if(m_current->get_state() == QValidator::Acceptable) {
           m_submission = m_current->get();
           m_has_update = false;
+          m_submit_signal(m_submission);
         } else {
           m_reject_signal(m_current->get());
           m_current->set(m_submission);
