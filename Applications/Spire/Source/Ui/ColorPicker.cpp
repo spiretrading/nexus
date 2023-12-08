@@ -2,6 +2,7 @@
 #include <QEvent>
 #include <QPainter>
 #include <QPixmap>
+#include <QTimer>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalScalarValueModel.hpp"
@@ -17,6 +18,8 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  const auto DEBOUNCE_TIME_OUT = 30;
+
   const auto& CHEQUERED_BOARD_IMAGE() {
     static auto image = QPixmap(":/Icons/chequered-board.png");
     return image;
@@ -36,6 +39,18 @@ namespace {
     static auto icon =
       imageFromSvg(":/Icons/color-thumb-invert.svg", scale(14, 14));
     return icon;
+  }
+
+  template<std::invocable F>
+  auto debounce(F callback, int msec) {
+    auto timer = std::make_shared<QTimer>();
+    timer->setSingleShot(true);
+    QObject::connect(timer.get(), &QTimer::timeout, [=] {
+      callback();
+    });
+    return [=] {
+      timer->start(msec);
+    };
   }
 
   auto get_hue(const QColor& color) {
@@ -70,8 +85,9 @@ namespace {
     painter.fillRect(track_area, saturation_gradient);
     painter.setCompositionMode(QPainter::CompositionMode_Multiply);
     painter.fillRect(track_area, brightness_gradient);
+    painter.end();
     update_style(color_spectrum, [&] (auto& style) {
-      style.get(Any() > Track()).set(IconImage(track_image));
+      style.get(Any() > Track()).set(IconImage(std::move(track_image)));
     });
   }
 
@@ -89,8 +105,9 @@ namespace {
       board_image.scaled(QSize(board_image.width(), track_size.height())));
     alpha_painter.setCompositionMode(QPainter::CompositionMode_Multiply);
     alpha_painter.fillRect(track_area, alpha_gradient);
+    alpha_painter.end();
     update_style(alpha_slider, [&] (auto& style) {
-      style.get(Any() > Track()).set(IconImage(alpha_image));
+      style.get(Any() > Track()).set(IconImage(std::move(alpha_image)));
     });
   }
 
@@ -235,7 +252,6 @@ ColorPicker::ColorPicker(std::shared_ptr<ColorModel> current,
     : QWidget(&parent),
       m_model(std::make_shared<ColorPickerModel>(std::move(current))),
       m_palette(std::move(palette)),
-      m_is_alpha_visible(true),
       m_panel_horizontal_spacing(0) {
   m_color_spectrum = make_color_spectrum(m_model->m_spectrum_x_model,
     m_model->m_spectrum_y_model);
@@ -257,11 +273,15 @@ ColorPicker::ColorPicker(std::shared_ptr<ColorModel> current,
       set(horizontal_padding(scale_width(8))).
       set(vertical_padding(scale_height(18)));
   });
-  on_current(get_current()->get());
   m_current_connection = get_current()->connect_update_signal(
-    std::bind_front(&ColorPicker::on_current, this));
-  m_style_connection = connect_style_signal(*this,
-    std::bind_front(&ColorPicker::on_style, this));
+    std::bind_front(&ColorPicker::on_current, this,
+      debounce([=] {
+        update_color_spectrum_track(*m_color_spectrum,
+          get_pure_color(get_current()->get()));
+      }, DEBOUNCE_TIME_OUT),
+      debounce([=] {
+        update_alpha_slider_track(*m_alpha_slider, get_current()->get());
+      }, DEBOUNCE_TIME_OUT)));
 }
 
 const std::shared_ptr<ColorModel>& ColorPicker::get_current() const {
@@ -299,28 +319,15 @@ void ColorPicker::resizeEvent(QResizeEvent* event) {
   return QWidget::resizeEvent(event);
 }
 
-void ColorPicker::on_current(const QColor& current) {
-  if(auto pure_color = get_pure_color(current);
-      get_pure_color(m_last_color) != pure_color) {
-    update_color_spectrum_track(*m_color_spectrum, pure_color);
+void ColorPicker::on_current(std::function<void()> update_spectrum,
+    std::function<void()> update_alpha, const QColor& current) {
+  if(get_pure_color(m_last_color) != get_pure_color(current)) {
+    update_spectrum();
   }
-  if(m_is_alpha_visible && m_last_color.rgb() != current.rgb()) {
-    update_alpha_slider_track(*m_alpha_slider, current);
+  if(m_alpha_slider->isVisible() && m_last_color.rgb() != current.rgb()) {
+    update_alpha();
   }
   m_last_color = current;
-}
-
-void ColorPicker::on_style() {
-  auto& stylist = find_stylist(*this);
-  if(auto visibility = Styles::find<Visibility>(stylist.get_computed_block())) {
-    stylist.evaluate(*visibility, [=] (auto visibility) {
-      if(visibility == Visibility::VISIBLE) {
-        m_is_alpha_visible = true;
-      } else {
-        m_is_alpha_visible = false;
-      }
-    });
-  }
 }
 
 void ColorPicker::on_panel_style() {

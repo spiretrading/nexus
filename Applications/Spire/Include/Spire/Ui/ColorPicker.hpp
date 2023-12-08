@@ -54,14 +54,13 @@ namespace Spire {
       Slider2D* m_color_spectrum;
       Slider* m_alpha_slider;
       QColor m_last_color;
-      bool m_is_alpha_visible;
       int m_panel_horizontal_spacing;
       boost::signals2::scoped_connection m_current_connection;
       boost::signals2::scoped_connection m_style_connection;
       boost::signals2::scoped_connection m_panel_style_connection;
 
-      void on_current(const QColor& current);
-      void on_style();
+      void on_current(std::function<void()> update_spectrum,
+        std::function<void()> update_alpha, const QColor& current);
       void on_panel_style();
   };
 }
