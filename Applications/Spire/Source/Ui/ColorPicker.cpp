@@ -86,9 +86,14 @@ namespace {
     painter.setCompositionMode(QPainter::CompositionMode_Multiply);
     painter.fillRect(track_area, brightness_gradient);
     painter.end();
-    update_style(color_spectrum, [&] (auto& style) {
-      style.get(Any() > Track()).set(IconImage(std::move(track_image)));
-    });
+    auto track = color_spectrum.findChild<QLabel*>();;
+    if(track->pixmap(Qt::ReturnByValue).isNull()) {
+      update_style(color_spectrum, [&] (auto& style) {
+        style.get(Any() > Track()).set(IconImage(std::move(track_image)));
+      });
+    } else {
+      track->setPixmap(QPixmap::fromImage(track_image));
+    }
   }
 
   void update_alpha_slider_track(Slider& alpha_slider, const QColor& color) {
@@ -106,9 +111,14 @@ namespace {
     alpha_painter.setCompositionMode(QPainter::CompositionMode_Multiply);
     alpha_painter.fillRect(track_area, alpha_gradient);
     alpha_painter.end();
-    update_style(alpha_slider, [&] (auto& style) {
-      style.get(Any() > Track()).set(IconImage(std::move(alpha_image)));
-    });
+    auto track = alpha_slider.findChild<QLabel*>();;
+    if(track->pixmap(Qt::ReturnByValue).isNull()) {
+      update_style(alpha_slider, [&] (auto& style) {
+        style.get(Any() > Track()).set(IconImage(std::move(alpha_image)));
+      });
+    } else {
+      track->setPixmap(QPixmap::fromImage(alpha_image));
+    }
   }
 
   auto make_color_spectrum(std::shared_ptr<DecimalModel> x_model,
