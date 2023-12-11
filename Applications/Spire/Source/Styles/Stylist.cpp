@@ -557,6 +557,10 @@ void Spire::Styles::forward_style(QWidget& source, QWidget& destination) {
   auto& stylists = get_stylists();
   assert(!stylists.contains(&source));
   stylists.insert(std::pair(&source, &find_stylist(destination)));
+  QObject::connect(&source, &QObject::destroyed,
+    [=, &source, &stylists] (QObject*) {
+      stylists.erase(&source);
+    });
 }
 
 void Spire::Styles::proxy_style(QWidget& source, QWidget& destination) {
