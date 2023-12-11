@@ -25,6 +25,11 @@ namespace {
     return *timer;
   }
 
+  auto& get_stylists() {
+    static auto stylists = std::unordered_map<QWidget*, Stylist*>();
+    return stylists;
+  }
+
   struct PseudoStylistHash {
     std::size_t operator ()(
         const std::pair<QWidget*, PseudoElement>& element) const {
@@ -442,16 +447,17 @@ const Stylist* Spire::Styles::find_stylist(
 }
 
 Stylist& Spire::Styles::find_stylist(QWidget& widget) {
-  static auto stylists = std::unordered_map<QWidget*, Stylist*>();
+  auto& stylists = get_stylists();
   auto stylist = stylists.find(&widget);
   if(stylist == stylists.end()) {
     auto entry = new Stylist(widget, none);
     stylist = stylists.insert(std::pair(&widget, entry)).first;
-    QObject::connect(&widget, &QObject::destroyed, [=, &widget] (QObject*) {
-      entry->m_style_event_filter = nullptr;
-      delete entry;
-      stylists.erase(&widget);
-    });
+    QObject::connect(&widget, &QObject::destroyed,
+      [=, &widget, &stylists] (QObject*) {
+        entry->m_style_event_filter = nullptr;
+        delete entry;
+        stylists.erase(&widget);
+      });
   }
   return *stylist->second;
 }
@@ -545,6 +551,12 @@ void Spire::Styles::add_pseudo_element(QWidget& source,
     delete entry;
     pseudo_stylists.erase(std::pair(&source, pseudo_element));
   });
+}
+
+void Spire::Styles::forward_style(QWidget& source, QWidget& destination) {
+  auto& stylists = get_stylists();
+  assert(!stylists.contains(&source));
+  stylists.insert(std::pair(&source, &find_stylist(destination)));
 }
 
 void Spire::Styles::proxy_style(QWidget& source, QWidget& destination) {

@@ -230,7 +230,7 @@ namespace Spire {
         m_current(std::move(current)),
         m_decimal_box(
           std::move(adaptor_model), make_adapted_modifiers(modifiers), this) {
-    Styles::proxy_style(*this, m_decimal_box);
+    Styles::forward_style(*this, m_decimal_box);
     setFocusProxy(&m_decimal_box);
     enclose(*this, m_decimal_box);
   }
