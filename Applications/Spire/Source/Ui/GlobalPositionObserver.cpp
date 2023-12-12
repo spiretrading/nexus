@@ -26,7 +26,7 @@ struct GlobalPositionObserver::EventFilter : QObject {
       : m_widget(&widget),
         m_position(::get_position(*m_widget)) {
     m_widget->installEventFilter(this);
-    m_widget->connect(
+    connect(
       m_widget, &QObject::destroyed, this, &EventFilter::on_widget_destroyed);
     observe_parent();
   }
@@ -62,6 +62,7 @@ struct GlobalPositionObserver::EventFilter : QObject {
 
   void on_widget_destroyed() {
     m_parent_position_connection.disconnect();
+    m_parent_observer = nullptr;
   }
 
   void on_position(const QPoint& position) {
