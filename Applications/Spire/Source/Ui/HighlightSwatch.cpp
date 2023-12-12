@@ -24,7 +24,7 @@ HighlightSwatch::HighlightSwatch(std::shared_ptr<ValueModel<Highlight>> current,
   update_style(*this, [&] (auto& style) {
     style.get(Any()).
       set(border(scale_width(1), QColor(0, 0, 0, 51))).
-      set(Font(font)).
+      set(Font(std::move(font))).
       set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
   });
   on_current(m_current->get());
