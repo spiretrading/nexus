@@ -16,23 +16,23 @@ namespace {
 
     AncestorObserver(
         const Stylist& stylist, const SelectionUpdateSignal& on_update)
-        : m_on_update(std::move(on_update)) {
+        : m_on_update(on_update) {
       auto ancestors = build_ancestors(stylist.get_widget());
       for(auto ancestor : ancestors) {
-        if(auto parent = ancestor->get_widget().parentWidget()) {
-          m_parents[ancestor] = &find_stylist(*parent);
+        if(auto parent = find_parent(*ancestor)) {
+          m_parents[ancestor] = parent;
         }
         ancestor->get_widget().installEventFilter(this);
       }
       m_on_update(std::move(ancestors), {});
-      if(auto parent = stylist.get_widget().parentWidget()) {
-        m_parents[&stylist] = &find_stylist(*parent);
+      if(auto parent = find_parent(stylist)) {
+        m_parents[&stylist] = parent;
       }
       stylist.get_widget().installEventFilter(this);
     }
 
-    std::unordered_set<const Stylist*> build_ancestors(
-        const QWidget& descendant) const {
+    std::unordered_set<const Stylist*>
+        build_ancestors(const QWidget& descendant) const {
       auto ancestors = std::unordered_set<const Stylist*>();
       auto ancestor = descendant.parentWidget();
       while(ancestor) {
@@ -55,8 +55,8 @@ namespace {
           }
           return std::unordered_set<const Stylist*>();
         }();
-        if(auto parent = widget.parentWidget()) {
-          m_parents[&stylist] = &find_stylist(*parent);
+        if(auto parent = find_parent(find_stylist(widget))) {
+          m_parents[&stylist] = parent;
         } else {
           m_parents.erase(&stylist);
         }

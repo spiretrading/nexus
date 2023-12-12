@@ -224,6 +224,16 @@ namespace Spire::Styles {
   /** Finds the Stylist associated with a widget's pseudo-element. */
   Stylist* find_stylist(QWidget& widget, const PseudoElement& pseudo_element);
 
+  /**
+   * Returns a Stylist's parent or <i>nullptr</i> if the Stylist is the root.
+   */
+  const Stylist* find_parent(const Stylist& stylist);
+
+  /**
+   * Returns a Stylist's parent or <i>nullptr</i> if the Stylist is the root.
+   */
+  Stylist* find_parent(Stylist& stylist);
+
   /** Returns a QWidget's styling. */
   const StyleSheet& get_style(const QWidget& widget);
 

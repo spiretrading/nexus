@@ -303,8 +303,8 @@ void Stylist::apply(Stylist& source, const RuleEntry& rule) {
   auto target = &source;
   auto increment = 1;
   while(base != target) {
-    if(auto parent = base->get_widget().parentWidget()) {
-      base = &find_stylist(*parent);
+    if(auto parent = find_parent(*base)) {
+      base = parent;
       level += increment;
     } else if(increment == 1) {
       level = 0;
@@ -467,6 +467,21 @@ Stylist* Spire::Styles::find_stylist(QWidget& widget,
   auto stylist = pseudo_stylists.find(std::pair(&widget, pseudo_element));
   if(stylist != pseudo_stylists.end()) {
     return &*stylist->second;
+  }
+  return nullptr;
+}
+
+const Stylist* Spire::Styles::find_parent(const Stylist& stylist) {
+  return find_parent(const_cast<Stylist&>(stylist));
+}
+
+Stylist* Spire::Styles::find_parent(Stylist& stylist) {
+  auto parent = stylist.get_widget().parentWidget();
+  while(parent != nullptr && &find_stylist(*parent) == &stylist) {
+    parent = parent->parentWidget();
+  }
+  if(parent) {
+    return &find_stylist(*parent);
   }
   return nullptr;
 }

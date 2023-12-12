@@ -35,9 +35,9 @@ namespace {
     }
 
     void connect_parent() {
-      if(auto parent = m_stylist->get_widget().parentWidget()) {
+      if(auto parent = find_parent(*m_stylist)) {
         m_parent_connection =
-          select(ChildSelector(Any(), Any()), find_stylist(*parent),
+          select(ChildSelector(Any(), Any()), *parent,
             std::bind_front(&SiblingObserver::on_selection, this));
       } else {
         auto selection = std::move(m_selection);
