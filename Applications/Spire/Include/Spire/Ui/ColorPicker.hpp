@@ -59,8 +59,7 @@ namespace Spire {
       boost::signals2::scoped_connection m_style_connection;
       boost::signals2::scoped_connection m_panel_style_connection;
 
-      void on_current(std::function<void()> update_spectrum,
-        std::function<void()> update_alpha, const QColor& current);
+      void on_current(const QColor& current);
       void on_panel_style();
   };
 }
