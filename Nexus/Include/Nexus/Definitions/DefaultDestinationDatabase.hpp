@@ -225,6 +225,7 @@ namespace Nexus {
       database.SetPreferredDesintation("XASE", "NASDAQ");
       database.SetPreferredDesintation("XASX", "ASXT");
       database.SetPreferredDesintation("XCNQ", "CSE");
+      database.SetPreferredDesintation("CSE2", "CSE");
       database.SetPreferredDesintation("XNYS", "NASDAQ");
       database.SetPreferredDesintation("XNAS", "NASDAQ");
       database.SetPreferredDesintation("XTSE", "TSX");
