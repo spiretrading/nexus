@@ -204,6 +204,16 @@ namespace Nexus {
       }
       {
         auto entry = MarketDatabase::Entry();
+        entry.m_code = "CSE2";
+        entry.m_countryCode = DefaultCountries::CA();
+        entry.m_timeZone = "Eastern_Time";
+        entry.m_currency = DefaultCurrencies::CAD();
+        entry.m_description = "Canadian Securities Exchange - CSE2";
+        entry.m_displayName = "CSE2";
+        database.Add(entry);
+      }
+      {
+        auto entry = MarketDatabase::Entry();
         entry.m_code = "XCX2";
         entry.m_countryCode = DefaultCountries::CA();
         entry.m_timeZone = "Eastern_Time";
@@ -414,6 +424,11 @@ namespace Nexus {
 
     inline MarketCode CSE() {
       static auto value = GetDefaultMarketDatabase().FromCode("XCNQ").m_code;
+      return value;
+    }
+
+    inline MarketCode CSE2() {
+      static auto value = GetDefaultMarketDatabase().FromCode("CSE2").m_code;
       return value;
     }
 

@@ -224,6 +224,8 @@ void Nexus::Python::ExportDefaultMarkets(module& module) {
   submodule.add_object("BATY", cast(DefaultMarkets::BATY()));
   submodule.add_object("BOSX", cast(DefaultMarkets::BOSX()));
   submodule.add_object("CBOE", cast(DefaultMarkets::CBOE()));
+  submodule.add_object("CSE", cast(DefaultMarkets::CSE()));
+  submodule.add_object("CSE2", cast(DefaultMarkets::CSE2()));
   submodule.add_object("NSEX", cast(DefaultMarkets::NSEX()));
   submodule.add_object("ADFX", cast(DefaultMarkets::ADFX()));
   submodule.add_object("ISE", cast(DefaultMarkets::ISE()));
