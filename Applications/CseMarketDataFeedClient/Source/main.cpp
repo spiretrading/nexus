@@ -78,7 +78,7 @@ namespace {
   }
 
   CseConfiguration ParseConfiguration(const YAML::Node& config,
-      const MarketDatabase& marketDatabase, const ptime& currentDate,
+      const MarketDatabase& marketDatabase, ptime currentDate,
       const local_time::tz_database& timeZones) {
     return TryOrNest([&] {
       auto configTimezone = Extract<std::string>(config, "time_zone",
@@ -90,9 +90,11 @@ namespace {
       auto cseConfig = CseConfiguration();
       cseConfig.m_isLoggingMessages = Extract<bool>(config, "enable_logging",
         false);
-      cseConfig.m_timeOffset = -GetUtcOffset(currentDate, *timeZone);
       cseConfig.m_isTimeAndSaleFeed = Extract<bool>(config, "is_time_and_sale",
         false);
+      cseConfig.m_timeOffset = -GetUtcOffset(currentDate, *timeZone);
+      cseConfig.m_market =
+        ParseMarketCode(Extract<std::string>(config, "market"), marketDatabase);
       if(auto mpidMappings = config["mpid_mappings"]) {
         cseConfig.m_mpidMappings = LoadMpidMappings(mpidMappings);
       }

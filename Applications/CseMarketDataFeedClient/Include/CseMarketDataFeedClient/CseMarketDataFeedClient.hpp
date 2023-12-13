@@ -197,8 +197,8 @@ namespace Nexus::MarketDataService {
     if(!askVolume) {
       return;
     }
-    auto security = Security(std::move(*symbol), DefaultMarkets::CSE(),
-      DefaultCountries::CA());
+    auto security =
+      Security(std::move(*symbol), m_config.m_market, DefaultCountries::CA());
     auto bid = Quote(*bidPrice, *bidVolume, Side::BID);
     auto ask = Quote(*askPrice, *askVolume, Side::ASK);
     auto bbo = BboQuote(bid, ask, m_timeClient->GetTime());
@@ -236,8 +236,8 @@ namespace Nexus::MarketDataService {
     if(!exchangeId) {
       return;
     }
-    auto security = Security(std::move(*symbol), DefaultMarkets::CSE(),
-      DefaultCountries::CA());
+    auto security =
+      Security(std::move(*symbol), m_config.m_market, DefaultCountries::CA());
     auto condition = TimeAndSale::Condition();
     condition.m_code = "@";
     auto timeAndSale = TimeAndSale(*timestamp, *price, *volume,
@@ -299,11 +299,11 @@ namespace Nexus::MarketDataService {
     }
     auto brokerNumber = message.GetBusinessField<std::string>(70);
     auto orderId = GetOrderId(symbol, brokerNumber, *orderNumber);
-    auto security = Security(std::move(*symbol), DefaultMarkets::CSE(),
-      DefaultCountries::CA());
+    auto security =
+      Security(std::move(*symbol), m_config.m_market, DefaultCountries::CA());
     *quantity = GetBoardLotPortion(*quantity, *price);
-    m_marketDataFeedClient->AddOrder(security, DefaultMarkets::CSE(), mpid,
-      false, orderId, *side, *price, *quantity, *timestamp);
+    m_marketDataFeedClient->AddOrder(security, m_config.m_market, mpid, false,
+      orderId, *side, *price, *quantity, *timestamp);
   }
 
   template<typename M, typename S, typename T>

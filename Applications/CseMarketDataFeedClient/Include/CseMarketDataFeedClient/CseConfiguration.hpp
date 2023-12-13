@@ -19,6 +19,9 @@ namespace Nexus::MarketDataService {
     /** The difference in time between the data provider's time and UTC. */
     boost::posix_time::time_duration m_timeOffset;
 
+    /** The market code the symbols are assigned to. */
+    MarketCode m_market;
+
     /** The set of Securities listed on the market. */
     std::unordered_set<std::string> m_securities;
 
