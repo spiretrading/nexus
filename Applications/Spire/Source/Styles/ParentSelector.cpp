@@ -16,10 +16,12 @@ namespace {
 
     ParentObserver(
         const Stylist& stylist, const SelectionUpdateSignal& on_update)
-        : m_on_update(on_update),
-          m_parent(stylist.get_widget().parentWidget()) {
-      if(m_parent) {
-        m_on_update({&find_stylist(*m_parent)}, {});
+        : m_on_update(on_update) {
+      if(auto parent = find_parent(stylist)) {
+        m_parent = &parent->get_widget();
+        m_on_update({parent}, {});
+      } else {
+        m_parent = nullptr;
       }
       stylist.get_widget().installEventFilter(this);
     }
@@ -28,7 +30,11 @@ namespace {
       if(event->type() == QEvent::ParentChange) {
         auto& widget = static_cast<QWidget&>(*watched);
         auto old_parent = m_parent;
-        m_parent = widget.parentWidget();
+        if(auto parent = find_parent(find_stylist(widget))) {
+          m_parent = &parent->get_widget();
+        } else {
+          m_parent = nullptr;
+        }
         if(m_parent && old_parent) {
           m_on_update({&find_stylist(*m_parent)}, {&find_stylist(*old_parent)});
         } else if(m_parent) {
