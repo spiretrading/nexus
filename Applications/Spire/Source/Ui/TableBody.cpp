@@ -712,7 +712,9 @@ void TableBody::on_cover_style(Cover& cover) {
         });
       });
   }
-  update();
+  if(cover.m_background_color != Qt::transparent) {
+    update(cover.geometry());
+  }
 }
 
 void TableBody::on_table_operation(const TableModel::Operation& operation) {
