@@ -30,6 +30,12 @@ markets:
     currency: CAD
     description: Canadian Securities Exchange
     display_name: CSE
+  - code: CSE2
+    country_code: CA
+    time_zone: Eastern_Time
+    currency: CAD
+    description: Canadian Securities Exchange - CSE2
+    display_name: CSE2
   - code: XCX2
     country_code: CA
     time_zone: Eastern_Time
