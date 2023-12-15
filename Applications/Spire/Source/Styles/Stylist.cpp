@@ -25,6 +25,11 @@ namespace {
     return *timer;
   }
 
+  auto& get_stylists() {
+    static auto stylists = std::unordered_map<QWidget*, Stylist*>();
+    return stylists;
+  }
+
   struct PseudoStylistHash {
     std::size_t operator ()(
         const std::pair<QWidget*, PseudoElement>& element) const {
@@ -298,8 +303,8 @@ void Stylist::apply(Stylist& source, const RuleEntry& rule) {
   auto target = &source;
   auto increment = 1;
   while(base != target) {
-    if(auto parent = base->get_widget().parentWidget()) {
-      base = &find_stylist(*parent);
+    if(auto parent = find_parent(*base)) {
+      base = parent;
       level += increment;
     } else if(increment == 1) {
       level = 0;
@@ -442,16 +447,17 @@ const Stylist* Spire::Styles::find_stylist(
 }
 
 Stylist& Spire::Styles::find_stylist(QWidget& widget) {
-  static auto stylists = std::unordered_map<QWidget*, Stylist*>();
+  auto& stylists = get_stylists();
   auto stylist = stylists.find(&widget);
   if(stylist == stylists.end()) {
     auto entry = new Stylist(widget, none);
     stylist = stylists.insert(std::pair(&widget, entry)).first;
-    QObject::connect(&widget, &QObject::destroyed, [=, &widget] (QObject*) {
-      entry->m_style_event_filter = nullptr;
-      delete entry;
-      stylists.erase(&widget);
-    });
+    QObject::connect(&widget, &QObject::destroyed,
+      [=, &widget, &stylists] (QObject*) {
+        entry->m_style_event_filter = nullptr;
+        delete entry;
+        stylists.erase(&widget);
+      });
   }
   return *stylist->second;
 }
@@ -461,6 +467,21 @@ Stylist* Spire::Styles::find_stylist(QWidget& widget,
   auto stylist = pseudo_stylists.find(std::pair(&widget, pseudo_element));
   if(stylist != pseudo_stylists.end()) {
     return &*stylist->second;
+  }
+  return nullptr;
+}
+
+const Stylist* Spire::Styles::find_parent(const Stylist& stylist) {
+  return find_parent(const_cast<Stylist&>(stylist));
+}
+
+Stylist* Spire::Styles::find_parent(Stylist& stylist) {
+  auto parent = stylist.get_widget().parentWidget();
+  while(parent != nullptr && &find_stylist(*parent) == &stylist) {
+    parent = parent->parentWidget();
+  }
+  if(parent) {
+    return &find_stylist(*parent);
   }
   return nullptr;
 }
@@ -545,6 +566,16 @@ void Spire::Styles::add_pseudo_element(QWidget& source,
     delete entry;
     pseudo_stylists.erase(std::pair(&source, pseudo_element));
   });
+}
+
+void Spire::Styles::forward_style(QWidget& source, QWidget& destination) {
+  auto& stylists = get_stylists();
+  assert(!stylists.contains(&source));
+  stylists.insert(std::pair(&source, &find_stylist(destination)));
+  QObject::connect(&source, &QObject::destroyed,
+    [=, &source, &stylists] (QObject*) {
+      stylists.erase(&source);
+    });
 }
 
 void Spire::Styles::proxy_style(QWidget& source, QWidget& destination) {

@@ -120,19 +120,24 @@ namespace Spire {
       /** Returns the DecimalBox used to display the scalar. */
       DecimalBox& get_decimal_box();
 
+    protected:
+      void showEvent(QShowEvent* event) override;
+
     private:
-      mutable SubmitSignal m_submit_signal;
-      mutable RejectSignal m_reject_signal;
+      struct EditableData {
+        mutable SubmitSignal m_submit_signal;
+        mutable RejectSignal m_reject_signal;
+      };
       std::shared_ptr<ScalarValueModel<boost::optional<Type>>> m_current;
-      std::shared_ptr<ToDecimalModel<Type>> m_adaptor_model;
-      boost::optional<Type> m_submission;
-      DecimalBox* m_decimal_box;
+      DecimalBox m_decimal_box;
+      std::unique_ptr<EditableData> m_data;
       boost::signals2::scoped_connection m_current_connection;
-      boost::signals2::scoped_connection m_submit_connection;
-      boost::signals2::scoped_connection m_reject_connection;
 
       static auto make_modifiers(
         const ScalarValueModel<boost::optional<Type>>& model);
+      static auto make_adapted_modifiers(
+        const QHash<Qt::KeyboardModifier, Type>& modifiers);
+      void initialize_editable_data() const;
       void on_submit(const boost::optional<Decimal>& submission);
       void on_reject(const boost::optional<Decimal>& value);
   };
@@ -174,34 +179,39 @@ namespace Spire {
 
   template<typename T>
   std::shared_ptr<const TextModel> DecimalBoxAdaptor<T>::get_text() const {
-    return m_decimal_box->get_text();
+    return m_decimal_box.get_text();
   }
 
   template<typename T>
   void DecimalBoxAdaptor<T>::set_placeholder(const QString& value) {
-    m_decimal_box->set_placeholder(value);
+    m_decimal_box.set_placeholder(value);
   }
 
   template<typename T>
   bool DecimalBoxAdaptor<T>::is_read_only() const {
-    return m_decimal_box->is_read_only();
+    return m_decimal_box.is_read_only();
   }
 
   template<typename T>
   void DecimalBoxAdaptor<T>::set_read_only(bool is_read_only) {
-    m_decimal_box->set_read_only(is_read_only);
+    m_decimal_box.set_read_only(is_read_only);
+    if(!is_read_only) {
+      initialize_editable_data();
+    }
   }
 
   template<typename T>
   boost::signals2::connection DecimalBoxAdaptor<T>::connect_submit_signal(
       const typename SubmitSignal::slot_type& slot) const {
-    return m_submit_signal.connect(slot);
+    initialize_editable_data();
+    return m_data->m_submit_signal.connect(slot);
   }
 
   template<typename T>
   boost::signals2::connection DecimalBoxAdaptor<T>::connect_reject_signal(
       const typename RejectSignal::slot_type& slot) const {
-    return m_reject_signal.connect(slot);
+    initialize_editable_data();
+    return m_data->m_reject_signal.connect(slot);
   }
 
   template<typename T>
@@ -218,27 +228,35 @@ namespace Spire {
       QHash<Qt::KeyboardModifier, Type> modifiers, QWidget* parent)
       : QWidget(parent),
         m_current(std::move(current)),
-        m_adaptor_model(std::move(adaptor_model)),
-        m_submission(m_current->get()) {
+        m_decimal_box(
+          std::move(adaptor_model), make_adapted_modifiers(modifiers), this) {
+    Styles::forward_style(*this, m_decimal_box);
+    setFocusProxy(&m_decimal_box);
+    enclose(*this, m_decimal_box);
+  }
+
+  template<typename T>
+  DecimalBox& DecimalBoxAdaptor<T>::get_decimal_box() {
+    return m_decimal_box;
+  }
+
+  template<typename T>
+  void DecimalBoxAdaptor<T>::showEvent(QShowEvent* event) {
+    if(!is_read_only()) {
+      initialize_editable_data();
+    }
+    QWidget::showEvent(event);
+  }
+
+  template<typename T>
+  auto DecimalBoxAdaptor<T>::make_adapted_modifiers(
+      const QHash<Qt::KeyboardModifier, Type>& modifiers) {
     auto adapted_modifiers = QHash<Qt::KeyboardModifier, Decimal>();
     for(auto modifier = modifiers.begin();
         modifier != modifiers.end(); ++modifier) {
       adapted_modifiers.insert(modifier.key(), to_decimal(modifier.value()));
     }
-    m_decimal_box =
-      new DecimalBox(m_adaptor_model, std::move(adapted_modifiers), this);
-    Styles::proxy_style(*this, *m_decimal_box);
-    setFocusProxy(m_decimal_box);
-    enclose(*this, *m_decimal_box);
-    m_submit_connection = m_decimal_box->connect_submit_signal(
-      [=] (const auto& submission) { on_submit(submission); });
-    m_reject_connection = m_decimal_box->connect_reject_signal(
-      [=] (const auto& value) { on_reject(value); });
-  }
-
-  template<typename T>
-  DecimalBox& DecimalBoxAdaptor<T>::get_decimal_box() {
-    return *m_decimal_box;
+    return adapted_modifiers;
   }
 
   template<typename T>
@@ -251,15 +269,28 @@ namespace Spire {
   }
 
   template<typename T>
+  void DecimalBoxAdaptor<T>::initialize_editable_data() const {
+    if(m_data) {
+      return;
+    }
+    auto self = const_cast<DecimalBoxAdaptor*>(this);
+    self->m_data = std::make_unique<EditableData>();
+    m_decimal_box.connect_submit_signal(
+      std::bind_front(&DecimalBoxAdaptor::on_submit, self));
+    m_decimal_box.connect_reject_signal(
+      std::bind_front(&DecimalBoxAdaptor::on_reject, self));
+  }
+
+  template<typename T>
   void DecimalBoxAdaptor<T>::on_submit(
       const boost::optional<Decimal>& submission) {
-    m_submission = m_current->get();
-    m_submit_signal(m_submission);
+    auto current = m_current->get();
+    m_data->m_submit_signal(current);
   }
 
   template<typename T>
   void DecimalBoxAdaptor<T>::on_reject(const boost::optional<Decimal>& value) {
-    m_reject_signal(from_decimal<Type>(value));
+    m_data->m_reject_signal(from_decimal<Type>(value));
   }
 }
 

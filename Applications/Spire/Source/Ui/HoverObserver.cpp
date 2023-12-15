@@ -61,10 +61,17 @@ struct HoverObserver::EventFilter : QObject {
     set_state(
       ::get_state(*m_widget, m_observers->m_position_observer.get_position()));
     for(auto child : m_widget->children()) {
-      if(child->isWidgetType()) {
+      if(child && child->isWidgetType()) {
         add(static_cast<QWidget&>(*child));
       }
     }
+  }
+
+  Observers& get_observers() {
+    if(!m_observers) {
+      initialize_observers();
+    }
+    return *m_observers;
   }
 
   void set_state(State state) {
@@ -81,18 +88,16 @@ struct HoverObserver::EventFilter : QObject {
         m_observers = nullptr;
       }
       return QObject::eventFilter(watched, event);
-    } else if(!m_observers) {
-      initialize_observers();
     }
     if(event->type() == QEvent::Enter) {
       set_state(::get_state(
-        *m_widget, m_observers->m_position_observer.get_position()));
+        *m_widget, get_observers().m_position_observer.get_position()));
     } else if(event->type() == QEvent::Leave) {
       set_state(State::NONE);
     } else if(event->type() == QEvent::EnabledChange ||
         event->type() == QEvent::MouseMove) {
       set_state(::get_state(
-        *m_widget, m_observers->m_position_observer.get_position()));
+        *m_widget, get_observers().m_position_observer.get_position()));
     } else if(event->type() == QEvent::ChildAdded) {
       auto& child_event = static_cast<QChildEvent&>(*event);
       if(child_event.child()->isWidgetType()) {
@@ -102,9 +107,9 @@ struct HoverObserver::EventFilter : QObject {
       auto& child_event = static_cast<QChildEvent&>(*event);
       if(child_event.child()->isWidgetType()) {
         auto& child = static_cast<QWidget&>(*child_event.child());
-        m_observers->m_children_observers.erase(&child);
+        get_observers().m_children_observers.erase(&child);
         set_state(::get_state(
-          *m_widget, m_observers->m_position_observer.get_position()));
+          *m_widget, get_observers().m_position_observer.get_position()));
       }
     }
     return QObject::eventFilter(watched, event);
@@ -115,15 +120,15 @@ struct HoverObserver::EventFilter : QObject {
     auto connection = observer->connect_state_signal(
       std::bind_front(&EventFilter::on_hover, this));
     auto child_entry = Child(std::move(observer), std::move(connection));
-    m_observers->m_children_observers.insert(
+    get_observers().m_children_observers.insert(
       std::pair(&child, std::move(child_entry)));
     set_state(::get_state(
-      *m_widget, m_observers->m_position_observer.get_position()));
+      *m_widget, get_observers().m_position_observer.get_position()));
   }
 
   void on_hover(State state) {
     set_state(::get_state(
-      *m_widget, m_observers->m_position_observer.get_position()));
+      *m_widget, get_observers().m_position_observer.get_position()));
   }
 
   void on_position(const QPoint& position) {

@@ -224,6 +224,16 @@ namespace Spire::Styles {
   /** Finds the Stylist associated with a widget's pseudo-element. */
   Stylist* find_stylist(QWidget& widget, const PseudoElement& pseudo_element);
 
+  /**
+   * Returns a Stylist's parent or <i>nullptr</i> if the Stylist is the root.
+   */
+  const Stylist* find_parent(const Stylist& stylist);
+
+  /**
+   * Returns a Stylist's parent or <i>nullptr</i> if the Stylist is the root.
+   */
+  Stylist* find_parent(Stylist& stylist);
+
   /** Returns a QWidget's styling. */
   const StyleSheet& get_style(const QWidget& widget);
 
@@ -271,11 +281,19 @@ namespace Spire::Styles {
   void add_pseudo_element(QWidget& source, const PseudoElement& pseudo_element);
 
   /**
-   * Specifies that a QWidget will proxy its style to another QWidget.
+   * Specifies that a QWidget does not have a style of its own but instead
+   * any styling applied to it will get forwarded to another QWidget.
    * @param principal The QWidget forwarding its style.
    * @param destination The QWidget receiving the style.
    */
-  void proxy_style(QWidget& source, QWidget& destination);
+  void forward_style(QWidget& principal, QWidget& destination);
+
+  /**
+   * Specifies that a QWidget will proxy its style to another QWidget.
+   * @param principal The QWidget proxying its style.
+   * @param destination The QWidget receiving the style.
+   */
+  void proxy_style(QWidget& principal, QWidget& destination);
 
   /**
    * Indicates a widget no longer matches a Selector.
