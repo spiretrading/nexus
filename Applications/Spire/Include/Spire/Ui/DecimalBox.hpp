@@ -124,6 +124,7 @@ namespace Styles {
     protected:
       void keyPressEvent(QKeyEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
+      void showEvent(QShowEvent* event) override;
       void wheelEvent(QWheelEvent* event) override;
 
     private:
@@ -138,24 +139,25 @@ namespace Styles {
         NEGATIVE
       };
       struct DecimalToTextModel;
-      mutable SubmitSignal m_submit_signal;
-      mutable RejectSignal m_reject_signal;
+      struct EditableData {
+        mutable SubmitSignal m_submit_signal;
+        mutable RejectSignal m_reject_signal;
+        boost::optional<Decimal> m_submission;
+        Button* m_up_button;
+        Button* m_down_button;
+      };
       std::shared_ptr<OptionalDecimalModel> m_current;
       std::shared_ptr<DecimalToTextModel> m_adaptor_model;
-      boost::optional<Decimal> m_submission;
       QHash<Qt::KeyboardModifier, Decimal> m_modifiers;
-      TextBox* m_text_box;
-      QRegExp m_validator;
-      Button* m_up_button;
-      Button* m_down_button;
+      TextBox m_text_box;
       boost::optional<Decimal> m_last_current;
       TickIndicator m_tick;
       SignIndicator m_sign;
+      std::unique_ptr<EditableData> m_data;
       boost::signals2::scoped_connection m_style_connection;
       boost::signals2::scoped_connection m_current_connection;
-      boost::signals2::scoped_connection m_submit_connection;
-      boost::signals2::scoped_connection m_reject_connection;
 
+      void initialize_editable_data() const;
       void decrement();
       void increment();
       Decimal get_increment() const;

@@ -70,9 +70,15 @@ namespace {
     painter.fillRect(track_area, saturation_gradient);
     painter.setCompositionMode(QPainter::CompositionMode_Multiply);
     painter.fillRect(track_area, brightness_gradient);
-    update_style(color_spectrum, [&] (auto& style) {
-      style.get(Any() > Track()).set(IconImage(track_image));
-    });
+    painter.end();
+    auto track = color_spectrum.findChild<QLabel*>();;
+    if(track->pixmap(Qt::ReturnByValue).isNull()) {
+      update_style(color_spectrum, [&] (auto& style) {
+        style.get(Any() > Track()).set(IconImage(std::move(track_image)));
+      });
+    } else {
+      track->setPixmap(QPixmap::fromImage(track_image));
+    }
   }
 
   void update_alpha_slider_track(Slider& alpha_slider, const QColor& color) {
@@ -89,9 +95,15 @@ namespace {
       board_image.scaled(QSize(board_image.width(), track_size.height())));
     alpha_painter.setCompositionMode(QPainter::CompositionMode_Multiply);
     alpha_painter.fillRect(track_area, alpha_gradient);
-    update_style(alpha_slider, [&] (auto& style) {
-      style.get(Any() > Track()).set(IconImage(alpha_image));
-    });
+    alpha_painter.end();
+    auto track = alpha_slider.findChild<QLabel*>();;
+    if(track->pixmap(Qt::ReturnByValue).isNull()) {
+      update_style(alpha_slider, [&] (auto& style) {
+        style.get(Any() > Track()).set(IconImage(std::move(alpha_image)));
+      });
+    } else {
+      track->setPixmap(QPixmap::fromImage(alpha_image));
+    }
   }
 
   auto make_color_spectrum(std::shared_ptr<DecimalModel> x_model,
@@ -235,7 +247,6 @@ ColorPicker::ColorPicker(std::shared_ptr<ColorModel> current,
     : QWidget(&parent),
       m_model(std::make_shared<ColorPickerModel>(std::move(current))),
       m_palette(std::move(palette)),
-      m_is_alpha_visible(true),
       m_panel_horizontal_spacing(0) {
   m_color_spectrum = make_color_spectrum(m_model->m_spectrum_x_model,
     m_model->m_spectrum_y_model);
@@ -260,8 +271,6 @@ ColorPicker::ColorPicker(std::shared_ptr<ColorModel> current,
   on_current(get_current()->get());
   m_current_connection = get_current()->connect_update_signal(
     std::bind_front(&ColorPicker::on_current, this));
-  m_style_connection = connect_style_signal(*this,
-    std::bind_front(&ColorPicker::on_style, this));
 }
 
 const std::shared_ptr<ColorModel>& ColorPicker::get_current() const {
@@ -304,23 +313,10 @@ void ColorPicker::on_current(const QColor& current) {
       get_pure_color(m_last_color) != pure_color) {
     update_color_spectrum_track(*m_color_spectrum, pure_color);
   }
-  if(m_is_alpha_visible && m_last_color.rgb() != current.rgb()) {
+  if(m_alpha_slider->isVisible() && m_last_color.rgb() != current.rgb()) {
     update_alpha_slider_track(*m_alpha_slider, current);
   }
   m_last_color = current;
-}
-
-void ColorPicker::on_style() {
-  auto& stylist = find_stylist(*this);
-  if(auto visibility = Styles::find<Visibility>(stylist.get_computed_block())) {
-    stylist.evaluate(*visibility, [=] (auto visibility) {
-      if(visibility == Visibility::VISIBLE) {
-        m_is_alpha_visible = true;
-      } else {
-        m_is_alpha_visible = false;
-      }
-    });
-  }
 }
 
 void ColorPicker::on_panel_style() {

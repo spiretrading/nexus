@@ -48,8 +48,8 @@ namespace {
     return size;
   }
 
-  auto create_button(const QString& icon, QWidget* parent) {
-    auto button = make_icon_button(imageFromSvg(icon, BUTTON_SIZE()), parent);
+  auto make_button(QImage icon, QWidget& parent) {
+    auto button = make_icon_button(std::move(icon), &parent);
     update_style(*button, [&] (auto& style) {
       style.get(Any() > Body()).
         set(BackgroundColor(QColor(0xFFFFFF))).
@@ -64,6 +64,16 @@ namespace {
     button->setFocusPolicy(Qt::NoFocus);
     button->setFixedSize(BUTTON_SIZE());
     return button;
+  }
+
+  auto make_up_button(QWidget& parent) {
+    static auto icon = imageFromSvg(":/Icons/arrow-up.svg", BUTTON_SIZE());
+    return make_button(icon, parent);
+  }
+
+  auto make_down_button(QWidget& parent) {
+    static auto icon = imageFromSvg(":/Icons/arrow-down.svg", BUTTON_SIZE());
+    return make_button(icon, parent);
   }
 
   auto make_modifiers(const OptionalDecimalModel& current) {
@@ -93,9 +103,7 @@ struct DecimalBox::DecimalToTextModel : TextModel {
         m_current(to_string(m_model->get())),
         m_is_rejected(false),
         m_current_connection(m_model->connect_update_signal(
-          [=] (const auto& current) {
-            on_current(current);
-          })) {
+          std::bind_front(&DecimalToTextModel::on_current, this))) {
     update_validator();
   }
 
@@ -439,12 +447,11 @@ DecimalBox::DecimalBox(std::shared_ptr<OptionalDecimalModel> current,
     : QWidget(parent),
       m_current(std::move(current)),
       m_adaptor_model(std::make_shared<DecimalToTextModel>(m_current)),
-      m_submission(m_current->get()),
       m_modifiers(std::move(modifiers)),
+      m_text_box(m_adaptor_model, this),
       m_tick(TickIndicator::NONE) {
-  m_text_box = new TextBox(m_adaptor_model, this);
-  enclose(*this, *m_text_box);
-  proxy_style(*this, *m_text_box);
+  enclose(*this, m_text_box);
+  proxy_style(*this, m_text_box);
   update_style(*this, [] (auto& style) {
     style.get(Any() > is_a<Button>()).set(Visibility::VISIBLE);
     style.get(ReadOnly() > is_a<Button>()).set(Visibility::NONE);
@@ -452,8 +459,9 @@ DecimalBox::DecimalBox(std::shared_ptr<OptionalDecimalModel> current,
         (is_a<Button>() && matches(Visibility::VISIBLE))).
       set(PaddingRight(scale_width(24)));
   });
-  m_style_connection = connect_style_signal(*this, [=] { on_style(); });
-  setFocusProxy(m_text_box);
+  m_style_connection =
+    connect_style_signal(*this, std::bind_front(&DecimalBox::on_style, this));
+  setFocusProxy(&m_text_box);
   if(auto current = m_current->get()) {
     if(*current > 0) {
       m_sign = SignIndicator::POSITIVE;
@@ -466,16 +474,7 @@ DecimalBox::DecimalBox(std::shared_ptr<OptionalDecimalModel> current,
     }
   }
   m_current_connection = m_current->connect_update_signal(
-    [=] (const auto& current) { on_current(current); });
-  m_submit_connection = m_text_box->connect_submit_signal(
-    [=] (const auto& submission) { on_submit(submission); });
-  m_reject_connection = m_text_box->connect_reject_signal(
-    [=] (const auto& value) { on_reject(value); });
-  m_up_button = create_button(":/Icons/arrow-up.svg", this);
-  m_up_button->connect_click_signal([=] { increment(); });
-  m_down_button = create_button(":/Icons/arrow-down.svg", this);
-  m_down_button->connect_click_signal([=] { decrement(); });
-  update_button_positions();
+    std::bind_front(&DecimalBox::on_current, this));
 }
 
 const std::shared_ptr<OptionalDecimalModel>& DecimalBox::get_current() const {
@@ -483,34 +482,40 @@ const std::shared_ptr<OptionalDecimalModel>& DecimalBox::get_current() const {
 }
 
 std::shared_ptr<const TextModel> DecimalBox::get_text() const {
-  return m_text_box->get_current();
+  return m_text_box.get_current();
 }
 
 void DecimalBox::set_placeholder(const QString& value) {
-  m_text_box->set_placeholder(value);
+  m_text_box.set_placeholder(value);
 }
 
 bool DecimalBox::is_read_only() const {
-  return m_text_box->is_read_only();
+  return m_text_box.is_read_only();
 }
 
 void DecimalBox::set_read_only(bool is_read_only) {
-  m_text_box->set_read_only(is_read_only);
+  if(is_read_only == this->is_read_only()) {
+    return;
+  }
+  m_text_box.set_read_only(is_read_only);
   if(is_read_only) {
     match(*this, ReadOnly());
   } else {
+    initialize_editable_data();
     unmatch(*this, ReadOnly());
   }
 }
 
 connection DecimalBox::connect_submit_signal(
     const SubmitSignal::slot_type& slot) const {
-  return m_submit_signal.connect(slot);
+  initialize_editable_data();
+  return m_data->m_submit_signal.connect(slot);
 }
 
 connection DecimalBox::connect_reject_signal(
     const RejectSignal::slot_type& slot) const {
-  return m_reject_signal.connect(slot);
+  initialize_editable_data();
+  return m_data->m_reject_signal.connect(slot);
 }
 
 void DecimalBox::keyPressEvent(QKeyEvent* event) {
@@ -531,6 +536,13 @@ void DecimalBox::resizeEvent(QResizeEvent* event) {
   QWidget::resizeEvent(event);
 }
 
+void DecimalBox::showEvent(QShowEvent* event) {
+  if(!is_read_only()) {
+    initialize_editable_data();
+  }
+  QWidget::showEvent(event);
+}
+
 void DecimalBox::wheelEvent(QWheelEvent* event) {
   if(hasFocus() && !is_read_only()) {
     auto angle_delta = [&] {
@@ -547,6 +559,25 @@ void DecimalBox::wheelEvent(QWheelEvent* event) {
     }
   }
   QWidget::wheelEvent(event);
+}
+
+void DecimalBox::initialize_editable_data() const {
+  if(m_data) {
+    return;
+  }
+  auto self = const_cast<DecimalBox*>(this);
+  self->m_data = std::make_unique<EditableData>();
+  m_data->m_submission = m_current->get();
+  m_data->m_up_button = make_up_button(*self);
+  m_data->m_up_button->connect_click_signal(
+    std::bind_front(&DecimalBox::increment, self));
+  m_data->m_down_button = make_down_button(*self);
+  m_data->m_down_button->connect_click_signal(
+    std::bind_front(&DecimalBox::decrement, self));
+  m_text_box.connect_submit_signal(
+    std::bind_front(&DecimalBox::on_submit, self));
+  m_text_box.connect_reject_signal(
+    std::bind_front(&DecimalBox::on_reject, self));
 }
 
 void DecimalBox::decrement() {
@@ -595,10 +626,14 @@ void DecimalBox::step_by(const Decimal& value) {
 }
 
 void DecimalBox::update_button_positions() {
+  if(!m_data) {
+    return;
+  }
   auto button_pos = QPoint(width() - BUTTON_RIGHT_PADDING() -
     BUTTON_SIZE().width(), height() / 2);
-  m_up_button->move(button_pos.x(), button_pos.y() - m_up_button->height());
-  m_down_button->move(button_pos);
+  m_data->m_up_button->move(
+    button_pos.x(), button_pos.y() - m_data->m_up_button->height());
+  m_data->m_down_button->move(button_pos);
 }
 
 void DecimalBox::on_current(const optional<Decimal>& current) {
@@ -639,22 +674,26 @@ void DecimalBox::on_current(const optional<Decimal>& current) {
       m_sign = SignIndicator::NEGATIVE;
     }
   }
-  m_up_button->setEnabled(!is_read_only() && (!m_current->get_maximum() ||
-    !m_current->get() || m_current->get() < m_current->get_maximum()));
-  m_down_button->setEnabled(!is_read_only() && (!m_current->get_minimum() ||
-    !m_current->get() || m_current->get() > m_current->get_minimum()));
+  if(m_data) {
+    m_data->m_up_button->setEnabled(!is_read_only() &&
+      (!m_current->get_maximum() ||
+        !m_current->get() || m_current->get() < m_current->get_maximum()));
+    m_data->m_down_button->setEnabled(!is_read_only() &&
+      (!m_current->get_minimum() ||
+        !m_current->get() || m_current->get() > m_current->get_minimum()));
+  }
 }
 
 void DecimalBox::on_submit(const QString& submission) {
   static auto VALIDATOR = QRegExp("^([-|\\+]?[0-9]+(\\.[0-9]*)?)|(-\\.)");
   if(VALIDATOR.exactMatch(submission)) {
-    m_submission = m_adaptor_model->submit();
-    m_submit_signal(m_submission);
+    m_data->m_submission = m_adaptor_model->submit();
+    m_data->m_submit_signal(m_data->m_submission);
   }
 }
 
 void DecimalBox::on_reject(const QString& value) {
-  m_reject_signal(text_to_decimal(value).value_or(Decimal(0)));
+  m_data->m_reject_signal(text_to_decimal(value).value_or(Decimal(0)));
   m_adaptor_model->reject();
 }
 
