@@ -29,18 +29,11 @@ using namespace Spire::Styles;
 namespace {
   const auto TITLE_NAME = QObject::tr("Time and Sales");
   const auto TITLE_SHORT_NAME = QObject::tr("T&S");
+  const auto DEBOUNCINT_TIME = 100;
 
   bool is_equal(const TimeAndSalesProperties& lhs,
       const TimeAndSalesProperties& rhs, BboIndicator indicator) {
     return lhs.get_highlight(indicator) == rhs.get_highlight(indicator);
-  }
-
-  void update_text_box_text_color(QLineEdit& text_box, const QColor& color) {
-    auto stylesheet = QString(
-      R"(QLineEdit {
-        background-color: transparent;
-        color: %1; })").arg(color.name());
-    text_box.setStyleSheet(stylesheet);
   }
 
   struct ExportTimeAndSalesTableMoel : TableModel {
@@ -274,7 +267,7 @@ void TimeAndSalesWindow::update_properties(
     m_properties = properties;
   } else {
     m_current_properties = properties;
-    m_timer.start(100);
+    m_timer.start(DEBOUNCINT_TIME);
   }
 }
 

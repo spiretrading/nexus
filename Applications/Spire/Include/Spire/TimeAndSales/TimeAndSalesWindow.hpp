@@ -8,26 +8,6 @@
 #include "Spire/Ui/Window.hpp"
 
 namespace Spire {
-namespace Styles {
-
-  /** Selects the row where the bbo indicator is unknown. */
-  using UnknownRow = StateSelector<void, struct UnknownRowSelectorTag>;
-
-  /** Selects the row where the bbo indicator is ABOVE_ASK. */
-  using AboveAskRow = StateSelector<void, struct AboveAskRowSelectorTag>;
-
-  /** Selects the row where the bbo indicator is AT_ASK. */
-  using AtAskRow = StateSelector<void, struct AtAskRowSelectorTag>;
-
-  /** Selects the row where the bbo indicator is INSIDE. */
-  using InsideRow = StateSelector<void, struct InsideRowSelectorTag>;
-
-  /** Selects the row where the bbo indicator is AT_BID. */
-  using AtBidRow = StateSelector<void, struct AtBidRowSelectorTag>;
-
-  /** Selects the row where the bbo indicator is BELOW_BID. */
-  using BelowBidRow = StateSelector<void, struct BelowBidRowSelectorTag>;
-}
 
   /** Display the time and sales window for a security. */
   class TimeAndSalesWindow : public Window {
