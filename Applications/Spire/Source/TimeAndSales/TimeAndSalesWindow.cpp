@@ -274,8 +274,7 @@ void TimeAndSalesWindow::update_properties(
     m_properties = properties;
   } else {
     m_current_properties = properties;
-    //m_timer.start(100);
-    on_timeout();
+    m_timer.start(100);
   }
 }
 
@@ -311,12 +310,10 @@ void TimeAndSalesWindow::on_table_operation(
       update_style(*row, [&] (auto& style) {
         style.get(Any()).
           set(BackgroundColor(highlight.m_background_color));
+        style.get(Any() > is_a<TextBox>()).
+          set(Font(m_properties.get_font())).
+          set(TextColor(highlight.m_text_color));
       });
-      auto text_boxes = row->findChildren<QLineEdit*>();
-      for(auto text_box : text_boxes) {
-        update_text_box_text_color(*text_box, highlight.m_text_color);
-        text_box->setFont(m_properties.get_font());
-      }
       m_rows[static_cast<int>(indicator)].push_back(row);
       update_export_menu_item();
     },
@@ -354,40 +351,54 @@ void TimeAndSalesWindow::on_properties() {
 void TimeAndSalesWindow::on_timeout() {
   auto font_database = QFontDatabase();
   auto& font = m_current_properties.get_font();
-  if(font != m_properties.get_font()) {
+  if(font.family() != m_properties.get_font().family() ||
+      font_database.styleString(font) !=
+        font_database.styleString(m_properties.get_font())) {
     auto promise = QtPromise([=] {
       update_style(*m_table_view, [&] (auto& style) {
         style.get(Any() > TableHeaderItem::Label()).set(Font(font));
       });
-    });
-    for(auto& indicator_rows : m_rows) {
-      for(auto row : indicator_rows) {
-        auto text_boxes = row->findChildren<QLineEdit*>();
-        for(auto text_box : text_boxes) {
-          auto promise = QtPromise([=] {
-            text_box->setFont(font);
+      for(auto& indicator_rows : m_rows) {
+        for(auto row : indicator_rows) {
+          update_style(*row, [&] (auto& style) {
+            style.get(Any() > is_a<TextBox>()).set(Font(font));
           });
         }
       }
-    }
+    });
+  } else if(font.pixelSize() != m_properties.get_font().pixelSize()) {
+    auto promise = QtPromise([=] {
+      update_style(*m_table_view, [&] (auto& style) {
+        style.get(Any() > TableHeaderItem::Label()).
+          set(FontSize(font.pixelSize()));
+      });
+      for(auto& indicator_rows : m_rows) {
+        for(auto row : indicator_rows) {
+          update_style(*row, [&] (auto& style) {
+            style.get(Any() > is_a<TextBox>()).
+              set(FontSize(font.pixelSize()));
+          });
+        }
+      }
+    });
   } else {
     for(auto i = 0; i < BBO_INDICATOR_COUNT; ++i) {
       auto indicator = static_cast<BboIndicator>(i);
       if(!::is_equal(m_current_properties, m_properties, indicator)) {
         auto& highlight = m_current_properties.get_highlight(indicator);
         for(auto row : m_rows[i]) {
-          auto promise = QtPromise([=] {
+          auto background_color_promise = QtPromise([=] {
             update_style(*row, [&] (auto& style) {
               style.get(Any()).
                 set(BackgroundColor(highlight.m_background_color));
             });
           });
-          auto text_boxes = row->findChildren<QLineEdit*>();
-          for(auto text_box : text_boxes) {
-            auto promise = QtPromise([=] {
-              update_text_box_text_color(*text_box, highlight.m_text_color);
+          auto text_color_promise = QtPromise([=] {
+            update_style(*row, [&] (auto& style) {
+              style.get(Any() > is_a<TextBox>()).
+                set(TextColor(highlight.m_text_color));
             });
-          }
+          });
         }
       }
     }
