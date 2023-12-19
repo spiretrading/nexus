@@ -22,6 +22,12 @@ destinations:
     description: Canadian Securities Exchange
     markets:
       - XCNQ
+  - id: CSE2
+    description: Canadian Securities Exchange - CSE2
+    markets:
+      - XTSE
+      - XTSX
+      - XCNQ
   - id: CX2
     description: Chi-X 2
     markets:

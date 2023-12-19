@@ -201,6 +201,8 @@ void Nexus::Python::ExportDefaultDestinations(module& module) {
   submodule.add_object("HKEX", cast(DefaultDestinations::HKEX()));
   submodule.add_object("ALPHA", cast(DefaultDestinations::ALPHA()));
   submodule.add_object("CHIX", cast(DefaultDestinations::CHIX()));
+  submodule.add_object("CSE", cast(DefaultDestinations::CSE()));
+  submodule.add_object("CSE2", cast(DefaultDestinations::CSE2()));
   submodule.add_object("CX2", cast(DefaultDestinations::CX2()));
   submodule.add_object("LYNX", cast(DefaultDestinations::LYNX()));
   submodule.add_object("MATNLP", cast(DefaultDestinations::MATNLP()));
