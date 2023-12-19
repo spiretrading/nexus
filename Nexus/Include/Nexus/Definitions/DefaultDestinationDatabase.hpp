@@ -146,6 +146,15 @@ namespace Nexus {
       }
       {
         auto entry = DestinationDatabase::Entry();
+        entry.m_id = "CSE2";
+        entry.m_description = "Canadian Securities Exchange - CSE2";
+        entry.m_markets.push_back("XCNQ");
+        entry.m_markets.push_back("XTSE");
+        entry.m_markets.push_back("XTSX");
+        database.Add(entry);
+      }
+      {
+        auto entry = DestinationDatabase::Entry();
         entry.m_id = "CX2";
         entry.m_description = "Chi-X 2";
         entry.m_markets.push_back("XTSE");
@@ -315,6 +324,11 @@ namespace Nexus {
 
     inline const std::string& CSE() {
       static auto value = std::string("CSE");
+      return value;
+    }
+
+    inline const std::string& CSE2() {
+      static auto value = std::string("CSE2");
       return value;
     }
 
