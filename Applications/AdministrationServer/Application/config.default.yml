@@ -70,6 +70,13 @@ entitlements:
     applicability:
       - source: XCNQ
         messages: [BBO, MQT, BOOK, TAS, IMB]
+  - name: CSE2
+    price: 0.00
+    currency: CAD
+    group: cse2
+    applicability:
+      - source: CSE2
+        messages: [BOOK, TAS]
   - name: TSX CEG
     price: 72.00
     currency: USD
