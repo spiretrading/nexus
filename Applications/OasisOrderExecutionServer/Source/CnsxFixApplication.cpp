@@ -3,6 +3,7 @@
 #include <Beam/Threading/LiveTimer.hpp>
 #include <boost/throw_exception.hpp>
 #include <quickfix/Session.h>
+#include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "Nexus/FixUtilities/FixConversions.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionSession.hpp"
@@ -29,7 +30,7 @@ namespace {
 }
 
 CnsxFixApplication::CnsxFixApplication(Ref<LiveNtpTimeClient> timeClient)
-    : m_timeClient(timeClient.Get()) {}
+  : m_timeClient(timeClient.Get()) {}
 
 const Order& CnsxFixApplication::Recover(
     const SequencedAccountOrderRecord& orderRecord) {
@@ -41,10 +42,10 @@ const Order& CnsxFixApplication::Submit(const OrderInfo& info) {
     GetSessionId().getTargetCompID(),
     [&] (Out<FIX42::NewOrderSingle> newOrderSingle) {
       if(info.m_fields.m_security.GetCountry() != DefaultCountries::CA()) {
-        BOOST_THROW_EXCEPTION(FixOrderRejectedException{"Invalid country."});
+        BOOST_THROW_EXCEPTION(FixOrderRejectedException("Invalid country."));
       }
       if(info.m_fields.m_currency != DefaultCurrencies::CAD()) {
-        BOOST_THROW_EXCEPTION(FixOrderRejectedException{"Invalid currency."});
+        BOOST_THROW_EXCEPTION(FixOrderRejectedException("Invalid currency."));
       }
       newOrderSingle->getHeader().set(FIX::SenderSubID(GetSenderSubID()));
       newOrderSingle->getHeader().set(
@@ -54,7 +55,7 @@ const Order& CnsxFixApplication::Submit(const OrderInfo& info) {
       newOrderSingle->setField(UMIR_ACCOUNT_TYPE_TAG, "CL");
       newOrderSingle->setField(UMIR_USER_ID_TAG, GetUmirUserID());
       auto& anonymousTag = GetAnonymousTag();
-      if(anonymousTag.is_initialized()) {
+      if(anonymousTag) {
         newOrderSingle->setField(ANONYMOUS_TAG, *anonymousTag);
       }
       auto noTradeFeat = GetNoTradeFeat();
@@ -77,8 +78,7 @@ void CnsxFixApplication::Cancel(const OrderExecutionSession& session,
     GetSessionId().getSenderCompID(), GetSessionId().getTargetCompID(),
     [&] (const Order& order,
         Out<FIX42::OrderCancelRequest> orderCancelRequest) {
-      orderCancelRequest->getHeader().set(
-        FIX::SenderSubID(GetSenderSubID()));
+      orderCancelRequest->getHeader().set(FIX::SenderSubID(GetSenderSubID()));
       orderCancelRequest->getHeader().set(
         FIX::OnBehalfOfCompID(session.GetAccount().m_name));
       orderCancelRequest->setField(UMIR_USER_ID_TAG, GetUmirUserID());
@@ -87,8 +87,8 @@ void CnsxFixApplication::Cancel(const OrderExecutionSession& session,
 
 void CnsxFixApplication::Update(const OrderExecutionSession& session,
     OrderId orderId, const ExecutionReport& executionReport) {
-  m_orderLog.Update(session, orderId, executionReport,
-    m_timeClient->GetTime());
+  m_orderLog.Update(
+    session, orderId, executionReport, m_timeClient->GetTime());
 }
 
 void CnsxFixApplication::onCreate(const FIX::SessionID& sessionID) {}
@@ -117,34 +117,41 @@ void CnsxFixApplication::onMessage(const FIX42::ExecutionReport& message,
     const FIX::SessionID& sessionId) {
   m_orderLog.Update(message, sessionId, m_timeClient->GetTime(),
     [=] (const Order& order, Out<ExecutionReport> update) {
-      std::string exchangeAdminValue;
-      if(message.isSetField(EXCHANGE_ADMIN_TAG)) {
-        exchangeAdminValue = message.getField(EXCHANGE_ADMIN_TAG);
-      }
+      auto exchangeAdminValue = [&] () -> std::string {
+        if(message.isSetField(EXCHANGE_ADMIN_TAG)) {
+          return message.getField(EXCHANGE_ADMIN_TAG);
+        }
+        return {};
+      }();
       if(exchangeAdminValue.size() >= 2) {
-        char liquidityFlag = exchangeAdminValue[1];
+        auto liquidityFlag = exchangeAdminValue[1];
         if(liquidityFlag != '0' && exchangeAdminValue.size() >= 3) {
           update->m_liquidityFlag = exchangeAdminValue[1];
-          char session = exchangeAdminValue[2];
+          auto session = exchangeAdminValue[2];
           if(session == 'O' || session == 'E') {
             update->m_liquidityFlag += session;
           }
         }
-        char lastMarket = exchangeAdminValue[0];
-        if(lastMarket == 'P') {
-          update->m_lastMarket = DefaultMarkets::PURE().GetData();
-        } else if(lastMarket == 'Q') {
-          update->m_lastMarket = DefaultMarkets::CSE().GetData();
+        auto lastMarket = exchangeAdminValue[0];
+        if(order.GetInfo().m_fields.m_destination ==
+            DefaultDestinations::CSE2()) {
+          update->m_lastMarket = DefaultMarkets::CSE2().GetData();
+        } else {
+          if(lastMarket == 'P') {
+            update->m_lastMarket = DefaultMarkets::PURE().GetData();
+          } else if(lastMarket == 'Q') {
+            update->m_lastMarket = DefaultMarkets::CSE().GetData();
+          }
         }
       }
     });
 }
 
 void CnsxFixApplication::onMessage(const FIX42::TradingSessionStatus& message,
-    const FIX::SessionID& sessionId) {}
+  const FIX::SessionID& sessionId) {}
 
 void CnsxFixApplication::onMessage(const FIX42::OrderCancelReject& message,
-    const FIX::SessionID& sessionId) {}
+  const FIX::SessionID& sessionId) {}
 
 std::string CnsxFixApplication::GetAccount() const {
   return GetSessionSettings().get(GetSessionId()).getString("Account");
@@ -176,7 +183,7 @@ std::string CnsxFixApplication::GetNoTradeKey() const {
 }
 
 const optional<std::string>& CnsxFixApplication::GetAnonymousTag() const {
-  if(m_anonymousTag.is_initialized()) {
+  if(m_anonymousTag) {
     return *m_anonymousTag;
   }
   if(GetSessionSettings().get(GetSessionId()).has("Anonymous")) {

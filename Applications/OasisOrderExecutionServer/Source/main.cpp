@@ -73,21 +73,22 @@ namespace {
   using ApplicationFixOrderExecutionDriver = FixOrderExecutionDriver;
   using ApplicationFeesCalculatorOrderExecutionDriver =
     FeesCalculatorOrderExecutionDriver<ApplicationFixOrderExecutionDriver*>;
-  using ApplicationOrderSubmissionCheckDriver = OrderSubmissionCheckDriver<
-    ApplicationFeesCalculatorOrderExecutionDriver*>;
+  using ApplicationOrderSubmissionCheckDriver =
+    OrderSubmissionCheckDriver<ApplicationFeesCalculatorOrderExecutionDriver*>;
   using ApplicationComplianceCheckOrderExecutionDriver =
-    ComplianceCheckOrderExecutionDriver<ApplicationOrderSubmissionCheckDriver*,
-    LiveNtpTimeClient*, ComplianceRuleSet<ApplicationComplianceClient::Client*,
-    ApplicationServiceLocatorClient::Client*>*>;
-  using ApplicationManualOrderEntryDriver = ManualOrderEntryDriver<
-    ApplicationComplianceCheckOrderExecutionDriver*,
-    ApplicationAdministrationClient::Client*>;
+    ComplianceCheckOrderExecutionDriver<
+      ApplicationOrderSubmissionCheckDriver*, LiveNtpTimeClient*,
+      ComplianceRuleSet<ApplicationComplianceClient::Client*,
+        ApplicationServiceLocatorClient::Client*>*>;
+  using ApplicationManualOrderEntryDriver =
+    ManualOrderEntryDriver<ApplicationComplianceCheckOrderExecutionDriver*,
+      ApplicationAdministrationClient::Client*>;
   using ApplicationOrderExecutionDriver = ApplicationManualOrderEntryDriver;
   using OrderExecutionServletContainer = ServiceProtocolServletContainer<
     MetaAuthenticationServletAdapter<MetaOrderExecutionServlet<
-    LiveNtpTimeClient*, ApplicationServiceLocatorClient::Client*,
-    ApplicationUidClient::Client*, ApplicationAdministrationClient::Client*,
-    ApplicationOrderExecutionDriver*, ReplicatedOrderExecutionDataStore*>,
+      LiveNtpTimeClient*, ApplicationServiceLocatorClient::Client*,
+      ApplicationUidClient::Client*, ApplicationAdministrationClient::Client*,
+      ApplicationOrderExecutionDriver*, ReplicatedOrderExecutionDataStore*>,
     ApplicationServiceLocatorClient::Client*>, TcpServerSocket,
     BinarySender<SharedBuffer>, NullEncoder, std::shared_ptr<LiveTimer>>;
 
@@ -98,23 +99,29 @@ namespace {
       auto entries = std::vector<FixApplicationEntry>();
       auto asxEntry = FixApplicationEntry();
       asxEntry.m_configPath = "asx.cfg";
-      asxEntry.m_application = std::make_shared<AsxFixApplication>(
-        Ref(timeClient));
+      asxEntry.m_application =
+        std::make_shared<AsxFixApplication>(Ref(timeClient));
       asxEntry.m_destinations.push_back(DefaultDestinations::ASXT());
       asxEntry.m_destinations.push_back(DefaultDestinations::CXA());
       entries.push_back(asxEntry);
       auto chixEntry = FixApplicationEntry();
       chixEntry.m_configPath = "chix.cfg";
-      chixEntry.m_application = std::make_shared<ChixFixApplication>(
-        Ref(timeClient));
+      chixEntry.m_application =
+        std::make_shared<ChixFixApplication>(Ref(timeClient));
       chixEntry.m_destinations.push_back(DefaultDestinations::CHIX());
       chixEntry.m_destinations.push_back(DefaultDestinations::CX2());
       chixEntry.m_destinations.push_back(DefaultDestinations::TSX());
       entries.push_back(chixEntry);
+      auto cse2Entry = FixApplicationEntry();
+      cse2Entry.m_configPath = "cse2.cfg";
+      cse2Entry.m_application =
+        std::make_shared<CnsxFixApplication>(Ref(timeClient));
+      cse2Entry.m_destinations.push_back(DefaultDestinations::CSE2());
+      entries.push_back(cse2Entry);
       auto tsxEntry = FixApplicationEntry();
       tsxEntry.m_configPath = "tsxsor.cfg";
-      tsxEntry.m_application = std::make_shared<TsxSorFixApplication>(
-        Ref(timeClient));
+      tsxEntry.m_application =
+        std::make_shared<TsxSorFixApplication>(Ref(timeClient));
       tsxEntry.m_destinations.push_back(DefaultDestinations::ALPHA());
       entries.push_back(tsxEntry);
       auto matchNowLiquidityProviderEntry = FixApplicationEntry();
@@ -140,8 +147,8 @@ namespace {
       entries.push_back(omegaEntry);
       auto pureEntry = FixApplicationEntry();
       pureEntry.m_configPath = "pure.cfg";
-      pureEntry.m_application = std::make_shared<CnsxFixApplication>(
-        Ref(timeClient));
+      pureEntry.m_application =
+        std::make_shared<CnsxFixApplication>(Ref(timeClient));
       pureEntry.m_destinations.push_back(DefaultDestinations::PURE());
       pureEntry.m_destinations.push_back(DefaultDestinations::CSE());
       entries.push_back(pureEntry);
@@ -185,15 +192,15 @@ namespace {
       const std::vector<ExchangeRate>& exchangeRates) {
     return TryOrNest([&] {
       auto checks = std::vector<std::unique_ptr<OrderSubmissionCheck>>();
-      checks.emplace_back(MakeBoardLotCheck(&marketDataClient, marketDatabase,
-        timeZoneDatabase));
+      checks.emplace_back(
+        MakeBoardLotCheck(&marketDataClient, marketDatabase, timeZoneDatabase));
       checks.emplace_back(std::make_unique<
         BuyingPowerCheck<ApplicationAdministrationClient::Client*,
-        ApplicationMarketDataClient::Client*>>(exchangeRates,
-        &administrationClient, &marketDataClient));
+          ApplicationMarketDataClient::Client*>>(exchangeRates,
+            &administrationClient, &marketDataClient));
       checks.emplace_back(std::make_unique<
         RiskStateCheck<ApplicationAdministrationClient::Client*>>(
-        &administrationClient));
+          &administrationClient));
       return checks;
     }, std::runtime_error("Unable to initialize order submission checks."));
   }
@@ -212,31 +219,31 @@ int main(int argc, const char** argv) {
     auto serviceLocatorClient = MakeApplicationServiceLocatorClient(
       GetNode(config, "service_locator"));
     auto uidClient = ApplicationUidClient(serviceLocatorClient.Get());
-    auto timeClient = MakeLiveNtpTimeClientFromServiceLocator(
-      *serviceLocatorClient);
-    auto administrationClient = ApplicationAdministrationClient(
-      serviceLocatorClient.Get());
-    auto definitionsClient = ApplicationDefinitionsClient(
-      serviceLocatorClient.Get());
-    auto complianceClient = ApplicationComplianceClient(
-      serviceLocatorClient.Get());
-    auto marketDataClient = ApplicationMarketDataClient(
-      serviceLocatorClient.Get());
-    auto fixApplicationEntries = LoadFixApplications(Ref(*timeClient),
-      Ref(marketDataClient));
-    auto fixOrderExecutionDriver = ApplicationFixOrderExecutionDriver(
-      fixApplicationEntries);
+    auto timeClient =
+      MakeLiveNtpTimeClientFromServiceLocator(*serviceLocatorClient);
+    auto administrationClient =
+      ApplicationAdministrationClient(serviceLocatorClient.Get());
+    auto definitionsClient =
+      ApplicationDefinitionsClient(serviceLocatorClient.Get());
+    auto complianceClient =
+      ApplicationComplianceClient(serviceLocatorClient.Get());
+    auto marketDataClient =
+      ApplicationMarketDataClient(serviceLocatorClient.Get());
+    auto fixApplicationEntries =
+      LoadFixApplications(Ref(*timeClient), Ref(marketDataClient));
+    auto fixOrderExecutionDriver =
+      ApplicationFixOrderExecutionDriver(fixApplicationEntries);
     auto marketDatabase = definitionsClient->LoadMarketDatabase();
     auto asxtFeeTable = TryOrNest([&] {
       return ParseAsxFeeTable(GetNode(feeTableConfig, "au_equities"));
     }, std::runtime_error("Failed parse section 'au_equities'."));
     auto hkexFeeTable = TryOrNest([&] {
-      return ParseHkexFeeTable(GetNode(feeTableConfig, "hk_equities"),
-        marketDatabase);
+      return ParseHkexFeeTable(
+        GetNode(feeTableConfig, "hk_equities"), marketDatabase);
     }, std::runtime_error("Failed parse section 'hk_equities'."));
     auto jpxFeeTable = TryOrNest([&] {
-      return ParseJpxFeeTable(GetNode(feeTableConfig, "jp_equities"),
-        marketDatabase);
+      return ParseJpxFeeTable(
+        GetNode(feeTableConfig, "jp_equities"), marketDatabase);
     }, std::runtime_error("Failed parse section 'jp_equities'."));
     auto tmxFeeTable = TryOrNest([&] {
       return ParseConsolidatedTmxFeeTable(
@@ -257,8 +264,8 @@ int main(int argc, const char** argv) {
       &feesCalculator, std::move(checks));
     auto complianceRuleSet = ComplianceRuleSet(complianceClient.Get(),
         serviceLocatorClient.Get(), [&] (const auto& entry) {
-      return MakeComplianceRule(entry.GetSchema(), *marketDataClient,
-        *definitionsClient, *timeClient);
+      return MakeComplianceRule(
+        entry.GetSchema(), *marketDataClient, *definitionsClient, *timeClient);
     });
     auto complianceCheckOrderExecutionDriver =
       ApplicationComplianceCheckOrderExecutionDriver(
@@ -266,8 +273,8 @@ int main(int argc, const char** argv) {
     auto manualOrderExecutionDriver = ApplicationManualOrderEntryDriver(
       DefaultDestinations::MOE(), &complianceCheckOrderExecutionDriver,
       administrationClient.Get());
-    auto sessionStartTime = ToUtcTime(Extract<ptime>(config,
-      "session_start_time", pos_infin));
+    auto sessionStartTime =
+      ToUtcTime(Extract<ptime>(config, "session_start_time", pos_infin));
     auto mySqlConfigs = TryOrNest([&] {
       return MySqlConfig::ParseReplication(GetNode(config, "data_store"));
     }, std::runtime_error("Error parsing section 'data_store'."));
@@ -287,11 +294,11 @@ int main(int argc, const char** argv) {
     auto destinationDatabase = definitionsClient->LoadDestinationDatabase();
     auto server = OrderExecutionServletContainer(Initialize(
       serviceLocatorClient.Get(), Initialize(sessionStartTime,
-      marketDatabase, destinationDatabase, timeClient.get(),
-      serviceLocatorClient.Get(), uidClient.Get(), administrationClient.Get(),
-      &manualOrderExecutionDriver, dataStore.get())),
+        marketDatabase, destinationDatabase, timeClient.get(),
+        serviceLocatorClient.Get(), uidClient.Get(), administrationClient.Get(),
+        &manualOrderExecutionDriver, dataStore.get())),
       Initialize(serviceConfig.m_interface),
-      std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10)));
+        std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10)));
     Register(*serviceLocatorClient, serviceConfig);
     WaitForKillEvent();
     serviceLocatorClient->Close();
