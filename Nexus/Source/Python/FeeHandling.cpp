@@ -10,6 +10,7 @@
 #include "Nexus/FeeHandling/ConsolidatedTmxFeeTable.hpp"
 #include "Nexus/FeeHandling/ConsolidatedUsFeeTable.hpp"
 #include "Nexus/FeeHandling/CseFeeTable.hpp"
+#include "Nexus/FeeHandling/Cse2FeeTable.hpp"
 #include "Nexus/FeeHandling/EdgaFeeTable.hpp"
 #include "Nexus/FeeHandling/EdgxFeeTable.hpp"
 #include "Nexus/FeeHandling/HkexFeeTable.hpp"
@@ -247,6 +248,23 @@ void Nexus::Python::ExportCseFeeTable(module& module) {
   module.def("lookup_fee", static_cast<Money (*)(const CseFeeTable&,
     LiquidityFlag, CseFeeTable::PriceClass)>(&LookupFee));
   module.def("calculate_fee", static_cast<Money (*)(const CseFeeTable&,
+    const ExecutionReport&)>(&CalculateFee));
+}
+
+void Nexus::Python::ExportCse2FeeTable(module& module) {
+  auto outer = class_<Cse2FeeTable>(module, "Cse2FeeTable")
+    .def(init())
+    .def(init<const Cse2FeeTable&>())
+    .def_readwrite("fee_table", &Cse2FeeTable::m_feeTable).
+    .def_readwrite("dark_table", &Cse2FeeTable::m_feeTable);
+  enum_<Cse2FeeTable::PriceClass>(outer, "PriceClass")
+    .value("NONE", Cse2FeeTable::PriceClass::NONE)
+    .value("DEFAULT", Cse2FeeTable::PriceClass::DEFAULT)
+    .value("SUBDOLLAR", Cse2FeeTable::PriceClass::SUBDOLLAR);
+  module.def("parse_cse2_fee_table", &ParseCse2FeeTable);
+  module.def("lookup_fee", static_cast<Money (*)(const Cse2FeeTable&,
+    LiquidityFlag, Cse2FeeTable::PriceClass)>(&LookupFee));
+  module.def("calculate_fee", static_cast<Money (*)(const Cse2FeeTable&,
     const ExecutionReport&)>(&CalculateFee));
 }
 

@@ -1,16 +1,38 @@
-#ifndef NEXUS_CSE_FEE_TABLE_HPP
-#define NEXUS_CSE_FEE_TABLE_HPP
+#ifndef NEXUS_CSE2_FEE_TABLE_HPP
+#define NEXUS_CSE2_FEE_TABLE_HPP
 #include <array>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include "Nexus/Definitions/Money.hpp"
-#include "Nexus/FeeHandling/FeeHandling.hpp"
-#include "Nexus/FeeHandling/LiquidityFlag.hpp"
-#include "Nexus/OrderExecutionService/ExecutionReport.hpp"
 
 namespace Nexus {
 
-  /** Stores the table of fees used by the Canadian Securities Exchange. */
-  struct CseFeeTable {
+  /** Stores the table of fees used by the CSE2 destination. */
+  struct Cse2FeeTable {
+
+    /** Enumerates the types of fee tables. */
+    enum class FeeTable {
+
+      /** Regular fee table. */
+      REGULAR,
+
+      /** Dark fee table. */
+      DARK,
+
+      /** Debentures or notes table. */
+      DEBENTURES_OR_NOTES,
+
+      /** CSE Government listed bond table. */
+      CSE_GOVERNMENT_LISTED_BONDS,
+
+      /** Oddlot table. */
+      ODDLOT,
+
+      /** Unintentional cross. */
+      UNINTENTIONAL_CROSS,
+
+      /** Intentional cross. */
+      INTENTIONAL_CROSS
+    };
 
     /** Enumerates the types of price classes. */
     enum class PriceClass {
@@ -22,40 +44,79 @@ namespace Nexus {
       DEFAULT,
 
       /** Price >= $0.10 & < $1.00. */
-      SUBDOLLAR,
-
-      /** Price < $0.10. */
-      SUBDIME
+      SUBDOLLAR
     };
 
     /** The number of price classes enumerated. */
-    static constexpr auto PRICE_CLASS_COUNT = std::size_t(3);
+    static constexpr auto PRICE_CLASS_COUNT = std::size_t(2);
 
-    /** The fee table. */
+    /** The market the security is listed on. */
+    enum class ListingMarket {
+
+      /** CSE listed. */
+      CSE,
+
+      /** TSX or TSX-V listed. */
+      TSX_TSXV
+    };
+
+    /** The number of listings. */
+    static constexpr auto LISTING_MARKET_COUNT = std::size_t(2);
+
+    /** The regular fee table. */
     std::array<std::array<Money, LIQUIDITY_FLAG_COUNT>, PRICE_CLASS_COUNT>
       m_feeTable;
+
+    /** The dark order fees. */
+    std::array<Money, LIQUIDITY_FLAG_COUNT> m_darkTable;
+
+    /** The debutures or notes table. */
+    std::array<std::array<Money, LIQUIDITY_FLAG_COUNT>, LISTING_MARKET_COUNT>
+      m_debenturesOrNotesTable;
+
+    /** The CSE listed government bonds fees. */
+    std::array<Money, LIQUIDITY_FLAG_COUNT> m_cseListedGovernmentBondsTable;
+
+    /** The oddlot fees. */
+    std::array<Money, LIQUIDITY_FLAG_COUNT> m_oddlotTable;
+
+    /** The unintentional cross fees. */
+    std::array<Money, LIQUIDITY_FLAG_COUNT> m_unintentionalCrossTable;
+
+    /** The intentional cross credit. */
+    Money m_intentionalCrossCredit;
   };
 
   /**
-   * Parses a CseFeeTable from a YAML configuration.
+   * Parses a Cse2FeeTable from a YAML configuration.
    * @param config The configuration to parse the CseFeeTable from.
-   * @return The CseFeeTable represented by the <i>config</i>.
+   * @return The Cse2FeeTable represented by the <i>config</i>.
    */
-  inline CseFeeTable ParseCseFeeTable(const YAML::Node& config) {
-    auto feeTable = CseFeeTable();
+  inline Cse2FeeTable ParseCse2FeeTable(const YAML::Node& config) {
+    auto feeTable = Cse2FeeTable();
     ParseFeeTable(config, "fee_table", Beam::Store(feeTable.m_feeTable));
+    ParseFeeTable(config, "dark_table", Beam::Store(feeTable.m_darkTable));
+    ParseFeeTable(config, "debentures_or_notes_table",
+      Beam::Store(feeTable.m_debenturesOrNotesTable));
+    ParseFeeTable(config, "cse_listed_government_bonds_table",
+      Beam::Store(feeTable.m_cseListedGovernmentBondsTable));
+    ParseFeeTable(config, "oddlot_table", Beam::Store(feeTable.m_oddlotTable));
+    ParseFeeTable(config, "unintentional_cross_table",
+      Beam::Store(feeTable.m_unintentionalCrossTable));
+    feeTable.m_intentionalCrossCredit =
+      Beam::Extract<Money>(config, "intentional_cross_credit");
     return feeTable;
   }
 
   /**
    * Looks up a fee.
-   * @param feeTable The CseFeeTable used to lookup the fee.
+   * @param feeTable The Cse2FeeTable used to lookup the fee.
    * @param liquidityFlag The trade's LiquidityFlag.
    * @param priceClass The trade's PriceClass.
    * @return The fee corresponding to the specified <i>liquidityFlag</i> and
    *         <i>priceClass</i>.
    */
-  inline Money LookupFee(const CseFeeTable& feeTable,
+  inline Money LookupFee(const Cse2FeeTable& feeTable,
       LiquidityFlag liquidityFlag, CseFeeTable::PriceClass priceClass) {
     return feeTable.m_feeTable[static_cast<int>(priceClass)][
       static_cast<int>(liquidityFlag)];

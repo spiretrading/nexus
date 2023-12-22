@@ -59,6 +59,12 @@ namespace Nexus::Python {
   void ExportCseFeeTable(pybind11::module& module);
 
   /**
+   * Exports the Cse2FeeTable class.
+   * @param module The module to export to.
+   */
+  void ExportCse2FeeTable(pybind11::module& module);
+
+  /**
    * Exports the EdgaFeeTable class.
    * @param module The module to export to.
    */
