@@ -187,6 +187,8 @@ void Nexus::Python::ExportConsolidatedTmxFeeTable(module& module) {
     .def_readwrite("per_order_fee", &ConsolidatedTmxFeeTable::m_perOrderFee)
     .def_readwrite("per_order_cap", &ConsolidatedTmxFeeTable::m_perOrderCap)
     .def_readwrite("chic_fee_table", &ConsolidatedTmxFeeTable::m_chicFeeTable)
+    .def_readwrite("cse_fee_table", &ConsolidatedTmxFeeTable::m_cseFeeTable)
+    .def_readwrite("cse2_fee_table", &ConsolidatedTmxFeeTable::m_cse2FeeTable)
     .def_readwrite("lynx_fee_table", &ConsolidatedTmxFeeTable::m_lynxFeeTable)
     .def_readwrite("matn_fee_table", &ConsolidatedTmxFeeTable::m_matnFeeTable)
     .def_readwrite("neoe_fee_table", &ConsolidatedTmxFeeTable::m_neoeFeeTable)
@@ -255,17 +257,40 @@ void Nexus::Python::ExportCse2FeeTable(module& module) {
   auto outer = class_<Cse2FeeTable>(module, "Cse2FeeTable")
     .def(init())
     .def(init<const Cse2FeeTable&>())
-    .def_readwrite("fee_table", &Cse2FeeTable::m_feeTable).
-    .def_readwrite("dark_table", &Cse2FeeTable::m_feeTable);
-  enum_<Cse2FeeTable::PriceClass>(outer, "PriceClass")
-    .value("NONE", Cse2FeeTable::PriceClass::NONE)
-    .value("DEFAULT", Cse2FeeTable::PriceClass::DEFAULT)
-    .value("SUBDOLLAR", Cse2FeeTable::PriceClass::SUBDOLLAR);
+    .def_readwrite("regular_table", &Cse2FeeTable::m_regularTable)
+    .def_readwrite("dark_table", &Cse2FeeTable::m_darkTable)
+    .def_readwrite(
+      "debentures_or_notes_table", &Cse2FeeTable::m_debenturesOrNotesTable)
+    .def_readwrite("cse_listed_government_bonds_table",
+      &Cse2FeeTable::m_cseListedGovernmentBondsTable)
+    .def_readwrite("oddlot_table", &Cse2FeeTable::m_oddlotTable)
+    .def_readwrite(
+      "unintentional_cross_table", &Cse2FeeTable::m_unintentionalCrossTable)
+    .def_readwrite(
+      "intentional_cross_credit", &Cse2FeeTable::m_intentionalCrossCredit);
+  enum_<Cse2FeeTable::Section>(outer, "Section")
+    .value("REGULAR", Cse2FeeTable::Section::REGULAR)
+    .value("DARK", Cse2FeeTable::Section::DARK)
+    .value("DEBENTURES_OR_NOTES", Cse2FeeTable::Section::DEBENTURES_OR_NOTES)
+    .value("CSE_LISTED_GOVERNMENT_BONDS",
+      Cse2FeeTable::Section::CSE_LISTED_GOVERNMENT_BONDS)
+    .value("ODDLOT", Cse2FeeTable::Section::ODDLOT)
+    .value("UNINTENTIONAL_CROSS", Cse2FeeTable::Section::UNINTENTIONAL_CROSS)
+    .value("INTENTIONAL_CROSS", Cse2FeeTable::Section::INTENTIONAL_CROSS);
   module.def("parse_cse2_fee_table", &ParseCse2FeeTable);
-  module.def("lookup_fee", static_cast<Money (*)(const Cse2FeeTable&,
-    LiquidityFlag, Cse2FeeTable::PriceClass)>(&LookupFee));
+  module.def("lookup_cse2_fee_table_section", &LookupCse2FeeTableSection);
+  module.def("calculate_regular_fee", &CalculateRegularFee);
+  module.def("calculate_dark_fee", &CalculateDarkFee);
+  module.def(
+    "calculate_debentures_or_notes_fee", &CalculateDebenturesOrNotesFee);
+  module.def("calculate_cse_listed_government_bonds_fee",
+    &CalculateCseListedGovernmentBondsFee);
+  module.def("calculate_oddlot_fee", &CalculateOddLotFee);
+  module.def(
+    "calculate_unintentional_cross_fee", &CalculateUnintentionalCrossFee);
+  module.def("calculate_intentional_cross_fee", &CalculateIntentionalCrossFee);
   module.def("calculate_fee", static_cast<Money (*)(const Cse2FeeTable&,
-    const ExecutionReport&)>(&CalculateFee));
+    const OrderFields&, const ExecutionReport&)>(&CalculateFee));
 }
 
 void Nexus::Python::ExportEdgaFeeTable(module& module) {
@@ -304,6 +329,7 @@ void Nexus::Python::ExportFeeHandling(module& module) {
   ExportConsolidatedTmxFeeTable(module);
   ExportConsolidatedUsFeeTable(module);
   ExportCseFeeTable(module);
+  ExportCse2FeeTable(module);
   ExportEdgaFeeTable(module);
   ExportEdgxFeeTable(module);
   ExportHkexFeeTable(module);
