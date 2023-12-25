@@ -27,6 +27,7 @@ namespace {
   const auto EXCHANGE_ADMIN_TAG = 6780;
   const auto NO_TRADE_FEAT_TAG = 7713;
   const auto NO_TRADE_KEY_TAG = 7714;
+  const auto TRADE_LIQUIDITY_INDICATOR_TAG = 9882;
 }
 
 CnsxFixApplication::CnsxFixApplication(Ref<LiveNtpTimeClient> timeClient)
@@ -117,26 +118,33 @@ void CnsxFixApplication::onMessage(const FIX42::ExecutionReport& message,
     const FIX::SessionID& sessionId) {
   m_orderLog.Update(message, sessionId, m_timeClient->GetTime(),
     [=] (const Order& order, Out<ExecutionReport> update) {
-      auto exchangeAdminValue = [&] () -> std::string {
-        if(message.isSetField(EXCHANGE_ADMIN_TAG)) {
-          return message.getField(EXCHANGE_ADMIN_TAG);
-        }
-        return {};
-      }();
-      if(exchangeAdminValue.size() >= 2) {
-        auto liquidityFlag = exchangeAdminValue[1];
-        if(liquidityFlag != '0' && exchangeAdminValue.size() >= 3) {
-          update->m_liquidityFlag = exchangeAdminValue[1];
-          auto session = exchangeAdminValue[2];
-          if(session == 'O' || session == 'E') {
-            update->m_liquidityFlag += session;
+      if(order.GetInfo().m_fields.m_destination ==
+          DefaultDestinations::CSE2()) {
+        auto flag = [&] () -> std::string {
+          if(message.isSetField(TRADE_LIQUIDITY_INDICATOR_TAG)) {
+            return message.getField(TRADE_LIQUIDITY_INDICATOR_TAG);
           }
-        }
-        auto lastMarket = exchangeAdminValue[0];
-        if(order.GetInfo().m_fields.m_destination ==
-            DefaultDestinations::CSE2()) {
-          update->m_lastMarket = DefaultMarkets::CSE2().GetData();
-        } else {
+          return {};
+        }();
+        update->m_liquidityFlag = std::move(flag);
+        update->m_lastMarket = DefaultMarkets::CSE2().GetData();
+      } else {
+        auto exchangeAdminValue = [&] () -> std::string {
+          if(message.isSetField(EXCHANGE_ADMIN_TAG)) {
+            return message.getField(EXCHANGE_ADMIN_TAG);
+          }
+          return {};
+        }();
+        if(exchangeAdminValue.size() >= 2) {
+          auto liquidityFlag = exchangeAdminValue[1];
+          if(liquidityFlag != '0' && exchangeAdminValue.size() >= 3) {
+            update->m_liquidityFlag = exchangeAdminValue[1];
+            auto session = exchangeAdminValue[2];
+            if(session == 'O' || session == 'E') {
+              update->m_liquidityFlag += session;
+            }
+          }
+          auto lastMarket = exchangeAdminValue[0];
           if(lastMarket == 'P') {
             update->m_lastMarket = DefaultMarkets::PURE().GetData();
           } else if(lastMarket == 'Q') {

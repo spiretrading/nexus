@@ -69,7 +69,7 @@ ca_equities:
        [0.00030,  0.00000, 0.00030,  0.00000],
        [0.00030,  0.00000, 0.00030,  0.00000]]
 
-  # CSE fees are based on http://thecse.com/en/services/become-dealer/fee-schedule
+  # CSE fees are based on https://thecse.com/trading/trading-resources/#trading-access-fees
   cse:
 
   # The fee_table is structured as follows:
@@ -81,6 +81,43 @@ ca_equities:
       [[0.00020, 0.00020],
        [0.00008, 0.00008],
        [0.00004, 0.00004]]
+
+  # CSE2 fees are based on https://thecse.com/trading/trading-resources/#trading-access-fees
+  cse2:
+
+  # The fee_table is structured as follows:
+  #                     Active, Passive
+  # >= $1.00               X       X
+  #  < $1.00               X       X
+    regular_table:
+      [[-0.0020, 0.0028],
+       [-0.0004, 0.0009]]
+
+  # The fee_table is structured as follows:
+  # Active, Passive
+  #    X       X
+    dark_table:
+      [0.00, 0.00]
+
+  # The fee_table is structured as follows:
+  #                    Active, Passive
+  #  CSE Listed           X       X
+  #  Default              X       X
+    debentures_or_notes_table:
+      [[0.09, -0.07],
+       [0.09, -0.08]]
+
+  # The fee_table is structured as follows:
+  # Active, Passive
+  #    X       X
+    cse_listed_government_bonds_table:
+      [9.75, 9.75]
+
+  # The fee_table is structured as follows:
+  # Active, Passive
+  #    X       X
+    oddlot_table:
+      [0.00, 0.00]
 
   # CX2 fees are based on http://business.nasdaq.com/trade/Canadian-Equities/Trading/Pricing
   # Fees for notes and debentures are not supported.
