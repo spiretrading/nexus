@@ -11,6 +11,7 @@
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "Nexus/FeeHandling/ChicFeeTable.hpp"
 #include "Nexus/FeeHandling/CseFeeTable.hpp"
+#include "Nexus/FeeHandling/Cse2FeeTable.hpp"
 #include "Nexus/FeeHandling/FeeHandling.hpp"
 #include "Nexus/FeeHandling/LynxFeeTable.hpp"
 #include "Nexus/FeeHandling/MatnFeeTable.hpp"
@@ -67,6 +68,9 @@ namespace Nexus {
 
     /** Fee table used by CSE. */
     CseFeeTable m_cseFeeTable;
+
+    /** Fee table used by CSE2. */
+    Cse2FeeTable m_cse2FeeTable;
 
     /** Fee table used by LYNX. */
     LynxFeeTable m_lynxFeeTable;
@@ -183,79 +187,72 @@ namespace Nexus {
     feeTable.m_clearingFee = Beam::Extract<Money>(config, "clearing_fee");
     feeTable.m_perOrderFee = Beam::Extract<Money>(config, "per_order_fee");
     feeTable.m_perOrderCap = Beam::Extract<Money>(config, "per_order_cap");
-    auto xatsConfig = config["xats"];
-    if(!xatsConfig) {
-      BOOST_THROW_EXCEPTION(std::runtime_error("Fee table for XATS missing."));
-    } else {
+    if(auto xatsConfig = config["xats"]) {
       feeTable.m_xatsFeeTable = ParseXatsFeeTable(xatsConfig);
-    }
-    auto chicConfig = config["chic"];
-    if(!chicConfig) {
-      BOOST_THROW_EXCEPTION(std::runtime_error("Fee table for CHIC missing."));
     } else {
+      BOOST_THROW_EXCEPTION(std::runtime_error("Fee table for XATS missing."));
+    }
+    if(auto chicConfig = config["chic"]) {
       feeTable.m_chicFeeTable = ParseChicFeeTable(chicConfig, feeTable.m_etfs,
         feeTable.m_interlisted);
-    }
-    auto cseConfig = config["cse"];
-    if(!cseConfig) {
-      BOOST_THROW_EXCEPTION(std::runtime_error("Fee table for CSE missing."));
     } else {
+      BOOST_THROW_EXCEPTION(std::runtime_error("Fee table for CHIC missing."));
+    }
+    if(auto cseConfig = config["cse"]) {
       feeTable.m_cseFeeTable = ParseCseFeeTable(cseConfig);
-    }
-    auto xcx2Config = config["xcx2"];
-    if(!xcx2Config) {
-      BOOST_THROW_EXCEPTION(std::runtime_error("Fee table for XCX2 missing."));
     } else {
+      BOOST_THROW_EXCEPTION(std::runtime_error("Fee table for CSE missing."));
+    }
+    if(auto cse2Config = config["cse2"]) {
+      feeTable.m_cse2FeeTable = ParseCse2FeeTable(cse2Config);
+    } else {
+      BOOST_THROW_EXCEPTION(std::runtime_error("Fee table for CSE2 missing."));
+    }
+    if(auto xcx2Config = config["xcx2"]) {
       feeTable.m_xcx2FeeTable = ParseXcx2FeeTable(xcx2Config, feeTable.m_etfs);
-    }
-    auto lynxConfig = config["lynx"];
-    if(!lynxConfig) {
-      BOOST_THROW_EXCEPTION(std::runtime_error("Fee table for LYNX missing."));
     } else {
+      BOOST_THROW_EXCEPTION(std::runtime_error("Fee table for XCX2 missing."));
+    }
+    if(auto lynxConfig = config["lynx"]) {
       feeTable.m_lynxFeeTable = ParseLynxFeeTable(
         lynxConfig, feeTable.m_etfs, feeTable.m_interlisted);
-    }
-    auto matnConfig = config["matn"];
-    if(!matnConfig) {
-      BOOST_THROW_EXCEPTION(std::runtime_error("Fee table for MATN missing."));
     } else {
+      BOOST_THROW_EXCEPTION(std::runtime_error("Fee table for LYNX missing."));
+    }
+    if(auto matnConfig = config["matn"]) {
       feeTable.m_matnFeeTable = ParseMatnFeeTable(matnConfig);
-    }
-    auto neoeConfig = config["neoe"];
-    if(!neoeConfig) {
-      BOOST_THROW_EXCEPTION(std::runtime_error("Fee table for NEOE missing."));
     } else {
+      BOOST_THROW_EXCEPTION(std::runtime_error("Fee table for MATN missing."));
+    }
+    if(auto neoeConfig = config["neoe"]) {
       feeTable.m_neoeFeeTable = ParseNeoeFeeTable(neoeConfig);
-    }
-    auto nexConfig = config["nex"];
-    if(!nexConfig) {
-      BOOST_THROW_EXCEPTION(std::runtime_error("Fee table for NEX missing."));
     } else {
+      BOOST_THROW_EXCEPTION(std::runtime_error("Fee table for NEOE missing."));
+    }
+    if(auto nexConfig = config["nex"]) {
       feeTable.m_nexFeeTable = ParseNexFeeTable(nexConfig);
-    }
-    auto omgaConfig = config["omga"];
-    if(!omgaConfig) {
-      BOOST_THROW_EXCEPTION(std::runtime_error("Fee table for OMGA missing."));
     } else {
+      BOOST_THROW_EXCEPTION(std::runtime_error("Fee table for NEX missing."));
+    }
+    if(auto omgaConfig = config["omga"]) {
       feeTable.m_omgaFeeTable = ParseOmgaFeeTable(omgaConfig);
-    }
-    auto pureConfig = config["pure"];
-    if(!pureConfig) {
-      BOOST_THROW_EXCEPTION(std::runtime_error("Fee table for PURE missing."));
     } else {
+      BOOST_THROW_EXCEPTION(std::runtime_error("Fee table for OMGA missing."));
+    }
+    if(auto pureConfig = config["pure"]) {
       feeTable.m_pureFeeTable = ParsePureFeeTable(pureConfig, marketDatabase);
-    }
-    auto tsxConfig = config["tsx"];
-    if(!tsxConfig) {
-      BOOST_THROW_EXCEPTION(std::runtime_error("Fee table for XTSE missing."));
     } else {
+      BOOST_THROW_EXCEPTION(std::runtime_error("Fee table for PURE missing."));
+    }
+    if(auto tsxConfig = config["tsx"]) {
       feeTable.m_tsxFeeTable = ParseTsxFeeTable(tsxConfig);
-    }
-    auto tsxvConfig = config["tsxv"];
-    if(!tsxvConfig) {
-      BOOST_THROW_EXCEPTION(std::runtime_error("Fee table for XTSX missing."));
     } else {
+      BOOST_THROW_EXCEPTION(std::runtime_error("Fee table for XTSE missing."));
+    }
+    if(auto tsxvConfig = config["tsxv"]) {
       feeTable.m_tsxVentureTable = ParseTsxFeeTable(tsxvConfig);
+    } else {
+      BOOST_THROW_EXCEPTION(std::runtime_error("Fee table for XTSX missing."));
     }
     return feeTable;
   }

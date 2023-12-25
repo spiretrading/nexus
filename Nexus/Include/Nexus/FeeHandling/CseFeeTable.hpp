@@ -12,7 +12,7 @@ namespace Nexus {
   /** Stores the table of fees used by the Canadian Securities Exchange. */
   struct CseFeeTable {
 
-    /* Enumerates the types of price classes. */
+    /** Enumerates the types of price classes. */
     enum class PriceClass {
 
       /** Unknown. */
