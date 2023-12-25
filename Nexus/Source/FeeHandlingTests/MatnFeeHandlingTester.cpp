@@ -211,15 +211,19 @@ TEST_SUITE("MatnFeeHandling") {
   TEST_CASE("unknown_liquidity_flag") {
     auto feeTable = MakeFeeTable();
     {
-      auto executionReport = ExecutionReport::MakeInitialReport(0,
-        second_clock::universal_time());
+      auto executionReport =
+        ExecutionReport::MakeInitialReport(0, second_clock::universal_time());
       executionReport.m_lastPrice = Money::CENT;
       executionReport.m_lastQuantity = 100;
       executionReport.m_liquidityFlag = "AP";
       auto calculatedFee = CalculateFee(feeTable,
         MatnFeeTable::Classification::DEFAULT, executionReport);
-      auto expectedFee = executionReport.m_lastQuantity * LookupFee(feeTable,
-        MatnFeeTable::GeneralIndex::FEE, MatnFeeTable::PriceClass::SUBDOLLAR);
+      auto maxCharge =
+        LookupFee(feeTable, MatnFeeTable::GeneralIndex::MAX_CHARGE,
+          MatnFeeTable::PriceClass::SUBDOLLAR);
+      auto expectedFee = std::min(maxCharge, executionReport.m_lastQuantity *
+        LookupFee(feeTable, MatnFeeTable::GeneralIndex::FEE,
+          MatnFeeTable::PriceClass::SUBDOLLAR));
       REQUIRE(calculatedFee == expectedFee);
     }
     {
@@ -230,9 +234,12 @@ TEST_SUITE("MatnFeeHandling") {
       executionReport.m_liquidityFlag = "PA";
       auto calculatedFee = CalculateFee(feeTable,
         MatnFeeTable::Classification::DEFAULT, executionReport);
-      auto expectedFee = executionReport.m_lastQuantity * LookupFee(feeTable,
-        MatnFeeTable::GeneralIndex::FEE,
-        MatnFeeTable::PriceClass::SUBFIVE_DOLLAR);
+      auto maxCharge =
+        LookupFee(feeTable, MatnFeeTable::GeneralIndex::MAX_CHARGE,
+          MatnFeeTable::PriceClass::SUBFIVE_DOLLAR);
+      auto expectedFee = std::min(maxCharge, executionReport.m_lastQuantity *
+        LookupFee(feeTable, MatnFeeTable::GeneralIndex::FEE,
+          MatnFeeTable::PriceClass::SUBFIVE_DOLLAR));
       REQUIRE(calculatedFee == expectedFee);
     }
     {
