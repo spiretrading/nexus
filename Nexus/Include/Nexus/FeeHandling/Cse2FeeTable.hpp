@@ -146,8 +146,8 @@ namespace Nexus {
       }
       return Cse2FeeTable::PriceClass::DEFAULT;
     }();
-    auto fee = feeTable.m_regularTable[static_cast<int>(liquidityFlag)][
-      static_cast<int>(priceClass)];
+    auto fee = feeTable.m_regularTable[static_cast<int>(priceClass)][
+      static_cast<int>(liquidityFlag)];
     return executionReport.m_lastQuantity * fee;
   }
 
@@ -183,7 +183,7 @@ namespace Nexus {
       return Cse2FeeTable::ListingMarket::CSE;
     }();
     auto fee = feeTable.m_debenturesOrNotesTable[
-      static_cast<int>(liquidityFlag)][static_cast<int>(listingMarket)];
+      static_cast<int>(listingMarket)][static_cast<int>(liquidityFlag)];
     return executionReport.m_lastQuantity * fee;
   }
 

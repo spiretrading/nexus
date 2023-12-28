@@ -60,8 +60,8 @@ TEST_SUITE("Cse2FeeHandling") {
   TEST_CASE("active_sub_dollar_regular") {
     auto feeTable = MakeFeeTable();
     auto expectedFee = 100 * feeTable.m_regularTable[
-      static_cast<int>(LiquidityFlag::ACTIVE)][
-      static_cast<int>(Cse2FeeTable::PriceClass::SUBDOLLAR)];
+      static_cast<int>(Cse2FeeTable::PriceClass::SUBDOLLAR)][
+      static_cast<int>(LiquidityFlag::ACTIVE)];
     auto fee = CalculateFee(feeTable, MakeOrderFields(Money::CENT),
       MakeExecutionReport(Money::CENT, 100, "TT "));
     REQUIRE(fee == expectedFee);
@@ -70,8 +70,8 @@ TEST_SUITE("Cse2FeeHandling") {
   TEST_CASE("active_default_regular") {
     auto feeTable = MakeFeeTable();
     auto expectedFee = 200 * feeTable.m_regularTable[
-      static_cast<int>(LiquidityFlag::ACTIVE)][
-      static_cast<int>(Cse2FeeTable::PriceClass::DEFAULT)];
+      static_cast<int>(Cse2FeeTable::PriceClass::DEFAULT)][
+      static_cast<int>(LiquidityFlag::ACTIVE)];
     auto fee = CalculateFee(feeTable, MakeOrderFields(Money::ONE),
       MakeExecutionReport(Money::ONE, 200, "TT "));
     REQUIRE(fee == expectedFee);
@@ -80,8 +80,8 @@ TEST_SUITE("Cse2FeeHandling") {
   TEST_CASE("passive_sub_dollar_regular") {
     auto feeTable = MakeFeeTable();
     auto expectedFee = 300 * feeTable.m_regularTable[
-      static_cast<int>(LiquidityFlag::PASSIVE)][
-      static_cast<int>(Cse2FeeTable::PriceClass::SUBDOLLAR)];
+      static_cast<int>(Cse2FeeTable::PriceClass::SUBDOLLAR)][
+      static_cast<int>(LiquidityFlag::PASSIVE)];
     auto fee = CalculateFee(feeTable, MakeOrderFields(Money::CENT),
       MakeExecutionReport(Money::CENT, 300, "PT "));
     REQUIRE(fee == expectedFee);
@@ -90,8 +90,8 @@ TEST_SUITE("Cse2FeeHandling") {
   TEST_CASE("passive_default_regular") {
     auto feeTable = MakeFeeTable();
     auto expectedFee = 400 * feeTable.m_regularTable[
-      static_cast<int>(LiquidityFlag::PASSIVE)][
-      static_cast<int>(Cse2FeeTable::PriceClass::DEFAULT)];
+      static_cast<int>(Cse2FeeTable::PriceClass::DEFAULT)][
+      static_cast<int>(LiquidityFlag::PASSIVE)];
     auto fee = CalculateFee(feeTable, MakeOrderFields(Money::ONE),
       MakeExecutionReport(Money::ONE, 400, "PT "));
     REQUIRE(fee == expectedFee);
@@ -118,8 +118,8 @@ TEST_SUITE("Cse2FeeHandling") {
   TEST_CASE("active_cse_debenture") {
     auto feeTable = MakeFeeTable();
     auto expectedFee = 100 * feeTable.m_debenturesOrNotesTable[
-      static_cast<int>(LiquidityFlag::ACTIVE)][
-      static_cast<int>(Cse2FeeTable::ListingMarket::CSE)];
+      static_cast<int>(Cse2FeeTable::ListingMarket::CSE)][
+      static_cast<int>(LiquidityFlag::ACTIVE)];
     auto fee = CalculateFee(feeTable, MakeOrderFields("TST.DB", Money::CENT,
       DefaultMarkets::CSE()), MakeExecutionReport(Money::CENT, 100, "TC "));
     REQUIRE(fee == expectedFee);
@@ -128,8 +128,8 @@ TEST_SUITE("Cse2FeeHandling") {
   TEST_CASE("passive_cse_debenture") {
     auto feeTable = MakeFeeTable();
     auto expectedFee = 100 * feeTable.m_debenturesOrNotesTable[
-      static_cast<int>(LiquidityFlag::PASSIVE)][
-      static_cast<int>(Cse2FeeTable::ListingMarket::CSE)];
+      static_cast<int>(Cse2FeeTable::ListingMarket::CSE)][
+      static_cast<int>(LiquidityFlag::PASSIVE)];
     auto fee = CalculateFee(feeTable, MakeOrderFields("TST.NO", Money::CENT,
       DefaultMarkets::CSE()), MakeExecutionReport(Money::CENT, 100, "PC "));
     REQUIRE(fee == expectedFee);
@@ -138,8 +138,8 @@ TEST_SUITE("Cse2FeeHandling") {
   TEST_CASE("active_tsx_debenture") {
     auto feeTable = MakeFeeTable();
     auto expectedFee = 300 * feeTable.m_debenturesOrNotesTable[
-      static_cast<int>(LiquidityFlag::ACTIVE)][
-      static_cast<int>(Cse2FeeTable::ListingMarket::TSX_TSXV)];
+      static_cast<int>(Cse2FeeTable::ListingMarket::TSX_TSXV)][
+      static_cast<int>(LiquidityFlag::ACTIVE)];
     auto fee = CalculateFee(feeTable, MakeOrderFields("TST.NT", Money::CENT,
       DefaultMarkets::TSX()), MakeExecutionReport(Money::CENT, 300, "TT "));
     REQUIRE(fee == expectedFee);
@@ -148,8 +148,8 @@ TEST_SUITE("Cse2FeeHandling") {
   TEST_CASE("passive_tsx_debenture") {
     auto feeTable = MakeFeeTable();
     auto expectedFee = 400 * feeTable.m_debenturesOrNotesTable[
-      static_cast<int>(LiquidityFlag::PASSIVE)][
-      static_cast<int>(Cse2FeeTable::ListingMarket::TSX_TSXV)];
+      static_cast<int>(Cse2FeeTable::ListingMarket::TSX_TSXV)][
+      static_cast<int>(LiquidityFlag::PASSIVE)];
     auto fee = CalculateFee(feeTable, MakeOrderFields("TST.NS", Money::ONE,
       DefaultMarkets::TSXV()), MakeExecutionReport(Money::ONE, 400, "PV "));
     REQUIRE(fee == expectedFee);
