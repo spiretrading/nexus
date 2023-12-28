@@ -58,14 +58,14 @@ namespace Nexus {
     static constexpr auto LISTING_MARKET_COUNT = std::size_t(2);
 
     /** The regular fee table. */
-    std::array<std::array<Money, PRICE_CLASS_COUNT>, LIQUIDITY_FLAG_COUNT>
+    std::array<std::array<Money, LIQUIDITY_FLAG_COUNT>, PRICE_CLASS_COUNT>
       m_regularTable;
 
     /** The dark order fees. */
     std::array<Money, LIQUIDITY_FLAG_COUNT> m_darkTable;
 
     /** The debutures or notes table. */
-    std::array<std::array<Money, LISTING_MARKET_COUNT>, LIQUIDITY_FLAG_COUNT>
+    std::array<std::array<Money, LIQUIDITY_FLAG_COUNT>, LISTING_MARKET_COUNT>
       m_debenturesOrNotesTable;
 
     /** The CSE listed government bonds fees. */
