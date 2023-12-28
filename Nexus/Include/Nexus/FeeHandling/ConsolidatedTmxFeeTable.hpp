@@ -294,7 +294,7 @@ namespace Nexus {
     feesReport.m_executionFee += [&] {
       auto lastMarket = [&] {
         if(!executionReport.m_lastMarket.empty()) {
-          return std::string{executionReport.m_lastMarket};
+          return executionReport.m_lastMarket;
         } else {
           auto& destination = order.GetInfo().m_fields.m_destination;
           if(destination == DefaultDestinations::ALPHA()) {
@@ -303,6 +303,8 @@ namespace Nexus {
             return boost::lexical_cast<std::string>(DefaultMarkets::CHIC());
           } else if(destination == DefaultDestinations::CSE()) {
             return boost::lexical_cast<std::string>(DefaultMarkets::CSE());
+          } else if(destination == DefaultDestinations::CSE2()) {
+            return boost::lexical_cast<std::string>(DefaultMarkets::CSE2());
           } else if(destination == DefaultDestinations::CX2()) {
             return boost::lexical_cast<std::string>(DefaultMarkets::XCX2());
           } else if(destination == DefaultDestinations::LYNX()) {
@@ -333,6 +335,9 @@ namespace Nexus {
           executionReport);
       } else if(lastMarket == DefaultMarkets::CSE()) {
         return CalculateFee(feeTable.m_cseFeeTable, executionReport);
+      } else if(lastMarket == DefaultMarkets::CSE2()) {
+        return CalculateFee(
+          feeTable.m_cse2FeeTable, order.GetInfo().m_fields, executionReport);
       } else if(lastMarket == DefaultMarkets::XCX2()) {
         return CalculateFee(feeTable.m_xcx2FeeTable, order.GetInfo().m_fields,
           executionReport);
