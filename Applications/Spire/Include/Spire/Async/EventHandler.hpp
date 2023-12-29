@@ -20,6 +20,8 @@ namespace Spire {
       /** Constructs an EventHandler. */
       EventHandler();
 
+      ~EventHandler();
+
       /**
        * Returns a QueueWriter used to call a slot on every push.
        * @param slot The slot to call when a new value is pushed.
@@ -45,12 +47,16 @@ namespace Spire {
       template<typename F>
       void push(F&& f);
 
+    protected:
+      bool event(QEvent* event) override;
+
     private:
-      QTimer m_update_timer;
+      std::unique_ptr<QTimer> m_update_timer;
       std::shared_ptr<Beam::TaskQueue> m_tasks;
 
       EventHandler(const EventHandler&) = delete;
       EventHandler& operator =(const EventHandler&) = delete;
+      void start_timer();
       void on_expired();
   };
 

@@ -143,19 +143,17 @@ boost::optional<ChartValue> ChartPlotController::LoadLastValue() {
   if(m_lastValue.has_value()) {
     return *m_lastValue;
   }
-  auto series = m_series;
-  auto lastValueIndex = m_lastValueIndex;
   m_taskQueue.Push(
-    [=] {
-      auto lastValue = ChartValue{std::numeric_limits<Quantity>::min()};
-      for(const auto& s : series) {
+    [=, series = m_series, lastValueIndex = m_lastValueIndex] {
+      auto lastValue = ChartValue(std::numeric_limits<Quantity>::min());
+      for(auto& s : series) {
         try {
           auto seriesLastValue = s->LoadLastCurrentDomain();
           lastValue = std::max(lastValue, seriesLastValue);
         } catch(const std::exception&) {}
       }
-      if(lastValue != ChartValue{std::numeric_limits<Quantity>().min()}) {
-        m_lastValuesLoaded.PushBack(std::make_tuple(lastValueIndex, lastValue));
+      if(lastValue != ChartValue(std::numeric_limits<Quantity>().min())) {
+        m_lastValuesLoaded.PushBack(std::tuple(lastValueIndex, lastValue));
       }
     });
   return none;
