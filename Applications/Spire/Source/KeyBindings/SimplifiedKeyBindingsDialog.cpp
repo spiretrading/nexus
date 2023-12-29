@@ -1241,6 +1241,177 @@ namespace {
     orderTypes.emplace_back(marketPegAsk.Make());
   }
 
+  void PopulateCse2Orders(vector<unique_ptr<const CanvasNode>>& orderTypes) {
+    auto limitBid = CanvasNodeBuilder(
+      *GetLimitBidOrderTaskNode()->Rename("CSE2 Limit Bid")->AddField(
+        "max_floor", 111, LinkedNode::SetReferent(MaxFloorNode(), "security")));
+    limitBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      make_unique<DestinationNode>(DefaultDestinations::CSE2()));
+    limitBid.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
+    limitBid.SetReadOnly(SingleOrderTaskNode::DESTINATION_PROPERTY, true);
+    limitBid.Replace(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    limitBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
+    limitBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
+    limitBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(limitBid.Make());
+    auto limitAsk = CanvasNodeBuilder(*GetLimitAskOrderTaskNode()->Rename(
+      "CSE2 Limit Ask")->AddField("max_floor", 111,
+        LinkedNode::SetReferent(MaxFloorNode(), "security")));
+    limitAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      make_unique<DestinationNode>(DefaultDestinations::CSE2()));
+    limitAsk.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
+    limitAsk.SetReadOnly(SingleOrderTaskNode::DESTINATION_PROPERTY, true);
+    limitAsk.Replace(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    limitAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
+    limitAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
+    limitAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(limitAsk.Make());
+    auto marketBid = CanvasNodeBuilder(
+      *GetMarketBidOrderTaskNode()->Rename("CSE2 Market Bid"));
+    marketBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      make_unique<DestinationNode>(DefaultDestinations::CSE2()));
+    marketBid.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
+    marketBid.SetReadOnly(SingleOrderTaskNode::DESTINATION_PROPERTY, true);
+    marketBid.Replace(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    marketBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
+    marketBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
+    marketBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(marketBid.Make());
+    auto marketAsk = CanvasNodeBuilder(
+      *GetMarketAskOrderTaskNode()->Rename("CSE2 Market Ask"));
+    marketAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      make_unique<DestinationNode>(DefaultDestinations::CSE2()));
+    marketAsk.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
+    marketAsk.SetReadOnly(SingleOrderTaskNode::DESTINATION_PROPERTY, true);
+    marketAsk.Replace(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    marketAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
+    marketAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
+    marketAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(marketAsk.Make());
+    auto buy =
+      CanvasNodeBuilder(*GetMarketBidOrderTaskNode()->Rename("CSE2 Buy"));
+    buy.SetVisible(SingleOrderTaskNode::QUANTITY_PROPERTY, false);
+    buy.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      make_unique<DestinationNode>(DefaultDestinations::CSE2()));
+    buy.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
+    buy.SetReadOnly(SingleOrderTaskNode::DESTINATION_PROPERTY, true);
+    buy.Replace(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    buy.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
+    buy.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
+    buy.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(buy.Make());
+    auto sell =
+      CanvasNodeBuilder(*GetMarketAskOrderTaskNode()->Rename("CSE2 Sell"));
+    sell.SetVisible(SingleOrderTaskNode::QUANTITY_PROPERTY, false);
+    sell.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      make_unique<DestinationNode>(DefaultDestinations::CSE2()));
+    sell.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
+    sell.SetReadOnly(SingleOrderTaskNode::DESTINATION_PROPERTY, true);
+    sell.Replace(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    sell.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
+    sell.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
+    sell.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(sell.Make());
+    auto darkLimitBid = CanvasNodeBuilder(
+      *GetLimitBidOrderTaskNode()->Rename("CSE2 Dark Limit Bid")->AddField(
+        "max_floor", 111, std::make_unique<IntegerNode>(0)));
+    darkLimitBid.SetVisible("max_floor", false);
+    darkLimitBid.SetReadOnly("max_floor", true);
+    darkLimitBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      make_unique<DestinationNode>(DefaultDestinations::CSE2()));
+    darkLimitBid.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
+    darkLimitBid.SetReadOnly(SingleOrderTaskNode::DESTINATION_PROPERTY, true);
+    darkLimitBid.Replace(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    darkLimitBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
+    darkLimitBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
+    darkLimitBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(darkLimitBid.Make());
+    auto darkLimitAsk = CanvasNodeBuilder(
+      *GetLimitAskOrderTaskNode()->Rename("CSE2 Dark Limit Ask")->AddField(
+        "max_floor", 111, std::make_unique<IntegerNode>(0)));
+    darkLimitAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      make_unique<DestinationNode>(DefaultDestinations::CSE2()));
+    darkLimitAsk.SetVisible("max_floor", false);
+    darkLimitAsk.SetReadOnly("max_floor", true);
+    darkLimitAsk.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
+    darkLimitAsk.SetReadOnly(SingleOrderTaskNode::DESTINATION_PROPERTY, true);
+    darkLimitAsk.Replace(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    darkLimitAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
+    darkLimitAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
+    darkLimitAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(darkLimitAsk.Make());
+    auto midPegBid = CanvasNodeBuilder(*GetPeggedBidOrderTaskNode(true)->Rename(
+      "CSE2 Mid Peg Bid")->AddField(
+        "exec_inst", 18, make_unique<TextNode>("M")));
+    midPegBid.SetReadOnly("exec_inst", true);
+    midPegBid.SetVisible("exec_inst", false);
+    midPegBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      make_unique<DestinationNode>(DefaultDestinations::CSE2()));
+    midPegBid.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
+    midPegBid.SetReadOnly(SingleOrderTaskNode::DESTINATION_PROPERTY, true);
+    midPegBid.Replace(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    midPegBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
+    midPegBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
+    midPegBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(midPegBid.Make());
+    auto midPegAsk = CanvasNodeBuilder(*GetPeggedAskOrderTaskNode(true)->Rename(
+      "CSE2 Mid Peg Ask")->AddField(
+        "exec_inst", 18, make_unique<TextNode>("M")));
+    midPegAsk.SetReadOnly("exec_inst", true);
+    midPegAsk.SetVisible("exec_inst", false);
+    midPegAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      make_unique<DestinationNode>(DefaultDestinations::CSE2()));
+    midPegAsk.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
+    midPegAsk.SetReadOnly(SingleOrderTaskNode::DESTINATION_PROPERTY, true);
+    midPegAsk.Replace(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    midPegAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
+    midPegAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
+    midPegAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(midPegAsk.Make());
+    auto marketPegBid = CanvasNodeBuilder(
+      *GetPeggedBidOrderTaskNode(true)->Rename("CSE2 Market Peg Bid")->AddField(
+        "exec_inst", 18, make_unique<TextNode>("P"))->AddField(
+          "peg_difference", 211, make_unique<MoneyNode>(-Money::CENT)));
+    marketPegBid.SetReadOnly("exec_inst", true);
+    marketPegBid.SetVisible("exec_inst", false);
+    marketPegBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      make_unique<DestinationNode>(DefaultDestinations::CSE2()));
+    marketPegBid.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
+    marketPegBid.SetReadOnly(SingleOrderTaskNode::DESTINATION_PROPERTY, true);
+    marketPegBid.Replace(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    marketPegBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
+    marketPegBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
+    marketPegBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(marketPegBid.Make());
+    auto marketPegAsk = CanvasNodeBuilder(
+      *GetPeggedAskOrderTaskNode(true)->Rename("CSE2 Market Peg Ask")->AddField(
+        "exec_inst", 18, make_unique<TextNode>("P"))->AddField(
+          "peg_difference", 211, make_unique<MoneyNode>(-Money::CENT)));
+    marketPegAsk.SetReadOnly("exec_inst", true);
+    marketPegAsk.SetVisible("exec_inst", false);
+    marketPegAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      make_unique<DestinationNode>(DefaultDestinations::CSE2()));
+    marketPegAsk.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
+    marketPegAsk.SetReadOnly(SingleOrderTaskNode::DESTINATION_PROPERTY, true);
+    marketPegAsk.Replace(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    marketPegAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
+    marketPegAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
+    marketPegAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(marketPegAsk.Make());
+  }
+
   void PopulateCx2Orders(vector<unique_ptr<const CanvasNode>>& orderTypes) {
     CanvasNodeBuilder cx2LimitBid(*GetLimitBidOrderTaskNode()->Rename(
       "CX2 Limit Bid")->AddField("max_floor", 111,
@@ -4284,6 +4455,7 @@ namespace {
     auto& cseOrderTypes = orderTypes[DefaultMarkets::CSE()];
     PopulateChixOrders(cseOrderTypes);
     PopulateCseOrders(cseOrderTypes);
+    PopulateCse2Orders(cseOrderTypes);
     PopulateCx2Orders(cseOrderTypes);
     PopulateLynxOrders(cseOrderTypes);
     PopulateMatchNowLpOrders(cseOrderTypes);
@@ -4320,6 +4492,7 @@ namespace {
     auto& tsxOrderTypes = orderTypes[DefaultMarkets::TSX()];
     PopulateAlphaOrders(tsxOrderTypes);
     PopulateChixOrders(tsxOrderTypes);
+    PopulateCse2Orders(tsxOrderTypes);
     PopulateCx2Orders(tsxOrderTypes);
     PopulateLynxOrders(tsxOrderTypes);
     PopulateMatchNowLpOrders(tsxOrderTypes);
@@ -4331,6 +4504,7 @@ namespace {
     auto& tsxvOrderTypes = orderTypes[DefaultMarkets::TSXV()];
     PopulateAlphaOrders(tsxvOrderTypes);
     PopulateChixOrders(tsxvOrderTypes);
+    PopulateCse2Orders(tsxvOrderTypes);
     PopulateCx2Orders(tsxvOrderTypes);
     PopulateLynxOrders(tsxvOrderTypes);
     PopulateMatchNowLpOrders(tsxvOrderTypes);
