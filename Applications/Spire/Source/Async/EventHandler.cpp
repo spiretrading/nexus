@@ -46,7 +46,8 @@ EventHandler::EventHandler()
 }
 
 EventHandler::~EventHandler() {
-  if(QThread::currentThread() != QCoreApplication::instance()->thread()) {
+  if(QCoreApplication::instance() != nullptr &&
+      QThread::currentThread() != QCoreApplication::instance()->thread()) {
     auto deleter = new TimerDeleter(std::move(m_update_timer));
     QCoreApplication::postEvent(deleter, new EventHandlerEvent());
   }
