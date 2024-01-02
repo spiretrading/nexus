@@ -353,6 +353,9 @@ void DropDownBox::submit() {
 }
 
 void DropDownBox::on_button_press_end(PressObserver::Reason reason) {
+  if(is_read_only()) {
+    return;
+  }
   if(reason == PressObserver::Reason::KEYBOARD) {
     if(m_drop_down_list->isVisible()) {
       m_drop_down_list->hide();
