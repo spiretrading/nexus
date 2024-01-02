@@ -109,14 +109,6 @@ ListView::ListView(
       m_overflow_gap(DEFAULT_OVERFLOW_GAP),
       m_query_timer(new QTimer(this)) {
   setFocusPolicy(Qt::StrongFocus);
-  for(auto i = 0; i != m_list->get_size(); ++i) {
-    make_item_entry(i);
-  }
-  auto& selection_model = m_selection_controller.get_selection();
-  for(auto i = 0; i != selection_model->get_size(); ++i) {
-    m_items[selection_model->get(i)]->m_item->set_selected(true);
-  }
-  update_focus(none);
   auto body = new QWidget();
   auto body_layout = new QBoxLayout(QBoxLayout::LeftToRight, body);
   body_layout->setContentsMargins({});
@@ -125,6 +117,14 @@ ListView::ListView(
   enclose(*this, *m_box);
   proxy_style(*this, *m_box);
   set_style(*this, DEFAULT_STYLE());
+  for(auto i = 0; i != m_list->get_size(); ++i) {
+    make_item_entry(i);
+  }
+  auto& selection_model = m_selection_controller.get_selection();
+  for(auto i = 0; i != selection_model->get_size(); ++i) {
+    m_items[selection_model->get(i)]->m_item->set_selected(true);
+  }
+  update_focus(none);
   update_layout();
   m_style_connection = connect_style_signal(*this, [=] { on_style(); });
   const auto QUERY_TIMEOUT_MS = 500;
