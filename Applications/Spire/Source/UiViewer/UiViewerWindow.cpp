@@ -132,6 +132,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_color_box_profile());
   add(make_color_code_panel_profile());
   add(make_color_picker_profile());
+  add(make_color_swatch_profile());
   add(make_combo_box_profile());
   add(make_context_menu_profile());
   add(make_date_box_profile());

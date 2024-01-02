@@ -29,6 +29,9 @@ namespace Spire {
   /** Returns a UiProfile for the ColorPicker. */
   UiProfile make_color_picker_profile();
 
+  /** Returns a UiProfile for the ColorSwatch. */
+  UiProfile make_color_swatch_profile();
+
   /** Returns a UiProfile for the ComboBox. */
   UiProfile make_combo_box_profile();
 
