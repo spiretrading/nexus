@@ -16,7 +16,7 @@ int main(int argc, char** argv) {
     list->push(QString::number(i));
   }
   auto box = ScrollableListBox(*(new ListView(list)));
-  box.setFixedHeight(100);
+  box.resize(box.sizeHint().width(), 100);
   box.show();
   application.exec();
 }

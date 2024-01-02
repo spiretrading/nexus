@@ -139,6 +139,8 @@ ListView::ListView(
   m_selection_connection = m_selection_controller.connect_operation_signal(
     std::bind_front(&ListView::on_selection, this));
   on_current(none, m_current_controller.get_current()->get());
+  update_parent();
+  update_visible_region();
 }
 
 const std::shared_ptr<AnyListModel>& ListView::get_list() const {
@@ -186,10 +188,25 @@ connection ListView::connect_submit_signal(
 }
 
 bool ListView::eventFilter(QObject* watched, QEvent* event) {
-  if(event->type() == QEvent::Resize) {
+  if(watched == parentWidget()) {
+    if(event->type() == QEvent::Resize) {
+      update_visible_region();
+    }
+  } else if(event->type() == QEvent::Resize) {
     update_layout();
   }
   return QWidget::eventFilter(watched, event);
+}
+
+bool ListView::event(QEvent* event) {
+  if(event->type() == QEvent::ParentAboutToChange) {
+    if(auto parent = parentWidget()) {
+      parent->removeEventFilter(this);
+    }
+  } else if(event->type() == QEvent::ParentChange) {
+    update_parent();
+  }
+  return QWidget::event(event);
 }
 
 void ListView::keyPressEvent(QKeyEvent* event) {
@@ -284,6 +301,14 @@ void ListView::keyReleaseEvent(QKeyEvent* event) {
       }
       break;
   }
+}
+
+void ListView::moveEvent(QMoveEvent* event) {
+  update_visible_region();
+}
+
+void ListView::resizeEvent(QResizeEvent* event) {
+  update_visible_region();
 }
 
 void ListView::append_query(const QString& query) {
@@ -483,6 +508,25 @@ void ListView::update_layout() {
       ++i;
     }
     body_layout.addLayout(inner_layout);
+  }
+}
+
+void ListView::update_parent() {
+  if(auto parent = parentWidget()) {
+    parent->installEventFilter(this);
+  }
+  update_visible_region();
+}
+
+void ListView::update_visible_region() {
+  if(!parentWidget()) {
+    qDebug() << rect();
+  } else {
+    auto intersection = geometry().intersected(parentWidget()->rect());
+    auto region = QRect(intersection.x() - geometry().x(),
+      intersection.y() - geometry().y(), intersection.width(),
+      intersection.height());
+    qDebug() << region;
   }
 }
 

@@ -208,8 +208,11 @@ namespace Styles {
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
+      bool event(QEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
       void keyReleaseEvent(QKeyEvent* event) override;
+      void moveEvent(QMoveEvent* event) override;
+      void resizeEvent(QResizeEvent* event) override;
 
     private:
       struct ItemEntry {
@@ -252,6 +255,8 @@ namespace Styles {
       void remove_item(int index);
       void move_item(int source, int destination);
       void update_layout();
+      void update_parent();
+      void update_visible_region();
       void on_item_click(ItemEntry& item);
       void on_list_operation(const AnyListModel::Operation& operation);
       void on_current(
