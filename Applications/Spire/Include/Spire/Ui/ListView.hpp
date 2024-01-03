@@ -213,6 +213,7 @@ namespace Styles {
       void keyReleaseEvent(QKeyEvent* event) override;
       void moveEvent(QMoveEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
+      void showEvent(QShowEvent* event) override;
 
     private:
       struct ItemEntry {
@@ -223,7 +224,7 @@ namespace Styles {
         boost::signals2::scoped_connection m_submit_connection;
         boost::signals2::scoped_connection m_click_connection;
 
-        ItemEntry(ListItem& item, int index);
+        ItemEntry(int index);
         void set(bool is_current);
       };
       mutable SubmitSignal m_submit_signal;

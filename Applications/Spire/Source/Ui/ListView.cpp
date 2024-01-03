@@ -50,10 +50,53 @@ namespace {
       return m_widget->frameGeometry();
     }
   };
+
+  class VirtualItem : public QWidget {
+    public:
+      VirtualItem()
+        : m_widget(nullptr) {}
+
+      bool is_mounted() const {
+        return m_widget != nullptr;
+      }
+
+      void mount(QWidget& widget) {
+        m_widget = &widget;
+        enclose(*this, *m_widget);
+      }
+
+      void unmount() {
+        auto size = m_widget->size();
+        auto item = layout()->takeAt(0);
+        delete item;
+        delete m_widget;
+        m_widget = nullptr;
+        delete layout();
+        setFixedSize(size);
+      }
+
+    private:
+      QWidget* m_widget;
+  };
+
+  bool test_visibility(const QWidget& container, const QWidget& widget,
+      const QSize& widget_size) {
+    auto widget_geometry =
+      QRect(widget.mapToGlobal(widget.rect().topLeft()), widget_size);
+    auto parent_local_rect = container.parentWidget()->rect();
+    auto parent_geometry = QRect(
+      container.parentWidget()->mapToGlobal(parent_local_rect.topLeft()),
+      parent_local_rect.size());
+    return !widget_geometry.intersected(parent_geometry).isEmpty();
+  }
+
+  bool test_visibility(const QWidget& container, const QWidget& widget) {
+    return test_visibility(container, widget, widget.rect().size());
+  }
 }
 
-ListView::ItemEntry::ItemEntry(ListItem& item, int index)
-  : m_item(&item),
+ListView::ItemEntry::ItemEntry(int index)
+  : m_item(new ListItem(*new VirtualItem())),
     m_index(index),
     m_is_current(false),
     m_click_observer(*m_item) {}
@@ -311,6 +354,10 @@ void ListView::resizeEvent(QResizeEvent* event) {
   update_visible_region();
 }
 
+void ListView::showEvent(QShowEvent* event) {
+  update_visible_region();
+}
+
 void ListView::append_query(const QString& query) {
   m_query += query;
   if(!m_items.empty()) {
@@ -367,16 +414,22 @@ void ListView::update_focus(optional<int> current) {
 }
 
 void ListView::make_item_entry(int index) {
-  auto item = new ListItem(*m_view_builder(m_list, index));
-  m_items.emplace(m_items.begin() + index, new ItemEntry(*item, index));
-  m_items[index]->m_click_connection =
-    m_items[index]->m_click_observer.connect_click_signal(std::bind_front(
+  auto entry = new ItemEntry(index);
+  m_items.emplace(m_items.begin() + index, entry);
+  if(isVisible() &&
+      test_visibility(*this, entry->m_item->get_body(), QSize(1, 1))) {
+    static_cast<VirtualItem&>(entry->m_item->get_body()).mount(
+      *m_view_builder(m_list, index));
+  }
+  entry->m_click_connection =
+    entry->m_click_observer.connect_click_signal(std::bind_front(
       &ListView::on_item_click, this, std::ref(*m_items[index])));
-  m_items[index]->m_submit_connection = item->connect_submit_signal(
+  entry->m_submit_connection = entry->m_item->connect_submit_signal(
     [=, item = m_items[index].get()] {
       on_item_submitted(*item);
     });
-  m_current_controller.add(std::make_unique<QWidgetItemView>(*item), index);
+  m_current_controller.add(
+    std::make_unique<QWidgetItemView>(*entry->m_item), index);
   m_selection_controller.add(index);
 }
 
@@ -519,6 +572,9 @@ void ListView::update_parent() {
 }
 
 void ListView::update_visible_region() {
+  if(!isVisible()) {
+    return;
+  }
   if(!parentWidget()) {
     qDebug() << rect();
   } else {
@@ -527,6 +583,20 @@ void ListView::update_visible_region() {
       intersection.y() - geometry().y(), intersection.width(),
       intersection.height());
     qDebug() << region;
+    for(auto i = 0; i != m_list->get_size(); ++i) {
+      auto& item = static_cast<VirtualItem&>(m_items[i]->m_item->get_body());
+      if(test_visibility(*this, *m_items[i]->m_item)) {
+        if(!item.is_mounted()) {
+          qDebug() << "Mounting: " << i;
+          item.mount(*m_view_builder(m_list, m_items[i]->m_index));
+        }
+      } else {
+        if(item.is_mounted()) {
+          qDebug() << "Unmounting: " << i;
+          item.unmount();
+        }
+      }
+    }
   }
 }
 
