@@ -4,6 +4,7 @@
 #include <functional>
 #include <memory>
 #include <unordered_set>
+#include <QSpacerItem>
 #include <QWidget>
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Spire/Spire.hpp"
@@ -220,12 +221,25 @@ namespace Styles {
         ListItem* m_item;
         int m_index;
         bool m_is_current;
-        ClickObserver m_click_observer;
+        bool m_is_selectable;
+        QRect m_geometry;
+        boost::optional<ClickObserver> m_click_observer;
         boost::signals2::scoped_connection m_submit_connection;
         boost::signals2::scoped_connection m_click_connection;
 
         ItemEntry(int index);
-        void set(bool is_current);
+        QRect get_geometry() const;
+        void set_current(bool is_current);
+        bool is_mounted() const;
+        void mount(ListView& view, QWidget& widget);
+        void unmount();
+      };
+      struct ItemView : ListCurrentController::ItemView {
+        ItemEntry* m_entry;
+
+        ItemView(ItemEntry& entry);
+        bool is_selectable() const override;
+        QRect get_geometry() const override;
       };
       mutable SubmitSignal m_submit_signal;
       std::shared_ptr<AnyListModel> m_list;
@@ -236,6 +250,10 @@ namespace Styles {
       ViewBuilder<> m_view_builder;
       std::vector<std::unique_ptr<ItemEntry>> m_items;
       Box* m_box;
+      QSpacerItem* m_top_padding;
+      QSpacerItem* m_bottom_padding;
+      int m_top_index;
+      int m_visible_count;
       QSizePolicy::Policy m_direction_policy;
       QSizePolicy::Policy m_perpendicular_policy;
       int m_item_gap;
