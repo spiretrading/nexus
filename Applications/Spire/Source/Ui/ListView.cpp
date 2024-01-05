@@ -420,7 +420,7 @@ void ListView::update_focus(optional<int> current) {
 
 void ListView::make_item_entry(int index) {
   auto entry = new ItemEntry(index);
-  if(index <= m_top_index + m_visible_count) {
+  if(index < m_top_index + m_visible_count) {
     entry->mount(*this, *m_view_builder(m_list, index));
   }
   m_items.emplace(m_items.begin() + index, entry);
