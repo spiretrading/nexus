@@ -6,9 +6,7 @@
 
 namespace Spire {
 
-  /**
-   * A tool that allows the user to pick a color from on-screen elements.
-   */
+  /** A tool that allows the user to pick a color from on-screen elements. */
   class EyeDropper : public QWidget {
     public:
 
@@ -30,7 +28,7 @@ namespace Spire {
        */
       explicit EyeDropper(QWidget* parent = nullptr);
 
-      /** Returns the current color. */
+      /** Returns the current color model. */
       const std::shared_ptr<ColorModel>& get_current() const;
 
       /** Connects a slot to the SubmitSignal. */

@@ -129,12 +129,12 @@ void EyeDropper::paintEvent(QPaintEvent* event) {
   auto path = QPainterPath();
   path.addEllipse(geometry);
   painter.setClipPath(path);
-  painter.setPen(QPen(QColor(0x808080), scale_width(1)));
-  painter.drawEllipse(geometry.adjusted(1, 1, -1, -1));
   auto position = QCursor::pos();
   painter.drawImage(geometry, m_screen_image,
     QRect(position.x() - HALF_ZOOM_LEVEL, position.y() - HALF_ZOOM_LEVEL,
       ZOOM_LEVEL, ZOOM_LEVEL));
+  painter.setPen(QPen(QColor(0x808080), scale_width(1)));
+  painter.drawEllipse(geometry.adjusted(1, 1, -1, -1));
   painter.drawRect(m_indicator_geometry);
 }
 
