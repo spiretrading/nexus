@@ -230,6 +230,7 @@ namespace Styles {
         ItemEntry(int index);
         QRect get_geometry() const;
         void set_current(bool is_current);
+        bool is_selectable() const;
         bool is_mounted() const;
         void mount(ListView& view, QWidget& widget);
         void unmount();
