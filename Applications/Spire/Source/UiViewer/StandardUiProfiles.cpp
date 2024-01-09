@@ -46,6 +46,7 @@
 #include "Spire/Ui/DurationBox.hpp"
 #include "Spire/Ui/EditableBox.hpp"
 #include "Spire/Ui/EyeDropper.hpp"
+#include "Spire/Ui/EyeDropperButton.hpp"
 #include "Spire/Ui/FilterPanel.hpp"
 #include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/FontBox.hpp"
@@ -2033,6 +2034,23 @@ UiProfile Spire::make_eye_dropper_profile() {
         create_eye_dropper(button, profile);
       }
     });
+    return button;
+  });
+  return profile;
+}
+
+UiProfile Spire::make_eye_dropper_button_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto profile = UiProfile("EyeDropperButton", properties, [] (auto& profile) {
+    auto button = new EyeDropperButton();
+    apply_widget_properties(button, profile.get_properties());
+    button->get_current()->connect_update_signal(
+      profile.make_event_slot<QColor>("Current"));
+    button->connect_submit_signal(
+      profile.make_event_slot<QColor>("Submit"));
+    button->connect_reject_signal(
+      profile.make_event_slot<QColor>("Reject"));
     return button;
   });
   return profile;
