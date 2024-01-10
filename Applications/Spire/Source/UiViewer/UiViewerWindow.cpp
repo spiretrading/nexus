@@ -167,7 +167,6 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_key_tag_profile());
   add(make_label_button_profile());
   add(make_label_profile());
-  add(make_list_item_profile());
   add(make_list_view_profile());
   add(make_market_box_profile());
   add(make_money_box_profile());

@@ -2713,33 +2713,6 @@ UiProfile Spire::make_label_profile() {
   return profile;
 }
 
-UiProfile Spire::make_list_item_profile() {
-  auto properties = std::vector<std::shared_ptr<UiProperty>>();
-  populate_widget_properties(properties);
-  properties.push_back(make_standard_property("current", false));
-  properties.push_back(make_standard_property("selected", false));
-  auto profile = UiProfile("ListItem", properties, [] (auto& profile) {
-    auto item = new ListItem(*make_label("Test Component"));
-    item->setFixedWidth(scale_width(100));
-    apply_widget_properties(item, profile.get_properties());
-    item->connect_submit_signal(profile.make_event_slot("Submit"));
-    auto& current = get<bool>("current", profile.get_properties());
-    current.connect_changed_signal([=] (auto value) {
-      if(value) {
-        match(*item, Current());
-      } else {
-        unmatch(*item, Current());
-      }
-    });
-    auto& selected = get<bool>("selected", profile.get_properties());
-    selected.connect_changed_signal([=] (auto value) {
-      item->set_selected(value);
-    });
-    return item;
-  });
-  return profile;
-}
-
 UiProfile Spire::make_list_view_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);

@@ -219,17 +219,13 @@ namespace Styles {
     private:
       struct ItemContainer;
       struct ItemEntry {
-        ItemContainer* m_container;
+        ListItem* m_item;
         int m_index;
-        bool m_is_current;
-        bool m_is_selectable;
-        QRect m_geometry;
-        boost::optional<ClickObserver> m_click_observer;
+        ClickObserver m_click_observer;
         boost::signals2::scoped_connection m_submit_connection;
         boost::signals2::scoped_connection m_click_connection;
 
         ItemEntry(int index);
-        void set_current(bool is_current);
       };
       mutable SubmitSignal m_submit_signal;
       std::shared_ptr<AnyListModel> m_list;

@@ -23,10 +23,15 @@ namespace Styles {
 
       /**
        * Constructs a ListItem.
-       * @param body The body of the item.
        * @param parent The parent widget.
        */
-      explicit ListItem(QWidget& body, QWidget* parent = nullptr);
+      explicit ListItem(QWidget* parent = nullptr);
+
+      /** Returns whether this is the current ListItem. */
+      bool is_current() const;
+
+      /** Sets whether this Listem is current. */
+      void set_current(bool is_current);
 
       /** Returns <code>true</code> iff this ListItem is selected. */
       bool is_selected() const;
@@ -37,6 +42,9 @@ namespace Styles {
        */
       void set_selected(bool is_selected);
 
+      /** Returns whether this ListItem has a body. */
+      bool is_mounted() const;
+
       /** Returns the body of this item. */
       QWidget& get_body();
 
@@ -45,9 +53,15 @@ namespace Styles {
         const SubmitSignal::slot_type& slot) const;
 
     private:
+      friend class ListView;
+      mutable SubmitSignal m_submit_signal;
+      bool m_is_current;
       bool m_is_selected;
       Box* m_box;
       Button* m_button;
+
+      void mount(QWidget& body);
+      void unmount();
   };
 }
 
