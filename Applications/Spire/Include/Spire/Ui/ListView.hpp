@@ -217,8 +217,9 @@ namespace Styles {
       void showEvent(QShowEvent* event) override;
 
     private:
+      struct ItemContainer;
       struct ItemEntry {
-        ListItem* m_item;
+        ItemContainer* m_container;
         int m_index;
         bool m_is_current;
         bool m_is_selectable;
@@ -228,19 +229,7 @@ namespace Styles {
         boost::signals2::scoped_connection m_click_connection;
 
         ItemEntry(int index);
-        QRect get_geometry() const;
         void set_current(bool is_current);
-        bool is_selectable() const;
-        bool is_mounted() const;
-        void mount(ListView& view, QWidget& widget);
-        void unmount();
-      };
-      struct ItemView : ListCurrentController::ItemView {
-        ItemEntry* m_entry;
-
-        ItemView(ItemEntry& entry);
-        bool is_selectable() const override;
-        QRect get_geometry() const override;
       };
       mutable SubmitSignal m_submit_signal;
       std::shared_ptr<AnyListModel> m_list;

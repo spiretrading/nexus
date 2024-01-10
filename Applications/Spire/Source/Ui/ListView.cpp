@@ -36,35 +36,76 @@ namespace {
     return style;
   }
 
-  bool test_visibility(const QWidget& container, const QRect& widget_geometry) {
-    auto global_widget_geometry = QRect(
-      container.mapToGlobal(widget_geometry.topLeft()), widget_geometry.size());
+  struct QWidgetItemView : ListCurrentController::ItemView {
+    QWidget* m_widget;
+
+    QWidgetItemView(QWidget& widget)
+      : m_widget(&widget) {}
+
+    bool is_selectable() const override {
+      return m_widget->isEnabled();
+    }
+
+    QRect get_geometry() const override {
+      return m_widget->frameGeometry();
+    }
+  };
+
+  bool test_visibility(const QWidget& container, const QWidget& widget,
+      const QSize& widget_size) {
+    auto widget_geometry =
+      QRect(widget.mapToGlobal(widget.rect().topLeft()), widget_size);
     auto parent_local_rect = container.parentWidget()->rect();
-    parent_local_rect.setHeight(parent_local_rect.height() + 100);
-    auto parent_global_geometry = QRect(
+    auto parent_geometry = QRect(
       container.parentWidget()->mapToGlobal(parent_local_rect.topLeft()),
       parent_local_rect.size());
-    if(global_widget_geometry.isEmpty()) {
-      return global_widget_geometry.y() >= parent_global_geometry.top() &&
-        global_widget_geometry.y() < parent_global_geometry.bottom();
-    }
-    return !global_widget_geometry.intersected(
-      parent_global_geometry).isEmpty();
+    return !widget_geometry.intersected(parent_geometry).isEmpty();
+  }
+
+  bool test_visibility(const QWidget& container, const QWidget& widget) {
+    return test_visibility(container, widget, widget.rect().size());
   }
 }
+
+struct ListView::ItemContainer : QWidget {
+  ListItem* m_list_item;
+  QSize m_size_hint;
+
+  ItemContainer()
+    : m_list_item(nullptr) {}
+
+  bool is_mounted() const {
+    return m_list_item != nullptr;
+  }
+
+  void mount(QWidget& body) {
+    m_list_item = new ListItem(body);
+    enclose(*this, *m_list_item);
+    resize(m_list_item->sizeHint());
+  }
+
+  void unmount() {
+    m_size_hint = QWidget::sizeHint();
+    auto item = layout()->takeAt(0);
+    delete item;
+    delete m_list_item;
+    m_list_item = nullptr;
+    delete layout();
+  }
+
+  QSize sizeHint() const override {
+    if(m_list_item) {
+      return QWidget::sizeHint();
+    }
+    return m_size_hint;
+  }
+};
 
 ListView::ItemEntry::ItemEntry(int index)
-  : m_item(nullptr),
+  : m_container(new ItemContainer()),
     m_index(index),
     m_is_current(false),
-    m_is_selectable(false) {}
-
-QRect ListView::ItemEntry::get_geometry() const {
-  if(m_item) {
-    return m_item->frameGeometry();
-  }
-  return m_geometry;
-}
+    m_click_observer(*m_container) {}
 
 void ListView::ItemEntry::set_current(bool is_current) {
   if(m_is_current == is_current) {
@@ -72,53 +113,10 @@ void ListView::ItemEntry::set_current(bool is_current) {
   }
   m_is_current = is_current;
   if(m_is_current) {
-    match(*m_item, Current());
+    match(*m_container->m_list_item, Current());
   } else {
-    unmatch(*m_item, Current());
+    unmatch(*m_container->m_list_item, Current());
   }
-}
-
-bool ListView::ItemEntry::is_selectable() const {
-  if(m_item) {
-    return m_item->isEnabled();
-  }
-  return m_is_selectable;
-}
-
-bool ListView::ItemEntry::is_mounted() const {
-  return m_item != nullptr;
-}
-
-void ListView::ItemEntry::mount(ListView& view, QWidget& widget) {
-  assert(!is_mounted());
-  m_item = new ListItem(widget);
-  m_click_observer.emplace(*m_item);
-  m_click_connection = m_click_observer->connect_click_signal(std::bind_front(
-    &ListView::on_item_click, &view, std::ref(*this)));
-  m_submit_connection = m_item->connect_submit_signal(std::bind_front(
-    &ListView::on_item_submitted, &view, std::ref(*this)));
-}
-
-void ListView::ItemEntry::unmount() {
-  assert(is_mounted());
-  m_is_selectable = m_item->isEnabled();
-  m_geometry = m_item->frameGeometry();
-  m_item->deleteLater();
-  m_item = nullptr;
-  m_click_observer = none;
-  m_click_connection.disconnect();
-  m_submit_connection.disconnect();
-}
-
-ListView::ItemView::ItemView(ItemEntry& entry)
-  : m_entry(&entry) {}
-
-bool ListView::ItemView::is_selectable() const {
-  return m_entry->is_selectable();
-}
-
-QRect ListView::ItemView::get_geometry() const {
-  return m_entry->get_geometry();
 }
 
 QWidget* ListView::default_view_builder(
@@ -152,8 +150,6 @@ ListView::ListView(
       m_current_controller(std::move(current)),
       m_selection_controller(std::move(selection)),
       m_view_builder(std::move(view_builder)),
-      m_top_index(0),
-      m_visible_count(0),
       m_direction(Qt::Vertical),
       m_overflow(Overflow::NONE),
       m_direction_policy(QSizePolicy::Fixed),
@@ -165,10 +161,6 @@ ListView::ListView(
   auto body = new QWidget();
   auto body_layout = new QBoxLayout(QBoxLayout::LeftToRight, body);
   body_layout->setContentsMargins({});
-  m_top_padding =
-    new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Maximum);
-  m_bottom_padding =
-    new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Maximum);
   body->installEventFilter(this);
   m_box = new Box(body);
   enclose(*this, *m_box);
@@ -197,6 +189,7 @@ ListView::ListView(
     std::bind_front(&ListView::on_selection, this));
   on_current(none, m_current_controller.get_current()->get());
   update_parent();
+  update_visible_region();
 }
 
 const std::shared_ptr<AnyListModel>& ListView::get_list() const {
@@ -379,7 +372,7 @@ void ListView::append_query(const QString& query) {
     auto is_repeated_query = m_query.count(m_query.at(0)) == m_query.count();
     auto short_match = optional<int>();
     while(i != start) {
-      if(m_items[i]->is_selectable()) {
+      if(m_items[i]->m_item->isEnabled()) {
         auto item_text = to_text(m_list->get(i)).toLower();
         if(item_text.startsWith(m_query.toLower())) {
           short_match = none;
@@ -408,7 +401,7 @@ void ListView::append_query(const QString& query) {
 void ListView::update_focus(optional<int> current) {
   if(m_focus_index && m_focus_index != current &&
       *m_focus_index < static_cast<int>(m_items.size())) {
-//    m_items[*m_focus_index]->m_item->setFocusPolicy(Qt::ClickFocus);
+    m_items[*m_focus_index]->m_item->setFocusPolicy(Qt::ClickFocus);
   }
   if(current) {
     m_focus_index = *current;
@@ -418,11 +411,9 @@ void ListView::update_focus(optional<int> current) {
     m_focus_index = none;
   }
   if(m_focus_index) {
-/* TODO
     auto& item = *m_items[*m_focus_index]->m_item;
     item.setFocusPolicy(Qt::StrongFocus);
     setFocusProxy(&item);
-*/
   } else {
     setFocusProxy(nullptr);
   }
@@ -431,7 +422,20 @@ void ListView::update_focus(optional<int> current) {
 void ListView::make_item_entry(int index) {
   auto entry = new ItemEntry(index);
   m_items.emplace(m_items.begin() + index, entry);
-  m_current_controller.add(std::make_unique<ItemView>(*entry), index);
+  if(isVisible() &&
+      test_visibility(*this, entry->m_item->get_body(), QSize(1, 1))) {
+    static_cast<VirtualItem&>(entry->m_item->get_body()).mount(
+      *m_view_builder(m_list, index));
+  }
+  entry->m_click_connection =
+    entry->m_click_observer.connect_click_signal(std::bind_front(
+      &ListView::on_item_click, this, std::ref(*m_items[index])));
+  entry->m_submit_connection = entry->m_item->connect_submit_signal(
+    [=, item = m_items[index].get()] {
+      on_item_submitted(*item);
+    });
+  m_current_controller.add(
+    std::make_unique<QWidgetItemView>(*entry->m_item), index);
   m_selection_controller.add(index);
 }
 
@@ -515,10 +519,6 @@ void ListView::update_layout() {
     body.updateGeometry();
   }
   auto& body_layout = *static_cast<QBoxLayout*>(body.layout());
-  if(!body_layout.isEmpty()) {
-    body_layout.itemAt(0)->layout()->removeItem(m_top_padding);
-    body_layout.itemAt(0)->layout()->removeItem(m_bottom_padding);
-  }
   while(auto item = body_layout.takeAt(body_layout.count() - 1)) {
     delete item;
   }
@@ -540,21 +540,12 @@ void ListView::update_layout() {
   }();
   auto i = m_items.begin();
   while(i != m_items.end()) {
-    if(!(*i)->is_mounted()) {
-      ++i;
-      continue;
-    }
     auto remaining_size = max_size;
     auto inner_layout = new QBoxLayout(reverse(direction));
     inner_layout->setContentsMargins({});
     inner_layout->setSpacing(m_item_gap);
     inner_layout->setAlignment(alignment);
-    inner_layout->addSpacerItem(m_top_padding);
     while(i != m_items.end()) {
-      if(!(*i)->is_mounted()) {
-        ++i;
-        continue;
-      }
       auto item_size = [&] {
         if(m_direction == Qt::Orientation::Horizontal) {
           return (*i)->m_item->sizeHint().width();
@@ -575,10 +566,8 @@ void ListView::update_layout() {
       inner_layout->addWidget((*i)->m_item);
       ++i;
     }
-    inner_layout->addSpacerItem(m_bottom_padding);
     body_layout.addLayout(inner_layout);
   }
-  update_visible_region();
 }
 
 void ListView::update_parent() {
@@ -589,56 +578,32 @@ void ListView::update_parent() {
 }
 
 void ListView::update_visible_region() {
-  if(!isVisible() || !parentWidget()) {
+  if(!isVisible()) {
     return;
   }
-  auto is_top = true;
-  auto top_padding = 0;
-  auto bottom_padding = 0;
-  auto last_coordinate = 0;
-  m_top_index = 0;
-  m_visible_count = 0;
-  for(auto i = 0; i != m_list->get_size(); ++i) {
-    auto geometry = m_items[i]->get_geometry();
-    geometry.moveTop(last_coordinate);
-    auto is_visible = test_visibility(*this, geometry);
-    if(is_visible) {
-      m_top_index = std::min(m_top_index, i);
-      ++m_visible_count;
-      if(m_items[i]->is_mounted()) {
-        is_top = false;
+  if(!parentWidget()) {
+    qDebug() << rect();
+  } else {
+    auto intersection = geometry().intersected(parentWidget()->rect());
+    auto region = QRect(intersection.x() - geometry().x(),
+      intersection.y() - geometry().y(), intersection.width(),
+      intersection.height());
+    qDebug() << region;
+    for(auto i = 0; i != m_list->get_size(); ++i) {
+      auto& item = static_cast<VirtualItem&>(m_items[i]->m_item->get_body());
+      if(test_visibility(*this, *m_items[i]->m_item)) {
+        if(!item.is_mounted()) {
+          qDebug() << "Mounting: " << i;
+          item.mount(*m_view_builder(m_list, m_items[i]->m_index));
+        }
       } else {
-        m_items[i]->mount(
-          *this, *m_view_builder(m_list, m_items[i]->m_index));
-        update_layout();
-        return;
+        if(item.is_mounted()) {
+          qDebug() << "Unmounting: " << i;
+          item.unmount();
+        }
       }
-    } else {
-      if(m_items[i]->is_mounted()) {
-        m_items[i]->unmount();
-        update_layout();
-        return;
-      }
-      if(is_top) {
-        top_padding += m_items[i]->get_geometry().height();
-      } else {
-        bottom_padding += m_items[i]->get_geometry().height();
-      }
-    }
-    if(!geometry.isEmpty()) {
-      last_coordinate = geometry.bottom() + 1;
     }
   }
-  auto [horizontal_policy, vertical_policy] = [&] {
-    if(m_direction == Qt::Orientation::Horizontal) {
-      return std::tuple(m_direction_policy, m_perpendicular_policy);
-    }
-    return std::tuple(m_perpendicular_policy, m_direction_policy);
-  }();
-  m_top_padding->changeSize(
-    0, top_padding, horizontal_policy, vertical_policy);
-  m_bottom_padding->changeSize(
-    0, bottom_padding, horizontal_policy, vertical_policy);
 }
 
 void ListView::on_item_click(ItemEntry& item) {
@@ -661,14 +626,10 @@ void ListView::on_list_operation(const AnyListModel::Operation& operation) {
 void ListView::on_current(optional<int> previous, optional<int> current) {
   update_focus(current);
   if(previous && previous != current) {
-    m_items[*previous]->set_current(false);
+    m_items[*previous]->set(false);
   }
   if(find_focus_state(*this) != FocusObserver::State::NONE) {
     if(current) {
-      if(!m_items[*current]->is_mounted()) {
-        m_items[*current]->mount(
-          *this, *m_view_builder(m_list, m_items[*current]->m_index));
-      }
       m_items[*current]->m_item->setFocus();
     } else {
       setFocus();
@@ -676,7 +637,7 @@ void ListView::on_current(optional<int> previous, optional<int> current) {
   }
   if(current) {
     auto& item = *m_items[*current];
-    item.set_current(true);
+    item.set(true);
     m_selection_controller.navigate(*current);
   }
 }
