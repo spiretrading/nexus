@@ -32,7 +32,7 @@ ListItem::ListItem(QWidget* parent)
       m_button(nullptr) {
   auto layout = make_hbox_layout(this);
   layout->setSizeConstraint(QLayout::SetMinAndMaxSize);
-  layout->addSpacerItem(new QSpacerItem(0, 0));
+  layout->addSpacerItem(new QSpacerItem(100, 100, QSizePolicy::Fixed, QSizePolicy::Fixed));
   setFocusPolicy(Qt::ClickFocus);
   set_style(*this, DEFAULT_STYLE());
 }
