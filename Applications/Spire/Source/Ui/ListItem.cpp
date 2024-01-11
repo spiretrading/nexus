@@ -32,7 +32,6 @@ ListItem::ListItem(QWidget* parent)
       m_button(nullptr) {
   auto layout = make_hbox_layout(this);
   layout->setSizeConstraint(QLayout::SetMinAndMaxSize);
-  layout->addSpacerItem(new QSpacerItem(100, 100, QSizePolicy::Fixed, QSizePolicy::Fixed));
   setFocusPolicy(Qt::ClickFocus);
   set_style(*this, DEFAULT_STYLE());
 }
@@ -79,6 +78,10 @@ connection ListItem::connect_submit_signal(
   return m_submit_signal.connect(slot);
 }
 
+void ListItem::mount(QSpacerItem& body) {
+  static_cast<QBoxLayout&>(*layout()).addSpacerItem(&body);
+}
+
 void ListItem::mount(QWidget& body) {
   m_box = new Box(&body, Box::Fit::BOTH);
   m_button = new Button(m_box, this);
@@ -91,8 +94,9 @@ void ListItem::mount(QWidget& body) {
     m_box->setFocusProxy(nullptr);
     setFocusProxy(m_button);
   }
-  auto item = layout()->takeAt(0);
-  delete item;
+  if(auto item = layout()->takeAt(0)) {
+    delete item;
+  }
   layout()->addWidget(m_button);
   proxy_style(*m_button, *m_box);
   proxy_style(*this, *m_button);

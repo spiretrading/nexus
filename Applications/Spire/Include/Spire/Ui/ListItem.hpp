@@ -4,6 +4,8 @@
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
 
+class QSpacerItem;
+
 namespace Spire {
 namespace Styles {
 
@@ -60,6 +62,7 @@ namespace Styles {
       Box* m_box;
       Button* m_button;
 
+      void mount(QSpacerItem& body);
       void mount(QWidget& body);
       void unmount();
   };

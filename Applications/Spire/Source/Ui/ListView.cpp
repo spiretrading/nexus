@@ -51,19 +51,14 @@ namespace {
     }
   };
 
-  bool test_visibility(const QWidget& container, const QWidget& widget,
-      const QSize& widget_size) {
+  bool test_visibility(const QWidget& container, const QRect& geometry) {
     auto widget_geometry =
-      QRect(widget.mapToGlobal(widget.rect().topLeft()), widget_size);
+      QRect(container.mapToGlobal(geometry.topLeft()), geometry.size());
     auto parent_local_rect = container.parentWidget()->rect();
     auto parent_geometry = QRect(
       container.parentWidget()->mapToGlobal(parent_local_rect.topLeft()),
       parent_local_rect.size());
     return !widget_geometry.intersected(parent_geometry).isEmpty();
-  }
-
-  bool test_visibility(const QWidget& container, const QWidget& widget) {
-    return test_visibility(container, widget, widget.rect().size());
   }
 }
 
@@ -141,6 +136,7 @@ ListView::ListView(
     std::bind_front(&ListView::on_current, this));
   m_selection_connection = m_selection_controller.connect_operation_signal(
     std::bind_front(&ListView::on_selection, this));
+  update_layout();
 }
 
 const std::shared_ptr<AnyListModel>& ListView::get_list() const {
@@ -528,17 +524,33 @@ void ListView::update_parent() {
 }
 
 void ListView::update_visible_region() {
-  if(!isVisible() || !parentWidget()) {
+  if(!parentWidget()) {
     return;
   }
+  auto position = 0;
   for(auto& item : m_items) {
-    if(test_visibility(*this, *item->m_item)) {
+    if(item == m_items.front()) {
       if(!item->m_item->is_mounted()) {
         item->m_item->mount(*m_view_builder(m_list, item->m_index));
       }
-    } else if(item->m_item->is_mounted()) {
-      item->m_item->unmount();
+    } else {
+      auto geometry = QRect(QPoint(0, position), item->m_item->size());
+      if(test_visibility(*this, geometry)) {
+        if(!item->m_item->is_mounted()) {
+          item->m_item->mount(*m_view_builder(m_list, item->m_index));
+        }
+      } else {
+        if(item->m_item->is_mounted()) {
+          item->m_item->unmount();
+        } else if(item->m_item->sizeHint().isEmpty()) {
+          auto size = m_items.front()->m_item->sizeHint();
+          auto size_policy = m_items.front()->m_item->sizePolicy();
+          item->m_item->mount(*new QSpacerItem(size.width(), size.height(),
+            size_policy.horizontalPolicy(), size_policy.verticalPolicy()));
+        }
+      }
     }
+    position += item->m_item->size().height() + m_item_gap;
   }
 }
 
