@@ -100,7 +100,6 @@ void ListItem::mount(QWidget& body) {
   layout()->addWidget(m_button);
   proxy_style(*m_button, *m_box);
   proxy_style(*this, *m_button);
-  resize(m_box->sizeHint());
 }
 
 void ListItem::unmount() {
