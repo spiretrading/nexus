@@ -539,15 +539,13 @@ void ListView::update_visible_region() {
         if(!item->m_item->is_mounted()) {
           item->m_item->mount(*m_view_builder(m_list, item->m_index));
         }
-      } else {
-        if(item->m_item->is_mounted()) {
-          item->m_item->unmount();
-        } else if(item->m_item->sizeHint().isEmpty()) {
-          auto size = m_items.front()->m_item->sizeHint();
-          auto size_policy = m_items.front()->m_item->sizePolicy();
-          item->m_item->mount(*new QSpacerItem(size.width(), size.height(),
-            size_policy.horizontalPolicy(), size_policy.verticalPolicy()));
-        }
+      } else if(item->m_item->is_mounted()) {
+        item->m_item->unmount();
+      } else if(item->m_item->sizeHint().isEmpty()) {
+        auto size = m_items.front()->m_item->sizeHint();
+        auto size_policy = m_items.front()->m_item->sizePolicy();
+        item->m_item->mount(*new QSpacerItem(size.width(), size.height(),
+          size_policy.horizontalPolicy(), size_policy.verticalPolicy()));
       }
     }
     position += item->m_item->size().height() + m_item_gap;

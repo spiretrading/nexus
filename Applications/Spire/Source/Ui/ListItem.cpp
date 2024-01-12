@@ -103,14 +103,14 @@ void ListItem::mount(QWidget& body) {
 }
 
 void ListItem::unmount() {
-  auto size_hint = QWidget::sizeHint();
+  auto size_hint = m_button->sizeHint();
   auto size_policy = get_body().sizePolicy();
   auto item = layout()->takeAt(0);
   delete item;
   m_button->deleteLater();
   m_button = nullptr;
   m_box = nullptr;
-  static_cast<QBoxLayout&>(*layout()).addSpacerItem(new QSpacerItem(
-    size_hint.width(), size_hint.height(), size_policy.horizontalPolicy(),
-    size_policy.verticalPolicy()));
+  static_cast<QBoxLayout&>(*layout()).addSpacerItem(
+    new QSpacerItem(size_hint.width(), size_hint.height(),
+      size_policy.horizontalPolicy(), size_policy.verticalPolicy()));
 }
