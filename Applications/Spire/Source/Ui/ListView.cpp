@@ -112,7 +112,6 @@ ListView::ListView(
   for(auto i = 0; i != selection_model->get_size(); ++i) {
     m_items[selection_model->get(i)]->m_item->set_selected(true);
   }
-  on_current(none, m_current_controller.get_current()->get());
   setFocusPolicy(Qt::StrongFocus);
   update_focus(none);
   auto body = new QWidget();
@@ -122,9 +121,9 @@ ListView::ListView(
   m_box = new Box(body);
   enclose(*this, *m_box);
   proxy_style(*this, *m_box);
-  set_style(*this, DEFAULT_STYLE());
   m_style_connection =
     connect_style_signal(*this, std::bind_front(&ListView::on_style, this));
+  set_style(*this, DEFAULT_STYLE());
   const auto QUERY_TIMEOUT_MS = 500;
   m_query_timer->setSingleShot(true);
   m_query_timer->setInterval(QUERY_TIMEOUT_MS);
@@ -136,7 +135,7 @@ ListView::ListView(
     std::bind_front(&ListView::on_current, this));
   m_selection_connection = m_selection_controller.connect_operation_signal(
     std::bind_front(&ListView::on_selection, this));
-  update_layout();
+  on_current(none, m_current_controller.get_current()->get());
 }
 
 const std::shared_ptr<AnyListModel>& ListView::get_list() const {
