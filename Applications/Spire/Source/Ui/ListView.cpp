@@ -53,12 +53,10 @@ namespace {
 
   bool test_visibility(const QWidget& container, const QRect& geometry) {
     auto widget_geometry =
-      QRect(container.mapToGlobal(geometry.topLeft()), geometry.size());
-    auto parent_local_rect = container.parentWidget()->rect();
-    auto parent_geometry = QRect(
-      container.parentWidget()->mapToGlobal(parent_local_rect.topLeft()),
-      parent_local_rect.size());
-    return !widget_geometry.intersected(parent_geometry).isEmpty();
+      QRect(container.mapToParent(geometry.topLeft()), geometry.size());
+    auto parent_geometry = container.parentWidget()->rect();
+    return std::max(widget_geometry.top(), parent_geometry.top()) <=
+      std::min(widget_geometry.bottom(), parent_geometry.bottom());
   }
 }
 
@@ -527,6 +525,7 @@ void ListView::update_visible_region() {
     return;
   }
   auto position = 0;
+  auto parent_geometry = parentWidget()->rect();
   for(auto& item : m_items) {
     if(item == m_items.front()) {
       if(!item->m_item->is_mounted()) {
