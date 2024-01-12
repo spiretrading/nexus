@@ -535,11 +535,11 @@ void ListView::update_visible_region() {
       }
     } else {
       auto geometry = QRect(QPoint(0, position), item->m_item->size());
-      if(test_visibility(*this, geometry)) {
+      if(item->m_item->is_current() || test_visibility(*this, geometry)) {
         if(!item->m_item->is_mounted()) {
           item->m_item->mount(*m_view_builder(m_list, item->m_index));
         }
-      } else if(item->m_item->is_mounted()) {
+      } else if(item->m_item->is_mounted() && !item->m_item->is_current()) {
         item->m_item->unmount();
       } else if(item->m_item->sizeHint().isEmpty()) {
         auto size = m_items.front()->m_item->sizeHint();
