@@ -299,9 +299,9 @@ void DropDownBox::mousePressEvent(QMouseEvent* event) {
     } else {
       m_is_mouse_press_on_list = false;
       m_mouse_press_position = event->globalPos();
-      m_timer.start(QApplication::doubleClickInterval());
       m_drop_down_list->show();
       m_drop_down_list->setFocus();
+      m_timer.start(QApplication::doubleClickInterval());
     }
   }
 }
