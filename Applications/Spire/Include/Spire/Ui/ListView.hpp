@@ -259,8 +259,10 @@ namespace Styles {
       void add_item(int index);
       void remove_item(int index);
       void move_item(int source, int destination);
+      ItemEntry* item_at(const QPoint& point);
       void update_layout();
       void update_parent();
+      void initialize_visible_region();
       void update_visible_region();
       void on_item_click(ItemEntry& item);
       void on_list_operation(const AnyListModel::Operation& operation);

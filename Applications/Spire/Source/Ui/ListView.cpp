@@ -1,4 +1,5 @@
 #include "Spire/Ui/ListView.hpp"
+#include <ranges>
 #include <boost/signals2/shared_connection_block.hpp>
 #include <QKeyEvent>
 #include <QTimer>
@@ -20,6 +21,7 @@ using namespace Styles;
 namespace {
   const auto DEFAULT_GAP = 0;
   const auto DEFAULT_OVERFLOW_GAP = DEFAULT_GAP;
+  const auto SCROLL_BUFFER = 200;
 
   auto reverse(QBoxLayout::Direction direction) {
     if(direction == QBoxLayout::TopToBottom) {
@@ -54,9 +56,9 @@ namespace {
   bool test_visibility(const QWidget& container, const QRect& geometry) {
     auto widget_geometry =
       QRect(container.mapToParent(geometry.topLeft()), geometry.size());
-    auto parent_geometry = container.parentWidget()->rect();
-    return std::max(widget_geometry.top(), parent_geometry.top()) <=
-      std::min(widget_geometry.bottom(), parent_geometry.bottom());
+    return std::max(-SCROLL_BUFFER, widget_geometry.top()) <=
+      std::min(container.parentWidget()->height() + SCROLL_BUFFER,
+        widget_geometry.bottom());
   }
 }
 
@@ -306,7 +308,6 @@ void ListView::resizeEvent(QResizeEvent* event) {
 
 void ListView::showEvent(QShowEvent* event) {
   update_parent();
-  update_layout();
 }
 
 void ListView::append_query(const QString& query) {
@@ -366,6 +367,9 @@ void ListView::update_focus(optional<int> current) {
 
 void ListView::make_item_entry(int index) {
   auto entry = new ItemEntry(index);
+  if(m_overflow != Overflow::NONE) {
+    entry->m_item->mount(*m_view_builder(m_list, entry->m_index));
+  }
   m_items.emplace(m_items.begin() + index, entry);
   entry->m_click_connection =
     entry->m_click_observer.connect_click_signal(std::bind_front(
@@ -443,6 +447,28 @@ void ListView::move_item(int source, int destination) {
   update_layout();
 }
 
+ListView::ItemEntry* ListView::item_at(const QPoint& point) {
+  auto local_point = mapFromParent(point);
+  auto widget = childAt(local_point);
+  if(!widget) {
+    return nullptr;
+  }
+  auto low = std::size_t(0);
+  auto high = m_items.size() - 1;
+  while(high >= low) {
+    auto middle = low + (high - low) / 2;
+    auto& item = m_items[middle];
+    if(item->m_item == widget || item->m_item->isAncestorOf(widget)) {
+      return item.get();
+    } else if(item->m_item->frameGeometry().top() > local_point.y()) {
+      high = middle - 1;
+    } else {
+      low = middle + 1;
+    }
+  }
+  return nullptr;
+}
+
 void ListView::update_layout() {
   auto& body = *m_box->get_body();
   if(m_direction == Qt::Orientation::Horizontal && m_overflow ==
@@ -517,36 +543,80 @@ void ListView::update_parent() {
   if(auto parent = parentWidget()) {
     parent->installEventFilter(this);
   }
-  update_visible_region();
+  initialize_visible_region();
 }
 
-void ListView::update_visible_region() {
-  if(!parentWidget()) {
+void ListView::initialize_visible_region() {
+  if(!parentWidget() || m_overflow != Overflow::NONE) {
     return;
   }
-  auto position = 0;
-  auto parent_geometry = parentWidget()->rect();
-  for(auto& item : m_items) {
-    if(item == m_items.front()) {
+  m_visible_count = 0;
+  if(m_items.empty()) {
+    m_top_index = 0;
+    return;
+  }
+  m_top_index = std::numeric_limits<int>::max();
+  if(!m_items.front()->m_item->is_mounted()) {
+    m_items.front()->m_item->mount(*m_view_builder(m_list, 0));
+  }
+  auto top_geometry = QRect(QPoint(0, 0), m_items.front()->m_item->size());
+  if(test_visibility(*this, top_geometry)) {
+    m_top_index = 0;
+    m_visible_count = 1;
+  }
+  auto position = m_items.front()->m_item->size().height() + m_item_gap;
+  for(auto& item : m_items | std::views::drop(1)) {
+    auto geometry = QRect(QPoint(0, position), item->m_item->size());
+    auto is_visible = test_visibility(*this, geometry);
+    if(is_visible || item->m_item->is_current()) {
       if(!item->m_item->is_mounted()) {
         item->m_item->mount(*m_view_builder(m_list, item->m_index));
       }
-    } else {
+      if(is_visible) {
+        m_top_index = std::min(m_top_index, item->m_index);
+        ++m_visible_count;
+      }
+    } else if(item->m_item->is_mounted() && !item->m_item->is_current()) {
+      item->m_item->unmount();
+    } else if(item->m_item->sizeHint().isEmpty()) {
+      auto size = m_items.front()->m_item->sizeHint();
+      auto size_policy = m_items.front()->m_item->sizePolicy();
+      item->m_item->mount(*new QSpacerItem(size.width(), size.height(),
+        size_policy.horizontalPolicy(), size_policy.verticalPolicy()));
+    }
+    position += item->m_item->size().height() + m_item_gap;
+  }
+}
+
+void ListView::update_visible_region() {
+  if(!parentWidget() || !isVisible() || m_overflow != Overflow::NONE) {
+    return;
+  }
+  auto top_item =
+    item_at(QPoint(0, std::max(frameGeometry().y(), -SCROLL_BUFFER)));
+  if(top_item) {
+    for(auto i = m_top_index; i != m_top_index + m_visible_count; ++i) {
+      auto& item = *m_items[i];
+      if(item.m_item->is_mounted() && !item.m_item->is_current() &&
+          !test_visibility(*this, item.m_item->frameGeometry())) {
+        item.m_item->unmount();
+      }
+    }
+    m_top_index = top_item->m_index;
+    m_visible_count = 0;
+    auto position = top_item->m_item->pos().y();
+    for(auto& item : m_items | std::views::drop(m_top_index)) {
       auto geometry = QRect(QPoint(0, position), item->m_item->size());
-      if(item->m_item->is_current() || test_visibility(*this, geometry)) {
+      if(test_visibility(*this, geometry)) {
         if(!item->m_item->is_mounted()) {
           item->m_item->mount(*m_view_builder(m_list, item->m_index));
         }
-      } else if(item->m_item->is_mounted() && !item->m_item->is_current()) {
-        item->m_item->unmount();
-      } else if(item->m_item->sizeHint().isEmpty()) {
-        auto size = m_items.front()->m_item->sizeHint();
-        auto size_policy = m_items.front()->m_item->sizePolicy();
-        item->m_item->mount(*new QSpacerItem(size.width(), size.height(),
-          size_policy.horizontalPolicy(), size_policy.verticalPolicy()));
+        ++m_visible_count;
+      } else {
+        break;
       }
+      position += item->m_item->size().height() + m_item_gap;
     }
-    position += item->m_item->size().height() + m_item_gap;
   }
 }
 
@@ -636,8 +706,17 @@ void ListView::on_style() {
       },
       [&] (EnumProperty<Overflow> overflow) {
         stylist.evaluate(overflow, [=] (auto overflow) {
-          m_overflow = overflow;
-          *has_update = true;
+          if(m_overflow != overflow) {
+            m_overflow = overflow;
+            if(m_overflow != Overflow::NONE) {
+              for(auto& item : m_items) {
+                if(!item->m_item->is_mounted()) {
+                  item->m_item->mount(*m_view_builder(m_list, item->m_index));
+                }
+              }
+            }
+            *has_update = true;
+          }
         });
       });
   }
