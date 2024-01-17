@@ -49,6 +49,7 @@ namespace {
         : m_selector(selector),
           m_stylist(&stylist),
           m_on_update(on_update) {
+      qDebug() << "Constructed: " << this;
       m_select_connection = select(
         m_selector, *m_stylist, std::bind_front(&TopObserver::on_update, this));
       for(auto child : stylist.get_widget().children()) {
@@ -57,6 +58,10 @@ namespace {
         }
       }
       stylist.get_widget().installEventFilter(this);
+    }
+
+    ~TopObserver() {
+      qDebug() << "Destroyed: " << this;
     }
 
     bool eventFilter(QObject* watched, QEvent* event) override {
@@ -136,17 +141,24 @@ namespace {
     }
 
     void add(const Stylist& stylist) {
+      if(m_matches.contains(&stylist)) {
+        return;
+      }
       auto& match = m_matches[&stylist];
       match.m_connection = select(TopSelector(Any(), m_selector), stylist,
         std::bind_front(&TopObserver::on_child_update, this, std::ref(match)));
     }
 
     void remove(const Stylist& stylist) {
+      auto i = m_matches.find(&stylist);
+      if(i == m_matches.end()) {
+        return;
+      }
       stylist.get_widget().removeEventFilter(this);
-      auto& match = m_matches[&stylist];
+      auto& match = i->second;
       auto removals = match.m_selection;
       on_child_update(match, {}, std::move(removals));
-      m_matches.erase(&stylist);
+      m_matches.erase(i);
     }
   };
 }

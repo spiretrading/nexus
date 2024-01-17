@@ -23,6 +23,7 @@ SelectConnection Spire::Styles::select(const IsASelector& selector,
     return {};
   } else if(selector.is_instance(base.get_widget())) {
     on_update({&base}, {});
+    return {};
   } else if(base.get_widget().testAttribute(Qt::WA_WState_Polished)) {
     return {};
   }
