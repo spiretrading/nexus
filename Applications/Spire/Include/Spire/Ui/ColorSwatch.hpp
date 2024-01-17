@@ -40,10 +40,13 @@ namespace Styles {
 
     private:
       std::shared_ptr<ColorModel> m_current;
+      Box* m_swatch;
       bool m_is_highlighted;
       boost::signals2::scoped_connection m_current_connection;
 
       void on_current(const QColor& highlight);
+      void on_drag(bool is_match);
+      void on_highlighted(bool is_match);
   };
 }
 
