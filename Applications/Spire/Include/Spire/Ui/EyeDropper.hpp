@@ -1,5 +1,6 @@
 #ifndef SPIRE_EYE_DROPPER_HPP
 #define SPIRE_EYE_DROPPER_HPP
+#include <QTimer>
 #include "Spire/Ui/ClickObserver.hpp"
 #include "Spire/Ui/ColorBox.hpp"
 #include "Spire/Ui/Ui.hpp"
@@ -40,9 +41,9 @@ namespace Spire {
         const SubmitSignal::slot_type& slot) const;
 
     protected:
-      bool eventFilter(QObject* watched, QEvent* event) override;
-      void closeEvent(QCloseEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
+      void mouseMoveEvent(QMouseEvent* event) override;
+      void showEvent(QShowEvent* event) override;
       void paintEvent(QPaintEvent* event) override;
 
     private:
@@ -50,11 +51,12 @@ namespace Spire {
       mutable RejectSignal m_reject_signal;
       std::shared_ptr<ColorModel> m_current;
       ClickObserver m_click_observer;
-      bool m_is_closed;
       QImage m_screen_image;
       QRectF m_indicator_geometry;
+      QTimer m_timer;
 
       void on_click();
+      void on_time();
   };
 }
 
