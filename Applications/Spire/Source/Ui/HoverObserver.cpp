@@ -32,7 +32,7 @@ struct HoverObserver::EventFilter : QObject {
   };
   struct Observers {
     GlobalPositionObserver m_position_observer;
-    std::unordered_map<QWidget*, Child> m_children_observers;
+    std::unordered_map<QObject*, Child> m_children_observers;
 
     Observers(QWidget& widget, std::function<void (const QPoint&)> on_position)
         : m_position_observer(widget) {
@@ -105,9 +105,9 @@ struct HoverObserver::EventFilter : QObject {
       }
     } else if(event->type() == QEvent::ChildRemoved) {
       auto& child_event = static_cast<QChildEvent&>(*event);
-      if(child_event.child()->isWidgetType()) {
-        auto& child = static_cast<QWidget&>(*child_event.child());
-        get_observers().m_children_observers.erase(&child);
+      if(m_observers &&
+          m_observers->m_children_observers.contains(child_event.child())) {
+        get_observers().m_children_observers.erase(child_event.child());
         set_state(::get_state(
           *m_widget, get_observers().m_position_observer.get_position()));
       }

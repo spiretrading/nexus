@@ -1,47 +1,39 @@
 #include <QApplication>
 #include <QTimer>
-#include <QWidget>
 #include "Spire/Spire/Resources.hpp"
-#include "Spire/Styles/Selectors.hpp"
+#include "Spire/Spire/ArrayListModel.hpp"
+#include "Spire/Ui/ListView.hpp"
+#include "Spire/Ui/ListItem.hpp"
+#include "Spire/Ui/ScrollBox.hpp"
+#include "Spire/Ui/ScrollableListBox.hpp"
 
 using namespace Spire;
 using namespace Spire::Styles;
-
-namespace {
-  auto DEFAULT_STYLE() {
-    auto style = StyleSheet();
-    style.get(Hover());
-    return style;
-  }
-
-  struct Dummy : QWidget {
-    QWidget* m_body;
-
-    void mount(QWidget& body) {
-      m_body = &body;
-      m_body->setParent(this);
-      m_body->show();
-      set_style(body, DEFAULT_STYLE());
-    }
-
-    void unmount() {
-      delete m_body;
-    }
-  };
-}
 
 int main(int argc, char** argv) {
   auto application = QApplication(argc, argv);
   application.setOrganizationName(QObject::tr("Spire Trading Inc"));
   application.setApplicationName(QObject::tr("Scratch"));
   initialize_resources();
-  auto item = Dummy();
-  item.show();
+  auto list = std::make_shared<ArrayListModel<QString>>();
+  for(auto i = 0; i != 20; ++i) {
+    list->push(QString::number(i));
+  }
+  auto box = ScrollableListBox(*(new ListView(list)));
+  box.resize(box.sizeHint().width(), 100);
+  update_style(box.get_list_view(), [&] (auto& style) {
+    style.get(Any() > Any()).
+      set(border_size(0)).
+      set(vertical_padding(0));
+  });
+  box.show();
   auto timer = QTimer();
-  timer.setInterval(0);
-  timer.connect(&timer, &QTimer::timeout, [&] {
-    item.mount(*new QWidget());
-    item.unmount();
+  timer.setInterval(10);
+  auto i = 0;
+  QObject::connect(&timer, &QTimer::timeout, [&] {
+    box.get_scroll_box().scroll_to(
+      *box.get_list_view().get_list_item(i % list->get_size()));
+    ++i;
   });
   timer.start();
   application.exec();

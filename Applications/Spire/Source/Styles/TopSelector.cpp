@@ -33,6 +33,7 @@ namespace {
   struct TopObserver : public QObject {
     struct Match {
       SelectConnection m_connection;
+      scoped_connection m_delete_connection;
       std::unordered_set<const Stylist*> m_selection;
     };
     Selector m_selector;
@@ -142,6 +143,8 @@ namespace {
       auto& match = m_matches[&stylist];
       match.m_connection = select(TopSelector(Any(), m_selector), stylist,
         std::bind_front(&TopObserver::on_child_update, this, std::ref(match)));
+      match.m_delete_connection = stylist.connect_delete_signal(
+        std::bind_front(&TopObserver::remove, this, std::ref(stylist)));
     }
 
     void remove(const Stylist& stylist) {
