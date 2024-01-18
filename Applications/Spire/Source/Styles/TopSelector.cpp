@@ -49,7 +49,6 @@ namespace {
         : m_selector(selector),
           m_stylist(&stylist),
           m_on_update(on_update) {
-      qDebug() << "Constructed: " << this;
       m_select_connection = select(
         m_selector, *m_stylist, std::bind_front(&TopObserver::on_update, this));
       for(auto child : stylist.get_widget().children()) {
@@ -58,10 +57,6 @@ namespace {
         }
       }
       stylist.get_widget().installEventFilter(this);
-    }
-
-    ~TopObserver() {
-      qDebug() << "Destroyed: " << this;
     }
 
     bool eventFilter(QObject* watched, QEvent* event) override {
