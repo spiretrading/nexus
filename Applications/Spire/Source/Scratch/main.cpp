@@ -1,11 +1,8 @@
 #include <QApplication>
 #include <QTimer>
-#include "Spire/Spire/Dimensions.hpp"
+#include <QWidget>
 #include "Spire/Spire/Resources.hpp"
-#include "Spire/Ui/Layouts.hpp"
-#include "Spire/Ui/Box.hpp"
-#include "Spire/Ui/TextBox.hpp"
-#include "Spire/Ui/ListItem.hpp"
+#include "Spire/Styles/Selectors.hpp"
 
 using namespace Spire;
 using namespace Spire::Styles;
@@ -41,15 +38,10 @@ int main(int argc, char** argv) {
   auto item = Dummy();
   item.show();
   auto timer = QTimer();
-  timer.setInterval(1);
-  auto i = 0;
+  timer.setInterval(0);
   timer.connect(&timer, &QTimer::timeout, [&] {
-    if(i % 2 == 0) {
-      item.mount(*new QWidget());
-    } else {
-      item.unmount();
-    }
-    ++i;
+    item.mount(*new QWidget());
+    item.unmount();
   });
   timer.start();
   application.exec();

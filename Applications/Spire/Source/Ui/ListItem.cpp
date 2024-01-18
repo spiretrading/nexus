@@ -31,9 +31,9 @@ ListItem::ListItem(QWidget* parent)
       m_box(nullptr),
       m_button(nullptr) {
   auto layout = make_hbox_layout(this);
-//  layout->setSizeConstraint(QLayout::SetMinAndMaxSize);
-//  setFocusPolicy(Qt::ClickFocus);
-//  set_style(*this, DEFAULT_STYLE());
+  layout->setSizeConstraint(QLayout::SetMinAndMaxSize);
+  setFocusPolicy(Qt::ClickFocus);
+  set_style(*this, DEFAULT_STYLE());
 }
 
 bool ListItem::is_current() const {
@@ -49,13 +49,11 @@ void ListItem::set_current(bool is_current) {
       unmatch(*m_button, Current());
     }
   }
-/*
   if(m_is_current) {
     match(*this, Current());
   } else {
     unmatch(*this, Current());
   }
-*/
 }
 
 bool ListItem::is_selected() const {
@@ -71,13 +69,11 @@ void ListItem::set_selected(bool is_selected) {
       unmatch(*m_button, Selected());
     }
   }
-/*
   if(m_is_selected) {
     match(*this, Selected());
   } else {
     unmatch(*this, Selected());
   }
-*/
 }
 
 bool ListItem::is_mounted() const {
@@ -101,12 +97,11 @@ void ListItem::mount(QSpacerItem& body) {
 }
 
 void ListItem::mount(QWidget& body) {
-  m_box = new Box(&body, Box::Fit::BOTH, this);
-//  m_button = new Button(m_box, this);
-//  m_button->layout()->setSizeConstraint(QLayout::SetMinAndMaxSize);
-//  m_button->setFocusPolicy(Qt::ClickFocus);
-//  m_button->connect_click_signal(m_submit_signal);
-/*
+  m_box = new Box(&body, Box::Fit::BOTH);
+  m_button = new Button(m_box, this);
+  m_button->layout()->setSizeConstraint(QLayout::SetMinAndMaxSize);
+  m_button->setFocusPolicy(Qt::ClickFocus);
+  m_button->connect_click_signal(m_submit_signal);
   if(body.isEnabled()) {
     setFocusProxy(&body);
   } else {
@@ -116,13 +111,9 @@ void ListItem::mount(QWidget& body) {
   if(auto item = layout()->takeAt(0)) {
     delete item;
   }
-*/
-//  layout()->addWidget(m_button);
-//  proxy_style(*m_button, *m_box);
-  layout()->addWidget(m_box);
-//  set_style(*m_button, DEFAULT_STYLE());
-  set_style(*m_box, DEFAULT_STYLE());
-/*
+  layout()->addWidget(m_button);
+  proxy_style(*m_button, *m_box);
+  set_style(*m_button, DEFAULT_STYLE());
   if(m_is_current) {
     match(*m_button, Current());
   } else {
@@ -133,22 +124,18 @@ void ListItem::mount(QWidget& body) {
   } else {
     unmatch(*m_button, Selected());
   }
-*/
-//  proxy_style(*this, *m_button);
+  proxy_style(*this, *m_button);
 }
 
 void ListItem::unmount() {
-//  auto size_hint = m_button->sizeHint();
-//  auto size_policy = get_body().sizePolicy();
+  auto size_hint = m_button->sizeHint();
+  auto size_policy = get_body().sizePolicy();
   auto item = layout()->takeAt(0);
   delete item;
-//  m_button->deleteLater();
+  m_button->deleteLater();
   m_button = nullptr;
-  m_box->deleteLater();
   m_box = nullptr;
-/*
   static_cast<QBoxLayout&>(*layout()).addSpacerItem(
     new QSpacerItem(size_hint.width(), size_hint.height(),
       size_policy.horizontalPolicy(), size_policy.verticalPolicy()));
-*/
 }
