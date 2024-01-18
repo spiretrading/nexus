@@ -97,7 +97,7 @@ void EyeDropper::showEvent(QShowEvent* event) {
   m_indicator_geometry.adjust(1, 1, 0, 0);
   m_timer.setInterval(10);
   connect(&m_timer, &QTimer::timeout,
-    std::bind_front(&EyeDropper::on_time, this));
+    std::bind_front(&EyeDropper::on_timeout, this));
   m_timer.start();
 }
 
@@ -118,11 +118,12 @@ void EyeDropper::paintEvent(QPaintEvent* event) {
 }
 
 void EyeDropper::on_click() {
+  setMouseTracking(false);
   m_submit_signal(m_current->get());
   close();
 }
 
-void EyeDropper::on_time() {
+void EyeDropper::on_timeout() {
   auto pos = QCursor::pos();
   if(!rect().contains(mapFromGlobal(pos))) {
     move(pos.x() - width() / 2, pos.y() - height() / 2);

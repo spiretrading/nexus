@@ -56,7 +56,7 @@ namespace Spire {
       QTimer m_timer;
 
       void on_click();
-      void on_time();
+      void on_timeout();
   };
 }
 
