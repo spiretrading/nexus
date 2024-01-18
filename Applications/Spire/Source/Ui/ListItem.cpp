@@ -31,8 +31,8 @@ ListItem::ListItem(QWidget* parent)
       m_box(nullptr),
       m_button(nullptr) {
   auto layout = make_hbox_layout(this);
-  layout->setSizeConstraint(QLayout::SetMinAndMaxSize);
-  setFocusPolicy(Qt::ClickFocus);
+//  layout->setSizeConstraint(QLayout::SetMinAndMaxSize);
+//  setFocusPolicy(Qt::ClickFocus);
 //  set_style(*this, DEFAULT_STYLE());
 }
 
