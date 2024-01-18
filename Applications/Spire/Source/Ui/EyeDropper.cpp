@@ -1,5 +1,4 @@
 #include "Spire/Ui/EyeDropper.hpp"
-#include <QApplication>
 #include <QGuiApplication>
 #include <QKeyEvent>
 #include <QMouseEvent>
@@ -41,25 +40,15 @@ EyeDropper::EyeDropper(QWidget* parent)
         Qt::Popup | Qt::FramelessWindowHint | Qt::NoDropShadowWindowHint),
       m_current(std::make_shared<LocalColorModel>()),
       m_click_observer(*this),
-      m_is_closed(false),
-      m_screen_image(grab_screens()) {
+      m_screen_image(grab_screens()),
+      m_timer(this) {
   setAttribute(Qt::WA_DeleteOnClose);
   setAttribute(Qt::WA_TranslucentBackground);
-  setFixedSize(scale(120, 120));
   setCursor(Qt::BlankCursor);
-  qApp->installEventFilter(this);
+  setMouseTracking(true);
+  setFixedSize(scale(120, 120));
   m_click_observer.connect_click_signal(
     std::bind_front(&EyeDropper::on_click, this));
-  auto point = QCursor::pos();
-  move(point.x() - width() / 2, point.y() - height() / 2);
-  auto indicator_size = QSizeF(size()) / ZOOM_LEVEL;
-  auto geometry = rect();
-  auto center =
-    QPointF(static_cast<double>(geometry.left() + geometry.right()) / 2,
-      static_cast<double>(geometry.top() + geometry.bottom()) / 2);
-  m_indicator_geometry = QRectF(QPointF(center.x() - indicator_size.width() / 2,
-    center.y() - indicator_size.height() / 2), indicator_size);
-  m_indicator_geometry.adjust(1, 1, 0, 0);
 }
 
 const std::shared_ptr<ValueModel<QColor>>& EyeDropper::get_current() const {
@@ -76,50 +65,39 @@ connection EyeDropper::connect_reject_signal(
   return m_reject_signal.connect(slot);
 }
 
-bool EyeDropper::eventFilter(QObject* watched, QEvent* event) {
-  if(event->type() == QEvent::MouseMove) {
-    if(m_is_closed) {
-      return QWidget::eventFilter(watched, event);
-    }
-    auto& mouse_event = *static_cast<QMouseEvent*>(event);
-    auto is_inside = false;
-    auto windows = QApplication::topLevelWindows();
-    for(auto window : windows) {
-      if(window->isVisible() && window->isActive() &&
-          window->winId() != winId()) {
-        if(window->frameGeometry().contains(mouse_event.globalPos())) {
-          is_inside = true;
-        }
-      }
-    }
-    if(is_inside) {
-      show();
-      move(mouse_event.globalX() - width() / 2,
-        mouse_event.globalY() - height() / 2);
-      m_current->set(m_screen_image.pixelColor(mouse_event.globalPos()));
-      update();
-    } else {
-      hide();
-    }
-    return true;
-  }
-  return QWidget::eventFilter(watched, event);
-}
-
-void EyeDropper::closeEvent(QCloseEvent* event) {
-  m_is_closed = true;
-  QWidget::closeEvent(event);
-}
-
 void EyeDropper::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Escape) {
+    setMouseTracking(false);
     m_reject_signal(m_current->get());
     close();
   } else if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
+    setMouseTracking(false);
     m_submit_signal(m_current->get());
     close();
   }
   QWidget::keyPressEvent(event);
+}
+
+void EyeDropper::mouseMoveEvent(QMouseEvent* event) {
+  move(event->globalPos());
+  m_current->set(m_screen_image.pixelColor(event->globalPos()));
+  update();
+}
+
+void EyeDropper::showEvent(QShowEvent* event) {
+  move(QCursor::pos());
+  auto indicator_size = QSizeF(size()) / ZOOM_LEVEL;
+  auto geometry = rect();
+  auto center =
+    QPointF(static_cast<double>(geometry.left() + geometry.right()) / 2,
+      static_cast<double>(geometry.top() + geometry.bottom()) / 2);
+  m_indicator_geometry = QRectF(QPointF(center.x() - indicator_size.width() / 2,
+    center.y() - indicator_size.height() / 2), indicator_size);
+  m_indicator_geometry.adjust(1, 1, 0, 0);
+  m_timer.setInterval(10);
+  connect(&m_timer, &QTimer::timeout,
+    std::bind_front(&EyeDropper::on_timeout, this));
+  m_timer.start();
 }
 
 void EyeDropper::paintEvent(QPaintEvent* event) {
@@ -138,7 +116,19 @@ void EyeDropper::paintEvent(QPaintEvent* event) {
   painter.drawRect(m_indicator_geometry);
 }
 
+void EyeDropper::move(const QPoint& position) {
+  QWidget::move(position.x() - width() / 2, position.y() - height() / 2);
+}
+
 void EyeDropper::on_click() {
+  setMouseTracking(false);
   m_submit_signal(m_current->get());
   close();
+}
+
+void EyeDropper::on_timeout() {
+  auto position = QCursor::pos();
+  if(!rect().contains(mapFromGlobal(position))) {
+    move(position);
+  }
 }
