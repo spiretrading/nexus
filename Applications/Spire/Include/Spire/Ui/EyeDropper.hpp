@@ -55,6 +55,7 @@ namespace Spire {
       QRectF m_indicator_geometry;
       QTimer m_timer;
 
+      void move(const QPoint& position);
       void on_click();
       void on_timeout();
   };

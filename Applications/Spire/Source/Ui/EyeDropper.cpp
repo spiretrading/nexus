@@ -79,14 +79,13 @@ void EyeDropper::keyPressEvent(QKeyEvent* event) {
 }
 
 void EyeDropper::mouseMoveEvent(QMouseEvent* event) {
-  move(event->globalX() - width() / 2, event->globalY() - height() / 2);
+  move(event->globalPos());
   m_current->set(m_screen_image.pixelColor(event->globalPos()));
   update();
 }
 
 void EyeDropper::showEvent(QShowEvent* event) {
-  auto position = QCursor::pos();
-  move(position.x() - width() / 2, position.y() - height() / 2);
+  move(QCursor::pos());
   auto indicator_size = QSizeF(size()) / ZOOM_LEVEL;
   auto geometry = rect();
   auto center =
@@ -117,6 +116,10 @@ void EyeDropper::paintEvent(QPaintEvent* event) {
   painter.drawRect(m_indicator_geometry);
 }
 
+void EyeDropper::move(const QPoint& position) {
+  QWidget::move(position.x() - width() / 2, position.y() - height() / 2);
+}
+
 void EyeDropper::on_click() {
   setMouseTracking(false);
   m_submit_signal(m_current->get());
@@ -124,8 +127,8 @@ void EyeDropper::on_click() {
 }
 
 void EyeDropper::on_timeout() {
-  auto pos = QCursor::pos();
-  if(!rect().contains(mapFromGlobal(pos))) {
-    move(pos.x() - width() / 2, pos.y() - height() / 2);
+  auto position = QCursor::pos();
+  if(!rect().contains(mapFromGlobal(position))) {
+    move(position);
   }
 }
