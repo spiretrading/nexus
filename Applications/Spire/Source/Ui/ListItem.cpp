@@ -42,13 +42,6 @@ bool ListItem::is_current() const {
 
 void ListItem::set_current(bool is_current) {
   m_is_current = is_current;
-  if(m_button) {
-    if(m_is_current) {
-      match(*m_button, Current());
-    } else {
-      unmatch(*m_button, Current());
-    }
-  }
   if(m_is_current) {
     match(*this, Current());
   } else {
@@ -62,13 +55,6 @@ bool ListItem::is_selected() const {
 
 void ListItem::set_selected(bool is_selected) {
   m_is_selected = is_selected;
-  if(m_button) {
-    if(m_is_selected) {
-      match(*m_button, Selected());
-    } else {
-      unmatch(*m_button, Selected());
-    }
-  }
   if(m_is_selected) {
     match(*this, Selected());
   } else {
@@ -113,17 +99,6 @@ void ListItem::mount(QWidget& body) {
   }
   layout()->addWidget(m_button);
   proxy_style(*m_button, *m_box);
-  set_style(*m_button, DEFAULT_STYLE());
-  if(m_is_current) {
-    match(*m_button, Current());
-  } else {
-    unmatch(*m_button, Current());
-  }
-  if(m_is_selected) {
-    match(*m_button, Selected());
-  } else {
-    unmatch(*m_button, Selected());
-  }
   proxy_style(*this, *m_button);
 }
 

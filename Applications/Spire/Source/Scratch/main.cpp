@@ -16,14 +16,11 @@ int main(int argc, char** argv) {
   application.setApplicationName(QObject::tr("Scratch"));
   initialize_resources();
   auto list = std::make_shared<ArrayListModel<QString>>();
-  for(auto i = 0; i != 20; ++i) {
+  for(auto i = 0; i != 1000; ++i) {
     list->push(QString::number(i));
   }
   auto box = ScrollableListBox(*(new ListView(list)));
   box.resize(box.sizeHint().width(), 100);
-  update_style(box.get_list_view(), [&] (auto& style) {
-    style.get(Any() > Any());
-  });
   box.show();
   auto timer = QTimer();
   timer.setInterval(10);
