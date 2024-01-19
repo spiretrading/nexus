@@ -43,24 +43,16 @@ struct HoverObserver::EventFilter : QObject {
   QWidget* m_widget;
   State m_state;
   std::unique_ptr<Observers> m_observers;
-  static inline int count = 0;
 
   EventFilter(QWidget& widget)
       : m_widget(&widget),
         m_state(State::NONE) {
-    ++count;
-    qDebug() << "EventFilter: " << count;
     widget.connect(
       &widget, &QObject::destroyed, this, &EventFilter::on_widget_destroyed);
     widget.installEventFilter(this);
     if(widget.isEnabled() && widget.isVisible()) {
       initialize_observers();
     }
-  }
-
-  ~EventFilter() {
-    --count;
-    qDebug() << "~EventFilter: " << count;
   }
 
   void initialize_observers() {

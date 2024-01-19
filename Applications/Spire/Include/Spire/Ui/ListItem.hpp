@@ -54,10 +54,6 @@ namespace Styles {
       boost::signals2::connection connect_submit_signal(
         const SubmitSignal::slot_type& slot) const;
 
-      void mount(QSpacerItem& body);
-      void mount(QWidget& body);
-      void unmount();
-
     private:
       friend class ListView;
       mutable SubmitSignal m_submit_signal;
@@ -66,6 +62,9 @@ namespace Styles {
       Box* m_box;
       Button* m_button;
 
+      void mount(QSpacerItem& body);
+      void mount(QWidget& body);
+      void unmount();
   };
 }
 

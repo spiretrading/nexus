@@ -22,9 +22,7 @@ int main(int argc, char** argv) {
   auto box = ScrollableListBox(*(new ListView(list)));
   box.resize(box.sizeHint().width(), 100);
   update_style(box.get_list_view(), [&] (auto& style) {
-    style.get(Any() > Any()).
-      set(border_size(0)).
-      set(vertical_padding(0));
+    style.get(Any() > Any());
   });
   box.show();
   auto timer = QTimer();

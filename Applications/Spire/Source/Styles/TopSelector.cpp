@@ -44,6 +44,7 @@ namespace {
     std::unordered_set<const Stylist*> m_children_selection;
     std::unordered_map<const Stylist*, int> m_selection_count;
     std::unordered_map<const Stylist*, Match> m_matches;
+    std::unordered_map<QObject*, const Stylist*> m_children_stylists;
 
     TopObserver(const Selector& selector, const Stylist& stylist,
         const SelectionUpdateSignal& on_update)
@@ -68,8 +69,9 @@ namespace {
         }
       } else if(event->type() == QEvent::ChildRemoved) {
         auto& child_event = static_cast<QChildEvent&>(*event);
-        if(child_event.child()->isWidgetType()) {
-          remove(find_stylist(*static_cast<QWidget*>(child_event.child())));
+        auto i = m_children_stylists.find(child_event.child());
+        if(i != m_children_stylists.end()) {
+          remove(*i->second);
         }
       }
       return QObject::eventFilter(watched, event);
@@ -140,6 +142,7 @@ namespace {
       if(m_matches.contains(&stylist)) {
         return;
       }
+      m_children_stylists.insert(std::pair(&stylist.get_widget(), &stylist));
       auto& match = m_matches[&stylist];
       match.m_connection = select(TopSelector(Any(), m_selector), stylist,
         std::bind_front(&TopObserver::on_child_update, this, std::ref(match)));
@@ -157,6 +160,7 @@ namespace {
       auto removals = match.m_selection;
       on_child_update(match, {}, std::move(removals));
       m_matches.erase(i);
+      m_children_stylists.erase(&stylist.get_widget());
     }
   };
 }
