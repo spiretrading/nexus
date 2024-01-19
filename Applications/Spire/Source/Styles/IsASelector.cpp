@@ -1,5 +1,6 @@
 #include "Spire/Styles/IsASelector.hpp"
 #include <QEvent>
+#include <QTimer>
 #include "Spire/Styles/Stylist.hpp"
 
 using namespace Spire;
@@ -37,8 +38,7 @@ SelectConnection Spire::Styles::select(const IsASelector& selector,
         : m_selector(selector),
           m_stylist(&const_cast<Stylist&>(base)),
           m_on_update(on_update) {
-      auto& widget = m_stylist->get_widget();
-      widget.installEventFilter(this);
+      QTimer::singleShot(0, this, std::bind_front(&Executor::test, this));
     }
 
     bool eventFilter(QObject* watched, QEvent* event) override {
@@ -49,6 +49,14 @@ SelectConnection Spire::Styles::select(const IsASelector& selector,
         m_stylist->get_widget().removeEventFilter(this);
       }
       return QObject::eventFilter(watched, event);
+    }
+
+    void test() {
+      if(m_selector.is_instance(m_stylist->get_widget())) {
+        m_on_update({m_stylist}, {});
+      } else {
+        m_stylist->get_widget().installEventFilter(this);
+      }
     }
   };
   return SelectConnection(

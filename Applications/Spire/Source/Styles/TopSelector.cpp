@@ -4,7 +4,6 @@
 #include <QWidget>
 #include "Spire/Styles/Any.hpp"
 #include "Spire/Styles/CombinatorSelector.hpp"
-#include "Spire/Styles/FlipSelector.hpp"
 #include "Spire/Styles/Stylist.hpp"
 
 using namespace boost;
@@ -33,7 +32,6 @@ namespace {
   struct TopObserver : public QObject {
     struct Match {
       SelectConnection m_connection;
-      scoped_connection m_delete_connection;
       std::unordered_set<const Stylist*> m_selection;
     };
     Selector m_selector;
@@ -54,7 +52,7 @@ namespace {
       m_select_connection = select(
         m_selector, *m_stylist, std::bind_front(&TopObserver::on_update, this));
       for(auto child : stylist.get_widget().children()) {
-        if(child->isWidgetType()) {
+        if(child && child->isWidgetType()) {
           add(find_stylist(*static_cast<QWidget*>(child)));
         }
       }
@@ -63,13 +61,13 @@ namespace {
 
     bool eventFilter(QObject* watched, QEvent* event) override {
       if(event->type() == QEvent::ChildAdded) {
-        auto& child_event = static_cast<QChildEvent&>(*event);
-        if(child_event.child()->isWidgetType()) {
-          add(find_stylist(*static_cast<QWidget*>(child_event.child())));
+        auto& child = *static_cast<QChildEvent&>(*event).child();
+        if(child.isWidgetType()) {
+          add(find_stylist(static_cast<QWidget&>(child)));
         }
       } else if(event->type() == QEvent::ChildRemoved) {
-        auto& child_event = static_cast<QChildEvent&>(*event);
-        auto i = m_children_stylists.find(child_event.child());
+        auto& child = *static_cast<QChildEvent&>(*event).child();
+        auto i = m_children_stylists.find(&child);
         if(i != m_children_stylists.end()) {
           remove(*i->second);
         }
@@ -146,8 +144,6 @@ namespace {
       auto& match = m_matches[&stylist];
       match.m_connection = select(TopSelector(Any(), m_selector), stylist,
         std::bind_front(&TopObserver::on_child_update, this, std::ref(match)));
-      match.m_delete_connection = stylist.connect_delete_signal(
-        std::bind_front(&TopObserver::remove, this, std::ref(stylist)));
     }
 
     void remove(const Stylist& stylist) {

@@ -100,9 +100,9 @@ struct HoverObserver::EventFilter : QObject {
       set_state(::get_state(
         *m_widget, get_observers().m_position_observer.get_position()));
     } else if(event->type() == QEvent::ChildAdded) {
-      auto& child_event = static_cast<QChildEvent&>(*event);
-      if(child_event.child()->isWidgetType()) {
-        add(static_cast<QWidget&>(*child_event.child()));
+      auto& child = *static_cast<QChildEvent&>(*event).child();
+      if(child.isWidgetType()) {
+        add(static_cast<QWidget&>(child));
       }
     } else if(event->type() == QEvent::ChildRemoved) {
       auto& child_event = static_cast<QChildEvent&>(*event);
