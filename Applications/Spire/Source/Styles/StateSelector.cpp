@@ -90,13 +90,16 @@ namespace {
     bool is_match(FocusObserver::State state) const {
       return state == m_expected_state ||
         m_expected_state == FocusObserver::State::FOCUS &&
-        is_set(state, m_expected_state);
+          is_set(state, m_expected_state);
     }
 
     bool eventFilter(QObject* watched, QEvent* event) override {
       if(!m_stylist->get_widget().isEnabled() ||
           !m_stylist->get_widget().isVisible()) {
         if(m_observer) {
+          if(m_observer->m_match_count != 0) {
+            m_on_update({}, {m_stylist});
+          }
           m_observer = nullptr;
         }
       } else if(!m_observer) {
@@ -156,6 +159,9 @@ namespace {
       if(!m_stylist->get_widget().isEnabled() ||
           !m_stylist->get_widget().isVisible()) {
         if(m_observer) {
+          if(m_observer->m_is_match) {
+            m_on_update({}, {m_stylist});
+          }
           m_observer = nullptr;
         }
       } else if(!m_observer) {
