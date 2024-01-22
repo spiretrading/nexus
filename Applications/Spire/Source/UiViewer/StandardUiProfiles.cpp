@@ -2753,7 +2753,6 @@ UiProfile Spire::make_list_view_profile() {
     auto& change_item = get<int>("change_item", profile.get_properties());
     auto& change_item_index =
       get<int>("change_item_index", profile.get_properties());
-    auto random_generator = QRandomGenerator(random_height_seed.get());
     auto list_model = std::make_shared<ArrayListModel<QString>>();
     for(auto i = 0; i < 66; ++i) {
       if(i == 1) {
@@ -2790,10 +2789,12 @@ UiProfile Spire::make_list_view_profile() {
     auto selection_model = std::make_shared<ListSelectionModel>();
     auto list_view =
       new ListView(list_model, selection_model,
-        [&] (const std::shared_ptr<ListModel<QString>>& model, auto index) {
+        [&, random_generator = std::make_shared<QRandomGenerator>(
+            random_height_seed.get())] (
+              const std::shared_ptr<ListModel<QString>>& model, auto index) {
           auto label = make_label(model->get(index));
           if(random_height_seed.get() == 0) {
-            auto random_size = random_generator.bounded(30, 70);
+            auto random_size = random_generator->bounded(30, 70);
             if(direction.get() == Qt::Vertical) {
               label->setFixedHeight(scale_height(random_size));
             } else {

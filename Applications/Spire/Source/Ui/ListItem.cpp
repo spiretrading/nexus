@@ -78,8 +78,19 @@ connection ListItem::connect_submit_signal(
   return m_submit_signal.connect(slot);
 }
 
+QSize ListItem::sizeHint() const {
+  if(m_box) {
+    return m_box->sizeHint();
+  }
+  return QWidget::sizeHint();
+}
+
 void ListItem::mount(QSpacerItem& body) {
+  if(auto item = layout()->takeAt(0)) {
+    delete item;
+  }
   static_cast<QBoxLayout&>(*layout()).addSpacerItem(&body);
+  updateGeometry();
 }
 
 void ListItem::mount(QWidget& body) {
@@ -100,10 +111,11 @@ void ListItem::mount(QWidget& body) {
   layout()->addWidget(m_button);
   proxy_style(*m_button, *m_box);
   proxy_style(*this, *m_button);
+  updateGeometry();
 }
 
 void ListItem::unmount() {
-  auto size_hint = m_button->sizeHint();
+  auto size_hint = sizeHint();
   auto size_policy = get_body().sizePolicy();
   auto item = layout()->takeAt(0);
   delete item;
@@ -113,4 +125,5 @@ void ListItem::unmount() {
   static_cast<QBoxLayout&>(*layout()).addSpacerItem(
     new QSpacerItem(size_hint.width(), size_hint.height(),
       size_policy.horizontalPolicy(), size_policy.verticalPolicy()));
+  updateGeometry();
 }

@@ -5,12 +5,14 @@
 #include <memory>
 #include <unordered_set>
 #include <QSpacerItem>
+#include <QTimer>
 #include <QWidget>
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Styles/BasicProperty.hpp"
 #include "Spire/Ui/ClickObserver.hpp"
 #include "Spire/Ui/ListCurrentController.hpp"
+#include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/ListSelectionController.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -217,13 +219,10 @@ namespace Styles {
       void showEvent(QShowEvent* event) override;
 
     private:
-      struct ItemContainer;
       struct ItemEntry {
-        ListItem* m_item;
+        ListItem m_item;
         int m_index;
         ClickObserver m_click_observer;
-        boost::signals2::scoped_connection m_submit_connection;
-        boost::signals2::scoped_connection m_click_connection;
 
         ItemEntry(int index);
       };
@@ -247,7 +246,7 @@ namespace Styles {
       Qt::Orientation m_direction;
       Styles::Overflow m_overflow;
       QString m_query;
-      QTimer* m_query_timer;
+      QTimer m_query_timer;
       boost::signals2::scoped_connection m_style_connection;
       boost::signals2::scoped_connection m_list_connection;
       boost::signals2::scoped_connection m_current_connection;

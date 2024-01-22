@@ -54,6 +54,8 @@ namespace Styles {
       boost::signals2::connection connect_submit_signal(
         const SubmitSignal::slot_type& slot) const;
 
+      QSize sizeHint() const override;
+
     private:
       friend class ListView;
       mutable SubmitSignal m_submit_signal;

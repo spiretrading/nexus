@@ -53,19 +53,49 @@ namespace {
     }
   };
 
-  bool test_visibility(const QWidget& container, const QRect& geometry) {
+  int get_directed_point(QPoint point, Qt::Orientation direction) {
+    if(direction == Qt::Orientation::Vertical) {
+      return point.y();
+    }
+    return point.x();
+  }
+
+  QPoint make_directed_point(int x, int y, Qt::Orientation direction) {
+    if(direction == Qt::Orientation::Vertical) {
+      return QPoint(x, y);
+    }
+    return QPoint(y, x);
+  }
+
+  QPoint make_directed_point(int x, Qt::Orientation direction) {
+    return make_directed_point(0, x, direction);
+  }
+
+  int get_directed_size(QSize size, Qt::Orientation direction) {
+    if(direction == Qt::Orientation::Vertical) {
+      return size.height();
+    }
+    return size.width();
+  }
+
+  bool test_visibility(const QWidget& container, const QRect& geometry,
+      Qt::Orientation direction) {
     auto widget_geometry =
       QRect(container.mapToParent(geometry.topLeft()), geometry.size());
-    return std::max(-SCROLL_BUFFER, widget_geometry.top()) <=
-      std::min(container.parentWidget()->height() + SCROLL_BUFFER,
-        widget_geometry.bottom());
+    if(direction == Qt::Orientation::Vertical) {
+      return std::max(-SCROLL_BUFFER, widget_geometry.top()) <=
+        std::min(container.parentWidget()->height() + SCROLL_BUFFER,
+          widget_geometry.bottom());
+    }
+    return std::max(-SCROLL_BUFFER, widget_geometry.left()) <=
+      std::min(container.parentWidget()->width() + SCROLL_BUFFER,
+        widget_geometry.right());
   }
 }
 
 ListView::ItemEntry::ItemEntry(int index)
-  : m_item(new ListItem()),
-    m_index(index),
-    m_click_observer(*m_item) {}
+  : m_index(index),
+    m_click_observer(m_item) {}
 
 QWidget* ListView::default_view_builder(
     const std::shared_ptr<AnyListModel>& list, int index) {
@@ -104,13 +134,13 @@ ListView::ListView(
       m_perpendicular_policy(QSizePolicy::Expanding),
       m_item_gap(DEFAULT_GAP),
       m_overflow_gap(DEFAULT_OVERFLOW_GAP),
-      m_query_timer(new QTimer(this)) {
+      m_query_timer(this) {
   for(auto i = 0; i != m_list->get_size(); ++i) {
     make_item_entry(i);
   }
   auto& selection_model = m_selection_controller.get_selection();
   for(auto i = 0; i != selection_model->get_size(); ++i) {
-    m_items[selection_model->get(i)]->m_item->set_selected(true);
+    m_items[selection_model->get(i)]->m_item.set_selected(true);
   }
   setFocusPolicy(Qt::StrongFocus);
   update_focus(none);
@@ -124,10 +154,10 @@ ListView::ListView(
   m_style_connection =
     connect_style_signal(*this, std::bind_front(&ListView::on_style, this));
   set_style(*this, DEFAULT_STYLE());
+  m_query_timer.setSingleShot(true);
   const auto QUERY_TIMEOUT_MS = 500;
-  m_query_timer->setSingleShot(true);
-  m_query_timer->setInterval(QUERY_TIMEOUT_MS);
-  connect(m_query_timer, &QTimer::timeout, this,
+  m_query_timer.setInterval(QUERY_TIMEOUT_MS);
+  connect(&m_query_timer, &QTimer::timeout, this,
     std::bind_front(&ListView::on_query_timer_expired, this));
   m_list_connection = m_list->connect_operation_signal(
     std::bind_front(&ListView::on_list_operation, this));
@@ -155,7 +185,7 @@ ListItem* ListView::get_list_item(int index) {
   if(index < 0 || index >= static_cast<int>(m_items.size())) {
     return nullptr;
   }
-  return m_items[index]->m_item;
+  return &m_items[index]->m_item;
 }
 
 void ListView::set_direction_size_policy(QSizePolicy::Policy policy) {
@@ -318,7 +348,7 @@ void ListView::append_query(const QString& query) {
     auto is_repeated_query = m_query.count(m_query.at(0)) == m_query.count();
     auto short_match = optional<int>();
     while(i != start) {
-      if(m_items[i]->m_item->isEnabled()) {
+      if(m_items[i]->m_item.isEnabled()) {
         auto item_text = to_text(m_list->get(i)).toLower();
         if(item_text.startsWith(m_query.toLower())) {
           short_match = none;
@@ -341,13 +371,13 @@ void ListView::append_query(const QString& query) {
       m_current_controller.get_current()->set(*short_match);
     }
   }
-  m_query_timer->start();
+  m_query_timer.start();
 }
 
 void ListView::update_focus(optional<int> current) {
   if(m_focus_index && m_focus_index != current &&
       *m_focus_index < static_cast<int>(m_items.size())) {
-    m_items[*m_focus_index]->m_item->setFocusPolicy(Qt::ClickFocus);
+    m_items[*m_focus_index]->m_item.setFocusPolicy(Qt::ClickFocus);
   }
   if(current) {
     m_focus_index = *current;
@@ -357,7 +387,7 @@ void ListView::update_focus(optional<int> current) {
     m_focus_index = none;
   }
   if(m_focus_index) {
-    auto& item = *m_items[*m_focus_index]->m_item;
+    auto& item = m_items[*m_focus_index]->m_item;
     item.setFocusPolicy(Qt::StrongFocus);
     setFocusProxy(&item);
   } else {
@@ -368,18 +398,15 @@ void ListView::update_focus(optional<int> current) {
 void ListView::make_item_entry(int index) {
   auto entry = new ItemEntry(index);
   if(m_overflow != Overflow::NONE) {
-    entry->m_item->mount(*m_view_builder(m_list, entry->m_index));
+    entry->m_item.mount(*m_view_builder(m_list, entry->m_index));
   }
   m_items.emplace(m_items.begin() + index, entry);
-  entry->m_click_connection =
-    entry->m_click_observer.connect_click_signal(std::bind_front(
-      &ListView::on_item_click, this, std::ref(*m_items[index])));
-  entry->m_submit_connection = entry->m_item->connect_submit_signal(
-    [=, item = m_items[index].get()] {
-      on_item_submitted(*item);
-    });
+  entry->m_click_observer.connect_click_signal(
+    std::bind_front(&ListView::on_item_click, this, std::ref(*m_items[index])));
+  entry->m_item.connect_submit_signal(std::bind_front(
+    &ListView::on_item_submitted, this, std::ref(*m_items[index])));
   m_current_controller.add(
-    std::make_unique<QWidgetItemView>(*entry->m_item), index);
+    std::make_unique<QWidgetItemView>(entry->m_item), index);
   m_selection_controller.add(index);
 }
 
@@ -395,8 +422,7 @@ void ListView::add_item(int index) {
 }
 
 void ListView::remove_item(int index) {
-  auto item = m_items[index]->m_item;
-  item->deleteLater();
+  auto item = std::move(m_items[index]);
   m_items.erase(m_items.begin() + index);
   for(auto i = m_items.begin() + index; i != m_items.end(); ++i) {
     --(*i)->m_index;
@@ -414,6 +440,9 @@ void ListView::remove_item(int index) {
   m_selection_controller.remove(index);
   on_current(none, m_current_controller.get_current()->get());
   update_layout();
+  QTimer::singleShot(0, [item = std::move(item)] () mutable {
+    item = nullptr;
+  });
 }
 
 void ListView::move_item(int source, int destination) {
@@ -458,9 +487,11 @@ ListView::ItemEntry* ListView::item_at(const QPoint& point) {
   while(high >= low) {
     auto middle = low + (high - low) / 2;
     auto& item = m_items[middle];
-    if(item->m_item == widget || item->m_item->isAncestorOf(widget)) {
+    if(&item->m_item == widget || item->m_item.isAncestorOf(widget)) {
       return item.get();
-    } else if(item->m_item->frameGeometry().top() > local_point.y()) {
+    } else if(get_directed_point(
+        item->m_item.frameGeometry().topLeft(), m_direction) >
+          get_directed_point(local_point, m_direction)) {
       high = middle - 1;
     } else {
       low = middle + 1;
@@ -512,26 +543,18 @@ void ListView::update_layout() {
     inner_layout->setSpacing(m_item_gap);
     inner_layout->setAlignment(alignment);
     while(i != m_items.end()) {
-      auto item_size = [&] {
-        if(m_direction == Qt::Orientation::Horizontal) {
-          return (*i)->m_item->sizeHint().width();
-        } else {
-          return (*i)->m_item->sizeHint().height();
-        }
-      }();
+      auto item_size = get_directed_size((*i)->m_item.sizeHint(), m_direction);
       remaining_size -= item_size;
       if(remaining_size < 0 && remaining_size + item_size != max_size) {
         break;
       }
       remaining_size -= inner_layout->spacing();
       if(m_direction == Qt::Orientation::Horizontal) {
-        (*i)->m_item->setSizePolicy(
-          m_direction_policy, m_perpendicular_policy);
+        (*i)->m_item.setSizePolicy(m_direction_policy, m_perpendicular_policy);
       } else {
-        (*i)->m_item->setSizePolicy(
-          m_perpendicular_policy, m_direction_policy);
+        (*i)->m_item.setSizePolicy(m_perpendicular_policy, m_direction_policy);
       }
-      inner_layout->addWidget((*i)->m_item);
+      inner_layout->addWidget(&(*i)->m_item);
       ++i;
     }
     body_layout.addLayout(inner_layout);
@@ -547,7 +570,15 @@ void ListView::update_parent() {
 }
 
 void ListView::initialize_visible_region() {
+  if(!isVisible()) {
+    return;
+  }
   if(!parentWidget() || m_overflow != Overflow::NONE) {
+    for(auto& item : m_items) {
+      if(!item->m_item.is_mounted()) {
+        item->m_item.mount(*m_view_builder(m_list, item->m_index));
+      }
+    }
     return;
   }
   m_visible_count = 0;
@@ -556,35 +587,45 @@ void ListView::initialize_visible_region() {
     return;
   }
   m_top_index = std::numeric_limits<int>::max();
-  if(!m_items.front()->m_item->is_mounted()) {
-    m_items.front()->m_item->mount(*m_view_builder(m_list, 0));
+  auto& front_item = *m_items.front();
+  if(!front_item.m_item.is_mounted()) {
+    front_item.m_item.mount(*m_view_builder(m_list, 0));
   }
-  auto top_geometry = QRect(QPoint(0, 0), m_items.front()->m_item->size());
-  if(test_visibility(*this, top_geometry)) {
+  auto top_geometry =
+    QRect(QPoint(0, 0), front_item.m_item.sizeHint());
+  if(test_visibility(*this, top_geometry, m_direction)) {
     m_top_index = 0;
     m_visible_count = 1;
   }
-  auto position = m_items.front()->m_item->size().height() + m_item_gap;
+  auto position =
+    get_directed_size(top_geometry.size(), m_direction) + m_item_gap;
   for(auto& item : m_items | std::views::drop(1)) {
-    auto geometry = QRect(QPoint(0, position), item->m_item->size());
-    auto is_visible = test_visibility(*this, geometry);
-    if(is_visible || item->m_item->is_current()) {
-      if(!item->m_item->is_mounted()) {
-        item->m_item->mount(*m_view_builder(m_list, item->m_index));
+    auto geometry = [&] {
+      if(item->m_item.is_mounted()) {
+        return QRect(make_directed_point(position, m_direction),
+          item->m_item.sizeHint());
+      }
+      return QRect(make_directed_point(position, m_direction),
+        front_item.m_item.sizeHint());
+    }();
+    auto is_visible = test_visibility(*this, geometry, m_direction);
+    if(is_visible || item->m_item.is_current()) {
+      if(!item->m_item.is_mounted()) {
+        item->m_item.mount(*m_view_builder(m_list, item->m_index));
       }
       if(is_visible) {
         m_top_index = std::min(m_top_index, item->m_index);
         ++m_visible_count;
       }
-    } else if(item->m_item->is_mounted() && !item->m_item->is_current()) {
-      item->m_item->unmount();
-    } else if(item->m_item->sizeHint().isEmpty()) {
-      auto size = m_items.front()->m_item->sizeHint();
-      auto size_policy = m_items.front()->m_item->sizePolicy();
-      item->m_item->mount(*new QSpacerItem(size.width(), size.height(),
+    } else if(item->m_item.is_mounted() && !item->m_item.is_current()) {
+      item->m_item.unmount();
+    } else if(item->m_item.sizeHint().isEmpty()) {
+      auto size = front_item.m_item.sizeHint();
+      auto size_policy = front_item.m_item.get_body().sizePolicy();
+      item->m_item.mount(*new QSpacerItem(size.width(), size.height(),
         size_policy.horizontalPolicy(), size_policy.verticalPolicy()));
     }
-    position += item->m_item->size().height() + m_item_gap;
+    position += get_directed_size(geometry.size(), m_direction) + m_item_gap;
   }
 }
 
@@ -592,30 +633,38 @@ void ListView::update_visible_region() {
   if(!parentWidget() || !isVisible() || m_overflow != Overflow::NONE) {
     return;
   }
-  auto top_item =
-    item_at(QPoint(0, std::max(frameGeometry().y(), -SCROLL_BUFFER)));
+  auto get_position = [&] (QPoint position) {
+    if(m_direction == Qt::Orientation::Vertical) {
+      return position.y();
+    }
+    return position.x();
+  };
+  auto top_item = item_at(make_directed_point(std::max(
+    get_position(frameGeometry().topLeft()), -SCROLL_BUFFER), m_direction));
   if(top_item) {
     for(auto i = m_top_index; i != m_top_index + m_visible_count; ++i) {
       auto& item = *m_items[i];
-      if(item.m_item->is_mounted() && !item.m_item->is_current() &&
-          !test_visibility(*this, item.m_item->frameGeometry())) {
-        item.m_item->unmount();
+      if(item.m_item.is_mounted() && !item.m_item.is_current() &&
+          !test_visibility(*this, item.m_item.frameGeometry(), m_direction)) {
+        item.m_item.unmount();
       }
     }
     m_top_index = top_item->m_index;
     m_visible_count = 0;
-    auto position = top_item->m_item->pos().y();
+    auto position = get_position(top_item->m_item.pos());
     for(auto& item : m_items | std::views::drop(m_top_index)) {
-      auto geometry = QRect(QPoint(0, position), item->m_item->size());
-      if(test_visibility(*this, geometry)) {
-        if(!item->m_item->is_mounted()) {
-          item->m_item->mount(*m_view_builder(m_list, item->m_index));
+      auto geometry =
+        QRect(make_directed_point(position, m_direction), item->m_item.size());
+      if(test_visibility(*this, geometry, m_direction)) {
+        if(!item->m_item.is_mounted()) {
+          item->m_item.mount(*m_view_builder(m_list, item->m_index));
         }
         ++m_visible_count;
       } else {
         break;
       }
-      position += item->m_item->size().height() + m_item_gap;
+      position +=
+        get_directed_size(item->m_item.size(), m_direction) + m_item_gap;
     }
   }
 }
@@ -640,18 +689,18 @@ void ListView::on_list_operation(const AnyListModel::Operation& operation) {
 void ListView::on_current(optional<int> previous, optional<int> current) {
   update_focus(current);
   if(previous && previous != current) {
-    m_items[*previous]->m_item->set_current(false);
+    m_items[*previous]->m_item.set_current(false);
   }
   if(find_focus_state(*this) != FocusObserver::State::NONE) {
     if(current) {
-      m_items[*current]->m_item->setFocus();
+      m_items[*current]->m_item.setFocus();
     } else {
       setFocus();
     }
   }
   if(current) {
     auto& item = *m_items[*current];
-    item.m_item->set_current(true);
+    item.m_item.set_current(true);
     m_selection_controller.navigate(*current);
   }
 }
@@ -659,14 +708,14 @@ void ListView::on_current(optional<int> previous, optional<int> current) {
 void ListView::on_selection(const ListModel<int>::Operation& operation) {
   visit(operation,
     [&] (const ListModel<int>::AddOperation& operation) {
-      m_items[operation.get_value()]->m_item->set_selected(true);
+      m_items[operation.get_value()]->m_item.set_selected(true);
     },
     [&] (const ListModel<int>::RemoveOperation& operation) {
-      m_items[operation.get_value()]->m_item->set_selected(false);
+      m_items[operation.get_value()]->m_item.set_selected(false);
     },
     [&] (const ListModel<int>::UpdateOperation& operation) {
-      m_items[operation.get_previous()]->m_item->set_selected(false);
-      m_items[operation.get_value()]->m_item->set_selected(true);
+      m_items[operation.get_previous()]->m_item.set_selected(false);
+      m_items[operation.get_value()]->m_item.set_selected(true);
     });
 }
 
@@ -708,13 +757,7 @@ void ListView::on_style() {
         stylist.evaluate(overflow, [=] (auto overflow) {
           if(m_overflow != overflow) {
             m_overflow = overflow;
-            if(m_overflow != Overflow::NONE) {
-              for(auto& item : m_items) {
-                if(!item->m_item->is_mounted()) {
-                  item->m_item->mount(*m_view_builder(m_list, item->m_index));
-                }
-              }
-            }
+            initialize_visible_region();
             *has_update = true;
           }
         });

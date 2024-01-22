@@ -69,7 +69,7 @@ namespace {
         auto& child = *static_cast<QChildEvent&>(*event).child();
         auto i = m_children_stylists.find(&child);
         if(i != m_children_stylists.end()) {
-          remove(*i->second);
+          remove(static_cast<QWidget&>(child));
         }
       }
       return QObject::eventFilter(watched, event);
@@ -146,17 +146,19 @@ namespace {
         std::bind_front(&TopObserver::on_child_update, this, std::ref(match)));
     }
 
-    void remove(const Stylist& stylist) {
-      auto i = m_matches.find(&stylist);
-      if(i == m_matches.end()) {
+    void remove(QWidget& widget) {
+      auto i = m_children_stylists.find(&widget);
+      auto& stylist = *i->second;
+      m_children_stylists.erase(i);
+      auto j = m_matches.find(&stylist);
+      if(j == m_matches.end()) {
         return;
       }
-      stylist.get_widget().removeEventFilter(this);
-      auto& match = i->second;
+      widget.removeEventFilter(this);
+      auto& match = j->second;
       auto removals = match.m_selection;
       on_child_update(match, {}, std::move(removals));
-      m_matches.erase(i);
-      m_children_stylists.erase(&stylist.get_widget());
+      m_matches.erase(j);
     }
   };
 }
