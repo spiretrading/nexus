@@ -38,6 +38,7 @@ namespace Spire {
   template<typename T> class EmptySelectionModel;
   class EmptyTableFilter;
   template<typename T> class EnumBox;
+  class EyeDropper;
   class FilterPanel;
   class FocusObserver;
   class GlobalPositionObserver;
