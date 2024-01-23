@@ -5,6 +5,7 @@
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Spire/SortedTableModel.hpp"
 #include "Spire/Ui/Box.hpp"
+#include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/EmptySelectionModel.hpp"
 #include "Spire/Ui/EmptyTableFilter.hpp"
 #include "Spire/Ui/Layouts.hpp"

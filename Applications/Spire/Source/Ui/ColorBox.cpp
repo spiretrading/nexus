@@ -158,9 +158,9 @@ bool ColorBox::eventFilter(QObject* watched, QEvent* event) {
       return true;
     }
   } else if(event->type() == QEvent::ChildAdded) {
-    auto& child_event = *static_cast<QChildEvent*>(event);
-    if(child_event.child()->isWidgetType()) {
-      child_event.child()->installEventFilter(this);
+    auto& child = *static_cast<QChildEvent&>(*event).child();
+    if(child.isWidgetType()) {
+      child.installEventFilter(this);
       watched->removeEventFilter(this);
     }
   }

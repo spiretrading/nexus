@@ -74,6 +74,9 @@ namespace Spire {
   /** Returns a UiProfile for the EditableBox. */
   UiProfile make_editable_box_profile();
 
+  /** Returns a UiProfile for the EyeDropper. */
+  UiProfile make_eye_dropper_profile();
+
   /** Returns a UiProfile for the FilterPanel. */
   UiProfile make_filter_panel_profile();
 
