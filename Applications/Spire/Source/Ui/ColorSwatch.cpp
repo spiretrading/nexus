@@ -24,6 +24,8 @@ namespace {
     style.get(Drag()).
       set(BackgroundColor(QColor(255, 255, 255, 204))).
       set(border_color(QColor(0x4B23A0)));
+    style.get(Any() >> Body()).
+      set(border(scale_width(1), QColor(0, 0, 0, 51)));
     return style;
   }
 }
@@ -37,23 +39,15 @@ ColorSwatch::ColorSwatch(std::shared_ptr<ColorModel> current,
       m_current(std::move(current)),
       m_is_highlighted(false) {
   setFocusPolicy(Qt::StrongFocus);
-  m_swatch = new Box();
-  m_swatch->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  update_style(*m_swatch, [] (auto& style) {
-    style.get(Any()).
-      set(border(scale_width(1), QColor(0, 0, 0, 51)));
-  });
-  auto box = new Box(m_swatch);
+  auto swatch = new Box();
+  swatch->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  auto box = new Box(swatch);
   enclose(*this, *box);
   proxy_style(*this, *box);
   set_style(*this, DEFAULT_STYLE());
   on_current(m_current->get());
   m_current_connection = m_current->connect_update_signal(
     std::bind_front(&ColorSwatch::on_current, this));
-  find_stylist(*this).connect_match_signal(Drag(),
-    std::bind_front(&ColorSwatch::on_drag, this));
-  find_stylist(*this).connect_match_signal(Highlighted(),
-    std::bind_front(&ColorSwatch::on_highlighted, this));
 }
 
 const std::shared_ptr<ColorModel>& ColorSwatch::get_current() const {
@@ -77,12 +71,12 @@ void ColorSwatch::set_highlighted(bool highlighted) {
 }
 
 void ColorSwatch::on_current(const QColor& color) {
-  update_style(*m_swatch, [&] (auto& style) {
-    style.get(Any()).set(BackgroundColor(color));
-    style.get(Drag()).
+  update_style(*this, [&] (auto& style) {
+    style.get(Any() >> Body()).set(BackgroundColor(color));
+    style.get(Drag() >> Body()).
       set(BackgroundColor(
         QColor(color.red(), color.green(), color.blue(), 204)));
-    style.get(Highlighted()).
+    style.get(Highlighted() >> Body()).
       set(border_color(
         chain(timeout(QColor(0xF2F2FF), milliseconds(250)),
           linear(QColor(0xF2F2FF), revert, milliseconds(300))))).
@@ -90,20 +84,4 @@ void ColorSwatch::on_current(const QColor& color) {
         chain(timeout(QColor(0xF2F2FF), milliseconds(250)),
           linear(QColor(0xF2F2FF), revert, milliseconds(300)))));
   });
-}
-
-void ColorSwatch::on_drag(bool is_match) {
-  if(is_match) {
-    match(*m_swatch, Drag());
-  } else {
-    unmatch(*m_swatch, Drag());
-  }
-}
-
-void ColorSwatch::on_highlighted(bool is_match) {
-  if(is_match) {
-    match(*m_swatch, Highlighted());
-  } else {
-    unmatch(*m_swatch, Highlighted());
-  }
 }
