@@ -2,6 +2,8 @@
 #define SPIRE_STYLES_LINEAR_EXPRESSION_HPP
 #include <memory>
 #include <utility>
+#include <Beam/Utilities/HashPtime.hpp>
+#include <boost/functional/hash.hpp>
 #include "Spire/Styles/Expression.hpp"
 #include "Spire/Styles/Styles.hpp"
 
@@ -36,9 +38,7 @@ namespace Spire::Styles {
       /** Returns the duration of the transition. */
       boost::posix_time::time_duration get_duration() const;
 
-      bool operator ==(const LinearExpression& expression) const;
-
-      bool operator !=(const LinearExpression& expression) const;
+      bool operator ==(const LinearExpression& expression) const = default;
 
     private:
       Expression<Type> m_initial;
@@ -129,19 +129,23 @@ namespace Spire::Styles {
   boost::posix_time::time_duration LinearExpression<T>::get_duration() const {
     return m_duration;
   }
+}
 
+namespace std {
   template<typename T>
-  bool LinearExpression<T>::operator ==(
-      const LinearExpression& expression) const {
-    return m_initial == expression.m_initial && m_end == expression.m_end &&
-      m_duration == expression.m_duration;
-  }
-
-  template<typename T>
-  bool LinearExpression<T>::operator !=(
-      const LinearExpression& expression) const {
-    return !(*this == expression);
-  }
+  struct hash<Spire::Styles::LinearExpression<T>> {
+    std::size_t operator ()(
+        const Spire::Styles::LinearExpression<T>& expression) const {
+      auto seed = std::size_t(0);
+      boost::hash_combine(seed,
+        std::hash<Spire::Styles::Expression<T>>()(expression.get_initial()));
+      boost::hash_combine(seed,
+        std::hash<Spire::Styles::Expression<T>>()(expression.get_end()));
+      boost::hash_combine(seed, std::hash<boost::posix_time::time_duration>()(
+        expression.get_duration()));
+      return seed;
+    }
+  };
 }
 
 #endif

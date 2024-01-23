@@ -1,6 +1,7 @@
 #ifndef SPIRE_STYLES_STYLIST_HPP
 #define SPIRE_STYLES_STYLIST_HPP
 #include <chrono>
+#include <memory>
 #include <type_traits>
 #include <unordered_set>
 #include <vector>
@@ -121,11 +122,8 @@ namespace Spire::Styles {
 
     private:
       struct StyleEventFilter;
-      struct SelectorHash {
-        std::size_t operator ()(const Selector& selector) const;
-      };
       struct RuleEntry {
-        Rule m_rule;
+        Block m_block;
         int m_priority;
         std::unordered_set<const Stylist*> m_selection;
         SelectConnection m_connection;
@@ -166,16 +164,15 @@ namespace Spire::Styles {
       mutable DeleteSignal m_delete_signal;
       QWidget* m_widget;
       boost::optional<PseudoElement> m_pseudo_element;
-      StyleSheet m_style;
+      std::shared_ptr<StyleSheet> m_style;
       std::vector<Source> m_sources;
       std::vector<std::unique_ptr<RuleEntry>> m_rules;
       boost::optional<EvaluatedBlock> m_evaluated_block;
       mutable boost::optional<Block> m_computed_block;
       std::vector<Stylist*> m_proxies;
       std::vector<Stylist*> m_principals;
-      std::unordered_set<Selector, SelectorHash> m_matches;
-      mutable std::unordered_map<Selector, MatchSignal, SelectorHash>
-        m_match_signals;
+      std::unordered_set<Selector> m_matches;
+      mutable std::unordered_map<Selector, MatchSignal> m_match_signals;
       std::unordered_map<
         std::type_index, std::unique_ptr<BaseEvaluatorEntry>> m_evaluators;
       std::type_index m_evaluated_property;
@@ -227,6 +224,16 @@ namespace Spire::Styles {
   /** Finds the Stylist associated with a widget's pseudo-element. */
   Stylist* find_stylist(QWidget& widget, const PseudoElement& pseudo_element);
 
+  /**
+   * Returns a Stylist's parent or <i>nullptr</i> if the Stylist is the root.
+   */
+  const Stylist* find_parent(const Stylist& stylist);
+
+  /**
+   * Returns a Stylist's parent or <i>nullptr</i> if the Stylist is the root.
+   */
+  Stylist* find_parent(Stylist& stylist);
+
   /** Returns a QWidget's styling. */
   const StyleSheet& get_style(const QWidget& widget);
 
@@ -274,11 +281,19 @@ namespace Spire::Styles {
   void add_pseudo_element(QWidget& source, const PseudoElement& pseudo_element);
 
   /**
-   * Specifies that a QWidget will proxy its style to another QWidget.
+   * Specifies that a QWidget does not have a style of its own but instead
+   * any styling applied to it will get forwarded to another QWidget.
    * @param principal The QWidget forwarding its style.
    * @param destination The QWidget receiving the style.
    */
-  void proxy_style(QWidget& source, QWidget& destination);
+  void forward_style(QWidget& principal, QWidget& destination);
+
+  /**
+   * Specifies that a QWidget will proxy its style to another QWidget.
+   * @param principal The QWidget proxying its style.
+   * @param destination The QWidget receiving the style.
+   */
+  void proxy_style(QWidget& principal, QWidget& destination);
 
   /**
    * Indicates a widget no longer matches a Selector.

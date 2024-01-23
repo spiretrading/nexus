@@ -1,4 +1,5 @@
 #include "Spire/Styles/Block.hpp"
+#include <boost/functional/hash.hpp>
 
 using namespace boost;
 using namespace Spire;
@@ -36,14 +37,6 @@ void Block::clear() {
   m_properties.clear();
 }
 
-bool Block::operator ==(const Block& block) const {
-  return m_properties == block.m_properties;
-}
-
-bool Block::operator !=(const Block& block) const {
-  return !(*this == block);
-}
-
 optional<Property>
     Spire::Styles::find(const Block& block, const std::type_index& type) {
   for(auto& property : block) {
@@ -58,4 +51,12 @@ void Spire::Styles::merge(Block& block, Block other) {
   for(auto& property : other) {
     block.set(std::move(property));
   }
+}
+
+std::size_t std::hash<Block>::operator ()(const Block& block) const {
+  auto seed = std::size_t(std::distance(block.begin(), block.end()));
+  for(auto& property : block) {
+    hash_combine(seed, std::hash<Property>()(property));
+  }
+  return seed;
 }

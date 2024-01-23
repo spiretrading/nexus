@@ -31,9 +31,7 @@ namespace Spire::Styles {
       /** Returns the associated data. */
       const Type& get_data() const;
 
-      bool operator ==(const StateSelector& selector) const;
-
-      bool operator !=(const StateSelector& selector) const;
+      bool operator ==(const StateSelector& selector) const = default;
 
     private:
       Type m_data;
@@ -44,9 +42,7 @@ namespace Spire::Styles {
     public:
       using Tag = G;
 
-      bool operator ==(const StateSelector& selector) const;
-
-      bool operator !=(const StateSelector& selector) const;
+      bool operator ==(const StateSelector& selector) const = default;
   };
 
   /** Selects the widget that is or belongs to the active window. */
@@ -108,28 +104,24 @@ namespace Spire::Styles {
       StateSelector<T, G>::get_data() const {
     return m_data;
   }
+}
 
+namespace std {
   template<typename T, typename G>
-  bool StateSelector<T, G>::operator ==(const StateSelector& selector) const {
-    return m_data == selector.m_data;
-  }
-
-  template<typename T, typename G>
-  bool StateSelector<T, G>::operator !=(const StateSelector& selector) const {
-    return !(*this == selector);
-  }
+  struct hash<Spire::Styles::StateSelector<T, G>> {
+    std::size_t operator ()(
+        const Spire::Styles::StateSelector<T, G>& selector) {
+      return std::hash<T>()(selector.get_data());
+    }
+  };
 
   template<typename G>
-  bool StateSelector<void, G>::operator ==(
-      const StateSelector& selector) const {
-    return true;
-  }
-
-  template<typename G>
-  bool StateSelector<void, G>::operator !=(
-      const StateSelector& selector) const {
-    return !(*this == selector);
-  }
+  struct hash<Spire::Styles::StateSelector<void, G>> {
+    std::size_t operator ()(
+        const Spire::Styles::StateSelector<void, G>& selector) const {
+      return 1;
+    }
+  };
 }
 
 #endif

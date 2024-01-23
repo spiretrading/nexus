@@ -1,13 +1,11 @@
 #include "Spire/Styles/TopSelector.hpp"
-#include <Beam/SignalHandling/ConnectionGroup.hpp>
+#include <boost/functional/hash.hpp>
 #include <QChildEvent>
 #include <QWidget>
 #include "Spire/Styles/Any.hpp"
 #include "Spire/Styles/CombinatorSelector.hpp"
-#include "Spire/Styles/FlipSelector.hpp"
 #include "Spire/Styles/Stylist.hpp"
 
-using namespace Beam::SignalHandling;
 using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
@@ -44,6 +42,7 @@ namespace {
     std::unordered_set<const Stylist*> m_children_selection;
     std::unordered_map<const Stylist*, int> m_selection_count;
     std::unordered_map<const Stylist*, Match> m_matches;
+    std::unordered_map<QObject*, const Stylist*> m_children_stylists;
 
     TopObserver(const Selector& selector, const Stylist& stylist,
         const SelectionUpdateSignal& on_update)
@@ -53,7 +52,7 @@ namespace {
       m_select_connection = select(
         m_selector, *m_stylist, std::bind_front(&TopObserver::on_update, this));
       for(auto child : stylist.get_widget().children()) {
-        if(child->isWidgetType()) {
+        if(child && child->isWidgetType()) {
           add(find_stylist(*static_cast<QWidget*>(child)));
         }
       }
@@ -62,14 +61,15 @@ namespace {
 
     bool eventFilter(QObject* watched, QEvent* event) override {
       if(event->type() == QEvent::ChildAdded) {
-        auto& child_event = static_cast<QChildEvent&>(*event);
-        if(child_event.child()->isWidgetType()) {
-          add(find_stylist(*static_cast<QWidget*>(child_event.child())));
+        auto& child = *static_cast<QChildEvent&>(*event).child();
+        if(child.isWidgetType()) {
+          add(find_stylist(static_cast<QWidget&>(child)));
         }
       } else if(event->type() == QEvent::ChildRemoved) {
-        auto& child_event = static_cast<QChildEvent&>(*event);
-        if(child_event.child()->isWidgetType()) {
-          remove(find_stylist(*static_cast<QWidget*>(child_event.child())));
+        auto& child = *static_cast<QChildEvent&>(*event).child();
+        auto i = m_children_stylists.find(&child);
+        if(i != m_children_stylists.end()) {
+          remove(static_cast<QWidget&>(child));
         }
       }
       return QObject::eventFilter(watched, event);
@@ -137,17 +137,28 @@ namespace {
     }
 
     void add(const Stylist& stylist) {
+      if(m_matches.contains(&stylist)) {
+        return;
+      }
+      m_children_stylists.insert(std::pair(&stylist.get_widget(), &stylist));
       auto& match = m_matches[&stylist];
       match.m_connection = select(TopSelector(Any(), m_selector), stylist,
         std::bind_front(&TopObserver::on_child_update, this, std::ref(match)));
     }
 
-    void remove(const Stylist& stylist) {
-      stylist.get_widget().removeEventFilter(this);
-      auto& match = m_matches[&stylist];
+    void remove(QWidget& widget) {
+      auto i = m_children_stylists.find(&widget);
+      auto& stylist = *i->second;
+      m_children_stylists.erase(i);
+      auto j = m_matches.find(&stylist);
+      if(j == m_matches.end()) {
+        return;
+      }
+      widget.removeEventFilter(this);
+      auto& match = j->second;
       auto removals = match.m_selection;
       on_child_update(match, {}, std::move(removals));
-      m_matches.erase(&stylist);
+      m_matches.erase(j);
     }
   };
 }
@@ -175,4 +186,12 @@ SelectConnection Spire::Styles::select(const TopSelector& selector,
       return SelectConnection(std::make_unique<TopObserver>(
         selector.get_descendant(), stylist, on_update));
     }), base, on_update);
+}
+
+std::size_t std::hash<TopSelector>::operator ()(
+    const TopSelector& selector) const {
+  auto seed = std::size_t(0);
+  hash_combine(seed, std::hash<Selector>()(selector.get_base()));
+  hash_combine(seed, std::hash<Selector>()(selector.get_descendant()));
+  return seed;
 }

@@ -13,16 +13,6 @@ const Property& PropertyMatchSelector::get_property() const {
   return m_property;
 }
 
-bool PropertyMatchSelector::operator ==(
-    const PropertyMatchSelector& selector) const {
-  return m_property == selector.m_property;
-}
-
-bool PropertyMatchSelector::operator !=(
-    const PropertyMatchSelector& selector) const {
-  return !(*this == selector);
-}
-
 PropertyMatchSelector Spire::Styles::matches(Property property) {
   return PropertyMatchSelector(std::move(property));
 }
@@ -67,4 +57,9 @@ SelectConnection Spire::Styles::select(const PropertyMatchSelector& selector,
   };
   return SelectConnection(
     std::make_unique<Executor>(selector, base, on_update));
+}
+
+std::size_t std::hash<PropertyMatchSelector>::operator ()(
+    const PropertyMatchSelector& selector) const {
+  return std::hash<Property>()(selector.get_property());
 }

@@ -1,7 +1,9 @@
 #ifndef SPIRE_STYLES_FUNCTION_DEFINITION_EXPRESSION_HPP
 #define SPIRE_STYLES_FUNCTION_DEFINITION_EXPRESSION_HPP
+#include <functional>
 #include <tuple>
 #include <utility>
+#include <Beam/Utilities/HashTuple.hpp>
 #include "Spire/Styles/Expression.hpp"
 #include "Spire/Styles/Styles.hpp"
 
@@ -33,9 +35,8 @@ namespace Spire::Styles {
       /** Returns the tuple of arguments. */
       const Arguments& get_arguments() const;
 
-      bool operator ==(const FunctionDefinitionExpression& expression) const;
-
-      bool operator !=(const FunctionDefinitionExpression& expression) const;
+      bool operator ==(
+        const FunctionDefinitionExpression& expression) const = default;
 
     private:
       Arguments m_arguments;
@@ -51,18 +52,19 @@ namespace Spire::Styles {
       FunctionDefinitionExpression<I, T, A...>::get_arguments() const {
     return m_arguments;
   }
+}
 
+namespace std {
   template<typename I, typename T, typename... A>
-  bool FunctionDefinitionExpression<I, T, A...>::operator ==(
-      const FunctionDefinitionExpression& expression) const {
-    return m_arguments == expression.m_arguments;
-  }
-
-  template<typename I, typename T, typename... A>
-  bool FunctionDefinitionExpression<I, T, A...>::operator !=(
-      const FunctionDefinitionExpression& expression) const {
-    return !(*this == expression);
-  }
+  struct hash<Spire::Styles::FunctionDefinitionExpression<I, T, A...>> {
+    std::size_t operator ()(
+        const Spire::Styles::FunctionDefinitionExpression<I, T, A...>&
+          expression) const {
+      return std::hash<
+        Spire::Styles::FunctionDefinitionExpression<I, T, A...>::Arguments>()(
+          expression.get_arguments());
+    }
+  };
 }
 
 #endif

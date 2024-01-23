@@ -1,8 +1,10 @@
 #ifndef SPIRE_STYLES_SELECTOR_HPP
 #define SPIRE_STYLES_SELECTOR_HPP
 #include <any>
+#include <functional>
 #include <typeindex>
 #include <type_traits>
+#include <unordered_map>
 #include <Beam/Utilities/Functional.hpp>
 #include "Spire/Styles/SelectConnection.hpp"
 #include "Spire/Styles/Styles.hpp"
@@ -69,13 +71,18 @@ namespace Spire::Styles {
       struct TypeExtractor<Beam::TypeSequence<T, U>> {
         using type = std::decay_t<U>;
       };
+      friend struct std::hash<Selector>;
       friend SelectConnection select(
         const Selector&, const Stylist&, const SelectionUpdateSignal&);
+      struct Operations {
+        std::function<bool (const Selector&, const Selector&)> m_is_equal;
+        std::function<SelectConnection (
+          const Selector&, const Stylist&, const SelectionUpdateSignal&)>
+          m_select;
+        std::function<std::size_t (const Selector&)> m_hash;
+      };
+      static std::unordered_map<std::type_index, Operations> m_operations;
       std::any m_selector;
-      std::function<bool (const Selector&, const Selector&)> m_is_equal;
-      std::function<SelectConnection (
-        const Selector&, const Stylist&, const SelectionUpdateSignal&)>
-        m_select;
   };
 
   /**
@@ -91,15 +98,23 @@ namespace Spire::Styles {
 
   template<typename T, typename>
   Selector::Selector(T selector)
-    : m_selector(std::move(selector)),
-      m_is_equal([] (const Selector& self, const Selector& selector) {
-        return selector.get_type() == typeid(T) &&
-          self.as<T>() == selector.as<T>();
-      }),
-      m_select([] (const Selector& self, const Stylist& base,
-          const SelectionUpdateSignal& on_update) {
-        return select(self.as<T>(), base, on_update);
-      }) {}
+      : m_selector(std::move(selector)) {
+    auto operations = m_operations.find(typeid(T));
+    if(operations == m_operations.end()) {
+      m_operations.emplace_hint(operations, typeid(T), Operations(
+        [] (const Selector& self, const Selector& selector) {
+          return selector.get_type() == typeid(T) &&
+            self.as<T>() == selector.as<T>();
+        },
+        [] (const Selector& self, const Stylist& base,
+            const SelectionUpdateSignal& on_update) {
+          return select(self.as<T>(), base, on_update);
+        },
+        [] (const Selector& self) {
+          return std::hash<T>()(self.as<T>());
+        }));
+    }
+  }
 
   template<typename U>
   const U& Selector::as() const {
@@ -129,6 +144,13 @@ namespace Spire::Styles {
     }
     return visit(std::forward<G>(g)...);
   }
+}
+
+namespace std {
+  template<>
+  struct hash<Spire::Styles::Selector> {
+    std::size_t operator ()(const Spire::Styles::Selector& selector) const;
+  };
 }
 
 #endif

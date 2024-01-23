@@ -1,6 +1,8 @@
 #include "Spire/Styles/AndSelector.hpp"
+#include <boost/functional/hash.hpp>
 #include <unordered_map>
 
+using namespace boost;
 using namespace Spire;
 using namespace Spire::Styles;
 
@@ -14,14 +16,6 @@ const Selector& AndSelector::get_left() const {
 
 const Selector& AndSelector::get_right() const {
   return m_right;
-}
-
-bool AndSelector::operator ==(const AndSelector& selector) const {
-  return m_left == selector.get_left() && m_right == selector.get_right();
-}
-
-bool AndSelector::operator !=(const AndSelector& selector) const {
-  return !(*this == selector);
 }
 
 AndSelector Spire::Styles::operator &&(Selector left, Selector right) {
@@ -71,4 +65,12 @@ SelectConnection Spire::Styles::select(const AndSelector& selector,
   };
   return SelectConnection(
     std::make_unique<Executor>(selector, base, on_update));
+}
+
+std::size_t std::hash<AndSelector>::operator ()(
+    const AndSelector& selector) const {
+  auto seed = std::size_t(0);
+  hash_combine(seed, std::hash<Selector>()(selector.get_left()));
+  hash_combine(seed, std::hash<Selector>()(selector.get_right()));
+  return seed;
 }

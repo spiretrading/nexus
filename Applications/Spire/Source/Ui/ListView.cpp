@@ -123,9 +123,9 @@ ListView::ListView(
   body->installEventFilter(this);
   m_box = new Box(body);
   enclose(*this, *m_box);
+  proxy_style(*this, *m_box);
   set_style(*this, DEFAULT_STYLE());
   update_layout();
-  proxy_style(*this, *m_box);
   m_style_connection = connect_style_signal(*this, [=] { on_style(); });
   const auto QUERY_TIMEOUT_MS = 500;
   m_query_timer->setSingleShot(true);
@@ -231,6 +231,8 @@ void ListView::keyPressEvent(QKeyEvent* event) {
     case Qt::Key_A:
       if(event->modifiers() & Qt::Modifier::CTRL && !event->isAutoRepeat()) {
         m_selection_controller.select_all();
+      } else {
+        append_query(event->text());
       }
       break;
     case Qt::Key_Control:

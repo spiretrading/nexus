@@ -5,6 +5,7 @@
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Spire/SortedTableModel.hpp"
 #include "Spire/Ui/Box.hpp"
+#include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/EmptySelectionModel.hpp"
 #include "Spire/Ui/EmptyTableFilter.hpp"
 #include "Spire/Ui/Layouts.hpp"
@@ -74,6 +75,7 @@ TableView::TableView(
     std::move(selection), m_header_view->get_widths(), std::move(view_builder));
   m_body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   m_scroll_box = new ScrollBox(m_body);
+  m_scroll_box->set(ScrollBox::DisplayPolicy::ON_ENGAGE);
   auto layout = make_vbox_layout(this);
   layout->addWidget(box);
   layout->addWidget(m_scroll_box);

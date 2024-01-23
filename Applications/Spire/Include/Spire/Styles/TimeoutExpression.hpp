@@ -1,7 +1,9 @@
 #ifndef SPIRE_STYLES_TIMEOUT_EXPRESSION_HPP
 #define SPIRE_STYLES_TIMEOUT_EXPRESSION_HPP
+#include <functional>
 #include <memory>
 #include <utility>
+#include <boost/functional/hash.hpp>
 #include "Spire/Styles/Expression.hpp"
 #include "Spire/Styles/Styles.hpp"
 
@@ -32,9 +34,7 @@ namespace Spire::Styles {
       /** Returns the duration of the transition. */
       boost::posix_time::time_duration get_duration() const;
 
-      bool operator ==(const TimeoutExpression& expression) const;
-
-      bool operator !=(const TimeoutExpression& expression) const;
+      bool operator ==(const TimeoutExpression& expression) const = default;
 
     private:
       Expression<Type> m_expression;
@@ -93,19 +93,21 @@ namespace Spire::Styles {
   boost::posix_time::time_duration TimeoutExpression<T>::get_duration() const {
     return m_duration;
   }
+}
 
+namespace std {
   template<typename T>
-  bool TimeoutExpression<T>::operator ==(
-      const TimeoutExpression& expression) const {
-    return m_expression == expression.m_expression &&
-      m_duration == expression.m_duration;
-  }
-
-  template<typename T>
-  bool TimeoutExpression<T>::operator !=(
-      const TimeoutExpression& expression) const {
-    return !(*this == expression);
-  }
+  struct hash<Spire::Styles::TimeoutExpression<T>> {
+    std::size_t operator ()(
+        const Spire::Styles::TimeoutExpression<T>& expression) const {
+      auto seed = std::size_t(0);
+      boost::hash_combine(seed,
+        std::hash<Spire::Styles::Expression<T>>()(expression.get_expression()));
+      boost::hash_combine(seed, std::hash<boost::posix_time::time_duration>()(
+        expression.get_duration()));
+      return seed;
+    }
+  };
 }
 
 #endif

@@ -1,5 +1,6 @@
 #include "Spire/Styles/CombinatorSelector.hpp"
 #include <unordered_map>
+#include <boost/functional/hash.hpp>
 #include "Spire/Styles/FlipSelector.hpp"
 #include "Spire/Styles/Stylist.hpp"
 
@@ -34,14 +35,6 @@ const Selector& CombinatorSelector::get_match() const {
 const CombinatorSelector::SelectionBuilder&
     CombinatorSelector::get_selection_builder() const {
   return m_selection_builder;
-}
-
-bool CombinatorSelector::operator ==(const CombinatorSelector& selector) const {
-  return m_base == selector.get_base() && m_match == selector.get_match();
-}
-
-bool CombinatorSelector::operator !=(const CombinatorSelector& selector) const {
-  return !(*this == selector);
 }
 
 SelectConnection Spire::Styles::select(const CombinatorSelector& selector,
@@ -204,4 +197,12 @@ SelectConnection Spire::Styles::select(const CombinatorSelector& selector,
   };
   return SelectConnection(
     std::make_unique<Executor>(selector, base, on_update));
+}
+
+std::size_t std::hash<CombinatorSelector>::operator ()(
+    const CombinatorSelector& selector) const {
+  auto seed = std::size_t(0);
+  hash_combine(seed, std::hash<Selector>()(selector.get_base()));
+  hash_combine(seed, std::hash<Selector>()(selector.get_match()));
+  return seed;
 }

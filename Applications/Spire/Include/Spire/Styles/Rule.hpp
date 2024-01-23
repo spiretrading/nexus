@@ -1,5 +1,6 @@
 #ifndef SPIRE_STYLES_RULE_HPP
 #define SPIRE_STYLES_RULE_HPP
+#include <functional>
 #include "Spire/Styles/Block.hpp"
 #include "Spire/Styles/Selector.hpp"
 #include "Spire/Styles/Styles.hpp"
@@ -55,6 +56,8 @@ namespace Spire::Styles {
       template<typename... T>
       Rule& set(CompositeProperty<T...> property);
 
+      bool operator ==(const Rule&) const = default;
+
     private:
       Selector m_selector;
       Block m_block;
@@ -65,6 +68,13 @@ namespace Spire::Styles {
     m_block.set(std::move(property));
     return *this;
   }
+}
+
+namespace std {
+  template<>
+  struct hash<Spire::Styles::Rule> {
+    std::size_t operator ()(const Spire::Styles::Rule& rule) const;
+  };
 }
 
 #endif

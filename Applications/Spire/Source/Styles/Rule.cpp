@@ -1,6 +1,8 @@
 #include "Spire/Styles/Rule.hpp"
+#include <boost/functional/hash.hpp>
 #include "Spire/Styles/Any.hpp"
 
+using namespace boost;
 using namespace Spire;
 using namespace Spire::Styles;
 
@@ -36,4 +38,11 @@ void Rule::clear() {
 Rule& Rule::set(Property property) {
   get_block().set(std::move(property));
   return *this;
+}
+
+std::size_t std::hash<Rule>::operator ()(const Rule& rule) const {
+  auto seed = std::size_t(0);
+  hash_combine(seed, std::hash<Selector>()(rule.get_selector()));
+  hash_combine(seed, std::hash<Block>()(rule.get_block()));
+  return seed;
 }

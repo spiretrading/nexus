@@ -40,4 +40,11 @@ namespace Spire::Styles {
     const SelectionUpdateSignal& on_update);
 }
 
+namespace std {
+  template<>
+  struct hash<Spire::Styles::TopSelector> {
+    std::size_t operator ()(const Spire::Styles::TopSelector& selector) const;
+  };
+}
+
 #endif

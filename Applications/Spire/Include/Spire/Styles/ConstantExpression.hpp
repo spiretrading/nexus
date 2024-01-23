@@ -1,5 +1,7 @@
 #ifndef SPIRE_STYLES_CONSTANT_EXPRESSION_HPP
 #define SPIRE_STYLES_CONSTANT_EXPRESSION_HPP
+#include <functional>
+#include "Spire/Spire/Hash.hpp"
 #include "Spire/Styles/Evaluator.hpp"
 #include "Spire/Styles/Styles.hpp"
 
@@ -28,9 +30,7 @@ namespace Spire::Styles {
       /** Returns the constant. */
       Type&& get_constant() &&;
 
-      bool operator ==(const ConstantExpression& expression) const;
-
-      bool operator !=(const ConstantExpression& expression) const;
+      bool operator ==(const ConstantExpression& expression) const = default;
 
     private:
       Type m_constant;
@@ -59,18 +59,16 @@ namespace Spire::Styles {
       ConstantExpression<T>::get_constant() && {
     return std::move(m_constant);
   }
+}
 
+namespace std {
   template<typename T>
-  bool ConstantExpression<T>::operator ==(
-      const ConstantExpression& expression) const {
-    return m_constant == expression.get_constant();
-  }
-
-  template<typename T>
-  bool ConstantExpression<T>::operator !=(
-      const ConstantExpression& expression) const {
-    return !(*this == expression);
-  }
+  struct hash<Spire::Styles::ConstantExpression<T>> {
+    std::size_t operator ()(
+        const Spire::Styles::ConstantExpression<T>& expression) const {
+      return std::hash<T>()(expression.get_constant());
+    }
+  };
 }
 
 #endif

@@ -1,5 +1,6 @@
 #ifndef SPIRE_STYLES_STYLE_SHEET_HPP
 #define SPIRE_STYLES_STYLE_SHEET_HPP
+#include <functional>
 #include <boost/optional/optional.hpp>
 #include "Spire/Styles/Rule.hpp"
 #include "Spire/Styles/Styles.hpp"
@@ -31,8 +32,17 @@ namespace Spire::Styles {
        */
       Rule& get(const Selector& selector);
 
+      bool operator ==(const StyleSheet&) const = default;
+
     private:
       std::vector<Rule> m_rules;
+  };
+}
+
+namespace std {
+  template<>
+  struct hash<Spire::Styles::StyleSheet> {
+    std::size_t operator ()(const Spire::Styles::StyleSheet& styles) const;
   };
 }
 
