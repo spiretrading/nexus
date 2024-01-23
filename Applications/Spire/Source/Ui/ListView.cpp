@@ -130,6 +130,8 @@ ListView::ListView(
       m_view_builder(std::move(view_builder)),
       m_direction(Qt::Vertical),
       m_overflow(Overflow::NONE),
+      m_visible_count(0),
+      m_top_index(-1),
       m_direction_policy(QSizePolicy::Fixed),
       m_perpendicular_policy(QSizePolicy::Expanding),
       m_item_gap(DEFAULT_GAP),
@@ -424,8 +426,8 @@ void ListView::add_item(int index) {
 void ListView::remove_item(int index) {
   auto item = std::move(m_items[index]);
   m_items.erase(m_items.begin() + index);
-  for(auto i = m_items.begin() + index; i != m_items.end(); ++i) {
-    --(*i)->m_index;
+  for(auto& item : m_items | std::views::drop(index)) {
+    --item->m_index;
   }
   if(m_focus_index) {
     if(*m_focus_index == index) {
@@ -630,6 +632,10 @@ void ListView::initialize_visible_region() {
 }
 
 void ListView::update_visible_region() {
+  if(m_top_index == -1) {
+    initialize_visible_region();
+    return;
+  }
   if(!parentWidget() || !isVisible() || m_overflow != Overflow::NONE) {
     return;
   }

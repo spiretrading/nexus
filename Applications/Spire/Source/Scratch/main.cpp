@@ -13,7 +13,7 @@ int main(int argc, char** argv) {
   initialize_resources();
   auto parent = QWidget();
   auto list = std::make_shared<ArrayListModel<int>>();
-  for(auto i = 0; i != 100; ++i) {
+  for(auto i = 0; i != 30; ++i) {
     list->push(i);
   }
   auto box = DropDownBox(list);
