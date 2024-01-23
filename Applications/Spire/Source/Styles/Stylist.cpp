@@ -235,7 +235,7 @@ connection Stylist::connect_delete_signal(
   return m_delete_signal.connect(slot);
 }
 
-Stylist::Stylist(QWidget& widget, boost::optional<PseudoElement> pseudo_element)
+Stylist::Stylist(QWidget& widget, optional<PseudoElement> pseudo_element)
     : m_widget(&widget),
       m_pseudo_element(std::move(pseudo_element)),
       m_style(load_styles(StyleSheet())),
@@ -453,7 +453,7 @@ Stylist& Spire::Styles::find_stylist(QWidget& widget) {
     auto entry = new Stylist(widget, none);
     stylist = stylists.insert(std::pair(&widget, entry)).first;
     QObject::connect(&widget, &QObject::destroyed,
-      [=, &widget, &stylists] (QObject*) {
+      [=, &widget, &stylists] (auto) {
         entry->m_style_event_filter = nullptr;
         delete entry;
         stylists.erase(&widget);

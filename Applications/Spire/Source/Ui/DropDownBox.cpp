@@ -299,9 +299,9 @@ void DropDownBox::mousePressEvent(QMouseEvent* event) {
     } else {
       m_is_mouse_press_on_list = false;
       m_mouse_press_position = event->globalPos();
-      m_timer.start(QApplication::doubleClickInterval());
       m_drop_down_list->show();
       m_drop_down_list->setFocus();
+      m_timer.start(QApplication::doubleClickInterval());
     }
   }
 }
@@ -356,7 +356,7 @@ void DropDownBox::on_button_press_end(PressObserver::Reason reason) {
   if(reason == PressObserver::Reason::KEYBOARD) {
     if(m_drop_down_list->isVisible()) {
       m_drop_down_list->hide();
-    } else {
+    } else if(!is_read_only()) {
       m_drop_down_list->show();
       m_drop_down_list->setFocus();
     }

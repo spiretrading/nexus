@@ -142,9 +142,9 @@ connection HexColorBox::connect_reject_signal(
 
 bool HexColorBox::eventFilter(QObject* watched, QEvent* event) {
   if(m_text_box == watched && event->type() == QEvent::ChildAdded) {
-    auto& child_event = static_cast<QChildEvent&>(*event);
-    if(child_event.child()->isWidgetType()) {
-      child_event.child()->installEventFilter(this);
+    auto& child = *static_cast<QChildEvent&>(*event).child();
+    if(child.isWidgetType()) {
+      child.installEventFilter(this);
       m_text_box->removeEventFilter(this);
     }
   } else if(event->type() == QEvent::KeyPress) {
