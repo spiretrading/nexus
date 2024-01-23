@@ -94,8 +94,8 @@ namespace {
     }
 
     bool eventFilter(QObject* watched, QEvent* event) override {
-      if(!m_stylist->get_widget().isEnabled() ||
-          !m_stylist->get_widget().isVisible()) {
+      auto& widget = *static_cast<QWidget*>(watched);
+      if(!widget.isEnabled() || !widget.isVisible()) {
         if(m_observer) {
           if(m_observer->m_match_count != 0) {
             m_on_update({}, {m_stylist});
@@ -156,8 +156,8 @@ namespace {
     }
 
     bool eventFilter(QObject* watched, QEvent* event) override {
-      if(!m_stylist->get_widget().isEnabled() ||
-          !m_stylist->get_widget().isVisible()) {
+      auto& widget = *static_cast<QWidget*>(watched);
+      if(!widget.isEnabled() || !widget.isVisible()) {
         if(m_observer) {
           if(m_observer->m_is_match) {
             m_on_update({}, {m_stylist});
