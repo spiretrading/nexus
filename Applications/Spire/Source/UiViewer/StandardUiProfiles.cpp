@@ -45,6 +45,7 @@
 #include "Spire/Ui/DropDownList.hpp"
 #include "Spire/Ui/DurationBox.hpp"
 #include "Spire/Ui/EditableBox.hpp"
+#include "Spire/Ui/EyeDropper.hpp"
 #include "Spire/Ui/FilterPanel.hpp"
 #include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/FontBox.hpp"
@@ -617,14 +618,14 @@ namespace {
     return image;
   }
 
-  auto create_panel_body() {
+  auto create_panel_body(const QString& button_name) {
     auto body = new QWidget();
     body->setFixedSize(scale(200, 200));
     auto container_layout = new QVBoxLayout(body);
     container_layout->setSpacing(0);
     container_layout->setContentsMargins(scale_width(1),
       scale_height(1), scale_width(1), scale_height(1));
-    auto create_button = make_label_button("Show child panel", body);
+    auto create_button = make_label_button(button_name, body);
     container_layout->addWidget(create_button);
     auto close_button = make_label_button("Close", body);
     close_button->connect_click_signal([=] { body->window()->close(); });
@@ -634,7 +635,7 @@ namespace {
 
   void create_child_panel(bool close_on_focus_out, bool draggable,
       OverlayPanel::Positioning positioning, Button* parent) {
-    auto body = create_panel_body();
+    auto body = create_panel_body("Show child panel");
     auto panel = new OverlayPanel(*body, *parent);
     auto button = body->findChild<Button*>();
     button->connect_click_signal([=] {
@@ -1999,6 +2000,44 @@ UiProfile Spire::make_editable_box_profile() {
   return profile;
 }
 
+UiProfile Spire::make_eye_dropper_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  properties.push_back(make_standard_property("popup_window", false));
+  auto profile = UiProfile("EyeDropper", properties, [] (auto& profile) {
+    auto create_eye_dropper = [] (QWidget* parent, UiProfile& profile) {
+      auto eye_dropper = new EyeDropper(parent);
+      eye_dropper->show();
+      eye_dropper->get_current()->connect_update_signal(
+        profile.make_event_slot<QColor>("Current"));
+      eye_dropper->connect_submit_signal(
+        profile.make_event_slot<QColor>("Submit"));
+      eye_dropper->connect_reject_signal(
+        profile.make_event_slot<QColor>("Reject"));
+    };
+    auto button = make_label_button("EyeDropper");
+    auto& popup_window = get<bool>("popup_window", profile.get_properties());
+    button->connect_click_signal([&, button] {
+      if(popup_window.get()) {
+        auto body = create_panel_body("EyeDropper");
+        auto panel = new OverlayPanel(*body, *button);
+        auto child_button = body->findChild<Button*>();
+        child_button->connect_click_signal([=, &profile] {
+          create_eye_dropper(child_button, profile);
+        });
+        panel->setAttribute(Qt::WA_DeleteOnClose);
+        panel->set_closed_on_focus_out(true);
+        panel->set_is_draggable(true);
+        panel->set_positioning(OverlayPanel::Positioning::NONE);
+        panel->show();
+      } else {
+        create_eye_dropper(button, profile);
+      }
+    });
+    return button;
+  });
+  return profile;
+}
+
 UiProfile Spire::make_filter_panel_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   properties.push_back(
@@ -3251,7 +3290,7 @@ UiProfile Spire::make_overlay_panel_profile() {
         if(panel && !close_on_focus_out.get()) {
           return;
         }
-        auto body = create_panel_body();
+        auto body = create_panel_body("Show child panel");
         panel = new OverlayPanel(*body, *button);
         auto child_button = body->findChild<Button*>();
         child_button->connect_click_signal(
