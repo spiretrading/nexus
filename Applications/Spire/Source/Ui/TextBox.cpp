@@ -538,6 +538,9 @@ void TextBox::showEvent(QShowEvent* event) {
 }
 
 void TextBox::elide_text() {
+  if(m_geometry.get_geometry().isEmpty()) {
+    return;
+  }
   auto font_metrics = QFontMetrics(m_text_style.m_font);
   m_display_text = font_metrics.elidedText(
     m_current->get(), Qt::ElideRight, m_geometry.get_content_area().width());

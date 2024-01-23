@@ -28,11 +28,11 @@ namespace {
 struct HoverObserver::EventFilter : QObject {
   struct Child {
     std::unique_ptr<HoverObserver> m_observer;
-    boost::signals2::scoped_connection m_state_connection;
+    scoped_connection m_state_connection;
   };
   struct Observers {
     GlobalPositionObserver m_position_observer;
-    std::unordered_map<QWidget*, Child> m_children_observers;
+    std::unordered_map<QObject*, Child> m_children_observers;
 
     Observers(QWidget& widget, std::function<void (const QPoint&)> on_position)
         : m_position_observer(widget) {
@@ -86,6 +86,7 @@ struct HoverObserver::EventFilter : QObject {
     if(!m_widget->isEnabled() || !m_widget->isVisible()) {
       if(m_observers) {
         m_observers = nullptr;
+        set_state(State::NONE);
       }
       return QObject::eventFilter(watched, event);
     }
@@ -99,15 +100,15 @@ struct HoverObserver::EventFilter : QObject {
       set_state(::get_state(
         *m_widget, get_observers().m_position_observer.get_position()));
     } else if(event->type() == QEvent::ChildAdded) {
-      auto& child_event = static_cast<QChildEvent&>(*event);
-      if(child_event.child()->isWidgetType()) {
-        add(static_cast<QWidget&>(*child_event.child()));
+      auto& child = *static_cast<QChildEvent&>(*event).child();
+      if(child.isWidgetType()) {
+        add(static_cast<QWidget&>(child));
       }
     } else if(event->type() == QEvent::ChildRemoved) {
       auto& child_event = static_cast<QChildEvent&>(*event);
-      if(child_event.child()->isWidgetType()) {
-        auto& child = static_cast<QWidget&>(*child_event.child());
-        get_observers().m_children_observers.erase(&child);
+      if(m_observers &&
+          m_observers->m_children_observers.contains(child_event.child())) {
+        get_observers().m_children_observers.erase(child_event.child());
         set_state(::get_state(
           *m_widget, get_observers().m_position_observer.get_position()));
       }
@@ -140,6 +141,7 @@ struct HoverObserver::EventFilter : QObject {
 
   void on_widget_destroyed() {
     m_observers = nullptr;
+    set_state(State::NONE);
   }
 };
 

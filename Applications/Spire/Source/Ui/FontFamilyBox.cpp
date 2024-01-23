@@ -43,10 +43,11 @@ FontFamilyBox* Spire::make_font_family_box(
     return label;
   };
   auto box = new FontFamilyBox(std::move(settings), parent);
-  update_style(*box, [&] (auto& style) {
+  update_style(*box, [] (auto& style) {
     style.get(Any() > is_a<ListItem>()).
       set(border_size(0)).
       set(vertical_padding(0));
   });
+  invalidate_descendant_layouts(*box);
   return box;
 }

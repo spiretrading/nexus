@@ -126,6 +126,7 @@ FontStyleBox* Spire::make_font_style_box(
     auto font = font_database.font(family, font_style, -1);
     font.setPixelSize(scale_width(12));
     auto label = make_label(font_style);
+    label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     update_style(*label, [&] (auto& style) {
       style.get(Any()).set(Font(font));
     });
