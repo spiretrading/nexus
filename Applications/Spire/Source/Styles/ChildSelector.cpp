@@ -1,4 +1,5 @@
 #include "Spire/Styles/ChildSelector.hpp"
+#include <unordered_map>
 #include <boost/functional/hash.hpp>
 #include <QChildEvent>
 #include <QWidget>
@@ -13,14 +14,17 @@ using namespace Spire::Styles;
 namespace {
   struct ChildObserver : public QObject {
     SelectionUpdateSignal m_on_update;
+    std::unordered_map<QObject*, const Stylist*> m_children_stylists;
 
     ChildObserver(
         const Stylist& stylist, const SelectionUpdateSignal& on_update)
         : m_on_update(on_update) {
       auto children = std::unordered_set<const Stylist*>();
       for(auto child : stylist.get_widget().children()) {
-        if(child->isWidgetType()) {
-          children.insert(&find_stylist(static_cast<QWidget&>(*child)));
+        if(child && child->isWidgetType()) {
+          auto& stylist = find_stylist(static_cast<const QWidget&>(*child));
+          m_children_stylists.insert(std::pair(child, &stylist));
+          children.insert(&stylist);
         }
       }
       if(!children.empty()) {
@@ -31,17 +35,17 @@ namespace {
 
     bool eventFilter(QObject* watched, QEvent* event) override {
       if(event->type() == QEvent::ChildAdded) {
-        auto& child_event = static_cast<QChildEvent&>(*event);
-        if(child_event.child()->isWidgetType()) {
-          m_on_update(
-            {&find_stylist(static_cast<const QWidget&>(*child_event.child()))},
-            {});
+        auto& child = *static_cast<QChildEvent&>(*event).child();
+        if(child.isWidgetType()) {
+          auto& stylist = find_stylist(static_cast<const QWidget&>(child));
+          m_children_stylists.insert(std::pair(&child, &stylist));
+          m_on_update({&stylist}, {});
         }
       } else if(event->type() == QEvent::ChildRemoved) {
-        auto& child_event = static_cast<QChildEvent&>(*event);
-        if(child_event.child()->isWidgetType()) {
-          m_on_update({},
-            {&find_stylist(static_cast<const QWidget&>(*child_event.child()))});
+        auto& child = *static_cast<QChildEvent&>(*event).child();
+        auto i = m_children_stylists.find(&child);
+        if(i != m_children_stylists.end()) {
+          m_on_update({}, {i->second});
         }
       }
       return QObject::eventFilter(watched, event);
