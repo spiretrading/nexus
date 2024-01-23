@@ -1,7 +1,5 @@
 #include "Spire/Ui/EyeDropperButton.hpp"
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Ui/Box.hpp"
-#include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/EyeDropper.hpp"
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/Layouts.hpp"
@@ -17,15 +15,6 @@ EyeDropperButton::EyeDropperButton(QWidget* parent)
   m_button = make_icon_toggle_button(
     imageFromSvg(":/Icons/eye-dropper.svg", scale(16, 16)));
   m_button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  update_style(*m_button, [] (auto& style) {
-    style.get((Hover() || Press()) > Body()).
-      set(BackgroundColor(QColor(Qt::transparent)));
-    style.get(Any() > (is_a<Button>() && FocusVisible()) > Body()).
-      set(border_color(QColor(Qt::transparent)));
-    style.get(Hover() > is_a<Icon>()).set(Fill(QColor(0x7F5EEC)));
-    style.get(Press() > is_a<Icon>()).set(Fill(QColor(0x7F5EEC)));
-    style.get(Disabled() > is_a<Icon>()).set(Fill(QColor(0xC8C8C8)));
-  });
   enclose(*this, *m_button);
   proxy_style(*this, *m_button);
   setFocusProxy(m_button);
