@@ -28,7 +28,7 @@ namespace {
       set(border_color(QColor(0x4B23A0)));
     style.get(Any() > Swatch()).
       set(border(scale_width(1), QColor(0, 0, 0, 51)));
-    style.get(Highlighted() > Swatch()).
+    style.get((!Drag() && Highlighted()) > Swatch()).
       set(border_color(
         chain(timeout(QColor(0xF2F2FF), milliseconds(250)),
           linear(QColor(0xF2F2FF), revert, milliseconds(300))))).
