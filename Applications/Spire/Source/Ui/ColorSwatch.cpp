@@ -13,6 +13,8 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  using Swatch = StateSelector<void, struct SwatchSelectorTag>;
+
   auto DEFAULT_STYLE() {
     auto style = StyleSheet();
     style.get(Any()).
@@ -24,8 +26,15 @@ namespace {
     style.get(Drag()).
       set(BackgroundColor(QColor(255, 255, 255, 204))).
       set(border_color(QColor(0x4B23A0)));
-    style.get(Any() >> Body()).
+    style.get(Any() > Swatch()).
       set(border(scale_width(1), QColor(0, 0, 0, 51)));
+    style.get(Highlighted() > Swatch()).
+      set(border_color(
+        chain(timeout(QColor(0xF2F2FF), milliseconds(250)),
+          linear(QColor(0xF2F2FF), revert, milliseconds(300))))).
+      set(BackgroundColor(
+        chain(timeout(QColor(0xF2F2FF), milliseconds(250)),
+          linear(QColor(0xF2F2FF), revert, milliseconds(300)))));
     return style;
   }
 }
@@ -41,6 +50,7 @@ ColorSwatch::ColorSwatch(std::shared_ptr<ColorModel> current,
   setFocusPolicy(Qt::StrongFocus);
   auto swatch = new Box();
   swatch->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  match(*swatch, Swatch());
   auto box = new Box(swatch);
   enclose(*this, *box);
   proxy_style(*this, *box);
@@ -72,16 +82,9 @@ void ColorSwatch::set_highlighted(bool highlighted) {
 
 void ColorSwatch::on_current(const QColor& color) {
   update_style(*this, [&] (auto& style) {
-    style.get(Any() >> Body()).set(BackgroundColor(color));
-    style.get(Drag() >> Body()).
+    style.get(Any() > Swatch()).set(BackgroundColor(color));
+    style.get(Drag() > Swatch()).
       set(BackgroundColor(
         QColor(color.red(), color.green(), color.blue(), 204)));
-    style.get(Highlighted() >> Body()).
-      set(border_color(
-        chain(timeout(QColor(0xF2F2FF), milliseconds(250)),
-          linear(QColor(0xF2F2FF), revert, milliseconds(300))))).
-      set(BackgroundColor(
-        chain(timeout(QColor(0xF2F2FF), milliseconds(250)),
-          linear(QColor(0xF2F2FF), revert, milliseconds(300)))));
   });
 }
