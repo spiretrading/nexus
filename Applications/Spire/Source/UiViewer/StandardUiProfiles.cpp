@@ -33,6 +33,7 @@
 #include "Spire/Ui/ColorBox.hpp"
 #include "Spire/Ui/ColorCodePanel.hpp"
 #include "Spire/Ui/ColorPicker.hpp"
+#include "Spire/Ui/ColorSwatch.hpp"
 #include "Spire/Ui/ComboBox.hpp"
 #include "Spire/Ui/ContextMenu.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
@@ -1423,6 +1424,37 @@ UiProfile Spire::make_color_picker_profile() {
     });
     button->connect_click_signal([=] { picker->show(); });
     return button;
+  });
+  return profile;
+}
+
+UiProfile Spire::make_color_swatch_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_property("color", QColor(0xFAA928)));
+  properties.push_back(make_standard_property("highlighted", false));
+  properties.push_back(make_standard_property("drag", false));
+  auto profile = UiProfile("ColorSwatch", properties, [] (auto& profile) {
+    auto swatch = new ColorSwatch();
+    swatch->setFixedSize(scale(30, 30));
+    apply_widget_properties(swatch, profile.get_properties());
+    auto& color = get<QColor>("color", profile.get_properties());
+    color.connect_changed_signal([=] (auto color) {
+      swatch->get_current()->set(color);
+    });
+    auto& highlighted = get<bool>("highlighted", profile.get_properties());
+    highlighted.connect_changed_signal([=] (auto value) {
+      swatch->set_highlighted(value);
+    });
+    auto& drag = get<bool>("drag", profile.get_properties());
+    drag.connect_changed_signal([=] (auto value) {
+      if(value) {
+        match(*swatch, Drag());
+      } else {
+        unmatch(*swatch, Drag());
+      }
+    });
+    return swatch;
   });
   return profile;
 }

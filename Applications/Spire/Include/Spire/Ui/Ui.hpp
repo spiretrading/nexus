@@ -23,6 +23,7 @@ namespace Spire {
   class ColorBox;
   class ColorCodePanel;
   class ColorPicker;
+  class ColorSwatch;
   class ComboBox;
   class ContextMenu;
   class DateBox;
