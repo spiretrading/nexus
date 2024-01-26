@@ -1,6 +1,6 @@
 #ifndef SPIRE_EYE_DROPPER_BUTTON_HPP
 #define SPIRE_EYE_DROPPER_BUTTON_HPP
-#include "Spire/Ui/ColorBox.hpp"
+#include "Spire/Ui/EyeDropper.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -9,17 +9,9 @@ namespace Spire {
   class EyeDropperButton : public QWidget {
     public:
 
-      /**
-       * Signals that the current color is being submitted.
-       * @param submission The submitted color.
-       */
-      using SubmitSignal = Signal<void (const QColor& submission)>;
+      using SubmitSignal = EyeDropper::SubmitSignal;
 
-      /**
-       * Signals that the current color is being rejected.
-       * @param color The rejected color.
-       */
-      using RejectSignal = Signal<void (const QColor& color)>;
+      using RejectSignal = EyeDropper::RejectSignal;
 
       /**
        * Constructs an EyeDropperButton.

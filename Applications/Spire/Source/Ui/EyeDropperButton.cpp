@@ -1,6 +1,5 @@
 #include "Spire/Ui/EyeDropperButton.hpp"
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Ui/EyeDropper.hpp"
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ToggleButton.hpp"
