@@ -357,10 +357,10 @@ void Stylist::apply() {
   }
   if(auto visibility = Spire::Styles::find<Visibility>(block)) {
     evaluate(*visibility, [=] (auto visibility) {
-      if(visibility != m_visibility) {
-        if(visibility == Visibility::VISIBLE) {
-          m_widget->show();
-        } else if(visibility == Visibility::NONE) {
+      if(visibility == Visibility::VISIBLE && !m_widget->isVisible()) {
+        m_widget->show();
+      } else if(visibility != m_visibility) {
+        if(visibility == Visibility::NONE) {
           auto size = m_widget->sizePolicy();
           size.setRetainSizeWhenHidden(false);
           m_widget->setSizePolicy(size);
