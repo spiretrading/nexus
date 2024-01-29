@@ -14,7 +14,7 @@
    <string>Imbalance Indicator</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="../../Resources/Resources.qrc">
+   <iconset resource="../../LegacyResources/Resources.qrc">
     <normaloff>:/icons/scales.png</normaloff>:/icons/scales.png</iconset>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout" stretch="1,0">
@@ -93,7 +93,7 @@
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="../../Resources/Resources.qrc"/>
+  <include location="../../LegacyResources/Resources.qrc"/>
  </resources>
  <connections/>
 </ui>

@@ -38,7 +38,7 @@
    <string>Properties - Time and Sales</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="../../Resources/Resources.qrc">
+   <iconset resource="../../LegacyResources/Resources.qrc">
     <normaloff>:/icons/time_and_sales.png</normaloff>:/icons/time_and_sales.png</iconset>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_4" stretch="1,0">
@@ -401,7 +401,7 @@
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="../../Resources/Resources.qrc"/>
+  <include location="../../LegacyResources/Resources.qrc"/>
  </resources>
  <connections/>
  <buttongroups>

@@ -20,7 +20,7 @@
    <string>Time and Sales - Spire</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="../../Resources/Resources.qrc">
+   <iconset resource="../../LegacyResources/Resources.qrc">
     <normaloff>:/icons/time_and_sales.png</normaloff>:/icons/time_and_sales.png</iconset>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -182,7 +182,7 @@
   </layout>
  </widget>
  <resources>
-  <include location="../../Resources/Resources.qrc"/>
+  <include location="../../LegacyResources/Resources.qrc"/>
  </resources>
  <connections/>
 </ui>

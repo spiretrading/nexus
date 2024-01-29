@@ -239,7 +239,7 @@
            <string/>
           </property>
           <property name="icon">
-           <iconset resource="../../Resources/Resources.qrc">
+           <iconset resource="../../LegacyResources/Resources.qrc">
             <normaloff>:/icons/table2.png</normaloff>:/icons/table2.png</iconset>
           </property>
           <property name="iconSize">
@@ -277,7 +277,7 @@
            <string/>
           </property>
           <property name="icon">
-           <iconset resource="../../Resources/Resources.qrc">
+           <iconset resource="../../LegacyResources/Resources.qrc">
             <normaloff>:/icons/user.png</normaloff>:/icons/user.png</iconset>
           </property>
           <property name="iconSize">
@@ -316,7 +316,7 @@
            <string/>
           </property>
           <property name="icon">
-           <iconset resource="../../Resources/Resources.qrc">
+           <iconset resource="../../LegacyResources/Resources.qrc">
             <normaloff>:/icons/keyboard_key.png</normaloff>:/icons/keyboard_key.png</iconset>
           </property>
           <property name="iconSize">
@@ -348,7 +348,7 @@
            <string/>
           </property>
           <property name="icon">
-           <iconset resource="../../Resources/Resources.qrc">
+           <iconset resource="../../LegacyResources/Resources.qrc">
             <normaloff>:/icons/exit.png</normaloff>:/icons/exit.png</iconset>
           </property>
           <property name="iconSize">
@@ -415,7 +415,7 @@
            <string/>
           </property>
           <property name="icon">
-           <iconset resource="../../Resources/Resources.qrc">
+           <iconset resource="../../LegacyResources/Resources.qrc">
             <normaloff>:/icons/book_blue.png</normaloff>:/icons/book_blue.png</iconset>
           </property>
           <property name="iconSize">
@@ -450,7 +450,7 @@
            <string/>
           </property>
           <property name="icon">
-           <iconset resource="../../Resources/Resources.qrc">
+           <iconset resource="../../LegacyResources/Resources.qrc">
             <normaloff>:/icons/time_and_sales.png</normaloff>:/icons/time_and_sales.png</iconset>
           </property>
           <property name="iconSize">
@@ -482,7 +482,7 @@
            <string/>
           </property>
           <property name="icon">
-           <iconset resource="../../Resources/Resources.qrc">
+           <iconset resource="../../LegacyResources/Resources.qrc">
             <normaloff>:/icons/chart_line.png</normaloff>:/icons/chart_line.png</iconset>
           </property>
           <property name="iconSize">
@@ -517,7 +517,7 @@
            <string/>
           </property>
           <property name="icon">
-           <iconset resource="../../Resources/Resources.qrc">
+           <iconset resource="../../LegacyResources/Resources.qrc">
             <normaloff>:/icons/code_colored.png</normaloff>:/icons/code_colored.png</iconset>
           </property>
           <property name="iconSize">
@@ -552,7 +552,7 @@
            <string/>
           </property>
           <property name="icon">
-           <iconset resource="../../Resources/Resources.qrc">
+           <iconset resource="../../LegacyResources/Resources.qrc">
             <normaloff>:/icons/scales.png</normaloff>:/icons/scales.png</iconset>
           </property>
           <property name="iconSize">
@@ -591,7 +591,7 @@
            <string/>
           </property>
           <property name="icon">
-           <iconset resource="../../Resources/Resources.qrc">
+           <iconset resource="../../LegacyResources/Resources.qrc">
             <normaloff>:/icons/window_earth.png</normaloff>:/icons/window_earth.png</iconset>
           </property>
           <property name="iconSize">
@@ -653,7 +653,7 @@
            <string/>
           </property>
           <property name="icon">
-           <iconset resource="../../Resources/Resources.qrc">
+           <iconset resource="../../LegacyResources/Resources.qrc">
             <normaloff>:/icons/application_server.png</normaloff>:/icons/application_server.png</iconset>
           </property>
           <property name="iconSize">
@@ -685,7 +685,7 @@
            <string/>
           </property>
           <property name="icon">
-           <iconset resource="../../Resources/Resources.qrc">
+           <iconset resource="../../LegacyResources/Resources.qrc">
             <normaloff>:/icons/briefcase.png</normaloff>:/icons/briefcase.png</iconset>
           </property>
           <property name="iconSize">
@@ -704,7 +704,7 @@
   </layout>
  </widget>
  <resources>
-  <include location="../../Resources/Resources.qrc"/>
+  <include location="../../LegacyResources/Resources.qrc"/>
  </resources>
  <connections/>
 </ui>

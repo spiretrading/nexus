@@ -57,7 +57,7 @@
           <string/>
          </property>
          <property name="icon">
-          <iconset resource="../../Resources/Resources.qrc">
+          <iconset resource="../../LegacyResources/Resources.qrc">
            <normaloff>:/icons/floppy_disk.png</normaloff>:/icons/floppy_disk.png</iconset>
          </property>
          <property name="iconSize">
@@ -89,7 +89,7 @@
           <string/>
          </property>
          <property name="icon">
-          <iconset resource="../../Resources/Resources.qrc">
+          <iconset resource="../../LegacyResources/Resources.qrc">
            <normaloff>:/icons/recycle.png</normaloff>:/icons/recycle.png</iconset>
          </property>
          <property name="iconSize">
@@ -160,7 +160,7 @@
           <string/>
          </property>
          <property name="icon">
-          <iconset resource="../../Resources/Resources.qrc">
+          <iconset resource="../../LegacyResources/Resources.qrc">
            <normaloff>:/icons/window_earth.png</normaloff>:/icons/window_earth.png</iconset>
          </property>
          <property name="iconSize">
@@ -209,7 +209,7 @@
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="../../Resources/Resources.qrc"/>
+  <include location="../../LegacyResources/Resources.qrc"/>
  </resources>
  <connections/>
 </ui>

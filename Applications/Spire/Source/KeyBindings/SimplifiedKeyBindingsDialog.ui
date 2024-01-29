@@ -26,7 +26,7 @@
    <string>Key Bindings</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="../../Resources/Resources.qrc">
+   <iconset resource="../../LegacyResources/Resources.qrc">
     <normaloff>:/icons/keyboard_key.png</normaloff>:/icons/keyboard_key.png</iconset>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -345,7 +345,7 @@
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="../../Resources/Resources.qrc"/>
+  <include location="../../LegacyResources/Resources.qrc"/>
  </resources>
  <connections/>
 </ui>

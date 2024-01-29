@@ -14,7 +14,7 @@
    <string>Book View - Spire</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="../../Resources/Resources.qrc">
+   <iconset resource="../../LegacyResources/Resources.qrc">
     <normaloff>:/icons/book_blue.png</normaloff>:/icons/book_blue.png</iconset>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout" stretch="0,1">
@@ -263,7 +263,7 @@
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="../../Resources/Resources.qrc"/>
+  <include location="../../LegacyResources/Resources.qrc"/>
  </resources>
  <connections/>
 </ui>

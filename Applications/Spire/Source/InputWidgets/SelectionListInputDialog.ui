@@ -68,7 +68,7 @@
           <string/>
          </property>
          <property name="icon">
-          <iconset resource="../../Resources/Resources.qrc">
+          <iconset resource="../../LegacyResources/Resources.qrc">
            <normaloff>:/icons/arrow_left_green.png</normaloff>:/icons/arrow_left_green.png</iconset>
          </property>
          <property name="iconSize">
@@ -97,7 +97,7 @@
           <string/>
          </property>
          <property name="icon">
-          <iconset resource="../../Resources/Resources.qrc">
+          <iconset resource="../../LegacyResources/Resources.qrc">
            <normaloff>:/icons/arrow_right_red.png</normaloff>:/icons/arrow_right_red.png</iconset>
          </property>
          <property name="iconSize">
@@ -178,7 +178,7 @@
   </layout>
  </widget>
  <resources>
-  <include location="../../Resources/Resources.qrc"/>
+  <include location="../../LegacyResources/Resources.qrc"/>
  </resources>
  <connections/>
 </ui>

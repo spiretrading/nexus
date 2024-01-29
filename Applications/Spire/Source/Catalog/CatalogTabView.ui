@@ -214,7 +214,7 @@
   <tabstop>m_descriptionText</tabstop>
  </tabstops>
  <resources>
-  <include location="../../Resources/Resources.qrc"/>
+  <include location="../../LegacyResources/Resources.qrc"/>
  </resources>
  <connections/>
 </ui>

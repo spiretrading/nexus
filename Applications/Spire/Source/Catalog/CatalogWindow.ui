@@ -17,7 +17,7 @@
    <string>Catalog - Spire</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="../../Resources/Resources.qrc">
+   <iconset resource="../../LegacyResources/Resources.qrc">
     <normaloff>:/icons/dictionary.png</normaloff>:/icons/dictionary.png</iconset>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -85,7 +85,7 @@
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="../../Resources/Resources.qrc"/>
+  <include location="../../LegacyResources/Resources.qrc"/>
  </resources>
  <connections/>
 </ui>
