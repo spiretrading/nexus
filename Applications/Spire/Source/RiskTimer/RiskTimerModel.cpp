@@ -1,5 +1,5 @@
 #include "Spire/RiskTimer/RiskTimerModel.hpp"
-#include "Spire/UI/UserProfile.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace Beam::Threading;

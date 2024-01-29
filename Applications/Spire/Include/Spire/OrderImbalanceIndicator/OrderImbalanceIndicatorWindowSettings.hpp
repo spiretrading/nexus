@@ -2,18 +2,19 @@
 #define SPIRE_ORDERIMBALANCEINDICATORWINDOWSETTINGS_HPP
 #include <Beam/Serialization/ShuttleSharedPtr.hpp>
 #include <QByteArray>
+#include "Spire/LegacyUI/ShuttleQtTypes.hpp"
+#include "Spire/LegacyUI/WindowSettings.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicator.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorProperties.hpp"
 #include "Spire/Spire/Spire.hpp"
-#include "Spire/UI/ShuttleQtTypes.hpp"
-#include "Spire/UI/WindowSettings.hpp"
 
 namespace Spire {
 
   /*! \class OrderImbalanceIndicatorWindowSettings
       \brief Stores the window settings for an OrderImbalanceIndicatorWindow.
    */
-  class OrderImbalanceIndicatorWindowSettings : public UI::WindowSettings {
+  class OrderImbalanceIndicatorWindowSettings :
+      public LegacyUI::WindowSettings {
     public:
 
       //! Constructs an OrderImbalanceIndicatorWindowSettings with default
@@ -44,8 +45,8 @@ namespace Spire {
       QByteArray m_geometry;
       QByteArray m_tableHeaderGeometry;
       QByteArray m_tableHeaderState;
-      std::shared_ptr<UI::WindowSettings> m_timeRangeSettings;
-      std::shared_ptr<UI::WindowSettings> m_marketsSettings;
+      std::shared_ptr<LegacyUI::WindowSettings> m_timeRangeSettings;
+      std::shared_ptr<LegacyUI::WindowSettings> m_marketsSettings;
 
       template<typename Shuttler>
       void Shuttle(Shuttler& shuttle, unsigned int version);

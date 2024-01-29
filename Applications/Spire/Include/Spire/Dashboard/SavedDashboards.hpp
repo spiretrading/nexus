@@ -9,8 +9,8 @@
 #include <boost/signals2/signal.hpp>
 #include "Spire/Dashboard/Dashboard.hpp"
 #include "Spire/Dashboard/DashboardModelSchema.hpp"
+#include "Spire/LegacyUI/WindowSettings.hpp"
 #include "Spire/Spire/Spire.hpp"
-#include "Spire/UI/WindowSettings.hpp"
 
 namespace Spire {
 
@@ -28,7 +28,7 @@ namespace Spire {
         DashboardModelSchema m_schema;
 
         /** The settings used to display the dashboard. */
-        std::shared_ptr<UI::WindowSettings> m_settings;
+        std::shared_ptr<LegacyUI::WindowSettings> m_settings;
 
         /** Constructs an uninitialized Entry. */
         Entry() = default;
@@ -40,7 +40,7 @@ namespace Spire {
          * @param settings The settings used to display the dashboard.
          */
         Entry(std::string name, DashboardModelSchema schema,
-          std::shared_ptr<UI::WindowSettings> settings);
+          std::shared_ptr<LegacyUI::WindowSettings> settings);
       };
 
       /**

@@ -1,7 +1,7 @@
 #include "Spire/BookView/BookViewPanel.hpp"
 #include "Spire/BookView/BookViewModel.hpp"
-#include "Spire/UI/CustomQtVariants.hpp"
-#include "Spire/UI/UserProfile.hpp"
+#include "Spire/LegacyUI/CustomQtVariants.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 #include "ui_BookViewPanel.h"
 
 using namespace Beam;
@@ -10,7 +10,7 @@ using namespace boost;
 using namespace Nexus;
 using namespace Nexus::MarketDataService;
 using namespace Spire;
-using namespace Spire::UI;
+using namespace Spire::LegacyUI;
 
 namespace {
   const auto MPID_WIDTH = 60;

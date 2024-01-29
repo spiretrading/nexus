@@ -20,7 +20,7 @@ add_executable(Spire ${app_type} ${header_files} ${source_files}
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 target_link_libraries(Spire Async Dashboard Charting PortfolioViewer Utilities
   RiskTimer AccountViewer KeyBindings Blotter Catalog BookView TimeAndSales
-  OrderImbalanceIndicator InputWidgets CanvasView Canvas UI Resources
+  OrderImbalanceIndicator InputWidgets CanvasView Canvas LegacyUI Resources
   debug ${CRYPTOPP_LIBRARY_DEBUG_PATH}
   optimized ${CRYPTOPP_LIBRARY_OPTIMIZED_PATH}
   debug ${LUA_LIBRARY_DEBUG_PATH}

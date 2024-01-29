@@ -11,8 +11,8 @@
 #include "Spire/Dashboard/Dashboard.hpp"
 #include "Spire/Dashboard/DashboardModelSchema.hpp"
 #include "Spire/Dashboard/SavedDashboards.hpp"
+#include "Spire/LegacyUI/PersistentWindow.hpp"
 #include "Spire/Spire/Spire.hpp"
-#include "Spire/UI/PersistentWindow.hpp"
 
 class Ui_DashboardWindow;
 
@@ -21,7 +21,7 @@ namespace Spire {
   /*! \class DashboardWindow
       \brief A QWidget that displays a DashboardModel.
    */
-  class DashboardWindow : public QWidget, public UI::PersistentWindow {
+  class DashboardWindow : public QWidget, public LegacyUI::PersistentWindow {
     public:
 
       //! Returns the name of a new DashboardWindow.
@@ -42,7 +42,8 @@ namespace Spire {
 
       virtual ~DashboardWindow();
 
-      virtual std::unique_ptr<UI::WindowSettings> GetWindowSettings() const;
+      virtual std::unique_ptr<LegacyUI::WindowSettings>
+        GetWindowSettings() const;
 
     protected:
       virtual void showEvent(QShowEvent* event);

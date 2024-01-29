@@ -9,8 +9,8 @@
 #include <QGuiApplication>
 #include <QMessageBox>
 #include <QScreen>
-#include "Spire/UI/UISerialization.hpp"
-#include "Spire/UI/UserProfile.hpp"
+#include "Spire/LegacyUI/UISerialization.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace Beam::IO;

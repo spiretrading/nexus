@@ -9,7 +9,7 @@
 #include "Nexus/Definitions/Side.hpp"
 #include "Spire/PortfolioViewer/PortfolioViewer.hpp"
 #include "Spire/Spire/Spire.hpp"
-#include "Spire/UI/UI.hpp"
+#include "Spire/LegacyUI/LegacyUI.hpp"
 
 namespace Spire {
 

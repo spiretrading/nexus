@@ -11,7 +11,7 @@
 #include "Spire/Dashboard/LowDashboardCellBuilder.hpp"
 #include "Spire/Dashboard/ValueDashboardCellBuilder.hpp"
 #include "Spire/Dashboard/VolumeDashboardCellBuilder.hpp"
-#include "Spire/UI/UserProfile.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace Nexus;

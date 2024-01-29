@@ -1,7 +1,7 @@
 #include "Spire/RiskTimer/RiskTimerMonitor.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/RiskTimer/RiskTimerModel.hpp"
 #include "Spire/RiskTimer/RiskTimerDialog.hpp"
-#include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace Beam::ServiceLocator;

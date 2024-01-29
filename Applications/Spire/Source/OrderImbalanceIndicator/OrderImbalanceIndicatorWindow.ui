@@ -61,7 +61,7 @@
       <enum>QLayout::SetFixedSize</enum>
      </property>
      <item>
-      <widget class="Spire::UI::CollapsibleWidget" name="m_timeRangeParametersWidget" native="true">
+      <widget class="Spire::LegacyUI::CollapsibleWidget" name="m_timeRangeParametersWidget" native="true">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
          <horstretch>0</horstretch>
@@ -71,7 +71,7 @@
       </widget>
      </item>
      <item>
-      <widget class="Spire::UI::CollapsibleWidget" name="m_marketSelectionWidget" native="true">
+      <widget class="Spire::LegacyUI::CollapsibleWidget" name="m_marketSelectionWidget" native="true">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
          <horstretch>0</horstretch>
@@ -86,9 +86,9 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>Spire::UI::CollapsibleWidget</class>
+   <class>Spire::LegacyUI::CollapsibleWidget</class>
    <extends>QWidget</extends>
-   <header>Spire/UI/CollapsibleWidget.hpp</header>
+   <header>Spire/LegacyUI/CollapsibleWidget.hpp</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

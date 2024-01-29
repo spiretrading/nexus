@@ -62,7 +62,7 @@
       <widget class="QComboBox" name="m_typeComboBox"/>
      </item>
      <item row="1" column="1">
-      <widget class="Spire::UI::FilePathInputWidget" name="m_pathInput" native="true"/>
+      <widget class="Spire::LegacyUI::FilePathInputWidget" name="m_pathInput" native="true"/>
      </item>
     </layout>
    </item>
@@ -131,9 +131,9 @@
    <header>Spire/CanvasView/LuaScriptParametersTable.hpp</header>
   </customwidget>
   <customwidget>
-   <class>Spire::UI::FilePathInputWidget</class>
+   <class>Spire::LegacyUI::FilePathInputWidget</class>
    <extends>QWidget</extends>
-   <header>Spire/UI/FilePathInputWidget.hpp</header>
+   <header>Spire/LegacyUI/FilePathInputWidget.hpp</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

@@ -2,14 +2,15 @@
 #define SPIRE_BLOTTERTASKENTRYITEMDELEGATE_HPP
 #include "Spire/Blotter/Blotter.hpp"
 #include "Spire/Spire/Spire.hpp"
-#include "Spire/UI/CustomQtVariants.hpp"
+#include "Spire/LegacyUI/CustomQtVariants.hpp"
 
 namespace Spire {
 
   /*! \class BlotterTaskEntryItemDelegate
       \brief Displays custom editors/visuals for an TaskEntry.
    */
-  class BlotterTaskEntryItemDelegate : public UI::CustomVariantItemDelegate {
+  class BlotterTaskEntryItemDelegate :
+      public LegacyUI::CustomVariantItemDelegate {
     public:
 
       //! Constructs a BlotterTaskEntryItemDelegate.

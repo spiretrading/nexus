@@ -6,12 +6,12 @@
 #include "Spire/Canvas/Common/CanvasNode.hpp"
 #include "Spire/Canvas/Common/CanvasNodeOperations.hpp"
 #include "Spire/CanvasView/DeleteNodeCommand.hpp"
-#include "Spire/UI/IgnoreCommandException.hpp"
+#include "Spire/LegacyUI/IgnoreCommandException.hpp"
 
 using namespace Beam;
 using namespace boost;
 using namespace Spire;
-using namespace Spire::UI;
+using namespace Spire::LegacyUI;
 using namespace std;
 
 CutNodeCommand::CutNodeCommand(Ref<CanvasNodeModel> view,

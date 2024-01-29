@@ -3,10 +3,10 @@
 #include <boost/signals2/connection.hpp>
 #include <QFrame>
 #include "Spire/InputWidgets/TimeRangeInputWidget.hpp"
+#include "Spire/LegacyUI/PersistentWindow.hpp"
+#include "Spire/LegacyUI/WindowSettings.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicator.hpp"
 #include "Spire/Spire/Spire.hpp"
-#include "Spire/UI/PersistentWindow.hpp"
-#include "Spire/UI/WindowSettings.hpp"
 #include "Spire/Utilities/Utilities.hpp"
 
 class Ui_OrderImbalanceIndicatorWindow;
@@ -15,7 +15,7 @@ namespace Spire {
 
   /** Displays Market OrderImbalances. */
   class OrderImbalanceIndicatorWindow :
-      public QFrame, public UI::PersistentWindow {
+      public QFrame, public LegacyUI::PersistentWindow {
     public:
 
       /**
@@ -38,7 +38,8 @@ namespace Spire {
        */
       void SetModel(const std::shared_ptr<OrderImbalanceIndicatorModel>& model);
 
-      std::unique_ptr<UI::WindowSettings> GetWindowSettings() const override;
+      std::unique_ptr<LegacyUI::WindowSettings>
+        GetWindowSettings() const override;
 
     protected:
       void closeEvent(QCloseEvent* event) override;
@@ -48,7 +49,7 @@ namespace Spire {
       std::unique_ptr<Ui_OrderImbalanceIndicatorWindow> m_ui;
       UserProfile* m_userProfile;
       std::shared_ptr<OrderImbalanceIndicatorModel> m_model;
-      std::unique_ptr<UI::CustomVariantSortFilterProxyModel> m_proxyModel;
+      std::unique_ptr<LegacyUI::CustomVariantSortFilterProxyModel> m_proxyModel;
       boost::signals2::scoped_connection m_timeRangeConnection;
 
       void OnTimeRangeUpdated(

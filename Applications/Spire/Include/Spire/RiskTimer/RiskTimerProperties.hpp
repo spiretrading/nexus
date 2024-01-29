@@ -2,9 +2,9 @@
 #define SPIRE_RISK_TIMER_PROPERTIES_HPP
 #include <Beam/Pointers/Out.hpp>
 #include <QPoint>
+#include "Spire/LegacyUI/ShuttleQtTypes.hpp"
 #include "Spire/RiskTimer/RiskTimer.hpp"
 #include "Spire/Spire/Spire.hpp"
-#include "Spire/UI/ShuttleQtTypes.hpp"
 
 namespace Spire {
 

@@ -6,8 +6,8 @@
 #include <QMetaObject>
 #include <QWidget>
 #include "Spire/Blotter/Blotter.hpp"
+#include "Spire/LegacyUI/LegacyUI.hpp"
 #include "Spire/Spire/Spire.hpp"
-#include "Spire/UI/UI.hpp"
 
 class QItemSelection;
 class Ui_OpenPositionsWidget;
@@ -66,7 +66,7 @@ namespace Spire {
       std::unique_ptr<Ui_OpenPositionsWidget> m_ui;
       UserProfile* m_userProfile;
       BlotterModel* m_model;
-      std::unique_ptr<UI::CustomVariantSortFilterProxyModel> m_proxyModel;
+      std::unique_ptr<LegacyUI::CustomVariantSortFilterProxyModel> m_proxyModel;
       QMetaObject::Connection m_selectionChangedConnection;
 
       void OnContextMenu(const QPoint& position);

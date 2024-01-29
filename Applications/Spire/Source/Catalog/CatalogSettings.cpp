@@ -13,8 +13,8 @@
 #include "Spire/Catalog/CatalogTabModel.hpp"
 #include "Spire/Catalog/RegistryCatalogEntry.hpp"
 #include "Spire/Catalog/UserCatalogEntry.hpp"
-#include "Spire/UI/UISerialization.hpp"
-#include "Spire/UI/UserProfile.hpp"
+#include "Spire/LegacyUI/UISerialization.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace Beam::IO;
@@ -24,7 +24,7 @@ using namespace boost;
 using namespace boost::signals2;
 using namespace boost::uuids;
 using namespace Spire;
-using namespace Spire::UI;
+using namespace Spire::LegacyUI;
 
 namespace {
   void CreateValuesTab(CatalogSettings& settings) {

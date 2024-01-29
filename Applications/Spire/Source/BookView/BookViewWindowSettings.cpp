@@ -1,6 +1,6 @@
 #include "Spire/BookView/BookViewWindowSettings.hpp"
 #include "Spire/BookView/BookViewWindow.hpp"
-#include "Spire/UI/UserProfile.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 #include "ui_BookViewPanel.h"
 #include "ui_BookViewWindow.h"
 

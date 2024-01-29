@@ -1,7 +1,7 @@
 #include "Spire/Charting/SecurityTimePriceChartPlotSeries.hpp"
 #include "Spire/Charting/CandlestickChartPlot.hpp"
 #include "Spire/Charting/ChartPoint.hpp"
-#include "Spire/UI/UserProfile.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace Beam::Queries;

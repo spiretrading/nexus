@@ -10,12 +10,12 @@
 #include "Spire/Charting/ChartInteractions.hpp"
 #include "Spire/Charting/ChartPlotController.hpp"
 #include "Spire/Charting/ChartValue.hpp"
+#include "Spire/LegacyUI/PersistentWindow.hpp"
+#include "Spire/LegacyUI/SecurityContext.hpp"
+#include "Spire/LegacyUI/SecurityViewStack.hpp"
+#include "Spire/LegacyUI/WindowSettings.hpp"
+#include "Spire/LegacyUI/LegacyUI.hpp"
 #include "Spire/Spire/Spire.hpp"
-#include "Spire/UI/PersistentWindow.hpp"
-#include "Spire/UI/SecurityContext.hpp"
-#include "Spire/UI/SecurityViewStack.hpp"
-#include "Spire/UI/WindowSettings.hpp"
-#include "Spire/UI/UI.hpp"
 
 class QMenu;
 class Ui_ChartWindow;
@@ -23,8 +23,8 @@ class Ui_ChartWindow;
 namespace Spire {
 
   /** Displays a chart. */
-  class ChartWindow : public QMainWindow, public UI::PersistentWindow,
-      public UI::SecurityContext {
+  class ChartWindow : public QMainWindow, public LegacyUI::PersistentWindow,
+      public LegacyUI::SecurityContext {
     public:
 
       /**
@@ -62,7 +62,8 @@ namespace Spire {
        */
       void DisplaySecurity(const Nexus::Security& security);
 
-      std::unique_ptr<UI::WindowSettings> GetWindowSettings() const override;
+      std::unique_ptr<LegacyUI::WindowSettings>
+        GetWindowSettings() const override;
 
     protected:
       void showEvent(QShowEvent* event) override;
@@ -81,7 +82,7 @@ namespace Spire {
       std::optional<ChartPlotController> m_controller;
       Nexus::Security m_security;
       std::string m_linkIdentifier;
-      UI::SecurityViewStack m_securityViewStack;
+      LegacyUI::SecurityViewStack m_securityViewStack;
       ChartValue m_xPan;
       ChartValue m_yPan;
       boost::signals2::scoped_connection m_linkConnection;
@@ -93,7 +94,7 @@ namespace Spire {
       EventHandler m_eventHandler;
 
       void AdjustSlider(int previousMinimum, int previousMaximum, int minimum,
-        int maximum, UI::ScalableScrollBar* scrollBar);
+        int maximum, LegacyUI::ScalableScrollBar* scrollBar);
       void UpdateInteractionMode();
       void OnVerticalSliderChanged(
         int previousMinimum, int previousMaximum, int minimum, int maximum);

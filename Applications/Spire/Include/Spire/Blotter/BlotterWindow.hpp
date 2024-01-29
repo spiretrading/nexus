@@ -6,8 +6,8 @@
 #include "Spire/Blotter/Blotter.hpp"
 #include "Spire/Blotter/BlotterTasksModel.hpp"
 #include "Spire/Canvas/Canvas.hpp"
+#include "Spire/LegacyUI/PersistentWindow.hpp"
 #include "Spire/Spire/Spire.hpp"
-#include "Spire/UI/PersistentWindow.hpp"
 
 class QAction;
 class QAbstactItemModel;
@@ -19,7 +19,7 @@ class Ui_BlotterWindow;
 namespace Spire {
 
   /** Displays a BlotterModel. */
-  class BlotterWindow : public QFrame, public UI::PersistentWindow {
+  class BlotterWindow : public QFrame, public LegacyUI::PersistentWindow {
     public:
 
       /**
@@ -49,7 +49,8 @@ namespace Spire {
       /** Returns the blotter model being displayed. */
       BlotterModel& GetModel();
 
-      std::unique_ptr<UI::WindowSettings> GetWindowSettings() const override;
+      std::unique_ptr<LegacyUI::WindowSettings>
+        GetWindowSettings() const override;
 
     protected:
       void showEvent(QShowEvent* event) override;
@@ -63,13 +64,13 @@ namespace Spire {
       BlotterModel* m_model;
       boost::signals2::scoped_connection m_activeBlotterChangedConnection;
       boost::signals2::scoped_connection m_profitAndLossUpdateConnection;
-      UI::CustomVariantSortFilterProxyModel* m_proxyModel;
+      LegacyUI::CustomVariantSortFilterProxyModel* m_proxyModel;
       QStatusBar* m_statusBar;
-      UI::ValueLabel* m_totalProfitAndLossLabel;
-      UI::ValueLabel* m_unrealizedProfitAndLossLabel;
-      UI::ValueLabel* m_realizedProfitAndLossLabel;
-      UI::ValueLabel* m_feesLabel;
-      UI::ValueLabel* m_costBasisLabel;
+      LegacyUI::ValueLabel* m_totalProfitAndLossLabel;
+      LegacyUI::ValueLabel* m_unrealizedProfitAndLossLabel;
+      LegacyUI::ValueLabel* m_realizedProfitAndLossLabel;
+      LegacyUI::ValueLabel* m_feesLabel;
+      LegacyUI::ValueLabel* m_costBasisLabel;
       QToolBar* m_toolbar;
       QAction* m_executeAction;
       QAction* m_cancelAction;

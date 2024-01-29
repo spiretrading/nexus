@@ -1,5 +1,5 @@
 #include "Spire/Canvas/Operations/CanvasNodeTranslationContext.hpp"
-#include "Spire/UI/UserProfile.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace Beam::ServiceLocator;

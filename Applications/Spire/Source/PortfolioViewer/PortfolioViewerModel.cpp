@@ -3,8 +3,8 @@
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 #include "Nexus/Definitions/ExchangeRateTable.hpp"
 #include "Spire/PortfolioViewer/PortfolioSelectionModel.hpp"
-#include "Spire/UI/CustomQtVariants.hpp"
-#include "Spire/UI/UserProfile.hpp"
+#include "Spire/LegacyUI/CustomQtVariants.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace Beam::Queries;
@@ -16,7 +16,7 @@ using namespace Nexus::Accounting;
 using namespace Nexus::MarketDataService;
 using namespace Nexus::RiskService;
 using namespace Spire;
-using namespace Spire::UI;
+using namespace Spire::LegacyUI;
 
 PortfolioViewerModel::Entry::Entry(const DirectoryEntry& account)
   : m_account(account) {}

@@ -3,17 +3,17 @@
 #include <QByteArray>
 #include "Nexus/Definitions/Security.hpp"
 #include "Spire/BookView/BookViewProperties.hpp"
+#include "Spire/LegacyUI/SecurityViewStack.hpp"
+#include "Spire/LegacyUI/ShuttleQtTypes.hpp"
+#include "Spire/LegacyUI/WindowSettings.hpp"
 #include "Spire/Spire/Spire.hpp"
-#include "Spire/UI/SecurityViewStack.hpp"
-#include "Spire/UI/ShuttleQtTypes.hpp"
-#include "Spire/UI/WindowSettings.hpp"
 
 namespace Spire {
 
   /*! \class BookViewWindowSettings
       \brief Stores the window settings for a BookViewWindow.
    */
-  class BookViewWindowSettings : public UI::WindowSettings {
+  class BookViewWindowSettings : public LegacyUI::WindowSettings {
     public:
 
       //! Constructs a BookViewWindowSettings with default values.
@@ -39,7 +39,7 @@ namespace Spire {
       BookViewProperties m_properties;
       Nexus::Security m_security;
       std::string m_name;
-      UI::SecurityViewStack m_securityViewStack;
+      LegacyUI::SecurityViewStack m_securityViewStack;
       std::string m_identifier;
       std::string m_linkIdentifier;
       QByteArray m_geometry;

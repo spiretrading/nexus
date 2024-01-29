@@ -5,16 +5,16 @@
 #include <QByteArray>
 #include "Spire/Dashboard/Dashboard.hpp"
 #include "Spire/Dashboard/DashboardModelSchema.hpp"
+#include "Spire/LegacyUI/ShuttleQtTypes.hpp"
+#include "Spire/LegacyUI/WindowSettings.hpp"
 #include "Spire/Spire/Spire.hpp"
-#include "Spire/UI/ShuttleQtTypes.hpp"
-#include "Spire/UI/WindowSettings.hpp"
 
 namespace Spire {
 
   /*! \class DashboardWindowSettings
       \brief Stores the window settings for a DashboardWindow.
    */
-  class DashboardWindowSettings : public UI::WindowSettings {
+  class DashboardWindowSettings : public LegacyUI::WindowSettings {
     public:
 
       //! Constructs a DashboardWindowSettings with default values.
@@ -39,7 +39,7 @@ namespace Spire {
       friend struct Beam::Serialization::DataShuttle;
       std::string m_name;
       DashboardModelSchema m_schema;
-      std::unique_ptr<UI::WindowSettings> m_dashboardWidgetSettings;
+      std::unique_ptr<LegacyUI::WindowSettings> m_dashboardWidgetSettings;
       QByteArray m_geometry;
 
       template<typename Shuttler>

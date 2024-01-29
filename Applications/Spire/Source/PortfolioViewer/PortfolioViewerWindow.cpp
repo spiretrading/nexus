@@ -13,10 +13,10 @@
 #include "Spire/PortfolioViewer/PortfolioSelectionModel.hpp"
 #include "Spire/PortfolioViewer/PortfolioViewerWindowSettings.hpp"
 #include "Spire/PortfolioViewer/PortfolioViewerModel.hpp"
-#include "Spire/UI/CustomQtVariants.hpp"
-#include "Spire/UI/FunctionalAction.hpp"
-#include "Spire/UI/UserProfile.hpp"
-#include "Spire/UI/ValueLabel.hpp"
+#include "Spire/LegacyUI/CustomQtVariants.hpp"
+#include "Spire/LegacyUI/FunctionalAction.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
+#include "Spire/LegacyUI/ValueLabel.hpp"
 #include "Spire/Utilities/ExportModel.hpp"
 #include "ui_PortfolioViewerWindow.h"
 
@@ -25,7 +25,7 @@ using namespace Beam::ServiceLocator;
 using namespace Nexus;
 using namespace Nexus::OrderExecutionService;
 using namespace Spire;
-using namespace Spire::UI;
+using namespace Spire::LegacyUI;
 using namespace std;
 
 namespace {

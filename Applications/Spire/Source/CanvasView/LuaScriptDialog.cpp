@@ -4,7 +4,7 @@
 #include "Spire/Canvas/Common/NoneNode.hpp"
 #include "Spire/Canvas/Operations/CanvasNodeBuilder.hpp"
 #include "Spire/Canvas/Types/IntegerType.hpp"
-#include "Spire/UI/UserProfile.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 #include "ui_LuaScriptDialog.h"
 
 using namespace Beam;

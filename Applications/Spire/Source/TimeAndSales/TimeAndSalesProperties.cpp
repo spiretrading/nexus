@@ -7,9 +7,9 @@
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
 #include <QMessageBox>
+#include "Spire/LegacyUI/UISerialization.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesModel.hpp"
-#include "Spire/UI/UISerialization.hpp"
-#include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace Beam::IO;

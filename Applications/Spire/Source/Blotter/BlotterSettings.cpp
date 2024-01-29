@@ -12,8 +12,8 @@
 #include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/Blotter/BlotterTaskProperties.hpp"
 #include "Spire/Blotter/BlotterWindow.hpp"
-#include "Spire/UI/UISerialization.hpp"
-#include "Spire/UI/UserProfile.hpp"
+#include "Spire/LegacyUI/UISerialization.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace Beam::IO;
@@ -22,7 +22,7 @@ using namespace Beam::ServiceLocator;
 using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
-using namespace Spire::UI;
+using namespace Spire::LegacyUI;
 
 namespace {
   void LoadDefaultBlotter(Out<UserProfile> userProfile) {

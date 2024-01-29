@@ -9,7 +9,7 @@
 #include <boost/uuid/uuid_generators.hpp>
 #include <QMessageBox>
 #include "Spire/Canvas/Operations/CanvasNodeBuilder.hpp"
-#include "Spire/UI/UISerialization.hpp"
+#include "Spire/LegacyUI/UISerialization.hpp"
 
 using namespace Beam;
 using namespace Beam::IO;
@@ -17,7 +17,7 @@ using namespace Beam::Serialization;
 using namespace boost;
 using namespace boost::uuids;
 using namespace Spire;
-using namespace Spire::UI;
+using namespace Spire::LegacyUI;
 
 namespace {
   auto GenerateUid() {

@@ -138,7 +138,7 @@
          </layout>
         </item>
         <item>
-         <widget class="Spire::UI::FontSelectionWidget" name="m_fontSelector" native="true">
+         <widget class="Spire::LegacyUI::FontSelectionWidget" name="m_fontSelector" native="true">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
             <horstretch>0</horstretch>
@@ -394,9 +394,9 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>Spire::UI::FontSelectionWidget</class>
+   <class>Spire::LegacyUI::FontSelectionWidget</class>
    <extends>QWidget</extends>
-   <header>Spire/UI/FontSelectionWidget.hpp</header>
+   <header>Spire/LegacyUI/FontSelectionWidget.hpp</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

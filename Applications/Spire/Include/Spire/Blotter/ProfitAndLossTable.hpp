@@ -4,8 +4,8 @@
 #include <Beam/Pointers/Ref.hpp>
 #include <QWidget>
 #include "Spire/Blotter/Blotter.hpp"
+#include "Spire/LegacyUI/LegacyUI.hpp"
 #include "Spire/Spire/Spire.hpp"
-#include "Spire/UI/UI.hpp"
 
 class QModelIndex;
 class Ui_ProfitAndLossTable;
@@ -33,7 +33,7 @@ namespace Spire {
     private:
       std::unique_ptr<Ui_ProfitAndLossTable> m_ui;
       ProfitAndLossEntryModel* m_model;
-      UI::CustomVariantSortFilterProxyModel* m_proxyModel;
+      LegacyUI::CustomVariantSortFilterProxyModel* m_proxyModel;
 
       void OnHeaderResized(int logicalIndex, int oldSize, int newSize);
       void OnRowCountChanged(const QModelIndex& parent, int start, int end);

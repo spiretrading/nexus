@@ -5,7 +5,7 @@
 #include "Spire/Canvas/Common/NoneNode.hpp"
 #include "Spire/Canvas/Operations/CanvasNodeBuilder.hpp"
 #include "Spire/Canvas/Types/UnionType.hpp"
-#include "Spire/UI/UserProfile.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 #include "ui_CustomNodeDialog.h"
 
 using namespace Beam;

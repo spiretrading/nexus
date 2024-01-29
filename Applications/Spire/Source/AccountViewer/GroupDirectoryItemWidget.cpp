@@ -1,5 +1,5 @@
 #include "Spire/AccountViewer/GroupDirectoryItemWidget.hpp"
-#include "Spire/UI/UserProfile.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 #include "ui_GroupDirectoryItemWidget.h"
 
 using namespace Beam;

@@ -3,8 +3,8 @@
 #include "Spire/Blotter/OrderLogModel.hpp"
 #include "Spire/Blotter/OrderLogPropertiesDialog.hpp"
 #include "Spire/Blotter/BlotterModel.hpp"
-#include "Spire/UI/CustomQtVariants.hpp"
-#include "Spire/UI/UserProfile.hpp"
+#include "Spire/LegacyUI/CustomQtVariants.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 #include "ui_OrderLogWidget.h"
 
 using namespace Beam;
@@ -13,7 +13,7 @@ using namespace boost::signals2;
 using namespace Nexus;
 using namespace Nexus::OrderExecutionService;
 using namespace Spire;
-using namespace Spire::UI;
+using namespace Spire::LegacyUI;
 
 namespace {
   class OrderLogFilterProxyModel : public CustomVariantSortFilterProxyModel {

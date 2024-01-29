@@ -1,14 +1,14 @@
 #include "Spire/BookView/BookViewHighlightPropertiesWidget.hpp"
 #include <QColorDialog>
 #include "Spire/BookView/BookViewProperties.hpp"
-#include "Spire/UI/UserProfile.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 #include "ui_BookViewHighlightPropertiesWidget.h"
 
 using namespace Beam;
 using namespace boost;
 using namespace Nexus;
 using namespace Spire;
-using namespace Spire::UI;
+using namespace Spire::LegacyUI;
 using namespace std;
 
 namespace {

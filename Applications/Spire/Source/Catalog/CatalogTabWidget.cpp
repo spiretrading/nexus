@@ -7,13 +7,13 @@
 #include "Spire/Catalog/CatalogWindow.hpp"
 #include "Spire/Catalog/CatalogTabModel.hpp"
 #include "Spire/Catalog/CatalogTabView.hpp"
-#include "Spire/UI/LineInputDialog.hpp"
-#include "Spire/UI/UserProfile.hpp"
+#include "Spire/LegacyUI/LineInputDialog.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace boost;
 using namespace Spire;
-using namespace Spire::UI;
+using namespace Spire::LegacyUI;
 using namespace std;
 
 CatalogTabWidget::CatalogTabWidget(QWidget* parent)

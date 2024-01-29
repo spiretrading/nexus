@@ -12,8 +12,8 @@
 #include "Spire/Charting/ChartWindowSettings.hpp"
 #include "Spire/Charting/SecurityTimePriceChartPlotSeries.hpp"
 #include "Spire/InputWidgets/SecurityInputDialog.hpp"
-#include "Spire/UI/LinkSecurityContextAction.hpp"
-#include "Spire/UI/UserProfile.hpp"
+#include "Spire/LegacyUI/LinkSecurityContextAction.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 #include "ui_ChartWindow.h"
 
 using namespace Beam;
@@ -23,7 +23,7 @@ using namespace boost::signals2;
 using namespace Nexus;
 using namespace Nexus::TechnicalAnalysis;
 using namespace Spire;
-using namespace Spire::UI;
+using namespace Spire::LegacyUI;
 
 ChartWindow::ChartWindow(Ref<UserProfile> userProfile,
     const std::string& identifier, QWidget* parent, Qt::WindowFlags flags)

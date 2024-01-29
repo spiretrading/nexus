@@ -1,10 +1,10 @@
 #include "Spire/Canvas/ValueNodes/OrderStatusNode.hpp"
 #include "Spire/Canvas/Common/CanvasNodeVisitor.hpp"
-#include "Spire/UI/CustomQtVariants.hpp"
+#include "Spire/LegacyUI/CustomQtVariants.hpp"
 
 using namespace Nexus;
 using namespace Spire;
-using namespace Spire::UI;
+using namespace Spire::LegacyUI;
 using namespace std;
 
 OrderStatusNode::OrderStatusNode()

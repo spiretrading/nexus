@@ -14,7 +14,7 @@
 #include "Nexus/Parsers/SideParser.hpp"
 #include "Spire/Canvas/Types/RecordType.hpp"
 #include "Spire/Canvas/Types/CanvasTypeRegistry.hpp"
-#include "Spire/UI/UserProfile.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace Beam::Parsers;

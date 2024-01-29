@@ -19,15 +19,15 @@
 #include "Spire/Dashboard/SavedDashboards.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorProperties.hpp"
 #include "Spire/KeyBindings/HotkeyOverride.hpp"
+#include "Spire/LegacyUI/CustomQtVariants.hpp"
+#include "Spire/LegacyUI/LoginDialog.hpp"
+#include "Spire/LegacyUI/Toolbar.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
+#include "Spire/LegacyUI/WindowSettings.hpp"
 #include "Spire/PortfolioViewer/PortfolioViewerProperties.hpp"
 #include "Spire/RiskTimer/RiskTimerMonitor.hpp"
 #include "Spire/Spire/SpireServiceClients.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
-#include "Spire/UI/CustomQtVariants.hpp"
-#include "Spire/UI/LoginDialog.hpp"
-#include "Spire/UI/Toolbar.hpp"
-#include "Spire/UI/UserProfile.hpp"
-#include "Spire/UI/WindowSettings.hpp"
 #include "Version.hpp"
 #include <QtPlugin>
 
@@ -42,7 +42,7 @@ using namespace boost;
 using namespace Nexus;
 using namespace Nexus::TelemetryService;
 using namespace Spire;
-using namespace Spire::UI;
+using namespace Spire::LegacyUI;
 
 inline void InitializeResources() {
   Q_INIT_RESOURCE(Resources);

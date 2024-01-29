@@ -6,7 +6,7 @@
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Charting/Charting.hpp"
 #include "Spire/Charting/ChartValue.hpp"
-#include "Spire/UI/PersistentWindow.hpp"
+#include "Spire/LegacyUI/PersistentWindow.hpp"
 
 class Ui_ChartIntervalComboBox;
 
@@ -15,7 +15,8 @@ namespace Spire {
   /*! \class ChartIntervalComboBox
       \brief Displays a combo box for selecting charting intervals.
    */
-  class ChartIntervalComboBox : public QWidget, public UI::PersistentWindow {
+  class ChartIntervalComboBox :
+      public QWidget, public LegacyUI::PersistentWindow {
     public:
 
       //! Signals a change to the interval.
@@ -60,7 +61,8 @@ namespace Spire {
       boost::signals2::connection ConnectIntervalChangedSignal(
         const IntervalChangedSignal::slot_function_type& slot) const;
 
-      virtual std::unique_ptr<UI::WindowSettings> GetWindowSettings() const;
+      virtual std::unique_ptr<LegacyUI::WindowSettings>
+        GetWindowSettings() const;
 
     protected:
       virtual bool eventFilter(QObject* object, QEvent* event);

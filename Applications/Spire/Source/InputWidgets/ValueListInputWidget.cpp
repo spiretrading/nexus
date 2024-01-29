@@ -4,14 +4,14 @@
 #include <QLocale>
 #include <QVBoxLayout>
 #include "Spire/InputWidgets/ValueListInputDialog.hpp"
-#include "Spire/UI/CustomQtVariants.hpp"
+#include "Spire/LegacyUI/CustomQtVariants.hpp"
 
 using namespace Beam;
 using namespace boost;
 using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
-using namespace Spire::UI;
+using namespace Spire::LegacyUI;
 using namespace std;
 
 namespace {

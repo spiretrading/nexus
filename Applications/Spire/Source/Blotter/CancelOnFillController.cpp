@@ -1,6 +1,6 @@
 #include "Spire/Blotter/CancelOnFillController.hpp"
 #include "Spire/KeyBindings/InteractionsProperties.hpp"
-#include "Spire/UI/UserProfile.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace Nexus;

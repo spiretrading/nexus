@@ -7,8 +7,8 @@
 #include "Spire/Async/EventHandler.hpp"
 #include "Spire/Blotter/Blotter.hpp"
 #include "Spire/Blotter/OrderLogModel.hpp"
+#include "Spire/LegacyUI/LegacyUI.hpp"
 #include "Spire/Spire/Spire.hpp"
-#include "Spire/UI/UI.hpp"
 
 class Ui_OrderLogWidget;
 
@@ -63,7 +63,7 @@ namespace Spire {
       std::unique_ptr<Ui_OrderLogWidget> m_ui;
       UserProfile* m_userProfile;
       BlotterModel* m_model;
-      std::unique_ptr<UI::CustomVariantSortFilterProxyModel> m_proxyModel;
+      std::unique_ptr<LegacyUI::CustomVariantSortFilterProxyModel> m_proxyModel;
       std::vector<OrderLogModel::OrderEntry> m_orderEntries;
       boost::signals2::scoped_connection m_orderAddedConnection;
       boost::signals2::scoped_connection m_orderRemovedConnection;

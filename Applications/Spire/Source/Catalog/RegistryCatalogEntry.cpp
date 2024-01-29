@@ -5,7 +5,7 @@
 #include <Beam/Utilities/NotSupportedException.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include "Spire/Canvas/Operations/CanvasNodeBuilder.hpp"
-#include "Spire/UI/UISerialization.hpp"
+#include "Spire/LegacyUI/UISerialization.hpp"
 
 using namespace Beam;
 using namespace Beam::IO;

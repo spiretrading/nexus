@@ -5,14 +5,14 @@
 #include "Spire/Dashboard/Dashboard.hpp"
 #include "Spire/Dashboard/DashboardWidget.hpp"
 #include "Spire/Dashboard/DashboardRenderer.hpp"
-#include "Spire/UI/WindowSettings.hpp"
+#include "Spire/LegacyUI/WindowSettings.hpp"
 
 namespace Spire {
 
   /*! \class DashboardWidgetWindowSettings
       \brief Stores the window settings for a DashboardWidget.
    */
-  class DashboardWidgetWindowSettings : public UI::WindowSettings {
+  class DashboardWidgetWindowSettings : public LegacyUI::WindowSettings {
     public:
 
       //! Constructs a DashboardWidgetWindowSettings with default values.

@@ -3,7 +3,7 @@
 using namespace boost;
 using namespace boost::uuids;
 using namespace Spire;
-using namespace Spire::UI;
+using namespace Spire::LegacyUI;
 using namespace std;
 
 PersistentCatalogEntry::~PersistentCatalogEntry() {}

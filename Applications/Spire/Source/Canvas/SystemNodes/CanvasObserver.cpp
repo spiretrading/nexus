@@ -12,7 +12,7 @@
 #include "Spire/Canvas/Operations/Translation.hpp"
 #include "Spire/Canvas/Operations/TranslationPreprocessor.hpp"
 #include "Spire/Canvas/ReferenceNodes/ReferenceNode.hpp"
-#include "Spire/UI/UserProfile.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace Beam::Reactors;

@@ -1,14 +1,14 @@
 #include "Spire/Blotter/ProfitAndLossHeader.hpp"
 #include <QLayout>
 #include "Spire/Blotter/ProfitAndLossEntryModel.hpp"
-#include "Spire/UI/CustomQtVariants.hpp"
+#include "Spire/LegacyUI/CustomQtVariants.hpp"
 #include "ui_ProfitAndLossHeader.h"
 
 using namespace Beam;
 using namespace boost;
 using namespace Nexus;
 using namespace Spire;
-using namespace Spire::UI;
+using namespace Spire::LegacyUI;
 using namespace std;
 
 ProfitAndLossHeader::ProfitAndLossHeader(Ref<ProfitAndLossEntryModel> model,

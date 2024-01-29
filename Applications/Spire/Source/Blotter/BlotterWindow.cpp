@@ -15,15 +15,15 @@
 #include "Spire/Blotter/BlotterTasksModel.hpp"
 #include "Spire/Blotter/BlotterSettings.hpp"
 #include "Spire/Blotter/BlotterWindowSettings.hpp"
-#include "Spire/UI/UserProfile.hpp"
-#include "Spire/UI/ValueLabel.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
+#include "Spire/LegacyUI/ValueLabel.hpp"
 #include "ui_BlotterWindow.h"
 
 using namespace Beam;
 using namespace boost;
 using namespace Nexus;
 using namespace Spire;
-using namespace Spire::UI;
+using namespace Spire::LegacyUI;
 
 namespace {
   std::unordered_map<BlotterModel*, BlotterWindow*> blotterWindows;

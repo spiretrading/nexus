@@ -1,7 +1,7 @@
 #include "Spire/InputWidgets/CurrencyInputWidget.hpp"
 #include <QComboBox>
 #include <QVBoxLayout>
-#include "Spire/UI/UserProfile.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace boost;

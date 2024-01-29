@@ -2,7 +2,7 @@
 #include <Beam/Queries/Sequence.hpp>
 #include <Beam/TimeService/ToLocalTime.hpp>
 #include "Spire/InputWidgets/TimeRangeInputWidgetWindowSettings.hpp"
-#include "Spire/UI/CustomQtVariants.hpp"
+#include "Spire/LegacyUI/CustomQtVariants.hpp"
 #include "ui_TimeRangeInputWidget.h"
 
 using namespace Beam;
@@ -13,7 +13,7 @@ using namespace boost::posix_time;
 using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
-using namespace Spire::UI;
+using namespace Spire::LegacyUI;
 using namespace std;
 
 namespace {

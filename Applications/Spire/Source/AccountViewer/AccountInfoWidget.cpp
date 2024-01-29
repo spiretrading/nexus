@@ -1,14 +1,14 @@
 #include "Spire/AccountViewer/AccountInfoWidget.hpp"
 #include <QMessageBox>
 #include "Spire/AccountViewer/AccountInfoModel.hpp"
-#include "Spire/UI/CustomQtVariants.hpp"
-#include "Spire/UI/UserProfile.hpp"
+#include "Spire/LegacyUI/CustomQtVariants.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 #include "ui_AccountInfoWidget.h"
 
 using namespace Beam;
 using namespace Nexus;
 using namespace Spire;
-using namespace Spire::UI;
+using namespace Spire::LegacyUI;
 using namespace std;
 
 AccountInfoWidget::AccountInfoWidget(QWidget* parent, Qt::WindowFlags flags)

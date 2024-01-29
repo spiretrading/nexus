@@ -9,8 +9,8 @@
 #include <Beam/Serialization/ShuttleOptional.hpp>
 #include <QMessageBox>
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorWindowSettings.hpp"
-#include "Spire/UI/UISerialization.hpp"
-#include "Spire/UI/UserProfile.hpp"
+#include "Spire/LegacyUI/UISerialization.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace Beam::IO;

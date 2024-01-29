@@ -13,7 +13,7 @@
 #include "Spire/Canvas/ValueNodes/SecurityNode.hpp"
 #include "Spire/Canvas/ValueNodes/SideNode.hpp"
 #include "Spire/Canvas/ValueNodes/TimeInForceNode.hpp"
-#include "Spire/UI/UserProfile.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace Nexus;

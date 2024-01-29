@@ -2,7 +2,7 @@
 
 using namespace Beam;
 using namespace Spire;
-using namespace Spire::UI;
+using namespace Spire::LegacyUI;
 
 OrderImbalanceIndicatorMarketSelectionWidgetWindowSettings::
     OrderImbalanceIndicatorMarketSelectionWidgetWindowSettings(

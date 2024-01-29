@@ -6,15 +6,15 @@
 #include "Spire/Blotter/OpenPositionsWidget.hpp"
 #include "Spire/Blotter/OrderLogWidget.hpp"
 #include "Spire/Spire/Spire.hpp"
-#include "Spire/UI/ShuttleQtTypes.hpp"
-#include "Spire/UI/WindowSettings.hpp"
+#include "Spire/LegacyUI/ShuttleQtTypes.hpp"
+#include "Spire/LegacyUI/WindowSettings.hpp"
 
 namespace Spire {
 
   /*! \class BlotterWindowSettings
       \brief Stores the window settings for a BlotterWindow.
    */
-  class BlotterWindowSettings : public UI::WindowSettings {
+  class BlotterWindowSettings : public LegacyUI::WindowSettings {
     public:
 
       //! Constructs a BlotterWindowSettings with default values.

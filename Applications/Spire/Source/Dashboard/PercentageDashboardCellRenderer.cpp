@@ -6,7 +6,7 @@ using namespace boost;
 using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
-using namespace Spire::UI;
+using namespace Spire::LegacyUI;
 using namespace std;
 
 PercentageDashboardCellRenderer::PercentageDashboardCellRenderer(

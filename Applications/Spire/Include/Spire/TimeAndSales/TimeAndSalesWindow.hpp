@@ -3,12 +3,12 @@
 #include <QFrame>
 #include "Nexus/Definitions/Quote.hpp"
 #include "Nexus/Definitions/Security.hpp"
+#include "Spire/LegacyUI/PersistentWindow.hpp"
+#include "Spire/LegacyUI/SecurityContext.hpp"
+#include "Spire/LegacyUI/SecurityViewStack.hpp"
+#include "Spire/LegacyUI/WindowSettings.hpp"
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesProperties.hpp"
-#include "Spire/UI/PersistentWindow.hpp"
-#include "Spire/UI/SecurityContext.hpp"
-#include "Spire/UI/SecurityViewStack.hpp"
-#include "Spire/UI/WindowSettings.hpp"
 #include "Spire/Utilities/Utilities.hpp"
 
 class QStatusBar;
@@ -17,8 +17,8 @@ class Ui_TimeAndSalesWindow;
 namespace Spire {
 
   /** Displays TimeAndSale prints. */
-  class TimeAndSalesWindow : public QFrame, public UI::PersistentWindow,
-      public UI::SecurityContext {
+  class TimeAndSalesWindow : public QFrame, public LegacyUI::PersistentWindow,
+      public LegacyUI::SecurityContext {
     public:
 
       /**
@@ -46,7 +46,8 @@ namespace Spire {
        */
       void DisplaySecurity(const Nexus::Security& security);
 
-      std::unique_ptr<UI::WindowSettings> GetWindowSettings() const override;
+      std::unique_ptr<LegacyUI::WindowSettings>
+        GetWindowSettings() const override;
 
     protected:
       void showEvent(QShowEvent* event) override;
@@ -61,9 +62,9 @@ namespace Spire {
       UserProfile* m_userProfile;
       TimeAndSalesProperties m_properties;
       Nexus::Security m_security;
-      UI::SecurityViewStack m_securityViewStack;
+      LegacyUI::SecurityViewStack m_securityViewStack;
       QStatusBar* m_statusBar;
-      UI::ValueLabel* m_volumeLabel;
+      LegacyUI::ValueLabel* m_volumeLabel;
       std::unique_ptr<TimeAndSalesModel> m_model;
       std::shared_ptr<SecurityTechnicalsModel> m_securityTechnicalsModel;
       boost::signals2::scoped_connection m_volumeConnection;

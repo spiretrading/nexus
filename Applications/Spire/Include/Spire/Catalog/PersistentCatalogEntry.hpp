@@ -2,7 +2,7 @@
 #define SPIRE_PERSISTENTCATALOGENTRY_HPP
 #include "Spire/Catalog/Catalog.hpp"
 #include "Spire/Catalog/CatalogEntry.hpp"
-#include "Spire/UI/UI.hpp"
+#include "Spire/LegacyUI/LegacyUI.hpp"
 
 namespace Spire {
 

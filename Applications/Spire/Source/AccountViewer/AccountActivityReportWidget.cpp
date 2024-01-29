@@ -3,8 +3,8 @@
 #include <Beam/Queues/SequencePublisher.hpp>
 #include <Beam/TimeService/ToLocalTime.hpp>
 #include "Nexus/OrderExecutionService/StandardQueries.hpp"
-#include "Spire/UI/CustomQtVariants.hpp"
-#include "Spire/UI/UserProfile.hpp"
+#include "Spire/LegacyUI/CustomQtVariants.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 #include "ui_AccountActivityReportWidget.h"
 
 using namespace Beam;
@@ -16,7 +16,7 @@ using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::OrderExecutionService;
 using namespace Spire;
-using namespace Spire::UI;
+using namespace Spire::LegacyUI;
 using namespace std;
 
 AccountActivityReportWidget::ReportModel::ReportModel(

@@ -5,15 +5,15 @@
 #include "Spire/Canvas/Common/CanvasNode.hpp"
 #include "Spire/Canvas/Types/OrderReferenceType.hpp"
 #include "Spire/CanvasView/CanvasNodeModel.hpp"
-#include "Spire/UI/CanvasWindow.hpp"
-#include "Spire/UI/UserProfile.hpp"
+#include "Spire/LegacyUI/CanvasWindow.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 #include "ui_TaskKeyBindingsDialog.h"
 
 using namespace Beam;
 using namespace boost;
 using namespace Nexus;
 using namespace Spire;
-using namespace Spire::UI;
+using namespace Spire::LegacyUI;
 using namespace std;
 
 namespace {

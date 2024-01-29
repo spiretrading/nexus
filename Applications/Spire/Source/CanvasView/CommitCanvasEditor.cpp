@@ -23,17 +23,17 @@
 #include "Spire/Canvas/ValueNodes/TextNode.hpp"
 #include "Spire/Canvas/ValueNodes/TimeInForceNode.hpp"
 #include "Spire/CanvasView/ReplaceNodeCommand.hpp"
-#include "Spire/UI/MaxFloorSpinBox.hpp"
-#include "Spire/UI/MoneySpinBox.hpp"
-#include "Spire/UI/OptionalPriceSpinBox.hpp"
-#include "Spire/UI/UserProfile.hpp"
+#include "Spire/LegacyUI/MaxFloorSpinBox.hpp"
+#include "Spire/LegacyUI/MoneySpinBox.hpp"
+#include "Spire/LegacyUI/OptionalPriceSpinBox.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Spire;
-using namespace Spire::UI;
+using namespace Spire::LegacyUI;
 using namespace std;
 
 namespace {

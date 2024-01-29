@@ -1,6 +1,6 @@
 #include "Spire/Blotter/ActivityLogModel.hpp"
 #include "Nexus/OrderExecutionService/Order.hpp"
-#include "Spire/UI/CustomQtVariants.hpp"
+#include "Spire/LegacyUI/CustomQtVariants.hpp"
 
 using namespace Beam;
 using namespace boost;
@@ -8,7 +8,7 @@ using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::OrderExecutionService;
 using namespace Spire;
-using namespace Spire::UI;
+using namespace Spire::LegacyUI;
 
 namespace {
   const auto MAX_LOWER_BOUND = 2000;

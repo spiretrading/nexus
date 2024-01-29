@@ -1,14 +1,14 @@
 #ifndef SPIRE_TIMERANGEINPUTWIDGETWINDOWSETTINGS_HPP
 #define SPIRE_TIMERANGEINPUTWIDGETWINDOWSETTINGS_HPP
 #include "Spire/InputWidgets/TimeRangeInputWidget.hpp"
-#include "Spire/UI/WindowSettings.hpp"
+#include "Spire/LegacyUI/WindowSettings.hpp"
 
 namespace Spire {
 
   /*! \class TimeRangeInputWidgetWindowSettings
       \brief Stores the window settings for a TimeRangeInputWidget.
    */
-  class TimeRangeInputWidgetWindowSettings : public UI::WindowSettings {
+  class TimeRangeInputWidgetWindowSettings : public LegacyUI::WindowSettings {
     public:
 
       //! Constructs a TimeRangeInputWidgetWindowSettings.

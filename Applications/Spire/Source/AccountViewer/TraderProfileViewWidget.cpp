@@ -4,7 +4,7 @@
 #include "Spire/AccountViewer/AccountInfoModel.hpp"
 #include "Spire/AccountViewer/ComplianceModel.hpp"
 #include "Spire/AccountViewer/RiskModel.hpp"
-#include "Spire/UI/UserProfile.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 #include "ui_TraderProfileViewWidget.h"
 
 using namespace Beam;

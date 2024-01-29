@@ -1,7 +1,7 @@
 #include "Spire/Charting/ChartWindowSettings.hpp"
 #include "Spire/Charting/ChartIntervalComboBox.hpp"
 #include "Spire/Charting/ChartWindow.hpp"
-#include "Spire/UI/UserProfile.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 #include "ui_ChartWindow.h"
 
 using namespace Beam;

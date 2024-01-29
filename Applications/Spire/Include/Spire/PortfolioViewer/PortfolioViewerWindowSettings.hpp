@@ -3,16 +3,16 @@
 #include "Spire/PortfolioViewer/PortfolioViewerProperties.hpp"
 #include "Spire/PortfolioViewer/PortfolioViewer.hpp"
 #include "Spire/Spire/Spire.hpp"
-#include "Spire/UI/ShuttleQtTypes.hpp"
-#include "Spire/UI/UI.hpp"
-#include "Spire/UI/WindowSettings.hpp"
+#include "Spire/LegacyUI/ShuttleQtTypes.hpp"
+#include "Spire/LegacyUI/LegacyUI.hpp"
+#include "Spire/LegacyUI/WindowSettings.hpp"
 
 namespace Spire {
 
   /*! \class PortfolioViewerWindowSettings
       \brief Stores the window settings for a PortfolioViewerWindow.
    */
-  class PortfolioViewerWindowSettings : public UI::WindowSettings {
+  class PortfolioViewerWindowSettings : public LegacyUI::WindowSettings {
     public:
 
       //! Constructs a PortfolioViewerWindowSettings with default values.

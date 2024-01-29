@@ -46,19 +46,19 @@
 #include "Spire/InputWidgets/SecurityInputDialog.hpp"
 #include "Spire/InputWidgets/TimeInputDialog.hpp"
 #include "Spire/InputWidgets/TimeRangeInputDialog.hpp"
-#include "Spire/UI/CustomQtVariants.hpp"
-#include "Spire/UI/MaxFloorSpinBox.hpp"
-#include "Spire/UI/MoneySpinBox.hpp"
-#include "Spire/UI/OptionalPriceSpinBox.hpp"
-#include "Spire/UI/QuantitySpinBox.hpp"
-#include "Spire/UI/UserProfile.hpp"
+#include "Spire/LegacyUI/CustomQtVariants.hpp"
+#include "Spire/LegacyUI/MaxFloorSpinBox.hpp"
+#include "Spire/LegacyUI/MoneySpinBox.hpp"
+#include "Spire/LegacyUI/OptionalPriceSpinBox.hpp"
+#include "Spire/LegacyUI/QuantitySpinBox.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Spire;
-using namespace Spire::UI;
+using namespace Spire::LegacyUI;
 
 namespace {
   class OpenEditorCanvasNodeVisitor : public CanvasNodeVisitor {

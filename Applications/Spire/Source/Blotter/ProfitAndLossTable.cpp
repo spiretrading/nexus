@@ -1,13 +1,13 @@
 #include "Spire/Blotter/ProfitAndLossTable.hpp"
 #include "Spire/Blotter/ProfitAndLossEntryModel.hpp"
-#include "Spire/UI/CustomQtVariants.hpp"
+#include "Spire/LegacyUI/CustomQtVariants.hpp"
 #include "ui_ProfitAndLossTable.h"
 
 using namespace Beam;
 using namespace boost;
 using namespace Nexus;
 using namespace Spire;
-using namespace Spire::UI;
+using namespace Spire::LegacyUI;
 
 ProfitAndLossTable::ProfitAndLossTable(Ref<UserProfile> userProfile,
     Ref<ProfitAndLossEntryModel> model, QWidget* parent)

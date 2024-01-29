@@ -6,8 +6,8 @@
 #include <Beam/Pointers/Ref.hpp>
 #include <boost/signals2/signal.hpp>
 #include "Spire/InputWidgets/ValueListInputDialog.hpp"
+#include "Spire/LegacyUI/LegacyUI.hpp"
 #include "Spire/Spire/Spire.hpp"
-#include "Spire/UI/UI.hpp"
 
 class QLineEdit;
 
@@ -88,7 +88,7 @@ namespace Spire {
       const std::type_info* m_type;
       std::vector<ValueListInputDialog::Value> m_values;
       QLineEdit* m_lineEdit;
-      std::unique_ptr<UI::CustomVariantItemDelegate> m_itemDelegate;
+      std::unique_ptr<LegacyUI::CustomVariantItemDelegate> m_itemDelegate;
       bool m_isReadOnly;
       mutable ValuesUpdatedSignal m_valuesUpdatedSignal;
   };

@@ -1,7 +1,7 @@
 #include "Spire/Dashboard/BboSizeDashboardCellBuilder.hpp"
 #include <Beam/Queues/ConverterQueueReader.hpp>
 #include "Spire/Dashboard/QueueDashboardCell.hpp"
-#include "Spire/UI/UserProfile.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace Beam::Queries;

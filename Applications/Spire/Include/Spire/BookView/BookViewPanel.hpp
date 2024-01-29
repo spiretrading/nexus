@@ -7,8 +7,8 @@
 #include "Nexus/Definitions/Side.hpp"
 #include "Spire/Async/EventHandler.hpp"
 #include "Spire/BookView/BookViewProperties.hpp"
+#include "Spire/LegacyUI/CustomQtVariants.hpp"
 #include "Spire/Spire/Spire.hpp"
-#include "Spire/UI/CustomQtVariants.hpp"
 
 class QModelIndex;
 class QTableView;
@@ -59,7 +59,7 @@ namespace Spire {
       friend class BookViewWindowSettings;
       std::unique_ptr<Ui_BookViewPanel> m_ui;
       UserProfile* m_userProfile;
-      std::optional<UI::CustomVariantItemDelegate> m_itemDelegate;
+      std::optional<LegacyUI::CustomVariantItemDelegate> m_itemDelegate;
       BookViewProperties m_properties;
       Nexus::Security m_security;
       Nexus::Side m_side;

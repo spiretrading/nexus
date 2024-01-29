@@ -12,8 +12,8 @@
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
 #include "Spire/Blotter/OrderLogModel.hpp"
 #include "Spire/Canvas/Canvas.hpp"
+#include "Spire/LegacyUI/HashQtTypes.hpp"
 #include "Spire/Spire/Spire.hpp"
-#include "Spire/UI/HashQtTypes.hpp"
 
 class QKeyEvent;
 

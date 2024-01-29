@@ -1,6 +1,6 @@
 #include "Spire/Blotter/OrderLogModel.hpp"
+#include "Spire/LegacyUI/CustomQtVariants.hpp"
 #include "Nexus/OrderExecutionService/Order.hpp"
-#include "Spire/UI/CustomQtVariants.hpp"
 
 using namespace Beam;
 using namespace boost;
@@ -9,7 +9,7 @@ using namespace boost::signals2;
 using namespace Nexus;
 using namespace Nexus::OrderExecutionService;
 using namespace Spire;
-using namespace Spire::UI;
+using namespace Spire::LegacyUI;
 
 OrderLogModel::OrderEntry::OrderEntry(const Order* order)
   : m_order(order),

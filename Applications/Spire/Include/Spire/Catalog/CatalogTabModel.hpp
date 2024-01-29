@@ -5,7 +5,7 @@
 #include <boost/signals2/signal.hpp>
 #include <QAbstractListModel>
 #include "Spire/Catalog/Catalog.hpp"
-#include "Spire/UI/UI.hpp"
+#include "Spire/LegacyUI/LegacyUI.hpp"
 
 namespace Spire {
 

@@ -121,7 +121,7 @@
 #include "Spire/Canvas/ValueNodes/TimeNode.hpp"
 #include "Spire/Canvas/ValueNodes/TimeRangeNode.hpp"
 #include "Spire/Canvas/ValueNodes/ValueNode.hpp"
-#include "Spire/UI/UserProfile.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace Beam::IO;

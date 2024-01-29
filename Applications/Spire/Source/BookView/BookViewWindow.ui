@@ -73,7 +73,7 @@
         </widget>
        </item>
        <item row="0" column="1">
-        <widget class="Spire::UI::ValueLabel" name="m_highValue">
+        <widget class="Spire::LegacyUI::ValueLabel" name="m_highValue">
          <property name="text">
           <string>99.99</string>
          </property>
@@ -83,7 +83,7 @@
         </widget>
        </item>
        <item row="1" column="1">
-        <widget class="Spire::UI::ValueLabel" name="m_lowValue">
+        <widget class="Spire::LegacyUI::ValueLabel" name="m_lowValue">
          <property name="text">
           <string>99.99</string>
          </property>
@@ -116,7 +116,7 @@
         <number>0</number>
        </property>
        <item row="1" column="1">
-        <widget class="Spire::UI::ValueLabel" name="m_volumeValue">
+        <widget class="Spire::LegacyUI::ValueLabel" name="m_volumeValue">
          <property name="text">
           <string>99999999</string>
          </property>
@@ -152,7 +152,7 @@
         </widget>
        </item>
        <item row="0" column="1">
-        <widget class="Spire::UI::ValueLabel" name="m_defaultQuantityValue">
+        <widget class="Spire::LegacyUI::ValueLabel" name="m_defaultQuantityValue">
          <property name="text">
           <string>999x999</string>
          </property>
@@ -185,7 +185,7 @@
         <number>0</number>
        </property>
        <item row="1" column="1">
-        <widget class="Spire::UI::ValueLabel" name="m_openValue">
+        <widget class="Spire::LegacyUI::ValueLabel" name="m_openValue">
          <property name="text">
           <string>99.99</string>
          </property>
@@ -221,7 +221,7 @@
         </widget>
        </item>
        <item row="2" column="1">
-        <widget class="Spire::UI::ValueLabel" name="m_closeValue">
+        <widget class="Spire::LegacyUI::ValueLabel" name="m_closeValue">
          <property name="text">
           <string>99.99</string>
          </property>
@@ -257,9 +257,9 @@
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>Spire::UI::ValueLabel</class>
+   <class>Spire::LegacyUI::ValueLabel</class>
    <extends>QLabel</extends>
-   <header>Spire/UI/ValueLabel.hpp</header>
+   <header>Spire/LegacyUI/ValueLabel.hpp</header>
   </customwidget>
  </customwidgets>
  <resources>

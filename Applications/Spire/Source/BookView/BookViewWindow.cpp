@@ -29,9 +29,9 @@
 #include "Spire/CanvasView/CondensedCanvasWidget.hpp"
 #include "Spire/CanvasView/CanvasNodeNotVisibleException.hpp"
 #include "Spire/InputWidgets/SecurityInputDialog.hpp"
-#include "Spire/UI/LinkSecurityContextAction.hpp"
-#include "Spire/UI/UserProfile.hpp"
-#include "Spire/UI/ValueLabel.hpp"
+#include "Spire/LegacyUI/LinkSecurityContextAction.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
+#include "Spire/LegacyUI/ValueLabel.hpp"
 #include "Spire/Utilities/SecurityTechnicalsModel.hpp"
 #include "ui_BookViewWindow.h"
 
@@ -40,7 +40,7 @@ using namespace boost;
 using namespace Nexus;
 using namespace Nexus::MarketDataService;
 using namespace Spire;
-using namespace Spire::UI;
+using namespace Spire::LegacyUI;
 
 namespace {
   const auto UPDATE_INTERVAL = 100;

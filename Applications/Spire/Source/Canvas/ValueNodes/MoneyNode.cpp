@@ -1,13 +1,13 @@
 #include "Spire/Canvas/ValueNodes/MoneyNode.hpp"
 #include <QString>
 #include "Spire/Canvas/Common/CanvasNodeVisitor.hpp"
-#include "Spire/UI/CustomQtVariants.hpp"
+#include "Spire/LegacyUI/CustomQtVariants.hpp"
 
 using namespace Beam;
 using namespace boost;
 using namespace Nexus;
 using namespace Spire;
-using namespace Spire::UI;
+using namespace Spire::LegacyUI;
 using namespace std;
 
 MoneyNode::MoneyNode()

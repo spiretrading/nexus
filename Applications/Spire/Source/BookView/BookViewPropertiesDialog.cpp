@@ -1,6 +1,6 @@
 #include "Spire/BookView/BookViewPropertiesDialog.hpp"
 #include "Spire/BookView/BookViewWindow.hpp"
-#include "Spire/UI/UserProfile.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 #include "ui_BookViewPropertiesDialog.h"
 
 using namespace Beam;
