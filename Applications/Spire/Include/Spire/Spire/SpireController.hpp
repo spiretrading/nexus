@@ -1,5 +1,7 @@
 #ifndef SPIRE_CONTROLLER_HPP
 #define SPIRE_CONTROLLER_HPP
+/** TODO */
+#if 0
 #include <memory>
 #include <vector>
 #include "Spire/Login/LoginController.hpp"
@@ -37,5 +39,6 @@ namespace Spire {
       void on_login(const Definitions& definitions);
   };
 }
+#endif
 
 #endif

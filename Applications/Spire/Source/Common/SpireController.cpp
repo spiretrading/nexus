@@ -2,6 +2,7 @@
 #ifdef slots
   #undef slots
 #endif
+#if 0
 #include <filesystem>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include "Nexus/ServiceClients/ApplicationServiceClients.hpp"
@@ -94,3 +95,4 @@ std::vector<LoginController::ServerEntry>
 void SpireController::on_login(const Definitions& definitions) {
   m_state = State::TOOLBAR;
 }
+#endif

@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <vector>
 #include <Beam/Collections/Trie.hpp>
-#include "Spire/Spire/QtPromise.hpp"
+#include "Spire/Async/QtPromise.hpp"
 #include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/Ui.hpp"
