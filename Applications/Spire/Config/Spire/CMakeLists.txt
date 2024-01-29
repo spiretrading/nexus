@@ -19,9 +19,9 @@ add_executable(Spire ${app_type} ${header_files} ${source_files}
   ${resource_files} ${manifest_files})
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 target_link_libraries(Spire Async Dashboard Charting PortfolioViewer Utilities
-  RiskTimer AccountViewer KeyBindings Blotter Catalog BookView TimeAndSales
-  OrderImbalanceIndicator InputWidgets CanvasView Canvas LegacyResources
-  LegacyUI
+  RiskTimer AccountViewer KeyBindings Blotter Catalog BookView Library
+  Resources TimeAndSales OrderImbalanceIndicator InputWidgets CanvasView Canvas
+  LegacyResources LegacyUI
   debug ${CRYPTOPP_LIBRARY_DEBUG_PATH}
   optimized ${CRYPTOPP_LIBRARY_OPTIMIZED_PATH}
   debug ${LUA_LIBRARY_DEBUG_PATH}
@@ -30,32 +30,38 @@ target_link_libraries(Spire Async Dashboard Charting PortfolioViewer Utilities
   optimized ${OPEN_SSL_LIBRARY_OPTIMIZED_PATH}
   debug ${OPEN_SSL_BASE_LIBRARY_DEBUG_PATH}
   optimized ${OPEN_SSL_BASE_LIBRARY_OPTIMIZED_PATH}
-  debug ${YAML_LIBRARY_DEBUG_PATH}
-  optimized ${YAML_LIBRARY_OPTIMIZED_PATH}
+  debug ${QT_ACCESS_LIBRARY_DEBUG_PATH}
+  optimized ${QT_ACCESS_LIBRARY_OPTIMIZED_PATH}
   debug ${QT_CORE_LIBRARY_DEBUG_PATH}
   optimized ${QT_CORE_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_FREETYPE_LIBRARY_DEBUG_PATH}
-  optimized ${QT_FREETYPE_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_HBNG_LIBRARY_DEBUG_PATH}
-  optimized ${QT_HBNG_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_GUI_LIBRARY_DEBUG_PATH}
-  optimized ${QT_GUI_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_MAIN_LIBRARY_DEBUG_PATH}
-  optimized ${QT_MAIN_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_PCRE_LIBRARY_DEBUG_PATH}
-  optimized ${QT_PCRE_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_WIDGETS_LIBRARY_DEBUG_PATH}
-  optimized ${QT_WIDGETS_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_PNG_LIBRARY_DEBUG_PATH}
-  optimized ${QT_PNG_LIBRARY_OPTIMIZED_PATH}
   debug ${QT_EVENT_LIBRARY_DEBUG_PATH}
   optimized ${QT_EVENT_LIBRARY_OPTIMIZED_PATH}
   debug ${QT_FONT_LIBRARY_DEBUG_PATH}
   optimized ${QT_FONT_LIBRARY_OPTIMIZED_PATH}
+  debug ${QT_FREETYPE_LIBRARY_DEBUG_PATH}
+  optimized ${QT_FREETYPE_LIBRARY_OPTIMIZED_PATH}
+  debug ${QT_GIF_LIBRARY_DEBUG_PATH}
+  optimized ${QT_GIF_LIBRARY_OPTIMIZED_PATH}
+  debug ${QT_GUI_LIBRARY_DEBUG_PATH}
+  optimized ${QT_GUI_LIBRARY_OPTIMIZED_PATH}
+  debug ${QT_HBNG_LIBRARY_DEBUG_PATH}
+  optimized ${QT_HBNG_LIBRARY_OPTIMIZED_PATH}
+  debug ${QT_MAIN_LIBRARY_DEBUG_PATH}
+  optimized ${QT_MAIN_LIBRARY_OPTIMIZED_PATH}
+  debug ${QT_PCRE_LIBRARY_DEBUG_PATH}
+  optimized ${QT_PCRE_LIBRARY_OPTIMIZED_PATH}
+  debug ${QT_PNG_LIBRARY_DEBUG_PATH}
+  optimized ${QT_PNG_LIBRARY_OPTIMIZED_PATH}
+  debug ${QT_SVG_ICON_PLUGIN_LIBRARY_DEBUG_PATH}
+  optimized ${QT_SVG_ICON_PLUGIN_LIBRARY_OPTIMIZED_PATH}
+  debug ${QT_SVG_LIBRARY_DEBUG_PATH}
+  optimized ${QT_SVG_LIBRARY_OPTIMIZED_PATH}
   debug ${QT_THEME_LIBRARY_DEBUG_PATH}
   optimized ${QT_THEME_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_ACCESS_LIBRARY_DEBUG_PATH}
-  optimized ${QT_ACCESS_LIBRARY_OPTIMIZED_PATH}
+  debug ${QT_WIDGETS_LIBRARY_DEBUG_PATH}
+  optimized ${QT_WIDGETS_LIBRARY_OPTIMIZED_PATH}
+  debug ${YAML_LIBRARY_DEBUG_PATH}
+  optimized ${YAML_LIBRARY_OPTIMIZED_PATH}
   debug ${ZLIB_LIBRARY_DEBUG_PATH}
   optimized ${ZLIB_LIBRARY_OPTIMIZED_PATH})
 if(UNIX)

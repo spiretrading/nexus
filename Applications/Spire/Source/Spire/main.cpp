@@ -24,8 +24,10 @@
 #include "Spire/LegacyUI/Toolbar.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
+#include "Spire/Login/LoginController.hpp"
 #include "Spire/PortfolioViewer/PortfolioViewerProperties.hpp"
 #include "Spire/RiskTimer/RiskTimerMonitor.hpp"
+#include "Spire/Spire/Resources.hpp"
 #include "Spire/Spire/SpireServiceClients.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
 #include "Version.hpp"
@@ -55,9 +57,9 @@ namespace {
     ServiceName<TelemetryService::SERVICE_NAME>,
     ZLibSessionBuilder<ServiceLocatorClientBox>>;
 
-  std::vector<LoginDialog::ServerEntry> ParseServers(
+  std::vector<LoginController::ServerEntry> ParseServers(
       const YAML::Node& config, const std::filesystem::path& configPath) {
-    auto servers = std::vector<LoginDialog::ServerEntry>();
+    auto servers = std::vector<LoginController::ServerEntry>();
     if(!config["servers"]) {
       {
         auto configFile = std::ofstream(configPath);
@@ -155,6 +157,7 @@ int main(int argc, char* argv[]) {
   application.setOrganizationName(QObject::tr("Spire Trading"));
   application.setApplicationName(QObject::tr("Spire"));
   application.setApplicationVersion(SPIRE_VERSION);
+  initialize_resources();
   RegisterCustomQtVariants();
   InitializeResources();
   auto applicationPath =
@@ -187,7 +190,7 @@ int main(int argc, char* argv[]) {
       QObject::tr("Invalid configuration file."));
     return -1;
   }
-  auto servers = std::vector<LoginDialog::ServerEntry>();
+  auto servers = std::vector<LoginController::ServerEntry>();
   try {
     servers = ParseServers(config, configPath);
   } catch(const std::exception&) {
@@ -195,6 +198,17 @@ int main(int argc, char* argv[]) {
       QObject::tr("Invalid configuration file."));
     return -1;
   }
+  auto login_controller = LoginController(SPIRE_VERSION, std::move(servers),
+    [&] (const auto& username, const auto& password, const auto& address)  {
+      return ServiceClientsBox(std::make_unique<SpireServiceClients>(
+        std::make_unique<ApplicationServiceLocatorClient>(
+          username, password, address)));
+    });
+  login_controller.open();
+  login_controller.connect_logged_in_signal([&] (auto service_clients) {
+  });
+  application.exec();
+/*
   auto loginDialog = LoginDialog(std::move(servers));
   auto loginResultCode = loginDialog.exec();
   if(loginResultCode == QDialog::Rejected) {
@@ -208,6 +222,8 @@ int main(int argc, char* argv[]) {
     QMessageBox::critical(nullptr, QObject::tr("Error"), QObject::tr(e.what()));
     return -1;
   }
+*/
+#if 0
   auto applicationTelemetryClient = optional<SpireTelemetryClient>();
   auto telemetryClient = optional<TelemetryClientBox>();
   try {
@@ -281,5 +297,6 @@ int main(int argc, char* argv[]) {
   BookViewProperties::Save(userProfile);
   CatalogSettings::Save(userProfile);
   BlotterSettings::Save(userProfile);
+#endif
   return 0;
 }

@@ -12,12 +12,12 @@ int main(int argc, char** argv) {
   application->setOrganizationName(QObject::tr("Spire Trading Inc"));
   application->setApplicationName(QObject::tr("Login UI Tester"));
   initialize_resources();
-  LoginWindow login(SPIRE_VERSION);
-  login.show();
-  LoginUiTester tester(&login);
-  login.installEventFilter(&tester);
-  tester.setGeometry(login.pos().x(),
-    login.pos().y() + login.height() + 100, 0, 0);
+  auto window = LoginWindow(SPIRE_VERSION);
+  window.show();
+  auto tester = LoginUiTester(&window);
+  window.installEventFilter(&tester);
+  tester.setGeometry(
+    window.pos().x(), window.pos().y() + window.height() + 100, 0, 0);
   tester.setAttribute(Qt::WA_ShowWithoutActivating);
   tester.show();
   application->exec();
