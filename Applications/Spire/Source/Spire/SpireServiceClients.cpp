@@ -35,11 +35,11 @@ using namespace Spire;
 
 namespace {
   template<typename Box, typename Client>
-  auto make_client(auto& service_locator_client, auto state) {
+  auto make_client(auto& service_locator_client, auto reason) {
     try {
       return Box(std::in_place_type<Client>, service_locator_client->Get());
     } catch(const std::exception&) {
-      throw LoginException(state);
+      throw LoginException(reason);
     }
   }
 }
@@ -53,43 +53,43 @@ BEAM_SUPPRESS_THIS_INITIALIZER()
       auto definitionsClient =
         make_client<DefinitionsClientBox, ApplicationDefinitionsClient>(
           m_applicationServiceLocatorClient,
-          LoginWindow::State::DEFINITIONS_SERVER_UNAVAILABLE);
-      auto minimumVersion = definitionsClient.LoadMinimumSpireClientVersion();
-      if(std::stoi(minimumVersion) > std::stoi(std::string(SPIRE_VERSION))) {
-        BOOST_THROW_EXCEPTION(std::runtime_error(
-          ("Spire version incompatible.\n"
-          "Minimum version required: ") + minimumVersion + ("\n"
-          "Current version installed: ") + std::string(SPIRE_VERSION)));
+          "Definitions server is unavailable.");
+      auto minimum_version = definitionsClient.LoadMinimumSpireClientVersion();
+      if(std::stoi(minimum_version) > std::stoi(std::string(SPIRE_VERSION))) {
+        BOOST_THROW_EXCEPTION(
+          LoginException("Unsupported version, update to " + minimum_version));
       }
       return definitionsClient;
     }()),
     m_registryClient(make_client<RegistryClientBox, ApplicationRegistryClient>(
-      m_applicationServiceLocatorClient,
-      LoginWindow::State::REGISTRY_SERVER_UNAVAILABLE)),
+      m_applicationServiceLocatorClient, "Registry server is unavailable.")),
     m_administrationClient(make_client<
       AdministrationClientBox, ApplicationAdministrationClient>(
         m_applicationServiceLocatorClient,
-        LoginWindow::State::ADMINISTRATION_SERVER_UNAVAILABLE)),
+        "Administration server is unavailable.")),
     m_marketDataClient(make_client<
       MarketDataClientBox, ApplicationMarketDataClient>(
         m_applicationServiceLocatorClient,
-        LoginWindow::State::MARKET_DATA_SERVER_UNAVAILABLE)),
+        "Market data server is unavailable.")),
     m_chartingClient(make_client<ChartingClientBox, ApplicationChartingClient>(
-      m_applicationServiceLocatorClient,
-      LoginWindow::State::CHARTING_SERVER_UNAVAILABLE)),
+      m_applicationServiceLocatorClient, "Charting server is unavailable.")),
     m_complianceClient(make_client<
       ComplianceClientBox, ApplicationComplianceClient>(
         m_applicationServiceLocatorClient,
-        LoginWindow::State::COMPLIANCE_SERVER_UNAVAILABLE)),
+        "Compliance server is unavailable.")),
     m_orderExecutionClient(make_client<
       OrderExecutionClientBox, ApplicationOrderExecutionClient>(
         m_applicationServiceLocatorClient,
-        LoginWindow::State::ORDER_EXECUTION_SERVER_UNAVAILABLE)),
+        "Order execution server is unavailable.")),
     m_riskClient(make_client<RiskClientBox, ApplicationRiskClient>(
-      m_applicationServiceLocatorClient,
-      LoginWindow::State::RISK_SERVER_UNAVAILABLE)),
-    m_timeClient(MakeLiveNtpTimeClientFromServiceLocator(
-      m_serviceLocatorClient)) {}
+      m_applicationServiceLocatorClient, "Risk server is unavailable.")),
+    m_timeClient([&] {
+      try {
+        return MakeLiveNtpTimeClientFromServiceLocator(m_serviceLocatorClient);
+      } catch(const std::exception&) {
+        throw LoginException("Time server is unavailable.");
+      }
+    }()) {}
 BEAM_UNSUPPRESS_THIS_INITIALIZER()
 
 SpireServiceClients::~SpireServiceClients() {

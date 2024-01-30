@@ -197,70 +197,19 @@ void LoginWindow::set_state(State state) {
       state = State::NONE;
       break;
     }
-    case State::INCORRECT_CREDENTIALS: {
-      m_status_label->get_current()->set(
-        tr("Incorrect username or password."));
-      reset_visuals();
-      break;
-    }
-    case State::ADMINISTRATION_SERVER_UNAVAILABLE: {
-      m_status_label->get_current()->set(
-        tr("Administration server is unavailable."));
-      reset_visuals();
-      break;
-    }
-    case State::CHARTING_SERVER_UNAVAILABLE: {
-      m_status_label->get_current()->set(tr("Charting server is unavailable."));
-      reset_visuals();
-      break;
-    }
-    case State::COMPLIANCE_SERVER_UNAVAILABLE: {
-      m_status_label->get_current()->set(
-        tr("Compliance server is unavailable."));
-      reset_visuals();
-      break;
-    }
-    case State::DEFINITIONS_SERVER_UNAVAILABLE: {
-      m_status_label->get_current()->set(
-        tr("Definitions server is unavailable."));
-      reset_visuals();
-      break;
-    }
-    case State::MARKET_DATA_SERVER_UNAVAILABLE: {
-      m_status_label->get_current()->set(
-        tr("Market data server is unavailable."));
-      reset_visuals();
-      break;
-    }
-    case State::ORDER_EXECUTION_SERVER_UNAVAILABLE: {
-      m_status_label->get_current()->set(
-        tr("Order execution server is unavailable."));
-      reset_visuals();
-      break;
-    }
-    case State::REGISTRY_SERVER_UNAVAILABLE: {
-      m_status_label->get_current()->set(tr("Registry server is unavailable."));
-      reset_visuals();
-      break;
-    }
-    case State::RISK_SERVER_UNAVAILABLE: {
-      m_status_label->get_current()->set(tr("Risk server is unavailable."));
-      reset_visuals();
-      break;
-    }
-    case State::TELEMETRY_SERVER_UNAVAILABLE: {
-      m_status_label->get_current()->set(
-        tr("Telemetry server is unavailable."));
-      reset_visuals();
-      break;
-    }
-    case State::SERVER_UNAVAILABLE: {
-      m_status_label->get_current()->set(tr("Server is unavailable."));
+    case State::ERROR: {
+      m_status_label->get_current()->set(tr("Login failed."));
       reset_visuals();
       break;
     }
   }
   m_state = state;
+}
+
+void LoginWindow::set_error(const QString& message) {
+  m_status_label->get_current()->set(message);
+  reset_visuals();
+  m_state = State::ERROR;
 }
 
 connection LoginWindow::connect_login_signal(
@@ -337,7 +286,7 @@ void LoginWindow::try_login() {
   }
   if(m_state != State::LOGGING_IN) {
     if(m_username_text_box->get_current()->get().isEmpty()) {
-      set_state(State::INCORRECT_CREDENTIALS);
+      set_error(tr("Incorrect username or password."));
     } else {
       m_login_signal(
         m_username_text_box->get_current()->get().toStdString(),

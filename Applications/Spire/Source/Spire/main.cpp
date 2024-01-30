@@ -227,7 +227,7 @@ int main(int argc, char* argv[]) {
           service_clients->GetTimeClient());
         telemetry_client.emplace(application_telemetry_client->Get());
       } catch(const std::exception&) {
-        throw LoginException(LoginWindow::State::TELEMETRY_SERVER_UNAVAILABLE);
+        throw LoginException("Telemetry server not available.");
       }
       return ServiceClientsBox(std::move(service_clients));
     });

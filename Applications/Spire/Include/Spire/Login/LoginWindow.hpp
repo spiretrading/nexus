@@ -7,6 +7,10 @@
 #include "Spire/Login/Login.hpp"
 #include "Spire/Ui/KeyObserver.hpp"
 
+#ifdef ERROR
+  #undef ERROR
+#endif
+
 namespace Spire {
 
   /** Displays the login window. */
@@ -25,38 +29,8 @@ namespace Spire {
         /** The user requested to cancel. */
         CANCELLING,
 
-        /** The login attempt used incorrect credentials. */
-        INCORRECT_CREDENTIALS,
-
-        /** The administration server is unavailable. */
-        ADMINISTRATION_SERVER_UNAVAILABLE,
-
-        /** The charting server is unavailable. */
-        CHARTING_SERVER_UNAVAILABLE,
-
-        /** The compliance server is unavailable. */
-        COMPLIANCE_SERVER_UNAVAILABLE,
-
-        /** The definitions server is unavailable. */
-        DEFINITIONS_SERVER_UNAVAILABLE,
-
-        /** The market data server is unavailable. */
-        MARKET_DATA_SERVER_UNAVAILABLE,
-
-        /** The order execution server is unavailable. */
-        ORDER_EXECUTION_SERVER_UNAVAILABLE,
-
-        /** The registry server is unavailable. */
-        REGISTRY_SERVER_UNAVAILABLE,
-
-        /** The risk server is unavailable. */
-        RISK_SERVER_UNAVAILABLE,
-
-        /** The telemetry server is unavailable. */
-        TELEMETRY_SERVER_UNAVAILABLE,
-
-        /** The server is unavailable. */
-        SERVER_UNAVAILABLE
+        /** An error occured. */
+        ERROR
       };
 
       /**
@@ -79,6 +53,9 @@ namespace Spire {
 
       /** Sets the state to display to the user. */
       void set_state(State state);
+
+      /** Sets an error state. */
+      void set_error(const QString& message);
 
       /** Connects a slot to the login signal. */
       boost::signals2::connection connect_login_signal(

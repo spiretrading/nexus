@@ -55,11 +55,11 @@ void LoginController::on_login_promise(
     try {
       std::rethrow_exception(service_clients.GetException());
     } catch(const AuthenticationException&) {
-      m_login_window->set_state(LoginWindow::State::INCORRECT_CREDENTIALS);
+      m_login_window->set_error(QObject::tr("Incorrect username or password."));
     } catch(const LoginException& e) {
-      m_login_window->set_state(e.get_state());
+      m_login_window->set_error(QObject::tr(e.what()));
     } catch(const std::exception&) {
-      m_login_window->set_state(LoginWindow::State::SERVER_UNAVAILABLE);
+      m_login_window->set_error(QObject::tr("Server unavailable."));
     }
     return;
   }

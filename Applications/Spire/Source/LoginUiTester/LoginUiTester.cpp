@@ -38,9 +38,9 @@ bool LoginUiTester::eventFilter(QObject* receiver, QEvent* event) {
     if(receiver == m_accept_button) {
       m_login_window->set_state(LoginWindow::State::NONE);
     } else if(receiver == m_reject_button) {
-      m_login_window->set_state(LoginWindow::State::INCORRECT_CREDENTIALS);
+      m_login_window->set_error(tr("Incorrect username or password."));
     } else if(receiver == m_server_unavailable_button) {
-      m_login_window->set_state(LoginWindow::State::SERVER_UNAVAILABLE);
+      m_login_window->set_error(tr("Server unavailable."));
     }
   }
   if(receiver == m_login_window && event->type() == QEvent::Close) {
