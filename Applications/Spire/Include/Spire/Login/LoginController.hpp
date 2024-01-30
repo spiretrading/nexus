@@ -8,7 +8,6 @@
 #include "Nexus/ServiceClients/ServiceClientsBox.hpp"
 #include "Spire/Async/QtPromise.hpp"
 #include "Spire/Login/Login.hpp"
-#include "Spire/Spire/Definitions.hpp"
 
 namespace Spire {
 
@@ -28,9 +27,10 @@ namespace Spire {
 
       /**
        * Signals a successful login.
-       * @param definitions The set of definitions available.
+       * @param service_clients The ServiceClients that successfully logged in.
        */
-      using LoggedInSignal = Signal<void (const Definitions& definitions)>;
+      using LoggedInSignal =
+        Signal<void (const Nexus::ServiceClientsBox& service_clients)>;
 
       /**
        * Factory used to build the Spire service clients.
@@ -54,9 +54,6 @@ namespace Spire {
       LoginController(std::string version, std::vector<ServerEntry> servers,
         ServiceClientsFactory service_clients_factory);
 
-      /** Returns the service clients that logged in. */
-      Nexus::ServiceClientsBox get_service_clients();
-
       /** Launches the login window. */
       void open();
 
@@ -71,7 +68,6 @@ namespace Spire {
       ServiceClientsFactory m_service_clients_factory;
       LoginWindow* m_login_window;
       QtPromise<void> m_login_promise;
-      boost::optional<Nexus::ServiceClientsBox> m_service_clients;
 
       LoginController(const LoginController&) = delete;
       LoginController& operator =(const LoginController&) = delete;

@@ -1,4 +1,5 @@
 #include "Spire/Login/LoginWindow.hpp"
+#include <QKeyEvent>
 #include <QMovie>
 #include "Spire/Login/ChromaHashWidget.hpp"
 #include "Spire/Spire/Dimensions.hpp"

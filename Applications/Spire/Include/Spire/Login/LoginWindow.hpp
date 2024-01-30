@@ -1,14 +1,8 @@
 #ifndef SPIRE_LOGIN_WINDOW_HPP
 #define SPIRE_LOGIN_WINDOW_HPP
 #include <string>
-#include <boost/signals2/connection.hpp>
-#include <QEvent>
-#include <QKeyEvent>
 #include <QLabel>
-#include <QLineEdit>
-#include <QMouseEvent>
 #include <QPoint>
-#include <QPushButton>
 #include <QWidget>
 #include "Spire/Login/Login.hpp"
 #include "Spire/Ui/Ui.hpp"
@@ -43,15 +37,18 @@ namespace Spire {
        * @param username The username to login with.
        * @param password The password to login with.
        */
-      using LoginSignal = Signal<void (const std::string& username,
-        const std::string& password)>;
+      using LoginSignal =
+        Signal<void (const std::string& username, const std::string& password)>;
 
       /** Signals to cancel a previous login operation. */
       using CancelSignal = Signal<void ()>;
 
-      /** Constructs a login window in the NONE state. */
-      explicit LoginWindow(const std::string& version,
-        QWidget* parent = nullptr);
+      /**
+       * Constructs a login window in the NONE state.
+       * @param version The application build version.
+       */
+      explicit LoginWindow(
+        const std::string& version, QWidget* parent = nullptr);
 
       /** Sets the state to display to the user. */
       void set_state(State state);

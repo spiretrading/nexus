@@ -12,23 +12,20 @@ using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 
-LoginController::LoginController(std::string version,
-  std::vector<ServerEntry> servers,
+LoginController::LoginController(
+  std::string version, std::vector<ServerEntry> servers,
   ServiceClientsFactory service_clients_factory)
   : m_version(std::move(version)),
     m_servers(std::move(servers)),
     m_service_clients_factory(std::move(service_clients_factory)),
     m_login_window(nullptr) {}
 
-ServiceClientsBox LoginController::get_service_clients() {
-  return *m_service_clients;
-}
-
 void LoginController::open() {
   m_login_window = new LoginWindow(m_version);
   m_login_window->connect_login_signal(
     std::bind_front(&LoginController::on_login, this));
-  m_login_window->connect_cancel_signal([=] () { on_cancel(); });
+  m_login_window->connect_cancel_signal(
+    std::bind_front(&LoginController::on_cancel, this));
   m_login_window->show();
 }
 
@@ -37,11 +34,11 @@ connection LoginController::connect_logged_in_signal(
   return m_logged_in_signal.connect(slot);
 }
 
-void LoginController::on_login(const std::string& username,
-    const std::string& password) {
+void LoginController::on_login(
+    const std::string& username, const std::string& password) {
   m_login_promise = QtPromise([=] {
-    return m_service_clients_factory(username, password,
-      m_servers.front().m_address);
+    return m_service_clients_factory(
+      username, password, m_servers.front().m_address);
   }, LaunchPolicy::ASYNC).then(
     std::bind_front(&LoginController::on_login_promise, this));
 }
@@ -54,15 +51,10 @@ void LoginController::on_cancel() {
 void LoginController::on_login_promise(
     Expect<ServiceClientsBox> service_clients) {
   try {
-    m_service_clients.emplace(std::move(service_clients.Get()));
+    service_clients.Get();
     m_login_window->close();
     delete_later(m_login_window);
-    auto definitions = Definitions(
-      m_service_clients->GetDefinitionsClient().LoadCountryDatabase(),
-      m_service_clients->GetDefinitionsClient().LoadMarketDatabase(),
-      m_service_clients->GetDefinitionsClient().LoadTimeZoneDatabase());
-    m_service_clients->GetTimeClient().GetTime();
-    m_logged_in_signal(definitions);
+    m_logged_in_signal(std::move(service_clients.Get()));
   } catch(const AuthenticationException&) {
     m_login_window->set_state(LoginWindow::State::INCORRECT_CREDENTIALS);
   } catch(const std::exception&) {
