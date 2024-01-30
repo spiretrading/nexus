@@ -29,7 +29,7 @@
    <string>Properties - Book View</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="../../LegacyResources/Resources.qrc">
+   <iconset resource="../../LegacyResources/LegacyResources.qrc">
     <normaloff>:/icons/book_blue.png</normaloff>:/icons/book_blue.png</iconset>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -160,7 +160,7 @@
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="../../LegacyResources/Resources.qrc"/>
+  <include location="../../LegacyResources/LegacyResources.qrc"/>
  </resources>
  <connections/>
 </ui>

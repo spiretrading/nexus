@@ -17,7 +17,7 @@
    <string>Chart - Spire</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="../../LegacyResources/Resources.qrc">
+   <iconset resource="../../LegacyResources/LegacyResources.qrc">
     <normaloff>:/icons/chart_line.png</normaloff>:/icons/chart_line.png</iconset>
   </property>
   <widget class="QWidget" name="m_centralWidget">
@@ -137,7 +137,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="../../LegacyResources/Resources.qrc">
+    <iconset resource="../../LegacyResources/LegacyResources.qrc">
      <normaloff>:/icons/pan_view.png</normaloff>:/icons/pan_view.png</iconset>
    </property>
    <property name="text">
@@ -152,7 +152,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="../../LegacyResources/Resources.qrc">
+    <iconset resource="../../LegacyResources/LegacyResources.qrc">
      <normaloff>:/icons/magnifying_glass.png</normaloff>:/icons/magnifying_glass.png</iconset>
    </property>
    <property name="text">
@@ -170,7 +170,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="../../LegacyResources/Resources.qrc">
+    <iconset resource="../../LegacyResources/LegacyResources.qrc">
      <normaloff>:/icons/fit_to_size.png</normaloff>:/icons/fit_to_size.png</iconset>
    </property>
    <property name="text">
@@ -188,7 +188,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="../../LegacyResources/Resources.qrc">
+    <iconset resource="../../LegacyResources/LegacyResources.qrc">
      <normaloff>:/icons/lock_view.png</normaloff>:/icons/lock_view.png</iconset>
    </property>
    <property name="text">
@@ -203,7 +203,7 @@
   </action>
   <action name="m_linkAction">
    <property name="icon">
-    <iconset resource="../../LegacyResources/Resources.qrc">
+    <iconset resource="../../LegacyResources/LegacyResources.qrc">
      <normaloff>:/icons/link.png</normaloff>:/icons/link.png</iconset>
    </property>
    <property name="text">
@@ -229,7 +229,7 @@
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="../../LegacyResources/Resources.qrc"/>
+  <include location="../../LegacyResources/LegacyResources.qrc"/>
  </resources>
  <connections/>
 </ui>

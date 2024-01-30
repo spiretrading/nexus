@@ -5,7 +5,7 @@
 #include <QPoint>
 #include <QWidget>
 #include "Spire/Login/Login.hpp"
-#include "Spire/Ui/Ui.hpp"
+#include "Spire/Ui/KeyObserver.hpp"
 
 namespace Spire {
 
@@ -75,7 +75,9 @@ namespace Spire {
       QLabel* m_logo_widget;
       TextBox* m_status_label;
       TextBox* m_username_text_box;
+      boost::optional<KeyObserver> m_username_key_observer;
       TextBox* m_password_text_box;
+      boost::optional<KeyObserver> m_password_key_observer;
       Button* m_sign_in_button;
       bool m_is_dragging;
       QPoint m_last_pos;
@@ -84,6 +86,7 @@ namespace Spire {
       void reset_all();
       void reset_visuals();
       void try_login();
+      void on_key_press(QWidget& target, const QKeyEvent& event);
   };
 }
 

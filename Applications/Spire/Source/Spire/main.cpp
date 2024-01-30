@@ -47,7 +47,7 @@ using namespace Spire;
 using namespace Spire::LegacyUI;
 
 inline void InitializeResources() {
-  Q_INIT_RESOURCE(Resources);
+  Q_INIT_RESOURCE(LegacyResources);
 }
 
 namespace {
@@ -275,6 +275,9 @@ int main(int argc, char* argv[]) {
   });
   auto hotkey_override = HotkeyOverride();
   application.exec();
+  if(!user_profile) {
+    return -1;
+  }
   SavedDashboards::Save(*user_profile);
   OrderImbalanceIndicatorProperties::Save(*user_profile);
   InteractionsProperties::Save(*user_profile);

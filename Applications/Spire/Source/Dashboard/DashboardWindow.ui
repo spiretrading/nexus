@@ -14,7 +14,7 @@
    <string>Dashboard</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="../../LegacyResources/Resources.qrc">
+   <iconset resource="../../LegacyResources/LegacyResources.qrc">
     <normaloff>:/icons/code_colored.png</normaloff>:/icons/code_colored.png</iconset>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout" stretch="0,1">
@@ -107,7 +107,7 @@
          <string/>
         </property>
         <property name="icon">
-         <iconset resource="../../LegacyResources/Resources.qrc">
+         <iconset resource="../../LegacyResources/LegacyResources.qrc">
           <normaloff>:/icons/floppy_disk.png</normaloff>:/icons/floppy_disk.png</iconset>
         </property>
         <property name="flat">
@@ -133,7 +133,7 @@
          <string/>
         </property>
         <property name="icon">
-         <iconset resource="../../LegacyResources/Resources.qrc">
+         <iconset resource="../../LegacyResources/LegacyResources.qrc">
           <normaloff>:/icons/delete_small.png</normaloff>:/icons/delete_small.png</iconset>
         </property>
        </widget>
@@ -168,7 +168,7 @@
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="../../LegacyResources/Resources.qrc"/>
+  <include location="../../LegacyResources/LegacyResources.qrc"/>
  </resources>
  <connections/>
 </ui>

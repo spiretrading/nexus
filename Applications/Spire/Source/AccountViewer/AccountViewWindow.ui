@@ -14,7 +14,7 @@
    <string>Accounts</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="../../LegacyResources/Resources.qrc">
+   <iconset resource="../../LegacyResources/LegacyResources.qrc">
     <normaloff>:/icons/application_server.png</normaloff>:/icons/application_server.png</iconset>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -93,7 +93,7 @@
   </layout>
  </widget>
  <resources>
-  <include location="../../LegacyResources/Resources.qrc"/>
+  <include location="../../LegacyResources/LegacyResources.qrc"/>
  </resources>
  <connections/>
 </ui>

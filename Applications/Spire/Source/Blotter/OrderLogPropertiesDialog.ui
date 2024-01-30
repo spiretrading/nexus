@@ -14,7 +14,7 @@
    <string>Order Log</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="../../LegacyResources/Resources.qrc">
+   <iconset resource="../../LegacyResources/LegacyResources.qrc">
     <normaloff>:/icons/window_earth.png</normaloff>:/icons/window_earth.png</iconset>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -125,7 +125,7 @@
   </layout>
  </widget>
  <resources>
-  <include location="../../LegacyResources/Resources.qrc"/>
+  <include location="../../LegacyResources/LegacyResources.qrc"/>
  </resources>
  <connections/>
 </ui>

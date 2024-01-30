@@ -14,7 +14,7 @@
    <string>Portfolio Viewer</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="../../LegacyResources/Resources.qrc">
+   <iconset resource="../../LegacyResources/LegacyResources.qrc">
     <normaloff>:/icons/briefcase.png</normaloff>:/icons/briefcase.png</iconset>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -110,7 +110,7 @@
   </layout>
  </widget>
  <resources>
-  <include location="../../LegacyResources/Resources.qrc"/>
+  <include location="../../LegacyResources/LegacyResources.qrc"/>
  </resources>
  <connections/>
 </ui>

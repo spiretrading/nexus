@@ -52,6 +52,7 @@ namespace Spire {
   class Icon;
   class InfoTip;
   class KeyInputBox;
+  class KeyObserver;
   class LayeredWidget;
   class ListItem;
   template<typename T> class ListSelectionValueModel;

@@ -14,7 +14,7 @@
    <string>Profile</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="../../LegacyResources/Resources.qrc">
+   <iconset resource="../../LegacyResources/LegacyResources.qrc">
     <normaloff>:/icons/user.png</normaloff>:/icons/user.png</iconset>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -47,7 +47,7 @@
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="../../LegacyResources/Resources.qrc"/>
+  <include location="../../LegacyResources/LegacyResources.qrc"/>
  </resources>
  <connections/>
 </ui>

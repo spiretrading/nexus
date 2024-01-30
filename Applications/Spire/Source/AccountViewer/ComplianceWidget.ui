@@ -95,7 +95,7 @@
             <string/>
            </property>
            <property name="icon">
-            <iconset resource="../../LegacyResources/Resources.qrc">
+            <iconset resource="../../LegacyResources/LegacyResources.qrc">
              <normaloff>:/icons/delete_small.png</normaloff>:/icons/delete_small.png</iconset>
            </property>
            <property name="shortcut">
@@ -181,7 +181,7 @@
   </layout>
  </widget>
  <resources>
-  <include location="../../LegacyResources/Resources.qrc"/>
+  <include location="../../LegacyResources/LegacyResources.qrc"/>
  </resources>
  <connections/>
 </ui>
