@@ -5,6 +5,7 @@
 namespace Spire {
   class ChromaHashWidget;
   class LoginController;
+  class LoginException;
   class LoginWindow;
 }
 

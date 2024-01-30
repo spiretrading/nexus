@@ -203,6 +203,57 @@ void LoginWindow::set_state(State state) {
       reset_visuals();
       break;
     }
+    case State::ADMINISTRATION_SERVER_UNAVAILABLE: {
+      m_status_label->get_current()->set(
+        tr("Administration server is unavailable."));
+      reset_visuals();
+      break;
+    }
+    case State::CHARTING_SERVER_UNAVAILABLE: {
+      m_status_label->get_current()->set(tr("Charting server is unavailable."));
+      reset_visuals();
+      break;
+    }
+    case State::COMPLIANCE_SERVER_UNAVAILABLE: {
+      m_status_label->get_current()->set(
+        tr("Compliance server is unavailable."));
+      reset_visuals();
+      break;
+    }
+    case State::DEFINITIONS_SERVER_UNAVAILABLE: {
+      m_status_label->get_current()->set(
+        tr("Definitions server is unavailable."));
+      reset_visuals();
+      break;
+    }
+    case State::MARKET_DATA_SERVER_UNAVAILABLE: {
+      m_status_label->get_current()->set(
+        tr("Market data server is unavailable."));
+      reset_visuals();
+      break;
+    }
+    case State::ORDER_EXECUTION_SERVER_UNAVAILABLE: {
+      m_status_label->get_current()->set(
+        tr("Order execution server is unavailable."));
+      reset_visuals();
+      break;
+    }
+    case State::REGISTRY_SERVER_UNAVAILABLE: {
+      m_status_label->get_current()->set(tr("Registry server is unavailable."));
+      reset_visuals();
+      break;
+    }
+    case State::RISK_SERVER_UNAVAILABLE: {
+      m_status_label->get_current()->set(tr("Risk server is unavailable."));
+      reset_visuals();
+      break;
+    }
+    case State::TELEMETRY_SERVER_UNAVAILABLE: {
+      m_status_label->get_current()->set(
+        tr("Telemetry server is unavailable."));
+      reset_visuals();
+      break;
+    }
     case State::SERVER_UNAVAILABLE: {
       m_status_label->get_current()->set(tr("Server is unavailable."));
       reset_visuals();

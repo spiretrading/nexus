@@ -18,7 +18,6 @@ namespace LegacyUI {
   class IgnoreCommandException;
   class ImportExportDialog;
   class LinkSecurityContextAction;
-  class LoginDialog;
   class MacroUndoCommand;
   class MaxFloorSpinBox;
   class MoneySpinBox;

@@ -2,6 +2,7 @@
 #include <Beam/ServiceLocator/AuthenticationException.hpp>
 #include "Nexus/ServiceClients/ServiceClientsBox.hpp"
 #include "Spire/Async/QtPromise.hpp"
+#include "Spire/Login/LoginException.hpp"
 #include "Spire/Login/LoginWindow.hpp"
 #include "Spire/Spire/Utility.hpp"
 
@@ -50,14 +51,19 @@ void LoginController::on_cancel() {
 
 void LoginController::on_login_promise(
     Expect<ServiceClientsBox> service_clients) {
-  try {
-    service_clients.Get();
-    m_login_window->close();
-    delete_later(m_login_window);
-    m_logged_in_signal(std::move(service_clients.Get()));
-  } catch(const AuthenticationException&) {
-    m_login_window->set_state(LoginWindow::State::INCORRECT_CREDENTIALS);
-  } catch(const std::exception&) {
-    m_login_window->set_state(LoginWindow::State::SERVER_UNAVAILABLE);
+  if(service_clients.IsException()) {
+    try {
+      std::rethrow_exception(service_clients.GetException());
+    } catch(const AuthenticationException&) {
+      m_login_window->set_state(LoginWindow::State::INCORRECT_CREDENTIALS);
+    } catch(const LoginException& e) {
+      m_login_window->set_state(e.get_state());
+    } catch(const std::exception&) {
+      m_login_window->set_state(LoginWindow::State::SERVER_UNAVAILABLE);
+    }
+    return;
   }
+  m_login_window->close();
+  delete_later(m_login_window);
+  m_logged_in_signal(std::move(service_clients.Get()));
 }

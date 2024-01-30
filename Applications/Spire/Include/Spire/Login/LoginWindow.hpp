@@ -28,6 +28,33 @@ namespace Spire {
         /** The login attempt used incorrect credentials. */
         INCORRECT_CREDENTIALS,
 
+        /** The administration server is unavailable. */
+        ADMINISTRATION_SERVER_UNAVAILABLE,
+
+        /** The charting server is unavailable. */
+        CHARTING_SERVER_UNAVAILABLE,
+
+        /** The compliance server is unavailable. */
+        COMPLIANCE_SERVER_UNAVAILABLE,
+
+        /** The definitions server is unavailable. */
+        DEFINITIONS_SERVER_UNAVAILABLE,
+
+        /** The market data server is unavailable. */
+        MARKET_DATA_SERVER_UNAVAILABLE,
+
+        /** The order execution server is unavailable. */
+        ORDER_EXECUTION_SERVER_UNAVAILABLE,
+
+        /** The registry server is unavailable. */
+        REGISTRY_SERVER_UNAVAILABLE,
+
+        /** The risk server is unavailable. */
+        RISK_SERVER_UNAVAILABLE,
+
+        /** The telemetry server is unavailable. */
+        TELEMETRY_SERVER_UNAVAILABLE,
+
         /** The server is unavailable. */
         SERVER_UNAVAILABLE
       };

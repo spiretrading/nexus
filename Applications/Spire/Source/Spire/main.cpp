@@ -1,5 +1,6 @@
 #include <filesystem>
 #include <fstream>
+#include <Beam/ServiceLocator/AuthenticationException.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/functional/factory.hpp>
 #include <boost/functional/value_factory.hpp>
@@ -20,11 +21,11 @@
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorProperties.hpp"
 #include "Spire/KeyBindings/HotkeyOverride.hpp"
 #include "Spire/LegacyUI/CustomQtVariants.hpp"
-#include "Spire/LegacyUI/LoginDialog.hpp"
 #include "Spire/LegacyUI/Toolbar.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
 #include "Spire/Login/LoginController.hpp"
+#include "Spire/Login/LoginException.hpp"
 #include "Spire/PortfolioViewer/PortfolioViewerProperties.hpp"
 #include "Spire/RiskTimer/RiskTimerMonitor.hpp"
 #include "Spire/Spire/Resources.hpp"
@@ -198,28 +199,42 @@ int main(int argc, char* argv[]) {
       QObject::tr("Invalid configuration file."));
     return -1;
   }
-  auto login_controller = LoginController(SPIRE_VERSION, std::move(servers),
-    [&] (const auto& username, const auto& password, const auto& address)  {
-      return ServiceClientsBox(std::make_unique<SpireServiceClients>(
-        std::make_unique<ApplicationServiceLocatorClient>(
-          username, password, address)));
-    });
-  login_controller.open();
   auto application_telemetry_client = optional<SpireTelemetryClient>();
   auto telemetry_client = optional<TelemetryClientBox>();
+  auto login_controller = LoginController(SPIRE_VERSION, std::move(servers),
+    [&] (const auto& username, const auto& password, const auto& address)  {
+      auto service_locator_client =
+        std::unique_ptr<ApplicationServiceLocatorClient>();
+      try {
+        service_locator_client =
+          std::make_unique<ApplicationServiceLocatorClient>(
+            username, password, address);
+      } catch(const std::exception& e) {
+        try {
+          std::rethrow_if_nested(e);
+        } catch(const std::exception& e) {
+          if(std::string(e.what()) == "Invalid username or password.") {
+            throw AuthenticationException();
+          }
+        }
+        throw;
+      }
+      auto service_clients = std::make_unique<SpireServiceClients>(
+        std::move(service_locator_client));
+      try {
+        application_telemetry_client.emplace(
+          service_clients->GetServiceLocatorClient(),
+          service_clients->GetTimeClient());
+        telemetry_client.emplace(application_telemetry_client->Get());
+      } catch(const std::exception&) {
+        throw LoginException(LoginWindow::State::TELEMETRY_SERVER_UNAVAILABLE);
+      }
+      return ServiceClientsBox(std::move(service_clients));
+    });
+  login_controller.open();
   auto user_profile = optional<UserProfile>();
   auto risk_timer_monitor = optional<RiskTimerMonitor>();
   login_controller.connect_logged_in_signal([&] (auto service_clients) {
-    try {
-      application_telemetry_client.emplace(
-        service_clients.GetServiceLocatorClient(),
-        service_clients.GetTimeClient());
-      telemetry_client.emplace(application_telemetry_client->Get());
-    } catch(const std::exception& e) {
-      QMessageBox::critical(
-        nullptr, QObject::tr("Error"), QObject::tr(e.what()));
-      return;
-    }
     auto is_administrator =
       service_clients.GetAdministrationClient().CheckAdministrator(
         service_clients.GetServiceLocatorClient().GetAccount());
