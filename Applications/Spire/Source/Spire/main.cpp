@@ -40,6 +40,7 @@ using namespace Beam;
 using namespace Beam::Network;
 using namespace Beam::Services;
 using namespace Beam::ServiceLocator;
+using namespace Beam::Threading;
 using namespace Beam::TimeService;
 using namespace boost;
 using namespace Nexus;
@@ -199,8 +200,9 @@ int main(int argc, char* argv[]) {
       QObject::tr("Invalid configuration file."));
     return -1;
   }
-  auto application_telemetry_client = optional<SpireTelemetryClient>();
-  auto telemetry_client = optional<TelemetryClientBox>();
+  auto telemetry_client_mutex = Mutex();
+  auto application_telemetry_client = std::unique_ptr<SpireTelemetryClient>();
+  auto telemetry_client = std::unique_ptr<TelemetryClientBox>();
   auto login_controller = LoginController(SPIRE_VERSION, std::move(servers),
     [&] (const auto& username, const auto& password, const auto& address)  {
       auto service_locator_client =
@@ -222,10 +224,14 @@ int main(int argc, char* argv[]) {
       auto service_clients = std::make_unique<SpireServiceClients>(
         std::move(service_locator_client));
       try {
-        application_telemetry_client.emplace(
-          service_clients->GetServiceLocatorClient(),
-          service_clients->GetTimeClient());
-        telemetry_client.emplace(application_telemetry_client->Get());
+        auto spire_telemetry_client =
+          std::make_unique<SpireTelemetryClient>(
+            service_clients->GetServiceLocatorClient(),
+            service_clients->GetTimeClient());
+        auto lock = std::lock_guard(telemetry_client_mutex);
+        application_telemetry_client = std::move(spire_telemetry_client);
+        telemetry_client = std::make_unique<TelemetryClientBox>(
+          application_telemetry_client->Get());
       } catch(const std::exception&) {
         throw LoginException("Telemetry server not available.");
       }

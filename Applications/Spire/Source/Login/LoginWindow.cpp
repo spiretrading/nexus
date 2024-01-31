@@ -22,7 +22,7 @@ namespace {
   }
 
   auto BUILD_LABEL_STYLE(StyleSheet style) {
-    style.get(Disabled()).set(TextColor(QColor(0xFF, 0xFF, 0xFF)));
+    style.get(Disabled()).set(TextColor(QColor(0xFFFFFF)));
     return style;
   }
 
@@ -76,7 +76,7 @@ namespace {
 
   auto STATUS_LABEL_STYLE(StyleSheet style) {
     style.get(Disabled()).
-      set(TextColor(QColor(0xFA, 0xEB, 0x96))).
+      set(TextColor(QColor(0xFAEB96))).
       set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
     return style;
   }
@@ -84,7 +84,8 @@ namespace {
 
 LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
     : QWidget(parent, Qt::FramelessWindowHint),
-      m_is_dragging(false) {
+      m_is_dragging(false),
+      m_last_focus(nullptr) {
   setWindowIcon(QIcon(":/Icons/taskbar_icons/spire.png"));
   setFixedSize(scale(384, 346));
   m_shadow = new DropShadow(this);
@@ -273,7 +274,12 @@ void LoginWindow::reset_all() {
 void LoginWindow::reset_visuals() {
   m_username_text_box->setEnabled(true);
   m_password_text_box->setEnabled(true);
-  m_sign_in_button->setFocus();
+  if(m_last_focus) {
+    m_last_focus->setFocus();
+    m_last_focus = nullptr;
+  } else {
+    m_sign_in_button->setFocus();
+  }
   static_cast<TextBox&>(
     m_sign_in_button->get_body()).get_current()->set(tr("Sign In"));
   m_logo_widget->movie()->stop();
@@ -301,6 +307,10 @@ void LoginWindow::try_login() {
 
 void LoginWindow::on_key_press(QWidget& target, const QKeyEvent& event) {
   if(event.key() == Qt::Key_Enter || event.key() == Qt::Key_Return) {
-    try_login();
+    if(m_state == State::NONE || m_state == State::ERROR) {
+      m_last_focus = &target;
+      try_login();
+      m_sign_in_button->setFocus();
+    }
   }
 }

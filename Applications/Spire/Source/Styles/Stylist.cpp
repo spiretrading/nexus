@@ -80,14 +80,15 @@ struct Stylist::StyleEventFilter : QObject {
     if(widget.isActiveWindow()) {
       m_stylist->match(Active());
     }
+    widget.installEventFilter(this);
   }
 
   bool eventFilter(QObject* watched, QEvent* event) override {
     if(event->type() == QEvent::EnabledChange) {
-      if(!m_stylist->m_widget->isEnabled()) {
-        m_stylist->match(Disabled());
-      } else {
+      if(m_stylist->m_widget->isEnabled()) {
         m_stylist->unmatch(Disabled());
+      } else {
+        m_stylist->match(Disabled());
       }
     } else if(event->type() == QEvent::WindowActivate) {
       m_stylist->match(Active());
@@ -244,7 +245,6 @@ Stylist::Stylist(QWidget& widget, optional<PseudoElement> pseudo_element)
       m_evaluated_property(typeid(void)) {
   if(!m_pseudo_element) {
     m_style_event_filter = std::make_unique<StyleEventFilter>(*this);
-    m_widget->installEventFilter(m_style_event_filter.get());
   }
 }
 
