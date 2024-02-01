@@ -31,16 +31,9 @@
 #include "Nexus/OrderExecutionService/ReplicatedOrderExecutionDataStore.hpp"
 #include "Nexus/OrderExecutionService/RiskStateCheck.hpp"
 #include "Nexus/OrderExecutionService/SqlOrderExecutionDataStore.hpp"
-#include "OasisOrderExecutionServer/AequitasFixApplication.hpp"
 #include "OasisOrderExecutionServer/AsxFixApplication.hpp"
-#include "OasisOrderExecutionServer/ChixFixApplication.hpp"
-#include "OasisOrderExecutionServer/CnsxFixApplication.hpp"
 #include "OasisOrderExecutionServer/FeeCalculatorOrderExecutionDriver.hpp"
-#include "OasisOrderExecutionServer/LekFixApplication.hpp"
-#include "OasisOrderExecutionServer/MatchNowFixApplication.hpp"
-#include "OasisOrderExecutionServer/MonexBoomFixApplication.hpp"
-#include "OasisOrderExecutionServer/OmegaFixApplication.hpp"
-#include "OasisOrderExecutionServer/TsxSorFixApplication.hpp"
+#include "OasisOrderExecutionServer/SerenityFixApplication.hpp"
 #include "Version.hpp"
 
 using namespace Beam;
@@ -104,82 +97,23 @@ namespace {
       asxEntry.m_destinations.push_back(DefaultDestinations::ASXT());
       asxEntry.m_destinations.push_back(DefaultDestinations::CXA());
       entries.push_back(asxEntry);
-      auto chixEntry = FixApplicationEntry();
-      chixEntry.m_configPath = "chix.cfg";
-      chixEntry.m_application =
-        std::make_shared<ChixFixApplication>(Ref(timeClient));
-      chixEntry.m_destinations.push_back(DefaultDestinations::CHIX());
-      chixEntry.m_destinations.push_back(DefaultDestinations::CX2());
-      chixEntry.m_destinations.push_back(DefaultDestinations::TSX());
-      entries.push_back(chixEntry);
-      auto cse2Entry = FixApplicationEntry();
-      cse2Entry.m_configPath = "cse2.cfg";
-      cse2Entry.m_application =
-        std::make_shared<CnsxFixApplication>(Ref(timeClient));
-      cse2Entry.m_destinations.push_back(DefaultDestinations::CSE2());
-      entries.push_back(cse2Entry);
-      auto tsxEntry = FixApplicationEntry();
-      tsxEntry.m_configPath = "tsxsor.cfg";
-      tsxEntry.m_application =
-        std::make_shared<TsxSorFixApplication>(Ref(timeClient));
-      tsxEntry.m_destinations.push_back(DefaultDestinations::ALPHA());
-      entries.push_back(tsxEntry);
-      auto matchNowLiquidityProviderEntry = FixApplicationEntry();
-      matchNowLiquidityProviderEntry.m_configPath = "matnlp.cfg";
-      matchNowLiquidityProviderEntry.m_application =
-        std::make_shared<MatchNowFixApplication>(Ref(timeClient));
-      matchNowLiquidityProviderEntry.m_destinations.push_back(
-        DefaultDestinations::MATNLP());
-      entries.push_back(matchNowLiquidityProviderEntry);
-      auto matchNowMarketFlowEntry = FixApplicationEntry();
-      matchNowMarketFlowEntry.m_configPath = "matnmf.cfg";
-      matchNowMarketFlowEntry.m_application =
-        std::make_shared<MatchNowFixApplication>(Ref(timeClient));
-      matchNowMarketFlowEntry.m_destinations.push_back(
-        DefaultDestinations::MATNMF());
-      entries.push_back(matchNowMarketFlowEntry);
-      auto omegaEntry = FixApplicationEntry();
-      omegaEntry.m_configPath = "omega.cfg";
-      omegaEntry.m_application = std::make_shared<OmegaFixApplication>(
-        Ref(timeClient), Ref(**marketDataClient));
-      omegaEntry.m_destinations.push_back(DefaultDestinations::LYNX());
-      omegaEntry.m_destinations.push_back(DefaultDestinations::OMEGA());
-      entries.push_back(omegaEntry);
-      auto pureEntry = FixApplicationEntry();
-      pureEntry.m_configPath = "pure.cfg";
-      pureEntry.m_application =
-        std::make_shared<CnsxFixApplication>(Ref(timeClient));
-      pureEntry.m_destinations.push_back(DefaultDestinations::PURE());
-      pureEntry.m_destinations.push_back(DefaultDestinations::CSE());
-      entries.push_back(pureEntry);
-      auto neoeEntry = FixApplicationEntry();
-      neoeEntry.m_configPath = "neoe.cfg";
-      neoeEntry.m_application = std::make_shared<AequitasFixApplication>(
-        Ref(timeClient));
-      neoeEntry.m_destinations.push_back(DefaultDestinations::NEOE());
-      entries.push_back(neoeEntry);
-      auto lekEntry = FixApplicationEntry();
-      lekEntry.m_configPath = "lek.cfg";
-      lekEntry.m_application = std::make_shared<LekFixApplication>(
-        Ref(timeClient));
-      lekEntry.m_destinations.push_back(DefaultDestinations::AMEX());
-      lekEntry.m_destinations.push_back(DefaultDestinations::ARCA());
-      lekEntry.m_destinations.push_back(DefaultDestinations::BATS());
-      lekEntry.m_destinations.push_back(DefaultDestinations::BATY());
-      lekEntry.m_destinations.push_back(DefaultDestinations::CBSX());
-      lekEntry.m_destinations.push_back(DefaultDestinations::EDGA());
-      lekEntry.m_destinations.push_back(DefaultDestinations::EDGX());
-      lekEntry.m_destinations.push_back(DefaultDestinations::NYSE());
-      lekEntry.m_destinations.push_back(DefaultDestinations::NASDAQ());
-      entries.push_back(lekEntry);
-      auto boomEntry = FixApplicationEntry();
-      boomEntry.m_configPath = "boom.cfg";
-      boomEntry.m_application = std::make_shared<MonexBoomFixApplication>(
-        Ref(timeClient), Ref(**marketDataClient));
-      boomEntry.m_destinations.push_back(DefaultDestinations::HKEX());
-      boomEntry.m_destinations.push_back(DefaultDestinations::OSE());
-      boomEntry.m_destinations.push_back(DefaultDestinations::TSE());
-      entries.push_back(boomEntry);
+      auto serenityEntry = FixApplicationEntry();
+      serenityEntry.m_configPath = "serenity.cfg";
+      serenityEntry.m_application =
+        std::make_shared<SerenityFixApplication>(Ref(timeClient));
+      serenityEntry.m_destinations.push_back(DefaultDestinations::ALPHA());
+      serenityEntry.m_destinations.push_back(DefaultDestinations::CHIX());
+      serenityEntry.m_destinations.push_back(DefaultDestinations::CSE());
+      serenityEntry.m_destinations.push_back(DefaultDestinations::CSE2());
+      serenityEntry.m_destinations.push_back(DefaultDestinations::CX2());
+      serenityEntry.m_destinations.push_back(DefaultDestinations::MATNLP());
+      serenityEntry.m_destinations.push_back(DefaultDestinations::MATNMF());
+      serenityEntry.m_destinations.push_back(DefaultDestinations::NEOE());
+      serenityEntry.m_destinations.push_back(DefaultDestinations::LYNX());
+      serenityEntry.m_destinations.push_back(DefaultDestinations::OMEGA());
+      serenityEntry.m_destinations.push_back(DefaultDestinations::PURE());
+      serenityEntry.m_destinations.push_back(DefaultDestinations::TSX());
+      entries.push_back(serenityEntry);
       return entries;
     }, std::runtime_error("Unable to initialize FIX application."));
   }
