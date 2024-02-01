@@ -83,6 +83,9 @@ namespace Spire::Styles {
     return SelectConnection(std::move(connection));
   }
 
+  SelectConnection select(const Disabled& selector, const Stylist& base,
+    const SelectionUpdateSignal& on_update);
+
   SelectConnection select(const Focus& selector, const Stylist& base,
     const SelectionUpdateSignal& on_update);
 

@@ -38,8 +38,10 @@ namespace Spire {
   class EditableBox;
   template<typename T> class EmptySelectionModel;
   class EmptyTableFilter;
+  class EnabledObserver;
   template<typename T> class EnumBox;
   class EyeDropper;
+  class EyeDropperButton;
   class FilterPanel;
   class FocusObserver;
   class GlobalPositionObserver;

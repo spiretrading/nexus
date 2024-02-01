@@ -74,9 +74,6 @@ struct Stylist::StyleEventFilter : QObject {
       : QObject(stylist.m_widget),
         m_stylist(&stylist) {
     auto& widget = *stylist.m_widget;
-    if(!widget.isEnabled()) {
-      m_stylist->match(Disabled());
-    }
     if(widget.isActiveWindow()) {
       m_stylist->match(Active());
     }
@@ -84,13 +81,7 @@ struct Stylist::StyleEventFilter : QObject {
   }
 
   bool eventFilter(QObject* watched, QEvent* event) override {
-    if(event->type() == QEvent::EnabledChange) {
-      if(m_stylist->m_widget->isEnabled()) {
-        m_stylist->unmatch(Disabled());
-      } else {
-        m_stylist->match(Disabled());
-      }
-    } else if(event->type() == QEvent::WindowActivate) {
+    if(event->type() == QEvent::WindowActivate) {
       m_stylist->match(Active());
     } else if(event->type() == QEvent::WindowDeactivate) {
       m_stylist->unmatch(Active());

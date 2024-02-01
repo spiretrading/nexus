@@ -74,7 +74,7 @@ FontBox::FontBox(std::shared_ptr<ValueModel<QFont>> current, QWidget* parent)
     if(m_current->get().pixelSize() < 1) {
       return 1;
     }
-    return m_current->get().pixelSize();
+    return unscale_width(m_current->get().pixelSize());
   }();
   size_model->set(font_size);
   m_font_size_box = new IntegerBox(std::move(size_model));
@@ -146,7 +146,14 @@ void FontBox::on_style_current(const QString& style) {
   }
   auto font =
     font_database.font(m_font_family_box->get_current()->get(), style, -1);
-  font.setPixelSize(current_font.pixelSize());
+  if(font_database.isScalable(m_font_family_box->get_current()->get(), style)) {
+    if(auto size = m_font_size_box->get_current()->get()) {
+      font.setPixelSize(scale_width(*size));
+    }
+    m_font_size_box->setEnabled(true);
+  } else {
+    m_font_size_box->setEnabled(false);
+  }
   auto blocker = shared_connection_block(m_font_connection);
   m_current->set(font);
 }
@@ -156,7 +163,7 @@ void FontBox::on_size_current(const optional<int>& value) {
     return;
   }
   auto current_font = m_current->get();
-  auto size = scale_width(static_cast<int>(*value));
+  auto size = scale_width(*value);
   if(size == current_font.pixelSize()) {
     return;
   }

@@ -48,7 +48,7 @@ struct HoverObserver::EventFilter : QObject {
       : m_widget(&widget),
         m_state(State::NONE) {
     widget.connect(
-      &widget, &QObject::destroyed, this, &EventFilter::on_widget_destroyed);
+      &widget, &QObject::destroyed, this, &EventFilter::destroy_observers);
     widget.installEventFilter(this);
     if(widget.isEnabled() && widget.isVisible()) {
       initialize_observers();
@@ -64,6 +64,16 @@ struct HoverObserver::EventFilter : QObject {
       if(child && child->isWidgetType()) {
         add(static_cast<QWidget&>(*child));
       }
+    }
+    connect(
+      qApp, &QApplication::focusChanged, this, &EventFilter::on_focus_changed);
+  }
+
+  void destroy_observers() {
+    if(m_observers) {
+      m_observers = nullptr;
+      disconnect(qApp, &QApplication::focusChanged, this, nullptr);
+      set_state(State::NONE);
     }
   }
 
@@ -90,15 +100,13 @@ struct HoverObserver::EventFilter : QObject {
       }
       return QObject::eventFilter(watched, event);
     }
-    if(event->type() == QEvent::Enter) {
+    if(event->type() == QEvent::Enter ||
+        event->type() == QEvent::EnabledChange ||
+        event->type() == QEvent::MouseMove) {
       set_state(::get_state(
         *m_widget, get_observers().m_position_observer.get_position()));
     } else if(event->type() == QEvent::Leave) {
       set_state(State::NONE);
-    } else if(event->type() == QEvent::EnabledChange ||
-        event->type() == QEvent::MouseMove) {
-      set_state(::get_state(
-        *m_widget, get_observers().m_position_observer.get_position()));
     } else if(event->type() == QEvent::ChildAdded) {
       auto& child = *static_cast<QChildEvent&>(*event).child();
       if(child.isWidgetType()) {
@@ -139,9 +147,9 @@ struct HoverObserver::EventFilter : QObject {
     }
   }
 
-  void on_widget_destroyed() {
-    m_observers = nullptr;
-    set_state(State::NONE);
+  void on_focus_changed(QWidget* old, QWidget* now) {
+    set_state(::get_state(
+      *m_widget, get_observers().m_position_observer.get_position()));
   }
 };
 

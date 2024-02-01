@@ -1,4 +1,5 @@
 #include "Spire/Styles/StateSelector.hpp"
+#include "Spire/Ui/EnabledObserver.hpp"
 #include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/HoverObserver.hpp"
 
@@ -8,6 +9,32 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  struct DisabledExecutor {
+    const Stylist* m_stylist;
+    SelectionUpdateSignal m_on_update;
+    EnabledObserver m_enabled_observer;
+
+    DisabledExecutor(const Stylist& stylist, SelectionUpdateSignal on_update)
+        : m_stylist(&stylist),
+          m_on_update(std::move(on_update)),
+          m_enabled_observer(m_stylist->get_widget()) {
+      auto& widget = m_stylist->get_widget();
+      if(!widget.isEnabled()) {
+        m_on_update({m_stylist}, {});
+      }
+      m_enabled_observer.connect_enabled_signal(
+        std::bind_front(&DisabledExecutor::on_enabled, this));
+    }
+
+    void on_enabled(bool is_enabled) {
+      if(is_enabled) {
+        m_on_update({}, {m_stylist});
+      } else {
+        m_on_update({m_stylist}, {});
+      }
+    }
+  };
+
   struct FocusExecutor : QObject {
     struct Observer {
       FocusObserver m_observer;
@@ -170,6 +197,11 @@ namespace {
       return QObject::eventFilter(watched, event);
     }
   };
+}
+
+SelectConnection Spire::Styles::select(const Disabled& selector,
+    const Stylist& base, const SelectionUpdateSignal& on_update) {
+  return SelectConnection(std::make_unique<DisabledExecutor>(base, on_update));
 }
 
 SelectConnection Spire::Styles::select(const Focus& selector,
