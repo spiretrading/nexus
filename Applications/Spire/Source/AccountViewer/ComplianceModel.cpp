@@ -1,6 +1,6 @@
 #include "Spire/AccountViewer/ComplianceModel.hpp"
 #include <algorithm>
-#include "Spire/UI/UserProfile.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace Beam::ServiceLocator;

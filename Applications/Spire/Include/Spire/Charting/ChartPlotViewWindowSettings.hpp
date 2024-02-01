@@ -4,16 +4,16 @@
 #include <QByteArray>
 #include "Spire/Charting/ChartPlotView.hpp"
 #include "Spire/Charting/Charting.hpp"
+#include "Spire/LegacyUI/ShuttleQtTypes.hpp"
+#include "Spire/LegacyUI/WindowSettings.hpp"
 #include "Spire/Spire/Spire.hpp"
-#include "Spire/UI/ShuttleQtTypes.hpp"
-#include "Spire/UI/WindowSettings.hpp"
 
 namespace Spire {
 
   /*! \class ChartPlotViewWindowSettings
       \brief Stores the window settings for a ChartPlotView.
    */
-  class ChartPlotViewWindowSettings : public UI::WindowSettings {
+  class ChartPlotViewWindowSettings : public LegacyUI::WindowSettings {
     public:
 
       //! Constructs a ChartPlotViewWindowSettings.

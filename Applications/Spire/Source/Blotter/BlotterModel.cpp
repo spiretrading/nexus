@@ -1,7 +1,7 @@
 #include "Spire/Blotter/BlotterModel.hpp"
 #include "Nexus/RiskService/RiskParameters.hpp"
 #include "Spire/Blotter/CancelOnFillController.hpp"
-#include "Spire/UI/UserProfile.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace Beam::Queries;

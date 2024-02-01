@@ -4,7 +4,7 @@
 #include <QKeyEvent>
 #include "Spire/Canvas/Types/CanvasTypeRegistry.hpp"
 #include "Spire/CanvasView/FileReaderNodeDialog.hpp"
-#include "Spire/UI/UserProfile.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace Spire;

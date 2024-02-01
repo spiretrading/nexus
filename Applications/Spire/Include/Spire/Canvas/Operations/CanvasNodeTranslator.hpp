@@ -2,7 +2,7 @@
 #define SPIRE_CANVAS_NODE_TRANSLATOR_HPP
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Canvas/Operations/CanvasNodeTranslationContext.hpp"
-#include "Spire/UI/UI.hpp"
+#include "Spire/LegacyUI/LegacyUI.hpp"
 
 namespace Spire {
 

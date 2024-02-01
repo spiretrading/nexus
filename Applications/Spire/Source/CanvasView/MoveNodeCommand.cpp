@@ -8,12 +8,12 @@
 #include "Spire/Canvas/ReferenceNodes/ReferenceNode.hpp"
 #include "Spire/CanvasView/PlaceNodeCommand.hpp"
 #include "Spire/CanvasView/ReplaceNodeCommand.hpp"
-#include "Spire/UI/IgnoreCommandException.hpp"
+#include "Spire/LegacyUI/IgnoreCommandException.hpp"
 
 using namespace Beam;
 using namespace boost;
 using namespace Spire;
-using namespace Spire::UI;
+using namespace Spire::LegacyUI;
 using namespace std;
 
 namespace {

@@ -1,8 +1,8 @@
 #include "Spire/AccountViewer/EntitlementEntryWidget.hpp"
 #include <QToolButton>
 #include "Spire/AccountViewer/AccountEntitlementModel.hpp"
-#include "Spire/UI/ReadOnlyCheckBox.hpp"
-#include "Spire/UI/UserProfile.hpp"
+#include "Spire/LegacyUI/ReadOnlyCheckBox.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 #include "ui_EntitlementEntryWidget.h"
 
 using namespace Beam;

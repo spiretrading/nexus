@@ -6,7 +6,7 @@
 #include <QWidget>
 #include "Nexus/Definitions/Market.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicator.hpp"
-#include "Spire/UI/PersistentWindow.hpp"
+#include "Spire/LegacyUI/PersistentWindow.hpp"
 
 class QCheckBox;
 
@@ -17,7 +17,7 @@ namespace Spire {
              for.
    */
   class OrderImbalanceIndicatorMarketSelectionWidget : public QWidget,
-      public UI::PersistentWindow {
+      public LegacyUI::PersistentWindow {
     public:
 
       //! Constructs an OrderImbalanceIndicatorMarketSelectionWidget.
@@ -45,7 +45,8 @@ namespace Spire {
       void Initialize(const Nexus::MarketDatabase& marketDatabase,
         Beam::Ref<OrderImbalanceIndicatorModel> model);
 
-      virtual std::unique_ptr<UI::WindowSettings> GetWindowSettings() const;
+      virtual std::unique_ptr<LegacyUI::WindowSettings>
+        GetWindowSettings() const;
 
     private:
       OrderImbalanceIndicatorModel* m_model;

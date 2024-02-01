@@ -2,18 +2,18 @@
 #define SPIRE_TIMEANDSALESWINDOWSETTINGS_HPP
 #include <QByteArray>
 #include "Nexus/Definitions/Security.hpp"
+#include "Spire/LegacyUI/SecurityViewStack.hpp"
+#include "Spire/LegacyUI/ShuttleQtTypes.hpp"
+#include "Spire/LegacyUI/WindowSettings.hpp"
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesProperties.hpp"
-#include "Spire/UI/SecurityViewStack.hpp"
-#include "Spire/UI/ShuttleQtTypes.hpp"
-#include "Spire/UI/WindowSettings.hpp"
 
 namespace Spire {
 
   /*! \class TimeAndSalesWindowSettings
       \brief Stores the window settings for a TimeAndSalesWindow.
    */
-  class TimeAndSalesWindowSettings : public UI::WindowSettings {
+  class TimeAndSalesWindowSettings : public LegacyUI::WindowSettings {
     public:
 
       //! Constructs a TimeAndSalesWindowSettings with default values.
@@ -41,7 +41,7 @@ namespace Spire {
       TimeAndSalesProperties m_properties;
       Nexus::Security m_security;
       std::string m_name;
-      UI::SecurityViewStack m_securityViewStack;
+      LegacyUI::SecurityViewStack m_securityViewStack;
       std::string m_identifier;
       std::string m_linkIdentifier;
       QByteArray m_geometry;

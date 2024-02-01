@@ -14,12 +14,12 @@
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/CanvasView/CanvasView.hpp"
 #include "Spire/KeyBindings/KeyBindings.hpp"
+#include "Spire/LegacyUI/PersistentWindow.hpp"
+#include "Spire/LegacyUI/SecurityContext.hpp"
+#include "Spire/LegacyUI/SecurityViewStack.hpp"
+#include "Spire/LegacyUI/WindowSettings.hpp"
+#include "Spire/LegacyUI/LegacyUI.hpp"
 #include "Spire/Spire/Spire.hpp"
-#include "Spire/UI/PersistentWindow.hpp"
-#include "Spire/UI/SecurityContext.hpp"
-#include "Spire/UI/SecurityViewStack.hpp"
-#include "Spire/UI/WindowSettings.hpp"
-#include "Spire/UI/UI.hpp"
 #include "Spire/Utilities/Utilities.hpp"
 
 class QStatusBar;
@@ -28,8 +28,8 @@ class Ui_BookViewWindow;
 namespace Spire {
 
   /** Displays a Security's BookQuotes. */
-  class BookViewWindow : public QFrame, public UI::PersistentWindow,
-      public UI::SecurityContext {
+  class BookViewWindow : public QFrame, public LegacyUI::PersistentWindow,
+      public LegacyUI::SecurityContext {
     public:
 
       /**
@@ -57,7 +57,8 @@ namespace Spire {
        */
       void DisplaySecurity(const Nexus::Security& security);
 
-      std::unique_ptr<UI::WindowSettings> GetWindowSettings() const override;
+      std::unique_ptr<LegacyUI::WindowSettings>
+        GetWindowSettings() const override;
 
     protected:
       void showEvent(QShowEvent* event) override;
@@ -72,7 +73,7 @@ namespace Spire {
       UserProfile* m_userProfile;
       BookViewProperties m_properties;
       Nexus::Security m_security;
-      UI::SecurityViewStack m_securityViewStack;
+      LegacyUI::SecurityViewStack m_securityViewStack;
       std::string m_linkIdentifier;
       boost::signals2::scoped_connection m_linkConnection;
       CondensedCanvasWidget* m_taskEntryWidget;

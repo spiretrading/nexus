@@ -7,7 +7,7 @@
 #include "Spire/Canvas/Operations/CanvasNodeValidationError.hpp"
 #include "Spire/Canvas/Operations/CanvasNodeValidator.hpp"
 #include "Spire/Canvas/Types/OrderReferenceType.hpp"
-#include "Spire/UI/UserProfile.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace Spire;

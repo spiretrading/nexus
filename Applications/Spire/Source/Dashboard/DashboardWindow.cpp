@@ -15,8 +15,8 @@
 #include "Spire/Dashboard/QueueDashboardCell.hpp"
 #include "Spire/Dashboard/TextDashboardCellRenderer.hpp"
 #include "Spire/Dashboard/ValueDashboardCell.hpp"
-#include "Spire/UI/LineInputDialog.hpp"
-#include "Spire/UI/UserProfile.hpp"
+#include "Spire/LegacyUI/LineInputDialog.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 #include "ui_DashboardWindow.h"
 
 using namespace Beam;
@@ -25,7 +25,7 @@ using namespace boost;
 using namespace Nexus;
 using namespace Nexus::MarketDataService;
 using namespace Spire;
-using namespace Spire::UI;
+using namespace Spire::LegacyUI;
 using namespace std;
 
 string DashboardWindow::GetDefaultName() {

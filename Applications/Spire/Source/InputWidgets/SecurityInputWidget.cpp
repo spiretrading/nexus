@@ -5,7 +5,7 @@
 #include <QVBoxLayout>
 #include "Nexus/Definitions/SecuritySet.hpp"
 #include "Spire/InputWidgets/SecurityInputDialog.hpp"
-#include "Spire/UI/UserProfile.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace boost;

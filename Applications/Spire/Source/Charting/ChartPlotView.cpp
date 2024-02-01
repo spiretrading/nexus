@@ -7,8 +7,8 @@
 #include "Spire/Canvas/Types/MoneyType.hpp"
 #include "Spire/Charting/CandlestickChartPlot.hpp"
 #include "Spire/Charting/ChartPlotViewWindowSettings.hpp"
-#include "Spire/UI/CustomQtVariants.hpp"
-#include "Spire/UI/UserProfile.hpp"
+#include "Spire/LegacyUI/CustomQtVariants.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace Beam::TimeService;
@@ -17,7 +17,7 @@ using namespace boost::posix_time;
 using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
-using namespace Spire::UI;
+using namespace Spire::LegacyUI;
 using namespace std;
 
 namespace {

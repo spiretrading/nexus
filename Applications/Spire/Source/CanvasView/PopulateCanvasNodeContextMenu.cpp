@@ -10,11 +10,11 @@
 #include "Spire/CanvasView/SetNodeReadOnlyCommand.hpp"
 #include "Spire/CanvasView/SetNodeVisibleCommand.hpp"
 #include "Spire/CanvasView/CanvasNodeModel.hpp"
-#include "Spire/UI/CommandAction.hpp"
+#include "Spire/LegacyUI/CommandAction.hpp"
 
 using namespace Beam;
 using namespace Spire;
-using namespace Spire::UI;
+using namespace Spire::LegacyUI;
 using namespace std;
 
 void Spire::PopulateCanvasNodeContextMenu(Ref<CanvasNodeModel> view,

@@ -1,7 +1,7 @@
 #include "Spire/AccountViewer/ServiceItemWidget.hpp"
 #include <QMessageBox>
 #include "Spire/AccountViewer/AccountEntitlementModel.hpp"
-#include "Spire/UI/UserProfile.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 #include "ui_ServiceItemWidget.h"
 
 using namespace Beam;

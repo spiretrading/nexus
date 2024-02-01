@@ -4,7 +4,7 @@
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/CanvasView/CanvasView.hpp"
 #include "Spire/CanvasView/CanvasNodeModel.hpp"
-#include "Spire/UI/UI.hpp"
+#include "Spire/LegacyUI/LegacyUI.hpp"
 
 namespace Spire {
 
@@ -31,7 +31,7 @@ namespace Spire {
     private:
       CanvasNodeModel* m_view;
       CanvasNodeModel::Coordinate m_coordinate;
-      std::unique_ptr<UI::MacroUndoCommand> m_placeCommand;
+      std::unique_ptr<LegacyUI::MacroUndoCommand> m_placeCommand;
   };
 }
 

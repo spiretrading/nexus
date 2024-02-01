@@ -11,16 +11,16 @@
 #include "Spire/Charting/Charting.hpp"
 #include "Spire/Charting/ChartValue.hpp"
 #include "Spire/Charting/ChartInteractions.hpp"
+#include "Spire/LegacyUI/PersistentWindow.hpp"
+#include "Spire/LegacyUI/ShuttleQtTypes.hpp"
 #include "Spire/Spire/Spire.hpp"
-#include "Spire/UI/PersistentWindow.hpp"
-#include "Spire/UI/ShuttleQtTypes.hpp"
 
 namespace Spire {
 
   /*! \class ChartPlotView
       \brief Displays ChartPlots.
    */
-  class ChartPlotView : public QWidget, public UI::PersistentWindow {
+  class ChartPlotView : public QWidget, public LegacyUI::PersistentWindow {
     public:
 
       /*! \struct Properties
@@ -184,7 +184,8 @@ namespace Spire {
       boost::signals2::connection ConnectEndPanSignal(
         const EndPanSignal::slot_function_type& slot) const;
 
-      virtual std::unique_ptr<UI::WindowSettings> GetWindowSettings() const;
+      virtual std::unique_ptr<LegacyUI::WindowSettings>
+        GetWindowSettings() const;
 
     protected:
       virtual void mouseMoveEvent(QMouseEvent* event);

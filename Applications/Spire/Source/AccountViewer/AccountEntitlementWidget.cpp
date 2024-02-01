@@ -1,7 +1,7 @@
 #include "Spire/AccountViewer/AccountEntitlementWidget.hpp"
 #include "Spire/AccountViewer/AccountEntitlementModel.hpp"
 #include "Spire/AccountViewer/EntitlementEntryWidget.hpp"
-#include "Spire/UI/UserProfile.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 #include "ui_AccountEntitlementWidget.h"
 
 using namespace Beam;

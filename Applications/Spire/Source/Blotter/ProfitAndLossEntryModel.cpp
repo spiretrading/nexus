@@ -1,6 +1,6 @@
 #include "Spire/Blotter/ProfitAndLossEntryModel.hpp"
 #include <Beam/Utilities/Algorithm.hpp>
-#include "Spire/UI/CustomQtVariants.hpp"
+#include "Spire/LegacyUI/CustomQtVariants.hpp"
 
 using namespace Beam;
 using namespace boost;
@@ -8,7 +8,7 @@ using namespace boost::signals2;
 using namespace Nexus;
 using namespace Nexus::Accounting;
 using namespace Spire;
-using namespace Spire::UI;
+using namespace Spire::LegacyUI;
 using namespace std;
 
 ProfitAndLossEntryModel::Entry::Entry(const Security& security)

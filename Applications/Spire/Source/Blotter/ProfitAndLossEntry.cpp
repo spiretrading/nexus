@@ -5,13 +5,13 @@
 #include "Spire/Blotter/ProfitAndLossEntryModel.hpp"
 #include "Spire/Blotter/ProfitAndLossHeader.hpp"
 #include "Spire/Blotter/ProfitAndLossTable.hpp"
-#include "Spire/UI/ExpandButton.hpp"
+#include "Spire/LegacyUI/ExpandButton.hpp"
 #include "ui_ProfitAndLossHeader.h"
 
 using namespace Beam;
 using namespace Nexus;
 using namespace Spire;
-using namespace Spire::UI;
+using namespace Spire::LegacyUI;
 
 ProfitAndLossEntry::ProfitAndLossEntry(Ref<UserProfile> userProfile,
     Ref<ProfitAndLossEntryModel> model, QWidget* parent,

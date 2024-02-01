@@ -2,7 +2,7 @@
 #include <QIcon>
 #include "Spire/AccountViewer/ManagerItem.hpp"
 #include "Spire/AccountViewer/TraderItem.hpp"
-#include "Spire/UI/UserProfile.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace Beam::ServiceLocator;

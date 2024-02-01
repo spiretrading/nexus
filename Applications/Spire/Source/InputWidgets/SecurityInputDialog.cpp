@@ -4,7 +4,7 @@
 #include <QScrollBar>
 #include <QTableView>
 #include "Nexus/Definitions/SecuritySet.hpp"
-#include "Spire/UI/UserProfile.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/Utilities/SecurityInfoCompleter.hpp"
 #include "Spire/Utilities/SecurityInfoModel.hpp"
 #include "ui_SecurityInputDialog.h"
@@ -13,7 +13,7 @@ using namespace Beam;
 using namespace boost;
 using namespace Nexus;
 using namespace Spire;
-using namespace Spire::UI;
+using namespace Spire::LegacyUI;
 
 void Spire::ShowSecurityInputDialog(Ref<UserProfile> userProfile,
     const variant<std::string, Security>& initialValue, QWidget* parent,

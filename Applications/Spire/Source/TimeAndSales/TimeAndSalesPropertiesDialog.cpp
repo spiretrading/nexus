@@ -1,9 +1,9 @@
 #include "Spire/TimeAndSales/TimeAndSalesPropertiesDialog.hpp"
 #include <QColorDialog>
 #include <QFontDialog>
+#include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesModel.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
-#include "Spire/UI/UserProfile.hpp"
 #include "ui_TimeAndSalesPropertiesDialog.h"
 
 using namespace Beam;

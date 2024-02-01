@@ -1,5 +1,6 @@
 #include <filesystem>
 #include <fstream>
+#include <Beam/ServiceLocator/AuthenticationException.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/functional/factory.hpp>
 #include <boost/functional/value_factory.hpp>
@@ -19,15 +20,17 @@
 #include "Spire/Dashboard/SavedDashboards.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorProperties.hpp"
 #include "Spire/KeyBindings/HotkeyOverride.hpp"
+#include "Spire/LegacyUI/CustomQtVariants.hpp"
+#include "Spire/LegacyUI/Toolbar.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
+#include "Spire/LegacyUI/WindowSettings.hpp"
+#include "Spire/Login/LoginController.hpp"
+#include "Spire/Login/LoginException.hpp"
 #include "Spire/PortfolioViewer/PortfolioViewerProperties.hpp"
 #include "Spire/RiskTimer/RiskTimerMonitor.hpp"
+#include "Spire/Spire/Resources.hpp"
 #include "Spire/Spire/SpireServiceClients.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
-#include "Spire/UI/CustomQtVariants.hpp"
-#include "Spire/UI/LoginDialog.hpp"
-#include "Spire/UI/Toolbar.hpp"
-#include "Spire/UI/UserProfile.hpp"
-#include "Spire/UI/WindowSettings.hpp"
 #include "Version.hpp"
 #include <QtPlugin>
 
@@ -37,15 +40,16 @@ using namespace Beam;
 using namespace Beam::Network;
 using namespace Beam::Services;
 using namespace Beam::ServiceLocator;
+using namespace Beam::Threading;
 using namespace Beam::TimeService;
 using namespace boost;
 using namespace Nexus;
 using namespace Nexus::TelemetryService;
 using namespace Spire;
-using namespace Spire::UI;
+using namespace Spire::LegacyUI;
 
 inline void InitializeResources() {
-  Q_INIT_RESOURCE(Resources);
+  Q_INIT_RESOURCE(LegacyResources);
 }
 
 namespace {
@@ -55,9 +59,9 @@ namespace {
     ServiceName<TelemetryService::SERVICE_NAME>,
     ZLibSessionBuilder<ServiceLocatorClientBox>>;
 
-  std::vector<LoginDialog::ServerEntry> ParseServers(
+  std::vector<LoginController::ServerEntry> ParseServers(
       const YAML::Node& config, const std::filesystem::path& configPath) {
-    auto servers = std::vector<LoginDialog::ServerEntry>();
+    auto servers = std::vector<LoginController::ServerEntry>();
     if(!config["servers"]) {
       {
         auto configFile = std::ofstream(configPath);
@@ -155,6 +159,7 @@ int main(int argc, char* argv[]) {
   application.setOrganizationName(QObject::tr("Eidolon Systems"));
   application.setApplicationName(QObject::tr("Spire"));
   application.setApplicationVersion(SPIRE_VERSION);
+  initialize_resources();
   RegisterCustomQtVariants();
   InitializeResources();
   auto applicationPath =
@@ -187,7 +192,7 @@ int main(int argc, char* argv[]) {
       QObject::tr("Invalid configuration file."));
     return -1;
   }
-  auto servers = std::vector<LoginDialog::ServerEntry>();
+  auto servers = std::vector<LoginController::ServerEntry>();
   try {
     servers = ParseServers(config, configPath);
   } catch(const std::exception&) {
@@ -195,91 +200,114 @@ int main(int argc, char* argv[]) {
       QObject::tr("Invalid configuration file."));
     return -1;
   }
-  auto loginDialog = LoginDialog(std::move(servers));
-  auto loginResultCode = loginDialog.exec();
-  if(loginResultCode == QDialog::Rejected) {
-    return -1;
-  }
-  auto serviceClients = optional<ServiceClientsBox>();
-  try {
-    serviceClients.emplace(std::make_unique<SpireServiceClients>(
-      loginDialog.GetServiceLocatorClient()));
-  } catch(const std::exception& e) {
-    QMessageBox::critical(nullptr, QObject::tr("Error"), QObject::tr(e.what()));
-    return -1;
-  }
-  auto applicationTelemetryClient = optional<SpireTelemetryClient>();
-  auto telemetryClient = optional<TelemetryClientBox>();
-  try {
-    applicationTelemetryClient.emplace(
-      serviceClients->GetServiceLocatorClient(),
-      serviceClients->GetTimeClient());
-    telemetryClient.emplace(applicationTelemetryClient->Get());
-  } catch(const std::exception& e) {
-    QMessageBox::critical(nullptr, QObject::tr("Error"), QObject::tr(e.what()));
-    return -1;
-  }
-  auto isAdministrator =
-    serviceClients->GetAdministrationClient().CheckAdministrator(
-      serviceClients->GetServiceLocatorClient().GetAccount());
-  auto isManager = isAdministrator ||
-    !serviceClients->GetAdministrationClient().LoadManagedTradingGroups(
-      serviceClients->GetServiceLocatorClient().GetAccount()).empty();
-  auto userProfile = UserProfile(loginDialog.GetUsername(), isAdministrator,
-    isManager, serviceClients->GetDefinitionsClient().LoadCountryDatabase(),
-    serviceClients->GetDefinitionsClient().LoadTimeZoneDatabase(),
-    serviceClients->GetDefinitionsClient().LoadCurrencyDatabase(),
-    serviceClients->GetDefinitionsClient().LoadExchangeRates(),
-    serviceClients->GetDefinitionsClient().LoadMarketDatabase(),
-    serviceClients->GetDefinitionsClient().LoadDestinationDatabase(),
-    serviceClients->GetAdministrationClient().LoadEntitlements(),
-    *serviceClients, *telemetryClient);
-  auto loginData = JsonObject();
-  loginData["version"] = std::string(SPIRE_VERSION);
-  try {
-    userProfile.CreateProfilePath();
-  } catch(const std::exception&) {
-    QMessageBox::critical(nullptr, QObject::tr("Error"),
-      QObject::tr("Error creating profile path."));
-    return -1;
-  }
-  BlotterSettings::Load(Store(userProfile));
-  CatalogSettings::Load(Store(userProfile));
-  BookViewProperties::Load(Store(userProfile));
-  RiskTimerProperties::Load(Store(userProfile));
-  TimeAndSalesProperties::Load(Store(userProfile));
-  PortfolioViewerProperties::Load(Store(userProfile));
-  KeyBindings::Load(Store(userProfile));
-  InteractionsProperties::Load(Store(userProfile));
-  OrderImbalanceIndicatorProperties::Load(Store(userProfile));
-  SavedDashboards::Load(Store(userProfile));
-  auto windowSettings = WindowSettings::Load(userProfile);
-  auto windows = std::vector<QWidget*>();
-  auto hotkeyOverride = HotkeyOverride();
-  if(!windowSettings.empty()) {
-    for(auto& settings : windowSettings) {
-      if(auto window = settings->Reopen(Ref(userProfile))) {
-        windows.push_back(window);
+  auto telemetry_client_mutex = Mutex();
+  auto application_telemetry_client = std::unique_ptr<SpireTelemetryClient>();
+  auto telemetry_client = std::unique_ptr<TelemetryClientBox>();
+  auto login_controller = LoginController(SPIRE_VERSION, std::move(servers),
+    [&] (const auto& username, const auto& password, const auto& address)  {
+      auto service_locator_client =
+        std::unique_ptr<ApplicationServiceLocatorClient>();
+      try {
+        service_locator_client =
+          std::make_unique<ApplicationServiceLocatorClient>(
+            username, password, address);
+      } catch(const std::exception& e) {
+        try {
+          std::rethrow_if_nested(e);
+        } catch(const std::exception& e) {
+          if(std::string(e.what()) == "Invalid username or password.") {
+            throw AuthenticationException();
+          }
+        }
+        throw;
       }
+      auto service_clients = std::make_unique<SpireServiceClients>(
+        std::move(service_locator_client));
+      try {
+        auto spire_telemetry_client =
+          std::make_unique<SpireTelemetryClient>(
+            service_clients->GetServiceLocatorClient(),
+            service_clients->GetTimeClient());
+        auto lock = std::lock_guard(telemetry_client_mutex);
+        application_telemetry_client = std::move(spire_telemetry_client);
+        telemetry_client = std::make_unique<TelemetryClientBox>(
+          application_telemetry_client->Get());
+      } catch(const std::exception&) {
+        throw LoginException("Telemetry server not available.");
+      }
+      return ServiceClientsBox(std::move(service_clients));
+    });
+  login_controller.open();
+  auto user_profile = optional<UserProfile>();
+  auto risk_timer_monitor = optional<RiskTimerMonitor>();
+  login_controller.connect_logged_in_signal([&] (auto service_clients) {
+    auto is_administrator =
+      service_clients.GetAdministrationClient().CheckAdministrator(
+        service_clients.GetServiceLocatorClient().GetAccount());
+    auto is_manager = is_administrator ||
+      !service_clients.GetAdministrationClient().LoadManagedTradingGroups(
+        service_clients.GetServiceLocatorClient().GetAccount()).empty();
+    user_profile.emplace(
+      service_clients.GetServiceLocatorClient().GetAccount().m_name,
+      is_administrator, is_manager,
+      service_clients.GetDefinitionsClient().LoadCountryDatabase(),
+      service_clients.GetDefinitionsClient().LoadTimeZoneDatabase(),
+      service_clients.GetDefinitionsClient().LoadCurrencyDatabase(),
+      service_clients.GetDefinitionsClient().LoadExchangeRates(),
+      service_clients.GetDefinitionsClient().LoadMarketDatabase(),
+      service_clients.GetDefinitionsClient().LoadDestinationDatabase(),
+      service_clients.GetAdministrationClient().LoadEntitlements(),
+      std::move(service_clients), *telemetry_client);
+    auto login_data = JsonObject();
+    login_data["version"] = std::string(SPIRE_VERSION);
+    try {
+      user_profile->CreateProfilePath();
+    } catch(const std::exception&) {
+      QMessageBox::critical(nullptr, QObject::tr("Error"),
+        QObject::tr("Error creating profile path."));
+      return;
     }
-  } else {
-    LoadDefaultLayout(windows, userProfile);
-  }
-  for(auto& window : windows) {
-    window->show();
-  }
-  auto riskMonitor = RiskTimerMonitor(Ref(userProfile));
-  riskMonitor.Load();
+    BlotterSettings::Load(Store(*user_profile));
+    CatalogSettings::Load(Store(*user_profile));
+    BookViewProperties::Load(Store(*user_profile));
+    RiskTimerProperties::Load(Store(*user_profile));
+    TimeAndSalesProperties::Load(Store(*user_profile));
+    PortfolioViewerProperties::Load(Store(*user_profile));
+    KeyBindings::Load(Store(*user_profile));
+    InteractionsProperties::Load(Store(*user_profile));
+    OrderImbalanceIndicatorProperties::Load(Store(*user_profile));
+    SavedDashboards::Load(Store(*user_profile));
+    auto window_settings = WindowSettings::Load(*user_profile);
+    auto windows = std::vector<QWidget*>();
+    if(!window_settings.empty()) {
+      for(auto& settings : window_settings) {
+        if(auto window = settings->Reopen(Ref(*user_profile))) {
+          windows.push_back(window);
+        }
+      }
+    } else {
+      LoadDefaultLayout(windows, *user_profile);
+    }
+    for(auto& window : windows) {
+      window->show();
+    }
+    risk_timer_monitor.emplace(Ref(*user_profile));
+    risk_timer_monitor->Load();
+  });
+  auto hotkey_override = HotkeyOverride();
   application.exec();
-  SavedDashboards::Save(userProfile);
-  OrderImbalanceIndicatorProperties::Save(userProfile);
-  InteractionsProperties::Save(userProfile);
-  KeyBindings::Save(userProfile);
-  PortfolioViewerProperties::Save(userProfile);
-  TimeAndSalesProperties::Save(userProfile);
-  RiskTimerProperties::Save(userProfile);
-  BookViewProperties::Save(userProfile);
-  CatalogSettings::Save(userProfile);
-  BlotterSettings::Save(userProfile);
+  if(!user_profile) {
+    return -1;
+  }
+  SavedDashboards::Save(*user_profile);
+  OrderImbalanceIndicatorProperties::Save(*user_profile);
+  InteractionsProperties::Save(*user_profile);
+  KeyBindings::Save(*user_profile);
+  PortfolioViewerProperties::Save(*user_profile);
+  TimeAndSalesProperties::Save(*user_profile);
+  RiskTimerProperties::Save(*user_profile);
+  BookViewProperties::Save(*user_profile);
+  CatalogSettings::Save(*user_profile);
+  BlotterSettings::Save(*user_profile);
   return 0;
 }

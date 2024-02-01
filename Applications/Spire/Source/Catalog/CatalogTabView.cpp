@@ -12,8 +12,8 @@
 #include "Spire/Catalog/CatalogSearchBarModel.hpp"
 #include "Spire/Catalog/CatalogTabModel.hpp"
 #include "Spire/Catalog/PersistentCatalogEntry.hpp"
-#include "Spire/UI/LineInputDialog.hpp"
-#include "Spire/UI/UserProfile.hpp"
+#include "Spire/LegacyUI/LineInputDialog.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 #include "ui_CatalogTabView.h"
 
 using namespace Beam;
@@ -21,7 +21,7 @@ using namespace boost;
 using namespace boost::signals2;
 using namespace boost::uuids;
 using namespace Spire;
-using namespace Spire::UI;
+using namespace Spire::LegacyUI;
 using namespace std;
 
 namespace {

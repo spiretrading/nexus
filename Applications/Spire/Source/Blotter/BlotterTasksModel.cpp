@@ -8,8 +8,8 @@
 #include "Spire/Blotter/BlotterTaskMonitor.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/OrderWrapperTaskNode.hpp"
 #include "Spire/Canvas/SystemNodes/CanvasObserver.hpp"
-#include "Spire/UI/CustomQtVariants.hpp"
-#include "Spire/UI/UserProfile.hpp"
+#include "Spire/LegacyUI/CustomQtVariants.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace Beam::Queries;

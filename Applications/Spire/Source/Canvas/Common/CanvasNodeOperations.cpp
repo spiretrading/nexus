@@ -14,7 +14,7 @@
 #include "Spire/Canvas/Operations/CanvasOperationException.hpp"
 #include "Spire/Canvas/Operations/DefaultCanvasNodeFromCanvasTypeVisitor.hpp"
 #include "Spire/Canvas/Types/CanvasType.hpp"
-#include "Spire/UI/UISerialization.hpp"
+#include "Spire/LegacyUI/UISerialization.hpp"
 
 using namespace Beam;
 using namespace Beam::IO;

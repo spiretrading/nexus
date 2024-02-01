@@ -10,13 +10,13 @@
 #include <QStandardPaths>
 #include <QStatusBar>
 #include "Spire/InputWidgets/SecurityInputDialog.hpp"
+#include "Spire/LegacyUI/CustomQtVariants.hpp"
+#include "Spire/LegacyUI/LinkSecurityContextAction.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
+#include "Spire/LegacyUI/ValueLabel.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesModel.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesPropertiesDialog.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesWindowSettings.hpp"
-#include "Spire/UI/CustomQtVariants.hpp"
-#include "Spire/UI/LinkSecurityContextAction.hpp"
-#include "Spire/UI/UserProfile.hpp"
-#include "Spire/UI/ValueLabel.hpp"
 #include "Spire/Utilities/ExportModel.hpp"
 #include "Spire/Utilities/SecurityTechnicalsModel.hpp"
 #include "ui_TimeAndSalesWindow.h"
@@ -26,7 +26,7 @@ using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Spire;
-using namespace Spire::UI;
+using namespace Spire::LegacyUI;
 
 namespace {
   auto DEFAULT_COLUMN_SIZES =

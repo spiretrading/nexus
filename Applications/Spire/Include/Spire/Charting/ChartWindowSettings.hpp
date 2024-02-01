@@ -6,17 +6,17 @@
 #include "Nexus/Definitions/Security.hpp"
 #include "Spire/Charting/Charting.hpp"
 #include "Spire/Charting/ChartInteractions.hpp"
+#include "Spire/LegacyUI/SecurityViewStack.hpp"
+#include "Spire/LegacyUI/ShuttleQtTypes.hpp"
+#include "Spire/LegacyUI/WindowSettings.hpp"
 #include "Spire/Spire/Spire.hpp"
-#include "Spire/UI/SecurityViewStack.hpp"
-#include "Spire/UI/ShuttleQtTypes.hpp"
-#include "Spire/UI/WindowSettings.hpp"
 
 namespace Spire {
 
   /*! \class ChartWindowSettings
       \brief Stores the window settings for a ChartWindow.
    */
-  class ChartWindowSettings : public UI::WindowSettings {
+  class ChartWindowSettings : public LegacyUI::WindowSettings {
     public:
 
       //! Constructs a ChartWindowSettings with default values.
@@ -46,12 +46,13 @@ namespace Spire {
       bool m_isLockGridEnabled;
       Nexus::Security m_security;
       std::string m_name;
-      UI::SecurityViewStack m_securityViewStack;
+      LegacyUI::SecurityViewStack m_securityViewStack;
       std::string m_identifier;
       std::string m_linkIdentifier;
       QByteArray m_geometry;
-      std::unique_ptr<UI::WindowSettings> m_chartPlotViewWindowSettings;
-      std::unique_ptr<UI::WindowSettings> m_chartIntervalComboBoxWindowSettings;
+      std::unique_ptr<LegacyUI::WindowSettings> m_chartPlotViewWindowSettings;
+      std::unique_ptr<LegacyUI::WindowSettings>
+        m_chartIntervalComboBoxWindowSettings;
 
       template<typename Shuttler>
       void Shuttle(Shuttler& shuttle, unsigned int version);

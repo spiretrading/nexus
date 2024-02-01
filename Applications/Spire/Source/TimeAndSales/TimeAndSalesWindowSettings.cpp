@@ -1,6 +1,6 @@
 #include "Spire/TimeAndSales/TimeAndSalesWindowSettings.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
-#include "Spire/UI/UserProfile.hpp"
 #include "ui_TimeAndSalesWindow.h"
 
 using namespace Beam;

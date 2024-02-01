@@ -33,7 +33,7 @@
     <number>0</number>
    </property>
    <item>
-    <widget class="Spire::UI::ExpandButton" name="m_expandButton" native="true">
+    <widget class="Spire::LegacyUI::ExpandButton" name="m_expandButton" native="true">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
        <horstretch>0</horstretch>
@@ -271,9 +271,9 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>Spire::UI::ExpandButton</class>
+   <class>Spire::LegacyUI::ExpandButton</class>
    <extends>QWidget</extends>
-   <header>Spire/UI/ExpandButton.hpp</header>
+   <header>Spire/LegacyUI/ExpandButton.hpp</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

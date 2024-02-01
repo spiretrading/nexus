@@ -9,7 +9,7 @@
 #include "Spire/Blotter/BlotterTaskProperties.hpp"
 #include "Spire/Blotter/OrderLogProperties.hpp"
 #include "Spire/Spire/Spire.hpp"
-#include "Spire/UI/UI.hpp"
+#include "Spire/LegacyUI/LegacyUI.hpp"
 
 namespace Spire {
 
@@ -166,7 +166,7 @@ namespace Spire {
       BlotterTaskProperties m_defaultBlotterTaskProperties;
       OrderLogProperties m_defaultOrderLogProperties;
       std::vector<std::unique_ptr<BlotterModel>> m_blotters;
-      std::unordered_map<const BlotterModel*, UI::WindowSettings*>
+      std::unordered_map<const BlotterModel*, LegacyUI::WindowSettings*>
         m_recentlyClosedBlotters;
       mutable std::unordered_map<Beam::ServiceLocator::DirectoryEntry,
         BlotterModel*> m_consolidatedBlotters;

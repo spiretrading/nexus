@@ -8,8 +8,8 @@
 #include "Spire/Blotter/OpenPositionsModel.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/OrderTaskNodes.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/SingleOrderTaskNode.hpp"
-#include "Spire/UI/CustomQtVariants.hpp"
-#include "Spire/UI/UserProfile.hpp"
+#include "Spire/LegacyUI/CustomQtVariants.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/Utilities/ExportModel.hpp"
 #include "ui_OpenPositionsWidget.h"
 
@@ -18,7 +18,7 @@ using namespace Nexus;
 using namespace Nexus::Accounting;
 using namespace Nexus::OrderExecutionService;
 using namespace Spire;
-using namespace Spire::UI;
+using namespace Spire::LegacyUI;
 using namespace std;
 
 namespace {

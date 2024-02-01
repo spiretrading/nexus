@@ -6,16 +6,16 @@
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Charting/Charting.hpp"
 #include "Spire/Charting/ChartValue.hpp"
+#include "Spire/LegacyUI/ShuttleQtTypes.hpp"
+#include "Spire/LegacyUI/WindowSettings.hpp"
 #include "Spire/Spire/Spire.hpp"
-#include "Spire/UI/ShuttleQtTypes.hpp"
-#include "Spire/UI/WindowSettings.hpp"
 
 namespace Spire {
 
   /*! \class ChartIntervalComboBoxWindowSettings
       \brief Stores the window settings for a ChartIntervalComboBox.
    */
-  class ChartIntervalComboBoxWindowSettings : public UI::WindowSettings {
+  class ChartIntervalComboBoxWindowSettings : public LegacyUI::WindowSettings {
     public:
 
       //! Constructs a ChartIntervalComboBoxWindowSettings.

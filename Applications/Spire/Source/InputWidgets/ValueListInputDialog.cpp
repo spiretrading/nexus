@@ -7,15 +7,15 @@
 #include <QMouseEvent>
 #include "Nexus/Definitions/Market.hpp"
 #include "Spire/InputWidgets/SecurityInputDialog.hpp"
-#include "Spire/UI/CustomQtVariants.hpp"
-#include "Spire/UI/UserProfile.hpp"
+#include "Spire/LegacyUI/CustomQtVariants.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 #include "ui_ValueListInputDialog.h"
 
 using namespace Beam;
 using namespace boost;
 using namespace Nexus;
 using namespace Spire;
-using namespace Spire::UI;
+using namespace Spire::LegacyUI;
 
 namespace {
   struct ValueToVariantConverter {

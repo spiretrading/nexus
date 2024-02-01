@@ -1,12 +1,12 @@
 #include "Spire/Blotter/OpenPositionsModel.hpp"
-#include "Spire/UI/CustomQtVariants.hpp"
+#include "Spire/LegacyUI/CustomQtVariants.hpp"
 
 using namespace Beam;
 using namespace boost;
 using namespace Nexus;
 using namespace Nexus::Accounting;
 using namespace Spire;
-using namespace Spire::UI;
+using namespace Spire::LegacyUI;
 
 OpenPositionsModel::Entry::Entry(int index, const SpireBookkeeper::Key& key)
   : m_index(index),

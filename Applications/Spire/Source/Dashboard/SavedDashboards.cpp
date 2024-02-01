@@ -7,8 +7,8 @@
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
 #include <QMessageBox>
-#include "Spire/UI/UISerialization.hpp"
-#include "Spire/UI/UserProfile.hpp"
+#include "Spire/LegacyUI/UISerialization.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace Beam::IO;
@@ -16,7 +16,7 @@ using namespace Beam::Serialization;
 using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
-using namespace Spire::UI;
+using namespace Spire::LegacyUI;
 
 SavedDashboards::Entry::Entry(std::string name, DashboardModelSchema schema,
   std::shared_ptr<WindowSettings> settings)

@@ -3,7 +3,7 @@
 #include <Beam/Serialization/DataShuttle.hpp>
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicator.hpp"
 #include "Spire/Spire/Spire.hpp"
-#include "Spire/UI/WindowSettings.hpp"
+#include "Spire/LegacyUI/WindowSettings.hpp"
 
 namespace Spire {
 
@@ -12,7 +12,7 @@ namespace Spire {
              OrderImbalanceIndicatorMarketSelectionWidget.
    */
   class OrderImbalanceIndicatorMarketSelectionWidgetWindowSettings :
-      public UI::WindowSettings {
+      public LegacyUI::WindowSettings {
     public:
 
       //! Constructs an

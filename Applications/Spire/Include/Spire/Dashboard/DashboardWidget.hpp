@@ -12,13 +12,13 @@
 #include "Nexus/Definitions/Security.hpp"
 #include "Spire/Dashboard/Dashboard.hpp"
 #include "Spire/Dashboard/DashboardCell.hpp"
+#include "Spire/LegacyUI/PersistentWindow.hpp"
 #include "Spire/Spire/Spire.hpp"
-#include "Spire/UI/PersistentWindow.hpp"
 
 namespace Spire {
 
   /** A QWidget that displays a DashboardModel. */
-  class DashboardWidget : public QWidget, public UI::PersistentWindow {
+  class DashboardWidget : public QWidget, public LegacyUI::PersistentWindow {
     public:
 
       /**
@@ -59,7 +59,8 @@ namespace Spire {
        */
       boost::optional<int> GetRowDisplayIndex(const QPoint& position) const;
 
-      std::unique_ptr<UI::WindowSettings> GetWindowSettings() const override;
+      std::unique_ptr<LegacyUI::WindowSettings>
+        GetWindowSettings() const override;
 
     protected:
       void keyPressEvent(QKeyEvent* event) override;

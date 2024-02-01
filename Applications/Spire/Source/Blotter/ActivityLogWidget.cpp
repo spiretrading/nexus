@@ -4,14 +4,14 @@
 #include <QStandardPaths>
 #include "Spire/Blotter/ActivityLogModel.hpp"
 #include "Spire/Blotter/BlotterModel.hpp"
-#include "Spire/UI/CustomQtVariants.hpp"
+#include "Spire/LegacyUI/CustomQtVariants.hpp"
 #include "Spire/Utilities/ExportModel.hpp"
 #include "ui_ActivityLogWidget.h"
 
 using namespace Beam;
 using namespace boost;
 using namespace Spire;
-using namespace Spire::UI;
+using namespace Spire::LegacyUI;
 using namespace std;
 
 ActivityLogWidget::ActivityLogWidget(QWidget* parent, Qt::WindowFlags flags)

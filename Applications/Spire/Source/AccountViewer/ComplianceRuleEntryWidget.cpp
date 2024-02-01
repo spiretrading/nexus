@@ -2,8 +2,8 @@
 #include "Nexus/Compliance/PerAccountComplianceRule.hpp"
 #include "Spire/AccountViewer/ComplianceModel.hpp"
 #include "Spire/AccountViewer/ComplianceValueWidget.hpp"
-#include "Spire/UI/ReadOnlyCheckBox.hpp"
-#include "Spire/UI/UserProfile.hpp"
+#include "Spire/LegacyUI/ReadOnlyCheckBox.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 #include "ui_ComplianceRuleEntryWidget.h"
 
 using namespace Beam;

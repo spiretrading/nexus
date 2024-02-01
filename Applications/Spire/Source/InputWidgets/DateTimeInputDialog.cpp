@@ -1,8 +1,8 @@
 #include "Spire/InputWidgets/DateTimeInputDialog.hpp"
 #include <Beam/TimeService/ToLocalTime.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
-#include "Spire/UI/CustomQtVariants.hpp"
-#include "Spire/UI/UserProfile.hpp"
+#include "Spire/LegacyUI/CustomQtVariants.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 #include "ui_DateTimeInputDialog.h"
 
 using namespace Beam;
@@ -11,7 +11,7 @@ using namespace boost;
 using namespace boost::gregorian;
 using namespace boost::posix_time;
 using namespace Spire;
-using namespace Spire::UI;
+using namespace Spire::LegacyUI;
 using namespace std;
 
 namespace {

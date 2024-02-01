@@ -1,15 +1,15 @@
 #include "Spire/PortfolioViewer/PortfolioSelectionModel.hpp"
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <Beam/Utilities/VariantLambdaVisitor.hpp>
-#include "Spire/UI/CustomQtVariants.hpp"
-#include "Spire/UI/UserProfile.hpp"
+#include "Spire/LegacyUI/CustomQtVariants.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace Beam::ServiceLocator;
 using namespace boost;
 using namespace Nexus;
 using namespace Spire;
-using namespace Spire::UI;
+using namespace Spire::LegacyUI;
 using namespace std;
 
 PortfolioSelectionModel::PortfolioSelectionModel(

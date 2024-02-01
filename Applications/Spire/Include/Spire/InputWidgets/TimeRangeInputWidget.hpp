@@ -7,8 +7,8 @@
 #include <boost/optional/optional.hpp>
 #include <boost/signals2/signal.hpp>
 #include <QWidget>
+#include "Spire/LegacyUI/PersistentWindow.hpp"
 #include "Spire/Spire/Spire.hpp"
-#include "Spire/UI/PersistentWindow.hpp"
 
 class QAbstractButton;
 class Ui_TimeRangeInputWidget;
@@ -33,7 +33,8 @@ namespace Spire {
   /*! \class TimeRangeInputWidget
       \brief Displays an input widget for a time range's parameters.
    */
-  class TimeRangeInputWidget : public QWidget, public UI::PersistentWindow {
+  class TimeRangeInputWidget :
+      public QWidget, public LegacyUI::PersistentWindow {
     public:
 
       //! Signals a change to the time range parameters.
@@ -74,7 +75,8 @@ namespace Spire {
       boost::signals2::connection ConnectTimeRangeUpdatedSignal(
         const TimeRangeUpdatedSignal::slot_function_type& slot) const;
 
-      virtual std::unique_ptr<UI::WindowSettings> GetWindowSettings() const;
+      virtual std::unique_ptr<LegacyUI::WindowSettings>
+        GetWindowSettings() const;
 
     private:
       std::unique_ptr<Ui_TimeRangeInputWidget> m_ui;

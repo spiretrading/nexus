@@ -1,7 +1,7 @@
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorModel.hpp"
 #include "Nexus/Definitions/Market.hpp"
-#include "Spire/UI/CustomQtVariants.hpp"
-#include "Spire/UI/UserProfile.hpp"
+#include "Spire/LegacyUI/CustomQtVariants.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace Beam::Queries;
@@ -10,7 +10,7 @@ using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::MarketDataService;
 using namespace Spire;
-using namespace Spire::UI;
+using namespace Spire::LegacyUI;
 
 OrderImbalanceIndicatorModel::OrderImbalanceIndicatorModel(
     Ref<UserProfile> userProfile,
