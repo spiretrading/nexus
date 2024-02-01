@@ -61,6 +61,10 @@ namespace Nexus::OasisOrderExecutionService {
     private:
       Beam::TimeService::LiveNtpTimeClient* m_timeClient;
       FixUtilities::FixOrderLog m_orderLog;
+
+      std::string GetUmirUserID() const;
+      std::string GetNoTradeFeat() const;
+      std::string GetNoTradeKey() const;
   };
 }
 

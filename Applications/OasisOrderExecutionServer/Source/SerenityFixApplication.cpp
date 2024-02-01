@@ -1,12 +1,22 @@
 #include "OasisOrderExecutionServer/SerenityFixApplication.hpp"
+#include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 #include <quickfix/Session.h>
 
+using namespace boost;
 using namespace Beam;
 using namespace Beam::TimeService;
 using namespace Nexus;
 using namespace Nexus::FixUtilities;
 using namespace Nexus::OasisOrderExecutionService;
 using namespace Nexus::OrderExecutionService;
+
+namespace {
+  const auto UMIR_ACCOUNT_TYPE_TAG = 6750;
+  const auto UMIR_USER_ID_TAG = 6751;
+  const auto NO_TRADE_FEAT_TAG = 7713;
+  const auto NO_TRADE_KEY_TAG = 7714;
+  const auto LONG_LIFE_TAG = 7735;
+}
 
 SerenityFixApplication::SerenityFixApplication(
   Ref<LiveNtpTimeClient> timeClient)
@@ -18,7 +28,64 @@ const Order& SerenityFixApplication::Recover(
 }
 
 const Order& SerenityFixApplication::Submit(const OrderInfo& info) {
-  throw std::runtime_error("Not implemented.");
+  return m_orderLog.Submit(info, GetSessionId().getSenderCompID(),
+    GetSessionId().getTargetCompID(),
+    [&] (Out<FIX42::NewOrderSingle> newOrderSingle) {
+      if(info.m_fields.m_security.GetCountry() != DefaultCountries::CA()) {
+        BOOST_THROW_EXCEPTION(FixOrderRejectedException("Invalid country."));
+      }
+      if(info.m_fields.m_currency != DefaultCurrencies::CAD()) {
+        BOOST_THROW_EXCEPTION(FixOrderRejectedException("Invalid currency."));
+      }
+      newOrderSingle->setField(UMIR_ACCOUNT_TYPE_TAG, "CL");
+      newOrderSingle->setField(UMIR_USER_ID_TAG, GetUmirUserID());
+      auto noTradeFeat = GetNoTradeFeat();
+      auto noTradeKey = GetNoTradeKey();
+      if(!noTradeFeat.empty() && !noTradeKey.empty()) {
+        newOrderSingle->setField(NO_TRADE_FEAT_TAG, noTradeFeat);
+        newOrderSingle->setField(NO_TRADE_KEY_TAG, noTradeKey);
+      }
+      newOrderSingle->set(FIX::Account(info.m_submissionAccount.m_name));
+      auto exDestination = [&] {
+        if(info.m_fields.m_destination == DefaultDestinations::TSX()) {
+          if(info.m_fields.m_security.GetMarket() == DefaultMarkets::TSXV()) {
+            return FIX::ExDestination("TSXV");
+          }
+          return FIX::ExDestination("TSX");
+        } else if(info.m_fields.m_destination == DefaultDestinations::CHIX()) {
+          return FIX::ExDestination("CHIX");
+        } else if(info.m_fields.m_destination == DefaultDestinations::CX2()) {
+          return FIX::ExDestination("XCX2");
+        } else if(
+            info.m_fields.m_destination == DefaultDestinations::MATNLP()) {
+          return FIX::ExDestination("MATN");
+        } else if(info.m_fields.m_destination == DefaultDestinations::CSE()) {
+          return FIX::ExDestination("XCNQ");
+        } else if(info.m_fields.m_destination == DefaultDestinations::CSE2()) {
+          return FIX::ExDestination("CSE2");
+        } else if(info.m_fields.m_destination == DefaultDestinations::ALPHA()) {
+          return FIX::ExDestination("XATS");
+        } else if(info.m_fields.m_destination == DefaultDestinations::OMEGA()) {
+          return FIX::ExDestination("OMGA");
+        } else if(info.m_fields.m_destination == DefaultDestinations::LYNX()) {
+          return FIX::ExDestination("LYNX");
+        } else if(info.m_fields.m_destination == DefaultDestinations::NEOE()) {
+          return FIX::ExDestination("NEOL");
+        }
+        BOOST_THROW_EXCEPTION(
+          FixOrderRejectedException("Invalid destination."));
+      }();
+      newOrderSingle->set(exDestination);
+      for(auto& tag : info.m_fields.m_additionalFields) {
+        if(tag.GetKey() == LONG_LIFE_TAG) {
+          if(auto value = get<std::string>(&tag.GetValue())) {
+            if(*value == "Y" || *value == "N") {
+              newOrderSingle->setField(LONG_LIFE_TAG, *value);
+            }
+          }
+        }
+      }
+    });
 }
 
 void SerenityFixApplication::Cancel(
@@ -63,3 +130,24 @@ void SerenityFixApplication::onMessage(
 
 void SerenityFixApplication::onMessage(
   const FIX42::OrderCancelReject& message, const FIX::SessionID& sessionId) {}
+
+std::string SerenityFixApplication::GetUmirUserID() const {
+  if(GetSessionSettings().get(GetSessionId()).has("UMIRUserID")) {
+    return GetSessionSettings().get(GetSessionId()).getString("UMIRUserID");
+  }
+  return {};
+}
+
+std::string SerenityFixApplication::GetNoTradeFeat() const {
+  if(GetSessionSettings().get(GetSessionId()).has("NoTradeFeat")) {
+    return GetSessionSettings().get(GetSessionId()).getString("NoTradeFeat");
+  }
+  return {};
+}
+
+std::string SerenityFixApplication::GetNoTradeKey() const {
+  if(GetSessionSettings().get(GetSessionId()).has("NoTradeKey")) {
+    return GetSessionSettings().get(GetSessionId()).getString("NoTradeKey");
+  }
+  return {};
+}
