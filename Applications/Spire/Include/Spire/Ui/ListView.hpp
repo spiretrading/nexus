@@ -4,12 +4,15 @@
 #include <functional>
 #include <memory>
 #include <unordered_set>
+#include <QSpacerItem>
+#include <QTimer>
 #include <QWidget>
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Styles/BasicProperty.hpp"
 #include "Spire/Ui/ClickObserver.hpp"
 #include "Spire/Ui/ListCurrentController.hpp"
+#include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/ListSelectionController.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -208,20 +211,19 @@ namespace Styles {
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
+      bool event(QEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
       void keyReleaseEvent(QKeyEvent* event) override;
+      void moveEvent(QMoveEvent* event) override;
+      void showEvent(QShowEvent* event) override;
 
     private:
       struct ItemEntry {
-        ListItem* m_item;
+        ListItem m_item;
         int m_index;
-        bool m_is_current;
-        ClickObserver m_click_observer;
-        boost::signals2::scoped_connection m_submit_connection;
-        boost::signals2::scoped_connection m_click_connection;
+        boost::optional<ClickObserver> m_click_observer;
 
-        ItemEntry(ListItem& item, int index);
-        void set(bool is_current);
+        ItemEntry(int index);
       };
       mutable SubmitSignal m_submit_signal;
       std::shared_ptr<AnyListModel> m_list;
@@ -232,6 +234,8 @@ namespace Styles {
       ViewBuilder<> m_view_builder;
       std::vector<std::unique_ptr<ItemEntry>> m_items;
       Box* m_box;
+      int m_top_index;
+      int m_visible_count;
       QSizePolicy::Policy m_direction_policy;
       QSizePolicy::Policy m_perpendicular_policy;
       int m_item_gap;
@@ -239,7 +243,8 @@ namespace Styles {
       Qt::Orientation m_direction;
       Styles::Overflow m_overflow;
       QString m_query;
-      QTimer* m_query_timer;
+      QTimer m_query_timer;
+      int m_initialize_count;
       boost::signals2::scoped_connection m_style_connection;
       boost::signals2::scoped_connection m_list_connection;
       boost::signals2::scoped_connection m_current_connection;
@@ -252,6 +257,9 @@ namespace Styles {
       void remove_item(int index);
       void move_item(int source, int destination);
       void update_layout();
+      void update_parent();
+      void initialize_visible_region();
+      void update_visible_region();
       void on_item_click(ItemEntry& item);
       void on_list_operation(const AnyListModel::Operation& operation);
       void on_current(
