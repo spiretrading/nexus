@@ -11,6 +11,7 @@ using namespace Nexus::OasisOrderExecutionService;
 using namespace Nexus::OrderExecutionService;
 
 namespace {
+  const auto MATN_CONSTRAINTS_TAG = 6005;
   const auto UMIR_ACCOUNT_TYPE_TAG = 6750;
   const auto UMIR_USER_ID_TAG = 6751;
   const auto NO_TRADE_FEAT_TAG = 7713;
@@ -83,6 +84,32 @@ const Order& SerenityFixApplication::Submit(const OrderInfo& info) {
               newOrderSingle->setField(LONG_LIFE_TAG, *value);
             }
           }
+        }
+      }
+      if(info.m_fields.m_destination == DefaultDestinations::MATNLP() ||
+          info.m_fields.m_destination == DefaultDestinations::MATNMF()) {
+        auto constraintsTagIterator = std::find_if(
+          info.m_fields.m_additionalFields.begin(),
+          info.m_fields.m_additionalFields.end(),
+          [] (const Tag& tag) {
+            return tag.GetKey() == MATN_CONSTRAINTS_TAG;
+          });
+        if(constraintsTagIterator != info.m_fields.m_additionalFields.end()) {
+          auto& constraintsTag = *constraintsTagIterator;
+          auto value = get<std::string>(constraintsTag.GetValue());
+          if(value == "PAG") {
+            newOrderSingle->setField(MATN_CONSTRAINTS_TAG, "PAG=-1");
+            if(info.m_fields.m_destination == "MATNLP") {
+              newOrderSingle->setField(FIX::ExecInst("R"));
+            }
+          } else if(value == "PMI") {
+            newOrderSingle->setField(MATN_CONSTRAINTS_TAG, "PMI=1");
+            if(info.m_fields.m_destination == "MATNLP") {
+              newOrderSingle->setField(FIX::ExecInst("p"));
+            }
+          }
+        } else if(info.m_fields.m_destination == "MATNLP") {
+          newOrderSingle->setField(FIX::ExecInst("M"));
         }
       }
     });
