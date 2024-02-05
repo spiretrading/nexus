@@ -161,6 +161,7 @@ bool ContextMenu::event(QEvent* event) {
     m_window->hide();
     hide_active_menu();
     m_list_view->get_current()->set(none);
+    m_list_view->setFocusProxy(nullptr);
   } else if(event->type() == QEvent::HoverMove) {
     auto& hover_event = *static_cast<QHoverEvent*>(event);
     for(auto i = 0; i < m_list_view->get_list()->get_size(); ++i) {
@@ -175,6 +176,8 @@ bool ContextMenu::event(QEvent* event) {
     }
   } else if(event->type() == QEvent::HoverLeave) {
     m_list_view->get_current()->set(none);
+    m_list_view->setFocusProxy(nullptr);
+    m_list_view->setFocus();
   }
   return QWidget::event(event);
 }
@@ -247,7 +250,6 @@ bool ContextMenu::handle_mouse_event(QMouseEvent* event) {
       if(!item->rect().contains(item->mapFromGlobal(event->globalPos()))) {
         hide_active_menu();
         clear_hover_style();
-        m_list_view->get_current()->set(none);
       } else if(event->type() == QEvent::MouseButtonPress ||
           event->type() == QEvent::MouseButtonDblClick) {
         return true;

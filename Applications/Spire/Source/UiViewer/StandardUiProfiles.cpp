@@ -1483,6 +1483,8 @@ UiProfile Spire::make_context_menu_profile() {
     [] (auto& profile) {
       auto button = make_label_button(QString::fromUtf8("Click me"));
       auto menu = new ContextMenu(*button);
+      menu->add_action("Undo", profile.make_event_slot<>(
+        QString("Action:Undo")));
       auto view_menu = new ContextMenu(*static_cast<QWidget*>(menu));
       view_menu->add_action("Large", profile.make_event_slot<>(
         QString("Action:Large")));
