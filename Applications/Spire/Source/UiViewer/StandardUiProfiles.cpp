@@ -68,6 +68,7 @@
 #include "Spire/Ui/ListSelectionModel.hpp"
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/MarketBox.hpp"
+#include "Spire/Ui/MenuButton.hpp"
 #include "Spire/Ui/MoneyBox.hpp"
 #include "Spire/Ui/NavigationView.hpp"
 #include "Spire/Ui/OpenFilterPanel.hpp"
@@ -3002,6 +3003,37 @@ UiProfile Spire::make_market_box_profile() {
       profile.make_event_slot<MarketToken>("Current"));
     box->connect_submit_signal(profile.make_event_slot<MarketToken>("Submit"));
     return box;
+  });
+  return profile;
+}
+
+UiProfile Spire::make_menu_button_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto profile = UiProfile("MenuButton", properties, [] (auto& profile) {
+    auto label = make_label("MenuButton");
+    update_style(*label, [] (auto& style) {
+      style.get(ReadOnly()).clear();
+      style.get(Disabled()).clear();
+      style.get(ReadOnly() && Disabled()).clear();
+      style.get(Any()).
+        set(border(scale_width(1), QColor(0xC8C8C8))).
+        set(TextAlign(Qt::Alignment(Qt::AlignCenter))).
+        set(horizontal_padding(scale_width(8))).
+        set(vertical_padding(scale_height(5)));
+    });
+    label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    auto menu_button = new MenuButton(label, [&] (QWidget* parent) {
+      auto menu = new ContextMenu(*parent);
+      menu->add_action("Minimize All",
+        profile.make_event_slot<>(QString("Action:Minimize All")));
+      menu->add_action("Restore All",
+        profile.make_event_slot<>(QString("Action:Restore All")));
+      return static_cast<OverlayPanel*>(menu->window());
+    });
+    menu_button->setFixedWidth(scale_width(120));
+    apply_widget_properties(menu_button, profile.get_properties());
+    return menu_button;
   });
   return profile;
 }
