@@ -10,13 +10,13 @@ namespace Spire {
   class MenuButton : public QWidget {
     public:
 
-    /**
-     * Constructs a MenuButton.
-     * @param body The component that opens a menu.
-     * @param menu The menu that is revealed when the body is clicked.
-     * @param parent The parent widget.
-     */
-    MenuButton(QWidget& body, OverlayPanel& menu, QWidget* parent = nullptr);
+      /**
+       * Constructs a MenuButton.
+       * @param body The widget contained by the button.
+       * @param menu The menu that is revealed when the button is clicked.
+       * @param parent The parent widget.
+       */
+      MenuButton(QWidget& body, OverlayPanel& menu, QWidget* parent = nullptr);
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
