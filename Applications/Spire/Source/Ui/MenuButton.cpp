@@ -2,23 +2,29 @@
 #include <QCoreApplication>
 #include <QKeyEvent>
 #include "Spire/Ui/Button.hpp"
+#include "Spire/Ui/ContextMenu.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
 
 using namespace Spire;
 using namespace Spire::Styles;
 
-MenuButton::MenuButton(QWidget& body, OverlayPanel& menu, QWidget* parent)
+MenuButton::MenuButton(QWidget& body, QWidget* parent)
     : QWidget(parent),
-      m_menu(&menu),
       m_timer(this),
       m_is_mouse_down_on_button(false) {
   setFocusPolicy(Qt::StrongFocus);
   enclose(*this, body);
-  m_menu->setWindowFlags(Qt::Popup | (m_menu->windowFlags() & ~Qt::Tool));
-  m_menu->set_positioning(OverlayPanel::Positioning::PARENT);
-  m_menu->installEventFilter(this);
+  m_menu = new ContextMenu(*this);
+  auto window = m_menu->window();
+  static_cast<OverlayPanel*>(window)->set_positioning(
+    OverlayPanel::Positioning::PARENT);
+  window->installEventFilter(this);
   m_timer.setSingleShot(true);
+}
+
+ContextMenu& MenuButton::get_menu() {
+  return *m_menu;
 }
 
 bool MenuButton::eventFilter(QObject* watched, QEvent* event) {
@@ -69,8 +75,7 @@ bool MenuButton::eventFilter(QObject* watched, QEvent* event) {
   } else if(event->type() == QEvent::KeyPress) {
     auto& key_event = *static_cast<QKeyEvent*>(event);
     if(key_event.key() == Qt::Key_Space) {
-      auto& menu_body = m_menu->get_body();
-      if(menu_body.focusProxy() == menu_body.focusWidget()) {
+      if(m_menu->focusProxy() == m_menu->focusWidget()) {
         match(*this, Press());
         m_menu->hide();
       }
