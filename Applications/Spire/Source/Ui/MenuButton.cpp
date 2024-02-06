@@ -55,12 +55,12 @@ bool MenuButton::eventFilter(QObject* watched, QEvent* event) {
         if(is_on_button && m_timer.isActive()) {
           m_timer.stop();
         } else {
-          if(auto child = m_menu->get_body().childAt(
-              m_menu->get_body().mapFromGlobal(mouse_event.globalPos()))) {
+          if(auto child = m_menu->childAt(
+              m_menu->mapFromGlobal(mouse_event.globalPos()))) {
             forward_mouse_event(child, QEvent::MouseButtonPress);
             forward_mouse_event(child, QEvent::MouseButtonRelease);
           } else {
-            m_menu->get_body().hide();
+            m_menu->hide();
           }
         }
       }
@@ -72,7 +72,7 @@ bool MenuButton::eventFilter(QObject* watched, QEvent* event) {
       auto& menu_body = m_menu->get_body();
       if(menu_body.focusProxy() == menu_body.focusWidget()) {
         match(*this, Press());
-        m_menu->get_body().hide();
+        m_menu->hide();
       }
     }
   }
@@ -83,7 +83,7 @@ void MenuButton::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Space || event->key() == Qt::Key_Enter ||
       event->key() == Qt::Key_Return) {
     match(*this, Press());
-    m_menu->get_body().show();
+    m_menu->show();
   }
   QWidget::keyPressEvent(event);
 }
@@ -100,7 +100,7 @@ void MenuButton::mousePressEvent(QMouseEvent* event) {
   if(!m_is_mouse_down_on_button && event->button() == Qt::LeftButton) {
     m_is_mouse_down_on_button = true;
     match(*this, Press());
-    m_menu->get_body().show();
+    m_menu->show();
     m_timer.start(500);
   }
   QWidget::mousePressEvent(event);
