@@ -1,12 +1,20 @@
 #include "Spire/Ui/MenuButton.hpp"
 #include <QCoreApplication>
 #include <QKeyEvent>
+#include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Button.hpp"
+#include "Spire/Ui/Icon.hpp"
+#include "Spire/Ui/LayeredWidget.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
+#include "Spire/Ui/TextBox.hpp"
 
 using namespace Spire;
 using namespace Spire::Styles;
+
+namespace {
+  using Label = StateSelector<void, struct LabelSelectorTag>;
+}
 
 MenuButton::MenuButton(QWidget& body, OverlayPanel& menu, QWidget* parent)
     : QWidget(parent),
@@ -112,4 +120,71 @@ void MenuButton::mouseReleaseEvent(QMouseEvent* event) {
     m_is_mouse_down_on_button = false;
   }
   QWidget::mouseReleaseEvent(event);
+}
+
+MenuButton* Spire::make_menu_label_button(QString label, OverlayPanel& menu,
+    QWidget* parent) {
+  auto label_box = make_label(std::move(label));
+  label_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  label_box->setFixedHeight(scale_height(26));
+  match(*label_box, Label());
+  update_style(*label_box, [] (auto& style) {
+    style.get(Any()).
+      set(border(scale_width(1), QColor(Qt::transparent))).
+      set(vertical_padding(scale_height(5))).
+      set(PaddingLeft(scale_width(8))).
+      set(PaddingRight(scale_width(14)));
+  });
+  auto icon_layer = new QWidget();
+  icon_layer->setAttribute(Qt::WA_TransparentForMouseEvents);
+  icon_layer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  auto arrow_icon =
+    new Icon(imageFromSvg(":/Icons/dropdown-arrow.svg", scale(6, 4)));
+  arrow_icon->setFixedSize(scale(6, 4));
+  auto icon_layer_layout = make_hbox_layout(icon_layer);
+  icon_layer_layout->addStretch();
+  icon_layer_layout->addWidget(arrow_icon);
+  icon_layer_layout->addSpacing(scale_width(8));
+  auto layers = new LayeredWidget();
+  layers->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  layers->add(label_box);
+  layers->add(icon_layer);
+  auto menu_button = new MenuButton(*layers, menu);
+  menu_button->setFixedHeight(scale_height(26));
+  menu.setParent(menu_button);
+  update_style(*menu_button, [] (auto& style) {
+    style.get(Any() > is_a<Icon>()).
+      set(Fill(QColor(0x333333)));
+    style.get((Hover() || Press() || FocusIn()) > is_a<Icon>()).
+      set(Fill(QColor(0xFFFFFF)));
+    style.get(Disabled() > is_a<Icon>()).
+      set(Fill(QColor(0xC8C8C8)));
+    style.get(FocusVisible() > Label()).
+      set(border_color(QColor(0x4B23A0)));
+    style.get(Hover() > Label()).
+      set(BackgroundColor(QColor(0x4B23A0))).
+      set(TextColor(QColor(0xFFFFFF)));
+    style.get(Press() > Label()).
+      set(BackgroundColor(QColor(0x7E71B8))).
+      set(TextColor(QColor(0xFFFFFF)));
+    style.get(FocusIn() > Label()).
+      set(BackgroundColor(QColor(0x684BC7))).
+      set(TextColor(QColor(0xFFFFFF)));
+    style.get(Disabled() > Label()).
+      set(TextColor(QColor(0xB8B8B8)));
+    //style.get(FocusVisible() > (is_a<TextBox>() && !(+Any() << is_a<OverlayPanel>()))).
+    //  set(border_color(QColor(0x4B23A0)));
+    //style.get(Hover() > (is_a<TextBox>() && !(+Any() << is_a<OverlayPanel>()))).
+    //  set(BackgroundColor(QColor(0x4B23A0))).
+    //  set(TextColor(QColor(0xFFFFFF)));
+    //style.get(Press() > (is_a<TextBox>() && !(+Any() << is_a<OverlayPanel>()))).
+    //  set(BackgroundColor(QColor(0x7E71B8))).
+    //  set(TextColor(QColor(0xFFFFFF)));
+    //style.get(FocusIn() > (is_a<TextBox>() && !(+Any() << is_a<OverlayPanel>()))).
+    //  set(BackgroundColor(QColor(0x684BC7))).
+    //  set(TextColor(QColor(0xFFFFFF)));
+    //style.get(Disabled() > (is_a<TextBox>() && !(+Any() << is_a<OverlayPanel>()))).
+    //  set(TextColor(QColor(0xB8B8B8)));
+  });
+  return menu_button;
 }

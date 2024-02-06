@@ -30,6 +30,15 @@ namespace Spire {
       QTimer m_timer;
       bool m_is_mouse_down_on_button;
   };
+
+  /**
+   * Makes a MenuLabelButton.
+   * @param label The text displayed on the button.
+   * @param menu The menu that is revealed when the body is clicked.
+   * @param parent The parent widget.
+   */
+  MenuButton* make_menu_label_button(QString label, OverlayPanel& menu,
+    QWidget* parent = nullptr);
 }
 
 #endif
