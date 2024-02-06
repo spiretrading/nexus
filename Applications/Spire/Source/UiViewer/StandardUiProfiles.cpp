@@ -3038,6 +3038,26 @@ UiProfile Spire::make_menu_button_profile() {
   return profile;
 }
 
+UiProfile Spire::make_menu_label_button_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto profile = UiProfile("MenuLabelButton", properties, [] (auto& profile) {
+    auto menu_button = make_menu_label_button("Window Manager",
+      [&] (QWidget* parent) {
+        auto menu = new ContextMenu(*parent);
+        menu->add_action("Minimize All",
+          profile.make_event_slot<>(QString("Action:Minimize All")));
+        menu->add_action("Restore All",
+          profile.make_event_slot<>(QString("Action:Restore All")));
+        return static_cast<OverlayPanel*>(menu->window());
+      });
+    menu_button->setFixedWidth(scale_width(120));
+    apply_widget_properties(menu_button, profile.get_properties());
+    return menu_button;
+  });
+  return profile;
+}
+
 UiProfile Spire::make_money_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);

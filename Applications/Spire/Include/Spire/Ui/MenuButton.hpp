@@ -39,6 +39,15 @@ namespace Spire {
       bool m_is_mouse_down_on_button_with_menu;
       bool m_is_mouse_down_on_button_without_menu;
   };
+
+  /**
+   * Makes a MenuLabelButton.
+   * @param label The text displayed on the button.
+   * @param menu_builder The MenuBuilder to use.
+   * @param parent The parent widget.
+   */
+  MenuButton* make_menu_label_button(const QString& label,
+    MenuButton::MenuBuilder menu_builder, QWidget* parent = nullptr);
 }
 
 #endif
