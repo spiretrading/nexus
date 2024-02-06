@@ -28,8 +28,7 @@ namespace Spire {
     private:
       OverlayPanel* m_menu;
       QTimer m_timer;
-      bool m_is_mouse_down_on_button_with_menu;
-      bool m_is_mouse_down_on_button_without_menu;
+      bool m_is_mouse_down_on_button;
   };
 }
 

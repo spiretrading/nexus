@@ -12,8 +12,7 @@ MenuButton::MenuButton(QWidget& body, OverlayPanel& menu, QWidget* parent)
     : QWidget(parent),
       m_menu(&menu),
       m_timer(this),
-      m_is_mouse_down_on_button_with_menu(false),
-      m_is_mouse_down_on_button_without_menu(false) {
+      m_is_mouse_down_on_button(false) {
   setFocusPolicy(Qt::StrongFocus);
   enclose(*this, body);
   m_menu->setWindowFlags(Qt::Popup | (m_menu->windowFlags() & ~Qt::Tool));
@@ -29,7 +28,7 @@ bool MenuButton::eventFilter(QObject* watched, QEvent* event) {
     auto& mouse_event = *static_cast<QMouseEvent*>(event);
     if(mouse_event.button() == Qt::LeftButton) {
       if(rect().contains(mapFromGlobal(mouse_event.globalPos()))) {
-        m_is_mouse_down_on_button_with_menu = true;
+        m_is_mouse_down_on_button = true;
         match(*this, Press());
       }
     }
@@ -39,9 +38,8 @@ bool MenuButton::eventFilter(QObject* watched, QEvent* event) {
       if(mouse_event.source() == Qt::MouseEventSynthesizedByApplication) {
         return true;
       }
-      auto is_on_button = [&] {
-        return rect().contains(mapFromGlobal(mouse_event.globalPos()));
-      }();
+      auto is_on_button =
+        rect().contains(mapFromGlobal(mouse_event.globalPos()));
       auto forward_mouse_event = [&] (QWidget* widget, QEvent::Type type) {
         auto position = widget->mapFromGlobal(mouse_event.globalPos());
         auto mouse_press_event = QMouseEvent(type, position,
@@ -53,7 +51,7 @@ bool MenuButton::eventFilter(QObject* watched, QEvent* event) {
       if(is_on_button) {
         unmatch(*this, Press());
       }
-      if(m_is_mouse_down_on_button_without_menu) {
+      if(m_is_mouse_down_on_button) {
         if(is_on_button && m_timer.isActive()) {
           m_timer.stop();
         } else {
@@ -66,8 +64,7 @@ bool MenuButton::eventFilter(QObject* watched, QEvent* event) {
           }
         }
       }
-      m_is_mouse_down_on_button_with_menu = false;
-      m_is_mouse_down_on_button_without_menu = false;
+      m_is_mouse_down_on_button = false;
     }
   } else if(event->type() == QEvent::KeyPress) {
     auto& key_event = *static_cast<QKeyEvent*>(event);
@@ -100,9 +97,8 @@ void MenuButton::keyReleaseEvent(QKeyEvent* event) {
 }
 
 void MenuButton::mousePressEvent(QMouseEvent* event) {
-  if(!m_is_mouse_down_on_button_with_menu &&
-      event->button() == Qt::LeftButton) {
-    m_is_mouse_down_on_button_without_menu = true;
+  if(!m_is_mouse_down_on_button && event->button() == Qt::LeftButton) {
+    m_is_mouse_down_on_button = true;
     match(*this, Press());
     m_menu->get_body().show();
     m_timer.start(500);
@@ -113,8 +109,7 @@ void MenuButton::mousePressEvent(QMouseEvent* event) {
 void MenuButton::mouseReleaseEvent(QMouseEvent* event) {
   if(event->button() == Qt::LeftButton) {
     unmatch(*this, Press());
-    m_is_mouse_down_on_button_with_menu = false;
-    m_is_mouse_down_on_button_without_menu = false;
+    m_is_mouse_down_on_button = false;
   }
   QWidget::mouseReleaseEvent(event);
 }
