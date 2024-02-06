@@ -8,14 +8,14 @@
 using namespace Spire;
 using namespace Spire::Styles;
 
-MenuButton::MenuButton(QWidget* body, MenuBuilder menu_builder, QWidget* parent)
+MenuButton::MenuButton(QWidget& body, OverlayPanel& menu, QWidget* parent)
     : QWidget(parent),
+      m_menu(&menu),
       m_timer(this),
       m_is_mouse_down_on_button_with_menu(false),
       m_is_mouse_down_on_button_without_menu(false) {
   setFocusPolicy(Qt::StrongFocus);
-  enclose(*this, *body);
-  m_menu = menu_builder(this);
+  enclose(*this, body);
   m_menu->setWindowFlags(Qt::Popup | (m_menu->windowFlags() & ~Qt::Tool));
   m_menu->set_positioning(OverlayPanel::Positioning::PARENT);
   m_menu->installEventFilter(this);

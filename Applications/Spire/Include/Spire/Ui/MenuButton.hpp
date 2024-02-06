@@ -10,21 +10,13 @@ namespace Spire {
   class MenuButton : public QWidget {
     public:
 
-      /**
-       * The type of function used to build a menu used by MenuButton.
-       * @param parent The parent of the menu.
-       * @return The OverlayPanel that represents a menu.
-       */
-      using MenuBuilder = std::function<OverlayPanel* (QWidget* parent)>;
-
-      /**
-       * Constructs a MenuButton.
-       * @param body The component that opens a menu.
-       * @param menu_builder The MenuBuilder to use.
-       * @param parent The parent widget.
-       */
-      MenuButton(QWidget* body, MenuBuilder menu_builder,
-        QWidget* parent = nullptr);
+    /**
+     * Constructs a MenuButton.
+     * @param body The component that opens a menu.
+     * @param menu The menu that is revealed when the body is clicked.
+     * @param parent The parent widget.
+     */
+    MenuButton(QWidget& body, OverlayPanel& menu, QWidget* parent = nullptr);
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;

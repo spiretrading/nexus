@@ -3023,14 +3023,13 @@ UiProfile Spire::make_menu_button_profile() {
         set(vertical_padding(scale_height(5)));
     });
     label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    auto menu_button = new MenuButton(label, [&] (QWidget* parent) {
-      auto menu = new ContextMenu(*parent);
-      menu->add_action("Minimize All",
-        profile.make_event_slot<>(QString("Action:Minimize All")));
-      menu->add_action("Restore All",
-        profile.make_event_slot<>(QString("Action:Restore All")));
-      return static_cast<OverlayPanel*>(menu->window());
-    });
+    auto menu = new ContextMenu(*label);
+    menu->add_action("Minimize All",
+      profile.make_event_slot<>(QString("Action:Minimize All")));
+    menu->add_action("Restore All",
+      profile.make_event_slot<>(QString("Action:Restore All")));
+    auto menu_button = new MenuButton(*label,
+      *static_cast<OverlayPanel*>(menu->window()));
     menu_button->setFixedWidth(scale_width(120));
     apply_widget_properties(menu_button, profile.get_properties());
     return menu_button;
