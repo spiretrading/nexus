@@ -111,6 +111,21 @@ namespace Styles {
       void on_cursor_position();
       void on_style();
   };
+
+  /**
+   * Returns a TextAreaBox as a TextAreaLabel.
+   * @param label The text displayed on the label.
+   * @param parent The parent widget.
+   */
+  TextAreaBox* make_text_area_label(QString label, QWidget* parent = nullptr);
+
+  /**
+   * Returns a TextAreaBox as a TextAreaLabel using a model.
+   * @param current The current value model.
+   * @param parent The parent widget.
+   */
+  TextAreaBox* make_text_area_label(std::shared_ptr<TextModel> model,
+    QWidget* parent = nullptr);
 }
 
 #endif
