@@ -3038,20 +3038,26 @@ UiProfile Spire::make_menu_button_profile() {
   return profile;
 }
 
-UiProfile Spire::make_menu_label_button_profile() {
+UiProfile Spire::make_menu_icon_button_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
-  auto profile = UiProfile("MenuLabelButton", properties, [] (auto& profile) {
-    auto menu_button = make_menu_label_button("Window Manager",
+  auto profile = UiProfile("MenuIconButton", properties, [] (auto& profile) {
+    auto menu_button = make_menu_icon_button(
+      imageFromSvg(":/Icons/toolbar_icons/blotter.svg", scale(26, 26)),
+      "MenuIconButton",
       [&] (QWidget* parent) {
         auto menu = new ContextMenu(*parent);
-        menu->add_action("Minimize All",
-          profile.make_event_slot<>(QString("Action:Minimize All")));
-        menu->add_action("Restore All",
-          profile.make_event_slot<>(QString("Action:Restore All")));
+        menu->add_action("New",
+          profile.make_event_slot<>(QString("Action:New")));
+        menu->add_separator();
+        menu->add_action("Global",
+          profile.make_event_slot<>(QString("Action:Global")));
+        menu->add_action("Australia",
+          profile.make_event_slot<>(QString("Action:Australia")));
+        menu->add_action("North America",
+          profile.make_event_slot<>(QString("Action:North America")));
         return static_cast<OverlayPanel*>(menu->window());
       });
-    menu_button->setFixedWidth(scale_width(120));
     apply_widget_properties(menu_button, profile.get_properties());
     return menu_button;
   });

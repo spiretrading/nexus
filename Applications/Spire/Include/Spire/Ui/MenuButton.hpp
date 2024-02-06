@@ -41,12 +41,22 @@ namespace Spire {
   };
 
   /**
-   * Makes a MenuLabelButton.
+   * Makes a MenuIconButton.
    * @param label The text displayed on the button.
    * @param menu_builder The MenuBuilder to use.
    * @param parent The parent widget.
    */
-  MenuButton* make_menu_label_button(const QString& label,
+  MenuButton* make_menu_icon_button(QImage icon,
+    MenuButton::MenuBuilder menu_builder, QWidget* parent = nullptr);
+
+  /**
+   * Makes a MenuIconButton.
+   * @param label The text displayed on the button.
+   * @param tooltip The text of the Tooltip to display.
+   * @param menu_builder The MenuBuilder to use.
+   * @param parent The parent widget.
+   */
+  MenuButton* make_menu_icon_button(QImage icon, QString tooltip,
     MenuButton::MenuBuilder menu_builder, QWidget* parent = nullptr);
 }
 

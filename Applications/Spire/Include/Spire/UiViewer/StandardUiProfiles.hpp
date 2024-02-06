@@ -149,8 +149,8 @@ namespace Spire {
   /** Returns a UiProfile for the MenuButton. */
   UiProfile make_menu_button_profile();
 
-  /** Returns a UiProfile for the MenuLabelButton. */
-  UiProfile make_menu_label_button_profile();
+  /** Returns a UiProfile for the MenuIconButton. */
+  UiProfile make_menu_icon_button_profile();
 
   /** Returns a UiProfile for the MoneyBox. */
   UiProfile make_money_box_profile();
