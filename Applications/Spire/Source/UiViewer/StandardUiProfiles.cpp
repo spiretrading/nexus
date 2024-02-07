@@ -3014,25 +3014,21 @@ UiProfile Spire::make_menu_button_profile() {
   populate_widget_properties(properties);
   auto profile = UiProfile("MenuButton", properties, [] (auto& profile) {
     auto label = make_label("MenuButton");
+    label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     update_style(*label, [] (auto& style) {
-      style.get(ReadOnly()).clear();
-      style.get(Disabled()).clear();
-      style.get(ReadOnly() && Disabled()).clear();
       style.get(Any()).
         set(border(scale_width(1), QColor(0xC8C8C8))).
         set(TextAlign(Qt::Alignment(Qt::AlignCenter))).
         set(horizontal_padding(scale_width(8))).
         set(vertical_padding(scale_height(5)));
     });
-    label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    auto menu = new ContextMenu(*label);
-    menu->add_action("Minimize All",
-      profile.make_event_slot<>(QString("Action:Minimize All")));
-    menu->add_action("Restore All",
-      profile.make_event_slot<>(QString("Action:Restore All")));
-    auto menu_button = new MenuButton(*label,
-      *static_cast<OverlayPanel*>(menu->window()));
+    auto menu_button = new MenuButton(*label);
     menu_button->setFixedWidth(scale_width(120));
+    auto& menu = menu_button->get_menu();
+    menu.add_action("Minimize All",
+      profile.make_event_slot<>(QString("Action:Minimize All")));
+    menu.add_action("Restore All",
+      profile.make_event_slot<>(QString("Action:Restore All")));
     apply_widget_properties(menu_button, profile.get_properties());
     return menu_button;
   });
@@ -3043,19 +3039,17 @@ UiProfile Spire::make_menu_label_button_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
   auto profile = UiProfile("MenuLabelButton", properties, [] (auto& profile) {
-    //auto top_widgets = QApplication::topLevelWindows();
-    auto menu = new ContextMenu(*QApplication::widgetAt(QCursor::pos()));
-    menu->add_action("Minimize All",
+    auto menu_button = make_menu_label_button("Window Manager");
+    auto& menu = menu_button->get_menu();
+    menu.add_action("Minimize All",
       profile.make_event_slot<>(QString("Action:Minimize All")));
-    menu->add_action("Restore All",
+    menu.add_action("Restore All",
       profile.make_event_slot<>(QString("Action:Restore All")));
-    menu->add_action("Import Settings...",
+    menu.add_action("Import Settings...",
       profile.make_event_slot<>(QString("Action:Import Settings")));
-    menu->add_action("Export Settings...",
+    menu.add_action("Export Settings...",
       profile.make_event_slot<>(QString("Action:Export Settings")));
-    auto menu_button = make_menu_label_button("Window Manager",
-      *static_cast<OverlayPanel*>(menu->window()));
-    menu_button->setFixedWidth(scale_width(120));
+    menu_button->setFixedWidth(scale_width(130));
     apply_widget_properties(menu_button, profile.get_properties());
     return menu_button;
   });
