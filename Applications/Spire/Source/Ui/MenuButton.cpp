@@ -153,7 +153,6 @@ MenuButton* Spire::make_menu_icon_button(QImage icon, QString tooltip,
       set(PaddingRight(scale_width(2)));
   });
   auto menu_button = new MenuButton(*box);
-  menu_button->setFixedHeight(scale_height(26));
   add_tooltip(std::move(tooltip), *menu_button);
   update_style(*menu_button, [] (auto& style) {
     style.get((Press() || Hover() || FocusIn()) > is_a<Box>()).

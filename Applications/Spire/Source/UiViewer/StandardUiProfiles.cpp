@@ -3038,13 +3038,15 @@ UiProfile Spire::make_menu_button_profile() {
 UiProfile Spire::make_menu_icon_button_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
+  properties.push_back(make_standard_property<QString>("tooltip", "Tooltip"));
   auto profile = UiProfile("MenuIconButton", properties, [] (auto& profile) {
+    auto& tooltip = get<QString>("tooltip", profile.get_properties());
     auto menu_button = make_menu_icon_button(
       imageFromSvg(":/Icons/toolbar_icons/blotter.svg", scale(26, 26)),
-      "MenuIconButton");
+      tooltip.get());
     apply_widget_properties(menu_button, profile.get_properties());
     auto& menu = menu_button->get_menu();
-    menu.add_action("New", profile.make_event_slot<>(QString("Action:New")));
+    menu.add_action("New...", profile.make_event_slot<>(QString("Action:New")));
     menu.add_separator();
     menu.add_action("Global",
       profile.make_event_slot<>(QString("Action:Global")));
