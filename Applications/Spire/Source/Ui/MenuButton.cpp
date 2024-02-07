@@ -11,16 +11,21 @@ using namespace Spire::Styles;
 
 MenuButton::MenuButton(QWidget& body, QWidget* parent)
     : QWidget(parent),
+      m_body(&body),
       m_timer(this),
       m_is_mouse_down_on_button(false) {
   setFocusPolicy(Qt::StrongFocus);
-  enclose(*this, body);
+  enclose(*this, *m_body);
   m_menu = new ContextMenu(*this);
   auto window = m_menu->window();
   static_cast<OverlayPanel*>(window)->set_positioning(
     OverlayPanel::Positioning::PARENT);
   window->installEventFilter(this);
   m_timer.setSingleShot(true);
+}
+
+QWidget& MenuButton::get_body() {
+  return *m_body;
 }
 
 ContextMenu& MenuButton::get_menu() {

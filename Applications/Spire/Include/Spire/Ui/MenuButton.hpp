@@ -17,6 +17,9 @@ namespace Spire {
        */
       explicit MenuButton(QWidget& body, QWidget* parent = nullptr);
 
+      /** Returns the body. */
+      QWidget& get_body();
+
       /** Returns the menu. */
       ContextMenu& get_menu();
 
@@ -28,6 +31,7 @@ namespace Spire {
       void mouseReleaseEvent(QMouseEvent* event) override;
 
     private:
+      QWidget* m_body;
       ContextMenu* m_menu;
       QTimer m_timer;
       bool m_is_mouse_down_on_button;
