@@ -62,7 +62,8 @@ const Order& SerenityFixApplication::Submit(const OrderInfo& info) {
         } else if(
             info.m_fields.m_destination == DefaultDestinations::MATNLP()) {
           return FIX::ExDestination("MATN");
-        } else if(info.m_fields.m_destination == DefaultDestinations::CSE()) {
+        } else if(info.m_fields.m_destination == DefaultDestinations::CSE() ||
+            info.m_fields.m_destination == DefaultDestinations::PURE()) {
           return FIX::ExDestination("XCNQ");
         } else if(info.m_fields.m_destination == DefaultDestinations::CSE2()) {
           return FIX::ExDestination("CSE2");
