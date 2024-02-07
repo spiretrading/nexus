@@ -13,10 +13,15 @@ namespace Spire {
       /**
        * Constructs a MenuButton.
        * @param body The widget contained by the button.
-       * @param menu The menu that is revealed when the button is clicked.
        * @param parent The parent widget.
        */
-      MenuButton(QWidget& body, OverlayPanel& menu, QWidget* parent = nullptr);
+      explicit MenuButton(QWidget& body, QWidget* parent = nullptr);
+
+      /** Returns the body. */
+      QWidget& get_body();
+
+      /** Returns the menu. */
+      ContextMenu& get_menu();
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
@@ -26,7 +31,8 @@ namespace Spire {
       void mouseReleaseEvent(QMouseEvent* event) override;
 
     private:
-      OverlayPanel* m_menu;
+      QWidget* m_body;
+      ContextMenu* m_menu;
       QTimer m_timer;
       bool m_is_mouse_down_on_button;
   };
