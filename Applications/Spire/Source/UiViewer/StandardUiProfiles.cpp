@@ -4760,11 +4760,18 @@ UiProfile Spire::make_text_area_box_profile() {
 
 UiProfile Spire::make_text_area_label_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
-  populate_widget_properties(properties);
+  properties.push_back(make_standard_property<int>("width", 100));
   properties.push_back(make_standard_property("current", QString("Label")));
   auto profile = UiProfile("TextAreaLabel", properties, [] (auto& profile) {
     auto text_area_label = make_text_area_label("");
-    apply_widget_properties(text_area_label, profile.get_properties());
+    auto& width = get<int>("width", profile.get_properties());
+    width.connect_changed_signal([=] (auto value) {
+      if(value != 0) {
+        if(unscale_width(text_area_label->width()) != value) {
+          text_area_label->setFixedWidth(scale_width(value));
+        }
+      }
+    });
     auto& current = get<QString>("current", profile.get_properties());
     current.connect_changed_signal([=] (const auto& value) {
       text_area_label->get_current()->set(value);
