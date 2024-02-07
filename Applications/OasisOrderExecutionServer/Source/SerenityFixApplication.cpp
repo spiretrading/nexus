@@ -122,7 +122,9 @@ void SerenityFixApplication::Cancel(
   m_orderLog.Cancel(session, orderId, m_timeClient->GetTime(),
     GetSessionId().getSenderCompID(), GetSessionId().getTargetCompID(),
     [&] (const Order& order,
-      Out<FIX42::OrderCancelRequest> orderCancelRequest) {});
+        Out<FIX42::OrderCancelRequest> orderCancelRequest) {
+      orderCancelRequest->setField(UMIR_USER_ID_TAG, GetUmirUserID());
+    });
 }
 
 void SerenityFixApplication::Update(const OrderExecutionSession& session,
