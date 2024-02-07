@@ -1484,6 +1484,8 @@ UiProfile Spire::make_context_menu_profile() {
     [] (auto& profile) {
       auto button = make_label_button(QString::fromUtf8("Click me"));
       auto menu = new ContextMenu(*button);
+      menu->add_action("Undo", profile.make_event_slot<>(
+        QString("Action:Undo")));
       auto view_menu = new ContextMenu(*static_cast<QWidget*>(menu));
       view_menu->add_action("Large", profile.make_event_slot<>(
         QString("Action:Large")));
@@ -3012,26 +3014,21 @@ UiProfile Spire::make_menu_button_profile() {
   populate_widget_properties(properties);
   auto profile = UiProfile("MenuButton", properties, [] (auto& profile) {
     auto label = make_label("MenuButton");
+    label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     update_style(*label, [] (auto& style) {
-      style.get(ReadOnly()).clear();
-      style.get(Disabled()).clear();
-      style.get(ReadOnly() && Disabled()).clear();
       style.get(Any()).
         set(border(scale_width(1), QColor(0xC8C8C8))).
         set(TextAlign(Qt::Alignment(Qt::AlignCenter))).
         set(horizontal_padding(scale_width(8))).
         set(vertical_padding(scale_height(5)));
     });
-    label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    auto menu_button = new MenuButton(label, [&] (QWidget* parent) {
-      auto menu = new ContextMenu(*parent);
-      menu->add_action("Minimize All",
-        profile.make_event_slot<>(QString("Action:Minimize All")));
-      menu->add_action("Restore All",
-        profile.make_event_slot<>(QString("Action:Restore All")));
-      return static_cast<OverlayPanel*>(menu->window());
-    });
+    auto menu_button = new MenuButton(*label);
     menu_button->setFixedWidth(scale_width(120));
+    auto& menu = menu_button->get_menu();
+    menu.add_action("Minimize All",
+      profile.make_event_slot<>(QString("Action:Minimize All")));
+    menu.add_action("Restore All",
+      profile.make_event_slot<>(QString("Action:Restore All")));
     apply_widget_properties(menu_button, profile.get_properties());
     return menu_button;
   });
@@ -3044,21 +3041,17 @@ UiProfile Spire::make_menu_icon_button_profile() {
   auto profile = UiProfile("MenuIconButton", properties, [] (auto& profile) {
     auto menu_button = make_menu_icon_button(
       imageFromSvg(":/Icons/toolbar_icons/blotter.svg", scale(26, 26)),
-      "MenuIconButton",
-      [&] (QWidget* parent) {
-        auto menu = new ContextMenu(*parent);
-        menu->add_action("New",
-          profile.make_event_slot<>(QString("Action:New")));
-        menu->add_separator();
-        menu->add_action("Global",
-          profile.make_event_slot<>(QString("Action:Global")));
-        menu->add_action("Australia",
-          profile.make_event_slot<>(QString("Action:Australia")));
-        menu->add_action("North America",
-          profile.make_event_slot<>(QString("Action:North America")));
-        return static_cast<OverlayPanel*>(menu->window());
-      });
+      "MenuIconButton");
     apply_widget_properties(menu_button, profile.get_properties());
+    auto& menu = menu_button->get_menu();
+    menu.add_action("New", profile.make_event_slot<>(QString("Action:New")));
+    menu.add_separator();
+    menu.add_action("Global",
+      profile.make_event_slot<>(QString("Action:Global")));
+    menu.add_action("Australia",
+      profile.make_event_slot<>(QString("Action:Australia")));
+    menu.add_action("North America",
+      profile.make_event_slot<>(QString("Action:North America")));
     return menu_button;
   });
   return profile;

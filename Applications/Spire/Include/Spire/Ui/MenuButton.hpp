@@ -11,20 +11,17 @@ namespace Spire {
     public:
 
       /**
-       * The type of function used to build a menu used by MenuButton.
-       * @param parent The parent of the menu.
-       * @return The OverlayPanel that represents a menu.
-       */
-      using MenuBuilder = std::function<OverlayPanel* (QWidget* parent)>;
-
-      /**
        * Constructs a MenuButton.
-       * @param body The component that opens a menu.
-       * @param menu_builder The MenuBuilder to use.
+       * @param body The widget contained by the button.
        * @param parent The parent widget.
        */
-      MenuButton(QWidget* body, MenuBuilder menu_builder,
-        QWidget* parent = nullptr);
+      explicit MenuButton(QWidget& body, QWidget* parent = nullptr);
+
+      /** Returns the body. */
+      QWidget& get_body();
+
+      /** Returns the menu. */
+      ContextMenu& get_menu();
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
@@ -34,30 +31,27 @@ namespace Spire {
       void mouseReleaseEvent(QMouseEvent* event) override;
 
     private:
-      OverlayPanel* m_menu;
+      QWidget* m_body;
+      ContextMenu* m_menu;
       QTimer m_timer;
-      bool m_is_mouse_down_on_button_with_menu;
-      bool m_is_mouse_down_on_button_without_menu;
+      bool m_is_mouse_down_on_button;
   };
 
   /**
-   * Makes a MenuIconButton.
-   * @param label The text displayed on the button.
-   * @param menu_builder The MenuBuilder to use.
+   * Returns a newly constructed MenuButton displaying an Icon and no tooltip.
+   * @param icon The icon used within the button.
    * @param parent The parent widget.
    */
-  MenuButton* make_menu_icon_button(QImage icon,
-    MenuButton::MenuBuilder menu_builder, QWidget* parent = nullptr);
+  MenuButton* make_menu_icon_button(QImage icon, QWidget* parent = nullptr);
 
   /**
-   * Makes a MenuIconButton.
-   * @param label The text displayed on the button.
+   * Returns a newly constructed MenuButton displaying an Icon and a tooltip.
+   * @param icon The icon used within the button.
    * @param tooltip The text of the Tooltip to display.
-   * @param menu_builder The MenuBuilder to use.
    * @param parent The parent widget.
    */
   MenuButton* make_menu_icon_button(QImage icon, QString tooltip,
-    MenuButton::MenuBuilder menu_builder, QWidget* parent = nullptr);
+    QWidget* parent = nullptr);
 }
 
 #endif
