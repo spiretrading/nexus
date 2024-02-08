@@ -42,6 +42,13 @@ namespace Spire {
       void update_menu_width();
       void on_menu_window_style();
   };
+
+  /**
+   * Returns a newly constructed MenuButton displaying a text label.
+   * @param label The button's text label.
+   * @param parent The parent widget.
+   */
+  MenuButton* make_menu_label_button(QString label, QWidget* parent = nullptr);
 }
 
 #endif
