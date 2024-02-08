@@ -140,6 +140,10 @@ void MenuButton::mouseReleaseEvent(QMouseEvent* event) {
 
 void MenuButton::show_menu() {
   m_menu->show();
+  update_menu_width();
+}
+
+void MenuButton::update_menu_width() {
   auto margins = m_menu_window->layout()->contentsMargins();
   auto max_width = std::max(
     {MINIMUM_MENU_WIDTH(), width(), m_menu->sizeHint().width()});
@@ -153,17 +157,23 @@ void MenuButton::show_menu() {
 void MenuButton::on_menu_window_style() {
   m_menu_border_size = 0;
   auto& stylist = find_stylist(*m_menu_window);
+  auto has_update = std::make_shared<bool>(false);
   for(auto& property : stylist.get_computed_block()) {
     property.visit(
       [&] (const BorderRightSize& size) {
         stylist.evaluate(size, [=] (auto size) {
           m_menu_border_size += size;
+          *has_update = true;
         });
       },
       [&] (const BorderLeftSize& size) {
         stylist.evaluate(size, [=] (auto size) {
           m_menu_border_size += size;
+          *has_update = true;
         });
       });
+  }
+  if(*has_update && m_menu->isVisible()) {
+    update_menu_width();
   }
 }
