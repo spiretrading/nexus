@@ -3029,6 +3029,9 @@ UiProfile Spire::make_menu_button_profile() {
       profile.make_event_slot<>(QString("Action:Minimize All")));
     menu.add_action("Restore All",
       profile.make_event_slot<>(QString("Action:Restore All")));
+    menu.add_action("This is a long name for test",
+      profile.make_event_slot<>(
+        QString("Action:This is a long name for test")));
     apply_widget_properties(menu_button, profile.get_properties());
     return menu_button;
   });
@@ -4775,6 +4778,29 @@ UiProfile Spire::make_text_area_box_profile() {
     text_area_box->get_current()->connect_update_signal(
       profile.make_event_slot<QString>("Current"));
     return text_area_box;
+  });
+  return profile;
+}
+
+UiProfile Spire::make_text_area_label_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  properties.push_back(make_standard_property<int>("width", 100));
+  properties.push_back(make_standard_property("current", QString("Label")));
+  auto profile = UiProfile("TextAreaLabel", properties, [] (auto& profile) {
+    auto text_area_label = make_text_area_label("");
+    auto& width = get<int>("width", profile.get_properties());
+    width.connect_changed_signal([=] (auto value) {
+      if(value != 0) {
+        if(unscale_width(text_area_label->width()) != value) {
+          text_area_label->setFixedWidth(scale_width(value));
+        }
+      }
+    });
+    auto& current = get<QString>("current", profile.get_properties());
+    current.connect_changed_signal([=] (const auto& value) {
+      text_area_label->get_current()->set(value);
+    });
+    return text_area_label;
   });
   return profile;
 }

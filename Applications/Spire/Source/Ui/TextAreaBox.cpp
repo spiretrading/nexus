@@ -47,6 +47,11 @@ namespace {
     style.get(Disabled() > Placeholder()).set(TextColor(QColor(0xC8C8C8)));
     return style;
   }
+
+  void apply_label_style(TextAreaBox& text_area_box) {
+    Spire::apply_label_style(text_area_box);
+    text_area_box.set_read_only(true);
+  }
 }
 
 class TextAreaBox::ContentSizedTextEdit : public QTextEdit {
@@ -498,4 +503,17 @@ void TextAreaBox::on_style() {
         });
     }
   });
+}
+
+TextAreaBox* Spire::make_text_area_label(QString label, QWidget* parent) {
+  auto text_area_box = new TextAreaBox(std::move(label), parent);
+  ::apply_label_style(*text_area_box);
+  return text_area_box;
+}
+
+TextAreaBox* Spire::make_text_area_label(std::shared_ptr<TextModel> current,
+    QWidget* parent) {
+  auto text_area_box = new TextAreaBox(std::move(current), parent);
+  ::apply_label_style(*text_area_box);
+  return text_area_box;
 }
