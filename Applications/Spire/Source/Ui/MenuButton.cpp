@@ -1,6 +1,8 @@
 #include "Spire/Ui/MenuButton.hpp"
 #include <QCoreApplication>
 #include <QKeyEvent>
+#include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/BoxPainter.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/ContextMenu.hpp"
 #include "Spire/Ui/Layouts.hpp"
@@ -9,19 +11,31 @@
 using namespace Spire;
 using namespace Spire::Styles;
 
+namespace {
+  auto MINIMUM_MENU_WIDTH() {
+    static auto width = scale_width(130);
+    return width;
+  }
+}
+
 MenuButton::MenuButton(QWidget& body, QWidget* parent)
     : QWidget(parent),
       m_body(&body),
       m_timer(this),
-      m_is_mouse_down_on_button(false) {
+      m_is_mouse_down_on_button(false),
+      m_menu_border_size(0) {
   setFocusPolicy(Qt::StrongFocus);
   enclose(*this, *m_body);
   m_menu = new ContextMenu(*this);
-  auto window = m_menu->window();
-  static_cast<OverlayPanel*>(window)->set_positioning(
-    OverlayPanel::Positioning::PARENT);
-  window->installEventFilter(this);
+  m_menu->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  m_menu_window = static_cast<OverlayPanel*>(m_menu->window());
+  m_menu_window->layout()->itemAt(0)->widget()->setSizePolicy(
+    QSizePolicy::Expanding, QSizePolicy::Fixed);
+  m_menu_window->set_positioning(OverlayPanel::Positioning::PARENT);
+  m_menu_window->installEventFilter(this);
   m_timer.setSingleShot(true);
+  on_menu_window_style();
+  connect_style_signal(*m_menu_window, [=] { on_menu_window_style(); });
 }
 
 QWidget& MenuButton::get_body() {
@@ -93,7 +107,7 @@ void MenuButton::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Space || event->key() == Qt::Key_Enter ||
       event->key() == Qt::Key_Return) {
     match(*this, Press());
-    m_menu->show();
+    show_menu();
   }
   QWidget::keyPressEvent(event);
 }
@@ -110,7 +124,7 @@ void MenuButton::mousePressEvent(QMouseEvent* event) {
   if(!m_is_mouse_down_on_button && event->button() == Qt::LeftButton) {
     m_is_mouse_down_on_button = true;
     match(*this, Press());
-    m_menu->show();
+    show_menu();
     m_timer.start(500);
   }
   QWidget::mousePressEvent(event);
@@ -122,4 +136,34 @@ void MenuButton::mouseReleaseEvent(QMouseEvent* event) {
     m_is_mouse_down_on_button = false;
   }
   QWidget::mouseReleaseEvent(event);
+}
+
+void MenuButton::show_menu() {
+  m_menu->show();
+  auto margins = m_menu_window->layout()->contentsMargins();
+  auto max_width = std::max(
+    {MINIMUM_MENU_WIDTH(), width(), m_menu->sizeHint().width()});
+  auto window_width = max_width + margins.left() + margins.right();
+  if(max_width == m_menu->sizeHint().width()) {
+    window_width += m_menu_border_size;
+  }
+  m_menu_window->setFixedWidth(window_width);
+}
+
+void MenuButton::on_menu_window_style() {
+  m_menu_border_size = 0;
+  auto& stylist = find_stylist(*m_menu_window);
+  for(auto& property : stylist.get_computed_block()) {
+    property.visit(
+      [&] (const BorderRightSize& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          m_menu_border_size += size;
+        });
+      },
+      [&] (const BorderLeftSize& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          m_menu_border_size += size;
+        });
+      });
+  }
 }

@@ -33,8 +33,13 @@ namespace Spire {
     private:
       QWidget* m_body;
       ContextMenu* m_menu;
+      OverlayPanel* m_menu_window;
       QTimer m_timer;
       bool m_is_mouse_down_on_button;
+      int m_menu_border_size;
+
+      void show_menu();
+      void on_menu_window_style();
   };
 }
 
