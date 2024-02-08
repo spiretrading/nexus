@@ -49,11 +49,7 @@ namespace {
   }
 
   void apply_label_style(TextAreaBox& text_area_box) {
-    update_style(text_area_box, [] (auto& style) {
-      style.get(Any()).
-        set(border_size(0)).
-        set(vertical_padding(0));
-    });
+    Spire::apply_label_style(text_area_box);
     text_area_box.set_read_only(true);
   }
 }
