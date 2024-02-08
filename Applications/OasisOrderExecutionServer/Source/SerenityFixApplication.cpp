@@ -18,6 +18,8 @@ namespace {
   const auto NO_TRADE_FEAT_TAG = 7713;
   const auto NO_TRADE_KEY_TAG = 7714;
   const auto LONG_LIFE_TAG = 7735;
+  const auto UNIFORM_LIQUDITY_TAG = 9730;
+  const auto ORIGINAL_LIQUIDITY_TAG = 9731;
 }
 
 SerenityFixApplication::SerenityFixApplication(
@@ -76,19 +78,22 @@ const Order& SerenityFixApplication::Submit(const OrderInfo& info) {
               DefaultMarkets::TSXV()) {
             return FIX::ExDestination("TSXV");
           }
-          return FIX::ExDestination("TSX");
+          return FIX::ExDestination("XTSX");
         } else if(submissionInfo->m_fields.m_destination ==
             DefaultDestinations::CHIX()) {
           return FIX::ExDestination("CHIX");
         } else if(submissionInfo->m_fields.m_destination ==
             DefaultDestinations::CX2()) {
           return FIX::ExDestination("XCX2");
-        } else if(
-            submissionInfo->m_fields.m_destination ==
-              DefaultDestinations::MATNLP()) {
+        } else if(submissionInfo->m_fields.m_destination ==
+            DefaultDestinations::MATNLP() ||
+              submissionInfo->m_fields.m_destination ==
+                DefaultDestinations::MATNMF()) {
           return FIX::ExDestination("MATN");
         } else if(submissionInfo->m_fields.m_destination ==
-            DefaultDestinations::CSE()) {
+            DefaultDestinations::CSE() ||
+              submissionInfo->m_fields.m_destination ==
+                DefaultDestinations::PURE()) {
           return FIX::ExDestination("XCNQ");
         } else if(submissionInfo->m_fields.m_destination ==
             DefaultDestinations::CSE2()) {
@@ -156,7 +161,9 @@ void SerenityFixApplication::Cancel(
   m_orderLog.Cancel(session, orderId, m_timeClient->GetTime(),
     GetSessionId().getSenderCompID(), GetSessionId().getTargetCompID(),
     [&] (const Order& order,
-      Out<FIX42::OrderCancelRequest> orderCancelRequest) {});
+        Out<FIX42::OrderCancelRequest> orderCancelRequest) {
+      orderCancelRequest->setField(UMIR_USER_ID_TAG, GetUmirUserID());
+    });
 }
 
 void SerenityFixApplication::Update(const OrderExecutionSession& session,
@@ -185,7 +192,52 @@ void SerenityFixApplication::fromApp(
 }
 
 void SerenityFixApplication::onMessage(
-    const FIX42::ExecutionReport& message, const FIX::SessionID& sessionId) {}
+    const FIX42::ExecutionReport& message, const FIX::SessionID& sessionId) {
+  m_orderLog.Update(message, sessionId, m_timeClient->GetTime(),
+    [=] (const Order& order, Out<ExecutionReport> update) {
+      auto liquidityFlag = std::string();
+      if(message.isSetField(UNIFORM_LIQUDITY_TAG)) {
+        liquidityFlag = message.getField(UNIFORM_LIQUDITY_TAG);
+      }
+      if(liquidityFlag == "A") {
+        update->m_liquidityFlag = "P";
+      } else if(liquidityFlag == "R") {
+        update->m_liquidityFlag = "A";
+      }
+      auto lastMkt = FIX::LastMkt();
+      if(message.isSet(lastMkt)) {
+        message.get(lastMkt);
+        if(lastMkt == "XTSX") {
+          update->m_lastMarket = DefaultMarkets::TSX().GetData();
+        } else if(lastMkt == "CHIX" || lastMkt == "XCXD") {
+          update->m_lastMarket = DefaultMarkets::CHIC().GetData();
+        } else if(lastMkt == "XCX2") {
+          update->m_lastMarket = DefaultMarkets::XCX2().GetData();
+        } else if(lastMkt == "MATN") {
+          update->m_lastMarket = DefaultMarkets::MATN().GetData();
+        } else if(lastMkt == "XCNQ") {
+          if(order.GetInfo().m_fields.m_security.GetMarket() ==
+              DefaultMarkets::CSE()) {
+            update->m_lastMarket = DefaultMarkets::CSE().GetData();
+          } else {
+            update->m_lastMarket = DefaultMarkets::PURE().GetData();
+          }
+        } else if(lastMkt == "CSE2") {
+          update->m_lastMarket = DefaultMarkets::CSE2().GetData();
+        } else if(lastMkt == "XATS") {
+          update->m_lastMarket = DefaultMarkets::XATS().GetData();
+        } else if(lastMkt == "OMGA") {
+          update->m_lastMarket = DefaultMarkets::OMGA().GetData();
+        } else if(lastMkt == "LYNX") {
+          update->m_lastMarket = DefaultMarkets::LYNX().GetData();
+        } else if(lastMkt == "NEON" || lastMkt == "NEOL" || lastMkt == "NEOD") {
+          update->m_lastMarket = DefaultMarkets::NEOE().GetData();
+        } else if(lastMkt == "TSXV") {
+          update->m_lastMarket = DefaultMarkets::TSXV().GetData();
+        }
+      }
+  });
+}
 
 void SerenityFixApplication::onMessage(
   const FIX42::TradingSessionStatus& message,
