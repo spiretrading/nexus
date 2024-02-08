@@ -124,7 +124,7 @@ namespace Styles {
    * @param current The current value model.
    * @param parent The parent widget.
    */
-  TextAreaBox* make_text_area_label(std::shared_ptr<TextModel> model,
+  TextAreaBox* make_text_area_label(std::shared_ptr<TextModel> current,
     QWidget* parent = nullptr);
 }
 

@@ -511,9 +511,9 @@ TextAreaBox* Spire::make_text_area_label(QString label, QWidget* parent) {
   return text_area_box;
 }
 
-TextAreaBox* Spire::make_text_area_label(std::shared_ptr<TextModel> model,
+TextAreaBox* Spire::make_text_area_label(std::shared_ptr<TextModel> current,
     QWidget* parent) {
-  auto text_area_box = new TextAreaBox(std::move(model), parent);
+  auto text_area_box = new TextAreaBox(std::move(current), parent);
   ::apply_label_style(*text_area_box);
   return text_area_box;
 }
