@@ -3029,6 +3029,9 @@ UiProfile Spire::make_menu_button_profile() {
       profile.make_event_slot<>(QString("Action:Minimize All")));
     menu.add_action("Restore All",
       profile.make_event_slot<>(QString("Action:Restore All")));
+    menu.add_action("This is a long name for test",
+      profile.make_event_slot<>(
+        QString("Action:This is a long name for test")));
     apply_widget_properties(menu_button, profile.get_properties());
     return menu_button;
   });
