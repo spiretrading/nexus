@@ -1,12 +1,13 @@
 #include "OasisOrderExecutionServer/SerenityFixApplication.hpp"
-#include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 #include <quickfix/Session.h>
+#include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 
 using namespace boost;
 using namespace Beam;
 using namespace Beam::TimeService;
 using namespace Nexus;
 using namespace Nexus::FixUtilities;
+using namespace Nexus::MarketDataService;
 using namespace Nexus::OasisOrderExecutionService;
 using namespace Nexus::OrderExecutionService;
 
@@ -20,8 +21,10 @@ namespace {
 }
 
 SerenityFixApplication::SerenityFixApplication(
-  Ref<LiveNtpTimeClient> timeClient)
-  : m_timeClient(timeClient.Get()) {}
+  Ref<LiveNtpTimeClient> timeClient,
+  Ref<ApplicationMarketDataClient::Client> marketDataClient)
+  : m_timeClient(timeClient.Get()),
+    m_marketDataClient(marketDataClient.Get()) {}
 
 const Order& SerenityFixApplication::Recover(
     const SequencedAccountOrderRecord& orderRecord) {
@@ -29,13 +32,31 @@ const Order& SerenityFixApplication::Recover(
 }
 
 const Order& SerenityFixApplication::Submit(const OrderInfo& info) {
-  return m_orderLog.Submit(info, GetSessionId().getSenderCompID(),
+  auto modifiedInfo = std::optional<OrderInfo>();
+  auto submissionInfo = [&] () -> const OrderInfo* {
+    if(info.m_fields.m_type != OrderType::MARKET) {
+      return &info;
+    }
+    modifiedInfo.emplace(info);
+    modifiedInfo->m_fields.m_type = OrderType::LIMIT;
+    auto bboQuote = LoadBboQuote(modifiedInfo->m_fields.m_security);
+    if(info.m_fields.m_side == Side::BID) {
+      modifiedInfo->m_fields.m_price =
+        bboQuote.m_ask.m_price + 2 * Money::CENT;
+    } else {
+      modifiedInfo->m_fields.m_price =
+        std::max(bboQuote.m_bid.m_price - 2 * Money::CENT, Money::CENT / 2);
+    }
+    return &*modifiedInfo;
+  }();
+  return m_orderLog.Submit(*submissionInfo, GetSessionId().getSenderCompID(),
     GetSessionId().getTargetCompID(),
     [&] (Out<FIX42::NewOrderSingle> newOrderSingle) {
-      if(info.m_fields.m_security.GetCountry() != DefaultCountries::CA()) {
+      if(submissionInfo->m_fields.m_security.GetCountry() !=
+          DefaultCountries::CA()) {
         BOOST_THROW_EXCEPTION(FixOrderRejectedException("Invalid country."));
       }
-      if(info.m_fields.m_currency != DefaultCurrencies::CAD()) {
+      if(submissionInfo->m_fields.m_currency != DefaultCurrencies::CAD()) {
         BOOST_THROW_EXCEPTION(FixOrderRejectedException("Invalid currency."));
       }
       newOrderSingle->setField(UMIR_ACCOUNT_TYPE_TAG, "CL");
@@ -46,38 +67,50 @@ const Order& SerenityFixApplication::Submit(const OrderInfo& info) {
         newOrderSingle->setField(NO_TRADE_FEAT_TAG, noTradeFeat);
         newOrderSingle->setField(NO_TRADE_KEY_TAG, noTradeKey);
       }
-      newOrderSingle->set(FIX::Account(info.m_submissionAccount.m_name));
+      newOrderSingle->set(
+        FIX::Account(submissionInfo->m_submissionAccount.m_name));
       auto exDestination = [&] {
-        if(info.m_fields.m_destination == DefaultDestinations::TSX()) {
-          if(info.m_fields.m_security.GetMarket() == DefaultMarkets::TSXV()) {
+        if(submissionInfo->m_fields.m_destination ==
+            DefaultDestinations::TSX()) {
+          if(submissionInfo->m_fields.m_security.GetMarket() ==
+              DefaultMarkets::TSXV()) {
             return FIX::ExDestination("TSXV");
           }
           return FIX::ExDestination("TSX");
-        } else if(info.m_fields.m_destination == DefaultDestinations::CHIX()) {
+        } else if(submissionInfo->m_fields.m_destination ==
+            DefaultDestinations::CHIX()) {
           return FIX::ExDestination("CHIX");
-        } else if(info.m_fields.m_destination == DefaultDestinations::CX2()) {
+        } else if(submissionInfo->m_fields.m_destination ==
+            DefaultDestinations::CX2()) {
           return FIX::ExDestination("XCX2");
         } else if(
-            info.m_fields.m_destination == DefaultDestinations::MATNLP()) {
+            submissionInfo->m_fields.m_destination ==
+              DefaultDestinations::MATNLP()) {
           return FIX::ExDestination("MATN");
-        } else if(info.m_fields.m_destination == DefaultDestinations::CSE()) {
+        } else if(submissionInfo->m_fields.m_destination ==
+            DefaultDestinations::CSE()) {
           return FIX::ExDestination("XCNQ");
-        } else if(info.m_fields.m_destination == DefaultDestinations::CSE2()) {
+        } else if(submissionInfo->m_fields.m_destination ==
+            DefaultDestinations::CSE2()) {
           return FIX::ExDestination("CSE2");
-        } else if(info.m_fields.m_destination == DefaultDestinations::ALPHA()) {
+        } else if(submissionInfo->m_fields.m_destination ==
+            DefaultDestinations::ALPHA()) {
           return FIX::ExDestination("XATS");
-        } else if(info.m_fields.m_destination == DefaultDestinations::OMEGA()) {
+        } else if(submissionInfo->m_fields.m_destination ==
+            DefaultDestinations::OMEGA()) {
           return FIX::ExDestination("OMGA");
-        } else if(info.m_fields.m_destination == DefaultDestinations::LYNX()) {
+        } else if(submissionInfo->m_fields.m_destination ==
+            DefaultDestinations::LYNX()) {
           return FIX::ExDestination("LYNX");
-        } else if(info.m_fields.m_destination == DefaultDestinations::NEOE()) {
+        } else if(submissionInfo->m_fields.m_destination ==
+            DefaultDestinations::NEOE()) {
           return FIX::ExDestination("NEOL");
         }
         BOOST_THROW_EXCEPTION(
           FixOrderRejectedException("Invalid destination."));
       }();
       newOrderSingle->set(exDestination);
-      for(auto& tag : info.m_fields.m_additionalFields) {
+      for(auto& tag : submissionInfo->m_fields.m_additionalFields) {
         if(tag.GetKey() == LONG_LIFE_TAG) {
           if(auto value = get<std::string>(&tag.GetValue())) {
             if(*value == "Y" || *value == "N") {
@@ -86,29 +119,32 @@ const Order& SerenityFixApplication::Submit(const OrderInfo& info) {
           }
         }
       }
-      if(info.m_fields.m_destination == DefaultDestinations::MATNLP() ||
-          info.m_fields.m_destination == DefaultDestinations::MATNMF()) {
+      if(submissionInfo->m_fields.m_destination ==
+          DefaultDestinations::MATNLP() ||
+            submissionInfo->m_fields.m_destination ==
+              DefaultDestinations::MATNMF()) {
         auto constraintsTagIterator = std::find_if(
-          info.m_fields.m_additionalFields.begin(),
-          info.m_fields.m_additionalFields.end(),
+          submissionInfo->m_fields.m_additionalFields.begin(),
+          submissionInfo->m_fields.m_additionalFields.end(),
           [] (const Tag& tag) {
             return tag.GetKey() == MATN_CONSTRAINTS_TAG;
           });
-        if(constraintsTagIterator != info.m_fields.m_additionalFields.end()) {
+        if(constraintsTagIterator !=
+            submissionInfo->m_fields.m_additionalFields.end()) {
           auto& constraintsTag = *constraintsTagIterator;
           auto value = get<std::string>(constraintsTag.GetValue());
           if(value == "PAG") {
             newOrderSingle->setField(MATN_CONSTRAINTS_TAG, "PAG=-1");
-            if(info.m_fields.m_destination == "MATNLP") {
+            if(submissionInfo->m_fields.m_destination == "MATNLP") {
               newOrderSingle->setField(FIX::ExecInst("R"));
             }
           } else if(value == "PMI") {
             newOrderSingle->setField(MATN_CONSTRAINTS_TAG, "PMI=1");
-            if(info.m_fields.m_destination == "MATNLP") {
+            if(submissionInfo->m_fields.m_destination == "MATNLP") {
               newOrderSingle->setField(FIX::ExecInst("p"));
             }
           }
-        } else if(info.m_fields.m_destination == "MATNLP") {
+        } else if(submissionInfo->m_fields.m_destination == "MATNLP") {
           newOrderSingle->setField(FIX::ExecInst("M"));
         }
       }
@@ -157,6 +193,22 @@ void SerenityFixApplication::onMessage(
 
 void SerenityFixApplication::onMessage(
   const FIX42::OrderCancelReject& message, const FIX::SessionID& sessionId) {}
+
+BboQuote SerenityFixApplication::LoadBboQuote(const Security& security) {
+  auto bbo = m_bboQuotes.GetOrInsert(security,
+    [&] {
+      auto bbo = std::make_shared<StateQueue<BboQuote>>();
+      QueryRealTimeWithSnapshot(security, *m_marketDataClient, bbo);
+      return bbo;
+    });
+  try {
+    return bbo->Peek();
+  } catch(const Beam::PipeBrokenException&) {
+    m_bboQuotes.Erase(security);
+    BOOST_THROW_EXCEPTION(
+      FixOrderRejectedException{"No BBO quote available."});
+  }
+}
 
 std::string SerenityFixApplication::GetUmirUserID() const {
   if(GetSessionSettings().get(GetSessionId()).has("UMIRUserID")) {

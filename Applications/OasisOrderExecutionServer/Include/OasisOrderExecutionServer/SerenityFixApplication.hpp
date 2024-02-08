@@ -1,9 +1,13 @@
 #ifndef OASIS_SERENITY_FIX_APPLICATION_HPP
 #define OASIS_SERENITY_FIX_APPLICATION_HPP
+#include <unordered_map>
+#include <Beam/Collections/SynchronizedMap.hpp>
+#include <Beam/Queues/StateQueue.hpp>
 #include <Beam/TimeService/NtpTimeClient.hpp>
 #include <quickfix/MessageCracker.h>
 #include "Nexus/FixUtilities/FixApplication.hpp"
 #include "Nexus/FixUtilities/FixOrderLog.hpp"
+#include "Nexus/MarketDataService/ApplicationDefinitions.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
 
 namespace Nexus::OasisOrderExecutionService {
@@ -16,9 +20,12 @@ namespace Nexus::OasisOrderExecutionService {
       /**
        * Constructs a SerenityFixApplication.
        * @param timeClient The TimeClient used for timestamps.
+       * @param marketDataClient The MarketDataClient used to determine the BBO.
        */
       SerenityFixApplication(
-        Beam::Ref<Beam::TimeService::LiveNtpTimeClient> timeClient);
+        Beam::Ref<Beam::TimeService::LiveNtpTimeClient> timeClient,
+        Beam::Ref<MarketDataService::ApplicationMarketDataClient::Client>
+          marketDataClient);
 
       const OrderExecutionService::Order& Recover(
         const OrderExecutionService::SequencedAccountOrderRecord& orderRecord)
@@ -60,8 +67,13 @@ namespace Nexus::OasisOrderExecutionService {
 
     private:
       Beam::TimeService::LiveNtpTimeClient* m_timeClient;
+      MarketDataService::ApplicationMarketDataClient::Client*
+        m_marketDataClient;
+      Beam::SynchronizedUnorderedMap<
+        Security, std::shared_ptr<Beam::StateQueue<BboQuote>>> m_bboQuotes;
       FixUtilities::FixOrderLog m_orderLog;
 
+      BboQuote LoadBboQuote(const Security& security);
       std::string GetUmirUserID() const;
       std::string GetNoTradeFeat() const;
       std::string GetNoTradeKey() const;

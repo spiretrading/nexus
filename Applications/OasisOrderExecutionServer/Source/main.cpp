@@ -99,8 +99,8 @@ namespace {
       entries.push_back(asxEntry);
       auto serenityEntry = FixApplicationEntry();
       serenityEntry.m_configPath = "serenity.cfg";
-      serenityEntry.m_application =
-        std::make_shared<SerenityFixApplication>(Ref(timeClient));
+      serenityEntry.m_application = std::make_shared<SerenityFixApplication>(
+        Ref(timeClient), Ref(**marketDataClient));
       serenityEntry.m_destinations.push_back(DefaultDestinations::ALPHA());
       serenityEntry.m_destinations.push_back(DefaultDestinations::CHIX());
       serenityEntry.m_destinations.push_back(DefaultDestinations::CSE());
