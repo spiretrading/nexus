@@ -173,6 +173,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_market_box_profile());
   add(make_menu_button_profile());
   add(make_menu_icon_button_profile());
+  add(make_menu_label_button_profile());
   add(make_money_box_profile());
   add(make_money_filter_panel_profile());
   add(make_navigation_view_profile());
@@ -214,6 +215,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_tag_box_profile());
   add(make_tag_combo_box_profile());
   add(make_text_area_box_profile());
+  add(make_text_area_label_profile());
   add(make_text_box_profile());
   add(make_time_box_profile());
   add(make_time_in_force_box_profile());
