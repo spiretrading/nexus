@@ -59,6 +59,7 @@
 #include "Spire/Ui/HighlightSwatch.hpp"
 #include "Spire/Ui/HoverObserver.hpp"
 #include "Spire/Ui/Icon.hpp"
+#include "Spire/Ui/InfoPanel.hpp"
 #include "Spire/Ui/InfoTip.hpp"
 #include "Spire/Ui/IntegerBox.hpp"
 #include "Spire/Ui/KeyFilterPanel.hpp"
@@ -2525,6 +2526,36 @@ UiProfile Spire::make_icon_toggle_button_profile() {
     auto button = make_icon_toggle_button(
       imageFromSvg(":/Icons/demo.svg", scale(26, 26)), tooltip.get());
     apply_widget_properties(button, profile.get_properties());
+    return button;
+  });
+  return profile;
+}
+
+UiProfile Spire::make_info_panel_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_property<QString>("message", "Message"));
+  auto severity_property = define_enum<InfoPanel::Severity>(
+    {{"INFO", InfoPanel::Severity::INFO},
+     {"SUCCESS", InfoPanel::Severity::SUCCESS},
+     {"WARNING", InfoPanel::Severity::WARNING},
+     {"ERROR", InfoPanel::Severity::ERROR}});
+  properties.push_back(
+    make_standard_enum_property("severity", severity_property));
+  auto profile = UiProfile("InfoPanel", properties, [] (auto& profile) {
+    auto button = make_label_button("Click me");
+    auto& message = get<QString>("message", profile.get_properties());
+    auto& severity =
+      get<InfoPanel::Severity>("severity", profile.get_properties());
+    auto info_panel = QPointer<InfoPanel>();
+    button->connect_click_signal([=, &message, &severity] () mutable {
+      if(info_panel) {
+        return;
+      }
+      info_panel = new InfoPanel(severity.get(), message.get(), *button);
+      info_panel->setAttribute(Qt::WA_DeleteOnClose);
+      info_panel->show();
+    });
     return button;
   });
   return profile;

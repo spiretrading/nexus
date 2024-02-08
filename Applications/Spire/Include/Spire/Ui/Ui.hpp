@@ -52,6 +52,7 @@ namespace Spire {
   class HighlightSwatch;
   class HoverObserver;
   class Icon;
+  class InfoPanel;
   class InfoTip;
   class KeyInputBox;
   class KeyObserver;
