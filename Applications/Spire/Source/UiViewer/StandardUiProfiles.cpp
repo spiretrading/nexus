@@ -3059,6 +3059,30 @@ UiProfile Spire::make_menu_label_button_profile() {
   return profile;
 }
 
+UiProfile Spire::make_menu_icon_button_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_property<QString>("tooltip", "Tooltip"));
+  auto profile = UiProfile("MenuIconButton", properties, [] (auto& profile) {
+    auto& tooltip = get<QString>("tooltip", profile.get_properties());
+    auto menu_button = make_menu_icon_button(
+      imageFromSvg(":/Icons/toolbar_icons/blotter.svg", scale(26, 26)),
+      tooltip.get());
+    apply_widget_properties(menu_button, profile.get_properties());
+    auto& menu = menu_button->get_menu();
+    menu.add_action("New...", profile.make_event_slot<>(QString("Action:New")));
+    menu.add_separator();
+    menu.add_action("Global",
+      profile.make_event_slot<>(QString("Action:Global")));
+    menu.add_action("Australia",
+      profile.make_event_slot<>(QString("Action:Australia")));
+    menu.add_action("North America",
+      profile.make_event_slot<>(QString("Action:North America")));
+    return menu_button;
+  });
+  return profile;
+}
+
 UiProfile Spire::make_money_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);

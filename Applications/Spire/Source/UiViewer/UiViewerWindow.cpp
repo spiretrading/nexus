@@ -172,6 +172,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_list_view_profile());
   add(make_market_box_profile());
   add(make_menu_button_profile());
+  add(make_menu_icon_button_profile());
   add(make_menu_label_button_profile());
   add(make_money_box_profile());
   add(make_money_filter_panel_profile());

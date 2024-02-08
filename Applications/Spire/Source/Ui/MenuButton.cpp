@@ -2,7 +2,7 @@
 #include <QCoreApplication>
 #include <QKeyEvent>
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Ui/BoxPainter.hpp"
+#include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/ContextMenu.hpp"
 #include "Spire/Ui/Icon.hpp"
@@ -10,6 +10,7 @@
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
 #include "Spire/Ui/TextBox.hpp"
+#include "Spire/Ui/Tooltip.hpp"
 
 using namespace Spire;
 using namespace Spire::Styles;
@@ -181,6 +182,49 @@ void MenuButton::on_menu_window_style() {
   if(*has_update && m_menu->isVisible()) {
     update_menu_width();
   }
+}
+
+MenuButton* Spire::make_menu_icon_button(QImage icon, QWidget* parent) {
+  return make_menu_icon_button(std::move(icon), "", parent);
+}
+
+MenuButton* Spire::make_menu_icon_button(QImage icon, QString tooltip,
+    QWidget* parent) {
+  auto action_icon = new Icon(std::move(icon));
+  action_icon->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  auto arrow_icon =
+    new Icon(imageFromSvg(":/Icons/dropdown-arrow.svg", scale(6, 4)));
+  arrow_icon->setFixedSize(scale(6, 4));
+  auto body = new QWidget();
+  auto layout = make_hbox_layout(body);
+  layout->addWidget(action_icon);
+  layout->addWidget(arrow_icon);
+  auto box = new Box(body);
+  update_style(*box, [] (auto& style) {
+    style.get(Any()).
+      set(BackgroundColor(QColor(Qt::transparent))).
+      set(border(scale_width(1), QColor(Qt::transparent))).
+      set(PaddingRight(scale_width(2)));
+  });
+  auto menu_button = new MenuButton(*box);
+  add_tooltip(std::move(tooltip), *menu_button);
+  update_style(*menu_button, [] (auto& style) {
+    style.get((Press() || Hover() || FocusIn()) > is_a<Box>()).
+      set(BackgroundColor(QColor(0xE0E0E0)));
+    style.get(FocusVisible() > is_a<Box>()).
+      set(border_color(QColor(0x4B23A0)));
+    style.get(Any() > is_a<Icon>()).
+      set(Fill(QColor(0x535353)));
+    style.get(Hover() > is_a<Icon>()).
+      set(Fill(QColor(0x4B23A0)));
+    style.get(Press() > is_a<Icon>()).
+      set(Fill(QColor(0x7E71B8)));
+    style.get(FocusIn() > is_a<Icon>()).
+      set(Fill(QColor(0x684BC7)));
+    style.get(Disabled() > is_a<Icon>()).
+      set(Fill(QColor(0xC8C8C8)));
+  });
+  return menu_button;
 }
 
 MenuButton* Spire::make_menu_label_button(QString label, QWidget* parent) {

@@ -44,6 +44,22 @@ namespace Spire {
   };
 
   /**
+   * Returns a newly constructed MenuButton displaying an Icon and no tooltip.
+   * @param icon The icon used within the button.
+   * @param parent The parent widget.
+   */
+  MenuButton* make_menu_icon_button(QImage icon, QWidget* parent = nullptr);
+
+  /**
+   * Returns a newly constructed MenuButton displaying an Icon and a tooltip.
+   * @param icon The icon used within the button.
+   * @param tooltip The text of the Tooltip to display.
+   * @param parent The parent widget.
+   */
+  MenuButton* make_menu_icon_button(QImage icon, QString tooltip,
+    QWidget* parent = nullptr);
+
+  /**
    * Returns a newly constructed MenuButton displaying a text label.
    * @param label The button's text label.
    * @param parent The parent widget.
