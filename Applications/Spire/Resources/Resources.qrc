@@ -124,5 +124,10 @@
     <file>Icons/color-thumb.svg</file>
     <file>Icons/chequered-board.png</file>
     <file>Icons/color-thumb-invert.svg</file>
+    <file>Icons/info_panel/error.svg</file>
+    <file>Icons/info_panel/info.svg</file>
+    <file>Icons/info_panel/success.svg</file>
+    <file>Icons/info_panel/warning.svg</file>
+    <file>Icons/info_panel/close.svg</file>
   </qresource>
 </RCC>

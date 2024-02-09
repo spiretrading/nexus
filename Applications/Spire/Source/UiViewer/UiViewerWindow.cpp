@@ -159,6 +159,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_hover_observer_profile());
   add(make_icon_button_profile());
   add(make_icon_toggle_button_profile());
+  add(make_info_panel_profile());
   add(make_info_tip_profile());
   add(make_input_box_profile());
   add(make_integer_box_profile());
