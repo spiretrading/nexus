@@ -2553,7 +2553,6 @@ UiProfile Spire::make_info_panel_profile() {
         return;
       }
       info_panel = new InfoPanel(severity.get(), message.get(), *button);
-      info_panel->setAttribute(Qt::WA_DeleteOnClose);
       info_panel->show();
     });
     return button;

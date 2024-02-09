@@ -31,14 +31,13 @@ namespace Spire {
 
       /**
        * Constructs an InfoPanel using Severity::INFO and initial message value.
-       * @param severity The severity of the message.
        * @param message The message displayed in the info panel.
        * @param parent The parent widget.
        */
       InfoPanel(QString message, QWidget& parent);
 
       /**
-       * Constructs an InfoPanel using Severity::INFO and initial message value.
+       * Constructs an InfoPanel.
        * @param severity The severity of the message.
        * @param message The message displayed in the info panel.
        * @param parent The parent widget.

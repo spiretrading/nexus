@@ -13,27 +13,32 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  auto SEVERITY_ICON_SIZE() {
+    static auto size = scale(14, 14);
+    return size;
+  }
+
   const auto& INFO_IMAGE() {
     static auto image =
-      imageFromSvg(":/Icons/info_panel/info.svg", scale(14, 14));
+      imageFromSvg(":/Icons/info_panel/info.svg", SEVERITY_ICON_SIZE());
     return image;
   }
 
   const auto& SUCCESS_IMAGE() {
     static auto image =
-      imageFromSvg(":/Icons/info_panel/success.svg", scale(14, 14));
+      imageFromSvg(":/Icons/info_panel/success.svg", SEVERITY_ICON_SIZE());
     return image;
   }
 
   const auto& WARNING_IMAGE() {
     static auto image =
-      imageFromSvg(":/Icons/info_panel/warning.svg", scale(14, 14));
+      imageFromSvg(":/Icons/info_panel/warning.svg", SEVERITY_ICON_SIZE());
     return image;
   }
 
   const auto& ERROR_IMAGE() {
     static auto image =
-      imageFromSvg(":/Icons/info_panel/error.svg", scale(14, 14));
+      imageFromSvg(":/Icons/info_panel/error.svg", SEVERITY_ICON_SIZE());
     return image;
   }
 }
@@ -45,6 +50,7 @@ InfoPanel::InfoPanel(Severity severity, QString message, QWidget& parent)
     : QWidget(&parent),
       m_severity(severity),
       m_message(std::move(message)) {
+  setAttribute(Qt::WA_DeleteOnClose);
   auto image = [&] {
     if(m_severity == Severity::INFO) {
       return INFO_IMAGE();
@@ -58,7 +64,7 @@ InfoPanel::InfoPanel(Severity severity, QString message, QWidget& parent)
     return QImage();
   }();
   auto severity_icon = new Icon(image);
-  severity_icon->setFixedSize(scale(14, 14));
+  severity_icon->setFixedSize(SEVERITY_ICON_SIZE());
   update_style(*severity_icon, [&] (auto& styles) {
     if(m_severity == Severity::INFO) {
       styles.get(Any() || Hover()).set(Fill(QColor(0x4392D6)));
