@@ -41,6 +41,20 @@ namespace {
       imageFromSvg(":/Icons/info_panel/error.svg", SEVERITY_ICON_SIZE());
     return image;
   }
+
+  auto SEVERITY_STYLE(InfoPanel::Severity severity) {
+    auto style = StyleSheet();
+    if(severity == InfoPanel::Severity::INFO) {
+      style.get(Any()).set(Fill(QColor(0x4392D6)));
+    } else if(severity == InfoPanel::Severity::SUCCESS) {
+      style.get(Any()).set(Fill(QColor(0x26BF4A)));
+    } else if(severity == InfoPanel::Severity::WARNING) {
+      style.get(Any()).set(Fill(QColor(0xFFBB00)));
+    } else if(severity == InfoPanel::Severity::ERROR) {
+      style.get(Any()).set(Fill(QColor(0xE63F44)));
+    }
+    return style;
+  }
 }
 
 InfoPanel::InfoPanel(QString message, QWidget& parent)
@@ -65,17 +79,7 @@ InfoPanel::InfoPanel(Severity severity, QString message, QWidget& parent)
   }();
   auto severity_icon = new Icon(image);
   severity_icon->setFixedSize(SEVERITY_ICON_SIZE());
-  update_style(*severity_icon, [&] (auto& styles) {
-    if(m_severity == Severity::INFO) {
-      styles.get(Any() || Hover()).set(Fill(QColor(0x4392D6)));
-    } else if(m_severity == Severity::SUCCESS) {
-      styles.get(Any() || Hover()).set(Fill(QColor(0x26BF4A)));
-    } else if(m_severity == Severity::WARNING) {
-      styles.get(Any() || Hover()).set(Fill(QColor(0xFFBB00)));
-    } else if(m_severity == Severity::ERROR) {
-      styles.get(Any() || Hover()).set(Fill(QColor(0xE63F44)));
-    }
-  });
+  set_style(*severity_icon, SEVERITY_STYLE(m_severity));
   auto message_area_layout = make_hbox_layout();
   message_area_layout->addWidget(severity_icon, 0, Qt::AlignTop);
   message_area_layout->addSpacing(scale_width(4));
@@ -115,9 +119,7 @@ const QString& InfoPanel::get_message() const {
 }
 
 bool InfoPanel::eventFilter(QObject* watched, QEvent* event) {
-  if(event->type() == QEvent::Show) {
-    show();
-  } else if(event->type() == QEvent::Close) {
+  if(event->type() == QEvent::Close) {
     close();
   }
   return QWidget::eventFilter(watched, event);
