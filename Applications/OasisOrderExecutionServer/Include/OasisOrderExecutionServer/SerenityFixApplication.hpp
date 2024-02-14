@@ -75,7 +75,7 @@ namespace Nexus::OasisOrderExecutionService {
       FixUtilities::FixOrderLog m_orderLog;
 
       BboQuote LoadBboQuote(const Security& security);
-      void RouteToChix(const Nexus::OrderExecutionService::OrderInfo& info,
+      void RouteToChix(Nexus::OrderExecutionService::OrderInfo info,
         Beam::Out<FIX42::NewOrderSingle> newOrderSingle);
       void RouteToMatn(const Nexus::OrderExecutionService::OrderInfo& info,
         Beam::Out<FIX42::NewOrderSingle> newOrderSingle);

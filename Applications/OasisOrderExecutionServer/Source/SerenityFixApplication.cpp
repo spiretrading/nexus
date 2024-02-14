@@ -3,6 +3,7 @@
 #include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 
 using namespace boost;
+using namespace boost::posix_time;
 using namespace Beam;
 using namespace Beam::TimeService;
 using namespace Nexus;
@@ -38,18 +39,26 @@ const Order& SerenityFixApplication::Recover(
 const Order& SerenityFixApplication::Submit(const OrderInfo& info) {
   auto modifiedInfo = std::optional<OrderInfo>();
   auto submissionInfo = [&] () -> const OrderInfo* {
-    if(info.m_fields.m_type != OrderType::MARKET) {
+    if(info.m_fields.m_type != OrderType::MARKET &&
+        info.m_fields.m_type != OrderType::PEGGED) {
       return &info;
     }
     modifiedInfo.emplace(info);
-    modifiedInfo->m_fields.m_type = OrderType::LIMIT;
+    if(info.m_fields.m_type == OrderType::MARKET) {
+      modifiedInfo->m_fields.m_type = OrderType::LIMIT;
+      modifiedInfo->m_fields.m_price = Money::ZERO;
+    }
     auto bboQuote = LoadBboQuote(modifiedInfo->m_fields.m_security);
-    if(info.m_fields.m_side == Side::BID) {
-      modifiedInfo->m_fields.m_price =
-        bboQuote.m_ask.m_price + 2 * Money::CENT;
-    } else {
-      modifiedInfo->m_fields.m_price =
-        std::max(bboQuote.m_bid.m_price - 2 * Money::CENT, Money::CENT / 2);
+    if(modifiedInfo->m_fields.m_price == Money::ZERO) {
+      if(info.m_fields.m_side == Side::BID) {
+        modifiedInfo->m_fields.m_price =
+          std::max(bboQuote.m_ask.m_price + 2 * Money::CENT,
+            Floor(1.02 * bboQuote.m_ask.m_price, 2));
+      } else {
+        modifiedInfo->m_fields.m_price = std::max(
+          std::min(bboQuote.m_bid.m_price - 2 * Money::CENT,
+            Floor(0.98 * bboQuote.m_bid.m_price, 2)), Money::CENT / 2);
+      }
     }
     return &*modifiedInfo;
   }();
@@ -231,12 +240,12 @@ BboQuote SerenityFixApplication::LoadBboQuote(const Security& security) {
   } catch(const Beam::PipeBrokenException&) {
     m_bboQuotes.Erase(security);
     BOOST_THROW_EXCEPTION(
-      FixOrderRejectedException{"No BBO quote available."});
+      FixOrderRejectedException("No BBO quote available."));
   }
 }
 
 void SerenityFixApplication::RouteToChix(
-    const OrderInfo& info, Out<FIX42::NewOrderSingle> newOrderSingle) {
+    OrderInfo info, Out<FIX42::NewOrderSingle> newOrderSingle) {
   auto hasDestination = false;
   if(info.m_fields.m_destination == DefaultDestinations::TSX()) {
     auto destination = [&] {
@@ -247,6 +256,13 @@ void SerenityFixApplication::RouteToChix(
     }();
     newOrderSingle->set(FIX::HandlInst('6'));
     newOrderSingle->getHeader().setField(destination);
+    static const auto openTime = hours(14) + minutes(30);
+    if(m_timeClient->GetTime().time_of_day() < openTime) {
+      if(info.m_fields.m_timeInForce.GetType() ==
+          TimeInForce::Type::DAY) {
+        info.m_fields.m_timeInForce = TimeInForce(TimeInForce::Type::OPG);
+      }
+    }
 /** TODO
     auto destination = FIX::ExDestination("SMRTXOPG-X2");
     newOrderSingle->getHeader().setField(destination);
