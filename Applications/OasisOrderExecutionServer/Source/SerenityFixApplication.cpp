@@ -12,6 +12,7 @@ using namespace Nexus::OasisOrderExecutionService;
 using namespace Nexus::OrderExecutionService;
 
 namespace {
+  const auto ANONYMOUS_TAG = 6761;
   const auto MATN_CONSTRAINTS_TAG = 6005;
   const auto UMIR_ACCOUNT_TYPE_TAG = 6750;
   const auto UMIR_USER_ID_TAG = 6751;
@@ -20,6 +21,7 @@ namespace {
   const auto LONG_LIFE_TAG = 7735;
   const auto UNIFORM_LIQUDITY_TAG = 9730;
   const auto ORIGINAL_LIQUIDITY_TAG = 9731;
+  const auto NEO_VISIBILITY_TYPE_TAG = 20000;
 }
 
 SerenityFixApplication::SerenityFixApplication(
@@ -71,50 +73,9 @@ const Order& SerenityFixApplication::Submit(const OrderInfo& info) {
       }
       newOrderSingle->set(
         FIX::Account(submissionInfo->m_submissionAccount.m_name));
-      auto exDestination = [&] {
-        if(submissionInfo->m_fields.m_destination ==
-            DefaultDestinations::TSX()) {
-          if(submissionInfo->m_fields.m_security.GetMarket() ==
-              DefaultMarkets::TSXV()) {
-            return FIX::ExDestination("TSXV");
-          }
-          return FIX::ExDestination("XTSX");
-        } else if(submissionInfo->m_fields.m_destination ==
-            DefaultDestinations::CHIX()) {
-          return FIX::ExDestination("CHIX");
-        } else if(submissionInfo->m_fields.m_destination ==
-            DefaultDestinations::CX2()) {
-          return FIX::ExDestination("XCX2");
-        } else if(submissionInfo->m_fields.m_destination ==
-            DefaultDestinations::MATNLP() ||
-              submissionInfo->m_fields.m_destination ==
-                DefaultDestinations::MATNMF()) {
-          return FIX::ExDestination("MATN");
-        } else if(submissionInfo->m_fields.m_destination ==
-            DefaultDestinations::CSE() ||
-              submissionInfo->m_fields.m_destination ==
-                DefaultDestinations::PURE()) {
-          return FIX::ExDestination("XCNQ");
-        } else if(submissionInfo->m_fields.m_destination ==
-            DefaultDestinations::CSE2()) {
-          return FIX::ExDestination("CSE2");
-        } else if(submissionInfo->m_fields.m_destination ==
-            DefaultDestinations::ALPHA()) {
-          return FIX::ExDestination("XATS");
-        } else if(submissionInfo->m_fields.m_destination ==
-            DefaultDestinations::OMEGA()) {
-          return FIX::ExDestination("OMGA");
-        } else if(submissionInfo->m_fields.m_destination ==
-            DefaultDestinations::LYNX()) {
-          return FIX::ExDestination("LYNX");
-        } else if(submissionInfo->m_fields.m_destination ==
-            DefaultDestinations::NEOE()) {
-          return FIX::ExDestination("NEOL");
-        }
-        BOOST_THROW_EXCEPTION(
-          FixOrderRejectedException("Invalid destination."));
-      }();
-      newOrderSingle->set(exDestination);
+      if(auto& anonymousTag = GetAnonymousTag()) {
+        newOrderSingle->setField(ANONYMOUS_TAG, *anonymousTag);
+      }
       for(auto& tag : submissionInfo->m_fields.m_additionalFields) {
         if(tag.GetKey() == LONG_LIFE_TAG) {
           if(auto value = get<std::string>(&tag.GetValue())) {
@@ -125,33 +86,45 @@ const Order& SerenityFixApplication::Submit(const OrderInfo& info) {
         }
       }
       if(submissionInfo->m_fields.m_destination ==
+          DefaultDestinations::CHIX() ||
+          submissionInfo->m_fields.m_destination ==
+            DefaultDestinations::CX2() ||
+          submissionInfo->m_fields.m_destination ==
+            DefaultDestinations::TSX()) {
+        RouteToChix(*submissionInfo, Store(newOrderSingle));
+      } else if(submissionInfo->m_fields.m_destination ==
           DefaultDestinations::MATNLP() ||
-            submissionInfo->m_fields.m_destination ==
-              DefaultDestinations::MATNMF()) {
-        auto constraintsTagIterator = std::find_if(
-          submissionInfo->m_fields.m_additionalFields.begin(),
-          submissionInfo->m_fields.m_additionalFields.end(),
-          [] (const Tag& tag) {
-            return tag.GetKey() == MATN_CONSTRAINTS_TAG;
-          });
-        if(constraintsTagIterator !=
-            submissionInfo->m_fields.m_additionalFields.end()) {
-          auto& constraintsTag = *constraintsTagIterator;
-          auto value = get<std::string>(constraintsTag.GetValue());
-          if(value == "PAG") {
-            newOrderSingle->setField(MATN_CONSTRAINTS_TAG, "PAG=-1");
-            if(submissionInfo->m_fields.m_destination == "MATNLP") {
-              newOrderSingle->setField(FIX::ExecInst("R"));
-            }
-          } else if(value == "PMI") {
-            newOrderSingle->setField(MATN_CONSTRAINTS_TAG, "PMI=1");
-            if(submissionInfo->m_fields.m_destination == "MATNLP") {
-              newOrderSingle->setField(FIX::ExecInst("p"));
-            }
+          submissionInfo->m_fields.m_destination ==
+            DefaultDestinations::MATNMF()) {
+        RouteToMatn(*submissionInfo, Store(newOrderSingle));
+      } else if(submissionInfo->m_fields.m_destination ==
+          DefaultDestinations::NEOE()) {
+        RouteToNeo(*submissionInfo, Store(newOrderSingle));
+      } else {
+        auto exDestination = [&] {
+          if(submissionInfo->m_fields.m_destination ==
+              DefaultDestinations::CSE() ||
+                submissionInfo->m_fields.m_destination ==
+                  DefaultDestinations::PURE()) {
+            return FIX::ExDestination("XCNQ");
+          } else if(submissionInfo->m_fields.m_destination ==
+              DefaultDestinations::CSE2()) {
+            return FIX::ExDestination("CSE2");
+          } else if(submissionInfo->m_fields.m_destination ==
+              DefaultDestinations::ALPHA()) {
+            return FIX::ExDestination("XATS");
+          } else if(submissionInfo->m_fields.m_destination ==
+              DefaultDestinations::OMEGA()) {
+            return FIX::ExDestination("OMGA");
+          } else if(submissionInfo->m_fields.m_destination ==
+              DefaultDestinations::LYNX()) {
+            return FIX::ExDestination("LYNX");
           }
-        } else if(submissionInfo->m_fields.m_destination == "MATNLP") {
-          newOrderSingle->setField(FIX::ExecInst("M"));
-        }
+          BOOST_THROW_EXCEPTION(
+            FixOrderRejectedException("Invalid destination."));
+        }();
+        newOrderSingle->set(FIX::HandlInst('6'));
+        newOrderSingle->set(exDestination);
       }
     });
 }
@@ -260,6 +233,186 @@ BboQuote SerenityFixApplication::LoadBboQuote(const Security& security) {
     BOOST_THROW_EXCEPTION(
       FixOrderRejectedException{"No BBO quote available."});
   }
+}
+
+void SerenityFixApplication::RouteToChix(
+    const OrderInfo& info, Out<FIX42::NewOrderSingle> newOrderSingle) {
+  auto hasDestination = false;
+  if(info.m_fields.m_destination == DefaultDestinations::TSX()) {
+    auto destination = [&] {
+      if(info.m_fields.m_security.GetMarket() == DefaultMarkets::TSXV()) {
+        return FIX::ExDestination("TSXV");
+      }
+      return FIX::ExDestination("XTSX");
+    }();
+    newOrderSingle->set(FIX::HandlInst('6'));
+    newOrderSingle->getHeader().setField(destination);
+/** TODO
+    auto destination = FIX::ExDestination("SMRTXOPG-X2");
+    newOrderSingle->getHeader().setField(destination);
+*/
+    if(info.m_fields.m_type == OrderType::PEGGED) {
+      newOrderSingle->set(FIX::ExecInst("M"));
+    }
+    hasDestination = true;
+  } else {
+    for(auto& tag : info.m_fields.m_additionalFields) {
+      if(tag.GetKey() == FIX::FIELD::ExDestination) {
+        if(auto value = boost::get<std::string>(&tag.GetValue())) {
+          auto destination = [&] {
+            if(*value == "SMRTFEE") {
+              return FIX::ExDestination("CX15");
+            } else if(*value == "SMRTXDARKNR") {
+              return FIX::ExDestination("CX11");
+            } else if(*value == "CXD") {
+              return FIX::ExDestination("CX02");
+            } else if(*value == "SMRTCXD") {
+              return FIX::ExDestination("CX02");
+            }
+            BOOST_THROW_EXCEPTION(FixOrderRejectedException(
+              "Invalid value for tag 100 (ExDestination)."));
+          }();
+          newOrderSingle->getHeader().setField(destination);
+          if(*value == "SMRTXDARKNR") {
+            newOrderSingle->setField(ANONYMOUS_TAG, "Y");
+          }
+          hasDestination = true;
+        } else {
+          BOOST_THROW_EXCEPTION(FixOrderRejectedException(
+            "Invalid value for tag 100 (ExDestination)."));
+        }
+      }
+    }
+  }
+  if(info.m_fields.m_timeInForce.GetType() == TimeInForce::Type::MOC) {
+    if(auto timeInForce = GetTimeInForceType(TimeInForce::Type::DAY)) {
+      newOrderSingle->set(*timeInForce);
+      if(info.m_fields.m_type == OrderType::MARKET) {
+        newOrderSingle->set(FIX::OrdType(FIX::OrdType_MARKET_ON_CLOSE));
+      } else if(info.m_fields.m_type == OrderType::LIMIT) {
+        newOrderSingle->set(FIX::OrdType(FIX::OrdType_LIMIT_ON_CLOSE));
+      }
+    }
+  }
+  if(!hasDestination) {
+    if(info.m_fields.m_type == OrderType::PEGGED) {
+      auto destination = [&] {
+        if(info.m_fields.m_destination == DefaultDestinations::CHIX()) {
+          return FIX::ExDestination("CHIX");
+        } else if(info.m_fields.m_destination ==
+            DefaultDestinations::CX2()) {
+          return FIX::ExDestination("XCX2");
+        } else {
+          BOOST_THROW_EXCEPTION(
+            FixOrderRejectedException("Destination not supported."));
+        }
+      }();
+      newOrderSingle->getHeader().setField(destination);
+    } else {
+      auto destination = [&] {
+        if(info.m_fields.m_destination == DefaultDestinations::CHIX()) {
+          return FIX::ExDestination("CX01");
+        } else if(info.m_fields.m_destination ==
+            DefaultDestinations::CX2()) {
+          return FIX::ExDestination("CX05");
+        } else {
+          BOOST_THROW_EXCEPTION(
+            FixOrderRejectedException("Destination not supported."));
+        }
+      }();
+      newOrderSingle->getHeader().setField(destination);
+    }
+  }
+}
+
+void SerenityFixApplication::RouteToMatn(
+    const OrderInfo& info, Out<FIX42::NewOrderSingle> newOrderSingle) {
+  newOrderSingle->setField(FIX::ExDestination("MATN"));
+  auto constraintsTagIterator = std::find_if(
+    info.m_fields.m_additionalFields.begin(),
+    info.m_fields.m_additionalFields.end(),
+    [] (const auto & tag) {
+      return tag.GetKey() == MATN_CONSTRAINTS_TAG;
+    });
+  if(constraintsTagIterator != info.m_fields.m_additionalFields.end()) {
+    auto& constraintsTag = *constraintsTagIterator;
+    auto value = get<std::string>(constraintsTag.GetValue());
+    if(value == "PAG") {
+      newOrderSingle->setField(MATN_CONSTRAINTS_TAG, "PAG=-1");
+      if(info.m_fields.m_destination == "MATNLP") {
+        newOrderSingle->setField(FIX::ExecInst("R"));
+      }
+    } else if(value == "PMI") {
+      newOrderSingle->setField(MATN_CONSTRAINTS_TAG, "PMI=1");
+      if(info.m_fields.m_destination == "MATNLP") {
+        newOrderSingle->setField(FIX::ExecInst("p"));
+      }
+    }
+  } else if(info.m_fields.m_destination == "MATNLP") {
+    newOrderSingle->setField(FIX::ExecInst("M"));
+  }
+}
+
+void SerenityFixApplication::RouteToNeo(
+    const OrderInfo& info, Out<FIX42::NewOrderSingle> newOrderSingle) {
+  auto isProtected = true;
+  auto isMidPoint = false;
+  auto isNeoBook = false;
+  for(auto& tag : info.m_fields.m_additionalFields) {
+    if(tag.GetKey() == FIX::FIELD::ExecInst) {
+      if(auto value = get<std::string>(&tag.GetValue())) {
+        if(*value == "M") {
+          isProtected = false;
+          isMidPoint = true;
+        }
+      } else {
+        BOOST_THROW_EXCEPTION(FixOrderRejectedException(
+          "Invalid value for tag 18 (ExecInst)."));
+      }
+    } else if(tag.GetKey() == FIX::FIELD::ExDestination) {
+      if(auto value = get<std::string>(&tag.GetValue())) {
+        auto destination = [&] {
+          if(*value == "N") {
+            return FIX::ExDestination("NEON");
+          }
+          BOOST_THROW_EXCEPTION(FixOrderRejectedException(
+            "Invalid value for tag 100 (ExDestination)."));
+        }();
+        newOrderSingle->getHeader().setField(destination);
+        if(*value == "N") {
+          isNeoBook = true;
+        }
+        break;
+      } else {
+        BOOST_THROW_EXCEPTION(FixOrderRejectedException(
+          "Invalid value for tag 100 (ExDestination)."));
+      }
+    }
+  }
+  if(!isNeoBook) {
+    newOrderSingle->getHeader().setField(FIX::ExDestination("NEOL"));
+  }
+  if(isProtected) {
+    newOrderSingle->set(FIX::HandlInst('5'));
+  }
+  if(isMidPoint) {
+    if(!isNeoBook) {
+      newOrderSingle->setField(NEO_VISIBILITY_TYPE_TAG, "2");
+    }
+  }
+}
+
+const optional<std::string>& SerenityFixApplication::GetAnonymousTag() const {
+  if(m_anonymousTag) {
+    return *m_anonymousTag;
+  }
+  if(GetSessionSettings().get(GetSessionId()).has("Anonymous")) {
+    m_anonymousTag.emplace(
+      GetSessionSettings().get(GetSessionId()).getString("Anonymous"));
+  } else {
+    m_anonymousTag.emplace(none);
+  }
+  return *m_anonymousTag;
 }
 
 std::string SerenityFixApplication::GetUmirUserID() const {

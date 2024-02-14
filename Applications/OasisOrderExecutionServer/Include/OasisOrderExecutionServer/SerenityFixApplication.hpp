@@ -71,9 +71,17 @@ namespace Nexus::OasisOrderExecutionService {
         m_marketDataClient;
       Beam::SynchronizedUnorderedMap<
         Security, std::shared_ptr<Beam::StateQueue<BboQuote>>> m_bboQuotes;
+      mutable boost::optional<boost::optional<std::string>> m_anonymousTag;
       FixUtilities::FixOrderLog m_orderLog;
 
       BboQuote LoadBboQuote(const Security& security);
+      void RouteToChix(const Nexus::OrderExecutionService::OrderInfo& info,
+        Beam::Out<FIX42::NewOrderSingle> newOrderSingle);
+      void RouteToMatn(const Nexus::OrderExecutionService::OrderInfo& info,
+        Beam::Out<FIX42::NewOrderSingle> newOrderSingle);
+      void RouteToNeo(const Nexus::OrderExecutionService::OrderInfo& info,
+        Beam::Out<FIX42::NewOrderSingle> newOrderSingle);
+      const boost::optional<std::string>& GetAnonymousTag() const;
       std::string GetUmirUserID() const;
       std::string GetNoTradeFeat() const;
       std::string GetNoTradeKey() const;
