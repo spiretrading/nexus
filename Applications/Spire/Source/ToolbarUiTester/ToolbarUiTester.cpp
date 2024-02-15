@@ -62,7 +62,7 @@ void ToolbarUiTester::on_toolbar_click() {
   m_toolbar_window->connect_sign_out_signal(
     std::bind_front(&ToolbarUiTester::on_sign_out, this));
   m_toolbar_window->show();
-  m_toolbar_window->move(x(), y() + height() + 10);
+  m_toolbar_window->move(x(), y() + frameGeometry().height() + 10);
 }
 
 void ToolbarUiTester::on_open(ToolbarWindow::WindowInfo window_info) {

@@ -1,7 +1,7 @@
 #include <QApplication>
-#include "Spire/ToolbarUiTester/ToolbarUiTester.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/Resources.hpp"
+#include "Spire/ToolbarUiTester/ToolbarUiTester.hpp"
 #include "Version.hpp"
 
 using namespace Spire;

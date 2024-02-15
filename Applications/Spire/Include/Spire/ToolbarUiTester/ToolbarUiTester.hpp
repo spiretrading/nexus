@@ -2,9 +2,7 @@
 #define TOOLBAR_UI_TESTER_HPP
 #include <QPointer>
 #include <QTextEdit>
-#include "Spire/Toolbar/Toolbar.hpp"
 #include "Spire/Toolbar/ToolbarWindow.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 

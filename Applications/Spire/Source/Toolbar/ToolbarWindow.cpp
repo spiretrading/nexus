@@ -5,12 +5,8 @@
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/ContextMenu.hpp"
 #include "Spire/Ui/Layouts.hpp"
-#include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/MenuButton.hpp"
-#include "Spire/Ui/ScrollableListBox.hpp"
-#include "Spire/Ui/TextBox.hpp"
 
-using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::Styles;
@@ -25,30 +21,10 @@ ToolbarWindow::ToolbarWindow(QString user_name, bool is_manager,
   set_svg_icon(":/Icons/spire.svg");
   setWindowIcon(QIcon(":/Icons/spire-icon-48x48.png"));
   setWindowTitle(QString("Spire - Signed in as %1").arg(user_name));
-  auto window_manager = make_menu_label_button(tr("Window Manager"));
-  window_manager->setFixedSize(scale(130, 26));
-  auto& window_menu = window_manager->get_menu();
-  window_menu.add_action(tr("Minimize All"), [=] {
-    m_minimize_all_signal();
-  });
-  window_menu.add_action(tr("Restore All"), [=] {
-    m_restore_all_signal();
-  });
-  window_menu.add_action(tr("Import Settings..."), [=] {});
-  window_menu.add_action(tr("Export Settings..."), [=] {});
-  m_recently_closed_windows = make_menu_label_button(tr("Recently Closed"));
-  m_recently_closed_windows->setFixedSize(scale(130, 26));
-  auto& history_menu = m_recently_closed_windows->get_menu();
-  for(auto i = 0; i < m_recent_windows->get_size(); ++i) {
-    history_menu.add_action(m_recent_windows->get(i).m_name, [=] {
-      auto& window = m_recent_windows->get(i);
-      m_open_signal({window.m_type, window.m_name});
-    });
-  }
   auto top_layout = make_hbox_layout();
-  top_layout->addWidget(window_manager);
+  top_layout->addWidget(make_window_manager_button());
   top_layout->addStretch();
-  top_layout->addWidget(m_recently_closed_windows);
+  top_layout->addWidget(make_recently_closed_button());
   auto bottom_layout = make_hbox_layout();
   bottom_layout->setSpacing(scale_width(4));
   bottom_layout->addWidget(make_icon_tool_button(
@@ -134,6 +110,34 @@ void ToolbarWindow::closeEvent(QCloseEvent* event) {
   Window::closeEvent(event);
 }
 
+MenuButton* ToolbarWindow::make_window_manager_button() {
+  auto window_manager_button = make_menu_label_button(tr("Window Manager"));
+  window_manager_button->setFixedSize(scale(130, 26));
+  auto& window_menu = window_manager_button->get_menu();
+  window_menu.add_action(tr("Minimize All"), [=] {
+    m_minimize_all_signal();
+  });
+  window_menu.add_action(tr("Restore All"), [=] {
+    m_restore_all_signal();
+  });
+  window_menu.add_action(tr("Import Settings..."), [=] {});
+  window_menu.add_action(tr("Export Settings..."), [=] {});
+  return window_manager_button;
+}
+
+MenuButton* ToolbarWindow::make_recently_closed_button() {
+  auto recently_closed_button = make_menu_label_button(tr("Recently Closed"));
+  recently_closed_button->setFixedSize(scale(130, 26));
+  auto& history_menu = recently_closed_button->get_menu();
+  for(auto i = 0; i < m_recent_windows->get_size(); ++i) {
+    history_menu.add_action(m_recent_windows->get(i).m_name, [=] {
+      auto& window = m_recent_windows->get(i);
+      m_open_signal({window.m_type, window.m_name});
+    });
+  }
+  return recently_closed_button;
+}
+
 MenuButton* ToolbarWindow::make_blotter_button() {
   auto blotter_button = make_menu_icon_button(imageFromSvg(
     ":/Icons/toolbar_icons/blotter.svg", scale(26, 26)), "Blotter");
@@ -177,7 +181,7 @@ const QString& Spire::displayText(ToolbarWindow::WindowType type) {
     static const auto value = QObject::tr("Canvas");
     return value;
   } else if(type == ToolbarWindow::WindowType::WATCHLIST) {
-    static const auto value = QObject::tr("Watchlists");
+    static const auto value = QObject::tr("Watchlist");
     return value;
   } else if(type == ToolbarWindow::WindowType::IMBALANCE_INDICATOR) {
     static const auto value = QObject::tr("Imbalance Indicator");

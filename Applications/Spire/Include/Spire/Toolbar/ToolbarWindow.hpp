@@ -3,7 +3,6 @@
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Toolbar/Toolbar.hpp"
 #include "Spire/Ui/Ui.hpp"
-#include "Spire/Ui/MenuButton.hpp"
 #include "Spire/Ui/Window.hpp"
 
 namespace Spire {
@@ -116,12 +115,11 @@ namespace Spire {
       mutable SignOutSignal m_sign_out_signal;
       std::shared_ptr<ListModel<WindowInfo>> m_recent_windows;
       std::shared_ptr<ListModel<QString>> m_pinned_blotters;
-      std::vector<Window*> m_windows;
-      std::vector<Window*> m_blotters;
-      MenuButton* m_recently_closed_windows;
 
       Button* make_icon_tool_button(WindowType type, const QString& icon_path,
         const QString& open_name = "");
+      MenuButton* make_window_manager_button();
+      MenuButton* make_recently_closed_button();
       MenuButton* make_blotter_button();
   };
 
