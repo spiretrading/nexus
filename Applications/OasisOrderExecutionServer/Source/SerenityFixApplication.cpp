@@ -361,15 +361,9 @@ void SerenityFixApplication::RouteToMatn(
     auto& constraintsTag = *constraintsTagIterator;
     auto value = get<std::string>(constraintsTag.GetValue());
     if(value == "PAG") {
-      newOrderSingle->setField(MATN_CONSTRAINTS_TAG, "PAG=-1");
-      if(info.m_fields.m_destination == "MATNLP") {
-        newOrderSingle->setField(FIX::ExecInst("R"));
-      }
+      newOrderSingle->setField(FIX::ExecInst("R"));
     } else if(value == "PMI") {
-      newOrderSingle->setField(MATN_CONSTRAINTS_TAG, "PMI=1");
-      if(info.m_fields.m_destination == "MATNLP") {
-        newOrderSingle->setField(FIX::ExecInst("p"));
-      }
+      newOrderSingle->setField(FIX::ExecInst("p"));
     }
   } else if(info.m_fields.m_destination == "MATNLP") {
     newOrderSingle->setField(FIX::ExecInst("M"));
