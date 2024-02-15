@@ -1,5 +1,6 @@
 #include <QApplication>
 #include "Spire/ToolbarUiTester/ToolbarUiTester.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/Resources.hpp"
 #include "Version.hpp"
 
@@ -10,5 +11,8 @@ int main(int argc, char** argv) {
   application.setOrganizationName(QObject::tr("Spire Trading Inc"));
   application.setApplicationName(QObject::tr("Toolbar UI Tester"));
   initialize_resources();
+  auto tester = ToolbarUiTester();
+  tester.resize(scale(650, 300));
+  tester.show();
   application.exec();
 }
