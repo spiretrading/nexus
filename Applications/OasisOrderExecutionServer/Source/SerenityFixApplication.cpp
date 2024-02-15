@@ -43,6 +43,13 @@ const Order& SerenityFixApplication::Submit(const OrderInfo& info) {
         info.m_fields.m_type != OrderType::PEGGED) {
       return &info;
     }
+    if(info.m_fields.m_type == OrderType::MARKET &&
+        (info.m_fields.m_timeInForce.GetType() ==
+          TimeInForce::Type::OPG ||
+          info.m_fields.m_timeInForce.GetType() ==
+            TimeInForce::Type::MOC)) {
+      return &info;
+    }
     modifiedInfo.emplace(info);
     if(info.m_fields.m_type == OrderType::MARKET) {
       modifiedInfo->m_fields.m_type = OrderType::LIMIT;
