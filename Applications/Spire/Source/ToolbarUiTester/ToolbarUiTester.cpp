@@ -66,9 +66,9 @@ void ToolbarUiTester::on_toolbar_click() {
 }
 
 void ToolbarUiTester::on_open(ToolbarWindow::WindowInfo window_info) {
-  auto message = QString("Open: ");
-  message += displayText(window_info.m_type) + ", " + window_info.m_name;
-  m_output->append(message);
+  m_output->append(QString("Open: %1, %2").
+    arg(displayText(window_info.m_type)).
+    arg(window_info.m_name));
 }
 
 void ToolbarUiTester::on_minimize_all() {

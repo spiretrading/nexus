@@ -130,22 +130,28 @@ MenuButton* ToolbarWindow::make_recently_closed_button() {
   recently_closed_button->setFixedSize(scale(130, 26));
   auto& history_menu = recently_closed_button->get_menu();
   for(auto i = 0; i < m_recent_windows->get_size(); ++i) {
-    history_menu.add_action(m_recent_windows->get(i).m_name, [=] {
-      auto& window = m_recent_windows->get(i);
-      m_open_signal({window.m_type, window.m_name});
-    });
+    auto& window = m_recent_windows->get(i);
+    history_menu.add_action(QString("%1 - %2").
+      arg(displayText(window.m_type)).arg(window.m_name),
+      [=] {
+        auto& window = m_recent_windows->get(i);
+        m_open_signal({window.m_type, window.m_name});
+      });
   }
   return recently_closed_button;
 }
 
 MenuButton* ToolbarWindow::make_blotter_button() {
   auto blotter_button = make_menu_icon_button(imageFromSvg(
-    ":/Icons/toolbar_icons/blotter.svg", scale(26, 26)), "Blotter");
+    ":/Icons/toolbar_icons/blotter.svg", scale(26, 26)),
+    displayText(WindowType::BLOTTER));
   blotter_button->setFixedSize(scale(32, 26));
   auto& blotter_menu = blotter_button->get_menu();
   blotter_menu.add_action(tr("New..."), [] {});
   blotter_menu.add_separator();
-  blotter_menu.add_action(tr("Global"), [] {});
+  blotter_menu.add_action(tr("Global"), [=] {
+    m_open_signal({WindowType::BLOTTER, "Global"});
+  });
   return blotter_button;
 }
 
