@@ -1,4 +1,4 @@
-#include "Spire/KeyBindings/KeyBindings.hpp"
+#include "Spire/LegacyKeyBindings/KeyBindings.hpp"
 #include <filesystem>
 #include <fstream>
 #include <Beam/IO/BasicIStreamReader.hpp>

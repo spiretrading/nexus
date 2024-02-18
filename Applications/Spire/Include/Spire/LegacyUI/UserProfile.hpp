@@ -19,8 +19,9 @@
 #include "Spire/Canvas/Types/CanvasTypeRegistry.hpp"
 #include "Spire/Catalog/CatalogSettings.hpp"
 #include "Spire/Dashboard/SavedDashboards.hpp"
-#include "Spire/KeyBindings/InteractionsProperties.hpp"
-#include "Spire/KeyBindings/KeyBindings.hpp"
+#include "Spire/LegacyKeyBindings/InteractionsProperties.hpp"
+#include "Spire/LegacyKeyBindings/KeyBindings.hpp"
+#include "Spire/LegacyUI/LegacyUI.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorProperties.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorWindowSettings.hpp"
 #include "Spire/PortfolioViewer/PortfolioViewerProperties.hpp"
@@ -28,7 +29,6 @@
 #include "Spire/RiskTimer/RiskTimerProperties.hpp"
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesProperties.hpp"
-#include "Spire/LegacyUI/LegacyUI.hpp"
 
 namespace Spire {
 

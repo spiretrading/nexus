@@ -11,7 +11,7 @@
 #include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 #include "Nexus/Definitions/SecuritySet.hpp"
 /** TODO
-#include "Spire/KeyBindings/OrderFieldInfoTip.hpp"
+#include "Spire/LegacyKeyBindings/OrderFieldInfoTip.hpp"
 */
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ArrayTableModel.hpp"

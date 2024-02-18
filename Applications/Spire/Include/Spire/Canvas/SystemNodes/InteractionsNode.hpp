@@ -1,8 +1,8 @@
 #ifndef SPIRE_INTERACTIONSNODE_HPP
 #define SPIRE_INTERACTIONSNODE_HPP
-#include "Spire/KeyBindings/InteractionsProperties.hpp"
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Canvas/Common/CanvasNode.hpp"
+#include "Spire/LegacyKeyBindings/InteractionsProperties.hpp"
 
 namespace Spire {
 
