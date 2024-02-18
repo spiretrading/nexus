@@ -11,14 +11,14 @@ namespace Spire {
   class EditableBox : public QWidget {
     public:
 
-      /** Tests whether a given string triggers an edit state. */
-      static bool is_edit_trigger(const QString& text);
-
       /** Signals that this box has started editing. */
       using StartEditSignal = Signal<void()>;
 
       /** Signals that this box has quit editing. */
       using EndEditSignal = Signal<void ()>;
+
+      /** Tests whether a given string triggers an edit state. */
+      static bool is_edit_trigger(const QString& text);
 
       /**
        * Constructs a EditableBox.
