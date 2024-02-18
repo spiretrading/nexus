@@ -2,6 +2,7 @@
 #define SPIRE_TABLE_VIEW_HPP
 #include <memory>
 #include <QWidget>
+#include "Spire/Spire/SortedTableModel.hpp"
 #include "Spire/Ui/TableBody.hpp"
 #include "Spire/Ui/TableHeader.hpp"
 #include "Spire/Ui/Ui.hpp"
@@ -27,6 +28,8 @@ namespace Spire {
 
       using SortSignal = TableHeader::SortSignal;
 
+      using Comparator = SortedTableModel::Comparator;
+
       /**
        * The default view builder which uses a label styled TextBox to display
        * the text representation of its value.
@@ -42,6 +45,7 @@ namespace Spire {
        * @param current The current value.
        * @param selection The selection.
        * @param view_builder The ViewBuilder to use.
+       * @param comparator A comparison function.
        * @param parent The parent widget.
        */
       TableView(std::shared_ptr<TableModel> table,
@@ -49,7 +53,7 @@ namespace Spire {
         std::shared_ptr<TableFilter> filter,
         std::shared_ptr<CurrentModel> current,
         std::shared_ptr<SelectionModel> selection, ViewBuilder view_builder,
-        QWidget* parent = nullptr);
+        Comparator comparator, QWidget* parent = nullptr);
 
       /** Returns the table of values displayed. */
       const std::shared_ptr<TableModel>& get_table() const;
@@ -158,6 +162,9 @@ namespace Spire {
       TableViewBuilder& set_view_builder(
         const TableView::ViewBuilder& view_builder);
 
+      /** Sets the Comparator to use. */
+      TableViewBuilder& set_comparator(TableView::Comparator comparator);
+
       /** Makes a new TableView using the current state of this builder. */
       TableView* make() const;
 
@@ -169,6 +176,7 @@ namespace Spire {
       std::shared_ptr<TableView::CurrentModel> m_current;
       std::shared_ptr<TableView::SelectionModel> m_selection;
       TableView::ViewBuilder m_view_builder;
+      TableView::Comparator m_comparator;
   };
 }
 

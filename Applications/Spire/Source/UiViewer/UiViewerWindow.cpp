@@ -179,9 +179,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_money_filter_panel_profile());
   add(make_navigation_view_profile());
   add(make_open_filter_panel_profile());
-/** TODO
   add(make_order_field_info_tip_profile());
-*/
   add(make_order_type_box_profile());
   add(make_order_type_filter_panel_profile());
   add(make_overlay_panel_profile());
