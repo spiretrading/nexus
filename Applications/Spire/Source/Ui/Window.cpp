@@ -48,11 +48,11 @@ Window::Window(QWidget* parent)
   setWindowFlags(windowFlags() | Qt::Window | Qt::WindowSystemMenuHint);
   m_title_bar = new TitleBar(make_svg_window_icon(":/Icons/spire.svg"), this);
   auto box_body = new QWidget();
-  m_layout = make_vbox_layout(box_body);
-  m_layout->setAlignment(Qt::AlignTop);
-  m_layout->setContentsMargins(
+  auto layout = make_vbox_layout(box_body);
+  layout->setAlignment(Qt::AlignTop);
+  layout->setContentsMargins(
     scale_width(1), scale_height(1), scale_width(1), scale_height(1));
-  m_layout->addWidget(m_title_bar);
+  layout->addWidget(m_title_bar);
   auto box = new Box(box_body);
   box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   proxy_style(*this, *box);
@@ -227,7 +227,8 @@ void Window::set_body(QWidget* body) {
   } else {
     resize(adjusted_window_size(body->size()));
   }
-  m_layout->addWidget(m_body);
+  auto& box = *static_cast<Box*>(layout()->itemAt(0)->widget());
+  box.get_body()->layout()->addWidget(m_body);
   m_body->installEventFilter(this);
 }
 

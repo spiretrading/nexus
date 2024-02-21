@@ -49,7 +49,6 @@ namespace Spire {
       mutable ClosedSignal m_closed_signal;
       TitleBar* m_title_bar;
       QWidget* m_body;
-      QLayout* m_layout;
       bool m_is_resizable;
       boost::optional<QSize> m_frame_size;
 
