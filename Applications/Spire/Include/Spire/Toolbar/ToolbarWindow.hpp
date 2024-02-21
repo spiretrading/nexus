@@ -7,10 +7,11 @@
 
 namespace Spire {
 
+  /** Displays the toolbar window. */
   class ToolbarWindow : public Window {
     public:
 
-      /** The type of window. */
+      /** Enumarates the types of windows that the toolbar can open. */
       enum class WindowType {
 
         /** The chart window. */
@@ -44,21 +45,11 @@ namespace Spire {
         PROFILE,
       };
 
-      /** The information of the window. */
-      struct WindowInfo {
-
-        /** The WindowType. */
-        WindowType m_type;
-
-        /** The name of the window. */
-        QString m_name;
-      };
-
       /**
-       * Signals that the user is opening a resource.
-       * @param recent_window 
+       * Signals an operation to open a window.
+       * @param type The type of window to open.
        */
-      using OpenSignal = Signal<void (WindowInfo window_info)>;
+      using OpenSignal = Signal<void (WindowType window)>;
 
       /** Signals that the user is minimizing all windows. */
       using MinimizeAllSignal = Signal<void ()>;
