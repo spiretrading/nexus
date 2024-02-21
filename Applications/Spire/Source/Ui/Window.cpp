@@ -9,6 +9,7 @@
 #include <qt_windows.h>
 #include <windowsx.h>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/TitleBar.hpp"
@@ -16,6 +17,7 @@
 using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
+using namespace Spire::Styles;
 
 namespace {
   auto RESIZE_AREA() {
@@ -45,11 +47,19 @@ Window::Window(QWidget* parent)
       m_is_resizable(true) {
   setWindowFlags(windowFlags() | Qt::Window | Qt::WindowSystemMenuHint);
   m_title_bar = new TitleBar(make_svg_window_icon(":/Icons/spire.svg"), this);
-  auto layout = make_vbox_layout(this);
-  layout->setAlignment(Qt::AlignTop);
-  layout->setContentsMargins(
+  auto box_body = new QWidget();
+  m_layout = make_vbox_layout(box_body);
+  m_layout->setAlignment(Qt::AlignTop);
+  m_layout->setContentsMargins(
     scale_width(1), scale_height(1), scale_width(1), scale_height(1));
-  layout->addWidget(m_title_bar);
+  m_layout->addWidget(m_title_bar);
+  auto box = new Box(box_body);
+  box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  proxy_style(*this, *box);
+  update_style(*this, [] (auto& style) {
+    style.get(Any()).set(BackgroundColor(QColor(0xF5F5F5)));
+  });
+  enclose(*this, *box);
 }
 
 void Window::set_icon(const QImage& icon) {
@@ -217,7 +227,7 @@ void Window::set_body(QWidget* body) {
   } else {
     resize(adjusted_window_size(body->size()));
   }
-  layout()->addWidget(m_body);
+  m_layout->addWidget(m_body);
   m_body->installEventFilter(this);
 }
 
