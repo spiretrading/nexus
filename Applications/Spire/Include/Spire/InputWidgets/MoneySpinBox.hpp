@@ -5,7 +5,7 @@
 #include <boost/optional/optional.hpp>
 #include <boost/signals2/signal.hpp>
 #include "Nexus/Definitions/Security.hpp"
-#include "Spire/KeyBindings/KeyBindings.hpp"
+#include "Spire/LegacyKeyBindings/KeyBindings.hpp"
 #include "Spire/Spire/Spire.hpp"
 
 class QDoubleSpinBox;

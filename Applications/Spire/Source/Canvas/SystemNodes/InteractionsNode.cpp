@@ -7,7 +7,7 @@
 #include "Spire/Canvas/ValueNodes/IntegerNode.hpp"
 #include "Spire/Canvas/ValueNodes/MoneyNode.hpp"
 #include "Spire/Canvas/ValueNodes/SecurityNode.hpp"
-#include "Spire/KeyBindings/InteractionsProperties.hpp"
+#include "Spire/LegacyKeyBindings/InteractionsProperties.hpp"
 
 using namespace Beam;
 using namespace boost;

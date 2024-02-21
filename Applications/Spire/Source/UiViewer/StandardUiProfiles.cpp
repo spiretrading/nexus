@@ -10,9 +10,7 @@
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 #include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 #include "Nexus/Definitions/SecuritySet.hpp"
-/** TODO
 #include "Spire/KeyBindings/OrderFieldInfoTip.hpp"
-*/
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ArrayTableModel.hpp"
 #include "Spire/Spire/ColumnViewListModel.hpp"
@@ -3272,7 +3270,6 @@ UiProfile Spire::make_open_filter_panel_profile() {
   return profile;
 }
 
-/** TODO
 UiProfile Spire::make_order_field_info_tip_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
@@ -3347,7 +3344,6 @@ UiProfile Spire::make_order_field_info_tip_profile() {
   });
   return profile;
 }
-*/
 
 UiProfile Spire::make_order_type_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();

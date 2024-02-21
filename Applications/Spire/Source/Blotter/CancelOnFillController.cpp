@@ -1,5 +1,5 @@
 #include "Spire/Blotter/CancelOnFillController.hpp"
-#include "Spire/KeyBindings/InteractionsProperties.hpp"
+#include "Spire/LegacyKeyBindings/InteractionsProperties.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 
 using namespace Beam;

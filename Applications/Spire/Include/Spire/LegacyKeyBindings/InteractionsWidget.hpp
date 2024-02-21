@@ -4,7 +4,7 @@
 #include <Beam/Pointers/Ref.hpp>
 #include <QWidget>
 #include "Nexus/Definitions/RegionMap.hpp"
-#include "Spire/KeyBindings/InteractionsProperties.hpp"
+#include "Spire/LegacyKeyBindings/InteractionsProperties.hpp"
 #include "Spire/Spire/Spire.hpp"
 
 class Ui_InteractionsWidget;

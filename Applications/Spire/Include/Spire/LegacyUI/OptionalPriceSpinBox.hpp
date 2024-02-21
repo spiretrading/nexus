@@ -6,7 +6,7 @@
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/Security.hpp"
 #include "Spire/Canvas/Canvas.hpp"
-#include "Spire/KeyBindings/KeyBindings.hpp"
+#include "Spire/LegacyKeyBindings/KeyBindings.hpp"
 #include "Spire/LegacyUI/LegacyUI.hpp"
 #include "Spire/Spire/Spire.hpp"
 

@@ -13,7 +13,7 @@
 #include "Spire/BookView/BookViewProperties.hpp"
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/CanvasView/CanvasView.hpp"
-#include "Spire/KeyBindings/KeyBindings.hpp"
+#include "Spire/LegacyKeyBindings/KeyBindings.hpp"
 #include "Spire/LegacyUI/PersistentWindow.hpp"
 #include "Spire/LegacyUI/SecurityContext.hpp"
 #include "Spire/LegacyUI/SecurityViewStack.hpp"
