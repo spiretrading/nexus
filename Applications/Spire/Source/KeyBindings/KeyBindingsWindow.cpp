@@ -32,7 +32,6 @@ KeyBindingsWindow::KeyBindingsWindow(
   setWindowTitle(tr("Key Bindings"));
   set_svg_icon(":/Icons/key-bindings.svg");
   setWindowIcon(QIcon(":/Icons/taskbar_icons/key-bindings.png"));
-  resize(scale(926, 476));
   auto body = new QWidget();
   auto body_layout = make_vbox_layout(body);
   m_navigation_view = new NavigationView();
@@ -76,12 +75,8 @@ KeyBindingsWindow::KeyBindingsWindow(
       set(vertical_padding(scale_height(8)));
   });
   body_layout->addWidget(buttons);
-  auto box = new Box(body);
-  proxy_style(*this, *box);
-  update_style(*this, [] (auto& style) {
-    style.get(Any()).set(BackgroundColor(QColor(0xF5F5F5)));
-  });
-  layout()->addWidget(box);
+  set_body(body);
+  resize(scale(926, 476));
   copy(*m_order_tasks_page->get_order_tasks(), *m_order_tasks_submission);
   m_order_tasks_connection =
     m_order_tasks_page->get_order_tasks()->connect_operation_signal(
