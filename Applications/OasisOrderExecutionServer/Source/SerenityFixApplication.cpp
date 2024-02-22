@@ -255,27 +255,26 @@ void SerenityFixApplication::RouteToChix(
     OrderInfo info, Out<FIX42::NewOrderSingle> newOrderSingle) {
   auto hasDestination = false;
   if(info.m_fields.m_destination == DefaultDestinations::TSX()) {
-    auto destination = [&] {
-      if(info.m_fields.m_security.GetMarket() == DefaultMarkets::TSXV()) {
-        return FIX::ExDestination("TSXV");
-      }
-      return FIX::ExDestination("XTSX");
-    }();
-    newOrderSingle->set(FIX::HandlInst('6'));
-    newOrderSingle->getHeader().setField(destination);
     static const auto openTime = hours(14) + minutes(30);
     if(m_timeClient->GetTime().time_of_day() < openTime) {
+      auto destination = [&] {
+        if(info.m_fields.m_security.GetMarket() == DefaultMarkets::TSXV()) {
+          return FIX::ExDestination("TSXV");
+        }
+        return FIX::ExDestination("XTSX");
+      }();
+      newOrderSingle->set(FIX::HandlInst('6'));
+      newOrderSingle->getHeader().setField(destination);
       if(info.m_fields.m_timeInForce.GetType() ==
           TimeInForce::Type::DAY) {
         info.m_fields.m_timeInForce = TimeInForce(TimeInForce::Type::OPG);
       }
-    }
-/** TODO
-    auto destination = FIX::ExDestination("SMRTXOPG-X2");
-    newOrderSingle->getHeader().setField(destination);
-*/
-    if(info.m_fields.m_type == OrderType::PEGGED) {
-      newOrderSingle->set(FIX::ExecInst("M"));
+    } else {
+      auto destination = FIX::ExDestination("CX25");
+      newOrderSingle->getHeader().setField(destination);
+      if(info.m_fields.m_type == OrderType::PEGGED) {
+        newOrderSingle->set(FIX::ExecInst("M"));
+      }
     }
     hasDestination = true;
   } else {
@@ -288,9 +287,9 @@ void SerenityFixApplication::RouteToChix(
             } else if(*value == "SMRTXDARKNR") {
               return FIX::ExDestination("CX11");
             } else if(*value == "CXD") {
-              return FIX::ExDestination("CX02");
+              return FIX::ExDestination("XCXD");
             } else if(*value == "SMRTCXD") {
-              return FIX::ExDestination("CX02");
+              return FIX::ExDestination("XCXD");
             }
             BOOST_THROW_EXCEPTION(FixOrderRejectedException(
               "Invalid value for tag 100 (ExDestination)."));
@@ -304,16 +303,6 @@ void SerenityFixApplication::RouteToChix(
           BOOST_THROW_EXCEPTION(FixOrderRejectedException(
             "Invalid value for tag 100 (ExDestination)."));
         }
-      }
-    }
-  }
-  if(info.m_fields.m_timeInForce.GetType() == TimeInForce::Type::MOC) {
-    if(auto timeInForce = GetTimeInForceType(TimeInForce::Type::DAY)) {
-      newOrderSingle->set(*timeInForce);
-      if(info.m_fields.m_type == OrderType::MARKET) {
-        newOrderSingle->set(FIX::OrdType(FIX::OrdType_MARKET_ON_CLOSE));
-      } else if(info.m_fields.m_type == OrderType::LIMIT) {
-        newOrderSingle->set(FIX::OrdType(FIX::OrdType_LIMIT_ON_CLOSE));
       }
     }
   }
