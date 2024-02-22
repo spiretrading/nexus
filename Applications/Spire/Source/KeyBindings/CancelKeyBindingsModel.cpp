@@ -5,27 +5,27 @@ using namespace boost;
 using namespace Spire;
 
 CancelKeyBindingsModel::CancelKeyBindingsModel() {
-  for(auto i = 0; i < 13; ++i) {
+  for(auto i = 0; i < OPERATION_COUNT; ++i) {
     auto operation = static_cast<Operation>(i);
-    m_bindings[operation] = make_validated_value_model<QKeySequence>(
+    m_bindings[i] = make_validated_value_model<QKeySequence>(
       std::bind_front(&CancelKeyBindingsModel::on_validate, this, operation),
-        std::make_shared<LocalKeySequenceValueModel>());
+      std::make_shared<LocalKeySequenceValueModel>());
+    m_bindings[i]->connect_update_signal(
+      std::bind_front(&CancelKeyBindingsModel::on_update, this, operation));
   }
 }
 
 std::shared_ptr<KeySequenceValueModel>
     CancelKeyBindingsModel::get_binding(Operation operation) const {
-  return m_bindings.at(operation);
+  return m_bindings[static_cast<int>(operation)];
 }
 
 optional<CancelKeyBindingsModel::Operation>
     CancelKeyBindingsModel::find_operation(const QKeySequence& sequence) const {
-  for(auto& binding : m_bindings) {
-    if(binding.second->get() == sequence) {
-      return binding.first;
-    }
+  if(auto i = m_bindings_map.find(sequence); i != m_bindings_map.end()) {
+    return i->second;
   }
-  return {};
+  return none;
 }
 
 QValidator::State CancelKeyBindingsModel::on_validate(Operation operation,
@@ -33,9 +33,6 @@ QValidator::State CancelKeyBindingsModel::on_validate(Operation operation,
   if(sequence.count() == 0) {
     return QValidator::Intermediate;
   } else if(sequence.count() > 1) {
-    return QValidator::Invalid;
-  }
-  if(auto search = find_operation(sequence); search && *search != operation) {
     return QValidator::Invalid;
   }
   auto key = sequence[0];
@@ -48,4 +45,15 @@ QValidator::State CancelKeyBindingsModel::on_validate(Operation operation,
     return QValidator::Acceptable;
   }
   return QValidator::Invalid;
+}
+
+void CancelKeyBindingsModel::on_update(Operation operation,
+    const QKeySequence& sequence) {
+  if(sequence.isEmpty()) {
+    return;
+  }
+  if(auto search = find_operation(sequence); search) {
+    m_bindings[static_cast<int>(*search)]->set(QKeySequence());
+  }
+  m_bindings_map[sequence] = operation;
 }
