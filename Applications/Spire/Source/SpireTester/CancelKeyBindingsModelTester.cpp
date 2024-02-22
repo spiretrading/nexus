@@ -64,5 +64,10 @@ TEST_SUITE("CancelKeyBindingsModel") {
     REQUIRE(all_binding->get() == Qt::Key_F1);
     REQUIRE(model.find_operation(Qt::Key_F1).get() ==
       CancelKeyBindingsModel::Operation::ALL);
+    all_binding->set(Qt::Key_F1);
+    REQUIRE(most_recent_binding->get().isEmpty());
+    REQUIRE(all_binding->get() == Qt::Key_F1);
+    REQUIRE(model.find_operation(Qt::Key_F1).get() ==
+      CancelKeyBindingsModel::Operation::ALL);
   }
 }
