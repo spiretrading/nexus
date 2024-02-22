@@ -53,10 +53,16 @@ TEST_SUITE("CancelKeyBindingsModel") {
     auto model = CancelKeyBindingsModel();
     auto most_recent_binding =
       model.get_binding(CancelKeyBindingsModel::Operation::MOST_RECENT);
-    REQUIRE(most_recent_binding->set(Qt::Key_F1) == QValidator::Acceptable);
+    most_recent_binding->set(Qt::Key_F1);
     REQUIRE(most_recent_binding->get() == Qt::Key_F1);
+    REQUIRE(model.find_operation(Qt::Key_F1).get() ==
+      CancelKeyBindingsModel::Operation::MOST_RECENT);
     auto all_binding =
       model.get_binding(CancelKeyBindingsModel::Operation::ALL);
-    REQUIRE(all_binding->set(Qt::Key_F1) == QValidator::Invalid);
+    all_binding->set(Qt::Key_F1);
+    REQUIRE(most_recent_binding->get().isEmpty());
+    REQUIRE(all_binding->get() == Qt::Key_F1);
+    REQUIRE(model.find_operation(Qt::Key_F1).get() ==
+      CancelKeyBindingsModel::Operation::ALL);
   }
 }

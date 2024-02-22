@@ -1,9 +1,20 @@
 #ifndef SPIRE_CANCEL_KEY_BINDINGS_MODEL_HPP
 #define SPIRE_CANCEL_KEY_BINDINGS_MODEL_HPP
+#include <array>
 #include <unordered_map>
+#include <QKeySequence>
 #include <QValidator>
 #include "Spire/KeyBindings/KeyBindings.hpp"
 #include "Spire/Ui/KeyInputBox.hpp"
+
+namespace std {
+  template<>
+  struct hash<QKeySequence> {
+    std::size_t operator ()(const QKeySequence& value) const {
+      return hash<string>()(value.toString().toStdString());
+    }
+  };
+}
 
 namespace Spire {
 
@@ -54,6 +65,9 @@ namespace Spire {
         FURTHEST_BID
       };
 
+      /** The number of the cancel operations. */
+      static constexpr auto OPERATION_COUNT = 13;
+
       /** Constructs an empty model. */
       CancelKeyBindingsModel();
 
@@ -71,14 +85,16 @@ namespace Spire {
         find_operation(const QKeySequence& sequence) const;
 
     private:
-      std::unordered_map<Operation, std::shared_ptr<KeySequenceValueModel>>
+      std::array<std::shared_ptr<KeySequenceValueModel>, OPERATION_COUNT>
         m_bindings;
+      std::unordered_map<QKeySequence, Operation> m_bindings_map;
 
       CancelKeyBindingsModel(const CancelKeyBindingsModel&) = delete;
       CancelKeyBindingsModel& operator =(const CancelKeyBindingsModel&)
         = delete;
       QValidator::State on_validate(Operation operation,
         const QKeySequence& sequence);
+      void on_update(Operation operation, const QKeySequence& sequence);
   };
 }
 
