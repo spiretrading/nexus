@@ -4,14 +4,12 @@
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
-#include "Spire/Ui/TextBox.hpp"
+#include "Spire/Ui/TextAreaBox.hpp"
 
 using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  using BoldText = StateSelector<void, struct BoldTextSelectorTag>;
-
   const QString& displayText(CancelKeyBindingsModel::Operation operation) {
     if(operation == CancelKeyBindingsModel::Operation::MOST_RECENT) {
       static const auto value = QObject::tr("Most Recent");
@@ -58,42 +56,21 @@ namespace {
     }
   }
 
-  auto make_help_text_region() {
-    auto help_text_body = new QWidget();
-    auto help_text_layout = make_hbox_layout(help_text_body);
-    auto dash = QString(0x2013);
-    help_text_layout->addWidget(make_label(QObject::tr("Allowed keys are: ")));
-    auto label1 = make_label("ESC, F1–F12");
-    label1->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
-    match(*label1, BoldText());
-    help_text_layout->addWidget(label1);
-    help_text_layout->addWidget(make_label(QObject::tr(" and ")));
-    auto label2 = make_label("0-9");
-    label2->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
-    match(*label2, BoldText());
-    help_text_layout->addWidget(label2);
-    help_text_layout->addWidget(make_label(QObject::tr(" and any combination with ")));
-    auto label3 = make_label(QObject::tr("Ctrl, Shift or Alt"));
-    label3->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
-    match(*label3, BoldText());
-    help_text_layout->addWidget(label3);
-    auto help_text_box = new Box(help_text_body);
-    help_text_box->setSizePolicy(QSizePolicy::Expanding,
-      QSizePolicy::Preferred);
+  auto make_help_text_box() {
+    auto help_text_box = make_text_area_label(
+      "Allowed keys are <b>ESC, F1–F12,</b> plus combinations of "
+      "<b>Ctrl, Shift, Alt</b> with <b>F1–F12</b> and <b>0–9</b>");
+    help_text_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     update_style(*help_text_box, [] (auto& style) {
-      style.get(Any()).
-        set(BackgroundColor(QColor(0xFFFFFF))).
-        set(horizontal_padding(scale_width(8))).
-        set(PaddingTop(scale_height(10))).
-        set(PaddingBottom(scale_height(5)));
       auto font = QFont("Roboto");
       font.setWeight(QFont::Normal);
       font.setPixelSize(scale_width(10));
-      style.get(Any() > is_a<TextBox>()).
-        set(text_style(font, QColor(0x808080)));
-      font.setWeight(QFont::Bold);
-      style.get(Any() > BoldText()).
-        set(Font(font));
+      style.get(Any()).
+        set(BackgroundColor(QColor(0xFFFFFF))).
+        set(text_style(font, QColor(0x808080))).
+        set(horizontal_padding(scale_width(8))).
+        set(PaddingTop(scale_height(10))).
+        set(PaddingBottom(scale_height(5)));
     });
     return help_text_box;
   }
@@ -103,7 +80,6 @@ namespace {
     auto label = make_label(displayText(operation));
     label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     auto key_input_box = new KeyInputBox(model->get_binding(operation));
-    //key_input_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     key_input_box->setFixedWidth(scale_width(164));
     auto widget = new QWidget();
     widget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
@@ -113,38 +89,42 @@ namespace {
     layout->addWidget(key_input_box);
     return widget;
   }
-
 }
 
 CancelKeyBindingsForm::CancelKeyBindingsForm(
     std::shared_ptr<CancelKeyBindingsModel> bindings, QWidget* parent)
     : QWidget(parent),
       m_bindings(std::move(bindings)) {
-  auto cancel_keys_list_body = new QWidget();
-  cancel_keys_list_body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  auto list_layout = make_vbox_layout(cancel_keys_list_body);
+  auto keys_list_body = new QWidget();
+  keys_list_body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  auto list_layout = make_vbox_layout(keys_list_body);
   list_layout->setSpacing(scale_height(4));
-  for(auto i = 0; i < 13; ++i) {
+  for(auto i = 0; i < CancelKeyBindingsModel::OPERATION_COUNT; ++i) {
     list_layout->addWidget(make_key_binding_field(
       static_cast<CancelKeyBindingsModel::Operation>(i), m_bindings));
   }
-  auto cancel_keys_list = new Box(cancel_keys_list_body);
-  update_style(*cancel_keys_list, [] (auto& style) {
+  auto keys_list = new Box(keys_list_body);
+  keys_list->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  update_style(*keys_list, [] (auto& style) {
     style.get(Any()).
       set(horizontal_padding(scale_width(8))).
       set(vertical_padding(scale_height(8)));
   });
   auto content = new QWidget();
-  content->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-  content->setMinimumWidth(scale_height(384));
-  content->setMaximumWidth(scale_height(480));
+  content->setMinimumWidth(scale_width(384));
+  content->setMaximumWidth(scale_width(480));
   auto content_layout = make_vbox_layout(content);
-  content_layout->addWidget(make_help_text_region());
-  content_layout->addWidget(cancel_keys_list);
+  content_layout->addWidget(make_help_text_box());
+  content_layout->addWidget(keys_list);
   auto body = new QWidget();
-  auto body_layout = make_vbox_layout(body);
-  body_layout->addWidget(content, 0, Qt::AlignHCenter);
-  body_layout->addStretch(1);
+  body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  auto center_layout = make_vbox_layout();
+  center_layout->addWidget(content);
+  center_layout->addStretch(1);
+  auto body_layout = make_hbox_layout(body);
+  body_layout->addStretch(0);
+  body_layout->addLayout(center_layout, 1);
+  body_layout->addStretch(0);
   auto scroll_box = new ScrollBox(body);
   scroll_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   update_style(*scroll_box, [] (auto& style) {

@@ -2,6 +2,7 @@
 #define SPIRE_KEY_BINDINGS_HPP
 
 namespace Spire {
+  class CancelKeyBindingsForm;
   class CancelKeyBindingsModel;
   class KeyBindingsWindow;
   class OrderFieldInfoTip;
