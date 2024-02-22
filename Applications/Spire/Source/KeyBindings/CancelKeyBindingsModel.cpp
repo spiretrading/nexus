@@ -53,7 +53,11 @@ void CancelKeyBindingsModel::on_update(Operation operation,
     return;
   }
   if(auto search = find_operation(sequence); search) {
-    m_bindings[static_cast<int>(*search)]->set(QKeySequence());
+    if(*search != operation) {
+      m_bindings[static_cast<int>(*search)]->set(QKeySequence());
+      m_bindings_map[sequence] = operation;
+    }
+  } else {
+    m_bindings_map[sequence] = operation;
   }
-  m_bindings_map[sequence] = operation;
 }
