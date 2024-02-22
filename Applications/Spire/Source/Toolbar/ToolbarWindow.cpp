@@ -1,5 +1,4 @@
 #include "Spire/Toolbar/ToolbarWindow.hpp"
-#include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
@@ -7,20 +6,25 @@
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/MenuButton.hpp"
 
+using namespace Beam;
+using namespace Beam::ServiceLocator;
 using namespace boost::signals2;
+using namespace Nexus;
+using namespace Nexus::AdministrationService;
 using namespace Spire;
 using namespace Spire::Styles;
 
-ToolbarWindow::ToolbarWindow(QString user_name, bool is_manager,
-    std::shared_ptr<ListModel<WindowInfo>> recent_windows,
-    std::shared_ptr<ListModel<QString>> pinned_blotters, QWidget* parent)
+ToolbarWindow::ToolbarWindow(DirectoryEntry account, AccountRoles roles,
+    std::shared_ptr<RecentlyClosedListModel> recently_closed_windows,
+    std::shared_ptr<ListModel<BlotterModel*>> pinned_blotters, QWidget* parent)
     : Window(parent),
-      m_recent_windows(std::move(recent_windows)),
+      m_recently_closed_windows(std::move(recently_closed_windows)),
       m_pinned_blotters(std::move(pinned_blotters)) {
   setWindowFlags(windowFlags() & ~Qt::WindowMaximizeButtonHint);
   set_svg_icon(":/Icons/spire.svg");
   setWindowIcon(QIcon(":/Icons/spire-icon-48x48.png"));
-  setWindowTitle(QString("Spire - Signed in as %1").arg(user_name));
+  setWindowTitle(QString("Spire - Signed in as %1").arg(
+    QString::fromStdString(account.m_name)));
   auto top_layout = make_hbox_layout();
   top_layout->addWidget(make_window_manager_button());
   top_layout->addStretch();
@@ -41,7 +45,8 @@ ToolbarWindow::ToolbarWindow(QString user_name, bool is_manager,
     WindowType::IMBALANCE_INDICATOR,
     ":/Icons/toolbar_icons/imbalance-indicator.svg"));
   bottom_layout->addWidget(make_blotter_button());
-  if(is_manager) {
+  if(roles.Test(AccountRole::MANAGER) ||
+      roles.Test(AccountRole::ADMINISTRATOR)) {
     bottom_layout->addWidget(make_icon_tool_button(
       WindowType::PORTFOLIO_VIEWER, ":/Icons/toolbar_icons/portfolio.svg"));
   }
@@ -49,15 +54,14 @@ ToolbarWindow::ToolbarWindow(QString user_name, bool is_manager,
   auto separator = new Box();
   separator->setFixedSize(scale(1, 16));
   update_style(*separator, [] (auto& styles) {
-    styles.get(Any()).
-      set(BackgroundColor(QColor(0xC8C8C8)));
+    styles.get(Any()).set(BackgroundColor(QColor(0xC8C8C8)));
   });
   bottom_layout->addWidget(separator);
   bottom_layout->addSpacing(scale_width(4));
   bottom_layout->addWidget(make_icon_tool_button(WindowType::KEY_BINDINGS,
     ":/Icons/toolbar_icons/key-bindings.svg"));
   bottom_layout->addWidget(make_icon_tool_button(WindowType::PROFILE,
-    ":/Icons/toolbar_icons/profile.svg", tr("Spire Web Portal")));
+    ":/Icons/toolbar_icons/profile.svg"));
   auto body = new QWidget();
   auto body_layout = make_vbox_layout(body);
   body_layout->addLayout(top_layout);
@@ -75,12 +79,12 @@ ToolbarWindow::ToolbarWindow(QString user_name, bool is_manager,
   set_body(content);
 }
 
-const std::shared_ptr<ListModel<ToolbarWindow::WindowInfo>>&
-    ToolbarWindow::get_recent_windows() const {
-  return m_recent_windows;
+const std::shared_ptr<ToolbarWindow::RecentlyClosedListModel>&
+    ToolbarWindow::get_recently_closed_windows() const {
+  return m_recently_closed_windows;
 }
 
-const std::shared_ptr<ListModel<QString>>&
+const std::shared_ptr<ListModel<BlotterModel*>>&
     ToolbarWindow::get_pinned_blotters() const {
   return m_pinned_blotters;
 }
@@ -88,6 +92,11 @@ const std::shared_ptr<ListModel<QString>>&
 connection ToolbarWindow::connect_open_signal(
     const OpenSignal::slot_type& slot) const {
   return m_open_signal.connect(slot);
+}
+
+connection ToolbarWindow::connect_reopen_signal(
+    const ReopenSignal::slot_type& slot) const {
+  return m_reopen_signal.connect(slot);
 }
 
 connection ToolbarWindow::connect_minimize_all_signal(
@@ -110,7 +119,7 @@ void ToolbarWindow::closeEvent(QCloseEvent* event) {
   Window::closeEvent(event);
 }
 
-MenuButton* ToolbarWindow::make_window_manager_button() {
+MenuButton* ToolbarWindow::make_window_manager_button() const {
   auto window_manager_button = make_menu_label_button(tr("Window Manager"));
   window_manager_button->setFixedSize(scale(130, 26));
   auto& window_menu = window_manager_button->get_menu();
@@ -125,23 +134,22 @@ MenuButton* ToolbarWindow::make_window_manager_button() {
   return window_manager_button;
 }
 
-MenuButton* ToolbarWindow::make_recently_closed_button() {
+MenuButton* ToolbarWindow::make_recently_closed_button() const {
   auto recently_closed_button = make_menu_label_button(tr("Recently Closed"));
   recently_closed_button->setFixedSize(scale(130, 26));
   auto& history_menu = recently_closed_button->get_menu();
-  for(auto i = 0; i < m_recent_windows->get_size(); ++i) {
-    auto& window = m_recent_windows->get(i);
-    history_menu.add_action(QString("%1 - %2").
-      arg(displayText(window.m_type)).arg(window.m_name),
+  for(auto i = 0; i < m_recently_closed_windows->get_size(); ++i) {
+    auto& window = m_recently_closed_windows->get(i);
+    history_menu.add_action(QString::fromStdString(window->GetName()),
       [=] {
-        auto& window = m_recent_windows->get(i);
-        m_open_signal({window.m_type, window.m_name});
+        auto window = m_recently_closed_windows->get(i);
+        m_reopen_signal(window);
       });
   }
   return recently_closed_button;
 }
 
-MenuButton* ToolbarWindow::make_blotter_button() {
+MenuButton* ToolbarWindow::make_blotter_button() const {
   auto blotter_button = make_menu_icon_button(imageFromSvg(
     ":/Icons/toolbar_icons/blotter.svg", scale(26, 26)),
     displayText(WindowType::BLOTTER));
@@ -149,23 +157,16 @@ MenuButton* ToolbarWindow::make_blotter_button() {
   auto& blotter_menu = blotter_button->get_menu();
   blotter_menu.add_action(tr("New..."), [] {});
   blotter_menu.add_separator();
-  blotter_menu.add_action(tr("Global"), [=] {
-    m_open_signal({WindowType::BLOTTER, "Global"});
-  });
   return blotter_button;
 }
 
-Button* ToolbarWindow::make_icon_tool_button(WindowType type,
-    const QString& icon_path, const QString& open_name) {
+Button* ToolbarWindow::make_icon_tool_button(
+    WindowType type, const QString& icon_path) const {
   auto button = make_icon_button(
     imageFromSvg(icon_path, scale(26, 26)), displayText(type));
   button->setFixedSize(scale(26, 26));
   button->connect_click_signal([=] {
-    if(open_name.isEmpty()) {
-      m_open_signal({type, displayText(type)});
-    } else {
-      m_open_signal({type, open_name});
-    }
+    m_open_signal(type);
   });
   return button;
 }
