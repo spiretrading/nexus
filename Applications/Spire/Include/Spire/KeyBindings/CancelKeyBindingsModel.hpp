@@ -5,16 +5,8 @@
 #include <QKeySequence>
 #include <QValidator>
 #include "Spire/KeyBindings/KeyBindings.hpp"
+#include "Spire/LegacyUI/HashQtTypes.hpp"
 #include "Spire/Ui/KeyInputBox.hpp"
-
-namespace std {
-  template<>
-  struct hash<QKeySequence> {
-    std::size_t operator ()(const QKeySequence& value) const {
-      return hash<string>()(value.toString().toStdString());
-    }
-  };
-}
 
 namespace Spire {
 
