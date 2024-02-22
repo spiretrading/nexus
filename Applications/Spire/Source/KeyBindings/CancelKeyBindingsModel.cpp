@@ -1,4 +1,5 @@
 #include "Spire/KeyBindings/CancelKeyBindingsModel.hpp"
+#include <QRegExp>
 #include "Spire/Spire/ValidatedValueModel.hpp"
 
 using namespace boost;
@@ -52,15 +53,19 @@ QValidator::State CancelKeyBindingsModel::on_validate(Operation operation,
 
 void CancelKeyBindingsModel::on_update(Operation operation,
     const QKeySequence& sequence) {
-  if(sequence.isEmpty()) {
-    return;
-  }
+  auto update = [=] {
+    m_bindings_map.erase(m_previous_bindings[static_cast<int>(operation)]);
+    if(!sequence.isEmpty()) {
+      m_bindings_map[sequence] = operation;
+    }
+    m_previous_bindings[static_cast<int>(operation)] = sequence;
+  };
   if(auto search = find_operation(sequence); search) {
     if(*search != operation) {
       m_bindings[static_cast<int>(*search)]->set(QKeySequence());
-      m_bindings_map[sequence] = operation;
+      update();
     }
   } else {
-    m_bindings_map[sequence] = operation;
+    update();
   }
 }

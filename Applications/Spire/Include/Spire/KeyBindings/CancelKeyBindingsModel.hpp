@@ -80,6 +80,7 @@ namespace Spire {
       std::array<std::shared_ptr<KeySequenceValueModel>, OPERATION_COUNT>
         m_bindings;
       std::unordered_map<QKeySequence, Operation> m_bindings_map;
+      std::array<QKeySequence, OPERATION_COUNT> m_previous_bindings;
 
       CancelKeyBindingsModel(const CancelKeyBindingsModel&) = delete;
       CancelKeyBindingsModel& operator =(const CancelKeyBindingsModel&)
