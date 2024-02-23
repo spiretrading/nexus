@@ -1,4 +1,5 @@
 #include "Spire/Toolbar/ToolbarWindow.hpp"
+#include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
@@ -99,6 +100,11 @@ connection ToolbarWindow::connect_reopen_signal(
   return m_reopen_signal.connect(slot);
 }
 
+connection ToolbarWindow::connect_open_blotter_signal(
+    const OpenBlotterSignal::slot_type& slot) const {
+  return m_open_blotter_signal.connect(slot);
+}
+
 connection ToolbarWindow::connect_minimize_all_signal(
     const MinimizeAllSignal::slot_type& slot) const {
   return m_minimize_all_signal.connect(slot);
@@ -152,18 +158,24 @@ MenuButton* ToolbarWindow::make_recently_closed_button() const {
 MenuButton* ToolbarWindow::make_blotter_button() const {
   auto blotter_button = make_menu_icon_button(imageFromSvg(
     ":/Icons/toolbar_icons/blotter.svg", scale(26, 26)),
-    displayText(WindowType::BLOTTER));
+    to_text(WindowType::BLOTTER));
   blotter_button->setFixedSize(scale(32, 26));
   auto& blotter_menu = blotter_button->get_menu();
   blotter_menu.add_action(tr("New..."), [] {});
   blotter_menu.add_separator();
+  for(auto i = 0; i != m_pinned_blotters->get_size(); ++i) {
+    auto blotter = m_pinned_blotters->get(i);
+    blotter_menu.add_action(QString::fromStdString(blotter->GetName()), [=] {
+      m_open_blotter_signal(*blotter);
+    });
+  }
   return blotter_button;
 }
 
 Button* ToolbarWindow::make_icon_tool_button(
     WindowType type, const QString& icon_path) const {
-  auto button = make_icon_button(
-    imageFromSvg(icon_path, scale(26, 26)), displayText(type));
+  auto button =
+    make_icon_button(imageFromSvg(icon_path, scale(26, 26)), to_text(type));
   button->setFixedSize(scale(26, 26));
   button->connect_click_signal([=] {
     m_open_signal(type);
@@ -171,7 +183,7 @@ Button* ToolbarWindow::make_icon_tool_button(
   return button;
 }
 
-const QString& Spire::displayText(ToolbarWindow::WindowType type) {
+const QString& Spire::to_text(ToolbarWindow::WindowType type) {
   if(type == ToolbarWindow::WindowType::CHART) {
     static const auto value = QObject::tr("Chart");
     return value;

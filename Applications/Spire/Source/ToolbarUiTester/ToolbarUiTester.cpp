@@ -77,7 +77,7 @@ void ToolbarUiTester::on_toolbar_click() {
 }
 
 void ToolbarUiTester::on_open(ToolbarWindow::WindowType window) {
-  m_output->append(QString("Open: %1").arg(displayText(window)));
+  m_output->append(QString("Open: %1").arg(to_text(window)));
 }
 
 void ToolbarUiTester::on_minimize_all() {

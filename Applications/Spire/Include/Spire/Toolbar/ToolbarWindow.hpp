@@ -113,6 +113,10 @@ namespace Spire {
       boost::signals2::connection connect_reopen_signal(
         const ReopenSignal::slot_type& slot) const;
 
+      /** Connects a slot to the OpenBlotterSignal. */
+      boost::signals2::connection connect_open_blotter_signal(
+        const OpenBlotterSignal::slot_type& slot) const;
+
       /** Connects a slot to the MinimizeAllSignal. */
       boost::signals2::connection connect_minimize_all_signal(
         const MinimizeAllSignal::slot_type& slot) const;
@@ -131,6 +135,7 @@ namespace Spire {
     private:
       mutable OpenSignal m_open_signal;
       mutable ReopenSignal m_reopen_signal;
+      mutable OpenBlotterSignal m_open_blotter_signal;
       mutable MinimizeAllSignal m_minimize_all_signal;
       mutable RestoreAllSignal m_restore_all_signal;
       mutable SignOutSignal m_sign_out_signal;
@@ -145,7 +150,7 @@ namespace Spire {
   };
 
   /** Returns the text representation of a WindowType. */ 
-  const QString& displayText(ToolbarWindow::WindowType type);
+  const QString& to_text(ToolbarWindow::WindowType type);
 }
 
 #endif
