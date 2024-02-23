@@ -19,7 +19,7 @@ add_executable(Spire ${app_type} ${header_files} ${source_files}
   ${resource_files} ${manifest_files})
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 target_link_libraries(Spire Async Dashboard Charting PortfolioViewer Utilities
-  RiskTimer AccountViewer KeyBindings Blotter Catalog BookView Library
+  RiskTimer AccountViewer KeyBindings Blotter Catalog BookView Library Login
   Resources TimeAndSales OrderImbalanceIndicator InputWidgets CanvasView Canvas
   LegacyResources LegacyUI
   debug ${CRYPTOPP_LIBRARY_DEBUG_PATH}
