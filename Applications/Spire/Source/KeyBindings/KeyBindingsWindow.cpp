@@ -24,7 +24,6 @@ KeyBindingsWindow::KeyBindingsWindow(QWidget* parent)
   navigation_view->add_tab(*task_keys_page, tr("Task Keys"));
   auto cancel_keys_page =
     new CancelKeyBindingsForm(std::make_shared<CancelKeyBindingsModel>());
-  //auto cancel_keys_page = new QWidget();
   cancel_keys_page->setSizePolicy(QSizePolicy::Expanding,
     QSizePolicy::Expanding);
   navigation_view->add_tab(*cancel_keys_page, tr("Cancel Keys"));
@@ -59,14 +58,7 @@ KeyBindingsWindow::KeyBindingsWindow(QWidget* parent)
   auto body_layout = make_vbox_layout(body);
   body_layout->addWidget(navigation_view);
   body_layout->addWidget(buttons);
-  auto box = new Box(body);
-  box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  proxy_style(*this, *box);
-  update_style(*this, [] (auto& style) {
-    style.get(Any()).set(BackgroundColor(QColor(0xF5F5F5)));
-  });
-  layout()->addWidget(box);
-  //set_body(box);
+  set_body(body);
   resize(scale(928, 640));
 }
 
