@@ -26,10 +26,10 @@ namespace {
 }
 
 SerenityFixApplication::SerenityFixApplication(
-  Ref<LiveNtpTimeClient> timeClient,
-  Ref<ApplicationMarketDataClient::Client> marketDataClient)
-  : m_timeClient(timeClient.Get()),
-    m_marketDataClient(marketDataClient.Get()) {}
+    Ref<LiveNtpTimeClient> timeClient,
+    Ref<ApplicationMarketDataClient::Client> marketDataClient)
+    : m_timeClient(timeClient.Get()),
+      m_marketDataClient(marketDataClient.Get()) {}
 
 const Order& SerenityFixApplication::Recover(
     const SequencedAccountOrderRecord& orderRecord) {
@@ -147,6 +147,9 @@ const Order& SerenityFixApplication::Submit(const OrderInfo& info) {
 
 void SerenityFixApplication::Cancel(
     const OrderExecutionSession& session, OrderId orderId) {
+  if(!m_cancellations.Insert(orderId)) {
+    return;
+  }
   m_orderLog.Cancel(session, orderId, m_timeClient->GetTime(),
     GetSessionId().getSenderCompID(), GetSessionId().getTargetCompID(),
     [&] (const Order& order,

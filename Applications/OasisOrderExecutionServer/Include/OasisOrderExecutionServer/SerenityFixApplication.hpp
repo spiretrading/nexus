@@ -2,6 +2,7 @@
 #define OASIS_SERENITY_FIX_APPLICATION_HPP
 #include <unordered_map>
 #include <Beam/Collections/SynchronizedMap.hpp>
+#include <Beam/Collections/SynchronizedSet.hpp>
 #include <Beam/Queues/StateQueue.hpp>
 #include <Beam/TimeService/NtpTimeClient.hpp>
 #include <quickfix/MessageCracker.h>
@@ -72,6 +73,8 @@ namespace Nexus::OasisOrderExecutionService {
       Beam::SynchronizedUnorderedMap<
         Security, std::shared_ptr<Beam::StateQueue<BboQuote>>> m_bboQuotes;
       mutable boost::optional<boost::optional<std::string>> m_anonymousTag;
+      Beam::SynchronizedUnorderedSet<OrderExecutionService::OrderId>
+        m_cancellations;
       FixUtilities::FixOrderLog m_orderLog;
 
       BboQuote LoadBboQuote(const Security& security);
