@@ -1,5 +1,4 @@
 #include "Spire/KeyBindings/CancelKeyBindingsModel.hpp"
-#include <QRegExp>
 #include "Spire/Spire/ValidatedValueModel.hpp"
 
 using namespace boost;

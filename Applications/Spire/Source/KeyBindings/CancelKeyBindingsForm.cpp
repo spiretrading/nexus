@@ -10,7 +10,7 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  const QString& displayText(CancelKeyBindingsModel::Operation operation) {
+  const QString& to_text(CancelKeyBindingsModel::Operation operation) {
     if(operation == CancelKeyBindingsModel::Operation::MOST_RECENT) {
       static const auto value = QObject::tr("Most Recent");
       return value;
@@ -77,7 +77,7 @@ namespace {
 
   auto make_key_binding_field(CancelKeyBindingsModel::Operation operation,
       const std::shared_ptr<CancelKeyBindingsModel>& model) {
-    auto label = make_label(displayText(operation));
+    auto label = make_label(to_text(operation));
     label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     auto key_input_box = new KeyInputBox(model->get_binding(operation));
     key_input_box->setFixedWidth(scale_width(164));
