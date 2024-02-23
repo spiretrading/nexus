@@ -40,7 +40,9 @@ ToolbarUiTester::ToolbarUiTester(QWidget* parent)
 }
 
 void ToolbarUiTester::closeEvent(QCloseEvent* event) {
-  m_toolbar_window->close();
+  if(m_toolbar_window) {
+    m_toolbar_window->close();
+  }
   QWidget::closeEvent(event);
 }
 

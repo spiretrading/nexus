@@ -31,6 +31,7 @@
 #include "Spire/Spire/Resources.hpp"
 #include "Spire/Spire/SpireServiceClients.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
+#include "Spire/Toolbar/ToolbarController.hpp"
 #include "Version.hpp"
 #include <QtPlugin>
 
@@ -240,6 +241,7 @@ int main(int argc, char* argv[]) {
   login_controller.open();
   auto user_profile = optional<UserProfile>();
   auto risk_timer_monitor = optional<RiskTimerMonitor>();
+  auto toolbar_controller = optional<ToolbarController>();
   login_controller.connect_logged_in_signal([&] (auto service_clients) {
     auto is_administrator =
       service_clients.GetAdministrationClient().CheckAdministrator(
@@ -278,6 +280,7 @@ int main(int argc, char* argv[]) {
     OrderImbalanceIndicatorProperties::Load(Store(*user_profile));
     SavedDashboards::Load(Store(*user_profile));
     auto window_settings = WindowSettings::Load(*user_profile);
+/*
     auto windows = std::vector<QWidget*>();
     if(!window_settings.empty()) {
       for(auto& settings : window_settings) {
@@ -291,6 +294,9 @@ int main(int argc, char* argv[]) {
     for(auto& window : windows) {
       window->show();
     }
+*/
+    toolbar_controller.emplace(Ref(*user_profile));
+    toolbar_controller->open();
     risk_timer_monitor.emplace(Ref(*user_profile));
     risk_timer_monitor->Load();
   });
@@ -309,5 +315,6 @@ int main(int argc, char* argv[]) {
   BookViewProperties::Save(*user_profile);
   CatalogSettings::Save(*user_profile);
   BlotterSettings::Save(*user_profile);
+  toolbar_controller->close();
   return 0;
 }
