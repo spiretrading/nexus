@@ -49,7 +49,7 @@ QValidator::State CancelKeyBindingsModel::on_validate(Operation operation,
 
 void CancelKeyBindingsModel::on_update(Operation operation,
     const QKeySequence& sequence) {
-  auto update = [=] {
+  auto update = [&] {
     m_bindings_map.erase(m_previous_bindings[static_cast<int>(operation)]);
     if(!sequence.isEmpty()) {
       m_bindings_map[sequence] = operation;
