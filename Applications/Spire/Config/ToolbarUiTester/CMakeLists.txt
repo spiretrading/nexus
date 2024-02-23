@@ -32,10 +32,10 @@ if(UNIX)
     debug ${QT_XML_LIBRARY_DEBUG_PATH}
     optimized ${QT_XML_LIBRARY_OPTIMIZED_PATH})
 endif()
-target_link_libraries(Spire Async Dashboard Charting PortfolioViewer Utilities
-  RiskTimer AccountViewer KeyBindings Blotter Catalog BookView Library Login
-  Resources TimeAndSales OrderImbalanceIndicator InputWidgets CanvasView Canvas
-  LegacyResources LegacyUI
+target_link_libraries(ToolbarUiTester Async Dashboard Charting PortfolioViewer
+  Utilities RiskTimer AccountViewer KeyBindings Blotter Catalog BookView
+  Library Login Resources TimeAndSales OrderImbalanceIndicator InputWidgets
+  CanvasView Canvas LegacyResources LegacyUI
   debug ${CRYPTOPP_LIBRARY_DEBUG_PATH}
   optimized ${CRYPTOPP_LIBRARY_OPTIMIZED_PATH}
   debug ${OPEN_SSL_LIBRARY_DEBUG_PATH}
