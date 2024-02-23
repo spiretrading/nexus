@@ -38,13 +38,10 @@ QValidator::State CancelKeyBindingsModel::on_validate(Operation operation,
   auto key = sequence[0];
   auto modifier = key & Qt::KeyboardModifierMask;
   key -= modifier;
-  if(modifier == Qt::NoModifier) {
-    if(key == Qt::Key_Escape || (key >= Qt::Key_F1 && key <= Qt::Key_F12)) {
-      return QValidator::Acceptable;
-    }
-  } else if((modifier & Qt::ControlModifier || modifier & Qt::ShiftModifier ||
-      modifier & Qt::AltModifier) && (key >= Qt::Key_F1 && key <= Qt::Key_F12 ||
-      key >= Qt::Key_0 && key <= Qt::Key_9)) {
+  if(((modifier == Qt::NoModifier || modifier & Qt::ControlModifier ||
+    modifier & Qt::ShiftModifier || modifier & Qt::AltModifier) &&
+      ((key >= Qt::Key_F1 && key <= Qt::Key_F12) ||
+        (key >= Qt::Key_0 && key <= Qt::Key_9) || key == Qt::Key_Escape))) {
     return QValidator::Acceptable;
   }
   return QValidator::Invalid;

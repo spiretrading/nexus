@@ -58,8 +58,8 @@ namespace {
 
   auto make_help_text_box() {
     auto help_text_box = make_text_area_label(
-      "Allowed keys are <b>ESC, F1–F12,</b> plus combinations of "
-      "<b>Ctrl, Shift, Alt</b> with <b>F1–F12</b> and <b>0–9</b>");
+      "Allowed keys are <b>ESC, F1–F12</b> and <b>0–9</b> and "
+      "any combination with <b>Ctrl, Shift</b> or <b>Alt </b>");
     help_text_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     update_style(*help_text_box, [] (auto& style) {
       auto font = QFont("Roboto");

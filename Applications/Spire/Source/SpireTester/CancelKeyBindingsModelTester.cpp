@@ -44,13 +44,17 @@ TEST_SUITE("CancelKeyBindingsModel") {
     REQUIRE(binding->get() == QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_2));
     REQUIRE(binding->set(Qt::Key_Escape) == QValidator::Acceptable);
     REQUIRE(binding->get() == QKeySequence(Qt::Key_Escape));
+    REQUIRE(binding->set(Qt::SHIFT | Qt::Key_Escape) == QValidator::Acceptable);
+    REQUIRE(binding->get() == QKeySequence(Qt::SHIFT | Qt::Key_Escape));
+    REQUIRE(binding->set(Qt::Key_0) == QValidator::Acceptable);
+    REQUIRE(binding->get() == QKeySequence(Qt::Key_0));
+    REQUIRE(binding->set(Qt::CTRL | Qt::Key_0) == QValidator::Acceptable);
+    REQUIRE(binding->get() == QKeySequence(Qt::CTRL | Qt::Key_0));
     REQUIRE(binding->set(Qt::Key_A) == QValidator::Invalid);
     REQUIRE(binding->set(Qt::ALT | Qt::Key_A) == QValidator::Invalid);
     REQUIRE(binding->set(Qt::CTRL | Qt::Key_A) == QValidator::Invalid);
     REQUIRE(binding->set(Qt::SHIFT | Qt::Key_A) == QValidator::Invalid);
-    REQUIRE(binding->set(Qt::Key_0) == QValidator::Invalid);
     REQUIRE(binding->set(Qt::Key_Tab) == QValidator::Invalid);
-    REQUIRE(binding->set(Qt::ALT | Qt::Key_Escape) == QValidator::Invalid);
   }
 
   TEST_CASE("validate2") {
