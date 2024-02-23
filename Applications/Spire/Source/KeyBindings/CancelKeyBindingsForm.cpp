@@ -126,6 +126,7 @@ CancelKeyBindingsForm::CancelKeyBindingsForm(
   body_layout->addLayout(center_layout, 1);
   body_layout->addStretch(0);
   auto scroll_box = new ScrollBox(body);
+  scroll_box->setFocusPolicy(Qt::NoFocus);
   scroll_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   update_style(*scroll_box, [] (auto& style) {
     style.get(Any()).set(BackgroundColor(QColor(0xFFFFFF)));
