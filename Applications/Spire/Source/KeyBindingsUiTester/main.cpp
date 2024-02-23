@@ -1,5 +1,6 @@
 #include <QApplication>
 #include "Spire/KeyBindings/KeyBindingsWindow.hpp"
+#include "Spire/LegacyKeyBindings/HotkeyOverride.hpp"
 #include "Spire/Spire/Resources.hpp"
 
 using namespace Spire;
@@ -11,5 +12,6 @@ int main(int argc, char** argv) {
   initialize_resources();
   auto window = KeyBindingsWindow();
   window.show();
+  auto hotkey_override = HotkeyOverride();
   application.exec();
 }
