@@ -233,8 +233,8 @@ void Window::set_body(QWidget* body) {
 }
 
 QSize Window::adjusted_window_size(const QSize& body_size) {
-  return {body_size.width() + 2 * scale_width(1),
-    body_size.height() + m_title_bar->height() + 2 * scale_height(1)};
+  return {body_size.width() + 4 * scale_width(1),
+    body_size.height() + m_title_bar->height() + 4 * scale_height(1)};
 }
 
 void Window::on_screen_changed(QScreen* screen) {
