@@ -38,13 +38,10 @@ QValidator::State CancelKeyBindingsModel::on_validate(Operation operation,
   auto key = sequence[0];
   auto modifier = key & Qt::KeyboardModifierMask;
   key -= modifier;
-  if(modifier == Qt::NoModifier) {
-    if(key == Qt::Key_Escape || (key >= Qt::Key_F1 && key <= Qt::Key_F12)) {
-      return QValidator::Acceptable;
-    }
-  } else if((modifier & Qt::ControlModifier || modifier & Qt::ShiftModifier ||
-      modifier & Qt::AltModifier) && (key >= Qt::Key_F1 && key <= Qt::Key_F12 ||
-      key >= Qt::Key_0 && key <= Qt::Key_9)) {
+  if(((modifier == Qt::NoModifier || modifier & Qt::ControlModifier ||
+    modifier & Qt::ShiftModifier || modifier & Qt::AltModifier) &&
+      ((key >= Qt::Key_F1 && key <= Qt::Key_F12) ||
+        (key >= Qt::Key_0 && key <= Qt::Key_9) || key == Qt::Key_Escape))) {
     return QValidator::Acceptable;
   }
   return QValidator::Invalid;
@@ -52,15 +49,19 @@ QValidator::State CancelKeyBindingsModel::on_validate(Operation operation,
 
 void CancelKeyBindingsModel::on_update(Operation operation,
     const QKeySequence& sequence) {
-  if(sequence.isEmpty()) {
-    return;
-  }
+  auto update = [&] {
+    m_bindings_map.erase(m_previous_bindings[static_cast<int>(operation)]);
+    if(!sequence.isEmpty()) {
+      m_bindings_map[sequence] = operation;
+    }
+    m_previous_bindings[static_cast<int>(operation)] = sequence;
+  };
   if(auto search = find_operation(sequence); search) {
     if(*search != operation) {
       m_bindings[static_cast<int>(*search)]->set(QKeySequence());
-      m_bindings_map[sequence] = operation;
+      update();
     }
   } else {
-    m_bindings_map[sequence] = operation;
+    update();
   }
 }
