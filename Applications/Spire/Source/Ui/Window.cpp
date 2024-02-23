@@ -50,8 +50,6 @@ Window::Window(QWidget* parent)
   auto box_body = new QWidget();
   auto layout = make_vbox_layout(box_body);
   layout->setAlignment(Qt::AlignTop);
-  layout->setContentsMargins(
-    scale_width(1), scale_height(1), scale_width(1), scale_height(1));
   layout->addWidget(m_title_bar);
   auto box = new Box(box_body);
   box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -190,13 +188,6 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
     }
     *result = HTCLIENT;
     return true;
-  } else if(msg->message == WM_SIZE) {
-    if(msg->wParam == SIZE_MAXIMIZED) {
-      layout()->setContentsMargins({});
-    } else if(msg->wParam == SIZE_RESTORED) {
-      layout()->setContentsMargins(scale_width(1), scale_height(1),
-        scale_width(1), scale_height(1));
-    }
   } else if(msg->message == WM_GETMINMAXINFO) {
     auto mmi = reinterpret_cast<MINMAXINFO*>(msg->lParam);
     if(maximumSize() != QSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX)) {
@@ -233,8 +224,7 @@ void Window::set_body(QWidget* body) {
 }
 
 QSize Window::adjusted_window_size(const QSize& body_size) {
-  return {body_size.width() + 4 * scale_width(1),
-    body_size.height() + m_title_bar->height() + 4 * scale_height(1)};
+  return {body_size.width(), body_size.height() + m_title_bar->height()};
 }
 
 void Window::on_screen_changed(QScreen* screen) {
