@@ -43,13 +43,13 @@ ToolbarWindow::ToolbarWindow(DirectoryEntry account, AccountRoles roles,
   bottom_layout->addWidget(make_icon_tool_button(
     WindowType::WATCHLIST, ":/Icons/toolbar_icons/watchlist.svg"));
   bottom_layout->addWidget(make_icon_tool_button(
-    WindowType::IMBALANCE_INDICATOR,
+    WindowType::ORDER_IMBALANCE_INDICATOR,
     ":/Icons/toolbar_icons/imbalance-indicator.svg"));
   bottom_layout->addWidget(make_blotter_button());
   if(roles.Test(AccountRole::MANAGER) ||
       roles.Test(AccountRole::ADMINISTRATOR)) {
     bottom_layout->addWidget(make_icon_tool_button(
-      WindowType::PORTFOLIO_VIEWER, ":/Icons/toolbar_icons/portfolio.svg"));
+      WindowType::PORTFOLIO, ":/Icons/toolbar_icons/portfolio.svg"));
   }
   bottom_layout->addSpacing(scale_width(4));
   auto separator = new Box();
@@ -202,11 +202,11 @@ const QString& Spire::to_text(ToolbarWindow::WindowType type) {
   } else if(type == ToolbarWindow::WindowType::WATCHLIST) {
     static const auto value = QObject::tr("Watchlist");
     return value;
-  } else if(type == ToolbarWindow::WindowType::IMBALANCE_INDICATOR) {
-    static const auto value = QObject::tr("Imbalance Indicator");
+  } else if(type == ToolbarWindow::WindowType::ORDER_IMBALANCE_INDICATOR) {
+    static const auto value = QObject::tr("Order Imbalance Indicator");
     return value;
-  } else if(type == ToolbarWindow::WindowType::PORTFOLIO_VIEWER) {
-    static const auto value = QObject::tr("Portfolio View");
+  } else if(type == ToolbarWindow::WindowType::PORTFOLIO) {
+    static const auto value = QObject::tr("Portfolio");
     return value;
   } else if(type == ToolbarWindow::WindowType::KEY_BINDINGS) {
     static const auto value = QObject::tr("Key Bindings");

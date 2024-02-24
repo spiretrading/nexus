@@ -30,6 +30,17 @@ namespace Spire {
 
       ToolbarController(const ToolbarController&) = delete;
       ToolbarController& operator =(const ToolbarController&) = delete;
+      void open_chart_window();
+      void open_book_view_window();
+      void open_time_and_sales_window();
+      void open_canvas_window();
+      void open_watchlist_window();
+      void open_order_imbalance_indicator_window();
+      void open_portfolio_window();
+      void open_key_bindings_window();
+      void open_profile_window();
+      void on_open(ToolbarWindow::WindowType window);
+      void on_open_blotter(BlotterModel& model);
   };
 }
 

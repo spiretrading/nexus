@@ -36,17 +36,17 @@ namespace Spire {
         /** The watchlist window. */
         WATCHLIST,
 
-        /** The imbalance indicator window. */
-        IMBALANCE_INDICATOR,
+        /** The order imbalance indicator window. */
+        ORDER_IMBALANCE_INDICATOR,
 
-        /** The portfolio viewer window. */
-        PORTFOLIO_VIEWER,
+        /** The portfolio window. */
+        PORTFOLIO,
 
         /** The key bindings window. */
         KEY_BINDINGS,
 
         /** The profile window. */
-        PROFILE,
+        PROFILE
       };
 
       /**
