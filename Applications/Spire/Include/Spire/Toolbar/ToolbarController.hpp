@@ -41,6 +41,8 @@ namespace Spire {
       void open_profile_window();
       void on_open(ToolbarWindow::WindowType window);
       void on_open_blotter(BlotterModel& model);
+      void on_minimize_all();
+      void on_restore_all();
   };
 }
 

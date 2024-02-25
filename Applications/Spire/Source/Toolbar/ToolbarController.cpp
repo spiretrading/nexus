@@ -4,6 +4,7 @@
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
+#include <QApplication>
 #include "Spire/AccountViewer/AccountViewWindow.hpp"
 #include "Spire/AccountViewer/TraderProfileWindow.hpp"
 #include "Spire/Blotter/BlotterSettings.hpp"
@@ -74,6 +75,10 @@ void ToolbarController::open() {
     std::bind_front(&ToolbarController::on_open, this));
   m_toolbar_window->connect_open_blotter_signal(
     std::bind_front(&ToolbarController::on_open_blotter, this));
+  m_toolbar_window->connect_minimize_all_signal(
+    std::bind_front(&ToolbarController::on_minimize_all, this));
+  m_toolbar_window->connect_restore_all_signal(
+    std::bind_front(&ToolbarController::on_restore_all, this));
   m_toolbar_window->show();
 }
 
@@ -190,4 +195,16 @@ void ToolbarController::on_open_blotter(BlotterModel& blotter) {
     BlotterWindow::GetBlotterWindow(Ref(*m_user_profile), Ref(blotter));
   window.show();
   window.activateWindow();
+}
+
+void ToolbarController::on_minimize_all() {
+  for(auto& widget : QApplication::topLevelWidgets()) {
+    widget->setWindowState(Qt::WindowMinimized);
+  }
+}
+
+void ToolbarController::on_restore_all() {
+  for(auto& widget : QApplication::topLevelWidgets()) {
+    widget->setWindowState(Qt::WindowActive);
+  }
 }
