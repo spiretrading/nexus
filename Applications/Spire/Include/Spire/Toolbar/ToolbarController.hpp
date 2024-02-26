@@ -44,6 +44,7 @@ namespace Spire {
       void on_open_blotter(BlotterModel& model);
       void on_minimize_all();
       void on_restore_all();
+      void on_sign_out();
   };
 }
 

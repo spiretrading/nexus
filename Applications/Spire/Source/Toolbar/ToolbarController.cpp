@@ -59,6 +59,8 @@ void ToolbarController::open() {
     std::bind_front(&ToolbarController::on_minimize_all, this));
   m_toolbar_window->connect_restore_all_signal(
     std::bind_front(&ToolbarController::on_restore_all, this));
+  m_toolbar_window->connect_sign_out_signal(
+    std::bind_front(&ToolbarController::on_sign_out, this));
   m_toolbar_window->show();
 }
 
@@ -199,4 +201,8 @@ void ToolbarController::on_restore_all() {
   for(auto& widget : QApplication::topLevelWidgets()) {
     widget->setWindowState(Qt::WindowActive);
   }
+}
+
+void ToolbarController::on_sign_out() {
+  QApplication::closeAllWindows();
 }
