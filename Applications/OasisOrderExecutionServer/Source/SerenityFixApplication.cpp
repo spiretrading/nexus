@@ -196,12 +196,21 @@ void SerenityFixApplication::onMessage(
       } else if(liquidityFlag == "R") {
         update->m_liquidityFlag = "A";
       }
+      auto originalLiquidityFlag = std::string();
+      if(message.isSetField(ORIGINAL_LIQUIDITY_TAG)) {
+        originalLiquidityFlag = message.getField(ORIGINAL_LIQUIDITY_TAG);
+      }
       auto lastMkt = FIX::LastMkt();
       if(message.isSet(lastMkt)) {
         message.get(lastMkt);
         if(lastMkt == "XTSX") {
           update->m_lastMarket = DefaultMarkets::TSX().GetData();
-        } else if(lastMkt == "CHIX" || lastMkt == "XCXD") {
+        } else if(lastMkt == "CHIX") {
+          update->m_lastMarket = DefaultMarkets::CHIC().GetData();
+        } else if(lastMkt == "XCXD") {
+          if(!originalLiquidityFlag.empty()) {
+            update->m_liquidityFlag = originalLiquidityFlag;
+          }
           update->m_lastMarket = DefaultMarkets::CHIC().GetData();
         } else if(lastMkt == "XCX2") {
           update->m_lastMarket = DefaultMarkets::XCX2().GetData();
