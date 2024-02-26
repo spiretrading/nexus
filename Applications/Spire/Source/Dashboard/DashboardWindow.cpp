@@ -17,6 +17,7 @@
 #include "Spire/Dashboard/ValueDashboardCell.hpp"
 #include "Spire/LegacyUI/LineInputDialog.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
+#include "Spire/Spire/ListModel.hpp"
 #include "ui_DashboardWindow.h"
 
 using namespace Beam;
@@ -88,7 +89,7 @@ void DashboardWindow::showEvent(QShowEvent* event) {
 void DashboardWindow::closeEvent(QCloseEvent* event) {
   Save();
   auto window = GetWindowSettings();
-  m_userProfile->AddRecentlyClosedWindow(std::move(window));
+  m_userProfile->GetRecentlyClosedWindows()->push(std::move(window));
   auto closeData = JsonObject();
   closeData["id"] = reinterpret_cast<std::intptr_t>(this);
   QWidget::closeEvent(event);

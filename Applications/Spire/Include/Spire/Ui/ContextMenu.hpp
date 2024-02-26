@@ -63,6 +63,9 @@ namespace Spire {
       /** Adds a menu separator. */
       void add_separator();
 
+      /** Resets the menu, removing all actions. */
+      void reset();
+
       /** Connects a slot to the Submit signal. */
       boost::signals2::connection connect_submit_signal(
         const SubmitSignal::slot_type& slot) const;

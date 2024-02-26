@@ -25,7 +25,7 @@ add_executable(CanvasViewTests ${test_source_files})
 target_link_libraries(CanvasViewTests Async Dashboard Charting PortfolioViewer
   Utilities RiskTimer AccountViewer KeyBindings Blotter Catalog BookView
   TimeAndSales OrderImbalanceIndicator InputWidgets CanvasView Canvas
-  LegacyResources LegacyUI
+  Library LegacyResources LegacyUI
   debug ${CRYPTOPP_LIBRARY_DEBUG_PATH}
   optimized ${CRYPTOPP_LIBRARY_OPTIMIZED_PATH}
   debug ${LUA_LIBRARY_DEBUG_PATH}

@@ -16,7 +16,7 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 ToolbarWindow::ToolbarWindow(DirectoryEntry account, AccountRoles roles,
-    std::shared_ptr<RecentlyClosedListModel> recently_closed_windows,
+    std::shared_ptr<RecentlyClosedWindowListModel> recently_closed_windows,
     std::shared_ptr<ListModel<BlotterModel*>> pinned_blotters, QWidget* parent)
     : Window(parent),
       m_recently_closed_windows(std::move(recently_closed_windows)),
@@ -29,7 +29,12 @@ ToolbarWindow::ToolbarWindow(DirectoryEntry account, AccountRoles roles,
   auto top_layout = make_hbox_layout();
   top_layout->addWidget(make_window_manager_button());
   top_layout->addStretch();
-  top_layout->addWidget(make_recently_closed_button());
+  auto recently_closed_button = make_recently_closed_button();
+  m_recently_closed_menu = &recently_closed_button->get_menu();
+  m_recently_closed_windows_connection =
+    m_recently_closed_windows->connect_operation_signal(std::bind_front(
+      &ToolbarWindow::on_recently_closed_window_operation, this));
+  top_layout->addWidget(recently_closed_button);
   auto bottom_layout = make_hbox_layout();
   bottom_layout->setSpacing(scale_width(4));
   bottom_layout->addWidget(make_icon_tool_button(
@@ -80,7 +85,7 @@ ToolbarWindow::ToolbarWindow(DirectoryEntry account, AccountRoles roles,
   set_body(content);
 }
 
-const std::shared_ptr<ToolbarWindow::RecentlyClosedListModel>&
+const std::shared_ptr<RecentlyClosedWindowListModel>&
     ToolbarWindow::get_recently_closed_windows() const {
   return m_recently_closed_windows;
 }
@@ -143,15 +148,6 @@ MenuButton* ToolbarWindow::make_window_manager_button() const {
 MenuButton* ToolbarWindow::make_recently_closed_button() const {
   auto recently_closed_button = make_menu_label_button(tr("Recently Closed"));
   recently_closed_button->setFixedSize(scale(130, 26));
-  auto& history_menu = recently_closed_button->get_menu();
-  for(auto i = 0; i < m_recently_closed_windows->get_size(); ++i) {
-    auto& window = m_recently_closed_windows->get(i);
-    history_menu.add_action(QString::fromStdString(window->GetName()),
-      [=] {
-        auto window = m_recently_closed_windows->get(i);
-        m_reopen_signal(window);
-      });
-  }
   return recently_closed_button;
 }
 
@@ -181,6 +177,23 @@ Button* ToolbarWindow::make_icon_tool_button(
     m_open_signal(type);
   });
   return button;
+}
+
+void ToolbarWindow::populate_recently_closed_menu() {
+  m_recently_closed_menu->reset();
+  for(auto i = 0; i < m_recently_closed_windows->get_size(); ++i) {
+    auto& window = m_recently_closed_windows->get(i);
+    m_recently_closed_menu->add_action(
+      QString::fromStdString(window->GetName()), [=] {
+        auto window = m_recently_closed_windows->get(i);
+        m_reopen_signal(*window);
+      });
+  }
+}
+
+void ToolbarWindow::on_recently_closed_window_operation(
+    const RecentlyClosedWindowListModel::Operation& operation) {
+  populate_recently_closed_menu();
 }
 
 const QString& Spire::to_text(ToolbarWindow::WindowType type) {

@@ -272,6 +272,7 @@ void Toolbar::OnImportExportAction() {
 }
 
 void Toolbar::OnRecentlyClosedButtonPressed() {
+/*
   m_recentlyClosedMenu->clear();
   const auto& recentlyClosedWindows = m_userProfile->GetRecentlyClosedWindows();
   if(recentlyClosedWindows.empty()) {
@@ -289,14 +290,17 @@ void Toolbar::OnRecentlyClosedButtonPressed() {
     }
   }
   m_ui->m_recentlyClosedButton->showMenu();
+*/
 }
 
 void Toolbar::OnRecentlyClosedAction(QAction* action) {
+/*
   auto closedAction = static_cast<RecentlyClosedAction*>(action);
   auto& window = closedAction->GetWindow();
   auto widget = window.Reopen(Ref(*m_userProfile));
   widget->show();
   m_userProfile->RemoveRecentlyClosedWindow(window);
+*/
 }
 
 void Toolbar::OnNewCanvasAction() {

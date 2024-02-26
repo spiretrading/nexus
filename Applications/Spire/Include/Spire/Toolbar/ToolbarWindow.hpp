@@ -3,6 +3,7 @@
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include "Nexus/AdministrationService/AccountRoles.hpp"
 #include "Spire/Blotter/Blotter.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Toolbar/Toolbar.hpp"
@@ -59,8 +60,8 @@ namespace Spire {
        * Signals to re-open a recently closed window.
        * @param settings The settings for the recently closed window to reopen.
        */
-      using ReopenSignal = Signal<void (
-        const std::shared_ptr<LegacyUI::WindowSettings>& settings)>;
+      using ReopenSignal =
+        Signal<void (const LegacyUI::WindowSettings& settings)>;
 
       /**
        * Signals to open a blotter.
@@ -78,12 +79,6 @@ namespace Spire {
       using SignOutSignal = Signal<void ()>;
 
       /**
-       * The type of model used to store the list of recently closed windows.
-       */
-      using RecentlyClosedListModel =
-        ListModel<std::shared_ptr<LegacyUI::WindowSettings>>;
-
-      /**
        * Constructs a ToolbarWindow.
        * @param user_name The user's name.
        * @param is_manager Whether the user is a manager.
@@ -93,12 +88,12 @@ namespace Spire {
        */
       ToolbarWindow(Beam::ServiceLocator::DirectoryEntry account,
         Nexus::AdministrationService::AccountRoles roles,
-        std::shared_ptr<RecentlyClosedListModel> recently_closed_windows,
+        std::shared_ptr<RecentlyClosedWindowListModel> recently_closed_windows,
         std::shared_ptr<ListModel<BlotterModel*>> pinned_blotters,
         QWidget* parent = nullptr);
 
       /** Returns the list of recently closed window. */
-      const std::shared_ptr<RecentlyClosedListModel>&
+      const std::shared_ptr<RecentlyClosedWindowListModel>&
         get_recently_closed_windows() const;
 
       /** Returns the list of pinned blotters. */
@@ -139,14 +134,19 @@ namespace Spire {
       mutable MinimizeAllSignal m_minimize_all_signal;
       mutable RestoreAllSignal m_restore_all_signal;
       mutable SignOutSignal m_sign_out_signal;
-      std::shared_ptr<RecentlyClosedListModel> m_recently_closed_windows;
+      ContextMenu* m_recently_closed_menu;
+      std::shared_ptr<RecentlyClosedWindowListModel> m_recently_closed_windows;
       std::shared_ptr<ListModel<BlotterModel*>> m_pinned_blotters;
+      boost::signals2::scoped_connection m_recently_closed_windows_connection;
 
       MenuButton* make_window_manager_button() const;
       MenuButton* make_recently_closed_button() const;
       MenuButton* make_blotter_button() const;
+      void populate_recently_closed_menu();
       Button* make_icon_tool_button(
         WindowType type, const QString& icon_path) const;
+      void on_recently_closed_window_operation(
+        const RecentlyClosedWindowListModel::Operation& operation);
   };
 
   /** Returns the text representation of a WindowType. */ 

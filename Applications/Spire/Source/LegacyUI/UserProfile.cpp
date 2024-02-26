@@ -4,6 +4,7 @@
 #include "Spire/Blotter/BlotterSettings.hpp"
 #include "Spire/Blotter/OpenPositionsModel.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
+#include "Spire/Spire/ArrayListModel.hpp"
 
 using namespace Beam;
 using namespace boost;
@@ -36,6 +37,8 @@ UserProfile::UserProfile(const std::string& username, bool isAdministrator,
       m_telemetryClient(std::move(telemetryClient)),
       m_profilePath(std::filesystem::path(QStandardPaths::writableLocation(
         QStandardPaths::DataLocation).toStdString()) / "Profiles" / m_username),
+      m_recentlyClosedWindows(
+        std::make_shared<ArrayListModel<std::shared_ptr<WindowSettings>>>()),
       m_catalogSettings(m_profilePath / "Catalog", isAdministrator),
       m_interactionProperties(InteractionsProperties::GetDefaultProperties()) {
   for(auto& exchangeRate : exchangeRates) {
@@ -108,24 +111,9 @@ const std::filesystem::path& UserProfile::GetProfilePath() const {
   return m_profilePath;
 }
 
-const std::vector<std::unique_ptr<WindowSettings>>&
+const std::shared_ptr<RecentlyClosedWindowListModel>&
     UserProfile::GetRecentlyClosedWindows() const {
   return m_recentlyClosedWindows;
-}
-
-void UserProfile::AddRecentlyClosedWindow(
-    std::unique_ptr<WindowSettings> window) {
-  m_recentlyClosedWindows.push_back(std::move(window));
-}
-
-void UserProfile::RemoveRecentlyClosedWindow(const WindowSettings& window) {
-  auto i = std::find_if(m_recentlyClosedWindows.begin(),
-    m_recentlyClosedWindows.end(), [&] (const auto& closedWindow) {
-      return closedWindow.get() == &window;
-    });
-  if(i != m_recentlyClosedWindows.end()) {
-    m_recentlyClosedWindows.erase(i);
-  }
 }
 
 const BlotterSettings& UserProfile::GetBlotterSettings() const {
