@@ -144,7 +144,8 @@ namespace Spire {
       MenuButton* make_blotter_button() const;
       void populate_recently_closed_menu();
       Button* make_icon_tool_button(
-        WindowType type, const QString& icon_path) const;
+        WindowType type, const QString& icon_path, QColor fill,
+        QColor hover_color, QColor press_color) const;
       void on_recently_closed_window_operation(
         const RecentlyClosedWindowListModel::Operation& operation);
   };

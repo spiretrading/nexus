@@ -4,6 +4,7 @@
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/ContextMenu.hpp"
+#include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/MenuButton.hpp"
 
@@ -37,24 +38,31 @@ ToolbarWindow::ToolbarWindow(DirectoryEntry account, AccountRoles roles,
   top_layout->addWidget(recently_closed_button);
   auto bottom_layout = make_hbox_layout();
   bottom_layout->setSpacing(scale_width(4));
+  bottom_layout->addWidget(
+    make_icon_tool_button(WindowType::CANVAS, ":/Icons/toolbar/canvas.svg",
+    QColor(0x00848A), QColor(0x00696E), QColor(0x00A88B)));
   bottom_layout->addWidget(make_icon_tool_button(
-    WindowType::CANVAS, ":/Icons/toolbar_icons/canvas.svg"));
+    WindowType::BOOK_VIEW, ":/Icons/toolbar/book_view.svg",
+    QColor(0x406ABF), QColor(0x404ABF), QColor(0x4392D6)));
   bottom_layout->addWidget(make_icon_tool_button(
-    WindowType::BOOK_VIEW, ":/Icons/toolbar_icons/bookview.svg"));
+    WindowType::TIME_AND_SALES, ":/Icons/toolbar/time_and_sales.svg",
+    QColor(0x26BF4A), QColor(0x2CAC79), QColor(0x1FD364)));
+  bottom_layout->addWidget(
+    make_icon_tool_button(WindowType::CHART, ":/Icons/toolbar/chart.svg",
+    QColor(0x7F5EEC), QColor(0x684BC7), QColor(0x8D78EC)));
   bottom_layout->addWidget(make_icon_tool_button(
-    WindowType::TIME_AND_SALES, ":/Icons/toolbar_icons/time-sales.svg"));
-  bottom_layout->addWidget(make_icon_tool_button(
-    WindowType::CHART, ":/Icons/toolbar_icons/chart.svg"));
-  bottom_layout->addWidget(make_icon_tool_button(
-    WindowType::WATCHLIST, ":/Icons/toolbar_icons/watchlist.svg"));
+    WindowType::WATCHLIST, ":/Icons/toolbar/watchlist.svg",
+    QColor(0xE67A44), QColor(0xCB6431), QColor(0xF28E38)));
   bottom_layout->addWidget(make_icon_tool_button(
     WindowType::ORDER_IMBALANCE_INDICATOR,
-    ":/Icons/toolbar_icons/imbalance-indicator.svg"));
+    ":/Icons/toolbar/order_imbalance_indicator.svg",
+    QColor(0xBF9540), QColor(0x9A7324), QColor(0xE0B04F)));
   bottom_layout->addWidget(make_blotter_button());
   if(roles.Test(AccountRole::MANAGER) ||
       roles.Test(AccountRole::ADMINISTRATOR)) {
     bottom_layout->addWidget(make_icon_tool_button(
-      WindowType::PORTFOLIO, ":/Icons/toolbar_icons/portfolio.svg"));
+      WindowType::PORTFOLIO, ":/Icons/toolbar/portfolio.svg",
+      QColor(0x406ABF), QColor(0x404ABF), QColor(0x4392D6)));
   }
   bottom_layout->addSpacing(scale_width(4));
   auto separator = new Box();
@@ -64,10 +72,12 @@ ToolbarWindow::ToolbarWindow(DirectoryEntry account, AccountRoles roles,
   });
   bottom_layout->addWidget(separator);
   bottom_layout->addSpacing(scale_width(4));
-  bottom_layout->addWidget(make_icon_tool_button(WindowType::KEY_BINDINGS,
-    ":/Icons/toolbar_icons/key-bindings.svg"));
-  bottom_layout->addWidget(make_icon_tool_button(WindowType::PROFILE,
-    ":/Icons/toolbar_icons/profile.svg"));
+  bottom_layout->addWidget(make_icon_tool_button(
+    WindowType::KEY_BINDINGS, ":/Icons/toolbar/key_bindings.svg",
+    QColor(0x808080), QColor(0x535353), QColor(0xA0A0A0)));
+  bottom_layout->addWidget(
+    make_icon_tool_button(WindowType::PROFILE, ":/Icons/toolbar/profile.svg",
+      QColor(0x70C1EB), QColor(0x4392D6), QColor(0x70C1EB)));
   auto body = new QWidget();
   auto body_layout = make_vbox_layout(body);
   body_layout->addLayout(top_layout);
@@ -152,9 +162,11 @@ MenuButton* ToolbarWindow::make_recently_closed_button() const {
 }
 
 MenuButton* ToolbarWindow::make_blotter_button() const {
-  auto blotter_button = make_menu_icon_button(imageFromSvg(
-    ":/Icons/toolbar_icons/blotter.svg", scale(26, 26)),
+  auto blotter_button = make_menu_icon_button(
+    imageFromSvg(":/Icons/toolbar/blotter.svg", scale(26, 26)),
     to_text(WindowType::BLOTTER));
+/*, QColor(0x00BFA0), QColor(0x00A88B),
+    QColor(0x00D6BB)*/
   blotter_button->setFixedSize(scale(32, 26));
   auto& blotter_menu = blotter_button->get_menu();
   blotter_menu.add_action(tr("New..."), [] {});
@@ -169,9 +181,15 @@ MenuButton* ToolbarWindow::make_blotter_button() const {
 }
 
 Button* ToolbarWindow::make_icon_tool_button(
-    WindowType type, const QString& icon_path) const {
+    WindowType type, const QString& icon_path, QColor fill,
+    QColor hover_color, QColor press_color) const {
   auto button =
     make_icon_button(imageFromSvg(icon_path, scale(26, 26)), to_text(type));
+  update_style(*button, [&] (auto& style) {
+    style.get(Any() > is_a<Icon>()).set(Fill(fill));
+    style.get(Hover() > is_a<Icon>()).set(Fill(hover_color));
+    style.get(Press() > is_a<Icon>()).set(Fill(press_color));
+  });
   button->setFixedSize(scale(26, 26));
   button->connect_click_signal([=] {
     m_open_signal(type);
