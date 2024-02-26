@@ -362,8 +362,8 @@ void Stylist::apply() {
           m_widget->setSizePolicy(size);
           m_widget->hide();
         }
-        m_visibility = visibility;
       }
+      m_visibility = visibility;
     });
   } else if(m_visibility != Visibility::VISIBLE) {
     m_widget->show();
