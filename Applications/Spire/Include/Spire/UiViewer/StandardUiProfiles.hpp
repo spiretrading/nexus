@@ -203,6 +203,9 @@ namespace Spire {
   /** Returns a UiProfile for the RegionBox. */
   UiProfile make_region_box_profile();
 
+  /** Returns a UiProfile for the RegionDropDownBox. */
+  UiProfile make_region_drop_down_box_profile();
+
   /** Returns a UiProfile for the RegionListItem. */
   UiProfile make_region_list_item_profile();
 
