@@ -78,6 +78,7 @@
 #include "Spire/Ui/PopupBox.hpp"
 #include "Spire/Ui/QuantityBox.hpp"
 #include "Spire/Ui/RegionBox.hpp"
+#include "Spire/Ui/RegionDropDownBox.hpp"
 #include "Spire/Ui/RegionListItem.hpp"
 #include "Spire/Ui/ResponsiveLabel.hpp"
 #include "Spire/Ui/SaleConditionBox.hpp"
@@ -3627,6 +3628,53 @@ UiProfile Spire::make_region_box_profile() {
     box->connect_submit_signal([=] (const Region& region) {
       submit_slot(print_region(region));
     });
+    return box;
+  });
+  return profile;
+}
+
+UiProfile Spire::make_region_drop_down_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto current_region = define_enum<Region>(
+    {{"NSEX", GetDefaultMarketDatabase().FromCode(DefaultMarkets::NSEX())},
+    {"ISE", GetDefaultMarketDatabase().FromCode(DefaultMarkets::ISE())},
+    {"TSX", GetDefaultMarketDatabase().FromCode(DefaultMarkets::TSX())},
+    {"USA", Region(DefaultCountries::US())},
+    {"CAN", Region(DefaultCountries::CA())}});
+  properties.push_back(make_standard_enum_property("current", current_region));
+  properties.push_back(make_standard_property("read_only", false));
+  auto profile = UiProfile("RegionDropDownBox", properties, [] (auto& profile) {
+    auto markets = std::vector<MarketCode>{DefaultMarkets::NSEX(),
+      DefaultMarkets::ISE(), DefaultMarkets::TSX()};
+    auto countries = std::vector<CountryCode>{DefaultCountries::US(),
+      DefaultCountries::CA()};
+    auto regions = std::make_shared<ArrayListModel<Region>>();
+    for(auto& market_code : markets) {
+      auto market = GetDefaultMarketDatabase().FromCode(market_code);
+      auto region = Region(market);
+      region.SetName(market.m_description);
+      regions->push(region);
+    }
+    for(auto& country : countries) {
+      auto region = Region(country);
+      region.SetName(
+        GetDefaultCountryDatabase().FromCode(country).m_name);
+      regions->push(region);
+    }
+    auto box = make_region_drop_down_box(std::move(regions));
+    box->setFixedWidth(scale_width(150));
+    apply_widget_properties(box, profile.get_properties());
+    auto& current = get<Region>("current", profile.get_properties());
+    current.connect_changed_signal([=] (auto value) {
+      box->get_current()->set(value);
+    });
+    auto& read_only = get<bool>("read_only", profile.get_properties());
+    read_only.connect_changed_signal(
+      std::bind_front(&RegionDropDownBox::set_read_only, box));
+    box->get_current()->connect_update_signal(
+      profile.make_event_slot<Region>("Current"));
+    box->connect_submit_signal(profile.make_event_slot<Region>("Submit"));
     return box;
   });
   return profile;

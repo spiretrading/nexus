@@ -189,6 +189,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_quantity_filter_panel_profile());
   add(make_radio_button_profile());
   add(make_region_box_profile());
+  add(make_region_drop_down_box_profile());
   add(make_region_list_item_profile());
   add(make_responsive_label_profile());
   add(make_sale_condition_box_profile());
