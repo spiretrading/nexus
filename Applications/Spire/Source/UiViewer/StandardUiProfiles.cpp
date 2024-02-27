@@ -39,6 +39,7 @@
 #include "Spire/Ui/DateBox.hpp"
 #include "Spire/Ui/DateFilterPanel.hpp"
 #include "Spire/Ui/DecimalBox.hpp"
+#include "Spire/Ui/DeletableListItem.hpp"
 #include "Spire/Ui/DestinationBox.hpp"
 #include "Spire/Ui/DestinationListItem.hpp"
 #include "Spire/Ui/DropDownBox.hpp"
@@ -1741,6 +1742,20 @@ UiProfile Spire::make_decimal_filter_panel_profile() {
       });
       return button;
     });
+  return profile;
+}
+
+UiProfile Spire::make_deletable_list_item_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto profile = UiProfile("DeletableListItem", properties,
+    [] (auto& profile) {
+      auto item = new DeletableListItem(*make_label("XIU.TSX"));
+      item->setFixedWidth(scale_width(120));
+      apply_widget_properties(item, profile.get_properties());
+      item->connect_delete_signal(profile.make_event_slot("DeleteSignal"));
+      return item;
+  });
   return profile;
 }
 
