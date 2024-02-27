@@ -123,10 +123,9 @@ void ToolbarController::open() {
     }
   }
   if(!m_toolbar_window) {
-/*
-    m_toolbar_window = std::make_unique<ToolbarWindow>(account, roles,
-      m_user_profile->GetRecentlyClosedWindows(), pinned_blotters);
-*/
+    m_toolbar_window =
+      std::unique_ptr<ToolbarWindow>(static_cast<ToolbarWindow*>(
+        ToolbarWindowSettings().Reopen(Ref(*m_user_profile))));
   }
   auto windows = std::vector<QWidget*>();
   if(!window_settings.empty()) {
@@ -302,5 +301,5 @@ void ToolbarController::on_restore_all() {
 }
 
 void ToolbarController::on_sign_out() {
-  QApplication::closeAllWindows();
+  close();
 }

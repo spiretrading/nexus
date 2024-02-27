@@ -14,7 +14,6 @@
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorProperties.hpp"
 #include "Spire/KeyBindings/HotkeyOverride.hpp"
 #include "Spire/LegacyUI/CustomQtVariants.hpp"
-#include "Spire/LegacyUI/Toolbar.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
 #include "Spire/Login/LoginController.hpp"

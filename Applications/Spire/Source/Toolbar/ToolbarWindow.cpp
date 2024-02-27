@@ -1,6 +1,7 @@
 #include "Spire/Toolbar/ToolbarWindow.hpp"
 #include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Toolbar/ToolbarWindowSettings.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/ContextMenu.hpp"

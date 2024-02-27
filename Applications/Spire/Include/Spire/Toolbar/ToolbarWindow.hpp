@@ -14,7 +14,7 @@
 namespace Spire {
 
   /** Displays the toolbar window. */
-  class ToolbarWindow : public Window, public PersistentWindow {
+  class ToolbarWindow : public Window, public LegacyUI::PersistentWindow {
     public:
 
       /** Enumarates the types of windows that the toolbar can open. */
@@ -125,7 +125,8 @@ namespace Spire {
       boost::signals2::connection connect_sign_out_signal(
         const SignOutSignal::slot_type& slot) const;
 
-      std::unique_ptr<WindowSettings> GetWindowSettings() const override;
+      std::unique_ptr<LegacyUI::WindowSettings>
+        GetWindowSettings() const override;
 
     protected:
       void closeEvent(QCloseEvent* event) override;

@@ -7,7 +7,6 @@
 #include <QApplication>
 #include <QMessageBox>
 #include "Spire/LegacyUI/PersistentWindow.hpp"
-#include "Spire/LegacyUI/ToolbarWindowSettings.hpp"
 #include "Spire/LegacyUI/UISerialization.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/Toolbar/ToolbarWindow.hpp"
