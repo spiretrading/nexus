@@ -3638,10 +3638,10 @@ UiProfile Spire::make_region_drop_down_box_profile() {
   populate_widget_properties(properties);
   auto current_region = define_enum<Region>(
     {{"NSEX", GetDefaultMarketDatabase().FromCode(DefaultMarkets::NSEX())},
-    {"ISE", GetDefaultMarketDatabase().FromCode(DefaultMarkets::ISE())},
-    {"TSX", GetDefaultMarketDatabase().FromCode(DefaultMarkets::TSX())},
-    {"USA", Region(DefaultCountries::US())},
-    {"CAN", Region(DefaultCountries::CA())}});
+     {"ISE", GetDefaultMarketDatabase().FromCode(DefaultMarkets::ISE())},
+     {"TSX", GetDefaultMarketDatabase().FromCode(DefaultMarkets::TSX())},
+     {"USA", Region(DefaultCountries::US())},
+     {"CAN", Region(DefaultCountries::CA())}});
   properties.push_back(make_standard_enum_property("current", current_region));
   properties.push_back(make_standard_property("read_only", false));
   auto profile = UiProfile("RegionDropDownBox", properties, [] (auto& profile) {
@@ -3658,8 +3658,7 @@ UiProfile Spire::make_region_drop_down_box_profile() {
     }
     for(auto& country : countries) {
       auto region = Region(country);
-      region.SetName(
-        GetDefaultCountryDatabase().FromCode(country).m_name);
+      region.SetName(GetDefaultCountryDatabase().FromCode(country).m_name);
       regions->push(region);
     }
     auto box = make_region_drop_down_box(std::move(regions));
