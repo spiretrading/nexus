@@ -1,5 +1,6 @@
 #ifndef SPIRE_DELETABLE_LIST_ITEM_HPP
 #define SPIRE_DELETABLE_LIST_ITEM_HPP
+#include <QWidget>
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
