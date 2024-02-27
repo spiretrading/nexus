@@ -18,6 +18,8 @@ namespace Spire {
        */
       explicit ToolbarController(Beam::Ref<UserProfile> user_profile);
 
+      ~ToolbarController();
+
       /** Displays the toolbar window. */
       void open();
 

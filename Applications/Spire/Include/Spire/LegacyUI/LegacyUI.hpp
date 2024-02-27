@@ -27,8 +27,6 @@ namespace Spire::LegacyUI {
   class ScalableScrollBar;
   class SecurityContext;
   class SecurityViewStack;
-  class Toolbar;
-  class ToolbarWindowSettings;
   class ValueLabel;
   class WindowSettings;
 }

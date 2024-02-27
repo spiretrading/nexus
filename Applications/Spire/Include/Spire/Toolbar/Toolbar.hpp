@@ -5,6 +5,7 @@
 namespace Spire {
   class ToolbarController;
   class ToolbarWindow;
+  class ToolbarWindowSettings;
 }
 
 #endif

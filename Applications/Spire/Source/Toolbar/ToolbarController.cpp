@@ -1,10 +1,15 @@
 #include "Spire/Toolbar/ToolbarController.hpp"
+#include <vector>
 #include <Beam/IO/BasicIStreamReader.hpp>
 #include <Beam/IO/BasicOStreamWriter.hpp>
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
 #include <QApplication>
+#include <QGuiApplication>
+#include <QScreen>
+#include "Nexus/Definitions/Market.hpp"
+#include "Nexus/Definitions/Security.hpp"
 #include "Spire/AccountViewer/AccountViewWindow.hpp"
 #include "Spire/AccountViewer/TraderProfileWindow.hpp"
 #include "Spire/Blotter/BlotterSettings.hpp"
@@ -14,7 +19,6 @@
 #include "Spire/Dashboard/DashboardWindow.hpp"
 #include "Spire/Dashboard/DashboardModelSchema.hpp"
 #include "Spire/KeyBindings/SimplifiedKeyBindingsDialog.hpp"
-#include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/LegacyUI/CanvasWindow.hpp"
 #include "Spire/LegacyUI/UISerialization.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
@@ -28,27 +32,115 @@ using namespace Beam;
 using namespace Beam::IO;
 using namespace Beam::Serialization;
 using namespace boost;
-using namespace Beam;
+using namespace Nexus;
 using namespace Spire;
 using namespace Spire::LegacyUI;
 
+namespace {
+  std::vector<QWidget*> load_default_layout(
+      UserProfile& user_profile, ToolbarWindow& toolbar_window) {
+    auto instantiate_security_windows = true;
+    auto next_position = QPoint(0, 0);
+    auto next_height = 0;
+    auto resolution = QGuiApplication::primaryScreen()->availableGeometry();
+    auto securities = std::vector<Security>();
+    auto& market_entry = user_profile.GetMarketDatabase().FromCode("XTSE");
+    securities.push_back(
+      Security("RY", market_entry.m_code, market_entry.m_countryCode));
+    securities.push_back(
+      Security("XIU", market_entry.m_code, market_entry.m_countryCode));
+    securities.push_back(
+      Security("ABX", market_entry.m_code, market_entry.m_countryCode));
+    securities.push_back(
+      Security("SU", market_entry.m_code, market_entry.m_countryCode));
+    securities.push_back(
+      Security("BCE", market_entry.m_code, market_entry.m_countryCode));
+    auto index = std::size_t(0);
+    auto windows = std::vector<QWidget*>();
+    while(instantiate_security_windows && index < securities.size()) {
+      auto width = 0;
+      auto book_view_window = new BookViewWindow(
+        Ref(user_profile), user_profile.GetDefaultBookViewProperties(), "");
+      auto time_and_sales_window = new TimeAndSalesWindow(
+        Ref(user_profile), user_profile.GetDefaultTimeAndSalesProperties(), "");
+      book_view_window->Link(*time_and_sales_window);
+      time_and_sales_window->Link(*book_view_window);
+      book_view_window->move(next_position);
+      book_view_window->show();
+      next_position.rx() += book_view_window->frameSize().width();
+      width += book_view_window->frameSize().width();
+      next_height = book_view_window->frameSize().height();
+      time_and_sales_window->resize(150, book_view_window->height());
+      time_and_sales_window->move(next_position);
+      time_and_sales_window->show();
+      book_view_window->DisplaySecurity(securities[index]);
+      next_position.rx() += time_and_sales_window->frameSize().width();
+      width += time_and_sales_window->frameSize().width();
+      windows.push_back(book_view_window);
+      windows.push_back(time_and_sales_window);
+      instantiate_security_windows = index < securities.size() &&
+        (next_position.x() + width < resolution.width());
+      ++index;
+    }
+    next_position.setX(0);
+    next_position.setY(next_height);
+    toolbar_window.move(next_position);
+    toolbar_window.show();
+    next_position.ry() += toolbar_window.frameSize().height();
+    auto& global_blotter = BlotterWindow::GetBlotterWindow(Ref(user_profile),
+      Ref(user_profile.GetBlotterSettings().GetConsolidatedBlotter()));
+    global_blotter.move(next_position);
+    global_blotter.show();
+    global_blotter.resize(global_blotter.width(),
+      resolution.height() - next_position.y() -
+        (global_blotter.frameSize().height() - global_blotter.size().height()));
+    windows.push_back(&global_blotter);
+    return windows;
+  }
+}
+
 ToolbarController::ToolbarController(Ref<UserProfile> user_profile)
   : m_user_profile(user_profile.Get()) {}
+
+ToolbarController::~ToolbarController() {
+  close();
+}
 
 void ToolbarController::open() {
   if(m_toolbar_window) {
     return;
   }
-  auto account =
-    m_user_profile->GetServiceClients().GetServiceLocatorClient().GetAccount();
-  auto roles = m_user_profile->
-    GetServiceClients().GetAdministrationClient().LoadAccountRoles(account);
-  auto pinned_blotters = std::make_shared<ArrayListModel<BlotterModel*>>();
-  for(auto& blotter : m_user_profile->GetBlotterSettings().GetAllBlotters()) {
-    pinned_blotters->push(&*blotter);
+  auto window_settings = WindowSettings::Load(*m_user_profile);
+  for(auto i = window_settings.begin(); i != window_settings.end(); ++i) {
+    auto& settings = **i;
+    if(auto toolbar_settings =
+        dynamic_cast<const ToolbarWindowSettings*>(&settings)) {
+      m_toolbar_window =
+        std::unique_ptr<ToolbarWindow>(dynamic_cast<ToolbarWindow*>(
+          toolbar_settings->Reopen(Ref(*m_user_profile))));
+      window_settings.erase(i);
+      break;
+    }
   }
-  m_toolbar_window = std::make_unique<ToolbarWindow>(
-    account, roles, m_user_profile->GetRecentlyClosedWindows(), pinned_blotters);
+  if(!m_toolbar_window) {
+/*
+    m_toolbar_window = std::make_unique<ToolbarWindow>(account, roles,
+      m_user_profile->GetRecentlyClosedWindows(), pinned_blotters);
+*/
+  }
+  auto windows = std::vector<QWidget*>();
+  if(!window_settings.empty()) {
+    for(auto& settings : window_settings) {
+      if(auto window = settings->Reopen(Ref(*m_user_profile))) {
+        windows.push_back(window);
+      }
+    }
+  } else {
+    windows = load_default_layout(*m_user_profile, *m_toolbar_window);
+  }
+  for(auto& window : windows) {
+    window->show();
+  }
   m_toolbar_window->connect_open_signal(
     std::bind_front(&ToolbarController::on_open, this));
   m_toolbar_window->connect_reopen_signal(
@@ -67,6 +159,12 @@ void ToolbarController::open() {
 void ToolbarController::close() {
   if(!m_toolbar_window) {
     return;
+  }
+  WindowSettings::Save(*m_user_profile);
+  for(auto& window : QApplication::topLevelWidgets()) {
+    if(window != &*m_toolbar_window) {
+      window->close();
+    }
   }
   m_toolbar_window->close();
   auto window = m_toolbar_window.release();

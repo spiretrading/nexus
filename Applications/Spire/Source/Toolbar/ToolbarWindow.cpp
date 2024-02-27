@@ -14,6 +14,7 @@ using namespace boost::signals2;
 using namespace Nexus;
 using namespace Nexus::AdministrationService;
 using namespace Spire;
+using namespace Spire::LegacyUI;
 using namespace Spire::Styles;
 
 ToolbarWindow::ToolbarWindow(DirectoryEntry account, AccountRoles roles,
@@ -133,6 +134,10 @@ connection ToolbarWindow::connect_restore_all_signal(
 connection ToolbarWindow::connect_sign_out_signal(
     const SignOutSignal::slot_type& slot) const {
   return m_sign_out_signal.connect(slot);
+}
+
+std::unique_ptr<WindowSettings> ToolbarWindow::GetWindowSettings() const {
+  return std::make_unique<ToolbarWindowSettings>(*this);
 }
 
 void ToolbarWindow::closeEvent(QCloseEvent* event) {

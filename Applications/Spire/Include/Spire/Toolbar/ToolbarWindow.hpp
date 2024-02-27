@@ -3,6 +3,7 @@
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include "Nexus/AdministrationService/AccountRoles.hpp"
 #include "Spire/Blotter/Blotter.hpp"
+#include "Spire/LegacyUI/PersistentWindow.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
 #include "Spire/Spire/ListModel.hpp"
@@ -13,7 +14,7 @@
 namespace Spire {
 
   /** Displays the toolbar window. */
-  class ToolbarWindow : public Window {
+  class ToolbarWindow : public Window, public PersistentWindow {
     public:
 
       /** Enumarates the types of windows that the toolbar can open. */
@@ -123,6 +124,8 @@ namespace Spire {
       /** Connects a slot to the SignOutSignal. */
       boost::signals2::connection connect_sign_out_signal(
         const SignOutSignal::slot_type& slot) const;
+
+      std::unique_ptr<WindowSettings> GetWindowSettings() const override;
 
     protected:
       void closeEvent(QCloseEvent* event) override;

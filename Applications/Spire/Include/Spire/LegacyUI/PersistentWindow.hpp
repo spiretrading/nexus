@@ -1,23 +1,18 @@
-#ifndef SPIRE_PERSISTENTWINDOW_HPP
-#define SPIRE_PERSISTENTWINDOW_HPP
+#ifndef SPIRE_PERSISTENT_WINDOW_HPP
+#define SPIRE_PERSISTENT_WINDOW_HPP
 #include <memory>
 #include "Spire/LegacyUI/LegacyUI.hpp"
 
-namespace Spire {
-namespace LegacyUI {
+namespace Spire::LegacyUI {
 
-  /*! \class PersistentWindow
-      \brief Interface for a window that persists between sessions.
-   */
+  /** Interface for a window that persists between sessions. */
   class PersistentWindow {
     public:
+      virtual ~PersistentWindow() = default;
 
-      virtual ~PersistentWindow();
-
-      //! Returns this window's settings.
+      /** Returns this window's settings. */
       virtual std::unique_ptr<WindowSettings> GetWindowSettings() const = 0;
   };
-}
 }
 
 #endif
