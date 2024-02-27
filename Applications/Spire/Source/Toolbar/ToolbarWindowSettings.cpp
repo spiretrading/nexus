@@ -2,6 +2,7 @@
 #include "Spire/Blotter/BlotterSettings.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Toolbar/ToolbarWindow.hpp"
 
 using namespace Beam;
@@ -26,8 +27,8 @@ QWidget* ToolbarWindowSettings::Reopen(Ref<UserProfile> profile) const {
   for(auto& blotter : profile->GetBlotterSettings().GetAllBlotters()) {
     pinned_blotters->push(&*blotter);
   }
-  auto window = new ToolbarWindow(account, roles,
-    profile->GetRecentlyClosedWindows(), pinned_blotters);
+  auto window = new ToolbarWindow(
+    account, roles, profile->GetRecentlyClosedWindows(), pinned_blotters);
   Apply(Ref(profile), Store(*window));
   return window;
 }
@@ -35,5 +36,5 @@ QWidget* ToolbarWindowSettings::Reopen(Ref<UserProfile> profile) const {
 void ToolbarWindowSettings::Apply(
     Ref<UserProfile> userProfile, Out<QWidget> widget) const {
   auto& window = dynamic_cast<ToolbarWindow&>(*widget);
-  window.move(m_position);
+  window.move(m_position + QPoint(scale_width(8), 0));
 }
