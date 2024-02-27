@@ -6,10 +6,8 @@
 #include <QMessageBox>
 #include <QStandardPaths>
 #include "Nexus/TelemetryService/ApplicationDefinitions.hpp"
-#include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/Blotter/BlotterSettings.hpp"
-#include "Spire/Blotter/BlotterWindow.hpp"
-#include "Spire/BookView/BookViewWindow.hpp"
+#include "Spire/BookView/BookViewProperties.hpp"
 #include "Spire/Dashboard/SavedDashboards.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorProperties.hpp"
 #include "Spire/KeyBindings/HotkeyOverride.hpp"
@@ -22,7 +20,7 @@
 #include "Spire/RiskTimer/RiskTimerMonitor.hpp"
 #include "Spire/Spire/Resources.hpp"
 #include "Spire/Spire/SpireServiceClients.hpp"
-#include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
+#include "Spire/TimeAndSales/TimeAndSalesProperties.hpp"
 #include "Spire/Toolbar/ToolbarController.hpp"
 #include "Version.hpp"
 #include <QtPlugin>
