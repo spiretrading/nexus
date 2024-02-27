@@ -171,8 +171,12 @@ MenuButton* ToolbarWindow::make_blotter_button() const {
   auto blotter_button = make_menu_icon_button(
     imageFromSvg(":/Icons/toolbar/blotter.svg", scale(26, 26)),
     to_text(WindowType::BLOTTER));
-/*, QColor(0x00BFA0), QColor(0x00A88B),
-    QColor(0x00D6BB)*/
+  update_style(*blotter_button, [&] (auto& style) {
+    style.get(Any() > is_a<Icon>()).set(Fill(QColor(0x00BFA0)));
+    style.get(Hover() > is_a<Icon>()).set(Fill(QColor(0x00A88B)));
+    style.get(Any() > (Press() || FocusIn()) > is_a<Icon>()).set(
+      Fill(QColor(0x00D6BB)));
+  });
   blotter_button->setFixedSize(scale(32, 26));
   auto& blotter_menu = blotter_button->get_menu();
   blotter_menu.add_action(tr("New..."), [] {});
