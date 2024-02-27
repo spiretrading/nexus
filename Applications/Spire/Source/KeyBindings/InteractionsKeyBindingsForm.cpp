@@ -3,7 +3,6 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/OptionalScalarValueModelDecorator.hpp"
 #include "Spire/Ui/Box.hpp"
-#include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/MoneyBox.hpp"
@@ -57,8 +56,8 @@ namespace {
           "suit your trading style.");
       }
       return
-        QString("Customize interactions on %1 to suit your trading style.").arg(
-          Spire::to_text(region));
+        QString("Customize interactions on %1 to suit your trading style.").
+          arg(Spire::to_text(region));
     }();
     auto label = make_text_area_label(description);
     label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
@@ -132,9 +131,10 @@ namespace {
     return widget;
   }
   
-  template<typename Type>
+  template<typename T>
   auto make_field_set(const QString& name,
       const std::shared_ptr<InteractionsKeyBindingsModel>& bindings) {
+    using Type = T;
     auto header = make_label(name);
     header->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     update_style(*header, [] (auto& style) {
@@ -183,9 +183,6 @@ InteractionsKeyBindingsForm::InteractionsKeyBindingsForm(Nexus::Region region,
   auto cancel_on_fill = new CheckBox(m_bindings->is_cancel_on_fill());
   cancel_on_fill->set_label(tr("Cancel on Fill"));
   layout->addWidget(cancel_on_fill, 0, Qt::AlignLeft);
-  auto reset_button = make_label_button(tr("Reset"));
-  reset_button->setFixedWidth(scale_width(120));
-  layout->addWidget(reset_button, 0, Qt::AlignRight);
   auto box = new Box(body);
   box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   update_style(*box, [] (auto& style) {

@@ -1,5 +1,6 @@
 #include "Spire/KeyBindings/InteractionsKeyBindingsModel.hpp"
 
+using namespace Nexus;
 using namespace Spire;
 
 namespace {
@@ -24,7 +25,7 @@ InteractionsKeyBindingsModel::InteractionsKeyBindingsModel()
     increment = std::make_shared<LocalQuantityModel>(100);
   }
   for(auto& increment : m_price_increments) {
-    increment = std::make_shared<LocalMoneyModel>(Nexus::Money(0.01));
+    increment = std::make_shared<LocalMoneyModel>(Money::CENT);
   }
 }
 
