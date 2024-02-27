@@ -31,6 +31,9 @@ AddRegionForm::AddRegionForm(std::shared_ptr<ListModel<Region>> regions,
   m_region_drop_down_box->setSizePolicy(QSizePolicy::Expanding,
     QSizePolicy::Fixed);
   find_focus_proxy(*m_region_drop_down_box)->installEventFilter(this);
+  if(m_regions->get_size() > 0) {
+    m_region_drop_down_box->get_current()->set(m_regions->get(0));
+  }
   auto body = new QWidget();
   auto body_layout = make_vbox_layout(body);
   body_layout->setSpacing(scale_height(8));
