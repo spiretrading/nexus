@@ -6,7 +6,7 @@
 
 namespace Spire {
 
-  /** Stores the key bindings for the interactions. */
+  /** Stores the key bindings for interactions. */
   class InteractionsKeyBindingsModel {
     public:
     
@@ -16,7 +16,7 @@ namespace Spire {
       /** Constructs an empty model. */
       InteractionsKeyBindingsModel();
 
-      /** Returns default quantity.*/
+      /** Returns the default quantity.*/
       std::shared_ptr<QuantityModel> get_default_quantity() const;
     
       /** Returns the quantity increment associated with a modifier.*/

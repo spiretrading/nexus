@@ -43,7 +43,6 @@ namespace {
       QSizePolicy::Expanding);
     return interactions_page;
   }
-
 }
 
 KeyBindingsWindow::KeyBindingsWindow(QWidget* parent)

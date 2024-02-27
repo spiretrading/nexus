@@ -152,10 +152,10 @@ namespace Spire {
             return QValidator::State::Invalid;
           }
         } else if constexpr(std::numeric_limits<Type>::is_specialized) {
-          //if(unwrapped_value != m_model->get() &&
-          //    fmod(unwrapped_value, *m_increment) != static_cast<Type>(0)) {
-          //  return QValidator::State::Invalid;
-          //}
+          if(unwrapped_value != m_model->get() &&
+              fmod(unwrapped_value, *m_increment) != static_cast<Type>(0)) {
+            return QValidator::State::Invalid;
+          }
         }
       }
     }

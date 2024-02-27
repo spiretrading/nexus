@@ -13,7 +13,7 @@ namespace Spire {
       /**
        * Constructs an InteractionsKeyBindingsForm.
        * @param region The Region that the user has set up an interaction for. 
-       * @param bindings The cancel key bindings to display.
+       * @param bindings The interactions key bindings to display.
        * @param parent The parent widget.
        */
       explicit InteractionsKeyBindingsForm(Nexus::Region region,
