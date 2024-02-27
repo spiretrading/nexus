@@ -237,6 +237,23 @@ void SerenityFixApplication::onMessage(
           update->m_lastMarket = DefaultMarkets::TSXV().GetData();
         }
       }
+      if(update->m_lastMarket == DefaultMarkets::TSXV() ||
+          update->m_lastMarket == DefaultMarkets::TSX()) {
+        if(originalLiquidityFlag == "O") {
+          update->m_liquidityFlag = "O";
+        } else if(originalLiquidityFlag.size() >= 3) {
+          auto subflag = originalLiquidityFlag.substr(1, 2);
+          if(subflag == "AO" || subflag == "AE") {
+            update->m_liquidityFlag = subflag;
+          }
+        }
+      } else if(update->m_lastMarket == DefaultMarkets::PURE() ||
+          update->m_lastMarket == DefaultMarkets::CSE() ||
+          update->m_lastMarket == DefaultMarkets::CSE2()) {
+        if(originalLiquidityFlag == "TC") {
+          update->m_liquidityFlag = "TC";
+        }
+      }
   });
 }
 
@@ -365,7 +382,7 @@ void SerenityFixApplication::RouteToMatn(
       newOrderSingle->setField(FIX::ExecInst("R"));
       newOrderSingle->setField(FIX::OrdType(FIX::OrdType_PEGGED));
     } else if(value == "PMI") {
-      newOrderSingle->setField(FIX::ExecInst("p"));
+      newOrderSingle->setField(FIX::ExecInst("x"));
       newOrderSingle->setField(FIX::OrdType(FIX::OrdType_PEGGED));
     }
   } else if(info.m_fields.m_destination == "MATNLP") {
