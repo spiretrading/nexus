@@ -11,6 +11,15 @@ using namespace Nexus;
 using namespace Spire;
 using namespace Spire::Styles;
 
+namespace {
+  auto make_action_button(const QString& name) {
+    auto button = make_label_button(name);
+    button->setAttribute(Qt::WA_NoMousePropagation);
+    button->setFixedSize(scale(100, 26));
+    return button;
+  }
+}
+
 AddRegionForm::AddRegionForm(std::shared_ptr<ListModel<Region>> regions,
     QWidget& parent)
     : QWidget(&parent),
@@ -46,14 +55,10 @@ AddRegionForm::AddRegionForm(std::shared_ptr<ListModel<Region>> regions,
       set(PaddingTop(scale_height(10))).
       set(PaddingBottom(scale_height(18)));
   });
-  auto cancel_button = make_label_button(tr("Cancel"));
-  cancel_button->setAttribute(Qt::WA_NoMousePropagation);
-  cancel_button->setFixedSize(scale(100, 26));
+  auto cancel_button = make_action_button(tr("Cancel"));
   cancel_button->connect_click_signal(
     std::bind_front(&AddRegionForm::on_cancel, this));
-  auto add_button = make_label_button(tr("Add"));
-  add_button->setAttribute(Qt::WA_NoMousePropagation);
-  add_button->setFixedSize(scale(100, 26));
+  auto add_button = make_action_button(tr("Add"));
   add_button->connect_click_signal(
     std::bind_front(&AddRegionForm::on_add, this));
   auto actions_body = new QWidget();
@@ -117,9 +122,5 @@ void AddRegionForm::on_cancel() {
 }
 
 void AddRegionForm::on_add() {
-  if(auto& region = m_region_drop_down_box->get_current()->get();
-    region.IsGlobal() || !region.GetCountries().empty() ||
-      !region.GetMarkets().empty() || !region.GetSecurities().empty()) {
-    m_submit_signal(region);
-  }
+  m_submit_signal(m_region_drop_down_box->get_current()->get());
 }
