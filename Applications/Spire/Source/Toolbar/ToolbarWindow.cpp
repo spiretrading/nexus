@@ -35,6 +35,7 @@ ToolbarWindow::ToolbarWindow(DirectoryEntry account, AccountRoles roles,
   top_layout->addStretch();
   auto recently_closed_button = make_recently_closed_button();
   m_recently_closed_menu = &recently_closed_button->get_menu();
+  populate_recently_closed_menu();
   m_recently_closed_windows_connection =
     m_recently_closed_windows->connect_operation_signal(std::bind_front(
       &ToolbarWindow::on_recently_closed_window_operation, this));
@@ -60,7 +61,12 @@ ToolbarWindow::ToolbarWindow(DirectoryEntry account, AccountRoles roles,
     WindowType::ORDER_IMBALANCE_INDICATOR,
     ":/Icons/toolbar/order_imbalance_indicator.svg",
     QColor(0xBF9540), QColor(0x9A7324), QColor(0xE0B04F)));
-  bottom_layout->addWidget(make_blotter_button());
+  auto blotter_button = make_blotter_button();
+  m_blotter_menu = &blotter_button->get_menu();
+  populate_blotter_menu();
+  m_pinned_blotter_connection = m_pinned_blotters->connect_operation_signal(
+    std::bind_front(&ToolbarWindow::on_blotter_operation, this));
+  bottom_layout->addWidget(blotter_button);
   if(roles.Test(AccountRole::MANAGER) ||
       roles.Test(AccountRole::ADMINISTRATOR)) {
     bottom_layout->addWidget(make_icon_tool_button(
@@ -187,16 +193,6 @@ MenuButton* ToolbarWindow::make_blotter_button() {
       Fill(QColor(0x00D6BB)));
   });
   blotter_button->setFixedSize(scale(32, 26));
-  auto& blotter_menu = blotter_button->get_menu();
-  blotter_menu.add_action(
-    tr("New..."), std::bind_front(&ToolbarWindow::on_new_blotter_action, this));
-  blotter_menu.add_separator();
-  for(auto i = 0; i != m_pinned_blotters->get_size(); ++i) {
-    auto blotter = m_pinned_blotters->get(i);
-    blotter_menu.add_action(QString::fromStdString(blotter->GetName()), [=] {
-      m_open_blotter_signal(*blotter);
-    });
-  }
   return blotter_button;
 }
 
@@ -229,6 +225,20 @@ void ToolbarWindow::populate_recently_closed_menu() {
   }
 }
 
+void ToolbarWindow::populate_blotter_menu() {
+  m_blotter_menu->reset();
+  m_blotter_menu->add_action(
+    tr("New..."), std::bind_front(&ToolbarWindow::on_new_blotter_action, this));
+  m_blotter_menu->add_separator();
+  for(auto i = 0; i != m_pinned_blotters->get_size(); ++i) {
+    auto blotter = m_pinned_blotters->get(i);
+    qDebug() << "Adding: " << QString::fromStdString(blotter->GetName());
+    m_blotter_menu->add_action(QString::fromStdString(blotter->GetName()), [=] {
+      m_open_blotter_signal(*blotter);
+    });
+  }
+}
+
 void ToolbarWindow::on_recently_closed_window_operation(
     const RecentlyClosedWindowListModel::Operation& operation) {
   populate_recently_closed_menu();
@@ -243,6 +253,11 @@ void ToolbarWindow::on_new_blotter_action() {
 
 void ToolbarWindow::on_new_blotter_submission(const QString& name) {
   m_new_blotter_signal(name);
+}
+
+void ToolbarWindow::on_blotter_operation(
+    const ListModel<BlotterModel*>::Operation& operation) {
+  populate_blotter_menu();
 }
 
 const QString& Spire::to_text(ToolbarWindow::WindowType type) {

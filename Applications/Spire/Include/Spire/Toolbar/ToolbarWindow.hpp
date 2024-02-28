@@ -153,15 +153,18 @@ namespace Spire {
       mutable SignOutSignal m_sign_out_signal;
       mutable NewBlotterSignal m_new_blotter_signal;
       ContextMenu* m_recently_closed_menu;
+      ContextMenu* m_blotter_menu;
       NewBlotterForm* m_new_blotter_form;
       std::shared_ptr<RecentlyClosedWindowListModel> m_recently_closed_windows;
       std::shared_ptr<ListModel<BlotterModel*>> m_pinned_blotters;
       boost::signals2::scoped_connection m_recently_closed_windows_connection;
+      boost::signals2::scoped_connection m_pinned_blotter_connection;
 
       MenuButton* make_window_manager_button() const;
       MenuButton* make_recently_closed_button() const;
       MenuButton* make_blotter_button();
       void populate_recently_closed_menu();
+      void populate_blotter_menu();
       Button* make_icon_tool_button(
         WindowType type, const QString& icon_path, QColor fill,
         QColor hover_color, QColor press_color) const;
@@ -169,6 +172,8 @@ namespace Spire {
         const RecentlyClosedWindowListModel::Operation& operation);
       void on_new_blotter_action();
       void on_new_blotter_submission(const QString& name);
+      void on_blotter_operation(
+        const ListModel<BlotterModel*>::Operation& operation);
   };
 
   /** Returns the text representation of a WindowType. */ 

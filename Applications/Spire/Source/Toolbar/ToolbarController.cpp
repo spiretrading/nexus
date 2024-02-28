@@ -128,6 +128,13 @@ void ToolbarController::open() {
       std::unique_ptr<ToolbarWindow>(static_cast<ToolbarWindow*>(
         ToolbarWindowSettings().Reopen(Ref(*m_user_profile))));
   }
+  m_pinned_blotters = m_toolbar_window->get_pinned_blotters();
+  m_blotter_added_connection =
+    m_user_profile->GetBlotterSettings().ConnectBlotterAddedSignal(
+      std::bind_front(&ToolbarController::on_blotter_added, this));
+  m_blotter_removed_connection =
+    m_user_profile->GetBlotterSettings().ConnectBlotterRemovedSignal(
+      std::bind_front(&ToolbarController::on_blotter_removed, this));
   auto windows = std::vector<QWidget*>();
   if(!window_settings.empty()) {
     for(auto& settings : window_settings) {
@@ -322,6 +329,19 @@ void ToolbarController::on_new_blotter(const QString& name) {
     Ref(*m_user_profile->GetBlotterSettings().GetAllBlotters().back()));
   window.show();
   window.activateWindow();
+}
+
+void ToolbarController::on_blotter_added(BlotterModel& blotter) {
+  m_pinned_blotters->push(&blotter);
+}
+
+void ToolbarController::on_blotter_removed(BlotterModel& blotter) {
+  for(auto i = 0; i != m_pinned_blotters->get_size(); ++i) {
+    if(m_pinned_blotters->get(i) == &blotter) {
+      m_pinned_blotters->remove(i);
+      break;
+    }
+  }
 }
 
 void ToolbarController::on_sign_out() {
