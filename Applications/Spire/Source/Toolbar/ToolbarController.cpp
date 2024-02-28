@@ -12,6 +12,7 @@
 #include "Nexus/Definitions/Security.hpp"
 #include "Spire/AccountViewer/AccountViewWindow.hpp"
 #include "Spire/AccountViewer/TraderProfileWindow.hpp"
+#include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/Blotter/BlotterSettings.hpp"
 #include "Spire/Blotter/BlotterWindow.hpp"
 #include "Spire/BookView/BookViewWindow.hpp"
@@ -150,6 +151,8 @@ void ToolbarController::open() {
     std::bind_front(&ToolbarController::on_minimize_all, this));
   m_toolbar_window->connect_restore_all_signal(
     std::bind_front(&ToolbarController::on_restore_all, this));
+  m_toolbar_window->connect_new_blotter_signal(
+    std::bind_front(&ToolbarController::on_new_blotter, this));
   m_toolbar_window->connect_sign_out_signal(
     std::bind_front(&ToolbarController::on_sign_out, this));
   m_toolbar_window->show();
@@ -220,6 +223,12 @@ void ToolbarController::open_order_imbalance_indicator_window() {
   }
 }
 
+void ToolbarController::open_account_directory_window() {
+  auto window = new AccountViewWindow(Ref(*m_user_profile));
+  window->setAttribute(Qt::WA_DeleteOnClose);
+  window->show();
+}
+
 void ToolbarController::open_portfolio_window() {
   if(auto settings =
       m_user_profile->GetInitialPortfolioViewerWindowSettings()) {
@@ -260,6 +269,8 @@ void ToolbarController::on_open(ToolbarWindow::WindowType window) {
     open_watchlist_window();
   } else if(window == ToolbarWindow::WindowType::ORDER_IMBALANCE_INDICATOR) {
     open_order_imbalance_indicator_window();
+  } else if(window == ToolbarWindow::WindowType::ACCOUNT_DIRECTORY) {
+    open_account_directory_window();
   } else if(window == ToolbarWindow::WindowType::PORTFOLIO) {
     open_portfolio_window();
   } else if(window == ToolbarWindow::WindowType::KEY_BINDINGS) {
@@ -298,6 +309,19 @@ void ToolbarController::on_restore_all() {
   for(auto& widget : QApplication::topLevelWidgets()) {
     widget->setWindowState(Qt::WindowActive);
   }
+}
+
+void ToolbarController::on_new_blotter(const QString& name) {
+  auto blotter = std::make_unique<BlotterModel>(name.toStdString(),
+    m_user_profile->GetServiceClients().GetServiceLocatorClient().GetAccount(),
+    false, Ref(*m_user_profile),
+    m_user_profile->GetBlotterSettings().GetDefaultBlotterTaskProperties(),
+    m_user_profile->GetBlotterSettings().GetDefaultOrderLogProperties());
+  m_user_profile->GetBlotterSettings().AddBlotter(std::move(blotter));
+  auto& window = BlotterWindow::GetBlotterWindow(Ref(*m_user_profile),
+    Ref(*m_user_profile->GetBlotterSettings().GetAllBlotters().back()));
+  window.show();
+  window.activateWindow();
 }
 
 void ToolbarController::on_sign_out() {

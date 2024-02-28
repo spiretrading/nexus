@@ -48,7 +48,10 @@ namespace Spire {
         KEY_BINDINGS,
 
         /** The profile window. */
-        PROFILE
+        PROFILE,
+
+        /** The account directory window. */
+        ACCOUNT_DIRECTORY
       };
 
       /**
@@ -75,6 +78,12 @@ namespace Spire {
 
       /** Signals that the user is restoring all windows. */
       using RestoreAllSignal = Signal<void ()>;
+
+      /**
+       * Signals a new blotter was created.
+       * @param name The name of the new blotter.
+       */
+      using NewBlotterSignal = Signal<void (const QString& name)>;
 
       /** Signals that the user has signed out of the account. */
       using SignOutSignal = Signal<void ()>;
@@ -121,6 +130,10 @@ namespace Spire {
       boost::signals2::connection connect_restore_all_signal(
         const RestoreAllSignal::slot_type& slot) const;
 
+      /** Connects a slot to the NewBlotterSignal. */
+      boost::signals2::connection connect_new_blotter_signal(
+        const NewBlotterSignal::slot_type& slot) const;
+
       /** Connects a slot to the SignOutSignal. */
       boost::signals2::connection connect_sign_out_signal(
         const SignOutSignal::slot_type& slot) const;
@@ -138,20 +151,24 @@ namespace Spire {
       mutable MinimizeAllSignal m_minimize_all_signal;
       mutable RestoreAllSignal m_restore_all_signal;
       mutable SignOutSignal m_sign_out_signal;
+      mutable NewBlotterSignal m_new_blotter_signal;
       ContextMenu* m_recently_closed_menu;
+      NewBlotterForm* m_new_blotter_form;
       std::shared_ptr<RecentlyClosedWindowListModel> m_recently_closed_windows;
       std::shared_ptr<ListModel<BlotterModel*>> m_pinned_blotters;
       boost::signals2::scoped_connection m_recently_closed_windows_connection;
 
       MenuButton* make_window_manager_button() const;
       MenuButton* make_recently_closed_button() const;
-      MenuButton* make_blotter_button() const;
+      MenuButton* make_blotter_button();
       void populate_recently_closed_menu();
       Button* make_icon_tool_button(
         WindowType type, const QString& icon_path, QColor fill,
         QColor hover_color, QColor press_color) const;
       void on_recently_closed_window_operation(
         const RecentlyClosedWindowListModel::Operation& operation);
+      void on_new_blotter_action();
+      void on_new_blotter_submission(const QString& name);
   };
 
   /** Returns the text representation of a WindowType. */ 

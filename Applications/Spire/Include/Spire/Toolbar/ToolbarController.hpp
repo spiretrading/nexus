@@ -38,6 +38,7 @@ namespace Spire {
       void open_canvas_window();
       void open_watchlist_window();
       void open_order_imbalance_indicator_window();
+      void open_account_directory_window();
       void open_portfolio_window();
       void open_key_bindings_window();
       void open_profile_window();
@@ -46,6 +47,7 @@ namespace Spire {
       void on_open_blotter(BlotterModel& model);
       void on_minimize_all();
       void on_restore_all();
+      void on_new_blotter(const QString& name);
       void on_sign_out();
   };
 }

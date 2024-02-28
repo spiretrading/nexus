@@ -1,6 +1,7 @@
 #include "Spire/Toolbar/ToolbarWindow.hpp"
 #include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Toolbar/NewBlotterForm.hpp"
 #include "Spire/Toolbar/ToolbarWindowSettings.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
@@ -62,6 +63,9 @@ ToolbarWindow::ToolbarWindow(DirectoryEntry account, AccountRoles roles,
   bottom_layout->addWidget(make_blotter_button());
   if(roles.Test(AccountRole::MANAGER) ||
       roles.Test(AccountRole::ADMINISTRATOR)) {
+    bottom_layout->addWidget(make_icon_tool_button(
+      WindowType::ACCOUNT_DIRECTORY, ":/Icons/toolbar/account_directory.svg",
+      QColor(0x4392D6), QColor(0x406ABF), QColor(0x70C1EB)));
     bottom_layout->addWidget(make_icon_tool_button(
       WindowType::PORTFOLIO, ":/Icons/toolbar/portfolio.svg",
       QColor(0x406ABF), QColor(0x404ABF), QColor(0x4392D6)));
@@ -132,6 +136,11 @@ connection ToolbarWindow::connect_restore_all_signal(
   return m_restore_all_signal.connect(slot);
 }
 
+connection ToolbarWindow::connect_new_blotter_signal(
+    const NewBlotterSignal::slot_type& slot) const {
+  return m_new_blotter_signal.connect(slot);
+}
+
 connection ToolbarWindow::connect_sign_out_signal(
     const SignOutSignal::slot_type& slot) const {
   return m_sign_out_signal.connect(slot);
@@ -167,7 +176,7 @@ MenuButton* ToolbarWindow::make_recently_closed_button() const {
   return recently_closed_button;
 }
 
-MenuButton* ToolbarWindow::make_blotter_button() const {
+MenuButton* ToolbarWindow::make_blotter_button() {
   auto blotter_button = make_menu_icon_button(
     imageFromSvg(":/Icons/toolbar/blotter.svg", scale(26, 26)),
     to_text(WindowType::BLOTTER));
@@ -179,7 +188,8 @@ MenuButton* ToolbarWindow::make_blotter_button() const {
   });
   blotter_button->setFixedSize(scale(32, 26));
   auto& blotter_menu = blotter_button->get_menu();
-  blotter_menu.add_action(tr("New..."), [] {});
+  blotter_menu.add_action(
+    tr("New..."), std::bind_front(&ToolbarWindow::on_new_blotter_action, this));
   blotter_menu.add_separator();
   for(auto i = 0; i != m_pinned_blotters->get_size(); ++i) {
     auto blotter = m_pinned_blotters->get(i);
@@ -224,6 +234,17 @@ void ToolbarWindow::on_recently_closed_window_operation(
   populate_recently_closed_menu();
 }
 
+void ToolbarWindow::on_new_blotter_action() {
+  m_new_blotter_form = new NewBlotterForm(m_pinned_blotters, *this);
+  m_new_blotter_form->connect_submit_signal(
+    std::bind_front(&ToolbarWindow::on_new_blotter_submission, this));
+  m_new_blotter_form->show();
+}
+
+void ToolbarWindow::on_new_blotter_submission(const QString& name) {
+  m_new_blotter_signal(name);
+}
+
 const QString& Spire::to_text(ToolbarWindow::WindowType type) {
   if(type == ToolbarWindow::WindowType::CHART) {
     static const auto value = QObject::tr("Chart");
@@ -254,6 +275,9 @@ const QString& Spire::to_text(ToolbarWindow::WindowType type) {
     return value;
   } else if(type == ToolbarWindow::WindowType::PROFILE) {
     static const auto value = QObject::tr("Profile");
+    return value;
+  } else if(type == ToolbarWindow::WindowType::ACCOUNT_DIRECTORY) {
+    static const auto value = QObject::tr("Account Directory");
     return value;
   } else {
     static const auto value = QObject::tr("None");
