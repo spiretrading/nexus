@@ -105,14 +105,14 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   setWindowTitle(tr("UI Viewer"));
   set_svg_icon(":/Icons/spire.svg");
   setWindowIcon(QIcon(":/Icons/taskbar_icons/spire.png"));
-  resize(scale(775, 580));
   m_body = new QSplitter(Qt::Horizontal, this);
   m_body->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
   m_body->setObjectName("ui_viewer_body");
   m_body->setStyleSheet("#ui_viewer_body { background-color: #F5F5F5; }");
   m_body->setContentsMargins(scale_width(6), scale_height(6), scale_width(6),
     scale_height(6));
-  layout()->addWidget(m_body);
+  set_body(m_body);
+  resize(scale(775, 580));
   m_widget_list = make_widget_list(this);
   connect(m_widget_list, &QListWidget::currentItemChanged, this,
     &UiViewerWindow::on_item_selected);
@@ -179,9 +179,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_money_filter_panel_profile());
   add(make_navigation_view_profile());
   add(make_open_filter_panel_profile());
-/** TODO
   add(make_order_field_info_tip_profile());
-*/
   add(make_order_type_box_profile());
   add(make_order_type_filter_panel_profile());
   add(make_overlay_panel_profile());

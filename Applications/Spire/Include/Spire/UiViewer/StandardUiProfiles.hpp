@@ -171,9 +171,7 @@ namespace Spire {
   UiProfile make_open_filter_panel_profile();
 
   /** Returns a UiProfile for the OrderFieldInfoTip. */
-/** TODO
   UiProfile make_order_field_info_tip_profile();
-*/
 
   /** Returns a UiProfile for the OrderTypeBox. */
   UiProfile make_order_type_box_profile();
