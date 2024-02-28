@@ -233,7 +233,8 @@ MenuButton* Spire::make_menu_label_button(QString label, QWidget* parent) {
   match(*button_label, Label());
   update_style(*button_label, [] (auto& style) {
     style.get(Any()).
-      set(border(scale_width(1), QColor(Qt::transparent))).
+      set(BackgroundColor(QColor(0xFFFFFF))).
+      set(border(scale_width(1), QColor(0xC8C8C8))).
       set(vertical_padding(scale_height(5))).
       set(PaddingLeft(scale_width(8))).
       set(PaddingRight(scale_width(14)));
@@ -256,22 +257,15 @@ MenuButton* Spire::make_menu_label_button(QString label, QWidget* parent) {
     style.get(Any() > is_a<Icon>()).
       set(Fill(QColor(0x333333)));
     style.get((Hover() || Press() || FocusIn()) > is_a<Icon>()).
-      set(Fill(QColor(0xFFFFFF)));
+      set(Fill(QColor(Qt::black)));
     style.get(Disabled() > is_a<Icon>()).
       set(Fill(QColor(0xC8C8C8)));
-    style.get(FocusVisible() > Label()).
+    style.get((FocusVisible() || Hover() || Press() || FocusIn()) > Label()).
       set(border_color(QColor(0x4B23A0)));
-    style.get(Hover() > Label()).
-      set(BackgroundColor(QColor(0x4B23A0))).
-      set(TextColor(QColor(0xFFFFFF)));
-    style.get(Press() > Label()).
-      set(BackgroundColor(QColor(0x7E71B8))).
-      set(TextColor(QColor(0xFFFFFF)));
-    style.get(FocusIn() > Label()).
-      set(BackgroundColor(QColor(0x684BC7))).
-      set(TextColor(QColor(0xFFFFFF)));
     style.get(Disabled() > Label()).
-      set(TextColor(QColor(0xB8B8B8)));
+      set(BackgroundColor(QColor(0xF5F5F5))).
+      set(TextColor(QColor(0xB8B8B8))).
+      set(border_color(QColor(0xEBEBEB)));
   });
   return menu_button;
 }
