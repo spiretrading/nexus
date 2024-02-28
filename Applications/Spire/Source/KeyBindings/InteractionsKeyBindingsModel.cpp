@@ -39,7 +39,7 @@ std::shared_ptr<QuantityModel>
       Qt::KeyboardModifier modifier) const {
   auto index = to_index(modifier);
   if(index < 0) {
-    throw std::out_of_range("The index is out of range.");
+    throw std::out_of_range("The modifier is out of range.");
   }
   return m_quantity_increments[index];
 }
@@ -49,7 +49,7 @@ std::shared_ptr<MoneyModel>
       Qt::KeyboardModifier modifier) const {
   auto index = to_index(modifier);
   if(index < 0) {
-    throw std::out_of_range("The index is out of range.");
+    throw std::out_of_range("The modifier is out of range.");
   }
   return m_price_increments[index];
 }

@@ -164,7 +164,7 @@ namespace {
 }
 
 InteractionsKeyBindingsForm::InteractionsKeyBindingsForm(Nexus::Region region,
-  std::shared_ptr<InteractionsKeyBindingsModel> bindings, QWidget* parent)
+    std::shared_ptr<InteractionsKeyBindingsModel> bindings, QWidget* parent)
     : QWidget(parent),
       m_bindings(std::move(bindings)) {
   auto body = new QWidget();
