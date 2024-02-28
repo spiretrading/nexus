@@ -163,11 +163,17 @@ bool NewBlotterForm::event(QEvent* event) {
 void NewBlotterForm::create_name(const QString& name) {
   auto trimmed_name = name.trimmed();
   auto new_name = trimmed_name;
-  auto count = 0;
-  for(auto i = 0; i < m_blotters->get_size(); ++i) {
-    if(m_blotters->get(i)->GetName() == new_name.toStdString()) {
-      ++count;
-      new_name = QString("%1 %2").arg(trimmed_name).arg(count);
+  auto count = 1;
+  auto is_existing_name = true;
+  while(is_existing_name) {
+    is_existing_name = false;
+    for(auto i = 0; i < m_blotters->get_size(); ++i) {
+      if(m_blotters->get(i)->GetName() == new_name.toStdString()) {
+        ++count;
+        new_name = QString("%1 %2").arg(trimmed_name).arg(count);
+        is_existing_name = true;
+        break;
+      }
     }
   }
   m_submit_signal(new_name);
