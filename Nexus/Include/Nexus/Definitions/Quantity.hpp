@@ -164,6 +164,7 @@ namespace Nexus {
       template<typename, typename> friend struct Beam::Serialization::Receive;
       friend std::ostream& operator <<(std::ostream& out, Quantity value);
       friend Quantity operator %(Quantity lhs, Quantity rhs);
+      friend Quantity fmod(Quantity lhs, Quantity rhs);
       friend Quantity Abs(Quantity);
       friend class std::numeric_limits<Nexus::Quantity>;
       boost::float64_t m_value;
@@ -266,6 +267,16 @@ namespace Nexus {
    * @return <i>lhs</i> % <i>rhs</i>
    */
   inline Quantity operator %(Quantity lhs, Quantity rhs) {
+    return Quantity::FromRepresentation(std::fmod(lhs.m_value, rhs.m_value));
+  }
+
+  /**
+   * Returns the modulus of two Quantities.
+   * @param lhs The left hand side.
+   * @param rhs The right hand side.
+   * @return <i>lhs</i> % <i>rhs</i>
+   */
+  inline Quantity fmod(Quantity lhs, Quantity rhs) {
     return Quantity::FromRepresentation(std::fmod(lhs.m_value, rhs.m_value));
   }
 
