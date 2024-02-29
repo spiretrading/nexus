@@ -15,7 +15,6 @@ namespace Spire::LegacyUI {
   class FontSelectionWidget;
   class FunctionalAction;
   class IgnoreCommandException;
-  class ImportExportDialog;
   class LinkSecurityContextAction;
   class MacroUndoCommand;
   class MaxFloorSpinBox;

@@ -1,6 +1,9 @@
 #include "Spire/Toolbar/ToolbarWindow.hpp"
+#include <QFileDialog>
+#include <QStandardPaths>
 #include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Toolbar/ImportSettingsPanel.hpp"
 #include "Spire/Toolbar/NewBlotterForm.hpp"
 #include "Spire/Toolbar/ToolbarWindowSettings.hpp"
 #include "Spire/Ui/Box.hpp"
@@ -23,13 +26,14 @@ ToolbarWindow::ToolbarWindow(DirectoryEntry account, AccountRoles roles,
     std::shared_ptr<RecentlyClosedWindowListModel> recently_closed_windows,
     std::shared_ptr<ListModel<BlotterModel*>> pinned_blotters, QWidget* parent)
     : Window(parent),
+      m_account(std::move(account)),
       m_recently_closed_windows(std::move(recently_closed_windows)),
       m_pinned_blotters(std::move(pinned_blotters)) {
   setWindowFlags(windowFlags() & ~Qt::WindowMaximizeButtonHint);
   set_svg_icon(":/Icons/spire.svg");
   setWindowIcon(QIcon(":/Icons/spire-icon-48x48.png"));
   setWindowTitle(QString("Spire - Signed in as %1").arg(
-    QString::fromStdString(account.m_name)));
+    QString::fromStdString(m_account.m_name)));
   auto top_layout = make_hbox_layout();
   top_layout->addWidget(make_window_manager_button());
   top_layout->addStretch();
@@ -142,6 +146,11 @@ connection ToolbarWindow::connect_restore_all_signal(
   return m_restore_all_signal.connect(slot);
 }
 
+connection ToolbarWindow::connect_import_signal(
+    const ImportSignal::slot_type& slot) const {
+  return m_import_signal.connect(slot);
+}
+
 connection ToolbarWindow::connect_new_blotter_signal(
     const NewBlotterSignal::slot_type& slot) const {
   return m_new_blotter_signal.connect(slot);
@@ -161,7 +170,7 @@ void ToolbarWindow::closeEvent(QCloseEvent* event) {
   Window::closeEvent(event);
 }
 
-MenuButton* ToolbarWindow::make_window_manager_button() const {
+MenuButton* ToolbarWindow::make_window_manager_button() {
   auto window_manager_button = make_menu_label_button(tr("Window Manager"));
   window_manager_button->setFixedSize(scale(130, 26));
   auto& window_menu = window_manager_button->get_menu();
@@ -171,7 +180,8 @@ MenuButton* ToolbarWindow::make_window_manager_button() const {
   window_menu.add_action(tr("Restore All"), [=] {
     m_restore_all_signal();
   });
-  window_menu.add_action(tr("Import Settings..."), [=] {});
+  window_menu.add_action(
+    tr("Import Settings..."), std::bind_front(&ToolbarWindow::on_import, this));
   window_menu.add_action(tr("Export Settings..."), [=] {});
   return window_manager_button;
 }
@@ -242,6 +252,24 @@ void ToolbarWindow::populate_blotter_menu() {
 void ToolbarWindow::on_recently_closed_window_operation(
     const RecentlyClosedWindowListModel::Operation& operation) {
   populate_recently_closed_menu();
+}
+
+void ToolbarWindow::on_import() {
+  auto settings_path = std::filesystem::path(QStandardPaths::writableLocation(
+    QStandardPaths::DocumentsLocation).toStdString());
+  settings_path /= m_account.m_name + "_settings.sps";
+  auto path = QFileDialog::getOpenFileName(this,
+    tr("Select the settings file."),
+    QString::fromStdString(settings_path.string()), tr("Settings (*.sps)"));
+  if(path.isNull()) {
+    return;
+  }
+  m_import_settings_panel = new ImportSettingsPanel(*this);
+  m_import_settings_panel->show();
+  m_import_settings_panel->connect_import_signal(
+    [=] (const auto& settings) {
+      m_import_signal(settings, std::filesystem::path(path.toStdString()));
+    });
 }
 
 void ToolbarWindow::on_new_blotter_action() {

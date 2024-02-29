@@ -29,6 +29,7 @@ namespace Spire {
       void on_open(ToolbarWindow::WindowType window);
       void on_minimize_all();
       void on_restore_all();
+      void on_import(Settings settings, const std::filesystem::path& path);
       void on_sign_out();
   };
 }
