@@ -1,4 +1,4 @@
-#include "Spire/LegacyUI/EnvironmentSettings.hpp"
+#include "Spire/Toolbar/UserSettings.hpp"
 #include <Beam/IO/BasicIStreamReader.hpp>
 #include <Beam/IO/BasicOStreamWriter.hpp>
 #include <Beam/IO/SharedBuffer.hpp>
@@ -26,7 +26,7 @@ using namespace Spire::LegacyUI;
 using namespace std;
 using namespace std::filesystem;
 
-bool Spire::LegacyUI::Export(const EnvironmentSettings& environmentSettings,
+bool Spire::Export(const EnvironmentSettings& environmentSettings,
     const path& environmentPath) {
   ofstream writerStream;
   writerStream.open(environmentPath, ios::binary);

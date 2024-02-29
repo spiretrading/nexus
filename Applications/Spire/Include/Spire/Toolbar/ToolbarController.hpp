@@ -51,6 +51,7 @@ namespace Spire {
       void on_open_blotter(BlotterModel& model);
       void on_minimize_all();
       void on_restore_all();
+      void on_import(Settings settings, const std::filesystem::path& path);
       void on_new_blotter(const QString& name);
       void on_blotter_added(BlotterModel& blotter);
       void on_blotter_removed(BlotterModel& blotter);

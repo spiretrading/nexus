@@ -8,43 +8,6 @@
 
 namespace Spire {
 
-  /** Enumerates the user's settings. */
-  BEAM_ENUM(Setting,
-
-    /** The book view. */
-    BOOK_VIEW,
-
-    /** The imbalance indicator. */
-    IMBALANCE_INDICATOR,
-
-    /** The interactions. */
-    INTERACTIONS,
-
-    /** The key bindings. */
-    KEY_BINDINGS,
-
-    /** The portfolio view. */
-    PORTFOLIO_VIEWER,
-
-    /** The time and sales. */
-    TIME_AND_SALES,
-
-    /** The watchlist. */
-    WATCHLIST,
-
-    /** The layout. */
-    LAYOUT
-  );
-
-  /** A set of Settings represented by a bitset. */
-  using Settings = Beam::EnumSet<Setting>;
-
-  /** Defines a value model over the Settings. */
-  using SettingsModel = ValueModel<Settings>;
-
-  /** Defines a local value model over the Settings. */
-  using LocalSettingsModel = LocalValueModel<Settings>;
-
   /** Displays a panel to import settings from a file. */
   class ImportSettingsPanel : public QWidget {
     public:

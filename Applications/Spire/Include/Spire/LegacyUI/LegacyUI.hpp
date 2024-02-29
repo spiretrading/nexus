@@ -9,7 +9,6 @@ namespace Spire::LegacyUI {
   class CommandAction;
   class CustomVariantItemDelegate;
   class CustomVariantSortFilterProxyModel;
-  struct EnvironmentSettings;
   class ExpandButton;
   class FilePathInputWidget;
   class FontSelectionWidget;

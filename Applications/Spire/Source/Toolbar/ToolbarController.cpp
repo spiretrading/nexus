@@ -158,6 +158,8 @@ void ToolbarController::open() {
     std::bind_front(&ToolbarController::on_minimize_all, this));
   m_toolbar_window->connect_restore_all_signal(
     std::bind_front(&ToolbarController::on_restore_all, this));
+  m_toolbar_window->connect_import_signal(
+    std::bind_front(&ToolbarController::on_import, this));
   m_toolbar_window->connect_new_blotter_signal(
     std::bind_front(&ToolbarController::on_new_blotter, this));
   m_toolbar_window->connect_sign_out_signal(
@@ -317,6 +319,9 @@ void ToolbarController::on_restore_all() {
     widget->setWindowState(Qt::WindowActive);
   }
 }
+
+void ToolbarController::on_import(
+  Settings settings, const std::filesystem::path& path) {}
 
 void ToolbarController::on_new_blotter(const QString& name) {
   auto blotter = std::make_unique<BlotterModel>(name.toStdString(),
