@@ -6,13 +6,13 @@ using namespace Nexus;
 using namespace Spire;
 
 RegionDropDownBox* Spire::make_region_drop_down_box(
-    std::shared_ptr<ListModel<Region>> regions, QWidget* parent) {
+    std::shared_ptr<RegionListModel> regions, QWidget* parent) {
   return make_region_drop_down_box(std::move(regions),
     std::make_shared<LocalRegionModel>(), parent);
 }
 
 RegionDropDownBox* Spire::make_region_drop_down_box(
-    std::shared_ptr<ListModel<Region>> regions,
+    std::shared_ptr<RegionListModel> regions,
     std::shared_ptr<RegionModel> current, QWidget* parent) {
   auto settings = RegionDropDownBox::Settings();
   settings.m_cases = std::move(regions);
