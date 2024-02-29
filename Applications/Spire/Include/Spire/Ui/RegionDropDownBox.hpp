@@ -12,6 +12,9 @@ namespace Spire {
   /** A LocalValueModel over a Nexus::Region. */
   using LocalRegionModel = LocalValueModel<Nexus::Region>;
 
+  /** A ListModel over Nexus::Region. */
+  using RegionListModel = ListModel<Nexus::Region>;
+
   /** An EnumBox specialized for a Nexus::Region. */
   using RegionDropDownBox = EnumBox<Nexus::Region>;
 
@@ -21,8 +24,7 @@ namespace Spire {
    * @param parent The parent widget.
    */
   RegionDropDownBox* make_region_drop_down_box(
-    std::shared_ptr<ListModel<Nexus::Region>> regions,
-    QWidget* parent = nullptr);
+    std::shared_ptr<RegionListModel> regions, QWidget* parent = nullptr);
 
   /**
    * Returns a RegionDropDownBox.
@@ -31,7 +33,7 @@ namespace Spire {
    * @param parent The parent widget.
    */
    RegionDropDownBox* make_region_drop_down_box(
-    std::shared_ptr<ListModel<Nexus::Region>> regions,
+    std::shared_ptr<RegionListModel> regions,
     std::shared_ptr<RegionModel> current, QWidget* parent = nullptr);
 }
 

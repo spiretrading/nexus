@@ -20,14 +20,13 @@ namespace Spire {
 
        /**
        * Constructs an AddRegionForm.
-       * @param regions A list of regions.
+       * @param regions A list of regions for the user to select.
        * @param parent The parent widget.
        */
-      AddRegionForm(std::shared_ptr<ListModel<Nexus::Region>> regions,
-        QWidget& parent);
+      AddRegionForm(std::shared_ptr<RegionListModel> regions, QWidget& parent);
 
-      /** Returns a list of regions. */
-      const std::shared_ptr<ListModel<Nexus::Region>>& get_regions() const;
+      /** Returns A list of regions for the user to select. */
+      const std::shared_ptr<RegionListModel>& get_regions() const;
     
       /** Connects a slot to the submit signal. */
       boost::signals2::connection connect_submit_signal(

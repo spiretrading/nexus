@@ -20,7 +20,7 @@ namespace {
   }
 }
 
-AddRegionForm::AddRegionForm(std::shared_ptr<ListModel<Region>> regions,
+AddRegionForm::AddRegionForm(std::shared_ptr<RegionListModel> regions,
     QWidget& parent)
     : QWidget(&parent),
       m_regions(std::move(regions)) {
@@ -86,7 +86,7 @@ AddRegionForm::AddRegionForm(std::shared_ptr<ListModel<Region>> regions,
   setFocusProxy(m_region_drop_down_box);
 }
 
-const std::shared_ptr<ListModel<Region>>& AddRegionForm::get_regions() const {
+const std::shared_ptr<RegionListModel>& AddRegionForm::get_regions() const {
   return m_regions;
 }
 
