@@ -11,24 +11,23 @@ namespace Spire {
   /** Displays a panel to add a region. */
   class AddRegionForm : public QWidget {
     public:
-    
+
       /**
        * Signals the submission of the region.
        * @param submission The region to be submitted.
        */
       using SubmitSignal = Signal<void (const Nexus::Region& submission)>;
 
-       /**
+      /**
        * Constructs an AddRegionForm.
-       * @param regions A list of regions.
+       * @param regions A list of regions for the user to select.
        * @param parent The parent widget.
        */
-      AddRegionForm(std::shared_ptr<ListModel<Nexus::Region>> regions,
-        QWidget& parent);
+      AddRegionForm(std::shared_ptr<RegionListModel> regions, QWidget& parent);
 
-      /** Returns a list of regions. */
-      const std::shared_ptr<ListModel<Nexus::Region>>& get_regions() const;
-    
+      /** Returns a list of regions for the user to select. */
+      const std::shared_ptr<RegionListModel>& get_regions() const;
+
       /** Connects a slot to the submit signal. */
       boost::signals2::connection connect_submit_signal(
         const SubmitSignal::slot_type& slot) const;
