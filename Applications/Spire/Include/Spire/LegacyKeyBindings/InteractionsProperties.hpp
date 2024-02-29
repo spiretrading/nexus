@@ -4,7 +4,7 @@
 #include <Beam/Serialization/DataShuttle.hpp>
 #include "Nexus/Definitions/Definitions.hpp"
 #include "Nexus/Definitions/Money.hpp"
-#include "Spire/KeyBindings/KeyBindings.hpp"
+#include "Spire/LegacyKeyBindings/KeyBindings.hpp"
 #include "Spire/Spire/Spire.hpp"
 
 namespace Spire {

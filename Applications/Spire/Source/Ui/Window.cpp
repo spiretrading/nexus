@@ -9,6 +9,7 @@
 #include <qt_windows.h>
 #include <windowsx.h>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/TitleBar.hpp"
@@ -16,6 +17,7 @@
 using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
+using namespace Spire::Styles;
 
 namespace {
   auto RESIZE_AREA() {
@@ -45,11 +47,17 @@ Window::Window(QWidget* parent)
       m_is_resizable(true) {
   setWindowFlags(windowFlags() | Qt::Window | Qt::WindowSystemMenuHint);
   m_title_bar = new TitleBar(make_svg_window_icon(":/Icons/spire.svg"), this);
-  auto layout = make_vbox_layout(this);
+  auto box_body = new QWidget();
+  auto layout = make_vbox_layout(box_body);
   layout->setAlignment(Qt::AlignTop);
-  layout->setContentsMargins(
-    scale_width(1), scale_height(1), scale_width(1), scale_height(1));
   layout->addWidget(m_title_bar);
+  auto box = new Box(box_body);
+  box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  proxy_style(*this, *box);
+  update_style(*this, [] (auto& style) {
+    style.get(Any()).set(BackgroundColor(QColor(0xF5F5F5)));
+  });
+  enclose(*this, *box);
 }
 
 void Window::set_icon(const QImage& icon) {
@@ -180,13 +188,6 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
     }
     *result = HTCLIENT;
     return true;
-  } else if(msg->message == WM_SIZE) {
-    if(msg->wParam == SIZE_MAXIMIZED) {
-      layout()->setContentsMargins({});
-    } else if(msg->wParam == SIZE_RESTORED) {
-      layout()->setContentsMargins(scale_width(1), scale_height(1),
-        scale_width(1), scale_height(1));
-    }
   } else if(msg->message == WM_GETMINMAXINFO) {
     auto mmi = reinterpret_cast<MINMAXINFO*>(msg->lParam);
     if(maximumSize() != QSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX)) {
@@ -217,13 +218,13 @@ void Window::set_body(QWidget* body) {
   } else {
     resize(adjusted_window_size(body->size()));
   }
-  layout()->addWidget(m_body);
+  auto& box = *static_cast<Box*>(layout()->itemAt(0)->widget());
+  box.get_body()->layout()->addWidget(m_body);
   m_body->installEventFilter(this);
 }
 
 QSize Window::adjusted_window_size(const QSize& body_size) {
-  return {body_size.width() + 2 * scale_width(1),
-    body_size.height() + m_title_bar->height() + 2 * scale_height(1)};
+  return {body_size.width(), body_size.height() + m_title_bar->height()};
 }
 
 void Window::on_screen_changed(QScreen* screen) {

@@ -19,7 +19,7 @@
 #include "Spire/Charting/ChartWindow.hpp"
 #include "Spire/Dashboard/DashboardWindow.hpp"
 #include "Spire/Dashboard/DashboardModelSchema.hpp"
-#include "Spire/KeyBindings/SimplifiedKeyBindingsDialog.hpp"
+#include "Spire/LegacyKeyBindings/SimplifiedKeyBindingsDialog.hpp"
 #include "Spire/LegacyUI/CanvasWindow.hpp"
 #include "Spire/LegacyUI/UISerialization.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"

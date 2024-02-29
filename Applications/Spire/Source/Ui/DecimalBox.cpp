@@ -539,6 +539,7 @@ void DecimalBox::resizeEvent(QResizeEvent* event) {
 void DecimalBox::showEvent(QShowEvent* event) {
   if(!is_read_only()) {
     initialize_editable_data();
+    update_button_positions();
   }
   QWidget::showEvent(event);
 }

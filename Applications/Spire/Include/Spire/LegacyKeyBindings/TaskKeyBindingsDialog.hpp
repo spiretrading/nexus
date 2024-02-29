@@ -2,7 +2,7 @@
 #define SPIRE_TASKKEYBINDINGSDIALOG_HPP
 #include <Beam/Pointers/Ref.hpp>
 #include <QDialog>
-#include "Spire/KeyBindings/KeyBindings.hpp"
+#include "Spire/LegacyKeyBindings/KeyBindings.hpp"
 #include "Spire/Spire/Spire.hpp"
 
 class QKeySequence;

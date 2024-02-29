@@ -1,4 +1,4 @@
-#include "Spire/KeyBindings/SimplifiedKeyBindingsDialog.hpp"
+#include "Spire/LegacyKeyBindings/SimplifiedKeyBindingsDialog.hpp"
 #include <QKeyEvent>
 #include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"

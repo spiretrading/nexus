@@ -34,11 +34,13 @@ namespace {
     style.get((ReadOnly() && Disabled()) > is_a<TextBox>()).
       set(BackgroundColor(QColor(Qt::transparent))).
       set(border_color(QColor(Qt::transparent)));
-    style.get(Any() > is_a<Icon>()).
+    style.get(Any() > (is_a<Icon>() && !(+Any() << is_a<ListItem>()))).
       set(Fill(QColor(0x333333))).
       set(BackgroundColor(QColor(Qt::transparent)));
-    style.get(Disabled() > is_a<Icon>()).set(Fill(QColor(0xC8C8C8)));
-    style.get(ReadOnly() > is_a<Icon>()).set(Visibility::NONE);
+    style.get(Disabled() > (is_a<Icon>() && !(+Any() << is_a<ListItem>()))).
+      set(Fill(QColor(0xC8C8C8)));
+    style.get(ReadOnly() > (is_a<Icon>() && !(+Any() << is_a<ListItem>()))).
+      set(Visibility::NONE);
     style.get(Any() > (is_a<TextBox>() && !(+Any() << is_a<ListItem>()))).
       set(PaddingRight(scale_width(14)));
     style.get(PopUp() > is_a<TextBox>() ||

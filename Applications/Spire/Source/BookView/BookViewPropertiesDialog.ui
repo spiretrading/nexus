@@ -143,7 +143,7 @@
   <customwidget>
    <class>Spire::InteractionsWidget</class>
    <extends>QWidget</extends>
-   <header>Spire/KeyBindings/InteractionsWidget.hpp</header>
+   <header>Spire/LegacyKeyBindings/InteractionsWidget.hpp</header>
    <container>1</container>
   </customwidget>
   <customwidget>
