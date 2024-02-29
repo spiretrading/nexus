@@ -33,6 +33,7 @@
 #include "Spire/LegacyUI/IgnoreCommandException.hpp"
 #include "Spire/LegacyUI/MacroUndoCommand.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
+#include "Spire/Spire/ListModel.hpp"
 #include "ui_CanvasWindow.h"
 
 using namespace Beam;
@@ -347,8 +348,8 @@ unique_ptr<WindowSettings> CanvasWindow::GetWindowSettings() const {
 }
 
 void CanvasWindow::closeEvent(QCloseEvent* event) {
-  unique_ptr<CanvasWindowSettings> settings(new CanvasWindowSettings(*this));
-  m_userProfile->AddRecentlyClosedWindow(std::move(settings));
+  auto settings = std::make_shared<CanvasWindowSettings>(*this);
+  m_userProfile->GetRecentlyClosedWindows()->push(std::move(settings));
   QFrame::closeEvent(event);
 }
 

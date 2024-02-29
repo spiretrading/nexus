@@ -7,7 +7,12 @@
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
+using namespace Beam;
+using namespace Beam::ServiceLocator;
+using namespace Nexus;
+using namespace Nexus::AdministrationService;
 using namespace Spire;
+using namespace Spire::LegacyUI;
 
 ToolbarUiTester::ToolbarUiTester(QWidget* parent)
     : QWidget(parent) {
@@ -35,7 +40,9 @@ ToolbarUiTester::ToolbarUiTester(QWidget* parent)
 }
 
 void ToolbarUiTester::closeEvent(QCloseEvent* event) {
-  m_toolbar_window->close();
+  if(m_toolbar_window) {
+    m_toolbar_window->close();
+  }
   QWidget::closeEvent(event);
 }
 
@@ -46,13 +53,17 @@ void ToolbarUiTester::on_toolbar_click() {
     }
     m_toolbar_window.clear();
   }
-  auto recent_windows =
-    std::make_shared<ArrayListModel<ToolbarWindow::WindowInfo>>();
-  recent_windows->push({ToolbarWindow::WindowType::TIME_AND_SALES, "AAA.TSX"});
-  recent_windows->push({ToolbarWindow::WindowType::CHART, "RX.TSX"});
-  m_toolbar_window = new ToolbarWindow(m_user_name->get_current()->get(),
-    m_mananger_check_box->get_current()->get(), std::move(recent_windows),
-    std::make_shared<ArrayListModel<QString>>());
+  auto account = DirectoryEntry::MakeAccount(
+    123, m_user_name->get_current()->get().toStdString());
+  auto roles = AccountRoles();
+  if(m_mananger_check_box->get_current()->get()) {
+    roles.Set(AccountRole::MANAGER);
+  }
+  auto recently_closed_windows =
+    std::make_shared<ArrayListModel<std::shared_ptr<WindowSettings>>>();
+  auto pinned_blotters = std::make_shared<ArrayListModel<BlotterModel*>>();
+  m_toolbar_window =
+    new ToolbarWindow(account, roles, recently_closed_windows, pinned_blotters);
   m_toolbar_window->connect_open_signal(
     std::bind_front(&ToolbarUiTester::on_open, this));
   m_toolbar_window->connect_minimize_all_signal(
@@ -65,10 +76,8 @@ void ToolbarUiTester::on_toolbar_click() {
   m_toolbar_window->move(x(), y() + frameGeometry().height() + 10);
 }
 
-void ToolbarUiTester::on_open(ToolbarWindow::WindowInfo window_info) {
-  m_output->append(QString("Open: %1, %2").
-    arg(displayText(window_info.m_type)).
-    arg(window_info.m_name));
+void ToolbarUiTester::on_open(ToolbarWindow::WindowType window) {
+  m_output->append(QString("Open: %1").arg(to_text(window)));
 }
 
 void ToolbarUiTester::on_minimize_all() {

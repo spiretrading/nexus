@@ -2,8 +2,8 @@
 #include <QStandardPaths>
 #include "Spire/LegacyUI/EnvironmentSettings.hpp"
 #include "Spire/LegacyUI/PersistentWindow.hpp"
-#include "Spire/LegacyUI/Toolbar.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
+#include "Spire/Toolbar/ToolbarWindow.hpp"
 #include "ui_ImportExportDialog.h"
 
 using namespace Beam;
@@ -84,7 +84,7 @@ void ImportExportDialog::ExportSettings() {
     vector<std::shared_ptr<WindowSettings>> windowLayouts;
     for(auto widget : QApplication::topLevelWidgets()) {
       auto window = dynamic_cast<PersistentWindow*>(widget);
-      if(window != nullptr && dynamic_cast<Toolbar*>(widget) == nullptr) {
+      if(window != nullptr && dynamic_cast<ToolbarWindow*>(widget) == nullptr) {
         windowLayouts.push_back(window->GetWindowSettings());
       }
     }

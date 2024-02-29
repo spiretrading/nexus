@@ -114,14 +114,14 @@
 #include "Spire/Dashboard/LowDashboardCellBuilder.hpp"
 #include "Spire/Dashboard/ValueDashboardCellBuilder.hpp"
 #include "Spire/Dashboard/VolumeDashboardCellBuilder.hpp"
+#include "Spire/InputWidgets/TimeRangeInputWidgetWindowSettings.hpp"
 #include "Spire/LegacyUI/CanvasWindowSettings.hpp"
 #include "Spire/LegacyUI/CollapsibleWidgetWindowSettings.hpp"
-#include "Spire/LegacyUI/ToolbarWindowSettings.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorMarketSelectionWidgetWindowSettings.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorWindowSettings.hpp"
-#include "Spire/InputWidgets/TimeRangeInputWidgetWindowSettings.hpp"
 #include "Spire/PortfolioViewer/PortfolioViewerWindowSettings.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesWindowSettings.hpp"
+#include "Spire/Toolbar/ToolbarWindowSettings.hpp"
 
 namespace Spire {
   BEAM_REGISTER_TYPES(RegisterCanvasCommonTypes,
@@ -275,7 +275,7 @@ namespace Spire {
     (TimeAndSalesWindowSettings, "Spire.TimeAndSalesWindowSettings"),
     (TimeRangeInputWidgetWindowSettings,
       "Spire.TimeRangeInputWidgetWindowSettings"),
-    (LegacyUI::ToolbarWindowSettings, "Spire.UI.ToolbarWindowSettings"));
+    (ToolbarWindowSettings, "Spire.UI.ToolbarWindowSettings"));
 
   template<typename SenderType>
   void RegisterSpireTypes(

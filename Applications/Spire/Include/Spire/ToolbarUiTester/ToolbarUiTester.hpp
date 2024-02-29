@@ -26,7 +26,7 @@ namespace Spire {
       QPointer<ToolbarWindow> m_toolbar_window;
 
       void on_toolbar_click();
-      void on_open(ToolbarWindow::WindowInfo window_info);
+      void on_open(ToolbarWindow::WindowType window);
       void on_minimize_all();
       void on_restore_all();
       void on_sign_out();

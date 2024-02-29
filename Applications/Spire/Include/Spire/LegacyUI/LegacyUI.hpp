@@ -1,8 +1,7 @@
 #ifndef SPIRE_LEGACY_UI_HPP
 #define SPIRE_LEGACY_UI_HPP
 
-namespace Spire {
-namespace LegacyUI {
+namespace Spire::LegacyUI {
   class CanvasWindow;
   class CanvasWindowSettings;
   class CollapsibleWidget;
@@ -28,11 +27,8 @@ namespace LegacyUI {
   class ScalableScrollBar;
   class SecurityContext;
   class SecurityViewStack;
-  class Toolbar;
-  class ToolbarWindowSettings;
   class ValueLabel;
   class WindowSettings;
-}
 }
 
 #endif

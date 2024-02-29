@@ -32,6 +32,10 @@
 
 namespace Spire {
 
+  /** The type of model used to store the list of recently closed windows. */
+  using RecentlyClosedWindowListModel =
+    ListModel<std::shared_ptr<LegacyUI::WindowSettings>>;
+
   /** Stores the user's preferences and application data. */
   class UserProfile {
     public:
@@ -113,21 +117,8 @@ namespace Spire {
       const std::filesystem::path& GetProfilePath() const;
 
       /** Returns the list of recently closed windows. */
-      const std::vector<std::unique_ptr<LegacyUI::WindowSettings>>&
+      const std::shared_ptr<RecentlyClosedWindowListModel>&
         GetRecentlyClosedWindows() const;
-
-      /**
-       * Adds a window to the list of recently closed windows.
-       * @param window The recently closed window to add.
-       */
-      void AddRecentlyClosedWindow(
-        std::unique_ptr<LegacyUI::WindowSettings> window);
-
-      /**
-       * Removes a window from the list of recently closed windows.
-       * @param window The recently closed window to remove.
-       */
-      void RemoveRecentlyClosedWindow(const LegacyUI::WindowSettings& window);
 
       /** Returns the BlotterSettings. */
       const BlotterSettings& GetBlotterSettings() const;
@@ -259,8 +250,7 @@ namespace Spire {
       mutable Nexus::ServiceClientsBox m_serviceClients;
       mutable Nexus::TelemetryService::TelemetryClientBox m_telemetryClient;
       std::filesystem::path m_profilePath;
-      std::vector<std::unique_ptr<LegacyUI::WindowSettings>>
-        m_recentlyClosedWindows;
+      std::shared_ptr<RecentlyClosedWindowListModel> m_recentlyClosedWindows;
       BookViewProperties m_defaultBookViewProperties;
       SavedDashboards m_savedDashboards;
       OrderImbalanceIndicatorProperties

@@ -1,63 +1,95 @@
 #include "Spire/Toolbar/ToolbarWindow.hpp"
-#include "Spire/Spire/ArrayListModel.hpp"
+#include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Toolbar/NewBlotterForm.hpp"
+#include "Spire/Toolbar/ToolbarWindowSettings.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/ContextMenu.hpp"
+#include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/MenuButton.hpp"
 
+using namespace Beam;
+using namespace Beam::ServiceLocator;
 using namespace boost::signals2;
+using namespace Nexus;
+using namespace Nexus::AdministrationService;
 using namespace Spire;
+using namespace Spire::LegacyUI;
 using namespace Spire::Styles;
 
-ToolbarWindow::ToolbarWindow(QString user_name, bool is_manager,
-    std::shared_ptr<ListModel<WindowInfo>> recent_windows,
-    std::shared_ptr<ListModel<QString>> pinned_blotters, QWidget* parent)
+ToolbarWindow::ToolbarWindow(DirectoryEntry account, AccountRoles roles,
+    std::shared_ptr<RecentlyClosedWindowListModel> recently_closed_windows,
+    std::shared_ptr<ListModel<BlotterModel*>> pinned_blotters, QWidget* parent)
     : Window(parent),
-      m_recent_windows(std::move(recent_windows)),
+      m_recently_closed_windows(std::move(recently_closed_windows)),
       m_pinned_blotters(std::move(pinned_blotters)) {
   setWindowFlags(windowFlags() & ~Qt::WindowMaximizeButtonHint);
   set_svg_icon(":/Icons/spire.svg");
   setWindowIcon(QIcon(":/Icons/spire-icon-48x48.png"));
-  setWindowTitle(QString("Spire - Signed in as %1").arg(user_name));
+  setWindowTitle(QString("Spire - Signed in as %1").arg(
+    QString::fromStdString(account.m_name)));
   auto top_layout = make_hbox_layout();
   top_layout->addWidget(make_window_manager_button());
   top_layout->addStretch();
-  top_layout->addWidget(make_recently_closed_button());
+  auto recently_closed_button = make_recently_closed_button();
+  m_recently_closed_menu = &recently_closed_button->get_menu();
+  populate_recently_closed_menu();
+  m_recently_closed_windows_connection =
+    m_recently_closed_windows->connect_operation_signal(std::bind_front(
+      &ToolbarWindow::on_recently_closed_window_operation, this));
+  top_layout->addWidget(recently_closed_button);
   auto bottom_layout = make_hbox_layout();
   bottom_layout->setSpacing(scale_width(4));
+  bottom_layout->addWidget(
+    make_icon_tool_button(WindowType::CANVAS, ":/Icons/toolbar/canvas.svg",
+    QColor(0x00848A), QColor(0x00696E), QColor(0x00A88B)));
   bottom_layout->addWidget(make_icon_tool_button(
-    WindowType::CANVAS, ":/Icons/toolbar_icons/canvas.svg"));
+    WindowType::BOOK_VIEW, ":/Icons/toolbar/book_view.svg",
+    QColor(0x406ABF), QColor(0x404ABF), QColor(0x4392D6)));
   bottom_layout->addWidget(make_icon_tool_button(
-    WindowType::BOOK_VIEW, ":/Icons/toolbar_icons/bookview.svg"));
+    WindowType::TIME_AND_SALES, ":/Icons/toolbar/time_and_sales.svg",
+    QColor(0x26BF4A), QColor(0x2CAC79), QColor(0x1FD364)));
+  bottom_layout->addWidget(
+    make_icon_tool_button(WindowType::CHART, ":/Icons/toolbar/chart.svg",
+    QColor(0x7F5EEC), QColor(0x684BC7), QColor(0x8D78EC)));
   bottom_layout->addWidget(make_icon_tool_button(
-    WindowType::TIME_AND_SALES, ":/Icons/toolbar_icons/time-sales.svg"));
+    WindowType::WATCHLIST, ":/Icons/toolbar/watchlist.svg",
+    QColor(0xE67A44), QColor(0xCB6431), QColor(0xF28E38)));
   bottom_layout->addWidget(make_icon_tool_button(
-    WindowType::CHART, ":/Icons/toolbar_icons/chart.svg"));
-  bottom_layout->addWidget(make_icon_tool_button(
-    WindowType::WATCHLIST, ":/Icons/toolbar_icons/watchlist.svg"));
-  bottom_layout->addWidget(make_icon_tool_button(
-    WindowType::IMBALANCE_INDICATOR,
-    ":/Icons/toolbar_icons/imbalance-indicator.svg"));
-  bottom_layout->addWidget(make_blotter_button());
-  if(is_manager) {
+    WindowType::ORDER_IMBALANCE_INDICATOR,
+    ":/Icons/toolbar/order_imbalance_indicator.svg",
+    QColor(0xBF9540), QColor(0x9A7324), QColor(0xE0B04F)));
+  auto blotter_button = make_blotter_button();
+  m_blotter_menu = &blotter_button->get_menu();
+  populate_blotter_menu();
+  m_pinned_blotter_connection = m_pinned_blotters->connect_operation_signal(
+    std::bind_front(&ToolbarWindow::on_blotter_operation, this));
+  bottom_layout->addWidget(blotter_button);
+  if(roles.Test(AccountRole::MANAGER) ||
+      roles.Test(AccountRole::ADMINISTRATOR)) {
     bottom_layout->addWidget(make_icon_tool_button(
-      WindowType::PORTFOLIO_VIEWER, ":/Icons/toolbar_icons/portfolio.svg"));
+      WindowType::ACCOUNT_DIRECTORY, ":/Icons/toolbar/account_directory.svg",
+      QColor(0x4392D6), QColor(0x406ABF), QColor(0x70C1EB)));
+    bottom_layout->addWidget(make_icon_tool_button(
+      WindowType::PORTFOLIO, ":/Icons/toolbar/portfolio.svg",
+      QColor(0x406ABF), QColor(0x404ABF), QColor(0x4392D6)));
   }
   bottom_layout->addSpacing(scale_width(4));
   auto separator = new Box();
   separator->setFixedSize(scale(1, 16));
   update_style(*separator, [] (auto& styles) {
-    styles.get(Any()).
-      set(BackgroundColor(QColor(0xC8C8C8)));
+    styles.get(Any()).set(BackgroundColor(QColor(0xC8C8C8)));
   });
   bottom_layout->addWidget(separator);
   bottom_layout->addSpacing(scale_width(4));
-  bottom_layout->addWidget(make_icon_tool_button(WindowType::KEY_BINDINGS,
-    ":/Icons/toolbar_icons/key-bindings.svg"));
-  bottom_layout->addWidget(make_icon_tool_button(WindowType::PROFILE,
-    ":/Icons/toolbar_icons/profile.svg", tr("Spire Web Portal")));
+  bottom_layout->addWidget(make_icon_tool_button(
+    WindowType::KEY_BINDINGS, ":/Icons/toolbar/key_bindings.svg",
+    QColor(0x808080), QColor(0x535353), QColor(0xA0A0A0)));
+  bottom_layout->addWidget(
+    make_icon_tool_button(WindowType::PROFILE, ":/Icons/toolbar/profile.svg",
+      QColor(0x70C1EB), QColor(0x4392D6), QColor(0x70C1EB)));
   auto body = new QWidget();
   auto body_layout = make_vbox_layout(body);
   body_layout->addLayout(top_layout);
@@ -75,12 +107,12 @@ ToolbarWindow::ToolbarWindow(QString user_name, bool is_manager,
   set_body(content);
 }
 
-const std::shared_ptr<ListModel<ToolbarWindow::WindowInfo>>&
-    ToolbarWindow::get_recent_windows() const {
-  return m_recent_windows;
+const std::shared_ptr<RecentlyClosedWindowListModel>&
+    ToolbarWindow::get_recently_closed_windows() const {
+  return m_recently_closed_windows;
 }
 
-const std::shared_ptr<ListModel<QString>>&
+const std::shared_ptr<ListModel<BlotterModel*>>&
     ToolbarWindow::get_pinned_blotters() const {
   return m_pinned_blotters;
 }
@@ -88,6 +120,16 @@ const std::shared_ptr<ListModel<QString>>&
 connection ToolbarWindow::connect_open_signal(
     const OpenSignal::slot_type& slot) const {
   return m_open_signal.connect(slot);
+}
+
+connection ToolbarWindow::connect_reopen_signal(
+    const ReopenSignal::slot_type& slot) const {
+  return m_reopen_signal.connect(slot);
+}
+
+connection ToolbarWindow::connect_open_blotter_signal(
+    const OpenBlotterSignal::slot_type& slot) const {
+  return m_open_blotter_signal.connect(slot);
 }
 
 connection ToolbarWindow::connect_minimize_all_signal(
@@ -100,9 +142,18 @@ connection ToolbarWindow::connect_restore_all_signal(
   return m_restore_all_signal.connect(slot);
 }
 
+connection ToolbarWindow::connect_new_blotter_signal(
+    const NewBlotterSignal::slot_type& slot) const {
+  return m_new_blotter_signal.connect(slot);
+}
+
 connection ToolbarWindow::connect_sign_out_signal(
     const SignOutSignal::slot_type& slot) const {
   return m_sign_out_signal.connect(slot);
+}
+
+std::unique_ptr<WindowSettings> ToolbarWindow::GetWindowSettings() const {
+  return std::make_unique<ToolbarWindowSettings>(*this);
 }
 
 void ToolbarWindow::closeEvent(QCloseEvent* event) {
@@ -110,7 +161,7 @@ void ToolbarWindow::closeEvent(QCloseEvent* event) {
   Window::closeEvent(event);
 }
 
-MenuButton* ToolbarWindow::make_window_manager_button() {
+MenuButton* ToolbarWindow::make_window_manager_button() const {
   auto window_manager_button = make_menu_label_button(tr("Window Manager"));
   window_manager_button->setFixedSize(scale(130, 26));
   auto& window_menu = window_manager_button->get_menu();
@@ -125,52 +176,91 @@ MenuButton* ToolbarWindow::make_window_manager_button() {
   return window_manager_button;
 }
 
-MenuButton* ToolbarWindow::make_recently_closed_button() {
+MenuButton* ToolbarWindow::make_recently_closed_button() const {
   auto recently_closed_button = make_menu_label_button(tr("Recently Closed"));
   recently_closed_button->setFixedSize(scale(130, 26));
-  auto& history_menu = recently_closed_button->get_menu();
-  for(auto i = 0; i < m_recent_windows->get_size(); ++i) {
-    auto& window = m_recent_windows->get(i);
-    history_menu.add_action(QString("%1 - %2").
-      arg(displayText(window.m_type)).arg(window.m_name),
-      [=] {
-        auto& window = m_recent_windows->get(i);
-        m_open_signal({window.m_type, window.m_name});
-      });
-  }
   return recently_closed_button;
 }
 
 MenuButton* ToolbarWindow::make_blotter_button() {
-  auto blotter_button = make_menu_icon_button(imageFromSvg(
-    ":/Icons/toolbar_icons/blotter.svg", scale(26, 26)),
-    displayText(WindowType::BLOTTER));
-  blotter_button->setFixedSize(scale(32, 26));
-  auto& blotter_menu = blotter_button->get_menu();
-  blotter_menu.add_action(tr("New..."), [] {});
-  blotter_menu.add_separator();
-  blotter_menu.add_action(tr("Global"), [=] {
-    m_open_signal({WindowType::BLOTTER, "Global"});
+  auto blotter_button = make_menu_icon_button(
+    imageFromSvg(":/Icons/toolbar/blotter.svg", scale(26, 26)),
+    to_text(WindowType::BLOTTER));
+  update_style(*blotter_button, [&] (auto& style) {
+    style.get(Any() > is_a<Icon>()).set(Fill(QColor(0x00BFA0)));
+    style.get(Hover() > is_a<Icon>()).set(Fill(QColor(0x00A88B)));
+    style.get(Any() > (Press() || FocusIn()) > is_a<Icon>()).set(
+      Fill(QColor(0x00D6BB)));
   });
+  blotter_button->setFixedSize(scale(32, 26));
   return blotter_button;
 }
 
-Button* ToolbarWindow::make_icon_tool_button(WindowType type,
-    const QString& icon_path, const QString& open_name) {
-  auto button = make_icon_button(
-    imageFromSvg(icon_path, scale(26, 26)), displayText(type));
+Button* ToolbarWindow::make_icon_tool_button(
+    WindowType type, const QString& icon_path, QColor fill,
+    QColor hover_color, QColor press_color) const {
+  auto button =
+    make_icon_button(imageFromSvg(icon_path, scale(26, 26)), to_text(type));
+  update_style(*button, [&] (auto& style) {
+    style.get(Any() > is_a<Icon>()).set(Fill(fill));
+    style.get(Hover() > is_a<Icon>()).set(Fill(hover_color));
+    style.get(Press() > is_a<Icon>()).set(Fill(press_color));
+  });
   button->setFixedSize(scale(26, 26));
   button->connect_click_signal([=] {
-    if(open_name.isEmpty()) {
-      m_open_signal({type, displayText(type)});
-    } else {
-      m_open_signal({type, open_name});
-    }
+    m_open_signal(type);
   });
   return button;
 }
 
-const QString& Spire::displayText(ToolbarWindow::WindowType type) {
+void ToolbarWindow::populate_recently_closed_menu() {
+  m_recently_closed_menu->reset();
+  for(auto i = 0; i < m_recently_closed_windows->get_size(); ++i) {
+    auto& window = m_recently_closed_windows->get(i);
+    m_recently_closed_menu->add_action(
+      QString::fromStdString(window->GetName()), [=] {
+        auto window = m_recently_closed_windows->get(i);
+        m_reopen_signal(*window);
+      });
+  }
+}
+
+void ToolbarWindow::populate_blotter_menu() {
+  m_blotter_menu->reset();
+  m_blotter_menu->add_action(
+    tr("New..."), std::bind_front(&ToolbarWindow::on_new_blotter_action, this));
+  m_blotter_menu->add_separator();
+  for(auto i = 0; i != m_pinned_blotters->get_size(); ++i) {
+    auto blotter = m_pinned_blotters->get(i);
+    qDebug() << "Adding: " << QString::fromStdString(blotter->GetName());
+    m_blotter_menu->add_action(QString::fromStdString(blotter->GetName()), [=] {
+      m_open_blotter_signal(*blotter);
+    });
+  }
+}
+
+void ToolbarWindow::on_recently_closed_window_operation(
+    const RecentlyClosedWindowListModel::Operation& operation) {
+  populate_recently_closed_menu();
+}
+
+void ToolbarWindow::on_new_blotter_action() {
+  m_new_blotter_form = new NewBlotterForm(m_pinned_blotters, *this);
+  m_new_blotter_form->connect_submit_signal(
+    std::bind_front(&ToolbarWindow::on_new_blotter_submission, this));
+  m_new_blotter_form->show();
+}
+
+void ToolbarWindow::on_new_blotter_submission(const QString& name) {
+  m_new_blotter_signal(name);
+}
+
+void ToolbarWindow::on_blotter_operation(
+    const ListModel<BlotterModel*>::Operation& operation) {
+  populate_blotter_menu();
+}
+
+const QString& Spire::to_text(ToolbarWindow::WindowType type) {
   if(type == ToolbarWindow::WindowType::CHART) {
     static const auto value = QObject::tr("Chart");
     return value;
@@ -189,17 +279,20 @@ const QString& Spire::displayText(ToolbarWindow::WindowType type) {
   } else if(type == ToolbarWindow::WindowType::WATCHLIST) {
     static const auto value = QObject::tr("Watchlist");
     return value;
-  } else if(type == ToolbarWindow::WindowType::IMBALANCE_INDICATOR) {
-    static const auto value = QObject::tr("Imbalance Indicator");
+  } else if(type == ToolbarWindow::WindowType::ORDER_IMBALANCE_INDICATOR) {
+    static const auto value = QObject::tr("Order Imbalance Indicator");
     return value;
-  } else if(type == ToolbarWindow::WindowType::PORTFOLIO_VIEWER) {
-    static const auto value = QObject::tr("Portfolio View");
+  } else if(type == ToolbarWindow::WindowType::PORTFOLIO) {
+    static const auto value = QObject::tr("Portfolio");
     return value;
   } else if(type == ToolbarWindow::WindowType::KEY_BINDINGS) {
     static const auto value = QObject::tr("Key Bindings");
     return value;
   } else if(type == ToolbarWindow::WindowType::PROFILE) {
     static const auto value = QObject::tr("Profile");
+    return value;
+  } else if(type == ToolbarWindow::WindowType::ACCOUNT_DIRECTORY) {
+    static const auto value = QObject::tr("Account Directory");
     return value;
   } else {
     static const auto value = QObject::tr("None");

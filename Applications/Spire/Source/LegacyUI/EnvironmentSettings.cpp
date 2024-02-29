@@ -9,13 +9,13 @@
 #include <QMessageBox>
 #include "Spire/BookView/BookViewWindow.hpp"
 #include "Spire/LegacyUI/PersistentWindow.hpp"
-#include "Spire/LegacyUI/Toolbar.hpp"
 #include "Spire/LegacyUI/UISerialization.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorModel.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorWindow.hpp"
 #include "Spire/PortfolioViewer/PortfolioViewerWindow.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
+#include "Spire/Toolbar/ToolbarWindow.hpp"
 
 using namespace Beam;
 using namespace Beam::IO;
@@ -81,7 +81,7 @@ bool Spire::LegacyUI::Import(const path& environmentPath,
       environmentSettings.m_windowLayouts.is_initialized()) {
     for(auto widget : QApplication::topLevelWidgets()) {
       if(dynamic_cast<PersistentWindow*>(widget) != nullptr &&
-          dynamic_cast<Toolbar*>(widget) == nullptr) {
+          dynamic_cast<ToolbarWindow*>(widget) == nullptr) {
         widget->close();
       }
     }

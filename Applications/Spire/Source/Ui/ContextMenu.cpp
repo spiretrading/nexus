@@ -96,6 +96,14 @@ void ContextMenu::add_separator() {
   m_list->push(MenuItem(MenuItemType::SEPARATOR));
 }
 
+void ContextMenu::reset() {
+  m_list->transact([&] {
+    for(auto i = m_list->get_size() - 1; i >= 0; --i) {
+      m_list->remove(i);
+    }
+  });
+}
+
 connection ContextMenu::connect_submit_signal(
     const SubmitSignal::slot_type& slot) const {
   return m_submit_signal.connect(slot);
