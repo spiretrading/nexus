@@ -2,25 +2,15 @@
 #include <fstream>
 #include <Beam/ServiceLocator/AuthenticationException.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
-#include <boost/functional/factory.hpp>
-#include <boost/functional/value_factory.hpp>
 #include <QApplication>
-#include <QGuiApplication>
 #include <QMessageBox>
-#include <QScreen>
 #include <QStandardPaths>
-#include "Nexus/Definitions/DefaultMarketDatabase.hpp"
-#include "Nexus/Definitions/Market.hpp"
-#include "Nexus/Definitions/Security.hpp"
 #include "Nexus/TelemetryService/ApplicationDefinitions.hpp"
-#include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/Blotter/BlotterSettings.hpp"
-#include "Spire/Blotter/BlotterWindow.hpp"
-#include "Spire/BookView/BookViewWindow.hpp"
+#include "Spire/BookView/BookViewProperties.hpp"
 #include "Spire/Dashboard/SavedDashboards.hpp"
 #include "Spire/LegacyKeyBindings/HotkeyOverride.hpp"
 #include "Spire/LegacyUI/CustomQtVariants.hpp"
-#include "Spire/LegacyUI/Toolbar.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
 #include "Spire/Login/LoginController.hpp"
@@ -30,7 +20,8 @@
 #include "Spire/RiskTimer/RiskTimerMonitor.hpp"
 #include "Spire/Spire/Resources.hpp"
 #include "Spire/Spire/SpireServiceClients.hpp"
-#include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
+#include "Spire/TimeAndSales/TimeAndSalesProperties.hpp"
+#include "Spire/Toolbar/ToolbarController.hpp"
 #include "Version.hpp"
 #include <QtPlugin>
 
@@ -86,67 +77,6 @@ namespace {
       servers.push_back({name, address});
     }
     return servers;
-  }
-
-  void LoadDefaultLayout(
-      std::vector<QWidget*>& windows, UserProfile& userProfile) {
-    auto instantiateSecurityWindows = true;
-    auto nextPosition = QPoint(0, 0);
-    auto nextHeight = 0;
-    auto resolution = QGuiApplication::primaryScreen()->availableGeometry();
-    auto defaultSecurities = std::vector<Security>();
-    auto& marketEntry = userProfile.GetMarketDatabase().FromCode("XTSE");
-    defaultSecurities.push_back(
-      Security("RY", marketEntry.m_code, marketEntry.m_countryCode));
-    defaultSecurities.push_back(
-      Security("XIU", marketEntry.m_code, marketEntry.m_countryCode));
-    defaultSecurities.push_back(
-      Security("ABX", marketEntry.m_code, marketEntry.m_countryCode));
-    defaultSecurities.push_back(
-      Security("SU", marketEntry.m_code, marketEntry.m_countryCode));
-    defaultSecurities.push_back(
-      Security("BCE", marketEntry.m_code, marketEntry.m_countryCode));
-    auto index = std::size_t(0);
-    while(instantiateSecurityWindows && index < defaultSecurities.size()) {
-      auto width = 0;
-      auto bookViewWindow = new BookViewWindow(
-        Ref(userProfile), userProfile.GetDefaultBookViewProperties(), "");
-      auto timeAndSalesWindow = new TimeAndSalesWindow(
-        Ref(userProfile), userProfile.GetDefaultTimeAndSalesProperties(), "");
-      bookViewWindow->Link(*timeAndSalesWindow);
-      timeAndSalesWindow->Link(*bookViewWindow);
-      bookViewWindow->move(nextPosition);
-      bookViewWindow->show();
-      nextPosition.rx() += bookViewWindow->frameSize().width();
-      width += bookViewWindow->frameSize().width();
-      nextHeight = bookViewWindow->frameSize().height();
-      timeAndSalesWindow->resize(150, bookViewWindow->height());
-      timeAndSalesWindow->move(nextPosition);
-      timeAndSalesWindow->show();
-      bookViewWindow->DisplaySecurity(defaultSecurities[index]);
-      nextPosition.rx() += timeAndSalesWindow->frameSize().width();
-      width += timeAndSalesWindow->frameSize().width();
-      windows.push_back(bookViewWindow);
-      windows.push_back(timeAndSalesWindow);
-      instantiateSecurityWindows = index < defaultSecurities.size() &&
-        (nextPosition.x() + width < resolution.width());
-      ++index;
-    }
-    nextPosition.setX(0);
-    nextPosition.setY(nextHeight);
-    auto toolbar = new Toolbar(Ref(userProfile));
-    toolbar->move(nextPosition);
-    toolbar->show();
-    nextPosition.ry() += toolbar->frameSize().height();
-    windows.push_back(toolbar);
-    auto& globalBlotter = BlotterWindow::GetBlotterWindow(Ref(userProfile),
-      Ref(userProfile.GetBlotterSettings().GetConsolidatedBlotter()));
-    globalBlotter.move(nextPosition);
-    globalBlotter.show();
-    globalBlotter.resize(globalBlotter.width(),
-      resolution.height() - nextPosition.y() -
-      (globalBlotter.frameSize().height() - globalBlotter.size().height()));
-    windows.push_back(&globalBlotter);
   }
 }
 
@@ -240,6 +170,7 @@ int main(int argc, char* argv[]) {
   login_controller.open();
   auto user_profile = optional<UserProfile>();
   auto risk_timer_monitor = optional<RiskTimerMonitor>();
+  auto toolbar_controller = optional<ToolbarController>();
   login_controller.connect_logged_in_signal([&] (auto service_clients) {
     auto is_administrator =
       service_clients.GetAdministrationClient().CheckAdministrator(
@@ -277,20 +208,8 @@ int main(int argc, char* argv[]) {
     InteractionsProperties::Load(Store(*user_profile));
     OrderImbalanceIndicatorProperties::Load(Store(*user_profile));
     SavedDashboards::Load(Store(*user_profile));
-    auto window_settings = WindowSettings::Load(*user_profile);
-    auto windows = std::vector<QWidget*>();
-    if(!window_settings.empty()) {
-      for(auto& settings : window_settings) {
-        if(auto window = settings->Reopen(Ref(*user_profile))) {
-          windows.push_back(window);
-        }
-      }
-    } else {
-      LoadDefaultLayout(windows, *user_profile);
-    }
-    for(auto& window : windows) {
-      window->show();
-    }
+    toolbar_controller.emplace(Ref(*user_profile));
+    toolbar_controller->open();
     risk_timer_monitor.emplace(Ref(*user_profile));
     risk_timer_monitor->Load();
   });
@@ -309,5 +228,6 @@ int main(int argc, char* argv[]) {
   BookViewProperties::Save(*user_profile);
   CatalogSettings::Save(*user_profile);
   BlotterSettings::Save(*user_profile);
+  toolbar_controller->close();
   return 0;
 }

@@ -36,6 +36,7 @@ namespace Spire {
   template<typename T> class CompositeModel;
   template<typename T> class ConstantValueModel;
   class Definitions;
+  template<typename T> class EnumSetTestModel;
   class Field;
   template<typename T> class FieldValueModel;
   class FilteredTableModel;

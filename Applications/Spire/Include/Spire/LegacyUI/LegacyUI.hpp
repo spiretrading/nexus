@@ -1,8 +1,7 @@
 #ifndef SPIRE_LEGACY_UI_HPP
 #define SPIRE_LEGACY_UI_HPP
 
-namespace Spire {
-namespace LegacyUI {
+namespace Spire::LegacyUI {
   class CanvasWindow;
   class CanvasWindowSettings;
   class CollapsibleWidget;
@@ -10,13 +9,11 @@ namespace LegacyUI {
   class CommandAction;
   class CustomVariantItemDelegate;
   class CustomVariantSortFilterProxyModel;
-  struct EnvironmentSettings;
   class ExpandButton;
   class FilePathInputWidget;
   class FontSelectionWidget;
   class FunctionalAction;
   class IgnoreCommandException;
-  class ImportExportDialog;
   class LinkSecurityContextAction;
   class MacroUndoCommand;
   class MaxFloorSpinBox;
@@ -28,11 +25,8 @@ namespace LegacyUI {
   class ScalableScrollBar;
   class SecurityContext;
   class SecurityViewStack;
-  class Toolbar;
-  class ToolbarWindowSettings;
   class ValueLabel;
   class WindowSettings;
-}
 }
 
 #endif

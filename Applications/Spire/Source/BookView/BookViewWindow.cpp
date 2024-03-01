@@ -32,6 +32,7 @@
 #include "Spire/LegacyUI/LinkSecurityContextAction.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/LegacyUI/ValueLabel.hpp"
+#include "Spire/Spire/ListModel.hpp"
 #include "Spire/Utilities/SecurityTechnicalsModel.hpp"
 #include "ui_BookViewWindow.h"
 
@@ -180,7 +181,7 @@ void BookViewWindow::closeEvent(QCloseEvent* event) {
   if(m_security != Security()) {
     auto settings =
       std::make_unique<BookViewWindowSettings>(*this, Ref(*m_userProfile));
-    m_userProfile->AddRecentlyClosedWindow(std::move(settings));
+    m_userProfile->GetRecentlyClosedWindows()->push(std::move(settings));
   }
   QFrame::closeEvent(event);
 }

@@ -5,6 +5,7 @@
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorWindowSettings.hpp"
 #include "Spire/LegacyUI/CustomQtVariants.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
+#include "Spire/Spire/ListModel.hpp"
 #include "ui_OrderImbalanceIndicatorWindow.h"
 
 using namespace Beam;
@@ -88,12 +89,12 @@ std::unique_ptr<WindowSettings>
 }
 
 void OrderImbalanceIndicatorWindow::closeEvent(QCloseEvent* event) {
-  auto settings = std::make_unique<OrderImbalanceIndicatorWindowSettings>(
+  auto settings = std::make_shared<OrderImbalanceIndicatorWindowSettings>(
     *this, Ref(*m_userProfile));
   m_userProfile->SetInitialOrderImbalanceIndicatorWindowSettings(*settings);
   m_userProfile->SetDefaultOrderImbalanceIndicatorProperties(
     m_model->GetProperties());
-  m_userProfile->AddRecentlyClosedWindow(std::move(settings));
+  m_userProfile->GetRecentlyClosedWindows()->push(std::move(settings));
   QFrame::closeEvent(event);
 }
 
