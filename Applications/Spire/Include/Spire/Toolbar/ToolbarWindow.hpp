@@ -82,11 +82,11 @@ namespace Spire {
 
       /**
        * Signals to import settings.
-       * @param settings The set of settings to import.
+       * @param categories The categories to import.
        * @param path The path to the settings file to import.
        */
-      using ImportSignal =
-        Signal<void (Settings settings, const std::filesystem::path& path)>;
+      using ImportSignal = Signal<void (UserSettings::Categories categories,
+        const std::filesystem::path& path)>;
 
       /**
        * Signals a new blotter was created.

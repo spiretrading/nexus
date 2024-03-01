@@ -6,7 +6,6 @@
 #include <Beam/Serialization/BinarySender.hpp>
 #include <Beam/Utilities/AssertionException.hpp>
 #include <QApplication>
-#include <QMessageBox>
 #include "Spire/BookView/BookViewWindow.hpp"
 #include "Spire/LegacyUI/PersistentWindow.hpp"
 #include "Spire/LegacyUI/UISerialization.hpp"
@@ -23,140 +22,121 @@ using namespace Beam::Serialization;
 using namespace boost;
 using namespace Spire;
 using namespace Spire::LegacyUI;
-using namespace std;
-using namespace std::filesystem;
 
-bool Spire::Export(const EnvironmentSettings& environmentSettings,
-    const path& environmentPath) {
-  ofstream writerStream;
-  writerStream.open(environmentPath, ios::binary);
-  if((writerStream.rdstate() & std::ifstream::failbit) != 0) {
-    QMessageBox::warning(nullptr, QObject::tr("Error"),
-      QObject::tr("Unable to write to the specified path."));
-    return false;
+void Spire::export_settings(
+    const UserSettings& settings, const std::filesystem::path& path) {
+  auto stream = std::ofstream();
+  stream.open(path, std::ios::binary);
+  if((stream.rdstate() & std::ifstream::failbit) != 0) {
+    throw std::runtime_error(
+      QObject::tr("Unable to write to the specified path.").toStdString());
   }
   try {
-    TypeRegistry<BinarySender<SharedBuffer>> typeRegistry;
-    RegisterSpireTypes(Store(typeRegistry));
-    auto sender = BinarySender<SharedBuffer>(Ref(typeRegistry));
-    SharedBuffer buffer;
+    auto registry = TypeRegistry<BinarySender<SharedBuffer>>();
+    RegisterSpireTypes(Store(registry));
+    auto sender = BinarySender<SharedBuffer>(Ref(registry));
+    auto buffer = SharedBuffer();
     sender.SetSink(Ref(buffer));
-    sender.Shuttle(environmentSettings);
-    BasicOStreamWriter<ofstream*> writer(&writerStream);
+    sender.Shuttle(settings);
+    auto writer = BasicOStreamWriter(&stream);
     writer.Write(buffer);
-  } catch(std::exception&) {
-    QMessageBox::warning(nullptr, QObject::tr("Warning"),
-      QObject::tr("Unable to export settings."));
-    return false;
+  } catch(const std::exception&) {
+    throw std::runtime_error(
+      QObject::tr("Unable to write to the specified path.").toStdString());
   }
-  return true;
 }
 
-bool Spire::LegacyUI::Import(const path& environmentPath,
-    EnvironmentSettings::TypeSet settings, bool apply,
-    Out<UserProfile> userProfile) {
-  ifstream readerStream;
-  readerStream.open(environmentPath, ios::binary);
-  if((readerStream.rdstate() & std::ifstream::failbit) != 0) {
-    QMessageBox::warning(nullptr, QObject::tr("Error"),
-      QObject::tr("Unable to read from the specified path."));
-    return false;
+void Spire::import_settings(UserSettings::Categories categories,
+    const std::filesystem::path& path, Out<UserProfile> user_profile) {
+  auto stream = std::ifstream();
+  stream.open(path, std::ios::binary);
+  if((stream.rdstate() & std::ifstream::failbit) != 0) {
+    throw std::runtime_error(
+      QObject::tr("Unable to read from the specified path.").toStdString());
   }
-  EnvironmentSettings environmentSettings;
+  auto settings = UserSettings();
   try {
-    BasicIStreamReader<ifstream*> reader(&readerStream);
-    SharedBuffer buffer;
+    auto reader = BasicIStreamReader(&stream);
+    auto buffer = SharedBuffer();
     reader.Read(Store(buffer));
-    TypeRegistry<BinarySender<SharedBuffer>> typeRegistry;
-    RegisterSpireTypes(Store(typeRegistry));
-    auto receiver = BinaryReceiver<SharedBuffer>(Ref(typeRegistry));
+    auto registry = TypeRegistry<BinarySender<SharedBuffer>>();
+    RegisterSpireTypes(Store(registry));
+    auto receiver = BinaryReceiver<SharedBuffer>(Ref(registry));
     receiver.SetSource(Ref(buffer));
-    receiver.Shuttle(environmentSettings);
-  } catch(std::exception&) {
-    QMessageBox::warning(nullptr, QObject::tr("Error"),
-      QObject::tr("Unable to read from the specified path."));
-    return false;
+    receiver.Shuttle(settings);
+  } catch(const std::exception&) {
+    throw std::runtime_error(
+      QObject::tr("Unable to read from the specified path.").toStdString());
   }
-  if(settings.Test(EnvironmentSettings::Type::WINDOW_LAYOUTS) &&
-      environmentSettings.m_windowLayouts.is_initialized()) {
-    for(auto widget : QApplication::topLevelWidgets()) {
-      if(dynamic_cast<PersistentWindow*>(widget) != nullptr &&
-          dynamic_cast<ToolbarWindow*>(widget) == nullptr) {
+  if(categories.Test(UserSettings::Category::LAYOUT) && settings.m_layouts) {
+    for(auto& widget : QApplication::topLevelWidgets()) {
+      if(dynamic_cast<PersistentWindow*>(widget) &&
+          !dynamic_cast<ToolbarWindow*>(widget)) {
         widget->close();
       }
     }
-    for(auto& windowSettings : *environmentSettings.m_windowLayouts) {
-      auto window = windowSettings->Reopen(Ref(*userProfile));
-      if(dynamic_cast<PortfolioViewerWindow*>(window) != nullptr &&
-          !userProfile->IsManager()) {
+    for(auto& layout : *settings.m_layouts) {
+      auto window = layout->Reopen(Ref(*user_profile));
+      if(dynamic_cast<PortfolioViewerWindow*>(window) &&
+          !user_profile->IsManager()) {
         continue;
       }
       window->show();
     }
   }
-  if(settings.Test(EnvironmentSettings::Type::BOOK_VIEW) &&
-      environmentSettings.m_bookViewProperties.is_initialized()) {
-    userProfile->SetDefaultBookViewProperties(
-      *environmentSettings.m_bookViewProperties);
+  if(categories.Test(UserSettings::Category::BOOK_VIEW) &&
+      settings.m_book_view_properties) {
+    user_profile->SetDefaultBookViewProperties(
+      *settings.m_book_view_properties);
   }
-  if(settings.Test(EnvironmentSettings::Type::DASHBOARDS) &&
-      environmentSettings.m_dashboards.is_initialized()) {
-    userProfile->GetSavedDashboards() = *environmentSettings.m_dashboards;
+  if(categories.Test(UserSettings::Category::WATCHLIST) &&
+      settings.m_dashboards) {
+    user_profile->GetSavedDashboards() = *settings.m_dashboards;
   }
-  if(settings.Test(EnvironmentSettings::Type::ORDER_IMBALANCE_INDICATOR) &&
-      environmentSettings.m_orderImbalanceIndicatorProperties.
-      is_initialized()) {
-    userProfile->SetDefaultOrderImbalanceIndicatorProperties(
-      *environmentSettings.m_orderImbalanceIndicatorProperties);
+  if(categories.Test(UserSettings::Category::ORDER_IMBALANCE_INDICATOR) &&
+      settings.m_order_imbalance_indicator_properties) {
+    user_profile->SetDefaultOrderImbalanceIndicatorProperties(
+      *settings.m_order_imbalance_indicator_properties);
   }
-  if(settings.Test(EnvironmentSettings::Type::INTERACTIONS) &&
-      environmentSettings.m_interactionsProperties.is_initialized()) {
-    userProfile->GetInteractionProperties() =
-      *environmentSettings.m_interactionsProperties;
+  if(categories.Test(UserSettings::Category::INTERACTIONS) &&
+      settings.m_interactions_properties) {
+    user_profile->GetInteractionProperties() =
+      *settings.m_interactions_properties;
   }
-  if(settings.Test(EnvironmentSettings::Type::KEY_BINDINGS) &&
-      environmentSettings.m_keyBindings.is_initialized()) {
-    userProfile->SetKeyBindings(*environmentSettings.m_keyBindings);
+  if(categories.Test(UserSettings::Category::KEY_BINDINGS) &&
+      settings.m_key_bindings) {
+    user_profile->SetKeyBindings(*settings.m_key_bindings);
   }
-  if(settings.Test(EnvironmentSettings::Type::PORTFOLIO_VIEWER) &&
-      environmentSettings.m_portfolioViewerProperties.is_initialized()) {
-    userProfile->SetDefaultPortfolioViewerProperties(
-      *environmentSettings.m_portfolioViewerProperties);
+  if(categories.Test(UserSettings::Category::PORTFOLIO) &&
+      settings.m_portfolio_properties) {
+    user_profile->SetDefaultPortfolioViewerProperties(
+      *settings.m_portfolio_properties);
   }
-  if(settings.Test(EnvironmentSettings::Type::TIME_AND_SALES) &&
-      environmentSettings.m_timeAndSalesProperties.is_initialized()) {
-    userProfile->SetDefaultTimeAndSalesProperties(
-      *environmentSettings.m_timeAndSalesProperties);
-  }
-  if(!apply) {
-    return true;
+  if(categories.Test(UserSettings::Category::TIME_AND_SALES) &&
+      settings.m_time_and_sales_properties) {
+    user_profile->SetDefaultTimeAndSalesProperties(
+      *settings.m_time_and_sales_properties);
   }
   for(auto widget : QApplication::topLevelWidgets()) {
-    if(auto bookView = dynamic_cast<BookViewWindow*>(widget)) {
-      if(environmentSettings.m_bookViewProperties.is_initialized()) {
-        bookView->SetProperties(*environmentSettings.m_bookViewProperties);
+    if(auto book_view = dynamic_cast<BookViewWindow*>(widget)) {
+      if(settings.m_book_view_properties) {
+        book_view->SetProperties(*settings.m_book_view_properties);
       }
-    } else if(auto orderImbalanceIndicator =
+    } else if(auto order_imbalance_indicator =
         dynamic_cast<OrderImbalanceIndicatorWindow*>(widget)) {
-      if(environmentSettings.m_orderImbalanceIndicatorProperties.
-          is_initialized()) {
+      if(settings.m_order_imbalance_indicator_properties) {
         auto model = std::make_shared<OrderImbalanceIndicatorModel>(
-          Ref(*userProfile),
-          *environmentSettings.m_orderImbalanceIndicatorProperties);
-        orderImbalanceIndicator->SetModel(model);
+          Ref(*user_profile), *settings.m_order_imbalance_indicator_properties);
+        order_imbalance_indicator->SetModel(model);
       }
-    } else if(auto portfolioViewer =
-        dynamic_cast<PortfolioViewerWindow*>(widget)) {
-      if(environmentSettings.m_portfolioViewerProperties.is_initialized()) {
-        portfolioViewer->SetProperties(
-          *environmentSettings.m_portfolioViewerProperties);
+    } else if(auto portfolio = dynamic_cast<PortfolioViewerWindow*>(widget)) {
+      if(settings.m_portfolio_properties) {
+        portfolio->SetProperties(*settings.m_portfolio_properties);
       }
-    } else if(auto timeAndSales = dynamic_cast<TimeAndSalesWindow*>(widget)) {
-      if(environmentSettings.m_timeAndSalesProperties.is_initialized()) {
-        timeAndSales->SetProperties(
-          *environmentSettings.m_timeAndSalesProperties);
+    } else if(auto time_and_sales = dynamic_cast<TimeAndSalesWindow*>(widget)) {
+      if(settings.m_time_and_sales_properties) {
+        time_and_sales->SetProperties(*settings.m_time_and_sales_properties);
       }
     }
   }
-  return true;
 }

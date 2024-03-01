@@ -242,7 +242,6 @@ void ToolbarWindow::populate_blotter_menu() {
   m_blotter_menu->add_separator();
   for(auto i = 0; i != m_pinned_blotters->get_size(); ++i) {
     auto blotter = m_pinned_blotters->get(i);
-    qDebug() << "Adding: " << QString::fromStdString(blotter->GetName());
     m_blotter_menu->add_action(QString::fromStdString(blotter->GetName()), [=] {
       m_open_blotter_signal(*blotter);
     });

@@ -20,12 +20,13 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 ImportSettingsPanel::ImportSettingsPanel(QWidget& parent)
-  : ImportSettingsPanel(std::make_shared<LocalSettingsModel>(), parent) {}
+  : ImportSettingsPanel(
+      std::make_shared<UserSettings::LocalCategoriesModel>(), parent) {}
 
 ImportSettingsPanel::ImportSettingsPanel(
-    std::shared_ptr<SettingsModel> settings, QWidget& parent)
+    std::shared_ptr<UserSettings::CategoriesModel> categories, QWidget& parent)
     : QWidget(&parent),
-      m_settings(std::move(settings)) {
+      m_categories(std::move(categories)) {
   auto heading = make_label(tr("Import Settings"));
   heading->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
   update_style(*heading, [] (auto& styles) {
@@ -37,16 +38,18 @@ ImportSettingsPanel::ImportSettingsPanel(
       set(horizontal_padding(scale_width(8))).
       set(vertical_padding(scale_height(10)));
   });
-  auto settings_list = std::make_shared<ArrayListModel<Setting>>();
-  auto& settings_bitset = m_settings->get().GetBitset();
+  auto settings_list =
+    std::make_shared<ArrayListModel<UserSettings::Category>>();
+  auto& settings_bitset = m_categories->get().GetBitset();
   for(auto i = 0; i < static_cast<int>(settings_bitset.size()); ++i) {
-    settings_list->push(static_cast<Setting>(i));
+    settings_list->push(static_cast<UserSettings::Category>(i));
   }
   auto settings_view = new ListView(settings_list,
-    [=] (const std::shared_ptr<ListModel<Setting>>& list, auto index) {
+    [=] (const std::shared_ptr<ListModel<UserSettings::Category>>& list,
+        auto index) {
       auto check_box = new CheckBox(
-        std::make_shared<EnumSetTestModel<Settings>>(
-          m_settings, list->get(index)));
+        std::make_shared<EnumSetTestModel<UserSettings::Categories>>(
+          m_categories, list->get(index)));
       check_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
       check_box->set_label(to_text(list->get(index)));
       return check_box;
@@ -100,15 +103,15 @@ ImportSettingsPanel::ImportSettingsPanel(
   m_panel->set_closed_on_focus_out(false);
   m_panel->set_is_draggable(true);
   m_panel->installEventFilter(this);
-  on_update(m_settings->get());
-  m_connection = m_settings->connect_update_signal(
+  on_update(m_categories->get());
+  m_connection = m_categories->connect_update_signal(
     std::bind_front(&ImportSettingsPanel::on_update, this));
   setFocusProxy(list_box);
 }
 
-const std::shared_ptr<SettingsModel>&
-    ImportSettingsPanel::get_settings() const {
-  return m_settings;
+const std::shared_ptr<UserSettings::CategoriesModel>&
+    ImportSettingsPanel::get_categories() const {
+  return m_categories;
 }
 
 connection ImportSettingsPanel::connect_import_signal(
@@ -133,8 +136,9 @@ bool ImportSettingsPanel::event(QEvent* event) {
   return QWidget::event(event);
 }
 
-void ImportSettingsPanel::on_update(const Settings& settings) {
-  m_import_button->setEnabled(settings.GetBitset().count() != 0);
+void ImportSettingsPanel::on_update(
+    const UserSettings::Categories& categories) {
+  m_import_button->setEnabled(categories.GetBitset().count() != 0);
 }
 
 void ImportSettingsPanel::on_cancel() {
@@ -142,34 +146,34 @@ void ImportSettingsPanel::on_cancel() {
 }
 
 void ImportSettingsPanel::on_import() {
-  m_import_signal(m_settings->get());
+  m_import_signal(m_categories->get());
   close();
 }
 
-const QString& Spire::to_text(Setting setting) {
-  if(setting == Setting::BOOK_VIEW) {
+const QString& Spire::to_text(UserSettings::Category category) {
+  if(category == UserSettings::Category::BOOK_VIEW) {
     static const auto value = QObject::tr("Book View");
     return value;
-  } else if(setting == Setting::IMBALANCE_INDICATOR) {
-    static const auto value = QObject::tr("Imbalance Indicator");
+  } else if(category == UserSettings::Category::ORDER_IMBALANCE_INDICATOR) {
+    static const auto value = QObject::tr("Order Imbalance Indicator");
     return value;
-  } else if(setting == Setting::INTERACTIONS) {
+  } else if(category == UserSettings::Category::INTERACTIONS) {
     static const auto value = QObject::tr("Interactions");
     return value;
-  } else if(setting == Setting::KEY_BINDINGS) {
+  } else if(category == UserSettings::Category::KEY_BINDINGS) {
     static const auto value = QObject::tr("Key Bindings");
     return value;
-  } else if(setting == Setting::PORTFOLIO_VIEWER) {
-    static const auto value = QObject::tr("Portfolio View");
+  } else if(category == UserSettings::Category::PORTFOLIO) {
+    static const auto value = QObject::tr("Portfolio");
     return value;
-  } else if(setting == Setting::TIME_AND_SALES) {
+  } else if(category == UserSettings::Category::TIME_AND_SALES) {
     static const auto value = QObject::tr("Time and Sales");
     return value;
-  } else if(setting == Setting::WATCHLIST) {
-    static const auto value = QObject::tr("Watchlists");
+  } else if(category == UserSettings::Category::WATCHLIST) {
+    static const auto value = QObject::tr("Watchlist");
     return value;
-  } else if(setting == Setting::LAYOUT) {
-    static const auto value = QObject::tr("Window Layout");
+  } else if(category == UserSettings::Category::LAYOUT) {
+    static const auto value = QObject::tr("Layout");
     return value;
   } else {
     static const auto value = QObject::tr("None");

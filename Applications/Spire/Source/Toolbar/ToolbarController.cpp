@@ -1,10 +1,5 @@
 #include "Spire/Toolbar/ToolbarController.hpp"
 #include <vector>
-#include <Beam/IO/BasicIStreamReader.hpp>
-#include <Beam/IO/BasicOStreamWriter.hpp>
-#include <Beam/IO/SharedBuffer.hpp>
-#include <Beam/Serialization/BinaryReceiver.hpp>
-#include <Beam/Serialization/BinarySender.hpp>
 #include <QApplication>
 #include <QGuiApplication>
 #include <QScreen>
@@ -30,8 +25,6 @@
 #include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
 
 using namespace Beam;
-using namespace Beam::IO;
-using namespace Beam::Serialization;
 using namespace boost;
 using namespace Nexus;
 using namespace Spire;
@@ -321,7 +314,9 @@ void ToolbarController::on_restore_all() {
 }
 
 void ToolbarController::on_import(
-  Settings settings, const std::filesystem::path& path) {}
+    UserSettings::Categories categories, const std::filesystem::path& path) {
+  import_settings(categories, path, Ref(*m_user_profile));
+}
 
 void ToolbarController::on_new_blotter(const QString& name) {
   auto blotter = std::make_unique<BlotterModel>(name.toStdString(),

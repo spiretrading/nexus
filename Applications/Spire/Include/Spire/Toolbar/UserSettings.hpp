@@ -23,8 +23,8 @@ namespace Details {
     /** The book view. */
     BOOK_VIEW,
 
-    /** The imbalance indicator. */
-    IMBALANCE_INDICATOR,
+    /** The order imbalance indicator. */
+    ORDER_IMBALANCE_INDICATOR,
 
     /** The interactions. */
     INTERACTIONS,
@@ -32,8 +32,8 @@ namespace Details {
     /** The key bindings. */
     KEY_BINDINGS,
 
-    /** The portfolio view. */
-    PORTFOLIO_VIEWER,
+    /** The portfolio. */
+    PORTFOLIO,
 
     /** The time and sales. */
     TIME_AND_SALES,
@@ -76,33 +76,36 @@ namespace Details {
     /** The key bindings. */
     boost::optional<KeyBindings> m_key_bindings;
 
-    /** The portfolio viewer properties. */
-    boost::optional<PortfolioViewerProperties> m_portfolio_viewer_properties;
+    /** The portfolio properties. */
+    boost::optional<PortfolioViewerProperties> m_portfolio_properties;
 
     /** The time and sales properties. */
     boost::optional<TimeAndSalesProperties> m_time_and_sales_properties;
 
     /** The window layouts. */
     boost::optional<std::vector<std::shared_ptr<LegacyUI::WindowSettings>>>
-      m_window_layouts;
+      m_layouts;
   };
+
+  /** Returns the text representation of a Category. */ 
+  const QString& to_text(UserSettings::Category category);
 
   /**
    * Exports the user's settings.
    * @param settings The UserSettings to save.
    * @param path The file path to save the settings to.
    */
-  void Export(const UserSettings& settings, const std::filesystem::path& path);
+  void export_settings(
+    const UserSettings& settings, const std::filesystem::path& path);
 
   /**
    * Imports the user's settings.
-   * @param path The file path to import.
    * @param categories The categories to import.
-   * @param apply Whether to apply the settings to all open windows.
-   * @param userProfile The user's profile.
+   * @param path The file path to import.
+   * @param user_profile The user's profile.
    */
-  bool Import(const std::filesystem::path& path,
-    UserSettings::Categories categories, Beam::Out<UserProfile> userProfile);
+  void import_settings(UserSettings::Categories categories,
+    const std::filesystem::path& path, Beam::Out<UserProfile> userProfile);
 }
 
 namespace Beam::Serialization {
@@ -119,10 +122,10 @@ namespace Beam::Serialization {
         value.m_interactions_properties);
       shuttle.Shuttle("key_bindings", value.m_key_bindings);
       shuttle.Shuttle("portfolio_viewer_properties",
-        value.m_portfolio_viewer_properties);
+        value.m_portfolio_properties);
       shuttle.Shuttle("time_and_sales_properties",
         value.m_time_and_sales_properties);
-      shuttle.Shuttle("window_layouts", value.m_window_layouts);
+      shuttle.Shuttle("window_layouts", value.m_layouts);
     }
   };
 }

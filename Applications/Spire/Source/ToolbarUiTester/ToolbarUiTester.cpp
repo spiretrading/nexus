@@ -91,13 +91,13 @@ void ToolbarUiTester::on_restore_all() {
 }
 
 void ToolbarUiTester::on_import(
-    Settings settings, const std::filesystem::path& path) {
+    UserSettings::Categories categories, const std::filesystem::path& path) {
   m_output->append(
     QString("Import (%s):").arg(QString::fromStdString(path.string())));
-  for(auto i = 0; i != Settings::Type::COUNT; ++i) {
-    auto setting = static_cast<Setting>(i);
-    if(settings.Test(setting)) {
-      m_output->append("\t" + to_text(setting));
+  for(auto i = 0; i != UserSettings::Category::COUNT; ++i) {
+    auto category = static_cast<UserSettings::Category>(i);
+    if(categories.Test(category)) {
+      m_output->append("\t" + to_text(category));
     }
   }
 }

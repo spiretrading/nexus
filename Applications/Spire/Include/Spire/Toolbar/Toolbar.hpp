@@ -8,6 +8,7 @@ namespace Spire {
   class ToolbarController;
   class ToolbarWindow;
   class ToolbarWindowSettings;
+  struct UserSettings;
 }
 
 #endif
