@@ -148,8 +148,8 @@ InteractionsPage::InteractionsPage(std::shared_ptr<RegionListModel> regions,
   auto layout = make_hbox_layout(this);
   layout->addWidget(master_box);
   layout->addWidget(scroll_box);
-  m_add_region_from = new AddRegionForm(m_regions, *this);
-  m_add_region_from->connect_submit_signal(
+  m_add_region_form = new AddRegionForm(m_regions, *this);
+  m_add_region_form->connect_submit_signal(
     std::bind_front(&InteractionsPage::on_add_region, this));
   m_list_view_current->set(std::get<0>(*get_region_interactions()->Begin()));
 }
@@ -206,7 +206,10 @@ QWidget* InteractionsPage::make_list_item(
 }
 
 void InteractionsPage::on_add_region_click() {
-  m_add_region_from->show();
+  m_add_region_form->show();
+  auto add_region_window = m_add_region_form->window();
+  add_region_window->move(mapToGlobal(QPoint(0,0)) + rect().center() -
+    add_region_window->rect().center());
 }
 
 void InteractionsPage::on_current_index(const optional<int>& current) {
@@ -245,7 +248,7 @@ void InteractionsPage::on_add_region(const Region& region) {
       m_list_model->get_size() - 1)->setFocusPolicy(Qt::NoFocus);
     m_add_signal(region, get_region_interactions()->Get(region));
   }
-  m_add_region_from->close();
+  m_add_region_form->close();
 }
 
 void InteractionsPage::on_delete_region(const Region& region) {

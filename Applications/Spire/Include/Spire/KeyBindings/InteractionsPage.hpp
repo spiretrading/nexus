@@ -61,7 +61,7 @@ namespace Spire {
       std::shared_ptr<LocalRegionModel> m_list_view_current;
       ListView* m_list_view;
       QVBoxLayout* m_center_layout;
-      AddRegionForm* m_add_region_from;
+      AddRegionForm* m_add_region_form;
       Nexus::Region m_current_region;
 
       QWidget* make_interactions_form(const Nexus::Region& region) const;
