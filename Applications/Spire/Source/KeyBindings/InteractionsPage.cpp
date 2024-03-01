@@ -23,6 +23,9 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  const auto modifiers = std::array<Qt::KeyboardModifier, 4>{
+    Qt::NoModifier, Qt::ShiftModifier, Qt::ControlModifier, Qt::AltModifier};
+
   void apply_deletable_list_item_style(StyleSheet& style) {
     style.get((Any() > is_a<DeletableListItem>()) << is_a<ListItem>()).
       set(vertical_padding(0)).
@@ -50,7 +53,24 @@ namespace {
       set(BorderRightSize(scale_width(1))).
       set(BorderRightColor(QColor(0xE0E0E0)));
   }
+
+  auto make_interactions(
+      const InteractionsKeyBindingsModel& base_interactions) {
+    auto interactions = std::make_shared<InteractionsKeyBindingsModel>();
+    interactions->get_default_quantity()->set(
+      base_interactions.get_default_quantity()->get());
+    interactions->is_cancel_on_fill()->set(
+      base_interactions.is_cancel_on_fill()->get());
+    for(auto modifier : modifiers) {
+      interactions->get_quantity_increment(modifier)->set(
+        base_interactions.get_quantity_increment(modifier)->get());
+      interactions->get_price_increment(modifier)->set(
+        base_interactions.get_price_increment(modifier)->get());
+    }
+    return interactions;
+  }
 }
+
 struct InteractionsPage::RegionInteractionsListModel : ArrayListModel<Region> {
   std::shared_ptr<RegionInteractionsMap> m_region_interactions;
 
@@ -65,8 +85,20 @@ struct InteractionsPage::RegionInteractionsListModel : ArrayListModel<Region> {
   }
 
   void push_region(const Region& region) {
+    auto base_region = [&] {
+      if(!region.GetMarkets().empty()) {
+        for(auto i = 0; i < get_size(); ++i) {
+          if(get(i) > region && !get(i).GetCountries().empty()) {
+            return get(i);
+          }
+        }
+      } else if(!region.GetCountries().empty()) {
+        return Region::Global();
+      }
+      return Region::Global();
+    }();
     m_region_interactions->Set(region,
-      std::make_shared<InteractionsKeyBindingsModel>());
+      make_interactions(*m_region_interactions->Get(base_region)));
     push(region);
   }
 
