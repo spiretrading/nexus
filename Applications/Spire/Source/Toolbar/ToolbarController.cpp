@@ -315,7 +315,7 @@ void ToolbarController::on_restore_all() {
 
 void ToolbarController::on_import(
     UserSettings::Categories categories, const std::filesystem::path& path) {
-  import_settings(categories, path, Ref(*m_user_profile));
+  import_settings(categories, path, Store(*m_user_profile));
 }
 
 void ToolbarController::on_new_blotter(const QString& name) {
