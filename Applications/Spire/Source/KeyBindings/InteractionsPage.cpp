@@ -238,13 +238,14 @@ void InteractionsPage::on_current_region(const Region& region) {
 void InteractionsPage::on_add_region(const Region& region) {
   if(std::get<0>(*get_region_interactions()->Find(region)) == region) {
     m_list_view_current->set(region);
-    m_add_region_from->close();
   } else {
     m_list_model->push_region(region);
+    m_list_view_current->set(region);
     m_list_view->get_list_item(
       m_list_model->get_size() - 1)->setFocusPolicy(Qt::NoFocus);
     m_add_signal(region, get_region_interactions()->Get(region));
   }
+  m_add_region_from->close();
 }
 
 void InteractionsPage::on_delete_region(const Region& region) {
