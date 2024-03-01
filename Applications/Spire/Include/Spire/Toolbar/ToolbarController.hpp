@@ -53,6 +53,8 @@ namespace Spire {
       void on_restore_all();
       void on_import(
         UserSettings::Categories categories, const std::filesystem::path& path);
+      void on_export(
+        UserSettings::Categories categories, const std::filesystem::path& path);
       void on_new_blotter(const QString& name);
       void on_blotter_added(BlotterModel& blotter);
       void on_blotter_removed(BlotterModel& blotter);

@@ -23,8 +23,45 @@ using namespace boost;
 using namespace Spire;
 using namespace Spire::LegacyUI;
 
-void Spire::export_settings(
-    const UserSettings& settings, const std::filesystem::path& path) {
+void Spire::export_settings(UserSettings::Categories categories,
+    const std::filesystem::path& path, const UserProfile& user_profile) {
+  auto settings = UserSettings();
+  if(categories.Test(UserSettings::Category::BOOK_VIEW)) {
+    settings.m_book_view_properties =
+      user_profile.GetDefaultBookViewProperties();
+  }
+  if(categories.Test(UserSettings::Category::WATCHLIST)) {
+    settings.m_dashboards = user_profile.GetSavedDashboards();
+  }
+  if(categories.Test(UserSettings::Category::ORDER_IMBALANCE_INDICATOR)) {
+    settings.m_order_imbalance_indicator_properties =
+      user_profile.GetDefaultOrderImbalanceIndicatorProperties();
+  }
+  if(categories.Test(UserSettings::Category::INTERACTIONS)) {
+    settings.m_interactions_properties =
+      user_profile.GetInteractionProperties();
+  }
+  if(categories.Test(UserSettings::Category::KEY_BINDINGS)) {
+    settings.m_key_bindings = user_profile.GetKeyBindings();
+  }
+  if(categories.Test(UserSettings::Category::PORTFOLIO)) {
+    settings.m_portfolio_properties =
+      user_profile.GetDefaultPortfolioViewerProperties();
+  }
+  if(categories.Test(UserSettings::Category::TIME_AND_SALES)) {
+    settings.m_time_and_sales_properties =
+      user_profile.GetDefaultTimeAndSalesProperties();
+  }
+  if(categories.Test(UserSettings::Category::LAYOUT)) {
+    auto layouts = std::vector<std::shared_ptr<WindowSettings>>();
+    for(auto& widget : QApplication::topLevelWidgets()) {
+      auto window = dynamic_cast<PersistentWindow*>(widget);
+      if(window && !dynamic_cast<ToolbarWindow*>(widget)) {
+        layouts.push_back(window->GetWindowSettings());
+      }
+    }
+    settings.m_layouts = std::move(layouts);
+  }
   auto stream = std::ofstream();
   stream.open(path, std::ios::binary);
   if((stream.rdstate() & std::ifstream::failbit) != 0) {
@@ -138,5 +175,36 @@ void Spire::import_settings(UserSettings::Categories categories,
         time_and_sales->SetProperties(*settings.m_time_and_sales_properties);
       }
     }
+  }
+}
+
+const QString& Spire::to_text(UserSettings::Category category) {
+  if(category == UserSettings::Category::BOOK_VIEW) {
+    static const auto value = QObject::tr("Book View");
+    return value;
+  } else if(category == UserSettings::Category::ORDER_IMBALANCE_INDICATOR) {
+    static const auto value = QObject::tr("Order Imbalance Indicator");
+    return value;
+  } else if(category == UserSettings::Category::INTERACTIONS) {
+    static const auto value = QObject::tr("Interactions");
+    return value;
+  } else if(category == UserSettings::Category::KEY_BINDINGS) {
+    static const auto value = QObject::tr("Key Bindings");
+    return value;
+  } else if(category == UserSettings::Category::PORTFOLIO) {
+    static const auto value = QObject::tr("Portfolio");
+    return value;
+  } else if(category == UserSettings::Category::TIME_AND_SALES) {
+    static const auto value = QObject::tr("Time and Sales");
+    return value;
+  } else if(category == UserSettings::Category::WATCHLIST) {
+    static const auto value = QObject::tr("Watchlist");
+    return value;
+  } else if(category == UserSettings::Category::LAYOUT) {
+    static const auto value = QObject::tr("Layout");
+    return value;
+  } else {
+    static const auto value = QObject::tr("None");
+    return value;
   }
 }

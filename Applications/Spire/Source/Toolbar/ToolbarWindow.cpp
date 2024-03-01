@@ -3,8 +3,8 @@
 #include <QStandardPaths>
 #include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Toolbar/ImportSettingsPanel.hpp"
 #include "Spire/Toolbar/NewBlotterForm.hpp"
+#include "Spire/Toolbar/SettingsPanel.hpp"
 #include "Spire/Toolbar/ToolbarWindowSettings.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
@@ -21,6 +21,15 @@ using namespace Nexus::AdministrationService;
 using namespace Spire;
 using namespace Spire::LegacyUI;
 using namespace Spire::Styles;
+
+namespace {
+  auto make_settings_path(const DirectoryEntry& account) {
+    auto path = std::filesystem::path(QStandardPaths::writableLocation(
+      QStandardPaths::DocumentsLocation).toStdString());
+    path /= account.m_name + "_settings.sps";
+    return QString::fromStdString(path.string());
+  }
+}
 
 ToolbarWindow::ToolbarWindow(DirectoryEntry account, AccountRoles roles,
     std::shared_ptr<RecentlyClosedWindowListModel> recently_closed_windows,
@@ -182,7 +191,8 @@ MenuButton* ToolbarWindow::make_window_manager_button() {
   });
   window_menu.add_action(
     tr("Import Settings..."), std::bind_front(&ToolbarWindow::on_import, this));
-  window_menu.add_action(tr("Export Settings..."), [=] {});
+  window_menu.add_action(
+    tr("Export Settings..."), std::bind_front(&ToolbarWindow::on_export, this));
   return window_manager_button;
 }
 
@@ -254,20 +264,32 @@ void ToolbarWindow::on_recently_closed_window_operation(
 }
 
 void ToolbarWindow::on_import() {
-  auto settings_path = std::filesystem::path(QStandardPaths::writableLocation(
-    QStandardPaths::DocumentsLocation).toStdString());
-  settings_path /= m_account.m_name + "_settings.sps";
   auto path = QFileDialog::getOpenFileName(this,
-    tr("Select the settings file."),
-    QString::fromStdString(settings_path.string()), tr("Settings (*.sps)"));
+    tr("Select the settings file."), make_settings_path(m_account),
+    tr("Settings (*.sps)"));
   if(path.isNull()) {
     return;
   }
-  m_import_settings_panel = new ImportSettingsPanel(*this);
-  m_import_settings_panel->show();
-  m_import_settings_panel->connect_import_signal(
+  m_settings_panel = new SettingsPanel(SettingsPanel::Mode::IMPORT, *this);
+  m_settings_panel->show();
+  m_settings_panel->connect_commit_signal(
     [=] (const auto& settings) {
       m_import_signal(settings, std::filesystem::path(path.toStdString()));
+    });
+}
+
+void ToolbarWindow::on_export() {
+  m_settings_panel = new SettingsPanel(SettingsPanel::Mode::EXPORT, *this);
+  m_settings_panel->show();
+  m_settings_panel->connect_commit_signal(
+    [=] (const auto& settings) {
+      auto path = QFileDialog::getSaveFileName(this,
+        tr("Select the settings file."), make_settings_path(m_account),
+        tr("Settings (*.sps)"));
+      if(path.isNull()) {
+        return;
+      }
+      m_export_signal(settings, std::filesystem::path(path.toStdString()));
     });
 }
 

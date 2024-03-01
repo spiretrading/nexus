@@ -153,6 +153,8 @@ void ToolbarController::open() {
     std::bind_front(&ToolbarController::on_restore_all, this));
   m_toolbar_window->connect_import_signal(
     std::bind_front(&ToolbarController::on_import, this));
+  m_toolbar_window->connect_export_signal(
+    std::bind_front(&ToolbarController::on_export, this));
   m_toolbar_window->connect_new_blotter_signal(
     std::bind_front(&ToolbarController::on_new_blotter, this));
   m_toolbar_window->connect_sign_out_signal(
@@ -316,6 +318,11 @@ void ToolbarController::on_restore_all() {
 void ToolbarController::on_import(
     UserSettings::Categories categories, const std::filesystem::path& path) {
   import_settings(categories, path, Store(*m_user_profile));
+}
+
+void ToolbarController::on_export(
+    UserSettings::Categories categories, const std::filesystem::path& path) {
+  export_settings(categories, path, *m_user_profile);
 }
 
 void ToolbarController::on_new_blotter(const QString& name) {

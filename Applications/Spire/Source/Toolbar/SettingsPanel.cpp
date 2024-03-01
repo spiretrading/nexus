@@ -1,4 +1,4 @@
-#include "Spire/Toolbar/ImportSettingsPanel.hpp"
+#include "Spire/Toolbar/SettingsPanel.hpp"
 #include <QEvent>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/EnumSetTestModel.hpp"
@@ -19,15 +19,21 @@ using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::Styles;
 
-ImportSettingsPanel::ImportSettingsPanel(QWidget& parent)
-  : ImportSettingsPanel(
-      std::make_shared<UserSettings::LocalCategoriesModel>(), parent) {}
+SettingsPanel::SettingsPanel(Mode mode, QWidget& parent)
+  : SettingsPanel(
+      mode, std::make_shared<UserSettings::LocalCategoriesModel>(), parent) {}
 
-ImportSettingsPanel::ImportSettingsPanel(
+SettingsPanel::SettingsPanel(Mode mode,
     std::shared_ptr<UserSettings::CategoriesModel> categories, QWidget& parent)
     : QWidget(&parent),
       m_categories(std::move(categories)) {
-  auto heading = make_label(tr("Import Settings"));
+  auto header = [&] {
+    if(mode == Mode::IMPORT) {
+      return tr("Import Settings");
+    }
+    return tr("Export Settings");
+  }();
+  auto heading = make_label(std::move(header));
   heading->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
   update_style(*heading, [] (auto& styles) {
     auto font = QFont("Roboto");
@@ -75,17 +81,23 @@ ImportSettingsPanel::ImportSettingsPanel(
   cancel_button->setAttribute(Qt::WA_NoMousePropagation);
   cancel_button->setFixedSize(scale(100, 26));
   cancel_button->connect_click_signal(
-    std::bind_front(&ImportSettingsPanel::on_cancel, this));
-  m_import_button = make_label_button(tr("Import"));
-  m_import_button->setAttribute(Qt::WA_NoMousePropagation);
-  m_import_button->setFixedSize(scale(100, 26));
-  m_import_button->connect_click_signal(
-    std::bind_front(&ImportSettingsPanel::on_import, this));
+    std::bind_front(&SettingsPanel::on_cancel, this));
+  auto commit_label = [&] {
+    if(mode == Mode::IMPORT) {
+      return tr("Import");
+    }
+    return tr("Export");
+  }();
+  m_commit_button = make_label_button(std::move(commit_label));
+  m_commit_button->setAttribute(Qt::WA_NoMousePropagation);
+  m_commit_button->setFixedSize(scale(100, 26));
+  m_commit_button->connect_click_signal(
+    std::bind_front(&SettingsPanel::on_commit, this));
   auto actions_body = new QWidget();
   auto actions_layout = make_hbox_layout(actions_body);
   actions_layout->setSpacing(scale_height(8));
   actions_layout->addWidget(cancel_button);
-  actions_layout->addWidget(m_import_button);
+  actions_layout->addWidget(m_commit_button);
   auto actions_box = new Box(actions_body);
   update_style(*actions_box, [] (auto& styles) {
     styles.get(Any()).
@@ -105,28 +117,28 @@ ImportSettingsPanel::ImportSettingsPanel(
   m_panel->installEventFilter(this);
   on_update(m_categories->get());
   m_connection = m_categories->connect_update_signal(
-    std::bind_front(&ImportSettingsPanel::on_update, this));
+    std::bind_front(&SettingsPanel::on_update, this));
   setFocusProxy(list_box);
 }
 
 const std::shared_ptr<UserSettings::CategoriesModel>&
-    ImportSettingsPanel::get_categories() const {
+    SettingsPanel::get_categories() const {
   return m_categories;
 }
 
-connection ImportSettingsPanel::connect_import_signal(
-    const ImportSignal::slot_type& slot) const {
-  return m_import_signal.connect(slot);
+connection SettingsPanel::connect_commit_signal(
+    const CommitSignal::slot_type& slot) const {
+  return m_commit_signal.connect(slot);
 }
 
-bool ImportSettingsPanel::eventFilter(QObject* watched, QEvent* event) {
+bool SettingsPanel::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::Close) {
     hide();
   }
   return QWidget::eventFilter(watched, event);
 }
 
-bool ImportSettingsPanel::event(QEvent* event) {
+bool SettingsPanel::event(QEvent* event) {
   if(event->type() == QEvent::ShowToParent) {
     m_panel->show();
     m_panel->activateWindow();
@@ -136,47 +148,15 @@ bool ImportSettingsPanel::event(QEvent* event) {
   return QWidget::event(event);
 }
 
-void ImportSettingsPanel::on_update(
-    const UserSettings::Categories& categories) {
-  m_import_button->setEnabled(categories.GetBitset().count() != 0);
+void SettingsPanel::on_update(const UserSettings::Categories& categories) {
+  m_commit_button->setEnabled(categories.GetBitset().count() != 0);
 }
 
-void ImportSettingsPanel::on_cancel() {
+void SettingsPanel::on_cancel() {
   close();
 }
 
-void ImportSettingsPanel::on_import() {
-  m_import_signal(m_categories->get());
+void SettingsPanel::on_commit() {
+  m_commit_signal(m_categories->get());
   close();
-}
-
-const QString& Spire::to_text(UserSettings::Category category) {
-  if(category == UserSettings::Category::BOOK_VIEW) {
-    static const auto value = QObject::tr("Book View");
-    return value;
-  } else if(category == UserSettings::Category::ORDER_IMBALANCE_INDICATOR) {
-    static const auto value = QObject::tr("Order Imbalance Indicator");
-    return value;
-  } else if(category == UserSettings::Category::INTERACTIONS) {
-    static const auto value = QObject::tr("Interactions");
-    return value;
-  } else if(category == UserSettings::Category::KEY_BINDINGS) {
-    static const auto value = QObject::tr("Key Bindings");
-    return value;
-  } else if(category == UserSettings::Category::PORTFOLIO) {
-    static const auto value = QObject::tr("Portfolio");
-    return value;
-  } else if(category == UserSettings::Category::TIME_AND_SALES) {
-    static const auto value = QObject::tr("Time and Sales");
-    return value;
-  } else if(category == UserSettings::Category::WATCHLIST) {
-    static const auto value = QObject::tr("Watchlist");
-    return value;
-  } else if(category == UserSettings::Category::LAYOUT) {
-    static const auto value = QObject::tr("Layout");
-    return value;
-  } else {
-    static const auto value = QObject::tr("None");
-    return value;
-  }
 }

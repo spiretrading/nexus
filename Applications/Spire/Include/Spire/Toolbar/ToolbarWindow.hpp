@@ -7,8 +7,8 @@
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
 #include "Spire/Spire/ListModel.hpp"
-#include "Spire/Toolbar/ImportSettingsPanel.hpp"
 #include "Spire/Toolbar/Toolbar.hpp"
+#include "Spire/Toolbar/UserSettings.hpp"
 #include "Spire/Ui/Ui.hpp"
 #include "Spire/Ui/Window.hpp"
 
@@ -83,9 +83,17 @@ namespace Spire {
       /**
        * Signals to import settings.
        * @param categories The categories to import.
-       * @param path The path to the settings file to import.
+       * @param path The path to the settings file to import from.
        */
       using ImportSignal = Signal<void (UserSettings::Categories categories,
+        const std::filesystem::path& path)>;
+
+      /**
+       * Signals to export settings.
+       * @param categories The categories to export.
+       * @param path The path to the settings file to export to.
+       */
+      using ExportSignal = Signal<void (UserSettings::Categories categories,
         const std::filesystem::path& path)>;
 
       /**
@@ -143,6 +151,10 @@ namespace Spire {
       boost::signals2::connection connect_import_signal(
         const ImportSignal::slot_type& slot) const;
 
+      /** Connects a slot to the ExportSignal. */
+      boost::signals2::connection connect_export_signal(
+        const ExportSignal::slot_type& slot) const;
+
       /** Connects a slot to the NewBlotterSignal. */
       boost::signals2::connection connect_new_blotter_signal(
         const NewBlotterSignal::slot_type& slot) const;
@@ -164,13 +176,14 @@ namespace Spire {
       mutable MinimizeAllSignal m_minimize_all_signal;
       mutable RestoreAllSignal m_restore_all_signal;
       mutable ImportSignal m_import_signal;
+      mutable ExportSignal m_export_signal;
       mutable SignOutSignal m_sign_out_signal;
       mutable NewBlotterSignal m_new_blotter_signal;
       Beam::ServiceLocator::DirectoryEntry m_account;
       ContextMenu* m_recently_closed_menu;
       ContextMenu* m_blotter_menu;
       NewBlotterForm* m_new_blotter_form;
-      ImportSettingsPanel* m_import_settings_panel;
+      SettingsPanel* m_settings_panel;
       std::shared_ptr<RecentlyClosedWindowListModel> m_recently_closed_windows;
       std::shared_ptr<ListModel<BlotterModel*>> m_pinned_blotters;
       boost::signals2::scoped_connection m_recently_closed_windows_connection;
@@ -187,6 +200,7 @@ namespace Spire {
       void on_recently_closed_window_operation(
         const RecentlyClosedWindowListModel::Operation& operation);
       void on_import();
+      void on_export();
       void on_new_blotter_action();
       void on_new_blotter_submission(const QString& name);
       void on_blotter_operation(

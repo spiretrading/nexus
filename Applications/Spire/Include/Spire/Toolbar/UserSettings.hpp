@@ -92,16 +92,17 @@ namespace Details {
 
   /**
    * Exports the user's settings.
-   * @param settings The UserSettings to save.
-   * @param path The file path to save the settings to.
+   * @param categories The categories to export.
+   * @param path The file path to export to.
+   * @param user_profile The user's profile.
    */
-  void export_settings(
-    const UserSettings& settings, const std::filesystem::path& path);
+  void export_settings(UserSettings::Categories categories,
+    const std::filesystem::path& path, const UserProfile& userProfile);
 
   /**
    * Imports the user's settings.
    * @param categories The categories to import.
-   * @param path The file path to import.
+   * @param path The file path to import from.
    * @param user_profile The user's profile.
    */
   void import_settings(UserSettings::Categories categories,

@@ -3,8 +3,8 @@
 #include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
-  class ImportSettingsPanel;
   class NewBlotterForm;
+  class SettingsPanel;
   class ToolbarController;
   class ToolbarWindow;
   class ToolbarWindowSettings;
