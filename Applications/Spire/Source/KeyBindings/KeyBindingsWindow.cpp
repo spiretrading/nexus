@@ -3,6 +3,8 @@
 #include "Spire/KeyBindings/CancelKeyBindingsModel.hpp"
 #include "Spire/KeyBindings/InteractionsKeyBindingsForm.hpp"
 #include "Spire/KeyBindings/InteractionsKeyBindingsModel.hpp"
+#include "Spire/KeyBindings/InteractionsPage.hpp"
+#include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
@@ -16,32 +18,26 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  auto make_interactions_page() {
-    auto interactions_form = new InteractionsKeyBindingsForm(Region::Global(),
-      std::make_shared<InteractionsKeyBindingsModel>());
-    interactions_form->setMinimumWidth(scale_width(384));
-    interactions_form->setMaximumWidth(scale_width(480));
-    auto scroll_box_body = new QWidget();
-    scroll_box_body->setSizePolicy(QSizePolicy::Expanding,
-      QSizePolicy::Expanding);
-    auto center_layout = make_vbox_layout();
-    center_layout->addWidget(interactions_form);
-    center_layout->addStretch(1);
-    auto scroll_box_body_layout = make_hbox_layout(scroll_box_body);
-    scroll_box_body_layout->addStretch(0);
-    scroll_box_body_layout->addLayout(center_layout, 1);
-    scroll_box_body_layout->addStretch(0);
-    auto scroll_box = new ScrollBox(scroll_box_body);
-    scroll_box->setFocusPolicy(Qt::NoFocus);
-    scroll_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    update_style(*scroll_box, [] (auto& style) {
-      style.get(Any()).set(BackgroundColor(QColor(0xFFFFFF)));
-    });
-    auto interactions_page = new QWidget();
-    enclose(*interactions_page, *scroll_box);
-    interactions_page->setSizePolicy(QSizePolicy::Expanding,
-      QSizePolicy::Expanding);
-    return interactions_page;
+  auto populate_regions() {
+    auto countries = std::vector<CountryCode>{DefaultCountries::US(),
+      DefaultCountries::CA()};
+    auto markets = std::vector<MarketCode>{DefaultMarkets::NSEX(),
+      DefaultMarkets::ISE(), DefaultMarkets::CSE(), DefaultMarkets::TSX(),
+      DefaultMarkets::TSXV(), DefaultMarkets::BOSX(), DefaultMarkets::CBOE(),
+      DefaultMarkets::HKEX(), DefaultMarkets::ASX()};
+    auto regions = std::make_shared<ArrayListModel<Region>>();
+    for(auto& country : countries) {
+      auto region = Region(country);
+      region.SetName(GetDefaultCountryDatabase().FromCode(country).m_name);
+      regions->push(region);
+    }
+    for(auto& market_code : markets) {
+      auto market = GetDefaultMarketDatabase().FromCode(market_code);
+      auto region = Region(market);
+      region.SetName(market.m_description);
+      regions->push(region);
+    }
+    return regions;
   }
 }
 
@@ -61,7 +57,12 @@ KeyBindingsWindow::KeyBindingsWindow(QWidget* parent)
   cancel_keys_page->setSizePolicy(QSizePolicy::Expanding,
     QSizePolicy::Expanding);
   navigation_view->add_tab(*cancel_keys_page, tr("Cancel Keys"));
-  navigation_view->add_tab(*make_interactions_page(), tr("Interactions"));
+  auto interactions_page = new InteractionsPage(populate_regions(),
+    std::make_shared<RegionInteractionsMap>("Global",
+      std::make_shared<InteractionsKeyBindingsModel>()));
+  interactions_page->setSizePolicy(QSizePolicy::Expanding,
+    QSizePolicy::Expanding);
+  navigation_view->add_tab(*interactions_page, tr("Interactions"));
   auto buttons_body = new QWidget();
   auto buttons_body_layout = make_hbox_layout(buttons_body);
   buttons_body_layout->setSpacing(scale_width(8));

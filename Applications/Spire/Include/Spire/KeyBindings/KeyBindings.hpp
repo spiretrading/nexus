@@ -7,6 +7,7 @@ namespace Spire {
   class CancelKeyBindingsModel;
   class InteractionsKeyBindingsForm;
   class InteractionsKeyBindingsModel;
+  class InteractionsPage;
   class KeyBindingsWindow;
   class OrderFieldInfoTip;
 }
