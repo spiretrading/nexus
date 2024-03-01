@@ -17,8 +17,8 @@ namespace Spire {
        * @param menu The ContextMenu where the submission is triggered.
        * @param label The label of the submitted the menu item.
        */
-      using SubmitSignal = Signal<void (const ContextMenu& menu,
-        const QString& label)>;
+      using SubmitSignal = Signal<
+        void (const ContextMenu& menu, const QString& label)>;
 
       /**
        * The type of function used to do an action.
@@ -44,6 +44,12 @@ namespace Spire {
        * @param action The action called when the item is submitted.
        */
       void add_action(const QString& name, const Action& action);
+
+      /**
+       * Adds an action that is disabled.
+       * @param name The name to display.
+       */
+      void add_disabled_action(const QString& name);
 
       /**
        * Adds a CheckBox.
@@ -77,6 +83,7 @@ namespace Spire {
     private:
       enum class MenuItemType {
         ACTION,
+        DISABLED_ACTION,
         CHECK,
         SEPARATOR,
         SUBMENU
