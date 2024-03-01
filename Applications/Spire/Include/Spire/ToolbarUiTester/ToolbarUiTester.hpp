@@ -2,6 +2,7 @@
 #define TOOLBAR_UI_TESTER_HPP
 #include <QPointer>
 #include <QTextEdit>
+#include "Spire/Toolbar/SettingsPanel.hpp"
 #include "Spire/Toolbar/ToolbarWindow.hpp"
 
 namespace Spire {
@@ -29,7 +30,7 @@ namespace Spire {
       void on_open(ToolbarWindow::WindowType window);
       void on_minimize_all();
       void on_restore_all();
-      void on_import(
+      void on_settings(SettingsPanel::Mode mode,
         UserSettings::Categories categories, const std::filesystem::path& path);
       void on_sign_out();
   };

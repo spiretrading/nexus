@@ -160,6 +160,11 @@ connection ToolbarWindow::connect_import_signal(
   return m_import_signal.connect(slot);
 }
 
+connection ToolbarWindow::connect_export_signal(
+    const ExportSignal::slot_type& slot) const {
+  return m_export_signal.connect(slot);
+}
+
 connection ToolbarWindow::connect_new_blotter_signal(
     const NewBlotterSignal::slot_type& slot) const {
   return m_new_blotter_signal.connect(slot);
@@ -190,9 +195,9 @@ MenuButton* ToolbarWindow::make_window_manager_button() {
     m_restore_all_signal();
   });
   window_menu.add_action(
-    tr("Import Settings..."), std::bind_front(&ToolbarWindow::on_import, this));
+    tr("Import Settings"), std::bind_front(&ToolbarWindow::on_import, this));
   window_menu.add_action(
-    tr("Export Settings..."), std::bind_front(&ToolbarWindow::on_export, this));
+    tr("Export Settings"), std::bind_front(&ToolbarWindow::on_export, this));
   return window_manager_button;
 }
 

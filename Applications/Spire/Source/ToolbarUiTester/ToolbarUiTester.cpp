@@ -70,8 +70,10 @@ void ToolbarUiTester::on_toolbar_click() {
     std::bind_front(&ToolbarUiTester::on_minimize_all, this));
   m_toolbar_window->connect_restore_all_signal(
     std::bind_front(&ToolbarUiTester::on_restore_all, this));
-  m_toolbar_window->connect_import_signal(
-    std::bind_front(&ToolbarUiTester::on_import, this));
+  m_toolbar_window->connect_import_signal(std::bind_front(
+    &ToolbarUiTester::on_settings, this, SettingsPanel::Mode::IMPORT));
+  m_toolbar_window->connect_export_signal(std::bind_front(
+    &ToolbarUiTester::on_settings, this, SettingsPanel::Mode::EXPORT));
   m_toolbar_window->connect_sign_out_signal(
     std::bind_front(&ToolbarUiTester::on_sign_out, this));
   m_toolbar_window->show();
@@ -90,10 +92,16 @@ void ToolbarUiTester::on_restore_all() {
   m_output->append("Restore all");
 }
 
-void ToolbarUiTester::on_import(
+void ToolbarUiTester::on_settings(SettingsPanel::Mode mode,
     UserSettings::Categories categories, const std::filesystem::path& path) {
-  m_output->append(
-    QString("Import (%s):").arg(QString::fromStdString(path.string())));
+  auto mode_label = [&] {
+    if(mode == SettingsPanel::Mode::EXPORT) {
+      return tr("Export");
+    }
+    return tr("Import");
+  }();
+  m_output->append(QString("(%1) (%2):").
+    arg(mode_label).arg(QString::fromStdString(path.string())));
   for(auto i = 0; i != UserSettings::Category::COUNT; ++i) {
     auto category = static_cast<UserSettings::Category>(i);
     if(categories.Test(category)) {
