@@ -1,6 +1,5 @@
 #ifndef SPIRE_INTERACTIONS_PAGE_HPP
 #define SPIRE_INTERACTIONS_PAGE_HPP
-#include <QVBoxLayout>
 #include <QWidget>
 #include "Nexus/Definitions/Region.hpp"
 #include "Nexus/Definitions/RegionMap.hpp"
@@ -57,13 +56,11 @@ namespace Spire {
       struct RegionInteractionsKeyBindingsModel;
       mutable AddSignal m_add_signal;
       mutable DeleteSignal m_delete_signal;
-      std::shared_ptr<RegionListModel> m_regions;
       std::shared_ptr<RegionInteractionsListModel> m_list_model;
       std::shared_ptr<LocalRegionModel> m_list_view_current;
       std::shared_ptr<RegionInteractionsKeyBindingsModel> m_interactions_model;
       InteractionsKeyBindingsForm* m_interactions_form;
       ListView* m_list_view;
-      QVBoxLayout* m_center_layout;
       AddRegionForm* m_add_region_form;
 
       QWidget* make_list_item(

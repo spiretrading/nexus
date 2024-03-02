@@ -94,14 +94,16 @@ struct InteractionsPage::RegionInteractionsListModel : ArrayListModel<Region> {
   void remove_region(const Region& region) {
     m_region_interactions->Erase(region);
     auto index = [&] {
-      for(auto i = 2; i < get_size(); ++i) {
+      for(auto i = 1; i < get_size(); ++i) {
         if(get(i) == region) {
           return i;
         }
       }
       return -1;
     }();
-    remove(index);
+    if(index > 0) {
+      remove(index);
+    }
   }
 
   const Region& get_base_region(const Region& region) const {
@@ -147,10 +149,10 @@ struct InteractionsPage::RegionInteractionsKeyBindingsModel :
   RegionInteractionsKeyBindingsModel(Region region,
       std::shared_ptr<RegionInteractionsMap> region_interactions)
       : m_region_interactions(std::move(region_interactions)) {
-    update_region(region);
+    set_region(region);
   }
 
-  void update_region(const Region& region) {
+  void set_region(const Region& region) {
     if(m_region == region) {
       return;
     }
@@ -188,16 +190,15 @@ struct InteractionsPage::RegionInteractionsKeyBindingsModel :
 
 InteractionsPage::InteractionsPage(std::shared_ptr<RegionListModel> regions,
     std::shared_ptr<RegionInteractionsMap> region_interactions, QWidget* parent)
-    : QWidget(parent),
-      m_regions(std::move(regions)) {
-  m_list_model = std::make_shared<RegionInteractionsListModel>(
-    std::move(region_interactions));
+    : QWidget(parent) {
+  m_list_model =
+    std::make_shared<RegionInteractionsListModel>(region_interactions);
   m_list_view_current = std::make_shared<LocalRegionModel>();
   m_list_view_current->connect_update_signal(
     std::bind_front(&InteractionsPage::on_current_region, this));
   m_list_view = new ListView(m_list_model,
-    std::make_shared<ListIndexValueModel<Region>>(m_list_model,
-      m_list_view_current),
+    std::make_shared<ListIndexValueModel<Region>>(
+      m_list_model, m_list_view_current),
     std::make_shared<ArrayListModel<int>>(),
     std::bind_front(&InteractionsPage::make_list_item, this));
   m_list_view->setFocusPolicy(Qt::NoFocus);
@@ -235,20 +236,19 @@ InteractionsPage::InteractionsPage(std::shared_ptr<RegionListModel> regions,
   auto scroll_box_body = new QWidget();
   scroll_box_body->setSizePolicy(QSizePolicy::Expanding,
     QSizePolicy::Expanding);
-  auto root_region = std::get<0>(*get_region_interactions()->Begin());
-  m_center_layout = make_vbox_layout();
-  m_interactions_model = 
-    std::make_shared<RegionInteractionsKeyBindingsModel>(root_region,
-      get_region_interactions());
+  auto root_region = std::get<0>(*region_interactions->Begin());
+  auto center_layout = make_vbox_layout();
+  m_interactions_model = std::make_shared<RegionInteractionsKeyBindingsModel>(
+    root_region, region_interactions);
   m_interactions_form = new InteractionsKeyBindingsForm(root_region,
     m_interactions_model);
   m_interactions_form->setMinimumWidth(scale_width(384));
   m_interactions_form->setMaximumWidth(scale_width(480));
-  m_center_layout->addWidget(m_interactions_form);
-  m_center_layout->addStretch(1);
+  center_layout->addWidget(m_interactions_form);
+  center_layout->addStretch(1);
   auto scroll_box_body_layout = make_hbox_layout(scroll_box_body);
   scroll_box_body_layout->addStretch(0);
-  scroll_box_body_layout->addLayout(m_center_layout, 1);
+  scroll_box_body_layout->addLayout(center_layout, 1);
   scroll_box_body_layout->addStretch(0);
   auto scroll_box = new ScrollBox(scroll_box_body);
   scroll_box->setFocusPolicy(Qt::NoFocus);
@@ -259,14 +259,14 @@ InteractionsPage::InteractionsPage(std::shared_ptr<RegionListModel> regions,
   auto layout = make_hbox_layout(this);
   layout->addWidget(master_box);
   layout->addWidget(scroll_box);
-  m_add_region_form = new AddRegionForm(m_regions, *this);
+  m_add_region_form = new AddRegionForm(std::move(regions), *this);
   m_add_region_form->connect_submit_signal(
     std::bind_front(&InteractionsPage::on_add_region, this));
   m_list_view_current->set(root_region);
 }
 
 const std::shared_ptr<RegionListModel>& InteractionsPage::get_regions() const {
-  return m_regions;
+  return m_add_region_form->get_regions();
 }
 
 const std::shared_ptr<RegionInteractionsMap>&
@@ -311,7 +311,7 @@ QWidget* InteractionsPage::make_list_item(
 void InteractionsPage::on_add_region_click() {
   m_add_region_form->show();
   auto add_region_window = m_add_region_form->window();
-  add_region_window->move(mapToGlobal(QPoint(0,0)) + rect().center() -
+  add_region_window->move(mapToGlobal(QPoint(0, 0)) + rect().center() -
     add_region_window->rect().center());
 }
 
@@ -327,7 +327,7 @@ void InteractionsPage::on_current_index(const optional<int>& current) {
 
 void InteractionsPage::on_current_region(const Region& region) {
   m_interactions_form->set_region(region);
-  m_interactions_model->update_region(region);
+  m_interactions_model->set_region(region);
 }
 
 void InteractionsPage::on_add_region(const Region& region) {
