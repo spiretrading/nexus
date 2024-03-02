@@ -58,7 +58,7 @@ KeyBindingsWindow::KeyBindingsWindow(QWidget* parent)
     QSizePolicy::Expanding);
   navigation_view->add_tab(*cancel_keys_page, tr("Cancel Keys"));
   auto interactions_page = new InteractionsPage(populate_regions(),
-    std::make_shared<RegionInteractionsMap>("Global",
+    std::make_shared<RegionInteractionsMap>(
       std::make_shared<InteractionsKeyBindingsModel>()));
   interactions_page->setSizePolicy(QSizePolicy::Expanding,
     QSizePolicy::Expanding);

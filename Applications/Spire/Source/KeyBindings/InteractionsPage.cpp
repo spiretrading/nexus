@@ -80,32 +80,21 @@ struct InteractionsPage::RegionInteractionsListModel : ArrayListModel<Region> {
     push(Region());
     for(auto i = m_region_interactions->Begin();
         i != m_region_interactions->End(); ++i) {
-      push(std::get<0>(*i));
+      auto& region = std::get<0>(*i);
+      insert(region, find_insert_index(region));
     }
   }
 
-  void push_region(const Region& region) {
-    auto base_region = [&] {
-      if(!region.GetMarkets().empty()) {
-        for(auto i = 0; i < get_size(); ++i) {
-          if(get(i) > region && !get(i).GetCountries().empty()) {
-            return get(i);
-          }
-        }
-      } else if(!region.GetCountries().empty()) {
-        return Region::Global();
-      }
-      return Region::Global();
-    }();
+  void add_region(const Region& region) {
     m_region_interactions->Set(region,
-      make_interactions(*m_region_interactions->Get(base_region)));
-    push(region);
+      make_interactions(*m_region_interactions->Get(get_base_region(region))));
+    insert(region, find_insert_index(region));
   }
 
   void remove_region(const Region& region) {
     m_region_interactions->Erase(region);
     auto index = [&] {
-      for(auto i = 0; i < get_size(); ++i) {
+      for(auto i = 2; i < get_size(); ++i) {
         if(get(i) == region) {
           return i;
         }
@@ -113,6 +102,87 @@ struct InteractionsPage::RegionInteractionsListModel : ArrayListModel<Region> {
       return -1;
     }();
     remove(index);
+  }
+
+  const Region& get_base_region(const Region& region) const {
+    if(!region.GetMarkets().empty()) {
+      for(auto i = 2; i < get_size(); ++i) {
+        if(get(i) > region && !get(i).GetCountries().empty()) {
+          return get(i);
+        }
+      }
+    } else if(!region.GetCountries().empty()) {
+      return get(1);
+    }
+    return get(1);
+  }
+
+  int find_insert_index(const Region& region) const {
+    for(auto i = 1; i < get_size(); ++i) {
+      if(!get(i).GetCountries().empty() && !region.GetCountries().empty()) {
+        if(to_text(*get(i).GetCountries().begin()) >
+            to_text(*region.GetCountries().begin())) {
+          return i;
+        }
+      } else if(!get(i).GetMarkets().empty() && !region.GetMarkets().empty()) {
+        if(to_text(MarketToken(*get(i).GetMarkets().begin())) >
+            to_text(MarketToken(*region.GetMarkets().begin()))) {
+          return i;
+        }
+      } else if(!get(i).GetMarkets().empty() &&
+          !region.GetCountries().empty()) {
+        return i;
+      }
+    }
+    return get_size();
+  }
+};
+
+struct InteractionsPage::RegionInteractionsKeyBindingsModel :
+    InteractionsKeyBindingsModel {
+  Region m_region;
+  std::shared_ptr<RegionInteractionsMap> m_region_interactions;
+  std::vector<scoped_connection> m_connections;
+
+  RegionInteractionsKeyBindingsModel(Region region,
+      std::shared_ptr<RegionInteractionsMap> region_interactions)
+      : m_region_interactions(std::move(region_interactions)) {
+    update_region(region);
+  }
+
+  void update_region(const Region& region) {
+    if(m_region == region) {
+      return;
+    }
+    m_region = region;
+    m_connections.clear();
+    auto interactions = std::get<1>(*m_region_interactions->Find(m_region));
+    get_default_quantity()->set(interactions->get_default_quantity()->get());
+    m_connections.push_back(get_default_quantity()->connect_update_signal(
+      [=] (auto& value) {
+        interactions->get_default_quantity()->set(value);
+      }));
+    is_cancel_on_fill()->set(interactions->is_cancel_on_fill()->get());
+    m_connections.push_back(is_cancel_on_fill()->connect_update_signal(
+      [=] (auto& value) {
+        interactions->is_cancel_on_fill()->set(value);
+      }));
+    for(auto modifier : modifiers) {
+      get_quantity_increment(modifier)->set(
+        interactions->get_quantity_increment(modifier)->get());
+      m_connections.push_back(
+        get_quantity_increment(modifier)->connect_update_signal(
+          [=] (auto& value) {
+            interactions->get_quantity_increment(modifier)->set(value);
+          }));
+      get_price_increment(modifier)->set(
+        interactions->get_price_increment(modifier)->get());
+      m_connections.push_back(
+        get_price_increment(modifier)->connect_update_signal(
+          [=] (auto& value) {
+            interactions->get_price_increment(modifier)->set(value);
+          }));
+    }
   }
 };
 
@@ -165,7 +235,16 @@ InteractionsPage::InteractionsPage(std::shared_ptr<RegionListModel> regions,
   auto scroll_box_body = new QWidget();
   scroll_box_body->setSizePolicy(QSizePolicy::Expanding,
     QSizePolicy::Expanding);
+  auto root_region = std::get<0>(*get_region_interactions()->Begin());
   m_center_layout = make_vbox_layout();
+  m_interactions_model = 
+    std::make_shared<RegionInteractionsKeyBindingsModel>(root_region,
+      get_region_interactions());
+  m_interactions_form = new InteractionsKeyBindingsForm(root_region,
+    m_interactions_model);
+  m_interactions_form->setMinimumWidth(scale_width(384));
+  m_interactions_form->setMaximumWidth(scale_width(480));
+  m_center_layout->addWidget(m_interactions_form);
   m_center_layout->addStretch(1);
   auto scroll_box_body_layout = make_hbox_layout(scroll_box_body);
   scroll_box_body_layout->addStretch(0);
@@ -183,7 +262,7 @@ InteractionsPage::InteractionsPage(std::shared_ptr<RegionListModel> regions,
   m_add_region_form = new AddRegionForm(m_regions, *this);
   m_add_region_form->connect_submit_signal(
     std::bind_front(&InteractionsPage::on_add_region, this));
-  m_list_view_current->set(std::get<0>(*get_region_interactions()->Begin()));
+  m_list_view_current->set(root_region);
 }
 
 const std::shared_ptr<RegionListModel>& InteractionsPage::get_regions() const {
@@ -203,14 +282,6 @@ connection InteractionsPage::connect_add_signal(
 connection InteractionsPage::connect_delete_signal(
     const DeleteSignal::slot_type& slot) const {
   return m_delete_signal.connect(slot);
-}
-
-QWidget* InteractionsPage::make_interactions_form(const Region& region) const {
-  auto interactions_form = new InteractionsKeyBindingsForm(region,
-    std::get<1>(*get_region_interactions()->Find(region)));
-  interactions_form->setMinimumWidth(scale_width(384));
-  interactions_form->setMaximumWidth(scale_width(480));
-  return interactions_form;
 }
 
 QWidget* InteractionsPage::make_list_item(
@@ -246,41 +317,28 @@ void InteractionsPage::on_add_region_click() {
 
 void InteractionsPage::on_current_index(const optional<int>& current) {
   if(current) {
-    auto item = m_list_view->get_list_item(*current);
-    item->set_selected(true);
-    item->setFocusPolicy(Qt::NoFocus);
+    if(auto item = m_list_view->get_list_item(*current)) {
+      item->set_selected(true);
+      item->setFocusPolicy(Qt::NoFocus);
+    }
   }
   m_list_view->setFocusPolicy(Qt::NoFocus);
 }
 
 void InteractionsPage::on_current_region(const Region& region) {
-  if(m_current_region == region) {
-    return;
-  }
-  if(auto widget = m_center_layout->itemAt(0)->widget(); widget) {
-    auto item = m_center_layout->replaceWidget(
-      m_center_layout->itemAt(0)->widget(), make_interactions_form(region));
-    if(item) {
-      delete item->widget();
-      delete item;
-    }
-  } else {
-    m_center_layout->insertWidget(0, make_interactions_form(region));
-  }
-  m_current_region = region;
+  m_interactions_form->set_region(region);
+  m_interactions_model->update_region(region);
 }
 
 void InteractionsPage::on_add_region(const Region& region) {
+  m_add_region_form->close();
   if(std::get<0>(*get_region_interactions()->Find(region)) == region) {
     m_list_view_current->set(region);
   } else {
-    m_list_model->push_region(region);
+    m_list_model->add_region(region);
     m_list_view_current->set(region);
-    m_list_view->get_list_item(
-      m_list_model->get_size() - 1)->setFocusPolicy(Qt::NoFocus);
     m_add_signal(region, get_region_interactions()->Get(region));
   }
-  m_add_region_form->close();
 }
 
 void InteractionsPage::on_delete_region(const Region& region) {

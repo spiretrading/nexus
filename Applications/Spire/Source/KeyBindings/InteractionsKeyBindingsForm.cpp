@@ -35,8 +35,8 @@ namespace {
     }
   }
 
-  auto make_region_header(const Region& region) {
-    auto label = make_label(Spire::to_text(region));
+  auto make_region_header() {
+    auto label = make_label("");
     label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     update_style(*label, [] (auto& style) {
       auto font = QFont("Roboto");
@@ -49,17 +49,8 @@ namespace {
     return label;
   }
 
-  auto make_description(const Region& region) {
-    auto description = [&] {
-      if(region.IsGlobal()) {
-        return QString("Customize the default interactions for all regions to "
-          "suit your trading style.");
-      }
-      return
-        QString("Customize interactions on %1 to suit your trading style.").
-          arg(Spire::to_text(region));
-    }();
-    auto label = make_text_area_label(description);
+  auto make_description() {
+    auto label = make_text_area_label("");
     label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     update_style(*label, [] (auto& style) {
       auto font = QFont("Roboto");
@@ -171,9 +162,12 @@ InteractionsKeyBindingsForm::InteractionsKeyBindingsForm(Nexus::Region region,
   body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto layout = make_vbox_layout(body);
   layout->setSpacing(scale_height(18));
-  layout->addWidget(make_region_header(region));
+  m_header = make_region_header();
+  layout->addWidget(m_header);
   layout->addSpacing(scale_height(-18));
-  layout->addWidget(make_description(region));
+  m_description = make_description();
+  set_region(region);
+  layout->addWidget(m_description);
   layout->addWidget(make_slot<Quantity>(tr("Default Quantity"),
     m_bindings->get_default_quantity()));
   layout->addWidget(
@@ -193,6 +187,20 @@ InteractionsKeyBindingsForm::InteractionsKeyBindingsForm(Nexus::Region region,
       set(PaddingBottom(scale_height(8)));
   });
   enclose(*this, *box);
+}
+
+void InteractionsKeyBindingsForm::set_region(const Region& region) {
+  auto description = [&] {
+    if(region.IsGlobal()) {
+      return QString("Customize the default interactions for all regions to "
+        "suit your trading style.");
+    }
+    return
+      QString("Customize interactions on %1 to suit your trading style.").
+      arg(Spire::to_text(region));
+  }();
+  m_description->get_current()->set(description);
+  m_header->get_current()->set(to_text(region));
 }
 
 const std::shared_ptr<InteractionsKeyBindingsModel>&
