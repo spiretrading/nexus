@@ -58,7 +58,8 @@ namespace Spire {
       mutable DeleteSignal m_delete_signal;
       std::shared_ptr<RegionInteractionsListModel> m_list_model;
       std::shared_ptr<LocalRegionModel> m_list_view_current;
-      std::shared_ptr<RegionInteractionsKeyBindingsModel> m_interactions_model;
+      std::shared_ptr<RegionInteractionsKeyBindingsModel>
+        m_interactions_form_model;
       InteractionsKeyBindingsForm* m_interactions_form;
       ListView* m_list_view;
       AddRegionForm* m_add_region_form;
