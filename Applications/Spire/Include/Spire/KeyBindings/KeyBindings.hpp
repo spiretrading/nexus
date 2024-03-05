@@ -7,8 +7,10 @@ namespace Spire {
   class CancelKeyBindingsModel;
   class InteractionsKeyBindingsForm;
   class InteractionsKeyBindingsModel;
+  class KeyBindingsModel;
   class KeyBindingsWindow;
   class OrderFieldInfoTip;
+  struct OrderTaskArguments;
 }
 
 #endif
