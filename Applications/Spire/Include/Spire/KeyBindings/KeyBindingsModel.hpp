@@ -16,7 +16,7 @@ namespace Spire {
       /** Constructs an empty KeyBindingsModel. */
       KeyBindingsModel();
 
-      /** Returns the list of OrderTaskArguments. */
+      /** Returns the list of order task arguments. */
       const std::shared_ptr<OrderTaskArgumentsListModel>&
         get_order_task_arguments() const;
 
