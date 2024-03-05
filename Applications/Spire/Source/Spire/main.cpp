@@ -9,7 +9,7 @@
 #include "Spire/Blotter/BlotterSettings.hpp"
 #include "Spire/BookView/BookViewProperties.hpp"
 #include "Spire/Dashboard/SavedDashboards.hpp"
-#include "Spire/LegacyKeyBindings/HotkeyOverride.hpp"
+#include "Spire/KeyBindings/HotkeyOverride.hpp"
 #include "Spire/LegacyUI/CustomQtVariants.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"

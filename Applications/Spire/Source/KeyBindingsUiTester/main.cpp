@@ -3,8 +3,8 @@
 #include <QTextEdit>
 #include <QVBoxLayout>
 #include "Spire/KeyBindings/AddRegionForm.hpp"
+#include "Spire/KeyBindings/HotkeyOverride.hpp"
 #include "Spire/KeyBindings/KeyBindingsWindow.hpp"
-#include "Spire/LegacyKeyBindings/HotkeyOverride.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/Resources.hpp"
 #include "Spire/Ui/Button.hpp"
