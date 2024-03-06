@@ -74,6 +74,9 @@ namespace Spire {
   /** Returns a UiProfile for the EditableBox. */
   UiProfile make_editable_box_profile();
 
+  /** Returns a UiProfile for the EditableTableView. */
+  UiProfile make_editable_table_view_profile();
+
   /** Returns a UiProfile for the EyeDropper. */
   UiProfile make_eye_dropper_profile();
 

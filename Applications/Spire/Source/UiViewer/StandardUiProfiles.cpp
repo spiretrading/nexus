@@ -16,8 +16,10 @@
 #include "Spire/Spire/ColumnViewListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/FieldValueModel.hpp"
+#include "Spire/Spire/FilteredTableModel.hpp"
 #include "Spire/Spire/ListValueModel.hpp"
 #include "Spire/Spire/LocalScalarValueModel.hpp"
+#include "Spire/Spire/RowViewListModel.hpp"
 #include "Spire/Spire/ToTextModel.hpp"
 #include "Spire/Spire/ValidatedValueModel.hpp"
 #include "Spire/Styles/ChainExpression.hpp"
@@ -46,6 +48,9 @@
 #include "Spire/Ui/DropDownList.hpp"
 #include "Spire/Ui/DurationBox.hpp"
 #include "Spire/Ui/EditableBox.hpp"
+#include "Spire/Ui/EditableTableView.hpp"
+#include "Spire/Ui/EmptySelectionModel.hpp"
+#include "Spire/Ui/EmptyTableFilter.hpp"
 #include "Spire/Ui/EyeDropper.hpp"
 #include "Spire/Ui/FilterPanel.hpp"
 #include "Spire/Ui/FocusObserver.hpp"
@@ -95,6 +100,7 @@
 #include "Spire/Ui/SecurityView.hpp"
 #include "Spire/Ui/SideBox.hpp"
 #include "Spire/Ui/SideFilterPanel.hpp"
+#include "Spire/Ui/SingleSelectionModel.hpp"
 #include "Spire/Ui/Slider.hpp"
 #include "Spire/Ui/Slider2D.hpp"
 #include "Spire/Ui/SplitView.hpp"
@@ -2016,6 +2022,149 @@ UiProfile Spire::make_editable_box_profile() {
     editable_box->setMinimumWidth(scale_width(112));
     apply_widget_properties(editable_box, profile.get_properties());
     return editable_box;
+  });
+  return profile;
+}
+
+auto make_header_model() {
+  auto model = std::make_shared<ArrayListModel<TableHeaderItem::Model>>();
+  model->push({"Name", "Name",
+    TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
+  model->push({"Region", "Region",
+    TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
+  model->push({"Order Type", "Ord Type",
+    TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
+  return model;
+}
+
+UiProfile Spire::make_editable_table_view_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_property("remove_row", -1));
+  properties.push_back(make_standard_property<QString>("search"));
+  auto profile = UiProfile("EditableTableView", properties, [] (auto& profile) {
+    auto array_table_model = std::make_shared<ArrayTableModel>();
+    array_table_model->push({QString("Test1"),
+      Region(*ParseWildCardSecurity(
+        "MSFT.NSDQ", GetDefaultMarketDatabase(), GetDefaultCountryDatabase())),
+      OrderType(OrderType::MARKET)});
+    array_table_model->push({QString("Test2"),
+      Region(GetDefaultMarketDatabase().FromCode(DefaultMarkets::TSX())),
+      OrderType(OrderType::STOP)});
+    auto filtered_table_model = std::make_shared<FilteredTableModel>(
+      array_table_model, [] (const TableModel&, int) {
+        return false;
+      });
+    auto table_view = new EditableTableView(filtered_table_model,
+      make_header_model(), std::make_shared<EmptyTableFilter>(),
+      std::make_shared<LocalValueModel<optional<TableIndex>>>(),
+      std::make_shared<TableSelectionModel>(
+        std::make_shared<TableEmptySelectionModel>(),
+        std::make_shared<ListSingleSelectionModel>(),
+        std::make_shared<ListEmptySelectionModel>()),
+      [=] (const auto& table, auto row, auto column) -> QWidget* {
+        if(row < table->get_row_size() - 1) {
+          if(column == 1) {
+            return new EditableBox(*new AnyInputBox(*new TextBox(
+              make_list_value_model(
+                std::make_shared<ColumnViewListModel<QString>>(table, column),
+                row))));
+          } else if(column == 2) {
+            return new CustomPopupBox(*new EditableBox(*new AnyInputBox(
+              *new RegionBox(populate_region_box_model(),
+                make_list_value_model(
+                  std::make_shared<ColumnViewListModel<Region>>(table, column),
+                  row)))));
+          } else if(column == 3) {
+            return new EditableBox(*new AnyInputBox(*make_order_type_box(
+              make_list_value_model(
+                std::make_shared<ColumnViewListModel<OrderType>>(table, column),
+                row))));
+          }
+          return nullptr;
+        } else {
+          auto input_box = [&] () -> AnyInputBox* {
+            if(column == 1) {
+              return new AnyInputBox(*new TextBox(""));
+            } else if(column == 2) {
+              return new AnyInputBox(
+                *new RegionBox(populate_region_box_model()));
+            } else if(column == 3) {
+              return new AnyInputBox(*make_order_type_box(OrderType::NONE));
+            }
+            return nullptr;
+          }();
+          if(input_box) {
+            input_box->connect_submit_signal([=] (const AnyRef& submission) {
+              auto has_value = false;
+              auto name = QString();
+              auto region = Region();
+              auto order_type = OrderType();
+              if(column == 1) {
+                name = any_cast<QString>(submission);
+                if(!name.isEmpty()) {
+                  has_value = true;
+                  input_box->get_current()->set(QString());
+                }
+              } else if(column == 2) {
+                region = any_cast<Region>(submission);
+                if(region != Region()) {
+                  has_value = true;
+                  input_box->get_current()->set(Region());
+                }
+              } else if(column == 3) {
+                order_type = any_cast<OrderType>(submission);
+                if(order_type != OrderType::NONE) {
+                  has_value = true;
+                  input_box->get_current()->set(OrderType());
+                }
+              }
+              if(has_value) {
+                array_table_model->push({name, region, order_type});
+              }
+            });
+          }
+          return new EditableBox(*input_box);
+        }
+      },
+      [] (const AnyRef& lhs, const AnyRef& rhs) -> bool {
+        if(lhs.get_type() != rhs.get_type()) {
+          return false;
+        } else if(!lhs.has_value() || !rhs.has_value()) {
+          return false;
+        } else if(lhs.get_type() == typeid(QString)) {
+          return QString::compare(any_cast<QString>(lhs),
+            any_cast<QString>(rhs), Qt::CaseInsensitive) < 0;
+        } else if(lhs.get_type() == typeid(OrderType)) {
+          return any_cast<OrderType>(lhs) < any_cast<OrderType>(rhs);
+        } else if(lhs.get_type() == typeid(Region)) {
+          return QString::compare(to_text(any_cast<Region>(lhs)),
+            to_text(any_cast<Region>(rhs))) < 0;
+        }
+        return false;
+      });
+    table_view->connect_delete_signal([=] (int row) {
+      array_table_model->remove(row);
+    });
+    apply_widget_properties(table_view, profile.get_properties());
+    table_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    auto& search = get<QString>("search", profile.get_properties());
+    search.connect_changed_signal([=] (const auto& value) {
+      filtered_table_model->set_filter([=] (const TableModel& model, int row) {
+        if(value.isEmpty() || row == model.get_row_size() - 1) {
+          return false;
+        }
+        return true;
+      });
+    });
+    auto& remove_row = get<int>("remove_row", profile.get_properties());
+    remove_row.connect_changed_signal([=] (const auto& value) {
+      if(value < 0 || value >= table_view->get_table()->get_row_size()) {
+        return;
+      }
+      array_table_model->remove(value);
+    });
+    return table_view;
   });
   return profile;
 }
