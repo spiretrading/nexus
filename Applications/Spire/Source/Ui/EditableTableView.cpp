@@ -31,27 +31,7 @@ namespace {
 
   using Editing = StateSelector<void, struct EditingSelectorTag>;
 
-  const auto DELETE_TIMEOUT_MS = 100;
-
-  auto adjust_row(int index, const AnyListModel& source) {
-    auto row = std::make_shared<ArrayListModel<std::any>>();
-    static auto row_index = 0;
-    row_index = index;
-    row->push(row_index);
-    for(auto i = 0; i < source.get_size(); ++i) {
-      row->push(source.get(i));
-    }
-    return row;
-  }
-
-  auto is_in_layout(QLayout* layout, QWidget* widget) {
-    for(auto i = 0; i < layout->count(); ++i) {
-      if(layout->itemAt(i)->widget() == widget) {
-        return true;
-      }
-    }
-    return false;
-  }
+  const auto DELETE_TIMEOUT_MS = 200;
 
   QWidget& get_table_item_body(const TableItem& item) {
     return *item.layout()->itemAt(0)->widget();
@@ -75,7 +55,8 @@ namespace {
   }
 
   EditableBox* find_editable_box(const QWidget& widget) {
-    if(auto editable_box = dynamic_cast<EditableBox*>(const_cast<QWidget*>(&widget))) {
+    if(auto editable_box =
+        dynamic_cast<EditableBox*>(const_cast<QWidget*>(&widget))) {
       return editable_box;
     }
     if(auto layout = widget.layout(); layout && layout->count() == 1) {
@@ -114,6 +95,72 @@ bool CustomPopupBox::event(QEvent* event) {
   return QWidget::event(event);
 }
 
+struct RevertTableModel : TableModel {
+  std::shared_ptr<TableModel> m_source;
+  TableModelTransactionLog m_transaction;
+  scoped_connection m_source_connection;
+
+  explicit RevertTableModel(std::shared_ptr<TableModel> source)
+    : m_source(std::move(source)),
+      m_source_connection(m_source->connect_operation_signal(
+        std::bind_front(&RevertTableModel::on_operation, this))) {}
+
+  int get_row_size() const {
+    return m_source->get_row_size();
+  }
+
+  int get_column_size() const {
+    return m_source->get_column_size() - 1;
+  }
+
+  AnyRef at(int row, int column) const {
+    if(row < 0 || row >= get_row_size() || column < 0 ||
+        column >= get_column_size()) {
+      throw std::out_of_range("The row or column is out of range.");
+    }
+    return m_source->at(row, column + 1);
+  }
+
+  QValidator::State set(int row, int column, const std::any& value) {
+    if(row < 0 || row >= get_row_size() || column < 0 ||
+        column >= get_column_size()) {
+      throw std::out_of_range("The row or column is out of range.");
+    }
+    return m_source->set(row, column + 1, value);
+  }
+
+  connection connect_operation_signal(
+      const OperationSignal::slot_type& slot) const {
+    return m_transaction.connect_operation_signal(slot);
+  }
+
+  void on_operation(const TableModel::Operation& operation) {
+    auto adjust_row = [] (int index, const AnyListModel & source) {
+      auto row = std::make_shared<ArrayListModel<std::any>>();
+      for(auto i = 1; i < source.get_size(); ++i) {
+        row->push(source.get(i));
+      }
+      return row;
+    };
+    visit(operation,
+      [&] (const TableModel::AddOperation& operation) {
+        m_transaction.push(TableModel::AddOperation(operation.m_index,
+          adjust_row(operation.m_index, *operation.m_row)));
+      },
+      [&] (const TableModel::MoveOperation& operation) {
+        m_transaction.push(operation);
+      },
+      [&] (const TableModel::RemoveOperation& operation) {
+        m_transaction.push(TableModel::RemoveOperation(operation.m_index,
+          adjust_row(operation.m_index, *operation.m_row)));
+      },
+      [&] (const TableModel::UpdateOperation& operation) {
+        m_transaction.push(TableModel::UpdateOperation(operation.m_row,
+          operation.m_column - 1, operation.m_previous, operation.m_value));
+      });
+  }
+};
+
 struct EditableTableView::EditableTableModel : TableModel {
   std::shared_ptr<TableModel> m_source;
   TableModelTransactionLog m_transaction;
@@ -133,13 +180,12 @@ struct EditableTableView::EditableTableModel : TableModel {
   }
 
   AnyRef at(int row, int column) const {
-    if(row < 0 || row >= get_row_size()) {
-      throw std::out_of_range("The row is out of range.");
+    if(row < 0 || row >= get_row_size() || column < 0 ||
+        column >= get_column_size()) {
+      throw std::out_of_range("The row or column is out of range.");
     }
     if(column == 0) {
-      static auto row_index = 0;
-      row_index = row;
-      return row_index;
+      return {};
     }
     if(row < m_source->get_row_size()) {
       return m_source->at(row, column - 1);
@@ -147,10 +193,10 @@ struct EditableTableView::EditableTableModel : TableModel {
     return {};
   }
 
-  QValidator::State set(int row, int column,
-    const std::any& value) {
-    if(row < 0 || row >= get_row_size()) {
-      throw std::out_of_range("The row is out of range.");
+  QValidator::State set(int row, int column, const std::any& value) {
+    if(row < 0 || row >= get_row_size() || column < 0 ||
+        column >= get_column_size()) {
+      throw std::out_of_range("The row or column is out of range.");
     }
     if(column == 0) {
       return QValidator::State::Invalid;
@@ -166,8 +212,17 @@ struct EditableTableView::EditableTableModel : TableModel {
     return m_transaction.connect_operation_signal(slot);
   }
 
-  void on_operation(
-    const TableModel::Operation& operation) {
+  void on_operation(const TableModel::Operation& operation) {
+    auto adjust_row = [] (int index, const AnyListModel& source) {
+      auto row = std::make_shared<ArrayListModel<std::any>>();
+      static auto row_index = 0;
+      row_index = index;
+      row->push(row_index);
+      for(auto i = 0; i < source.get_size(); ++i) {
+        row->push(source.get(i));
+      }
+      return row;
+    };
     visit(operation,
       [&] (const TableModel::AddOperation& operation) {
         m_transaction.push(TableModel::AddOperation(operation.m_index,
@@ -341,29 +396,20 @@ EditableTableView::EditableTableView(
       set(border_color(QColor(Qt::transparent)));
     style.get(Any() > CurrentRow() > DeleteButton()).
       set(Visibility(Visibility::VISIBLE));
-    style.get(Any() > CurrentRow() > (DeleteButton() && Hover()) > Body() > is_a<Icon>()).
+    style.get(Any() > CurrentRow() > (DeleteButton() && Hover()) >
+        Body() > is_a<Icon>()).
       set(BackgroundColor(QColor(0xD0CEEB)));
     style.get(Any() > CurrentRow()).set(BackgroundColor(QColor(0xE2E0FF)));
     style.get(Any() > CurrentColumn()).set(BackgroundColor(Qt::transparent));
   });
   for(auto row = 0; row < get_table()->get_row_size(); ++row) {
-    auto editable_row = std::make_shared<EditableTableRow>(row, *m_table_body->layout()->itemAt(row)->widget());
+    auto editable_row = std::make_shared<EditableTableRow>(row,
+      *m_table_body->layout()->itemAt(row)->widget());
     if(row == get_table()->get_row_size() - 1) {
       editable_row->set_ignore_filters(true);
     }
+    editable_row->get_row()->raise();
     m_rows.push(editable_row);
-  }
-  auto& children = m_table_body->children();
-  auto count = 0;
-  for(auto i = children.rbegin(); i != children.rend(); ++i) {
-    if(count >= get_table()->get_column_size()) {
-      break;
-    }
-    if((*i)->isWidgetType() &&
-        !is_in_layout(m_table_body->layout(), static_cast<QWidget*>(*i))) {
-      static_cast<QWidget*>(*i)->hide();
-      ++count;
-    }
   }
   m_table_body->get_table()->connect_operation_signal(
     std::bind_front(&EditableTableView::on_table_operation, this));
@@ -423,7 +469,7 @@ QWidget* EditableTableView::view_builder(ViewBuilder source_view_builder,
       });
       button->connect_click_signal([=] {
         QTimer::singleShot(DELETE_TIMEOUT_MS, [=] {
-          m_delete_signal(row);
+          m_delete_signal(get_current()->get()->m_row);
         });
       });
       return button;
@@ -434,7 +480,8 @@ QWidget* EditableTableView::view_builder(ViewBuilder source_view_builder,
       return label;
     }
   } else {
-    auto cell = source_view_builder(table, row, column);
+    auto cell = source_view_builder(
+      std::make_shared<RevertTableModel>(table), row, column - 1);
     cell->setFocusPolicy(Qt::ClickFocus);
     if(auto editable_box = find_editable_box(*cell)) {
       editable_box->connect_start_edit_signal([=] {
@@ -469,6 +516,8 @@ void EditableTableView::on_table_operation(
         auto blocker = shared_connection_block(m_current_connection);
         m_table_body->get_current()->set(index);
       }
+      auto row = m_table_body->layout()->itemAt(operation.m_index)->widget();
+      row->raise();
     },
     [&] (const TableModel::RemoveOperation& operation) {
     },

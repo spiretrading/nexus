@@ -2064,18 +2064,18 @@ UiProfile Spire::make_editable_table_view_profile() {
         std::make_shared<ListEmptySelectionModel>()),
       [=] (const auto& table, auto row, auto column) -> QWidget* {
         if(row < table->get_row_size() - 1) {
-          if(column == 1) {
+          if(column == 0) {
             return new EditableBox(*new AnyInputBox(*new TextBox(
               make_list_value_model(
                 std::make_shared<ColumnViewListModel<QString>>(table, column),
                 row))));
-          } else if(column == 2) {
+          } else if(column == 1) {
             return new CustomPopupBox(*new EditableBox(*new AnyInputBox(
               *new RegionBox(populate_region_box_model(),
                 make_list_value_model(
                   std::make_shared<ColumnViewListModel<Region>>(table, column),
                   row)))));
-          } else if(column == 3) {
+          } else if(column == 2) {
             return new EditableBox(*new AnyInputBox(*make_order_type_box(
               make_list_value_model(
                 std::make_shared<ColumnViewListModel<OrderType>>(table, column),
@@ -2084,12 +2084,12 @@ UiProfile Spire::make_editable_table_view_profile() {
           return nullptr;
         } else {
           auto input_box = [&] () -> AnyInputBox* {
-            if(column == 1) {
+            if(column == 0) {
               return new AnyInputBox(*new TextBox(""));
-            } else if(column == 2) {
+            } else if(column == 1) {
               return new AnyInputBox(
                 *new RegionBox(populate_region_box_model()));
-            } else if(column == 3) {
+            } else if(column == 2) {
               return new AnyInputBox(*make_order_type_box(OrderType::NONE));
             }
             return nullptr;
@@ -2100,19 +2100,19 @@ UiProfile Spire::make_editable_table_view_profile() {
               auto name = QString();
               auto region = Region();
               auto order_type = OrderType();
-              if(column == 1) {
+              if(column == 0) {
                 name = any_cast<QString>(submission);
                 if(!name.isEmpty()) {
                   has_value = true;
                   input_box->get_current()->set(QString());
                 }
-              } else if(column == 2) {
+              } else if(column == 1) {
                 region = any_cast<Region>(submission);
                 if(region != Region()) {
                   has_value = true;
                   input_box->get_current()->set(Region());
                 }
-              } else if(column == 3) {
+              } else if(column == 2) {
                 order_type = any_cast<OrderType>(submission);
                 if(order_type != OrderType::NONE) {
                   has_value = true;
@@ -2151,7 +2151,16 @@ UiProfile Spire::make_editable_table_view_profile() {
     auto& search = get<QString>("search", profile.get_properties());
     search.connect_changed_signal([=] (const auto& value) {
       filtered_table_model->set_filter([=] (const TableModel& model, int row) {
-        if(value.isEmpty() || row == model.get_row_size() - 1) {
+        if(value.isEmpty()) {
+          return false;
+        }
+        if(model.get<QString>(row, 0).contains(value, Qt::CaseInsensitive)) {
+          return false;
+        }
+        if(to_text(model.get<Region>(row, 1)).contains(value, Qt::CaseInsensitive)) {
+          return false;
+        }
+        if(to_text(model.get<OrderType>(row, 2)).contains(value, Qt::CaseInsensitive)) {
           return false;
         }
         return true;
