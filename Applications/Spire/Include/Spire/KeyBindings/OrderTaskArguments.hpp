@@ -11,6 +11,7 @@
 #include "Nexus/Definitions/Side.hpp"
 #include "Nexus/Definitions/Tag.hpp"
 #include "Nexus/Definitions/TimeInForce.hpp"
+#include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Spire/ListModel.hpp"
 
 namespace Spire {
@@ -52,15 +53,18 @@ namespace Spire {
   /**
    * Finds the <i>OrderTaskArguments</i> bound to a given <i>key</i> for a
    * specified <i>region</i>.
-   * @param order_task_arguments The list of OrderTaskArguments to search.
+   * @param arguments The list of OrderTaskArguments to search.
    * @param region The region that the binding belongs to.
    * @param key The key binding to find.
    * @return The <i>OrderTaskArguments</i> with the specified <i>key</i> whose
    *         region field is a subset of the specified <i>region</i>.
    */
   boost::optional<const OrderTaskArguments&> find_order_task_arguments(
-    const OrderTaskArgumentsListModel& order_task_arguments,
-    const Nexus::Region& region, const QKeySequence& key);
+    const OrderTaskArgumentsListModel& arguments, const Nexus::Region& region,
+    const QKeySequence& key);
+
+  std::unique_ptr<CanvasNode>
+    make_canvas_node(const OrderTaskArguments& arguments);
 }
 
 #endif

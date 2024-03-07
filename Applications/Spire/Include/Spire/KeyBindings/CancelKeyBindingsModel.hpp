@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <QKeySequence>
 #include <QValidator>
+#include "Spire/Canvas/Canvas.hpp"
 #include "Spire/KeyBindings/KeyBindings.hpp"
 #include "Spire/LegacyUI/HashQtTypes.hpp"
 #include "Spire/Ui/KeyInputBox.hpp"
@@ -89,6 +90,9 @@ namespace Spire {
         Operation operation, const QKeySequence& sequence);
       void on_update(Operation operation, const QKeySequence& sequence);
   };
+
+  void execute(CancelKeyBindingsModel::Operation operation,
+    Beam::Out<std::vector<std::shared_ptr<Task>>> tasks);
 }
 
 #endif

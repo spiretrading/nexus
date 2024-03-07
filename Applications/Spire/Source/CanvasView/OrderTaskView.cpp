@@ -27,7 +27,7 @@ using namespace Nexus;
 using namespace Spire;
 
 OrderTaskView::OrderTaskView(const DisplayWidgetSlot& displayWidgetSlot,
-  const RemoveWidgetSlot& removeWidgetSlot,  Ref<QWidget> parent,
+  const RemoveWidgetSlot& removeWidgetSlot, Ref<QWidget> parent,
   Ref<UserProfile> userProfile)
   : m_parent(parent.Get()),
     m_userProfile(userProfile.Get()),
@@ -172,11 +172,10 @@ std::unique_ptr<CanvasNode>
   return taskNode;
 }
 
-bool OrderTaskView::HandleKeyBindingEvent(
-    const OrderTaskArguments& arguments) {
-  auto taskNode = InitializeTaskNode(*keyBinding.m_node);
-  m_taskEntryWidget =
-    new CondensedCanvasWidget(keyBinding.m_name, Ref(*m_userProfile), m_parent);
+bool OrderTaskView::HandleKeyBindingEvent(const OrderTaskArguments& arguments) {
+  auto taskNode = InitializeTaskNode(*make_canvas_node(arguments));
+  m_taskEntryWidget = new CondensedCanvasWidget(
+    arguments.m_name.toStdString(), Ref(*m_userProfile), m_parent);
   auto coordinate = CanvasNodeModel::Coordinate(0, 0);
   auto isVisible = [&] {
     try {
@@ -205,10 +204,6 @@ bool OrderTaskView::HandleTaskInputEvent(const QKeyEvent& event) {
     return true;
   } else if(baseKey == Qt::Key_Enter || baseKey == Qt::Key_Return) {
     if(m_isTaskEntryWidgetForInteractionsProperties) {
-      auto& interactionsNode = static_cast<const InteractionsNode&>(
-        *m_taskEntryWidget->GetRoots().front());
-      m_userProfile->GetInteractionProperties().Set(*m_state->m_security,
-        interactionsNode.GetProperties());
       RemoveTaskEntry();
       return true;
     } else {
@@ -222,7 +217,7 @@ bool OrderTaskView::HandleTaskInputEvent(const QKeyEvent& event) {
     HandleInteractionsPropertiesEvent();
     return true;
   } else {
-    auto key = QKeySequence{static_cast<int>(event.modifiers() + event.key())};
+    auto key = QKeySequence(static_cast<int>(event.modifiers() + event.key()));
     auto arguments = find_order_task_arguments(
       *m_userProfile->GetKeyBindings()->get_order_task_arguments(),
       *m_state->m_security, key);
@@ -235,15 +230,15 @@ bool OrderTaskView::HandleTaskInputEvent(const QKeyEvent& event) {
 }
 
 void OrderTaskView::HandleInteractionsPropertiesEvent() {
-  auto& interactionsProperties =
-    m_userProfile->GetInteractionProperties().Get(*m_state->m_security);
+  auto interactions =
+    m_userProfile->GetKeyBindings()->get_interactions_key_bindings(
+      *m_state->m_security);
   auto interactionsNode = std::make_unique<InteractionsNode>(
-    *m_state->m_security, m_userProfile->GetMarketDatabase(),
-    interactionsProperties);
-  m_taskEntryWidget = new CondensedCanvasWidget{"Interactions",
-    Ref(*m_userProfile), m_parent};
+    *m_state->m_security, m_userProfile->GetMarketDatabase(), interactions);
+  m_taskEntryWidget =
+    new CondensedCanvasWidget("Interactions", Ref(*m_userProfile), m_parent);
   m_isTaskEntryWidgetForInteractionsProperties = true;
-  auto coordinate = CanvasNodeModel::Coordinate{0, 0};
+  auto coordinate = CanvasNodeModel::Coordinate(0, 0);
   m_taskEntryWidget->Add(coordinate, *interactionsNode);
   m_taskEntryWidget->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
   m_displayWidgetSlot(*m_taskEntryWidget);
@@ -252,8 +247,7 @@ void OrderTaskView::HandleInteractionsPropertiesEvent() {
 bool OrderTaskView::HandleCancelBindingEvent(
     const CancelKeyBindingsModel::Operation& operation) {
   HandleTasks(m_slotHandler);
-  KeyBindings::CancelBinding::HandleCancel(keyBinding,
-    Store(m_tasksExecuted[*m_state->m_security]));
+  execute(operation, Store(m_tasksExecuted[*m_state->m_security]));
   return true;
 }
 
