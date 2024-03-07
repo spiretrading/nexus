@@ -1,5 +1,6 @@
 #ifndef SPIRE_INTERACTIONS_KEY_BINDINGS_MODEL_HPP
 #define SPIRE_INTERACTIONS_KEY_BINDINGS_MODEL_HPP
+#include <Beam/SignalHandling/ConnectionGroup.hpp>
 #include "Spire/KeyBindings/KeyBindings.hpp"
 #include "Spire/Ui/MoneyBox.hpp"
 #include "Spire/Ui/QuantityBox.hpp"
@@ -15,6 +16,13 @@ namespace Spire {
 
       /** Constructs an empty model. */
       InteractionsKeyBindingsModel();
+
+      /**
+       * Constructs a model that is linked to a parent model.
+       * @param parent The parent to link to.
+       */
+      explicit InteractionsKeyBindingsModel(
+        std::shared_ptr<InteractionsKeyBindingsModel> parent);
 
       /** Returns the default quantity.*/
       std::shared_ptr<QuantityModel> get_default_quantity() const;
@@ -37,6 +45,9 @@ namespace Spire {
       std::array<std::shared_ptr<MoneyModel>, MODIFIER_COUNT>
         m_price_increments;
       std::shared_ptr<BooleanModel> m_is_cancel_on_fill;
+      Beam::SignalHandling::ConnectionGroup m_connections;
+
+      void on_write();
   };
 
   /**
