@@ -223,11 +223,12 @@ bool OrderTaskView::HandleTaskInputEvent(const QKeyEvent& event) {
     return true;
   } else {
     auto key = QKeySequence{static_cast<int>(event.modifiers() + event.key())};
-    auto taskBinding = m_userProfile->GetKeyBindings().GetTaskFromBinding(
-      m_state->m_security->GetMarket(), key);
-    if(taskBinding) {
+    auto arguments = find_order_task_arguments(
+      *m_userProfile->GetKeyBindings()->get_order_task_arguments(),
+      *m_state->m_security, key);
+    if(arguments) {
       RemoveTaskEntry();
-      return HandleKeyBindingEvent(*taskBinding);
+      return HandleKeyBindingEvent(*arguments);
     }
   }
   return false;
