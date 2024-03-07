@@ -1,6 +1,7 @@
 #ifndef SPIRE_EDITABLE_TABLE_VIEW_HPP
 #define SPIRE_EDITABLE_TABLE_VIEW_HPP
 #include "Spire/Spire/ArrayListModel.hpp"
+#include "Spire/Spire/FilteredTableModel.hpp"
 #include "Spire/Ui/TableView.hpp"
 
 namespace Spire {
@@ -12,7 +13,6 @@ namespace Spire {
 
     protected:
       bool event(QEvent* event) override;
-      //void keyPressEvent(QKeyEvent* event) override;
 
     private:
       PopupBox* m_popup_box;
@@ -35,8 +35,10 @@ namespace Spire {
 
       using Comparator = TableView::Comparator;
 
+      using Filter = FilteredTableModel::Filter;
+
       /**
-       * Signals that the tag is being clicked to delete.
+       * Signals that the row is being clicked to delete.
        */
       using DeleteSignal = Signal<void (int row)>;
 
@@ -44,19 +46,23 @@ namespace Spire {
        * Constructs a EditableTableView.
        * @param table The model of values to display.
        * @param header The model used to display the header.
-       * @param filter The filter to apply.
+       * @param table_filter The filter to apply to a column.
        * @param current The current value.
        * @param selection The selection.
        * @param view_builder The ViewBuilder to use.
-       * @param comparator A comparison function.
+       * @param comparator The comparison function.
+       * @param filter The filter to apply to the entire table.
        * @param parent The parent widget.
        */
       EditableTableView(std::shared_ptr<TableModel> table,
         std::shared_ptr<HeaderModel> header,
-        std::shared_ptr<TableFilter> filter,
+        std::shared_ptr<TableFilter> table_filter,
         std::shared_ptr<CurrentModel> current,
         std::shared_ptr<SelectionModel> selection, ViewBuilder view_builder,
-        Comparator comparator, QWidget* parent = nullptr);
+        Comparator comparator, Filter filter, QWidget* parent = nullptr);
+
+      /** Applies a new filter to this TableView. */
+      void set_filter(const Filter& filter);
 
       /** Connects a slot to the DeleteSignal. */
       boost::signals2::connection connect_delete_signal(
@@ -70,17 +76,21 @@ namespace Spire {
       struct EditableTableHeaderModel;
       class EditableTableRow;
       mutable DeleteSignal m_delete_signal;
-      std::shared_ptr<EditableTableModel> m_table_model;
+      std::shared_ptr<TableModel> m_source_table;
       ViewBuilder m_view_builder;
       TableBody* m_table_body;
       ArrayListModel<std::shared_ptr<EditableTableRow>> m_rows;
       boost::signals2::scoped_connection m_current_connection;
+      boost::signals2::scoped_connection m_source_operation_connection;
+      boost::signals2::scoped_connection m_operation_connection;
+      boost::signals2::scoped_connection m_sort_connection;
 
       QWidget* view_builder(ViewBuilder source_view_builder,
         const std::shared_ptr<TableModel>& table, int row, int column);
       void on_current(const boost::optional<Index>& index);
       void on_table_operation(const TableModel::Operation& operation);
       void on_source_table_operation(const TableModel::Operation& operation);
+      void on_sort(int column, TableHeaderItem::Order order);
   };
 }
 

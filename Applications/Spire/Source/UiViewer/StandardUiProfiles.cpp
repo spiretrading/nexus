@@ -876,6 +876,57 @@ namespace {
     private:
       Type m_rejected;
   };
+
+  auto make_header_model() {
+    auto model = std::make_shared<ArrayListModel<TableHeaderItem::Model>>();
+    model->push({"Name", "Name",
+      TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
+    model->push({"Region", "Region",
+      TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
+    model->push({"Order Type", "Ord Type",
+      TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
+    return model;
+  }
+
+  template<typename T>
+  class CustomListValueModel : public ListValueModel<T> {
+    public:
+      using Type = typename ListValueModel<T>::Type;
+
+      CustomListValueModel(std::shared_ptr<ListModel<Type>> source, int index)
+        : ListValueModel<Type>(std::move(source), index) {}
+
+      const Type& get() const override {
+        if(ListValueModel<Type>::get_state() == QValidator::State::Acceptable) {
+          return ListValueModel<Type>::get();
+        }
+        static auto value = Type();
+        return value;
+      }
+  };
+
+  template<typename T>
+  auto make_custom_list_value_model(std::shared_ptr<T> source, int index) {
+    return std::make_shared<CustomListValueModel<typename T::Type>>(
+      std::move(source), index);
+  }
+
+  template<typename T>
+  class CustomColumnViewListModel : public ColumnViewListModel<T> {
+    public:
+      using Type = typename ColumnViewListModel<T>::Type;
+
+      CustomColumnViewListModel(std::shared_ptr<TableModel> source, int column)
+        : ColumnViewListModel<T>(std::move(source), column) {}
+
+      const Type& get(int index) const override {
+        if(index != ColumnViewListModel<Type>::get_size() - 1) {
+          return ColumnViewListModel<Type>::get(index);
+        }
+        static auto value = Type();
+        return value;
+      }
+  };
 }
 
 UiProfile Spire::make_adaptive_box_profile() {
@@ -2026,17 +2077,6 @@ UiProfile Spire::make_editable_box_profile() {
   return profile;
 }
 
-auto make_header_model() {
-  auto model = std::make_shared<ArrayListModel<TableHeaderItem::Model>>();
-  model->push({"Name", "Name",
-    TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
-  model->push({"Region", "Region",
-    TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
-  model->push({"Order Type", "Ord Type",
-    TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
-  return model;
-}
-
 UiProfile Spire::make_editable_table_view_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
@@ -2051,11 +2091,7 @@ UiProfile Spire::make_editable_table_view_profile() {
     array_table_model->push({QString("Test2"),
       Region(GetDefaultMarketDatabase().FromCode(DefaultMarkets::TSX())),
       OrderType(OrderType::STOP)});
-    auto filtered_table_model = std::make_shared<FilteredTableModel>(
-      array_table_model, [] (const TableModel&, int) {
-        return false;
-      });
-    auto table_view = new EditableTableView(filtered_table_model,
+    auto table_view = new EditableTableView(array_table_model,
       make_header_model(), std::make_shared<EmptyTableFilter>(),
       std::make_shared<LocalValueModel<optional<TableIndex>>>(),
       std::make_shared<TableSelectionModel>(
@@ -2066,19 +2102,19 @@ UiProfile Spire::make_editable_table_view_profile() {
         if(row < table->get_row_size() - 1) {
           if(column == 0) {
             return new EditableBox(*new AnyInputBox(*new TextBox(
-              make_list_value_model(
-                std::make_shared<ColumnViewListModel<QString>>(table, column),
+              make_custom_list_value_model(
+                std::make_shared<CustomColumnViewListModel<QString>>(table, column),
                 row))));
           } else if(column == 1) {
             return new CustomPopupBox(*new EditableBox(*new AnyInputBox(
               *new RegionBox(populate_region_box_model(),
-                make_list_value_model(
-                  std::make_shared<ColumnViewListModel<Region>>(table, column),
+                make_custom_list_value_model(
+                  std::make_shared<CustomColumnViewListModel<Region>>(table, column),
                   row)))));
           } else if(column == 2) {
             return new EditableBox(*new AnyInputBox(*make_order_type_box(
-              make_list_value_model(
-                std::make_shared<ColumnViewListModel<OrderType>>(table, column),
+              make_custom_list_value_model(
+                std::make_shared<CustomColumnViewListModel<OrderType>>(table, column),
                 row))));
           }
           return nullptr;
@@ -2142,6 +2178,9 @@ UiProfile Spire::make_editable_table_view_profile() {
             to_text(any_cast<Region>(rhs))) < 0;
         }
         return false;
+      },
+      [] (const TableModel&, int) {
+        return false;
       });
     table_view->connect_delete_signal([=] (int row) {
       array_table_model->remove(row);
@@ -2150,7 +2189,7 @@ UiProfile Spire::make_editable_table_view_profile() {
     table_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     auto& search = get<QString>("search", profile.get_properties());
     search.connect_changed_signal([=] (const auto& value) {
-      filtered_table_model->set_filter([=] (const TableModel& model, int row) {
+      table_view->set_filter([=] (const TableModel& model, int row) {
         if(value.isEmpty()) {
           return false;
         }

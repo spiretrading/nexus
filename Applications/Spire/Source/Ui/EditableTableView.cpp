@@ -33,6 +33,19 @@ namespace {
 
   const auto DELETE_TIMEOUT_MS = 200;
 
+  bool is_a_word(const QString& text) {
+    return text.size() == 1 && (text[0].isLetterOrNumber() || text[0] == '_');
+  }
+
+  auto is_in_layout(QLayout* layout, QWidget* widget) {
+    for(auto i = 0; i < layout->count(); ++i) {
+      if(layout->itemAt(i)->widget() == widget) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   QWidget& get_table_item_body(const TableItem& item) {
     return *item.layout()->itemAt(0)->widget();
   }
@@ -185,7 +198,9 @@ struct EditableTableView::EditableTableModel : TableModel {
       throw std::out_of_range("The row or column is out of range.");
     }
     if(column == 0) {
-      return {};
+      static auto row_index = 0;
+      row_index = row;
+      return row_index;
     }
     if(row < m_source->get_row_size()) {
       return m_source->at(row, column - 1);
@@ -313,17 +328,25 @@ struct EditableTableView::EditableTableHeaderModel :
 
 class EditableTableView::EditableTableRow {
   public:
-    EditableTableRow(int row_index, QWidget& row)
-      : m_row_index(row_index),
-        m_row(&row),
-        m_is_ignore_filters(false),
-        m_is_out_of_range(false) {
+    EditableTableRow(std::shared_ptr<TableModel> source, int row_index,
+        QWidget& row)
+        : m_source(std::move(source)),
+          m_row_index(row_index),
+          m_row(&row),
+          m_is_ignore_filters(false),
+          m_is_out_of_range(false),
+          m_operation_connection(m_source->connect_operation_signal(
+            std::bind_front(&EditableTableRow::on_operation, this))) {
       update_style(*m_row, [] (auto& style) {
         style.get(Hover()).
           set(BackgroundColor(0xF2F2FF));
         style.get(Hover() > DeleteButton()).
           set(Visibility(Visibility::VISIBLE));
       });
+    }
+
+    void set_row_index(int index) {
+      m_row_index = index;
     }
 
     int get_row_index() const {
@@ -351,22 +374,55 @@ class EditableTableView::EditableTableRow {
     }
 
   private:
+    std::shared_ptr<TableModel> m_source;
     int m_row_index;
     QWidget* m_row;
     bool m_is_ignore_filters;
     bool m_is_out_of_range;
+    scoped_connection m_operation_connection;
+
+    void on_operation(const TableModel::Operation& operation) {
+      visit(operation,
+        [&] (const TableModel::AddOperation& operation) {
+          if(m_row_index >= operation.m_index) {
+            ++m_row_index;
+          }
+        },
+        [&] (const TableModel::RemoveOperation& operation) {
+          if(m_row_index == operation.m_index) {
+            m_row_index = -1;
+          } else if(m_row_index > operation.m_index) {
+            --m_row_index;
+          }
+        },
+        [&] (const TableModel::MoveOperation& operation) {
+          if(m_row_index == operation.m_source) {
+            m_row_index = operation.m_destination;
+          } else if(operation.m_source < operation.m_destination) {
+            if(m_row_index > operation.m_source &&
+              m_row_index <= operation.m_destination) {
+              --m_row_index;
+            }
+          } else if(m_row_index >= operation.m_destination &&
+            m_row_index < operation.m_source) {
+            ++m_row_index;
+          }
+        });
+    }
 };
 
 EditableTableView::EditableTableView(
     std::shared_ptr<TableModel> table, std::shared_ptr<HeaderModel> header,
-    std::shared_ptr<TableFilter> filter, std::shared_ptr<CurrentModel> current,
+    std::shared_ptr<TableFilter> table_filter, std::shared_ptr<CurrentModel> current,
     std::shared_ptr<SelectionModel> selection, ViewBuilder view_builder,
-    Comparator comparator, QWidget* parent)
-    : TableView(std::make_shared<EditableTableModel>(std::move(table)),
+    Comparator comparator, Filter filter, QWidget* parent)
+    : TableView(std::make_shared<EditableTableModel>(
+        std::make_shared<FilteredTableModel>(table, std::move(filter))),
       std::make_shared<EditableTableHeaderModel>(std::move(header)),
-      std::move(filter), std::move(current), std::move(selection),
+      std::move(table_filter), std::move(current), std::move(selection),
       std::bind_front(&EditableTableView::view_builder, this, view_builder),
-      std::move(comparator), parent) {
+      std::move(comparator), parent),
+      m_source_table(std::move(table)) {
   auto table_header = static_cast<TableHeader*>(static_cast<Box*>(
     layout()->itemAt(0)->widget())->get_body()->layout()->
       itemAt(0)->widget());
@@ -403,7 +459,7 @@ EditableTableView::EditableTableView(
     style.get(Any() > CurrentColumn()).set(BackgroundColor(Qt::transparent));
   });
   for(auto row = 0; row < get_table()->get_row_size(); ++row) {
-    auto editable_row = std::make_shared<EditableTableRow>(row,
+    auto editable_row = std::make_shared<EditableTableRow>(m_source_table, row,
       *m_table_body->layout()->itemAt(row)->widget());
     if(row == get_table()->get_row_size() - 1) {
       editable_row->set_ignore_filters(true);
@@ -411,12 +467,36 @@ EditableTableView::EditableTableView(
     editable_row->get_row()->raise();
     m_rows.push(editable_row);
   }
-  m_table_body->get_table()->connect_operation_signal(
-    std::bind_front(&EditableTableView::on_table_operation, this));
-  get_table()->connect_operation_signal(
+  auto& children = m_table_body->children();
+  auto count = 0;
+  for(auto i = children.rbegin(); i != children.rend(); ++i) {
+    if(count >= get_table()->get_column_size()) {
+      break;
+    }
+    if((*i)->isWidgetType() &&
+        !is_in_layout(m_table_body->layout(), static_cast<QWidget*>(*i))) {
+      static_cast<QWidget*>(*i)->hide();
+      ++count;
+    }
+  }
+  m_source_operation_connection = m_source_table->connect_operation_signal(
     std::bind_front(&EditableTableView::on_source_table_operation, this));
+  m_operation_connection = m_table_body->get_table()->connect_operation_signal(
+    std::bind_front(&EditableTableView::on_table_operation, this));
   m_current_connection = get_current()->connect_update_signal(
     std::bind_front(&EditableTableView::on_current, this));
+  m_sort_connection = connect_sort_signal(
+    std::bind_front(&EditableTableView::on_sort, this));
+}
+
+void EditableTableView::set_filter(const Filter& filter) {
+  auto current = get_current()->get();
+  std::static_pointer_cast<FilteredTableModel>(
+    std::static_pointer_cast<EditableTableModel>(
+      get_table())->m_source)->set_filter(
+        [=] (const TableModel& model, int row) {
+          return filter(model, row);
+        });
 }
 
 connection EditableTableView::connect_delete_signal(
@@ -447,7 +527,14 @@ bool EditableTableView::eventFilter(QObject* watched, QEvent* event) {
             return true;
           }
         default:
-          break;
+          if(auto text = key_event.text(); is_a_word(text)) {
+            if(auto current = m_table_body->get_current()->get();
+                current->m_column != 0) {
+              QCoreApplication::sendEvent(find_focus_proxy(
+                get_table_item_body(*m_table_body->get_item(*current))), event);
+              return true;
+            }
+          }
       }
     }
   }
@@ -469,7 +556,9 @@ QWidget* EditableTableView::view_builder(ViewBuilder source_view_builder,
       });
       button->connect_click_signal([=] {
         QTimer::singleShot(DELETE_TIMEOUT_MS, [=] {
-          m_delete_signal(get_current()->get()->m_row);
+          m_delete_signal(m_rows.get(
+            m_table_body->get_current()->get()->m_row)->get_row_index());
+          m_table_body->setFocus();
         });
       });
       return button;
@@ -517,11 +606,16 @@ void EditableTableView::on_table_operation(
         m_table_body->get_current()->set(index);
       }
       auto row = m_table_body->layout()->itemAt(operation.m_index)->widget();
-      row->raise();
+      auto editable_row = std::make_shared<EditableTableRow>(m_source_table,
+        m_table_body->get_table()->get<int>(operation.m_index, 0), *row);
+      m_rows.insert(editable_row, operation.m_index);
+      row->show();
     },
     [&] (const TableModel::RemoveOperation& operation) {
+      m_rows.remove(operation.m_index);
     },
     [&] (const TableModel::MoveOperation& operation) {
+      m_rows.move(operation.m_source, operation.m_destination);
     });
 }
 
@@ -534,4 +628,8 @@ void EditableTableView::on_source_table_operation(
     },
     [&] (const TableModel::MoveOperation& operation) {
     });
+}
+
+void EditableTableView::on_sort(int column, TableHeaderItem::Order order) {
+  m_table_body->update();
 }
