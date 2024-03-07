@@ -322,7 +322,23 @@ struct EditableTableView::EditableTableHeaderModel :
   }
 
   void on_operation(const Operation& operation) {
-    m_transaction.push(Operation(operation));
+    visit(operation,
+      [&] (const AddOperation& operation) {
+        m_transaction.push(AddOperation(operation.m_index + 1,
+          operation.get_value()));
+      },
+      [&] (const MoveOperation& operation) {
+        m_transaction.push(MoveOperation(operation.m_source + 1,
+          operation.m_destination + 1));
+      },
+      [&] (const RemoveOperation& operation) {
+        m_transaction.push(RemoveOperation(operation.m_index + 1,
+          operation.get_value()));
+      },
+      [&] (const UpdateOperation& operation) {
+        m_transaction.push(UpdateOperation(operation.m_index + 1,
+          operation.get_previous(), operation.get_value()));
+      });
   }
 };
 
