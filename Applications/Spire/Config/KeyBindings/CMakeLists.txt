@@ -1,11 +1,14 @@
 find_package(Qt5Widgets REQUIRED)
 file(GLOB header_files ${SPIRE_INCLUDE_PATH}/Spire/KeyBindings/*.hpp)
 file(GLOB source_files ${SPIRE_SOURCE_PATH}/KeyBindings/*.cpp)
+file(GLOB form_files ${SPIRE_SOURCE_PATH}/KeyBindings/*.ui)
+qt5_wrap_ui(generated_header_files ${form_files})
 find_cpp_qobject(qobject_source_files ${header_files})
 qt5_wrap_cpp(generated_source_files ${qobject_source_files}
   OPTIONS -DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED)
 source_group("Generated Files\\Header Files" FILES ${generated_header_files})
 source_group("Generated Files\\Source Files" FILES ${generated_source_files})
+source_group("Form Files" FILES ${form_files})
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 add_library(KeyBindings ${header_files} ${source_files}
   ${generated_header_files} ${generated_source_files})
@@ -49,8 +52,8 @@ if(UNIX)
     debug ${QT_XML_LIBRARY_DEBUG_PATH}
     optimized ${QT_XML_LIBRARY_OPTIMIZED_PATH})
 endif()
-target_link_libraries(KeyBindingsUiTester Async KeyBindings LegacyUI
-  LegacyKeyBindings Library Resources
+target_link_libraries(KeyBindingsUiTester Async KeyBindings LegacyUI Library
+  Resources
   debug ${CRYPTOPP_LIBRARY_DEBUG_PATH}
   optimized ${CRYPTOPP_LIBRARY_OPTIMIZED_PATH}
   debug ${OPEN_SSL_LIBRARY_DEBUG_PATH}

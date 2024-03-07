@@ -38,6 +38,19 @@ namespace Spire {
         m_price_increments;
       std::shared_ptr<BooleanModel> m_is_cancel_on_fill;
   };
+
+  /**
+   * Returns the default order quantity to display to a user.
+   * @param interactions The user's interactions.
+   * @param security The security that the user is entering a quantity for.
+   * @param position The current position in the given <i>security</i>.
+   * @param side The side of the order that the user is entering a quantity for.
+   * @return The default quantity to display.
+   */
+  Nexus::Quantity get_default_order_quantity(
+    const InteractionsKeyBindingsModel& interactions,
+    const Nexus::Security& security, Nexus::Quantity position,
+    Nexus::Side side);
 }
 
 #endif

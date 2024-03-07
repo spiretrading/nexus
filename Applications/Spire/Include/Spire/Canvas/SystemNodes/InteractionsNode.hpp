@@ -1,38 +1,37 @@
-#ifndef SPIRE_INTERACTIONSNODE_HPP
-#define SPIRE_INTERACTIONSNODE_HPP
+#ifndef SPIRE_INTERACTIONS_NODE_HPP
+#define SPIRE_INTERACTIONS_NODE_HPP
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Canvas/Common/CanvasNode.hpp"
-#include "Spire/LegacyKeyBindings/InteractionsProperties.hpp"
+#include "Spire/KeyBindings/InteractionsKeyBindingsModel.hpp"
 
 namespace Spire {
 
-  /*! \class InteractionsNode
-      \brief A CanvasNode used to display InteractionsProperties.
-   */
+  /** A CanvasNode used to display InteractionsProperties. */
   class InteractionsNode : public CanvasNode {
     public:
 
-      //! Constructs an InteractionsNode.
+      /** Constructs an InteractionsNode using default interactions. */
       InteractionsNode();
 
-      //! Constructs an InteractionsNode.
-      /*!
-        \param security The Security whose interactions are represented.
-        \param marketDatabase The MarketDatabase containing the
-               <i>security</i>'s market.
-        \param properties The InteractionsProperties to represent.
-      */
+      /**
+       * Constructs an InteractionsNode.
+       * @param security The Security whose interactions are represented.
+       * @param marketDatabase The MarketDatabase containing the
+       *        <i>security</i>'s market.
+       * @param interactions The interactions to represent.
+       */
       InteractionsNode(Nexus::Security security,
         const Nexus::MarketDatabase& marketDatabase,
-        const InteractionsProperties& properties);
+        const std::shared_ptr<InteractionsKeyBindingsModel>& interactions);
 
-      //! Returns the InteractionsProperties represented.
-      const InteractionsProperties& GetProperties() const;
+      /** Returns the interactions. */
+      const std::shared_ptr<InteractionsKeyBindingsModel>&
+        GetProperties() const;
 
-      virtual std::unique_ptr<CanvasNode> Replace(const CanvasNode& child,
-        std::unique_ptr<CanvasNode> replacement) const;
+      std::unique_ptr<CanvasNode> Replace(const CanvasNode& child,
+        std::unique_ptr<CanvasNode> replacement) const override;
 
-      virtual void Apply(CanvasNodeVisitor& visitor) const;
+      void Apply(CanvasNodeVisitor& visitor) const override;
 
       using CanvasNode::Replace;
     protected:
@@ -40,11 +39,11 @@ namespace Spire {
 
     private:
       friend struct Beam::Serialization::DataShuttle;
-      InteractionsProperties m_properties;
+      std::shared_ptr<InteractionsKeyBindingsModel> m_interactions;
 
       void Setup(Nexus::Security security,
         const Nexus::MarketDatabase& marketDatabase,
-        const InteractionsProperties& properties);
+        const std::shared_ptr<InteractionsKeyBindingsModel>& interactions);
       template<typename Shuttler>
       void Shuttle(Shuttler& shuttle, unsigned int version);
   };
@@ -52,7 +51,7 @@ namespace Spire {
   template<typename Shuttler>
   void InteractionsNode::Shuttle(Shuttler& shuttle, unsigned int version) {
     CanvasNode::Shuttle(shuttle, version);
-    shuttle.Shuttle("properties", m_properties);
+/** TODO    shuttle.Shuttle("properties", m_properties); */
   }
 }
 

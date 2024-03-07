@@ -50,9 +50,9 @@ if(UNIX)
     optimized ${QT_XML_LIBRARY_OPTIMIZED_PATH})
 endif()
 target_link_libraries(ToolbarUiTester Async Dashboard Charting PortfolioViewer
-  Utilities RiskTimer AccountViewer LegacyKeyBindings KeyBindings Blotter
-  Catalog BookView Library Login Resources TimeAndSales OrderImbalanceIndicator
-  InputWidgets CanvasView Canvas LegacyResources LegacyUI Toolbar
+  Utilities RiskTimer AccountViewer KeyBindings Blotter Catalog BookView Library
+  Login Resources TimeAndSales OrderImbalanceIndicator InputWidgets CanvasView
+  Canvas LegacyResources LegacyUI Toolbar
   debug ${CRYPTOPP_LIBRARY_DEBUG_PATH}
   optimized ${CRYPTOPP_LIBRARY_OPTIMIZED_PATH}
   debug ${LUA_LIBRARY_DEBUG_PATH}

@@ -1,4 +1,4 @@
-#include "Spire/LegacyKeyBindings/InteractionsWidget.hpp"
+#include "Spire/KeyBindings/InteractionsWidget.hpp"
 #include "Spire/LegacyUI/MoneySpinBox.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "ui_InteractionsWidget.h"

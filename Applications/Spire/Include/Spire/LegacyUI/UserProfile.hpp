@@ -19,8 +19,7 @@
 #include "Spire/Canvas/Types/CanvasTypeRegistry.hpp"
 #include "Spire/Catalog/CatalogSettings.hpp"
 #include "Spire/Dashboard/SavedDashboards.hpp"
-#include "Spire/LegacyKeyBindings/InteractionsProperties.hpp"
-#include "Spire/LegacyKeyBindings/KeyBindings.hpp"
+#include "Spire/KeyBindings/KeyBindingsModel.hpp"
 #include "Spire/LegacyUI/LegacyUI.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorProperties.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorWindowSettings.hpp"
@@ -132,17 +131,8 @@ namespace Spire {
       /** Returns the SavedDashboards. */
       const SavedDashboards& GetSavedDashboards() const;
 
-      /** Returns the KeyBindings. */
-      const KeyBindings& GetKeyBindings() const;
-
-      /** Returns the KeyBindings. */
-      KeyBindings& GetKeyBindings();
-
-      /**
-       * Sets the KeyBindings.
-       * @param keyBindings The new KeyBindings to use for this profile.
-       */
-      void SetKeyBindings(const KeyBindings& keyBindings);
+      /** Returns the key bindings. */
+      const std::shared_ptr<KeyBindingsModel>& GetKeyBindings() const;
 
       /** Returns the CatalogSettings. */
       const CatalogSettings& GetCatalogSettings() const;
@@ -212,22 +202,6 @@ namespace Spire {
       void SetDefaultPortfolioViewerProperties(
         const PortfolioViewerProperties& properties);
 
-      /** Returns the RegionMap storing the InteractionProperties. */
-      Nexus::RegionMap<InteractionsProperties>& GetInteractionProperties();
-
-      /** Returns the RegionMap storing the InteractionProperties. */
-      const Nexus::RegionMap<InteractionsProperties>&
-        GetInteractionProperties() const;
-
-      /**
-       * Returns the default Quantity.
-       * @param security The Security to lookup the default Quantity for.
-       * @param side The Side to get the default Quantity on.
-       * @return The default Quantity used for Tasks.
-       */
-      Nexus::Quantity GetDefaultQuantity(
-        const Nexus::Security& security, Nexus::Side side) const;
-
       /** Returns the initial PortfolioViewerWindowSettings. */
       const boost::optional<PortfolioViewerWindowSettings>&
         GetInitialPortfolioViewerWindowSettings() const;
@@ -258,9 +232,8 @@ namespace Spire {
       RiskTimerProperties m_riskTimerProperties;
       TimeAndSalesProperties m_defaultTimeAndSalesProperties;
       PortfolioViewerProperties m_defaultPortfolioViewerProperties;
-      Nexus::RegionMap<InteractionsProperties> m_interactionProperties;
       CatalogSettings m_catalogSettings;
-      KeyBindings m_keyBindings;
+      std::shared_ptr<KeyBindingsModel> m_keyBindings;
       CanvasTypeRegistry m_typeRegistry;
       std::unique_ptr<BlotterSettings> m_blotterSettings;
       boost::optional<OrderImbalanceIndicatorWindowSettings>
