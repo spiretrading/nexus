@@ -1,11 +1,17 @@
 #include "Spire/KeyBindings/KeyBindingsWindow.hpp"
+#include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
+#include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
+#include "Nexus/Definitions/SecuritySet.hpp"
 #include "Spire/KeyBindings/CancelKeyBindingsForm.hpp"
 #include "Spire/KeyBindings/CancelKeyBindingsModel.hpp"
 #include "Spire/KeyBindings/InteractionsKeyBindingsForm.hpp"
 #include "Spire/KeyBindings/InteractionsKeyBindingsModel.hpp"
+#include "Spire/KeyBindings/OrderTasksKeyBindingsForm.hpp"
+#include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/NavigationView.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
@@ -43,6 +49,64 @@ namespace {
       QSizePolicy::Expanding);
     return interactions_page;
   }
+
+  auto populate_region_box_model() {
+    auto securities = std::vector<std::pair<std::string, std::string>>{
+      {"MSFT.NSDQ", "Microsoft Corporation"},
+      {"MG.TSX", "Magna International Inc."},
+      {"MRU.TSX", "Metro Inc."},
+      {"MFC.TSX", "Manulife Financial Corporation"},
+      {"MX.TSX", "Methanex Corporation"},
+      {"TSO.ASX", "Tesoro Resources Limited"}};
+    auto markets = std::vector<MarketCode>{DefaultMarkets::NSEX(),
+      DefaultMarkets::ISE(), DefaultMarkets::CSE(), DefaultMarkets::TSX(),
+      DefaultMarkets::TSXV(), DefaultMarkets::BOSX()};
+    auto countries = std::vector<CountryCode>{DefaultCountries::US(),
+      DefaultCountries::CA(), DefaultCountries::AU(), DefaultCountries::JP(),
+      DefaultCountries::CN()};
+    auto model = std::make_shared<LocalComboBoxQueryModel>();
+    for(auto& security_info : securities) {
+      auto security = *ParseWildCardSecurity(security_info.first,
+        GetDefaultMarketDatabase(), GetDefaultCountryDatabase());
+      auto region = Region(security);
+      region.SetName(security_info.second);
+      model->add(to_text(security).toLower(), region);
+      model->add(QString::fromStdString(region.GetName()).toLower(), region);
+    }
+    for(auto& market_code : markets) {
+      auto market = GetDefaultMarketDatabase().FromCode(market_code);
+      auto region = Region(market);
+      region.SetName(market.m_description);
+      model->add(to_text(MarketToken(market.m_code)).toLower(), region);
+      model->add(QString::fromStdString(region.GetName()).toLower(), region);
+    }
+    for(auto& country : countries) {
+      auto region = Region(country);
+      region.SetName(
+        GetDefaultCountryDatabase().FromCode(country).m_name);
+      model->add(to_text(country).toLower(), region);
+      model->add(QString::fromStdString(region.GetName()).toLower(), region);
+    }
+    return model;
+  }
+
+  auto populate_order_task_arguments() {
+    auto arguments = std::make_shared<ArrayListModel<OrderTaskArguments>>();
+    arguments->push({"Test1",
+      Region(*ParseWildCardSecurity(
+        "MSFT.NSDQ", GetDefaultMarketDatabase(), GetDefaultCountryDatabase())),
+      "NASDAQ", OrderType::MARKET, Side::ASK, Quantity(1),
+      TimeInForce(TimeInForce::Type::DAY), {}, QKeySequence("Ctrl+F4")});
+    arguments->push({"Test2",
+      Region(GetDefaultMarketDatabase().FromCode(DefaultMarkets::TSX())),
+      "TSX", OrderType::STOP, Side::ASK, Quantity(10),
+      TimeInForce(TimeInForce::Type::DAY), {}, QKeySequence("Ctrl+Alt+S")});
+    arguments->push({"Test3",
+      Region(DefaultCountries::US()), "NYSE",
+      OrderType::MARKET, Side::BID, Quantity(20),
+      TimeInForce(TimeInForce::Type::IOC), {}, QKeySequence("F3")});
+    return arguments;
+  }
 }
 
 KeyBindingsWindow::KeyBindingsWindow(QWidget* parent)
@@ -53,7 +117,9 @@ KeyBindingsWindow::KeyBindingsWindow(QWidget* parent)
   auto navigation_view = new NavigationView();
   navigation_view->setSizePolicy(QSizePolicy::Expanding,
     QSizePolicy::Expanding);
-  auto task_keys_page = new QWidget();
+  auto task_keys_page = new OrderTasksKeyBindingsForm(
+    populate_region_box_model(), populate_order_task_arguments(),
+    GetDefaultDestinationDatabase(), GetDefaultMarketDatabase());
   task_keys_page->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   navigation_view->add_tab(*task_keys_page, tr("Task Keys"));
   auto cancel_keys_page =

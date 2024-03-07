@@ -10,8 +10,12 @@ namespace Spire {
   class InteractionsKeyBindingsModel;
   class KeyBindingsModel;
   class KeyBindingsWindow;
+  class MatchCache;
   class OrderFieldInfoTip;
   struct OrderTaskArguments;
+  class OrderTaskArgumentsToTableModel;
+  class OrderTasksKeyBindingsForm;
+  class TableMatchCache;
 }
 
 #endif
