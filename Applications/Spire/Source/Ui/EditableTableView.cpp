@@ -123,7 +123,7 @@ struct RevertTableModel : TableModel {
   }
 
   int get_column_size() const {
-    return m_source->get_column_size() - 1;
+    return m_source->get_column_size() - 2;
   }
 
   AnyRef at(int row, int column) const {
@@ -189,7 +189,7 @@ struct EditableTableView::EditableTableModel : TableModel {
   }
 
   int get_column_size() const {
-    return m_source->get_column_size() + 1;
+    return m_source->get_column_size() + 2;
   }
 
   AnyRef at(int row, int column) const {
@@ -270,11 +270,11 @@ struct EditableTableView::EditableTableHeaderModel :
         std::bind_front(&EditableTableHeaderModel::on_operation, this))) {}
 
   int get_size() const override {
-    return m_source->get_size() + 1;
+    return m_source->get_size() + 2;
   }
 
   const TableHeaderItem::Model& get(int index) const override {
-    if(index == 0) {
+    if(index == 0 || index == get_size() - 1) {
       static auto model = TableHeaderItem::Model{"", "",
         TableHeaderItem::Order::UNORDERED, TableFilter::Filter::NONE};
       return model;
@@ -584,20 +584,27 @@ QWidget* EditableTableView::view_builder(ViewBuilder source_view_builder,
       match(*label, EmptyCell());
       return label;
     }
+  } else if(column == table->get_column_size() - 1) {
+    auto label = make_label("");
+    label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    match(*label, EmptyCell());
+    return label;
   } else {
     auto cell = source_view_builder(
       std::make_shared<RevertTableModel>(table), row, column - 1);
-    cell->setFocusPolicy(Qt::ClickFocus);
-    if(auto editable_box = find_editable_box(*cell)) {
-      editable_box->connect_start_edit_signal([=] {
-        match(*cell, Editing());
-      });
-      editable_box->connect_end_edit_signal([=] {
-        unmatch(*cell, Editing());
-        if(!QApplication::focusWidget()) {
-          m_table_body->setFocus();
-        }
-      });
+    if(cell) {
+      cell->setFocusPolicy(Qt::ClickFocus);
+      if(auto editable_box = find_editable_box(*cell)) {
+        editable_box->connect_start_edit_signal([=] {
+          match(*cell, Editing());
+        });
+        editable_box->connect_end_edit_signal([=] {
+          unmatch(*cell, Editing());
+          if(!QApplication::focusWidget()) {
+            m_table_body->setFocus();
+          }
+        });
+      }
     }
     return cell;
   }
@@ -607,7 +614,9 @@ void EditableTableView::on_current(const boost::optional<Index>& index) {
   if(index) {
     if(index->m_column == 0) {
       m_table_body->get_current()->set(TableBody::Index{index->m_row, 1});
-      return;
+    } else if(index->m_column == get_table()->get_column_size() - 1) {
+      m_table_body->get_current()->set(TableBody::Index{index->m_row,
+        get_table()->get_column_size() - 2});
     }
   }
 }
