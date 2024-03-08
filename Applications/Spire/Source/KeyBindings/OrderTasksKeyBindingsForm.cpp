@@ -212,6 +212,7 @@ namespace {
         set(PaddingBottom(scale_height(10))).
         set(BorderBottomSize(scale_height(1))).
         set(BorderBottomColor(QColor(0xE0E0E0)));
+      style.get(Any() > Placeholder()).set(TextColor(QColor(0xA0A0A0)));
     });
     return std::tuple(search_region, search_box);
   }
