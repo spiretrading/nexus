@@ -30,7 +30,7 @@ namespace Spire::LegacyUI {
       UserProfile* m_userProfile;
       boost::optional<Nexus::Security> m_security;
 
-      void AdjustIncrement(Qt::KeyboardModifiers modifier);
+      void AdjustIncrement(Qt::KeyboardModifier modifier);
   };
 }
 

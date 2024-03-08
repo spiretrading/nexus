@@ -10,13 +10,12 @@ using namespace boost;
 using namespace Nexus;
 using namespace Spire;
 using namespace Spire::LegacyUI;
-using namespace std;
 
 MoneySpinBox::MoneySpinBox(QWidget* parent)
     : QDoubleSpinBox(parent),
       m_userProfile(nullptr) {
-  setMaximum(numeric_limits<double>::max());
-  setMinimum(numeric_limits<double>::lowest());
+  setMaximum(std::numeric_limits<double>::max());
+  setMinimum(std::numeric_limits<double>::lowest());
   setCorrectionMode(QAbstractSpinBox::CorrectToPreviousValue);
   setKeyboardTracking(true);
   setAccelerated(false);
@@ -28,34 +27,32 @@ MoneySpinBox::MoneySpinBox(Ref<UserProfile> userProfile,
     const MoneyNode& node, QWidget* parent)
     : QDoubleSpinBox(parent),
       m_userProfile(userProfile.Get()) {
-  setMaximum(numeric_limits<double>::max());
-  setMinimum(numeric_limits<double>::lowest());
+  setMaximum(std::numeric_limits<double>::max());
+  setMinimum(std::numeric_limits<double>::lowest());
   setCorrectionMode(QAbstractSpinBox::CorrectToPreviousValue);
   setKeyboardTracking(true);
   setAccelerated(false);
   setSingleStep(0.01);
   setDecimals(6);
   auto referent = node.FindReferent();
-  if(referent.is_initialized()) {
-    auto anchor = FindAnchor(*referent);
-    if(anchor.is_initialized()) {
+  if(referent) {
+    if(auto anchor = FindAnchor(*referent)) {
       referent = anchor;
     }
   }
-  if(referent.is_initialized()) {
-    auto securityValueNode = dynamic_cast<const SecurityNode*>(&*referent);
-    if(securityValueNode != nullptr) {
+  if(referent) {
+    if(auto securityValueNode = dynamic_cast<const SecurityNode*>(&*referent)) {
       m_security = securityValueNode->GetValue();
     }
   }
-  AdjustIncrement(KeyModifiers::PLAIN);
+  AdjustIncrement(Qt::NoModifier);
 }
 
-MoneySpinBox::~MoneySpinBox() {}
+MoneySpinBox::~MoneySpinBox() = default;
 
 Money MoneySpinBox::GetValue() const {
   auto value = Money::FromValue(cleanText().toStdString());
-  assert(value.is_initialized());
+  assert((value));
   return *value;
 }
 
@@ -64,24 +61,25 @@ void MoneySpinBox::SetValue(Money value) {
 }
 
 void MoneySpinBox::keyPressEvent(QKeyEvent* event) {
-  AdjustIncrement(KeyModifiersFromEvent(*event));
+  AdjustIncrement(to_modifier(event->modifiers()));
   QDoubleSpinBox::keyPressEvent(event);
 }
 
 void MoneySpinBox::keyReleaseEvent(QKeyEvent* event) {
   if(event->modifiers() == Qt::SHIFT || event->modifiers() == Qt::ALT ||
       event->modifiers() == Qt::CTRL) {
-    AdjustIncrement(KeyModifiers::PLAIN);
+    AdjustIncrement(Qt::NoModifier);
   }
   QDoubleSpinBox::keyReleaseEvent(event);
 }
 
-void MoneySpinBox::AdjustIncrement(KeyModifiers modifier) {
-  if(m_userProfile == nullptr || !m_security.is_initialized()) {
+void MoneySpinBox::AdjustIncrement(Qt::KeyboardModifier modifier) {
+  if(!m_userProfile || !m_security) {
     return;
   }
-  auto priceIncrement = m_userProfile->GetInteractionProperties().Get(
-    *m_security).m_priceIncrements[static_cast<int>(modifier)];
+  auto priceIncrement =
+    m_userProfile->GetKeyBindings()->get_interactions_key_bindings(
+      *m_security)->get_price_increment(modifier)->get();
   auto increment = static_cast<double>(static_cast<Quantity>(priceIncrement));
   if(increment != singleStep()) {
     setSingleStep(increment);

@@ -41,7 +41,7 @@ namespace Spire::LegacyUI {
       boost::optional<Nexus::Security> m_security;
       Nexus::Money m_referencePrice;
 
-      void AdjustIncrement(Qt::KeyboardModifiers modifier);
+      void AdjustIncrement(Qt::KeyboardModifier modifier);
   };
 }
 

@@ -94,7 +94,7 @@ namespace Spire {
       bool m_isReadOnly;
       mutable ValueUpdatedSignal m_valueUpdatedSignal;
 
-      void AdjustIncrement(Qt::KeyboardModifiers modifier);
+      void AdjustIncrement(Qt::KeyboardModifier modifier);
       void OnValueChanged(const QString& value);
   };
 }

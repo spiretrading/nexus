@@ -242,14 +242,14 @@ InteractionsKeyBindingsModel::InteractionsKeyBindingsModel(
   m_is_cancel_on_fill = std::move(is_cancel_on_fill);
   for(auto i : std::views::iota(0, MODIFIER_COUNT)) {
     auto model = std::make_shared<HierarchicalQuantityModel>(
-      parent->get_quantity_increment(to_modifier(i)));
+      parent->get_quantity_increment(::to_modifier(i)));
     m_connections.AddConnection(model->connect_write_signal(
       std::bind_front(&InteractionsKeyBindingsModel::on_write, this)));
     m_quantity_increments[i] = std::move(model);
   }
   for(auto i : std::views::iota(0, MODIFIER_COUNT)) {
     auto model = std::make_shared<HierarchicalMoneyModel>(
-      parent->get_price_increment(to_modifier(i)));
+      parent->get_price_increment(::to_modifier(i)));
     m_connections.AddConnection(model->connect_write_signal(
       std::bind_front(&InteractionsKeyBindingsModel::on_write, this)));
     m_price_increments[i] = std::move(model);
