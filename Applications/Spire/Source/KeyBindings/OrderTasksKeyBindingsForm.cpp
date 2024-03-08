@@ -501,6 +501,8 @@ OrderTasksKeyBindingsForm::OrderTasksKeyBindingsForm(
     order_task_arguments_table, table_matcher_builder);
   m_table_view->connect_delete_signal(
     std::bind_front(&OrderTasksKeyBindingsForm::on_delete, this));
+  m_order_task_arguments->connect_operation_signal(
+    std::bind_front(&OrderTasksKeyBindingsForm::on_list_operation, this));
 }
 
 const std::shared_ptr<ComboBox::QueryModel>&
@@ -730,4 +732,15 @@ void OrderTasksKeyBindingsForm::on_search(const QString& query) {
     }
     return !m_table_match_cache->matches(row, query);
   });
+}
+
+void OrderTasksKeyBindingsForm::on_list_operation(
+    const OrderTaskArgumentsListModel::Operation& operation) {
+  visit(operation,
+    [&] (const OrderTaskArgumentsListModel::AddOperation& operation) {
+      m_table_view->adjustSize();
+    },
+    [&] (const OrderTaskArgumentsListModel::RemoveOperation& operation) {
+      m_table_view->adjustSize();
+    });
 }
