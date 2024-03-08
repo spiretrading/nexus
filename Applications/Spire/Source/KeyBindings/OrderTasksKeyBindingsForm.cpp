@@ -1,4 +1,6 @@
 #include "Spire/KeyBindings/OrderTasksKeyBindingsForm.hpp"
+#include "Spire/KeyBindings/OrderTaskArgumentsMatch.hpp"
+#include "Spire/KeyBindings/TableMatchCache.hpp"
 #include "Spire/Spire/ColumnViewListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ListValueModel.hpp"
@@ -105,6 +107,74 @@ namespace {
     return false;
   }
 
+  auto make_header_widths() {
+    auto widths = std::vector<int>();
+    widths.push_back(scale_width(160));
+    widths.push_back(scale_width(80));
+    widths.push_back(scale_width(110));
+    widths.push_back(scale_width(90));
+    widths.push_back(scale_width(70));
+    widths.push_back(scale_width(70));
+    widths.push_back(scale_width(70));
+    widths.push_back(0);
+    widths.push_back(scale_width(128));
+    return widths;
+  }
+
+  auto make_header_model() {
+    auto model = std::make_shared<ArrayListModel<TableHeaderItem::Model>>();
+    model->push({"Name", "Name",
+      TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
+    model->push({"Region", "Region",
+      TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
+    model->push({"Destination", "Dest",
+      TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
+    model->push({"Order Type", "Ord Type",
+      TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
+    model->push({"Side", "Side",
+      TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
+    model->push({"Quantity", "Qty",
+      TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
+    model->push({"Time in Force", "TIF",
+      TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
+    model->push({"Tags", "Tags",
+      TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
+    model->push({"Key", "Key",
+      TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
+    return model;
+  }
+
+  template<typename T>
+  auto make_matcher(const std::shared_ptr<TableModel>& table, int row,
+    int column) {
+    return [=] (const QString& query) {
+      return matches(table->get<T>(row, column), query);
+    };
+  }
+
+  TableMatchCache::Matcher table_matcher_builder(
+      const std::shared_ptr<TableModel>& table, int row, int column) {
+    auto column_id = static_cast<OrderTaskArgumentsToTableModel::Column>(column);
+    if(column_id == OrderTaskArgumentsToTableModel::Column::NAME) {
+      return make_matcher<QString>(table, row, column);
+    } else if(column_id == OrderTaskArgumentsToTableModel::Column::REGION) {
+      return make_matcher<Region>(table, row, column);
+    } else if(column_id == OrderTaskArgumentsToTableModel::Column::DESTINATION) {
+      return make_matcher<Destination>(table, row, column);
+    } else if(column_id == OrderTaskArgumentsToTableModel::Column::ORDER_TYPE) {
+      return make_matcher<OrderType>(table, row, column);
+    } else if(column_id == OrderTaskArgumentsToTableModel::Column::SIDE) {
+      return make_matcher<Side>(table, row, column);
+    } else if(column_id == OrderTaskArgumentsToTableModel::Column::QUANTITY) {
+      return make_matcher<optional<Quantity>>(table, row, column);
+    } else if(column_id == OrderTaskArgumentsToTableModel::Column::TIME_IN_FORCE) {
+      return make_matcher<TimeInForce>(table, row, column);
+    } else if(column_id == OrderTaskArgumentsToTableModel::Column::KEY) {
+      return make_matcher<QKeySequence>(table, row, column);
+    }
+    return [] (const QString& query) { return false; };
+  }
+
   auto make_help_text_box() {
     auto help_text_box = make_text_area_label(
       "Allowed keys are: <b>F1–F12</b> and <b>Ctrl, Shift, Alt + F1–F12</b> "
@@ -142,29 +212,6 @@ namespace {
         set(BorderBottomColor(QColor(0xE0E0E0)));
     });
     return std::tuple(search_region, search_box);
-  }
-
-  auto make_header_model() {
-    auto model = std::make_shared<ArrayListModel<TableHeaderItem::Model>>();
-    model->push({"Name", "Name",
-      TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
-    model->push({"Region", "Region",
-      TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
-    model->push({"Destination", "Dest",
-      TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
-    model->push({"Order Type", "Ord Type",
-      TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
-    model->push({"Side", "Side",
-      TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
-    model->push({"Quantity", "Qty",
-      TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
-    model->push({"Time in Force", "TIF",
-      TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
-    //model->push({"Tags", "Tags",
-    //  TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
-    model->push({"Key", "Key",
-      TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
-    return model;
   }
 
   template<typename T>
@@ -316,10 +363,12 @@ OrderTasksKeyBindingsForm::OrderTasksKeyBindingsForm(
   auto layout = make_vbox_layout(this);
   layout->addWidget(make_help_text_box());
   auto [search_region, m_search_box] = make_search_region();
+  m_search_box->connect_submit_signal(
+    std::bind_front(&OrderTasksKeyBindingsForm::on_search, this));
   layout->addWidget(search_region);
   auto order_task_arguments_table =
     std::make_shared<OrderTaskArgumentsToTableModel>(m_order_task_arguments);
-  auto table_view = new EditableTableView(order_task_arguments_table,
+  m_table_view = new EditableTableView(order_task_arguments_table,
     make_header_model(), std::make_shared<EmptyTableFilter>(),
     std::make_shared<LocalValueModel<optional<TableIndex>>>(),
     std::make_shared<TableSelectionModel>(
@@ -331,7 +380,24 @@ OrderTasksKeyBindingsForm::OrderTasksKeyBindingsForm(
     [] (const TableModel&, int) {
       return false;
     });
-  layout->addWidget(table_view);
+  m_table_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  auto table_header = static_cast<TableHeader*>(static_cast<Box*>(
+    m_table_view->layout()->itemAt(0)->widget())->get_body()->layout()->
+      itemAt(0)->widget());
+  auto widths = make_header_widths();
+  for(auto i = 0; i < std::ssize(widths); ++i) {
+    table_header->get_widths()->set(i + 1, widths[i]);
+  }
+  auto table_view_box = new Box(m_table_view);
+  table_view_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  update_style(*table_view_box, [] (auto& style) {
+    style.get(Any()).set(BackgroundColor(QColor(0xFFFFFF)));
+  });
+  layout->addWidget(table_view_box);
+  m_table_match_cache = std::make_unique<TableMatchCache>(
+    order_task_arguments_table, table_matcher_builder);
+  m_table_view->connect_delete_signal(
+    std::bind_front(&OrderTasksKeyBindingsForm::on_delete, this));
 }
 
 const std::shared_ptr<ComboBox::QueryModel>&
@@ -358,20 +424,20 @@ QWidget* OrderTasksKeyBindingsForm::make_cell(
       case Column::ORDER_TYPE:
       case Column::SIDE:
       case Column::TIME_IN_FORCE:
-        style.get(ReadOnly() > is_a<TextBox>()).
+        style.get(Any() > (is_a<TextBox>() && !(+Any() << is_a<ListItem>()))).
           set(horizontal_padding(scale_width(8)));
         break;
       case Column::QUANTITY:
-        style.get(Any() > is_a<TextBox>()).set(TextAlign(Qt::AlignRight));
+        style.get(Any()).set(TextAlign(Qt::Alignment(Qt::AlignRight)));
+        //style.get(Any() > is_a<TextBox>()).set(TextAlign(Qt::AlignRight));
       default:
-        style.get(ReadOnly()).
+        style.get(Any()).
           set(horizontal_padding(scale_width(8)));
         break;
     }
   });
   auto cell = [&] () -> QWidget* {
-    if(static_cast<Column>(column) == Column::REGION ||
-        static_cast<Column>(column) == Column::QUANTITY) {
+    if(static_cast<Column>(column) == Column::REGION) {
       return new CustomPopupBox(*editor);
     }
     return editor;
@@ -430,8 +496,8 @@ EditableBox* OrderTasksKeyBindingsForm::make_editor(
           make_custom_list_value_model(
             std::make_shared<CustomColumnViewListModel<TimeInForce>>(table,
               column), row)));
-      //case Column::TAG:
-      //  return new AnyInputBox(*new TextBox(""));
+      case Column::TAG:
+        return new AnyInputBox(*make_label(""));
       case Column::KEY:
         return new AnyInputBox(*new KeyInputBox(
           make_validated_value_model<QKeySequence>(&test_key_sequence,
@@ -467,8 +533,8 @@ EditableBox* OrderTasksKeyBindingsForm::make_empty_editor(
         return new AnyInputBox(*new QuantityBox(make_quantity_modifiers()));
       case Column::TIME_IN_FORCE:
         return new AnyInputBox(*make_time_in_force_box(TimeInForce()));
-      //case Column::TAG:
-      //  return new AnyInputBox(*new TextBox(""));
+      case Column::TAG:
+        return new AnyInputBox(*make_label(""));
       case Column::KEY:
         return new AnyInputBox(*(new KeyInputBox(
           make_validated_value_model<QKeySequence>(&test_key_sequence,
@@ -532,7 +598,6 @@ void OrderTasksKeyBindingsForm::on_submit(AnyInputBox* input_box, Column column,
       has_value = true;
       input_box->get_current()->set(TimeInForce());
     }
-  //} else if(column == Column::TAG) {
   } else if(column == Column::KEY) {
     argument.m_key = any_cast<QKeySequence>(submission);
     if(!argument.m_key.isEmpty()) {
@@ -545,3 +610,15 @@ void OrderTasksKeyBindingsForm::on_submit(AnyInputBox* input_box, Column column,
   }
 }
 
+void OrderTasksKeyBindingsForm::on_delete(int row) {
+  m_order_task_arguments->remove(row);
+}
+
+void OrderTasksKeyBindingsForm::on_search(const QString& query) {
+  m_table_view->set_filter([=] (const TableModel& model, int row) {
+    if(query.isEmpty()) {
+      return false;
+    }
+    return !m_table_match_cache->matches(row, query);
+  });
+}

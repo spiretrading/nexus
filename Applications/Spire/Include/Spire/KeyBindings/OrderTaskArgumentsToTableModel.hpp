@@ -39,14 +39,14 @@ namespace Spire {
         TIME_IN_FORCE,
 
         /** The tag field. */
-        //TAG,
+        TAG,
 
         /** The key field. */
         KEY
       };
 
       /** The number of columns in this table. */
-      static const auto COLUMN_SIZE = 8;
+      static const auto COLUMN_SIZE = 9;
 
       /**
        * Constructs an OrderTaskArgumentsToTableModel.

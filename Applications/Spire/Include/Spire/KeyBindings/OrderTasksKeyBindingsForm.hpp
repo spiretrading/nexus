@@ -40,6 +40,8 @@ namespace Spire {
       std::shared_ptr<OrderTaskArgumentsListModel> m_order_task_arguments;
       Nexus::DestinationDatabase m_destinations;
       Nexus::MarketDatabase m_markets;
+      EditableTableView* m_table_view;
+      std::unique_ptr<TableMatchCache> m_table_match_cache;
 
       QWidget* make_cell(const std::shared_ptr<TableModel>& table,
         int row, int column);
@@ -49,6 +51,8 @@ namespace Spire {
         int row, int column);
       void on_submit(AnyInputBox* input_box, Column column,
         const AnyRef& submission);
+      void on_delete(int row);
+      void on_search(const QString& query);
   };
 }
 

@@ -17,7 +17,7 @@ namespace {
     list_model->push(arguments.m_side);
     list_model->push(arguments.m_quantity);
     list_model->push(arguments.m_time_in_force);
-    list_model->push(QString(""));
+    list_model->push(arguments.m_additional_tags);
     list_model->push(arguments.m_key);
     return list_model;
   }
@@ -66,8 +66,8 @@ QValidator::State OrderTaskArgumentsToTableModel::set(int row, int column,
     arguments.m_quantity = std::any_cast<optional<Quantity>>(value);
   } else if(column_index == Column::TIME_IN_FORCE) {
     arguments.m_time_in_force = std::any_cast<TimeInForce>(value);
-  //} else if(column_index == Column::TAG) {
-  //  arguments.m_additional_tags = {};
+  } else if(column_index == Column::TAG) {
+    arguments.m_additional_tags = {};
   } else if(column_index == Column::KEY) {
     arguments.m_key = std::any_cast<QKeySequence>(value);
   }
@@ -98,8 +98,8 @@ AnyRef OrderTaskArgumentsToTableModel::extract_field(
     return arguments.m_quantity;
   } else if(column == Column::TIME_IN_FORCE) {
     return arguments.m_time_in_force;
-  //} else if(column == Column::TAG) {
-  //  return QString("");
+  } else if(column == Column::TAG) {
+    return arguments.m_additional_tags;
   } else if(column == Column::KEY) {
     return arguments.m_key;
   }

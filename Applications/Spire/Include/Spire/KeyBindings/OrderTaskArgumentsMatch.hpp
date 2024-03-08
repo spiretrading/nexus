@@ -1,6 +1,6 @@
 #ifndef SPIRE_ORDER_TASK_MATCH_HPP
 #define SPIRE_ORDER_TASK_MATCH_HPP
-#include "Spire/KeyBindings/OrderTask.hpp"
+#include "Spire/KeyBindings/OrderTaskArguments.hpp"
 
 namespace Spire {
 

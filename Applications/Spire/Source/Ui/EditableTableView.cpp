@@ -150,7 +150,7 @@ struct RevertTableModel : TableModel {
   void on_operation(const TableModel::Operation& operation) {
     auto adjust_row = [] (int index, const AnyListModel & source) {
       auto row = std::make_shared<ArrayListModel<std::any>>();
-      for(auto i = 1; i < source.get_size(); ++i) {
+      for(auto i = 1; i < source.get_size() - 1; ++i) {
         row->push(source.get(i));
       }
       return row;
@@ -236,6 +236,7 @@ struct EditableTableView::EditableTableModel : TableModel {
       for(auto i = 0; i < source.get_size(); ++i) {
         row->push(source.get(i));
       }
+      row->push({});
       return row;
     };
     visit(operation,
@@ -453,6 +454,7 @@ EditableTableView::EditableTableView(
   m_table_body->installEventFilter(this);
   update_style(*this, [] (auto& style) {
     style.get(Any() > is_a<ScrollBox>()).
+      set(BackgroundColor(QColor(0xFFFFFF))).
       set(PaddingBottom(64));
     style.get(Any() > Current()).
       set(BackgroundColor(Qt::transparent));
@@ -480,7 +482,6 @@ EditableTableView::EditableTableView(
     if(row == get_table()->get_row_size() - 1) {
       editable_row->set_ignore_filters(true);
     }
-    editable_row->get_row()->raise();
     m_rows.push(editable_row);
   }
   auto& children = m_table_body->children();
@@ -491,7 +492,7 @@ EditableTableView::EditableTableView(
     }
     if((*i)->isWidgetType() &&
         !is_in_layout(m_table_body->layout(), static_cast<QWidget*>(*i))) {
-      static_cast<QWidget*>(*i)->hide();
+      static_cast<QWidget*>(*i)->setAttribute(Qt::WA_TransparentForMouseEvents);
       ++count;
     }
   }
