@@ -10,7 +10,6 @@
 #include "Nexus/Definitions/ExchangeRateTable.hpp"
 #include "Nexus/Definitions/Destination.hpp"
 #include "Nexus/Definitions/Market.hpp"
-#include "Nexus/Definitions/RegionMap.hpp"
 #include "Nexus/MarketDataService/EntitlementDatabase.hpp"
 #include "Nexus/ServiceClients/ServiceClientsBox.hpp"
 #include "Nexus/TelemetryService/TelemetryClientBox.hpp"
