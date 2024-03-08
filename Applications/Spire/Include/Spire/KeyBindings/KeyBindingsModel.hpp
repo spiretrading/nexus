@@ -30,42 +30,21 @@ namespace Spire {
       const std::shared_ptr<CancelKeyBindingsModel>&
         get_cancel_key_bindings() const;
 
-      /** Returns the global interactions key bindings. */
+      /** Returns the interactions key bindings for a given region. */
       const std::shared_ptr<InteractionsKeyBindingsModel>&
-        get_interactions_key_bindings() const;
+        get_interactions_key_bindings(const Nexus::Region& region) const;
 
       /**
-       * Returns a country's interactions key bindings.
-       * @param country The country to lookup the interactions for.
+       * Returns the list of regions that have interactions settings available.
        */
-      const std::shared_ptr<InteractionsKeyBindingsModel>&
-        get_interactions_key_bindings(Nexus::CountryCode country) const;
-
-      /**
-       * Returns a market's interactions key bindings.
-       * @param market The market to lookup the interactions for.
-       */
-      const std::shared_ptr<InteractionsKeyBindingsModel>&
-        get_interactions_key_bindings(Nexus::MarketCode market) const;
-
-      /**
-       * Returns a security's interactions key bindings.
-       * @param security The security to lookup the interactions for.
-       */
-      const std::shared_ptr<InteractionsKeyBindingsModel>&
-        get_interactions_key_bindings(const Nexus::Security& security) const;
+      std::vector<Nexus::Region> make_interactions_key_bindings_regions() const;
 
     private:
       Nexus::MarketDatabase m_markets;
       std::shared_ptr<OrderTaskArgumentsListModel> m_order_task_arguments;
       std::shared_ptr<CancelKeyBindingsModel> m_cancel_key_bindings;
-      std::shared_ptr<InteractionsKeyBindingsModel> m_global_interactions;
-      mutable std::unordered_map<Nexus::CountryCode,
-        std::shared_ptr<InteractionsKeyBindingsModel>> m_country_interactions;
-      mutable std::unordered_map<Nexus::MarketCode,
-        std::shared_ptr<InteractionsKeyBindingsModel>> m_market_interactions;
-      mutable std::unordered_map<Nexus::Security,
-        std::shared_ptr<InteractionsKeyBindingsModel>> m_security_interactions;
+      mutable std::unordered_map<Nexus::Region,
+        std::shared_ptr<InteractionsKeyBindingsModel>> m_interactions;
 
       KeyBindingsModel(const KeyBindingsModel&) = delete;
       KeyBindingsModel& operator =(const KeyBindingsModel&) = delete;

@@ -10,7 +10,7 @@ namespace Spire {
   /** Stores the key bindings for interactions. */
   class InteractionsKeyBindingsModel {
     public:
-    
+
       /** The number of the modifiers. */
       static constexpr auto MODIFIER_COUNT = 4;
 
@@ -24,9 +24,12 @@ namespace Spire {
       explicit InteractionsKeyBindingsModel(
         std::shared_ptr<InteractionsKeyBindingsModel> parent);
 
+      /** Returns whether this model has been detached from its parent. */
+      bool is_detached() const;
+
       /** Returns the default quantity.*/
       std::shared_ptr<QuantityModel> get_default_quantity() const;
-    
+
       /** Returns the quantity increment associated with a modifier.*/
       std::shared_ptr<QuantityModel>
         get_quantity_increment(Qt::KeyboardModifier modifier) const;
@@ -38,7 +41,11 @@ namespace Spire {
       /** Returns whether cancel on fill is enabled.*/
       std::shared_ptr<BooleanModel> is_cancel_on_fill() const;
 
+      /** Resets this model to link to its parent. */
+      void reset();
+
     private:
+      bool m_is_detached;
       std::shared_ptr<QuantityModel> m_default_quantity;
       std::array<std::shared_ptr<QuantityModel>, MODIFIER_COUNT>
         m_quantity_increments;

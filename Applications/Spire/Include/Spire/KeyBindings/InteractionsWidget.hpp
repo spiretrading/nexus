@@ -39,9 +39,6 @@ namespace Spire {
       void Initialize(
         Beam::Ref<UserProfile> userProfile, const Nexus::Security& security);
 
-      /** Returns the interactions key bindings represented by this widget. */
-      const std::shared_ptr<InteractionsKeyBindingsModel>& GetInteractions();
-
     private:
       struct RegionEntry {
         Nexus::Region m_region;
@@ -55,8 +52,8 @@ namespace Spire {
       int m_quantityModifierIndex;
       int m_priceModifierIndex;
 
-      void AddRegion(RegionEntry region);
-      void StyleRegion(const RegionEntry& region);
+      void Add(RegionEntry region);
+      void Style(const RegionEntry& region);
       void Update();
       void Store();
       void OnRegionIndexChanged(int index);

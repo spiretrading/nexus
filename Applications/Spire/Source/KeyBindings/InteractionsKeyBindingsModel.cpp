@@ -46,34 +46,39 @@ namespace {
             std::bind_front(&HierarchicalValueModel::on_update, this))),
           m_value(m_parent->get()) {}
 
-      void flip() {
-        m_parent = nullptr;
+      void detach() {
         m_connection.disconnect();
       }
 
+      void reset() {
+        m_connection = m_parent->connect_update_signal(
+          std::bind_front(&HierarchicalValueModel::on_update, this));
+        m_value.set(m_parent->get());
+      }
+
       QValidator::State get_state() const override {
-        if(m_parent) {
+        if(m_connection.connected()) {
           return m_parent->get_state();
         }
         return m_value.get_state();
       }
 
       const Type& get() const {
-        if(m_parent) {
+        if(m_connection.connected()) {
           return m_parent->get();
         }
         return m_value.get();
       }
 
       QValidator::State test(const Type& value) const override {
-        if(m_parent) {
+        if(m_connection.connected()) {
           return m_parent->test(value);
         }
         return m_value.test(value);
       }
 
       QValidator::State set(const Type& value) override {
-        if(m_parent) {
+        if(m_connection.connected()) {
           reset_parent();
         }
         return m_value.set(value);
@@ -96,7 +101,7 @@ namespace {
       scoped_connection m_connection;
 
       void reset_parent() {
-        flip();
+        detach();
         m_write_signal();
       }
 
@@ -120,55 +125,60 @@ namespace {
             std::bind_front(&HierarchicalScalarValueModel::on_update, this))),
           m_value(m_parent->get()) {}
 
-      void flip() {
-        m_parent = nullptr;
+      void detach() {
         m_connection.disconnect();
       }
 
+      void reset() {
+        m_connection = m_parent->connect_update_signal(
+          std::bind_front(&HierarchicalScalarValueModel::on_update, this));
+        m_value.set(m_parent->get());
+      }
+
       optional<Scalar> get_minimum() const override {
-        if(m_parent) {
+        if(m_connection.connected()) {
           return m_parent->get_minimum();
         }
         return m_value.get_minimum();
       }
 
       optional<Scalar> get_maximum() const override {
-        if(m_parent) {
+        if(m_connection.connected()) {
           return m_parent->get_maximum();
         }
         return m_value.get_maximum();
       }
 
       optional<Scalar> get_increment() const override {
-        if(m_parent) {
+        if(m_connection.connected()) {
           return m_parent->get_increment();
         }
         return m_value.get_increment();
       }
 
       QValidator::State get_state() const override {
-        if(m_parent) {
+        if(m_connection.connected()) {
           return m_parent->get_state();
         }
         return m_value.get_state();
       }
 
       const Type& get() const {
-        if(m_parent) {
+        if(m_connection.connected()) {
           return m_parent->get();
         }
         return m_value.get();
       }
 
       QValidator::State test(const Type& value) const override {
-        if(m_parent) {
+        if(m_connection.connected()) {
           return m_parent->test(value);
         }
         return m_value.test(value);
       }
 
       QValidator::State set(const Type& value) override {
-        if(m_parent) {
+        if(m_connection.connected()) {
           reset_parent();
         }
         return m_value.set(value);
@@ -191,7 +201,7 @@ namespace {
       scoped_connection m_connection;
 
       void reset_parent() {
-        flip();
+        detach();
         m_write_signal();
       }
 
@@ -206,7 +216,8 @@ namespace {
 }
 
 InteractionsKeyBindingsModel::InteractionsKeyBindingsModel()
-    : m_default_quantity(std::make_shared<LocalQuantityModel>(100)),
+    : m_is_detached(true),
+      m_default_quantity(std::make_shared<LocalQuantityModel>(100)),
       m_is_cancel_on_fill(std::make_shared<LocalBooleanModel>(false)) {
   for(auto& increment : m_quantity_increments) {
     increment = std::make_shared<LocalQuantityModel>(100);
@@ -217,7 +228,8 @@ InteractionsKeyBindingsModel::InteractionsKeyBindingsModel()
 }
 
 InteractionsKeyBindingsModel::InteractionsKeyBindingsModel(
-      std::shared_ptr<InteractionsKeyBindingsModel> parent) {
+      std::shared_ptr<InteractionsKeyBindingsModel> parent)
+    : m_is_detached(false) {
   auto default_quantity =
     std::make_shared<HierarchicalQuantityModel>(parent->get_default_quantity());
   m_connections.AddConnection(default_quantity->connect_write_signal(
@@ -244,6 +256,10 @@ InteractionsKeyBindingsModel::InteractionsKeyBindingsModel(
   }
 }
 
+bool InteractionsKeyBindingsModel::is_detached() const {
+  return m_is_detached;
+}
+
 std::shared_ptr<QuantityModel>
     InteractionsKeyBindingsModel::get_default_quantity() const {
   return m_default_quantity;
@@ -265,17 +281,40 @@ std::shared_ptr<BooleanModel>
   return m_is_cancel_on_fill;
 }
 
-void InteractionsKeyBindingsModel::on_write() {
+void InteractionsKeyBindingsModel::reset() {
+  if(!m_is_detached) {
+    return;
+  }
+  m_is_detached = false;
   std::static_pointer_cast<HierarchicalQuantityModel>(
-    m_default_quantity)->flip();
+    m_default_quantity)->reset();
   std::static_pointer_cast<HierarchicalBooleanModel>(
-    m_is_cancel_on_fill)->flip();
+    m_is_cancel_on_fill)->reset();
   for(auto i : std::views::iota(0, MODIFIER_COUNT)) {
     std::static_pointer_cast<HierarchicalQuantityModel>(
-      m_quantity_increments[i])->flip();
+      m_quantity_increments[i])->reset();
   }
   for(auto i : std::views::iota(0, MODIFIER_COUNT)) {
     std::static_pointer_cast<HierarchicalMoneyModel>(
-      m_price_increments[i])->flip();
+      m_price_increments[i])->reset();
+  }
+}
+
+void InteractionsKeyBindingsModel::on_write() {
+  if(m_is_detached) {
+    return;
+  }
+  m_is_detached = true;
+  std::static_pointer_cast<HierarchicalQuantityModel>(
+    m_default_quantity)->detach();
+  std::static_pointer_cast<HierarchicalBooleanModel>(
+    m_is_cancel_on_fill)->detach();
+  for(auto i : std::views::iota(0, MODIFIER_COUNT)) {
+    std::static_pointer_cast<HierarchicalQuantityModel>(
+      m_quantity_increments[i])->detach();
+  }
+  for(auto i : std::views::iota(0, MODIFIER_COUNT)) {
+    std::static_pointer_cast<HierarchicalMoneyModel>(
+      m_price_increments[i])->detach();
   }
 }
