@@ -58,6 +58,12 @@ namespace Spire {
   };
 
   /**
+   * Converts a Qt::KeyboardModifiers into a single Qt::KeyboardModifier by
+   * the most representative modifier among the set.
+   */
+  Qt::KeyboardModifier to_modifier(Qt::KeyboardModifiers modifiers);
+
+  /**
    * Returns the default order quantity to display to a user.
    * @param interactions The user's interactions.
    * @param security The security that the user is entering a quantity for.
