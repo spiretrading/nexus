@@ -1,6 +1,8 @@
 #include "Spire/KeyBindings/OrderTasksKeyBindingsForm.hpp"
 #include "Spire/KeyBindings/OrderTaskArgumentsMatch.hpp"
 #include "Spire/KeyBindings/TableMatchCache.hpp"
+#include "Spire/LegacyUI/HashQtTypes.hpp"
+#include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ColumnViewListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ListValueModel.hpp"
@@ -348,7 +350,106 @@ namespace {
       }
     }
   };
+
+  struct RegionKeyHash {
+    std::size_t operator()(
+        const std::pair<Region, QKeySequence>& region_key) const {
+      auto seed = std::size_t(0);
+      hash_combine(seed, hash_range(region_key.first.GetCountries().begin(),
+        region_key.first.GetCountries().end()));
+      auto markets = region_key.first.GetMarkets();
+      hash_combine(seed, hash_range(markets.begin(), markets.end()));
+      hash_combine(seed, hash_range(region_key.first.GetSecurities().begin(),
+        region_key.first.GetSecurities().end()));
+      hash_combine(seed, qHash(region_key.second));
+      return seed;
+    }
+  };
 }
+
+struct OrderTasksKeyBindingsForm::UniqueKeyBindingsModel {
+  struct UpdatedInfo {
+    Region m_region;
+    QKeySequence m_key;
+    int m_row;
+  };
+  static const auto KeyIndex =
+    static_cast<int>(OrderTaskArgumentsToTableModel::Column::KEY);
+  static const auto RegionIndex =
+    static_cast<int>(OrderTaskArgumentsToTableModel::Column::REGION);
+  std::shared_ptr<TableModel> m_source;
+  std::unordered_set<std::pair<Region, QKeySequence>, RegionKeyHash>
+    m_region_key_set;
+  UpdatedInfo m_updated_info;
+  scoped_connection m_connection;
+
+  UniqueKeyBindingsModel(std::shared_ptr<TableModel> source)
+      : m_source(std::move(source)),
+        m_connection(m_source->connect_operation_signal(
+          std::bind_front(&UniqueKeyBindingsModel::on_operation, this))) {
+    for(auto row = 0; row < m_source->get_row_size(); ++row) {
+      if(auto& key = m_source->get<QKeySequence>(row, KeyIndex); !key.isEmpty()) {
+        m_region_key_set.insert(std::pair(
+          m_source->get<Region>(row, RegionIndex), key));
+      }
+    }
+  }
+
+  void update() {
+    if(!m_region_key_set.contains(
+        {m_updated_info.m_region, m_updated_info.m_key})) {
+      return;
+    }
+    for(auto i = 0; i < m_source->get_row_size(); ++i) {
+      if(i != m_updated_info.m_row) {
+        if(m_source->get<QKeySequence>(i, KeyIndex) == m_updated_info.m_key &&
+            m_source->get<Region>(i, RegionIndex) == m_updated_info.m_region) {
+          m_source->set(i, KeyIndex, QKeySequence());
+          return;
+        }
+      }
+    }
+  }
+
+  void on_operation(const TableModel::Operation& operation) {
+    visit(operation,
+      [&] (const TableModel::AddOperation& operation) {
+        auto key = std::any_cast<QKeySequence>(operation.m_row->get(KeyIndex));
+        auto region = std::any_cast<Region>(operation.m_row->get(RegionIndex));
+        if(!key.isEmpty()) {
+          m_region_key_set.insert(std::pair(region, key));
+          m_updated_info = {region, key, operation.m_index};
+          update();
+        }
+      },
+      [&] (const TableModel::RemoveOperation& operation) {
+        m_region_key_set.erase({
+          std::any_cast<Region>(operation.m_row->get(RegionIndex)),
+          std::any_cast<QKeySequence>(operation.m_row->get(KeyIndex))});
+      },
+      [&] (const TableModel::UpdateOperation& operation) {
+        if(operation.m_column == RegionIndex) {
+          auto& region = std::any_cast<const Region&>(operation.m_value);
+          auto& key = m_source->get<QKeySequence>(operation.m_row, KeyIndex);
+          m_region_key_set.erase(
+            {std::any_cast<Region>(operation.m_previous), key});
+          if(!key.isEmpty()) {
+            m_region_key_set.insert({region, key});
+            m_updated_info = {region, key, operation.m_row};
+          }
+        } else if(operation.m_column == KeyIndex) {
+          auto& region = m_source->get<Region>(operation.m_row, RegionIndex);
+          auto& key = std::any_cast<const QKeySequence&>(operation.m_value);
+          m_region_key_set.erase(
+            {region, std::any_cast<QKeySequence>(operation.m_previous)});
+          if(!key.isEmpty()) {
+            m_region_key_set.insert({region, key});
+            m_updated_info = {region, key, operation.m_row};
+          }
+        }
+      });
+  }
+};
 
 OrderTasksKeyBindingsForm::OrderTasksKeyBindingsForm(
     std::shared_ptr<ComboBox::QueryModel> region_query_model,
@@ -368,6 +469,8 @@ OrderTasksKeyBindingsForm::OrderTasksKeyBindingsForm(
   layout->addWidget(search_region);
   auto order_task_arguments_table =
     std::make_shared<OrderTaskArgumentsToTableModel>(m_order_task_arguments);
+  m_unique_key_bindings =
+    std::make_unique<UniqueKeyBindingsModel>(order_task_arguments_table);
   m_table_view = new EditableTableView(order_task_arguments_table,
     make_header_model(), std::make_shared<EmptyTableFilter>(),
     std::make_shared<LocalValueModel<optional<TableIndex>>>(),
@@ -446,9 +549,10 @@ QWidget* OrderTasksKeyBindingsForm::make_cell(
 }
 
 EditableBox* OrderTasksKeyBindingsForm::make_editor(
-  const std::shared_ptr<TableModel>& table, int row, int column) {
+    const std::shared_ptr<TableModel>& table, int row, int column) {
+  auto column_id = static_cast<Column>(column);
   auto input_box = [&] () -> AnyInputBox* {
-    switch(static_cast<Column>(column)) {
+    switch(column_id) {
       case Column::NAME:
         return new AnyInputBox(*new TextBox(make_custom_list_value_model(
           std::make_shared<CustomColumnViewListModel<QString>>(table, column),
@@ -510,6 +614,11 @@ EditableBox* OrderTasksKeyBindingsForm::make_editor(
   }();
   if(!input_box) {
     return nullptr;
+  }
+  if(column_id == Column::REGION || column_id == Column::KEY) {
+    input_box->connect_submit_signal([=] (const auto& region) {
+      m_unique_key_bindings->update();
+    });
   }
   return new EditableBox(*input_box);;
 }

@@ -36,10 +36,12 @@ namespace Spire {
 
     private:
       using Column = OrderTaskArgumentsToTableModel::Column;
+      struct UniqueKeyBindingsModel;
       std::shared_ptr<ComboBox::QueryModel> m_region_query_model;
       std::shared_ptr<OrderTaskArgumentsListModel> m_order_task_arguments;
       Nexus::DestinationDatabase m_destinations;
       Nexus::MarketDatabase m_markets;
+      std::unique_ptr<UniqueKeyBindingsModel> m_unique_key_bindings;
       EditableTableView* m_table_view;
       std::unique_ptr<TableMatchCache> m_table_match_cache;
 
