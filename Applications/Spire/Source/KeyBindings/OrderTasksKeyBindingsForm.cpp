@@ -125,24 +125,39 @@ namespace {
 
   auto make_header_model() {
     auto model = std::make_shared<ArrayListModel<TableHeaderItem::Model>>();
-    model->push({"Name", "Name",
-      TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
-    model->push({"Region", "Region",
-      TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
-    model->push({"Destination", "Dest",
-      TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
-    model->push({"Order Type", "Ord Type",
-      TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
-    model->push({"Side", "Side",
-      TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
-    model->push({"Quantity", "Qty",
-      TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
-    model->push({"Time in Force", "TIF",
-      TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
-    model->push({"Tags", "Tags",
-      TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
-    model->push({"Key", "Key",
-      TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
+    auto push = [&] (const QString& name, const QString& short_name) {
+      model->push({name, short_name, TableHeaderItem::Order::NONE,
+        TableFilter::Filter::UNFILTERED});
+    };
+    push(QObject::tr("Name"), QObject::tr("Name"));
+    push(QObject::tr("Region"), QObject::tr("Region"));
+    push(QObject::tr("Destination"), QObject::tr("Dest"));
+    push(QObject::tr("Order Type"), QObject::tr("Ord Type"));
+    push(QObject::tr("Side"), QObject::tr("Side"));
+    push(QObject::tr("Quantity"), QObject::tr("Qty"));
+    push(QObject::tr("Time in Force"), QObject::tr("TIF"));
+    push(QObject::tr("Tags"), QObject::tr("Tags"));
+    push(QObject::tr("Key"), QObject::tr("Key"));
+
+    //auto model = std::make_shared<ArrayListModel<TableHeaderItem::Model>>();
+    //model->push({"Name", "Name",
+    //  TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
+    //model->push({"Region", "Region",
+    //  TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
+    //model->push({"Destination", "Dest",
+    //  TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
+    //model->push({"Order Type", "Ord Type",
+    //  TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
+    //model->push({"Side", "Side",
+    //  TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
+    //model->push({"Quantity", "Qty",
+    //  TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
+    //model->push({"Time in Force", "TIF",
+    //  TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
+    //model->push({"Tags", "Tags",
+    //  TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
+    //model->push({"Key", "Key",
+    //  TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
     return model;
   }
 
@@ -535,7 +550,10 @@ QWidget* OrderTasksKeyBindingsForm::make_cell(
         break;
       case Column::QUANTITY:
         style.get(Any()).set(TextAlign(Qt::Alignment(Qt::AlignRight)));
-        //style.get(Any() > is_a<TextBox>()).set(TextAlign(Qt::AlignRight));
+        style.get(+(Any() > is_a<TextBox>()) %
+            (is_a<Button>() && matches(Visibility::NONE))).
+          set(PaddingRight(scale_width(8)));
+        break;
       default:
         style.get(Any()).
           set(horizontal_padding(scale_width(8)));

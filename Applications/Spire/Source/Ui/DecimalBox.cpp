@@ -451,13 +451,15 @@ DecimalBox::DecimalBox(std::shared_ptr<OptionalDecimalModel> current,
       m_text_box(m_adaptor_model, this),
       m_tick(TickIndicator::NONE) {
   enclose(*this, m_text_box);
+  update_style(m_text_box, [] (auto& style) {
+    style.get(+(Any() > is_a<TextBox>()) %
+        (is_a<Button>() && matches(Visibility::VISIBLE))).
+      set(PaddingRight(scale_width(24)));
+  });
   proxy_style(*this, m_text_box);
   update_style(*this, [] (auto& style) {
     style.get(Any() > is_a<Button>()).set(Visibility::VISIBLE);
     style.get(ReadOnly() > is_a<Button>()).set(Visibility::NONE);
-    style.get(+(Any() > is_a<TextBox>()) %
-        (is_a<Button>() && matches(Visibility::VISIBLE))).
-      set(PaddingRight(scale_width(24)));
   });
   m_style_connection =
     connect_style_signal(*this, std::bind_front(&DecimalBox::on_style, this));
