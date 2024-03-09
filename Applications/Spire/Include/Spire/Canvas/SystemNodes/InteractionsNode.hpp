@@ -2,7 +2,7 @@
 #define SPIRE_INTERACTIONS_NODE_HPP
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Canvas/Common/CanvasNode.hpp"
-#include "Spire/KeyBindings/InteractionsKeyBindingsModel.hpp"
+#include "Spire/KeyBindings/KeyBindingsModel.hpp"
 
 namespace Spire {
 
@@ -22,36 +22,42 @@ namespace Spire {
        */
       InteractionsNode(Nexus::Security security,
         const Nexus::MarketDatabase& marketDatabase,
-        const std::shared_ptr<InteractionsKeyBindingsModel>& interactions);
-
-      /** Returns the interactions. */
-      const std::shared_ptr<InteractionsKeyBindingsModel>&
-        GetProperties() const;
-
-      std::unique_ptr<CanvasNode> Replace(const CanvasNode& child,
-        std::unique_ptr<CanvasNode> replacement) const override;
+        const InteractionsKeyBindingsModel& interactions);
 
       void Apply(CanvasNodeVisitor& visitor) const override;
 
-      using CanvasNode::Replace;
     protected:
-      virtual std::unique_ptr<CanvasNode> Clone() const;
+      std::unique_ptr<CanvasNode> Clone() const override;
 
     private:
       friend struct Beam::Serialization::DataShuttle;
-      std::shared_ptr<InteractionsKeyBindingsModel> m_interactions;
 
-      void Setup(Nexus::Security security,
-        const Nexus::MarketDatabase& marketDatabase,
-        const std::shared_ptr<InteractionsKeyBindingsModel>& interactions);
       template<typename Shuttler>
       void Shuttle(Shuttler& shuttle, unsigned int version);
   };
 
+  /**
+   * Applies the value represented by an <i>InteractionsNode</i> to an
+   * <i>InteractionsKeyBindingsModel</i>.
+   * @param node The <i>InteractionsNode</i> representing the values to apply.
+   * @param interactions The <i>InteractionsKeyBindingsModel</i> to apply the
+   *        values from the <i>node</i> to.
+   */
+  void apply(const InteractionsNode& node,
+    InteractionsKeyBindingsModel& interactions);
+
+  /**
+   * Applies the value represented by an <i>InteractionsNode</i> to a
+   * <i>KeyBindingsModel</i>.
+   * @param node The <i>InteractionsNode</i> representing the values to apply.
+   * @param keyBindings The <i>KeyBindingsModel</i> to apply the values from the
+   *        <i>node</i> to.
+   */
+  void apply(const InteractionsNode& node, KeyBindingsModel& keyBindings);
+
   template<typename Shuttler>
   void InteractionsNode::Shuttle(Shuttler& shuttle, unsigned int version) {
     CanvasNode::Shuttle(shuttle, version);
-/** TODO    shuttle.Shuttle("properties", m_properties); */
   }
 }
 

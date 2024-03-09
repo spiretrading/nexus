@@ -96,7 +96,6 @@
 #include "Spire/Canvas/StandardNodes/TimerNode.hpp"
 #include "Spire/Canvas/StandardNodes/UnequalNode.hpp"
 #include "Spire/Canvas/SystemNodes/BlotterTaskMonitorNode.hpp"
-#include "Spire/Canvas/SystemNodes/InteractionsNode.hpp"
 #include "Spire/Canvas/Types/ExecutionReportRecordType.hpp"
 #include "Spire/Canvas/Types/OrderImbalanceRecordType.hpp"
 #include "Spire/Canvas/Types/OrderReferenceType.hpp"

@@ -412,7 +412,7 @@ void BookViewWindow::HandleKeyBindingEvent(
 
 void BookViewWindow::HandleInteractionsPropertiesEvent() {
   auto& interactions =
-    m_userProfile->GetKeyBindings()->get_interactions_key_bindings(m_security);
+    *m_userProfile->GetKeyBindings()->get_interactions_key_bindings(m_security);
   auto interactionsNode = std::make_unique<InteractionsNode>(
     m_security, m_userProfile->GetMarketDatabase(), interactions);
   m_taskEntryWidget =
@@ -436,6 +436,9 @@ void BookViewWindow::HandleTaskInputEvent(QKeyEvent* event) {
     RemoveTaskEntry();
   } else if(baseKey == Qt::Key_Enter || baseKey == Qt::Key_Return) {
     if(m_isTaskEntryWidgetForInteractionsProperties) {
+      auto& node = static_cast<const InteractionsNode&>(
+        *m_taskEntryWidget->GetRoots().front());
+      apply(node, *m_userProfile->GetKeyBindings());
       RemoveTaskEntry();
     } else {
       auto taskNode = CanvasNode::Clone(*m_taskEntryWidget->GetRoots().front());

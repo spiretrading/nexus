@@ -191,6 +191,9 @@ bool OrderTaskView::HandleTaskInputEvent(const QKeyEvent& event) {
     return true;
   } else if(baseKey == Qt::Key_Enter || baseKey == Qt::Key_Return) {
     if(m_isTaskEntryWidgetForInteractionsProperties) {
+      auto& node = static_cast<const InteractionsNode&>(
+        *m_taskEntryWidget->GetRoots().front());
+      apply(node, *m_userProfile->GetKeyBindings());
       RemoveTaskEntry();
       return true;
     } else {
@@ -217,8 +220,8 @@ bool OrderTaskView::HandleTaskInputEvent(const QKeyEvent& event) {
 }
 
 void OrderTaskView::HandleInteractionsPropertiesEvent() {
-  auto interactions =
-    m_userProfile->GetKeyBindings()->get_interactions_key_bindings(
+  auto& interactions =
+    *m_userProfile->GetKeyBindings()->get_interactions_key_bindings(
       *m_state->m_security);
   auto interactionsNode = std::make_unique<InteractionsNode>(
     *m_state->m_security, m_userProfile->GetMarketDatabase(), interactions);
