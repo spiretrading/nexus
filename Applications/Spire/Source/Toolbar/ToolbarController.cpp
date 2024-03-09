@@ -14,7 +14,7 @@
 #include "Spire/Charting/ChartWindow.hpp"
 #include "Spire/Dashboard/DashboardWindow.hpp"
 #include "Spire/Dashboard/DashboardModelSchema.hpp"
-#include "Spire/LegacyKeyBindings/SimplifiedKeyBindingsDialog.hpp"
+#include "Spire/KeyBindings/KeyBindingsWindow.hpp"
 #include "Spire/LegacyUI/CanvasWindow.hpp"
 #include "Spire/LegacyUI/UISerialization.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
@@ -247,7 +247,7 @@ void ToolbarController::open_portfolio_window() {
 }
 
 void ToolbarController::open_key_bindings_window() {
-  auto dialog = new SimplifiedKeyBindingsDialog(Ref(*m_user_profile));
+  auto dialog = new KeyBindingsWindow();
   dialog->setAttribute(Qt::WA_DeleteOnClose);
   dialog->show();
 }

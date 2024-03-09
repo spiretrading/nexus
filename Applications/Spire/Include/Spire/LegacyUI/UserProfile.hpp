@@ -240,6 +240,16 @@ namespace Spire {
       boost::optional<PortfolioViewerWindowSettings>
         m_initialPortfolioViewerWindowSettings;
   };
+
+  /**
+   * Returns the default order quantity to display to a user.
+   * @param userProfile The profile of the user to display the default order
+   *        quantity to.
+   * @param security The security that the user is entering a quantity for.
+   * @return The default quantity to display.
+   */
+  Nexus::Quantity get_default_order_quantity(const UserProfile& userProfile,
+    const Nexus::Security& security, Nexus::Side side);
 }
 
 #endif

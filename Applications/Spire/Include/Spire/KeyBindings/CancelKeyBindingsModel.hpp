@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <QKeySequence>
 #include <QValidator>
+#include "Spire/Blotter/OrderLogModel.hpp"
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/KeyBindings/KeyBindings.hpp"
 #include "Spire/LegacyUI/HashQtTypes.hpp"
@@ -91,8 +92,23 @@ namespace Spire {
       void on_update(Operation operation, const QKeySequence& sequence);
   };
 
+  /**
+   * Executes a cancel operation on a list of order tasks.
+   * @param operation The cancel operation to execute.
+   * @param tasks The list of tasks to execute the cancel operation on.
+   */
   void execute(CancelKeyBindingsModel::Operation operation,
     Beam::Out<std::vector<std::shared_ptr<Task>>> tasks);
+
+  /**
+   * Executes a cancel operation on a list of order entries.
+   * @param operation The cancel operation to execute.
+   * @param entries The list of order entries to execute the cancel operation
+   *        on.
+   */
+  void execute(CancelKeyBindingsModel::Operation operation,
+    Nexus::OrderExecutionService::OrderExecutionClientBox& client,
+    Beam::Out<std::vector<OrderLogModel::OrderEntry>> entries);
 }
 
 #endif

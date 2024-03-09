@@ -218,3 +218,18 @@ void UserProfile::SetInitialPortfolioViewerWindowSettings(
     const PortfolioViewerWindowSettings& settings) {
   m_initialPortfolioViewerWindowSettings = settings;
 }
+
+Quantity Spire::get_default_order_quantity(const UserProfile& userProfile,
+    const Security& security, Side side) {
+  auto position = [&] {
+    auto& blotter = userProfile.GetBlotterSettings().GetActiveBlotter();
+    if(auto position = blotter.GetOpenPositionsModel().GetOpenPosition(
+        security)) {
+      return position->m_inventory.m_position.m_quantity;
+    }
+    return Quantity(0);
+  }();
+  return get_default_order_quantity(
+    *userProfile.GetKeyBindings()->get_interactions_key_bindings(security),
+    security, position, side);
+}

@@ -113,12 +113,10 @@ std::unique_ptr<CanvasNode>
       auto price = [&] {
         if(sideNode) {
           if(auto sideValueNode = dynamic_cast<const SideNode*>(&*sideNode)) {
-            if(sideValueNode->GetValue() == Side::BID) {
-              return *m_state->m_bidPrice;
+            if(sideValueNode->GetValue() == Side::ASK) {
+              return *m_state->m_askPrice;
             }
-            return *m_state->m_askPrice;
           }
-          return *m_state->m_bidPrice;
         }
         return *m_state->m_askPrice;
       }();
@@ -145,20 +143,9 @@ std::unique_ptr<CanvasNode>
             if(sideNode) {
               if(auto sideValueNode =
                   dynamic_cast<const SideNode*>(&*sideNode)) {
-                auto position = [&] {
-                  auto& blotter =
-                    m_userProfile->GetBlotterSettings().GetActiveBlotter();
-                  if(auto position =
-                      blotter.GetOpenPositionsModel().GetOpenPosition(
-                        *m_state->m_security)) {
-                    return position->m_inventory.m_position.m_quantity;
-                  }
-                  return Quantity(0);
-                }();
-                return get_default_order_quantity(interactions,
-                  *m_state->m_security, position, sideValueNode->GetValue());
+                return get_default_order_quantity(*m_userProfile,
+                  *m_state->m_security, sideValueNode->GetValue());
               }
-              return interactions.get_default_quantity()->get();
             }
             return interactions.get_default_quantity()->get();
           }();
