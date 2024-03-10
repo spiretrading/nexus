@@ -52,10 +52,14 @@ if(UNIX)
     debug ${QT_XML_LIBRARY_DEBUG_PATH}
     optimized ${QT_XML_LIBRARY_OPTIMIZED_PATH})
 endif()
-target_link_libraries(KeyBindingsUiTester Async KeyBindings LegacyUI Library
-  Resources
+target_link_libraries(KeyBindingsUiTester Async Dashboard Charting
+  PortfolioViewer Utilities RiskTimer AccountViewer KeyBindings Blotter Catalog
+  BookView Library Login Resources TimeAndSales OrderImbalanceIndicator
+  InputWidgets CanvasView Canvas LegacyResources LegacyUI Toolbar
   debug ${CRYPTOPP_LIBRARY_DEBUG_PATH}
   optimized ${CRYPTOPP_LIBRARY_OPTIMIZED_PATH}
+  debug ${LUA_LIBRARY_DEBUG_PATH}
+  optimized ${LUA_LIBRARY_OPTIMIZED_PATH}
   debug ${OPEN_SSL_LIBRARY_DEBUG_PATH}
   optimized ${OPEN_SSL_LIBRARY_OPTIMIZED_PATH}
   debug ${OPEN_SSL_BASE_LIBRARY_DEBUG_PATH}
@@ -161,9 +165,14 @@ if(UNIX)
     debug ${QT_XML_LIBRARY_DEBUG_PATH}
     optimized ${QT_XML_LIBRARY_OPTIMIZED_PATH})
 endif()
-target_link_libraries(KeyBindingsTester KeyBindings Library Resources
+target_link_libraries(KeyBindingsTester Async Dashboard Charting PortfolioViewer
+  Utilities RiskTimer AccountViewer KeyBindings Blotter Catalog BookView Library
+  Login Resources TimeAndSales OrderImbalanceIndicator InputWidgets CanvasView
+  Canvas LegacyResources LegacyUI Toolbar
   debug ${CRYPTOPP_LIBRARY_DEBUG_PATH}
   optimized ${CRYPTOPP_LIBRARY_OPTIMIZED_PATH}
+  debug ${LUA_LIBRARY_DEBUG_PATH}
+  optimized ${LUA_LIBRARY_OPTIMIZED_PATH}
   debug ${OPEN_SSL_LIBRARY_DEBUG_PATH}
   optimized ${OPEN_SSL_LIBRARY_OPTIMIZED_PATH}
   debug ${OPEN_SSL_BASE_LIBRARY_DEBUG_PATH}

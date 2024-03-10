@@ -62,3 +62,13 @@ void Spire::apply(const InteractionsNode& node,
     }
   }
 }
+
+void Spire::apply(const InteractionsNode& node, KeyBindingsModel& keyBindings) {
+  if(auto securityNode = node.FindChild("security")) {
+    if(auto security =
+        dynamic_cast<const SecurityNode*>(&*securityNode)) {
+      apply(
+        node, *keyBindings.get_interactions_key_bindings(security->GetValue()));
+    }
+  }
+}

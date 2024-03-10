@@ -318,3 +318,27 @@ void InteractionsKeyBindingsModel::on_write() {
       m_price_increments[i])->detach();
   }
 }
+
+Qt::KeyboardModifier Spire::to_modifier(Qt::KeyboardModifiers modifiers) {
+  if(modifiers.testFlag(Qt::ShiftModifier)) {
+    return Qt::ShiftModifier;
+  } else if(modifiers.testFlag(Qt::ControlModifier)) {
+    return Qt::ControlModifier;
+  } else if(modifiers.testFlag(Qt::AltModifier)) {
+    return Qt::AltModifier;
+  }
+  return Qt::NoModifier;
+}
+
+Quantity Spire::get_default_order_quantity(
+    const InteractionsKeyBindingsModel& interactions, const Security& security,
+    Quantity position, Side side) {
+  auto baseQuantity = interactions.get_default_quantity()->get();
+  if(baseQuantity <= 0) {
+    return 0;
+  } else if(
+      side == Side::BID && position < 0 || side == Side::ASK && position > 0) {
+    return std::min(baseQuantity, Abs(position));
+  }
+  return baseQuantity - Abs(position) % baseQuantity;
+}

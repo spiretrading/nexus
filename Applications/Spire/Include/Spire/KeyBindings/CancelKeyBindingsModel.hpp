@@ -7,7 +7,7 @@
 #include "Spire/Blotter/OrderLogModel.hpp"
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/KeyBindings/KeyBindings.hpp"
-#include "Spire/LegacyUI/HashQtTypes.hpp"
+#include "Spire/Spire/HashQtTypes.hpp"
 #include "Spire/Ui/KeyInputBox.hpp"
 
 namespace Spire {

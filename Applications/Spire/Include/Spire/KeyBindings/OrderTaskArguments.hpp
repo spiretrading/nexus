@@ -63,6 +63,11 @@ namespace Spire {
     const OrderTaskArgumentsListModel& arguments, const Nexus::Region& region,
     const QKeySequence& key);
 
+  /**
+   * Constructs a <i>CanvasNode</i> representing an order task with a specified
+   * set of arguments.
+   * @param arguments The arguments used to build the <i>CanvasNode<i>.
+   */
   std::unique_ptr<CanvasNode>
     make_canvas_node(const OrderTaskArguments& arguments);
 }
