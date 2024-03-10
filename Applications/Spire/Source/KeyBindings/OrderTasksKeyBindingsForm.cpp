@@ -118,7 +118,7 @@ namespace {
     widths.push_back(scale_width(70));
     widths.push_back(scale_width(70));
     widths.push_back(scale_width(70));
-    widths.push_back(0);
+    widths.push_back(scale_width(80));
     widths.push_back(scale_width(128));
     return widths;
   }
@@ -138,26 +138,6 @@ namespace {
     push(QObject::tr("Time in Force"), QObject::tr("TIF"));
     push(QObject::tr("Tags"), QObject::tr("Tags"));
     push(QObject::tr("Key"), QObject::tr("Key"));
-
-    //auto model = std::make_shared<ArrayListModel<TableHeaderItem::Model>>();
-    //model->push({"Name", "Name",
-    //  TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
-    //model->push({"Region", "Region",
-    //  TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
-    //model->push({"Destination", "Dest",
-    //  TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
-    //model->push({"Order Type", "Ord Type",
-    //  TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
-    //model->push({"Side", "Side",
-    //  TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
-    //model->push({"Quantity", "Qty",
-    //  TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
-    //model->push({"Time in Force", "TIF",
-    //  TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
-    //model->push({"Tags", "Tags",
-    //  TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
-    //model->push({"Key", "Key",
-    //  TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
     return model;
   }
 
