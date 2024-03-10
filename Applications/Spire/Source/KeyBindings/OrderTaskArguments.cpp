@@ -16,7 +16,20 @@ using namespace Spire;
 optional<const OrderTaskArguments&> Spire::find_order_task_arguments(
     const OrderTaskArgumentsListModel& arguments, const Region& region,
     const QKeySequence& key) {
-  return none;
+  auto candidates = std::vector<int>();
+  for(auto i = 0; i != arguments.get_size(); ++i) {
+    auto& argument = arguments.get(i);
+    if(argument.m_key == key && region <= argument.m_region) {
+      candidates.push_back(i);
+    }
+  }
+  if(candidates.empty()) {
+    return none;
+  }
+  std::sort(candidates.begin(), candidates.end(), [&] (auto left, auto right) {
+    return arguments.get(left).m_region < arguments.get(right).m_region;
+  });
+  return arguments.get(candidates.front());
 }
 
 std::unique_ptr<CanvasNode>
