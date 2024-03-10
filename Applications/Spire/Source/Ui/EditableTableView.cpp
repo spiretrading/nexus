@@ -558,6 +558,32 @@ bool EditableTableView::eventFilter(QObject* watched, QEvent* event) {
   return TableView::eventFilter(watched, event);
 }
 
+bool EditableTableView::focusNextPrevChild(bool next) {
+  if(auto current = m_table_body->get_current()->get(); !current) {
+    auto focus_widget = QApplication::focusWidget();
+    if(!m_table_body->isAncestorOf(focus_widget) &&
+        m_table_body != focus_widget) {
+      auto next_focus_widget = [&] {
+        if(next) {
+          return focus_widget->nextInFocusChain();
+        }
+        return focus_widget->previousInFocusChain();
+      }();
+      if(!m_table_body->isAncestorOf(next_focus_widget) &&
+          m_table_body != focus_widget) {
+        return QWidget::focusNextPrevChild(next);
+      }
+    }
+  }
+  m_table_body->setFocus();
+  if(next) {
+    navigate_next();
+  } else {
+    navigate_previous();
+  }
+  return true;
+}
+
 QWidget* EditableTableView::view_builder(ViewBuilder source_view_builder,
     const std::shared_ptr<TableModel>& table, int row, int column) {
   if(column == 0) {
@@ -608,6 +634,46 @@ QWidget* EditableTableView::view_builder(ViewBuilder source_view_builder,
       }
     }
     return cell;
+  }
+}
+
+void EditableTableView::navigate_next() {
+  if(auto current = m_table_body->get_current()->get()) {
+    auto column = current->m_column + 1;
+    if(column >= m_table_body->get_table()->get_column_size() - 1) {
+      auto row = current->m_row + 1;
+      if(row >= m_table_body->get_table()->get_row_size()) {
+        m_table_body->get_current()->set(none);
+      } else {
+        m_table_body->get_current()->set(Index(row, 1));
+      }
+    } else {
+      m_table_body->get_current()->set(Index(current->m_row, column));
+    }
+  } else {
+    m_table_body->get_current()->set(Index(0, 1));
+  }
+}
+
+void EditableTableView::navigate_previous() {
+  if(auto current = m_table_body->get_current()->get()) {
+    auto column = current->m_column - 1;
+    if(column <= 0) {
+      auto row = current->m_row - 1;
+      if(row < 0) {
+        QWidget::focusNextPrevChild(false);
+        m_table_body->get_current()->set(none);
+      } else {
+        m_table_body->get_current()->set(Index(row,
+          m_table_body->get_table()->get_column_size() - 1));
+      }
+    } else {
+      m_table_body->get_current()->set(Index(current->m_row, column));
+    }
+  } else {
+    m_table_body->get_current()->set(
+      TableView::Index(m_table_body->get_table()->get_row_size() - 1,
+        m_table_body->get_table()->get_column_size() - 1));
   }
 }
 
