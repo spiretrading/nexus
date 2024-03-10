@@ -70,6 +70,7 @@ namespace Spire {
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
+      bool focusNextPrevChild(bool next) override;
 
     private:
       struct EditableTableModel;
@@ -87,6 +88,8 @@ namespace Spire {
 
       QWidget* view_builder(ViewBuilder source_view_builder,
         const std::shared_ptr<TableModel>& table, int row, int column);
+      void navigate_next();
+      void navigate_previous();
       void on_current(const boost::optional<Index>& index);
       void on_table_operation(const TableModel::Operation& operation);
       void on_source_table_operation(const TableModel::Operation& operation);

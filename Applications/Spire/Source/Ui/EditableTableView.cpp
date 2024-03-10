@@ -150,7 +150,7 @@ struct RevertTableModel : TableModel {
   void on_operation(const TableModel::Operation& operation) {
     auto adjust_row = [] (int index, const AnyListModel & source) {
       auto row = std::make_shared<ArrayListModel<std::any>>();
-      for(auto i = 1; i < source.get_size(); ++i) {
+      for(auto i = 1; i < source.get_size() - 1; ++i) {
         row->push(source.get(i));
       }
       return row;
@@ -236,6 +236,7 @@ struct EditableTableView::EditableTableModel : TableModel {
       for(auto i = 0; i < source.get_size(); ++i) {
         row->push(source.get(i));
       }
+      row->push({});
       return row;
     };
     visit(operation,
@@ -453,6 +454,7 @@ EditableTableView::EditableTableView(
   m_table_body->installEventFilter(this);
   update_style(*this, [] (auto& style) {
     style.get(Any() > is_a<ScrollBox>()).
+      set(BackgroundColor(QColor(0xFFFFFF))).
       set(PaddingBottom(64));
     style.get(Any() > Current()).
       set(BackgroundColor(Qt::transparent));
@@ -480,7 +482,6 @@ EditableTableView::EditableTableView(
     if(row == get_table()->get_row_size() - 1) {
       editable_row->set_ignore_filters(true);
     }
-    editable_row->get_row()->raise();
     m_rows.push(editable_row);
   }
   auto& children = m_table_body->children();
@@ -491,7 +492,7 @@ EditableTableView::EditableTableView(
     }
     if((*i)->isWidgetType() &&
         !is_in_layout(m_table_body->layout(), static_cast<QWidget*>(*i))) {
-      static_cast<QWidget*>(*i)->hide();
+      static_cast<QWidget*>(*i)->setAttribute(Qt::WA_TransparentForMouseEvents);
       ++count;
     }
   }
@@ -557,6 +558,32 @@ bool EditableTableView::eventFilter(QObject* watched, QEvent* event) {
   return TableView::eventFilter(watched, event);
 }
 
+bool EditableTableView::focusNextPrevChild(bool next) {
+  if(auto current = m_table_body->get_current()->get(); !current) {
+    auto focus_widget = QApplication::focusWidget();
+    if(!m_table_body->isAncestorOf(focus_widget) &&
+        m_table_body != focus_widget) {
+      auto next_focus_widget = [&] {
+        if(next) {
+          return focus_widget->nextInFocusChain();
+        }
+        return focus_widget->previousInFocusChain();
+      }();
+      if(!m_table_body->isAncestorOf(next_focus_widget) &&
+          m_table_body != focus_widget) {
+        return QWidget::focusNextPrevChild(next);
+      }
+    }
+  }
+  m_table_body->setFocus();
+  if(next) {
+    navigate_next();
+  } else {
+    navigate_previous();
+  }
+  return true;
+}
+
 QWidget* EditableTableView::view_builder(ViewBuilder source_view_builder,
     const std::shared_ptr<TableModel>& table, int row, int column) {
   if(column == 0) {
@@ -607,6 +634,46 @@ QWidget* EditableTableView::view_builder(ViewBuilder source_view_builder,
       }
     }
     return cell;
+  }
+}
+
+void EditableTableView::navigate_next() {
+  if(auto current = m_table_body->get_current()->get()) {
+    auto column = current->m_column + 1;
+    if(column >= m_table_body->get_table()->get_column_size() - 1) {
+      auto row = current->m_row + 1;
+      if(row >= m_table_body->get_table()->get_row_size()) {
+        m_table_body->get_current()->set(none);
+      } else {
+        m_table_body->get_current()->set(Index(row, 1));
+      }
+    } else {
+      m_table_body->get_current()->set(Index(current->m_row, column));
+    }
+  } else {
+    m_table_body->get_current()->set(Index(0, 1));
+  }
+}
+
+void EditableTableView::navigate_previous() {
+  if(auto current = m_table_body->get_current()->get()) {
+    auto column = current->m_column - 1;
+    if(column <= 0) {
+      auto row = current->m_row - 1;
+      if(row < 0) {
+        QWidget::focusNextPrevChild(false);
+        m_table_body->get_current()->set(none);
+      } else {
+        m_table_body->get_current()->set(Index(row,
+          m_table_body->get_table()->get_column_size() - 1));
+      }
+    } else {
+      m_table_body->get_current()->set(Index(current->m_row, column));
+    }
+  } else {
+    m_table_body->get_current()->set(
+      TableView::Index(m_table_body->get_table()->get_row_size() - 1,
+        m_table_body->get_table()->get_column_size() - 1));
   }
 }
 
