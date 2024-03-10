@@ -53,6 +53,8 @@ const std::shared_ptr<InteractionsKeyBindingsModel>&
       i = m_interactions.insert(std::pair(security, interactions)).first;
     }
     return i->second;
+  } else if(region.IsGlobal()) {
+    return m_interactions.at(region);
   }
   static auto NONE = std::shared_ptr<InteractionsKeyBindingsModel>();
   return NONE;
