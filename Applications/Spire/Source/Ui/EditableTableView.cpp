@@ -528,7 +528,7 @@ void EditableTableView::set_filter(const Filter& filter) {
         m_is_added_row_filtered = is_filtered;
         return false;
       }
-      auto current = get_current()->get();
+      auto& current = get_current()->get();
       if(current && find_focus_state(*this) != FocusObserver::State::NONE) {
         for(auto i = 0; i < m_rows.get_size() - 1; ++i) {
           if(current->m_row == i && m_rows.get(i)->get_row_index() == row) {
@@ -554,7 +554,7 @@ bool EditableTableView::eventFilter(QObject* watched, QEvent* event) {
         case Qt::Key_Enter:
         case Qt::Key_Return:
         case Qt::Key_Backspace:
-          if(auto current = get_current()->get(); current->m_column != 0) {
+          if(auto& current = get_current()->get(); current->m_column != 0) {
             QCoreApplication::sendEvent(find_focus_proxy(
               get_table_item_body(*m_table_body->get_item(*current))), event);
             return true;
@@ -569,7 +569,7 @@ bool EditableTableView::eventFilter(QObject* watched, QEvent* event) {
           }
         default:
           if(auto text = key_event.text(); is_a_word(text)) {
-            if(auto current = get_current()->get(); current->m_column != 0) {
+            if(auto& current = get_current()->get(); current->m_column != 0) {
               QCoreApplication::sendEvent(find_focus_proxy(
                 get_table_item_body(*m_table_body->get_item(*current))), event);
               return true;
@@ -582,7 +582,7 @@ bool EditableTableView::eventFilter(QObject* watched, QEvent* event) {
 }
 
 bool EditableTableView::focusNextPrevChild(bool next) {
-  if(auto current = get_current()->get(); !current) {
+  if(auto& current = get_current()->get(); !current) {
     auto focus_widget = QApplication::focusWidget();
     if(!m_table_body->isAncestorOf(focus_widget) &&
         m_table_body != focus_widget) {
@@ -612,6 +612,7 @@ QWidget* EditableTableView::view_builder(ViewBuilder source_view_builder,
   if(column == 0) {
     if(row < table->get_row_size() - 1) {
       auto button = make_delete_icon_button();
+      button->setFixedHeight(scale_height(24));
       match(*button, DeleteButton());
       update_style(*button, [&] (auto& style) {
         style.get(Any()).
@@ -626,7 +627,9 @@ QWidget* EditableTableView::view_builder(ViewBuilder source_view_builder,
           m_delete_signal(m_rows.get(
             get_current()->get()->m_row)->get_row_index());
           m_table_body->setFocus();
-          get_current()->set(TableBody::Index{get_current()->get()->m_row, 0});
+          if(get_current()->get()) {
+            get_current()->set(TableBody::Index{get_current()->get()->m_row, 0});
+          }
         });
       });
       return button;
@@ -663,7 +666,7 @@ QWidget* EditableTableView::view_builder(ViewBuilder source_view_builder,
 }
 
 void EditableTableView::navigate_next() {
-  if(auto current = get_current()->get()) {
+  if(auto& current = get_current()->get()) {
     auto column = current->m_column + 1;
     if(column >= m_table_body->get_table()->get_column_size() - 1) {
       auto row = current->m_row + 1;
@@ -681,7 +684,7 @@ void EditableTableView::navigate_next() {
 }
 
 void EditableTableView::navigate_previous() {
-  if(auto current = get_current()->get()) {
+  if(auto& current = get_current()->get()) {
     auto column = current->m_column - 1;
     if(column <= 0) {
       auto row = current->m_row - 1;
@@ -705,10 +708,14 @@ void EditableTableView::navigate_previous() {
 void EditableTableView::on_current(const boost::optional<Index>& index) {
   if(index) {
     if(index->m_column == 0) {
-      get_current()->set(TableBody::Index{index->m_row, 1});
-    } else if(index->m_column == get_table()->get_column_size() - 1) {
-      get_current()->set(TableBody::Index{index->m_row,
-        get_table()->get_column_size() - 2});
+      if(m_source_table->get_column_size() > 0) {
+        auto blocker = shared_connection_block(m_current_connection);
+        get_current()->set(TableBody::Index{index->m_row, 1});
+      }
+    } else if(index->m_column == get_table()->get_column_size() - 1 &&
+        index->m_column - 1 > 0) {
+      auto blocker = shared_connection_block(m_current_connection);
+      get_current()->set(TableBody::Index{index->m_row, index->m_column - 1});
     } else if(index->m_row < m_rows.get_size()) {
       for(auto row = 0; row < m_rows.get_size() - 1; ++row) {
         if(row != index->m_row && m_rows.get(row)->is_out_of_range()) {
@@ -725,11 +732,12 @@ void EditableTableView::on_table_operation(
   visit(operation,
     [&] (const TableModel::AddOperation& operation) {
       auto row = m_table_body->layout()->itemAt(operation.m_index)->widget();
+      row->show();
       auto editable_row = std::make_shared<EditableTableRow>(m_source_table,
         m_table_body->get_table()->get<int>(operation.m_index, 0), *row);
       m_rows.insert(editable_row, operation.m_index);
       if(m_previous_table_row_size < m_source_table->get_row_size()) {
-        if(auto current = get_current()->get()) {
+        if(auto& current = get_current()->get()) {
           auto index = TableView::Index(operation.m_index, current->m_column);
           auto blocker = shared_connection_block(m_current_connection);
           get_current()->set(index);
@@ -737,9 +745,11 @@ void EditableTableView::on_table_operation(
         editable_row->set_out_of_range(m_is_added_row_filtered);
         m_is_added_row_filtered = false;
       }
+      m_table_body->adjustSize();
     },
     [&] (const TableModel::RemoveOperation& operation) {
       m_rows.remove(operation.m_index);
+      m_table_body->adjustSize();
     },
     [&] (const TableModel::MoveOperation& operation) {
       m_rows.move(operation.m_source, operation.m_destination);
