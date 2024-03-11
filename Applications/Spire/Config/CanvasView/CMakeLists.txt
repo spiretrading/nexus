@@ -23,9 +23,9 @@ install(TARGETS CanvasView CONFIGURATIONS Release
 file(GLOB test_source_files ${SPIRE_SOURCE_PATH}/CanvasViewTests/*.cpp)
 add_executable(CanvasViewTests ${test_source_files})
 target_link_libraries(CanvasViewTests Async Dashboard Charting PortfolioViewer
-  Utilities RiskTimer AccountViewer LegacyKeyBindings Blotter Catalog BookView
-  TimeAndSales OrderImbalanceIndicator InputWidgets CanvasView Canvas
-  LegacyResources LegacyUI
+  Utilities RiskTimer AccountViewer Blotter Catalog BookView TimeAndSales
+  OrderImbalanceIndicator InputWidgets CanvasView Canvas KeyBindings Library
+  LegacyResources LegacyUI Toolbar
   debug ${CRYPTOPP_LIBRARY_DEBUG_PATH}
   optimized ${CRYPTOPP_LIBRARY_OPTIMIZED_PATH}
   debug ${LUA_LIBRARY_DEBUG_PATH}

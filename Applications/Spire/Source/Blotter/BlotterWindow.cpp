@@ -244,11 +244,10 @@ bool BlotterWindow::eventFilter(QObject* object, QEvent* event) {
         return QWidget::eventFilter(object, event);
       }
       auto key = QKeySequence(keyEvent->modifiers() + keyEvent->key());
-      auto cancelBinding =
-        m_userProfile->GetKeyBindings().GetCancelFromBinding(key);
+      auto cancelBinding = m_userProfile->
+        GetKeyBindings()->get_cancel_key_bindings()->find_operation(key);
       if(cancelBinding) {
-        KeyBindings::CancelBinding::HandleCancel(
-          *cancelBinding, Store(m_tasksExecuted));
+        execute(*cancelBinding, Store(m_tasksExecuted));
         return true;
       }
     }

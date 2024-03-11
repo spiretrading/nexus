@@ -10,12 +10,11 @@ using namespace boost;
 using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
-using namespace std;
 
 MoneySpinBox::MoneySpinBox(QWidget* parent, Qt::WindowFlags flags)
-    : QWidget{parent, flags},
-      m_userProfile{nullptr},
-      m_isReadOnly{false} {
+    : QWidget(parent, flags),
+      m_userProfile(nullptr),
+      m_isReadOnly(false) {
   auto layout = new QVBoxLayout{this};
   layout->setContentsMargins(0, 0, 0, 0);
   setLayout(layout);
@@ -29,8 +28,7 @@ MoneySpinBox::MoneySpinBox(QWidget* parent, Qt::WindowFlags flags)
   m_spinBox->setDecimals(6);
   m_spinBox->installEventFilter(this);
   layout->addWidget(m_spinBox);
-  connect(m_spinBox,
-    static_cast<void (QDoubleSpinBox::*)(const QString&)>(
+  connect(m_spinBox, qOverload<const QString&>(
     &QDoubleSpinBox::textChanged), this, &MoneySpinBox::OnValueChanged);
 }
 
@@ -42,17 +40,16 @@ MoneySpinBox::MoneySpinBox(Ref<UserProfile> userProfile, QWidget* parent,
 
 void MoneySpinBox::Initialize(Ref<UserProfile> userProfile) {
   m_userProfile = userProfile.Get();
-  AdjustIncrement(KeyModifiers::PLAIN);
+  AdjustIncrement(Qt::NoModifier);
 }
 
-const boost::optional<Security>& MoneySpinBox::GetLinkedSecurity() const {
+const optional<Security>& MoneySpinBox::GetLinkedSecurity() const {
   return m_security;
 }
 
-void MoneySpinBox::SetLinkedSecurity(
-    const boost::optional<Security>& security) {
+void MoneySpinBox::SetLinkedSecurity(const optional<Security>& security) {
   m_security = security;
-  AdjustIncrement(KeyModifiers::PLAIN);
+  AdjustIncrement(Qt::NoModifier);
 }
 
 void MoneySpinBox::SetDecimals(int decimalCount) {
@@ -65,13 +62,13 @@ int MoneySpinBox::GetDecimals() const {
 
 Money MoneySpinBox::GetValue() const {
   auto value = Money::FromValue(m_spinBox->cleanText().toStdString());
-  assert(value.is_initialized());
+  assert((value));
   return *value;
 }
 
 void MoneySpinBox::SetValue(Money value) {
-  m_spinBox->setValue(static_cast<Quantity>(value).GetRepresentation() /
-    Quantity::MULTIPLIER);
+  m_spinBox->setValue(
+    static_cast<Quantity>(value).GetRepresentation() / Quantity::MULTIPLIER);
   m_valueUpdatedSignal(value);
 }
 
@@ -89,25 +86,26 @@ bool MoneySpinBox::eventFilter(QObject* receiver, QEvent* event) {
   if(receiver == m_spinBox) {
     if(event->type() == QEvent::KeyPress) {
       auto keyEvent = static_cast<QKeyEvent*>(event);
-      AdjustIncrement(KeyModifiersFromEvent(*keyEvent));
+      AdjustIncrement(to_modifier(keyEvent->modifiers()));
     } else if(event->type() == QEvent::KeyRelease) {
       auto keyEvent = static_cast<QKeyEvent*>(event);
       if(keyEvent->modifiers() == Qt::SHIFT ||
           keyEvent->modifiers() == Qt::ALT ||
           keyEvent->modifiers() == Qt::CTRL) {
-        AdjustIncrement(KeyModifiers::PLAIN);
+        AdjustIncrement(Qt::NoModifier);
       }
     }
   }
   return QWidget::eventFilter(receiver, event);
 }
 
-void MoneySpinBox::AdjustIncrement(KeyModifiers modifier) {
-  if(m_userProfile == nullptr || !m_security.is_initialized()) {
+void MoneySpinBox::AdjustIncrement(Qt::KeyboardModifier modifier) {
+  if(!m_userProfile || !m_security) {
     return;
   }
-  auto priceIncrement = m_userProfile->GetInteractionProperties().Get(
-    *m_security).m_priceIncrements[static_cast<int>(modifier)];
+  auto priceIncrement =
+    m_userProfile->GetKeyBindings()->get_interactions_key_bindings(
+      *m_security)->get_price_increment(modifier)->get();
   auto increment = static_cast<Quantity>(priceIncrement) / Quantity::MULTIPLIER;
   if(increment != m_spinBox->singleStep()) {
     m_spinBox->setSingleStep(static_cast<double>(increment));

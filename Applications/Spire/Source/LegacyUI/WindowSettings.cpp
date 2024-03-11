@@ -7,10 +7,9 @@
 #include <QApplication>
 #include <QMessageBox>
 #include "Spire/LegacyUI/PersistentWindow.hpp"
-#include "Spire/LegacyUI/Toolbar.hpp"
-#include "Spire/LegacyUI/ToolbarWindowSettings.hpp"
 #include "Spire/LegacyUI/UISerialization.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
+#include "Spire/Toolbar/ToolbarWindow.hpp"
 
 using namespace Beam;
 using namespace Beam::IO;
@@ -50,7 +49,7 @@ void WindowSettings::Save(const UserProfile& userProfile) {
   auto widgets = QApplication::topLevelWidgets();
   for(auto& widget : widgets) {
     if(auto window = dynamic_cast<PersistentWindow*>(widget)) {
-      if(dynamic_cast<Toolbar*>(window)) {
+      if(dynamic_cast<ToolbarWindow*>(window)) {
         windowSettings.insert(
           windowSettings.begin(), window->GetWindowSettings());
       } else if(widget->isVisible()) {

@@ -1,60 +1,61 @@
-#ifndef SPIRE_ORDERTASKVIEW_HPP
-#define SPIRE_ORDERTASKVIEW_HPP
+#ifndef SPIRE_ORDER_TASK_VIEW_HPP
+#define SPIRE_ORDER_TASK_VIEW_HPP
 #include <unordered_map>
 #include <vector>
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/Queues/TaskQueue.hpp>
-#include <boost/noncopyable.hpp>
 #include <QKeyEvent>
 #include "Nexus/Definitions/Definitions.hpp"
 #include "Spire/Blotter/BlotterTasksModel.hpp"
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/CanvasView/CanvasView.hpp"
-#include "Spire/LegacyKeyBindings/KeyBindings.hpp"
+#include "Spire/KeyBindings/CancelKeyBindingsModel.hpp"
+#include "Spire/KeyBindings/KeyBindings.hpp"
 #include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
 
-  /*! \class OrderTaskView
-      \brief Stores the necessary state to display an CondensedCanvasWidget for
-             an Order CanvasNode within a widget.
+  /**
+   * Stores the necessary state to display a CondensedCanvasWidget for an Order
+   * CanvasNode within a widget.
    */
-  class OrderTaskView : private boost::noncopyable {
+  class OrderTaskView {
     public:
 
-      //! Specifies the type of slot used to display a CondensedCanvasWidget.
-      /*!
-        \param widget The CondensedCanvasWidget to display.
-      */
-      using DisplayWidgetSlot = std::function<
-        void (CondensedCanvasWidget& widget)>;
+      /**
+       * Specifies the type of slot used to display a CondensedCanvasWidget.
+       * @param widget The CondensedCanvasWidget to display.
+       */
+      using DisplayWidgetSlot =
+        std::function<void (CondensedCanvasWidget& widget)>;
 
-      //! Specifies the type of slot used to remove a CondensedCanvasWidget.
-      /*!
-        \param widget The CondensedCanvasWidget to remove.
-      */
-      using RemoveWidgetSlot = std::function<
-        void (CondensedCanvasWidget& widget)>;
+      /**
+       * Specifies the type of slot used to remove a CondensedCanvasWidget.
+       * @param widget The CondensedCanvasWidget to remove.
+       */
+      using RemoveWidgetSlot =
+        std::function<void (CondensedCanvasWidget& widget)>;
 
-      //! Constructs an OrderTaskView.
-      /*!
-        \param displayWidget The slot used to display a CondensedCanvasWidget.
-        \param removeWidgetSlot The slot used to remove a CondensedCanvasWidget.
-        \param parent The parent widget.
-        \param param userProfile The user's profile.
-      */
+      /**
+       * Constructs an OrderTaskView.
+       * @param displayWidget The slot used to display a CondensedCanvasWidget.
+       * @param removeWidgetSlot The slot used to remove a
+       *        CondensedCanvasWidget.
+       * @param parent The parent widget.
+       * @param param userProfile The user's profile.
+       */
       OrderTaskView(const DisplayWidgetSlot& displayWidgetSlot,
-        const RemoveWidgetSlot& removeWidgetSlot,
-        Beam::Ref<QWidget> parent, Beam::Ref<UserProfile> userProfile);
+        const RemoveWidgetSlot& removeWidgetSlot, Beam::Ref<QWidget> parent,
+        Beam::Ref<UserProfile> userProfile);
 
-      //! Handles a key event sent to the parent widget.
-      /*!
-        \param event The event sent to the parent widget to handle.
-        \param security The Security represented by the widget.
-        \param askPrice The price to use as an ask.
-        \param bidPrice The price to use as a bid.
-        \return <code>true</code> iff the event was handled by this view.
-      */
+      /**
+       * Handles a key event sent to the parent widget.
+       * @param event The event sent to the parent widget to handle.
+       * @param security The Security represented by the widget.
+       * @param askPrice The price to use as an ask.
+       * @param bidPrice The price to use as a bid.
+       * @return <code>true</code> iff the event was handled by this view.
+       */
       bool HandleKeyPressEvent(const QKeyEvent& event,
         const Nexus::Security& security, Nexus::Money askPrice,
         Nexus::Money bidPrice);
@@ -80,11 +81,11 @@ namespace Spire {
       void ExecuteTask(const CanvasNode& node);
       std::unique_ptr<CanvasNode> InitializeTaskNode(
         const CanvasNode& baseNode);
-      bool HandleKeyBindingEvent(const KeyBindings::TaskBinding& keyBinding);
+      bool HandleKeyBindingEvent(const OrderTaskArguments& arguments);
       bool HandleTaskInputEvent(const QKeyEvent& event);
       void HandleInteractionsPropertiesEvent();
       bool HandleCancelBindingEvent(
-        const KeyBindings::CancelBinding& keyBinding);
+        const CancelKeyBindingsModel::Operation& operation);
       void OnTaskState(const std::shared_ptr<Task>& task,
         const Nexus::Security& security, const Task::StateEntry& update);
   };

@@ -14,6 +14,7 @@
 #include "Spire/LegacyUI/LinkSecurityContextAction.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/LegacyUI/ValueLabel.hpp"
+#include "Spire/Spire/ListModel.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesModel.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesPropertiesDialog.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesWindowSettings.hpp"
@@ -178,8 +179,8 @@ void TimeAndSalesWindow::showEvent(QShowEvent* event) {
 void TimeAndSalesWindow::closeEvent(QCloseEvent* event) {
   if(m_security != Security()) {
     auto window =
-      std::make_unique<TimeAndSalesWindowSettings>(*this, Ref(*m_userProfile));
-    m_userProfile->AddRecentlyClosedWindow(std::move(window));
+      std::make_shared<TimeAndSalesWindowSettings>(*this, Ref(*m_userProfile));
+    m_userProfile->GetRecentlyClosedWindows()->push(std::move(window));
   }
   QFrame::closeEvent(event);
 }

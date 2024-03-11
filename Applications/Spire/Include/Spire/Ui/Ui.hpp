@@ -63,6 +63,7 @@ namespace Spire {
   class ListView;
   class MarketBox;
   class MenuBox;
+  class MenuButton;
   class MoneyBox;
   template<typename T> class MultiSelectionModel;
   class NavigationView;

@@ -14,6 +14,7 @@
 #include "Spire/InputWidgets/SecurityInputDialog.hpp"
 #include "Spire/LegacyUI/LinkSecurityContextAction.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
+#include "Spire/Spire/ListModel.hpp"
 #include "ui_ChartWindow.h"
 
 using namespace Beam;
@@ -158,7 +159,7 @@ void ChartWindow::showEvent(QShowEvent* event) {
 void ChartWindow::closeEvent(QCloseEvent* event) {
   if(m_security != Security()) {
     auto settings = GetWindowSettings();
-    m_userProfile->AddRecentlyClosedWindow(std::move(settings));
+    m_userProfile->GetRecentlyClosedWindows()->push(std::move(settings));
   }
   QMainWindow::closeEvent(event);
 }

@@ -14,6 +14,7 @@
 #include "Spire/Blotter/BlotterWindow.hpp"
 #include "Spire/LegacyUI/UISerialization.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
+#include "Spire/Spire/ListModel.hpp"
 
 using namespace Beam;
 using namespace Beam::IO;
@@ -299,9 +300,9 @@ void BlotterSettings::AddRecentlyClosedWindow(const BlotterWindow& window) {
   if(m_recentlyClosedBlotters.find(&model) != m_recentlyClosedBlotters.end()) {
     return;
   }
-  auto settings = window.GetWindowSettings();
-  m_recentlyClosedBlotters[&model] = settings.get();
-  m_userProfile->AddRecentlyClosedWindow(std::move(settings));
+  auto settings = std::shared_ptr(window.GetWindowSettings());
+  m_recentlyClosedBlotters[&model] = settings;
+  m_userProfile->GetRecentlyClosedWindows()->push(std::move(settings));
 }
 
 void BlotterSettings::RemoveRecentlyClosedWindow(const BlotterWindow& window) {
@@ -312,7 +313,13 @@ void BlotterSettings::RemoveRecentlyClosedWindow(const BlotterWindow& window) {
   }
   auto settings = settingsIterator->second;
   m_recentlyClosedBlotters.erase(&model);
-  m_userProfile->RemoveRecentlyClosedWindow(*settings);
+  auto recentlyClosedWindows = m_userProfile->GetRecentlyClosedWindows();
+  for(auto i = 0; i != recentlyClosedWindows->get_size(); ++i) {
+    if(recentlyClosedWindows->get(i) == settings) {
+      recentlyClosedWindows->remove(i);
+      break;
+    }
+  }
 }
 
 connection BlotterSettings::ConnectBlotterAddedSignal(
