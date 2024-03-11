@@ -765,7 +765,7 @@ void EditableTableView::on_focus_changed(QWidget* old, QWidget* now) {
   if(now) {
     if(find_focus_state(*this) == FocusObserver::State::NONE &&
         isAncestorOf(old)) {
-      if(get_current()->get()) {
+      if(get_current()->get() && m_filter) {
         set_filter(m_filter);
       }
     }
