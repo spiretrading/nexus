@@ -460,11 +460,13 @@ OrderTasksKeyBindingsForm::OrderTasksKeyBindingsForm(
   auto layout = make_vbox_layout(this);
   layout->addWidget(make_help_text_box());
   auto [search_region, m_search_box] = make_search_region();
-  m_search_box->connect_submit_signal(
+  m_search_box->get_current()->connect_update_signal(
     std::bind_front(&OrderTasksKeyBindingsForm::on_search, this));
   layout->addWidget(search_region);
   auto order_task_arguments_table =
     std::make_shared<OrderTaskArgumentsToTableModel>(m_order_task_arguments);
+  m_table_match_cache = std::make_unique<TableMatchCache>(
+    order_task_arguments_table, table_matcher_builder);
   m_unique_key_bindings =
     std::make_unique<UniqueKeyBindingsModel>(order_task_arguments_table);
   m_table_view = new EditableTableView(order_task_arguments_table,
@@ -493,8 +495,6 @@ OrderTasksKeyBindingsForm::OrderTasksKeyBindingsForm(
     style.get(Any()).set(BackgroundColor(QColor(0xFFFFFF)));
   });
   layout->addWidget(table_view_box);
-  m_table_match_cache = std::make_unique<TableMatchCache>(
-    order_task_arguments_table, table_matcher_builder);
   m_table_view->connect_delete_signal(
     std::bind_front(&OrderTasksKeyBindingsForm::on_delete, this));
   m_order_task_arguments->connect_operation_signal(
