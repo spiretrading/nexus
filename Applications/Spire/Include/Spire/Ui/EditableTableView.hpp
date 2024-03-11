@@ -81,6 +81,9 @@ namespace Spire {
       ViewBuilder m_view_builder;
       TableBody* m_table_body;
       ArrayListModel<std::shared_ptr<EditableTableRow>> m_rows;
+      Filter m_filter;
+      bool m_is_added_row_filtered;
+      int m_previous_table_row_size;
       boost::signals2::scoped_connection m_current_connection;
       boost::signals2::scoped_connection m_source_operation_connection;
       boost::signals2::scoped_connection m_operation_connection;
@@ -94,6 +97,7 @@ namespace Spire {
       void on_table_operation(const TableModel::Operation& operation);
       void on_source_table_operation(const TableModel::Operation& operation);
       void on_sort(int column, TableHeaderItem::Order order);
+      void on_focus_changed(QWidget* old, QWidget* now);
   };
 }
 

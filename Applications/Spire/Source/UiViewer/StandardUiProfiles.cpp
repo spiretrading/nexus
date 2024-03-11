@@ -2193,13 +2193,13 @@ UiProfile Spire::make_editable_table_view_profile() {
         if(value.isEmpty()) {
           return false;
         }
-        if(model.get<QString>(row, 0).contains(value, Qt::CaseInsensitive)) {
+        if(array_table_model->get<QString>(row, 0).contains(value, Qt::CaseInsensitive)) {
           return false;
         }
-        if(to_text(model.get<Region>(row, 1)).contains(value, Qt::CaseInsensitive)) {
+        if(to_text(array_table_model->get<Region>(row, 1)).contains(value, Qt::CaseInsensitive)) {
           return false;
         }
-        if(to_text(model.get<OrderType>(row, 2)).contains(value, Qt::CaseInsensitive)) {
+        if(to_text(array_table_model->get<OrderType>(row, 2)).contains(value, Qt::CaseInsensitive)) {
           return false;
         }
         return true;
