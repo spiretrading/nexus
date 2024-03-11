@@ -50,6 +50,8 @@ namespace Spire {
   template<typename T> class LocalValueModel;
   template<typename T> class ModelTransactionLog;
   template<typename T> class OptionalScalarValueModelDecorator;
+  template<typename T> class ProxyValueModel;
+  template<typename T> class ProxyScalarValueModel;
   class RangeInputModel;
   class RealSpinBoxModel;
   template<typename T> class RowViewListModel;

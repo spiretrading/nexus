@@ -2,9 +2,8 @@
 #include "Spire/KeyBindings/AddRegionForm.hpp"
 #include "Spire/KeyBindings/InteractionsKeyBindingsForm.hpp"
 #include "Spire/KeyBindings/InteractionsKeyBindingsModel.hpp"
-#include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Spire/ListIndexValueModel.hpp"
+#include "Spire/Spire/TransformValueModel.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
@@ -23,9 +22,6 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  const auto modifiers = std::array<Qt::KeyboardModifier, 4>{
-    Qt::NoModifier, Qt::ShiftModifier, Qt::ControlModifier, Qt::AltModifier};
-
   void apply_deletable_list_item_style(StyleSheet& style) {
     style.get((Any() > is_a<DeletableListItem>()) << is_a<ListItem>()).
       set(vertical_padding(0)).
@@ -66,8 +62,16 @@ InteractionsPage::InteractionsPage(
     m_regions, std::bind_front(&InteractionsPage::make_region_list_item, this));
   m_list_view->setFocusPolicy(Qt::NoFocus);
   m_list_view->get_list_item(0)->setEnabled(false);
-  m_list_view->get_current()->connect_update_signal(
-    std::bind_front(&InteractionsPage::on_current_index, this));
+  m_current_region = make_transform_value_model(m_list_view->get_current(),
+    [=] (const auto& index) {
+      if(index) {
+        return m_regions->get(*index);
+      }
+      return m_regions->get(0);
+    },
+    [] (const auto& region) {
+      throw std::invalid_argument("Setting not supported.");
+    });
   update_style(*m_list_view, apply_deletable_list_item_style);
   auto scrollable_list_box = new ScrollableListBox(*m_list_view);
   scrollable_list_box->setFocusPolicy(Qt::NoFocus);
@@ -97,11 +101,11 @@ InteractionsPage::InteractionsPage(
   master_box->setFixedWidth(scale_width(240));
   update_style(*master_box, apply_master_box_style);
   auto scroll_box_body = new QWidget();
-  scroll_box_body->setSizePolicy(QSizePolicy::Expanding,
-    QSizePolicy::Expanding);
+  scroll_box_body->setSizePolicy(
+    QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto center_layout = make_vbox_layout();
-  m_interactions_form = new InteractionsKeyBindingsForm(Region::Global(),
-    m_key_bindings->get_interactions_key_bindings(Region::Global()));
+  m_interactions_form =
+    new InteractionsKeyBindingsForm(m_key_bindings, m_current_region);
   m_interactions_form->setMinimumWidth(scale_width(384));
   m_interactions_form->setMaximumWidth(scale_width(480));
   center_layout->addWidget(m_interactions_form);
@@ -122,7 +126,7 @@ InteractionsPage::InteractionsPage(
   m_add_region_form = new AddRegionForm(m_regions, *this);
   m_add_region_form->connect_submit_signal(
     std::bind_front(&InteractionsPage::on_add_region, this));
-//  m_list_view_current->set(root_region);
+  m_list_view->get_current()->set(1);
 }
 
 QWidget* InteractionsPage::make_region_list_item(
@@ -151,9 +155,9 @@ QWidget* InteractionsPage::make_region_list_item(
 
 void InteractionsPage::on_add_region_click() {
   m_add_region_form->show();
-  auto add_region_window = m_add_region_form->window();
-  add_region_window->move(mapToGlobal(QPoint(0, 0)) + rect().center() -
-    add_region_window->rect().center());
+  auto window = m_add_region_form->window();
+  window->move(
+    mapToGlobal(QPoint(0, 0)) + rect().center() - window->rect().center());
 }
 
 void InteractionsPage::on_current_index(const optional<int>& current) {
@@ -164,39 +168,24 @@ void InteractionsPage::on_current_index(const optional<int>& current) {
   }
 }
 
-void InteractionsPage::on_current_region(const Region& region) {
-/*
-  m_interactions_form->set_region(region);
-  m_interactions_form_model->set_key_bindings(
-    get_region_interactions()->Get(region));
-*/
-}
-
 void InteractionsPage::on_add_region(const Region& region) {
-/*
   m_add_region_form->close();
-  auto result = m_list_model->push(region);
-  m_list_view_current->set(region);
-  if(result == QValidator::Acceptable) {
-    m_add_signal(region, get_region_interactions()->Get(region));
+  if(m_regions->push(region) == QValidator::Acceptable) {
+    m_current_region->set(region);
   }
-*/
 }
 
 void InteractionsPage::on_delete_region(const Region& region) {
   m_key_bindings->get_interactions_key_bindings(region)->reset();
-/*
   auto index = [&] {
-    for(auto i = 0; i < m_list_model->get_size(); ++i) {
-      if(m_list_model->get(i) == region) {
+    for(auto i = 1; i < m_regions->get_size(); ++i) {
+      if(m_regions->get(i) == region) {
         return i;
       }
     }
     return -1;
   }();
-  if(index > 0 && m_list_model->remove(index) == QValidator::Acceptable) {
+  if(index > 0 && m_regions->remove(index) == QValidator::Acceptable) {
     m_list_view->get_selection()->push(*m_list_view->get_current()->get());
-    m_delete_signal(region);
   }
-*/
 }

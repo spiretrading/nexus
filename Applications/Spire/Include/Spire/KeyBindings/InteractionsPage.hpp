@@ -28,6 +28,7 @@ namespace Spire {
     private:
       std::shared_ptr<KeyBindingsModel> m_key_bindings;
       std::shared_ptr<ArrayListModel<Nexus::Region>> m_regions;
+      std::shared_ptr<RegionModel> m_current_region;
       InteractionsKeyBindingsForm* m_interactions_form;
       ListView* m_list_view;
       AddRegionForm* m_add_region_form;
@@ -36,7 +37,6 @@ namespace Spire {
         const std::shared_ptr<RegionListModel>& list, int index);
       void on_add_region_click();
       void on_current_index(const boost::optional<int>& current);
-      void on_current_region(const Nexus::Region& region);
       void on_add_region(const Nexus::Region& region);
       void on_delete_region(const Nexus::Region& region);
   };

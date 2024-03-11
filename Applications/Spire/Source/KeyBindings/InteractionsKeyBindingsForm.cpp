@@ -2,15 +2,18 @@
 #include "Spire/KeyBindings/InteractionsKeyBindingsModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/OptionalScalarValueModelDecorator.hpp"
+#include "Spire/Spire/ProxyScalarValueModel.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/MoneyBox.hpp"
 #include "Spire/Ui/QuantityBox.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
-#include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/TextAreaBox.hpp"
+#include "Spire/Ui/TextBox.hpp"
 
+using namespace boost;
+using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 using namespace Spire::Styles;
@@ -33,6 +36,19 @@ namespace {
       static const auto value = QObject::tr("None");
       return value;
     }
+  }
+
+  auto to_index(Qt::KeyboardModifier modifier) {
+    if(modifier == Qt::NoModifier) {
+      return 0;
+    } else if(modifier == Qt::ShiftModifier) {
+      return 1;
+    } else if(modifier == Qt::ControlModifier) {
+      return 2;
+    } else if(modifier == Qt::AltModifier) {
+      return 0;
+    }
+    throw std::out_of_range("Invalid keyboard modifier.");
   }
 
   auto make_region_header() {
@@ -87,29 +103,8 @@ namespace {
   }
 
   template<typename T>
-  std::shared_ptr<ScalarValueModel<T>> get_increment(
-      const std::shared_ptr<InteractionsKeyBindingsModel>& bindings,
-      Qt::KeyboardModifier modifier) {
-    return std::shared_ptr<ScalarValueModel<T>>();
-  }
-
-  template<>
-  std::shared_ptr<ScalarValueModel<Quantity>> get_increment(
-      const std::shared_ptr<InteractionsKeyBindingsModel>& bindings,
-      Qt::KeyboardModifier modifier) {
-    return bindings->get_quantity_increment(modifier);
-  }
-
-  template<>
-  std::shared_ptr<ScalarValueModel<Money>> get_increment(
-      const std::shared_ptr<InteractionsKeyBindingsModel>& bindings,
-      Qt::KeyboardModifier modifier) {
-    return bindings->get_price_increment(modifier);
-  }
-
-  template<typename T>
-  auto make_slot(const QString& name,
-      std::shared_ptr<ScalarValueModel<T>> model) {
+  auto make_slot(
+      const QString& name, std::shared_ptr<ScalarValueModel<T>> model) {
     auto label = make_label(name);
     label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     auto box = make_decimal_box(std::move(model));
@@ -121,11 +116,11 @@ namespace {
     layout->addWidget(box);
     return widget;
   }
-  
+
   template<typename T>
   auto make_field_set(const QString& name,
-      const std::shared_ptr<InteractionsKeyBindingsModel>& bindings) {
-    using Type = T;
+      const std::array<T, InteractionsKeyBindingsModel::MODIFIER_COUNT>&
+        increments) {
     auto header = make_label(name);
     header->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     update_style(*header, [] (auto& style) {
@@ -142,22 +137,24 @@ namespace {
     layout->setSpacing(scale_height(4));
     layout->addWidget(header);
     layout->addSpacing(scale_height(-4));
-    layout->addWidget(make_slot<Type>(to_text(Qt::NoModifier),
-      get_increment<Type>(bindings, Qt::NoModifier)));
-    layout->addWidget(make_slot<Type>(to_text(Qt::ShiftModifier),
-      get_increment<Type>(bindings, Qt::ShiftModifier)));
-    layout->addWidget(make_slot<Type>(to_text(Qt::ControlModifier),
-      get_increment<Type>(bindings, Qt::ControlModifier)));
-    layout->addWidget(make_slot<Type>(to_text(Qt::AltModifier),
-      get_increment<Type>(bindings, Qt::AltModifier)));
+    layout->addWidget(
+      make_slot(to_text(Qt::NoModifier), increments[to_index(Qt::NoModifier)]));
+    layout->addWidget(make_slot(
+      to_text(Qt::ShiftModifier), increments[to_index(Qt::ShiftModifier)]));
+    layout->addWidget(make_slot(
+      to_text(Qt::ControlModifier), increments[to_index(Qt::ControlModifier)]));
+    layout->addWidget(make_slot(
+      to_text(Qt::AltModifier), increments[to_index(Qt::AltModifier)]));
     return widget;
   }
 }
 
-InteractionsKeyBindingsForm::InteractionsKeyBindingsForm(Nexus::Region region,
-    std::shared_ptr<InteractionsKeyBindingsModel> bindings, QWidget* parent)
+InteractionsKeyBindingsForm::InteractionsKeyBindingsForm(
+    std::shared_ptr<KeyBindingsModel> key_bindings,
+    std::shared_ptr<RegionModel> region, QWidget* parent)
     : QWidget(parent),
-      m_bindings(std::move(bindings)) {
+      m_key_bindings(std::move(key_bindings)),
+      m_region(std::move(region)) {
   auto body = new QWidget();
   body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto layout = make_vbox_layout(body);
@@ -166,15 +163,22 @@ InteractionsKeyBindingsForm::InteractionsKeyBindingsForm(Nexus::Region region,
   layout->addWidget(m_header);
   layout->addSpacing(scale_height(-18));
   m_description = make_description();
-  set_region(region);
+  m_region_connection = m_region->connect_update_signal(
+    std::bind_front(&InteractionsKeyBindingsForm::on_region, this));
+  on_region(m_region->get());
   layout->addWidget(m_description);
-  layout->addWidget(make_slot<Quantity>(tr("Default Quantity"),
-    m_bindings->get_default_quantity()));
+  auto interactions =
+    m_key_bindings->get_interactions_key_bindings(region->get());
+  m_default_quantity =
+    make_proxy_scalar_value_model(interactions->get_default_quantity());
   layout->addWidget(
-    make_field_set<Quantity>(tr("Quantity Increments"), m_bindings));
+    make_slot<Quantity>(tr("Default Quantity"), m_default_quantity));
   layout->addWidget(
-    make_field_set<Money>(tr("Price Increments"), m_bindings));
-  auto cancel_on_fill = new CheckBox(m_bindings->is_cancel_on_fill());
+    make_field_set(tr("Quantity Increments"), m_quantity_increments));
+  layout->addWidget(make_field_set(tr("Price Increments"), m_price_increments));
+  m_is_cancel_on_fill =
+    make_proxy_value_model(interactions->is_cancel_on_fill());
+  auto cancel_on_fill = new CheckBox(m_is_cancel_on_fill);
   cancel_on_fill->set_label(tr("Cancel on Fill"));
   layout->addWidget(cancel_on_fill, 0, Qt::AlignLeft);
   auto box = new Box(body);
@@ -189,21 +193,15 @@ InteractionsKeyBindingsForm::InteractionsKeyBindingsForm(Nexus::Region region,
   enclose(*this, *box);
 }
 
-void InteractionsKeyBindingsForm::set_region(const Region& region) {
+void InteractionsKeyBindingsForm::on_region(const Region& region) {
   auto description = [&] {
     if(region.IsGlobal()) {
       return QString("Customize the default interactions for all regions to "
         "suit your trading style.");
     }
-    return
-      QString("Customize interactions on %1 to suit your trading style.").
+    return QString("Customize interactions on %1 to suit your trading style.").
       arg(Spire::to_text(region));
   }();
   m_description->get_current()->set(description);
   m_header->get_current()->set(to_text(region));
-}
-
-const std::shared_ptr<InteractionsKeyBindingsModel>&
-    InteractionsKeyBindingsForm::get_bindings() const {
-  return m_bindings;
 }
