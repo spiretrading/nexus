@@ -1,4 +1,4 @@
-#include "Spire/KeyBindings/InteractionsProperties.hpp"
+#include "Spire/LegacyKeyBindings/InteractionsProperties.hpp"
 #include <filesystem>
 #include <fstream>
 #include <Beam/IO/BasicIStreamReader.hpp>

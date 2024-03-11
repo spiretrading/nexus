@@ -52,6 +52,7 @@ namespace Spire {
   class HighlightSwatch;
   class HoverObserver;
   class Icon;
+  class InfoPanel;
   class InfoTip;
   class KeyInputBox;
   class KeyObserver;
@@ -60,6 +61,7 @@ namespace Spire {
   template<typename T> class ListSelectionValueModel;
   class ListView;
   class MarketBox;
+  class MenuBox;
   class MoneyBox;
   template<typename T> class MultiSelectionModel;
   class NavigationView;

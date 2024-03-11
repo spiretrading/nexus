@@ -110,6 +110,9 @@ namespace Spire {
   /** Returns a UiProfile for the IconToggleButton. */
   UiProfile make_icon_toggle_button_profile();
 
+  /** Returns a UiProfile for the IntoPanel. */
+  UiProfile make_info_panel_profile();
+
   /** Returns a UiProfile for the IntoTip. */
   UiProfile make_info_tip_profile();
 
@@ -146,6 +149,15 @@ namespace Spire {
   /** Returns a UiProfile for the MarketBox. */
   UiProfile make_market_box_profile();
 
+  /** Returns a UiProfile for the MenuButton. */
+  UiProfile make_menu_button_profile();
+
+  /** Returns a UiProfile for the MenuIconButton. */
+  UiProfile make_menu_icon_button_profile();
+
+  /** Returns a UiProfile for the MenuLabelButton. */
+  UiProfile make_menu_label_button_profile();
+
   /** Returns a UiProfile for the MoneyBox. */
   UiProfile make_money_box_profile();
 
@@ -159,9 +171,7 @@ namespace Spire {
   UiProfile make_open_filter_panel_profile();
 
   /** Returns a UiProfile for the OrderFieldInfoTip. */
-/** TODO
   UiProfile make_order_field_info_tip_profile();
-*/
 
   /** Returns a UiProfile for the OrderTypeBox. */
   UiProfile make_order_type_box_profile();
@@ -264,6 +274,9 @@ namespace Spire {
 
   /** Returns a UiProfile for the TextAreaBox. */
   UiProfile make_text_area_box_profile();
+
+  /** Returns a UiProfile for the TextAreaLabel. */
+  UiProfile make_text_area_label_profile();
 
   /** Returns a UiProfile for the TextBox. */
   UiProfile make_text_box_profile();

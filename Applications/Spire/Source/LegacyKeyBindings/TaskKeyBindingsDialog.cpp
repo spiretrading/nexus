@@ -1,4 +1,4 @@
-#include "Spire/KeyBindings/TaskKeyBindingsDialog.hpp"
+#include "Spire/LegacyKeyBindings/TaskKeyBindingsDialog.hpp"
 #include <QHeaderView>
 #include <QStandardItemModel>
 #include <QTableView>

@@ -10,9 +10,7 @@
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 #include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 #include "Nexus/Definitions/SecuritySet.hpp"
-/** TODO
 #include "Spire/KeyBindings/OrderFieldInfoTip.hpp"
-*/
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ArrayTableModel.hpp"
 #include "Spire/Spire/ColumnViewListModel.hpp"
@@ -59,6 +57,7 @@
 #include "Spire/Ui/HighlightSwatch.hpp"
 #include "Spire/Ui/HoverObserver.hpp"
 #include "Spire/Ui/Icon.hpp"
+#include "Spire/Ui/InfoPanel.hpp"
 #include "Spire/Ui/InfoTip.hpp"
 #include "Spire/Ui/IntegerBox.hpp"
 #include "Spire/Ui/KeyFilterPanel.hpp"
@@ -68,6 +67,7 @@
 #include "Spire/Ui/ListSelectionModel.hpp"
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/MarketBox.hpp"
+#include "Spire/Ui/MenuButton.hpp"
 #include "Spire/Ui/MoneyBox.hpp"
 #include "Spire/Ui/NavigationView.hpp"
 #include "Spire/Ui/OpenFilterPanel.hpp"
@@ -1483,6 +1483,8 @@ UiProfile Spire::make_context_menu_profile() {
     [] (auto& profile) {
       auto button = make_label_button(QString::fromUtf8("Click me"));
       auto menu = new ContextMenu(*button);
+      menu->add_action("Undo", profile.make_event_slot<>(
+        QString("Action:Undo")));
       auto view_menu = new ContextMenu(*static_cast<QWidget*>(menu));
       view_menu->add_action("Large", profile.make_event_slot<>(
         QString("Action:Large")));
@@ -2527,6 +2529,35 @@ UiProfile Spire::make_icon_toggle_button_profile() {
   return profile;
 }
 
+UiProfile Spire::make_info_panel_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_property<QString>("message", "Message"));
+  auto severity_property = define_enum<InfoPanel::Severity>(
+    {{"INFO", InfoPanel::Severity::INFO},
+     {"SUCCESS", InfoPanel::Severity::SUCCESS},
+     {"WARNING", InfoPanel::Severity::WARNING},
+     {"ERROR", InfoPanel::Severity::ERROR}});
+  properties.push_back(
+    make_standard_enum_property("severity", severity_property));
+  auto profile = UiProfile("InfoPanel", properties, [] (auto& profile) {
+    auto button = make_label_button("Click me");
+    auto& message = get<QString>("message", profile.get_properties());
+    auto& severity =
+      get<InfoPanel::Severity>("severity", profile.get_properties());
+    auto info_panel = QPointer<InfoPanel>();
+    button->connect_click_signal([=, &message, &severity] () mutable {
+      if(info_panel) {
+        return;
+      }
+      info_panel = new InfoPanel(severity.get(), message.get(), *button);
+      info_panel->show();
+    });
+    return button;
+  });
+  return profile;
+}
+
 UiProfile Spire::make_info_tip_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
@@ -3006,6 +3037,80 @@ UiProfile Spire::make_market_box_profile() {
   return profile;
 }
 
+UiProfile Spire::make_menu_button_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto profile = UiProfile("MenuButton", properties, [] (auto& profile) {
+    auto label = make_label("MenuButton");
+    label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    update_style(*label, [] (auto& style) {
+      style.get(Any()).
+        set(border(scale_width(1), QColor(0xC8C8C8))).
+        set(TextAlign(Qt::Alignment(Qt::AlignCenter))).
+        set(horizontal_padding(scale_width(8))).
+        set(vertical_padding(scale_height(5)));
+    });
+    auto menu_button = new MenuButton(*label);
+    menu_button->setFixedWidth(scale_width(120));
+    auto& menu = menu_button->get_menu();
+    menu.add_action("Minimize All",
+      profile.make_event_slot<>(QString("Action:Minimize All")));
+    menu.add_action("Restore All",
+      profile.make_event_slot<>(QString("Action:Restore All")));
+    menu.add_action("This is a long name for test",
+      profile.make_event_slot<>(
+        QString("Action:This is a long name for test")));
+    apply_widget_properties(menu_button, profile.get_properties());
+    return menu_button;
+  });
+  return profile;
+}
+
+UiProfile Spire::make_menu_label_button_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto profile = UiProfile("MenuLabelButton", properties, [] (auto& profile) {
+    auto menu_button = make_menu_label_button("Window Manager");
+    auto& menu = menu_button->get_menu();
+    menu.add_action("Minimize All",
+      profile.make_event_slot<>(QString("Action:Minimize All")));
+    menu.add_action("Restore All",
+      profile.make_event_slot<>(QString("Action:Restore All")));
+    menu.add_action("Import Settings...",
+      profile.make_event_slot<>(QString("Action:Import Settings")));
+    menu.add_action("Export Settings...",
+      profile.make_event_slot<>(QString("Action:Export Settings")));
+    menu_button->setFixedWidth(scale_width(130));
+    apply_widget_properties(menu_button, profile.get_properties());
+    return menu_button;
+  });
+  return profile;
+}
+
+UiProfile Spire::make_menu_icon_button_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_property<QString>("tooltip", "Tooltip"));
+  auto profile = UiProfile("MenuIconButton", properties, [] (auto& profile) {
+    auto& tooltip = get<QString>("tooltip", profile.get_properties());
+    auto menu_button = make_menu_icon_button(
+      imageFromSvg(":/Icons/toolbar_icons/blotter.svg", scale(26, 26)),
+      tooltip.get());
+    apply_widget_properties(menu_button, profile.get_properties());
+    auto& menu = menu_button->get_menu();
+    menu.add_action("New...", profile.make_event_slot<>(QString("Action:New")));
+    menu.add_separator();
+    menu.add_action("Global",
+      profile.make_event_slot<>(QString("Action:Global")));
+    menu.add_action("Australia",
+      profile.make_event_slot<>(QString("Action:Australia")));
+    menu.add_action("North America",
+      profile.make_event_slot<>(QString("Action:North America")));
+    return menu_button;
+  });
+  return profile;
+}
+
 UiProfile Spire::make_money_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
@@ -3165,7 +3270,6 @@ UiProfile Spire::make_open_filter_panel_profile() {
   return profile;
 }
 
-/** TODO
 UiProfile Spire::make_order_field_info_tip_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
@@ -3240,7 +3344,6 @@ UiProfile Spire::make_order_field_info_tip_profile() {
   });
   return profile;
 }
-*/
 
 UiProfile Spire::make_order_type_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
@@ -4725,6 +4828,29 @@ UiProfile Spire::make_text_area_box_profile() {
     text_area_box->get_current()->connect_update_signal(
       profile.make_event_slot<QString>("Current"));
     return text_area_box;
+  });
+  return profile;
+}
+
+UiProfile Spire::make_text_area_label_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  properties.push_back(make_standard_property<int>("width", 100));
+  properties.push_back(make_standard_property("current", QString("Label")));
+  auto profile = UiProfile("TextAreaLabel", properties, [] (auto& profile) {
+    auto text_area_label = make_text_area_label("");
+    auto& width = get<int>("width", profile.get_properties());
+    width.connect_changed_signal([=] (auto value) {
+      if(value != 0) {
+        if(unscale_width(text_area_label->width()) != value) {
+          text_area_label->setFixedWidth(scale_width(value));
+        }
+      }
+    });
+    auto& current = get<QString>("current", profile.get_properties());
+    current.connect_changed_signal([=] (const auto& value) {
+      text_area_label->get_current()->set(value);
+    });
+    return text_area_label;
   });
   return profile;
 }
