@@ -55,8 +55,6 @@ namespace Spire {
         const AnyRef& submission);
       void on_delete(int row);
       void on_search(const QString& query);
-      void on_list_operation(
-        const OrderTaskArgumentsListModel::Operation& operation);
   };
 }
 

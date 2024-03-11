@@ -35,6 +35,10 @@ namespace Spire {
   /** Matches the query against the time in force. */
   bool matches(const Nexus::TimeInForce& time_in_force, const QString& query);
 
+  /** Matches the query against the tags. */
+  bool matches(const std::vector<Nexus::Tag>& time_in_force,
+    const QString& query);
+
   /** Matches the query against the key. */
   bool matches(const QKeySequence& key, const QString& query);
 }

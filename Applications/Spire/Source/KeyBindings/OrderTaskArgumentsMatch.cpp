@@ -161,6 +161,11 @@ bool Spire::matches(const TimeInForce& time_in_force, const QString& query) {
   return false;
 }
 
+bool Spire::matches(const std::vector<Nexus::Tag>& time_in_force,
+    const QString& query) {
+  return false;
+}
+
 bool Spire::matches(const QKeySequence& key, const QString& query) {
   return matches(key.toString().replace('+', ' '), query);
 }

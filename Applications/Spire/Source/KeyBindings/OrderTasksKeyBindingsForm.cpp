@@ -166,6 +166,8 @@ namespace {
       return make_matcher<optional<Quantity>>(table, row, column);
     } else if(column_id == OrderTaskArgumentsToTableModel::Column::TIME_IN_FORCE) {
       return make_matcher<TimeInForce>(table, row, column);
+    } else if(column_id == OrderTaskArgumentsToTableModel::Column::TAG) {
+      return make_matcher<std::vector<Nexus::Tag>>(table, row, column);
     } else if(column_id == OrderTaskArgumentsToTableModel::Column::KEY) {
       return make_matcher<QKeySequence>(table, row, column);
     }
@@ -497,8 +499,6 @@ OrderTasksKeyBindingsForm::OrderTasksKeyBindingsForm(
   layout->addWidget(table_view_box);
   m_table_view->connect_delete_signal(
     std::bind_front(&OrderTasksKeyBindingsForm::on_delete, this));
-  m_order_task_arguments->connect_operation_signal(
-    std::bind_front(&OrderTasksKeyBindingsForm::on_list_operation, this));
 }
 
 const std::shared_ptr<ComboBox::QueryModel>&
@@ -731,15 +731,4 @@ void OrderTasksKeyBindingsForm::on_search(const QString& query) {
     }
     return !m_table_match_cache->matches(row, query);
   });
-}
-
-void OrderTasksKeyBindingsForm::on_list_operation(
-    const OrderTaskArgumentsListModel::Operation& operation) {
-  visit(operation,
-    [&] (const OrderTaskArgumentsListModel::AddOperation& operation) {
-      m_table_view->adjustSize();
-    },
-    [&] (const OrderTaskArgumentsListModel::RemoveOperation& operation) {
-      m_table_view->adjustSize();
-    });
 }
