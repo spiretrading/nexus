@@ -69,6 +69,13 @@ ListModel<std::any>::const_iterator ListModel<std::any>::end() const {
   return const_iterator(const_cast<ListModel&>(*this), get_size());
 }
 
+ListModel<std::any>::const_iterator ListModel<std::any>::cbegin() const {
+  return const_iterator(const_cast<ListModel&>(*this), 0);
+}
+
+ListModel<std::any>::const_iterator ListModel<std::any>::cend() const {
+  return const_iterator(const_cast<ListModel&>(*this), get_size());
+}
 
 void Spire::clear(AnyListModel& model) {
   auto size = model.get_size();

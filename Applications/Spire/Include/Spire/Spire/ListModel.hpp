@@ -244,7 +244,8 @@ namespace Spire {
       using value_type = T;
       using difference_type = std::ptrdiff_t;
       using pointer = const T*;
-      using reference = ListModelReference<T>;
+      using reference =
+        std::conditional_t<std::is_const_v<T>, T&, ListModelReference<T>>;
 
       /** Constructs an uninitialized ListModelIterator. */
       ListModelIterator();
@@ -416,6 +417,12 @@ namespace Spire {
       /** Returns an iterator to one past the end of this list. */
       const_iterator end() const;
 
+      /** Returns an iterator to the beginning of this list. */
+      const_iterator cbegin() const;
+
+      /** Returns an iterator to one past the end of this list. */
+      const_iterator cend() const;
+
       /** Connects a slot to the OperationSignal. */
       template<typename F>
       boost::signals2::connection connect_operation_signal(const F& slot) const;
@@ -495,6 +502,10 @@ namespace Spire {
       const_iterator begin() const;
 
       const_iterator end() const;
+
+      const_iterator cbegin() const;
+
+      const_iterator cend() const;
 
     protected:
       ListModel() = default;
@@ -601,7 +612,11 @@ namespace Spire {
   template<typename T>
   typename ListModelIterator<T>::reference
       ListModelIterator<T>::operator *() const {
-    return reference(*m_model, m_index);
+    if constexpr(std::is_const_v<T>) {
+      return m_model->get(m_index);
+    } else {
+      return reference(*m_model, m_index);
+    }
   }
 
   template<typename T>
@@ -750,6 +765,16 @@ namespace Spire {
 
   template<typename T>
   typename ListModel<T>::const_iterator ListModel<T>::end() const {
+    return const_iterator(const_cast<ListModel&>(*this), get_size());
+  }
+
+  template<typename T>
+  typename ListModel<T>::const_iterator ListModel<T>::cbegin() const {
+    return const_iterator(const_cast<ListModel&>(*this), 0);
+  }
+
+  template<typename T>
+  typename ListModel<T>::const_iterator ListModel<T>::cend() const {
     return const_iterator(const_cast<ListModel&>(*this), get_size());
   }
 
