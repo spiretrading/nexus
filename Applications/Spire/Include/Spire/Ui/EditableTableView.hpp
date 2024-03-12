@@ -13,6 +13,7 @@ namespace Spire {
 
     protected:
       bool event(QEvent* event) override;
+      void keyPressEvent(QKeyEvent* event) override;
 
     private:
       PopupBox* m_popup_box;
@@ -91,6 +92,7 @@ namespace Spire {
 
       QWidget* view_builder(ViewBuilder source_view_builder,
         const std::shared_ptr<TableModel>& table, int row, int column);
+      bool is_popuped_item(Index index) const;
       void navigate_next();
       void navigate_previous();
       void on_current(const boost::optional<Index>& index);

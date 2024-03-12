@@ -36,10 +36,6 @@ namespace {
 
   const auto DELETE_TIMEOUT_MS = 200;
 
-  bool is_a_word(const QString& text) {
-    return text.size() == 1 && (text[0].isLetterOrNumber() || text[0] == '_');
-  }
-
   auto is_in_layout(QLayout* layout, QWidget* widget) {
     for(auto i = 0; i < layout->count(); ++i) {
       if(layout->itemAt(i)->widget() == widget) {
@@ -87,7 +83,6 @@ CustomPopupBox::CustomPopupBox(QWidget& body, QWidget* parent)
   m_popup_box = new PopupBox(body);
   enclose(*this, *m_popup_box);
   proxy_style(*this, *m_popup_box);
-  setFocusProxy(m_popup_box);
   setFocusPolicy(Qt::ClickFocus);
   m_popup_box->setAttribute(Qt::WA_TransparentForMouseEvents);
   m_tip_window = find_tip_window(body);
@@ -97,7 +92,7 @@ bool CustomPopupBox::event(QEvent* event) {
   switch(event->type()) {
     case QEvent::MouseButtonPress:
       if(auto& mouse_event = *static_cast<QMouseEvent*>(event);
-        mouse_event.button() == Qt::LeftButton) {
+          mouse_event.button() == Qt::LeftButton) {
         m_popup_box->get_body().setFocus();
       }
       break;
@@ -110,6 +105,20 @@ bool CustomPopupBox::event(QEvent* event) {
   }
   return QWidget::event(event);
 }
+
+void CustomPopupBox::keyPressEvent(QKeyEvent* event) {
+  switch(event->key()) {
+    case Qt::Key_Enter:
+    case Qt::Key_Return:
+    case Qt::Key_Backspace:
+      QCoreApplication::sendEvent(&m_popup_box->get_body(), event);
+      break;
+    default:
+      QCoreApplication::sendEvent(&m_popup_box->get_body(), event);
+      break;
+  }
+}
+
 
 struct RevertTableModel : TableModel {
   std::shared_ptr<TableModel> m_source;
@@ -290,7 +299,7 @@ struct EditableTableView::EditableTableHeaderModel :
 
   QValidator::State set(int index,
       const TableHeaderItem::Model& value) override {
-    if(index == 0) {
+    if(index == 0 || index == get_size() - 1) {
       return QValidator::Invalid;
     }
     return m_source->set(index - 1, value);
@@ -298,21 +307,19 @@ struct EditableTableView::EditableTableHeaderModel :
 
   QValidator::State insert(const TableHeaderItem::Model& value,
       int index) override {
-    if(index == 0) {
-      return QValidator::Invalid;
-    }
     return m_source->insert(value, index - 1);
   }
 
   QValidator::State move(int source, int destination) override {
-    if(source == 0 || destination == 0) {
+    if(source == 0 || destination == 0 || source == get_size() - 1 ||
+        destination == get_size() - 1) {
       return QValidator::Invalid;
     }
     return m_source->move(source - 1, destination - 1);
   }
 
   QValidator::State remove(int index) override {
-    if(index == 0) {
+    if(index == 0 || index == get_size() - 1) {
       return QValidator::Invalid;
     }
     return m_source->remove(index - 1);
@@ -374,14 +381,6 @@ class EditableTableView::EditableTableRow {
     QWidget* get_row() const {
       return m_row;
     }
-
-    //bool is_ignore_filters() const {
-    //  return m_is_ignore_filters;
-    //}
-
-    //void set_ignore_filters(bool is_ignore_filters) {
-    //  m_is_ignore_filters = is_ignore_filters;
-    //}
 
     bool is_out_of_range() const {
       return m_is_out_of_range;
@@ -529,7 +528,8 @@ void EditableTableView::set_filter(const Filter& filter) {
         return false;
       }
       auto& current = get_current()->get();
-      if(current && find_focus_state(*this) != FocusObserver::State::NONE) {
+      if(current && (is_popuped_item(*current) ||
+          find_focus_state(*this) != FocusObserver::State::NONE)) {
         for(auto i = 0; i < m_rows.get_size() - 1; ++i) {
           if(current->m_row == i && m_rows.get(i)->get_row_index() == row) {
             m_rows.get(i)->set_out_of_range(is_filtered);
@@ -551,10 +551,18 @@ bool EditableTableView::eventFilter(QObject* watched, QEvent* event) {
     if(event->type() == QEvent::KeyPress) {
       auto& key_event = *static_cast<QKeyEvent*>(event);
       switch(key_event.key()) {
+        case Qt::Key_Home:
+        case Qt::Key_End:
+        case Qt::Key_Up:
+        case Qt::Key_Down:
+        case Qt::Key_Left:
+        case Qt::Key_Right:
+          break;
         case Qt::Key_Enter:
         case Qt::Key_Return:
         case Qt::Key_Backspace:
-          if(auto& current = get_current()->get(); current->m_column != 0) {
+          if(auto& current = get_current()->get();
+              current && event->spontaneous()) {
             QCoreApplication::sendEvent(find_focus_proxy(
               get_table_item_body(*m_table_body->get_item(*current))), event);
             return true;
@@ -568,12 +576,11 @@ bool EditableTableView::eventFilter(QObject* watched, QEvent* event) {
             return true;
           }
         default:
-          if(auto text = key_event.text(); is_a_word(text)) {
-            if(auto& current = get_current()->get(); current->m_column != 0) {
-              QCoreApplication::sendEvent(find_focus_proxy(
-                get_table_item_body(*m_table_body->get_item(*current))), event);
-              return true;
-            }
+          if(auto& current = get_current()->get();
+              current && event->spontaneous()) {
+            QCoreApplication::sendEvent(find_focus_proxy(
+              get_table_item_body(*m_table_body->get_item(*current))), event);
+            return true;
           }
       }
     }
@@ -663,6 +670,13 @@ QWidget* EditableTableView::view_builder(ViewBuilder source_view_builder,
     }
     return cell;
   }
+}
+
+bool EditableTableView::is_popuped_item(Index index) const {
+  auto& item = *m_table_body->get_item(index);
+  auto& popup_box =
+    *get_table_item_body(item).layout()->itemAt(0)->widget();
+  return popup_box.layout()->count() == 0;
 }
 
 void EditableTableView::navigate_next() {
@@ -775,8 +789,13 @@ void EditableTableView::on_focus_changed(QWidget* old, QWidget* now) {
   if(now) {
     if(find_focus_state(*this) == FocusObserver::State::NONE &&
         isAncestorOf(old)) {
-      if(get_current()->get() && m_filter) {
-        set_filter(m_filter);
+      if(auto& current = get_current()->get()) {
+        if(is_popuped_item(*current)) {
+          return;
+        }
+        if(m_filter) {
+          set_filter(m_filter);
+        }
       }
     }
   } else if(isAncestorOf(old) && window()->isActiveWindow()) {

@@ -101,9 +101,6 @@ struct HoverObserver::EventFilter : QObject {
       }
       return QObject::eventFilter(watched, event);
     }
-    if(!m_observers) {
-      return QObject::eventFilter(watched, event);
-    }
     if(event->type() == QEvent::Enter ||
         event->type() == QEvent::EnabledChange ||
         event->type() == QEvent::MouseMove) {
