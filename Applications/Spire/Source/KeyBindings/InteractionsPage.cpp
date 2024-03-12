@@ -4,6 +4,7 @@
 #include "Spire/KeyBindings/InteractionsKeyBindingsModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/TransformValueModel.hpp"
+#include "Spire/Spire/Utility.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
@@ -54,11 +55,24 @@ namespace {
       const CountryDatabase& countries, const MarketDatabase& markets) {
     auto regions = std::make_shared<ArrayListModel<Region>>(
       key_bindings.make_interactions_key_bindings_regions());
+    regions->insert(Region::Global("Global"), 0);
+    return regions;
+  }
+
+  auto make_available_region_list(const KeyBindingsModel& key_bindings,
+      const CountryDatabase& countries, const MarketDatabase& markets) {
+    auto regions = std::make_shared<ArrayListModel<Region>>();
     for(auto& country : countries.GetEntries()) {
       regions->push(country.m_code);
     }
     for(auto& market : markets.GetEntries()) {
       regions->push(market);
+    }
+    for(auto& region : key_bindings.make_interactions_key_bindings_regions()) {
+      auto i = std::find(regions->begin(), regions->end(), region);
+      if(i != regions->end()) {
+        regions->remove(i - regions->begin());
+      }
     }
     return regions;
   }
@@ -69,8 +83,11 @@ InteractionsPage::InteractionsPage(
     const CountryDatabase& countries, const MarketDatabase& markets,
     QWidget* parent)
     : QWidget(parent),
-      m_key_bindings(std::move(key_bindings)) {
+      m_key_bindings(std::move(key_bindings)),
+      m_add_region_form(nullptr) {
   m_regions = make_region_list(*m_key_bindings, countries, markets);
+  m_available_regions =
+    make_available_region_list(*m_key_bindings, countries, markets);
   m_list_view = new ListView(
     m_regions, std::bind_front(&InteractionsPage::make_region_list_item, this));
   m_list_view->setFocusPolicy(Qt::NoFocus);
@@ -141,9 +158,6 @@ InteractionsPage::InteractionsPage(
   auto layout = make_hbox_layout(this);
   layout->addWidget(master_box);
   layout->addWidget(scroll_box);
-  m_add_region_form = new AddRegionForm(m_regions, *this);
-  m_add_region_form->connect_submit_signal(
-    std::bind_front(&InteractionsPage::on_add_region, this));
   m_list_view->get_current()->set(1);
 }
 
@@ -172,6 +186,9 @@ QWidget* InteractionsPage::make_region_list_item(
 }
 
 void InteractionsPage::on_add_region_click() {
+  m_add_region_form = new AddRegionForm(m_available_regions, *this);
+  m_add_region_form->connect_submit_signal(
+    std::bind_front(&InteractionsPage::on_add_region, this));
   m_add_region_form->show();
   auto window = m_add_region_form->window();
   window->move(
@@ -188,6 +205,7 @@ void InteractionsPage::on_current_index(const optional<int>& current) {
 
 void InteractionsPage::on_add_region(const Region& region) {
   m_add_region_form->close();
+  delete_later(m_add_region_form);
   if(m_regions->push(region) == QValidator::Acceptable) {
     m_current_region->set(region);
   }

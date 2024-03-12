@@ -31,6 +31,7 @@ namespace Spire {
     private:
       std::shared_ptr<KeyBindingsModel> m_key_bindings;
       std::shared_ptr<ArrayListModel<Nexus::Region>> m_regions;
+      std::shared_ptr<ListModel<Nexus::Region>> m_available_regions;
       std::shared_ptr<RegionModel> m_current_region;
       InteractionsKeyBindingsForm* m_interactions_form;
       ListView* m_list_view;
