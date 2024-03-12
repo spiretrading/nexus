@@ -72,10 +72,6 @@ void BookViewPropertiesDialog::OnOk() {
 }
 
 void BookViewPropertiesDialog::OnApply() {
-  if(m_security != Security()) {
-    m_userProfile->GetInteractionProperties() =
-      m_ui->m_interactionsTab->GetProperties();
-  }
   BookViewWindow* window = dynamic_cast<BookViewWindow*>(parent());
   if(window == nullptr) {
     return;
@@ -84,10 +80,6 @@ void BookViewPropertiesDialog::OnApply() {
 }
 
 void BookViewPropertiesDialog::OnApplyToAll() {
-  if(m_security != Security()) {
-    m_userProfile->GetInteractionProperties() =
-      m_ui->m_interactionsTab->GetProperties();
-  }
   QWidgetList widgets = QApplication::topLevelWidgets();
   for(auto i = widgets.begin(); i != widgets.end(); ++i) {
     BookViewWindow* window = dynamic_cast<BookViewWindow*>(*i);

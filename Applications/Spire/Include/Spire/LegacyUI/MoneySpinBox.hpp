@@ -1,56 +1,52 @@
-#ifndef SPIRE_MONEYSPINBOX_HPP
-#define SPIRE_MONEYSPINBOX_HPP
+#ifndef SPIRE_MONEY_SPIN_BOX_HPP
+#define SPIRE_MONEY_SPIN_BOX_HPP
 #include <Beam/Pointers/Ref.hpp>
 #include <boost/optional/optional.hpp>
 #include <QDoubleSpinBox>
 #include "Nexus/Definitions/Security.hpp"
 #include "Spire/Canvas/Canvas.hpp"
-#include "Spire/LegacyKeyBindings/KeyBindings.hpp"
+#include "Spire/KeyBindings/InteractionsKeyBindingsModel.hpp"
 #include "Spire/Spire/Spire.hpp"
 
-namespace Spire {
-namespace LegacyUI {
+namespace Spire::LegacyUI {
 
-  /*! \class MoneySpinBox
-      \brief Displays a QSpinBox used to represent a Money value.
-   */
+  /** Displays a QSpinBox used to represent a Money value. */
   class MoneySpinBox : public QDoubleSpinBox {
     public:
 
-      //! Constructs a MoneySpinBox.
-      /*!
-        \param parent The parent widget.
-      */
-      MoneySpinBox(QWidget* parent = nullptr);
+      /**
+       * Constructs a MoneySpinBox.
+       * @param parent The parent widget.
+       */
+      explicit MoneySpinBox(QWidget* parent = nullptr);
 
-      //! Constructs a MoneySpinBox.
-      /*!
-        \param userProfile The user's profile.
-        \param node The MoneyNode this MoneySpinBox represents.
-        \param parent The parent widget.
-      */
-      MoneySpinBox(Beam::Ref<UserProfile> userProfile,
-        const MoneyNode& node, QWidget* parent = nullptr);
+      /**
+       * Constructs a MoneySpinBox.
+       * @param userProfile The user's profile.
+       * @param node The MoneyNode this MoneySpinBox represents.
+       * @param parent The parent widget.
+       */
+      MoneySpinBox(Beam::Ref<UserProfile> userProfile, const MoneyNode& node,
+        QWidget* parent = nullptr);
 
-      virtual ~MoneySpinBox();
+      ~MoneySpinBox() override;
 
-      //! Returns the value represented.
+      /** Returns the value represented. */
       Nexus::Money GetValue() const;
 
-      //! Sets the value to display.
+      /** Sets the value to display. */
       void SetValue(Nexus::Money value);
 
     protected:
-      virtual void keyPressEvent(QKeyEvent* event);
-      virtual void keyReleaseEvent(QKeyEvent* event);
+      void keyPressEvent(QKeyEvent* event) override;
+      void keyReleaseEvent(QKeyEvent* event) override;
 
     private:
       UserProfile* m_userProfile;
       boost::optional<Nexus::Security> m_security;
 
-      void AdjustIncrement(KeyModifiers modifier);
+      void AdjustIncrement(Qt::KeyboardModifier modifier);
   };
-}
 }
 
 #endif

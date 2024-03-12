@@ -5,10 +5,13 @@ namespace Spire {
   class AddRegionForm;
   class CancelKeyBindingsForm;
   class CancelKeyBindingsModel;
+  class HotkeyOverride;
   class InteractionsKeyBindingsForm;
   class InteractionsKeyBindingsModel;
+  class KeyBindingsModel;
   class KeyBindingsWindow;
   class OrderFieldInfoTip;
+  struct OrderTaskArguments;
 }
 
 #endif

@@ -10,54 +10,52 @@ using namespace boost;
 using namespace Nexus;
 using namespace Spire;
 using namespace Spire::LegacyUI;
-using namespace std;
 
 QuantitySpinBox::QuantitySpinBox(Ref<UserProfile> userProfile,
     const IntegerNode& node, QWidget* parent)
     : QSpinBox(parent),
       m_userProfile(userProfile.Get()) {
-  setMaximum(numeric_limits<int>::max());
-  setMinimum(numeric_limits<int>::min());
+  setMaximum(std::numeric_limits<int>::max());
+  setMinimum(std::numeric_limits<int>::min());
   setCorrectionMode(QAbstractSpinBox::CorrectToPreviousValue);
   setKeyboardTracking(true);
   setAccelerated(false);
   setSingleStep(1);
   auto referent = node.FindReferent();
-  if(referent.is_initialized()) {
-    auto anchor = FindAnchor(*referent);
-    if(anchor.is_initialized()) {
+  if(referent) {
+    if(auto anchor = FindAnchor(*referent)) {
       referent = anchor;
     }
   }
-  if(referent.is_initialized()) {
-    auto securityValueNode = dynamic_cast<const SecurityNode*>(&*referent);
-    if(securityValueNode != nullptr) {
+  if(referent) {
+    if(auto securityValueNode = dynamic_cast<const SecurityNode*>(&*referent)) {
       m_security = securityValueNode->GetValue();
       setMinimum(0);
     }
   }
-  AdjustIncrement(KeyModifiers::PLAIN);
+  AdjustIncrement(Qt::NoModifier);
 }
 
 void QuantitySpinBox::keyPressEvent(QKeyEvent* event) {
-  AdjustIncrement(KeyModifiersFromEvent(*event));
+  AdjustIncrement(to_modifier(event->modifiers()));
   QSpinBox::keyPressEvent(event);
 }
 
 void QuantitySpinBox::keyReleaseEvent(QKeyEvent* event) {
   if(event->modifiers() == Qt::SHIFT || event->modifiers() == Qt::ALT ||
       event->modifiers() == Qt::CTRL) {
-    AdjustIncrement(KeyModifiers::PLAIN);
+    AdjustIncrement(Qt::NoModifier);
   }
   QSpinBox::keyReleaseEvent(event);
 }
 
-void QuantitySpinBox::AdjustIncrement(KeyModifiers modifier) {
-  if(!m_security.is_initialized()) {
+void QuantitySpinBox::AdjustIncrement(Qt::KeyboardModifier modifier) {
+  if(!m_security) {
     return;
   }
-  auto quantityIncrement = m_userProfile->GetInteractionProperties().Get(
-    *m_security).m_quantityIncrements[static_cast<int>(modifier)];
+  auto quantityIncrement =
+    m_userProfile->GetKeyBindings()->get_interactions_key_bindings(
+      *m_security)->get_quantity_increment(modifier)->get();
   if(quantityIncrement != singleStep()) {
     setSingleStep(static_cast<int>(quantityIncrement));
   }

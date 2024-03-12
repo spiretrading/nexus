@@ -10,14 +10,13 @@ using namespace boost;
 using namespace Nexus;
 using namespace Spire;
 using namespace Spire::LegacyUI;
-using namespace std;
 
 OptionalPriceSpinBox::OptionalPriceSpinBox(Ref<UserProfile> userProfile,
     const OptionalPriceNode& node, QWidget* parent)
     : QDoubleSpinBox(parent),
       m_userProfile(userProfile.Get()),
       m_referencePrice(node.GetReferencePrice()) {
-  setMaximum(numeric_limits<double>::max());
+  setMaximum(std::numeric_limits<double>::max());
   setMinimum(0);
   setSpecialValueText(tr("N/A"));
   setCorrectionMode(QAbstractSpinBox::CorrectToPreviousValue);
@@ -26,26 +25,23 @@ OptionalPriceSpinBox::OptionalPriceSpinBox(Ref<UserProfile> userProfile,
   setSingleStep(0.01);
   setDecimals(6);
   auto referent = node.FindReferent();
-  if(referent.is_initialized()) {
-    auto anchor = FindAnchor(*referent);
-    if(anchor.is_initialized()) {
+  if(referent) {
+    if(auto anchor = FindAnchor(*referent)) {
       referent = anchor;
     }
   }
-  if(referent.is_initialized()) {
-    auto securityValueNode = dynamic_cast<const SecurityNode*>(&*referent);
-    if(securityValueNode != nullptr) {
+  if(referent) {
+    if(auto securityValueNode = dynamic_cast<const SecurityNode*>(&*referent)) {
       m_security = securityValueNode->GetValue();
     }
   }
-  AdjustIncrement(KeyModifiers::PLAIN);
+  AdjustIncrement(Qt::NoModifier);
 }
 
-OptionalPriceSpinBox::~OptionalPriceSpinBox() {}
+OptionalPriceSpinBox::~OptionalPriceSpinBox() = default;
 
 Money OptionalPriceSpinBox::GetValue() const {
-  auto value = Money::FromValue(cleanText().toStdString());
-  if(value.is_initialized()) {
+  if(auto value = Money::FromValue(cleanText().toStdString())) {
     return *value;
   }
   return Money::ZERO;
@@ -72,24 +68,25 @@ void OptionalPriceSpinBox::keyPressEvent(QKeyEvent* event) {
       return;
     }
   }
-  AdjustIncrement(KeyModifiersFromEvent(*event));
+  AdjustIncrement(to_modifier(event->modifiers()));
   QDoubleSpinBox::keyPressEvent(event);
 }
 
 void OptionalPriceSpinBox::keyReleaseEvent(QKeyEvent* event) {
   if(event->modifiers() == Qt::SHIFT || event->modifiers() == Qt::ALT ||
       event->modifiers() == Qt::CTRL) {
-    AdjustIncrement(KeyModifiers::PLAIN);
+    AdjustIncrement(Qt::NoModifier);
   }
   QDoubleSpinBox::keyReleaseEvent(event);
 }
 
-void OptionalPriceSpinBox::AdjustIncrement(KeyModifiers modifier) {
-  if(m_userProfile == nullptr || !m_security.is_initialized()) {
+void OptionalPriceSpinBox::AdjustIncrement(Qt::KeyboardModifier modifier) {
+  if(!m_userProfile || !m_security) {
     return;
   }
-  auto priceIncrement = m_userProfile->GetInteractionProperties().Get(
-    *m_security).m_priceIncrements[static_cast<int>(modifier)];
+  auto priceIncrement =
+    m_userProfile->GetKeyBindings()->get_interactions_key_bindings(
+      *m_security)->get_price_increment(modifier)->get();
   auto increment = static_cast<double>(static_cast<Quantity>(priceIncrement));
   if(increment != singleStep()) {
     setSingleStep(increment);

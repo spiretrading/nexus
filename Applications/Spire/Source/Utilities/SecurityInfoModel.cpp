@@ -1,5 +1,6 @@
 #include "Spire/Utilities/SecurityInfoModel.hpp"
 #include <boost/algorithm/string/case_conv.hpp>
+#include <QTimer>
 #include "Spire/LegacyUI/UserProfile.hpp"
 
 using namespace Beam;

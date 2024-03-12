@@ -1,5 +1,5 @@
-#ifndef SPIRE_HASHQTTYPES_HPP
-#define SPIRE_HASHQTTYPES_HPP
+#ifndef SPIRE_HASH_QT_TYPES_HPP
+#define SPIRE_HASH_QT_TYPES_HPP
 #include <unordered_map>
 
 class QKeySequence;

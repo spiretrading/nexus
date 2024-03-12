@@ -1,9 +1,11 @@
 #ifndef NEXUS_REGION_HPP
 #define NEXUS_REGION_HPP
+#include <functional>
 #include <string>
 #include <unordered_set>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <Beam/Serialization/ShuttleUnorderedSet.hpp>
+#include <boost/functional/hash.hpp>
 #include "Nexus/Definitions/Country.hpp"
 #include "Nexus/Definitions/Market.hpp"
 #include "Nexus/Definitions/Security.hpp"
@@ -146,6 +148,20 @@ namespace Nexus {
     } else {
       return out;
     }
+  }
+
+  inline std::size_t hash_value(const Region& region) {
+    auto seed = std::size_t(0);
+    for(auto& country : region.GetCountries()) {
+      boost::hash_combine(seed, country);
+    }
+    for(auto& market : region.GetMarkets()) {
+      boost::hash_combine(seed, market);
+    }
+    for(auto& security : region.GetSecurities()) {
+      boost::hash_combine(seed, security);
+    }
+    return seed;
   }
 
   inline bool operator <(const Security& security, const Region& region) {
@@ -328,7 +344,7 @@ namespace Nexus {
   inline bool Region::operator ==(const Region& region) const {
     return std::tie(m_isGlobal, m_countries, m_markets, m_securities) ==
       std::tie(region.m_isGlobal, region.m_countries, region.m_markets,
-      region.m_securities);
+        region.m_securities);
   }
 
   inline bool Region::operator !=(const Region& region) const {
@@ -372,6 +388,15 @@ namespace Beam::Serialization {
       shuttle.Shuttle("countries", value.m_countries);
       shuttle.Shuttle("markets", value.m_markets);
       shuttle.Shuttle("securities", value.m_securities);
+    }
+  };
+}
+
+namespace std {
+  template<>
+  struct hash<Nexus::Region> {
+    std::size_t operator ()(const Nexus::Region& region) const {
+      return hash_value(region);
     }
   };
 }
