@@ -78,7 +78,7 @@ namespace Spire {
   template<typename T>
   void ProxyScalarValueModel<T>::set_source(
       std::shared_ptr<ScalarValueModel<Type>> source) {
-    m_source.set(std::move(source));
+    m_source.set_source(std::move(source));
   }
 
   template<typename T>
@@ -123,7 +123,7 @@ namespace Spire {
   template<typename T>
   boost::signals2::connection ProxyScalarValueModel<T>::connect_update_signal(
       const typename UpdateSignal::slot_type& slot) const {
-    return m_source.connect(slot);
+    return m_source.connect_update_signal(slot);
   }
 }
 

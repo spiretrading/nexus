@@ -69,7 +69,7 @@ InteractionsPage::InteractionsPage(
       }
       return m_regions->get(0);
     },
-    [] (const auto& region) {
+    [] (const auto& region) -> int {
       throw std::invalid_argument("Setting not supported.");
     });
   update_style(*m_list_view, apply_deletable_list_item_style);
