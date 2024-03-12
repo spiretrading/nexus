@@ -49,15 +49,28 @@ namespace {
       set(BorderRightSize(scale_width(1))).
       set(BorderRightColor(QColor(0xE0E0E0)));
   }
+
+  auto make_region_list(const KeyBindingsModel& key_bindings,
+      const CountryDatabase& countries, const MarketDatabase& markets) {
+    auto regions = std::make_shared<ArrayListModel<Region>>(
+      key_bindings.make_interactions_key_bindings_regions());
+    for(auto& country : countries.GetEntries()) {
+      regions->push(country.m_code);
+    }
+    for(auto& market : markets.GetEntries()) {
+      regions->push(market);
+    }
+    return regions;
+  }
 }
 
 InteractionsPage::InteractionsPage(
-    std::shared_ptr<KeyBindingsModel> key_bindings, QWidget* parent)
+    std::shared_ptr<KeyBindingsModel> key_bindings,
+    const CountryDatabase& countries, const MarketDatabase& markets,
+    QWidget* parent)
     : QWidget(parent),
       m_key_bindings(std::move(key_bindings)) {
-  m_regions = std::make_shared<ArrayListModel<Region>>(
-    m_key_bindings->make_interactions_key_bindings_regions());
-  m_regions->insert(Region::Global(), 0);
+  m_regions = make_region_list(*m_key_bindings, countries, markets);
   m_list_view = new ListView(
     m_regions, std::bind_front(&InteractionsPage::make_region_list_item, this));
   m_list_view->setFocusPolicy(Qt::NoFocus);
@@ -69,8 +82,13 @@ InteractionsPage::InteractionsPage(
       }
       return m_regions->get(0);
     },
-    [] (const auto& region) -> int {
-      throw std::invalid_argument("Setting not supported.");
+    [=] (const auto& region) {
+      for(auto i = m_regions->get_size() - 1; i >= 0; --i) {
+        if(m_regions->get(i) == region) {
+          return i;
+        }
+      }
+      throw std::invalid_argument("Region not found.");
     });
   update_style(*m_list_view, apply_deletable_list_item_style);
   auto scrollable_list_box = new ScrollableListBox(*m_list_view);

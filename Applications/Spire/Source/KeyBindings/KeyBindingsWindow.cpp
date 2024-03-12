@@ -17,7 +17,9 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 KeyBindingsWindow::KeyBindingsWindow(
-    std::shared_ptr<KeyBindingsModel> key_bindings, QWidget* parent)
+    std::shared_ptr<KeyBindingsModel> key_bindings,
+    const CountryDatabase& countries, const MarketDatabase& markets,
+    QWidget* parent)
     : Window(parent),
       m_key_bindings(std::move(key_bindings)) {
   setWindowTitle(tr("Key Bindings"));
@@ -34,7 +36,8 @@ KeyBindingsWindow::KeyBindingsWindow(
   cancel_keys_page->setSizePolicy(
     QSizePolicy::Expanding, QSizePolicy::Expanding);
   navigation_view->add_tab(*cancel_keys_page, tr("Cancel Keys"));
-  auto interactions_page = new InteractionsPage(m_key_bindings);
+  auto interactions_page =
+    new InteractionsPage(m_key_bindings, countries, markets);
   interactions_page->setSizePolicy(
     QSizePolicy::Expanding, QSizePolicy::Expanding);
   navigation_view->add_tab(*interactions_page, tr("Interactions"));

@@ -1,6 +1,8 @@
 #ifndef SPIRE_INTERACTIONS_PAGE_HPP
 #define SPIRE_INTERACTIONS_PAGE_HPP
 #include <QWidget>
+#include "Nexus/Definitions/Country.hpp"
+#include "Nexus/Definitions/Market.hpp"
 #include "Spire/KeyBindings/KeyBindings.hpp"
 #include "Spire/KeyBindings/KeyBindingsModel.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
@@ -19,8 +21,9 @@ namespace Spire {
        * @param key_bindings The KeyBindingsModel storing all user interactions.
        * @param parent The parent widget.
        */
-      explicit InteractionsPage(std::shared_ptr<KeyBindingsModel> key_bindings,
-        QWidget* parent = nullptr);
+      InteractionsPage(std::shared_ptr<KeyBindingsModel> key_bindings,
+        const Nexus::CountryDatabase& countries,
+        const Nexus::MarketDatabase& markets, QWidget* parent = nullptr);
 
       /** Returns the key bindings being displayed. */
       const std::shared_ptr<KeyBindingsModel>& get_key_bindings() const;

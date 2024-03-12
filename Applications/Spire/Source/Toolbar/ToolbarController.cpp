@@ -14,7 +14,6 @@
 #include "Spire/Charting/ChartWindow.hpp"
 #include "Spire/Dashboard/DashboardWindow.hpp"
 #include "Spire/Dashboard/DashboardModelSchema.hpp"
-#include "Spire/KeyBindings/KeyBindingsWindow.hpp"
 #include "Spire/LegacyUI/CanvasWindow.hpp"
 #include "Spire/LegacyUI/UISerialization.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
@@ -93,8 +92,26 @@ namespace {
   }
 }
 
+struct ToolbarController::EventFilter : QObject {
+  ToolbarController* m_self;
+
+  EventFilter(ToolbarController& self)
+    : m_self(&self) {}
+
+  bool eventFilter(QObject* receiver, QEvent* event) override {
+    if(event->type() == QEvent::Close) {
+      if(receiver == m_self->m_key_bindings_window.get()) {
+        m_self->on_key_bindings_window_closed();
+      }
+    }
+    return QObject::eventFilter(receiver, event);
+  }
+};
+
 ToolbarController::ToolbarController(Ref<UserProfile> user_profile)
-  : m_user_profile(user_profile.Get()) {}
+    : m_user_profile(user_profile.Get()) {
+  m_event_filter = std::make_unique<EventFilter>(*this);
+}
 
 ToolbarController::~ToolbarController() {
   close();
@@ -247,9 +264,15 @@ void ToolbarController::open_portfolio_window() {
 }
 
 void ToolbarController::open_key_bindings_window() {
-  auto dialog = new KeyBindingsWindow(m_user_profile->GetKeyBindings());
-  dialog->setAttribute(Qt::WA_DeleteOnClose);
-  dialog->show();
+  if(m_key_bindings_window) {
+    m_key_bindings_window->activateWindow();
+    return;
+  }
+  m_key_bindings_window = std::make_unique<KeyBindingsWindow>(
+    m_user_profile->GetKeyBindings(), m_user_profile->GetCountryDatabase(),
+    m_user_profile->GetMarketDatabase());
+  m_key_bindings_window->installEventFilter(m_event_filter.get());
+  m_key_bindings_window->show();
 }
 
 void ToolbarController::open_profile_window() {
@@ -349,6 +372,11 @@ void ToolbarController::on_blotter_removed(BlotterModel& blotter) {
       break;
     }
   }
+}
+
+void ToolbarController::on_key_bindings_window_closed() {
+  auto window = std::move(m_key_bindings_window);
+  window.release()->deleteLater();
 }
 
 void ToolbarController::on_sign_out() {

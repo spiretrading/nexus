@@ -2,6 +2,7 @@
 #include <QHBoxLayout>
 #include <QTextEdit>
 #include <QVBoxLayout>
+#include "Nexus/Definitions/DefaultCountryDatabase.hpp"
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "Spire/KeyBindings/HotkeyOverride.hpp"
 #include "Spire/KeyBindings/KeyBindingsWindow.hpp"
@@ -18,7 +19,8 @@ int main(int argc, char** argv) {
   initialize_resources();
   auto key_bindings =
     std::make_shared<KeyBindingsModel>(GetDefaultMarketDatabase());
-  auto window = KeyBindingsWindow(key_bindings);
+  auto window = KeyBindingsWindow(key_bindings, GetDefaultCountryDatabase(),
+    GetDefaultMarketDatabase());
   window.show();
   auto hotkey_override = HotkeyOverride();
   application.exec();
