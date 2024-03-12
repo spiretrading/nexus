@@ -78,7 +78,8 @@ namespace {
   }
 }
 
-CustomPopupBox::CustomPopupBox(QWidget& body, QWidget* parent)
+TransparentMouseEventPopupBox::TransparentMouseEventPopupBox(QWidget& body,
+    QWidget* parent)
     : QWidget(parent) {
   m_popup_box = new PopupBox(body);
   enclose(*this, *m_popup_box);
@@ -88,7 +89,7 @@ CustomPopupBox::CustomPopupBox(QWidget& body, QWidget* parent)
   m_tip_window = find_tip_window(body);
 }
 
-bool CustomPopupBox::event(QEvent* event) {
+bool TransparentMouseEventPopupBox::event(QEvent* event) {
   switch(event->type()) {
     case QEvent::MouseButtonPress:
       if(auto& mouse_event = *static_cast<QMouseEvent*>(event);
@@ -106,7 +107,7 @@ bool CustomPopupBox::event(QEvent* event) {
   return QWidget::event(event);
 }
 
-void CustomPopupBox::keyPressEvent(QKeyEvent* event) {
+void TransparentMouseEventPopupBox::keyPressEvent(QKeyEvent* event) {
   switch(event->key()) {
     case Qt::Key_Enter:
     case Qt::Key_Return:
@@ -118,7 +119,6 @@ void CustomPopupBox::keyPressEvent(QKeyEvent* event) {
       break;
   }
 }
-
 
 struct RevertTableModel : TableModel {
   std::shared_ptr<TableModel> m_source;
@@ -528,7 +528,7 @@ void EditableTableView::set_filter(const Filter& filter) {
         return false;
       }
       auto& current = get_current()->get();
-      if(current && (is_popuped_item(*current) ||
+      if(current && (is_popped_item(*current) ||
           find_focus_state(*this) != FocusObserver::State::NONE)) {
         for(auto i = 0; i < m_rows.get_size() - 1; ++i) {
           if(current->m_row == i && m_rows.get(i)->get_row_index() == row) {
@@ -672,11 +672,13 @@ QWidget* EditableTableView::view_builder(ViewBuilder source_view_builder,
   }
 }
 
-bool EditableTableView::is_popuped_item(Index index) const {
-  auto& item = *m_table_body->get_item(index);
-  auto& popup_box =
-    *get_table_item_body(item).layout()->itemAt(0)->widget();
-  return popup_box.layout()->count() == 0;
+bool EditableTableView::is_popped_item(Index index) const {
+  auto& item_body = get_table_item_body(*m_table_body->get_item(index));
+  if(auto layout = item_body.layout(); layout && layout->count() > 0) {
+    auto& body = *layout->itemAt(0)->widget();
+    return body.layout()->count() == 0;
+  }
+  return false;
 }
 
 void EditableTableView::navigate_next() {
@@ -790,7 +792,7 @@ void EditableTableView::on_focus_changed(QWidget* old, QWidget* now) {
     if(find_focus_state(*this) == FocusObserver::State::NONE &&
         isAncestorOf(old)) {
       if(auto& current = get_current()->get()) {
-        if(is_popuped_item(*current)) {
+        if(is_popped_item(*current)) {
           return;
         }
         if(m_filter) {

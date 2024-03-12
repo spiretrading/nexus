@@ -6,10 +6,16 @@
 
 namespace Spire {
 
-  class CustomPopupBox : public QWidget {
+  /**
+   * Customizes the PopupBox to propagate mouse events to TableItem to
+   * trigger the current signal for TableView.
+   */
+  class TransparentMouseEventPopupBox : public QWidget {
     public:
 
-      explicit CustomPopupBox(QWidget& body, QWidget* parent = nullptr);
+      /** Constructs a TransparentMouseEventPopupBox. */
+      explicit TransparentMouseEventPopupBox(QWidget& body,
+        QWidget* parent = nullptr);
 
     protected:
       bool event(QEvent* event) override;
@@ -44,7 +50,7 @@ namespace Spire {
       using DeleteSignal = Signal<void (int row)>;
 
       /**
-       * Constructs a EditableTableView.
+       * Constructs an EditableTableView.
        * @param table The model of values to display.
        * @param header The model used to display the header.
        * @param table_filter The filter to apply to a column.
@@ -92,7 +98,7 @@ namespace Spire {
 
       QWidget* view_builder(ViewBuilder source_view_builder,
         const std::shared_ptr<TableModel>& table, int row, int column);
-      bool is_popuped_item(Index index) const;
+      bool is_popped_item(Index index) const;
       void navigate_next();
       void navigate_previous();
       void on_current(const boost::optional<Index>& index);

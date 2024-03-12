@@ -2103,19 +2103,19 @@ UiProfile Spire::make_editable_table_view_profile() {
           if(column == 0) {
             return new EditableBox(*new AnyInputBox(*new TextBox(
               make_custom_list_value_model(
-                std::make_shared<CustomColumnViewListModel<QString>>(table, column),
-                row))));
+                std::make_shared<CustomColumnViewListModel<QString>>(table,
+                  column), row))));
           } else if(column == 1) {
-            return new CustomPopupBox(*new EditableBox(*new AnyInputBox(
-              *new RegionBox(populate_region_box_model(),
+            return new TransparentMouseEventPopupBox(*new EditableBox(
+              *new AnyInputBox(*new RegionBox(populate_region_box_model(),
                 make_custom_list_value_model(
-                  std::make_shared<CustomColumnViewListModel<Region>>(table, column),
-                  row)))));
+                  std::make_shared<CustomColumnViewListModel<Region>>(table,
+                    column), row)))));
           } else if(column == 2) {
             return new EditableBox(*new AnyInputBox(*make_order_type_box(
               make_custom_list_value_model(
-                std::make_shared<CustomColumnViewListModel<OrderType>>(table, column),
-                row))));
+                std::make_shared<CustomColumnViewListModel<OrderType>>(table,
+                  column), row))));
           }
           return nullptr;
         } else {
@@ -2130,35 +2130,40 @@ UiProfile Spire::make_editable_table_view_profile() {
             }
             return nullptr;
           }();
-          if(input_box) {
-            input_box->connect_submit_signal([=] (const AnyRef& submission) {
-              auto has_value = false;
-              auto name = QString();
-              auto region = Region();
-              auto order_type = OrderType();
-              if(column == 0) {
-                name = any_cast<QString>(submission);
-                if(!name.isEmpty()) {
-                  has_value = true;
-                  input_box->get_current()->set(QString());
-                }
-              } else if(column == 1) {
-                region = any_cast<Region>(submission);
-                if(region != Region()) {
-                  has_value = true;
-                  input_box->get_current()->set(Region());
-                }
-              } else if(column == 2) {
-                order_type = any_cast<OrderType>(submission);
-                if(order_type != OrderType::NONE) {
-                  has_value = true;
-                  input_box->get_current()->set(OrderType());
-                }
+          if(!input_box) {
+            return nullptr;
+          }
+          input_box->connect_submit_signal([=] (const AnyRef& submission) {
+            auto has_value = false;
+            auto name = QString();
+            auto region = Region();
+            auto order_type = OrderType();
+            if(column == 0) {
+              name = any_cast<QString>(submission);
+              if(!name.isEmpty()) {
+                has_value = true;
+                input_box->get_current()->set(QString());
               }
-              if(has_value) {
-                array_table_model->push({name, region, order_type});
+            } else if(column == 1) {
+              region = any_cast<Region>(submission);
+              if(region != Region()) {
+                has_value = true;
+                input_box->get_current()->set(Region());
               }
-            });
+            } else if(column == 2) {
+              order_type = any_cast<OrderType>(submission);
+              if(order_type != OrderType::NONE) {
+                has_value = true;
+                input_box->get_current()->set(OrderType());
+              }
+            }
+            if(has_value) {
+              array_table_model->push({name, region, order_type});
+            }
+          });
+          if(column == 1) {
+            return new TransparentMouseEventPopupBox(
+              *new EditableBox(*input_box));
           }
           return new EditableBox(*input_box);
         }
@@ -2193,13 +2198,16 @@ UiProfile Spire::make_editable_table_view_profile() {
         if(value.isEmpty()) {
           return false;
         }
-        if(array_table_model->get<QString>(row, 0).contains(value, Qt::CaseInsensitive)) {
+        if(array_table_model->get<QString>(row, 0).contains(value,
+            Qt::CaseInsensitive)) {
           return false;
         }
-        if(to_text(array_table_model->get<Region>(row, 1)).contains(value, Qt::CaseInsensitive)) {
+        if(to_text(array_table_model->get<Region>(row, 1)).contains(value,
+            Qt::CaseInsensitive)) {
           return false;
         }
-        if(to_text(array_table_model->get<OrderType>(row, 2)).contains(value, Qt::CaseInsensitive)) {
+        if(to_text(array_table_model->get<OrderType>(row, 2)).contains(value,
+            Qt::CaseInsensitive)) {
           return false;
         }
         return true;
