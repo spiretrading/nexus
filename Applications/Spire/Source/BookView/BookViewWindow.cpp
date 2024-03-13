@@ -205,14 +205,15 @@ void BookViewWindow::keyPressEvent(QKeyEvent* event) {
     if(key.matches(Qt::Key_QuoteLeft) == QKeySequence::ExactMatch) {
       HandleInteractionsPropertiesEvent();
     } else {
-      auto taskBinding = m_userProfile->GetKeyBindings().GetTaskFromBinding(
-        m_security.GetMarket(), key);
+      auto taskBinding = find_order_task_arguments(
+        *m_userProfile->GetKeyBindings()->get_order_task_arguments(),
+        m_security, key);
       if(taskBinding) {
         HandleKeyBindingEvent(*taskBinding);
         return;
       }
-      auto cancelBinding =
-        m_userProfile->GetKeyBindings().GetCancelFromBinding(key);
+      auto cancelBinding = m_userProfile->GetKeyBindings()->
+        get_cancel_key_bindings()->find_operation(key);
       if(cancelBinding) {
         HandleCancelBindingEvent(*cancelBinding);
         return;
@@ -276,12 +277,10 @@ std::unique_ptr<CanvasNode>
         if(auto sideNode =
             taskNode->FindNode(SingleOrderTaskNode::SIDE_PROPERTY)) {
           if(auto sideValueNode = dynamic_cast<const SideNode*>(&*sideNode)) {
-            if(sideValueNode->GetValue() == Side::BID) {
-              return m_ui->m_bidPanel->GetBestQuote().m_price;
+            if(sideValueNode->GetValue() == Side::ASK) {
+              return m_ui->m_askPanel->GetBestQuote().m_price;
             }
-            return m_ui->m_askPanel->GetBestQuote().m_price;
           }
-          return m_ui->m_bidPanel->GetBestQuote().m_price;
         }
         return m_ui->m_bidPanel->GetBestQuote().m_price;
       }();
@@ -299,22 +298,20 @@ std::unique_ptr<CanvasNode>
       if(quantityNode && !quantityNode->IsReadOnly()) {
         if(auto quantityValueNode =
             dynamic_cast<const IntegerNode*>(&*quantityNode)) {
-          auto sideNode =
-            taskNode->FindNode(SingleOrderTaskNode::SIDE_PROPERTY);
           auto quantity = [&] {
+            auto sideNode =
+              taskNode->FindNode(SingleOrderTaskNode::SIDE_PROPERTY);
+            auto& interactions =
+              *m_userProfile->GetKeyBindings()->get_interactions_key_bindings(
+                m_security);
             if(sideNode) {
               if(auto sideValueNode =
                   dynamic_cast<const SideNode*>(&*sideNode)) {
-                return m_userProfile->GetDefaultQuantity(
-                  m_security, sideValueNode->GetValue());
-              } else {
-                return m_userProfile->GetInteractionProperties().Get(
-                  m_security).m_defaultQuantity;
+                return get_default_order_quantity(
+                  *m_userProfile, m_security, sideValueNode->GetValue());
               }
-            } else {
-              return m_userProfile->GetInteractionProperties().Get(
-                m_security).m_defaultQuantity;
             }
+            return interactions.get_default_quantity()->get();
           }();
           builder.Replace(*quantityNode,
             quantityValueNode->SetValue(static_cast<int>(quantity)));
@@ -388,10 +385,10 @@ void BookViewWindow::HandleSecurityInputEvent(QKeyEvent* event) {
 }
 
 void BookViewWindow::HandleKeyBindingEvent(
-    const KeyBindings::TaskBinding& keyBinding) {
-  auto taskNode = PrepareTaskNode(*keyBinding.m_node);
-  m_taskEntryWidget =
-    new CondensedCanvasWidget(keyBinding.m_name, Ref(*m_userProfile), this);
+    const OrderTaskArguments& arguments) {
+  auto taskNode = PrepareTaskNode(*make_canvas_node(arguments));
+  m_taskEntryWidget = new CondensedCanvasWidget(
+    arguments.m_name.toStdString(), Ref(*m_userProfile), this);
   auto coordinate = CanvasNodeModel::Coordinate(0, 0);
   auto isVisible = [&] {
     try {
@@ -414,10 +411,10 @@ void BookViewWindow::HandleKeyBindingEvent(
 }
 
 void BookViewWindow::HandleInteractionsPropertiesEvent() {
-  auto& interactionsProperties =
-    m_userProfile->GetInteractionProperties().Get(m_security);
+  auto& interactions =
+    *m_userProfile->GetKeyBindings()->get_interactions_key_bindings(m_security);
   auto interactionsNode = std::make_unique<InteractionsNode>(
-    m_security, m_userProfile->GetMarketDatabase(), interactionsProperties);
+    m_security, m_userProfile->GetMarketDatabase(), interactions);
   m_taskEntryWidget =
     new CondensedCanvasWidget("Interactions", Ref(*m_userProfile), this);
   m_isTaskEntryWidgetForInteractionsProperties = true;
@@ -429,9 +426,8 @@ void BookViewWindow::HandleInteractionsPropertiesEvent() {
 }
 
 void BookViewWindow::HandleCancelBindingEvent(
-    const KeyBindings::CancelBinding& cancelBinding) {
-  KeyBindings::CancelBinding::HandleCancel(
-    cancelBinding, Store(m_tasksExecuted[m_security]));
+    const CancelKeyBindingsModel::Operation& operation) {
+  execute(operation, Store(m_tasksExecuted[m_security]));
 }
 
 void BookViewWindow::HandleTaskInputEvent(QKeyEvent* event) {
@@ -440,10 +436,9 @@ void BookViewWindow::HandleTaskInputEvent(QKeyEvent* event) {
     RemoveTaskEntry();
   } else if(baseKey == Qt::Key_Enter || baseKey == Qt::Key_Return) {
     if(m_isTaskEntryWidgetForInteractionsProperties) {
-      auto& interactionsNode = static_cast<const InteractionsNode&>(
+      auto& node = static_cast<const InteractionsNode&>(
         *m_taskEntryWidget->GetRoots().front());
-      m_userProfile->GetInteractionProperties().Set(
-        m_security, interactionsNode.GetProperties());
+      apply(node, *m_userProfile->GetKeyBindings());
       RemoveTaskEntry();
     } else {
       auto taskNode = CanvasNode::Clone(*m_taskEntryWidget->GetRoots().front());
@@ -456,8 +451,9 @@ void BookViewWindow::HandleTaskInputEvent(QKeyEvent* event) {
   } else {
     auto key =
       QKeySequence(static_cast<int>(event->modifiers() + event->key()));
-    auto taskBinding = m_userProfile->GetKeyBindings().GetTaskFromBinding(
-      m_security.GetMarket(), key);
+    auto taskBinding = find_order_task_arguments(
+      *m_userProfile->GetKeyBindings()->get_order_task_arguments(), m_security,
+      key);
     if(taskBinding) {
       RemoveTaskEntry();
       HandleKeyBindingEvent(*taskBinding);
@@ -467,9 +463,9 @@ void BookViewWindow::HandleTaskInputEvent(QKeyEvent* event) {
 
 void BookViewWindow::UpdateDefaultQuantity() {
   auto defaultBidQuantity =
-    m_userProfile->GetDefaultQuantity(m_security, Side::BID);
+    get_default_order_quantity(*m_userProfile, m_security, Side::BID);
   auto defaultAskQuantity =
-    m_userProfile->GetDefaultQuantity(m_security, Side::ASK);
+    get_default_order_quantity(*m_userProfile, m_security, Side::ASK);
   m_ui->m_defaultQuantityValue->SetValue(QString::fromStdString(
     lexical_cast<std::string>(defaultBidQuantity) + "x" +
     lexical_cast<std::string>(defaultAskQuantity)));

@@ -4,8 +4,10 @@
 #include <unordered_map>
 #include <QKeySequence>
 #include <QValidator>
+#include "Spire/Blotter/OrderLogModel.hpp"
+#include "Spire/Canvas/Canvas.hpp"
 #include "Spire/KeyBindings/KeyBindings.hpp"
-#include "Spire/LegacyUI/HashQtTypes.hpp"
+#include "Spire/Spire/HashQtTypes.hpp"
 #include "Spire/Ui/KeyInputBox.hpp"
 
 namespace Spire {
@@ -66,8 +68,8 @@ namespace Spire {
       /**
        * Returns the key binding associated with a cancel operation.
        * An empty key sequence indicates an unbound operation.
-       * If a cancel operation is bound to an existing key sequence
-       * then the existing key sequence is reset.
+       * If a cancel operation is bound to an existing key sequence then the
+       * existing key sequence is reset.
        */
       std::shared_ptr<KeySequenceValueModel>
         get_binding(Operation operation) const;
@@ -83,12 +85,30 @@ namespace Spire {
       std::array<QKeySequence, OPERATION_COUNT> m_previous_bindings;
 
       CancelKeyBindingsModel(const CancelKeyBindingsModel&) = delete;
-      CancelKeyBindingsModel& operator =(const CancelKeyBindingsModel&)
-        = delete;
-      QValidator::State on_validate(Operation operation,
-        const QKeySequence& sequence);
+      CancelKeyBindingsModel& operator =(const CancelKeyBindingsModel&) =
+        delete;
+      QValidator::State on_validate(
+        Operation operation, const QKeySequence& sequence);
       void on_update(Operation operation, const QKeySequence& sequence);
   };
+
+  /**
+   * Executes a cancel operation on a list of order tasks.
+   * @param operation The cancel operation to execute.
+   * @param tasks The list of tasks to execute the cancel operation on.
+   */
+  void execute(CancelKeyBindingsModel::Operation operation,
+    Beam::Out<std::vector<std::shared_ptr<Task>>> tasks);
+
+  /**
+   * Executes a cancel operation on a list of order entries.
+   * @param operation The cancel operation to execute.
+   * @param entries The list of order entries to execute the cancel operation
+   *        on.
+   */
+  void execute(CancelKeyBindingsModel::Operation operation,
+    Nexus::OrderExecutionService::OrderExecutionClientBox& client,
+    Beam::Out<std::vector<OrderLogModel::OrderEntry>> entries);
 }
 
 #endif

@@ -122,5 +122,6 @@ void AddRegionForm::on_cancel() {
 }
 
 void AddRegionForm::on_add() {
-  m_submit_signal(m_region_drop_down_box->get_current()->get());
+  auto submission = m_region_drop_down_box->get_current()->get();
+  m_submit_signal(submission);
 }

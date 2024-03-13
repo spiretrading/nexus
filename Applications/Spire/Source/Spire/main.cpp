@@ -9,7 +9,7 @@
 #include "Spire/Blotter/BlotterSettings.hpp"
 #include "Spire/BookView/BookViewProperties.hpp"
 #include "Spire/Dashboard/SavedDashboards.hpp"
-#include "Spire/LegacyKeyBindings/HotkeyOverride.hpp"
+#include "Spire/KeyBindings/HotkeyOverride.hpp"
 #include "Spire/LegacyUI/CustomQtVariants.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
@@ -204,8 +204,10 @@ int main(int argc, char* argv[]) {
     RiskTimerProperties::Load(Store(*user_profile));
     TimeAndSalesProperties::Load(Store(*user_profile));
     PortfolioViewerProperties::Load(Store(*user_profile));
+/* TODO
     KeyBindings::Load(Store(*user_profile));
     InteractionsProperties::Load(Store(*user_profile));
+*/
     OrderImbalanceIndicatorProperties::Load(Store(*user_profile));
     SavedDashboards::Load(Store(*user_profile));
     toolbar_controller.emplace(Ref(*user_profile));
@@ -220,8 +222,10 @@ int main(int argc, char* argv[]) {
   }
   SavedDashboards::Save(*user_profile);
   OrderImbalanceIndicatorProperties::Save(*user_profile);
+/* TODO
   InteractionsProperties::Save(*user_profile);
   KeyBindings::Save(*user_profile);
+*/
   PortfolioViewerProperties::Save(*user_profile);
   TimeAndSalesProperties::Save(*user_profile);
   RiskTimerProperties::Save(*user_profile);

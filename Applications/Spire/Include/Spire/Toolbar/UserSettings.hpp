@@ -8,8 +8,7 @@
 #include "Nexus/Definitions/RegionMap.hpp"
 #include "Spire/BookView/BookViewProperties.hpp"
 #include "Spire/Dashboard/SavedDashboards.hpp"
-#include "Spire/LegacyKeyBindings/InteractionsProperties.hpp"
-#include "Spire/LegacyKeyBindings/KeyBindings.hpp"
+#include "Spire/KeyBindings/KeyBindingsModel.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorProperties.hpp"
 #include "Spire/PortfolioViewer/PortfolioViewerProperties.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesProperties.hpp"
@@ -69,12 +68,8 @@ namespace Details {
     boost::optional<OrderImbalanceIndicatorProperties>
       m_order_imbalance_indicator_properties;
 
-    /** The interactions properties. */
-    boost::optional<Nexus::RegionMap<InteractionsProperties>>
-      m_interactions_properties;
-
     /** The key bindings. */
-    boost::optional<KeyBindings> m_key_bindings;
+    boost::optional<KeyBindingsModel> m_key_bindings;
 
     /** The portfolio properties. */
     boost::optional<PortfolioViewerProperties> m_portfolio_properties;
@@ -119,9 +114,9 @@ namespace Beam::Serialization {
       shuttle.Shuttle("dashboards", value.m_dashboards);
       shuttle.Shuttle("order_imbalance_indicator_properties",
         value.m_order_imbalance_indicator_properties);
-      shuttle.Shuttle("interactions_properties",
-        value.m_interactions_properties);
+/* TODO
       shuttle.Shuttle("key_bindings", value.m_key_bindings);
+*/
       shuttle.Shuttle("portfolio_viewer_properties",
         value.m_portfolio_properties);
       shuttle.Shuttle("time_and_sales_properties",
