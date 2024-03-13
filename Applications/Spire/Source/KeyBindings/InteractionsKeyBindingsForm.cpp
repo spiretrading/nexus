@@ -46,7 +46,7 @@ namespace {
     } else if(modifier == Qt::ControlModifier) {
       return 2;
     } else if(modifier == Qt::AltModifier) {
-      return 0;
+      return 3;
     }
     throw std::out_of_range("Invalid keyboard modifier.");
   }

@@ -51,14 +51,6 @@ namespace {
       set(BorderRightColor(QColor(0xE0E0E0)));
   }
 
-  auto make_region_list(const KeyBindingsModel& key_bindings,
-      const CountryDatabase& countries, const MarketDatabase& markets) {
-    auto regions = std::make_shared<ArrayListModel<Region>>(
-      key_bindings.make_interactions_key_bindings_regions());
-    regions->insert(Region::Global("Global"), 0);
-    return regions;
-  }
-
   bool region_comparator(const Region& left, const Region& right) {
     if(left.IsGlobal()) {
       return !right.IsGlobal();
@@ -84,6 +76,15 @@ namespace {
         to_text(*right.GetSecurities().begin());
     }
     return false;
+  }
+
+  auto make_region_list(const KeyBindingsModel& key_bindings,
+      const CountryDatabase& countries, const MarketDatabase& markets) {
+    auto regions = std::make_shared<ArrayListModel<Region>>(
+      key_bindings.make_interactions_key_bindings_regions());
+    regions->insert(Region::Global("Global"), 0);
+    std::sort(regions->begin() + 1, regions->end(), &region_comparator);
+    return regions;
   }
 
   auto make_available_region_list(const KeyBindingsModel& key_bindings,
@@ -232,34 +233,30 @@ void InteractionsPage::on_current_index(const optional<int>& current) {
 }
 
 void InteractionsPage::on_add_region(const Region& region) {
-  auto i =
-    std::find(m_available_regions->begin(), m_available_regions->end(), region);
-  if(i != m_available_regions->end()) {
-    m_available_regions->remove(i - m_available_regions->begin());
-  }
   m_add_region_form->close();
   delete_later(m_add_region_form);
   if(m_regions->push(region) == QValidator::Acceptable) {
+    auto i = std::find(
+      m_available_regions->begin(), m_available_regions->end(), region);
+    if(i != m_available_regions->end()) {
+      m_available_regions->remove(i - m_available_regions->begin());
+    }
     m_current_region->set(region);
   }
 }
 
 void InteractionsPage::on_delete_region(const Region& region) {
-  m_key_bindings->get_interactions_key_bindings(region)->reset();
-  if(region.GetSecurities().empty()) {
-    auto i = std::lower_bound(m_available_regions->begin(),
-      m_available_regions->end(), region, &region_comparator);
-    m_available_regions->insert(region, i);
-  }
-  auto index = [&] {
-    for(auto i = 1; i < m_regions->get_size(); ++i) {
-      if(m_regions->get(i) == region) {
-        return i;
-      }
+  auto i = std::find(m_regions->begin() + 1, m_regions->end(), region);
+  if(i != m_regions->end() &&
+      m_regions->remove(i - m_regions->begin()) == QValidator::Acceptable) {
+    if(auto current = m_list_view->get_current()->get()) {
+      m_list_view->get_selection()->push(*current);
     }
-    return -1;
-  }();
-  if(index > 0 && m_regions->remove(index) == QValidator::Acceptable) {
-    m_list_view->get_selection()->push(*m_list_view->get_current()->get());
+    m_key_bindings->get_interactions_key_bindings(region)->reset();
+    if(region.GetSecurities().empty()) {
+      auto i = std::lower_bound(m_available_regions->begin(),
+        m_available_regions->end(), region, &region_comparator);
+      m_available_regions->insert(region, i);
+    }
   }
 }
