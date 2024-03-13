@@ -88,6 +88,15 @@ namespace Spire {
       void on_update(const Source& value);
   };
 
+  /**
+   * Constructs a ToTextModel with default conversion functions.
+   * @param model The reference model.
+   */
+  template<typename T>
+  auto make_to_text_model(std::shared_ptr<ValueModel<T>> model) {
+    return std::make_shared<ToTextModel<T>>(std::move(model));
+  }
+
   template<typename T>
   ToTextModel<T>::ToTextModel(std::shared_ptr<ValueModel<Source>> model)
     : ToTextModel(std::move(model), [] (const Source& value) {
@@ -115,7 +124,7 @@ namespace Spire {
       m_from_string(std::move(from_string)),
       m_value(m_to_string(m_model->get())),
       m_update_connection(m_model->connect_update_signal(
-        [=] (const auto& value) { on_update(value); })) {}
+        std::bind_front(&ToTextModel::on_update, this))) {}
 
   template<typename T>
   QValidator::State ToTextModel<T>::get_state() const {

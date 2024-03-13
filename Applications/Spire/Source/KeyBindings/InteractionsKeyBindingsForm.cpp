@@ -3,6 +3,8 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/OptionalScalarValueModelDecorator.hpp"
 #include "Spire/Spire/ProxyScalarValueModel.hpp"
+#include "Spire/Spire/ToTextModel.hpp"
+#include "Spire/Spire/TransformValueModel.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/Layouts.hpp"
@@ -64,8 +66,8 @@ namespace {
     throw std::out_of_range("Invalid keyboard modifier.");
   }
 
-  auto make_region_header() {
-    auto label = make_label("");
+  auto make_region_header(std::shared_ptr<RegionModel> region) {
+    auto label = make_label(make_to_text_model(std::move(region)));
     label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     update_style(*label, [] (auto& style) {
       auto font = QFont("Roboto");
@@ -78,8 +80,18 @@ namespace {
     return label;
   }
 
-  auto make_description() {
-    auto label = make_text_area_label("");
+  auto make_description(std::shared_ptr<RegionModel> region) {
+    auto description = make_transform_value_model(std::move(region),
+      [] (const auto& region) {
+        if(region.IsGlobal()) {
+          return QString("Customize the default interactions for all regions "
+            "to suit your trading style.");
+        }
+        return QString(
+          "Customize interactions on %1 to suit your trading style.").
+            arg(Spire::to_text(region));
+      });
+    auto label = make_text_area_label(std::move(description));
     label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     update_style(*label, [] (auto& style) {
       auto font = QFont("Roboto");
@@ -171,10 +183,10 @@ InteractionsKeyBindingsForm::InteractionsKeyBindingsForm(
   body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto layout = make_vbox_layout(body);
   layout->setSpacing(scale_height(18));
-  m_header = make_region_header();
+  m_header = make_region_header(m_region);
   layout->addWidget(m_header);
   layout->addSpacing(scale_height(-18));
-  m_description = make_description();
+  m_description = make_description(m_region);
   auto interactions =
     m_key_bindings->get_interactions_key_bindings(m_region->get());
   m_default_quantity =
@@ -211,14 +223,6 @@ InteractionsKeyBindingsForm::InteractionsKeyBindingsForm(
 }
 
 void InteractionsKeyBindingsForm::on_region(const Region& region) {
-  auto description = [&] {
-    if(region.IsGlobal()) {
-      return QString("Customize the default interactions for all regions to "
-        "suit your trading style.");
-    }
-    return QString("Customize interactions on %1 to suit your trading style.").
-      arg(Spire::to_text(region));
-  }();
   auto interactions = m_key_bindings->get_interactions_key_bindings(region);
   m_default_quantity->set_source(interactions->get_default_quantity());
   for(auto i = 0; i != InteractionsKeyBindingsModel::MODIFIER_COUNT; ++i) {
@@ -228,6 +232,5 @@ void InteractionsKeyBindingsForm::on_region(const Region& region) {
       interactions->get_price_increment(::to_modifier(i)));
   }
   m_is_cancel_on_fill->set_source(interactions->is_cancel_on_fill());
-  m_description->get_current()->set(description);
   m_header->get_current()->set(to_text(region));
 }
