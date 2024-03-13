@@ -751,25 +751,29 @@ namespace {
     return model;
   }
 
-  auto populate_key_input_box_model(const QKeySequence& key) {
-    auto model = make_validated_value_model<QKeySequence>([] (auto sequence) {
-      if(sequence.count() == 0) {
-        return QValidator::Intermediate;
-      } else if(sequence.count() > 1) {
-        return QValidator::Invalid;
-      }
-      auto key = sequence[0];
-      key &= ~Qt::ShiftModifier;
-      key &= ~Qt::ControlModifier;
-      key &= ~Qt::AltModifier;
-      key &= ~Qt::MetaModifier;
-      key &= ~Qt::KeypadModifier;
-      key &= ~Qt::GroupSwitchModifier;
-      if(key >= Qt::Key_F1 && key <= Qt::Key_F32) {
-        return QValidator::Acceptable;
-      }
+  auto key_input_box_validator(const QKeySequence& sequence) {
+    if(sequence.count() == 0) {
+      return QValidator::Intermediate;
+    } else if(sequence.count() > 1) {
       return QValidator::Invalid;
-      }, std::make_shared<LocalKeySequenceValueModel>(key));
+    }
+    auto key = sequence[0];
+    key &= ~Qt::ShiftModifier;
+    key &= ~Qt::ControlModifier;
+    key &= ~Qt::AltModifier;
+    key &= ~Qt::MetaModifier;
+    key &= ~Qt::KeypadModifier;
+    key &= ~Qt::GroupSwitchModifier;
+    if(key >= Qt::Key_F1 && key <= Qt::Key_F32) {
+      return QValidator::Acceptable;
+    }
+    return QValidator::Invalid;
+  }
+
+  auto populate_key_input_box_model(const QKeySequence& key) {
+    auto model = make_validated_value_model<QKeySequence>(
+      &key_input_box_validator,
+      std::make_shared<LocalKeySequenceValueModel>(key));
     return model;
   }
 
@@ -2012,7 +2016,14 @@ UiProfile Spire::make_editable_box_profile() {
       current->set(std::any_cast<Region>(query_model->parse("TSX")));
       return new AnyInputBox((*new RegionBox(query_model, current)));
     }();
-    auto editable_box = new EditableBox(*input_box);
+    auto editable_box = [&] {
+      if(test_widget.get() == 4) {
+        return new EditableBox(*input_box, [] (const auto& sequence) {
+          return key_input_box_validator(sequence) == QValidator::Acceptable;
+        });
+      }
+      return new EditableBox(*input_box);
+    }();
     editable_box->setMinimumWidth(scale_width(112));
     apply_widget_properties(editable_box, profile.get_properties());
     return editable_box;
