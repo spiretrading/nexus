@@ -123,10 +123,7 @@ InteractionsPage::InteractionsPage(
   m_list_view->get_list_item(0)->setEnabled(false);
   m_current_region = make_transform_value_model(m_list_view->get_current(),
     [=] (const auto& index) {
-      if(index) {
-        return m_regions->get(*index);
-      }
-      return m_regions->get(0);
+      return m_regions->get(index.value_or(0));
     },
     [=] (const auto& region) {
       auto i = std::find(m_regions->rbegin(), m_regions->rend() - 1, region);
