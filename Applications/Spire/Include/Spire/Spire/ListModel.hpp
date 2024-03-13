@@ -227,6 +227,8 @@ namespace Spire {
 
     private:
       template<typename> friend class ListModelIterator;
+      template<typename U>
+      friend void swap(ListModelReference<U>, ListModelReference<U>);
       ListModel<std::remove_const_t<T>>* m_model;
       int m_index;
 
@@ -264,7 +266,11 @@ namespace Spire {
 
       ListModelIterator operator+(difference_type n) const;
 
+      ListModelIterator& operator+=(difference_type n);
+
       ListModelIterator operator-(difference_type n) const;
+
+      ListModelIterator& operator-=(difference_type n);
 
       difference_type operator-(const ListModelIterator& other) const;
 
@@ -346,7 +352,7 @@ namespace Spire {
       using OperationSignal = Signal<void (const Operation&)>;
 
       /** The type of iterator into a ListModel. */
-      using iterator = ListModelIterator<const Type>;
+      using iterator = ListModelIterator<Type>;
 
       /** The type of const iterator into a ListModel. */
       using const_iterator = ListModelIterator<const Type>;
@@ -385,6 +391,16 @@ namespace Spire {
        *         otherwise.
        */
       virtual QValidator::State insert(const Type& value, int index);
+
+      /**
+       * Inserts a value.
+       * @param value The value to insert.
+       * @param i An iterator to the location to insert.
+       * @return <code>QValidator::State::Acceptable</code> if the model
+       *         supports the operation, <code>QValidator::State::Invalid</code>
+       *         otherwise.
+       */
+      virtual QValidator::State insert(const Type& value, iterator i);
 
       /**
        * Moves a value.
@@ -491,6 +507,8 @@ namespace Spire {
 
       virtual QValidator::State insert(const Type& value, int index);
 
+      virtual QValidator::State insert(const Type& value, iterator i);
+
       QValidator::State move(int source, int destination) override;
 
       QValidator::State remove(int index) override;
@@ -554,6 +572,31 @@ namespace Spire {
   /** Removes all values from a ListModel. */
   void clear(AnyListModel& model);
 
+  template<typename T>
+  bool operator ==(
+      const ListModelReference<T>& left, const ListModelReference<T>& right) {
+    return static_cast<const T&>(left) == static_cast<const T&>(right);
+  }
+
+  template<typename T>
+  void swap(ListModelReference<T> left, ListModelReference<T> right) {
+    left.m_model->transact([&] {
+      auto temp = static_cast<const T&>(left);
+      left = static_cast<const T&>(right);
+      right = std::move(temp);
+    });
+  }
+
+  template<typename T, typename U>
+  bool operator ==(const ListModelReference<T>& left, const U& right) {
+    return static_cast<const T&>(left) == right;
+  }
+
+  template<typename T, typename U>
+  bool operator ==(const U& left, const ListModelReference<T>& right) {
+    return left == static_cast<const T&>(right);
+  }
+
   std::ostream& operator <<(
     std::ostream& out, const AnyListModel::AddOperation& operation);
 
@@ -589,7 +632,7 @@ namespace Spire {
 
   template<typename T>
   ListModelReference<T>& ListModelReference<T>::operator =(const T& value) {
-    m_model->set(value, m_index);
+    m_model->set(m_index, value);
     return *this;
   }
 
@@ -658,9 +701,23 @@ namespace Spire {
   }
 
   template<typename T>
+  ListModelIterator<T>&
+      ListModelIterator<T>::operator +=(difference_type n) {
+    m_index += n;
+    return *this;
+  }
+
+  template<typename T>
   ListModelIterator<T>
       ListModelIterator<T>::operator -(difference_type n) const {
     return ListModelIterator(*m_model, m_index - n);
+  }
+
+  template<typename T>
+  ListModelIterator<T>&
+      ListModelIterator<T>::operator -=(difference_type n) {
+    m_index -= n;
+    return *this;
   }
 
   template<typename T>
@@ -736,6 +793,11 @@ namespace Spire {
   template<typename T>
   QValidator::State ListModel<T>::insert(const Type& value, int index) {
     return QValidator::State::Invalid;
+  }
+
+  template<typename T>
+  QValidator::State ListModel<T>::insert(const Type& value, iterator i) {
+    return insert(value, i - begin());
   }
 
   template<typename T>

@@ -59,6 +59,33 @@ namespace {
     return regions;
   }
 
+  bool region_comparator(const Region& left, const Region& right) {
+    if(left.IsGlobal()) {
+      return !right.IsGlobal();
+    } else if(left.GetCountries().size() != 0) {
+      if(right.GetCountries().size() == 0) {
+        return !right.IsGlobal();
+      }
+      return to_text(*left.GetCountries().begin()) <
+        to_text(*right.GetCountries().begin());
+    } else if(left.GetMarkets().size() != 0) {
+      if(right.GetMarkets().size() == 0) {
+        return !right.IsGlobal() && right.GetCountries().size() == 0;
+      }
+      return to_text(MarketToken(*left.GetMarkets().begin())) <
+        to_text(MarketToken(*right.GetMarkets().begin()));
+    }
+    if(left.GetSecurities().size() != 0) {
+      if(right.GetSecurities().size() == 0) {
+        return !right.IsGlobal() && right.GetCountries().size() == 0 &&
+          right.GetMarkets().size() == 0;
+      }
+      return to_text(*left.GetSecurities().begin()) <
+        to_text(*right.GetSecurities().begin());
+    }
+    return false;
+  }
+
   auto make_available_region_list(const KeyBindingsModel& key_bindings,
       const CountryDatabase& countries, const MarketDatabase& markets) {
     auto regions = std::make_shared<ArrayListModel<Region>>();
@@ -74,6 +101,7 @@ namespace {
         regions->remove(i - regions->begin());
       }
     }
+    std::sort(regions->begin(), regions->end(), &region_comparator);
     return regions;
   }
 }
@@ -204,6 +232,11 @@ void InteractionsPage::on_current_index(const optional<int>& current) {
 }
 
 void InteractionsPage::on_add_region(const Region& region) {
+  auto i =
+    std::find(m_available_regions->begin(), m_available_regions->end(), region);
+  if(i != m_available_regions->end()) {
+    m_available_regions->remove(i - m_available_regions->begin());
+  }
   m_add_region_form->close();
   delete_later(m_add_region_form);
   if(m_regions->push(region) == QValidator::Acceptable) {
@@ -213,6 +246,11 @@ void InteractionsPage::on_add_region(const Region& region) {
 
 void InteractionsPage::on_delete_region(const Region& region) {
   m_key_bindings->get_interactions_key_bindings(region)->reset();
+  if(region.GetSecurities().empty()) {
+    auto i = std::lower_bound(m_available_regions->begin(),
+      m_available_regions->end(), region, &region_comparator);
+    m_available_regions->insert(region, i);
+  }
   auto index = [&] {
     for(auto i = 1; i < m_regions->get_size(); ++i) {
       if(m_regions->get(i) == region) {

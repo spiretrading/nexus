@@ -40,9 +40,14 @@ QValidator::State ListModel<std::any>::push(const std::any& value) {
   return insert(value, get_size());
 }
 
-QValidator::State ListModel<std::any>::insert(const std::any& value,
-    int index) {
+QValidator::State ListModel<std::any>::insert(
+    const std::any& value, int index) {
   return QValidator::State::Invalid;
+}
+
+QValidator::State ListModel<std::any>::insert(
+    const std::any& value, iterator i) {
+  return insert(value, i - begin());
 }
 
 QValidator::State ListModel<std::any>::move(int source, int destination) {
