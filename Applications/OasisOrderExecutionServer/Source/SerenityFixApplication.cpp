@@ -284,7 +284,7 @@ void SerenityFixApplication::RouteToChix(
     OrderInfo info, Out<FIX42::NewOrderSingle> newOrderSingle) {
   auto hasDestination = false;
   if(info.m_fields.m_destination == DefaultDestinations::TSX()) {
-    static const auto openTime = hours(14) + minutes(30);
+    static const auto openTime = hours(13) + minutes(30);
     if(m_timeClient->GetTime().time_of_day() < openTime) {
       auto destination = [&] {
         if(info.m_fields.m_security.GetMarket() == DefaultMarkets::TSXV()) {
