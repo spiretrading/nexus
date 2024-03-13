@@ -2,6 +2,7 @@
 #define SPIRE_LIST_MODEL_HPP
 #include <any>
 #include <functional>
+#include <iterator>
 #include <ostream>
 #include <type_traits>
 #include <utility>
@@ -252,6 +253,15 @@ namespace Spire {
       /** Constructs an uninitialized ListModelIterator. */
       ListModelIterator();
 
+      /**
+       * Constructs a const ListModelIterator from a non-const
+       * ListModelIterator.
+       */
+      ListModelIterator(const ListModelIterator<std::remove_const_t<T>>& i)
+        requires(std::is_const_v<T>);
+
+      ListModelIterator(const ListModelIterator&) = default;
+
       reference operator *() const;
 
       pointer operator ->() const;
@@ -277,6 +287,7 @@ namespace Spire {
       auto operator<=>(const ListModelIterator& other) const = default;
 
     private:
+      template<typename> friend class ListModelIterator;
       template<typename> friend class ListModel;
       ListModel<std::remove_const_t<T>>* m_model;
       int m_index;
@@ -357,6 +368,12 @@ namespace Spire {
       /** The type of const iterator into a ListModel. */
       using const_iterator = ListModelIterator<const Type>;
 
+      /** The type of reverse iterator into a ListModel. */
+      using reverse_iterator = std::reverse_iterator<iterator>;
+
+      /** The type of const reverse iterator into a ListModel. */
+      using const_reverse_iterator = std::reverse_iterator<const_iterator>;
+
       /**
        * Returns the value at a specified index.
        * @throws <code>std::out_of_range</code> iff index is out of range.
@@ -365,8 +382,8 @@ namespace Spire {
 
       /**
        * Sets the value at a specified index.
-       * @param index - The index to set.
-       * @param value - The value to set at the specified index.
+       * @param index The index to set.
+       * @param value The value to set at the specified index.
        * @return The state of the value at the <i>index</i>, or
        *         <code>QValidator::State::Invalid</code> iff row or column is
        *         out of range.
@@ -400,12 +417,12 @@ namespace Spire {
        *         supports the operation, <code>QValidator::State::Invalid</code>
        *         otherwise.
        */
-      virtual QValidator::State insert(const Type& value, iterator i);
+      virtual QValidator::State insert(const Type& value, const_iterator i);
 
       /**
        * Moves a value.
-       * @param source - The index of the value to move.
-       * @param destination - The index to move the value to.
+       * @param source The index of the value to move.
+       * @param destination The index to move the value to.
        * @return <code>QValidator::State::Acceptable</code> if the model
        *         supports the operation, <code>QValidator::State::Invalid</code>
        *         otherwise.
@@ -414,12 +431,21 @@ namespace Spire {
 
       /**
        * Removes a value from the model.
-       * @param index - The index of the value to remove.
+       * @param index The index of the value to remove.
        * @return <code>QValidator::State::Acceptable</code> if the model
        *         supports the operation, <code>QValidator::State::Invalid</code>
        *         otherwise.
        */
       QValidator::State remove(int index) override;
+
+      /**
+       * Removes a value from the model.
+       * @param i An iterator to the value to remove.
+       * @return <code>QValidator::State::Acceptable</code> if the model
+       *         supports the operation, <code>QValidator::State::Invalid</code>
+       *         otherwise.
+       */
+      QValidator::State remove(const_iterator i);
 
       /** Returns an iterator to the beginning of this list. */
       iterator begin();
@@ -439,6 +465,24 @@ namespace Spire {
       /** Returns an iterator to one past the end of this list. */
       const_iterator cend() const;
 
+      /** Returns an iterator to the beginning of this list. */
+      reverse_iterator rbegin();
+
+      /** Returns an iterator to one past the end of this list. */
+      reverse_iterator rend();
+
+      /** Returns an iterator to the beginning of this list. */
+      const_reverse_iterator rbegin() const;
+
+      /** Returns an iterator to one past the end of this list. */
+      const_reverse_iterator rend() const;
+
+      /** Returns an iterator to the beginning of this list. */
+      const_reverse_iterator crbegin() const;
+
+      /** Returns an iterator to one past the end of this list. */
+      const_reverse_iterator crend() const;
+
       /** Connects a slot to the OperationSignal. */
       template<typename F>
       boost::signals2::connection connect_operation_signal(const F& slot) const;
@@ -451,6 +495,15 @@ namespace Spire {
       /** Connects a slot to the OperationSignal. */
       virtual boost::signals2::connection connect_operation_signal(
         const typename OperationSignal::slot_type& slot) const = 0;
+
+      QValidator::State set(int index, const std::any& value) override;
+
+      std::any at(int index) const override;
+
+      QValidator::State insert(const std::any& value, int index) override;
+
+      boost::signals2::connection connect_operation_signal(
+        const AnyListModel::OperationSignal::slot_type& slot) const override;
 
     private:
       template<typename U>
@@ -483,11 +536,6 @@ namespace Spire {
       using downcast_t = typename downcast<U>::type;
       ListModel(const ListModel&) = delete;
       ListModel& operator =(const ListModel&) = delete;
-      QValidator::State set(int index, const std::any& value) override;
-      std::any at(int index) const override;
-      QValidator::State insert(const std::any& value, int index) override;
-      boost::signals2::connection connect_operation_signal(
-        const AnyListModel::OperationSignal::slot_type& slot) const override;
   };
 
   template<>
@@ -499,6 +547,10 @@ namespace Spire {
 
       using const_iterator = ListModelIterator<const Type>;
 
+      using reverse_iterator = std::reverse_iterator<iterator>;
+
+      using const_reverse_iterator = std::reverse_iterator<const_iterator>;
+
       virtual const Type& get(int index) const = 0;
 
       virtual QValidator::State set(int index, const Type& value);
@@ -507,11 +559,13 @@ namespace Spire {
 
       virtual QValidator::State insert(const Type& value, int index);
 
-      virtual QValidator::State insert(const Type& value, iterator i);
+      virtual QValidator::State insert(const Type& value, const_iterator i);
 
       QValidator::State move(int source, int destination) override;
 
       QValidator::State remove(int index) override;
+
+      QValidator::State remove(const_iterator index);
 
       iterator begin();
 
@@ -524,6 +578,18 @@ namespace Spire {
       const_iterator cbegin() const;
 
       const_iterator cend() const;
+
+      reverse_iterator rbegin();
+
+      reverse_iterator rend();
+
+      const_reverse_iterator rbegin() const;
+
+      const_reverse_iterator rend() const;
+
+      const_reverse_iterator crbegin() const;
+
+      const_reverse_iterator crend() const;
 
     protected:
       ListModel() = default;
@@ -651,6 +717,12 @@ namespace Spire {
   ListModelIterator<T>::ListModelIterator()
     : m_model(nullptr),
       m_index(0) {}
+
+  template<typename T>
+  ListModelIterator<T>::ListModelIterator(
+    const ListModelIterator<std::remove_const_t<T>>& i)
+      requires(std::is_const_v<T>)
+    : ListModelIterator(*i.m_model, i.m_index) {}
 
   template<typename T>
   typename ListModelIterator<T>::reference
@@ -796,8 +868,8 @@ namespace Spire {
   }
 
   template<typename T>
-  QValidator::State ListModel<T>::insert(const Type& value, iterator i) {
-    return insert(value, i - begin());
+  QValidator::State ListModel<T>::insert(const Type& value, const_iterator i) {
+    return insert(value, i - cbegin());
   }
 
   template<typename T>
@@ -808,6 +880,11 @@ namespace Spire {
   template<typename T>
   QValidator::State ListModel<T>::remove(int index) {
     return QValidator::State::Invalid;
+  }
+
+  template<typename T>
+  QValidator::State ListModel<T>::remove(const_iterator i) {
+    return remove(i - cbegin());
   }
 
   template<typename T>
@@ -838,6 +915,36 @@ namespace Spire {
   template<typename T>
   typename ListModel<T>::const_iterator ListModel<T>::cend() const {
     return const_iterator(const_cast<ListModel&>(*this), get_size());
+  }
+
+  template<typename T>
+  typename ListModel<T>::reverse_iterator ListModel<T>::rbegin() {
+    return reverse_iterator(begin());
+  }
+
+  template<typename T>
+  typename ListModel<T>::reverse_iterator ListModel<T>::rend() {
+    return reverse_iterator(end());
+  }
+
+  template<typename T>
+  typename ListModel<T>::const_reverse_iterator ListModel<T>::rbegin() const {
+    return const_reverse_iterator(begin());
+  }
+
+  template<typename T>
+  typename ListModel<T>::const_reverse_iterator ListModel<T>::rend() const {
+    return const_reverse_iterator(end());
+  }
+
+  template<typename T>
+  typename ListModel<T>::const_reverse_iterator ListModel<T>::crbegin() const {
+    return const_reverse_iterator(begin());
+  }
+
+  template<typename T>
+  typename ListModel<T>::const_reverse_iterator ListModel<T>::crend() const {
+    return const_reverse_iterator(end());
   }
 
   template<typename T>

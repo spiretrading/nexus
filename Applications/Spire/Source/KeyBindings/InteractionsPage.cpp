@@ -99,7 +99,7 @@ namespace {
     for(auto& region : key_bindings.make_interactions_key_bindings_regions()) {
       auto i = std::find(regions->begin(), regions->end(), region);
       if(i != regions->end()) {
-        regions->remove(i - regions->begin());
+        regions->remove(i);
       }
     }
     std::sort(regions->begin(), regions->end(), &region_comparator);
@@ -129,10 +129,9 @@ InteractionsPage::InteractionsPage(
       return m_regions->get(0);
     },
     [=] (const auto& region) {
-      for(auto i = m_regions->get_size() - 1; i >= 0; --i) {
-        if(m_regions->get(i) == region) {
-          return i;
-        }
+      auto i = std::find(m_regions->rbegin(), m_regions->rend() - 1, region);
+      if(i != m_regions->rend()) {
+        return i - m_regions->rbegin();
       }
       throw std::invalid_argument("Region not found.");
     });
@@ -237,12 +236,11 @@ void InteractionsPage::on_add_region(const Region& region) {
   delete_later(m_add_region_form);
   auto i = std::lower_bound(
     m_regions->begin(), m_regions->end(), region, &region_comparator);
-  if(m_regions->insert(region, i - m_regions->begin()) ==
-      QValidator::Acceptable) {
+  if(m_regions->insert(region, i) == QValidator::Acceptable) {
     auto i = std::find(
       m_available_regions->begin(), m_available_regions->end(), region);
     if(i != m_available_regions->end()) {
-      m_available_regions->remove(i - m_available_regions->begin());
+      m_available_regions->remove(i);
     }
     m_current_region->set(region);
   }
@@ -250,8 +248,7 @@ void InteractionsPage::on_add_region(const Region& region) {
 
 void InteractionsPage::on_delete_region(const Region& region) {
   auto i = std::find(m_regions->begin() + 1, m_regions->end(), region);
-  if(i != m_regions->end() &&
-      m_regions->remove(i - m_regions->begin()) == QValidator::Acceptable) {
+  if(i != m_regions->end() && m_regions->remove(i) == QValidator::Acceptable) {
     if(auto current = m_list_view->get_current()->get()) {
       m_list_view->get_selection()->push(*current);
     }

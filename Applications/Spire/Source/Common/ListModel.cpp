@@ -46,8 +46,8 @@ QValidator::State ListModel<std::any>::insert(
 }
 
 QValidator::State ListModel<std::any>::insert(
-    const std::any& value, iterator i) {
-  return insert(value, i - begin());
+    const std::any& value, const_iterator i) {
+  return insert(value, i - cbegin());
 }
 
 QValidator::State ListModel<std::any>::move(int source, int destination) {
@@ -56,6 +56,10 @@ QValidator::State ListModel<std::any>::move(int source, int destination) {
 
 QValidator::State ListModel<std::any>::remove(int index) {
   return QValidator::State::Invalid;
+}
+
+QValidator::State ListModel<std::any>::remove(const_iterator i) {
+  return remove(i - cbegin());
 }
 
 ListModel<std::any>::iterator ListModel<std::any>::begin() {
@@ -80,6 +84,31 @@ ListModel<std::any>::const_iterator ListModel<std::any>::cbegin() const {
 
 ListModel<std::any>::const_iterator ListModel<std::any>::cend() const {
   return const_iterator(const_cast<ListModel&>(*this), get_size());
+}
+
+ListModel<std::any>::reverse_iterator ListModel<std::any>::rbegin() {
+  return reverse_iterator(begin());
+}
+
+ListModel<std::any>::reverse_iterator ListModel<std::any>::rend() {
+  return reverse_iterator(end());
+}
+
+ListModel<std::any>::const_reverse_iterator ListModel<std::any>::rbegin() const {
+  return const_reverse_iterator(begin());
+}
+
+ListModel<std::any>::const_reverse_iterator ListModel<std::any>::rend() const {
+  return const_reverse_iterator(end());
+}
+
+ListModel<std::any>::const_reverse_iterator
+    ListModel<std::any>::crbegin() const {
+  return const_reverse_iterator(begin());
+}
+
+ListModel<std::any>::const_reverse_iterator ListModel<std::any>::crend() const {
+  return const_reverse_iterator(end());
 }
 
 void Spire::clear(AnyListModel& model) {
