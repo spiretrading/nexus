@@ -232,5 +232,4 @@ void InteractionsKeyBindingsForm::on_region(const Region& region) {
       interactions->get_price_increment(::to_modifier(i)));
   }
   m_is_cancel_on_fill->set_source(interactions->is_cancel_on_fill());
-  m_header->get_current()->set(to_text(region));
 }
