@@ -87,28 +87,28 @@ ListModel<std::any>::const_iterator ListModel<std::any>::cend() const {
 }
 
 ListModel<std::any>::reverse_iterator ListModel<std::any>::rbegin() {
-  return reverse_iterator(begin());
-}
-
-ListModel<std::any>::reverse_iterator ListModel<std::any>::rend() {
   return reverse_iterator(end());
 }
 
+ListModel<std::any>::reverse_iterator ListModel<std::any>::rend() {
+  return reverse_iterator(begin());
+}
+
 ListModel<std::any>::const_reverse_iterator ListModel<std::any>::rbegin() const {
-  return const_reverse_iterator(begin());
+  return const_reverse_iterator(end());
 }
 
 ListModel<std::any>::const_reverse_iterator ListModel<std::any>::rend() const {
-  return const_reverse_iterator(end());
+  return const_reverse_iterator(begin());
 }
 
 ListModel<std::any>::const_reverse_iterator
     ListModel<std::any>::crbegin() const {
-  return const_reverse_iterator(begin());
+  return const_reverse_iterator(end());
 }
 
 ListModel<std::any>::const_reverse_iterator ListModel<std::any>::crend() const {
-  return const_reverse_iterator(end());
+  return const_reverse_iterator(begin());
 }
 
 void Spire::clear(AnyListModel& model) {

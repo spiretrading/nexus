@@ -919,32 +919,32 @@ namespace Spire {
 
   template<typename T>
   typename ListModel<T>::reverse_iterator ListModel<T>::rbegin() {
-    return reverse_iterator(begin());
-  }
-
-  template<typename T>
-  typename ListModel<T>::reverse_iterator ListModel<T>::rend() {
     return reverse_iterator(end());
   }
 
   template<typename T>
+  typename ListModel<T>::reverse_iterator ListModel<T>::rend() {
+    return reverse_iterator(begin());
+  }
+
+  template<typename T>
   typename ListModel<T>::const_reverse_iterator ListModel<T>::rbegin() const {
-    return const_reverse_iterator(begin());
+    return const_reverse_iterator(end());
   }
 
   template<typename T>
   typename ListModel<T>::const_reverse_iterator ListModel<T>::rend() const {
-    return const_reverse_iterator(end());
-  }
-
-  template<typename T>
-  typename ListModel<T>::const_reverse_iterator ListModel<T>::crbegin() const {
     return const_reverse_iterator(begin());
   }
 
   template<typename T>
-  typename ListModel<T>::const_reverse_iterator ListModel<T>::crend() const {
+  typename ListModel<T>::const_reverse_iterator ListModel<T>::crbegin() const {
     return const_reverse_iterator(end());
+  }
+
+  template<typename T>
+  typename ListModel<T>::const_reverse_iterator ListModel<T>::crend() const {
+    return const_reverse_iterator(begin());
   }
 
   template<typename T>
