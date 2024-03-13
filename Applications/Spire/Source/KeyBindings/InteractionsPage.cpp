@@ -235,7 +235,10 @@ void InteractionsPage::on_current_index(const optional<int>& current) {
 void InteractionsPage::on_add_region(const Region& region) {
   m_add_region_form->close();
   delete_later(m_add_region_form);
-  if(m_regions->push(region) == QValidator::Acceptable) {
+  auto i = std::lower_bound(
+    m_regions->begin(), m_regions->end(), region, &region_comparator);
+  if(m_regions->insert(region, i - m_regions->begin()) ==
+      QValidator::Acceptable) {
     auto i = std::find(
       m_available_regions->begin(), m_available_regions->end(), region);
     if(i != m_available_regions->end()) {
