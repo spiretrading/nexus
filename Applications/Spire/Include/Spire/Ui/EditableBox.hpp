@@ -17,15 +17,35 @@ namespace Spire {
       /** Signals that this box has quit editing. */
       using EndEditSignal = Signal<void ()>;
 
-      /** Tests whether a given string triggers an edit state. */
-      static bool is_edit_trigger(const QString& text);
+      /**
+       * The type of function used to test whether a given key sequence triggers
+       * an edit state.
+       * @param key The key sequence used to test.
+       * @return <code>true</code> iff the key sequence passes the test.
+       */
+      using EditTrigger = std::function<bool (const QKeySequence& key)>;
 
       /**
-       * Constructs a EditableBox.
+       * The default edit trigger can trigger the edit state when
+       * the key is alphanumeric.
+       */
+      static bool default_edit_trigger(const QKeySequence& key);
+
+      /**
+       * Constructs an EditableBox with a default edit trigger.
        * @param input_box The AnyInputBox to encapsulate.
        * @param parent The parent widget.
        */
       explicit EditableBox(AnyInputBox& input_box, QWidget* parent = nullptr);
+
+      /**
+       * Constructs an EditableBox.
+       * @param input_box The AnyInputBox to encapsulate.
+       * @param trigger The edit trigger for the user input.
+       * @param parent The parent widget.
+       */
+      EditableBox(AnyInputBox& input_box, EditTrigger trigger,
+        QWidget* parent = nullptr);
 
       /** Returns the AnyInputBox. */
       const AnyInputBox& get_input_box() const;
@@ -60,6 +80,7 @@ namespace Spire {
       mutable StartEditSignal m_start_edit_signal;
       mutable EndEditSignal m_end_edit_signal;
       AnyInputBox* m_input_box;
+      EditTrigger m_edit_trigger;
       FocusObserver m_focus_observer;
       QWidget* m_focus_proxy;
       boost::signals2::scoped_connection m_submit_connection;

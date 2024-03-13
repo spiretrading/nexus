@@ -2,17 +2,58 @@
 #include <QCoreApplication>
 #include <QKeyEvent>
 
+using namespace boost;
 using namespace boost::signals2;
+using namespace Nexus;
 using namespace Spire;
 using namespace Spire::Styles;
 
-bool EditableBox::is_edit_trigger(const QString& text) {
+namespace{
+  auto reset(AnyRef& any) {
+    if(any.get_type() == typeid(QString)) {
+      static auto value = QString("");
+      any = AnyRef(value);
+    } else if(any.get_type() == typeid(Region)) {
+      static auto value = Region();
+      any = AnyRef(value);
+    } else if(any.get_type() == typeid(Destination)) {
+      static auto value = Destination();
+      any = AnyRef(value);
+    } else if(any.get_type() == typeid(OrderType)) {
+      static auto value = OrderType(OrderType::NONE);
+      any = AnyRef(value);
+    } else if(any.get_type() == typeid(Side)) {
+      static auto value = Side(Side::NONE);
+      any = AnyRef(value);
+    } else if(any.get_type() == typeid(TimeInForce)) {
+      static auto value = TimeInForce(TimeInForce::Type::NONE);
+      any = AnyRef(value);
+    } else if(any.get_type() == typeid(optional<Quantity>)) {
+      static auto value = optional<Quantity>();
+      any = AnyRef(value);
+    } else if(any.get_type() == typeid(QKeySequence)) {
+      static auto value = QKeySequence();
+      any = AnyRef(value);
+    } else {
+      any = AnyRef();
+    }
+    return any;
+  }
+}
+
+bool EditableBox::default_edit_trigger(const QKeySequence& key) {
+  auto text = key.toString();
   return text.size() == 1 && (text[0].isLetterOrNumber() || text[0] == '_');
 }
 
 EditableBox::EditableBox(AnyInputBox& input_box, QWidget* parent)
+  : EditableBox(input_box, default_edit_trigger, parent) {}
+
+EditableBox::EditableBox(AnyInputBox& input_box, EditTrigger trigger,
+    QWidget* parent)
     : QWidget(parent),
       m_input_box(&input_box),
+      m_edit_trigger(std::move(trigger)),
       m_focus_observer(*this),
       m_focus_proxy(nullptr) {
   setFocusProxy(m_input_box);
@@ -76,12 +117,13 @@ void EditableBox::keyPressEvent(QKeyEvent* event) {
   } else if(event->key() == Qt::Key_Escape) {
     set_editing(false);
   } else if(event->key() == Qt::Key_Backspace) {
-    m_input_box->get_current()->set(AnyRef());
+    auto current = m_input_box->get_current()->get();
+    m_input_box->get_current()->set(reset(current));
   } else {
     if(is_editing()) {
       return;
     }
-    if(is_edit_trigger(event->text())) {
+    if(m_edit_trigger(QKeySequence(event->key() | event->modifiers()))) {
       set_editing(true);
       select_all_text();
       QCoreApplication::sendEvent(m_focus_proxy, event);
