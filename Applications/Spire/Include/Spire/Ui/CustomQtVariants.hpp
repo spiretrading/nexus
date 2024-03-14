@@ -184,6 +184,10 @@ namespace Spire {
   QString to_text(
     const Nexus::Security& security, const QLocale& locale = QLocale());
 
+  /** Returns the text representation of a keyboard modifier. */
+  const QString& to_text(
+    Qt::KeyboardModifier modifier, const QLocale& locale = QLocale());
+
   /** Returns the text representation of a QKeySequence. */
   QString to_text(const QKeySequence& value, const QLocale& locale = QLocale());
 

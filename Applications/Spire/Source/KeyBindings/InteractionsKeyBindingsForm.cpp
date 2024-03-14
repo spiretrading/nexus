@@ -21,38 +21,6 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  const auto& to_text(Qt::KeyboardModifier modifier) {
-    if(modifier == Qt::NoModifier) {
-      static const auto value = QObject::tr("Default");
-      return value;
-    } else if(modifier == Qt::ShiftModifier) {
-      static const auto value = QObject::tr("Shift");
-      return value;
-    } else if(modifier == Qt::ControlModifier) {
-      static const auto value = QObject::tr("Ctrl");
-      return value;
-    } else if(modifier == Qt::AltModifier) {
-      static const auto value = QObject::tr("Alt");
-      return value;
-    } else {
-      static const auto value = QObject::tr("None");
-      return value;
-    }
-  }
-
-  auto to_modifier(int index) {
-    if(index == 0) {
-      return Qt::NoModifier;
-    } else if(index == 1) {
-      return Qt::ShiftModifier;
-    } else if(index == 2) {
-      return Qt::ControlModifier;
-    } else if(index == 3) {
-      return Qt::AltModifier;
-    }
-    throw std::out_of_range("Invalid keyboard modifier.");
-  }
-
   auto make_region_header(std::shared_ptr<RegionModel> region) {
     auto label = make_label(make_to_text_model(std::move(region)));
     label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
@@ -207,12 +175,12 @@ InteractionsKeyBindingsForm::InteractionsKeyBindingsForm(
     quantity_increments[i] = make_interactions_proxy_model<
       ProxyScalarValueModel<Quantity>>(
         m_key_bindings, m_region, [=] (const auto& interactions) {
-          return interactions.get_quantity_increment(::to_modifier(i));
+          return interactions.get_quantity_increment(to_modifier(i));
         });
     price_increments[i] = make_interactions_proxy_model<
       ProxyScalarValueModel<Money>>(
         m_key_bindings, m_region, [=] (const auto& interactions) {
-          return interactions.get_price_increment(::to_modifier(i));
+          return interactions.get_price_increment(to_modifier(i));
         });
   }
   layout->addWidget(

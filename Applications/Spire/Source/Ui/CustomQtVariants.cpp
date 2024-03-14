@@ -330,6 +330,26 @@ QString Spire::to_text(const Security& security, const QLocale& locale) {
     security, GetDefaultMarketDatabase(), GetDefaultCountryDatabase()));
 }
 
+const QString& Spire::to_text(
+    Qt::KeyboardModifier modifier, const QLocale& locale) {
+  if(modifier == Qt::NoModifier) {
+    static const auto value = QObject::tr("Default");
+    return value;
+  } else if(modifier == Qt::ShiftModifier) {
+    static const auto value = QObject::tr("Shift");
+    return value;
+  } else if(modifier == Qt::ControlModifier) {
+    static const auto value = QObject::tr("Ctrl");
+    return value;
+  } else if(modifier == Qt::AltModifier) {
+    static const auto value = QObject::tr("Alt");
+    return value;
+  } else {
+    static const auto value = QObject::tr("None");
+    return value;
+  }
+}
+
 QString Spire::to_text(const QKeySequence& value, const QLocale& locale) {
   return value.toString();
 }
