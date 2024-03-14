@@ -24,6 +24,7 @@ namespace Spire {
     private:
       PopupBox* m_popup_box;
       QWidget* m_tip_window;
+      bool m_has_sent_event;
   };
 
   /** Represents an editable TableView. */
@@ -90,6 +91,7 @@ namespace Spire {
       ArrayListModel<std::shared_ptr<EditableTableRow>> m_rows;
       Filter m_filter;
       bool m_is_added_row_filtered;
+      bool m_has_sent_event;
       int m_previous_table_row_size;
       boost::signals2::scoped_connection m_current_connection;
       boost::signals2::scoped_connection m_source_operation_connection;

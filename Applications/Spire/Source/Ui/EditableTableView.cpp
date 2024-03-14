@@ -80,7 +80,8 @@ namespace {
 
 TransparentMouseEventPopupBox::TransparentMouseEventPopupBox(QWidget& body,
     QWidget* parent)
-    : QWidget(parent) {
+    : QWidget(parent),
+      m_has_sent_event(false) {
   m_popup_box = new PopupBox(body);
   enclose(*this, *m_popup_box);
   proxy_style(*this, *m_popup_box);
@@ -108,16 +109,12 @@ bool TransparentMouseEventPopupBox::event(QEvent* event) {
 }
 
 void TransparentMouseEventPopupBox::keyPressEvent(QKeyEvent* event) {
-  switch(event->key()) {
-    case Qt::Key_Enter:
-    case Qt::Key_Return:
-    case Qt::Key_Backspace:
-      QCoreApplication::sendEvent(&m_popup_box->get_body(), event);
-      break;
-    default:
-      QCoreApplication::sendEvent(&m_popup_box->get_body(), event);
-      break;
+  if(m_has_sent_event) {
+    return;
   }
+  m_has_sent_event = true;
+  QCoreApplication::sendEvent(&m_popup_box->get_body(), event);
+  m_has_sent_event = false;
 }
 
 struct RevertTableModel : TableModel {
@@ -448,6 +445,7 @@ EditableTableView::EditableTableView(
       std::move(comparator), parent),
       m_source_table(std::move(table)),
       m_is_added_row_filtered(false),
+      m_has_sent_event(false),
       m_previous_table_row_size(m_source_table->get_row_size()) {
   auto table_header = static_cast<TableHeader*>(static_cast<Box*>(
     layout()->itemAt(0)->widget())->get_body()->layout()->
@@ -561,10 +559,14 @@ bool EditableTableView::eventFilter(QObject* watched, QEvent* event) {
         case Qt::Key_Enter:
         case Qt::Key_Return:
         case Qt::Key_Backspace:
-          if(auto& current = get_current()->get();
-              current && event->spontaneous()) {
+          if(auto& current = get_current()->get()) {
+            if(m_has_sent_event) {
+              return true;
+            }
+            m_has_sent_event = true;
             QCoreApplication::sendEvent(find_focus_proxy(
               get_table_item_body(*m_table_body->get_item(*current))), event);
+            m_has_sent_event = false;
             return true;
           }
           break;
@@ -576,10 +578,14 @@ bool EditableTableView::eventFilter(QObject* watched, QEvent* event) {
             return true;
           }
         default:
-          if(auto& current = get_current()->get();
-              current && event->spontaneous()) {
+          if(auto& current = get_current()->get()) {
+            if(m_has_sent_event) {
+              return true;
+            }
+            m_has_sent_event = true;
             QCoreApplication::sendEvent(find_focus_proxy(
               get_table_item_body(*m_table_body->get_item(*current))), event);
+            m_has_sent_event = false;
             return true;
           }
       }
