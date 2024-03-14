@@ -472,7 +472,7 @@ namespace {
     auto model = std::make_shared<ArrayListModel<T>>();
     for(auto property : properties) {
       if(get<bool>(property->get_name(), profile.get_properties()).get()) {
-        model->push(*from_string<T>(property->get_name()));
+        model->push(*from_text<T>(property->get_name()));
       }
     }
     auto button = make_label_button("Click me");

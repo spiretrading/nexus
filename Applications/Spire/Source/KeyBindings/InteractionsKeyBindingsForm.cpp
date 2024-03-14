@@ -40,19 +40,6 @@ namespace {
     }
   }
 
-  auto to_index(Qt::KeyboardModifier modifier) {
-    if(modifier == Qt::NoModifier) {
-      return 0;
-    } else if(modifier == Qt::ShiftModifier) {
-      return 1;
-    } else if(modifier == Qt::ControlModifier) {
-      return 2;
-    } else if(modifier == Qt::AltModifier) {
-      return 3;
-    }
-    throw std::out_of_range("Invalid keyboard modifier.");
-  }
-
   auto to_modifier(int index) {
     if(index == 0) {
       return Qt::NoModifier;
@@ -81,13 +68,13 @@ namespace {
   }
 
   auto make_description(std::shared_ptr<RegionModel> region) {
-    auto description = make_transform_value_model(std::move(region),
+    auto description = make_to_text_model(std::move(region),
       [] (const auto& region) {
         if(region.IsGlobal()) {
-          return QString("Customize the default interactions for all regions "
-            "to suit your trading style.");
+          return QObject::tr("Customize the default interactions for all "
+            "regions to suit your trading style.");
         }
-        return QString(
+        return QObject::tr(
           "Customize interactions on %1 to suit your trading style.").
             arg(Spire::to_text(region));
       });
@@ -143,8 +130,7 @@ namespace {
 
   template<typename T>
   auto make_field_set(const QString& name,
-      const std::array<T, InteractionsKeyBindingsModel::MODIFIER_COUNT>&
-        increments) {
+      std::array<T, InteractionsKeyBindingsModel::MODIFIER_COUNT> increments) {
     auto header = make_label(name);
     header->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     update_style(*header, [] (auto& style) {
@@ -161,15 +147,35 @@ namespace {
     layout->setSpacing(scale_height(4));
     layout->addWidget(header);
     layout->addSpacing(scale_height(-4));
-    layout->addWidget(
-      make_slot(to_text(Qt::NoModifier), increments[to_index(Qt::NoModifier)]));
-    layout->addWidget(make_slot(
-      to_text(Qt::ShiftModifier), increments[to_index(Qt::ShiftModifier)]));
-    layout->addWidget(make_slot(
-      to_text(Qt::ControlModifier), increments[to_index(Qt::ControlModifier)]));
-    layout->addWidget(make_slot(
-      to_text(Qt::AltModifier), increments[to_index(Qt::AltModifier)]));
+    for(auto i = 0; i != InteractionsKeyBindingsModel::MODIFIER_COUNT; ++i) {
+      layout->addWidget(make_slot(to_text(to_modifier(i)), increments[i]));
+    }
     return widget;
+  }
+
+  template<typename ProxyModel>
+  struct InteractionsProxyModel : ProxyModel {
+    scoped_connection m_connection;
+
+    template<typename F>
+    InteractionsProxyModel(std::shared_ptr<KeyBindingsModel> key_bindings,
+        std::shared_ptr<RegionModel> region, F accessor)
+        : ProxyModel(accessor(
+            *key_bindings->get_interactions_key_bindings(region->get()))) {
+      m_connection = region->connect_update_signal(
+        [=, accessor = std::move(accessor)] (const auto& region) {
+          this->set_source(
+            accessor(*key_bindings->get_interactions_key_bindings(region)));
+        });
+    }
+  };
+
+  template<typename ProxyModel, typename F>
+  auto make_interactions_proxy_model(
+      std::shared_ptr<KeyBindingsModel> key_bindings,
+      std::shared_ptr<RegionModel> region, F accessor) {
+    return std::make_shared<InteractionsProxyModel<ProxyModel>>(
+      std::move(key_bindings), std::move(region), std::move(accessor));
   }
 }
 
@@ -183,31 +189,41 @@ InteractionsKeyBindingsForm::InteractionsKeyBindingsForm(
   body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto layout = make_vbox_layout(body);
   layout->setSpacing(scale_height(18));
-  m_header = make_region_header(m_region);
-  layout->addWidget(m_header);
+  layout->addWidget(make_region_header(m_region));
   layout->addSpacing(scale_height(-18));
-  m_description = make_description(m_region);
-  auto interactions =
-    m_key_bindings->get_interactions_key_bindings(m_region->get());
-  m_default_quantity =
-    make_proxy_scalar_value_model(interactions->get_default_quantity());
-  for(auto i = 0; i != InteractionsKeyBindingsModel::MODIFIER_COUNT; ++i) {
-    m_quantity_increments[i] = make_proxy_scalar_value_model(
-      interactions->get_quantity_increment(::to_modifier(i)));
-    m_price_increments[i] = make_proxy_scalar_value_model(
-      interactions->get_price_increment(::to_modifier(i)));
-  }
-  m_is_cancel_on_fill =
-    make_proxy_value_model(interactions->is_cancel_on_fill());
-  m_region_connection = m_region->connect_update_signal(
-    std::bind_front(&InteractionsKeyBindingsForm::on_region, this));
-  on_region(m_region->get());
-  layout->addWidget(m_description);
-  layout->addWidget(make_slot(tr("Default Quantity"), m_default_quantity));
+  layout->addWidget(make_description(m_region));
+  auto default_quantity = make_interactions_proxy_model<
+    ProxyScalarValueModel<Quantity>>(
+      m_key_bindings, m_region, [] (const auto& interactions) {
+        return interactions.get_default_quantity();
+      });
   layout->addWidget(
-    make_field_set(tr("Quantity Increments"), m_quantity_increments));
-  layout->addWidget(make_field_set(tr("Price Increments"), m_price_increments));
-  auto cancel_on_fill = new CheckBox(m_is_cancel_on_fill);
+    make_slot(tr("Default Quantity"), std::move(default_quantity)));
+  auto quantity_increments = std::array<std::shared_ptr<QuantityModel>,
+    InteractionsKeyBindingsModel::MODIFIER_COUNT>();
+  auto price_increments = std::array<std::shared_ptr<MoneyModel>,
+    InteractionsKeyBindingsModel::MODIFIER_COUNT>();
+  for(auto i = 0; i != InteractionsKeyBindingsModel::MODIFIER_COUNT; ++i) {
+    quantity_increments[i] = make_interactions_proxy_model<
+      ProxyScalarValueModel<Quantity>>(
+        m_key_bindings, m_region, [=] (const auto& interactions) {
+          return interactions.get_quantity_increment(::to_modifier(i));
+        });
+    price_increments[i] = make_interactions_proxy_model<
+      ProxyScalarValueModel<Money>>(
+        m_key_bindings, m_region, [=] (const auto& interactions) {
+          return interactions.get_price_increment(::to_modifier(i));
+        });
+  }
+  layout->addWidget(
+    make_field_set(tr("Quantity Increments"), std::move(quantity_increments)));
+  layout->addWidget(
+    make_field_set(tr("Price Increments"), std::move(price_increments)));
+  auto is_cancel_on_fill = make_interactions_proxy_model<ProxyValueModel<bool>>(
+    m_key_bindings, m_region, [] (const auto& interactions) {
+      return interactions.is_cancel_on_fill();
+    });
+  auto cancel_on_fill = new CheckBox(std::move(is_cancel_on_fill));
   cancel_on_fill->set_label(tr("Cancel on Fill"));
   layout->addWidget(cancel_on_fill, 0, Qt::AlignLeft);
   auto box = new Box(body);
@@ -220,16 +236,4 @@ InteractionsKeyBindingsForm::InteractionsKeyBindingsForm(
       set(PaddingBottom(scale_height(8)));
   });
   enclose(*this, *box);
-}
-
-void InteractionsKeyBindingsForm::on_region(const Region& region) {
-  auto interactions = m_key_bindings->get_interactions_key_bindings(region);
-  m_default_quantity->set_source(interactions->get_default_quantity());
-  for(auto i = 0; i != InteractionsKeyBindingsModel::MODIFIER_COUNT; ++i) {
-    m_quantity_increments[i]->set_source(
-      interactions->get_quantity_increment(::to_modifier(i)));
-    m_price_increments[i]->set_source(
-      interactions->get_price_increment(::to_modifier(i)));
-  }
-  m_is_cancel_on_fill->set_source(interactions->is_cancel_on_fill());
 }

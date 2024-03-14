@@ -29,18 +29,7 @@ namespace Spire {
     private:
       std::shared_ptr<KeyBindingsModel> m_key_bindings;
       std::shared_ptr<RegionModel> m_region;
-      std::shared_ptr<ProxyScalarValueModel<Nexus::Quantity>>
-        m_default_quantity;
-      std::array<std::shared_ptr<ProxyScalarValueModel<Nexus::Quantity>>,
-        InteractionsKeyBindingsModel::MODIFIER_COUNT> m_quantity_increments;
-      std::array<std::shared_ptr<ProxyScalarValueModel<Nexus::Money>>,
-        InteractionsKeyBindingsModel::MODIFIER_COUNT> m_price_increments;
-      std::shared_ptr<ProxyValueModel<bool>> m_is_cancel_on_fill;
-      TextBox* m_header;
       TextAreaBox* m_description;
-      boost::signals2::scoped_connection m_region_connection;
-
-      void on_region(const Nexus::Region& region);
   };
 }
 

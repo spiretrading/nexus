@@ -37,8 +37,8 @@ AddRegionForm::AddRegionForm(std::shared_ptr<RegionListModel> regions,
   });
   auto label = make_label(tr("Region"));
   m_region_drop_down_box = make_region_drop_down_box(m_regions);
-  m_region_drop_down_box->setSizePolicy(QSizePolicy::Expanding,
-    QSizePolicy::Fixed);
+  m_region_drop_down_box->setSizePolicy(
+    QSizePolicy::Expanding, QSizePolicy::Fixed);
   find_focus_proxy(*m_region_drop_down_box)->installEventFilter(this);
   if(m_regions->get_size() > 0) {
     m_region_drop_down_box->get_current()->set(m_regions->get(0));
