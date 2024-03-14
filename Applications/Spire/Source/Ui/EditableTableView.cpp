@@ -185,11 +185,14 @@ struct RevertTableModel : TableModel {
 
 struct EditableTableView::EditableTableModel : TableModel {
   std::shared_ptr<TableModel> m_source;
+  std::shared_ptr<HeaderModel> m_header;
   TableModelTransactionLog m_transaction;
   scoped_connection m_source_connection;
 
-  explicit EditableTableModel(std::shared_ptr<TableModel> source)
+  explicit EditableTableModel(std::shared_ptr<TableModel> source,
+    std::shared_ptr<HeaderModel> header)
     : m_source(std::move(source)),
+      m_header(std::move(header)),
       m_source_connection(m_source->connect_operation_signal(
         std::bind_front(&EditableTableModel::on_operation, this))) {}
 
@@ -198,7 +201,7 @@ struct EditableTableView::EditableTableModel : TableModel {
   }
 
   int get_column_size() const {
-    return m_source->get_column_size() + 2;
+    return m_header->get_size() + 2;
   }
 
   AnyRef at(int row, int column) const {
@@ -438,8 +441,8 @@ EditableTableView::EditableTableView(
     std::shared_ptr<SelectionModel> selection, ViewBuilder view_builder,
     Comparator comparator, Filter filter, QWidget* parent)
     : TableView(std::make_shared<FilteredTableModel>(
-        std::make_shared<EditableTableModel>(table), std::move(filter)),
-      std::make_shared<EditableTableHeaderModel>(std::move(header)),
+        std::make_shared<EditableTableModel>(table, header), std::move(filter)),
+      std::make_shared<EditableTableHeaderModel>(header),
       std::move(table_filter), std::move(current), std::move(selection),
       std::bind_front(&EditableTableView::view_builder, this, view_builder),
       std::move(comparator), parent),
