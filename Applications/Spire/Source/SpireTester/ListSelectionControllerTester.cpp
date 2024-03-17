@@ -9,13 +9,8 @@ using namespace boost::signals2;
 using namespace Spire;
 
 namespace {
-  bool find(ListModel<int>& list, int value) {
-    for(auto i = 0; i != list.get_size(); ++i) {
-      if(list.get(i) == value) {
-        return true;
-      }
-    }
-    return false;
+  bool find_value(ListModel<int>& list, int value) {
+    return std::find(list.begin(), list.end(), value) != list.end();
   }
 }
 
@@ -93,20 +88,20 @@ TEST_SUITE("ListSelectionController") {
     REQUIRE(selection->get(0) == 5);
     controller.click(6);
     REQUIRE(selection->get_size() == 2);
-    REQUIRE(find(*selection, 5));
-    REQUIRE(find(*selection, 6));
+    REQUIRE(find_value(*selection, 5));
+    REQUIRE(find_value(*selection, 6));
     controller.click(2);
     REQUIRE(selection->get_size() == 3);
-    REQUIRE(find(*selection, 5));
-    REQUIRE(find(*selection, 6));
-    REQUIRE(find(*selection, 2));
+    REQUIRE(find_value(*selection, 5));
+    REQUIRE(find_value(*selection, 6));
+    REQUIRE(find_value(*selection, 2));
     controller.click(5);
     REQUIRE(selection->get_size() == 2);
-    REQUIRE(find(*selection, 6));
-    REQUIRE(find(*selection, 2));
+    REQUIRE(find_value(*selection, 6));
+    REQUIRE(find_value(*selection, 2));
     controller.click(5);
     REQUIRE(selection->get_size() == 3);
-    REQUIRE(find(*selection, 5));
+    REQUIRE(find_value(*selection, 5));
     controller.click(5);
     controller.click(6);
     controller.click(2);
@@ -128,7 +123,7 @@ TEST_SUITE("ListSelectionController") {
     controller.click(5);
     controller.navigate(5);
     REQUIRE(selection->get_size() == 1);
-    REQUIRE(find(*selection, 5));
+    REQUIRE(find_value(*selection, 5));
   }
 
   TEST_CASE("range_click") {
@@ -137,17 +132,17 @@ TEST_SUITE("ListSelectionController") {
     controller.set_mode(ListSelectionController::Mode::RANGE);
     controller.click(3);
     REQUIRE(selection->get_size() == 1);
-    REQUIRE(find(*selection, 3));
+    REQUIRE(find_value(*selection, 3));
     controller.click(6);
     REQUIRE(selection->get_size() == 4);
-    REQUIRE(find(*selection, 3));
-    REQUIRE(find(*selection, 4));
-    REQUIRE(find(*selection, 5));
-    REQUIRE(find(*selection, 6));
+    REQUIRE(find_value(*selection, 3));
+    REQUIRE(find_value(*selection, 4));
+    REQUIRE(find_value(*selection, 5));
+    REQUIRE(find_value(*selection, 6));
     controller.click(2);
     REQUIRE(selection->get_size() == 2);
-    REQUIRE(find(*selection, 2));
-    REQUIRE(find(*selection, 3));
+    REQUIRE(find_value(*selection, 2));
+    REQUIRE(find_value(*selection, 3));
   }
 
   TEST_CASE("range_navigation_single_selection") {

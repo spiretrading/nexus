@@ -50,4 +50,12 @@ TEST_SUITE("TransformValueModel") {
         return std::stoi(next);
       });
   }
+
+  TEST_CASE("one_way") {
+    auto source = std::make_shared<LocalValueModel<int>>(1);
+    auto model = make_transform_value_model(source,
+      [] (int current) {
+        return std::to_string(current);
+      });
+  }
 }

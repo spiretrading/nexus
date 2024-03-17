@@ -63,6 +63,12 @@ namespace Spire {
    */
   Qt::KeyboardModifier to_modifier(Qt::KeyboardModifiers modifiers);
 
+  /** Converts an integer index into its respective Qt::KeyboardModifier. */
+  Qt::KeyboardModifier to_modifier(int index);
+
+  /** Converts a Qt::KeyboardModifier into its integer index. */
+  int to_index(Qt::KeyboardModifier modifier);
+
   /**
    * Returns the default order quantity to display to a user.
    * @param interactions The user's interactions.

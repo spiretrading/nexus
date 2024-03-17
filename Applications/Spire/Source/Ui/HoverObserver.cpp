@@ -94,13 +94,8 @@ struct HoverObserver::EventFilter : QObject {
 
   bool eventFilter(QObject* watched, QEvent* event) override {
     if(!m_widget->isEnabled() || !m_widget->isVisible()) {
-      if(m_observers) {
-        m_observers = nullptr;
-        set_state(State::NONE);
-      }
-      return QObject::eventFilter(watched, event);
-    }
-    if(event->type() == QEvent::Enter ||
+      destroy_observers();
+    } else if(event->type() == QEvent::Enter ||
         event->type() == QEvent::EnabledChange ||
         event->type() == QEvent::MouseMove) {
       set_state(::get_state(

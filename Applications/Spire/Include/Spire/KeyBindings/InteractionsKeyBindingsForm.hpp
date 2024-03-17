@@ -1,8 +1,13 @@
 #ifndef SPIRE_INTERACTIONS_KEY_BINDINGS_FORM_HPP
 #define SPIRE_INTERACTIONS_KEY_BINDINGS_FORM_HPP
+#include <array>
 #include <QWidget>
-#include "Nexus/Definitions/Region.hpp"
 #include "Spire/KeyBindings/KeyBindings.hpp"
+#include "Spire/KeyBindings/KeyBindingsModel.hpp"
+#include "Spire/Spire/ProxyScalarValueModel.hpp"
+#include "Spire/Spire/ProxyValueModel.hpp"
+#include "Spire/Ui/RegionDropDownBox.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 
@@ -12,19 +17,19 @@ namespace Spire {
 
       /**
        * Constructs an InteractionsKeyBindingsForm.
-       * @param region The Region that the user has set up an interaction for. 
-       * @param bindings The interactions key bindings to display.
+       * @param key_bindings The KeyBindingsModel storing all of the user's
+       *        interactions.
+       * @param region The region whose interactions are to be displayed.
        * @param parent The parent widget.
        */
-      explicit InteractionsKeyBindingsForm(Nexus::Region region,
-        std::shared_ptr<InteractionsKeyBindingsModel> bindings,
-        QWidget* parent = nullptr);
-
-      /** Returns the interactions key bindings. */
-      const std::shared_ptr<InteractionsKeyBindingsModel>& get_bindings() const;
+      InteractionsKeyBindingsForm(
+        std::shared_ptr<KeyBindingsModel> key_bindings,
+        std::shared_ptr<RegionModel> region, QWidget* parent = nullptr);
 
     private:
-      std::shared_ptr<InteractionsKeyBindingsModel> m_bindings;
+      std::shared_ptr<KeyBindingsModel> m_key_bindings;
+      std::shared_ptr<RegionModel> m_region;
+      TextAreaBox* m_description;
   };
 }
 

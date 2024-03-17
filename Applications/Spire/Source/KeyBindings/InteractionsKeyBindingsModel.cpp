@@ -7,32 +7,6 @@ using namespace Nexus;
 using namespace Spire;
 
 namespace {
-  auto to_modifier(int index) {
-    if(index == 0) {
-      return Qt::NoModifier;
-    } else if(index == 1) {
-      return Qt::ShiftModifier;
-    } else if(index == 2) {
-      return Qt::ControlModifier;
-    } else if(index == 3) {
-      return Qt::AltModifier;
-    }
-    throw std::out_of_range("The modifier is out of range.");
-  }
-
-  auto to_index(Qt::KeyboardModifier modifier) {
-    if(modifier == Qt::NoModifier) {
-      return 0;
-    } else if(modifier == Qt::ShiftModifier) {
-      return 1;
-    } else if(modifier == Qt::ControlModifier) {
-      return 2;
-    } else if(modifier == Qt::AltModifier) {
-      return 3;
-    }
-    throw std::out_of_range("The modifier is out of range.");
-  }
-
   template<typename T>
   class HierarchicalValueModel : public ValueModel<T> {
     public:
@@ -242,14 +216,14 @@ InteractionsKeyBindingsModel::InteractionsKeyBindingsModel(
   m_is_cancel_on_fill = std::move(is_cancel_on_fill);
   for(auto i : std::views::iota(0, MODIFIER_COUNT)) {
     auto model = std::make_shared<HierarchicalQuantityModel>(
-      parent->get_quantity_increment(::to_modifier(i)));
+      parent->get_quantity_increment(to_modifier(i)));
     m_connections.AddConnection(model->connect_write_signal(
       std::bind_front(&InteractionsKeyBindingsModel::on_write, this)));
     m_quantity_increments[i] = std::move(model);
   }
   for(auto i : std::views::iota(0, MODIFIER_COUNT)) {
     auto model = std::make_shared<HierarchicalMoneyModel>(
-      parent->get_price_increment(::to_modifier(i)));
+      parent->get_price_increment(to_modifier(i)));
     m_connections.AddConnection(model->connect_write_signal(
       std::bind_front(&InteractionsKeyBindingsModel::on_write, this)));
     m_price_increments[i] = std::move(model);
@@ -328,6 +302,32 @@ Qt::KeyboardModifier Spire::to_modifier(Qt::KeyboardModifiers modifiers) {
     return Qt::AltModifier;
   }
   return Qt::NoModifier;
+}
+
+Qt::KeyboardModifier Spire::to_modifier(int index) {
+  if(index == 0) {
+    return Qt::NoModifier;
+  } else if(index == 1) {
+    return Qt::ShiftModifier;
+  } else if(index == 2) {
+    return Qt::ControlModifier;
+  } else if(index == 3) {
+    return Qt::AltModifier;
+  }
+  throw std::out_of_range("Invalid keyboard modifier.");
+}
+
+int Spire::to_index(Qt::KeyboardModifier modifier) {
+  if(modifier == Qt::NoModifier) {
+    return 0;
+  } else if(modifier == Qt::ShiftModifier) {
+    return 1;
+  } else if(modifier == Qt::ControlModifier) {
+    return 2;
+  } else if(modifier == Qt::AltModifier) {
+    return 3;
+  }
+  throw std::out_of_range("Invalid keyboard modifier.");
 }
 
 Quantity Spire::get_default_order_quantity(

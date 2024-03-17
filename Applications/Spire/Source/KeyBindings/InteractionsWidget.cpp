@@ -10,7 +10,7 @@ using namespace Spire;
 using namespace std;
 
 namespace {
-  Qt::KeyboardModifier to_modifier(int index) {
+  Qt::KeyboardModifier make_modifier(int index) {
     if(index == 0) {
       return Qt::NoModifier;
     } else if(index == 1) {
@@ -147,9 +147,9 @@ void InteractionsWidget::Update() {
     static_cast<int>(interactions->get_default_quantity()->get()));
   m_ui->m_quantityIncrementSpinBox->setValue(
     static_cast<int>(interactions->get_quantity_increment(
-      ::to_modifier(m_quantityModifierIndex))->get()));
+      make_modifier(m_quantityModifierIndex))->get()));
   m_ui->m_priceIncrementSpinBox->SetValue(interactions->get_price_increment(
-    ::to_modifier(m_priceModifierIndex))->get());
+    make_modifier(m_priceModifierIndex))->get());
   m_ui->m_cancelOnFillCheckBox->setChecked(
     interactions->is_cancel_on_fill()->get());
   m_ui->m_activateRegionButton->setEnabled(region.m_region.IsGlobal());
@@ -179,11 +179,11 @@ void InteractionsWidget::Store() {
     m_ui->m_defaultQuantitySpinBox->value());
   if(m_quantityModifierIndex != -1) {
     interactions->get_quantity_increment(
-      ::to_modifier(m_quantityModifierIndex))->set(
+      make_modifier(m_quantityModifierIndex))->set(
         m_ui->m_quantityIncrementSpinBox->value());
   }
   if(m_priceModifierIndex != -1) {
-    interactions->get_price_increment(::to_modifier(m_priceModifierIndex))->set(
+    interactions->get_price_increment(make_modifier(m_priceModifierIndex))->set(
       m_ui->m_priceIncrementSpinBox->GetValue());
   }
   interactions->is_cancel_on_fill()->set(

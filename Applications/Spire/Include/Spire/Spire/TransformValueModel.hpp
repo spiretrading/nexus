@@ -20,6 +20,13 @@ namespace Details {
   template<typename F>
   TransformValueModelCollapser(F&&) ->
     TransformValueModelCollapser<std::remove_reference_t<F>>;
+
+  template<typename T>
+  struct ThrowTransformInverter {
+    T operator ()(const auto&, const auto&) const {
+      throw std::invalid_argument("Setting not supported.");
+    }
+  };
 }
 
   /**
@@ -38,6 +45,17 @@ namespace Details {
       using Source = U;
       using Type = typename ValueModel<T>::Type;
       using UpdateSignal = typename ValueModel<T>::UpdateSignal;
+
+      /**
+       * Constructs a TransformValueModel.
+       * @param source The source model being transformed.
+       * @param f The callable used to perform the transformation.
+       */
+      template<typename FF>
+      TransformValueModel(
+        std::shared_ptr<ValueModel<Source>> source, FF&& f)
+        : TransformValueModel(std::move(source), std::forward<FF>(f),
+            Details::ThrowTransformInverter<Source>()) {}
 
       /**
        * Constructs a TransformValueModel.
@@ -88,6 +106,12 @@ namespace Details {
       void on_update(const Source& value);
   };
 
+  template<typename T, typename F>
+  TransformValueModel(std::shared_ptr<T>, F&&) ->
+    TransformValueModel<std::invoke_result_t<F, typename T::Type>,
+      typename T::Type, std::remove_reference_t<F>,
+      Details::ThrowTransformInverter<typename T::Type>>;
+
   template<typename T, typename F,
     std::invocable<std::invoke_result_t<F, typename T::Type>> G>
   TransformValueModel(std::shared_ptr<T>, F&&, G&&) ->
@@ -100,6 +124,13 @@ namespace Details {
   TransformValueModel(std::shared_ptr<T>, F&&, G&&) ->
     TransformValueModel<std::invoke_result_t<F, typename T::Type>,
       typename T::Type, std::remove_reference_t<F>, std::remove_reference_t<G>>;
+
+  template<typename T, typename F>
+  auto make_transform_value_model(std::shared_ptr<T> source, F&& f) {
+    using Model =
+      decltype(TransformValueModel(std::move(source), std::forward<F>(f)));
+    return std::make_shared<Model>(std::move(source), std::forward<F>(f));
+  }
 
   template<typename T, typename F, typename G>
   auto make_transform_value_model(std::shared_ptr<T> source, F&& f, G&& g) {

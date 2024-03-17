@@ -9,7 +9,8 @@ KeyBindingsModel::KeyBindingsModel(MarketDatabase markets)
         std::make_shared<ArrayListModel<OrderTaskArguments>>()),
       m_cancel_key_bindings(std::make_shared<CancelKeyBindingsModel>()) {
   m_interactions.insert(std::pair(
-    Region::Global(), std::make_shared<InteractionsKeyBindingsModel>()));
+    Region::Global(QObject::tr("Global").toStdString()),
+    std::make_shared<InteractionsKeyBindingsModel>()));
 }
 
 const std::shared_ptr<OrderTaskArgumentsListModel>&

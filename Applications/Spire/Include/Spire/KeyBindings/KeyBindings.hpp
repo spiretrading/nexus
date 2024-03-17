@@ -8,6 +8,7 @@ namespace Spire {
   class HotkeyOverride;
   class InteractionsKeyBindingsForm;
   class InteractionsKeyBindingsModel;
+  class InteractionsPage;
   class KeyBindingsModel;
   class KeyBindingsWindow;
   class OrderFieldInfoTip;

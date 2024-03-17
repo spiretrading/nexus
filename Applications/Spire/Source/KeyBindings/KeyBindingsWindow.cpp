@@ -3,6 +3,7 @@
 #include "Spire/KeyBindings/CancelKeyBindingsModel.hpp"
 #include "Spire/KeyBindings/InteractionsKeyBindingsForm.hpp"
 #include "Spire/KeyBindings/InteractionsKeyBindingsModel.hpp"
+#include "Spire/KeyBindings/InteractionsPage.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
@@ -15,53 +16,31 @@ using namespace Nexus;
 using namespace Spire;
 using namespace Spire::Styles;
 
-namespace {
-  auto make_interactions_page() {
-    auto interactions_form = new InteractionsKeyBindingsForm(Region::Global(),
-      std::make_shared<InteractionsKeyBindingsModel>());
-    interactions_form->setMinimumWidth(scale_width(384));
-    interactions_form->setMaximumWidth(scale_width(480));
-    auto scroll_box_body = new QWidget();
-    scroll_box_body->setSizePolicy(QSizePolicy::Expanding,
-      QSizePolicy::Expanding);
-    auto center_layout = make_vbox_layout();
-    center_layout->addWidget(interactions_form);
-    center_layout->addStretch(1);
-    auto scroll_box_body_layout = make_hbox_layout(scroll_box_body);
-    scroll_box_body_layout->addStretch(0);
-    scroll_box_body_layout->addLayout(center_layout, 1);
-    scroll_box_body_layout->addStretch(0);
-    auto scroll_box = new ScrollBox(scroll_box_body);
-    scroll_box->setFocusPolicy(Qt::NoFocus);
-    scroll_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    update_style(*scroll_box, [] (auto& style) {
-      style.get(Any()).set(BackgroundColor(QColor(0xFFFFFF)));
-    });
-    auto interactions_page = new QWidget();
-    enclose(*interactions_page, *scroll_box);
-    interactions_page->setSizePolicy(QSizePolicy::Expanding,
-      QSizePolicy::Expanding);
-    return interactions_page;
-  }
-}
-
-KeyBindingsWindow::KeyBindingsWindow(QWidget* parent)
-    : Window(parent) {
+KeyBindingsWindow::KeyBindingsWindow(
+    std::shared_ptr<KeyBindingsModel> key_bindings,
+    const CountryDatabase& countries, const MarketDatabase& markets,
+    QWidget* parent)
+    : Window(parent),
+      m_key_bindings(std::move(key_bindings)) {
   setWindowTitle(tr("Key Bindings"));
   set_svg_icon(":/Icons/key-bindings.svg");
   setWindowIcon(QIcon(":/Icons/taskbar_icons/key-bindings.png"));
   auto navigation_view = new NavigationView();
-  navigation_view->setSizePolicy(QSizePolicy::Expanding,
-    QSizePolicy::Expanding);
+  navigation_view->setSizePolicy(
+    QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto task_keys_page = new QWidget();
   task_keys_page->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   navigation_view->add_tab(*task_keys_page, tr("Task Keys"));
   auto cancel_keys_page =
-    new CancelKeyBindingsForm(std::make_shared<CancelKeyBindingsModel>());
-  cancel_keys_page->setSizePolicy(QSizePolicy::Expanding,
-    QSizePolicy::Expanding);
+    new CancelKeyBindingsForm(m_key_bindings->get_cancel_key_bindings());
+  cancel_keys_page->setSizePolicy(
+    QSizePolicy::Expanding, QSizePolicy::Expanding);
   navigation_view->add_tab(*cancel_keys_page, tr("Cancel Keys"));
-  navigation_view->add_tab(*make_interactions_page(), tr("Interactions"));
+  auto interactions_page =
+    new InteractionsPage(m_key_bindings, countries, markets);
+  interactions_page->setSizePolicy(
+    QSizePolicy::Expanding, QSizePolicy::Expanding);
+  navigation_view->add_tab(*interactions_page, tr("Interactions"));
   auto buttons_body = new QWidget();
   auto buttons_body_layout = make_hbox_layout(buttons_body);
   buttons_body_layout->setSpacing(scale_width(8));

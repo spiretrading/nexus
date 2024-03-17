@@ -330,6 +330,26 @@ QString Spire::to_text(const Security& security, const QLocale& locale) {
     security, GetDefaultMarketDatabase(), GetDefaultCountryDatabase()));
 }
 
+const QString& Spire::to_text(
+    Qt::KeyboardModifier modifier, const QLocale& locale) {
+  if(modifier == Qt::NoModifier) {
+    static const auto value = QObject::tr("Default");
+    return value;
+  } else if(modifier == Qt::ShiftModifier) {
+    static const auto value = QObject::tr("Shift");
+    return value;
+  } else if(modifier == Qt::ControlModifier) {
+    static const auto value = QObject::tr("Ctrl");
+    return value;
+  } else if(modifier == Qt::AltModifier) {
+    static const auto value = QObject::tr("Alt");
+    return value;
+  } else {
+    static const auto value = QObject::tr("None");
+    return value;
+  }
+}
+
 QString Spire::to_text(const QKeySequence& value, const QLocale& locale) {
   return value.toString();
 }
@@ -458,37 +478,37 @@ bool Spire::is_equal(const std::any& left, const std::any& right) {
 }
 
 template<>
-optional<int> Spire::from_string(const QString& string) {
+optional<int> Spire::from_text(const QString& string) {
   return from_string_lexical_cast<int>(string);
 }
 
 template<>
-optional<double> Spire::from_string(const QString& string) {
+optional<double> Spire::from_text(const QString& string) {
   return from_string_lexical_cast<double>(string);
 }
 
 template<>
-optional<gregorian::date> Spire::from_string(const QString& string) {
+optional<gregorian::date> Spire::from_text(const QString& string) {
   return from_string_lexical_cast<gregorian::date>(string);
 }
 
 template<>
-optional<ptime> Spire::from_string(const QString& string) {
+optional<ptime> Spire::from_text(const QString& string) {
   return from_string_lexical_cast<ptime>(string);
 }
 
 template<>
-optional<posix_time::time_duration> Spire::from_string(const QString& string) {
+optional<posix_time::time_duration> Spire::from_text(const QString& string) {
   return from_string_lexical_cast<posix_time::time_duration>(string);
 }
 
 template<>
-optional<std::string> Spire::from_string(const QString& string) {
+optional<std::string> Spire::from_text(const QString& string) {
   return string.toStdString();
 }
 
 template<>
-optional<CurrencyId> Spire::from_string(const QString& string) {
+optional<CurrencyId> Spire::from_text(const QString& string) {
   if(auto id = ParseCurrency(string.toStdString());
       id != CurrencyId::NONE) {
     return id;
@@ -497,22 +517,22 @@ optional<CurrencyId> Spire::from_string(const QString& string) {
 }
 
 template<>
-optional<Money> Spire::from_string(const QString& string) {
+optional<Money> Spire::from_text(const QString& string) {
   return Money::FromValue(string.toStdString());
 }
 
 template<>
-optional<Quantity> Spire::from_string(const QString& string) {
+optional<Quantity> Spire::from_text(const QString& string) {
   return Quantity::FromValue(string.toStdString());
 }
 
 template<>
-optional<Region> Spire::from_string(const QString& string) {
+optional<Region> Spire::from_text(const QString& string) {
   return Region(string.toStdString());
 }
 
 template<>
-optional<OrderStatus> Spire::from_string(const QString& string) {
+optional<OrderStatus> Spire::from_text(const QString& string) {
   if(string == QObject::tr("Pending New")) {
     return optional<OrderStatus>(OrderStatus::PENDING_NEW);
   } else if(string == QObject::tr("Rejected")) {
@@ -544,7 +564,7 @@ optional<OrderStatus> Spire::from_string(const QString& string) {
 }
 
 template<>
-optional<OrderType> Spire::from_string(const QString& string) {
+optional<OrderType> Spire::from_text(const QString& string) {
   if(string == QObject::tr("Market")) {
     return optional<OrderType>(OrderType::MARKET);
   } else if(string == QObject::tr("Limit")) {
@@ -560,7 +580,7 @@ optional<OrderType> Spire::from_string(const QString& string) {
 }
 
 template<>
-optional<Security> Spire::from_string(const QString& string) {
+optional<Security> Spire::from_text(const QString& string) {
   if(auto security = ParseSecurity(string.toStdString());
       security != Security()) {
     return security;
@@ -569,7 +589,7 @@ optional<Security> Spire::from_string(const QString& string) {
 }
 
 template<>
-optional<Side> Spire::from_string(const QString& string) {
+optional<Side> Spire::from_text(const QString& string) {
   if(string == QObject::tr("Sell")) {
     return optional<Side>(Side::ASK);
   } else if(string == QObject::tr("Buy")) {
@@ -581,7 +601,7 @@ optional<Side> Spire::from_string(const QString& string) {
 }
 
 template<>
-optional<TimeInForce> Spire::from_string(const QString& string) {
+optional<TimeInForce> Spire::from_text(const QString& string) {
   if(string == QObject::tr("DAY")) {
     return optional<TimeInForce>(TimeInForce::Type::DAY);
   } else if(string == QObject::tr("FOK")) {
@@ -605,7 +625,7 @@ optional<TimeInForce> Spire::from_string(const QString& string) {
 }
 
 template<>
-optional<QColor> Spire::from_string(const QString& string) {
+optional<QColor> Spire::from_text(const QString& string) {
   if(auto color = QColor(string); color.isValid()) {
     return color;
   }
@@ -613,7 +633,7 @@ optional<QColor> Spire::from_string(const QString& string) {
 }
 
 template<>
-optional<QKeySequence> Spire::from_string(const QString& string) {
+optional<QKeySequence> Spire::from_text(const QString& string) {
   if(auto sequence = QKeySequence(string); !sequence.isEmpty()) {
     return sequence;
   }
