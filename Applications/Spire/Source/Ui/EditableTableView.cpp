@@ -25,16 +25,13 @@ using namespace Spire::Styles;
 
 namespace {
   using DeleteButton = StateSelector<void, struct DeleteButtonSeletorTag>;
-
   using HoverRow = StateSelector<void, struct HoverRowSelectorTag>;
-
   using EmptyCell = StateSelector<void, struct EmptyCellSeletorTag>;
-
   using Editing = StateSelector<void, struct EditingSelectorTag>;
-
   using OutOfRangeRow = StateSelector<void, struct OutOfRangeRowSelectorTag>;
 
-  const auto DELETE_TIMEOUT_MS = 200;
+  const auto DELETE_TIMEOUT_MS = 100;
+  const auto UPDATE_CURRENT_TIMEOUT_MS = 100;
 
   auto is_in_layout(QLayout* layout, QWidget* widget) {
     for(auto i = 0; i < layout->count(); ++i) {
@@ -382,6 +379,14 @@ class EditableTableView::EditableTableRow {
       return m_row;
     }
 
+    bool is_ignore_filters() const {
+      return m_is_ignore_filters;
+    }
+
+    void set_ignore_filters(bool is_ignore_filters) {
+      m_is_ignore_filters = is_ignore_filters;
+    }
+
     bool is_out_of_range() const {
       return m_is_out_of_range;
     }
@@ -447,6 +452,7 @@ EditableTableView::EditableTableView(
       std::bind_front(&EditableTableView::view_builder, this, view_builder),
       std::move(comparator), parent),
       m_source_table(std::move(table)),
+      m_previous_row(nullptr),
       m_is_added_row_filtered(false),
       m_has_sent_event(false),
       m_previous_table_row_size(m_source_table->get_row_size()) {
@@ -528,14 +534,14 @@ void EditableTableView::set_filter(const Filter& filter) {
         m_is_added_row_filtered = is_filtered;
         return false;
       }
-      auto& current = get_current()->get();
-      if(current && (is_popped_item(*current) ||
-          find_focus_state(*this) != FocusObserver::State::NONE)) {
-        for(auto i = 0; i < m_rows.get_size() - 1; ++i) {
-          if(current->m_row == i && m_rows.get(i)->get_row_index() == row) {
-            m_rows.get(i)->set_out_of_range(is_filtered);
-            return false;
-          }
+      if(!is_filtered) {
+        return is_filtered;
+      }
+      for(auto i = 0; i < m_rows.get_size(); ++i) {
+        if(m_rows.get(i)->get_row_index() == row &&
+            m_rows.get(i)->is_ignore_filters()) {
+          m_rows.get(i)->set_out_of_range(is_filtered);
+          return false;
         }
       }
       return is_filtered;
@@ -552,6 +558,12 @@ bool EditableTableView::eventFilter(QObject* watched, QEvent* event) {
     if(event->type() == QEvent::KeyPress) {
       auto& key_event = *static_cast<QKeyEvent*>(event);
       switch(key_event.key()) {
+        case Qt::Key_Tab:
+          navigate_next();
+          return true;
+        case Qt::Key_Backtab:
+          navigate_previous();
+          return true;
         case Qt::Key_Home:
         case Qt::Key_End:
         case Qt::Key_Up:
@@ -681,6 +693,25 @@ QWidget* EditableTableView::view_builder(ViewBuilder source_view_builder,
   }
 }
 
+QWidget* EditableTableView::get_row_widget(const optional<Index>& index) const {
+  if(!index) {
+    return nullptr;
+  }
+  return m_table_body->get_item(*index)->parentWidget();
+}
+
+optional<int> EditableTableView::get_row_index(QWidget* row) const {
+  if(!row) {
+    return none;
+  }
+  for(auto i = 0; i < m_rows.get_size(); ++i) {
+    if(m_rows.get(i)->get_row() == row) {
+      return i;
+    }
+  }
+  return none;
+}
+
 bool EditableTableView::is_popped_item(Index index) const {
   auto& item_body = get_table_item_body(*m_table_body->get_item(index));
   if(auto layout = item_body.layout(); layout && layout->count() > 0) {
@@ -730,7 +761,7 @@ void EditableTableView::navigate_previous() {
   }
 }
 
-void EditableTableView::on_current(const boost::optional<Index>& index) {
+void EditableTableView::on_current(const optional<Index>& index) {
   if(index) {
     if(index->m_column == 0) {
       if(m_source_table->get_column_size() > 0) {
@@ -739,16 +770,25 @@ void EditableTableView::on_current(const boost::optional<Index>& index) {
       }
     } else if(index->m_column == get_table()->get_column_size() - 1 &&
         index->m_column - 1 > 0) {
-      auto blocker = shared_connection_block(m_current_connection);
       get_current()->set(TableBody::Index{index->m_row, index->m_column - 1});
-    } else if(index->m_row < m_rows.get_size()) {
-      for(auto row = 0; row < m_rows.get_size() - 1; ++row) {
-        if(row != index->m_row && m_rows.get(row)->is_out_of_range()) {
-          set_filter(m_filter);
-          break;
+    } else {
+      if(m_table_body->layout()->count() < m_rows.get_size()) {
+        return;
+      }
+      auto current_row = get_row_widget(index);
+      if(m_previous_row != current_row) {
+        if(auto previous_row_index = get_row_index(m_previous_row)) {
+          m_rows.get(*previous_row_index)->set_ignore_filters(false);
         }
+        m_rows.get(index->m_row)->set_ignore_filters(true);
+        if(m_filter) {
+          set_filter(m_filter);
+        }
+        m_previous_row = current_row;
       }
     }
+  } else {
+    m_previous_row = nullptr;
   }
 }
 
@@ -757,7 +797,6 @@ void EditableTableView::on_table_operation(
   visit(operation,
     [&] (const TableModel::AddOperation& operation) {
       auto row = m_table_body->layout()->itemAt(operation.m_index)->widget();
-      row->show();
       auto editable_row = std::make_shared<EditableTableRow>(m_source_table,
         m_table_body->get_table()->get<int>(operation.m_index, 0), *row);
       m_rows.insert(editable_row, operation.m_index);
@@ -766,15 +805,22 @@ void EditableTableView::on_table_operation(
           auto index = TableView::Index(operation.m_index, current->m_column);
           auto blocker = shared_connection_block(m_current_connection);
           get_current()->set(index);
+          auto current_row = get_row_widget(index);
+          if(auto previous_row_index = get_row_index(m_previous_row)) {
+            m_rows.get(*previous_row_index)->set_ignore_filters(false);
+          }
+          m_previous_row = current_row;
+          m_rows.get(index.m_row)->set_ignore_filters(true);
         }
         editable_row->set_out_of_range(m_is_added_row_filtered);
         m_is_added_row_filtered = false;
       }
-      m_table_body->adjustSize();
     },
     [&] (const TableModel::RemoveOperation& operation) {
       m_rows.remove(operation.m_index);
-      m_table_body->adjustSize();
+      QTimer::singleShot(UPDATE_CURRENT_TIMEOUT_MS, [=] {
+        get_current()->set(get_current()->get());
+      });
     },
     [&] (const TableModel::MoveOperation& operation) {
       m_rows.move(operation.m_source, operation.m_destination);
@@ -786,9 +832,11 @@ void EditableTableView::on_source_table_operation(
   visit(operation,
     [&] (const TableModel::AddOperation& operation) {
       m_previous_table_row_size = m_source_table->get_row_size();
+      m_table_body->adjustSize();
     },
     [&] (const TableModel::RemoveOperation& operation) {
       m_previous_table_row_size = m_source_table->get_row_size();
+      m_table_body->adjustSize();
     });
 }
 
@@ -805,7 +853,10 @@ void EditableTableView::on_focus_changed(QWidget* old, QWidget* now) {
           return;
         }
         if(m_filter) {
-          set_filter(m_filter);
+          if(m_rows.get(current->m_row)->is_out_of_range()) {
+            m_rows.get(current->m_row)->set_ignore_filters(false);
+            set_filter(m_filter);
+          }
         }
       }
     }

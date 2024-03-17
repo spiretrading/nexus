@@ -90,6 +90,7 @@ namespace Spire {
       TableBody* m_table_body;
       ArrayListModel<std::shared_ptr<EditableTableRow>> m_rows;
       Filter m_filter;
+      QWidget* m_previous_row;
       bool m_is_added_row_filtered;
       bool m_has_sent_event;
       int m_previous_table_row_size;
@@ -100,6 +101,8 @@ namespace Spire {
 
       QWidget* view_builder(ViewBuilder source_view_builder,
         const std::shared_ptr<TableModel>& table, int row, int column);
+      QWidget* get_row_widget(const boost::optional<Index>& index) const;
+      boost::optional<int> get_row_index(QWidget* row) const;
       bool is_popped_item(Index index) const;
       void navigate_next();
       void navigate_previous();
