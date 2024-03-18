@@ -87,6 +87,20 @@ TransparentMouseEventPopupBox::TransparentMouseEventPopupBox(QWidget& body,
   m_tip_window = find_tip_window(body);
 }
 
+bool TransparentMouseEventPopupBox::eventFilter(QObject* watched, QEvent* event) {
+  if(event->type() == QEvent::KeyPress) {
+    auto& key_event = *static_cast<QKeyEvent*>(event);
+    if(key_event.key() == Qt::Key_Tab) {
+      focusNextChild();
+      return true;
+    } else if(key_event.key() == Qt::Key_Backtab) {
+      focusPreviousChild();
+      return true;
+    }
+  }
+  return QWidget::eventFilter(watched, event);
+}
+
 bool TransparentMouseEventPopupBox::event(QEvent* event) {
   switch(event->type()) {
     case QEvent::MouseButtonPress:
@@ -103,6 +117,11 @@ bool TransparentMouseEventPopupBox::event(QEvent* event) {
       break;
   }
   return QWidget::event(event);
+}
+
+void TransparentMouseEventPopupBox::showEvent(QShowEvent* event) {
+  auto focus_proxy = find_focus_proxy(*m_popup_box);
+  focus_proxy->installEventFilter(this);
 }
 
 void TransparentMouseEventPopupBox::keyPressEvent(QKeyEvent* event) {
