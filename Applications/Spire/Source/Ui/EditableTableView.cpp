@@ -534,9 +534,6 @@ void EditableTableView::set_filter(const Filter& filter) {
         m_is_added_row_filtered = is_filtered;
         return false;
       }
-      if(!is_filtered) {
-        return is_filtered;
-      }
       for(auto i = 0; i < m_rows.get_size(); ++i) {
         if(m_rows.get(i)->get_row_index() == row &&
             m_rows.get(i)->is_ignore_filters()) {
