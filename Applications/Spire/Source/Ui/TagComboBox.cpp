@@ -280,8 +280,14 @@ void TagComboBox::on_combo_box_submit(const std::any& submission) {
 
 void TagComboBox::on_focus(FocusObserver::State state) {
   if(state == FocusObserver::State::NONE) {
-    m_tag_box->get_current()->set("");
-    if(m_is_modified && get_current()->get_size() > 0) {
+    if(m_tag_box->get_current()->get().isEmpty()) {
+      if(m_is_modified && get_current()->get_size() > 0) {
+        submit();
+      }
+    } else {
+      get_current()->push(m_combo_box->get_query_model()->parse(
+        m_tag_box->get_current()->get()));
+      m_tag_box->get_current()->set("");
       submit();
     }
   }
