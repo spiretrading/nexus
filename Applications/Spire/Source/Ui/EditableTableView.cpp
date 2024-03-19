@@ -199,14 +199,14 @@ struct RevertTableModel : TableModel {
   }
 };
 
-struct EditableTableView::EditableTableModel : TableModel {
+struct EditableTableModel : TableModel {
   std::shared_ptr<TableModel> m_source;
-  std::shared_ptr<HeaderModel> m_header;
+  std::shared_ptr<EditableTableView::HeaderModel> m_header;
   TableModelTransactionLog m_transaction;
   scoped_connection m_source_connection;
 
   explicit EditableTableModel(std::shared_ptr<TableModel> source,
-    std::shared_ptr<HeaderModel> header)
+    std::shared_ptr<EditableTableView::HeaderModel> header)
     : m_source(std::move(source)),
       m_header(std::move(header)),
       m_source_connection(m_source->connect_operation_signal(
@@ -288,8 +288,7 @@ struct EditableTableView::EditableTableModel : TableModel {
   }
 };
 
-struct EditableTableView::EditableTableHeaderModel :
-    ListModel<TableHeaderItem::Model> {
+struct EditableTableHeaderModel : ListModel<TableHeaderItem::Model> {
   std::shared_ptr<ListModel<TableHeaderItem::Model>> m_source;
   ListModelTransactionLog<TableHeaderItem::Model> m_transaction;
   scoped_connection m_source_connection;
@@ -437,9 +436,7 @@ class EditableTableView::EditableTableRow {
           }
         },
         [&] (const TableModel::RemoveOperation& operation) {
-          if(m_row_index == operation.m_index) {
-            m_row_index = -1;
-          } else if(m_row_index > operation.m_index) {
+          if(m_row_index > operation.m_index) {
             --m_row_index;
           }
         },
@@ -448,11 +445,11 @@ class EditableTableView::EditableTableRow {
             m_row_index = operation.m_destination;
           } else if(operation.m_source < operation.m_destination) {
             if(m_row_index > operation.m_source &&
-              m_row_index <= operation.m_destination) {
+                m_row_index <= operation.m_destination) {
               --m_row_index;
             }
           } else if(m_row_index >= operation.m_destination &&
-            m_row_index < operation.m_source) {
+              m_row_index < operation.m_source) {
             ++m_row_index;
           }
         });
@@ -562,6 +559,9 @@ void EditableTableView::set_filter(const Filter& filter) {
       }
       return is_filtered;
     });
+  m_table_body->adjustSize();
+  auto blocker = shared_connection_block(m_current_connection);
+  get_current()->set(get_current()->get());
 }
 
 connection EditableTableView::connect_delete_signal(
@@ -667,7 +667,6 @@ QWidget* EditableTableView::view_builder(ViewBuilder source_view_builder,
       });
       button->connect_click_signal([=] {
         QTimer::singleShot(DELETE_TIMEOUT_MS, [=] {
-          m_rows.get(get_current()->get()->m_row)->get_row_index();
           m_delete_signal(m_rows.get(
             get_current()->get()->m_row)->get_row_index());
           m_table_body->setFocus();
@@ -781,8 +780,12 @@ void EditableTableView::on_current(const optional<Index>& index) {
   if(index) {
     if(index->m_column == 0) {
       if(m_source_table->get_column_size() > 0) {
-        auto blocker = shared_connection_block(m_current_connection);
-        get_current()->set(TableBody::Index{index->m_row, 1});
+        if(index->m_row == get_table()->get_row_size() - 1) {
+          get_current()->set(TableBody::Index{index->m_row, 1});
+        } else {
+          auto blocker = shared_connection_block(m_current_connection);
+          get_current()->set(TableBody::Index{index->m_row, 1});
+        }
       }
     } else if(index->m_column == get_table()->get_column_size() - 1 &&
         index->m_column - 1 > 0) {
@@ -796,7 +799,9 @@ void EditableTableView::on_current(const optional<Index>& index) {
         if(auto previous_row_index = get_row_index(m_previous_row)) {
           m_rows.get(*previous_row_index)->set_ignore_filters(false);
         }
-        m_rows.get(index->m_row)->set_ignore_filters(true);
+        if(auto row_index = get_row_index(current_row)) {
+          m_rows.get(*row_index)->set_ignore_filters(true);
+        }
         if(m_filter) {
           set_filter(m_filter);
         }
@@ -815,7 +820,11 @@ void EditableTableView::on_table_operation(
       auto row = m_table_body->layout()->itemAt(operation.m_index)->widget();
       auto editable_row = std::make_shared<EditableTableRow>(m_source_table,
         m_table_body->get_table()->get<int>(operation.m_index, 0), *row);
-      m_rows.insert(editable_row, operation.m_index);
+      if(operation.m_index < m_rows.get_size()) {
+        m_rows.insert(editable_row, operation.m_index);
+      } else {
+        m_rows.push(editable_row);
+      }
       if(m_previous_table_row_size < m_source_table->get_row_size()) {
         if(auto& current = get_current()->get()) {
           auto index = TableView::Index(operation.m_index, current->m_column);
@@ -826,7 +835,7 @@ void EditableTableView::on_table_operation(
             m_rows.get(*previous_row_index)->set_ignore_filters(false);
           }
           m_previous_row = current_row;
-          m_rows.get(index.m_row)->set_ignore_filters(true);
+          editable_row->set_ignore_filters(true);
         }
         editable_row->set_out_of_range(m_is_added_row_filtered);
         m_is_added_row_filtered = false;
@@ -834,9 +843,6 @@ void EditableTableView::on_table_operation(
     },
     [&] (const TableModel::RemoveOperation& operation) {
       m_rows.remove(operation.m_index);
-      QTimer::singleShot(UPDATE_CURRENT_TIMEOUT_MS, [=] {
-        get_current()->set(get_current()->get());
-      });
     },
     [&] (const TableModel::MoveOperation& operation) {
       m_rows.move(operation.m_source, operation.m_destination);
@@ -848,11 +854,19 @@ void EditableTableView::on_source_table_operation(
   visit(operation,
     [&] (const TableModel::AddOperation& operation) {
       m_previous_table_row_size = m_source_table->get_row_size();
+      for(auto i = 0; i < m_rows.get_size(); ++i) {
+        if(m_rows.get(i)->get_row_index() == operation.m_index) {
+          m_rows.get(i)->get_row()->show();
+          break;
+        }
+      }
       m_table_body->adjustSize();
+      get_current()->set(get_current()->get());
     },
     [&] (const TableModel::RemoveOperation& operation) {
       m_previous_table_row_size = m_source_table->get_row_size();
       m_table_body->adjustSize();
+      get_current()->set(get_current()->get());
     });
 }
 

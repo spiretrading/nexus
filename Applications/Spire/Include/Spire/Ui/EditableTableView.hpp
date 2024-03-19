@@ -83,8 +83,6 @@ namespace Spire {
       bool focusNextPrevChild(bool next) override;
 
     private:
-      struct EditableTableModel;
-      struct EditableTableHeaderModel;
       class EditableTableRow;
       mutable DeleteSignal m_delete_signal;
       std::shared_ptr<TableModel> m_source_table;
