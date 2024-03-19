@@ -91,4 +91,38 @@ TEST_SUITE("TopSelector") {
       require_addition(updates, *child1);
     });
   }
+
+  TEST_CASE("flip") {
+    run_test([] {
+      auto root = new QWidget();
+      root->setObjectName("Root");
+      auto child1 = new QWidget(root);
+      child1->setObjectName("Child1");
+      auto child2 = new QWidget(root);
+      child2->setObjectName("Child2");
+      auto updates = std::deque<SelectionUpdate>();
+      auto connection = select(TopSelector(+Foo(), Bar()),
+        find_stylist(*root), [&] (auto&& additions, auto&& removals) {
+          updates.push_back({std::move(additions), std::move(removals)});
+        });
+      match(*child1, Bar());
+      REQUIRE(updates.empty());
+      match(*root, Foo());
+      require_addition(updates, *root);
+      unmatch(*child1, Bar());
+      require_removal(updates, *root);
+      match(*child2, Bar());
+      require_addition(updates, *root);
+      unmatch(*root, Foo());
+      require_removal(updates, *root);
+      match(*root, Foo());
+      require_addition(updates, *root);
+      match(*child1, Bar());
+      REQUIRE(updates.empty());
+      unmatch(*child2, Bar());
+      REQUIRE(updates.empty());
+      unmatch(*child1, Bar());
+      require_removal(updates, *root);
+    });
+  }
 }

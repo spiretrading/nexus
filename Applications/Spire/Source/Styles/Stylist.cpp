@@ -139,13 +139,16 @@ const StyleSheet& Stylist::get_style() const {
 }
 
 void Stylist::set_style(StyleSheet style) {
+  auto initial_rule_size = m_rules.size();
   for(auto& rule : m_rules) {
     auto selection = std::move(rule->m_selection);
     if(!selection.empty()) {
       on_selection_update(*rule, {}, std::move(selection));
     }
   }
-  m_rules.clear();
+  if(m_rules.size() != initial_rule_size) {
+    m_rules.erase(m_rules.begin(), m_rules.begin() + initial_rule_size);
+  }
   m_style = load_styles(std::move(style));
   apply(*m_style);
 }
@@ -317,11 +320,9 @@ void Stylist::apply(Stylist& source, const RuleEntry& rule) {
 }
 
 void Stylist::unapply(Stylist& source, const RuleEntry& rule) {
-  auto i = std::find_if(m_sources.begin(), m_sources.end(),
-    [&] (const auto& entry) { return entry.m_rule == &rule; });
-  if(i != m_sources.end()) {
-    m_sources.erase(i);
-  }
+  std::erase_if(m_sources, [&] (const auto& entry) {
+    return entry.m_rule == &rule;
+  });
   apply_proxies();
 }
 
