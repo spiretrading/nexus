@@ -14,6 +14,7 @@
 #include "Spire/LegacyUI/LinkSecurityContextAction.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/LegacyUI/ValueLabel.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesModel.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesPropertiesDialog.hpp"
@@ -42,6 +43,7 @@ TimeAndSalesWindow::TimeAndSalesWindow(Ref<UserProfile> userProfile,
       m_ui(std::make_unique<Ui_TimeAndSalesWindow>()),
       m_userProfile(userProfile.Get()) {
   m_ui->setupUi(this);
+  resize(scale(size()));
   m_ui->m_timeAndSalesView->setItemDelegate(
     new CustomVariantItemDelegate(Ref(*m_userProfile)));
   m_ui->m_snapshotView->setItemDelegate(
