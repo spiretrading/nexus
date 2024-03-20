@@ -442,6 +442,8 @@ void ComboBox::on_drop_down_submit(const std::any& submission) {
 void ComboBox::on_focus(FocusObserver::State state) {
   if(state == FocusObserver::State::NONE) {
     m_data->m_drop_down_list->hide();
+    auto focus_out_event = QFocusEvent(QEvent::FocusOut);
+    QCoreApplication::sendEvent(m_data->m_input_focus_proxy, &focus_out_event);
     submit(any_cast<QString>(m_input_box->get_current()->get()), true);
   }
 }
