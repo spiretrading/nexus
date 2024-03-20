@@ -191,6 +191,14 @@ connection TableHeaderItem::connect_filter_signal(
   return m_filter_button->connect_click_signal(slot);
 }
 
+QSize TableHeaderItem::minimumSizeHint() const {
+  auto size_hint = QWidget::minimumSizeHint();
+  if(!m_is_resizeable) {
+    return {0, size_hint.height()};
+  }
+  return size_hint;
+}
+
 bool TableHeaderItem::eventFilter(QObject* watched, QEvent* event) {
   if(watched == m_sash) {
     if(event->type() == QEvent::MouseButtonPress) {
