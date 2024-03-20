@@ -17,6 +17,7 @@ using namespace Spire::Styles;
 
 namespace {
   using Sortable = StateSelector<void, struct SortableTag>;
+  const auto HEADER_NAME_COUNT = 2;
 
   struct SortIndicator : QWidget {
     static const QImage& ASCENDING_IMAGE() {
@@ -98,20 +99,17 @@ namespace {
     public:
       explicit HeaderNameListModel(
         std::shared_ptr<ValueModel<TableHeaderItem::Model>> source)
-        : m_source(std::move(source)) {}
+        : m_source(std::move(source)),
+          m_names{m_source->get().m_name, m_source->get().m_short_name},
+          m_connection(m_source->connect_update_signal(
+            std::bind_front(&HeaderNameListModel::on_current, this))) {}
 
       int get_size() const override {
-        return 2;
+        return HEADER_NAME_COUNT;
       }
 
       const QString& get(int index) const override {
-        if(index < 0 || index >= get_size()) {
-          throw std::out_of_range("The index is out of range.");
-        }
-        if(index == 0) {
-          return m_source->get().m_name;
-        }
-        return m_source->get().m_short_name;
+        return m_names[index];
       }
 
       connection connect_operation_signal(
@@ -126,7 +124,23 @@ namespace {
 
     private:
       std::shared_ptr<ValueModel<TableHeaderItem::Model>> m_source;
+      std::array<QString, HEADER_NAME_COUNT> m_names;
+      scoped_connection m_connection;
       ListModelTransactionLog<QString> m_transaction;
+
+      void on_current(const TableHeaderItem::Model& current) {
+        auto current_names = std::array<QString, HEADER_NAME_COUNT>{
+          current.m_name, current.m_short_name};
+        m_transaction.transact([&] {
+          for(auto i = 0; i < HEADER_NAME_COUNT; ++i) {
+            if(current_names[i] != m_names[i]) {
+              auto previous = m_names[i];
+              m_names[i] = current_names[i];
+              m_transaction.push(UpdateOperation(i, previous, m_names[i]));
+            }
+          }
+        });
+      }
   };
 }
 
