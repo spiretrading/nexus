@@ -1,11 +1,13 @@
 #include "Spire/Ui/TableHeaderItem.hpp"
 #include <QMouseEvent>
+#include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/FieldValueModel.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/Layouts.hpp"
+#include "Spire/Ui/ResponsiveLabel.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace boost;
@@ -98,7 +100,10 @@ TableHeaderItem::TableHeaderItem(
     : QWidget(parent),
       m_model(std::move(model)),
       m_is_resizeable(true) {
-  auto name_label = make_label(make_field_value_model(m_model, &Model::m_name));
+  auto labels = std::make_shared<ArrayListModel<QString>>();
+  labels->push(m_model->get().m_name);
+  labels->push(m_model->get().m_short_name);
+  auto name_label = new ResponsiveLabel(labels);
   match(*name_label, Label());
   auto sort_indicator =
     new SortIndicator(make_field_value_model(m_model, &Model::m_order));
