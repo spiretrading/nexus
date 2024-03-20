@@ -93,6 +93,41 @@ namespace {
     enclose(*sash, *resize_handle, Qt::AlignRight);
     return sash;
   }
+
+  class HeaderNameListModel : public ListModel<QString> {
+    public:
+      explicit HeaderNameListModel(
+        std::shared_ptr<ValueModel<TableHeaderItem::Model>> source)
+        : m_source(std::move(source)) {}
+
+      int get_size() const override {
+        return 2;
+      }
+
+      const QString& get(int index) const override {
+        if(index < 0 || index >= get_size()) {
+          throw std::out_of_range("The index is out of range.");
+        }
+        if(index == 0) {
+          return m_source->get().m_name;
+        }
+        return m_source->get().m_short_name;
+      }
+
+      connection connect_operation_signal(
+          const OperationSignal::slot_type& slot) const override {
+        return m_transaction.connect_operation_signal(slot);
+      }
+
+    protected:
+      void transact(const std::function<void()>& transaction) override {
+        m_transaction.transact(transaction);
+      }
+
+    private:
+      std::shared_ptr<ValueModel<TableHeaderItem::Model>> m_source;
+      ListModelTransactionLog<QString> m_transaction;
+  };
 }
 
 TableHeaderItem::TableHeaderItem(
@@ -100,10 +135,8 @@ TableHeaderItem::TableHeaderItem(
     : QWidget(parent),
       m_model(std::move(model)),
       m_is_resizeable(true) {
-  auto labels = std::make_shared<ArrayListModel<QString>>();
-  labels->push(m_model->get().m_name);
-  labels->push(m_model->get().m_short_name);
-  auto name_label = new ResponsiveLabel(labels);
+  auto name_label = new ResponsiveLabel(
+    std::make_shared<HeaderNameListModel>(m_model));
   match(*name_label, Label());
   auto sort_indicator =
     new SortIndicator(make_field_value_model(m_model, &Model::m_order));
