@@ -32,6 +32,7 @@
 #include "Spire/LegacyUI/LinkSecurityContextAction.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/LegacyUI/ValueLabel.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Utilities/SecurityTechnicalsModel.hpp"
 #include "ui_BookViewWindow.h"
@@ -116,6 +117,7 @@ BookViewWindow::BookViewWindow(Ref<UserProfile> userProfile,
       m_bidPanelGuard(false),
       m_askPanelGuard(false) {
   m_ui->setupUi(this);
+  resize(scale(size()));
   m_ui->m_highValue->Initialize("", Ref(*m_userProfile));
   m_ui->m_lowValue->Initialize("", Ref(*m_userProfile));
   m_ui->m_defaultQuantityValue->Initialize("", Ref(*m_userProfile));
