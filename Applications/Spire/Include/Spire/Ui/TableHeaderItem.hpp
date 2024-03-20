@@ -112,6 +112,8 @@ namespace Spire {
       boost::signals2::connection connect_filter_signal(
         const FilterSignal::slot_type& slot) const;
 
+      QSize minimumSizeHint() const override;
+
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
       void mouseReleaseEvent(QMouseEvent* event) override;
