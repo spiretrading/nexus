@@ -2,7 +2,6 @@
 #define SPIRE_EXTENSION_CACHE_HPP
 #include <memory>
 #include <unordered_map>
-#include <QMetaObject>
 #include <QObject>
 #include "Spire/Spire/Spire.hpp"
 
@@ -17,16 +16,13 @@ namespace Spire {
    */
   template<typename E, typename T>
   std::shared_ptr<E> find_extension(T& object) {
-    struct Entry {
-      QMetaObject::Connection m_connection;
-      std::weak_ptr<E> m_object;
-    };
-    static auto extensions = std::unordered_map<const T*, Entry>();
+    static auto extensions = std::unordered_map<const T*, std::weak_ptr<E>>();
     auto i = extensions.find(&object);
     if(i != extensions.end()) {
-      if(auto extension = i->second.m_object.lock()) {
+      if(auto extension = i->second.lock()) {
         return extension;
       }
+      extensions.erase(i);
     }
     auto extension = std::shared_ptr<E>(new E(object), [&object] (auto* p) {
       if(!p) {
@@ -34,7 +30,6 @@ namespace Spire {
       } else {
         auto i = extensions.find(&object);
         if(i != extensions.end()) {
-          QObject::disconnect(i->second.m_connection);
           extensions.erase(i);
         }
       }
@@ -44,11 +39,7 @@ namespace Spire {
         delete p;
       }
     });
-    auto connection = QObject::connect(&object, &QObject::destroyed,
-      [] (auto object) {
-        extensions.erase(static_cast<const T*>(object));
-      });
-    extensions.emplace(&object, Entry(connection, extension));
+    extensions.emplace(&object, extension);
     return extension;
   }
 }
