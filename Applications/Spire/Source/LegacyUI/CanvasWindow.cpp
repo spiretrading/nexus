@@ -33,6 +33,7 @@
 #include "Spire/LegacyUI/IgnoreCommandException.hpp"
 #include "Spire/LegacyUI/MacroUndoCommand.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ListModel.hpp"
 #include "ui_CanvasWindow.h"
 
@@ -138,6 +139,7 @@ CanvasWindow::CanvasWindow(Ref<UserProfile> userProfile, QWidget* parent,
       m_userProfile(userProfile.Get()) {
   m_state = READY;
   m_ui->setupUi(this);
+  resize(scale(size()));
   m_ui->m_canvasTable->SetUserProfile(Ref(*m_userProfile));
   m_ui->m_canvasTable->installEventFilter(this);
   m_ui->m_canvasTable->ConnectBeginEditSignal(
@@ -146,7 +148,7 @@ CanvasWindow::CanvasWindow(Ref<UserProfile> userProfile, QWidget* parent,
     std::bind(&CanvasWindow::OnCanvasTableCommand, this,
     std::placeholders::_1));
   m_statusBar = new QStatusBar(this);
-  QSizePolicy sizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+  QSizePolicy sizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
   sizePolicy.setHorizontalStretch(0);
   sizePolicy.setVerticalStretch(0);
   sizePolicy.setHeightForWidth(m_statusBar->sizePolicy().hasHeightForWidth());
@@ -166,7 +168,7 @@ CanvasWindow::CanvasWindow(Ref<UserProfile> userProfile, QWidget* parent,
   m_newCustomNodeAction = new QAction(this);
   m_newCustomNodeAction->setText(tr("New Custom Node"));
   m_newCustomNodeAction->setToolTip(tr("New Custom Node"));
-  m_newCustomNodeAction->setIcon(QIcon(":/icons/branch_element_new.png"));
+  m_newCustomNodeAction->setIcon(QIcon(":/icons/branch_element_new.png"));  
   m_newCustomNodeAction->setShortcut(QKeySequence::New);
   addAction(m_newCustomNodeAction);
   m_toolbar->addAction(m_newCustomNodeAction);

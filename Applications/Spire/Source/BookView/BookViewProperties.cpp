@@ -30,7 +30,7 @@ BookViewProperties BookViewProperties::GetDefault() {
   properties.SetBookQuoteForegroundColor(QColor(0, 0, 0));
   properties.SetOrderHighlightColor(QColor(0, 255, 0));
   properties.SetShowGrid(false);
-  properties.SetShowBbo(false);
+  properties.SetShowBbo(true);
   return properties;
 }
 
