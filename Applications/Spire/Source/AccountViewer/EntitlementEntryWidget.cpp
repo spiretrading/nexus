@@ -3,6 +3,7 @@
 #include "Spire/AccountViewer/AccountEntitlementModel.hpp"
 #include "Spire/LegacyUI/ReadOnlyCheckBox.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 #include "ui_EntitlementEntryWidget.h"
 
 using namespace Beam;
@@ -56,6 +57,13 @@ EntitlementEntryWidget::EntitlementEntryWidget(Ref<UserProfile> userProfile,
       m_entitlement(entitlement),
       m_model(model) {
   m_ui->setupUi(this);
+  m_ui->m_expandButton->setFixedSize(scale(m_ui->m_expandButton->size()));
+  m_ui->m_expandToGrantSpacer->changeSize(
+    scale_width(m_ui->m_expandToGrantSpacer->sizeHint().width()),
+    scale_height(m_ui->m_expandToGrantSpacer->sizeHint().height()),
+    m_ui->m_expandToGrantSpacer->sizePolicy().horizontalPolicy(),
+    m_ui->m_expandToGrantSpacer->sizePolicy().verticalPolicy());
+  m_ui->m_priceLabel->setFixedWidth(scale_width(m_ui->m_priceLabel->width()));
   m_ui->m_entitlementLabel->setText(
     QString::fromStdString(m_entitlement.m_name));
   if(m_entitlement.m_price == Money::ZERO) {

@@ -4,6 +4,7 @@
 #include "Spire/AccountViewer/ComplianceValueWidget.hpp"
 #include "Spire/LegacyUI/ReadOnlyCheckBox.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 #include "ui_ComplianceRuleEntryWidget.h"
 
 using namespace Beam;
@@ -27,6 +28,12 @@ ComplianceRuleEntryWidget::ComplianceRuleEntryWidget(
       m_entry{entry},
       m_model{std::move(model)} {
   m_ui->setupUi(this);
+  m_ui->m_expandButton->setFixedSize(scale(m_ui->m_expandButton->size()));
+  m_ui->m_expandToDeleteSpacer->changeSize(
+    scale_width(m_ui->m_expandToDeleteSpacer->sizeHint().width()),
+    scale_height(m_ui->m_expandToDeleteSpacer->sizeHint().height()),
+    m_ui->m_expandToDeleteSpacer->sizePolicy().horizontalPolicy(),
+    m_ui->m_expandToDeleteSpacer->sizePolicy().verticalPolicy());
   m_ui->m_parametersWidget->hide();
   if(m_entry.GetSchema().GetName() == PerAccountComplianceRule::GetName()) {
     for(auto& parameter : m_entry.GetSchema().GetParameters()) {
