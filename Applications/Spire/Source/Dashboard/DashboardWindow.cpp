@@ -17,6 +17,7 @@
 #include "Spire/Dashboard/ValueDashboardCell.hpp"
 #include "Spire/LegacyUI/LineInputDialog.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ListModel.hpp"
 #include "ui_DashboardWindow.h"
 
@@ -40,6 +41,17 @@ DashboardWindow::DashboardWindow(const string& name,
       m_ui{std::make_unique<Ui_DashboardWindow>()},
       m_userProfile{userProfile.Get()} {
   m_ui->setupUi(this);
+  resize(scale(size()));
+  m_ui->m_deleteButton->setMinimumSize(
+    scale(m_ui->m_deleteButton->minimumSize()));
+  m_ui->m_saveButton->setMinimumSize(scale(m_ui->m_saveButton->minimumSize()));
+  m_ui->m_saveToButtonSpacer->changeSize(
+    scale_width(m_ui->m_saveToButtonSpacer->sizeHint().width()),
+    scale_height(m_ui->m_saveToButtonSpacer->sizeHint().height()),
+    m_ui->m_saveToButtonSpacer->sizePolicy().horizontalPolicy(),
+    m_ui->m_saveToButtonSpacer->sizePolicy().verticalPolicy());
+  m_ui->m_savesComboBox->setMinimumWidth(
+    scale_width(m_ui->m_savesComboBox->minimumWidth()));
   auto displayTaskSlot = [=] (CondensedCanvasWidget& widget) {
     m_ui->verticalLayout->insertWidget(2, &widget);
     widget.Focus();

@@ -15,6 +15,7 @@
 #include "Spire/Dashboard/ValueDashboardCell.hpp"
 #include "Spire/InputWidgets/SecurityInputDialog.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 
 using namespace Beam;
 using namespace boost;
@@ -255,8 +256,10 @@ void DashboardWidget::mouseReleaseEvent(QMouseEvent* event) {
     setCursor(Qt::ArrowCursor);
     TestHoveringColumnExpansion(*event);
     auto position = event->pos();
-    if(std::abs(position.x() - m_lastMousePressPosition.x()) <= 5 &&
-        std::abs(position.y() - m_lastMousePressPosition.y()) <= 5) {
+    if(std::abs(position.x() - m_lastMousePressPosition.x()) <=
+        scale_width(5) &&
+        std::abs(position.y() - m_lastMousePressPosition.y()) <=
+        scale_height(5)) {
       auto column = GetColumnAt(position);
       ModifyColumnSortOrder(column);
     }
@@ -377,7 +380,7 @@ void DashboardWidget::DeleteSelectedRows() {
 }
 
 void DashboardWidget::TestHoveringColumnExpansion(const QMouseEvent& event) {
-  const auto WIDTH_ADJUSTMENT_THRESHOLD = 3;
+  const auto WIDTH_ADJUSTMENT_THRESHOLD = scale_width(3);
   auto position = event.pos();
   if(position.y() > m_renderer->GetMaxRowHeight()) {
     if(m_isHoveringOverColumnResize) {
