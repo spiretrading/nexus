@@ -9,6 +9,7 @@
 #include "Spire/Charting/ChartPlotViewWindowSettings.hpp"
 #include "Spire/LegacyUI/CustomQtVariants.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 
 using namespace Beam;
 using namespace Beam::TimeService;
@@ -211,7 +212,7 @@ void ChartPlotView::PaintGrids() {
   auto chartWidth = m_xAxisParameters.m_max - m_xAxisParameters.m_min;
   auto gridPoint = m_xAxisParameters.m_min +
     (xScale - (m_xAxisParameters.m_min % xScale));
-  QRectF previousTextBox(-100, 0, 0, 0);
+  QRectF previousTextBox(scale_width(-100), 0, 0, 0);
   while(true) {
     painter.setPen(gridPen);
     auto topPoint = ComputeScreenPoint(gridPoint, m_yAxisParameters.m_min);
@@ -221,8 +222,9 @@ void ChartPlotView::PaintGrids() {
     }
     auto label = LoadLabel(gridPoint, *GetXAxisParameters().m_type);
     auto boundingBox = painter.fontMetrics().boundingRect(label);
-    QRectF textBox(topPoint.x() - boundingBox.width() / 2, topPoint.y() + 4,
-      boundingBox.width() + 4, boundingBox.height());
+    QRectF textBox(topPoint.x() - boundingBox.width() / 2,
+      topPoint.y() + scale_height(4),
+      boundingBox.width() + scale_width(4), boundingBox.height());
     if(textBox.x() > previousTextBox.x() + previousTextBox.width()) {
       painter.drawLine(topPoint, bottomPoint);
       painter.setPen(labelPen);
@@ -236,7 +238,7 @@ void ChartPlotView::PaintGrids() {
   auto chartHeight = m_yAxisParameters.m_max - m_yAxisParameters.m_min;
   gridPoint = m_yAxisParameters.m_min +
     (yScale - (m_yAxisParameters.m_min % yScale));
-  previousTextBox = QRectF(0, height() + 100, 0, 0);
+  previousTextBox = QRectF(0, height() + scale_height(100), 0, 0);
   while(true) {
     painter.setPen(gridPen);
     auto leftPoint = ComputeScreenPoint(m_xAxisParameters.m_min, gridPoint);
@@ -246,9 +248,9 @@ void ChartPlotView::PaintGrids() {
     }
     auto label = LoadLabel(gridPoint, *GetYAxisParameters().m_type);
     auto boundingBox = painter.fontMetrics().boundingRect(label);
-    QRectF textBox(rightPoint.x() + 4,
-      rightPoint.y() - boundingBox.height() / 2, boundingBox.width() + 4,
-      boundingBox.height());
+    QRectF textBox(rightPoint.x() + scale_width(4),
+      rightPoint.y() - boundingBox.height() / 2,
+      boundingBox.width() + scale_width(4), boundingBox.height());
     if(textBox.y() + textBox.height() < previousTextBox.y()) {
       painter.drawLine(leftPoint, rightPoint);
       painter.setPen(labelPen);
@@ -368,7 +370,7 @@ void ChartPlotView::PaintCandlestickChartPlot(
   auto highShadowBottomRight =
     ComputeScreenPoint(shadowRight, highShadowBottom);
   highShadowBottomRight.ry() -= 1;
-  if(body.width() <= 3) {
+  if(body.width() <= scale_width(3)) {
     highShadowBottomRight.rx() = highShadowTopLeft.x();
   }
   QRect highShadow(highShadowTopLeft, highShadowBottomRight);
@@ -387,7 +389,7 @@ void ChartPlotView::PaintCandlestickChartPlot(
   auto lowShadowTopLeft = ComputeScreenPoint(shadowLeft, lowShadowTop);
   auto lowShadowBottomRight = ComputeScreenPoint(shadowRight, lowShadowBottom);
   lowShadowTopLeft.ry() += 1;
-  if(body.width() <= 3) {
+  if(body.width() <= scale_width(3)) {
     lowShadowBottomRight.rx() = lowShadowTopLeft.x();
   }
   QRect lowShadow(lowShadowTopLeft, lowShadowBottomRight);
@@ -404,7 +406,7 @@ void ChartPlotView::PaintCandlestickChartPlot(
 
 void ChartPlotView::PaintHorizontalCursor(const QPoint& position,
     const ChartValue& value) {
-  const auto WIDTH = 55;
+  const auto WIDTH = scale_width(55);
   const auto HEIGHT = height() - position.y();
   QPainter painter{this};
   QPoint bodyTopLeft{position.x() - WIDTH / 2, position.y()};
@@ -423,7 +425,7 @@ void ChartPlotView::PaintHorizontalCursor(const QPoint& position,
 void ChartPlotView::PaintVerticalCursor(const QPoint& position,
     const ChartValue& value) {
   const auto WIDTH = width() - position.x();
-  const auto HEIGHT = 16;
+  const auto HEIGHT = scale_height(16);
   QPainter painter{this};
   QPoint bodyTopLeft{position.x(), position.y() - HEIGHT / 2};
   QPoint bodyBottomRight{position.x() + WIDTH, position.y() + HEIGHT / 2};
@@ -432,8 +434,9 @@ void ChartPlotView::PaintVerticalCursor(const QPoint& position,
   bodyBrush.setColor(QColor{155, 155, 155});
   painter.setBrush(bodyBrush);
   painter.drawRect(body);
-  QRectF textBox{static_cast<qreal>(body.x() + 4), static_cast<qreal>(body.y()),
-    static_cast<qreal>(body.width()), static_cast<qreal>(body.height())};
+  QRectF textBox{static_cast<qreal>(body.x() + scale_width(4)),
+    static_cast<qreal>(body.y()), static_cast<qreal>(body.width()),
+    static_cast<qreal>(body.height())};
   painter.drawText(textBox, Qt::AlignLeft | Qt::AlignVCenter,
     LoadLabel(value, *GetYAxisParameters().m_type));
 }
@@ -511,12 +514,12 @@ QString ChartPlotView::LoadLabel(ChartValue value,
 }
 
 int ChartPlotView::GetChartWidth() const {
-  static const int LABEL_WIDTH = 40;
+  static const int LABEL_WIDTH = scale_width(40);
   return width() - LABEL_WIDTH;
 }
 
 int ChartPlotView::GetChartHeight() const {
-  static const int LABEL_HEIGHT = 20;
+  static const int LABEL_HEIGHT = scale_height(20);
   return height() - LABEL_HEIGHT;
 }
 
