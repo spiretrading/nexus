@@ -1,8 +1,8 @@
 #include "Spire/Ui/TableHeaderItem.hpp"
 #include <QMouseEvent>
-#include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/FieldValueModel.hpp"
+#include "Spire/Spire/ListModelTransactionLog.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/Icon.hpp"
@@ -16,7 +16,6 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  using Sortable = StateSelector<void, struct SortableTag>;
   const auto HEADER_NAME_COUNT = 2;
 
   struct SortIndicator : QWidget {
