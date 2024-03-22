@@ -42,8 +42,17 @@ namespace{
 }
 
 bool EditableBox::default_edit_trigger(const QKeySequence& key) {
-  auto text = key.toString();
-  return text.size() == 1 && (text[0].isLetterOrNumber() || text[0] == '_');
+  if(key.count() != 1) {
+    return false;
+  }
+  auto combination = key[0];
+  auto modifier = combination & Qt::KeyboardModifierMask;
+  auto key_value = combination - modifier;
+  return (modifier == Qt::NoModifier || modifier == Qt::ShiftModifier ||
+    modifier == Qt::KeypadModifier) &&
+    (key_value >= Qt::Key_A && key_value <= Qt::Key_Z ||
+      key_value >= Qt::Key_0 && key_value <= Qt::Key_9 ||
+      key_value == Qt::Key_Underscore);
 }
 
 EditableBox::EditableBox(AnyInputBox& input_box, QWidget* parent)
