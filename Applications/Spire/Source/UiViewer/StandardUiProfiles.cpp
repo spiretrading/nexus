@@ -4663,16 +4663,20 @@ UiProfile Spire::make_table_view_profile() {
     auto header = std::make_shared<ArrayListModel<TableHeaderItem::Model>>();
     auto item = TableHeaderItem::Model();
     item.m_name = "Security";
+    item.m_short_name = "Sec";
     header->push(item);
     item = TableHeaderItem::Model();
     item.m_name = "Quantity";
+    item.m_short_name = "Qty";
     item.m_order = TableHeaderItem::Order::ASCENDING;
     header->push(item);
     item = TableHeaderItem::Model();
     item.m_name = "Side";
+    item.m_short_name = "Sd";
     header->push(item);
     item = TableHeaderItem::Model();
     item.m_name = "Date";
+    item.m_short_name = "Date";
     header->push(item);
     auto view = TableViewBuilder(model).
       set_header(header).
