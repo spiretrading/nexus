@@ -148,6 +148,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_duration_filter_panel_profile());
   add(make_eye_dropper_profile());
   add(make_editable_box_profile());
+  add(make_editable_table_view_profile());
   add(make_filter_panel_profile());
   add(make_focus_observer_profile());
   add(make_font_box_profile());
