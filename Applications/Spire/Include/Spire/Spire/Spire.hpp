@@ -60,6 +60,7 @@ namespace Spire {
   class Scalar;
   template<typename T> class ScalarValueModel;
   template<typename T> class ScalarValueModelDecorator;
+  class ServiceSecurityQueryModel;
   class SortedTableModel;
   template<typename T> class SpinBoxModel;
   class SpireController;
