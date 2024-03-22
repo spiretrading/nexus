@@ -45,16 +45,16 @@ struct SecurityBox::SecurityQueryModel : ComboBox::QueryModel {
   }
 };
 
-SecurityBox::SecurityBox(std::shared_ptr<ComboBox::QueryModel> query_model,
+SecurityBox::SecurityBox(std::shared_ptr<ComboBox::QueryModel> securities,
   QWidget* parent)
-  : SecurityBox(std::move(query_model),
-      std::make_shared<LocalValueModel<Security>>(), parent) {}
+  : SecurityBox(
+      std::move(securities), std::make_shared<LocalSecurityModel>(), parent) {}
 
-SecurityBox::SecurityBox(std::shared_ptr<ComboBox::QueryModel> query_model,
+SecurityBox::SecurityBox(std::shared_ptr<ComboBox::QueryModel> securities,
     std::shared_ptr<CurrentModel> current, QWidget* parent)
     : QWidget(parent),
-      m_query_model(
-        std::make_shared<SecurityQueryModel>(std::move(query_model))),
+      m_securities(
+        std::make_shared<SecurityQueryModel>(std::move(securities))),
       m_current(std::move(current)) {
   auto combo_box_current = make_transform_value_model(m_current,
     [] (const Security& current) {
@@ -63,10 +63,10 @@ SecurityBox::SecurityBox(std::shared_ptr<ComboBox::QueryModel> query_model,
     [] (const std::any& current) {
       return std::any_cast<Security>(current);
     });
-  m_combo_box = new ComboBox(m_query_model, combo_box_current,
+  m_combo_box = new ComboBox(m_securities, combo_box_current,
     [=] (const auto& list, auto index) {
       return new SecurityListItem(std::any_cast<SecurityInfo&&>(
-        m_query_model->m_source->parse(to_text(list->get(index)))));
+        m_securities->m_source->parse(to_text(list->get(index)))));
     });
   m_combo_box->connect_submit_signal([=] (const auto& submission) {
     m_submit_signal(std::any_cast<const Security&>(submission));
@@ -76,8 +76,8 @@ SecurityBox::SecurityBox(std::shared_ptr<ComboBox::QueryModel> query_model,
 }
 
 const std::shared_ptr<ComboBox::QueryModel>&
-    SecurityBox::get_query_model() const {
-  return m_query_model->m_source;
+    SecurityBox::get_securities() const {
+  return m_securities->m_source;
 }
 
 const std::shared_ptr<SecurityBox::CurrentModel>&

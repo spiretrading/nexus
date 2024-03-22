@@ -83,6 +83,7 @@ namespace Spire {
   class ScrollableListBox;
   class SearchBox;
   class SecurityBox;
+  class SecurityDialog;
   class SecurityListItem;
   class SecurityStack;
   class SecurityView;
