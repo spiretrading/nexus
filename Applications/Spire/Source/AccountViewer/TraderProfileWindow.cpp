@@ -6,6 +6,7 @@
 #include "Spire/AccountViewer/RiskModel.hpp"
 #include "Spire/AccountViewer/TraderProfileViewWidget.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 #include "ui_TraderProfileWindow.h"
 
 using namespace Beam;
@@ -18,6 +19,7 @@ TraderProfileWindow::TraderProfileWindow(Ref<UserProfile> userProfile,
       m_ui{std::make_unique<Ui_TraderProfileWindow>()},
       m_userProfile{userProfile.Get()} {
   m_ui->setupUi(this);
+  resize(scale(size()));
 }
 
 TraderProfileWindow::~TraderProfileWindow() {}

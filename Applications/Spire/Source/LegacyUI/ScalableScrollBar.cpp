@@ -5,6 +5,7 @@
 #include <QMouseEvent>
 #include <QToolButton>
 #include <QVBoxLayout>
+#include "Spire/Spire/Dimensions.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -26,12 +27,12 @@ ScalableScrollBar::ScalableScrollBar(QWidget* parent)
       m_mouseTarget(nullptr),
       m_pageScrollDirection(0) {
   m_decrementButton = new QToolButton(this);
-  m_decrementButton->setMinimumSize(QSize(16, 16));
-  m_decrementButton->setMaximumSize(QSize(16, 16));
+  m_decrementButton->setMinimumSize(scale(16, 16));
+  m_decrementButton->setMaximumSize(scale(16, 16));
   m_decrementButton->setAutoRepeat(true);
   m_incrementButton = new QToolButton(this);
-  m_incrementButton->setMinimumSize(QSize(16, 16));
-  m_incrementButton->setMaximumSize(QSize(16, 16));
+  m_incrementButton->setMinimumSize(scale(16, 16));
+  m_incrementButton->setMaximumSize(scale(16, 16));
   m_incrementButton->setAutoRepeat(true);
   m_scaleBackground = new QWidget(this);
   m_scaleBackground->setAutoFillBackground(true);
@@ -40,8 +41,8 @@ ScalableScrollBar::ScalableScrollBar(QWidget* parent)
   m_topScaleHandle->setMouseTracking(true);
   m_topScaleHandle->setFrameShape(QFrame::WinPanel);
   m_topScaleHandle->setFrameShadow(QFrame::Raised);
-  m_topScaleHandle->setLineWidth(1);
-  m_topScaleHandle->setMidLineWidth(0);
+  m_topScaleHandle->setLineWidth(scale_width(1));
+  m_topScaleHandle->setMidLineWidth(scale_width(0));
   m_scaleBody = new QFrame(m_scaleHandle);
   m_scaleBody->setFrameShape(QFrame::WinPanel);
   m_scaleBody->setFrameShadow(QFrame::Raised);
@@ -50,8 +51,8 @@ ScalableScrollBar::ScalableScrollBar(QWidget* parent)
   m_bottomScaleHandle->setMouseTracking(true);
   m_bottomScaleHandle->setFrameShape(QFrame::WinPanel);
   m_bottomScaleHandle->setFrameShadow(QFrame::Raised);
-  m_bottomScaleHandle->setLineWidth(1);
-  m_bottomScaleHandle->setMidLineWidth(0);
+  m_bottomScaleHandle->setLineWidth(scale_width(1));
+  m_bottomScaleHandle->setMidLineWidth(scale_width(0));
   m_scaleHandle->installEventFilter(this);
   m_topScaleHandle->installEventFilter(this);
   m_bottomScaleHandle->installEventFilter(this);
@@ -196,8 +197,8 @@ void ScalableScrollBar::SetOrientation(Qt::Orientation orientation) {
     sizePolicy.setHeightForWidth(
       m_scaleBackground->sizePolicy().hasHeightForWidth());
     m_scaleBackground->setSizePolicy(sizePolicy);
-    m_scaleBackground->setMinimumSize(QSize(16, 0));
-    m_scaleBackground->setMaximumSize(QSize(16, 16777215));
+    m_scaleBackground->setMinimumSize(QSize(scale_width(16), 0));
+    m_scaleBackground->setMaximumSize(QSize(scale_width(16), 16777215));
     m_scaleLayout = new QVBoxLayout(m_scaleHandle);
     m_scaleLayout->setSpacing(0);
     m_scaleLayout->setContentsMargins(0, 0, 0, 0);
@@ -207,20 +208,20 @@ void ScalableScrollBar::SetOrientation(Qt::Orientation orientation) {
     scaleSizePolicy.setHeightForWidth(
       m_topScaleHandle->sizePolicy().hasHeightForWidth());
     m_topScaleHandle->setSizePolicy(scaleSizePolicy);
-    m_topScaleHandle->setMinimumSize(QSize(16, 6));
-    m_topScaleHandle->setMaximumSize(QSize(16, 6));
+    m_topScaleHandle->setMinimumSize(scale(16, 6));
+    m_topScaleHandle->setMaximumSize(scale(16, 6));
     m_bottomScaleHandle->setSizePolicy(scaleSizePolicy);
-    m_bottomScaleHandle->setMinimumSize(QSize(16, 6));
-    m_bottomScaleHandle->setMaximumSize(QSize(16, 6));
+    m_bottomScaleHandle->setMinimumSize(scale(16, 6));
+    m_bottomScaleHandle->setMaximumSize(scale(16, 6));
     sizePolicy.setHeightForWidth(m_scaleBody->sizePolicy().hasHeightForWidth());
     m_scaleBody->setSizePolicy(sizePolicy);
-    m_scaleBody->setMinimumSize(QSize(16, 0));
-    m_scaleBody->setMaximumSize(QSize(16, 16777215));
+    m_scaleBody->setMinimumSize(QSize(scale_width(16), 0));
+    m_scaleBody->setMaximumSize(QSize(scale_width(16), 16777215));
     m_decrementButton->setArrowType(Qt::UpArrow);
     m_incrementButton->setArrowType(Qt::DownArrow);
-    m_scaleBackground->setFixedWidth(16);
-    m_scaleHandle->setFixedWidth(16);
-    setFixedWidth(16);
+    m_scaleBackground->setFixedWidth(scale_width(16));
+    m_scaleHandle->setFixedWidth(scale_width(16));
+    setFixedWidth(scale_width(16));
     m_topScaleHandle->setCursor(Qt::SizeVerCursor);
     m_bottomScaleHandle->setCursor(Qt::SizeVerCursor);
     setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Minimum);
@@ -234,8 +235,8 @@ void ScalableScrollBar::SetOrientation(Qt::Orientation orientation) {
     sizePolicy.setWidthForHeight(
       m_scaleBackground->sizePolicy().hasWidthForHeight());
     m_scaleBackground->setSizePolicy(sizePolicy);
-    m_scaleBackground->setMinimumSize(QSize(0, 16));
-    m_scaleBackground->setMaximumSize(QSize(16777215, 16));
+    m_scaleBackground->setMinimumSize(QSize(0, scale_height(16)));
+    m_scaleBackground->setMaximumSize(QSize(16777215, scale_height(16)));
     m_scaleLayout = new QHBoxLayout(m_scaleHandle);
     m_scaleLayout->setSpacing(0);
     m_scaleLayout->setContentsMargins(0, 0, 0, 0);
@@ -245,20 +246,20 @@ void ScalableScrollBar::SetOrientation(Qt::Orientation orientation) {
     scaleSizePolicy.setWidthForHeight(
       m_topScaleHandle->sizePolicy().hasWidthForHeight());
     m_topScaleHandle->setSizePolicy(scaleSizePolicy);
-    m_topScaleHandle->setMinimumSize(QSize(6, 16));
-    m_topScaleHandle->setMaximumSize(QSize(6, 16));
+    m_topScaleHandle->setMinimumSize(scale(6, 16));
+    m_topScaleHandle->setMaximumSize(scale(6, 16));
     m_bottomScaleHandle->setSizePolicy(scaleSizePolicy);
-    m_bottomScaleHandle->setMinimumSize(QSize(6, 16));
-    m_bottomScaleHandle->setMaximumSize(QSize(6, 16));
+    m_bottomScaleHandle->setMinimumSize(scale(6, 16));
+    m_bottomScaleHandle->setMaximumSize(scale(6, 16));
     sizePolicy.setWidthForHeight(m_scaleBody->sizePolicy().hasWidthForHeight());
     m_scaleBody->setSizePolicy(sizePolicy);
-    m_scaleBody->setMinimumSize(QSize(0, 16));
-    m_scaleBody->setMaximumSize(QSize(16777215, 16));
+    m_scaleBody->setMinimumSize(scale(0, 16));
+    m_scaleBody->setMaximumSize(QSize(16777215, scale_height(16)));
     m_decrementButton->setArrowType(Qt::LeftArrow);
     m_incrementButton->setArrowType(Qt::RightArrow);
-    m_scaleBackground->setFixedHeight(16);
-    m_scaleHandle->setFixedHeight(16);
-    setFixedHeight(16);
+    m_scaleBackground->setFixedHeight(scale_height(16));
+    m_scaleHandle->setFixedHeight(scale_height(16));
+    setFixedHeight(scale_height(16));
     m_topScaleHandle->setCursor(Qt::SizeHorCursor);
     m_bottomScaleHandle->setCursor(Qt::SizeHorCursor);
     setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);

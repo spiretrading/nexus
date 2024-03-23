@@ -5,6 +5,7 @@
 #include "Spire/Blotter/OpenPositionsModel.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
+#include "Spire/Spire/ServiceSecurityQueryModel.hpp"
 
 using namespace Beam;
 using namespace boost;
@@ -39,6 +40,8 @@ UserProfile::UserProfile(const std::string& username, bool isAdministrator,
         QStandardPaths::DataLocation).toStdString()) / "Profiles" / m_username),
       m_recentlyClosedWindows(
         std::make_shared<ArrayListModel<std::shared_ptr<WindowSettings>>>()),
+      m_security_query_model(std::make_shared<ServiceSecurityQueryModel>(
+        m_marketDatabase, m_serviceClients.GetMarketDataClient())),
       m_catalogSettings(m_profilePath / "Catalog", isAdministrator),
       m_keyBindings(std::make_shared<KeyBindingsModel>(m_marketDatabase)) {
   for(auto& exchangeRate : exchangeRates) {
@@ -114,6 +117,11 @@ const std::filesystem::path& UserProfile::GetProfilePath() const {
 const std::shared_ptr<RecentlyClosedWindowListModel>&
     UserProfile::GetRecentlyClosedWindows() const {
   return m_recentlyClosedWindows;
+}
+
+const std::shared_ptr<ComboBox::QueryModel>&
+    UserProfile::GetSecurityQueryModel() const {
+  return m_security_query_model;
 }
 
 const BlotterSettings& UserProfile::GetBlotterSettings() const {

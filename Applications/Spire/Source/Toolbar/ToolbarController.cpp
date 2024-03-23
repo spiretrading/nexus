@@ -21,6 +21,7 @@
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorProperties.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorWindow.hpp"
 #include "Spire/PortfolioViewer/PortfolioViewerWindow.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
 
 using namespace Beam;
@@ -63,7 +64,8 @@ namespace {
       next_position.rx() += book_view_window->frameSize().width();
       width += book_view_window->frameSize().width();
       next_height = book_view_window->frameSize().height();
-      time_and_sales_window->resize(150, book_view_window->height());
+      time_and_sales_window->resize(
+        scale_width(150), book_view_window->height());
       time_and_sales_window->move(next_position);
       time_and_sales_window->show();
       book_view_window->DisplaySecurity(securities[index]);

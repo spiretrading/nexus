@@ -6,6 +6,7 @@
 #include "Spire/Dashboard/DashboardSelectionModel.hpp"
 #include "Spire/Dashboard/TextDashboardCellRenderer.hpp"
 #include "Spire/Dashboard/ValueDashboardCell.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 
 using namespace Beam;
 using namespace boost;
@@ -45,9 +46,9 @@ DashboardRenderer::DashboardRenderer(Ref<const DashboardModel> model,
       m_header{std::make_unique<DashboardRow>(
         std::make_unique<ValueDashboardCell>())},
       m_headerEntry{std::make_unique<RowEntry>()},
-      m_defaultColumnWidth{75},
-      m_minimumColumnWidth{25},
-      m_maxRowHeight{20} {
+      m_defaultColumnWidth{scale_width(75)},
+      m_minimumColumnWidth{scale_width(25)},
+      m_maxRowHeight{scale_height(20)} {
   for(auto i = 0; i < model->GetColumnCount(); ++i) {
     ColumnEntry column;
     column.m_index = i;

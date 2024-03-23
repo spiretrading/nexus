@@ -26,7 +26,14 @@
         </widget>
        </item>
        <item>
-        <widget class="QComboBox" name="m_regionComboBox"/>
+        <widget class="QComboBox" name="m_regionComboBox">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+        </widget>
        </item>
       </layout>
      </item>

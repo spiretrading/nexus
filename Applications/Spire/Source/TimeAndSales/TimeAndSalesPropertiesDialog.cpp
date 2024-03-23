@@ -2,6 +2,7 @@
 #include <QColorDialog>
 #include <QFontDialog>
 #include "Spire/LegacyUI/UserProfile.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesModel.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
 #include "ui_TimeAndSalesPropertiesDialog.h"
@@ -26,6 +27,8 @@ TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
       m_userProfile(userProfile.Get()),
       m_properties(properties) {
   m_ui->setupUi(this);
+  setFixedSize(scale(size()));
+  m_ui->m_priceRangeList->setFixedSize(scale(256, 192));
   m_fontChangedConnection = m_ui->m_fontSelector->ConnectFontChangedSignal(
     std::bind(&TimeAndSalesPropertiesDialog::OnFontChanged, this,
     std::placeholders::_1, std::placeholders::_2));

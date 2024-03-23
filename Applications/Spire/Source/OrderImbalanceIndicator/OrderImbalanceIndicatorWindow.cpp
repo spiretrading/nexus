@@ -5,6 +5,7 @@
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorWindowSettings.hpp"
 #include "Spire/LegacyUI/CustomQtVariants.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ListModel.hpp"
 #include "ui_OrderImbalanceIndicatorWindow.h"
 
@@ -29,6 +30,7 @@ OrderImbalanceIndicatorWindow::OrderImbalanceIndicatorWindow(
       m_ui(std::make_unique<Ui_OrderImbalanceIndicatorWindow>()),
       m_userProfile(userProfile.Get()) {
   m_ui->setupUi(this);
+  resize(scale(size()));
   m_ui->m_orderImbalanceIndicatorTableView->setItemDelegate(
     new CustomVariantItemDelegate(Ref(*m_userProfile)));
   for(auto i = 0; i < OrderImbalanceIndicatorModel::COLUMN_COUNT; ++i) {

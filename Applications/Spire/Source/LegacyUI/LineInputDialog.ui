@@ -9,61 +9,66 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>262</width>
-    <height>71</height>
+    <width>270</width>
+    <height>75</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string/>
   </property>
-  <widget class="QWidget" name="outerLayoutWidget">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>10</y>
-     <width>241</width>
-     <height>22</height>
-    </rect>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="spacing">
+    <number>0</number>
    </property>
-   <layout class="QFormLayout" name="m_inputLayout">
-    <item row="0" column="0">
-     <widget class="QLabel" name="m_inputLabel">
-      <property name="text">
-       <string>Name:</string>
-      </property>
-     </widget>
-    </item>
-    <item row="0" column="1">
-     <widget class="QLineEdit" name="m_input"/>
-    </item>
-   </layout>
-  </widget>
-  <widget class="QWidget" name="layoutWidget">
-   <property name="geometry">
-    <rect>
-     <x>90</x>
-     <y>40</y>
-     <width>158</width>
-     <height>25</height>
-    </rect>
-   </property>
-   <layout class="QHBoxLayout" name="m_buttonLayout">
-    <item>
-     <widget class="QPushButton" name="m_okButton">
-      <property name="text">
-       <string>OK</string>
-      </property>
-     </widget>
-    </item>
-    <item>
-     <widget class="QPushButton" name="m_cancelButton">
-      <property name="text">
-       <string>Cancel</string>
-      </property>
-     </widget>
-    </item>
-   </layout>
-  </widget>
+   <item>
+    <layout class="QFormLayout" name="m_inputLayout">
+     <property name="horizontalSpacing">
+      <number>4</number>
+     </property>
+     <item row="0" column="0">
+      <widget class="QLabel" name="m_inputLabel">
+       <property name="text">
+        <string>Name:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QLineEdit" name="m_input"/>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="m_buttonLayout">
+     <item>
+      <spacer name="m_buttonSpacer">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QPushButton" name="m_okButton">
+       <property name="text">
+        <string>OK</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="m_cancelButton">
+       <property name="text">
+        <string>Cancel</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
  </widget>
  <resources/>
  <connections/>
