@@ -59,6 +59,21 @@ namespace {
     return style;
   }
 
+  auto DELETE_BUTTON_STYLE() {
+    auto style = StyleSheet();
+    style.get(Any()).set(Visibility(Visibility::INVISIBLE));
+    style.get(Any() > is_a<Box>()).
+      set(BackgroundColor(QColor(Qt::transparent))).
+      set(horizontal_padding(scale_width(2))).
+      set(vertical_padding(scale_height(2)));
+    style.get(Any() > is_a<Icon>()).
+      set(BackgroundColor(QColor(Qt::transparent)));
+    style.get(Hover() > Body() > is_a<Icon>()).
+      set(BackgroundColor(QColor(0xDFDFEB))).
+      set(Fill(QColor(0xB71C1C)));
+    return style;
+  }
+
   QWidget* make_empty_cell() {
     auto cell = new QWidget();
     cell->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -400,8 +415,7 @@ class EditableTableView::EditableTableRow {
           set(horizontal_padding(scale_width(8)));
         style.get(Any() > is_a<EditableBox>()).
           set(horizontal_padding(scale_width(8)));
-        style.get(Hover()).
-          set(BackgroundColor(0xF2F2FF));
+        style.get(Hover()).set(BackgroundColor(0xF2F2FF));
         style.get(Hover() > DeleteButton()).
           set(Visibility(Visibility::VISIBLE));
       });
@@ -565,14 +579,8 @@ QWidget* EditableTableView::view_builder(ViewBuilder source_view_builder,
     if(row < table->get_row_size() - 1) {
       auto button = make_delete_icon_button();
       button->setMaximumHeight(scale_height(26));
+      set_style(*button, DELETE_BUTTON_STYLE());
       match(*button, DeleteButton());
-      update_style(*button, [&] (auto& style) {
-        style.get(Any()).
-          set(Visibility(Visibility::INVISIBLE));
-        style.get(Hover() > Body() > is_a<Icon>()).
-          set(BackgroundColor(QColor(0xDFDFEB))).
-          set(Fill(QColor(0xB71C1C)));
-      });
       button->connect_click_signal([=] {
         QTimer::singleShot(DELETE_TIMEOUT_MS, [=] {
           delete_current_row();
