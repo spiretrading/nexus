@@ -8,11 +8,7 @@ using namespace Spire;
 
 namespace {
   QPoint get_position(const QWidget& widget) {
-    if(auto parent = widget.parentWidget()) {
-      return parent->mapToGlobal(widget.pos());
-    } else {
-      return widget.pos();
-    }
+    return widget.mapToGlobal(QPoint(0, 0));
   }
 }
 
@@ -53,7 +49,8 @@ struct GlobalPositionObserver::EventFilter : QObject {
   }
 
   bool eventFilter(QObject* watched, QEvent* event) override {
-    if(event->type() == QEvent::Move) {
+    if(event->type() == QEvent::Move ||
+        event->type() == QEvent::LayoutRequest) {
       set_position(::get_position(*m_widget));
     } else if(event->type() == QEvent::ParentChange) {
       observe_parent();
