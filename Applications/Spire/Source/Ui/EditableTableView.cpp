@@ -43,18 +43,24 @@ namespace {
       set(padding(scale_width(2)));
     style.get((Any() > DeleteButton()) << (HoverItem() || Current())).
       set(border_color(QColor(Qt::transparent)));
+    style.get(Any() > (DeleteButton() && Hover()) > is_a<Icon>()).
+      set(BackgroundColor(QColor(0xDFDFEB))).
+      set(Fill(QColor(0xB71C1C)));
     style.get((Any() > EmptyCell()) << (HoverItem() || Current())).
       set(border_color(QColor(Qt::transparent)));
     style.get(Any() > CurrentRow() > DeleteButton()).
       set(Visibility(Visibility::VISIBLE));
+    style.get(Any() > CurrentRow() > DeleteButton() > is_a<Icon>()).
+      set(Fill(QColor(0x535353)));
     style.get(Any() > CurrentRow() > (DeleteButton() && Hover()) >
-        Body() > is_a<Icon>()).
-      set(BackgroundColor(QColor(0xD0CEEB)));
+        is_a<Icon>()).
+      set(BackgroundColor(QColor(0xD0CEEB))).
+      set(Fill(QColor(0xB71C1C)));
     style.get(Any() > CurrentRow()).set(BackgroundColor(QColor(0xE2E0FF)));
     style.get(Any() > CurrentColumn()).set(BackgroundColor(Qt::transparent));
     style.get(Any() > OutOfRangeRow()).set(BackgroundColor(QColor(0xFDF8DE)));
     style.get(Any() > OutOfRangeRow() > (DeleteButton() && Hover()) >
-        Body() > is_a<Icon>()).
+        is_a<Icon>()).
       set(BackgroundColor(QColor(0xE9E4CC)));
     return style;
   }
@@ -68,9 +74,20 @@ namespace {
       set(vertical_padding(scale_height(2)));
     style.get(Any() > is_a<Icon>()).
       set(BackgroundColor(QColor(Qt::transparent)));
-    style.get(Hover() > Body() > is_a<Icon>()).
-      set(BackgroundColor(QColor(0xDFDFEB))).
-      set(Fill(QColor(0xB71C1C)));
+    return style;
+  }
+
+  auto TABLE_ROW_STYLE(StyleSheet style) {
+    style.get(Any() > is_a<DropDownBox>() >
+        (is_a<TextBox>() && !(+Any() << is_a<ListItem>()))).
+      set(horizontal_padding(scale_width(8)));
+    style.get(Any() > is_a<EditableBox>()).
+      set(horizontal_padding(scale_width(8)));
+    style.get(Hover()).set(BackgroundColor(0xF2F2FF));
+    style.get(Hover() > DeleteButton()).
+      set(Visibility(Visibility::VISIBLE));
+    style.get(Hover() > DeleteButton() > is_a<Icon>()).
+      set(Fill(QColor(0x535353)));
     return style;
   }
 
@@ -102,9 +119,8 @@ namespace {
     return nullptr;
   }
 
-  EditableBox* find_editable_box(const QWidget& widget) {
-    if(auto editable_box =
-        dynamic_cast<EditableBox*>(const_cast<QWidget*>(&widget))) {
+  EditableBox* find_editable_box(QWidget& widget) {
+    if(auto editable_box = dynamic_cast<EditableBox*>(&widget)) {
       return editable_box;
     }
     if(auto layout = widget.layout(); layout && layout->count() == 1) {
@@ -410,14 +426,7 @@ class EditableTableView::EditableTableRow {
           m_is_ignore_filters(false),
           m_is_out_of_range(false) {
       update_style(*m_row, [] (auto& style) {
-        style.get(Any() > is_a<DropDownBox>() >
-            (is_a<TextBox>() && !(+Any() << is_a<ListItem>()))).
-          set(horizontal_padding(scale_width(8)));
-        style.get(Any() > is_a<EditableBox>()).
-          set(horizontal_padding(scale_width(8)));
-        style.get(Hover()).set(BackgroundColor(0xF2F2FF));
-        style.get(Hover() > DeleteButton()).
-          set(Visibility(Visibility::VISIBLE));
+        style = TABLE_ROW_STYLE(style);
       });
     }
 
