@@ -170,6 +170,6 @@ connection HoverObserver::connect_state_signal(
 bool Spire::is_set(HoverObserver::State left, HoverObserver::State right) {
   return static_cast<HoverObserver::State>(
     static_cast<std::underlying_type_t<HoverObserver::State>>(left) &
-    static_cast<std::underlying_type_t<HoverObserver::State>>(right)) !=
-    HoverObserver::State::NONE;
+      static_cast<std::underlying_type_t<HoverObserver::State>>(right)) !=
+        HoverObserver::State::NONE;
 }
