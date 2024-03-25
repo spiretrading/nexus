@@ -468,19 +468,14 @@ EditableTableView::EditableTableView(
     std::shared_ptr<TableFilter> table_filter,
     std::shared_ptr<CurrentModel> current,
     std::shared_ptr<SelectionModel> selection, ViewBuilder view_builder,
-    Comparator comparator, Filter filter, QWidget* parent)
-    : TableView(std::make_shared<FilteredTableModel>(
-        std::make_shared<EditableTableModel>(table, header), filter),
+    Comparator comparator, QWidget* parent)
+    : TableView(std::make_shared<EditableTableModel>(table, header),
         std::make_shared<EditableTableHeaderModel>(header),
         std::move(table_filter), std::move(current), std::move(selection),
         std::bind_front(&EditableTableView::view_builder, this,
           std::move(view_builder)),
         std::move(comparator), parent),
-      m_table(std::move(table)),
-      m_filter(std::move(filter)),
-      m_newly_added_row(nullptr),
-      m_has_sent_event(false),
-      m_previous_table_row_size(m_table->get_row_size()) {
+      m_has_sent_event(false) {
   auto table_header = static_cast<TableHeader*>(static_cast<Box*>(
     layout()->itemAt(0)->widget())->get_body()->layout()->
       itemAt(0)->widget());
@@ -494,32 +489,13 @@ EditableTableView::EditableTableView(
   m_table_body = static_cast<TableBody*>(&scroll_box.get_body());
   m_table_body->installEventFilter(this);
   set_style(*this, TABLE_VIEW_STYLE());
-  for(auto i = 0; i < m_table->get_row_size() + 1; ++i) {
-    m_source_rows.push({});
-  }
   for(auto i = 0; i < m_table_body->get_table()->get_row_size(); ++i) {
     auto row = m_table_body->layout()->itemAt(i)->widget();
     m_rows[row] = std::make_unique<EditableTableRow>(*row);
-    m_view_rows.push(row);
-    m_source_rows.set(m_table_body->get_table()->get<int>(i, 0), row);
   }
   set_column_cover_mouse_events_transparent();
-  m_source_operation_connection = m_table->connect_operation_signal(
-    std::bind_front(&EditableTableView::on_source_table_operation, this));
-  m_operation_connection = m_table_body->get_table()->connect_operation_signal(
-    std::bind_front(&EditableTableView::on_table_operation, this));
   m_current_connection = get_current()->connect_update_signal(
     std::bind_front(&EditableTableView::on_current, this));
-}
-
-void EditableTableView::set_filter(const Filter& filter) {
-  m_filter = filter;
-  do_filter();
-}
-
-connection EditableTableView::connect_delete_signal(
-    const DeleteSignal::slot_type& slot) const {
-  return m_delete_signal.connect(slot);
 }
 
 bool EditableTableView::eventFilter(QObject* watched, QEvent* event) {
@@ -575,11 +551,6 @@ QWidget* EditableTableView::view_builder(ViewBuilder source_view_builder,
       button->setMaximumHeight(scale_height(26));
       set_style(*button, DELETE_BUTTON_STYLE());
       match(*button, DeleteButton());
-      button->connect_click_signal([=] {
-        QTimer::singleShot(DELETE_TIMEOUT_MS, [=] {
-          delete_current_row();
-        });
-      });
       return button;
     } else {
       return make_empty_cell();
@@ -620,36 +591,6 @@ void EditableTableView::set_column_cover_mouse_events_transparent() {
       ++count;
     }
   }
-}
-
-void EditableTableView::delete_current_row() {
-  if(auto& current = get_current()->get()) {
-    auto source_index = [&] {
-      for(auto i = 0; i < m_source_rows.get_size(); ++i) {
-        if(m_source_rows.get(i) == m_view_rows.get(current->m_row)) {
-          return i;
-        }
-      }
-      return -1;
-    }();
-    if(source_index >= 0) {
-      m_delete_signal(source_index);
-    }
-  }
-  m_table_body->setFocus();
-  if(get_current()->get()) {
-    get_current()->set(TableBody::Index{get_current()->get()->m_row, 1});
-  }
-}
-
-void EditableTableView::do_filter() {
-  std::static_pointer_cast<FilteredTableModel>(get_table())->set_filter(
-    [=] (const TableModel& model, int row) {
-      if(row == model.get_row_size() - 1) {
-        return false;
-      }
-      return m_filter(model, row);
-    });
 }
 
 void EditableTableView::navigate_next() {
@@ -701,51 +642,4 @@ void EditableTableView::on_current(const optional<Index>& index) {
       navigate_previous();
     }
   }
-}
-
-void EditableTableView::on_table_operation(
-    const TableModel::Operation& operation) {
-  visit(operation,
-    [&] (const TableModel::AddOperation& operation) {
-      auto row_widget =
-        m_table_body->layout()->itemAt(operation.m_index)->widget();
-      m_view_rows.insert(row_widget, operation.m_index);
-      m_rows[row_widget] = std::make_unique<EditableTableRow>(*row_widget);
-      m_source_rows.set(
-        m_table_body->get_table()->get<int>(operation.m_index, 0), row_widget);
-      if(m_previous_table_row_size < m_table->get_row_size()) {
-        m_newly_added_row = row_widget;
-        if(auto& current = get_current()->get()) {
-          get_current()->set(
-            TableView::Index(operation.m_index, current->m_column));
-        }
-      }
-    },
-    [&] (const TableModel::RemoveOperation& operation) {
-      m_view_rows.remove(operation.m_index);
-    },
-    [&] (const TableModel::MoveOperation& operation) {
-      m_view_rows.move(operation.m_source, operation.m_destination);
-    });
-}
-
-void EditableTableView::on_source_table_operation(
-    const TableModel::Operation& operation) {
-  visit(operation,
-    [&] (const TableModel::AddOperation& operation) {
-      m_previous_table_row_size = m_table->get_row_size();
-      m_newly_added_row->show();
-      m_source_rows.insert(m_newly_added_row, operation.m_index);
-      m_table_body->adjustSize();
-      get_current()->set(get_current()->get());
-    },
-    [&] (const TableModel::RemoveOperation& operation) {
-      m_previous_table_row_size = m_table->get_row_size();
-      m_source_rows.remove(operation.m_index);
-      m_table_body->adjustSize();
-      get_current()->set(get_current()->get());
-    },
-    [&] (const TableModel::MoveOperation& operation) {
-      m_source_rows.move(operation.m_source, operation.m_destination);
-    });
 }

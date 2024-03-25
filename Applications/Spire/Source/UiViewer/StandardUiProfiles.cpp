@@ -933,6 +933,66 @@ namespace {
         return value;
       }
   };
+
+  QWidget* make_row_cell(const std::shared_ptr<TableModel>& table,
+      auto row, auto column) {
+    if(column == 0) {
+      return new EditableBox(*new AnyInputBox(*new TextBox(
+        make_custom_list_value_model(
+          std::make_shared<CustomColumnViewListModel<QString>>(table,
+            column), row))));
+    } else if(column == 1) {
+      return new TransparentMouseEventsPopupBox(*new EditableBox(
+        *new AnyInputBox(*new RegionBox(populate_region_box_model(),
+          make_custom_list_value_model(
+            std::make_shared<CustomColumnViewListModel<Region>>(table,
+              column), row)))));
+    } else if(column == 2) {
+      return new EditableBox(*new AnyInputBox(*make_order_type_box(
+        make_custom_list_value_model(
+          std::make_shared<CustomColumnViewListModel<OrderType>>(table,
+            column), row))));
+    } else if(column == 3) {
+      return new EditableBox(*new AnyInputBox(*new KeyInputBox(
+        make_validated_value_model<QKeySequence>(&key_input_box_validator,
+          make_custom_list_value_model(
+            std::make_shared<CustomColumnViewListModel<QKeySequence>>(
+              table, column), row)))),
+        [] (const auto& key) {
+          return key_input_box_validator(key) == QValidator::Acceptable;
+        });
+    }
+    return nullptr;
+  }
+
+  QWidget* make_empty_row_cell(const std::shared_ptr<TableModel>& table,
+      auto row, auto column) {
+    auto input_box = [&] () -> AnyInputBox* {
+      if(column == 0) {
+        return new AnyInputBox(*new TextBox(""));
+      } else if(column == 1) {
+        return new AnyInputBox(*new RegionBox(populate_region_box_model()));
+      } else if(column == 2) {
+        return new AnyInputBox(*make_order_type_box(OrderType::NONE));
+      } else if(column == 3) {
+        return new AnyInputBox(*new KeyInputBox(
+          make_validated_value_model<QKeySequence>(&key_input_box_validator,
+            std::make_shared<LocalValueModel<QKeySequence>>())));
+      }
+      return nullptr;
+    }();
+    if(!input_box) {
+      return nullptr;
+    }
+    if(column == 1) {
+      return new TransparentMouseEventsPopupBox(*new EditableBox(*input_box));
+    } else if(column == 3) {
+      return new EditableBox(*input_box, [] (const auto& key) {
+        return key_input_box_validator(key) == QValidator::Acceptable;
+      });
+    }
+    return new EditableBox(*input_box);
+  }
 }
 
 UiProfile Spire::make_adaptive_box_profile() {
@@ -2111,107 +2171,13 @@ UiProfile Spire::make_editable_table_view_profile() {
         std::make_shared<ListEmptySelectionModel>()),
       [=] (const auto& table, auto row, auto column) -> QWidget* {
         if(row < table->get_row_size() - 1) {
-          if(column == 0) {
-            return new EditableBox(*new AnyInputBox(*new TextBox(
-              make_custom_list_value_model(
-                std::make_shared<CustomColumnViewListModel<QString>>(table,
-                  column), row))));
-          } else if(column == 1) {
-            return new TransparentMouseEventsPopupBox(*new EditableBox(
-              *new AnyInputBox(*new RegionBox(populate_region_box_model(),
-                make_custom_list_value_model(
-                  std::make_shared<CustomColumnViewListModel<Region>>(table,
-                    column), row)))));
-          } else if(column == 2) {
-            return new EditableBox(*new AnyInputBox(*make_order_type_box(
-              make_custom_list_value_model(
-                std::make_shared<CustomColumnViewListModel<OrderType>>(table,
-                  column), row))));
-          } else if(column == 3) {
-            return new EditableBox(*new AnyInputBox(*new KeyInputBox(
-              make_validated_value_model<QKeySequence>(&key_input_box_validator,
-                make_custom_list_value_model(
-                  std::make_shared<CustomColumnViewListModel<QKeySequence>>(
-                    table, column), row)))), [] (const auto& key) {
-              return key_input_box_validator(key) == QValidator::Acceptable;
-            });
-          }
-          return nullptr;
-        } else {
-          auto input_box = [&] () -> AnyInputBox* {
-            if(column == 0) {
-              return new AnyInputBox(*new TextBox(""));
-            } else if(column == 1) {
-              return new AnyInputBox(
-                *new RegionBox(populate_region_box_model()));
-            } else if(column == 2) {
-              return new AnyInputBox(*make_order_type_box(OrderType::NONE));
-            } else if(column == 3) {
-              return new AnyInputBox(*new KeyInputBox(
-                make_validated_value_model<QKeySequence>(
-                  &key_input_box_validator,
-                  std::make_shared<LocalValueModel<QKeySequence>>())));
-            }
-            return nullptr;
-          }();
-          if(!input_box) {
-            return nullptr;
-          }
-          input_box->connect_submit_signal([=] (const AnyRef& submission) {
-            auto has_value = false;
-            auto name = QString();
-            auto region = Region();
-            auto order_type = OrderType();
-            auto key = QKeySequence();
-            if(column == 0) {
-              name = any_cast<QString>(submission);
-              if(!name.isEmpty()) {
-                has_value = true;
-                input_box->get_current()->set(QString());
-              }
-            } else if(column == 1) {
-              region = any_cast<Region>(submission);
-              if(region != Region()) {
-                has_value = true;
-                input_box->get_current()->set(Region());
-              }
-            } else if(column == 2) {
-              order_type = any_cast<OrderType>(submission);
-              if(order_type != OrderType::NONE) {
-                has_value = true;
-                input_box->get_current()->set(OrderType());
-              }
-            } else if(column == 3) {
-              key = any_cast<QKeySequence>(submission);
-              if(!key.isEmpty()) {
-                has_value = true;
-                input_box->get_current()->set(QKeySequence());
-              }
-            }
-            if(has_value) {
-              array_table_model->push({name, region, order_type, key});
-            }
-          });
-          if(column == 1) {
-            return new TransparentMouseEventsPopupBox(
-              *new EditableBox(*input_box));
-          } else if(column == 3) {
-            return new EditableBox(*input_box, [] (const auto& key) {
-              return key_input_box_validator(key) == QValidator::Acceptable;
-            });
-          }
-          return new EditableBox(*input_box);
+          return make_row_cell(table, row, column);
         }
+        return make_empty_row_cell(table, row, column);
       },
       [] (const AnyRef&, const AnyRef&) -> bool {
         return false;
-      },
-      [] (const TableModel&, int) {
-        return false;
       });
-    table_view->connect_delete_signal([=] (int row) {
-      array_table_model->remove(row);
-    });
     apply_widget_properties(table_view, profile.get_properties());
     table_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     return table_view;
