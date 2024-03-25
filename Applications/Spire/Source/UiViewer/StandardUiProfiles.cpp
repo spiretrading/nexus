@@ -2117,7 +2117,7 @@ UiProfile Spire::make_editable_table_view_profile() {
                 std::make_shared<CustomColumnViewListModel<QString>>(table,
                   column), row))));
           } else if(column == 1) {
-            return new TransparentMouseEventPopupBox(*new EditableBox(
+            return new TransparentMouseEventsPopupBox(*new EditableBox(
               *new AnyInputBox(*new RegionBox(populate_region_box_model(),
                 make_custom_list_value_model(
                   std::make_shared<CustomColumnViewListModel<Region>>(table,
@@ -2193,7 +2193,7 @@ UiProfile Spire::make_editable_table_view_profile() {
             }
           });
           if(column == 1) {
-            return new TransparentMouseEventPopupBox(
+            return new TransparentMouseEventsPopupBox(
               *new EditableBox(*input_box));
           } else if(column == 3) {
             return new EditableBox(*input_box, [] (const auto& key) {

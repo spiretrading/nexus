@@ -36,7 +36,6 @@ namespace {
     style.get(Any() > Current()).
       set(BackgroundColor(Qt::transparent));
     style.get((Any() > Editing()) << Current()).
-      set(BackgroundColor(Qt::transparent)).
       set(border_color(QColor(Qt::transparent)));
     style.get(Any() > HoverItem()).set(border_color(QColor(0xA0A0A0)));
     style.get((Any() > DeleteButton()) << is_a<TableItem>()).
@@ -130,7 +129,7 @@ namespace {
   }
 }
 
-TransparentMouseEventPopupBox::TransparentMouseEventPopupBox(QWidget& body,
+TransparentMouseEventsPopupBox::TransparentMouseEventsPopupBox(QWidget& body,
     QWidget* parent)
     : QWidget(parent),
       m_has_sent_event(false) {
@@ -142,7 +141,7 @@ TransparentMouseEventPopupBox::TransparentMouseEventPopupBox(QWidget& body,
   m_tip_window = find_tip_window(body);
 }
 
-bool TransparentMouseEventPopupBox::eventFilter(
+bool TransparentMouseEventsPopupBox::eventFilter(
     QObject* watched, QEvent* event) {
   if(event->type() == QEvent::KeyPress) {
     auto& key_event = *static_cast<QKeyEvent*>(event);
@@ -157,7 +156,7 @@ bool TransparentMouseEventPopupBox::eventFilter(
   return QWidget::eventFilter(watched, event);
 }
 
-bool TransparentMouseEventPopupBox::event(QEvent* event) {
+bool TransparentMouseEventsPopupBox::event(QEvent* event) {
   switch(event->type()) {
     case QEvent::MouseButtonPress:
       if(auto& mouse_event = *static_cast<QMouseEvent*>(event);
@@ -175,13 +174,13 @@ bool TransparentMouseEventPopupBox::event(QEvent* event) {
   return QWidget::event(event);
 }
 
-void TransparentMouseEventPopupBox::showEvent(QShowEvent* event) {
+void TransparentMouseEventsPopupBox::showEvent(QShowEvent* event) {
   if(auto focus_proxy = find_focus_proxy(*m_popup_box)) {
     focus_proxy->installEventFilter(this);
   }
 }
 
-void TransparentMouseEventPopupBox::keyPressEvent(QKeyEvent* event) {
+void TransparentMouseEventsPopupBox::keyPressEvent(QKeyEvent* event) {
   if(m_has_sent_event) {
     return;
   }
@@ -471,12 +470,14 @@ EditableTableView::EditableTableView(
     std::shared_ptr<SelectionModel> selection, ViewBuilder view_builder,
     Comparator comparator, Filter filter, QWidget* parent)
     : TableView(std::make_shared<FilteredTableModel>(
-        std::make_shared<EditableTableModel>(table, header), std::move(filter)),
-      std::make_shared<EditableTableHeaderModel>(header),
-      std::move(table_filter), std::move(current), std::move(selection),
-      std::bind_front(&EditableTableView::view_builder, this, view_builder),
-      std::move(comparator), parent),
+        std::make_shared<EditableTableModel>(table, header), filter),
+        std::make_shared<EditableTableHeaderModel>(header),
+        std::move(table_filter), std::move(current), std::move(selection),
+        std::bind_front(&EditableTableView::view_builder, this,
+          std::move(view_builder)),
+        std::move(comparator), parent),
       m_table(std::move(table)),
+      m_filter(std::move(filter)),
       m_newly_added_row(nullptr),
       m_has_sent_event(false),
       m_previous_table_row_size(m_table->get_row_size()) {
@@ -557,22 +558,6 @@ bool EditableTableView::eventFilter(QObject* watched, QEvent* event) {
 }
 
 bool EditableTableView::focusNextPrevChild(bool next) {
-  if(auto& current = get_current()->get(); !current) {
-    auto focus_widget = QApplication::focusWidget();
-    if(!m_table_body->isAncestorOf(focus_widget) &&
-        m_table_body != focus_widget) {
-      auto next_focus_widget = [&] {
-        if(next) {
-          return focus_widget->nextInFocusChain();
-        }
-        return focus_widget->previousInFocusChain();
-      }();
-      if(!m_table_body->isAncestorOf(next_focus_widget) &&
-          m_table_body != focus_widget) {
-        return QWidget::focusNextPrevChild(next);
-      }
-    }
-  }
   m_table_body->setFocus();
   if(next) {
     navigate_next();
@@ -731,8 +716,8 @@ void EditableTableView::on_table_operation(
       if(m_previous_table_row_size < m_table->get_row_size()) {
         m_newly_added_row = row_widget;
         if(auto& current = get_current()->get()) {
-          auto index = TableView::Index(operation.m_index, current->m_column);
-          get_current()->set(index);
+          get_current()->set(
+            TableView::Index(operation.m_index, current->m_column));
         }
       }
     },

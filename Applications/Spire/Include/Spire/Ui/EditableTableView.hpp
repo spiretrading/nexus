@@ -10,11 +10,11 @@ namespace Spire {
    * Customizes the PopupBox to propagate mouse events to TableItem to
    * trigger the current signal for TableView.
    */
-  class TransparentMouseEventPopupBox : public QWidget {
+  class TransparentMouseEventsPopupBox : public QWidget {
     public:
 
-      /** Constructs a TransparentMouseEventPopupBox. */
-      explicit TransparentMouseEventPopupBox(QWidget& body,
+      /** Constructs a TransparentMouseEventsPopupBox. */
+      explicit TransparentMouseEventsPopupBox(QWidget& body,
         QWidget* parent = nullptr);
 
     protected:
@@ -86,7 +86,6 @@ namespace Spire {
       class EditableTableRow;
       mutable DeleteSignal m_delete_signal;
       std::shared_ptr<TableModel> m_table;
-      ViewBuilder m_view_builder;
       Filter m_filter;
       TableBody* m_table_body;
       std::unordered_map<QWidget*, std::unique_ptr<EditableTableRow>> m_rows;
