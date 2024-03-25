@@ -12,7 +12,7 @@ set(LUA_LIBRARY_DEBUG_PATH
   "${PROJECT_BINARY_DIR}/Dependencies/lua-5.4.4/src/Debug/lua.lib")
 set(LUA_LIBRARY_OPTIMIZED_PATH
   "${PROJECT_BINARY_DIR}/Dependencies/lua-5.4.4/src/Release/lua.lib")
-set(QT_ROOT "${PROJECT_BINARY_DIR}/Dependencies/qt-5.15.2")
+set(QT_ROOT "${PROJECT_BINARY_DIR}/Dependencies/qt-5.15.13")
 set(QT_INCLUDE_PATH "${QT_ROOT}/qtbase/include")
 set(QT_CORE_INCLUDE_PATH "${QT_INCLUDE_PATH}/QtCore")
 set(QT_GUI_INCLUDE_PATH "${QT_INCLUDE_PATH}/QtGui")
