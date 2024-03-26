@@ -1,7 +1,5 @@
 #ifndef SPIRE_EDITABLE_TABLE_VIEW_HPP
 #define SPIRE_EDITABLE_TABLE_VIEW_HPP
-#include "Spire/Spire/ArrayListModel.hpp"
-#include "Spire/Spire/FilteredTableModel.hpp"
 #include "Spire/Ui/TableView.hpp"
 
 namespace Spire {
@@ -35,7 +33,6 @@ namespace Spire {
     private:
       class EditableTableRow;
       TableBody* m_table_body;
-      std::unordered_map<QWidget*, std::unique_ptr<EditableTableRow>> m_rows;
       bool m_has_sent_event;
       boost::signals2::scoped_connection m_current_connection;
 

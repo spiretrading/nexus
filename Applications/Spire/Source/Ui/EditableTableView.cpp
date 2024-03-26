@@ -1,8 +1,7 @@
 #include "Spire/Ui/EditableTableView.hpp"
-#include <boost/signals2/shared_connection_block.hpp>
 #include <QApplication>
 #include <QKeyEvent>
-#include <QTimer>
+#include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
@@ -10,7 +9,6 @@
 #include "Spire/Ui/EditableBox.hpp"
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/Layouts.hpp"
-#include "Spire/Ui/PopupBox.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/TableBody.hpp"
 #include "Spire/Ui/TableItem.hpp"
@@ -341,51 +339,6 @@ struct EditableTableHeaderModel : ListModel<TableHeaderItem::Model> {
   }
 };
 
-class EditableTableView::EditableTableRow {
-  public:
-    EditableTableRow(QWidget& row)
-        : m_row(&row),
-          m_is_ignore_filters(false),
-          m_is_out_of_range(false) {
-      update_style(*m_row, [] (auto& style) {
-        style = TABLE_ROW_STYLE(style);
-      });
-    }
-
-    QWidget* get_row() const {
-      return m_row;
-    }
-
-    bool is_ignore_filters() const {
-      return m_is_ignore_filters;
-    }
-
-    void set_ignore_filters(bool is_ignore_filters) {
-      m_is_ignore_filters = is_ignore_filters;
-    }
-
-    bool is_out_of_range() const {
-      return m_is_out_of_range;
-    }
-
-    void set_out_of_range(bool is_out_of_range) {
-      if(m_is_out_of_range == is_out_of_range) {
-        return;
-      }
-      m_is_out_of_range = is_out_of_range;
-      if(m_is_out_of_range) {
-        match(*m_row, OutOfRangeRow());
-      } else {
-        unmatch(*m_row, OutOfRangeRow());
-      }
-    }
-
-  private:
-    QWidget* m_row;
-    bool m_is_ignore_filters;
-    bool m_is_out_of_range;
-};
-
 EditableTableView::EditableTableView(
     std::shared_ptr<TableModel> table, std::shared_ptr<HeaderModel> header,
     std::shared_ptr<TableFilter> table_filter,
@@ -414,7 +367,9 @@ EditableTableView::EditableTableView(
   set_style(*this, TABLE_VIEW_STYLE());
   for(auto i = 0; i < m_table_body->get_table()->get_row_size(); ++i) {
     auto row = m_table_body->layout()->itemAt(i)->widget();
-    m_rows[row] = std::make_unique<EditableTableRow>(*row);
+    update_style(*row, [] (auto& style) {
+      style = TABLE_ROW_STYLE(style);
+    });
   }
   set_column_cover_mouse_events_transparent();
   m_current_connection = get_current()->connect_update_signal(
