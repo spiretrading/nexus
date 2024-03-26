@@ -6,29 +6,6 @@
 
 namespace Spire {
 
-  /**
-   * Customizes the PopupBox to propagate mouse events to TableItem to
-   * trigger the current signal for TableView.
-   */
-  class TransparentMouseEventsPopupBox : public QWidget {
-    public:
-
-      /** Constructs a TransparentMouseEventsPopupBox. */
-      explicit TransparentMouseEventsPopupBox(QWidget& body,
-        QWidget* parent = nullptr);
-
-    protected:
-      bool eventFilter(QObject* watched, QEvent* event) override;
-      bool event(QEvent* event) override;
-      void showEvent(QShowEvent* event) override;
-      void keyPressEvent(QKeyEvent* event) override;
-
-    private:
-      PopupBox* m_popup_box;
-      QWidget* m_tip_window;
-      bool m_has_sent_event;
-  };
-
   /** Represents an editable TableView. */
   class EditableTableView : public TableView {
     public:

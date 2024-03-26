@@ -101,23 +101,6 @@ namespace {
     return *item.layout()->itemAt(0)->widget();
   }
 
-  QWidget* find_tip_window(const QWidget& parent) {
-    for(auto child : parent.children()) {
-      if(!child->isWidgetType()) {
-        continue;
-      }
-      auto& widget = *static_cast<QWidget*>(child);
-      if(widget.isWindow() &&
-          (widget.windowFlags() & Qt::WindowDoesNotAcceptFocus)) {
-        return &widget;
-      }
-      if(auto window = find_tip_window(widget)) {
-        return window;
-      }
-    }
-    return nullptr;
-  }
-
   EditableBox* find_editable_box(QWidget& widget) {
     if(auto editable_box = dynamic_cast<EditableBox*>(&widget)) {
       return editable_box;
@@ -129,75 +112,15 @@ namespace {
   }
 }
 
-TransparentMouseEventsPopupBox::TransparentMouseEventsPopupBox(QWidget& body,
-    QWidget* parent)
-    : QWidget(parent),
-      m_has_sent_event(false) {
-  m_popup_box = new PopupBox(body);
-  enclose(*this, *m_popup_box);
-  proxy_style(*this, *m_popup_box);
-  setFocusPolicy(Qt::ClickFocus);
-  m_popup_box->setAttribute(Qt::WA_TransparentForMouseEvents);
-  m_tip_window = find_tip_window(body);
-}
-
-bool TransparentMouseEventsPopupBox::eventFilter(
-    QObject* watched, QEvent* event) {
-  if(event->type() == QEvent::KeyPress) {
-    auto& key_event = *static_cast<QKeyEvent*>(event);
-    if(key_event.key() == Qt::Key_Tab) {
-      focusNextChild();
-      return true;
-    } else if(key_event.key() == Qt::Key_Backtab) {
-      focusPreviousChild();
-      return true;
-    }
-  }
-  return QWidget::eventFilter(watched, event);
-}
-
-bool TransparentMouseEventsPopupBox::event(QEvent* event) {
-  switch(event->type()) {
-    case QEvent::MouseButtonPress:
-      if(auto& mouse_event = *static_cast<QMouseEvent*>(event);
-          mouse_event.button() == Qt::LeftButton) {
-        m_popup_box->get_body().setFocus();
-      }
-      break;
-    case QEvent::Enter:
-    case QEvent::Leave:
-      if(m_tip_window) {
-        QCoreApplication::sendEvent(m_tip_window->parentWidget(), event);
-      }
-      break;
-  }
-  return QWidget::event(event);
-}
-
-void TransparentMouseEventsPopupBox::showEvent(QShowEvent* event) {
-  if(auto focus_proxy = find_focus_proxy(*m_popup_box)) {
-    focus_proxy->installEventFilter(this);
-  }
-}
-
-void TransparentMouseEventsPopupBox::keyPressEvent(QKeyEvent* event) {
-  if(m_has_sent_event) {
-    return;
-  }
-  m_has_sent_event = true;
-  QCoreApplication::sendEvent(&m_popup_box->get_body(), event);
-  m_has_sent_event = false;
-}
-
-struct RevertTableModel : TableModel {
+struct RevertColumnTableModel : TableModel {
   std::shared_ptr<TableModel> m_source;
   TableModelTransactionLog m_transaction;
   scoped_connection m_source_connection;
 
-  explicit RevertTableModel(std::shared_ptr<TableModel> source)
+  explicit RevertColumnTableModel(std::shared_ptr<TableModel> source)
     : m_source(std::move(source)),
       m_source_connection(m_source->connect_operation_signal(
-        std::bind_front(&RevertTableModel::on_operation, this))) {}
+        std::bind_front(&RevertColumnTableModel::on_operation, this))) {}
 
   int get_row_size() const {
     return m_source->get_row_size();
@@ -559,7 +482,7 @@ QWidget* EditableTableView::view_builder(ViewBuilder source_view_builder,
     return make_empty_cell();
   } else {
     auto cell = source_view_builder(
-      std::make_shared<RevertTableModel>(table), row, column - 1);
+      std::make_shared<RevertColumnTableModel>(table), row, column - 1);
     if(cell) {
       cell->setFocusPolicy(Qt::ClickFocus);
       if(auto editable_box = find_editable_box(*cell)) {

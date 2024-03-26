@@ -885,8 +885,6 @@ namespace {
     auto model = std::make_shared<ArrayListModel<TableHeaderItem::Model>>();
     model->push({"Name", "Name",
       TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
-    model->push({"Region", "Region",
-      TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
     model->push({"Order Type", "Ord Type",
       TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
     model->push({"Key", "Key",
@@ -942,17 +940,11 @@ namespace {
           std::make_shared<CustomColumnViewListModel<QString>>(table,
             column), row))));
     } else if(column == 1) {
-      return new TransparentMouseEventsPopupBox(*new EditableBox(
-        *new AnyInputBox(*new RegionBox(populate_region_box_model(),
-          make_custom_list_value_model(
-            std::make_shared<CustomColumnViewListModel<Region>>(table,
-              column), row)))));
-    } else if(column == 2) {
       return new EditableBox(*new AnyInputBox(*make_order_type_box(
         make_custom_list_value_model(
           std::make_shared<CustomColumnViewListModel<OrderType>>(table,
             column), row))));
-    } else if(column == 3) {
+    } else if(column == 2) {
       return new EditableBox(*new AnyInputBox(*new KeyInputBox(
         make_validated_value_model<QKeySequence>(&key_input_box_validator,
           make_custom_list_value_model(
@@ -971,10 +963,8 @@ namespace {
       if(column == 0) {
         return new AnyInputBox(*new TextBox(""));
       } else if(column == 1) {
-        return new AnyInputBox(*new RegionBox(populate_region_box_model()));
-      } else if(column == 2) {
         return new AnyInputBox(*make_order_type_box(OrderType::NONE));
-      } else if(column == 3) {
+      } else if(column == 2) {
         return new AnyInputBox(*new KeyInputBox(
           make_validated_value_model<QKeySequence>(&key_input_box_validator,
             std::make_shared<LocalValueModel<QKeySequence>>())));
@@ -984,9 +974,7 @@ namespace {
     if(!input_box) {
       return nullptr;
     }
-    if(column == 1) {
-      return new TransparentMouseEventsPopupBox(*new EditableBox(*input_box));
-    } else if(column == 3) {
+    if(column == 2) {
       return new EditableBox(*input_box, [] (const auto& key) {
         return key_input_box_validator(key) == QValidator::Acceptable;
       });
@@ -2155,13 +2143,10 @@ UiProfile Spire::make_editable_table_view_profile() {
   populate_widget_properties(properties);
   auto profile = UiProfile("EditableTableView", properties, [] (auto& profile) {
     auto array_table_model = std::make_shared<ArrayTableModel>();
-    array_table_model->push({QString("Test1"),
-      Region(*ParseWildCardSecurity(
-        "MSFT.NSDQ", GetDefaultMarketDatabase(), GetDefaultCountryDatabase())),
-      OrderType(OrderType::MARKET), QKeySequence("F3")});
-    array_table_model->push({QString("Test2"),
-      Region(GetDefaultMarketDatabase().FromCode(DefaultMarkets::TSX())),
-      OrderType(OrderType::STOP), QKeySequence("F7")});
+    array_table_model->push({QString("Test1"), OrderType(OrderType::MARKET),
+      QKeySequence("F3")});
+    array_table_model->push({QString("Test2"), OrderType(OrderType::STOP),
+      QKeySequence("F7")});
     auto table_view = new EditableTableView(array_table_model,
       make_header_model(), std::make_shared<EmptyTableFilter>(),
       std::make_shared<LocalValueModel<optional<TableIndex>>>(),
