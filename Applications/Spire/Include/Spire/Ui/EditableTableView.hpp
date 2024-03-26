@@ -61,8 +61,6 @@ namespace Spire {
       std::unordered_map<QWidget*, std::unique_ptr<EditableTableRow>> m_rows;
       bool m_has_sent_event;
       boost::signals2::scoped_connection m_current_connection;
-      boost::signals2::scoped_connection m_source_operation_connection;
-      boost::signals2::scoped_connection m_operation_connection;
 
       QWidget* view_builder(ViewBuilder source_view_builder,
         const std::shared_ptr<TableModel>& table, int row, int column);
