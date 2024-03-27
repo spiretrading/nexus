@@ -16,7 +16,6 @@
 #include "Spire/Spire/ColumnViewListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/FieldValueModel.hpp"
-#include "Spire/Spire/FilteredTableModel.hpp"
 #include "Spire/Spire/ListValueModel.hpp"
 #include "Spire/Spire/LocalScalarValueModel.hpp"
 #include "Spire/Spire/RowViewListModel.hpp"
