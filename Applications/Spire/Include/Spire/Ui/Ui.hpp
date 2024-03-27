@@ -37,6 +37,7 @@ namespace Spire {
   class DropShadow;
   class DurationBox;
   class EditableBox;
+  class EditableTableView;
   template<typename T> class EmptySelectionModel;
   class EmptyTableFilter;
   class EnabledObserver;
