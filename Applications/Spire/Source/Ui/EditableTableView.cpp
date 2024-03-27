@@ -83,16 +83,6 @@ namespace {
     match(*cell, EmptyCell());
     return cell;
   }
-
-  EditableBox* find_editable_box(QWidget& widget) {
-    if(auto editable_box = dynamic_cast<EditableBox*>(&widget)) {
-      return editable_box;
-    }
-    if(auto layout = widget.layout(); layout && layout->count() == 1) {
-      return find_editable_box(*layout->itemAt(0)->widget());
-    }
-    return nullptr;
-  }
 }
 
 struct RevertColumnTableModel : TableModel {
@@ -330,7 +320,7 @@ EditableTableView::EditableTableView(
     std::shared_ptr<CurrentModel> current,
     std::shared_ptr<SelectionModel> selection, ViewBuilder view_builder,
     Comparator comparator, QWidget* parent)
-    : TableView(std::make_shared<EditableTableModel>(table, header),
+    : TableView(std::make_shared<EditableTableModel>(std::move(table), header),
         std::make_shared<EditableTableHeaderModel>(header),
         std::move(table_filter), std::move(current), std::move(selection),
         std::bind_front(&EditableTableView::make_table_item, this,
@@ -379,7 +369,7 @@ QWidget* EditableTableView::make_table_item(ViewBuilder source_view_builder,
       match(*button, DeleteButton());
       button->connect_click_signal([=] {
         QTimer::singleShot(DELETE_TIMEOUT_MS,
-        std::bind_front(&EditableTableView::delete_current_row, this));
+          std::bind_front(&EditableTableView::delete_current_row, this));
       });
       return button;
     } else {
@@ -421,10 +411,10 @@ void EditableTableView::delete_current_row() {
     }();
     if(source_index != -1) {
       m_delete_signal(source_index);
+      m_table_body->setFocus();
+      get_current()->set(TableBody::Index{get_current()->get()->m_row, 1});
     }
   }
-  m_table_body->setFocus();
-  get_current()->set(TableBody::Index{get_current()->get()->m_row, 1});
 }
 
 void EditableTableView::on_source_table_operation(
