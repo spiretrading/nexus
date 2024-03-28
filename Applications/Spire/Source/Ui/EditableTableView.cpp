@@ -170,9 +170,7 @@ struct EditableTableModel : TableModel {
       throw std::out_of_range("The row or column is out of range.");
     }
     if(column == 0) {
-      static auto row_index = 0;
-      row_index = row;
-      return row_index;
+      return AnyRef(row, AnyRef::by_value); 
     }
     column -= 1;
     if(row < m_source->get_row_size() && column < m_source->get_column_size()) {
@@ -204,9 +202,7 @@ struct EditableTableModel : TableModel {
   void on_operation(const TableModel::Operation& operation) {
     auto adjust_row = [] (int index, const AnyListModel& source) {
       auto row = std::make_shared<ArrayListModel<std::any>>();
-      static auto row_index = 0;
-      row_index = index;
-      row->push(row_index);
+      row->push(index);
       for(auto i = 0; i < source.get_size(); ++i) {
         row->push(source.get(i));
       }
@@ -347,7 +343,7 @@ EditableTableView::EditableTableView(
     update_style(*row, [] (auto& style) {
       style = TABLE_ROW_STYLE(style);
     });
-    m_rows.set(m_table_body->get_table()->get<int>(i, 0), row);
+    m_rows.set(any_cast<int>(m_table_body->get_table()->at(i, 0)), row);
   }
   m_operation_connection = get_table()->connect_operation_signal(
     std::bind_front(&EditableTableView::on_source_table_operation, this));
