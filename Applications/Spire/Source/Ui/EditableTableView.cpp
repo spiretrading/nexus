@@ -349,7 +349,6 @@ EditableTableView::EditableTableView(
     });
     m_rows.set(m_table_body->get_table()->get<int>(i, 0), row);
   }
-  set_column_cover_mouse_events_transparent();
   m_operation_connection = get_table()->connect_operation_signal(
     std::bind_front(&EditableTableView::on_source_table_operation, this));
 }
@@ -380,21 +379,6 @@ QWidget* EditableTableView::make_table_item(ViewBuilder source_view_builder,
   } else {
     return source_view_builder(std::make_shared<RevertColumnTableModel>(table),
       row, column - 1);
-  }
-}
-
-void EditableTableView::set_column_cover_mouse_events_transparent() {
-  auto& children = m_table_body->children();
-  auto count = 0;
-  for(auto i = children.rbegin(); i != children.rend(); ++i) {
-    if(count >= get_table()->get_column_size()) {
-      break;
-    }
-    if((*i)->isWidgetType() &&
-        m_table_body->layout()->indexOf(static_cast<QWidget*>(*i)) == -1) {
-      static_cast<QWidget*>(*i)->setAttribute(Qt::WA_TransparentForMouseEvents);
-      ++count;
-    }
   }
 }
 

@@ -44,7 +44,6 @@ namespace Spire {
 
       QWidget* make_table_item(ViewBuilder source_view_builder,
         const std::shared_ptr<TableModel>& table, int row, int column);
-      void set_column_cover_mouse_events_transparent();
       void delete_current_row();
       void on_source_table_operation(const TableModel::Operation& operation);
   };
