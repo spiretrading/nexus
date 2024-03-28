@@ -367,7 +367,7 @@ QWidget* EditableTableView::make_table_item(ViewBuilder source_view_builder,
       set_style(*button, DELETE_BUTTON_STYLE());
       match(*button, DeleteButton());
       button->connect_click_signal([=] {
-        QTimer::singleShot(DELETE_TIMEOUT_MS,
+        QTimer::singleShot(DELETE_TIMEOUT_MS, this,
           std::bind_front(&EditableTableView::delete_current_row, this));
       });
       return button;
