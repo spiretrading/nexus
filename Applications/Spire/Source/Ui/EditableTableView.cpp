@@ -26,54 +26,48 @@ namespace {
     style.get(Any() > is_a<ScrollBox>()).
       set(BackgroundColor(QColor(0xFFFFFF))).
       set(PaddingBottom(64));
+    style.get(Any() > is_a<DropDownBox>() >
+        (is_a<TextBox>() && !(+Any() << is_a<ListItem>()))).
+      set(horizontal_padding(scale_width(8)));
+    style.get(Any() > is_a<EditableBox>()).
+      set(horizontal_padding(scale_width(8)));
+    style.get(Any() > DeleteButton()).
+      set(Visibility(Visibility::INVISIBLE));
+    style.get(Any() > DeleteButton() > is_a<Box>()).
+      set(BackgroundColor(QColor(Qt::transparent))).
+      set(horizontal_padding(scale_width(2))).
+      set(vertical_padding(scale_height(2)));
+    style.get(Any() > DeleteButton() > is_a<Icon>()).
+      set(BackgroundColor(QColor(Qt::transparent)));
+    style.get((Any() > DeleteButton()) << is_a<TableItem>()).
+      set(padding(scale_width(2)));
+    style.get(Any() > (Row() && Hover())).
+      set(BackgroundColor(0xF2F2FF));
+    style.get(Any() > (Row() && Hover()) > DeleteButton()).
+      set(Visibility(Visibility::VISIBLE));
+    style.get((Any() > (Row() && Hover())) > DeleteButton() > is_a<Icon>()).
+      set(Fill(QColor(0x535353)));
+    style.get(Any() > (Row() && Hover()) > DeleteButton() >
+        (is_a<Icon>() && Hover())).
+      set(BackgroundColor(QColor(0xDFDFEB))).
+      set(Fill(QColor(0xB71C1C)));
     style.get(Any() > Current()).
       set(BackgroundColor(Qt::transparent));
     style.get(Any() > HoverItem()).set(border_color(QColor(0xA0A0A0)));
-    style.get((Any() > DeleteButton()) << is_a<TableItem>()).
-      set(padding(scale_width(2)));
     style.get((Any() > DeleteButton()) << (HoverItem() || Current())).
       set(border_color(QColor(Qt::transparent)));
-    style.get(Any() > (DeleteButton() && Hover()) > is_a<Icon>()).
-      set(BackgroundColor(QColor(0xDFDFEB))).
-      set(Fill(QColor(0xB71C1C)));
     style.get((Any() > EmptyCell()) << (HoverItem() || Current())).
       set(border_color(QColor(Qt::transparent)));
     style.get(Any() > CurrentRow() > DeleteButton()).
       set(Visibility(Visibility::VISIBLE));
     style.get(Any() > CurrentRow() > DeleteButton() > is_a<Icon>()).
       set(Fill(QColor(0x535353)));
-    style.get(Any() > CurrentRow() > (DeleteButton() && Hover()) >
-        is_a<Icon>()).
+    style.get(Any() > CurrentRow() > DeleteButton() >
+        (is_a<Icon>() && Hover())).
       set(BackgroundColor(QColor(0xD0CEEB))).
       set(Fill(QColor(0xB71C1C)));
     style.get(Any() > CurrentRow()).set(BackgroundColor(QColor(0xE2E0FF)));
     style.get(Any() > CurrentColumn()).set(BackgroundColor(Qt::transparent));
-    return style;
-  }
-
-  auto DELETE_BUTTON_STYLE() {
-    auto style = StyleSheet();
-    style.get(Any()).set(Visibility(Visibility::INVISIBLE));
-    style.get(Any() > is_a<Box>()).
-      set(BackgroundColor(QColor(Qt::transparent))).
-      set(horizontal_padding(scale_width(2))).
-      set(vertical_padding(scale_height(2)));
-    style.get(Any() > is_a<Icon>()).
-      set(BackgroundColor(QColor(Qt::transparent)));
-    return style;
-  }
-
-  auto TABLE_ROW_STYLE(StyleSheet style) {
-    style.get(Any() > is_a<DropDownBox>() >
-        (is_a<TextBox>() && !(+Any() << is_a<ListItem>()))).
-      set(horizontal_padding(scale_width(8)));
-    style.get(Any() > is_a<EditableBox>()).
-      set(horizontal_padding(scale_width(8)));
-    style.get(Hover()).set(BackgroundColor(0xF2F2FF));
-    style.get(Hover() > DeleteButton()).
-      set(Visibility(Visibility::VISIBLE));
-    style.get(Hover() > DeleteButton() > is_a<Icon>()).
-      set(Fill(QColor(0x535353)));
     return style;
   }
 
@@ -340,9 +334,6 @@ EditableTableView::EditableTableView(
   }
   for(auto i = 0; i < m_table_body->get_table()->get_row_size(); ++i) {
     auto row = m_table_body->layout()->itemAt(i)->widget();
-    update_style(*row, [] (auto& style) {
-      style = TABLE_ROW_STYLE(style);
-    });
     m_rows.set(any_cast<int>(m_table_body->get_table()->at(i, 0)), row);
   }
   m_operation_connection = get_table()->connect_operation_signal(
@@ -360,7 +351,6 @@ QWidget* EditableTableView::make_table_item(ViewBuilder source_view_builder,
     if(row < table->get_row_size() - 1) {
       auto button = make_delete_icon_button();
       button->setMaximumHeight(scale_height(26));
-      set_style(*button, DELETE_BUTTON_STYLE());
       match(*button, DeleteButton());
       button->connect_click_signal([=] {
         QTimer::singleShot(DELETE_TIMEOUT_MS, this,
