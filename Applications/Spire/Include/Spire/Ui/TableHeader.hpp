@@ -44,6 +44,9 @@ namespace Spire {
       /** Returns a column's filter button. */
       Button& get_filter_button(int column);
 
+      /** Returns a column's header item. */
+      TableHeaderItem& get_item(int column);
+
       /**
        * Connects a slot to the SortSignal.
        * @param slot The slot to connect.

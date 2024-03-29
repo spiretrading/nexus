@@ -316,25 +316,15 @@ EditableTableView::EditableTableView(
         std::bind_front(&EditableTableView::make_table_item, this,
           std::move(view_builder)),
         std::move(comparator), parent) {
-  auto table_header = static_cast<TableHeader*>(static_cast<Box*>(
-    layout()->itemAt(0)->widget())->get_body()->layout()->
-      itemAt(0)->widget());
-  auto empty_header_item =
-    static_cast<TableHeaderItem*>(table_header->layout()->itemAt(0)->widget());
-  empty_header_item->set_is_resizeable(false);
-  table_header->get_widths()->set(0, scale_width(26));
-  auto& scroll_box =
-    *static_cast<ScrollBox*>(layout()->itemAt(1)->widget());
-  scroll_box.setFocusPolicy(Qt::NoFocus);
-  m_table_body = static_cast<TableBody*>(&scroll_box.get_body());
-  m_table_body->installEventFilter(this);
+  get_header().get_item(0).set_is_resizeable(false);
+  get_header().get_widths()->set(0, scale_width(26));
   set_style(*this, TABLE_VIEW_STYLE());
   for(auto i = 0; i < get_table()->get_row_size(); ++i) {
     m_rows.push({});
   }
-  for(auto i = 0; i < m_table_body->get_table()->get_row_size(); ++i) {
-    auto row = m_table_body->layout()->itemAt(i)->widget();
-    m_rows.set(any_cast<int>(m_table_body->get_table()->at(i, 0)), row);
+  for(auto i = 0; i < get_body().get_table()->get_row_size(); ++i) {
+    auto row = get_body().layout()->itemAt(i)->widget();
+    m_rows.set(any_cast<int>(get_body().get_table()->at(i, 0)), row);
   }
   m_operation_connection = get_table()->connect_operation_signal(
     std::bind_front(&EditableTableView::on_source_table_operation, this));
@@ -370,7 +360,7 @@ QWidget* EditableTableView::make_table_item(ViewBuilder source_view_builder,
 
 void EditableTableView::delete_current_row() {
   if(auto& current = get_current()->get()) {
-    auto row = m_table_body->layout()->itemAt(current->m_row)->widget();
+    auto row = get_body().layout()->itemAt(current->m_row)->widget();
     auto source_index = [&] {
       for(auto i = 0; i < m_rows.get_size(); ++i) {
         if(m_rows.get(i) == row) {
@@ -381,7 +371,7 @@ void EditableTableView::delete_current_row() {
     }();
     if(source_index != -1) {
       m_delete_signal(source_index);
-      m_table_body->setFocus();
+      get_body().setFocus();
       get_current()->set(TableBody::Index{get_current()->get()->m_row, 1});
     }
   }
@@ -392,7 +382,7 @@ void EditableTableView::on_source_table_operation(
   visit(operation,
     [&] (const TableModel::RemoveOperation& operation) {
       m_rows.remove(operation.m_index);
-      m_table_body->adjustSize();
+      get_body().adjustSize();
       get_current()->set(get_current()->get());
     },
     [&] (const TableModel::MoveOperation& operation) {

@@ -38,7 +38,6 @@ namespace Spire {
 
     private:
       mutable DeleteSignal m_delete_signal;
-      TableBody* m_table_body;
       ArrayListModel<QWidget*> m_rows;
       boost::signals2::scoped_connection m_operation_connection;
 
