@@ -10,11 +10,6 @@ namespace Spire {
     public:
 
       /**
-       * Signals that the row is being clicked to delete.
-       */
-      using DeleteSignal = Signal<void (int row)>;
-
-      /**
        * Constructs an EditableTableView.
        * @param table The model of values to display.
        * @param header The model used to display the header.
@@ -32,12 +27,7 @@ namespace Spire {
         std::shared_ptr<SelectionModel> selection, ViewBuilder view_builder,
         Comparator comparator, QWidget* parent = nullptr);
 
-      /** Connects a slot to the DeleteSignal. */
-      boost::signals2::connection connect_delete_signal(
-        const DeleteSignal::slot_type& slot) const;
-
     private:
-      mutable DeleteSignal m_delete_signal;
       ArrayListModel<QWidget*> m_rows;
       boost::signals2::scoped_connection m_operation_connection;
 

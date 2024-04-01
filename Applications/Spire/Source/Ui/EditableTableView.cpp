@@ -68,15 +68,15 @@ struct EditableTableModel : TableModel {
       m_source_connection(m_source->connect_operation_signal(
         std::bind_front(&EditableTableModel::on_operation, this))) {}
 
-  int get_row_size() const {
+  int get_row_size() const override {
     return m_source->get_row_size();
   }
 
-  int get_column_size() const {
+  int get_column_size() const override {
     return m_header->get_size() + 2;
   }
 
-  AnyRef at(int row, int column) const {
+  AnyRef at(int row, int column) const override {
     if(row < 0 || row >= get_row_size() || column < 0 ||
         column >= get_column_size()) {
       throw std::out_of_range("The row or column is out of range.");
@@ -91,7 +91,7 @@ struct EditableTableModel : TableModel {
     return {};
   }
 
-  QValidator::State set(int row, int column, const std::any& value) {
+  QValidator::State set(int row, int column, const std::any& value) override {
     if(row < 0 || row >= get_row_size() || column < 0 ||
         column >= get_column_size()) {
       throw std::out_of_range("The row or column is out of range.");
@@ -106,8 +106,12 @@ struct EditableTableModel : TableModel {
     return QValidator::State::Invalid;
   }
 
+  QValidator::State remove(int row) override {
+    return m_source->remove(row);
+  }
+
   connection connect_operation_signal(
-      const OperationSignal::slot_type& slot) const {
+      const OperationSignal::slot_type& slot) const override {
     return m_transaction.connect_operation_signal(slot);
   }
 
@@ -248,11 +252,6 @@ EditableTableView::EditableTableView(
     std::bind_front(&EditableTableView::on_source_table_operation, this));
 }
 
-connection EditableTableView::connect_delete_signal(
-    const DeleteSignal::slot_type& slot) const {
-  return m_delete_signal.connect(slot);
-}
-
 QWidget* EditableTableView::make_table_item(ViewBuilder source_view_builder,
     const std::shared_ptr<TableModel>& table, int row, int column) {
   if(column == 0) {
@@ -285,7 +284,7 @@ void EditableTableView::delete_current_row() {
       return -1;
     }();
     if(source_index != -1) {
-      m_delete_signal(source_index);
+      get_table()->remove(source_index);
       get_body().setFocus();
       if(auto& current = get_current()->get()) {
         get_current()->set(TableBody::Index{current->m_row, 1});

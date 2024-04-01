@@ -2113,9 +2113,6 @@ UiProfile Spire::make_editable_table_view_profile() {
       [=] (const auto& table, auto row, auto column) -> QWidget* {
         return make_row_cell(table, row, column);
       }, {});
-    table_view->connect_delete_signal([=] (int row) {
-      array_table_model->remove(row);
-    });
     apply_widget_properties(table_view, profile.get_properties());
     table_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     return table_view;
