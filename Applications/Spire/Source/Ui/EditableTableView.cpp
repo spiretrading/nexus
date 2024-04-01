@@ -17,20 +17,11 @@ using namespace Spire::Styles;
 
 namespace {
   using DeleteButton = StateSelector<void, struct DeleteButtonSeletorTag>;
-  using EmptyCell = StateSelector<void, struct EmptyCellSeletorTag>;
 
   const auto DELETE_TIMEOUT_MS = 100;
 
   auto TABLE_VIEW_STYLE() {
     auto style = StyleSheet();
-    style.get(Any() > is_a<ScrollBox>()).
-      set(BackgroundColor(QColor(0xFFFFFF))).
-      set(PaddingBottom(64));
-    style.get(Any() > is_a<DropDownBox>() >
-        (is_a<TextBox>() && !(+Any() << is_a<ListItem>()))).
-      set(horizontal_padding(scale_width(8)));
-    style.get(Any() > is_a<EditableBox>()).
-      set(horizontal_padding(scale_width(8)));
     style.get(Any() > DeleteButton()).
       set(Visibility(Visibility::INVISIBLE));
     style.get(Any() > DeleteButton() > is_a<Box>()).
@@ -39,42 +30,31 @@ namespace {
       set(vertical_padding(scale_height(2)));
     style.get(Any() > DeleteButton() > is_a<Icon>()).
       set(BackgroundColor(QColor(Qt::transparent)));
-    style.get((Any() > DeleteButton()) << is_a<TableItem>()).
-      set(padding(scale_width(2)));
-    style.get(Any() > (Row() && Hover())).
-      set(BackgroundColor(0xF2F2FF));
-    style.get(Any() > (Row() && Hover()) > DeleteButton()).
+    style.get(Any() > (CurrentRow() || (Row() && Hover())) > DeleteButton()).
       set(Visibility(Visibility::VISIBLE));
-    style.get((Any() > (Row() && Hover())) > DeleteButton() > is_a<Icon>()).
+    style.get((Any() > (CurrentRow() || (Row() && Hover()))) >
+        DeleteButton() > is_a<Icon>()).
       set(Fill(QColor(0x535353)));
     style.get(Any() > (Row() && Hover()) > DeleteButton() >
         (is_a<Icon>() && Hover())).
       set(BackgroundColor(QColor(0xDFDFEB))).
       set(Fill(QColor(0xB71C1C)));
-    style.get(Any() > Current()).
-      set(BackgroundColor(Qt::transparent));
-    style.get(Any() > HoverItem()).set(border_color(QColor(0xA0A0A0)));
     style.get((Any() > DeleteButton()) << (HoverItem() || Current())).
       set(border_color(QColor(Qt::transparent)));
-    style.get((Any() > EmptyCell()) << (HoverItem() || Current())).
-      set(border_color(QColor(Qt::transparent)));
-    style.get(Any() > CurrentRow() > DeleteButton()).
-      set(Visibility(Visibility::VISIBLE));
-    style.get(Any() > CurrentRow() > DeleteButton() > is_a<Icon>()).
-      set(Fill(QColor(0x535353)));
+    //style.get(Any() > CurrentRow() > DeleteButton()).
+    //  set(Visibility(Visibility::VISIBLE));
+    //style.get(Any() > CurrentRow() > DeleteButton() > is_a<Icon>()).
+    //  set(Fill(QColor(0x535353)));
     style.get(Any() > CurrentRow() > DeleteButton() >
         (is_a<Icon>() && Hover())).
       set(BackgroundColor(QColor(0xD0CEEB))).
       set(Fill(QColor(0xB71C1C)));
-    style.get(Any() > CurrentRow()).set(BackgroundColor(QColor(0xE2E0FF)));
-    style.get(Any() > CurrentColumn()).set(BackgroundColor(Qt::transparent));
     return style;
   }
 
   QWidget* make_empty_cell() {
     auto cell = new QWidget();
     cell->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    match(*cell, EmptyCell());
     return cell;
   }
 }
