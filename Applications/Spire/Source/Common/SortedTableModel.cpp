@@ -64,6 +64,10 @@ QValidator::State
   return m_translation.set(row, column, value);
 }
 
+QValidator::State SortedTableModel::remove(int row) {
+  return m_translation.remove(row);
+}
+
 connection SortedTableModel::connect_operation_signal(
     const OperationSignal::slot_type& slot) const {
   return m_transaction.connect_operation_signal(slot);

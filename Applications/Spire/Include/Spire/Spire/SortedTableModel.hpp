@@ -108,6 +108,8 @@ namespace Spire {
       QValidator::State set(
         int row, int column, const std::any& value) override;
 
+      QValidator::State remove(int row) override;
+
       boost::signals2::connection connect_operation_signal(
         const OperationSignal::slot_type& slot) const override;
 
