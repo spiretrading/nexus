@@ -41,10 +41,6 @@ namespace {
       set(Fill(QColor(0xB71C1C)));
     style.get((Any() > DeleteButton()) << (HoverItem() || Current())).
       set(border_color(QColor(Qt::transparent)));
-    //style.get(Any() > CurrentRow() > DeleteButton()).
-    //  set(Visibility(Visibility::VISIBLE));
-    //style.get(Any() > CurrentRow() > DeleteButton() > is_a<Icon>()).
-    //  set(Fill(QColor(0x535353)));
     style.get(Any() > CurrentRow() > DeleteButton() >
         (is_a<Icon>() && Hover())).
       set(BackgroundColor(QColor(0xD0CEEB))).
@@ -73,7 +69,7 @@ struct EditableTableModel : TableModel {
         std::bind_front(&EditableTableModel::on_operation, this))) {}
 
   int get_row_size() const {
-    return m_source->get_row_size() + 1;
+    return m_source->get_row_size();
   }
 
   int get_column_size() const {
@@ -260,18 +256,14 @@ connection EditableTableView::connect_delete_signal(
 QWidget* EditableTableView::make_table_item(ViewBuilder source_view_builder,
     const std::shared_ptr<TableModel>& table, int row, int column) {
   if(column == 0) {
-    if(row < table->get_row_size() - 1) {
-      auto button = make_delete_icon_button();
-      button->setMaximumHeight(scale_height(26));
-      match(*button, DeleteButton());
-      button->connect_click_signal([=] {
-        QTimer::singleShot(DELETE_TIMEOUT_MS, this,
-          std::bind_front(&EditableTableView::delete_current_row, this));
-      });
-      return button;
-    } else {
-      return make_empty_cell();
-    }
+    auto button = make_delete_icon_button();
+    button->setMaximumHeight(scale_height(26));
+    match(*button, DeleteButton());
+    button->connect_click_signal([=] {
+      QTimer::singleShot(DELETE_TIMEOUT_MS, this,
+        std::bind_front(&EditableTableView::delete_current_row, this));
+    });
+    return button;
   } else if(column == table->get_column_size() - 1) {
     return make_empty_cell();
   } else {
@@ -295,7 +287,9 @@ void EditableTableView::delete_current_row() {
     if(source_index != -1) {
       m_delete_signal(source_index);
       get_body().setFocus();
-      get_current()->set(TableBody::Index{get_current()->get()->m_row, 1});
+      if(auto& current = get_current()->get()) {
+        get_current()->set(TableBody::Index{current->m_row, 1});
+      }
     }
   }
 }
@@ -306,7 +300,9 @@ void EditableTableView::on_source_table_operation(
     [&] (const TableModel::RemoveOperation& operation) {
       m_rows.remove(operation.m_index);
       get_body().adjustSize();
-      get_current()->set(get_current()->get());
+      if(auto& current = get_current()->get()) {
+        get_current()->set(current);
+      }
     },
     [&] (const TableModel::MoveOperation& operation) {
       m_rows.move(operation.m_source, operation.m_destination);

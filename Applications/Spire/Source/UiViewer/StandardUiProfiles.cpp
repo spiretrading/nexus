@@ -935,31 +935,6 @@ namespace {
     }
     return nullptr;
   }
-
-  QWidget* make_empty_row_cell(const std::shared_ptr<TableModel>& table,
-      auto row, auto column) {
-    auto input_box = [&] () -> AnyInputBox* {
-      if(column == 0) {
-        return new AnyInputBox(*new TextBox(""));
-      } else if(column == 1) {
-        return new AnyInputBox(*make_order_type_box(OrderType::NONE));
-      } else if(column == 2) {
-        return new AnyInputBox(*new KeyInputBox(
-          make_validated_value_model<QKeySequence>(&key_input_box_validator,
-            std::make_shared<LocalValueModel<QKeySequence>>())));
-      }
-      return nullptr;
-    }();
-    if(!input_box) {
-      return nullptr;
-    }
-    if(column == 2) {
-      return new EditableBox(*input_box, [] (const auto& key) {
-        return key_input_box_validator(key) == QValidator::Acceptable;
-      });
-    }
-    return new EditableBox(*input_box);
-  }
 }
 
 UiProfile Spire::make_adaptive_box_profile() {
@@ -2136,10 +2111,7 @@ UiProfile Spire::make_editable_table_view_profile() {
         std::make_shared<ListSingleSelectionModel>(),
         std::make_shared<ListEmptySelectionModel>()),
       [=] (const auto& table, auto row, auto column) -> QWidget* {
-        if(row < table->get_row_size()) {
-          return make_row_cell(table, row, column);
-        }
-        return make_empty_row_cell(table, row, column);
+        return make_row_cell(table, row, column);
       }, {});
     table_view->connect_delete_signal([=] (int row) {
       array_table_model->remove(row);
