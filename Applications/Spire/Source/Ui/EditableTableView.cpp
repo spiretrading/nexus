@@ -234,7 +234,7 @@ EditableTableView::EditableTableView(
         std::bind_front(&EditableTableView::make_table_item, this,
           std::move(view_builder)),
         std::move(comparator), parent) {
-  get_header().get_item(0).set_is_resizeable(false);
+  get_header().get_item(0)->set_is_resizeable(false);
   get_header().get_widths()->set(0, scale_width(26));
   set_style(*this, TABLE_VIEW_STYLE());
   for(auto i = 0; i < get_table()->get_row_size(); ++i) {

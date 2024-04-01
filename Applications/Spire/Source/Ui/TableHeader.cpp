@@ -64,8 +64,11 @@ Button& TableHeader::get_filter_button(int column) {
   return m_item_views[column]->get_filter_button();
 }
 
-TableHeaderItem& TableHeader::get_item(int column) {
-  return *m_item_views[column];
+TableHeaderItem* TableHeader::get_item(int column) {
+  if(column < 0 || column >= std::ssize(m_item_views)) {
+    return nullptr;
+  }
+  return m_item_views[column];
 }
 
 connection TableHeader::connect_sort_signal(
