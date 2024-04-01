@@ -323,8 +323,8 @@ EditableTableView::EditableTableView(
     m_rows.push({});
   }
   for(auto i = 0; i < get_body().get_table()->get_row_size(); ++i) {
-    auto row = get_body().layout()->itemAt(i)->widget();
-    m_rows.set(any_cast<int>(get_body().get_table()->at(i, 0)), row);
+    m_rows.set(any_cast<int>(get_body().get_table()->at(i, 0)),
+      get_body().layout()->itemAt(i)->widget());
   }
   m_operation_connection = get_table()->connect_operation_signal(
     std::bind_front(&EditableTableView::on_source_table_operation, this));
