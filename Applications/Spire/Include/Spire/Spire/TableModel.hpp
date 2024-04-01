@@ -136,6 +136,17 @@ namespace Spire {
        */
       virtual QValidator::State set(int row, int column, const std::any& value);
 
+      /**
+       * Removes a row from the model.
+       * @param row - The index of the row to remove.
+       * @return <code>QValidator::State::Acceptable</code> if the model
+       *         supports the operation, <code>QValidator::State::Invalid</code>
+       *         otherwise.
+       * @throws <code>std::out_of_range</code> - The index is not within this
+       *         table's range.
+       */
+      virtual QValidator::State remove(int row);
+
       /** Connects a slot to the OperationSignal. */
       virtual boost::signals2::connection connect_operation_signal(
         const OperationSignal::slot_type& slot) const = 0;

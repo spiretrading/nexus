@@ -69,6 +69,10 @@ QValidator::State TranslatedTableModel::set(
   return m_source->set(m_translation[row], column, value);
 }
 
+QValidator::State TranslatedTableModel::remove(int row) {
+  return m_source->remove(m_translation[row]);
+}
+
 connection TranslatedTableModel::connect_operation_signal(
     const OperationSignal::slot_type& slot) const {
   return m_transaction.connect_operation_signal(slot);
