@@ -892,46 +892,43 @@ namespace {
   }
 
   template<typename T>
-  class CustomListValueModel : public ListValueModel<T> {
+  class CustomColumnViewListModel : public ColumnViewListModel<T> {
     public:
-      using Type = typename ListValueModel<T>::Type;
+      using Type = typename ColumnViewListModel<T>::Type;
 
-      CustomListValueModel(std::shared_ptr<ListModel<Type>> source, int index)
-        : ListValueModel<Type>(std::move(source), index) {}
+      CustomColumnViewListModel(std::shared_ptr<TableModel> source, int column)
+        : ColumnViewListModel<T>(std::move(source), column) {}
 
-      const Type& get() const override {
-        if(ListValueModel<Type>::get_state() == QValidator::State::Acceptable) {
-          return ListValueModel<Type>::get();
+      const Type& get(int index) const override {
+        if(ColumnViewListModel<Type>::get_size() > 0) {
+          if(index == ColumnViewListModel<Type>::get_size()) {
+            return ColumnViewListModel<Type>::get(index - 1);
+          }
+          return ColumnViewListModel<Type>::get(index);
         }
         static auto value = Type();
         return value;
       }
   };
 
-  template<typename T>
-  auto make_custom_list_value_model(std::shared_ptr<T> source, int index) {
-    return std::make_shared<CustomListValueModel<typename T::Type>>(
-      std::move(source), index);
-  }
-
   QWidget* make_row_cell(const std::shared_ptr<TableModel>& table,
       auto row, auto column) {
     if(column == 0) {
       return new EditableBox(*new AnyInputBox(*new TextBox(
-        make_custom_list_value_model(
-          std::make_shared<ColumnViewListModel<QString>>(table, column),
+        make_list_value_model(
+          std::make_shared<CustomColumnViewListModel<QString>>(table, column),
           row))));
     } else if(column == 1) {
       return new EditableBox(*new AnyInputBox(*make_order_type_box(
-        make_custom_list_value_model(
-          std::make_shared<ColumnViewListModel<OrderType>>(table, column),
+        make_list_value_model(
+          std::make_shared<CustomColumnViewListModel<OrderType>>(table, column),
           row))));
     } else if(column == 2) {
       return new EditableBox(*new AnyInputBox(*new KeyInputBox(
         make_validated_value_model<QKeySequence>(&key_input_box_validator,
-          make_custom_list_value_model(
-            std::make_shared<ColumnViewListModel<QKeySequence>>(table, column),
-            row)))),
+          make_list_value_model(
+            std::make_shared<CustomColumnViewListModel<QKeySequence>>(table,
+              column), row)))),
         [] (const auto& key) {
           return key_input_box_validator(key) == QValidator::Acceptable;
         });
@@ -2139,7 +2136,7 @@ UiProfile Spire::make_editable_table_view_profile() {
         std::make_shared<ListSingleSelectionModel>(),
         std::make_shared<ListEmptySelectionModel>()),
       [=] (const auto& table, auto row, auto column) -> QWidget* {
-        if(row < table->get_row_size() - 1) {
+        if(row < table->get_row_size()) {
           return make_row_cell(table, row, column);
         }
         return make_empty_row_cell(table, row, column);

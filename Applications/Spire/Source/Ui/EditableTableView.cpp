@@ -79,64 +79,6 @@ namespace {
   }
 }
 
-struct RevertColumnTableModel : TableModel {
-  std::shared_ptr<TableModel> m_source;
-  TableModelTransactionLog m_transaction;
-  scoped_connection m_source_connection;
-
-  explicit RevertColumnTableModel(std::shared_ptr<TableModel> source)
-    : m_source(std::move(source)),
-      m_source_connection(m_source->connect_operation_signal(
-        std::bind_front(&RevertColumnTableModel::on_operation, this))) {}
-
-  int get_row_size() const {
-    return m_source->get_row_size();
-  }
-
-  int get_column_size() const {
-    return m_source->get_column_size() - 2;
-  }
-
-  AnyRef at(int row, int column) const {
-    return m_source->at(row, column + 1);
-  }
-
-  QValidator::State set(int row, int column, const std::any& value) {
-    return m_source->set(row, column + 1, value);
-  }
-
-  connection connect_operation_signal(
-      const OperationSignal::slot_type& slot) const {
-    return m_transaction.connect_operation_signal(slot);
-  }
-
-  void on_operation(const TableModel::Operation& operation) {
-    auto adjust_row = [] (int index, const AnyListModel& source) {
-      auto row = std::make_shared<ArrayListModel<std::any>>();
-      for(auto i = 1; i < source.get_size() - 1; ++i) {
-        row->push(source.get(i));
-      }
-      return row;
-    };
-    visit(operation,
-      [&] (const TableModel::AddOperation& operation) {
-        m_transaction.push(TableModel::AddOperation(operation.m_index,
-          adjust_row(operation.m_index, *operation.m_row)));
-      },
-      [&] (const TableModel::MoveOperation& operation) {
-        m_transaction.push(operation);
-      },
-      [&] (const TableModel::RemoveOperation& operation) {
-        m_transaction.push(TableModel::RemoveOperation(operation.m_index,
-          adjust_row(operation.m_index, *operation.m_row)));
-      },
-      [&] (const TableModel::UpdateOperation& operation) {
-        m_transaction.push(TableModel::UpdateOperation(operation.m_row,
-          operation.m_column - 1, operation.m_previous, operation.m_value));
-      });
-  }
-};
-
 struct EditableTableModel : TableModel {
   std::shared_ptr<TableModel> m_source;
   std::shared_ptr<EditableTableView::HeaderModel> m_header;
@@ -353,8 +295,9 @@ QWidget* EditableTableView::make_table_item(ViewBuilder source_view_builder,
   } else if(column == table->get_column_size() - 1) {
     return make_empty_cell();
   } else {
-    return source_view_builder(std::make_shared<RevertColumnTableModel>(table),
-      row, column - 1);
+    return source_view_builder(
+      std::static_pointer_cast<EditableTableModel>(get_table())->m_source,
+      any_cast<int>(table->at(row, 0)), column - 1);
   }
 }
 
