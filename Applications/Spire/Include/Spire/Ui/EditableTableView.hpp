@@ -1,6 +1,5 @@
 #ifndef SPIRE_EDITABLE_TABLE_VIEW_HPP
 #define SPIRE_EDITABLE_TABLE_VIEW_HPP
-#include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Ui/TableView.hpp"
 
 namespace Spire {
@@ -28,13 +27,9 @@ namespace Spire {
         Comparator comparator, QWidget* parent = nullptr);
 
     private:
-      ArrayListModel<QWidget*> m_rows;
-      boost::signals2::scoped_connection m_operation_connection;
-
-      QWidget* make_table_item(ViewBuilder source_view_builder,
+      QWidget* make_table_item(const ViewBuilder& view_builder,
         const std::shared_ptr<TableModel>& table, int row, int column);
-      void delete_current_row();
-      void on_source_table_operation(const TableModel::Operation& operation);
+      void delete_row(const TableRowIndexTracker& row);
   };
 }
 

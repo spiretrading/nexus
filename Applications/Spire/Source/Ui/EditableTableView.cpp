@@ -1,12 +1,11 @@
 #include "Spire/Ui/EditableTableView.hpp"
+#include <QTimer>
+#include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/TableRowIndexTracker.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
-#include "Spire/Ui/DropDownBox.hpp"
-#include "Spire/Ui/EditableBox.hpp"
 #include "Spire/Ui/Icon.hpp"
-#include "Spire/Ui/Layouts.hpp"
-#include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/TableBody.hpp"
 #include "Spire/Ui/TableItem.hpp"
 
@@ -17,8 +16,6 @@ using namespace Spire::Styles;
 
 namespace {
   using DeleteButton = StateSelector<void, struct DeleteButtonSeletorTag>;
-
-  const auto DELETE_TIMEOUT_MS = 100;
 
   auto TABLE_VIEW_STYLE() {
     auto style = StyleSheet();
@@ -235,75 +232,36 @@ EditableTableView::EditableTableView(
     : TableView(std::make_shared<EditableTableModel>(std::move(table), header),
         std::make_shared<EditableTableHeaderModel>(header),
         std::move(table_filter), std::move(current), std::move(selection),
-        std::bind_front(&EditableTableView::make_table_item, this,
-          std::move(view_builder)),
+        std::bind_front(
+          &EditableTableView::make_table_item, this, std::move(view_builder)),
         std::move(comparator), parent) {
   get_header().get_item(0)->set_is_resizeable(false);
   get_header().get_widths()->set(0, scale_width(26));
   set_style(*this, TABLE_VIEW_STYLE());
-  for(auto i = 0; i < get_table()->get_row_size(); ++i) {
-    m_rows.push({});
-  }
-  for(auto i = 0; i < get_body().get_table()->get_row_size(); ++i) {
-    m_rows.set(any_cast<int>(get_body().get_table()->at(i, 0)),
-      get_body().layout()->itemAt(i)->widget());
-  }
-  m_operation_connection = get_table()->connect_operation_signal(
-    std::bind_front(&EditableTableView::on_source_table_operation, this));
 }
 
-QWidget* EditableTableView::make_table_item(ViewBuilder source_view_builder,
+QWidget* EditableTableView::make_table_item(const ViewBuilder& view_builder,
     const std::shared_ptr<TableModel>& table, int row, int column) {
   if(column == 0) {
     auto button = make_delete_icon_button();
     button->setMaximumHeight(scale_height(26));
     match(*button, DeleteButton());
-    button->connect_click_signal([=] {
-      QTimer::singleShot(DELETE_TIMEOUT_MS, this,
-        std::bind_front(&EditableTableView::delete_current_row, this));
-    });
+    button->connect_click_signal(
+      [=, index = std::make_shared<TableRowIndexTracker>(*table, row)] {
+        QTimer::singleShot(0, this, [=] {
+          delete_row(*index);
+        });
+      });
     return button;
   } else if(column == table->get_column_size() - 1) {
     return make_empty_cell();
   } else {
-    return source_view_builder(
+    return view_builder(
       std::static_pointer_cast<EditableTableModel>(get_table())->m_source,
       any_cast<int>(table->at(row, 0)), column - 1);
   }
 }
 
-void EditableTableView::delete_current_row() {
-  if(auto& current = get_current()->get()) {
-    auto row = get_body().layout()->itemAt(current->m_row)->widget();
-    auto source_index = [&] {
-      for(auto i = 0; i < m_rows.get_size(); ++i) {
-        if(m_rows.get(i) == row) {
-          return i;
-        }
-      }
-      return -1;
-    }();
-    if(source_index != -1) {
-      get_table()->remove(source_index);
-      get_body().setFocus();
-      if(auto& current = get_current()->get()) {
-        get_current()->set(TableBody::Index{current->m_row, 1});
-      }
-    }
-  }
-}
-
-void EditableTableView::on_source_table_operation(
-    const TableModel::Operation& operation) {
-  visit(operation,
-    [&] (const TableModel::RemoveOperation& operation) {
-      m_rows.remove(operation.m_index);
-      get_body().adjustSize();
-      if(auto& current = get_current()->get()) {
-        get_current()->set(current);
-      }
-    },
-    [&] (const TableModel::MoveOperation& operation) {
-      m_rows.move(operation.m_source, operation.m_destination);
-    });
+void EditableTableView::delete_row(const TableRowIndexTracker& row) {
+  get_table()->remove(row.get_index());
 }
