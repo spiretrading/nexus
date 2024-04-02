@@ -27,13 +27,6 @@ namespace Spire {
 
         /** The value that was added. */
         std::any m_value;
-
-        /**
-         * Constructs an AddOperation.
-         * @param index The index where the value was inserted.
-         * @param value The value that was added.
-         */
-        AddOperation(int index, std::any value);
       };
 
       /** Indicates a value was removed from the model. */
@@ -44,13 +37,6 @@ namespace Spire {
 
         /** The value that was removed. */
         std::any m_value;
-
-        /**
-         * Constructs a RemoveOperation.
-         * @param index The index of the value removed.
-         * @param value The value that was removed.
-         */
-        RemoveOperation(int index, std::any value);
       };
 
       /** Indicates a value was moved from one index to another. */
@@ -61,13 +47,6 @@ namespace Spire {
 
         /** The index that the value was moved to. */
         int m_destination;
-
-        /**
-         * Constructs a MoveOperation.
-         * @param source The index of the value that was moved.
-         * @param destination The index that the value was moved to.
-         */
-        MoveOperation(int source, int destination);
       };
 
       /** Indicates a value was updated. */
@@ -81,14 +60,6 @@ namespace Spire {
 
         /** The updated value. */
         std::any m_value;
-
-        /**
-         * Constructs an UpdateOperation.
-         * @param index The index of the updated value.
-         * @param previous The previous value.
-         * @param value The updated value.
-         */
-        UpdateOperation(int index, std::any previous, std::any value);
       };
 
       /** Indicates the beginning of a transaction. */

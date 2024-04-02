@@ -12,14 +12,14 @@ TEST_CASE("ListModelIterator") {
   list.push(5);
   auto i = list.begin();
   SUBCASE("dereferece") {
-    REQUIRE(*i == 1);
+    REQUIRE_UNARY(*i == 1);
   }
   SUBCASE("increment") {
     ++i;
-    REQUIRE(*i == 2);
+    REQUIRE_UNARY(*i == 2);
   }
   SUBCASE("random_access") {
     auto j = i + 3;
-    REQUIRE(*j == 4);
+    REQUIRE_UNARY(*j == 4);
   }
 }

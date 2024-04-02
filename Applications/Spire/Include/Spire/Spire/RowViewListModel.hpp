@@ -5,6 +5,7 @@
 #include "Spire/Spire/ListModelTransactionLog.hpp"
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Spire/TableModel.hpp"
+#include "Spire/Spire/TableRowIndexTracker.hpp"
 
 namespace Spire {
 namespace Details {
@@ -65,7 +66,7 @@ namespace Details {
 
     private:
       std::shared_ptr<TableModel> m_source;
-      int m_row;
+      TableRowIndexTracker m_row;
       ListModelTransactionLog<Type> m_transaction;
       boost::signals2::scoped_connection m_source_connection;
 
@@ -75,12 +76,12 @@ namespace Details {
   template<typename T>
   RowViewListModel<T>::RowViewListModel(
       std::shared_ptr<TableModel> source, int row)
-      : m_source(std::move(source)) {
+      : m_source(std::move(source)),
+        m_row(row) {
     if(row < 0 || row >= m_source->get_row_size()) {
-      m_row = -1;
       m_source = nullptr;
+      m_row.set(-1);
     } else {
-      m_row = row;
       m_source_connection = m_source->connect_operation_signal(
         std::bind_front(&RowViewListModel::on_operation, this));
     }
@@ -88,7 +89,7 @@ namespace Details {
 
   template<typename T>
   int RowViewListModel<T>::get_size() const {
-    if(m_row == -1) {
+    if(m_row.get_index() == -1) {
       return 0;
     }
     return m_source->get_column_size();
@@ -97,23 +98,23 @@ namespace Details {
   template<typename T>
   const typename RowViewListModel<T>::Type& RowViewListModel<T>::get(int index)
       const {
-    if(m_row == -1) {
+    if(m_row.get_index() == -1) {
       throw std::out_of_range("The row is out of range.");
     }
     if constexpr(std::is_same_v<Type, AnyRef>) {
-      this->m_reference = m_source->at(m_row, index);
+      this->m_reference = m_source->at(m_row.get_index(), index);
       return this->m_reference;
     } else {
-      return m_source->get<Type>(m_row, index);
+      return m_source->get<Type>(m_row.get_index(), index);
     }
   }
 
   template<typename T>
   QValidator::State RowViewListModel<T>::set(int index, const Type& value) {
-    if(m_row == -1) {
+    if(m_row.get_index() == -1) {
       return QValidator::State::Invalid;
     }
-    return m_source->set(m_row, index, value);
+    return m_source->set(m_row.get_index(), index, value);
   }
 
   template<typename T>
@@ -138,34 +139,8 @@ namespace Details {
       [&] (const TableModel::EndTransaction) {
         m_transaction.end();
       },
-      [&] (const TableModel::AddOperation& operation) {
-        if(m_row >= operation.m_index) {
-          ++m_row;
-        }
-      },
-      [&] (const TableModel::MoveOperation& operation) {
-        if(m_row == operation.m_source) {
-          m_row = operation.m_destination;
-        } else if(operation.m_source < operation.m_destination) {
-          if(m_row > operation.m_source && m_row <= operation.m_destination) {
-            --m_row;
-          }
-        } else if(m_row >= operation.m_destination &&
-            m_row < operation.m_source) {
-          ++m_row;
-        }
-      },
-      [&] (const TableModel::RemoveOperation& operation) {
-        if(m_row == operation.m_index) {
-          m_source_connection.disconnect();
-          m_row = -1;
-          m_source = nullptr;
-        } else if(m_row > operation.m_index) {
-          --m_row;
-        }
-      },
       [&] (const TableModel::UpdateOperation& operation) {
-        if(m_row == operation.m_row) {
+        if(m_row.get_index() == operation.m_row) {
           if constexpr(std::is_same_v<Type, AnyRef>) {
             m_transaction.push(UpdateOperation(operation.m_column,
               AnyRef(operation.m_previous), AnyRef(operation.m_value)));
@@ -174,6 +149,13 @@ namespace Details {
               std::any_cast<const Type&>(operation.m_previous),
               std::any_cast<const Type&>(operation.m_value)));
           }
+        }
+      },
+      [&] (const auto& operation) {
+        m_row.update(operation);
+        if(m_row.get_index() == -1) {
+          m_source_connection.disconnect();
+          m_source = nullptr;
         }
       });
   }
