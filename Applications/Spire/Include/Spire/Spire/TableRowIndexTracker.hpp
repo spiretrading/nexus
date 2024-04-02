@@ -1,6 +1,6 @@
 #ifndef SPIRE_TABLE_ROW_INDEX_TRACKER_HPP
 #define SPIRE_TABLE_ROW_INDEX_TRACKER_HPP
-#include <boost/signals2/connection.hpp>
+#include "Spire/Spire/ListIndexTracker.hpp"
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Spire/TableModel.hpp"
 
@@ -15,10 +15,9 @@ namespace Spire {
 
       /**
        * Constructs a TableRowIndexTracker.
-       * @param table The table to monitor the row for.
        * @param index The initial index of the row to track.
        */
-      TableRowIndexTracker(const TableModel& table, int index);
+      explicit TableRowIndexTracker(int index);
 
       /**
        * Returns the current index of the row being tracked, if the row was
@@ -26,11 +25,17 @@ namespace Spire {
        */
       int get_index() const;
 
-    private:
-      boost::signals2::scoped_connection m_connection;
-      int m_index;
+      /** Sets the index of the row to track. */
+      void set(int index);
 
-      void on_operation(const TableModel::Operation& operation);
+      /**
+       * Updates the row index based on an operation.
+       * @param operation The operation performed on the table.
+       */
+      void update(const TableModel::Operation& operation);
+
+    private:
+      ListIndexTracker m_tracker;
   };
 }
 

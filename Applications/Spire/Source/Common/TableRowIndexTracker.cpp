@@ -2,40 +2,27 @@
 
 using namespace Spire;
 
-TableRowIndexTracker::TableRowIndexTracker(const TableModel& table, int index)
-  : m_connection(table.connect_operation_signal(
-      std::bind_front(&TableRowIndexTracker::on_operation, this))),
-    m_index(index) {}
+TableRowIndexTracker::TableRowIndexTracker(int index)
+  : m_tracker(index) {}
 
 int TableRowIndexTracker::get_index() const {
-  return m_index;
+  return m_tracker.get_index();
 }
 
-void TableRowIndexTracker::on_operation(
-    const TableModel::Operation& operation) {
+void TableRowIndexTracker::set(int index) {
+  m_tracker.set(index);
+}
+
+void TableRowIndexTracker::update(const TableModel::Operation& operation) {
   visit(operation,
     [&] (const TableModel::AddOperation& operation) {
-      if(operation.m_index <= m_index) {
-        ++m_index;
-      }
+      m_tracker.update(AnyListModel::AddOperation(operation.m_index));
     },
     [&] (const TableModel::RemoveOperation& operation) {
-      if(operation.m_index < m_index) {
-        --m_index;
-      } else if(operation.m_index == m_index) {
-        m_index = -1;
-        m_connection.disconnect();
-      }
+      m_tracker.update(AnyListModel::RemoveOperation(operation.m_index));
     },
     [&] (const TableModel::MoveOperation& operation) {
-      if(operation.m_source == m_index) {
-        m_index = operation.m_destination;
-      } else if(operation.m_source < m_index &&
-          operation.m_destination >= m_index) {
-        --m_index;
-      } else if(operation.m_source > m_index &&
-          operation.m_destination <= m_index) {
-        ++m_index;
-      }
+      m_tracker.update(AnyListModel::MoveOperation(
+        operation.m_source, operation.m_destination));
     });
 }

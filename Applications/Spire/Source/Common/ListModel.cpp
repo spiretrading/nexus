@@ -2,24 +2,6 @@
 
 using namespace Spire;
 
-AnyListModel::AddOperation::AddOperation(int index, std::any value)
-  : m_index(index),
-    m_value(std::move(value)) {}
-
-AnyListModel::RemoveOperation::RemoveOperation(int index, std::any value)
-  : m_index(index),
-    m_value(std::move(value)) {}
-
-AnyListModel::MoveOperation::MoveOperation(int source, int destination)
-  : m_source(source),
-    m_destination(destination) {}
-
-AnyListModel::UpdateOperation::UpdateOperation(
-  int index, std::any previous, std::any value)
-  : m_index(index),
-    m_previous(std::move(previous)),
-    m_value(std::move(value)) {}
-
 std::any AnyListModel::get(int index) const {
   return at(index);
 }

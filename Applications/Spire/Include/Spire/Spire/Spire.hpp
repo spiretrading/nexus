@@ -41,6 +41,7 @@ namespace Spire {
   template<typename T> class FieldValueModel;
   class FilteredTableModel;
   class KeySequenceValidationModel;
+  class ListIndexTracker;
   template<typename T> class ListIndexValueModel;
   template<typename T> class ListModel;
   template<typename T> class ListModelIterator;
