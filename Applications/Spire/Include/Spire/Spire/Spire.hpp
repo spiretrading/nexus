@@ -66,6 +66,7 @@ namespace Spire {
   class SpireController;
   template<typename T> struct SubscriptionResult;
   class TableModel;
+  class TableRowIndexTracker;
   class TaskKeySequenceValidationModel;
   class TechnicalsModel;
   class TestKeySequenceValidationModel;
