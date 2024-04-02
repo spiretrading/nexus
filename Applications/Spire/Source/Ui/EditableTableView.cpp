@@ -50,6 +50,14 @@ namespace {
     cell->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     return cell;
   }
+
+  struct Tracker {
+    TableRowIndexTracker m_index;
+    scoped_connection m_connection;
+
+    Tracker(int index)
+      : m_index(index) {}
+  };
 }
 
 struct EditableTableModel : TableModel {
@@ -246,12 +254,14 @@ QWidget* EditableTableView::make_table_item(const ViewBuilder& view_builder,
     auto button = make_delete_icon_button();
     button->setMaximumHeight(scale_height(26));
     match(*button, DeleteButton());
-    button->connect_click_signal(
-      [=, index = std::make_shared<TableRowIndexTracker>(*table, row)] {
-        QTimer::singleShot(0, this, [=] {
-          delete_row(*index);
-        });
+    auto tracker = std::make_shared<Tracker>(row);
+    tracker->m_connection = get_table()->connect_operation_signal(
+      std::bind_front(&TableRowIndexTracker::update, &tracker->m_index));
+    button->connect_click_signal([=] {
+      QTimer::singleShot(0, this, [=] {
+        delete_row(tracker->m_index);
       });
+    });
     return button;
   } else if(column == table->get_column_size() - 1) {
     return make_empty_cell();
