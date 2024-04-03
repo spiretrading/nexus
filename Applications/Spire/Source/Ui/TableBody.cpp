@@ -57,72 +57,10 @@ struct TableBody::ColumnCover : Cover {
 
   ColumnCover(QWidget* parent)
       : Cover(parent) {
-    setMouseTracking(true);
+    setAttribute(Qt::WA_TransparentForMouseEvents);
     update_style(*this, [] (auto& style) {
       style.get(CurrentColumn()).set(BackgroundColor(QColor(0xE2E0FF)));
     });
-  }
-
-  bool event(QEvent* event) override {
-    switch(event->type()) {
-      case QEvent::MouseButtonPress:
-      case QEvent::MouseButtonRelease:
-      case QEvent::MouseButtonDblClick:
-      case QEvent::MouseMove:
-        return mouse_event(*static_cast<QMouseEvent*>(event));
-    }
-    return Cover::event(event);
-  }
-
-  bool mouse_event(QMouseEvent& event) {
-    setAttribute(Qt::WA_TransparentForMouseEvents);
-    auto hovered_widget = parentWidget()->childAt(mapToParent(event.pos()));
-    if(m_hovered != hovered_widget) {
-      if(m_hovered) {
-        auto leave_event = QEvent(QEvent::Type::Leave);
-        QCoreApplication::sendEvent(m_hovered, &leave_event);
-      }
-      if(hovered_widget == parentWidget()) {
-        m_hovered.clear();
-      } else {
-        m_hovered = hovered_widget;
-        if(m_hovered) {
-          auto local_position = m_hovered->mapFromGlobal(event.globalPos());
-          auto enter_event =
-            QEnterEvent(local_position, event.windowPos(), event.screenPos());
-          QCoreApplication::sendEvent(m_hovered, &enter_event);
-        }
-      }
-    }
-    auto result = [&] {
-      if(hovered_widget) {
-        auto mouse_event = QMouseEvent(event.type(),
-          hovered_widget->mapFromGlobal(event.globalPos()), event.windowPos(),
-          event.screenPos(), event.button(), event.buttons(), event.modifiers(),
-          event.source());
-        auto result = [&] {
-          if(event.spontaneous()) {
-            return qt_sendSpontaneousEvent(hovered_widget, &mouse_event);
-          }
-          return QCoreApplication::sendEvent(hovered_widget, &mouse_event);
-        }();
-        event.setAccepted(mouse_event.isAccepted());
-        return result;
-      } else {
-        return false;
-      }
-    }();
-    setAttribute(Qt::WA_TransparentForMouseEvents, false);
-    return result;
-  }
-
-  void leaveEvent(QEvent* event) override {
-    if(m_hovered) {
-      auto leave_event = QEvent(QEvent::Type::Leave);
-      QCoreApplication::sendEvent(m_hovered, &leave_event);
-      m_hovered = nullptr;
-    }
-    Cover::leaveEvent(event);
   }
 };
 

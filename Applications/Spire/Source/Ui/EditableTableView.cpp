@@ -18,7 +18,7 @@ namespace {
 
   auto TABLE_VIEW_STYLE() {
     auto style = StyleSheet();
-    style.get(Any() > DeleteButton() > Body()).
+    style.get(Any() > DeleteButton()).
       set(Visibility(Visibility::INVISIBLE));
     style.get(Any() > DeleteButton() > is_a<Box>()).
       set(BackgroundColor(QColor(Qt::transparent))).
@@ -26,9 +26,8 @@ namespace {
       set(vertical_padding(scale_height(2)));
     style.get(Any() > DeleteButton() > is_a<Icon>()).
       set(BackgroundColor(QColor(Qt::transparent)));
-    style.get(
-      Any() > (CurrentRow() || (Row() && Hover())) > DeleteButton() > Body()).
-        set(Visibility(Visibility::VISIBLE));
+    style.get(Any() > (CurrentRow() || (Row() && Hover())) > DeleteButton()).
+      set(Visibility(Visibility::VISIBLE));
     style.get((Any() > (CurrentRow() || (Row() && Hover()))) >
         DeleteButton() > is_a<Icon>()).
       set(Fill(QColor(0x535353)));

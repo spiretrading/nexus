@@ -1,8 +1,8 @@
 #include "Spire/Styles/Stylist.hpp"
 #include <deque>
+#include <boost/functional/hash.hpp>
 #include <QApplication>
 #include <QTimer>
-#include <boost/functional/hash.hpp>
 #include "Spire/Styles/PseudoElement.hpp"
 #include "Spire/Styles/Selectors.hpp"
 
@@ -316,14 +316,12 @@ void Stylist::apply(Stylist& source, const RuleEntry& rule) {
         std::tie(level, right.m_priority);
     });
   m_sources.insert(j, {&source, level, &rule});
-  apply_proxies();
 }
 
 void Stylist::unapply(Stylist& source, const RuleEntry& rule) {
   std::erase_if(m_sources, [&] (const auto& entry) {
     return entry.m_rule == &rule;
   });
-  apply_proxies();
 }
 
 void Stylist::apply() {
@@ -417,15 +415,21 @@ void Stylist::on_animation() {
 void Stylist::on_selection_update(
     RuleEntry& rule, std::unordered_set<const Stylist*>&& additions,
     std::unordered_set<const Stylist*>&& removals) {
+  auto changed_stylists = std::unordered_set<Stylist*>();
   for(auto removal : removals) {
     rule.m_selection.erase(removal);
     auto& stylist = const_cast<Stylist&>(*removal);
     stylist.unapply(*this, rule);
+    changed_stylists.insert(&stylist);
   }
   for(auto addition : additions) {
     rule.m_selection.insert(addition);
     auto& stylist = const_cast<Stylist&>(*addition);
     stylist.apply(*this, rule);
+    changed_stylists.insert(&stylist);
+  }
+  for(auto stylist : changed_stylists) {
+    stylist->apply_proxies();
   }
 }
 
@@ -516,7 +520,8 @@ const Block& Spire::Styles::get_computed_block(
   }
 }
 
-const EvaluatedBlock& Spire::Styles::get_evaluated_block(const QWidget& widget) {
+const EvaluatedBlock&
+    Spire::Styles::get_evaluated_block(const QWidget& widget) {
   return find_stylist(widget).get_evaluated_block();
 }
 
