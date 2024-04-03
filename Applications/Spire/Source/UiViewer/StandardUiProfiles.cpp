@@ -926,7 +926,7 @@ namespace {
     return nullptr;
   }
 
-  void on_submit(ArrayTableModel& table, AnyInputBox& input_box,
+  void on_empty_cell_submit(ArrayTableModel& table, AnyInputBox& input_box,
       int column, const AnyRef& submission) {
     auto has_update = false;
     auto name = QString();
@@ -964,7 +964,7 @@ namespace {
   }
 
   QWidget* make_empty_row_cell(std::shared_ptr<ArrayTableModel> table,
-      int row, int column) {
+      int column) {
     auto input_box = [&] () -> AnyInputBox* {
       if(column == 0) {
         return new AnyInputBox(*new TextBox(""));
@@ -983,7 +983,7 @@ namespace {
       return nullptr;
     }
     input_box->connect_submit_signal([=] (const auto& submission) {
-      on_submit(*table, *input_box, column, submission);
+      on_empty_cell_submit(*table, *input_box, column, submission);
     });
     if(column == 3) {
       return new EditableBox(*input_box, [] (const auto& key) {
@@ -2171,7 +2171,7 @@ UiProfile Spire::make_editable_table_view_profile() {
         if(row < table->get_row_size()) {
           return make_row_cell(table, row, column);
         }
-        return make_empty_row_cell(array_table_model, row, column);
+        return make_empty_row_cell(array_table_model, column);
       }, {});
     apply_widget_properties(table_view, profile.get_properties());
     table_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
