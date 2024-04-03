@@ -18,6 +18,7 @@
 #include "Spire/Spire/FieldValueModel.hpp"
 #include "Spire/Spire/ListValueModel.hpp"
 #include "Spire/Spire/LocalScalarValueModel.hpp"
+#include "Spire/Spire/RowViewListModel.hpp"
 #include "Spire/Spire/ToTextModel.hpp"
 #include "Spire/Spire/ValidatedValueModel.hpp"
 #include "Spire/Styles/ChainExpression.hpp"
@@ -46,6 +47,9 @@
 #include "Spire/Ui/DropDownList.hpp"
 #include "Spire/Ui/DurationBox.hpp"
 #include "Spire/Ui/EditableBox.hpp"
+#include "Spire/Ui/EditableTableView.hpp"
+#include "Spire/Ui/EmptySelectionModel.hpp"
+#include "Spire/Ui/EmptyTableFilter.hpp"
 #include "Spire/Ui/EyeDropper.hpp"
 #include "Spire/Ui/FilterPanel.hpp"
 #include "Spire/Ui/FocusObserver.hpp"
@@ -95,6 +99,7 @@
 #include "Spire/Ui/SecurityView.hpp"
 #include "Spire/Ui/SideBox.hpp"
 #include "Spire/Ui/SideFilterPanel.hpp"
+#include "Spire/Ui/SingleSelectionModel.hpp"
 #include "Spire/Ui/Slider.hpp"
 #include "Spire/Ui/Slider2D.hpp"
 #include "Spire/Ui/SplitView.hpp"
@@ -874,6 +879,52 @@ namespace {
     private:
       Type m_rejected;
   };
+
+  auto make_header_model() {
+    auto model = std::make_shared<ArrayListModel<TableHeaderItem::Model>>();
+    model->push({"Name", "Name",
+      TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
+    model->push({"Order Type", "Ord Type",
+      TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
+    model->push({"Quantity", "Qty",
+      TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
+    model->push({"Key", "Key",
+      TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
+    return model;
+  }
+
+  QWidget* make_row_cell(const std::shared_ptr<TableModel>& table,
+      auto row, auto column) {
+    if(column == 0) {
+      return new EditableBox(*new AnyInputBox(*new TextBox(
+        make_list_value_model(std::make_shared<ColumnViewListModel<QString>>(
+          table, column), row))));
+    } else if(column == 1) {
+      return new EditableBox(*new AnyInputBox(*make_order_type_box(
+        make_list_value_model(std::make_shared<ColumnViewListModel<OrderType>>(
+          table, column), row))));
+    } else if(column == 2) {
+      auto model =
+        std::make_shared<ScalarValueModelDecorator<optional<Quantity>>>(
+          make_list_value_model(
+            std::make_shared<ColumnViewListModel<optional<Quantity>>>(
+              table, column), row));
+      return new EditableBox(*new AnyInputBox(*new QuantityBox(std::move(model),
+        QHash<Qt::KeyboardModifier, Quantity>(
+          {{Qt::NoModifier, 1}, {Qt::AltModifier, 5}, {Qt::ControlModifier, 10},
+          {Qt::ShiftModifier, 20}}))));
+    } else if(column == 3) {
+      return new EditableBox(*new AnyInputBox(*new KeyInputBox(
+        make_validated_value_model<QKeySequence>(&key_input_box_validator,
+          make_list_value_model(
+            std::make_shared<ColumnViewListModel<QKeySequence>>(table, column),
+            row)))),
+        [] (const auto& key) {
+          return key_input_box_validator(key) == QValidator::Acceptable;
+        });
+    }
+    return nullptr;
+  }
 }
 
 UiProfile Spire::make_adaptive_box_profile() {
@@ -2027,6 +2078,34 @@ UiProfile Spire::make_editable_box_profile() {
     editable_box->setMinimumWidth(scale_width(112));
     apply_widget_properties(editable_box, profile.get_properties());
     return editable_box;
+  });
+  return profile;
+}
+
+UiProfile Spire::make_editable_table_view_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto profile = UiProfile("EditableTableView", properties, [] (auto& profile) {
+    auto array_table_model = std::make_shared<ArrayTableModel>();
+    array_table_model->push({QString("Test1"), OrderType(OrderType::MARKET),
+      optional<Quantity>(10), QKeySequence("F3")});
+    array_table_model->push({QString("Test2"), OrderType(OrderType::STOP),
+      optional<Quantity>(20), QKeySequence("F7")});
+    array_table_model->push({QString("Test3"), OrderType(OrderType::LIMIT),
+      optional<Quantity>(30), QKeySequence("Ctrl+F2")});
+    auto table_view = new EditableTableView(array_table_model,
+      make_header_model(), std::make_shared<EmptyTableFilter>(),
+      std::make_shared<LocalValueModel<optional<TableIndex>>>(),
+      std::make_shared<TableSelectionModel>(
+        std::make_shared<TableEmptySelectionModel>(),
+        std::make_shared<ListSingleSelectionModel>(),
+        std::make_shared<ListEmptySelectionModel>()),
+      [=] (const auto& table, auto row, auto column) -> QWidget* {
+        return make_row_cell(table, row, column);
+      }, {});
+    apply_widget_properties(table_view, profile.get_properties());
+    table_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    return table_view;
   });
   return profile;
 }

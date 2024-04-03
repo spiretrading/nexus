@@ -110,6 +110,10 @@ const std::shared_ptr<TableView::SelectionModel>&
   return m_body->get_selection();
 }
 
+TableHeader& TableView::get_header() {
+  return *m_header_view;
+}
+
 connection TableView::connect_sort_signal(
     const SortSignal::slot_type& slot) const {
   return m_sort_signal.connect(slot);
