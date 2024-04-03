@@ -29,6 +29,19 @@ namespace {
     }
     return SortedTableModel::Ordering::NONE;
   }
+
+  auto make_column_order(const TableView::HeaderModel& header) {
+    auto order = std::vector<SortedTableModel::ColumnOrder>();
+    for(auto i = 0; i != header.get_size(); ++i) {
+      auto& item = header.get(i);
+      if(item.m_order != TableHeaderItem::Order::NONE &&
+          item.m_order != TableHeaderItem::Order::UNORDERED) {
+        order.push_back(
+          SortedTableModel::ColumnOrder(i, to_table_order(item.m_order)));
+      }
+    }
+    return order;
+  }
 }
 
 QWidget* TableView::default_view_builder(
@@ -70,10 +83,11 @@ TableView::TableView(
   m_filtered_table = std::make_shared<FilteredTableModel>(
     m_table, std::bind_front(&TableView::is_filtered, this));
   if(comparator) {
-    m_sorted_table = std::make_shared<SortedTableModel>(m_filtered_table,
-      std::move(comparator));
+    m_sorted_table = std::make_shared<SortedTableModel>(
+      m_filtered_table, make_column_order(*m_header), std::move(comparator));
   } else {
-    m_sorted_table = std::make_shared<SortedTableModel>(m_filtered_table);
+    m_sorted_table = std::make_shared<SortedTableModel>(
+      m_filtered_table, make_column_order(*m_header));
   }
   m_body = new TableBody(m_sorted_table, std::move(current),
     std::move(selection), m_header_view->get_widths(), std::move(view_builder));
