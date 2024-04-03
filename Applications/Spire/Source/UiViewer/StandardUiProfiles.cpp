@@ -886,6 +886,8 @@ namespace {
       TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
     model->push({"Order Type", "Ord Type",
       TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
+    model->push({"Quantity", "Qty",
+      TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
     model->push({"Key", "Key",
       TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
     return model;
@@ -924,6 +926,16 @@ namespace {
           std::make_shared<CustomColumnViewListModel<OrderType>>(table, column),
           row))));
     } else if(column == 2) {
+      auto model =
+        std::make_shared<ScalarValueModelDecorator<optional<Quantity>>>(
+          make_list_value_model(
+            std::make_shared<CustomColumnViewListModel<optional<Quantity>>>(
+              table, column), row));
+      return new EditableBox(*new AnyInputBox(*new QuantityBox(std::move(model),
+        QHash<Qt::KeyboardModifier, Quantity>(
+          {{Qt::NoModifier, 1}, {Qt::AltModifier, 5}, {Qt::ControlModifier, 10},
+          {Qt::ShiftModifier, 20}}))));
+    } else if(column == 3) {
       return new EditableBox(*new AnyInputBox(*new KeyInputBox(
         make_validated_value_model<QKeySequence>(&key_input_box_validator,
           make_list_value_model(
@@ -2098,11 +2110,11 @@ UiProfile Spire::make_editable_table_view_profile() {
   auto profile = UiProfile("EditableTableView", properties, [] (auto& profile) {
     auto array_table_model = std::make_shared<ArrayTableModel>();
     array_table_model->push({QString("Test1"), OrderType(OrderType::MARKET),
-      QKeySequence("F3")});
+      optional<Quantity>(10), QKeySequence("F3")});
     array_table_model->push({QString("Test2"), OrderType(OrderType::STOP),
-      QKeySequence("F7")});
+      optional<Quantity>(20), QKeySequence("F7")});
     array_table_model->push({QString("Test3"), OrderType(OrderType::LIMIT),
-      QKeySequence("Ctrl+F2")});
+      optional<Quantity>(30), QKeySequence("Ctrl+F2")});
     auto table_view = new EditableTableView(array_table_model,
       make_header_model(), std::make_shared<EmptyTableFilter>(),
       std::make_shared<LocalValueModel<optional<TableIndex>>>(),
