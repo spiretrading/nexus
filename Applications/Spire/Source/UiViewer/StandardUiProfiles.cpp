@@ -963,7 +963,7 @@ namespace {
     }
   }
 
-  QWidget* make_empty_row_cell(std::shared_ptr<ArrayTableModel> table,
+  QWidget* make_empty_row_cell(const std::shared_ptr<ArrayTableModel>& table,
       int column) {
     auto input_box = [&] () -> AnyInputBox* {
       if(column == 0) {
