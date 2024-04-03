@@ -90,7 +90,7 @@ struct EditableTableModel : TableModel {
         std::bind_front(&EditableTableModel::on_operation, this))) {}
 
   int get_row_size() const override {
-    return m_source->get_row_size();
+    return m_source->get_row_size() + 1;
   }
 
   int get_column_size() const override {
@@ -267,18 +267,22 @@ EditableTableView::EditableTableView(
 QWidget* EditableTableView::make_table_item(const ViewBuilder& view_builder,
     const std::shared_ptr<TableModel>& table, int row, int column) {
   if(column == 0) {
-    auto button = make_delete_icon_button();
-    button->setMaximumHeight(scale_height(26));
-    match(*button, DeleteButton());
-    auto tracker = std::make_shared<Tracker>(row);
-    tracker->m_connection = get_table()->connect_operation_signal(
-      std::bind_front(&TableRowIndexTracker::update, &tracker->m_index));
-    button->connect_click_signal([=] {
-      QTimer::singleShot(0, this, [=] {
-        delete_row(tracker->m_index);
+    if(row < table->get_row_size() - 1) {
+      auto button = make_delete_icon_button();
+      button->setMaximumHeight(scale_height(26));
+      match(*button, DeleteButton());
+      auto tracker = std::make_shared<Tracker>(row);
+      tracker->m_connection = get_table()->connect_operation_signal(
+        std::bind_front(&TableRowIndexTracker::update, &tracker->m_index));
+      button->connect_click_signal([=] {
+        QTimer::singleShot(0, this, [=] {
+          delete_row(tracker->m_index);
+        });
       });
-    });
-    return button;
+      return button;
+    } else {
+      return make_empty_cell();
+    }
   } else if(column == table->get_column_size() - 1) {
     return make_empty_cell();
   } else {
