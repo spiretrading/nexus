@@ -7,6 +7,7 @@
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/TableItem.hpp"
+#include "Spire/Ui/TextBox.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -15,9 +16,20 @@ using namespace Spire::Styles;
 
 namespace {
   using DeleteButton = StateSelector<void, struct DeleteButtonSeletorTag>;
+  using EmptyCell = StateSelector<void, struct EmptyCellSeletorTag>;
 
   auto TABLE_VIEW_STYLE() {
     auto style = StyleSheet();
+    style.get(Any() > is_a<TableItem>() >
+        (ReadOnly() && !(+Any() << is_a<ListItem>()))).
+      set(horizontal_padding(scale_width(8)));
+    style.get(Any() > is_a<TableItem>() > ReadOnly() >
+        (is_a<TextBox>() && !(+Any() << is_a<ListItem>()))).
+      set(horizontal_padding(scale_width(8)));
+    style.get(Any() > Current()).set(BackgroundColor(Qt::transparent));
+    style.get(Any() > HoverItem()).set(border_color(QColor(0xA0A0A0)));
+    style.get(Any() > (Row() && Hover())).
+      set(BackgroundColor(0xF2F2FF));
     style.get(Any() > DeleteButton()).
       set(Visibility(Visibility::INVISIBLE));
     style.get(Any() > DeleteButton() > is_a<Box>()).
@@ -41,12 +53,17 @@ namespace {
         (is_a<Icon>() && Hover())).
       set(BackgroundColor(QColor(0xD0CEEB))).
       set(Fill(QColor(0xB71C1C)));
+    style.get((Any() > EmptyCell()) << (HoverItem() || Current())).
+      set(border_color(QColor(Qt::transparent)));
+    style.get(Any() > CurrentRow()).set(BackgroundColor(QColor(0xE2E0FF)));
+    style.get(Any() > CurrentColumn()).set(BackgroundColor(Qt::transparent));
     return style;
   }
 
   QWidget* make_empty_cell() {
     auto cell = new QWidget();
     cell->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    match(*cell, EmptyCell());
     return cell;
   }
 
