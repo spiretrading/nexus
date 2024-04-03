@@ -5,6 +5,7 @@
 #include "Spire/Spire/TableRowIndexTracker.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
+#include "Spire/Ui/EditableBox.hpp"
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/TableItem.hpp"
 #include "Spire/Ui/TextBox.hpp"
@@ -67,6 +68,16 @@ namespace {
     return cell;
   }
 
+  EditableBox* find_editable_box(QWidget& widget) {
+    if(auto editable_box = dynamic_cast<EditableBox*>(&widget)) {
+      return editable_box;
+    }
+    if(auto layout = widget.layout(); layout && layout->count() == 1) {
+      return find_editable_box(*layout->itemAt(0)->widget());
+    }
+    return nullptr;
+  }
+
   struct Tracker {
     TableRowIndexTracker m_index;
     scoped_connection m_connection;
@@ -90,7 +101,7 @@ struct EditableTableModel : TableModel {
         std::bind_front(&EditableTableModel::on_operation, this))) {}
 
   int get_row_size() const override {
-    return m_source->get_row_size() + 1;
+    return m_source->get_row_size();
   }
 
   int get_column_size() const override {
@@ -286,9 +297,29 @@ QWidget* EditableTableView::make_table_item(const ViewBuilder& view_builder,
   } else if(column == table->get_column_size() - 1) {
     return make_empty_cell();
   } else {
-    return view_builder(
+    auto cell = view_builder(
       std::static_pointer_cast<EditableTableModel>(get_table())->m_source,
       any_cast<int>(table->at(row, 0)), column - 1);
+    if(row < table->get_row_size() - 1) {
+      if(auto editable_box = find_editable_box(*cell)) {
+        editable_box->get_input_box().connect_submit_signal(
+          [=] (const auto& submission) {
+            auto row =
+              std::vector<std::any>(get_table()->get_column_size() - 2);
+            row[column - 1] = submission;
+            for(auto i = 1; i < get_table()->get_column_size() - 1; ++i) {
+              if(i != column) {
+                row[i - 1] =
+                  get_table()->at(get_table()->get_row_size() - 1, column);
+              }
+            }
+            // Since TableModel doesn't provide the insert interface, the code
+            // below doesn't work.
+            //get_table()->insert(row, get_table()->get_row_size() - 1);
+        });
+      }
+    }
+    return cell;
   }
 }
 

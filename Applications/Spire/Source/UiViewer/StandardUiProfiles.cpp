@@ -925,73 +925,6 @@ namespace {
     }
     return nullptr;
   }
-
-  void on_empty_cell_submit(ArrayTableModel& table, AnyInputBox& input_box,
-      int column, const AnyRef& submission) {
-    auto has_update = false;
-    auto name = QString();
-    auto order_type = OrderType();
-    auto quantity = optional<Quantity>();
-    auto key = QKeySequence();
-    if(column == 0) {
-      name = any_cast<QString>(submission);
-      if(!name.isEmpty()) {
-        has_update = true;
-        input_box.get_current()->set(QString());
-      }
-    } else if(column == 1) {
-      order_type = any_cast<OrderType>(submission);
-      if(order_type != OrderType::NONE) {
-        has_update = true;
-        input_box.get_current()->set(OrderType());
-      }
-    } else if(column == 2) {
-      quantity = any_cast<optional<Quantity>>(submission);
-      if(quantity) {
-        has_update = true;
-        input_box.get_current()->set(optional<Quantity>());
-      }
-    } else if(column == 3) {
-      key = any_cast<QKeySequence>(submission);
-      if(!key.isEmpty()) {
-        has_update = true;
-        input_box.get_current()->set(QKeySequence());
-      }
-    }
-    if(has_update) {
-      table.push({name, order_type, quantity, key});
-    }
-  }
-
-  QWidget* make_empty_row_cell(const std::shared_ptr<ArrayTableModel>& table,
-      int column) {
-    auto input_box = [&] () -> AnyInputBox* {
-      if(column == 0) {
-        return new AnyInputBox(*new TextBox(""));
-      } else if(column == 1) {
-        return new AnyInputBox(*make_order_type_box(OrderType::NONE));
-      } else if(column == 2) {
-        return new AnyInputBox(*new QuantityBox());
-      } else if(column == 3) {
-        return new AnyInputBox(*new KeyInputBox(
-          make_validated_value_model<QKeySequence>(&key_input_box_validator,
-            std::make_shared<LocalValueModel<QKeySequence>>())));
-      }
-      return nullptr;
-    }();
-    if(!input_box) {
-      return nullptr;
-    }
-    input_box->connect_submit_signal([=] (const auto& submission) {
-      on_empty_cell_submit(*table, *input_box, column, submission);
-    });
-    if(column == 3) {
-      return new EditableBox(*input_box, [] (const auto& key) {
-        return key_input_box_validator(key) == QValidator::Acceptable;
-      });
-    }
-    return new EditableBox(*input_box);
-  }
 }
 
 UiProfile Spire::make_adaptive_box_profile() {
@@ -2160,6 +2093,8 @@ UiProfile Spire::make_editable_table_view_profile() {
       optional<Quantity>(20), QKeySequence("F7")});
     array_table_model->push({QString("Test3"), OrderType(OrderType::LIMIT),
       optional<Quantity>(30), QKeySequence("Ctrl+F2")});
+    array_table_model->push({QString(""), OrderType(),
+      optional<Quantity>(), QKeySequence()});
     auto table_view = new EditableTableView(array_table_model,
       make_header_model(), std::make_shared<EmptyTableFilter>(),
       std::make_shared<LocalValueModel<optional<TableIndex>>>(),
@@ -2168,10 +2103,7 @@ UiProfile Spire::make_editable_table_view_profile() {
         std::make_shared<ListSingleSelectionModel>(),
         std::make_shared<ListEmptySelectionModel>()),
       [=] (const auto& table, auto row, auto column) -> QWidget* {
-        if(row < table->get_row_size()) {
-          return make_row_cell(table, row, column);
-        }
-        return make_empty_row_cell(array_table_model, column);
+        return make_row_cell(table, row, column);
       }, {});
     apply_widget_properties(table_view, profile.get_properties());
     table_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
