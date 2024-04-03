@@ -6,7 +6,6 @@
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/Icon.hpp"
-#include "Spire/Ui/TableBody.hpp"
 #include "Spire/Ui/TableItem.hpp"
 
 using namespace boost;
