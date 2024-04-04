@@ -49,8 +49,6 @@ namespace {
         (is_a<Icon>() && Hover())).
       set(BackgroundColor(QColor(0xDFDFEB))).
       set(Fill(QColor(0xB71C1C)));
-    style.get((Any() > DeleteButton()) << (HoverItem() || Current())).
-      set(border_color(QColor(Qt::transparent)));
     style.get(Any() > CurrentRow() > DeleteButton() >
         (is_a<Icon>() && Hover())).
       set(BackgroundColor(QColor(0xD0CEEB))).
@@ -343,20 +341,20 @@ void EditableTableView::navigate_next() {
       if(row >= get_table()->get_row_size()) {
         get_current()->set(none);
       } else {
-        get_current()->set(Index(row, 1));
+        get_current()->set(Index(row, 0));
       }
     } else {
       get_current()->set(Index(current->m_row, column));
     }
   } else {
-    get_current()->set(Index(0, 1));
+    get_current()->set(Index(0, 0));
   }
 }
 
 void EditableTableView::navigate_previous() {
   if(auto& current = get_current()->get()) {
     auto column = current->m_column - 1;
-    if(column <= 0) {
+    if(column < 0) {
       auto row = current->m_row - 1;
       if(row < 0) {
         get_current()->set(none);
@@ -374,11 +372,7 @@ void EditableTableView::navigate_previous() {
 }
 
 void EditableTableView::on_current(const optional<Index>& index) {
-  if(index) {
-    if(index->m_column == 0) {
-      navigate_next();
-    } else if(index->m_column == get_table()->get_column_size() - 1) {
-      navigate_previous();
-    }
+  if(index && index->m_column == get_table()->get_column_size() - 1) {
+    navigate_previous();
   }
 }
