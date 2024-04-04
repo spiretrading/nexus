@@ -29,10 +29,19 @@ namespace Spire {
         std::shared_ptr<SelectionModel> selection, ViewBuilder view_builder,
         Comparator comparator, QWidget* parent = nullptr);
 
+    protected:
+      bool eventFilter(QObject* watched, QEvent* event) override;
+      bool focusNextPrevChild(bool next) override;
+
     private:
+      boost::signals2::scoped_connection m_current_connection;
+
       QWidget* make_table_item(const ViewBuilder& view_builder,
         const std::shared_ptr<TableModel>& table, int row, int column);
       void delete_row(const TableRowIndexTracker& row);
+      void navigate_next();
+      void navigate_previous();
+      void on_current(const boost::optional<Index>& index);
   };
 }
 

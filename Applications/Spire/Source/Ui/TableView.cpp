@@ -128,6 +128,10 @@ TableHeader& TableView::get_header() {
   return *m_header_view;
 }
 
+TableBody& TableView::get_body() {
+  return *m_body;
+}
+
 connection TableView::connect_sort_signal(
     const SortSignal::slot_type& slot) const {
   return m_sort_signal.connect(slot);
