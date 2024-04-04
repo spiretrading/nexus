@@ -274,7 +274,6 @@ EditableTableView::EditableTableView(
   get_header().get_item(0)->set_is_resizeable(false);
   get_header().get_widths()->set(0, scale_width(26));
   set_style(*this, TABLE_VIEW_STYLE());
-  setFocusProxy(&get_body());
   get_body().installEventFilter(this);
   m_current_connection = get_current()->connect_update_signal(
     std::bind_front(&EditableTableView::on_current, this));
