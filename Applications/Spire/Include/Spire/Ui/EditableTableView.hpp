@@ -45,6 +45,7 @@ namespace Spire {
       void delete_row(const TableRowIndexTracker& row);
       void navigate_next();
       void navigate_previous();
+      void set_focus(Index index);
       void on_current(const boost::optional<Index>& index);
   };
 }

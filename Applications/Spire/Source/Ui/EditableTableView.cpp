@@ -1,5 +1,5 @@
 #include "Spire/Ui/EditableTableView.hpp"
-#include <QKeyEvent>
+#include <QApplication>
 #include <QTimer>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
@@ -302,7 +302,9 @@ QWidget* EditableTableView::make_table_item(
       any_cast<int>(table->at(row, 0)), column - 1);
     if(item) {
       item->connect_end_edit_signal([=] {
-        setFocus();
+        if(!QApplication::focusWidget()) {
+          setFocus();
+        }
       });
     }
     return item;
@@ -329,6 +331,9 @@ void EditableTableView::navigate_next() {
   } else {
     get_current()->set(Index(0, 0));
   }
+  if(auto& current = get_current()->get()) {
+    set_focus(*current);
+  }
 }
 
 void EditableTableView::navigate_previous() {
@@ -348,6 +353,15 @@ void EditableTableView::navigate_previous() {
     get_current()->set(
       TableView::Index(get_table()->get_row_size() - 1,
         get_table()->get_column_size() - 1));
+  }
+  if(auto& current = get_current()->get()) {
+    set_focus(*current);
+  }
+}
+
+void EditableTableView::set_focus(Index index) {
+  if(auto item = get_body().get_item(index)) {
+    item->setFocus();
   }
 }
 
