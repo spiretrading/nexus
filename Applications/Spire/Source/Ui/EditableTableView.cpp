@@ -67,16 +67,6 @@ namespace {
     return cell;
   }
 
-  EditableBox* find_editable_box(QWidget& widget) {
-    if(auto editable_box = dynamic_cast<EditableBox*>(&widget)) {
-      return editable_box;
-    }
-    if(auto layout = widget.layout(); layout && layout->count() == 1) {
-      return find_editable_box(*layout->itemAt(0)->widget());
-    }
-    return nullptr;
-  }
-
   struct Tracker {
     TableRowIndexTracker m_index;
     scoped_connection m_connection;
@@ -261,7 +251,7 @@ EditableTableView::EditableTableView(
     std::shared_ptr<TableModel> table, std::shared_ptr<HeaderModel> header,
     std::shared_ptr<TableFilter> table_filter,
     std::shared_ptr<CurrentModel> current,
-    std::shared_ptr<SelectionModel> selection, ViewBuilder view_builder,
+    std::shared_ptr<SelectionModel> selection, EditableViewBuilder view_builder,
     Comparator comparator, QWidget* parent)
     : TableView(std::make_shared<EditableTableModel>(std::move(table), header),
         std::make_shared<EditableTableHeaderModel>(header),
@@ -272,34 +262,24 @@ EditableTableView::EditableTableView(
   get_header().get_item(0)->set_is_resizeable(false);
   get_header().get_widths()->set(0, scale_width(26));
   set_style(*this, TABLE_VIEW_STYLE());
-  get_body().installEventFilter(this);
   m_current_connection = get_current()->connect_update_signal(
     std::bind_front(&EditableTableView::on_current, this));
 }
 
-bool EditableTableView::eventFilter(QObject* watched, QEvent* event) {
-  if(watched == &get_body()) {
-    if(event->type() == QEvent::KeyPress) {
-      auto& key_event = *static_cast<QKeyEvent*>(event);
-      if(key_event.key() == Qt::Key_Shift) {
-        return true;
-      }
-    }
-  }
-  return TableView::eventFilter(watched, event);
-}
-
 bool EditableTableView::focusNextPrevChild(bool next) {
-  setFocus();
-  if(next) {
-    navigate_next();
-  } else {
-    navigate_previous();
+  if(isEnabled()) {
+    if(next) {
+      navigate_next();
+    } else {
+      navigate_previous();
+    }
+    return true;
   }
-  return true;
+  return TableView::focusNextPrevChild(next);
 }
 
-QWidget* EditableTableView::make_table_item(const ViewBuilder& view_builder,
+QWidget* EditableTableView::make_table_item(
+    const EditableViewBuilder& view_builder,
     const std::shared_ptr<TableModel>& table, int row, int column) {
   if(column == 0) {
     auto button = make_delete_icon_button();
@@ -320,8 +300,8 @@ QWidget* EditableTableView::make_table_item(const ViewBuilder& view_builder,
     auto item = view_builder(
       std::static_pointer_cast<EditableTableModel>(get_table())->m_source,
       any_cast<int>(table->at(row, 0)), column - 1);
-    if(auto editable_box = find_editable_box(*item)) {
-      editable_box->connect_end_edit_signal([=] {
+    if(item) {
+      item->connect_end_edit_signal([=] {
         setFocus();
       });
     }
@@ -372,7 +352,9 @@ void EditableTableView::navigate_previous() {
 }
 
 void EditableTableView::on_current(const optional<Index>& index) {
-  if(index && index->m_column == get_table()->get_column_size() - 1) {
-    navigate_previous();
+  if(index) {
+    if(index->m_column == get_table()->get_column_size() - 1) {
+      navigate_previous();
+    }
   }
 }
