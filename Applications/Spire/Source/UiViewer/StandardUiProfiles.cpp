@@ -860,26 +860,6 @@ namespace {
     });
   }
 
-  template<typename T>
-  class RejectedValueModel : public LocalValueModel<T> {
-    public:
-      using Type = typename LocalValueModel<T>::Type;
-
-      void set_rejected(const Type& rejected) {
-        m_rejected = rejected;
-      }
-
-      QValidator::State get_state() const {
-        if(this->get() == m_rejected) {
-          return QValidator::Invalid;
-        }
-        return QValidator::Acceptable;
-      }
-
-    private:
-      Type m_rejected;
-  };
-
   auto make_header_model() {
     auto model = std::make_shared<ArrayListModel<TableHeaderItem::Model>>();
     model->push({"Name", "Name",
@@ -2382,15 +2362,17 @@ UiProfile Spire::make_hex_color_box_profile() {
   properties.push_back(make_standard_property<QColor>("current"));
   properties.push_back(make_standard_property<QColor>("rejected", Qt::red));
   auto profile = UiProfile("HexColorBox", properties, [] (auto& profile) {
-    auto model = std::make_shared<RejectedValueModel<QColor>>();
+    auto& rejected = get<QColor>("rejected", profile.get_properties());
+    auto model = make_validated_value_model<QColor>([&] (QColor value) {
+      if(value == rejected.get()) {
+        return QValidator::State::Invalid;
+      }
+      return QValidator::State::Acceptable;
+    });
     auto box = new HexColorBox(model);
     box->setFixedWidth(scale_width(120));
     apply_widget_properties(box, profile.get_properties());
     link(box->get_current(), get<QColor>("current", profile.get_properties()));
-    auto& rejected = get<QColor>("rejected", profile.get_properties());
-    rejected.connect_changed_signal([=] (const auto& value) {
-      model->set_rejected(value);
-    });
     box->get_current()->connect_update_signal(
       profile.make_event_slot<QColor>("Current"));
     box->connect_submit_signal(profile.make_event_slot<QColor>("Submit"));
@@ -5025,7 +5007,14 @@ UiProfile Spire::make_text_box_profile() {
   properties.push_back(make_standard_enum_property(
     "text_align", text_alignment_property));
   auto profile = UiProfile("TextBox", properties, [] (auto& profile) {
-    auto model = std::make_shared<RejectedValueModel<QString>>();
+    auto& rejected = get<QString>("rejected", profile.get_properties());
+    auto model = make_validated_value_model<QString>(
+      [&] (const QString& value) {
+        if(value == rejected.get()) {
+          return QValidator::State::Intermediate;
+        }
+        return QValidator::State::Acceptable;
+      });
     auto text_box = new TextBox(model);
     text_box->setFixedWidth(scale_width(100));
     apply_widget_properties(text_box, profile.get_properties());
@@ -5038,10 +5027,6 @@ UiProfile Spire::make_text_box_profile() {
     auto& placeholder = get<QString>("placeholder", profile.get_properties());
     placeholder.connect_changed_signal([=] (const auto& text) {
       text_box->set_placeholder(text);
-    });
-    auto& rejected = get<QString>("rejected", profile.get_properties());
-    rejected.connect_changed_signal([=] (const auto& value) {
-      model->set_rejected(value);
     });
     auto& padding = get<int>("horizontal_padding", profile.get_properties());
     padding.connect_changed_signal([=] (const auto& value) {
