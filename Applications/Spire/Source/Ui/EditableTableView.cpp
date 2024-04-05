@@ -269,13 +269,29 @@ EditableTableView::EditableTableView(
 bool EditableTableView::focusNextPrevChild(bool next) {
   if(isEnabled()) {
     if(next) {
-      navigate_next();
+      if(navigate_next()) {
+        return true;
+      }
     } else {
-      navigate_previous();
+      if(navigate_previous()) {
+        return true;
+      }
     }
-    return true;
   }
-  return TableView::focusNextPrevChild(next);
+  auto next_focus_widget = static_cast<QWidget*>(this);
+  auto next_widget = nextInFocusChain();
+  while(next_widget && next_widget != this) {
+    next_widget = next_widget->nextInFocusChain();
+    if(!isAncestorOf(next_widget) && next_widget->isEnabled() &&
+        next_widget->focusPolicy() & Qt::TabFocus) {
+      next_focus_widget = next_widget;
+      if(next) {
+        break;
+      }
+    }
+  }
+  next_focus_widget->setFocus();
+  return true;
 }
 
 QWidget* EditableTableView::make_table_item(
@@ -315,13 +331,13 @@ void EditableTableView::delete_row(const TableRowIndexTracker& row) {
   get_table()->remove(row.get_index());
 }
 
-void EditableTableView::navigate_next() {
+bool EditableTableView::navigate_next() {
   if(auto& current = get_current()->get()) {
     auto column = current->m_column + 1;
     if(column >= get_table()->get_column_size() - 1) {
       auto row = current->m_row + 1;
       if(row >= get_table()->get_row_size()) {
-        get_current()->set(none);
+        return false;
       } else {
         get_current()->set(Index(row, 0));
       }
@@ -334,15 +350,16 @@ void EditableTableView::navigate_next() {
   if(auto& current = get_current()->get()) {
     set_focus(*current);
   }
+  return true;
 }
 
-void EditableTableView::navigate_previous() {
+bool EditableTableView::navigate_previous() {
   if(auto& current = get_current()->get()) {
     auto column = current->m_column - 1;
     if(column < 0) {
       auto row = current->m_row - 1;
       if(row < 0) {
-        get_current()->set(none);
+        return false;
       } else {
         get_current()->set(Index(row, get_table()->get_column_size() - 1));
       }
@@ -357,6 +374,7 @@ void EditableTableView::navigate_previous() {
   if(auto& current = get_current()->get()) {
     set_focus(*current);
   }
+  return true;
 }
 
 void EditableTableView::set_focus(Index index) {
