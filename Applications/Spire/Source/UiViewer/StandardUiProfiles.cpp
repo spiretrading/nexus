@@ -873,8 +873,8 @@ namespace {
     return model;
   }
 
-  QWidget* make_row_cell(const std::shared_ptr<TableModel>& table,
-      auto row, auto column) {
+  EditableBox* make_row_cell(const std::shared_ptr<TableModel>& table,
+      int row, int column) {
     if(column == 0) {
       return new EditableBox(*new AnyInputBox(*new TextBox(
         make_list_value_model(std::make_shared<ColumnViewListModel<QString>>(
@@ -2080,9 +2080,7 @@ UiProfile Spire::make_editable_table_view_profile() {
         std::make_shared<TableEmptySelectionModel>(),
         std::make_shared<ListSingleSelectionModel>(),
         std::make_shared<ListEmptySelectionModel>()),
-      [=] (const auto& table, auto row, auto column) -> QWidget* {
-        return make_row_cell(table, row, column);
-      }, {});
+      make_row_cell, {});
     apply_widget_properties(table_view, profile.get_properties());
     table_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     return table_view;

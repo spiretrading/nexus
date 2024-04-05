@@ -108,6 +108,7 @@ TableView::TableView(
     std::bind_front(&TableView::on_current, this));
   m_body_style_connection = connect_style_signal(
     *m_body, std::bind_front(&TableView::on_body_style, this));
+  setFocusProxy(m_body);
   on_body_style();
 }
 
@@ -126,6 +127,10 @@ const std::shared_ptr<TableView::SelectionModel>&
 
 TableHeader& TableView::get_header() {
   return *m_header_view;
+}
+
+TableBody& TableView::get_body() {
+  return *m_body;
 }
 
 connection TableView::connect_sort_signal(

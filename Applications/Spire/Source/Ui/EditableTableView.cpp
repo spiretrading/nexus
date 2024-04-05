@@ -1,10 +1,12 @@
 #include "Spire/Ui/EditableTableView.hpp"
+#include <QApplication>
 #include <QTimer>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/TableRowIndexTracker.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
+#include "Spire/Ui/EditableBox.hpp"
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/TableItem.hpp"
 #include "Spire/Ui/TextBox.hpp"
@@ -47,8 +49,6 @@ namespace {
         (is_a<Icon>() && Hover())).
       set(BackgroundColor(QColor(0xDFDFEB))).
       set(Fill(QColor(0xB71C1C)));
-    style.get((Any() > DeleteButton()) << (HoverItem() || Current())).
-      set(border_color(QColor(Qt::transparent)));
     style.get(Any() > CurrentRow() > DeleteButton() >
         (is_a<Icon>() && Hover())).
       set(BackgroundColor(QColor(0xD0CEEB))).
@@ -262,6 +262,34 @@ EditableTableView::EditableTableView(
   get_header().get_item(0)->set_is_resizeable(false);
   get_header().get_widths()->set(0, scale_width(26));
   set_style(*this, TABLE_VIEW_STYLE());
+  m_current_connection = get_current()->connect_update_signal(
+    std::bind_front(&EditableTableView::on_current, this));
+}
+
+bool EditableTableView::focusNextPrevChild(bool next) {
+  if(isEnabled()) {
+    if(next) {
+      if(navigate_next()) {
+        return true;
+      }
+    } else if(navigate_previous()) {
+      return true;
+    }
+  }
+  auto next_focus_widget = static_cast<QWidget*>(this);
+  auto next_widget = nextInFocusChain();
+  while(next_widget && next_widget != this) {
+    next_widget = next_widget->nextInFocusChain();
+    if(!isAncestorOf(next_widget) && next_widget->isEnabled() &&
+        next_widget->focusPolicy() & Qt::TabFocus) {
+      next_focus_widget = next_widget;
+      if(next) {
+        break;
+      }
+    }
+  }
+  next_focus_widget->setFocus();
+  return true;
 }
 
 QWidget* EditableTableView::make_table_item(const ViewBuilder& view_builder,
@@ -282,12 +310,76 @@ QWidget* EditableTableView::make_table_item(const ViewBuilder& view_builder,
   } else if(column == table->get_column_size() - 1) {
     return make_empty_cell();
   } else {
-    return view_builder(
+    auto item = view_builder(
       std::static_pointer_cast<EditableTableModel>(get_table())->m_source,
       any_cast<int>(table->at(row, 0)), column - 1);
+    item->connect_end_edit_signal([=] {
+      if(!QApplication::focusWidget()) {
+        setFocus();
+      }
+    });
+    return item;
   }
 }
 
 void EditableTableView::delete_row(const TableRowIndexTracker& row) {
   get_table()->remove(row.get_index());
+}
+
+bool EditableTableView::navigate_next() {
+  if(auto& current = get_current()->get()) {
+    auto column = current->m_column + 1;
+    if(column >= get_table()->get_column_size() - 1) {
+      auto row = current->m_row + 1;
+      if(row >= get_table()->get_row_size()) {
+        return false;
+      } else {
+        get_current()->set(Index(row, 0));
+      }
+    } else {
+      get_current()->set(Index(current->m_row, column));
+    }
+  } else {
+    get_current()->set(Index(0, 0));
+  }
+  if(auto& current = get_current()->get()) {
+    set_focus(*current);
+  }
+  return true;
+}
+
+bool EditableTableView::navigate_previous() {
+  if(auto& current = get_current()->get()) {
+    auto column = current->m_column - 1;
+    if(column < 0) {
+      auto row = current->m_row - 1;
+      if(row < 0) {
+        return false;
+      } else {
+        get_current()->set(Index(row, get_table()->get_column_size() - 1));
+      }
+    } else {
+      get_current()->set(Index(current->m_row, column));
+    }
+  } else {
+    get_current()->set(
+      TableView::Index(get_table()->get_row_size() - 1,
+        get_table()->get_column_size() - 1));
+  }
+  if(auto& current = get_current()->get()) {
+    set_focus(*current);
+  }
+  return true;
+}
+
+void EditableTableView::set_focus(Index index) {
+  if(auto item = get_body().get_item(index)) {
+    item->setFocus();
+  }
+}
+
+void EditableTableView::on_current(const optional<Index>& index) {
+  if(index && index->m_column == get_table()->get_column_size() - 1) {
+    navigate_previous();
+  }
 }
