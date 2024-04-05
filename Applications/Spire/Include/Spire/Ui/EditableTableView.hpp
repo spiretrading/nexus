@@ -11,7 +11,7 @@ namespace Spire {
   class EditableTableView : public TableView {
     public:
 
-      using EditableViewBuilder = std::function<EditableBox* (
+      using ViewBuilder = std::function<EditableBox* (
         const std::shared_ptr<TableModel>& table, int row, int column)>;
 
       /**
@@ -29,18 +29,16 @@ namespace Spire {
         std::shared_ptr<HeaderModel> header,
         std::shared_ptr<TableFilter> table_filter,
         std::shared_ptr<CurrentModel> current,
-        std::shared_ptr<SelectionModel> selection,
-        EditableViewBuilder view_builder,
+        std::shared_ptr<SelectionModel> selection, ViewBuilder view_builder,
         Comparator comparator, QWidget* parent = nullptr);
 
     protected:
       bool focusNextPrevChild(bool next) override;
 
     private:
-      using TableView::ViewBuilder;
       boost::signals2::scoped_connection m_current_connection;
 
-      QWidget* make_table_item(const EditableViewBuilder& view_builder,
+      QWidget* make_table_item(const ViewBuilder& view_builder,
         const std::shared_ptr<TableModel>& table, int row, int column);
       void delete_row(const TableRowIndexTracker& row);
       bool navigate_next();

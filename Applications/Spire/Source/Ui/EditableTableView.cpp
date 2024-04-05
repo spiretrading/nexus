@@ -251,7 +251,7 @@ EditableTableView::EditableTableView(
     std::shared_ptr<TableModel> table, std::shared_ptr<HeaderModel> header,
     std::shared_ptr<TableFilter> table_filter,
     std::shared_ptr<CurrentModel> current,
-    std::shared_ptr<SelectionModel> selection, EditableViewBuilder view_builder,
+    std::shared_ptr<SelectionModel> selection, ViewBuilder view_builder,
     Comparator comparator, QWidget* parent)
     : TableView(std::make_shared<EditableTableModel>(std::move(table), header),
         std::make_shared<EditableTableHeaderModel>(header),
@@ -294,8 +294,7 @@ bool EditableTableView::focusNextPrevChild(bool next) {
   return true;
 }
 
-QWidget* EditableTableView::make_table_item(
-    const EditableViewBuilder& view_builder,
+QWidget* EditableTableView::make_table_item(const ViewBuilder& view_builder,
     const std::shared_ptr<TableModel>& table, int row, int column) {
   if(column == 0) {
     auto button = make_delete_icon_button();
