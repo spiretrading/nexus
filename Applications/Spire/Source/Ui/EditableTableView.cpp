@@ -272,10 +272,8 @@ bool EditableTableView::focusNextPrevChild(bool next) {
       if(navigate_next()) {
         return true;
       }
-    } else {
-      if(navigate_previous()) {
-        return true;
-      }
+    } else if(navigate_previous()) {
+      return true;
     }
   }
   auto next_focus_widget = static_cast<QWidget*>(this);
@@ -383,9 +381,7 @@ void EditableTableView::set_focus(Index index) {
 }
 
 void EditableTableView::on_current(const optional<Index>& index) {
-  if(index) {
-    if(index->m_column == get_table()->get_column_size() - 1) {
-      navigate_previous();
-    }
+  if(index && index->m_column == get_table()->get_column_size() - 1) {
+    navigate_previous();
   }
 }
