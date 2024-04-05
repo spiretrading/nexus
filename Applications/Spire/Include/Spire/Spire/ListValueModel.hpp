@@ -42,6 +42,7 @@ namespace Spire {
     private:
       mutable UpdateSignal m_update_signal;
       std::shared_ptr<ListModel<Type>> m_source;
+      std::unique_ptr<Type> m_last;
       ListIndexTracker m_index;
       boost::signals2::scoped_connection m_source_connection;
 
@@ -86,7 +87,9 @@ namespace Spire {
 
   template<typename T>
   const typename ListValueModel<T>::Type& ListValueModel<T>::get() const {
-    if(m_index.get_index() == -1) {
+    if(m_last) {
+      return *m_last;
+    } else if(m_index.get_index() == -1) {
       throw std::out_of_range("Index out of range.");
     }
     return m_source->get(m_index.get_index());
@@ -123,12 +126,16 @@ namespace Spire {
           m_update_signal(operation.get_value());
         }
       },
-      [&] (const auto& operation) {
+      [&] (const ListModel<Type>::RemoveOperation& operation) {
         m_index.update(operation);
         if(m_index.get_index() == -1) {
+          m_last = std::make_unique<Type>(operation.get_value());
           m_source_connection.disconnect();
           m_source = nullptr;
         }
+      },
+      [&] (const auto& operation) {
+        m_index.update(operation);
       });
   }
 }
