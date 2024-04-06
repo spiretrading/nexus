@@ -5,6 +5,7 @@
 #include "Spire/Styles/FlipSelector.hpp"
 #include "Spire/Styles/Stylist.hpp"
 #include "Spire/StylesTester/StylesTester.hpp"
+#include "Spire/Ui/Box.hpp"
 
 using namespace Spire;
 using namespace Spire::Styles;
@@ -18,7 +19,7 @@ TEST_SUITE("Stylist") {
       match(parent, Foo());
       proxy_style(parent, child);
       auto style = StyleSheet();
-      style.get(Foo()).set(Visibility::INVISIBLE);
+      style.get(Foo()).set(BackgroundColor(QColor(0xFF00FF)));
       set_style(parent, style);
       auto computed_block = std::deque<Block>();
       connect_style_signal(child, [&] {
