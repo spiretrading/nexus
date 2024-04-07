@@ -74,178 +74,235 @@ namespace {
     Tracker(int index)
       : m_index(index) {}
   };
-}
 
-struct EditableTableModel : TableModel {
-  std::shared_ptr<TableModel> m_source;
-  std::shared_ptr<EditableTableView::HeaderModel> m_header;
-  TableModelTransactionLog m_transaction;
-  scoped_connection m_source_connection;
+  struct EditableTableCurrentModel : EditableTableView::CurrentModel {
+    mutable UpdateSignal m_update_signal;
+    std::shared_ptr<EditableTableView::CurrentModel> m_current;
+    int m_columns;
+    optional<TableIndex> m_value;
+    scoped_connection m_current_connection;
 
-  explicit EditableTableModel(std::shared_ptr<TableModel> source,
-    std::shared_ptr<EditableTableView::HeaderModel> header)
-    : m_source(std::move(source)),
-      m_header(std::move(header)),
-      m_source_connection(m_source->connect_operation_signal(
-        std::bind_front(&EditableTableModel::on_operation, this))) {}
-
-  int get_row_size() const override {
-    return m_source->get_row_size();
-  }
-
-  int get_column_size() const override {
-    return m_header->get_size() + 2;
-  }
-
-  AnyRef at(int row, int column) const override {
-    if(row < 0 || row >= get_row_size() || column < 0 ||
-        column >= get_column_size()) {
-      throw std::out_of_range("The row or column is out of range.");
+    EditableTableCurrentModel(
+        std::shared_ptr<EditableTableView::CurrentModel> current, int columns)
+        : m_current(std::move(current)),
+          m_columns(columns),
+          m_current_connection(m_current->connect_update_signal(
+            std::bind_front(&EditableTableCurrentModel::on_update, this))) {
+      auto value = m_current->get();
+      if(test(value) != QValidator::State::Invalid) {
+        m_value = std::move(value);
+      }
     }
-    if(column == 0) {
-      return AnyRef(row, AnyRef::by_value); 
-    }
-    column -= 1;
-    if(row < m_source->get_row_size() && column < m_source->get_column_size()) {
-      return m_source->at(row, column);
-    }
-    return {};
-  }
 
-  QValidator::State set(int row, int column, const std::any& value) override {
-    if(row < 0 || row >= get_row_size() || column < 0 ||
-        column >= get_column_size()) {
-      throw std::out_of_range("The row or column is out of range.");
+    QValidator::State get_state() const override {
+      return m_current->get_state();
     }
-    if(column == 0) {
+
+    const Type& get() const override {
+      return m_value;
+    }
+
+    QValidator::State test(const Type& value) const override {
+      if(value && value->m_column == m_columns - 1) {
+        return QValidator::State::Invalid;
+      }
+      return m_current->test(value);
+    }
+
+    QValidator::State set(const Type& value) override {
+      if(test(value) == QValidator::State::Invalid) {
+        return QValidator::State::Invalid;
+      }
+      return m_current->set(value);
+    }
+
+    connection connect_update_signal(
+        const UpdateSignal::slot_type& slot) const {
+      return m_update_signal.connect(slot);
+    }
+
+    void on_update(const optional<TableIndex>& index) {
+      if(test(index) == QValidator::State::Invalid) {
+        m_value = none;
+        m_update_signal(none);
+      } else {
+        m_value = index;
+        m_update_signal(index);
+      }
+    }
+  };
+
+  struct EditableTableModel : TableModel {
+    std::shared_ptr<TableModel> m_source;
+    std::shared_ptr<EditableTableView::HeaderModel> m_header;
+    TableModelTransactionLog m_transaction;
+    scoped_connection m_source_connection;
+
+    explicit EditableTableModel(std::shared_ptr<TableModel> source,
+      std::shared_ptr<EditableTableView::HeaderModel> header)
+      : m_source(std::move(source)),
+        m_header(std::move(header)),
+        m_source_connection(m_source->connect_operation_signal(
+          std::bind_front(&EditableTableModel::on_operation, this))) {}
+
+    int get_row_size() const override {
+      return m_source->get_row_size();
+    }
+
+    int get_column_size() const override {
+      return m_header->get_size() + 2;
+    }
+
+    AnyRef at(int row, int column) const override {
+      if(row < 0 || row >= get_row_size() || column < 0 ||
+          column >= get_column_size()) {
+        throw std::out_of_range("The row or column is out of range.");
+      }
+      if(column == 0) {
+        return AnyRef(row, AnyRef::by_value); 
+      }
+      column -= 1;
+      if(row < m_source->get_row_size() && column < m_source->get_column_size()) {
+        return m_source->at(row, column);
+      }
+      return {};
+    }
+
+    QValidator::State set(int row, int column, const std::any& value) override {
+      if(row < 0 || row >= get_row_size() || column < 0 ||
+          column >= get_column_size()) {
+        throw std::out_of_range("The row or column is out of range.");
+      }
+      if(column == 0) {
+        return QValidator::State::Invalid;
+      }
+      column -= 1;
+      if(row < m_source->get_row_size() && column < m_source->get_column_size()) {
+        return m_source->set(row, column, value);
+      }
       return QValidator::State::Invalid;
     }
-    column -= 1;
-    if(row < m_source->get_row_size() && column < m_source->get_column_size()) {
-      return m_source->set(row, column, value);
+
+    QValidator::State remove(int row) override {
+      return m_source->remove(row);
     }
-    return QValidator::State::Invalid;
-  }
 
-  QValidator::State remove(int row) override {
-    return m_source->remove(row);
-  }
+    connection connect_operation_signal(
+        const OperationSignal::slot_type& slot) const override {
+      return m_transaction.connect_operation_signal(slot);
+    }
 
-  connection connect_operation_signal(
-      const OperationSignal::slot_type& slot) const override {
-    return m_transaction.connect_operation_signal(slot);
-  }
+    void on_operation(const TableModel::Operation& operation) {
+      auto adjust_row = [] (int index, const AnyListModel& source) {
+        auto row = std::make_shared<ArrayListModel<std::any>>();
+        row->push(index);
+        for(auto i = 0; i < source.get_size(); ++i) {
+          row->push(source.get(i));
+        }
+        row->push({});
+        return row;
+      };
+      visit(operation,
+        [&] (const TableModel::AddOperation& operation) {
+          m_transaction.push(TableModel::AddOperation(operation.m_index,
+            adjust_row(operation.m_index, *operation.m_row)));
+        },
+        [&] (const TableModel::MoveOperation& operation) {
+          m_transaction.push(operation);
+        },
+        [&] (const TableModel::RemoveOperation& operation) {
+          m_transaction.push(TableModel::RemoveOperation(operation.m_index,
+            adjust_row(operation.m_index, *operation.m_row)));
+        },
+        [&] (const TableModel::UpdateOperation& operation) {
+          m_transaction.push(TableModel::UpdateOperation(operation.m_row,
+            operation.m_column + 1, operation.m_previous, operation.m_value));
+        });
+    }
+  };
 
-  void on_operation(const TableModel::Operation& operation) {
-    auto adjust_row = [] (int index, const AnyListModel& source) {
-      auto row = std::make_shared<ArrayListModel<std::any>>();
-      row->push(index);
-      for(auto i = 0; i < source.get_size(); ++i) {
-        row->push(source.get(i));
+  struct EditableTableHeaderModel : ListModel<TableHeaderItem::Model> {
+    std::shared_ptr<ListModel<TableHeaderItem::Model>> m_source;
+    ListModelTransactionLog<TableHeaderItem::Model> m_transaction;
+    scoped_connection m_source_connection;
+
+    explicit EditableTableHeaderModel(
+      std::shared_ptr<ListModel<TableHeaderItem::Model>> source)
+      : m_source(std::move(source)),
+        m_source_connection(m_source->connect_operation_signal(
+          std::bind_front(&EditableTableHeaderModel::on_operation, this))) {}
+
+    int get_size() const override {
+      return m_source->get_size() + 2;
+    }
+
+    const TableHeaderItem::Model& get(int index) const override {
+      if(index == 0 || index == get_size() - 1) {
+        static auto model = TableHeaderItem::Model{"", "",
+          TableHeaderItem::Order::UNORDERED, TableFilter::Filter::NONE};
+        return model;
       }
-      row->push({});
-      return row;
-    };
-    visit(operation,
-      [&] (const TableModel::AddOperation& operation) {
-        m_transaction.push(TableModel::AddOperation(operation.m_index,
-          adjust_row(operation.m_index, *operation.m_row)));
-      },
-      [&] (const TableModel::MoveOperation& operation) {
-        m_transaction.push(operation);
-      },
-      [&] (const TableModel::RemoveOperation& operation) {
-        m_transaction.push(TableModel::RemoveOperation(operation.m_index,
-          adjust_row(operation.m_index, *operation.m_row)));
-      },
-      [&] (const TableModel::UpdateOperation& operation) {
-        m_transaction.push(TableModel::UpdateOperation(operation.m_row,
-          operation.m_column + 1, operation.m_previous, operation.m_value));
-      });
-  }
-};
-
-struct EditableTableHeaderModel : ListModel<TableHeaderItem::Model> {
-  std::shared_ptr<ListModel<TableHeaderItem::Model>> m_source;
-  ListModelTransactionLog<TableHeaderItem::Model> m_transaction;
-  scoped_connection m_source_connection;
-
-  explicit EditableTableHeaderModel(
-    std::shared_ptr<ListModel<TableHeaderItem::Model>> source)
-    : m_source(std::move(source)),
-      m_source_connection(m_source->connect_operation_signal(
-        std::bind_front(&EditableTableHeaderModel::on_operation, this))) {}
-
-  int get_size() const override {
-    return m_source->get_size() + 2;
-  }
-
-  const TableHeaderItem::Model& get(int index) const override {
-    if(index == 0 || index == get_size() - 1) {
-      static auto model = TableHeaderItem::Model{"", "",
-        TableHeaderItem::Order::UNORDERED, TableFilter::Filter::NONE};
-      return model;
+      return m_source->get(index - 1);
     }
-    return m_source->get(index - 1);
-  }
 
-  QValidator::State set(int index,
-      const TableHeaderItem::Model& value) override {
-    if(index == 0 || index == get_size() - 1) {
-      return QValidator::Invalid;
+    QValidator::State set(int index,
+        const TableHeaderItem::Model& value) override {
+      if(index == 0 || index == get_size() - 1) {
+        return QValidator::Invalid;
+      }
+      return m_source->set(index - 1, value);
     }
-    return m_source->set(index - 1, value);
-  }
 
-  QValidator::State insert(const TableHeaderItem::Model& value,
-      int index) override {
-    return m_source->insert(value, index - 1);
-  }
-
-  QValidator::State move(int source, int destination) override {
-    if(source == 0 || destination == 0 || source == get_size() - 1 ||
-        destination == get_size() - 1) {
-      return QValidator::Invalid;
+    QValidator::State insert(const TableHeaderItem::Model& value,
+        int index) override {
+      return m_source->insert(value, index - 1);
     }
-    return m_source->move(source - 1, destination - 1);
-  }
 
-  QValidator::State remove(int index) override {
-    if(index == 0 || index == get_size() - 1) {
-      return QValidator::Invalid;
+    QValidator::State move(int source, int destination) override {
+      if(source == 0 || destination == 0 || source == get_size() - 1 ||
+          destination == get_size() - 1) {
+        return QValidator::Invalid;
+      }
+      return m_source->move(source - 1, destination - 1);
     }
-    return m_source->remove(index - 1);
-  }
 
-  connection connect_operation_signal(
-      const OperationSignal::slot_type& slot) const override {
-    return m_transaction.connect_operation_signal(slot);
-  }
+    QValidator::State remove(int index) override {
+      if(index == 0 || index == get_size() - 1) {
+        return QValidator::Invalid;
+      }
+      return m_source->remove(index - 1);
+    }
 
-  void transact(const std::function<void ()>& transaction) override {
-    m_transaction.transact(transaction);
-  }
+    connection connect_operation_signal(
+        const OperationSignal::slot_type& slot) const override {
+      return m_transaction.connect_operation_signal(slot);
+    }
 
-  void on_operation(const Operation& operation) {
-    visit(operation,
-      [&] (const AddOperation& operation) {
-        m_transaction.push(AddOperation(operation.m_index + 1,
-          operation.get_value()));
-      },
-      [&] (const MoveOperation& operation) {
-        m_transaction.push(MoveOperation(operation.m_source + 1,
-          operation.m_destination + 1));
-      },
-      [&] (const RemoveOperation& operation) {
-        m_transaction.push(RemoveOperation(operation.m_index + 1,
-          operation.get_value()));
-      },
-      [&] (const UpdateOperation& operation) {
-        m_transaction.push(UpdateOperation(operation.m_index + 1,
-          operation.get_previous(), operation.get_value()));
-      });
-  }
-};
+    void transact(const std::function<void ()>& transaction) override {
+      m_transaction.transact(transaction);
+    }
+
+    void on_operation(const Operation& operation) {
+      visit(operation,
+        [&] (const AddOperation& operation) {
+          m_transaction.push(AddOperation(operation.m_index + 1,
+            operation.get_value()));
+        },
+        [&] (const MoveOperation& operation) {
+          m_transaction.push(MoveOperation(operation.m_source + 1,
+            operation.m_destination + 1));
+        },
+        [&] (const RemoveOperation& operation) {
+          m_transaction.push(RemoveOperation(operation.m_index + 1,
+            operation.get_value()));
+        },
+        [&] (const UpdateOperation& operation) {
+          m_transaction.push(UpdateOperation(operation.m_index + 1,
+            operation.get_previous(), operation.get_value()));
+        });
+    }
+  };
+}
 
 EditableTableView::EditableTableView(
     std::shared_ptr<TableModel> table, std::shared_ptr<HeaderModel> header,
@@ -255,15 +312,14 @@ EditableTableView::EditableTableView(
     Comparator comparator, QWidget* parent)
     : TableView(std::make_shared<EditableTableModel>(std::move(table), header),
         std::make_shared<EditableTableHeaderModel>(header),
-        std::move(table_filter), std::move(current), std::move(selection),
+        std::move(table_filter), std::make_shared<EditableTableCurrentModel>(
+          std::move(current), header->get_size() + 2), std::move(selection),
         std::bind_front(
           &EditableTableView::make_table_item, this, std::move(view_builder)),
         std::move(comparator), parent) {
   get_header().get_item(0)->set_is_resizeable(false);
   get_header().get_widths()->set(0, scale_width(26));
   set_style(*this, TABLE_VIEW_STYLE());
-  m_current_connection = get_current()->connect_update_signal(
-    std::bind_front(&EditableTableView::on_current, this));
 }
 
 bool EditableTableView::focusNextPrevChild(bool next) {
@@ -339,11 +395,10 @@ bool EditableTableView::navigate_next() {
     } else {
       get_current()->set(Index(current->m_row, column));
     }
-  } else {
+  } else if(get_table()->get_row_size() > 0) {
     get_current()->set(Index(0, 0));
-  }
-  if(auto& current = get_current()->get()) {
-    set_focus(*current);
+  } else {
+    return false;
   }
   return true;
 }
@@ -361,25 +416,11 @@ bool EditableTableView::navigate_previous() {
     } else {
       get_current()->set(Index(current->m_row, column));
     }
+  } else if(get_table()->get_row_size() > 0) {
+    get_current()->set(TableView::Index(
+      get_table()->get_row_size() - 1, get_table()->get_column_size() - 1));
   } else {
-    get_current()->set(
-      TableView::Index(get_table()->get_row_size() - 1,
-        get_table()->get_column_size() - 1));
-  }
-  if(auto& current = get_current()->get()) {
-    set_focus(*current);
+    return false;
   }
   return true;
-}
-
-void EditableTableView::set_focus(Index index) {
-  if(auto item = get_body().get_item(index)) {
-    item->setFocus();
-  }
-}
-
-void EditableTableView::on_current(const optional<Index>& index) {
-  if(index && index->m_column == get_table()->get_column_size() - 1) {
-    navigate_previous();
-  }
 }

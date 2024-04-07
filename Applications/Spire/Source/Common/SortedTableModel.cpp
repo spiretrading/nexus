@@ -20,6 +20,18 @@ SortedTableModel::SortedTableModel(
       }) {}
 
 SortedTableModel::SortedTableModel(
+  std::shared_ptr<TableModel> source, ValueComparator comparator)
+  : SortedTableModel(std::move(source), {}, std::move(comparator)) {}
+
+SortedTableModel::SortedTableModel(std::shared_ptr<TableModel> source,
+    std::vector<ColumnOrder> order, ValueComparator comparator)
+    : SortedTableModel(std::move(source), std::move(order),
+        [comparator = std::move(comparator)] (const AnyRef& left, int left_row,
+            const AnyRef& right, int right_row, int column) {
+          return comparator(left, right);
+        }) {}
+
+SortedTableModel::SortedTableModel(
   std::shared_ptr<TableModel> source, Comparator comparator)
   : SortedTableModel(std::move(source), {}, std::move(comparator)) {}
 
@@ -30,7 +42,7 @@ SortedTableModel::SortedTableModel(std::shared_ptr<TableModel> source,
       m_comparator(std::move(comparator)) {
   set_column_order(order);
   m_source_connection = m_translation.connect_operation_signal(
-    [=] (const auto& operation) { on_operation(operation); });
+    std::bind_front(&SortedTableModel::on_operation, this));
 }
 
 const SortedTableModel::Comparator& SortedTableModel::get_comparator() const {
@@ -78,13 +90,13 @@ bool SortedTableModel::row_comparator(int lhs, int rhs) const {
     if(order.m_order == Ordering::NONE) {
       continue;
     }
-    auto is_lesser = m_comparator(m_translation.at(lhs, order.m_index),
-      m_translation.at(rhs, order.m_index));
+    auto is_lesser = m_comparator(m_translation.at(lhs, order.m_index), lhs,
+      m_translation.at(rhs, order.m_index), rhs, order.m_index);
     if(is_lesser) {
       return order.m_order == Ordering::ASCENDING;
     }
-    auto is_greater = m_comparator(m_translation.at(rhs, order.m_index),
-      m_translation.at(lhs, order.m_index));
+    auto is_greater = m_comparator(m_translation.at(rhs, order.m_index), rhs,
+      m_translation.at(lhs, order.m_index), lhs, order.m_index);
     if(is_greater) {
       return order.m_order == Ordering::DESCENDING;
     }

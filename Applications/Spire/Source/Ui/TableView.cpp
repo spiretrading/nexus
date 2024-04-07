@@ -180,25 +180,26 @@ void TableView::on_filter(int column, TableFilter::Filter filter) {
 }
 
 void TableView::on_current(const optional<Index>& current) {
-  if(current) {
-    if(auto item = m_body->get_item(*current)) {
-      auto& horizontal_scroll_bar = m_scroll_box->get_horizontal_scroll_bar();
-      auto old_x = horizontal_scroll_bar.get_position();
-      auto& vertical_scroll_bar = m_scroll_box->get_vertical_scroll_bar();
-      auto old_y = vertical_scroll_bar.get_position();
-      m_scroll_box->scroll_to(*item);
-      auto x = horizontal_scroll_bar.get_position();
-      if(x > old_x) {
-        horizontal_scroll_bar.set_position(x + m_horizontal_spacing);
-      } else if(x < old_x) {
-        horizontal_scroll_bar.set_position(x - m_horizontal_spacing);
-      }
-      auto y = vertical_scroll_bar.get_position();
-      if(y > old_y) {
-        vertical_scroll_bar.set_position(y + m_vertical_spacing);
-      } else if(y < old_y) {
-        vertical_scroll_bar.set_position(y - m_vertical_spacing);
-      }
+  if(!current) {
+    return;
+  }
+  if(auto item = m_body->get_item(*current)) {
+    auto& horizontal_scroll_bar = m_scroll_box->get_horizontal_scroll_bar();
+    auto old_x = horizontal_scroll_bar.get_position();
+    auto& vertical_scroll_bar = m_scroll_box->get_vertical_scroll_bar();
+    auto old_y = vertical_scroll_bar.get_position();
+    m_scroll_box->scroll_to(*item);
+    auto x = horizontal_scroll_bar.get_position();
+    if(x > old_x) {
+      horizontal_scroll_bar.set_position(x + m_horizontal_spacing);
+    } else if(x < old_x) {
+      horizontal_scroll_bar.set_position(x - m_horizontal_spacing);
+    }
+    auto y = vertical_scroll_bar.get_position();
+    if(y > old_y) {
+      vertical_scroll_bar.set_position(y + m_vertical_spacing);
+    } else if(y < old_y) {
+      vertical_scroll_bar.set_position(y - m_vertical_spacing);
     }
   }
 }

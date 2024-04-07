@@ -378,8 +378,9 @@ TableItem* TableBody::find_item(const optional<Index>& index) {
   if(!index) {
     return nullptr;
   }
-  return static_cast<TableItem*>(layout()->itemAt(index->m_row)->widget()->
-    layout()->itemAt(index->m_column)->widget());
+  auto row = find_row(index->m_row);
+  auto item = row->layout()->itemAt(index->m_column)->widget();
+  return static_cast<TableItem*>(item);
 }
 
 int TableBody::get_left_spacing(int index) const {
@@ -444,10 +445,10 @@ void TableBody::remove_row(int index) {
   auto& row_layout = *static_cast<QBoxLayout*>(layout());
   auto row = row_layout.itemAt(index);
   row_layout.removeItem(row);
-  delete row->widget();
-  delete row;
   m_current_controller.remove_row(index);
   m_selection_controller.remove_row(index);
+  delete row->widget();
+  delete row;
 }
 
 void TableBody::move_row(int source, int destination) {
@@ -555,6 +556,7 @@ void TableBody::on_current(
       match(*m_column_covers[current->m_column], CurrentColumn());
     }
     m_selection_controller.navigate(*current);
+    current_item->setFocus();
   }
 }
 

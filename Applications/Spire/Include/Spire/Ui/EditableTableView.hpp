@@ -10,7 +10,6 @@ namespace Spire {
    */
   class EditableTableView : public TableView {
     public:
-
       using ViewBuilder = std::function<EditableBox* (
         const std::shared_ptr<TableModel>& table, int row, int column)>;
 
@@ -36,15 +35,11 @@ namespace Spire {
       bool focusNextPrevChild(bool next) override;
 
     private:
-      boost::signals2::scoped_connection m_current_connection;
-
       QWidget* make_table_item(const ViewBuilder& view_builder,
         const std::shared_ptr<TableModel>& table, int row, int column);
       void delete_row(const TableRowIndexTracker& row);
       bool navigate_next();
       bool navigate_previous();
-      void set_focus(Index index);
-      void on_current(const boost::optional<Index>& index);
   };
 }
 
