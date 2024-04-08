@@ -31,7 +31,6 @@ namespace {
         (is_a<TextBox>() && !(+Any() << is_a<ListItem>()))).
       set(horizontal_padding(scale_width(8)));
     style.get((Any() > Editing()) << Current()).
-      set(BackgroundColor(Qt::transparent)).
       set(border_color(QColor(Qt::transparent)));
     style.get(Any() > Current()).set(BackgroundColor(Qt::transparent));
     style.get(Any() > HoverItem()).set(border_color(QColor(0xA0A0A0)));
