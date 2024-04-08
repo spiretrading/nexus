@@ -1,5 +1,6 @@
 #include "Spire/Ui/EditableTableView.hpp"
 #include <QApplication>
+#include <QKeyEvent>
 #include <QTimer>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
@@ -32,10 +33,6 @@ namespace {
     style.get((Any() > Editing()) << Current()).
       set(BackgroundColor(Qt::transparent)).
       set(border_color(QColor(Qt::transparent)));
-    //style.get(Any() > Editing()).
-    //  set(border_color(QColor(Qt::transparent)));
-    //style.get(Any() > Editing() > is_a<TextBox>()).
-    //  set(border_color(QColor(Qt::transparent)));
     style.get(Any() > Current()).set(BackgroundColor(Qt::transparent));
     style.get(Any() > HoverItem()).set(border_color(QColor(0xA0A0A0)));
     style.get(Any() > (Row() && Hover())).
@@ -324,10 +321,25 @@ EditableTableView::EditableTableView(
           std::move(current), header->get_size() + 2), std::move(selection),
         std::bind_front(
           &EditableTableView::make_table_item, this, std::move(view_builder)),
-        std::move(comparator), parent) {
+        std::move(comparator), parent),
+      m_is_processing_key(false) {
   get_header().get_item(0)->set_is_resizeable(false);
   get_header().get_widths()->set(0, scale_width(26));
   set_style(*this, TABLE_VIEW_STYLE());
+}
+
+void EditableTableView::keyPressEvent(QKeyEvent* event) {
+  if(auto& current = get_current()->get()) {
+    if(m_is_processing_key) {
+      return;
+    }
+    m_is_processing_key = true;
+    QCoreApplication::sendEvent(find_focus_proxy(
+      get_body().get_item(*current)->get_body()), event);
+    m_is_processing_key = false;
+  } else {
+    TableView::keyPressEvent(event);
+  }
 }
 
 bool EditableTableView::focusNextPrevChild(bool next) {
