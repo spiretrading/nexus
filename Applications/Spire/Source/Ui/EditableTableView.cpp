@@ -19,6 +19,7 @@ using namespace Spire::Styles;
 namespace {
   using DeleteButton = StateSelector<void, struct DeleteButtonSeletorTag>;
   using EmptyCell = StateSelector<void, struct EmptyCellSeletorTag>;
+  using Editing = StateSelector<void, struct EditingSelectorTag>;
 
   auto TABLE_VIEW_STYLE() {
     auto style = StyleSheet();
@@ -28,6 +29,13 @@ namespace {
     style.get(Any() > is_a<TableItem>() > ReadOnly() >
         (is_a<TextBox>() && !(+Any() << is_a<ListItem>()))).
       set(horizontal_padding(scale_width(8)));
+    style.get((Any() > Editing()) << Current()).
+      set(BackgroundColor(Qt::transparent)).
+      set(border_color(QColor(Qt::transparent)));
+    //style.get(Any() > Editing()).
+    //  set(border_color(QColor(Qt::transparent)));
+    //style.get(Any() > Editing() > is_a<TextBox>()).
+    //  set(border_color(QColor(Qt::transparent)));
     style.get(Any() > Current()).set(BackgroundColor(Qt::transparent));
     style.get(Any() > HoverItem()).set(border_color(QColor(0xA0A0A0)));
     style.get(Any() > (Row() && Hover())).
@@ -369,7 +377,11 @@ QWidget* EditableTableView::make_table_item(const ViewBuilder& view_builder,
     auto item = view_builder(
       std::static_pointer_cast<EditableTableModel>(get_table())->m_source,
       any_cast<int>(table->at(row, 0)), column - 1);
+    item->connect_start_edit_signal([=] {
+      match(*item, Editing());
+    });
     item->connect_end_edit_signal([=] {
+      unmatch(*item, Editing());
       if(!QApplication::focusWidget()) {
         setFocus();
       }
