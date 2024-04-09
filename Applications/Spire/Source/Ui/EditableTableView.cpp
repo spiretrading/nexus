@@ -1,5 +1,6 @@
 #include "Spire/Ui/EditableTableView.hpp"
 #include <QApplication>
+#include <QKeyEvent>
 #include <QTimer>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
@@ -19,6 +20,7 @@ using namespace Spire::Styles;
 namespace {
   using DeleteButton = StateSelector<void, struct DeleteButtonSeletorTag>;
   using EmptyCell = StateSelector<void, struct EmptyCellSeletorTag>;
+  using Editing = StateSelector<void, struct EditingSelectorTag>;
 
   auto TABLE_VIEW_STYLE() {
     auto style = StyleSheet();
@@ -28,6 +30,8 @@ namespace {
     style.get(Any() > is_a<TableItem>() > ReadOnly() >
         (is_a<TextBox>() && !(+Any() << is_a<ListItem>()))).
       set(horizontal_padding(scale_width(8)));
+    style.get((Any() > Editing()) << Current()).
+      set(border_color(QColor(Qt::transparent)));
     style.get(Any() > Current()).set(BackgroundColor(Qt::transparent));
     style.get(Any() > HoverItem()).set(border_color(QColor(0xA0A0A0)));
     style.get(Any() > (Row() && Hover())).
@@ -316,10 +320,25 @@ EditableTableView::EditableTableView(
           std::move(current), header->get_size() + 2), std::move(selection),
         std::bind_front(
           &EditableTableView::make_table_item, this, std::move(view_builder)),
-        std::move(comparator), parent) {
+        std::move(comparator), parent),
+      m_is_processing_key(false) {
   get_header().get_item(0)->set_is_resizeable(false);
   get_header().get_widths()->set(0, scale_width(26));
   set_style(*this, TABLE_VIEW_STYLE());
+}
+
+void EditableTableView::keyPressEvent(QKeyEvent* event) {
+  if(auto& current = get_current()->get()) {
+    if(m_is_processing_key) {
+      return;
+    }
+    m_is_processing_key = true;
+    QCoreApplication::sendEvent(find_focus_proxy(
+      get_body().get_item(*current)->get_body()), event);
+    m_is_processing_key = false;
+  } else {
+    TableView::keyPressEvent(event);
+  }
 }
 
 bool EditableTableView::focusNextPrevChild(bool next) {
@@ -369,7 +388,11 @@ QWidget* EditableTableView::make_table_item(const ViewBuilder& view_builder,
     auto item = view_builder(
       std::static_pointer_cast<EditableTableModel>(get_table())->m_source,
       any_cast<int>(table->at(row, 0)), column - 1);
+    item->connect_start_edit_signal([=] {
+      match(*item, Editing());
+    });
     item->connect_end_edit_signal([=] {
+      unmatch(*item, Editing());
       if(!QApplication::focusWidget()) {
         setFocus();
       }

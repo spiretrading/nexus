@@ -32,9 +32,12 @@ namespace Spire {
         Comparator comparator, QWidget* parent = nullptr);
 
     protected:
+      void keyPressEvent(QKeyEvent* event) override;
       bool focusNextPrevChild(bool next) override;
 
     private:
+      bool m_is_processing_key;
+
       QWidget* make_table_item(const ViewBuilder& view_builder,
         const std::shared_ptr<TableModel>& table, int row, int column);
       void delete_row(const TableRowIndexTracker& row);
