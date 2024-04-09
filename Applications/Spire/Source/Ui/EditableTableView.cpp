@@ -330,11 +330,12 @@ EditableTableView::EditableTableView(
 void EditableTableView::keyPressEvent(QKeyEvent* event) {
   if(auto& current = get_current()->get()) {
     if(m_is_processing_key) {
-      return;
+      return TableView::keyPressEvent(event);
     }
     m_is_processing_key = true;
-    QCoreApplication::sendEvent(find_focus_proxy(
-      get_body().get_item(*current)->get_body()), event);
+    auto target = find_focus_proxy(get_body().get_item(*current)->get_body());
+    QCoreApplication::sendEvent(target, event);
+    target->setFocus();
     m_is_processing_key = false;
   } else {
     TableView::keyPressEvent(event);
@@ -377,9 +378,7 @@ QWidget* EditableTableView::make_table_item(const ViewBuilder& view_builder,
     tracker->m_connection = get_table()->connect_operation_signal(
       std::bind_front(&TableRowIndexTracker::update, &tracker->m_index));
     button->connect_click_signal([=] {
-      QTimer::singleShot(0, this, [=] {
-        delete_row(tracker->m_index);
-      });
+      delete_row(tracker->m_index);
     });
     return button;
   } else if(column == table->get_column_size() - 1) {
