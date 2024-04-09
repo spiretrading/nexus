@@ -62,13 +62,12 @@ namespace {
     return i;
   }
 
-  int find_index(auto value, auto& list) {
-    for(auto i = 0; i != list.get_size(); ++i) {
-      if(list.get(i) == value) {
-        return i;
-      }
+  auto find_index(auto value, auto& list) {
+    auto i = std::find(list.begin(), list.end(), value);
+    if(i == list.end()) {
+      return -1;
     }
-    return -1;
+    return std::distance(list.begin(), i);
   }
 }
 
@@ -256,6 +255,9 @@ void TableSelectionController::select_all() {
 }
 
 void TableSelectionController::click(Index index) {
+  auto row_blocker = shared_connection_block(m_row_connection);
+  auto column_blocker = shared_connection_block(m_column_connection);
+  auto item_blocker = shared_connection_block(m_item_connection);
   if(m_mode == Mode::SINGLE) {
     auto select = [&] (auto selection, auto index) {
       if(selection->get_size() != 1 || selection->get(0) != index) {
