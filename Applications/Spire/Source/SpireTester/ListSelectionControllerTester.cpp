@@ -159,4 +159,17 @@ TEST_SUITE("ListSelectionController") {
     REQUIRE(selection->get_size() == 1);
     REQUIRE(selection->get(0) == 1);
   }
+
+  TEST_CASE("range_reentrant") { 
+    auto selection = std::make_shared<ListSingleSelectionModel>(); 
+    auto controller = ListSelectionController(selection); 
+    controller.set_mode(ListSelectionController::Mode::RANGE); 
+    controller.add(0); 
+    controller.add(1); 
+    controller.add(2); 
+    controller.navigate(0); 
+    controller.navigate(2); 
+    REQUIRE(selection->get_size() == 1);
+    REQUIRE(selection->get(0) == 2);
+  }
 }

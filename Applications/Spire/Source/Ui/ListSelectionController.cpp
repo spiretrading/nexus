@@ -6,13 +6,12 @@ using namespace boost::signals2;
 using namespace Spire;
 
 namespace {
-  int find_index(int value, ListSelectionController::SelectionModel& list) {
-    for(auto i = 0; i != list.get_size(); ++i) {
-      if(list.get(i) == value) {
-        return i;
-      }
+  auto find_index(int value, ListSelectionController::SelectionModel& list) {
+    auto i = std::find(list.begin(), list.end(), value);
+    if(i == list.end()) {
+      return -1;
     }
-    return -1;
+    return std::distance(list.begin(), i);
   }
 
   int get_direction(int start, int end) {
@@ -150,9 +149,10 @@ void ListSelectionController::click(int index) {
       });
     } else {
       auto direction = get_direction(*m_current, index);
+      auto range_anchor = *m_range_anchor;
       m_selection->transact([&] {
         for(auto i = *m_current; i != index + direction; i += direction) {
-          if(direction * i >= direction * *m_range_anchor) {
+          if(direction * i >= direction * range_anchor) {
             if(find_index(i, *m_selection) == -1) {
               m_selection->push(i);
             }

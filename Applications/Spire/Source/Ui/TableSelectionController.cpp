@@ -255,9 +255,6 @@ void TableSelectionController::select_all() {
 }
 
 void TableSelectionController::click(Index index) {
-  auto row_blocker = shared_connection_block(m_row_connection);
-  auto column_blocker = shared_connection_block(m_column_connection);
-  auto item_blocker = shared_connection_block(m_item_connection);
   if(m_mode == Mode::SINGLE) {
     auto select = [&] (auto selection, auto index) {
       if(selection->get_size() != 1 || selection->get(0) != index) {
@@ -300,12 +297,13 @@ void TableSelectionController::click(Index index) {
           selection->push(i);
         }
       };
+      auto range_anchor = *m_range_anchor;
       m_selection->transact([&] {
         select(
-          m_selection->get_row_selection(), index.m_row, m_range_anchor->m_row);
+          m_selection->get_row_selection(), index.m_row, range_anchor.m_row);
         select(m_selection->get_column_selection(), index.m_column,
-          m_range_anchor->m_column);
-        select(m_selection->get_item_selection(), index, *m_range_anchor);
+          range_anchor.m_column);
+        select(m_selection->get_item_selection(), index, range_anchor);
       });
     } else {
       auto select =
@@ -325,13 +323,14 @@ void TableSelectionController::click(Index index) {
             }
           }
         };
+      auto range_anchor = *m_range_anchor;
       m_selection->transact([&] {
         select(m_selection->get_row_selection(), m_current->m_row, index.m_row,
-          m_range_anchor->m_row);
+          range_anchor.m_row);
         select(m_selection->get_column_selection(), m_current->m_column,
-          index.m_column, m_range_anchor->m_column);
-        select(m_selection->get_item_selection(), *m_current, index,
-          *m_range_anchor);
+          index.m_column, range_anchor.m_column);
+        select(
+          m_selection->get_item_selection(), *m_current, index, range_anchor);
       });
     }
   }
