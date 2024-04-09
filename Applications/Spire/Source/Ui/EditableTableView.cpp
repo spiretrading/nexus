@@ -433,14 +433,14 @@ bool EditableTableView::navigate_previous() {
       if(row < 0) {
         return false;
       } else {
-        get_current()->set(Index(row, get_table()->get_column_size() - 1));
+        get_current()->set(Index(row, get_table()->get_column_size() - 2));
       }
     } else {
       get_current()->set(Index(current->m_row, column));
     }
   } else if(get_table()->get_row_size() > 0) {
     get_current()->set(TableView::Index(
-      get_table()->get_row_size() - 1, get_table()->get_column_size() - 1));
+      get_table()->get_row_size() - 1, get_table()->get_column_size() - 2));
   } else {
     return false;
   }
