@@ -191,26 +191,12 @@ bool TagComboBox::eventFilter(QObject* watched, QEvent* event) {
       if(key_event.text() != "\r") {
         return QWidget::eventFilter(watched, event);
       }
-      if(!m_tag_box->get_current()->get().isEmpty()) {
-        if(auto value = m_combo_box->get_query_model()->parse(
-            m_tag_box->get_current()->get()); value.has_value()) {
-          if(!is_equal(m_combo_box->get_current()->get(), value)) {
-            m_combo_box->get_current()->set(value);
-          }
-          get_current()->push(value);
-        }
-        m_tag_box->get_current()->set("");
-      }
-      if(get_current()->get_size() > 0) {
-        submit();
-      }
+      push_combo_box();
       return true;
     } else if(key_event.key() == Qt::Key_Space) {
       if(m_combo_box->get_query_model()->parse(
           m_tag_box->get_current()->get()).has_value()) {
-        auto new_event = QKeyEvent(key_event.type(), Qt::Key_Enter,
-          key_event.modifiers(), key_event.text());
-        QCoreApplication::sendEvent(m_input_box, &new_event);
+        push_combo_box();
         return true;
       }
     } else if(key_event.key() == Qt::Key_Escape) {
@@ -267,6 +253,24 @@ void TagComboBox::install_text_proxy_event_filter() {
   }
 }
 
+void TagComboBox::push_combo_box() {
+  if(m_tag_box->get_current()->get().isEmpty()) {
+    return;
+  }
+  auto value =
+    m_combo_box->get_query_model()->parse(m_tag_box->get_current()->get());
+  if(value.has_value()) {
+    if(!is_equal(m_combo_box->get_current()->get(), value)) {
+      m_combo_box->get_current()->set(value);
+    }
+    get_current()->push(value);
+    m_tag_box->get_current()->set("");
+    submit();
+  } else {
+    m_tag_box->get_current()->set("");
+  }
+}
+
 void TagComboBox::submit() {
   copy_list_model(get_current(), m_submission);
   m_is_modified = false;
@@ -285,10 +289,7 @@ void TagComboBox::on_focus(FocusObserver::State state) {
         submit();
       }
     } else {
-      get_current()->push(m_combo_box->get_query_model()->parse(
-        m_tag_box->get_current()->get()));
-      m_tag_box->get_current()->set("");
-      submit();
+      push_combo_box();
     }
   }
 }
