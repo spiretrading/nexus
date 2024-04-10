@@ -11,7 +11,7 @@ struct KeyObserver::EventFilter : QObject {
     std::unique_ptr<KeyObserver> m_observer;
     scoped_connection m_connection;
   };
-  mutable KeyPressSignal m_key_press_signal;
+  mutable FilteredKeyPressSignal m_key_press_signal;
   std::unordered_map<QObject*, Child> m_children;
 
   EventFilter(QWidget& widget) {
@@ -25,8 +25,9 @@ struct KeyObserver::EventFilter : QObject {
 
   bool eventFilter(QObject* watched, QEvent* event) override {
     if(event->type() == QEvent::KeyPress) {
-      m_key_press_signal(
-        *static_cast<QWidget*>(watched), *static_cast<QKeyEvent*>(event));
+      auto filter = m_key_press_signal(*static_cast<QWidget*>(watched),
+        *static_cast<QKeyEvent*>(event)).value_or(false);
+      return filter;
     } else if(event->type() == QEvent::ChildAdded) {
       auto& child = *static_cast<QChildEvent&>(*event).child();
       if(child.isWidgetType()) {
@@ -41,7 +42,10 @@ struct KeyObserver::EventFilter : QObject {
 
   void add(QWidget& child) {
     auto observer = std::make_unique<KeyObserver>(child);
-    auto connection = observer->connect_key_press_signal(m_key_press_signal);
+    auto connection = observer->connect_filtered_key_press_signal(
+      [=] (auto& target, auto& event) {
+        return m_key_press_signal(target, event).value_or(false);
+      });
     auto child_entry = Child(std::move(observer), std::move(connection));
     m_children.insert(std::pair(&child, std::move(child_entry)));
   }
@@ -49,11 +53,21 @@ struct KeyObserver::EventFilter : QObject {
 
 KeyObserver::KeyObserver(QWidget& widget) {
   m_filter = find_extension<EventFilter>(widget);
-  m_filter_connection =
-    m_filter->m_key_press_signal.connect(m_key_press_signal);
+  m_filter_connection = m_filter->m_key_press_signal.connect(
+    [=] (auto& target, auto& event) {
+      return m_key_press_signal(target, event).value_or(false);
+    });
+}
+
+connection KeyObserver::connect_filtered_key_press_signal(
+    const FilteredKeyPressSignal::slot_type& slot) const {
+  return m_key_press_signal.connect(slot);
 }
 
 connection KeyObserver::connect_key_press_signal(
-    const KeyPressSignal::slot_type& slot) const {
-  return m_key_press_signal.connect(slot);
+    const KeyPressSignal& slot) const {
+  return connect_filtered_key_press_signal([=] (auto& target, auto& event) {
+    slot(target, event);
+    return false;
+  });
 }
