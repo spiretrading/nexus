@@ -313,6 +313,9 @@ void ComboBox::on_current(const std::any& current) {
 
 void ComboBox::on_input(const AnyRef& current) {
   auto& query = any_cast<QString>(current);
+  if(!m_data->m_last_completion.toLower().startsWith(query.toLower())) {
+    m_data->m_last_completion.clear();
+  }
   m_data->m_user_query = query;
   m_data->m_has_autocomplete_selection = false;
   if(query.isEmpty()) {
