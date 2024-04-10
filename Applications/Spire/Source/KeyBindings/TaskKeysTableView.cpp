@@ -1,6 +1,5 @@
 #include "Spire/KeyBindings/TaskKeysTableView.hpp"
 #include <boost/signals2/shared_connection_block.hpp>
-#include <QKeyEvent>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ColumnViewListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
@@ -169,11 +168,11 @@ struct DestinationValueModel : ValueModel<Destination> {
   scoped_connection m_connection;
 
   DestinationValueModel(std::shared_ptr<ValueModel<Destination>> source,
-    std::shared_ptr<DestinationQueryModel> query_model)
-    : m_source(std::move(source)),
-      m_query_model(std::move(query_model)),
-      m_connection(m_query_model->m_region_model->connect_update_signal(
-        std::bind_front(&DestinationValueModel::on_update, this))) {
+      std::shared_ptr<DestinationQueryModel> query_model)
+      : m_source(std::move(source)),
+        m_query_model(std::move(query_model)),
+        m_connection(m_query_model->m_region_model->connect_update_signal(
+          std::bind_front(&DestinationValueModel::on_update, this))) {
     on_update(m_query_model->m_region_model->get());
   }
 
@@ -194,7 +193,7 @@ struct DestinationValueModel : ValueModel<Destination> {
   }
 
   connection connect_update_signal(
-    const typename UpdateSignal::slot_type& slot) const override {
+      const typename UpdateSignal::slot_type& slot) const override {
     return m_source->connect_update_signal(slot);
   }
 
@@ -338,7 +337,7 @@ struct OrderTaskTableModel : TableModel {
 EditableBox* make_table_item(
     std::shared_ptr<ComboBox::QueryModel> region_query_model,
     const DestinationDatabase& destinations, const MarketDatabase& markets,
-      const std::shared_ptr<TableModel>& table, int row, int column) {
+    const std::shared_ptr<TableModel>& table, int row, int column) {
   auto column_id = static_cast<OrderTaskTableModel::Column>(column);
   auto input_box = [&] () -> AnyInputBox* {
     if(column_id == OrderTaskTableModel::Column::NAME) {
