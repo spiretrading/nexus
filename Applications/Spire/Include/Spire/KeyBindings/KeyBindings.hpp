@@ -13,7 +13,6 @@ namespace Spire {
   class KeyBindingsWindow;
   class OrderFieldInfoTip;
   struct OrderTaskArguments;
-  class TaskKeysTableView;
 }
 
 #endif
