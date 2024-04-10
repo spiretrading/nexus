@@ -1,6 +1,5 @@
 #include "Spire/KeyBindings/KeyBindingsWindow.hpp"
 #include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
-#include "Nexus/Definitions/SecuritySet.hpp"
 #include "Spire/KeyBindings/CancelKeyBindingsForm.hpp"
 #include "Spire/KeyBindings/CancelKeyBindingsModel.hpp"
 #include "Spire/KeyBindings/InteractionsKeyBindingsForm.hpp"
@@ -10,7 +9,6 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
-#include "Spire/Ui/EmptyTableFilter.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/NavigationView.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
@@ -20,57 +18,6 @@ using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 using namespace Spire::Styles;
-
-namespace {
-  auto populate_order_task_arguments() {
-    auto arguments = std::make_shared<ArrayListModel<OrderTaskArguments>>();
-    arguments->push({"Test1",
-      Region(GetDefaultMarketDatabase().FromCode(DefaultMarkets::TSX())),
-      "ALPHA", OrderType::MARKET, Side::ASK, Quantity(1),
-      TimeInForce(TimeInForce::Type::DAY), {}, QKeySequence("Ctrl+F4")});
-    arguments->push({"Test2",
-      Region(GetDefaultMarketDatabase().FromCode(DefaultMarkets::TSX())),
-      "TSX", OrderType::STOP, Side::ASK, Quantity(10),
-      TimeInForce(TimeInForce::Type::DAY), {}, QKeySequence("Ctrl+Alt+S")});
-    arguments->push({"Test3",
-      Region(DefaultCountries::US()), "NYSE",
-      OrderType::MARKET, Side::BID, Quantity(20),
-      TimeInForce(TimeInForce::Type::IOC), {}, QKeySequence("F3")});
-    return arguments;
-  }
-
-  auto populate_region_box_model() {
-    auto securities = std::vector<std::pair<std::string, std::string>>{
-      {"MSFT.NSDQ", "Microsoft Corporation"},
-      {"MG.TSX", "Magna International Inc."},
-      {"MRU.TSX", "Metro Inc."},
-      {"MFC.TSX", "Manulife Financial Corporation"},
-      {"MX.TSX", "Methanex Corporation"},
-      {"TSO.ASX", "Tesoro Resources Limited"}};
-    auto model = std::make_shared<LocalComboBoxQueryModel>();
-    for(auto& security_info : securities) {
-      auto security = *ParseWildCardSecurity(security_info.first,
-        GetDefaultMarketDatabase(), GetDefaultCountryDatabase());
-      auto region = Region(security);
-      region.SetName(security_info.second);
-      model->add(to_text(security).toLower(), region);
-      model->add(QString::fromStdString(region.GetName()).toLower(), region);
-    }
-    for(auto& market : GetDefaultMarketDatabase().GetEntries()) {
-      auto region = Region(market);
-      region.SetName(market.m_description);
-      model->add(to_text(MarketToken(market.m_code)).toLower(), region);
-      model->add(QString::fromStdString(region.GetName()).toLower(), region);
-    }
-    for(auto& country : GetDefaultCountryDatabase().GetEntries()) {
-      auto region = Region(country.m_code);
-      region.SetName(country.m_name);
-      model->add(to_text(country.m_code).toLower(), region);
-      model->add(QString::fromStdString(region.GetName()).toLower(), region);
-    }
-    return model;
-  }
-}
 
 KeyBindingsWindow::KeyBindingsWindow(
     std::shared_ptr<KeyBindingsModel> key_bindings,
@@ -86,8 +33,10 @@ KeyBindingsWindow::KeyBindingsWindow(
     QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto task_keys_page = new QWidget();
   task_keys_page->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  auto task_key_table_view = make_task_keys_table_view(populate_order_task_arguments(),
-    populate_region_box_model(), GetDefaultDestinationDatabase(), markets);
+  auto task_key_table_view = make_task_keys_table_view(
+    m_key_bindings->get_order_task_arguments(),
+    std::make_shared<LocalComboBoxQueryModel>(),
+    GetDefaultDestinationDatabase(), markets);
   enclose(*task_keys_page, *task_key_table_view);
   navigation_view->add_tab(*task_keys_page, tr("Task Keys"));
   auto cancel_keys_page =
