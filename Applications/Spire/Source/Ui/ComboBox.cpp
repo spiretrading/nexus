@@ -24,6 +24,7 @@ ComboBox::DeferredData::DeferredData(ComboBox& box)
     m_input_focus_proxy(nullptr),
     m_list_view(nullptr),
     m_focus_observer(box),
+    m_key_observer(*box.m_input_box),
     m_matches(std::make_shared<ArrayListModel<std::any>>()),
     m_completion_tag(0),
     m_has_autocomplete_selection(false),
@@ -101,22 +102,7 @@ bool ComboBox::eventFilter(QObject* watched, QEvent* event) {
       unmatch(*this, PopUp());
     }
   } else if(watched == m_input_box) {
-    if(event->type() == QEvent::KeyPress) {
-      auto& key_event = static_cast<QKeyEvent&>(*event);
-      if(key_event.key() == Qt::Key_Escape) {
-        if(m_data->m_drop_down_list->isVisible()) {
-          m_data->m_drop_down_list->hide();
-          revert_current();
-        } else if(any_cast<QString>(m_input_box->get_current()->get()) !=
-            m_data->m_submission_text &&
-            m_query_model->parse(m_data->m_submission_text).has_value()) {
-          revert_to(m_data->m_submission_text, false);
-        } else {
-          event->ignore();
-        }
-        return true;
-      }
-    } else if(event->type() == QEvent::Show) {
+    if(event->type() == QEvent::Show) {
       m_data->m_input_focus_proxy = find_focus_proxy(*m_input_box);
       if(m_data->m_input_focus_proxy) {
         m_data->m_input_focus_proxy->installEventFilter(this);
@@ -225,6 +211,8 @@ void ComboBox::initialize_deferred_data() const {
     std::bind_front(&ComboBox::on_drop_down_submit, self));
   m_data->m_focus_observer.connect_state_signal(
     std::bind_front(&ComboBox::on_focus, self));
+  m_data->m_key_observer.connect_filtered_key_press_signal(
+    std::bind_front(&ComboBox::on_input_key_press, self));
 }
 
 void ComboBox::update_completion() {
@@ -446,6 +434,23 @@ void ComboBox::on_focus(FocusObserver::State state) {
     QCoreApplication::sendEvent(m_data->m_input_focus_proxy, &focus_out_event);
     submit(any_cast<QString>(m_input_box->get_current()->get()), true);
   }
+}
+
+bool ComboBox::on_input_key_press(QWidget& target, QKeyEvent& event) {
+  if(event.key() == Qt::Key_Escape) {
+    if(m_data->m_drop_down_list->isVisible()) {
+      m_data->m_drop_down_list->hide();
+      revert_current();
+    } else if(any_cast<QString>(m_input_box->get_current()->get()) !=
+        m_data->m_submission_text &&
+        m_query_model->parse(m_data->m_submission_text).has_value()) {
+      revert_to(m_data->m_submission_text, false);
+    } else {
+      event.ignore();
+    }
+    return true;
+  }
+  return false;
 }
 
 LocalComboBoxQueryModel::LocalComboBoxQueryModel()
