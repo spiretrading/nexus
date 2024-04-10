@@ -163,14 +163,17 @@ struct DestinationQueryModel : ComboBox::QueryModel {
 };
 
 struct DestinationValueModel : ValueModel<Destination> {
+  mutable UpdateSignal m_update_signal;
   std::shared_ptr<ValueModel<Destination>> m_source;
   std::shared_ptr<DestinationQueryModel> m_query_model;
+  scoped_connection m_source_connection;
   scoped_connection m_connection;
 
   DestinationValueModel(std::shared_ptr<ValueModel<Destination>> source,
       std::shared_ptr<DestinationQueryModel> query_model)
       : m_source(std::move(source)),
         m_query_model(std::move(query_model)),
+        m_source_connection(m_source->connect_update_signal(m_update_signal)),
         m_connection(m_query_model->m_region_model->connect_update_signal(
           std::bind_front(&DestinationValueModel::on_update, this))) {
     on_update(m_query_model->m_region_model->get());
@@ -193,8 +196,8 @@ struct DestinationValueModel : ValueModel<Destination> {
   }
 
   connection connect_update_signal(
-      const typename UpdateSignal::slot_type& slot) const override {
-    return m_source->connect_update_signal(slot);
+      const UpdateSignal::slot_type& slot) const override {
+    return m_update_signal.connect(slot);
   }
 
   void on_update(const Region& region) {
