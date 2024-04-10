@@ -222,8 +222,10 @@ TextAreaBox::TextAreaBox(QString current, QWidget* parent)
 
 TextAreaBox::TextAreaBox(std::shared_ptr<TextModel> current, QWidget* parent)
     : QWidget(parent),
-      m_text_edit_styles([=] { commit_style(); }),
-      m_placeholder_styles([=] { commit_placeholder_style(); }),
+      m_text_edit_styles(std::bind_front(&TextAreaBox::commit_style, this)),
+      m_placeholder_styles(
+        std::bind_front(&TextAreaBox::commit_placeholder_style, this)),
+      m_has_update(false),
       m_submission(current->get()) {
   m_text_edit = new ContentSizedTextEdit(std::move(current));
   m_text_edit->setObjectName(QString("0x%1").arg(
@@ -239,14 +241,15 @@ TextAreaBox::TextAreaBox(std::shared_ptr<TextModel> current, QWidget* parent)
   enclose(*this, *m_scroll_box);
   proxy_style(*this, *m_scroll_box);
   add_pseudo_element(*this, Placeholder());
-  m_style_connection = connect_style_signal(*this, [=] { on_style(); });
-  m_placeholder_style_connection =
-    connect_style_signal(*this, Placeholder(), [=] { on_style(); });
+  m_style_connection =
+    connect_style_signal(*this, std::bind_front(&TextAreaBox::on_style, this));
+  m_placeholder_style_connection = connect_style_signal(
+    *this, Placeholder(), std::bind_front(&TextAreaBox::on_style, this));
   set_style(*this, DEFAULT_STYLE());
   connect(m_text_edit, &QTextEdit::cursorPositionChanged, this,
     &TextAreaBox::on_cursor_position);
   get_current()->connect_update_signal(
-    std::bind_front(&TextAreaBox::on_current_update, this));
+    std::bind_front(&TextAreaBox::on_current, this));
   m_vertical_scroll_bar = &m_scroll_box->get_vertical_scroll_bar();
   m_vertical_scroll_bar->installEventFilter(this);
 }
@@ -290,13 +293,17 @@ connection TextAreaBox::connect_submit_signal(
 bool TextAreaBox::eventFilter(QObject* watched, QEvent* event) {
   if(watched == m_text_edit) {
     if(event->type() == QEvent::FocusOut) {
-      m_submission = m_text_edit->get_current()->get();
-      m_submit_signal(m_submission);
+      if(m_has_update &&
+          get_current()->get_state() == QValidator::State::Acceptable) {
+        m_submission = get_current()->get();
+        m_has_update = false;
+        m_submit_signal(m_submission);
+      }
     } else if(event->type() == QEvent::Resize) {
       scroll_to_end(*m_vertical_scroll_bar);
     }
-  } else if(watched == m_vertical_scroll_bar && (event->type() == QEvent::Show
-      || event->type() == QEvent::Hide)) {
+  } else if(watched == m_vertical_scroll_bar &&
+      (event->type() == QEvent::Show || event->type() == QEvent::Hide)) {
     m_text_edit->document()->setTextWidth(-1);
     update_text_width(width());
   }
@@ -371,7 +378,8 @@ void TextAreaBox::update_text_width(int width) {
     get_horizontal_padding_length() - get_scroll_bar_width());
 }
 
-void TextAreaBox::on_current_update(const QString& current) {
+void TextAreaBox::on_current(const QString& current) {
+  m_has_update = true;
   m_text_edit->document()->setTextWidth(-1);
   if(m_text_edit->sizeHint().width() + get_horizontal_padding_length() +
       get_scroll_bar_width() > maximumWidth()) {
