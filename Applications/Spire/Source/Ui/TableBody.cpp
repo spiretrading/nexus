@@ -77,7 +77,6 @@ TableBody::TableBody(
         std::move(selection), 0, m_table->get_column_size()),
       m_widths(std::move(widths)),
       m_view_builder(std::move(view_builder)) {
-  setAttribute(Qt::WA_Hover);
   setFocusPolicy(Qt::StrongFocus);
   auto row_layout = make_vbox_layout(this);
   m_style_connection =
@@ -134,40 +133,25 @@ const std::shared_ptr<TableBody::SelectionModel>&
   return m_selection_controller.get_selection();
 }
 
+TableIndex TableBody::get_index(const TableItem& item) const {
+  auto row = layout()->indexOf(item.parentWidget());
+  if(row == -1) {
+    throw std::runtime_error("Invalid table item.");
+  }
+  auto column =
+    item.parentWidget()->layout()->indexOf(const_cast<TableItem*>(&item));
+  if(column == -1) {
+    throw std::runtime_error("Invalid table item.");
+  }
+  return TableIndex(row, column);
+}
+
 const TableItem* TableBody::get_item(Index index) const {
   return const_cast<TableBody*>(this)->get_item(index);
 }
 
 TableItem* TableBody::get_item(Index index) {
   return find_item(index);
-}
-
-bool TableBody::eventFilter(QObject* watched, QEvent* event) {
-  if(event->type() == QEvent::HoverMove) {
-    auto item = static_cast<QWidget*>(watched);
-    auto hover_item = find_item(m_hover_index);
-    if(hover_item != item) {
-      if(hover_item) {
-        m_hover_index = none;
-        unmatch(*hover_item, HoverItem());
-        update();
-      }
-      if(item != get_current_item()) {
-        m_hover_index = [&] () -> optional<Index> {
-          for(auto row = 0; row != layout()->count(); ++row) {
-            if(auto column =
-                layout()->itemAt(row)->widget()->layout()->indexOf(item);
-                column >= 0) {
-              return Index(row, column);
-            }
-          }
-          return none;
-        }();
-        match(*item, HoverItem());
-      }
-    }
-  }
-  return QWidget::eventFilter(watched, event);
 }
 
 bool TableBody::event(QEvent* event) {
@@ -190,13 +174,6 @@ bool TableBody::event(QEvent* event) {
       cover->raise();
     }
     return result;
-  } else if(event->type() == QEvent::HoverLeave) {
-    if(auto hover_item = find_item(m_hover_index)) {
-      m_hover_index = none;
-      unmatch(*hover_item, HoverItem());
-      update();
-    }
-    return true;
   } else {
     return QWidget::event(event);
   }
@@ -321,8 +298,8 @@ void TableBody::paintEvent(QPaintEvent* event) {
   }
   if(m_styles.m_horizontal_grid_color.alphaF() != 0) {
     auto draw_border = [&] (int top, int height) {
-      painter.fillRect(QRect(0, top, width(), height),
-        m_styles.m_horizontal_grid_color);
+      painter.fillRect(
+        QRect(0, top, width(), height), m_styles.m_horizontal_grid_color);
     };
     if(m_styles.m_padding.top() != 0) {
       draw_border(0, m_styles.m_padding.top());
@@ -335,14 +312,14 @@ void TableBody::paintEvent(QPaintEvent* event) {
       }
     }
     if(m_styles.m_padding.bottom() != 0) {
-      draw_border(height() - m_styles.m_padding.bottom(),
-        m_styles.m_padding.bottom());
+      draw_border(
+        height() - m_styles.m_padding.bottom(), m_styles.m_padding.bottom());
     }
   }
   if(m_styles.m_vertical_grid_color.alphaF() != 0) {
     auto draw_border = [&] (int left, int width) {
-      painter.fillRect(QRect(left, 0, width, height()),
-        m_styles.m_vertical_grid_color);
+      painter.fillRect(
+        QRect(left, 0, width, height()), m_styles.m_vertical_grid_color);
     };
     if(m_styles.m_padding.left() != 0) {
       draw_border(0, m_styles.m_padding.left());
@@ -357,8 +334,8 @@ void TableBody::paintEvent(QPaintEvent* event) {
       }
     }
     if(m_styles.m_padding.right() != 0) {
-      draw_border(width() - m_styles.m_padding.right(),
-        m_styles.m_padding.right());
+      draw_border(
+        width() - m_styles.m_padding.right(), m_styles.m_padding.right());
     }
   }
   draw_item_borders(m_hover_index, painter);
@@ -416,8 +393,10 @@ void TableBody::add_row(int index) {
   column_layout->setSpacing(m_styles.m_horizontal_spacing);
   for(auto column = 0; column != m_table->get_column_size(); ++column) {
     auto item = new TableItem(*m_view_builder(m_table, index, column));
-    item->setAttribute(Qt::WA_Hover);
-    item->installEventFilter(this);
+    m_hover_observers.emplace(std::piecewise_construct,
+      std::forward_as_tuple(item), std::forward_as_tuple(*item));
+    m_hover_observers.at(item).connect_state_signal(
+      std::bind_front(&TableBody::on_hover, this, std::ref(*item)));
     if(column != m_table->get_column_size() - 1) {
       item->setFixedWidth(m_widths->get(column) - get_left_spacing(column));
     } else {
@@ -438,8 +417,12 @@ void TableBody::add_row(int index) {
 }
 
 void TableBody::remove_row(int index) {
-  if(m_hover_index && m_hover_index->m_row >= index) {
-    unmatch(*find_item(m_hover_index), HoverItem());
+  for(auto i = 0; i != m_table->get_column_size(); ++i) {
+    if(auto item = find_item(TableIndex(index, i))) {
+      m_hover_observers.erase(item);
+    }
+  }
+  if(m_hover_index && m_hover_index->m_row == index) {
     m_hover_index = none;
   }
   auto& row_layout = *static_cast<QBoxLayout*>(layout());
@@ -460,8 +443,8 @@ void TableBody::move_row(int source, int destination) {
   m_selection_controller.move_row(source, destination);
 }
 
-void TableBody::draw_item_borders(const boost::optional<Index>& index,
-    QPainter& painter) {
+void TableBody::draw_item_borders(
+    const optional<Index>& index, QPainter& painter) {
   auto item = find_item(index);
   if(!item) {
     return;
@@ -547,9 +530,6 @@ void TableBody::on_current(
   }
   if(current) {
     auto current_item = get_current_item();
-    if(current == m_hover_index) {
-      unmatch(*current_item, HoverItem());
-    }
     match(*current_item, Current());
     match(*current_item->parentWidget(), CurrentRow());
     if(!previous || previous->m_column != current->m_column) {
@@ -569,6 +549,21 @@ void TableBody::on_row_selection(const ListModel<int>::Operation& operation) {
       unmatch(*find_row(operation.get_previous()), Selected());
       match(*find_row(operation.get_value()), Selected());
     });
+}
+
+void TableBody::on_hover(TableItem& item, HoverObserver::State state) {
+  auto index = get_index(item);
+  if(state == HoverObserver::State::NONE) {
+    unmatch(item, HoverItem());
+    if(index == m_hover_index) {
+      m_hover_index = none;
+    }
+    update();
+  } else if(is_set(state, HoverObserver::State::MOUSE_OVER)) {
+    match(item, HoverItem());
+    m_hover_index = index;
+    update();
+  }
 }
 
 void TableBody::on_style() {

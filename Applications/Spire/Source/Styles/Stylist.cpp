@@ -579,6 +579,10 @@ void Spire::Styles::proxy_style(QWidget& source, QWidget& destination) {
   find_stylist(source).add_proxy(destination);
 }
 
+bool Spire::Styles::is_match(QWidget& widget, const Selector& selector) {
+  return find_stylist(widget).is_match(selector);
+}
+
 void Spire::Styles::match(QWidget& widget, const Selector& selector) {
   find_stylist(widget).match(selector);
 }

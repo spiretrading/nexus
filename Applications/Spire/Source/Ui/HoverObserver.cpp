@@ -98,7 +98,7 @@ struct HoverObserver::EventFilter : QObject {
       destroy_observers();
     } else if(event->type() == QEvent::Enter ||
         event->type() == QEvent::EnabledChange ||
-        event->type() == QEvent::MouseMove) {
+        event->type() == QEvent::MouseMove || event->type() == QEvent::Show) {
       set_state(::get_state(
         *m_widget, get_observers().m_position_observer.get_position()));
     } else if(event->type() == QEvent::Leave) {
