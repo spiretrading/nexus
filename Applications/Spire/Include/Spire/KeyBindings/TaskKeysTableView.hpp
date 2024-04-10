@@ -1,6 +1,5 @@
 #ifndef SPIRE_TASK_KEYS_TABLE_VIEW_HPP
 #define SPIRE_TASK_KEYS_TABLE_VIEW_HPP
-#include <QWidget>
 #include "Spire/KeyBindings/OrderTaskArguments.hpp"
 #include "Spire/Ui/ComboBox.hpp"
 
