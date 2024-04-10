@@ -28,6 +28,18 @@ using namespace Nexus;
 using namespace Spire;
 
 namespace {
+  enum class Column {
+    NAME,
+    REGION,
+    DESTINATION,
+    ORDER_TYPE,
+    SIDE,
+    QUANTITY,
+    TIME_IN_FORCE,
+    TAGS,
+    KEY
+  };
+
   auto to_list(const OrderTaskArguments& arguments) {
     auto list_model = std::make_shared<ArrayListModel<std::any>>();
     list_model->push(arguments.m_name);
@@ -98,6 +110,28 @@ namespace {
     widths.push_back(scale_width(80));
     widths.push_back(scale_width(128));
     return widths;
+  }
+
+  AnyRef extract_field(const OrderTaskArguments& arguments, Column column) {
+    if(column == Column::NAME) {
+      return arguments.m_name;
+    } else if(column == Column::REGION) {
+      return arguments.m_region;
+    } else if(column == Column::DESTINATION) {
+      return arguments.m_destination;
+    } else if(column == Column::ORDER_TYPE) {
+      return arguments.m_order_type;
+    } else if(column == Column::SIDE) {
+      return arguments.m_side;
+    } else if(column == Column::QUANTITY) {
+      return arguments.m_quantity;
+    } else if(column == Column::TIME_IN_FORCE) {
+      return arguments.m_time_in_force;
+    } else if(column == Column::TAGS) {
+      return arguments.m_additional_tags;
+    } else {
+      return arguments.m_key;
+    }
   }
 
   template<typename T>
@@ -208,17 +242,6 @@ struct DestinationValueModel : ValueModel<Destination> {
 };
 
 struct OrderTaskTableModel : TableModel {
-  enum class Column {
-    NAME,
-    REGION,
-    DESTINATION,
-    ORDER_TYPE,
-    SIDE,
-    QUANTITY,
-    TIME_IN_FORCE,
-    TAGS,
-    KEY
-  };
   static const auto COLUMN_SIZE = 9;
   std::shared_ptr<OrderTaskArgumentsListModel> m_source;
   TableModelTransactionLog m_transaction;
@@ -253,26 +276,30 @@ struct OrderTaskTableModel : TableModel {
     auto arguments = m_source->get(row);
     auto previous = to_any(extract_field(arguments, column_index));
     if(column_index == Column::NAME) {
-      arguments.m_name = std::any_cast<QString>(value);
+      arguments.m_name = std::any_cast<const QString&>(value);
     } else if(column_index == Column::REGION) {
-      arguments.m_region = std::any_cast<Region>(value);
+      arguments.m_region = std::any_cast<const Region&>(value);
     } else if(column_index == Column::DESTINATION) {
-      arguments.m_destination = std::any_cast<Destination>(value);
+      arguments.m_destination = std::any_cast<const Destination&>(value);
     } else if(column_index == Column::ORDER_TYPE) {
-      arguments.m_order_type = std::any_cast<OrderType>(value);
+      arguments.m_order_type = std::any_cast<const OrderType&>(value);
     } else if(column_index == Column::SIDE) {
-      arguments.m_side = std::any_cast<Side>(value);
+      arguments.m_side = std::any_cast<const Side&>(value);
     } else if(column_index == Column::QUANTITY) {
-      arguments.m_quantity = std::any_cast<optional<Quantity>>(value);
+      arguments.m_quantity = std::any_cast<const optional<Quantity>&>(value);
     } else if(column_index == Column::TIME_IN_FORCE) {
-      arguments.m_time_in_force = std::any_cast<TimeInForce>(value);
+      arguments.m_time_in_force = std::any_cast<const TimeInForce&>(value);
     } else if(column_index == Column::TAGS) {
-      arguments.m_additional_tags = {};
+      arguments.m_additional_tags =
+        std::any_cast<const std::vector<Nexus::Tag>&>(value);
     } else if(column_index == Column::KEY) {
-      arguments.m_key = std::any_cast<QKeySequence>(value);
+      arguments.m_key = std::any_cast<const QKeySequence&>(value);
     }
     auto blocker = shared_connection_block(m_source_connection);
-    auto result = m_source->set(row, arguments);
+    auto result = m_source->set(row, std::move(arguments));
+    if(result == QValidator::State::Invalid) {
+      return QValidator::State::Invalid;
+    }
     m_transaction.push(
       TableModel::UpdateOperation(row, column, previous, value));
     return result;
@@ -285,30 +312,6 @@ struct OrderTaskTableModel : TableModel {
   connection connect_operation_signal(
       const OperationSignal::slot_type& slot) const override {
     return m_transaction.connect_operation_signal(slot);
-  }
-
-  AnyRef extract_field(const OrderTaskArguments& arguments,
-      Column column) const {
-    if(column == Column::NAME) {
-      return arguments.m_name;
-    } else if(column == Column::REGION) {
-      return arguments.m_region;
-    } else if(column == Column::DESTINATION) {
-      return arguments.m_destination;
-    } else if(column == Column::ORDER_TYPE) {
-      return arguments.m_order_type;
-    } else if(column == Column::SIDE) {
-      return arguments.m_side;
-    } else if(column == Column::QUANTITY) {
-      return arguments.m_quantity;
-    } else if(column == Column::TIME_IN_FORCE) {
-      return arguments.m_time_in_force;
-    } else if(column == Column::TAGS) {
-      return arguments.m_additional_tags;
-    } else if(column == Column::KEY) {
-      return arguments.m_key;
-    }
-    return {};
   }
 
   void on_operation(const OrderTaskArgumentsListModel::Operation& operation) {
@@ -341,50 +344,46 @@ EditableBox* make_table_item(
     std::shared_ptr<ComboBox::QueryModel> region_query_model,
     const DestinationDatabase& destinations, const MarketDatabase& markets,
     const std::shared_ptr<TableModel>& table, int row, int column) {
-  auto column_id = static_cast<OrderTaskTableModel::Column>(column);
-  auto input_box = [&] () -> AnyInputBox* {
-    if(column_id == OrderTaskTableModel::Column::NAME) {
+  auto column_id = static_cast<Column>(column);
+  auto input_box = [&] {
+    if(column_id == Column::NAME) {
       return new AnyInputBox(*new TextBox(
         to_value_model<QString>(table, row, column)));
-    } else if(column_id == OrderTaskTableModel::Column::REGION) {
+    } else if(column_id == Column::REGION) {
       return new AnyInputBox(*new RegionBox(region_query_model,
         to_value_model<Region>(table, row, column)));
-    } else if(column_id == OrderTaskTableModel::Column::DESTINATION) {
+    } else if(column_id == Column::DESTINATION) {
       auto region_model = to_value_model<Region>(table, row,
-        static_cast<int>(OrderTaskTableModel::Column::REGION));
+        static_cast<int>(Column::REGION));
       auto query_model = std::make_shared<DestinationQueryModel>(
         std::move(region_model), destinations, markets);
       auto current_model = std::make_shared<DestinationValueModel>(
         to_value_model<Destination>(table, row, column), query_model);
       return new AnyInputBox(*new DestinationBox(std::move(query_model),
         std::move(current_model)));
-    } else if(column_id == OrderTaskTableModel::Column::ORDER_TYPE) {
+    } else if(column_id == Column::ORDER_TYPE) {
       return new AnyInputBox(*make_order_type_box(
         to_value_model<OrderType>(table, row, column)));
-    } else if(column_id == OrderTaskTableModel::Column::SIDE) {
+    } else if(column_id == Column::SIDE) {
       return new AnyInputBox(*make_side_box(
         to_value_model<Side>(table, row, column)));
-    } else if(column_id == OrderTaskTableModel::Column::QUANTITY) {
+    } else if(column_id == Column::QUANTITY) {
       return new AnyInputBox(*new QuantityBox(
         std::make_shared<ScalarValueModelDecorator<optional<Quantity>>>(
           to_value_model<optional<Quantity>>(table, row, column)),
         make_quantity_modifiers()));
-    } else if(column_id == OrderTaskTableModel::Column::TIME_IN_FORCE) {
+    } else if(column_id == Column::TIME_IN_FORCE) {
       return new AnyInputBox(*make_time_in_force_box(
         to_value_model<TimeInForce>(table, row, column)));
-    } else if(column_id == OrderTaskTableModel::Column::TAGS) {
+    } else if(column_id == Column::TAGS) {
       return new AnyInputBox(*make_label(""));
-    } else if(column_id == OrderTaskTableModel::Column::KEY) {
+    } else {
       return new AnyInputBox(*new KeyInputBox(
         make_validated_value_model<QKeySequence>(&key_input_box_validator,
           to_value_model<QKeySequence>(table, row, column))));
     } 
-    return nullptr;
   }();
-  if(!input_box) {
-    return nullptr;
-  }
-  if(column_id == OrderTaskTableModel::Column::KEY) {
+  if(column_id == Column::KEY) {
     return new EditableBox(*input_box, [] (const auto& key) {
       return key_input_box_validator(key) == QValidator::Acceptable;
     });
