@@ -146,7 +146,7 @@ struct DestinationQueryModel : ComboBox::QueryModel {
   std::shared_ptr<ValueModel<Region>> m_region_model;
   DestinationDatabase m_destinations;
   MarketDatabase m_markets;
-  std::unique_ptr<LocalComboBoxQueryModel> m_local_query_model;
+  optional<LocalComboBoxQueryModel> m_local_query_model;
   scoped_connection m_region_connection;
 
   DestinationQueryModel(std::shared_ptr<ValueModel<Region>> region_model,
@@ -154,7 +154,6 @@ struct DestinationQueryModel : ComboBox::QueryModel {
       : m_region_model(std::move(region_model)),
         m_destinations(std::move(destinations)),
         m_markets(std::move(markets)),
-        m_local_query_model(std::make_unique<LocalComboBoxQueryModel>()),
         m_region_connection(m_region_model->connect_update_signal(
           std::bind_front(&DestinationQueryModel::on_update, this))) {
     on_update(m_region_model->get());
@@ -181,7 +180,7 @@ struct DestinationQueryModel : ComboBox::QueryModel {
         market_set.insert(market.m_code);
       }
     }
-    m_local_query_model = std::make_unique<LocalComboBoxQueryModel>();
+    m_local_query_model.emplace();
     auto destinations = m_destinations.SelectEntries(
       [] (auto& value) { return true; });
     for(auto& destination : destinations) {
