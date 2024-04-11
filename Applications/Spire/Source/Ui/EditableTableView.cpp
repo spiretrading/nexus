@@ -166,7 +166,8 @@ namespace {
         return AnyRef(row, AnyRef::by_value); 
       }
       column -= 1;
-      if(row < m_source->get_row_size() && column < m_source->get_column_size()) {
+      if(row < m_source->get_row_size() &&
+          column < m_source->get_column_size()) {
         return m_source->at(row, column);
       }
       return {};
@@ -181,7 +182,8 @@ namespace {
         return QValidator::State::Invalid;
       }
       column -= 1;
-      if(row < m_source->get_row_size() && column < m_source->get_column_size()) {
+      if(row < m_source->get_row_size() &&
+          column < m_source->get_column_size()) {
         return m_source->set(row, column, value);
       }
       return QValidator::State::Invalid;
