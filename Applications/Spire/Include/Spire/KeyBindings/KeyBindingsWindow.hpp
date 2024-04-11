@@ -19,7 +19,9 @@ namespace Spire {
        */
       explicit KeyBindingsWindow(std::shared_ptr<KeyBindingsModel> key_bindings,
         const Nexus::CountryDatabase& countries,
-        const Nexus::MarketDatabase& markets, QWidget* parent = nullptr);
+        const Nexus::MarketDatabase& markets,
+        const Nexus::DestinationDatabase& destinations,
+        QWidget* parent = nullptr);
 
     private:
       std::shared_ptr<KeyBindingsModel> m_key_bindings;

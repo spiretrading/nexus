@@ -2,6 +2,7 @@
 #define SPIRE_TASK_KEYS_TABLE_VIEW_HPP
 #include "Spire/KeyBindings/OrderTaskArguments.hpp"
 #include "Spire/Ui/ComboBox.hpp"
+#include "Spire/Ui/TableView.hpp"
 
 namespace Spire {
 

@@ -1,5 +1,4 @@
 #include "Spire/KeyBindings/KeyBindingsWindow.hpp"
-#include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 #include "Spire/KeyBindings/CancelKeyBindingsForm.hpp"
 #include "Spire/KeyBindings/CancelKeyBindingsModel.hpp"
 #include "Spire/KeyBindings/InteractionsKeyBindingsForm.hpp"
@@ -12,7 +11,6 @@
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/NavigationView.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
-#include "Spire/Ui/TableView.hpp"
 
 using namespace boost::signals2;
 using namespace Nexus;
@@ -22,7 +20,7 @@ using namespace Spire::Styles;
 KeyBindingsWindow::KeyBindingsWindow(
     std::shared_ptr<KeyBindingsModel> key_bindings,
     const CountryDatabase& countries, const MarketDatabase& markets,
-    QWidget* parent)
+    const DestinationDatabase& destinations, QWidget* parent)
     : Window(parent),
       m_key_bindings(std::move(key_bindings)) {
   setWindowTitle(tr("Key Bindings"));
@@ -35,8 +33,7 @@ KeyBindingsWindow::KeyBindingsWindow(
   task_keys_page->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto task_key_table_view = make_task_keys_table_view(
     m_key_bindings->get_order_task_arguments(),
-    std::make_shared<LocalComboBoxQueryModel>(),
-    GetDefaultDestinationDatabase(), markets);
+    std::make_shared<LocalComboBoxQueryModel>(), destinations, markets);
   enclose(*task_keys_page, *task_key_table_view);
   navigation_view->add_tab(*task_keys_page, tr("Task Keys"));
   auto cancel_keys_page =
