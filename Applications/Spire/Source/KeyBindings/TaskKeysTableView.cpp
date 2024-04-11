@@ -315,6 +315,12 @@ struct OrderTaskTableModel : TableModel {
 
   void on_operation(const OrderTaskArgumentsListModel::Operation& operation) {
     visit(operation,
+      [&] (const StartTransaction&) {
+        m_transaction.start();
+      },
+      [&] (const EndTransaction&) {
+        m_transaction.end();
+      },
       [&] (const OrderTaskArgumentsListModel::AddOperation& operation) {
         m_transaction.push(TableModel::AddOperation(operation.m_index,
           to_list(operation.get_value())));
@@ -328,13 +334,15 @@ struct OrderTaskTableModel : TableModel {
           to_list(operation.get_value())));
       },
       [&] (const OrderTaskArgumentsListModel::UpdateOperation& operation) {
-        for(auto i = 0; i < COLUMN_SIZE; ++i) {
-          m_transaction.push(TableModel::UpdateOperation(operation.m_index, i,
-            to_any(
-              extract_field(operation.get_previous(), static_cast<Column>(i))),
-            to_any(
-              extract_field(operation.get_value(), static_cast<Column>(i)))));
-        }
+        m_transaction.transact([&] {
+          for(auto i = 0; i < COLUMN_SIZE; ++i) {
+            m_transaction.push(TableModel::UpdateOperation(operation.m_index, i,
+              to_any(extract_field(operation.get_previous(),
+                static_cast<Column>(i))),
+              to_any(extract_field(operation.get_value(),
+                static_cast<Column>(i)))));
+          }
+        });
       });
   }
 };
