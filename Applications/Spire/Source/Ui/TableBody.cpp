@@ -425,7 +425,7 @@ void TableBody::remove_row(int index) {
       m_hover_observers.erase(item);
     }
   }
-  if(m_hover_index && m_hover_index->m_row == index) {
+  if(m_hover_index && m_hover_index->m_row >= index) {
     m_hover_index = none;
   }
   auto& row_layout = *static_cast<QBoxLayout*>(layout());
