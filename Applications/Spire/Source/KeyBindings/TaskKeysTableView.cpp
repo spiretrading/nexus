@@ -392,10 +392,10 @@ EditableBox* make_table_item(
   }();
   if(column_id == Column::KEY) {
     return new EditableBox(*input_box, [] (const auto& key) {
-      return key_input_box_validator(key) == QValidator::Acceptable;
+      return key_input_box_validator(key) != QValidator::Invalid;
     });
   }
-  return new EditableBox(*input_box);;
+  return new EditableBox(*input_box);
 }
 
 TableView* Spire::make_task_keys_table_view(
