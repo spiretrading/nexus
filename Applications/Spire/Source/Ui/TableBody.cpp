@@ -72,9 +72,8 @@ TableBody::TableBody(
     QWidget* parent)
     : QWidget(parent),
       m_table(std::move(table)),
-      m_current_controller(std::move(current), 0, m_table->get_column_size()),
-      m_selection_controller(
-        std::move(selection), 0, m_table->get_column_size()),
+      m_current_controller(std::move(current), 0, widths->get_size() + 1),
+      m_selection_controller(std::move(selection), 0, widths->get_size() + 1),
       m_widths(std::move(widths)),
       m_view_builder(std::move(view_builder)) {
   setFocusPolicy(Qt::StrongFocus);
@@ -326,7 +325,7 @@ void TableBody::paintEvent(QPaintEvent* event) {
     }
     if(m_styles.m_horizontal_spacing != 0 && m_widths->get_size() > 0) {
       auto left = m_widths->get(0);
-      for(auto column = 1; column < m_table->get_column_size(); ++column) {
+      for(auto column = 1; column < get_column_size(); ++column) {
         draw_border(left, m_styles.m_horizontal_spacing);
         if(column != m_widths->get_size()) {
           left += m_widths->get(column);
@@ -341,6 +340,10 @@ void TableBody::paintEvent(QPaintEvent* event) {
   draw_item_borders(m_hover_index, painter);
   draw_item_borders(current, painter);
   QWidget::paintEvent(event);
+}
+
+int TableBody::get_column_size() const {
+  return m_widths->get_size() + 1;
 }
 
 TableItem* TableBody::get_current_item() {
@@ -391,13 +394,13 @@ void TableBody::add_row(int index) {
   match(*row, Row());
   auto column_layout = make_hbox_layout(row);
   column_layout->setSpacing(m_styles.m_horizontal_spacing);
-  for(auto column = 0; column != m_table->get_column_size(); ++column) {
+  for(auto column = 0; column != get_column_size(); ++column) {
     auto item = new TableItem(*m_view_builder(m_table, index, column));
     m_hover_observers.emplace(std::piecewise_construct,
       std::forward_as_tuple(item), std::forward_as_tuple(*item));
     m_hover_observers.at(item).connect_state_signal(
       std::bind_front(&TableBody::on_hover, this, std::ref(*item)));
-    if(column != m_table->get_column_size() - 1) {
+    if(column != get_column_size() - 1) {
       item->setFixedWidth(m_widths->get(column) - get_left_spacing(column));
     } else {
       item->setSizePolicy(
@@ -417,7 +420,7 @@ void TableBody::add_row(int index) {
 }
 
 void TableBody::remove_row(int index) {
-  for(auto i = 0; i != m_table->get_column_size(); ++i) {
+  for(auto i = 0; i != get_column_size(); ++i) {
     if(auto item = find_item(TableIndex(index, i))) {
       m_hover_observers.erase(item);
     }
@@ -452,7 +455,7 @@ void TableBody::draw_item_borders(
   auto top_spacing = get_top_spacing(index->m_row);
   auto left_spacing = get_left_spacing(index->m_column);
   auto right_spacing = [&] {
-    if(index->m_column == m_table->get_column_size() - 1) {
+    if(index->m_column == get_column_size() - 1) {
       return m_styles.m_padding.right();
     }
     return m_styles.m_horizontal_spacing;

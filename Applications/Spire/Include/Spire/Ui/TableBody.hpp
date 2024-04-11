@@ -159,6 +159,7 @@ namespace Styles {
       boost::signals2::scoped_connection m_current_connection;
       boost::signals2::scoped_connection m_widths_connection;
 
+      int get_column_size() const;
       TableItem* get_current_item();
       Cover* find_row(int index);
       TableItem* find_item(const boost::optional<Index>& index);
