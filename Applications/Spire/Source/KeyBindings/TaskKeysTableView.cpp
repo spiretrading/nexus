@@ -26,9 +26,12 @@ using namespace boost;
 using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
+using namespace Spire::Styles;
 
 namespace {
-  enum class Column {
+  using PopUp = StateSelector<void, struct PopUpSelectorTag>;
+
+  enum class TableColumn {
     NAME,
     REGION,
     DESTINATION,
@@ -112,26 +115,44 @@ namespace {
     return widths;
   }
 
-  AnyRef extract_field(const OrderTaskArguments& arguments, Column column) {
-    if(column == Column::NAME) {
+  AnyRef extract_field(const OrderTaskArguments& arguments,
+      TableColumn column) {
+    if(column == TableColumn::NAME) {
       return arguments.m_name;
-    } else if(column == Column::REGION) {
+    } else if(column == TableColumn::REGION) {
       return arguments.m_region;
-    } else if(column == Column::DESTINATION) {
+    } else if(column == TableColumn::DESTINATION) {
       return arguments.m_destination;
-    } else if(column == Column::ORDER_TYPE) {
+    } else if(column == TableColumn::ORDER_TYPE) {
       return arguments.m_order_type;
-    } else if(column == Column::SIDE) {
+    } else if(column == TableColumn::SIDE) {
       return arguments.m_side;
-    } else if(column == Column::QUANTITY) {
+    } else if(column == TableColumn::QUANTITY) {
       return arguments.m_quantity;
-    } else if(column == Column::TIME_IN_FORCE) {
+    } else if(column == TableColumn::TIME_IN_FORCE) {
       return arguments.m_time_in_force;
-    } else if(column == Column::TAGS) {
+    } else if(column == TableColumn::TAGS) {
       return arguments.m_additional_tags;
     } else {
       return arguments.m_key;
     }
+  }
+
+  QWidget* find_tip_window(const QWidget& parent) {
+    for(auto child : parent.children()) {
+      if(!child->isWidgetType()) {
+        continue;
+      }
+      auto& widget = *static_cast<QWidget*>(child);
+      if(widget.isWindow() &&
+          (widget.windowFlags() & Qt::WindowDoesNotAcceptFocus)) {
+        return &widget;
+      }
+      if(auto window = find_tip_window(widget)) {
+        return window;
+      }
+    }
+    return nullptr;
   }
 
   template<typename T>
@@ -264,34 +285,34 @@ struct OrderTaskTableModel : TableModel {
     if(column < 0 || column >= get_column_size()) {
       throw std::out_of_range("The column is out of range.");
     }
-    return extract_field(m_source->get(row), static_cast<Column>(column));
+    return extract_field(m_source->get(row), static_cast<TableColumn>(column));
   }
 
   QValidator::State set(int row, int column, const std::any& value) override {
     if(column < 0 || column >= get_column_size()) {
       throw std::out_of_range("The column is out of range.");
     }
-    auto column_index = static_cast<Column>(column);
+    auto column_index = static_cast<TableColumn>(column);
     auto arguments = m_source->get(row);
     auto previous = to_any(extract_field(arguments, column_index));
-    if(column_index == Column::NAME) {
+    if(column_index == TableColumn::NAME) {
       arguments.m_name = std::any_cast<const QString&>(value);
-    } else if(column_index == Column::REGION) {
+    } else if(column_index == TableColumn::REGION) {
       arguments.m_region = std::any_cast<const Region&>(value);
-    } else if(column_index == Column::DESTINATION) {
+    } else if(column_index == TableColumn::DESTINATION) {
       arguments.m_destination = std::any_cast<const Destination&>(value);
-    } else if(column_index == Column::ORDER_TYPE) {
+    } else if(column_index == TableColumn::ORDER_TYPE) {
       arguments.m_order_type = std::any_cast<const OrderType&>(value);
-    } else if(column_index == Column::SIDE) {
+    } else if(column_index == TableColumn::SIDE) {
       arguments.m_side = std::any_cast<const Side&>(value);
-    } else if(column_index == Column::QUANTITY) {
+    } else if(column_index == TableColumn::QUANTITY) {
       arguments.m_quantity = std::any_cast<const optional<Quantity>&>(value);
-    } else if(column_index == Column::TIME_IN_FORCE) {
+    } else if(column_index == TableColumn::TIME_IN_FORCE) {
       arguments.m_time_in_force = std::any_cast<const TimeInForce&>(value);
-    } else if(column_index == Column::TAGS) {
+    } else if(column_index == TableColumn::TAGS) {
       arguments.m_additional_tags =
         std::any_cast<const std::vector<Nexus::Tag>&>(value);
-    } else if(column_index == Column::KEY) {
+    } else if(column_index == TableColumn::KEY) {
       arguments.m_key = std::any_cast<const QKeySequence&>(value);
     }
     auto blocker = shared_connection_block(m_source_connection);
@@ -338,51 +359,150 @@ struct OrderTaskTableModel : TableModel {
           for(auto i = 0; i < COLUMN_SIZE; ++i) {
             m_transaction.push(TableModel::UpdateOperation(operation.m_index, i,
               to_any(extract_field(operation.get_previous(),
-                static_cast<Column>(i))),
+                static_cast<TableColumn>(i))),
               to_any(extract_field(operation.get_value(),
-                static_cast<Column>(i)))));
+                static_cast<TableColumn>(i)))));
           }
         });
       });
   }
 };
 
+class DumbInputBox : public QWidget {
+  public:
+    using SubmitSignal = AnyInputBox::SubmitSignal;
+
+    DumbInputBox(std::shared_ptr<AnyValueModel> current,
+      QWidget* parent = nullptr)
+      : QWidget(parent),
+        m_current(std::move(current)),
+        m_is_read_only(false) {}
+
+    const std::shared_ptr<AnyValueModel>& get_current() const {
+      return m_current;
+    }
+
+    bool is_read_only() const {
+      return m_is_read_only;
+    }
+
+    void set_read_only(bool is_read_only) {
+      m_is_read_only = is_read_only;
+    }
+
+    connection connect_submit_signal(
+        const SubmitSignal::slot_type& slot) const {
+      return connection();
+    }
+
+  private:
+    std::shared_ptr<AnyValueModel> m_current;
+    bool m_is_read_only;
+};
+
+class EditablePopupBox : public EditableBox {
+  public:
+    EditablePopupBox(AnyInputBox& input_box, QWidget* parent = nullptr)
+        : EditableBox(*new AnyInputBox(
+            *new DumbInputBox(input_box.get_current())), parent),
+          m_is_processing_key(false) {
+      get_input_box().setEnabled(false);
+      get_input_box().hide();
+      m_editable_box = new EditableBox(input_box);
+      m_editable_box->connect_end_edit_signal([=] {
+        setFocus();
+        set_editing(false);
+      });
+      m_popup_box = new PopupBox(*m_editable_box);
+      m_popup_box->setAttribute(Qt::WA_TransparentForMouseEvents);
+      layout()->addWidget(m_popup_box);
+      m_tip_window = find_tip_window(input_box);
+      m_editable_box->installEventFilter(this);
+    }
+
+    bool eventFilter(QObject* watched, QEvent* event) override {
+      if(watched == m_editable_box) {
+        if(event->type() == QEvent::ParentChange) {
+          if(m_editable_box->parentWidget() != m_popup_box) {
+            match(*this, PopUp());
+          } else {
+            unmatch(*this, PopUp());
+          }
+        }
+      }
+      return EditableBox::eventFilter(watched, event);
+    }
+
+    bool event(QEvent* event) override {
+      switch(event->type()) {
+        case QEvent::MouseButtonPress:
+          if(auto& mouse_event = *static_cast<QMouseEvent*>(event);
+              mouse_event.button() == Qt::LeftButton && hasFocus()) {
+            m_popup_box->get_body().setFocus();
+          }
+          break;
+        case QEvent::Enter:
+        case QEvent::Leave:
+          if(m_tip_window) {
+            QCoreApplication::sendEvent(m_tip_window->parentWidget(), event);
+          }
+          break;
+      }
+      return EditableBox::event(event);
+    }
+
+    void keyPressEvent(QKeyEvent* event) override {
+      if(m_is_processing_key) {
+        return EditableBox::keyPressEvent(event);
+      }
+      m_is_processing_key = true;
+      QCoreApplication::sendEvent(&m_popup_box->get_body(), event);
+      m_is_processing_key = false;
+    }
+
+  private:
+    EditableBox* m_editable_box;
+    PopupBox* m_popup_box;
+    QWidget* m_tip_window;
+    bool m_is_processing_key;
+};
+
 EditableBox* make_table_item(
     std::shared_ptr<ComboBox::QueryModel> region_query_model,
     const DestinationDatabase& destinations, const MarketDatabase& markets,
     const std::shared_ptr<TableModel>& table, int row, int column) {
-  auto column_id = static_cast<Column>(column);
+  auto column_id = static_cast<TableColumn>(column);
   auto input_box = [&] {
-    if(column_id == Column::NAME) {
+    if(column_id == TableColumn::NAME) {
       return new AnyInputBox(*new TextBox(
         to_value_model<QString>(table, row, column)));
-    } else if(column_id == Column::REGION) {
+    } else if(column_id == TableColumn::REGION) {
       return new AnyInputBox(*new RegionBox(region_query_model,
         to_value_model<Region>(table, row, column)));
-    } else if(column_id == Column::DESTINATION) {
+    } else if(column_id == TableColumn::DESTINATION) {
       auto region_model = to_value_model<Region>(table, row,
-        static_cast<int>(Column::REGION));
+        static_cast<int>(TableColumn::REGION));
       auto query_model = std::make_shared<DestinationQueryModel>(
         std::move(region_model), destinations, markets);
       auto current_model = std::make_shared<DestinationValueModel>(
         to_value_model<Destination>(table, row, column), query_model);
       return new AnyInputBox(*new DestinationBox(std::move(query_model),
         std::move(current_model)));
-    } else if(column_id == Column::ORDER_TYPE) {
+    } else if(column_id == TableColumn::ORDER_TYPE) {
       return new AnyInputBox(*make_order_type_box(
         to_value_model<OrderType>(table, row, column)));
-    } else if(column_id == Column::SIDE) {
+    } else if(column_id == TableColumn::SIDE) {
       return new AnyInputBox(*make_side_box(
         to_value_model<Side>(table, row, column)));
-    } else if(column_id == Column::QUANTITY) {
+    } else if(column_id == TableColumn::QUANTITY) {
       return new AnyInputBox(*new QuantityBox(
         std::make_shared<ScalarValueModelDecorator<optional<Quantity>>>(
           to_value_model<optional<Quantity>>(table, row, column)),
         make_quantity_modifiers()));
-    } else if(column_id == Column::TIME_IN_FORCE) {
+    } else if(column_id == TableColumn::TIME_IN_FORCE) {
       return new AnyInputBox(*make_time_in_force_box(
         to_value_model<TimeInForce>(table, row, column)));
-    } else if(column_id == Column::TAGS) {
+    } else if(column_id == TableColumn::TAGS) {
       return new AnyInputBox(*make_label(""));
     } else {
       return new AnyInputBox(*new KeyInputBox(
@@ -390,7 +510,9 @@ EditableBox* make_table_item(
           to_value_model<QKeySequence>(table, row, column))));
     } 
   }();
-  if(column_id == Column::KEY) {
+  if(column_id == TableColumn::REGION) {
+    return new EditablePopupBox(*input_box);
+  } else if(column_id == TableColumn::KEY) {
     return new EditableBox(*input_box, [] (const auto& key) {
       return key_input_box_validator(key) != QValidator::Invalid;
     });
@@ -417,5 +539,11 @@ TableView* Spire::make_task_keys_table_view(
   for(auto i = 0; i < std::ssize(widths); ++i) {
     table_view->get_header().get_widths()->set(i + 1, widths[i]);
   }
+  update_style(*table_view, [] (auto& style) {
+    style.get((Any() > PopUp()) << Current()).
+      set(border_color(QColor(Qt::transparent)));
+    style.get(Any() > is_a<EditablePopupBox>() > ReadOnly()).
+      set(horizontal_padding(scale_width(8)));
+  });
   return table_view;
 }
