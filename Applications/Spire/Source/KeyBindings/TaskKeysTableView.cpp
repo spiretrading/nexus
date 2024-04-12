@@ -559,6 +559,8 @@ TableView* Spire::make_task_keys_table_view(
       set(border_color(QColor(Qt::transparent)));
     style.get(Any() > is_a<EditablePopupBox>() > ReadOnly()).
       set(horizontal_padding(scale_width(8)));
+    style.get(Any() > is_a<DecimalBox>()).
+      set(TextAlign(Qt::Alignment(Qt::AlignRight)));
   });
   return table_view;
 }
