@@ -471,6 +471,7 @@ class EditablePopupBox : public EditableBox {
       }
       m_is_processing_key = true;
       QCoreApplication::sendEvent(&m_popup_box->get_body(), event);
+      m_popup_box->get_body().setFocus();
       m_is_processing_key = false;
     }
 
