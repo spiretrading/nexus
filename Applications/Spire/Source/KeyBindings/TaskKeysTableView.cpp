@@ -417,6 +417,9 @@ class EditablePopupBox : public EditableBox {
       m_popup_box->setAttribute(Qt::WA_TransparentForMouseEvents);
       layout()->addWidget(m_popup_box);
       m_tip_window = find_tip_window(input_box);
+      if(auto proxy = find_focus_proxy(input_box)) {
+        proxy->installEventFilter(this);
+      }
       m_editable_box->installEventFilter(this);
     }
 
@@ -428,6 +431,17 @@ class EditablePopupBox : public EditableBox {
           } else {
             unmatch(*this, PopUp());
           }
+        }
+      } else if(event->type() == QEvent::KeyPress) {
+        auto& key_event = *static_cast<QKeyEvent*>(event);
+        if(key_event.key() == Qt::Key_Tab) {
+          setFocus();
+          focusNextChild();
+          return true;
+        } else if(key_event.key() == Qt::Key_Backtab) {
+          setFocus();
+          focusPreviousChild();
+          return true;
         }
       }
       return EditableBox::eventFilter(watched, event);
