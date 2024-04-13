@@ -13,6 +13,7 @@
 #include "Nexus/Compliance/SecurityFilterComplianceRule.hpp"
 #include "Nexus/Compliance/TimeFilterComplianceRule.hpp"
 #include "Nexus/Definitions/Money.hpp"
+#include "Nexus/Definitions/Region.hpp"
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
 #include "Nexus/OrderExecutionService/Order.hpp"
 
