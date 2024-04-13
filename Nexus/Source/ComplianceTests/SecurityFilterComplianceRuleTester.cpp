@@ -27,59 +27,50 @@ namespace {
       DefaultDestinations::TSX(), 100, Money::ONE);
   }
 
-  auto MakeSecuritySet() {
-    auto securities = SecuritySet();
-    securities.Add(Security("A", DefaultMarkets::TSX(),
-      DefaultCountries::CA()));
-    return securities;
+  auto MakeRegion() {
+    return Security("A", DefaultMarkets::TSX(), DefaultCountries::CA());
   }
 }
 
 TEST_SUITE("SecurityFilterComplianceRule") {
   TEST_CASE("matching_add") {
     auto baseRule = std::make_unique<RejectSubmissionsComplianceRule>();
-    auto rule = SecurityFilterComplianceRule(MakeSecuritySet(),
-      std::move(baseRule));
+    auto rule = SecurityFilterComplianceRule(MakeRegion(), std::move(baseRule));
     auto order = PrimitiveOrder({MakeOrderFields("A"), 1, TIMESTAMP});
     REQUIRE_NOTHROW(rule.Add(order));
   }
 
   TEST_CASE("unmatching_add") {
     auto baseRule = std::make_unique<RejectSubmissionsComplianceRule>();
-    auto rule = SecurityFilterComplianceRule(MakeSecuritySet(),
-      std::move(baseRule));
+    auto rule = SecurityFilterComplianceRule(MakeRegion(), std::move(baseRule));
     auto order = PrimitiveOrder({MakeOrderFields("B"), 1, TIMESTAMP});
     REQUIRE_NOTHROW(rule.Add(order));
   }
 
   TEST_CASE("matching_submit") {
     auto baseRule = std::make_unique<RejectSubmissionsComplianceRule>();
-    auto rule = SecurityFilterComplianceRule(MakeSecuritySet(),
-      std::move(baseRule));
+    auto rule = SecurityFilterComplianceRule(MakeRegion(), std::move(baseRule));
     auto order = PrimitiveOrder({MakeOrderFields("A"), 1, TIMESTAMP});
     REQUIRE_THROWS_AS(rule.Submit(order), ComplianceCheckException);
   }
 
   TEST_CASE("unmatching_submit") {
     auto baseRule = std::make_unique<RejectSubmissionsComplianceRule>();
-    auto rule = SecurityFilterComplianceRule(MakeSecuritySet(),
-      std::move(baseRule));
+    auto rule = SecurityFilterComplianceRule(MakeRegion(), std::move(baseRule));
     auto order = PrimitiveOrder({MakeOrderFields("B"), 1, TIMESTAMP});
     REQUIRE_NOTHROW(rule.Submit(order));
   }
 
   TEST_CASE("matching_cancel") {
     auto baseRule = std::make_unique<RejectCancelsComplianceRule>();
-    auto rule = SecurityFilterComplianceRule(MakeSecuritySet(),
-      std::move(baseRule));
+    auto rule = SecurityFilterComplianceRule(MakeRegion(), std::move(baseRule));
     auto order = PrimitiveOrder({MakeOrderFields("A"), 1, TIMESTAMP});
     REQUIRE_THROWS_AS(rule.Cancel(order), ComplianceCheckException);
   }
 
   TEST_CASE("unmatching_cancel") {
     auto baseRule = std::make_unique<RejectCancelsComplianceRule>();
-    auto rule = SecurityFilterComplianceRule(MakeSecuritySet(),
-      std::move(baseRule));
+    auto rule = SecurityFilterComplianceRule(MakeRegion(), std::move(baseRule));
     auto order = PrimitiveOrder({MakeOrderFields("B"), 1, TIMESTAMP});
     REQUIRE_NOTHROW(rule.Cancel(order));
   }

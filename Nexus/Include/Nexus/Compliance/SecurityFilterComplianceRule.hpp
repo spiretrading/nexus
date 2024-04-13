@@ -2,7 +2,7 @@
 #define NEXUS_SECURITY_FILTER_COMPLIANCE_RULE_HPP
 #include <Beam/Pointers/Out.hpp>
 #include <boost/throw_exception.hpp>
-#include "Nexus/Definitions/SecuritySet.hpp"
+#include "Nexus/Definitions/Region.hpp"
 #include "Nexus/Compliance/Compliance.hpp"
 #include "Nexus/Compliance/ComplianceParameter.hpp"
 #include "Nexus/Compliance/ComplianceRule.hpp"
@@ -16,11 +16,11 @@ namespace Nexus::Compliance {
 
       /**
        * Constructs a SecurityFilterComplianceRule.
-       * @param securities The set of Securities the rule applies to.
+       * @param region The Region this rule applies to.
        * @param rule The ComplianceRule to apply.
        */
-      SecurityFilterComplianceRule(SecuritySet securities,
-        std::unique_ptr<ComplianceRule> rule);
+      SecurityFilterComplianceRule(
+        Region region, std::unique_ptr<ComplianceRule> rule);
 
       void Submit(const OrderExecutionService::Order& order) override;
 
@@ -29,18 +29,18 @@ namespace Nexus::Compliance {
       void Add(const OrderExecutionService::Order& order) override;
 
     private:
-      SecuritySet m_securities;
+      Region m_region;
       std::unique_ptr<ComplianceRule> m_rule;
   };
 
   inline SecurityFilterComplianceRule::SecurityFilterComplianceRule(
-    SecuritySet securities, std::unique_ptr<ComplianceRule> rule)
-    : m_securities(std::move(securities)),
+    Region region, std::unique_ptr<ComplianceRule> rule)
+    : m_region(std::move(region)),
       m_rule(std::move(rule)) {}
 
   inline void SecurityFilterComplianceRule::Submit(
       const OrderExecutionService::Order& order) {
-    if(m_securities.Contains(order.GetInfo().m_fields.m_security)) {
+    if(m_region.Contains(order.GetInfo().m_fields.m_security)) {
       m_rule->Submit(order);
     } else {
       Add(order);
@@ -49,7 +49,7 @@ namespace Nexus::Compliance {
 
   inline void SecurityFilterComplianceRule::Cancel(
       const OrderExecutionService::Order& order) {
-    if(m_securities.Contains(order.GetInfo().m_fields.m_security)) {
+    if(m_region.Contains(order.GetInfo().m_fields.m_security)) {
       m_rule->Cancel(order);
     }
   }
