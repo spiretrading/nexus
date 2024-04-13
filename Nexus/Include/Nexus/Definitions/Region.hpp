@@ -46,7 +46,7 @@ namespace Nexus {
        * @param market The market to represent.
        * @param country The country the market belongs to.
        */
-      Region(const MarketCode& market, CountryCode country);
+      Region(MarketCode market, CountryCode country);
 
       /**
        * Constructs a Region consisting of a single market.
@@ -82,18 +82,18 @@ namespace Nexus {
       const std::unordered_set<Security>& GetSecurities() const;
 
       /**
+       * Returns <code>true</code> iff <i>region</i> is a subset of
+       * <i>this</i>.
+       */
+      bool Contains(const Region& region) const;
+
+      /**
        * Combines <i>this</i> Region with another.
        * @param region The Region to combine.
        * @return A Region containing all of <i>this</i>'s elements and
        *         <i>region</i>'s elements.
        */
       Region& operator +=(const Region& region);
-
-      /**
-       * Returns <code>true</code> iff <i>region</i> is a subset of
-       * <i>this</i>.
-       */
-      bool Contains(const Region& region) const;
 
       /**
        * Returns <code>true</code> iff <i>this</i> Region is a strict subset of
@@ -244,7 +244,7 @@ namespace Nexus {
     m_countries.insert(country);
   }
 
-  inline Region::Region(const MarketCode& market, CountryCode country)
+  inline Region::Region(MarketCode market, CountryCode country)
       : m_isGlobal(false) {
     m_markets.insert(MarketEntry(market, country));
   }
