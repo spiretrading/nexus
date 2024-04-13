@@ -46,15 +46,15 @@ TEST_SUITE("Region") {
 
   TEST_CASE("security_region_subset_of_market_region") {
     auto market = GetDefaultMarketDatabase().FromCode(DefaultMarkets::NASDAQ());
-    auto security = Security("TST", DefaultMarkets::NASDAQ(),
-      DefaultCountries::US());
+    auto security =
+      Security("TST", DefaultMarkets::NASDAQ(), DefaultCountries::US());
     TestProperSubset(security, market);
   }
 
   TEST_CASE("security_region_subset_of_country_region") {
     auto country = DefaultCountries::US();
-    auto security = Security("TST", DefaultMarkets::NASDAQ(),
-      DefaultCountries::US());
+    auto security =
+      Security("TST", DefaultMarkets::NASDAQ(), DefaultCountries::US());
     TestProperSubset(security, country);
   }
 

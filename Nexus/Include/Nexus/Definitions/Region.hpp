@@ -44,6 +44,13 @@ namespace Nexus {
       /**
        * Constructs a Region consisting of a single market.
        * @param market The market to represent.
+       * @param country The country the market belongs to.
+       */
+      Region(const MarketCode& market, CountryCode country);
+
+      /**
+       * Constructs a Region consisting of a single market.
+       * @param market The market to represent.
        */
       Region(const MarketDatabase::Entry& market);
 
@@ -62,6 +69,9 @@ namespace Nexus {
       /** Returns <code>true</code> iff this is the global Region. */
       bool IsGlobal() const;
 
+      /** Returns <code>true</code> iff this Region is empty. */
+      bool IsEmpty() const;
+
       /** Returns the countries in this Region. */
       const std::unordered_set<CountryCode>& GetCountries() const;
 
@@ -77,7 +87,13 @@ namespace Nexus {
        * @return A Region containing all of <i>this</i>'s elements and
        *         <i>region</i>'s elements.
        */
-      Region operator +(const Region& region) const;
+      Region& operator +=(const Region& region);
+
+      /**
+       * Returns <code>true</code> iff <i>region</i> is a subset of
+       * <i>this</i>.
+       */
+      bool Contains(const Region& region) const;
 
       /**
        * Returns <code>true</code> iff <i>this</i> Region is a strict subset of
@@ -188,6 +204,11 @@ namespace Nexus {
     return Region(security) > region;
   }
 
+  inline Region operator +(Region left, const Region& right) {
+    left += right;
+    return left;
+  }
+
   inline Region::MarketEntry::MarketEntry(MarketCode market,
     CountryCode country)
     : m_market(market),
@@ -223,14 +244,30 @@ namespace Nexus {
     m_countries.insert(country);
   }
 
-  inline Region::Region(const MarketDatabase::Entry& market)
+  inline Region::Region(const MarketCode& market, CountryCode country)
       : m_isGlobal(false) {
-    m_markets.insert(MarketEntry(market.m_code, market.m_countryCode));
+    m_markets.insert(MarketEntry(market, country));
   }
+
+  inline Region::Region(const MarketDatabase::Entry& market)
+    : Region(market.m_code, market.m_countryCode) {}
 
   inline Region::Region(Security security)
       : m_isGlobal(false) {
-    m_securities.insert(std::move(security));
+    if(security.GetSymbol() == "*") {
+      if(security.GetMarket() == "*" || security.GetMarket() == MarketCode()) {
+        if(security.GetCountry() == CountryCode::NONE) {
+          m_isGlobal = true;
+        } else {
+          m_countries.insert(security.GetCountry());
+        }
+      } else {
+        m_markets.insert(
+          MarketEntry(security.GetMarket(), security.GetCountry()));
+      }
+    } else {
+      m_securities.insert(std::move(security));
+    }
   }
 
   inline const std::string& Region::GetName() const {
@@ -243,6 +280,10 @@ namespace Nexus {
 
   inline bool Region::IsGlobal() const {
     return m_isGlobal;
+  }
+
+  inline bool Region::IsEmpty() const {
+    return m_countries.empty() && m_markets.empty() && m_securities.empty();
   }
 
   inline const std::unordered_set<CountryCode>& Region::GetCountries() const {
@@ -261,20 +302,23 @@ namespace Nexus {
     return m_securities;
   }
 
-  inline Region Region::operator +(const Region& region) const {
-    if(m_isGlobal) {
-      return *this;
-    } else if(region.m_isGlobal) {
-      return region;
+  inline bool Region::Contains(const Region& region) const {
+    return region <= *this;
+  }
+
+  inline Region& Region::operator +=(const Region& region) {
+    if(region.m_isGlobal) {
+      m_isGlobal = true;
+      m_countries = {};
+      m_markets = {};
+      m_securities = {};
+    } else if(!m_isGlobal) {
+      m_countries.insert(region.m_countries.begin(), region.m_countries.end());
+      m_markets.insert(region.m_markets.begin(), region.m_markets.end());
+      m_securities.insert(
+        region.m_securities.begin(), region.m_securities.end());
     }
-    auto unionRegion = *this;
-    unionRegion.m_countries.insert(region.m_countries.begin(),
-      region.m_countries.end());
-    unionRegion.m_markets.insert(region.m_markets.begin(),
-      region.m_markets.end());
-    unionRegion.m_securities.insert(region.m_securities.begin(),
-      region.m_securities.end());
-    return unionRegion;
+    return *this;
   }
 
   inline bool Region::operator <(const Region& region) const {
