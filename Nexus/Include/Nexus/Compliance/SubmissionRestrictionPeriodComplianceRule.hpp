@@ -8,7 +8,7 @@
 #include "Nexus/Compliance/ComplianceCheckException.hpp"
 #include "Nexus/Compliance/ComplianceRule.hpp"
 #include "Nexus/Compliance/ComplianceRuleSchema.hpp"
-#include "Nexus/Definitions/SecuritySet.hpp"
+#include "Nexus/Definitions/Region.hpp"
 #include "Nexus/OrderExecutionService/Order.hpp"
 
 namespace Nexus::Compliance {
@@ -46,14 +46,14 @@ namespace Nexus::Compliance {
        *        submissions.
        */
       template<typename CF>
-      SubmissionRestrictionPeriodComplianceRule(SecuritySet symbols,
-        boost::posix_time::time_duration startPeriod,
+      SubmissionRestrictionPeriodComplianceRule(
+        Region region, boost::posix_time::time_duration startPeriod,
         boost::posix_time::time_duration endPeriod, CF&& timeClient);
 
       void Submit(const OrderExecutionService::Order& order) override;
 
     private:
-      SecuritySet m_symbols;
+      Region m_region;
       boost::posix_time::time_duration m_startPeriod;
       boost::posix_time::time_duration m_endPeriod;
       Beam::GetOptionalLocalPtr<C> m_timeClient;
@@ -84,16 +84,16 @@ namespace Nexus::Compliance {
       : m_timeClient(std::forward<CF>(timeClient)) {
     for(auto& parameter : parameters) {
       if(parameter.m_name == "symbols") {
-        for(auto& security : boost::get<std::vector<ComplianceValue>>(
-            parameter.m_value)) {
-          m_symbols.Add(std::move(boost::get<Security>(security)));
+        for(auto& security :
+            boost::get<std::vector<ComplianceValue>>(parameter.m_value)) {
+          m_region += boost::get<Security>(security);
         }
       } else if(parameter.m_name == "start_period") {
-        m_startPeriod = boost::get<boost::posix_time::time_duration>(
-          parameter.m_value);
+        m_startPeriod =
+          boost::get<boost::posix_time::time_duration>(parameter.m_value);
       } else if(parameter.m_name == "end_period") {
-        m_endPeriod = boost::get<boost::posix_time::time_duration>(
-          parameter.m_value);
+        m_endPeriod =
+          boost::get<boost::posix_time::time_duration>(parameter.m_value);
       }
     }
   }
@@ -101,10 +101,10 @@ namespace Nexus::Compliance {
   template<typename C>
   template<typename CF>
   SubmissionRestrictionPeriodComplianceRule<C>::
-      SubmissionRestrictionPeriodComplianceRule(SecuritySet symbols,
+    SubmissionRestrictionPeriodComplianceRule(Region region,
       boost::posix_time::time_duration startPeriod,
       boost::posix_time::time_duration endPeriod, CF&& timeClient)
-    : m_symbols(std::move(symbols)),
+    : m_region(std::move(region)),
       m_startPeriod(startPeriod),
       m_endPeriod(endPeriod),
       m_timeClient(std::forward<CF>(timeClient)) {}
@@ -113,7 +113,7 @@ namespace Nexus::Compliance {
   void SubmissionRestrictionPeriodComplianceRule<C>::Submit(
       const OrderExecutionService::Order& order) {
     auto& security = order.GetInfo().m_fields.m_security;
-    if(!m_symbols.Contains(security)) {
+    if(!m_region.Contains(security)) {
       return;
     }
     auto time = m_timeClient->GetTime();

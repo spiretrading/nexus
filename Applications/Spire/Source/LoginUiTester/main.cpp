@@ -8,9 +8,9 @@
 using namespace Spire;
 
 int main(int argc, char** argv) {
-  auto application = new QApplication(argc, argv);
-  application->setOrganizationName(QObject::tr("Spire Trading Inc"));
-  application->setApplicationName(QObject::tr("Login UI Tester"));
+  auto application = QApplication(argc, argv);
+  application.setOrganizationName(QObject::tr("Spire Trading Inc"));
+  application.setApplicationName(QObject::tr("Login UI Tester"));
   initialize_resources();
   auto window = LoginWindow(SPIRE_VERSION);
   window.show();
@@ -20,5 +20,5 @@ int main(int argc, char** argv) {
     window.pos().x(), window.pos().y() + window.height() + 100, 0, 0);
   tester.setAttribute(Qt::WA_ShowWithoutActivating);
   tester.show();
-  application->exec();
+  application.exec();
 }

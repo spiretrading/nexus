@@ -81,6 +81,12 @@ void ContextMenu::add_action(const QString& name, const Action& action) {
   m_list->push(MenuItem(MenuItemType::ACTION, name, action));
 }
 
+void ContextMenu::add_disabled_action(const QString& name) {
+  m_list->push(MenuItem(MenuItemType::DISABLED_ACTION, name));
+  auto item = m_list_view->get_list_item(m_list->get_size() - 1);
+  item->setDisabled(true);
+}
+
 std::shared_ptr<BooleanModel> ContextMenu::add_check_box(const QString& name) {
   auto model = std::make_shared<LocalBooleanModel>();
   add_check_box(name, model);
@@ -94,6 +100,14 @@ void ContextMenu::add_check_box(const QString& name,
 
 void ContextMenu::add_separator() {
   m_list->push(MenuItem(MenuItemType::SEPARATOR));
+}
+
+void ContextMenu::reset() {
+  m_list->transact([&] {
+    for(auto i = m_list->get_size() - 1; i >= 0; --i) {
+      m_list->remove(i);
+    }
+  });
 }
 
 connection ContextMenu::connect_submit_signal(
@@ -161,6 +175,7 @@ bool ContextMenu::event(QEvent* event) {
     m_window->hide();
     hide_active_menu();
     m_list_view->get_current()->set(none);
+    m_list_view->setFocusProxy(nullptr);
   } else if(event->type() == QEvent::HoverMove) {
     auto& hover_event = *static_cast<QHoverEvent*>(event);
     for(auto i = 0; i < m_list_view->get_list()->get_size(); ++i) {
@@ -175,15 +190,32 @@ bool ContextMenu::event(QEvent* event) {
     }
   } else if(event->type() == QEvent::HoverLeave) {
     m_list_view->get_current()->set(none);
+    m_list_view->setFocusProxy(nullptr);
+    m_list_view->setFocus();
   }
   return QWidget::event(event);
 }
 
-QWidget* ContextMenu::build_item(const std::shared_ptr<AnyListModel>& list,
-    int index) {
+QWidget* ContextMenu::build_item(
+    const std::shared_ptr<AnyListModel>& list, int index) {
   auto item = std::any_cast<MenuItem&&>(list->get(index));
   if(item.m_type == MenuItemType::ACTION) {
     return make_label(item.m_name);
+  } else if(item.m_type == MenuItemType::DISABLED_ACTION) {
+    auto label = make_label(item.m_name);
+    label->setSizePolicy(
+      QSizePolicy::Expanding, label->sizePolicy().verticalPolicy());
+    update_style(*label, [] (auto& style) {
+      auto font = QFont("Roboto");
+      font.setWeight(QFont::Normal);
+      font.setPixelSize(scale_width(12));
+      font.setItalic(true);
+      style.get(Any()).
+        set(Font(font)).
+        set(TextAlign(Qt::Alignment(Qt::AlignCenter))).
+        set(TextColor(QColor(Qt::black)));
+    });
+    return label;
   } else if(item.m_type == MenuItemType::CHECK) {
     auto check_box =
       new CheckBox(std::get<std::shared_ptr<BooleanModel>>(item.m_data));
@@ -247,7 +279,6 @@ bool ContextMenu::handle_mouse_event(QMouseEvent* event) {
       if(!item->rect().contains(item->mapFromGlobal(event->globalPos()))) {
         hide_active_menu();
         clear_hover_style();
-        m_list_view->get_current()->set(none);
       } else if(event->type() == QEvent::MouseButtonPress ||
           event->type() == QEvent::MouseButtonDblClick) {
         return true;

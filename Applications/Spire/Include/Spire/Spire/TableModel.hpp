@@ -18,13 +18,6 @@ namespace Spire {
 
         /** A list representation of the added row. */
         std::shared_ptr<const AnyListModel> m_row;
-
-        /**
-         * Constructs an AddOperation.
-         * @param index The index where the row was inserted.
-         * @param row The list representation of the added row.
-         */
-        AddOperation(int index, std::shared_ptr<const AnyListModel> row);
       };
 
       /** Indicates a row was removed from the model. */
@@ -35,13 +28,6 @@ namespace Spire {
 
         /** A list representation of the removed row. */
         std::shared_ptr<const AnyListModel> m_row;
-
-        /**
-         * Constructs a RemoveOperation.
-         * @param index The index where the row removed.
-         * @param row The list representation of the removed row.
-         */
-        RemoveOperation(int index, std::shared_ptr<const AnyListModel> row);
       };
 
       /** Indicates a row was moved from one index to another. */
@@ -52,13 +38,6 @@ namespace Spire {
 
         /** The index that the row was moved to. */
         int m_destination;
-
-        /**
-         * Constructs a MoveOperation.
-         * @param source The index of the row that was moved.
-         * @param destination The index that the row was moved to.
-         */
-        MoveOperation(int source, int destination);
       };
 
       /** Indicates a value was updated. */
@@ -75,15 +54,6 @@ namespace Spire {
 
         /** The updated value. */
         std::any m_value;
-
-        /**
-         * Constructs an UpdateOperation.
-         * @param row The row of the updated value.
-         * @param column The column of the updated value.
-         * @param previous The previous value.
-         * @param value The updated value.
-         */
-        UpdateOperation(int row, int column, std::any previous, std::any value);
       };
 
       /** Indicates the beginning of a transaction. */
@@ -135,6 +105,17 @@ namespace Spire {
        *         out of range.
        */
       virtual QValidator::State set(int row, int column, const std::any& value);
+
+      /**
+       * Removes a row from the model.
+       * @param row - The index of the row to remove.
+       * @return <code>QValidator::State::Acceptable</code> if the model
+       *         supports the operation, <code>QValidator::State::Invalid</code>
+       *         otherwise.
+       * @throws <code>std::out_of_range</code> - The index is not within this
+       *         table's range.
+       */
+      virtual QValidator::State remove(int row);
 
       /** Connects a slot to the OperationSignal. */
       virtual boost::signals2::connection connect_operation_signal(

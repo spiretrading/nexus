@@ -1,4 +1,5 @@
 #include "Spire/Catalog/CatalogIconSelectionDialog.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 #include "ui_CatalogIconSelectionDialog.h"
 
 using namespace Spire;
@@ -26,6 +27,7 @@ CatalogIconSelectionDialog::CatalogIconSelectionDialog(QWidget* parent,
     : QDialog(parent, flags),
       m_ui(std::make_unique<Ui_CatalogIconSelectionDialog>()) {
   m_ui->setupUi(this);
+  resize(scale(size()));
   m_ui->m_iconListWidget->addItem(new IconListWidgetItem(
     ":/icons/logic_and.png", "Conjunction"));
   m_ui->m_iconListWidget->addItem(new IconListWidgetItem(":/icons/weight.png",

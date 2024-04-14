@@ -11,13 +11,12 @@ using namespace boost;
 using namespace Nexus;
 using namespace Spire;
 using namespace Spire::LegacyUI;
-using namespace std;
 
-MaxFloorSpinBox::MaxFloorSpinBox(Ref<UserProfile> userProfile,
-    const MaxFloorNode& node, QWidget* parent)
+MaxFloorSpinBox::MaxFloorSpinBox(
+    Ref<UserProfile> userProfile, const MaxFloorNode& node, QWidget* parent)
     : QSpinBox(parent),
       m_userProfile(userProfile.Get()) {
-  setMaximum(numeric_limits<int>::max());
+  setMaximum(std::numeric_limits<int>::max());
   setMinimum(-1);
   setSpecialValueText(tr("N/A"));
   setCorrectionMode(QAbstractSpinBox::CorrectToPreviousValue);
@@ -25,22 +24,20 @@ MaxFloorSpinBox::MaxFloorSpinBox(Ref<UserProfile> userProfile,
   setAccelerated(false);
   setSingleStep(1);
   auto referent = node.FindReferent();
-  if(referent.is_initialized()) {
-    auto anchor = FindAnchor(*referent);
-    if(anchor.is_initialized()) {
+  if(referent) {
+    if(auto anchor = FindAnchor(*referent)) {
       referent = anchor;
     }
   }
-  if(referent.is_initialized()) {
-    auto securityValueNode = dynamic_cast<const SecurityNode*>(&*referent);
-    if(securityValueNode != nullptr) {
+  if(referent) {
+    if(auto securityValueNode = dynamic_cast<const SecurityNode*>(&*referent)) {
       m_security = securityValueNode->GetValue();
     }
   }
-  AdjustIncrement(KeyModifiers::PLAIN);
+  AdjustIncrement(Qt::NoModifier);
 }
 
-MaxFloorSpinBox::~MaxFloorSpinBox() {}
+MaxFloorSpinBox::~MaxFloorSpinBox() = default;
 
 void MaxFloorSpinBox::stepBy(int steps) {
   if(steps <= 0) {
@@ -64,24 +61,25 @@ void MaxFloorSpinBox::keyPressEvent(QKeyEvent* event) {
     selectAll();
     return;
   }
-  AdjustIncrement(KeyModifiersFromEvent(*event));
+  AdjustIncrement(to_modifier(event->modifiers()));
   QSpinBox::keyPressEvent(event);
 }
 
 void MaxFloorSpinBox::keyReleaseEvent(QKeyEvent* event) {
   if(event->modifiers() == Qt::SHIFT || event->modifiers() == Qt::ALT ||
       event->modifiers() == Qt::CTRL) {
-    AdjustIncrement(KeyModifiers::PLAIN);
+    AdjustIncrement(Qt::NoModifier);
   }
   QSpinBox::keyReleaseEvent(event);
 }
 
-void MaxFloorSpinBox::AdjustIncrement(KeyModifiers modifier) {
-  if(!m_security.is_initialized()) {
+void MaxFloorSpinBox::AdjustIncrement(Qt::KeyboardModifier modifier) {
+  if(!m_security) {
     return;
   }
-  auto quantityIncrement = m_userProfile->GetInteractionProperties().Get(
-    *m_security).m_quantityIncrements[static_cast<int>(modifier)];
+  auto quantityIncrement =
+    m_userProfile->GetKeyBindings()->get_interactions_key_bindings(
+      *m_security)->get_quantity_increment(modifier)->get();
   if(quantityIncrement != singleStep()) {
     setSingleStep(static_cast<int>(quantityIncrement));
   }

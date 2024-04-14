@@ -1,8 +1,8 @@
 #include "Spire/Styles/Stylist.hpp"
 #include <deque>
+#include <boost/functional/hash.hpp>
 #include <QApplication>
 #include <QTimer>
-#include <boost/functional/hash.hpp>
 #include "Spire/Styles/PseudoElement.hpp"
 #include "Spire/Styles/Selectors.hpp"
 
@@ -139,13 +139,16 @@ const StyleSheet& Stylist::get_style() const {
 }
 
 void Stylist::set_style(StyleSheet style) {
+  auto initial_rule_size = m_rules.size();
   for(auto& rule : m_rules) {
     auto selection = std::move(rule->m_selection);
     if(!selection.empty()) {
       on_selection_update(*rule, {}, std::move(selection));
     }
   }
-  m_rules.clear();
+  if(m_rules.size() != initial_rule_size) {
+    m_rules.erase(m_rules.begin(), m_rules.begin() + initial_rule_size);
+  }
   m_style = load_styles(std::move(style));
   apply(*m_style);
 }
@@ -313,16 +316,12 @@ void Stylist::apply(Stylist& source, const RuleEntry& rule) {
         std::tie(level, right.m_priority);
     });
   m_sources.insert(j, {&source, level, &rule});
-  apply_proxies();
 }
 
 void Stylist::unapply(Stylist& source, const RuleEntry& rule) {
-  auto i = std::find_if(m_sources.begin(), m_sources.end(),
-    [&] (const auto& entry) { return entry.m_rule == &rule; });
-  if(i != m_sources.end()) {
-    m_sources.erase(i);
-  }
-  apply_proxies();
+  std::erase_if(m_sources, [&] (const auto& entry) {
+    return entry.m_rule == &rule;
+  });
 }
 
 void Stylist::apply() {
@@ -362,8 +361,8 @@ void Stylist::apply() {
           m_widget->setSizePolicy(size);
           m_widget->hide();
         }
-        m_visibility = visibility;
       }
+      m_visibility = visibility;
     });
   } else if(m_visibility != Visibility::VISIBLE) {
     m_widget->show();
@@ -416,15 +415,21 @@ void Stylist::on_animation() {
 void Stylist::on_selection_update(
     RuleEntry& rule, std::unordered_set<const Stylist*>&& additions,
     std::unordered_set<const Stylist*>&& removals) {
+  auto changed_stylists = std::unordered_set<Stylist*>();
   for(auto removal : removals) {
     rule.m_selection.erase(removal);
     auto& stylist = const_cast<Stylist&>(*removal);
     stylist.unapply(*this, rule);
+    changed_stylists.insert(&stylist);
   }
   for(auto addition : additions) {
     rule.m_selection.insert(addition);
     auto& stylist = const_cast<Stylist&>(*addition);
     stylist.apply(*this, rule);
+    changed_stylists.insert(&stylist);
+  }
+  for(auto stylist : changed_stylists) {
+    stylist->apply_proxies();
   }
 }
 
@@ -515,7 +520,8 @@ const Block& Spire::Styles::get_computed_block(
   }
 }
 
-const EvaluatedBlock& Spire::Styles::get_evaluated_block(const QWidget& widget) {
+const EvaluatedBlock&
+    Spire::Styles::get_evaluated_block(const QWidget& widget) {
   return find_stylist(widget).get_evaluated_block();
 }
 
@@ -571,6 +577,10 @@ void Spire::Styles::forward_style(QWidget& source, QWidget& destination) {
 
 void Spire::Styles::proxy_style(QWidget& source, QWidget& destination) {
   find_stylist(source).add_proxy(destination);
+}
+
+bool Spire::Styles::is_match(QWidget& widget, const Selector& selector) {
+  return find_stylist(widget).is_match(selector);
 }
 
 void Spire::Styles::match(QWidget& widget, const Selector& selector) {

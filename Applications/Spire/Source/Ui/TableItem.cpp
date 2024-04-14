@@ -32,6 +32,10 @@ const TableItem::Styles& TableItem::get_styles() const {
   return m_styles;
 }
 
+QWidget& TableItem::get_body() {
+  return *layout()->itemAt(0)->widget();
+}
+
 connection TableItem::connect_active_signal(
     const ActiveSignal::slot_type& slot) const {
   return m_active_signal.connect(slot);

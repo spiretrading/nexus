@@ -2,6 +2,7 @@
 #define SPIRE_TABLE_BODY_HPP
 #include <functional>
 #include <memory>
+#include <unordered_map>
 #include <unordered_set>
 #include <boost/optional/optional.hpp>
 #include <QWidget>
@@ -11,6 +12,7 @@
 #include "Spire/Styles/BasicProperty.hpp"
 #include "Spire/Styles/CompositeProperty.hpp"
 #include "Spire/Styles/StateSelector.hpp"
+#include "Spire/Ui/HoverObserver.hpp"
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/TableCurrentController.hpp"
 #include "Spire/Ui/TableSelectionController.hpp"
@@ -112,6 +114,9 @@ namespace Styles {
       /** Returns the selection. */
       const std::shared_ptr<SelectionModel>& get_selection() const;
 
+      /** Returns the index of a TableItem. */
+      TableIndex get_index(const TableItem& item) const;
+
       /** Returns the TableItem at a specified index. */
       const TableItem* get_item(Index index) const;
 
@@ -119,7 +124,6 @@ namespace Styles {
       TableItem* get_item(Index index);
 
     protected:
-      bool eventFilter(QObject* watched, QEvent* event) override;
       bool event(QEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
       void keyReleaseEvent(QKeyEvent* event) override;
@@ -147,6 +151,7 @@ namespace Styles {
       ViewBuilder m_view_builder;
       std::vector<ColumnCover*> m_column_covers;
       Styles m_styles;
+      std::unordered_map<TableItem*, HoverObserver> m_hover_observers;
       boost::optional<Index> m_hover_index;
       boost::signals2::scoped_connection m_style_connection;
       boost::signals2::scoped_connection m_row_style_connection;
@@ -154,6 +159,7 @@ namespace Styles {
       boost::signals2::scoped_connection m_current_connection;
       boost::signals2::scoped_connection m_widths_connection;
 
+      int get_column_size() const;
       TableItem* get_current_item();
       Cover* find_row(int index);
       TableItem* find_item(const boost::optional<Index>& index);
@@ -169,6 +175,7 @@ namespace Styles {
       void on_current(const boost::optional<Index>& previous,
         const boost::optional<Index>& current);
       void on_row_selection(const ListModel<int>::Operation& operation);
+      void on_hover(TableItem& item, HoverObserver::State state);
       void on_style();
       void on_cover_style(Cover& cover);
       void on_table_operation(const TableModel::Operation& operation);

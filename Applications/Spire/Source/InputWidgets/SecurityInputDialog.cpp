@@ -3,8 +3,9 @@
 #include <QKeyEvent>
 #include <QScrollBar>
 #include <QTableView>
-#include "Nexus/Definitions/SecuritySet.hpp"
+#include "Spire/LegacyUI/CustomQtVariants.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Utilities/SecurityInfoCompleter.hpp"
 #include "Spire/Utilities/SecurityInfoModel.hpp"
 #include "ui_SecurityInputDialog.h"
@@ -116,7 +117,7 @@ bool SecurityInputDialog::eventFilter(QObject* receiver, QEvent* event) {
 
 void SecurityInputDialog::Initialize() {
   m_ui->setupUi(this);
-  setFixedSize(width(), height());
+  setFixedSize(scale(size()));
   m_model = std::make_unique<SecurityInfoModel>(Ref(*m_userProfile));
   m_completer = new SecurityInfoCompleter(m_model.get(), this);
   m_completer->setWrapAround(false);

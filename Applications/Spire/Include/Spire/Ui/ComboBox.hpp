@@ -6,6 +6,7 @@
 #include <Beam/Collections/Trie.hpp>
 #include "Spire/Async/QtPromise.hpp"
 #include "Spire/Ui/FocusObserver.hpp"
+#include "Spire/Ui/KeyObserver.hpp"
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -138,6 +139,7 @@ namespace Spire {
         QWidget* m_input_focus_proxy;
         ListView* m_list_view;
         FocusObserver m_focus_observer;
+        KeyObserver m_key_observer;
         std::shared_ptr<ArrayListModel<std::any>> m_matches;
         DropDownList* m_drop_down_list;
         boost::optional<QString> m_user_query;
@@ -174,6 +176,7 @@ namespace Spire {
       void on_drop_down_current(boost::optional<int> index);
       void on_drop_down_submit(const std::any& submission);
       void on_focus(FocusObserver::State state);
+      bool on_input_key_press(QWidget& target, QKeyEvent& event);
   };
 
   /**

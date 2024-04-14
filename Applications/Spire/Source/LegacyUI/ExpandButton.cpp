@@ -1,6 +1,7 @@
 #include "Spire/LegacyUI/ExpandButton.hpp"
 #include <QStyleOption>
 #include <QStylePainter>
+#include "Spire/Spire/Dimensions.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -49,20 +50,24 @@ connection ExpandButton::ConnectCollapsedSignal(
 }
 
 void ExpandButton::paintEvent(QPaintEvent* event) {
-  static const int DECORATION_SIZE = 9;
+  static const int DECORATION_WIDTH = scale_width(9);
+  static const int DECORATION_HEIGHT = scale_height(9);
   QWidget::paintEvent(event);
   QStylePainter painter(this);
   QStyleOption option;
   option.initFrom(this);
-  int x = option.rect.x() + DECORATION_SIZE / 2;
-  int y = option.rect.y() + option.rect.height() / 2 - DECORATION_SIZE / 2;
-  painter.drawLine(x + 2, y + 4, x + 6, y + 4);
+  int x = option.rect.x() + DECORATION_WIDTH / 2;
+  int y = option.rect.y() + option.rect.height() / 2 - DECORATION_HEIGHT / 2;
+  painter.drawLine(x + scale_width(2), y + scale_height(4), x + scale_width(6),
+    y + scale_height(4));
   if(!m_expanded) {
-    painter.drawLine(x + 4, y + 2, x + 4, y + 6);
+    painter.drawLine(x + scale_width(4), y + scale_height(2),
+      x + scale_width(4), y + scale_height(6));
   }
   QPen oldPen = painter.pen();
   painter.setPen(option.palette.dark().color());
-  painter.drawRect(x, y, DECORATION_SIZE - 1, DECORATION_SIZE - 1);
+  painter.drawRect(x, y, DECORATION_WIDTH - scale_width(1),
+    DECORATION_HEIGHT - scale_height(1));
   painter.setPen(oldPen);
 }
 
@@ -82,7 +87,7 @@ void ExpandButton::Setup() {
   sizePolicy.setVerticalStretch(0);
   sizePolicy.setHeightForWidth(this->sizePolicy().hasHeightForWidth());
   setSizePolicy(sizePolicy);
-  setMinimumSize(QSize(16, 16));
-  setMaximumSize(QSize(16, 16));
+  setMinimumSize(scale(16, 16));
+  setMaximumSize(scale(16, 16));
   update();
 }

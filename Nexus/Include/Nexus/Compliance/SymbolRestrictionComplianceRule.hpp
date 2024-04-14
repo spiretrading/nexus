@@ -5,16 +5,13 @@
 #include "Nexus/Compliance/ComplianceCheckException.hpp"
 #include "Nexus/Compliance/ComplianceRule.hpp"
 #include "Nexus/Compliance/ComplianceRuleSchema.hpp"
-#include "Nexus/Definitions/SecuritySet.hpp"
+#include "Nexus/Definitions/Region.hpp"
 #include "Nexus/OrderExecutionService/Order.hpp"
 #include "Nexus/OrderExecutionService/OrderFields.hpp"
 
 namespace Nexus::Compliance {
 
-  /**
-   * Restricts orders that are submitted on any symbol found within a list of
-   * symbols.
-   */
+  /** Restricts orders that are submitted in a Region. */
   class SymbolRestrictionComplianceRule : public ComplianceRule {
     public:
 
@@ -27,14 +24,14 @@ namespace Nexus::Compliance {
 
       /**
        * Constructs a SymbolRestrictionComplianceRule.
-       * @param restrictions The set of Securities to restrict.
+       * @param region The Region to restrict.
        */
-      explicit SymbolRestrictionComplianceRule(SecuritySet restrictions);
+      explicit SymbolRestrictionComplianceRule(Region region);
 
       void Submit(const OrderExecutionService::Order& order) override;
 
     private:
-      SecuritySet m_restrictions;
+      Region m_region;
   };
 
   /**
@@ -54,21 +51,21 @@ namespace Nexus::Compliance {
       const std::vector<ComplianceParameter>& parameters) {
     for(auto& parameter : parameters) {
       if(parameter.m_name == "symbols") {
-        for(auto& security : boost::get<std::vector<ComplianceValue>>(
-            parameter.m_value)) {
-          m_restrictions.Add(std::move(boost::get<Security>(security)));
+        for(auto& security :
+            boost::get<std::vector<ComplianceValue>>(parameter.m_value)) {
+          m_region += boost::get<Security>(security);
         }
       }
     }
   }
 
   inline SymbolRestrictionComplianceRule::SymbolRestrictionComplianceRule(
-    SecuritySet restrictions)
-    : m_restrictions(std::move(restrictions)) {}
+    Region region)
+    : m_region(std::move(region)) {}
 
   inline void SymbolRestrictionComplianceRule::Submit(
       const OrderExecutionService::Order& order) {
-    if(m_restrictions.Contains(order.GetInfo().m_fields.m_security)) {
+    if(m_region.Contains(order.GetInfo().m_fields.m_security)) {
       throw ComplianceCheckException("Submission restricted on symbol.");
     }
   }

@@ -98,6 +98,15 @@ bool InfoTip::eventFilter(QObject* watched, QEvent* event) {
   return QWidget::eventFilter(watched, event);
 }
 
+void InfoTip::changeEvent(QEvent* event) {
+  if(event->type() == QEvent::EnabledChange) {
+    if(isEnabled() && parentWidget()->underMouse()) {
+      m_show_timer.start();
+    }
+  }
+  return QWidget::changeEvent(event);
+}
+
 void InfoTip::leaveEvent(QEvent* event) {
   fade_out();
   QWidget::leaveEvent(event);

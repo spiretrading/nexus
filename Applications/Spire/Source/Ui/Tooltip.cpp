@@ -1,4 +1,5 @@
 #include "Spire/Ui/Tooltip.hpp"
+#include <QTimer>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
@@ -25,7 +26,7 @@ namespace {
 
 Tooltip::Tooltip(QString text, QWidget* parent)
     : QObject(parent) {
-  m_label = make_label("", parent);
+  m_label = make_label("");
   m_label->setFixedHeight(scale_height(30));
   m_tooltip = new InfoTip(m_label, parent);
   set_label(std::move(text));
@@ -34,11 +35,13 @@ Tooltip::Tooltip(QString text, QWidget* parent)
 
 void Tooltip::set_label(const QString& text) {
   m_label->get_current()->set(text);
-  m_tooltip->adjustSize();
   m_tooltip->setDisabled(text.isEmpty());
   if(!m_tooltip->isEnabled()) {
     m_tooltip->hide();
   }
+  QTimer::singleShot(0, this, [=] {
+    m_tooltip->adjustSize();
+  });
 }
 
 void Spire::add_tooltip(QString text, QWidget& parent) {

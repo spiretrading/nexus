@@ -595,14 +595,20 @@ void Nexus::Python::ExportRegion(module& module) {
     def(init()).
     def(init<std::string>()).
     def(init<CountryCode>()).
+    def(init<MarketCode, CountryCode>()).
     def(init<const MarketDatabase::Entry&>()).
     def(init<Security>()).
     def_property("name", &Region::GetName, &Region::SetName).
     def_property_readonly("is_global", &Region::IsGlobal).
+    def_property_readonly("is_empty", &Region::IsEmpty).
     def_property_readonly("countries", &Region::GetCountries).
+    def_property_readonly("markets", &Region::GetMarkets).
     def_property_readonly("securities", &Region::GetSecurities).
+    def("contains", &Region::Contains).
+    def("__hash__", static_cast<std::size_t (*)(const Region&)>(hash_value)).
     def("__str__", &lexical_cast<std::string, Region>).
     def(self + self).
+    def(self += self).
     def(self < self).
     def(self <= self).
     def(self == self).
@@ -620,7 +626,7 @@ void Nexus::Python::ExportSecurity(module& module) {
     def(self < self).
     def(self == self).
     def(self != self).
-    def("__hash__", static_cast<size_t (*)(const Security&)>(hash_value)).
+    def("__hash__", static_cast<std::size_t (*)(const Security&)>(hash_value)).
     def("__str__", static_cast<std::string (*)(const Security&)>(&ToString)).
     def_property_readonly("symbol", &Security::GetSymbol).
     def_property_readonly("market", &Security::GetMarket).

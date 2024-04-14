@@ -96,7 +96,6 @@
 #include "Spire/Canvas/StandardNodes/TimerNode.hpp"
 #include "Spire/Canvas/StandardNodes/UnequalNode.hpp"
 #include "Spire/Canvas/SystemNodes/BlotterTaskMonitorNode.hpp"
-#include "Spire/Canvas/SystemNodes/InteractionsNode.hpp"
 #include "Spire/Canvas/Types/ExecutionReportRecordType.hpp"
 #include "Spire/Canvas/Types/OrderImbalanceRecordType.hpp"
 #include "Spire/Canvas/Types/OrderReferenceType.hpp"
@@ -1577,33 +1576,33 @@ void CanvasNodeTranslationVisitor::Visit(const SideNode& node) {
 void CanvasNodeTranslationVisitor::Visit(const SingleOrderTaskNode& node) {
   auto orderExecutionPublisher =
     std::make_shared<SequencePublisher<const Order*>>();
-  auto additionalFields = std::vector<Aspen::Box<Tag>>();
+  auto additionalFields = std::vector<Aspen::Box<Nexus::Tag>>();
   for(const auto& field : node.GetFields()) {
     auto value = InternalTranslation(*node.FindChild(field.m_name));
     if(field.m_type->GetCompatibility(IntegerType::GetInstance()) ==
         CanvasType::Compatibility::EQUAL) {
       additionalFields.push_back(Aspen::box(Aspen::unconsecutive(Aspen::lift(
         [key = field.m_key] (Quantity q) {
-          return Tag(key, q);
+          return Nexus::Tag(key, q);
         }, value.Extract<Aspen::Box<Quantity>>()))));
     } else if(field.m_type->GetCompatibility(
         Spire::DecimalType::GetInstance()) ==
         CanvasType::Compatibility::EQUAL) {
       additionalFields.push_back(Aspen::box(Aspen::unconsecutive(Aspen::lift(
         [key = field.m_key] (double q) {
-          return Tag(key, q);
+          return Nexus::Tag(key, q);
         }, value.Extract<Aspen::Box<double>>()))));
     } else if(field.m_type->GetCompatibility(Spire::MoneyType::GetInstance()) ==
         CanvasType::Compatibility::EQUAL) {
       additionalFields.push_back(Aspen::box(Aspen::unconsecutive(Aspen::lift(
         [key = field.m_key] (Money q) {
-          return Tag(key, q);
+          return Nexus::Tag(key, q);
         }, value.Extract<Aspen::Box<Money>>()))));
     } else if(field.m_type->GetCompatibility(Spire::TextType::GetInstance()) ==
         CanvasType::Compatibility::EQUAL) {
       additionalFields.push_back(Aspen::box(Aspen::unconsecutive(Aspen::lift(
         [key = field.m_key] (std::string q) {
-          return Tag(key, q);
+          return Nexus::Tag(key, q);
         }, value.Extract<Aspen::Box<std::string>>()))));
     }
   }

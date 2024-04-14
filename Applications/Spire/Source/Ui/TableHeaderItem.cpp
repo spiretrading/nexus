@@ -2,10 +2,12 @@
 #include <QMouseEvent>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/FieldValueModel.hpp"
+#include "Spire/Spire/ListModelTransactionLog.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/Layouts.hpp"
+#include "Spire/Ui/ResponsiveLabel.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace boost;
@@ -14,7 +16,7 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  using Sortable = StateSelector<void, struct SortableTag>;
+  const auto HEADER_NAME_COUNT = 2;
 
   struct SortIndicator : QWidget {
     static const QImage& ASCENDING_IMAGE() {
@@ -91,6 +93,54 @@ namespace {
     enclose(*sash, *resize_handle, Qt::AlignRight);
     return sash;
   }
+
+  class HeaderNameListModel : public ListModel<QString> {
+    public:
+      explicit HeaderNameListModel(
+        std::shared_ptr<ValueModel<TableHeaderItem::Model>> source)
+        : m_source(std::move(source)),
+          m_names{m_source->get().m_name, m_source->get().m_short_name},
+          m_connection(m_source->connect_update_signal(
+            std::bind_front(&HeaderNameListModel::on_current, this))) {}
+
+      int get_size() const override {
+        return HEADER_NAME_COUNT;
+      }
+
+      const QString& get(int index) const override {
+        return m_names[index];
+      }
+
+      connection connect_operation_signal(
+          const OperationSignal::slot_type& slot) const override {
+        return m_transaction.connect_operation_signal(slot);
+      }
+
+    protected:
+      void transact(const std::function<void()>& transaction) override {
+        m_transaction.transact(transaction);
+      }
+
+    private:
+      std::shared_ptr<ValueModel<TableHeaderItem::Model>> m_source;
+      std::array<QString, HEADER_NAME_COUNT> m_names;
+      scoped_connection m_connection;
+      ListModelTransactionLog<QString> m_transaction;
+
+      void on_current(const TableHeaderItem::Model& current) {
+        auto current_names = std::array<QString, HEADER_NAME_COUNT>{
+          current.m_name, current.m_short_name};
+        m_transaction.transact([&] {
+          for(auto i = 0; i < HEADER_NAME_COUNT; ++i) {
+            if(current_names[i] != m_names[i]) {
+              auto previous = m_names[i];
+              m_names[i] = current_names[i];
+              m_transaction.push(UpdateOperation(i, previous, m_names[i]));
+            }
+          }
+        });
+      }
+  };
 }
 
 TableHeaderItem::TableHeaderItem(
@@ -98,7 +148,8 @@ TableHeaderItem::TableHeaderItem(
     : QWidget(parent),
       m_model(std::move(model)),
       m_is_resizeable(true) {
-  auto name_label = make_label(make_field_value_model(m_model, &Model::m_name));
+  auto name_label = new ResponsiveLabel(
+    std::make_shared<HeaderNameListModel>(m_model));
   match(*name_label, Label());
   auto sort_indicator =
     new SortIndicator(make_field_value_model(m_model, &Model::m_order));
@@ -189,6 +240,14 @@ connection TableHeaderItem::connect_sort_signal(
 connection TableHeaderItem::connect_filter_signal(
     const FilterSignal::slot_type& slot) const {
   return m_filter_button->connect_click_signal(slot);
+}
+
+QSize TableHeaderItem::minimumSizeHint() const {
+  auto size_hint = QWidget::minimumSizeHint();
+  if(!m_is_resizeable) {
+    return {0, size_hint.height()};
+  }
+  return size_hint;
 }
 
 bool TableHeaderItem::eventFilter(QObject* watched, QEvent* event) {

@@ -23,7 +23,6 @@ namespace Nexus {
   template<typename T> class RegionMap;
   class Security;
   struct SecurityInfo;
-  class SecuritySet;
   struct SecurityTechnicals;
   class Tag;
   struct TimeAndSale;

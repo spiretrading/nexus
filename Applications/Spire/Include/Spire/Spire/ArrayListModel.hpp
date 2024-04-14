@@ -52,8 +52,9 @@ namespace Spire {
       boost::signals2::connection connect_operation_signal(
         const typename OperationSignal::slot_type& slot) const override;
 
+      using ListModel<T>::insert;
+      using ListModel<T>::remove;
       using ListModel<T>::transact;
-
     protected:
       void transact(const std::function<void ()>& transaction) override;
 

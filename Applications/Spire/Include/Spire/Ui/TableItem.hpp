@@ -43,6 +43,9 @@ namespace Spire {
       /** Returns the styling applied to this item. */
       const Styles& get_styles() const;
 
+      /** Returns the body of this item. */
+      QWidget& get_body();
+
       /** Connects a slot to the ActiveSignal. */
       boost::signals2::connection connect_active_signal(
         const ActiveSignal::slot_type& slot) const;

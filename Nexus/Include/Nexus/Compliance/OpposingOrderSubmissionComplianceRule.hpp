@@ -13,6 +13,7 @@
 #include "Nexus/Compliance/SecurityFilterComplianceRule.hpp"
 #include "Nexus/Compliance/TimeFilterComplianceRule.hpp"
 #include "Nexus/Definitions/Money.hpp"
+#include "Nexus/Definitions/Region.hpp"
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
 #include "Nexus/OrderExecutionService/Order.hpp"
 
@@ -99,23 +100,23 @@ namespace Nexus::Compliance {
   std::unique_ptr<ComplianceRule> MakeOpposingOrderSubmissionComplianceRule(
       const std::vector<ComplianceParameter>& parameters,
       const TimeClient& timeClient) {
-    auto symbols = SecuritySet();
+    auto region = Region();
     auto startPeriod = boost::posix_time::time_duration();
     auto endPeriod = boost::posix_time::time_duration();
     auto timeout = boost::posix_time::time_duration();
     auto offset = Money();
     for(auto& parameter : parameters) {
       if(parameter.m_name == "symbols") {
-        for(auto& security : boost::get<std::vector<ComplianceValue>>(
-            parameter.m_value)) {
-          symbols.Add(std::move(boost::get<Security>(security)));
+        for(auto& security :
+            boost::get<std::vector<ComplianceValue>>(parameter.m_value)) {
+          region += boost::get<Security>(security);
         }
       } else if(parameter.m_name == "start_period") {
-        startPeriod = boost::get<boost::posix_time::time_duration>(
-          parameter.m_value);
+        startPeriod =
+          boost::get<boost::posix_time::time_duration>(parameter.m_value);
       } else if(parameter.m_name == "end_period") {
-        endPeriod = boost::get<boost::posix_time::time_duration>(
-          parameter.m_value);
+        endPeriod =
+          boost::get<boost::posix_time::time_duration>(parameter.m_value);
       } else if(parameter.m_name == "timeout") {
         timeout = boost::posix_time::seconds(
           static_cast<int>(boost::get<Quantity>(parameter.m_value)));
@@ -123,16 +124,14 @@ namespace Nexus::Compliance {
         offset = boost::get<Money>(parameter.m_value);
       }
     }
-    auto mapRule = MakeMapSecurityComplianceRule({},
-      [=] (const auto&) {
-        return std::make_unique<OpposingOrderSubmissionComplianceRule<
-          TimeClient>>(timeout, offset, timeClient);
-      });
+    auto mapRule = MakeMapSecurityComplianceRule({}, [=] (const auto&) {
+      return std::make_unique<OpposingOrderSubmissionComplianceRule<
+        TimeClient>>(timeout, offset, timeClient);
+    });
     auto timeFilter = std::make_unique<TimeFilterComplianceRule<TimeClient>>(
       startPeriod, endPeriod, timeClient, std::move(mapRule));
-    auto symbolFilter = std::make_unique<SecurityFilterComplianceRule>(
-      std::move(symbols), std::move(timeFilter));
-    return std::move(symbolFilter);
+    return std::make_unique<SecurityFilterComplianceRule>(
+      std::move(region), std::move(timeFilter));
   }
 
   template<typename C>
@@ -197,8 +196,8 @@ namespace Nexus::Compliance {
       m_lastBidCancelTime, m_lastAskCancelTime);
     if(TestSubmissionPriceInRange(order) &&
         lastCancelTime >= (time - m_timeout)) {
-      BOOST_THROW_EXCEPTION(ComplianceCheckException(
-        "Opposing order can not be submitted yet."));
+      BOOST_THROW_EXCEPTION(
+        ComplianceCheckException("Opposing order can not be submitted yet."));
     }
     order.GetPublisher().Monitor(m_executionReportQueue.GetSlot(&order));
   }

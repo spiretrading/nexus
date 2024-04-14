@@ -14,6 +14,7 @@
 #include "Spire/Catalog/PersistentCatalogEntry.hpp"
 #include "Spire/LegacyUI/LineInputDialog.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 #include "ui_CatalogTabView.h"
 
 using namespace Beam;
@@ -69,6 +70,20 @@ CatalogTabView::CatalogTabView(Ref<CatalogTabModel> model,
       m_isAllTab(m_model == &m_userProfile->GetCatalogSettings().GetAllTab()),
       m_searchBarSelected(false) {
   m_ui->setupUi(this);
+  m_ui->m_searchLayout->setSpacing(
+    scale_width(m_ui->m_searchLayout->spacing()));
+  m_ui->m_searchButton->setFixedSize(scale(m_ui->m_searchButton->size()));
+  m_ui->m_searchButton->setIconSize(m_ui->m_searchButton->iconSize());
+  m_ui->m_searchBar->setMinimumWidth(
+    scale_width(m_ui->m_searchBar->minimumWidth()));
+  m_ui->m_searchBar->setMaximumHeight(
+    scale_height(m_ui->m_searchBar->maximumHeight()));
+  m_ui->m_catalogEntryList->setIconSize(
+    scale(m_ui->m_catalogEntryList->iconSize()));
+  m_ui->m_catalogEntryList->setSpacing(
+    scale_width(m_ui->m_catalogEntryList->spacing()));
+  m_ui->m_descriptionText->setMinimumHeight(
+    scale_height(m_ui->m_descriptionText->minimumHeight()));
   m_proxyModel = new CanvasNodeTypeFilterProxyModel(filter, model, this);
   m_proxyModel->setSourceModel(m_model);
   m_proxyModel->setDynamicSortFilter(true);
@@ -102,7 +117,8 @@ CatalogTabView::CatalogTabView(Ref<CatalogTabModel> model,
     &CatalogTabView::OnSelectionChanged);
   connect(m_ui->m_descriptionText, &QTextEdit::textChanged, this,
     &CatalogTabView::OnDescriptionChanged);
-  m_ui->m_descriptionText->resize(m_ui->m_descriptionText->width(), 60);
+  m_ui->m_descriptionText->resize(
+    m_ui->m_descriptionText->width(), scale_height(60));
 }
 
 CatalogTabModel& CatalogTabView::GetModel() {

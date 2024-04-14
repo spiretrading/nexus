@@ -20,7 +20,7 @@ FOR /f "usebackq delims=" %%i IN (`!VSWHERE! -prerelease -latest -property insta
   )
 )
 SET BUILD_BEAM=
-SET BEAM_COMMIT="d3af529a391fd5183fbac63ca3d310f3fadd3677"
+SET BEAM_COMMIT="f4a358737245e32c2684e09c9bdc46f681f7f7a8"
 IF NOT EXIST Beam (
   git clone https://www.github.com/spiretrading/beam Beam
   IF !ERRORLEVEL! EQU 0 (
@@ -53,12 +53,11 @@ IF EXIST Beam (
   POPD
 )
 SET PATH=!PATH!;!ROOT!\Strawberry\perl\site\bin;!ROOT!\Strawberry\perl\bin;!ROOT!\Strawberry\c\bin
-IF NOT EXIST qt-5.15.2 (
-  git clone git://code.qt.io/qt/qt5.git qt-5.15.2
+IF NOT EXIST qt-5.15.13 (
+  git clone --branch v5.15.13-lts-lgpl --depth 1 https://code.qt.io/qt/qt5.git qt-5.15.13
   IF !ERRORLEVEL! EQU 0 (
-    PUSHD qt-5.15.2
-    git checkout 5.15.2
-    perl init-repository --module-subset=qtbase,qttools,qttranslations
+    PUSHD qt-5.15.13
+    perl init-repository --module-subset=qtbase,qtsvg,qttools,qttranslations
     CALL configure -prefix %cd% -opensource -static -mp -make libs -make tools ^
       -nomake examples -nomake tests -opengl desktop -no-icu -qt-freetype ^
       -qt-harfbuzz -qt-libpng -qt-pcre -qt-zlib -confirm-license
@@ -68,7 +67,7 @@ IF NOT EXIST qt-5.15.2 (
     COPY NUL qtbase\lib\cmake\Qt5Core\Qt5CoreConfigExtrasMkspecDir.cmake
     POPD
   ) ELSE (
-    RD /S /Q qt-5.15.2
+    RD /S /Q qt-5.15.13
     SET EXIT_STATUS=1
   )
 )

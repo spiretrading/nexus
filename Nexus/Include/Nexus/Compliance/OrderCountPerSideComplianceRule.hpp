@@ -10,7 +10,7 @@
 #include "Nexus/Compliance/ComplianceCheckException.hpp"
 #include "Nexus/Compliance/ComplianceRule.hpp"
 #include "Nexus/Compliance/ComplianceRuleSchema.hpp"
-#include "Nexus/Definitions/SecuritySet.hpp"
+#include "Nexus/Definitions/Region.hpp"
 #include "Nexus/Definitions/Side.hpp"
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
 #include "Nexus/OrderExecutionService/Order.hpp"
@@ -34,7 +34,7 @@ namespace Nexus::Compliance {
       void Add(const OrderExecutionService::Order& order) override;
 
     private:
-      SecuritySet m_securities;
+      Region m_region;
       int m_count;
       Beam::SynchronizedUnorderedMap<Security, boost::atomic_int> m_askCounts;
       Beam::SynchronizedUnorderedMap<Security, boost::atomic_int> m_bidCounts;
@@ -59,13 +59,13 @@ namespace Nexus::Compliance {
   }
 
   inline OrderCountPerSideComplianceRule::OrderCountPerSideComplianceRule(
-    const std::vector<ComplianceParameter>& parameters)
-    : m_count(0) {
+      const std::vector<ComplianceParameter>& parameters)
+      : m_count(0) {
     for(auto& parameter : parameters) {
       if(parameter.m_name == "symbols") {
-        for(auto& security : boost::get<std::vector<ComplianceValue>>(
-            parameter.m_value)) {
-          m_securities.Add(std::move(boost::get<Security>(security)));
+        for(auto& security :
+            boost::get<std::vector<ComplianceValue>>(parameter.m_value)) {
+          m_region += boost::get<Security>(security);
         }
       } else if(parameter.m_name == "count") {
         m_count = static_cast<int>(boost::get<Quantity>(parameter.m_value));
@@ -75,14 +75,13 @@ namespace Nexus::Compliance {
 
   inline void OrderCountPerSideComplianceRule::Submit(
       const OrderExecutionService::Order& order) {
-    if(!m_securities.Contains(order.GetInfo().m_fields.m_security)) {
+    if(!m_region.Contains(order.GetInfo().m_fields.m_security)) {
       return;
     }
-    auto& orderCounts = Pick(order.GetInfo().m_fields.m_side, m_askCounts,
-      m_bidCounts);
+    auto& orderCounts =
+      Pick(order.GetInfo().m_fields.m_side, m_askCounts, m_bidCounts);
     auto& orderCount = orderCounts.GetOrInsert(
-      order.GetInfo().m_fields.m_security,
-      [] {
+      order.GetInfo().m_fields.m_security, [] {
         return 0;
       });
     auto currentOrderCount = ++orderCount;
@@ -100,11 +99,11 @@ namespace Nexus::Compliance {
 
   inline void OrderCountPerSideComplianceRule::Add(
       const OrderExecutionService::Order& order) {
-    if(!m_securities.Contains(order.GetInfo().m_fields.m_security)) {
+    if(!m_region.Contains(order.GetInfo().m_fields.m_security)) {
       return;
     }
-    auto& orderCounts = Pick(order.GetInfo().m_fields.m_side, m_askCounts,
-      m_bidCounts);
+    auto& orderCounts =
+      Pick(order.GetInfo().m_fields.m_side, m_askCounts, m_bidCounts);
     auto& orderCount = orderCounts.GetOrInsert(
       order.GetInfo().m_fields.m_security, [] {
         return 0;

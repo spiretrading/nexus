@@ -93,6 +93,29 @@ namespace Spire::LegacyUI {
   //! Registers the custom QVariant types.
   void RegisterCustomQtVariants();
 
+  //! Returns the string representation of a Security, including wild-cards.
+  /*!
+    \param security The Security to represent.
+    \param marketDatabase The MarketDatabase used to represent the MarketCode.
+    \param countryDatabase The CountryDatabase used to represent the
+           CountryCode.
+    \return The string representation of the <i>security</i>.
+  */
+  std::string ToWildCardString(const Nexus::Security& security,
+    const Nexus::MarketDatabase& marketDatabase,
+    const Nexus::CountryDatabase& countryDatabase);
+
+  //! Parses a Security containing wild cards.
+  /*!
+    \param source The string to parse.
+    \param marketDatabase The database containing all MarketCodes.
+    \param countryDatabase The database containing all CountryCodes.
+    \return The Security represented by the <i>source</i>.
+  */
+  boost::optional<Nexus::Security> ParseWildCardSecurity(
+    const std::string& source, const Nexus::MarketDatabase& marketDatabase,
+    const Nexus::CountryDatabase& countryDatabase);
+
   //! Returns the test representation of a Side.
   const QString& displayText(Nexus::Side side);
 

@@ -16,6 +16,7 @@
 #include "Spire/Catalog/RegistryCatalogEntry.hpp"
 #include "Spire/Catalog/UserCatalogEntry.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 #include "ui_CatalogWindow.h"
 
 using namespace Beam;
@@ -177,6 +178,7 @@ bool CatalogWindow::eventFilter(QObject* object, QEvent* event) {
 
 void CatalogWindow::Initialize() {
   m_ui->setupUi(this);
+  resize(scale(size()));
   m_ui->m_categoryTabs->installEventFilter(this);
   if(m_mode == SAVING) {
     setWindowTitle(tr("Catalog Save As - Spire"));

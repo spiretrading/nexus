@@ -210,6 +210,7 @@ class TextBox::LineEdit : public QLineEdit {
       }
       QLineEdit::setReadOnly(read_only);
       setCursorPosition(0);
+      m_text_box->setCursor(cursor());
     }
 
   protected:

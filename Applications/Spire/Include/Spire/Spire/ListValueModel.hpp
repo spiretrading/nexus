@@ -2,6 +2,7 @@
 #define SPIRE_LIST_VALUE_MODEL_HPP
 #include <functional>
 #include <memory>
+#include "Spire/Spire/ListIndexTracker.hpp"
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Spire/ValueModel.hpp"
@@ -41,7 +42,8 @@ namespace Spire {
     private:
       mutable UpdateSignal m_update_signal;
       std::shared_ptr<ListModel<Type>> m_source;
-      int m_index;
+      std::unique_ptr<Type> m_last;
+      ListIndexTracker m_index;
       boost::signals2::scoped_connection m_source_connection;
 
       void on_operation(const typename ListModel<Type>::Operation& operation);
@@ -64,12 +66,12 @@ namespace Spire {
   template<typename T>
   ListValueModel<T>::ListValueModel(
       std::shared_ptr<ListModel<Type>> source, int index)
-      : m_source(std::move(source)) {
-    if(index < 0 || index >= m_source->get_size()) {
-      m_index = -1;
+      : m_source(std::move(source)),
+        m_index(index) {
+    if(m_index.get_index() < 0 || m_index.get_index() >= m_source->get_size()) {
       m_source = nullptr;
+      m_index.set(-1);
     } else {
-      m_index = index;
       m_source_connection = m_source->connect_operation_signal(
         std::bind_front(&ListValueModel::on_operation, this));
     }
@@ -77,7 +79,7 @@ namespace Spire {
 
   template<typename T>
   QValidator::State ListValueModel<T>::get_state() const {
-    if(m_index == -1) {
+    if(m_index.get_index() == -1) {
       return QValidator::State::Invalid;
     }
     return QValidator::State::Acceptable;
@@ -85,15 +87,17 @@ namespace Spire {
 
   template<typename T>
   const typename ListValueModel<T>::Type& ListValueModel<T>::get() const {
-    if(m_index == -1) {
+    if(m_last) {
+      return *m_last;
+    } else if(m_index.get_index() == -1) {
       throw std::out_of_range("Index out of range.");
     }
-    return m_source->get(m_index);
+    return m_source->get(m_index.get_index());
   }
 
   template<typename T>
   QValidator::State ListValueModel<T>::test(const Type& value) const {
-    if(m_index == -1) {
+    if(m_index.get_index() == -1) {
       return QValidator::State::Invalid;
     }
     return QValidator::State::Acceptable;
@@ -101,10 +105,10 @@ namespace Spire {
 
   template<typename T>
   QValidator::State ListValueModel<T>::set(const Type& value) {
-    if(m_index == -1) {
+    if(m_index.get_index() == -1) {
       return QValidator::State::Invalid;
     }
-    return m_source->set(m_index, value);
+    return m_source->set(m_index.get_index(), value);
   }
 
   template<typename T>
@@ -117,37 +121,21 @@ namespace Spire {
   void ListValueModel<T>::on_operation(
       const typename ListModel<Type>::Operation& operation) {
     visit(operation,
-      [&] (const ListModel<Type>::AddOperation& operation) {
-        if(m_index >= operation.m_index) {
-          ++m_index;
+      [&] (const ListModel<Type>::UpdateOperation& operation) {
+        if(operation.m_index == m_index.get_index()) {
+          m_update_signal(operation.get_value());
         }
       },
       [&] (const ListModel<Type>::RemoveOperation& operation) {
-        if(m_index == operation.m_index) {
+        m_index.update(operation);
+        if(m_index.get_index() == -1) {
+          m_last = std::make_unique<Type>(operation.get_value());
           m_source_connection.disconnect();
-          m_index = -1;
           m_source = nullptr;
-        } else if(m_index > operation.m_index) {
-          --m_index;
         }
       },
-      [&] (const ListModel<Type>::MoveOperation& operation) {
-        if(m_index == operation.m_source) {
-          m_index = operation.m_destination;
-        } else if(operation.m_source < operation.m_destination) {
-          if(m_index > operation.m_source &&
-              m_index <= operation.m_destination) {
-            --m_index;
-          }
-        } else if(m_index >= operation.m_destination &&
-            m_index < operation.m_source) {
-          ++m_index;
-        }
-      },
-      [&] (const ListModel<Type>::UpdateOperation& operation) {
-        if(operation.m_index == m_index) {
-          m_update_signal(get());
-        }
+      [&] (const auto& operation) {
+        m_index.update(operation);
       });
   }
 }

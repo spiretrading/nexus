@@ -10,8 +10,8 @@ using namespace Nexus::Compliance;
 using namespace Nexus::OrderExecutionService;
 
 namespace {
-  const auto TST = Security("TST", DefaultMarkets::NYSE(),
-    DefaultCountries::US());
+  const auto TST =
+    Security("TST", DefaultMarkets::NYSE(), DefaultCountries::US());
 
   struct Fixture {
     TestEnvironment m_testEnvironment;
@@ -22,8 +22,8 @@ namespace {
         : m_orderSubmissions(std::make_shared<Queue<const Order*>>()),
           m_serviceClients(Ref(m_testEnvironment)) {
       m_testEnvironment.MonitorOrderSubmissions(m_orderSubmissions);
-      m_testEnvironment.UpdateBboPrice(TST, Money::ONE,
-        Money::ONE + Money::CENT);
+      m_testEnvironment.UpdateBboPrice(
+        TST, Money::ONE, Money::ONE + Money::CENT);
     }
   };
 }
@@ -34,22 +34,22 @@ TEST_SUITE("BuyingPowerComplianceRule") {
     parameters.emplace_back("currency", DefaultCurrencies::USD());
     parameters.emplace_back("buying_power", 1000 * Money::ONE);
     auto symbols = std::vector<ComplianceValue>();
-    symbols.push_back(SecuritySet::GetSecurityWildCard());
+    symbols.push_back(Security("*", "", CountryCode::NONE));
     parameters.emplace_back("symbols", symbols);
-    auto rule = BuyingPowerComplianceRule(parameters, {},
-      &m_serviceClients.GetMarketDataClient());
-    auto recoveryFields = OrderFields::MakeLimitOrder(TST, Side::BID, 100,
-      Money::ONE);
-    auto& recoverOrder = m_serviceClients.GetOrderExecutionClient().Submit(
-      recoveryFields);
+    auto rule = BuyingPowerComplianceRule(
+      parameters, {}, &m_serviceClients.GetMarketDataClient());
+    auto recoveryFields =
+      OrderFields::MakeLimitOrder(TST, Side::BID, 100, Money::ONE);
+    auto& recoverOrder =
+      m_serviceClients.GetOrderExecutionClient().Submit(recoveryFields);
     auto submittedRecoveryOrder = m_orderSubmissions->Pop();
     m_testEnvironment.Accept(*submittedRecoveryOrder);
     m_testEnvironment.Fill(*submittedRecoveryOrder, 100);
     REQUIRE_NOTHROW(rule.Add(*submittedRecoveryOrder));
-    auto submissionFields = OrderFields::MakeLimitOrder(TST, Side::BID, 100,
-      2 * Money::ONE);
-    auto& submissionOrder = m_serviceClients.GetOrderExecutionClient().Submit(
-      submissionFields);
+    auto submissionFields =
+      OrderFields::MakeLimitOrder(TST, Side::BID, 100, 2 * Money::ONE);
+    auto& submissionOrder =
+      m_serviceClients.GetOrderExecutionClient().Submit(submissionFields);
     auto submittedOrder = m_orderSubmissions->Pop();
     REQUIRE_NOTHROW(rule.Submit(*submittedOrder));
   }

@@ -3,8 +3,8 @@
 #include <QKeyEvent>
 #include <QLineEdit>
 #include <QVBoxLayout>
-#include "Nexus/Definitions/SecuritySet.hpp"
 #include "Spire/InputWidgets/SecurityInputDialog.hpp"
+#include "Spire/LegacyUI/CustomQtVariants.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 
 using namespace Beam;
@@ -12,6 +12,7 @@ using namespace boost;
 using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
+using namespace Spire::LegacyUI;
 
 SecurityInputWidget::SecurityInputWidget(QWidget* parent, Qt::WindowFlags flags)
     : QWidget(parent, flags),

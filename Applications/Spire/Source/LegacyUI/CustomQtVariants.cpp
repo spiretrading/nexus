@@ -2,7 +2,6 @@
 #include <Beam/TimeService/ToLocalTime.hpp>
 #include <boost/lexical_cast.hpp>
 #include <QDateTime>
-#include "Nexus/Definitions/SecuritySet.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 
 using namespace Beam;
@@ -13,7 +12,6 @@ using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Spire;
 using namespace Spire::LegacyUI;
-using namespace std;
 
 namespace {
   QVariant AnyToVariant(const any& value) {
@@ -27,9 +25,9 @@ namespace {
       return QVariant::fromValue(any_cast<ptime>(value));
     } else if(value.type() == typeid(posix_time::time_duration)) {
       return QVariant::fromValue(any_cast<posix_time::time_duration>(value));
-    } else if(value.type() == typeid(string)) {
-      return QVariant::fromValue(QString::fromStdString(
-        any_cast<string>(value)));
+    } else if(value.type() == typeid(std::string)) {
+      return QVariant::fromValue(
+        QString::fromStdString(any_cast<std::string>(value)));
     } else if(value.type() == typeid(CurrencyId)) {
       return QVariant::fromValue(any_cast<CurrencyId>(value));
     } else if(value.type() == typeid(MarketToken)) {
@@ -70,12 +68,12 @@ namespace {
 MarketToken::MarketToken() {}
 
 MarketToken::MarketToken(MarketCode code)
-    : m_code(code) {}
+  : m_code(code) {}
 
 PositionSideToken::PositionSideToken() {}
 
 PositionSideToken::PositionSideToken(Side side)
-    : m_side(side) {}
+  : m_side(side) {}
 
 QString PositionSideToken::ToString() const {
   if(m_side == Side::BID) {
@@ -114,6 +112,83 @@ posix_time::ptime Spire::LegacyUI::ToPosixTime(const QDateTime& time) {
 }
 
 void Spire::LegacyUI::RegisterCustomQtVariants() {}
+
+std::string Spire::LegacyUI::ToWildCardString(const Security& security,
+    const MarketDatabase& marketDatabase,
+    const CountryDatabase& countryDatabase) {
+  if(security.GetSymbol() == "*" && security.GetMarket() == "*" &&
+      security.GetCountry() == CountryCode::NONE) {
+    return "*";
+  } else if(security == Security()) {
+    return {};
+  }
+  auto symbol = security.GetSymbol() + '.';
+  if(security.GetMarket() == "*") {
+    if(security.GetCountry() != CountryCode::NONE) {
+      auto& countryEntry = countryDatabase.FromCode(security.GetCountry());
+      symbol += countryEntry.m_twoLetterCode.GetData();
+    } else {
+      symbol += '*';
+    }
+    return symbol;
+  } else {
+    auto& market = marketDatabase.FromCode(security.GetMarket());
+    symbol += market.m_displayName;
+  }
+  return symbol;
+}
+
+optional<Security> Spire::LegacyUI::ParseWildCardSecurity(
+    const std::string& source, const MarketDatabase& marketDatabase,
+    const CountryDatabase& countryDatabase) {
+  if(source == "*" || source == "*.*" || source == "*.*.*") {
+    return Security("*", "*", CountryCode::NONE);
+  }
+  auto seperator = source.find_last_of('.');
+  if(seperator == std::string::npos) {
+    return none;
+  }
+  auto header = source.substr(0, seperator);
+  auto trailer = source.substr(seperator + 1);
+  if(header == "*") {
+    auto& market = ParseMarketEntry(trailer, marketDatabase);
+    if(market.m_code != MarketCode()) {
+      return Security(header, market.m_code, market.m_countryCode);
+    }
+  }
+  auto prefixSecurity =
+    ParseWildCardSecurity(header, marketDatabase, countryDatabase);
+  if(prefixSecurity) {
+    if(trailer.size() == 2) {
+      auto code = countryDatabase.FromTwoLetterCode(trailer);
+      if(code.m_code != CountryCode::NONE) {
+        return Security(prefixSecurity->GetSymbol(),
+          prefixSecurity->GetMarket(), code.m_code);
+      } else {
+        return none;
+      }
+    } else if(trailer == "*") {
+      return Security(prefixSecurity->GetSymbol(),
+        prefixSecurity->GetMarket(), CountryCode::NONE);
+    } else {
+      return none;
+    }
+  }
+  auto market = MarketCode();
+  auto country = CountryCode();
+  if(trailer == "*") {
+    market = "*";
+    country = CountryCode::NONE;
+  } else {
+    auto& marketEntry = ParseMarketEntry(trailer, marketDatabase);
+    if(marketEntry.m_code == MarketCode()) {
+      return none;
+    }
+    market = marketEntry.m_code;
+    country = marketEntry.m_countryCode;
+  }
+  return Security(std::move(header), market, country);
+}
 
 const QString& Spire::LegacyUI::displayText(Side side) {
   if(side == Side::ASK) {
@@ -201,8 +276,8 @@ QString CustomVariantItemDelegate::displayText(const QVariant& value,
     const QLocale& locale) const {
   if(value.canConvert<ptime>()) {
     ptime timeValue = ToLocalTime(value.value<ptime>());
-    string a = to_simple_string(value.value<ptime>());
-    string b = to_simple_string(timeValue);
+    std::string a = to_simple_string(value.value<ptime>());
+    std::string b = to_simple_string(timeValue);
     auto currentTime = ToLocalTime(
       m_userProfile->GetServiceClients().GetTimeClient().GetTime());
     if(timeValue.date() == currentTime.date()) {
@@ -220,14 +295,15 @@ QString CustomVariantItemDelegate::displayText(const QVariant& value,
       value.value<MarketToken>().m_code);
     return QString::fromStdString(entry.m_displayName);
   } else if(value.canConvert<Money>()) {
-    return QString::fromStdString(lexical_cast<string>(value.value<Money>()));
+    return QString::fromStdString(
+      lexical_cast<std::string>(value.value<Money>()));
   } else if(value.canConvert<Quantity>()) {
     return QString::fromStdString(
       lexical_cast<std::string>(value.value<Quantity>()));
   } else if(value.canConvert<OrderStatus>()) {
     return Spire::LegacyUI::displayText(value.value<OrderStatus>());
   } else if(value.userType() == QMetaTypeId<Task::State>::qt_metatype_id()) {
-    return QString::fromStdString(lexical_cast<string>(
+    return QString::fromStdString(lexical_cast<std::string>(
       value.value<Task::State>()));
   } else if(value.canConvert<OrderType>()) {
     return Spire::LegacyUI::displayText(value.value<OrderType>());
@@ -240,7 +316,7 @@ QString CustomVariantItemDelegate::displayText(const QVariant& value,
     return Spire::LegacyUI::displayText(value.value<Side>());
   } else if(value.canConvert<TimeInForce>()) {
     return QString::fromStdString(
-      lexical_cast<string>(value.value<TimeInForce>().GetType()));
+      lexical_cast<std::string>(value.value<TimeInForce>().GetType()));
   } else if(value.canConvert<any>()) {
     QVariant translatedValue = AnyToVariant(value.value<any>());
     return displayText(translatedValue, locale);
@@ -271,8 +347,9 @@ bool CustomVariantSortFilterProxyModel::lessThan(const QModelIndex& left,
     return QSortFilterProxyModel::lessThan(left, right);
   }
   if(leftVariant.userType() == QMetaTypeId<Task::State>::qt_metatype_id()) {
-    return Compare(lexical_cast<string>(leftVariant.value<Task::State>()),
-      lexical_cast<string>(rightVariant.value<Task::State>()), left, right);
+    return Compare(lexical_cast<std::string>(leftVariant.value<Task::State>()),
+      lexical_cast<std::string>(rightVariant.value<Task::State>()), left,
+      right);
   } else if(leftVariant.canConvert<ptime>()) {
     return Compare(leftVariant.value<ptime>(), rightVariant.value<ptime>(),
       left, right);
@@ -301,9 +378,9 @@ bool CustomVariantSortFilterProxyModel::lessThan(const QModelIndex& left,
       displayText(rightVariant.value<Side>()), left, right);
   } else if(leftVariant.canConvert<TimeInForce>()) {
     return Compare(
-      lexical_cast<string>(leftVariant.value<TimeInForce>().GetType()),
-      lexical_cast<string>(rightVariant.value<TimeInForce>().GetType()), left,
-      right);
+      lexical_cast<std::string>(leftVariant.value<TimeInForce>().GetType()),
+      lexical_cast<std::string>(rightVariant.value<TimeInForce>().GetType()),
+      left, right);
   } else if(leftVariant.canConvert<CurrencyId>()) {
     const CurrencyDatabase::Entry& leftEntry =
       m_userProfile->GetCurrencyDatabase().FromId(

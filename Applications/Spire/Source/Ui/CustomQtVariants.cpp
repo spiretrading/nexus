@@ -1,7 +1,6 @@
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include <Beam/TimeService/ToLocalTime.hpp>
 #include <QStyledItemDelegate>
-#include "Nexus/Definitions/SecuritySet.hpp"
 
 using namespace Beam;
 using namespace Beam::TimeService;
@@ -12,9 +11,57 @@ using namespace Nexus;
 using namespace Spire;
 
 namespace {
+  decltype(auto) type_of(const AnyRef& arg) {
+    return arg.get_type();
+  }
+
+  decltype(auto) type_of(const std::any& arg) {
+    return arg.type();
+  }
+
   template<typename T>
-  bool compare(const AnyRef& left, const AnyRef& right) {
-    return any_cast<T>(left) < any_cast<T>(right);
+  decltype(auto) cast_any(const std::any& a) {
+    return std::any_cast<const T&>(a);
+  }
+
+  template<typename T>
+  decltype(auto) cast_any(const AnyRef& a) {
+    return any_cast<T>(a);
+  }
+
+  template<typename T, typename... U>
+  struct apply_any {
+    template<typename Any, typename F>
+    auto operator ()(const Any& arg, const F& f) const {
+      if(type_of(arg) == typeid(T)) {
+        return f(cast_any<T>(arg));
+      }
+      if constexpr(sizeof...(U) == 0) {
+        return false;
+      } else {
+        return apply_any<U...>()(arg, f);
+      }
+    }
+
+    template<typename Any, typename F>
+    auto operator ()(const Any& arg1, const AnyRef& arg2, const F& f) const {
+      if(type_of(arg1) == typeid(T)) {
+        return f(cast_any<T>(arg1), cast_any<T>(arg2));
+      }
+      if constexpr(sizeof...(U) == 0) {
+        return false;
+      } else {
+        return apply_any<U...>()(arg1, arg2, f);
+      }
+    }
+  };
+
+  template<typename... T>
+  bool compare_any(const AnyRef& left, const AnyRef& right) {
+    return apply_any<T...>()(left, right,
+      [&] (const auto& left, const auto& right) {
+        return left < right;
+      });
   }
 
   template<typename T>
@@ -22,16 +69,12 @@ namespace {
     return to_text(any_cast<T>(left)) < to_text(any_cast<T>(right));
   }
 
-  template<typename T, typename... U>
+  template<typename... T>
   bool is_equal_any(const std::any& left, const std::any& right) {
-    if(left.type() == typeid(T)) {
-      return std::any_cast<const T&>(left) == std::any_cast<const T&>(right);
-    }
-    if constexpr(sizeof...(U) == 0) {
-      return false;
-    } else {
-      return is_equal_any<U...>(left, right);
-    }
+    return apply_any<T...>()(left, right,
+      [&] (const auto& left, const auto& right) {
+        return left == right;
+      });
   }
 
   template<typename T>
@@ -326,8 +369,27 @@ QString Spire::to_text(const Region& region, const QLocale& locale) {
 }
 
 QString Spire::to_text(const Security& security, const QLocale& locale) {
-  return QString::fromStdString(ToWildCardString(
-    security, GetDefaultMarketDatabase(), GetDefaultCountryDatabase()));
+  return QString::fromStdString(ToString(security, GetDefaultMarketDatabase()));
+}
+
+const QString& Spire::to_text(
+    Qt::KeyboardModifier modifier, const QLocale& locale) {
+  if(modifier == Qt::NoModifier) {
+    static const auto value = QObject::tr("Default");
+    return value;
+  } else if(modifier == Qt::ShiftModifier) {
+    static const auto value = QObject::tr("Shift");
+    return value;
+  } else if(modifier == Qt::ControlModifier) {
+    static const auto value = QObject::tr("Ctrl");
+    return value;
+  } else if(modifier == Qt::AltModifier) {
+    static const auto value = QObject::tr("Alt");
+    return value;
+  } else {
+    static const auto value = QObject::tr("None");
+    return value;
+  }
 }
 
 QString Spire::to_text(const QKeySequence& value, const QLocale& locale) {
@@ -371,6 +433,8 @@ QString Spire::to_text(const std::any& value, const QLocale& locale) {
     return to_text(std::any_cast<TimeAndSale::Condition>(value), locale);
   } else if(value.type() == typeid(TimeInForce)) {
     return to_text(std::any_cast<TimeInForce>(value), locale);
+  } else if(value.type() == typeid(QKeySequence)) {
+    return to_text(std::any_cast<QKeySequence>(value), locale);
   } else if(value.type() == typeid(std::string)) {
     return QString::fromStdString(std::any_cast<std::string>(value));
   } else if(value.type() == typeid(QColor)) {
@@ -402,46 +466,12 @@ bool Spire::compare(const AnyRef& left, const AnyRef& right) {
   if(left.get_type() != right.get_type()) {
     return false;
   }
-  if(left.get_type() == typeid(gregorian::date)) {
-    return ::compare<gregorian::date>(left, right);
-  } else if(left.get_type() == typeid(ptime)) {
-    return ::compare<ptime>(left, right);
-  } else if(left.get_type() == typeid(posix_time::time_duration)) {
-    return ::compare<posix_time::time_duration>(left, right);
-  } else if(left.get_type() == typeid(Money)) {
-    return ::compare<Money>(left, right);
-  } else if(left.get_type() == typeid(Quantity)) {
-    return ::compare<Quantity>(left, right);
-  } else if(left.get_type() == typeid(OrderStatus)) {
-    return ::compare<OrderStatus>(left, right);
-  } else if(left.get_type() == typeid(OrderType)) {
-    return ::compare<OrderType>(left, right);
-  } else if(left.get_type() == typeid(Security)) {
-    return compare_text<Security>(left, right);
-  } else if(left.get_type() == typeid(Side)) {
-    return compare_text<Side>(left, right);
-  } else if(left.get_type() == typeid(TimeInForce)) {
-    return compare_text<TimeInForce>(left, right);
-  } else if(left.get_type() == typeid(CurrencyId)) {
-    return compare_text<CurrencyId>(left, right);
-  } else if(left.get_type() == typeid(MarketToken)) {
-    return compare_text<MarketToken>(left, right);
-  } else if(left.get_type() == typeid(QMetaType::QKeySequence)) {
-    return compare_text<QKeySequence>(left, right);
-  } else if(left.get_type() == typeid(bool)) {
-    return ::compare<bool>(left, right);
-  } else if(left.get_type() == typeid(unsigned int)) {
-    return ::compare<unsigned int>(left, right);
-  } else if(left.get_type() == typeid(int)) {
-    return ::compare<int>(left, right);
-  } else if(left.get_type() == typeid(std::uint64_t)) {
-    return ::compare<std::uint64_t>(left, right);
-  } else if(left.get_type() == typeid(std::int64_t)) {
-    return ::compare<std::int64_t>(left, right);
-  } else if(left.get_type() == typeid(double)) {
-    return ::compare<double>(left, right);
-  }
-  return false;
+  return compare_any<bool, int, optional<int>, std::int64_t,
+    optional<std::int64_t>, std::uint64_t, optional<std::uint64_t>, Quantity,
+    optional<Quantity>, double, optional<double>, gregorian::date, ptime,
+    posix_time::time_duration, std::string, CountryCode, CurrencyId, Money,
+    optional<Money>, Region, OrderStatus, OrderType, Security, Side,
+    QKeySequence, QString>(left, right);
 }
 
 bool Spire::is_equal(const std::any& left, const std::any& right) {
@@ -451,42 +481,42 @@ bool Spire::is_equal(const std::any& left, const std::any& right) {
   return is_equal_any<bool, int, std::int64_t, std::uint64_t, Quantity, double,
     gregorian::date, ptime, posix_time::time_duration, std::string, CountryCode,
     CurrencyId, CurrencyId, MarketToken, Money, Region, OrderStatus, OrderType,
-    PositionSideToken, Security, Side, TimeInForce, QColor, QString>(
-      left, right);
+    PositionSideToken, Security, Side, TimeInForce, QColor, QKeySequence,
+    QString>(left, right);
 }
 
 template<>
-optional<int> Spire::from_string(const QString& string) {
+optional<int> Spire::from_text(const QString& string) {
   return from_string_lexical_cast<int>(string);
 }
 
 template<>
-optional<double> Spire::from_string(const QString& string) {
+optional<double> Spire::from_text(const QString& string) {
   return from_string_lexical_cast<double>(string);
 }
 
 template<>
-optional<gregorian::date> Spire::from_string(const QString& string) {
+optional<gregorian::date> Spire::from_text(const QString& string) {
   return from_string_lexical_cast<gregorian::date>(string);
 }
 
 template<>
-optional<ptime> Spire::from_string(const QString& string) {
+optional<ptime> Spire::from_text(const QString& string) {
   return from_string_lexical_cast<ptime>(string);
 }
 
 template<>
-optional<posix_time::time_duration> Spire::from_string(const QString& string) {
+optional<posix_time::time_duration> Spire::from_text(const QString& string) {
   return from_string_lexical_cast<posix_time::time_duration>(string);
 }
 
 template<>
-optional<std::string> Spire::from_string(const QString& string) {
+optional<std::string> Spire::from_text(const QString& string) {
   return string.toStdString();
 }
 
 template<>
-optional<CurrencyId> Spire::from_string(const QString& string) {
+optional<CurrencyId> Spire::from_text(const QString& string) {
   if(auto id = ParseCurrency(string.toStdString());
       id != CurrencyId::NONE) {
     return id;
@@ -495,22 +525,22 @@ optional<CurrencyId> Spire::from_string(const QString& string) {
 }
 
 template<>
-optional<Money> Spire::from_string(const QString& string) {
+optional<Money> Spire::from_text(const QString& string) {
   return Money::FromValue(string.toStdString());
 }
 
 template<>
-optional<Quantity> Spire::from_string(const QString& string) {
+optional<Quantity> Spire::from_text(const QString& string) {
   return Quantity::FromValue(string.toStdString());
 }
 
 template<>
-optional<Region> Spire::from_string(const QString& string) {
+optional<Region> Spire::from_text(const QString& string) {
   return Region(string.toStdString());
 }
 
 template<>
-optional<OrderStatus> Spire::from_string(const QString& string) {
+optional<OrderStatus> Spire::from_text(const QString& string) {
   if(string == QObject::tr("Pending New")) {
     return optional<OrderStatus>(OrderStatus::PENDING_NEW);
   } else if(string == QObject::tr("Rejected")) {
@@ -542,7 +572,7 @@ optional<OrderStatus> Spire::from_string(const QString& string) {
 }
 
 template<>
-optional<OrderType> Spire::from_string(const QString& string) {
+optional<OrderType> Spire::from_text(const QString& string) {
   if(string == QObject::tr("Market")) {
     return optional<OrderType>(OrderType::MARKET);
   } else if(string == QObject::tr("Limit")) {
@@ -558,7 +588,7 @@ optional<OrderType> Spire::from_string(const QString& string) {
 }
 
 template<>
-optional<Security> Spire::from_string(const QString& string) {
+optional<Security> Spire::from_text(const QString& string) {
   if(auto security = ParseSecurity(string.toStdString());
       security != Security()) {
     return security;
@@ -567,7 +597,7 @@ optional<Security> Spire::from_string(const QString& string) {
 }
 
 template<>
-optional<Side> Spire::from_string(const QString& string) {
+optional<Side> Spire::from_text(const QString& string) {
   if(string == QObject::tr("Sell")) {
     return optional<Side>(Side::ASK);
   } else if(string == QObject::tr("Buy")) {
@@ -579,7 +609,7 @@ optional<Side> Spire::from_string(const QString& string) {
 }
 
 template<>
-optional<TimeInForce> Spire::from_string(const QString& string) {
+optional<TimeInForce> Spire::from_text(const QString& string) {
   if(string == QObject::tr("DAY")) {
     return optional<TimeInForce>(TimeInForce::Type::DAY);
   } else if(string == QObject::tr("FOK")) {
@@ -603,7 +633,7 @@ optional<TimeInForce> Spire::from_string(const QString& string) {
 }
 
 template<>
-optional<QColor> Spire::from_string(const QString& string) {
+optional<QColor> Spire::from_text(const QString& string) {
   if(auto color = QColor(string); color.isValid()) {
     return color;
   }
@@ -611,7 +641,7 @@ optional<QColor> Spire::from_string(const QString& string) {
 }
 
 template<>
-optional<QKeySequence> Spire::from_string(const QString& string) {
+optional<QKeySequence> Spire::from_text(const QString& string) {
   if(auto sequence = QKeySequence(string); !sequence.isEmpty()) {
     return sequence;
   }

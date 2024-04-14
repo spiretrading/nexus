@@ -47,6 +47,9 @@ namespace Spire {
   /** Returns a UiProfile for the DecimalFilterPanel. */
   UiProfile make_decimal_filter_panel_profile();
 
+  /** Returns a UiProfile for the DeletableListItem. */
+  UiProfile make_deletable_list_item_profile();
+
   /** Returns a UiProfile for the DeleteIconButton. */
   UiProfile make_delete_icon_button_profile();
 
@@ -70,6 +73,9 @@ namespace Spire {
 
   /** Returns a UiProfile for the EditableBox. */
   UiProfile make_editable_box_profile();
+
+  /** Returns a UiProfile for the EditableTableView. */
+  UiProfile make_editable_table_view_profile();
 
   /** Returns a UiProfile for the EyeDropper. */
   UiProfile make_eye_dropper_profile();
@@ -110,6 +116,9 @@ namespace Spire {
   /** Returns a UiProfile for the IconToggleButton. */
   UiProfile make_icon_toggle_button_profile();
 
+  /** Returns a UiProfile for the IntoPanel. */
+  UiProfile make_info_panel_profile();
+
   /** Returns a UiProfile for the IntoTip. */
   UiProfile make_info_tip_profile();
 
@@ -146,6 +155,15 @@ namespace Spire {
   /** Returns a UiProfile for the MarketBox. */
   UiProfile make_market_box_profile();
 
+  /** Returns a UiProfile for the MenuButton. */
+  UiProfile make_menu_button_profile();
+
+  /** Returns a UiProfile for the MenuIconButton. */
+  UiProfile make_menu_icon_button_profile();
+
+  /** Returns a UiProfile for the MenuLabelButton. */
+  UiProfile make_menu_label_button_profile();
+
   /** Returns a UiProfile for the MoneyBox. */
   UiProfile make_money_box_profile();
 
@@ -159,9 +177,7 @@ namespace Spire {
   UiProfile make_open_filter_panel_profile();
 
   /** Returns a UiProfile for the OrderFieldInfoTip. */
-/** TODO
   UiProfile make_order_field_info_tip_profile();
-*/
 
   /** Returns a UiProfile for the OrderTypeBox. */
   UiProfile make_order_type_box_profile();
@@ -189,6 +205,9 @@ namespace Spire {
 
   /** Returns a UiProfile for the RegionBox. */
   UiProfile make_region_box_profile();
+
+  /** Returns a UiProfile for the RegionDropDownBox. */
+  UiProfile make_region_drop_down_box_profile();
 
   /** Returns a UiProfile for the RegionListItem. */
   UiProfile make_region_list_item_profile();
@@ -264,6 +283,9 @@ namespace Spire {
 
   /** Returns a UiProfile for the TextAreaBox. */
   UiProfile make_text_area_box_profile();
+
+  /** Returns a UiProfile for the TextAreaLabel. */
+  UiProfile make_text_area_label_profile();
 
   /** Returns a UiProfile for the TextBox. */
   UiProfile make_text_box_profile();

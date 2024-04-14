@@ -296,6 +296,15 @@ namespace Spire::Styles {
   void proxy_style(QWidget& principal, QWidget& destination);
 
   /**
+   * Returns <code>true</code> iff a widget matches a selector.
+   * @param widget The widget to test.
+   * @param selector The selector to check for a match.
+   * @return <code>true</code> iff the <i>widget</i> matches the
+   *         <i>selector</i>.
+   */
+  bool is_match(QWidget& widget, const Selector& selector);
+
+  /**
    * Indicates a widget no longer matches a Selector.
    * @param widget The widget to match.
    * @param selector The selector to match.
