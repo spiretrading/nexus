@@ -2,7 +2,6 @@
 #include <Beam/TimeService/ToLocalTime.hpp>
 #include <boost/lexical_cast.hpp>
 #include <QDateTime>
-#include "Nexus/Definitions/SecuritySet.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 
 using namespace Beam;
@@ -113,6 +112,83 @@ posix_time::ptime Spire::LegacyUI::ToPosixTime(const QDateTime& time) {
 }
 
 void Spire::LegacyUI::RegisterCustomQtVariants() {}
+
+std::string Spire::LegacyUI::ToWildCardString(const Security& security,
+    const MarketDatabase& marketDatabase,
+    const CountryDatabase& countryDatabase) {
+  if(security.GetSymbol() == "*" && security.GetMarket() == "*" &&
+      security.GetCountry() == CountryCode::NONE) {
+    return "*";
+  } else if(security == Security()) {
+    return {};
+  }
+  auto symbol = security.GetSymbol() + '.';
+  if(security.GetMarket() == "*") {
+    if(security.GetCountry() != CountryCode::NONE) {
+      auto& countryEntry = countryDatabase.FromCode(security.GetCountry());
+      symbol += countryEntry.m_twoLetterCode.GetData();
+    } else {
+      symbol += '*';
+    }
+    return symbol;
+  } else {
+    auto& market = marketDatabase.FromCode(security.GetMarket());
+    symbol += market.m_displayName;
+  }
+  return symbol;
+}
+
+optional<Security> Spire::LegacyUI::ParseWildCardSecurity(
+    const std::string& source, const MarketDatabase& marketDatabase,
+    const CountryDatabase& countryDatabase) {
+  if(source == "*" || source == "*.*" || source == "*.*.*") {
+    return Security("*", "*", CountryCode::NONE);
+  }
+  auto seperator = source.find_last_of('.');
+  if(seperator == std::string::npos) {
+    return none;
+  }
+  auto header = source.substr(0, seperator);
+  auto trailer = source.substr(seperator + 1);
+  if(header == "*") {
+    auto& market = ParseMarketEntry(trailer, marketDatabase);
+    if(market.m_code != MarketCode()) {
+      return Security(header, market.m_code, market.m_countryCode);
+    }
+  }
+  auto prefixSecurity =
+    ParseWildCardSecurity(header, marketDatabase, countryDatabase);
+  if(prefixSecurity) {
+    if(trailer.size() == 2) {
+      auto code = countryDatabase.FromTwoLetterCode(trailer);
+      if(code.m_code != CountryCode::NONE) {
+        return Security(prefixSecurity->GetSymbol(),
+          prefixSecurity->GetMarket(), code.m_code);
+      } else {
+        return none;
+      }
+    } else if(trailer == "*") {
+      return Security(prefixSecurity->GetSymbol(),
+        prefixSecurity->GetMarket(), CountryCode::NONE);
+    } else {
+      return none;
+    }
+  }
+  auto market = MarketCode();
+  auto country = CountryCode();
+  if(trailer == "*") {
+    market = "*";
+    country = CountryCode::NONE;
+  } else {
+    auto& marketEntry = ParseMarketEntry(trailer, marketDatabase);
+    if(marketEntry.m_code == MarketCode()) {
+      return none;
+    }
+    market = marketEntry.m_code;
+    country = marketEntry.m_countryCode;
+  }
+  return Security(std::move(header), market, country);
+}
 
 const QString& Spire::LegacyUI::displayText(Side side) {
   if(side == Side::ASK) {

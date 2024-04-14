@@ -1,7 +1,6 @@
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include <Beam/TimeService/ToLocalTime.hpp>
 #include <QStyledItemDelegate>
-#include "Nexus/Definitions/SecuritySet.hpp"
 
 using namespace Beam;
 using namespace Beam::TimeService;
@@ -370,8 +369,7 @@ QString Spire::to_text(const Region& region, const QLocale& locale) {
 }
 
 QString Spire::to_text(const Security& security, const QLocale& locale) {
-  return QString::fromStdString(ToWildCardString(
-    security, GetDefaultMarketDatabase(), GetDefaultCountryDatabase()));
+  return QString::fromStdString(ToString(security, GetDefaultMarketDatabase()));
 }
 
 const QString& Spire::to_text(
