@@ -3,9 +3,15 @@
 #include <QKeySequence>
 #include <QWidget>
 #include "Spire/Spire/LocalValueModel.hpp"
+#include "Spire/Styles/Stylist.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+namespace Styles {
+
+  /** Selects a prompt. */
+  using Prompt = StateSelector<void, struct PromptSelectorTag>;
+}
 
   /** A ValueModel over a QKeySequence. */
   using KeySequenceValueModel = ValueModel<QKeySequence>;

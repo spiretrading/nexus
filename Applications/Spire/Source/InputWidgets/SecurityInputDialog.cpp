@@ -3,7 +3,7 @@
 #include <QKeyEvent>
 #include <QScrollBar>
 #include <QTableView>
-#include "Nexus/Definitions/SecuritySet.hpp"
+#include "Spire/LegacyUI/CustomQtVariants.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Utilities/SecurityInfoCompleter.hpp"

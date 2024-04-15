@@ -9,7 +9,6 @@
 #include <QStringBuilder>
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 #include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
-#include "Nexus/Definitions/SecuritySet.hpp"
 #include "Spire/KeyBindings/OrderFieldInfoTip.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ArrayTableModel.hpp"
@@ -659,26 +658,19 @@ namespace {
 
   std::shared_ptr<ComboBox::QueryModel> populate_security_query_model() {
     auto security_infos = std::vector<SecurityInfo>();
-    security_infos.emplace_back(*ParseWildCardSecurity("MRU.TSX",
-      GetDefaultMarketDatabase(), GetDefaultCountryDatabase()),
+    security_infos.emplace_back(ParseSecurity("MRU.TSX"),
       "Metro Inc.", "", 0);
-    security_infos.emplace_back(*ParseWildCardSecurity("MG.TSX",
-      GetDefaultMarketDatabase(), GetDefaultCountryDatabase()),
+    security_infos.emplace_back(ParseSecurity("MG.TSX"),
       "Magna International Inc.", "", 0);
-    security_infos.emplace_back(*ParseWildCardSecurity("MGA.TSX",
-      GetDefaultMarketDatabase(), GetDefaultCountryDatabase()),
+    security_infos.emplace_back(ParseSecurity("MGA.TSX"),
       "Mega Uranium Ltd.", "", 0);
-    security_infos.emplace_back(*ParseWildCardSecurity("MGAB.TSX",
-      GetDefaultMarketDatabase(), GetDefaultCountryDatabase()),
+    security_infos.emplace_back(ParseSecurity("MGAB.TSX"),
       "Mackenzie Global Fixed Income Alloc ETF", "", 0);
-    security_infos.emplace_back(*ParseWildCardSecurity("MON.NYSE",
-      GetDefaultMarketDatabase(), GetDefaultCountryDatabase()),
+    security_infos.emplace_back(ParseSecurity("MON.NYSE"),
       "Monsanto Co.", "", 0);
-    security_infos.emplace_back(*ParseWildCardSecurity("MFC.TSX",
-      GetDefaultMarketDatabase(), GetDefaultCountryDatabase()),
+    security_infos.emplace_back(ParseSecurity("MFC.TSX"),
       "Manulife Financial Corporation", "", 0);
-    security_infos.emplace_back(*ParseWildCardSecurity("MX.TSX",
-      GetDefaultMarketDatabase(), GetDefaultCountryDatabase()),
+    security_infos.emplace_back(ParseSecurity("MX.TSX"),
       "Methanex Corporation", "", 0);
     auto model = std::make_shared<LocalComboBoxQueryModel>();
     for(auto security_info : security_infos) {
@@ -732,8 +724,7 @@ namespace {
       DefaultCountries::CN()};
     auto model = std::make_shared<LocalComboBoxQueryModel>();
     for(auto& security_info : securities) {
-      auto security = *ParseWildCardSecurity(security_info.first,
-        GetDefaultMarketDatabase(), GetDefaultCountryDatabase());
+      auto security = ParseSecurity(security_info.first);
       auto region = Region(security);
       region.SetName(security_info.second);
       model->add(to_text(security).toLower(), region);
@@ -3774,9 +3765,8 @@ UiProfile Spire::make_region_list_item_profile() {
     auto& type = get<int>("type", profile.get_properties());
     auto region = [&] {
       if(type.get() == 0) {
-        auto security = ParseWildCardSecurity("MSFT.NSDQ",
-          GetDefaultMarketDatabase(), GetDefaultCountryDatabase());
-        auto region = Region(*security);
+        auto security = ParseSecurity("MSFT.NSDQ");
+        auto region = Region(security);
         region.SetName("Microsoft Corporation");
         return region;
       } else if(type.get() == 1) {
@@ -4220,10 +4210,9 @@ UiProfile Spire::make_security_list_item_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
   auto profile = UiProfile("SecurityListItem", properties, [] (auto& profile) {
-    auto security = ParseWildCardSecurity(
-      "AB.NYSE", GetDefaultMarketDatabase(), GetDefaultCountryDatabase());
+    auto security = ParseSecurity("AB.NYSE");
     auto security_info =
-      SecurityInfo(*security, "Alliancebernstein Holding LP", "", 0);
+      SecurityInfo(security, "Alliancebernstein Holding LP", "", 0);
     auto item = new SecurityListItem(security_info);
     apply_widget_properties(item, profile.get_properties());
     return item;

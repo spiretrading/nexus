@@ -9,6 +9,7 @@
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/EditableBox.hpp"
 #include "Spire/Ui/Icon.hpp"
+#include "Spire/Ui/KeyInputBox.hpp"
 #include "Spire/Ui/TableItem.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
@@ -25,10 +26,10 @@ namespace {
   auto TABLE_VIEW_STYLE() {
     auto style = StyleSheet();
     style.get(Any() > is_a<TableItem>() >
-        (ReadOnly() && !(+Any() << is_a<ListItem>()))).
+        (ReadOnly() && !(+Any() << is_a<ListItem>()) && !Prompt())).
       set(horizontal_padding(scale_width(8)));
     style.get(Any() > is_a<TableItem>() > ReadOnly() >
-        (is_a<TextBox>() && !(+Any() << is_a<ListItem>()))).
+        (is_a<TextBox>() && !(+Any() << is_a<ListItem>()) && !Prompt())).
       set(horizontal_padding(scale_width(8)));
     style.get((Any() > Editing()) << Current()).
       set(border_color(QColor(Qt::transparent)));
@@ -166,7 +167,8 @@ namespace {
         return AnyRef(row, AnyRef::by_value); 
       }
       column -= 1;
-      if(row < m_source->get_row_size() && column < m_source->get_column_size()) {
+      if(row < m_source->get_row_size() &&
+          column < m_source->get_column_size()) {
         return m_source->at(row, column);
       }
       return {};
@@ -181,7 +183,8 @@ namespace {
         return QValidator::State::Invalid;
       }
       column -= 1;
-      if(row < m_source->get_row_size() && column < m_source->get_column_size()) {
+      if(row < m_source->get_row_size() &&
+          column < m_source->get_column_size()) {
         return m_source->set(row, column, value);
       }
       return QValidator::State::Invalid;
