@@ -4,6 +4,7 @@
 #include "Spire/KeyBindings/InteractionsKeyBindingsForm.hpp"
 #include "Spire/KeyBindings/InteractionsKeyBindingsModel.hpp"
 #include "Spire/KeyBindings/InteractionsPage.hpp"
+#include "Spire/KeyBindings/TaskKeysTableView.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
@@ -19,7 +20,7 @@ using namespace Spire::Styles;
 KeyBindingsWindow::KeyBindingsWindow(
     std::shared_ptr<KeyBindingsModel> key_bindings,
     const CountryDatabase& countries, const MarketDatabase& markets,
-    QWidget* parent)
+    const DestinationDatabase& destinations, QWidget* parent)
     : Window(parent),
       m_key_bindings(std::move(key_bindings)) {
   setWindowTitle(tr("Key Bindings"));
@@ -30,6 +31,10 @@ KeyBindingsWindow::KeyBindingsWindow(
     QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto task_keys_page = new QWidget();
   task_keys_page->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  auto task_key_table_view = make_task_keys_table_view(
+    m_key_bindings->get_order_task_arguments(),
+    std::make_shared<LocalComboBoxQueryModel>(), destinations, markets);
+  enclose(*task_keys_page, *task_key_table_view);
   navigation_view->add_tab(*task_keys_page, tr("Task Keys"));
   auto cancel_keys_page =
     new CancelKeyBindingsForm(m_key_bindings->get_cancel_key_bindings());

@@ -9,6 +9,7 @@
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/EditableBox.hpp"
 #include "Spire/Ui/Icon.hpp"
+#include "Spire/Ui/KeyInputBox.hpp"
 #include "Spire/Ui/TableItem.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
@@ -25,10 +26,10 @@ namespace {
   auto TABLE_VIEW_STYLE() {
     auto style = StyleSheet();
     style.get(Any() > is_a<TableItem>() >
-        (ReadOnly() && !(+Any() << is_a<ListItem>()))).
+        (ReadOnly() && !(+Any() << is_a<ListItem>()) && !Prompt())).
       set(horizontal_padding(scale_width(8)));
     style.get(Any() > is_a<TableItem>() > ReadOnly() >
-        (is_a<TextBox>() && !(+Any() << is_a<ListItem>()))).
+        (is_a<TextBox>() && !(+Any() << is_a<ListItem>()) && !Prompt())).
       set(horizontal_padding(scale_width(8)));
     style.get((Any() > Editing()) << Current()).
       set(border_color(QColor(Qt::transparent)));
