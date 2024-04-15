@@ -1,11 +1,10 @@
 #include "Spire/KeyBindings/TaskKeysPage.hpp"
 #include "Spire/KeyBindings/TaskKeysTableView.hpp"
 #include "Spire/Ui/Button.hpp"
+#include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/SearchBox.hpp"
 #include "Spire/Ui/TextAreaBox.hpp"
 
-using namespace boost;
-using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 using namespace Spire::Styles;
@@ -29,29 +28,39 @@ namespace {
     });
     return help_text_box;
   }
+
+  auto make_button(const QString& path, const QString& tooltip) {
+    auto button = make_icon_button(imageFromSvg(path, scale(16, 16)), tooltip);
+    button->setFixedSize(scale(26, 26));
+    return button;
+  }
 }
 
 TaskKeysPage::TaskKeysPage(std::shared_ptr<KeyBindingsModel> key_bindings,
     DestinationDatabase destinations, MarketDatabase markets, QWidget* parent)
     : QWidget(parent),
       m_key_bindings(std::move(key_bindings)) {
-  auto layout = make_vbox_layout(this);
-  layout->addWidget(make_help_text_box());
   auto toolbar_body = new QWidget();
   auto toolbar_layout = make_hbox_layout(toolbar_body);
   auto search_box = new SearchBox();
+  search_box->set_placeholder(tr("Search tasks"));
   search_box->setFixedWidth(scale_width(368));
   toolbar_layout->addWidget(search_box);
   toolbar_layout->addStretch();
   toolbar_layout->addSpacing(scale_width(18));
-  toolbar_layout->addWidget(make_icon_button(imageFromSvg(":/Icons/add.svg",
-    scale(16, 16)), tr("Add Task (Shift + Enter)")));
+  toolbar_layout->addWidget(
+    make_button(":/Icons/add.svg", tr("Add Task (Shift + Enter)")));
   toolbar_layout->addSpacing(scale_width(4));
-  toolbar_layout->addWidget(make_icon_button(imageFromSvg(":/Icons/duplicate.svg",
-    scale(16, 16)), tr("Duplicate (Ctrl + D)")));
+  toolbar_layout->addWidget(
+    make_button(":/Icons/duplicate.svg", tr("Duplicate (Ctrl + D)")));
   toolbar_layout->addSpacing(scale_width(4));
-  toolbar_layout->addWidget(make_icon_button(imageFromSvg(":/Icons/delete3.svg",
-    scale(16, 16)), tr("Delete (Del)")));
+  auto delete_button =
+    make_button(":/Icons/delete3.svg", tr("Delete (Del)"));
+  update_style(*delete_button, [] (auto& style) {
+    style.get((Hover() || Press()) > Body() > is_a<Icon>()).
+      set(Fill(QColor(0xB71C1C)));
+  });
+  toolbar_layout->addWidget(delete_button);
   auto toolbar = new Box(toolbar_body);
   update_style(*toolbar, [] (auto& style) {
     style.get(Any()).
@@ -62,10 +71,13 @@ TaskKeysPage::TaskKeysPage(std::shared_ptr<KeyBindingsModel> key_bindings,
       set(BorderBottomSize(scale_height(1))).
       set(BorderBottomColor(QColor(0xE0E0E0)));
   });
+  auto layout = make_vbox_layout(this);
+  layout->addWidget(make_help_text_box());
   layout->addWidget(toolbar);
   layout->addWidget(make_task_keys_table_view(
     m_key_bindings->get_order_task_arguments(),
-    std::make_shared<LocalComboBoxQueryModel>(), destinations, markets));
+    std::make_shared<LocalComboBoxQueryModel>(), std::move(destinations),
+    std::move(markets)));
 }
 
 const std::shared_ptr<KeyBindingsModel>&

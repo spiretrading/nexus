@@ -3,7 +3,6 @@
 #include <QWidget>
 #include "Spire/KeyBindings/KeyBindings.hpp"
 #include "Spire/KeyBindings/KeyBindingsModel.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 
@@ -14,6 +13,8 @@ namespace Spire {
       /**
        * Constructs a TaskKeysPage.
        * @param key_bindings The KeyBindingsModel storing all user interactions.
+       * @param destinations The destination database to use.
+       * @param markets The market database to use.
        * @param parent The parent widget.
        */
       TaskKeysPage(std::shared_ptr<KeyBindingsModel> key_bindings,
