@@ -20,7 +20,6 @@ namespace {
       font.setWeight(QFont::Normal);
       font.setPixelSize(scale_width(10));
       style.get(Any()).
-        set(BackgroundColor(QColor(0xFFFFFF))).
         set(text_style(font, QColor(0x808080))).
         set(horizontal_padding(scale_width(8))).
         set(PaddingTop(scale_height(10))).
@@ -54,8 +53,7 @@ TaskKeysPage::TaskKeysPage(std::shared_ptr<KeyBindingsModel> key_bindings,
   toolbar_layout->addWidget(
     make_button(":/Icons/duplicate.svg", tr("Duplicate (Ctrl + D)")));
   toolbar_layout->addSpacing(scale_width(4));
-  auto delete_button =
-    make_button(":/Icons/delete3.svg", tr("Delete (Del)"));
+  auto delete_button = make_button(":/Icons/delete3.svg", tr("Delete"));
   update_style(*delete_button, [] (auto& style) {
     style.get((Hover() || Press()) > Body() > is_a<Icon>()).
       set(Fill(QColor(0xB71C1C)));
@@ -71,13 +69,19 @@ TaskKeysPage::TaskKeysPage(std::shared_ptr<KeyBindingsModel> key_bindings,
       set(BorderBottomSize(scale_height(1))).
       set(BorderBottomColor(QColor(0xE0E0E0)));
   });
-  auto layout = make_vbox_layout(this);
+  auto body = new QWidget();
+  auto layout = make_vbox_layout(body);
   layout->addWidget(make_help_text_box());
   layout->addWidget(toolbar);
   layout->addWidget(make_task_keys_table_view(
     m_key_bindings->get_order_task_arguments(),
     std::make_shared<LocalComboBoxQueryModel>(), std::move(destinations),
     std::move(markets)));
+  auto box = new Box(body);
+  update_style(*box, [] (auto& style) {
+    style.get(Any()).set(BackgroundColor(QColor(0xFFFFFF)));
+  });
+  enclose(*this, *box);
 }
 
 const std::shared_ptr<KeyBindingsModel>&
