@@ -558,6 +558,8 @@ void Spire::Styles::add_pseudo_element(QWidget& source,
   auto entry = new Stylist(source, pseudo_element);
   stylist = pseudo_stylists.insert(
     std::pair(std::pair(&source, pseudo_element), entry)).first;
+  auto& source_stylist = find_stylist(source);
+  source_stylist.set_style(source_stylist.get_style());
   QObject::connect(&source, &QObject::destroyed, [=, &source] (QObject*) {
     entry->m_style_event_filter = nullptr;
     delete entry;
