@@ -4,7 +4,7 @@
 #include "Spire/KeyBindings/InteractionsKeyBindingsForm.hpp"
 #include "Spire/KeyBindings/InteractionsKeyBindingsModel.hpp"
 #include "Spire/KeyBindings/InteractionsPage.hpp"
-#include "Spire/KeyBindings/TaskKeysTableView.hpp"
+#include "Spire/KeyBindings/TaskKeysPage.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
@@ -29,12 +29,8 @@ KeyBindingsWindow::KeyBindingsWindow(
   auto navigation_view = new NavigationView();
   navigation_view->setSizePolicy(
     QSizePolicy::Expanding, QSizePolicy::Expanding);
-  auto task_keys_page = new QWidget();
+  auto task_keys_page = new TaskKeysPage(m_key_bindings, destinations, markets);
   task_keys_page->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  auto task_key_table_view = make_task_keys_table_view(
-    m_key_bindings->get_order_task_arguments(),
-    std::make_shared<LocalComboBoxQueryModel>(), destinations, markets);
-  enclose(*task_keys_page, *task_key_table_view);
   navigation_view->add_tab(*task_keys_page, tr("Task Keys"));
   auto cancel_keys_page =
     new CancelKeyBindingsForm(m_key_bindings->get_cancel_key_bindings());
