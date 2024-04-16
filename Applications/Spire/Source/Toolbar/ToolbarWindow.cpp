@@ -3,7 +3,6 @@
 #include <QStandardPaths>
 #include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Toolbar/NewBlotterForm.hpp"
 #include "Spire/Toolbar/SettingsPanel.hpp"
 #include "Spire/Toolbar/ToolbarWindowSettings.hpp"
 #include "Spire/Ui/Box.hpp"
@@ -11,6 +10,7 @@
 #include "Spire/Ui/ContextMenu.hpp"
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/Layouts.hpp"
+#include "Spire/Ui/LineInputForm.hpp"
 #include "Spire/Ui/MenuButton.hpp"
 
 using namespace Beam;
@@ -28,6 +28,25 @@ namespace {
       QStandardPaths::DocumentsLocation).toStdString());
     path /= account.m_name + "_settings.sps";
     return QString::fromStdString(path.string());
+  }
+
+  auto make_unique_blotter_name(
+      const QString& name, const ListModel<BlotterModel*>& blotters) {
+    auto unique_name = name;
+    auto count = 1;
+    auto is_existing_name = true;
+    while(is_existing_name) {
+      is_existing_name = false;
+      for(auto i = 0; i < blotters.get_size(); ++i) {
+        if(blotters.get(i)->GetName() == unique_name.toStdString()) {
+          ++count;
+          unique_name = QString("%1 %2").arg(name).arg(count);
+          is_existing_name = true;
+          break;
+        }
+      }
+    }
+    return unique_name;
   }
 }
 
@@ -303,14 +322,16 @@ void ToolbarWindow::on_export() {
 }
 
 void ToolbarWindow::on_new_blotter_action() {
-  m_new_blotter_form = new NewBlotterForm(m_pinned_blotters, *this);
+  m_new_blotter_form = new LineInputForm(tr("New Blotter"), *this);
   m_new_blotter_form->connect_submit_signal(
     std::bind_front(&ToolbarWindow::on_new_blotter_submission, this));
   m_new_blotter_form->show();
 }
 
 void ToolbarWindow::on_new_blotter_submission(const QString& name) {
-  m_new_blotter_signal(name);
+  auto unique_name = make_unique_blotter_name(name, *m_pinned_blotters);
+  m_new_blotter_form->deleteLater();
+  m_new_blotter_signal(unique_name);
 }
 
 void ToolbarWindow::on_blotter_operation(

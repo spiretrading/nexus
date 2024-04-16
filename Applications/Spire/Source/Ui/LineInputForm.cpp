@@ -1,7 +1,6 @@
-#include "Spire/Toolbar/NewBlotterForm.hpp"
+#include "Spire/Ui/LineInputForm.hpp"
 #include <boost/signals2/shared_connection_block.hpp>
 #include <QKeyEvent>
-#include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
@@ -14,50 +13,66 @@ using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::Styles;
 
-class NewBlotterForm::TextModel : public ::Spire::TextModel {
-  public:
-    QValidator::State get_state() const override {
-      if(m_value.get().trimmed().isEmpty()) {
-        return QValidator::State::Intermediate;
+namespace {
+  class NonEmptyTextModel : public TextModel {
+    public:
+      explicit NonEmptyTextModel(std::shared_ptr<TextModel> source)
+        : m_source(std::move(source)),
+          m_connection(m_source->connect_update_signal(m_update_signal)) {}
+
+      QValidator::State get_state() const override {
+        if(m_source->get().trimmed().isEmpty()) {
+          return QValidator::State::Intermediate;
+        }
+        return m_source->get_state();
       }
-      return m_value.get_state();
-    }
 
-    const QString& get() const override {
-      return m_value.get();
-    }
-
-    QValidator::State test(const Type& value) const {
-      if(value.trimmed().isEmpty()) {
-        return QValidator::State::Intermediate;
+      const QString& get() const override {
+        return m_source->get();
       }
-      return m_value.test(value);
-    }
 
-    QValidator::State set(const Type& value) {
-      auto validation = m_value.set(value);
-      if(value.trimmed().isEmpty()) {
-        return QValidator::State::Intermediate;
+      QValidator::State test(const Type& value) const {
+        if(value.trimmed().isEmpty()) {
+          return QValidator::State::Intermediate;
+        }
+        return m_source->test(value);
       }
-      return validation;
-    }
 
-    connection connect_update_signal(
-        const typename UpdateSignal::slot_type& slot) const {
-      return m_value.connect_update_signal(slot);
-    }
+      QValidator::State set(const Type& value) {
+        auto state = test(value);
+        if(state == QValidator::State::Invalid) {
+          return state;
+        }
+        m_source->set(value);
+        return state;
+      }
 
-  private:
-    LocalTextModel m_value;
-};
+      connection connect_update_signal(
+          const typename UpdateSignal::slot_type& slot) const {
+        return m_update_signal.connect(slot);
+      }
 
-NewBlotterForm::NewBlotterForm(
-    std::shared_ptr<ListModel<BlotterModel*>> blotters, QWidget& parent)
-    : QWidget(&parent),
-      m_blotters(std::move(blotters)) {
-  auto heading = make_label(tr("New Blotter"));
-  heading->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-  update_style(*heading, [] (auto& styles) {
+    private:
+      mutable UpdateSignal m_update_signal;
+      std::shared_ptr<TextModel> m_source;
+      scoped_connection m_connection;
+
+      void on_current(const QString& current) {
+        m_update_signal(current);
+      }
+  };
+}
+
+LineInputForm::LineInputForm(QString heading, QWidget& parent)
+  : LineInputForm(
+      std::move(heading), std::make_shared<LocalTextModel>(), parent) {}
+
+LineInputForm::LineInputForm(
+    QString heading, std::shared_ptr<TextModel> current, QWidget& parent)
+    : QWidget(&parent) {
+  auto heading_label = make_label(std::move(heading));
+  heading_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+  update_style(*heading_label, [] (auto& styles) {
     auto font = QFont("Roboto");
     font.setWeight(QFont::Medium);
     font.setPixelSize(scale_width(12));
@@ -67,16 +82,16 @@ NewBlotterForm::NewBlotterForm(
       set(vertical_padding(scale_height(10)));
   });
   auto label = make_label(tr("Name"));
-  m_current_name = std::make_shared<TextModel>();
-  m_name = new TextBox(m_current_name);
-  m_current_name_connection = m_current_name->connect_update_signal(
-    std::bind_front(&NewBlotterForm::on_current_name, this));
-  m_name->installEventFilter(this);
+  m_current = std::make_shared<NonEmptyTextModel>(std::move(current));
+  m_input = new TextBox(m_current);
+  m_input->installEventFilter(this);
+  m_connection = m_current->connect_update_signal(
+    std::bind_front(&LineInputForm::on_current, this));
   auto body = new QWidget();
   auto body_layout = make_vbox_layout(body);
   body_layout->setSpacing(scale_height(8));
   body_layout->addWidget(label);
-  body_layout->addWidget(m_name);
+  body_layout->addWidget(m_input);
   auto field_set = new Box(body);
   update_style(*field_set, [] (auto& styles) {
     styles.get(Any()).
@@ -86,12 +101,12 @@ NewBlotterForm::NewBlotterForm(
   auto cancel_button = make_label_button(tr("Cancel"));
   cancel_button->setFixedSize(scale(100, 26));
   cancel_button->connect_click_signal(
-    std::bind_front(&NewBlotterForm::on_cancel, this));
+    std::bind_front(&LineInputForm::on_cancel, this));
   m_create_button = make_label_button(tr("Create"));
   m_create_button->setFixedSize(scale(100, 26));
   m_create_button->setEnabled(false);
   m_create_button->connect_click_signal(
-    std::bind_front(&NewBlotterForm::on_create, this));
+    std::bind_front(&LineInputForm::on_create, this));
   auto actions_body = new QWidget();
   auto actions_layout = make_hbox_layout(actions_body);
   actions_layout->setSpacing(scale_height(8));
@@ -106,7 +121,7 @@ NewBlotterForm::NewBlotterForm(
   });
   auto layout = make_vbox_layout(this);
   layout->setSpacing(scale_height(10));
-  layout->addWidget(heading);
+  layout->addWidget(heading_label);
   layout->addWidget(field_set);
   layout->addWidget(actions_box);
   m_panel = new OverlayPanel(*this, parent);
@@ -114,32 +129,32 @@ NewBlotterForm::NewBlotterForm(
   m_panel->set_closed_on_focus_out(false);
   m_panel->set_is_draggable(true);
   m_panel->installEventFilter(this);
-  setFocusProxy(m_name);
+  setFocusProxy(m_input);
 }
 
-connection NewBlotterForm::connect_submit_signal(
+connection LineInputForm::connect_submit_signal(
     const SubmitSignal::slot_type& slot) const {
   return m_submit_signal.connect(slot);
 }
 
-bool NewBlotterForm::eventFilter(QObject* watched, QEvent* event) {
+bool LineInputForm::eventFilter(QObject* watched, QEvent* event) {
   if(watched == m_panel) {
     if(event->type() == QEvent::Close) {
       hide();
     }
-  } else if(watched == m_name) {
+  } else if(watched == m_input) {
     if(event->type() == QEvent::ChildAdded) {
       auto& child = *static_cast<QChildEvent&>(*event).child();
       if(child.isWidgetType()) {
         child.installEventFilter(this);
-        m_name->removeEventFilter(this);
+        m_input->removeEventFilter(this);
       }
     }
   } else if(event->type() == QEvent::KeyPress) {
     auto& key_event = *static_cast<QKeyEvent*>(event);
     if(key_event.key() == Qt::Key_Enter || key_event.key() == Qt::Key_Return) {
-      if(auto name = m_name->get_current()->get(); !name.trimmed().isEmpty()) {
-        create_name(name);
+      if(auto name = m_input->get_current()->get(); !name.trimmed().isEmpty()) {
+        on_create();
         return true;
       }
     }
@@ -147,51 +162,28 @@ bool NewBlotterForm::eventFilter(QObject* watched, QEvent* event) {
   return QWidget::eventFilter(watched, event);
 }
 
-bool NewBlotterForm::event(QEvent* event) {
+bool LineInputForm::event(QEvent* event) {
   if(event->type() == QEvent::ShowToParent) {
-    m_current_name->set("");
+    m_current->set("");
     m_panel->show();
     m_panel->activateWindow();
   } else if(event->type() == QEvent::HideToParent) {
-    auto current_blocker = shared_connection_block(m_current_name_connection);
-    m_current_name->set("");
+    auto current_blocker = shared_connection_block(m_connection);
+    m_current->set("");
     m_panel->hide();
   }
   return QWidget::event(event);
 }
 
-void NewBlotterForm::create_name(const QString& name) {
-  auto trimmed_name = name.trimmed();
-  auto new_name = trimmed_name;
-  auto count = 1;
-  auto is_existing_name = true;
-  while(is_existing_name) {
-    is_existing_name = false;
-    for(auto i = 0; i < m_blotters->get_size(); ++i) {
-      if(m_blotters->get(i)->GetName() == new_name.toStdString()) {
-        ++count;
-        new_name = QString("%1 %2").arg(trimmed_name).arg(count);
-        is_existing_name = true;
-        break;
-      }
-    }
-  }
-  m_submit_signal(new_name);
+void LineInputForm::on_cancel() {
   close();
 }
 
-void NewBlotterForm::on_cancel() {
+void LineInputForm::on_create() {
+  m_submit_signal(m_input->get_current()->get());
   close();
 }
 
-void NewBlotterForm::on_create() {
-  create_name(m_name->get_current()->get());
-}
-
-void NewBlotterForm::on_current_name(const QString& value) {
-  if(value.trimmed().isEmpty()) {
-    m_create_button->setEnabled(false);
-  } else {
-    m_create_button->setEnabled(true);
-  }
+void LineInputForm::on_current(const QString& value) {
+  m_create_button->setEnabled(!value.trimmed().isEmpty());
 }
