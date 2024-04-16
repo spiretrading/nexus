@@ -89,6 +89,7 @@ TableBody::TableBody(
       set(vertical_padding(scale_height(1))).
       set(grid_color(QColor(0xE0E0E0)));
   });
+  setUpdatesEnabled(false);
   for(auto row = 0; row != m_table->get_row_size(); ++row) {
     add_row(row);
   }
@@ -171,6 +172,9 @@ bool TableBody::event(QEvent* event) {
       cover->setFixedSize(width, height());
       left += width;
       cover->raise();
+    }
+    if(!updatesEnabled()) {
+      setUpdatesEnabled(true);
     }
     return result;
   } else {
