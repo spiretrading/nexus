@@ -12,7 +12,7 @@ namespace Spire {
 
       /**
        * Constructs a TaskKeysPage.
-       * @param key_bindings The KeyBindingsModel storing all user interactions.
+       * @param key_bindings The task key bindings to display.
        * @param destinations The destination database to use.
        * @param markets The market database to use.
        * @param parent The parent widget.
