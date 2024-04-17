@@ -194,6 +194,12 @@ namespace Spire {
        */
       ListModelReference& operator =(const T& value);
 
+      /**
+       * Updates the ListModel with the given value.
+       * @param value The updated value.
+       */
+      ListModelReference& operator =(const ListModelReference& value);
+
       /** Converts this reference into a native reference. */
       operator const T&() const;
 
@@ -671,6 +677,12 @@ namespace Spire {
   ListModelReference<T>& ListModelReference<T>::operator =(const T& value) {
     m_model->set(m_index, value);
     return *this;
+  }
+
+  template<typename T>
+  ListModelReference<T>& ListModelReference<T>::operator =(
+      const ListModelReference& value) {
+    return *this = static_cast<const T&>(value);
   }
 
   template<typename T>

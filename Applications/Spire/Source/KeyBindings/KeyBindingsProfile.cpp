@@ -1,4 +1,5 @@
 #include "Spire/KeyBindings/KeyBindingsProfile.hpp"
+#include <array>
 #include <fstream>
 #include <unordered_map>
 #include <Beam/Collections/Enum.hpp>
@@ -7,6 +8,7 @@
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
+#include "Nexus/Definitions/RegionMap.hpp"
 #include "Spire/LegacyUI/UISerialization.hpp"
 
 using namespace Beam;
@@ -16,6 +18,19 @@ using namespace Nexus;
 using namespace Spire;
 
 namespace {
+  struct LegacyInteractionsProperties {
+    BEAM_ENUM(Modifier,
+      PLAIN,
+      SHIFT,
+      ALT,
+      CONTROL);
+    static const auto MODIFIER_COUNT = 4;
+    Quantity m_default_quantity;
+    std::array<Quantity, MODIFIER_COUNT> m_quantity_increments;
+    std::array<Money, MODIFIER_COUNT> m_price_increments;
+    bool m_cancel_on_fill;
+  };
+
   struct LegacyKeyBindings {
     struct TaskBinding {
       std::string m_name;
@@ -81,6 +96,31 @@ namespace {
 
 namespace Beam::Serialization {
   template<>
+  struct Shuttle<LegacyInteractionsProperties> {
+    template<typename Shuttler>
+    void operator ()(Shuttler& shuttle, LegacyInteractionsProperties& value,
+        unsigned int version) {
+      auto default_quantity = std::int64_t();
+      shuttle.Shuttle("default_quantity", default_quantity);
+      value.m_default_quantity = default_quantity;
+      auto quantity_increments = std::array<
+        std::int64_t, LegacyInteractionsProperties::MODIFIER_COUNT>();
+      shuttle.Shuttle("quantity_increments", quantity_increments);
+      for(auto i = 0; i < LegacyInteractionsProperties::MODIFIER_COUNT; ++i) {
+        value.m_quantity_increments[i] = quantity_increments[i];
+      }
+      auto price_increments = std::array<
+        std::int64_t, LegacyInteractionsProperties::MODIFIER_COUNT>();
+      shuttle.Shuttle("price_increments", price_increments);
+      for(auto i = 0; i < LegacyInteractionsProperties::MODIFIER_COUNT; ++i) {
+        value.m_price_increments[i] = Nexus::Money(
+          Nexus::Quantity(price_increments[i]) / Nexus::Quantity::MULTIPLIER);
+      }
+      shuttle.Shuttle("cancel_on_fill", value.m_cancel_on_fill);
+    }
+  };
+
+  template<>
   struct Shuttle<LegacyKeyBindings::TaskBinding> {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle, LegacyKeyBindings::TaskBinding& value,
@@ -113,12 +153,9 @@ namespace Beam::Serialization {
 }
 
 namespace {
-  auto convert_legacy_key_bindings(
-      const std::filesystem::path& path, MarketDatabase markets) {
-    if(!std::filesystem::exists(path)) {
-      throw std::runtime_error("key_bindings.dat not found.");
-    }
-    auto legacy_key_bindings = LegacyKeyBindings();
+  auto load_legacy_interactions_properties(const std::filesystem::path& path) {
+    auto interactions_properties =
+      RegionMap<LegacyInteractionsProperties>("Global", {});
     try {
       auto reader =
         BasicIStreamReader<std::ifstream>(Initialize(path, std::ios::binary));
@@ -128,14 +165,80 @@ namespace {
       RegisterSpireTypes(Store(registry));
       auto receiver = BinaryReceiver<SharedBuffer>(Ref(registry));
       receiver.SetSource(Ref(buffer));
-      receiver.Shuttle(legacy_key_bindings);
-    } catch(std::exception&) {
-      throw std::runtime_error("Unable to load key bindings, using defaults.");
+      receiver.Shuttle(interactions_properties);
+    } catch(const std::exception&) {
+      throw std::runtime_error("Unable to load interactions.");
     }
+    return interactions_properties;
+  }
+
+  auto load_legacy_key_bindings(const std::filesystem::path& path) {
+    auto key_bindings = LegacyKeyBindings();
+    try {
+      auto reader =
+        BasicIStreamReader<std::ifstream>(Initialize(path, std::ios::binary));
+      auto buffer = SharedBuffer();
+      reader.Read(Store(buffer));
+      auto registry = TypeRegistry<BinarySender<SharedBuffer>>();
+      RegisterSpireTypes(Store(registry));
+      auto receiver = BinaryReceiver<SharedBuffer>(Ref(registry));
+      receiver.SetSource(Ref(buffer));
+      receiver.Shuttle(key_bindings);
+    } catch(const std::exception&) {
+      throw std::runtime_error("Unable to load key bindings.");
+    }
+    return key_bindings;
+  }
+
+  auto convert_legacy_key_bindings(
+      const std::filesystem::path& path, MarketDatabase markets) {
+    auto key_bindings_path = path / "key_bindings.dat";
+    if(!std::filesystem::exists(key_bindings_path)) {
+      throw std::runtime_error("key_bindings.dat not found.");
+    }
+    auto interactions_properties_path = path / "interactions.dat";
+    if(!std::filesystem::exists(interactions_properties_path)) {
+      throw std::runtime_error("interactions.dat not found.");
+    }
+    auto legacy_key_bindings = load_legacy_key_bindings(key_bindings_path);
+    auto legacy_interactions_properties =
+      load_legacy_interactions_properties(interactions_properties_path);
     auto key_bindings = std::make_shared<KeyBindingsModel>(std::move(markets));
     for(auto& cancel_binding : legacy_key_bindings.m_cancel_bindings) {
       key_bindings->get_cancel_key_bindings()->get_binding(
         from_legacy(cancel_binding.second.m_type))->set(cancel_binding.first);
+    }
+    for(auto i = legacy_interactions_properties.Begin();
+        i != legacy_interactions_properties.End(); ++i) {
+      auto& properties = std::get<1>(*i);
+      auto interactions =
+        key_bindings->get_interactions_key_bindings(std::get<0>(*i));
+      interactions->get_default_quantity()->set(properties.m_default_quantity);
+      interactions->get_quantity_increment(Qt::NoModifier)->set(
+        properties.m_quantity_increments[
+          LegacyInteractionsProperties::Modifier::PLAIN]);
+      interactions->get_quantity_increment(Qt::ShiftModifier)->set(
+        properties.m_quantity_increments[
+          LegacyInteractionsProperties::Modifier::SHIFT]);
+      interactions->get_quantity_increment(Qt::AltModifier)->set(
+        properties.m_quantity_increments[
+          LegacyInteractionsProperties::Modifier::ALT]);
+      interactions->get_quantity_increment(Qt::ControlModifier)->set(
+        properties.m_quantity_increments[
+          LegacyInteractionsProperties::Modifier::CONTROL]);
+      interactions->get_price_increment(Qt::NoModifier)->set(
+        properties.m_price_increments[
+          LegacyInteractionsProperties::Modifier::PLAIN]);
+      interactions->get_price_increment(Qt::ShiftModifier)->set(
+        properties.m_price_increments[
+          LegacyInteractionsProperties::Modifier::SHIFT]);
+      interactions->get_price_increment(Qt::AltModifier)->set(
+        properties.m_price_increments[
+          LegacyInteractionsProperties::Modifier::ALT]);
+      interactions->get_price_increment(Qt::ControlModifier)->set(
+        properties.m_price_increments[
+          LegacyInteractionsProperties::Modifier::CONTROL]);
+      interactions->is_cancel_on_fill()->set(properties.m_cancel_on_fill);
     }
     return key_bindings;
   }
@@ -151,7 +254,7 @@ std::shared_ptr<KeyBindingsModel> Spire::load_key_bindings_profile(
   if(!std::filesystem::exists(file_path)) {
     auto legacy_path = path / "key_bindings.dat";
     if(std::filesystem::exists(legacy_path)) {
-      return convert_legacy_key_bindings(legacy_path, std::move(markets));
+      return convert_legacy_key_bindings(path, std::move(markets));
     }
     return load_default_key_bindings(std::move(markets));
   }
