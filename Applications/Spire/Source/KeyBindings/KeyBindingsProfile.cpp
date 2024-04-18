@@ -8,12 +8,20 @@
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
+#include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
+#include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "Nexus/Definitions/RegionMap.hpp"
+#include "Spire/Canvas/Operations/CanvasNodeBuilder.hpp"
+#include "Spire/Canvas/Operations/CanvasOperationException.hpp"
+#include "Spire/Canvas/OrderExecutionNodes/MaxFloorNode.hpp"
+#include "Spire/Canvas/OrderExecutionNodes/OrderTaskNodes.hpp"
+#include "Spire/Canvas/OrderExecutionNodes/SingleOrderTaskNode.hpp"
 #include "Spire/LegacyUI/UISerialization.hpp"
 
 using namespace Beam;
 using namespace Beam::IO;
 using namespace Beam::Serialization;
+using namespace boost;
 using namespace Nexus;
 using namespace Spire;
 
@@ -153,6 +161,211 @@ namespace Beam::Serialization {
 }
 
 namespace {
+  auto make_asx_order_task_arguments() {
+    auto orderTypes = std::vector<std::unique_ptr<CanvasNode>>();
+    CanvasNodeBuilder limitBid(*GetLimitBidOrderTaskNode()->Rename(
+      "ASX TradeMatch Limit Bid")->AddField("max_floor", 111,
+      LinkedNode::SetReferent(MaxFloorNode(), "security")));
+    limitBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      std::make_unique<DestinationNode>(DefaultDestinations::ASXT()));
+    limitBid.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
+    limitBid.SetReadOnly(SingleOrderTaskNode::DESTINATION_PROPERTY, true);
+    limitBid.Replace(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      std::make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    limitBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
+    limitBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
+    orderTypes.emplace_back(limitBid.Make());
+    CanvasNodeBuilder limitAsk(*GetLimitAskOrderTaskNode()->Rename(
+      "ASX TradeMatch Limit Ask")->AddField("max_floor", 111,
+      LinkedNode::SetReferent(MaxFloorNode(), "security")));
+    limitAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      std::make_unique<DestinationNode>(DefaultDestinations::ASXT()));
+    limitAsk.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
+    limitAsk.SetReadOnly(SingleOrderTaskNode::DESTINATION_PROPERTY, true);
+    limitAsk.Replace(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      std::make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    limitAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
+    limitAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
+    orderTypes.emplace_back(limitAsk.Make());
+    CanvasNodeBuilder marketBid(*GetMarketBidOrderTaskNode()->Rename(
+      "ASX TradeMatch Market Bid"));
+    marketBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      std::make_unique<DestinationNode>(DefaultDestinations::ASXT()));
+    marketBid.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
+    marketBid.SetReadOnly(SingleOrderTaskNode::DESTINATION_PROPERTY, true);
+    marketBid.Replace(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      std::make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    marketBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
+    marketBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
+    orderTypes.emplace_back(marketBid.Make());
+    CanvasNodeBuilder marketAsk(*GetMarketAskOrderTaskNode()->Rename(
+      "ASX TradeMatch Market Ask"));
+    marketAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      std::make_unique<DestinationNode>(DefaultDestinations::ASXT()));
+    marketAsk.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
+    marketAsk.SetReadOnly(SingleOrderTaskNode::DESTINATION_PROPERTY, true);
+    marketAsk.Replace(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      std::make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    marketAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
+    marketAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
+    orderTypes.emplace_back(marketAsk.Make());
+    CanvasNodeBuilder buy(*GetMarketBidOrderTaskNode()->Rename(
+      "ASX TradeMatch Buy"));
+    buy.SetVisible(SingleOrderTaskNode::QUANTITY_PROPERTY, false);
+    buy.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      std::make_unique<DestinationNode>(DefaultDestinations::ASXT()));
+    buy.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
+    buy.SetReadOnly(SingleOrderTaskNode::DESTINATION_PROPERTY, true);
+    buy.Replace(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      std::make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    buy.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
+    buy.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
+    orderTypes.emplace_back(buy.Make());
+    CanvasNodeBuilder sell(*GetMarketAskOrderTaskNode()->Rename(
+      "ASX TradeMatch Sell"));
+    sell.SetVisible(SingleOrderTaskNode::QUANTITY_PROPERTY, false);
+    sell.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      std::make_unique<DestinationNode>(DefaultDestinations::ASXT()));
+    sell.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
+    sell.SetReadOnly(SingleOrderTaskNode::DESTINATION_PROPERTY, true);
+    sell.Replace(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      std::make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    sell.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
+    sell.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
+    orderTypes.emplace_back(sell.Make());
+    CanvasNodeBuilder primaryPegBid(*GetPeggedBidOrderTaskNode(false)->Rename(
+      "ASX TradeMatch Primary Peg Bid")->AddField("exec_inst", 18,
+      std::make_unique<TextNode>("R"))->AddField("peg_difference", 211,
+      std::make_unique<MoneyNode>(Money::ZERO)));
+    primaryPegBid.SetReadOnly("exec_inst", true);
+    primaryPegBid.SetVisible("exec_inst", false);
+    primaryPegBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      std::make_unique<DestinationNode>(DefaultDestinations::ASXT()));
+    primaryPegBid.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      false);
+    primaryPegBid.SetReadOnly(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      true);
+    primaryPegBid.Replace(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      std::make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    primaryPegBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      false);
+    primaryPegBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      true);
+    orderTypes.emplace_back(primaryPegBid.Make());
+    CanvasNodeBuilder primaryPegAsk(*GetPeggedAskOrderTaskNode(false)->Rename(
+      "ASX TradeMatch Primary Peg Ask")->AddField("exec_inst", 18,
+      std::make_unique<TextNode>("R"))->AddField("peg_difference", 211,
+      std::make_unique<MoneyNode>(Money::ZERO)));
+    primaryPegAsk.SetReadOnly("exec_inst", true);
+    primaryPegAsk.SetVisible("exec_inst", false);
+    primaryPegAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      std::make_unique<DestinationNode>(DefaultDestinations::ASXT()));
+    primaryPegAsk.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      false);
+    primaryPegAsk.SetReadOnly(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      true);
+    primaryPegAsk.Replace(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      std::make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    primaryPegAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      false);
+    primaryPegAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      true);
+    orderTypes.emplace_back(primaryPegAsk.Make());
+    CanvasNodeBuilder midPegBid(*GetPeggedBidOrderTaskNode(false)->Rename(
+      "ASX TradeMatch Mid Peg Bid")->AddField("exec_inst", 18,
+      std::make_unique<TextNode>("M")));
+    midPegBid.SetReadOnly("exec_inst", true);
+    midPegBid.SetVisible("exec_inst", false);
+    midPegBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      std::make_unique<DestinationNode>(DefaultDestinations::ASXT()));
+    midPegBid.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
+    midPegBid.SetReadOnly(SingleOrderTaskNode::DESTINATION_PROPERTY, true);
+    midPegBid.Replace(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      std::make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    midPegBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
+    midPegBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
+    orderTypes.emplace_back(midPegBid.Make());
+    CanvasNodeBuilder midPegAsk(*GetPeggedAskOrderTaskNode(false)->Rename(
+      "ASX TradeMatch Mid Peg Ask")->AddField("exec_inst", 18,
+      std::make_unique<TextNode>("M")));
+    midPegAsk.SetReadOnly("exec_inst", true);
+    midPegAsk.SetVisible("exec_inst", false);
+    midPegAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      std::make_unique<DestinationNode>(DefaultDestinations::ASXT()));
+    midPegAsk.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
+    midPegAsk.SetReadOnly(SingleOrderTaskNode::DESTINATION_PROPERTY, true);
+    midPegAsk.Replace(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      std::make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    midPegAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
+    midPegAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
+    orderTypes.emplace_back(midPegAsk.Make());
+    CanvasNodeBuilder marketPegBid(*GetPeggedBidOrderTaskNode(false)->Rename(
+      "ASX TradeMatch Market Peg Bid")->AddField("exec_inst", 18,
+      std::make_unique<TextNode>("P"))->AddField("peg_difference", 211,
+      std::make_unique<MoneyNode>(-Money::CENT)));
+    marketPegBid.SetReadOnly("exec_inst", true);
+    marketPegBid.SetVisible("exec_inst", false);
+    marketPegBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      std::make_unique<DestinationNode>(DefaultDestinations::ASXT()));
+    marketPegBid.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
+    marketPegBid.SetReadOnly(SingleOrderTaskNode::DESTINATION_PROPERTY, true);
+    marketPegBid.Replace(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      std::make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    marketPegBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      false);
+    marketPegBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      true);
+    orderTypes.emplace_back(marketPegBid.Make());
+    CanvasNodeBuilder marketPegAsk(*GetPeggedAskOrderTaskNode(false)->Rename(
+      "ASX TradeMatch Market Peg Ask")->AddField("exec_inst", 18,
+      std::make_unique<TextNode>("P"))->AddField("peg_difference", 211,
+      std::make_unique<MoneyNode>(-Money::CENT)));
+    marketPegAsk.SetReadOnly("exec_inst", true);
+    marketPegAsk.SetVisible("exec_inst", false);
+    marketPegAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      std::make_unique<DestinationNode>(DefaultDestinations::ASXT()));
+    marketPegAsk.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
+    marketPegAsk.SetReadOnly(SingleOrderTaskNode::DESTINATION_PROPERTY, true);
+    marketPegAsk.Replace(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      std::make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    marketPegAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      false);
+    marketPegAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      true);
+    orderTypes.emplace_back(marketPegAsk.Make());
+    return orderTypes;
+  }
+
+  auto make_default_order_task_arguments() {
+    return make_asx_order_task_arguments();
+  }
+
+  template<typename T>
+  typename T::Type extract(const optional<const CanvasNode&>& child) {
+    if(!child) {
+      return {};
+    } else if(auto node = dynamic_cast<const ValueNode<T>*>(&*child)) {
+      return node->GetValue();
+    }
+    return {};
+  }
+
+  auto to_order_task_arguments(const CanvasNode& node) {
+    auto arguments = OrderTaskArguments();
+    arguments.m_name = QString::fromStdString(node.GetText());
+    arguments.m_region = Region(DefaultMarkets::ASX(), DefaultCountries::AU());
+    arguments.m_region.SetName("ASX");
+    arguments.m_destination = extract<DestinationType>(
+      node.FindChild(SingleOrderTaskNode::DESTINATION_PROPERTY));
+    arguments.m_order_type = extract<OrderTypeType>(
+      node.FindChild(SingleOrderTaskNode::ORDER_TYPE_PROPERTY));
+    arguments.m_side =
+      extract<SideType>(node.FindChild(SingleOrderTaskNode::SIDE_PROPERTY));
+    arguments.m_time_in_force = extract<TimeInForceType>(
+      node.FindChild(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY));
+    return arguments;
+  }
+
   auto load_legacy_interactions_properties(const std::filesystem::path& path) {
     auto interactions_properties =
       RegionMap<LegacyInteractionsProperties>("Global", {});
@@ -204,6 +417,10 @@ namespace {
     auto legacy_interactions_properties =
       load_legacy_interactions_properties(interactions_properties_path);
     auto key_bindings = std::make_shared<KeyBindingsModel>(std::move(markets));
+    for(auto& task : make_default_order_task_arguments()) {
+      key_bindings->get_order_task_arguments()->push(
+        to_order_task_arguments(*task));
+    }
     for(auto& cancel_binding : legacy_key_bindings.m_cancel_bindings) {
       key_bindings->get_cancel_key_bindings()->get_binding(
         from_legacy(cancel_binding.second.m_type))->set(cancel_binding.first);
