@@ -367,7 +367,7 @@ bool EditableTableView::focusNextPrevChild(bool next) {
       }
     }
   }
-  next_focus_widget->setFocus();
+  next_focus_widget->setFocus(Qt::TabFocusReason);
   return true;
 }
 
