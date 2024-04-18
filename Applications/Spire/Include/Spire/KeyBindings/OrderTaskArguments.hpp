@@ -70,6 +70,13 @@ namespace Spire {
    */
   std::unique_ptr<CanvasNode>
     make_canvas_node(const OrderTaskArguments& arguments);
+
+  /**
+   * Converts an OrderTaskNode into an OrderTaskArguments record.
+   * @param node The node to convert, should be a SingleOrderTaskNode.
+   * @return The OrderTaskArguments represented by the <i>node</i>.
+   */
+  OrderTaskArguments to_order_task_arguments(const CanvasNode& node);
 }
 
 #endif

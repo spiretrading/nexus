@@ -2,10 +2,21 @@
 #define SPIRE_KEY_BINDINGS_PROFILE_HPP
 #include <filesystem>
 #include <memory>
+#include <vector>
+#include "Spire/Canvas/Common/CanvasNode.hpp"
 #include "Spire/KeyBindings/KeyBindings.hpp"
 #include "Spire/KeyBindings/KeyBindingsModel.hpp"
 
 namespace Spire {
+
+  /** Returns the list of built-in ASX order task nodes. */
+  std::vector<std::unique_ptr<CanvasNode>> make_asx_order_task_nodes();
+
+  /** Returns the list of built-in CXA order task nodes. */
+  std::vector<std::unique_ptr<CanvasNode>> make_cxa_order_task_nodes();
+
+  /** Returns the full list of built-in order task nodes. */
+  std::vector<std::unique_ptr<CanvasNode>> make_default_order_task_nodes();
 
   /**
    * Loads the key bindings profile found at a given path.

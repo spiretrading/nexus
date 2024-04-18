@@ -205,9 +205,6 @@ int main(int argc, char* argv[]) {
     RiskTimerProperties::Load(Store(*user_profile));
     TimeAndSalesProperties::Load(Store(*user_profile));
     PortfolioViewerProperties::Load(Store(*user_profile));
-/* TODO
-    InteractionsProperties::Load(Store(*user_profile));
-*/
     OrderImbalanceIndicatorProperties::Load(Store(*user_profile));
     SavedDashboards::Load(Store(*user_profile));
     toolbar_controller.emplace(Ref(*user_profile));
@@ -224,9 +221,6 @@ int main(int argc, char* argv[]) {
   OrderImbalanceIndicatorProperties::Save(*user_profile);
   save_key_bindings_profile(
     *user_profile->GetKeyBindings(), user_profile->GetProfilePath());
-/* TODO
-  InteractionsProperties::Save(*user_profile);
-*/
   PortfolioViewerProperties::Save(*user_profile);
   TimeAndSalesProperties::Save(*user_profile);
   RiskTimerProperties::Save(*user_profile);

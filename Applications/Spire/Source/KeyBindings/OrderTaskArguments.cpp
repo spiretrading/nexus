@@ -13,6 +13,18 @@ using namespace boost;
 using namespace Nexus;
 using namespace Spire;
 
+namespace {
+  template<typename T>
+  typename T::Type extract(const optional<const CanvasNode&>& child) {
+    if(!child) {
+      return {};
+    } else if(auto node = dynamic_cast<const ValueNode<T>*>(&*child)) {
+      return node->GetValue();
+    }
+    return {};
+  }
+}
+
 optional<const OrderTaskArguments&> Spire::find_order_task_arguments(
     const OrderTaskArgumentsListModel& arguments, const Region& region,
     const QKeySequence& key) {
@@ -58,4 +70,20 @@ std::unique_ptr<CanvasNode>
       std::make_unique<TimeInForceNode>(arguments.m_time_in_force));
   }
   return node;
+}
+
+OrderTaskArguments Spire::to_order_task_arguments(const CanvasNode& node) {
+  auto arguments = OrderTaskArguments();
+  arguments.m_name = QString::fromStdString(node.GetText());
+  arguments.m_region = Region(DefaultMarkets::ASX(), DefaultCountries::AU());
+  arguments.m_region.SetName("ASX");
+  arguments.m_destination = extract<DestinationType>(
+    node.FindChild(SingleOrderTaskNode::DESTINATION_PROPERTY));
+  arguments.m_order_type = extract<OrderTypeType>(
+    node.FindChild(SingleOrderTaskNode::ORDER_TYPE_PROPERTY));
+  arguments.m_side =
+    extract<SideType>(node.FindChild(SingleOrderTaskNode::SIDE_PROPERTY));
+  arguments.m_time_in_force = extract<TimeInForceType>(
+    node.FindChild(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY));
+  return arguments;
 }
