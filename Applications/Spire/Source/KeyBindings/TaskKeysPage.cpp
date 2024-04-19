@@ -84,10 +84,7 @@ namespace {
 TaskKeysPage::TaskKeysPage(std::shared_ptr<KeyBindingsModel> key_bindings,
     DestinationDatabase destinations, MarketDatabase markets, QWidget* parent)
     : QWidget(parent),
-      m_key_bindings(std::move(key_bindings)),
-      m_operation_connection(
-        m_key_bindings->get_order_task_arguments()->connect_operation_signal(
-          std::bind_front(&TaskKeysPage::on_operation, this))) {
+      m_key_bindings(std::move(key_bindings)) {
   auto toolbar_body = new QWidget();
   auto toolbar_layout = make_hbox_layout(toolbar_body);
   auto search_box = new SearchBox();
@@ -145,6 +142,9 @@ TaskKeysPage::TaskKeysPage(std::shared_ptr<KeyBindingsModel> key_bindings,
   auto& row_selection = m_table_view->get_selection()->get_row_selection();
   m_selection_connection = row_selection->connect_operation_signal(
     std::bind_front(&TaskKeysPage::on_row_selection, this));
+  m_table_operation_connection =
+    m_table_view->get_body().get_table()->connect_operation_signal(
+      std::bind_front(&TaskKeysPage::on_table_operation, this));
 }
 
 const std::shared_ptr<KeyBindingsModel>&
@@ -201,6 +201,7 @@ void TaskKeysPage::on_duplicate_task_action() {
   if(selection->get_size() == 0) {
     return;
   }
+  m_table_view->setFocus();
   auto last_current_row = m_table_view->get_current()->get()->m_row;
   auto sorted_selection = std::vector<int>();
   sorted_selection.assign(selection->begin(), selection->end());
@@ -226,30 +227,24 @@ void TaskKeysPage::on_duplicate_task_action() {
 }
 
 void TaskKeysPage::on_delete_task_action() {
+  m_table_view->setFocus();
   auto& selection = m_table_view->get_selection()->get_row_selection();
   for(auto i = 0; i < selection->get_size(); ++i) {
-    m_key_bindings->get_order_task_arguments()->remove(selection->get(i));
+    m_table_view->get_body().get_table()->remove(selection->get(i));
   }
 }
 
 void TaskKeysPage::on_new_task_submission(const QString& name) {
+  m_table_view->setFocus();
   auto order_task = OrderTaskArguments();
   order_task.m_name = name;
-  auto current_index = TableView::Index();
+  m_is_row_added = true;
   if(auto& current = m_table_view->get_current()->get()) {
     m_key_bindings->get_order_task_arguments()->insert(order_task,
       current->m_row);
-    current_index = {current->m_row, 2};
   } else {
     m_key_bindings->get_order_task_arguments()->push(order_task);
-    current_index =
-      {m_key_bindings->get_order_task_arguments()->get_size() - 1, 2};
   }
-  QTimer::singleShot(0, this, [=] {
-    m_table_view->get_current()->set(current_index);
-    m_added_region_item = m_table_view->get_body().get_item(current_index);
-    m_added_region_item->installEventFilter(this);
-  });
 }
 
 void TaskKeysPage::on_row_selection(
@@ -263,11 +258,21 @@ void TaskKeysPage::on_row_selection(
     });
 }
 
-void TaskKeysPage::on_operation(
-    const OrderTaskArgumentsListModel::Operation& operation) {
+void TaskKeysPage::on_table_operation(const TableModel::Operation& operation) {
   visit(operation,
-    [&] (const OrderTaskArgumentsListModel::RemoveOperation& operation) {
-      if(m_key_bindings->get_order_task_arguments()->get_size() == 0) {
+    [&] (const TableModel::AddOperation& operation) {
+      if(m_is_row_added) {
+        QTimer::singleShot(0, this, [=] {
+          auto index = TableView::Index(operation.m_index, 2);
+          m_table_view->get_current()->set(index);
+          m_added_region_item = m_table_view->get_body().get_item(index);
+          m_added_region_item->installEventFilter(this);
+        });
+        m_is_row_added = false;
+      }
+    },
+    [&] (const TableModel::RemoveOperation& operation) {
+      if(m_table_view->get_body().get_table()->get_row_size() == 0) {
         QTimer::singleShot(0, this, [=] {
           m_table_view->setFocus();
         });

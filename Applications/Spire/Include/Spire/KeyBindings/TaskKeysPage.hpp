@@ -3,6 +3,7 @@
 #include <QWidget>
 #include "Spire/KeyBindings/KeyBindings.hpp"
 #include "Spire/KeyBindings/KeyBindingsModel.hpp"
+#include "Spire/Spire/TableModel.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -35,8 +36,9 @@ namespace Spire {
       Button* m_delete_button;
       LineInputForm* m_new_task_form;
       TableItem* m_added_region_item;
+      bool m_is_row_added;
       boost::signals2::scoped_connection m_selection_connection;
-      boost::signals2::scoped_connection m_operation_connection;
+      boost::signals2::scoped_connection m_table_operation_connection;
 
       void update_button_state();
       void on_new_task_action();
@@ -44,8 +46,7 @@ namespace Spire {
       void on_delete_task_action();
       void on_new_task_submission(const QString& name);
       void on_row_selection(const ListModel<int>::Operation& operation);
-      void on_operation(
-        const OrderTaskArgumentsListModel::Operation& operation);
+      void on_table_operation(const TableModel::Operation& operation);
   };
 }
 
