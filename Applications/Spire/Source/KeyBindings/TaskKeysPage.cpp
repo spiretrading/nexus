@@ -164,9 +164,10 @@ void TaskKeysPage::on_duplicate_task_action() {
   }
   m_table_view->setFocus();
   auto last_current_row = m_table_view->get_current()->get()->m_row;
-  auto sorted_selection = std::vector<int>();
-  sorted_selection.assign(selection->begin(), selection->end());
-  std::sort(sorted_selection.begin(), sorted_selection.end(), std::greater<int>());
+  auto sorted_selection =
+    std::vector<int>(selection->begin(), selection->end());
+  std::sort(sorted_selection.begin(), sorted_selection.end(),
+    std::greater<int>());
   auto& table = m_table_view->get_body().get_table();
   for(auto index : sorted_selection) {
     auto order_task = OrderTaskArguments();
@@ -189,9 +190,8 @@ void TaskKeysPage::on_duplicate_task_action() {
 
 void TaskKeysPage::on_delete_task_action() {
   m_table_view->setFocus();
-  auto& selection = m_table_view->get_selection()->get_row_selection();
-  for(auto i = 0; i < selection->get_size(); ++i) {
-    m_table_view->get_body().get_table()->remove(selection->get(i));
+  for(auto i : *m_table_view->get_selection()->get_row_selection()) {
+    m_table_view->get_body().get_table()->remove(i);
   }
 }
 
