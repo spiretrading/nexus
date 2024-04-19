@@ -8,8 +8,6 @@
 #include "Spire/Ui/TableItem.hpp"
 #include "Spire/Ui/TextAreaBox.hpp"
 
-#include "Spire/Ui/CustomQtVariants.hpp"
-
 using namespace boost;
 using namespace Nexus;
 using namespace Spire;
@@ -40,51 +38,13 @@ namespace {
     button->setFocusPolicy(Qt::TabFocus);
     return button;
   }
-
-  auto populate_region_box_model() {
-    auto securities = std::vector<std::pair<std::string, std::string>>{
-      {"MSFT.NSDQ", "Microsoft Corporation"},
-      {"MG.TSX", "Magna International Inc."},
-      {"MRU.TSX", "Metro Inc."},
-      {"MFC.TSX", "Manulife Financial Corporation"},
-      {"MX.TSX", "Methanex Corporation"},
-      {"TSO.ASX", "Tesoro Resources Limited"}};
-    auto markets = std::vector<MarketCode>{DefaultMarkets::NSEX(),
-      DefaultMarkets::ISE(), DefaultMarkets::CSE(), DefaultMarkets::TSX(),
-      DefaultMarkets::TSXV(), DefaultMarkets::BOSX()};
-    auto countries = std::vector<CountryCode>{DefaultCountries::US(),
-      DefaultCountries::CA(), DefaultCountries::AU(), DefaultCountries::JP(),
-      DefaultCountries::CN()};
-    auto model = std::make_shared<LocalComboBoxQueryModel>();
-    for(auto& security_info : securities) {
-      auto security = ParseSecurity(security_info.first);
-      auto region = Region(security);
-      region.SetName(security_info.second);
-      model->add(to_text(security).toLower(), region);
-      model->add(QString::fromStdString(region.GetName()).toLower(), region);
-    }
-    for(auto& market_code : markets) {
-      auto market = GetDefaultMarketDatabase().FromCode(market_code);
-      auto region = Region(market);
-      region.SetName(market.m_description);
-      model->add(to_text(MarketToken(market.m_code)).toLower(), region);
-      model->add(QString::fromStdString(region.GetName()).toLower(), region);
-    }
-    for(auto& country : countries) {
-      auto region = Region(country);
-      region.SetName(
-        GetDefaultCountryDatabase().FromCode(country).m_name);
-      model->add(to_text(country).toLower(), region);
-      model->add(QString::fromStdString(region.GetName()).toLower(), region);
-    }
-    return model;
-  }
 }
 
 TaskKeysPage::TaskKeysPage(std::shared_ptr<KeyBindingsModel> key_bindings,
     DestinationDatabase destinations, MarketDatabase markets, QWidget* parent)
     : QWidget(parent),
-      m_key_bindings(std::move(key_bindings)) {
+      m_key_bindings(std::move(key_bindings)),
+      m_is_row_added(false) {
   auto toolbar_body = new QWidget();
   auto toolbar_layout = make_hbox_layout(toolbar_body);
   auto search_box = new SearchBox();
@@ -129,8 +89,8 @@ TaskKeysPage::TaskKeysPage(std::shared_ptr<KeyBindingsModel> key_bindings,
   layout->addWidget(toolbar);
   m_table_view = make_task_keys_table_view(
     m_key_bindings->get_order_task_arguments(),
-    populate_region_box_model(),
-    std::move(destinations), std::move(markets));
+    std::make_shared<LocalComboBoxQueryModel>(), std::move(destinations),
+    std::move(markets));
   m_table_view->installEventFilter(this);
   layout->addWidget(m_table_view);
   auto box = new Box(body);
@@ -138,6 +98,9 @@ TaskKeysPage::TaskKeysPage(std::shared_ptr<KeyBindingsModel> key_bindings,
     style.get(Any()).set(BackgroundColor(QColor(0xFFFFFF)));
   });
   enclose(*this, *box);
+  m_new_task_form = new LineInputForm(tr("New Task"), *this);
+  m_new_task_form->connect_submit_signal(
+    std::bind_front(&TaskKeysPage::on_new_task_submission, this));
   update_button_state();
   auto& row_selection = m_table_view->get_selection()->get_row_selection();
   m_selection_connection = row_selection->connect_operation_signal(
@@ -187,9 +150,6 @@ void TaskKeysPage::update_button_state() {
 }
 
 void TaskKeysPage::on_new_task_action() {
-  m_new_task_form = new LineInputForm(tr("New Task"), *this);
-  m_new_task_form->connect_submit_signal(
-    std::bind_front(&TaskKeysPage::on_new_task_submission, this));
   m_new_task_form->show();
   auto window = m_new_task_form->window();
   window->move(
