@@ -582,6 +582,71 @@ std::vector<std::unique_ptr<CanvasNode>> Spire::make_lynx_order_task_nodes() {
   return order_types;
 }
 
+std::vector<std::unique_ptr<CanvasNode>> Spire::make_matnlp_order_task_nodes() {
+  auto order_types = std::vector<std::unique_ptr<CanvasNode>>();
+  populate_basic_order_task_nodes(
+    DefaultDestinations::MATNLP(), "MATCH Now LP", order_types);
+  auto at_the_touch = CanvasNodeBuilder(*GetLimitOrderTaskNode()->AddField(
+    "constraints", 6005, std::make_unique<TextNode>("PAG")));
+  at_the_touch.SetVisible("constraints", false);
+  at_the_touch.SetReadOnly("constraints", true);
+  auto mpi = CanvasNodeBuilder(*GetLimitOrderTaskNode()->AddField(
+    "constraints", 6005, std::make_unique<TextNode>("PMI")));
+  mpi.SetVisible("constraints", false);
+  mpi.SetReadOnly("constraints", true);
+  populate_bid_ask(at_the_touch, "MATCH Now LP MPI",
+    DefaultDestinations::MATNLP(), TimeInForce::Type::DAY, order_types);
+  return order_types;
+}
+
+std::vector<std::unique_ptr<CanvasNode>> Spire::make_matnmf_order_task_nodes() {
+  auto order_types = std::vector<std::unique_ptr<CanvasNode>>();
+  populate_basic_order_task_nodes(
+    DefaultDestinations::MATNMF(), "MATCH Now MF", order_types);
+  return order_types;
+}
+
+std::vector<std::unique_ptr<CanvasNode>> Spire::make_neoe_order_task_nodes() {
+  auto order_types = std::vector<std::unique_ptr<CanvasNode>>();
+  populate_basic_order_task_nodes(
+    DefaultDestinations::NEOE(), "NEO Lit", order_types);
+  auto mid_peg = CanvasNodeBuilder(*GetPeggedOrderTaskNode(true)->AddField(
+    "exec_inst", 18, std::make_unique<TextNode>("M")));
+  mid_peg.SetReadOnly("exec_inst", true);
+  mid_peg.SetVisible("exec_inst", false);
+  populate_bid_ask(mid_peg, "NEOE Lit Mid Peg", DefaultDestinations::NEOE(),
+    TimeInForce::Type::DAY, order_types);
+  auto book = CanvasNodeBuilder(*SingleOrderTaskNode().AddField("max_floor",
+    111, LinkedNode::SetReferent(MaxFloorNode(), "security"))->AddField(
+      "ex_destination", 100, std::make_unique<TextNode>("N")));
+  book.SetReadOnly("ex_destination", true);
+  book.SetVisible("ex_destination", false);
+  populate_bid_ask_limit_market(book, DefaultDestinations::NEOE(),
+    TimeInForce::Type::DAY, "NEO Book", order_types);
+  auto ioc = CanvasNodeBuilder(*GetLimitOrderTaskNode()->AddField(
+    "ex_destination", 100, std::make_unique<TextNode>("N")));
+  ioc.SetReadOnly("ex_destination", true);
+  ioc.SetVisible("ex_destination", false);
+  populate_bid_ask(ioc, "NEO Book IOC", DefaultDestinations::NEOE(),
+    TimeInForce::Type::IOC, order_types);
+  auto fok = CanvasNodeBuilder(*GetLimitOrderTaskNode()->AddField(
+    "ex_destination", 100, std::make_unique<TextNode>("N")));
+  ioc.SetReadOnly("ex_destination", true);
+  ioc.SetVisible("ex_destination", false);
+  populate_bid_ask(ioc, "NEO Book FOK", DefaultDestinations::NEOE(),
+    TimeInForce::Type::FOK, order_types);
+  auto book_mid_peg = CanvasNodeBuilder(*GetPeggedOrderTaskNode(true)->AddField(
+    "exec_inst", 18, std::make_unique<TextNode>("M"))->AddField(
+      "ex_destination", 100, std::make_unique<TextNode>("N")));
+  book_mid_peg.SetReadOnly("exec_inst", true);
+  book_mid_peg.SetVisible("exec_inst", false);
+  book_mid_peg.SetReadOnly("ex_destination", true);
+  book_mid_peg.SetVisible("ex_destination", false);
+  populate_bid_ask(book_mid_peg, "NEOE Book Mid Peg",
+    DefaultDestinations::NEOE(), TimeInForce::Type::DAY, order_types);
+  return order_types;
+}
+
 std::vector<std::unique_ptr<CanvasNode>> Spire::make_omega_order_task_nodes() {
   auto order_types = std::vector<std::unique_ptr<CanvasNode>>();
   populate_basic_order_task_nodes(
@@ -635,6 +700,9 @@ std::vector<std::unique_ptr<CanvasNode>>
   populate(tasks, make_cse2_order_task_nodes());
   populate(tasks, make_cx2_order_task_nodes());
   populate(tasks, make_lynx_order_task_nodes());
+  populate(tasks, make_matnlp_order_task_nodes());
+  populate(tasks, make_matnmf_order_task_nodes());
+  populate(tasks, make_neoe_order_task_nodes());
   populate(tasks, make_omega_order_task_nodes());
   populate(tasks, make_pure_order_task_nodes());
   populate(tasks, make_tsx_order_task_nodes());

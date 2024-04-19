@@ -33,6 +33,15 @@ namespace Spire {
   /** Returns the list of built-in Lynx order task nodes. */
   std::vector<std::unique_ptr<CanvasNode>> make_lynx_order_task_nodes();
 
+  /** Returns the list of built-in Match Now LP order task nodes. */
+  std::vector<std::unique_ptr<CanvasNode>> make_matnlp_order_task_nodes();
+
+  /** Returns the list of built-in Match Now MF order task nodes. */
+  std::vector<std::unique_ptr<CanvasNode>> make_matnmf_order_task_nodes();
+
+  /** Returns the list of built-in NEO order task nodes. */
+  std::vector<std::unique_ptr<CanvasNode>> make_neoe_order_task_nodes();
+
   /** Returns the list of built-in Omega order task nodes. */
   std::vector<std::unique_ptr<CanvasNode>> make_omega_order_task_nodes();
 
