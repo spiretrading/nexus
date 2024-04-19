@@ -199,6 +199,42 @@ namespace {
     nodes.push_back(std::move(ask));
   }
 
+  auto populate_bid_ask(CanvasNodeBuilder& builder, const std::string& prefix,
+      Destination destination, TimeInForce time_in_force,
+      std::vector<std::unique_ptr<CanvasNode>>& nodes) {
+    populate_bid_ask(builder, prefix + " Bid", prefix + " Ask",
+      std::move(destination), time_in_force, nodes);
+  }
+
+  auto populate_bid_ask_limit_market(CanvasNodeBuilder& builder,
+      Destination destination, TimeInForce time_in_force,
+      std::string limit_bid_name, std::string limit_ask_name,
+      std::string market_bid_name, std::string market_ask_name,
+      std::string buy_name, std::string sell_name,
+      std::vector<std::unique_ptr<CanvasNode>>& nodes) {
+    builder.Replace(SingleOrderTaskNode::ORDER_TYPE_PROPERTY,
+      std::make_unique<OrderTypeNode>(OrderType::LIMIT));
+    populate_bid_ask(builder, limit_bid_name, limit_ask_name, destination,
+      time_in_force, nodes);
+    builder.Replace(SingleOrderTaskNode::ORDER_TYPE_PROPERTY,
+      std::make_unique<OrderTypeNode>(OrderType::MARKET));
+    populate_bid_ask(builder, market_bid_name, market_ask_name, destination,
+      time_in_force, nodes);
+    builder.SetVisible(SingleOrderTaskNode::QUANTITY_PROPERTY, false);
+    populate_bid_ask(
+      builder, buy_name, sell_name, destination, time_in_force, nodes);
+  }
+
+  auto populate_bid_ask_limit_market(CanvasNodeBuilder& builder,
+      Destination destination, TimeInForce time_in_force,
+      const std::string& prefix,
+      std::vector<std::unique_ptr<CanvasNode>>& nodes) {
+    populate_bid_ask_limit_market(builder, std::move(destination),
+      time_in_force, prefix + " Limit Bid", prefix + " Limit Ask",
+      prefix + " Market Bid", prefix + " Market Ask", prefix + " Buy",
+      prefix + " Sell", nodes);
+  }
+
   auto populate_basic_order_task_nodes(Destination destination,
       std::string limit_bid_name, std::string limit_ask_name,
       std::string market_bid_name, std::string market_ask_name,
@@ -207,14 +243,28 @@ namespace {
     auto limit = CanvasNodeBuilder(*GetLimitOrderTaskNode()->AddField(
       "max_floor", 111, LinkedNode::SetReferent(MaxFloorNode(), "security")));
     populate_bid_ask(limit, limit_bid_name, limit_ask_name, destination,
-      TimeInForce(TimeInForce::Type::DAY), nodes);
+      TimeInForce::Type::DAY, nodes);
     auto market = CanvasNodeBuilder(*GetMarketOrderTaskNode());
     populate_bid_ask(market, market_bid_name, market_ask_name, destination,
-      TimeInForce(TimeInForce::Type::DAY), nodes);
+      TimeInForce::Type::DAY, nodes);
     auto immediate = CanvasNodeBuilder(*GetMarketOrderTaskNode());
     immediate.SetVisible(SingleOrderTaskNode::QUANTITY_PROPERTY, false);
     populate_bid_ask(immediate, buy_name, sell_name, destination,
-      TimeInForce(TimeInForce::Type::DAY), nodes);
+      TimeInForce::Type::DAY, nodes);
+  }
+
+  auto populate_basic_order_task_nodes(Destination destination,
+      const std::string& prefix,
+      std::vector<std::unique_ptr<CanvasNode>>& nodes) {
+    populate_basic_order_task_nodes(std::move(destination),
+      prefix + " Limit Bid", prefix + " Limit Ask", prefix + " Market Bid",
+      prefix + " Market Ask", prefix + " Buy", prefix + " Sell", nodes);
+  }
+
+  void populate(std::vector<std::unique_ptr<CanvasNode>>& nodes,
+      std::vector<std::unique_ptr<CanvasNode>> tasks) {
+    nodes.insert(nodes.end(), std::make_move_iterator(tasks.begin()),
+      std::make_move_iterator(tasks.end()));
   }
 
   auto load_legacy_interactions_properties(const std::filesystem::path& path) {
@@ -324,74 +374,141 @@ namespace {
 std::vector<std::unique_ptr<CanvasNode>> Spire::make_asx_order_task_nodes() {
   auto order_types = std::vector<std::unique_ptr<CanvasNode>>();
   populate_basic_order_task_nodes(DefaultDestinations::ASXT(),
-    "ASX TradeMatch Limit Bid", "ASX TradeMatch Limit Ask",
-    "ASX TradeMatch Market Bid", "ASX TradeMatch Market Ask",
-    "ASX TradeMatch Buy", "ASX TradeMatch Sell", order_types);
+    "ASX TradeMatch", order_types);
   auto primary_peg = CanvasNodeBuilder(*GetPeggedOrderTaskNode(false)->AddField(
     "exec_inst", 18, std::make_unique<TextNode>("R"))->AddField(
       "peg_difference", 211, std::make_unique<MoneyNode>(Money::ZERO)));
   primary_peg.SetReadOnly("exec_inst", true);
   primary_peg.SetVisible("exec_inst", false);
-  populate_bid_ask(primary_peg, "ASX TradeMatch Primary Peg Bid",
-    "ASX TradeMatch Primary Peg Ask", DefaultDestinations::ASXT(),
-    TimeInForce(TimeInForce::Type::DAY), order_types);
+  populate_bid_ask(primary_peg, "ASX TradeMatch Primary Peg",
+    DefaultDestinations::ASXT(), TimeInForce::Type::DAY, order_types);
   auto mid_peg = CanvasNodeBuilder(*GetPeggedOrderTaskNode(false)->AddField(
     "exec_inst", 18, std::make_unique<TextNode>("M")));
   mid_peg.SetReadOnly("exec_inst", true);
   mid_peg.SetVisible("exec_inst", false);
-  populate_bid_ask(mid_peg, "ASX TradeMatch Mid Peg Bid",
-    "ASX TradeMatch Mid Peg Ask", DefaultDestinations::ASXT(),
-    TimeInForce(TimeInForce::Type::DAY), order_types);
+  populate_bid_ask(mid_peg, "ASX TradeMatch Mid Peg",
+    DefaultDestinations::ASXT(), TimeInForce::Type::DAY, order_types);
   auto market_peg = CanvasNodeBuilder(*GetPeggedOrderTaskNode(false)->AddField(
     "exec_inst", 18, std::make_unique<TextNode>("P"))->AddField(
       "peg_difference", 211, std::make_unique<MoneyNode>(-Money::CENT)));
   market_peg.SetReadOnly("exec_inst", true);
   market_peg.SetVisible("exec_inst", false);
-  populate_bid_ask(market_peg, "ASX TradeMatch Market Peg Bid",
-    "ASX TradeMatch Market Peg Ask", DefaultDestinations::ASXT(),
-    TimeInForce(TimeInForce::Type::DAY), order_types);
+  populate_bid_ask(market_peg, "ASX TradeMatch Market Peg",
+    DefaultDestinations::ASXT(), TimeInForce::Type::DAY, order_types);
   return order_types;
 }
 
 std::vector<std::unique_ptr<CanvasNode>> Spire::make_cxa_order_task_nodes() {
   auto order_types = std::vector<std::unique_ptr<CanvasNode>>();
-  populate_basic_order_task_nodes(DefaultDestinations::CXA(),
-    "CXA Limit Bid", "CXA Limit Ask", "CXA Market Bid", "CXA Market Ask",
-    "CXA Buy", "CXA Sell", order_types);
+  populate_basic_order_task_nodes(
+    DefaultDestinations::CXA(), "CXA", order_types);
   auto primary_peg = CanvasNodeBuilder(*GetPeggedOrderTaskNode(false)->AddField(
     "exec_inst", 18, std::make_unique<TextNode>("R"))->AddField(
       "peg_difference", 211, std::make_unique<MoneyNode>(Money::ZERO)));
   primary_peg.SetReadOnly("exec_inst", true);
   primary_peg.SetVisible("exec_inst", false);
-  set_destination(primary_peg, DefaultDestinations::CXA());
-  set_time_in_force(primary_peg, TimeInForce(TimeInForce::Type::DAY));
-  populate_bid_ask(primary_peg, "CXA Primary Peg Bid", "CXA Primary Peg Ask",
-    DefaultDestinations::CXA(), TimeInForce(TimeInForce::Type::DAY),
-    order_types);
+  populate_bid_ask(primary_peg, "CXA Primary Peg", DefaultDestinations::CXA(),
+    TimeInForce::Type::DAY, order_types);
   auto mid_peg = CanvasNodeBuilder(*GetPeggedOrderTaskNode(false)->AddField(
     "exec_inst", 18, std::make_unique<TextNode>("M")));
   mid_peg.SetReadOnly("exec_inst", true);
   mid_peg.SetVisible("exec_inst", false);
-  populate_bid_ask(mid_peg, "CXA Mid Peg Bid", "CXA Mid Peg Ask",
-    DefaultDestinations::CXA(), TimeInForce(TimeInForce::Type::DAY),
-    order_types);
+  populate_bid_ask(mid_peg, "CXA Mid Peg", DefaultDestinations::CXA(),
+    TimeInForce::Type::DAY, order_types);
   auto market_peg = CanvasNodeBuilder(*GetPeggedOrderTaskNode(false)->AddField(
     "exec_inst", 18, std::make_unique<TextNode>("P"))->AddField(
       "peg_difference", 211, std::make_unique<MoneyNode>(-Money::CENT)));
   market_peg.SetReadOnly("exec_inst", true);
   market_peg.SetVisible("exec_inst", false);
-  populate_bid_ask(market_peg, "CXA Market Peg Bid", "CXA Market Peg Ask",
-    DefaultDestinations::CXA(), TimeInForce(TimeInForce::Type::DAY),
-    order_types);
+  populate_bid_ask(market_peg, "CXA Market Peg", DefaultDestinations::CXA(),
+    TimeInForce::Type::DAY, order_types);
+  return order_types;
+}
+
+std::vector<std::unique_ptr<CanvasNode>> Spire::make_alpha_order_task_nodes() {
+  auto order_types = std::vector<std::unique_ptr<CanvasNode>>();
+  populate_basic_order_task_nodes(
+    DefaultDestinations::ALPHA(), "Alpha", order_types);
+  return order_types;
+}
+
+std::vector<std::unique_ptr<CanvasNode>> Spire::make_chix_order_task_nodes() {
+  auto order_types = std::vector<std::unique_ptr<CanvasNode>>();
+  populate_basic_order_task_nodes(
+    DefaultDestinations::CHIX(), "CHI-X", order_types);
+  auto fee_sensitive =
+    CanvasNodeBuilder(*SingleOrderTaskNode().AddField("max_floor", 111,
+      LinkedNode::SetReferent(MaxFloorNode(), "security"))->AddField(
+        "ex_destination", 100, std::make_unique<TextNode>("SMRTFEE")));
+  populate_bid_ask_limit_market(fee_sensitive, DefaultDestinations::CHIX(),
+    TimeInForce::Type::DAY, "CHI-X Fee Sensitive", order_types);
+  auto smart_dark =
+    CanvasNodeBuilder(*SingleOrderTaskNode().AddField("max_floor", 111,
+      LinkedNode::SetReferent(MaxFloorNode(), "security"))->AddField(
+        "ex_destination", 100,
+          std::make_unique<TextNode>("SMRTXDARKNR"))->AddField(
+        "long_life", 7735, std::make_unique<TextNode>("Y")));
+  populate_bid_ask_limit_market(smart_dark, DefaultDestinations::CHIX(),
+    TimeInForce::Type::DAY, "CHI-X SMART X Dark", order_types);
+  auto dark_att = CanvasNodeBuilder(*GetPeggedOrderTaskNode(false)->AddField(
+    "ex_destination", 100, std::make_unique<TextNode>("CXD"))->AddField(
+      "exec_inst", 18, std::make_unique<TextNode>("P")));
+  dark_att.SetReadOnly("exec_inst", true);
+  dark_att.SetVisible("exec_inst", false);
+  populate_bid_ask(dark_att, "CHI-X Dark ATT", DefaultDestinations::CHIX(),
+    TimeInForce::Type::DAY, order_types);
+  auto dark_mpi = CanvasNodeBuilder(*GetPeggedOrderTaskNode(false)->AddField(
+    "ex_destination", 100, std::make_unique<TextNode>("CXD"))->AddField(
+      "exec_inst", 18, std::make_unique<TextNode>("x")));
+  dark_mpi.SetReadOnly("exec_inst", true);
+  dark_mpi.SetVisible("exec_inst", false);
+  populate_bid_ask(dark_mpi, "CHI-X Dark MPI", DefaultDestinations::CHIX(),
+    TimeInForce::Type::DAY, order_types);
+  auto primary_peg = CanvasNodeBuilder(*GetPeggedOrderTaskNode(false)->AddField(
+    "exec_inst", 18, std::make_unique<TextNode>("R"))->AddField(
+      "peg_difference", 211, std::make_unique<MoneyNode>(Money::ZERO)));
+  primary_peg.SetReadOnly("exec_inst", true);
+  primary_peg.SetVisible("exec_inst", false);
+  populate_bid_ask(primary_peg, "CHI-X Primary Peg",
+    DefaultDestinations::CHIX(), TimeInForce::Type::DAY, order_types);
+  auto mid_peg = CanvasNodeBuilder(*GetPeggedOrderTaskNode(true)->AddField(
+    "exec_inst", 18, std::make_unique<TextNode>("M")));
+  mid_peg.SetReadOnly("exec_inst", true);
+  mid_peg.SetVisible("exec_inst", false);
+  populate_bid_ask(mid_peg, "CHI-X Mid Peg", DefaultDestinations::CHIX(),
+    TimeInForce::Type::DAY, order_types);
+  auto dark_mid_peg = CanvasNodeBuilder(*GetPeggedOrderTaskNode(true)->AddField(
+    "exec_inst", 18, std::make_unique<TextNode>("M"))->AddField(
+      "ex_destination", 100, std::make_unique<TextNode>("SMRTCXD")));
+  dark_mid_peg.SetReadOnly("exec_inst", true);
+  dark_mid_peg.SetVisible("exec_inst", false);
+  populate_bid_ask(dark_mid_peg, "CHI-X Dark Mid Peg",
+    DefaultDestinations::CHIX(), TimeInForce::Type::DAY, order_types);
+  auto market_peg = CanvasNodeBuilder(*GetPeggedOrderTaskNode(true)->AddField(
+    "exec_inst", 18, std::make_unique<TextNode>("P"))->AddField(
+      "peg_difference", 211, std::make_unique<MoneyNode>(-Money::CENT)));
+  market_peg.SetReadOnly("exec_inst", true);
+  market_peg.SetVisible("exec_inst", false);
+  populate_bid_ask(market_peg, "CHI-X Market Peg", DefaultDestinations::CHIX(),
+    TimeInForce::Type::DAY, order_types);
+  auto multi_mid_peg =
+    CanvasNodeBuilder(*GetPeggedOrderTaskNode(true)->AddField("exec_inst", 18,
+      std::make_unique<TextNode>("M"))->AddField("ex_destination", 100,
+        std::make_unique<TextNode>("MULTIDARK-YCM")));
+  multi_mid_peg.SetReadOnly("exec_inst", true);
+  multi_mid_peg.SetVisible("exec_inst", false);
+  populate_bid_ask(multi_mid_peg, "CHI-X Multi-Mid Peg",
+    DefaultDestinations::CHIX(), TimeInForce::Type::DAY, order_types);
   return order_types;
 }
 
 std::vector<std::unique_ptr<CanvasNode>>
     Spire::make_default_order_task_nodes() {
-  auto tasks = make_asx_order_task_nodes();
-  auto nodes = make_cxa_order_task_nodes();
-  tasks.insert(tasks.end(), std::make_move_iterator(nodes.begin()),
-    std::make_move_iterator(nodes.end()));
+  auto tasks = std::vector<std::unique_ptr<CanvasNode>>();
+  populate(tasks, make_asx_order_task_nodes());
+  populate(tasks, make_cxa_order_task_nodes());
+  populate(tasks, make_alpha_order_task_nodes());
+  populate(tasks, make_chix_order_task_nodes());
   return tasks;
 }
 

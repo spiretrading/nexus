@@ -15,6 +15,12 @@ namespace Spire {
   /** Returns the list of built-in CXA order task nodes. */
   std::vector<std::unique_ptr<CanvasNode>> make_cxa_order_task_nodes();
 
+  /** Returns the list of built-in Alpha order task nodes. */
+  std::vector<std::unique_ptr<CanvasNode>> make_alpha_order_task_nodes();
+
+  /** Returns the list of built-in CHIX order task nodes. */
+  std::vector<std::unique_ptr<CanvasNode>> make_chix_order_task_nodes();
+
   /** Returns the full list of built-in order task nodes. */
   std::vector<std::unique_ptr<CanvasNode>> make_default_order_task_nodes();
 
