@@ -170,16 +170,9 @@ void TaskKeysPage::on_duplicate_task_action() {
     std::greater<int>());
   auto& table = m_table_view->get_body().get_table();
   for(auto index : sorted_selection) {
-    auto order_task = OrderTaskArguments();
-    order_task.m_name = table->get<QString>(index, 1);
-    order_task.m_region = table->get<Region>(index, 2);
-    order_task.m_destination = table->get<Destination>(index, 3);
-    order_task.m_order_type = table->get<OrderType>(index, 4);
-    order_task.m_side = table->get<Side>(index, 5);
-    order_task.m_quantity = table->get<optional<Quantity>>(index, 6);
-    order_task.m_time_in_force = table->get<TimeInForce>(index, 7);
-    order_task.m_additional_tags =
-      table->get<std::vector<Nexus::Tag>>(index, 8);
+    auto order_task = m_key_bindings->get_order_task_arguments()->get(
+      any_cast<int>(table->at(index, 0)));
+    order_task.m_key = QKeySequence();
     m_key_bindings->get_order_task_arguments()->insert(order_task,
       m_table_view->get_current()->get()->m_row);
   }
