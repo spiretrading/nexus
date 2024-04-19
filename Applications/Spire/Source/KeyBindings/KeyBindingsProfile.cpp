@@ -575,6 +575,55 @@ std::vector<std::unique_ptr<CanvasNode>> Spire::make_cx2_order_task_nodes() {
   return order_types;
 }
 
+std::vector<std::unique_ptr<CanvasNode>> Spire::make_lynx_order_task_nodes() {
+  auto order_types = std::vector<std::unique_ptr<CanvasNode>>();
+  populate_basic_order_task_nodes(
+    DefaultDestinations::LYNX(), "Lynx", order_types);
+  return order_types;
+}
+
+std::vector<std::unique_ptr<CanvasNode>> Spire::make_omega_order_task_nodes() {
+  auto order_types = std::vector<std::unique_ptr<CanvasNode>>();
+  populate_basic_order_task_nodes(
+    DefaultDestinations::OMEGA(), "Omega", order_types);
+  return order_types;
+}
+
+std::vector<std::unique_ptr<CanvasNode>> Spire::make_pure_order_task_nodes() {
+  auto order_types = std::vector<std::unique_ptr<CanvasNode>>();
+  populate_basic_order_task_nodes(
+    DefaultDestinations::PURE(), "Pure", order_types);
+  return order_types;
+}
+
+std::vector<std::unique_ptr<CanvasNode>> Spire::make_tsx_order_task_nodes() {
+  auto order_types = std::vector<std::unique_ptr<CanvasNode>>();
+  auto limit = CanvasNodeBuilder(*GetLimitOrderTaskNode()->AddField("max_floor",
+    111, LinkedNode::SetReferent(MaxFloorNode(), "security"))->AddField(
+      "long_life", 7735, std::make_unique<TextNode>("Y")));
+  limit.SetReadOnly("long_life", true);
+  limit.SetVisible("long_life", false);
+  populate_bid_ask(limit, "TSX", DefaultDestinations::TSX(),
+    TimeInForce::Type::DAY, order_types);
+  auto market = CanvasNodeBuilder(*GetMarketOrderTaskNode());
+  populate_bid_ask(market, "TSX", DefaultDestinations::TSX(),
+    TimeInForce::Type::DAY, order_types);
+  auto immediate = CanvasNodeBuilder(*GetMarketOrderTaskNode());
+  immediate.SetVisible(SingleOrderTaskNode::QUANTITY_PROPERTY, false);
+  populate_bid_ask(immediate, "TSX", DefaultDestinations::TSX(),
+    TimeInForce::Type::DAY, order_types);
+  auto limit_on_close = CanvasNodeBuilder(*GetLimitOrderTaskNode());
+  populate_bid_ask(limit_on_close, "TSX Limit On Close",
+    DefaultDestinations::TSX(), TimeInForce::Type::MOC, order_types);
+  auto market_on_close = CanvasNodeBuilder(*GetMarketOrderTaskNode());
+  populate_bid_ask(limit_on_close, "TSX Market On Close",
+    DefaultDestinations::TSX(), TimeInForce::Type::MOC, order_types);
+  auto dark_mid_point = CanvasNodeBuilder(*GetPeggedOrderTaskNode(false));
+  populate_bid_ask(dark_mid_point, "TSX Dark Mid-Point",
+    DefaultDestinations::TSX(), TimeInForce::Type::DAY, order_types);
+  return order_types;
+}
+
 std::vector<std::unique_ptr<CanvasNode>>
     Spire::make_default_order_task_nodes() {
   auto tasks = std::vector<std::unique_ptr<CanvasNode>>();
@@ -585,6 +634,10 @@ std::vector<std::unique_ptr<CanvasNode>>
   populate(tasks, make_cse_order_task_nodes());
   populate(tasks, make_cse2_order_task_nodes());
   populate(tasks, make_cx2_order_task_nodes());
+  populate(tasks, make_lynx_order_task_nodes());
+  populate(tasks, make_omega_order_task_nodes());
+  populate(tasks, make_pure_order_task_nodes());
+  populate(tasks, make_tsx_order_task_nodes());
   return tasks;
 }
 

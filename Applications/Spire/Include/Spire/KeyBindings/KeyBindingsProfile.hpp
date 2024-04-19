@@ -30,6 +30,18 @@ namespace Spire {
   /** Returns the list of built-in CX2 order task nodes. */
   std::vector<std::unique_ptr<CanvasNode>> make_cx2_order_task_nodes();
 
+  /** Returns the list of built-in Lynx order task nodes. */
+  std::vector<std::unique_ptr<CanvasNode>> make_lynx_order_task_nodes();
+
+  /** Returns the list of built-in Omega order task nodes. */
+  std::vector<std::unique_ptr<CanvasNode>> make_omega_order_task_nodes();
+
+  /** Returns the list of built-in Pure order task nodes. */
+  std::vector<std::unique_ptr<CanvasNode>> make_pure_order_task_nodes();
+
+  /** Returns the list of built-in TSX order task nodes. */
+  std::vector<std::unique_ptr<CanvasNode>> make_tsx_order_task_nodes();
+
   /** Returns the full list of built-in order task nodes. */
   std::vector<std::unique_ptr<CanvasNode>> make_default_order_task_nodes();
 
