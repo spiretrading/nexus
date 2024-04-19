@@ -522,6 +522,156 @@ std::vector<std::unique_ptr<CanvasNode>> Spire::make_cse_order_task_nodes() {
   return order_types;
 }
 
+std::vector<std::unique_ptr<CanvasNode>> Spire::make_cse2_order_task_nodes() {
+  auto order_types = std::vector<std::unique_ptr<CanvasNode>>();
+  populate_basic_order_task_nodes(
+    DefaultDestinations::CSE2(), "CSE2", order_types);
+  auto dark_limit = CanvasNodeBuilder(*GetLimitOrderTaskNode()->AddField(
+    "max_floor", 111, std::make_unique<IntegerNode>(0)));
+  dark_limit.SetVisible("max_floor", false);
+  dark_limit.SetReadOnly("max_floor", true);
+  populate_bid_ask(dark_limit, "CSE Dark Limit", DefaultDestinations::CSE2(),
+    TimeInForce::Type::DAY, order_types);
+  auto mid_peg = CanvasNodeBuilder(*GetPeggedOrderTaskNode(true)->AddField(
+    "exec_inst", 18, std::make_unique<TextNode>("M")));
+  mid_peg.SetReadOnly("exec_inst", true);
+  mid_peg.SetVisible("exec_inst", false);
+  populate_bid_ask(mid_peg, "CSE2 Mid Peg", DefaultDestinations::CSE2(),
+    TimeInForce::Type::DAY, order_types);
+  auto market_peg = CanvasNodeBuilder(*GetPeggedOrderTaskNode(true)->AddField(
+    "exec_inst", 18, std::make_unique<TextNode>("P"))->AddField(
+      "peg_difference", 211, std::make_unique<MoneyNode>(-Money::CENT)));
+  market_peg.SetReadOnly("exec_inst", true);
+  market_peg.SetVisible("exec_inst", false);
+  populate_bid_ask(market_peg, "CSE2 Market Peg", DefaultDestinations::CSE2(),
+    TimeInForce::Type::DAY, order_types);
+  return order_types;
+}
+
+std::vector<std::unique_ptr<CanvasNode>> Spire::make_cx2_order_task_nodes() {
+  auto order_types = std::vector<std::unique_ptr<CanvasNode>>();
+  populate_basic_order_task_nodes(
+    DefaultDestinations::CX2(), "CX2", order_types);
+  auto primary_peg = CanvasNodeBuilder(*GetPeggedOrderTaskNode(false)->AddField(
+    "exec_inst", 18, std::make_unique<TextNode>("R"))->AddField(
+      "peg_difference", 211, std::make_unique<MoneyNode>(Money::ZERO)));
+  primary_peg.SetReadOnly("exec_inst", true);
+  primary_peg.SetVisible("exec_inst", false);
+  populate_bid_ask(primary_peg, "CX2 Primary Peg",
+    DefaultDestinations::CX2(), TimeInForce::Type::DAY, order_types);
+
+
+    CanvasNodeBuilder cx2PrimaryPegBid(
+      *GetPeggedBidOrderTaskNode(true)->Rename(
+      "CX2 Primary Peg Bid")->AddField("exec_inst", 18,
+      make_unique<TextNode>("R"))->AddField("peg_difference", 211,
+      make_unique<MoneyNode>(Money::ZERO)));
+    cx2PrimaryPegBid.SetReadOnly("exec_inst", true);
+    cx2PrimaryPegBid.SetVisible("exec_inst", false);
+    cx2PrimaryPegBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      make_unique<DestinationNode>(DefaultDestinations::CX2()));
+    cx2PrimaryPegBid.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      false);
+    cx2PrimaryPegBid.SetReadOnly(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      true);
+    cx2PrimaryPegBid.Replace(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    cx2PrimaryPegBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      false);
+    cx2PrimaryPegBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      true);
+    cx2PrimaryPegBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(cx2PrimaryPegBid.Make());
+    CanvasNodeBuilder cx2PrimaryPegAsk(
+      *GetPeggedAskOrderTaskNode(true)->Rename(
+      "CX2 Primary Peg Ask")->AddField("exec_inst", 18,
+      make_unique<TextNode>("R"))->AddField("peg_difference", 211,
+      make_unique<MoneyNode>(Money::ZERO)));
+    cx2PrimaryPegAsk.SetReadOnly("exec_inst", true);
+    cx2PrimaryPegAsk.SetVisible("exec_inst", false);
+    cx2PrimaryPegAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      make_unique<DestinationNode>(DefaultDestinations::CX2()));
+    cx2PrimaryPegAsk.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      false);
+    cx2PrimaryPegAsk.SetReadOnly(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      true);
+    cx2PrimaryPegAsk.Replace(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    cx2PrimaryPegAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      false);
+    cx2PrimaryPegAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      true);
+    cx2PrimaryPegAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(cx2PrimaryPegAsk.Make());
+    CanvasNodeBuilder cx2MidPegBid(*GetPeggedBidOrderTaskNode(true)->Rename(
+      "CX2 Mid Peg Bid")->AddField("exec_inst", 18,
+      make_unique<TextNode>("M")));
+    cx2MidPegBid.SetReadOnly("exec_inst", true);
+    cx2MidPegBid.SetVisible("exec_inst", false);
+    cx2MidPegBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      make_unique<DestinationNode>(DefaultDestinations::CX2()));
+    cx2MidPegBid.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
+    cx2MidPegBid.SetReadOnly(SingleOrderTaskNode::DESTINATION_PROPERTY, true);
+    cx2MidPegBid.Replace(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    cx2MidPegBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
+    cx2MidPegBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
+    cx2MidPegBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(cx2MidPegBid.Make());
+    CanvasNodeBuilder cx2MidPegAsk(*GetPeggedAskOrderTaskNode(true)->Rename(
+      "CX2 Mid Peg Ask")->AddField("exec_inst", 18,
+      make_unique<TextNode>("M")));
+    cx2MidPegAsk.SetReadOnly("exec_inst", true);
+    cx2MidPegAsk.SetVisible("exec_inst", false);
+    cx2MidPegAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      make_unique<DestinationNode>(DefaultDestinations::CX2()));
+    cx2MidPegAsk.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
+    cx2MidPegAsk.SetReadOnly(SingleOrderTaskNode::DESTINATION_PROPERTY, true);
+    cx2MidPegAsk.Replace(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    cx2MidPegAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
+    cx2MidPegAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
+    cx2MidPegAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(cx2MidPegAsk.Make());
+    CanvasNodeBuilder cx2MarketPegBid(*GetPeggedBidOrderTaskNode(true)->Rename(
+      "CX2 Market Peg Bid")->AddField("exec_inst", 18,
+      make_unique<TextNode>("P"))->AddField("peg_difference", 211,
+      make_unique<MoneyNode>(-Money::CENT)));
+    cx2MarketPegBid.SetReadOnly("exec_inst", true);
+    cx2MarketPegBid.SetVisible("exec_inst", false);
+    cx2MarketPegBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      make_unique<DestinationNode>(DefaultDestinations::CX2()));
+    cx2MarketPegBid.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
+    cx2MarketPegBid.SetReadOnly(SingleOrderTaskNode::DESTINATION_PROPERTY, true);
+    cx2MarketPegBid.Replace(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    cx2MarketPegBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      false);
+    cx2MarketPegBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      true);
+    cx2MarketPegBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(cx2MarketPegBid.Make());
+    CanvasNodeBuilder cx2MarketPegAsk(*GetPeggedAskOrderTaskNode(true)->Rename(
+      "CX2 Market Peg Ask")->AddField("exec_inst", 18,
+      make_unique<TextNode>("P"))->AddField("peg_difference", 211,
+      make_unique<MoneyNode>(-Money::CENT)));
+    cx2MarketPegAsk.SetReadOnly("exec_inst", true);
+    cx2MarketPegAsk.SetVisible("exec_inst", false);
+    cx2MarketPegAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      make_unique<DestinationNode>(DefaultDestinations::CX2()));
+    cx2MarketPegAsk.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
+    cx2MarketPegAsk.SetReadOnly(SingleOrderTaskNode::DESTINATION_PROPERTY, true);
+    cx2MarketPegAsk.Replace(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    cx2MarketPegAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      false);
+    cx2MarketPegAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      true);
+    cx2MarketPegAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(cx2MarketPegAsk.Make());
+  return order_types;
+}
+
 std::vector<std::unique_ptr<CanvasNode>>
     Spire::make_default_order_task_nodes() {
   auto tasks = std::vector<std::unique_ptr<CanvasNode>>();
@@ -530,6 +680,8 @@ std::vector<std::unique_ptr<CanvasNode>>
   populate(tasks, make_alpha_order_task_nodes());
   populate(tasks, make_chix_order_task_nodes());
   populate(tasks, make_cse_order_task_nodes());
+  populate(tasks, make_cse2_order_task_nodes());
+  populate(tasks, make_cx2_order_task_nodes());
   return tasks;
 }
 
