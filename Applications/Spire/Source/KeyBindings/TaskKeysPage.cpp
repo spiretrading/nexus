@@ -1,5 +1,6 @@
 #include "Spire/KeyBindings/TaskKeysPage.hpp"
 #include "Spire/KeyBindings/TaskKeysTableView.hpp"
+#include "Spire/Spire/Utility.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/LineInputForm.hpp"
@@ -98,9 +99,6 @@ TaskKeysPage::TaskKeysPage(std::shared_ptr<KeyBindingsModel> key_bindings,
     style.get(Any()).set(BackgroundColor(QColor(0xFFFFFF)));
   });
   enclose(*this, *box);
-  m_new_task_form = new LineInputForm(tr("New Task"), *this);
-  m_new_task_form->connect_submit_signal(
-    std::bind_front(&TaskKeysPage::on_new_task_submission, this));
   update_button_state();
   auto& row_selection = m_table_view->get_selection()->get_row_selection();
   m_selection_connection = row_selection->connect_operation_signal(
@@ -150,6 +148,9 @@ void TaskKeysPage::update_button_state() {
 }
 
 void TaskKeysPage::on_new_task_action() {
+  m_new_task_form = new LineInputForm(tr("New Task"), *this);
+  m_new_task_form->connect_submit_signal(
+    std::bind_front(&TaskKeysPage::on_new_task_submission, this));
   m_new_task_form->show();
   auto window = m_new_task_form->window();
   window->move(
@@ -198,6 +199,8 @@ void TaskKeysPage::on_new_task_submission(const QString& name) {
   m_table_view->setFocus();
   auto order_task = OrderTaskArguments();
   order_task.m_name = name;
+  m_new_task_form->close();
+  delete_later(m_new_task_form);
   m_is_row_added = true;
   if(auto& current = m_table_view->get_current()->get()) {
     m_key_bindings->get_order_task_arguments()->insert(order_task,
