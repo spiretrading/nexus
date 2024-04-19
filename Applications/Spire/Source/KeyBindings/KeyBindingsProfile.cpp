@@ -502,6 +502,26 @@ std::vector<std::unique_ptr<CanvasNode>> Spire::make_chix_order_task_nodes() {
   return order_types;
 }
 
+std::vector<std::unique_ptr<CanvasNode>> Spire::make_cse_order_task_nodes() {
+  auto order_types = std::vector<std::unique_ptr<CanvasNode>>();
+  populate_basic_order_task_nodes(
+    DefaultDestinations::CSE(), "CSE", order_types);
+  auto mid_peg = CanvasNodeBuilder(*GetPeggedOrderTaskNode(true)->AddField(
+    "exec_inst", 18, std::make_unique<TextNode>("M")));
+  mid_peg.SetReadOnly("exec_inst", true);
+  mid_peg.SetVisible("exec_inst", false);
+  populate_bid_ask(mid_peg, "CSE Mid Peg", DefaultDestinations::CSE(),
+    TimeInForce::Type::DAY, order_types);
+  auto market_peg = CanvasNodeBuilder(*GetPeggedOrderTaskNode(true)->AddField(
+    "exec_inst", 18, std::make_unique<TextNode>("P"))->AddField(
+      "peg_difference", 211, std::make_unique<MoneyNode>(-Money::CENT)));
+  market_peg.SetReadOnly("exec_inst", true);
+  market_peg.SetVisible("exec_inst", false);
+  populate_bid_ask(market_peg, "CSE Market Peg", DefaultDestinations::CSE(),
+    TimeInForce::Type::DAY, order_types);
+  return order_types;
+}
+
 std::vector<std::unique_ptr<CanvasNode>>
     Spire::make_default_order_task_nodes() {
   auto tasks = std::vector<std::unique_ptr<CanvasNode>>();
@@ -509,6 +529,7 @@ std::vector<std::unique_ptr<CanvasNode>>
   populate(tasks, make_cxa_order_task_nodes());
   populate(tasks, make_alpha_order_task_nodes());
   populate(tasks, make_chix_order_task_nodes());
+  populate(tasks, make_cse_order_task_nodes());
   return tasks;
 }
 
