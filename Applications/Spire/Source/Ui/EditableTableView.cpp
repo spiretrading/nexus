@@ -367,7 +367,7 @@ bool EditableTableView::focusNextPrevChild(bool next) {
       }
     }
   }
-  next_focus_widget->setFocus();
+  next_focus_widget->setFocus(Qt::TabFocusReason);
   return true;
 }
 
@@ -378,7 +378,7 @@ QWidget* EditableTableView::make_table_item(const ViewBuilder& view_builder,
     button->setMaximumHeight(scale_height(26));
     match(*button, DeleteButton());
     auto tracker = std::make_shared<Tracker>(row);
-    tracker->m_connection = get_table()->connect_operation_signal(
+    tracker->m_connection = table->connect_operation_signal(
       std::bind_front(&TableRowIndexTracker::update, &tracker->m_index));
     button->connect_click_signal([=] {
       delete_row(tracker->m_index);
@@ -395,16 +395,14 @@ QWidget* EditableTableView::make_table_item(const ViewBuilder& view_builder,
     });
     item->connect_end_edit_signal([=] {
       unmatch(*item, Editing());
-      if(!QApplication::focusWidget()) {
-        setFocus();
-      }
+      setFocus();
     });
     return item;
   }
 }
 
 void EditableTableView::delete_row(const TableRowIndexTracker& row) {
-  get_table()->remove(row.get_index());
+  get_body().get_table()->remove(row.get_index());
 }
 
 bool EditableTableView::navigate_next() {
