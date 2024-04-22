@@ -92,7 +92,6 @@ TaskKeysPage::TaskKeysPage(std::shared_ptr<KeyBindingsModel> key_bindings,
     m_key_bindings->get_order_task_arguments(),
     std::make_shared<LocalComboBoxQueryModel>(), std::move(destinations),
     std::move(markets));
-  m_table_view->installEventFilter(this);
   layout->addWidget(m_table_view);
   auto box = new Box(body);
   update_style(*box, [] (auto& style) {
@@ -114,21 +113,7 @@ const std::shared_ptr<KeyBindingsModel>&
 }
 
 bool TaskKeysPage::eventFilter(QObject* watched, QEvent* event) {
-  if(watched == m_table_view) {
-    if(event->type() == QEvent::KeyPress) {
-      auto& key_event = *static_cast<QKeyEvent*>(event);
-      if(key_event.modifiers() & Qt::ShiftModifier &&
-          (key_event.key() == Qt::Key_Return ||
-            key_event.key() == Qt::Key_Enter)) {
-        on_new_task_action();
-        return true;
-      } else if(key_event.modifiers() & Qt::ControlModifier &&
-          key_event.key() == Qt::Key_D) {
-        on_duplicate_task_action();
-        return true;
-      }
-    }
-  } else if(watched == m_added_region_item) {
+  if(watched == m_added_region_item) {
     if(event->type() == QEvent::Show) {
       auto enter_event =
         QKeyEvent(QEvent::KeyPress, Qt::Key_Enter, Qt::NoModifier);
@@ -138,6 +123,18 @@ bool TaskKeysPage::eventFilter(QObject* watched, QEvent* event) {
     }
   }
   return QWidget::eventFilter(watched, event);
+}
+
+void TaskKeysPage::keyPressEvent(QKeyEvent* event) {
+  if(event->modifiers() & Qt::ShiftModifier &&
+      (event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter)) {
+    on_new_task_action();
+  } else if(event->modifiers() & Qt::ControlModifier &&
+      event->key() == Qt::Key_D) {
+    on_duplicate_task_action();
+  } else {
+    QWidget::keyPressEvent(event);
+  }
 }
 
 void TaskKeysPage::update_button_state() {

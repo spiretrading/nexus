@@ -28,6 +28,7 @@ namespace Spire {
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
+      void keyPressEvent(QKeyEvent* event) override;
 
     private:
       std::shared_ptr<KeyBindingsModel> m_key_bindings;

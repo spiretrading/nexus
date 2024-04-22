@@ -130,7 +130,8 @@ bool EditableBox::eventFilter(QObject* watched, QEvent* event) {
 }
 
 void EditableBox::keyPressEvent(QKeyEvent* event) {
-  if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
+  if(event->modifiers() & Qt::NoModifier &&
+      (event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return)) {
     if(!event->isAutoRepeat()) {
       set_editing(true);
     }
@@ -185,11 +186,7 @@ void EditableBox::on_focus(FocusObserver::State state) {
   if(m_input_box->isHidden()) {
     return;
   }
-  if(state == FocusObserver::State::NONE) {
-    set_editing(false);
-  } else {
-    set_editing(true);
-  }
+  set_editing(state != FocusObserver::State::NONE);
 }
 
 void EditableBox::on_submit(const AnyRef& submission) {
