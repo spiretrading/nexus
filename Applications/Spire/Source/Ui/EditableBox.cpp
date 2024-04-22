@@ -90,10 +90,21 @@ bool EditableBox::is_editing() const {
 }
 
 void EditableBox::set_editing(bool is_editing) {
+  if(is_editing == this->is_editing()) {
+    return;
+  }
   if(is_editing) {
+    m_input_box->set_read_only(false);
+    install_focus_proxy_event_filter();
+    if(auto line_edit = dynamic_cast<QLineEdit*>(m_focus_proxy)) {
+      line_edit->setCursorPosition(line_edit->text().length());
+    }
     m_input_box->setFocus();
+    m_start_edit_signal();
   } else {
+    m_input_box->set_read_only(true);
     m_input_box->clearFocus();
+    m_end_edit_signal();
   }
 }
 
@@ -171,21 +182,13 @@ void EditableBox::select_all_text() {
 }
 
 void EditableBox::on_focus(FocusObserver::State state) {
-  if(isHidden()) {
+  if(m_input_box->isHidden()) {
     return;
   }
   if(state == FocusObserver::State::NONE) {
-    if(is_editing()) {
-      m_input_box->set_read_only(true);
-      m_end_edit_signal();
-    }
-  } else if(!is_editing()) {
-    m_input_box->set_read_only(false);
-    install_focus_proxy_event_filter();
-    if(auto line_edit = dynamic_cast<QLineEdit*>(m_focus_proxy)) {
-      line_edit->setCursorPosition(line_edit->text().length());
-    }
-    m_start_edit_signal();
+    set_editing(false);
+  } else {
+    set_editing(true);
   }
 }
 

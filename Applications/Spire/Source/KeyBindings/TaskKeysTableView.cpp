@@ -408,9 +408,12 @@ class EditablePopupBox : public EditableBox {
           m_is_processing_key(false) {
       get_input_box().setEnabled(false);
       get_input_box().hide();
+      get_input_box().setFocusPolicy(Qt::ClickFocus);
       m_editable_box = new EditableBox(input_box);
+      m_editable_box->connect_start_edit_signal([=] {
+        get_input_box().set_read_only(false);
+      });
       m_editable_box->connect_end_edit_signal([=] {
-        setFocus();
         set_editing(false);
       });
       m_popup_box = new PopupBox(*m_editable_box);
@@ -452,7 +455,7 @@ class EditablePopupBox : public EditableBox {
         case QEvent::MouseButtonPress:
           if(auto& mouse_event = *static_cast<QMouseEvent*>(event);
               mouse_event.button() == Qt::LeftButton && hasFocus()) {
-            m_popup_box->get_body().setFocus();
+            m_editable_box->setFocus();
           }
           break;
         case QEvent::Enter:
@@ -471,7 +474,7 @@ class EditablePopupBox : public EditableBox {
       }
       m_is_processing_key = true;
       QCoreApplication::sendEvent(&m_popup_box->get_body(), event);
-      m_popup_box->get_body().setFocus();
+      m_editable_box->setFocus();
       m_is_processing_key = false;
     }
 
