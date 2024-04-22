@@ -164,10 +164,9 @@ void TaskKeysPage::on_duplicate_task_action() {
     std::vector<int>(selection->begin(), selection->end());
   std::sort(sorted_selection.begin(), sorted_selection.end(),
     std::greater<int>());
-  auto& table = m_table_view->get_body().get_table();
   for(auto index : sorted_selection) {
     auto order_task = m_key_bindings->get_order_task_arguments()->get(
-      any_cast<int>(table->at(index, 0)));
+      any_cast<int>(m_table_view->get_body().get_table()->at(index, 0)));
     order_task.m_key = QKeySequence();
     m_key_bindings->get_order_task_arguments()->insert(order_task,
       m_table_view->get_current()->get()->m_row);
@@ -178,9 +177,12 @@ void TaskKeysPage::on_duplicate_task_action() {
 }
 
 void TaskKeysPage::on_delete_task_action() {
-  for(auto i : *m_table_view->get_selection()->get_row_selection()) {
-    m_table_view->get_body().get_table()->remove(i);
-  }
+  m_key_bindings->get_order_task_arguments()->transact([&] {
+    for(auto i : *m_table_view->get_selection()->get_row_selection()) {
+      m_key_bindings->get_order_task_arguments()->remove(
+        any_cast<int>(m_table_view->get_body().get_table()->at(i, 0)));
+    }
+  });
 }
 
 void TaskKeysPage::on_new_task_submission(const QString& name) {
