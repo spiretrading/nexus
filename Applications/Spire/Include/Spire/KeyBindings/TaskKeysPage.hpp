@@ -35,7 +35,6 @@ namespace Spire {
       TableView* m_table_view;
       Button* m_duplicate_button;
       Button* m_delete_button;
-      LineInputForm* m_new_task_form;
       TableItem* m_added_region_item;
       bool m_is_row_added;
       boost::signals2::scoped_connection m_selection_connection;
