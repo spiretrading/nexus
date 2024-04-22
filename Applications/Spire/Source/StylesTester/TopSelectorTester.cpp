@@ -25,6 +25,24 @@ namespace {
     REQUIRE(update.m_removals.count(&find_stylist(child)) == 1);
     REQUIRE(update.m_additions.empty());
   }
+
+  void require_update(std::deque<SelectionUpdate>& updates,
+      std::unordered_set<QWidget*> additions,
+      std::unordered_set<QWidget*> removals) {
+    REQUIRE(!updates.empty());
+    auto update = updates.front();
+    updates.pop_front();
+    auto additions_stylists = std::unordered_set<const Stylist*>();
+    for(auto& addition : additions) {
+      additions_stylists.insert(&find_stylist(*addition));
+    }
+    auto removals_stylists = std::unordered_set<const Stylist*>();
+    for(auto& removal : removals) {
+      removals_stylists.insert(&find_stylist(*removal));
+    }
+    REQUIRE(update.m_additions == additions_stylists);
+    REQUIRE(update.m_removals == removals_stylists);
+  }
 }
 
 TEST_SUITE("TopSelector") {
@@ -123,6 +141,27 @@ TEST_SUITE("TopSelector") {
       REQUIRE(updates.empty());
       unmatch(*child1, Bar());
       require_removal(updates, *root);
+    });
+  }
+
+  TEST_CASE("deep") {
+    run_test([] {
+      auto root = QWidget();
+      root.setObjectName("Root");
+      auto child1 = QWidget(&root);
+      child1.setObjectName("Child1");
+      auto child2 = QWidget(&child1);
+      child2.setObjectName("Child2");
+      auto updates = std::deque<SelectionUpdate>();
+      auto connection = select(TopSelector(Foo(), Bar()),
+        find_stylist(root), [&] (auto&& additions, auto&& removals) {
+          updates.push_back({std::move(additions), std::move(removals)});
+        });
+      match(root, Foo());
+      match(child2, Bar());
+      require_addition(updates, child2);
+      match(child1, Bar());
+      require_update(updates, {&child1}, {&child2});
     });
   }
 }
