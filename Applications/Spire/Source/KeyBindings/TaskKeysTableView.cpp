@@ -424,6 +424,9 @@ class EditablePopupBox : public EditableBox {
         proxy->installEventFilter(this);
       }
       m_editable_box->installEventFilter(this);
+      connect_start_edit_signal([=] {
+        m_editable_box->set_editing(true);
+      });
     }
 
     bool eventFilter(QObject* watched, QEvent* event) override {

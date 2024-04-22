@@ -2,6 +2,7 @@
 #include "Spire/KeyBindings/TaskKeysTableView.hpp"
 #include "Spire/Spire/Utility.hpp"
 #include "Spire/Ui/Button.hpp"
+#include "Spire/Ui/EditableBox.hpp"
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/LineInputForm.hpp"
 #include "Spire/Ui/SearchBox.hpp"
@@ -115,11 +116,8 @@ const std::shared_ptr<KeyBindingsModel>&
 bool TaskKeysPage::eventFilter(QObject* watched, QEvent* event) {
   if(watched == m_added_region_item) {
     if(event->type() == QEvent::Show) {
-      auto enter_event =
-        QKeyEvent(QEvent::KeyPress, Qt::Key_Enter, Qt::NoModifier);
-      QCoreApplication::sendEvent(&m_added_region_item->get_body(),
-        &enter_event);
-      m_added_region_item->removeEventFilter(this);
+      static_cast<EditableBox*>(
+        &m_added_region_item->get_body())->set_editing(true);
     }
   }
   return QWidget::eventFilter(watched, event);
