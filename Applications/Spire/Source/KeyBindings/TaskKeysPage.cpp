@@ -118,6 +118,7 @@ bool TaskKeysPage::eventFilter(QObject* watched, QEvent* event) {
     if(event->type() == QEvent::Show) {
       static_cast<EditableBox*>(
         &m_added_region_item->get_body())->set_editing(true);
+      m_added_region_item->removeEventFilter(this);
     }
   }
   return QWidget::eventFilter(watched, event);
