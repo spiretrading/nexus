@@ -42,22 +42,26 @@ SelectConnection Spire::Styles::select(const IsASelector& selector,
     }
 
     bool is_connected() const {
-      return true;
+      return m_stylist != nullptr;
     }
 
     bool eventFilter(QObject* watched, QEvent* event) override {
       if(event->type() == QEvent::Polish) {
-        if(m_selector.is_instance(m_stylist->get_widget())) {
-          m_on_update({m_stylist}, {});
+        auto stylist = std::exchange(m_stylist, nullptr);
+        stylist->get_widget().removeEventFilter(this);
+        if(m_selector.is_instance(stylist->get_widget())) {
+          m_on_update({stylist}, {});
+        } else {
+          m_on_update({}, {});
         }
-        m_stylist->get_widget().removeEventFilter(this);
       }
       return QObject::eventFilter(watched, event);
     }
 
     void test() {
       if(m_selector.is_instance(m_stylist->get_widget())) {
-        m_on_update({m_stylist}, {});
+        auto stylist = std::exchange(m_stylist, nullptr);
+        m_on_update({stylist}, {});
       } else {
         m_stylist->get_widget().installEventFilter(this);
       }

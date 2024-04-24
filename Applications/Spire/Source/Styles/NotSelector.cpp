@@ -40,7 +40,7 @@ SelectConnection Spire::Styles::select(const NotSelector& selector,
     }
 
     bool is_connected() const {
-      return true;
+      return m_connection.is_connected();
     }
 
     void on_update(

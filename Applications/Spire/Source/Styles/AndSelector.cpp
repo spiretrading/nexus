@@ -31,12 +31,13 @@ SelectConnection Spire::Styles::select(const AndSelector& selector,
     SelectConnection m_right;
 
     Executor(const AndSelector& selector, const Stylist& base,
-      const SelectionUpdateSignal& on_update)
-      : m_on_update(on_update),
-        m_left(select(selector.get_left(), base,
-          std::bind_front(&Executor::on_update, this))),
-        m_right(select(selector.get_right(), base,
-          std::bind_front(&Executor::on_update, this))) {}
+        const SelectionUpdateSignal& on_update)
+        : m_on_update(on_update) {
+      m_left = select(selector.get_left(), base,
+        std::bind_front(&Executor::on_update, this));
+      m_right = select(selector.get_right(), base,
+        std::bind_front(&Executor::on_update, this));
+    }
 
     bool is_connected() const {
       return m_left.is_connected() || m_right.is_connected();
@@ -44,23 +45,21 @@ SelectConnection Spire::Styles::select(const AndSelector& selector,
 
     void on_update(std::unordered_set<const Stylist*>&& additions,
         std::unordered_set<const Stylist*>&& removals) {
-      for(auto i = additions.begin(); i != additions.end();) {
-        auto& selection = m_selection[*i];
+      std::erase_if(additions, [&] (const auto& addition) {
+        auto& selection = m_selection[addition];
         ++selection;
-        if(selection == 1) {
-          i = additions.erase(i);
-        } else {
-          ++i;
-        }
-      }
-      for(auto i = removals.begin(); i != removals.end();) {
-        auto& selection = m_selection[*i];
+        return selection == 1;
+      });
+      std::erase_if(removals, [&] (const auto& removal) {
+        auto& selection = m_selection[removal];
         --selection;
-        if(selection == 0) {
-          i = removals.erase(i);
-        } else {
-          ++i;
-        }
+        return selection == 0;
+      });
+      if(!m_left.is_connected()) {
+        m_left.disconnect();
+      }
+      if(!m_right.is_connected()) {
+        m_right.disconnect();
       }
       if(!additions.empty() || !removals.empty()) {
         m_on_update(std::move(additions), std::move(removals));
