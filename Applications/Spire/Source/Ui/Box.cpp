@@ -56,6 +56,7 @@ Box::Box(QWidget* body, Fit fit, QWidget* parent)
     match(*m_body, Body());
     m_container = new QWidget(this);
     enclose(*m_container, *m_body, Qt::AlignTop | Qt::AlignLeft);
+    forward_style(*m_container, *m_body);
     setFocusProxy(m_body);
     update_fit();
   } else {

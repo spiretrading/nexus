@@ -68,6 +68,7 @@ Button* Spire::make_icon_button(QImage icon, QString tooltip, QWidget* parent) {
   auto button_icon = new Icon(std::move(icon));
   button_icon->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto button = new Button(new Box(button_icon), parent);
+  link(*button, *button_icon);
   add_tooltip(std::move(tooltip), *button);
   auto style = StyleSheet();
   style.get(Any() > Body()).

@@ -175,6 +175,10 @@ const EvaluatedBlock& Stylist::get_evaluated_block() const {
   return *m_evaluated_block;
 }
 
+const std::vector<Stylist*>& Stylist::get_proxies() const {
+  return m_proxies;
+}
+
 void Stylist::add_proxy(QWidget& widget) {
   auto& stylist = find_stylist(widget);
   auto i = std::find(m_proxies.begin(), m_proxies.end(), &stylist);
@@ -195,6 +199,14 @@ void Stylist::remove_proxy(QWidget& widget) {
     std::find(stylist.m_principals.begin(), stylist.m_principals.end(), this));
   m_proxies.erase(i);
   stylist.apply_proxies();
+}
+
+const std::vector<const Stylist*>& Stylist::get_links() const {
+  return m_links;
+}
+
+void Stylist::link(const Stylist& target) {
+  m_links.push_back(&target);
 }
 
 void Stylist::match(const Selector& selector) {
@@ -579,6 +591,10 @@ void Spire::Styles::forward_style(QWidget& source, QWidget& destination) {
 
 void Spire::Styles::proxy_style(QWidget& source, QWidget& destination) {
   find_stylist(source).add_proxy(destination);
+}
+
+void Spire::Styles::link(QWidget& root, const QWidget& target) {
+  find_stylist(root).link(find_stylist(target));
 }
 
 bool Spire::Styles::is_match(QWidget& widget, const Selector& selector) {

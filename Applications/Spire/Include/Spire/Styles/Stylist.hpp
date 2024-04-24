@@ -73,6 +73,9 @@ namespace Spire::Styles {
        */
       const EvaluatedBlock& get_evaluated_block() const;
 
+      /** Returns the list of Stylists being proxied. */
+      const std::vector<Stylist*>& get_proxies() const;
+
       /**
        * Specifies that all styles applied to this widget are also applied to
        * another widget.
@@ -85,6 +88,16 @@ namespace Spire::Styles {
        * @param widget The widget to stop proxying styles to.
        */
       void remove_proxy(QWidget& widget);
+
+      /** Returns the list of links from this. */
+      const std::vector<const Stylist*>& get_links() const;
+
+      /**
+       * Adds a link from this stylist to a target stylist, allowing the target
+       * to be selected through this along a path.
+       * @param target The stylist to link from this.
+       */
+      void link(const Stylist& target);
 
       /**
        * Directs this Stylist to match a Selector.
@@ -173,6 +186,7 @@ namespace Spire::Styles {
       std::vector<Stylist*> m_principals;
       std::unordered_set<Selector> m_matches;
       mutable std::unordered_map<Selector, MatchSignal> m_match_signals;
+      std::vector<const Stylist*> m_links;
       std::unordered_map<
         std::type_index, std::unique_ptr<BaseEvaluatorEntry>> m_evaluators;
       std::type_index m_evaluated_property;
@@ -294,6 +308,14 @@ namespace Spire::Styles {
    * @param destination The QWidget receiving the style.
    */
   void proxy_style(QWidget& principal, QWidget& destination);
+
+  /**
+   * Adds a link from a root QWidget to another QWidget, allowing it to be
+   * accessed through the root along a path.
+   * @param root The root of the link.
+   * @param target The QWidget to link from the root.
+   */
+  void link(QWidget& root, const QWidget& target);
 
   /**
    * Returns <code>true</code> iff a widget matches a selector.
