@@ -166,12 +166,7 @@ namespace {
     std::size_t operator()(
         const std::pair<Region, QKeySequence>& region_key) const {
       auto seed = std::size_t(0);
-      hash_combine(seed, hash_range(region_key.first.GetCountries().begin(),
-        region_key.first.GetCountries().end()));
-      auto markets = region_key.first.GetMarkets();
-      hash_combine(seed, hash_range(markets.begin(), markets.end()));
-      hash_combine(seed, hash_range(region_key.first.GetSecurities().begin(),
-        region_key.first.GetSecurities().end()));
+      hash_combine(seed, hash_value(region_key.first));
       hash_combine(seed, qHash(region_key.second));
       return seed;
     }
@@ -384,36 +379,22 @@ struct OrderTaskTableModel : TableModel {
 };
 
 struct UniqueTaskKeyTableModel : TableModel {
-  static const auto KeyIndex = static_cast<int>(TableColumn::KEY);
-  static const auto RegionIndex = static_cast<int>(TableColumn::REGION);
-  using RegionKey = std::pair<Region, QKeySequence>;
+  static const auto KEY_INDEX = static_cast<int>(TableColumn::KEY);
+  static const auto REGION_INDEX = static_cast<int>(TableColumn::REGION);
   std::shared_ptr<TableModel> m_source;
   TableModelTransactionLog m_transaction;
-  std::unordered_map<RegionKey, int, RegionKeyHash> m_region_keys;
-  int m_conflicting_row;
+  std::unordered_set<std::pair<Region, QKeySequence>, RegionKeyHash>
+    m_region_keys;
   scoped_connection m_source_connection;
 
   explicit UniqueTaskKeyTableModel(std::shared_ptr<TableModel> source)
       : m_source(std::move(source)),
-        m_conflicting_row(-1),
         m_source_connection(m_source->connect_operation_signal(
           std::bind_front(&UniqueTaskKeyTableModel::on_operation, this))) {
     for(auto row = 0; row < get_row_size(); ++row) {
-      if(auto& key = get<QKeySequence>(row, KeyIndex); !key.isEmpty()) {
-        m_region_keys[{get<Region>(row, RegionIndex), key}] = row;
+      if(auto& key = get<QKeySequence>(row, KEY_INDEX); !key.isEmpty()) {
+        m_region_keys.insert({get<Region>(row, REGION_INDEX), key});
       }
-    }
-  }
-
-  void update() {
-    if(m_conflicting_row != -1) {
-      auto& previous = get<QKeySequence>(m_conflicting_row, KeyIndex);
-      auto previous_row = m_conflicting_row;
-      m_conflicting_row = -1;
-      auto current_blocker = shared_connection_block(m_source_connection);
-      set(previous_row, KeyIndex, QKeySequence());
-      m_transaction.push(
-        UpdateOperation(previous_row, KeyIndex, previous, QKeySequence()));
     }
   }
 
@@ -430,10 +411,34 @@ struct UniqueTaskKeyTableModel : TableModel {
   }
 
   QValidator::State set(int row, int column, const std::any& value) override {
-    return m_source->set(row, column, value);
+    auto update_key = [&] (const Region& region, const QKeySequence& key) {
+      if(m_region_keys.insert({region, key}).second) {
+        return;
+      }
+      for(auto i = 0; i < get_row_size(); ++i) {
+        if(i != row) {
+          if(get<Region>(i, REGION_INDEX) == region &&
+              get<QKeySequence>(i, KEY_INDEX) == key) {
+            m_source->set(i, KEY_INDEX, QKeySequence());
+            return;
+          }
+        }
+      }
+    };
+    auto result = m_source->set(row, column, value);
+    if(column == REGION_INDEX) {
+      update_key(std::any_cast<const Region&>(value),
+        get<QKeySequence>(row, KEY_INDEX));
+    } else if(column == KEY_INDEX) {
+      update_key(get<Region>(row, REGION_INDEX),
+        std::any_cast<const QKeySequence&>(value));
+    }
+    return result;
   }
 
   QValidator::State remove(int row) override {
+    m_region_keys.erase({get<Region>(row, REGION_INDEX),
+      get<QKeySequence>(row, KEY_INDEX)});
     return m_source->remove(row);
   }
 
@@ -443,21 +448,6 @@ struct UniqueTaskKeyTableModel : TableModel {
   }
 
   void on_operation(const Operation& operation) {
-    auto check_conflicting_row = [=] (const RegionKey& region_key) {
-      if(auto i = m_region_keys.find(region_key); i != m_region_keys.end()) {
-        m_conflicting_row = i->second;
-      }
-    };
-    auto update_region_key = [=] (int row, const Region& previous_region,
-        const QKeySequence& previous_key, const Region& current_region,
-        const QKeySequence& current_key) {
-      m_region_keys.erase({previous_region, previous_key});
-      if(!current_key.isEmpty()) {
-        auto region_key = RegionKey(current_region, current_key);
-        check_conflicting_row(region_key);
-        m_region_keys[region_key] = row;
-      }
-    };
     visit(operation,
       [&] (const StartTransaction&) {
         m_transaction.start();
@@ -465,57 +455,7 @@ struct UniqueTaskKeyTableModel : TableModel {
       [&] (const EndTransaction&) {
         m_transaction.end();
       },
-      [&] (const AddOperation& operation) {
-        for(auto& region_key : m_region_keys) {
-          if(operation.m_index <= region_key.second) {
-            ++region_key.second;
-          }
-        }
-        if(auto key =
-            std::any_cast<QKeySequence>(operation.m_row->get(KeyIndex));
-            !key.isEmpty()) {
-          auto region_key = RegionKey(
-            std::any_cast<Region>(operation.m_row->get(RegionIndex)), key);
-          check_conflicting_row(region_key);
-          m_region_keys[region_key] = operation.m_index;
-        }
-        m_transaction.push(operation);
-      },
-      [&] (const MoveOperation& operation) {
-        for(auto& region_key : m_region_keys) {
-          if(operation.m_source < region_key.second &&
-              operation.m_destination >= region_key.second) {
-            --region_key.second;
-          } else if(operation.m_source > region_key.second &&
-              operation.m_destination <= region_key.second) {
-            ++region_key.second;
-          }
-        }
-        m_transaction.push(operation);
-      },
-      [&] (const RemoveOperation& operation) {
-        for(auto& region_key : m_region_keys) {
-          if(operation.m_index < region_key.second) {
-            --region_key.second;
-          }
-        }
-        m_region_keys.erase(
-          {std::any_cast<Region>(operation.m_row->get(RegionIndex)),
-          std::any_cast<QKeySequence>(operation.m_row->get(KeyIndex))});
-        m_transaction.push(operation);
-      },
-      [&] (const UpdateOperation& operation) {
-        if(operation.m_column == RegionIndex) {
-          auto& key = get<QKeySequence>(operation.m_row, KeyIndex);
-          update_region_key(operation.m_row,
-            std::any_cast<const Region&>(operation.m_previous), key,
-            std::any_cast<const Region&>(operation.m_value), key);
-        } else if(operation.m_column == KeyIndex) {
-          auto& region = get<Region>(operation.m_row, RegionIndex);
-          update_region_key(operation.m_row,
-            region, std::any_cast<const QKeySequence&>(operation.m_previous),
-            region, std::any_cast<const QKeySequence&>(operation.m_value));
-        }
+      [&] (const auto& operation) {
         m_transaction.push(operation);
       });
   }
@@ -685,14 +625,8 @@ EditableBox* make_table_item(
     } 
   }();
   if(column_id == TableColumn::REGION) {
-    input_box->connect_submit_signal([=] (const auto&) {
-      std::static_pointer_cast<UniqueTaskKeyTableModel>(table)->update();
-    });
     return new EditablePopupBox(*input_box);
   } else if(column_id == TableColumn::KEY) {
-    input_box->connect_submit_signal([=] (const auto& key) {
-      std::static_pointer_cast<UniqueTaskKeyTableModel>(table)->update();
-    });
     return new EditableBox(*input_box, [] (const auto& key) {
       return key_input_box_validator(key) != QValidator::Invalid;
     });
