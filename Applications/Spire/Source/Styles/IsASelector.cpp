@@ -41,6 +41,10 @@ SelectConnection Spire::Styles::select(const IsASelector& selector,
       QTimer::singleShot(0, this, std::bind_front(&Executor::test, this));
     }
 
+    bool is_connected() const {
+      return true;
+    }
+
     bool eventFilter(QObject* watched, QEvent* event) override {
       if(event->type() == QEvent::Polish) {
         if(m_selector.is_instance(m_stylist->get_widget())) {

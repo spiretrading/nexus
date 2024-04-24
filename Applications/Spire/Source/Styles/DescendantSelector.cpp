@@ -49,6 +49,10 @@ namespace {
       m_on_update(std::move(descendants), {});
     }
 
+    bool is_connected() const {
+      return true;
+    }
+
     bool eventFilter(QObject* watched, QEvent* event) override {
       if(event->type() == QEvent::ChildAdded) {
         auto& child_event = static_cast<QChildEvent&>(*event);

@@ -73,6 +73,10 @@ SelectConnection Spire::Styles::select(const CombinatorSelector& selector,
         m_base_connection(select(selector.get_base(), *m_base,
           std::bind_front(&Executor::on_base, this))) {}
 
+    bool is_connected() const {
+      return true;
+    }
+
     void remove(const Stylist& stylist) {
       for(auto selection : m_selection) {
         if(selection.second.contains(&stylist)) {

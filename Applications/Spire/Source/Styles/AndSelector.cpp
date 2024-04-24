@@ -38,6 +38,10 @@ SelectConnection Spire::Styles::select(const AndSelector& selector,
         m_right(select(selector.get_right(), base,
           std::bind_front(&Executor::on_update, this))) {}
 
+    bool is_connected() const {
+      return m_left.is_connected() || m_right.is_connected();
+    }
+
     void on_update(std::unordered_set<const Stylist*>&& additions,
         std::unordered_set<const Stylist*>&& removals) {
       for(auto i = additions.begin(); i != additions.end();) {
