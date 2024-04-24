@@ -116,9 +116,9 @@ const std::shared_ptr<KeyBindingsModel>&
 bool TaskKeysPage::eventFilter(QObject* watched, QEvent* event) {
   if(watched == m_added_region_item) {
     if(event->type() == QEvent::Show) {
+      m_added_region_item->removeEventFilter(this);
       static_cast<EditableBox*>(
         &m_added_region_item->get_body())->set_editing(true);
-      m_added_region_item->removeEventFilter(this);
     }
   }
   return QWidget::eventFilter(watched, event);
