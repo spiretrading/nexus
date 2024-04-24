@@ -172,6 +172,7 @@ void PopupBox::on_focus(FocusObserver::State state) {
   if(state != FocusObserver::State::NONE && !has_popped_up()) {
     update_window();
     m_last_size = size();
+    m_body->hide();
     {
       auto blocker = shared_connection_block(m_focus_connection);
       m_body->setParent(m_window);
