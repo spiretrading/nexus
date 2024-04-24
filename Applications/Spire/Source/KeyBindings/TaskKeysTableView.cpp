@@ -400,7 +400,7 @@ struct UniqueTaskKeyTableModel : TableModel {
           std::bind_front(&UniqueTaskKeyTableModel::on_operation, this))) {
     for(auto row = 0; row < get_row_size(); ++row) {
       if(auto& key = get<QKeySequence>(row, KeyIndex); !key.isEmpty()) {
-        m_region_keys.insert({{get<Region>(row, RegionIndex), key}, row});
+        m_region_keys[{get<Region>(row, RegionIndex), key}] = row;
       }
     }
   }
@@ -474,9 +474,8 @@ struct UniqueTaskKeyTableModel : TableModel {
         if(auto key =
             std::any_cast<QKeySequence>(operation.m_row->get(KeyIndex));
             !key.isEmpty()) {
-          auto region_key =
-            std::pair(std::any_cast<Region>(operation.m_row->get(RegionIndex)),
-              key);
+          auto region_key = RegionKey(
+            std::any_cast<Region>(operation.m_row->get(RegionIndex)), key);
           check_conflicting_row(region_key);
           m_region_keys[region_key] = operation.m_index;
         }
