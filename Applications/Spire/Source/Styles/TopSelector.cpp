@@ -51,16 +51,18 @@ namespace {
           m_on_update(on_update) {
       m_select_connection = select(
         m_selector, *m_stylist, std::bind_front(&TopObserver::on_update, this));
-      for(auto child : stylist.get_widget().children()) {
-        if(child && child->isWidgetType()) {
-          add(find_stylist(*static_cast<QWidget*>(child)));
+      if(m_select_connection.is_connected() || m_base_selection.empty()) {
+        for(auto child : m_stylist->get_widget().children()) {
+          if(child && child->isWidgetType()) {
+            add(find_stylist(*static_cast<QWidget*>(child)));
+          }
         }
+        m_stylist->get_widget().installEventFilter(this);
       }
-      stylist.get_widget().installEventFilter(this);
     }
 
     bool is_connected() const {
-      return true;
+      return m_select_connection.is_connected() || m_base_selection.empty();
     }
 
     bool eventFilter(QObject* watched, QEvent* event) override {
@@ -86,20 +88,31 @@ namespace {
         auto children_removals = m_children_selection;
         erase_common(additions, children_removals);
         m_on_update(std::move(additions), std::move(children_removals));
-        return;
-      }
-      for(auto removal : removals) {
-        m_base_selection.erase(removal);
-      }
-      m_base_selection.insert(additions.begin(), additions.end());
-      if(m_base_selection.empty()) {
-        auto children_selection = m_children_selection;
-        for(auto selection : children_selection) {
-          removals.erase(selection);
-        }
-        m_on_update(std::move(children_selection), std::move(removals));
       } else {
-        m_on_update(std::move(additions), std::move(removals));
+        for(auto removal : removals) {
+          m_base_selection.erase(removal);
+        }
+        m_base_selection.insert(additions.begin(), additions.end());
+        if(m_base_selection.empty()) {
+          auto children_selection = m_children_selection;
+          for(auto selection : children_selection) {
+            removals.erase(selection);
+          }
+          m_on_update(std::move(children_selection), std::move(removals));
+        } else {
+          m_on_update(std::move(additions), std::move(removals));
+        }
+      }
+      if(!m_select_connection.is_connected()) {
+        m_select_connection.disconnect();
+        if(m_base_selection.empty()) {
+        } else {
+          for(auto child : m_stylist->get_widget().children()) {
+            if(child && child->isWidgetType()) {
+              remove(static_cast<QWidget&>(*child));
+            }
+          }
+        }
       }
     }
 
@@ -152,13 +165,15 @@ namespace {
 
     void remove(QWidget& widget) {
       auto i = m_children_stylists.find(&widget);
+      if(i == m_children_stylists.end()) {
+        return;
+      }
       auto& stylist = *i->second;
       m_children_stylists.erase(i);
       auto j = m_matches.find(&stylist);
       if(j == m_matches.end()) {
         return;
       }
-      widget.removeEventFilter(this);
       auto& match = j->second;
       auto removals = match.m_selection;
       on_child_update(match, {}, std::move(removals));
