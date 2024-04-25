@@ -64,14 +64,15 @@ SelectConnection Spire::Styles::select(const CombinatorSelector& selector,
 
     Executor(const CombinatorSelector& selector, const Stylist& base,
       const SelectionUpdateSignal& on_update)
-      : m_match_selector(selector.get_match()),
-        m_base(&base),
-        m_is_flipped(selector.get_base().get_type() == typeid(FlipSelector)),
-        m_selection_builder(selector.get_selection_builder()),
-        m_on_update(on_update),
-        m_matches(0),
-        m_base_connection(select(selector.get_base(), *m_base,
-          std::bind_front(&Executor::on_base, this))) {}
+        : m_match_selector(selector.get_match()),
+          m_base(&base),
+          m_is_flipped(selector.get_base().get_type() == typeid(FlipSelector)),
+          m_selection_builder(selector.get_selection_builder()),
+          m_on_update(on_update),
+          m_matches(0) {
+      m_base_connection = select(selector.get_base(), *m_base,
+        std::bind_front(&Executor::on_base, this));
+    }
 
     bool is_connected() const {
       return true;
@@ -87,6 +88,9 @@ SelectConnection Spire::Styles::select(const CombinatorSelector& selector,
 
     void on_base(std::unordered_set<const Stylist*>&& additions,
         std::unordered_set<const Stylist*>&& removals) {
+      if(!m_base_connection.is_connected()) {
+        m_base_connection.disconnect();
+      }
       for(auto addition : additions) {
         m_base_connections[addition] = m_selection_builder(*addition,
           std::bind_front(&Executor::on_selection, this, std::ref(*addition)));
@@ -101,6 +105,9 @@ SelectConnection Spire::Styles::select(const CombinatorSelector& selector,
     void on_selection(const Stylist& base,
         std::unordered_set<const Stylist*>&& additions,
         std::unordered_set<const Stylist*>&& removals) {
+      if(!m_base_connections[&base].is_connected()) {
+        m_base_connections.erase(&base);
+      }
       if(!additions.empty()) {
         m_selection[&base].insert(additions.begin(), additions.end());
       }
@@ -187,6 +194,9 @@ SelectConnection Spire::Styles::select(const CombinatorSelector& selector,
           m_match_counts.erase(*i);
           ++i;
         }
+      }
+      if(!entry.m_select_connection.is_connected()) {
+        entry.m_select_connection.disconnect();
       }
       if(m_is_flipped) {
         if(flip_match == FlipMatch::ADD) {
