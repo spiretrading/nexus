@@ -68,7 +68,6 @@ Button* Spire::make_icon_button(QImage icon, QString tooltip, QWidget* parent) {
   auto button_icon = new Icon(std::move(icon));
   button_icon->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto button = new Button(new Box(button_icon), parent);
-  link(*button, *button_icon);
   add_tooltip(std::move(tooltip), *button);
   auto style = StyleSheet();
   style.get(Any() > Body()).
@@ -77,10 +76,10 @@ Button* Spire::make_icon_button(QImage icon, QString tooltip, QWidget* parent) {
   style.get((Hover() || Press()) > Body()).
     set(BackgroundColor(QColor(0xE0E0E0)));
   style.get(FocusVisible() > Body()).set(border_color(QColor(0x4B23A0)));
-  style.get(Any() > is_a<Icon>()).set(Fill(QColor(0x535353)));
-  style.get(Hover() > is_a<Icon>()).set(Fill(QColor(0x4B23A0)));
-  style.get(Press() > is_a<Icon>()).set(Fill(QColor(0x7E71B8)));
-  style.get(Disabled() > is_a<Icon>()).set(Fill(QColor(0xC8C8C8)));
+  style.get(Any() > Body() > is_a<Icon>()).set(Fill(QColor(0x535353)));
+  style.get(Hover() > Body() > is_a<Icon>()).set(Fill(QColor(0x4B23A0)));
+  style.get(Press() > Body() > is_a<Icon>()).set(Fill(QColor(0x7E71B8)));
+  style.get(Disabled() > Body()> is_a<Icon>()).set(Fill(QColor(0xC8C8C8)));
   set_style(*button, std::move(style));
   return button;
 }
