@@ -183,7 +183,7 @@ void EditableBox::select_all_text() {
 }
 
 void EditableBox::on_focus(FocusObserver::State state) {
-  if(m_input_box->isHidden()) {
+  if(isHidden() || m_input_box->isHidden()) {
     return;
   }
   set_editing(state != FocusObserver::State::NONE);

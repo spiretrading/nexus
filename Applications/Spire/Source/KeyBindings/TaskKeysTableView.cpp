@@ -161,6 +161,16 @@ namespace {
     return make_list_value_model(
       std::make_shared<ColumnViewListModel<T>>(table, column), row);
   }
+
+  struct RegionKeyHash {
+    std::size_t operator()(
+        const std::pair<Region, QKeySequence>& region_key) const {
+      auto seed = std::size_t(0);
+      hash_combine(seed, region_key.first);
+      hash_combine(seed, qHash(region_key.second));
+      return seed;
+    }
+  };
 }
 
 struct DestinationQueryModel : ComboBox::QueryModel {
@@ -368,6 +378,101 @@ struct OrderTaskTableModel : TableModel {
   }
 };
 
+struct UniqueTaskKeyTableModel : TableModel {
+  static const auto KEY_INDEX = static_cast<int>(TableColumn::KEY);
+  static const auto REGION_INDEX = static_cast<int>(TableColumn::REGION);
+  std::shared_ptr<TableModel> m_source;
+  TableModelTransactionLog m_transaction;
+  std::unordered_set<std::pair<Region, QKeySequence>, RegionKeyHash>
+    m_region_keys;
+  scoped_connection m_source_connection;
+
+  explicit UniqueTaskKeyTableModel(std::shared_ptr<TableModel> source)
+      : m_source(std::move(source)),
+        m_source_connection(m_source->connect_operation_signal(
+          std::bind_front(&UniqueTaskKeyTableModel::on_operation, this))) {
+    for(auto row = 0; row < get_row_size(); ++row) {
+      if(auto& key = get<QKeySequence>(row, KEY_INDEX); !key.isEmpty()) {
+        m_region_keys.insert({get<Region>(row, REGION_INDEX), key});
+      }
+    }
+  }
+
+  int get_row_size() const override {
+    return m_source->get_row_size();
+  }
+
+  int get_column_size() const override {
+    return m_source->get_column_size();
+  }
+
+  AnyRef at(int row, int column) const override {
+    return m_source->at(row, column);
+  }
+
+  QValidator::State set(int row, int column, const std::any& value) override {
+    auto find_conflicting_row =
+      [&] (const Region& region, const QKeySequence& key) {
+        if(key.isEmpty() || m_region_keys.insert({region, key}).second) {
+          return -1;
+        }
+        for(auto i = 0; i < get_row_size(); ++i) {
+          if(i != row && get<Region>(i, REGION_INDEX) == region &&
+              get<QKeySequence>(i, KEY_INDEX) == key) {
+            return i;
+          }
+        }
+        return -1;
+      };
+    auto result = QValidator::State::Acceptable;
+    m_transaction.transact([&] {
+      if(column == REGION_INDEX) {
+        auto& key = get<QKeySequence>(row, KEY_INDEX);
+        m_region_keys.erase({get<Region>(row, REGION_INDEX), key});
+        if(auto row = find_conflicting_row(std::any_cast<const Region&>(value),
+            key); row != -1) {
+          result = m_source->set(row, KEY_INDEX, QKeySequence());
+        }
+      } else if(column == KEY_INDEX) {
+        auto& region = get<Region>(row, REGION_INDEX);
+        m_region_keys.erase({region, get<QKeySequence>(row, KEY_INDEX)});
+        if(auto row = find_conflicting_row(region,
+            std::any_cast<const QKeySequence&>(value)); row != -1) {
+          result = m_source->set(row, KEY_INDEX, QKeySequence());
+        }
+      }
+      if(result != QValidator::Invalid) {
+        result = m_source->set(row, column, value);
+      }
+    });
+    return result;
+  }
+
+  QValidator::State remove(int row) override {
+    m_region_keys.erase({get<Region>(row, REGION_INDEX),
+      get<QKeySequence>(row, KEY_INDEX)});
+    return m_source->remove(row);
+  }
+
+  connection connect_operation_signal(
+      const OperationSignal::slot_type& slot) const override {
+    return m_transaction.connect_operation_signal(slot);
+  }
+
+  void on_operation(const Operation& operation) {
+    visit(operation,
+      [&] (const StartTransaction&) {
+        m_transaction.start();
+      },
+      [&] (const EndTransaction&) {
+        m_transaction.end();
+      },
+      [&] (const auto& operation) {
+        m_transaction.push(operation);
+      });
+  }
+};
+
 class DumbInputBox : public QWidget {
   public:
     using SubmitSignal = AnyInputBox::SubmitSignal;
@@ -547,7 +652,8 @@ TableView* Spire::make_task_keys_table_view(
     Nexus::DestinationDatabase destinations, Nexus::MarketDatabase markets,
     QWidget* parent) {
   auto table_view = new EditableTableView(
-    std::make_shared<OrderTaskTableModel>(order_task_arguments),
+    std::make_shared<UniqueTaskKeyTableModel>(
+      std::make_shared<OrderTaskTableModel>(order_task_arguments)),
     make_header_model(), std::make_shared<EmptyTableFilter>(),
     std::make_shared<LocalValueModel<optional<TableIndex>>>(),
     std::make_shared<TableSelectionModel>(
