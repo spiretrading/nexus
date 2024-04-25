@@ -3,6 +3,7 @@
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ColumnViewListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/HashQtTypes.hpp"
 #include "Spire/Spire/ListValueModel.hpp"
 #include "Spire/Spire/TableModelTransactionLog.hpp"
 #include "Spire/Spire/ValidatedValueModel.hpp"
@@ -166,7 +167,7 @@ namespace {
     std::size_t operator()(
         const std::pair<Region, QKeySequence>& region_key) const {
       auto seed = std::size_t(0);
-      hash_combine(seed, hash_value(region_key.first));
+      hash_combine(seed, region_key.first);
       hash_combine(seed, qHash(region_key.second));
       return seed;
     }
@@ -411,28 +412,40 @@ struct UniqueTaskKeyTableModel : TableModel {
   }
 
   QValidator::State set(int row, int column, const std::any& value) override {
-    auto update_key = [&] (const Region& region, const QKeySequence& key) {
-      if(m_region_keys.insert({region, key}).second) {
-        return;
-      }
-      for(auto i = 0; i < get_row_size(); ++i) {
-        if(i != row) {
-          if(get<Region>(i, REGION_INDEX) == region &&
+    auto find_conflicting_row =
+      [&] (const Region& region, const QKeySequence& key) {
+        if(key.isEmpty() || m_region_keys.insert({region, key}).second) {
+          return -1;
+        }
+        for(auto i = 0; i < get_row_size(); ++i) {
+          if(i != row && get<Region>(i, REGION_INDEX) == region &&
               get<QKeySequence>(i, KEY_INDEX) == key) {
-            m_source->set(i, KEY_INDEX, QKeySequence());
-            return;
+            return i;
           }
         }
+        return -1;
+      };
+    auto result = QValidator::State::Acceptable;
+    m_transaction.transact([&] {
+      if(column == REGION_INDEX) {
+        auto& key = get<QKeySequence>(row, KEY_INDEX);
+        m_region_keys.erase({get<Region>(row, REGION_INDEX), key});
+        if(auto row = find_conflicting_row(std::any_cast<const Region&>(value),
+            key); row != -1) {
+          result = m_source->set(row, KEY_INDEX, QKeySequence());
+        }
+      } else if(column == KEY_INDEX) {
+        auto& region = get<Region>(row, REGION_INDEX);
+        m_region_keys.erase({region, get<QKeySequence>(row, KEY_INDEX)});
+        if(auto row = find_conflicting_row(region,
+            std::any_cast<const QKeySequence&>(value)); row != -1) {
+          result = m_source->set(row, KEY_INDEX, QKeySequence());
+        }
       }
-    };
-    auto result = m_source->set(row, column, value);
-    if(column == REGION_INDEX) {
-      update_key(std::any_cast<const Region&>(value),
-        get<QKeySequence>(row, KEY_INDEX));
-    } else if(column == KEY_INDEX) {
-      update_key(get<Region>(row, REGION_INDEX),
-        std::any_cast<const QKeySequence&>(value));
-    }
+      if(result != QValidator::Invalid) {
+        result = m_source->set(row, column, value);
+      }
+    });
     return result;
   }
 
