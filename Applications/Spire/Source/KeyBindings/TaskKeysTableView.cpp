@@ -3,7 +3,6 @@
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ColumnViewListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Spire/HashQtTypes.hpp"
 #include "Spire/Spire/ListValueModel.hpp"
 #include "Spire/Spire/TableModelTransactionLog.hpp"
 #include "Spire/Spire/ValidatedValueModel.hpp"
