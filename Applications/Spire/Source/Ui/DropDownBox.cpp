@@ -106,7 +106,7 @@ DropDownBox::DropDownBox(std::shared_ptr<AnyListModel> list,
   icon_layer_layout->addWidget(drop_down_icon);
   icon_layer_layout->addSpacing(scale_width(8));
   layers->add(icon_layer);
-  link(*this, *icon_layer);
+  link(*this, *drop_down_icon);
   m_button = new Button(new QWidget());
   m_button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_button_press_observer.emplace(*m_button);

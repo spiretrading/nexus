@@ -53,14 +53,11 @@ namespace Spire {
       /** Returns the AnyInputBox. */
       AnyInputBox& get_input_box();
 
-      /** Returns <code>true</code> iff this box is being edited. */
-      bool is_editing() const;
+      /** Returns <code>true</code> iff this box is read-only. */
+      bool is_read_only() const;
 
-      /**
-       * Sets the edit state.
-       * @param is_editing True iff this box starts editing.
-       */
-      void set_editing(bool is_editing);
+      /** Sets whether the box is read-only. */
+      void set_read_only(bool read_only);
 
       /** Connects a slot to the StartEditSignal. */
       boost::signals2::connection connect_start_edit_signal(

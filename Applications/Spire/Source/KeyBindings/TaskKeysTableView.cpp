@@ -414,7 +414,7 @@ class EditablePopupBox : public EditableBox {
         get_input_box().set_read_only(false);
       });
       m_editable_box->connect_end_edit_signal([=] {
-        set_editing(false);
+        set_read_only(true);
       });
       m_popup_box = new PopupBox(*m_editable_box);
       m_popup_box->setAttribute(Qt::WA_TransparentForMouseEvents);
@@ -425,7 +425,7 @@ class EditablePopupBox : public EditableBox {
       }
       m_editable_box->installEventFilter(this);
       connect_start_edit_signal([=] {
-        m_editable_box->set_editing(true);
+        m_editable_box->set_read_only(false);
       });
     }
 

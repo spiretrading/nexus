@@ -117,7 +117,7 @@ bool TaskKeysPage::eventFilter(QObject* watched, QEvent* event) {
   if(watched == m_added_region_item) {
     if(event->type() == QEvent::Show) {
       static_cast<EditableBox*>(
-        &m_added_region_item->get_body())->set_editing(true);
+        &m_added_region_item->get_body())->set_read_only(false);
     }
   }
   return QWidget::eventFilter(watched, event);
