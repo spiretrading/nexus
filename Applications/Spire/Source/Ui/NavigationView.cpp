@@ -36,6 +36,8 @@ class LabelContainer : public QWidget {
       body_layout->addWidget(select_line);
       auto box = new Box(body);
       enclose(*this, *box);
+      link(*this, *text_box);
+      link(*this, *select_line);
       proxy_style(*this, *box);
     }
 };
@@ -55,6 +57,8 @@ class NavigationTab : public QWidget {
       tab->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
       layers->add(tab);
       enclose(*this, *layers);
+      link(*this, *container);
+      link(*this, *tab);
       auto style = StyleSheet();
       style.get(Any() > is_a<LabelContainer>()).
         set(horizontal_padding(scale_width(8)));
@@ -62,7 +66,7 @@ class NavigationTab : public QWidget {
         set(border(scale_width(1), QColor(Qt::transparent)));
       style.get(FocusVisible() > Tab()).
         set(border_color(QColor(0x4B23A0)));
-      style.get(FocusVisible() > is_a<TextBox>()).
+      style.get(FocusVisible() > is_a<LabelContainer>() > is_a<TextBox>()).
         set(TextColor(QColor(0x4B23A0)));
       set_style(*this, std::move(style));
     }
@@ -90,6 +94,11 @@ NavigationView::NavigationView(
       set(EdgeNavigation::CONTAIN).
       set(Overflow::NONE).
       set(Qt::Horizontal);
+    style.get(Any() > is_a<ListItem>()).
+      set(BackgroundColor(QColor(Qt::transparent))).
+      set(border_color(QColor(Qt::transparent))).
+      set(border_size(0)).
+      set(padding(0));
   });
   m_navigation_view->setFixedHeight(scale_height(28));
   auto navigation_list_layout = make_hbox_layout();
@@ -133,23 +142,22 @@ void NavigationView::insert_tab(int index, QWidget& page,
     throw std::out_of_range("The index is out of range.");
   }
   m_navigation_list->insert(label, index);
-  auto style = StyleSheet();
-  style.get(Any()).
-    set(BackgroundColor(QColor(Qt::transparent))).
-    set(border_color(QColor(Qt::transparent))).
-    set(border_size(0)).
-    set(padding(0));
-  style.get(Any() > SelectLine()).
-    set(BackgroundColor(QColor(Qt::transparent)));
-  style.get((Checked() || Hover()) > is_a<TextBox>()).
-    set(TextColor(QColor(0x4B23A0)));
-  style.get(Disabled() > is_a<TextBox>()).
-    set(TextColor(QColor(0xC8C8C8)));
-  style.get(Checked() > SelectLine()).
-    set(BackgroundColor(QColor(0x4B23A0)));
-  style.get((Checked() && Disabled()) > SelectLine()).
-    set(BackgroundColor(QColor(0xC8C8C8)));
-  set_style(*m_navigation_view->get_list_item(index), std::move(style));
+  update_style(*m_navigation_view->get_list_item(index), [] (auto& style) {
+    style.get(is_a<NavigationTab>() > is_a<LabelContainer>() > SelectLine()).
+      set(BackgroundColor(QColor(Qt::transparent)));
+    style.get((Checked() || Hover()) >
+        is_a<NavigationTab>() > is_a<LabelContainer>() > is_a<TextBox>()).
+      set(TextColor(QColor(0x4B23A0)));
+    style.get(Disabled() >
+        is_a<NavigationTab>() > is_a<LabelContainer>() > is_a<TextBox>()).
+      set(TextColor(QColor(0xC8C8C8)));
+    style.get(Checked() >
+        is_a<NavigationTab>() > is_a<LabelContainer>() > SelectLine()).
+      set(BackgroundColor(QColor(0x4B23A0)));
+    style.get((Checked() && Disabled()) >
+        is_a<NavigationTab>() > is_a<LabelContainer>() > SelectLine()).
+      set(BackgroundColor(QColor(0xC8C8C8)));
+  });
   auto content_block = new QWidget();
   auto size_policy = page.sizePolicy();
   auto aligment = Qt::Alignment();

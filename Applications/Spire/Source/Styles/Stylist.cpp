@@ -124,6 +124,14 @@ Stylist::~Stylist() {
   while(!m_principals.empty()) {
     m_principals.front()->remove_proxy(*m_widget);
   }
+  while(!m_links.empty()) {
+    std::erase(m_links.back()->m_backlinks, this);
+    m_links.pop_back();
+  }
+  while(!m_backlinks.empty()) {
+    std::erase(m_backlinks.back()->m_links, this);
+    m_backlinks.pop_back();
+  }
 }
 
 QWidget& Stylist::get_widget() const {
@@ -201,12 +209,27 @@ void Stylist::remove_proxy(QWidget& widget) {
   stylist.apply_proxies();
 }
 
-const std::vector<const Stylist*>& Stylist::get_links() const {
+std::vector<const Stylist*> Stylist::get_links() const {
+  return std::vector<const Stylist*>(m_links.begin(), m_links.end());
+}
+
+const std::vector<Stylist*>& Stylist::get_links() {
   return m_links;
 }
 
-void Stylist::link(const Stylist& target) {
+std::vector<const Stylist*> Stylist::get_backlinks() const {
+  return std::vector<const Stylist*>(m_backlinks.begin(), m_backlinks.end());
+}
+
+const std::vector<Stylist*>& Stylist::get_backlinks() {
+  return m_backlinks;
+}
+
+void Stylist::link(Stylist& target) {
   m_links.push_back(&target);
+  target.m_backlinks.push_back(this);
+  m_link_signal(target);
+  target.m_backlink_signal(*this);
 }
 
 void Stylist::match(const Selector& selector) {
@@ -230,6 +253,16 @@ void Stylist::unmatch(const Selector& selector) {
 connection Stylist::connect_style_signal(
     const StyleSignal::slot_type& slot) const {
   return m_style_signal.connect(slot);
+}
+
+connection Stylist::connect_link_signal(
+    const LinkSignal::slot_type& slot) const {
+  return m_link_signal.connect(slot);
+}
+
+connection Stylist::connect_backlink_signal(
+    const BacklinkSignal::slot_type& slot) const {
+  return m_backlink_signal.connect(slot);
 }
 
 connection Stylist::connect_match_signal(
@@ -593,7 +626,7 @@ void Spire::Styles::proxy_style(QWidget& source, QWidget& destination) {
   find_stylist(source).add_proxy(destination);
 }
 
-void Spire::Styles::link(QWidget& root, const QWidget& target) {
+void Spire::Styles::link(QWidget& root, QWidget& target) {
   find_stylist(root).link(find_stylist(target));
 }
 

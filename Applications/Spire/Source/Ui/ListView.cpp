@@ -343,7 +343,6 @@ void ListView::update_focus(optional<int> current) {
 
 void ListView::make_item_entry(int index) {
   auto item = new ListItem(*m_view_builder(m_list, index));
-  link(*this, *item);
   m_items.emplace(m_items.begin() + index, new ItemEntry(*item, index));
   m_items[index]->m_click_connection =
     m_items[index]->m_click_observer.connect_click_signal(std::bind_front(
@@ -462,6 +461,7 @@ void ListView::update_layout() {
     inner_layout->setContentsMargins({});
     inner_layout->setSpacing(m_item_gap);
     inner_layout->setAlignment(alignment);
+    body_layout.addLayout(inner_layout);
     while(i != m_items.end()) {
       auto item_size = [&] {
         if(m_direction == Qt::Orientation::Horizontal) {
@@ -480,10 +480,13 @@ void ListView::update_layout() {
       } else {
         (*i)->m_item->setSizePolicy(m_perpendicular_policy, m_direction_policy);
       }
+      auto is_linked = (*i)->m_item->parentWidget() != nullptr;
       inner_layout->addWidget((*i)->m_item);
+      if(!is_linked) {
+        link(*this, *(*i)->m_item);
+      }
       ++i;
     }
-    body_layout.addLayout(inner_layout);
   }
 }
 

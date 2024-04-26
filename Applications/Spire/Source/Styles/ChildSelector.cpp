@@ -23,6 +23,7 @@ namespace {
   struct ChildObserver : public QObject {
     SelectionUpdateSignal m_on_update;
     std::unordered_map<QObject*, const Stylist*> m_children_stylists;
+    scoped_connection m_link_connection;
 
     ChildObserver(
         const Stylist& stylist, const SelectionUpdateSignal& on_update)
@@ -36,8 +37,13 @@ namespace {
         }
       }
       for(auto& link : stylist.get_links()) {
-        children.insert(link);
+        if(m_children_stylists.insert(
+            std::pair(&link->get_widget(), link)).second) {
+          children.insert(link);
+        }
       }
+      m_link_connection = stylist.connect_link_signal(
+        std::bind_front(&ChildObserver::on_link, this));
       insert_proxies(stylist, children);
       if(!children.empty()) {
         m_on_update(std::move(children), {});
@@ -61,6 +67,13 @@ namespace {
         }
       }
       return QObject::eventFilter(watched, event);
+    }
+
+    void on_link(const Stylist& link) {
+      if(m_children_stylists.insert(
+          std::pair(&link.get_widget(), &link)).second) {
+        m_on_update({&link}, {});
+      }
     }
   };
 }
