@@ -71,8 +71,7 @@ TaskKeysPage::TaskKeysPage(std::shared_ptr<KeyBindingsModel> key_bindings,
   m_delete_button->connect_click_signal(
     std::bind_front(&TaskKeysPage::on_delete_task_action, this));
   update_style(*m_delete_button, [] (auto& style) {
-    style.get((Hover() || Press()) > Body() > is_a<Icon>()).
-      set(Fill(QColor(0xB71C1C)));
+    style.get((Hover() || Press()) > is_a<Icon>()).set(Fill(QColor(0xB71C1C)));
   });
   toolbar_layout->addWidget(m_delete_button);
   auto toolbar = new Box(toolbar_body);

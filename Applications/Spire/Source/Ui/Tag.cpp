@@ -28,7 +28,7 @@ namespace {
   }
 
   auto DELETE_BUTTON_STYLE(StyleSheet style) {
-    style.get((Hover() || Press()) > Body() > is_a<Icon>()).
+    style.get((Hover() || Press()) > is_a<Icon>()).
       set(BackgroundColor(QColor(Qt::transparent)));
     return style;
   }
@@ -37,7 +37,7 @@ namespace {
 Tag::Tag(QString label, QWidget* parent)
     : QWidget(parent),
       m_is_read_only(false) {
-  auto container = new QWidget(this);
+  auto container = new QWidget();
   auto container_layout = make_hbox_layout(container);
   auto label_box = make_label(std::move(label));
   label_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -51,6 +51,8 @@ Tag::Tag(QString label, QWidget* parent)
   container_layout->addWidget(m_delete_button);
   auto box = new Box(container);
   enclose(*this, *box);
+  link(*this, *label_box);
+  link(*this, *m_delete_button);
   proxy_style(*this, *box);
   set_style(*this, DEFAULT_STYLE());
 }

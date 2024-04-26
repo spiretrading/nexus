@@ -19,6 +19,7 @@
 #include "Spire/Ui/RegionBox.hpp"
 #include "Spire/Ui/SideBox.hpp"
 #include "Spire/Ui/SingleSelectionModel.hpp"
+#include "Spire/Ui/TableItem.hpp"
 #include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/TimeInForceBox.hpp"
 
@@ -561,11 +562,14 @@ TableView* Spire::make_task_keys_table_view(
     table_view->get_header().get_widths()->set(i + 1, widths[i]);
   }
   update_style(*table_view, [] (auto& style) {
-    style.get((Any() > PopUp()) << Current()).
+    style.get((Any() > is_a<TableBody>() >
+        Row() > is_a<TableItem>() > PopUp()) << Current()).
       set(border_color(QColor(Qt::transparent)));
-    style.get(Any() > is_a<EditablePopupBox>() > ReadOnly()).
+    style.get(Any() > is_a<TableBody>() >
+        Row() > is_a<TableItem>() > is_a<EditablePopupBox>() > ReadOnly()).
       set(horizontal_padding(scale_width(8)));
-    style.get(Any() > is_a<DecimalBox>()).
+    style.get(Any() > is_a<TableBody>() >
+        Row() > is_a<TableItem>() > is_a<EditableBox>() > is_a<DecimalBox>()).
       set(TextAlign(Qt::Alignment(Qt::AlignRight)));
   });
   return table_view;
