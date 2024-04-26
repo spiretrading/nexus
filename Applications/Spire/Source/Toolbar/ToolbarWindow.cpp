@@ -76,7 +76,7 @@ ToolbarWindow::ToolbarWindow(DirectoryEntry account, AccountRoles roles,
   bottom_layout->setSpacing(scale_width(4));
   bottom_layout->addWidget(
     make_icon_tool_button(WindowType::CANVAS, ":/Icons/toolbar/canvas.svg",
-    QColor(0x00848A), QColor(0x00696E), QColor(0x00A88B)));
+      QColor(0x00848A), QColor(0x00696E), QColor(0x00A88B)));
   bottom_layout->addWidget(make_icon_tool_button(
     WindowType::BOOK_VIEW, ":/Icons/toolbar/book_view.svg",
     QColor(0x406ABF), QColor(0x404ABF), QColor(0x4392D6)));
@@ -85,7 +85,7 @@ ToolbarWindow::ToolbarWindow(DirectoryEntry account, AccountRoles roles,
     QColor(0x26BF4A), QColor(0x2CAC79), QColor(0x1FD364)));
   bottom_layout->addWidget(
     make_icon_tool_button(WindowType::CHART, ":/Icons/toolbar/chart.svg",
-    QColor(0x7F5EEC), QColor(0x684BC7), QColor(0x8D78EC)));
+      QColor(0x7F5EEC), QColor(0x684BC7), QColor(0x8D78EC)));
   bottom_layout->addWidget(make_icon_tool_button(
     WindowType::WATCHLIST, ":/Icons/toolbar/watchlist.svg",
     QColor(0xE67A44), QColor(0xCB6431), QColor(0xF28E38)));
@@ -231,9 +231,9 @@ MenuButton* ToolbarWindow::make_blotter_button() {
     imageFromSvg(":/Icons/toolbar/blotter.svg", scale(26, 26)),
     to_text(WindowType::BLOTTER));
   update_style(*blotter_button, [&] (auto& style) {
-    style.get(Any() > is_a<Icon>()).set(Fill(QColor(0x00BFA0)));
-    style.get(Hover() > is_a<Icon>()).set(Fill(QColor(0x00A88B)));
-    style.get(Any() > (Press() || FocusIn()) > is_a<Icon>()).set(
+    style.get(Any() > Body() > Body() > is_a<Icon>()).set(Fill(QColor(0x00BFA0)));
+    style.get(Hover() > Body() > Body() > is_a<Icon>()).set(Fill(QColor(0x00A88B)));
+    style.get(Any() > (Press() || FocusIn()) > Body() > Body() > is_a<Icon>()).set(
       Fill(QColor(0x00D6BB)));
   });
   blotter_button->setFixedSize(scale(32, 26));
@@ -246,9 +246,9 @@ Button* ToolbarWindow::make_icon_tool_button(
   auto button =
     make_icon_button(imageFromSvg(icon_path, scale(26, 26)), to_text(type));
   update_style(*button, [&] (auto& style) {
-    style.get(Any() > is_a<Icon>()).set(Fill(fill));
-    style.get(Hover() > is_a<Icon>()).set(Fill(hover_color));
-    style.get(Press() > is_a<Icon>()).set(Fill(press_color));
+    style.get(Any() > Body() > is_a<Icon>()).set(Fill(fill));
+    style.get(Hover() > Body() > is_a<Icon>()).set(Fill(hover_color));
+    style.get(Press() > Body() > is_a<Icon>()).set(Fill(press_color));
   });
   button->setFixedSize(scale(26, 26));
   button->connect_click_signal([=] {
