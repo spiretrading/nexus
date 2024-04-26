@@ -125,6 +125,7 @@ LineInputForm::LineInputForm(
   layout->addWidget(field_set);
   layout->addWidget(actions_box);
   m_panel = new OverlayPanel(*this, parent);
+  m_panel->setWindowModality(Qt::WindowModal);
   m_panel->set_positioning(OverlayPanel::Positioning::NONE);
   m_panel->set_closed_on_focus_out(false);
   m_panel->set_is_draggable(true);

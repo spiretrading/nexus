@@ -1,10 +1,16 @@
 #include "Spire/KeyBindings/TaskKeysPage.hpp"
 #include "Spire/KeyBindings/TaskKeysTableView.hpp"
+#include "Spire/Spire/Utility.hpp"
 #include "Spire/Ui/Button.hpp"
+#include "Spire/Ui/EditableBox.hpp"
 #include "Spire/Ui/Icon.hpp"
+#include "Spire/Ui/LineInputForm.hpp"
 #include "Spire/Ui/SearchBox.hpp"
+#include "Spire/Ui/TableBody.hpp"
+#include "Spire/Ui/TableItem.hpp"
 #include "Spire/Ui/TextAreaBox.hpp"
 
+using namespace boost;
 using namespace Nexus;
 using namespace Spire;
 using namespace Spire::Styles;
@@ -31,6 +37,7 @@ namespace {
   auto make_button(const QString& path, const QString& tooltip) {
     auto button = make_icon_button(imageFromSvg(path, scale(16, 16)), tooltip);
     button->setFixedSize(scale(26, 26));
+    button->setFocusPolicy(Qt::TabFocus);
     return button;
   }
 }
@@ -38,7 +45,8 @@ namespace {
 TaskKeysPage::TaskKeysPage(std::shared_ptr<KeyBindingsModel> key_bindings,
     DestinationDatabase destinations, MarketDatabase markets, QWidget* parent)
     : QWidget(parent),
-      m_key_bindings(std::move(key_bindings)) {
+      m_key_bindings(std::move(key_bindings)),
+      m_is_row_added(false) {
   auto toolbar_body = new QWidget();
   auto toolbar_layout = make_hbox_layout(toolbar_body);
   auto search_box = new SearchBox();
@@ -47,18 +55,26 @@ TaskKeysPage::TaskKeysPage(std::shared_ptr<KeyBindingsModel> key_bindings,
   toolbar_layout->addWidget(search_box);
   toolbar_layout->addStretch();
   toolbar_layout->addSpacing(scale_width(18));
-  toolbar_layout->addWidget(
-    make_button(":/Icons/add.svg", tr("Add Task (Shift + Enter)")));
+  auto add_task_button =
+    make_button(":/Icons/add.svg", tr("Add Task (Shift + Enter)"));
+  add_task_button->connect_click_signal(
+    std::bind_front(&TaskKeysPage::on_new_task_action, this));
+  toolbar_layout->addWidget(add_task_button);
   toolbar_layout->addSpacing(scale_width(4));
-  toolbar_layout->addWidget(
-    make_button(":/Icons/duplicate.svg", tr("Duplicate (Ctrl + D)")));
+  m_duplicate_button =
+    make_button(":/Icons/duplicate.svg", tr("Duplicate (Ctrl + D)"));
+  m_duplicate_button->connect_click_signal(
+    std::bind_front(&TaskKeysPage::on_duplicate_task_action, this));
+  toolbar_layout->addWidget(m_duplicate_button);
   toolbar_layout->addSpacing(scale_width(4));
-  auto delete_button = make_button(":/Icons/delete3.svg", tr("Delete"));
-  update_style(*delete_button, [] (auto& style) {
+  m_delete_button = make_button(":/Icons/delete3.svg", tr("Delete"));
+  m_delete_button->connect_click_signal(
+    std::bind_front(&TaskKeysPage::on_delete_task_action, this));
+  update_style(*m_delete_button, [] (auto& style) {
     style.get((Hover() || Press()) > Body() > is_a<Icon>()).
       set(Fill(QColor(0xB71C1C)));
   });
-  toolbar_layout->addWidget(delete_button);
+  toolbar_layout->addWidget(m_delete_button);
   auto toolbar = new Box(toolbar_body);
   update_style(*toolbar, [] (auto& style) {
     style.get(Any()).
@@ -73,18 +89,140 @@ TaskKeysPage::TaskKeysPage(std::shared_ptr<KeyBindingsModel> key_bindings,
   auto layout = make_vbox_layout(body);
   layout->addWidget(make_help_text_box());
   layout->addWidget(toolbar);
-  layout->addWidget(make_task_keys_table_view(
+  m_table_view = make_task_keys_table_view(
     m_key_bindings->get_order_task_arguments(),
     std::make_shared<LocalComboBoxQueryModel>(), std::move(destinations),
-    std::move(markets)));
+    std::move(markets));
+  layout->addWidget(m_table_view);
   auto box = new Box(body);
   update_style(*box, [] (auto& style) {
     style.get(Any()).set(BackgroundColor(QColor(0xFFFFFF)));
   });
   enclose(*this, *box);
+  update_button_state();
+  auto& row_selection = m_table_view->get_selection()->get_row_selection();
+  m_selection_connection = row_selection->connect_operation_signal(
+    std::bind_front(&TaskKeysPage::on_row_selection, this));
+  m_table_operation_connection =
+    m_table_view->get_body().get_table()->connect_operation_signal(
+      std::bind_front(&TaskKeysPage::on_table_operation, this));
 }
 
 const std::shared_ptr<KeyBindingsModel>&
     TaskKeysPage::get_key_bindings() const {
   return m_key_bindings;
+}
+
+bool TaskKeysPage::eventFilter(QObject* watched, QEvent* event) {
+  if(watched == m_added_region_item) {
+    if(event->type() == QEvent::Show) {
+      static_cast<EditableBox*>(
+        &m_added_region_item->get_body())->set_editing(true);
+    }
+  }
+  return QWidget::eventFilter(watched, event);
+}
+
+void TaskKeysPage::keyPressEvent(QKeyEvent* event) {
+  if(event->modifiers() & Qt::ShiftModifier &&
+      (event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter)) {
+    on_new_task_action();
+  } else if(event->modifiers() & Qt::ControlModifier &&
+      event->key() == Qt::Key_D) {
+    on_duplicate_task_action();
+  } else {
+    QWidget::keyPressEvent(event);
+  }
+}
+
+void TaskKeysPage::update_button_state() {
+  auto is_enabled =
+    m_table_view->get_selection()->get_row_selection()->get_size() > 0;
+  m_duplicate_button->setEnabled(is_enabled);
+  m_delete_button->setEnabled(is_enabled);
+}
+
+void TaskKeysPage::on_new_task_action() {
+  auto new_task_form = new LineInputForm(tr("New Task"), *this);
+  new_task_form->setAttribute(Qt::WA_DeleteOnClose);
+  new_task_form->connect_submit_signal(
+    std::bind_front(&TaskKeysPage::on_new_task_submission, this));
+  new_task_form->show();
+  auto window = new_task_form->window();
+  window->move(
+    mapToGlobal(QPoint(0, 0)) + rect().center() - window->rect().center());
+}
+
+void TaskKeysPage::on_duplicate_task_action() {
+  auto& selection = m_table_view->get_selection()->get_row_selection();
+  if(selection->get_size() == 0) {
+    return;
+  }
+  auto last_current_row = m_table_view->get_current()->get()->m_row;
+  auto sorted_selection =
+    std::vector<int>(selection->begin(), selection->end());
+  std::sort(sorted_selection.begin(), sorted_selection.end(),
+    std::greater<int>());
+  for(auto index : sorted_selection) {
+    auto order_task = m_key_bindings->get_order_task_arguments()->get(
+      any_cast<int>(m_table_view->get_body().get_table()->at(index, 0)));
+    order_task.m_key = QKeySequence();
+    m_key_bindings->get_order_task_arguments()->insert(order_task,
+      m_table_view->get_current()->get()->m_row);
+  }
+  QTimer::singleShot(0, this, [=] {
+    m_table_view->get_current()->set(TableView::Index(last_current_row, 1));
+  });
+}
+
+void TaskKeysPage::on_delete_task_action() {
+  m_key_bindings->get_order_task_arguments()->transact([&] {
+    for(auto i : *m_table_view->get_selection()->get_row_selection()) {
+      m_key_bindings->get_order_task_arguments()->remove(
+        any_cast<int>(m_table_view->get_body().get_table()->at(i, 0)));
+    }
+  });
+}
+
+void TaskKeysPage::on_new_task_submission(const QString& name) {
+  auto order_task = OrderTaskArguments();
+  order_task.m_name = name;
+  m_is_row_added = true;
+  if(auto& current = m_table_view->get_current()->get()) {
+    m_key_bindings->get_order_task_arguments()->insert(order_task,
+      current->m_row);
+  } else {
+    m_key_bindings->get_order_task_arguments()->push(order_task);
+  }
+  m_is_row_added = false;
+}
+
+void TaskKeysPage::on_row_selection(
+    const ListModel<int>::Operation& operation) {
+  visit(operation,
+    [&] (const ListModel<int>::AddOperation& operation) {
+      update_button_state();
+    },
+    [&] (const ListModel<int>::RemoveOperation& operation) {
+      update_button_state();
+    });
+}
+
+void TaskKeysPage::on_table_operation(const TableModel::Operation& operation) {
+  visit(operation,
+    [&] (const TableModel::AddOperation& operation) {
+      if(m_is_row_added) {
+        QTimer::singleShot(0, this, [=] {
+          auto index = TableView::Index(operation.m_index, 2);
+          m_table_view->get_current()->set(index);
+          m_added_region_item = m_table_view->get_body().get_item(index);
+          m_added_region_item->installEventFilter(this);
+        });
+      }
+    },
+    [&] (const TableModel::RemoveOperation& operation) {
+      if(m_table_view->get_body().get_table()->get_row_size() == 0) {
+        m_table_view->setFocus();
+      }
+    });
 }

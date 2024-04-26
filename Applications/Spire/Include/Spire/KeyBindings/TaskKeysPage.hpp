@@ -3,6 +3,8 @@
 #include <QWidget>
 #include "Spire/KeyBindings/KeyBindings.hpp"
 #include "Spire/KeyBindings/KeyBindingsModel.hpp"
+#include "Spire/Spire/TableModel.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 
@@ -24,8 +26,27 @@ namespace Spire {
       /** Returns the key bindings being displayed. */
       const std::shared_ptr<KeyBindingsModel>& get_key_bindings() const;
 
+    protected:
+      bool eventFilter(QObject* watched, QEvent* event) override;
+      void keyPressEvent(QKeyEvent* event) override;
+
     private:
       std::shared_ptr<KeyBindingsModel> m_key_bindings;
+      TableView* m_table_view;
+      Button* m_duplicate_button;
+      Button* m_delete_button;
+      TableItem* m_added_region_item;
+      bool m_is_row_added;
+      boost::signals2::scoped_connection m_selection_connection;
+      boost::signals2::scoped_connection m_table_operation_connection;
+
+      void update_button_state();
+      void on_new_task_action();
+      void on_duplicate_task_action();
+      void on_delete_task_action();
+      void on_new_task_submission(const QString& name);
+      void on_row_selection(const ListModel<int>::Operation& operation);
+      void on_table_operation(const TableModel::Operation& operation);
   };
 }
 
