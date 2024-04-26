@@ -231,10 +231,12 @@ MenuButton* ToolbarWindow::make_blotter_button() {
     imageFromSvg(":/Icons/toolbar/blotter.svg", scale(26, 26)),
     to_text(WindowType::BLOTTER));
   update_style(*blotter_button, [&] (auto& style) {
-    style.get(Any() > Body() > Body() > is_a<Icon>()).set(Fill(QColor(0x00BFA0)));
-    style.get(Hover() > Body() > Body() > is_a<Icon>()).set(Fill(QColor(0x00A88B)));
-    style.get(Any() > (Press() || FocusIn()) > Body() > Body() > is_a<Icon>()).set(
-      Fill(QColor(0x00D6BB)));
+    style.get(Any() > Body() > Body() > is_a<Icon>()).
+      set(Fill(QColor(0x00BFA0)));
+    style.get(Hover() > Body() > Body() > is_a<Icon>()).
+      set(Fill(QColor(0x00A88B)));
+    style.get(Any() > (Press() || FocusIn()) > Body() > Body() > is_a<Icon>()).
+      set(Fill(QColor(0x00D6BB)));
   });
   blotter_button->setFixedSize(scale(32, 26));
   return blotter_button;
