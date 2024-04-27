@@ -388,7 +388,7 @@ namespace {
   auto make_colon() {
     auto colon = make_label(":");
     colon->setFixedWidth(scale_width(10));
-    find_stylist(*colon).match(Colon());
+    match(*colon, Colon());
     return colon;
   }
 }

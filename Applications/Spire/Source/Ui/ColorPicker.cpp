@@ -54,8 +54,8 @@ namespace {
       {{Qt::NoModifier, 1}, {Qt::ShiftModifier, 10}});
   }
 
-  void update_color_spectrum_track(Slider2D& color_spectrum,
-      const QColor& pure_color) {
+  void update_color_spectrum_track(
+      Slider2D& color_spectrum, const QColor& pure_color) {
     auto track_size = color_spectrum.size().shrunkBy(
       QMargins{scale_width(1), scale_width(1), scale_width(1), scale_width(1)});
     auto saturation_gradient = QLinearGradient(0, 0, track_size.width(), 0);
