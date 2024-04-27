@@ -41,4 +41,41 @@ TEST_SUITE("Stylist") {
       child.setParent(&parent);
     });
   }
+
+  TEST_CASE("parent_priority") {
+    run_test([] {
+      auto parent = QWidget();
+      auto parent_style = StyleSheet();
+      parent_style.get(ChildSelector(Any(), Any())).
+        set(BackgroundColor(QColor(0x00FF00)));
+      set_style(parent, std::move(parent_style));
+      auto child = QWidget(&parent);
+      auto child_style = StyleSheet();
+      child_style.get(Any()).set(BackgroundColor(QColor(0xFF0000)));
+      set_style(child, std::move(child_style));
+      auto block = find_stylist(child).get_computed_block();
+      auto color = find<BackgroundColor>(block);
+      REQUIRE(color.is_initialized());
+      REQUIRE(*color == QColor(0x00FF00));
+    });
+  }
+
+  TEST_CASE("deferred_parent_priority") {
+    run_test([] {
+      auto parent = QWidget();
+      auto parent_style = StyleSheet();
+      parent_style.get(ChildSelector(Any(), Any())).
+        set(BackgroundColor(QColor(0x00FF00)));
+      set_style(parent, std::move(parent_style));
+      auto child = QWidget();
+      auto child_style = StyleSheet();
+      child_style.get(Any()).set(BackgroundColor(QColor(0xFF0000)));
+      set_style(child, std::move(child_style));
+      child.setParent(&parent);
+      auto block = find_stylist(child).get_computed_block();
+      auto color = find<BackgroundColor>(block);
+      REQUIRE(color.is_initialized());
+      REQUIRE(*color == QColor(0x00FF00));
+    });
+  }
 }
