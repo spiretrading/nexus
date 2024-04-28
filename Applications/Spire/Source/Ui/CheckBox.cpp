@@ -29,8 +29,7 @@ namespace {
     style.get(Any() > is_a<Icon>()).
       set(BackgroundColor(QColor(Qt::transparent))).
       set(Fill(QColor(0x333333)));
-    style.get(!Checked() > is_a<Icon>()).
-      set(Fill(QColor(0, 0, 0, 0)));
+    style.get(!Checked() > is_a<Icon>()).set(Fill(QColor(0, 0, 0, 0)));
     style.get((Disabled() && Checked()) > is_a<Icon>()).
       set(Fill(QColor(0xC8C8C8)));
     style.get(Any() > is_a<Box>()).

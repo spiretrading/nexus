@@ -9,6 +9,7 @@
 #include "Spire/Ui/ColorBox.hpp"
 #include "Spire/Ui/ColorCodePanel.hpp"
 #include "Spire/Ui/ColorConversion.hpp"
+#include "Spire/Ui/ColorPicker.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/ListView.hpp"
@@ -107,7 +108,7 @@ namespace {
     color_box->setFixedHeight(scale_height(26));
     get_color_picker(*color_box)->get_body().setFixedWidth(scale_width(220));
     update_style(*color_box, [] (auto& style) {
-      style.get(Any() > Alpha()).set(Visibility::NONE);
+      style.get(Any() > is_a<ColorPicker>() > Alpha()).set(Visibility::NONE);
     });
     return color_box;
   }

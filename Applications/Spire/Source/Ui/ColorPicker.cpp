@@ -248,8 +248,8 @@ ColorPicker::ColorPicker(std::shared_ptr<ColorModel> current,
       m_model(std::make_shared<ColorPickerModel>(std::move(current))),
       m_palette(std::move(palette)),
       m_panel_horizontal_spacing(0) {
-  m_color_spectrum = make_color_spectrum(m_model->m_spectrum_x_model,
-    m_model->m_spectrum_y_model);
+  m_color_spectrum = make_color_spectrum(
+    m_model->m_spectrum_x_model, m_model->m_spectrum_y_model);
   m_alpha_slider = make_alpha_slider(m_model->m_alpha_slider_model);
   auto layout = make_vbox_layout(this);
   layout->setSpacing(scale_height(8));
@@ -261,8 +261,8 @@ ColorPicker::ColorPicker(std::shared_ptr<ColorModel> current,
   m_panel = new OverlayPanel(*this, parent);
   m_panel->setWindowFlags(Qt::Popup | (m_panel->windowFlags() & ~Qt::Tool));
   m_panel->installEventFilter(this);
-  m_panel_style_connection = connect_style_signal(*m_panel,
-    std::bind_front(&ColorPicker::on_panel_style, this));
+  m_panel_style_connection = connect_style_signal(
+    *m_panel, std::bind_front(&ColorPicker::on_panel_style, this));
   update_style(*m_panel, [] (auto& style) {
     style.get(Any()).
       set(horizontal_padding(scale_width(8))).

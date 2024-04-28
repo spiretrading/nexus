@@ -44,7 +44,7 @@ namespace {
     style.get(Any() > (is_a<TextBox>() && !(+Any() << is_a<ListItem>()))).
       set(PaddingRight(scale_width(14)));
     style.get(PopUp() > is_a<TextBox>() ||
-      (+Any() > is_a<Button>() && (Hover() || FocusIn())) > is_a<TextBox>()).
+        (+Any() > is_a<Button>() && (Hover() || FocusIn())) > is_a<TextBox>()).
       set(border_color(QColor(0x4B23A0)));
     style.get(ReadOnly() > (is_a<TextBox>() && !(+Any() << is_a<ListItem>()))).
       set(horizontal_padding(0)).
