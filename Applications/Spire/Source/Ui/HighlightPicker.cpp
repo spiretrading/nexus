@@ -108,7 +108,10 @@ namespace {
     color_box->setFixedHeight(scale_height(26));
     get_color_picker(*color_box)->get_body().setFixedWidth(scale_width(220));
     update_style(*color_box, [] (auto& style) {
-      style.get(Any() > is_a<ColorPicker>() > Alpha()).set(Visibility::NONE);
+      style.get(Any() >
+        Any() > Any() > is_a<ColorPicker>() > Alpha()).set(Visibility::NONE);
+      style.get(Any() > Any() > Any() > is_a<ColorPicker>() >
+        is_a<ColorCodePanel>() > Alpha()).set(Visibility::NONE);
     });
     return color_box;
   }
