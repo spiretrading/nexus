@@ -143,16 +143,18 @@ namespace {
       ScrollBox::DisplayPolicy policy) {
     update_style(scroll_bar, [&] (auto& style) {
       if(policy == ScrollBox::DisplayPolicy::ON_ENGAGE) {
-        style.get(Any() > ScrollThumb()).
+        style.get(Any() > ScrollTrack() > ScrollThumb()).
           set(BackgroundColor(QColor("#CCC8C8C8")));
-        style.get(Any() > (ScrollThumb() && (Hover() || Drag()))).
+        style.get(Any() >
+            ScrollTrack() > (ScrollThumb() && (Hover() || Drag()))).
           set(BackgroundColor(QColor("#CCA0A0A0")));
         style.get(Any() > ScrollTrack()).
           set(BackgroundColor(QColor("#CCFFFFFF")));
       } else {
-        style.get(Any() > ScrollThumb()).
+        style.get(Any() > ScrollTrack() > ScrollThumb()).
           set(BackgroundColor(QColor(0xC8C8C8)));
-        style.get(Any() > (ScrollThumb() && (Hover() || Drag()))).
+        style.get(Any() >
+            ScrollTrack() > (ScrollThumb() && (Hover() || Drag()))).
           set(BackgroundColor(QColor(0xA0A0A0)));
         style.get(Any() > ScrollTrack()).
           set(BackgroundColor(QColor(0xFFFFFF)));

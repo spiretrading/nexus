@@ -44,7 +44,7 @@ namespace {
     style.get(Any() > (is_a<TextBox>() && !(+Any() << is_a<ListItem>()))).
       set(PaddingRight(scale_width(14)));
     style.get(PopUp() > is_a<TextBox>() ||
-      (+Any() > is_a<Button>() && (Hover() || FocusIn())) > is_a<TextBox>()).
+        (+Any() > is_a<Button>() && (Hover() || FocusIn())) > is_a<TextBox>()).
       set(border_color(QColor(0x4B23A0)));
     style.get(ReadOnly() > (is_a<TextBox>() && !(+Any() << is_a<ListItem>()))).
       set(horizontal_padding(0)).
@@ -94,6 +94,7 @@ DropDownBox::DropDownBox(std::shared_ptr<AnyListModel> list,
   });
   auto layers = new LayeredWidget();
   layers->add(m_text_box);
+  link(*this, *m_text_box);
   auto icon_layer = new QWidget();
   icon_layer->setAttribute(Qt::WA_TransparentForMouseEvents);
   icon_layer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -105,10 +106,12 @@ DropDownBox::DropDownBox(std::shared_ptr<AnyListModel> list,
   icon_layer_layout->addWidget(drop_down_icon);
   icon_layer_layout->addSpacing(scale_width(8));
   layers->add(icon_layer);
+  link(*this, *drop_down_icon);
   m_button = new Button(new QWidget());
   m_button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_button_press_observer.emplace(*m_button);
   layers->add(m_button);
+  link(*this, *m_button);
   enclose(*this, *layers);
   m_drop_down_list = new DropDownList(*m_list_view, *this);
   m_drop_down_list->installEventFilter(this);
@@ -121,9 +124,9 @@ DropDownBox::DropDownBox(std::shared_ptr<AnyListModel> list,
   m_button_press_observer->connect_press_end_signal(
     std::bind_front(&DropDownBox::on_button_press_end, this));
   m_current_connection = m_list_view->get_current()->connect_update_signal(
-    [=] (const auto& current) { on_current(current); });
+    std::bind_front(&DropDownBox::on_current, this));
   m_submit_connection = m_list_view->connect_submit_signal(
-    [=] (const auto& submission) { on_submit(submission); });
+    std::bind_front(&DropDownBox::on_submit, this));
   m_button->installEventFilter(this);
   m_timer.setSingleShot(true);
 }

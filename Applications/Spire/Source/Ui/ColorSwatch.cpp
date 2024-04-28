@@ -53,6 +53,7 @@ ColorSwatch::ColorSwatch(std::shared_ptr<ColorModel> current,
   match(*swatch, Swatch());
   auto box = new Box(swatch);
   enclose(*this, *box);
+  link(*this, *swatch);
   proxy_style(*this, *box);
   set_style(*this, DEFAULT_STYLE());
   on_current(m_current->get());
