@@ -231,11 +231,9 @@ MenuButton* ToolbarWindow::make_blotter_button() {
     imageFromSvg(":/Icons/toolbar/blotter.svg", scale(26, 26)),
     to_text(WindowType::BLOTTER));
   update_style(*blotter_button, [&] (auto& style) {
-    style.get(Any() > Body() > Body() > is_a<Icon>()).
-      set(Fill(QColor(0x00BFA0)));
-    style.get(Hover() > Body() > Body() > is_a<Icon>()).
-      set(Fill(QColor(0x00A88B)));
-    style.get(Any() > (Press() || FocusIn()) > Body() > Body() > is_a<Icon>()).
+    style.get(Any() > is_a<Icon>()).set(Fill(QColor(0x00BFA0)));
+    style.get(Hover() > is_a<Icon>()).set(Fill(QColor(0x00A88B)));
+    style.get(Any() > (Press() || FocusIn()) > is_a<Icon>()).
       set(Fill(QColor(0x00D6BB)));
   });
   blotter_button->setFixedSize(scale(32, 26));
@@ -248,9 +246,9 @@ Button* ToolbarWindow::make_icon_tool_button(
   auto button =
     make_icon_button(imageFromSvg(icon_path, scale(26, 26)), to_text(type));
   update_style(*button, [&] (auto& style) {
-    style.get(Any() > Body() > is_a<Icon>()).set(Fill(fill));
-    style.get(Hover() > Body() > is_a<Icon>()).set(Fill(hover_color));
-    style.get(Press() > Body() > is_a<Icon>()).set(Fill(press_color));
+    style.get(Any() > is_a<Icon>()).set(Fill(fill));
+    style.get(Hover() > is_a<Icon>()).set(Fill(hover_color));
+    style.get(Press() > is_a<Icon>()).set(Fill(press_color));
   });
   button->setFixedSize(scale(26, 26));
   button->connect_click_signal([=] {

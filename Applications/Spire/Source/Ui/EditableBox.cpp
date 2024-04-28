@@ -67,12 +67,12 @@ EditableBox::EditableBox(
       m_focus_proxy(nullptr) {
   setFocusProxy(m_input_box);
   enclose(*this, *m_input_box);
+  proxy_style(*this, *m_input_box);
   setFocusPolicy(Qt::StrongFocus);
   m_focus_observer.connect_state_signal(
     std::bind_front(&EditableBox::on_focus, this));
   m_input_box->set_read_only(true);
   match(*this, ReadOnly());
-  proxy_style(*this, *m_input_box);
   m_submit_connection = m_input_box->connect_submit_signal(
     std::bind_front(&EditableBox::on_submit, this));
   install_focus_proxy_event_filter();
