@@ -72,6 +72,8 @@ InfoTip::InfoTip(QWidget* body, QWidget* parent)
   m_show_timer.setSingleShot(true);
   connect(&m_show_timer, &QTimer::timeout, this, &InfoTip::on_show_timeout);
   parent->installEventFilter(this);
+  match(*m_body, Body());
+  link(*this, *m_body);
   m_style_connection = connect_style_signal(*this, [=] { on_style(); });
   set_style(*this, DEFAULT_STYLE());
 }

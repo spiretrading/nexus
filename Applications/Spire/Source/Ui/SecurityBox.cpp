@@ -1,5 +1,6 @@
 #include "Spire/Ui/SecurityBox.hpp"
 #include "Spire/Spire/TransformValueModel.hpp"
+#include "Spire/Styles/Stylist.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/SecurityListItem.hpp"
@@ -8,6 +9,7 @@ using namespace Beam;
 using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
+using namespace Spire::Styles;
 
 struct SecurityBox::SecurityQueryModel : ComboBox::QueryModel {
   std::shared_ptr<ComboBox::QueryModel> m_source;
@@ -72,6 +74,7 @@ SecurityBox::SecurityBox(std::shared_ptr<ComboBox::QueryModel> securities,
     m_submit_signal(std::any_cast<const Security&>(submission));
   });
   enclose(*this, *m_combo_box);
+  proxy_style(*this, *m_combo_box);
   setFocusProxy(m_combo_box);
 }
 

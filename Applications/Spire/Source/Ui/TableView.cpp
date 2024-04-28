@@ -72,6 +72,7 @@ TableView::TableView(
   m_header_view = new TableHeader(m_header);
   m_header_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   m_header_view->setContentsMargins({scale_width(1), 0, 0, 0});
+  link(*this, *m_header_view);
   auto box_body = new QWidget();
   enclose(*box_body, *m_header_view);
   auto box = new Box(box_body);
@@ -92,6 +93,7 @@ TableView::TableView(
   m_body = new TableBody(m_sorted_table, std::move(current),
     std::move(selection), m_header_view->get_widths(), std::move(view_builder));
   m_body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+  link(*this, *m_body);
   m_scroll_box = new ScrollBox(m_body);
   m_scroll_box->set(ScrollBox::DisplayPolicy::ON_ENGAGE);
   auto layout = make_vbox_layout(this);

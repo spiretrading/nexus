@@ -12,22 +12,21 @@ using namespace Spire::Styles;
 ToggleButton::ToggleButton(QWidget* body, QWidget* parent)
   : ToggleButton(body, std::make_shared<LocalBooleanModel>()) {}
 
-ToggleButton::ToggleButton(QWidget* body, std::shared_ptr<BooleanModel> current,
-    QWidget* parent)
+ToggleButton::ToggleButton(
+    QWidget* body, std::shared_ptr<BooleanModel> current, QWidget* parent)
     : QWidget(parent),
       m_current(std::move(current)) {
   setFocusPolicy(Qt::StrongFocus);
   m_button = new Button(body);
   setFocusProxy(m_button);
   enclose(*this, *m_button);
-  find_stylist(*m_button).connect_match_signal(Press(),
-    [=] (auto is_match) {
-      if(is_match) {
-        match(*this, Press());
-      } else {
-        unmatch(*this, Press());
-      }
-    });
+  find_stylist(*m_button).connect_match_signal(Press(), [=] (auto is_match) {
+    if(is_match) {
+      match(*this, Press());
+    } else {
+      unmatch(*this, Press());
+    }
+  });
   proxy_style(*this, *m_button);
   m_button->connect_click_signal(
     std::bind_front(&ToggleButton::on_click, this));
@@ -85,6 +84,7 @@ ToggleButton* Spire::make_icon_toggle_button(QImage icon,
   auto button =
     new ToggleButton(new Box(button_icon), std::move(current), parent);
   add_tooltip(std::move(tooltip), *button);
+  link(*button, *button_icon);
   auto style = StyleSheet();
   style.get(Any() > Body()).
     set(BackgroundColor(QColor(Qt::transparent))).
