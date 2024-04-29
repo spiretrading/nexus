@@ -60,6 +60,7 @@ SelectConnection Spire::Styles::select(const CombinatorSelector& selector,
       m_selection;
     std::unordered_map<const Stylist*, int> m_match_counts;
     int m_matches;
+    int m_match_connections;
     SelectConnection m_base_connection;
 
     Executor(const CombinatorSelector& selector, const Stylist& base,
@@ -68,14 +69,23 @@ SelectConnection Spire::Styles::select(const CombinatorSelector& selector,
           m_base(&base),
           m_is_flipped(selector.get_base().get_type() == typeid(FlipSelector)),
           m_selection_builder(selector.get_selection_builder()),
-          m_on_update(on_update),
-          m_matches(0) {
+          m_matches(0),
+          m_match_connections(0) {
+      auto additions = std::unordered_set<const Stylist*>();
+      m_on_update = [&] (auto&& initial, auto&&) {
+        additions.insert(initial.begin(), initial.end());
+      };
       m_base_connection = select(selector.get_base(), *m_base,
         std::bind_front(&Executor::on_base, this));
+      m_on_update = on_update;
+      if(!additions.empty()) {
+        m_on_update(std::move(additions), {});
+      }
     }
 
     bool is_connected() const {
-      return true;
+      return m_base_connection.is_connected() || !m_base_connections.empty() ||
+        m_match_connections != 0;
     }
 
     void remove(const Stylist& stylist) {
@@ -129,6 +139,9 @@ SelectConnection Spire::Styles::select(const CombinatorSelector& selector,
         if(entry.m_count == 1) {
           entry.m_select_connection = select(m_match_selector, *stylist,
             std::bind_front(&Executor::on_match, this, std::ref(entry)));
+          if(entry.m_select_connection.is_connected()) {
+            ++m_match_connections;
+          }
           entry.m_delete_connection = stylist->connect_delete_signal(
             std::bind_front(&Executor::remove, this, std::ref(*stylist)));
         }
@@ -142,6 +155,7 @@ SelectConnection Spire::Styles::select(const CombinatorSelector& selector,
         if(entry->second.m_count == 0) {
           auto removals = std::move(entry->second.m_selection);
           entry->second.m_selection.clear();
+          entry->second.m_select_connection.disconnect();
           on_match(entry->second, {}, std::move(removals));
           m_match_entries.erase(entry);
         }
@@ -162,6 +176,7 @@ SelectConnection Spire::Styles::select(const CombinatorSelector& selector,
         REMOVE
       };
       if(!entry.m_select_connection.is_connected()) {
+        --m_match_connections;
         entry.m_select_connection.disconnect();
       }
       auto flip_match = FlipMatch::NONE;
