@@ -3,10 +3,25 @@
 using namespace Spire;
 using namespace Spire::Styles;
 
-void SelectConnection::disconnect() {
-  m_executor = nullptr;
+SelectConnection::SelectConnection(SelectConnection&& connection) {
+  if(connection.is_connected()) {
+    m_executor = std::move(connection.m_executor);
+  }
+}
+
+SelectConnection& SelectConnection::operator =(SelectConnection&& connection) {
+  if(connection.is_connected()) {
+    m_executor = std::move(connection.m_executor);
+  } else {
+    m_executor = nullptr;
+  }
+  return *this;
 }
 
 bool SelectConnection::is_connected() const {
   return m_executor != nullptr && m_executor->is_connected();
+}
+
+void SelectConnection::disconnect() {
+  m_executor = nullptr;
 }

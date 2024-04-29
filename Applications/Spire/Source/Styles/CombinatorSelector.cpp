@@ -92,8 +92,11 @@ SelectConnection Spire::Styles::select(const CombinatorSelector& selector,
         m_base_connection.disconnect();
       }
       for(auto addition : additions) {
-        m_base_connections[addition] = m_selection_builder(*addition,
+        auto connection = m_selection_builder(*addition,
           std::bind_front(&Executor::on_selection, this, std::ref(*addition)));
+        if(connection.is_connected()) {
+          m_base_connections.insert(std::pair(addition, std::move(connection)));
+        }
       }
       for(auto removal : removals) {
         on_selection(*removal, {}, std::move(m_selection[removal]));
@@ -105,8 +108,10 @@ SelectConnection Spire::Styles::select(const CombinatorSelector& selector,
     void on_selection(const Stylist& base,
         std::unordered_set<const Stylist*>&& additions,
         std::unordered_set<const Stylist*>&& removals) {
-      if(!m_base_connections[&base].is_connected()) {
-        m_base_connections.erase(&base);
+      auto base_connection = m_base_connections.find(&base);
+      if(base_connection != m_base_connections.end() &&
+          !base_connection->second.is_connected()) {
+        m_base_connections.erase(base_connection);
       }
       if(!additions.empty()) {
         m_selection[&base].insert(additions.begin(), additions.end());
@@ -156,6 +161,9 @@ SelectConnection Spire::Styles::select(const CombinatorSelector& selector,
         ADD,
         REMOVE
       };
+      if(!entry.m_select_connection.is_connected()) {
+        entry.m_select_connection.disconnect();
+      }
       auto flip_match = FlipMatch::NONE;
       for(auto i = additions.begin(); i != additions.end();) {
         entry.m_selection.insert(*i);
@@ -194,9 +202,6 @@ SelectConnection Spire::Styles::select(const CombinatorSelector& selector,
           m_match_counts.erase(*i);
           ++i;
         }
-      }
-      if(!entry.m_select_connection.is_connected()) {
-        entry.m_select_connection.disconnect();
       }
       if(m_is_flipped) {
         if(flip_match == FlipMatch::ADD) {

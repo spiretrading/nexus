@@ -34,17 +34,17 @@ namespace Spire::Styles {
 
       SelectConnection(const SelectConnection&) = delete;
 
-      SelectConnection(SelectConnection&&) = default;
+      SelectConnection(SelectConnection&& connection);
 
       SelectConnection& operator =(const SelectConnection&) = delete;
 
-      SelectConnection& operator =(SelectConnection&&) = default;
-
-      /** Disconnects this connection. */
-      void disconnect();
+      SelectConnection& operator =(SelectConnection&& connection);
 
       /** Returns <code>true</code> iff there is a connection. */
       bool is_connected() const;
+
+      /** Disconnects this connection. */
+      void disconnect();
 
     private:
       struct BaseExecutor {
