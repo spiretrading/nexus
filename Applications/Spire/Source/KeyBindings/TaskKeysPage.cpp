@@ -1,4 +1,5 @@
 #include "Spire/KeyBindings/TaskKeysPage.hpp"
+#include "Spire/KeyBindings/OrderTaskArgumentsMatch.hpp"
 #include "Spire/KeyBindings/TaskKeysTableView.hpp"
 #include "Spire/Spire/Utility.hpp"
 #include "Spire/Ui/Button.hpp"
@@ -11,6 +12,7 @@
 #include "Spire/Ui/TextAreaBox.hpp"
 
 using namespace boost;
+using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 using namespace Spire::Styles;
@@ -42,16 +44,219 @@ namespace {
   }
 }
 
+struct OrderTaskMatchCache {
+  std::unordered_set<QString> m_caches;
+
+  bool matches(const OrderTaskArguments& order_task, const QString& query) {
+    if(m_caches.contains(query)) {
+      return true;
+    }
+    auto matched = ::matches(order_task, query);
+    if(matched) {
+      m_caches.insert(query);
+    }
+    return matched;
+  }
+};
+
+struct TaskKeysPage::FilteredTaskKeysListModel : OrderTaskArgumentsListModel {
+  std::shared_ptr<OrderTaskArgumentsListModel> m_source;
+  std::vector<OrderTaskMatchCache> m_caches;
+  std::vector<int> m_filtered_data;
+  QString m_query;
+  ListModelTransactionLog<OrderTaskArguments> m_transaction;
+  scoped_connection m_source_connection;
+
+  explicit FilteredTaskKeysListModel(
+      std::shared_ptr<OrderTaskArgumentsListModel> source)
+      : m_source(std::move(source)),
+        m_filtered_data(m_source->get_size()),
+        m_source_connection(m_source->connect_operation_signal(
+          std::bind_front(&FilteredTaskKeysListModel::on_operation, this))) {
+    std::iota(m_filtered_data.begin(), m_filtered_data.end(), 0);
+  }
+
+  void matches(const QString& query) {
+    m_query = query;
+    auto source_row = 0;
+    auto filtered_row = 0;
+    m_transaction.transact([&] {
+      while(source_row != m_source->get_size() &&
+        filtered_row != static_cast<int>(m_filtered_data.size())) {
+        if(is_matched(source_row)) {
+          if(m_filtered_data[filtered_row] != source_row) {
+            m_filtered_data.insert(
+              m_filtered_data.begin() + filtered_row, source_row);
+            m_transaction.push(AddOperation(filtered_row, get(filtered_row)));
+          }
+          ++filtered_row;
+        } else {
+          if(m_filtered_data[filtered_row] == source_row) {
+            auto& order_task = get(filtered_row);
+            m_filtered_data.erase(m_filtered_data.begin() + filtered_row);
+            m_transaction.push(RemoveOperation(filtered_row, std::move(order_task)));
+          }
+        }
+        ++source_row;
+      }
+      while(filtered_row != static_cast<int>(m_filtered_data.size())) {
+        auto& order_task = get(filtered_row);
+        m_filtered_data.erase(m_filtered_data.begin() + filtered_row);
+        m_transaction.push(RemoveOperation(filtered_row, std::move(order_task)));
+      }
+      while(source_row != m_source->get_size()) {
+        if(is_matched(source_row)) {
+          m_filtered_data.push_back(source_row);
+          m_transaction.push(
+            AddOperation(m_filtered_data.size() - 1, get(m_filtered_data.size() - 1)));
+        }
+        ++source_row;
+      }
+    });
+  }
+
+  int get_size() const override {
+    return static_cast<int>(m_filtered_data.size());
+  }
+
+  const OrderTaskArguments& get(int index) const override {
+    if(index < 0 || index >= get_size()) {
+      throw std::out_of_range("The index is out of range.");
+    }
+    return m_source->get(m_filtered_data[index]);
+  }
+
+  QValidator::State set(int index, const OrderTaskArguments& value) override {
+    if(index < 0 || index >= get_size()) {
+      throw std::out_of_range("The index is out of range.");
+    }
+    return m_source->set(m_filtered_data[index], value);
+  }
+
+  QValidator::State insert(const OrderTaskArguments& value,
+      int index) override {
+    if(index < 0 || index > get_size()) {
+      throw std::out_of_range("The index is out of range.");
+    }
+    auto source_index = [&] {
+      if(index < get_size()) {
+        return m_filtered_data[index];
+      }
+      return m_source->get_size();
+    }();
+    return m_source->insert(value, source_index);
+  }
+
+  QValidator::State remove(int index) override {
+    if(index < 0 || index >= get_size()) {
+      throw std::out_of_range("The index is out of range.");
+    }
+    return m_source->remove(m_filtered_data[index]);
+  }
+
+  connection connect_operation_signal(
+      const OperationSignal::slot_type& slot) const override {
+    return m_transaction.connect_operation_signal(slot);
+  }
+
+  void transact(const std::function<void()>& transaction) override {
+    m_transaction.transact(transaction);
+  }
+
+  bool is_matched(int index) {
+    if(m_query.isEmpty()) {
+      return true;
+    }
+    return m_caches[index].matches(m_source->get(index), m_query);
+  }
+
+  std::tuple<bool, std::vector<int>::iterator> find(int index) {
+    auto i = std::lower_bound(m_filtered_data.begin(), m_filtered_data.end(),
+      index);
+    if(i != m_filtered_data.end() && *i == index) {
+      return {true, i};
+    }
+    return {false, i};
+  }
+
+  void on_operation(const Operation& operation) {
+    visit(operation,
+      [&] (const StartTransaction&) {
+        m_transaction.start();
+      },
+      [&] (const EndTransaction&) {
+        m_transaction.end();
+      },
+      [&] (const OrderTaskArgumentsListModel::AddOperation& operation) {
+        m_caches.insert(std::next(m_caches.begin(), operation.m_index),
+          OrderTaskMatchCache());
+        if(operation.m_index >= m_source->get_size() - 1) {
+          if(is_matched(operation.m_index)) {
+            m_filtered_data.push_back(operation.m_index);
+            m_transaction.push(AddOperation(
+              static_cast<int>(m_filtered_data.size()) - 1,
+              std::any_cast<const OrderTaskArguments&>(operation.m_value)));
+          }
+        } else {
+          auto i = std::get<1>(find(operation.m_index));
+          std::for_each(i, m_filtered_data.end(), [] (int& value) { ++value; });
+          if(is_matched(operation.m_index)) {
+            m_transaction.push(AddOperation(
+              static_cast<int>(m_filtered_data.insert(i, operation.m_index) -
+                m_filtered_data.begin()),
+              std::any_cast<const OrderTaskArguments&>(operation.m_value)));
+          }
+        }
+      },
+      [&] (const OrderTaskArgumentsListModel::RemoveOperation& operation) {
+        m_caches.erase(std::next(m_caches.begin(), operation.m_index));
+        auto [is_found, i] = find(operation.m_index);
+        std::for_each(i, m_filtered_data.end(), [] (int& value) { --value; });
+        if(is_found) {
+          auto index = static_cast<int>(i - m_filtered_data.begin());
+          m_filtered_data.erase(i);
+          m_transaction.push(RemoveOperation(index,
+            std::any_cast<const OrderTaskArguments&>(operation.m_value)));
+        }
+      },
+      [&] (const OrderTaskArgumentsListModel::UpdateOperation& operation) {
+        m_caches[operation.m_index] = OrderTaskMatchCache();
+        auto [is_found, i] = find(operation.m_index);
+        if(is_matched(operation.m_index)) {
+          if(is_found) {
+            m_transaction.push(UpdateOperation(
+              static_cast<int>(i - m_filtered_data.begin()),
+              std::any_cast<const OrderTaskArguments&>(operation.m_previous),
+              std::any_cast<const OrderTaskArguments&>(operation.m_value)));
+          } else {
+            auto filtered_row = static_cast<int>(m_filtered_data.insert(
+              i, operation.m_index) - m_filtered_data.begin());
+            m_transaction.push(AddOperation(filtered_row, get(filtered_row)));
+          }
+        } else if(is_found) {
+          auto index = static_cast<int>(i - m_filtered_data.begin());
+          auto& order_task = get(index);
+          m_filtered_data.erase(i);
+          m_transaction.push(RemoveOperation(index, std::move(order_task)));
+        }
+      });
+  }
+};
+
 TaskKeysPage::TaskKeysPage(std::shared_ptr<KeyBindingsModel> key_bindings,
     DestinationDatabase destinations, MarketDatabase markets, QWidget* parent)
     : QWidget(parent),
       m_key_bindings(std::move(key_bindings)),
+      m_filtered_model(std::make_shared<FilteredTaskKeysListModel>(
+        m_key_bindings->get_order_task_arguments())),
       m_is_row_added(false) {
   auto toolbar_body = new QWidget();
   auto toolbar_layout = make_hbox_layout(toolbar_body);
   auto search_box = new SearchBox();
   search_box->set_placeholder(tr("Search tasks"));
   search_box->setFixedWidth(scale_width(368));
+  search_box->get_current()->connect_update_signal(
+    std::bind_front(&TaskKeysPage::on_search, this));
   toolbar_layout->addWidget(search_box);
   toolbar_layout->addStretch();
   toolbar_layout->addSpacing(scale_width(18));
@@ -90,9 +295,8 @@ TaskKeysPage::TaskKeysPage(std::shared_ptr<KeyBindingsModel> key_bindings,
   layout->addWidget(make_help_text_box());
   layout->addWidget(toolbar);
   m_table_view = make_task_keys_table_view(
-    m_key_bindings->get_order_task_arguments(),
-    std::make_shared<LocalComboBoxQueryModel>(), std::move(destinations),
-    std::move(markets));
+    m_filtered_model, std::make_shared<LocalComboBoxQueryModel>(),
+    std::move(destinations), std::move(markets));
   layout->addWidget(m_table_view);
   auto box = new Box(body);
   update_style(*box, [] (auto& style) {
@@ -141,6 +345,10 @@ void TaskKeysPage::update_button_state() {
     m_table_view->get_selection()->get_row_selection()->get_size() > 0;
   m_duplicate_button->setEnabled(is_enabled);
   m_delete_button->setEnabled(is_enabled);
+}
+
+void TaskKeysPage::on_search(const QString& query) {
+  m_filtered_model->matches(query);
 }
 
 void TaskKeysPage::on_new_task_action() {
@@ -219,11 +427,6 @@ void TaskKeysPage::on_table_operation(const TableModel::Operation& operation) {
           m_added_region_item = m_table_view->get_body().get_item(index);
           m_added_region_item->installEventFilter(this);
         });
-      }
-    },
-    [&] (const TableModel::RemoveOperation& operation) {
-      if(m_table_view->get_body().get_table()->get_row_size() == 0) {
-        m_table_view->setFocus();
       }
     });
 }

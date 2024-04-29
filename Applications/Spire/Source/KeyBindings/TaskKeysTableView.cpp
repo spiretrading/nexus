@@ -304,7 +304,6 @@ struct OrderTaskTableModel : TableModel {
     }
     auto column_index = static_cast<TableColumn>(column);
     auto arguments = m_source->get(row);
-    auto previous = to_any(extract_field(arguments, column_index));
     if(column_index == TableColumn::NAME) {
       arguments.m_name = std::any_cast<const QString&>(value);
     } else if(column_index == TableColumn::REGION) {
@@ -325,14 +324,7 @@ struct OrderTaskTableModel : TableModel {
     } else if(column_index == TableColumn::KEY) {
       arguments.m_key = std::any_cast<const QKeySequence&>(value);
     }
-    auto blocker = shared_connection_block(m_source_connection);
-    auto result = m_source->set(row, std::move(arguments));
-    if(result == QValidator::State::Invalid) {
-      return QValidator::State::Invalid;
-    }
-    m_transaction.push(
-      TableModel::UpdateOperation(row, column, previous, value));
-    return result;
+    return m_source->set(row, std::move(arguments));
   }
 
   QValidator::State remove(int row) override {
@@ -510,16 +502,21 @@ class EditablePopupBox : public EditableBox {
     EditablePopupBox(AnyInputBox& input_box, QWidget* parent = nullptr)
         : EditableBox(*new AnyInputBox(
             *new DumbInputBox(input_box.get_current())), parent),
-          m_is_processing_key(false) {
+          m_is_processing_key(false),
+          m_is_destroyed(false) {
       get_input_box().setEnabled(false);
       get_input_box().hide();
       get_input_box().setFocusPolicy(Qt::ClickFocus);
       m_editable_box = new EditableBox(input_box);
       m_editable_box->connect_start_edit_signal([=] {
-        get_input_box().set_read_only(false);
+        if(!m_is_destroyed) {
+          get_input_box().set_read_only(false);
+        }
       });
       m_editable_box->connect_end_edit_signal([=] {
-        set_editing(false);
+        if(!m_is_destroyed) {
+          set_editing(false);
+        }
       });
       m_popup_box = new PopupBox(*m_editable_box);
       m_popup_box->setAttribute(Qt::WA_TransparentForMouseEvents);
@@ -531,6 +528,12 @@ class EditablePopupBox : public EditableBox {
       m_editable_box->installEventFilter(this);
       connect_start_edit_signal([=] {
         m_editable_box->set_editing(true);
+      });
+      connect(this, &EditableBox::destroyed, [=] {
+        m_is_destroyed = true;
+        if(m_editable_box->parentWidget() != m_popup_box) {
+          m_editable_box->deleteLater();
+        }
       });
     }
 
@@ -591,6 +594,7 @@ class EditablePopupBox : public EditableBox {
     PopupBox* m_popup_box;
     QWidget* m_tip_window;
     bool m_is_processing_key;
+    bool m_is_destroyed;
 };
 
 EditableBox* make_table_item(
