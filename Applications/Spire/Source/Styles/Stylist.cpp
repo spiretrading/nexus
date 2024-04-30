@@ -187,6 +187,10 @@ const std::vector<Stylist*>& Stylist::get_proxies() const {
   return m_proxies;
 }
 
+const std::vector<Stylist*>& Stylist::get_principals() const {
+  return m_principals;
+}
+
 void Stylist::add_proxy(QWidget& widget) {
   auto& stylist = find_stylist(widget);
   auto i = std::find(m_proxies.begin(), m_proxies.end(), &stylist);

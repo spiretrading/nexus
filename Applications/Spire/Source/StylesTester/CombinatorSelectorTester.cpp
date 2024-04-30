@@ -1,4 +1,5 @@
 #include <doctest/doctest.h>
+#include "Spire/Styles/Any.hpp"
 #include "Spire/Styles/CombinatorSelector.hpp"
 #include "Spire/StylesTester/StylesTester.hpp"
 
@@ -25,6 +26,21 @@ TEST_SUITE("CombinatorSelector") {
         });
       delete graph["C"];
       unmatch(*graph["B"], Bar());
+    });
+  }
+
+  TEST_CASE("disconnect") {
+    run_test([] {
+      auto graph = make_graph();
+      auto updates = std::deque<SelectionUpdate>();
+      auto connection = select(CombinatorSelector(Any(), Any(),
+        [&] (const auto& stylist, const auto& on_update) {
+          return SelectConnection();
+        }), find_stylist(*graph["A"]),
+        [&] (auto&& additions, auto&& removals) {
+          updates.push_back({std::move(additions), std::move(removals)});
+        });
+      REQUIRE(!connection.is_connected());
     });
   }
 }

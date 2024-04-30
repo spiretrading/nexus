@@ -51,6 +51,10 @@ namespace {
       stylist.get_widget().installEventFilter(this);
     }
 
+    bool is_connected() const {
+      return true;
+    }
+
     bool eventFilter(QObject* watched, QEvent* event) override {
       if(event->type() == QEvent::ChildAdded) {
         auto& child = *static_cast<QChildEvent&>(*event).child();
