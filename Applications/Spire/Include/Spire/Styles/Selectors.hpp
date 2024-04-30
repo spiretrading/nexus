@@ -14,6 +14,5 @@
 #include "Spire/Styles/PropertyMatchSelector.hpp"
 #include "Spire/Styles/SiblingSelector.hpp"
 #include "Spire/Styles/StateSelector.hpp"
-#include "Spire/Styles/TopSelector.hpp"
 
 #endif

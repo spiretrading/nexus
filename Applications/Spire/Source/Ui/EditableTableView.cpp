@@ -21,47 +21,53 @@ using namespace Spire::Styles;
 namespace {
   using DeleteButton = StateSelector<void, struct DeleteButtonSeletorTag>;
   using EmptyCell = StateSelector<void, struct EmptyCellSeletorTag>;
-  using Editing = StateSelector<void, struct EditingSelectorTag>;
 
   auto TABLE_VIEW_STYLE() {
     auto style = StyleSheet();
-    style.get(Any() > is_a<TableItem>() >
+    auto body_selector = Any() > is_a<TableBody>();
+    auto item_selector = body_selector > Row() > is_a<TableItem>();
+    style.get(item_selector > Any() >
         (ReadOnly() && !(+Any() << is_a<ListItem>()) && !Prompt())).
       set(horizontal_padding(scale_width(8)));
-    style.get(Any() > is_a<TableItem>() > ReadOnly() >
+    style.get(item_selector >  Any() > ReadOnly() >
         (is_a<TextBox>() && !(+Any() << is_a<ListItem>()) && !Prompt())).
       set(horizontal_padding(scale_width(8)));
-    style.get((Any() > Editing()) << Current()).
+    style.get((item_selector > !ReadOnly()) << Current()).
       set(border_color(QColor(Qt::transparent)));
-    style.get(Any() > Current()).set(BackgroundColor(Qt::transparent));
-    style.get(Any() > HoverItem()).set(border_color(QColor(0xA0A0A0)));
-    style.get(Any() > (Row() && Hover())).
+    style.get(body_selector > Row() > Current()).
+      set(BackgroundColor(Qt::transparent));
+    style.get(body_selector > Row() > HoverItem()).
+      set(border_color(QColor(0xA0A0A0)));
+    style.get(body_selector > (Row() && Hover())).
       set(BackgroundColor(0xF2F2FF));
-    style.get(Any() > DeleteButton()).
+    style.get(item_selector > DeleteButton()).
       set(Visibility(Visibility::INVISIBLE));
-    style.get(Any() > DeleteButton() > is_a<Box>()).
+    style.get(item_selector > DeleteButton() > is_a<Box>()).
       set(BackgroundColor(QColor(Qt::transparent))).
       set(horizontal_padding(scale_width(2))).
       set(vertical_padding(scale_height(2)));
-    style.get(Any() > DeleteButton() > is_a<Icon>()).
+    style.get(item_selector > DeleteButton() > is_a<Icon>()).
       set(BackgroundColor(QColor(Qt::transparent)));
-    style.get(Any() > (CurrentRow() || (Row() && Hover())) > DeleteButton()).
+    style.get(body_selector > (CurrentRow() || (Row() && Hover())) >
+        is_a<TableItem>() > DeleteButton()).
       set(Visibility(Visibility::VISIBLE));
-    style.get((Any() > (CurrentRow() || (Row() && Hover()))) >
+    style.get((body_selector > (CurrentRow() || (Row() && Hover()))) >
         DeleteButton() > is_a<Icon>()).
       set(Fill(QColor(0x535353)));
-    style.get(Any() > (Row() && Hover()) > DeleteButton() >
+    style.get(body_selector > (Row() && Hover()) > DeleteButton() >
         (is_a<Icon>() && Hover())).
       set(BackgroundColor(QColor(0xDFDFEB))).
       set(Fill(QColor(0xB71C1C)));
-    style.get(Any() > CurrentRow() > DeleteButton() >
+    style.get(body_selector > CurrentRow() > DeleteButton() >
         (is_a<Icon>() && Hover())).
       set(BackgroundColor(QColor(0xD0CEEB))).
       set(Fill(QColor(0xB71C1C)));
-    style.get((Any() > EmptyCell()) << (HoverItem() || Current())).
+    style.get((item_selector > EmptyCell()) << (HoverItem() || Current())).
       set(border_color(QColor(Qt::transparent)));
-    style.get(Any() > CurrentRow()).set(BackgroundColor(QColor(0xE2E0FF)));
-    style.get(Any() > CurrentColumn()).set(BackgroundColor(Qt::transparent));
+    style.get(body_selector > CurrentRow()).
+      set(BackgroundColor(QColor(0xE2E0FF)));
+    style.get(body_selector > CurrentColumn()).
+      set(BackgroundColor(Qt::transparent));
     return style;
   }
 
@@ -390,11 +396,7 @@ QWidget* EditableTableView::make_table_item(const ViewBuilder& view_builder,
     auto item = view_builder(
       std::static_pointer_cast<EditableTableModel>(get_table())->m_source,
       any_cast<int>(table->at(row, 0)), column - 1);
-    item->connect_start_edit_signal([=] {
-      match(*item, Editing());
-    });
     item->connect_end_edit_signal([=] {
-      unmatch(*item, Editing());
       setFocus();
     });
     return item;

@@ -50,29 +50,33 @@ SearchBox::SearchBox(QWidget* parent)
 
 SearchBox::SearchBox(std::shared_ptr<TextModel> model, QWidget* parent)
     : QWidget(parent) {
-  auto container = new QWidget(this);
-  auto search_icon = new Icon(
-    imageFromSvg(":/Icons/magnifying-glass.svg", scale(16, 16)), this);
+  auto container = new QWidget();
+  auto search_icon =
+    new Icon(imageFromSvg(":/Icons/magnifying-glass.svg", scale(16, 16)));
   search_icon->setFixedSize(scale(16, 16));
   auto container_layout = make_hbox_layout(container);
   container_layout->addWidget(search_icon);
-  m_text_box = new TextBox(std::move(model), this);
+  m_text_box = new TextBox(std::move(model));
   container->setFocusProxy(m_text_box);
   m_text_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   container_layout->addWidget(m_text_box);
-  m_delete_button = make_delete_icon_button(this);
+  m_delete_button = make_delete_icon_button();
   m_delete_button->setFixedSize(scale(16, 16));
   m_delete_button->setFocusPolicy(Qt::NoFocus);
   m_delete_button->hide();
   container_layout->addWidget(m_delete_button);
   auto box = new Box(container);
   enclose(*this, *box);
+  link(*this, *search_icon);
+  link(*this, *m_text_box);
+  link(*this, *m_delete_button);
   setFocusProxy(box);
   proxy_style(*this, *box);
   set_style(*this, DEFAULT_STYLE());
   m_current_connection = m_text_box->get_current()->connect_update_signal(
-    [=] (const auto& current) { on_current(current); });
-  m_delete_button->connect_click_signal([=] { on_delete_button(); });
+    std::bind_front(&SearchBox::on_current, this));
+  m_delete_button->connect_click_signal(
+    std::bind_front(&SearchBox::on_delete_button, this));
 }
 
 const std::shared_ptr<TextModel>& SearchBox::get_current() const {

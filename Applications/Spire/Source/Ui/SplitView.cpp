@@ -227,8 +227,8 @@ SplitView::SplitView(QWidget& primary, QWidget& secondary, QWidget* parent)
   update_divider_state();
   update_style(*this, [] (auto& style) {
     style.get(Any()).set(Qt::Orientation::Horizontal);
-    style.get(
-        Any() > (is_a<Sash>() && (Hover() || Drag())) % is_a<DividerBox>()).
+    style.get(Any() >
+        (is_a<Sash>() && (Hover() || Drag())) % is_a<DividerBox>()).
       set(BackgroundColor(QColor(0x4B23A0)));
   });
   m_style_connection =

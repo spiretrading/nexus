@@ -40,6 +40,18 @@ namespace Spire::Styles {
       using StyleSignal = Signal<void ()>;
 
       /**
+       * Signals a link was added to another stylist.
+       * @param stylist The stylist being linked to.
+       */
+      using LinkSignal = Signal<void (const Stylist& stylist)>;
+
+      /**
+       * Signals a backlink was added to another stylist.
+       * @param stylist The stylist being backlinked to.
+       */
+      using BacklinkSignal = Signal<void (const Stylist& stylist)>;
+
+      /**
        * Signals that a Selector was matched or unmatched.
        * @param is_match <code>true</code> iff the associated Selector matches.
        */
@@ -73,6 +85,9 @@ namespace Spire::Styles {
        */
       const EvaluatedBlock& get_evaluated_block() const;
 
+      /** Returns the list of Stylists being proxied. */
+      const std::vector<Stylist*>& get_proxies() const;
+
       /**
        * Specifies that all styles applied to this widget are also applied to
        * another widget.
@@ -85,6 +100,25 @@ namespace Spire::Styles {
        * @param widget The widget to stop proxying styles to.
        */
       void remove_proxy(QWidget& widget);
+
+      /** Returns the list of links from this. */
+      std::vector<const Stylist*> get_links() const;
+
+      /** Returns the list of links from this. */
+      const std::vector<Stylist*>& get_links();
+
+      /** Returns the list of backlinks from this. */
+      std::vector<const Stylist*> get_backlinks() const;
+
+      /** Returns the list of backlinks from this. */
+      const std::vector<Stylist*>& get_backlinks();
+
+      /**
+       * Adds a link from this stylist to a target stylist, allowing the target
+       * to be selected through this along a path.
+       * @param target The stylist to link from this.
+       */
+      void link(Stylist& target);
 
       /**
        * Directs this Stylist to match a Selector.
@@ -111,6 +145,14 @@ namespace Spire::Styles {
       /** Connects a slot to the StyleSignal. */
       boost::signals2::connection connect_style_signal(
         const StyleSignal::slot_type& slot) const;
+
+      /** Connects a slot to the LinkSignal. */
+      boost::signals2::connection connect_link_signal(
+        const LinkSignal::slot_type& slot) const;
+
+      /** Connects a slot to the BackLinkSignal. */
+      boost::signals2::connection connect_backlink_signal(
+        const BacklinkSignal::slot_type& slot) const;
 
       /** Connects a slot to the MatchSignal. */
       boost::signals2::connection connect_match_signal(
@@ -161,6 +203,8 @@ namespace Spire::Styles {
       friend Evaluator<T> make_evaluator(
         RevertExpression<T> expression, const Stylist& stylist);
       mutable StyleSignal m_style_signal;
+      mutable LinkSignal m_link_signal;
+      mutable BacklinkSignal m_backlink_signal;
       mutable DeleteSignal m_delete_signal;
       QWidget* m_widget;
       boost::optional<PseudoElement> m_pseudo_element;
@@ -173,6 +217,8 @@ namespace Spire::Styles {
       std::vector<Stylist*> m_principals;
       std::unordered_set<Selector> m_matches;
       mutable std::unordered_map<Selector, MatchSignal> m_match_signals;
+      std::vector<Stylist*> m_links;
+      std::vector<Stylist*> m_backlinks;
       std::unordered_map<
         std::type_index, std::unique_ptr<BaseEvaluatorEntry>> m_evaluators;
       std::type_index m_evaluated_property;
@@ -294,6 +340,14 @@ namespace Spire::Styles {
    * @param destination The QWidget receiving the style.
    */
   void proxy_style(QWidget& principal, QWidget& destination);
+
+  /**
+   * Adds a link from a root QWidget to another QWidget, allowing it to be
+   * accessed through the root along a path.
+   * @param root The root of the link.
+   * @param target The QWidget to link from the root.
+   */
+  void link(QWidget& root, QWidget& target);
 
   /**
    * Returns <code>true</code> iff a widget matches a selector.
