@@ -1,6 +1,7 @@
 #include "Spire/KeyBindings/TaskKeysPage.hpp"
 #include "Spire/KeyBindings/OrderTaskArgumentsMatch.hpp"
 #include "Spire/KeyBindings/TaskKeysTableView.hpp"
+#include "Spire/Spire/FilteredTableModel.hpp"
 #include "Spire/Spire/Utility.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/EditableBox.hpp"
@@ -43,7 +44,44 @@ namespace {
     return button;
   }
 
-  struct OrderTaskMatchCache {
+  AnyRef extract_field(const OrderTaskArguments& arguments,
+      OrderTaskColumns column) {
+    if(column == OrderTaskColumns::NAME) {
+      return arguments.m_name;
+    } else if(column == OrderTaskColumns::REGION) {
+      return arguments.m_region;
+    } else if(column == OrderTaskColumns::DESTINATION) {
+      return arguments.m_destination;
+    } else if(column == OrderTaskColumns::ORDER_TYPE) {
+      return arguments.m_order_type;
+    } else if(column == OrderTaskColumns::SIDE) {
+      return arguments.m_side;
+    } else if(column == OrderTaskColumns::QUANTITY) {
+      return arguments.m_quantity;
+    } else if(column == OrderTaskColumns::TIME_IN_FORCE) {
+      return arguments.m_time_in_force;
+    } else if(column == OrderTaskColumns::TAGS) {
+      return arguments.m_additional_tags;
+    } else {
+      return arguments.m_key;
+    }
+  }
+
+  auto to_list(const OrderTaskArguments& arguments) {
+    auto list_model = std::make_shared<ArrayListModel<std::any>>();
+    list_model->push(arguments.m_name);
+    list_model->push(arguments.m_region);
+    list_model->push(arguments.m_destination);
+    list_model->push(arguments.m_order_type);
+    list_model->push(arguments.m_side);
+    list_model->push(arguments.m_quantity);
+    list_model->push(arguments.m_time_in_force);
+    list_model->push(arguments.m_additional_tags);
+    list_model->push(arguments.m_key);
+    return list_model;
+  }
+
+  struct OrderTaskArgumentsMatchCache {
     std::unordered_set<QString> m_caches;
 
     bool matches(const OrderTaskArguments& order_task, const QString& query,
@@ -60,197 +98,146 @@ namespace {
       return matched;
     }
   };
+
+  struct OrderTaskTableModel : TableModel {
+    static const auto COLUMN_SIZE = 9;
+    std::shared_ptr<OrderTaskArgumentsListModel> m_source;
+    TableModelTransactionLog m_transaction;
+    scoped_connection m_source_connection;
+
+    explicit OrderTaskTableModel(
+      std::shared_ptr<OrderTaskArgumentsListModel> source)
+      : m_source(std::move(source)),
+      m_source_connection(m_source->connect_operation_signal(
+        std::bind_front(&OrderTaskTableModel::on_operation, this))) {}
+
+    int get_row_size() const override {
+      return m_source->get_size();
+    }
+
+    int get_column_size() const override {
+      return COLUMN_SIZE;
+    }
+
+    AnyRef at(int row, int column) const override {
+      if(column < 0 || column >= get_column_size()) {
+        throw std::out_of_range("The column is out of range.");
+      }
+      return extract_field(m_source->get(row),
+        static_cast<OrderTaskColumns>(column));
+    }
+
+    QValidator::State set(int row, int column, const std::any& value) override {
+      if(column < 0 || column >= get_column_size()) {
+        throw std::out_of_range("The column is out of range.");
+      }
+      auto column_index = static_cast<OrderTaskColumns>(column);
+      auto arguments = m_source->get(row);
+      if(column_index == OrderTaskColumns::NAME) {
+        arguments.m_name = std::any_cast<const QString&>(value);
+      } else if(column_index == OrderTaskColumns::REGION) {
+        arguments.m_region = std::any_cast<const Region&>(value);
+      } else if(column_index == OrderTaskColumns::DESTINATION) {
+        arguments.m_destination = std::any_cast<const Destination&>(value);
+      } else if(column_index == OrderTaskColumns::ORDER_TYPE) {
+        arguments.m_order_type = std::any_cast<const OrderType&>(value);
+      } else if(column_index == OrderTaskColumns::SIDE) {
+        arguments.m_side = std::any_cast<const Side&>(value);
+      } else if(column_index == OrderTaskColumns::QUANTITY) {
+        arguments.m_quantity = std::any_cast<const optional<Quantity>&>(value);
+      } else if(column_index == OrderTaskColumns::TIME_IN_FORCE) {
+        arguments.m_time_in_force = std::any_cast<const TimeInForce&>(value);
+      } else if(column_index == OrderTaskColumns::TAGS) {
+        arguments.m_additional_tags =
+          std::any_cast<const std::vector<Nexus::Tag>&>(value);
+      } else if(column_index == OrderTaskColumns::KEY) {
+        arguments.m_key = std::any_cast<const QKeySequence&>(value);
+      }
+      return m_source->set(row, std::move(arguments));
+    }
+
+    QValidator::State remove(int row) override {
+      return m_source->remove(row);
+    }
+
+    connection connect_operation_signal(
+      const OperationSignal::slot_type& slot) const override {
+      return m_transaction.connect_operation_signal(slot);
+    }
+
+    void on_operation(const OrderTaskArgumentsListModel::Operation& operation) {
+      visit(operation,
+        [&] (const StartTransaction&) {
+          m_transaction.start();
+        },
+        [&] (const EndTransaction&) {
+          m_transaction.end();
+        },
+        [&] (const OrderTaskArgumentsListModel::AddOperation& operation) {
+          m_transaction.push(TableModel::AddOperation(operation.m_index,
+          to_list(operation.get_value())));
+        },
+        [&] (const OrderTaskArgumentsListModel::MoveOperation& operation) {
+          m_transaction.push(TableModel::MoveOperation(
+            operation.m_source, operation.m_destination));
+        },
+        [&] (const OrderTaskArgumentsListModel::RemoveOperation& operation) {
+          m_transaction.push(TableModel::RemoveOperation(operation.m_index,
+          to_list(operation.get_value())));
+        },
+        [&] (const OrderTaskArgumentsListModel::UpdateOperation& operation) {
+          m_transaction.transact([&] {
+            for(auto i = 0; i < COLUMN_SIZE; ++i) {
+              m_transaction.push(TableModel::UpdateOperation(operation.m_index,
+                i, to_any(extract_field(operation.get_previous(),
+                  static_cast<OrderTaskColumns>(i))),
+                to_any(extract_field(operation.get_value(),
+                  static_cast<OrderTaskColumns>(i)))));
+            }
+          });
+      });
+    }
+  };
 }
 
-struct TaskKeysPage::FilteredTaskKeysListModel : OrderTaskArgumentsListModel {
+struct TaskKeysPage::OrderTaskMatchCache {
   std::shared_ptr<OrderTaskArgumentsListModel> m_source;
   MarketDatabase m_markets;
   CountryDatabase m_countries;
   DestinationDatabase m_destinations;
-  std::vector<OrderTaskMatchCache> m_caches;
-  std::vector<int> m_filtered_data;
-  QString m_query;
-  ListModelTransactionLog<OrderTaskArguments> m_transaction;
-  scoped_connection m_source_connection;
+  std::vector<OrderTaskArgumentsMatchCache> m_caches;
+  scoped_connection m_connection;
 
-  explicit FilteredTaskKeysListModel(
-      std::shared_ptr<OrderTaskArgumentsListModel> source,
-      CountryDatabase countries, MarketDatabase markets,
-      DestinationDatabase destinations)
-      : m_source(std::move(source)),
-        m_countries(std::move(countries)),
-        m_markets(std::move(markets)),
-        m_destinations(std::move(destinations)),
-        m_filtered_data(m_source->get_size()),
-        m_source_connection(m_source->connect_operation_signal(
-          std::bind_front(&FilteredTaskKeysListModel::on_operation, this))) {
-    std::iota(m_filtered_data.begin(), m_filtered_data.end(), 0);
-  }
+  OrderTaskMatchCache(std::shared_ptr<OrderTaskArgumentsListModel> source,
+    CountryDatabase countries, MarketDatabase markets,
+    DestinationDatabase destinations)
+    : m_source(std::move(source)),
+      m_countries(std::move(countries)),
+      m_markets(std::move(markets)),
+      m_destinations(std::move(destinations)),
+      m_caches(m_source->get_size()),
+      m_connection(m_source->connect_operation_signal(
+        std::bind_front(&OrderTaskMatchCache::on_operation, this))) {}
 
-  void matches(const QString& query) {
-    m_query = query;
-    auto source_row = 0;
-    auto filtered_row = 0;
-    m_transaction.transact([&] {
-      while(source_row != m_source->get_size() &&
-          filtered_row != static_cast<int>(m_filtered_data.size())) {
-        if(is_matched(source_row)) {
-          if(m_filtered_data[filtered_row] != source_row) {
-            m_filtered_data.insert(
-              m_filtered_data.begin() + filtered_row, source_row);
-            m_transaction.push(AddOperation(filtered_row, get(filtered_row)));
-          }
-          ++filtered_row;
-        } else {
-          if(m_filtered_data[filtered_row] == source_row) {
-            auto& order_task = get(filtered_row);
-            m_filtered_data.erase(m_filtered_data.begin() + filtered_row);
-            m_transaction.push(
-              RemoveOperation(filtered_row, std::move(order_task)));
-          }
-        }
-        ++source_row;
-      }
-      while(filtered_row != static_cast<int>(m_filtered_data.size())) {
-        auto& order_task = get(filtered_row);
-        m_filtered_data.erase(m_filtered_data.begin() + filtered_row);
-        m_transaction.push(
-          RemoveOperation(filtered_row, std::move(order_task)));
-      }
-      while(source_row != m_source->get_size()) {
-        if(is_matched(source_row)) {
-          m_filtered_data.push_back(source_row);
-          m_transaction.push(AddOperation(
-            m_filtered_data.size() - 1, get(m_filtered_data.size() - 1)));
-        }
-        ++source_row;
-      }
-    });
-  }
-
-  int get_size() const override {
-    return static_cast<int>(m_filtered_data.size());
-  }
-
-  const OrderTaskArguments& get(int index) const override {
-    if(index < 0 || index >= get_size()) {
-      throw std::out_of_range("The index is out of range.");
+  bool matches(int row, const QString& query) {
+    if(query.isEmpty()) {
+      return true;
     }
-    return m_source->get(m_filtered_data[index]);
+    return m_caches[row].matches(m_source->get(row), query,
+      m_countries, m_markets, m_destinations);
   }
 
-  QValidator::State set(int index, const OrderTaskArguments& value) override {
-    if(index < 0 || index >= get_size()) {
-      throw std::out_of_range("The index is out of range.");
-    }
-    return m_source->set(m_filtered_data[index], value);
-  }
-
-  QValidator::State insert(const OrderTaskArguments& value,
-      int index) override {
-    if(index < 0 || index > get_size()) {
-      throw std::out_of_range("The index is out of range.");
-    }
-    auto source_index = [&] {
-      if(index < get_size()) {
-        return m_filtered_data[index];
-      }
-      return m_source->get_size();
-    }();
-    return m_source->insert(value, source_index);
-  }
-
-  QValidator::State remove(int index) override {
-    if(index < 0 || index >= get_size()) {
-      throw std::out_of_range("The index is out of range.");
-    }
-    return m_source->remove(m_filtered_data[index]);
-  }
-
-  connection connect_operation_signal(
-      const OperationSignal::slot_type& slot) const override {
-    return m_transaction.connect_operation_signal(slot);
-  }
-
-  void transact(const std::function<void()>& transaction) override {
-    m_transaction.transact(transaction);
-  }
-
-  bool is_matched(int index) {
-    return m_query.isEmpty() ||
-      m_caches[index].matches(m_source->get(index), m_query, m_countries,
-        m_markets, m_destinations);
-  }
-
-  std::tuple<bool, std::vector<int>::iterator> find(int index) {
-    auto i = std::lower_bound(m_filtered_data.begin(), m_filtered_data.end(),
-      index);
-    if(i != m_filtered_data.end() && *i == index) {
-      return {true, i};
-    }
-    return {false, i};
-  }
-
-  void on_operation(const Operation& operation) {
+  void on_operation(const OrderTaskArgumentsListModel::Operation& operation) {
     visit(operation,
-      [&] (const StartTransaction&) {
-        m_transaction.start();
-      },
-      [&] (const EndTransaction&) {
-        m_transaction.end();
-      },
       [&] (const OrderTaskArgumentsListModel::AddOperation& operation) {
         m_caches.insert(std::next(m_caches.begin(), operation.m_index),
-          OrderTaskMatchCache());
-        if(operation.m_index >= m_source->get_size() - 1) {
-          if(is_matched(operation.m_index)) {
-            m_filtered_data.push_back(operation.m_index);
-            m_transaction.push(AddOperation(
-              static_cast<int>(m_filtered_data.size()) - 1,
-              std::any_cast<const OrderTaskArguments&>(operation.m_value)));
-          }
-        } else {
-          auto i = std::get<1>(find(operation.m_index));
-          std::for_each(i, m_filtered_data.end(), [] (int& value) { ++value; });
-          if(is_matched(operation.m_index)) {
-            m_transaction.push(AddOperation(
-              static_cast<int>(m_filtered_data.insert(i, operation.m_index) -
-                m_filtered_data.begin()),
-              std::any_cast<const OrderTaskArguments&>(operation.m_value)));
-          }
-        }
+          OrderTaskArgumentsMatchCache());
       },
       [&] (const OrderTaskArgumentsListModel::RemoveOperation& operation) {
         m_caches.erase(std::next(m_caches.begin(), operation.m_index));
-        auto [is_found, i] = find(operation.m_index);
-        std::for_each(i, m_filtered_data.end(), [] (int& value) { --value; });
-        if(is_found) {
-          auto index = static_cast<int>(i - m_filtered_data.begin());
-          m_filtered_data.erase(i);
-          m_transaction.push(RemoveOperation(index,
-            std::any_cast<const OrderTaskArguments&>(operation.m_value)));
-        }
       },
       [&] (const OrderTaskArgumentsListModel::UpdateOperation& operation) {
-        m_caches[operation.m_index] = OrderTaskMatchCache();
-        auto [is_found, i] = find(operation.m_index);
-        if(is_matched(operation.m_index)) {
-          if(is_found) {
-            m_transaction.push(UpdateOperation(
-              static_cast<int>(i - m_filtered_data.begin()),
-              std::any_cast<const OrderTaskArguments&>(operation.m_previous),
-              std::any_cast<const OrderTaskArguments&>(operation.m_value)));
-          } else {
-            auto filtered_row = static_cast<int>(m_filtered_data.insert(
-              i, operation.m_index) - m_filtered_data.begin());
-            m_transaction.push(AddOperation(filtered_row, get(filtered_row)));
-          }
-        } else if(is_found) {
-          auto index = static_cast<int>(i - m_filtered_data.begin());
-          auto& order_task = get(index);
-          m_filtered_data.erase(i);
-          m_transaction.push(RemoveOperation(index, std::move(order_task)));
-        }
+        m_caches[operation.m_index] = OrderTaskArgumentsMatchCache();
       });
   }
 };
@@ -260,9 +247,12 @@ TaskKeysPage::TaskKeysPage(std::shared_ptr<KeyBindingsModel> key_bindings,
     DestinationDatabase destinations, QWidget* parent)
     : QWidget(parent),
       m_key_bindings(std::move(key_bindings)),
-      m_filtered_model(std::make_shared<FilteredTaskKeysListModel>(
-        m_key_bindings->get_order_task_arguments(), std::move(countries),
-          std::move(markets), std::move(destinations))),
+      m_match_cache(std::make_unique<OrderTaskMatchCache>(
+        m_key_bindings->get_order_task_arguments(),
+        std::move(countries), std::move(markets), std::move(destinations))),
+      m_filtered_model(std::make_shared<FilteredTableModel>(
+        std::make_shared<OrderTaskTableModel>(m_match_cache->m_source),
+        std::bind_front(&TaskKeysPage::filter, this, ""))),
       m_is_row_added(false) {
   auto toolbar_body = new QWidget();
   auto toolbar_layout = make_hbox_layout(toolbar_body);
@@ -310,7 +300,7 @@ TaskKeysPage::TaskKeysPage(std::shared_ptr<KeyBindingsModel> key_bindings,
   layout->addWidget(toolbar);
   m_table_view = make_task_keys_table_view(
     m_filtered_model, std::make_shared<LocalComboBoxQueryModel>(),
-    m_filtered_model->m_destinations, m_filtered_model->m_markets);
+    m_match_cache->m_destinations, m_match_cache->m_markets);
   layout->addWidget(m_table_view);
   auto box = new Box(body);
   update_style(*box, [] (auto& style) {
@@ -354,6 +344,10 @@ void TaskKeysPage::keyPressEvent(QKeyEvent* event) {
   }
 }
 
+bool TaskKeysPage::filter(const QString& query, const TableModel&, int row) {
+  return !m_match_cache->matches(row, query);
+}
+
 void TaskKeysPage::update_button_state() {
   auto is_enabled =
     m_table_view->get_selection()->get_row_selection()->get_size() > 0;
@@ -362,7 +356,8 @@ void TaskKeysPage::update_button_state() {
 }
 
 void TaskKeysPage::on_search(const QString& query) {
-  m_filtered_model->matches(query);
+  m_filtered_model->set_filter(
+    std::bind_front(&TaskKeysPage::filter, this, query));
 }
 
 void TaskKeysPage::on_new_task_action() {
