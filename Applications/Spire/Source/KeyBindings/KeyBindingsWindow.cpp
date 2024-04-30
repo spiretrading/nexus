@@ -29,7 +29,8 @@ KeyBindingsWindow::KeyBindingsWindow(
   auto navigation_view = new NavigationView();
   navigation_view->setSizePolicy(
     QSizePolicy::Expanding, QSizePolicy::Expanding);
-  auto task_keys_page = new TaskKeysPage(m_key_bindings, destinations, markets);
+  auto task_keys_page = new TaskKeysPage(m_key_bindings, countries, markets,
+    destinations);
   task_keys_page->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   navigation_view->add_tab(*task_keys_page, tr("Task Keys"));
   auto cancel_keys_page =

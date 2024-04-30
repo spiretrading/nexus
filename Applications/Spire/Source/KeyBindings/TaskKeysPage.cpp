@@ -42,25 +42,31 @@ namespace {
     button->setFocusPolicy(Qt::TabFocus);
     return button;
   }
+
+  struct OrderTaskMatchCache {
+    std::unordered_set<QString> m_caches;
+
+    bool matches(const OrderTaskArguments& order_task, const QString& query,
+        const CountryDatabase& countries, const MarketDatabase& markets,
+        const DestinationDatabase& destinations) {
+      if(m_caches.contains(query)) {
+        return true;
+      }
+      auto matched = ::matches(order_task, query, countries, markets,
+        destinations);
+      if(matched) {
+        m_caches.insert(query);
+      }
+      return matched;
+    }
+  };
 }
-
-struct OrderTaskMatchCache {
-  std::unordered_set<QString> m_caches;
-
-  bool matches(const OrderTaskArguments& order_task, const QString& query) {
-    if(m_caches.contains(query)) {
-      return true;
-    }
-    auto matched = ::matches(order_task, query);
-    if(matched) {
-      m_caches.insert(query);
-    }
-    return matched;
-  }
-};
 
 struct TaskKeysPage::FilteredTaskKeysListModel : OrderTaskArgumentsListModel {
   std::shared_ptr<OrderTaskArgumentsListModel> m_source;
+  MarketDatabase m_markets;
+  CountryDatabase m_countries;
+  DestinationDatabase m_destinations;
   std::vector<OrderTaskMatchCache> m_caches;
   std::vector<int> m_filtered_data;
   QString m_query;
@@ -68,8 +74,13 @@ struct TaskKeysPage::FilteredTaskKeysListModel : OrderTaskArgumentsListModel {
   scoped_connection m_source_connection;
 
   explicit FilteredTaskKeysListModel(
-      std::shared_ptr<OrderTaskArgumentsListModel> source)
+      std::shared_ptr<OrderTaskArgumentsListModel> source,
+      CountryDatabase countries, MarketDatabase markets,
+      DestinationDatabase destinations)
       : m_source(std::move(source)),
+        m_countries(std::move(countries)),
+        m_markets(std::move(markets)),
+        m_destinations(std::move(destinations)),
         m_filtered_data(m_source->get_size()),
         m_source_connection(m_source->connect_operation_signal(
           std::bind_front(&FilteredTaskKeysListModel::on_operation, this))) {
@@ -167,7 +178,8 @@ struct TaskKeysPage::FilteredTaskKeysListModel : OrderTaskArgumentsListModel {
 
   bool is_matched(int index) {
     return m_query.isEmpty() ||
-      m_caches[index].matches(m_source->get(index), m_query);
+      m_caches[index].matches(m_source->get(index), m_query, m_countries,
+        m_markets, m_destinations);
   }
 
   std::tuple<bool, std::vector<int>::iterator> find(int index) {
@@ -244,11 +256,13 @@ struct TaskKeysPage::FilteredTaskKeysListModel : OrderTaskArgumentsListModel {
 };
 
 TaskKeysPage::TaskKeysPage(std::shared_ptr<KeyBindingsModel> key_bindings,
-    DestinationDatabase destinations, MarketDatabase markets, QWidget* parent)
+    CountryDatabase countries, MarketDatabase markets,
+    DestinationDatabase destinations, QWidget* parent)
     : QWidget(parent),
       m_key_bindings(std::move(key_bindings)),
       m_filtered_model(std::make_shared<FilteredTaskKeysListModel>(
-        m_key_bindings->get_order_task_arguments())),
+        m_key_bindings->get_order_task_arguments(), std::move(countries),
+          std::move(markets), std::move(destinations))),
       m_is_row_added(false) {
   auto toolbar_body = new QWidget();
   auto toolbar_layout = make_hbox_layout(toolbar_body);
@@ -296,7 +310,7 @@ TaskKeysPage::TaskKeysPage(std::shared_ptr<KeyBindingsModel> key_bindings,
   layout->addWidget(toolbar);
   m_table_view = make_task_keys_table_view(
     m_filtered_model, std::make_shared<LocalComboBoxQueryModel>(),
-    std::move(destinations), std::move(markets));
+    m_filtered_model->m_destinations, m_filtered_model->m_markets);
   layout->addWidget(m_table_view);
   auto box = new Box(body);
   update_style(*box, [] (auto& style) {

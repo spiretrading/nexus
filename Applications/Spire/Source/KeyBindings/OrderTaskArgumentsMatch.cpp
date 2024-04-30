@@ -1,5 +1,4 @@
 #include "Spire/KeyBindings/OrderTaskArgumentsMatch.hpp"
-#include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 
 using namespace boost;
@@ -28,8 +27,9 @@ bool Spire::matches(const QString& name, const QString& query) {
   return false;
 }
 
-bool Spire::matches(const CountryCode& country, const QString& query) {
-  auto& entry = GetDefaultCountryDatabase().FromCode(country);
+bool Spire::matches(CountryCode country, const QString& query,
+    const CountryDatabase& countries) {
+  auto& entry = countries.FromCode(country);
   return entry.m_code != CountryCode::NONE &&
     (QString::fromStdString(entry.m_twoLetterCode.GetData()).startsWith(
         query, Qt::CaseInsensitive) ||
@@ -39,8 +39,9 @@ bool Spire::matches(const CountryCode& country, const QString& query) {
         query, Qt::CaseInsensitive));
 }
 
-bool Spire::matches(const MarketCode& market, const QString& query) {
-  auto& entry = GetDefaultMarketDatabase().FromCode(market);
+bool Spire::matches(MarketCode market, const QString& query,
+    const MarketDatabase& markets) {
+  auto& entry = markets.FromCode(market);
   return !entry.m_code.IsEmpty() &&
     (QString::fromStdString(entry.m_code.GetData()).startsWith(
         query, Qt::CaseInsensitive) ||
@@ -49,49 +50,52 @@ bool Spire::matches(const MarketCode& market, const QString& query) {
       matches_by_word(QString::fromStdString(entry.m_description), query));
 }
 
-bool Spire::matches(const Security& security, const QString& query) {
+bool Spire::matches(const Security& security, const QString& query,
+    const MarketDatabase& markets) {
   return !security.GetSymbol().empty() &&
     (to_text(security).startsWith(query, Qt::CaseInsensitive) ||
-      matches(security.GetMarket(), query));
+      matches(security.GetMarket(), query, markets));
 }
 
-bool Spire::matches(const Region& region, const QString& query) {
+bool Spire::matches(const Region& region, const QString& query,
+    const CountryDatabase& countries, const MarketDatabase& markets) {
   if(!region.GetName().empty() && QString::fromStdString(
       region.GetName()).startsWith(query, Qt::CaseInsensitive)) {
     return true;
   }
   for(auto& country : region.GetCountries()) {
-    if(matches(country, query)) {
+    if(matches(country, query, countries)) {
       return true;
     }
   }
   for(auto& market : region.GetMarkets()) {
-    if(matches(market, query)) {
+    if(matches(market, query, markets)) {
       return true;
     }
   }
   for(auto& security : region.GetSecurities()) {
-    if(matches(security, query)) {
+    if(matches(security, query, markets)) {
       return true;
     }
   }
   return false;
 }
 
-bool Spire::matches(const Destination& destination, const QString& query) {
-  auto& entry = GetDefaultDestinationDatabase().FromId(destination);
+bool Spire::matches(const Destination& destination, const QString& query,
+    const DestinationDatabase& destinations) {
+  auto& entry = destinations.FromId(destination);
   return !entry.m_id.empty() &&
     (QString::fromStdString(entry.m_id).startsWith(
         query, Qt::CaseInsensitive) ||
       matches_by_word(QString::fromStdString(entry.m_description), query));
 }
 
-bool Spire::matches(const OrderType& order_type, const QString& query) {
+bool Spire::matches(OrderType order_type, const QString& query) {
   return order_type != OrderType::NONE &&
     to_text(order_type).startsWith(query, Qt::CaseInsensitive);
 }
 
-bool Spire::matches(const Side& side, const QString& query) {
+bool Spire::matches(Side side, const QString& query) {
   if(side == Side::NONE) {
     return false;
   }
@@ -123,7 +127,7 @@ bool Spire::matches(const optional<Quantity>& quantity, const QString& query) {
   return QString::fromStdString(text).startsWith(query, Qt::CaseInsensitive);
 }
 
-bool Spire::matches(const TimeInForce& time_in_force, const QString& query) {
+bool Spire::matches(TimeInForce time_in_force, const QString& query) {
   if(time_in_force.GetType() == TimeInForce::Type::NONE) {
     return false;
   }
@@ -163,11 +167,12 @@ bool Spire::matches(const QKeySequence& key_sequence, const QString& query) {
   return matches_by_word(key_sequence.toString().replace('+', ' '), query);
 }
 
-bool Spire::matches(const OrderTaskArguments& order_task,
-    const QString& query) {
+bool Spire::matches(const OrderTaskArguments& order_task, const QString& query,
+    const CountryDatabase& countries, const MarketDatabase& markets,
+    const DestinationDatabase& destinations) {
   return matches(order_task.m_name, query) ||
-    matches(order_task.m_region, query) ||
-    matches(order_task.m_destination, query) ||
+    matches(order_task.m_region, query, countries, markets) ||
+    matches(order_task.m_destination, query, destinations) ||
     matches(order_task.m_order_type, query) ||
     matches(order_task.m_side, query) ||
     matches(order_task.m_quantity, query) ||
