@@ -39,6 +39,10 @@ SelectConnection Spire::Styles::select(const NotSelector& selector,
       }
     }
 
+    bool is_connected() const {
+      return m_connection.is_connected();
+    }
+
     void on_update(
         std::unordered_set<const Stylist*>&& additions,
         std::unordered_set<const Stylist*>&& removals) {

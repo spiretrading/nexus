@@ -88,6 +88,9 @@ namespace Spire::Styles {
       /** Returns the list of Stylists being proxied. */
       const std::vector<Stylist*>& get_proxies() const;
 
+      /** Returns the list of Stylists that proxy into this. */
+      const std::vector<Stylist*>& get_principals() const;
+
       /**
        * Specifies that all styles applied to this widget are also applied to
        * another widget.
