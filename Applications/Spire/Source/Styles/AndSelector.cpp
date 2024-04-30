@@ -76,7 +76,7 @@ SelectConnection Spire::Styles::select(const AndSelector& selector,
       auto i = std::ranges::find_if(values, [&] (auto count) {
         return count & flag;
       });
-      if(i != values.end()) {
+      if(i == values.end()) {
         m_selection = {};
         connection.disconnect();
       }
