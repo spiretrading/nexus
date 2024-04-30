@@ -15,6 +15,17 @@ namespace {
     }
     return false;
   }
+
+  bool matches_by_word(const QString& text, const QString& query) {
+    auto words = text.splitRef(' ', Qt::SkipEmptyParts);
+    for(auto& word : words) {
+      if(text.midRef(
+          text.indexOf(word)).startsWith(query, Qt::CaseInsensitive)) {
+        return true;
+      }
+    }
+    return false;
+  }
 }
 
 bool Spire::matches(const QString& name, const QString& query) {
@@ -45,12 +56,7 @@ bool Spire::matches(const MarketCode& market, const QString& query) {
       entry.m_displayName).startsWith(query, Qt::CaseInsensitive)) {
     return true;
   }
-  for(auto& word : QString::fromStdString(entry.m_description).splitRef(' ')) {
-    if(word.startsWith(query, Qt::CaseInsensitive)) {
-      return true;
-    }
-  }
-  return false;
+  return matches_by_word(QString::fromStdString(entry.m_description), query);
 }
 
 bool Spire::matches(const Security& security, const QString& query) {
@@ -95,12 +101,7 @@ bool Spire::matches(const Destination& destination, const QString& query) {
       Qt::CaseInsensitive)) {
     return true;
   }
-  for(auto& word : QString::fromStdString(entry.m_description).splitRef(' ')) {
-    if(word.startsWith(query, Qt::CaseInsensitive)) {
-      return true;
-    }
-  }
-  return false;
+  return matches_by_word(QString::fromStdString(entry.m_description), query);
 }
 
 bool Spire::matches(const OrderType& order_type, const QString& query) {
@@ -180,13 +181,7 @@ bool Spire::matches(const std::vector<Nexus::Tag>& tags, const QString& query) {
 }
 
 bool Spire::matches(const QKeySequence& key_sequence, const QString& query) {
-  for(auto& key : key_sequence.toString().splitRef('+')) {
-    if(key.startsWith(query, Qt::CaseInsensitive)) {
-      return true;
-    }
-  }
-  return key_sequence.toString().replace('+', ' ').startsWith(query,
-    Qt::CaseInsensitive);
+  return matches_by_word(key_sequence.toString().replace('+', ' '), query);
 }
 
 bool Spire::matches(const OrderTaskArguments& order_task,
