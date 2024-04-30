@@ -82,7 +82,7 @@ struct TaskKeysPage::FilteredTaskKeysListModel : OrderTaskArgumentsListModel {
     auto filtered_row = 0;
     m_transaction.transact([&] {
       while(source_row != m_source->get_size() &&
-        filtered_row != static_cast<int>(m_filtered_data.size())) {
+          filtered_row != static_cast<int>(m_filtered_data.size())) {
         if(is_matched(source_row)) {
           if(m_filtered_data[filtered_row] != source_row) {
             m_filtered_data.insert(
@@ -94,7 +94,8 @@ struct TaskKeysPage::FilteredTaskKeysListModel : OrderTaskArgumentsListModel {
           if(m_filtered_data[filtered_row] == source_row) {
             auto& order_task = get(filtered_row);
             m_filtered_data.erase(m_filtered_data.begin() + filtered_row);
-            m_transaction.push(RemoveOperation(filtered_row, std::move(order_task)));
+            m_transaction.push(
+              RemoveOperation(filtered_row, std::move(order_task)));
           }
         }
         ++source_row;
@@ -102,13 +103,14 @@ struct TaskKeysPage::FilteredTaskKeysListModel : OrderTaskArgumentsListModel {
       while(filtered_row != static_cast<int>(m_filtered_data.size())) {
         auto& order_task = get(filtered_row);
         m_filtered_data.erase(m_filtered_data.begin() + filtered_row);
-        m_transaction.push(RemoveOperation(filtered_row, std::move(order_task)));
+        m_transaction.push(
+          RemoveOperation(filtered_row, std::move(order_task)));
       }
       while(source_row != m_source->get_size()) {
         if(is_matched(source_row)) {
           m_filtered_data.push_back(source_row);
-          m_transaction.push(
-            AddOperation(m_filtered_data.size() - 1, get(m_filtered_data.size() - 1)));
+          m_transaction.push(AddOperation(
+            m_filtered_data.size() - 1, get(m_filtered_data.size() - 1)));
         }
         ++source_row;
       }
@@ -164,10 +166,8 @@ struct TaskKeysPage::FilteredTaskKeysListModel : OrderTaskArgumentsListModel {
   }
 
   bool is_matched(int index) {
-    if(m_query.isEmpty()) {
-      return true;
-    }
-    return m_caches[index].matches(m_source->get(index), m_query);
+    return m_query.isEmpty() ||
+      m_caches[index].matches(m_source->get(index), m_query);
   }
 
   std::tuple<bool, std::vector<int>::iterator> find(int index) {

@@ -7,15 +7,6 @@ using namespace Nexus;
 using namespace Spire;
 
 namespace {
-  bool suffix_matches(const QString& s1, const QString& s2) {
-    for(auto i = 0; i < s1.length(); ++i) {
-      if(s1.right(s1.length() - i).startsWith(s2)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   bool matches_by_word(const QString& text, const QString& query) {
     auto words = text.splitRef(' ', Qt::SkipEmptyParts);
     for(auto& word : words) {
@@ -29,44 +20,39 @@ namespace {
 }
 
 bool Spire::matches(const QString& name, const QString& query) {
-  return suffix_matches(name.toLower(), query.toLower());
+  for(auto i = 0; i < name.length(); ++i) {
+    if(name.right(name.length() - i).startsWith(query, Qt::CaseInsensitive)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 bool Spire::matches(const CountryCode& country, const QString& query) {
   auto& entry = GetDefaultCountryDatabase().FromCode(country);
-  if(entry.m_code == CountryCode::NONE) {
-    return false;
-  }
-  return QString::fromStdString(
-      entry.m_twoLetterCode.GetData()).startsWith(query, Qt::CaseInsensitive) ||
-    QString::fromStdString(
-      entry.m_threeLetterCode.GetData()).startsWith(query,
-        Qt::CaseInsensitive) ||
-    QString::fromStdString(entry.m_name).startsWith(query, Qt::CaseInsensitive);
+  return entry.m_code != CountryCode::NONE &&
+    (QString::fromStdString(entry.m_twoLetterCode.GetData()).startsWith(
+        query, Qt::CaseInsensitive) ||
+      QString::fromStdString(entry.m_threeLetterCode.GetData()).startsWith(
+        query, Qt::CaseInsensitive) ||
+      QString::fromStdString(entry.m_name).startsWith(
+        query, Qt::CaseInsensitive));
 }
 
 bool Spire::matches(const MarketCode& market, const QString& query) {
   auto& entry = GetDefaultMarketDatabase().FromCode(market);
-  if(entry.m_code.IsEmpty()) {
-    return false;
-  }
-  if(QString::fromStdString(
-      entry.m_code.GetData()).startsWith(query, Qt::CaseInsensitive) ||
-    QString::fromStdString(
-      entry.m_displayName).startsWith(query, Qt::CaseInsensitive)) {
-    return true;
-  }
-  return matches_by_word(QString::fromStdString(entry.m_description), query);
+  return !entry.m_code.IsEmpty() &&
+    (QString::fromStdString(entry.m_code.GetData()).startsWith(
+        query, Qt::CaseInsensitive) ||
+      QString::fromStdString(entry.m_displayName).startsWith(
+        query, Qt::CaseInsensitive) ||
+      matches_by_word(QString::fromStdString(entry.m_description), query));
 }
 
 bool Spire::matches(const Security& security, const QString& query) {
-  if(security.GetSymbol().empty()) {
-    return false;
-  }
-  if(to_text(security).startsWith(query, Qt::CaseInsensitive)) {
-    return true;
-  }
-  return matches(security.GetMarket(), query);
+  return !security.GetSymbol().empty() &&
+    (to_text(security).startsWith(query, Qt::CaseInsensitive) ||
+      matches(security.GetMarket(), query));
 }
 
 bool Spire::matches(const Region& region, const QString& query) {
@@ -94,21 +80,15 @@ bool Spire::matches(const Region& region, const QString& query) {
 
 bool Spire::matches(const Destination& destination, const QString& query) {
   auto& entry = GetDefaultDestinationDatabase().FromId(destination);
-  if(entry.m_id.empty()) {
-    return false;
-  }
-  if(QString::fromStdString(entry.m_id).startsWith(query,
-      Qt::CaseInsensitive)) {
-    return true;
-  }
-  return matches_by_word(QString::fromStdString(entry.m_description), query);
+  return !entry.m_id.empty() &&
+    (QString::fromStdString(entry.m_id).startsWith(
+        query, Qt::CaseInsensitive) ||
+      matches_by_word(QString::fromStdString(entry.m_description), query));
 }
 
 bool Spire::matches(const OrderType& order_type, const QString& query) {
-  if(order_type == OrderType::NONE) {
-    return false;
-  }
-  return to_text(order_type).startsWith(query, Qt::CaseInsensitive);
+  return order_type != OrderType::NONE &&
+    to_text(order_type).startsWith(query, Qt::CaseInsensitive);
 }
 
 bool Spire::matches(const Side& side, const QString& query) {
@@ -147,8 +127,7 @@ bool Spire::matches(const TimeInForce& time_in_force, const QString& query) {
   if(time_in_force.GetType() == TimeInForce::Type::NONE) {
     return false;
   }
-  auto lower_query = query.toLower();
-  if(to_text(time_in_force).toLower().startsWith(lower_query)) {
+  if(to_text(time_in_force).startsWith(query, Qt::CaseInsensitive)) {
     return true;
   }
   static auto descriptions =
@@ -169,7 +148,7 @@ bool Spire::matches(const TimeInForce& time_in_force, const QString& query) {
   descriptions.emplace(TimeInForce::Type::OPG,
     std::vector<QString>{"opening", "at the opening"});
   for(auto& description : descriptions[time_in_force.GetType()]) {
-    if(description.startsWith(lower_query)) {
+    if(description.startsWith(query, Qt::CaseInsensitive)) {
       return true;
     }
   }
