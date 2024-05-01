@@ -19,6 +19,7 @@
 #include "Spire/Ui/RegionBox.hpp"
 #include "Spire/Ui/SideBox.hpp"
 #include "Spire/Ui/SingleSelectionModel.hpp"
+#include "Spire/Ui/TableItem.hpp"
 #include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/TimeInForceBox.hpp"
 
@@ -367,7 +368,7 @@ class EditablePopupBox : public EditableBox {
       });
       m_editable_box->connect_end_edit_signal([=] {
         if(!m_is_destroyed) {
-          set_editing(false);
+          set_read_only(true);
         }
       });
       m_popup_box = new PopupBox(*m_editable_box);
@@ -379,7 +380,7 @@ class EditablePopupBox : public EditableBox {
       }
       m_editable_box->installEventFilter(this);
       connect_start_edit_signal([=] {
-        m_editable_box->set_editing(true);
+        m_editable_box->set_read_only(false);
       });
       connect(this, &EditableBox::destroyed, [=] {
         m_is_destroyed = true;
@@ -522,11 +523,14 @@ TableView* Spire::make_task_keys_table_view(
     table_view->get_header().get_widths()->set(i + 1, widths[i]);
   }
   update_style(*table_view, [] (auto& style) {
-    style.get((Any() > PopUp()) << Current()).
+    style.get((Any() > is_a<TableBody>() >
+        Row() > is_a<TableItem>() > PopUp()) << Current()).
       set(border_color(QColor(Qt::transparent)));
-    style.get(Any() > is_a<EditablePopupBox>() > ReadOnly()).
+    style.get(Any() > is_a<TableBody>() >
+        Row() > is_a<TableItem>() > is_a<EditablePopupBox>() > ReadOnly()).
       set(horizontal_padding(scale_width(8)));
-    style.get(Any() > is_a<DecimalBox>()).
+    style.get(Any() > is_a<TableBody>() >
+        Row() > is_a<TableItem>() > is_a<EditableBox>() > is_a<DecimalBox>()).
       set(TextAlign(Qt::Alignment(Qt::AlignRight)));
   });
   return table_view;

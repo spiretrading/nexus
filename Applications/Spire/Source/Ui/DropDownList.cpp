@@ -39,6 +39,7 @@ DropDownList::DropDownList(ListView& list_view, QWidget& parent)
     style = SCROLLABLE_LIST_STYLE(style);
   });
   enclose(*this, *m_scrollable_list_box);
+  link(*this, *m_list_view);
   setFocusProxy(m_scrollable_list_box);
   m_panel = new OverlayPanel(*this, parent);
   m_panel->set_closed_on_focus_out(true);

@@ -41,6 +41,8 @@ ListItem::ListItem(QWidget& body, QWidget* parent)
   auto layout = make_hbox_layout(this);
   layout->setSizeConstraint(QLayout::SetMinAndMaxSize);
   layout->addWidget(m_button);
+  link(*this, body);
+  match(body, Body());
   proxy_style(*m_button, *m_box);
   proxy_style(*this, *m_button);
   set_style(*this, DEFAULT_STYLE());

@@ -21,12 +21,12 @@ namespace {
     return image;
   }
 
-  auto get_color_code_panel(ColorPicker& color_picker) {
+  auto get_color_code_panel(const ColorPicker& color_picker) {
     auto index = color_picker.layout()->count() - 1;
     return color_picker.layout()->itemAt(index)->widget();
   }
 
-  auto get_input_boxes(ColorPicker& color_picker) {
+  auto get_input_boxes(const ColorPicker& color_picker) {
     auto input_boxes = std::vector<QWidget*>();
     auto color_code_panel = get_color_code_panel(color_picker);
     auto& children = color_code_panel->children();
@@ -75,8 +75,8 @@ ColorBox::ColorBox(std::shared_ptr<ColorModel> current, QWidget* parent)
   auto checker_board = new CheckerBoard();
   checker_board->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_color_display = new Box();
-  m_color_display->setSizePolicy(QSizePolicy::Expanding,
-    QSizePolicy::Expanding);
+  m_color_display->setSizePolicy(
+    QSizePolicy::Expanding, QSizePolicy::Expanding);
   update_style(*m_color_display, [&] (auto& style) {
     style.get(Any()).set(BackgroundColor(m_current->get()));
     style.get(Disabled()).set(BackgroundColor(QColor(0xF5F5F5)));

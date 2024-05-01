@@ -280,8 +280,7 @@ TaskKeysPage::TaskKeysPage(std::shared_ptr<KeyBindingsModel> key_bindings,
   m_delete_button->connect_click_signal(
     std::bind_front(&TaskKeysPage::on_delete_task_action, this));
   update_style(*m_delete_button, [] (auto& style) {
-    style.get((Hover() || Press()) > Body() > is_a<Icon>()).
-      set(Fill(QColor(0xB71C1C)));
+    style.get((Hover() || Press()) > is_a<Icon>()).set(Fill(QColor(0xB71C1C)));
   });
   toolbar_layout->addWidget(m_delete_button);
   auto toolbar = new Box(toolbar_body);
@@ -326,7 +325,7 @@ bool TaskKeysPage::eventFilter(QObject* watched, QEvent* event) {
     if(event->type() == QEvent::Show) {
       m_added_region_item->removeEventFilter(this);
       static_cast<EditableBox*>(
-        &m_added_region_item->get_body())->set_editing(true);
+        &m_added_region_item->get_body())->set_read_only(false);
     }
   }
   return QWidget::eventFilter(watched, event);

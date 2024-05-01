@@ -93,7 +93,7 @@ PercentBox::PercentBox(std::shared_ptr<OptionalDecimalModel> model,
     std::make_shared<OptionalPercentModel>(m_model), std::move(modifiers));
   enclose(*this, *m_decimal_box);
   setFocusProxy(m_decimal_box);
-  proxy_style(*this, *m_decimal_box);
+  forward_style(*this, *m_decimal_box);
   m_submit_connection = m_decimal_box->connect_submit_signal(
     std::bind_front(&PercentBox::on_submit, this));
   m_reject_connection = m_decimal_box->connect_reject_signal(
