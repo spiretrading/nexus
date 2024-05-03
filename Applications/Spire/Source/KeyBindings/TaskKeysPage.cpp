@@ -4,6 +4,7 @@
 #include "Spire/Spire/FilteredTableModel.hpp"
 #include "Spire/Spire/Utility.hpp"
 #include "Spire/Ui/Button.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/EditableBox.hpp"
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/LineInputForm.hpp"
@@ -198,6 +199,76 @@ namespace {
       });
     }
   };
+
+  struct RegionQueryModel : ComboBox::QueryModel {
+    std::shared_ptr<ComboBox::QueryModel> m_securities;
+    CountryDatabase m_countries;
+    MarketDatabase m_markets;
+    std::shared_ptr<LocalComboBoxQueryModel> m_model;
+
+    RegionQueryModel(std::shared_ptr<ComboBox::QueryModel> securities,
+        CountryDatabase countries, MarketDatabase markets)
+        : m_securities(std::move(securities)),
+          m_countries(std::move(countries)),
+          m_markets(std::move(markets)),
+          m_model(std::make_shared<LocalComboBoxQueryModel>()) {
+      for(auto& market : m_markets.GetEntries()) {
+        auto region = Region(market);
+        region.SetName(market.m_description);
+        m_model->add(to_text(MarketToken(market.m_code)).toLower(), region);
+        m_model->add(QString::fromStdString(region.GetName()).toLower(), region);
+      }
+      for(auto& country : m_countries.GetEntries()) {
+        auto region = Region(country.m_code);
+        region.SetName(country.m_name);
+        m_model->add(to_text(country.m_code).toLower(), region);
+        m_model->add(QString::fromStdString(region.GetName()).toLower(), region);
+      }
+    }
+
+    std::any parse(const QString& query) override {
+      auto security = m_securities->parse(query);
+      if(security.has_value()) {
+        return Region(std::any_cast<SecurityInfo&>(security).m_security);
+      }
+      return m_model->parse(query);
+    }
+
+    QtPromise<std::vector<std::any>> submit(const QString& query) override {
+      return m_securities->submit(query).then([=] (auto&& security_result) {
+        auto security_matches = [&] {
+          try {
+            return security_result.Get();
+          } catch(const std::exception&) {
+            return std::vector<std::any>();
+          }
+        }();
+        auto result = std::vector<std::any>();
+        auto regions = std::unordered_set<Region>();
+        for(auto& security : security_matches) {
+          auto region = Region(std::any_cast<SecurityInfo&>(security).m_security);
+          if(regions.insert(region).second) {
+            result.push_back(region);
+          }
+        }
+        return m_model->submit(query).then([=] (auto&& region_result) mutable {
+          auto region_matches = [&] {
+            try {
+              return region_result.Get();
+            } catch(const std::exception&) {
+              return std::vector<std::any>();
+            }
+          }();
+          for(auto& region : region_matches) {
+            if(regions.insert(std::any_cast<Region&>(region)).second) {
+              result.push_back(region);
+            }
+          }
+          return result;
+        });
+      });
+    }
+  };
 }
 
 struct TaskKeysPage::OrderTaskMatchCache {
@@ -243,6 +314,7 @@ struct TaskKeysPage::OrderTaskMatchCache {
 };
 
 TaskKeysPage::TaskKeysPage(std::shared_ptr<KeyBindingsModel> key_bindings,
+    std::shared_ptr<ComboBox::QueryModel> securities,
     CountryDatabase countries, MarketDatabase markets,
     DestinationDatabase destinations, QWidget* parent)
     : QWidget(parent),
@@ -298,7 +370,7 @@ TaskKeysPage::TaskKeysPage(std::shared_ptr<KeyBindingsModel> key_bindings,
   layout->addWidget(make_help_text_box());
   layout->addWidget(toolbar);
   m_table_view = make_task_keys_table_view(
-    m_filtered_model, std::make_shared<LocalComboBoxQueryModel>(),
+    m_filtered_model, std::make_shared<RegionQueryModel>(std::move(securities), m_match_cache->m_countries, m_match_cache->m_markets),
     m_match_cache->m_destinations, m_match_cache->m_markets);
   layout->addWidget(m_table_view);
   auto box = new Box(body);

@@ -271,7 +271,7 @@ void ToolbarController::open_key_bindings_window() {
     return;
   }
   m_key_bindings_window = std::make_unique<KeyBindingsWindow>(
-    m_user_profile->GetKeyBindings(), m_user_profile->GetCountryDatabase(),
+    m_user_profile->GetKeyBindings(), std::make_shared<LocalComboBoxQueryModel>(), m_user_profile->GetCountryDatabase(),
     m_user_profile->GetMarketDatabase(),
     m_user_profile->GetDestinationDatabase());
   m_key_bindings_window->installEventFilter(m_event_filter.get());
