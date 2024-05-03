@@ -64,7 +64,8 @@ EditableBox::EditableBox(
       m_input_box(&input_box),
       m_edit_trigger(std::move(trigger)),
       m_focus_observer(*this),
-      m_focus_proxy(nullptr) {
+      m_focus_proxy(nullptr),
+      m_is_submit_connected(false) {
   setFocusProxy(m_input_box);
   enclose(*this, *m_input_box);
   proxy_style(*this, *m_input_box);
@@ -73,8 +74,6 @@ EditableBox::EditableBox(
     std::bind_front(&EditableBox::on_focus, this));
   m_input_box->set_read_only(true);
   match(*this, ReadOnly());
-  m_submit_connection = m_input_box->connect_submit_signal(
-    std::bind_front(&EditableBox::on_submit, this));
   install_focus_proxy_event_filter();
 }
 
@@ -98,26 +97,25 @@ void EditableBox::set_read_only(bool read_only) {
   if(read_only) {
     match(*this, ReadOnly());
     m_input_box->clearFocus();
-    m_end_edit_signal();
   } else {
     unmatch(*this, ReadOnly());
+    if(!m_is_submit_connected) {
+      m_is_submit_connected = true;
+      m_input_box->connect_submit_signal(
+        std::bind_front(&EditableBox::on_submit, this));
+    }
     install_focus_proxy_event_filter();
     if(auto line_edit = dynamic_cast<QLineEdit*>(m_focus_proxy)) {
       line_edit->setCursorPosition(line_edit->text().length());
     }
     m_input_box->setFocus();
-    m_start_edit_signal();
   }
+  m_read_only_signal(read_only);
 }
 
-connection EditableBox::connect_start_edit_signal(
-    const StartEditSignal::slot_type& slot) const {
-  return m_start_edit_signal.connect(slot);
-}
-
-connection EditableBox::connect_end_edit_signal(
-    const EndEditSignal::slot_type& slot) const {
-  return m_end_edit_signal.connect(slot);
+connection EditableBox::connect_read_only_signal(
+    const ReadOnlySignal::slot_type& slot) const {
+  return m_read_only_signal.connect(slot);
 }
 
 bool EditableBox::eventFilter(QObject* watched, QEvent* event) {

@@ -98,8 +98,8 @@ ListView::ListView(
     QWidget* parent)
     : QWidget(parent),
       m_list(std::move(list)),
-      m_current_controller(std::move(current)),
-      m_selection_controller(std::move(selection)),
+      m_current_controller(std::move(current), m_list->get_size()),
+      m_selection_controller(std::move(selection), m_list->get_size()),
       m_view_builder(std::move(view_builder)),
       m_direction(Qt::Vertical),
       m_overflow(Overflow::NONE),
