@@ -1,6 +1,7 @@
 #include "Spire/KeyBindings/KeyBindingsProfile.hpp"
 #include <array>
 #include <fstream>
+#include <ranges>
 #include <unordered_map>
 #include <Beam/Collections/Enum.hpp>
 #include <Beam/IO/BasicIStreamReader.hpp>
@@ -321,6 +322,21 @@ namespace {
     for(auto& task : make_default_order_task_nodes()) {
       key_bindings->get_order_task_arguments()->push(
         to_order_task_arguments(*task));
+    }
+    auto& arguments = *key_bindings->get_order_task_arguments();
+    for(auto& tasks :
+        legacy_key_bindings.m_task_bindings | std::views::values) {
+      for(auto& task : tasks) {
+        auto& key = task.first;
+        auto& legacy_binding = task.second;
+        for(auto i = 0; i != arguments.get_size(); ++i) {
+          auto binding = arguments.get(i);
+          if(binding.m_name == QString::fromStdString(legacy_binding.m_name)) {
+            binding.m_key = key;
+            arguments.set(i, binding);
+          }
+        }
+      }
     }
     for(auto& cancel_binding : legacy_key_bindings.m_cancel_bindings) {
       key_bindings->get_cancel_key_bindings()->get_binding(
