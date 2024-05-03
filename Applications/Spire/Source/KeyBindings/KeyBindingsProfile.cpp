@@ -684,14 +684,14 @@ std::vector<std::unique_ptr<CanvasNode>> Spire::make_tsx_order_task_nodes() {
       "long_life", 7735, std::make_unique<TextNode>("Y")));
   limit.SetReadOnly("long_life", true);
   limit.SetVisible("long_life", false);
-  populate_bid_ask(limit, "TSX", DefaultDestinations::TSX(),
+  populate_bid_ask(limit, "TSX Limit", DefaultDestinations::TSX(),
     TimeInForce::Type::DAY, order_types);
   auto market = CanvasNodeBuilder(*GetMarketOrderTaskNode());
-  populate_bid_ask(market, "TSX", DefaultDestinations::TSX(),
+  populate_bid_ask(market, "TSX Market", DefaultDestinations::TSX(),
     TimeInForce::Type::DAY, order_types);
   auto immediate = CanvasNodeBuilder(*GetMarketOrderTaskNode());
   immediate.SetVisible(SingleOrderTaskNode::QUANTITY_PROPERTY, false);
-  populate_bid_ask(immediate, "TSX", DefaultDestinations::TSX(),
+  populate_bid_ask(immediate, "TSX Buy", "TSX Sell", DefaultDestinations::TSX(),
     TimeInForce::Type::DAY, order_types);
   auto limit_on_close = CanvasNodeBuilder(*GetLimitOrderTaskNode());
   populate_bid_ask(limit_on_close, "TSX Limit On Close",
