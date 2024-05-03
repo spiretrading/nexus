@@ -57,8 +57,9 @@ namespace Spire {
        * Constructs a ListCurrentController over a given current index model
        * with an EdgeNavigation set to WRAP.
        * @param current The current index model.
+       * @param size The size of the list.
        */
-      explicit ListCurrentController(std::shared_ptr<CurrentModel> current);
+      ListCurrentController(std::shared_ptr<CurrentModel> current, int size);
 
       /** Returns the current index model. */
       const std::shared_ptr<CurrentModel>& get_current() const;
@@ -145,10 +146,12 @@ namespace Spire {
       mutable UpdateSignal m_update_signal;
       std::vector<std::unique_ptr<ItemView>> m_views;
       std::shared_ptr<CurrentModel> m_current;
+      int m_size;
       EdgeNavigation m_edge_navigation;
       boost::optional<int> m_last_current;
       boost::signals2::scoped_connection m_connection;
 
+      bool is_initialized() const;
       void on_current(boost::optional<int> current);
   };
 }

@@ -144,10 +144,12 @@ namespace Styles {
 
     private:
       mutable SubmitSignal m_submit_signal;
-      ListView* m_list_view;
+      std::shared_ptr<AnyListModel> m_list;
+      std::shared_ptr<CurrentModel> m_current;
+      std::shared_ptr<SelectionModel> m_selection;
+      ViewBuilder<> m_view_builder;
       TextBox* m_text_box;
       Button* m_button;
-      DropDownList* m_drop_down_list;
       QTimer m_timer;
       bool m_is_read_only;
       boost::optional<int> m_submission;
@@ -156,6 +158,7 @@ namespace Styles {
       bool m_is_mouse_press_on_list;
       QPoint m_mouse_press_position;
       QPointer<QWidget> m_hovered_item;
+      DropDownList* m_drop_down_list;
       boost::signals2::scoped_connection m_submit_connection;
       boost::signals2::scoped_connection m_current_connection;
 
@@ -163,6 +166,8 @@ namespace Styles {
       void enter_hovered_item(const QMouseEvent& event);
       void leave_hovered_item();
       void revert_current();
+      void show_drop_down_list();
+      void hide_drop_down_list();
       void submit();
       void on_button_press_end(PressObserver::Reason reason);
       void on_current(const boost::optional<int>& current);

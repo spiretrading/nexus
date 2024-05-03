@@ -396,8 +396,10 @@ QWidget* EditableTableView::make_table_item(const ViewBuilder& view_builder,
     auto item = view_builder(
       std::static_pointer_cast<EditableTableModel>(get_table())->m_source,
       any_cast<int>(table->at(row, 0)), column - 1);
-    item->connect_end_edit_signal([=] {
-      setFocus();
+    item->connect_read_only_signal([=] (auto read_only) {
+      if(read_only) {
+        setFocus();
+      }
     });
     return item;
   }

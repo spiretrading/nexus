@@ -91,6 +91,7 @@ namespace Spire {
       void install_text_proxy_event_filter();
       void push_combo_box();
       void submit();
+      QWidget* find_drop_down_window();
       void on_combo_box_submit(const std::any& submission);
       void on_focus(FocusObserver::State state);
       void on_operation(const AnyListModel::Operation& operation);

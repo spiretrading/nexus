@@ -361,13 +361,13 @@ class EditablePopupBox : public EditableBox {
       get_input_box().hide();
       get_input_box().setFocusPolicy(Qt::ClickFocus);
       m_editable_box = new EditableBox(input_box);
-      m_editable_box->connect_start_edit_signal([=] {
-        if(!m_is_destroyed) {
+      m_editable_box->connect_read_only_signal([=] (auto read_only) {
+        if(!read_only && !m_is_destroyed) {
           get_input_box().set_read_only(false);
         }
       });
-      m_editable_box->connect_end_edit_signal([=] {
-        if(!m_is_destroyed) {
+      m_editable_box->connect_read_only_signal([=] (auto read_only) {
+        if(read_only && !m_is_destroyed) {
           set_read_only(true);
         }
       });
@@ -379,8 +379,10 @@ class EditablePopupBox : public EditableBox {
         proxy->installEventFilter(this);
       }
       m_editable_box->installEventFilter(this);
-      connect_start_edit_signal([=] {
-        m_editable_box->set_read_only(false);
+      connect_read_only_signal([=] (auto read_only) {
+        if(!read_only) {
+          m_editable_box->set_read_only(false);
+        }
       });
       connect(this, &EditableBox::destroyed, [=] {
         m_is_destroyed = true;

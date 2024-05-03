@@ -74,6 +74,7 @@ namespace Spire {
       ComboBox* m_combo_box;
       AnyInputBox* m_input_box;
       bool m_is_rejected;
+      bool m_has_submit;
       boost::signals2::scoped_connection m_current_connection;
 
       void on_current(const Nexus::Destination& current);
