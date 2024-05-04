@@ -2,6 +2,8 @@
 #define SPIRE_KEY_BINDINGS_MODEL_HPP
 #include <memory>
 #include <unordered_map>
+#include <Beam/Serialization/Receiver.hpp>
+#include <Beam/Serialization/Sender.hpp>
 #include "Nexus/Definitions/Market.hpp"
 #include "Nexus/Definitions/Region.hpp"
 #include "Spire/KeyBindings/CancelKeyBindingsModel.hpp"
@@ -59,6 +61,7 @@ namespace Beam::Serialization {
     void operator ()(Shuttler& shuttle, Spire::KeyBindingsModel& value,
         unsigned int version) {
       shuttle.Shuttle("order_task_arguments", *value.m_order_task_arguments);
+      shuttle.Shuttle("cancel_key_bindings", *value.m_cancel_key_bindings);
     }
   };
 }
