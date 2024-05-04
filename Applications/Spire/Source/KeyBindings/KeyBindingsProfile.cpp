@@ -9,6 +9,8 @@
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
+#include <Beam/Serialization/JsonReceiver.hpp>
+#include <Beam/Serialization/JsonSender.hpp>
 #include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "Nexus/Definitions/RegionMap.hpp"
@@ -735,9 +737,35 @@ std::shared_ptr<KeyBindingsModel> Spire::load_key_bindings_profile(
     }
     return load_default_key_bindings(std::move(markets));
   }
-  return std::make_shared<KeyBindingsModel>(std::move(markets));
+  auto key_bindings = std::make_shared<KeyBindingsModel>(std::move(markets));
+  try {
+    auto reader = BasicIStreamReader<std::ifstream>(Initialize(file_path));
+    auto buffer = SharedBuffer();
+    reader.Read(Store(buffer));
+    auto registry = TypeRegistry<JsonSender<SharedBuffer>>();
+    RegisterSpireTypes(Store(registry));
+    auto receiver = JsonReceiver<SharedBuffer>(Ref(registry));
+    receiver.SetSource(Ref(buffer));
+    receiver.Shuttle(*key_bindings);
+  } catch(const std::exception&) {
+    throw std::runtime_error("Unable to load key bindings.");
+  }
+  return key_bindings;
 }
 
 void Spire::save_key_bindings_profile(
     const KeyBindingsModel& key_bindings, const std::filesystem::path& path) {
+  auto file_path = path / "key_bindings.json";
+  try {
+    auto registry = TypeRegistry<JsonSender<SharedBuffer>>();
+    RegisterSpireTypes(Store(registry));
+    auto sender = JsonSender<SharedBuffer>(Ref(registry));
+    auto buffer = SharedBuffer();
+    sender.SetSink(Ref(buffer));
+    sender.Shuttle(key_bindings);
+    auto writer = BasicOStreamWriter<std::ofstream>(Initialize(file_path));
+    writer.Write(buffer);
+  } catch(const std::exception&) {
+    throw std::runtime_error("Unable to save key bindings.");
+  }
 }

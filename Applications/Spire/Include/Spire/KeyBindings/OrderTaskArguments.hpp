@@ -2,6 +2,10 @@
 #define SPIRE_ORDER_TASK_ARGUMENTS_HPP
 #include <vector>
 #include <boost/optional/optional.hpp>
+#include <Beam/Serialization/Receiver.hpp>
+#include <Beam/Serialization/Sender.hpp>
+#include <Beam/Serialization/ShuttleOptional.hpp>
+#include <Beam/Serialization/ShuttleVector.hpp>
 #include <QKeySequence>
 #include <QString>
 #include "Nexus/Definitions/Destination.hpp"
@@ -12,6 +16,7 @@
 #include "Nexus/Definitions/Tag.hpp"
 #include "Nexus/Definitions/TimeInForce.hpp"
 #include "Spire/Canvas/Canvas.hpp"
+#include "Spire/LegacyUI/ShuttleQtTypes.hpp"
 #include "Spire/Spire/ListModel.hpp"
 
 namespace Spire {
@@ -77,6 +82,25 @@ namespace Spire {
    * @return The OrderTaskArguments represented by the <i>node</i>.
    */
   OrderTaskArguments to_order_task_arguments(const CanvasNode& node);
+}
+
+namespace Beam::Serialization {
+  template<>
+  struct Shuttle<Spire::OrderTaskArguments> {
+    template<typename Shuttler>
+    void operator ()(Shuttler& shuttle, Spire::OrderTaskArguments& value,
+        unsigned int version) {
+      shuttle.Shuttle("name", value.m_name);
+      shuttle.Shuttle("region", value.m_region);
+      shuttle.Shuttle("destination", value.m_destination);
+      shuttle.Shuttle("order_type", value.m_order_type);
+      shuttle.Shuttle("side", value.m_side);
+      shuttle.Shuttle("quantity", value.m_quantity);
+      shuttle.Shuttle("time_in_force", value.m_time_in_force);
+      shuttle.Shuttle("additional_tags", value.m_additional_tags);
+      shuttle.Shuttle("key", value.m_key);
+    }
+  };
 }
 
 #endif

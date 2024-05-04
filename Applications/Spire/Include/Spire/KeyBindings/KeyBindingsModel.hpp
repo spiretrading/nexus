@@ -40,6 +40,7 @@ namespace Spire {
       std::vector<Nexus::Region> make_interactions_key_bindings_regions() const;
 
     private:
+      friend struct Beam::Serialization::Shuttle<KeyBindingsModel>;
       Nexus::MarketDatabase m_markets;
       std::shared_ptr<OrderTaskArgumentsListModel> m_order_task_arguments;
       std::shared_ptr<CancelKeyBindingsModel> m_cancel_key_bindings;
@@ -48,6 +49,17 @@ namespace Spire {
 
       KeyBindingsModel(const KeyBindingsModel&) = delete;
       KeyBindingsModel& operator =(const KeyBindingsModel&) = delete;
+  };
+}
+
+namespace Beam::Serialization {
+  template<>
+  struct Shuttle<Spire::KeyBindingsModel> {
+    template<typename Shuttler>
+    void operator ()(Shuttler& shuttle, Spire::KeyBindingsModel& value,
+        unsigned int version) {
+      shuttle.Shuttle("order_task_arguments", *value.m_order_task_arguments);
+    }
   };
 }
 
