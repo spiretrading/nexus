@@ -88,7 +88,7 @@ namespace Beam::Serialization {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle, const char* name,
         const Spire::ValueModel<T>& value) const {
-      shuttle.Shuttle(value.get());
+      shuttle.Shuttle(name, value.get());
     }
   };
 
@@ -98,7 +98,7 @@ namespace Beam::Serialization {
     void operator ()(Shuttler& shuttle, const char* name,
         Spire::ValueModel<T>& value) const {
       auto field = T();
-      shuttle.Shuttle(field);
+      shuttle.Shuttle(name, field);
       value.set(field);
     }
   };

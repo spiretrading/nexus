@@ -62,6 +62,23 @@ namespace Beam::Serialization {
         unsigned int version) {
       shuttle.Shuttle("order_task_arguments", *value.m_order_task_arguments);
       shuttle.Shuttle("cancel_key_bindings", *value.m_cancel_key_bindings);
+      if constexpr(IsSender<Shuttler>::value) {
+        shuttle.StartSequence("interactions", 2 * value.m_interactions.size());
+        for(auto& interactions : value.m_interactions) {
+          shuttle.Shuttle(interactions.first);
+          shuttle.Shuttle(*interactions.second);
+        }
+      } else {
+        auto size = int();
+        shuttle.StartSequence("interactions", size);
+        for(auto i = 0; i != size / 2; ++i) {
+          auto region = Nexus::Region();
+          shuttle.Shuttle(region);
+          auto& interactions = value.get_interactions_key_bindings(region);
+          shuttle.Shuttle(*interactions);
+        }
+      }
+      shuttle.EndSequence();
     }
   };
 }
