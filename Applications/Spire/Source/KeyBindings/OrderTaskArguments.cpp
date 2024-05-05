@@ -143,8 +143,8 @@ std::unique_ptr<CanvasNode>
         arguments.m_time_in_force)->SetReadOnly(true)->SetVisible(false));
   }
   for(auto& tag : arguments.m_additional_tags) {
-    node = static_cast<SingleOrderTaskNode*>(node.get())->AddField(
-      get_name(tag), tag.GetKey(), to_canvas_node(tag));
+    node = static_cast<SingleOrderTaskNode*>(
+      node.get())->AddField(get_name(tag), tag.GetKey(), to_canvas_node(tag));
   }
   return node;
 }
