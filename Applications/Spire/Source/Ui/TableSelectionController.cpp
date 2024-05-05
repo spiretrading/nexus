@@ -62,13 +62,12 @@ namespace {
     return i;
   }
 
-  int find_index(auto value, auto& list) {
-    for(auto i = 0; i != list.get_size(); ++i) {
-      if(list.get(i) == value) {
-        return i;
-      }
+  auto find_index(auto value, auto& list) {
+    auto i = std::find(list.begin(), list.end(), value);
+    if(i == list.end()) {
+      return -1;
     }
-    return -1;
+    return std::distance(list.begin(), i);
   }
 }
 
@@ -298,12 +297,13 @@ void TableSelectionController::click(Index index) {
           selection->push(i);
         }
       };
+      auto range_anchor = *m_range_anchor;
       m_selection->transact([&] {
         select(
-          m_selection->get_row_selection(), index.m_row, m_range_anchor->m_row);
+          m_selection->get_row_selection(), index.m_row, range_anchor.m_row);
         select(m_selection->get_column_selection(), index.m_column,
-          m_range_anchor->m_column);
-        select(m_selection->get_item_selection(), index, *m_range_anchor);
+          range_anchor.m_column);
+        select(m_selection->get_item_selection(), index, range_anchor);
       });
     } else {
       auto select =
@@ -323,13 +323,14 @@ void TableSelectionController::click(Index index) {
             }
           }
         };
+      auto range_anchor = *m_range_anchor;
       m_selection->transact([&] {
         select(m_selection->get_row_selection(), m_current->m_row, index.m_row,
-          m_range_anchor->m_row);
+          range_anchor.m_row);
         select(m_selection->get_column_selection(), m_current->m_column,
-          index.m_column, m_range_anchor->m_column);
-        select(m_selection->get_item_selection(), *m_current, index,
-          *m_range_anchor);
+          index.m_column, range_anchor.m_column);
+        select(
+          m_selection->get_item_selection(), *m_current, index, range_anchor);
       });
     }
   }

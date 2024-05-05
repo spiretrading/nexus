@@ -59,6 +59,12 @@ namespace Details {
       /**
        * Constructs a TimeInForce.
        * @param type The TimeInForce's Type.
+       */
+      TimeInForce(Type::Type type);
+
+      /**
+       * Constructs a TimeInForce.
+       * @param type The TimeInForce's Type.
        * @param expiry Specifies when the Order expires.
        */
       TimeInForce(Type type, boost::posix_time::ptime expiry);
@@ -77,8 +83,8 @@ namespace Details {
       boost::posix_time::ptime m_expiry;
   };
 
-  inline std::ostream& operator <<(std::ostream& out,
-      TimeInForce::Type value) {
+  inline std::ostream& operator <<(
+      std::ostream& out, TimeInForce::Type value) {
     if(value == Nexus::TimeInForce::Type::DAY) {
       return out << "DAY";
     } else if(value == Nexus::TimeInForce::Type::GTC) {
@@ -99,8 +105,8 @@ namespace Details {
     return out << "NONE";
   }
 
-  inline std::ostream& operator <<(std::ostream& out,
-      const TimeInForce& value) {
+  inline std::ostream& operator <<(
+      std::ostream& out, const TimeInForce& value) {
     if(value.GetExpiry() == boost::posix_time::not_a_date_time) {
       return out << value.GetType();
     } else {
@@ -117,6 +123,9 @@ namespace Details {
 
   inline TimeInForce::TimeInForce(Type type)
     : m_type(type) {}
+
+  inline TimeInForce::TimeInForce(Type::Type type)
+    : TimeInForce(Type(type)) {}
 
   inline TimeInForce::TimeInForce(Type type, boost::posix_time::ptime expiry)
     : m_type(type),

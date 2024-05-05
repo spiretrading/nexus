@@ -105,14 +105,14 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   setWindowTitle(tr("UI Viewer"));
   set_svg_icon(":/Icons/spire.svg");
   setWindowIcon(QIcon(":/Icons/taskbar_icons/spire.png"));
-  resize(scale(775, 580));
   m_body = new QSplitter(Qt::Horizontal, this);
   m_body->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
   m_body->setObjectName("ui_viewer_body");
   m_body->setStyleSheet("#ui_viewer_body { background-color: #F5F5F5; }");
   m_body->setContentsMargins(scale_width(6), scale_height(6), scale_width(6),
     scale_height(6));
-  layout()->addWidget(m_body);
+  set_body(m_body);
+  resize(scale(775, 580));
   m_widget_list = make_widget_list(this);
   connect(m_widget_list, &QListWidget::currentItemChanged, this,
     &UiViewerWindow::on_item_selected);
@@ -138,6 +138,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_date_filter_panel_profile());
   add(make_decimal_box_profile());
   add(make_decimal_filter_panel_profile());
+  add(make_deletable_list_item_profile());
   add(make_delete_icon_button_profile());
   add(make_destination_box_profile());
   add(make_destination_list_item_profile());
@@ -147,6 +148,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_duration_filter_panel_profile());
   add(make_eye_dropper_profile());
   add(make_editable_box_profile());
+  add(make_editable_table_view_profile());
   add(make_filter_panel_profile());
   add(make_focus_observer_profile());
   add(make_font_box_profile());
@@ -189,6 +191,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_quantity_filter_panel_profile());
   add(make_radio_button_profile());
   add(make_region_box_profile());
+  add(make_region_drop_down_box_profile());
   add(make_region_list_item_profile());
   add(make_responsive_label_profile());
   add(make_sale_condition_box_profile());

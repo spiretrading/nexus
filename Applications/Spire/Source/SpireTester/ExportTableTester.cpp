@@ -1,6 +1,5 @@
 #include <doctest/doctest.h>
 #include <Beam/TimeService/ToLocalTime.hpp>
-#include "Nexus/Definitions/SecuritySet.hpp"
 #include "Spire/Spire/ArrayTableModel.hpp"
 #include "Spire/Spire/ExportTable.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
@@ -38,19 +37,18 @@ TEST_SUITE("ExportTable") {
       ts3, ts3.substr(0, 10), ts3.substr(11));
     auto table = ArrayTableModel();
     auto market = MarketToken(MarketCode("XNYS"));
-    auto security = ParseWildCardSecurity(
-      "MRU.TSX", GetDefaultMarketDatabase(), GetDefaultCountryDatabase());
+    auto security = ParseSecurity("MRU.TSX");
     auto country = DefaultCountries::CA();
     auto condition =
       TimeAndSale::Condition(TimeAndSale::Condition::Type::REGULAR, "@");
     table.push({"Time", "Date", "Duration", "Int", "Double", "Price",
       "Quantity", "Market", "Security", "Country", "Condition"});
     table.push({time1, date1, time_duration1, 100, 1234.56, Money(1000.55),
-      Quantity(1000.32), market, *security, country, condition});
+      Quantity(1000.32), market, security, country, condition});
     table.push({time2, date2, time_duration2, 1000, 0.21, Money(20),
-      Quantity(10.5), market, *security, country, condition});
+      Quantity(10.5), market, security, country, condition});
     table.push({time3, date3, time_duration3, 10000, 1000, Money(30.12),
-      Quantity(4000), market, *security, country, condition});
+      Quantity(4000), market, security, country, condition});
     auto out = std::stringstream();
     export_table_as_csv(table, out);
     REQUIRE(out.str() == result);

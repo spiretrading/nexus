@@ -4,6 +4,8 @@
 #include "Spire/Blotter/BlotterSettings.hpp"
 #include "Spire/Blotter/OpenPositionsModel.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
+#include "Spire/Spire/ArrayListModel.hpp"
+#include "Spire/Spire/ServiceSecurityQueryModel.hpp"
 
 using namespace Beam;
 using namespace boost;
@@ -36,8 +38,12 @@ UserProfile::UserProfile(const std::string& username, bool isAdministrator,
       m_telemetryClient(std::move(telemetryClient)),
       m_profilePath(std::filesystem::path(QStandardPaths::writableLocation(
         QStandardPaths::DataLocation).toStdString()) / "Profiles" / m_username),
+      m_recentlyClosedWindows(
+        std::make_shared<ArrayListModel<std::shared_ptr<WindowSettings>>>()),
+      m_security_query_model(std::make_shared<ServiceSecurityQueryModel>(
+        m_marketDatabase, m_serviceClients.GetMarketDataClient())),
       m_catalogSettings(m_profilePath / "Catalog", isAdministrator),
-      m_interactionProperties(InteractionsProperties::GetDefaultProperties()) {
+      m_keyBindings(std::make_shared<KeyBindingsModel>(m_marketDatabase)) {
   for(auto& exchangeRate : exchangeRates) {
     m_exchangeRates.Add(exchangeRate);
   }
@@ -108,24 +114,14 @@ const std::filesystem::path& UserProfile::GetProfilePath() const {
   return m_profilePath;
 }
 
-const std::vector<std::unique_ptr<WindowSettings>>&
+const std::shared_ptr<RecentlyClosedWindowListModel>&
     UserProfile::GetRecentlyClosedWindows() const {
   return m_recentlyClosedWindows;
 }
 
-void UserProfile::AddRecentlyClosedWindow(
-    std::unique_ptr<WindowSettings> window) {
-  m_recentlyClosedWindows.push_back(std::move(window));
-}
-
-void UserProfile::RemoveRecentlyClosedWindow(const WindowSettings& window) {
-  auto i = std::find_if(m_recentlyClosedWindows.begin(),
-    m_recentlyClosedWindows.end(), [&] (const auto& closedWindow) {
-      return closedWindow.get() == &window;
-    });
-  if(i != m_recentlyClosedWindows.end()) {
-    m_recentlyClosedWindows.erase(i);
-  }
+const std::shared_ptr<ComboBox::QueryModel>&
+    UserProfile::GetSecurityQueryModel() const {
+  return m_security_query_model;
 }
 
 const BlotterSettings& UserProfile::GetBlotterSettings() const {
@@ -144,16 +140,8 @@ const SavedDashboards& UserProfile::GetSavedDashboards() const {
   return m_savedDashboards;
 }
 
-const KeyBindings& UserProfile::GetKeyBindings() const {
+const std::shared_ptr<KeyBindingsModel>& UserProfile::GetKeyBindings() const {
   return m_keyBindings;
-}
-
-KeyBindings& UserProfile::GetKeyBindings() {
-  return m_keyBindings;
-}
-
-void UserProfile::SetKeyBindings(const KeyBindings& keyBindings) {
-  m_keyBindings = keyBindings;
 }
 
 const CatalogSettings& UserProfile::GetCatalogSettings() const {
@@ -229,39 +217,6 @@ void UserProfile::SetDefaultPortfolioViewerProperties(
   m_defaultPortfolioViewerProperties = properties;
 }
 
-RegionMap<InteractionsProperties>& UserProfile::GetInteractionProperties() {
-  return m_interactionProperties;
-}
-
-const RegionMap<InteractionsProperties>&
-    UserProfile::GetInteractionProperties() const {
-  return m_interactionProperties;
-}
-
-Quantity
-    UserProfile::GetDefaultQuantity(const Security& security, Side side) const {
-  auto baseQuantity =
-    GetInteractionProperties().Get(security).m_defaultQuantity;
-  if(baseQuantity <= 0) {
-    return 0;
-  }
-  auto& activeBlotter = GetBlotterSettings().GetActiveBlotter();
-  auto position =
-    activeBlotter.GetOpenPositionsModel().GetOpenPosition(security);
-  auto currentQuantity = [&] {
-    if(position) {
-      return position->m_inventory.m_position.m_quantity;
-    }
-    return Quantity(0);
-  }();
-  if(side == Side::BID && currentQuantity < 0 ||
-      side == Side::ASK && currentQuantity > 0) {
-    return std::min(baseQuantity, Abs(currentQuantity));
-  } else {
-    return baseQuantity - Abs(currentQuantity) % baseQuantity;
-  }
-}
-
 const optional<PortfolioViewerWindowSettings>&
     UserProfile::GetInitialPortfolioViewerWindowSettings() const {
   return m_initialPortfolioViewerWindowSettings;
@@ -270,4 +225,19 @@ const optional<PortfolioViewerWindowSettings>&
 void UserProfile::SetInitialPortfolioViewerWindowSettings(
     const PortfolioViewerWindowSettings& settings) {
   m_initialPortfolioViewerWindowSettings = settings;
+}
+
+Quantity Spire::get_default_order_quantity(const UserProfile& userProfile,
+    const Security& security, Side side) {
+  auto position = [&] {
+    auto& blotter = userProfile.GetBlotterSettings().GetActiveBlotter();
+    if(auto position = blotter.GetOpenPositionsModel().GetOpenPosition(
+        security)) {
+      return position->m_inventory.m_position.m_quantity;
+    }
+    return Quantity(0);
+  }();
+  return get_default_order_quantity(
+    *userProfile.GetKeyBindings()->get_interactions_key_bindings(security),
+    security, position, side);
 }

@@ -15,23 +15,11 @@ using namespace boost::signals2;
 using namespace Spire;
 using namespace Styles;
 
-class SelectLine : public Box {
-  public:
-    explicit SelectLine(QWidget* parent = nullptr)
-      : Box(nullptr, parent) {}
-};
-
-class Separator : public Box {
-  public:
-    explicit Separator(QWidget* parent = nullptr)
-      : Box(nullptr, parent) {}
-};
-
-class Tab : public Box {
-  public:
-    explicit Tab(QWidget* parent = nullptr)
-      : Box(nullptr, parent) {}
-};
+namespace {
+  using SelectLine = StateSelector<void, struct SelectLineTag>;
+  using Separator = StateSelector<void, struct SeparatorTag>;
+  using Tab = StateSelector<void, struct TabTag>;
+}
 
 class LabelContainer : public QWidget {
   public:
@@ -42,11 +30,14 @@ class LabelContainer : public QWidget {
       text_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
       auto body_layout = make_vbox_layout(body);
       body_layout->addWidget(text_box);
-      auto select_line = new SelectLine();
+      auto select_line = new Box();
+      match(*select_line, SelectLine());
       select_line->setFixedHeight(scale_height(2));
       body_layout->addWidget(select_line);
       auto box = new Box(body);
       enclose(*this, *box);
+      link(*this, *text_box);
+      link(*this, *select_line);
       proxy_style(*this, *box);
     }
 };
@@ -61,18 +52,21 @@ class NavigationTab : public QWidget {
       auto container = new LabelContainer(std::move(label));
       container->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
       layers->add(container);
-      auto tab = new Tab();
+      auto tab = new Box();
+      match(*tab, Tab());
       tab->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
       layers->add(tab);
       enclose(*this, *layers);
+      link(*this, *container);
+      link(*this, *tab);
       auto style = StyleSheet();
       style.get(Any() > is_a<LabelContainer>()).
         set(horizontal_padding(scale_width(8)));
-      style.get(Any() > is_a<Tab>()).
+      style.get(Any() > Tab()).
         set(border(scale_width(1), QColor(Qt::transparent)));
-      style.get(FocusVisible() > is_a<Tab>()).
+      style.get(FocusVisible() > Tab()).
         set(border_color(QColor(0x4B23A0)));
-      style.get(FocusVisible() > is_a<TextBox>()).
+      style.get(FocusVisible() > is_a<LabelContainer>() > is_a<TextBox>()).
         set(TextColor(QColor(0x4B23A0)));
       set_style(*this, std::move(style));
     }
@@ -100,6 +94,26 @@ NavigationView::NavigationView(
       set(EdgeNavigation::CONTAIN).
       set(Overflow::NONE).
       set(Qt::Horizontal);
+    style.get(Any() > is_a<ListItem>()).
+      set(BackgroundColor(QColor(Qt::transparent))).
+      set(border_color(QColor(Qt::transparent))).
+      set(border_size(0)).
+      set(padding(0));
+    style.get(Any() > is_a<ListItem>() >
+        is_a<NavigationTab>() > is_a<LabelContainer>() > SelectLine()).
+      set(BackgroundColor(QColor(Qt::transparent)));
+    style.get(Any() > (is_a<ListItem>() && (Checked() || Hover())) >
+        is_a<NavigationTab>() > is_a<LabelContainer>() > is_a<TextBox>()).
+      set(TextColor(QColor(0x4B23A0)));
+    style.get(Any() > (is_a<ListItem>() && Disabled()) >
+        is_a<NavigationTab>() > is_a<LabelContainer>() > is_a<TextBox>()).
+      set(TextColor(QColor(0xC8C8C8)));
+    style.get(Any() > (is_a<ListItem>() && Checked()) >
+        is_a<NavigationTab>() > is_a<LabelContainer>() > SelectLine()).
+      set(BackgroundColor(QColor(0x4B23A0)));
+    style.get(Any() > (is_a<ListItem>() && Checked() && Disabled()) >
+        is_a<NavigationTab>() > is_a<LabelContainer>() > SelectLine()).
+      set(BackgroundColor(QColor(0xC8C8C8)));
   });
   m_navigation_view->setFixedHeight(scale_height(28));
   auto navigation_list_layout = make_hbox_layout();
@@ -108,7 +122,8 @@ NavigationView::NavigationView(
   auto navigation_menu_layout = make_vbox_layout(navigation_menu);
   navigation_menu_layout->addSpacing(scale_height(7));
   navigation_menu_layout->addLayout(navigation_list_layout);
-  auto separator = new Separator();
+  auto separator = new Box();
+  match(*separator, Separator());
   separator->setFixedHeight(scale_height(5));
   navigation_menu_layout->addWidget(separator);
   auto layout = make_vbox_layout(this);
@@ -117,7 +132,7 @@ NavigationView::NavigationView(
   m_stacked_widget->setContentsMargins({});
   layout->addWidget(m_stacked_widget);
   auto style = StyleSheet();
-  style.get(Any() > is_a<Separator>()).
+  style.get(Any() > Separator()).
     set(BorderTopSize(scale_height(1))).
     set(BorderTopColor(QColor(0xD0D0D0)));
   set_style(*this, std::move(style));
@@ -142,23 +157,6 @@ void NavigationView::insert_tab(int index, QWidget& page,
     throw std::out_of_range("The index is out of range.");
   }
   m_navigation_list->insert(label, index);
-  auto style = StyleSheet();
-  style.get(Any()).
-    set(BackgroundColor(QColor(Qt::transparent))).
-    set(border_color(QColor(Qt::transparent))).
-    set(border_size(0)).
-    set(padding(0));
-  style.get(Any() > is_a<SelectLine>()).
-    set(BackgroundColor(QColor(Qt::transparent)));
-  style.get((Checked() || Hover()) > is_a<TextBox>()).
-    set(TextColor(QColor(0x4B23A0)));
-  style.get(Disabled() > is_a<TextBox>()).
-    set(TextColor(QColor(0xC8C8C8)));
-  style.get(Checked() > is_a<SelectLine>()).
-    set(BackgroundColor(QColor(0x4B23A0)));
-  style.get((Checked() && Disabled()) > is_a<SelectLine>()).
-    set(BackgroundColor(QColor(0xC8C8C8)));
-  set_style(*m_navigation_view->get_list_item(index), std::move(style));
   auto content_block = new QWidget();
   auto size_policy = page.sizePolicy();
   auto aligment = Qt::Alignment();
@@ -174,7 +172,8 @@ void NavigationView::insert_tab(int index, QWidget& page,
   layout->addWidget(&page, 0, aligment);
   m_stacked_widget->insertWidget(index, content_block);
   m_associative_model.get_association(label)->connect_update_signal(
-    std::bind_front(&NavigationView::on_associative_value_current, this, index));
+    std::bind_front(
+      &NavigationView::on_associative_value_current, this, index));
   if(index == m_current->get()) {
     on_current(index);
   }
@@ -268,6 +267,7 @@ void NavigationView::on_associative_value_current(int index, bool value) {
   if(value) {
     match(*m_navigation_view->get_list_item(index), Checked());
     m_stacked_widget->setCurrentIndex(index);
+    m_stacked_widget->currentWidget()->adjustSize();
     m_navigation_view->get_current()->set(index);
     if(index != m_current->get()) {
       m_current->set(index);

@@ -10,7 +10,6 @@
 #include "Nexus/Definitions/ExchangeRateTable.hpp"
 #include "Nexus/Definitions/Destination.hpp"
 #include "Nexus/Definitions/Market.hpp"
-#include "Nexus/Definitions/RegionMap.hpp"
 #include "Nexus/MarketDataService/EntitlementDatabase.hpp"
 #include "Nexus/ServiceClients/ServiceClientsBox.hpp"
 #include "Nexus/TelemetryService/TelemetryClientBox.hpp"
@@ -19,8 +18,7 @@
 #include "Spire/Canvas/Types/CanvasTypeRegistry.hpp"
 #include "Spire/Catalog/CatalogSettings.hpp"
 #include "Spire/Dashboard/SavedDashboards.hpp"
-#include "Spire/LegacyKeyBindings/InteractionsProperties.hpp"
-#include "Spire/LegacyKeyBindings/KeyBindings.hpp"
+#include "Spire/KeyBindings/KeyBindingsModel.hpp"
 #include "Spire/LegacyUI/LegacyUI.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorProperties.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorWindowSettings.hpp"
@@ -29,8 +27,13 @@
 #include "Spire/RiskTimer/RiskTimerProperties.hpp"
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesProperties.hpp"
+#include "Spire/Ui/ComboBox.hpp"
 
 namespace Spire {
+
+  /** The type of model used to store the list of recently closed windows. */
+  using RecentlyClosedWindowListModel =
+    ListModel<std::shared_ptr<LegacyUI::WindowSettings>>;
 
   /** Stores the user's preferences and application data. */
   class UserProfile {
@@ -113,21 +116,12 @@ namespace Spire {
       const std::filesystem::path& GetProfilePath() const;
 
       /** Returns the list of recently closed windows. */
-      const std::vector<std::unique_ptr<LegacyUI::WindowSettings>>&
+      const std::shared_ptr<RecentlyClosedWindowListModel>&
         GetRecentlyClosedWindows() const;
 
-      /**
-       * Adds a window to the list of recently closed windows.
-       * @param window The recently closed window to add.
-       */
-      void AddRecentlyClosedWindow(
-        std::unique_ptr<LegacyUI::WindowSettings> window);
-
-      /**
-       * Removes a window from the list of recently closed windows.
-       * @param window The recently closed window to remove.
-       */
-      void RemoveRecentlyClosedWindow(const LegacyUI::WindowSettings& window);
+      /** Returns the model used to query securities. */
+      const std::shared_ptr<ComboBox::QueryModel>&
+        GetSecurityQueryModel() const;
 
       /** Returns the BlotterSettings. */
       const BlotterSettings& GetBlotterSettings() const;
@@ -141,17 +135,8 @@ namespace Spire {
       /** Returns the SavedDashboards. */
       const SavedDashboards& GetSavedDashboards() const;
 
-      /** Returns the KeyBindings. */
-      const KeyBindings& GetKeyBindings() const;
-
-      /** Returns the KeyBindings. */
-      KeyBindings& GetKeyBindings();
-
-      /**
-       * Sets the KeyBindings.
-       * @param keyBindings The new KeyBindings to use for this profile.
-       */
-      void SetKeyBindings(const KeyBindings& keyBindings);
+      /** Returns the key bindings. */
+      const std::shared_ptr<KeyBindingsModel>& GetKeyBindings() const;
 
       /** Returns the CatalogSettings. */
       const CatalogSettings& GetCatalogSettings() const;
@@ -221,22 +206,6 @@ namespace Spire {
       void SetDefaultPortfolioViewerProperties(
         const PortfolioViewerProperties& properties);
 
-      /** Returns the RegionMap storing the InteractionProperties. */
-      Nexus::RegionMap<InteractionsProperties>& GetInteractionProperties();
-
-      /** Returns the RegionMap storing the InteractionProperties. */
-      const Nexus::RegionMap<InteractionsProperties>&
-        GetInteractionProperties() const;
-
-      /**
-       * Returns the default Quantity.
-       * @param security The Security to lookup the default Quantity for.
-       * @param side The Side to get the default Quantity on.
-       * @return The default Quantity used for Tasks.
-       */
-      Nexus::Quantity GetDefaultQuantity(
-        const Nexus::Security& security, Nexus::Side side) const;
-
       /** Returns the initial PortfolioViewerWindowSettings. */
       const boost::optional<PortfolioViewerWindowSettings>&
         GetInitialPortfolioViewerWindowSettings() const;
@@ -259,8 +228,8 @@ namespace Spire {
       mutable Nexus::ServiceClientsBox m_serviceClients;
       mutable Nexus::TelemetryService::TelemetryClientBox m_telemetryClient;
       std::filesystem::path m_profilePath;
-      std::vector<std::unique_ptr<LegacyUI::WindowSettings>>
-        m_recentlyClosedWindows;
+      std::shared_ptr<RecentlyClosedWindowListModel> m_recentlyClosedWindows;
+      std::shared_ptr<ComboBox::QueryModel> m_security_query_model;
       BookViewProperties m_defaultBookViewProperties;
       SavedDashboards m_savedDashboards;
       OrderImbalanceIndicatorProperties
@@ -268,9 +237,8 @@ namespace Spire {
       RiskTimerProperties m_riskTimerProperties;
       TimeAndSalesProperties m_defaultTimeAndSalesProperties;
       PortfolioViewerProperties m_defaultPortfolioViewerProperties;
-      Nexus::RegionMap<InteractionsProperties> m_interactionProperties;
       CatalogSettings m_catalogSettings;
-      KeyBindings m_keyBindings;
+      std::shared_ptr<KeyBindingsModel> m_keyBindings;
       CanvasTypeRegistry m_typeRegistry;
       std::unique_ptr<BlotterSettings> m_blotterSettings;
       boost::optional<OrderImbalanceIndicatorWindowSettings>
@@ -278,6 +246,16 @@ namespace Spire {
       boost::optional<PortfolioViewerWindowSettings>
         m_initialPortfolioViewerWindowSettings;
   };
+
+  /**
+   * Returns the default order quantity to display to a user.
+   * @param userProfile The profile of the user to display the default order
+   *        quantity to.
+   * @param security The security that the user is entering a quantity for.
+   * @return The default quantity to display.
+   */
+  Nexus::Quantity get_default_order_quantity(const UserProfile& userProfile,
+    const Nexus::Security& security, Nexus::Side side);
 }
 
 #endif

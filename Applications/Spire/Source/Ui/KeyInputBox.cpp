@@ -206,7 +206,7 @@ void KeyInputBox::layout_key_sequence() {
 }
 
 void KeyInputBox::transition_status() {
-  if(!is_read_only() && m_current->get().count() == 0) {
+  if(!is_read_only() && hasFocus() && m_current->get().count() == 0) {
     set_status(Status::PROMPT);
   } else {
     set_status(Status::NONE);
@@ -237,6 +237,7 @@ void KeyInputBox::set_status(Status status) {
     clear(layout);
     layout.setSpacing(0);
     auto prompt = make_label(tr("Enter Keys"));
+    match(*prompt, Prompt());
     prompt->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     prompt->set_read_only(true);
     prompt->setDisabled(true);

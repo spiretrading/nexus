@@ -6,13 +6,12 @@ using namespace boost::signals2;
 using namespace Spire;
 
 namespace {
-  int find_index(int value, ListSelectionController::SelectionModel& list) {
-    for(auto i = 0; i != list.get_size(); ++i) {
-      if(list.get(i) == value) {
-        return i;
-      }
+  auto find_index(int value, ListSelectionController::SelectionModel& list) {
+    auto i = std::find(list.begin(), list.end(), value);
+    if(i == list.end()) {
+      return -1;
     }
-    return -1;
+    return std::distance(list.begin(), i);
   }
 
   int get_direction(int start, int end) {
@@ -24,10 +23,11 @@ namespace {
 }
 
 ListSelectionController::ListSelectionController(
-  std::shared_ptr<SelectionModel> selection)
+  std::shared_ptr<SelectionModel> selection, int size)
   : m_mode(Mode::SINGLE),
     m_selection(std::move(selection)),
     m_size(0),
+    m_list_size(size),
     m_connection(m_selection->connect_operation_signal(
       std::bind_front(&ListSelectionController::on_operation, this))) {}
 
@@ -45,7 +45,12 @@ void ListSelectionController::set_mode(Mode mode) {
 }
 
 void ListSelectionController::add(int index) {
+  auto update_selection = is_initialized();
   ++m_size;
+  m_list_size = std::max(m_list_size, m_size);
+  if(!update_selection) {
+    return;
+  }
   auto blocker = shared_connection_block(m_connection);
   m_selection->transact([&] {
     for(auto i = 0; i != m_selection->get_size(); ++i) {
@@ -59,6 +64,7 @@ void ListSelectionController::add(int index) {
 
 void ListSelectionController::remove(int index) {
   --m_size;
+  --m_list_size;
   auto operation = optional<SelectionModel::Operation>();
   {
     auto blocker = shared_connection_block(m_connection);
@@ -150,9 +156,10 @@ void ListSelectionController::click(int index) {
       });
     } else {
       auto direction = get_direction(*m_current, index);
+      auto range_anchor = *m_range_anchor;
       m_selection->transact([&] {
         for(auto i = *m_current; i != index + direction; i += direction) {
-          if(direction * i >= direction * *m_range_anchor) {
+          if(direction * i >= direction * range_anchor) {
             if(find_index(i, *m_selection) == -1) {
               m_selection->push(i);
             }
@@ -178,6 +185,10 @@ void ListSelectionController::navigate(int index) {
 connection ListSelectionController::connect_operation_signal(
     const SelectionModel::OperationSignal::slot_type& slot) const {
   return m_operation_signal.connect(slot);
+}
+
+bool ListSelectionController::is_initialized() const {
+  return m_size == m_list_size;
 }
 
 void ListSelectionController::on_operation(

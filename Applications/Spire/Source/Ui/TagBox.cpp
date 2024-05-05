@@ -25,7 +25,7 @@ namespace {
     style.get(Any()).
       set(horizontal_padding(scale_width(8))).
       set(vertical_padding(0));
-    style.get(Any() > is_a<ScrollableListBox>()).
+    style.get(Any() > is_a<Box>() > is_a<ScrollableListBox>()).
       set(BackgroundColor(QColor(Qt::transparent))).
       set(border_size(0));
     return style;
@@ -190,8 +190,8 @@ TagBox::TagBox(std::shared_ptr<AnyListModel> list,
   update_style(*m_list_view, [] (auto& style) {
     style = LIST_VIEW_STYLE(style);
   });
-  m_list_view_style_connection = connect_style_signal(*m_list_view,
-    std::bind_front(&TagBox::on_list_view_style, this));
+  m_list_view_style_connection = connect_style_signal(
+    *m_list_view, std::bind_front(&TagBox::on_list_view_style, this));
   m_list_view->get_list()->connect_operation_signal(
     std::bind_front(&TagBox::on_operation, this));
   m_list_view->connect_submit_signal(
@@ -213,6 +213,7 @@ TagBox::TagBox(std::shared_ptr<AnyListModel> list,
     &m_scrollable_list_box->get_scroll_box().get_vertical_scroll_bar();
   auto input_box = make_input_box(m_scrollable_list_box);
   enclose(*this, *input_box);
+  link(*this, *m_list_view);
   proxy_style(*this, *input_box);
   set_style(*this, INPUT_BOX_STYLE(get_style(*input_box)));
   m_style_connection = connect_style_signal(*this,

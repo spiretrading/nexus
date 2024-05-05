@@ -94,6 +94,10 @@ QValidator::State FilteredTableModel::set(
   return m_source->set(m_filtered_data[row], column, value);
 }
 
+QValidator::State FilteredTableModel::remove(int row) {
+  return m_source->remove(m_filtered_data[row]);
+}
+
 connection FilteredTableModel::connect_operation_signal(
     const OperationSignal::slot_type& slot) const {
   return m_transaction.connect_operation_signal(slot);

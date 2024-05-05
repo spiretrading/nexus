@@ -64,6 +64,12 @@ namespace Spire {
       /** Returns the selection. */
       const std::shared_ptr<SelectionModel>& get_selection() const;
 
+      /** Returns the table header. */
+      TableHeader& get_header();
+
+      /** Returns the table body. */
+      TableBody& get_body();
+
       /** Connects a slot to the sort signal. */
       boost::signals2::connection connect_sort_signal(
         const SortSignal::slot_type& slot) const;

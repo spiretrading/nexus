@@ -1,6 +1,7 @@
 #include "Spire/Ui/HoverObserver.hpp"
 #include <QApplication>
 #include <QChildEvent>
+#include <QPointer>
 #include "Spire/Spire/ExtensionCache.hpp"
 #include "Spire/Ui/GlobalPositionObserver.hpp"
 
@@ -40,7 +41,7 @@ struct HoverObserver::EventFilter : QObject {
     }
   };
   mutable StateSignal m_state_signal;
-  QWidget* m_widget;
+  QPointer<QWidget> m_widget;
   State m_state;
   std::unique_ptr<Observers> m_observers;
 
@@ -94,15 +95,10 @@ struct HoverObserver::EventFilter : QObject {
 
   bool eventFilter(QObject* watched, QEvent* event) override {
     if(!m_widget->isEnabled() || !m_widget->isVisible()) {
-      if(m_observers) {
-        m_observers = nullptr;
-        set_state(State::NONE);
-      }
-      return QObject::eventFilter(watched, event);
-    }
-    if(event->type() == QEvent::Enter ||
+      destroy_observers();
+    } else if(event->type() == QEvent::Enter ||
         event->type() == QEvent::EnabledChange ||
-        event->type() == QEvent::MouseMove) {
+        event->type() == QEvent::MouseMove || event->type() == QEvent::Show) {
       set_state(::get_state(
         *m_widget, get_observers().m_position_observer.get_position()));
     } else if(event->type() == QEvent::Leave) {
@@ -136,20 +132,24 @@ struct HoverObserver::EventFilter : QObject {
   }
 
   void on_hover(State state) {
-    set_state(::get_state(
-      *m_widget, get_observers().m_position_observer.get_position()));
+    if(m_widget) {
+      set_state(::get_state(
+        *m_widget, get_observers().m_position_observer.get_position()));
+    }
   }
 
   void on_position(const QPoint& position) {
-    if(m_state != HoverObserver::State::NONE ||
-        QApplication::mouseButtons() == Qt::NoButton) {
+    if(m_widget && (m_state != HoverObserver::State::NONE ||
+        QApplication::mouseButtons() == Qt::NoButton)) {
       set_state(::get_state(*m_widget, position));
     }
   }
 
   void on_focus_changed(QWidget* old, QWidget* now) {
-    set_state(::get_state(
-      *m_widget, get_observers().m_position_observer.get_position()));
+    if(m_widget) {
+      set_state(::get_state(
+        *m_widget, get_observers().m_position_observer.get_position()));
+    }
   }
 };
 
@@ -170,6 +170,6 @@ connection HoverObserver::connect_state_signal(
 bool Spire::is_set(HoverObserver::State left, HoverObserver::State right) {
   return static_cast<HoverObserver::State>(
     static_cast<std::underlying_type_t<HoverObserver::State>>(left) &
-    static_cast<std::underlying_type_t<HoverObserver::State>>(right)) !=
-    HoverObserver::State::NONE;
+      static_cast<std::underlying_type_t<HoverObserver::State>>(right)) !=
+        HoverObserver::State::NONE;
 }

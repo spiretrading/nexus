@@ -31,6 +31,7 @@ MenuButton::MenuButton(QWidget& body, QWidget* parent)
       m_is_mouse_down_on_button(false),
       m_menu_border_size(0) {
   setFocusPolicy(Qt::StrongFocus);
+  match(*m_body, Body());
   enclose(*this, *m_body);
   m_menu = new ContextMenu(*this);
   m_menu->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -209,19 +210,19 @@ MenuButton* Spire::make_menu_icon_button(QImage icon, QString tooltip,
   auto menu_button = new MenuButton(*box);
   add_tooltip(std::move(tooltip), *menu_button);
   update_style(*menu_button, [] (auto& style) {
-    style.get((Press() || Hover() || FocusIn()) > is_a<Box>()).
+    style.get((Press() || Hover() || FocusIn()) > Body()).
       set(BackgroundColor(QColor(0xE0E0E0)));
-    style.get(FocusVisible() > is_a<Box>()).
+    style.get(FocusVisible() > Body()).
       set(border_color(QColor(0x4B23A0)));
-    style.get(Any() > is_a<Icon>()).
+    style.get(Any() > Body() > Body() > is_a<Icon>()).
       set(Fill(QColor(0x535353)));
-    style.get(Hover() > is_a<Icon>()).
+    style.get(Hover() > Body() > Body() > is_a<Icon>()).
       set(Fill(QColor(0x4B23A0)));
-    style.get(Press() > is_a<Icon>()).
+    style.get(Press() > Body() > Body() > is_a<Icon>()).
       set(Fill(QColor(0x7E71B8)));
-    style.get(FocusIn() > is_a<Icon>()).
+    style.get(FocusIn() > Body() > Body() > is_a<Icon>()).
       set(Fill(QColor(0x684BC7)));
-    style.get(Disabled() > is_a<Icon>()).
+    style.get(Disabled() > Body() > Body() > is_a<Icon>()).
       set(Fill(QColor(0xC8C8C8)));
   });
   return menu_button;
@@ -233,7 +234,8 @@ MenuButton* Spire::make_menu_label_button(QString label, QWidget* parent) {
   match(*button_label, Label());
   update_style(*button_label, [] (auto& style) {
     style.get(Any()).
-      set(border(scale_width(1), QColor(Qt::transparent))).
+      set(BackgroundColor(QColor(0xFFFFFF))).
+      set(border(scale_width(1), QColor(0xC8C8C8))).
       set(vertical_padding(scale_height(5))).
       set(PaddingLeft(scale_width(8))).
       set(PaddingRight(scale_width(14)));
@@ -253,25 +255,19 @@ MenuButton* Spire::make_menu_label_button(QString label, QWidget* parent) {
   layers->add(icon_layer);
   auto menu_button = new MenuButton(*layers);
   update_style(*menu_button, [] (auto& style) {
-    style.get(Any() > is_a<Icon>()).
+    style.get(Any() > Body() > is_a<Icon>()).
       set(Fill(QColor(0x333333)));
-    style.get((Hover() || Press() || FocusIn()) > is_a<Icon>()).
-      set(Fill(QColor(0xFFFFFF)));
-    style.get(Disabled() > is_a<Icon>()).
+    style.get((Hover() || Press() || FocusIn()) > Body() > is_a<Icon>()).
+      set(Fill(QColor(Qt::black)));
+    style.get(Disabled() > Body() > is_a<Icon>()).
       set(Fill(QColor(0xC8C8C8)));
-    style.get(FocusVisible() > Label()).
+    style.get(
+        (FocusVisible() || Hover() || Press() || FocusIn()) > Body() > Label()).
       set(border_color(QColor(0x4B23A0)));
-    style.get(Hover() > Label()).
-      set(BackgroundColor(QColor(0x4B23A0))).
-      set(TextColor(QColor(0xFFFFFF)));
-    style.get(Press() > Label()).
-      set(BackgroundColor(QColor(0x7E71B8))).
-      set(TextColor(QColor(0xFFFFFF)));
-    style.get(FocusIn() > Label()).
-      set(BackgroundColor(QColor(0x684BC7))).
-      set(TextColor(QColor(0xFFFFFF)));
-    style.get(Disabled() > Label()).
-      set(TextColor(QColor(0xB8B8B8)));
+    style.get(Disabled() > Body() > Label()).
+      set(BackgroundColor(QColor(0xF5F5F5))).
+      set(TextColor(QColor(0xB8B8B8))).
+      set(border_color(QColor(0xEBEBEB)));
   });
   return menu_button;
 }

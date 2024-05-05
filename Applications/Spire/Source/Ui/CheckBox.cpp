@@ -29,8 +29,7 @@ namespace {
     style.get(Any() > is_a<Icon>()).
       set(BackgroundColor(QColor(Qt::transparent))).
       set(Fill(QColor(0x333333)));
-    style.get(!Checked() > is_a<Icon>()).
-      set(Fill(QColor(0, 0, 0, 0)));
+    style.get(!Checked() > is_a<Icon>()).set(Fill(QColor(0, 0, 0, 0)));
     style.get((Disabled() && Checked()) > is_a<Icon>()).
       set(Fill(QColor(0xC8C8C8)));
     style.get(Any() > is_a<Box>()).
@@ -73,9 +72,11 @@ CheckBox::CheckBox(std::shared_ptr<BooleanModel> current, QWidget* parent)
   body_layout->addWidget(check_box);
   m_label = make_label("", this);
   body_layout->addWidget(m_label);
-  m_connection = m_current->connect_update_signal([=] (auto current) {
-    on_current(current);
-  });
+  m_connection = m_current->connect_update_signal(
+    std::bind_front(&CheckBox::on_current, this));
+  link(*this, *check_box);
+  link(*this, *check);
+  link(*this, *m_label);
   on_current(m_current->get());
   set_style(*this, DEFAULT_STYLE());
   on_layout_direction(layoutDirection());

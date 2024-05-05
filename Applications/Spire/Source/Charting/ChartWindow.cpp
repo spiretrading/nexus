@@ -14,6 +14,8 @@
 #include "Spire/InputWidgets/SecurityInputDialog.hpp"
 #include "Spire/LegacyUI/LinkSecurityContextAction.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
+#include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/ListModel.hpp"
 #include "ui_ChartWindow.h"
 
 using namespace Beam;
@@ -33,6 +35,7 @@ ChartWindow::ChartWindow(Ref<UserProfile> userProfile,
       m_userProfile(userProfile.Get()),
       m_interactionMode(ChartInteractionMode::NONE) {
   m_ui->setupUi(this);
+  resize(scale(size()));
   m_intervalComboBox = new ChartIntervalComboBox(this);
   m_ui->m_toolBar->insertWidget(m_ui->m_panAction, m_intervalComboBox);
   m_ui->m_toolBar->insertSeparator(m_ui->m_panAction);
@@ -158,7 +161,7 @@ void ChartWindow::showEvent(QShowEvent* event) {
 void ChartWindow::closeEvent(QCloseEvent* event) {
   if(m_security != Security()) {
     auto settings = GetWindowSettings();
-    m_userProfile->AddRecentlyClosedWindow(std::move(settings));
+    m_userProfile->GetRecentlyClosedWindows()->push(std::move(settings));
   }
   QMainWindow::closeEvent(event);
 }

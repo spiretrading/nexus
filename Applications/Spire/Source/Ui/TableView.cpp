@@ -29,6 +29,19 @@ namespace {
     }
     return SortedTableModel::Ordering::NONE;
   }
+
+  auto make_column_order(const TableView::HeaderModel& header) {
+    auto order = std::vector<SortedTableModel::ColumnOrder>();
+    for(auto i = 0; i != header.get_size(); ++i) {
+      auto& item = header.get(i);
+      if(item.m_order != TableHeaderItem::Order::NONE &&
+          item.m_order != TableHeaderItem::Order::UNORDERED) {
+        order.push_back(
+          SortedTableModel::ColumnOrder(i, to_table_order(item.m_order)));
+      }
+    }
+    return order;
+  }
 }
 
 QWidget* TableView::default_view_builder(
@@ -59,6 +72,7 @@ TableView::TableView(
   m_header_view = new TableHeader(m_header);
   m_header_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   m_header_view->setContentsMargins({scale_width(1), 0, 0, 0});
+  link(*this, *m_header_view);
   auto box_body = new QWidget();
   enclose(*box_body, *m_header_view);
   auto box = new Box(box_body);
@@ -70,14 +84,16 @@ TableView::TableView(
   m_filtered_table = std::make_shared<FilteredTableModel>(
     m_table, std::bind_front(&TableView::is_filtered, this));
   if(comparator) {
-    m_sorted_table = std::make_shared<SortedTableModel>(m_filtered_table,
-      std::move(comparator));
+    m_sorted_table = std::make_shared<SortedTableModel>(
+      m_filtered_table, make_column_order(*m_header), std::move(comparator));
   } else {
-    m_sorted_table = std::make_shared<SortedTableModel>(m_filtered_table);
+    m_sorted_table = std::make_shared<SortedTableModel>(
+      m_filtered_table, make_column_order(*m_header));
   }
   m_body = new TableBody(m_sorted_table, std::move(current),
     std::move(selection), m_header_view->get_widths(), std::move(view_builder));
   m_body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+  link(*this, *m_body);
   m_scroll_box = new ScrollBox(m_body);
   m_scroll_box->set(ScrollBox::DisplayPolicy::ON_ENGAGE);
   auto layout = make_vbox_layout(this);
@@ -94,6 +110,7 @@ TableView::TableView(
     std::bind_front(&TableView::on_current, this));
   m_body_style_connection = connect_style_signal(
     *m_body, std::bind_front(&TableView::on_body_style, this));
+  setFocusProxy(m_body);
   on_body_style();
 }
 
@@ -108,6 +125,14 @@ const std::shared_ptr<TableView::CurrentModel>& TableView::get_current() const {
 const std::shared_ptr<TableView::SelectionModel>&
     TableView::get_selection() const {
   return m_body->get_selection();
+}
+
+TableHeader& TableView::get_header() {
+  return *m_header_view;
+}
+
+TableBody& TableView::get_body() {
+  return *m_body;
 }
 
 connection TableView::connect_sort_signal(
@@ -157,25 +182,26 @@ void TableView::on_filter(int column, TableFilter::Filter filter) {
 }
 
 void TableView::on_current(const optional<Index>& current) {
-  if(current) {
-    if(auto item = m_body->get_item(*current)) {
-      auto& horizontal_scroll_bar = m_scroll_box->get_horizontal_scroll_bar();
-      auto old_x = horizontal_scroll_bar.get_position();
-      auto& vertical_scroll_bar = m_scroll_box->get_vertical_scroll_bar();
-      auto old_y = vertical_scroll_bar.get_position();
-      m_scroll_box->scroll_to(*item);
-      auto x = horizontal_scroll_bar.get_position();
-      if(x > old_x) {
-        horizontal_scroll_bar.set_position(x + m_horizontal_spacing);
-      } else if(x < old_x) {
-        horizontal_scroll_bar.set_position(x - m_horizontal_spacing);
-      }
-      auto y = vertical_scroll_bar.get_position();
-      if(y > old_y) {
-        vertical_scroll_bar.set_position(y + m_vertical_spacing);
-      } else if(y < old_y) {
-        vertical_scroll_bar.set_position(y - m_vertical_spacing);
-      }
+  if(!current) {
+    return;
+  }
+  if(auto item = m_body->get_item(*current)) {
+    auto& horizontal_scroll_bar = m_scroll_box->get_horizontal_scroll_bar();
+    auto old_x = horizontal_scroll_bar.get_position();
+    auto& vertical_scroll_bar = m_scroll_box->get_vertical_scroll_bar();
+    auto old_y = vertical_scroll_bar.get_position();
+    m_scroll_box->scroll_to(*item);
+    auto x = horizontal_scroll_bar.get_position();
+    if(x > old_x) {
+      horizontal_scroll_bar.set_position(x + m_horizontal_spacing);
+    } else if(x < old_x) {
+      horizontal_scroll_bar.set_position(x - m_horizontal_spacing);
+    }
+    auto y = vertical_scroll_bar.get_position();
+    if(y > old_y) {
+      vertical_scroll_bar.set_position(y + m_vertical_spacing);
+    } else if(y < old_y) {
+      vertical_scroll_bar.set_position(y - m_vertical_spacing);
     }
   }
 }

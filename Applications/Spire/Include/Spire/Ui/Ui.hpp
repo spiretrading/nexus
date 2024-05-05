@@ -29,6 +29,7 @@ namespace Spire {
   class DateBox;
   class DateFilterPanel;
   class DecimalBox;
+  class DeletableListItem;
   class DestinationBox;
   class DestinationListItem;
   class DropDownBox;
@@ -36,6 +37,7 @@ namespace Spire {
   class DropShadow;
   class DurationBox;
   class EditableBox;
+  class EditableTableView;
   template<typename T> class EmptySelectionModel;
   class EmptyTableFilter;
   class EnabledObserver;
@@ -57,11 +59,13 @@ namespace Spire {
   class KeyInputBox;
   class KeyObserver;
   class LayeredWidget;
+  class LineInputForm;
   class ListItem;
   template<typename T> class ListSelectionValueModel;
   class ListView;
   class MarketBox;
   class MenuBox;
+  class MenuButton;
   class MoneyBox;
   template<typename T> class MultiSelectionModel;
   class NavigationView;
@@ -81,6 +85,7 @@ namespace Spire {
   class ScrollableListBox;
   class SearchBox;
   class SecurityBox;
+  class SecurityDialog;
   class SecurityListItem;
   class SecurityStack;
   class SecurityView;

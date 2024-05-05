@@ -288,7 +288,6 @@ AdaptiveBox::AdaptiveBox(QWidget* parent)
   if(parent) {
     parent->installEventFilter(this);
   }
-  installEventFilter(this);
 }
 
 void AdaptiveBox::add(QLayout& layout) {
@@ -317,16 +316,7 @@ QSize AdaptiveBox::minimumSizeHint() const {
 }
 
 bool AdaptiveBox::eventFilter(QObject* watched, QEvent* event) {
-  if(watched == this) {
-    if(event->type() == QEvent::ParentChange) {
-      parentWidget()->installEventFilter(this);
-    } else if(event->type() == QEvent::ParentAboutToChange) {
-      parentWidget()->removeEventFilter(this);
-    }
-  } else if(watched == parentWidget() &&
-      event->type() == QEvent::LayoutRequest) {
-    update_layout();
-  } else if(event->type() == QEvent::LayoutRequest) {
+  if(event->type() == QEvent::LayoutRequest) {
     if(watched == m_stacked_layout->currentWidget()) {
       auto index = m_stacked_layout->currentIndex();
       for(auto i = 0; i < m_stacked_layout->count(); ++i) {
@@ -338,6 +328,19 @@ bool AdaptiveBox::eventFilter(QObject* watched, QEvent* event) {
     update_layout();
   }
   return QWidget::eventFilter(watched, event);
+}
+
+bool AdaptiveBox::event(QEvent* event) {
+  if(event->type() == QEvent::ParentChange) {
+    if(parentWidget()) {
+      parentWidget()->installEventFilter(this);
+    }
+  } else if(event->type() == QEvent::ParentAboutToChange) {
+    if(parentWidget()) {
+      parentWidget()->removeEventFilter(this);
+    }
+  }
+  return QWidget::event(event);
 }
 
 void AdaptiveBox::resizeEvent(QResizeEvent* event) {

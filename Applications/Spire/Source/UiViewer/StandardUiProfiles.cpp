@@ -9,7 +9,6 @@
 #include <QStringBuilder>
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 #include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
-#include "Nexus/Definitions/SecuritySet.hpp"
 #include "Spire/KeyBindings/OrderFieldInfoTip.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ArrayTableModel.hpp"
@@ -18,6 +17,7 @@
 #include "Spire/Spire/FieldValueModel.hpp"
 #include "Spire/Spire/ListValueModel.hpp"
 #include "Spire/Spire/LocalScalarValueModel.hpp"
+#include "Spire/Spire/RowViewListModel.hpp"
 #include "Spire/Spire/ToTextModel.hpp"
 #include "Spire/Spire/ValidatedValueModel.hpp"
 #include "Spire/Styles/ChainExpression.hpp"
@@ -39,12 +39,16 @@
 #include "Spire/Ui/DateBox.hpp"
 #include "Spire/Ui/DateFilterPanel.hpp"
 #include "Spire/Ui/DecimalBox.hpp"
+#include "Spire/Ui/DeletableListItem.hpp"
 #include "Spire/Ui/DestinationBox.hpp"
 #include "Spire/Ui/DestinationListItem.hpp"
 #include "Spire/Ui/DropDownBox.hpp"
 #include "Spire/Ui/DropDownList.hpp"
 #include "Spire/Ui/DurationBox.hpp"
 #include "Spire/Ui/EditableBox.hpp"
+#include "Spire/Ui/EditableTableView.hpp"
+#include "Spire/Ui/EmptySelectionModel.hpp"
+#include "Spire/Ui/EmptyTableFilter.hpp"
 #include "Spire/Ui/EyeDropper.hpp"
 #include "Spire/Ui/FilterPanel.hpp"
 #include "Spire/Ui/FocusObserver.hpp"
@@ -78,6 +82,7 @@
 #include "Spire/Ui/PopupBox.hpp"
 #include "Spire/Ui/QuantityBox.hpp"
 #include "Spire/Ui/RegionBox.hpp"
+#include "Spire/Ui/RegionDropDownBox.hpp"
 #include "Spire/Ui/RegionListItem.hpp"
 #include "Spire/Ui/ResponsiveLabel.hpp"
 #include "Spire/Ui/SaleConditionBox.hpp"
@@ -93,6 +98,7 @@
 #include "Spire/Ui/SecurityView.hpp"
 #include "Spire/Ui/SideBox.hpp"
 #include "Spire/Ui/SideFilterPanel.hpp"
+#include "Spire/Ui/SingleSelectionModel.hpp"
 #include "Spire/Ui/Slider.hpp"
 #include "Spire/Ui/Slider2D.hpp"
 #include "Spire/Ui/SplitView.hpp"
@@ -470,7 +476,7 @@ namespace {
     auto model = std::make_shared<ArrayListModel<T>>();
     for(auto property : properties) {
       if(get<bool>(property->get_name(), profile.get_properties()).get()) {
-        model->push(*from_string<T>(property->get_name()));
+        model->push(*from_text<T>(property->get_name()));
       }
     }
     auto button = make_label_button("Click me");
@@ -652,26 +658,19 @@ namespace {
 
   std::shared_ptr<ComboBox::QueryModel> populate_security_query_model() {
     auto security_infos = std::vector<SecurityInfo>();
-    security_infos.emplace_back(*ParseWildCardSecurity("MRU.TSX",
-      GetDefaultMarketDatabase(), GetDefaultCountryDatabase()),
+    security_infos.emplace_back(ParseSecurity("MRU.TSX"),
       "Metro Inc.", "", 0);
-    security_infos.emplace_back(*ParseWildCardSecurity("MG.TSX",
-      GetDefaultMarketDatabase(), GetDefaultCountryDatabase()),
+    security_infos.emplace_back(ParseSecurity("MG.TSX"),
       "Magna International Inc.", "", 0);
-    security_infos.emplace_back(*ParseWildCardSecurity("MGA.TSX",
-      GetDefaultMarketDatabase(), GetDefaultCountryDatabase()),
+    security_infos.emplace_back(ParseSecurity("MGA.TSX"),
       "Mega Uranium Ltd.", "", 0);
-    security_infos.emplace_back(*ParseWildCardSecurity("MGAB.TSX",
-      GetDefaultMarketDatabase(), GetDefaultCountryDatabase()),
+    security_infos.emplace_back(ParseSecurity("MGAB.TSX"),
       "Mackenzie Global Fixed Income Alloc ETF", "", 0);
-    security_infos.emplace_back(*ParseWildCardSecurity("MON.NYSE",
-      GetDefaultMarketDatabase(), GetDefaultCountryDatabase()),
+    security_infos.emplace_back(ParseSecurity("MON.NYSE"),
       "Monsanto Co.", "", 0);
-    security_infos.emplace_back(*ParseWildCardSecurity("MFC.TSX",
-      GetDefaultMarketDatabase(), GetDefaultCountryDatabase()),
+    security_infos.emplace_back(ParseSecurity("MFC.TSX"),
       "Manulife Financial Corporation", "", 0);
-    security_infos.emplace_back(*ParseWildCardSecurity("MX.TSX",
-      GetDefaultMarketDatabase(), GetDefaultCountryDatabase()),
+    security_infos.emplace_back(ParseSecurity("MX.TSX"),
       "Methanex Corporation", "", 0);
     auto model = std::make_shared<LocalComboBoxQueryModel>();
     for(auto security_info : security_infos) {
@@ -725,8 +724,7 @@ namespace {
       DefaultCountries::CN()};
     auto model = std::make_shared<LocalComboBoxQueryModel>();
     for(auto& security_info : securities) {
-      auto security = *ParseWildCardSecurity(security_info.first,
-        GetDefaultMarketDatabase(), GetDefaultCountryDatabase());
+      auto security = ParseSecurity(security_info.first);
       auto region = Region(security);
       region.SetName(security_info.second);
       model->add(to_text(security).toLower(), region);
@@ -749,25 +747,29 @@ namespace {
     return model;
   }
 
-  auto populate_key_input_box_model(const QKeySequence& key) {
-    auto model = make_validated_value_model<QKeySequence>([] (auto sequence) {
-      if(sequence.count() == 0) {
-        return QValidator::Intermediate;
-      } else if(sequence.count() > 1) {
-        return QValidator::Invalid;
-      }
-      auto key = sequence[0];
-      key &= ~Qt::ShiftModifier;
-      key &= ~Qt::ControlModifier;
-      key &= ~Qt::AltModifier;
-      key &= ~Qt::MetaModifier;
-      key &= ~Qt::KeypadModifier;
-      key &= ~Qt::GroupSwitchModifier;
-      if(key >= Qt::Key_F1 && key <= Qt::Key_F32) {
-        return QValidator::Acceptable;
-      }
+  auto key_input_box_validator(const QKeySequence& sequence) {
+    if(sequence.count() == 0) {
+      return QValidator::Intermediate;
+    } else if(sequence.count() > 1) {
       return QValidator::Invalid;
-      }, std::make_shared<LocalKeySequenceValueModel>(key));
+    }
+    auto key = sequence[0];
+    key &= ~Qt::ShiftModifier;
+    key &= ~Qt::ControlModifier;
+    key &= ~Qt::AltModifier;
+    key &= ~Qt::MetaModifier;
+    key &= ~Qt::KeypadModifier;
+    key &= ~Qt::GroupSwitchModifier;
+    if(key >= Qt::Key_F1 && key <= Qt::Key_F32) {
+      return QValidator::Acceptable;
+    }
+    return QValidator::Invalid;
+  }
+
+  auto populate_key_input_box_model(const QKeySequence& key) {
+    auto model = make_validated_value_model<QKeySequence>(
+      &key_input_box_validator,
+      std::make_shared<LocalKeySequenceValueModel>(key));
     return model;
   }
 
@@ -849,25 +851,51 @@ namespace {
     });
   }
 
-  template<typename T>
-  class RejectedValueModel : public LocalValueModel<T> {
-    public:
-      using Type = typename LocalValueModel<T>::Type;
+  auto make_header_model() {
+    auto model = std::make_shared<ArrayListModel<TableHeaderItem::Model>>();
+    model->push({"Name", "Name",
+      TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
+    model->push({"Order Type", "Ord Type",
+      TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
+    model->push({"Quantity", "Qty",
+      TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
+    model->push({"Key", "Key",
+      TableHeaderItem::Order::NONE, TableFilter::Filter::UNFILTERED});
+    return model;
+  }
 
-      void set_rejected(const Type& rejected) {
-        m_rejected = rejected;
-      }
-
-      QValidator::State get_state() const {
-        if(this->get() == m_rejected) {
-          return QValidator::Invalid;
-        }
-        return QValidator::Acceptable;
-      }
-
-    private:
-      Type m_rejected;
-  };
+  EditableBox* make_row_cell(const std::shared_ptr<TableModel>& table,
+      int row, int column) {
+    if(column == 0) {
+      return new EditableBox(*new AnyInputBox(*new TextBox(
+        make_list_value_model(std::make_shared<ColumnViewListModel<QString>>(
+          table, column), row))));
+    } else if(column == 1) {
+      return new EditableBox(*new AnyInputBox(*make_order_type_box(
+        make_list_value_model(std::make_shared<ColumnViewListModel<OrderType>>(
+          table, column), row))));
+    } else if(column == 2) {
+      auto model =
+        std::make_shared<ScalarValueModelDecorator<optional<Quantity>>>(
+          make_list_value_model(
+            std::make_shared<ColumnViewListModel<optional<Quantity>>>(
+              table, column), row));
+      return new EditableBox(*new AnyInputBox(*new QuantityBox(std::move(model),
+        QHash<Qt::KeyboardModifier, Quantity>(
+          {{Qt::NoModifier, 1}, {Qt::AltModifier, 5}, {Qt::ControlModifier, 10},
+          {Qt::ShiftModifier, 20}}))));
+    } else if(column == 3) {
+      return new EditableBox(*new AnyInputBox(*new KeyInputBox(
+        make_validated_value_model<QKeySequence>(&key_input_box_validator,
+          make_list_value_model(
+            std::make_shared<ColumnViewListModel<QKeySequence>>(table, column),
+            row)))),
+        [] (const auto& key) {
+          return key_input_box_validator(key) == QValidator::Acceptable;
+        });
+    }
+    return nullptr;
+  }
 }
 
 UiProfile Spire::make_adaptive_box_profile() {
@@ -1744,6 +1772,20 @@ UiProfile Spire::make_decimal_filter_panel_profile() {
   return profile;
 }
 
+UiProfile Spire::make_deletable_list_item_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto profile = UiProfile("DeletableListItem", properties,
+    [] (auto& profile) {
+      auto item = new DeletableListItem(*make_label("XIU.TSX"));
+      item->setFixedWidth(scale_width(120));
+      apply_widget_properties(item, profile.get_properties());
+      item->connect_delete_signal(profile.make_event_slot("DeleteSignal"));
+      return item;
+  });
+  return profile;
+}
+
 UiProfile Spire::make_delete_icon_button_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
@@ -1996,10 +2038,43 @@ UiProfile Spire::make_editable_box_profile() {
       current->set(std::any_cast<Region>(query_model->parse("TSX")));
       return new AnyInputBox((*new RegionBox(query_model, current)));
     }();
-    auto editable_box = new EditableBox(*input_box);
+    auto editable_box = [&] {
+      if(test_widget.get() == 4) {
+        return new EditableBox(*input_box, [] (const auto& sequence) {
+          return key_input_box_validator(sequence) == QValidator::Acceptable;
+        });
+      }
+      return new EditableBox(*input_box);
+    }();
     editable_box->setMinimumWidth(scale_width(112));
     apply_widget_properties(editable_box, profile.get_properties());
     return editable_box;
+  });
+  return profile;
+}
+
+UiProfile Spire::make_editable_table_view_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto profile = UiProfile("EditableTableView", properties, [] (auto& profile) {
+    auto array_table_model = std::make_shared<ArrayTableModel>();
+    array_table_model->push({QString("Test1"), OrderType(OrderType::MARKET),
+      optional<Quantity>(10), QKeySequence("F3")});
+    array_table_model->push({QString("Test2"), OrderType(OrderType::STOP),
+      optional<Quantity>(20), QKeySequence("F7")});
+    array_table_model->push({QString("Test3"), OrderType(OrderType::LIMIT),
+      optional<Quantity>(30), QKeySequence("Ctrl+F2")});
+    auto table_view = new EditableTableView(array_table_model,
+      make_header_model(), std::make_shared<EmptyTableFilter>(),
+      std::make_shared<LocalValueModel<optional<TableIndex>>>(),
+      std::make_shared<TableSelectionModel>(
+        std::make_shared<TableEmptySelectionModel>(),
+        std::make_shared<ListSingleSelectionModel>(),
+        std::make_shared<ListEmptySelectionModel>()),
+      make_row_cell, {});
+    apply_widget_properties(table_view, profile.get_properties());
+    table_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    return table_view;
   });
   return profile;
 }
@@ -2276,15 +2351,17 @@ UiProfile Spire::make_hex_color_box_profile() {
   properties.push_back(make_standard_property<QColor>("current"));
   properties.push_back(make_standard_property<QColor>("rejected", Qt::red));
   auto profile = UiProfile("HexColorBox", properties, [] (auto& profile) {
-    auto model = std::make_shared<RejectedValueModel<QColor>>();
+    auto& rejected = get<QColor>("rejected", profile.get_properties());
+    auto model = make_validated_value_model<QColor>([&] (QColor value) {
+      if(value == rejected.get()) {
+        return QValidator::State::Invalid;
+      }
+      return QValidator::State::Acceptable;
+    });
     auto box = new HexColorBox(model);
     box->setFixedWidth(scale_width(120));
     apply_widget_properties(box, profile.get_properties());
     link(box->get_current(), get<QColor>("current", profile.get_properties()));
-    auto& rejected = get<QColor>("rejected", profile.get_properties());
-    rejected.connect_changed_signal([=] (const auto& value) {
-      model->set_rejected(value);
-    });
     box->get_current()->connect_update_signal(
       profile.make_event_slot<QColor>("Current"));
     box->connect_submit_signal(profile.make_event_slot<QColor>("Submit"));
@@ -3632,6 +3709,52 @@ UiProfile Spire::make_region_box_profile() {
   return profile;
 }
 
+UiProfile Spire::make_region_drop_down_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto current_region = define_enum<Region>(
+    {{"NSEX", GetDefaultMarketDatabase().FromCode(DefaultMarkets::NSEX())},
+     {"ISE", GetDefaultMarketDatabase().FromCode(DefaultMarkets::ISE())},
+     {"TSX", GetDefaultMarketDatabase().FromCode(DefaultMarkets::TSX())},
+     {"USA", Region(DefaultCountries::US())},
+     {"CAN", Region(DefaultCountries::CA())}});
+  properties.push_back(make_standard_enum_property("current", current_region));
+  properties.push_back(make_standard_property("read_only", false));
+  auto profile = UiProfile("RegionDropDownBox", properties, [] (auto& profile) {
+    auto markets = std::vector<MarketCode>{DefaultMarkets::NSEX(),
+      DefaultMarkets::ISE(), DefaultMarkets::TSX()};
+    auto countries = std::vector<CountryCode>{DefaultCountries::US(),
+      DefaultCountries::CA()};
+    auto regions = std::make_shared<ArrayListModel<Region>>();
+    for(auto& market_code : markets) {
+      auto market = GetDefaultMarketDatabase().FromCode(market_code);
+      auto region = Region(market);
+      region.SetName(market.m_description);
+      regions->push(region);
+    }
+    for(auto& country : countries) {
+      auto region = Region(country);
+      region.SetName(GetDefaultCountryDatabase().FromCode(country).m_name);
+      regions->push(region);
+    }
+    auto box = make_region_drop_down_box(std::move(regions));
+    box->setFixedWidth(scale_width(150));
+    apply_widget_properties(box, profile.get_properties());
+    auto& current = get<Region>("current", profile.get_properties());
+    current.connect_changed_signal([=] (auto value) {
+      box->get_current()->set(value);
+    });
+    auto& read_only = get<bool>("read_only", profile.get_properties());
+    read_only.connect_changed_signal(
+      std::bind_front(&RegionDropDownBox::set_read_only, box));
+    box->get_current()->connect_update_signal(
+      profile.make_event_slot<Region>("Current"));
+    box->connect_submit_signal(profile.make_event_slot<Region>("Submit"));
+    return box;
+  });
+  return profile;
+}
+
 UiProfile Spire::make_region_list_item_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
@@ -3642,9 +3765,8 @@ UiProfile Spire::make_region_list_item_profile() {
     auto& type = get<int>("type", profile.get_properties());
     auto region = [&] {
       if(type.get() == 0) {
-        auto security = ParseWildCardSecurity("MSFT.NSDQ",
-          GetDefaultMarketDatabase(), GetDefaultCountryDatabase());
-        auto region = Region(*security);
+        auto security = ParseSecurity("MSFT.NSDQ");
+        auto region = Region(security);
         region.SetName("Microsoft Corporation");
         return region;
       } else if(type.get() == 1) {
@@ -4088,10 +4210,9 @@ UiProfile Spire::make_security_list_item_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
   auto profile = UiProfile("SecurityListItem", properties, [] (auto& profile) {
-    auto security = ParseWildCardSecurity(
-      "AB.NYSE", GetDefaultMarketDatabase(), GetDefaultCountryDatabase());
+    auto security = ParseSecurity("AB.NYSE");
     auto security_info =
-      SecurityInfo(*security, "Alliancebernstein Holding LP", "", 0);
+      SecurityInfo(security, "Alliancebernstein Holding LP", "", 0);
     auto item = new SecurityListItem(security_info);
     apply_widget_properties(item, profile.get_properties());
     return item;
@@ -4590,16 +4711,20 @@ UiProfile Spire::make_table_view_profile() {
     auto header = std::make_shared<ArrayListModel<TableHeaderItem::Model>>();
     auto item = TableHeaderItem::Model();
     item.m_name = "Security";
+    item.m_short_name = "Sec";
     header->push(item);
     item = TableHeaderItem::Model();
     item.m_name = "Quantity";
+    item.m_short_name = "Qty";
     item.m_order = TableHeaderItem::Order::ASCENDING;
     header->push(item);
     item = TableHeaderItem::Model();
     item.m_name = "Side";
+    item.m_short_name = "Sd";
     header->push(item);
     item = TableHeaderItem::Model();
     item.m_name = "Date";
+    item.m_short_name = "Date";
     header->push(item);
     auto view = TableViewBuilder(model).
       set_header(header).
@@ -4869,7 +4994,14 @@ UiProfile Spire::make_text_box_profile() {
   properties.push_back(make_standard_enum_property(
     "text_align", text_alignment_property));
   auto profile = UiProfile("TextBox", properties, [] (auto& profile) {
-    auto model = std::make_shared<RejectedValueModel<QString>>();
+    auto& rejected = get<QString>("rejected", profile.get_properties());
+    auto model = make_validated_value_model<QString>(
+      [&] (const QString& value) {
+        if(value == rejected.get()) {
+          return QValidator::State::Intermediate;
+        }
+        return QValidator::State::Acceptable;
+      });
     auto text_box = new TextBox(model);
     text_box->setFixedWidth(scale_width(100));
     apply_widget_properties(text_box, profile.get_properties());
@@ -4882,10 +5014,6 @@ UiProfile Spire::make_text_box_profile() {
     auto& placeholder = get<QString>("placeholder", profile.get_properties());
     placeholder.connect_changed_signal([=] (const auto& text) {
       text_box->set_placeholder(text);
-    });
-    auto& rejected = get<QString>("rejected", profile.get_properties());
-    rejected.connect_changed_signal([=] (const auto& value) {
-      model->set_rejected(value);
     });
     auto& padding = get<int>("horizontal_padding", profile.get_properties());
     padding.connect_changed_signal([=] (const auto& value) {

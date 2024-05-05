@@ -130,23 +130,23 @@ TagComboBox::TagComboBox(std::shared_ptr<ComboBox::QueryModel> query_model,
       m_submission(std::make_shared<ArrayListModel<std::any>>()),
       m_focus_observer(*this),
       m_input_box(nullptr),
+      m_drop_down_window(nullptr),
       m_is_modified(false) {
   copy_list_model(current, m_submission);
-  m_tag_box = new TagBox(std::move(current),
-    std::make_shared<LocalTextModel>());
+  m_tag_box =
+    new TagBox(std::move(current), std::make_shared<LocalTextModel>());
   m_list_connection = m_tag_box->get_tags()->connect_operation_signal(
     std::bind_front(&TagComboBox::on_operation, this));
   m_any_input_box = new AnyInputBox(*m_tag_box);
-  m_combo_box = new ComboBox(
-    std::make_shared<TagComboBoxQueryModel>(std::move(query_model),
-    m_tag_box->get_tags()), std::make_shared<LocalValueModel<std::any>>(),
-    m_any_input_box, std::move(view_builder));
+  m_combo_box = new ComboBox(std::make_shared<TagComboBoxQueryModel>(
+    std::move(query_model), m_tag_box->get_tags()),
+    std::make_shared<LocalValueModel<std::any>>(), m_any_input_box,
+    std::move(view_builder));
   m_combo_box->connect_submit_signal(
     std::bind_front(&TagComboBox::on_combo_box_submit, this));
   enclose(*this, *m_combo_box);
   proxy_style(*this, *m_combo_box);
   setFocusProxy(m_combo_box);
-  m_drop_down_window = find_pop_up_window(*m_combo_box);
   m_focus_observer.connect_state_signal(
     std::bind_front(&TagComboBox::on_focus, this));
   m_any_input_box->installEventFilter(this);
@@ -191,26 +191,12 @@ bool TagComboBox::eventFilter(QObject* watched, QEvent* event) {
       if(key_event.text() != "\r") {
         return QWidget::eventFilter(watched, event);
       }
-      if(!m_tag_box->get_current()->get().isEmpty()) {
-        if(auto value = m_combo_box->get_query_model()->parse(
-            m_tag_box->get_current()->get()); value.has_value()) {
-          if(!is_equal(m_combo_box->get_current()->get(), value)) {
-            m_combo_box->get_current()->set(value);
-          }
-          get_current()->push(value);
-        }
-        m_tag_box->get_current()->set("");
-      }
-      if(get_current()->get_size() > 0) {
-        submit();
-      }
+      push_combo_box();
       return true;
     } else if(key_event.key() == Qt::Key_Space) {
       if(m_combo_box->get_query_model()->parse(
           m_tag_box->get_current()->get()).has_value()) {
-        auto new_event = QKeyEvent(key_event.type(), Qt::Key_Enter,
-          key_event.modifiers(), key_event.text());
-        QCoreApplication::sendEvent(m_input_box, &new_event);
+        push_combo_box();
         return true;
       }
     } else if(key_event.key() == Qt::Key_Escape) {
@@ -220,15 +206,19 @@ bool TagComboBox::eventFilter(QObject* watched, QEvent* event) {
         key_event.key() == Qt::Key_Up ||
         key_event.key() == Qt::Key_PageDown ||
         key_event.key() == Qt::Key_PageUp) {
-      if(m_drop_down_window && m_drop_down_window->isVisible()) {
+      auto drop_down_window = find_drop_down_window();
+      if(drop_down_window && drop_down_window->isVisible()) {
         QCoreApplication::sendEvent(m_combo_box, event);
         event->accept();
         return true;
       }
     }
-  } else if(watched == m_input_box && event->type() == QEvent::FocusOut &&
-      find_focus_state(*m_drop_down_window) != FocusObserver::State::NONE) {
-    return true;
+  } else if(watched == m_input_box && event->type() == QEvent::FocusOut) {
+    auto drop_down_window = find_drop_down_window();
+    if(drop_down_window && find_focus_state(*drop_down_window) !=
+        FocusObserver::State::NONE) {
+      return true;
+    }
   } else if(watched == m_any_input_box && event->type() == QEvent::KeyPress) {
     if(static_cast<QKeyEvent*>(event)->key() == Qt::Key_Escape) {
       event->ignore();
@@ -267,10 +257,36 @@ void TagComboBox::install_text_proxy_event_filter() {
   }
 }
 
+void TagComboBox::push_combo_box() {
+  if(m_tag_box->get_current()->get().isEmpty()) {
+    return;
+  }
+  auto value =
+    m_combo_box->get_query_model()->parse(m_tag_box->get_current()->get());
+  if(value.has_value()) {
+    if(!is_equal(m_combo_box->get_current()->get(), value)) {
+      m_combo_box->get_current()->set(value);
+    }
+    get_current()->push(value);
+    m_tag_box->get_current()->set("");
+    submit();
+  } else {
+    m_tag_box->get_current()->set("");
+  }
+}
+
 void TagComboBox::submit() {
   copy_list_model(get_current(), m_submission);
   m_is_modified = false;
   m_submit_signal(m_submission);
+}
+
+QWidget* TagComboBox::find_drop_down_window() {
+  if(m_drop_down_window) {
+    return m_drop_down_window;
+  }
+  m_drop_down_window = find_pop_up_window(*m_combo_box);
+  return m_drop_down_window;
 }
 
 void TagComboBox::on_combo_box_submit(const std::any& submission) {
@@ -280,9 +296,12 @@ void TagComboBox::on_combo_box_submit(const std::any& submission) {
 
 void TagComboBox::on_focus(FocusObserver::State state) {
   if(state == FocusObserver::State::NONE) {
-    m_tag_box->get_current()->set("");
-    if(m_is_modified && get_current()->get_size() > 0) {
-      submit();
+    if(m_tag_box->get_current()->get().isEmpty()) {
+      if(m_is_modified && get_current()->get_size() > 0) {
+        submit();
+      }
+    } else {
+      push_combo_box();
     }
   }
 }

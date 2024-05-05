@@ -94,6 +94,7 @@ namespace Styles {
       ScrollBar* m_vertical_scroll_bar;
       StyleProperties m_text_edit_styles;
       StyleProperties m_placeholder_styles;
+      bool m_has_update;
       boost::signals2::scoped_connection m_style_connection;
       boost::signals2::scoped_connection m_placeholder_style_connection;
       QString m_submission;
@@ -107,7 +108,7 @@ namespace Styles {
       int get_scroll_bar_width() const;
       bool is_placeholder_shown() const;
       void update_text_width(int width);
-      void on_current_update(const QString& current);
+      void on_current(const QString& current);
       void on_cursor_position();
       void on_style();
   };

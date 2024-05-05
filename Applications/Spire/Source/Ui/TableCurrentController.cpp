@@ -96,8 +96,18 @@ void TableCurrentController::move_row(int source, int destination) {
 }
 
 void TableCurrentController::navigate_home() {
-  if(m_row_size > 0 && m_column_size > 0 && m_current->get() != Index(0, 0)) {
-    m_current->set(Index(0, 0));
+  if(m_row_size == 0 || m_column_size == 0) {
+    return;
+  }
+  auto& current = m_current->get();
+  for(auto row = 0; row < m_row_size; ++row) {
+    for(auto column = 0; column < m_column_size; ++column) {
+      auto index = Index(row, column);
+      if(current == index ||
+          m_current->set(index) != QValidator::State::Invalid) {
+        break;
+      }
+    }
   }
 }
 
@@ -105,8 +115,13 @@ void TableCurrentController::navigate_home_row() {
   auto& current = m_current->get();
   if(!current) {
     navigate_home();
-  } else if(current->m_row != 0) {
-    m_current->set(Index(0, current->m_column));
+    return;
+  }
+  for(auto row = 0; row < m_row_size; ++row) {
+    if(current->m_row == row || m_current->set(Index(row, current->m_column)) !=
+        QValidator::State::Invalid) {
+      break;
+    }
   }
 }
 
@@ -114,15 +129,30 @@ void TableCurrentController::navigate_home_column() {
   auto& current = m_current->get();
   if(!current) {
     navigate_home();
-  } else if(current->m_column != 0) {
-    m_current->set(Index(current->m_row, 0));
+    return;
+  }
+  for(auto column = 0; column < m_column_size; ++column) {
+    if(current->m_column == column ||
+        m_current->set(Index(current->m_row, column)) !=
+          QValidator::State::Invalid) {
+      break;
+    }
   }
 }
 
 void TableCurrentController::navigate_end() {
-  if(m_row_size > 0 && m_column_size > 0 &&
-      m_current->get() != Index(m_row_size - 1, m_column_size - 1)) {
-    m_current->set(Index(m_row_size - 1, m_column_size - 1));
+  if(m_row_size == 0 || m_column_size == 0) {
+    return;
+  }
+  auto& current = m_current->get();
+  for(auto row = m_row_size - 1; row >= 0; --row) {
+    for(auto column = m_column_size - 1; column >= 0; --column) {
+      auto index = Index(row, column);
+      if(current == index ||
+          m_current->set(index) != QValidator::State::Invalid) {
+        break;
+      }
+    }
   }
 }
 
@@ -130,8 +160,13 @@ void TableCurrentController::navigate_end_row() {
   auto& current = m_current->get();
   if(!current) {
     navigate_end();
-  } else if(current->m_row != m_row_size - 1) {
-    m_current->set(Index(m_row_size - 1, current->m_column));
+    return;
+  }
+  for(auto row = m_row_size - 1; row >= 0; --row) {
+    if(current->m_row == row || m_current->set(Index(row, current->m_column)) !=
+        QValidator::State::Invalid) {
+      break;
+    }
   }
 }
 
@@ -139,8 +174,14 @@ void TableCurrentController::navigate_end_column() {
   auto& current = m_current->get();
   if(!current) {
     navigate_end();
-  } else if(current->m_column != m_column_size - 1) {
-    m_current->set(Index(current->m_row, m_column_size - 1));
+    return;
+  }
+  for(auto column = m_column_size - 1; column >= 0; --column) {
+    if(current->m_column == column ||
+        m_current->set(Index(current->m_row, column)) !=
+          QValidator::State::Invalid) {
+      break;
+    }
   }
 }
 
@@ -148,8 +189,13 @@ void TableCurrentController::navigate_next_row() {
   auto& current = m_current->get();
   if(!current) {
     navigate_home();
-  } else if(current->m_row != m_row_size - 1) {
-    m_current->set(Index(current->m_row + 1, current->m_column));
+    return;
+  }
+  for(auto row = current->m_row + 1; row < m_row_size; ++row) {
+    if(m_current->set(Index(row, current->m_column)) !=
+        QValidator::State::Invalid) {
+      break;
+    }
   }
 }
 
@@ -157,8 +203,13 @@ void TableCurrentController::navigate_next_column() {
   auto& current = m_current->get();
   if(!current) {
     navigate_home();
-  } else if(current->m_column != m_column_size - 1) {
-    m_current->set(Index(current->m_row, current->m_column + 1));
+    return;
+  }
+  for(auto column = current->m_column + 1; column < m_column_size; ++column) {
+    if(m_current->set(Index(current->m_row, column)) !=
+        QValidator::State::Invalid) {
+      break;
+    }
   }
 }
 
@@ -166,8 +217,13 @@ void TableCurrentController::navigate_previous_row() {
   auto& current = m_current->get();
   if(!current) {
     navigate_home();
-  } else if(current->m_row != 0) {
-    m_current->set(Index(current->m_row - 1, current->m_column));
+    return;
+  }
+  for(auto row = current->m_row - 1; row >= 0; --row) {
+    if(m_current->set(Index(row, current->m_column)) !=
+        QValidator::State::Invalid) {
+      break;
+    }
   }
 }
 
@@ -175,8 +231,13 @@ void TableCurrentController::navigate_previous_column() {
   auto& current = m_current->get();
   if(!current) {
     navigate_home();
-  } else if(current->m_column != 0) {
-    m_current->set(Index(current->m_row, current->m_column - 1));
+    return;
+  }
+  for(auto column = current->m_column - 1; column >= 0; --column) {
+    if(m_current->set(Index(current->m_row, column)) !=
+        QValidator::State::Invalid) {
+      break;
+    }
   }
 }
 

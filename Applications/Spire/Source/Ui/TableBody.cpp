@@ -4,6 +4,7 @@
 #include <QMouseEvent>
 #include <QPainter>
 #include <QPointer>
+#include <QTimer>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ListValueModel.hpp"
@@ -57,72 +58,10 @@ struct TableBody::ColumnCover : Cover {
 
   ColumnCover(QWidget* parent)
       : Cover(parent) {
-    setMouseTracking(true);
+    setAttribute(Qt::WA_TransparentForMouseEvents);
     update_style(*this, [] (auto& style) {
       style.get(CurrentColumn()).set(BackgroundColor(QColor(0xE2E0FF)));
     });
-  }
-
-  bool event(QEvent* event) override {
-    switch(event->type()) {
-      case QEvent::MouseButtonPress:
-      case QEvent::MouseButtonRelease:
-      case QEvent::MouseButtonDblClick:
-      case QEvent::MouseMove:
-        return mouse_event(*static_cast<QMouseEvent*>(event));
-    }
-    return Cover::event(event);
-  }
-
-  bool mouse_event(QMouseEvent& event) {
-    setAttribute(Qt::WA_TransparentForMouseEvents);
-    auto hovered_widget = parentWidget()->childAt(mapToParent(event.pos()));
-    if(m_hovered != hovered_widget) {
-      if(m_hovered) {
-        auto leave_event = QEvent(QEvent::Type::Leave);
-        QCoreApplication::sendEvent(m_hovered, &leave_event);
-      }
-      if(hovered_widget == parentWidget()) {
-        m_hovered.clear();
-      } else {
-        m_hovered = hovered_widget;
-        if(m_hovered) {
-          auto local_position = m_hovered->mapFromGlobal(event.globalPos());
-          auto enter_event =
-            QEnterEvent(local_position, event.windowPos(), event.screenPos());
-          QCoreApplication::sendEvent(m_hovered, &enter_event);
-        }
-      }
-    }
-    auto result = [&] {
-      if(hovered_widget) {
-        auto mouse_event = QMouseEvent(event.type(),
-          hovered_widget->mapFromGlobal(event.globalPos()), event.windowPos(),
-          event.screenPos(), event.button(), event.buttons(), event.modifiers(),
-          event.source());
-        auto result = [&] {
-          if(event.spontaneous()) {
-            return qt_sendSpontaneousEvent(hovered_widget, &mouse_event);
-          }
-          return QCoreApplication::sendEvent(hovered_widget, &mouse_event);
-        }();
-        event.setAccepted(mouse_event.isAccepted());
-        return result;
-      } else {
-        return false;
-      }
-    }();
-    setAttribute(Qt::WA_TransparentForMouseEvents, false);
-    return result;
-  }
-
-  void leaveEvent(QEvent* event) override {
-    if(m_hovered) {
-      auto leave_event = QEvent(QEvent::Type::Leave);
-      QCoreApplication::sendEvent(m_hovered, &leave_event);
-      m_hovered = nullptr;
-    }
-    Cover::leaveEvent(event);
   }
 };
 
@@ -133,12 +72,10 @@ TableBody::TableBody(
     QWidget* parent)
     : QWidget(parent),
       m_table(std::move(table)),
-      m_current_controller(std::move(current), 0, m_table->get_column_size()),
-      m_selection_controller(
-        std::move(selection), 0, m_table->get_column_size()),
+      m_current_controller(std::move(current), 0, widths->get_size() + 1),
+      m_selection_controller(std::move(selection), 0, widths->get_size() + 1),
       m_widths(std::move(widths)),
       m_view_builder(std::move(view_builder)) {
-  setAttribute(Qt::WA_Hover);
   setFocusPolicy(Qt::StrongFocus);
   auto row_layout = make_vbox_layout(this);
   m_style_connection =
@@ -152,6 +89,7 @@ TableBody::TableBody(
       set(vertical_padding(scale_height(1))).
       set(grid_color(QColor(0xE0E0E0)));
   });
+  setUpdatesEnabled(false);
   for(auto row = 0; row != m_table->get_row_size(); ++row) {
     add_row(row);
   }
@@ -195,40 +133,25 @@ const std::shared_ptr<TableBody::SelectionModel>&
   return m_selection_controller.get_selection();
 }
 
+TableIndex TableBody::get_index(const TableItem& item) const {
+  auto row = layout()->indexOf(item.parentWidget());
+  if(row == -1) {
+    throw std::runtime_error("Invalid table item.");
+  }
+  auto column =
+    item.parentWidget()->layout()->indexOf(const_cast<TableItem*>(&item));
+  if(column == -1) {
+    throw std::runtime_error("Invalid table item.");
+  }
+  return TableIndex(row, column);
+}
+
 const TableItem* TableBody::get_item(Index index) const {
   return const_cast<TableBody*>(this)->get_item(index);
 }
 
 TableItem* TableBody::get_item(Index index) {
   return find_item(index);
-}
-
-bool TableBody::eventFilter(QObject* watched, QEvent* event) {
-  if(event->type() == QEvent::HoverMove) {
-    auto item = static_cast<QWidget*>(watched);
-    auto hover_item = find_item(m_hover_index);
-    if(hover_item != item) {
-      if(hover_item) {
-        m_hover_index = none;
-        unmatch(*hover_item, HoverItem());
-        update();
-      }
-      if(item != get_current_item()) {
-        m_hover_index = [&] () -> optional<Index> {
-          for(auto row = 0; row != layout()->count(); ++row) {
-            if(auto column =
-                layout()->itemAt(row)->widget()->layout()->indexOf(item);
-                column >= 0) {
-              return Index(row, column);
-            }
-          }
-          return none;
-        }();
-        match(*item, HoverItem());
-      }
-    }
-  }
-  return QWidget::eventFilter(watched, event);
 }
 
 bool TableBody::event(QEvent* event) {
@@ -250,14 +173,10 @@ bool TableBody::event(QEvent* event) {
       left += width;
       cover->raise();
     }
-    return result;
-  } else if(event->type() == QEvent::HoverLeave) {
-    if(auto hover_item = find_item(m_hover_index)) {
-      m_hover_index = none;
-      unmatch(*hover_item, HoverItem());
-      update();
+    if(!updatesEnabled()) {
+      setUpdatesEnabled(true);
     }
-    return true;
+    return result;
   } else {
     return QWidget::event(event);
   }
@@ -382,8 +301,8 @@ void TableBody::paintEvent(QPaintEvent* event) {
   }
   if(m_styles.m_horizontal_grid_color.alphaF() != 0) {
     auto draw_border = [&] (int top, int height) {
-      painter.fillRect(QRect(0, top, width(), height),
-        m_styles.m_horizontal_grid_color);
+      painter.fillRect(
+        QRect(0, top, width(), height), m_styles.m_horizontal_grid_color);
     };
     if(m_styles.m_padding.top() != 0) {
       draw_border(0, m_styles.m_padding.top());
@@ -396,21 +315,21 @@ void TableBody::paintEvent(QPaintEvent* event) {
       }
     }
     if(m_styles.m_padding.bottom() != 0) {
-      draw_border(height() - m_styles.m_padding.bottom(),
-        m_styles.m_padding.bottom());
+      draw_border(
+        height() - m_styles.m_padding.bottom(), m_styles.m_padding.bottom());
     }
   }
   if(m_styles.m_vertical_grid_color.alphaF() != 0) {
     auto draw_border = [&] (int left, int width) {
-      painter.fillRect(QRect(left, 0, width, height()),
-        m_styles.m_vertical_grid_color);
+      painter.fillRect(
+        QRect(left, 0, width, height()), m_styles.m_vertical_grid_color);
     };
     if(m_styles.m_padding.left() != 0) {
       draw_border(0, m_styles.m_padding.left());
     }
     if(m_styles.m_horizontal_spacing != 0 && m_widths->get_size() > 0) {
       auto left = m_widths->get(0);
-      for(auto column = 1; column < m_table->get_column_size(); ++column) {
+      for(auto column = 1; column < get_column_size(); ++column) {
         draw_border(left, m_styles.m_horizontal_spacing);
         if(column != m_widths->get_size()) {
           left += m_widths->get(column);
@@ -418,13 +337,17 @@ void TableBody::paintEvent(QPaintEvent* event) {
       }
     }
     if(m_styles.m_padding.right() != 0) {
-      draw_border(width() - m_styles.m_padding.right(),
-        m_styles.m_padding.right());
+      draw_border(
+        width() - m_styles.m_padding.right(), m_styles.m_padding.right());
     }
   }
   draw_item_borders(m_hover_index, painter);
   draw_item_borders(current, painter);
   QWidget::paintEvent(event);
+}
+
+int TableBody::get_column_size() const {
+  return m_widths->get_size() + 1;
 }
 
 TableItem* TableBody::get_current_item() {
@@ -439,8 +362,9 @@ TableItem* TableBody::find_item(const optional<Index>& index) {
   if(!index) {
     return nullptr;
   }
-  return static_cast<TableItem*>(layout()->itemAt(index->m_row)->widget()->
-    layout()->itemAt(index->m_column)->widget());
+  auto row = find_row(index->m_row);
+  auto item = row->layout()->itemAt(index->m_column)->widget();
+  return static_cast<TableItem*>(item);
 }
 
 int TableBody::get_left_spacing(int index) const {
@@ -474,11 +398,13 @@ void TableBody::add_row(int index) {
   match(*row, Row());
   auto column_layout = make_hbox_layout(row);
   column_layout->setSpacing(m_styles.m_horizontal_spacing);
-  for(auto column = 0; column != m_table->get_column_size(); ++column) {
+  for(auto column = 0; column != get_column_size(); ++column) {
     auto item = new TableItem(*m_view_builder(m_table, index, column));
-    item->setAttribute(Qt::WA_Hover);
-    item->installEventFilter(this);
-    if(column != m_table->get_column_size() - 1) {
+    m_hover_observers.emplace(std::piecewise_construct,
+      std::forward_as_tuple(item), std::forward_as_tuple(*item));
+    m_hover_observers.at(item).connect_state_signal(
+      std::bind_front(&TableBody::on_hover, this, std::ref(*item)));
+    if(column != get_column_size() - 1) {
       item->setFixedWidth(m_widths->get(column) - get_left_spacing(column));
     } else {
       item->setSizePolicy(
@@ -498,17 +424,21 @@ void TableBody::add_row(int index) {
 }
 
 void TableBody::remove_row(int index) {
+  for(auto i = 0; i != get_column_size(); ++i) {
+    if(auto item = find_item(TableIndex(index, i))) {
+      m_hover_observers.erase(item);
+    }
+  }
   if(m_hover_index && m_hover_index->m_row >= index) {
-    unmatch(*find_item(m_hover_index), HoverItem());
     m_hover_index = none;
   }
   auto& row_layout = *static_cast<QBoxLayout*>(layout());
   auto row = row_layout.itemAt(index);
   row_layout.removeItem(row);
-  delete row->widget();
-  delete row;
   m_current_controller.remove_row(index);
   m_selection_controller.remove_row(index);
+  delete row->widget();
+  delete row;
 }
 
 void TableBody::move_row(int source, int destination) {
@@ -520,8 +450,8 @@ void TableBody::move_row(int source, int destination) {
   m_selection_controller.move_row(source, destination);
 }
 
-void TableBody::draw_item_borders(const boost::optional<Index>& index,
-    QPainter& painter) {
+void TableBody::draw_item_borders(
+    const optional<Index>& index, QPainter& painter) {
   auto item = find_item(index);
   if(!item) {
     return;
@@ -529,7 +459,7 @@ void TableBody::draw_item_borders(const boost::optional<Index>& index,
   auto top_spacing = get_top_spacing(index->m_row);
   auto left_spacing = get_left_spacing(index->m_column);
   auto right_spacing = [&] {
-    if(index->m_column == m_table->get_column_size() - 1) {
+    if(index->m_column == get_column_size() - 1) {
       return m_styles.m_padding.right();
     }
     return m_styles.m_horizontal_spacing;
@@ -607,15 +537,13 @@ void TableBody::on_current(
   }
   if(current) {
     auto current_item = get_current_item();
-    if(current == m_hover_index) {
-      unmatch(*current_item, HoverItem());
-    }
     match(*current_item, Current());
     match(*current_item->parentWidget(), CurrentRow());
     if(!previous || previous->m_column != current->m_column) {
       match(*m_column_covers[current->m_column], CurrentColumn());
     }
     m_selection_controller.navigate(*current);
+    current_item->setFocus();
   }
 }
 
@@ -628,6 +556,21 @@ void TableBody::on_row_selection(const ListModel<int>::Operation& operation) {
       unmatch(*find_row(operation.get_previous()), Selected());
       match(*find_row(operation.get_value()), Selected());
     });
+}
+
+void TableBody::on_hover(TableItem& item, HoverObserver::State state) {
+  auto index = get_index(item);
+  if(state == HoverObserver::State::NONE) {
+    unmatch(item, HoverItem());
+    if(index == m_hover_index) {
+      m_hover_index = none;
+    }
+    update();
+  } else if(is_set(state, HoverObserver::State::MOUSE_OVER)) {
+    match(item, HoverItem());
+    m_hover_index = index;
+    update();
+  }
 }
 
 void TableBody::on_style() {
@@ -716,16 +659,19 @@ void TableBody::on_cover_style(Cover& cover) {
 }
 
 void TableBody::on_table_operation(const TableModel::Operation& operation) {
-  visit(operation,
-    [&] (const TableModel::AddOperation& operation) {
-      add_row(operation.m_index);
-    },
-    [&] (const TableModel::RemoveOperation& operation) {
-      remove_row(operation.m_index);
-    },
-    [&] (const TableModel::MoveOperation& operation) {
-      move_row(operation.m_source, operation.m_destination);
-    });
+  /** TODO: Proper synchronization is needed. */
+  QTimer::singleShot(0, this, [=] {
+    visit(operation,
+      [&] (const TableModel::AddOperation& operation) {
+        add_row(operation.m_index);
+      },
+      [&] (const TableModel::RemoveOperation& operation) {
+        remove_row(operation.m_index);
+      },
+      [&] (const TableModel::MoveOperation& operation) {
+        move_row(operation.m_source, operation.m_destination);
+      });
+  });
 }
 
 void TableBody::on_widths_update(const ListModel<int>::Operation& operation) {

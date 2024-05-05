@@ -1,32 +1,47 @@
 #include "Spire/KeyBindings/KeyBindingsWindow.hpp"
+#include "Spire/KeyBindings/CancelKeyBindingsForm.hpp"
+#include "Spire/KeyBindings/CancelKeyBindingsModel.hpp"
+#include "Spire/KeyBindings/InteractionsKeyBindingsForm.hpp"
+#include "Spire/KeyBindings/InteractionsKeyBindingsModel.hpp"
+#include "Spire/KeyBindings/InteractionsPage.hpp"
+#include "Spire/KeyBindings/TaskKeysPage.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/NavigationView.hpp"
+#include "Spire/Ui/ScrollBox.hpp"
 
 using namespace boost::signals2;
+using namespace Nexus;
 using namespace Spire;
 using namespace Spire::Styles;
 
-KeyBindingsWindow::KeyBindingsWindow(QWidget* parent)
-    : Window(parent) {
+KeyBindingsWindow::KeyBindingsWindow(
+    std::shared_ptr<KeyBindingsModel> key_bindings,
+    const CountryDatabase& countries, const MarketDatabase& markets,
+    const DestinationDatabase& destinations, QWidget* parent)
+    : Window(parent),
+      m_key_bindings(std::move(key_bindings)) {
   setWindowTitle(tr("Key Bindings"));
   set_svg_icon(":/Icons/key-bindings.svg");
   setWindowIcon(QIcon(":/Icons/taskbar_icons/key-bindings.png"));
   auto navigation_view = new NavigationView();
-  navigation_view->setSizePolicy(QSizePolicy::Expanding,
-    QSizePolicy::Expanding);
-  auto task_keys_page = new QWidget();
+  navigation_view->setSizePolicy(
+    QSizePolicy::Expanding, QSizePolicy::Expanding);
+  auto task_keys_page = new TaskKeysPage(m_key_bindings, countries, markets,
+    destinations);
   task_keys_page->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   navigation_view->add_tab(*task_keys_page, tr("Task Keys"));
-  auto cancel_keys_page = new QWidget();
-  cancel_keys_page->setSizePolicy(QSizePolicy::Expanding,
-    QSizePolicy::Expanding);
+  auto cancel_keys_page =
+    new CancelKeyBindingsForm(m_key_bindings->get_cancel_key_bindings());
+  cancel_keys_page->setSizePolicy(
+    QSizePolicy::Expanding, QSizePolicy::Expanding);
   navigation_view->add_tab(*cancel_keys_page, tr("Cancel Keys"));
-  auto interactions_page = new QWidget();
-  interactions_page->setSizePolicy(QSizePolicy::Expanding,
-    QSizePolicy::Expanding);
+  auto interactions_page =
+    new InteractionsPage(m_key_bindings, countries, markets);
+  interactions_page->setSizePolicy(
+    QSizePolicy::Expanding, QSizePolicy::Expanding);
   navigation_view->add_tab(*interactions_page, tr("Interactions"));
   auto buttons_body = new QWidget();
   auto buttons_body_layout = make_hbox_layout(buttons_body);

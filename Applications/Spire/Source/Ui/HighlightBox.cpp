@@ -55,7 +55,7 @@ HighlightBox::HighlightBox(std::shared_ptr<HighlightColorModel> current,
   proxy_style(*this, *m_input_box);
   update_style(*this, [] (auto& style) {
     style.get(Any()).set(padding(scale_width(1)));
-    style.get(Disabled() > is_a<TextBox>()).
+    style.get(Disabled() > is_a<Box>() > is_a<TextBox>()).
       set(BackgroundColor(QColor(0xF5F5F5))).
       set(TextColor(QColor(0xC8C8C8)));
   });

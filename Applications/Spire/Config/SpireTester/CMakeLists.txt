@@ -2,6 +2,9 @@ find_package(Qt5Widgets REQUIRED)
 file(GLOB header_files ../../Include/Spire/SpireTester/*.hpp)
 file(GLOB source_files ../../Source/SpireTester/*.cpp)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
+if(MSVC)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
+endif()
 add_executable(SpireTester ${header_files} ${source_files})
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 if(UNIX)
@@ -27,7 +30,8 @@ if(UNIX)
     debug ${QT_XML_LIBRARY_DEBUG_PATH}
     optimized ${QT_XML_LIBRARY_OPTIMIZED_PATH})
 endif()
-target_link_libraries(SpireTester Async Library Resources
+target_link_libraries(SpireTester Async KeyBindings LegacyUI Styles Library
+  Resources
   debug ${CRYPTOPP_LIBRARY_DEBUG_PATH}
   optimized ${CRYPTOPP_LIBRARY_OPTIMIZED_PATH}
   debug ${OPEN_SSL_LIBRARY_DEBUG_PATH}

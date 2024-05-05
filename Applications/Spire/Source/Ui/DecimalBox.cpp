@@ -453,10 +453,8 @@ DecimalBox::DecimalBox(std::shared_ptr<OptionalDecimalModel> current,
   enclose(*this, m_text_box);
   proxy_style(*this, m_text_box);
   update_style(*this, [] (auto& style) {
-    style.get(Any() > is_a<Button>()).set(Visibility::VISIBLE);
     style.get(ReadOnly() > is_a<Button>()).set(Visibility::NONE);
-    style.get(+(Any() > is_a<TextBox>()) %
-        (is_a<Button>() && matches(Visibility::VISIBLE))).
+    style.get(+Any() > (is_a<Button>() && !matches(Visibility::NONE))).
       set(PaddingRight(scale_width(24)));
   });
   m_style_connection =
@@ -539,6 +537,7 @@ void DecimalBox::resizeEvent(QResizeEvent* event) {
 void DecimalBox::showEvent(QShowEvent* event) {
   if(!is_read_only()) {
     initialize_editable_data();
+    update_button_positions();
   }
   QWidget::showEvent(event);
 }

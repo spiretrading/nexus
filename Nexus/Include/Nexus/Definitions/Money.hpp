@@ -153,6 +153,16 @@ namespace Details {
   }
 
   /**
+   * Returns the modulus of two Money objects.
+   * @param lhs The left hand side.
+   * @param rhs The right hand side.
+   * @return <i>lhs</i> % <i>rhs</i>
+   */
+  inline Money fmod(Money lhs, Money rhs) {
+    return Money(static_cast<Quantity>(lhs) % static_cast<Quantity>(rhs));
+  }
+
+  /**
    * Multiplies a Money instance by a scalar quantity.
    * @param lhs The scalar quantity.
    * @param rhs The Money instance to be multiplied.

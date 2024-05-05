@@ -17,6 +17,7 @@
 #include "Spire/AccountViewer/TraderItem.hpp"
 #include "Spire/AccountViewer/TraderItemWidget.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 #include "ui_AccountViewWindow.h"
 
 using namespace Beam;
@@ -44,6 +45,7 @@ AccountViewWindow::AccountViewWindow(Ref<UserProfile> userProfile,
       m_userProfile{userProfile.Get()},
       m_model{std::make_unique<AccountViewModel>(Ref(*m_userProfile))} {
   m_ui->setupUi(this);
+  resize(scale(size()));
   try {
     m_model->Load();
   } catch(const std::exception& e) {

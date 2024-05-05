@@ -69,15 +69,19 @@
     <file>Icons/minimize.svg</file>
     <file>Icons/restore.svg</file>
     <file>Icons/imbalance-indicator.svg</file>
-    <file>Icons/toolbar_icons/account.svg</file>
-    <file>Icons/toolbar_icons/blotter.svg</file>
-    <file>Icons/toolbar_icons/bookview.svg</file>
-    <file>Icons/toolbar_icons/canvas.svg</file>
-    <file>Icons/toolbar_icons/chart.svg</file>
-    <file>Icons/toolbar_icons/dashboard.svg</file>
-    <file>Icons/toolbar_icons/imbalance-indicator.svg</file>
-    <file>Icons/toolbar_icons/key-bindings.svg</file>
-    <file>Icons/toolbar_icons/time-sales.svg</file>
+    <file>Icons/toolbar/account.svg</file>
+    <file>Icons/toolbar/account_directory.svg</file>
+    <file>Icons/toolbar/blotter.svg</file>
+    <file>Icons/toolbar/book_view.svg</file>
+    <file>Icons/toolbar/canvas.svg</file>
+    <file>Icons/toolbar/chart.svg</file>
+    <file>Icons/toolbar/dashboard.svg</file>
+    <file>Icons/toolbar/key_bindings.svg</file>
+    <file>Icons/toolbar/order_imbalance_indicator.svg</file>
+    <file>Icons/toolbar/portfolio.svg</file>
+    <file>Icons/toolbar/profile.svg</file>
+    <file>Icons/toolbar/time_and_sales.svg</file>
+    <file>Icons/toolbar/watchlist.svg</file>
     <file>Icons/account.svg</file>
     <file>Icons/blotter.svg</file>
     <file>Icons/bookview.svg</file>
@@ -106,11 +110,16 @@
     <file>Icons/arrow-up.svg</file>
     <file>Icons/radio-check.svg</file>
     <file>Icons/delete.svg</file>
+    <file>Icons/delete2.svg</file>
     <file>Icons/magnifying-glass.svg</file>
     <file>Icons/market-symbol.svg</file>
     <file>Icons/security-symbol.svg</file>
     <file>Icons/flag_icons/aus.svg</file>
+    <file>Icons/flag_icons/bra.svg</file>
     <file>Icons/flag_icons/can.svg</file>
+    <file>Icons/flag_icons/chn.svg</file>
+    <file>Icons/flag_icons/hkg.svg</file>
+    <file>Icons/flag_icons/jpn.svg</file>
     <file>Icons/flag_icons/usa.svg</file>
     <file>Icons/dropdown-arrow.svg</file>
     <file>Icons/calendar-arrow-left.svg</file>
@@ -129,5 +138,8 @@
     <file>Icons/info_panel/success.svg</file>
     <file>Icons/info_panel/warning.svg</file>
     <file>Icons/info_panel/close.svg</file>
+    <file>Icons/add.svg</file>
+    <file>Icons/delete3.svg</file>
+    <file>Icons/duplicate.svg</file>
   </qresource>
 </RCC>

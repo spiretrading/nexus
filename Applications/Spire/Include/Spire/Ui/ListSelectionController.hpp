@@ -30,9 +30,10 @@ namespace Spire {
        * Constructs a ListSelectionController over a given selection model with
        * an initial selection mode set to SINGLE.
        * @param selection The model of selected items.
+       * @param size The size of the list.
        */
-      explicit ListSelectionController(
-        std::shared_ptr<SelectionModel> selection);
+      ListSelectionController(
+        std::shared_ptr<SelectionModel> selection, int size);
 
       /** Returns the selection model. */
       const std::shared_ptr<SelectionModel>& get_selection() const;
@@ -86,10 +87,12 @@ namespace Spire {
       Mode m_mode;
       std::shared_ptr<SelectionModel> m_selection;
       int m_size;
+      int m_list_size;
       boost::optional<int> m_current;
       boost::optional<int> m_range_anchor;
       boost::signals2::scoped_connection m_connection;
 
+      bool is_initialized() const;
       void on_operation(const SelectionModel::Operation& operation);
   };
 }

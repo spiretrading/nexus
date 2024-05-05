@@ -265,6 +265,10 @@ Slider::Slider(std::shared_ptr<ScalarValueModel<Decimal>> current,
   match(*m_thumb, Thumb());
   auto box = new Box(m_body);
   enclose(*this, *box);
+  link(*this, *track_rail);
+  link(*this, *m_track_fill);
+  link(*this, *m_track);
+  link(*this, *m_thumb);
   proxy_style(*this, *box);
   set_style(*this, DEFAULT_STYLE());
   update_track();
@@ -273,12 +277,12 @@ Slider::Slider(std::shared_ptr<ScalarValueModel<Decimal>> current,
     std::bind_front(&Slider::on_focus, this));
   m_current_connection = m_current->connect_update_signal(
     std::bind_front(&Slider::on_current, this));
-  m_track_style_connection = connect_style_signal(*m_track,
-    std::bind_front(&Slider::on_track_style, this));
-  m_thumb_icon_style_connection = connect_style_signal(*thumb_icon,
-    std::bind_front(&Slider::on_thumb_icon_style, this));
-  m_style_connection = connect_style_signal(*this,
-    std::bind_front(&Slider::on_style, this));
+  m_track_style_connection = connect_style_signal(
+    *m_track, std::bind_front(&Slider::on_track_style, this));
+  m_thumb_icon_style_connection = connect_style_signal(
+    *thumb_icon, std::bind_front(&Slider::on_thumb_icon_style, this));
+  m_style_connection =
+    connect_style_signal(*this, std::bind_front(&Slider::on_style, this));
 }
 
 const std::shared_ptr<ScalarValueModel<Decimal>>& Slider::get_current() const {

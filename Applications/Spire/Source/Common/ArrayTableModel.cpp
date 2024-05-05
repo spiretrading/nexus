@@ -44,16 +44,6 @@ void ArrayTableModel::move(int source, int destination) {
   m_transaction.push(MoveOperation(source, destination));
 }
 
-void ArrayTableModel::remove(int index) {
-  if(index < 0 || index >= get_row_size()) {
-    throw std::out_of_range("The index is out of range.");
-  }
-  auto previous =
-    std::make_shared<ArrayListModel<std::any>>(std::move(m_data[index]));
-  m_data.erase(std::next(m_data.begin(), index));
-  m_transaction.push(RemoveOperation(index, std::move(previous)));
-}
-
 int ArrayTableModel::get_row_size() const {
   return static_cast<int>(m_data.size());
 }
@@ -84,6 +74,17 @@ QValidator::State ArrayTableModel::set(
   m_data[row][column] = value;
   m_transaction.push(UpdateOperation(row, column, std::move(previous), value));
   return QValidator::State::Acceptable;
+}
+
+QValidator::State ArrayTableModel::remove(int row) {
+  if(row < 0 || row >= get_row_size()) {
+    throw std::out_of_range("The index is out of range.");
+  }
+  auto previous =
+    std::make_shared<ArrayListModel<std::any>>(std::move(m_data[row]));
+  m_data.erase(std::next(m_data.begin(), row));
+  m_transaction.push(RemoveOperation(row, std::move(previous)));
+  return QValidator::Acceptable;
 }
 
 connection ArrayTableModel::connect_operation_signal(

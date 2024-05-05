@@ -17,6 +17,8 @@
 #include "Spire/LegacyUI/FunctionalAction.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/LegacyUI/ValueLabel.hpp"
+#include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/ListModel.hpp"
 #include "Spire/Utilities/ExportModel.hpp"
 #include "ui_PortfolioViewerWindow.h"
 
@@ -55,6 +57,7 @@ PortfolioViewerWindow::PortfolioViewerWindow(Ref<UserProfile> userProfile,
       m_ui(std::make_unique<Ui_PortfolioViewerWindow>()),
       m_userProfile(userProfile.Get()) {
   m_ui->setupUi(this);
+  resize(scale(1900, 667));
   m_statusBar = new QStatusBar(this);
   m_statusBar->setStyleSheet("QStatusBar::item { border: 0px solid black };");
   auto spacer = new QLabel("");
@@ -138,7 +141,7 @@ void PortfolioViewerWindow::closeEvent(QCloseEvent* event) {
   auto settings = std::make_unique<PortfolioViewerWindowSettings>(*this);
   m_userProfile->SetInitialPortfolioViewerWindowSettings(*settings);
   m_userProfile->SetDefaultPortfolioViewerProperties(m_properties);
-  m_userProfile->AddRecentlyClosedWindow(std::move(settings));
+  m_userProfile->GetRecentlyClosedWindows()->push(std::move(settings));
   QFrame::closeEvent(event);
 }
 

@@ -59,6 +59,7 @@ DestinationBox::DestinationBox(
       m_current(std::move(current)),
       m_submission(m_current->get()),
       m_is_rejected(false),
+      m_has_submit(false),
       m_current_connection(m_current->connect_update_signal(
         std::bind_front(&DestinationBox::on_current, this))) {
   auto combo_box_current = make_transform_value_model(m_current,
@@ -80,15 +81,11 @@ DestinationBox::DestinationBox(
         std::any_cast<DestinationDatabase::Entry&&>(
           m_query_model->m_source->parse(to_text(list->get(index)))));
     });
-  m_combo_box->connect_submit_signal(
-    std::bind_front(&DestinationBox::on_submit, this));
   enclose(*this, *m_combo_box);
   proxy_style(*this, *m_combo_box);
   setFocusProxy(m_combo_box);
   m_input_box =
     static_cast<AnyInputBox*>(m_combo_box->layout()->itemAt(0)->widget());
-  m_input_box->connect_submit_signal(
-    std::bind_front(&DestinationBox::on_input_submit, this));
   m_input_box->installEventFilter(this);
 }
 
@@ -120,6 +117,14 @@ void DestinationBox::set_read_only(bool is_read_only) {
 
 connection DestinationBox::connect_submit_signal(
     const SubmitSignal::slot_type& slot) const {
+  if(!m_has_submit) {
+    auto& self = *const_cast<DestinationBox*>(this);
+    self.m_has_submit = true;
+    self.m_input_box->connect_submit_signal(
+      std::bind_front(&DestinationBox::on_input_submit, &self));
+    self.m_combo_box->connect_submit_signal(
+      std::bind_front(&DestinationBox::on_submit, &self));
+  }
   return m_submit_signal.connect(slot);
 }
 

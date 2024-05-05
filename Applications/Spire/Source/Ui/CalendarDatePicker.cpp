@@ -225,9 +225,9 @@ class CalendarDayLabel : public QWidget {
           set(TextAlign(Qt::AlignCenter)).
           set(TextColor(QColor(Qt::black))).
           set(padding(0));
-        style.get(OutOfMonth() && !Disabled()).
+        style.get(+OutOfMonth() < Body() < !Disabled()).
           set(TextColor(QColor(0xA0A0A0)));
-        style.get(Today() && !Disabled()).
+        style.get(+Today() < Body() < !Disabled()).
           set(BackgroundColor(QColor(0xFFF2AB))).
           set(TextColor(QColor(0xDB8700)));
         style.get(Hover() || Press()).
@@ -235,7 +235,7 @@ class CalendarDayLabel : public QWidget {
           set(border_color(QColor(Qt::transparent)));
         style.get(Focus()).
           set(border_color(QColor(Qt::transparent)));
-        style.get(Disabled()).
+        style.get(+Any() < Body() < Disabled()).
           set(BackgroundColor(QColor(0xFFFFFF))).
           set(border_color(QColor(Qt::transparent))).
           set(TextColor(QColor(0xC8C8C8)));
@@ -321,8 +321,8 @@ CalendarDatePicker::CalendarDatePicker(
     set(padding(0));
   calendar_style.get(Any() > (is_a<ListItem>() && Hover())).
     set(BackgroundColor(QColor(0xFFFFFF)));
-  calendar_style.get(
-      Any() > (is_a<ListItem>() && Selected()) > is_a<CalendarDayLabel>()).
+  calendar_style.get(Any() >
+      (is_a<ListItem>() && Selected()) > Body() > is_a<CalendarDayLabel>()).
     set(BackgroundColor(QColor(0x4B23A0))).
     set(border(0, QColor(Qt::transparent))).
     set(TextColor(QColor(0xFFFFFF)));

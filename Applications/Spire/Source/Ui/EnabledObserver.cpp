@@ -1,7 +1,8 @@
 #include "Spire/Ui/EnabledObserver.hpp"
 #include <QEvent>
-#include "Spire/Spire/ExtensionCache.hpp"
+#include <QPointer>
 #include <QWidget>
+#include "Spire/Spire/ExtensionCache.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -9,8 +10,7 @@ using namespace Spire;
 
 struct EnabledObserver::EventFilter : QObject {
   mutable EnabledSignal m_enabled_signal;
-  QWidget* m_widget;
-  QObject* m_parent;
+  QPointer<QWidget> m_widget;
   optional<EnabledObserver> m_parent_observer;
   bool m_is_enabled;
 
@@ -55,7 +55,9 @@ struct EnabledObserver::EventFilter : QObject {
   }
 
   void on_parent_enabled(bool is_enabled) {
-    update();
+    if(m_widget) {
+      update();
+    }
   }
 };
 

@@ -1,6 +1,7 @@
 #include "Spire/BookView/BookViewPropertiesDialog.hpp"
 #include "Spire/BookView/BookViewWindow.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 #include "ui_BookViewPropertiesDialog.h"
 
 using namespace Beam;
@@ -18,6 +19,7 @@ BookViewPropertiesDialog::BookViewPropertiesDialog(
       m_security(security),
       m_properties(properties) {
   m_ui->setupUi(this);
+  setFixedSize(scale(size()));
   m_ui->m_levelsTab->Initialize(Ref(m_properties));
   m_ui->m_highlightsTab->Initialize(Ref(*m_userProfile), Ref(m_properties));
   if(m_security == Security()) {
@@ -72,10 +74,6 @@ void BookViewPropertiesDialog::OnOk() {
 }
 
 void BookViewPropertiesDialog::OnApply() {
-  if(m_security != Security()) {
-    m_userProfile->GetInteractionProperties() =
-      m_ui->m_interactionsTab->GetProperties();
-  }
   BookViewWindow* window = dynamic_cast<BookViewWindow*>(parent());
   if(window == nullptr) {
     return;
@@ -84,10 +82,6 @@ void BookViewPropertiesDialog::OnApply() {
 }
 
 void BookViewPropertiesDialog::OnApplyToAll() {
-  if(m_security != Security()) {
-    m_userProfile->GetInteractionProperties() =
-      m_ui->m_interactionsTab->GetProperties();
-  }
   QWidgetList widgets = QApplication::topLevelWidgets();
   for(auto i = widgets.begin(); i != widgets.end(); ++i) {
     BookViewWindow* window = dynamic_cast<BookViewWindow*>(*i);

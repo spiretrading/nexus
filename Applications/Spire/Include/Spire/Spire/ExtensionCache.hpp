@@ -27,6 +27,7 @@ namespace Spire {
       if(auto extension = i->second.m_object.lock()) {
         return extension;
       }
+      extensions.erase(i);
     }
     auto extension = std::shared_ptr<E>(new E(object), [&object] (auto* p) {
       if(!p) {

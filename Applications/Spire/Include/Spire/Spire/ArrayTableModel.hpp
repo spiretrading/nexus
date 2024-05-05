@@ -53,14 +53,6 @@ namespace Spire {
        */
       void move(int source, int destination);
 
-      /**
-       * Removes a row from the table.
-       * @param index - The index of the row to remove.
-       * @throws <code>std::out_of_range</code> - The index is not within this
-       *         table's range.
-       */
-      void remove(int index);
-
       int get_row_size() const override;
 
       int get_column_size() const override;
@@ -69,6 +61,8 @@ namespace Spire {
 
       QValidator::State set(
         int row, int column, const std::any& value) override;
+
+      QValidator::State remove(int row) override;
 
       boost::signals2::connection connect_operation_signal(
         const OperationSignal::slot_type& slot) const override;

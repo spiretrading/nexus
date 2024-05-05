@@ -112,6 +112,8 @@ void ListItem::mount(QWidget& body) {
     delete item;
   }
   layout()->addWidget(&*m_button);
+  link(*this, body);
+  match(body, Body());
   proxy_style(*m_button, *m_box);
   proxy_style(*this, *m_button);
   updateGeometry();

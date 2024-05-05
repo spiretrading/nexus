@@ -125,8 +125,8 @@ ListView::ListView(
     QWidget* parent)
     : QWidget(parent),
       m_list(std::move(list)),
-      m_current_controller(std::move(current)),
-      m_selection_controller(std::move(selection)),
+      m_current_controller(std::move(current), m_list->get_size()),
+      m_selection_controller(std::move(selection), m_list->get_size()),
       m_view_builder(std::move(view_builder)),
       m_direction(Qt::Vertical),
       m_overflow(Overflow::NONE),
@@ -518,6 +518,7 @@ void ListView::update_layout() {
     inner_layout->setContentsMargins({});
     inner_layout->setSpacing(m_item_gap);
     inner_layout->setAlignment(alignment);
+    body_layout.addLayout(inner_layout);
     while(i != m_items.end()) {
       auto item_size = get_directed_size((*i)->m_item.sizeHint(), m_direction);
       remaining_size -= item_size;
@@ -530,10 +531,13 @@ void ListView::update_layout() {
       } else {
         (*i)->m_item.setSizePolicy(m_perpendicular_policy, m_direction_policy);
       }
+      auto is_linked = (*i)->m_item.parentWidget() != nullptr;
       inner_layout->addWidget(&(*i)->m_item);
+      if(!is_linked) {
+        link(*this, (*i)->m_item);
+      }
       ++i;
     }
-    body_layout.addLayout(inner_layout);
   }
   update_visible_region();
 }

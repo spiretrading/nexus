@@ -17,12 +17,23 @@ namespace Spire {
     public:
 
       /**
+       * Comparison function that accepts two elements along with their sorted
+       * row and column and returns whether the first element is less than the
+       * second.
+       * @return Returns <code>true</code> iff the first argument is less than
+       *         the second.
+       */
+      using Comparator = std::function<bool (const AnyRef& left, int left_row,
+        const AnyRef& right, int right_row, int column)>;
+
+      /**
        * Binary function that accepts two elements and returns whether the first
        * argument is less than the second.
        * @return Returns <code>true</code> iff the first argument is less than
        *         the second.
        */
-      using Comparator = std::function<bool (const AnyRef&, const AnyRef&)>;
+      using ValueComparator =
+        std::function<bool (const AnyRef& left, const AnyRef& right)>;
 
       /** Specifies a sort order. */
       enum class Ordering {
@@ -72,6 +83,27 @@ namespace Spire {
        * @param compartor A comparison function.
        */
       SortedTableModel(std::shared_ptr<TableModel> source,
+        ValueComparator comparator);
+
+      /**
+       * Constructs a SortedTableModel from a TableModel, a ColumnOrder and
+       * a comparator. It supports sorting by multiple columns.
+       * @param source The model.
+       * @param order The multiple-column sorting order which comtains multiple
+       *               columns and sort orders. The first element in the order
+       *               is considered as the primary sorting key and the rest is
+       *               the secondary sorting key.
+       * @param compartor A comparison function.
+       */
+      SortedTableModel(std::shared_ptr<TableModel> source,
+        std::vector<ColumnOrder> order, ValueComparator comparator);
+
+      /**
+       * Constructs a SortedTableModel from a TableModel and a comparator.
+       * @param source The model.
+       * @param compartor A comparison function.
+       */
+      SortedTableModel(std::shared_ptr<TableModel> source,
         Comparator comparator);
 
       /**
@@ -107,6 +139,8 @@ namespace Spire {
 
       QValidator::State set(
         int row, int column, const std::any& value) override;
+
+      QValidator::State remove(int row) override;
 
       boost::signals2::connection connect_operation_signal(
         const OperationSignal::slot_type& slot) const override;
