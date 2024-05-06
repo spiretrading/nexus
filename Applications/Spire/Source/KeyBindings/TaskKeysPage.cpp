@@ -226,19 +226,19 @@ namespace {
 
   struct RegionQueryModel : ComboBox::QueryModel {
     std::shared_ptr<ComboBox::QueryModel> m_securities;
-    std::shared_ptr<ComboBox::QueryModel> m_region_model;
+    std::shared_ptr<ComboBox::QueryModel> m_regions;
 
     RegionQueryModel(std::shared_ptr<ComboBox::QueryModel> securities,
-      std::shared_ptr<ComboBox::QueryModel> region_model)
+      std::shared_ptr<ComboBox::QueryModel> regions)
       : m_securities(std::move(securities)),
-        m_region_model(std::move(region_model)) {}
+        m_regions(std::move(regions)) {}
 
     std::any parse(const QString& query) override {
       auto security = m_securities->parse(query);
       if(security.has_value()) {
         return make_region(std::any_cast<SecurityInfo&>(security));
       }
-      return m_region_model->parse(query);
+      return m_regions->parse(query);
     }
 
     QtPromise<std::vector<std::any>> submit(const QString& query) override {
@@ -251,14 +251,14 @@ namespace {
           }
         }();
         auto result = std::vector<std::any>();
-        auto regions = std::unordered_set<Region>();
+        auto region_set = std::unordered_set<Region>();
         for(auto& security : security_matches) {
           auto region = make_region(std::any_cast<SecurityInfo&>(security));
-          if(regions.insert(region).second) {
+          if(region_set.insert(region).second) {
             result.push_back(region);
           }
         }
-        return m_region_model->submit(query).then(
+        return m_regions->submit(query).then(
           [=] (auto&& region_result) mutable {
             auto region_matches = [&] {
               try {
@@ -268,7 +268,7 @@ namespace {
               }
             }();
             for(auto& region : region_matches) {
-              if(regions.insert(std::any_cast<Region&>(region)).second) {
+              if(region_set.insert(std::any_cast<Region&>(region)).second) {
                 result.push_back(region);
               }
             }
