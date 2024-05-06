@@ -417,7 +417,6 @@ void ListView::add_item(int index) {
   if(m_focus_index && *m_focus_index > index) {
     ++*m_focus_index;
   }
-  update_layout();
 }
 
 void ListView::remove_item(int index) {
@@ -438,7 +437,6 @@ void ListView::remove_item(int index) {
   m_current_controller.remove(index);
   m_selection_controller.remove(index);
   on_current(none, m_current_controller.get_current()->get());
-  update_layout();
   item->m_click_observer = none;
   QTimer::singleShot(0, [item = std::move(item)] () mutable {
     item = nullptr;
@@ -473,7 +471,6 @@ void ListView::move_item(int source, int destination) {
   m_items[destination]->m_index = destination;
   m_current_controller.move(source, destination);
   m_selection_controller.move(source, destination);
-  update_layout();
 }
 
 void ListView::update_layout() {
@@ -699,6 +696,8 @@ void ListView::on_list_operation(const AnyListModel::Operation& operation) {
     [&] (const AnyListModel::MoveOperation& operation) {
       move_item(operation.m_source, operation.m_destination);
     });
+  m_top_index = -1;
+  update_layout();
 }
 
 void ListView::on_current(optional<int> previous, optional<int> current) {
