@@ -16,7 +16,7 @@ namespace Spire {
       /**
        * Constructs a TaskKeysPage.
        * @param key_bindings The task key bindings to display.
-       * @param securities The set of securities that can be queried.
+       * @param securities The set of securities to use.
        * @param countries The country database to use.
        * @param markets The market database to use.
        * @param destinations The destination database to use.

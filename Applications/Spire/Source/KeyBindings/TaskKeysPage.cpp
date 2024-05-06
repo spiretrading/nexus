@@ -82,6 +82,30 @@ namespace {
     return list_model;
   }
 
+  Region make_region(const SecurityInfo& security_info) {
+    auto region = Region(security_info.m_security);
+    region.SetName(security_info.m_name);
+    return region;
+  }
+
+  auto populate_region_query_model(const CountryDatabase& countries,
+      const MarketDatabase& markets) {
+    auto model = std::make_shared<LocalComboBoxQueryModel>();
+    for(auto& country : countries.GetEntries()) {
+      auto region = Region(country.m_code);
+      region.SetName(country.m_name);
+      model->add(to_text(country.m_code).toLower(), region);
+      model->add(QString::fromStdString(region.GetName()).toLower(), region);
+    }
+    for(auto& market : markets.GetEntries()) {
+      auto region = Region(market);
+      region.SetName(market.m_description);
+      model->add(to_text(MarketToken(market.m_code)).toLower(), region);
+      model->add(QString::fromStdString(region.GetName()).toLower(), region);
+    }
+    return model;
+  }
+
   struct OrderTaskArgumentsMatchCache {
     std::unordered_set<QString> m_caches;
 
@@ -202,36 +226,19 @@ namespace {
 
   struct RegionQueryModel : ComboBox::QueryModel {
     std::shared_ptr<ComboBox::QueryModel> m_securities;
-    CountryDatabase m_countries;
-    MarketDatabase m_markets;
-    std::shared_ptr<LocalComboBoxQueryModel> m_model;
+    std::shared_ptr<ComboBox::QueryModel> m_region_model;
 
     RegionQueryModel(std::shared_ptr<ComboBox::QueryModel> securities,
-        CountryDatabase countries, MarketDatabase markets)
-        : m_securities(std::move(securities)),
-          m_countries(std::move(countries)),
-          m_markets(std::move(markets)),
-          m_model(std::make_shared<LocalComboBoxQueryModel>()) {
-      for(auto& market : m_markets.GetEntries()) {
-        auto region = Region(market);
-        region.SetName(market.m_description);
-        m_model->add(to_text(MarketToken(market.m_code)).toLower(), region);
-        m_model->add(QString::fromStdString(region.GetName()).toLower(), region);
-      }
-      for(auto& country : m_countries.GetEntries()) {
-        auto region = Region(country.m_code);
-        region.SetName(country.m_name);
-        m_model->add(to_text(country.m_code).toLower(), region);
-        m_model->add(QString::fromStdString(region.GetName()).toLower(), region);
-      }
-    }
+      std::shared_ptr<ComboBox::QueryModel> region_model)
+      : m_securities(std::move(securities)),
+        m_region_model(std::move(region_model)) {}
 
     std::any parse(const QString& query) override {
       auto security = m_securities->parse(query);
       if(security.has_value()) {
-        return Region(std::any_cast<SecurityInfo&>(security).m_security);
+        return make_region(std::any_cast<SecurityInfo&>(security));
       }
-      return m_model->parse(query);
+      return m_region_model->parse(query);
     }
 
     QtPromise<std::vector<std::any>> submit(const QString& query) override {
@@ -246,26 +253,27 @@ namespace {
         auto result = std::vector<std::any>();
         auto regions = std::unordered_set<Region>();
         for(auto& security : security_matches) {
-          auto region = Region(std::any_cast<SecurityInfo&>(security).m_security);
+          auto region = make_region(std::any_cast<SecurityInfo&>(security));
           if(regions.insert(region).second) {
             result.push_back(region);
           }
         }
-        return m_model->submit(query).then([=] (auto&& region_result) mutable {
-          auto region_matches = [&] {
-            try {
-              return region_result.Get();
-            } catch(const std::exception&) {
-              return std::vector<std::any>();
+        return m_region_model->submit(query).then(
+          [=] (auto&& region_result) mutable {
+            auto region_matches = [&] {
+              try {
+                return region_result.Get();
+              } catch(const std::exception&) {
+                return std::vector<std::any>();
+              }
+            }();
+            for(auto& region : region_matches) {
+              if(regions.insert(std::any_cast<Region&>(region)).second) {
+                result.push_back(region);
+              }
             }
-          }();
-          for(auto& region : region_matches) {
-            if(regions.insert(std::any_cast<Region&>(region)).second) {
-              result.push_back(region);
-            }
-          }
-          return result;
-        });
+            return result;
+          });
       });
     }
   };
@@ -370,7 +378,9 @@ TaskKeysPage::TaskKeysPage(std::shared_ptr<KeyBindingsModel> key_bindings,
   layout->addWidget(make_help_text_box());
   layout->addWidget(toolbar);
   m_table_view = make_task_keys_table_view(
-    m_filtered_model, std::make_shared<RegionQueryModel>(std::move(securities), m_match_cache->m_countries, m_match_cache->m_markets),
+    m_filtered_model, std::make_shared<RegionQueryModel>(std::move(securities),
+      populate_region_query_model(m_match_cache->m_countries,
+        m_match_cache->m_markets)),
     m_match_cache->m_destinations, m_match_cache->m_markets);
   layout->addWidget(m_table_view);
   auto box = new Box(body);
