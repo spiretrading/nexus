@@ -32,6 +32,7 @@ namespace Spire {
       ScrollableListBox* m_scrollable_list_box;
       OverlayPanel* m_panel;
       QSize m_panel_border_size;
+      bool m_is_scrolled_to_current;
       boost::signals2::scoped_connection m_panel_style_connection;
       mutable boost::optional<QSize> m_size_hint;
 
