@@ -137,7 +137,8 @@ ListView::ListView(
       m_item_gap(DEFAULT_GAP),
       m_overflow_gap(DEFAULT_OVERFLOW_GAP),
       m_query_timer(this),
-      m_initialize_count(0) {
+      m_initialize_count(0),
+      m_is_transaction(false) {
   for(auto i : std::ranges::views::iota(0, m_list->get_size())) {
     make_item_entry(i);
   }
@@ -687,6 +688,12 @@ void ListView::on_item_click(ItemEntry& item) {
 
 void ListView::on_list_operation(const AnyListModel::Operation& operation) {
   visit(operation,
+    [&] (AnyListModel::StartTransaction) {
+      m_is_transaction = true;
+    },
+    [&] (AnyListModel::EndTransaction) {
+      m_is_transaction = false;
+    },
     [&] (const AnyListModel::AddOperation& operation) {
       add_item(operation.m_index);
     },
@@ -696,8 +703,10 @@ void ListView::on_list_operation(const AnyListModel::Operation& operation) {
     [&] (const AnyListModel::MoveOperation& operation) {
       move_item(operation.m_source, operation.m_destination);
     });
-  m_top_index = -1;
-  update_layout();
+  if(!m_is_transaction) {
+    m_top_index = -1;
+    update_layout();
+  }
 }
 
 void ListView::on_current(optional<int> previous, optional<int> current) {

@@ -245,6 +245,7 @@ namespace Styles {
       QString m_query;
       QTimer m_query_timer;
       int m_initialize_count;
+      bool m_is_transaction;
       boost::signals2::scoped_connection m_style_connection;
       boost::signals2::scoped_connection m_list_connection;
       boost::signals2::scoped_connection m_current_connection;

@@ -210,14 +210,13 @@ class CalendarDayLabel : public QWidget {
         : QWidget(parent),
           m_current(std::move(current)),
           m_current_connection(m_current->connect_update_signal(
-            [=] (const auto& current) {
-              on_current(current);
-            })),
+            std::bind_front(&CalendarDayLabel::on_current, this))),
           m_month(std::move(month)) {
       setFixedSize(scale(24, 24));
       m_label = make_label("", this);
+      enclose(*this, *m_label);
       proxy_style(*this, *m_label);
-      update_style(*m_label, [&] (auto& style) {
+      update_style(*this, [&] (auto& style) {
         style.get(Any()).
           set(BackgroundColor(QColor(Qt::transparent))).
           set(border(scale_width(1), QColor(Qt::transparent))).
@@ -225,9 +224,9 @@ class CalendarDayLabel : public QWidget {
           set(TextAlign(Qt::AlignCenter)).
           set(TextColor(QColor(Qt::black))).
           set(padding(0));
-        style.get(+OutOfMonth() < Body() < !Disabled()).
+        style.get(+OutOfMonth() < !Disabled()).
           set(TextColor(QColor(0xA0A0A0)));
-        style.get(+Today() < Body() < !Disabled()).
+        style.get(+Today() < !Disabled()).
           set(BackgroundColor(QColor(0xFFF2AB))).
           set(TextColor(QColor(0xDB8700)));
         style.get(Hover() || Press()).
@@ -235,13 +234,12 @@ class CalendarDayLabel : public QWidget {
           set(border_color(QColor(Qt::transparent)));
         style.get(Focus()).
           set(border_color(QColor(Qt::transparent)));
-        style.get(+Any() < Body() < Disabled()).
+        style.get(+Any() < Disabled()).
           set(BackgroundColor(QColor(0xFFFFFF))).
           set(border_color(QColor(Qt::transparent))).
           set(TextColor(QColor(0xC8C8C8)));
       });
-      enclose(*this, *m_label);
-      on_current(std::any_cast<date>(m_current->get()));
+      on_current(m_current->get());
     }
 
   private:
