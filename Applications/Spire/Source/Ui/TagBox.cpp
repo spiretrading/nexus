@@ -130,8 +130,7 @@ struct TagBox::PartialListModel : public AnyListModel {
     if(index < m_source->get_size()) {
       return m_source->get(index);
     }
-    static auto value = std::any();
-    return value;
+    return {};
   }
 
   QValidator::State set(int index, const std::any& value) override {
@@ -232,7 +231,7 @@ TagBox::TagBox(std::shared_ptr<AnyListModel> list,
   on_list_view_style();
   m_min_scroll_height = vertical_length(m_list_view_padding) +
     vertical_length(m_input_box_border) + vertical_length(m_input_box_padding) +
-    m_text_box->sizeHint().height();
+      m_text_box->sizeHint().height();
   setFocusProxy(m_text_box);
   setFocusPolicy(Qt::StrongFocus);
   m_focus_observer.connect_state_signal(
@@ -244,9 +243,6 @@ TagBox::TagBox(std::shared_ptr<AnyListModel> list,
       update_tooltip();
     }
   });
-  m_text_item_button = m_list_view->get_list_item(
-    m_list_view->get_list()->get_size() - 1)->findChild<Button*>();
-  m_text_item_button->installEventFilter(this);
   update_tag_size_policy();
   update_size_constraint();
 }
@@ -319,14 +315,13 @@ bool TagBox::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::KeyPress) {
     auto& key_event = *static_cast<QKeyEvent*>(event);
     if(watched == m_text_focus_proxy && !is_read_only() &&
-        key_event.key() == Qt::Key_Backspace &&
-        get_tags()->get_size() > 0 &&
-        (m_text_box->get_highlight()->get().m_start == 0 &&
-        m_text_box->get_highlight()->get().m_end == 0 ||
-        m_text_box->get_current()->get().isEmpty())) {
+        key_event.key() == Qt::Key_Backspace && get_tags()->get_size() > 0 &&
+          (m_text_box->get_highlight()->get().m_start == 0 &&
+            m_text_box->get_highlight()->get().m_end == 0 ||
+              m_text_box->get_current()->get().isEmpty())) {
       get_tags()->remove(get_tags()->get_size() - 1);
       return true;
-    } else if(watched == m_list_view || watched == m_text_item_button) {
+    } else if(watched == m_list_view) {
       event->ignore();
       return true;
     }
@@ -380,10 +375,21 @@ void TagBox::showEvent(QShowEvent* event) {
 QWidget* TagBox::make_tag(
     const std::shared_ptr<AnyListModel>& model, int index) {
   if(index == model->get_size() - 1) {
-    return m_text_box;
+    auto box = new QWidget();
+    enclose(*box, *m_text_box);
+    connect(box, &QObject::destroyed, this,
+      [=] {
+        m_text_box->setParent(nullptr);
+      });
+    return box;
   }
   auto label = to_text(model->get(index));
   auto tag = new Tag(label, this);
+  if(m_list_view_overflow == Overflow::WRAP) {
+    tag->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  } else {
+    tag->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
+  }
   tag->set_read_only(m_is_read_only || !isEnabled());
   tag->connect_delete_signal([=] {
     auto tag_index = [&] {
@@ -443,10 +449,13 @@ void TagBox::update_tag_size_policy() {
   } else {
     auto set_tag_text_size_policy = [&] (QSizePolicy::Policy horizontal) {
       for(auto i = 0; i < m_list_view->get_list()->get_size() - 1; ++i) {
-        auto& box = *static_cast<Box*>(m_list_view->get_list_item(i)->
-          get_body().layout()->itemAt(0)->widget());
-        auto& label = *box.get_body()->layout()->itemAt(0)->widget();
-        label.setSizePolicy(horizontal, QSizePolicy::Expanding);
+        auto& item = *m_list_view->get_list_item(i);
+        if(item.is_mounted()) {
+          auto& box =
+            *static_cast<Box*>(item.get_body().layout()->itemAt(0)->widget());
+          auto& label = *box.get_body()->layout()->itemAt(0)->widget();
+          label.setSizePolicy(horizontal, QSizePolicy::Expanding);
+        }
       }
     };
     if(m_list_view_overflow == Overflow::WRAP) {
@@ -462,8 +471,10 @@ void TagBox::update_tag_size_policy() {
 void TagBox::update_tags_read_only() {
   auto is_read_only = m_is_read_only || !isEnabled();
   for(auto i = 0; i < m_model->m_source->get_size(); ++i) {
-    static_cast<Tag*>(&(m_list_view->get_list_item(i)->get_body()))->
-      set_read_only(is_read_only);
+    auto& item = *m_list_view->get_list_item(i);
+    if(item.is_mounted()) {
+      static_cast<Tag*>(&item.get_body())->set_read_only(is_read_only);
+    }
   }
 }
 
@@ -502,9 +513,8 @@ void TagBox::update_tooltip() {
       auto list_view_content_width =
         m_list_view->width() - horizontal_length(m_list_view_padding);
       for(auto i = 0; i < m_model->m_source->get_size(); ++i) {
-        auto tag =
-          static_cast<Tag*>(&(m_list_view->get_list_item(i)->get_body()));
-        if(tag->sizeHint().width() > list_view_content_width) {
+        auto& tag = *m_list_view->get_list_item(i);
+        if(tag.sizeHint().width() > list_view_content_width) {
           return true;
         }
       }

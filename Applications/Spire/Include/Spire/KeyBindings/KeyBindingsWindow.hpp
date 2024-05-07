@@ -4,6 +4,7 @@
 #include "Nexus/Definitions/Market.hpp"
 #include "Spire/KeyBindings/KeyBindings.hpp"
 #include "Spire/KeyBindings/KeyBindingsModel.hpp"
+#include "Spire/Ui/ComboBox.hpp"
 #include "Spire/Ui/Window.hpp"
 
 namespace Spire {
@@ -15,9 +16,14 @@ namespace Spire {
       /**
        * Constructs a KeyBindingsWindow.
        * @param key_bindings The KeyBindingsModel to display.
+       * @param securities The set of securities to use.
+       * @param countries The country database to use.
+       * @param markets The market database to use.
+       * @param destinations The destination database to use.
        * @param parent The parent widget.
        */
-      explicit KeyBindingsWindow(std::shared_ptr<KeyBindingsModel> key_bindings,
+      KeyBindingsWindow(std::shared_ptr<KeyBindingsModel> key_bindings,
+        std::shared_ptr<ComboBox::QueryModel> securities,
         const Nexus::CountryDatabase& countries,
         const Nexus::MarketDatabase& markets,
         const Nexus::DestinationDatabase& destinations,

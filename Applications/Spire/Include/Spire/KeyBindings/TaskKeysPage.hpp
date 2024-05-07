@@ -4,6 +4,7 @@
 #include "Spire/KeyBindings/KeyBindings.hpp"
 #include "Spire/KeyBindings/KeyBindingsModel.hpp"
 #include "Spire/Spire/TableModel.hpp"
+#include "Spire/Ui/ComboBox.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -15,12 +16,14 @@ namespace Spire {
       /**
        * Constructs a TaskKeysPage.
        * @param key_bindings The task key bindings to display.
+       * @param securities The set of securities to use.
        * @param countries The country database to use.
        * @param markets The market database to use.
        * @param destinations The destination database to use.
        * @param parent The parent widget.
        */
       TaskKeysPage(std::shared_ptr<KeyBindingsModel> key_bindings,
+        std::shared_ptr<ComboBox::QueryModel> securities,
         Nexus::CountryDatabase countries, Nexus::MarketDatabase markets,
         Nexus::DestinationDatabase destinations, QWidget* parent = nullptr);
 

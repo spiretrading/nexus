@@ -120,6 +120,8 @@ DropDownBox::DropDownBox(std::shared_ptr<AnyListModel> list,
   set_style(*this, DEFAULT_STYLE());
   setFocusProxy(m_button);
   on_current(get_current()->get());
+  m_current_connection = get_current()->connect_update_signal(
+    std::bind_front(&DropDownBox::on_current, this));
   m_button_press_observer->connect_press_end_signal(
     std::bind_front(&DropDownBox::on_button_press_end, this));
   m_button->installEventFilter(this);
@@ -356,8 +358,6 @@ void DropDownBox::show_drop_down_list() {
   window->setWindowFlags(Qt::Popup | (window->windowFlags() & ~Qt::Tool));
   window->installEventFilter(this);
   window->show();
-  m_current_connection = list_view->get_current()->connect_update_signal(
-    std::bind_front(&DropDownBox::on_current, this));
   m_submit_connection = list_view->connect_submit_signal(
     std::bind_front(&DropDownBox::on_submit, this));
 }

@@ -379,7 +379,9 @@ void ComboBox::on_query(
       auto list_item = m_data->m_list_view->get_list_item(
         m_data->m_list_view->get_list()->get_size() - 1);
       list_item->setFocusPolicy(Qt::NoFocus);
-      list_item->layout()->itemAt(0)->widget()->setFocusPolicy(Qt::NoFocus);
+      if(list_item->is_mounted()) {
+        list_item->layout()->itemAt(0)->widget()->setFocusPolicy(Qt::NoFocus);
+      }
     }
   }
   update_completion();
