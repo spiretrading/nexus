@@ -5,6 +5,8 @@
 #include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/Ui.hpp"
 
+class QSpacerItem;
+
 namespace Spire {
 
   /** Represents an item in a table. */
@@ -34,14 +36,26 @@ namespace Spire {
       using ActiveSignal = Signal<void ()>;
 
       /**
-       * Constructs a TableItem.
-       * @param component The component to display.
+       * Constructs a mounted TableItem.
+       * @param body The body to mount.
        * @param parent The parent widget.
        */
-      explicit TableItem(QWidget& component, QWidget* parent = nullptr);
+      explicit TableItem(QWidget& body, QWidget* parent = nullptr);
+
+      /**
+       * Constructs an unmounted TableItem.
+       * @param parent The parent widget.
+       */
+      explicit TableItem(QWidget* parent = nullptr);
 
       /** Returns the styling applied to this item. */
       const Styles& get_styles() const;
+
+      /** Returns whether this TableItem has a body. */
+      bool is_mounted() const;
+
+      /** Returns the body of this item. */
+      const QWidget& get_body() const;
 
       /** Returns the body of this item. */
       QWidget& get_body();
@@ -50,13 +64,19 @@ namespace Spire {
       boost::signals2::connection connect_active_signal(
         const ActiveSignal::slot_type& slot) const;
 
+      QSize sizeHint() const override;
+
     private:
+      friend class TableBody;
       mutable ActiveSignal m_active_signal;
       Styles m_styles;
       ClickObserver m_click_observer;
       FocusObserver m_focus_observer;
       boost::signals2::scoped_connection m_style_connection;
 
+      void mount(QWidget& body);
+      void mount(QSpacerItem& body);
+      void unmount();
       void on_focus(FocusObserver::State state);
       void on_style();
   };

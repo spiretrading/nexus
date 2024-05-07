@@ -124,10 +124,13 @@ namespace Styles {
       TableItem* get_item(Index index);
 
     protected:
+      bool eventFilter(QObject* watched, QEvent* event) override;
       bool event(QEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
       void keyReleaseEvent(QKeyEvent* event) override;
+      void moveEvent(QMoveEvent* event) override;
       void paintEvent(QPaintEvent* event) override;
+      void showEvent(QShowEvent* event) override;
 
     private:
       struct Styles {
@@ -139,6 +142,7 @@ namespace Styles {
         QColor m_vertical_grid_color;
       };
       struct Cover;
+      struct RowCover;
       struct ColumnCover;
       struct BoxStyles {
         QColor m_background_color;
@@ -150,6 +154,9 @@ namespace Styles {
       std::shared_ptr<ListModel<int>> m_widths;
       ViewBuilder m_view_builder;
       std::vector<ColumnCover*> m_column_covers;
+      int m_top_index;
+      int m_visible_count;
+      int m_initialize_count;
       Styles m_styles;
       std::unordered_map<TableItem*, HoverObserver> m_hover_observers;
       boost::optional<Index> m_hover_index;
@@ -161,7 +168,7 @@ namespace Styles {
 
       int get_column_size() const;
       TableItem* get_current_item();
-      Cover* find_row(int index);
+      RowCover* find_row(int index);
       TableItem* find_item(const boost::optional<Index>& index);
       int get_left_spacing(int index) const;
       int get_top_spacing(int index) const;
@@ -169,6 +176,9 @@ namespace Styles {
       void add_row(int index);
       void remove_row(int index);
       void move_row(int source, int destination);
+      void update_parent();
+      void initialize_visible_region();
+      void update_visible_region();
       void draw_item_borders(const boost::optional<Index>& index,
         QPainter& painter);
       void on_item_activated(TableItem& item);
