@@ -556,7 +556,7 @@ void ListView::initialize_visible_region() {
     }
     return;
   }
-  if(!parentWidget() || m_top_index != -1) {
+  if(!parentWidget() || m_top_index != -1 || !isVisible()) {
     return;
   }
   ++m_initialize_count;
@@ -780,7 +780,9 @@ void ListView::on_style() {
         stylist.evaluate(overflow, [=] (auto overflow) {
           if(m_overflow != overflow) {
             m_overflow = overflow;
-            initialize_visible_region();
+            if(isVisible()) {
+              initialize_visible_region();
+            }
             *has_update = true;
           }
         });
