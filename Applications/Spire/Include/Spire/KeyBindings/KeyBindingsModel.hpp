@@ -2,6 +2,8 @@
 #define SPIRE_KEY_BINDINGS_MODEL_HPP
 #include <memory>
 #include <unordered_map>
+#include <Beam/Serialization/Receiver.hpp>
+#include <Beam/Serialization/Sender.hpp>
 #include "Nexus/Definitions/Market.hpp"
 #include "Nexus/Definitions/Region.hpp"
 #include "Spire/KeyBindings/CancelKeyBindingsModel.hpp"
@@ -40,6 +42,7 @@ namespace Spire {
       std::vector<Nexus::Region> make_interactions_key_bindings_regions() const;
 
     private:
+      friend struct Beam::Serialization::Shuttle<KeyBindingsModel>;
       Nexus::MarketDatabase m_markets;
       std::shared_ptr<OrderTaskArgumentsListModel> m_order_task_arguments;
       std::shared_ptr<CancelKeyBindingsModel> m_cancel_key_bindings;
@@ -48,6 +51,35 @@ namespace Spire {
 
       KeyBindingsModel(const KeyBindingsModel&) = delete;
       KeyBindingsModel& operator =(const KeyBindingsModel&) = delete;
+  };
+}
+
+namespace Beam::Serialization {
+  template<>
+  struct Shuttle<Spire::KeyBindingsModel> {
+    template<typename Shuttler>
+    void operator ()(Shuttler& shuttle, Spire::KeyBindingsModel& value,
+        unsigned int version) {
+      shuttle.Shuttle("order_task_arguments", *value.m_order_task_arguments);
+      shuttle.Shuttle("cancel_key_bindings", *value.m_cancel_key_bindings);
+      if constexpr(IsSender<Shuttler>::value) {
+        shuttle.StartSequence("interactions", 2 * value.m_interactions.size());
+        for(auto& interactions : value.m_interactions) {
+          shuttle.Shuttle(interactions.first);
+          shuttle.Shuttle(*interactions.second);
+        }
+      } else {
+        auto size = int();
+        shuttle.StartSequence("interactions", size);
+        for(auto i = 0; i != size / 2; ++i) {
+          auto region = Nexus::Region();
+          shuttle.Shuttle(region);
+          auto& interactions = value.get_interactions_key_bindings(region);
+          shuttle.Shuttle(*interactions);
+        }
+      }
+      shuttle.EndSequence();
+    }
   };
 }
 

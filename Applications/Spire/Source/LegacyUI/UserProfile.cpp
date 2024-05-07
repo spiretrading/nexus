@@ -3,6 +3,7 @@
 #include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/Blotter/BlotterSettings.hpp"
 #include "Spire/Blotter/OpenPositionsModel.hpp"
+#include "Spire/KeyBindings/KeyBindingsProfile.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ServiceSecurityQueryModel.hpp"
@@ -42,8 +43,9 @@ UserProfile::UserProfile(const std::string& username, bool isAdministrator,
         std::make_shared<ArrayListModel<std::shared_ptr<WindowSettings>>>()),
       m_security_query_model(std::make_shared<ServiceSecurityQueryModel>(
         m_marketDatabase, m_serviceClients.GetMarketDataClient())),
-      m_catalogSettings(m_profilePath / "Catalog", isAdministrator),
-      m_keyBindings(std::make_shared<KeyBindingsModel>(m_marketDatabase)) {
+      m_catalogSettings(m_profilePath / "Catalog", isAdministrator) {
+  m_keyBindings = load_key_bindings_profile(
+    m_profilePath, m_marketDatabase, m_destinationDatabase);
   for(auto& exchangeRate : exchangeRates) {
     m_exchangeRates.Add(exchangeRate);
   }

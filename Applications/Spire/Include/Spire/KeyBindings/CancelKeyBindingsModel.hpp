@@ -2,6 +2,8 @@
 #define SPIRE_CANCEL_KEY_BINDINGS_MODEL_HPP
 #include <array>
 #include <unordered_map>
+#include <Beam/Serialization/Receiver.hpp>
+#include <Beam/Serialization/Sender.hpp>
 #include <QKeySequence>
 #include <QValidator>
 #include "Spire/Blotter/OrderLogModel.hpp"
@@ -79,6 +81,7 @@ namespace Spire {
         find_operation(const QKeySequence& sequence) const;
 
     private:
+      friend struct Beam::Serialization::Shuttle<CancelKeyBindingsModel>;
       std::array<std::shared_ptr<KeySequenceValueModel>, OPERATION_COUNT>
         m_bindings;
       std::unordered_map<QKeySequence, Operation> m_bindings_map;
@@ -109,6 +112,24 @@ namespace Spire {
   void execute(CancelKeyBindingsModel::Operation operation,
     Nexus::OrderExecutionService::OrderExecutionClientBox& client,
     Beam::Out<std::vector<OrderLogModel::OrderEntry>> entries);
+}
+
+namespace Beam::Serialization {
+  template<>
+  struct Shuttle<Spire::CancelKeyBindingsModel> {
+    template<typename Shuttler>
+    void operator ()(Shuttler& shuttle, Spire::CancelKeyBindingsModel& value,
+        unsigned int version) {
+      auto size = static_cast<int>(value.m_bindings.size());
+      shuttle.StartSequence("bindings", size);
+      for(auto& binding : value.m_bindings) {
+        shuttle.Shuttle(*binding);
+      }
+      shuttle.EndSequence();
+      shuttle.Shuttle("bindings_map", value.m_bindings_map);
+      shuttle.Shuttle("previous_bindings", value.m_previous_bindings);
+    }
+  };
 }
 
 #endif

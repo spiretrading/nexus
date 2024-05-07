@@ -7,6 +7,8 @@
 #include <type_traits>
 #include <utility>
 #include <vector>
+#include <Beam/Serialization/Receiver.hpp>
+#include <Beam/Serialization/Sender.hpp>
 #include <boost/signals2/connection.hpp>
 #include <boost/variant/apply_visitor.hpp>
 #include <boost/variant/get.hpp>
@@ -193,6 +195,12 @@ namespace Spire {
        * @param value The updated value.
        */
       ListModelReference& operator =(const T& value);
+
+      /**
+       * Updates the ListModel with the given value.
+       * @param value The updated value.
+       */
+      ListModelReference& operator =(const ListModelReference& value);
 
       /** Converts this reference into a native reference. */
       operator const T&() const;
@@ -674,6 +682,12 @@ namespace Spire {
   }
 
   template<typename T>
+  ListModelReference<T>& ListModelReference<T>::operator =(
+      const ListModelReference& value) {
+    return *this = static_cast<const T&>(value);
+  }
+
+  template<typename T>
   ListModelReference<T>::operator const T&() const {
     return m_model->get(m_index);
   }
@@ -942,6 +956,43 @@ namespace Spire {
       slot(static_cast<const AnyListModel::Operation&>(operation));
     });
   }
+}
+
+namespace Beam::Serialization {
+  template<typename T>
+  struct IsStructure<Spire::ListModel<T>> : std::false_type {};
+
+  template<typename T>
+  struct Send<Spire::ListModel<T>> {
+    template<typename Shuttler>
+    void operator ()(Shuttler& shuttle, const char* name,
+        const Spire::ListModel<T>& value) const {
+      shuttle.StartSequence(name, value.get_size());
+      for(const auto& i : value) {
+        shuttle.Shuttle(i);
+      }
+      shuttle.EndSequence();
+    }
+  };
+
+  template<typename T>
+  struct Receive<Spire::ListModel<T>> {
+    template<typename Shuttler>
+    void operator ()(Shuttler& shuttle, const char* name,
+        Spire::ListModel<T>& value) const {
+      value.transact([&] {
+        Spire::clear(value);
+        auto size = int();
+        shuttle.StartSequence(name, size);
+        for(auto i = 0; i < size; ++i) {
+          auto element = T();
+          shuttle.Shuttle(element);
+          value.push(element);
+        }
+        shuttle.EndSequence();
+      });
+    }
+  };
 }
 
 #endif

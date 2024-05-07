@@ -1,5 +1,4 @@
 #include "Spire/Canvas/Operations/CanvasNodeBuilder.hpp"
-#include <boost/throw_exception.hpp>
 #include "Spire/Canvas/Common/CanvasNodeOperations.hpp"
 #include "Spire/Canvas/Common/CanvasPath.hpp"
 #include "Spire/Canvas/Operations/DefaultCanvasNodeFromCanvasTypeVisitor.hpp"
@@ -7,42 +6,41 @@
 
 using namespace boost;
 using namespace Spire;
-using namespace std;
 
 CanvasNodeBuilder::CanvasNodeBuilder(const CanvasNode& node)
-    : m_node(CanvasNode::Clone(node)) {}
+  : m_node(CanvasNode::Clone(node)) {}
 
-unique_ptr<CanvasNode> CanvasNodeBuilder::Make() {
-  return std::move(m_node);
+std::unique_ptr<CanvasNode> CanvasNodeBuilder::Make() const {
+  return CanvasNode::Clone(*m_node);
 }
 
-void CanvasNodeBuilder::Convert(const CanvasPath& path,
-    const CanvasType& type) {
+void CanvasNodeBuilder::Convert(
+    const CanvasPath& path, const CanvasType& type) {
   auto& node = GetNode(path, *m_node);
   if(IsCompatible(node.GetType(), type)) {
     return;
   }
-  auto convertedNode = node.Convert(type);
-  Replace(node, std::move(convertedNode));
+  Replace(node, node.Convert(type));
 }
 
-void CanvasNodeBuilder::ForceConvert(const CanvasPath& path,
-    const CanvasType& type) {
+void CanvasNodeBuilder::ForceConvert(
+    const CanvasPath& path, const CanvasType& type) {
   auto& node = GetNode(path, *m_node);
   if(IsCompatible(node.GetType(), type)) {
     return;
   }
-  unique_ptr<CanvasNode> convertedNode;
-  try {
-    convertedNode = node.Convert(type);
-  } catch(std::exception&) {
-    convertedNode = MakeDefaultCanvasNode(type);
-  }
-  Replace(node, std::move(convertedNode));
+  auto converted_node = [&] {
+    try {
+      return node.Convert(type);
+    } catch(const std::exception&) {
+      return MakeDefaultCanvasNode(type);
+    }
+  }();
+  Replace(node, std::move(converted_node));
 }
 
-void CanvasNodeBuilder::Replace(const CanvasPath& path,
-    unique_ptr<CanvasNode> replacement) {
+void CanvasNodeBuilder::Replace(
+    const CanvasPath& path, std::unique_ptr<CanvasNode> replacement) {
   auto& node = GetNode(path, *m_node);
   if(IsRoot(node)) {
     m_node = std::move(replacement);
@@ -61,26 +59,25 @@ void CanvasNodeBuilder::SetReadOnly(const CanvasPath& path, bool readOnly) {
   Replace(node, node.SetReadOnly(readOnly));
 }
 
-void CanvasNodeBuilder::SetMetaData(const CanvasPath& path, string name,
-    CanvasNode::MetaData value) {
+void CanvasNodeBuilder::SetMetaData(
+    const CanvasPath& path, std::string name, CanvasNode::MetaData value) {
   auto& node = GetNode(path, *m_node);
   Replace(node, node.SetMetaData(std::move(name), std::move(value)));
 }
 
-void CanvasNodeBuilder::DeleteMetaData(const CanvasPath& path,
-    const string& name) {
+void CanvasNodeBuilder::DeleteMetaData(
+    const CanvasPath& path, const std::string& name) {
   auto& node = GetNode(path, *m_node);
   Replace(node, node.DeleteMetaData(name));
 }
 
 void CanvasNodeBuilder::Reset(const CanvasPath& path) {
   auto& node = GetNode(path, *m_node);
-  auto resetNode = node.Reset();
-  Replace(node, std::move(resetNode));
+  Replace(node, node.Reset());
 }
 
-void CanvasNodeBuilder::Commit(const CanvasNode& node,
-    unique_ptr<CanvasNode> replacement) {
+void CanvasNodeBuilder::Commit(
+    const CanvasNode& node, std::unique_ptr<CanvasNode> replacement) {
   if(IsRoot(node)) {
     m_node = std::move(replacement);
   } else {
