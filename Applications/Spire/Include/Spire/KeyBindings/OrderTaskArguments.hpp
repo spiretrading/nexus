@@ -9,6 +9,7 @@
 #include <QKeySequence>
 #include <QString>
 #include "Nexus/Definitions/Destination.hpp"
+#include "Nexus/Definitions/Market.hpp"
 #include "Nexus/Definitions/OrderType.hpp"
 #include "Nexus/Definitions/Quantity.hpp"
 #include "Nexus/Definitions/Region.hpp"
@@ -79,9 +80,14 @@ namespace Spire {
   /**
    * Converts an OrderTaskNode into an OrderTaskArguments record.
    * @param node The node to convert, should be a SingleOrderTaskNode.
+   * @param markets The database of markets used to set specify the region.
+   * @param destinations The database of destinations used to identify the
+   *        market.
    * @return The OrderTaskArguments represented by the <i>node</i>.
    */
-  OrderTaskArguments to_order_task_arguments(const CanvasNode& node);
+  OrderTaskArguments to_order_task_arguments(const CanvasNode& node,
+    const Nexus::MarketDatabase& markets,
+    const Nexus::DestinationDatabase& destinations);
 }
 
 namespace Beam::Serialization {

@@ -149,13 +149,21 @@ std::unique_ptr<CanvasNode>
   return node;
 }
 
-OrderTaskArguments Spire::to_order_task_arguments(const CanvasNode& node) {
+OrderTaskArguments Spire::to_order_task_arguments(const CanvasNode& node,
+    const MarketDatabase& markets, const DestinationDatabase& destinations) {
   auto arguments = OrderTaskArguments();
   arguments.m_name = QString::fromStdString(node.GetText());
-  arguments.m_region = Region(DefaultMarkets::ASX(), DefaultCountries::AU());
-  arguments.m_region.SetName("ASX");
   arguments.m_destination = extract<DestinationType>(
     node.FindChild(SingleOrderTaskNode::DESTINATION_PROPERTY));
+  if(arguments.m_destination.empty()) {
+    arguments.m_region = Region::Global();
+    arguments.m_region.SetName("Global");
+  } else {
+    auto& destination = destinations.FromId(arguments.m_destination);
+    for(auto& market : destination.m_markets) {
+      arguments.m_region += Region(markets.FromCode(market));
+    }
+  }
   arguments.m_order_type = extract<OrderTypeType>(
     node.FindChild(SingleOrderTaskNode::ORDER_TYPE_PROPERTY));
   arguments.m_side =

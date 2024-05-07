@@ -3,6 +3,8 @@
 #include <filesystem>
 #include <memory>
 #include <vector>
+#include "Nexus/Definitions/Destination.hpp"
+#include "Nexus/Definitions/Market.hpp"
 #include "Spire/Canvas/Common/CanvasNode.hpp"
 #include "Spire/KeyBindings/KeyBindings.hpp"
 #include "Spire/KeyBindings/KeyBindingsModel.hpp"
@@ -58,9 +60,11 @@ namespace Spire {
    * Loads the key bindings profile found at a given path.
    * @param path The path to the directory containing the key bindings profile.
    * @param markets The database of market definitions.
+   * @param destinations The database of destinations.
    */
   std::shared_ptr<KeyBindingsModel> load_key_bindings_profile(
-    const std::filesystem::path& path, Nexus::MarketDatabase markets);
+    const std::filesystem::path& path, const Nexus::MarketDatabase& markets,
+    const Nexus::DestinationDatabase& destinations);
 
   /**
    * Saves the key bindings profile to a given path.

@@ -44,7 +44,8 @@ UserProfile::UserProfile(const std::string& username, bool isAdministrator,
       m_security_query_model(std::make_shared<ServiceSecurityQueryModel>(
         m_marketDatabase, m_serviceClients.GetMarketDataClient())),
       m_catalogSettings(m_profilePath / "Catalog", isAdministrator) {
-  m_keyBindings = load_key_bindings_profile(m_profilePath, m_marketDatabase);
+  m_keyBindings = load_key_bindings_profile(
+    m_profilePath, m_marketDatabase, m_destinationDatabase);
   for(auto& exchangeRate : exchangeRates) {
     m_exchangeRates.Add(exchangeRate);
   }

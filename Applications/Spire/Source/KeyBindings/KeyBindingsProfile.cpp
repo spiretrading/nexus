@@ -308,7 +308,8 @@ namespace {
   }
 
   auto convert_legacy_key_bindings(
-      const std::filesystem::path& path, MarketDatabase markets) {
+      const std::filesystem::path& path, const MarketDatabase& markets,
+      const DestinationDatabase& destinations) {
     auto key_bindings_path = path / "key_bindings.dat";
     if(!std::filesystem::exists(key_bindings_path)) {
       throw std::runtime_error("key_bindings.dat not found.");
@@ -320,10 +321,10 @@ namespace {
     auto legacy_key_bindings = load_legacy_key_bindings(key_bindings_path);
     auto legacy_interactions_properties =
       load_legacy_interactions_properties(interactions_properties_path);
-    auto key_bindings = std::make_shared<KeyBindingsModel>(std::move(markets));
+    auto key_bindings = std::make_shared<KeyBindingsModel>(markets);
     for(auto& task : make_default_order_task_nodes()) {
       key_bindings->get_order_task_arguments()->push(
-        to_order_task_arguments(*task));
+        to_order_task_arguments(*task, markets, destinations));
     }
     auto& arguments = *key_bindings->get_order_task_arguments();
     for(auto& tasks :
@@ -379,11 +380,12 @@ namespace {
     return key_bindings;
   }
 
-  auto load_default_key_bindings(MarketDatabase markets) {
+  auto load_default_key_bindings(
+      const MarketDatabase& markets, const DestinationDatabase& destinations) {
     auto key_bindings = std::make_shared<KeyBindingsModel>(std::move(markets));
     for(auto& task : make_default_order_task_nodes()) {
       key_bindings->get_order_task_arguments()->push(
-        to_order_task_arguments(*task));
+        to_order_task_arguments(*task, markets, destinations));
     }
     return key_bindings;
   }
@@ -728,16 +730,17 @@ std::vector<std::unique_ptr<CanvasNode>>
 }
 
 std::shared_ptr<KeyBindingsModel> Spire::load_key_bindings_profile(
-    const std::filesystem::path& path, MarketDatabase markets) {
+    const std::filesystem::path& path, const MarketDatabase& markets,
+    const DestinationDatabase& destinations) {
   auto file_path = path / "key_bindings.json";
   if(!std::filesystem::exists(file_path)) {
     auto legacy_path = path / "key_bindings.dat";
     if(std::filesystem::exists(legacy_path)) {
-      return convert_legacy_key_bindings(path, std::move(markets));
+      return convert_legacy_key_bindings(path, markets, destinations);
     }
-    return load_default_key_bindings(std::move(markets));
+    return load_default_key_bindings(markets, destinations);
   }
-  auto key_bindings = std::make_shared<KeyBindingsModel>(std::move(markets));
+  auto key_bindings = std::make_shared<KeyBindingsModel>(markets);
   try {
     auto reader = BasicIStreamReader<std::ifstream>(Initialize(file_path));
     auto buffer = SharedBuffer();

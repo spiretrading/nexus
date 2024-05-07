@@ -49,8 +49,8 @@ int main(int argc, char** argv) {
     std::make_shared<KeyBindingsModel>(GetDefaultMarketDatabase());
   auto tasks = make_default_order_task_nodes();
   for(auto& task : tasks) {
-    key_bindings->get_order_task_arguments()->push(
-      to_order_task_arguments(*task));
+    key_bindings->get_order_task_arguments()->push(to_order_task_arguments(
+      *task, GetDefaultMarketDatabase(), GetDefaultDestinationDatabase()));
   }
   auto window = KeyBindingsWindow(key_bindings, populate_security_query_model(),
     GetDefaultCountryDatabase(), GetDefaultMarketDatabase(),
