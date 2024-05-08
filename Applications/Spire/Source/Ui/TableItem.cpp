@@ -21,6 +21,7 @@ TableItem::TableItem(QWidget* parent)
       m_focus_observer(*this) {
   setFocusPolicy(Qt::StrongFocus);
   auto layout = make_hbox_layout(this);
+  setSizePolicy(sizePolicy().horizontalPolicy(), QSizePolicy::Fixed);
   m_click_observer.connect_click_signal(m_active_signal);
   m_focus_observer.connect_state_signal(
     std::bind_front(&TableItem::on_focus, this));
