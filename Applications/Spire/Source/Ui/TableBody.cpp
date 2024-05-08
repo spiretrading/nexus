@@ -94,7 +94,6 @@ struct TableBody::RowCover : Cover {
       const std::shared_ptr<TableModel> table) {
     for(auto i = 0; i != layout()->count(); ++i) {
       auto& item = *get_item(i);
-      item.setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
       item.mount(*view_builder(table, m_index, i));
     }
     updateGeometry();
@@ -861,16 +860,15 @@ void TableBody::on_style() {
       });
   }
   auto& row_layout = *layout();
-  for(auto row = 0; row != row_layout.count(); ++row) {
-    row_layout.itemAt(row)->widget()->layout()->setSpacing(
-      m_styles.m_horizontal_spacing);
+  for(auto i = 0; i != row_layout.count(); ++i) {
+    find_row(i)->layout()->setSpacing(m_styles.m_horizontal_spacing);
   }
   row_layout.setSpacing(m_styles.m_vertical_spacing);
   row_layout.setContentsMargins(m_styles.m_padding);
-  for(auto row = 0; row != row_layout.count(); ++row) {
-    auto& column_layout = *row_layout.itemAt(row)->widget()->layout();
+  for(auto i = 0; i != row_layout.count(); ++i) {
+    auto& row = *find_row(i);
     for(auto column = 0; column != m_widths->get_size(); ++column) {
-      auto& item = *column_layout.itemAt(column)->widget();
+      auto& item = *row.get_item(column);
       item.setFixedWidth(m_widths->get(column) - get_left_spacing(column));
     }
   }
@@ -915,8 +913,8 @@ void TableBody::on_widths_update(const ListModel<int>::Operation& operation) {
       auto spacing = get_left_spacing(operation.m_index);
       auto& row_layout = *layout();
       for(auto i = 0; i != row_layout.count(); ++i) {
-        auto& column_layout = *find_row(i)->layout();
-        auto& item = *column_layout.itemAt(operation.m_index)->widget();
+        auto& row = *find_row(i);
+        auto& item = *row.get_item(operation.m_index);
         item.setFixedWidth(m_widths->get(operation.m_index) - spacing);
       }
     });

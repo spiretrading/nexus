@@ -19,9 +19,8 @@ TableItem::TableItem(QWidget* parent)
         Qt::transparent, Qt::transparent},
       m_click_observer(*this),
       m_focus_observer(*this) {
-  auto layout = make_hbox_layout(this);
-  layout->setSizeConstraint(QLayout::SetMinAndMaxSize);
   setFocusPolicy(Qt::StrongFocus);
+  auto layout = make_hbox_layout(this);
   m_click_observer.connect_click_signal(m_active_signal);
   m_focus_observer.connect_state_signal(
     std::bind_front(&TableItem::on_focus, this));
@@ -80,11 +79,7 @@ void TableItem::mount(QWidget& body) {
   if(auto item = layout()->takeAt(0)) {
     delete item;
   }
-  body.setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
   layout()->addWidget(&body);
-  if(body.isEnabled()) {
-    setFocusProxy(&body);
-  }
   updateGeometry();
 }
 
