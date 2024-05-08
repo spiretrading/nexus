@@ -64,8 +64,6 @@ namespace Spire {
       boost::signals2::connection connect_active_signal(
         const ActiveSignal::slot_type& slot) const;
 
-      QSize sizeHint() const override;
-
     private:
       friend class TableBody;
       mutable ActiveSignal m_active_signal;

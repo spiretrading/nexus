@@ -21,7 +21,7 @@ TableItem::TableItem(QWidget* parent)
       m_focus_observer(*this) {
   setFocusPolicy(Qt::StrongFocus);
   auto layout = make_hbox_layout(this);
-  setSizePolicy(sizePolicy().horizontalPolicy(), QSizePolicy::Fixed);
+  setSizePolicy(sizePolicy().horizontalPolicy(), QSizePolicy::MinimumExpanding);
   m_click_observer.connect_click_signal(m_active_signal);
   m_focus_observer.connect_state_signal(
     std::bind_front(&TableItem::on_focus, this));
@@ -61,19 +61,11 @@ connection TableItem::connect_active_signal(
   return m_active_signal.connect(slot);
 }
 
-QSize TableItem::sizeHint() const {
-  if(is_mounted()) {
-    return get_body().sizeHint();
-  }
-  return QWidget::sizeHint();
-}
-
 void TableItem::mount(QSpacerItem& body) {
   if(auto item = layout()->takeAt(0)) {
     delete item;
   }
   static_cast<QBoxLayout&>(*layout()).addSpacerItem(&body);
-  updateGeometry();
 }
 
 void TableItem::mount(QWidget& body) {
@@ -81,7 +73,6 @@ void TableItem::mount(QWidget& body) {
     delete item;
   }
   layout()->addWidget(&body);
-  updateGeometry();
 }
 
 void TableItem::unmount() {
@@ -94,7 +85,6 @@ void TableItem::unmount() {
   static_cast<QBoxLayout&>(*layout()).addSpacerItem(
     new QSpacerItem(size_hint.width(), size_hint.height(),
       size_policy.horizontalPolicy(), size_policy.verticalPolicy()));
-  updateGeometry();
 }
 
 void TableItem::on_focus(FocusObserver::State state) {

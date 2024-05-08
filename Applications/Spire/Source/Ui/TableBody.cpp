@@ -96,31 +96,21 @@ struct TableBody::RowCover : Cover {
       auto& item = *get_item(i);
       item.mount(*view_builder(table, m_index, i));
     }
-    updateGeometry();
   }
 
   void unmount() {
     for(auto i = 0; i != layout()->count(); ++i) {
       get_item(i)->unmount();
     }
-    updateGeometry();
   }
 
   void fill_space(const RowCover& row) {
     for(auto i = 0; i != layout()->count(); ++i) {
-      auto size = row.get_item(i)->sizeHint();
+      auto size = row.get_item(i)->size();
       get_item(i)->mount(*new QSpacerItem(size.width(), size.height(),
         row.get_item(i)->sizePolicy().horizontalPolicy(),
         row.get_item(i)->get_body().sizePolicy().verticalPolicy()));
     }
-    updateGeometry();
-  }
-
-  QSize sizeHint() const {
-    if(auto front = get_item(0)) {
-      return front->sizeHint();
-    }
-    return QWidget::sizeHint();
   }
 };
 
@@ -578,6 +568,9 @@ void TableBody::initialize_visible_region() {
     if(test_visibility(*this, top_geometry)) {
       m_top_index = 0;
       m_visible_count = 1;
+    } else {
+      m_top_index = -1;
+      return;
     }
     auto position = top_geometry.height() + m_styles.m_vertical_spacing;
     auto current_row = [&] {
