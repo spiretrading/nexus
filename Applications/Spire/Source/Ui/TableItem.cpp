@@ -60,13 +60,6 @@ connection TableItem::connect_active_signal(
   return m_active_signal.connect(slot);
 }
 
-void TableItem::mount(QSpacerItem& body) {
-  if(auto item = layout()->takeAt(0)) {
-    delete item;
-  }
-  static_cast<QBoxLayout&>(*layout()).addSpacerItem(&body);
-}
-
 void TableItem::mount(QWidget& body) {
   if(auto item = layout()->takeAt(0)) {
     delete item;

@@ -103,15 +103,6 @@ struct TableBody::RowCover : Cover {
       get_item(i)->unmount();
     }
   }
-
-  void fill_space(const RowCover& row) {
-    for(auto i = 0; i != layout()->count(); ++i) {
-      auto size = row.get_item(i)->size();
-      get_item(i)->mount(*new QSpacerItem(size.width(), size.height(),
-        row.get_item(i)->sizePolicy().horizontalPolicy(),
-        row.get_item(i)->get_body().sizePolicy().verticalPolicy()));
-    }
-  }
 };
 
 struct TableBody::ColumnCover : Cover {
@@ -599,7 +590,7 @@ void TableBody::initialize_visible_region() {
       } else if(row.is_mounted() && current_row != row.m_index) {
         row.unmount();
       } else if(row.sizeHint().isEmpty()) {
-        row.fill_space(front_row);
+        row.setFixedHeight(geometry.height());
       }
       position += geometry.height() + m_styles.m_vertical_spacing;
     }

@@ -73,7 +73,6 @@ namespace Spire {
       boost::signals2::scoped_connection m_style_connection;
 
       void mount(QWidget& body);
-      void mount(QSpacerItem& body);
       void unmount();
       void on_focus(FocusObserver::State state);
       void on_style();
