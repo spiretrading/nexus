@@ -656,7 +656,8 @@ void TableBody::update_visible_region() {
       }
       return -1;
     }();
-    for(auto i = m_top_index; i != m_top_index + m_visible_count; ++i) {
+    for(auto i = m_top_index;
+        i != std::min(m_top_index + m_visible_count, layout()->count()); ++i) {
       auto& row = *find_row(i);
       if(row.is_mounted() && current_row != row.m_index &&
           !test_visibility(*this, row.frameGeometry())) {
