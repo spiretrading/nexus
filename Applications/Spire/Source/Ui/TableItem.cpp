@@ -80,6 +80,7 @@ void TableItem::mount(QWidget& body) {
   if(auto item = layout()->takeAt(0)) {
     delete item;
   }
+  body.setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
   layout()->addWidget(&body);
   if(body.isEnabled()) {
     setFocusProxy(&body);
@@ -91,7 +92,9 @@ void TableItem::unmount() {
   auto size_hint = sizeHint();
   auto size_policy = get_body().sizePolicy();
   auto item = layout()->takeAt(0);
+  auto view = item->widget();
   delete item;
+  delete view;
   static_cast<QBoxLayout&>(*layout()).addSpacerItem(
     new QSpacerItem(size_hint.width(), size_hint.height(),
       size_policy.horizontalPolicy(), size_policy.verticalPolicy()));

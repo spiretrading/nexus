@@ -93,7 +93,9 @@ struct TableBody::RowCover : Cover {
   void mount(const ViewBuilder& view_builder,
       const std::shared_ptr<TableModel> table) {
     for(auto i = 0; i != layout()->count(); ++i) {
-      get_item(i)->mount(*view_builder(table, m_index, i));
+      auto& item = *get_item(i);
+      item.setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+      item.mount(*view_builder(table, m_index, i));
     }
     updateGeometry();
   }
@@ -913,7 +915,7 @@ void TableBody::on_widths_update(const ListModel<int>::Operation& operation) {
       auto spacing = get_left_spacing(operation.m_index);
       auto& row_layout = *layout();
       for(auto i = 0; i != row_layout.count(); ++i) {
-        auto& column_layout = *row_layout.itemAt(i)->widget()->layout();
+        auto& column_layout = *find_row(i)->layout();
         auto& item = *column_layout.itemAt(operation.m_index)->widget();
         item.setFixedWidth(m_widths->get(operation.m_index) - spacing);
       }
