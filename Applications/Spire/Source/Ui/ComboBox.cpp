@@ -145,6 +145,9 @@ bool ComboBox::eventFilter(QObject* watched, QEvent* event) {
 }
 
 void ComboBox::keyPressEvent(QKeyEvent* event) {
+  if(is_read_only()) {
+    return QWidget::keyPressEvent(event);
+  }
   if(m_data->m_drop_down_list->isVisible() &&
       (event->key() == Qt::Key_Down || event->key() == Qt::Key_Up ||
       event->key() == Qt::Key_PageUp || event->key() == Qt::Key_PageDown)) {
@@ -312,6 +315,9 @@ void ComboBox::on_current(const std::any& current) {
 }
 
 void ComboBox::on_input(const AnyRef& current) {
+  if(is_read_only()) {
+    return;
+  }
   auto& query = any_cast<QString>(current);
   if(!m_data->m_last_completion.toLower().startsWith(query.toLower())) {
     m_data->m_last_completion.clear();
@@ -433,16 +439,21 @@ void ComboBox::on_drop_down_submit(const std::any& submission) {
 }
 
 void ComboBox::on_focus(FocusObserver::State state) {
-  if(state == FocusObserver::State::NONE) {
+  if(state == FocusObserver::State::NONE && m_data) {
     m_data->m_drop_down_list->hide();
-    auto focus_out_event = QFocusEvent(QEvent::FocusOut);
-    QCoreApplication::sendEvent(m_data->m_input_focus_proxy, &focus_out_event);
+    if(m_data->m_input_focus_proxy) {
+      auto focus_out_event = QFocusEvent(QEvent::FocusOut);
+      QCoreApplication::sendEvent(
+        m_data->m_input_focus_proxy, &focus_out_event);
+    }
     submit(any_cast<QString>(m_input_box->get_current()->get()), true);
   }
 }
 
 bool ComboBox::on_input_key_press(QWidget& target, QKeyEvent& event) {
-  if(event.key() == Qt::Key_Escape) {
+  if(is_read_only()) {
+    return false;
+  } else if(event.key() == Qt::Key_Escape) {
     if(m_data->m_drop_down_list->isVisible()) {
       m_data->m_drop_down_list->hide();
       revert_current();
