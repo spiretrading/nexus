@@ -10,6 +10,7 @@ TEST_SUITE("RecycledListViewBuilder") {
     run_test([] {
       auto builder = RecycledListViewBuilder<ListModel<int>>();
       auto model = std::make_shared<ArrayListModel<int>>();
+      model->push(1);
       auto w1 = builder.mount(model, 0);
       builder.unmount(w1, 0);
       auto w2 = builder.mount(model, 0);
