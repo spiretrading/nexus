@@ -605,7 +605,9 @@ void ListView::initialize_visible_region() {
           ++m_visible_count;
         }
       } else if(item->m_item.is_mounted() && !item->m_item.is_current()) {
-        item->m_item.unmount();
+        if(auto widget = item->m_item.unmount()) {
+          m_view_builder.unmount(widget, item->m_index);
+        }
       } else if(item->m_item.sizeHint().isEmpty()) {
         auto size = front_item.m_item.sizeHint();
         auto size_policy = front_item.m_item.get_body().sizePolicy();
@@ -659,7 +661,9 @@ void ListView::update_visible_region() {
           std::views::drop(m_top_index) | std::views::take(m_visible_count)) {
       if(item->m_item.is_mounted() && !item->m_item.is_current() &&
           !test_visibility(*this, item->m_item.frameGeometry(), m_direction)) {
-        item->m_item.unmount();
+        if(auto widget = item->m_item.unmount()) {
+          m_view_builder.unmount(widget, item->m_index);
+        }
       }
     }
     m_top_index = top_item->m_index;
