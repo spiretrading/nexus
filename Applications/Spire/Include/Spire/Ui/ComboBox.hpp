@@ -19,9 +19,6 @@ namespace Spire {
       /** The type of model representing the current value. */
       using CurrentModel = ValueModel<std::any>;
 
-      /** The type of function used to build a QWidget representing a value. */
-      using ViewBuilder = ListView::ViewBuilder<void>;
-
       /**
        * Signals that the value was submitted.
        * @param submission The submitted value.
@@ -72,21 +69,21 @@ namespace Spire {
       /**
        * Constructs a ComboBox using default local models and a TextBox.
        * @param query_model The model used to query matches.
-       * @param view_builder The ViewBuilder to use.
+       * @param view_builder The ListViewBuilder to use.
        * @param parent The parent widget.
        */
       ComboBox(std::shared_ptr<QueryModel> query_model,
-        ViewBuilder view_builder, QWidget* parent = nullptr);
+        ListViewBuilder<> view_builder, QWidget* parent = nullptr);
 
       /**
        * Constructs a ComboBox using a TextBox.
        * @param query_model The model used to query matches.
        * @param current The current value's model.
-       * @param view_builder The ViewBuilder to use.
+       * @param view_builder The ListViewBuilder to use.
        * @param parent The parent widget.
        */
       ComboBox(std::shared_ptr<QueryModel> query_model,
-        std::shared_ptr<CurrentModel> current, ViewBuilder view_builder,
+        std::shared_ptr<CurrentModel> current, ListViewBuilder<> view_builder,
         QWidget* parent = nullptr);
 
       /**
@@ -94,12 +91,12 @@ namespace Spire {
        * @param query_model The model used to query matches.
        * @param current The current value's model.
        * @param input_box The input box to use.
-       * @param view_builder The ViewBuilder to use.
+       * @param view_builder The ListViewBuilder to use.
        * @param parent The parent widget.
        */
       ComboBox(std::shared_ptr<QueryModel> query_model,
         std::shared_ptr<CurrentModel> current, AnyInputBox* input_box,
-        ViewBuilder view_builder, QWidget* parent = nullptr);
+        ListViewBuilder<> view_builder, QWidget* parent = nullptr);
 
       /** Returns the model used to query matches. */
       const std::shared_ptr<QueryModel>& get_query_model() const;
@@ -159,7 +156,7 @@ namespace Spire {
       std::shared_ptr<QueryModel> m_query_model;
       std::shared_ptr<CurrentModel> m_current;
       AnyInputBox* m_input_box;
-      ViewBuilder m_view_builder;
+      ListViewBuilder<> m_view_builder;
       std::unique_ptr<DeferredData> m_data;
 
       void initialize_deferred_data() const;
