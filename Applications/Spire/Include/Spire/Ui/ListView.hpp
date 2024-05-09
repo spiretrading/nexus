@@ -59,6 +59,10 @@ namespace Styles {
       /** The type of ListModel to mount QWidget's for. */
       using ListModel = T;
 
+      ListViewBuilder(const ListViewBuilder&) = default;
+
+      ListViewBuilder(ListViewBuilder&&) = default;
+
       /**
        * Constructs a ListViewBuilder that calls a function to build a new
        * QWidget for every element, and calls delete to unmount widgets.
@@ -84,9 +88,10 @@ namespace Styles {
 
       /** Constructs a ListViewBuilder. */
       template<ListViewBuilderConcept<ListModel> B>
-      ListViewBuilder(B&& view_builder)
+      ListViewBuilder(B&& view_builder) requires
+        !std::is_same_v<std::remove_cvref_t<B>, ListViewBuilder>
         : m_builder(std::make_shared<WrappedListViewBuilder<
-            std::remove_reference_t<B>>>(std::forward<B>(view_builder))) {}
+            std::remove_cvref_t<B>>>(std::forward<B>(view_builder))) {}
 
       /** Constructs a ListViewBuilder. */
       template<typename M>
@@ -108,6 +113,10 @@ namespace Styles {
        * @param index The index of the element the <i>widget</i> represented.
        */
       void unmount(QWidget* widget, int index);
+
+      ListViewBuilder& operator =(const ListViewBuilder&) = default;
+
+      ListViewBuilder& operator =(ListViewBuilder&&) = default;
 
     private:
       struct VirtualListViewBuilder {
