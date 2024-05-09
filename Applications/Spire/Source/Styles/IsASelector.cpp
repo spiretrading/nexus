@@ -3,6 +3,7 @@
 #include <QTimer>
 #include "Spire/Styles/Stylist.hpp"
 
+using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::Styles;
 
@@ -32,12 +33,15 @@ SelectConnection Spire::Styles::select(const IsASelector& selector,
     IsASelector m_selector;
     Stylist* m_stylist;
     SelectionUpdateSignal m_on_update;
+    scoped_connection m_delete_connection;
 
     Executor(const IsASelector& selector, const Stylist& base,
         const SelectionUpdateSignal& on_update)
         : m_selector(selector),
           m_stylist(&const_cast<Stylist&>(base)),
           m_on_update(on_update) {
+      m_delete_connection = m_stylist->connect_delete_signal(
+        std::bind_front(&Executor::on_delete, this));
       QTimer::singleShot(0, this, std::bind_front(&Executor::test, this));
     }
 
@@ -59,12 +63,19 @@ SelectConnection Spire::Styles::select(const IsASelector& selector,
     }
 
     void test() {
+      if(!m_delete_connection.connected()) {
+        return;
+      }
       if(m_selector.is_instance(m_stylist->get_widget())) {
         auto stylist = std::exchange(m_stylist, nullptr);
         m_on_update({stylist}, {});
       } else {
         m_stylist->get_widget().installEventFilter(this);
       }
+    }
+
+    void on_delete() {
+      m_delete_connection.disconnect();
     }
   };
   return SelectConnection(
