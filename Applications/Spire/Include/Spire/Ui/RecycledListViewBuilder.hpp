@@ -1,62 +1,72 @@
 #ifndef SPIRE_RECYCLED_LIST_VIEW_BUILDER_HPP
 #define SPIRE_RECYCLED_LIST_VIEW_BUILDER_HPP
 #include <deque>
-#include "Spire/Spire/ListValueModel.hpp"
-#include "Spire/Spire/OptionalScalarValueModelDecorator.hpp"
-#include "Spire/Spire/ProxyScalarValueModel.hpp"
-#include "Spire/Ui/IntegerBox.hpp"
+#include <memory>
 #include "Spire/Ui/ListViewBuilder.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 
   /**
-   * Implements a ListViewBuilder that recycles previously unmounted QWidgets.
-   * @param <T> The type of ListModel to mount QWidget's for.
+   * Implements a ListViewBuilder that reuses previously mounted QWidgets to
+   * avoid constantly allocating and deallocating objects.
+   * @param <B> The type of ViewBuilder used to initialize and reset QWidgets.
    */
-  template<typename T>
+  template<typename B>
   class RecycledListViewBuilder {
     public:
 
-      /** The type of ListModel to mount QWidget's for. */
-      using ListModel = T;
+      /** The type of ViewBuilder used to initialize and reset QWidgets. */
+      using ViewBuilder = B;
 
-      QWidget* mount(const std::shared_ptr<ListModel>& model, int index);
+      /**
+       * Constructs a RecycledListViewBuilder.
+       * @param view_builder The ViewBuilder used to initialize and reset
+       *        QWidgets.
+       */
+      explicit RecycledListViewBuilder(ViewBuilder view_builder);
+
+      ~RecycledListViewBuilder();
+
+      template<typename T>
+      QWidget* mount(const std::shared_ptr<T>& model, int index);
 
       void unmount(QWidget* widget, int index);
 
     private:
+      ViewBuilder m_view_builder;
       std::deque<QWidget*> m_pool;
   };
 
+  template<typename B>
+  RecycledListViewBuilder<B>::RecycledListViewBuilder(ViewBuilder view_builder)
+    : m_view_builder(std::move(view_builder)) {}
+
+  template<typename B>
+  RecycledListViewBuilder<B>::~RecycledListViewBuilder() {
+    while(!m_pool.empty()) {
+      auto widget = m_pool.front();
+      m_pool.pop_front();
+      m_view_builder.unmount(widget);
+    }
+  }
+
+  template<typename B>
   template<typename T>
-  QWidget* RecycledListViewBuilder<T>::mount(
-      const std::shared_ptr<ListModel>& model, int index) {
+  QWidget* RecycledListViewBuilder<B>::mount(
+      const std::shared_ptr<T>& model, int index) {
     if(m_pool.empty()) {
-      if constexpr(std::is_same_v<typename ListModel::Type, int>) {
-        auto proxy = make_proxy_scalar_value_model(
-          make_optional_scalar_value_model_decorator(
-            make_scalar_value_model_decorator(
-              make_list_value_model(model, index))));
-        auto widget = new IntegerBox(std::move(proxy), {});
-        return widget;
-      }
+      return m_view_builder.mount(model, index);
     } else {
       auto widget = m_pool.front();
       m_pool.pop_front();
-      if constexpr(std::is_same_v<typename ListModel::Type, int>) {
-        static_cast<ProxyScalarValueModel<boost::optional<int>>*>(
-          &*static_cast<IntegerBox*>(widget)->get_current())->set_source(
-            make_optional_scalar_value_model_decorator(
-              make_scalar_value_model_decorator(
-                make_list_value_model(model, index))));
-      }
+      m_view_builder.reset(*widget, model, index);
       return widget;
     }
   }
 
-  template<typename T>
-  void RecycledListViewBuilder<T>::unmount(QWidget* widget, int index) {
+  template<typename B>
+  void RecycledListViewBuilder<B>::unmount(QWidget* widget, int index) {
     m_pool.push_back(widget);
   }
 }
