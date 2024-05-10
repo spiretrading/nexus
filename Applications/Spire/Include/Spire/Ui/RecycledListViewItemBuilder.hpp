@@ -53,13 +53,13 @@ namespace Spire {
   template<typename B>
   template<typename T>
   QWidget* RecycledListViewItemBuilder<B>::mount(
-      const std::shared_ptr<T>& model, int index) {
+      const std::shared_ptr<T>& list, int index) {
     if(m_pool.empty()) {
-      return m_builder.mount(model, index);
+      return m_builder.mount(list, index);
     } else {
       auto widget = m_pool.front();
       m_pool.pop_front();
-      m_builder.reset(*widget, model, index);
+      m_builder.reset(*widget, list, index);
       return widget;
     }
   }
