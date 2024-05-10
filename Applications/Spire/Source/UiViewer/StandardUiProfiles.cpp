@@ -9,7 +9,9 @@
 #include <QStringBuilder>
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 #include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
+#include "Spire/KeyBindings/OrderFieldAdditionalTag.hpp"
 #include "Spire/KeyBindings/OrderFieldInfoTip.hpp"
+#include "Spire/KeyBindings/TagNameBox.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ArrayTableModel.hpp"
 #include "Spire/Spire/ColumnViewListModel.hpp"
@@ -745,6 +747,58 @@ namespace {
       model->add(QString::fromStdString(region.GetName()).toLower(), region);
     }
     return model;
+  }
+
+  auto populate_additional_tag_list() {
+    auto make_info_model =
+      [] (const std::string& name, const std::string& description,
+          const std::vector<std::pair<std::string, std::string>>& arguments) {
+        auto model = OrderFieldInfoTip::Model();
+        model.m_tag.m_name = name;
+        model.m_tag.m_description = description;
+        for(auto& argument : arguments) {
+          model.m_tag.m_arguments.push_back({argument.first, argument.second});
+        }
+        return model;
+      };
+    auto tags = std::vector<std::shared_ptr<AdditionalTag>>();
+    tags.push_back(std::make_shared<OrderFieldAdditionalTag>(
+      Nexus::Tag(Nexus::Tag::QUANTITY_INDEX, Quantity(100)),
+      make_info_model("OrderQty", "The volume of an order or the total volume"
+        "for undisclosed Iceberg orders.", {})));
+    tags.push_back(std::make_shared<OrderFieldAdditionalTag>(
+      Nexus::Tag(Nexus::Tag::MONEY_INDEX, Money::ONE),
+      make_info_model("Price", "Required for limit orders.", {})));
+    tags.push_back(std::make_shared<OrderFieldAdditionalTag>(
+      Nexus::Tag(Nexus::Tag::MONEY_INDEX, 10 * Money::ONE),
+      make_info_model("AvgPx", "The average price of all fills for an order",
+        {})));
+    tags.push_back(std::make_shared<OrderFieldAdditionalTag>(
+      Nexus::Tag(Nexus::Tag::CHAR_INDEX, 'Y'),
+      make_info_model("TSXUndisplayed",
+        "Indicates the order is completely undisplayed.", {})));
+    tags.push_back(std::make_shared<OrderFieldAdditionalTag>(
+      Nexus::Tag(Nexus::Tag::DATE_INDEX, date(2025, 12, 31)),
+      make_info_model("ExpireDate", "Date of order expiration"
+        "(last day the order can trade), always expressed in terms of the local"
+        "market date.", {})));
+    tags.push_back(std::make_shared<OrderFieldAdditionalTag>(
+      Nexus::Tag(Nexus::Tag::CHAR_INDEX, 'C'),
+      make_info_model("TSXPegType",
+        "Peg to the protected NBBO. Available on undisplayed orders only.",
+        {{"C", "Contra Midpoint Only Plus.Order is priced at the Protected "
+        "NBBO midpoint. Can trade only against other Contra Midpoint Only Plus "
+        "orders."},
+        {"D", "Contra Midpoint Only Plus, Dark Sweep.Order is priced at the"
+        "protected NBBO midpoint. Can trade against all dark orders on entry, "
+        "and only against other Contra Midpoint Only Plus orders once resting."}
+        })));
+    tags.push_back(std::make_shared<OrderFieldAdditionalTag>(
+      Nexus::Tag(Nexus::Tag::CHAR_INDEX, 'Y'),
+      make_info_model("TSXAnonymous",
+        "Flag to indicate if the order is anonymous.",
+        {{"N", "No"}, {"Y", "Yes"}})));
+    return tags;
   }
 
   auto key_input_box_validator(const QKeySequence& sequence) {
@@ -4888,6 +4942,59 @@ UiProfile Spire::make_tag_combo_box_profile() {
         }
         submit_filter_slot(result);
       });
+    return box;
+  });
+  return profile;
+}
+
+UiProfile Spire::make_tag_name_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(
+    make_standard_property<QString>("current", "TSXPegType"));
+  properties.push_back(make_standard_property<QString>("placeholder"));
+  properties.push_back(make_standard_property<bool>("read_only"));
+  auto profile = UiProfile("TagNameBox", properties, [] (auto& profile) {
+    auto query_model = std::make_shared<LocalComboBoxQueryModel>();
+    for(auto& tag : populate_additional_tag_list()) {
+      query_model->add(tag->get_name().toLower(), tag);
+    }
+    auto& current = get<QString>("current", profile.get_properties());
+    auto current_model =
+      std::make_shared<LocalValueModel<std::shared_ptr<AdditionalTag>>>(
+        std::any_cast<std::shared_ptr<AdditionalTag>>(query_model->parse(
+          current.get())));
+    auto box = new TagNameBox(query_model, std::move(current_model));
+    box->setMinimumWidth(scale_width(112));
+    apply_widget_properties(box, profile.get_properties());
+    auto& placeholder = get<QString>("placeholder", profile.get_properties());
+    placeholder.connect_changed_signal(
+      std::bind_front(&TagNameBox::set_placeholder, box));
+    auto& read_only = get<bool>("read_only", profile.get_properties());
+    read_only.connect_changed_signal(
+      std::bind_front(&TagNameBox::set_read_only, box));
+    auto current_slot = profile.make_event_slot<QString>("Current");
+    auto current_connection = box->get_current()->connect_update_signal(
+      [=, &current] (const auto& value) {
+        current_slot(value->get_name());
+        current.set(value->get_name());
+      });
+    auto submit_slot = profile.make_event_slot<QString>("Submit");
+    box->connect_submit_signal([=] (const auto& submission) {
+      submit_slot(submission->get_name());
+    });
+    current.connect_changed_signal([=] (const auto& value) {
+      auto result = query_model->parse(value);
+      auto tag_current = [&] () -> std::shared_ptr<AdditionalTag> {
+        if(result.has_value()) {
+          return std::any_cast<std::shared_ptr<AdditionalTag>>(result);
+        }
+        return std::make_shared<OrderFieldAdditionalTag>(Nexus::Tag(),
+          OrderFieldInfoTip::Model());
+      }();
+      auto current_blocker = shared_connection_block(current_connection);
+      box->get_current()->set(std::move(tag_current));
+    });
     return box;
   });
   return profile;

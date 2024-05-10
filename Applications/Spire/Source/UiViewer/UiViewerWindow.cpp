@@ -216,6 +216,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_tag_profile());
   add(make_tag_box_profile());
   add(make_tag_combo_box_profile());
+  add(make_tag_name_box_profile());
   add(make_text_area_box_profile());
   add(make_text_area_label_profile());
   add(make_text_box_profile());
