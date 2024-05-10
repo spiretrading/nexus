@@ -35,13 +35,13 @@ ComboBox::ComboBox(std::shared_ptr<QueryModel> query_model, QWidget* parent)
   : ComboBox(std::move(query_model), &ListView::default_view_builder, parent) {}
 
 ComboBox::ComboBox(std::shared_ptr<QueryModel> query_model,
-  ViewBuilder view_builder, QWidget* parent)
+  ListViewBuilder<> view_builder, QWidget* parent)
   : ComboBox(std::move(query_model),
       std::make_shared<LocalValueModel<std::any>>(),
       std::move(view_builder), parent) {}
 
 ComboBox::ComboBox(std::shared_ptr<QueryModel> query_model,
-  std::shared_ptr<CurrentModel> current, ViewBuilder view_builder,
+  std::shared_ptr<CurrentModel> current, ListViewBuilder<> view_builder,
   QWidget* parent)
   : ComboBox(std::move(query_model), std::move(current),
       new AnyInputBox(*(new TextBox(to_text(current->get())))),
@@ -49,7 +49,7 @@ ComboBox::ComboBox(std::shared_ptr<QueryModel> query_model,
 
 ComboBox::ComboBox(std::shared_ptr<QueryModel> query_model,
     std::shared_ptr<CurrentModel> current, AnyInputBox* input_box,
-    ViewBuilder view_builder, QWidget* parent)
+    ListViewBuilder<> view_builder, QWidget* parent)
     : QWidget(parent),
       m_query_model(std::move(query_model)),
       m_current(std::move(current)),

@@ -118,13 +118,13 @@ TagComboBox::TagComboBox(std::shared_ptr<ComboBox::QueryModel> query_model,
       parent) {}
 
 TagComboBox::TagComboBox(std::shared_ptr<ComboBox::QueryModel> query_model,
-  ViewBuilder view_builder, QWidget* parent)
+  ListViewBuilder<> view_builder, QWidget* parent)
   : TagComboBox(std::move(query_model),
       std::make_shared<ArrayListModel<std::any>>(),
       std::move(view_builder), parent) {}
 
 TagComboBox::TagComboBox(std::shared_ptr<ComboBox::QueryModel> query_model,
-    std::shared_ptr<AnyListModel> current, ViewBuilder view_builder,
+    std::shared_ptr<AnyListModel> current, ListViewBuilder<> view_builder,
     QWidget* parent)
     : QWidget(parent),
       m_submission(std::make_shared<ArrayListModel<std::any>>()),
