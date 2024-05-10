@@ -10,8 +10,6 @@ namespace Spire {
    */
   class EditableTableView : public TableView {
     public:
-      using ViewBuilder = std::function<EditableBox* (
-        const std::shared_ptr<TableModel>& table, int row, int column)>;
 
       /**
        * Constructs an EditableTableView.
@@ -20,7 +18,7 @@ namespace Spire {
        * @param table_filter The filter to apply to a column.
        * @param current The current value.
        * @param selection The selection.
-       * @param view_builder The ViewBuilder to use.
+       * @param item_builder The TableViewItemBuilder to use.
        * @param comparator The comparison function.
        * @param parent The parent widget.
        */
@@ -28,8 +26,9 @@ namespace Spire {
         std::shared_ptr<HeaderModel> header,
         std::shared_ptr<TableFilter> table_filter,
         std::shared_ptr<CurrentModel> current,
-        std::shared_ptr<SelectionModel> selection, ViewBuilder view_builder,
-        Comparator comparator, QWidget* parent = nullptr);
+        std::shared_ptr<SelectionModel> selection,
+        TableViewItemBuilder item_builder, Comparator comparator,
+        QWidget* parent = nullptr);
 
     protected:
       void keyPressEvent(QKeyEvent* event) override;
@@ -38,7 +37,7 @@ namespace Spire {
     private:
       bool m_is_processing_key;
 
-      QWidget* make_table_item(const ViewBuilder& view_builder,
+      QWidget* make_table_item(TableViewItemBuilder& item_builder,
         const std::shared_ptr<TableModel>& table, int row, int column);
       void delete_row(const TableRowIndexTracker& row);
       bool navigate_next();

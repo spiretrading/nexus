@@ -29,7 +29,7 @@ int main(int argc, char** argv) {
     std::make_shared<ListEmptySelectionModel>());
   auto widths = std::make_shared<ArrayListModel<int>>();
   auto body = new TableBody(
-    table, current, selection, widths, TableView::default_view_builder);
+    table, current, selection, widths, TableView::default_item_builder);
   auto scroll_box = new ScrollBox(body);
   scroll_box->resize(300, 100);
   scroll_box->show();

@@ -16,6 +16,7 @@
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/TableCurrentController.hpp"
 #include "Spire/Ui/TableSelectionController.hpp"
+#include "Spire/Ui/TableViewItemBuilder.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -65,18 +66,6 @@ namespace Styles {
   /** Displays the body of a TableView. */
   class TableBody : public QWidget {
     public:
-
-      /**
-       * The type of function used to build a QWidget representing a value.
-       * @param table The table of values being displayed.
-       * @param row The row of the specific value to be displayed.
-       * @param column The column of the specific value to be displayed.
-       * @return The QWidget that shall be used to display the value in the
-       *         <i>table</i> at the given <i>row</i> and <i>column</i>.
-       */
-      using ViewBuilder = std::function<QWidget* (
-        const std::shared_ptr<TableModel>& table, int row, int column)>;
-
       using CurrentModel = TableCurrentController::CurrentModel;
 
       using SelectionModel = TableSelectionController::SelectionModel;
@@ -84,10 +73,10 @@ namespace Styles {
       using Index = TableIndex;
 
       /**
-       * The default view builder which uses a label styled TextBox to display
+       * The default item builder which uses a label styled TextBox to display
        * the text representation of its value.
        */
-      static QWidget* default_view_builder(
+      static QWidget* default_item_builder(
         const std::shared_ptr<TableModel>& table, int row, int column);
 
       /**
@@ -96,14 +85,14 @@ namespace Styles {
        * @param current The current value.
        * @param selection The selection.
        * @param widths The widths of each column.
-       * @param view_builder The ViewBuilder to use.
+       * @param item_builder The TableViewItemBuilder to use.
        * @param parent The parent widget.
        */
       TableBody(std::shared_ptr<TableModel> table,
         std::shared_ptr<CurrentModel> current,
         std::shared_ptr<SelectionModel> selection,
-        std::shared_ptr<ListModel<int>> widths, ViewBuilder view_builder,
-        QWidget* parent = nullptr);
+        std::shared_ptr<ListModel<int>> widths,
+        TableViewItemBuilder item_builder, QWidget* parent = nullptr);
 
       /** Returns the table of values displayed. */
       const std::shared_ptr<TableModel>& get_table() const;
@@ -152,7 +141,7 @@ namespace Styles {
       TableCurrentController m_current_controller;
       TableSelectionController m_selection_controller;
       std::shared_ptr<ListModel<int>> m_widths;
-      ViewBuilder m_view_builder;
+      TableViewItemBuilder m_item_builder;
       std::vector<ColumnCover*> m_column_covers;
       int m_top_index;
       int m_visible_count;

@@ -4729,7 +4729,7 @@ UiProfile Spire::make_table_view_profile() {
     auto view = TableViewBuilder(model).
       set_header(header).
       set_standard_filter().
-      set_view_builder(
+      set_item_builder(
         [] (const std::shared_ptr<TableModel>& table, int row, int column) {
           return make_label(std::make_shared<ToTextModel<int>>(
             make_list_value_model(std::make_shared<ColumnViewListModel<int>>(

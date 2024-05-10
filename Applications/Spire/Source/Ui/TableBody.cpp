@@ -43,7 +43,7 @@ GridColor Spire::Styles::grid_color(QColor color) {
   return GridColor(color, color);
 }
 
-QWidget* TableBody::default_view_builder(
+QWidget* TableBody::default_item_builder(
     const std::shared_ptr<TableModel>& table, int row, int column) {
   auto text = std::make_shared<ToTextModel<AnyRef>>(
     std::make_shared<ListValueModel<AnyRef>>(
@@ -90,17 +90,18 @@ struct TableBody::RowCover : Cover {
     return layout()->isEmpty() || get_item(0)->is_mounted();
   }
 
-  void mount(const ViewBuilder& view_builder,
-      const std::shared_ptr<TableModel> table) {
+  void mount(TableViewItemBuilder& item_builder,
+      const std::shared_ptr<TableModel>& table) {
     for(auto i = 0; i != layout()->count(); ++i) {
       auto& item = *get_item(i);
-      item.mount(*view_builder(table, m_index, i));
+      item.mount(*item_builder.mount(table, m_index, i));
     }
   }
 
-  void unmount() {
+  void unmount(TableViewItemBuilder& item_builder) {
     for(auto i = 0; i != layout()->count(); ++i) {
-      get_item(i)->unmount();
+      auto item = get_item(i)->unmount();
+      item_builder.unmount(item, m_index, i);
     }
   }
 };
@@ -120,14 +121,14 @@ struct TableBody::ColumnCover : Cover {
 TableBody::TableBody(
     std::shared_ptr<TableModel> table, std::shared_ptr<CurrentModel> current,
     std::shared_ptr<SelectionModel> selection,
-    std::shared_ptr<ListModel<int>> widths, ViewBuilder view_builder,
+    std::shared_ptr<ListModel<int>> widths, TableViewItemBuilder item_builder,
     QWidget* parent)
     : QWidget(parent),
       m_table(std::move(table)),
       m_current_controller(std::move(current), 0, widths->get_size() + 1),
       m_selection_controller(std::move(selection), 0, widths->get_size() + 1),
       m_widths(std::move(widths)),
-      m_view_builder(std::move(view_builder)),
+      m_item_builder(std::move(item_builder)),
       m_top_index(-1),
       m_visible_count(0),
       m_initialize_count(0) {
@@ -553,7 +554,7 @@ void TableBody::initialize_visible_region() {
     m_top_index = std::numeric_limits<int>::max();
     auto& front_row = *find_row(0);
     if(!front_row.is_mounted()) {
-      front_row.mount(m_view_builder, m_table);
+      front_row.mount(m_item_builder, m_table);
     }
     auto top_geometry = QRect(QPoint(0, 0), front_row.sizeHint());
     if(test_visibility(*this, top_geometry)) {
@@ -581,14 +582,14 @@ void TableBody::initialize_visible_region() {
       auto is_visible = test_visibility(*this, geometry);
       if(is_visible || row.m_index == current_row) {
         if(!row.is_mounted()) {
-          row.mount(m_view_builder, m_table);
+          row.mount(m_item_builder, m_table);
         }
         if(is_visible) {
           m_top_index = std::min(m_top_index, row.m_index);
           ++m_visible_count;
         }
       } else if(row.is_mounted() && current_row != row.m_index) {
-        row.unmount();
+        row.unmount(m_item_builder);
       } else if(row.sizeHint().isEmpty()) {
         row.setFixedHeight(geometry.height());
       }
@@ -645,7 +646,7 @@ void TableBody::update_visible_region() {
       auto& row = *find_row(i);
       if(row.is_mounted() && current_row != row.m_index &&
           !test_visibility(*this, row.frameGeometry())) {
-        row.unmount();
+        row.unmount(m_item_builder);
       }
     }
     m_top_index = top_row->m_index;
@@ -656,7 +657,7 @@ void TableBody::update_visible_region() {
       auto geometry = QRect(QPoint(0, position), row.get_item(0)->size());
       if(test_visibility(*this, geometry)) {
         if(!row.is_mounted()) {
-          row.mount(m_view_builder, m_table);
+          row.mount(m_item_builder, m_table);
         }
         ++m_visible_count;
       } else {

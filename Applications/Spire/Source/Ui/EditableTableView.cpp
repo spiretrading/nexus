@@ -321,14 +321,14 @@ EditableTableView::EditableTableView(
     std::shared_ptr<TableModel> table, std::shared_ptr<HeaderModel> header,
     std::shared_ptr<TableFilter> table_filter,
     std::shared_ptr<CurrentModel> current,
-    std::shared_ptr<SelectionModel> selection, ViewBuilder view_builder,
-    Comparator comparator, QWidget* parent)
+    std::shared_ptr<SelectionModel> selection,
+    TableViewItemBuilder item_builder, Comparator comparator, QWidget* parent)
     : TableView(std::make_shared<EditableTableModel>(std::move(table), header),
         std::make_shared<EditableTableHeaderModel>(header),
         std::move(table_filter), std::make_shared<EditableTableCurrentModel>(
           std::move(current), header->get_size() + 2), std::move(selection),
-        std::bind_front(
-          &EditableTableView::make_table_item, this, std::move(view_builder)),
+        FunctionTableViewItemBuilder(std::bind_front(
+          &EditableTableView::make_table_item, this, std::move(item_builder))),
         std::move(comparator), parent),
       m_is_processing_key(false) {
   get_header().get_item(0)->set_is_resizeable(false);
@@ -377,7 +377,7 @@ bool EditableTableView::focusNextPrevChild(bool next) {
   return true;
 }
 
-QWidget* EditableTableView::make_table_item(const ViewBuilder& view_builder,
+QWidget* EditableTableView::make_table_item(TableViewItemBuilder& item_builder,
     const std::shared_ptr<TableModel>& table, int row, int column) {
   if(column == 0) {
     auto button = make_delete_icon_button();
@@ -393,9 +393,9 @@ QWidget* EditableTableView::make_table_item(const ViewBuilder& view_builder,
   } else if(column == table->get_column_size() - 1) {
     return make_empty_cell();
   } else {
-    auto item = view_builder(
+    auto item = static_cast<EditableBox*>(item_builder.mount(
       std::static_pointer_cast<EditableTableModel>(get_table())->m_source,
-      any_cast<int>(table->at(row, 0)), column - 1);
+      any_cast<int>(table->at(row, 0)), column - 1));
     item->connect_read_only_signal([=] (auto read_only) {
       if(read_only) {
         setFocus();

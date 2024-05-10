@@ -31,8 +31,8 @@ namespace Spire {
        * QWidget for every element, and calls delete to unmount widgets.
        * @param builder The function to call for every element of the table.
        */
-      TableViewItemBuilder(std::function<
-        QWidget* (const std::shared_ptr<TableModel>&, int, int)> builder);
+      TableViewItemBuilder(std::invocable<
+        const std::shared_ptr<TableModel>&, int, int> auto builder);
 
       template<TableViewItemBuilderConcept B>
       TableViewItemBuilder(B&& builder) requires
@@ -59,6 +59,10 @@ namespace Spire {
        * @param column The column of the element the <i>widget</i> represented.
        */
       void unmount(QWidget* widget, int row, int column);
+
+      TableViewItemBuilder& operator =(const TableViewItemBuilder&) = default;
+
+      TableViewItemBuilder& operator =(TableViewItemBuilder&&) = default;
 
     private:
       struct VirtualTableViewItemBuilder {
@@ -106,11 +110,34 @@ namespace Spire {
         m_builder;
   };
 
+  TableViewItemBuilder::TableViewItemBuilder(std::invocable<
+    const std::shared_ptr<TableModel>&, int, int> auto builder)
+    : TableViewItemBuilder(FunctionTableViewItemBuilder(
+        std::move(builder))) {}
+
   template<TableViewItemBuilderConcept B>
   TableViewItemBuilder::TableViewItemBuilder(B&& builder) requires
     !std::is_same_v<std::remove_cvref_t<B>, TableViewItemBuilder>
     : m_builder(std::make_shared<WrappedTableViewItemBuilder<
         std::remove_cvref_t<B>>>(std::forward<B>(builder))) {}
+
+  template<typename B>
+  template<typename... Args>
+  TableViewItemBuilder::
+    WrappedTableViewItemBuilder<B>::WrappedTableViewItemBuilder(Args&&... args)
+    : m_builder(std::forward<Args>(args)...) {}
+
+  template<typename B>
+  QWidget* TableViewItemBuilder::WrappedTableViewItemBuilder<B>::mount(
+      const std::shared_ptr<TableModel>& table, int row, int column) {
+    return m_builder->mount(table, row, column);
+  }
+
+  template<typename B>
+  void TableViewItemBuilder::WrappedTableViewItemBuilder<B>::unmount(
+      QWidget* widget, int row, int column) {
+    m_builder->unmount(widget, row, column);
+  }
 }
 
 #endif
