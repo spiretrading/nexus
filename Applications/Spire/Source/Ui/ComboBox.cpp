@@ -32,29 +32,29 @@ ComboBox::DeferredData::DeferredData(ComboBox& box)
       std::bind_front(&ComboBox::on_current, &box))) {}
 
 ComboBox::ComboBox(std::shared_ptr<QueryModel> query_model, QWidget* parent)
-  : ComboBox(std::move(query_model), &ListView::default_view_builder, parent) {}
+  : ComboBox(std::move(query_model), &ListView::default_item_builder, parent) {}
 
 ComboBox::ComboBox(std::shared_ptr<QueryModel> query_model,
-  ListViewBuilder<> view_builder, QWidget* parent)
+  ListViewItemBuilder<> item_builder, QWidget* parent)
   : ComboBox(std::move(query_model),
-      std::make_shared<LocalValueModel<std::any>>(),
-      std::move(view_builder), parent) {}
+      std::make_shared<LocalValueModel<std::any>>(), std::move(item_builder),
+      parent) {}
 
 ComboBox::ComboBox(std::shared_ptr<QueryModel> query_model,
-  std::shared_ptr<CurrentModel> current, ListViewBuilder<> view_builder,
+  std::shared_ptr<CurrentModel> current, ListViewItemBuilder<> item_builder,
   QWidget* parent)
   : ComboBox(std::move(query_model), std::move(current),
       new AnyInputBox(*(new TextBox(to_text(current->get())))),
-      std::move(view_builder), parent) {}
+      std::move(item_builder), parent) {}
 
 ComboBox::ComboBox(std::shared_ptr<QueryModel> query_model,
     std::shared_ptr<CurrentModel> current, AnyInputBox* input_box,
-    ListViewBuilder<> view_builder, QWidget* parent)
+    ListViewItemBuilder<> item_builder, QWidget* parent)
     : QWidget(parent),
       m_query_model(std::move(query_model)),
       m_current(std::move(current)),
       m_input_box(input_box),
-      m_view_builder(std::move(view_builder)) {
+      m_item_builder(std::move(item_builder)) {
   setFocusProxy(m_input_box);
   proxy_style(*this, *m_input_box);
   enclose(*this, *m_input_box);
@@ -198,7 +198,7 @@ void ComboBox::initialize_deferred_data() const {
       std::bind_front(&ComboBox::on_highlight, self));
   m_data->m_list_view =
     new ListView(std::static_pointer_cast<AnyListModel>(m_data->m_matches),
-      std::move(m_view_builder));
+      std::move(m_item_builder));
   m_data->m_list_view->setFocusPolicy(Qt::NoFocus);
   m_data->m_drop_down_list = new DropDownList(*m_data->m_list_view, *self);
   m_data->m_drop_down_list->setFocusPolicy(Qt::NoFocus);

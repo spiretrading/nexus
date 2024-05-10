@@ -56,31 +56,31 @@ namespace {
 }
 
 DropDownBox::DropDownBox(std::shared_ptr<AnyListModel> list, QWidget* parent)
-  : DropDownBox(std::move(list), ListView::default_view_builder, parent) {}
+  : DropDownBox(std::move(list), ListView::default_item_builder, parent) {}
 
 DropDownBox::DropDownBox(std::shared_ptr<AnyListModel> list,
-  ListViewBuilder<> view_builder, QWidget* parent)
+  ListViewItemBuilder<> item_builder, QWidget* parent)
   : DropDownBox(std::move(list),
       std::make_shared<LocalValueModel<optional<int>>>(),
       std::make_shared<ListSingleSelectionModel>(),
-      std::move(view_builder), parent) {}
+      std::move(item_builder), parent) {}
 
 DropDownBox::DropDownBox(std::shared_ptr<AnyListModel> list,
-  std::shared_ptr<CurrentModel> current, ListViewBuilder<> view_builder,
+  std::shared_ptr<CurrentModel> current, ListViewItemBuilder<> item_builder,
   QWidget* parent)
   : DropDownBox(std::move(list), std::move(current),
-      std::make_shared<ListSingleSelectionModel>(), std::move(view_builder),
+      std::make_shared<ListSingleSelectionModel>(), std::move(item_builder),
       parent) {}
 
 DropDownBox::DropDownBox(std::shared_ptr<AnyListModel> list,
     std::shared_ptr<CurrentModel> current,
-    std::shared_ptr<SelectionModel> selection, ListViewBuilder<> view_builder,
-    QWidget* parent)
+    std::shared_ptr<SelectionModel> selection,
+    ListViewItemBuilder<> item_builder, QWidget* parent)
     : QWidget(parent),
       m_list(std::move(list)),
       m_current(std::move(current)),
       m_selection(std::move(selection)),
-      m_view_builder(std::move(view_builder)),
+      m_item_builder(std::move(item_builder)),
       m_timer(this),
       m_is_read_only(false),
       m_is_modified(false),
@@ -351,7 +351,7 @@ void DropDownBox::revert_current() {
 }
 
 void DropDownBox::show_drop_down_list() {
-  auto list_view = new ListView(m_list, m_current, m_selection, m_view_builder);
+  auto list_view = new ListView(m_list, m_current, m_selection, m_item_builder);
   m_drop_down_list = new DropDownList(*list_view, *this);
   m_drop_down_list->installEventFilter(this);
   auto window = m_drop_down_list->window();

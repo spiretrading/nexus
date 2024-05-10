@@ -14,7 +14,7 @@
 #include "Spire/Ui/ListCurrentController.hpp"
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/ListSelectionController.hpp"
-#include "Spire/Ui/ListViewBuilder.hpp"
+#include "Spire/Ui/ListViewItemBuilder.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -62,10 +62,10 @@ namespace Styles {
       using SubmitSignal = Signal<void (const std::any& submission)>;
 
       /**
-       * The default view builder which uses a label styled TextBox to display
+       * The default item builder which uses a label styled TextBox to display
        * the text representation of its value.
        */
-      static QWidget* default_view_builder(
+      static QWidget* default_item_builder(
         const std::shared_ptr<AnyListModel>& list, int index);
 
       /**
@@ -80,45 +80,45 @@ namespace Styles {
       /**
        * Constructs a ListView using default local models.
        * @param list The model of values to display.
-       * @param view_builder The ListViewBuilder to use.
+       * @param item_builder The ListViewItemBuilder to use.
        * @param parent The parent widget.
        */
       ListView(std::shared_ptr<AnyListModel> list,
-        ListViewBuilder<> view_builder, QWidget* parent = nullptr);
+        ListViewItemBuilder<> item_builder, QWidget* parent = nullptr);
 
       /**
        * Constructs a ListView using default local models.
        * @param list The model of values to display.
        * @param selection The selection model.
-       * @param view_builder The ViewBuilder to use.
+       * @param item_builder The ListViewItemBuilder to use.
        * @param parent The parent widget.
        */
       ListView(std::shared_ptr<AnyListModel> list,
         std::shared_ptr<SelectionModel> selection,
-        ListViewBuilder<> view_builder, QWidget* parent = nullptr);
+        ListViewItemBuilder<> item_builder, QWidget* parent = nullptr);
 
       /**
        * Constructs a ListView using default local models.
        * @param list The model of values to display.
-       * @param view_builder The ViewBuilder to use.
+       * @param item_builder The ListViewItemBuilder to use.
        * @param parent The parent widget.
        */
       template<std::derived_from<AnyListModel> T>
       ListView(std::shared_ptr<T> list,
-        ListViewBuilder<ListModel<typename T::Type>> view_builder,
+        ListViewItemBuilder<ListModel<typename T::Type>> item_builder,
         QWidget* parent = nullptr);
 
       /**
        * Constructs a ListView using default local models.
        * @param list The model of values to display.
        * @param selection The selection model.
-       * @param view_builder The ViewBuilder to use.
+       * @param item_builder The ListViewItemBuilder to use.
        * @param parent The parent widget.
        */
       template<std::derived_from<AnyListModel> T>
       ListView(std::shared_ptr<T> list,
         std::shared_ptr<SelectionModel> selection,
-        ListViewBuilder<ListModel<typename T::Type>> view_builder,
+        ListViewItemBuilder<ListModel<typename T::Type>> item_builder,
         QWidget* parent = nullptr);
 
       /**
@@ -126,27 +126,27 @@ namespace Styles {
        * @param list The list model which holds a list of items.
        * @param current The current value model.
        * @param selection The selection model.
-       * @param view_builder The ViewBuilder to use.
+       * @param item_builder The ListViewItemBuilder to use.
        * @param parent The parent widget.
        */
       ListView(std::shared_ptr<AnyListModel> list,
         std::shared_ptr<CurrentModel> current,
         std::shared_ptr<SelectionModel> selection,
-        ListViewBuilder<> view_builder, QWidget* parent = nullptr);
+        ListViewItemBuilder<> item_builder, QWidget* parent = nullptr);
 
       /**
        * Constructs a ListView.
        * @param list The list model which holds a list of items.
        * @param current The current value model.
        * @param selection The selection model.
-       * @param view_builder The ViewBuilder to use.
+       * @param item_builder The ListViewItemBuilder to use.
        * @param parent The parent widget.
        */
       template<std::derived_from<AnyListModel> T>
       ListView(std::shared_ptr<T> list,
         std::shared_ptr<CurrentModel> current,
         std::shared_ptr<SelectionModel> selection,
-        ListViewBuilder<ListModel<typename T::Type>> view_builder,
+        ListViewItemBuilder<ListModel<typename T::Type>> item_builder,
         QWidget* parent = nullptr);
 
       /** Returns the list of values displayed. */
@@ -212,7 +212,7 @@ namespace Styles {
       std::unordered_set<Qt::Key> m_keys;
       ListCurrentController m_current_controller;
       ListSelectionController m_selection_controller;
-      ListViewBuilder<> m_view_builder;
+      ListViewItemBuilder<> m_item_builder;
       std::vector<std::unique_ptr<ItemEntry>> m_items;
       Box* m_box;
       int m_top_index;
@@ -254,25 +254,27 @@ namespace Styles {
 
   template<std::derived_from<AnyListModel> T>
   ListView::ListView(std::shared_ptr<T> list,
-    ListViewBuilder<ListModel<typename T::Type>> view_builder,
+    ListViewItemBuilder<ListModel<typename T::Type>> item_builder,
     QWidget* parent)
     : ListView(std::static_pointer_cast<AnyListModel>(list),
-        ListViewBuilder<>(std::move(view_builder))) {}
+        ListViewItemBuilder<>(std::move(item_builder))) {}
 
   template<std::derived_from<AnyListModel> T>
   ListView::ListView(std::shared_ptr<T> list,
     std::shared_ptr<SelectionModel> selection,
-    ListViewBuilder<ListModel<typename T::Type>> view_builder, QWidget* parent)
+    ListViewItemBuilder<ListModel<typename T::Type>> item_builder,
+    QWidget* parent)
     : ListView(std::static_pointer_cast<AnyListModel>(list),
-        std::move(selection), ListViewBuilder<>(std::move(view_builder))) {}
+        std::move(selection), ListViewItemBuilder<>(std::move(item_builder))) {}
 
   template<std::derived_from<AnyListModel> T>
   ListView::ListView(std::shared_ptr<T> list,
     std::shared_ptr<CurrentModel> current,
     std::shared_ptr<SelectionModel> selection,
-    ListViewBuilder<ListModel<typename T::Type>> view_builder, QWidget* parent)
+    ListViewItemBuilder<ListModel<typename T::Type>> item_builder,
+    QWidget* parent)
     : ListView(std::static_pointer_cast<AnyListModel>(list), std::move(current),
-        std::move(selection), ListViewBuilder<>(std::move(view_builder))) {}
+        std::move(selection), ListViewItemBuilder<>(std::move(item_builder))) {}
 }
 
 #endif

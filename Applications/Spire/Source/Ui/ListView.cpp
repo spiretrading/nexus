@@ -97,37 +97,37 @@ ListView::ItemEntry::ItemEntry(int index)
   : m_index(index),
     m_click_observer(m_item) {}
 
-QWidget* ListView::default_view_builder(
+QWidget* ListView::default_item_builder(
     const std::shared_ptr<AnyListModel>& list, int index) {
   return make_label(to_text(list->get(index)));
 }
 
 ListView::ListView(std::shared_ptr<AnyListModel> list, QWidget* parent)
-  : ListView(std::move(list), default_view_builder, parent) {}
+  : ListView(std::move(list), default_item_builder, parent) {}
 
 ListView::ListView(std::shared_ptr<AnyListModel> list,
-  ListViewBuilder<> view_builder, QWidget* parent)
+  ListViewItemBuilder<> item_builder, QWidget* parent)
   : ListView(
       std::move(list), std::make_shared<LocalValueModel<optional<int>>>(),
-      std::make_shared<ListSingleSelectionModel>(), std::move(view_builder),
+      std::make_shared<ListSingleSelectionModel>(), std::move(item_builder),
       parent) {}
 
 ListView::ListView(std::shared_ptr<AnyListModel> list,
-  std::shared_ptr<SelectionModel> selection, ListViewBuilder<> view_builder,
+  std::shared_ptr<SelectionModel> selection, ListViewItemBuilder<> item_builder,
   QWidget* parent)
   : ListView(
       std::move(list), std::make_shared<LocalValueModel<optional<int>>>(),
-      std::move(selection), std::move(view_builder), parent) {}
+      std::move(selection), std::move(item_builder), parent) {}
 
 ListView::ListView(
     std::shared_ptr<AnyListModel> list, std::shared_ptr<CurrentModel> current,
-    std::shared_ptr<SelectionModel> selection, ListViewBuilder<> view_builder,
-    QWidget* parent)
+    std::shared_ptr<SelectionModel> selection,
+    ListViewItemBuilder<> item_builder, QWidget* parent)
     : QWidget(parent),
       m_list(std::move(list)),
       m_current_controller(std::move(current), m_list->get_size()),
       m_selection_controller(std::move(selection), m_list->get_size()),
-      m_view_builder(std::move(view_builder)),
+      m_item_builder(std::move(item_builder)),
       m_direction(Qt::Vertical),
       m_overflow(Overflow::NONE),
       m_visible_count(0),
@@ -398,7 +398,7 @@ void ListView::update_focus(optional<int> current) {
 void ListView::make_item_entry(int index) {
   auto entry = new ItemEntry(index);
   if(m_overflow != Overflow::NONE) {
-    entry->m_item.mount(*m_view_builder.mount(m_list, entry->m_index));
+    entry->m_item.mount(*m_item_builder.mount(m_list, entry->m_index));
   }
   m_items.emplace(m_items.begin() + index, entry);
   entry->m_click_observer->connect_click_signal(
@@ -551,7 +551,7 @@ void ListView::initialize_visible_region() {
   if(m_overflow != Overflow::NONE) {
     for(auto& item : m_items) {
       if(!item->m_item.is_mounted()) {
-        item->m_item.mount(*m_view_builder.mount(m_list, item->m_index));
+        item->m_item.mount(*m_item_builder.mount(m_list, item->m_index));
       }
     }
     return;
@@ -576,7 +576,7 @@ void ListView::initialize_visible_region() {
     m_top_index = std::numeric_limits<int>::max();
     auto& front_item = *m_items.front();
     if(!front_item.m_item.is_mounted()) {
-      front_item.m_item.mount(*m_view_builder.mount(m_list, 0));
+      front_item.m_item.mount(*m_item_builder.mount(m_list, 0));
     }
     auto top_geometry =
       QRect(QPoint(0, 0), front_item.m_item.sizeHint());
@@ -598,7 +598,7 @@ void ListView::initialize_visible_region() {
       auto is_visible = test_visibility(*this, geometry, m_direction);
       if(is_visible || item->m_item.is_current()) {
         if(!item->m_item.is_mounted()) {
-          item->m_item.mount(*m_view_builder.mount(m_list, item->m_index));
+          item->m_item.mount(*m_item_builder.mount(m_list, item->m_index));
         }
         if(is_visible) {
           m_top_index = std::min(m_top_index, item->m_index);
@@ -606,7 +606,7 @@ void ListView::initialize_visible_region() {
         }
       } else if(item->m_item.is_mounted() && !item->m_item.is_current()) {
         if(auto widget = item->m_item.unmount()) {
-          m_view_builder.unmount(widget, item->m_index);
+          m_item_builder.unmount(widget, item->m_index);
         }
       } else if(item->m_item.sizeHint().isEmpty()) {
         auto size = front_item.m_item.sizeHint();
@@ -662,7 +662,7 @@ void ListView::update_visible_region() {
       if(item->m_item.is_mounted() && !item->m_item.is_current() &&
           !test_visibility(*this, item->m_item.frameGeometry(), m_direction)) {
         if(auto widget = item->m_item.unmount()) {
-          m_view_builder.unmount(widget, item->m_index);
+          m_item_builder.unmount(widget, item->m_index);
         }
       }
     }
@@ -674,7 +674,7 @@ void ListView::update_visible_region() {
         QRect(make_directed_point(position, m_direction), item->m_item.size());
       if(test_visibility(*this, geometry, m_direction)) {
         if(!item->m_item.is_mounted()) {
-          item->m_item.mount(*m_view_builder.mount(m_list, item->m_index));
+          item->m_item.mount(*m_item_builder.mount(m_list, item->m_index));
         }
         ++m_visible_count;
       } else {

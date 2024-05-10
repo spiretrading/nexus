@@ -1477,8 +1477,8 @@ UiProfile Spire::make_combo_box_profile() {
     auto& current = get<QString>("current", profile.get_properties());
     auto current_model =
       std::make_shared<LocalValueModel<std::any>>(current.get());
-    auto box = new ComboBox(model, current_model,
-      &ListView::default_view_builder);
+    auto box =
+      new ComboBox(model, current_model, &ListView::default_item_builder);
     box->setFixedWidth(scale_width(112));
     apply_widget_properties(box, profile.get_properties());
     auto current_connection = box->get_current()->connect_update_signal(
@@ -1871,7 +1871,7 @@ UiProfile Spire::make_drop_down_box_profile() {
     }
     auto drop_down_box = new DropDownBox(list_model,
       std::make_shared<LocalValueModel<optional<int>>>(item_count.get() - 1),
-      ListView::default_view_builder);
+        ListView::default_item_builder);
     drop_down_box->setFixedWidth(scale_width(112));
     apply_widget_properties(drop_down_box, profile.get_properties());
     auto& read_only = get<bool>("read_only", profile.get_properties());
