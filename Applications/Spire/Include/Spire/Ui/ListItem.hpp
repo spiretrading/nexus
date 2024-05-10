@@ -73,7 +73,7 @@ namespace Styles {
 
       void mount(QSpacerItem& body);
       void mount(QWidget& body);
-      void unmount();
+      QWidget* unmount();
   };
 }
 

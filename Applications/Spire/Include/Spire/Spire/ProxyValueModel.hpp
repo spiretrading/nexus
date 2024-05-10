@@ -52,8 +52,9 @@ namespace Spire {
    * @param source The model to forward calls to.
    */
   template<typename T>
-  auto make_proxy_value_model(std::shared_ptr<ValueModel<T>> source) {
-    return std::make_shared<ProxyValueModel<T>>(std::move(source));
+  auto make_proxy_value_model(std::shared_ptr<T> source) {
+    return std::make_shared<ProxyValueModel<ValueModel<typename T::Type>>>(
+      std::move(source));
   }
 
   template<typename T>
