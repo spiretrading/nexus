@@ -2,12 +2,15 @@
 #define SPIRE_TAG_NAME_BOX_HPP
 #include <QPointer>
 #include "Spire/KeyBindings/AdditionalTag.hpp"
-#include "Spire/Ui/ComboBox.hpp"
+#include "Spire/Spire/ListModel.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 
-  /** Displays a tag name over a list of available tags. */
+  /**
+   * Represents a widget which allows the user to choose a tag name over
+   * a list of available tags.
+   */
   class TagNameBox : public QWidget {
     public:
 
@@ -20,34 +23,30 @@ namespace Spire {
 
       /**
        * Constructs a TagNameBox using a default local model.
-       * @param query_model The model used to query matches.
+       * @param tags A list of available tags to display.
        * @param parent The parent widget.
        */
-      explicit TagNameBox(std::shared_ptr<ComboBox::QueryModel> query_model,
+      explicit TagNameBox(
+        std::shared_ptr<ListModel<std::shared_ptr<AdditionalTag>>> tags,
         QWidget* parent = nullptr);
 
       /**
        * Constructs a TagNameBox.
-       * @param query_model The model used to query matches.
+       * @param tags A list of available tags to display.
        * @param current The current value's model.
        * @param parent The parent widget.
        */
-      TagNameBox(std::shared_ptr<ComboBox::QueryModel> query_model,
+      TagNameBox(std::shared_ptr<ListModel<std::shared_ptr<AdditionalTag>>> tags,
         std::shared_ptr<ValueModel<std::shared_ptr<AdditionalTag>>> current,
         QWidget* parent = nullptr);
 
-      /** Returns the model used to query matches. */
-      const std::shared_ptr<ComboBox::QueryModel>& get_query_model() const;
+      /** Returns a list of available tags. */
+      const std::shared_ptr<ListModel<std::shared_ptr<AdditionalTag>>>&
+        get_tags() const;
 
       /** Returns the current model. */
       const std::shared_ptr<ValueModel<std::shared_ptr<AdditionalTag>>>&
         get_current() const;
-
-      /** Returns the last submission. */
-      const std::shared_ptr<AdditionalTag>& get_submission() const;
-
-      /** Sets the placeholder value. */
-      void set_placeholder(const QString& placeholder);
 
       /** Returns <code>true</code> iff the TagNameBox is read-only. */
       bool is_read_only() const;
@@ -63,15 +62,13 @@ namespace Spire {
         const SubmitSignal::slot_type& slot) const;
 
     private:
-      struct TagNameQueryModel;
-      mutable SubmitSignal m_submit_signal;
-      std::shared_ptr<TagNameQueryModel> m_tags;
+      std::shared_ptr<ListModel<std::shared_ptr<AdditionalTag>>> m_tags;
       std::shared_ptr<ValueModel<std::shared_ptr<AdditionalTag>>> m_current;
-      ComboBox* m_combo_box;
+      DropDownBox* m_drop_down_box;
       QPointer<OrderFieldInfoTip> m_info_tip;
-      std::shared_ptr<AdditionalTag> m_submission;
       boost::signals2::scoped_connection m_connection;
 
+      void create_info_tip(const std::shared_ptr<AdditionalTag>& current);
       void on_current(const std::shared_ptr<AdditionalTag>& current);
   };
 }
