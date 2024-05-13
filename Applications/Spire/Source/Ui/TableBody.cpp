@@ -145,7 +145,6 @@ TableBody::TableBody(
       set(vertical_padding(scale_height(1))).
       set(grid_color(QColor(0xE0E0E0)));
   });
-  setUpdatesEnabled(false);
   for(auto row = 0; row != m_table->get_row_size(); ++row) {
     add_row(row);
   }
@@ -591,9 +590,6 @@ void TableBody::initialize_visible_region() {
         row.setFixedHeight(geometry.height());
       }
       position += geometry.height() + m_styles.m_vertical_spacing;
-    }
-    if(!updatesEnabled()) {
-      setUpdatesEnabled(true);
     }
   });
 }
