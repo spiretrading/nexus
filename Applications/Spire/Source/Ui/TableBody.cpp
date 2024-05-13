@@ -101,7 +101,7 @@ struct TableBody::RowCover : Cover {
   void unmount(TableViewItemBuilder& item_builder) {
     for(auto i = 0; i != layout()->count(); ++i) {
       auto item = get_item(i)->unmount();
-      item_builder.unmount(item, m_index, i);
+      item_builder.unmount(item);
     }
   }
 };

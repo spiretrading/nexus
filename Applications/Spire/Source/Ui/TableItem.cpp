@@ -71,13 +71,14 @@ QWidget* TableItem::unmount() {
   auto size_hint = sizeHint();
   auto size_policy = get_body().sizePolicy();
   auto item = layout()->takeAt(0);
-  auto view = item->widget();
-  view->setParent(nullptr);
+  auto body = item->widget();
+  body->hide();
+  body->setParent(nullptr);
   delete item;
   static_cast<QBoxLayout&>(*layout()).addSpacerItem(
     new QSpacerItem(size_hint.width(), size_hint.height(),
       size_policy.horizontalPolicy(), size_policy.verticalPolicy()));
-  return view;
+  return body;
 }
 
 void TableItem::on_focus(FocusObserver::State state) {

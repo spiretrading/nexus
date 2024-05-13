@@ -16,7 +16,7 @@ namespace Spire {
   template<typename T>
   concept TableViewItemBuilderConcept = requires(T builder) {
     { builder.mount(std::shared_ptr<TableModel>(), int(), int()) };
-    { builder.unmount(static_cast<QWidget*>(nullptr), int(), int()) };
+    { builder.unmount(static_cast<QWidget*>(nullptr)) };
   };
 
   /**
@@ -55,10 +55,8 @@ namespace Spire {
       /**
        * Releases a previously mounted QWidget.
        * @param widget The QWidget to release.
-       * @param row The row of the element the <i>widget</i> represented.
-       * @param column The column of the element the <i>widget</i> represented.
        */
-      void unmount(QWidget* widget, int row, int column);
+      void unmount(QWidget* widget);
 
       TableViewItemBuilder& operator =(const TableViewItemBuilder&) = default;
 
@@ -69,7 +67,7 @@ namespace Spire {
         virtual ~VirtualTableViewItemBuilder() = default;
         virtual QWidget* mount(
           const std::shared_ptr<TableModel>& table, int row, int column) = 0;
-        virtual void unmount(QWidget* widget, int row, int column) = 0;
+        virtual void unmount(QWidget* widget) = 0;
       };
       template<typename B>
       struct WrappedTableViewItemBuilder final : VirtualTableViewItemBuilder {
@@ -80,7 +78,7 @@ namespace Spire {
         WrappedTableViewItemBuilder(Args&&... args);
         QWidget* mount(const std::shared_ptr<TableModel>& table, int row,
           int column) override;
-        void unmount(QWidget* widget, int row, int column) override;
+        void unmount(QWidget* widget) override;
       };
       std::shared_ptr<VirtualTableViewItemBuilder> m_builder;
   };
@@ -103,7 +101,7 @@ namespace Spire {
       QWidget* mount(
         const std::shared_ptr<TableModel>& table, int row, int column);
 
-      void unmount(QWidget* widget, int row, int column);
+      void unmount(QWidget* widget);
 
     private:
       std::function<QWidget* (const std::shared_ptr<TableModel>&, int, int)>
@@ -135,8 +133,8 @@ namespace Spire {
 
   template<typename B>
   void TableViewItemBuilder::WrappedTableViewItemBuilder<B>::unmount(
-      QWidget* widget, int row, int column) {
-    m_builder->unmount(widget, row, column);
+      QWidget* widget) {
+    m_builder->unmount(widget);
   }
 }
 

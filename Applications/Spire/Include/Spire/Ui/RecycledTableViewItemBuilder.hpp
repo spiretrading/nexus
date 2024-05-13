@@ -30,11 +30,12 @@ namespace Spire {
       QWidget* mount(
         const std::shared_ptr<TableModel>& table, int row, int column);
 
-      void unmount(QWidget* widget, int row, int column);
+      void unmount(QWidget* widget);
 
     private:
       Builder m_builder;
       std::vector<std::deque<QWidget*>> m_pool;
+      std::unordered_map<QWidget*, int> m_columns;
 
       std::deque<QWidget*>& get_pool(int column);
   };
@@ -59,7 +60,9 @@ namespace Spire {
       const std::shared_ptr<TableModel>& table, int row, int column) {
     auto& pool = get_pool(column);
     if(pool.empty()) {
-      return m_builder.mount(table, row, column);
+      auto widget = m_builder.mount(table, row, column);
+      m_columns[widget] = column;
+      return widget;
     } else {
       auto widget = pool.front();
       pool.pop_front();
@@ -69,15 +72,14 @@ namespace Spire {
   }
 
   template<typename B>
-  void RecycledTableViewItemBuilder<B>::unmount(
-      QWidget* widget, int row, int column) {
-    auto& pool = get_pool(column);
+  void RecycledTableViewItemBuilder<B>::unmount(QWidget* widget) {
+    auto& pool = get_pool(m_columns[widget]);
     pool.push_back(widget);
   }
 
   template<typename B>
   std::deque<QWidget*>& RecycledTableViewItemBuilder<B>::get_pool(int column) {
-    while(m_pool.size() < column) {
+    while(static_cast<int>(m_pool.size()) < column + 1) {
       m_pool.push_back({});
     }
     return m_pool[column];

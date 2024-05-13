@@ -7,8 +7,8 @@ QWidget* TableViewItemBuilder::mount(
   return m_builder->mount(table, row, column);
 }
 
-void TableViewItemBuilder::unmount(QWidget* widget, int row, int column) {
-  m_builder->unmount(widget, row, column);
+void TableViewItemBuilder::unmount(QWidget* widget) {
+  m_builder->unmount(widget);
 }
 
 FunctionTableViewItemBuilder::FunctionTableViewItemBuilder(
@@ -21,7 +21,6 @@ QWidget* FunctionTableViewItemBuilder::mount(
   return m_builder(table, row, column);
 }
 
-void FunctionTableViewItemBuilder::unmount(
-    QWidget* widget, int row, int column) {
+void FunctionTableViewItemBuilder::unmount(QWidget* widget) {
   delete widget;
 }

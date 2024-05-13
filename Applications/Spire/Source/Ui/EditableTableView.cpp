@@ -8,8 +8,13 @@
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/EditableBox.hpp"
+#include "Spire/Ui/EmptySelectionModel.hpp"
+#include "Spire/Ui/EmptyTableFilter.hpp"
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/KeyInputBox.hpp"
+#include "Spire/Ui/RecycledTableViewItemBuilder.hpp"
+#include "Spire/Ui/SingleSelectionModel.hpp"
+#include "Spire/Ui/StandardTableFilter.hpp"
 #include "Spire/Ui/TableItem.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
@@ -317,6 +322,49 @@ namespace {
   };
 }
 
+struct EditableTableView::ItemBuilder {
+  EditableTableView* m_view;
+  TableViewItemBuilder m_builder;
+
+  QWidget* mount(
+      const std::shared_ptr<TableModel>& table, int row, int column) {
+    if(column == 0) {
+      auto button = make_delete_icon_button();
+      button->setMaximumHeight(scale_height(26));
+      match(*button, DeleteButton());
+      auto tracker = std::make_shared<Tracker>(row);
+      tracker->m_connection = table->connect_operation_signal(
+        std::bind_front(&TableRowIndexTracker::update, &tracker->m_index));
+      button->connect_click_signal([=] {
+        m_view->delete_row(tracker->m_index);
+      });
+      return button;
+    } else if(column == table->get_column_size() - 1) {
+      return make_empty_cell();
+    } else {
+      auto item = static_cast<EditableBox*>(m_builder.mount(
+        std::static_pointer_cast<EditableTableModel>(
+          m_view->get_table())->m_source, any_cast<int>(table->at(row, 0)),
+          column - 1));
+      item->connect_read_only_signal([=] (auto read_only) {
+        if(read_only) {
+          m_view->setFocus();
+        }
+      });
+      return item;
+    }
+  }
+
+  void unmount(QWidget* widget) {
+    if(typeid(*widget) == typeid(Button) ||
+        typeid(*widget) == typeid(QWidget)) {
+      delete widget;
+    } else {
+      m_builder.unmount(widget);
+    }
+  }
+};
+
 EditableTableView::EditableTableView(
     std::shared_ptr<TableModel> table, std::shared_ptr<HeaderModel> header,
     std::shared_ptr<TableFilter> table_filter,
@@ -327,9 +375,8 @@ EditableTableView::EditableTableView(
         std::make_shared<EditableTableHeaderModel>(header),
         std::move(table_filter), std::make_shared<EditableTableCurrentModel>(
           std::move(current), header->get_size() + 2), std::move(selection),
-        FunctionTableViewItemBuilder(std::bind_front(
-          &EditableTableView::make_table_item, this, std::move(item_builder))),
-        std::move(comparator), parent),
+        ItemBuilder(this, std::move(item_builder)), std::move(comparator),
+        parent),
       m_is_processing_key(false) {
   get_header().get_item(0)->set_is_resizeable(false);
   get_header().get_widths()->set(0, scale_width(26));
@@ -377,34 +424,6 @@ bool EditableTableView::focusNextPrevChild(bool next) {
   return true;
 }
 
-QWidget* EditableTableView::make_table_item(TableViewItemBuilder& item_builder,
-    const std::shared_ptr<TableModel>& table, int row, int column) {
-  if(column == 0) {
-    auto button = make_delete_icon_button();
-    button->setMaximumHeight(scale_height(26));
-    match(*button, DeleteButton());
-    auto tracker = std::make_shared<Tracker>(row);
-    tracker->m_connection = table->connect_operation_signal(
-      std::bind_front(&TableRowIndexTracker::update, &tracker->m_index));
-    button->connect_click_signal([=] {
-      delete_row(tracker->m_index);
-    });
-    return button;
-  } else if(column == table->get_column_size() - 1) {
-    return make_empty_cell();
-  } else {
-    auto item = static_cast<EditableBox*>(item_builder.mount(
-      std::static_pointer_cast<EditableTableModel>(get_table())->m_source,
-      any_cast<int>(table->at(row, 0)), column - 1));
-    item->connect_read_only_signal([=] (auto read_only) {
-      if(read_only) {
-        setFocus();
-      }
-    });
-    return item;
-  }
-}
-
 void EditableTableView::delete_row(const TableRowIndexTracker& row) {
   get_body().get_table()->remove(row.get_index());
 }
@@ -450,4 +469,92 @@ bool EditableTableView::navigate_previous() {
     return false;
   }
   return true;
+}
+
+EditableTableViewBuilder::EditableTableViewBuilder(
+  std::shared_ptr<TableModel> table, QWidget* parent)
+  : m_table(std::move(table)),
+    m_parent(parent),
+    m_header(std::make_shared<ArrayListModel<TableHeaderItem::Model>>()),
+    m_filter(std::make_shared<EmptyTableFilter>()),
+    m_current(std::make_shared<LocalValueModel<optional<TableIndex>>>()),
+    m_selection(std::make_shared<TableSelectionModel>(
+      std::make_shared<TableEmptySelectionModel>(),
+      std::make_shared<ListSingleSelectionModel>(),
+      std::make_shared<ListEmptySelectionModel>())),
+    m_item_builder(&TableView::default_item_builder) {}
+
+EditableTableViewBuilder& EditableTableViewBuilder::set_header(
+    const std::shared_ptr<TableView::HeaderModel>& header) {
+  m_header = header;
+  return *this;
+}
+
+EditableTableViewBuilder&
+    EditableTableViewBuilder::add_header_item(QString name) {
+  return add_header_item(std::move(name), QString());
+}
+
+EditableTableViewBuilder& EditableTableViewBuilder::add_header_item(
+    QString name, QString short_name) {
+  return add_header_item(
+    std::move(name), std::move(short_name), TableFilter::Filter::NONE);
+}
+
+EditableTableViewBuilder& EditableTableViewBuilder::add_header_item(
+    QString name, QString short_name, TableFilter::Filter filter) {
+  m_header->push(TableHeaderItem::Model(std::move(name), std::move(short_name),
+    TableHeaderItem::Order::NONE, filter));
+  return *this;
+}
+
+EditableTableViewBuilder& EditableTableViewBuilder::add_header_item(
+    QString name, TableFilter::Filter filter) {
+  return add_header_item(std::move(name), QString(), filter);
+}
+
+EditableTableViewBuilder& EditableTableViewBuilder::set_filter(
+    const std::shared_ptr<TableFilter>& filter) {
+  m_filter = filter;
+  return *this;
+}
+
+EditableTableViewBuilder& EditableTableViewBuilder::set_standard_filter() {
+  if(m_table->get_row_size() == 0) {
+    return *this;
+  }
+  auto types = std::vector<std::type_index>();
+  for(auto i = 0; i != m_table->get_column_size(); ++i) {
+    types.push_back(m_table->at(0, i).get_type());
+  }
+  return set_filter(std::make_shared<StandardTableFilter>(std::move(types)));
+}
+
+EditableTableViewBuilder& EditableTableViewBuilder::set_current(
+    const std::shared_ptr<TableView::CurrentModel>& current) {
+  m_current = current;
+  return *this;
+}
+
+EditableTableViewBuilder& EditableTableViewBuilder::set_selection(
+    const std::shared_ptr<TableView::SelectionModel>& selection) {
+  m_selection = selection;
+  return *this;
+}
+
+EditableTableViewBuilder& EditableTableViewBuilder::set_item_builder(
+    const TableViewItemBuilder& item_builder) {
+  m_item_builder = item_builder;
+  return *this;
+}
+
+EditableTableViewBuilder& EditableTableViewBuilder::set_comparator(
+    TableView::Comparator comparator) {
+  m_comparator = comparator;
+  return *this;
+}
+
+EditableTableView* EditableTableViewBuilder::make() const {
+  return new EditableTableView(m_table, m_header, m_filter, m_current,
+    m_selection, m_item_builder, m_comparator, m_parent);
 }

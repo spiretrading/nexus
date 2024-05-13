@@ -129,6 +129,7 @@ QWidget* ListItem::unmount() {
       return nullptr;
     }
     auto body = m_box->get_body();
+    body->hide();
     body->setParent(nullptr);
     return body;
   }();
