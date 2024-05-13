@@ -236,9 +236,6 @@ bool TableBody::event(QEvent* event) {
       left += width;
       cover->raise();
     }
-    if(!updatesEnabled()) {
-      setUpdatesEnabled(true);
-    }
     return result;
   } else if(event->type() == QEvent::ParentChange) {
     update_parent();
@@ -595,6 +592,9 @@ void TableBody::initialize_visible_region() {
       }
       position += geometry.height() + m_styles.m_vertical_spacing;
     }
+    if(!updatesEnabled()) {
+      setUpdatesEnabled(true);
+    }
   });
 }
 
@@ -654,7 +654,7 @@ void TableBody::update_visible_region() {
     auto position = top_row->pos().y();
     for(auto i = m_top_index; i != layout()->count(); ++i) {
       auto& row = *find_row(i);
-      auto geometry = QRect(QPoint(0, position), row.get_item(0)->size());
+      auto geometry = QRect(QPoint(0, position), row.size());
       if(test_visibility(*this, geometry)) {
         if(!row.is_mounted()) {
           row.mount(m_item_builder, m_table);
