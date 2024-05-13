@@ -2,6 +2,7 @@
 #define SPIRE_TAG_NAME_BOX_HPP
 #include <QPointer>
 #include "Spire/KeyBindings/AdditionalTag.hpp"
+#include "Spire/KeyBindings/KeyBindings.hpp"
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -22,7 +23,7 @@ namespace Spire {
         Signal<void (const std::shared_ptr<AdditionalTag>& submission)>;
 
       /**
-       * Constructs a TagNameBox using a default local model.
+       * Constructs a TagNameBox using a default model.
        * @param tags A list of available tags to display.
        * @param parent The parent widget.
        */
@@ -36,7 +37,8 @@ namespace Spire {
        * @param current The current value's model.
        * @param parent The parent widget.
        */
-      TagNameBox(std::shared_ptr<ListModel<std::shared_ptr<AdditionalTag>>> tags,
+      TagNameBox(
+        std::shared_ptr<ListModel<std::shared_ptr<AdditionalTag>>> tags,
         std::shared_ptr<ValueModel<std::shared_ptr<AdditionalTag>>> current,
         QWidget* parent = nullptr);
 

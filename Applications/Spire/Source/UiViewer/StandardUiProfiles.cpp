@@ -4987,10 +4987,9 @@ UiProfile Spire::make_tag_name_box_profile() {
     read_only.connect_changed_signal(
       std::bind_front(&TagNameBox::set_read_only, box));
     auto current_slot = profile.make_event_slot<QString>("Current");
-    auto current_connection = box->get_current()->connect_update_signal(
-      [=] (const auto& value) {
-        current_slot(value->get_name());
-      });
+    box->get_current()->connect_update_signal([=] (const auto& value) {
+      current_slot(value->get_name());
+    });
     auto submit_slot = profile.make_event_slot<QString>("Submit");
     box->connect_submit_signal([=] (const auto& submission) {
       submit_slot(submission->get_name());

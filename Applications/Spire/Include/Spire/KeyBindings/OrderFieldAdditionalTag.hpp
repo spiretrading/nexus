@@ -19,7 +19,8 @@ namespace Spire {
       /** Returns the details of the order field. */
       const OrderFieldInfoTip::Model& get_model() const;
 
-      const std::shared_ptr<AdditionalTagValueModel>& make_value() const override;
+      const std::shared_ptr<AdditionalTagValueModel>&
+        make_value() const override;
 
       QWidget* make_view(
         const std::shared_ptr<AdditionalTagValueModel>& value) const override;

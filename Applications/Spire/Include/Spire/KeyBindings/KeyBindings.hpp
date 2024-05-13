@@ -2,6 +2,7 @@
 #define SPIRE_KEY_BINDINGS_HPP
 
 namespace Spire {
+  class AdditionalTag;
   class AddRegionForm;
   class CancelKeyBindingsForm;
   class CancelKeyBindingsModel;
@@ -11,6 +12,7 @@ namespace Spire {
   class InteractionsPage;
   class KeyBindingsModel;
   class KeyBindingsWindow;
+  class OrderFieldAdditionalTag;
   class OrderFieldInfoTip;
   struct OrderTaskArguments;
   class TagNameBox;

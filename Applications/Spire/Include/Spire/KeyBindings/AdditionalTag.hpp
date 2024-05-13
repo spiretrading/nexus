@@ -1,9 +1,7 @@
 #ifndef SPIRE_ADDITIONAL_TAG_HPP
 #define SPIRE_ADDITIONAL_TAG_HPP
-#include <Beam/Collections/EnumSet.hpp>
 #include "Nexus/Definitions/Tag.hpp"
-#include "Spire/KeyBindings/OrderFieldInfoTip.hpp"
-#include "Spire/Spire/AnyValueModel.hpp"
+#include "Spire/Spire/ValueModel.hpp"
 
 namespace Spire {
 

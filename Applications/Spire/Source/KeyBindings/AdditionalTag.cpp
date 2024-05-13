@@ -1,8 +1,5 @@
 #include "Spire/KeyBindings/AdditionalTag.hpp"
-#include "Spire/Spire/FieldValueModel.hpp"
-#include "Spire/Ui/AnyInputBox.hpp"
 
-using namespace boost;
 using namespace Nexus;
 using namespace Spire;
 

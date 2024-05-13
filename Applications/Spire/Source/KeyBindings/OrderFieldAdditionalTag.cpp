@@ -58,6 +58,9 @@ const std::shared_ptr<AdditionalTagValueModel>&
 
 QWidget* OrderFieldAdditionalTag::make_view(
     const std::shared_ptr<AdditionalTagValueModel>& value) const {
+  if(!value->get()) {
+    return nullptr;
+  }
   if(get_key() == Nexus::Tag::INT_INDEX) {
     return new IntegerBox(
       std::make_shared<LocalOptionalIntegerModel>(get<int>(*value->get())));
@@ -70,8 +73,7 @@ QWidget* OrderFieldAdditionalTag::make_view(
   } else if(get_key() == Nexus::Tag::MONEY_INDEX) {
     return new MoneyBox(
       std::make_shared<LocalOptionalMoneyModel>(get<Money>(*value->get())));
-  } else if(get_key() == Nexus::Tag::CHAR_INDEX ||
-      get_key() == Nexus::Tag::STRING_INDEX) {
+  } else if(get_key() == Nexus::Tag::CHAR_INDEX) {
     return make_drop_down_box(m_model, QString(get<char>(*value->get())));
   } else if(get_key() == Nexus::Tag::STRING_INDEX) {
     if(m_model.m_tag.m_arguments.empty()) {
