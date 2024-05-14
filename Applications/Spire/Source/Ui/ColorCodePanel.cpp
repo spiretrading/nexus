@@ -20,7 +20,7 @@ namespace {
     using EditingFinishSignal = Signal<void (const optional<int>& value)>;
     mutable EditingFinishSignal m_editing_finish_signal;
 
-    CustomIntegerBox(std::shared_ptr<OptionalIntegerModel> current,
+    explicit CustomIntegerBox(std::shared_ptr<OptionalIntegerModel> current,
       QWidget* parent = nullptr)
       : IntegerBox(std::move(current), parent) {}
 
@@ -47,7 +47,7 @@ namespace {
     using EditingFinishSignal = Signal<void (const optional<Decimal>& value)>;
     mutable EditingFinishSignal m_editing_finish_signal;
 
-    CustomPercentBox(std::shared_ptr<OptionalDecimalModel> current,
+    explicit CustomPercentBox(std::shared_ptr<OptionalDecimalModel> current,
       QWidget* parent = nullptr)
       : PercentBox(std::move(current), parent) {}
 
@@ -268,7 +268,7 @@ struct ColorCodePanel::ColorCodeValueModel {
   scoped_connection m_brightness_connection;
   scoped_connection m_alpha_connection;
 
-  ColorCodeValueModel(std::shared_ptr<ValueModel<QColor>> source)
+  explicit ColorCodeValueModel(std::shared_ptr<ValueModel<QColor>> source)
       : m_source(std::move(source)),
       m_hex_model(std::make_shared<LocalValueModel<QColor>>()),
       m_red_model(std::make_shared<LocalOptionalIntegerModel>()),
