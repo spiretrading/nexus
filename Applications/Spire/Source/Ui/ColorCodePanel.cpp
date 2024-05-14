@@ -16,20 +16,13 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  template<typename T>
-  auto make_modifiers() {
-    return QHash<Qt::KeyboardModifier, T>(
-      {{Qt::NoModifier, 1}, {Qt::AltModifier, 5}, {Qt::ControlModifier, 10},
-        {Qt::ShiftModifier, 20}});
-  }
-
   struct CustomIntegerBox : IntegerBox {
     using EditingFinishSignal = Signal<void (const optional<int>& value)>;
     mutable EditingFinishSignal m_editing_finish_signal;
 
     CustomIntegerBox(std::shared_ptr<OptionalIntegerModel> current,
       QWidget* parent = nullptr)
-      : IntegerBox(std::move(current), ::make_modifiers<int>(), parent) {}
+      : IntegerBox(std::move(current), parent) {}
 
     bool eventFilter(QObject* watched, QEvent* event) override {
       if(event->type() == QEvent::KeyPress) {
@@ -56,7 +49,7 @@ namespace {
 
     CustomPercentBox(std::shared_ptr<OptionalDecimalModel> current,
       QWidget* parent = nullptr)
-      : PercentBox(std::move(current), ::make_modifiers<Decimal>(), parent) {}
+      : PercentBox(std::move(current), parent) {}
 
     bool eventFilter(QObject* watched, QEvent* event) override {
       if(event->type() == QEvent::KeyPress) {

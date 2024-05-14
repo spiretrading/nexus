@@ -31,6 +31,14 @@ namespace Spire {
         modifiers, QWidget* parent = nullptr);
 
       /**
+       * Constructs a PercentBox with default modifiers.
+       * @param current The current value model.
+       * @param parent The parent widget.
+       */
+      explicit PercentBox(std::shared_ptr<OptionalDecimalModel> current,
+        QWidget* parent = nullptr);
+
+      /**
        * Constructs a PercentBox.
        * @param current The current value model.
        * @param modifiers The keyboard modifier increments.
