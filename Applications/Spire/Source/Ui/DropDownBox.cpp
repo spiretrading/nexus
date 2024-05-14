@@ -288,7 +288,8 @@ void DropDownBox::keyPressEvent(QKeyEvent* event) {
       revert_current();
       break;
     default:
-      if(m_drop_down_list) {
+      if(!is_read_only()) {
+        make_drop_down_list();
         QCoreApplication::sendEvent(&m_drop_down_list->get_list_view(), event);
       }
   }
@@ -350,16 +351,23 @@ void DropDownBox::revert_current() {
   }
 }
 
-void DropDownBox::show_drop_down_list() {
+void DropDownBox::make_drop_down_list() {
+  if(m_drop_down_list) {
+    return;
+  }
   auto list_view = new ListView(m_list, m_current, m_selection, m_view_builder);
   m_drop_down_list = new DropDownList(*list_view, *this);
   m_drop_down_list->installEventFilter(this);
   auto window = m_drop_down_list->window();
   window->setWindowFlags(Qt::Popup | (window->windowFlags() & ~Qt::Tool));
   window->installEventFilter(this);
-  window->show();
   m_submit_connection = list_view->connect_submit_signal(
     std::bind_front(&DropDownBox::on_submit, this));
+}
+
+void DropDownBox::show_drop_down_list() {
+  make_drop_down_list();
+  m_drop_down_list->window()->show();
 }
 
 void DropDownBox::hide_drop_down_list() {
