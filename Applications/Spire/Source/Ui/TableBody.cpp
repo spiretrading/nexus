@@ -354,17 +354,22 @@ TableItem* TableBody::get_current_item() {
   return find_item(m_current_controller.get_current()->get());
 }
 
-TableBody::Cover* TableBody::find_row(int index) {
-  return static_cast<Cover*>(layout()->itemAt(index)->widget());
+TableBody::Cover* TableBody::find_row(int index) {   
+  if(auto item = layout()->itemAt(index)) {
+    return static_cast<Cover*>(item->widget());
+  }
+  return nullptr;
 }
 
 TableItem* TableBody::find_item(const optional<Index>& index) {
   if(!index) {
     return nullptr;
   }
-  auto row = find_row(index->m_row);
-  auto item = row->layout()->itemAt(index->m_column)->widget();
-  return static_cast<TableItem*>(item);
+  if(auto row = find_row(index->m_row)) {
+    auto item = row->layout()->itemAt(index->m_column)->widget();
+    return static_cast<TableItem*>(item);
+  }
+  return nullptr;
 }
 
 int TableBody::get_left_spacing(int index) const {
@@ -553,7 +558,9 @@ void TableBody::on_row_selection(const ListModel<int>::Operation& operation) {
       match(*find_row(operation.get_value()), Selected());
     },
     [&] (const ListModel<int>::UpdateOperation& operation) {
-      unmatch(*find_row(operation.get_previous()), Selected());
+      if(auto previous = find_row(operation.get_previous())) {
+        unmatch(*previous, Selected());
+      }
       match(*find_row(operation.get_value()), Selected());
     });
 }
