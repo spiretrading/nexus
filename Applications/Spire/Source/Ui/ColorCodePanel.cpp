@@ -20,9 +20,7 @@ namespace {
     using EditingFinishSignal = Signal<void (const optional<int>& value)>;
     mutable EditingFinishSignal m_editing_finish_signal;
 
-    explicit CustomIntegerBox(std::shared_ptr<OptionalIntegerModel> current,
-      QWidget* parent = nullptr)
-      : IntegerBox(std::move(current), parent) {}
+    using IntegerBox::IntegerBox;
 
     bool eventFilter(QObject* watched, QEvent* event) override {
       if(event->type() == QEvent::KeyPress) {
@@ -47,9 +45,7 @@ namespace {
     using EditingFinishSignal = Signal<void (const optional<Decimal>& value)>;
     mutable EditingFinishSignal m_editing_finish_signal;
 
-    explicit CustomPercentBox(std::shared_ptr<OptionalDecimalModel> current,
-      QWidget* parent = nullptr)
-      : PercentBox(std::move(current), parent) {}
+    using PercentBox::PercentBox;
 
     bool eventFilter(QObject* watched, QEvent* event) override {
       if(event->type() == QEvent::KeyPress) {
@@ -236,7 +232,7 @@ namespace {
 
   auto make_alpha_box(std::shared_ptr<ValueModel<QColor>> color_model,
       std::shared_ptr<OptionalDecimalModel> alpha_model, QWidget* parent) {
-    auto alpha_box = new CustomPercentBox(alpha_model, parent);
+    auto alpha_box = new CustomPercentBox(std::move(alpha_model), parent);
     alpha_box->m_editing_finish_signal.connect([=] (const auto& value) {
       if(!value) {
         alpha_box->get_current()->set(to_alpha(color_model->get()));
