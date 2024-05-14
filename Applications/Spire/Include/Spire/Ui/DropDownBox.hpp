@@ -165,6 +165,8 @@ namespace Styles {
       void enter_hovered_item(const QMouseEvent& event);
       void leave_hovered_item();
       void revert_current();
+      bool is_drop_down_list_visible() const;
+      void make_drop_down_list();
       void show_drop_down_list();
       void hide_drop_down_list();
       void submit();
