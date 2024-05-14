@@ -76,14 +76,18 @@ namespace {
 }
 
 PercentBox::PercentBox(QWidget* parent)
-  : PercentBox(QHash<Qt::KeyboardModifier, Decimal>(
-      {{Qt::NoModifier, 1}, {Qt::AltModifier, 5}, {Qt::ControlModifier, 10},
-      {Qt::ShiftModifier, 20}}), parent) {}
+  : PercentBox(std::make_shared<LocalOptionalDecimalModel>(), parent) {}
 
 PercentBox::PercentBox(
-    QHash<Qt::KeyboardModifier, Decimal> modifiers, QWidget* parent)
-    : PercentBox(std::make_shared<LocalOptionalDecimalModel>(),
-        std::move(modifiers), parent) {}
+  QHash<Qt::KeyboardModifier, Decimal> modifiers, QWidget* parent)
+  : PercentBox(std::make_shared<LocalOptionalDecimalModel>(),
+      std::move(modifiers), parent) {}
+
+PercentBox::PercentBox(std::shared_ptr<OptionalDecimalModel> current,
+  QWidget* parent)
+  : PercentBox(std::move(current), QHash<Qt::KeyboardModifier, Decimal>(
+      {{Qt::NoModifier, 1}, {Qt::AltModifier, 5}, {Qt::ControlModifier, 10},
+      {Qt::ShiftModifier, 20}}), parent) {}
 
 PercentBox::PercentBox(std::shared_ptr<OptionalDecimalModel> model,
     QHash<Qt::KeyboardModifier, Decimal> modifiers, QWidget* parent)

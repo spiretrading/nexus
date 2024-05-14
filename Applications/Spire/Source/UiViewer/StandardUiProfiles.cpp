@@ -880,10 +880,8 @@ namespace {
           make_list_value_model(
             std::make_shared<ColumnViewListModel<optional<Quantity>>>(
               table, column), row));
-      return new EditableBox(*new AnyInputBox(*new QuantityBox(std::move(model),
-        QHash<Qt::KeyboardModifier, Quantity>(
-          {{Qt::NoModifier, 1}, {Qt::AltModifier, 5}, {Qt::ControlModifier, 10},
-          {Qt::ShiftModifier, 20}}))));
+      return new EditableBox(*new AnyInputBox(
+        *new QuantityBox(std::move(model))));
     } else if(column == 3) {
       return new EditableBox(*new AnyInputBox(*new KeyInputBox(
         make_validated_value_model<QKeySequence>(&key_input_box_validator,
@@ -2023,12 +2021,8 @@ UiProfile Spire::make_editable_box_profile() {
         return new AnyInputBox((*new DecimalBox(
           std::make_shared<LocalOptionalDecimalModel>(Decimal(1)))));
       } else if(value == 3) {
-        auto modifiers = QHash<Qt::KeyboardModifier, Quantity>(
-          {{Qt::NoModifier, 1}, {Qt::AltModifier, 5}, {Qt::ControlModifier, 10},
-           {Qt::ShiftModifier, 20}});
         return new AnyInputBox((*new QuantityBox(
-          std::make_shared<LocalOptionalQuantityModel>(Quantity(1)),
-          std::move(modifiers))));
+          std::make_shared<LocalOptionalQuantityModel>(Quantity(1)))));
       } else if(value == 4) {
         return new AnyInputBox((*new KeyInputBox(populate_key_input_box_model(
           QKeySequence("F1")))));

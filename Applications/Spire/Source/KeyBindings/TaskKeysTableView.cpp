@@ -32,12 +32,6 @@ using namespace Spire::Styles;
 namespace {
   using PopUp = StateSelector<void, struct PopUpSelectorTag>;
 
-  auto make_quantity_modifiers() {
-    return QHash<Qt::KeyboardModifier, Quantity>(
-      {{Qt::NoModifier, 1}, {Qt::AltModifier, 5}, {Qt::ControlModifier, 10},
-       {Qt::ShiftModifier, 20}});
-  }
-
   auto key_input_box_validator(const QKeySequence& sequence) {
     if(sequence.count() == 0) {
       return QValidator::Intermediate;
@@ -482,8 +476,7 @@ EditableBox* make_table_item(
     } else if(column_id == OrderTaskColumns::QUANTITY) {
       return new AnyInputBox(*new QuantityBox(
         std::make_shared<ScalarValueModelDecorator<optional<Quantity>>>(
-          to_value_model<optional<Quantity>>(table, row, column)),
-        make_quantity_modifiers()));
+          to_value_model<optional<Quantity>>(table, row, column))));
     } else if(column_id == OrderTaskColumns::TIME_IN_FORCE) {
       return new AnyInputBox(*make_time_in_force_box(
         to_value_model<TimeInForce>(table, row, column)));
