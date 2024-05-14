@@ -56,7 +56,7 @@ namespace {
 
   bool has_focus(const QWidget& root) {
     if(auto focus_widget = QApplication::focusWidget()) {
-      return root.isAncestorOf(focus_widget);
+      return is_ancestor(&root, focus_widget);
     }
     return false;
   }
@@ -191,8 +191,7 @@ bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
         return true;
       }
     } else if(event->type() == QEvent::FocusOut) {
-      if(!is_read_only() && is_drop_down_list_visible() && !has_focus(*this) &&
-          !has_focus(*m_drop_down_list)) {
+      if(!is_read_only() && is_drop_down_list_visible() && !has_focus(*this)) {
         submit();
         if(m_submission) {
           m_selection->push(*m_submission);
