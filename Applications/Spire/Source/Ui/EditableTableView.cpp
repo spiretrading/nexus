@@ -206,30 +206,13 @@ namespace {
     }
 
     void on_operation(const TableModel::Operation& operation) {
-      auto adjust_row = [] (int index, const AnyListModel& source) {
-        auto row = std::make_shared<ArrayListModel<std::any>>();
-        row->push(index);
-        for(auto i = 0; i < source.get_size(); ++i) {
-          row->push(source.get(i));
-        }
-        row->push({});
-        return row;
-      };
       visit(operation,
-        [&] (const TableModel::AddOperation& operation) {
-          m_transaction.push(TableModel::AddOperation(operation.m_index,
-            adjust_row(operation.m_index, *operation.m_row)));
-        },
-        [&] (const TableModel::MoveOperation& operation) {
-          m_transaction.push(operation);
-        },
-        [&] (const TableModel::RemoveOperation& operation) {
-          m_transaction.push(TableModel::RemoveOperation(operation.m_index,
-            adjust_row(operation.m_index, *operation.m_row)));
-        },
         [&] (const TableModel::UpdateOperation& operation) {
           m_transaction.push(TableModel::UpdateOperation(operation.m_row,
             operation.m_column + 1, operation.m_previous, operation.m_value));
+        },
+        [&] (const auto& operation) {
+          m_transaction.push(operation);
         });
     }
   };

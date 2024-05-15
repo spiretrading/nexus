@@ -15,19 +15,13 @@ namespace Spire {
 
         /** The index where the row was inserted. */
         int m_index;
-
-        /** A list representation of the added row. */
-        std::shared_ptr<const AnyListModel> m_row;
       };
 
-      /** Indicates a row was removed from the model. */
+      /** Indicates a row is about to be removed from the model. */
       struct RemoveOperation {
 
-        /** The index of the row removed. */
+        /** The index of the row to be removed. */
         int m_index;
-
-        /** A list representation of the removed row. */
-        std::shared_ptr<const AnyListModel> m_row;
       };
 
       /** Indicates a row was moved from one index to another. */

@@ -666,19 +666,16 @@ void TableBody::on_cover_style(Cover& cover) {
 }
 
 void TableBody::on_table_operation(const TableModel::Operation& operation) {
-  /** TODO: Proper synchronization is needed. */
-  QTimer::singleShot(0, this, [=] {
-    visit(operation,
-      [&] (const TableModel::AddOperation& operation) {
-        add_row(operation.m_index);
-      },
-      [&] (const TableModel::RemoveOperation& operation) {
-        remove_row(operation.m_index);
-      },
-      [&] (const TableModel::MoveOperation& operation) {
-        move_row(operation.m_source, operation.m_destination);
-      });
-  });
+  visit(operation,
+    [&] (const TableModel::AddOperation& operation) {
+      add_row(operation.m_index);
+    },
+    [&] (const TableModel::RemoveOperation& operation) {
+      remove_row(operation.m_index);
+    },
+    [&] (const TableModel::MoveOperation& operation) {
+      move_row(operation.m_source, operation.m_destination);
+    });
 }
 
 void TableBody::on_widths_update(const ListModel<int>::Operation& operation) {

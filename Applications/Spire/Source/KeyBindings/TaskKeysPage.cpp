@@ -199,16 +199,14 @@ namespace {
           m_transaction.end();
         },
         [&] (const OrderTaskArgumentsListModel::AddOperation& operation) {
-          m_transaction.push(TableModel::AddOperation(operation.m_index,
-          to_list(operation.get_value())));
+          m_transaction.push(TableModel::AddOperation(operation.m_index));
         },
         [&] (const OrderTaskArgumentsListModel::MoveOperation& operation) {
           m_transaction.push(TableModel::MoveOperation(
             operation.m_source, operation.m_destination));
         },
         [&] (const OrderTaskArgumentsListModel::RemoveOperation& operation) {
-          m_transaction.push(TableModel::RemoveOperation(operation.m_index,
-          to_list(operation.get_value())));
+          m_transaction.push(TableModel::RemoveOperation(operation.m_index));
         },
         [&] (const OrderTaskArgumentsListModel::UpdateOperation& operation) {
           m_transaction.transact([&] {
