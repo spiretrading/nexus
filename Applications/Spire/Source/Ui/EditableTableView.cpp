@@ -409,7 +409,7 @@ bool EditableTableView::navigate_next() {
     } else {
       get_current()->set(Index(current->m_row, column));
     }
-  } else if(get_table()->get_row_size() > 0) {
+  } else if(get_body().get_item(Index(0, 0))) {
     get_current()->set(Index(0, 0));
   } else {
     return false;

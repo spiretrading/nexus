@@ -437,11 +437,11 @@ void TableBody::remove_row(int index) {
   if(m_hover_index && m_hover_index->m_row >= index) {
     m_hover_index = none;
   }
+  m_current_controller.remove_row(index);
+  m_selection_controller.remove_row(index);
   auto& row_layout = *static_cast<QBoxLayout*>(layout());
   auto row = row_layout.itemAt(index);
   row_layout.removeItem(row);
-  m_current_controller.remove_row(index);
-  m_selection_controller.remove_row(index);
   delete row->widget();
   delete row;
 }
