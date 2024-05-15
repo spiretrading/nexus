@@ -281,20 +281,21 @@ namespace {
     void on_operation(const Operation& operation) {
       visit(operation,
         [&] (const AddOperation& operation) {
-          m_transaction.push(AddOperation(operation.m_index + 1,
-            operation.get_value()));
+          m_transaction.push(AddOperation(operation.m_index + 1));
         },
         [&] (const MoveOperation& operation) {
           m_transaction.push(MoveOperation(operation.m_source + 1,
             operation.m_destination + 1));
         },
         [&] (const RemoveOperation& operation) {
-          m_transaction.push(RemoveOperation(operation.m_index + 1,
-            operation.get_value()));
+          m_transaction.push(RemoveOperation(operation.m_index + 1));
         },
         [&] (const UpdateOperation& operation) {
           m_transaction.push(UpdateOperation(operation.m_index + 1,
             operation.get_previous(), operation.get_value()));
+        },
+        [&] (const auto& operation) {
+          m_transaction.push(operation);
         });
     }
   };

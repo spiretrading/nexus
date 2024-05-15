@@ -26,19 +26,13 @@ namespace Spire {
 
         /** The index where the value was inserted. */
         int m_index;
-
-        /** The value that was added. */
-        std::any m_value;
       };
 
-      /** Indicates a value was removed from the model. */
+      /** Indicates a value will be removed from the model. */
       struct RemoveOperation {
 
-        /** The index of the value removed. */
+        /** The index of the value to be removed. */
         int m_index;
-
-        /** The value that was removed. */
-        std::any m_value;
       };
 
       /** Indicates a value was moved from one index to another. */
@@ -284,34 +278,6 @@ namespace Spire {
 
       /** The type of value being listed. */
       using Type = T;
-
-      /** Indicates a value was added to the model. */
-      struct AddOperation : AnyListModel::AddOperation {
-
-        /**
-         * Constructs an AddOperation.
-         * @param index The index where the value was inserted.
-         * @param value The value that was added.
-         */
-        AddOperation(int index, Type value);
-
-        /** Returns the value that was added. */
-        const Type& get_value() const;
-      };
-
-      /** Indicates a value was removed from the model. */
-      struct RemoveOperation : AnyListModel::RemoveOperation {
-
-        /**
-         * Constructs a RemoveOperation.
-         * @param index The index of the value removed.
-         * @param value The value that was removed.
-         */
-        RemoveOperation(int index, Type value);
-
-        /** Returns the value that was removed. */
-        const Type& get_value() const;
-      };
 
       /** Indicates a value was updated. */
       struct UpdateOperation : AnyListModel::UpdateOperation {
@@ -788,26 +754,6 @@ namespace Spire {
     ListModel<std::remove_const_t<T>>& model, int index)
     : m_model(&model),
       m_index(index) {}
-
-  template<typename T>
-  ListModel<T>::AddOperation::AddOperation(int index, Type value)
-    : AnyListModel::AddOperation(index, std::move(value)) {}
-
-  template<typename T>
-  const typename ListModel<T>::Type& ListModel<T>::AddOperation::get_value()
-      const {
-    return std::any_cast<const Type&>(m_value);
-  }
-
-  template<typename T>
-  ListModel<T>::RemoveOperation::RemoveOperation(int index, Type value)
-    : AnyListModel::RemoveOperation(index, std::move(value)) {}
-
-  template<typename T>
-  const typename ListModel<T>::Type& ListModel<T>::RemoveOperation::get_value()
-      const {
-    return std::any_cast<const Type&>(m_value);
-  }
 
   template<typename T>
   ListModel<T>::UpdateOperation::UpdateOperation(

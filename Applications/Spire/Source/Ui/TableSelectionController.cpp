@@ -147,7 +147,9 @@ void TableSelectionController::remove_row(int index) {
           auto selection = rows->get(i);
           if(selection == index) {
             if(rows->remove(i) != QValidator::State::Invalid) {
-              row_operation = ListModel<int>::RemoveOperation(i, index);
+
+              /** TODO: The operation needs to be signalled before removal. */
+              row_operation = ListModel<int>::RemoveOperation(i);
             } else {
               ++i;
             }
@@ -166,8 +168,9 @@ void TableSelectionController::remove_row(int index) {
           auto selection = items->get(i);
           if(selection.m_row == index) {
             if(items->remove(i) != QValidator::State::Invalid) {
-              item_operation =
-                ListModel<TableIndex>::RemoveOperation(i, selection);
+
+              /** TODO: The operation needs to be signalled before removal. */
+              item_operation = ListModel<TableIndex>::RemoveOperation(i);
             } else {
               ++i;
             }
@@ -363,7 +366,8 @@ void TableSelectionController::on_item_operation(
   visit(operation,
     [&] (const TableSelectionModel::ItemSelectionModel::RemoveOperation&
         operation) {
-      if(operation.get_value() == m_range_anchor) {
+      if(m_selection->get_item_selection()->get(operation.m_index) ==
+          m_range_anchor) {
         m_range_anchor = none;
       }
     },
@@ -381,7 +385,9 @@ void TableSelectionController::on_row_operation(
   visit(operation,
     [&] (const TableSelectionModel::RowSelectionModel::RemoveOperation&
         operation) {
-      if(m_range_anchor && operation.get_value() == m_range_anchor->m_row) {
+      if(m_range_anchor &&
+          m_selection->get_row_selection()->get(operation.m_index) ==
+            m_range_anchor->m_row) {
         m_range_anchor = none;
       }
     },
@@ -399,7 +405,9 @@ void TableSelectionController::on_column_operation(
   visit(operation,
     [&] (const TableSelectionModel::ColumnSelectionModel::RemoveOperation&
         operation) {
-      if(m_range_anchor && operation.get_value() == m_range_anchor->m_column) {
+      if(m_range_anchor &&
+          m_selection->get_column_selection()->get(operation.m_index) ==
+            m_range_anchor->m_column) {
         m_range_anchor = none;
       }
     },

@@ -27,7 +27,9 @@ void ListSelectionModel::set_mode(Mode mode) {
     m_model = std::make_shared<ListEmptySelectionModel>();
     auto operations = std::vector<Operation>();
     for(auto i = previous->get_size() - 1; i >= 0; --i) {
-      operations.push_back(RemoveOperation(i, previous->get(i)));
+
+      /** TODO: The operation needs to be signalled before removal. */
+      operations.push_back(RemoveOperation(i));
     }
     if(operations.size() == 1) {
       m_operation_signal(operations.front());
@@ -42,7 +44,9 @@ void ListSelectionModel::set_mode(Mode mode) {
     m_model = std::make_shared<ListSingleSelectionModel>();
     auto operations = std::vector<Operation>();
     for(auto i = previous->get_size() - 2; i >= 0; --i) {
-      operations.push_back(RemoveOperation(i, previous->get(i)));
+
+      /** TODO: The operation needs to be signalled before removal. */
+      operations.push_back(RemoveOperation(i));
     }
     if(previous->get_size() >= 1) {
       m_model->push(previous->get(previous->get_size() - 1));

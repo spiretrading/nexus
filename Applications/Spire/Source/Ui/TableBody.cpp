@@ -555,7 +555,9 @@ void TableBody::on_current(
 void TableBody::on_row_selection(const ListModel<int>::Operation& operation) {
   visit(operation,
     [&] (const ListModel<int>::AddOperation& operation) {
-      match(*find_row(operation.get_value()), Selected());
+      auto& selection =
+        m_selection_controller.get_selection()->get_row_selection();
+      match(*find_row(selection->get(operation.m_index)), Selected());
     },
     [&] (const ListModel<int>::UpdateOperation& operation) {
       if(auto previous = find_row(operation.get_previous())) {
