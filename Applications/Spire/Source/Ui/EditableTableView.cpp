@@ -371,7 +371,10 @@ QWidget* EditableTableView::make_table_item(const ViewBuilder& view_builder,
     tracker->m_connection = table->connect_operation_signal(
       std::bind_front(&TableRowIndexTracker::update, &tracker->m_index));
     button->connect_click_signal([=] {
-      delete_row(tracker->m_index);
+      auto index = tracker->m_index.get_index();
+      QTimer::singleShot(0, this, [=] {
+        delete_row(index);
+      });
     });
     return button;
   } else if(column == table->get_column_size() - 1) {
@@ -389,8 +392,8 @@ QWidget* EditableTableView::make_table_item(const ViewBuilder& view_builder,
   }
 }
 
-void EditableTableView::delete_row(const TableRowIndexTracker& row) {
-  get_body().get_table()->remove(row.get_index());
+void EditableTableView::delete_row(int row) {
+  get_body().get_table()->remove(row);
 }
 
 bool EditableTableView::navigate_next() {

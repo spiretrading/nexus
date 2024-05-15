@@ -40,7 +40,7 @@ namespace Spire {
 
       QWidget* make_table_item(const ViewBuilder& view_builder,
         const std::shared_ptr<TableModel>& table, int row, int column);
-      void delete_row(const TableRowIndexTracker& row);
+      void delete_row(int row);
       bool navigate_next();
       bool navigate_previous();
   };

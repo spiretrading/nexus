@@ -154,10 +154,12 @@ void FilteredTableModel::on_operation(const Operation& operation) {
     },
     [&] (const RemoveOperation& operation) {
       auto [is_found, i] = find(operation.m_index);
-      std::for_each(i, m_filtered_data.end(), [] (int& value) { --value; });
       if(is_found) {
         auto index = static_cast<int>(i - m_filtered_data.begin());
         m_transaction.push(RemoveOperation(index));
+      }
+      std::for_each(i, m_filtered_data.end(), [] (int& value) { --value; });
+      if(is_found) {
         m_filtered_data.erase(i);
       }
     },
