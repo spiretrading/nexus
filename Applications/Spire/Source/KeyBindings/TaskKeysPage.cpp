@@ -68,20 +68,6 @@ namespace {
     }
   }
 
-  auto to_list(const OrderTaskArguments& arguments) {
-    auto list_model = std::make_shared<ArrayListModel<std::any>>();
-    list_model->push(arguments.m_name);
-    list_model->push(arguments.m_region);
-    list_model->push(arguments.m_destination);
-    list_model->push(arguments.m_order_type);
-    list_model->push(arguments.m_side);
-    list_model->push(arguments.m_quantity);
-    list_model->push(arguments.m_time_in_force);
-    list_model->push(arguments.m_additional_tags);
-    list_model->push(arguments.m_key);
-    return list_model;
-  }
-
   Region make_region(const SecurityInfo& security_info) {
     auto region = Region(security_info.m_security);
     region.SetName(security_info.m_name);
