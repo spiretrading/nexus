@@ -104,10 +104,10 @@ struct TagComboBoxQueryModel : ComboBox::QueryModel {
   void on_operation(const AnyListModel::Operation& operation) {
     visit(operation,
       [&] (const AnyListModel::AddOperation& operation) {
-        m_exclusion_set.insert(to_text(operation.m_value));
+        m_exclusion_set.insert(to_text(m_exclusions->get(operation.m_index)));
       },
       [&] (const AnyListModel::RemoveOperation& operation) {
-        m_exclusion_set.erase(to_text(operation.m_value));
+        m_exclusion_set.erase(to_text(m_exclusions->get(operation.m_index)));
       });
   }
 };

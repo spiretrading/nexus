@@ -24,37 +24,21 @@ void ListSelectionModel::set_mode(Mode mode) {
   m_mode = mode;
   auto previous = m_model;
   if(m_mode == Mode::NONE) {
-    m_model = std::make_shared<ListEmptySelectionModel>();
-    auto operations = std::vector<Operation>();
-    for(auto i = previous->get_size() - 1; i >= 0; --i) {
-      operations.push_back(RemoveOperation(i, previous->get(i)));
-    }
-    if(operations.size() == 1) {
-      m_operation_signal(operations.front());
-    } else if(!operations.empty()) {
-      m_operation_signal(StartTransaction());
-      for(auto& operation : operations) {
-        m_operation_signal(operation);
+    m_model->transact([&] {
+      while(m_model->get_size() != 0) {
+        m_model->remove(m_model->end() - 1);
       }
-      m_operation_signal(EndTransaction());
-    }
+    });
+    m_model = std::make_shared<ListEmptySelectionModel>();
   } else if(m_mode == Mode::SINGLE) {
+    m_model->transact([&] {
+      while(m_model->get_size() > 1) {
+        m_model->remove(m_model->end() - 1);
+      }
+    });
     m_model = std::make_shared<ListSingleSelectionModel>();
-    auto operations = std::vector<Operation>();
-    for(auto i = previous->get_size() - 2; i >= 0; --i) {
-      operations.push_back(RemoveOperation(i, previous->get(i)));
-    }
     if(previous->get_size() >= 1) {
       m_model->push(previous->get(previous->get_size() - 1));
-    }
-    if(operations.size() == 1) {
-      m_operation_signal(operations.front());
-    } else if(!operations.empty()) {
-      m_operation_signal(StartTransaction());
-      for(auto& operation : operations) {
-        m_operation_signal(operation);
-      }
-      m_operation_signal(EndTransaction());
     }
   } else {
     m_model = std::make_shared<ListMultiSelectionModel>();

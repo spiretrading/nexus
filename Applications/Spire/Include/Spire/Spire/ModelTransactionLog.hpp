@@ -76,6 +76,13 @@ namespace Spire {
 
   template<typename T>
   void ModelTransactionLog<T>::push(typename Type::Operation&& operation) {
+    if(operation.type() == typeid(typename Type::StartTransaction())) {
+      start();
+      return;
+    } else if(operation.type() == typeid(typename Type::EndTransaction())) {
+      end();
+      return;
+    }
     if(m_level != 0 && m_is_first) {
       m_is_first = false;
       m_operation_signal(typename Type::StartTransaction());

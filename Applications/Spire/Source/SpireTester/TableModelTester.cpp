@@ -95,7 +95,7 @@ TEST_SUITE("TableModel") {
     REQUIRE(move_count == 0);
     REQUIRE(remove_count == 0);
     REQUIRE(update_count == 0);
-    visitor(TableModel::AddOperation(0, nullptr));
+    visitor(TableModel::AddOperation(0));
     REQUIRE(start_count == 1);
     REQUIRE(end_count == 0);
     REQUIRE(add_count == 1);
@@ -109,7 +109,7 @@ TEST_SUITE("TableModel") {
     REQUIRE(move_count == 1);
     REQUIRE(remove_count == 0);
     REQUIRE(update_count == 0);
-    visitor(TableModel::RemoveOperation(1, nullptr));
+    visitor(TableModel::RemoveOperation(1));
     REQUIRE(start_count == 1);
     REQUIRE(end_count == 0);
     REQUIRE(add_count == 1);
@@ -141,11 +141,11 @@ TEST_SUITE("TableModel") {
         REQUIRE(move_operation.m_destination == 1);
       });
     };
-    visitor(TableModel::AddOperation(0, nullptr));
+    visitor(TableModel::AddOperation(0));
     REQUIRE(move_count == 0);
     visitor(TableModel::MoveOperation(0, 1));
     REQUIRE(move_count == 1);
-    visitor(TableModel::RemoveOperation(1, nullptr));
+    visitor(TableModel::RemoveOperation(1));
     REQUIRE(move_count == 1);
     visitor(TableModel::UpdateOperation(0, 0, 0, 0));
     REQUIRE(move_count == 1);
@@ -164,13 +164,13 @@ TEST_SUITE("TableModel") {
           ++default_count;
         });
     };
-    visitor(TableModel::AddOperation(0, nullptr));
+    visitor(TableModel::AddOperation(0));
     REQUIRE(add_count == 1);
     REQUIRE(default_count == 0);
     visitor(TableModel::MoveOperation(0, 1));
     REQUIRE(add_count == 1);
     REQUIRE(default_count == 1);
-    visitor(TableModel::RemoveOperation(1, nullptr));
+    visitor(TableModel::RemoveOperation(1));
     REQUIRE(add_count == 1);
     REQUIRE(default_count == 2);
     visitor(TableModel::UpdateOperation(0, 0, 0, 0));

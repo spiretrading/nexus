@@ -288,9 +288,11 @@ struct UniqueTaskKeyTableModel : TableModel {
   }
 
   QValidator::State remove(int row) override {
-    m_region_keys.erase({get<Region>(row, REGION_INDEX),
-      get<QKeySequence>(row, KEY_INDEX)});
-    return m_source->remove(row);
+    auto key = std::pair(
+      get<Region>(row, REGION_INDEX), get<QKeySequence>(row, KEY_INDEX));
+    auto state = m_source->remove(row);
+    m_region_keys.erase(key);
+    return state;
   }
 
   connection connect_operation_signal(
