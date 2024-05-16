@@ -1,7 +1,6 @@
 #ifndef SPIRE_TRANSFORM_LIST_MODEL_HPP
 #define SPIRE_TRANSFORM_LIST_MODEL_HPP
 #include <concepts>
-#include <memory>
 #include <type_traits>
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Spire/ListModelTransactionLog.hpp"
