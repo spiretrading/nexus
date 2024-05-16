@@ -11,6 +11,7 @@
 #include <Beam/Serialization/BinarySender.hpp>
 #include <Beam/Serialization/JsonReceiver.hpp>
 #include <Beam/Serialization/JsonSender.hpp>
+#include <Beam/Serialization/ShuttleArray.hpp>
 #include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "Nexus/Definitions/RegionMap.hpp"
@@ -20,6 +21,7 @@
 #include "Spire/Canvas/OrderExecutionNodes/OrderTaskNodes.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/SingleOrderTaskNode.hpp"
 #include "Spire/LegacyUI/UISerialization.hpp"
+#include "Spire/LegacyUI/ShuttleQtTypes.hpp"
 
 using namespace Beam;
 using namespace Beam::IO;

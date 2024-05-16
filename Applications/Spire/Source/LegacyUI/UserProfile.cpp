@@ -199,16 +199,6 @@ RiskTimerProperties& UserProfile::GetRiskTimerProperties() {
   return m_riskTimerProperties;
 }
 
-const TimeAndSalesProperties&
-    UserProfile::GetDefaultTimeAndSalesProperties() const {
-  return m_defaultTimeAndSalesProperties;
-}
-
-void UserProfile::SetDefaultTimeAndSalesProperties(
-    const TimeAndSalesProperties& properties) {
-  m_defaultTimeAndSalesProperties = properties;
-}
-
 const PortfolioViewerProperties&
     UserProfile::GetDefaultPortfolioViewerProperties() const {
   return m_defaultPortfolioViewerProperties;

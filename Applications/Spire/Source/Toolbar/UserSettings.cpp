@@ -13,7 +13,6 @@
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorModel.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorWindow.hpp"
 #include "Spire/PortfolioViewer/PortfolioViewerWindow.hpp"
-#include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
 #include "Spire/Toolbar/ToolbarWindow.hpp"
 
 using namespace Beam;
@@ -50,10 +49,12 @@ void Spire::export_settings(UserSettings::Categories categories,
     settings.m_portfolio_properties =
       user_profile.GetDefaultPortfolioViewerProperties();
   }
+/** TODO
   if(categories.Test(UserSettings::Category::TIME_AND_SALES)) {
     settings.m_time_and_sales_properties =
       user_profile.GetDefaultTimeAndSalesProperties();
   }
+*/
   if(categories.Test(UserSettings::Category::LAYOUT)) {
     auto layouts = std::vector<std::shared_ptr<WindowSettings>>();
     for(auto& widget : QApplication::topLevelWidgets()) {
@@ -153,11 +154,13 @@ void Spire::import_settings(UserSettings::Categories categories,
     user_profile->SetDefaultPortfolioViewerProperties(
       *settings.m_portfolio_properties);
   }
+/** TODO
   if(categories.Test(UserSettings::Category::TIME_AND_SALES) &&
       settings.m_time_and_sales_properties) {
     user_profile->SetDefaultTimeAndSalesProperties(
       *settings.m_time_and_sales_properties);
   }
+*/
   for(auto widget : QApplication::topLevelWidgets()) {
     if(auto book_view = dynamic_cast<BookViewWindow*>(widget)) {
       if(settings.m_book_view_properties) {
@@ -173,10 +176,6 @@ void Spire::import_settings(UserSettings::Categories categories,
     } else if(auto portfolio = dynamic_cast<PortfolioViewerWindow*>(widget)) {
       if(settings.m_portfolio_properties) {
         portfolio->SetProperties(*settings.m_portfolio_properties);
-      }
-    } else if(auto time_and_sales = dynamic_cast<TimeAndSalesWindow*>(widget)) {
-      if(settings.m_time_and_sales_properties) {
-        time_and_sales->SetProperties(*settings.m_time_and_sales_properties);
       }
     }
   }

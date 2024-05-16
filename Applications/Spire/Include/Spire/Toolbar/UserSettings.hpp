@@ -11,7 +11,6 @@
 #include "Spire/KeyBindings/KeyBindingsModel.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorProperties.hpp"
 #include "Spire/PortfolioViewer/PortfolioViewerProperties.hpp"
-#include "Spire/TimeAndSales/TimeAndSalesProperties.hpp"
 
 namespace Spire {
 namespace Details {
@@ -74,9 +73,6 @@ namespace Details {
     /** The portfolio properties. */
     boost::optional<PortfolioViewerProperties> m_portfolio_properties;
 
-    /** The time and sales properties. */
-    boost::optional<TimeAndSalesProperties> m_time_and_sales_properties;
-
     /** The window layouts. */
     boost::optional<std::vector<std::shared_ptr<LegacyUI::WindowSettings>>>
       m_layouts;
@@ -119,8 +115,10 @@ namespace Beam::Serialization {
 */
       shuttle.Shuttle("portfolio_viewer_properties",
         value.m_portfolio_properties);
+/* TODO
       shuttle.Shuttle("time_and_sales_properties",
         value.m_time_and_sales_properties);
+*/
       shuttle.Shuttle("window_layouts", value.m_layouts);
     }
   };

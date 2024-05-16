@@ -26,7 +26,6 @@
 #include "Spire/PortfolioViewer/PortfolioViewerWindowSettings.hpp"
 #include "Spire/RiskTimer/RiskTimerProperties.hpp"
 #include "Spire/Spire/Spire.hpp"
-#include "Spire/TimeAndSales/TimeAndSalesProperties.hpp"
 #include "Spire/Ui/ComboBox.hpp"
 
 namespace Spire {
@@ -185,16 +184,6 @@ namespace Spire {
       /** Returns the RiskTimerProperties. */
       RiskTimerProperties& GetRiskTimerProperties();
 
-      /** Returns the default TimeAndSalesProperties. */
-      const TimeAndSalesProperties& GetDefaultTimeAndSalesProperties() const;
-
-      /**
-       * Sets the default TimeAndSalesProperties.
-       * @param properties The TimeAndSalesProperties to use as defaults.
-       */
-      void SetDefaultTimeAndSalesProperties(
-        const TimeAndSalesProperties& properties);
-
       /** Returns the default PortfolioViewerProperties. */
       const PortfolioViewerProperties&
         GetDefaultPortfolioViewerProperties() const;
@@ -235,7 +224,6 @@ namespace Spire {
       OrderImbalanceIndicatorProperties
         m_defaultOrderImbalanceIndicatorProperties;
       RiskTimerProperties m_riskTimerProperties;
-      TimeAndSalesProperties m_defaultTimeAndSalesProperties;
       PortfolioViewerProperties m_defaultPortfolioViewerProperties;
       CatalogSettings m_catalogSettings;
       std::shared_ptr<KeyBindingsModel> m_keyBindings;

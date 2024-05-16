@@ -21,7 +21,6 @@
 #include "Spire/RiskTimer/RiskTimerMonitor.hpp"
 #include "Spire/Spire/Resources.hpp"
 #include "Spire/Spire/SpireServiceClients.hpp"
-#include "Spire/TimeAndSales/TimeAndSalesProperties.hpp"
 #include "Spire/Toolbar/ToolbarController.hpp"
 #include "Version.hpp"
 #include <QtPlugin>
@@ -203,7 +202,6 @@ int main(int argc, char* argv[]) {
     CatalogSettings::Load(Store(*user_profile));
     BookViewProperties::Load(Store(*user_profile));
     RiskTimerProperties::Load(Store(*user_profile));
-    TimeAndSalesProperties::Load(Store(*user_profile));
     PortfolioViewerProperties::Load(Store(*user_profile));
     OrderImbalanceIndicatorProperties::Load(Store(*user_profile));
     SavedDashboards::Load(Store(*user_profile));
@@ -222,7 +220,6 @@ int main(int argc, char* argv[]) {
   save_key_bindings_profile(
     *user_profile->GetKeyBindings(), user_profile->GetProfilePath());
   PortfolioViewerProperties::Save(*user_profile);
-  TimeAndSalesProperties::Save(*user_profile);
   RiskTimerProperties::Save(*user_profile);
   BookViewProperties::Save(*user_profile);
   CatalogSettings::Save(*user_profile);
