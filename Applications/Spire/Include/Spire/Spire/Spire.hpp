@@ -74,6 +74,8 @@ namespace Spire {
   template<typename T> class ToDecimalModel;
   template<typename T> class ToTextModel;
   template<typename T, typename U, typename F, typename G>
+    class TransformListModel;
+  template<typename T, typename U, typename F, typename G>
     class TransformValueModel;
   class TranslatedTableModel;
   class UnsignedQuantityModel;

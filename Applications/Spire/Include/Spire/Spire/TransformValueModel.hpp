@@ -102,6 +102,7 @@ namespace Details {
       F m_f;
       mutable G m_g;
       LocalValueModel<Type> m_model;
+      boost::signals2::scoped_connection m_connection;
 
       void on_update(const Source& value);
   };

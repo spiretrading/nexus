@@ -4,6 +4,7 @@
 #include <memory>
 #include <type_traits>
 #include "Spire/Spire/ListModel.hpp"
+#include "Spire/Spire/ListModelTransactionLog.hpp"
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Spire/TransformValueModel.hpp"
 
@@ -75,8 +76,7 @@ namespace Spire {
           std::shared_ptr<ListModel<Source>> source, FF&& f, GG&& g)
           : m_source(std::move(source)),
             m_f(std::forward<FF>(f)),
-            m_g(std::forward<GG>(g)),
-            m_model(m_f(m_source->get())) {
+            m_g(std::forward<GG>(g)) {
         m_connection = m_source->connect_operation_signal(
           std::bind_front(&TransformListModel::on_operation, this));
       }
@@ -108,9 +108,45 @@ namespace Spire {
       mutable boost::optional<Type> m_last;
       mutable F m_f;
       mutable G m_g;
+      ListModelTransactionLog<Type> m_transaction;
+      boost::signals2::scoped_connection m_connection;
 
       void on_operation(const typename ListModel<Source>::Operation& operation);
   };
+
+  template<typename T, typename F>
+  TransformListModel(std::shared_ptr<T>, F&&) ->
+    TransformListModel<std::invoke_result_t<F, typename T::Type>,
+      typename T::Type, std::remove_reference_t<F>,
+      Details::ThrowTransformInverter<typename T::Type>>;
+
+  template<typename T, typename F,
+    std::invocable<std::invoke_result_t<F, typename T::Type>> G>
+  TransformListModel(std::shared_ptr<T>, F&&, G&&) ->
+    TransformListModel<std::invoke_result_t<F, typename T::Type>,
+      typename T::Type, std::remove_reference_t<F>,
+      Details::TransformValueModelCollapser<std::remove_reference_t<G>>>;
+
+  template<typename T, typename F, std::invocable<
+    typename T::Type, std::invoke_result_t<F, typename T::Type>> G>
+  TransformListModel(std::shared_ptr<T>, F&&, G&&) ->
+    TransformListModel<std::invoke_result_t<F, typename T::Type>,
+      typename T::Type, std::remove_reference_t<F>, std::remove_reference_t<G>>;
+
+  template<typename T, typename F>
+  auto make_transform_list_model(std::shared_ptr<T> source, F&& f) {
+    using Model =
+      decltype(TransformListModel(std::move(source), std::forward<F>(f)));
+    return std::make_shared<Model>(std::move(source), std::forward<F>(f));
+  }
+
+  template<typename T, typename F, typename G>
+  auto make_transform_list_model(std::shared_ptr<T> source, F&& f, G&& g) {
+    using Model = decltype(TransformListModel(
+      std::move(source), std::forward<F>(f), std::forward<G>(g)));
+    return std::make_shared<Model>(
+      std::move(source), std::forward<F>(f), std::forward<G>(g));
+  }
 
   template<typename T, typename U, typename F, typename G>
   int TransformListModel<T, U, F, G>::get_size() const {
@@ -173,8 +209,11 @@ namespace Spire {
       const typename ListModel<Source>::Operation& operation) {
     visit(operation,
       [&] (const typename ListModel<Source>::UpdateOperation& operation) {
+        m_transaction.push(UpdateOperation(operation.m_index,
+          m_f(operation.get_previous()), m_f(operation.get_value())));
       },
-      [&] (const auto& operation) {
+      [&] <typename T> (const T& operation) requires
+          !std::is_same_v<T, typename ListModel<Source>::UpdateOperation> {
         m_transaction.push(operation);
       });
   }
