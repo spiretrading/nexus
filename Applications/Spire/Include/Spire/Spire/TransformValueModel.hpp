@@ -3,8 +3,8 @@
 #include <concepts>
 #include <memory>
 #include <type_traits>
-#include "Spire/Spire/Spire.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
+#include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
 namespace Details {
@@ -82,7 +82,7 @@ namespace Details {
             m_f(std::forward<FF>(f)),
             m_g(std::forward<GG>(g)),
             m_model(m_f(m_source->get())) {
-        m_source->connect_update_signal(
+        m_connection = m_source->connect_update_signal(
           std::bind_front(&TransformValueModel::on_update, this));
       }
 
