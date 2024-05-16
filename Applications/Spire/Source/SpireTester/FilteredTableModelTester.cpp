@@ -461,19 +461,19 @@ TEST_SUITE("FilteredTableModel") {
     REQUIRE(filtered_model.get<int>(7, 0) == 14);
     require_transaction(operations,
       {
-        TableModel::AddOperation(0, nullptr),
-        TableModel::RemoveOperation(1, nullptr),
-        TableModel::AddOperation(1, nullptr),
-        TableModel::RemoveOperation(2, nullptr),
-        TableModel::AddOperation(2, nullptr),
-        TableModel::RemoveOperation(3, nullptr),
-        TableModel::AddOperation(3, nullptr),
-        TableModel::RemoveOperation(4, nullptr),
-        TableModel::AddOperation(4, nullptr),
-        TableModel::RemoveOperation(5, nullptr),
-        TableModel::AddOperation(5, nullptr),
-        TableModel::AddOperation(6, nullptr),
-        TableModel::AddOperation(7, nullptr)
+        TableModel::AddOperation(0),
+        TableModel::RemoveOperation(1),
+        TableModel::AddOperation(1),
+        TableModel::RemoveOperation(2),
+        TableModel::AddOperation(2),
+        TableModel::RemoveOperation(3),
+        TableModel::AddOperation(3),
+        TableModel::RemoveOperation(4),
+        TableModel::AddOperation(4),
+        TableModel::RemoveOperation(5),
+        TableModel::AddOperation(5),
+        TableModel::AddOperation(6),
+        TableModel::AddOperation(7)
       });
   }
 
@@ -520,19 +520,19 @@ TEST_SUITE("FilteredTableModel") {
     REQUIRE(filtered_model.get<int>(4, 0) == 8);
     require_transaction(operations,
       {
-        TableModel::AddOperation(0, nullptr),
-        TableModel::RemoveOperation(1, nullptr),
-        TableModel::AddOperation(1, nullptr),
-        TableModel::RemoveOperation(2, nullptr),
-        TableModel::AddOperation(2, nullptr),
-        TableModel::RemoveOperation(3, nullptr),
-        TableModel::AddOperation(3, nullptr),
-        TableModel::RemoveOperation(4, nullptr),
-        TableModel::AddOperation(4, nullptr),
-        TableModel::RemoveOperation(5, nullptr),
-        TableModel::RemoveOperation(5, nullptr),
-        TableModel::RemoveOperation(5, nullptr),
-        TableModel::RemoveOperation(5, nullptr)
+        TableModel::AddOperation(0),
+        TableModel::RemoveOperation(1),
+        TableModel::AddOperation(1),
+        TableModel::RemoveOperation(2),
+        TableModel::AddOperation(2),
+        TableModel::RemoveOperation(3),
+        TableModel::AddOperation(3),
+        TableModel::RemoveOperation(4),
+        TableModel::AddOperation(4),
+        TableModel::RemoveOperation(5),
+        TableModel::RemoveOperation(5),
+        TableModel::RemoveOperation(5),
+        TableModel::RemoveOperation(5)
       });
   }
 }

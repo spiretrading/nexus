@@ -93,7 +93,6 @@ TEST_SUITE("ColumnViewListModel") {
     test_operation(operation,
       [&] (const ColumnViewListModel<int>::AddOperation& operation) {
         REQUIRE(operation.m_index == 2);
-        REQUIRE(operation.get_value() == 6);
       });
     REQUIRE(invalid_model.get_size() == 0);
     REQUIRE(model.get_size() == 3);
@@ -108,7 +107,6 @@ TEST_SUITE("ColumnViewListModel") {
     test_operation(operation,
       [&] (const ColumnViewListModel<int>::AddOperation& operation) {
         REQUIRE(operation.m_index == 1);
-        REQUIRE(operation.get_value() == 8);
       });
     REQUIRE(invalid_model.get_size() == 0);
     REQUIRE(model.get_size() == 4);
@@ -136,7 +134,6 @@ TEST_SUITE("ColumnViewListModel") {
           get<ColumnViewListModel<int>::RemoveOperation>(&operation);
         REQUIRE(remove_operation != nullptr);
         REQUIRE(remove_operation->m_index == index);
-        REQUIRE(remove_operation->get_value() == value);
       }));
     index = 3;
     value = 8;

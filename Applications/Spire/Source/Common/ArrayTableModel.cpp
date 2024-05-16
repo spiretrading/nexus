@@ -19,8 +19,7 @@ void ArrayTableModel::insert(const std::vector<std::any>& row, int index) {
     throw std::out_of_range("The index is out of range.");
   }
   m_data.insert(std::next(m_data.begin(), index), row);
-  auto model = std::make_shared<ArrayListModel<std::any>>(row);
-  m_transaction.push(AddOperation(index, std::move(model)));
+  m_transaction.push(AddOperation(index));
 }
 
 void ArrayTableModel::move(int source, int destination) {
@@ -80,10 +79,8 @@ QValidator::State ArrayTableModel::remove(int row) {
   if(row < 0 || row >= get_row_size()) {
     throw std::out_of_range("The index is out of range.");
   }
-  auto previous =
-    std::make_shared<ArrayListModel<std::any>>(std::move(m_data[row]));
+  m_transaction.push(RemoveOperation(row));
   m_data.erase(std::next(m_data.begin(), row));
-  m_transaction.push(RemoveOperation(row, std::move(previous)));
   return QValidator::Acceptable;
 }
 

@@ -127,16 +127,14 @@ namespace Spire {
         m_transaction.end();
       },
       [&] (const TableModel::AddOperation& operation) {
-        m_transaction.push(AddOperation(operation.m_index,
-          std::any_cast<const Type&>(operation.m_row->get(m_column))));
+        m_transaction.push(AddOperation(operation.m_index));
       },
       [&] (const TableModel::MoveOperation& operation) {
         m_transaction.push(
           MoveOperation(operation.m_source, operation.m_destination));
       },
       [&] (const TableModel::RemoveOperation& operation) {
-        m_transaction.push(RemoveOperation(operation.m_index,
-          std::any_cast<const Type&>(operation.m_row->get(m_column))));
+        m_transaction.push(RemoveOperation(operation.m_index));
       },
       [&] (const TableModel::UpdateOperation& operation) {
         if(m_column == operation.m_column) {

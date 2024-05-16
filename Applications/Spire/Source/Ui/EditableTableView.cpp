@@ -206,30 +206,13 @@ namespace {
     }
 
     void on_operation(const TableModel::Operation& operation) {
-      auto adjust_row = [] (int index, const AnyListModel& source) {
-        auto row = std::make_shared<ArrayListModel<std::any>>();
-        row->push(index);
-        for(auto i = 0; i < source.get_size(); ++i) {
-          row->push(source.get(i));
-        }
-        row->push({});
-        return row;
-      };
       visit(operation,
-        [&] (const TableModel::AddOperation& operation) {
-          m_transaction.push(TableModel::AddOperation(operation.m_index,
-            adjust_row(operation.m_index, *operation.m_row)));
-        },
-        [&] (const TableModel::MoveOperation& operation) {
-          m_transaction.push(operation);
-        },
-        [&] (const TableModel::RemoveOperation& operation) {
-          m_transaction.push(TableModel::RemoveOperation(operation.m_index,
-            adjust_row(operation.m_index, *operation.m_row)));
-        },
         [&] (const TableModel::UpdateOperation& operation) {
           m_transaction.push(TableModel::UpdateOperation(operation.m_row,
             operation.m_column + 1, operation.m_previous, operation.m_value));
+        },
+        [&] (const auto& operation) {
+          m_transaction.push(operation);
         });
     }
   };
@@ -298,20 +281,21 @@ namespace {
     void on_operation(const Operation& operation) {
       visit(operation,
         [&] (const AddOperation& operation) {
-          m_transaction.push(AddOperation(operation.m_index + 1,
-            operation.get_value()));
+          m_transaction.push(AddOperation(operation.m_index + 1));
         },
         [&] (const MoveOperation& operation) {
           m_transaction.push(MoveOperation(operation.m_source + 1,
             operation.m_destination + 1));
         },
         [&] (const RemoveOperation& operation) {
-          m_transaction.push(RemoveOperation(operation.m_index + 1,
-            operation.get_value()));
+          m_transaction.push(RemoveOperation(operation.m_index + 1));
         },
         [&] (const UpdateOperation& operation) {
           m_transaction.push(UpdateOperation(operation.m_index + 1,
             operation.get_previous(), operation.get_value()));
+        },
+        [&] (const auto& operation) {
+          m_transaction.push(operation);
         });
     }
   };
@@ -387,7 +371,10 @@ QWidget* EditableTableView::make_table_item(const ViewBuilder& view_builder,
     tracker->m_connection = table->connect_operation_signal(
       std::bind_front(&TableRowIndexTracker::update, &tracker->m_index));
     button->connect_click_signal([=] {
-      delete_row(tracker->m_index);
+      auto index = tracker->m_index.get_index();
+      QTimer::singleShot(0, this, [=] {
+        delete_row(index);
+      });
     });
     return button;
   } else if(column == table->get_column_size() - 1) {
@@ -405,8 +392,8 @@ QWidget* EditableTableView::make_table_item(const ViewBuilder& view_builder,
   }
 }
 
-void EditableTableView::delete_row(const TableRowIndexTracker& row) {
-  get_body().get_table()->remove(row.get_index());
+void EditableTableView::delete_row(int row) {
+  get_body().get_table()->remove(row);
 }
 
 bool EditableTableView::navigate_next() {
@@ -422,7 +409,7 @@ bool EditableTableView::navigate_next() {
     } else {
       get_current()->set(Index(current->m_row, column));
     }
-  } else if(get_table()->get_row_size() > 0) {
+  } else if(get_body().get_item(Index(0, 0))) {
     get_current()->set(Index(0, 0));
   } else {
     return false;

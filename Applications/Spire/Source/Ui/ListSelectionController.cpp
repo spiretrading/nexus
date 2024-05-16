@@ -74,7 +74,7 @@ void ListSelectionController::remove(int index) {
         auto selection = m_selection->get(i);
         if(selection == index) {
           if(m_selection->remove(i) != QValidator::State::Invalid) {
-            operation = SelectionModel::RemoveOperation(i, index);
+            operation = SelectionModel::RemoveOperation(i);
           } else {
             ++i;
           }
@@ -195,7 +195,7 @@ void ListSelectionController::on_operation(
     const SelectionModel::Operation& operation) {
   visit(operation,
     [&] (const SelectionModel::RemoveOperation& operation) {
-      if(operation.get_value() == m_range_anchor) {
+      if(m_selection->get(operation.m_index) == m_range_anchor) {
         m_range_anchor = none;
       }
     },

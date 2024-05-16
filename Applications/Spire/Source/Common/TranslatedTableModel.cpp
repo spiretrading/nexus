@@ -111,7 +111,7 @@ void TranslatedTableModel::on_operation(const Operation& operation) {
         operation.m_index);
       m_reverse_translation.insert(
         m_reverse_translation.begin() + operation.m_index, reverse_index);
-      m_transaction.push(AddOperation(reverse_index, operation.m_row));
+      m_transaction.push(AddOperation(reverse_index));
     },
     [&] (const MoveOperation& operation) {
       auto direction = [&] {
@@ -135,11 +135,11 @@ void TranslatedTableModel::on_operation(const Operation& operation) {
     },
     [&] (const RemoveOperation& operation) {
       auto reverse_index = m_reverse_translation[operation.m_index];
+      m_transaction.push(RemoveOperation(reverse_index));
       translate(-1, operation.m_index);
       m_translation.erase(m_translation.begin() + reverse_index);
       m_reverse_translation.erase(
         m_reverse_translation.begin() + operation.m_index);
-      m_transaction.push(RemoveOperation(reverse_index, operation.m_row));
     },
     [&] (const UpdateOperation& operation) {
       auto translated_row = m_reverse_translation[operation.m_row];

@@ -7,15 +7,15 @@ TEST_SUITE("TableRowIndexTracker") {
   TEST_CASE("add") {
     auto tracker = TableRowIndexTracker(5);
     SUBCASE("add_at") {
-      tracker.update(TableModel::AddOperation(5, {}));
+      tracker.update(TableModel::AddOperation(5));
       CHECK(tracker.get_index() == 6);
     }
     SUBCASE("add_before") {
-      tracker.update(TableModel::AddOperation(3, {}));
+      tracker.update(TableModel::AddOperation(3));
       CHECK(tracker.get_index() == 6);
     }
     SUBCASE("add_after") {
-      tracker.update(TableModel::AddOperation(7, {}));
+      tracker.update(TableModel::AddOperation(7));
       CHECK(tracker.get_index() == 5);
     }
   }
@@ -23,15 +23,15 @@ TEST_SUITE("TableRowIndexTracker") {
   TEST_CASE("remove") {
     auto tracker = TableRowIndexTracker(5);
     SUBCASE("remove_at") {
-      tracker.update(TableModel::RemoveOperation(5, {}));
+      tracker.update(TableModel::RemoveOperation(5));
       CHECK(tracker.get_index() == -1);
     }
     SUBCASE("remove_before") {
-      tracker.update(TableModel::RemoveOperation(3, {}));
+      tracker.update(TableModel::RemoveOperation(3));
       CHECK(tracker.get_index() == 4);
     }
     SUBCASE("remove_after") {
-      tracker.update(TableModel::RemoveOperation(7, {}));
+      tracker.update(TableModel::RemoveOperation(7));
       CHECK(tracker.get_index() == 5);
     }
   }
