@@ -68,11 +68,12 @@ struct TableBody::Cover : QWidget {
 struct TableBody::RowCover : Cover {
   int m_index;
 
-  RowCover(int index, QWidget* parent)
-      : Cover(parent),
+  RowCover(int index, TableBody& body)
+      : Cover(&body),
         m_index(index) {
     make_hbox_layout(this);
     match(*this, Row());
+    layout()->setSpacing(body.m_styles.m_horizontal_spacing);
   }
 
   const TableItem* get_item(int index) const {
@@ -87,21 +88,44 @@ struct TableBody::RowCover : Cover {
   }
 
   bool is_mounted() const {
-    return layout()->isEmpty() || get_item(0)->is_mounted();
+    return get_item(0) != nullptr;
   }
 
-  void mount(TableViewItemBuilder& item_builder,
-      const std::shared_ptr<TableModel>& table) {
+  void mount() {
+    auto& body = *static_cast<TableBody*>(parentWidget());
+    for(auto column = 0; column != body.get_column_size(); ++column) {
+      auto item = new TableItem();
+      body.m_hover_observers.emplace(std::piecewise_construct,
+        std::forward_as_tuple(item), std::forward_as_tuple(*item));
+      body.m_hover_observers.at(item).connect_state_signal(
+        std::bind_front(&TableBody::on_hover, &body, std::ref(*item)));
+      if(column != body.get_column_size() - 1) {
+        item->setFixedWidth(
+          body.m_widths->get(column) - body.get_left_spacing(column));
+      } else {
+        item->setSizePolicy(
+          QSizePolicy::Expanding, item->sizePolicy().verticalPolicy());
+      }
+      layout()->addWidget(item);
+      item->connect_active_signal(
+        std::bind_front(&TableBody::on_item_activated, &body, std::ref(*item)));
+    }
     for(auto i = 0; i != layout()->count(); ++i) {
       auto& item = *get_item(i);
-      item.mount(*item_builder.mount(table, m_index, i));
+      item.mount(*body.m_item_builder.mount(body.m_table, m_index, i));
     }
   }
 
-  void unmount(TableViewItemBuilder& item_builder) {
+  void unmount() {
+    auto& body = *static_cast<TableBody*>(parentWidget());
     for(auto i = 0; i != layout()->count(); ++i) {
       auto item = get_item(i)->unmount();
-      item_builder.unmount(item);
+      body.m_hover_observers.erase(get_item(i));
+      body.m_item_builder.unmount(item);
+    }
+    while(auto item = layout()->takeAt(0)) {
+      delete item->widget();
+      delete item;
     }
   }
 };
@@ -467,9 +491,8 @@ void TableBody::add_column_cover(int index, const QRect& geometry) {
 }
 
 void TableBody::add_row(int index) {
-  auto row = new RowCover(index, this);
-  auto column_layout = row->layout();
-  column_layout->setSpacing(m_styles.m_horizontal_spacing);
+  auto row = new RowCover(index, *this);
+/*
   for(auto column = 0; column != get_column_size(); ++column) {
     auto item = new TableItem();
     m_hover_observers.emplace(std::piecewise_construct,
@@ -486,6 +509,7 @@ void TableBody::add_row(int index) {
     item->connect_active_signal(
       std::bind_front(&TableBody::on_item_activated, this, std::ref(*item)));
   }
+*/
   auto& row_layout = *static_cast<QBoxLayout*>(layout());
   row_layout.insertWidget(index, row);
   connect_style_signal(
@@ -550,7 +574,7 @@ void TableBody::initialize_visible_region() {
     m_top_index = std::numeric_limits<int>::max();
     auto& front_row = *find_row(0);
     if(!front_row.is_mounted()) {
-      front_row.mount(m_item_builder, m_table);
+      front_row.mount();
     }
     auto top_geometry = QRect(QPoint(0, 0), front_row.sizeHint());
     if(test_visibility(*this, top_geometry)) {
@@ -578,14 +602,14 @@ void TableBody::initialize_visible_region() {
       auto is_visible = test_visibility(*this, geometry);
       if(is_visible || row.m_index == current_row) {
         if(!row.is_mounted()) {
-          row.mount(m_item_builder, m_table);
+          row.mount();
         }
         if(is_visible) {
           m_top_index = std::min(m_top_index, row.m_index);
           ++m_visible_count;
         }
       } else if(row.is_mounted() && current_row != row.m_index) {
-        row.unmount(m_item_builder);
+        row.unmount();
       } else if(row.sizeHint().isEmpty()) {
         row.setFixedHeight(geometry.height());
       }
@@ -642,7 +666,7 @@ void TableBody::update_visible_region() {
       auto& row = *find_row(i);
       if(row.is_mounted() && current_row != row.m_index &&
           !test_visibility(*this, row.frameGeometry())) {
-        row.unmount(m_item_builder);
+        row.unmount();
       }
     }
     m_top_index = top_row->m_index;
@@ -653,7 +677,7 @@ void TableBody::update_visible_region() {
       auto geometry = QRect(QPoint(0, position), row.size());
       if(test_visibility(*this, geometry)) {
         if(!row.is_mounted()) {
-          row.mount(m_item_builder, m_table);
+          row.mount();
         }
         ++m_visible_count;
       } else {
@@ -897,8 +921,9 @@ void TableBody::on_widths_update(const ListModel<int>::Operation& operation) {
       auto& row_layout = *layout();
       for(auto i = 0; i != row_layout.count(); ++i) {
         auto& row = *find_row(i);
-        auto& item = *row.get_item(operation.m_index);
-        item.setFixedWidth(m_widths->get(operation.m_index) - spacing);
+        if(auto item = row.get_item(operation.m_index)) {
+          item->setFixedWidth(m_widths->get(operation.m_index) - spacing);
+        }
       }
     });
 }
