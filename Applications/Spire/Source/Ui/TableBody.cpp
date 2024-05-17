@@ -504,11 +504,11 @@ void TableBody::remove_row(int index) {
   if(m_hover_index && m_hover_index->m_row >= index) {
     m_hover_index = none;
   }
+  m_current_controller.remove_row(index);
+  m_selection_controller.remove_row(index);
   auto& row_layout = *static_cast<QBoxLayout*>(layout());
   auto row = row_layout.itemAt(index);
   row_layout.removeItem(row);
-  m_current_controller.remove_row(index);
-  m_selection_controller.remove_row(index);
   delete row->widget();
   delete row;
 }
@@ -764,10 +764,14 @@ void TableBody::on_current(
 void TableBody::on_row_selection(const ListModel<int>::Operation& operation) {
   visit(operation,
     [&] (const ListModel<int>::AddOperation& operation) {
-      match(*find_row(operation.get_value()), Selected());
+      auto& selection =
+        m_selection_controller.get_selection()->get_row_selection();
+      match(*find_row(selection->get(operation.m_index)), Selected());
     },
     [&] (const ListModel<int>::UpdateOperation& operation) {
-      unmatch(*find_row(operation.get_previous()), Selected());
+      if(auto previous = find_row(operation.get_previous())) {
+        unmatch(*previous, Selected());
+      }
       match(*find_row(operation.get_value()), Selected());
     });
 }
@@ -873,20 +877,17 @@ void TableBody::on_cover_style(Cover& cover) {
 }
 
 void TableBody::on_table_operation(const TableModel::Operation& operation) {
-  /** TODO: Proper synchronization is needed. */
-  QTimer::singleShot(0, this, [=] {
-    visit(operation,
-      [&] (const TableModel::AddOperation& operation) {
-        add_row(operation.m_index);
-      },
-      [&] (const TableModel::RemoveOperation& operation) {
-        remove_row(operation.m_index);
-      },
-      [&] (const TableModel::MoveOperation& operation) {
-        move_row(operation.m_source, operation.m_destination);
-      });
-    update_visible_region();
-  });
+  visit(operation,
+    [&] (const TableModel::AddOperation& operation) {
+      add_row(operation.m_index);
+    },
+    [&] (const TableModel::RemoveOperation& operation) {
+      remove_row(operation.m_index);
+    },
+    [&] (const TableModel::MoveOperation& operation) {
+      move_row(operation.m_source, operation.m_destination);
+    });
+  update_visible_region();
 }
 
 void TableBody::on_widths_update(const ListModel<int>::Operation& operation) {

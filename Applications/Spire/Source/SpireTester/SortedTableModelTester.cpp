@@ -236,7 +236,7 @@ TEST_SUITE("SortedTableModel") {
     source->push({2, std::string("Tom"), 3.0f});
     require_transaction(operations,
       {
-        TableModel::AddOperation(2, nullptr)
+        TableModel::AddOperation(2)
       });
     operations.clear();
     REQUIRE(column_span<int>(sorted_model, 0) ==
@@ -249,7 +249,7 @@ TEST_SUITE("SortedTableModel") {
     source->push({7, std::string("Smith"), 4.4f});
     require_transaction(operations,
       {
-        TableModel::AddOperation(5, nullptr)
+        TableModel::AddOperation(5)
       });
     operations.clear();
     REQUIRE(column_span<int>(sorted_model, 0) ==
@@ -284,7 +284,7 @@ TEST_SUITE("SortedTableModel") {
     source->insert({2, std::string("Tom"), 3.0f}, 4);
     require_transaction(operations,
       {
-        TableModel::AddOperation(2, nullptr)
+        TableModel::AddOperation(2)
       });
     operations.clear();
     REQUIRE(column_span<int>(sorted_model, 0) ==
@@ -297,7 +297,7 @@ TEST_SUITE("SortedTableModel") {
     source->insert({7, std::string("Smith"), 4.4f}, 0);
     require_transaction(operations,
       {
-        TableModel::AddOperation(5, nullptr)
+        TableModel::AddOperation(5)
       });
     operations.clear();
     REQUIRE(column_span<int>(sorted_model, 0) ==
@@ -324,7 +324,7 @@ TEST_SUITE("SortedTableModel") {
     source->push({1, std::string("Tom"), 3.0f});
     require_transaction(operations,
       {
-        TableModel::AddOperation(3, nullptr)
+        TableModel::AddOperation(3)
       });
     operations.clear();
     REQUIRE(column_span<int>(sorted_model, 0) == std::vector{4, 2, 9, 1});
@@ -334,7 +334,7 @@ TEST_SUITE("SortedTableModel") {
     source->insert({7, std::string("Smith"), 4.4f}, 1);
     require_transaction(operations,
       {
-        TableModel::AddOperation(1, nullptr)
+        TableModel::AddOperation(1)
       });
     operations.clear();
     REQUIRE(column_span<int>(sorted_model, 0) == std::vector{4, 7, 2, 9, 1});
@@ -348,7 +348,7 @@ TEST_SUITE("SortedTableModel") {
     source->insert({0, std::string("Liam"), 1.4f}, 3);
     require_transaction(operations,
       {
-        TableModel::AddOperation(3, nullptr)
+        TableModel::AddOperation(3)
       });
     operations.clear();
     REQUIRE(column_span<int>(sorted_model, 0) == std::vector{4, 7, 9, 0, 1});
@@ -380,7 +380,7 @@ TEST_SUITE("SortedTableModel") {
     source->remove(2);
     require_transaction(operations,
       {
-        TableModel::RemoveOperation(4, nullptr)
+        TableModel::RemoveOperation(4)
       });
     operations.clear();
     REQUIRE(column_span<int>(sorted_model, 0) == std::vector{2, 2, 4, 6, 9});

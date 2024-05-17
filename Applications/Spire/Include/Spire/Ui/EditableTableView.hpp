@@ -38,7 +38,7 @@ namespace Spire {
       struct ItemBuilder;
       bool m_is_processing_key;
 
-      void delete_row(const TableRowIndexTracker& row);
+      void delete_row(int row);
       bool navigate_next();
       bool navigate_previous();
   };

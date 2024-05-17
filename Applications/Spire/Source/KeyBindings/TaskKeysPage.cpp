@@ -68,20 +68,6 @@ namespace {
     }
   }
 
-  auto to_list(const OrderTaskArguments& arguments) {
-    auto list_model = std::make_shared<ArrayListModel<std::any>>();
-    list_model->push(arguments.m_name);
-    list_model->push(arguments.m_region);
-    list_model->push(arguments.m_destination);
-    list_model->push(arguments.m_order_type);
-    list_model->push(arguments.m_side);
-    list_model->push(arguments.m_quantity);
-    list_model->push(arguments.m_time_in_force);
-    list_model->push(arguments.m_additional_tags);
-    list_model->push(arguments.m_key);
-    return list_model;
-  }
-
   Region make_region(const SecurityInfo& security_info) {
     auto region = Region(security_info.m_security);
     region.SetName(security_info.m_name);
@@ -199,16 +185,14 @@ namespace {
           m_transaction.end();
         },
         [&] (const OrderTaskArgumentsListModel::AddOperation& operation) {
-          m_transaction.push(TableModel::AddOperation(operation.m_index,
-          to_list(operation.get_value())));
+          m_transaction.push(TableModel::AddOperation(operation.m_index));
         },
         [&] (const OrderTaskArgumentsListModel::MoveOperation& operation) {
           m_transaction.push(TableModel::MoveOperation(
             operation.m_source, operation.m_destination));
         },
         [&] (const OrderTaskArgumentsListModel::RemoveOperation& operation) {
-          m_transaction.push(TableModel::RemoveOperation(operation.m_index,
-          to_list(operation.get_value())));
+          m_transaction.push(TableModel::RemoveOperation(operation.m_index));
         },
         [&] (const OrderTaskArgumentsListModel::UpdateOperation& operation) {
           m_transaction.transact([&] {

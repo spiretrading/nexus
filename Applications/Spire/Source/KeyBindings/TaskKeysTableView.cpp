@@ -34,12 +34,6 @@ using namespace Spire::Styles;
 namespace {
   using PopUp = StateSelector<void, struct PopUpSelectorTag>;
 
-  auto make_quantity_modifiers() {
-    return QHash<Qt::KeyboardModifier, Quantity>(
-      {{Qt::NoModifier, 1}, {Qt::AltModifier, 5}, {Qt::ControlModifier, 10},
-       {Qt::ShiftModifier, 20}});
-  }
-
   auto key_input_box_validator(const QKeySequence& sequence) {
     if(sequence.count() == 0) {
       return QValidator::Intermediate;
@@ -464,34 +458,33 @@ namespace {
       auto column_id = static_cast<OrderTaskColumns>(column);
       auto input_box = [&] {
         if(column_id == OrderTaskColumns::NAME) {
-          auto model = make_proxy_value_model(
-            to_value_model<QString>(table, row, column));
+          auto model =
+            make_proxy_value_model(to_value_model<QString>(table, row, column));
           auto box = new AnyInputBox(*new TextBox(model));
           m_models[box] = model;
           return box;
         } else if(column_id == OrderTaskColumns::REGION) {
-          return new AnyInputBox(*new RegionBox(m_region_query_model,
-            to_value_model<Region>(table, row, column)));
+          return new AnyInputBox(*new RegionBox(
+            m_region_query_model, to_value_model<Region>(table, row, column)));
         } else if(column_id == OrderTaskColumns::DESTINATION) {
-          auto region_model = to_value_model<Region>(table, row,
-            static_cast<int>(OrderTaskColumns::REGION));
+          auto region_model = to_value_model<Region>(
+            table, row, static_cast<int>(OrderTaskColumns::REGION));
           auto query_model = std::make_shared<DestinationQueryModel>(
             std::move(region_model), m_destinations, m_markets);
           auto current_model = std::make_shared<DestinationValueModel>(
             to_value_model<Destination>(table, row, column), query_model);
-          return new AnyInputBox(*new DestinationBox(std::move(query_model),
-            std::move(current_model)));
+          return new AnyInputBox(*new DestinationBox(
+            std::move(query_model), std::move(current_model)));
         } else if(column_id == OrderTaskColumns::ORDER_TYPE) {
           return new AnyInputBox(*make_order_type_box(
             to_value_model<OrderType>(table, row, column)));
         } else if(column_id == OrderTaskColumns::SIDE) {
-          return new AnyInputBox(*make_side_box(
-            to_value_model<Side>(table, row, column)));
+          return new AnyInputBox(
+            *make_side_box(to_value_model<Side>(table, row, column)));
         } else if(column_id == OrderTaskColumns::QUANTITY) {
           return new AnyInputBox(*new QuantityBox(
             std::make_shared<ScalarValueModelDecorator<optional<Quantity>>>(
-              to_value_model<optional<Quantity>>(table, row, column)),
-            make_quantity_modifiers()));
+              to_value_model<optional<Quantity>>(table, row, column))));
         } else if(column_id == OrderTaskColumns::TIME_IN_FORCE) {
           return new AnyInputBox(*make_time_in_force_box(
             to_value_model<TimeInForce>(table, row, column)));
@@ -501,7 +494,7 @@ namespace {
           return new AnyInputBox(*new KeyInputBox(
             make_validated_value_model<QKeySequence>(&key_input_box_validator,
               to_value_model<QKeySequence>(table, row, column))));
-        } 
+        }
       }();
       if(column_id == OrderTaskColumns::REGION) {
         return new EditablePopupBox(*input_box);

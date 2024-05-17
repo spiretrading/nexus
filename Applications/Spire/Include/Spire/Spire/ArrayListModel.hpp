@@ -98,7 +98,7 @@ namespace Spire {
       throw std::out_of_range("The index is out of range.");
     }
     m_data.insert(std::next(m_data.begin(), index), value);
-    m_transaction.push(AddOperation(index, value));
+    m_transaction.push(AddOperation(index));
     return QValidator::State::Acceptable;
   }
 
@@ -131,9 +131,8 @@ namespace Spire {
     if(index < 0 || index >= get_size()) {
       throw std::out_of_range("The index is out of range.");
     }
-    auto value = m_data[index];
+    m_transaction.push(RemoveOperation(index));
     m_data.erase(std::next(m_data.begin(), index));
-    m_transaction.push(RemoveOperation(index, value));
     return QValidator::State::Acceptable;
   }
 

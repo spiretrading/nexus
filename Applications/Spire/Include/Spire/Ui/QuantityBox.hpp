@@ -40,6 +40,14 @@ namespace Spire {
         modifiers, QWidget* parent = nullptr);
 
       /**
+       * Constructs a QuantityBox with default modifiers.
+       * @param current The current value model.
+       * @param parent The parent widget.
+       */
+      explicit QuantityBox(std::shared_ptr<OptionalQuantityModel> current,
+        QWidget* parent = nullptr);
+
+      /**
        * Constructs a QuantityBox.
        * @param current The current value model.
        * @param modifiers The keyboard modifier increments.

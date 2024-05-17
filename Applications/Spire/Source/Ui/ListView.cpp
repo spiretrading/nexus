@@ -735,10 +735,12 @@ void ListView::on_current(optional<int> previous, optional<int> current) {
 void ListView::on_selection(const ListModel<int>::Operation& operation) {
   visit(operation,
     [&] (const ListModel<int>::AddOperation& operation) {
-      m_items[operation.get_value()]->m_item.set_selected(true);
+      auto& selection = m_selection_controller.get_selection();
+      m_items[selection->get(operation.m_index)]->m_item.set_selected(true);
     },
     [&] (const ListModel<int>::RemoveOperation& operation) {
-      m_items[operation.get_value()]->m_item.set_selected(false);
+      auto& selection = m_selection_controller.get_selection();
+      m_items[selection->get(operation.m_index)]->m_item.set_selected(false);
     },
     [&] (const ListModel<int>::UpdateOperation& operation) {
       m_items[operation.get_previous()]->m_item.set_selected(false);

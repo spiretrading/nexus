@@ -350,11 +350,11 @@ TEST_SUITE("TranslatedTableModel") {
     });
     require_transaction(operations,
       {
-        TableModel::AddOperation(2, nullptr),
+        TableModel::AddOperation(2),
         TableModel::UpdateOperation(1, 0, nullptr, nullptr),
-        TableModel::AddOperation(0, nullptr),
-        TableModel::RemoveOperation(1, nullptr),
-        TableModel::AddOperation(3, nullptr)
+        TableModel::AddOperation(0),
+        TableModel::RemoveOperation(1),
+        TableModel::AddOperation(3)
       });
     REQUIRE(translation.get<int>(0, 0) == 6);
     REQUIRE(translation.get<int>(1, 0) == 10);
