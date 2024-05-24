@@ -1,5 +1,4 @@
 #include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
-#include "Spire/TimeAndSales/NoneTimeAndSalesModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/SecurityView.hpp"
