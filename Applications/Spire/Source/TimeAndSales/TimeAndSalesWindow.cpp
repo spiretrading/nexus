@@ -1,11 +1,8 @@
 #include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
 #include "Spire/TimeAndSales/NoneTimeAndSalesModel.hpp"
-#include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
-#include "Spire/Ui/ResponsiveLabel.hpp"
 #include "Spire/Ui/SecurityView.hpp"
-#include "Spire/Ui/TitleBar.hpp"
 #include "Spire/Ui/TransitionView.hpp"
 
 using namespace Nexus;
