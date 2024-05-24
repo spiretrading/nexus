@@ -1,0 +1,43 @@
+#include "Spire/TimeAndSales/TimeAndSalesProperties.hpp"
+#include "Spire/Spire/Dimensions.hpp"
+
+using namespace Spire;
+
+TimeAndSalesProperties::TimeAndSalesProperties()
+    : m_font("Roboto"),
+      m_is_grid_enabled(false) {
+  m_font.setWeight(QFont::Medium);
+  m_font.setPixelSize(scale_width(10));
+  set_highlight(BboIndicator::UNKNOWN, {QColor(0xFFFFFF), QColor(Qt::black)});
+  set_highlight(BboIndicator::ABOVE_ASK, {QColor(0xEBFFF0), QColor(0x007735)});
+  set_highlight(BboIndicator::AT_ASK, {QColor(0xEBFFF0), QColor(0x007735)});
+  set_highlight(BboIndicator::INSIDE, {QColor(0xFFFFFF), QColor(Qt::black)});
+  set_highlight(BboIndicator::AT_BID, {QColor(0xFFF1F1), QColor(0xB71C1C)});
+  set_highlight(BboIndicator::BELOW_BID, {QColor(0xFFF1F1), QColor(0xB71C1C)});
+}
+
+const TimeAndSalesProperties::Highlight&
+    TimeAndSalesProperties::get_highlight(BboIndicator indicator) const {
+  return m_highlights[static_cast<int>(indicator)];
+}
+
+void TimeAndSalesProperties::set_highlight(BboIndicator indicator,
+    const Highlight& highlight) {
+  m_highlights[static_cast<int>(indicator)] = highlight;
+}
+
+const QFont& TimeAndSalesProperties::get_font() const {
+  return m_font;
+}
+
+void TimeAndSalesProperties::set_font(const QFont& font) {
+  m_font = font;
+}
+
+bool TimeAndSalesProperties::is_grid_enabled() const {
+  return m_is_grid_enabled;
+}
+
+void TimeAndSalesProperties::set_grid_enabled(bool is_enabled) {
+  m_is_grid_enabled = is_enabled;
+}

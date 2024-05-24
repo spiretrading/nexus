@@ -68,6 +68,10 @@ void Window::set_svg_icon(const QString& icon_path) {
   set_icon(make_svg_window_icon(icon_path));
 }
 
+const TitleBar& Window::get_title_bar() const {
+  return *m_title_bar;
+}
+
 void Window::closeEvent(QCloseEvent* event) {
   m_closed_signal();
 }

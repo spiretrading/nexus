@@ -31,6 +31,9 @@ namespace Spire {
        */
       void set_svg_icon(const QString& icon_path);
 
+      /** Returns the title bar. */
+      const TitleBar& get_title_bar() const;
+
     protected:
 
       /**
