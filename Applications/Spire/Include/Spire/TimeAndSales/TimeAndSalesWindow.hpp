@@ -32,11 +32,7 @@ namespace Spire {
         std::shared_ptr<TimeAndSalesPropertiesWindowFactory> factory,
         ModelBuilder model_builder, QWidget* parent = nullptr);
 
-    protected:
-      void resizeEvent(QResizeEvent* event) override;
-
     private:
-      ResponsiveLabel* m_responsive_title_label;
       TransitionView* m_transition_view;
 
       void on_current(const Nexus::Security& security);
