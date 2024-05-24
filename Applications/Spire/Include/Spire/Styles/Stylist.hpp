@@ -173,6 +173,11 @@ namespace Spire::Styles {
         std::unordered_set<const Stylist*> m_selection;
         SelectConnection m_connection;
       };
+      struct RuleUpdate {
+        RuleEntry* m_rule;
+        std::unordered_set<const Stylist*> m_additions;
+        std::unordered_set<const Stylist*> m_removals;
+      };
       struct Source {
         Stylist* m_source;
         int m_level;
@@ -224,9 +229,11 @@ namespace Spire::Styles {
       std::vector<Stylist*> m_backlinks;
       std::unordered_map<
         std::type_index, std::unique_ptr<BaseEvaluatorEntry>> m_evaluators;
+      std::unordered_map<const RuleEntry*, RuleUpdate> m_updates;
       std::type_index m_evaluated_property;
       std::chrono::time_point<std::chrono::steady_clock> m_last_frame;
       QMetaObject::Connection m_animation_connection;
+      boost::optional<QMetaObject::Connection> m_update_connection;
       Visibility m_visibility;
       std::unique_ptr<StyleEventFilter> m_style_event_filter;
 
@@ -252,6 +259,7 @@ namespace Spire::Styles {
       Evaluator<T> revert(std::type_index type) const;
       void connect_animation();
       void on_animation();
+      void on_update_expired();
       void on_selection_update(RuleEntry& rule,
         std::unordered_set<const Stylist*>&& additions,
         std::unordered_set<const Stylist*>&& removals);

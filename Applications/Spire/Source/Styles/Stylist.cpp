@@ -25,6 +25,16 @@ namespace {
     return *timer;
   }
 
+  QTimer& get_update_timer() {
+    static auto timer = [] {
+      auto timer = std::make_unique<QTimer>();
+      timer->setInterval(static_cast<int>(FRAME_DURATION.total_milliseconds()));
+      timer->start();
+      return timer;
+    }();
+    return *timer;
+  }
+
   auto& get_stylists() {
     static auto stylists = std::unordered_map<QWidget*, Stylist*>();
     return stylists;
@@ -97,6 +107,7 @@ struct Stylist::StyleEventFilter : QObject {
 };
 
 Stylist::~Stylist() {
+  m_update_connection = none;
   while(!m_matches.empty()) {
     auto selector = *m_matches.begin();
     unmatch(selector);
@@ -461,24 +472,44 @@ void Stylist::on_animation() {
   m_last_frame = std::chrono::steady_clock::now();
 }
 
-void Stylist::on_selection_update(
-    RuleEntry& rule, std::unordered_set<const Stylist*>&& additions,
-    std::unordered_set<const Stylist*>&& removals) {
+void Stylist::on_update_expired() {
   auto changed_stylists = std::unordered_set<Stylist*>();
-  for(auto removal : removals) {
-    rule.m_selection.erase(removal);
-    auto& stylist = const_cast<Stylist&>(*removal);
-    stylist.unapply(*this, rule);
-    changed_stylists.insert(&stylist);
-  }
-  for(auto addition : additions) {
-    rule.m_selection.insert(addition);
-    auto& stylist = const_cast<Stylist&>(*addition);
-    stylist.apply(*this, rule);
-    changed_stylists.insert(&stylist);
+  auto updates = std::exchange(m_updates, {});
+  for(auto& update : updates) {
+    for(auto removal : update.second.m_removals) {
+      update.second.m_rule->m_selection.erase(removal);
+      auto& stylist = const_cast<Stylist&>(*removal);
+      stylist.unapply(*this, *update.second.m_rule);
+      changed_stylists.insert(&stylist);
+    }
+    for(auto addition : update.second.m_additions) {
+      update.second.m_rule->m_selection.insert(addition);
+      auto& stylist = const_cast<Stylist&>(*addition);
+      stylist.apply(*this, *update.second.m_rule);
+      changed_stylists.insert(&stylist);
+    }
   }
   for(auto stylist : changed_stylists) {
     stylist->apply_proxies();
+  }
+  m_update_connection = none;
+}
+
+void Stylist::on_selection_update(
+    RuleEntry& rule, std::unordered_set<const Stylist*>&& additions,
+    std::unordered_set<const Stylist*>&& removals) {
+  auto i = m_updates.find(&rule);
+  if(i == m_updates.end()) {
+    i = m_updates.emplace(&rule, RuleUpdate(&rule, {}, {})).first;
+  }
+  auto& updates = i->second;
+  updates.m_additions.insert(additions.begin(), additions.end());
+  updates.m_additions.erase(removals.begin(), removals.end());
+  updates.m_removals.erase(additions.begin(), additions.end());
+  updates.m_removals.insert(removals.begin(), removals.end());
+  if(!m_update_connection) {
+    m_update_connection.emplace(QObject::connect(&get_update_timer(),
+      &QTimer::timeout, [=] { on_update_expired(); }));
   }
 }
 
