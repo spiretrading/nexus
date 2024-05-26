@@ -13,19 +13,8 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  const auto FRAME_DURATION = time_duration(seconds(1)) / 30;
-
   QTimer& get_animation_timer() {
-    static auto timer = [] {
-      auto timer = std::make_unique<QTimer>();
-      timer->setInterval(static_cast<int>(FRAME_DURATION.total_milliseconds()));
-      timer->start();
-      return timer;
-    }();
-    return *timer;
-  }
-
-  QTimer& get_update_timer() {
+    static const auto FRAME_DURATION = time_duration(seconds(1)) / 30;
     static auto timer = [] {
       auto timer = std::make_unique<QTimer>();
       timer->setInterval(static_cast<int>(FRAME_DURATION.total_milliseconds()));
@@ -106,8 +95,43 @@ struct Stylist::StyleEventFilter : QObject {
   }
 };
 
+struct Stylist::UpdateEntry {
+  Stylist* m_stylist;
+};
+
+struct Stylist::UpdateProcessor : QObject {
+  std::unordered_set<std::shared_ptr<UpdateEntry>> m_updates;
+  QTimer m_timer;
+
+  static UpdateProcessor& get() {
+    static auto processor = UpdateProcessor();
+    return processor;
+  }
+
+  UpdateProcessor() {
+    static const auto UPDATE_DURATION = time_duration(seconds(1)) / 250;
+    m_timer.setInterval(
+      static_cast<int>(UPDATE_DURATION.total_milliseconds()));
+    connect(&m_timer, &QTimer::timeout, this, &UpdateProcessor::on_timer);
+    m_timer.start();
+  }
+
+  void add(Stylist& stylist) {
+    m_updates.insert(stylist.m_update_entry);
+  }
+
+  void on_timer() {
+    auto updates = std::exchange(m_updates, {});
+    for(auto update : updates) {
+      if(auto stylist = update->m_stylist) {
+        stylist->apply_proxies();
+      }
+    }
+  }
+};
+
 Stylist::~Stylist() {
-  m_update_connection = none;
+  m_update_entry->m_stylist = nullptr;
   while(!m_matches.empty()) {
     auto selector = *m_matches.begin();
     unmatch(selector);
@@ -294,9 +318,10 @@ Stylist::Stylist(QWidget& widget, optional<PseudoElement> pseudo_element)
     : m_widget(&widget),
       m_pseudo_element(std::move(pseudo_element)),
       m_style(load_styles(StyleSheet())),
-      m_visibility(Visibility::VISIBLE),
+      m_update_entry(std::make_shared<UpdateEntry>(this)),
       m_evaluated_block(in_place_init),
-      m_evaluated_property(typeid(void)) {
+      m_evaluated_property(typeid(void)),
+      m_visibility(Visibility::VISIBLE) {
   if(!m_pseudo_element) {
     m_style_event_filter = std::make_unique<StyleEventFilter>(*this);
   }
@@ -472,44 +497,20 @@ void Stylist::on_animation() {
   m_last_frame = std::chrono::steady_clock::now();
 }
 
-void Stylist::on_update_expired() {
-  auto changed_stylists = std::unordered_set<Stylist*>();
-  auto updates = std::exchange(m_updates, {});
-  for(auto& update : updates) {
-    for(auto removal : update.second.m_removals) {
-      update.second.m_rule->m_selection.erase(removal);
-      auto& stylist = const_cast<Stylist&>(*removal);
-      stylist.unapply(*this, *update.second.m_rule);
-      changed_stylists.insert(&stylist);
-    }
-    for(auto addition : update.second.m_additions) {
-      update.second.m_rule->m_selection.insert(addition);
-      auto& stylist = const_cast<Stylist&>(*addition);
-      stylist.apply(*this, *update.second.m_rule);
-      changed_stylists.insert(&stylist);
-    }
-  }
-  for(auto stylist : changed_stylists) {
-    stylist->apply_proxies();
-  }
-  m_update_connection = none;
-}
-
 void Stylist::on_selection_update(
     RuleEntry& rule, std::unordered_set<const Stylist*>&& additions,
     std::unordered_set<const Stylist*>&& removals) {
-  auto i = m_updates.find(&rule);
-  if(i == m_updates.end()) {
-    i = m_updates.emplace(&rule, RuleUpdate(&rule, {}, {})).first;
+  for(auto removal : removals) {
+    rule.m_selection.erase(removal);
+    auto& stylist = const_cast<Stylist&>(*removal);
+    stylist.unapply(*this, rule);
+    UpdateProcessor::get().add(stylist);
   }
-  auto& updates = i->second;
-  updates.m_additions.insert(additions.begin(), additions.end());
-  updates.m_additions.erase(removals.begin(), removals.end());
-  updates.m_removals.erase(additions.begin(), additions.end());
-  updates.m_removals.insert(removals.begin(), removals.end());
-  if(!m_update_connection) {
-    m_update_connection.emplace(QObject::connect(&get_update_timer(),
-      &QTimer::timeout, [=] { on_update_expired(); }));
+  for(auto addition : additions) {
+    rule.m_selection.insert(addition);
+    auto& stylist = const_cast<Stylist&>(*addition);
+    stylist.apply(*this, rule);
+    UpdateProcessor::get().add(stylist);
   }
 }
 
