@@ -94,7 +94,9 @@ TableView::TableView(
     std::move(selection), m_header_view->get_widths(), std::move(view_builder));
   m_body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   link(*this, *m_body);
-  m_scroll_box = new ScrollBox(m_body);
+  auto scroll_box_body = new QWidget();
+  enclose(*scroll_box_body, *m_body);
+  m_scroll_box = new ScrollBox(scroll_box_body);
   m_scroll_box->set(ScrollBox::DisplayPolicy::ON_ENGAGE);
   auto layout = make_vbox_layout(this);
   layout->addWidget(box);
