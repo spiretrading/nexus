@@ -44,23 +44,34 @@ std::shared_ptr<TimeAndSalesModel> model_builder(const Security& security) {
 
 QString to_text(const TimeAndSalesProperties& properties,
     const TimeAndSalesProperties& previous_properties) {
+  auto text = QString();
   if(properties.get_font() != previous_properties.get_font()) {
     auto& font = properties.get_font();
-    return QString("Font: %1, %2, %3").arg(font.family()).
-      arg(QFontDatabase().styleString(font)).arg(unscale_width(font.pixelSize()));
-  } else if(properties.is_grid_enabled() != previous_properties.is_grid_enabled()) {
-    return QString("Grid enabled: %1").arg(properties.is_grid_enabled());
-  } else {
-    for(auto i = 0; i < BBO_INDICATOR_COUNT; ++i) {
-      auto indicator = static_cast<BboIndicator>(i);
-      if(properties.get_highlight(indicator) != previous_properties.get_highlight(indicator)) {
-        auto& highlight = properties.get_highlight(indicator);
-        return QString("Highlight of the Indicator %1: %2").arg(i).arg(
-          highlight.m_background_color.name() + " " + highlight.m_text_color.name());
+    text += QString("Font: %1, %2, %3").
+      arg(font.family()).
+      arg(QFontDatabase().styleString(font)).
+      arg(unscale_width(font.pixelSize()));
+  }
+  if(properties.is_grid_enabled() != previous_properties.is_grid_enabled()) {
+    if(!text.isEmpty()) {
+      text += "\n";
+    }
+    text += QString("Grid enabled: %1").arg(properties.is_grid_enabled());
+  }
+  for(auto i = 0; i < BBO_INDICATOR_COUNT; ++i) {
+    auto indicator = static_cast<BboIndicator>(i);
+    if(properties.get_highlight_color(indicator) !=
+        previous_properties.get_highlight_color(indicator)) {
+      if(!text.isEmpty()) {
+        text += "\n";
       }
+      auto& highlight = properties.get_highlight_color(indicator);
+      text += QString("Highlight of the Indicator %1: [%2 %3]").arg(i).
+        arg(highlight.m_background_color.name()).
+        arg(highlight.m_text_color.name());
     }
   }
-  return "";
+  return text;
 }
 
 int main(int argc, char** argv) {
@@ -72,7 +83,7 @@ int main(int argc, char** argv) {
   auto time_and_sales_window = TimeAndSalesWindow(populate_securities(),
     factory, &model_builder);
   time_and_sales_window.show();
-  auto properties_window = factory->create();
+  auto properties_window = factory->make();
   properties_window->show();
   auto previous_properties = properties_window->get_current()->get();
   auto output_widget = QWidget();
@@ -81,7 +92,10 @@ int main(int argc, char** argv) {
   enclose(output_widget, *output);
   properties_window->get_current()->connect_update_signal(
     [&] (const auto& properties) {
-      output->append(to_text(properties, previous_properties));
+      if(auto text = to_text(properties, previous_properties);
+          !text.isEmpty()) {
+        output->append(text);
+      }
       previous_properties = properties;
     });
   output_widget.show();

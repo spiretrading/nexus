@@ -45,7 +45,7 @@ namespace {
   }
 
   auto make_bbo_indicator_row(const QString& name,
-      std::shared_ptr<HighlightColorModel> color_model) {
+      std::shared_ptr<HighlightColorModel> color_model, QWidget& parent) {
     auto layout = make_hbox_layout();
     auto label = make_label(name);
     update_style(*label, [] (auto& style) {
@@ -54,6 +54,7 @@ namespace {
     layout->addWidget(label);
     auto highlight_box = new HighlightBox(std::move(color_model));
     highlight_box->setFixedSize(scale(120, 20));
+    link(parent, *highlight_box);
     layout->addWidget(highlight_box);
     return layout;
   }
@@ -84,11 +85,11 @@ struct TimeAndSalesPropertiesWindow::PropertiesWindowModel {
     m_show_grid_connection = m_show_grid_model->connect_update_signal(
       std::bind_front(&PropertiesWindowModel::on_show_grid, this));
     for(auto i = 0; i < BBO_INDICATOR_COUNT; ++i) {
+      auto indicator = static_cast<BboIndicator>(i);
       m_highlight_models[i] = std::make_shared<LocalHighlightColorModel>(
-        m_properties_model->get().get_highlight(static_cast<BboIndicator>(i)));
+        m_properties_model->get().get_highlight_color(indicator));
       m_highlight_connections[i] = m_highlight_models[i]->connect_update_signal(
-        std::bind_front(&PropertiesWindowModel::on_highlight, this,
-          static_cast<BboIndicator>(i)));
+        std::bind_front(&PropertiesWindowModel::on_highlight, this, indicator));
     }
   }
 
@@ -103,9 +104,10 @@ struct TimeAndSalesPropertiesWindow::PropertiesWindowModel {
     }
     for(auto i = 0; i < BBO_INDICATOR_COUNT; ++i) {
       auto indicator = static_cast<BboIndicator>(i);
-      if(properties.get_highlight(indicator) != m_highlight_models[i]->get()) {
+      if(properties.get_highlight_color(indicator) !=
+          m_highlight_models[i]->get()) {
         auto blocker = shared_connection_block(m_highlight_connections[i]);
-        m_highlight_models[i]->set(properties.get_highlight(indicator));
+        m_highlight_models[i]->set(properties.get_highlight_color(indicator));
       }
     }
   }
@@ -126,7 +128,7 @@ struct TimeAndSalesPropertiesWindow::PropertiesWindowModel {
 
   void on_highlight(BboIndicator indicator, const HighlightColor& highlight) {
     auto properties = m_properties_model->get();
-    properties.set_highlight(indicator, highlight);
+    properties.set_highlight_color(indicator, highlight);
     auto blocker = shared_connection_block(m_properties_connection);
     m_properties_model->set(properties);
   }
@@ -163,7 +165,7 @@ TimeAndSalesPropertiesWindow::TimeAndSalesPropertiesWindow(
   for(auto i = 0; i < BBO_INDICATOR_COUNT; ++i) {
     indicators_layout->addLayout(
       make_bbo_indicator_row(get_bbo_indicator_name(i),
-        m_model->m_highlight_models[i]));
+        m_model->m_highlight_models[i], *this));
   }
   auto content_body = new QWidget();
   auto content_body_layout = make_vbox_layout(content_body);
@@ -199,11 +201,11 @@ TimeAndSalesPropertiesWindow::TimeAndSalesPropertiesWindow(
   });
   auto body = new QWidget();
   body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  body->setFixedWidth(scale_width(256));
   auto body_layout = make_vbox_layout(body);
   body_layout->addWidget(content_box);
   body_layout->addWidget(actions_box);
   set_body(body);
-  setFixedWidth(scale_width(256));
   on_font(m_model->m_font_model->get());
 }
 
