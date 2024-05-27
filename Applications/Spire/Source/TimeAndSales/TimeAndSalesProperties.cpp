@@ -8,22 +8,28 @@ TimeAndSalesProperties::TimeAndSalesProperties()
       m_is_grid_enabled(false) {
   m_font.setWeight(QFont::Medium);
   m_font.setPixelSize(scale_width(10));
-  set_highlight(BboIndicator::UNKNOWN, {QColor(0xFFFFFF), QColor(Qt::black)});
-  set_highlight(BboIndicator::ABOVE_ASK, {QColor(0xEBFFF0), QColor(0x007735)});
-  set_highlight(BboIndicator::AT_ASK, {QColor(0xEBFFF0), QColor(0x007735)});
-  set_highlight(BboIndicator::INSIDE, {QColor(0xFFFFFF), QColor(Qt::black)});
-  set_highlight(BboIndicator::AT_BID, {QColor(0xFFF1F1), QColor(0xB71C1C)});
-  set_highlight(BboIndicator::BELOW_BID, {QColor(0xFFF1F1), QColor(0xB71C1C)});
+  set_highlight_color(BboIndicator::UNKNOWN,
+    {QColor(0xFFFFFF), QColor(Qt::black)});
+  set_highlight_color(BboIndicator::ABOVE_ASK,
+    {QColor(0xEBFFF0), QColor(0x007735)});
+  set_highlight_color(BboIndicator::AT_ASK,
+    {QColor(0xEBFFF0), QColor(0x007735)});
+  set_highlight_color(BboIndicator::INSIDE,
+    {QColor(0xFFFFFF), QColor(Qt::black)});
+  set_highlight_color(BboIndicator::AT_BID,
+    {QColor(0xFFF1F1), QColor(0xB71C1C)});
+  set_highlight_color(BboIndicator::BELOW_BID,
+    {QColor(0xFFF1F1), QColor(0xB71C1C)});
 }
 
-const TimeAndSalesProperties::Highlight&
-    TimeAndSalesProperties::get_highlight(BboIndicator indicator) const {
-  return m_highlights[static_cast<int>(indicator)];
+const HighlightColor& TimeAndSalesProperties::get_highlight_color(
+    BboIndicator indicator) const {
+  return m_highlight_colors[static_cast<int>(indicator)];
 }
 
-void TimeAndSalesProperties::set_highlight(BboIndicator indicator,
-    const Highlight& highlight) {
-  m_highlights[static_cast<int>(indicator)] = highlight;
+void TimeAndSalesProperties::set_highlight_color(BboIndicator indicator,
+    const HighlightColor& highlight_color) {
+  m_highlight_colors[static_cast<int>(indicator)] = highlight_color;
 }
 
 const QFont& TimeAndSalesProperties::get_font() const {

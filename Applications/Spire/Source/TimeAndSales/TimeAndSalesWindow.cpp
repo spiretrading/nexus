@@ -5,9 +5,7 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/ContextMenu.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
-#include "Spire/Ui/ResponsiveLabel.hpp"
 #include "Spire/Ui/SecurityView.hpp"
-#include "Spire/Ui/TitleBar.hpp"
 #include "Spire/Ui/TransitionView.hpp"
 
 using namespace Nexus;

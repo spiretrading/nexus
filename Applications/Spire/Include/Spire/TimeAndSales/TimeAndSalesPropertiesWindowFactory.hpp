@@ -21,8 +21,8 @@ namespace Spire {
       explicit TimeAndSalesPropertiesWindowFactory(
         std::shared_ptr<TimeAndSalesPropertiesModel> properties);
 
-      /* Creates a TimeAndSalesPropertiesWindow. */
-      TimeAndSalesPropertiesWindow* create();
+      /* Returns the newly created TimeAndSalesPropertiesWindow. */
+      TimeAndSalesPropertiesWindow* make();
 
     private:
       std::shared_ptr<TimeAndSalesPropertiesModel> m_properties;

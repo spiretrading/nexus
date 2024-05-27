@@ -12,23 +12,22 @@ namespace Spire {
   class TimeAndSalesProperties {
     public:
 
-      using Highlight = HighlightColor;
-
       /* Constructs default properties. */
       TimeAndSalesProperties();
 
       /**
-       * Returns the highlight of a specific BBO indicator.
+       * Returns the highlight color of a specific BBO indicator.
        * @param indicator The highlighted indicator.
        */
-      const Highlight& get_highlight(BboIndicator indicator) const;
+      const HighlightColor& get_highlight_color(BboIndicator indicator) const;
 
       /**
-       * Sets the highlight to a specific BBO indicator.
+       * Sets the highlight color to a specific BBO indicator.
        * @param indicator The indicator to be highlighted.
-       * @param highlight The highlight to be applied to the indicator.
+       * @param highlight_color The highlight color of the indicator.
        */
-      void set_highlight(BboIndicator indicator, const Highlight& highlight);
+      void set_highlight_color(BboIndicator indicator,
+        const HighlightColor& highlight_color);
 
       /* Returns the font. */
       const QFont& get_font() const;
@@ -49,7 +48,7 @@ namespace Spire {
       void set_grid_enabled(bool is_enabled);
 
     private:
-      std::array<Highlight, BBO_INDICATOR_COUNT> m_highlights;
+      std::array<HighlightColor, BBO_INDICATOR_COUNT> m_highlight_colors;
       QFont m_font;
       bool m_is_grid_enabled;
   };
