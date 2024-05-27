@@ -77,6 +77,7 @@ namespace Spire {
       boost::signals2::scoped_connection m_items_connection;
       boost::signals2::scoped_connection m_widths_connection;
 
+      int get_next_visible_sibling_index(int index) const;
       void on_items_operation(
         const ListModel<TableHeaderItem::Model>::Operation& operation);
       void on_widths_operation(const ListModel<int>::Operation& operation);
