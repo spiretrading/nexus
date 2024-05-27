@@ -44,8 +44,8 @@ int main(int argc, char** argv) {
   application.setOrganizationName(QObject::tr("Spire Trading Inc"));
   application.setApplicationName(QObject::tr("Time and Sales UI Tester"));
   initialize_resources();
-  auto time_and_times_window = TimeAndSalesWindow(populate_securities(),
+  auto time_and_sales_window = TimeAndSalesWindow(populate_securities(),
     std::make_shared<TimeAndSalesPropertiesWindowFactory>(), &model_builder);
-  time_and_times_window.show();
+  time_and_sales_window.show();
   application.exec();
 }
