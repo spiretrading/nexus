@@ -4692,6 +4692,7 @@ UiProfile Spire::make_table_view_profile() {
   properties.push_back(make_standard_property("vertical-spacing", 1));
   properties.push_back(make_standard_property("hover-cell-color",
     QColor(Qt::transparent)));
+  properties.push_back(make_standard_property("invisible-column", 1));
   auto profile = UiProfile("TableView", properties, [] (auto& profile) {
     auto model = std::make_shared<ArrayTableModel>();
     auto& row_count = get<int>("row_count", profile.get_properties());
@@ -4780,6 +4781,22 @@ UiProfile Spire::make_table_view_profile() {
       update_style(*view, [&] (auto& style) {
         style.get(selector > HoverItem()).set(border_color(value));
       });
+    });
+    auto& invisible_column =
+      get<int>("invisible-column", profile.get_properties());
+    invisible_column.connect_changed_signal([=] (int column) {
+      auto& widths = view->get_header().get_widths();
+      if(column >= 0 && column < widths->get_size()) {
+        view->get_header().get_item(column)->setVisible(false);
+        widths->set(column, 0);
+      } else if(column < 0) {
+        for(auto i = 0; i < header->get_size(); ++i) {
+          if(!view->get_header().get_item(i)->isVisible()) {
+            view->get_header().get_item(i)->setVisible(true);
+            widths->set(i, view->get_header().get_item(i)->sizeHint().width());
+          }
+        }
+      }
     });
     return view;
   });

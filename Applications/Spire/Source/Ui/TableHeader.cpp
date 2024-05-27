@@ -94,34 +94,45 @@ void TableHeader::mouseMoveEvent(QMouseEvent* event) {
     position.rx() = delta + m_resize_position.x();
     if(delta != 0) {
       m_widths->set(m_resize_index, m_widths->get(m_resize_index) + delta);
-      if(m_resize_index != m_widths->get_size() - 1) {
-        m_widths->set(
-          m_resize_index + 1, m_widths->get(m_resize_index + 1) - delta);
+      auto sibling_index = get_next_visible_sibling_index(m_resize_index);
+      if(sibling_index != m_widths->get_size() - 1) {
+        m_widths->set(sibling_index, m_widths->get(sibling_index) - delta);
       }
     }
   } else if(delta > 0) {
+    auto sibling_index = get_next_visible_sibling_index(m_resize_index);
     auto sibling_width = [&] {
-      if(m_resize_index == m_widths->get_size() - 1) {
+      if(sibling_index == m_widths->get_size() - 1) {
         auto w = 0;
         for(auto i = 0; i != m_widths->get_size(); ++i) {
           w += m_widths->get(i);
         }
         return width() - w;
       }
-      return m_widths->get(m_resize_index + 1);
+      return m_widths->get(sibling_index);
     }();
     auto new_sibling_width = std::max(scale_width(10), sibling_width - delta);
     delta = new_sibling_width - sibling_width;
     position.rx() = -delta + m_resize_position.x();
     if(delta != 0) {
-      if(m_resize_index != m_widths->get_size() - 1) {
-        m_widths->set(
-          m_resize_index + 1, m_widths->get(m_resize_index + 1) + delta);
+      if(sibling_index != m_widths->get_size() - 1) {
+        m_widths->set(sibling_index, m_widths->get(sibling_index) + delta);
       }
       m_widths->set(m_resize_index, m_widths->get(m_resize_index) - delta);
     }
   }
   m_resize_position = position;
+}
+
+int TableHeader::get_next_visible_sibling_index(int index) const {
+  if(index == m_widths->get_size() - 1) {
+    return index;
+  }
+  ++index;
+  if(!m_item_views[index]->isVisible()) {
+    return get_next_visible_sibling_index(index);
+  }
+  return index;
 }
 
 void TableHeader::on_items_operation(
