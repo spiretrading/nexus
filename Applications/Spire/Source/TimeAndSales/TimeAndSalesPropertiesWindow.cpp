@@ -216,8 +216,7 @@ const std::shared_ptr<TimeAndSalesPropertiesModel>&
 
 void TimeAndSalesPropertiesWindow::on_font(const QFont& font) {
   update_style(*this, [&] (auto& style) {
-    style.get(Any() > is_a<HighlightBox>() >>
-        (is_a<TextBox>() && !(+Any() << is_a<HighlightPicker>()))).
+    style.get(Any() > is_a<HighlightBox>() > is_a<TextBox>()).
       set(Font(font));
   });
 }
