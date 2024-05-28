@@ -451,57 +451,61 @@ namespace {
     std::shared_ptr<ComboBox::QueryModel> m_region_query_model;
     DestinationDatabase m_destinations;
     MarketDatabase m_markets;
-    std::map<QWidget*, std::shared_ptr<void>> m_models;
+    std::map<QWidget*, std::shared_ptr<void>> m_currents;
 
     EditableBox* mount(
         const std::shared_ptr<TableModel>& table, int row, int column) {
+      auto make_current = [&] <typename T> () {
+        return make_proxy_value_model(to_value_model<T>(table, row, column));
+      };
       auto column_id = static_cast<OrderTaskColumns>(column);
-      auto input_box = [&] {
-        if(column_id == OrderTaskColumns::NAME) {
-          auto model =
-            make_proxy_value_model(to_value_model<QString>(table, row, column));
-          auto box = new AnyInputBox(*new TextBox(model));
-          m_models[box] = model;
-          return box;
-        } else if(column_id == OrderTaskColumns::REGION) {
-          return new AnyInputBox(*new RegionBox(
-            m_region_query_model, to_value_model<Region>(table, row, column)));
-        } else if(column_id == OrderTaskColumns::DESTINATION) {
-          auto region_model = to_value_model<Region>(
-            table, row, static_cast<int>(OrderTaskColumns::REGION));
-          auto query_model = std::make_shared<DestinationQueryModel>(
-            std::move(region_model), m_destinations, m_markets);
-          auto current_model = std::make_shared<DestinationValueModel>(
-            to_value_model<Destination>(table, row, column), query_model);
-          return new AnyInputBox(*new DestinationBox(
-            std::move(query_model), std::move(current_model)));
-        } else if(column_id == OrderTaskColumns::ORDER_TYPE) {
-          return new AnyInputBox(*make_order_type_box(
-            to_value_model<OrderType>(table, row, column)));
-        } else if(column_id == OrderTaskColumns::SIDE) {
-          return new AnyInputBox(
-            *make_side_box(to_value_model<Side>(table, row, column)));
-        } else if(column_id == OrderTaskColumns::QUANTITY) {
-          return new AnyInputBox(*new QuantityBox(
-            std::make_shared<ScalarValueModelDecorator<optional<Quantity>>>(
-              to_value_model<optional<Quantity>>(table, row, column))));
-        } else if(column_id == OrderTaskColumns::TIME_IN_FORCE) {
-          return new AnyInputBox(*make_time_in_force_box(
-            to_value_model<TimeInForce>(table, row, column)));
-        } else if(column_id == OrderTaskColumns::TAGS) {
-          return new AnyInputBox(*make_label(""));
-        } else {
-          return new AnyInputBox(*new KeyInputBox(
-            make_validated_value_model<QKeySequence>(&key_input_box_validator,
-              to_value_model<QKeySequence>(table, row, column))));
-        }
-      }();
+      auto [input_box, current] =
+        [&] () -> std::tuple<AnyInputBox*, std::shared_ptr<void>> {
+          if(column_id == OrderTaskColumns::NAME) {
+            auto current = make_current.operator ()<QString>();
+            return {new AnyInputBox(*new TextBox(current)), current};
+          } else if(column_id == OrderTaskColumns::REGION) {
+            auto current = make_current.operator ()<Region>();
+            return {new AnyInputBox(
+              *new RegionBox(m_region_query_model, current)), current};
+          } else if(column_id == OrderTaskColumns::DESTINATION) {
+            auto region_model = to_value_model<Region>(
+              table, row, static_cast<int>(OrderTaskColumns::REGION));
+            auto query_model = std::make_shared<DestinationQueryModel>(
+              std::move(region_model), m_destinations, m_markets);
+            auto current = std::make_shared<DestinationValueModel>(
+              to_value_model<Destination>(table, row, column), query_model);
+            return {new AnyInputBox(*new DestinationBox(
+              std::move(query_model), std::move(current))), current};
+          } else if(column_id == OrderTaskColumns::ORDER_TYPE) {
+            auto current = make_current.operator ()<OrderType>();
+            return {new AnyInputBox(*make_order_type_box(current)), current};
+          } else if(column_id == OrderTaskColumns::SIDE) {
+            auto current = make_current.operator ()<Side>();
+            return {new AnyInputBox(*make_side_box(current)), current};
+          } else if(column_id == OrderTaskColumns::QUANTITY) {
+            auto current = make_scalar_value_model_decorator(
+              make_current.operator ()<optional<Quantity>>());
+            return {new AnyInputBox(*new QuantityBox(current)), current};
+          } else if(column_id == OrderTaskColumns::TIME_IN_FORCE) {
+            auto current = make_current.operator ()<TimeInForce>();
+            return {new AnyInputBox(*make_time_in_force_box(current)), current};
+          } else if(column_id == OrderTaskColumns::TAGS) {
+            return {new AnyInputBox(*make_label("")), std::shared_ptr<void>()};
+          } else {
+            auto current = make_validated_value_model(&key_input_box_validator,
+              make_current.operator ()<QKeySequence>());
+            return {new AnyInputBox(*new KeyInputBox(current)), current};
+          }
+        }();
+      m_currents[input_box] = current;
       if(column_id == OrderTaskColumns::REGION) {
         return new EditablePopupBox(*input_box);
       } else if(column_id == OrderTaskColumns::KEY) {
-        return new EditableBox(*input_box, [] (const auto& key) {
-          return key_input_box_validator(key) != QValidator::Invalid;
-        });
+        return new EditableBox(*input_box,
+          [] (const auto& key) {
+            return key_input_box_validator(key) != QValidator::Invalid;
+          });
       }
       return new EditableBox(*input_box);
     }
@@ -511,7 +515,8 @@ namespace {
       if(column != 0) {
         return;
       }
-      auto model = m_models[&static_cast<EditableBox&>(widget).get_input_box()];
+      auto model =
+        m_currents[&static_cast<EditableBox&>(widget).get_input_box()];
       std::static_pointer_cast<ProxyValueModel<QString>>(model)->set_source(
         to_value_model<QString>(table, row, column));
     }
