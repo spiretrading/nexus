@@ -60,6 +60,12 @@ namespace Spire {
      */
     void load_history(int max_count);
 
+    /*
+     * Returns the bbo indicator at a specified row.
+     * @param row The specified row.
+     */
+    BboIndicator get_bbo_indicator(int row) const;
+
     int get_row_size() const override;
 
     int get_column_size() const override;

@@ -54,10 +54,10 @@ void TimeAndSalesTableModel::load_history(int max_count) {
       max_count);
   }
 }
-//
-//BboIndicator TimeAndSalesTableModel::get_bbo_indicator(int row) const {
-//  return m_entries.get(row).m_indicator;
-//}
+
+BboIndicator TimeAndSalesTableModel::get_bbo_indicator(int row) const {
+  return m_entries.get(row).m_indicator;
+}
 
 int TimeAndSalesTableModel::get_row_size() const {
   return m_entries.get_size();

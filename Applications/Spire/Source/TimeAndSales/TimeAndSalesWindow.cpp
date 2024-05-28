@@ -6,6 +6,8 @@
 #include "Spire/Ui/ContextMenu.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/SecurityView.hpp"
+#include "Spire/Ui/TableItem.hpp"
+#include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/TransitionView.hpp"
 
 using namespace Nexus;
@@ -13,17 +15,34 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  using UnknownIndicator =
+    StateSelector<void, struct UnknownIndicatorSeletorTag>;
+  using AboveAskIndicator =
+    StateSelector<void, struct AboveAskIndicatorSeletorTag>;
+  using AtAskIndicator = StateSelector<void, struct AtAskIndicatorSeletorTag>;
+  using InsideIndicator = StateSelector<void, struct InsideIndicatorSeletorTag>;
+  using AtBidIndicator = StateSelector<void, struct AtBidIndicatorSeletorTag>;
+  using BelowBidIndicator =
+    StateSelector<void, struct BelowBidIndicatorSeletorTag>;
   const auto TITLE_NAME = QObject::tr("Time and Sales");
 
-  auto make_header_widths() {
-    auto widths = std::vector<int>();
-    widths.push_back(scale_width(45));
-    widths.push_back(scale_width(50));
-    widths.push_back(scale_width(40));
-    widths.push_back(scale_width(38));
-    widths.push_back(scale_width(34));
-    return widths;
+  auto get_height(const QFont& font) {
+    auto label = std::unique_ptr<TextBox>(make_label("x"));
+    update_style(*label, [&] (auto& style) {
+      style.get(Any()).
+        set(Font(font)).
+        set(vertical_padding(scale_height(1.5)));
+    });
+    return label->sizeHint().height();
   }
+
+  void apply_indicator_style(StyleSheet& style, const Selector& selector,
+      const HighlightColor& highlight) {
+    style.get(selector).
+      set(BackgroundColor(highlight.m_background_color));
+    style.get(selector >> is_a<TextBox>()).
+      set(TextColor(highlight.m_text_color));
+  };
 }
 
 TimeAndSalesWindow::TimeAndSalesWindow(
@@ -31,6 +50,7 @@ TimeAndSalesWindow::TimeAndSalesWindow(
     std::shared_ptr<TimeAndSalesPropertiesWindowFactory> factory,
     ModelBuilder model_builder, QWidget* parent)
     : Window(parent),
+      m_factory(std::move(factory)),
       m_model_builder(std::move(model_builder)),
       m_table_model(std::make_shared<TimeAndSalesTableModel>(
         std::make_shared<NoneTimeAndSalesModel>())),
@@ -46,19 +66,13 @@ TimeAndSalesWindow::TimeAndSalesWindow(
     new SecurityView(std::move(securities), *m_transition_view);
   security_view->get_current()->connect_update_signal(
     std::bind_front(&TimeAndSalesWindow::on_current, this));
-  auto box = new Box(security_view);
-  box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  update_style(*box, [] (auto& style) {
+  m_body = new Box(security_view);
+  m_body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  update_style(*m_body, [] (auto& style) {
     style.get(Any()).set(BackgroundColor(QColor(0xFFFFFF)));
   });
-  set_body(box);
-  m_header_item_widths = make_header_widths();
-  for(auto i = 0; i < std::ssize(m_header_item_widths); ++i) {
-    //if(m_table_view->get_header().get_item(i)->isVisible()) {
-      m_table_view->get_header().get_widths()->set(i, m_header_item_widths[i]);
-    //}
-  }
-  resize(sizeHint().width(), scale_height(361));
+  set_body(m_body);
+  resize(security_view->sizeHint().width(), scale_height(361));
   m_table_model->connect_begin_loading_signal([=] {
     if(m_transition_view->get_status() == TransitionView::Status::NONE) {
       m_transition_view->set_status(TransitionView::Status::LOADING);
@@ -67,8 +81,9 @@ TimeAndSalesWindow::TimeAndSalesWindow(
   m_table_model->connect_end_loading_signal([=] {
     m_transition_view->set_status(TransitionView::Status::READY);
     make_table_header_menu();
-    m_table_view->setFocus();
   });
+  m_table_view->get_table()->connect_operation_signal(
+    std::bind_front(&TimeAndSalesWindow::on_table_operation, this));
 }
 
 bool TimeAndSalesWindow::eventFilter(QObject* watched, QEvent* event) {
@@ -82,6 +97,13 @@ bool TimeAndSalesWindow::eventFilter(QObject* watched, QEvent* event) {
     }
   }
   return Window::eventFilter(watched, event);
+}
+
+int TimeAndSalesWindow::get_row_height() const {
+  if(m_table_model->get_row_size() == 0) {
+    return get_height(m_factory->make()->get_current()->get().get_font());
+  }
+  return m_table_view->get_body().get_item({0, 0})->height();
 }
 
 void TimeAndSalesWindow::make_table_header_menu() {
@@ -104,21 +126,57 @@ void TimeAndSalesWindow::make_table_header_menu() {
 
 void TimeAndSalesWindow::on_current(const Security& security) {
   setWindowTitle(to_text(security) + " " + QString(0x2013) + " " + TITLE_NAME);
-  //m_transition_view->set_status(TransitionView::Status::LOADING);
   m_transition_view->set_status(TransitionView::Status::NONE);
   m_table_model->set_model(m_model_builder(security));
+  auto& header = m_table_view->get_header();
   m_table_model->load_history(
-    (height() - m_table_view->get_header().sizeHint().height()) / 24);
+    (m_body->height() - header.height()) / get_row_height());
+  auto& properties = m_factory->make()->get_current()->get();
+  update_style(*m_table_view, [&] (auto& style) {
+    auto body_selector = Any() > is_a<TableBody>();
+    style.get(Any() > is_a<TableHeader>() >> is_a<TextBox>()).
+      set(Font(properties.get_font()));
+    style.get(body_selector > Row() >> is_a<TextBox>()).
+      set(Font(properties.get_font()));
+    apply_indicator_style(style, body_selector > UnknownIndicator(),
+      properties.get_highlight_color(BboIndicator::UNKNOWN));
+    apply_indicator_style(style, body_selector > AboveAskIndicator(),
+      properties.get_highlight_color(BboIndicator::ABOVE_ASK));
+    apply_indicator_style(style, body_selector > AtAskIndicator(),
+      properties.get_highlight_color(BboIndicator::AT_ASK));
+    apply_indicator_style(style, body_selector > InsideIndicator(),
+      properties.get_highlight_color(BboIndicator::INSIDE));
+    apply_indicator_style(style, body_selector > AtBidIndicator(),
+      properties.get_highlight_color(BboIndicator::AT_BID));
+    apply_indicator_style(style, body_selector > BelowBidIndicator(),
+      properties.get_highlight_color(BboIndicator::BELOW_BID));
+  });
 }
 
 void TimeAndSalesWindow::on_header_item_check(int column, bool checked) {
-  auto header_items = m_table_view->get_header().get_items();
-  auto width = [&] {
-    if(checked) {
-      return m_header_item_widths[column];
-    }
-    return 0;
-  }();
   m_table_view->get_header().get_item(column)->setVisible(checked);
-  m_table_view->get_header().get_widths()->set(column, width);
+}
+
+void TimeAndSalesWindow::on_table_operation(
+    const TableModel::Operation& operation) {
+  visit(operation,
+    [&] (const TableModel::AddOperation& operation) {
+      auto row = m_table_view->get_body().get_item(
+        {operation.m_index, 0})->parentWidget();
+      row->setDisabled(true);
+      auto indicator = m_table_model->get_bbo_indicator(operation.m_index);
+      if(indicator == BboIndicator::UNKNOWN) {
+        match(*row, UnknownIndicator());
+      } else if(indicator == BboIndicator::ABOVE_ASK) {
+        match(*row, AboveAskIndicator());
+      } else if(indicator == BboIndicator::AT_ASK) {
+        match(*row, AtAskIndicator());
+      } else if(indicator == BboIndicator::INSIDE) {
+        match(*row, InsideIndicator());
+      } else if(indicator == BboIndicator::AT_BID) {
+        match(*row, AtBidIndicator());
+      } else if(indicator == BboIndicator::BELOW_BID) {
+        match(*row, BelowBidIndicator());
+      }
+    });
 }

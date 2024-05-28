@@ -38,17 +38,20 @@ namespace Spire {
       bool eventFilter(QObject* watched, QEvent* event) override;
 
     private:
+      std::shared_ptr<TimeAndSalesPropertiesWindowFactory> m_factory;
       ModelBuilder m_model_builder;
       std::shared_ptr<TimeAndSalesTableModel> m_table_model;
       TableView* m_table_view;
       TransitionView* m_transition_view;
       ContextMenu* m_table_header_menu;
+      QWidget* m_body;
       std::vector<int> m_header_item_widths;
 
-
+      int get_row_height() const;
       void make_table_header_menu();
       void on_current(const Nexus::Security& security);
       void on_header_item_check(int column, bool checked);
+      void on_table_operation(const TableModel::Operation& operation);
   };
 }
 
