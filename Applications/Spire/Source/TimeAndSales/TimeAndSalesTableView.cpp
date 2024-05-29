@@ -22,7 +22,7 @@ namespace {
     int m_width;
   };
 
-  auto TABLE_VIEW_STYLE(StyleSheet style) {
+  auto apply_table_view_style(StyleSheet& style) {
     auto body_selector = Any() > is_a<TableBody>();
     style.get(body_selector).
       set(grid_color(Qt::transparent)).
@@ -37,15 +37,16 @@ namespace {
       set(BackgroundColor(Qt::transparent));
     style.get(body_selector > CurrentColumn()).
       set(BackgroundColor(Qt::transparent));
-    return style;
+    style.get(Any() > is_a<ScrollBox>()).
+      set(BorderBottomSize(scale_height(1))).
+      set(BorderBottomColor(QColor(0xE0E0E0)));
   }
 
-  auto TABLE_CELL_STYLE(StyleSheet style) {
+  auto apply_table_cell_style(StyleSheet& style) {
     style.get(Any()).
       set(border_size(0)).
       set(horizontal_padding(scale_width(2))).
       set(vertical_padding(scale_height(1.5)));
-    return style;
   }
 
   auto make_header_model() {
@@ -65,7 +66,7 @@ namespace {
 
   auto make_header_item_properties() {
     auto properties = std::vector<HeaderItemProperties>();
-    properties.emplace_back(false, Qt::AlignLeft, scale_width(45));
+    properties.emplace_back(false, Qt::AlignLeft, scale_width(48));
     properties.emplace_back(true, Qt::AlignRight, scale_width(50));
     properties.emplace_back(true, Qt::AlignRight, scale_width(40));
     properties.emplace_back(true, Qt::AlignLeft, scale_width(38));
@@ -113,7 +114,7 @@ namespace {
       return make_label("");
     }();
     update_style(*cell, [] (auto& style) {
-      style = TABLE_CELL_STYLE(style);
+      apply_table_cell_style(style);
     });
     return cell;
   }
@@ -125,7 +126,7 @@ TableView* Spire::make_time_and_sales_table_view(
     set_header(make_header_model()).
     set_view_builder(table_view_builder).make();
   update_style(*table_view, [] (auto& style) {
-    style = TABLE_VIEW_STYLE(style);
+    apply_table_view_style(style);
   });
   auto& header_box =
     *static_cast<Box*>(table_view->layout()->itemAt(0)->widget());
@@ -135,6 +136,7 @@ TableView* Spire::make_time_and_sales_table_view(
   header_scroll_box->setFocusPolicy(Qt::NoFocus);
   header_scroll_box->set_horizontal(ScrollBox::DisplayPolicy::NEVER);
   header_scroll_box->set_vertical(ScrollBox::DisplayPolicy::NEVER);
+  link(*table_view, *header_scroll_box);
   auto old_header_box =
     table_view->layout()->replaceWidget(&header_box, header_scroll_box);
   delete old_header_box->widget();
