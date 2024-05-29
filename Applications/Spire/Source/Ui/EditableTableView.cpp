@@ -287,6 +287,9 @@ namespace {
           m_transaction.push(MoveOperation(operation.m_source + 1,
             operation.m_destination + 1));
         },
+        [&] (const PreRemoveOperation& operation) {
+          m_transaction.push(PreRemoveOperation(operation.m_index + 1));
+        },
         [&] (const RemoveOperation& operation) {
           m_transaction.push(RemoveOperation(operation.m_index + 1));
         },

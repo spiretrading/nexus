@@ -20,7 +20,7 @@ void ListIndexTracker::update(const AnyListModel::Operation& operation) {
         ++m_index;
       }
     },
-    [&] (const AnyListModel::RemoveOperation& operation) {
+    [&] (const AnyListModel::PreRemoveOperation& operation) {
       if(operation.m_index < m_index) {
         --m_index;
       } else if(operation.m_index == m_index) {

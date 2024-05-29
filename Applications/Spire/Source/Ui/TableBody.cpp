@@ -672,7 +672,7 @@ void TableBody::on_table_operation(const TableModel::Operation& operation) {
     [&] (const TableModel::AddOperation& operation) {
       add_row(operation.m_index);
     },
-    [&] (const TableModel::RemoveOperation& operation) {
+    [&] (const TableModel::PreRemoveOperation& operation) {
       remove_row(operation.m_index);
     },
     [&] (const TableModel::MoveOperation& operation) {

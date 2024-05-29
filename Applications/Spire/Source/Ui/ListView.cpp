@@ -701,7 +701,7 @@ void ListView::on_list_operation(const AnyListModel::Operation& operation) {
     [&] (const AnyListModel::AddOperation& operation) {
       add_item(operation.m_index);
     },
-    [&] (const AnyListModel::RemoveOperation& operation) {
+    [&] (const AnyListModel::PreRemoveOperation& operation) {
       remove_item(operation.m_index);
     },
     [&] (const AnyListModel::MoveOperation& operation) {
@@ -738,7 +738,7 @@ void ListView::on_selection(const ListModel<int>::Operation& operation) {
       auto& selection = m_selection_controller.get_selection();
       m_items[selection->get(operation.m_index)]->m_item.set_selected(true);
     },
-    [&] (const ListModel<int>::RemoveOperation& operation) {
+    [&] (const ListModel<int>::PreRemoveOperation& operation) {
       auto& selection = m_selection_controller.get_selection();
       m_items[selection->get(operation.m_index)]->m_item.set_selected(false);
     },
