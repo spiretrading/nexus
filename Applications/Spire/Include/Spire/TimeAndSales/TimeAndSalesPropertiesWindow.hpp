@@ -30,7 +30,13 @@ namespace Spire {
         get_current() const;
 
     private:
-      std::shared_ptr<TimeAndSalesPropertiesModel> m_current;
+      struct PropertiesWindowModel;
+      std::unique_ptr<PropertiesWindowModel> m_model;
+      TimeAndSalesProperties m_initial_properties;
+
+      void on_font(const QFont& font);
+      void on_cancel();
+      void on_done();
   };
 }
 
