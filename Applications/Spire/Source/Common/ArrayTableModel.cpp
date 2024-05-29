@@ -79,8 +79,9 @@ QValidator::State ArrayTableModel::remove(int row) {
   if(row < 0 || row >= get_row_size()) {
     throw std::out_of_range("The index is out of range.");
   }
-  m_transaction.push(RemoveOperation(row));
+  m_transaction.push(PreRemoveOperation(row));
   m_data.erase(std::next(m_data.begin(), row));
+  m_transaction.push(RemoveOperation(row));
   return QValidator::Acceptable;
 }
 
