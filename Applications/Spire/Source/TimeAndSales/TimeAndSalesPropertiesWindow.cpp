@@ -3,7 +3,7 @@
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/FontBox.hpp"
 #include "Spire/Ui/HighlightBox.hpp"
-#include "Spire/Ui/layouts.hpp"
+#include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace boost::signals2;
