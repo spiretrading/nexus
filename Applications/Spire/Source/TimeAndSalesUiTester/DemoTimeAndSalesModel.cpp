@@ -82,8 +82,7 @@ void DemoTimeAndSalesModel::set_data_random(bool is_random) {
 }
 
 QtPromise<std::vector<TimeAndSalesModel::Entry>>
-DemoTimeAndSalesModel::query_until(Queries::Sequence sequence,
-  int max_count) {
+DemoTimeAndSalesModel::query_until(Queries::Sequence sequence, int max_count) {
   return QtPromise([=] {
     auto result = std::vector<TimeAndSalesModel::Entry>();
     if(m_query_duration == pos_infin) {
@@ -107,7 +106,7 @@ DemoTimeAndSalesModel::query_until(Queries::Sequence sequence,
     timer.Start();
     timer.Wait();
     return result;
-    }, LaunchPolicy::ASYNC);
+  }, LaunchPolicy::ASYNC);
 }
 
 connection DemoTimeAndSalesModel::connect_update_signal(
