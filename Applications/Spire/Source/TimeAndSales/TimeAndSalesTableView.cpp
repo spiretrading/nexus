@@ -47,9 +47,6 @@ namespace {
       set(BackgroundColor(Qt::transparent));
     style.get(body_selector > CurrentColumn()).
       set(BackgroundColor(Qt::transparent));
-    style.get(Any() > is_a<ScrollBox>()).
-      set(BorderBottomSize(scale_height(1))).
-      set(BorderBottomColor(QColor(0xE0E0E0)));
     style.get(Any() > PullIndicator()).
       set(Visibility::NONE).
       set(BodyAlign(Qt::AlignHCenter)).
@@ -60,6 +57,12 @@ namespace {
       set(PaddingBottom(0));
     style.get(PullDelayed() > PullIndicator()).
       set(Visibility::VISIBLE);
+  }
+
+  auto apply_table_header_style(StyleSheet& style) {
+    style.get(Any()).
+      set(BorderBottomSize(scale_height(1))).
+      set(BorderBottomColor(QColor(0xE0E0E0)));
   }
 
   auto apply_table_cell_style(StyleSheet& style) {
@@ -165,7 +168,9 @@ TableView* Spire::make_time_and_sales_table_view(
   header_scroll_box->setFocusPolicy(Qt::NoFocus);
   header_scroll_box->set_horizontal(ScrollBox::DisplayPolicy::NEVER);
   header_scroll_box->set_vertical(ScrollBox::DisplayPolicy::NEVER);
-  link(*table_view, *header_scroll_box);
+  update_style(*header_scroll_box, [] (auto& style) {
+    apply_table_header_style(style);
+  });
   auto old_header_box =
     table_view->layout()->replaceWidget(&header_box, header_scroll_box);
   delete old_header_box->widget();
