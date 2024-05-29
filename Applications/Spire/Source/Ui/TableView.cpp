@@ -44,16 +44,16 @@ namespace {
   }
 }
 
-QWidget* TableView::default_view_builder(
+QWidget* TableView::default_item_builder(
     const std::shared_ptr<TableModel>& table, int row, int column) {
-  return TableBody::default_view_builder(table, row, column);
+  return TableBody::default_item_builder(table, row, column);
 }
 
 TableView::TableView(
     std::shared_ptr<TableModel> table, std::shared_ptr<HeaderModel> header,
     std::shared_ptr<TableFilter> filter, std::shared_ptr<CurrentModel> current,
-    std::shared_ptr<SelectionModel> selection, ViewBuilder view_builder,
-    Comparator comparator, QWidget* parent)
+    std::shared_ptr<SelectionModel> selection,
+    TableViewItemBuilder item_builder, Comparator comparator, QWidget* parent)
     : QWidget(parent),
       m_table(std::move(table)),
       m_header(std::move(header)),
@@ -91,7 +91,7 @@ TableView::TableView(
       m_filtered_table, make_column_order(*m_header));
   }
   m_body = new TableBody(m_sorted_table, std::move(current),
-    std::move(selection), m_header_view->get_widths(), std::move(view_builder));
+    std::move(selection), m_header_view->get_widths(), std::move(item_builder));
   m_body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   link(*this, *m_body);
   m_scroll_box = new ScrollBox(m_body);
@@ -239,7 +239,7 @@ TableViewBuilder::TableViewBuilder(
       std::make_shared<TableEmptySelectionModel>(),
       std::make_shared<ListSingleSelectionModel>(),
       std::make_shared<ListEmptySelectionModel>())),
-    m_view_builder(&TableView::default_view_builder) {}
+    m_item_builder(&TableView::default_item_builder) {}
 
 TableViewBuilder& TableViewBuilder::set_header(
     const std::shared_ptr<TableView::HeaderModel>& header) {
@@ -298,9 +298,9 @@ TableViewBuilder& TableViewBuilder::set_selection(
   return *this;
 }
 
-TableViewBuilder& TableViewBuilder::set_view_builder(
-    const TableView::ViewBuilder& view_builder) {
-  m_view_builder = view_builder;
+TableViewBuilder& TableViewBuilder::set_item_builder(
+    const TableViewItemBuilder& item_builder) {
+  m_item_builder = item_builder;
   return *this;
 }
 
@@ -312,5 +312,5 @@ TableViewBuilder& TableViewBuilder::set_comparator(
 
 TableView* TableViewBuilder::make() const {
   return new TableView(m_table, m_header, m_filter, m_current, m_selection,
-    m_view_builder, m_comparator, m_parent);
+    m_item_builder, m_comparator, m_parent);
 }

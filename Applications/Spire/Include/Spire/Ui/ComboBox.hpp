@@ -69,34 +69,34 @@ namespace Spire {
       /**
        * Constructs a ComboBox using default local models and a TextBox.
        * @param query_model The model used to query matches.
-       * @param view_builder The ListViewBuilder to use.
+       * @param item_builder The ListViewItemBuilder to use.
        * @param parent The parent widget.
        */
       ComboBox(std::shared_ptr<QueryModel> query_model,
-        ListViewBuilder<> view_builder, QWidget* parent = nullptr);
+        ListViewItemBuilder<> item_builder, QWidget* parent = nullptr);
 
       /**
        * Constructs a ComboBox using a TextBox.
        * @param query_model The model used to query matches.
        * @param current The current value's model.
-       * @param view_builder The ListViewBuilder to use.
+       * @param item_builder The ListViewItemBuilder to use.
        * @param parent The parent widget.
        */
       ComboBox(std::shared_ptr<QueryModel> query_model,
-        std::shared_ptr<CurrentModel> current, ListViewBuilder<> view_builder,
-        QWidget* parent = nullptr);
+        std::shared_ptr<CurrentModel> current,
+        ListViewItemBuilder<> item_builder, QWidget* parent = nullptr);
 
       /**
        * Constructs a ComboBox.
        * @param query_model The model used to query matches.
        * @param current The current value's model.
        * @param input_box The input box to use.
-       * @param view_builder The ListViewBuilder to use.
+       * @param item_builder The ListViewItemBuilder to use.
        * @param parent The parent widget.
        */
       ComboBox(std::shared_ptr<QueryModel> query_model,
         std::shared_ptr<CurrentModel> current, AnyInputBox* input_box,
-        ListViewBuilder<> view_builder, QWidget* parent = nullptr);
+        ListViewItemBuilder<> item_builder, QWidget* parent = nullptr);
 
       /** Returns the model used to query matches. */
       const std::shared_ptr<QueryModel>& get_query_model() const;
@@ -156,7 +156,7 @@ namespace Spire {
       std::shared_ptr<QueryModel> m_query_model;
       std::shared_ptr<CurrentModel> m_current;
       AnyInputBox* m_input_box;
-      ListViewBuilder<> m_view_builder;
+      ListViewItemBuilder<> m_item_builder;
       std::unique_ptr<DeferredData> m_data;
 
       void initialize_deferred_data() const;

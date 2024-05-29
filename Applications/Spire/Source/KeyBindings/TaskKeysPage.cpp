@@ -191,6 +191,9 @@ namespace {
           m_transaction.push(TableModel::MoveOperation(
             operation.m_source, operation.m_destination));
         },
+        [&] (const OrderTaskArgumentsListModel::PreRemoveOperation& operation) {
+          m_transaction.push(TableModel::PreRemoveOperation(operation.m_index));
+        },
         [&] (const OrderTaskArgumentsListModel::RemoveOperation& operation) {
           m_transaction.push(TableModel::RemoveOperation(operation.m_index));
         },

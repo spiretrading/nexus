@@ -22,6 +22,8 @@ namespace Spire {
 
       using MoveOperation = typename ListModel<T>::MoveOperation;
 
+      using PreRemoveOperation = typename ListModel<T>::PreRemoveOperation;
+
       using RemoveOperation = typename ListModel<T>::RemoveOperation;
 
       using UpdateOperation = typename ListModel<T>::UpdateOperation;
@@ -103,10 +105,11 @@ namespace Spire {
             get(operation.m_index));
           m_transaction.push(AddOperation(operation.m_index));
         },
-        [&] (const typename ListModel<int>::RemoveOperation& operation) {
-          m_transaction.push(RemoveOperation(operation.m_index));
+        [&] (const typename ListModel<int>::PreRemoveOperation& operation) {
+          m_transaction.push(PreRemoveOperation(operation.m_index));
           m_selection_values.erase(
             m_selection_values.begin() + operation.m_index);
+          m_transaction.push(RemoveOperation(operation.m_index));
         },
         [&] (const typename ListModel<int>::MoveOperation& operation) {
           if(operation.m_source < operation.m_destination) {

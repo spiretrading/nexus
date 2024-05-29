@@ -252,14 +252,19 @@ TEST_SUITE("TranslatedTableModel") {
     auto removed_row = 0;
     auto connection = scoped_connection(translation.connect_operation_signal(
       [&] (const TableModel::Operation& operation) {
-        ++signal_count;
-        auto remove_operation = get<TableModel::RemoveOperation>(&operation);
-        REQUIRE(remove_operation != nullptr);
-        REQUIRE(remove_operation->m_index == removed_row);
+        visit(operation,
+          [&] (const TableModel::PreRemoveOperation& operation) {
+            ++signal_count;
+            REQUIRE(operation.m_index == removed_row);
+          },
+          [&] (const TableModel::RemoveOperation& operation) {
+            ++signal_count;
+            REQUIRE(operation.m_index == removed_row);
+          });
       }));
     removed_row = 2;
     source->remove(0);
-    REQUIRE(signal_count == 1);
+    REQUIRE(signal_count == 2);
     REQUIRE(translation.get<int>(0, 0) == 1);
     REQUIRE(translation.get<int>(1, 0) == 2);
     REQUIRE(translation.get<int>(2, 0) == 9);
@@ -267,7 +272,7 @@ TEST_SUITE("TranslatedTableModel") {
     REQUIRE_THROWS(translation.get<int>(3, 0));
     removed_row = 0;
     source->remove(2);
-    REQUIRE(signal_count == 2);
+    REQUIRE(signal_count == 4);
     REQUIRE(translation.get<int>(0, 0) == 2);
     REQUIRE(translation.get<int>(1, 0) == 9);
     REQUIRE(translation.get_row_size() == 2);
@@ -353,6 +358,7 @@ TEST_SUITE("TranslatedTableModel") {
         TableModel::AddOperation(2),
         TableModel::UpdateOperation(1, 0, nullptr, nullptr),
         TableModel::AddOperation(0),
+        TableModel::PreRemoveOperation(1),
         TableModel::RemoveOperation(1),
         TableModel::AddOperation(3)
       });
@@ -371,28 +377,33 @@ TEST_SUITE("TranslatedTableModel") {
     auto signal_count = 0;
     auto add_count = 0;
     auto move_count = 0;
+    auto pre_remove_count = 0;
     auto remove_count = 0;
     auto update_count = 0;
     auto connection = scoped_connection(translation.connect_operation_signal(
       [&] (const TableModel::Operation& operation) {
         ++signal_count;
         visit(operation,
-          [&] (const TableModel::AddOperation& add_operation) {
+          [&] (const TableModel::AddOperation& operation) {
             ++add_count;
           },
-          [&] (const TableModel::MoveOperation& move_operation) {
+          [&] (const TableModel::MoveOperation& operation) {
             ++move_count;
-            REQUIRE(move_operation.m_source == 1);
-            REQUIRE(move_operation.m_destination == 0);
+            REQUIRE(operation.m_source == 1);
+            REQUIRE(operation.m_destination == 0);
           },
-          [&] (const TableModel::RemoveOperation& remove_operation) {
+          [&] (const TableModel::PreRemoveOperation& operation) {
+            ++pre_remove_count;
+            REQUIRE(operation.m_index == 1);
+          },
+          [&] (const TableModel::RemoveOperation& operation) {
             ++remove_count;
-            REQUIRE(remove_operation.m_index == 1);
+            REQUIRE(operation.m_index == 1);
           },
-          [&] (const TableModel::UpdateOperation& update_operation) {
+          [&] (const TableModel::UpdateOperation& operation) {
             ++update_count;
-            REQUIRE(update_operation.m_row == 0);
-            REQUIRE(update_operation.m_column == 0);
+            REQUIRE(operation.m_row == 0);
+            REQUIRE(operation.m_column == 0);
           });
       }));
     source->push({4});
@@ -417,7 +428,8 @@ TEST_SUITE("TranslatedTableModel") {
     REQUIRE(translation.get<int>(0, 0) == 0);
     REQUIRE(translation.get<int>(1, 0) == 4);
     source->remove(0);
-    REQUIRE(signal_count == 5);
+    REQUIRE(signal_count == 6);
+    REQUIRE(pre_remove_count == 1);
     REQUIRE(remove_count == 1);
     REQUIRE(translation.get<int>(0, 0) == 0);
     REQUIRE(translation.get_row_size() == 1);

@@ -380,6 +380,7 @@ TEST_SUITE("SortedTableModel") {
     source->remove(2);
     require_transaction(operations,
       {
+        TableModel::PreRemoveOperation(4),
         TableModel::RemoveOperation(4)
       });
     operations.clear();

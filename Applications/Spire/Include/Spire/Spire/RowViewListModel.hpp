@@ -35,6 +35,8 @@ namespace Details {
 
       using MoveOperation = typename ListModel<T>::MoveOperation;
 
+      using PreRemoveOperation = typename ListModel<T>::PreRemoveOperation;
+
       using RemoveOperation = typename ListModel<T>::RemoveOperation;
 
       using UpdateOperation = typename ListModel<T>::UpdateOperation;
