@@ -151,10 +151,15 @@ TEST_SUITE("FilteredTableModel") {
     auto signal_count = 0;
     auto connection = scoped_connection(filtered_model.connect_operation_signal(
       [&] (const TableModel::Operation& operation) {
-        ++signal_count;
-        auto remove_operation = get<TableModel::RemoveOperation>(&operation);
-        REQUIRE(remove_operation != nullptr);
-        REQUIRE(remove_operation->m_index == 0);
+        visit(operation,
+          [&] (const TableModel::PreRemoveOperation& operation) {
+            ++signal_count;
+            REQUIRE(operation.m_index == 0);
+          },
+          [&] (const TableModel::RemoveOperation& operation) {
+            ++signal_count;
+            REQUIRE(operation.m_index == 0);
+          });
       }));
     source->remove(2);
     REQUIRE(signal_count == 0);
@@ -165,13 +170,13 @@ TEST_SUITE("FilteredTableModel") {
     REQUIRE(source->get<int>(1, 0) == 2);
     REQUIRE(source->get<int>(2, 0) == 1);
     source->remove(1);
-    REQUIRE(signal_count == 1);
+    REQUIRE(signal_count == 2);
     REQUIRE(filtered_model.get<int>(0, 0) == 1);
     REQUIRE(filtered_model.get_row_size() == 1);
     REQUIRE(source->get<int>(0, 0) == 4);
     REQUIRE(source->get<int>(1, 0) == 1);
     source->remove(1);
-    REQUIRE(signal_count == 2);
+    REQUIRE(signal_count == 4);
     REQUIRE(filtered_model.get_row_size() == 0);
     REQUIRE(source->get<int>(0, 0) == 4);
   }
@@ -276,24 +281,29 @@ TEST_SUITE("FilteredTableModel") {
     REQUIRE(source->get<int>(3, 0) == 1);
     auto signal_count = 0;
     auto add_count = 0;
+    auto pre_remove_count = 0;
     auto remove_count = 0;
     auto update_count = 0;
     auto connection = scoped_connection(filtered_model.connect_operation_signal(
       [&] (const TableModel::Operation& operation) {
         ++signal_count;
         visit(operation,
-          [&] (const TableModel::AddOperation& add_operation) {
+          [&] (const TableModel::AddOperation& operation) {
             ++add_count;
-            REQUIRE(add_operation.m_index == 0);
+            REQUIRE(operation.m_index == 0);
           },
-          [&] (const TableModel::RemoveOperation& remove_operation) {
+          [&] (const TableModel::PreRemoveOperation& operation) {
+            ++pre_remove_count;
+            REQUIRE(operation.m_index == 2);
+          },
+          [&] (const TableModel::RemoveOperation& operation) {
             ++remove_count;
-            REQUIRE(remove_operation.m_index == 2);
+            REQUIRE(operation.m_index == 2);
           },
-          [&] (const TableModel::UpdateOperation& update_operation) {
+          [&] (const TableModel::UpdateOperation& operation) {
             ++update_count;
-            REQUIRE(update_operation.m_row == 1);
-            REQUIRE(update_operation.m_column == 0);
+            REQUIRE(operation.m_row == 1);
+            REQUIRE(operation.m_column == 0);
           },
           [] (const auto&) {
             REQUIRE(false);
@@ -311,7 +321,8 @@ TEST_SUITE("FilteredTableModel") {
     REQUIRE(source->get<int>(2, 0) == 9);
     REQUIRE(source->get<int>(3, 0) == 1);
     source->set(3, 0, 10);
-    REQUIRE(signal_count == 2);
+    REQUIRE(signal_count == 3);
+    REQUIRE(pre_remove_count == 1);
     REQUIRE(remove_count == 1);
     REQUIRE(filtered_model.get<int>(0, 0) == 0);
     REQUIRE(filtered_model.get<int>(1, 0) == 2);
@@ -321,7 +332,7 @@ TEST_SUITE("FilteredTableModel") {
     REQUIRE(source->get<int>(2, 0) == 9);
     REQUIRE(source->get<int>(3, 0) == 10);
     source->set(1, 0, 1);
-    REQUIRE(signal_count == 3);
+    REQUIRE(signal_count == 4);
     REQUIRE(update_count == 1);
     REQUIRE(filtered_model.get<int>(0, 0) == 0);
     REQUIRE(filtered_model.get<int>(1, 0) == 1);
@@ -331,7 +342,7 @@ TEST_SUITE("FilteredTableModel") {
     REQUIRE(source->get<int>(2, 0) == 9);
     REQUIRE(source->get<int>(3, 0) == 10);
     source->set(3, 0, 6);
-    REQUIRE(signal_count == 3);
+    REQUIRE(signal_count == 4);
     REQUIRE(filtered_model.get<int>(0, 0) == 0);
     REQUIRE(filtered_model.get<int>(1, 0) == 1);
     REQUIRE(filtered_model.get_row_size() == 2);
@@ -362,6 +373,7 @@ TEST_SUITE("FilteredTableModel") {
     auto end_count = 0;
     auto add_count = 0;
     auto move_count = 0;
+    auto pre_remove_count = 0;
     auto remove_count = 0;
     auto update_count = 0;
     auto connection = scoped_connection(filtered_model.connect_operation_signal(
@@ -374,22 +386,26 @@ TEST_SUITE("FilteredTableModel") {
           [&] (const TableModel::EndTransaction&) {
             ++end_count;
           },
-          [&] (const TableModel::AddOperation& add_operation) {
+          [&] (const TableModel::AddOperation& operation) {
             ++add_count;
           },
-          [&] (const TableModel::MoveOperation& move_operation) {
+          [&] (const TableModel::MoveOperation& operation) {
             ++move_count;
-            REQUIRE(move_operation.m_source == 2);
-            REQUIRE(move_operation.m_destination == 0);
+            REQUIRE(operation.m_source == 2);
+            REQUIRE(operation.m_destination == 0);
           },
-          [&] (const TableModel::RemoveOperation& remove_operation) {
+          [&] (const TableModel::PreRemoveOperation& operation) {
+            ++pre_remove_count;
+            REQUIRE(operation.m_index == 3);
+          },
+          [&] (const TableModel::RemoveOperation& operation) {
             ++remove_count;
-            REQUIRE(remove_operation.m_index == 3);
+            REQUIRE(operation.m_index == 3);
           },
-          [&] (const TableModel::UpdateOperation& update_operation) {
+          [&] (const TableModel::UpdateOperation& operation) {
             ++update_count;
-            REQUIRE(update_operation.m_row == 0);
-            REQUIRE(update_operation.m_column == 0);
+            REQUIRE(operation.m_row == 0);
+            REQUIRE(operation.m_column == 0);
           });
       }));
     source->transact([&] {
@@ -404,11 +420,12 @@ TEST_SUITE("FilteredTableModel") {
       });
       source->move(2, 0);
     });
-    REQUIRE(signal_count == 8);
+    REQUIRE(signal_count == 9);
     REQUIRE(start_count == 1);
     REQUIRE(end_count == 1);
     REQUIRE(add_count == 3);
     REQUIRE(move_count == 1);
+    REQUIRE(pre_remove_count == 1);
     REQUIRE(remove_count == 1);
     REQUIRE(update_count == 1);
     REQUIRE(filtered_model.get<int>(0, 0) == 2);
@@ -462,14 +479,19 @@ TEST_SUITE("FilteredTableModel") {
     require_transaction(operations,
       {
         TableModel::AddOperation(0),
+        TableModel::PreRemoveOperation(1),
         TableModel::RemoveOperation(1),
         TableModel::AddOperation(1),
+        TableModel::PreRemoveOperation(2),
         TableModel::RemoveOperation(2),
         TableModel::AddOperation(2),
+        TableModel::PreRemoveOperation(3),
         TableModel::RemoveOperation(3),
         TableModel::AddOperation(3),
+        TableModel::PreRemoveOperation(4),
         TableModel::RemoveOperation(4),
         TableModel::AddOperation(4),
+        TableModel::PreRemoveOperation(5),
         TableModel::RemoveOperation(5),
         TableModel::AddOperation(5),
         TableModel::AddOperation(6),
@@ -521,17 +543,25 @@ TEST_SUITE("FilteredTableModel") {
     require_transaction(operations,
       {
         TableModel::AddOperation(0),
+        TableModel::PreRemoveOperation(1),
         TableModel::RemoveOperation(1),
         TableModel::AddOperation(1),
+        TableModel::PreRemoveOperation(2),
         TableModel::RemoveOperation(2),
         TableModel::AddOperation(2),
+        TableModel::PreRemoveOperation(3),
         TableModel::RemoveOperation(3),
         TableModel::AddOperation(3),
+        TableModel::PreRemoveOperation(4),
         TableModel::RemoveOperation(4),
         TableModel::AddOperation(4),
+        TableModel::PreRemoveOperation(5),
         TableModel::RemoveOperation(5),
+        TableModel::PreRemoveOperation(5),
         TableModel::RemoveOperation(5),
+        TableModel::PreRemoveOperation(5),
         TableModel::RemoveOperation(5),
+        TableModel::PreRemoveOperation(5),
         TableModel::RemoveOperation(5)
       });
   }

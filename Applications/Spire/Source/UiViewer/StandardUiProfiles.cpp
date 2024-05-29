@@ -767,8 +767,7 @@ namespace {
   }
 
   auto populate_key_input_box_model(const QKeySequence& key) {
-    auto model = make_validated_value_model<QKeySequence>(
-      &key_input_box_validator,
+    auto model = make_validated_value_model(&key_input_box_validator,
       std::make_shared<LocalKeySequenceValueModel>(key));
     return model;
   }
@@ -884,8 +883,8 @@ namespace {
         *new QuantityBox(std::move(model))));
     } else if(column == 3) {
       return new EditableBox(*new AnyInputBox(*new KeyInputBox(
-        make_validated_value_model<QKeySequence>(&key_input_box_validator,
-          make_list_value_model(
+        make_validated_value_model(
+          &key_input_box_validator, make_list_value_model(
             std::make_shared<ColumnViewListModel<QKeySequence>>(table, column),
             row)))),
         [] (const auto& key) {

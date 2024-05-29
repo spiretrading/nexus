@@ -35,6 +35,7 @@ namespace Spire {
       bool focusNextPrevChild(bool next) override;
 
     private:
+      struct EditableItemBuilder;
       struct ItemBuilder;
       bool m_is_processing_key;
 

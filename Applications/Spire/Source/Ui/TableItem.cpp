@@ -74,7 +74,6 @@ QWidget* TableItem::unmount() {
   auto item = layout()->takeAt(0);
   auto body = item->widget();
   body->setAttribute(Qt::WA_DontShowOnScreen);
-  body->setParent(parentWidget());
   delete item;
   static_cast<QBoxLayout&>(*layout()).addSpacerItem(
     new QSpacerItem(size_hint.width(), size_hint.height(),

@@ -159,6 +159,9 @@ void SortedTableModel::on_operation(const Operation& operation) {
         m_transaction.push(std::move(update));
       }
     },
+    [&] (const PreRemoveOperation& operation) {
+      m_transaction.push(operation);
+    },
     [&] (const RemoveOperation& operation) {
       m_transaction.push(operation);
     });

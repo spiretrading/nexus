@@ -59,13 +59,18 @@ TEST_SUITE("ArrayTableModel") {
     REQUIRE(model.get_row_size() == 3);
     connection = model.connect_operation_signal(
       [&] (const TableModel::Operation& operation) {
-        ++signal_count;
-        auto remove_operation = get<TableModel::RemoveOperation>(&operation);
-        REQUIRE(remove_operation != nullptr);
-        REQUIRE(remove_operation->m_index == 0);
+        visit(operation,
+          [&] (const TableModel::PreRemoveOperation& operation) {
+            ++signal_count;
+            REQUIRE(operation.m_index == 0);
+          },
+          [&] (const TableModel::RemoveOperation& operation) {
+            ++signal_count;
+            REQUIRE(operation.m_index == 0);
+          });
       });
     REQUIRE_NOTHROW(model.remove(0));
-    REQUIRE(signal_count == 4);
+    REQUIRE(signal_count == 5);
     REQUIRE(model.get_row_size() == 2);
     REQUIRE(model.get<int>(0, 0) == 3);
     REQUIRE(model.get<int>(0, 1) == 4);
@@ -169,12 +174,16 @@ TEST_SUITE("ArrayTableModel") {
     REQUIRE(signal_count == 1);
     connection = model.connect_operation_signal(
       [&] (const TableModel::Operation& operation) {
-        ++signal_count;
-        auto remove_operation = get<TableModel::RemoveOperation>(&operation);
-        REQUIRE(remove_operation != nullptr);
+        visit(operation,
+          [&] (const TableModel::PreRemoveOperation& operation) {
+            ++signal_count;
+          },
+          [&] (const TableModel::RemoveOperation& operation) {
+            ++signal_count;
+          });
       });
     REQUIRE_NOTHROW(model.remove(index));
-    REQUIRE(signal_count == 2);
+    REQUIRE(signal_count == 3);
     signal_count = 0;
     connection = model.connect_operation_signal(
       [&] (const TableModel::Operation& operation) {
@@ -292,14 +301,15 @@ TEST_SUITE("ArrayTableModel") {
         model.push({8, 9, 9});
       });
     });
-    REQUIRE(operations.size() == 7);
+    REQUIRE(operations.size() == 8);
     REQUIRE(get<TableModel::StartTransaction>(&operations[0]) != nullptr);
     REQUIRE(get<TableModel::AddOperation>(&operations[1]) != nullptr);
     REQUIRE(get<TableModel::UpdateOperation>(&operations[2]) != nullptr);
     REQUIRE(get<TableModel::AddOperation>(&operations[3]) != nullptr);
-    REQUIRE(get<TableModel::RemoveOperation>(&operations[4]) != nullptr);
-    REQUIRE(get<TableModel::AddOperation>(&operations[5]) != nullptr);
-    REQUIRE(get<TableModel::EndTransaction>(&operations[6]) != nullptr);
+    REQUIRE(get<TableModel::PreRemoveOperation>(&operations[4]) != nullptr);
+    REQUIRE(get<TableModel::RemoveOperation>(&operations[5]) != nullptr);
+    REQUIRE(get<TableModel::AddOperation>(&operations[6]) != nullptr);
+    REQUIRE(get<TableModel::EndTransaction>(&operations[7]) != nullptr);
     operations.clear();
     model.transact([&] {
       model.push({1, 2, 3});

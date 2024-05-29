@@ -29,9 +29,16 @@ namespace Spire {
       };
 
       /** Indicates a value will be removed from the model. */
-      struct RemoveOperation {
+      struct PreRemoveOperation {
 
         /** The index of the value to be removed. */
+        int m_index;
+      };
+
+      /** Indicates a value was be removed from the model. */
+      struct RemoveOperation {
+
+        /** The index of the value that was removed. */
         int m_index;
       };
 
@@ -65,8 +72,9 @@ namespace Spire {
       struct EndTransaction {};
 
       /** Consolidates all operations. */
-      using Operation = boost::variant<AddOperation, RemoveOperation,
-        MoveOperation, UpdateOperation, StartTransaction, EndTransaction>;
+      using Operation = boost::variant<AddOperation, PreRemoveOperation,
+        RemoveOperation, MoveOperation, UpdateOperation, StartTransaction,
+        EndTransaction>;
 
       /**
        * Signals an operation was applied to this model.
@@ -298,8 +306,9 @@ namespace Spire {
       };
 
       /** Consolidates all operations. */
-      using Operation = boost::variant<AddOperation, RemoveOperation,
-        MoveOperation, UpdateOperation, StartTransaction, EndTransaction>;
+      using Operation = boost::variant<AddOperation, PreRemoveOperation,
+        RemoveOperation, MoveOperation, UpdateOperation, StartTransaction,
+        EndTransaction>;
 
       /**
        * Signals an operation was applied to this model.
@@ -458,6 +467,10 @@ namespace Spire {
         using type = AddOperation;
       };
       template<>
+      struct downcast<AnyListModel::PreRemoveOperation> {
+        using type = PreRemoveOperation;
+      };
+      template<>
       struct downcast<AnyListModel::RemoveOperation> {
         using type = RemoveOperation;
       };
@@ -610,6 +623,9 @@ namespace Spire {
 
   std::ostream& operator <<(
     std::ostream& out, const AnyListModel::AddOperation& operation);
+
+  std::ostream& operator <<(
+    std::ostream& out, const AnyListModel::PreRemoveOperation& operation);
 
   std::ostream& operator <<(
     std::ostream& out, const AnyListModel::RemoveOperation& operation);
