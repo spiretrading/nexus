@@ -84,7 +84,7 @@ namespace {
   }
 
   struct Tracker {
-    TableRowIndexTracker m_index;
+    optional<TableRowIndexTracker> m_index;
     scoped_connection m_connection;
 
     Tracker(int index)
@@ -309,9 +309,9 @@ namespace {
   };
 }
 
-struct EditableTableView::ItemBuilder {
+struct EditableTableView::EditableItemBuilder {
   EditableTableView* m_view;
-  TableViewItemBuilder m_builder;
+  std::unordered_map<QWidget*, std::shared_ptr<Tracker>> m_trackers;
 
   QWidget* mount(
       const std::shared_ptr<TableModel>& table, int row, int column) {
@@ -321,16 +321,52 @@ struct EditableTableView::ItemBuilder {
       match(*button, DeleteButton());
       auto tracker = std::make_shared<Tracker>(row);
       tracker->m_connection = table->connect_operation_signal(
-        std::bind_front(&TableRowIndexTracker::update, &tracker->m_index));
+        std::bind_front(&TableRowIndexTracker::update, &*tracker->m_index));
+      m_trackers.insert(std::pair(button, tracker));
       button->connect_click_signal([=] {
-        auto index = tracker->m_index.get_index();
+        auto index = tracker->m_index->get_index();
         QTimer::singleShot(0, m_view, [=] {
           m_view->delete_row(index);
         });
       });
       return button;
+    }
+    return make_empty_cell();
+  }
+
+  void reset(QWidget& widget,
+      const std::shared_ptr<TableModel>& table, int row, int column) {
+    if(column != 0) {
+      return;
+    }
+    auto tracker = m_trackers[&widget];
+    tracker->m_index = none;
+    tracker->m_index.emplace(row);
+    tracker->m_connection = table->connect_operation_signal(
+      std::bind_front(&TableRowIndexTracker::update, &*tracker->m_index));
+  }
+
+  void unmount(QWidget* widget) {
+    delete widget;
+  }
+};
+
+struct EditableTableView::ItemBuilder {
+  EditableTableView* m_view;
+  TableViewItemBuilder m_builder;
+  RecycledTableViewItemBuilder<EditableItemBuilder> m_editable_builder;
+
+  ItemBuilder(EditableTableView* view, TableViewItemBuilder builder)
+    : m_view(view),
+      m_builder(std::move(builder)),
+      m_editable_builder(EditableItemBuilder(view)) {}
+
+  QWidget* mount(
+      const std::shared_ptr<TableModel>& table, int row, int column) {
+    if(column == 0) {
+      return m_editable_builder.mount(table, row, 0);
     } else if(column == table->get_column_size() - 1) {
-      return make_empty_cell();
+      return m_editable_builder.mount(table, row, 1);
     } else {
       auto item = static_cast<EditableBox*>(m_builder.mount(
         std::static_pointer_cast<EditableTableModel>(
@@ -348,7 +384,7 @@ struct EditableTableView::ItemBuilder {
   void unmount(QWidget* widget) {
     if(typeid(*widget) == typeid(Button) ||
         typeid(*widget) == typeid(QWidget)) {
-      delete widget;
+      m_editable_builder.unmount(widget);
     } else {
       m_builder.unmount(widget);
     }
