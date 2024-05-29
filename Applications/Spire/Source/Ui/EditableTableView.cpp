@@ -34,7 +34,7 @@ namespace {
     style.get(item_selector > Any() >
         (ReadOnly() && !(+Any() << is_a<ListItem>()) && !Prompt())).
       set(horizontal_padding(scale_width(8)));
-    style.get(item_selector >  Any() > ReadOnly() >
+    style.get(item_selector > Any() > ReadOnly() >
         (is_a<TextBox>() && !(+Any() << is_a<ListItem>()) && !Prompt())).
       set(horizontal_padding(scale_width(8)));
     style.get((item_selector > !ReadOnly()) << Current()).
