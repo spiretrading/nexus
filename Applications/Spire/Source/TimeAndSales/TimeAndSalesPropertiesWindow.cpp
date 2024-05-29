@@ -3,7 +3,6 @@
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/FontBox.hpp"
 #include "Spire/Ui/HighlightBox.hpp"
-#include "Spire/Ui/HighlightPicker.hpp"
 #include "Spire/Ui/layouts.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
