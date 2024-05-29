@@ -18,16 +18,14 @@ using namespace Spire;
 
 std::shared_ptr<ComboBox::QueryModel> populate_securities() {
   auto security_infos = std::vector<SecurityInfo>();
-  security_infos.emplace_back(ParseSecurity("MRU.TSX"),
-    "Metro Inc.", "", 0);
+  security_infos.emplace_back(ParseSecurity("MRU.TSX"), "Metro Inc.", "", 0);
   security_infos.emplace_back(ParseSecurity("MG.TSX"),
     "Magna International Inc.", "", 0);
   security_infos.emplace_back(ParseSecurity("MGA.TSX"),
     "Mega Uranium Ltd.", "", 0);
   security_infos.emplace_back(ParseSecurity("MGAB.TSX"),
     "Mackenzie Global Fixed Income Alloc ETF", "", 0);
-  security_infos.emplace_back(ParseSecurity("MON.NYSE"),
-    "Monsanto Co.", "", 0);
+  security_infos.emplace_back(ParseSecurity("MON.NYSE"), "Monsanto Co.", "", 0);
   security_infos.emplace_back(ParseSecurity("MFC.TSX"),
     "Manulife Financial Corporation", "", 0);
   security_infos.emplace_back(ParseSecurity("MX.TSX"),
@@ -74,10 +72,6 @@ auto make_bbo_indicator_list() {
   return indicators;
 }
 
-std::shared_ptr<TimeAndSalesModel> model_builder(const Security& security) {
-  return std::make_shared<DemoTimeAndSalesModel>(security);
-}
-
 struct TimeAndSalesTestWindow : QWidget {
   std::shared_ptr<DemoTimeAndSalesModel> m_time_and_sales;
   MoneyBox* m_money_box;
@@ -85,9 +79,9 @@ struct TimeAndSalesTestWindow : QWidget {
   IntegerBox* m_loading_time_box;
 
   explicit TimeAndSalesTestWindow(
-    std::shared_ptr<DemoTimeAndSalesModel> time_and_sales,
-    QWidget* parent = nullptr)
-    : m_time_and_sales(std::move(time_and_sales)) {
+      std::shared_ptr<DemoTimeAndSalesModel> time_and_sales,
+      QWidget* parent = nullptr)
+      : m_time_and_sales(std::move(time_and_sales)) {
     auto& markets = GetDefaultMarketDatabase();
     auto layout = make_grid_layout(this);
     layout->setContentsMargins({scale_width(15), 0, scale_width(15), 0});
@@ -121,10 +115,7 @@ struct TimeAndSalesTestWindow : QWidget {
     auto model = std::make_shared<LocalOptionalMoneyModel>(
       m_time_and_sales->get_price());
     model->set_minimum(Money(0));
-    auto box = new MoneyBox(model, QHash<Qt::KeyboardModifier, Money>(
-      {{Qt::NoModifier, Money::CENT}, {Qt::AltModifier, 5 * Money::CENT},
-      {Qt::ControlModifier, 10 * Money::CENT},
-      {Qt::ShiftModifier, 20 * Money::CENT}}));
+    auto box = new MoneyBox(model);
     box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     model->connect_update_signal([=] (const auto& value) {
       if(value) {
@@ -141,8 +132,7 @@ struct TimeAndSalesTestWindow : QWidget {
       m_time_and_sales->get_bbo_indicator()));
     box->get_current()->connect_update_signal([=] (auto value) {
       if(value) {
-        m_time_and_sales->set_bbo_indicator(
-          static_cast<BboIndicator>(*value));
+        m_time_and_sales->set_bbo_indicator(static_cast<BboIndicator>(*value));
       }
     });
     return box;
@@ -196,17 +186,10 @@ struct TimeAndSalesTestWindow : QWidget {
     auto check_box = new CheckBox(std::make_shared<LocalBooleanModel>());
     m_time_and_sales->set_data_random(check_box->get_current()->get());
     check_box->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
-    check_box->get_current()->connect_update_signal(
-      [=] (bool checked) {
-      if(checked) {
-        m_money_box->setEnabled(false);
-        m_indicator_box->setEnabled(false);
-        m_time_and_sales->set_data_random(true);
-      } else {
-        m_money_box->setEnabled(true);
-        m_indicator_box->setEnabled(true);
-        m_time_and_sales->set_data_random(false);
-      }
+    check_box->get_current()->connect_update_signal([=] (bool checked) {
+      m_money_box->setEnabled(!checked);
+      m_indicator_box->setEnabled(!checked);
+      m_time_and_sales->set_data_random(checked);
     });
     check_box->get_current()->set(true);
     return check_box;
@@ -217,12 +200,12 @@ struct TimeAndSalesWindowController {
   std::shared_ptr<TimeAndSalesWindow> m_time_and_sales_window;
   std::unique_ptr<TimeAndSalesTestWindow> m_time_and_sales_test_window;
 
-  TimeAndSalesWindowController()
-    : m_time_and_sales_window(std::make_shared<TimeAndSalesWindow>(
-      populate_securities(),
-      std::make_shared<TimeAndSalesPropertiesWindowFactory>(),
-      std::bind_front(&TimeAndSalesWindowController::model_builder,
-        this))),
+  explicit TimeAndSalesWindowController(
+      std::shared_ptr<TimeAndSalesPropertiesWindowFactory> factory)
+      : m_time_and_sales_window(std::make_shared<TimeAndSalesWindow>(
+          populate_securities(), std::move(factory),
+          std::bind_front(&TimeAndSalesWindowController::model_builder,
+            this))),
     m_time_and_sales_test_window(std::make_unique<TimeAndSalesTestWindow>(
       std::make_shared<DemoTimeAndSalesModel>(Security()))) {
     m_time_and_sales_window->show();
@@ -256,10 +239,7 @@ int main(int argc, char** argv) {
   application.setOrganizationName(QObject::tr("Spire Trading Inc"));
   application.setApplicationName(QObject::tr("Time and Sales UI Tester"));
   initialize_resources();
-  //auto time_and_times_window = TimeAndSalesWindow(populate_securities(),
-  //  std::make_shared<TimeAndSalesPropertiesWindowFactory>(),
-  //  &model_builder);
-  //time_and_times_window.show();
-  auto controller = TimeAndSalesWindowController();
+  auto factory = std::make_shared<TimeAndSalesPropertiesWindowFactory>();
+  auto controller = TimeAndSalesWindowController(std::move(factory));
   application.exec();
 }

@@ -50,6 +50,7 @@ HighlightBox::HighlightBox(std::shared_ptr<HighlightColorModel> current,
   update_style(*label, [] (auto& style) {
     style.get(Any()).set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
   });
+  link(*this, *label);
   m_input_box = make_input_box(label);
   enclose(*this, *m_input_box);
   proxy_style(*this, *m_input_box);
