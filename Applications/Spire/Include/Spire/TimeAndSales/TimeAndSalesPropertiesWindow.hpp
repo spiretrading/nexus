@@ -1,12 +1,7 @@
 #ifndef SPIRE_TIME_AND_SALES_PROPERTIES_WINDOW_HPP
 #define SPIRE_TIME_AND_SALES_PROPERTIES_WINDOW_HPP
-#include <QFont>
-#include <QLayout>
-#include "Spire/TimeAndSales/TimeAndSales.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesProperties.hpp"
-#include "Spire/Ui/FontBox.hpp"
 #include "Spire/Ui/Window.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 

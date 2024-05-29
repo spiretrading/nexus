@@ -1,5 +1,4 @@
 #include "Spire/TimeAndSales/TimeAndSalesPropertiesWindow.hpp"
-#include <QFontDatabase>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/FontBox.hpp"
@@ -143,12 +142,12 @@ TimeAndSalesPropertiesWindow::TimeAndSalesPropertiesWindow(
   setWindowTitle(tr("Time and Sales Properties"));
   setWindowFlags(windowFlags() & ~Qt::WindowMinimizeButtonHint);
   auto text_header = make_label(tr("Text"));
-  text_header->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
+  text_header->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   update_style(*text_header, [] (auto& style) {
     apply_header_label_style(style);
   });
   auto font_box = new FontBox(m_model->m_font_model);
-  font_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
+  font_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   font_box->get_current()->connect_update_signal(
     std::bind_front(&TimeAndSalesPropertiesWindow::on_font, this));
   auto grid_check_box = new CheckBox(m_model->m_show_grid_model);
@@ -200,7 +199,6 @@ TimeAndSalesPropertiesWindow::TimeAndSalesPropertiesWindow(
     apply_actions_style(style);
   });
   auto body = new QWidget();
-  body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   body->setFixedWidth(scale_width(256));
   auto body_layout = make_vbox_layout(body);
   body_layout->addWidget(content_box);

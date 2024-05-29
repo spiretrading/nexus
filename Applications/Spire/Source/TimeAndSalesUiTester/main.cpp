@@ -5,9 +5,10 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/Resources.hpp"
 #include "Spire/TimeAndSales/NoneTimeAndSalesModel.hpp"
-#include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesPropertiesWindow.hpp"
+#include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
+#include "Spire/Ui/layouts.hpp"
 #include "Version.hpp"
 
 using namespace Nexus;
