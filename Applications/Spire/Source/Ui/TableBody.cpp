@@ -66,11 +66,8 @@ struct TableBody::Cover : QWidget {
 };
 
 struct TableBody::RowCover : Cover {
-  int m_index;
-
   RowCover(TableBody& body)
-      : Cover(&body),
-        m_index(-1) {
+      : Cover(&body) {
     make_hbox_layout(this);
     match(*this, Row());
     layout()->setSpacing(body.m_styles.m_horizontal_spacing);
@@ -106,29 +103,19 @@ struct TableBody::RowCover : Cover {
   }
 
   void mount(int index) {
-    m_index = index;
     auto& body = *static_cast<TableBody*>(parentWidget());
     for(auto i = 0; i != layout()->count(); ++i) {
       auto& item = *get_item(i);
-      item.mount(*body.m_item_builder.mount(body.m_table, m_index, i));
+      item.mount(*body.m_item_builder.mount(body.m_table, index, i));
     }
   }
 
   void unmount() {
-/*
     auto& body = *static_cast<TableBody*>(parentWidget());
     for(auto i = 0; i != layout()->count(); ++i) {
       auto item = get_item(i)->unmount();
-//      body.m_hover_observers.erase(get_item(i));
       body.m_item_builder.unmount(item);
     }
-    auto items = std::vector<TableItem*>();
-    while(auto item = layout()->takeAt(0)) {
-      items.push_back(static_cast<TableItem*>(item->widget()));
-//      delete item->widget();
-      delete item;
-    }
-*/
   }
 };
 
@@ -156,7 +143,9 @@ TableBody::TableBody(
       m_widths(std::move(widths)),
       m_item_builder(std::move(item_builder)),
       m_top_index(-1),
-      m_visible_count(0) {
+      m_visible_count(0),
+      m_top_spacer(nullptr),
+      m_bottom_spacer(nullptr) {
   setFocusPolicy(Qt::StrongFocus);
   make_vbox_layout(this);
   m_style_connection =
@@ -531,14 +520,35 @@ void TableBody::initialize_visible_region() {
 }
 
 void TableBody::update_visible_region() {
-/*
   if(m_top_index == -1) {
     initialize_visible_region();
     return;
   }
-  if(!parentWidget() || !isVisible() || layout()->isEmpty()) {
+  if(!parentWidget() || !isVisible()) {
     return;
   }
+  auto position = [&] {
+    if(m_top_spacer) {
+      return m_top_spacer->sizeHint().height();
+    }
+    return 0;
+  }();
+  auto unmounted_rows = std::vector<RowCover*>();
+  auto has_visible_row = false;
+  for(auto i = 0; i != layout()->count(); ++i) {
+    auto row = static_cast<RowCover*>(layout()->itemAt(i)->widget());
+    if(!row) {
+      continue;
+    }
+    if(test_visibility(*this, row->geometry())) {
+      has_visible_row = true;
+    } else {
+      row->unmount();
+      unmounted_rows.push_back(row);
+    }
+  }
+  qDebug() << mapFromParent(QPoint(0, 0));
+/*
   auto top_row = [&] {
     auto low = std::size_t(0);
     auto high = std::size_t(layout()->count() - 1);
