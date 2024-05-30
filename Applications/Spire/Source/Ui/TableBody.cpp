@@ -67,6 +67,7 @@ struct TableBody::Cover : QWidget {
 
 struct TableBody::RowCover : Cover {
   int m_index;
+  static std::deque<std::vector<TableItem*>> m_items;
 
   RowCover(int index, TableBody& body)
       : Cover(&body),
@@ -93,22 +94,41 @@ struct TableBody::RowCover : Cover {
 
   void mount() {
     auto& body = *static_cast<TableBody*>(parentWidget());
-    for(auto column = 0; column != body.get_column_size(); ++column) {
-      auto item = new TableItem();
-      body.m_hover_observers.emplace(std::piecewise_construct,
-        std::forward_as_tuple(item), std::forward_as_tuple(*item));
-      body.m_hover_observers.at(item).connect_state_signal(
-        std::bind_front(&TableBody::on_hover, &body, std::ref(*item)));
-      if(column != body.get_column_size() - 1) {
-        item->setFixedWidth(
-          body.m_widths->get(column) - body.get_left_spacing(column));
-      } else {
-        item->setSizePolicy(
-          QSizePolicy::Expanding, item->sizePolicy().verticalPolicy());
+    if(m_items.empty()) {
+      for(auto column = 0; column != body.get_column_size(); ++column) {
+        auto item = new TableItem();
+        body.m_hover_observers.emplace(std::piecewise_construct,
+          std::forward_as_tuple(item), std::forward_as_tuple(*item));
+        body.m_hover_observers.at(item).connect_state_signal(
+          std::bind_front(&TableBody::on_hover, &body, std::ref(*item)));
+        if(column != body.get_column_size() - 1) {
+          item->setFixedWidth(
+            body.m_widths->get(column) - body.get_left_spacing(column));
+        } else {
+          item->setSizePolicy(
+            QSizePolicy::Expanding, item->sizePolicy().verticalPolicy());
+        }
+        layout()->addWidget(item);
+        item->connect_active_signal(std::bind_front(
+          &TableBody::on_item_activated, &body, std::ref(*item)));
       }
-      layout()->addWidget(item);
-      item->connect_active_signal(
-        std::bind_front(&TableBody::on_item_activated, &body, std::ref(*item)));
+    } else {
+      auto items = std::move(m_items.front());
+      m_items.pop_front();
+      for(auto column = 0; column != body.get_column_size(); ++column) {
+        auto item = items[column];
+//        body.m_hover_observers.emplace(std::piecewise_construct,
+//          std::forward_as_tuple(item), std::forward_as_tuple(*item));
+//        body.m_hover_observers.at(item).connect_state_signal(
+//          std::bind_front(&TableBody::on_hover, &body, std::ref(*item)));
+        if(column != body.get_column_size() - 1) {
+          item->setFixedWidth(
+            body.m_widths->get(column) - body.get_left_spacing(column));
+        }
+        layout()->addWidget(item);
+//        item->connect_active_signal(std::bind_front(
+//          &TableBody::on_item_activated, &body, std::ref(*item)));
+      }
     }
     for(auto i = 0; i != layout()->count(); ++i) {
       auto& item = *get_item(i);
@@ -120,15 +140,20 @@ struct TableBody::RowCover : Cover {
     auto& body = *static_cast<TableBody*>(parentWidget());
     for(auto i = 0; i != layout()->count(); ++i) {
       auto item = get_item(i)->unmount();
-      body.m_hover_observers.erase(get_item(i));
+//      body.m_hover_observers.erase(get_item(i));
       body.m_item_builder.unmount(item);
     }
+    auto items = std::vector<TableItem*>();
     while(auto item = layout()->takeAt(0)) {
-      delete item->widget();
+      items.push_back(static_cast<TableItem*>(item->widget()));
+//      delete item->widget();
       delete item;
     }
+    m_items.push_back(std::move(items));
   }
 };
+
+std::deque<std::vector<TableItem*>> TableBody::RowCover::m_items;
 
 struct TableBody::ColumnCover : Cover {
   QPointer<QWidget> m_hovered;
