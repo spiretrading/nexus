@@ -29,9 +29,8 @@ namespace {
   }
 }
 
-DemoTimeAndSalesModel::DemoTimeAndSalesModel(Security security)
-    : m_security(std::move(security)),
-      m_price(Money::ONE),
+DemoTimeAndSalesModel::DemoTimeAndSalesModel()
+    : m_price(Money::ONE),
       m_indicator(BboIndicator::UNKNOWN),
       m_period(seconds(1)),
       m_query_duration(seconds(5)),

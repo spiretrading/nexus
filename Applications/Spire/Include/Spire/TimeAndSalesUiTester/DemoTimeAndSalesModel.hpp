@@ -14,8 +14,8 @@ namespace Spire {
   class DemoTimeAndSalesModel : public TimeAndSalesModel {
   public:
 
-    /** Constructs a DemoTimeAndSalesModel. */
-    explicit DemoTimeAndSalesModel(Nexus::Security security);
+    /** Constructs a default DemoTimeAndSalesModel. */
+    DemoTimeAndSalesModel();
 
     /* Returns the price of new time and sales. */
     Nexus::Money get_price() const;
@@ -55,7 +55,6 @@ namespace Spire {
 
   private:
     mutable UpdateSignal m_update_signal;
-    Nexus::Security m_security;
     Nexus::Money m_price;
     BboIndicator m_indicator;
     boost::posix_time::time_duration m_period;

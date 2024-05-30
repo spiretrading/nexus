@@ -207,7 +207,7 @@ struct TimeAndSalesWindowController {
           std::bind_front(&TimeAndSalesWindowController::model_builder,
             this))),
     m_time_and_sales_test_window(std::make_unique<TimeAndSalesTestWindow>(
-      std::make_shared<DemoTimeAndSalesModel>(Security()))) {
+      std::make_shared<DemoTimeAndSalesModel>())) {
     m_time_and_sales_window->show();
     m_time_and_sales_window->installEventFilter(
       m_time_and_sales_test_window.get());
@@ -220,8 +220,7 @@ struct TimeAndSalesWindowController {
 
   std::shared_ptr<TimeAndSalesModel> model_builder(const Security& security) {
     auto time_and_sales = m_time_and_sales_test_window->m_time_and_sales;
-    auto new_time_and_sales =
-      std::make_shared<DemoTimeAndSalesModel>(security);
+    auto new_time_and_sales = std::make_shared<DemoTimeAndSalesModel>();
     new_time_and_sales->set_price(time_and_sales->get_price());
     new_time_and_sales->set_bbo_indicator(
       time_and_sales->get_bbo_indicator());

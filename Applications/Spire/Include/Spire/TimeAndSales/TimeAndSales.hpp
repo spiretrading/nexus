@@ -7,6 +7,7 @@ namespace Spire {
   class TimeAndSalesProperties;
   class TimeAndSalesPropertiesWindow;
   class TimeAndSalesPropertiesWindowFactory;
+  class TimeAndSalesTableModel;
   class TimeAndSalesWindow;
 }
 

@@ -88,7 +88,7 @@ TimeAndSalesWindow::TimeAndSalesWindow(
     if(m_transition_view->get_status() == TransitionView::Status::NONE) {
       m_transition_view->set_status(TransitionView::Status::LOADING);
     }
-    });
+  });
   m_table_model->connect_end_loading_signal([=] {
     m_transition_view->set_status(TransitionView::Status::READY);
     make_table_header_menu();
@@ -127,7 +127,7 @@ void TimeAndSalesWindow::make_table_header_menu() {
     model->set(checked);
     model->connect_update_signal(std::bind_front(
       &TimeAndSalesWindow::on_header_item_check, this, column));
-    };
+  };
   auto header_items = m_table_view->get_header().get_items();
   for(auto i = 0; i < header_items->get_size() - 1; ++i) {
     add_sub_menu(i, header_items->get(i).m_name,

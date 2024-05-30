@@ -1,15 +1,13 @@
 #include "Spire/TimeAndSales/TimeAndSalesTableModel.hpp"
-#include <boost/signals2/shared_connection_block.hpp>
-#include "Spire/Spire/ArrayListModel.hpp"
 
 using namespace Beam;
-using namespace boost;
 using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 
 namespace {
-  AnyRef extract_field(const TimeAndSale& time_and_sale, TimeAndSalesTableModel::Column column) {
+  AnyRef extract_field(const TimeAndSale& time_and_sale,
+      TimeAndSalesTableModel::Column column) {
     if(column == TimeAndSalesTableModel::Column::TIME) {
       return time_and_sale.m_timestamp;
     } else if(column == TimeAndSalesTableModel::Column::PRICE) {
@@ -28,30 +26,32 @@ namespace {
 TimeAndSalesTableModel::TimeAndSalesTableModel(
     std::shared_ptr<TimeAndSalesModel> model)
     : m_model(std::move(model)),
-      m_source_connection(m_model->connect_update_signal(
+      m_connection(m_model->connect_update_signal(
         std::bind_front(&TimeAndSalesTableModel::on_update, this))) {
   m_entries.connect_operation_signal(
     std::bind_front(&TimeAndSalesTableModel::on_operation, this));
 }
 
-const std::shared_ptr<TimeAndSalesModel>& TimeAndSalesTableModel::get_model() const {
+const std::shared_ptr<TimeAndSalesModel>&
+    TimeAndSalesTableModel::get_model() const {
   return m_model;
 }
 
-void TimeAndSalesTableModel::set_model(std::shared_ptr<TimeAndSalesModel> model) {
+void TimeAndSalesTableModel::set_model(
+    std::shared_ptr<TimeAndSalesModel> model) {
   clear(m_entries);
   m_model = std::move(model);
-  m_source_connection = m_model->connect_update_signal(
+  m_connection = m_model->connect_update_signal(
     std::bind_front(&TimeAndSalesTableModel::on_update, this));
 }
 
 void TimeAndSalesTableModel::load_history(int max_count) {
   if(m_entries.get_size() == 0) {
-    load_snapshot(Beam::Queries::Sequence::Present(), max_count);
+    load_snapshot(Queries::Sequence::Present(), max_count);
   } else {
     load_snapshot(
       m_entries.get(m_entries.get_size() - 1).m_time_and_sale.GetSequence(),
-      max_count);
+        max_count);
   }
 }
 
@@ -75,15 +75,18 @@ AnyRef TimeAndSalesTableModel::at(int row, int column) const {
     static_cast<Column>(column));
 }
 
-connection TimeAndSalesTableModel::connect_begin_loading_signal(const BeginLoadingSignal::slot_type& slot) const {
+connection TimeAndSalesTableModel::connect_begin_loading_signal(
+    const BeginLoadingSignal::slot_type& slot) const {
   return m_begin_loading_signal.connect(slot);
 }
 
-connection TimeAndSalesTableModel::connect_end_loading_signal(const EndLoadingSignal::slot_type& slot) const {
+connection TimeAndSalesTableModel::connect_end_loading_signal(
+    const EndLoadingSignal::slot_type& slot) const {
   return m_end_loading_signal.connect(slot);
 }
 
-connection TimeAndSalesTableModel::connect_operation_signal(const OperationSignal::slot_type& slot) const {
+connection TimeAndSalesTableModel::connect_operation_signal(
+    const OperationSignal::slot_type& slot) const {
   return m_transaction.connect_operation_signal(slot);
 }
 
@@ -104,7 +107,7 @@ void TimeAndSalesTableModel::on_update(const TimeAndSalesModel::Entry& entry) {
 }
 
 void TimeAndSalesTableModel::on_operation(
-  const ListModel<TimeAndSalesModel::Entry>::Operation& operation) {
+    const ListModel<TimeAndSalesModel::Entry>::Operation& operation) {
   visit(operation,
     [&] (const StartTransaction&) {
       m_transaction.start();
@@ -115,7 +118,8 @@ void TimeAndSalesTableModel::on_operation(
     [&] (const ListModel<TimeAndSalesModel::Entry>::AddOperation& operation) {
       m_transaction.push(TableModel::AddOperation(operation.m_index));
     },
-    [&] (const ListModel<TimeAndSalesModel::Entry>::RemoveOperation& operation) {
+    [&] (const ListModel<TimeAndSalesModel::Entry>::RemoveOperation&
+        operation) {
       m_transaction.push(TableModel::RemoveOperation(operation.m_index));
     });
 }

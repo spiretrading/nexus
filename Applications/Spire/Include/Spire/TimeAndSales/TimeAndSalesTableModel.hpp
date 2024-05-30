@@ -44,7 +44,7 @@ namespace Spire {
 
     /**
      * Constructs an TimeAndSalesTableModel.
-     * @param source A list of time and sales.
+     * @param model The time and sales model.
      */
     explicit TimeAndSalesTableModel(std::shared_ptr<TimeAndSalesModel> model);
 
@@ -90,7 +90,7 @@ namespace Spire {
     ArrayListModel<TimeAndSalesModel::Entry> m_entries;
     QtPromise<void> m_promise;
     TableModelTransactionLog m_transaction;
-    boost::signals2::scoped_connection m_source_connection;
+    boost::signals2::scoped_connection m_connection;
 
     void load_snapshot(Beam::Queries::Sequence last, int count);
     void on_update(const TimeAndSalesModel::Entry& entry);
