@@ -1,5 +1,4 @@
 #include <QApplication>
-#include "Nexus/Definitions/Security.hpp"
 #include "Nexus/Definitions/SecurityInfo.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/Resources.hpp"
