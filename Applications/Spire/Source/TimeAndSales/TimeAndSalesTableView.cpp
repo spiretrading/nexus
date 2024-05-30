@@ -169,8 +169,7 @@ TableView* Spire::make_time_and_sales_table_view(
   auto& body_scroll_box =
     *static_cast<ScrollBox*>(table_view->layout()->itemAt(1)->widget());
   body_scroll_box.get_horizontal_scroll_bar().connect_position_signal(
-    [=] (int position) {
-      header_scroll_box->get_horizontal_scroll_bar().set_position(position);
-    });
+    std::bind_front(&ScrollBar::set_position,
+      &header_scroll_box->get_horizontal_scroll_bar()));
   return table_view;
 }

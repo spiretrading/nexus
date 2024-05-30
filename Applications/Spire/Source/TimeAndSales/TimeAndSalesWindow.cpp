@@ -36,6 +36,17 @@ namespace {
     return label->sizeHint().height();
   }
 
+  auto get_bbo_indicator_selector(BboIndicator indicator) {
+    static auto selectors = std::array<Selector, BBO_INDICATOR_COUNT>{
+      Any() > is_a<TableBody>() > UnknownIndicator(),
+      Any() > is_a<TableBody>() > AboveAskIndicator(),
+      Any() > is_a<TableBody>() > AtAskIndicator(),
+      Any() > is_a<TableBody>() > InsideIndicator(),
+      Any() > is_a<TableBody>() > AtBidIndicator(),
+      Any() > is_a<TableBody>() > BelowBidIndicator()};
+    return selectors[static_cast<int>(indicator)];
+  }
+
   void apply_indicator_style(StyleSheet& style, const Selector& selector,
       const HighlightColor& highlight) {
     style.get(selector).
@@ -133,23 +144,19 @@ void TimeAndSalesWindow::on_current(const Security& security) {
     (m_body->height() - header.height()) / get_row_height());
   auto& properties = m_factory->make()->get_current()->get();
   update_style(*m_table_view, [&] (auto& style) {
-    auto body_selector = Any() > is_a<TableBody>();
-    style.get(Any() > is_a<TableHeader>() >> is_a<TextBox>()).
+    auto header_item_selector =
+      Any() > is_a<TableHeader>() > is_a<TableHeaderItem>();
+    auto body_item_selector =
+      Any() > is_a<TableBody>() > Row() > is_a<TableItem>();
+    style.get(header_item_selector > TableHeaderItem::Label()).
       set(Font(properties.get_font()));
-    style.get(body_selector > Row() >> is_a<TextBox>()).
+    style.get(body_item_selector >> is_a<TextBox>()).
       set(Font(properties.get_font()));
-    apply_indicator_style(style, body_selector > UnknownIndicator(),
-      properties.get_highlight_color(BboIndicator::UNKNOWN));
-    apply_indicator_style(style, body_selector > AboveAskIndicator(),
-      properties.get_highlight_color(BboIndicator::ABOVE_ASK));
-    apply_indicator_style(style, body_selector > AtAskIndicator(),
-      properties.get_highlight_color(BboIndicator::AT_ASK));
-    apply_indicator_style(style, body_selector > InsideIndicator(),
-      properties.get_highlight_color(BboIndicator::INSIDE));
-    apply_indicator_style(style, body_selector > AtBidIndicator(),
-      properties.get_highlight_color(BboIndicator::AT_BID));
-    apply_indicator_style(style, body_selector > BelowBidIndicator(),
-      properties.get_highlight_color(BboIndicator::BELOW_BID));
+    for(auto i = 0; i < BBO_INDICATOR_COUNT; ++i) {
+      auto indicator = static_cast<BboIndicator>(i);
+      apply_indicator_style(style, get_bbo_indicator_selector(indicator),
+        properties.get_highlight_color(indicator));
+    }
   });
 }
 
