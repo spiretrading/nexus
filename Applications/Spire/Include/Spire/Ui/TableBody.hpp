@@ -103,15 +103,6 @@ namespace Styles {
       /** Returns the selection. */
       const std::shared_ptr<SelectionModel>& get_selection() const;
 
-      /** Returns the index of a TableItem. */
-      TableIndex get_index(const TableItem& item) const;
-
-      /** Returns the TableItem at a specified index. */
-      const TableItem* get_item(Index index) const;
-
-      /** Returns the TableItem at a specified index. */
-      TableItem* get_item(Index index);
-
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
       bool event(QEvent* event) override;
@@ -145,7 +136,8 @@ namespace Styles {
       std::vector<ColumnCover*> m_column_covers;
       int m_top_index;
       int m_visible_count;
-      int m_initialize_count;
+      QSpacerItem* m_top_spacer;
+      QSpacerItem* m_bottom_spacer;
       Styles m_styles;
       std::unordered_map<TableItem*, HoverObserver> m_hover_observers;
       boost::optional<Index> m_hover_index;
@@ -156,9 +148,6 @@ namespace Styles {
       boost::signals2::scoped_connection m_widths_connection;
 
       int get_column_size() const;
-      TableItem* get_current_item();
-      RowCover* find_row(int index);
-      TableItem* find_item(const boost::optional<Index>& index);
       int get_left_spacing(int index) const;
       int get_top_spacing(int index) const;
       void add_column_cover(int index, const QRect& geometry);

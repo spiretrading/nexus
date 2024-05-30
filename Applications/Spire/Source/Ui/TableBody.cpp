@@ -67,14 +67,31 @@ struct TableBody::Cover : QWidget {
 
 struct TableBody::RowCover : Cover {
   int m_index;
-  static std::deque<std::vector<TableItem*>> m_items;
 
-  RowCover(int index, TableBody& body)
+  RowCover(TableBody& body)
       : Cover(&body),
-        m_index(index) {
+        m_index(-1) {
     make_hbox_layout(this);
     match(*this, Row());
     layout()->setSpacing(body.m_styles.m_horizontal_spacing);
+    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    for(auto column = 0; column != body.get_column_size(); ++column) {
+      auto item = new TableItem();
+      body.m_hover_observers.emplace(std::piecewise_construct,
+        std::forward_as_tuple(item), std::forward_as_tuple(*item));
+      body.m_hover_observers.at(item).connect_state_signal(
+        std::bind_front(&TableBody::on_hover, &body, std::ref(*item)));
+      if(column != body.get_column_size() - 1) {
+        item->setFixedWidth(
+          body.m_widths->get(column) - body.get_left_spacing(column));
+      } else {
+        item->setSizePolicy(
+          QSizePolicy::Expanding, item->sizePolicy().verticalPolicy());
+      }
+      layout()->addWidget(item);
+      item->connect_active_signal(std::bind_front(
+        &TableBody::on_item_activated, &body, std::ref(*item)));
+    }
   }
 
   const TableItem* get_item(int index) const {
@@ -88,48 +105,9 @@ struct TableBody::RowCover : Cover {
     return nullptr;
   }
 
-  bool is_mounted() const {
-    return get_item(0) != nullptr;
-  }
-
-  void mount() {
+  void mount(int index) {
+    m_index = index;
     auto& body = *static_cast<TableBody*>(parentWidget());
-    if(m_items.empty()) {
-      for(auto column = 0; column != body.get_column_size(); ++column) {
-        auto item = new TableItem();
-        body.m_hover_observers.emplace(std::piecewise_construct,
-          std::forward_as_tuple(item), std::forward_as_tuple(*item));
-        body.m_hover_observers.at(item).connect_state_signal(
-          std::bind_front(&TableBody::on_hover, &body, std::ref(*item)));
-        if(column != body.get_column_size() - 1) {
-          item->setFixedWidth(
-            body.m_widths->get(column) - body.get_left_spacing(column));
-        } else {
-          item->setSizePolicy(
-            QSizePolicy::Expanding, item->sizePolicy().verticalPolicy());
-        }
-        layout()->addWidget(item);
-        item->connect_active_signal(std::bind_front(
-          &TableBody::on_item_activated, &body, std::ref(*item)));
-      }
-    } else {
-      auto items = std::move(m_items.front());
-      m_items.pop_front();
-      for(auto column = 0; column != body.get_column_size(); ++column) {
-        auto item = items[column];
-//        body.m_hover_observers.emplace(std::piecewise_construct,
-//          std::forward_as_tuple(item), std::forward_as_tuple(*item));
-//        body.m_hover_observers.at(item).connect_state_signal(
-//          std::bind_front(&TableBody::on_hover, &body, std::ref(*item)));
-        if(column != body.get_column_size() - 1) {
-          item->setFixedWidth(
-            body.m_widths->get(column) - body.get_left_spacing(column));
-        }
-        layout()->addWidget(item);
-//        item->connect_active_signal(std::bind_front(
-//          &TableBody::on_item_activated, &body, std::ref(*item)));
-      }
-    }
     for(auto i = 0; i != layout()->count(); ++i) {
       auto& item = *get_item(i);
       item.mount(*body.m_item_builder.mount(body.m_table, m_index, i));
@@ -137,6 +115,7 @@ struct TableBody::RowCover : Cover {
   }
 
   void unmount() {
+/*
     auto& body = *static_cast<TableBody*>(parentWidget());
     for(auto i = 0; i != layout()->count(); ++i) {
       auto item = get_item(i)->unmount();
@@ -149,11 +128,9 @@ struct TableBody::RowCover : Cover {
 //      delete item->widget();
       delete item;
     }
-    m_items.push_back(std::move(items));
+*/
   }
 };
-
-std::deque<std::vector<TableItem*>> TableBody::RowCover::m_items;
 
 struct TableBody::ColumnCover : Cover {
   QPointer<QWidget> m_hovered;
@@ -179,10 +156,9 @@ TableBody::TableBody(
       m_widths(std::move(widths)),
       m_item_builder(std::move(item_builder)),
       m_top_index(-1),
-      m_visible_count(0),
-      m_initialize_count(0) {
+      m_visible_count(0) {
   setFocusPolicy(Qt::StrongFocus);
-  auto row_layout = make_vbox_layout(this);
+  make_vbox_layout(this);
   m_style_connection =
     connect_style_signal(*this, std::bind_front(&TableBody::on_style, this));
   update_style(*this, [] (auto& style) {
@@ -208,12 +184,14 @@ TableBody::TableBody(
     add_column_cover(column, QRect(QPoint(left, 0), QSize(width, height())));
     left += width;
   }
+/*
   if(auto current_item = get_current_item()) {
     match(*current_item, Current());
     match(*current_item->parentWidget(), CurrentRow());
     match(*m_column_covers[
       m_current_controller.get_current()->get()->m_column], CurrentColumn());
   }
+*/
   m_table_connection = m_table->connect_operation_signal(
     std::bind_front(&TableBody::on_table_operation, this));
   m_current_connection = m_current_controller.connect_update_signal(
@@ -235,27 +213,6 @@ const std::shared_ptr<TableBody::CurrentModel>& TableBody::get_current() const {
 const std::shared_ptr<TableBody::SelectionModel>&
     TableBody::get_selection() const {
   return m_selection_controller.get_selection();
-}
-
-TableIndex TableBody::get_index(const TableItem& item) const {
-  auto row = layout()->indexOf(item.parentWidget());
-  if(row == -1) {
-    throw std::runtime_error("Invalid table item.");
-  }
-  auto column =
-    item.parentWidget()->layout()->indexOf(const_cast<TableItem*>(&item));
-  if(column == -1) {
-    throw std::runtime_error("Invalid table item.");
-  }
-  return TableIndex(row, column);
-}
-
-const TableItem* TableBody::get_item(Index index) const {
-  return const_cast<TableBody*>(this)->get_item(index);
-}
-
-TableItem* TableBody::get_item(Index index) {
-  return find_item(index);
 }
 
 bool TableBody::eventFilter(QObject* watched, QEvent* event) {
@@ -393,12 +350,14 @@ void TableBody::paintEvent(QPaintEvent* event) {
     }
   }
   for(auto i = 0; i != layout()->count(); ++i) {
-    auto& cover = *static_cast<Cover*>(layout()->itemAt(i)->widget());
-    if(cover.m_background_color.alphaF() != 0 &&
-        (!current || current->m_row != i)) {
-      painter.fillRect(cover.geometry(), cover.m_background_color);
+    if(auto cover = static_cast<Cover*>(layout()->itemAt(i)->widget())) {
+      if(cover->m_background_color.alphaF() != 0 &&
+          (!current || current->m_row != i)) {
+        painter.fillRect(cover->geometry(), cover->m_background_color);
+      }
     }
   }
+/*
   if(auto current_item = get_current_item()) {
     auto column_cover = m_column_covers[current->m_column];
     if(column_cover->m_background_color.alphaF() != 0) {
@@ -416,6 +375,7 @@ void TableBody::paintEvent(QPaintEvent* event) {
     painter.fillRect(
       QRect(current_position, current_item->size()), styles.m_background_color);
   }
+*/
   if(m_styles.m_horizontal_grid_color.alphaF() != 0) {
     auto draw_border = [&] (int top, int height) {
       painter.fillRect(
@@ -467,28 +427,6 @@ int TableBody::get_column_size() const {
   return m_widths->get_size() + 1;
 }
 
-TableItem* TableBody::get_current_item() {
-  return find_item(m_current_controller.get_current()->get());
-}
-
-TableBody::RowCover* TableBody::find_row(int index) {   
-  if(auto item = layout()->itemAt(index)) {
-    return static_cast<RowCover*>(item->widget());
-  }
-  return nullptr;
-}
-
-TableItem* TableBody::find_item(const optional<Index>& index) {
-  if(!index) {
-    return nullptr;
-  }
-  if(auto row = find_row(index->m_row)) {
-    auto item = row->layout()->itemAt(index->m_column)->widget();
-    return static_cast<TableItem*>(item);
-  }
-  return nullptr;
-}
-
 int TableBody::get_left_spacing(int index) const {
   if(index == 0) {
     return m_styles.m_padding.left();
@@ -509,42 +447,19 @@ void TableBody::add_column_cover(int index, const QRect& geometry) {
   cover->setFixedSize(geometry.size());
   m_column_covers.insert(m_column_covers.begin() + index, cover);
   match(*cover, Column());
-  connect_style_signal(*cover, std::bind_front(
-    &TableBody::on_cover_style, this, std::ref(*cover)));
+  connect_style_signal(*cover,
+    std::bind_front(&TableBody::on_cover_style, this, std::ref(*cover)));
   cover->show();
   on_cover_style(*cover);
 }
 
 void TableBody::add_row(int index) {
-  auto row = new RowCover(index, *this);
-/*
-  for(auto column = 0; column != get_column_size(); ++column) {
-    auto item = new TableItem();
-    m_hover_observers.emplace(std::piecewise_construct,
-      std::forward_as_tuple(item), std::forward_as_tuple(*item));
-    m_hover_observers.at(item).connect_state_signal(
-      std::bind_front(&TableBody::on_hover, this, std::ref(*item)));
-    if(column != get_column_size() - 1) {
-      item->setFixedWidth(m_widths->get(column) - get_left_spacing(column));
-    } else {
-      item->setSizePolicy(
-        QSizePolicy::Expanding, item->sizePolicy().verticalPolicy());
-    }
-    column_layout->addWidget(item);
-    item->connect_active_signal(
-      std::bind_front(&TableBody::on_item_activated, this, std::ref(*item)));
-  }
-*/
-  auto& row_layout = *static_cast<QBoxLayout*>(layout());
-  row_layout.insertWidget(index, row);
-  connect_style_signal(
-    *row, std::bind_front(&TableBody::on_cover_style, this, std::ref(*row)));
-  on_cover_style(*row);
   m_current_controller.add_row(index);
   m_selection_controller.add_row(index);
 }
 
 void TableBody::remove_row(int index) {
+/*
   for(auto i = 0; i != get_column_size(); ++i) {
     if(auto item = find_item(TableIndex(index, i))) {
       m_hover_observers.erase(item);
@@ -560,6 +475,7 @@ void TableBody::remove_row(int index) {
   row_layout.removeItem(row);
   delete row->widget();
   delete row;
+*/
 }
 
 void TableBody::move_row(int source, int destination) {
@@ -579,71 +495,43 @@ void TableBody::update_parent() {
 }
 
 void TableBody::initialize_visible_region() {
-  if(!parentWidget() || m_top_index != -1 || !isVisible()) {
+  if(!parentWidget() || m_top_index != -1 || !isVisible() ||
+      m_table->get_row_size() == 0 || m_table->get_column_size() == 0) {
     return;
   }
-  ++m_initialize_count;
-  QTimer::singleShot(0, this, [=] {
-    --m_initialize_count;
-    if(m_initialize_count != 0) {
-      return;
+  m_top_index = 0;
+  m_visible_count = 0;
+  auto i = 0;
+  auto position = 0;
+  auto layout_event = QEvent(QEvent::LayoutRequest);
+  while(position < height()) {
+    auto row = new RowCover(*this);
+    row->mount(i);
+    layout()->addWidget(row);
+    connect_style_signal(
+      *row, std::bind_front(&TableBody::on_cover_style, this, std::ref(*row)));
+    on_cover_style(*row);
+    row->show();
+    QApplication::sendEvent(this, &layout_event);
+    ++m_visible_count;
+    ++i;
+    position += row->height() + m_styles.m_vertical_spacing;
+  }
+  auto hidden_row_count = m_table->get_row_size() - m_visible_count;
+  if(hidden_row_count > 0) {
+    auto average_height = position / m_visible_count;
+    auto bottom_spacer_size =
+      (height() - position) + hidden_row_count * average_height;
+    if(bottom_spacer_size > 0) {
+      m_bottom_spacer = new QSpacerItem(
+        1, bottom_spacer_size, QSizePolicy::Expanding, QSizePolicy::Fixed);
+      layout()->addItem(m_bottom_spacer);
     }
-    if(!parentWidget()) {
-      return;
-    }
-    m_visible_count = 0;
-    if(layout()->isEmpty()) {
-      m_top_index = 0;
-      return;
-    }
-    m_top_index = std::numeric_limits<int>::max();
-    auto& front_row = *find_row(0);
-    if(!front_row.is_mounted()) {
-      front_row.mount();
-    }
-    auto top_geometry = QRect(QPoint(0, 0), front_row.sizeHint());
-    if(test_visibility(*this, top_geometry)) {
-      m_top_index = 0;
-      m_visible_count = 1;
-    } else {
-      m_top_index = -1;
-      return;
-    }
-    auto position = top_geometry.height() + m_styles.m_vertical_spacing;
-    auto current_row = [&] {
-      if(auto& current = m_current_controller.get_current()->get()) {
-        return current->m_row;
-      }
-      return -1;
-    }();
-    for(auto i = 1; i != layout()->count(); ++i) {
-      auto& row = *find_row(i);
-      auto geometry = [&] {
-        if(row.is_mounted()) {
-          return QRect(QPoint(0, position), row.sizeHint());
-        }
-        return QRect(QPoint(0, position), front_row.sizeHint());
-      }();
-      auto is_visible = test_visibility(*this, geometry);
-      if(is_visible || row.m_index == current_row) {
-        if(!row.is_mounted()) {
-          row.mount();
-        }
-        if(is_visible) {
-          m_top_index = std::min(m_top_index, row.m_index);
-          ++m_visible_count;
-        }
-      } else if(row.is_mounted() && current_row != row.m_index) {
-        row.unmount();
-      } else if(row.sizeHint().isEmpty()) {
-        row.setFixedHeight(geometry.height());
-      }
-      position += geometry.height() + m_styles.m_vertical_spacing;
-    }
-  });
+  }
 }
 
 void TableBody::update_visible_region() {
+/*
   if(m_top_index == -1) {
     initialize_visible_region();
     return;
@@ -711,10 +599,12 @@ void TableBody::update_visible_region() {
       position += row.height() + m_styles.m_vertical_spacing;
     }
   }
+*/
 }
 
 void TableBody::draw_item_borders(
     const optional<Index>& index, QPainter& painter) {
+/*
   auto item = find_item(index);
   if(!item) {
     return;
@@ -771,6 +661,7 @@ void TableBody::draw_item_borders(
     styles.m_border_bottom_color);
   painter.fillRect(QRect(left, top, left_border_size, height),
     styles.m_border_left_color);
+*/
 }
 
 void TableBody::on_item_activated(TableItem& item) {
@@ -790,6 +681,7 @@ void TableBody::on_item_activated(TableItem& item) {
 
 void TableBody::on_current(
     const optional<Index>& previous, const optional<Index>& current) {
+/*
   if(previous) {
     auto previous_item = find_item(previous);
     unmatch(*previous_item->parentWidget(), CurrentRow());
@@ -798,6 +690,8 @@ void TableBody::on_current(
     }
     unmatch(*previous_item, Current());
   }
+*/
+/*
   if(current) {
     auto current_item = get_current_item();
     match(*current_item, Current());
@@ -808,9 +702,11 @@ void TableBody::on_current(
     m_selection_controller.navigate(*current);
     current_item->setFocus();
   }
+*/
 }
 
 void TableBody::on_row_selection(const ListModel<int>::Operation& operation) {
+/*
   visit(operation,
     [&] (const ListModel<int>::AddOperation& operation) {
       auto& selection =
@@ -823,9 +719,11 @@ void TableBody::on_row_selection(const ListModel<int>::Operation& operation) {
       }
       match(*find_row(operation.get_value()), Selected());
     });
+*/
 }
 
 void TableBody::on_hover(TableItem& item, HoverObserver::State state) {
+/*
   auto index = get_index(item);
   if(state == HoverObserver::State::NONE) {
     unmatch(item, HoverItem());
@@ -838,6 +736,7 @@ void TableBody::on_hover(TableItem& item, HoverObserver::State state) {
     m_hover_index = index;
     update();
   }
+*/
 }
 
 void TableBody::on_style() {
@@ -894,6 +793,7 @@ void TableBody::on_style() {
         });
       });
   }
+/*
   auto& row_layout = *layout();
   for(auto i = 0; i != row_layout.count(); ++i) {
     find_row(i)->layout()->setSpacing(m_styles.m_horizontal_spacing);
@@ -907,6 +807,7 @@ void TableBody::on_style() {
       item.setFixedWidth(m_widths->get(column) - get_left_spacing(column));
     }
   }
+*/
   update_visible_region();
   update();
 }
@@ -940,6 +841,7 @@ void TableBody::on_table_operation(const TableModel::Operation& operation) {
 }
 
 void TableBody::on_widths_update(const ListModel<int>::Operation& operation) {
+/*
   visit(operation,
     [&] (const ListModel<int>::UpdateOperation& operation) {
       auto spacing = get_left_spacing(operation.m_index);
@@ -951,4 +853,5 @@ void TableBody::on_widths_update(const ListModel<int>::Operation& operation) {
         }
       }
     });
+*/
 }

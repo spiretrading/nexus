@@ -415,9 +415,11 @@ void EditableTableView::keyPressEvent(QKeyEvent* event) {
       return TableView::keyPressEvent(event);
     }
     m_is_processing_key = true;
+/* TODO
     auto target = find_focus_proxy(get_body().get_item(*current)->get_body());
     QCoreApplication::sendEvent(target, event);
     target->setFocus();
+*/
     m_is_processing_key = false;
   } else {
     TableView::keyPressEvent(event);
@@ -455,6 +457,7 @@ void EditableTableView::delete_row(int row) {
 }
 
 bool EditableTableView::navigate_next() {
+/*
   if(auto& current = get_current()->get()) {
     auto column = current->m_column + 1;
     if(column >= get_table()->get_column_size() - 1) {
@@ -472,6 +475,7 @@ bool EditableTableView::navigate_next() {
   } else {
     return false;
   }
+*/
   return true;
 }
 
