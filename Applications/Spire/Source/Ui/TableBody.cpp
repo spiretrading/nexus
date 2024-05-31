@@ -524,9 +524,7 @@ void TableBody::unmount_hidden_rows() {
     auto row = static_cast<RowCover*>(layout()->itemAt(i)->widget());
     if(!row) {
       ++i;
-      continue;
-    }
-    if(test_visibility(*this, row->geometry())) {
+    } else if(test_visibility(*this, row->geometry())) {
       is_top = false;
       ++i;
     } else {
@@ -573,6 +571,31 @@ void TableBody::update_visible_region() {
     return;
   }
   unmount_hidden_rows();
+  if(m_visible_count != 0) {
+    auto i = 0;
+    auto position = [&] {
+      if(m_bottom_spacer) {
+        return layout()->itemAt(layout()->count() - 2)->geometry().bottom() +
+          m_styles.m_vertical_spacing;
+      }
+      return layout()->itemAt(layout()->count() - 1)->geometry().bottom() +
+        m_styles.m_vertical_spacing;
+    }();
+    auto layout_event = QEvent(QEvent::LayoutRequest);
+    while(position < height()) {
+      auto row = new RowCover(*this);
+      row->mount(i);
+      layout()->addWidget(row);
+      connect_style_signal(
+        *row, std::bind_front(&TableBody::on_cover_style, this, std::ref(*row)));
+      on_cover_style(*row);
+      row->show();
+      QApplication::sendEvent(this, &layout_event);
+      ++m_visible_count;
+      ++i;
+      position += row->height() + m_styles.m_vertical_spacing;
+    }
+  }
 }
 
 void TableBody::draw_item_borders(
