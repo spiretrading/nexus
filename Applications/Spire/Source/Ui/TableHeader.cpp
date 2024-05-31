@@ -90,17 +90,16 @@ bool TableHeader::eventFilter(QObject* watched, QEvent* event) {
     }
     return -1;
   };
-  if(event->type() == QEvent::HideToParent) {
-    auto index = find_item_index(watched);
-    if(index != -1) {
-      auto blocker = shared_connection_block(m_widths_connection);
-      m_widths->set(index, 0);
-    }
-  } else if(event->type() == QEvent::ShowToParent) {
-    auto index = find_item_index(watched);
-    if(index != -1) {
-      auto blocker = shared_connection_block(m_widths_connection);
-      m_widths->set(index, m_item_views[index]->width());
+  if(event->type() == QEvent::HideToParent ||
+      event->type() == QEvent::ShowToParent) {
+    if(auto index = find_item_index(watched); index != -1) {
+      auto width = [&] {
+        if(event->type() == QEvent::HideToParent) {
+          return 0;
+        }
+        return m_item_views[index]->width();
+      }();
+      m_widths->set(index, width);
     }
   }
   return QWidget::eventFilter(watched, event);
