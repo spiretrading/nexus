@@ -203,10 +203,9 @@ struct TimeAndSalesWindowController {
       std::shared_ptr<TimeAndSalesPropertiesWindowFactory> factory)
       : m_time_and_sales_window(std::make_shared<TimeAndSalesWindow>(
           populate_securities(), std::move(factory),
-          std::bind_front(&TimeAndSalesWindowController::model_builder,
-            this))),
-    m_time_and_sales_test_window(std::make_unique<TimeAndSalesTestWindow>(
-      std::make_shared<DemoTimeAndSalesModel>())) {
+          std::bind_front(&TimeAndSalesWindowController::model_builder, this))),
+        m_time_and_sales_test_window(std::make_unique<TimeAndSalesTestWindow>(
+          std::make_shared<DemoTimeAndSalesModel>())) {
     m_time_and_sales_window->show();
     m_time_and_sales_window->installEventFilter(
       m_time_and_sales_test_window.get());
@@ -221,8 +220,7 @@ struct TimeAndSalesWindowController {
     auto time_and_sales = m_time_and_sales_test_window->m_time_and_sales;
     auto new_time_and_sales = std::make_shared<DemoTimeAndSalesModel>();
     new_time_and_sales->set_price(time_and_sales->get_price());
-    new_time_and_sales->set_bbo_indicator(
-      time_and_sales->get_bbo_indicator());
+    new_time_and_sales->set_bbo_indicator(time_and_sales->get_bbo_indicator());
     new_time_and_sales->set_period(time_and_sales->get_period());
     new_time_and_sales->set_query_duration(
       time_and_sales->get_query_duration());
@@ -237,7 +235,7 @@ int main(int argc, char** argv) {
   application.setOrganizationName(QObject::tr("Spire Trading Inc"));
   application.setApplicationName(QObject::tr("Time and Sales UI Tester"));
   initialize_resources();
-  auto factory = std::make_shared<TimeAndSalesPropertiesWindowFactory>();
-  auto controller = TimeAndSalesWindowController(std::move(factory));
+  auto controller = TimeAndSalesWindowController(
+    std::make_shared<TimeAndSalesPropertiesWindowFactory>());
   application.exec();
 }
