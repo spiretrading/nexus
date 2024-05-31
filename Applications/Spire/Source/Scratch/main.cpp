@@ -19,7 +19,7 @@ int main(int argc, char** argv) {
   application.setApplicationName(QObject::tr("Scratch"));
   initialize_resources();
   auto table = std::make_shared<ArrayTableModel>();
-  for(auto i = 0; i != 1000; ++i) {
+  for(auto i = 0; i != 10; ++i) {
     table->push({i});
   }
   auto current = std::make_shared<LocalValueModel<optional<TableIndex>>>();

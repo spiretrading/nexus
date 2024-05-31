@@ -24,14 +24,11 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  const auto SCROLL_BUFFER = 200;
-
   bool test_visibility(const QWidget& container, const QRect& geometry) {
     auto widget_geometry =
       QRect(container.mapToParent(geometry.topLeft()), geometry.size());
-    return std::max(-SCROLL_BUFFER, widget_geometry.top()) <=
-      std::min(container.parentWidget()->height() + SCROLL_BUFFER,
-        widget_geometry.bottom());
+    return std::max(0, widget_geometry.top()) <=
+      std::min(container.parentWidget()->height(), widget_geometry.bottom());
   }
 }
 
@@ -519,6 +516,54 @@ void TableBody::initialize_visible_region() {
   }
 }
 
+void TableBody::unmount_hidden_rows() {
+  auto is_top = true;
+  auto i = 0;
+  while(i != layout()->count()) {
+    auto item = layout()->itemAt(i);
+    auto row = static_cast<RowCover*>(layout()->itemAt(i)->widget());
+    if(!row) {
+      ++i;
+      continue;
+    }
+    if(test_visibility(*this, row->geometry())) {
+      is_top = false;
+      ++i;
+    } else {
+      if(is_top) {
+        ++m_top_index;
+        --m_visible_count;
+      }
+      auto height = row->height();
+      layout()->takeAt(i);
+      delete item;
+      row->unmount();
+      auto spacer = [&] {
+        if(is_top) {
+          if(!m_top_spacer) {
+            m_top_spacer =
+              new QSpacerItem(1, 0, QSizePolicy::Expanding, QSizePolicy::Fixed);
+            static_cast<QBoxLayout*>(layout())->insertSpacerItem(
+              0, m_top_spacer);
+            ++i;
+          }
+          return m_top_spacer;
+        }
+        if(!m_bottom_spacer) {
+          m_bottom_spacer =
+            new QSpacerItem(1, 0, QSizePolicy::Expanding, QSizePolicy::Fixed);
+          static_cast<QBoxLayout*>(layout())->insertSpacerItem(
+            layout()->count(), m_bottom_spacer);
+        }
+        return m_bottom_spacer;
+      }();
+      spacer->changeSize(1, spacer->sizeHint().height() + height,
+        QSizePolicy::Expanding, QSizePolicy::Fixed);
+      layout()->invalidate();
+    }
+  }
+}
+
 void TableBody::update_visible_region() {
   if(m_top_index == -1) {
     initialize_visible_region();
@@ -527,89 +572,7 @@ void TableBody::update_visible_region() {
   if(!parentWidget() || !isVisible()) {
     return;
   }
-  auto position = [&] {
-    if(m_top_spacer) {
-      return m_top_spacer->sizeHint().height();
-    }
-    return 0;
-  }();
-  auto unmounted_rows = std::vector<RowCover*>();
-  auto has_visible_row = false;
-  for(auto i = 0; i != layout()->count(); ++i) {
-    auto row = static_cast<RowCover*>(layout()->itemAt(i)->widget());
-    if(!row) {
-      continue;
-    }
-    if(test_visibility(*this, row->geometry())) {
-      has_visible_row = true;
-    } else {
-      row->unmount();
-      unmounted_rows.push_back(row);
-    }
-  }
-  qDebug() << mapFromParent(QPoint(0, 0));
-/*
-  auto top_row = [&] {
-    auto low = std::size_t(0);
-    auto high = std::size_t(layout()->count() - 1);
-    auto last_visible = static_cast<RowCover*>(nullptr);
-    while(high >= low) {
-      auto middle = low + (high - low) / 2;
-      auto& row = *find_row(middle);
-      auto item_geometry = row.frameGeometry();
-      if(test_visibility(*this, item_geometry)) {
-        last_visible = &row;
-        if(middle == 0) {
-          break;
-        }
-        high = middle - 1;
-      } else {
-        auto widget_geometry = mapToParent(item_geometry.topLeft());
-        if(widget_geometry.y() < 0) {
-          low = middle + 1;
-        } else {
-          if(middle == 0) {
-            break;
-          }
-          high = middle - 1;
-        }
-      }
-    }
-    return last_visible;
-  }();
-  if(top_row) {
-    auto current_row = [&] {
-      if(auto& current = m_current_controller.get_current()->get()) {
-        return current->m_row;
-      }
-      return -1;
-    }();
-    for(auto i = m_top_index;
-        i != std::min(m_top_index + m_visible_count, layout()->count()); ++i) {
-      auto& row = *find_row(i);
-      if(row.is_mounted() && current_row != row.m_index &&
-          !test_visibility(*this, row.frameGeometry())) {
-        row.unmount();
-      }
-    }
-    m_top_index = top_row->m_index;
-    m_visible_count = 0;
-    auto position = top_row->pos().y();
-    for(auto i = m_top_index; i != layout()->count(); ++i) {
-      auto& row = *find_row(i);
-      auto geometry = QRect(QPoint(0, position), row.size());
-      if(test_visibility(*this, geometry)) {
-        if(!row.is_mounted()) {
-          row.mount();
-        }
-        ++m_visible_count;
-      } else {
-        break;
-      }
-      position += row.height() + m_styles.m_vertical_spacing;
-    }
-  }
-*/
+  unmount_hidden_rows();
 }
 
 void TableBody::draw_item_borders(
