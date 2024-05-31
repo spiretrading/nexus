@@ -1,4 +1,5 @@
 #include "Spire/Ui/TableHeader.hpp"
+#include <boost/signals2/shared_connection_block.hpp>
 #include <QMouseEvent>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
@@ -30,9 +31,9 @@ TableHeader::TableHeader(
       if(m_widths->get_size() > i) {
         item->setFixedWidth(m_widths->get(i));
       } else {
-        std::static_pointer_cast<ArrayListModel<int>>(m_widths)->push(
-          item->sizeHint().width());
+        m_widths->push(item->sizeHint().width());
       }
+      item->installEventFilter(this);
     }
     item->set_is_resizeable(!is_last);
     item->connect_start_resize_signal(
@@ -79,6 +80,29 @@ connection TableHeader::connect_sort_signal(
 connection TableHeader::connect_filter_signal(
     const FilterSignal::slot_type& slot) const {
   return m_filter_signal.connect(slot);
+}
+
+bool TableHeader::eventFilter(QObject* watched, QEvent* event) {
+  auto find_item_index = [&] (QObject* item) {
+    auto i = std::find(m_item_views.begin(), m_item_views.end(), item);
+    if(i != m_item_views.end()) {
+      return std::distance(m_item_views.begin(), i);
+    }
+    return -1;
+  };
+  if(event->type() == QEvent::HideToParent ||
+      event->type() == QEvent::ShowToParent) {
+    if(auto index = find_item_index(watched); index != -1) {
+      auto width = [&] {
+        if(event->type() == QEvent::HideToParent) {
+          return 0;
+        }
+        return m_item_views[index]->width();
+      }();
+      m_widths->set(index, width);
+    }
+  }
+  return QWidget::eventFilter(watched, event);
 }
 
 void TableHeader::mouseMoveEvent(QMouseEvent* event) {
@@ -145,6 +169,10 @@ void TableHeader::on_widths_operation(
     [&] (const ListModel<int>::UpdateOperation& operation) {
       m_item_views[operation.m_index]->setFixedWidth(
         m_widths->get(operation.m_index));
+      if(!m_item_views[operation.m_index]->isVisible()) {
+        auto blocker = shared_connection_block(m_widths_connection);
+        m_widths->set(operation.m_index, 0);
+      }
     });
 }
 
