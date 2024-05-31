@@ -530,7 +530,8 @@ void TableBody::mount_visible_rows(std::vector<RowCover*>& unmounted_rows) {
       }
       return 0;
     }();
-    return layout()->itemAt(top_index)->geometry().top() - 1;
+    return layout()->itemAt(top_index)->geometry().top() -
+      m_styles.m_vertical_spacing - 1;
   }();
   auto invalidate_layout = false;
   auto top = mapFromParent(QPoint(0, 0)).y();
@@ -558,7 +559,7 @@ void TableBody::mount_visible_rows(std::vector<RowCover*>& unmounted_rows) {
       return layout()->count() - 1;
     }();
     return layout()->itemAt(bottom_index)->geometry().bottom() +
-      m_styles.m_vertical_spacing;
+      m_styles.m_vertical_spacing + 1;
   }();
   auto bottom = mapFromParent(QPoint(0, parentWidget()->height())).y();
   while(m_top_index + m_visible_count < m_table->get_row_size() &&
