@@ -93,13 +93,13 @@ bool TableHeader::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::HideToParent) {
     auto index = find_item_index(watched);
     if(index != -1) {
-      auto current_blocker = shared_connection_block(m_widths_connection);
+      auto blocker = shared_connection_block(m_widths_connection);
       m_widths->set(index, 0);
     }
   } else if(event->type() == QEvent::ShowToParent) {
     auto index = find_item_index(watched);
     if(index != -1) {
-      auto current_blocker = shared_connection_block(m_widths_connection);
+      auto blocker = shared_connection_block(m_widths_connection);
       m_widths->set(index, m_item_views[index]->width());
     }
   }
@@ -171,7 +171,7 @@ void TableHeader::on_widths_operation(
       m_item_views[operation.m_index]->setFixedWidth(
         m_widths->get(operation.m_index));
       if(!m_item_views[operation.m_index]->isVisible()) {
-        auto current_blocker = shared_connection_block(m_widths_connection);
+        auto blocker = shared_connection_block(m_widths_connection);
         m_widths->set(operation.m_index, 0);
       }
     });
