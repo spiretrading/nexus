@@ -51,7 +51,7 @@ void TimeAndSalesTableModel::load_history(int max_count) {
   if(m_entries.empty()) {
     load_snapshot(Queries::Sequence::Present(), max_count);
   } else {
-    load_snapshot(m_entries.back().m_time_and_sale.GetSequence(), max_count);
+    load_snapshot(m_entries.front().m_time_and_sale.GetSequence(), max_count);
   }
 }
 
@@ -59,7 +59,7 @@ BboIndicator TimeAndSalesTableModel::get_bbo_indicator(int row) const {
   if(row < 0 || row >= get_row_size()) {
     throw std::out_of_range("The row is out of range.");
   }
-  return m_entries[row].m_indicator;
+  return m_entries[m_entries.size() - 1 - row].m_indicator;
 }
 
 int TimeAndSalesTableModel::get_row_size() const {
@@ -71,10 +71,12 @@ int TimeAndSalesTableModel::get_column_size() const {
 }
 
 AnyRef TimeAndSalesTableModel::at(int row, int column) const {
-  if(column < 0 || column >= get_column_size()) {
-    throw std::out_of_range("The column is out of range.");
+  if(row < 0 || row >= get_row_size() || column < 0 ||
+      column >= get_column_size()) {
+    throw std::out_of_range("The row or column is out of range.");
   }
-  return extract_field(m_entries[row].m_time_and_sale.GetValue(),
+  return extract_field(
+    m_entries[m_entries.size() - 1 - row].m_time_and_sale.GetValue(),
     static_cast<Column>(column));
 }
 
@@ -98,10 +100,13 @@ void TimeAndSalesTableModel::load_snapshot(Queries::Sequence last, int count) {
   m_promise = m_model->query_until(last, count).then(
     [=] (auto&& result) {
       auto& snapshot = result.Get();
+      auto size = get_row_size();
+      m_entries.insert(m_entries.begin(),
+        std::make_move_iterator(snapshot.begin()),
+        std::make_move_iterator(snapshot.end()));
       m_transaction.transact([&] {
-        for(auto i = snapshot.rbegin(); i != snapshot.rend(); ++i) {
-          m_entries.push_back(*i);
-          m_transaction.push(TableModel::AddOperation(m_entries.size() - 1));
+        for(auto i = 0; i < std::ssize(snapshot); ++i) {
+          m_transaction.push(TableModel::AddOperation(size + i));
         }
       });
       m_end_loading_signal();
@@ -109,6 +114,6 @@ void TimeAndSalesTableModel::load_snapshot(Queries::Sequence last, int count) {
 }
 
 void TimeAndSalesTableModel::on_update(const TimeAndSalesModel::Entry& entry) {
-  m_entries.push_front(entry);
+  m_entries.push_back(entry);
   m_transaction.push(TableModel::AddOperation(0));
 }

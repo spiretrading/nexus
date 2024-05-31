@@ -1,6 +1,5 @@
 #ifndef SPIRE_TIME_AND_SALES_TABLE_MODEL_HPP
 #define SPIRE_TIME_AND_SALES_TABLE_MODEL_HPP
-#include <deque>
 #include "Spire/Spire/TableModel.hpp"
 #include "Spire/Spire/TableModelTransactionLog.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesModel.hpp"
@@ -88,7 +87,7 @@ namespace Spire {
       mutable BeginLoadingSignal m_begin_loading_signal;
       mutable EndLoadingSignal m_end_loading_signal;
       std::shared_ptr<TimeAndSalesModel> m_model;
-      std::deque<TimeAndSalesModel::Entry> m_entries;
+      std::vector<TimeAndSalesModel::Entry> m_entries;
       QtPromise<void> m_promise;
       TableModelTransactionLog m_transaction;
       boost::signals2::scoped_connection m_connection;
