@@ -196,28 +196,26 @@ struct TimeAndSalesTestWindow : QWidget {
 };
 
 struct TimeAndSalesWindowController {
-  std::shared_ptr<TimeAndSalesWindow> m_time_and_sales_window;
-  std::unique_ptr<TimeAndSalesTestWindow> m_time_and_sales_test_window;
+  TimeAndSalesWindow m_time_and_sales_window;
+  TimeAndSalesTestWindow m_time_and_sales_test_window;
 
   explicit TimeAndSalesWindowController(
       std::shared_ptr<TimeAndSalesPropertiesWindowFactory> factory)
-      : m_time_and_sales_window(std::make_shared<TimeAndSalesWindow>(
-          populate_securities(), std::move(factory),
-          std::bind_front(&TimeAndSalesWindowController::model_builder, this))),
-        m_time_and_sales_test_window(std::make_unique<TimeAndSalesTestWindow>(
-          std::make_shared<DemoTimeAndSalesModel>())) {
-    m_time_and_sales_window->show();
-    m_time_and_sales_window->installEventFilter(
-      m_time_and_sales_test_window.get());
-    m_time_and_sales_test_window->setAttribute(Qt::WA_ShowWithoutActivating);
-    m_time_and_sales_test_window->show();
-    m_time_and_sales_test_window->move(m_time_and_sales_window->pos().x() +
-      m_time_and_sales_window->frameGeometry().width() + scale_width(100),
-      m_time_and_sales_window->pos().y());
+      : m_time_and_sales_window(populate_securities(), std::move(factory),
+          std::bind_front(&TimeAndSalesWindowController::model_builder, this)),
+        m_time_and_sales_test_window(
+          std::make_shared<DemoTimeAndSalesModel>()) {
+    m_time_and_sales_window.show();
+    m_time_and_sales_window.installEventFilter(&m_time_and_sales_test_window);
+    m_time_and_sales_test_window.setAttribute(Qt::WA_ShowWithoutActivating);
+    m_time_and_sales_test_window.show();
+    m_time_and_sales_test_window.move(m_time_and_sales_window.pos().x() +
+      m_time_and_sales_window.frameGeometry().width() + scale_width(100),
+      m_time_and_sales_window.pos().y());
   }
 
   std::shared_ptr<TimeAndSalesModel> model_builder(const Security& security) {
-    auto time_and_sales = m_time_and_sales_test_window->m_time_and_sales;
+    auto time_and_sales = m_time_and_sales_test_window.m_time_and_sales;
     auto new_time_and_sales = std::make_shared<DemoTimeAndSalesModel>();
     new_time_and_sales->set_price(time_and_sales->get_price());
     new_time_and_sales->set_bbo_indicator(time_and_sales->get_bbo_indicator());
@@ -225,7 +223,7 @@ struct TimeAndSalesWindowController {
     new_time_and_sales->set_query_duration(
       time_and_sales->get_query_duration());
     new_time_and_sales->set_data_random(time_and_sales->is_data_random());
-    m_time_and_sales_test_window->m_time_and_sales = new_time_and_sales;
+    m_time_and_sales_test_window.m_time_and_sales = new_time_and_sales;
     return new_time_and_sales;
   }
 };
