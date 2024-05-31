@@ -480,56 +480,99 @@ void TableBody::update_parent() {
   initialize_visible_region();
 }
 
+TableBody::RowCover* TableBody::mount_row(
+    int index, int layout_index, std::vector<RowCover*>& unmounted_rows) {
+  auto row = [&] {
+    if(unmounted_rows.empty()) {
+      auto row = new RowCover(*this);
+      connect_style_signal(*row,
+        std::bind_front(&TableBody::on_cover_style, this, std::ref(*row)));
+      return row;
+    }
+    auto row = unmounted_rows.back();
+    unmounted_rows.pop_back();
+    return row;
+  }();
+  row->mount(index);
+  static_cast<QBoxLayout*>(layout())->insertWidget(layout_index, row);
+  on_cover_style(*row);
+  row->show();
+  auto layout_event = QEvent(QEvent::LayoutRequest);
+  QApplication::sendEvent(this, &layout_event);
+  return row;
+}
+
+bool TableBody::adjust_spacer_height(
+    QSpacerItem*& spacer, int index, int height) {
+  if(spacer) {
+    auto spacer_size = spacer->sizeHint().height() - height;
+    if(spacer_size > 0) {
+      spacer->changeSize(
+        1, spacer_size, QSizePolicy::Expanding, QSizePolicy::Fixed);
+    } else {
+      layout()->takeAt(index);
+      delete spacer;
+      spacer = nullptr;
+    }
+    return true;
+  }
+  return false;
+}
+
 void TableBody::mount_visible_rows(std::vector<RowCover*>& unmounted_rows) {
   auto position = [&] {
     if(layout()->isEmpty()) {
       return 0;
-    } else if(m_bottom_spacer) {
-      return layout()->itemAt(layout()->count() - 2)->geometry().bottom() +
-        m_styles.m_vertical_spacing;
     }
-    return layout()->itemAt(layout()->count() - 1)->geometry().bottom() +
+    auto top_index = [&] {
+      if(m_top_spacer) {
+        return 1;
+      }
+      return 0;
+    }();
+    return layout()->itemAt(top_index)->geometry().top() - 1;
+  }();
+  auto invalidate_layout = false;
+  auto top = mapFromParent(QPoint(0, 0)).y();
+  while(m_top_index > 0 && position > top) {
+    auto layout_index = [&] {
+      if(m_top_spacer) {
+        return 1;
+      }
+      return 0;
+    }();
+    auto row = mount_row(m_top_index - 1, layout_index, unmounted_rows);
+    invalidate_layout |= adjust_spacer_height(m_top_spacer, 0, row->height());
+    --m_top_index;
+    ++m_visible_count;
+    position -= row->height() + m_styles.m_vertical_spacing;
+  }
+  position = [&] {
+    if(layout()->isEmpty()) {
+      return 0;
+    }
+    auto bottom_index = [&] {
+      if(m_bottom_spacer) {
+        return layout()->count() - 2;
+      }
+      return layout()->count() - 1;
+    }();
+    return layout()->itemAt(bottom_index)->geometry().bottom() +
       m_styles.m_vertical_spacing;
   }();
-  auto layout_event = QEvent(QEvent::LayoutRequest);
   auto bottom = mapFromParent(QPoint(0, parentWidget()->height())).y();
-  auto invalidate_layout = false;
   while(m_top_index + m_visible_count < m_table->get_row_size() &&
       position < bottom) {
-    auto row = [&] {
-      if(unmounted_rows.empty()) {
-        auto row = new RowCover(*this);
-        connect_style_signal(*row,
-          std::bind_front(&TableBody::on_cover_style, this, std::ref(*row)));
-        return row;
+    auto layout_index = [&] {
+      if(m_bottom_spacer) {
+        return layout()->count() - 1;
       }
-      auto row = unmounted_rows.back();
-      unmounted_rows.pop_back();
-      return row;
+      return layout()->count();
     }();
-    row->mount(m_top_index + m_visible_count);
-    if(m_bottom_spacer) {
-      static_cast<QBoxLayout*>(
-        layout())->insertWidget(layout()->count() - 1, row);
-    } else {
-      layout()->addWidget(row);
-    }
-    on_cover_style(*row);
-    row->show();
-    QApplication::sendEvent(this, &layout_event);
-    if(m_bottom_spacer) {
-      auto bottom_spacer_size =
-        m_bottom_spacer->sizeHint().height() - row->height();
-      if(bottom_spacer_size > 0) {
-        m_bottom_spacer->changeSize(
-          1, bottom_spacer_size, QSizePolicy::Expanding, QSizePolicy::Fixed);
-      } else {
-        layout()->takeAt(layout()->count() - 1);
-        delete m_bottom_spacer;
-        m_bottom_spacer = nullptr;
-      }
-      invalidate_layout = true;
-    }
+    auto row =
+      mount_row(m_top_index + m_visible_count, layout_index, unmounted_rows);
+    invalidate_layout |= adjust_spacer_height(
+      m_bottom_spacer, layout()->count() - 1, row->height());
     ++m_visible_count;
     position += row->height() + m_styles.m_vertical_spacing;
   }
