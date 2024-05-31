@@ -621,8 +621,8 @@ std::vector<TableBody::RowCover*> TableBody::unmount_hidden_rows() {
     } else {
       if(is_top) {
         ++m_top_index;
-        --m_visible_count;
       }
+      --m_visible_count;
       auto height = row->height();
       layout()->takeAt(i);
       delete item;
