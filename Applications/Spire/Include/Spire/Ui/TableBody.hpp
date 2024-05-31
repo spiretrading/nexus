@@ -155,8 +155,9 @@ namespace Styles {
       void remove_row(int index);
       void move_row(int source, int destination);
       void update_parent();
+      void mount_visible_rows(std::vector<RowCover*>& unmounted_rows);
       void initialize_visible_region();
-      void unmount_hidden_rows();
+      std::vector<RowCover*> unmount_hidden_rows();
       void update_visible_region();
       void draw_item_borders(const boost::optional<Index>& index,
         QPainter& painter);
