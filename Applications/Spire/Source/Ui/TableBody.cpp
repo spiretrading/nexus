@@ -356,6 +356,7 @@ void TableBody::paintEvent(QPaintEvent* event) {
     painter.fillRect(
       QRect(current_position, current_item->size()), styles.m_background_color);
   }
+*/
   if(m_styles.m_horizontal_grid_color.alphaF() != 0) {
     auto draw_border = [&] (int top, int height) {
       painter.fillRect(
@@ -365,10 +366,25 @@ void TableBody::paintEvent(QPaintEvent* event) {
       draw_border(0, m_styles.m_padding.top());
     }
     if(m_styles.m_vertical_spacing != 0) {
-      auto& row_layout = *static_cast<QBoxLayout*>(layout());
-      for(auto row = 1; row < row_layout.count(); ++row) {
-        draw_border(row_layout.itemAt(row)->geometry().top() -
+      auto bottom_index = [&] {
+        if(m_bottom_spacer) {
+          return layout()->count() - 1;
+        }
+        return layout()->count();
+      }();
+      auto top_index = 1;
+      if(m_top_spacer) {
+        draw_border(m_top_spacer->geometry().bottom() + 1 -
           m_styles.m_vertical_spacing, m_styles.m_vertical_spacing);
+        ++top_index;
+      }
+      for(auto row = top_index; row < bottom_index; ++row) {
+        draw_border(layout()->itemAt(row)->geometry().top() -
+          m_styles.m_vertical_spacing, m_styles.m_vertical_spacing);
+      }
+      if(m_bottom_spacer) {
+        draw_border(
+          m_bottom_spacer->geometry().top(), m_styles.m_vertical_spacing);
       }
     }
     if(m_styles.m_padding.bottom() != 0) {
@@ -398,6 +414,7 @@ void TableBody::paintEvent(QPaintEvent* event) {
         width() - m_styles.m_padding.right(), m_styles.m_padding.right());
     }
   }
+/*
   draw_item_borders(m_hover_index, painter);
   draw_item_borders(current, painter);
 */
@@ -845,21 +862,17 @@ void TableBody::on_style() {
         });
       });
   }
-  auto& row_layout = *layout();
-  row_layout.setSpacing(m_styles.m_vertical_spacing);
-  row_layout.setContentsMargins(m_styles.m_padding);
-/*
-  for(auto i = 0; i != row_layout.count(); ++i) {
-    find_row(i)->layout()->setSpacing(m_styles.m_horizontal_spacing);
-  }
-  for(auto i = 0; i != row_layout.count(); ++i) {
-    auto& row = *find_row(i);
-    for(auto column = 0; column != m_widths->get_size(); ++column) {
-      auto& item = *row.get_item(column);
-      item.setFixedWidth(m_widths->get(column) - get_left_spacing(column));
+  layout()->setSpacing(m_styles.m_vertical_spacing);
+  layout()->setContentsMargins(m_styles.m_padding);
+  for(auto i = 0; i != layout()->count(); ++i) {
+    if(auto row = static_cast<RowCover*>(layout()->itemAt(i)->widget())) {
+      row->layout()->setSpacing(m_styles.m_horizontal_spacing);
+      for(auto column = 0; column != m_widths->get_size(); ++column) {
+        auto& item = *row->get_item(column);
+        item.setFixedWidth(m_widths->get(column) - get_left_spacing(column));
+      }
     }
   }
-*/
   update_visible_region();
   update();
 }
@@ -893,17 +906,15 @@ void TableBody::on_table_operation(const TableModel::Operation& operation) {
 }
 
 void TableBody::on_widths_update(const ListModel<int>::Operation& operation) {
-/*
   visit(operation,
     [&] (const ListModel<int>::UpdateOperation& operation) {
       auto spacing = get_left_spacing(operation.m_index);
-      auto& row_layout = *layout();
-      for(auto i = 0; i != row_layout.count(); ++i) {
-        auto& row = *find_row(i);
-        if(auto item = row.get_item(operation.m_index)) {
-          item->setFixedWidth(m_widths->get(operation.m_index) - spacing);
+      for(auto i = 0; i != layout()->count(); ++i) {
+        if(auto row = static_cast<RowCover*>(layout()->itemAt(i)->widget())) {
+          if(auto item = row->get_item(operation.m_index)) {
+            item->setFixedWidth(m_widths->get(operation.m_index) - spacing);
+          }
         }
       }
     });
-*/
 }
