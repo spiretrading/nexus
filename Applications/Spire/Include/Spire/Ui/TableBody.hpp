@@ -124,6 +124,7 @@ namespace Styles {
       struct Cover;
       struct RowCover;
       struct ColumnCover;
+      struct Painter;
       struct BoxStyles {
         QColor m_background_color;
       };

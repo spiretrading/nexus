@@ -122,6 +122,74 @@ struct TableBody::ColumnCover : Cover {
   }
 };
 
+struct TableBody::Painter {
+  static void paint_horizontal_borders(TableBody& body, QPainter& painter) {
+    if(body.m_styles.m_horizontal_grid_color.alphaF() == 0) {
+      return;
+    }
+    auto draw_border = [&] (int top, int height) {
+      painter.fillRect(QRect(0, top, body.width(), height),
+        body.m_styles.m_horizontal_grid_color);
+    };
+    if(body.m_styles.m_padding.top() != 0) {
+      draw_border(0, body.m_styles.m_padding.top());
+    }
+    if(body.m_styles.m_vertical_spacing != 0) {
+      auto bottom_index = [&] {
+        if(body.m_bottom_spacer) {
+          return body.layout()->count() - 1;
+        }
+        return body.layout()->count();
+      }();
+      auto top_index = 1;
+      if(body.m_top_spacer) {
+        draw_border(body.m_top_spacer->geometry().bottom() + 1 -
+          body.m_styles.m_vertical_spacing, body.m_styles.m_vertical_spacing);
+        ++top_index;
+      }
+      for(auto row = top_index; row < bottom_index; ++row) {
+        draw_border(body.layout()->itemAt(row)->geometry().top() -
+          body.m_styles.m_vertical_spacing, body.m_styles.m_vertical_spacing);
+      }
+      if(body.m_bottom_spacer) {
+        draw_border(body.m_bottom_spacer->geometry().top(),
+          body.m_styles.m_vertical_spacing);
+      }
+    }
+    if(body.m_styles.m_padding.bottom() != 0) {
+      draw_border(body.height() - body.m_styles.m_padding.bottom(),
+        body.m_styles.m_padding.bottom());
+    }
+  }
+
+  static void paint_vertical_borders(TableBody& body, QPainter& painter) {
+    if(body.m_styles.m_vertical_grid_color.alphaF() == 0) {
+      return;
+    }
+    auto draw_border = [&] (int left, int width) {
+      painter.fillRect(QRect(left, 0, width, body.height()),
+        body.m_styles.m_vertical_grid_color);
+    };
+    if(body.m_styles.m_padding.left() != 0) {
+      draw_border(0, body.m_styles.m_padding.left());
+    }
+    if(body.m_styles.m_horizontal_spacing != 0 &&
+        body.m_widths->get_size() > 0) {
+      auto left = body.m_widths->get(0);
+      for(auto column = 1; column < body.get_column_size(); ++column) {
+        draw_border(left, body.m_styles.m_horizontal_spacing);
+        if(column != body.m_widths->get_size()) {
+          left += body.m_widths->get(column);
+        }
+      }
+    }
+    if(body.m_styles.m_padding.right() != 0) {
+      draw_border(body.width() - body.m_styles.m_padding.right(),
+        body.m_styles.m_padding.right());
+    }
+  }
+};
+
 TableBody::TableBody(
     std::shared_ptr<TableModel> table, std::shared_ptr<CurrentModel> current,
     std::shared_ptr<SelectionModel> selection,
@@ -357,63 +425,8 @@ void TableBody::paintEvent(QPaintEvent* event) {
       QRect(current_position, current_item->size()), styles.m_background_color);
   }
 */
-  if(m_styles.m_horizontal_grid_color.alphaF() != 0) {
-    auto draw_border = [&] (int top, int height) {
-      painter.fillRect(
-        QRect(0, top, width(), height), m_styles.m_horizontal_grid_color);
-    };
-    if(m_styles.m_padding.top() != 0) {
-      draw_border(0, m_styles.m_padding.top());
-    }
-    if(m_styles.m_vertical_spacing != 0) {
-      auto bottom_index = [&] {
-        if(m_bottom_spacer) {
-          return layout()->count() - 1;
-        }
-        return layout()->count();
-      }();
-      auto top_index = 1;
-      if(m_top_spacer) {
-        draw_border(m_top_spacer->geometry().bottom() + 1 -
-          m_styles.m_vertical_spacing, m_styles.m_vertical_spacing);
-        ++top_index;
-      }
-      for(auto row = top_index; row < bottom_index; ++row) {
-        draw_border(layout()->itemAt(row)->geometry().top() -
-          m_styles.m_vertical_spacing, m_styles.m_vertical_spacing);
-      }
-      if(m_bottom_spacer) {
-        draw_border(
-          m_bottom_spacer->geometry().top(), m_styles.m_vertical_spacing);
-      }
-    }
-    if(m_styles.m_padding.bottom() != 0) {
-      draw_border(
-        height() - m_styles.m_padding.bottom(), m_styles.m_padding.bottom());
-    }
-  }
-  if(m_styles.m_vertical_grid_color.alphaF() != 0) {
-    auto draw_border = [&] (int left, int width) {
-      painter.fillRect(
-        QRect(left, 0, width, height()), m_styles.m_vertical_grid_color);
-    };
-    if(m_styles.m_padding.left() != 0) {
-      draw_border(0, m_styles.m_padding.left());
-    }
-    if(m_styles.m_horizontal_spacing != 0 && m_widths->get_size() > 0) {
-      auto left = m_widths->get(0);
-      for(auto column = 1; column < get_column_size(); ++column) {
-        draw_border(left, m_styles.m_horizontal_spacing);
-        if(column != m_widths->get_size()) {
-          left += m_widths->get(column);
-        }
-      }
-    }
-    if(m_styles.m_padding.right() != 0) {
-      draw_border(
-        width() - m_styles.m_padding.right(), m_styles.m_padding.right());
-    }
-  }
+  Painter::paint_horizontal_borders(*this, painter);
+  Painter::paint_vertical_borders(*this, painter);
 /*
   draw_item_borders(m_hover_index, painter);
   draw_item_borders(current, painter);
