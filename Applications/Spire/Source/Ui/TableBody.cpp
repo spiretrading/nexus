@@ -78,8 +78,6 @@ struct TableBody::Cover : QWidget {
 };
 
 struct TableBody::RowCover : Cover {
-  mutable optional<QSize> m_size_hint;
-
   RowCover(TableBody& body)
       : Cover(&body) {
     make_hbox_layout(this);
@@ -130,26 +128,6 @@ struct TableBody::RowCover : Cover {
       auto item = get_item(i)->unmount();
       body.m_item_builder.unmount(item);
     }
-  }
-
-  QSize sizeHint() const override {
-    if(m_size_hint) {
-      return *m_size_hint;
-    }
-    m_size_hint.emplace(1, 0);
-    for(auto i = 0; i != layout()->count(); ++i) {
-      m_size_hint->rheight() += std::max(m_size_hint->height(),
-        layout()->itemAt(i)->widget()->sizeHint().height());
-    }
-    return *m_size_hint;
-  }
-
-  bool event(QEvent* event) override {
-    if(event->type() == QEvent::LayoutRequest) {
-      m_size_hint = none;
-      updateGeometry();
-    }
-    return QWidget::event(event);
   }
 };
 
@@ -579,14 +557,8 @@ void TableBody::update_spacer(Spacer*& spacer, int hidden_row_count) {
         total_height += row->sizeHint().height();
       }
     }
-    auto spacer_size = [&] {
-      auto spacing_count = hidden_row_count;
-      if(spacer == m_bottom_spacer) {
-        --spacing_count;
-      }
-      return (hidden_row_count * total_height) / m_visible_count +
-        spacing_count * layout()->spacing();
-    }();
+    auto spacer_size = (hidden_row_count * total_height) / m_visible_count +
+      hidden_row_count * layout()->spacing();
     if(spacer_size > 0) {
       if(spacer) {
         spacer->set_height(spacer_size);
@@ -599,7 +571,6 @@ void TableBody::update_spacer(Spacer*& spacer, int hidden_row_count) {
           layout()->addItem(spacer);
         }
       }
-      diagnose("Update", *layout());
     } else if(spacer) {
       delete_spacer = true;
     }
@@ -615,31 +586,6 @@ void TableBody::update_spacer(Spacer*& spacer, int hidden_row_count) {
     delete spacer;
     spacer = nullptr;
   }
-  auto expected_height = layout()->contentsMargins().top() +
-    layout()->contentsMargins().bottom();
-  expected_height += m_table->get_row_size() *
-    layout()->itemAt(1)->widget()->sizeHint().height();
-  expected_height += (m_table->get_row_size() - 1) * layout()->spacing();
-  auto total_height = layout()->contentsMargins().top() +
-    layout()->contentsMargins().bottom();
-  for(auto i = 0; i != layout()->count(); ++i) {
-    if(auto row = layout()->itemAt(i)->widget()) {
-      total_height += row->sizeHint().height();
-      if(i != layout()->count() - 1) {
-        total_height += layout()->spacing();
-      }
-    }
-  }
-  if(m_top_spacer) {
-    total_height += m_top_spacer->get_height();
-  }
-  if(m_bottom_spacer) {
-    total_height += m_bottom_spacer->get_height();
-  }
-  qDebug() << "Expected: " << expected_height;
-  qDebug() << "Total: " << total_height;
-  qDebug() << "Actual: " << height();
-  qDebug() << "Size Hint: " << sizeHint();
 }
 
 void TableBody::mount_visible_rows(std::vector<RowCover*>& unmounted_rows) {
