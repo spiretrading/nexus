@@ -143,6 +143,35 @@ struct TableBody::ColumnCover : Cover {
   }
 };
 
+struct TableBody::Spacer : QSpacerItem {
+  int m_height;
+
+  explicit Spacer(int height)
+    : QSpacerItem(0, height, QSizePolicy::Expanding, QSizePolicy::Fixed),
+      m_height(height) {}
+
+  int get_height() const {
+    return m_height;
+  }
+
+  void set_height(int height) {
+    m_height = height;
+    changeSize(0, m_height, QSizePolicy::Expanding, QSizePolicy::Fixed);
+  }
+
+  QSize maximumSize() const override {
+    return QSize(QSpacerItem::maximumSize().width(), m_height);
+  }
+
+  QSize minimumSize() const override {
+    return QSize(QSpacerItem::minimumSize().width(), m_height);
+  }
+
+  QSize sizeHint() const override {
+    return QSize(QSpacerItem::sizeHint().width(), m_height);
+  }
+};
+
 TableBody::TableBody(
     std::shared_ptr<TableModel> table, std::shared_ptr<CurrentModel> current,
     std::shared_ptr<SelectionModel> selection,
@@ -517,14 +546,11 @@ TableBody::RowCover* TableBody::mount_row(
   return row;
 }
 
-bool TableBody::adjust_spacer_height(
-    QSpacerItem*& spacer, int index, int height) {
+bool TableBody::adjust_spacer_height(Spacer*& spacer, int index, int height) {
   if(spacer) {
     auto spacer_size = spacer->sizeHint().height() - height;
     if(spacer_size > 0) {
-      spacer->changeSize(spacer->sizeHint().width(), spacer_size,
-        spacer->sizePolicy().horizontalPolicy(),
-        spacer->sizePolicy().verticalPolicy());
+      spacer->set_height(spacer_size);
       diagnose("Adjust", *layout());
     } else {
       layout()->takeAt(index);
@@ -621,10 +647,9 @@ void TableBody::initialize_visible_region() {
     }
     auto average_height = total_height / layout()->count();
     auto bottom_spacer_size = hidden_row_count * average_height +
-      (hidden_row_count - 1) * layout()->spacing();
+      (hidden_row_count) * layout()->spacing();
     if(bottom_spacer_size > 0) {
-      m_bottom_spacer = new QSpacerItem(
-        0, bottom_spacer_size, QSizePolicy::Expanding, QSizePolicy::Fixed);
+      m_bottom_spacer = new Spacer(bottom_spacer_size);
       layout()->addItem(m_bottom_spacer);
       diagnose("Initialize", *layout());
     }
@@ -657,31 +682,25 @@ std::vector<TableBody::RowCover*> TableBody::unmount_hidden_rows() {
       delete item;
       row->unmount();
       unmounted_rows.push_back(row);
-      auto spacer = [&] () -> QSpacerItem* {
+      auto spacer = [&] () -> Spacer* {
         if(is_top) {
           if(!m_top_spacer) {
-            m_top_spacer = new QSpacerItem(
-              0, height, QSizePolicy::Expanding, QSizePolicy::Fixed);
-            static_cast<QBoxLayout*>(layout())->insertItem(
-              0, m_top_spacer);
+            m_top_spacer = new Spacer(height + layout()->spacing());
+            static_cast<QBoxLayout*>(layout())->insertItem(0, m_top_spacer);
             ++i;
             return nullptr;
           }
           return m_top_spacer;
         }
         if(!m_bottom_spacer) {
-          m_bottom_spacer = new QSpacerItem(
-            0, height, QSizePolicy::Expanding, QSizePolicy::Fixed);
+          m_bottom_spacer = new Spacer(height);
           layout()->addItem(m_bottom_spacer);
           return nullptr;
         }
         return m_bottom_spacer;
       }();
       if(spacer) {
-        spacer->changeSize(
-          spacer->sizeHint().width(), spacer->sizeHint().height() + height,
-          spacer->sizePolicy().horizontalPolicy(),
-          spacer->sizePolicy().verticalPolicy());
+        spacer->set_height(spacer->get_height() + height);
       }
       diagnose("Unmount", *layout());
       invalidate_layout = true;

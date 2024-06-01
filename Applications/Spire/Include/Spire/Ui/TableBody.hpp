@@ -124,6 +124,7 @@ namespace Styles {
       struct Cover;
       struct RowCover;
       struct ColumnCover;
+      struct Spacer;
       struct BoxStyles {
         QColor m_background_color;
       };
@@ -136,8 +137,8 @@ namespace Styles {
       std::vector<ColumnCover*> m_column_covers;
       int m_top_index;
       int m_visible_count;
-      QSpacerItem* m_top_spacer;
-      QSpacerItem* m_bottom_spacer;
+      Spacer* m_top_spacer;
+      Spacer* m_bottom_spacer;
       Styles m_styles;
       std::unordered_map<TableItem*, HoverObserver> m_hover_observers;
       boost::optional<Index> m_hover_index;
@@ -157,7 +158,7 @@ namespace Styles {
       void update_parent();
       RowCover* mount_row(
         int index, int layout_index, std::vector<RowCover*>& unmounted_rows);
-      bool adjust_spacer_height(QSpacerItem*& spacer, int index, int height);
+      bool adjust_spacer_height(Spacer*& spacer, int index, int height);
       void mount_visible_rows(std::vector<RowCover*>& unmounted_rows);
       void initialize_visible_region();
       std::vector<RowCover*> unmount_hidden_rows();
