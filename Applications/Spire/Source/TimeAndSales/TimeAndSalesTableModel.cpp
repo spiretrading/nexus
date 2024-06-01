@@ -20,6 +20,10 @@ namespace {
       return time_and_sale.m_condition;
     }
   }
+
+  auto get_timestamp(const TimeAndSalesModel::Entry& entry) {
+    return entry.m_time_and_sale.GetValue().m_timestamp;
+  }
 }
 
 TimeAndSalesTableModel::TimeAndSalesTableModel(
@@ -101,14 +105,29 @@ void TimeAndSalesTableModel::load_snapshot(Queries::Sequence last, int count) {
     [=] (auto&& result) {
       auto& snapshot = result.Get();
       auto size = get_row_size();
-      m_entries.insert(m_entries.begin(),
-        std::make_move_iterator(snapshot.begin()),
-        std::make_move_iterator(snapshot.end()));
-      m_transaction.transact([&] {
-        for(auto i = 0; i < std::ssize(snapshot); ++i) {
-          m_transaction.push(TableModel::AddOperation(size + i));
-        }
-      });
+      auto oldest_timestamp = get_timestamp(m_entries.front());
+      if(get_timestamp(snapshot.front()) < oldest_timestamp) {
+        m_entries.insert(m_entries.begin(),
+          std::make_move_iterator(snapshot.begin()),
+          std::make_move_iterator(snapshot.end()));
+        m_transaction.transact([&] {
+          for(auto i = 0; i < std::ssize(snapshot); ++i) {
+            m_transaction.push(TableModel::AddOperation(size + i));
+          }
+        });
+      } else if(get_timestamp(snapshot.back()) < oldest_timestamp) {
+        auto iter = std::upper_bound(snapshot.begin(), snapshot.end(), oldest_timestamp,
+          [] (const auto timestamp, const auto entry) {
+            return timestamp < get_timestamp(entry);
+          });
+        m_entries.insert(m_entries.begin(), std::make_move_iterator(iter),
+          std::make_move_iterator(snapshot.end()));
+        m_transaction.transact([&] {
+          for(auto i = 0; i < std::distance(iter, snapshot.end()); ++i) {
+            m_transaction.push(TableModel::AddOperation(size + i));
+          }
+        });
+      }
       m_end_loading_signal();
     });
 }
