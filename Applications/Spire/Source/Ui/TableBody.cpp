@@ -30,6 +30,21 @@ namespace {
     return std::max(0, widget_geometry.top()) <=
       std::min(container.parentWidget()->height(), widget_geometry.bottom());
   }
+
+  void diagnose(QString name, QLayout& layout) {
+    qDebug() << "Diagnose: " << name;
+    for(auto i = 0; i != layout.count(); ++i) {
+      auto& item = *layout.itemAt(i);
+      auto type = [&] () -> QString {
+        if(item.widget()) {
+          return "Row";
+        }
+        return "Spacer";
+      }();
+      qDebug() << "\t" << i << ": " << type << " " << item.geometry() << " " <<
+        item.sizeHint();
+    }
+  }
 }
 
 Spacing Spire::Styles::spacing(int spacing) {
@@ -507,12 +522,15 @@ bool TableBody::adjust_spacer_height(
   if(spacer) {
     auto spacer_size = spacer->sizeHint().height() - height;
     if(spacer_size > 0) {
-      spacer->changeSize(
-        1, spacer_size, QSizePolicy::Expanding, QSizePolicy::Fixed);
+      spacer->changeSize(spacer->sizeHint().width(), spacer_size,
+        spacer->sizePolicy().horizontalPolicy(),
+        spacer->sizePolicy().verticalPolicy());
+      diagnose("Adjust", *layout());
     } else {
       layout()->takeAt(index);
       delete spacer;
       spacer = nullptr;
+      diagnose("Remove", *layout());
     }
     return true;
   }
@@ -531,7 +549,7 @@ void TableBody::mount_visible_rows(std::vector<RowCover*>& unmounted_rows) {
       return 0;
     }();
     return layout()->itemAt(top_index)->geometry().top() -
-      m_styles.m_vertical_spacing - 1;
+      layout()->spacing() - 1;
   }();
   auto invalidate_layout = false;
   auto top = mapFromParent(QPoint(0, 0)).y();
@@ -546,7 +564,7 @@ void TableBody::mount_visible_rows(std::vector<RowCover*>& unmounted_rows) {
     invalidate_layout |= adjust_spacer_height(m_top_spacer, 0, row->height());
     --m_top_index;
     ++m_visible_count;
-    position -= row->height() + m_styles.m_vertical_spacing;
+    position -= row->height() + layout()->spacing();
   }
   position = [&] {
     if(layout()->isEmpty()) {
@@ -572,10 +590,10 @@ void TableBody::mount_visible_rows(std::vector<RowCover*>& unmounted_rows) {
     }();
     auto row =
       mount_row(m_top_index + m_visible_count, layout_index, unmounted_rows);
-    invalidate_layout |= adjust_spacer_height(
-      m_bottom_spacer, layout()->count() - 1, row->height());
+    invalidate_layout |= adjust_spacer_height(m_bottom_spacer,
+      layout()->count() - 1, row->height() + layout()->spacing());
     ++m_visible_count;
-    position += row->height() + m_styles.m_vertical_spacing;
+    position += row->height() + layout()->spacing();
   }
   if(invalidate_layout) {
     layout()->invalidate();
@@ -591,17 +609,24 @@ void TableBody::initialize_visible_region() {
   m_visible_count = 0;
   auto unmounted_rows = std::vector<RowCover*>();
   mount_visible_rows(unmounted_rows);
+  if(m_visible_count == 0) {
+    m_top_index = -1;
+    return;
+  }
   auto hidden_row_count = m_table->get_row_size() - m_visible_count;
   if(hidden_row_count > 0) {
-    auto bottom = layout()->itemAt(layout()->count() - 1)->geometry().bottom() +
-      m_styles.m_vertical_spacing;
-    auto average_height = bottom / m_visible_count;
-    auto bottom_spacer_size =
-      (height() - bottom) + hidden_row_count * average_height;
+    auto total_height = 0;
+    for(auto i = 0; i != layout()->count(); ++i) {
+      total_height += layout()->itemAt(i)->geometry().height();
+    }
+    auto average_height = total_height / layout()->count();
+    auto bottom_spacer_size = hidden_row_count * average_height +
+      (hidden_row_count - 1) * layout()->spacing();
     if(bottom_spacer_size > 0) {
       m_bottom_spacer = new QSpacerItem(
-        1, bottom_spacer_size, QSizePolicy::Expanding, QSizePolicy::Fixed);
+        0, bottom_spacer_size, QSizePolicy::Expanding, QSizePolicy::Fixed);
       layout()->addItem(m_bottom_spacer);
+      diagnose("Initialize", *layout());
     }
   }
 }
@@ -613,44 +638,57 @@ std::vector<TableBody::RowCover*> TableBody::unmount_hidden_rows() {
   auto i = 0;
   while(i != layout()->count()) {
     auto item = layout()->itemAt(i);
-    auto row = static_cast<RowCover*>(layout()->itemAt(i)->widget());
+    auto row = static_cast<RowCover*>(item->widget());
     if(!row) {
       ++i;
     } else if(test_visibility(*this, row->geometry())) {
       is_top = false;
       ++i;
     } else {
-      if(is_top) {
-        ++m_top_index;
-      }
-      --m_visible_count;
-      auto height = row->height();
+      auto height = [&] {
+
+        /** TODO: handle bottom spacer case when is_top = false */
+        if(m_top_index == 0) {
+          return row->height();
+        }
+        return row->height() + layout()->spacing();
+      }();
       layout()->takeAt(i);
       delete item;
       row->unmount();
       unmounted_rows.push_back(row);
-      auto spacer = [&] {
+      auto spacer = [&] () -> QSpacerItem* {
         if(is_top) {
           if(!m_top_spacer) {
-            m_top_spacer =
-              new QSpacerItem(1, 0, QSizePolicy::Expanding, QSizePolicy::Fixed);
-            static_cast<QBoxLayout*>(layout())->insertSpacerItem(
+            m_top_spacer = new QSpacerItem(
+              0, height, QSizePolicy::Expanding, QSizePolicy::Fixed);
+            static_cast<QBoxLayout*>(layout())->insertItem(
               0, m_top_spacer);
             ++i;
+            return nullptr;
           }
           return m_top_spacer;
         }
         if(!m_bottom_spacer) {
-          m_bottom_spacer =
-            new QSpacerItem(1, 0, QSizePolicy::Expanding, QSizePolicy::Fixed);
-          static_cast<QBoxLayout*>(layout())->insertSpacerItem(
-            layout()->count(), m_bottom_spacer);
+          m_bottom_spacer = new QSpacerItem(
+            0, height, QSizePolicy::Expanding, QSizePolicy::Fixed);
+          layout()->addItem(m_bottom_spacer);
+          return nullptr;
         }
         return m_bottom_spacer;
       }();
-      spacer->changeSize(1, spacer->sizeHint().height() + height,
-        QSizePolicy::Expanding, QSizePolicy::Fixed);
+      if(spacer) {
+        spacer->changeSize(
+          spacer->sizeHint().width(), spacer->sizeHint().height() + height,
+          spacer->sizePolicy().horizontalPolicy(),
+          spacer->sizePolicy().verticalPolicy());
+      }
+      diagnose("Unmount", *layout());
       invalidate_layout = true;
+      if(is_top) {
+        ++m_top_index;
+      }
+      --m_visible_count;
     }
   }
   if(invalidate_layout) {
@@ -867,13 +905,13 @@ void TableBody::on_style() {
         });
       });
   }
-/*
   auto& row_layout = *layout();
+  row_layout.setSpacing(m_styles.m_vertical_spacing);
+  row_layout.setContentsMargins(m_styles.m_padding);
+/*
   for(auto i = 0; i != row_layout.count(); ++i) {
     find_row(i)->layout()->setSpacing(m_styles.m_horizontal_spacing);
   }
-  row_layout.setSpacing(m_styles.m_vertical_spacing);
-  row_layout.setContentsMargins(m_styles.m_padding);
   for(auto i = 0; i != row_layout.count(); ++i) {
     auto& row = *find_row(i);
     for(auto column = 0; column != m_widths->get_size(); ++column) {
