@@ -158,7 +158,7 @@ namespace Styles {
       void update_parent();
       RowCover* mount_row(
         int index, int layout_index, std::vector<RowCover*>& unmounted_rows);
-      bool adjust_spacer_height(Spacer*& spacer, int index, int height);
+      void update_spacer(Spacer*& spacer, int hidden_row_count);
       void mount_visible_rows(std::vector<RowCover*>& unmounted_rows);
       void initialize_visible_region();
       std::vector<RowCover*> unmount_hidden_rows();
