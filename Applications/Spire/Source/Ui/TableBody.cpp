@@ -1,14 +1,10 @@
 #include "Spire/Ui/TableBody.hpp"
 #include <QApplication>
-#include <QEnterEvent>
-#include <QMouseEvent>
+#include <QKeyEvent>
 #include <QPainter>
 #include <QPointer>
-#include <QTimer>
-#include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ListValueModel.hpp"
-#include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Spire/RowViewListModel.hpp"
 #include "Spire/Spire/TableModel.hpp"
 #include "Spire/Spire/ToTextModel.hpp"
@@ -16,8 +12,6 @@
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TableItem.hpp"
 #include "Spire/Ui/TextBox.hpp"
-
-extern bool qt_sendSpontaneousEvent(QObject* receiver, QEvent* event);
 
 using namespace boost;
 using namespace Spire;
@@ -29,21 +23,6 @@ namespace {
       QRect(container.mapToParent(geometry.topLeft()), geometry.size());
     return std::max(0, widget_geometry.top()) <=
       std::min(container.parentWidget()->height(), widget_geometry.bottom());
-  }
-
-  void diagnose(QString name, QLayout& layout) {
-    qDebug() << "Diagnose: " << name;
-    for(auto i = 0; i != layout.count(); ++i) {
-      auto& item = *layout.itemAt(i);
-      auto type = [&] () -> QString {
-        if(item.widget()) {
-          return "Row";
-        }
-        return "Spacer";
-      }();
-      qDebug() << "\t" << i << ": " << type << " " << item.geometry() << " " <<
-        item.sizeHint();
-    }
   }
 }
 
@@ -143,35 +122,6 @@ struct TableBody::ColumnCover : Cover {
   }
 };
 
-struct TableBody::Spacer : QSpacerItem {
-  int m_height;
-
-  explicit Spacer(int height)
-    : QSpacerItem(0, height, QSizePolicy::Expanding, QSizePolicy::Fixed),
-      m_height(height) {}
-
-  int get_height() const {
-    return m_height;
-  }
-
-  void set_height(int height) {
-    m_height = height;
-    changeSize(0, m_height, QSizePolicy::Expanding, QSizePolicy::Fixed);
-  }
-
-  QSize maximumSize() const override {
-    return QSize(QSpacerItem::maximumSize().width(), m_height);
-  }
-
-  QSize minimumSize() const override {
-    return QSize(QSpacerItem::minimumSize().width(), m_height);
-  }
-
-  QSize sizeHint() const override {
-    return QSize(QSpacerItem::sizeHint().width(), m_height);
-  }
-};
-
 TableBody::TableBody(
     std::shared_ptr<TableModel> table, std::shared_ptr<CurrentModel> current,
     std::shared_ptr<SelectionModel> selection,
@@ -187,9 +137,9 @@ TableBody::TableBody(
       m_visible_count(0),
       m_top_spacer(nullptr),
       m_bottom_spacer(nullptr) {
-  setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   setFocusPolicy(Qt::StrongFocus);
   make_vbox_layout(this);
+  layout()->setAlignment(Qt::AlignTop);
   m_style_connection =
     connect_style_signal(*this, std::bind_front(&TableBody::on_style, this));
   update_style(*this, [] (auto& style) {
@@ -406,7 +356,6 @@ void TableBody::paintEvent(QPaintEvent* event) {
     painter.fillRect(
       QRect(current_position, current_item->size()), styles.m_background_color);
   }
-*/
   if(m_styles.m_horizontal_grid_color.alphaF() != 0) {
     auto draw_border = [&] (int top, int height) {
       painter.fillRect(
@@ -451,6 +400,7 @@ void TableBody::paintEvent(QPaintEvent* event) {
   }
   draw_item_borders(m_hover_index, painter);
   draw_item_borders(current, painter);
+*/
   QWidget::paintEvent(event);
 }
 
@@ -548,7 +498,7 @@ TableBody::RowCover* TableBody::mount_row(
   return row;
 }
 
-void TableBody::update_spacer(Spacer*& spacer, int hidden_row_count) {
+void TableBody::update_spacer(QSpacerItem*& spacer, int hidden_row_count) {
   auto delete_spacer = false;
   if(hidden_row_count > 0) {
     auto total_height = 0;
@@ -561,10 +511,13 @@ void TableBody::update_spacer(Spacer*& spacer, int hidden_row_count) {
       hidden_row_count * layout()->spacing();
     if(spacer_size > 0) {
       if(spacer) {
-        spacer->set_height(spacer_size);
+        spacer->changeSize(0, spacer_size,
+          spacer->sizePolicy().horizontalPolicy(),
+          spacer->sizePolicy().verticalPolicy());
         layout()->invalidate();
       } else {
-        spacer = new Spacer(spacer_size);
+        spacer = new QSpacerItem(
+          0, spacer_size, QSizePolicy::Expanding, QSizePolicy::Fixed);
         if(spacer == m_top_spacer) {
           static_cast<QBoxLayout*>(layout())->insertItem(0, spacer);
         } else {
@@ -588,30 +541,29 @@ void TableBody::update_spacer(Spacer*& spacer, int hidden_row_count) {
   }
 }
 
+void TableBody::update_spacers() {
+  update_spacer(m_top_spacer, m_top_index);
+  update_spacer(
+    m_bottom_spacer, m_table->get_row_size() - m_top_index - m_visible_count);
+}
+
 void TableBody::mount_visible_rows(std::vector<RowCover*>& unmounted_rows) {
+  auto top_index = [&] {
+    if(m_top_spacer) {
+      return 1;
+    }
+    return 0;
+  }();
   auto position = [&] {
     if(layout()->isEmpty()) {
       return layout()->contentsMargins().top();
     }
-    auto top_index = [&] {
-      if(m_top_spacer) {
-        return 1;
-      }
-      return 0;
-    }();
     return layout()->itemAt(top_index)->geometry().top() -
       layout()->spacing() - 1;
   }();
-  auto invalidate_layout = false;
   auto top = mapFromParent(QPoint(0, 0)).y();
   while(m_top_index > 0 && position > top) {
-    auto layout_index = [&] {
-      if(m_top_spacer) {
-        return 1;
-      }
-      return 0;
-    }();
-    auto row = mount_row(m_top_index - 1, layout_index, unmounted_rows);
+    auto row = mount_row(m_top_index - 1, top_index, unmounted_rows);
     --m_top_index;
     position -= row->height() + layout()->spacing();
   }
@@ -641,9 +593,7 @@ void TableBody::mount_visible_rows(std::vector<RowCover*>& unmounted_rows) {
       mount_row(m_top_index + m_visible_count, layout_index, unmounted_rows);
     position += row->height() + layout()->spacing();
   }
-  update_spacer(m_top_spacer, m_top_index);
-  update_spacer(
-    m_bottom_spacer, m_table->get_row_size() - m_top_index - m_visible_count);
+  update_spacers();
 }
 
 void TableBody::initialize_visible_region() {
@@ -673,14 +623,6 @@ std::vector<TableBody::RowCover*> TableBody::unmount_hidden_rows() {
       is_top = false;
       ++i;
     } else {
-      auto height = [&] {
-
-        /** TODO: handle bottom spacer case when is_top = false */
-        if(m_top_index == 0) {
-          return row->height();
-        }
-        return row->height() + layout()->spacing();
-      }();
       layout()->takeAt(i);
       delete item;
       row->unmount();
@@ -691,9 +633,7 @@ std::vector<TableBody::RowCover*> TableBody::unmount_hidden_rows() {
       --m_visible_count;
     }
   }
-  update_spacer(m_top_spacer, m_top_index);
-  update_spacer(
-    m_bottom_spacer, m_table->get_row_size() - m_top_index - m_visible_count);
+  update_spacers();
   return unmounted_rows;
 }
 
