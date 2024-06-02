@@ -138,6 +138,7 @@ namespace Styles {
       int m_top_index;
       int m_visible_count;
       QSpacerItem* m_top_spacer;
+      QSpacerItem* m_current_spacer;
       QSpacerItem* m_bottom_spacer;
       Styles m_styles;
       std::unordered_map<TableItem*, HoverObserver> m_hover_observers;
@@ -148,6 +149,11 @@ namespace Styles {
       boost::signals2::scoped_connection m_current_connection;
       boost::signals2::scoped_connection m_widths_connection;
 
+      RowCover* find_row(int index);
+      TableItem* find_item(const Index& index);
+      TableItem* find_item(const boost::optional<Index>& index);
+      TableItem* get_current_item();
+      Index get_index(const TableItem& item) const;
       int get_column_size() const;
       int get_left_spacing(int index) const;
       int get_top_spacing(int index) const;
@@ -164,8 +170,6 @@ namespace Styles {
       void initialize_visible_region();
       std::vector<RowCover*> unmount_hidden_rows();
       void update_visible_region();
-      void draw_item_borders(const boost::optional<Index>& index,
-        QPainter& painter);
       void on_item_activated(TableItem& item);
       void on_current(const boost::optional<Index>& previous,
         const boost::optional<Index>& current);
