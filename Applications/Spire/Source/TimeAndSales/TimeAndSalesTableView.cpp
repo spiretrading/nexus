@@ -77,7 +77,7 @@ namespace {
     auto push = [&] (const QString& name, const QString& short_name) {
       model->push({name, short_name, TableHeaderItem::Order::UNORDERED,
         TableFilter::Filter::NONE});
-      };
+    };
     push(QObject::tr("Time"), QObject::tr("Time"));
     push(QObject::tr("Price"), QObject::tr("Px"));
     push(QObject::tr("Size"), QObject::tr("Sz"));
@@ -106,10 +106,10 @@ namespace {
     return new Box(spinner_widget);
   }
 
-  auto make_time_cell(const ptime& time) {
-    auto ts = to_text(time);
-    ts = ts.left(ts.lastIndexOf('.'));
-    return make_label(ts);
+  auto make_time_cell(ptime time) {
+    auto time_text = to_text(time);
+    time_text = time_text.left(time_text.lastIndexOf('.'));
+    return make_label(time_text);
   }
 
   template<typename B, typename T =
@@ -160,8 +160,6 @@ TableView* Spire::make_time_and_sales_table_view(
   update_style(*table_view, [] (auto& style) {
     apply_table_view_style(style);
   });
-  auto& header_box =
-    *static_cast<Box*>(table_view->layout()->itemAt(0)->widget());
   auto& header = table_view->get_header();
   auto header_scroll_box = new ScrollBox(&header);
   header_scroll_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
@@ -171,6 +169,8 @@ TableView* Spire::make_time_and_sales_table_view(
   update_style(*header_scroll_box, [] (auto& style) {
     apply_table_header_style(style);
   });
+  auto& header_box =
+    *static_cast<Box*>(table_view->layout()->itemAt(0)->widget());
   auto old_header_box =
     table_view->layout()->replaceWidget(&header_box, header_scroll_box);
   delete old_header_box->widget();

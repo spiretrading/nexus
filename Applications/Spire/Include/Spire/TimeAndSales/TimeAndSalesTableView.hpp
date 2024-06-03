@@ -7,7 +7,7 @@ namespace Spire {
 
   /**
    * Returns a new TableView for the time and sales.
-   * @param table The table model of order task arguments.
+   * @param table The table model of time and sales.
    * @param parent The parent widget.
    */
   TableView* make_time_and_sales_table_view(

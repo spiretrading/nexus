@@ -45,7 +45,6 @@ namespace Spire {
       TransitionView* m_transition_view;
       ContextMenu* m_table_header_menu;
       QWidget* m_body;
-      std::vector<int> m_header_item_widths;
 
       int get_row_height() const;
       void make_table_header_menu();

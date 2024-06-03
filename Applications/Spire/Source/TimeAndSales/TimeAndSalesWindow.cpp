@@ -5,6 +5,7 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/ContextMenu.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
+#include "Spire/Ui/DecimalBox.hpp"
 #include "Spire/Ui/SecurityView.hpp"
 #include "Spire/Ui/TableItem.hpp"
 #include "Spire/Ui/TextBox.hpp"
@@ -36,11 +37,23 @@ namespace {
     return label->sizeHint().height();
   }
 
+  auto get_bbo_indicator_selector(BboIndicator indicator) {
+    static auto selectors = std::array<Selector, BBO_INDICATOR_COUNT>{
+      Any() > is_a<TableBody>() > UnknownIndicator(),
+      Any() > is_a<TableBody>() > AboveAskIndicator(),
+      Any() > is_a<TableBody>() > AtAskIndicator(),
+      Any() > is_a<TableBody>() > InsideIndicator(),
+      Any() > is_a<TableBody>() > AtBidIndicator(),
+      Any() > is_a<TableBody>() > BelowBidIndicator()};
+    return selectors[static_cast<int>(indicator)];
+  }
+
   void apply_indicator_style(StyleSheet& style, const Selector& selector,
       const HighlightColor& highlight) {
     style.get(selector).
       set(BackgroundColor(highlight.m_background_color));
-    style.get(selector >> is_a<TextBox>()).
+    style.get(selector > is_a<TableItem>() >
+        (is_a<TextBox>() || is_a<DecimalBox>())).
       set(TextColor(highlight.m_text_color));
   };
 }
@@ -54,7 +67,7 @@ TimeAndSalesWindow::TimeAndSalesWindow(
       m_model_builder(std::move(model_builder)),
       m_table_model(std::make_shared<TimeAndSalesTableModel>(
         std::make_shared<NoneTimeAndSalesModel>())),
-     m_table_header_menu(nullptr) {
+      m_table_header_menu(nullptr) {
   set_svg_icon(":/Icons/time-sales.svg");
   setWindowIcon(QIcon(":/Icons/taskbar_icons/time-sales.png"));
   setWindowTitle(TITLE_NAME);
@@ -77,7 +90,7 @@ TimeAndSalesWindow::TimeAndSalesWindow(
     if(m_transition_view->get_status() == TransitionView::Status::NONE) {
       m_transition_view->set_status(TransitionView::Status::LOADING);
     }
-    });
+  });
   m_table_model->connect_end_loading_signal([=] {
     m_transition_view->set_status(TransitionView::Status::READY);
     make_table_header_menu();
@@ -116,7 +129,7 @@ void TimeAndSalesWindow::make_table_header_menu() {
     model->set(checked);
     model->connect_update_signal(std::bind_front(
       &TimeAndSalesWindow::on_header_item_check, this, column));
-    };
+  };
   auto header_items = m_table_view->get_header().get_items();
   for(auto i = 0; i < header_items->get_size() - 1; ++i) {
     add_sub_menu(i, header_items->get(i).m_name,
@@ -133,23 +146,19 @@ void TimeAndSalesWindow::on_current(const Security& security) {
     (m_body->height() - header.height()) / get_row_height());
   auto& properties = m_factory->make()->get_current()->get();
   update_style(*m_table_view, [&] (auto& style) {
-    auto body_selector = Any() > is_a<TableBody>();
-    style.get(Any() > is_a<TableHeader>() >> is_a<TextBox>()).
+    auto header_item_selector =
+      Any() > is_a<TableHeader>() > is_a<TableHeaderItem>();
+    auto body_item_selector =
+      Any() > is_a<TableBody>() > Row() > is_a<TableItem>();
+    style.get(header_item_selector > TableHeaderItem::Label()).
       set(Font(properties.get_font()));
-    style.get(body_selector > Row() >> is_a<TextBox>()).
+    style.get(body_item_selector > (is_a<TextBox>() || is_a<DecimalBox>())).
       set(Font(properties.get_font()));
-    apply_indicator_style(style, body_selector > UnknownIndicator(),
-      properties.get_highlight_color(BboIndicator::UNKNOWN));
-    apply_indicator_style(style, body_selector > AboveAskIndicator(),
-      properties.get_highlight_color(BboIndicator::ABOVE_ASK));
-    apply_indicator_style(style, body_selector > AtAskIndicator(),
-      properties.get_highlight_color(BboIndicator::AT_ASK));
-    apply_indicator_style(style, body_selector > InsideIndicator(),
-      properties.get_highlight_color(BboIndicator::INSIDE));
-    apply_indicator_style(style, body_selector > AtBidIndicator(),
-      properties.get_highlight_color(BboIndicator::AT_BID));
-    apply_indicator_style(style, body_selector > BelowBidIndicator(),
-      properties.get_highlight_color(BboIndicator::BELOW_BID));
+    for(auto i = 0; i < BBO_INDICATOR_COUNT; ++i) {
+      auto indicator = static_cast<BboIndicator>(i);
+      apply_indicator_style(style, get_bbo_indicator_selector(indicator),
+        properties.get_highlight_color(indicator));
+    }
   });
 }
 
