@@ -673,7 +673,7 @@ TableBody::RowCover* TableBody::mount_row(
 
 void TableBody::update_spacer(QSpacerItem*& spacer, int hidden_row_count) {
   auto delete_spacer = false;
-  if(hidden_row_count > 0) {
+  if(m_visible_count > 0 && hidden_row_count > 0) {
     auto total_height = 0;
     for(auto i = 0; i != layout()->count(); ++i) {
       if(auto row = layout()->itemAt(i)->widget()) {
@@ -751,7 +751,7 @@ void TableBody::mount_visible_rows(std::vector<RowCover*>& unmounted_rows) {
       return layout()->count() - 1;
     }();
     return layout()->itemAt(bottom_index)->geometry().bottom() +
-      m_styles.m_vertical_spacing + 1;
+      layout()->spacing() + 1;
   }();
   auto bottom = mapFromParent(QPoint(0, parentWidget()->height())).y();
   while(m_top_index + m_visible_count < m_table->get_row_size() &&
@@ -790,6 +790,7 @@ std::vector<TableBody::RowCover*> TableBody::unmount_hidden_rows() {
   auto unmounted_rows = std::vector<RowCover*>();
   auto is_top = true;
   auto i = 0;
+  auto r = std::vector<QLayoutItem*>();
   while(i != layout()->count()) {
     auto item = layout()->itemAt(i);
     auto row = static_cast<RowCover*>(item->widget());
@@ -799,19 +800,24 @@ std::vector<TableBody::RowCover*> TableBody::unmount_hidden_rows() {
       is_top = false;
       ++i;
     } else {
-      layout()->takeAt(i);
-      delete item;
-      if(row != m_current_row) {
-        row->unmount();
-        unmounted_rows.push_back(row);
-      } else {
-        row->move(-1000, -1000);
-      }
       if(is_top) {
         ++m_top_index;
       }
-      --m_visible_count;
+      r.push_back(item);
+      ++i;
     }
+  }
+  for(auto item : r) {
+    auto row = static_cast<RowCover*>(item->widget());
+    layout()->removeItem(item);
+    delete item;
+    if(row != m_current_row) {
+      row->unmount();
+      unmounted_rows.push_back(row);
+    } else {
+      row->move(-1000, -1000);
+    }
+    --m_visible_count;
   }
   update_spacers();
   return unmounted_rows;
