@@ -95,14 +95,12 @@ namespace {
         return make_time_cell(table->get<ptime>(row, column));
       } else if(column_id == TimeAndSalesTableModel::Column::PRICE) {
         auto money_cell = make_label(to_text(table->get<Money>(row, column)));
-        update_style(*money_cell,
-          std::bind_front(&apply_table_cell_right_align_style));
+        update_style(*money_cell, apply_table_cell_right_align_style);
         return money_cell;
       } else if(column_id == TimeAndSalesTableModel::Column::SIZE) {
         auto quantity_cell = make_label(
           to_text(table->get<Quantity>(row, column)).remove(QChar(',')));
-        update_style(*quantity_cell,
-          std::bind_front(&apply_table_cell_right_align_style));
+        update_style(*quantity_cell, apply_table_cell_right_align_style);
         return quantity_cell;
       } else if(column_id == TimeAndSalesTableModel::Column::MARKET) {
         return make_label(
@@ -113,7 +111,7 @@ namespace {
       }
       return make_label("");
     }();
-    update_style(*cell, std::bind_front(&apply_table_cell_style));
+    update_style(*cell, apply_table_cell_style);
     return cell;
   }
 }
@@ -123,14 +121,14 @@ TableView* Spire::make_time_and_sales_table_view(
   auto table_view = TableViewBuilder(table).
     set_header(make_header_model()).
     set_view_builder(table_view_builder).make();
-  update_style(*table_view, std::bind_front(&apply_table_view_style));
+  update_style(*table_view, apply_table_view_style);
   auto& header = table_view->get_header();
   auto header_scroll_box = new ScrollBox(&header);
   header_scroll_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   header_scroll_box->setFocusPolicy(Qt::NoFocus);
   header_scroll_box->set_horizontal(ScrollBox::DisplayPolicy::NEVER);
   header_scroll_box->set_vertical(ScrollBox::DisplayPolicy::NEVER);
-  update_style(*table_view, std::bind_front(&apply_table_header_style));
+  update_style(*table_view, apply_table_header_style);
   auto& header_box =
     *static_cast<Box*>(table_view->layout()->itemAt(0)->widget());
   auto old_header_box =
