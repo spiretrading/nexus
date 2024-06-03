@@ -214,7 +214,7 @@ struct TimeAndSalesWindowController {
       m_time_and_sales_window.pos().y());
   }
 
-  std::shared_ptr<TimeAndSalesModel> model_builder(const Security& security) {
+  std::shared_ptr<TimeAndSalesModel> model_builder(const Security&) {
     auto time_and_sales = m_time_and_sales_test_window.m_time_and_sales;
     auto new_time_and_sales = std::make_shared<DemoTimeAndSalesModel>();
     new_time_and_sales->set_price(time_and_sales->get_price());
