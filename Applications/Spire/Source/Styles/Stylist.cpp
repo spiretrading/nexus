@@ -147,20 +147,16 @@ const StyleSheet& Stylist::get_style() const {
 }
 
 void Stylist::set_style(StyleSheet style) {
-//  auto initial_rule_size = m_rules.size();
-  auto rules = std::move(m_rules);
-  m_rules.clear();
+  auto rules = std::exchange(m_rules, {});
   for(auto& rule : rules) {
     auto selection = std::move(rule->m_selection);
     if(!selection.empty()) {
       on_selection_update(*rule, {}, std::move(selection));
     }
   }
-/*
-  if(m_rules.size() != initial_rule_size) {
-    m_rules.erase(m_rules.begin(), m_rules.begin() + initial_rule_size);
+  if(!m_rules.empty()) {
+    qDebug() << "Waaaard";
   }
-*/
   m_style = load_styles(std::move(style));
   apply(*m_style);
 }
@@ -397,10 +393,10 @@ void Stylist::apply(Stylist& source, const RuleEntry& rule) {
   }
 }
 
-void Stylist::unapply(Stylist& source, const RuleEntry& rule) {
+void Stylist::unapply(const RuleEntry& rule) {
   for(auto& b : rule.m_block) {
     if(std::string(b.get_type().name()).find("TagTag") != std::string::npos) {
-      qDebug() << "unapply: " << this << " " << &source << " " << &rule;
+      qDebug() << "unapply: " << this << " " << &rule;
       qDebug() << "  " << b.get_type().name();
     }
   }
@@ -496,7 +492,7 @@ void Stylist::on_selection_update(
   for(auto removal : removals) {
     rule.m_selection.erase(removal);
     auto& stylist = const_cast<Stylist&>(*removal);
-    stylist.unapply(*this, rule);
+    stylist.unapply(rule);
     changed_stylists.insert(&stylist);
   }
   for(auto addition : additions) {
