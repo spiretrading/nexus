@@ -33,15 +33,17 @@ TableItem::TableItem(QWidget* parent)
   });
 }
 
-const TableItem::Styles& TableItem::get_styles() const {
-  return m_styles;
+TableItem::~TableItem() {
+  if(auto item = layout()->takeAt(0)) {
+    auto body = item->widget();
+    body->setAttribute(Qt::WA_DontShowOnScreen);
+    body->setParent(nullptr);
+    delete item;
+  }
 }
 
-bool TableItem::is_mounted() const {
-  if(auto item = layout()->itemAt(0)) {
-    return item->widget() != nullptr;
-  }
-  return false;
+const TableItem::Styles& TableItem::get_styles() const {
+  return m_styles;
 }
 
 const QWidget& TableItem::get_body() const {
@@ -49,8 +51,8 @@ const QWidget& TableItem::get_body() const {
 }
 
 QWidget& TableItem::get_body() {
-  if(is_mounted()) {
-    return *layout()->itemAt(0)->widget();
+  if(auto item = layout()->itemAt(0)) {
+    return *item->widget();
   }
   return *this;
 }
@@ -61,27 +63,24 @@ connection TableItem::connect_active_signal(
 }
 
 void TableItem::mount(QWidget& body) {
-  if(auto item = layout()->takeAt(0)) {
+  if(auto item = layout()->itemAt(0)) {
+    if(item->widget() == &body) {
+      body.setAttribute(Qt::WA_DontShowOnScreen, false);
+      return;
+    }
+    layout()->takeAt(0);
+    auto previous_body = item->widget();
+    previous_body->setParent(nullptr);
     delete item;
   }
   layout()->addWidget(&body);
-  body.show();
-//  body.setAttribute(Qt::WA_DontShowOnScreen, false);
+  body.setAttribute(Qt::WA_DontShowOnScreen, false);
 }
 
 QWidget* TableItem::unmount() {
-  auto size_hint = sizeHint();
-  auto size_policy = get_body().sizePolicy();
-  auto item = layout()->takeAt(0);
-  auto body = item->widget();
-  body->hide();
-//  body->setAttribute(Qt::WA_DontShowOnScreen);
-  body->setParent(nullptr);
-  delete item;
-  static_cast<QBoxLayout&>(*layout()).addSpacerItem(
-    new QSpacerItem(size_hint.width(), size_hint.height(),
-      size_policy.horizontalPolicy(), size_policy.verticalPolicy()));
-  return body;
+  auto& body = get_body();
+  body.setAttribute(Qt::WA_DontShowOnScreen);
+  return &body;
 }
 
 void TableItem::on_focus(FocusObserver::State state) {

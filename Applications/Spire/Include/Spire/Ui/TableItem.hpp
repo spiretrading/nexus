@@ -48,11 +48,10 @@ namespace Spire {
        */
       explicit TableItem(QWidget* parent = nullptr);
 
+      ~TableItem() override;
+
       /** Returns the styling applied to this item. */
       const Styles& get_styles() const;
-
-      /** Returns whether this TableItem has a body. */
-      bool is_mounted() const;
 
       /** Returns the body of this item. */
       const QWidget& get_body() const;

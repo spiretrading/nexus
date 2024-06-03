@@ -96,16 +96,14 @@ struct TableBody::RowCover : Cover {
   void mount(int index) {
     auto& body = *static_cast<TableBody*>(parentWidget());
     for(auto i = 0; i != layout()->count(); ++i) {
-      auto& item = *get_item(i);
-      item.mount(*body.m_item_builder.mount(body.m_table, index, i));
+      get_item(i)->mount(*body.m_item_builder.mount(body.m_table, index, i));
     }
   }
 
   void unmount() {
     auto& body = *static_cast<TableBody*>(parentWidget());
     for(auto i = 0; i != layout()->count(); ++i) {
-      auto item = get_item(i)->unmount();
-      body.m_item_builder.unmount(item);
+      body.m_item_builder.unmount(get_item(i)->unmount());
     }
   }
 };
@@ -605,6 +603,7 @@ void TableBody::remove_row(int index) {
     }
     auto item = layout()->takeAt(layout()->indexOf(row));
     layout()->removeItem(item);
+    row->unmount();
     if(row == m_current_row) {
       m_current_row = nullptr;
     }
