@@ -2,8 +2,10 @@
 #define SPIRE_TIME_AND_SALES_WINDOW_HPP
 #include "Spire/TimeAndSales/TimeAndSalesModel.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesPropertiesWindowFactory.hpp"
+#include "Spire/TimeAndSales/TimeAndSalesTableModel.hpp"
 #include "Spire/Ui/ComboBox.hpp"
 #include "Spire/Ui/Window.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 
@@ -32,10 +34,23 @@ namespace Spire {
         std::shared_ptr<TimeAndSalesPropertiesWindowFactory> factory,
         ModelBuilder model_builder, QWidget* parent = nullptr);
 
-    private:
-      TransitionView* m_transition_view;
+    protected:
+      bool eventFilter(QObject* watched, QEvent* event) override;
 
+    private:
+      std::shared_ptr<TimeAndSalesPropertiesWindowFactory> m_factory;
+      ModelBuilder m_model_builder;
+      std::shared_ptr<TimeAndSalesTableModel> m_table_model;
+      TableView* m_table_view;
+      TransitionView* m_transition_view;
+      ContextMenu* m_table_header_menu;
+      QWidget* m_body;
+
+      int get_row_height() const;
+      void make_table_header_menu();
       void on_current(const Nexus::Security& security);
+      void on_header_item_check(int column, bool checked);
+      void on_table_operation(const TableModel::Operation& operation);
   };
 }
 

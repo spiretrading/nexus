@@ -7,7 +7,7 @@ using namespace Spire;
 QtPromise<std::vector<TimeAndSalesModel::Entry>>
     NoneTimeAndSalesModel::query_until(Queries::Sequence sequence,
       int max_count) {
-  return {};
+  return std::vector<TimeAndSalesModel::Entry>{};
 }
 
 connection NoneTimeAndSalesModel::connect_update_signal(
