@@ -29,9 +29,8 @@ namespace {
   }
 }
 
-DemoTimeAndSalesModel::DemoTimeAndSalesModel(Security security)
-    : m_security(std::move(security)),
-      m_price(Money::ONE),
+DemoTimeAndSalesModel::DemoTimeAndSalesModel()
+    : m_price(Money::ONE),
       m_indicator(BboIndicator::UNKNOWN),
       m_period(seconds(1)),
       m_query_duration(seconds(5)),
@@ -121,16 +120,17 @@ DemoTimeAndSalesModel::Entry DemoTimeAndSalesModel::make_entry(
     ptime timestamp) const {
   if(m_is_data_random) {
     auto random_generator = QRandomGenerator(to_time_t_milliseconds(timestamp));
-    return {SequencedValue(make_time_and_sale(timestamp,
+    return {SequencedValue(
+      make_time_and_sale(timestamp,
         Truncate(Money(random_generator.bounded(2000.0)), 2),
-        random_generator.bounded(1, 10000),
-        markets[random_generator.bounded(markets.size())]),
+          random_generator.bounded(1, 10000),
+            markets[random_generator.bounded(markets.size())]),
       Queries::Sequence(to_time_t_milliseconds(timestamp))),
       static_cast<BboIndicator>(random_generator.bounded(6))};
   }
   return {SequencedValue(
     make_time_and_sale(timestamp, m_price, 100, markets.front()),
-    Queries::Sequence(to_time_t_milliseconds(timestamp))), m_indicator};
+      Queries::Sequence(to_time_t_milliseconds(timestamp))), m_indicator};
 }
 
 void DemoTimeAndSalesModel::on_timeout() {

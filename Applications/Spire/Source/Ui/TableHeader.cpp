@@ -83,18 +83,23 @@ connection TableHeader::connect_filter_signal(
 }
 
 bool TableHeader::eventFilter(QObject* watched, QEvent* event) {
-  if(event->type() == QEvent::HideToParent) {
-    auto i = std::find(m_item_views.begin(), m_item_views.end(), watched);
+  auto find_item_index = [&] (QObject* item) {
+    auto i = std::find(m_item_views.begin(), m_item_views.end(), item);
     if(i != m_item_views.end()) {
-      auto current_blocker = shared_connection_block(m_widths_connection);
-      m_widths->set(std::distance(m_item_views.begin(), i), 0);
+      return std::distance(m_item_views.begin(), i);
     }
-  } else if(event->type() == QEvent::ShowToParent) {
-    auto i = std::find(m_item_views.begin(), m_item_views.end(), watched);
-    if(i != m_item_views.end()) {
-      auto index = std::distance(m_item_views.begin(), i);
-      auto current_blocker = shared_connection_block(m_widths_connection);
-      m_widths->set(index, m_item_views[index]->width());
+    return -1;
+  };
+  if(event->type() == QEvent::HideToParent ||
+      event->type() == QEvent::ShowToParent) {
+    if(auto index = find_item_index(watched); index != -1) {
+      auto width = [&] {
+        if(event->type() == QEvent::HideToParent) {
+          return 0;
+        }
+        return m_item_views[index]->width();
+      }();
+      m_widths->set(index, width);
     }
   }
   return QWidget::eventFilter(watched, event);
@@ -165,7 +170,7 @@ void TableHeader::on_widths_operation(
       m_item_views[operation.m_index]->setFixedWidth(
         m_widths->get(operation.m_index));
       if(!m_item_views[operation.m_index]->isVisible()) {
-        auto current_blocker = shared_connection_block(m_widths_connection);
+        auto blocker = shared_connection_block(m_widths_connection);
         m_widths->set(operation.m_index, 0);
       }
     });
