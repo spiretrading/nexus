@@ -26,6 +26,8 @@ using namespace Spire::Styles;
 namespace {
   using DeleteButton = StateSelector<void, struct DeleteButtonSeletorTag>;
   using EmptyCell = StateSelector<void, struct EmptyCellSeletorTag>;
+  using DummyTag = BasicProperty<int, struct DummyTagTag>;
+  using FunnyTag = BasicProperty<int, struct FunnyTagTag>;
 
   auto TABLE_VIEW_STYLE() {
     auto style = StyleSheet();
@@ -46,7 +48,8 @@ namespace {
     style.get(body_selector > (Row() && Hover())).
       set(BackgroundColor(0xF2F2FF));
     style.get(item_selector > DeleteButton()).
-      set(Visibility(Visibility::INVISIBLE));
+      set(Visibility(Visibility::INVISIBLE)).
+      set(DummyTag(5));
     style.get(item_selector > DeleteButton() > is_a<Box>()).
       set(BackgroundColor(QColor(Qt::transparent))).
       set(horizontal_padding(scale_width(2))).
@@ -55,7 +58,8 @@ namespace {
       set(BackgroundColor(QColor(Qt::transparent)));
     style.get(body_selector > (CurrentRow() || (Row() && Hover())) >
         is_a<TableItem>() > DeleteButton()).
-      set(Visibility(Visibility::VISIBLE));
+      set(Visibility(Visibility::VISIBLE)).
+      set(FunnyTag(12));
     style.get((body_selector > (CurrentRow() || (Row() && Hover()))) >
         DeleteButton() > is_a<Icon>()).
       set(Fill(QColor(0x535353)));

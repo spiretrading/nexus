@@ -147,16 +147,20 @@ const StyleSheet& Stylist::get_style() const {
 }
 
 void Stylist::set_style(StyleSheet style) {
-  auto initial_rule_size = m_rules.size();
-  for(auto& rule : m_rules) {
+//  auto initial_rule_size = m_rules.size();
+  auto rules = std::move(m_rules);
+  m_rules.clear();
+  for(auto& rule : rules) {
     auto selection = std::move(rule->m_selection);
     if(!selection.empty()) {
       on_selection_update(*rule, {}, std::move(selection));
     }
   }
+/*
   if(m_rules.size() != initial_rule_size) {
     m_rules.erase(m_rules.begin(), m_rules.begin() + initial_rule_size);
   }
+*/
   m_style = load_styles(std::move(style));
   apply(*m_style);
 }
@@ -333,6 +337,26 @@ void Stylist::apply(const StyleSheet& style) {
     auto entry = std::make_unique<RuleEntry>();
     entry->m_priority = priority;
     ++priority;
+    for(auto b : rule.get_block()) {
+      if(std::string(b.get_type().name()).find("Dummy") != std::string::npos) {
+        for(auto& rq : m_rules) {
+          for(auto q : rq->m_block) {
+            if(std::string(q.get_type().name()).find("Dummy") != std::string::npos) {
+              qDebug() << "Nooo";
+            }
+          }
+        }
+      }
+      if(std::string(b.get_type().name()).find("Funny") != std::string::npos) {
+        for(auto& rq : m_rules) {
+          for(auto q : rq->m_block) {
+            if(std::string(q.get_type().name()).find("Funny") != std::string::npos) {
+              qDebug() << "Neeee";
+            }
+          }
+        }
+      }
+    }
     entry->m_block = rule.get_block();
     entry->m_connection = select(rule.get_selector(), *this,
       std::bind_front(&Stylist::on_selection_update, this, std::ref(*entry)));
@@ -365,9 +389,21 @@ void Stylist::apply(Stylist& source, const RuleEntry& rule) {
         std::tie(level, right.m_priority);
     });
   m_sources.insert(j, {&source, level, &rule});
+  for(auto& b : rule.m_block) {
+    if(std::string(b.get_type().name()).find("TagTag") != std::string::npos) {
+      qDebug() << "apply: " << this << " " << &source << " " << &rule;
+      qDebug() << "  " << b.get_type().name();
+    }
+  }
 }
 
 void Stylist::unapply(Stylist& source, const RuleEntry& rule) {
+  for(auto& b : rule.m_block) {
+    if(std::string(b.get_type().name()).find("TagTag") != std::string::npos) {
+      qDebug() << "unapply: " << this << " " << &source << " " << &rule;
+      qDebug() << "  " << b.get_type().name();
+    }
+  }
   std::erase_if(m_sources, [&] (const auto& entry) {
     return entry.m_rule == &rule;
   });
@@ -396,26 +432,18 @@ void Stylist::apply() {
   }
   if(auto visibility = Spire::Styles::find<Visibility>(block)) {
     evaluate(*visibility, [=] (auto visibility) {
-      if(visibility == Visibility::VISIBLE && !m_widget->isVisible()) {
-        m_widget->show();
-      } else if(visibility != m_visibility) {
-        if(visibility == Visibility::NONE) {
-          auto size = m_widget->sizePolicy();
-          size.setRetainSizeWhenHidden(false);
-          m_widget->setSizePolicy(size);
-          m_widget->hide();
-        } else if(visibility == Visibility::INVISIBLE) {
-          auto size = m_widget->sizePolicy();
-          size.setRetainSizeWhenHidden(true);
-          m_widget->setSizePolicy(size);
-          m_widget->hide();
-        }
-      }
       m_visibility = visibility;
+      qDebug() << typeid(get_widget()).name() << ": " << this << " " <<
+        &get_widget() << " " << static_cast<int>(m_visibility);
+      if(m_visibility == Visibility::VISIBLE) {
+        m_widget->show();
+      } else {
+        auto size = m_widget->sizePolicy();
+        size.setRetainSizeWhenHidden(m_visibility == Visibility::INVISIBLE);
+        m_widget->setSizePolicy(size);
+        m_widget->hide();
+      }
     });
-  } else if(m_visibility != Visibility::VISIBLE) {
-    m_widget->show();
-    m_visibility = Visibility::VISIBLE;
   }
 }
 
