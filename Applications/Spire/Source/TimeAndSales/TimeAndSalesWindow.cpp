@@ -25,16 +25,7 @@ namespace {
   using BelowBidIndicator =
     StateSelector<void, struct BelowBidIndicatorSeletorTag>;
   const auto TITLE_NAME = QObject::tr("Time and Sales");
-
-  auto get_height(const QFont& font) {
-    auto label = std::unique_ptr<TextBox>(make_label("x"));
-    update_style(*label, [&] (auto& style) {
-      style.get(Any()).
-        set(Font(font)).
-        set(vertical_padding(scale_height(1.5)));
-    });
-    return label->sizeHint().height();
-  }
+  const auto CELL_VERTICAL_PADDING = 1.5;
 
   auto get_bbo_indicator_selector(BboIndicator indicator) {
     static auto selectors = std::array<Selector, BBO_INDICATOR_COUNT>{
@@ -66,6 +57,11 @@ namespace {
       apply_highlight_style(style, get_bbo_indicator_selector(indicator),
         properties.get_highlight_color(indicator));
     }
+  }
+
+  auto get_height(const QFont& font) {
+    auto metrics = QFontMetrics(font);
+    return metrics.height() + 2 * scale_height(CELL_VERTICAL_PADDING);
   }
 }
 
@@ -120,13 +116,6 @@ bool TimeAndSalesWindow::eventFilter(QObject* watched, QEvent* event) {
   return Window::eventFilter(watched, event);
 }
 
-int TimeAndSalesWindow::get_row_height() const {
-  if(m_table_model->get_row_size() == 0) {
-    return get_height(m_factory->make()->get_current()->get().get_font());
-  }
-  return m_table_view->get_body().get_item({0, 0})->height();
-}
-
 void TimeAndSalesWindow::make_table_header_menu() {
   if(m_table_header_menu) {
     return;
@@ -158,8 +147,9 @@ void TimeAndSalesWindow::on_current(const Security& security) {
   m_transition_view->set_status(TransitionView::Status::NONE);
   m_table_model->set_model(m_model_builder(security));
   auto& header = m_table_view->get_header();
+  auto& properties = m_factory->make()->get_current()->get();
   m_table_model->load_history(
-    (m_body->height() - header.height()) / get_row_height());
+    (m_body->height() - header.height()) / get_height(properties.get_font()));
 }
 
 void TimeAndSalesWindow::on_header_item_check(int column, bool checked) {

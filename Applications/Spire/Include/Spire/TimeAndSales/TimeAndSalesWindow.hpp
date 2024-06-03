@@ -46,7 +46,6 @@ namespace Spire {
       ContextMenu* m_table_header_menu;
       QWidget* m_body;
 
-      int get_row_height() const;
       void make_table_header_menu();
       void on_begin_loading();
       void on_end_loading();

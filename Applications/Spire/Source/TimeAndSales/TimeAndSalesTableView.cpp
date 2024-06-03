@@ -128,7 +128,7 @@ TableView* Spire::make_time_and_sales_table_view(
   header_scroll_box->setFocusPolicy(Qt::NoFocus);
   header_scroll_box->set_horizontal(ScrollBox::DisplayPolicy::NEVER);
   header_scroll_box->set_vertical(ScrollBox::DisplayPolicy::NEVER);
-  update_style(*table_view, apply_table_header_style);
+  update_style(*header_scroll_box, apply_table_header_style);
   auto& header_box =
     *static_cast<Box*>(table_view->layout()->itemAt(0)->widget());
   auto old_header_box =
