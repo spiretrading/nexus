@@ -52,6 +52,10 @@ namespace {
       set(vertical_padding(scale_height(1.5)));
   }
 
+  auto apply_table_cell_right_align_style(StyleSheet& style) {
+    style.get(Any()).set(TextAlign(Qt::AlignRight | Qt::AlignVCenter));
+  }
+
   auto make_header_model() {
     auto model = std::make_shared<ArrayListModel<TableHeaderItem::Model>>();
     auto push = [&] (const QString& name, const QString& short_name) {
@@ -83,19 +87,6 @@ namespace {
     return make_label(time_text);
   }
 
-  template<typename B, typename T =
-    std::decay_t<decltype(*std::declval<B>().get_current())>::Scalar>
-  auto make_decimal_cell(const T& value) {
-    auto cell = new B();
-    cell->get_current()->set(value);
-    cell->set_read_only(true);
-    update_style(*cell, [] (auto& style) {
-      style.get(Any() > is_a<TextBox>()).
-        set(TextAlign(Qt::AlignRight | Qt::AlignVCenter));
-      });
-    return cell;
-  }
-
   QWidget* table_view_builder(const std::shared_ptr<TableModel>& table, int row,
       int column) {
     auto column_id = static_cast<TimeAndSalesTableModel::Column>(column);
@@ -103,10 +94,16 @@ namespace {
       if(column_id == TimeAndSalesTableModel::Column::TIME) {
         return make_time_cell(table->get<ptime>(row, column));
       } else if(column_id == TimeAndSalesTableModel::Column::PRICE) {
-        return make_decimal_cell<MoneyBox>(table->get<Money>(row, column));
+        auto money_cell = make_label(to_text(table->get<Money>(row, column)));
+        update_style(*money_cell,
+          std::bind_front(&apply_table_cell_right_align_style));
+        return money_cell;
       } else if(column_id == TimeAndSalesTableModel::Column::SIZE) {
-        return make_decimal_cell<QuantityBox>(
-          table->get<Quantity>(row, column));
+        auto quantity_cell = make_label(
+          to_text(table->get<Quantity>(row, column)).remove(QChar(',')));
+        update_style(*quantity_cell,
+          std::bind_front(&apply_table_cell_right_align_style));
+        return quantity_cell;
       } else if(column_id == TimeAndSalesTableModel::Column::MARKET) {
         return make_label(
           QString::fromStdString(table->get<std::string>(row, column)));
@@ -116,9 +113,7 @@ namespace {
       }
       return make_label("");
     }();
-    update_style(*cell, [] (auto& style) {
-      apply_table_cell_style(style);
-    });
+    update_style(*cell, std::bind_front(&apply_table_cell_style));
     return cell;
   }
 }
@@ -128,18 +123,14 @@ TableView* Spire::make_time_and_sales_table_view(
   auto table_view = TableViewBuilder(table).
     set_header(make_header_model()).
     set_view_builder(table_view_builder).make();
-  update_style(*table_view, [] (auto& style) {
-    apply_table_view_style(style);
-  });
+  update_style(*table_view, std::bind_front(&apply_table_view_style));
   auto& header = table_view->get_header();
   auto header_scroll_box = new ScrollBox(&header);
   header_scroll_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   header_scroll_box->setFocusPolicy(Qt::NoFocus);
   header_scroll_box->set_horizontal(ScrollBox::DisplayPolicy::NEVER);
   header_scroll_box->set_vertical(ScrollBox::DisplayPolicy::NEVER);
-  update_style(*header_scroll_box, [] (auto& style) {
-    apply_table_header_style(style);
-  });
+  update_style(*table_view, std::bind_front(&apply_table_header_style));
   auto& header_box =
     *static_cast<Box*>(table_view->layout()->itemAt(0)->widget());
   auto old_header_box =
