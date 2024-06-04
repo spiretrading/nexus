@@ -36,9 +36,6 @@ namespace {
       set(BackgroundColor(Qt::transparent));
     style.get(body_selector > CurrentColumn()).
       set(BackgroundColor(Qt::transparent));
-    style.get(Any() > (is_a<TableHeader>() < is_a<Box>())).
-      set(BorderBottomSize(scale_height(1))).
-      set(BorderBottomColor(QColor(0xE0E0E0)));
   }
 
   auto apply_table_cell_style(StyleSheet& style) {
