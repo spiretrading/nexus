@@ -27,9 +27,10 @@ namespace {
 
   void apply_highlight_style(StyleSheet& style, const Selector& selector,
       const HighlightColor& highlight) {
-    style.get(Any() >> selector).
+    auto item_selector = Any() > is_a<TableBody>() > Row() > is_a<TableItem>();
+    style.get(item_selector > selector).
       set(TextColor(highlight.m_text_color));
-    style.get(Any() >> (selector < is_a<TableItem>() < Row())).
+    style.get(item_selector > (selector < is_a<TableItem>() < Row())).
       set(BackgroundColor(highlight.m_background_color));
   };
 
