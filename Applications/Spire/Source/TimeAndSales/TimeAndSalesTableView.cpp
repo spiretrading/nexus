@@ -76,7 +76,7 @@ namespace {
     style.get(Any()).set(TextAlign(Qt::AlignRight | Qt::AlignVCenter));
   }
 
-  double get_height(TableBody& table_body) {
+  double get_row_height(TableBody& table_body) {
     if(auto item = table_body.get_item({0, 0})) {
       return item->height();
     }
@@ -212,13 +212,6 @@ TableView* Spire::make_time_and_sales_table_view(
     std::bind_front(&ScrollBar::set_position,
       &header_scroll_box->get_horizontal_scroll_bar()));
   auto status = std::make_shared<Status>(false, 0);
-  auto timer = new QTimer(table_view);
-  timer->setSingleShot(true);
-  QObject::connect(timer, &QTimer::timeout, [=] {
-    match(*table_view, PullDelayed());
-    body_scroll_box->get_body().adjustSize();
-    scroll_to_end(body_scroll_box->get_vertical_scroll_bar());
-  });
   body_scroll_box->get_vertical_scroll_bar().connect_position_signal(
     [=] (int position) {
       auto& scroll_bar = body_scroll_box->get_vertical_scroll_bar();
@@ -226,10 +219,17 @@ TableView* Spire::make_time_and_sales_table_view(
           scroll_bar.get_range().m_end - position <
             scroll_bar.get_page_size() / 2) {
         table->load_history(
-          body_scroll_box->height() / get_height(table_view->get_body()));
+          body_scroll_box->height() / get_row_height(table_view->get_body()));
       }
       status->m_last_scroll_y = position;
     });
+  auto timer = new QTimer(table_view);
+  timer->setSingleShot(true);
+  QObject::connect(timer, &QTimer::timeout, [=] {
+    match(*table_view, PullDelayed());
+    body_scroll_box->get_body().adjustSize();
+    scroll_to_end(body_scroll_box->get_vertical_scroll_bar());
+  });
   table->connect_begin_loading_signal([=] {
     if(status->m_is_loading) {
       return;

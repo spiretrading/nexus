@@ -94,8 +94,6 @@ namespace Spire {
 
       void load_snapshot(Beam::Queries::Sequence last, int count);
       void on_update(const TimeAndSalesModel::Entry& entry);
-    void on_operation(
-      const ListModel<TimeAndSalesModel::Entry>::Operation& operation);
   };
 }
 
