@@ -1,10 +1,9 @@
 #include "Spire/TimeAndSales/TimeAndSalesTableView.hpp"
+#include <QLayout>
 #include <QMovie>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
-#include "Spire/Ui/MoneyBox.hpp"
-#include "Spire/Ui/QuantityBox.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/TableHeaderItem.hpp"
@@ -19,6 +18,7 @@ using namespace Spire::Styles;
 namespace {
   using PullIndicator = StateSelector<void, struct PullIndicatorSelectorTag>;
   using PullDelayed = StateSelector<void, struct PullDelayedSelectorTag>;
+  const auto CELL_VERTICAL_PADDING = 1.5;
 
   struct HeaderItemProperties {
     bool m_is_visible;
@@ -69,7 +69,18 @@ namespace {
     style.get(Any()).
       set(border_size(0)).
       set(horizontal_padding(scale_width(2))).
-      set(vertical_padding(scale_height(1.5)));
+      set(vertical_padding(scale_height(CELL_VERTICAL_PADDING)));
+  }
+
+  auto apply_table_cell_right_align_style(StyleSheet& style) {
+    style.get(Any()).set(TextAlign(Qt::AlignRight | Qt::AlignVCenter));
+  }
+
+  double get_height(TableBody& table_body) {
+    if(auto item = table_body.get_item({0, 0})) {
+      return item->height();
+    }
+    return 2 * scale_height(CELL_VERTICAL_PADDING);
   }
 
   auto make_header_model() {
@@ -87,6 +98,15 @@ namespace {
     return model;
   }
 
+   auto make_pull_indicator() {
+    auto spinner = new QMovie(":/Icons/spinner.gif", QByteArray());
+    spinner->setScaledSize(scale(16, 16));
+    spinner->start();
+    auto spinner_widget = new QLabel();
+    spinner_widget->setMovie(spinner);
+    return new Box(spinner_widget);
+  }
+
   auto make_header_item_properties() {
     auto properties = std::vector<HeaderItemProperties>();
     properties.emplace_back(false, Qt::AlignLeft, scale_width(48));
@@ -97,45 +117,23 @@ namespace {
     return properties;
   }
 
-  auto make_pull_indicator() {
-    auto spinner = new QMovie(":/Icons/spinner.gif", QByteArray());
-    spinner->setScaledSize(scale(16, 16));
-    spinner->start();
-    auto spinner_widget = new QLabel();
-    spinner_widget->setMovie(spinner);
-    return new Box(spinner_widget);
-  }
-
-  auto make_time_cell(ptime time) {
-    auto time_text = to_text(time);
-    time_text = time_text.left(time_text.lastIndexOf('.'));
-    return make_label(time_text);
-  }
-
-  template<typename B, typename T =
-    std::decay_t<decltype(*std::declval<B>().get_current())>::Scalar>
-  auto make_decimal_cell(const T& value) {
-    auto cell = new B();
-    cell->get_current()->set(value);
-    cell->set_read_only(true);
-    update_style(*cell, [] (auto& style) {
-      style.get(Any() > is_a<TextBox>()).
-        set(TextAlign(Qt::AlignRight | Qt::AlignVCenter));
-      });
-    return cell;
-  }
-
-  QWidget* table_view_builder(const std::shared_ptr<TableModel>& table, int row,
-      int column) {
+  QWidget* table_view_builder(
+      const std::shared_ptr<TimeAndSalesTableModel>& time_and_sales,
+      const std::shared_ptr<TableModel>& table, int row, int column) {
     auto column_id = static_cast<TimeAndSalesTableModel::Column>(column);
     auto cell = [&] () -> QWidget* {
       if(column_id == TimeAndSalesTableModel::Column::TIME) {
-        return make_time_cell(table->get<ptime>(row, column));
+        auto time = to_text(table->get<ptime>(row, column));
+        return make_label(time.left(time.lastIndexOf('.')));
       } else if(column_id == TimeAndSalesTableModel::Column::PRICE) {
-        return make_decimal_cell<MoneyBox>(table->get<Money>(row, column));
+        auto money_cell = make_label(to_text(table->get<Money>(row, column)));
+        update_style(*money_cell, apply_table_cell_right_align_style);
+        return money_cell;
       } else if(column_id == TimeAndSalesTableModel::Column::SIZE) {
-        return make_decimal_cell<QuantityBox>(
-          table->get<Quantity>(row, column));
+        auto quantity_cell = make_label(
+          to_text(table->get<Quantity>(row, column)).remove(QChar(',')));
+        update_style(*quantity_cell, apply_table_cell_right_align_style);
+        return quantity_cell;
       } else if(column_id == TimeAndSalesTableModel::Column::MARKET) {
         return make_label(
           QString::fromStdString(table->get<std::string>(row, column)));
@@ -143,11 +141,23 @@ namespace {
         return make_label(
           to_text(table->get<TimeAndSale::Condition>(row, column)));
       }
-      return make_label("");
+      return new QWidget();
     }();
-    update_style(*cell, [] (auto& style) {
-      apply_table_cell_style(style);
-    });
+    auto indicator = time_and_sales->get_bbo_indicator(row);
+    if(indicator == BboIndicator::UNKNOWN) {
+      match(*cell, UnknownIndicator());
+    } else if(indicator == BboIndicator::ABOVE_ASK) {
+      match(*cell, AboveAskIndicator());
+    } else if(indicator == BboIndicator::AT_ASK) {
+      match(*cell, AtAskIndicator());
+    } else if(indicator == BboIndicator::INSIDE) {
+      match(*cell, InsideIndicator());
+    } else if(indicator == BboIndicator::AT_BID) {
+      match(*cell, AtBidIndicator());
+    } else if(indicator == BboIndicator::BELOW_BID) {
+      match(*cell, BelowBidIndicator());
+    }
+    update_style(*cell, apply_table_cell_style);
     return cell;
   }
 }
@@ -156,19 +166,15 @@ TableView* Spire::make_time_and_sales_table_view(
     std::shared_ptr<TimeAndSalesTableModel> table, QWidget* parent) {
   auto table_view = TableViewBuilder(table).
     set_header(make_header_model()).
-    set_view_builder(table_view_builder).make();
-  update_style(*table_view, [] (auto& style) {
-    apply_table_view_style(style);
-  });
+    set_view_builder(std::bind_front(&table_view_builder, table)).make();
+  update_style(*table_view, apply_table_view_style);
   auto& header = table_view->get_header();
   auto header_scroll_box = new ScrollBox(&header);
   header_scroll_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   header_scroll_box->setFocusPolicy(Qt::NoFocus);
   header_scroll_box->set_horizontal(ScrollBox::DisplayPolicy::NEVER);
   header_scroll_box->set_vertical(ScrollBox::DisplayPolicy::NEVER);
-  update_style(*header_scroll_box, [] (auto& style) {
-    apply_table_header_style(style);
-  });
+  update_style(*header_scroll_box, apply_table_header_style);
   auto& header_box =
     *static_cast<Box*>(table_view->layout()->itemAt(0)->widget());
   auto old_header_box =
@@ -199,30 +205,28 @@ TableView* Spire::make_time_and_sales_table_view(
   pull_indicator->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   match(*pull_indicator, PullIndicator());
   link(*table_view, *pull_indicator);
-  auto scroll_box =
+  auto body_scroll_box =
     static_cast<ScrollBox*>(table_view->layout()->itemAt(1)->widget());
-  scroll_box->get_body().layout()->addWidget(pull_indicator);
-  scroll_box->get_horizontal_scroll_bar().connect_position_signal(
-    [=] (int position) {
-      header_scroll_box->get_horizontal_scroll_bar().set_position(position);
-    });
+  body_scroll_box->get_body().layout()->addWidget(pull_indicator);
+  body_scroll_box->get_horizontal_scroll_bar().connect_position_signal(
+    std::bind_front(&ScrollBar::set_position,
+      &header_scroll_box->get_horizontal_scroll_bar()));
   auto status = std::make_shared<Status>(false, 0);
   auto timer = new QTimer(table_view);
   timer->setSingleShot(true);
   QObject::connect(timer, &QTimer::timeout, [=] {
     match(*table_view, PullDelayed());
-    scroll_box->get_body().adjustSize();
-    scroll_to_end(scroll_box->get_vertical_scroll_bar());
+    body_scroll_box->get_body().adjustSize();
+    scroll_to_end(body_scroll_box->get_vertical_scroll_bar());
   });
-  scroll_box->get_vertical_scroll_bar().connect_position_signal(
+  body_scroll_box->get_vertical_scroll_bar().connect_position_signal(
     [=] (int position) {
-      auto& scroll_bar = scroll_box->get_vertical_scroll_bar();
+      auto& scroll_bar = body_scroll_box->get_vertical_scroll_bar();
       if(!status->m_is_loading && position > status->m_last_scroll_y &&
           scroll_bar.get_range().m_end - position <
             scroll_bar.get_page_size() / 2) {
-        auto& body = table_view->get_body();
         table->load_history(
-          scroll_box->height() / body.get_item({0, 0})->height());
+          body_scroll_box->height() / get_height(table_view->get_body()));
       }
       status->m_last_scroll_y = position;
     });
@@ -236,7 +240,9 @@ TableView* Spire::make_time_and_sales_table_view(
   table->connect_end_loading_signal([=] {
     status->m_is_loading = false;
     timer->stop();
-    unmatch(*table_view, PullDelayed());
+    if(is_match(*table_view, PullDelayed())) {
+      unmatch(*table_view, PullDelayed());
+    }
   });
   return table_view;
 }
