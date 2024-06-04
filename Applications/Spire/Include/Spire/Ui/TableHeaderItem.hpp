@@ -1,6 +1,7 @@
 #ifndef SPIRE_TABLE_HEADER_ITEM_HPP
 #define SPIRE_TABLE_HEADER_ITEM_HPP
 #include <boost/signals2/connection.hpp>
+#include <QSpacerItem>
 #include <QWidget>
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Spire/ValueModel.hpp"
@@ -125,7 +126,9 @@ namespace Spire {
       std::shared_ptr<ValueModel<Model>> m_model;
       bool m_is_resizeable;
       Button* m_filter_button;
+      QWidget* m_sort_indicator;
       QWidget* m_sash;
+      QSpacerItem* m_spacer;
       boost::signals2::scoped_connection m_connection;
 
       void on_update(const Model& model);

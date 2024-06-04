@@ -151,13 +151,10 @@ TableHeaderItem::TableHeaderItem(
   auto name_label =
     new ResponsiveLabel(std::make_shared<HeaderNameListModel>(m_model));
   match(*name_label, Label());
-  link(*this, *name_label);
-  auto sort_indicator =
+  m_sort_indicator =
     new SortIndicator(make_field_value_model(m_model, &Model::m_order));
-  link(*this, *sort_indicator);
   m_filter_button = make_filter_button();
   match(*m_filter_button, FilterButton());
-  link(*this, *m_filter_button);
   m_sash = make_sash();
   m_sash->installEventFilter(this);
   auto hover_element = new Box(nullptr);
@@ -166,25 +163,34 @@ TableHeaderItem::TableHeaderItem(
   auto contents = new QWidget();
   contents->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   auto contents_layout = make_hbox_layout(contents);
-  contents_layout->setContentsMargins({scale_width(8), 0, 0, 0});
   contents_layout->addWidget(name_label);
-  contents_layout->addSpacerItem(
-    new QSpacerItem(1, 0, QSizePolicy::Expanding, QSizePolicy::Expanding));
-  contents_layout->addWidget(sort_indicator);
+  m_spacer =
+    new QSpacerItem(1, 0, QSizePolicy::Expanding, QSizePolicy::Expanding);
+  contents_layout->addSpacerItem(m_spacer);
+  contents_layout->addWidget(m_sort_indicator);
   contents_layout->addWidget(m_filter_button);
   auto top_layout = make_hbox_layout();
   top_layout->addWidget(contents);
   top_layout->addWidget(m_sash);
   auto bottom_layout = make_hbox_layout();
-  bottom_layout->setContentsMargins({scale_width(8), 0, 0, 0});
   bottom_layout->addWidget(hover_element);
   bottom_layout->addSpacerItem(
     new QSpacerItem(1, 0, QSizePolicy::Expanding, QSizePolicy::Expanding));
-  auto layout = make_vbox_layout(this);
-  layout->setContentsMargins({0, scale_height(8), 0, 0});
+  auto body = new QWidget();
+  auto layout = make_vbox_layout(body);
   layout->addLayout(top_layout);
   layout->addLayout(bottom_layout);
+  auto box = new Box(body);
+  enclose(*this, *box);
+  proxy_style(*this, *box);
+  link(*this, *name_label);
+  link(*this, *m_sort_indicator);
+  link(*this, *m_filter_button);
+  link(*this, *hover_element);
   auto style = StyleSheet();
+  style.get(Any()).
+    set(PaddingLeft(scale_width(8))).
+    set(PaddingTop(scale_height(8)));
   style.get(Any() > Label()).set(TextColor(QColor(0x808080)));
   style.get((Hover() && Sortable()) > Label()).set(TextColor(QColor(0x4B23A0)));
   style.get(Any() > HoverElement()).set(Visibility::INVISIBLE);
@@ -218,11 +224,17 @@ void TableHeaderItem::set_is_resizeable(bool is_resizeable) {
   }
   m_is_resizeable = is_resizeable;
   m_sash->setVisible(m_is_resizeable);
-  if(m_is_resizeable) {
-    layout()->setContentsMargins({0, scale_height(8), 0, 0});
-  } else {
-    layout()->setContentsMargins({0, scale_height(8), scale_width(8), 0});
-  }
+  update_style(*this, [&] (auto& style) {
+    if(m_is_resizeable) {
+      style.get(Any()).
+        set(PaddingRight(0)).
+        set(PaddingTop(scale_height(8)));
+    } else {
+      style.get(Any()).
+        set(PaddingRight(scale_width(8))).
+        set(PaddingTop(scale_height(8)));
+    }
+  });
 }
 
 connection TableHeaderItem::connect_start_resize_signal(
@@ -279,6 +291,12 @@ void TableHeaderItem::mouseReleaseEvent(QMouseEvent* event) {
 
 void TableHeaderItem::on_update(const Model& model) {
   m_filter_button->setVisible(model.m_filter != TableFilter::Filter::NONE);
+  m_sort_indicator->setVisible(model.m_order != Order::UNORDERED);
+  if(!m_filter_button->isVisible() && !m_sort_indicator->isVisible()) {
+    m_spacer->changeSize(0, 0);
+  } else {
+    m_spacer->changeSize(1, 0, QSizePolicy::Expanding, QSizePolicy::Expanding);
+  }
   auto& stylist = find_stylist(*this);
   if(model.m_order != Order::UNORDERED) {
     if(!stylist.is_match(Sortable())) {
