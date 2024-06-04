@@ -1,9 +1,8 @@
 #include "Spire/TimeAndSales/TimeAndSalesTableView.hpp"
+#include <QLayout>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
-#include "Spire/Ui/MoneyBox.hpp"
-#include "Spire/Ui/QuantityBox.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/TableHeaderItem.hpp"
@@ -81,18 +80,13 @@ namespace {
     return properties;
   }
 
-  auto make_time_cell(ptime time) {
-    auto time_text = to_text(time);
-    time_text = time_text.left(time_text.lastIndexOf('.'));
-    return make_label(time_text);
-  }
-
   QWidget* table_view_builder(const std::shared_ptr<TableModel>& table, int row,
       int column) {
     auto column_id = static_cast<TimeAndSalesTableModel::Column>(column);
     auto cell = [&] () -> QWidget* {
       if(column_id == TimeAndSalesTableModel::Column::TIME) {
-        return make_time_cell(table->get<ptime>(row, column));
+        auto time_text = to_text(table->get<ptime>(row, column));
+        return make_label(time_text.left(time_text.lastIndexOf('.')));
       } else if(column_id == TimeAndSalesTableModel::Column::PRICE) {
         auto money_cell = make_label(to_text(table->get<Money>(row, column)));
         update_style(*money_cell, apply_table_cell_right_align_style);
@@ -109,7 +103,7 @@ namespace {
         return make_label(
           to_text(table->get<TimeAndSale::Condition>(row, column)));
       }
-      return make_label("");
+      return new QWidget();
     }();
     update_style(*cell, apply_table_cell_style);
     return cell;

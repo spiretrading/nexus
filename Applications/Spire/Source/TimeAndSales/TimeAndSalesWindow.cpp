@@ -60,8 +60,12 @@ namespace {
   }
 
   auto get_height(const QFont& font) {
-    return QFontMetrics(font).height() +
+    auto height = QFontMetrics(font).height() +
       2 * scale_height(CELL_VERTICAL_PADDING);
+    if(height <= 0) {
+      height = 2 * scale_height(CELL_VERTICAL_PADDING);
+    }
+    return height;
   }
 }
 
