@@ -154,9 +154,6 @@ void Stylist::set_style(StyleSheet style) {
       on_selection_update(*rule, {}, std::move(selection));
     }
   }
-  if(!m_rules.empty()) {
-    qDebug() << "Waaaard";
-  }
   m_style = load_styles(std::move(style));
   apply(*m_style);
 }
@@ -333,26 +330,6 @@ void Stylist::apply(const StyleSheet& style) {
     auto entry = std::make_unique<RuleEntry>();
     entry->m_priority = priority;
     ++priority;
-    for(auto b : rule.get_block()) {
-      if(std::string(b.get_type().name()).find("Dummy") != std::string::npos) {
-        for(auto& rq : m_rules) {
-          for(auto q : rq->m_block) {
-            if(std::string(q.get_type().name()).find("Dummy") != std::string::npos) {
-              qDebug() << "Nooo";
-            }
-          }
-        }
-      }
-      if(std::string(b.get_type().name()).find("Funny") != std::string::npos) {
-        for(auto& rq : m_rules) {
-          for(auto q : rq->m_block) {
-            if(std::string(q.get_type().name()).find("Funny") != std::string::npos) {
-              qDebug() << "Neeee";
-            }
-          }
-        }
-      }
-    }
     entry->m_block = rule.get_block();
     entry->m_connection = select(rule.get_selector(), *this,
       std::bind_front(&Stylist::on_selection_update, this, std::ref(*entry)));
@@ -385,21 +362,9 @@ void Stylist::apply(Stylist& source, const RuleEntry& rule) {
         std::tie(level, right.m_priority);
     });
   m_sources.insert(j, {&source, level, &rule});
-  for(auto& b : rule.m_block) {
-    if(std::string(b.get_type().name()).find("TagTag") != std::string::npos) {
-      qDebug() << "apply: " << this << " " << &source << " " << &rule;
-      qDebug() << "  " << b.get_type().name();
-    }
-  }
 }
 
 void Stylist::unapply(const RuleEntry& rule) {
-  for(auto& b : rule.m_block) {
-    if(std::string(b.get_type().name()).find("TagTag") != std::string::npos) {
-      qDebug() << "unapply: " << this << " " << &rule;
-      qDebug() << "  " << b.get_type().name();
-    }
-  }
   std::erase_if(m_sources, [&] (const auto& entry) {
     return entry.m_rule == &rule;
   });
@@ -429,8 +394,6 @@ void Stylist::apply() {
   if(auto visibility = Spire::Styles::find<Visibility>(block)) {
     evaluate(*visibility, [=] (auto visibility) {
       m_visibility = visibility;
-      qDebug() << typeid(get_widget()).name() << ": " << this << " " <<
-        &get_widget() << " " << static_cast<int>(m_visibility);
       if(m_visibility == Visibility::VISIBLE) {
         m_widget->show();
       } else {

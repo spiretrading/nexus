@@ -32,15 +32,13 @@ namespace {
       for(auto child : stylist.get_widget().children()) {
         if(child && child->isWidgetType()) {
           auto& stylist = find_stylist(static_cast<const QWidget&>(*child));
-          m_children_stylists.insert(std::pair(child, &stylist));
+          m_children_stylists.insert_or_assign(child, &stylist);
           children.insert(&stylist);
         }
       }
       for(auto& link : stylist.get_links()) {
-        if(m_children_stylists.insert(
-            std::pair(&link->get_widget(), link)).second) {
-          children.insert(link);
-        }
+        m_children_stylists.insert_or_assign(&link->get_widget(), link);
+        children.insert(link);
       }
       m_link_connection = stylist.connect_link_signal(
         std::bind_front(&ChildObserver::on_link, this));
@@ -60,7 +58,7 @@ namespace {
         auto& child = *static_cast<QChildEvent&>(*event).child();
         if(child.isWidgetType()) {
           auto& stylist = find_stylist(static_cast<const QWidget&>(child));
-          m_children_stylists.insert(std::pair(&child, &stylist));
+          m_children_stylists.insert_or_assign(&child, &stylist);
           m_on_update({&stylist}, {});
         }
       } else if(event->type() == QEvent::ChildRemoved) {
@@ -74,10 +72,8 @@ namespace {
     }
 
     void on_link(const Stylist& link) {
-      if(m_children_stylists.insert(
-          std::pair(&link.get_widget(), &link)).second) {
-        m_on_update({&link}, {});
-      }
+      m_children_stylists.insert_or_assign(&link.get_widget(), &link);
+      m_on_update({&link}, {});
     }
   };
 }

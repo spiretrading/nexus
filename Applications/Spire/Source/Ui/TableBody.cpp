@@ -102,6 +102,7 @@ struct TableBody::RowCover : Cover {
 
   void unmount() {
     auto& body = *static_cast<TableBody*>(parentWidget());
+    setParent(nullptr);
     for(auto i = 0; i != layout()->count(); ++i) {
       body.m_item_builder.unmount(get_item(i)->unmount());
     }
@@ -650,6 +651,7 @@ TableBody::RowCover* TableBody::mount_row(
     }
     auto row = unmounted_rows.back();
     unmounted_rows.pop_back();
+    row->setParent(this);
     return row;
   }();
   if(row != m_current_row) {

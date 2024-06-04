@@ -21,27 +21,20 @@ int main(int argc, char** argv) {
   application.setOrganizationName(QObject::tr("Spire Trading Inc"));
   application.setApplicationName(QObject::tr("Scratch"));
   initialize_resources();
-  auto table = std::make_shared<ArrayTableModel>();
-  for(auto i = 0; i != 100; ++i) {
-    table->push({i});
-  }
-  auto current = std::make_shared<LocalValueModel<optional<TableIndex>>>();
-  auto selection = std::make_shared<TableSelectionModel>(
-    std::make_shared<TableEmptySelectionModel>(),
-    std::make_shared<ListSingleSelectionModel>(),
-    std::make_shared<ListEmptySelectionModel>());
-  auto widths = std::make_shared<ArrayListModel<int>>();
-  auto body = new TableBody(
-    table, current, selection, widths, TableView::default_item_builder);
-  update_style(*body, [] (auto& style) {
-    style.get(Any()).
-      set(VerticalSpacing(30));//.
-//      set(grid_color(QColor(0xFF0000)));
-    style.get(Any() > Row() > is_a<TableItem>() > is_a<TextBox>()).
-      set(border(1, QColor(0x0000FF)));
+  auto p = new QWidget();
+  update_style(*p, [] (auto& styles) {
+    styles.get(Any() > Any()).set(BackgroundColor(QColor(0xFF00FF)));
   });
-  auto scroll_box = new ScrollBox(body);
-  scroll_box->resize(300, 100);
-  scroll_box->show();
+  p->show();
+  auto s = std::unordered_set<void*>();
+  while(true) {
+    auto q = new QWidget();
+    if(s.contains(q)) {
+      qDebug() << q;
+    }
+    s.insert(q);
+    q->setParent(p);
+    delete q;
+  }
   application.exec();
 }
