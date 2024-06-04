@@ -1,7 +1,7 @@
 #include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 #include "Spire/TimeAndSales/NoneTimeAndSalesModel.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesTableView.hpp"
-#include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/ContextMenu.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DecimalBox.hpp"
@@ -15,19 +15,10 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  using UnknownIndicator =
-    StateSelector<void, struct UnknownIndicatorSeletorTag>;
-  using AboveAskIndicator =
-    StateSelector<void, struct AboveAskIndicatorSeletorTag>;
-  using AtAskIndicator = StateSelector<void, struct AtAskIndicatorSeletorTag>;
-  using InsideIndicator = StateSelector<void, struct InsideIndicatorSeletorTag>;
-  using AtBidIndicator = StateSelector<void, struct AtBidIndicatorSeletorTag>;
-  using BelowBidIndicator =
-    StateSelector<void, struct BelowBidIndicatorSeletorTag>;
   const auto TITLE_NAME = QObject::tr("Time and Sales");
   const auto CELL_VERTICAL_PADDING = 1.5;
 
-  auto get_bbo_indicator_selector(BboIndicator indicator) {
+  auto& get_bbo_indicator_selector(BboIndicator indicator) {
     static auto selectors = std::array<Selector, BBO_INDICATOR_COUNT>{
       UnknownIndicator(), AboveAskIndicator(), AtAskIndicator(),
         InsideIndicator(), AtBidIndicator(), BelowBidIndicator()};
@@ -36,9 +27,9 @@ namespace {
 
   void apply_highlight_style(StyleSheet& style, const Selector& selector,
       const HighlightColor& highlight) {
-    style.get(Any() > selector).
+    style.get(Any() >> selector).
       set(TextColor(highlight.m_text_color));
-    style.get(Any() > (selector < is_a<TableItem>() < Row())).
+    style.get(Any() >> (selector < is_a<TableItem>() < Row())).
       set(BackgroundColor(highlight.m_background_color));
   };
 
@@ -103,8 +94,6 @@ TimeAndSalesWindow::TimeAndSalesWindow(
     std::bind_front(&TimeAndSalesWindow::on_begin_loading, this));
   m_table_model->connect_end_loading_signal(
     std::bind_front(&TimeAndSalesWindow::on_end_loading, this));
-  m_table_view->get_table()->connect_operation_signal(
-    std::bind_front(&TimeAndSalesWindow::on_table_operation, this));
 }
 
 bool TimeAndSalesWindow::eventFilter(QObject* watched, QEvent* event) {
@@ -158,30 +147,4 @@ void TimeAndSalesWindow::on_current(const Security& security) {
 
 void TimeAndSalesWindow::on_header_item_check(int column, bool checked) {
   m_table_view->get_header().get_item(column)->setVisible(checked);
-}
-
-void TimeAndSalesWindow::on_table_operation(
-    const TableModel::Operation& operation) {
-  visit(operation,
-    [&] (const TableModel::AddOperation& operation) {
-      auto indicator = m_table_model->get_bbo_indicator(operation.m_index);
-      for(auto i = 0; i < m_table_model->get_column_size(); ++i) {
-        auto& cell =
-          m_table_view->get_body().get_item({operation.m_index, i})->get_body();
-        if(indicator == BboIndicator::UNKNOWN) {
-          match(cell, UnknownIndicator());
-        } else if(indicator == BboIndicator::ABOVE_ASK) {
-          match(cell, AboveAskIndicator());
-        } else if(indicator == BboIndicator::AT_ASK) {
-          match(cell, AtAskIndicator());
-        } else if(indicator == BboIndicator::INSIDE) {
-          match(cell, InsideIndicator());
-        } else if(indicator == BboIndicator::AT_BID) {
-          match(cell, AtBidIndicator());
-        } else if(indicator == BboIndicator::BELOW_BID) {
-          match(cell, BelowBidIndicator());
-        }
-        link(*m_table_view, cell);
-      }
-    });
 }

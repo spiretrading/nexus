@@ -80,13 +80,14 @@ namespace {
     return properties;
   }
 
-  QWidget* table_view_builder(const std::shared_ptr<TableModel>& table, int row,
-      int column) {
+  QWidget* table_view_builder(
+      const std::shared_ptr<TimeAndSalesTableModel>& time_and_sales,
+      const std::shared_ptr<TableModel>& table, int row, int column) {
     auto column_id = static_cast<TimeAndSalesTableModel::Column>(column);
     auto cell = [&] () -> QWidget* {
       if(column_id == TimeAndSalesTableModel::Column::TIME) {
-        auto time_text = to_text(table->get<ptime>(row, column));
-        return make_label(time_text.left(time_text.lastIndexOf('.')));
+        auto time = to_text(table->get<ptime>(row, column));
+        return make_label(time.left(time.lastIndexOf('.')));
       } else if(column_id == TimeAndSalesTableModel::Column::PRICE) {
         auto money_cell = make_label(to_text(table->get<Money>(row, column)));
         update_style(*money_cell, apply_table_cell_right_align_style);
@@ -105,6 +106,20 @@ namespace {
       }
       return new QWidget();
     }();
+    auto indicator = time_and_sales->get_bbo_indicator(row);
+    if(indicator == BboIndicator::UNKNOWN) {
+      match(*cell, UnknownIndicator());
+    } else if(indicator == BboIndicator::ABOVE_ASK) {
+      match(*cell, AboveAskIndicator());
+    } else if(indicator == BboIndicator::AT_ASK) {
+      match(*cell, AtAskIndicator());
+    } else if(indicator == BboIndicator::INSIDE) {
+      match(*cell, InsideIndicator());
+    } else if(indicator == BboIndicator::AT_BID) {
+      match(*cell, AtBidIndicator());
+    } else if(indicator == BboIndicator::BELOW_BID) {
+      match(*cell, BelowBidIndicator());
+    }
     update_style(*cell, apply_table_cell_style);
     return cell;
   }
@@ -114,7 +129,7 @@ TableView* Spire::make_time_and_sales_table_view(
     std::shared_ptr<TimeAndSalesTableModel> table, QWidget* parent) {
   auto table_view = TableViewBuilder(table).
     set_header(make_header_model()).
-    set_view_builder(table_view_builder).make();
+    set_view_builder(std::bind_front(&table_view_builder, table)).make();
   update_style(*table_view, apply_table_view_style);
   auto& header = table_view->get_header();
   auto header_scroll_box = new ScrollBox(&header);

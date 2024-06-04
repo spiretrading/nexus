@@ -51,7 +51,6 @@ namespace Spire {
       void on_end_loading();
       void on_current(const Nexus::Security& security);
       void on_header_item_check(int column, bool checked);
-      void on_table_operation(const TableModel::Operation& operation);
   };
 }
 
