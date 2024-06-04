@@ -186,7 +186,7 @@ TableHeaderItem::TableHeaderItem(
   layout->addLayout(bottom_layout);
   auto style = StyleSheet();
   style.get(Any() > Label()).set(TextColor(QColor(0x808080)));
-  style.get(Hover() > Label()).set(TextColor(QColor(0x4B23A0)));
+  style.get((Hover() && Sortable()) > Label()).set(TextColor(QColor(0x4B23A0)));
   style.get(Any() > HoverElement()).set(Visibility::INVISIBLE);
   style.get((Hover() && Sortable()) > HoverElement()).
     set(BackgroundColor(0x4B23A0)).

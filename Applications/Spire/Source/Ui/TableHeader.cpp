@@ -99,6 +99,7 @@ bool TableHeader::eventFilter(QObject* watched, QEvent* event) {
         }
         return m_item_views[index]->width();
       }();
+      auto blocker = shared_connection_block(m_widths_connection);
       m_widths->set(index, width);
     }
   }
