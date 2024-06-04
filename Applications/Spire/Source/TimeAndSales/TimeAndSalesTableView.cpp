@@ -36,10 +36,7 @@ namespace {
       set(BackgroundColor(Qt::transparent));
     style.get(body_selector > CurrentColumn()).
       set(BackgroundColor(Qt::transparent));
-  }
-
-  auto apply_table_header_style(StyleSheet& style) {
-    style.get(Any()).
+    style.get(Any() > (is_a<TableHeader>() < is_a<Box>())).
       set(BorderBottomSize(scale_height(1))).
       set(BorderBottomColor(QColor(0xE0E0E0)));
   }
@@ -132,18 +129,6 @@ TableView* Spire::make_time_and_sales_table_view(
     set_view_builder(std::bind_front(&table_view_builder, table)).make();
   update_style(*table_view, apply_table_view_style);
   auto& header = table_view->get_header();
-  auto header_scroll_box = new ScrollBox(&header);
-  header_scroll_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-  header_scroll_box->setFocusPolicy(Qt::NoFocus);
-  header_scroll_box->set_horizontal(ScrollBox::DisplayPolicy::NEVER);
-  header_scroll_box->set_vertical(ScrollBox::DisplayPolicy::NEVER);
-  update_style(*header_scroll_box, apply_table_header_style);
-  auto& header_box =
-    *static_cast<Box*>(table_view->layout()->itemAt(0)->widget());
-  auto old_header_box =
-    table_view->layout()->replaceWidget(&header_box, header_scroll_box);
-  delete old_header_box->widget();
-  delete old_header_box;
   auto properties = make_header_item_properties();
   for(auto i = 0; i < std::ssize(properties); ++i) {
     header.get_widths()->set(i, properties[i].m_width);
@@ -164,10 +149,5 @@ TableView* Spire::make_time_and_sales_table_view(
       });
     }
   }
-  auto& body_scroll_box =
-    *static_cast<ScrollBox*>(table_view->layout()->itemAt(1)->widget());
-  body_scroll_box.get_horizontal_scroll_bar().connect_position_signal(
-    std::bind_front(&ScrollBar::set_position,
-      &header_scroll_box->get_horizontal_scroll_bar()));
   return table_view;
 }

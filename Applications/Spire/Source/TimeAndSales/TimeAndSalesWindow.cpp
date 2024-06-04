@@ -4,7 +4,7 @@
 #include "Spire/TimeAndSales/TimeAndSalesTableView.hpp"
 #include "Spire/Ui/ContextMenu.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
-#include "Spire/Ui/DecimalBox.hpp"
+#include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/SecurityView.hpp"
 #include "Spire/Ui/TableItem.hpp"
 #include "Spire/Ui/TextBox.hpp"
@@ -79,7 +79,11 @@ TimeAndSalesWindow::TimeAndSalesWindow(
   m_table_view->get_header().installEventFilter(this);
   update_style(*m_table_view, std::bind_front(apply_table_view_style,
     m_factory->make()->get_current()->get()));
-  m_transition_view = new TransitionView(m_table_view);
+  auto scroll_box = new ScrollBox(m_table_view);
+  scroll_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  scroll_box->set_horizontal(ScrollBox::DisplayPolicy::ON_ENGAGE);
+  scroll_box->set_vertical(ScrollBox::DisplayPolicy::NEVER);
+  m_transition_view = new TransitionView(scroll_box);
   auto security_view =
     new SecurityView(std::move(securities), *m_transition_view);
   security_view->get_current()->connect_update_signal(
@@ -142,8 +146,8 @@ void TimeAndSalesWindow::on_current(const Security& security) {
   m_table_model->set_model(m_model_builder(security));
   auto& header = m_table_view->get_header();
   auto& properties = m_factory->make()->get_current()->get();
-  m_table_model->load_history(
-    (m_body->height() - header.height()) / get_height(properties.get_font()));
+  m_table_model->load_history((m_body->height() - header.sizeHint().height()) /
+    get_height(properties.get_font()));
 }
 
 void TimeAndSalesWindow::on_header_item_check(int column, bool checked) {

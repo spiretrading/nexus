@@ -77,6 +77,7 @@ TableView::TableView(
   enclose(*box_body, *m_header_view);
   auto box = new Box(box_body);
   box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+  link(*box, *m_header_view);
   update_style(*box, [] (auto& style) {
     style.get(Any()).set(BackgroundColor(QColor(0xFFFFFF)));
   });
