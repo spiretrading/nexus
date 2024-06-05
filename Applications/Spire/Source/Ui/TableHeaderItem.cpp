@@ -162,13 +162,12 @@ TableHeaderItem::TableHeaderItem(
   match(*hover_element, HoverElement());
   auto contents = new QWidget();
   contents->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-  auto contents_layout = make_hbox_layout(contents);
-  contents_layout->addWidget(name_label);
-  m_spacer =
-    new QSpacerItem(1, 0, QSizePolicy::Expanding, QSizePolicy::Expanding);
-  contents_layout->addSpacerItem(m_spacer);
-  contents_layout->addWidget(m_sort_indicator);
-  contents_layout->addWidget(m_filter_button);
+  m_contents_layout = make_hbox_layout(contents);
+  m_contents_layout->addWidget(name_label);
+  m_contents_layout->addSpacerItem(
+    new QSpacerItem(1, 0, QSizePolicy::Expanding, QSizePolicy::Expanding));
+  m_contents_layout->addWidget(m_sort_indicator);
+  m_contents_layout->addWidget(m_filter_button);
   auto top_layout = make_hbox_layout();
   top_layout->addWidget(contents);
   top_layout->addWidget(m_sash);
@@ -292,10 +291,15 @@ void TableHeaderItem::mouseReleaseEvent(QMouseEvent* event) {
 void TableHeaderItem::on_update(const Model& model) {
   m_filter_button->setVisible(model.m_filter != TableFilter::Filter::NONE);
   m_sort_indicator->setVisible(model.m_order != Order::UNORDERED);
+  auto& spacer = *m_contents_layout->itemAt(1)->spacerItem();
   if(!m_filter_button->isVisible() && !m_sort_indicator->isVisible()) {
-    m_spacer->changeSize(0, 0);
-  } else {
-    m_spacer->changeSize(1, 0, QSizePolicy::Expanding, QSizePolicy::Expanding);
+    if(spacer.sizeHint().width() != 0) {
+      spacer.changeSize(0, 0);
+      m_contents_layout->invalidate();
+    }
+  } else if(spacer.sizeHint().width() != 1) {
+    spacer.changeSize(1, 0, QSizePolicy::Expanding, QSizePolicy::Expanding);
+    m_contents_layout->invalidate();
   }
   auto& stylist = find_stylist(*this);
   if(model.m_order != Order::UNORDERED) {
