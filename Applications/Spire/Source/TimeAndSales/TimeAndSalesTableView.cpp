@@ -19,6 +19,7 @@ namespace {
   using PullIndicator = StateSelector<void, struct PullIndicatorSelectorTag>;
   using PullDelayed = StateSelector<void, struct PullDelayedSelectorTag>;
   const auto CELL_VERTICAL_PADDING = 1.5;
+  const auto PULL_DELAY_TIMEOUT_MS = 1000;
 
   struct HeaderItemProperties {
     bool m_is_visible;
@@ -196,24 +197,23 @@ TableView* Spire::make_time_and_sales_table_view(
       }
       status->m_last_scroll_y = position;
     });
-  auto timer = new QTimer(table_view);
-  timer->setSingleShot(true);
-  QObject::connect(timer, &QTimer::timeout, [=] {
-    match(*table_view, PullDelayed());
-    auto& scroll_box = table_view->get_scroll_Box();
-    scroll_box.get_body().adjustSize();
-    scroll_to_end(scroll_box.get_vertical_scroll_bar());
-  });
   table->connect_begin_loading_signal([=] {
     if(status->m_is_loading) {
       return;
     }
     status->m_is_loading = true;
-    timer->start(1000);
+    QTimer::singleShot(PULL_DELAY_TIMEOUT_MS, table_view, [=] {
+      if(!status->m_is_loading) {
+        return;
+      }
+      match(*table_view, PullDelayed());
+      auto& scroll_box = table_view->get_scroll_Box();
+      scroll_box.get_body().adjustSize();
+      scroll_to_end(scroll_box.get_vertical_scroll_bar());
+    });
   });
   table->connect_end_loading_signal([=] {
     status->m_is_loading = false;
-    timer->stop();
     if(is_match(*table_view, PullDelayed())) {
       unmatch(*table_view, PullDelayed());
     }
