@@ -144,6 +144,12 @@ bool ContextMenu::eventFilter(QObject* watched, QEvent* event) {
         }
         break;
     }
+  } else if(watched == m_window) {
+    if(event->type() == QEvent::Show) {
+      show();
+    } else if(event->type() == QEvent::Close) {
+      hide();
+    }
   } else if(watched == m_active_menu_window) {
     if(event->type() == QEvent::MouseButtonPress ||
         event->type() == QEvent::MouseButtonDblClick ||

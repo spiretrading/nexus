@@ -44,9 +44,12 @@ namespace Spire {
       TableView* m_table_view;
       TransitionView* m_transition_view;
       ContextMenu* m_table_header_menu;
+      ContextMenu* m_body_menu;
       QWidget* m_body;
 
       void make_table_header_menu();
+      void on_export_menu();
+      void on_properties_menu();
       void on_begin_loading();
       void on_end_loading();
       void on_current(const Nexus::Security& security);
