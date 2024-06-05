@@ -585,8 +585,8 @@ std::vector<PseudoElement> Spire::Styles::get_pseudo_elements(
   return pseudo_elements;
 }
 
-void Spire::Styles::add_pseudo_element(QWidget& source,
-    const PseudoElement& pseudo_element) {
+void Spire::Styles::add_pseudo_element(
+    QWidget& source, const PseudoElement& pseudo_element) {
   auto stylist = pseudo_stylists.find(std::pair(&source, pseudo_element));
   if(stylist != pseudo_stylists.end()) {
     return;

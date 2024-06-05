@@ -172,6 +172,8 @@ namespace Styles {
       void mount_visible_rows(std::vector<RowCover*>& unmounted_rows);
       std::vector<RowCover*> unmount_hidden_rows();
       void initialize_visible_region();
+      void reset_visible_region(
+        int total_height, std::vector<RowCover*>& unmounted_rows);
       void update_visible_region();
       void on_item_activated(TableItem& item);
       void on_current(const boost::optional<Index>& previous,

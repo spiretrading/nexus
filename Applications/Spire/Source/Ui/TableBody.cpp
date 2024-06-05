@@ -25,11 +25,15 @@ namespace {
       std::min(container.parentWidget()->height(), widget_geometry.bottom());
   }
 
-  void adjust_height(QSpacerItem& spacer, QLayout& layout, int height) {
-    spacer.changeSize(0, std::max(0, spacer.sizeHint().height() + height),
+  void set_height(QSpacerItem& spacer, QLayout& layout, int height) {
+    spacer.changeSize(0, std::max(0, height),
       spacer.sizePolicy().horizontalPolicy(),
       spacer.sizePolicy().verticalPolicy());
     layout.invalidate();
+  }
+
+  void adjust_height(QSpacerItem& spacer, QLayout& layout, int height) {
+    set_height(spacer, layout, spacer.sizeHint().height() + height);
   }
 }
 
@@ -763,10 +767,7 @@ void TableBody::update_spacer(QSpacerItem*& spacer, int hidden_row_count) {
       hidden_row_count * layout()->spacing();
     if(spacer_size > 0) {
       if(spacer) {
-        spacer->changeSize(0, spacer_size,
-          spacer->sizePolicy().horizontalPolicy(),
-          spacer->sizePolicy().verticalPolicy());
-        layout()->invalidate();
+        set_height(*spacer, *layout(), spacer_size);
       } else {
         spacer = new QSpacerItem(
           0, spacer_size, QSizePolicy::Expanding, QSizePolicy::Fixed);
@@ -898,6 +899,29 @@ void TableBody::initialize_visible_region() {
   }
 }
 
+void TableBody::reset_visible_region(
+    int total_height, std::vector<RowCover*>& unmounted_rows) {
+  auto row_height =
+    (total_height + layout()->spacing()) / m_table->get_row_size();
+  if(row_height == 0) {
+    return;
+  }
+  m_top_index = mapFromParent(QPoint(0, 0)).y() / row_height;
+  auto top_position = row_height * m_top_index;
+  if(top_position != 0) {
+    if(!m_top_spacer) {
+      m_top_spacer = new QSpacerItem(
+        0, top_position, QSizePolicy::Expanding, QSizePolicy::Fixed);
+      static_cast<QBoxLayout*>(layout())->insertItem(0, m_top_spacer);
+    } else {
+      set_height(*m_top_spacer, *layout(), top_position);
+    }
+  }
+  auto layout_index = m_top_spacer ? 1 : 0;
+  mount_row(m_top_index, layout_index, unmounted_rows);
+  mount_visible_rows(unmounted_rows);
+}
+
 void TableBody::update_visible_region() {
   if(m_top_index == -1) {
     initialize_visible_region();
@@ -906,9 +930,13 @@ void TableBody::update_visible_region() {
   if(!parentWidget() || !isVisible()) {
     return;
   }
+  auto total_height = height() -
+    layout()->contentsMargins().top() - layout()->contentsMargins().bottom();
   auto unmounted_rows = unmount_hidden_rows();
   if(m_visible_count != 0) {
     mount_visible_rows(unmounted_rows);
+  } else {
+    reset_visible_region(total_height, unmounted_rows);
   }
   for(auto unmounted_row : unmounted_rows) {
     delete unmounted_row;
