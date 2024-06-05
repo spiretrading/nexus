@@ -848,23 +848,6 @@ void TableBody::mount_visible_rows(std::vector<RowCover*>& unmounted_rows) {
   update_spacers();
 }
 
-void TableBody::initialize_visible_region() {
-  if(!parentWidget() || m_top_index != -1 || !isVisible() ||
-      m_table->get_row_size() == 0 || m_table->get_column_size() == 0) {
-    return;
-  }
-  m_top_index = 0;
-  m_visible_count = 0;
-  auto unmounted_rows = std::vector<RowCover*>();
-  mount_visible_rows(unmounted_rows);
-  if(get_current()->get()) {
-    get_current_item();
-  }
-  if(m_visible_count == 0) {
-    m_top_index = -1;
-  }
-}
-
 std::vector<TableBody::RowCover*> TableBody::unmount_hidden_rows() {
   auto unmounted_rows = std::vector<RowCover*>();
   auto removed_items = std::vector<QLayoutItem*>();
@@ -898,6 +881,23 @@ std::vector<TableBody::RowCover*> TableBody::unmount_hidden_rows() {
   return unmounted_rows;
 }
 
+void TableBody::initialize_visible_region() {
+  if(!parentWidget() || m_top_index != -1 || !isVisible() ||
+      m_table->get_row_size() == 0 || m_table->get_column_size() == 0) {
+    return;
+  }
+  m_top_index = 0;
+  m_visible_count = 0;
+  auto unmounted_rows = std::vector<RowCover*>();
+  mount_visible_rows(unmounted_rows);
+  if(get_current()->get()) {
+    get_current_item();
+  }
+  if(m_visible_count == 0) {
+    m_top_index = -1;
+  }
+}
+
 void TableBody::update_visible_region() {
   if(m_top_index == -1) {
     initialize_visible_region();
@@ -909,9 +909,6 @@ void TableBody::update_visible_region() {
   auto unmounted_rows = unmount_hidden_rows();
   if(m_visible_count != 0) {
     mount_visible_rows(unmounted_rows);
-  } else {
-    m_top_index = -1;
-    initialize_visible_region();
   }
   for(auto unmounted_row : unmounted_rows) {
     delete unmounted_row;

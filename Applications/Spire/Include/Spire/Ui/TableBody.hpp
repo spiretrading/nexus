@@ -170,8 +170,8 @@ namespace Styles {
       void update_spacer(QSpacerItem*& spacer, int hidden_row_count);
       void update_spacers();
       void mount_visible_rows(std::vector<RowCover*>& unmounted_rows);
-      void initialize_visible_region();
       std::vector<RowCover*> unmount_hidden_rows();
+      void initialize_visible_region();
       void update_visible_region();
       void on_item_activated(TableItem& item);
       void on_current(const boost::optional<Index>& previous,
