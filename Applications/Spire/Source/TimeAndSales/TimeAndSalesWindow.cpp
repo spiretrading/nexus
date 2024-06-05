@@ -1,5 +1,8 @@
 #include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
+#include <QFileDialog>
+#include <QStandardPaths>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/ExportTable.hpp"
 #include "Spire/TimeAndSales/NoneTimeAndSalesModel.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesTableView.hpp"
 #include "Spire/Ui/ContextMenu.hpp"
@@ -90,11 +93,20 @@ TimeAndSalesWindow::TimeAndSalesWindow(
     std::bind_front(&TimeAndSalesWindow::on_current, this));
   m_body = new Box(security_view);
   m_body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  m_body->installEventFilter(this);
   update_style(*m_body, [] (auto& style) {
     style.get(Any()).set(BackgroundColor(QColor(0xFFFFFF)));
   });
   set_body(m_body);
   resize(security_view->sizeHint().width(), scale_height(361));
+  m_body_menu = new ContextMenu(*m_body);
+  m_body_menu->add_action(tr("Properties"),
+    std::bind_front(&TimeAndSalesWindow::on_properties_menu, this));
+  auto link_menu = new ContextMenu(*static_cast<QWidget*>(m_body_menu));
+  m_body_menu->add_menu(tr("Link to"), *link_menu);
+  m_body_menu->add_separator();
+  m_body_menu->add_action(tr("Export..."),
+    std::bind_front(&TimeAndSalesWindow::on_export_menu, this));
   m_table_model->connect_begin_loading_signal(
     std::bind_front(&TimeAndSalesWindow::on_begin_loading, this));
   m_table_model->connect_end_loading_signal(
@@ -102,12 +114,16 @@ TimeAndSalesWindow::TimeAndSalesWindow(
 }
 
 bool TimeAndSalesWindow::eventFilter(QObject* watched, QEvent* event) {
-  if(watched == &m_table_view->get_header()) {
-    if(event->type() == QEvent::MouseButtonPress) {
-      auto& mouse_event = *static_cast<QMouseEvent*>(event);
-      if(mouse_event.button() == Qt::RightButton) {
+  if(event->type() == QEvent::MouseButtonPress) {
+    auto& mouse_event = *static_cast<QMouseEvent*>(event);
+    if(mouse_event.button() == Qt::RightButton) {
+      if(watched == &m_table_view->get_header()) {
         m_table_header_menu->window()->move(mouse_event.globalPos());
         m_table_header_menu->window()->show();
+        return true;
+      } else if(watched == m_body) {
+        m_body_menu->window()->move(mouse_event.globalPos());
+        m_body_menu->window()->show();
       }
     }
   }
@@ -127,6 +143,19 @@ void TimeAndSalesWindow::make_table_header_menu() {
     model->connect_update_signal(std::bind_front(
       &TimeAndSalesWindow::on_header_item_check, this, i));
   }
+}
+
+void TimeAndSalesWindow::on_export_menu() {
+  auto file_name = QFileDialog::getSaveFileName(this, tr("Save As"),
+    QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) +
+    tr("/time_and_sales"), tr("CSV (*.csv)"));
+  if(!file_name.isEmpty()) {
+    auto out = std::ofstream(file_name.toStdString());
+    export_table_as_csv(*m_table_view->get_table(), out);
+  }
+}
+
+void TimeAndSalesWindow::on_properties_menu() {
 }
 
 void TimeAndSalesWindow::on_begin_loading() {
