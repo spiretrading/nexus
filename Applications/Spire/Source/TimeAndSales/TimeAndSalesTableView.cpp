@@ -1,5 +1,6 @@
 #include "Spire/TimeAndSales/TimeAndSalesTableView.hpp"
 #include <QLayout>
+#include <QMovie>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
@@ -15,10 +16,20 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  using PullIndicator = StateSelector<void, struct PullIndicatorSelectorTag>;
+  using PullDelayed = StateSelector<void, struct PullDelayedSelectorTag>;
+  const auto CELL_VERTICAL_PADDING = 1.5;
+  const auto PULL_DELAY_TIMEOUT_MS = 1000;
+
   struct HeaderItemProperties {
     bool m_is_visible;
     Qt::Alignment m_alignment;
     int m_width;
+  };
+
+  struct Status {
+    bool m_is_loading;
+    int m_last_scroll_y;
   };
 
   auto apply_table_view_style(StyleSheet& style) {
@@ -26,7 +37,8 @@ namespace {
     style.get(body_selector).
       set(grid_color(Qt::transparent)).
       set(horizontal_padding(0)).
-      set(vertical_padding(0)).
+      set(PaddingBottom(scale_height(44))).
+      set(PaddingTop(0)).
       set(HorizontalSpacing(0)).
       set(VerticalSpacing(0));
     style.get(body_selector > Row() > Current()).
@@ -36,17 +48,34 @@ namespace {
       set(BackgroundColor(Qt::transparent));
     style.get(body_selector > CurrentColumn()).
       set(BackgroundColor(Qt::transparent));
+    style.get(Any() > PullIndicator()).
+      set(Visibility::NONE).
+      set(BodyAlign(Qt::AlignHCenter)).
+      set(horizontal_padding(scale_width(8))).
+      set(PaddingBottom(scale_height(20))).
+      set(PaddingTop(scale_height(8)));
+    style.get(PullDelayed() > is_a<TableBody>()).
+      set(PaddingBottom(0));
+    style.get(PullDelayed() > PullIndicator()).
+      set(Visibility::VISIBLE);
   }
 
   auto apply_table_cell_style(StyleSheet& style) {
     style.get(Any()).
       set(border_size(0)).
       set(horizontal_padding(scale_width(2))).
-      set(vertical_padding(scale_height(1.5)));
+      set(vertical_padding(scale_height(CELL_VERTICAL_PADDING)));
   }
 
   auto apply_table_cell_right_align_style(StyleSheet& style) {
     style.get(Any()).set(TextAlign(Qt::AlignRight | Qt::AlignVCenter));
+  }
+
+  double get_row_height(TableBody& table_body) {
+    if(auto item = table_body.get_item({0, 0})) {
+      return item->height();
+    }
+    return 2 * scale_height(CELL_VERTICAL_PADDING);
   }
 
   auto make_header_model() {
@@ -62,6 +91,15 @@ namespace {
     push(QObject::tr("Condition"), QObject::tr("Cond"));
     push("", "");
     return model;
+  }
+
+   auto make_pull_indicator() {
+    auto spinner = new QMovie(":/Icons/spinner.gif", QByteArray());
+    spinner->setScaledSize(scale(16, 16));
+    spinner->start();
+    auto spinner_widget = new QLabel();
+    spinner_widget->setMovie(spinner);
+    return new Box(spinner_widget);
   }
 
   auto make_header_item_properties() {
@@ -140,5 +178,45 @@ TableView* Spire::make_time_and_sales_table_view(
         set(TextAlign(properties[i].m_alignment));
     });
   }
+  auto pull_indicator = make_pull_indicator();
+  pull_indicator->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+  match(*pull_indicator, PullIndicator());
+  link(*table_view, *pull_indicator);
+  auto& scroll_box = table_view->get_scroll_Box();
+  scroll_box.get_body().layout()->addWidget(pull_indicator);
+  auto status = std::make_shared<Status>(false, 0);
+  scroll_box.get_vertical_scroll_bar().connect_position_signal(
+    [=] (int position) {
+      auto& scroll_box = table_view->get_scroll_Box();
+      auto& scroll_bar = scroll_box.get_vertical_scroll_bar();
+      if(!status->m_is_loading && position > status->m_last_scroll_y &&
+          scroll_bar.get_range().m_end - position <
+            scroll_bar.get_page_size() / 2) {
+        table->load_history(
+          scroll_box.height() / get_row_height(table_view->get_body()));
+      }
+      status->m_last_scroll_y = position;
+    });
+  table->connect_begin_loading_signal([=] {
+    if(status->m_is_loading) {
+      return;
+    }
+    status->m_is_loading = true;
+    QTimer::singleShot(PULL_DELAY_TIMEOUT_MS, table_view, [=] {
+      if(!status->m_is_loading) {
+        return;
+      }
+      match(*table_view, PullDelayed());
+      auto& scroll_box = table_view->get_scroll_Box();
+      scroll_box.get_body().adjustSize();
+      scroll_to_end(scroll_box.get_vertical_scroll_bar());
+    });
+  });
+  table->connect_end_loading_signal([=] {
+    status->m_is_loading = false;
+    if(is_match(*table_view, PullDelayed())) {
+      unmatch(*table_view, PullDelayed());
+    }
+  });
   return table_view;
 }
