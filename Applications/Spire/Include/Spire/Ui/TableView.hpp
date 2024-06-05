@@ -70,6 +70,9 @@ namespace Spire {
       /** Returns the table body. */
       TableBody& get_body();
 
+      /** Returns the scroll box. */
+      ScrollBox& get_scroll_Box();
+
       /** Connects a slot to the sort signal. */
       boost::signals2::connection connect_sort_signal(
         const SortSignal::slot_type& slot) const;

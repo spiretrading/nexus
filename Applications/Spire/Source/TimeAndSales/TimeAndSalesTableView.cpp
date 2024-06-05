@@ -59,12 +59,6 @@ namespace {
       set(Visibility::VISIBLE);
   }
 
-  auto apply_table_header_style(StyleSheet& style) {
-    style.get(Any()).
-      set(BorderBottomSize(scale_height(1))).
-      set(BorderBottomColor(QColor(0xE0E0E0)));
-  }
-
   auto apply_table_cell_style(StyleSheet& style) {
     style.get(Any()).
       set(border_size(0)).
@@ -169,57 +163,36 @@ TableView* Spire::make_time_and_sales_table_view(
     set_view_builder(std::bind_front(&table_view_builder, table)).make();
   update_style(*table_view, apply_table_view_style);
   auto& header = table_view->get_header();
-  auto header_scroll_box = new ScrollBox(&header);
-  header_scroll_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-  header_scroll_box->setFocusPolicy(Qt::NoFocus);
-  header_scroll_box->set_horizontal(ScrollBox::DisplayPolicy::NEVER);
-  header_scroll_box->set_vertical(ScrollBox::DisplayPolicy::NEVER);
-  update_style(*header_scroll_box, apply_table_header_style);
-  auto& header_box =
-    *static_cast<Box*>(table_view->layout()->itemAt(0)->widget());
-  auto old_header_box =
-    table_view->layout()->replaceWidget(&header_box, header_scroll_box);
-  delete old_header_box->widget();
-  delete old_header_box;
   auto properties = make_header_item_properties();
   for(auto i = 0; i < std::ssize(properties); ++i) {
     header.get_widths()->set(i, properties[i].m_width);
     auto item = table_view->get_header().get_item(i);
     item->setVisible(properties[i].m_is_visible);
-    auto item_layout = item->layout();
-    item_layout->setContentsMargins({scale_width(4), scale_height(5), 0, 0});
-    auto contents_layout =
-      item_layout->itemAt(0)->layout()->itemAt(0)->widget()->layout();
-    contents_layout->setContentsMargins({});
-    if(properties[i].m_alignment == Qt::AlignRight) {
-      static_cast<QSpacerItem*>(contents_layout->itemAt(1))->changeSize(0, 0);
-      contents_layout->itemAt(2)->widget()->setFixedWidth(0);
-      contents_layout->itemAt(3)->widget()->setFixedWidth(0);
-      update_style(*item, [] (auto& style) {
-        style.get(Any() > TableHeaderItem::Label()).
-          set(TextAlign(Qt::Alignment(Qt::AlignRight | Qt::AlignVCenter)));
-      });
-    }
+    update_style(*item, [&] (auto& style) {
+      style.get(Any()).
+        set(PaddingLeft(scale_width(4))).
+        set(PaddingTop(scale_height(5))).
+        set(PaddingBottom(scale_height(4)));
+      style.get(Any() > TableHeaderItem::Label()).
+        set(TextAlign(properties[i].m_alignment));
+    });
   }
   auto pull_indicator = make_pull_indicator();
   pull_indicator->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   match(*pull_indicator, PullIndicator());
   link(*table_view, *pull_indicator);
-  auto body_scroll_box =
-    static_cast<ScrollBox*>(table_view->layout()->itemAt(1)->widget());
-  body_scroll_box->get_body().layout()->addWidget(pull_indicator);
-  body_scroll_box->get_horizontal_scroll_bar().connect_position_signal(
-    std::bind_front(&ScrollBar::set_position,
-      &header_scroll_box->get_horizontal_scroll_bar()));
+  auto& scroll_box = table_view->get_scroll_Box();
+  scroll_box.get_body().layout()->addWidget(pull_indicator);
   auto status = std::make_shared<Status>(false, 0);
-  body_scroll_box->get_vertical_scroll_bar().connect_position_signal(
+  scroll_box.get_vertical_scroll_bar().connect_position_signal(
     [=] (int position) {
-      auto& scroll_bar = body_scroll_box->get_vertical_scroll_bar();
+      auto& scroll_box = table_view->get_scroll_Box();
+      auto& scroll_bar = scroll_box.get_vertical_scroll_bar();
       if(!status->m_is_loading && position > status->m_last_scroll_y &&
           scroll_bar.get_range().m_end - position <
             scroll_bar.get_page_size() / 2) {
         table->load_history(
-          body_scroll_box->height() / get_row_height(table_view->get_body()));
+          scroll_box.height() / get_row_height(table_view->get_body()));
       }
       status->m_last_scroll_y = position;
     });
@@ -227,8 +200,9 @@ TableView* Spire::make_time_and_sales_table_view(
   timer->setSingleShot(true);
   QObject::connect(timer, &QTimer::timeout, [=] {
     match(*table_view, PullDelayed());
-    body_scroll_box->get_body().adjustSize();
-    scroll_to_end(body_scroll_box->get_vertical_scroll_bar());
+    auto& scroll_box = table_view->get_scroll_Box();
+    scroll_box.get_body().adjustSize();
+    scroll_to_end(scroll_box.get_vertical_scroll_bar());
   });
   table->connect_begin_loading_signal([=] {
     if(status->m_is_loading) {

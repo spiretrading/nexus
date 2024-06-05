@@ -137,6 +137,10 @@ TableBody& TableView::get_body() {
   return *m_body;
 }
 
+ScrollBox& TableView::get_scroll_Box() {
+  return *m_scroll_box;
+}
+
 connection TableView::connect_sort_signal(
     const SortSignal::slot_type& slot) const {
   return m_sort_signal.connect(slot);
