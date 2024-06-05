@@ -13,6 +13,7 @@
 #include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/TransitionView.hpp"
 
+using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 using namespace Spire::Styles;
@@ -62,6 +63,50 @@ namespace {
     }
     return height;
   }
+
+  struct ExportTimeAndSalesTableModel : TableModel {
+    std::shared_ptr<TimeAndSalesTableModel> m_source;
+
+    explicit ExportTimeAndSalesTableModel(
+      std::shared_ptr<TimeAndSalesTableModel> source)
+      : m_source(std::move(source)) {}
+
+    int get_row_size() const override {
+      return m_source->get_row_size() + 1;
+    }
+
+    int get_column_size() const override {
+      return m_source->get_column_size();
+    }
+
+    AnyRef at(int row, int column) const override {
+      auto column_id = static_cast<TimeAndSalesTableModel::Column>(column);
+      if(row == 0) {
+        if(column_id == TimeAndSalesTableModel::Column::TIME) {
+          static const auto value = QObject::tr("Time");
+          return value;
+        } else if(column_id == TimeAndSalesTableModel::Column::PRICE) {
+          static const auto value = QObject::tr("Price");
+          return value;
+        } else if(column_id == TimeAndSalesTableModel::Column::SIZE) {
+          static const auto value = QObject::tr("Size");
+          return value;
+        } else if(column_id == TimeAndSalesTableModel::Column::MARKET) {
+          static const auto value = QObject::tr("Market");
+          return value;
+        } else {
+          static const auto value = QObject::tr("Condition");
+          return value;
+        }
+      }
+      return m_source->at(row - 1, column);
+    }
+
+    connection connect_operation_signal(
+        const OperationSignal::slot_type& slot) const override {
+      return connection();
+    }
+  };
 }
 
 TimeAndSalesWindow::TimeAndSalesWindow(
@@ -124,6 +169,7 @@ bool TimeAndSalesWindow::eventFilter(QObject* watched, QEvent* event) {
       } else if(watched == m_body) {
         m_body_menu->window()->move(mouse_event.globalPos());
         m_body_menu->window()->show();
+        return true;
       }
     }
   }
@@ -151,7 +197,7 @@ void TimeAndSalesWindow::on_export_menu() {
     tr("/time_and_sales"), tr("CSV (*.csv)"));
   if(!file_name.isEmpty()) {
     auto out = std::ofstream(file_name.toStdString());
-    export_table_as_csv(*m_table_view->get_table(), out);
+    export_table_as_csv(ExportTimeAndSalesTableModel(m_table_model), out);
   }
 }
 
