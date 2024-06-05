@@ -25,6 +25,7 @@ namespace {
   const auto TITLE_NAME = QObject::tr("Time and Sales");
   const auto CELL_VERTICAL_PADDING = 1.5;
   const auto DEBOUNCE_TIME_MS = 100;
+  const auto EXPORT_MENU_ITEM_INDEX = 3;
 
   auto& get_bbo_indicator_selector(BboIndicator indicator) {
     static auto selectors = std::array<Selector, BBO_INDICATOR_COUNT>{
@@ -164,7 +165,7 @@ void TimeAndSalesWindow::make_table_header_menu() {
 }
 
 void TimeAndSalesWindow::update_export_menu_item() {
-  if(auto export_item = m_body_menu->get_menu_item(3)) {
+  if(auto export_item = m_body_menu->get_menu_item(EXPORT_MENU_ITEM_INDEX)) {
     if(m_table_model->get_row_size() == 0) {
       if(export_item->isEnabled()) {
         export_item->setEnabled(false);
