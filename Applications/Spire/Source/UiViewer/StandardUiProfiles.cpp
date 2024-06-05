@@ -4692,7 +4692,8 @@ UiProfile Spire::make_table_view_profile() {
   properties.push_back(make_standard_property("update", 0));
   properties.push_back(std::make_shared<
     StandardUiProperty<TableModel::RemoveOperation>>(
-      "remove", [] (auto parent, auto& property) {
+      "remove", TableModel::RemoveOperation(-1), [] (
+          auto parent, auto& property) {
         auto form = new QWidget();
         auto layout = make_hbox_layout(form);
         auto row = new QSpinBox();
@@ -4790,7 +4791,10 @@ UiProfile Spire::make_table_view_profile() {
     auto& remove_operation =
       get<TableModel::RemoveOperation>("remove", profile.get_properties());
     remove_operation.connect_changed_signal([=] (const auto& operation) {
-      model->remove(operation.m_index);
+      if(operation.m_index >= 0 &&
+          operation.m_index < model->get_row_size()) {
+        model->remove(operation.m_index);
+      }
     });
     return view;
   });
