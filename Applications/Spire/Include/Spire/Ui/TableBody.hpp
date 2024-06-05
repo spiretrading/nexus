@@ -165,6 +165,8 @@ namespace Styles {
       void update_parent();
       RowCover* mount_row(
         int index, int layout_index, std::vector<RowCover*>& unmounted_rows);
+      RowCover* mount_row(int index, int layout_index);
+      void remove(RowCover& row);
       void update_spacer(QSpacerItem*& spacer, int hidden_row_count);
       void update_spacers();
       void mount_visible_rows(std::vector<RowCover*>& unmounted_rows);

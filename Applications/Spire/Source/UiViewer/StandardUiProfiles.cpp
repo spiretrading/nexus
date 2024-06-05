@@ -5,7 +5,9 @@
 #include <QLabel>
 #include <QPainter>
 #include <QPointer>
+#include <QPushButton>
 #include <QRandomGenerator>
+#include <QSpinBox>
 #include <QStringBuilder>
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 #include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
@@ -4679,10 +4681,6 @@ UiProfile Spire::make_table_view_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
   properties.push_back(make_standard_property("row_count", 50));
-  properties.push_back(make_standard_property("row", 0));
-  properties.push_back(make_standard_property("column", 0));
-  properties.push_back(make_standard_property("value", 0));
-  properties.push_back(make_standard_property("remove_row", -1));
   properties.push_back(make_standard_property("padding-top", 1));
   properties.push_back(make_standard_property("padding-right", 1));
   properties.push_back(make_standard_property("padding-bottom", 1));
@@ -4691,6 +4689,21 @@ UiProfile Spire::make_table_view_profile() {
   properties.push_back(make_standard_property("vertical-spacing", 1));
   properties.push_back(make_standard_property("hover-cell-color",
     QColor(Qt::transparent)));
+  properties.push_back(make_standard_property("update", 0));
+  properties.push_back(std::make_shared<
+    StandardUiProperty<TableModel::RemoveOperation>>(
+      "remove", [] (auto parent, auto& property) {
+        auto form = new QWidget();
+        auto layout = make_hbox_layout(form);
+        auto row = new QSpinBox();
+        auto button = new QPushButton("Remove");
+        layout->addWidget(row);
+        layout->addWidget(button);
+        QObject::connect(button, &QPushButton::pressed, [=, &property] {
+          property.set(TableModel::RemoveOperation(row->value()));
+        });
+        return form;
+      }));
   auto profile = UiProfile("TableView", properties, [] (auto& profile) {
     auto model = std::make_shared<ArrayTableModel>();
     auto& row_count = get<int>("row_count", profile.get_properties());
@@ -4740,18 +4753,6 @@ UiProfile Spire::make_table_view_profile() {
         "Sort", to_string_converter(get_order_property())));
     auto& height = get<int>("height", profile.get_properties());
     height.set(300);
-    auto& update_value = get<int>("value", profile.get_properties());
-    update_value.connect_changed_signal([&, view] (auto value) {
-      view->get_table()->set(get<int>("row", profile.get_properties()).get(),
-        get<int>("column", profile.get_properties()).get(), value);
-    });
-    auto& remove_row = get<int>("remove_row", profile.get_properties());
-    remove_row.connect_changed_signal([=] (const auto& value) {
-      if(value < 0 || value >= model->get_row_size()) {
-        return;
-      }
-      model->remove(value);
-    });
     auto& padding_top = get<int>("padding-top", profile.get_properties());
     auto& padding_right = get<int>("padding-right", profile.get_properties());
     auto& padding_bottom = get<int>("padding-bottom", profile.get_properties());
@@ -4779,6 +4780,17 @@ UiProfile Spire::make_table_view_profile() {
       update_style(*view, [&] (auto& style) {
         style.get(selector > HoverItem()).set(border_color(value));
       });
+    });
+    auto& update_operation = get<int>("update", profile.get_properties());
+    update_operation.connect_changed_signal([&, view] (auto value) {
+      if(auto current = view->get_current()->get()) {
+        model->set(current->m_row, current->m_column, value);
+      }
+    });
+    auto& remove_operation =
+      get<TableModel::RemoveOperation>("remove", profile.get_properties());
+    remove_operation.connect_changed_signal([=] (const auto& operation) {
+      model->remove(operation.m_index);
     });
     return view;
   });

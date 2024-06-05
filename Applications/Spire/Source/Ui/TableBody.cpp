@@ -24,6 +24,13 @@ namespace {
     return std::max(0, widget_geometry.top()) <=
       std::min(container.parentWidget()->height(), widget_geometry.bottom());
   }
+
+  void adjust_height(QSpacerItem& spacer, QLayout& layout, int height) {
+    spacer.changeSize(0, std::max(0, spacer.sizeHint().height() + height),
+      spacer.sizePolicy().horizontalPolicy(),
+      spacer.sizePolicy().verticalPolicy());
+    layout.invalidate();
+  }
 }
 
 Spacing Spire::Styles::spacing(int spacing) {
@@ -598,18 +605,7 @@ void TableBody::add_row(int index) {
 
 void TableBody::remove_row(int index) {
   if(auto row = find_row(index)) {
-    for(auto i = 0; i != get_column_size(); ++i) {
-      auto item = row->get_item(i);
-      m_hover_observers.erase(item);
-    }
-    auto item = layout()->takeAt(layout()->indexOf(row));
-    layout()->removeItem(item);
-    row->unmount();
-    if(row == m_current_row) {
-      m_current_row = nullptr;
-    }
-    delete item;
-    delete row;
+    remove(*row);
   }
   if(m_hover_index && m_hover_index->m_row >= index) {
     m_hover_index = none;
@@ -619,12 +615,73 @@ void TableBody::remove_row(int index) {
 }
 
 void TableBody::move_row(int source, int destination) {
-/* TODO
-  if(auto row = find_row(source)) {
-    auto item = layout()->takeAt(layout()->indexOf(row));
-    row_layout.insertItem(destination, &row);
+  if(is_visible(source)) {
+    if(is_visible(destination)) {
+      if(auto row = find_row(source)) {
+        auto item = layout()->takeAt(layout()->indexOf(row));
+        static_cast<QBoxLayout*>(layout())->insertItem(destination, item);
+        auto layout_event = QEvent(QEvent::LayoutRequest);
+        QApplication::sendEvent(this, &layout_event);
+      }
+    } else if(auto row = find_row(source)) {
+      remove(*row);
+      if(auto spacer =
+          destination < m_top_index ? m_top_spacer : m_bottom_spacer) {
+        adjust_height(*spacer, *layout(), row->sizeHint().height());
+      }
+      if(destination < m_top_index) {
+        ++m_top_index;
+      }
+    }
+  } else if(source < m_top_index) {
+    if(is_visible(destination)) {
+      auto layout_index = destination - m_top_index;
+      if(m_top_spacer) {
+        ++layout_index;
+      }
+      auto row = mount_row(destination, layout_index);
+      if(m_top_spacer) {
+        adjust_height(*m_top_spacer, *layout(), -row->sizeHint().height());
+      }
+      if(destination > m_top_index) {
+        --m_top_index;
+      }
+    } else if(destination >= m_top_index + m_visible_count) {
+      if(m_top_spacer) {
+        auto top_row_height = m_top_spacer->sizeHint().height() / m_top_index;
+        adjust_height(*m_top_spacer, *layout(), -top_row_height);
+        if(m_bottom_spacer) {
+          adjust_height(*m_bottom_spacer, *layout(), top_row_height);
+        }
+      }
+      --m_top_index;
+    }
+  } else {
+    if(is_visible(destination)) {
+      auto layout_index = destination - m_top_index;
+      if(m_top_spacer) {
+        ++layout_index;
+      }
+      auto row = mount_row(destination, layout_index);
+      if(m_bottom_spacer) {
+        adjust_height(*m_bottom_spacer, *layout(), -row->sizeHint().height());
+      }
+    } else if(destination < m_top_index) {
+      if(m_bottom_spacer) {
+        auto hidden_rows =
+          m_table->get_row_size() - m_top_index - m_visible_count;
+        if(hidden_rows > 0) {
+          auto bottom_row_height =
+            m_bottom_spacer->sizeHint().height() / hidden_rows;
+          adjust_height(*m_bottom_spacer, *layout(), -bottom_row_height);
+          if(m_top_spacer) {
+            adjust_height(*m_top_spacer, *layout(), bottom_row_height);
+          }
+        }
+      }
+      ++m_top_index;
+    }
   }
-*/
   m_current_controller.move_row(source, destination);
   m_selection_controller.move_row(source, destination);
 }
@@ -670,6 +727,27 @@ TableBody::RowCover* TableBody::mount_row(
     m_current_row = row;
   }
   return row;
+}
+
+TableBody::RowCover* TableBody::mount_row(int index, int layout_index) {
+  auto unmounted_rows = std::vector<RowCover*>();
+  return mount_row(index, layout_index, unmounted_rows);
+}
+
+void TableBody::remove(RowCover& row) {
+  for(auto i = 0; i != get_column_size(); ++i) {
+    auto item = row.get_item(i);
+    m_hover_observers.erase(item);
+  }
+  auto item = layout()->takeAt(layout()->indexOf(&row));
+  layout()->removeItem(item);
+  row.unmount();
+  if(&row == m_current_row) {
+    m_current_row = nullptr;
+  }
+  delete item;
+  delete &row;
+  --m_visible_count;
 }
 
 void TableBody::update_spacer(QSpacerItem*& spacer, int hidden_row_count) {
@@ -789,26 +867,22 @@ void TableBody::initialize_visible_region() {
 
 std::vector<TableBody::RowCover*> TableBody::unmount_hidden_rows() {
   auto unmounted_rows = std::vector<RowCover*>();
+  auto removed_items = std::vector<QLayoutItem*>();
   auto is_top = true;
-  auto i = 0;
-  auto r = std::vector<QLayoutItem*>();
-  while(i != layout()->count()) {
-    auto item = layout()->itemAt(i);
-    auto row = static_cast<RowCover*>(item->widget());
-    if(!row) {
-      ++i;
-    } else if(test_visibility(*this, row->geometry())) {
-      is_top = false;
-      ++i;
-    } else {
-      if(is_top) {
-        ++m_top_index;
+  for(auto i = 0; i != layout()->count(); ++i) {
+    auto& item = *layout()->itemAt(i);
+    if(auto row = static_cast<RowCover*>(item.widget())) {
+      if(test_visibility(*this, row->geometry())) {
+        is_top = false;
+      } else {
+        if(is_top) {
+          ++m_top_index;
+        }
+        removed_items.push_back(&item);
       }
-      r.push_back(item);
-      ++i;
     }
   }
-  for(auto item : r) {
+  for(auto item : removed_items) {
     auto row = static_cast<RowCover*>(item->widget());
     layout()->removeItem(item);
     delete item;
@@ -835,6 +909,9 @@ void TableBody::update_visible_region() {
   auto unmounted_rows = unmount_hidden_rows();
   if(m_visible_count != 0) {
     mount_visible_rows(unmounted_rows);
+  } else {
+    m_top_index = -1;
+    initialize_visible_region();
   }
   for(auto unmounted_row : unmounted_rows) {
     delete unmounted_row;
