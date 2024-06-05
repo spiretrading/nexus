@@ -170,6 +170,15 @@ void TimeAndSalesWindow::update_export_menu_item() {
 }
 
 void TimeAndSalesWindow::on_export_menu() {
+  auto file_name = QFileDialog::getSaveFileName(this, tr("Save As"),
+    QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) +
+    tr("/time_and_sales"), tr("CSV (*.csv)"));
+  if(!file_name.isEmpty()) {
+    auto out = std::ofstream(file_name.toStdString());
+    export_table_as_csv(*m_table_model,
+      {tr("Time"), tr("Price"), tr("Size"), tr("Market"), tr("Condition")},
+      out);
+  }
 }
 
 void TimeAndSalesWindow::on_properties_menu() {
