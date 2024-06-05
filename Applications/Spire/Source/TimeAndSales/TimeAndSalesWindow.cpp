@@ -122,13 +122,10 @@ TimeAndSalesWindow::TimeAndSalesWindow(
   m_body_menu->add_separator();
   m_body_menu->add_action(tr("Export..."),
     std::bind_front(&TimeAndSalesWindow::on_export_menu, this));
-  update_export_menu_item();
   m_table_model->connect_begin_loading_signal(
     std::bind_front(&TimeAndSalesWindow::on_begin_loading, this));
   m_table_model->connect_end_loading_signal(
     std::bind_front(&TimeAndSalesWindow::on_end_loading, this));
-  m_table_model->connect_operation_signal(
-    std::bind_front(&TimeAndSalesWindow::on_table_operation, this));
 }
 
 bool TimeAndSalesWindow::eventFilter(QObject* watched, QEvent* event) {
@@ -140,6 +137,10 @@ bool TimeAndSalesWindow::eventFilter(QObject* watched, QEvent* event) {
         m_table_header_menu->window()->show();
         return true;
       } else if(watched == m_body) {
+        if(auto export_item =
+            m_body_menu->get_menu_item(EXPORT_MENU_ITEM_INDEX)) {
+          export_item->setEnabled(m_table_model->get_row_size() != 0);
+        }
         m_body_menu->window()->move(mouse_event.globalPos());
         m_body_menu->window()->show();
         return true;
@@ -164,18 +165,6 @@ void TimeAndSalesWindow::make_table_header_menu() {
   }
 }
 
-void TimeAndSalesWindow::update_export_menu_item() {
-  if(auto export_item = m_body_menu->get_menu_item(EXPORT_MENU_ITEM_INDEX)) {
-    if(m_table_model->get_row_size() == 0) {
-      if(export_item->isEnabled()) {
-        export_item->setEnabled(false);
-      }
-    } else if(!export_item->isEnabled()) {
-      export_item->setEnabled(true);
-    }
-  }
-}
-
 void TimeAndSalesWindow::on_export_menu() {
   auto file_name = QFileDialog::getSaveFileName(this, tr("Save As"),
     QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) +
@@ -190,11 +179,9 @@ void TimeAndSalesWindow::on_export_menu() {
 
 void TimeAndSalesWindow::on_properties_menu() {
   auto properties_window = m_factory->make();
-  if(!m_properties_connection.connected()) {
-    m_properties_connection =
-      properties_window->get_current()->connect_update_signal(
-        std::bind_front(&TimeAndSalesWindow::on_properties, this));
-  }
+  m_properties_connection =
+    properties_window->get_current()->connect_update_signal(
+      std::bind_front(&TimeAndSalesWindow::on_properties, this));
   if(!properties_window->isVisible()) {
     properties_window->show();
     if(screen()->geometry().right() - frameGeometry().right() >=
@@ -227,22 +214,10 @@ void TimeAndSalesWindow::on_current(const Security& security) {
   auto& properties = m_factory->make()->get_current()->get();
   m_table_model->load_history((m_body->height() - header.sizeHint().height()) /
     get_height(properties.get_font()));
-  update_export_menu_item();
 }
 
 void TimeAndSalesWindow::on_header_item_check(int column, bool checked) {
   m_table_view->get_header().get_item(column)->setVisible(checked);
-}
-
-void TimeAndSalesWindow::on_table_operation(
-    const TableModel::Operation& operation) {
-  visit(operation,
-    [&] (const TableModel::AddOperation& operation) {
-      update_export_menu_item();
-    },
-    [&] (const TableModel::RemoveOperation& operation) {
-      update_export_menu_item();
-    });
 }
 
 void TimeAndSalesWindow::on_properties(
