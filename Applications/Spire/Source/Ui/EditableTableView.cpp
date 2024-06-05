@@ -414,13 +414,13 @@ void EditableTableView::keyPressEvent(QKeyEvent* event) {
     if(m_is_processing_key) {
       return TableView::keyPressEvent(event);
     }
-    m_is_processing_key = true;
-/* TODO
-    auto target = find_focus_proxy(get_body().get_item(*current)->get_body());
-    QCoreApplication::sendEvent(target, event);
-    target->setFocus();
-*/
-    m_is_processing_key = false;
+    if(auto item = get_body().find_item(*current)) {
+      m_is_processing_key = true;
+      auto target = find_focus_proxy(item->get_body());
+      QCoreApplication::sendEvent(target, event);
+      target->setFocus();
+      m_is_processing_key = false;
+    }
   } else {
     TableView::keyPressEvent(event);
   }

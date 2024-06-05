@@ -352,6 +352,21 @@ const std::shared_ptr<TableBody::SelectionModel>&
   return m_selection_controller.get_selection();
 }
 
+TableItem* TableBody::find_item(const Index& index) {
+  if(auto row = find_row(index.m_row)) {
+    if(row == m_current_row) {
+      auto current_index = get_current()->get()->m_row;
+      if(!is_visible(current_index)) {
+        auto position = layout()->contentsMargins().top() +
+          current_index * estimate_row_height();
+        m_current_row->move(layout()->contentsMargins().left(), position);
+      }
+    }
+    return row->get_item(index.m_column);
+  }
+  return nullptr;
+}
+
 bool TableBody::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::Resize) {
     update_visible_region();
@@ -515,13 +530,6 @@ TableBody::RowCover* TableBody::find_row(int index) {
     layout()->itemAt(index - m_top_index)->widget());
 }
 
-TableItem* TableBody::find_item(const Index& index) {
-  if(auto row = find_row(index.m_row)) {
-    return row->get_item(index.m_column);
-  }
-  return nullptr;
-}
-
 TableItem* TableBody::find_item(const optional<Index>& index) {
   if(index) {
     return find_item(*index);
@@ -574,6 +582,15 @@ TableBody::Index TableBody::get_index(const TableItem& item) const {
 
 int TableBody::get_column_size() const {
   return m_widths->get_size() + 1;
+}
+
+int TableBody::estimate_row_height() const {
+  if(m_table->get_row_size() == 0) {
+    return 0;
+  }
+  auto layout_height = height() - layout()->contentsMargins().top() -
+    layout()->contentsMargins().bottom();
+  return (layout_height + layout()->spacing()) / m_table->get_row_size();
 }
 
 int TableBody::get_left_spacing(int index) const {

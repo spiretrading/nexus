@@ -103,6 +103,9 @@ namespace Styles {
       /** Returns the selection. */
       const std::shared_ptr<SelectionModel>& get_selection() const;
 
+      /** Returns the TableItem at a given index. */
+      TableItem* find_item(const Index& index);
+
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
       bool event(QEvent* event) override;
@@ -150,12 +153,12 @@ namespace Styles {
       boost::signals2::scoped_connection m_widths_connection;
 
       RowCover* find_row(int index);
-      TableItem* find_item(const Index& index);
       TableItem* find_item(const boost::optional<Index>& index);
       TableItem* get_current_item();
       bool is_visible(int index) const;
       Index get_index(const TableItem& item) const;
       int get_column_size() const;
+      int estimate_row_height() const;
       int get_left_spacing(int index) const;
       int get_top_spacing(int index) const;
       void add_column_cover(int index, const QRect& geometry);

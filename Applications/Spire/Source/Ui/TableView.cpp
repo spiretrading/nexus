@@ -185,8 +185,7 @@ void TableView::on_current(const optional<Index>& current) {
   if(!current) {
     return;
   }
-/* TODO
-  if(auto item = m_body->get_item(*current)) {
+  if(auto item = m_body->find_item(*current)) {
     auto& horizontal_scroll_bar = m_scroll_box->get_horizontal_scroll_bar();
     auto old_x = horizontal_scroll_bar.get_position();
     auto& vertical_scroll_bar = m_scroll_box->get_vertical_scroll_bar();
@@ -205,7 +204,6 @@ void TableView::on_current(const optional<Index>& current) {
       vertical_scroll_bar.set_position(y - m_vertical_spacing);
     }
   }
-*/
 }
 
 void TableView::on_body_style() {
