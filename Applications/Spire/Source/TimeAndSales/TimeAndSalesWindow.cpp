@@ -21,6 +21,7 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  using ShowGrid = StateSelector<void, struct ShowGridSeletorTag>;
   const auto TITLE_NAME = QObject::tr("Time and Sales");
   const auto CELL_VERTICAL_PADDING = 1.5;
   const auto DEBOUNCE_TIME_MS = 100;
@@ -55,6 +56,10 @@ namespace {
 
   auto apply_table_view_style(const TimeAndSalesProperties& properties,
       StyleSheet& style) {
+    style.get(ShowGrid() > is_a<TableBody>()).
+      set(grid_color(QColor(0xE0E0E0))).
+      set(HorizontalSpacing(scale_width(1))).
+      set(VerticalSpacing(scale_height(1)));
     apply_font_style(properties, style);
     for(auto i = 0; i < BBO_INDICATOR_COUNT; ++i) {
       auto indicator = static_cast<BboIndicator>(i);
@@ -159,13 +164,14 @@ void TimeAndSalesWindow::make_table_header_menu() {
 }
 
 void TimeAndSalesWindow::update_export_menu_item() {
-  auto export_item = m_body_menu->get_menu_item(3);
-  if(m_table_view->get_table()->get_row_size() == 0) {
-    if(export_item->isEnabled()) {
-      export_item->setEnabled(false);
+  if(auto export_item = m_body_menu->get_menu_item(3)) {
+    if(m_table_model->get_row_size() == 0) {
+      if(export_item->isEnabled()) {
+        export_item->setEnabled(false);
+      }
+    } else if(!export_item->isEnabled()) {
+      export_item->setEnabled(true);
     }
-  } else if(!export_item->isEnabled()) {
-    export_item->setEnabled(true);
   }
 }
 
@@ -250,18 +256,11 @@ void TimeAndSalesWindow::on_timeout() {
     update_style(*m_table_view, std::bind_front(apply_font_style, properties));
   }
   if(properties.is_grid_enabled() != m_properties.is_grid_enabled()) {
-    auto [color, width, height] = [&] {
-      if(properties.is_grid_enabled()) {
-        return std::tuple(QColor(0xE0E0E0), scale_width(1), scale_height(1));
-      }
-      return std::tuple(QColor(Qt::transparent), 0, 0);
-    }();
-    update_style(*m_table_view, [&] (auto& style) {
-      style.get(Any() > is_a<TableBody>()).
-        set(grid_color(color)).
-        set(HorizontalSpacing(width)).
-        set(VerticalSpacing(height));
-    });
+    if(properties.is_grid_enabled()) {
+      match(*m_table_view, ShowGrid());
+    } else {
+      unmatch(*m_table_view, ShowGrid());
+    }
   }
   for(auto i = 0; i < BBO_INDICATOR_COUNT; ++i) {
     auto indicator = static_cast<BboIndicator>(i);
