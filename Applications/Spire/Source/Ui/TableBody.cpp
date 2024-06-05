@@ -18,16 +18,22 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  const auto SCROLL_BUFFER = 1;
+
   bool test_visibility(const QWidget& container, const QRect& geometry) {
     auto widget_geometry =
       QRect(container.mapToParent(geometry.topLeft()), geometry.size());
-    return std::max(0, widget_geometry.top()) <=
-      std::min(container.parentWidget()->height(), widget_geometry.bottom());
+    return std::max(-SCROLL_BUFFER, widget_geometry.top()) <=
+      std::min(container.parentWidget()->height() + SCROLL_BUFFER,
+        widget_geometry.bottom());
   }
 
   void set_height(QSpacerItem& spacer, QLayout& layout, int height) {
-    spacer.changeSize(0, std::max(0, height),
-      spacer.sizePolicy().horizontalPolicy(),
+    height = std::max(0, height);
+    if(spacer.sizeHint().height() == height) {
+      return;
+    }
+    spacer.changeSize(0, height, spacer.sizePolicy().horizontalPolicy(),
       spacer.sizePolicy().verticalPolicy());
     layout.invalidate();
   }
@@ -831,7 +837,7 @@ void TableBody::mount_visible_rows(std::vector<RowCover*>& unmounted_rows) {
     return layout()->itemAt(top_index)->geometry().top() -
       layout()->spacing() - 1;
   }();
-  auto top = mapFromParent(QPoint(0, 0)).y();
+  auto top = mapFromParent(QPoint(0, 0)).y() - SCROLL_BUFFER;
   while(m_top_index > 0 && position > top) {
     auto row = mount_row(m_top_index - 1, top_index, unmounted_rows);
     --m_top_index;
@@ -850,7 +856,8 @@ void TableBody::mount_visible_rows(std::vector<RowCover*>& unmounted_rows) {
     return layout()->itemAt(bottom_index)->geometry().bottom() +
       layout()->spacing() + 1;
   }();
-  auto bottom = mapFromParent(QPoint(0, parentWidget()->height())).y();
+  auto bottom =
+    mapFromParent(QPoint(0, parentWidget()->height())).y() + SCROLL_BUFFER;
   while(m_top_index + m_visible_count < m_table->get_row_size() &&
       position < bottom) {
     auto layout_index = [&] {
