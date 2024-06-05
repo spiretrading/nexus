@@ -80,8 +80,8 @@ namespace {
     }
 
     AnyRef at(int row, int column) const override {
-      auto column_id = static_cast<TimeAndSalesTableModel::Column>(column);
       if(row == 0) {
+        auto column_id = static_cast<TimeAndSalesTableModel::Column>(column);
         if(column_id == TimeAndSalesTableModel::Column::TIME) {
           static const auto value = QObject::tr("Time");
           return value;
