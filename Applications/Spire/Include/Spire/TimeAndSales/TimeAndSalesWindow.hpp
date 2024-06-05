@@ -46,6 +46,8 @@ namespace Spire {
       ContextMenu* m_table_header_menu;
       ContextMenu* m_body_menu;
       QWidget* m_body;
+      TimeAndSalesProperties m_properties;
+      boost::signals2::scoped_connection m_properties_connection;
 
       void make_table_header_menu();
       void on_export_menu();
@@ -54,6 +56,8 @@ namespace Spire {
       void on_end_loading();
       void on_current(const Nexus::Security& security);
       void on_header_item_check(int column, bool checked);
+      void on_properties(const TimeAndSalesProperties& properties);
+      void on_timeout();
   };
 }
 

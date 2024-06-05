@@ -1,6 +1,8 @@
 #include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
 #include <QFileDialog>
+#include <QScreen>
 #include <QStandardPaths>
+#include <QTimer>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ExportTable.hpp"
 #include "Spire/TimeAndSales/NoneTimeAndSalesModel.hpp"
@@ -19,8 +21,11 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  using ShowGrid = StateSelector<void, struct ShowGridSeletorTag>;
   const auto TITLE_NAME = QObject::tr("Time and Sales");
   const auto CELL_VERTICAL_PADDING = 1.5;
+  const auto DEBOUNCE_TIME_MS = 100;
+  const auto EXPORT_MENU_ITEM_INDEX = 3;
 
   auto& get_bbo_indicator_selector(BboIndicator indicator) {
     static auto selectors = std::array<Selector, BBO_INDICATOR_COUNT>{
@@ -29,8 +34,8 @@ namespace {
     return selectors[static_cast<int>(indicator)];
   }
 
-  void apply_highlight_style(StyleSheet& style, const Selector& selector,
-      const HighlightColor& highlight) {
+  void apply_highlight_style(const Selector& selector,
+      const HighlightColor& highlight, StyleSheet& style) {
     auto item_selector = Any() > is_a<TableBody>() > Row() > is_a<TableItem>();
     style.get(item_selector > selector).
       set(TextColor(highlight.m_text_color));
@@ -38,7 +43,7 @@ namespace {
       set(BackgroundColor(highlight.m_background_color));
   };
 
-  auto apply_table_view_style(const TimeAndSalesProperties& properties,
+  void apply_font_style(const TimeAndSalesProperties& properties,
       StyleSheet& style) {
     auto header_item_selector =
       Any() > is_a<TableHeader>() > is_a<TableHeaderItem>();
@@ -48,10 +53,19 @@ namespace {
       set(Font(properties.get_font()));
     style.get(body_item_selector > is_a<TextBox>()).
       set(Font(properties.get_font()));
+  };
+
+  auto apply_table_view_style(const TimeAndSalesProperties& properties,
+      StyleSheet& style) {
+    style.get(ShowGrid() > is_a<TableBody>()).
+      set(grid_color(QColor(0xE0E0E0))).
+      set(HorizontalSpacing(scale_width(1))).
+      set(VerticalSpacing(scale_height(1)));
+    apply_font_style(properties, style);
     for(auto i = 0; i < BBO_INDICATOR_COUNT; ++i) {
       auto indicator = static_cast<BboIndicator>(i);
-      apply_highlight_style(style, get_bbo_indicator_selector(indicator),
-        properties.get_highlight_color(indicator));
+      apply_highlight_style(get_bbo_indicator_selector(indicator),
+        properties.get_highlight_color(indicator), style);
     }
   }
 
@@ -123,6 +137,10 @@ bool TimeAndSalesWindow::eventFilter(QObject* watched, QEvent* event) {
         m_table_header_menu->window()->show();
         return true;
       } else if(watched == m_body) {
+        if(auto export_item =
+            m_body_menu->get_menu_item(EXPORT_MENU_ITEM_INDEX)) {
+          export_item->setEnabled(m_table_model->get_row_size() != 0);
+        }
         m_body_menu->window()->move(mouse_event.globalPos());
         m_body_menu->window()->show();
         return true;
@@ -160,6 +178,21 @@ void TimeAndSalesWindow::on_export_menu() {
 }
 
 void TimeAndSalesWindow::on_properties_menu() {
+  auto properties_window = m_factory->make();
+  m_properties_connection =
+    properties_window->get_current()->connect_update_signal(
+      std::bind_front(&TimeAndSalesWindow::on_properties, this));
+  if(!properties_window->isVisible()) {
+    properties_window->show();
+    if(screen()->geometry().right() - frameGeometry().right() >=
+        properties_window->frameGeometry().width()) {
+      properties_window->move(frameGeometry().right(), y());
+    } else {
+      properties_window->move(x() - properties_window->frameGeometry().width(),
+        y());
+    }
+  }
+  properties_window->activateWindow();
 }
 
 void TimeAndSalesWindow::on_begin_loading() {
@@ -185,4 +218,34 @@ void TimeAndSalesWindow::on_current(const Security& security) {
 
 void TimeAndSalesWindow::on_header_item_check(int column, bool checked) {
   m_table_view->get_header().get_item(column)->setVisible(checked);
+}
+
+void TimeAndSalesWindow::on_properties(
+    const TimeAndSalesProperties& properties) {
+  QTimer::singleShot(DEBOUNCE_TIME_MS, this,
+    std::bind_front(&TimeAndSalesWindow::on_timeout, this));
+}
+
+void TimeAndSalesWindow::on_timeout() {
+  auto& properties = m_factory->make()->get_current()->get();
+  if(properties.get_font() != m_properties.get_font()) {
+    update_style(*m_table_view, std::bind_front(apply_font_style, properties));
+  }
+  if(properties.is_grid_enabled() != m_properties.is_grid_enabled()) {
+    if(properties.is_grid_enabled()) {
+      match(*m_table_view, ShowGrid());
+    } else {
+      unmatch(*m_table_view, ShowGrid());
+    }
+  }
+  for(auto i = 0; i < BBO_INDICATOR_COUNT; ++i) {
+    auto indicator = static_cast<BboIndicator>(i);
+    if(properties.get_highlight_color(indicator) !=
+        m_properties.get_highlight_color(indicator)) {
+      update_style(*m_table_view, std::bind_front(apply_highlight_style,
+        get_bbo_indicator_selector(indicator),
+        properties.get_highlight_color(indicator)));
+    }
+  }
+  m_properties = properties;
 }

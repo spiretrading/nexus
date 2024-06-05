@@ -35,6 +35,8 @@ namespace {
   auto LIST_VIEW_STYLE(StyleSheet style) {
     style.get(Any()).
       set(EdgeNavigation::CONTAIN);
+    style.get(Any() > (is_a<ListItem>() && Disabled()) > is_a<TextBox>()).
+      set(TextColor(QColor(0xC8C8C8)));
     return style;
   }
 }
@@ -108,6 +110,10 @@ void ContextMenu::reset() {
       m_list->remove(i);
     }
   });
+}
+
+QWidget* ContextMenu::get_menu_item(int index) {
+  return m_list_view->get_list_item(index);
 }
 
 connection ContextMenu::connect_submit_signal(
