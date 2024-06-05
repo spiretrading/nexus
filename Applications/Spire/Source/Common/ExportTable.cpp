@@ -7,18 +7,9 @@ using namespace boost::gregorian;
 using namespace boost::posix_time;
 using namespace Nexus;
 
-void Spire::export_table_as_csv(const TableModel& table,
-    const std::vector<QString>& headers, std::ostream& out) {
+void Spire::export_table_as_csv(const TableModel& table, std::ostream& out) {
   auto locale = QLocale();
   locale.setNumberOptions(QLocale::OmitGroupSeparator);
-  for(auto i = headers.begin(); i != headers.end(); ++i) {
-    out << '\"' << i->toStdString() << '\"';
-    if(i == headers.end() - 1) {
-      out << '\n';
-    } else {
-      out << ',';
-    }
-  }
   for(auto i = 0; i < table.get_row_size(); ++i) {
     if(i != 0) {
       out << '\n';

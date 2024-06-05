@@ -27,6 +27,8 @@ TEST_SUITE("ExportTable") {
     auto time_duration2 = local_time2.time_of_day();
     auto time_duration3 = local_time3.time_of_day();
     auto result = std::format(
+      "\"Time\",\"Date\",\"Duration\",\"Int\",\"Double\",\"Price\","
+      "\"Quantity\",\"Market\",\"Security\",\"Country\",\"Condition\"\n"
       R"({},{},{},100,1234.56,1000.55,1000.32,"NYSE","MRU.TSX","CAN","@")""\n"
       R"({},{},{},1000,0.21,20.00,10.5,"NYSE","MRU.TSX","CAN","@")""\n"
       R"({},{},{},10000,1000,30.12,4000,"NYSE","MRU.TSX","CAN","@")",
@@ -39,6 +41,8 @@ TEST_SUITE("ExportTable") {
     auto country = DefaultCountries::CA();
     auto condition =
       TimeAndSale::Condition(TimeAndSale::Condition::Type::REGULAR, "@");
+    table.push({"Time", "Date", "Duration", "Int", "Double", "Price",
+      "Quantity", "Market", "Security", "Country", "Condition"});
     table.push({time1, date1, time_duration1, 100, 1234.56, Money(1000.55),
       Quantity(1000.32), market, security, country, condition});
     table.push({time2, date2, time_duration2, 1000, 0.21, Money(20),
@@ -46,17 +50,7 @@ TEST_SUITE("ExportTable") {
     table.push({time3, date3, time_duration3, 10000, 1000, Money(30.12),
       Quantity(4000), market, security, country, condition});
     auto out = std::stringstream();
-    export_table_as_csv(table, {}, out);
-    REQUIRE(out.str() == result);
-    result = std::format(
-      "\"Time\",\"Date\",\"Duration\",\"Int\",\"Double\",\"Price\","
-      "\"Quantity\",\"Market\",\"Security\",\"Country\",\"Condition\"\n") +
-      result;
-    out.str("");
-    auto headers = std::vector<QString>{
-      "Time", "Date", "Duration", "Int", "Double", "Price",
-      "Quantity", "Market", "Security", "Country", "Condition"};
-    export_table_as_csv(table, headers, out);
+    export_table_as_csv(table, out);
     REQUIRE(out.str() == result);
   }
 }

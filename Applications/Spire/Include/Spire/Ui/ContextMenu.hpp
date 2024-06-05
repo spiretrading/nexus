@@ -72,6 +72,12 @@ namespace Spire {
       /** Resets the menu, removing all actions. */
       void reset();
 
+      /**
+       * Returns the menu item at a specified index, or <code>nullptr</code> iff
+       * the index is out of range.
+       */
+      QWidget* get_menu_item(int index);
+
       /** Connects a slot to the Submit signal. */
       boost::signals2::connection connect_submit_signal(
         const SubmitSignal::slot_type& slot) const;
@@ -100,7 +106,6 @@ namespace Spire {
       OverlayPanel* m_window;
       QWidget* m_active_menu_window;
       QMargins m_window_border_size;
-      boost::optional<QSize> m_window_size;
       std::unordered_map<int, QWidget*> m_submenus;
       boost::signals2::scoped_connection m_window_style_connection;
 
