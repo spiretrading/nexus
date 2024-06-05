@@ -131,20 +131,14 @@ TableView* Spire::make_time_and_sales_table_view(
     header.get_widths()->set(i, properties[i].m_width);
     auto item = table_view->get_header().get_item(i);
     item->setVisible(properties[i].m_is_visible);
-    auto item_layout = item->layout();
-    item_layout->setContentsMargins({scale_width(4), scale_height(5), 0, 0});
-    auto contents_layout =
-      item_layout->itemAt(0)->layout()->itemAt(0)->widget()->layout();
-    contents_layout->setContentsMargins({});
-    if(properties[i].m_alignment == Qt::AlignRight) {
-      static_cast<QSpacerItem*>(contents_layout->itemAt(1))->changeSize(0, 0);
-      contents_layout->itemAt(2)->widget()->setFixedWidth(0);
-      contents_layout->itemAt(3)->widget()->setFixedWidth(0);
-      update_style(*item, [] (auto& style) {
-        style.get(Any() > TableHeaderItem::Label()).
-          set(TextAlign(Qt::Alignment(Qt::AlignRight | Qt::AlignVCenter)));
-      });
-    }
+    update_style(*item, [&] (auto& style) {
+      style.get(Any()).
+        set(PaddingLeft(scale_width(4))).
+        set(PaddingTop(scale_height(5))).
+        set(PaddingBottom(scale_height(4)));
+      style.get(Any() > TableHeaderItem::Label()).
+        set(TextAlign(properties[i].m_alignment));
+    });
   }
   return table_view;
 }
