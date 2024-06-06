@@ -30,7 +30,7 @@ namespace Spire {
         get_current() const;
 
     protected:
-      void hideEvent(QHideEvent* event) override;
+      void closeEvent(QCloseEvent* event) override;
 
     private:
       struct PropertiesWindowModel;

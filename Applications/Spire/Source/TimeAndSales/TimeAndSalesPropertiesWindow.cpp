@@ -211,7 +211,7 @@ const std::shared_ptr<TimeAndSalesPropertiesModel>&
   return m_model->m_properties_model;
 }
 
-void TimeAndSalesPropertiesWindow::hideEvent(QHideEvent*) {
+void TimeAndSalesPropertiesWindow::closeEvent(QCloseEvent*) {
   m_initial_properties = m_model->m_properties_model->get();
 }
 
