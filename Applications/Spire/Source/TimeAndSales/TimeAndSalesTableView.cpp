@@ -37,8 +37,7 @@ namespace {
     style.get(body_selector).
       set(grid_color(Qt::transparent)).
       set(horizontal_padding(0)).
-      set(PaddingBottom(scale_height(44))).
-      set(PaddingTop(0)).
+      set(vertical_padding(0)).
       set(HorizontalSpacing(0)).
       set(VerticalSpacing(0));
     style.get(body_selector > Row() > Current()).
@@ -48,13 +47,15 @@ namespace {
       set(BackgroundColor(Qt::transparent));
     style.get(body_selector > CurrentColumn()).
       set(BackgroundColor(Qt::transparent));
+    style.get(Any() > is_a<ScrollBox>()).
+      set(PaddingBottom(scale_height(44)));
     style.get(Any() > PullIndicator()).
       set(Visibility::NONE).
       set(BodyAlign(Qt::AlignHCenter)).
       set(horizontal_padding(scale_width(8))).
       set(PaddingBottom(scale_height(20))).
       set(PaddingTop(scale_height(8)));
-    style.get(PullDelayed() > is_a<TableBody>()).
+    style.get(PullDelayed() > is_a<ScrollBox>()).
       set(PaddingBottom(0));
     style.get(PullDelayed() > PullIndicator()).
       set(Visibility::VISIBLE);

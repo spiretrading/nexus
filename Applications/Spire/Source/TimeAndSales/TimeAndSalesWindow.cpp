@@ -59,6 +59,7 @@ namespace {
       StyleSheet& style) {
     style.get(ShowGrid() > is_a<TableBody>()).
       set(grid_color(QColor(0xE0E0E0))).
+      set(PaddingBottom(scale_height(1))).
       set(HorizontalSpacing(scale_width(1))).
       set(VerticalSpacing(scale_height(1)));
     apply_font_style(properties, style);
