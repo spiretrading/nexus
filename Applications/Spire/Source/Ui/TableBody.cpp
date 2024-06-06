@@ -363,12 +363,10 @@ const std::shared_ptr<TableBody::SelectionModel>&
 
 TableItem* TableBody::find_item(const Index& index) {
   if(auto row = find_row(index.m_row)) {
-    if(row == m_current_row) {
-      if(!is_visible(*m_current_row_index)) {
-        auto position = layout()->contentsMargins().top() +
-          *m_current_row_index * estimate_row_height();
-        m_current_row->move(layout()->contentsMargins().left(), position);
-      }
+    if(row == get_current_row() && !is_visible(*m_current_row_index)) {
+      auto position = layout()->contentsMargins().top() +
+        *m_current_row_index * estimate_row_height();
+      row->move(layout()->contentsMargins().left(), position);
     }
     return row->get_item(index.m_column);
   }
@@ -526,15 +524,16 @@ void TableBody::paintEvent(QPaintEvent* event) {
 }
 
 TableBody::RowCover* TableBody::find_row(int index) {
-  if(index == m_current_row_index && m_current_row) {
-    return m_current_row;
-  } else if(!is_visible(index)) {
-    return nullptr;
-  } else if(m_top_spacer) {
-    ++index;
+  if(is_visible(index)) {
+    if(m_top_spacer) {
+      ++index;
+    }
+    return static_cast<RowCover*>(
+      layout()->itemAt(index - m_top_index)->widget());
+  } else if(index == m_current_row_index) {
+    return get_current_row();
   }
-  return static_cast<RowCover*>(
-    layout()->itemAt(index - m_top_index)->widget());
+  return nullptr;
 }
 
 TableItem* TableBody::find_item(const optional<Index>& index) {
@@ -544,9 +543,9 @@ TableItem* TableBody::find_item(const optional<Index>& index) {
   return nullptr;
 }
 
-TableItem* TableBody::get_current_item() {
+TableBody::RowCover* TableBody::get_current_row() {
   if(m_current_row) {
-    return m_current_row->get_item(get_current()->get()->m_column);
+    return m_current_row;
   } else if(m_current_row_index) {
     if(is_visible(*m_current_row_index)) {
       m_current_row = find_row(*m_current_row_index);
@@ -559,7 +558,14 @@ TableItem* TableBody::get_current_item() {
       m_current_row->move(-1000, -1000);
       m_current_row->show();
     }
-    return get_current_item();
+    return m_current_row;
+  }
+  return nullptr;
+}
+
+TableItem* TableBody::get_current_item() {
+  if(auto row = get_current_row()) {
+    return row->get_item(get_current()->get()->m_column);
   }
   return nullptr;
 }
@@ -726,7 +732,7 @@ TableBody::RowCover* TableBody::mount_row(
     int index, int layout_index, std::vector<RowCover*>& unmounted_rows) {
   auto row = [&] {
     if(index == m_current_row_index) {
-      return m_current_row;
+      return get_current_row();
     }
     if(unmounted_rows.empty()) {
       auto row = new RowCover(*this);
@@ -996,8 +1002,8 @@ void TableBody::on_current(
         m_current_row->unmount();
         delete m_current_row;
       }
-      m_current_row = nullptr;
     }
+    m_current_row = nullptr;
   }
   if(current) {
     m_current_row_index = current->m_row;

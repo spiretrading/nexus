@@ -155,6 +155,7 @@ namespace Styles {
 
       RowCover* find_row(int index);
       TableItem* find_item(const boost::optional<Index>& index);
+      RowCover* get_current_row();
       TableItem* get_current_item();
       bool is_visible(int index) const;
       Index get_index(const TableItem& item) const;
