@@ -652,10 +652,11 @@ void TableBody::move_row(int source, int destination) {
         QApplication::sendEvent(this, &layout_event);
       }
     } else if(auto row = find_row(source)) {
+      auto row_height = row->sizeHint().height();
       remove(*row);
       if(auto spacer =
           destination < m_top_index ? m_top_spacer : m_bottom_spacer) {
-        adjust_height(*spacer, *layout(), row->sizeHint().height());
+        adjust_height(*spacer, *layout(), row_height);
       }
       if(destination < m_top_index) {
         ++m_top_index;
@@ -953,6 +954,8 @@ void TableBody::update_visible_region() {
   if(!parentWidget() || !isVisible()) {
     return;
   }
+  auto layout_event = QEvent(QEvent::LayoutRequest);
+  QApplication::sendEvent(this, &layout_event);
   auto total_height = height() -
     layout()->contentsMargins().top() - layout()->contentsMargins().bottom();
   auto unmounted_rows = unmount_hidden_rows();
