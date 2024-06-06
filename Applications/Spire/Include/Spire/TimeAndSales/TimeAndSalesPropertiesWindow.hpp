@@ -29,6 +29,9 @@ namespace Spire {
       const std::shared_ptr<TimeAndSalesPropertiesModel>&
         get_current() const;
 
+    protected:
+      void closeEvent(QCloseEvent* event) override;
+
     private:
       struct PropertiesWindowModel;
       std::unique_ptr<PropertiesWindowModel> m_model;
