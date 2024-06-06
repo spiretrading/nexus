@@ -211,6 +211,10 @@ const std::shared_ptr<TimeAndSalesPropertiesModel>&
   return m_model->m_properties_model;
 }
 
+void TimeAndSalesPropertiesWindow::hideEvent(QHideEvent*) {
+  m_initial_properties = m_model->m_properties_model->get();
+}
+
 void TimeAndSalesPropertiesWindow::on_font(const QFont& font) {
   update_style(*this, [&] (auto& style) {
     style.get(Any() > is_a<HighlightBox>() > is_a<TextBox>()).
