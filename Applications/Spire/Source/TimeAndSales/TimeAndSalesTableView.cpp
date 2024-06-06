@@ -94,12 +94,15 @@ namespace {
   }
 
    auto make_pull_indicator() {
-    auto spinner = new QMovie(":/Icons/spinner.gif", QByteArray());
+    auto spinner = new QMovie(":/Icons/spinner.gif");
     spinner->setScaledSize(scale(16, 16));
     spinner->start();
     auto spinner_widget = new QLabel();
     spinner_widget->setMovie(spinner);
-    return new Box(spinner_widget);
+    auto indicator_box = new Box(spinner_widget);
+    indicator_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    match(*indicator_box, PullIndicator());
+    return indicator_box;
   }
 
   auto make_header_item_properties() {
@@ -179,15 +182,13 @@ TableView* Spire::make_time_and_sales_table_view(
     });
   }
   auto pull_indicator = make_pull_indicator();
-  pull_indicator->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-  match(*pull_indicator, PullIndicator());
   link(*table_view, *pull_indicator);
-  auto& scroll_box = table_view->get_scroll_Box();
+  auto& scroll_box = table_view->get_scroll_box();
   scroll_box.get_body().layout()->addWidget(pull_indicator);
   auto status = std::make_shared<Status>(false, 0);
   scroll_box.get_vertical_scroll_bar().connect_position_signal(
     [=] (int position) {
-      auto& scroll_box = table_view->get_scroll_Box();
+      auto& scroll_box = table_view->get_scroll_box();
       auto& scroll_bar = scroll_box.get_vertical_scroll_bar();
       if(!status->m_is_loading && position > status->m_last_scroll_y &&
           scroll_bar.get_range().m_end - position <
@@ -207,7 +208,7 @@ TableView* Spire::make_time_and_sales_table_view(
         return;
       }
       match(*table_view, PullDelayed());
-      auto& scroll_box = table_view->get_scroll_Box();
+      auto& scroll_box = table_view->get_scroll_box();
       scroll_box.get_body().adjustSize();
       scroll_to_end(scroll_box.get_vertical_scroll_bar());
     });

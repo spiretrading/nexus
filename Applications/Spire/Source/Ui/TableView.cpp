@@ -137,7 +137,7 @@ TableBody& TableView::get_body() {
   return *m_body;
 }
 
-ScrollBox& TableView::get_scroll_Box() {
+ScrollBox& TableView::get_scroll_box() {
   return *m_scroll_box;
 }
 
