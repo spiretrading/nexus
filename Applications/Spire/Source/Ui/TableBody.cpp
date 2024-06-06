@@ -151,18 +151,13 @@ struct TableBody::Painter {
       paint_border(0, body.m_styles.m_padding.top());
     }
     if(body.m_styles.m_vertical_spacing != 0) {
-      auto bottom_index = [&] {
-        if(body.m_bottom_spacer) {
-          return body.layout()->count() - 1;
-        }
-        return body.layout()->count();
-      }();
-      auto top_index = 1;
+      auto bottom_index =
+        body.layout()->count() - (body.m_bottom_spacer ? 1 : 0);
       if(body.m_top_spacer) {
         paint_border(body.m_top_spacer->geometry().bottom() + 1 -
           body.m_styles.m_vertical_spacing, body.m_styles.m_vertical_spacing);
-        ++top_index;
       }
+      auto top_index = body.m_top_spacer ? 2 : 1;
       for(auto row = top_index; row < bottom_index; ++row) {
         paint_border(body.layout()->itemAt(row)->geometry().top() -
           body.m_styles.m_vertical_spacing, body.m_styles.m_vertical_spacing);
@@ -247,16 +242,10 @@ struct TableBody::Painter {
       }
       return body.m_styles.m_vertical_spacing;
     }();
-    auto get_border_size = [] (auto size) {
-      if(size <= 0) {
-        return 1;
-      }
-      return size;
-    };
-    auto top_border_size = get_border_size(top_spacing);
-    auto left_border_size = get_border_size(left_spacing);
-    auto right_border_size = get_border_size(right_spacing);
-    auto bottom_border_size = get_border_size(bottom_spacing);
+    auto top_border_size = std::max(1, top_spacing);
+    auto left_border_size = std::max(1, left_spacing);
+    auto right_border_size = std::max(1, right_spacing);
+    auto bottom_border_size = std::max(1, bottom_spacing);
     auto position = item->parentWidget()->mapToParent(item->pos());
     auto& styles = item->get_styles();
     auto left = position.x() - left_spacing;
@@ -507,10 +496,12 @@ void TableBody::paintEvent(QPaintEvent* event) {
       painter.fillRect(cover->geometry(), cover->m_background_color);
     }
   }
+  auto offset = m_top_spacer ? 1 : 0;
   for(auto i = 0; i != layout()->count(); ++i) {
     if(auto cover = static_cast<Cover*>(layout()->itemAt(i)->widget())) {
+      auto index = m_top_index + offset + i;
       if(cover->m_background_color.alphaF() != 0 &&
-          (!current || current->m_row != i)) {
+          m_current_row_index != index) {
         painter.fillRect(cover->geometry(), cover->m_background_color);
       }
     }
@@ -840,12 +831,7 @@ void TableBody::update_spacers() {
 }
 
 void TableBody::mount_visible_rows(std::vector<RowCover*>& unmounted_rows) {
-  auto top_index = [&] {
-    if(m_top_spacer) {
-      return 1;
-    }
-    return 0;
-  }();
+  auto top_index = m_top_spacer ? 1 : 0;
   auto position = [&] {
     if(layout()->isEmpty()) {
       return layout()->contentsMargins().top();
@@ -863,12 +849,7 @@ void TableBody::mount_visible_rows(std::vector<RowCover*>& unmounted_rows) {
     if(layout()->isEmpty()) {
       return layout()->contentsMargins().top();
     }
-    auto bottom_index = [&] {
-      if(m_bottom_spacer) {
-        return layout()->count() - 2;
-      }
-      return layout()->count() - 1;
-    }();
+    auto bottom_index = layout()->count() - (m_bottom_spacer ? 2 : 1);
     return layout()->itemAt(bottom_index)->geometry().bottom() +
       layout()->spacing() + 1;
   }();
@@ -876,12 +857,7 @@ void TableBody::mount_visible_rows(std::vector<RowCover*>& unmounted_rows) {
     mapFromParent(QPoint(0, parentWidget()->height())).y() + SCROLL_BUFFER;
   while(m_top_index + m_visible_count < m_table->get_row_size() &&
       position < bottom) {
-    auto layout_index = [&] {
-      if(m_bottom_spacer) {
-        return layout()->count() - 1;
-      }
-      return layout()->count();
-    }();
+    auto layout_index = layout()->count() - (m_bottom_spacer ? 1 : 0);
     auto row =
       mount_row(m_top_index + m_visible_count, layout_index, unmounted_rows);
     position += row->height() + layout()->spacing();
