@@ -485,6 +485,9 @@ void TableBody::showEvent(QShowEvent* event) {
 
 void TableBody::paintEvent(QPaintEvent* event) {
   auto painter = QPainter(this);
+  if(m_current_row && !is_match(*m_current_row, CurrentRow())) {
+    qDebug() << "Nooooo";
+  }
   if(m_styles.m_background_color.alphaF() != 0) {
     painter.fillRect(QRect(QPoint(0, 0), size()), m_styles.m_background_color);
   }
@@ -549,6 +552,10 @@ TableBody::RowCover* TableBody::get_current_row() {
       m_current_row->move(-1000, -1000);
       m_current_row->show();
     }
+    if(auto current = m_current_controller.get_current()->get()) {
+      match(*m_current_row->get_item(current->m_column), Current());
+    }
+    match(*m_current_row, CurrentRow());
     return m_current_row;
   }
   return nullptr;
@@ -977,6 +984,7 @@ void TableBody::on_current(
   if(previous) {
     if(auto previous_item = find_item(previous)) {
       unmatch(*previous_item->parentWidget(), CurrentRow());
+      qDebug() << "Unmatching: " << previous->m_row;
       if(!current || current->m_column != previous->m_column) {
         unmatch(*m_column_covers[previous->m_column], CurrentColumn());
       }
