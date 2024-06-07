@@ -1134,6 +1134,11 @@ void TableBody::on_table_operation(const TableModel::Operation& operation) {
     [&] (const TableModel::MoveOperation& operation) {
       move_row(operation.m_source, operation.m_destination);
     });
+  if(auto current = m_current_controller.get_current()->get()) {
+    m_current_row_index = current->m_row;
+  } else {
+    m_current_row_index = none;
+  }
   update_visible_region();
 }
 
