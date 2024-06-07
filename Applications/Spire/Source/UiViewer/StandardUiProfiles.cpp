@@ -117,6 +117,7 @@
 #include "Spire/Ui/ToggleButton.hpp"
 #include "Spire/Ui/Tooltip.hpp"
 #include "Spire/Ui/TransitionView.hpp"
+#include "Spire/Ui/Window.hpp"
 #include "Spire/UiViewer/StandardUiProperties.hpp"
 #include "Spire/UiViewer/UiProfile.hpp"
 
@@ -5108,6 +5109,43 @@ UiProfile Spire::make_time_in_force_filter_panel_profile() {
   auto profile = UiProfile("TimeInForceFilterPanel", properties,
     std::bind_front(setup_closed_filter_panel_profile<
       TimeInForce, make_time_in_force_filter_panel>));
+  return profile;
+}
+
+UiProfile Spire::make_title_bar_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  properties.push_back(
+    make_standard_property("title", QString("Spire Desktop")));
+  auto icon_property = define_enum<std::tuple<QString, QString>>(
+    {{"Spire", {":/Icons/spire.svg", ":/Icons/taskbar_icons/spire.png"}},
+    {"KeyBindings",
+      {":/Icons/key-bindings.svg", ":/Icons/taskbar_icons/key-bindings.png"}},
+    {"TimeAndSales",
+      {":/Icons/time-sales.svg", ":/Icons/taskbar_icons/time-sales.png"}}});
+  populate_enum_properties(properties, "icon", icon_property);
+  auto profile = UiProfile("TitleBar", properties, [] (auto& profile) {
+    auto& title = get<QString>("title", profile.get_properties());
+    auto& icon =
+      get<std::tuple<QString, QString>>("icon", profile.get_properties());
+    auto button = make_label_button("Click me");
+    button->connect_click_signal([&title, &icon] {
+      auto window = QPointer<Window>(new Window());
+      window->setAttribute(Qt::WA_DeleteOnClose);
+      title.connect_changed_signal([=] (const auto& text) {
+        if(window) {
+          window->setWindowTitle(text);
+        }
+      });
+      icon.connect_changed_signal([=] (const auto& value) {
+        if(window) {
+          window->set_svg_icon(get<0>(value));
+          window->setWindowIcon(QIcon(get<1>(value)));
+        }
+      });
+      window->show();
+    });
+    return button;
+  });
   return profile;
 }
 
