@@ -757,9 +757,6 @@ TableBody::RowCover* TableBody::mount_row(
   auto layout_event = QEvent(QEvent::LayoutRequest);
   QApplication::sendEvent(this, &layout_event);
   ++m_visible_count;
-  if(!m_current_row && index == m_current_row_index) {
-    m_current_row = row;
-  }
   return row;
 }
 
