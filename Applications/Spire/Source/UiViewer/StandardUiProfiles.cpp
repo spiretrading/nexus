@@ -5124,18 +5124,18 @@ UiProfile Spire::make_title_bar_profile() {
       {":/Icons/time-sales.svg", ":/Icons/taskbar_icons/time-sales.png"}}});
   populate_enum_properties(properties, "icon", icon_property);
   auto profile = UiProfile("TitleBar", properties, [] (auto& profile) {
+    auto& title = get<QString>("title", profile.get_properties());
+    auto& icon =
+      get<std::tuple<QString, QString>>("icon", profile.get_properties());
     auto button = make_label_button("Click me");
-    button->connect_click_signal([=, &profile] {
+    button->connect_click_signal([&title, &icon] {
       auto window = QPointer<Window>(new Window());
       window->setAttribute(Qt::WA_DeleteOnClose);
-      auto& title = get<QString>("title", profile.get_properties());
       title.connect_changed_signal([=] (const auto& text) {
         if(window) {
           window->setWindowTitle(text);
         }
       });
-      auto& icon =
-        get<std::tuple<QString, QString>>("icon", profile.get_properties());
       icon.connect_changed_signal([=] (const auto& value) {
         if(window) {
           window->set_svg_icon(get<0>(value));
