@@ -19,6 +19,13 @@ const std::shared_ptr<TableCurrentController::CurrentModel>&
   return m_current;
 }
 
+optional<int> TableCurrentController::get_row() const {
+  if(m_last_current) {
+    return m_last_current->m_row;
+  }
+  return none;
+}
+
 int TableCurrentController::get_row_size() const {
   return m_row_size;
 }
