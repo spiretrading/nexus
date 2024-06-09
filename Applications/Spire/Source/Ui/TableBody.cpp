@@ -715,6 +715,16 @@ void TableBody::move_row(int source, int destination) {
       ++m_top_index;
     }
   }
+  if(m_current_row_index && (source == *m_current_row_index ||
+      destination == *m_current_row_index ||
+      source < *m_current_row_index && destination > *m_current_row_index ||
+      source > *m_current_row_index && destination < *m_current_row_index)) {
+    if(m_current_row && layout()->indexOf(m_current_row) == -1) {
+      m_current_row->unmount();
+      delete m_current_row;
+    }
+    m_current_row = nullptr;
+  }
   m_current_controller.move_row(source, destination);
   m_selection_controller.move_row(source, destination);
 }
