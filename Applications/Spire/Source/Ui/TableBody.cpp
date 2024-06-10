@@ -985,10 +985,10 @@ void TableBody::on_current(
         unmatch(*m_column_covers[previous->m_column], CurrentColumn());
       }
       unmatch(*previous_item, Current());
-      if(!is_visible(previous->m_row)) {
-        m_current_row->unmount();
-        delete m_current_row;
-      }
+    }
+    if(m_current_row && layout()->indexOf(m_current_row) == -1) {
+      m_current_row->unmount();
+      delete m_current_row;
     }
     m_current_row = nullptr;
   }
