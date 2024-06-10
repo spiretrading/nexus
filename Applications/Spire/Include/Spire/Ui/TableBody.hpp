@@ -140,7 +140,6 @@ namespace Styles {
       TableViewItemBuilder m_item_builder;
       std::vector<ColumnCover*> m_column_covers;
       int m_top_index;
-      int m_visible_count;
       QSpacerItem* m_top_spacer;
       QSpacerItem* m_bottom_spacer;
       RowCover* m_current_row;
@@ -157,6 +156,7 @@ namespace Styles {
       TableItem* find_item(const boost::optional<Index>& index);
       RowCover* get_current_row();
       TableItem* get_current_item();
+      int visible_count() const;
       bool is_visible(int index) const;
       Index get_index(const TableItem& item) const;
       int get_column_size() const;
