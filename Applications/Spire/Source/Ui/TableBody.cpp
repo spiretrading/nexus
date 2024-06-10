@@ -41,6 +41,20 @@ namespace {
   void adjust_height(QSpacerItem& spacer, QLayout& layout, int height) {
     set_height(spacer, layout, spacer.sizeHint().height() + height);
   }
+
+  void move_current_index(int source, int destination, optional<int>& index) {
+    if(!index) {
+      return;
+    }
+    auto direction = source < destination ? -1 : 1;
+    if(*index == source) {
+      *index = destination;
+    } else if(direction == 1 && *index >= destination &&
+        *index < source || direction == -1 && *index > source &&
+        *index <= destination) {
+      *index += direction;
+    }
+  }
 }
 
 Spacing Spire::Styles::spacing(int spacing) {
@@ -680,14 +694,13 @@ void TableBody::move_row(int source, int destination) {
     if(is_visible(destination)) {
       auto layout_index =
         destination - m_top_index + (m_top_spacer ? 1 : 0) + 1;
-      m_current_controller.move_row(source, destination);
-      m_selection_controller.move_row(source, destination);
-      auto row = mount_row(destination, layout_index);
+      auto current_index = m_current_controller.get_row();
+      move_current_index(source, destination, current_index);
+      auto row = mount_row(destination, layout_index, current_index);
       if(m_top_spacer) {
         adjust_height(*m_top_spacer, *layout(), -row->sizeHint().height());
       }
       --m_top_index;
-      return;
     } else if(destination >= m_top_index + visible_count()) {
       if(m_top_spacer) {
         auto top_row_height = m_top_spacer->sizeHint().height() / m_top_index;
@@ -701,13 +714,12 @@ void TableBody::move_row(int source, int destination) {
   } else {
     if(is_visible(destination)) {
       auto layout_index = destination - m_top_index + (m_top_spacer ? 1 : 0);
-      m_current_controller.move_row(source, destination);
-      m_selection_controller.move_row(source, destination);
-      auto row = mount_row(destination, layout_index);
+      auto current_index = m_current_controller.get_row();
+      move_current_index(source, destination, current_index);
+      auto row = mount_row(destination, layout_index, current_index);
       if(m_bottom_spacer) {
         adjust_height(*m_bottom_spacer, *layout(), -row->sizeHint().height());
       }
-      return;
     } else if(destination < m_top_index) {
       if(m_bottom_spacer) {
         auto hidden_rows =
@@ -736,9 +748,13 @@ void TableBody::update_parent() {
 }
 
 TableBody::RowCover* TableBody::mount_row(
-    int index, int layout_index, std::vector<RowCover*>& unmounted_rows) {
+    int index, int layout_index, optional<int> current_index,
+    std::vector<RowCover*>& unmounted_rows) {
   auto row = [&] {
-    if(index == m_current_controller.get_row()) {
+    if(!current_index) {
+      current_index = m_current_controller.get_row();
+    }
+    if(index == current_index) {
       return get_current_row();
     }
     if(unmounted_rows.empty()) {
@@ -767,9 +783,10 @@ TableBody::RowCover* TableBody::mount_row(
   return row;
 }
 
-TableBody::RowCover* TableBody::mount_row(int index, int layout_index) {
+TableBody::RowCover* TableBody::mount_row(int index, int layout_index,
+    optional<int> current_index) {
   auto unmounted_rows = std::vector<RowCover*>();
-  return mount_row(index, layout_index, unmounted_rows);
+  return mount_row(index, layout_index, current_index, unmounted_rows);
 }
 
 void TableBody::remove(RowCover& row) {
@@ -844,7 +861,7 @@ void TableBody::mount_visible_rows(std::vector<RowCover*>& unmounted_rows) {
   }();
   auto top = mapFromParent(QPoint(0, 0)).y() - SCROLL_BUFFER;
   while(m_top_index > 0 && position > top) {
-    auto row = mount_row(m_top_index - 1, top_index, unmounted_rows);
+    auto row = mount_row(m_top_index - 1, top_index, none, unmounted_rows);
     --m_top_index;
     position -= row->height() + layout()->spacing();
   }
@@ -861,8 +878,8 @@ void TableBody::mount_visible_rows(std::vector<RowCover*>& unmounted_rows) {
   while(m_top_index + visible_count() < m_table->get_row_size() &&
       position < bottom) {
     auto layout_index = layout()->count() - (m_bottom_spacer ? 1 : 0);
-    auto row =
-      mount_row(m_top_index + visible_count(), layout_index, unmounted_rows);
+    auto row = mount_row(
+      m_top_index + visible_count(), layout_index, none, unmounted_rows);
     position += row->height() + layout()->spacing();
   }
   update_spacers();
@@ -935,7 +952,7 @@ void TableBody::reset_visible_region(
     }
   }
   auto layout_index = m_top_spacer ? 1 : 0;
-  mount_row(m_top_index, layout_index, unmounted_rows);
+  mount_row(m_top_index, layout_index, none, unmounted_rows);
   mount_visible_rows(unmounted_rows);
 }
 
@@ -1000,7 +1017,6 @@ void TableBody::on_current(
       match(*m_column_covers[current->m_column], CurrentColumn());
     }
     m_selection_controller.navigate(*current);
-    current_item->setFocus();
   }
 }
 

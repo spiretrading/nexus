@@ -58,6 +58,7 @@ TableView::TableView(
       m_table(std::move(table)),
       m_header(std::move(header)),
       m_filter(std::move(filter)),
+      m_current_item(nullptr),
       m_horizontal_spacing(0),
       m_vertical_spacing(0) {
   for(auto i = 0; i != m_header->get_size(); ++i) {
@@ -183,9 +184,18 @@ void TableView::on_filter(int column, TableFilter::Filter filter) {
 
 void TableView::on_current(const optional<Index>& current) {
   if(!current) {
+    QObject::disconnect(m_current_item_connection);
+    m_current_item = nullptr;
     return;
   }
   if(auto item = m_body->find_item(*current)) {
+    if(item == m_current_item) {
+      return;
+    }
+    QObject::disconnect(m_current_item_connection);
+    m_current_item = item;
+    m_current_item_connection = connect(m_current_item, &QObject::destroyed,
+      this, [&] (auto object) { m_current_item = nullptr; });
     auto& horizontal_scroll_bar = m_scroll_box->get_horizontal_scroll_bar();
     auto old_x = horizontal_scroll_bar.get_position();
     auto& vertical_scroll_bar = m_scroll_box->get_vertical_scroll_bar();
