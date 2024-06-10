@@ -135,7 +135,6 @@ namespace Styles {
       std::unordered_set<Qt::Key> m_keys;
       TableCurrentController m_current_controller;
       TableSelectionController m_selection_controller;
-      boost::optional<int> m_current_row_index;
       std::shared_ptr<ListModel<int>> m_widths;
       TableViewItemBuilder m_item_builder;
       std::vector<ColumnCover*> m_column_covers;
