@@ -482,9 +482,6 @@ void TableBody::showEvent(QShowEvent* event) {
 
 void TableBody::paintEvent(QPaintEvent* event) {
   auto painter = QPainter(this);
-  if(m_current_row && !is_match(*m_current_row, CurrentRow())) {
-    qDebug() << "Nooooo";
-  }
   if(m_styles.m_background_color.alphaF() != 0) {
     painter.fillRect(QRect(QPoint(0, 0), size()), m_styles.m_background_color);
   }
@@ -1131,8 +1128,6 @@ void TableBody::on_table_operation(const TableModel::Operation& operation) {
       move_row(operation.m_source, operation.m_destination);
     });
   update_visible_region();
-  qDebug() << m_top_index << " " << visible_count() << " " <<
-    m_current_controller.get_row().get_value_or(-1);
 }
 
 void TableBody::on_widths_update(const ListModel<int>::Operation& operation) {
