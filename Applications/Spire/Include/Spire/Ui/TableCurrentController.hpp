@@ -37,7 +37,14 @@ namespace Spire {
       /** Returns the current index model. */
       const std::shared_ptr<CurrentModel>& get_current() const;
 
+      /** Returns the current index. */
+      const boost::optional<Index>& get() const;
+
+      /** Returns the current row. */
       boost::optional<int> get_row() const;
+
+      /** Returns the current column. */
+      boost::optional<int> get_column() const;
 
       /** Returns the number of rows. */
       int get_row_size() const;

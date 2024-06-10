@@ -19,9 +19,21 @@ const std::shared_ptr<TableCurrentController::CurrentModel>&
   return m_current;
 }
 
+const optional<TableCurrentController::Index>&
+    TableCurrentController::get() const {
+  return m_last_current;
+}
+
 optional<int> TableCurrentController::get_row() const {
   if(m_last_current) {
     return m_last_current->m_row;
+  }
+  return none;
+}
+
+optional<int> TableCurrentController::get_column() const {
+  if(m_last_current) {
+    return m_last_current->m_column;
   }
   return none;
 }

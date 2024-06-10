@@ -320,8 +320,8 @@ TableBody::TableBody(
     add_column_cover(column, QRect(QPoint(left, 0), QSize(width, height())));
     left += width;
   }
-  if(auto current = m_current_controller.get_current()->get()) {
-    match(*m_column_covers[current->m_column], CurrentColumn());
+  if(auto current = m_current_controller.get_column()) {
+    match(*m_column_covers[*current], CurrentColumn());
   }
   m_table_connection = m_table->connect_operation_signal(
     std::bind_front(&TableBody::on_table_operation, this));
@@ -485,11 +485,10 @@ void TableBody::paintEvent(QPaintEvent* event) {
   if(m_styles.m_background_color.alphaF() != 0) {
     painter.fillRect(QRect(QPoint(0, 0), size()), m_styles.m_background_color);
   }
-  auto current = m_current_controller.get_current()->get();
   for(auto i = 0; i != static_cast<int>(m_column_covers.size()); ++i) {
     auto cover = m_column_covers[i];
     if(cover->m_background_color.alphaF() != 0 &&
-        (!current || current->m_column != i)) {
+        m_current_controller.get_column() != i) {
       painter.fillRect(cover->geometry(), cover->m_background_color);
     }
   }
@@ -503,11 +502,11 @@ void TableBody::paintEvent(QPaintEvent* event) {
       }
     }
   }
-  Painter::paint_current_item(*this, painter, current);
+  Painter::paint_current_item(*this, painter, m_current_controller.get());
   Painter::paint_horizontal_borders(*this, painter);
   Painter::paint_vertical_borders(*this, painter);
   Painter::paint_item_borders(*this, painter, m_hover_index);
-  Painter::paint_item_borders(*this, painter, current);
+  Painter::paint_item_borders(*this, painter, m_current_controller.get());
   QWidget::paintEvent(event);
 }
 
@@ -546,8 +545,8 @@ TableBody::RowCover* TableBody::get_current_row() {
       m_current_row->move(-1000, -1000);
       m_current_row->show();
     }
-    if(auto current = m_current_controller.get_current()->get()) {
-      match(*m_current_row->get_item(current->m_column), Current());
+    if(auto column = m_current_controller.get_column()) {
+      match(*m_current_row->get_item(*column), Current());
     }
     match(*m_current_row, CurrentRow());
     return m_current_row;
@@ -557,7 +556,7 @@ TableBody::RowCover* TableBody::get_current_row() {
 
 TableItem* TableBody::get_current_item() {
   if(auto row = get_current_row()) {
-    return row->get_item(get_current()->get()->m_column);
+    return row->get_item(*m_current_controller.get_column());
   }
   return nullptr;
 }
