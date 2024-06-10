@@ -974,7 +974,6 @@ void TableBody::on_current(
   if(previous) {
     if(auto previous_item = find_item(previous)) {
       unmatch(*previous_item->parentWidget(), CurrentRow());
-      qDebug() << "Unmatching: " << previous->m_row;
       if(!current || current->m_column != previous->m_column) {
         unmatch(*m_column_covers[previous->m_column], CurrentColumn());
       }
