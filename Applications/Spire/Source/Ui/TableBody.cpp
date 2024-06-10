@@ -682,14 +682,13 @@ void TableBody::move_row(int source, int destination) {
     }
   } else if(source < m_top_index) {
     if(is_visible(destination)) {
-      auto layout_index = destination - m_top_index + (m_top_spacer ? 1 : 0);
+      auto layout_index =
+        destination - m_top_index + (m_top_spacer ? 1 : 0) + 1;
       auto row = mount_row(destination, layout_index);
       if(m_top_spacer) {
         adjust_height(*m_top_spacer, *layout(), -row->sizeHint().height());
       }
-      if(destination > m_top_index) {
-        --m_top_index;
-      }
+      --m_top_index;
     } else if(destination >= m_top_index + visible_count()) {
       if(m_top_spacer) {
         auto top_row_height = m_top_spacer->sizeHint().height() / m_top_index;
@@ -702,10 +701,7 @@ void TableBody::move_row(int source, int destination) {
     }
   } else {
     if(is_visible(destination)) {
-      auto layout_index = destination - m_top_index;
-      if(m_top_spacer) {
-        ++layout_index;
-      }
+      auto layout_index = destination - m_top_index + (m_top_spacer ? 1 : 0);
       auto row = mount_row(destination, layout_index);
       if(m_bottom_spacer) {
         adjust_height(*m_bottom_spacer, *layout(), -row->sizeHint().height());
