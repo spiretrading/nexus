@@ -164,6 +164,7 @@ namespace Styles {
       int get_top_spacing(int index) const;
       void add_column_cover(int index, const QRect& geometry);
       void add_row(int index);
+      void pre_remove_row(int index);
       void remove_row(int index);
       void move_row(int source, int destination);
       void update_parent();

@@ -158,7 +158,6 @@ struct TableBody::RowCover : Cover {
 
   void unmount() {
     auto& body = *static_cast<TableBody*>(parentWidget());
-    setParent(nullptr);
     for(auto i = 0; i != layout()->count(); ++i) {
       body.m_item_builder.unmount(get_item(i)->unmount());
     }
@@ -705,9 +704,10 @@ void TableBody::add_row(int index) {
   }
   m_current_controller.add_row(index);
   m_selection_controller.add_row(index);
+  update_visible_region();
 }
 
-void TableBody::remove_row(int index) {
+void TableBody::pre_remove_row(int index) {
   if(is_visible(index)) {
     remove(*find_row(index));
   } else {
@@ -739,8 +739,12 @@ void TableBody::remove_row(int index) {
   if(m_hover_index && m_hover_index->m_row >= index) {
     m_hover_index = none;
   }
+}
+
+void TableBody::remove_row(int index) {
   m_current_controller.remove_row(index);
   m_selection_controller.remove_row(index);
+  update_visible_region();
 }
 
 void TableBody::move_row(int source, int destination) {
@@ -817,6 +821,7 @@ void TableBody::move_row(int source, int destination) {
   }
   m_current_controller.move_row(source, destination);
   m_selection_controller.move_row(source, destination);
+  update_visible_region();
 }
 
 void TableBody::update_parent() {
@@ -872,7 +877,7 @@ void TableBody::destroy(RowCover* row) {
     auto item = row->get_item(i);
     m_hover_observers.erase(item);
   }
-  delete row;
+  row->deleteLater();
 }
 
 void TableBody::remove(RowCover& row) {
@@ -1017,6 +1022,9 @@ void TableBody::initialize_visible_region() {
 
 void TableBody::reset_visible_region(
     int total_height, std::vector<RowCover*>& unmounted_rows) {
+  if(m_table->get_row_size() == 0) {
+    return;
+  }
   auto row_height =
     (total_height + layout()->spacing()) / m_table->get_row_size();
   if(row_height == 0) {
@@ -1225,12 +1233,14 @@ void TableBody::on_table_operation(const TableModel::Operation& operation) {
       add_row(operation.m_index);
     },
     [&] (const TableModel::PreRemoveOperation& operation) {
+      pre_remove_row(operation.m_index);
+    },
+    [&] (const TableModel::RemoveOperation& operation) {
       remove_row(operation.m_index);
     },
     [&] (const TableModel::MoveOperation& operation) {
       move_row(operation.m_source, operation.m_destination);
     });
-  update_visible_region();
 }
 
 void TableBody::on_widths_update(const ListModel<int>::Operation& operation) {
