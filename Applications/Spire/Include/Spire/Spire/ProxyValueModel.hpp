@@ -53,7 +53,7 @@ namespace Spire {
    */
   template<typename T>
   auto make_proxy_value_model(std::shared_ptr<T> source) {
-    return std::make_shared<ProxyValueModel<ValueModel<typename T::Type>>>(
+    return std::make_shared<ProxyValueModel<typename T::Type>>(
       std::move(source));
   }
 

@@ -18,8 +18,6 @@ namespace Spire {
       /** The model representing the header. */
       using HeaderModel = ListModel<TableHeaderItem::Model>;
 
-      using ViewBuilder = TableBody::ViewBuilder;
-
       using Index = TableBody::Index;
 
       using CurrentModel = TableBody::CurrentModel;
@@ -31,10 +29,10 @@ namespace Spire {
       using Comparator = SortedTableModel::Comparator;
 
       /**
-       * The default view builder which uses a label styled TextBox to display
+       * The default item builder which uses a label styled TextBox to display
        * the text representation of its value.
        */
-      static QWidget* default_view_builder(
+      static QWidget* default_item_builder(
         const std::shared_ptr<TableModel>& table, int row, int column);
 
       /**
@@ -44,7 +42,7 @@ namespace Spire {
        * @param filter The filter to apply.
        * @param current The current value.
        * @param selection The selection.
-       * @param view_builder The ViewBuilder to use.
+       * @param item_builder The TableViewItemBuilder to use.
        * @param comparator A comparison function.
        * @param parent The parent widget.
        */
@@ -52,8 +50,9 @@ namespace Spire {
         std::shared_ptr<HeaderModel> header,
         std::shared_ptr<TableFilter> filter,
         std::shared_ptr<CurrentModel> current,
-        std::shared_ptr<SelectionModel> selection, ViewBuilder view_builder,
-        Comparator comparator, QWidget* parent = nullptr);
+        std::shared_ptr<SelectionModel> selection,
+        TableViewItemBuilder item_builder, Comparator comparator,
+        QWidget* parent = nullptr);
 
       /** Returns the table of values displayed. */
       const std::shared_ptr<TableModel>& get_table() const;
@@ -83,6 +82,8 @@ namespace Spire {
       std::shared_ptr<TableFilter> m_filter;
       TableHeader* m_header_view;
       TableBody* m_body;
+      TableItem* m_current_item;
+      QMetaObject::Connection m_current_item_connection;
       int m_horizontal_spacing;
       int m_vertical_spacing;
       ScrollBox* m_scroll_box;
@@ -164,9 +165,9 @@ namespace Spire {
       TableViewBuilder& set_selection(
         const std::shared_ptr<TableView::SelectionModel>& selection);
 
-      /** Sets the ViewBuilder to use. */
-      TableViewBuilder& set_view_builder(
-        const TableView::ViewBuilder& view_builder);
+      /** Sets the TableViewItemBuilder to use. */
+      TableViewBuilder& set_item_builder(
+        const TableViewItemBuilder& item_builder);
 
       /** Sets the Comparator to use. */
       TableViewBuilder& set_comparator(TableView::Comparator comparator);
@@ -181,7 +182,7 @@ namespace Spire {
       std::shared_ptr<TableFilter> m_filter;
       std::shared_ptr<TableView::CurrentModel> m_current;
       std::shared_ptr<TableView::SelectionModel> m_selection;
-      TableView::ViewBuilder m_view_builder;
+      TableViewItemBuilder m_item_builder;
       TableView::Comparator m_comparator;
   };
 }

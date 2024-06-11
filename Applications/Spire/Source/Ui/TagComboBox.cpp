@@ -114,17 +114,17 @@ struct TagComboBoxQueryModel : ComboBox::QueryModel {
 
 TagComboBox::TagComboBox(std::shared_ptr<ComboBox::QueryModel> query_model,
   QWidget* parent)
-  : TagComboBox(std::move(query_model), &ListView::default_view_builder,
+  : TagComboBox(std::move(query_model), &ListView::default_item_builder,
       parent) {}
 
 TagComboBox::TagComboBox(std::shared_ptr<ComboBox::QueryModel> query_model,
-  ListViewBuilder<> view_builder, QWidget* parent)
+  ListViewItemBuilder<> item_builder, QWidget* parent)
   : TagComboBox(std::move(query_model),
       std::make_shared<ArrayListModel<std::any>>(),
-      std::move(view_builder), parent) {}
+      std::move(item_builder), parent) {}
 
 TagComboBox::TagComboBox(std::shared_ptr<ComboBox::QueryModel> query_model,
-    std::shared_ptr<AnyListModel> current, ListViewBuilder<> view_builder,
+    std::shared_ptr<AnyListModel> current, ListViewItemBuilder<> item_builder,
     QWidget* parent)
     : QWidget(parent),
       m_submission(std::make_shared<ArrayListModel<std::any>>()),
@@ -141,7 +141,7 @@ TagComboBox::TagComboBox(std::shared_ptr<ComboBox::QueryModel> query_model,
   m_combo_box = new ComboBox(std::make_shared<TagComboBoxQueryModel>(
     std::move(query_model), m_tag_box->get_tags()),
     std::make_shared<LocalValueModel<std::any>>(), m_any_input_box,
-    std::move(view_builder));
+    std::move(item_builder));
   m_combo_box->connect_submit_signal(
     std::bind_front(&TagComboBox::on_combo_box_submit, this));
   enclose(*this, *m_combo_box);

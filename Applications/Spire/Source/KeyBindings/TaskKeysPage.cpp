@@ -497,6 +497,7 @@ void TaskKeysPage::on_row_selection(
 void TaskKeysPage::on_table_operation(const TableModel::Operation& operation) {
   visit(operation,
     [&] (const TableModel::AddOperation& operation) {
+/* TODO
       if(m_is_row_added) {
         QTimer::singleShot(0, this, [=] {
           auto index = TableView::Index(operation.m_index, 2);
@@ -505,5 +506,6 @@ void TaskKeysPage::on_table_operation(const TableModel::Operation& operation) {
           m_added_region_item->installEventFilter(this);
         });
       }
+*/
     });
 }

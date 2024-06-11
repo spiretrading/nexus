@@ -98,6 +98,7 @@ void ListItem::mount(QSpacerItem& body) {
 
 void ListItem::mount(QWidget& body) {
   m_box.emplace(&body, Box::Fit::BOTH);
+  body.setAttribute(Qt::WA_DontShowOnScreen, false);
   m_button.emplace(&*m_box, this);
   m_button->layout()->setSizeConstraint(QLayout::SetMinAndMaxSize);
   m_button->setFocusPolicy(Qt::ClickFocus);
@@ -129,7 +130,8 @@ QWidget* ListItem::unmount() {
       return nullptr;
     }
     auto body = m_box->get_body();
-    body->setParent(nullptr);
+    body->setAttribute(Qt::WA_DontShowOnScreen);
+    body->setParent(parentWidget());
     return body;
   }();
   m_box = none;

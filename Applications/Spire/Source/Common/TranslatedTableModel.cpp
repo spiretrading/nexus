@@ -136,6 +136,9 @@ void TranslatedTableModel::on_operation(const Operation& operation) {
     [&] (const PreRemoveOperation& operation) {
       auto reverse_index = m_reverse_translation[operation.m_index];
       m_transaction.push(PreRemoveOperation(reverse_index));
+    },
+    [&] (const RemoveOperation& operation) {
+      auto reverse_index = m_reverse_translation[operation.m_index];
       translate(-1, operation.m_index);
       m_translation.erase(m_translation.begin() + reverse_index);
       m_reverse_translation.erase(

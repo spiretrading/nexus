@@ -243,7 +243,7 @@ namespace Spire::Styles {
       void for_each_proxy(F&& f) const;
       void apply(const StyleSheet& style);
       void apply(Stylist& source, const RuleEntry& rule);
-      void unapply(Stylist& source, const RuleEntry& rule);
+      void unapply(const RuleEntry& rule);
       void apply();
       void apply_proxies();
       boost::optional<Property> find_reverted_property(

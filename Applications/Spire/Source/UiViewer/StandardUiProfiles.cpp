@@ -5,7 +5,9 @@
 #include <QLabel>
 #include <QPainter>
 #include <QPointer>
+#include <QPushButton>
 #include <QRandomGenerator>
+#include <QSpinBox>
 #include <QStringBuilder>
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 #include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
@@ -768,8 +770,7 @@ namespace {
   }
 
   auto populate_key_input_box_model(const QKeySequence& key) {
-    auto model = make_validated_value_model<QKeySequence>(
-      &key_input_box_validator,
+    auto model = make_validated_value_model(&key_input_box_validator,
       std::make_shared<LocalKeySequenceValueModel>(key));
     return model;
   }
@@ -885,8 +886,8 @@ namespace {
         *new QuantityBox(std::move(model))));
     } else if(column == 3) {
       return new EditableBox(*new AnyInputBox(*new KeyInputBox(
-        make_validated_value_model<QKeySequence>(&key_input_box_validator,
-          make_list_value_model(
+        make_validated_value_model(
+          &key_input_box_validator, make_list_value_model(
             std::make_shared<ColumnViewListModel<QKeySequence>>(table, column),
             row)))),
         [] (const auto& key) {
@@ -1476,8 +1477,8 @@ UiProfile Spire::make_combo_box_profile() {
     auto& current = get<QString>("current", profile.get_properties());
     auto current_model =
       std::make_shared<LocalValueModel<std::any>>(current.get());
-    auto box = new ComboBox(model, current_model,
-      &ListView::default_view_builder);
+    auto box =
+      new ComboBox(model, current_model, &ListView::default_item_builder);
     box->setFixedWidth(scale_width(112));
     apply_widget_properties(box, profile.get_properties());
     auto current_connection = box->get_current()->connect_update_signal(
@@ -1870,7 +1871,7 @@ UiProfile Spire::make_drop_down_box_profile() {
     }
     auto drop_down_box = new DropDownBox(list_model,
       std::make_shared<LocalValueModel<optional<int>>>(item_count.get() - 1),
-      ListView::default_view_builder);
+        ListView::default_item_builder);
     drop_down_box->setFixedWidth(scale_width(112));
     apply_widget_properties(drop_down_box, profile.get_properties());
     auto& read_only = get<bool>("read_only", profile.get_properties());
@@ -4677,10 +4678,6 @@ UiProfile Spire::make_table_view_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
   properties.push_back(make_standard_property("row_count", 50));
-  properties.push_back(make_standard_property("row", 0));
-  properties.push_back(make_standard_property("column", 0));
-  properties.push_back(make_standard_property("value", 0));
-  properties.push_back(make_standard_property("remove_row", -1));
   properties.push_back(make_standard_property("padding-top", 1));
   properties.push_back(make_standard_property("padding-right", 1));
   properties.push_back(make_standard_property("padding-bottom", 1));
@@ -4689,6 +4686,22 @@ UiProfile Spire::make_table_view_profile() {
   properties.push_back(make_standard_property("vertical-spacing", 1));
   properties.push_back(make_standard_property("hover-cell-color",
     QColor(Qt::transparent)));
+  properties.push_back(make_standard_property("update", 0));
+  properties.push_back(std::make_shared<
+    StandardUiProperty<TableModel::RemoveOperation>>(
+      "remove", TableModel::RemoveOperation(-1), [] (
+          auto parent, auto& property) {
+        auto form = new QWidget();
+        auto layout = make_hbox_layout(form);
+        auto row = new QSpinBox();
+        auto button = new QPushButton("Remove");
+        layout->addWidget(row);
+        layout->addWidget(button);
+        QObject::connect(button, &QPushButton::pressed, [=, &property] {
+          property.set(TableModel::RemoveOperation(row->value()));
+        });
+        return form;
+      }));
   auto profile = UiProfile("TableView", properties, [] (auto& profile) {
     auto model = std::make_shared<ArrayTableModel>();
     auto& row_count = get<int>("row_count", profile.get_properties());
@@ -4720,7 +4733,7 @@ UiProfile Spire::make_table_view_profile() {
     auto view = TableViewBuilder(model).
       set_header(header).
       set_standard_filter().
-      set_view_builder(
+      set_item_builder(
         [] (const std::shared_ptr<TableModel>& table, int row, int column) {
           return make_label(std::make_shared<ToTextModel<int>>(
             make_list_value_model(std::make_shared<ColumnViewListModel<int>>(
@@ -4738,18 +4751,6 @@ UiProfile Spire::make_table_view_profile() {
         "Sort", to_string_converter(get_order_property())));
     auto& height = get<int>("height", profile.get_properties());
     height.set(300);
-    auto& update_value = get<int>("value", profile.get_properties());
-    update_value.connect_changed_signal([&, view] (auto value) {
-      view->get_table()->set(get<int>("row", profile.get_properties()).get(),
-        get<int>("column", profile.get_properties()).get(), value);
-    });
-    auto& remove_row = get<int>("remove_row", profile.get_properties());
-    remove_row.connect_changed_signal([=] (const auto& value) {
-      if(value < 0 || value >= model->get_row_size()) {
-        return;
-      }
-      model->remove(value);
-    });
     auto& padding_top = get<int>("padding-top", profile.get_properties());
     auto& padding_right = get<int>("padding-right", profile.get_properties());
     auto& padding_bottom = get<int>("padding-bottom", profile.get_properties());
@@ -4777,6 +4778,20 @@ UiProfile Spire::make_table_view_profile() {
       update_style(*view, [&] (auto& style) {
         style.get(selector > HoverItem()).set(border_color(value));
       });
+    });
+    auto& update_operation = get<int>("update", profile.get_properties());
+    update_operation.connect_changed_signal([&, view] (auto value) {
+      if(auto current = view->get_current()->get()) {
+        model->set(current->m_row, current->m_column, value);
+      }
+    });
+    auto& remove_operation =
+      get<TableModel::RemoveOperation>("remove", profile.get_properties());
+    remove_operation.connect_changed_signal([=] (const auto& operation) {
+      if(operation.m_index >= 0 &&
+          operation.m_index < model->get_row_size()) {
+        model->remove(operation.m_index);
+      }
     });
     return view;
   });

@@ -147,15 +147,12 @@ const StyleSheet& Stylist::get_style() const {
 }
 
 void Stylist::set_style(StyleSheet style) {
-  auto initial_rule_size = m_rules.size();
-  for(auto& rule : m_rules) {
+  auto rules = std::exchange(m_rules, {});
+  for(auto& rule : rules) {
     auto selection = std::move(rule->m_selection);
     if(!selection.empty()) {
       on_selection_update(*rule, {}, std::move(selection));
     }
-  }
-  if(m_rules.size() != initial_rule_size) {
-    m_rules.erase(m_rules.begin(), m_rules.begin() + initial_rule_size);
   }
   m_style = load_styles(std::move(style));
   apply(*m_style);
@@ -367,7 +364,7 @@ void Stylist::apply(Stylist& source, const RuleEntry& rule) {
   m_sources.insert(j, {&source, level, &rule});
 }
 
-void Stylist::unapply(Stylist& source, const RuleEntry& rule) {
+void Stylist::unapply(const RuleEntry& rule) {
   std::erase_if(m_sources, [&] (const auto& entry) {
     return entry.m_rule == &rule;
   });
@@ -396,26 +393,16 @@ void Stylist::apply() {
   }
   if(auto visibility = Spire::Styles::find<Visibility>(block)) {
     evaluate(*visibility, [=] (auto visibility) {
-      if(visibility == Visibility::VISIBLE && !m_widget->isVisible()) {
-        m_widget->show();
-      } else if(visibility != m_visibility) {
-        if(visibility == Visibility::NONE) {
-          auto size = m_widget->sizePolicy();
-          size.setRetainSizeWhenHidden(false);
-          m_widget->setSizePolicy(size);
-          m_widget->hide();
-        } else if(visibility == Visibility::INVISIBLE) {
-          auto size = m_widget->sizePolicy();
-          size.setRetainSizeWhenHidden(true);
-          m_widget->setSizePolicy(size);
-          m_widget->hide();
-        }
-      }
       m_visibility = visibility;
+      if(m_visibility == Visibility::VISIBLE) {
+        m_widget->show();
+      } else {
+        auto size = m_widget->sizePolicy();
+        size.setRetainSizeWhenHidden(m_visibility == Visibility::INVISIBLE);
+        m_widget->setSizePolicy(size);
+        m_widget->hide();
+      }
     });
-  } else if(m_visibility != Visibility::VISIBLE) {
-    m_widget->show();
-    m_visibility = Visibility::VISIBLE;
   }
 }
 
@@ -468,7 +455,7 @@ void Stylist::on_selection_update(
   for(auto removal : removals) {
     rule.m_selection.erase(removal);
     auto& stylist = const_cast<Stylist&>(*removal);
-    stylist.unapply(*this, rule);
+    stylist.unapply(rule);
     changed_stylists.insert(&stylist);
   }
   for(auto addition : additions) {
@@ -598,8 +585,8 @@ std::vector<PseudoElement> Spire::Styles::get_pseudo_elements(
   return pseudo_elements;
 }
 
-void Spire::Styles::add_pseudo_element(QWidget& source,
-    const PseudoElement& pseudo_element) {
+void Spire::Styles::add_pseudo_element(
+    QWidget& source, const PseudoElement& pseudo_element) {
   auto stylist = pseudo_stylists.find(std::pair(&source, pseudo_element));
   if(stylist != pseudo_stylists.end()) {
     return;
