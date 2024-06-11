@@ -28,6 +28,28 @@ namespace {
         widget_geometry.bottom());
   }
 
+  int compute_average_row_height(
+      QSpacerItem* top, QSpacerItem* bottom, QLayout* layout, int top_index,
+      int visible_count, int rows) {
+    auto total_height = 0;
+    auto total_rows = 0;
+    if(top) {
+      total_height += top->sizeHint().height();
+      total_rows += top_index;
+    }
+    if(layout) {
+      for(auto i = 0; i != layout->count(); ++i) {
+        total_height += layout->itemAt(i)->sizeHint().height();
+        ++total_rows;
+      }
+    }
+    if(bottom) {
+      total_height += bottom->sizeHint().height();
+      total_rows += rows - top_index - visible_count;
+    }
+    return total_height / total_rows;
+  }
+
   void set_height(QSpacerItem& spacer, QLayout& layout, int height) {
     height = std::max(0, height);
     if(spacer.sizeHint().height() == height) {
@@ -649,6 +671,35 @@ void TableBody::add_column_cover(int index, const QRect& geometry) {
 }
 
 void TableBody::add_row(int index) {
+  if(is_visible(index)) {
+    auto layout_index = index - m_top_index + (m_top_spacer ? 1 : 0);
+    auto current_index = m_current_controller.get_row();
+    if(current_index && *current_index >= index) {
+      ++*current_index;
+    }
+    mount_row(index, layout_index, current_index);
+  } else {
+    auto row_height = compute_average_row_height(m_top_spacer, m_bottom_spacer,
+      layout(), m_top_index, visible_count(), m_table->get_row_size() - 1);
+    if(index < m_top_index) {
+      if(m_top_spacer) {
+        adjust_height(*m_top_spacer, *layout(),  row_height);
+      } else {
+        m_top_spacer = new QSpacerItem(
+          0, row_height, QSizePolicy::Expanding, QSizePolicy::Fixed);
+        static_cast<QBoxLayout*>(layout())->insertItem(0, m_top_spacer);
+      }
+      ++m_top_index;
+    } else {
+      if(m_bottom_spacer) {
+        adjust_height(*m_bottom_spacer, *layout(),  row_height);
+      } else {
+        m_bottom_spacer = new QSpacerItem(
+          0, row_height, QSizePolicy::Expanding, QSizePolicy::Fixed);
+        layout()->addItem(m_bottom_spacer);
+      }
+    }
+  }
   m_current_controller.add_row(index);
   m_selection_controller.add_row(index);
 }
