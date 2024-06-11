@@ -385,7 +385,7 @@ struct EditableTableView::ItemBuilder {
     if(auto box = dynamic_cast<EditableBox*>(widget)) {
       m_builder.unmount(widget);
     } else {
-      m_editable_builder.unmount(box);
+      m_editable_builder.unmount(widget);
     }
   }
 };
