@@ -3508,7 +3508,8 @@ UiProfile Spire::make_popup_box_profile() {
     size_policy_property));
   auto profile = UiProfile("PopupBox", properties, [] (auto& profile) {
     auto popup_boxes = std::vector<PopupBox*>();
-    auto grid_layout = new QGridLayout();
+    auto widget = new QWidget();
+    auto grid_layout = new QGridLayout(widget);
     grid_layout->setSpacing(0);
     for(auto i = 0; i < 5; ++i) {
       for(auto j = 0; j < 3; ++j) {
@@ -3543,17 +3544,11 @@ UiProfile Spire::make_popup_box_profile() {
         }
       }
     }
-    auto widget = new QWidget();
-    auto layout = make_hbox_layout(widget);
-    layout->addStretch(1);
-    auto vertical_layout = make_vbox_layout();
-    vertical_layout->addStretch(1);
-    vertical_layout->addLayout(grid_layout);
-    vertical_layout->addStretch(1);
-    layout->addLayout(vertical_layout, 5);
-    layout->addStretch(1);
-    widget->setMinimumSize(scale(200, 200));
-    auto& horizontal_size_policy = get<int>("horizontal_size_policy", profile.get_properties());
+    grid_layout->setColumnMinimumWidth(0, scale_width(30));
+    grid_layout->setColumnMinimumWidth(1, scale_width(120));
+    grid_layout->setColumnMinimumWidth(2, scale_width(100));
+    auto& horizontal_size_policy = get<int>("horizontal_size_policy",
+      profile.get_properties());
     horizontal_size_policy.connect_changed_signal([=] (auto value) {
       for(auto box : popup_boxes) {
         auto policy = box->sizePolicy();
@@ -3567,7 +3562,8 @@ UiProfile Spire::make_popup_box_profile() {
         box->setSizePolicy(policy);
       }
     });
-    auto& vertical_size_policy = get<int>("vertical_size_policy", profile.get_properties());
+    auto& vertical_size_policy = get<int>("vertical_size_policy",
+      profile.get_properties());
     vertical_size_policy.connect_changed_signal([=] (auto value) {
       for(auto box : popup_boxes) {
         auto policy = box->sizePolicy();
