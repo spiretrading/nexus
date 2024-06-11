@@ -172,6 +172,7 @@ namespace Styles {
         std::vector<RowCover*>& unmounted_rows);
       RowCover* mount_row(
         int index, int layout_index, boost::optional<int> current_index);
+      void destroy(RowCover* row);
       void remove(RowCover& row);
       void update_spacer(QSpacerItem*& spacer, int hidden_row_count);
       void update_spacers();

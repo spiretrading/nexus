@@ -47,6 +47,9 @@ namespace {
       total_height += bottom->sizeHint().height();
       total_rows += rows - top_index - visible_count;
     }
+    if(total_height == 0) {
+      return 0;
+    }
     return total_height / total_rows;
   }
 
@@ -705,8 +708,33 @@ void TableBody::add_row(int index) {
 }
 
 void TableBody::remove_row(int index) {
-  if(auto row = find_row(index)) {
-    remove(*row);
+  if(is_visible(index)) {
+    remove(*find_row(index));
+  } else {
+    auto row_height = -1;
+    if(index == m_current_controller.get_row() && m_current_row) {
+      row_height = m_current_row->sizeHint().height();
+      destroy(m_current_row);
+      m_current_row = nullptr;
+    }
+    if(index < m_top_index) {
+      if(m_top_spacer) {
+        if(row_height == -1) {
+          row_height = compute_average_row_height(m_top_spacer, nullptr,
+            nullptr, m_top_index, visible_count(), m_table->get_row_size() - 1);
+        }
+        adjust_height(*m_top_spacer, *layout(), -row_height);
+      }
+      --m_top_index;
+    } else {
+      if(m_bottom_spacer) {
+        if(row_height == -1) {
+          row_height = compute_average_row_height(nullptr, m_bottom_spacer,
+            nullptr, m_top_index, visible_count(), m_table->get_row_size() - 1);
+        }
+        adjust_height(*m_bottom_spacer, *layout(), -row_height);
+      }
+    }
   }
   if(m_hover_index && m_hover_index->m_row >= index) {
     m_hover_index = none;
@@ -798,9 +826,8 @@ void TableBody::update_parent() {
   initialize_visible_region();
 }
 
-TableBody::RowCover* TableBody::mount_row(
-    int index, int layout_index, optional<int> current_index,
-    std::vector<RowCover*>& unmounted_rows) {
+TableBody::RowCover* TableBody::mount_row(int index, int layout_index,
+    optional<int> current_index, std::vector<RowCover*>& unmounted_rows) {
   auto row = [&] {
     if(!current_index) {
       current_index = m_current_controller.get_row();
@@ -834,25 +861,29 @@ TableBody::RowCover* TableBody::mount_row(
   return row;
 }
 
-TableBody::RowCover* TableBody::mount_row(int index, int layout_index,
-    optional<int> current_index) {
+TableBody::RowCover* TableBody::mount_row(
+    int index, int layout_index, optional<int> current_index) {
   auto unmounted_rows = std::vector<RowCover*>();
   return mount_row(index, layout_index, current_index, unmounted_rows);
 }
 
-void TableBody::remove(RowCover& row) {
+void TableBody::destroy(RowCover* row) {
   for(auto i = 0; i != get_column_size(); ++i) {
-    auto item = row.get_item(i);
+    auto item = row->get_item(i);
     m_hover_observers.erase(item);
   }
+  delete row;
+}
+
+void TableBody::remove(RowCover& row) {
   auto item = layout()->takeAt(layout()->indexOf(&row));
   layout()->removeItem(item);
-  row.unmount();
   if(&row == m_current_row) {
     m_current_row = nullptr;
   }
+  row.unmount();
   delete item;
-  delete &row;
+  destroy(&row);
 }
 
 void TableBody::update_spacer(QSpacerItem*& spacer, int hidden_row_count) {
@@ -1026,7 +1057,7 @@ void TableBody::update_visible_region() {
     reset_visible_region(total_height, unmounted_rows);
   }
   for(auto unmounted_row : unmounted_rows) {
-    delete unmounted_row;
+    destroy(unmounted_row);
   }
 }
 
@@ -1056,7 +1087,7 @@ void TableBody::on_current(
     }
     if(m_current_row && layout()->indexOf(m_current_row) == -1) {
       m_current_row->unmount();
-      delete m_current_row;
+      destroy(m_current_row);
     }
     m_current_row = nullptr;
   }
