@@ -300,16 +300,7 @@ namespace {
     }
 
     void on_operation(const Operation& operation) {
-      visit(operation,
-        [&] (const StartTransaction&) {
-          m_transaction.start();
-        },
-        [&] (const EndTransaction&) {
-          m_transaction.end();
-        },
-        [&] (const auto& operation) {
-          m_transaction.push(operation);
-        });
+      m_transaction.push(operation);
     }
   };
 

@@ -382,11 +382,10 @@ struct EditableTableView::ItemBuilder {
   }
 
   void unmount(QWidget* widget) {
-    if(typeid(*widget) == typeid(Button) ||
-        typeid(*widget) == typeid(QWidget)) {
-      m_editable_builder.unmount(widget);
-    } else {
+    if(auto box = dynamic_cast<EditableBox*>(widget)) {
       m_builder.unmount(widget);
+    } else {
+      m_editable_builder.unmount(box);
     }
   }
 };
