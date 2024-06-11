@@ -1080,10 +1080,10 @@ void TableBody::on_current(
   if(previous) {
     if(auto previous_item = find_item(previous)) {
       unmatch(*previous_item->parentWidget(), CurrentRow());
-      if(!current || current->m_column != previous->m_column) {
-        unmatch(*m_column_covers[previous->m_column], CurrentColumn());
-      }
       unmatch(*previous_item, Current());
+    }
+    if(!current || current->m_column != previous->m_column) {
+      unmatch(*m_column_covers[previous->m_column], CurrentColumn());
     }
     if(m_current_row && layout()->indexOf(m_current_row) == -1) {
       m_current_row->unmount();
