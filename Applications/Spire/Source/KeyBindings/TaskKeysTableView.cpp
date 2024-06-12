@@ -1,5 +1,6 @@
 #include "Spire/KeyBindings/TaskKeysTableView.hpp"
 #include <boost/signals2/shared_connection_block.hpp>
+#include "Spire/KeyBindings/AdditionalTagsBox.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ColumnViewListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
@@ -483,7 +484,8 @@ namespace {
             auto current = make_proxy.operator ()<TimeInForce>();
             return {new AnyInputBox(*make_time_in_force_box(current)), current};
           } else if(column_id == OrderTaskColumns::TAGS) {
-            return {new AnyInputBox(*make_label("")), std::shared_ptr<void>()};
+            auto current = make_proxy.operator ()<std::vector<AdditionalTag>>();
+            return {new AnyInputBox(*new AdditionalTagsBox(current)), current};
           } else {
             auto proxy = make_proxy.operator ()<QKeySequence>();
             auto current =
@@ -528,6 +530,8 @@ namespace {
         update_proxy.operator ()<optional<Quantity>>();
       } else if(column_id == OrderTaskColumns::TIME_IN_FORCE) {
         update_proxy.operator ()<TimeInForce>();
+      } else if(column_id == OrderTaskColumns::TAGS) {
+        update_proxy.operator ()<std::vector<AdditionalTag>>();
       } else if(column_id == OrderTaskColumns::KEY) {
         update_proxy.operator ()<QKeySequence>();
       }

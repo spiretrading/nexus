@@ -20,8 +20,6 @@ using namespace Nexus;
 using namespace Spire;
 
 namespace {
-  const auto MAX_FLOOR_KEY = 111;
-
   template<typename T>
   typename T::Type extract(const optional<const CanvasNode&>& child) {
     if(!child) {
@@ -32,40 +30,7 @@ namespace {
     return {};
   }
 
-  const std::string& get_name(const Tag& tag) {
-    if(tag.GetKey() == MAX_FLOOR_KEY) {
-      static const auto name = std::string("max_floor");
-      return name;
-    }
-    static const auto name = std::string();
-    return name;
-  }
-
-  std::unique_ptr<CanvasNode> to_canvas_node(const Tag& tag) {
-    auto& tag_value = tag.GetValue();
-    if(tag.GetKey() == MAX_FLOOR_KEY) {
-      return LinkedNode::SetReferent(MaxFloorNode(), "security");
-    } else if(auto value = get<int>(&tag_value)) {
-      return std::make_unique<IntegerNode>(*value);
-    } else if(auto value = get<double>(&tag_value)) {
-      return std::make_unique<DecimalNode>(*value);
-    } else if(auto value = get<Quantity>(&tag_value)) {
-      return std::make_unique<IntegerNode>(*value);
-    } else if(auto value = get<Money>(&tag_value)) {
-      return std::make_unique<MoneyNode>(*value);
-    } else if(auto value = get<char>(&tag_value)) {
-      return std::make_unique<TextNode>(std::string(1, *value));
-    } else if(auto value = get<std::string>(&tag_value)) {
-      return std::make_unique<TextNode>(*value);
-    } else if(auto value = get<time_duration>(&tag_value)) {
-      return std::make_unique<DurationNode>(*value);
-    } else if(auto value = get<ptime>(&tag_value)) {
-      return std::make_unique<DateTimeNode>(*value);
-    }
-    throw std::runtime_error("Unsupported tag.");
-  }
-
-  Tag to_tag(const SingleOrderTaskNode& node,
+  AdditionalTag to_additional_tag(const SingleOrderTaskNode& node,
       const SingleOrderTaskNode::FieldEntry& field) {
     auto child = node.FindChild(field.m_name);
     if(!child) {
@@ -89,7 +54,7 @@ namespace {
       }
       throw std::runtime_error("Unsupported tag.");
     }();
-    return Tag(field.m_key, std::move(value));
+    return AdditionalTag(field.m_key, std::move(value));
   }
 }
 
@@ -113,7 +78,8 @@ optional<const OrderTaskArguments&> Spire::find_order_task_arguments(
 }
 
 std::unique_ptr<CanvasNode>
-    Spire::make_canvas_node(const OrderTaskArguments& arguments) {
+    Spire::make_canvas_node(const OrderTaskArguments& arguments,
+      const AdditionalTagDatabase& additional_tags) {
   auto node = std::unique_ptr<CanvasNode>(
     std::make_unique<SingleOrderTaskNode>()->Rename(
       arguments.m_name.toStdString()));
@@ -143,8 +109,12 @@ std::unique_ptr<CanvasNode>
         arguments.m_time_in_force)->SetReadOnly(true)->SetVisible(false));
   }
   for(auto& tag : arguments.m_additional_tags) {
-    node = static_cast<SingleOrderTaskNode*>(
-      node.get())->AddField(get_name(tag), tag.GetKey(), to_canvas_node(tag));
+    if(auto schema = Spire::find(additional_tags, arguments.m_destination,
+        arguments.m_region, tag.m_key)) {
+      node = static_cast<SingleOrderTaskNode*>(node.get())->AddField(
+        schema->get_name(), schema->get_key(),
+        schema->make_canvas_node(tag.m_value));
+    }
   }
   return node;
 }
@@ -172,7 +142,7 @@ OrderTaskArguments Spire::to_order_task_arguments(const CanvasNode& node,
     node.FindChild(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY));
   if(auto task = dynamic_cast<const SingleOrderTaskNode*>(&node)) {
     for(auto& field : task->GetFields()) {
-      arguments.m_additional_tags.push_back(to_tag(*task, field));
+      arguments.m_additional_tags.push_back(to_additional_tag(*task, field));
     }
   }
   return arguments;

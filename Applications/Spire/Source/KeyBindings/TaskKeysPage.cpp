@@ -1,4 +1,5 @@
 #include "Spire/KeyBindings/TaskKeysPage.hpp"
+#include "Spire/KeyBindings/AdditionalTag.hpp"
 #include "Spire/KeyBindings/OrderTaskArgumentsMatch.hpp"
 #include "Spire/KeyBindings/TaskKeysTableView.hpp"
 #include "Spire/Spire/FilteredTableModel.hpp"
@@ -119,8 +120,8 @@ namespace {
     explicit OrderTaskTableModel(
       std::shared_ptr<OrderTaskArgumentsListModel> source)
       : m_source(std::move(source)),
-      m_source_connection(m_source->connect_operation_signal(
-        std::bind_front(&OrderTaskTableModel::on_operation, this))) {}
+        m_source_connection(m_source->connect_operation_signal(
+          std::bind_front(&OrderTaskTableModel::on_operation, this))) {}
 
     int get_row_size() const override {
       return m_source->get_size();
@@ -134,8 +135,8 @@ namespace {
       if(column < 0 || column >= get_column_size()) {
         throw std::out_of_range("The column is out of range.");
       }
-      return extract_field(m_source->get(row),
-        static_cast<OrderTaskColumns>(column));
+      return extract_field(
+        m_source->get(row), static_cast<OrderTaskColumns>(column));
     }
 
     QValidator::State set(int row, int column, const std::any& value) override {
@@ -160,7 +161,7 @@ namespace {
         arguments.m_time_in_force = std::any_cast<const TimeInForce&>(value);
       } else if(column_index == OrderTaskColumns::TAGS) {
         arguments.m_additional_tags =
-          std::any_cast<const std::vector<Nexus::Tag>&>(value);
+          std::any_cast<const std::vector<AdditionalTag>&>(value);
       } else if(column_index == OrderTaskColumns::KEY) {
         arguments.m_key = std::any_cast<const QKeySequence&>(value);
       }

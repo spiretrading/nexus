@@ -3,6 +3,7 @@
 
 namespace Spire {
   struct AdditionalTag;
+  class AdditionalTagDatabase;
   class AdditionalTagSchema;
   class AdditionalTagsBox;
   class AddRegionForm;

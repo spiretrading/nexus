@@ -88,9 +88,9 @@ namespace Spire {
     if(index < 0 || index >= get_size()) {
       throw std::out_of_range("The index is out of range.");
     }
-    auto previous = m_data[index];
+    auto previous = std::move(m_data[index]);
     m_data[index] = value;
-    m_transaction.push(UpdateOperation(index, previous, value));
+    m_transaction.push(UpdateOperation(index, std::move(previous), value));
     return QValidator::State::Acceptable;
   }
 

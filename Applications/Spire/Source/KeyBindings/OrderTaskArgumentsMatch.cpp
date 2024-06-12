@@ -159,7 +159,8 @@ bool Spire::matches(TimeInForce time_in_force, const QString& query) {
   return false;
 }
 
-bool Spire::matches(const std::vector<Nexus::Tag>& tags, const QString& query) {
+bool Spire::matches(
+    const std::vector<AdditionalTag>& tags, const QString& query) {
   return false;
 }
 

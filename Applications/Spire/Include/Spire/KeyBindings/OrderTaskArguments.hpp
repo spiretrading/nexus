@@ -17,6 +17,9 @@
 #include "Nexus/Definitions/Tag.hpp"
 #include "Nexus/Definitions/TimeInForce.hpp"
 #include "Spire/Canvas/Canvas.hpp"
+#include "Spire/KeyBindings/AdditionalTag.hpp"
+#include "Spire/KeyBindings/AdditionalTagDatabase.hpp"
+#include "Spire/KeyBindings/KeyBindings.hpp"
 #include "Spire/LegacyUI/ShuttleQtTypes.hpp"
 #include "Spire/Spire/ListModel.hpp"
 
@@ -47,7 +50,7 @@ namespace Spire {
     Nexus::TimeInForce m_time_in_force;
 
     /** The list of additional tags to apply to the order. */
-    std::vector<Nexus::Tag> m_additional_tags;
+    std::vector<AdditionalTag> m_additional_tags;
 
     /** The order task's key binding. */
     QKeySequence m_key;
@@ -73,9 +76,11 @@ namespace Spire {
    * Constructs a <i>CanvasNode</i> representing an order task with a specified
    * set of arguments.
    * @param arguments The arguments used to build the <i>CanvasNode<i>.
+   * @param additional_tags The database of additional tags.
    */
   std::unique_ptr<CanvasNode>
-    make_canvas_node(const OrderTaskArguments& arguments);
+    make_canvas_node(const OrderTaskArguments& arguments,
+      const AdditionalTagDatabase& additional_tags);
 
   /**
    * Converts an OrderTaskNode into an OrderTaskArguments record.
