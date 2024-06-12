@@ -220,7 +220,7 @@ namespace Details {
   template<typename MarketDataType>
   void ChartingServlet<C, M>::HandleQuery(
       Beam::Services::RequestToken<ServiceProtocolClient,
-      QuerySecurityService>& request, const SecurityChartingQuery& query,
+        QuerySecurityService>& request, const SecurityChartingQuery& query,
       int clientQueryId, QueryEntry<MarketDataType>& queryEntry) {
     using Query = MarketDataService::GetMarketDataQueryType<MarketDataType>;
     if(query.GetRange().GetEnd() == Beam::Queries::Sequence::Last()) {
@@ -229,10 +229,12 @@ namespace Details {
         realTimeQuery.SetIndex(query.GetIndex());
         realTimeQuery.SetRange(Beam::Queries::Range::RealTime());
         MarketDataService::QueryMarketDataClient(*m_marketDataClient,
-          realTimeQuery, m_tasks.GetSlot<MarketDataType>(std::bind(
-            &ChartingServlet::OnQueryUpdate<
-              typename Query::Index, MarketDataType>, this, query.GetIndex(),
-            std::placeholders::_1, std::ref(queryEntry))));
+          realTimeQuery, m_tasks.GetSlot<MarketDataType>(
+            [=, &queryEntry] (auto&& value) {
+              OnQueryUpdate<typename Query::Index, MarketDataType>(
+                query.GetIndex(), std::forward<decltype(value)>(value),
+                queryEntry);
+            }));
       });
     }
     auto result = SecurityChartingQueryResult();
