@@ -2,6 +2,9 @@
 #define SPIRE_KEY_BINDINGS_HPP
 
 namespace Spire {
+  struct AdditionalTag;
+  class AdditionalTagSchema;
+  class AdditionalTagsBox;
   class AddRegionForm;
   class CancelKeyBindingsForm;
   class CancelKeyBindingsModel;

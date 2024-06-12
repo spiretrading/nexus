@@ -267,7 +267,7 @@ void NavigationView::on_associative_value_current(int index, bool value) {
   if(value) {
     match(*m_navigation_view->get_list_item(index), Checked());
     m_stacked_widget->setCurrentIndex(index);
-    m_stacked_widget->currentWidget()->adjustSize();
+// TODO    m_stacked_widget->currentWidget()->adjustSize();
     m_navigation_view->get_current()->set(index);
     if(index != m_current->get()) {
       m_current->set(index);
