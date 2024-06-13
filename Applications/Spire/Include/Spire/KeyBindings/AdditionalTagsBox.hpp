@@ -3,8 +3,11 @@
 #include <vector>
 #include <QWidget>
 #include "Spire/KeyBindings/AdditionalTag.hpp"
+#include "Spire/KeyBindings/AdditionalTagDatabase.hpp"
 #include "Spire/KeyBindings/KeyBindings.hpp"
 #include "Spire/Spire/ValueModel.hpp"
+#include "Spire/Ui/DestinationBox.hpp"
+#include "Spire/Ui/RegionBox.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 namespace Spire {
@@ -25,10 +28,16 @@ namespace Spire {
 
       /**
        * Constructs an AdditionalTagsBox.
+       * @param additional_tags The definitions of all additional tags.
+       * @param destination The destination to constrain the available tags to.
+       * @param region The region to constrain the available tags to.
        * @param current The list of additional tags to represent.
        * @param parent The parent widget.
        */
-      explicit AdditionalTagsBox(std::shared_ptr<AdditionalTagsModel> current,
+      AdditionalTagsBox(AdditionalTagDatabase additional_tags,
+        std::shared_ptr<DestinationModel> destination,
+        std::shared_ptr<RegionModel> region,
+        std::shared_ptr<AdditionalTagsModel> current,
         QWidget* parent = nullptr);
 
       /** Returns the list of additional tags represented. */
@@ -52,6 +61,9 @@ namespace Spire {
         const SubmitSignal::slot_type& slot) const;
 
     private:
+      AdditionalTagDatabase m_additional_tags;
+      std::shared_ptr<DestinationModel> m_destination;
+      std::shared_ptr<RegionModel> m_region;
       std::shared_ptr<AdditionalTagsModel> m_current;
       std::shared_ptr<TextModel> m_tags_text;
       TextBox* m_label;

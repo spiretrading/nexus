@@ -7,9 +7,14 @@ using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::Styles;
 
-AdditionalTagsBox::AdditionalTagsBox(
+AdditionalTagsBox::AdditionalTagsBox(AdditionalTagDatabase additional_tags,
+    std::shared_ptr<DestinationModel> destination,
+    std::shared_ptr<RegionModel> region,
     std::shared_ptr<AdditionalTagsModel> current, QWidget* parent)
     : QWidget(parent),
+      m_additional_tags(std::move(additional_tags)),
+      m_destination(std::move(destination)),
+      m_region(std::move(region)),
       m_current(std::move(current)),
       m_is_read_only(false) {
   m_tags_text = make_transform_value_model(m_current,

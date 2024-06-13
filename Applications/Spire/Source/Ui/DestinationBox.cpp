@@ -48,11 +48,11 @@ struct DestinationBox::DestinationQueryModel : ComboBox::QueryModel {
 DestinationBox::DestinationBox(
   std::shared_ptr<ComboBox::QueryModel> query_model, QWidget* parent)
   : DestinationBox(std::move(query_model),
-      std::make_shared<LocalValueModel<Destination>>(), parent) {}
+      std::make_shared<LocalDestinationModel>(), parent) {}
 
 DestinationBox::DestinationBox(
     std::shared_ptr<ComboBox::QueryModel> query_model,
-    std::shared_ptr<CurrentModel> current, QWidget* parent)
+    std::shared_ptr<DestinationModel> current, QWidget* parent)
     : QWidget(parent),
       m_query_model(
         std::make_shared<DestinationQueryModel>(std::move(query_model))),
@@ -94,8 +94,7 @@ const std::shared_ptr<ComboBox::QueryModel>&
   return m_query_model->m_source;
 }
 
-const std::shared_ptr<DestinationBox::CurrentModel>&
-    DestinationBox::get_current() const {
+const std::shared_ptr<DestinationModel>& DestinationBox::get_current() const {
   return m_current;
 }
 
