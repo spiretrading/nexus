@@ -5,12 +5,14 @@
 #include "Nexus/Definitions/DefaultCountryDatabase.hpp"
 #include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
+#include "Spire/Canvas/OrderExecutionNodes/MaxFloorNode.hpp"
 #include "Spire/KeyBindings/HotkeyOverride.hpp"
 #include "Spire/KeyBindings/KeyBindingsProfile.hpp"
 #include "Spire/KeyBindings/KeyBindingsWindow.hpp"
 #include "Spire/Spire/Resources.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 
+using namespace boost;
 using namespace Nexus;
 using namespace Spire;
 
@@ -39,6 +41,26 @@ std::shared_ptr<ComboBox::QueryModel> populate_security_query_model() {
   return model;
 }
 
+class MaxFloorSchema : public AdditionalTagSchema {
+  public:
+    MaxFloorSchema()
+      : AdditionalTagSchema("MaxFloor", 111) {}
+
+    std::unique_ptr<CanvasNode> make_canvas_node(
+        const optional<Nexus::Tag::Type>& value) const {
+      return LinkedNode::SetReferent(MaxFloorNode(), "security");
+    }
+};
+
+const AdditionalTagDatabase& get_default_additional_tag_database() {
+  static auto database = [] {
+    auto database = AdditionalTagDatabase();
+    database.add(Region::Global(), std::make_shared<MaxFloorSchema>());
+    return database;
+  }();
+  return database;
+}
+
 int main(int argc, char** argv) {
   auto application = QApplication(argc, argv);
   application.setOrganizationName(QObject::tr("Spire Trading Inc"));
@@ -54,7 +76,7 @@ int main(int argc, char** argv) {
   }
   auto window = KeyBindingsWindow(key_bindings, populate_security_query_model(),
     GetDefaultCountryDatabase(), GetDefaultMarketDatabase(),
-    GetDefaultDestinationDatabase());
+    GetDefaultDestinationDatabase(), get_default_additional_tag_database());
   window.show();
   auto hotkey_override = HotkeyOverride();
   application.exec();

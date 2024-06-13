@@ -18,11 +18,21 @@ AdditionalTagsBox::AdditionalTagsBox(AdditionalTagDatabase additional_tags,
       m_current(std::move(current)),
       m_is_read_only(false) {
   m_tags_text = make_transform_value_model(m_current,
-    [] (const auto& current) {
-      return QString();
+    [=] (const auto& current) {
+      auto label = QString();
+      for(auto& tag : current) {
+        auto schema = Spire::find(
+          m_additional_tags, m_destination->get(), m_region->get(), tag.m_key);
+        if(schema) {
+          if(!label.isEmpty()) {
+            label.append(", ");
+          }
+          label.append(QString::fromStdString(schema->get_name()));
+        }
+      }
+      return label;
     });
-  m_label = new TextBox(m_tags_text);
-  m_label->set_read_only(true);
+  m_label = make_label(m_tags_text);
   enclose(*this, *m_label);
   proxy_style(*this, *m_label);
 }

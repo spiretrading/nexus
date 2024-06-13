@@ -7,6 +7,21 @@ namespace {
   const auto NONE = std::shared_ptr<AdditionalTagSchema>();
 }
 
+AdditionalTagDatabase::AdditionalTagDatabase()
+  : m_schemas(
+      std::unordered_map<int, std::shared_ptr<AdditionalTagSchema>>()) {}
+
+void AdditionalTagDatabase::add(const Region& region,
+    const std::shared_ptr<AdditionalTagSchema>& schema) {
+  auto i = m_schemas.Find(region);
+  if(std::get<0>(*i) == region) {
+    std::get<1>(*i)[schema->get_key()] = schema;
+  } else {
+    m_schemas.Set(region, {});
+    add(region, schema);
+  }
+}
+
 const std::shared_ptr<AdditionalTagSchema>&
     AdditionalTagDatabase::find(const Destination& destination, int key) const {
   return NONE;
@@ -14,7 +29,12 @@ const std::shared_ptr<AdditionalTagSchema>&
 
 const std::shared_ptr<AdditionalTagSchema>&
     AdditionalTagDatabase::find(const Region& region, int key) const {
-  return NONE;
+  auto i = m_schemas.Find(region);
+  auto j = std::get<1>(*i).find(key);
+  if(j == std::get<1>(*i).end()) {
+    return NONE;
+  }
+  return j->second;
 }
 
 const std::shared_ptr<AdditionalTagSchema>& Spire::find(

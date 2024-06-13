@@ -43,13 +43,15 @@ namespace Spire {
    * @param region_query_model The model used to query region matches.
    * @param destinations The destination database to use.
    * @param markets The market database to use.
+   * @param additional_tags Specifies the definition of all available additional
+   *        tags.
    * @param parent The parent widget.
    */
   TableView* make_task_keys_table_view(
     std::shared_ptr<TableModel> order_task_table,
     std::shared_ptr<ComboBox::QueryModel> region_query_model,
     Nexus::DestinationDatabase destinations, Nexus::MarketDatabase markets,
-    QWidget* parent = nullptr);
+    AdditionalTagDatabase additional_tags, QWidget* parent = nullptr);
 }
 
 #endif

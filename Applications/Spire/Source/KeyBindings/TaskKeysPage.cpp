@@ -312,7 +312,8 @@ struct TaskKeysPage::OrderTaskMatchCache {
 TaskKeysPage::TaskKeysPage(std::shared_ptr<KeyBindingsModel> key_bindings,
     std::shared_ptr<ComboBox::QueryModel> securities,
     CountryDatabase countries, MarketDatabase markets,
-    DestinationDatabase destinations, QWidget* parent)
+    DestinationDatabase destinations, AdditionalTagDatabase additional_tags,
+    QWidget* parent)
     : QWidget(parent),
       m_key_bindings(std::move(key_bindings)),
       m_match_cache(std::make_unique<OrderTaskMatchCache>(
@@ -369,7 +370,7 @@ TaskKeysPage::TaskKeysPage(std::shared_ptr<KeyBindingsModel> key_bindings,
     m_filtered_model, std::make_shared<RegionQueryModel>(std::move(securities),
       populate_region_query_model(m_match_cache->m_countries,
         m_match_cache->m_markets)),
-    m_match_cache->m_destinations, m_match_cache->m_markets);
+    m_match_cache->m_destinations, m_match_cache->m_markets, additional_tags);
   layout->addWidget(m_table_view);
   auto box = new Box(body);
   update_style(*box, [] (auto& style) {

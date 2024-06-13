@@ -1,8 +1,9 @@
 #ifndef SPIRE_ADDITIONAL_TAG_DATABASE_HPP
 #define SPIRE_ADDITIONAL_TAG_DATABASE_HPP
 #include <memory>
+#include <unordered_map>
 #include "Nexus/Definitions/Destination.hpp"
-#include "Nexus/Definitions/Region.hpp"
+#include "Nexus/Definitions/RegionMap.hpp"
 #include "Spire/KeyBindings/AdditionalTagSchema.hpp"
 #include "Spire/KeyBindings/KeyBindings.hpp"
 
@@ -14,6 +15,17 @@ namespace Spire {
    */
   class AdditionalTagDatabase {
     public:
+
+      /** Constructs an empty database. */
+      AdditionalTagDatabase();
+
+      /**
+       * Adds a schema to this database.
+       * @param region The region the schema applies to.
+       * @param schema The schema to add.
+       */
+      void add(const Nexus::Region& region,
+        const std::shared_ptr<AdditionalTagSchema>& schema);
 
       /**
        * Returns the schema associated with a destination or <i>nullptr</i> iff
@@ -28,6 +40,10 @@ namespace Spire {
        */
       const std::shared_ptr<AdditionalTagSchema>&
         find(const Nexus::Region& region, int key) const;
+
+    private:
+      Nexus::RegionMap<std::unordered_map<
+        int, std::shared_ptr<AdditionalTagSchema>>> m_schemas;
   };
 
   /**

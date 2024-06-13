@@ -443,6 +443,7 @@ namespace {
     std::shared_ptr<ComboBox::QueryModel> m_region_query_model;
     DestinationDatabase m_destinations;
     MarketDatabase m_markets;
+    AdditionalTagDatabase m_additional_tags;
     std::map<QWidget*, std::shared_ptr<void>> m_proxies;
 
     EditableBox* mount(
@@ -490,7 +491,7 @@ namespace {
               table, row, static_cast<int>(OrderTaskColumns::REGION));
             auto current = make_proxy.operator ()<std::vector<AdditionalTag>>();
             return {new AnyInputBox(*new AdditionalTagsBox(
-              {}, destination, region, current)), current};
+              m_additional_tags, destination, region, current)), current};
           } else {
             auto proxy = make_proxy.operator ()<QKeySequence>();
             auto current =
@@ -551,8 +552,8 @@ namespace {
 TableView* Spire::make_task_keys_table_view(
     std::shared_ptr<TableModel> order_task_table,
     std::shared_ptr<ComboBox::QueryModel> region_query_model,
-    Nexus::DestinationDatabase destinations, Nexus::MarketDatabase markets,
-    QWidget* parent) {
+    DestinationDatabase destinations, MarketDatabase markets,
+    AdditionalTagDatabase additional_tags, QWidget* parent) {
   auto table_view = new EditableTableView(
     std::make_shared<UniqueTaskKeyTableModel>(std::move(order_task_table)),
     make_header_model(), std::make_shared<EmptyTableFilter>(),
@@ -562,7 +563,7 @@ TableView* Spire::make_task_keys_table_view(
       std::make_shared<ListSingleSelectionModel>(),
       std::make_shared<ListEmptySelectionModel>()),
     RecycledTableViewItemBuilder(TaskKeysTableViewItemBuilder(
-      region_query_model, destinations, markets)), {});
+      region_query_model, destinations, markets, additional_tags)), {});
   auto widths = make_header_widths();
   for(auto i = 0; i < std::ssize(widths); ++i) {
     table_view->get_header().get_widths()->set(i + 1, widths[i]);
