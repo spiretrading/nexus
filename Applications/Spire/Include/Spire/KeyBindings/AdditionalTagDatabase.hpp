@@ -16,18 +16,18 @@ namespace Spire {
     public:
 
       /**
-       * Returns the schema associated with a region and tag key or
-       * <i>nullptr</i> iff no schema exists.
-       */
-      const std::shared_ptr<AdditionalTagSchema>&
-        find(const Nexus::Region& region, int key) const;
-
-      /**
        * Returns the schema associated with a destination or <i>nullptr</i> iff
        * no schema exists.
        */
       const std::shared_ptr<AdditionalTagSchema>&
         find(const Nexus::Destination& destination, int key) const;
+
+      /**
+       * Returns the schema associated with a region and tag key or
+       * <i>nullptr</i> iff no schema exists.
+       */
+      const std::shared_ptr<AdditionalTagSchema>&
+        find(const Nexus::Region& region, int key) const;
   };
 
   /**

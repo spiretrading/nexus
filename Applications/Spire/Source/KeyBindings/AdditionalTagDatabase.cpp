@@ -8,12 +8,12 @@ namespace {
 }
 
 const std::shared_ptr<AdditionalTagSchema>&
-    AdditionalTagDatabase::find(const Region& region, int key) const {
+    AdditionalTagDatabase::find(const Destination& destination, int key) const {
   return NONE;
 }
 
 const std::shared_ptr<AdditionalTagSchema>&
-    AdditionalTagDatabase::find(const Destination& destination, int key) const {
+    AdditionalTagDatabase::find(const Region& region, int key) const {
   return NONE;
 }
 

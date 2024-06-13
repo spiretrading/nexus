@@ -461,10 +461,10 @@ namespace {
             return {new AnyInputBox(
               *new RegionBox(m_region_query_model, current)), current};
           } else if(column_id == OrderTaskColumns::DESTINATION) {
-            auto region_model = to_value_model<Region>(
+            auto region = to_value_model<Region>(
               table, row, static_cast<int>(OrderTaskColumns::REGION));
             auto query_model = std::make_shared<DestinationQueryModel>(
-              std::move(region_model), m_destinations, m_markets);
+              std::move(region), m_destinations, m_markets);
             auto proxy = make_proxy.operator ()<Destination>();
             auto current =
               std::make_shared<DestinationValueModel>(proxy, query_model);
@@ -484,8 +484,13 @@ namespace {
             auto current = make_proxy.operator ()<TimeInForce>();
             return {new AnyInputBox(*make_time_in_force_box(current)), current};
           } else if(column_id == OrderTaskColumns::TAGS) {
+            auto destination = to_value_model<Destination>(
+              table, row, static_cast<int>(OrderTaskColumns::DESTINATION));
+            auto region = to_value_model<Region>(
+              table, row, static_cast<int>(OrderTaskColumns::REGION));
             auto current = make_proxy.operator ()<std::vector<AdditionalTag>>();
-            return {new AnyInputBox(*new AdditionalTagsBox(current)), current};
+            return {new AnyInputBox(*new AdditionalTagsBox(
+              {}, destination, region, current)), current};
           } else {
             auto proxy = make_proxy.operator ()<QKeySequence>();
             auto current =
