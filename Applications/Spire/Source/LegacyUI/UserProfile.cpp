@@ -144,6 +144,10 @@ const SavedDashboards& UserProfile::GetSavedDashboards() const {
   return m_savedDashboards;
 }
 
+const AdditionalTagDatabase& UserProfile::GetAdditionalTagDatabase() const {
+  return m_additionalTagDatabase;
+}
+
 const std::shared_ptr<KeyBindingsModel>& UserProfile::GetKeyBindings() const {
   return m_keyBindings;
 }
