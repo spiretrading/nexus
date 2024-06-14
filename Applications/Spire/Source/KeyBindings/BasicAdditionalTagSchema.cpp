@@ -1,4 +1,5 @@
 #include "Spire/KeyBindings/BasicAdditionalTagSchema.hpp"
+#include "Spire/Canvas/Operations/DefaultCanvasNodeFromCanvasTypeVisitor.hpp"
 #include "Spire/Canvas/Operations/CanvasTypeCompatibilityException.hpp"
 #include "Spire/Canvas/Types/CanvasType.hpp"
 #include "Spire/Canvas/ValueNodes/DateTimeNode.hpp"
@@ -7,7 +8,6 @@
 #include "Spire/Canvas/ValueNodes/IntegerNode.hpp"
 #include "Spire/Canvas/ValueNodes/MoneyNode.hpp"
 #include "Spire/Canvas/ValueNodes/TextNode.hpp"
-#include "Spire/Canvas/Operations/DefaultCanvasNodeFromCanvasTypeVisitor.hpp"
 
 using namespace boost;
 using namespace boost::gregorian;
