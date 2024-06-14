@@ -20,12 +20,14 @@ namespace Spire {
        * @param countries The country database to use.
        * @param markets The market database to use.
        * @param destinations The destination database to use.
+       * @param additional_tags Defines all available additional tags.
        * @param parent The parent widget.
        */
       TaskKeysPage(std::shared_ptr<KeyBindingsModel> key_bindings,
         std::shared_ptr<ComboBox::QueryModel> securities,
         Nexus::CountryDatabase countries, Nexus::MarketDatabase markets,
-        Nexus::DestinationDatabase destinations, QWidget* parent = nullptr);
+        Nexus::DestinationDatabase destinations,
+        AdditionalTagDatabase additional_tags, QWidget* parent = nullptr);
 
       /** Returns the key bindings being displayed. */
       const std::shared_ptr<KeyBindingsModel>& get_key_bindings() const;

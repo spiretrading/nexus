@@ -20,6 +20,7 @@ namespace Spire {
        * @param countries The country database to use.
        * @param markets The market database to use.
        * @param destinations The destination database to use.
+       * @param additional_tags Defines all available additional tags.
        * @param parent The parent widget.
        */
       KeyBindingsWindow(std::shared_ptr<KeyBindingsModel> key_bindings,
@@ -27,6 +28,7 @@ namespace Spire {
         const Nexus::CountryDatabase& countries,
         const Nexus::MarketDatabase& markets,
         const Nexus::DestinationDatabase& destinations,
+        const AdditionalTagDatabase& additional_tags,
         QWidget* parent = nullptr);
 
     private:

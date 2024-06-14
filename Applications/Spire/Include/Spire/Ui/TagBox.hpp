@@ -12,7 +12,7 @@ namespace Spire {
   class TagBox : public QWidget {
     public:
 
-       /** Signals that the current value in the TextBox is being submitted. */
+      /** Signals that the current value in the TextBox is being submitted. */
       using SubmitSignal = TextBox::SubmitSignal;
 
       /**

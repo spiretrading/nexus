@@ -25,6 +25,7 @@ UserProfile::UserProfile(const std::string& username, bool isAdministrator,
     const MarketDatabase& marketDatabase,
     const DestinationDatabase& destinationDatabase,
     const EntitlementDatabase& entitlementDatabase,
+    const AdditionalTagDatabase& additionalTagDatabase,
     ServiceClientsBox serviceClients, TelemetryClientBox telemetryClient)
     : m_username(username),
       m_isAdministrator(isAdministrator),
@@ -43,7 +44,8 @@ UserProfile::UserProfile(const std::string& username, bool isAdministrator,
         std::make_shared<ArrayListModel<std::shared_ptr<WindowSettings>>>()),
       m_security_query_model(std::make_shared<ServiceSecurityQueryModel>(
         m_marketDatabase, m_serviceClients.GetMarketDataClient())),
-      m_catalogSettings(m_profilePath / "Catalog", isAdministrator) {
+      m_catalogSettings(m_profilePath / "Catalog", isAdministrator),
+      m_additionalTagDatabase(additionalTagDatabase) {
   m_keyBindings = load_key_bindings_profile(
     m_profilePath, m_marketDatabase, m_destinationDatabase);
   for(auto& exchangeRate : exchangeRates) {
@@ -140,6 +142,10 @@ SavedDashboards& UserProfile::GetSavedDashboards() {
 
 const SavedDashboards& UserProfile::GetSavedDashboards() const {
   return m_savedDashboards;
+}
+
+const AdditionalTagDatabase& UserProfile::GetAdditionalTagDatabase() const {
+  return m_additionalTagDatabase;
 }
 
 const std::shared_ptr<KeyBindingsModel>& UserProfile::GetKeyBindings() const {

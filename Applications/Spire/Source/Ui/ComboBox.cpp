@@ -4,6 +4,7 @@
 #include <QKeyEvent>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
+#include "Spire/Spire/TransformValueModel.hpp"
 #include "Spire/Ui/AnyInputBox.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DropDownBox.hpp"
@@ -43,8 +44,9 @@ ComboBox::ComboBox(std::shared_ptr<QueryModel> query_model,
 ComboBox::ComboBox(std::shared_ptr<QueryModel> query_model,
   std::shared_ptr<CurrentModel> current, ListViewItemBuilder<> item_builder,
   QWidget* parent)
-  : ComboBox(std::move(query_model), std::move(current),
-      new AnyInputBox(*(new TextBox(to_text(current->get())))),
+  : ComboBox(std::move(query_model), current,
+      new AnyInputBox(*(new TextBox(make_transform_value_model(current,
+        [] (const auto& current) { return to_text(current); })))),
       std::move(item_builder), parent) {}
 
 ComboBox::ComboBox(std::shared_ptr<QueryModel> query_model,

@@ -119,11 +119,10 @@ struct RegionBox::RegionQueryModel : ComboBox::QueryModel {
 
 RegionBox::RegionBox(std::shared_ptr<ComboBox::QueryModel> query_model,
   QWidget* parent)
-  : RegionBox(query_model, std::make_shared<LocalValueModel<Region>>(),
-      parent) {}
+  : RegionBox(query_model, std::make_shared<LocalRegionModel>(), parent) {}
 
 RegionBox::RegionBox(std::shared_ptr<ComboBox::QueryModel> query_model,
-    std::shared_ptr<CurrentModel> current, QWidget* parent)
+    std::shared_ptr<RegionModel> current, QWidget* parent)
     : QWidget(parent),
       m_query_model(
         std::make_shared<RegionQueryModel>(std::move(query_model))),
@@ -155,7 +154,7 @@ const std::shared_ptr<ComboBox::QueryModel>&
   return m_query_model->m_source;
 }
 
-const std::shared_ptr<RegionBox::CurrentModel>& RegionBox::get_current() const {
+const std::shared_ptr<RegionModel>& RegionBox::get_current() const {
   return m_current;
 }
 
