@@ -6,6 +6,8 @@
 #include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/MaxFloorNode.hpp"
+#include "Spire/Canvas/Types/MoneyType.hpp"
+#include "Spire/KeyBindings/BasicAdditionalTagSchema.hpp"
 #include "Spire/KeyBindings/HotkeyOverride.hpp"
 #include "Spire/KeyBindings/KeyBindingsProfile.hpp"
 #include "Spire/KeyBindings/KeyBindingsWindow.hpp"
@@ -56,6 +58,8 @@ const AdditionalTagDatabase& get_default_additional_tag_database() {
   static auto database = [] {
     auto database = AdditionalTagDatabase();
     database.add(Region::Global(), std::make_shared<MaxFloorSchema>());
+    database.add(Region::Global(), std::make_shared<BasicAdditionalTagSchema>(
+      "PegDifference", 211, MoneyType::GetInstance()));
     return database;
   }();
   return database;

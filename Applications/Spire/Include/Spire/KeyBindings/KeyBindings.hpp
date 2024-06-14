@@ -7,6 +7,7 @@ namespace Spire {
   class AdditionalTagSchema;
   class AdditionalTagsBox;
   class AddRegionForm;
+  class BasicAdditionalTagSchema;
   class CancelKeyBindingsForm;
   class CancelKeyBindingsModel;
   class HotkeyOverride;
