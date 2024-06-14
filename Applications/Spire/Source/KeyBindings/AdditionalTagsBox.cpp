@@ -8,10 +8,11 @@ using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::Styles;
 
-AdditionalTagsBox::AdditionalTagsBox(AdditionalTagDatabase additional_tags,
+AdditionalTagsBox::AdditionalTagsBox(
+    std::shared_ptr<AdditionalTagsModel> current,
+    AdditionalTagDatabase additional_tags,
     std::shared_ptr<DestinationModel> destination,
-    std::shared_ptr<RegionModel> region,
-    std::shared_ptr<AdditionalTagsModel> current, QWidget* parent)
+    std::shared_ptr<RegionModel> region, QWidget* parent)
     : QWidget(parent),
       m_additional_tags(std::move(additional_tags)),
       m_destination(std::move(destination)),
@@ -67,7 +68,9 @@ connection AdditionalTagsBox::connect_submit_signal(
 }
 
 void AdditionalTagsBox::on_click() {
-  auto window = new AdditionalTagsWindow(this);
+  auto window = new AdditionalTagsWindow(
+    m_current, m_additional_tags, m_destination, m_region, this);
+  window->setAttribute(Qt::WA_DeleteOnClose);
   window->setWindowModality(Qt::WindowModal);
   window->show();
 }

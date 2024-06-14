@@ -450,8 +450,8 @@ namespace {
   struct DestinationState : ItemState {
     std::shared_ptr<ProxyValueModel<Region>> m_region;
 
-    DestinationState(std::shared_ptr<ProxyValueModel<Region>> region,
-      std::shared_ptr<void> proxy)
+    DestinationState(std::shared_ptr<void> proxy,
+      std::shared_ptr<ProxyValueModel<Region>> region)
       : ItemState(std::move(proxy)),
         m_region(std::move(region)) {}
   };
@@ -460,10 +460,9 @@ namespace {
     std::shared_ptr<ProxyValueModel<Destination>> m_destination;
     std::shared_ptr<ProxyValueModel<Region>> m_region;
 
-    AdditionalTagsState(
+    AdditionalTagsState(std::shared_ptr<void> proxy,
       std::shared_ptr<ProxyValueModel<Destination>> destination,
-      std::shared_ptr<ProxyValueModel<Region>> region,
-      std::shared_ptr<void> proxy)
+      std::shared_ptr<ProxyValueModel<Region>> region)
       : ItemState(std::move(proxy)),
         m_destination(std::move(destination)),
         m_region(std::move(region)) {}
@@ -503,7 +502,7 @@ namespace {
               std::make_shared<DestinationValueModel>(proxy, query_model);
             return {new AnyInputBox(
               *new DestinationBox(std::move(query_model), current)),
-              std::make_shared<DestinationState>(region, proxy)};
+              std::make_shared<DestinationState>(proxy, region)};
           } else if(column_id == OrderTaskColumns::ORDER_TYPE) {
             auto current = make_proxy.operator ()<OrderType>();
             return {new AnyInputBox(*make_order_type_box(current)),
@@ -529,9 +528,9 @@ namespace {
               table, row, static_cast<int>(OrderTaskColumns::REGION)));
             auto current = make_proxy.operator ()<std::vector<AdditionalTag>>();
             return {new AnyInputBox(*new AdditionalTagsBox(
-              m_additional_tags, destination, region, current)),
+              current, m_additional_tags, destination, region)),
               std::make_shared<AdditionalTagsState>(
-                destination, region, current)};
+                current, destination, region)};
           } else {
             auto proxy = make_proxy.operator ()<QKeySequence>();
             auto current =

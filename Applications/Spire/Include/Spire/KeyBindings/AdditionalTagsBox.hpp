@@ -29,16 +29,16 @@ namespace Spire {
 
       /**
        * Constructs an AdditionalTagsBox.
+       * @param current The list of additional tags to represent.
        * @param additional_tags The definitions of all additional tags.
        * @param destination The destination to constrain the available tags to.
        * @param region The region to constrain the available tags to.
-       * @param current The list of additional tags to represent.
        * @param parent The parent widget.
        */
-      AdditionalTagsBox(AdditionalTagDatabase additional_tags,
+      AdditionalTagsBox(std::shared_ptr<AdditionalTagsModel> current,
+        AdditionalTagDatabase additional_tags,
         std::shared_ptr<DestinationModel> destination,
         std::shared_ptr<RegionModel> region,
-        std::shared_ptr<AdditionalTagsModel> current,
         QWidget* parent = nullptr);
 
       /** Returns the list of additional tags represented. */
