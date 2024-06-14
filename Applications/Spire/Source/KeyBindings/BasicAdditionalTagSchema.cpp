@@ -1,4 +1,5 @@
 #include "Spire/KeyBindings/BasicAdditionalTagSchema.hpp"
+#include "Spire/Canvas/Operations/CanvasTypeCompatibilityException.hpp"
 #include "Spire/Canvas/Types/CanvasType.hpp"
 #include "Spire/Canvas/ValueNodes/DateTimeNode.hpp"
 #include "Spire/Canvas/ValueNodes/DecimalNode.hpp"
@@ -72,7 +73,7 @@ std::unique_ptr<CanvasNode> BasicAdditionalTagSchema::make_canvas_node(
     auto result = apply_visitor(visitor(), *value);
     if(result->GetType().GetCompatibility(*m_type) !=
         CanvasType::Compatibility::EQUAL) {
-      return nullptr;
+      throw CanvasTypeCompatibilityException();
     }
     return result;
   } else if(m_default_value) {

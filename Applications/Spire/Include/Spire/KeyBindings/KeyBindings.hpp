@@ -16,6 +16,7 @@ namespace Spire {
   class InteractionsPage;
   class KeyBindingsModel;
   class KeyBindingsWindow;
+  class MaxFloorSchema;
   class OrderFieldInfoTip;
   struct OrderTaskArguments;
   class TaskKeysPage;

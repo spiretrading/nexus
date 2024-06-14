@@ -5,12 +5,12 @@
 #include "Nexus/Definitions/DefaultCountryDatabase.hpp"
 #include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
-#include "Spire/Canvas/OrderExecutionNodes/MaxFloorNode.hpp"
 #include "Spire/Canvas/Types/MoneyType.hpp"
 #include "Spire/KeyBindings/BasicAdditionalTagSchema.hpp"
 #include "Spire/KeyBindings/HotkeyOverride.hpp"
 #include "Spire/KeyBindings/KeyBindingsProfile.hpp"
 #include "Spire/KeyBindings/KeyBindingsWindow.hpp"
+#include "Spire/KeyBindings/MaxFloorSchema.hpp"
 #include "Spire/Spire/Resources.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 
@@ -42,17 +42,6 @@ std::shared_ptr<ComboBox::QueryModel> populate_security_query_model() {
   }
   return model;
 }
-
-class MaxFloorSchema : public AdditionalTagSchema {
-  public:
-    MaxFloorSchema()
-      : AdditionalTagSchema("MaxFloor", 111) {}
-
-    std::unique_ptr<CanvasNode> make_canvas_node(
-        const optional<Nexus::Tag::Type>& value) const {
-      return LinkedNode::SetReferent(MaxFloorNode(), "security");
-    }
-};
 
 const AdditionalTagDatabase& get_default_additional_tag_database() {
   static auto database = [] {

@@ -1,0 +1,20 @@
+#ifndef SPIRE_MAX_FLOOR_SCHEMA_HPP
+#define SPIRE_MAX_FLOOR_SCHEMA_HPP
+#include "Spire/KeyBindings/AdditionalTagSchema.hpp"
+#include "Spire/KeyBindings/KeyBindings.hpp"
+
+namespace Spire {
+
+  /** Provides a schema for the MaxFloor tag. */
+  class MaxFloorSchema : public AdditionalTagSchema {
+    public:
+
+      /** Constructs a MaxFloorSchema. */
+      MaxFloorSchema();
+
+      std::unique_ptr<CanvasNode> make_canvas_node(
+        const boost::optional<Nexus::Tag::Type>& value) const override;
+  };
+}
+
+#endif
