@@ -47,7 +47,7 @@ namespace {
         m_userProfile("", false, false, GetDefaultCountryDatabase(),
           GetDefaultTimeZoneDatabase(), GetDefaultCurrencyDatabase(), {},
           GetDefaultMarketDatabase(), GetDefaultDestinationDatabase(),
-          EntitlementDatabase(), get_additional_tag_database(),
+          EntitlementDatabase(), get_default_additional_tag_database(),
           m_serviceClients, m_telemetryClient) {}
   };
 

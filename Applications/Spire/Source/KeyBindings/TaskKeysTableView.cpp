@@ -439,12 +439,42 @@ namespace {
       bool m_is_destroyed;
   };
 
+  struct ItemState {
+    virtual ~ItemState() = default;
+    std::shared_ptr<void> m_proxy;
+
+    ItemState(std::shared_ptr<void> proxy)
+      : m_proxy(std::move(proxy)) {}
+  };
+
+  struct DestinationState : ItemState {
+    std::shared_ptr<ProxyValueModel<Region>> m_region;
+
+    DestinationState(std::shared_ptr<ProxyValueModel<Region>> region,
+      std::shared_ptr<void> proxy)
+      : ItemState(std::move(proxy)),
+        m_region(std::move(region)) {}
+  };
+
+  struct AdditionalTagsState : ItemState {
+    std::shared_ptr<ProxyValueModel<Destination>> m_destination;
+    std::shared_ptr<ProxyValueModel<Region>> m_region;
+
+    AdditionalTagsState(
+      std::shared_ptr<ProxyValueModel<Destination>> destination,
+      std::shared_ptr<ProxyValueModel<Region>> region,
+      std::shared_ptr<void> proxy)
+      : ItemState(std::move(proxy)),
+        m_destination(std::move(destination)),
+        m_region(std::move(region)) {}
+  };
+
   struct TaskKeysTableViewItemBuilder {
     std::shared_ptr<ComboBox::QueryModel> m_region_query_model;
     DestinationDatabase m_destinations;
     MarketDatabase m_markets;
     AdditionalTagDatabase m_additional_tags;
-    std::map<QWidget*, std::shared_ptr<void>> m_proxies;
+    std::map<QWidget*, std::shared_ptr<ItemState>> m_item_states;
 
     EditableBox* mount(
         const std::shared_ptr<TableModel>& table, int row, int column) {
@@ -453,50 +483,61 @@ namespace {
       };
       auto column_id = static_cast<OrderTaskColumns>(column);
       auto [input_box, proxy] =
-        [&] () -> std::tuple<AnyInputBox*, std::shared_ptr<void>> {
+        [&] () -> std::tuple<AnyInputBox*, std::shared_ptr<ItemState>> {
           if(column_id == OrderTaskColumns::NAME) {
             auto current = make_proxy.operator ()<QString>();
-            return {new AnyInputBox(*new TextBox(current)), current};
+            return {new AnyInputBox(
+              *new TextBox(current)), std::make_shared<ItemState>(current)};
           } else if(column_id == OrderTaskColumns::REGION) {
             auto current = make_proxy.operator ()<Region>();
             return {new AnyInputBox(
-              *new RegionBox(m_region_query_model, current)), current};
+                *new RegionBox(m_region_query_model, current)),
+              std::make_shared<ItemState>(current)};
           } else if(column_id == OrderTaskColumns::DESTINATION) {
-            auto region = to_value_model<Region>(
-              table, row, static_cast<int>(OrderTaskColumns::REGION));
+            auto region = make_proxy_value_model(to_value_model<Region>(
+              table, row, static_cast<int>(OrderTaskColumns::REGION)));
             auto query_model = std::make_shared<DestinationQueryModel>(
-              std::move(region), m_destinations, m_markets);
+              region, m_destinations, m_markets);
             auto proxy = make_proxy.operator ()<Destination>();
             auto current =
               std::make_shared<DestinationValueModel>(proxy, query_model);
-            return {new AnyInputBox(*new DestinationBox(
-              std::move(query_model), std::move(current))), proxy};
+            return {new AnyInputBox(
+              *new DestinationBox(std::move(query_model), current)),
+              std::make_shared<DestinationState>(region, proxy)};
           } else if(column_id == OrderTaskColumns::ORDER_TYPE) {
             auto current = make_proxy.operator ()<OrderType>();
-            return {new AnyInputBox(*make_order_type_box(current)), current};
+            return {new AnyInputBox(*make_order_type_box(current)),
+              std::make_shared<ItemState>(current)};
           } else if(column_id == OrderTaskColumns::SIDE) {
             auto current = make_proxy.operator ()<Side>();
-            return {new AnyInputBox(*make_side_box(current)), current};
+            return {new AnyInputBox(*make_side_box(current)),
+              std::make_shared<ItemState>(current)};
           } else if(column_id == OrderTaskColumns::QUANTITY) {
             auto proxy = make_proxy.operator ()<optional<Quantity>>();
             auto current = make_scalar_value_model_decorator(proxy);
-            return {new AnyInputBox(*new QuantityBox(current)), proxy};
+            return {new AnyInputBox(*new QuantityBox(current)),
+              std::make_shared<ItemState>(proxy)};
           } else if(column_id == OrderTaskColumns::TIME_IN_FORCE) {
             auto current = make_proxy.operator ()<TimeInForce>();
-            return {new AnyInputBox(*make_time_in_force_box(current)), current};
+            return {new AnyInputBox(*make_time_in_force_box(current)),
+              std::make_shared<ItemState>(current)};
           } else if(column_id == OrderTaskColumns::TAGS) {
-            auto destination = to_value_model<Destination>(
-              table, row, static_cast<int>(OrderTaskColumns::DESTINATION));
-            auto region = to_value_model<Region>(
-              table, row, static_cast<int>(OrderTaskColumns::REGION));
+            auto destination = make_proxy_value_model(
+              to_value_model<Destination>(
+                table, row, static_cast<int>(OrderTaskColumns::DESTINATION)));
+            auto region = make_proxy_value_model(to_value_model<Region>(
+              table, row, static_cast<int>(OrderTaskColumns::REGION)));
             auto current = make_proxy.operator ()<std::vector<AdditionalTag>>();
             return {new AnyInputBox(*new AdditionalTagsBox(
-              m_additional_tags, destination, region, current)), current};
+              m_additional_tags, destination, region, current)),
+              std::make_shared<AdditionalTagsState>(
+                destination, region, current)};
           } else {
             auto proxy = make_proxy.operator ()<QKeySequence>();
             auto current =
               make_validated_value_model(&key_input_box_validator, proxy);
-            return {new AnyInputBox(*new KeyInputBox(current)), proxy};
+            return {new AnyInputBox(*new KeyInputBox(current)),
+              std::make_shared<ItemState>(proxy)};
           }
         }();
       auto editable_box = [&] () -> EditableBox* {
@@ -510,15 +551,15 @@ namespace {
         }
         return new EditableBox(*input_box);
       }();
-      m_proxies[editable_box] = proxy;
+      m_item_states[editable_box] = std::move(proxy);
       return editable_box;
     }
 
     void reset(QWidget& widget,
         const std::shared_ptr<TableModel>& table, int row, int column) {
       auto update_proxy = [&] <typename T> () {
-        auto proxy = m_proxies[&widget];
-        std::static_pointer_cast<ProxyValueModel<T>>(proxy)->set_source(
+        auto& state = *m_item_states[&widget];
+        std::static_pointer_cast<ProxyValueModel<T>>(state.m_proxy)->set_source(
           to_value_model<T>(table, row, column));
       };
       auto column_id = static_cast<OrderTaskColumns>(column);
@@ -527,6 +568,9 @@ namespace {
       } else if(column_id == OrderTaskColumns::REGION) {
         update_proxy.operator ()<Region>();
       } else if(column_id == OrderTaskColumns::DESTINATION) {
+        auto& state = static_cast<DestinationState&>(*m_item_states[&widget]);
+        state.m_region->set_source(to_value_model<Region>(
+          table, row, static_cast<int>(OrderTaskColumns::REGION)));
         update_proxy.operator ()<Destination>();
       } else if(column_id == OrderTaskColumns::ORDER_TYPE) {
         update_proxy.operator ()<OrderType>();
@@ -537,6 +581,12 @@ namespace {
       } else if(column_id == OrderTaskColumns::TIME_IN_FORCE) {
         update_proxy.operator ()<TimeInForce>();
       } else if(column_id == OrderTaskColumns::TAGS) {
+        auto& state =
+          static_cast<AdditionalTagsState&>(*m_item_states[&widget]);
+        state.m_destination->set_source(to_value_model<Destination>(
+          table, row, static_cast<int>(OrderTaskColumns::DESTINATION)));
+        state.m_region->set_source(to_value_model<Region>(
+          table, row, static_cast<int>(OrderTaskColumns::REGION)));
         update_proxy.operator ()<std::vector<AdditionalTag>>();
       } else if(column_id == OrderTaskColumns::KEY) {
         update_proxy.operator ()<QKeySequence>();
