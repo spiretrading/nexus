@@ -1,4 +1,7 @@
 #include "Spire/KeyBindings/AdditionalTagDatabase.hpp"
+#include "Spire/Canvas/Types/MoneyType.hpp"
+#include "Spire/KeyBindings/BasicAdditionalTagSchema.hpp"
+#include "Spire/KeyBindings/MaxFloorSchema.hpp"
 
 using namespace Nexus;
 using namespace Spire;
@@ -35,6 +38,17 @@ const std::shared_ptr<AdditionalTagSchema>&
     return NONE;
   }
   return j->second;
+}
+
+const AdditionalTagDatabase& Spire::get_default_additional_tag_database() {
+  static auto database = [] {
+    auto database = AdditionalTagDatabase();
+    database.add(Region::Global(), std::make_shared<MaxFloorSchema>());
+    database.add(Region::Global(), std::make_shared<BasicAdditionalTagSchema>(
+      "PegDifference", 211, MoneyType::GetInstance()));
+    return database;
+  }();
+  return database;
 }
 
 const std::shared_ptr<AdditionalTagSchema>& Spire::find(

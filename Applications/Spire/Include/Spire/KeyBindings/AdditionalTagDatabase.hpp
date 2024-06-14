@@ -46,6 +46,9 @@ namespace Spire {
         int, std::shared_ptr<AdditionalTagSchema>>> m_schemas;
   };
 
+  /** Returns a database of default additional tags. */
+  const AdditionalTagDatabase& get_default_additional_tag_database();
+
   /**
    * Returns the schema associated with a destination, and if no such schema is
    * found, then searches for the schema associated with a region. Returns
