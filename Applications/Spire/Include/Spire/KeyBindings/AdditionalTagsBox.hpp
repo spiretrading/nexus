@@ -6,6 +6,7 @@
 #include "Spire/KeyBindings/AdditionalTagDatabase.hpp"
 #include "Spire/KeyBindings/KeyBindings.hpp"
 #include "Spire/Spire/ValueModel.hpp"
+#include "Spire/Ui/ClickObserver.hpp"
 #include "Spire/Ui/DestinationBox.hpp"
 #include "Spire/Ui/RegionBox.hpp"
 #include "Spire/Ui/TextBox.hpp"
@@ -68,6 +69,9 @@ namespace Spire {
       std::shared_ptr<TextModel> m_tags_text;
       TextBox* m_label;
       bool m_is_read_only;
+      ClickObserver m_click_observer;
+
+      void on_click();
   };
 }
 

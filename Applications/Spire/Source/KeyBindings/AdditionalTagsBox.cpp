@@ -1,4 +1,5 @@
 #include "Spire/KeyBindings/AdditionalTagsBox.hpp"
+#include "Spire/KeyBindings/AdditionalTagsWindow.hpp"
 #include "Spire/Spire/TransformValueModel.hpp"
 #include "Spire/Ui/Layouts.hpp"
 
@@ -16,7 +17,8 @@ AdditionalTagsBox::AdditionalTagsBox(AdditionalTagDatabase additional_tags,
       m_destination(std::move(destination)),
       m_region(std::move(region)),
       m_current(std::move(current)),
-      m_is_read_only(false) {
+      m_is_read_only(false),
+      m_click_observer(*this) {
   m_tags_text = make_transform_value_model(m_current,
     [=] (const auto& current) {
       auto label = QString();
@@ -35,6 +37,8 @@ AdditionalTagsBox::AdditionalTagsBox(AdditionalTagDatabase additional_tags,
   m_label = make_label(m_tags_text);
   enclose(*this, *m_label);
   proxy_style(*this, *m_label);
+  m_click_observer.connect_click_signal(
+    std::bind_front(&AdditionalTagsBox::on_click, this));
 }
 
 const std::shared_ptr<AdditionalTagsModel>&
@@ -60,4 +64,10 @@ void AdditionalTagsBox::set_read_only(bool is_read_only) {
 connection AdditionalTagsBox::connect_submit_signal(
     const SubmitSignal::slot_type& slot) const {
   return {};
+}
+
+void AdditionalTagsBox::on_click() {
+  auto window = new AdditionalTagsWindow(this);
+  window->setWindowModality(Qt::WindowModal);
+  window->show();
 }
