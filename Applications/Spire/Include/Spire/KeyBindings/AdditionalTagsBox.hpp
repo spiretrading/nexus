@@ -47,13 +47,12 @@ namespace Spire {
       /** Sets the placeholder value. */
       void set_placeholder(const QString& placeholder);
 
-      /** Returns <code>true</code> iff this TagBox is read-only. */
+      /** Returns <code>true</code> iff this box is read-only. */
       bool is_read_only() const;
 
       /**
        * Sets the read-only state.
-       * @param is_read_only <code>true</code> iff the TagBox should be
-       *        read-only.
+       * @param is_read_only <code>true</code> iff the box should be read-only.
        */
       void set_read_only(bool is_read_only);
 

@@ -4,6 +4,7 @@
 namespace Spire {
   struct AdditionalTag;
   class AdditionalTagDatabase;
+  class AdditionalTagKeyBox;
   class AdditionalTagSchema;
   class AdditionalTagsBox;
   class AdditionalTagsWindow;

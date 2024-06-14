@@ -1,6 +1,7 @@
 #ifndef SPIRE_ADDITIONAL_TAGS_WINDOW_HPP
 #define SPIRE_ADDITIONAL_TAGS_WINDOW_HPP
 #include "Spire/KeyBindings/AdditionalTagsBox.hpp"
+#include "Spire/KeyBindings/AdditionalTagDatabase.hpp"
 #include "Spire/KeyBindings/KeyBindings.hpp"
 #include "Spire/Spire/TableModel.hpp"
 #include "Spire/Ui/TextBox.hpp"
