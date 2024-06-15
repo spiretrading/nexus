@@ -1,6 +1,10 @@
 #include "Spire/KeyBindings/AdditionalTagsWindow.hpp"
+#include "Spire/KeyBindings/AdditionalTagKeyBox.hpp"
+#include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ArrayTableModel.hpp"
+#include "Spire/Spire/ColumnViewListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/ListValueModel.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/EditableBox.hpp"
 #include "Spire/Ui/EditableTableView.hpp"
@@ -12,34 +16,31 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  struct ItemBuilder {
-    EditableBox* mount(
-        const std::shared_ptr<TableModel>& table, int row, int column) {
-      return new EditableBox(*new AnyInputBox(*new TextBox()));
-    }
-
-    void unmount(QWidget* widget) {
-      widget->deleteLater();
-    }
-  };
+  auto make_available_tags() {
+    auto tags = std::make_shared<ArrayListModel<int>>();
+    tags->push(111);
+    tags->push(211);
+    return tags;
+  }
 
   auto make_tags_table(const std::vector<AdditionalTag>& tags) {
     auto table = std::make_shared<ArrayTableModel>();
     for(auto& tag : tags) {
       auto row = std::vector<std::any>();
-      row.push_back(tag);
+      row.push_back(tag.m_key);
       row.push_back(tag);
       table->push(std::move(row));
     }
     return table;
   }
 
-  auto make_table_view(std::shared_ptr<TableModel> tags) {
+  auto make_table_view(
+      std::shared_ptr<TableModel> tags, TableViewItemBuilder view_builder) {
     static const auto DELETE_COLUMN = 0;
     static const auto NAME_COLUMN = 1;
     static const auto VALUE_COLUMN = 2;
     auto table_builder = EditableTableViewBuilder(std::move(tags));
-    table_builder.set_item_builder(ItemBuilder());
+    table_builder.set_item_builder(std::move(view_builder));
     table_builder.add_header_item(QObject::tr("Name"));
     table_builder.add_header_item(QObject::tr("Value"));
     auto table_view = table_builder.make();
@@ -114,17 +115,22 @@ AdditionalTagsWindow::AdditionalTagsWindow(
     std::shared_ptr<DestinationModel> destination,
     std::shared_ptr<RegionModel> region, QWidget* parent)
     : Window(parent),
-      m_current(std::move(current)) {
+      m_current(std::move(current)),
+      m_additional_tags(std::move(additional_tags)),
+      m_destination(std::move(destination)),
+      m_region(std::move(region)) {
   setWindowFlags(windowFlags() & ~Qt::WindowMinimizeButtonHint);
   setWindowFlags(windowFlags() & ~Qt::WindowMaximizeButtonHint);
   setWindowTitle(tr("Additional Tags"));
   set_svg_icon(":/Icons/key-bindings.svg");
   setWindowIcon(QIcon(":/Icons/taskbar_icons/key-bindings.png"));
   setFixedSize(scale(272, 384));
+  m_available_tags = make_available_tags();
   auto body = new QWidget();
   auto layout = make_vbox_layout(body);
   m_tags = make_tags_table(m_current->get());
-  auto table_view = make_table_view(m_tags);
+  auto table_view = make_table_view(
+    m_tags, std::bind_front(&AdditionalTagsWindow::make_item, this));
   layout->addWidget(table_view);
   m_error_message = std::make_shared<LocalTextModel>();
   auto error_box = make_error_box(m_error_message);
@@ -136,10 +142,35 @@ AdditionalTagsWindow::AdditionalTagsWindow(
   set_body(body);
 }
 
+EditableBox* AdditionalTagsWindow::make_key_item(
+    const std::shared_ptr<TableModel>& table, int row, int column) const {
+  return new EditableBox(*new AnyInputBox(*new AdditionalTagKeyBox(
+    make_list_value_model(
+      std::make_shared<ColumnViewListModel<int>>(table, column), row),
+    m_available_tags, m_additional_tags, m_destination, m_region)));
+}
+
+EditableBox* AdditionalTagsWindow::make_value_item(
+    const std::shared_ptr<TableModel>& table, int row, int column) const {
+  return new EditableBox(*new AnyInputBox(*new TextBox()));
+}
+
+EditableBox* AdditionalTagsWindow::make_item(
+    const std::shared_ptr<TableModel>& table, int row, int column) const {
+  const auto KEY_COLUMN = 0;
+  const auto VALUE_COLUMN = 1;
+  if(column == KEY_COLUMN) {
+    return make_key_item(table, row, column);
+  } else if(column == VALUE_COLUMN) {
+    return make_value_item(table, row, column);
+  }
+  throw std::runtime_error("Invalid column.");
+}
+
 void AdditionalTagsWindow::commit() {
   auto updated_tags = std::vector<AdditionalTag>();
   for(auto i = 0; i != m_tags->get_row_size(); ++i) {
-    auto tag = AdditionalTag(m_tags->get<AdditionalTag>(i, 0).m_key,
+    auto tag = AdditionalTag(m_tags->get<int>(i, 0),
       m_tags->get<AdditionalTag>(i, 1).m_value);
     updated_tags.push_back(std::move(tag));
   }

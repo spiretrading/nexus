@@ -28,9 +28,19 @@ namespace Spire {
 
     private:
       std::shared_ptr<AdditionalTagsModel> m_current;
+      AdditionalTagDatabase m_additional_tags;
+      std::shared_ptr<DestinationModel> m_destination;
+      std::shared_ptr<RegionModel> m_region;
       std::shared_ptr<TableModel> m_tags;
+      std::shared_ptr<ListModel<int>> m_available_tags;
       std::shared_ptr<TextModel> m_error_message;
 
+      EditableBox* make_key_item(
+        const std::shared_ptr<TableModel>& table, int row, int column) const;
+      EditableBox* make_value_item(
+        const std::shared_ptr<TableModel>& table, int row, int column) const;
+      EditableBox* make_item(
+        const std::shared_ptr<TableModel>& table, int row, int column) const;
       void commit();
       void on_cancel();
       void on_done();

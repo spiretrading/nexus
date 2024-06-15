@@ -4,7 +4,9 @@
 #include "Spire/KeyBindings/AdditionalTagsBox.hpp"
 #include "Spire/KeyBindings/AdditionalTagDatabase.hpp"
 #include "Spire/KeyBindings/KeyBindings.hpp"
+#include "Spire/Spire/ListModel.hpp"
 #include "Spire/Spire/ValueModel.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 
@@ -27,22 +29,20 @@ namespace Spire {
       /**
        * Constructs an AdditionalTagKeyBox.
        * @param current The current tag key to represent.
+       * @param available_tags The list of tag keys to choose from.
        * @param additional_tags The definitions of all additional tags.
        * @param destination The destination to constrain the available tags to.
        * @param region The region to constrain the available tags to.
        * @param parent The parent widget.
        */
-      AdditionalTagsBox(std::shared_ptr<AdditionalTagKeyModel> current,
+      AdditionalTagKeyBox(std::shared_ptr<AdditionalTagKeyModel> current,
+        std::shared_ptr<ListModel<int>> available_tags,
         AdditionalTagDatabase additional_tags,
         std::shared_ptr<DestinationModel> destination,
-        std::shared_ptr<RegionModel> region,
-        QWidget* parent = nullptr);
+        std::shared_ptr<RegionModel> region, QWidget* parent = nullptr);
 
       /** Returns the current tag key represented. */
       const std::shared_ptr<AdditionalTagKeyModel>& get_current() const;
-
-      /** Sets the placeholder value. */
-      void set_placeholder(const QString& placeholder);
 
       /** Returns <code>true</code> iff this box is read-only. */
       bool is_read_only() const;
@@ -56,6 +56,18 @@ namespace Spire {
       /** Connects a slot to the SubmitSignal. */
       boost::signals2::connection connect_submit_signal(
         const SubmitSignal::slot_type& slot) const;
+
+    private:
+      std::shared_ptr<AdditionalTagKeyModel> m_current;
+      std::shared_ptr<ListModel<int>> m_available_tags;
+      AdditionalTagDatabase m_additional_tags;
+      std::shared_ptr<DestinationModel> m_destination;
+      std::shared_ptr<RegionModel> m_region;
+      DropDownBox* m_drop_down_box;
+
+      QWidget* make_key_item(
+        const std::shared_ptr<ListModel<int>>& available_tags, int index) const;
+      QString key_to_text(int key) const;
   };
 }
 

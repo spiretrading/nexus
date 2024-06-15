@@ -1,5 +1,6 @@
 #ifndef SPIRE_DROP_DOWN_BOX_HPP
 #define SPIRE_DROP_DOWN_BOX_HPP
+#include <functional>
 #include <QPointer>
 #include <QTimer>
 #include <QWidget>
@@ -26,6 +27,9 @@ namespace Styles {
 
       /** The type of model representing the index of the selected value. */
       using SelectionModel = ListView::SelectionModel;
+
+      /** The type of function used to display the value. */
+      using ToText = std::function<QString (const std::any&)>;
 
       /**
        * Signals that the value was submitted.
@@ -55,12 +59,51 @@ namespace Styles {
        * Constructs a DropDownBox using default local models.
        * @param list The model of list of values to display.
        * @param item_builder The ListViewItemBuilder to use.
+       * @param to_text The function used to display the current value.
+       * @param parent The parent widget.
+       */
+      DropDownBox(std::shared_ptr<AnyListModel> list,
+        ListViewItemBuilder<> item_builder, ToText to_text,
+        QWidget* parent = nullptr);
+
+      /**
+       * Constructs a DropDownBox using default local models.
+       * @param list The model of list of values to display.
+       * @param item_builder The ListViewItemBuilder to use.
        * @param parent The parent widget.
        */
       template<std::derived_from<AnyListModel> T>
       DropDownBox(std::shared_ptr<T> list,
         ListViewItemBuilder<ListModel<typename T::Type>> item_builder,
         QWidget* parent = nullptr);
+
+      /**
+       * Constructs a DropDownBox using default local models.
+       * @param list The model of list of values to display.
+       * @param item_builder The ListViewItemBuilder to use.
+       * @param to_text The function used to display the current value.
+       * @param parent The parent widget.
+       */
+      template<std::derived_from<AnyListModel> T,
+        std::invocable<const typename T::Type&> F>
+      DropDownBox(std::shared_ptr<T> list,
+        ListViewItemBuilder<ListModel<typename T::Type>> item_builder,
+        F&& to_text, QWidget* parent = nullptr);
+
+      /**
+       * Constructs a DropDownBox using default local models.
+       * @param list The model of list of values to display.
+       * @param current The current value model.
+       * @param item_builder The ListViewItemBuilder to use.
+       * @param to_text The function used to display the current value.
+       * @param parent The parent widget.
+       */
+      template<std::derived_from<AnyListModel> T,
+        std::invocable<const typename T::Type&> F>
+      DropDownBox(std::shared_ptr<T> list,
+        std::shared_ptr<CurrentModel> current,
+        ListViewItemBuilder<ListModel<typename T::Type>> item_builder,
+        F&& to_text, QWidget* parent = nullptr);
 
       /**
        * Constructs a DropDownBox.
@@ -72,6 +115,19 @@ namespace Styles {
       DropDownBox(std::shared_ptr<AnyListModel> list,
         std::shared_ptr<CurrentModel> current,
         ListViewItemBuilder<> item_builder, QWidget* parent = nullptr);
+
+      /**
+       * Constructs a DropDownBox.
+       * @param list The model of list of values to display.
+       * @param current The current value model.
+       * @param item_builder The ListViewItemBuilder to use.
+       * @param to_text The function used to display the current value.
+       * @param parent The parent widget.
+       */
+      DropDownBox(std::shared_ptr<AnyListModel> list,
+        std::shared_ptr<CurrentModel> current,
+        ListViewItemBuilder<> item_builder, ToText to_text,
+        QWidget* parent = nullptr);
 
       /**
        * Constructs a DropDownBox.
@@ -90,6 +146,21 @@ namespace Styles {
        * Constructs a DropDownBox.
        * @param list The model of list of values to display.
        * @param current The current value model.
+       * @param selection The selection model.
+       * @param item_builder The ListViewItemBuilder to use.
+       * @param to_text The function used to display the current value.
+       * @param parent The parent widget.
+       */
+      DropDownBox(std::shared_ptr<AnyListModel> list,
+        std::shared_ptr<CurrentModel> current,
+        std::shared_ptr<SelectionModel> selection,
+        ListViewItemBuilder<> item_builder, ToText to_text,
+        QWidget* parent = nullptr);
+
+      /**
+       * Constructs a DropDownBox.
+       * @param list The model of list of values to display.
+       * @param current The current value model.
        * @param item_builder The ListViewItemBuilder to use.
        * @param parent The parent widget.
        */
@@ -113,6 +184,23 @@ namespace Styles {
         std::shared_ptr<SelectionModel> selection,
         ListViewItemBuilder<ListModel<typename T::Type>> item_builder,
         QWidget* parent = nullptr);
+
+      /**
+       * Constructs a DropDownBox.
+       * @param list The model of list of values to display.
+       * @param current The current value model.
+       * @param selection The selection model.
+       * @param item_builder The ListViewItemBuilder to use.
+       * @param to_text The function used to display the current value.
+       * @param parent The parent widget.
+       */
+      template<std::derived_from<AnyListModel> T,
+        std::invocable<const typename T::Type&> F>
+      DropDownBox(std::shared_ptr<T> list,
+        std::shared_ptr<CurrentModel> current,
+        std::shared_ptr<SelectionModel> selection,
+        ListViewItemBuilder<ListModel<typename T::Type>> item_builder,
+        F&& to_text, QWidget* parent = nullptr);
 
       /** Returns the model of list of values displayed. */
       const std::shared_ptr<AnyListModel>& get_list() const;
@@ -147,6 +235,7 @@ namespace Styles {
       std::shared_ptr<CurrentModel> m_current;
       std::shared_ptr<SelectionModel> m_selection;
       ListViewItemBuilder<> m_item_builder;
+      ToText m_to_text;
       TextBox* m_text_box;
       Button* m_button;
       QTimer m_timer;
@@ -191,6 +280,29 @@ namespace Styles {
         std::make_shared<ListSingleSelectionModel>(), std::move(item_builder),
         parent) {}
 
+  template<std::derived_from<AnyListModel> T,
+    std::invocable<const typename T::Type&> F>
+  DropDownBox::DropDownBox(std::shared_ptr<T> list,
+    ListViewItemBuilder<ListModel<typename T::Type>> item_builder,
+    F&& to_text, QWidget* parent)
+    : DropDownBox(std::static_pointer_cast<AnyListModel>(list),
+        ListViewItemBuilder<>(std::move(item_builder)),
+        [to_text = std::forward<F>(to_text)] (const std::any& value) {
+          return to_text(std::any_cast<const typename T::Type&>(value));
+        }, parent) {}
+
+  template<std::derived_from<AnyListModel> T,
+    std::invocable<const typename T::Type&> F>
+  DropDownBox::DropDownBox(std::shared_ptr<T> list,
+    std::shared_ptr<CurrentModel> current,
+    ListViewItemBuilder<ListModel<typename T::Type>> item_builder,
+    F&& to_text, QWidget* parent)
+    : DropDownBox(std::static_pointer_cast<AnyListModel>(list),
+        std::move(current), ListViewItemBuilder<>(std::move(item_builder)),
+        [to_text = std::forward<F>(to_text)] (const std::any& value) {
+          return to_text(std::any_cast<const typename T::Type&>(value));
+        }, parent) {}
+
   template<std::derived_from<AnyListModel> T>
   DropDownBox::DropDownBox(std::shared_ptr<T> list,
     std::shared_ptr<CurrentModel> current,
@@ -200,6 +312,20 @@ namespace Styles {
     : DropDownBox(std::static_pointer_cast<AnyListModel>(list),
         std::move(current), std::move(selection),
         ListViewItemBuilder<>(std::move(item_builder)), parent) {}
+
+  template<std::derived_from<AnyListModel> T,
+    std::invocable<const typename T::Type&> F>
+  DropDownBox::DropDownBox(std::shared_ptr<T> list,
+    std::shared_ptr<CurrentModel> current,
+    std::shared_ptr<SelectionModel> selection,
+    ListViewItemBuilder<ListModel<typename T::Type>> item_builder,
+    F&& to_text, QWidget* parent)
+    : DropDownBox(std::static_pointer_cast<AnyListModel>(list),
+        std::move(current), std::move(selection),
+        ListViewItemBuilder<>(std::move(item_builder)),
+        [to_text = std::forward<F>(to_text)] (const std::any& value) {
+          return to_text(std::any_cast<const typename T::Type&>(value));
+        }, parent) {}
 }
 
 #endif
