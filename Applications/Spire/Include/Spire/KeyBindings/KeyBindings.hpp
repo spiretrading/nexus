@@ -6,6 +6,7 @@ namespace Spire {
   class AdditionalTagDatabase;
   class AdditionalTagKeyBox;
   class AdditionalTagSchema;
+  class AdditionalTagValueBox;
   class AdditionalTagsBox;
   class AdditionalTagsWindow;
   class AddRegionForm;

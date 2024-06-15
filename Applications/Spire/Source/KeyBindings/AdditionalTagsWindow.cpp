@@ -1,5 +1,6 @@
 #include "Spire/KeyBindings/AdditionalTagsWindow.hpp"
 #include "Spire/KeyBindings/AdditionalTagKeyBox.hpp"
+#include "Spire/KeyBindings/AdditionalTagValueBox.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ArrayTableModel.hpp"
 #include "Spire/Spire/ColumnViewListModel.hpp"
@@ -12,6 +13,7 @@
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TextAreaBox.hpp"
 
+using namespace boost;
 using namespace Nexus;
 using namespace Spire;
 using namespace Spire::Styles;
@@ -32,7 +34,7 @@ namespace {
     for(auto& tag : tags) {
       auto row = std::vector<std::any>();
       row.push_back(tag.m_key);
-      row.push_back(tag);
+      row.push_back(tag.m_value);
       table->push(std::move(row));
     }
     return table;
@@ -157,7 +159,12 @@ EditableBox* AdditionalTagsWindow::make_key_item(
 
 EditableBox* AdditionalTagsWindow::make_value_item(
     const std::shared_ptr<TableModel>& table, int row, int column) const {
-  return new EditableBox(*new AnyInputBox(*new TextBox()));
+  auto value = make_list_value_model(
+    std::make_shared<ColumnViewListModel<optional<Nexus::Tag::Type>>>(
+      table, column), row);
+  auto schema = std::shared_ptr<LocalAdditionalTagSchemaModel>();
+  return new EditableBox(
+    *new AnyInputBox(*new AdditionalTagValueBox(value, schema)));
 }
 
 EditableBox* AdditionalTagsWindow::make_item(
@@ -175,8 +182,8 @@ EditableBox* AdditionalTagsWindow::make_item(
 void AdditionalTagsWindow::commit() {
   auto updated_tags = std::vector<AdditionalTag>();
   for(auto i = 0; i != m_tags->get_row_size(); ++i) {
-    auto tag = AdditionalTag(m_tags->get<int>(i, 0),
-      m_tags->get<AdditionalTag>(i, 1).m_value);
+    auto tag = AdditionalTag(
+      m_tags->get<int>(i, 0), m_tags->get<optional<Nexus::Tag::Type>>(i, 1));
     updated_tags.push_back(std::move(tag));
   }
   m_current->set(updated_tags);

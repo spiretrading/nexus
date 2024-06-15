@@ -5,6 +5,7 @@
 #include "Spire/KeyBindings/AdditionalTagDatabase.hpp"
 #include "Spire/KeyBindings/KeyBindings.hpp"
 #include "Spire/Spire/ListModel.hpp"
+#include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Spire/ValueModel.hpp"
 #include "Spire/Ui/Ui.hpp"
 

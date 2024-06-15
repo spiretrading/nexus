@@ -5,6 +5,7 @@
 #include "Spire/KeyBindings/AdditionalTag.hpp"
 #include "Spire/KeyBindings/AdditionalTagDatabase.hpp"
 #include "Spire/KeyBindings/KeyBindings.hpp"
+#include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Spire/ValueModel.hpp"
 #include "Spire/Ui/ClickObserver.hpp"
 #include "Spire/Ui/DestinationBox.hpp"
@@ -13,8 +14,17 @@
 
 namespace Spire {
 
+  /** Models an AdditionalTag. */
+  using AdditionalTagModel = ValueModel<AdditionalTag>;
+
+  /** A local model over an AdditionalTag. */
+  using LocalAdditionalTagModel = LocalValueModel<AdditionalTag>;
+
   /** Models a list of AdditionalTags. */
   using AdditionalTagsModel = ValueModel<std::vector<AdditionalTag>>;
+
+  /** A local model over a list of AdditionalTags. */
+  using LocalAdditionalTagsModel = LocalValueModel<std::vector<AdditionalTag>>;
 
   /** Represents an input box for a list of AdditionalTags. */
   class AdditionalTagsBox : public QWidget {
