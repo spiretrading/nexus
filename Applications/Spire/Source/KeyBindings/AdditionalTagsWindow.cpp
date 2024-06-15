@@ -12,15 +12,19 @@
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TextAreaBox.hpp"
 
+using namespace Nexus;
 using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  auto make_available_tags() {
-    auto tags = std::make_shared<ArrayListModel<int>>();
-    tags->push(111);
-    tags->push(211);
-    return tags;
+  auto make_available_tags_list(const AdditionalTagDatabase& additional_tags,
+      const Destination& destination, const Region& region) {
+    auto list = std::make_shared<ArrayListModel<int>>();
+    auto tags = find(additional_tags, destination, region);
+    for(auto& tag : tags) {
+      list->push(tag->get_key());
+    }
+    return list;
   }
 
   auto make_tags_table(const std::vector<AdditionalTag>& tags) {
@@ -125,7 +129,8 @@ AdditionalTagsWindow::AdditionalTagsWindow(
   set_svg_icon(":/Icons/key-bindings.svg");
   setWindowIcon(QIcon(":/Icons/taskbar_icons/key-bindings.png"));
   setFixedSize(scale(272, 384));
-  m_available_tags = make_available_tags();
+  m_available_tags = make_available_tags_list(
+    m_additional_tags, m_destination->get(), m_region->get());
   auto body = new QWidget();
   auto layout = make_vbox_layout(body);
   m_tags = make_tags_table(m_current->get());

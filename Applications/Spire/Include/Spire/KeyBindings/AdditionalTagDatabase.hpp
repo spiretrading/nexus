@@ -41,6 +41,14 @@ namespace Spire {
       const std::shared_ptr<AdditionalTagSchema>&
         find(const Nexus::Region& region, int key) const;
 
+      /** Returns a list of all schemas for a given region. */
+      std::vector<std::shared_ptr<AdditionalTagSchema>>
+        find(const Nexus::Region& region) const;
+
+      /** Returns a list of all schemas for a given destination. */
+      std::vector<std::shared_ptr<AdditionalTagSchema>>
+        find(const Nexus::Destination& destination) const;
+
     private:
       Nexus::RegionMap<std::unordered_map<
         int, std::shared_ptr<AdditionalTagSchema>>> m_schemas;
@@ -58,6 +66,11 @@ namespace Spire {
     const AdditionalTagDatabase& database,
     const Nexus::Destination& destination, const Nexus::Region& region,
     int key);
+
+  /** Returns the list of all schemas for a destination and region. */
+  std::vector<std::shared_ptr<AdditionalTagSchema>> find(
+    const AdditionalTagDatabase& database,
+    const Nexus::Destination& destination, const Nexus::Region& region);
 }
 
 #endif
