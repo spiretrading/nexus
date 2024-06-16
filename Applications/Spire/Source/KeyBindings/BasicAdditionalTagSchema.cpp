@@ -8,6 +8,8 @@
 #include "Spire/Canvas/ValueNodes/IntegerNode.hpp"
 #include "Spire/Canvas/ValueNodes/MoneyNode.hpp"
 #include "Spire/Canvas/ValueNodes/TextNode.hpp"
+#include "Spire/Spire/TransformValueModel.hpp"
+#include "Spire/Ui/MoneyBox.hpp"
 
 using namespace boost;
 using namespace boost::gregorian;
@@ -68,7 +70,7 @@ BasicAdditionalTagSchema::BasicAdditionalTagSchema(
     m_default_value(std::move(default_value)) {}
 
 std::unique_ptr<CanvasNode> BasicAdditionalTagSchema::make_canvas_node(
-    const optional<Tag::Type>& value) const {
+    const optional<Nexus::Tag::Type>& value) const {
   if(value) {
     auto result = apply_visitor(visitor(), *value);
     if(result->GetType().GetCompatibility(*m_type) !=
@@ -80,4 +82,23 @@ std::unique_ptr<CanvasNode> BasicAdditionalTagSchema::make_canvas_node(
     return make_canvas_node(*m_default_value);
   }
   return MakeDefaultCanvasNode(*m_type);
+}
+
+AnyInputBox* BasicAdditionalTagSchema::make_input_box(
+    std::shared_ptr<AdditionalTagValueModel> current) const {
+  current->set(Nexus::Tag::Type(Money::ZERO));
+  return new AnyInputBox(*new MoneyBox(make_scalar_value_model_decorator(
+    make_transform_value_model(std::move(current),
+      [] (const auto& value) -> optional<Money> {
+        if(!value) {
+          return none;
+        }
+        return get<Money>(*value);
+      },
+      [] (const auto& value) -> optional<Nexus::Tag::Type> {
+        if(!value) {
+          return none;
+        }
+        return Nexus::Tag::Type(*value);
+      }))));
 }

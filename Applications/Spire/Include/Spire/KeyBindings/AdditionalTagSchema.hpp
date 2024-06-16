@@ -6,8 +6,17 @@
 #include "Nexus/Definitions/Tag.hpp"
 #include "Spire/Canvas/Common/CanvasNode.hpp"
 #include "Spire/KeyBindings/KeyBindings.hpp"
+#include "Spire/Spire/LocalValueModel.hpp"
+#include "Spire/Ui/AnyInputBox.hpp"
 
 namespace Spire {
+
+  /** Represents the value of an AdditionalTag. */
+  using AdditionalTagValueModel = ValueModel<boost::optional<Nexus::Tag::Type>>;
+
+  /** A local value model over an AdditionalTag's value. */
+  using LocalAdditionalTagValueModel =
+    LocalValueModel<boost::optional<Nexus::Tag::Type>>;
 
   /** Base class used to define an additional tag. */
   class AdditionalTagSchema {
@@ -19,6 +28,14 @@ namespace Spire {
 
       /** Returns this tag's key. */
       int get_key() const;
+
+      /**
+       * Makes an input box suitable for representing a value for this type of
+       * tag.
+       * @param current The tag's current value.
+       */
+      virtual AnyInputBox* make_input_box(
+        std::shared_ptr<AdditionalTagValueModel> current) const = 0;
 
       /** Makes a CanvasNode representing this tag. */
       virtual std::unique_ptr<CanvasNode> make_canvas_node() const;

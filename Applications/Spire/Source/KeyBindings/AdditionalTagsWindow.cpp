@@ -159,10 +159,13 @@ EditableBox* AdditionalTagsWindow::make_key_item(
 
 EditableBox* AdditionalTagsWindow::make_value_item(
     const std::shared_ptr<TableModel>& table, int row, int column) const {
+  const auto KEY_COLUMN = 0;
   auto value = make_list_value_model(
     std::make_shared<ColumnViewListModel<optional<Nexus::Tag::Type>>>(
       table, column), row);
-  auto schema = std::shared_ptr<LocalAdditionalTagSchemaModel>();
+  auto schema = std::make_shared<LocalAdditionalTagSchemaModel>(
+    Spire::find(m_additional_tags, m_destination->get(),
+      m_region->get(), m_tags->get<int>(row, KEY_COLUMN)));
   return new EditableBox(
     *new AnyInputBox(*new AdditionalTagValueBox(value, schema)));
 }

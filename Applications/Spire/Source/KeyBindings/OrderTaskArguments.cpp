@@ -36,7 +36,7 @@ namespace {
     if(!child) {
       return {};
     }
-    auto value = [&] () -> Tag::Type {
+    auto value = [&] () -> Nexus::Tag::Type {
       if(field.m_type->GetNativeType() == typeid(int)) {
         return extract<IntegerType>(child);
       } else if(field.m_type->GetNativeType() == typeid(double)) {

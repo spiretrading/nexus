@@ -17,13 +17,6 @@ namespace Spire {
   using LocalAdditionalTagSchemaModel =
     LocalValueModel<std::shared_ptr<AdditionalTagSchema>>;
 
-  /** Represents the value of an AdditionalTag. */
-  using AdditionalTagValueModel = ValueModel<boost::optional<Nexus::Tag::Type>>;
-
-  /** A local value model over an AdditionalTag's value. */
-  using LocalAdditionalTagValueModel =
-    LocalValueModel<boost::optional<Nexus::Tag::Type>>;
-
   /** Represents the value of an additional tag. */
   class AdditionalTagValueBox : public QWidget {
     public:
@@ -64,6 +57,10 @@ namespace Spire {
     private:
       mutable SubmitSignal m_submit_signal;
       std::shared_ptr<AdditionalTagValueModel> m_current;
+      std::shared_ptr<AdditionalTagSchemaModel> m_schema;
+      boost::signals2::scoped_connection m_schema_connection;
+
+      void on_schema(const std::shared_ptr<AdditionalTagSchema>& schema);
   };
 }
 

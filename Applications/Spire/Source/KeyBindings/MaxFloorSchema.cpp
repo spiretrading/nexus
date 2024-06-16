@@ -1,6 +1,8 @@
 #include "Spire/KeyBindings/MaxFloorSchema.hpp"
 #include "Spire/Canvas/Operations/CanvasTypeCompatibilityException.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/MaxFloorNode.hpp"
+#include "Spire/Spire/TransformValueModel.hpp"
+#include "Spire/Ui/QuantityBox.hpp"
 
 using namespace boost;
 using namespace Nexus;
@@ -25,4 +27,23 @@ std::unique_ptr<CanvasNode> MaxFloorSchema::make_canvas_node(
     return MaxFloorNode();
   }();
   return LinkedNode::SetReferent(std::move(max_floor_node), "security");
+}
+
+AnyInputBox* MaxFloorSchema::make_input_box(
+    std::shared_ptr<AdditionalTagValueModel> current) const {
+  current->set(Nexus::Tag::Type(Quantity(0)));
+  return new AnyInputBox(*new QuantityBox(make_scalar_value_model_decorator(
+    make_transform_value_model(std::move(current),
+      [] (const auto& value) -> optional<Quantity> {
+        if(!value) {
+          return none;
+        }
+        return get<Quantity>(*value);
+      },
+      [] (const auto& value) -> optional<Nexus::Tag::Type> {
+        if(!value) {
+          return none;
+        }
+        return Nexus::Tag::Type(*value);
+      }))));
 }
