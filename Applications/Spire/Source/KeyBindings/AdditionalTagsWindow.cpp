@@ -1,6 +1,8 @@
 #include "Spire/KeyBindings/AdditionalTagsWindow.hpp"
+#include <boost/signals2/shared_connection_block.hpp>
 #include "Spire/KeyBindings/AdditionalTagKeyBox.hpp"
 #include "Spire/KeyBindings/AdditionalTagValueBox.hpp"
+#include "Spire/KeyBindings/NoneAdditionalTagSchema.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ArrayTableModel.hpp"
 #include "Spire/Spire/ColumnViewListModel.hpp"
@@ -14,11 +16,145 @@
 #include "Spire/Ui/TextAreaBox.hpp"
 
 using namespace boost;
+using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  struct AppendableTableModel : TableModel {
+    static const auto KEY_COLUMN = 0;
+    static const auto VALUE_COLUMN = 1;
+    static const auto NONE_KEY = -1;
+    static const auto& NONE_VALUE() {
+      static auto NONE = optional<Nexus::Tag::Type>();
+      return NONE;
+    }
+
+    std::shared_ptr<ArrayTableModel> m_source;
+    scoped_connection m_connection;
+    TableModelTransactionLog m_transaction;
+
+    AppendableTableModel(std::shared_ptr<ArrayTableModel> source)
+        : m_source(std::move(source)) {
+      m_connection = m_source->connect_operation_signal(
+        std::bind_front(&AppendableTableModel::on_operation, this));
+    }
+
+    int get_row_size() const {
+      return m_source->get_row_size() + 1;
+    }
+
+    int get_column_size() const {
+      return m_source->get_column_size();
+    }
+
+    AnyRef at(int row, int column) const {
+      if(row < m_source->get_row_size()) {
+        return m_source->at(row, column);
+      } else if(row == m_source->get_row_size()) {
+        if(column == KEY_COLUMN) {
+          return NONE_KEY;
+        } else if(column == VALUE_COLUMN) {
+          static auto NONE = optional<Nexus::Tag::Type>();
+          return NONE;
+        }
+      }
+      throw std::out_of_range("The row or column is out of range.");
+    }
+
+    QValidator::State set(int row, int column, const std::any& value) {
+      if(row < m_source->get_row_size()) {
+        return m_source->set(row, column, value);
+      } else if(row == m_source->get_row_size()) {
+        if(column == VALUE_COLUMN) {
+          if(std::any_cast<const optional<Nexus::Tag::Type>&>(value) ==
+              NONE_VALUE()) {
+            return QValidator::Acceptable;
+          }
+        }
+        auto blocker = shared_connection_block(m_connection);
+        m_source->push({value, NONE_VALUE()});
+        m_transaction.transact([&] {
+          m_transaction.push(UpdateOperation(row, column, NONE_KEY, value));
+          m_transaction.push(AddOperation(row + 1));
+        });
+        return QValidator::Acceptable;
+      }
+      throw std::out_of_range("The row is out of range.");
+    }
+
+    QValidator::State remove(int row) {
+      if(row < m_source->get_row_size()) {
+        return m_source->remove(row);
+      } else if(row == m_source->get_row_size()) {
+        return QValidator::Invalid;
+      }
+      throw std::out_of_range("The row is out of range.");
+    }
+
+    connection connect_operation_signal(
+        const OperationSignal::slot_type& slot) const {
+      return m_transaction.connect_operation_signal(slot);
+    }
+
+    void on_operation(const TableModel::Operation& operation) {
+      m_transaction.push(operation);
+    }
+  };
+
+  struct KeyToSchemaModel : AdditionalTagSchemaModel {
+    std::shared_ptr<AdditionalTagKeyModel> m_key;
+    AdditionalTagDatabase m_additional_tags;
+    std::shared_ptr<DestinationModel> m_destination;
+    std::shared_ptr<RegionModel> m_region;
+    scoped_connection m_connection;
+    LocalAdditionalTagSchemaModel m_schema;
+
+    KeyToSchemaModel(std::shared_ptr<AdditionalTagKeyModel> key,
+        AdditionalTagDatabase additional_tags,
+        std::shared_ptr<DestinationModel> destination,
+        std::shared_ptr<RegionModel> region)
+        : m_key(std::move(key)),
+          m_additional_tags(std::move(additional_tags)),
+          m_destination(std::move(destination)),
+          m_region(std::move(region)) {
+      m_connection = m_key->connect_update_signal(
+        std::bind_front(&KeyToSchemaModel::on_update, this));
+      on_update(m_key->get());
+    }
+
+    QValidator::State get_state() const override {
+      return m_schema.get_state();
+    }
+
+    const Type& get() const override {
+      return m_schema.get();
+    }
+
+    QValidator::State test(const Type& value) const override {
+      return m_schema.test(value);
+    }
+
+    QValidator::State set(const Type& value) override {
+      return m_schema.set(value);
+    }
+
+    connection
+        connect_update_signal(const UpdateSignal::slot_type& slot) const {
+      return m_schema.connect_update_signal(slot);
+    }
+
+    void on_update(int key) {
+      if(key == -1) {
+        m_schema.set(NoneAdditionalTagSchema::get_instance());
+      } else {
+        m_schema.set(
+          find(m_additional_tags, m_destination->get(), m_region->get(), key));
+      }
+    }
+  };
+
   auto make_available_tags_list(const AdditionalTagDatabase& additional_tags,
       const Destination& destination, const Region& region) {
     auto list = std::make_shared<ArrayListModel<int>>();
@@ -37,7 +173,7 @@ namespace {
       row.push_back(tag.m_value);
       table->push(std::move(row));
     }
-    return table;
+    return std::make_shared<AppendableTableModel>(std::move(table));
   }
 
   auto make_table_view(
@@ -160,12 +296,13 @@ EditableBox* AdditionalTagsWindow::make_key_item(
 EditableBox* AdditionalTagsWindow::make_value_item(
     const std::shared_ptr<TableModel>& table, int row, int column) const {
   const auto KEY_COLUMN = 0;
+  auto key = make_list_value_model(
+    std::make_shared<ColumnViewListModel<int>>(table, KEY_COLUMN), row);
   auto value = make_list_value_model(
     std::make_shared<ColumnViewListModel<optional<Nexus::Tag::Type>>>(
       table, column), row);
-  auto schema = std::make_shared<LocalAdditionalTagSchemaModel>(
-    Spire::find(m_additional_tags, m_destination->get(),
-      m_region->get(), m_tags->get<int>(row, KEY_COLUMN)));
+  auto schema = std::make_shared<KeyToSchemaModel>(
+    std::move(key), m_additional_tags, m_destination, m_region);
   return new EditableBox(
     *new AnyInputBox(*new AdditionalTagValueBox(value, schema)));
 }
@@ -184,7 +321,7 @@ EditableBox* AdditionalTagsWindow::make_item(
 
 void AdditionalTagsWindow::commit() {
   auto updated_tags = std::vector<AdditionalTag>();
-  for(auto i = 0; i != m_tags->get_row_size(); ++i) {
+  for(auto i = 0; i < m_tags->get_row_size() - 1; ++i) {
     auto tag = AdditionalTag(
       m_tags->get<int>(i, 0), m_tags->get<optional<Nexus::Tag::Type>>(i, 1));
     updated_tags.push_back(std::move(tag));

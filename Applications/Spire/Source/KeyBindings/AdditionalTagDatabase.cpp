@@ -65,7 +65,7 @@ std::vector<std::shared_ptr<AdditionalTagSchema>>
 const AdditionalTagDatabase& Spire::get_default_additional_tag_database() {
   static auto database = [] {
     auto database = AdditionalTagDatabase();
-    database.add(Region::Global(), std::make_shared<MaxFloorSchema>());
+    database.add(Region::Global(), MaxFloorSchema::get_instance());
     database.add(Region::Global(), std::make_shared<BasicAdditionalTagSchema>(
       "PegDifference", 211, MoneyType::GetInstance()));
     return database;

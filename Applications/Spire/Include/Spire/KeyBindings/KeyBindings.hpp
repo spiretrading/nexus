@@ -20,6 +20,7 @@ namespace Spire {
   class KeyBindingsModel;
   class KeyBindingsWindow;
   class MaxFloorSchema;
+  class NoneAdditionalTagSchema;
   class OrderFieldInfoTip;
   struct OrderTaskArguments;
   class TaskKeysPage;

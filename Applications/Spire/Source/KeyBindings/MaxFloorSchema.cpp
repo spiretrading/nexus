@@ -7,9 +7,13 @@
 using namespace boost;
 using namespace Nexus;
 using namespace Spire;
+using namespace Spire::Styles;
 
-MaxFloorSchema::MaxFloorSchema()
-  : AdditionalTagSchema("MaxFloor", 111) {}
+const std::shared_ptr<MaxFloorSchema>& MaxFloorSchema::get_instance() {
+  static const auto schema =
+    std::shared_ptr<MaxFloorSchema>(new MaxFloorSchema());
+  return schema;
+}
 
 std::unique_ptr<CanvasNode> MaxFloorSchema::make_canvas_node(
     const optional<Nexus::Tag::Type>& value) const {
@@ -32,7 +36,7 @@ std::unique_ptr<CanvasNode> MaxFloorSchema::make_canvas_node(
 AnyInputBox* MaxFloorSchema::make_input_box(
     std::shared_ptr<AdditionalTagValueModel> current) const {
   current->set(Nexus::Tag::Type(Quantity(0)));
-  return new AnyInputBox(*new QuantityBox(make_scalar_value_model_decorator(
+  auto quantity_box = new QuantityBox(make_scalar_value_model_decorator(
     make_transform_value_model(std::move(current),
       [] (const auto& value) -> optional<Quantity> {
         if(!value) {
@@ -45,5 +49,12 @@ AnyInputBox* MaxFloorSchema::make_input_box(
           return none;
         }
         return Nexus::Tag::Type(*value);
-      }))));
+      })));
+  update_style(*quantity_box, [] (auto& style) {
+    style.get(Any()).set(border_size(0));
+  });
+  return new AnyInputBox(*quantity_box);
 }
+
+MaxFloorSchema::MaxFloorSchema()
+  : AdditionalTagSchema("MaxFloor", 111) {}
