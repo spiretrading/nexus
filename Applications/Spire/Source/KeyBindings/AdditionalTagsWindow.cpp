@@ -90,6 +90,7 @@ namespace {
         auto blocker = shared_connection_block(m_connection);
         add_available_tags(get_row_size());
         m_source->push({value, NONE_VALUE()});
+        reduce_available_tags(row);
         m_transaction.transact([&] {
           m_transaction.push(UpdateOperation(row, column, NONE_KEY, value));
           m_transaction.push(AddOperation(row + 1));
@@ -187,9 +188,9 @@ namespace {
           m_available_tags.erase(m_available_tags.begin() + operation.m_index);
         },
         [&] (const TableModel::MoveOperation& operation) {
-          auto s = m_available_tags.begin() + operation.m_source;
-          auto source = std::move(*s);
-          m_available_tags.erase(s);
+          auto i = m_available_tags.begin() + operation.m_source;
+          auto source = std::move(*i);
+          m_available_tags.erase(i);
           m_available_tags.insert(m_available_tags.begin() +
             operation.m_destination, std::move(source));
         },
