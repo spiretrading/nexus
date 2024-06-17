@@ -155,15 +155,67 @@ namespace {
     }
   };
 
-  auto make_available_tags_list(const AdditionalTagDatabase& additional_tags,
-      const Destination& destination, const Region& region) {
-    auto list = std::make_shared<ArrayListModel<int>>();
-    auto tags = find(additional_tags, destination, region);
-    for(auto& tag : tags) {
-      list->push(tag->get_key());
+  struct AvailableTagsListModel : ArrayListModel<int> {
+    std::shared_ptr<TableModel> m_tags;
+    scoped_connection m_connection;
+
+    AvailableTagsListModel(std::shared_ptr<TableModel> tags,
+        const AdditionalTagDatabase& additional_tags,
+        const Destination& destination, const Region& region)
+        : m_tags(std::move(tags)) {
+      m_connection = m_tags->connect_operation_signal(
+        std::bind_front(&AvailableTagsListModel::on_operation, this));
+      auto keys = find(additional_tags, destination, region);
+      for(auto& key : keys) {
+        add_key(key->get_key());
+      }
     }
-    return list;
-  }
+
+    void add_key(int key) {
+      if(key == -1) {
+        return;
+      }
+      auto i = std::find(begin(), end(), key);
+      if(i == end()) {
+        push(key);
+      }
+    }
+
+    void remove_key(int key) {
+      if(key == -1) {
+        return;
+      }
+      auto i = std::find(begin(), end(), key);
+      if(i != end()) {
+        remove(i);
+      }
+    }
+
+    void on_operation(const TableModel::Operation& operation) {
+      visit(operation,
+        [&] (const TableModel::AddOperation& operation) {
+          remove_key(m_tags->get<int>(operation.m_index, 0));
+        },
+        [&] (const TableModel::PreRemoveOperation& operation) {
+          add_key(m_tags->get<int>(operation.m_index, 0));
+        },
+        [&] (const TableModel::UpdateOperation& operation) {
+          static const auto KEY_COLUMN = 0;
+          if(operation.m_column != KEY_COLUMN) {
+            return;
+          }
+          auto previous = std::any_cast<int>(operation.m_previous);
+          auto current = std::any_cast<int>(operation.m_value);
+          if(previous == current) {
+            return;
+          }
+          transact([&] {
+            remove_key(current);
+            add_key(previous);
+          });
+        });
+    }
+  };
 
   auto make_tags_table(const std::vector<AdditionalTag>& tags) {
     auto table = std::make_shared<ArrayTableModel>();
@@ -267,11 +319,11 @@ AdditionalTagsWindow::AdditionalTagsWindow(
   set_svg_icon(":/Icons/key-bindings.svg");
   setWindowIcon(QIcon(":/Icons/taskbar_icons/key-bindings.png"));
   setFixedSize(scale(272, 384));
-  m_available_tags = make_available_tags_list(
-    m_additional_tags, m_destination->get(), m_region->get());
+  m_tags = make_tags_table(m_current->get());
+  m_available_tags = std::make_shared<AvailableTagsListModel>(
+    m_tags, m_additional_tags, m_destination->get(), m_region->get());
   auto body = new QWidget();
   auto layout = make_vbox_layout(body);
-  m_tags = make_tags_table(m_current->get());
   auto table_view = make_table_view(
     m_tags, std::bind_front(&AdditionalTagsWindow::make_item, this));
   layout->addWidget(table_view);
