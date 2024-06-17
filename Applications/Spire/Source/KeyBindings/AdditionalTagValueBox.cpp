@@ -35,7 +35,7 @@ connection AdditionalTagValueBox::connect_submit_signal(
 void AdditionalTagValueBox::on_schema(
     const std::shared_ptr<AdditionalTagSchema>& schema) {
   if(auto item = layout()->takeAt(0)) {
-    item->widget()->deleteLater();
+    delete item->widget();
     delete item;
   }
   auto box = schema->make_input_box(m_current);
