@@ -4,8 +4,11 @@
 namespace Spire {
   struct AdditionalTag;
   class AdditionalTagDatabase;
+  class AdditionalTagKeyBox;
   class AdditionalTagSchema;
+  class AdditionalTagValueBox;
   class AdditionalTagsBox;
+  class AdditionalTagsWindow;
   class AddRegionForm;
   class BasicAdditionalTagSchema;
   class CancelKeyBindingsForm;
@@ -17,6 +20,7 @@ namespace Spire {
   class KeyBindingsModel;
   class KeyBindingsWindow;
   class MaxFloorSchema;
+  class NoneAdditionalTagSchema;
   class OrderFieldInfoTip;
   struct OrderTaskArguments;
   class TaskKeysPage;

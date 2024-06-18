@@ -5,15 +5,26 @@
 #include "Spire/KeyBindings/AdditionalTag.hpp"
 #include "Spire/KeyBindings/AdditionalTagDatabase.hpp"
 #include "Spire/KeyBindings/KeyBindings.hpp"
+#include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Spire/ValueModel.hpp"
+#include "Spire/Ui/ClickObserver.hpp"
 #include "Spire/Ui/DestinationBox.hpp"
 #include "Spire/Ui/RegionBox.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 namespace Spire {
 
+  /** Models an AdditionalTag. */
+  using AdditionalTagModel = ValueModel<AdditionalTag>;
+
+  /** A local model over an AdditionalTag. */
+  using LocalAdditionalTagModel = LocalValueModel<AdditionalTag>;
+
   /** Models a list of AdditionalTags. */
   using AdditionalTagsModel = ValueModel<std::vector<AdditionalTag>>;
+
+  /** A local model over a list of AdditionalTags. */
+  using LocalAdditionalTagsModel = LocalValueModel<std::vector<AdditionalTag>>;
 
   /** Represents an input box for a list of AdditionalTags. */
   class AdditionalTagsBox : public QWidget {
@@ -28,16 +39,16 @@ namespace Spire {
 
       /**
        * Constructs an AdditionalTagsBox.
+       * @param current The list of additional tags to represent.
        * @param additional_tags The definitions of all additional tags.
        * @param destination The destination to constrain the available tags to.
        * @param region The region to constrain the available tags to.
-       * @param current The list of additional tags to represent.
        * @param parent The parent widget.
        */
-      AdditionalTagsBox(AdditionalTagDatabase additional_tags,
+      AdditionalTagsBox(std::shared_ptr<AdditionalTagsModel> current,
+        AdditionalTagDatabase additional_tags,
         std::shared_ptr<DestinationModel> destination,
         std::shared_ptr<RegionModel> region,
-        std::shared_ptr<AdditionalTagsModel> current,
         QWidget* parent = nullptr);
 
       /** Returns the list of additional tags represented. */
@@ -46,13 +57,12 @@ namespace Spire {
       /** Sets the placeholder value. */
       void set_placeholder(const QString& placeholder);
 
-      /** Returns <code>true</code> iff this TagBox is read-only. */
+      /** Returns <code>true</code> iff this box is read-only. */
       bool is_read_only() const;
 
       /**
        * Sets the read-only state.
-       * @param is_read_only <code>true</code> iff the TagBox should be
-       *        read-only.
+       * @param is_read_only <code>true</code> iff the box should be read-only.
        */
       void set_read_only(bool is_read_only);
 
@@ -68,6 +78,9 @@ namespace Spire {
       std::shared_ptr<TextModel> m_tags_text;
       TextBox* m_label;
       bool m_is_read_only;
+      ClickObserver m_click_observer;
+
+      void on_click();
   };
 }
 

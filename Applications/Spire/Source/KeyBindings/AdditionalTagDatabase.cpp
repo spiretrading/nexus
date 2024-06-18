@@ -40,10 +40,32 @@ const std::shared_ptr<AdditionalTagSchema>&
   return j->second;
 }
 
+std::vector<std::shared_ptr<AdditionalTagSchema>>
+    AdditionalTagDatabase::find(const Region& region) const {
+  auto matches = std::vector<std::shared_ptr<AdditionalTagSchema>>();
+  for(auto i = m_schemas.Find(region); i != m_schemas.End(); ++i) {
+    for(auto& schema : std::get<1>(*i)) {
+      auto j = std::find_if(matches.begin(), matches.end(),
+        [&] (const auto& match) {
+          return match->get_key() == schema.second->get_key();
+        });
+      if(j == matches.end()) {
+        matches.push_back(schema.second);
+      }
+    }
+  }
+  return matches;
+}
+
+std::vector<std::shared_ptr<AdditionalTagSchema>>
+    AdditionalTagDatabase::find(const Destination& destination) const {
+  return {};
+}
+
 const AdditionalTagDatabase& Spire::get_default_additional_tag_database() {
   static auto database = [] {
     auto database = AdditionalTagDatabase();
-    database.add(Region::Global(), std::make_shared<MaxFloorSchema>());
+    database.add(Region::Global(), MaxFloorSchema::get_instance());
     database.add(Region::Global(), std::make_shared<BasicAdditionalTagSchema>(
       "PegDifference", 211, MoneyType::GetInstance()));
     return database;
@@ -59,4 +81,10 @@ const std::shared_ptr<AdditionalTagSchema>& Spire::find(
     return schema;
   }
   return database.find(region, key);
+}
+
+std::vector<std::shared_ptr<AdditionalTagSchema>> Spire::find(
+    const AdditionalTagDatabase& database, const Destination& destination,
+    const Region& region) {
+  return database.find(region);
 }

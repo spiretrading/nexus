@@ -1,16 +1,16 @@
-#ifndef SPIRE_MAX_FLOOR_SCHEMA_HPP
-#define SPIRE_MAX_FLOOR_SCHEMA_HPP
+#ifndef SPIRE_NONE_ADDITIONAL_TAG_SCHEMA_HPP
+#define SPIRE_NONE_ADDITIONAL_TAG_SCHEMA_HPP
 #include "Spire/KeyBindings/AdditionalTagSchema.hpp"
 #include "Spire/KeyBindings/KeyBindings.hpp"
 
 namespace Spire {
 
-  /** Provides a schema for the MaxFloor tag. */
-  class MaxFloorSchema : public AdditionalTagSchema {
+  /** Implements an AdditionalTagSchema for an invalid, empty, or no tag. */
+  class NoneAdditionalTagSchema : public AdditionalTagSchema {
     public:
 
       /** Returns the single instance of this schema. */
-      static const std::shared_ptr<MaxFloorSchema>& get_instance();
+      static const std::shared_ptr<NoneAdditionalTagSchema>& get_instance();
 
       std::unique_ptr<CanvasNode> make_canvas_node(
         const boost::optional<Nexus::Tag::Type>& value) const override;
@@ -19,7 +19,7 @@ namespace Spire {
         std::shared_ptr<AdditionalTagValueModel> current) const override;
 
     private:
-      MaxFloorSchema();
+      NoneAdditionalTagSchema();
   };
 }
 
