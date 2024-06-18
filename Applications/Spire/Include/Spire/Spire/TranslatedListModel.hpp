@@ -1,5 +1,7 @@
 #ifndef SPIRE_TRANSLATED_LIST_MODEL_HPP
 #define SPIRE_TRANSLATED_LIST_MODEL_HPP
+#include <algorithm>
+#include <stdexcept>
 #include <boost/signals2/connection.hpp>
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Spire/ListModel.hpp"
@@ -83,6 +85,10 @@ namespace Spire {
       void translate(int direction, int index);
       void on_operation(const Operation& operation);
   };
+
+  template<typename T>
+  TranslatedListModel(std::shared_ptr<T>) ->
+    TranslatedListModel<typename T::Type>;
 
   template<typename T>
   TranslatedListModel<T>::TranslatedListModel(
@@ -252,7 +258,6 @@ namespace Spire {
           translated_index, operation.get_previous(), operation.get_value()));
       });
   }
-
 }
 
 #endif

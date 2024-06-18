@@ -24,7 +24,7 @@ TEST_SUITE("TranslatedListModel") {
     source->push(2);
     source->push(9);
     source->push(1);
-    auto translation = TranslatedListModel<int>(source);
+    auto translation = TranslatedListModel(source);
     auto operations = std::deque<ListModel<int>::Operation>();
     translation.connect_operation_signal([&] (const auto& operation) {
       operations.push_back(operation);
@@ -67,7 +67,7 @@ TEST_SUITE("TranslatedListModel") {
     source->push(9);
     source->push(1);
     source->push(6);
-    auto translation = TranslatedListModel<int>(source);
+    auto translation = TranslatedListModel(source);
     auto operations = std::deque<ListModel<int>::Operation>();
     translation.connect_operation_signal([&] (const auto& operation) {
       operations.push_back(operation);
@@ -103,7 +103,7 @@ TEST_SUITE("TranslatedListModel") {
     source->push(1);
     source->push(6);
     auto signal_count = 0;
-    auto translation = TranslatedListModel<int>(source);
+    auto translation = TranslatedListModel(source);
     auto operations = std::deque<ListModel<int>::Operation>();
     translation.connect_operation_signal([&] (const auto& operation) {
       operations.push_back(operation);
@@ -127,7 +127,7 @@ TEST_SUITE("TranslatedListModel") {
     source->push(2);
     source->push(9);
     source->push(1);
-    auto translation = TranslatedListModel<int>(source);
+    auto translation = TranslatedListModel(source);
     REQUIRE_NOTHROW(translation.move(3, 0));
     REQUIRE_NOTHROW(translation.move(1, 2));
     REQUIRE(translation.get(0) == 1);
@@ -158,7 +158,7 @@ TEST_SUITE("TranslatedListModel") {
     source->push(2);
     source->push(9);
     source->push(1);
-    auto translation = TranslatedListModel<int>(source);
+    auto translation = TranslatedListModel(source);
     REQUIRE_NOTHROW(translation.move(3, 0));
     REQUIRE_NOTHROW(translation.move(1, 2));
     REQUIRE(translation.get(0) == 1);
@@ -189,7 +189,7 @@ TEST_SUITE("TranslatedListModel") {
     source->push(2);
     source->push(9);
     source->push(1);
-    auto translation = TranslatedListModel<int>(source);
+    auto translation = TranslatedListModel(source);
     REQUIRE_NOTHROW(translation.move(3, 0));
     REQUIRE_NOTHROW(translation.move(1, 2));
     REQUIRE(translation.get(0) == 1);
@@ -243,7 +243,7 @@ TEST_SUITE("TranslatedListModel") {
     source->push(2);
     source->push(9);
     source->push(1);
-    auto translation = TranslatedListModel<int>(source);
+    auto translation = TranslatedListModel(source);
     REQUIRE_NOTHROW(translation.move(3, 0));
     REQUIRE_NOTHROW(translation.move(1, 2));
     REQUIRE(translation.get(0) == 1);
@@ -287,7 +287,7 @@ TEST_SUITE("TranslatedListModel") {
     source->push(2);
     source->push(9);
     source->push(1);
-    auto translation = TranslatedListModel<int>(source);
+    auto translation = TranslatedListModel(source);
     REQUIRE_NOTHROW(translation.move(3, 0));
     REQUIRE_NOTHROW(translation.move(2, 1));
     auto signal_count = 0;
@@ -323,7 +323,7 @@ TEST_SUITE("TranslatedListModel") {
     auto source = std::make_shared<ArrayListModel<int>>();
     source->push(2);
     source->push(1);
-    auto translation = TranslatedListModel<int>(source);
+    auto translation = TranslatedListModel(source);
     translation.move(1, 0);
     translation.set(0, 10);
     REQUIRE(source->get(0) == 2);
@@ -334,7 +334,7 @@ TEST_SUITE("TranslatedListModel") {
     auto source = std::make_shared<ArrayListModel<int>>();
     source->push(2);
     source->push(1);
-    auto translation = TranslatedListModel<int>(source);
+    auto translation = TranslatedListModel(source);
     REQUIRE_NOTHROW(translation.move(1, 0));
     REQUIRE(translation.get(0) == 1);
     REQUIRE(translation.get(1) == 2);
@@ -372,7 +372,7 @@ TEST_SUITE("TranslatedListModel") {
 
   TEST_CASE("translate_mixing_with_source_operation") {
     auto source = std::make_shared<ArrayListModel<int>>();
-    auto translation = TranslatedListModel<int>(source);
+    auto translation = TranslatedListModel(source);
     REQUIRE(translation.get_size() == 0);
     auto signal_count = 0;
     auto add_count = 0;
