@@ -26,11 +26,15 @@ namespace Spire {
         offset = 1;
       }
     } else {
-      REQUIRE(operations.size() == expected.size() + 2);
-      REQUIRE(
-        boost::get<typename ListModel<T>::StartTransaction>(&operations[0]) !=
-          nullptr);
-      offset = 1;
+      if(get<typename ListModel<T>::StartTransaction>(&operations[0]) ==
+          nullptr) {
+        REQUIRE(operations.size() == 2);
+        REQUIRE(get<typename ListModel<T>::PreRemoveOperation>(
+          &operations[0]) != nullptr);
+      } else {
+        REQUIRE(operations.size() == expected.size() + 2);
+        offset = 1;
+      }
     }
     for(auto i = 0; i != std::ssize(expected); ++i) {
       visit(expected[i],
