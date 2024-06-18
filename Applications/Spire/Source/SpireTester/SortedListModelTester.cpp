@@ -158,7 +158,7 @@ TEST_SUITE("SortedListModel") {
     source->push(2);
     source->push(9);
     source->push(6);
-    auto sorted_model = SortedListModel(source);
+    auto sorted_model = SortedListModel(source, &reverse_comparator);
     auto signal_count = 0;
     sorted_model.connect_operation_signal(
       [&] (const auto& operation) { ++signal_count; });
