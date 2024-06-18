@@ -3,6 +3,7 @@
 #include <memory>
 #include <unordered_map>
 #include "Nexus/Definitions/Destination.hpp"
+#include "Nexus/Definitions/Market.hpp"
 #include "Nexus/Definitions/RegionMap.hpp"
 #include "Spire/KeyBindings/AdditionalTagSchema.hpp"
 #include "Spire/KeyBindings/KeyBindings.hpp"
@@ -16,8 +17,22 @@ namespace Spire {
   class AdditionalTagDatabase {
     public:
 
-      /** Constructs an empty database. */
-      AdditionalTagDatabase();
+      /**
+       * Constructs an empty database.
+       * @param markets The database of markets used to form regions.
+       * @param destinations The database of destinations used to resolve the
+       *        region they belong to.
+       */
+      AdditionalTagDatabase(
+        Nexus::MarketDatabase markets, Nexus::DestinationDatabase destinations);
+
+      /**
+       * Adds a schema to this database.
+       * @param destination The destination the schema applies to.
+       * @param schema The schema to add.
+       */
+      void add(const Nexus::Destination& destination,
+        const std::shared_ptr<AdditionalTagSchema>& schema);
 
       /**
        * Adds a schema to this database.
@@ -41,17 +56,21 @@ namespace Spire {
       const std::shared_ptr<AdditionalTagSchema>&
         find(const Nexus::Region& region, int key) const;
 
-      /** Returns a list of all schemas for a given region. */
-      std::vector<std::shared_ptr<AdditionalTagSchema>>
-        find(const Nexus::Region& region) const;
-
       /** Returns a list of all schemas for a given destination. */
       std::vector<std::shared_ptr<AdditionalTagSchema>>
         find(const Nexus::Destination& destination) const;
 
+      /** Returns a list of all schemas for a given region. */
+      std::vector<std::shared_ptr<AdditionalTagSchema>>
+        find(const Nexus::Region& region) const;
+
     private:
+      Nexus::MarketDatabase m_markets;
+      Nexus::DestinationDatabase m_destinations;
       Nexus::RegionMap<std::unordered_map<
         int, std::shared_ptr<AdditionalTagSchema>>> m_schemas;
+      std::unordered_map<Nexus::Destination, std::unordered_map<
+        int, std::shared_ptr<AdditionalTagSchema>>> m_destination_schemas;
   };
 
   /** Returns a database of default additional tags. */

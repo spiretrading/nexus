@@ -1,4 +1,5 @@
 #include "Spire/KeyBindings/AdditionalTagDatabase.hpp"
+#include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 #include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "Spire/Canvas/Types/MoneyType.hpp"
 #include "Spire/KeyBindings/BasicAdditionalTagSchema.hpp"
@@ -13,8 +14,36 @@ namespace {
 
   auto make_asx_exec_inst_schema() {
     auto cases = std::vector<std::string>{"A", "M", "R", "P"};
+    std::sort(cases.begin(), cases.end());
     auto schema = std::make_shared<EnumAdditionalTagSchema>(
       "ExecInst", 18, std::move(cases));
+    return schema;
+  }
+
+  auto make_chix_ex_destination_schema() {
+    auto cases = std::vector<std::string>{"CXD", "SMRTCHIX", "SMRTCHIXD",
+      "SMRTDARKNR", "SMRTDARK", "SMRTX", "SMRTXD", "SMRTXDARKNR", "SMRTXDARK",
+      "SWEEPANDCROSS", "SWEEPANDPOST", "DEPTHFINDER", "SMRTFEE", "MULTI-CA",
+      "MULTI-CXA", "MULTI-CX", "MULTI-CXY", "MULTIDARK-CM", "MULTIDARK-YM",
+      "MULTIDARK-YCM", "MULTIDARK-CYXM", "MULTIDARK-DM"};
+    std::sort(cases.begin(), cases.end());
+    auto schema = std::make_shared<EnumAdditionalTagSchema>(
+      "ExDestination", 100, std::move(cases));
+    return schema;
+  }
+
+  auto make_chix_exec_inst_schema() {
+    auto cases = std::vector<std::string>{"M", "R", "P", "x", "f"};
+    std::sort(cases.begin(), cases.end());
+    auto schema = std::make_shared<EnumAdditionalTagSchema>(
+      "ExecInst", 18, std::move(cases));
+    return schema;
+  }
+
+  auto make_tsx_long_life_schema() {
+    auto cases = std::vector<std::string>{"Y", "N"};
+    auto schema = std::make_shared<EnumAdditionalTagSchema>(
+      "TSXLongLife", 7735, std::move(cases));
     return schema;
   }
 
@@ -31,9 +60,17 @@ namespace {
   }
 }
 
-AdditionalTagDatabase::AdditionalTagDatabase()
-  : m_schemas(
+AdditionalTagDatabase::AdditionalTagDatabase(
+  MarketDatabase markets, DestinationDatabase destinations)
+  : m_markets(std::move(markets)),
+    m_destinations(std::move(destinations)),
+    m_schemas(
       std::unordered_map<int, std::shared_ptr<AdditionalTagSchema>>()) {}
+
+void AdditionalTagDatabase::add(const Destination& destination,
+    const std::shared_ptr<AdditionalTagSchema>& schema) {
+  m_destination_schemas[destination][schema->get_key()] = schema;
+}
 
 void AdditionalTagDatabase::add(const Region& region,
     const std::shared_ptr<AdditionalTagSchema>& schema) {
@@ -48,7 +85,18 @@ void AdditionalTagDatabase::add(const Region& region,
 
 const std::shared_ptr<AdditionalTagSchema>&
     AdditionalTagDatabase::find(const Destination& destination, int key) const {
-  return NONE;
+  auto i = m_destination_schemas.find(destination);
+  if(i != m_destination_schemas.end()) {
+    auto j = std::get<1>(*i).find(key);
+    if(j != std::get<1>(*i).end()) {
+      return j->second;
+    }
+  }
+  auto region = Region();
+  for(auto& market : m_destinations.FromId(destination).m_markets) {
+    region += Region(m_markets.FromCode(market));
+  }
+  return find(region, key);
 }
 
 const std::shared_ptr<AdditionalTagSchema>&
@@ -63,6 +111,34 @@ const std::shared_ptr<AdditionalTagSchema>&
     }
   }
   return *match;
+}
+
+std::vector<std::shared_ptr<AdditionalTagSchema>>
+    AdditionalTagDatabase::find(const Destination& destination) const {
+  auto matches = std::vector<std::shared_ptr<AdditionalTagSchema>>();
+  auto i = m_destination_schemas.find(destination);
+  if(i != m_destination_schemas.end()) {
+    for(auto& j : i->second) {
+      for(auto& schema : std::get<1>(*i)) {
+        auto k = std::find_if(matches.begin(), matches.end(),
+          [&] (const auto& match) {
+            return match->get_key() == schema.second->get_key();
+          });
+        if(k == matches.end()) {
+          matches.push_back(schema.second);
+        }
+      }
+    }
+  }
+  auto region = Region();
+  for(auto& market : m_destinations.FromId(destination).m_markets) {
+    region += Region(m_markets.FromCode(market));
+  }
+  auto parent_matches = find(region);
+  for(auto& match : parent_matches) {
+    matches.push_back(match);
+  }
+  return matches;
 }
 
 std::vector<std::shared_ptr<AdditionalTagSchema>>
@@ -84,18 +160,18 @@ std::vector<std::shared_ptr<AdditionalTagSchema>>
   return matches;
 }
 
-std::vector<std::shared_ptr<AdditionalTagSchema>>
-    AdditionalTagDatabase::find(const Destination& destination) const {
-  return {};
-}
-
 const AdditionalTagDatabase& Spire::get_default_additional_tag_database() {
   static auto database = [] {
-    auto database = AdditionalTagDatabase();
+    auto database = AdditionalTagDatabase(
+      GetDefaultMarketDatabase(), GetDefaultDestinationDatabase());
     database.add(Region::Global(), MaxFloorSchema::get_instance());
     database.add(Region::Global(), std::make_shared<BasicAdditionalTagSchema>(
       "PegDifference", 211, MoneyType::GetInstance()));
     database.add(ASX(), make_asx_exec_inst_schema());
+    database.add(
+      DefaultDestinations::CHIX(), make_chix_ex_destination_schema());
+    database.add(DefaultDestinations::CHIX(), make_chix_exec_inst_schema());
+    database.add(DefaultDestinations::CHIX(), make_tsx_long_life_schema());
     return database;
   }();
   return database;
@@ -104,8 +180,10 @@ const AdditionalTagDatabase& Spire::get_default_additional_tag_database() {
 const std::shared_ptr<AdditionalTagSchema>& Spire::find(
     const AdditionalTagDatabase& database, const Destination& destination,
     const Region& region, int key) {
-  if(auto& schema = database.find(destination, key)) {
-    return schema;
+  if(!destination.empty()) {
+    if(auto& schema = database.find(destination, key)) {
+      return schema;
+    }
   }
   return database.find(region, key);
 }
@@ -113,5 +191,8 @@ const std::shared_ptr<AdditionalTagSchema>& Spire::find(
 std::vector<std::shared_ptr<AdditionalTagSchema>> Spire::find(
     const AdditionalTagDatabase& database, const Destination& destination,
     const Region& region) {
-  return database.find(region);
+  if(destination.empty()) {
+    return database.find(region);
+  }
+  return database.find(destination);
 }
