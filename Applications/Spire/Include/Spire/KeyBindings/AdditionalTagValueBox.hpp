@@ -60,6 +60,10 @@ namespace Spire {
       std::shared_ptr<AdditionalTagSchemaModel> m_schema;
       boost::signals2::scoped_connection m_schema_connection;
 
+      const AnyInputBox& get_input_box() const;
+      AnyInputBox& get_input_box();
+      void update_schema(
+        const std::shared_ptr<AdditionalTagSchema>& schema, bool is_read_only);
       void on_schema(const std::shared_ptr<AdditionalTagSchema>& schema);
   };
 }

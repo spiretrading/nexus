@@ -93,7 +93,6 @@ namespace {
     }
 
     void Visit(const MoneyType& type) override {
-      m_current->set(Nexus::Tag::Type(Money::ZERO));
       auto box = new MoneyBox(make_scalar_value_model_decorator(
         make_transform_value_model(std::move(m_current),
           [] (const auto& value) -> optional<Money> {
