@@ -59,6 +59,8 @@ namespace Spire {
 
       QValidator::State set(int index, const Type& value) override;
 
+      QValidator::State push(const Type& value) override;
+
       QValidator::State insert(const Type& value, int index) override;
 
       QValidator::State move(int source, int destination) override;
@@ -135,9 +137,14 @@ namespace Spire {
   }
 
   template<typename T>
+  QValidator::State TranslatedListModel<T>::push(const Type& value) {
+    return m_source->push(value);
+  }
+
+  template<typename T>
   QValidator::State TranslatedListModel<T>::insert(
       const Type& value, int index) {
-    return QValidator::State::Invalid;
+    return m_source->insert(value, index);
   }
 
   template<typename T>
