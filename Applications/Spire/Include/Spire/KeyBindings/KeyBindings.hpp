@@ -13,6 +13,7 @@ namespace Spire {
   class BasicAdditionalTagSchema;
   class CancelKeyBindingsForm;
   class CancelKeyBindingsModel;
+  class EnumAdditionalTagSchema;
   class HotkeyOverride;
   class InteractionsKeyBindingsForm;
   class InteractionsKeyBindingsModel;
