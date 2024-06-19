@@ -40,10 +40,34 @@ namespace {
     return schema;
   }
 
+  auto make_cx2_ex_destination_schema() {
+    auto cases = std::vector<std::string>{
+      "SMRTCX2", "SMRTCX2D", "SMRTCX2DARKNR", "SMRTCX2DARK"};
+    std::sort(cases.begin(), cases.end());
+    auto schema = std::make_shared<EnumAdditionalTagSchema>(
+      "ExDestination", 100, std::move(cases));
+    return schema;
+  }
+
+  auto make_cx2_exec_inst_schema() {
+    auto cases = std::vector<std::string>{"M", "R", "P", "x", "f"};
+    std::sort(cases.begin(), cases.end());
+    auto schema = std::make_shared<EnumAdditionalTagSchema>(
+      "ExecInst", 18, std::move(cases));
+    return schema;
+  }
+
   auto make_tsx_long_life_schema() {
     auto cases = std::vector<std::string>{"Y", "N"};
     auto schema = std::make_shared<EnumAdditionalTagSchema>(
       "TSXLongLife", 7735, std::move(cases));
+    return schema;
+  }
+
+  auto make_cse_exec_inst_schema() {
+    auto cases = std::vector<std::string>{"M", "P", "R", "9", "0"};
+    auto schema = std::make_shared<EnumAdditionalTagSchema>(
+      "ExecInst", 18, std::move(cases));
     return schema;
   }
 
@@ -172,6 +196,11 @@ const AdditionalTagDatabase& Spire::get_default_additional_tag_database() {
       DefaultDestinations::CHIX(), make_chix_ex_destination_schema());
     database.add(DefaultDestinations::CHIX(), make_chix_exec_inst_schema());
     database.add(DefaultDestinations::CHIX(), make_tsx_long_life_schema());
+    database.add(DefaultDestinations::CSE(), make_cse_exec_inst_schema());
+    database.add(DefaultDestinations::CSE2(), make_cse_exec_inst_schema());
+    database.add(DefaultDestinations::CX2(), make_cx2_ex_destination_schema());
+    database.add(DefaultDestinations::CX2(), make_cx2_exec_inst_schema());
+    database.add(DefaultDestinations::CX2(), make_tsx_long_life_schema());
     return database;
   }();
   return database;
