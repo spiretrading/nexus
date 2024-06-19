@@ -381,6 +381,14 @@ AdditionalTagsWindow::AdditionalTagsWindow(
   set_body(body);
 }
 
+void AdditionalTagsWindow::keyPressEvent(QKeyEvent* event) {
+  if(event->key() == Qt::Key_Escape) {
+    on_cancel();
+    return;
+  }
+  QWidget::keyPressEvent(event);
+}
+
 EditableBox* AdditionalTagsWindow::make_key_item(
     const std::shared_ptr<TableModel>& table, int row, int column) const {
   auto current = make_list_value_model(

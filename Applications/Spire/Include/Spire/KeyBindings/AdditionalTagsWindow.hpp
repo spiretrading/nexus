@@ -26,6 +26,9 @@ namespace Spire {
         std::shared_ptr<DestinationModel> destination,
         std::shared_ptr<RegionModel> region, QWidget* parent = nullptr);
 
+    protected:
+      void keyPressEvent(QKeyEvent* event) override;
+
     private:
       std::shared_ptr<AdditionalTagsModel> m_current;
       AdditionalTagDatabase m_additional_tags;
