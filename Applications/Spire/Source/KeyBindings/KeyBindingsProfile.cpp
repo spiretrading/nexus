@@ -606,15 +606,17 @@ std::vector<std::unique_ptr<CanvasNode>> Spire::make_matnlp_order_task_nodes() {
   auto order_types = std::vector<std::unique_ptr<CanvasNode>>();
   populate_basic_order_task_nodes(
     DefaultDestinations::MATNLP(), "MATCH Now LP", order_types);
-  auto at_the_touch = CanvasNodeBuilder(*GetLimitOrderTaskNode()->AddField(
-    "constraints", 6005, std::make_unique<TextNode>("PAG")));
-  at_the_touch.SetVisible("constraints", false);
-  at_the_touch.SetReadOnly("constraints", true);
-  auto mpi = CanvasNodeBuilder(*GetLimitOrderTaskNode()->AddField(
-    "constraints", 6005, std::make_unique<TextNode>("PMI")));
-  mpi.SetVisible("constraints", false);
-  mpi.SetReadOnly("constraints", true);
-  populate_bid_ask(at_the_touch, "MATCH Now LP MPI",
+  auto att = CanvasNodeBuilder(*GetPeggedOrderTaskNode(true)->AddField(
+    "exec_inst", 18, std::make_unique<TextNode>("R")));
+  att.SetVisible("exec_inst", false);
+  att.SetReadOnly("exec_inst", true);
+  populate_bid_ask(att, "MATCH Now LP At-The-Touch",
+    DefaultDestinations::MATNLP(), TimeInForce::Type::DAY, order_types);
+  auto mpi = CanvasNodeBuilder(*GetPeggedOrderTaskNode(true)->AddField(
+    "exec_inst", 18, std::make_unique<TextNode>("x")));
+  mpi.SetVisible("exec_inst", false);
+  mpi.SetReadOnly("exec_inst", true);
+  populate_bid_ask(mpi, "MATCH Now LP MPI",
     DefaultDestinations::MATNLP(), TimeInForce::Type::DAY, order_types);
   return order_types;
 }
@@ -623,6 +625,18 @@ std::vector<std::unique_ptr<CanvasNode>> Spire::make_matnmf_order_task_nodes() {
   auto order_types = std::vector<std::unique_ptr<CanvasNode>>();
   populate_basic_order_task_nodes(
     DefaultDestinations::MATNMF(), "MATCH Now MF", order_types);
+  auto att = CanvasNodeBuilder(*GetPeggedOrderTaskNode(true)->AddField(
+    "exec_inst", 18, std::make_unique<TextNode>("R")));
+  att.SetVisible("exec_inst", false);
+  att.SetReadOnly("exec_inst", true);
+  populate_bid_ask(att, "MATCH Now MF At-The-Touch",
+    DefaultDestinations::MATNMF(), TimeInForce::Type::DAY, order_types);
+  auto mpi = CanvasNodeBuilder(*GetPeggedOrderTaskNode(true)->AddField(
+    "exec_inst", 18, std::make_unique<TextNode>("x")));
+  mpi.SetVisible("exec_inst", false);
+  mpi.SetReadOnly("exec_inst", true);
+  populate_bid_ask(mpi, "MATCH Now MF MPI",
+    DefaultDestinations::MATNMF(), TimeInForce::Type::DAY, order_types);
   return order_types;
 }
 

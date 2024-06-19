@@ -71,6 +71,41 @@ namespace {
     return schema;
   }
 
+  auto make_matn_exec_inst_schema() {
+    auto cases = std::vector<std::string>{"M", "N", "R", "P", "p", "b"};
+    auto schema = std::make_shared<EnumAdditionalTagSchema>(
+      "ExecInst", 18, std::move(cases));
+    return schema;
+  }
+
+  auto make_matn_anonymous_schema() {
+    auto cases = std::vector<std::string>{"Y", "N"};
+    auto schema = std::make_shared<EnumAdditionalTagSchema>(
+      "Anonymous", 6761, std::move(cases));
+    return schema;
+  }
+
+  auto make_neoe_ex_destination_schema() {
+    auto cases = std::vector<std::string>{"L", "N"};
+    auto schema = std::make_shared<EnumAdditionalTagSchema>(
+      "ExDestination", 100, std::move(cases));
+    return schema;
+  }
+
+  auto make_neoe_exec_inst_schema() {
+    auto cases = std::vector<std::string>{"M", "i", "6", "100", "x"};
+    auto schema = std::make_shared<EnumAdditionalTagSchema>(
+      "ExecInst", 18, std::move(cases));
+    return schema;
+  }
+
+  auto make_neoe_handl_inst_schema() {
+    auto cases = std::vector<std::string>{"5", "6"};
+    auto schema = std::make_shared<EnumAdditionalTagSchema>(
+      "HandlInst", 21, std::move(cases));
+    return schema;
+  }
+
   const auto& ASX() {
     static const auto REGION = [&] {
       auto region = Region();
@@ -201,6 +236,16 @@ const AdditionalTagDatabase& Spire::get_default_additional_tag_database() {
     database.add(DefaultDestinations::CX2(), make_cx2_ex_destination_schema());
     database.add(DefaultDestinations::CX2(), make_cx2_exec_inst_schema());
     database.add(DefaultDestinations::CX2(), make_tsx_long_life_schema());
+    database.add(DefaultDestinations::MATNLP(), make_matn_anonymous_schema());
+    database.add(DefaultDestinations::MATNLP(), make_matn_exec_inst_schema());
+    database.add(DefaultDestinations::MATNMF(), make_matn_anonymous_schema());
+    database.add(DefaultDestinations::MATNMF(), make_matn_exec_inst_schema());
+    database.add(
+      DefaultDestinations::NEOE(), make_neoe_ex_destination_schema());
+    database.add(DefaultDestinations::NEOE(), make_neoe_exec_inst_schema());
+    database.add(
+      DefaultDestinations::NEOE(), make_neoe_handl_inst_schema());
+    database.add(DefaultDestinations::TSX(), make_tsx_long_life_schema());
     return database;
   }();
   return database;
