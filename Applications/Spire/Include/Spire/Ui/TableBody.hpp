@@ -106,6 +106,12 @@ namespace Styles {
       /** Returns the TableItem at a given index. */
       TableItem* find_item(const Index& index);
 
+      /**
+       * Returns an estimate of how many pixels need to be scrolled for a single
+       * row.
+       */
+      int estimate_scroll_line_height() const;
+
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
       bool event(QEvent* event) override;

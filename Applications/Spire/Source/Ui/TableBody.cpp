@@ -397,6 +397,10 @@ TableItem* TableBody::find_item(const Index& index) {
   return nullptr;
 }
 
+int TableBody::estimate_scroll_line_height() const {
+  return std::max(1, estimate_row_height()) + m_styles.m_vertical_spacing;
+}
+
 bool TableBody::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::Resize) {
     update_visible_region();

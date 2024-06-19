@@ -73,6 +73,9 @@ namespace Spire {
       boost::signals2::connection connect_sort_signal(
         const SortSignal::slot_type& slot) const;
 
+    protected:
+      bool eventFilter(QObject* watched, QEvent* event) override;
+
     private:
       mutable SortSignal m_sort_signal;
       std::shared_ptr<TableModel> m_table;
@@ -92,6 +95,7 @@ namespace Spire {
       boost::signals2::scoped_connection m_body_style_connection;
 
       bool is_filtered(const TableModel& model, int row);
+      void update_scroll_sizes();
       void on_order_update(int index, TableHeaderItem::Order order);
       void on_filter_clicked(int index);
       void on_filter(int column, TableFilter::Filter filter);

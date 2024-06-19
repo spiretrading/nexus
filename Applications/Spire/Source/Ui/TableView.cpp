@@ -1,4 +1,5 @@
 #include "Spire/Ui/TableView.hpp"
+#include <QEvent>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/FilteredTableModel.hpp"
@@ -94,6 +95,7 @@ TableView::TableView(
   m_body = new TableBody(m_sorted_table, std::move(current),
     std::move(selection), m_header_view->get_widths(), std::move(item_builder));
   m_body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+  m_body->installEventFilter(this);
   link(*this, *m_body);
   m_scroll_box = new ScrollBox(m_body);
   m_scroll_box->set(ScrollBox::DisplayPolicy::ON_ENGAGE);
@@ -141,8 +143,24 @@ connection TableView::connect_sort_signal(
   return m_sort_signal.connect(slot);
 }
 
+bool TableView::eventFilter(QObject* watched, QEvent* event) {
+  if(watched == m_body) {
+    if(event->type() == QEvent::Resize || event->type() == QEvent::Show) {
+      auto result = QWidget::eventFilter(watched, event);
+      update_scroll_sizes();
+      return result;
+    }
+  }
+  return QWidget::eventFilter(watched, event);
+}
+
 bool TableView::is_filtered(const TableModel& model, int row) {
   return m_filter->is_filtered(model, row);
+}
+
+void TableView::update_scroll_sizes() {
+  m_scroll_box->get_vertical_scroll_bar().set_line_size(
+    m_body->estimate_scroll_line_height());
 }
 
 void TableView::on_order_update(int index, TableHeaderItem::Order order) {
@@ -235,6 +253,7 @@ void TableView::on_body_style() {
         });
       });
   }
+  update_scroll_sizes();
   update();
 }
 
