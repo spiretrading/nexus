@@ -87,6 +87,11 @@ std::unique_ptr<CanvasNode>
     node = node->Replace(SingleOrderTaskNode::ORDER_TYPE_PROPERTY,
       std::make_unique<OrderTypeNode>(
         arguments.m_order_type)->SetReadOnly(true)->SetVisible(false));
+    if(arguments.m_order_type == OrderType::MARKET) {
+      node = node->Replace(SingleOrderTaskNode::PRICE_PROPERTY,
+        node->FindChild(SingleOrderTaskNode::PRICE_PROPERTY)->
+          SetVisible(false)->SetReadOnly(true));
+    }
   }
   if(arguments.m_side != Side::NONE) {
     node = node->Replace(SingleOrderTaskNode::SIDE_PROPERTY,
