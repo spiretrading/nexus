@@ -34,9 +34,8 @@ namespace Spire {
   /** Matches the query against the side. */
   bool matches(Nexus::Side side, const QString& query);
 
-  /** Matches the query against the quantity. */
-  bool matches(const boost::optional<Nexus::Quantity>& quantity,
-    const QString& query);
+  /** Matches the query against the quantity setting. */
+  bool matches(QuantitySetting setting, const QString& query);
 
   /** Matches the query against the time in force. */
   bool matches(Nexus::TimeInForce time_in_force, const QString& query);

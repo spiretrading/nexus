@@ -152,11 +152,11 @@ namespace {
       } else if(column_index == OrderTaskColumns::DESTINATION) {
         arguments.m_destination = std::any_cast<const Destination&>(value);
       } else if(column_index == OrderTaskColumns::ORDER_TYPE) {
-        arguments.m_order_type = std::any_cast<const OrderType&>(value);
+        arguments.m_order_type = std::any_cast<OrderType>(value);
       } else if(column_index == OrderTaskColumns::SIDE) {
-        arguments.m_side = std::any_cast<const Side&>(value);
+        arguments.m_side = std::any_cast<Side>(value);
       } else if(column_index == OrderTaskColumns::QUANTITY) {
-        arguments.m_quantity = std::any_cast<const optional<Quantity>&>(value);
+        arguments.m_quantity = std::any_cast<QuantitySetting>(value);
       } else if(column_index == OrderTaskColumns::TIME_IN_FORCE) {
         arguments.m_time_in_force = std::any_cast<const TimeInForce&>(value);
       } else if(column_index == OrderTaskColumns::TAGS) {

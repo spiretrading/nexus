@@ -98,10 +98,10 @@ std::unique_ptr<CanvasNode>
       std::make_unique<DestinationNode>(
         arguments.m_destination)->SetReadOnly(true)->SetVisible(false));
   }
-  if(arguments.m_quantity) {
+  if(arguments.m_quantity == QuantitySetting::DEFAULT) {
     node = node->Replace(SingleOrderTaskNode::QUANTITY_PROPERTY,
-      std::make_unique<IntegerNode>(
-        *arguments.m_quantity)->SetReadOnly(true)->SetVisible(false));
+      node->FindChild(
+        SingleOrderTaskNode::QUANTITY_PROPERTY)->SetVisible(false));
   }
   if(arguments.m_time_in_force.GetType() != TimeInForce::Type::NONE) {
     node = node->Replace(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
@@ -134,6 +134,15 @@ OrderTaskArguments Spire::to_order_task_arguments(const CanvasNode& node,
       arguments.m_region += Region(markets.FromCode(market));
     }
   }
+  if(auto quantity = node.FindChild(SingleOrderTaskNode::QUANTITY_PROPERTY)) {
+    if(quantity->IsVisible()) {
+      arguments.m_quantity = QuantitySetting::ADJUSTABLE;
+    } else {
+      arguments.m_quantity = QuantitySetting::DEFAULT;
+    }
+  } else {
+    arguments.m_quantity = QuantitySetting::ADJUSTABLE;
+  }
   arguments.m_order_type = extract<OrderTypeType>(
     node.FindChild(SingleOrderTaskNode::ORDER_TYPE_PROPERTY));
   arguments.m_side =
@@ -146,4 +155,16 @@ OrderTaskArguments Spire::to_order_task_arguments(const CanvasNode& node,
     }
   }
   return arguments;
+}
+
+const QString& Spire::to_text(QuantitySetting setting) {
+  if(setting == QuantitySetting::DEFAULT) {
+    static const auto TEXT = QObject::tr("Default");
+    return TEXT;
+  } else if(setting == QuantitySetting::ADJUSTABLE) {
+    static const auto TEXT = QObject::tr("Adjustable");
+    return TEXT;
+  }
+  static const auto TEXT = QObject::tr("None");
+  return TEXT;
 }

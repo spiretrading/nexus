@@ -11,7 +11,6 @@
 #include "Nexus/Definitions/Destination.hpp"
 #include "Nexus/Definitions/Market.hpp"
 #include "Nexus/Definitions/OrderType.hpp"
-#include "Nexus/Definitions/Quantity.hpp"
 #include "Nexus/Definitions/Region.hpp"
 #include "Nexus/Definitions/Side.hpp"
 #include "Nexus/Definitions/Tag.hpp"
@@ -24,6 +23,15 @@
 #include "Spire/Spire/ListModel.hpp"
 
 namespace Spire {
+
+  enum class QuantitySetting {
+
+    /** The order quantity is fixed to the default. */
+    DEFAULT,
+
+    /** The order quantity is set at submission time. */
+    ADJUSTABLE
+  };
 
   /** Stores the arguments used to submit an order task. */
   struct OrderTaskArguments {
@@ -44,7 +52,7 @@ namespace Spire {
     Nexus::Side m_side;
 
     /** The order's quantity. */
-    boost::optional<Nexus::Quantity> m_quantity;
+    QuantitySetting m_quantity;
 
     /** The order's time in force. */
     Nexus::TimeInForce m_time_in_force;
@@ -93,6 +101,9 @@ namespace Spire {
   OrderTaskArguments to_order_task_arguments(const CanvasNode& node,
     const Nexus::MarketDatabase& markets,
     const Nexus::DestinationDatabase& destinations);
+
+  /** Returns the text representation of a QuantitySetting. */
+  const QString& to_text(QuantitySetting setting);
 }
 
 namespace Beam::Serialization {

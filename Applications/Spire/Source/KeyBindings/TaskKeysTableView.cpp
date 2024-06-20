@@ -1,6 +1,7 @@
 #include "Spire/KeyBindings/TaskKeysTableView.hpp"
 #include <boost/signals2/shared_connection_block.hpp>
 #include "Spire/KeyBindings/AdditionalTagsBox.hpp"
+#include "Spire/KeyBindings/QuantitySettingBox.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ColumnViewListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
@@ -9,6 +10,7 @@
 #include "Spire/Spire/TableModelTransactionLog.hpp"
 #include "Spire/Spire/ValidatedValueModel.hpp"
 #include "Spire/Ui/AnyInputBox.hpp"
+#include "Spire/Ui/DecimalBox.hpp"
 #include "Spire/Ui/DestinationBox.hpp"
 #include "Spire/Ui/EditableBox.hpp"
 #include "Spire/Ui/EditableTableView.hpp"
@@ -17,7 +19,6 @@
 #include "Spire/Ui/KeyInputBox.hpp"
 #include "Spire/Ui/OrderTypeBox.hpp"
 #include "Spire/Ui/PopupBox.hpp"
-#include "Spire/Ui/QuantityBox.hpp"
 #include "Spire/Ui/RecycledTableViewItemBuilder.hpp"
 #include "Spire/Ui/RegionBox.hpp"
 #include "Spire/Ui/SideBox.hpp"
@@ -512,10 +513,9 @@ namespace {
             return {new AnyInputBox(*make_side_box(current)),
               std::make_shared<ItemState>(current)};
           } else if(column_id == OrderTaskColumns::QUANTITY) {
-            auto proxy = make_proxy.operator ()<optional<Quantity>>();
-            auto current = make_scalar_value_model_decorator(proxy);
-            return {new AnyInputBox(*new QuantityBox(current)),
-              std::make_shared<ItemState>(proxy)};
+            auto current = make_proxy.operator ()<QuantitySetting>();
+            return {new AnyInputBox(*make_quantity_setting_box(current)),
+              std::make_shared<ItemState>(current)};
           } else if(column_id == OrderTaskColumns::TIME_IN_FORCE) {
             auto current = make_proxy.operator ()<TimeInForce>();
             return {new AnyInputBox(*make_time_in_force_box(current)),
@@ -576,7 +576,7 @@ namespace {
       } else if(column_id == OrderTaskColumns::SIDE) {
         update_proxy.operator ()<Side>();
       } else if(column_id == OrderTaskColumns::QUANTITY) {
-        update_proxy.operator ()<optional<Quantity>>();
+        update_proxy.operator ()<QuantitySetting>();
       } else if(column_id == OrderTaskColumns::TIME_IN_FORCE) {
         update_proxy.operator ()<TimeInForce>();
       } else if(column_id == OrderTaskColumns::TAGS) {

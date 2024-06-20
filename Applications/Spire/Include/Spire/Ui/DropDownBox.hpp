@@ -269,7 +269,10 @@ namespace Styles {
     ListViewItemBuilder<ListModel<typename T::Type>> item_builder,
     QWidget* parent)
     : DropDownBox(std::static_pointer_cast<AnyListModel>(list),
-        ListViewItemBuilder<>(std::move(item_builder)), parent) {}
+        ListViewItemBuilder<>(std::move(item_builder)),
+        [] (const std::any& value) {
+          return to_text(std::any_cast<const typename T::Type&>(value));
+        }, parent) {}
 
   template<std::derived_from<AnyListModel> T>
   DropDownBox::DropDownBox(std::shared_ptr<T> list,
@@ -278,7 +281,9 @@ namespace Styles {
     QWidget* parent)
     : DropDownBox(std::move(list), std::move(current),
         std::make_shared<ListSingleSelectionModel>(), std::move(item_builder),
-        parent) {}
+        [] (const std::any& value) {
+          return to_text(std::any_cast<const typename T::Type&>(value));
+        }, parent) {}
 
   template<std::derived_from<AnyListModel> T,
     std::invocable<const typename T::Type&> F>
@@ -311,7 +316,10 @@ namespace Styles {
     QWidget* parent)
     : DropDownBox(std::static_pointer_cast<AnyListModel>(list),
         std::move(current), std::move(selection),
-        ListViewItemBuilder<>(std::move(item_builder)), parent) {}
+        ListViewItemBuilder<>(std::move(item_builder)),
+        [] (const std::any& value) {
+          return to_text(std::any_cast<const typename T::Type&>(value));
+        }, parent) {}
 
   template<std::derived_from<AnyListModel> T,
     std::invocable<const typename T::Type&> F>

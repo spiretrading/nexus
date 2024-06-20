@@ -108,23 +108,8 @@ bool Spire::matches(Side side, const QString& query) {
     Qt::CaseInsensitive);
 }
 
-bool Spire::matches(const optional<Quantity>& quantity, const QString& query) {
-  if(!quantity) {
-    return false;
-  }
-  auto osstr = std::ostringstream();
-  osstr << *quantity;
-  auto string = osstr.str();
-  auto text = [&] {
-    if(auto pos = string.find('.'); pos != std::string::npos) {
-      if(auto last_zero_pos = string.find_last_not_of('0');
-          last_zero_pos > pos) {
-        return string.erase(last_zero_pos + 1, std::string::npos);
-      }
-    }
-    return string;
-  }();
-  return QString::fromStdString(text).startsWith(query, Qt::CaseInsensitive);
+bool Spire::matches(QuantitySetting setting, const QString& query) {
+  return to_text(setting).startsWith(query, Qt::CaseInsensitive);
 }
 
 bool Spire::matches(TimeInForce time_in_force, const QString& query) {
