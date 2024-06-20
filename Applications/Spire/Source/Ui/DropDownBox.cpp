@@ -389,6 +389,22 @@ void DropDownBox::make_drop_down_list() {
   if(m_drop_down_list) {
     return;
   }
+  if(m_selection->get_size() > 0) {
+    m_selection->transact([&] {
+      auto has_current = [&] {
+        if(!m_current->get()) {
+          return false;
+        }
+        auto i = std::find(
+          m_selection->begin(), m_selection->end(), *m_current->get());
+        return i != m_selection->end();
+      }();
+      clear(*m_selection);
+      if(has_current) {
+        m_selection->push(*m_current->get());
+      }
+    });
+  }
   auto list_view = new ListView(m_list, m_current, m_selection, m_item_builder);
   m_drop_down_list = new DropDownList(*list_view, *this);
   m_drop_down_list->installEventFilter(this);

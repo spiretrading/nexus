@@ -62,17 +62,27 @@ namespace Details {
         Details::is_index_optional<SearchType>::value;
       LocalValueModel<boost::optional<int>> m_index;
       std::shared_ptr<ListModel<SearchType>> m_list;
+      boost::signals2::scoped_connection m_list_connection;
       std::shared_ptr<ValueModel<SearchType>> m_value;
       boost::signals2::scoped_connection m_current_connection;
 
+      void search(const SearchType& value);
+      void on_operation(
+        const typename ListModel<SearchType>::Operation& operation);
       void on_current(const SearchType& current);
   };
+
+  template<typename L, typename T>
+  ListIndexValueModel(std::shared_ptr<L>, std::shared_ptr<T>) ->
+    ListIndexValueModel<typename T::Type>;
 
   template<typename T>
   ListIndexValueModel<T>::ListIndexValueModel(
       std::shared_ptr<ListModel<SearchType>> list,
       std::shared_ptr<ValueModel<SearchType>> value)
       : m_list(std::move(list)),
+        m_list_connection(m_list->connect_operation_signal(
+          std::bind_front(&ListIndexValueModel::on_operation, this))),
         m_value(std::move(value)),
         m_current_connection(m_value->connect_update_signal(
           std::bind_front(&ListIndexValueModel::on_current, this))) {
@@ -150,16 +160,47 @@ namespace Details {
   }
 
   template<typename T>
-  void ListIndexValueModel<T>::on_current(const SearchType& current) {
+  void ListIndexValueModel<T>::search(const SearchType& value) {
     for(auto i = 0; i != m_list->get_size(); ++i) {
       try {
-        if(m_list->get(i) == current) {
+        if(m_list->get(i) == value) {
           m_index.set(i);
           return;
         }
       } catch(const std::bad_any_cast&) {}
     }
     m_index.set(boost::none);
+  }
+
+  template<typename T>
+  void ListIndexValueModel<T>::on_operation(
+      const typename ListModel<SearchType>::Operation& operation) {
+    visit(operation,
+      [&] (const typename ListModel<SearchType>::AddOperation& operation) {
+        if(m_index.get() && operation.m_index <= *m_index.get()) {
+          m_index.set(*m_index.get() + 1);
+        }
+      },
+      [&] (const typename ListModel<SearchType>::RemoveOperation& operation) {
+        if(!m_index.get()) {
+          return;
+        }
+        if(operation.m_index < *m_index.get()) {
+          m_index.set(*m_index.get() - 1);
+        } else if(operation.m_index == *m_index.get()) {
+          search(m_value->get());
+        }
+      },
+      [&] (const typename ListModel<SearchType>::UpdateOperation& operation) {
+        if(m_index.get() && operation.m_index == *m_index.get()) {
+          search(operation.get_previous());
+        }
+      });
+  }
+
+  template<typename T>
+  void ListIndexValueModel<T>::on_current(const SearchType& current) {
+    search(current);
   }
 }
 
