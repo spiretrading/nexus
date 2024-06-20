@@ -115,6 +115,7 @@ namespace Styles {
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
       bool event(QEvent* event) override;
+      bool focusNextPrevChild(bool next) override;
       void keyPressEvent(QKeyEvent* event) override;
       void keyReleaseEvent(QKeyEvent* event) override;
       void moveEvent(QMoveEvent* event) override;
@@ -189,6 +190,8 @@ namespace Styles {
       void reset_visible_region(
         int total_height, std::vector<RowCover*>& unmounted_rows);
       void update_visible_region();
+      bool navigate_next();
+      bool navigate_previous();
       void on_item_activated(TableItem& item);
       void on_current(const boost::optional<Index>& previous,
         const boost::optional<Index>& current);

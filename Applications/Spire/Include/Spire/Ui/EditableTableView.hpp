@@ -32,7 +32,6 @@ namespace Spire {
 
     protected:
       void keyPressEvent(QKeyEvent* event) override;
-      bool focusNextPrevChild(bool next) override;
 
     private:
       struct EditableItemBuilder;
@@ -40,8 +39,6 @@ namespace Spire {
       bool m_is_processing_key;
 
       void delete_row(int row);
-      bool navigate_next();
-      bool navigate_previous();
   };
 
   /**
