@@ -331,7 +331,6 @@ void ComboBox::submit(const QString& query, bool is_passive) {
     m_data->m_has_autocomplete_selection = false;
     auto current_blocker =
       shared_connection_block(m_data->m_current_connection);
-    qDebug() << "OnSubmit";
     m_current->set(value);
   }
   m_data->m_last_completion = query;
@@ -377,7 +376,6 @@ void ComboBox::on_input(const AnyRef& current) {
       auto blocker = std::array{
         shared_connection_block(m_data->m_input_connection),
         shared_connection_block(m_data->m_current_connection)};
-      qDebug() << "OnInput";
       m_current->set(value);
     }
   }
@@ -396,7 +394,6 @@ void ComboBox::on_highlight(const Highlight& highlight) {
   m_data->m_prefix = query;
   m_data->m_completion.clear();
   auto current_blocker = shared_connection_block(m_data->m_current_connection);
-  qDebug() << "OnHighlight";
   m_current->set(value);
 }
 
@@ -464,7 +461,6 @@ void ComboBox::on_drop_down_current(optional<int> index) {
     m_data->m_has_autocomplete_selection = false;
     auto current_blocker =
       shared_connection_block(m_data->m_current_connection);
-    qDebug() << "OnDropDown";
     m_current->set(value);
   }
 }
