@@ -4,7 +4,6 @@
 #include <QKeyEvent>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
-#include "Spire/Spire/TransformValueModel.hpp"
 #include "Spire/Ui/AnyInputBox.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DropDownBox.hpp"
@@ -18,6 +17,45 @@ using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::Styles;
+
+namespace {
+  struct ComboBoxTextModel : TextModel {
+    std::shared_ptr<ComboBox::CurrentModel> m_current;
+    scoped_connection m_connection;
+    LocalTextModel m_value;
+
+    ComboBoxTextModel(std::shared_ptr<ComboBox::CurrentModel> current)
+        : m_current(current),
+          m_value(to_text(m_current->get())) {
+      m_connection = m_current->connect_update_signal(
+        std::bind_front(&ComboBoxTextModel::on_update, this));
+    }
+
+    const Type& get() const {
+      return m_value.get();
+    }
+
+    QValidator::State test(const Type& value) const {
+      return m_value.test(value);
+    }
+
+    QValidator::State set(const Type& value) {
+      return m_value.set(value);
+    }
+
+    connection connect_update_signal(
+        const typename UpdateSignal::slot_type& slot) const {
+      return m_value.connect_update_signal(slot);
+    }
+
+    void on_update(const std::any& current) {
+      auto text = to_text(current);
+      if(m_value.get() != text) {
+        m_value.set(text);
+      }
+    }
+  };
+}
 
 ComboBox::DeferredData::DeferredData(ComboBox& box)
   : m_submission(box.m_current->get()),
@@ -44,9 +82,8 @@ ComboBox::ComboBox(std::shared_ptr<QueryModel> query_model,
 ComboBox::ComboBox(std::shared_ptr<QueryModel> query_model,
   std::shared_ptr<CurrentModel> current, ListViewItemBuilder<> item_builder,
   QWidget* parent)
-  : ComboBox(std::move(query_model), current,
-      new AnyInputBox(*(new TextBox(make_transform_value_model(current,
-        [] (const auto& current) { return to_text(current); })))),
+  : ComboBox(std::move(query_model), current, new AnyInputBox(
+      *(new TextBox(std::make_shared<ComboBoxTextModel>(current)))),
       std::move(item_builder), parent) {}
 
 ComboBox::ComboBox(std::shared_ptr<QueryModel> query_model,
@@ -294,6 +331,7 @@ void ComboBox::submit(const QString& query, bool is_passive) {
     m_data->m_has_autocomplete_selection = false;
     auto current_blocker =
       shared_connection_block(m_data->m_current_connection);
+    qDebug() << "OnSubmit";
     m_current->set(value);
   }
   m_data->m_last_completion = query;
@@ -310,9 +348,12 @@ void ComboBox::submit(const QString& query, bool is_passive) {
 }
 
 void ComboBox::on_current(const std::any& current) {
-  if(!is_equal(current, m_query_model->parse(
-      any_cast<QString>(m_input_box->get_current()->get())))) {
-    m_input_box->get_current()->set(to_text(current));
+  auto input = any_cast<QString>(m_input_box->get_current()->get());
+  if(!is_equal(current, m_query_model->parse(input))) {
+    auto text = to_text(current);
+    if(input != text) {
+      m_input_box->get_current()->set(text);
+    }
   }
 }
 
@@ -333,8 +374,10 @@ void ComboBox::on_input(const AnyRef& current) {
       &ComboBox::on_query, this, ++m_data->m_completion_tag, true));
     auto value = m_query_model->parse(query);
     if(value.has_value()) {
-      auto current_blocker =
-        shared_connection_block(m_data->m_current_connection);
+      auto blocker = std::array{
+        shared_connection_block(m_data->m_input_connection),
+        shared_connection_block(m_data->m_current_connection)};
+      qDebug() << "OnInput";
       m_current->set(value);
     }
   }
@@ -353,6 +396,7 @@ void ComboBox::on_highlight(const Highlight& highlight) {
   m_data->m_prefix = query;
   m_data->m_completion.clear();
   auto current_blocker = shared_connection_block(m_data->m_current_connection);
+  qDebug() << "OnHighlight";
   m_current->set(value);
 }
 
@@ -420,6 +464,7 @@ void ComboBox::on_drop_down_current(optional<int> index) {
     m_data->m_has_autocomplete_selection = false;
     auto current_blocker =
       shared_connection_block(m_data->m_current_connection);
+    qDebug() << "OnDropDown";
     m_current->set(value);
   }
 }
