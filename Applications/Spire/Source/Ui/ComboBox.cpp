@@ -65,6 +65,7 @@ ComboBox::DeferredData::DeferredData(ComboBox& box)
     m_focus_observer(box),
     m_key_observer(*box.m_input_box),
     m_matches(std::make_shared<ArrayListModel<std::any>>()),
+    m_drop_down_list(nullptr),
     m_completion_tag(0),
     m_has_autocomplete_selection(false),
     m_current_connection(box.m_current->connect_update_signal(
@@ -142,10 +143,7 @@ bool ComboBox::eventFilter(QObject* watched, QEvent* event) {
     }
   } else if(watched == m_input_box) {
     if(event->type() == QEvent::Show) {
-      m_data->m_input_focus_proxy = find_focus_proxy(*m_input_box);
-      if(m_data->m_input_focus_proxy) {
-        m_data->m_input_focus_proxy->installEventFilter(this);
-      }
+      update_focus_proxy();
     }
   } else if(watched == m_data->m_input_focus_proxy) {
     if(event->type() == QEvent::FocusOut &&
@@ -220,6 +218,19 @@ void ComboBox::showEvent(QShowEvent* event) {
   QWidget::showEvent(event);
 }
 
+void ComboBox::update_focus_proxy() {
+  auto proxy = find_focus_proxy(*m_input_box);
+  if(proxy != m_data->m_input_focus_proxy) {
+    if(m_data->m_input_focus_proxy) {
+      m_data->m_input_focus_proxy->removeEventFilter(this);
+    }
+    m_data->m_input_focus_proxy = proxy;
+    if(proxy) {
+      proxy->installEventFilter(this);
+    }
+  }
+}
+
 void ComboBox::initialize_deferred_data() const {
   if(m_data) {
     return;
@@ -246,6 +257,7 @@ void ComboBox::initialize_deferred_data() const {
   panel->setWindowFlags(Qt::Popup | (panel->windowFlags() & ~Qt::Tool));
   panel->installEventFilter(self);
   m_data->m_drop_down_list->installEventFilter(self);
+  self->update_focus_proxy();
   m_data->m_drop_down_current_connection = m_data->m_drop_down_list->
     get_list_view().get_current()->connect_update_signal(
       std::bind_front(&ComboBox::on_drop_down_current, self));
@@ -520,7 +532,7 @@ void LocalComboBoxQueryModel::add(const std::any& value) {
 }
 
 void LocalComboBoxQueryModel::add(const QString& id, const std::any& value) {
-  m_values[id.data()] = value;
+  m_values[id.toLower().data()] = value;
 }
 
 std::any LocalComboBoxQueryModel::parse(const QString& query) {
