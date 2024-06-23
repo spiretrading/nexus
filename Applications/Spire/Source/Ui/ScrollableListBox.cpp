@@ -59,7 +59,9 @@ void ScrollableListBox::on_current(const optional<int>& current) {
   if(!current) {
     return;
   }
-  m_scroll_box->scroll_to(*m_list_view->get_list_item(*current));
+  if(auto item = m_list_view->get_list_item(*current)) {
+    m_scroll_box->scroll_to(*item);
+  }
 }
 
 void ScrollableListBox::on_list_view_style() {

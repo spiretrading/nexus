@@ -185,6 +185,7 @@ TagBox::TagBox(std::shared_ptr<AnyListModel> list,
   m_text_box->get_current()->connect_update_signal(
     std::bind_front(&TagBox::on_text_box_current, this));
   m_list_view = new ListView(m_model, std::bind_front(&TagBox::make_tag, this));
+  m_list_view->get_current()->set(m_model->get_size() - 1);
   m_list_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_list_view->set_item_size_policy(QSizePolicy::Fixed, QSizePolicy::Preferred);
   update_style(*m_list_view, [] (auto& style) {
@@ -629,6 +630,9 @@ void TagBox::on_operation(const AnyListModel::Operation& operation) {
       update_tip();
       update_tooltip();
     });
+  if(m_list_view->get_current()->get() != m_model->get_size() - 1) {
+    m_list_view->get_current()->set(m_model->get_size() - 1);
+  }
 }
 
 void TagBox::on_text_box_current(const QString& current) {
@@ -637,8 +641,8 @@ void TagBox::on_text_box_current(const QString& current) {
 }
 
 void TagBox::on_list_view_current(const optional<int>& current) {
-  if(current) {
-    m_list_view->get_current()->set(none);
+  if(current != m_model->get_size() - 1) {
+    m_list_view->get_current()->set(m_model->get_size() - 1);
   }
 }
 
