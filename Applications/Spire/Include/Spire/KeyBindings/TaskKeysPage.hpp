@@ -57,7 +57,6 @@ namespace Spire {
       void on_delete_task_action();
       void on_new_task_submission(const QString& name);
       void on_row_selection(const ListModel<int>::Operation& operation);
-      void on_table_operation(const TableModel::Operation& operation);
   };
 }
 

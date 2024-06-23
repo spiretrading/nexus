@@ -381,9 +381,6 @@ TaskKeysPage::TaskKeysPage(std::shared_ptr<KeyBindingsModel> key_bindings,
   auto& row_selection = m_table_view->get_selection()->get_row_selection();
   m_selection_connection = row_selection->connect_operation_signal(
     std::bind_front(&TaskKeysPage::on_row_selection, this));
-  m_table_operation_connection =
-    m_table_view->get_body().get_table()->connect_operation_signal(
-      std::bind_front(&TaskKeysPage::on_table_operation, this));
 }
 
 const std::shared_ptr<KeyBindingsModel>&
@@ -493,21 +490,5 @@ void TaskKeysPage::on_row_selection(
     },
     [&] (const ListModel<int>::RemoveOperation& operation) {
       update_button_state();
-    });
-}
-
-void TaskKeysPage::on_table_operation(const TableModel::Operation& operation) {
-  visit(operation,
-    [&] (const TableModel::AddOperation& operation) {
-/* TODO
-      if(m_is_row_added) {
-        QTimer::singleShot(0, this, [=] {
-          auto index = TableView::Index(operation.m_index, 2);
-          m_table_view->get_current()->set(index);
-          m_added_region_item = m_table_view->get_body().get_item(index);
-          m_added_region_item->installEventFilter(this);
-        });
-      }
-*/
     });
 }

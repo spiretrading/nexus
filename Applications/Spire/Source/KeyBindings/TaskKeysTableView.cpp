@@ -306,140 +306,6 @@ namespace {
     }
   };
 
-  class DumbInputBox : public QWidget {
-    public:
-      using SubmitSignal = AnyInputBox::SubmitSignal;
-
-      DumbInputBox(std::shared_ptr<AnyValueModel> current,
-        QWidget* parent = nullptr)
-        : QWidget(parent),
-          m_current(std::move(current)),
-          m_is_read_only(false) {}
-
-      const std::shared_ptr<AnyValueModel>& get_current() const {
-        return m_current;
-      }
-
-      bool is_read_only() const {
-        return m_is_read_only;
-      }
-
-      void set_read_only(bool is_read_only) {
-        m_is_read_only = is_read_only;
-      }
-
-      connection connect_submit_signal(
-          const SubmitSignal::slot_type& slot) const {
-        return connection();
-      }
-
-    private:
-      std::shared_ptr<AnyValueModel> m_current;
-      bool m_is_read_only;
-  };
-
-  class EditablePopupBox : public EditableBox {
-    public:
-      EditablePopupBox(AnyInputBox& input_box, QWidget* parent = nullptr)
-          : EditableBox(*new AnyInputBox(
-              *new DumbInputBox(input_box.get_current())), parent),
-            m_is_processing_key(false),
-            m_is_destroyed(false) {
-        get_input_box().setEnabled(false);
-        get_input_box().hide();
-        get_input_box().setFocusPolicy(Qt::ClickFocus);
-        m_editable_box = new EditableBox(input_box);
-        m_editable_box->connect_read_only_signal([=] (auto read_only) {
-          if(!read_only && !m_is_destroyed) {
-            get_input_box().set_read_only(false);
-          }
-        });
-        m_editable_box->connect_read_only_signal([=] (auto read_only) {
-          if(read_only && !m_is_destroyed) {
-            set_read_only(true);
-          }
-        });
-        m_popup_box = new PopupBox(*m_editable_box);
-        m_popup_box->setAttribute(Qt::WA_TransparentForMouseEvents);
-        layout()->addWidget(m_popup_box);
-        m_tip_window = find_tip_window(input_box);
-        if(auto proxy = find_focus_proxy(input_box)) {
-          proxy->installEventFilter(this);
-        }
-        m_editable_box->installEventFilter(this);
-        connect_read_only_signal([=] (auto read_only) {
-          if(!read_only) {
-            m_editable_box->set_read_only(false);
-          }
-        });
-        connect(this, &EditableBox::destroyed, [=] {
-          m_is_destroyed = true;
-          if(m_editable_box->parentWidget() != m_popup_box) {
-            m_editable_box->deleteLater();
-          }
-        });
-      }
-
-      bool eventFilter(QObject* watched, QEvent* event) override {
-        if(watched == m_editable_box) {
-          if(event->type() == QEvent::ParentChange) {
-            if(m_editable_box->parentWidget() != m_popup_box) {
-              match(*this, PopUp());
-            } else {
-              unmatch(*this, PopUp());
-            }
-          }
-        } else if(event->type() == QEvent::KeyPress) {
-          auto& key_event = *static_cast<QKeyEvent*>(event);
-          if(key_event.key() == Qt::Key_Tab) {
-            setFocus();
-            focusNextChild();
-            return true;
-          } else if(key_event.key() == Qt::Key_Backtab) {
-            setFocus();
-            focusPreviousChild();
-            return true;
-          }
-        }
-        return EditableBox::eventFilter(watched, event);
-      }
-
-      bool event(QEvent* event) override {
-        switch(event->type()) {
-          case QEvent::MouseButtonPress:
-            if(auto& mouse_event = *static_cast<QMouseEvent*>(event);
-                mouse_event.button() == Qt::LeftButton && hasFocus()) {
-              m_editable_box->setFocus();
-            }
-            break;
-          case QEvent::Enter:
-          case QEvent::Leave:
-            if(m_tip_window) {
-              QCoreApplication::sendEvent(m_tip_window->parentWidget(), event);
-            }
-            break;
-        }
-        return EditableBox::event(event);
-      }
-
-      void keyPressEvent(QKeyEvent* event) override {
-        if(m_is_processing_key) {
-          return EditableBox::keyPressEvent(event);
-        }
-        m_is_processing_key = true;
-        QCoreApplication::sendEvent(&m_popup_box->get_body(), event);
-        m_editable_box->setFocus();
-        m_is_processing_key = false;
-      }
-
-    private:
-      EditableBox* m_editable_box;
-      PopupBox* m_popup_box;
-      QWidget* m_tip_window;
-      bool m_is_processing_key;
-      bool m_is_destroyed;
-  };
-
   struct ItemState {
     virtual ~ItemState() = default;
     std::shared_ptr<void> m_proxy;
@@ -490,8 +356,11 @@ namespace {
               *new TextBox(current)), std::make_shared<ItemState>(current)};
           } else if(column_id == OrderTaskColumns::REGION) {
             auto current = make_proxy.operator ()<Region>();
-            return {new AnyInputBox(
-                *new RegionBox(m_region_query_model, current)),
+            auto region_box = new RegionBox(m_region_query_model, current);
+            region_box->setFixedHeight(scale_height(26));
+            region_box->setSizePolicy(
+              QSizePolicy::Preferred, QSizePolicy::Fixed);
+            return {new AnyInputBox(*region_box),
               std::make_shared<ItemState>(current)};
           } else if(column_id == OrderTaskColumns::DESTINATION) {
             auto region = make_proxy_value_model(to_value_model<Region>(
@@ -540,9 +409,7 @@ namespace {
           }
         }();
       auto editable_box = [&] () -> EditableBox* {
-        if(column_id == OrderTaskColumns::REGION) {
-          return new EditablePopupBox(*input_box);
-        } else if(column_id == OrderTaskColumns::KEY) {
+        if(column_id == OrderTaskColumns::KEY) {
           return new EditableBox(*input_box,
             [] (const auto& key) {
               return key_input_box_validator(key) != QValidator::Invalid;
@@ -621,9 +488,6 @@ TableView* Spire::make_task_keys_table_view(
     style.get((Any() > is_a<TableBody>() >
         Row() > is_a<TableItem>() > PopUp()) << Current()).
       set(border_color(QColor(Qt::transparent)));
-    style.get(Any() > is_a<TableBody>() >
-        Row() > is_a<TableItem>() > is_a<EditablePopupBox>() > ReadOnly()).
-      set(horizontal_padding(scale_width(8)));
     style.get(Any() > is_a<TableBody>() >
         Row() > is_a<TableItem>() > is_a<EditableBox>() > is_a<DecimalBox>()).
       set(TextAlign(Qt::Alignment(Qt::AlignRight)));
