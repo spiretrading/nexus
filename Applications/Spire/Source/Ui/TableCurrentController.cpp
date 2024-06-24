@@ -50,9 +50,9 @@ void TableCurrentController::add_row(int index) {
   ++m_row_size;
   if(m_current->get() && m_current->get()->m_row >= index &&
       m_current->get()->m_row < m_row_size - 1) {
-    auto blocker = shared_connection_block(m_connection);
     m_last_current =
       Index(m_current->get()->m_row + 1, m_current->get()->m_column);
+    auto blocker = shared_connection_block(m_connection);
     m_current->set(m_last_current);
   }
 }
@@ -74,9 +74,9 @@ void TableCurrentController::remove_row(int index) {
         m_current->set(Index(index, m_current->get()->m_column));
       }
     } else if(m_current->get()->m_row > index) {
-      auto blocker = shared_connection_block(m_connection);
       m_last_current =
         Index(m_current->get()->m_row - 1, m_current->get()->m_column);
+      auto blocker = shared_connection_block(m_connection);
       m_current->set(m_last_current);
     }
   }

@@ -67,6 +67,7 @@ namespace Spire {
       mutable SubmitSignal m_submit_signal;
       std::shared_ptr<RegionQueryModel> m_query_model;
       std::shared_ptr<RegionModel> m_current;
+      Nexus::Region m_last_region;
       TagComboBox* m_tag_combo_box;
       boost::signals2::scoped_connection m_current_connection;
       boost::signals2::scoped_connection m_tag_operation_connection;

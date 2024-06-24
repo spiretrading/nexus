@@ -162,15 +162,26 @@ namespace {
       }
       m_local_query_model.emplace();
       auto destinations = m_destinations.SelectEntries(
-        [] (auto& value) { return true; });
-      for(auto& destination : destinations) {
-        for(auto& market : destination.m_markets) {
-          if(market_set.contains(market)) {
-            m_local_query_model->add(to_text(destination.m_id).toLower(),
-              destination);
-            break;
+        [&] (const auto& destination) {
+          for(auto& market : destination.m_markets) {
+            if(market_set.contains(market)) {
+              return true;
+            }
+          }
+          return false;
+        });
+      std::erase_if(destinations, [&] (const auto& destination) {
+        for(auto& market : market_set) {
+          auto i = std::find(destination.m_markets.begin(),
+            destination.m_markets.end(), market);
+          if(i == destination.m_markets.end()) {
+            return true;
           }
         }
+        return false;
+      });
+      for(auto& destination : destinations) {
+        m_local_query_model->add(to_text(destination.m_id), destination);
       }
     }
   };

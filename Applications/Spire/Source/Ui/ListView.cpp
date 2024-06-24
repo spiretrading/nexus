@@ -426,6 +426,10 @@ void ListView::remove_item(int index) {
   for(auto& item : m_items | std::views::drop(index)) {
     --item->m_index;
   }
+  item->m_click_observer = none;
+  QTimer::singleShot(0, [item = std::move(item)] () mutable {
+    item = nullptr;
+  });
   if(m_focus_index) {
     if(*m_focus_index == index) {
       m_focus_index = none;
@@ -433,15 +437,11 @@ void ListView::remove_item(int index) {
       --*m_focus_index;
     }
   }
-  auto current_blocker = shared_connection_block(m_current_connection);
-  auto selection_blocker = shared_connection_block(m_selection_connection);
+  auto blocker = std::array{
+    shared_connection_block(m_current_connection),
+    shared_connection_block(m_selection_connection)};
   m_current_controller.remove(index);
   m_selection_controller.remove(index);
-  on_current(none, m_current_controller.get_current()->get());
-  item->m_click_observer = none;
-  QTimer::singleShot(0, [item = std::move(item)] () mutable {
-    item = nullptr;
-  });
 }
 
 void ListView::move_item(int source, int destination) {
