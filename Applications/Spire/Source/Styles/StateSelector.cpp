@@ -26,6 +26,10 @@ namespace {
         std::bind_front(&DisabledExecutor::on_enabled, this));
     }
 
+    bool is_connected() const {
+      return true;
+    }
+
     void on_enabled(bool is_enabled) {
       if(is_enabled) {
         m_on_update({}, {m_stylist});
@@ -60,6 +64,10 @@ namespace {
       if(widget.isEnabled() && widget.isVisible()) {
         initialize_observer();
       }
+    }
+
+    bool is_connected() const {
+      return true;
     }
 
     void initialize_observer() {
@@ -158,6 +166,10 @@ namespace {
       if(widget.isEnabled() && widget.isVisible()) {
         initialize_observer();
       }
+    }
+
+    bool is_connected() const {
+      return true;
     }
 
     void initialize_observer() {

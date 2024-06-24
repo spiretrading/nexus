@@ -11,11 +11,11 @@ namespace Spire {
   class EditableBox : public QWidget {
     public:
 
-      /** Signals that this box has started editing. */
-      using StartEditSignal = Signal<void()>;
-
-      /** Signals that this box has quit editing. */
-      using EndEditSignal = Signal<void ()>;
+      /**
+       * Signals a change to the read-only state.
+       * @param read_only Whether this EditableBox is read only.
+       */
+      using ReadOnlySignal = Signal<void(bool read_only)>;
 
       /**
        * The type of function used to test whether a given key sequence triggers
@@ -44,8 +44,8 @@ namespace Spire {
        * @param trigger The edit trigger for the user input.
        * @param parent The parent widget.
        */
-      EditableBox(AnyInputBox& input_box, EditTrigger trigger,
-        QWidget* parent = nullptr);
+      EditableBox(
+        AnyInputBox& input_box, EditTrigger trigger, QWidget* parent = nullptr);
 
       /** Returns the AnyInputBox. */
       const AnyInputBox& get_input_box() const;
@@ -53,22 +53,15 @@ namespace Spire {
       /** Returns the AnyInputBox. */
       AnyInputBox& get_input_box();
 
-      /** Returns <code>true</code> iff this box is being edited. */
-      bool is_editing() const;
+      /** Returns <code>true</code> iff this box is read-only. */
+      bool is_read_only() const;
 
-      /**
-       * Sets the edit state.
-       * @param is_editing True iff this box starts editing.
-       */
-      void set_editing(bool is_editing);
+      /** Sets whether the box is read-only. */
+      void set_read_only(bool read_only);
 
-      /** Connects a slot to the StartEditSignal. */
-      boost::signals2::connection connect_start_edit_signal(
-        const StartEditSignal::slot_type& slot) const;
-
-      /** Connects a slot to the EndEditSignal. */
-      boost::signals2::connection connect_end_edit_signal(
-        const EndEditSignal::slot_type& slot) const;
+      /** Connects a slot to the ReadOnlySignal. */
+      boost::signals2::connection connect_read_only_signal(
+        const ReadOnlySignal::slot_type& slot) const;
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
@@ -77,13 +70,12 @@ namespace Spire {
       bool focusNextPrevChild(bool next) override;
 
     private:
-      mutable StartEditSignal m_start_edit_signal;
-      mutable EndEditSignal m_end_edit_signal;
+      mutable ReadOnlySignal m_read_only_signal;
       AnyInputBox* m_input_box;
       EditTrigger m_edit_trigger;
       FocusObserver m_focus_observer;
       QWidget* m_focus_proxy;
-      boost::signals2::scoped_connection m_submit_connection;
+      bool m_is_submit_connected;
 
       void install_focus_proxy_event_filter();
       void select_all_text();

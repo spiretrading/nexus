@@ -17,8 +17,7 @@ SecurityDialog::SecurityDialog(
   : SecurityDialog(
       std::move(securities), std::make_shared<LocalSecurityModel>(), parent) {}
 
-SecurityDialog::SecurityDialog(
-    std::shared_ptr<ComboBox::QueryModel> securities,
+SecurityDialog::SecurityDialog(std::shared_ptr<ComboBox::QueryModel> securities,
     std::shared_ptr<SecurityModel> current, QWidget* parent)
     : QWidget(parent) {
   auto header = make_label(tr("Security"));

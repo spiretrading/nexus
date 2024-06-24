@@ -1,5 +1,7 @@
 #ifndef SPIRE_VALUE_MODEL_HPP
 #define SPIRE_VALUE_MODEL_HPP
+#include <Beam/Serialization/Receiver.hpp>
+#include <Beam/Serialization/Sender.hpp>
 #include <boost/signals2/connection.hpp>
 #include <QValidator>
 #include "Spire/Spire/Spire.hpp"
@@ -75,6 +77,31 @@ namespace Spire {
   QValidator::State ValueModel<T>::set(const Type& value) {
     return QValidator::State::Invalid;
   }
+}
+
+namespace Beam::Serialization {
+  template<typename T>
+  struct IsStructure<Spire::ValueModel<T>> : std::false_type {};
+
+  template<typename T>
+  struct Send<Spire::ValueModel<T>> {
+    template<typename Shuttler>
+    void operator ()(Shuttler& shuttle, const char* name,
+        const Spire::ValueModel<T>& value) const {
+      shuttle.Shuttle(name, value.get());
+    }
+  };
+
+  template<typename T>
+  struct Receive<Spire::ValueModel<T>> {
+    template<typename Shuttler>
+    void operator ()(Shuttler& shuttle, const char* name,
+        Spire::ValueModel<T>& value) const {
+      auto field = T();
+      shuttle.Shuttle(name, field);
+      value.set(field);
+    }
+  };
 }
 
 #endif

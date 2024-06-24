@@ -8,7 +8,13 @@
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/EditableBox.hpp"
+#include "Spire/Ui/EmptySelectionModel.hpp"
+#include "Spire/Ui/EmptyTableFilter.hpp"
 #include "Spire/Ui/Icon.hpp"
+#include "Spire/Ui/KeyInputBox.hpp"
+#include "Spire/Ui/RecycledTableViewItemBuilder.hpp"
+#include "Spire/Ui/SingleSelectionModel.hpp"
+#include "Spire/Ui/StandardTableFilter.hpp"
 #include "Spire/Ui/TableItem.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
@@ -20,47 +26,53 @@ using namespace Spire::Styles;
 namespace {
   using DeleteButton = StateSelector<void, struct DeleteButtonSeletorTag>;
   using EmptyCell = StateSelector<void, struct EmptyCellSeletorTag>;
-  using Editing = StateSelector<void, struct EditingSelectorTag>;
 
   auto TABLE_VIEW_STYLE() {
     auto style = StyleSheet();
-    style.get(Any() > is_a<TableItem>() >
-        (ReadOnly() && !(+Any() << is_a<ListItem>()))).
+    auto body_selector = Any() > is_a<TableBody>();
+    auto item_selector = body_selector > Row() > is_a<TableItem>();
+    style.get(item_selector > Any() >
+        (ReadOnly() && !(+Any() << is_a<ListItem>()) && !Prompt())).
       set(horizontal_padding(scale_width(8)));
-    style.get(Any() > is_a<TableItem>() > ReadOnly() >
-        (is_a<TextBox>() && !(+Any() << is_a<ListItem>()))).
+    style.get(item_selector > Any() > ReadOnly() >
+        (is_a<TextBox>() && !(+Any() << is_a<ListItem>()) && !Prompt())).
       set(horizontal_padding(scale_width(8)));
-    style.get((Any() > Editing()) << Current()).
+    style.get((item_selector > !ReadOnly()) << Current()).
       set(border_color(QColor(Qt::transparent)));
-    style.get(Any() > Current()).set(BackgroundColor(Qt::transparent));
-    style.get(Any() > HoverItem()).set(border_color(QColor(0xA0A0A0)));
-    style.get(Any() > (Row() && Hover())).
+    style.get(body_selector > Row() > Current()).
+      set(BackgroundColor(Qt::transparent));
+    style.get(body_selector > Row() > HoverItem()).
+      set(border_color(QColor(0xA0A0A0)));
+    style.get(body_selector > (Row() && Hover())).
       set(BackgroundColor(0xF2F2FF));
-    style.get(Any() > DeleteButton()).
+    style.get(item_selector > DeleteButton()).
       set(Visibility(Visibility::INVISIBLE));
-    style.get(Any() > DeleteButton() > is_a<Box>()).
+    style.get(item_selector > DeleteButton() > is_a<Box>()).
       set(BackgroundColor(QColor(Qt::transparent))).
       set(horizontal_padding(scale_width(2))).
       set(vertical_padding(scale_height(2)));
-    style.get(Any() > DeleteButton() > is_a<Icon>()).
+    style.get(item_selector > DeleteButton() > is_a<Icon>()).
       set(BackgroundColor(QColor(Qt::transparent)));
-    style.get(Any() > (CurrentRow() || (Row() && Hover())) > DeleteButton()).
+    style.get(body_selector > (CurrentRow() || (Row() && Hover())) >
+        is_a<TableItem>() > DeleteButton()).
       set(Visibility(Visibility::VISIBLE));
-    style.get((Any() > (CurrentRow() || (Row() && Hover()))) >
+    style.get((body_selector > (CurrentRow() || (Row() && Hover()))) >
         DeleteButton() > is_a<Icon>()).
       set(Fill(QColor(0x535353)));
-    style.get(Any() > (Row() && Hover()) > DeleteButton() >
+    style.get(body_selector > (Row() && Hover()) > DeleteButton() >
         (is_a<Icon>() && Hover())).
       set(BackgroundColor(QColor(0xDFDFEB))).
       set(Fill(QColor(0xB71C1C)));
-    style.get(Any() > CurrentRow() > DeleteButton() >
+    style.get(body_selector > CurrentRow() > DeleteButton() >
         (is_a<Icon>() && Hover())).
       set(BackgroundColor(QColor(0xD0CEEB))).
       set(Fill(QColor(0xB71C1C)));
-    style.get((Any() > EmptyCell()) << (HoverItem() || Current())).
+    style.get((item_selector > EmptyCell()) << (HoverItem() || Current())).
       set(border_color(QColor(Qt::transparent)));
-    style.get(Any() > CurrentRow()).set(BackgroundColor(QColor(0xE2E0FF)));
-    style.get(Any() > CurrentColumn()).set(BackgroundColor(Qt::transparent));
+    style.get(body_selector > CurrentRow()).
+      set(BackgroundColor(QColor(0xE2E0FF)));
+    style.get(body_selector > CurrentColumn()).
+      set(BackgroundColor(Qt::transparent));
     return style;
   }
 
@@ -72,7 +84,7 @@ namespace {
   }
 
   struct Tracker {
-    TableRowIndexTracker m_index;
+    optional<TableRowIndexTracker> m_index;
     scoped_connection m_connection;
 
     Tracker(int index)
@@ -199,30 +211,13 @@ namespace {
     }
 
     void on_operation(const TableModel::Operation& operation) {
-      auto adjust_row = [] (int index, const AnyListModel& source) {
-        auto row = std::make_shared<ArrayListModel<std::any>>();
-        row->push(index);
-        for(auto i = 0; i < source.get_size(); ++i) {
-          row->push(source.get(i));
-        }
-        row->push({});
-        return row;
-      };
       visit(operation,
-        [&] (const TableModel::AddOperation& operation) {
-          m_transaction.push(TableModel::AddOperation(operation.m_index,
-            adjust_row(operation.m_index, *operation.m_row)));
-        },
-        [&] (const TableModel::MoveOperation& operation) {
-          m_transaction.push(operation);
-        },
-        [&] (const TableModel::RemoveOperation& operation) {
-          m_transaction.push(TableModel::RemoveOperation(operation.m_index,
-            adjust_row(operation.m_index, *operation.m_row)));
-        },
         [&] (const TableModel::UpdateOperation& operation) {
           m_transaction.push(TableModel::UpdateOperation(operation.m_row,
             operation.m_column + 1, operation.m_previous, operation.m_value));
+        },
+        [&] (const auto& operation) {
+          m_transaction.push(operation);
         });
     }
   };
@@ -291,38 +286,122 @@ namespace {
     void on_operation(const Operation& operation) {
       visit(operation,
         [&] (const AddOperation& operation) {
-          m_transaction.push(AddOperation(operation.m_index + 1,
-            operation.get_value()));
+          m_transaction.push(AddOperation(operation.m_index + 1));
         },
         [&] (const MoveOperation& operation) {
           m_transaction.push(MoveOperation(operation.m_source + 1,
             operation.m_destination + 1));
         },
+        [&] (const PreRemoveOperation& operation) {
+          m_transaction.push(PreRemoveOperation(operation.m_index + 1));
+        },
         [&] (const RemoveOperation& operation) {
-          m_transaction.push(RemoveOperation(operation.m_index + 1,
-            operation.get_value()));
+          m_transaction.push(RemoveOperation(operation.m_index + 1));
         },
         [&] (const UpdateOperation& operation) {
           m_transaction.push(UpdateOperation(operation.m_index + 1,
             operation.get_previous(), operation.get_value()));
+        },
+        [&] (const auto& operation) {
+          m_transaction.push(operation);
         });
     }
   };
 }
 
+struct EditableTableView::EditableItemBuilder {
+  EditableTableView* m_view;
+  std::unordered_map<QWidget*, std::shared_ptr<Tracker>> m_trackers;
+
+  QWidget* mount(
+      const std::shared_ptr<TableModel>& table, int row, int column) {
+    if(column == 0) {
+      auto button = make_delete_icon_button();
+      button->setMaximumHeight(scale_height(26));
+      match(*button, DeleteButton());
+      auto tracker = std::make_shared<Tracker>(row);
+      tracker->m_connection = table->connect_operation_signal(
+        std::bind_front(&TableRowIndexTracker::update, &*tracker->m_index));
+      m_trackers.insert(std::pair(button, tracker));
+      button->connect_click_signal([=] {
+        auto index = tracker->m_index->get_index();
+        QTimer::singleShot(0, m_view, [=] {
+          m_view->delete_row(index);
+        });
+      });
+      return button;
+    }
+    return make_empty_cell();
+  }
+
+  void reset(QWidget& widget,
+      const std::shared_ptr<TableModel>& table, int row, int column) {
+    if(column != 0) {
+      return;
+    }
+    auto tracker = m_trackers[&widget];
+    tracker->m_index = none;
+    tracker->m_index.emplace(row);
+    tracker->m_connection = table->connect_operation_signal(
+      std::bind_front(&TableRowIndexTracker::update, &*tracker->m_index));
+  }
+
+  void unmount(QWidget* widget) {
+    delete widget;
+  }
+};
+
+struct EditableTableView::ItemBuilder {
+  EditableTableView* m_view;
+  TableViewItemBuilder m_builder;
+  RecycledTableViewItemBuilder<EditableItemBuilder> m_editable_builder;
+
+  ItemBuilder(EditableTableView* view, TableViewItemBuilder builder)
+    : m_view(view),
+      m_builder(std::move(builder)),
+      m_editable_builder(EditableItemBuilder(view)) {}
+
+  QWidget* mount(
+      const std::shared_ptr<TableModel>& table, int row, int column) {
+    if(column == 0) {
+      return m_editable_builder.mount(table, row, 0);
+    } else if(column == table->get_column_size() - 1) {
+      return m_editable_builder.mount(table, row, 1);
+    } else {
+      auto item = static_cast<EditableBox*>(m_builder.mount(
+        std::static_pointer_cast<EditableTableModel>(
+          m_view->get_table())->m_source, any_cast<int>(table->at(row, 0)),
+          column - 1));
+      item->connect_read_only_signal([=] (auto read_only) {
+        if(read_only) {
+          m_view->setFocus();
+        }
+      });
+      return item;
+    }
+  }
+
+  void unmount(QWidget* widget) {
+    if(auto box = dynamic_cast<EditableBox*>(widget)) {
+      m_builder.unmount(widget);
+    } else {
+      m_editable_builder.unmount(widget);
+    }
+  }
+};
+
 EditableTableView::EditableTableView(
     std::shared_ptr<TableModel> table, std::shared_ptr<HeaderModel> header,
     std::shared_ptr<TableFilter> table_filter,
     std::shared_ptr<CurrentModel> current,
-    std::shared_ptr<SelectionModel> selection, ViewBuilder view_builder,
-    Comparator comparator, QWidget* parent)
+    std::shared_ptr<SelectionModel> selection,
+    TableViewItemBuilder item_builder, Comparator comparator, QWidget* parent)
     : TableView(std::make_shared<EditableTableModel>(std::move(table), header),
         std::make_shared<EditableTableHeaderModel>(header),
         std::move(table_filter), std::make_shared<EditableTableCurrentModel>(
           std::move(current), header->get_size() + 2), std::move(selection),
-        std::bind_front(
-          &EditableTableView::make_table_item, this, std::move(view_builder)),
-        std::move(comparator), parent),
+        ItemBuilder(this, std::move(item_builder)), std::move(comparator),
+        parent),
       m_is_processing_key(false) {
   get_header().get_item(0)->set_is_resizeable(false);
   get_header().get_widths()->set(0, scale_width(26));
@@ -334,117 +413,106 @@ void EditableTableView::keyPressEvent(QKeyEvent* event) {
     if(m_is_processing_key) {
       return TableView::keyPressEvent(event);
     }
-    m_is_processing_key = true;
-    auto target = find_focus_proxy(get_body().get_item(*current)->get_body());
-    QCoreApplication::sendEvent(target, event);
-    target->setFocus();
-    m_is_processing_key = false;
+    if(auto item = get_body().find_item(*current)) {
+      m_is_processing_key = true;
+      auto target = find_focus_proxy(item->get_body());
+      QCoreApplication::sendEvent(target, event);
+      target->setFocus();
+      m_is_processing_key = false;
+    }
   } else {
     TableView::keyPressEvent(event);
   }
 }
 
-bool EditableTableView::focusNextPrevChild(bool next) {
-  if(isEnabled()) {
-    if(next) {
-      if(navigate_next()) {
-        return true;
-      }
-    } else if(navigate_previous()) {
-      return true;
-    }
-  }
-  auto next_focus_widget = static_cast<QWidget*>(this);
-  auto next_widget = nextInFocusChain();
-  while(next_widget && next_widget != this) {
-    next_widget = next_widget->nextInFocusChain();
-    if(!isAncestorOf(next_widget) && next_widget->isEnabled() &&
-        next_widget->focusPolicy() & Qt::TabFocus) {
-      next_focus_widget = next_widget;
-      if(next) {
-        break;
-      }
-    }
-  }
-  next_focus_widget->setFocus();
-  return true;
+void EditableTableView::delete_row(int row) {
+  get_body().get_table()->remove(row);
 }
 
-QWidget* EditableTableView::make_table_item(const ViewBuilder& view_builder,
-    const std::shared_ptr<TableModel>& table, int row, int column) {
-  if(column == 0) {
-    auto button = make_delete_icon_button();
-    button->setMaximumHeight(scale_height(26));
-    match(*button, DeleteButton());
-    auto tracker = std::make_shared<Tracker>(row);
-    tracker->m_connection = get_table()->connect_operation_signal(
-      std::bind_front(&TableRowIndexTracker::update, &tracker->m_index));
-    button->connect_click_signal([=] {
-      delete_row(tracker->m_index);
-    });
-    return button;
-  } else if(column == table->get_column_size() - 1) {
-    return make_empty_cell();
-  } else {
-    auto item = view_builder(
-      std::static_pointer_cast<EditableTableModel>(get_table())->m_source,
-      any_cast<int>(table->at(row, 0)), column - 1);
-    item->connect_start_edit_signal([=] {
-      match(*item, Editing());
-    });
-    item->connect_end_edit_signal([=] {
-      unmatch(*item, Editing());
-      if(!QApplication::focusWidget()) {
-        setFocus();
-      }
-    });
-    return item;
-  }
+EditableTableViewBuilder::EditableTableViewBuilder(
+  std::shared_ptr<TableModel> table, QWidget* parent)
+  : m_table(std::move(table)),
+    m_parent(parent),
+    m_header(std::make_shared<ArrayListModel<TableHeaderItem::Model>>()),
+    m_filter(std::make_shared<EmptyTableFilter>()),
+    m_current(std::make_shared<LocalValueModel<optional<TableIndex>>>()),
+    m_selection(std::make_shared<TableSelectionModel>(
+      std::make_shared<TableEmptySelectionModel>(),
+      std::make_shared<ListSingleSelectionModel>(),
+      std::make_shared<ListEmptySelectionModel>())),
+    m_item_builder(&TableView::default_item_builder) {}
+
+EditableTableViewBuilder& EditableTableViewBuilder::set_header(
+    const std::shared_ptr<TableView::HeaderModel>& header) {
+  m_header = header;
+  return *this;
 }
 
-void EditableTableView::delete_row(const TableRowIndexTracker& row) {
-  get_table()->remove(row.get_index());
+EditableTableViewBuilder&
+    EditableTableViewBuilder::add_header_item(QString name) {
+  return add_header_item(std::move(name), QString());
 }
 
-bool EditableTableView::navigate_next() {
-  if(auto& current = get_current()->get()) {
-    auto column = current->m_column + 1;
-    if(column >= get_table()->get_column_size() - 1) {
-      auto row = current->m_row + 1;
-      if(row >= get_table()->get_row_size()) {
-        return false;
-      } else {
-        get_current()->set(Index(row, 0));
-      }
-    } else {
-      get_current()->set(Index(current->m_row, column));
-    }
-  } else if(get_table()->get_row_size() > 0) {
-    get_current()->set(Index(0, 0));
-  } else {
-    return false;
-  }
-  return true;
+EditableTableViewBuilder& EditableTableViewBuilder::add_header_item(
+    QString name, QString short_name) {
+  return add_header_item(
+    std::move(name), std::move(short_name), TableFilter::Filter::NONE);
 }
 
-bool EditableTableView::navigate_previous() {
-  if(auto& current = get_current()->get()) {
-    auto column = current->m_column - 1;
-    if(column < 0) {
-      auto row = current->m_row - 1;
-      if(row < 0) {
-        return false;
-      } else {
-        get_current()->set(Index(row, get_table()->get_column_size() - 2));
-      }
-    } else {
-      get_current()->set(Index(current->m_row, column));
-    }
-  } else if(get_table()->get_row_size() > 0) {
-    get_current()->set(TableView::Index(
-      get_table()->get_row_size() - 1, get_table()->get_column_size() - 2));
-  } else {
-    return false;
+EditableTableViewBuilder& EditableTableViewBuilder::add_header_item(
+    QString name, QString short_name, TableFilter::Filter filter) {
+  m_header->push(TableHeaderItem::Model(std::move(name), std::move(short_name),
+    TableHeaderItem::Order::NONE, filter));
+  return *this;
+}
+
+EditableTableViewBuilder& EditableTableViewBuilder::add_header_item(
+    QString name, TableFilter::Filter filter) {
+  return add_header_item(std::move(name), QString(), filter);
+}
+
+EditableTableViewBuilder& EditableTableViewBuilder::set_filter(
+    const std::shared_ptr<TableFilter>& filter) {
+  m_filter = filter;
+  return *this;
+}
+
+EditableTableViewBuilder& EditableTableViewBuilder::set_standard_filter() {
+  if(m_table->get_row_size() == 0) {
+    return *this;
   }
-  return true;
+  auto types = std::vector<std::type_index>();
+  for(auto i = 0; i != m_table->get_column_size(); ++i) {
+    types.push_back(m_table->at(0, i).get_type());
+  }
+  return set_filter(std::make_shared<StandardTableFilter>(std::move(types)));
+}
+
+EditableTableViewBuilder& EditableTableViewBuilder::set_current(
+    const std::shared_ptr<TableView::CurrentModel>& current) {
+  m_current = current;
+  return *this;
+}
+
+EditableTableViewBuilder& EditableTableViewBuilder::set_selection(
+    const std::shared_ptr<TableView::SelectionModel>& selection) {
+  m_selection = selection;
+  return *this;
+}
+
+EditableTableViewBuilder& EditableTableViewBuilder::set_item_builder(
+    const TableViewItemBuilder& item_builder) {
+  m_item_builder = item_builder;
+  return *this;
+}
+
+EditableTableViewBuilder& EditableTableViewBuilder::set_comparator(
+    TableView::Comparator comparator) {
+  m_comparator = comparator;
+  return *this;
+}
+
+EditableTableView* EditableTableViewBuilder::make() const {
+  return new EditableTableView(m_table, m_header, m_filter, m_current,
+    m_selection, m_item_builder, m_comparator, m_parent);
 }

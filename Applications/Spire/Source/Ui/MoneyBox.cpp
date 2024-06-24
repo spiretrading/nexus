@@ -16,18 +16,16 @@ namespace {
       return Decimal("0.000001");
     }
   };
-
-  const auto DEFAULT_MODIFIERS = QHash<Qt::KeyboardModifier, Money>(
-    {{Qt::NoModifier, Money::CENT}, {Qt::AltModifier, 5 * Money::CENT},
-    {Qt::ControlModifier, 10 * Money::CENT},
-    {Qt::ShiftModifier, 20 * Money::CENT}});
 }
 
 MoneyBox::MoneyBox(QWidget* parent)
-  : MoneyBox(DEFAULT_MODIFIERS, parent) {}
+  : MoneyBox(std::make_shared<LocalOptionalMoneyModel>(), parent) {}
 
 MoneyBox::MoneyBox(std::shared_ptr<OptionalMoneyModel> current, QWidget* parent)
-  : MoneyBox(std::move(current), DEFAULT_MODIFIERS, parent) {}
+  : MoneyBox(std::move(current), QHash<Qt::KeyboardModifier, Money>(
+      {{Qt::NoModifier, Money::CENT}, {Qt::AltModifier, 5 * Money::CENT},
+      {Qt::ControlModifier, 10 * Money::CENT},
+      {Qt::ShiftModifier, 20 * Money::CENT}}), parent) {}
 
 MoneyBox::MoneyBox(QHash<Qt::KeyboardModifier, Money> modifiers,
   QWidget* parent)

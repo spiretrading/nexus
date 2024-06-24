@@ -1,6 +1,8 @@
 #ifndef SPIRE_SCROLLABLE_LIST_BOX_HPP
 #define SPIRE_SCROLLABLE_LIST_BOX_HPP
 #include <QWidget>
+#include "Spire/Ui/ListView.hpp"
+#include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {

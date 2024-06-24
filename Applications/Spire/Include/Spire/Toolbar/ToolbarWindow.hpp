@@ -182,7 +182,7 @@ namespace Spire {
       Beam::ServiceLocator::DirectoryEntry m_account;
       ContextMenu* m_recently_closed_menu;
       ContextMenu* m_blotter_menu;
-      NewBlotterForm* m_new_blotter_form;
+      LineInputForm* m_new_blotter_form;
       SettingsPanel* m_settings_panel;
       std::shared_ptr<RecentlyClosedWindowListModel> m_recently_closed_windows;
       std::shared_ptr<ListModel<BlotterModel*>> m_pinned_blotters;

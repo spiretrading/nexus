@@ -7,6 +7,8 @@
 #include <type_traits>
 #include <utility>
 #include <vector>
+#include <Beam/Serialization/Receiver.hpp>
+#include <Beam/Serialization/Sender.hpp>
 #include <boost/signals2/connection.hpp>
 #include <boost/variant/apply_visitor.hpp>
 #include <boost/variant/get.hpp>
@@ -24,19 +26,20 @@ namespace Spire {
 
         /** The index where the value was inserted. */
         int m_index;
-
-        /** The value that was added. */
-        std::any m_value;
       };
 
-      /** Indicates a value was removed from the model. */
+      /** Indicates a value will be removed from the model. */
+      struct PreRemoveOperation {
+
+        /** The index of the value to be removed. */
+        int m_index;
+      };
+
+      /** Indicates a value was be removed from the model. */
       struct RemoveOperation {
 
-        /** The index of the value removed. */
+        /** The index of the value that was removed. */
         int m_index;
-
-        /** The value that was removed. */
-        std::any m_value;
       };
 
       /** Indicates a value was moved from one index to another. */
@@ -69,8 +72,9 @@ namespace Spire {
       struct EndTransaction {};
 
       /** Consolidates all operations. */
-      using Operation = boost::variant<AddOperation, RemoveOperation,
-        MoveOperation, UpdateOperation, StartTransaction, EndTransaction>;
+      using Operation = boost::variant<AddOperation, PreRemoveOperation,
+        RemoveOperation, MoveOperation, UpdateOperation, StartTransaction,
+        EndTransaction>;
 
       /**
        * Signals an operation was applied to this model.
@@ -194,6 +198,12 @@ namespace Spire {
        */
       ListModelReference& operator =(const T& value);
 
+      /**
+       * Updates the ListModel with the given value.
+       * @param value The updated value.
+       */
+      ListModelReference& operator =(const ListModelReference& value);
+
       /** Converts this reference into a native reference. */
       operator const T&() const;
 
@@ -277,34 +287,6 @@ namespace Spire {
       /** The type of value being listed. */
       using Type = T;
 
-      /** Indicates a value was added to the model. */
-      struct AddOperation : AnyListModel::AddOperation {
-
-        /**
-         * Constructs an AddOperation.
-         * @param index The index where the value was inserted.
-         * @param value The value that was added.
-         */
-        AddOperation(int index, Type value);
-
-        /** Returns the value that was added. */
-        const Type& get_value() const;
-      };
-
-      /** Indicates a value was removed from the model. */
-      struct RemoveOperation : AnyListModel::RemoveOperation {
-
-        /**
-         * Constructs a RemoveOperation.
-         * @param index The index of the value removed.
-         * @param value The value that was removed.
-         */
-        RemoveOperation(int index, Type value);
-
-        /** Returns the value that was removed. */
-        const Type& get_value() const;
-      };
-
       /** Indicates a value was updated. */
       struct UpdateOperation : AnyListModel::UpdateOperation {
 
@@ -324,8 +306,9 @@ namespace Spire {
       };
 
       /** Consolidates all operations. */
-      using Operation = boost::variant<AddOperation, RemoveOperation,
-        MoveOperation, UpdateOperation, StartTransaction, EndTransaction>;
+      using Operation = boost::variant<AddOperation, PreRemoveOperation,
+        RemoveOperation, MoveOperation, UpdateOperation, StartTransaction,
+        EndTransaction>;
 
       /**
        * Signals an operation was applied to this model.
@@ -484,6 +467,10 @@ namespace Spire {
         using type = AddOperation;
       };
       template<>
+      struct downcast<AnyListModel::PreRemoveOperation> {
+        using type = PreRemoveOperation;
+      };
+      template<>
       struct downcast<AnyListModel::RemoveOperation> {
         using type = RemoveOperation;
       };
@@ -638,6 +625,9 @@ namespace Spire {
     std::ostream& out, const AnyListModel::AddOperation& operation);
 
   std::ostream& operator <<(
+    std::ostream& out, const AnyListModel::PreRemoveOperation& operation);
+
+  std::ostream& operator <<(
     std::ostream& out, const AnyListModel::RemoveOperation& operation);
 
   std::ostream& operator <<(
@@ -671,6 +661,12 @@ namespace Spire {
   ListModelReference<T>& ListModelReference<T>::operator =(const T& value) {
     m_model->set(m_index, value);
     return *this;
+  }
+
+  template<typename T>
+  ListModelReference<T>& ListModelReference<T>::operator =(
+      const ListModelReference& value) {
+    return *this = static_cast<const T&>(value);
   }
 
   template<typename T>
@@ -774,26 +770,6 @@ namespace Spire {
     ListModel<std::remove_const_t<T>>& model, int index)
     : m_model(&model),
       m_index(index) {}
-
-  template<typename T>
-  ListModel<T>::AddOperation::AddOperation(int index, Type value)
-    : AnyListModel::AddOperation(index, std::move(value)) {}
-
-  template<typename T>
-  const typename ListModel<T>::Type& ListModel<T>::AddOperation::get_value()
-      const {
-    return std::any_cast<const Type&>(m_value);
-  }
-
-  template<typename T>
-  ListModel<T>::RemoveOperation::RemoveOperation(int index, Type value)
-    : AnyListModel::RemoveOperation(index, std::move(value)) {}
-
-  template<typename T>
-  const typename ListModel<T>::Type& ListModel<T>::RemoveOperation::get_value()
-      const {
-    return std::any_cast<const Type&>(m_value);
-  }
 
   template<typename T>
   ListModel<T>::UpdateOperation::UpdateOperation(
@@ -942,6 +918,43 @@ namespace Spire {
       slot(static_cast<const AnyListModel::Operation&>(operation));
     });
   }
+}
+
+namespace Beam::Serialization {
+  template<typename T>
+  struct IsStructure<Spire::ListModel<T>> : std::false_type {};
+
+  template<typename T>
+  struct Send<Spire::ListModel<T>> {
+    template<typename Shuttler>
+    void operator ()(Shuttler& shuttle, const char* name,
+        const Spire::ListModel<T>& value) const {
+      shuttle.StartSequence(name, value.get_size());
+      for(const auto& i : value) {
+        shuttle.Shuttle(i);
+      }
+      shuttle.EndSequence();
+    }
+  };
+
+  template<typename T>
+  struct Receive<Spire::ListModel<T>> {
+    template<typename Shuttler>
+    void operator ()(Shuttler& shuttle, const char* name,
+        Spire::ListModel<T>& value) const {
+      value.transact([&] {
+        Spire::clear(value);
+        auto size = int();
+        shuttle.StartSequence(name, size);
+        for(auto i = 0; i < size; ++i) {
+          auto element = T();
+          shuttle.Shuttle(element);
+          value.push(element);
+        }
+        shuttle.EndSequence();
+      });
+    }
+  };
 }
 
 #endif

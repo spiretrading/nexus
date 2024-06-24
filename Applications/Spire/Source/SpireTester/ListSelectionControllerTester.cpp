@@ -22,7 +22,7 @@ TEST_SUITE("ListSelectionController") {
       [&] (const ListModel<int>::Operation& operation) {
         operations.push_back(operation);
       }));
-    auto controller = ListSelectionController(selection);
+    auto controller = ListSelectionController(selection, 0);
     REQUIRE(controller.get_mode() == ListSelectionController::Mode::SINGLE);
     controller.click(5);
     REQUIRE(selection->get_size() == 1);
@@ -47,7 +47,7 @@ TEST_SUITE("ListSelectionController") {
     selection->push(2);
     selection->push(3);
     selection->push(4);
-    auto controller = ListSelectionController(selection);
+    auto controller = ListSelectionController(selection, 0);
     REQUIRE(controller.get_mode() == ListSelectionController::Mode::SINGLE);
     controller.click(2);
     REQUIRE(selection->get_size() == 1);
@@ -56,7 +56,7 @@ TEST_SUITE("ListSelectionController") {
 
   TEST_CASE("single_navigate") {
     auto selection = std::make_shared<ArrayListModel<int>>();
-    auto controller = ListSelectionController(selection);
+    auto controller = ListSelectionController(selection, 0);
     auto operations = std::deque<ListModel<int>::Operation>();
     auto connection = scoped_connection(controller.connect_operation_signal(
       [&] (const ListModel<int>::Operation& operation) {
@@ -81,7 +81,7 @@ TEST_SUITE("ListSelectionController") {
 
   TEST_CASE("incremental_click") {
     auto selection = std::make_shared<ArrayListModel<int>>();
-    auto controller = ListSelectionController(selection);
+    auto controller = ListSelectionController(selection, 0);
     controller.set_mode(ListSelectionController::Mode::INCREMENTAL);
     controller.click(5);
     REQUIRE(selection->get_size() == 1);
@@ -110,7 +110,7 @@ TEST_SUITE("ListSelectionController") {
 
   TEST_CASE("incremental_navigate") {
     auto selection = std::make_shared<ArrayListModel<int>>();
-    auto controller = ListSelectionController(selection);
+    auto controller = ListSelectionController(selection, 0);
     controller.set_mode(ListSelectionController::Mode::INCREMENTAL);
     controller.navigate(5);
     REQUIRE(selection->get_size() == 0);
@@ -128,7 +128,7 @@ TEST_SUITE("ListSelectionController") {
 
   TEST_CASE("range_click") {
     auto selection = std::make_shared<ArrayListModel<int>>();
-    auto controller = ListSelectionController(selection);
+    auto controller = ListSelectionController(selection, 0);
     controller.set_mode(ListSelectionController::Mode::RANGE);
     controller.click(3);
     REQUIRE(selection->get_size() == 1);
@@ -147,7 +147,7 @@ TEST_SUITE("ListSelectionController") {
 
   TEST_CASE("range_navigation_single_selection") {
     auto selection = std::make_shared<ListSingleSelectionModel>();
-    auto controller = ListSelectionController(selection);
+    auto controller = ListSelectionController(selection, 0);
     controller.set_mode(ListSelectionController::Mode::RANGE);
     controller.add(0);
     controller.add(1);
@@ -161,9 +161,9 @@ TEST_SUITE("ListSelectionController") {
   }
 
   TEST_CASE("range_reentrant") { 
-    auto selection = std::make_shared<ListSingleSelectionModel>(); 
-    auto controller = ListSelectionController(selection); 
-    controller.set_mode(ListSelectionController::Mode::RANGE); 
+    auto selection = std::make_shared<ListSingleSelectionModel>();
+    auto controller = ListSelectionController(selection, 0);
+    controller.set_mode(ListSelectionController::Mode::RANGE);
     controller.add(0); 
     controller.add(1); 
     controller.add(2); 

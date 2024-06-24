@@ -31,22 +31,25 @@ namespace {
     return descendants;
   }
 
-  struct DescendantObserver : public QObject {
+  struct Executor : public QObject {
     SelectionUpdateSignal m_on_update;
     ConnectionGroup m_delete_connections;
 
-    DescendantObserver(
-        const Stylist& stylist, const SelectionUpdateSignal& on_update)
+    Executor(const Stylist& stylist, const SelectionUpdateSignal& on_update)
         : m_on_update(on_update) {
       stylist.get_widget().installEventFilter(this);
       auto descendants = build_descendants(stylist.get_widget());
       for(auto descendant : descendants) {
         auto connection = descendant->connect_delete_signal(std::bind_front(
-          &DescendantObserver::on_delete, this, std::ref(*descendant)));
+          &Executor::on_delete, this, std::ref(*descendant)));
         m_delete_connections.AddConnection(&descendant, connection);
         descendant->get_widget().installEventFilter(this);
       }
       m_on_update(std::move(descendants), {});
+    }
+
+    bool is_connected() const {
+      return true;
     }
 
     bool eventFilter(QObject* watched, QEvent* event) override {
@@ -58,7 +61,7 @@ namespace {
           descendants.insert(&find_stylist(child));
           for(auto descendant : descendants) {
             auto connection = descendant->connect_delete_signal(std::bind_front(
-              &DescendantObserver::on_delete, this, std::ref(*descendant)));
+              &Executor::on_delete, this, std::ref(*descendant)));
             m_delete_connections.AddConnection(&descendant, connection);
             descendant->get_widget().installEventFilter(this);
           }
@@ -113,8 +116,7 @@ SelectConnection Spire::Styles::select(const DescendantSelector& selector,
     const Stylist& base, const SelectionUpdateSignal& on_update) {
   return select(CombinatorSelector(selector.get_base(),
     selector.get_descendant(), [] (const auto& stylist, const auto& on_update) {
-      return SelectConnection(
-        std::make_unique<DescendantObserver>(stylist, on_update));
+      return SelectConnection(std::make_unique<Executor>(stylist, on_update));
     }), base, on_update);
 }
 

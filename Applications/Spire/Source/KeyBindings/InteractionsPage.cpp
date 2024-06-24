@@ -24,12 +24,12 @@ using namespace Spire::Styles;
 
 namespace {
   void apply_deletable_list_item_style(StyleSheet& style) {
-    style.get((Any() > is_a<DeletableListItem>()) << is_a<ListItem>()).
+    style.get((Any() > is_a<ListItem>() > is_a<DeletableListItem>()) <<
+        is_a<ListItem>()).
       set(vertical_padding(0)).
       set(horizontal_padding(0));
     style.get(Any() > (is_a<ListItem>() && Selected()) >
-        is_a<DeletableListItem>() > is_a<Button>()).
-      set(Visibility::VISIBLE);
+        is_a<DeletableListItem>() > is_a<Button>()).set(Visibility::VISIBLE);
     style.get(Any() > (is_a<ListItem>() && Current()) >
         is_a<DeletableListItem>() >
           (is_a<Button>() && (Hover() || Press())) > Body()).

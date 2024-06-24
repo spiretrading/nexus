@@ -108,6 +108,11 @@ std::ostream& Spire::operator <<(
 }
 
 std::ostream& Spire::operator <<(
+    std::ostream& out, const AnyListModel::PreRemoveOperation& operation) {
+  return out << operation.m_index;
+}
+
+std::ostream& Spire::operator <<(
     std::ostream& out, const AnyListModel::RemoveOperation& operation) {
   return out << operation.m_index;
 }
@@ -134,6 +139,9 @@ std::ostream& Spire::operator <<(
     },
     [&] (const AnyListModel::AddOperation& operation) {
       out << "(AddOperation " << operation << ')';
+    },
+    [&] (const AnyListModel::PreRemoveOperation& operation) {
+      out << "(PreRemoveOperation " << operation << ')';
     },
     [&] (const AnyListModel::RemoveOperation& operation) {
       out << "(RemoveOperation " << operation << ')';

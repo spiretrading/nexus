@@ -78,6 +78,17 @@ namespace Spire {
   ScalarValueModelDecorator(std::shared_ptr<T>) ->
     ScalarValueModelDecorator<typename T::Type>;
 
+  /**
+   * Constructs a ScalarValueModelDecorator with the default minimum,
+   * maximum, and increment.
+   * @param model The model to decorate.
+   */
+  template<typename T>
+  auto make_scalar_value_model_decorator(std::shared_ptr<T> model) {
+    return std::make_shared<ScalarValueModelDecorator<typename T::Type>>(
+      std::move(model));
+  }
+
   template<typename T>
   ScalarValueModelDecorator<T>::ScalarValueModelDecorator(
     std::shared_ptr<ValueModel<Type>> model)

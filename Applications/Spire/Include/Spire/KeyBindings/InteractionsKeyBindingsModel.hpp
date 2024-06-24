@@ -1,5 +1,7 @@
 #ifndef SPIRE_INTERACTIONS_KEY_BINDINGS_MODEL_HPP
 #define SPIRE_INTERACTIONS_KEY_BINDINGS_MODEL_HPP
+#include <Beam/Serialization/Receiver.hpp>
+#include <Beam/Serialization/Sender.hpp>
 #include <Beam/SignalHandling/ConnectionGroup.hpp>
 #include "Spire/KeyBindings/KeyBindings.hpp"
 #include "Spire/Ui/MoneyBox.hpp"
@@ -45,6 +47,7 @@ namespace Spire {
       void reset();
 
     private:
+      friend struct Beam::Serialization::Shuttle<InteractionsKeyBindingsModel>;
       bool m_is_detached;
       std::shared_ptr<QuantityModel> m_default_quantity;
       std::array<std::shared_ptr<QuantityModel>, MODIFIER_COUNT>
@@ -81,6 +84,34 @@ namespace Spire {
     const InteractionsKeyBindingsModel& interactions,
     const Nexus::Security& security, Nexus::Quantity position,
     Nexus::Side side);
+}
+
+namespace Beam::Serialization {
+  template<>
+  struct Shuttle<Spire::InteractionsKeyBindingsModel> {
+    template<typename Shuttler>
+    void operator ()(Shuttler& shuttle,
+        Spire::InteractionsKeyBindingsModel& value, unsigned int version) {
+      shuttle.Shuttle("is_detached", value.m_is_detached);
+      shuttle.Shuttle("default_quantity",
+        static_cast<Spire::ValueModel<Nexus::Quantity>&>(
+          *value.m_default_quantity));
+      auto count = Spire::InteractionsKeyBindingsModel::MODIFIER_COUNT;
+      shuttle.StartSequence("quantity_increments", count);
+      for(auto& increment : value.m_quantity_increments) {
+        shuttle.Shuttle(
+          static_cast<Spire::ValueModel<Nexus::Quantity>&>(*increment));
+      }
+      shuttle.EndSequence();
+      shuttle.StartSequence("price_increments", count);
+      for(auto& increment : value.m_price_increments) {
+        shuttle.Shuttle(
+          static_cast<Spire::ValueModel<Nexus::Money>&>(*increment));
+      }
+      shuttle.EndSequence();
+      shuttle.Shuttle("is_cancel_on_fill", *value.m_is_cancel_on_fill);
+    }
+  };
 }
 
 #endif

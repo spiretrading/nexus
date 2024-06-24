@@ -8,14 +8,19 @@ using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::Styles;
 
-TableItem::TableItem(QWidget& component, QWidget* parent)
+TableItem::TableItem(QWidget& body, QWidget* parent)
+    : TableItem(parent) {
+  mount(body);
+}
+
+TableItem::TableItem(QWidget* parent)
     : QWidget(parent),
       m_styles{Qt::transparent, Qt::transparent, Qt::transparent,
         Qt::transparent, Qt::transparent},
       m_click_observer(*this),
       m_focus_observer(*this) {
   setFocusPolicy(Qt::StrongFocus);
-  enclose(*this, component);
+  auto layout = make_hbox_layout(this);
   m_click_observer.connect_click_signal(m_active_signal);
   m_focus_observer.connect_state_signal(
     std::bind_front(&TableItem::on_focus, this));
@@ -28,17 +33,54 @@ TableItem::TableItem(QWidget& component, QWidget* parent)
   });
 }
 
+TableItem::~TableItem() {
+  if(auto item = layout()->takeAt(0)) {
+    auto body = item->widget();
+    body->setAttribute(Qt::WA_DontShowOnScreen);
+    body->setParent(nullptr);
+    delete item;
+  }
+}
+
 const TableItem::Styles& TableItem::get_styles() const {
   return m_styles;
 }
 
+const QWidget& TableItem::get_body() const {
+  return const_cast<TableItem*>(this)->get_body();
+}
+
 QWidget& TableItem::get_body() {
-  return *layout()->itemAt(0)->widget();
+  if(auto item = layout()->itemAt(0)) {
+    return *item->widget();
+  }
+  return *this;
 }
 
 connection TableItem::connect_active_signal(
     const ActiveSignal::slot_type& slot) const {
   return m_active_signal.connect(slot);
+}
+
+void TableItem::mount(QWidget& body) {
+  if(auto item = layout()->itemAt(0)) {
+    if(item->widget() == &body) {
+      body.setAttribute(Qt::WA_DontShowOnScreen, false);
+      return;
+    }
+    layout()->takeAt(0);
+    auto previous_body = item->widget();
+    previous_body->setParent(nullptr);
+    delete item;
+  }
+  layout()->addWidget(&body);
+  body.setAttribute(Qt::WA_DontShowOnScreen, false);
+}
+
+QWidget* TableItem::unmount() {
+  auto& body = get_body();
+  body.setAttribute(Qt::WA_DontShowOnScreen);
+  return &body;
 }
 
 void TableItem::on_focus(FocusObserver::State state) {

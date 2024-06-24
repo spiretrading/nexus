@@ -33,6 +33,9 @@ namespace {
       auto divider = new Box(nullptr);
       divider->setFixedSize(scale(1, 14));
       match(*divider, TabView::Divider());
+      update_style(*divider, [] (auto& style) {
+        style.get(Any()).set(BackgroundColor(QColor(0xC8C8C8)));
+      });
       auto body = new QWidget();
       body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
       auto body_layout = make_hbox_layout(body);
@@ -40,11 +43,9 @@ namespace {
       body_layout->addWidget(divider, 0, Qt::AlignVCenter);
       auto box = new Box(body);
       enclose(*this, *box);
+      link(*this, *label);
+      link(*this, *divider);
       proxy_style(*this, *box);
-      update_style(*this, [] (auto& style) {
-        style.get(Any() > TabView::Divider()).
-          set(BackgroundColor(QColor(0xC8C8C8)));
-      });
     }
   };
 }
@@ -63,6 +64,7 @@ TabView::TabView(QWidget* parent)
     });
   m_tab_list->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   m_tab_list->set_item_size_policy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+  link(*this, *m_tab_list);
   auto scrollable_list_box = new ScrollableListBox(*m_tab_list);
   scrollable_list_box->get_scroll_box().set(
     ScrollBox::DisplayPolicy::NEVER, ScrollBox::DisplayPolicy::NEVER);
@@ -78,15 +80,14 @@ TabView::TabView(QWidget* parent)
       set(Qt::Orientation::Horizontal).
       set(EdgeNavigation::WRAP);
     style.get(Any() > is_a<ListItem>()).
-      set(BackgroundColor(QColor(Qt::transparent))).
-      set(padding(0)).
-      set(border_size(0));
-    style.get(Any() > is_a<ListItem>()).
       set(BackgroundColor(QColor(0xEBEBEB))).
+      set(padding(0)).
+      set(border_size(0)).
       set(BorderTopSize(scale_height(1))).
       set(border_color(QColor(Qt::transparent)));
     style.get(Any() > (is_a<ListItem>() && (Current() || Hover())) >
-        is_a<ResponsiveLabel>()).set(TextColor(QColor(Qt::black)));
+        is_a<Tab>() > is_a<ResponsiveLabel>()).
+      set(TextColor(QColor(Qt::black)));
     style.get(Any() > (is_a<ListItem>() && Hover())).
       set(BackgroundColor(QColor(0xE0E0E0)));
     style.get(Any() > (is_a<ListItem>() && Current())).
@@ -95,7 +96,7 @@ TabView::TabView(QWidget* parent)
       is_a<Tab>() > TabView::Divider()).set(Visibility::INVISIBLE);
   });
   update_style(*this, [] (auto& style) {
-    style.get(FocusIn() > (is_a<ListItem>() && Current())).
+    style.get(FocusIn() > is_a<ListView>() > (is_a<ListItem>() && Current())).
       set(BorderTopColor(QColor(0x4B23A0)));
   });
   enclose(*this, *scrollable_list_box, Qt::AlignTop);

@@ -27,11 +27,11 @@ TEST_SUITE("OrderTaskArguments") {
   TEST_CASE("find_exact_security_argument_match") {
     auto arguments = ArrayListModel<OrderTaskArguments>();
     arguments.push({"Test1", ABX(), DefaultDestinations::TSX(),
-      OrderType::LIMIT, Side::BID, none, TimeInForce::Type::DAY, {},
-      Qt::Key_F2});
+      OrderType::LIMIT, Side::BID, QuantitySetting::ADJUSTABLE,
+      TimeInForce::Type::DAY, {}, Qt::Key_F2});
     arguments.push({"Test2", TD(), DefaultDestinations::CHIX(),
-      OrderType::MARKET, Side::ASK, none, TimeInForce::Type::DAY, {},
-      Qt::Key_F3});
+      OrderType::MARKET, Side::ASK, QuantitySetting::ADJUSTABLE,
+      TimeInForce::Type::DAY, {}, Qt::Key_F3});
     auto match_test_1 = find_order_task_arguments(arguments, ABX(), Qt::Key_F2);
     REQUIRE(match_test_1.is_initialized());
     REQUIRE(match_test_1->m_key == Qt::Key_F2);
@@ -54,11 +54,11 @@ TEST_SUITE("OrderTaskArguments") {
   TEST_CASE("find_market_region_argument_match") {
     auto arguments = ArrayListModel<OrderTaskArguments>();
     arguments.push({"Test1", TSX(), DefaultDestinations::TSX(),
-      OrderType::LIMIT, Side::BID, none, TimeInForce::Type::DAY, {},
-      Qt::Key_F2});
+      OrderType::LIMIT, Side::BID, QuantitySetting::ADJUSTABLE,
+      TimeInForce::Type::DAY, {}, Qt::Key_F2});
     arguments.push({"Test2", TD(), DefaultDestinations::CHIX(),
-      OrderType::MARKET, Side::ASK, none, TimeInForce::Type::DAY, {},
-      Qt::Key_F2});
+      OrderType::MARKET, Side::ASK, QuantitySetting::ADJUSTABLE,
+      TimeInForce::Type::DAY, {}, Qt::Key_F2});
     auto match_test_1_security =
       find_order_task_arguments(arguments, ABX(), Qt::Key_F2);
     REQUIRE(match_test_1_security.is_initialized());

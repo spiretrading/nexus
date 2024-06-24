@@ -62,6 +62,7 @@ namespace Spire {
   template<typename T> class ScalarValueModel;
   template<typename T> class ScalarValueModelDecorator;
   class ServiceSecurityQueryModel;
+  template<typename T> class SortedListModel;
   class SortedTableModel;
   template<typename T> class SpinBoxModel;
   class SpireController;
@@ -74,7 +75,10 @@ namespace Spire {
   template<typename T> class ToDecimalModel;
   template<typename T> class ToTextModel;
   template<typename T, typename U, typename F, typename G>
+    class TransformListModel;
+  template<typename T, typename U, typename F, typename G>
     class TransformValueModel;
+  template<typename T> class TranslatedListModel;
   class TranslatedTableModel;
   class UnsignedQuantityModel;
   template<typename T, std::invocable<const T&> F> class ValidatedValueModel;

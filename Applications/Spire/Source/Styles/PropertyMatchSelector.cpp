@@ -35,6 +35,10 @@ SelectConnection Spire::Styles::select(const PropertyMatchSelector& selector,
         m_style_connection(connect_style_signal(
           base.get_widget(), std::bind_front(&Executor::on_style, this))) {}
 
+    bool is_connected() const {
+      return true;
+    }
+
     void on_style() {
       auto& block = m_base->get_computed_block();
       auto is_missing_property = true;

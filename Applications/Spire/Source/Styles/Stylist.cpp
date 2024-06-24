@@ -124,6 +124,14 @@ Stylist::~Stylist() {
   while(!m_principals.empty()) {
     m_principals.front()->remove_proxy(*m_widget);
   }
+  while(!m_links.empty()) {
+    std::erase(m_links.back()->m_backlinks, this);
+    m_links.pop_back();
+  }
+  while(!m_backlinks.empty()) {
+    std::erase(m_backlinks.back()->m_links, this);
+    m_backlinks.pop_back();
+  }
 }
 
 QWidget& Stylist::get_widget() const {
@@ -139,15 +147,12 @@ const StyleSheet& Stylist::get_style() const {
 }
 
 void Stylist::set_style(StyleSheet style) {
-  auto initial_rule_size = m_rules.size();
-  for(auto& rule : m_rules) {
+  auto rules = std::exchange(m_rules, {});
+  for(auto& rule : rules) {
     auto selection = std::move(rule->m_selection);
     if(!selection.empty()) {
       on_selection_update(*rule, {}, std::move(selection));
     }
-  }
-  if(m_rules.size() != initial_rule_size) {
-    m_rules.erase(m_rules.begin(), m_rules.begin() + initial_rule_size);
   }
   m_style = load_styles(std::move(style));
   apply(*m_style);
@@ -175,6 +180,14 @@ const EvaluatedBlock& Stylist::get_evaluated_block() const {
   return *m_evaluated_block;
 }
 
+const std::vector<Stylist*>& Stylist::get_proxies() const {
+  return m_proxies;
+}
+
+const std::vector<Stylist*>& Stylist::get_principals() const {
+  return m_principals;
+}
+
 void Stylist::add_proxy(QWidget& widget) {
   auto& stylist = find_stylist(widget);
   auto i = std::find(m_proxies.begin(), m_proxies.end(), &stylist);
@@ -195,6 +208,29 @@ void Stylist::remove_proxy(QWidget& widget) {
     std::find(stylist.m_principals.begin(), stylist.m_principals.end(), this));
   m_proxies.erase(i);
   stylist.apply_proxies();
+}
+
+std::vector<const Stylist*> Stylist::get_links() const {
+  return std::vector<const Stylist*>(m_links.begin(), m_links.end());
+}
+
+const std::vector<Stylist*>& Stylist::get_links() {
+  return m_links;
+}
+
+std::vector<const Stylist*> Stylist::get_backlinks() const {
+  return std::vector<const Stylist*>(m_backlinks.begin(), m_backlinks.end());
+}
+
+const std::vector<Stylist*>& Stylist::get_backlinks() {
+  return m_backlinks;
+}
+
+void Stylist::link(Stylist& target) {
+  m_links.push_back(&target);
+  target.m_backlinks.push_back(this);
+  m_link_signal(target);
+  target.m_backlink_signal(*this);
 }
 
 void Stylist::match(const Selector& selector) {
@@ -218,6 +254,16 @@ void Stylist::unmatch(const Selector& selector) {
 connection Stylist::connect_style_signal(
     const StyleSignal::slot_type& slot) const {
   return m_style_signal.connect(slot);
+}
+
+connection Stylist::connect_link_signal(
+    const LinkSignal::slot_type& slot) const {
+  return m_link_signal.connect(slot);
+}
+
+connection Stylist::connect_backlink_signal(
+    const BacklinkSignal::slot_type& slot) const {
+  return m_backlink_signal.connect(slot);
 }
 
 connection Stylist::connect_match_signal(
@@ -318,7 +364,7 @@ void Stylist::apply(Stylist& source, const RuleEntry& rule) {
   m_sources.insert(j, {&source, level, &rule});
 }
 
-void Stylist::unapply(Stylist& source, const RuleEntry& rule) {
+void Stylist::unapply(const RuleEntry& rule) {
   std::erase_if(m_sources, [&] (const auto& entry) {
     return entry.m_rule == &rule;
   });
@@ -347,26 +393,16 @@ void Stylist::apply() {
   }
   if(auto visibility = Spire::Styles::find<Visibility>(block)) {
     evaluate(*visibility, [=] (auto visibility) {
-      if(visibility == Visibility::VISIBLE && !m_widget->isVisible()) {
-        m_widget->show();
-      } else if(visibility != m_visibility) {
-        if(visibility == Visibility::NONE) {
-          auto size = m_widget->sizePolicy();
-          size.setRetainSizeWhenHidden(false);
-          m_widget->setSizePolicy(size);
-          m_widget->hide();
-        } else if(visibility == Visibility::INVISIBLE) {
-          auto size = m_widget->sizePolicy();
-          size.setRetainSizeWhenHidden(true);
-          m_widget->setSizePolicy(size);
-          m_widget->hide();
-        }
-      }
       m_visibility = visibility;
+      if(m_visibility == Visibility::VISIBLE) {
+        m_widget->show();
+      } else {
+        auto size = m_widget->sizePolicy();
+        size.setRetainSizeWhenHidden(m_visibility == Visibility::INVISIBLE);
+        m_widget->setSizePolicy(size);
+        m_widget->hide();
+      }
     });
-  } else if(m_visibility != Visibility::VISIBLE) {
-    m_widget->show();
-    m_visibility = Visibility::VISIBLE;
   }
 }
 
@@ -419,7 +455,7 @@ void Stylist::on_selection_update(
   for(auto removal : removals) {
     rule.m_selection.erase(removal);
     auto& stylist = const_cast<Stylist&>(*removal);
-    stylist.unapply(*this, rule);
+    stylist.unapply(rule);
     changed_stylists.insert(&stylist);
   }
   for(auto addition : additions) {
@@ -549,8 +585,8 @@ std::vector<PseudoElement> Spire::Styles::get_pseudo_elements(
   return pseudo_elements;
 }
 
-void Spire::Styles::add_pseudo_element(QWidget& source,
-    const PseudoElement& pseudo_element) {
+void Spire::Styles::add_pseudo_element(
+    QWidget& source, const PseudoElement& pseudo_element) {
   auto stylist = pseudo_stylists.find(std::pair(&source, pseudo_element));
   if(stylist != pseudo_stylists.end()) {
     return;
@@ -558,6 +594,8 @@ void Spire::Styles::add_pseudo_element(QWidget& source,
   auto entry = new Stylist(source, pseudo_element);
   stylist = pseudo_stylists.insert(
     std::pair(std::pair(&source, pseudo_element), entry)).first;
+  auto& source_stylist = find_stylist(source);
+  source_stylist.set_style(source_stylist.get_style());
   QObject::connect(&source, &QObject::destroyed, [=, &source] (QObject*) {
     entry->m_style_event_filter = nullptr;
     delete entry;
@@ -577,6 +615,10 @@ void Spire::Styles::forward_style(QWidget& source, QWidget& destination) {
 
 void Spire::Styles::proxy_style(QWidget& source, QWidget& destination) {
   find_stylist(source).add_proxy(destination);
+}
+
+void Spire::Styles::link(QWidget& root, QWidget& target) {
+  find_stylist(root).link(find_stylist(target));
 }
 
 bool Spire::Styles::is_match(QWidget& widget, const Selector& selector) {

@@ -12,8 +12,8 @@ using namespace Spire::Styles;
 DeletableListItem::DeletableListItem(QWidget& body, QWidget* parent)
     : QWidget(parent),
       m_body(&body) {
-  auto delete_button = make_icon_button(imageFromSvg(":/Icons/delete2.svg",
-    scale(26, 24)));
+  auto delete_button =
+    make_icon_button(imageFromSvg(":/Icons/delete2.svg", scale(26, 24)));
   delete_button->setFocusPolicy(Qt::NoFocus);
   delete_button->setFixedSize(scale(26, 24));
   update_style(*delete_button, [] (auto& style) {

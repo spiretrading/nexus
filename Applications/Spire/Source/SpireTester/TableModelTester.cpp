@@ -16,9 +16,13 @@ void Spire::require_transaction(
       offset = 1;
     }
   } else {
-    REQUIRE(operations.size() == expected.size() + 2);
-    REQUIRE(get<TableModel::StartTransaction>(&operations[0]) != nullptr);
-    offset = 1;
+    if(get<TableModel::StartTransaction>(&operations[0]) == nullptr) {
+      REQUIRE(operations.size() == 2);
+      REQUIRE(get<TableModel::PreRemoveOperation>(&operations[0]) != nullptr);
+    } else {
+      REQUIRE(operations.size() == expected.size() + 2);
+      offset = 1;
+    }
   }
   for(auto i = 0; i != std::ssize(expected); ++i) {
     visit(expected[i],
@@ -27,9 +31,9 @@ void Spire::require_transaction(
         REQUIRE(operation != nullptr);
         REQUIRE(operation->m_index == expected.m_index);
       },
-      [&] (const TableModel::RemoveOperation& expected) {
+      [&] (const TableModel::PreRemoveOperation& expected) {
         auto operation =
-          get<TableModel::RemoveOperation>(&operations[i + offset]);
+          get<TableModel::PreRemoveOperation>(&operations[i + offset]);
         REQUIRE(operation != nullptr);
         REQUIRE(operation->m_index == expected.m_index);
       },
@@ -78,7 +82,7 @@ TEST_SUITE("TableModel") {
           REQUIRE(move_operation.m_source == 0);
           REQUIRE(move_operation.m_destination == 1);
         },
-        [&] (const TableModel::RemoveOperation& remove_operation) {
+        [&] (const TableModel::PreRemoveOperation& remove_operation) {
           ++remove_count;
           REQUIRE(remove_operation.m_index == 1);
         },
@@ -95,7 +99,7 @@ TEST_SUITE("TableModel") {
     REQUIRE(move_count == 0);
     REQUIRE(remove_count == 0);
     REQUIRE(update_count == 0);
-    visitor(TableModel::AddOperation(0, nullptr));
+    visitor(TableModel::AddOperation(0));
     REQUIRE(start_count == 1);
     REQUIRE(end_count == 0);
     REQUIRE(add_count == 1);
@@ -109,7 +113,7 @@ TEST_SUITE("TableModel") {
     REQUIRE(move_count == 1);
     REQUIRE(remove_count == 0);
     REQUIRE(update_count == 0);
-    visitor(TableModel::RemoveOperation(1, nullptr));
+    visitor(TableModel::PreRemoveOperation(1));
     REQUIRE(start_count == 1);
     REQUIRE(end_count == 0);
     REQUIRE(add_count == 1);
@@ -141,11 +145,11 @@ TEST_SUITE("TableModel") {
         REQUIRE(move_operation.m_destination == 1);
       });
     };
-    visitor(TableModel::AddOperation(0, nullptr));
+    visitor(TableModel::AddOperation(0));
     REQUIRE(move_count == 0);
     visitor(TableModel::MoveOperation(0, 1));
     REQUIRE(move_count == 1);
-    visitor(TableModel::RemoveOperation(1, nullptr));
+    visitor(TableModel::PreRemoveOperation(1));
     REQUIRE(move_count == 1);
     visitor(TableModel::UpdateOperation(0, 0, 0, 0));
     REQUIRE(move_count == 1);
@@ -164,13 +168,13 @@ TEST_SUITE("TableModel") {
           ++default_count;
         });
     };
-    visitor(TableModel::AddOperation(0, nullptr));
+    visitor(TableModel::AddOperation(0));
     REQUIRE(add_count == 1);
     REQUIRE(default_count == 0);
     visitor(TableModel::MoveOperation(0, 1));
     REQUIRE(add_count == 1);
     REQUIRE(default_count == 1);
-    visitor(TableModel::RemoveOperation(1, nullptr));
+    visitor(TableModel::PreRemoveOperation(1));
     REQUIRE(add_count == 1);
     REQUIRE(default_count == 2);
     visitor(TableModel::UpdateOperation(0, 0, 0, 0));

@@ -93,7 +93,6 @@ TEST_SUITE("ColumnViewListModel") {
     test_operation(operation,
       [&] (const ColumnViewListModel<int>::AddOperation& operation) {
         REQUIRE(operation.m_index == 2);
-        REQUIRE(operation.get_value() == 6);
       });
     REQUIRE(invalid_model.get_size() == 0);
     REQUIRE(model.get_size() == 3);
@@ -108,7 +107,6 @@ TEST_SUITE("ColumnViewListModel") {
     test_operation(operation,
       [&] (const ColumnViewListModel<int>::AddOperation& operation) {
         REQUIRE(operation.m_index == 1);
-        REQUIRE(operation.get_value() == 8);
       });
     REQUIRE(invalid_model.get_size() == 0);
     REQUIRE(model.get_size() == 4);
@@ -131,17 +129,20 @@ TEST_SUITE("ColumnViewListModel") {
     auto signal_count = 0;
     auto connection = scoped_connection(model.connect_operation_signal(
       [&] (const auto& operation) {
-        ++signal_count;
-        auto remove_operation =
-          get<ColumnViewListModel<int>::RemoveOperation>(&operation);
-        REQUIRE(remove_operation != nullptr);
-        REQUIRE(remove_operation->m_index == index);
-        REQUIRE(remove_operation->get_value() == value);
+        visit(operation,
+          [&] (const ColumnViewListModel<int>::PreRemoveOperation& operation) {
+            ++signal_count;
+            REQUIRE(operation.m_index == index);
+          },
+          [&] (const ColumnViewListModel<int>::RemoveOperation& operation) {
+            ++signal_count;
+            REQUIRE(operation.m_index == index);
+          });
       }));
     index = 3;
     value = 8;
     source->remove(index);
-    REQUIRE(signal_count == 1);
+    REQUIRE(signal_count == 2);
     REQUIRE(model.get_size() == 3);
     REQUIRE(model.get(0) == 2);
     REQUIRE(model.get(1) == 4);
@@ -149,7 +150,7 @@ TEST_SUITE("ColumnViewListModel") {
     index = 1;
     value = 4;
     source->remove(index);
-    REQUIRE(signal_count == 2);
+    REQUIRE(signal_count == 4);
     REQUIRE(model.get_size() == 2);
     REQUIRE(model.get(0) == 2);
     REQUIRE(model.get(1) == 6);
@@ -252,6 +253,7 @@ TEST_SUITE("ColumnViewListModel") {
     auto end_count = 0;
     auto add_count = 0;
     auto move_count = 0;
+    auto pre_remove_count = 0;
     auto remove_count = 0;
     auto update_count = 0;
     for(auto& operation : operations) {
@@ -268,6 +270,9 @@ TEST_SUITE("ColumnViewListModel") {
         [&] (const ColumnViewListModel<int>::MoveOperation& operation) {
           ++move_count;
         },
+        [&] (const ColumnViewListModel<int>::PreRemoveOperation& operation) {
+          ++pre_remove_count;
+        },
         [&] (const ColumnViewListModel<int>::RemoveOperation& operation) {
           ++remove_count;
         },
@@ -279,6 +284,7 @@ TEST_SUITE("ColumnViewListModel") {
     REQUIRE(end_count == 1);
     REQUIRE(add_count == 2);
     REQUIRE(move_count == 1);
+    REQUIRE(pre_remove_count == 1);
     REQUIRE(remove_count == 1);
     REQUIRE(update_count == 1);
     REQUIRE(model.get(0) == 10);

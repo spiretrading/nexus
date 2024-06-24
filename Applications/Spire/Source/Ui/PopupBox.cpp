@@ -165,6 +165,7 @@ void PopupBox::on_body_focus(FocusObserver::State state) {
     m_body->setMinimumWidth(0);
     m_body->setMaximumWidth(QWIDGETSIZE_MAX);
     layout()->addWidget(m_body);
+    setFocusProxy(m_body);
   }
 }
 
@@ -174,6 +175,8 @@ void PopupBox::on_focus(FocusObserver::State state) {
     m_last_size = size();
     {
       auto blocker = shared_connection_block(m_focus_connection);
+      setFocusProxy(nullptr);
+      setFocus();
       m_body->setParent(m_window);
     }
     layout()->removeWidget(m_body);

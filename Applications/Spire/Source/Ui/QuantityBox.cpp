@@ -23,15 +23,20 @@ namespace {
 }
 
 QuantityBox::QuantityBox(QWidget* parent)
-  : QuantityBox(QHash<Qt::KeyboardModifier, Type>(
-      {{Qt::NoModifier, 1}, {Qt::AltModifier, 5}, {Qt::ControlModifier, 10},
-      {Qt::ShiftModifier, 20}}), parent) {}
+  : QuantityBox(std::make_shared<UnsignedQuantityModel>(
+      std::make_shared<LocalOptionalQuantityModel>()), parent) {}
 
 QuantityBox::QuantityBox(
-    QHash<Qt::KeyboardModifier, Quantity> modifiers, QWidget* parent)
+  QHash<Qt::KeyboardModifier, Quantity> modifiers, QWidget* parent)
   : QuantityBox(std::make_shared<UnsignedQuantityModel>(
       std::make_shared<LocalOptionalQuantityModel>()), std::move(modifiers),
       parent) {}
+
+QuantityBox::QuantityBox(std::shared_ptr<OptionalQuantityModel> current,
+  QWidget* parent)
+  : QuantityBox(std::move(current), QHash<Qt::KeyboardModifier, Type>(
+      {{Qt::NoModifier, 1}, {Qt::AltModifier, 5}, {Qt::ControlModifier, 10},
+      {Qt::ShiftModifier, 20}}), parent) {}
 
 QuantityBox::QuantityBox(std::shared_ptr<OptionalQuantityModel> model,
     QHash<Qt::KeyboardModifier, Quantity> modifiers, QWidget* parent)

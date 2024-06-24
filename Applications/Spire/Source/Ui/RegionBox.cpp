@@ -119,15 +119,15 @@ struct RegionBox::RegionQueryModel : ComboBox::QueryModel {
 
 RegionBox::RegionBox(std::shared_ptr<ComboBox::QueryModel> query_model,
   QWidget* parent)
-  : RegionBox(query_model, std::make_shared<LocalValueModel<Region>>(),
-      parent) {}
+  : RegionBox(query_model, std::make_shared<LocalRegionModel>(), parent) {}
 
 RegionBox::RegionBox(std::shared_ptr<ComboBox::QueryModel> query_model,
-    std::shared_ptr<CurrentModel> current, QWidget* parent)
+    std::shared_ptr<RegionModel> current, QWidget* parent)
     : QWidget(parent),
       m_query_model(
         std::make_shared<RegionQueryModel>(std::move(query_model))),
       m_current(std::move(current)),
+      m_last_region(m_current->get()),
       m_current_connection(m_current->connect_update_signal(
         std::bind_front(&RegionBox::on_current, this))) {
   auto current_model = std::make_shared<ArrayListModel<std::any>>();
@@ -155,7 +155,7 @@ const std::shared_ptr<ComboBox::QueryModel>&
   return m_query_model->m_source;
 }
 
-const std::shared_ptr<RegionBox::CurrentModel>& RegionBox::get_current() const {
+const std::shared_ptr<RegionModel>& RegionBox::get_current() const {
   return m_current;
 }
 
@@ -177,6 +177,10 @@ connection RegionBox::connect_submit_signal(
 }
 
 void RegionBox::on_current(const Region& region) {
+  if(region == m_last_region) {
+    return;
+  }
+  m_last_region = region;
   auto blocker = shared_connection_block(m_tag_operation_connection);
   auto& current = m_tag_combo_box->get_current();
   current->transact([&] {

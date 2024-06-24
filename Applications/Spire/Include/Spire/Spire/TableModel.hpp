@@ -15,19 +15,20 @@ namespace Spire {
 
         /** The index where the row was inserted. */
         int m_index;
+      };
 
-        /** A list representation of the added row. */
-        std::shared_ptr<const AnyListModel> m_row;
+      /** Indicates a row is about to be removed from the model. */
+      struct PreRemoveOperation {
+
+        /** The index of the row to be removed. */
+        int m_index;
       };
 
       /** Indicates a row was removed from the model. */
       struct RemoveOperation {
 
-        /** The index of the row removed. */
+        /** The index of the row that was removed. */
         int m_index;
-
-        /** A list representation of the removed row. */
-        std::shared_ptr<const AnyListModel> m_row;
       };
 
       /** Indicates a row was moved from one index to another. */
@@ -63,8 +64,9 @@ namespace Spire {
       struct EndTransaction {};
 
       /** Consolidates all operations. */
-      using Operation = boost::variant<AddOperation, RemoveOperation,
-        MoveOperation, UpdateOperation, StartTransaction, EndTransaction>;
+      using Operation = boost::variant<AddOperation, PreRemoveOperation,
+        RemoveOperation, MoveOperation, UpdateOperation, StartTransaction,
+        EndTransaction>;
 
       /**
        * Signals an operation was applied to this model.

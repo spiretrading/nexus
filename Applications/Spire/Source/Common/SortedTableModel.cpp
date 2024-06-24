@@ -2,7 +2,6 @@
 #include <algorithm>
 #include <boost/iterator/counting_iterator.hpp>
 #include "Spire/Ui/CustomQtVariants.hpp"
-#include "Spire/Ui/DecimalBox.hpp"
 
 using namespace boost::iterators;
 using namespace boost::posix_time;
@@ -143,7 +142,7 @@ void SortedTableModel::on_operation(const Operation& operation) {
     [&] (const AddOperation& operation) {
       auto index = find_sorted_index(operation.m_index, get_row_size());
       m_translation.move(operation.m_index, index);
-      m_transaction.push(AddOperation(index, operation.m_row));
+      m_transaction.push(AddOperation(index));
     },
     [&] (const UpdateOperation& operation) {
       auto index = find_sorted_index(operation.m_row, get_row_size());
@@ -158,6 +157,9 @@ void SortedTableModel::on_operation(const Operation& operation) {
       } else {
         m_transaction.push(std::move(update));
       }
+    },
+    [&] (const PreRemoveOperation& operation) {
+      m_transaction.push(operation);
     },
     [&] (const RemoveOperation& operation) {
       m_transaction.push(operation);

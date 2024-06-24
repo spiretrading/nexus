@@ -69,6 +69,7 @@
     <file>Icons/minimize.svg</file>
     <file>Icons/restore.svg</file>
     <file>Icons/imbalance-indicator.svg</file>
+    <file>Icons/key_bindings/error.svg</file>
     <file>Icons/toolbar/account.svg</file>
     <file>Icons/toolbar/account_directory.svg</file>
     <file>Icons/toolbar/blotter.svg</file>
@@ -138,5 +139,8 @@
     <file>Icons/info_panel/success.svg</file>
     <file>Icons/info_panel/warning.svg</file>
     <file>Icons/info_panel/close.svg</file>
+    <file>Icons/add.svg</file>
+    <file>Icons/delete3.svg</file>
+    <file>Icons/duplicate.svg</file>
   </qresource>
 </RCC>

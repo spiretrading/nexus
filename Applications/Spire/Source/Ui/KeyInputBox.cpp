@@ -237,6 +237,7 @@ void KeyInputBox::set_status(Status status) {
     clear(layout);
     layout.setSpacing(0);
     auto prompt = make_label(tr("Enter Keys"));
+    match(*prompt, Prompt());
     prompt->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     prompt->set_read_only(true);
     prompt->setDisabled(true);

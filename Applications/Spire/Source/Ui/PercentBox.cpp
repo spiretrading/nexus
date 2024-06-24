@@ -76,14 +76,18 @@ namespace {
 }
 
 PercentBox::PercentBox(QWidget* parent)
-  : PercentBox(QHash<Qt::KeyboardModifier, Decimal>(
-      {{Qt::NoModifier, 1}, {Qt::AltModifier, 5}, {Qt::ControlModifier, 10},
-      {Qt::ShiftModifier, 20}}), parent) {}
+  : PercentBox(std::make_shared<LocalOptionalDecimalModel>(), parent) {}
 
 PercentBox::PercentBox(
-    QHash<Qt::KeyboardModifier, Decimal> modifiers, QWidget* parent)
-    : PercentBox(std::make_shared<LocalOptionalDecimalModel>(),
-        std::move(modifiers), parent) {}
+  QHash<Qt::KeyboardModifier, Decimal> modifiers, QWidget* parent)
+  : PercentBox(std::make_shared<LocalOptionalDecimalModel>(),
+      std::move(modifiers), parent) {}
+
+PercentBox::PercentBox(std::shared_ptr<OptionalDecimalModel> current,
+  QWidget* parent)
+  : PercentBox(std::move(current), QHash<Qt::KeyboardModifier, Decimal>(
+      {{Qt::NoModifier, 1}, {Qt::AltModifier, 5}, {Qt::ControlModifier, 10},
+      {Qt::ShiftModifier, 20}}), parent) {}
 
 PercentBox::PercentBox(std::shared_ptr<OptionalDecimalModel> model,
     QHash<Qt::KeyboardModifier, Decimal> modifiers, QWidget* parent)
@@ -93,7 +97,7 @@ PercentBox::PercentBox(std::shared_ptr<OptionalDecimalModel> model,
     std::make_shared<OptionalPercentModel>(m_model), std::move(modifiers));
   enclose(*this, *m_decimal_box);
   setFocusProxy(m_decimal_box);
-  proxy_style(*this, *m_decimal_box);
+  forward_style(*this, *m_decimal_box);
   m_submit_connection = m_decimal_box->connect_submit_signal(
     std::bind_front(&PercentBox::on_submit, this));
   m_reject_connection = m_decimal_box->connect_reject_signal(

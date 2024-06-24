@@ -205,6 +205,9 @@ Slider2D::Slider2D(std::shared_ptr<ScalarValueModel<Decimal>> x_current,
   match(*m_thumb, Thumb());
   auto box = new Box(body);
   enclose(*this, *box);
+  link(*this, *track_pad);
+  link(*this, *m_track);
+  link(*this, *m_thumb);
   proxy_style(*this, *box);
   set_style(*this, DEFAULT_STYLE());
   m_focus_observer.connect_state_signal(
@@ -213,10 +216,10 @@ Slider2D::Slider2D(std::shared_ptr<ScalarValueModel<Decimal>> x_current,
     std::bind_front(&Slider2D::on_x_current, this));
   m_y_current_connection = m_y_current->connect_update_signal(
     std::bind_front(&Slider2D::on_y_current, this));
-  m_track_style_connection = connect_style_signal(*m_track,
-    std::bind_front(&Slider2D::on_track_style, this));
-  m_thumb_icon_style_connection = connect_style_signal(*thumb_icon,
-    std::bind_front(&Slider2D::on_thumb_icon_style, this));
+  m_track_style_connection = connect_style_signal(
+    *m_track, std::bind_front(&Slider2D::on_track_style, this));
+  m_thumb_icon_style_connection = connect_style_signal(
+    *thumb_icon, std::bind_front(&Slider2D::on_thumb_icon_style, this));
 }
 
 const std::shared_ptr<ScalarValueModel<Decimal>>&

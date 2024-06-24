@@ -57,6 +57,16 @@ namespace Spire {
   OptionalScalarValueModelDecorator(std::shared_ptr<T>) ->
     OptionalScalarValueModelDecorator<typename T::Type>;
 
+  /**
+   * Constructs an OptionalScalarValueModelDecorator.
+   * @param model The model to decorate.
+   */
+  template<typename T>
+  auto make_optional_scalar_value_model_decorator(std::shared_ptr<T> model) {
+    return std::make_shared<
+      OptionalScalarValueModelDecorator<typename T::Type>>(std::move(model));
+  }
+
   template<typename T>
   OptionalScalarValueModelDecorator<T>::OptionalScalarValueModelDecorator(
     std::shared_ptr<ScalarValueModel<Scalar>> model)

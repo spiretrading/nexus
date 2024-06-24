@@ -4,6 +4,7 @@
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
+#include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/ScrollableListBox.hpp"
 
 using namespace boost;
@@ -33,12 +34,14 @@ namespace {
 DropDownList::DropDownList(ListView& list_view, QWidget& parent)
     : QWidget(&parent),
       m_list_view(&list_view),
-      m_panel_border_size(0, 0) {
+      m_panel_border_size(0, 0),
+      m_is_scrolled_to_current(false) {
   m_scrollable_list_box = new ScrollableListBox(*m_list_view, this);
   update_style(*m_scrollable_list_box, [&] (auto& style) {
     style = SCROLLABLE_LIST_STYLE(style);
   });
   enclose(*this, *m_scrollable_list_box);
+  link(*this, *m_list_view);
   setFocusProxy(m_scrollable_list_box);
   m_panel = new OverlayPanel(*this, parent);
   m_panel->set_closed_on_focus_out(true);
@@ -74,6 +77,14 @@ bool DropDownList::eventFilter(QObject* watched, QEvent* event) {
       event->type() == QEvent::LayoutRequest) {
     m_size_hint = none;
     updateGeometry();
+    if(width() != 0 && height() != 0 && !m_is_scrolled_to_current) {
+      m_is_scrolled_to_current = true;
+      if(auto current = m_list_view->get_current()->get()) {
+        if(auto item = m_list_view->get_list_item(*current)) {
+          m_scrollable_list_box->get_scroll_box().scroll_to(*item);
+        }
+      }
+    }
   }
   return QWidget::eventFilter(watched, event);
 }

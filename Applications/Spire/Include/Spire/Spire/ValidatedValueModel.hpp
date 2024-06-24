@@ -72,11 +72,10 @@ namespace Spire {
    * @param base The base ValueModel to apply the validation to.
    * @param validator The function used to validate updates.
    */
-  template<typename T, std::invocable<const T&> V>
-  auto make_validated_value_model(
-      V&& validator, std::shared_ptr<ValueModel<T>> base) {
-    return std::make_shared<ValidatedValueModel<T, std::remove_reference_t<V>>>(
-      std::forward<V>(validator), std::move(base));
+  template<typename T, std::invocable<const typename T::Type&> V>
+  auto make_validated_value_model(V&& validator, std::shared_ptr<T> base) {
+    return std::make_shared<ValidatedValueModel<typename T::Type,
+      std::remove_reference_t<V>>>(std::forward<V>(validator), std::move(base));
   }
 
   /**

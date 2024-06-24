@@ -6,8 +6,9 @@ using namespace boost::signals2;
 using namespace Spire;
 
 ListCurrentController::ListCurrentController(
-  std::shared_ptr<CurrentModel> current)
+  std::shared_ptr<CurrentModel> current, int size)
   : m_current(std::move(current)),
+    m_size(size),
     m_edge_navigation(EdgeNavigation::WRAP),
     m_last_current(m_current->get()),
     m_connection(m_current->connect_update_signal(
@@ -28,8 +29,10 @@ void ListCurrentController::set_edge_navigation(EdgeNavigation navigation) {
 }
 
 void ListCurrentController::add(std::unique_ptr<ItemView> view, int index) {
+  auto update_current = is_initialized();
   m_views.insert(std::next(m_views.begin(), index), std::move(view));
-  if(m_current->get() && *m_current->get() >= index &&
+  m_size = std::max<int>(m_size, std::ssize(m_views));
+  if(update_current && m_current->get() && *m_current->get() >= index &&
       *m_current->get() < std::ssize(m_views) - 1) {
     auto current = *m_current->get() + 1;
     m_last_current = current;
@@ -40,6 +43,7 @@ void ListCurrentController::add(std::unique_ptr<ItemView> view, int index) {
 
 void ListCurrentController::remove(int index) {
   m_views.erase(m_views.begin() + index);
+  --m_size;
   if(m_current->get()) {
     if(m_current->get() == index) {
       auto size = static_cast<int>(m_views.size());
@@ -202,6 +206,10 @@ void ListCurrentController::cross(int direction, Qt::Orientation orientation) {
 connection ListCurrentController::connect_update_signal(
     const UpdateSignal::slot_type& slot) const {
   return m_update_signal.connect(slot);
+}
+
+bool ListCurrentController::is_initialized() const {
+  return m_size == m_views.size();
 }
 
 void ListCurrentController::on_current(optional<int> current) {

@@ -3,6 +3,7 @@
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
+#include "Spire/Ui/DropDownList.hpp"
 #include "Spire/Ui/ListItem.hpp"
 
 using namespace Spire;
@@ -136,7 +137,8 @@ FontStyleBox* Spire::make_font_style_box(
   auto box = new FontStyleBox(std::move(settings), parent);
   auto update_box_style = [=] {
     update_style(*box, [] (auto& style) {
-      style.get(Any() > is_a<ListItem>()).
+      style.get(Any() > is_a<DropDownBox>() > is_a<DropDownList>() >
+          is_a<ListView>() > is_a<ListItem>()).
         set(border_size(0)).
         set(vertical_padding(0));
     });

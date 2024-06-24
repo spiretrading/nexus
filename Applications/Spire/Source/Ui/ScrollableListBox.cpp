@@ -50,14 +50,18 @@ ScrollBox& ScrollableListBox::get_scroll_box() {
 }
 
 void ScrollableListBox::showEvent(QShowEvent* event) {
-  on_current(m_list_view->get_current()->get());
+  QTimer::singleShot(0, this, [=] {
+    on_current(m_list_view->get_current()->get());
+  });
 }
 
 void ScrollableListBox::on_current(const optional<int>& current) {
   if(!current) {
     return;
   }
-  m_scroll_box->scroll_to(*m_list_view->get_list_item(*current));
+  if(auto item = m_list_view->get_list_item(*current)) {
+    m_scroll_box->scroll_to(*item);
+  }
 }
 
 void ScrollableListBox::on_list_view_style() {

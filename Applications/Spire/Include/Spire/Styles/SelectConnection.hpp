@@ -2,8 +2,6 @@
 #define SPIRE_SELECT_CONNECTION_HPP
 #include <functional>
 #include <memory>
-#include <tuple>
-#include <type_traits>
 #include <unordered_set>
 #include <utility>
 #include "Spire/Styles/Styles.hpp"
@@ -28,31 +26,52 @@ namespace Spire::Styles {
 
       /**
        * Constructs a stateful connection.
-       * @param args The arguments representing the state of the connection.
+       * @param executor The object managing the connection and selection
+       *        updates.
        */
-      template<typename T, typename... U>
-      explicit SelectConnection(T&& arg, U&&... args);
+      template<typename T>
+      explicit SelectConnection(std::unique_ptr<T> executor);
 
       SelectConnection(const SelectConnection&) = delete;
 
-      SelectConnection(SelectConnection&&) = default;
+      SelectConnection(SelectConnection&& connection);
 
       SelectConnection& operator =(const SelectConnection&) = delete;
 
-      SelectConnection& operator =(SelectConnection&&) = default;
+      SelectConnection& operator =(SelectConnection&& connection);
 
       /** Returns <code>true</code> iff there is a connection. */
       bool is_connected() const;
 
+      /** Disconnects this connection. */
+      void disconnect();
+
     private:
-      std::shared_ptr<void> m_state;
+      struct BaseExecutor {
+        virtual ~BaseExecutor() = default;
+        virtual bool is_connected() const = 0;
+      };
+      template<typename T>
+      struct Executor final : BaseExecutor {
+        std::unique_ptr<T> m_executor;
+        explicit Executor(std::unique_ptr<T> executor);
+        bool is_connected() const override;
+      };
+      std::unique_ptr<BaseExecutor> m_executor;
   };
 
-  template<typename T, typename... U>
-  SelectConnection::SelectConnection(T&& arg, U&&... args)
-    : m_state(std::make_shared<
-        std::tuple<std::remove_reference_t<T>, std::remove_reference_t<U>...>>(
-          std::forward<T>(arg), std::forward<U>(args)...)) {}
+  template<typename T>
+  SelectConnection::SelectConnection(std::unique_ptr<T> executor)
+    : m_executor(std::make_unique<Executor<T>>(std::move(executor))) {}
+
+  template<typename T>
+  SelectConnection::Executor<T>::Executor(std::unique_ptr<T> executor)
+    : m_executor(std::move(executor)) {}
+
+  template<typename T>
+  bool SelectConnection::Executor<T>::is_connected() const {
+    return m_executor->is_connected();
+  }
 }
 
 #endif

@@ -29,11 +29,10 @@ namespace Spire {
     protected:
       void changeEvent(QEvent* event) override;
       bool eventFilter(QObject* watched, QEvent* event) override;
-      void resizeEvent(QResizeEvent* event) override;
 
     private:
       QHBoxLayout* m_container_layout;
-      Button* m_window_button;
+      Icon* m_window_icon;
       TextBox* m_title_label;
       Button* m_minimize_button;
       Button* m_maximize_button;

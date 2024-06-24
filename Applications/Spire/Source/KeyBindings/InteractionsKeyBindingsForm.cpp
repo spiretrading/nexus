@@ -69,9 +69,7 @@ namespace {
       std::shared_ptr<ScalarValueModel<Quantity>> model) {
     return new QuantityBox(
       std::make_shared<OptionalScalarValueModelDecorator<Quantity>>(
-        std::move(model)), QHash<Qt::KeyboardModifier, Quantity>(
-          {{Qt::NoModifier, 1}, {Qt::AltModifier, 5}, {Qt::ControlModifier, 10},
-          {Qt::ShiftModifier, 20}}));
+        std::move(model)));
   }
 
   template<>

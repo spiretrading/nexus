@@ -388,7 +388,7 @@ namespace {
   auto make_colon() {
     auto colon = make_label(":");
     colon->setFixedWidth(scale_width(10));
-    find_stylist(*colon).match(Colon());
+    match(*colon, Colon());
     return colon;
   }
 }
@@ -428,6 +428,11 @@ DurationBox::DurationBox(std::shared_ptr<OptionalDurationModel> current,
   container_layout->addWidget(m_second_field, 11);
   auto box = new Box(container);
   enclose(*this, *box);
+  link(*this, *m_hour_field);
+  link(*this, *hour_minute_colon);
+  link(*this, *m_minute_field);
+  link(*this, *minute_second_colon);
+  link(*this, *m_second_field);
   setFocusPolicy(Qt::StrongFocus);
   setFocusProxy(box);
   proxy_style(*this, *box);
@@ -447,13 +452,11 @@ DurationBox::DurationBox(std::shared_ptr<OptionalDurationModel> current,
       on_submit();
     }
   });
-  m_hour_field->connect_reject_signal([=] (const auto& value) { on_reject(); });
-  m_minute_field->connect_reject_signal(
-    [=] (const auto& value) { on_reject(); });
-  m_second_field->connect_reject_signal(
-    [=] (const auto& value) { on_reject(); });
+  m_hour_field->connect_reject_signal([=] (const auto&) { on_reject(); });
+  m_minute_field->connect_reject_signal([=] (const auto&) { on_reject(); });
+  m_second_field->connect_reject_signal([=] (const auto&) { on_reject(); });
   m_current->connect_update_signal(
-    [=] (const auto& value) { on_current(value); });
+    std::bind_front(&DurationBox::on_current, this));
 }
 
 const std::shared_ptr<OptionalDurationModel>& DurationBox::get_current() const {
@@ -465,6 +468,9 @@ bool DurationBox::is_read_only() const {
 }
 
 void DurationBox::set_read_only(bool is_read_only) {
+  if(is_read_only == m_is_read_only) {
+    return;
+  }
   m_is_read_only = is_read_only;
   m_hour_field->set_read_only(m_is_read_only);
   m_minute_field->set_read_only(m_is_read_only);

@@ -23,6 +23,8 @@ namespace Spire {
 
       using MoveOperation = typename ListModel<T>::MoveOperation;
 
+      using PreRemoveOperation = typename ListModel<T>::PreRemoveOperation;
+
       using RemoveOperation = typename ListModel<T>::RemoveOperation;
 
       using UpdateOperation = typename ListModel<T>::UpdateOperation;
@@ -101,7 +103,7 @@ namespace Spire {
       const Type& value, int index) {
     if(!m_value && index == 0) {
       m_value = value;
-      m_transaction.push(AddOperation(index, value));
+      m_transaction.push(AddOperation(index));
       return QValidator::State::Acceptable;
     } else if(m_value && (index == 0 || index == 1)) {
       auto previous = *m_value;
@@ -126,9 +128,9 @@ namespace Spire {
     if(index < 0 || index >= get_size()) {
       throw std::out_of_range("The index is out of range.");
     }
-    auto previous = *m_value;
+    m_transaction.push(PreRemoveOperation(index));
     m_value = boost::none;
-    m_transaction.push(RemoveOperation(index, previous));
+    m_transaction.push(RemoveOperation(index));
     return QValidator::State::Acceptable;
   }
 

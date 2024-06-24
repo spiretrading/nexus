@@ -23,10 +23,11 @@ namespace {
 }
 
 ListSelectionController::ListSelectionController(
-  std::shared_ptr<SelectionModel> selection)
+  std::shared_ptr<SelectionModel> selection, int size)
   : m_mode(Mode::SINGLE),
     m_selection(std::move(selection)),
     m_size(0),
+    m_list_size(size),
     m_connection(m_selection->connect_operation_signal(
       std::bind_front(&ListSelectionController::on_operation, this))) {}
 
@@ -44,7 +45,12 @@ void ListSelectionController::set_mode(Mode mode) {
 }
 
 void ListSelectionController::add(int index) {
+  auto update_selection = is_initialized();
   ++m_size;
+  m_list_size = std::max(m_list_size, m_size);
+  if(!update_selection) {
+    return;
+  }
   auto blocker = shared_connection_block(m_connection);
   m_selection->transact([&] {
     for(auto i = 0; i != m_selection->get_size(); ++i) {
@@ -58,6 +64,7 @@ void ListSelectionController::add(int index) {
 
 void ListSelectionController::remove(int index) {
   --m_size;
+  --m_list_size;
   auto operation = optional<SelectionModel::Operation>();
   {
     auto blocker = shared_connection_block(m_connection);
@@ -67,7 +74,7 @@ void ListSelectionController::remove(int index) {
         auto selection = m_selection->get(i);
         if(selection == index) {
           if(m_selection->remove(i) != QValidator::State::Invalid) {
-            operation = SelectionModel::RemoveOperation(i, index);
+            operation = SelectionModel::PreRemoveOperation(i);
           } else {
             ++i;
           }
@@ -180,11 +187,16 @@ connection ListSelectionController::connect_operation_signal(
   return m_operation_signal.connect(slot);
 }
 
+bool ListSelectionController::is_initialized() const {
+  return m_size == m_list_size;
+}
+
 void ListSelectionController::on_operation(
     const SelectionModel::Operation& operation) {
   visit(operation,
-    [&] (const SelectionModel::RemoveOperation& operation) {
-      if(operation.get_value() == m_range_anchor) {
+    [&] (const SelectionModel::PreRemoveOperation& operation) {
+      m_operation_signal(operation);
+      if(m_selection->get(operation.m_index) == m_range_anchor) {
         m_range_anchor = none;
       }
     },
@@ -192,6 +204,9 @@ void ListSelectionController::on_operation(
       if(operation.get_previous() == m_range_anchor) {
         m_range_anchor = none;
       }
+      m_operation_signal(operation);
+    },
+    [&] (const auto& operation) {
+      m_operation_signal(operation);
     });
-  m_operation_signal(operation);
 }

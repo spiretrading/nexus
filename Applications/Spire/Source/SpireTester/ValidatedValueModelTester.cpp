@@ -6,7 +6,7 @@ using namespace Spire;
 TEST_SUITE("ValidatedValueModel") {
   TEST_CASE("validate") {
     auto source = std::make_shared<LocalValueModel<int>>(2);
-    auto model = make_validated_value_model<int>([] (auto value) {
+    auto model = make_validated_value_model([] (auto value) {
       if(value % 2 == 0) {
         return QValidator::State::Acceptable;
       }

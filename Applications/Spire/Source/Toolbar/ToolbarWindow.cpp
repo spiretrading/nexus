@@ -3,7 +3,6 @@
 #include <QStandardPaths>
 #include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Toolbar/NewBlotterForm.hpp"
 #include "Spire/Toolbar/SettingsPanel.hpp"
 #include "Spire/Toolbar/ToolbarWindowSettings.hpp"
 #include "Spire/Ui/Box.hpp"
@@ -11,6 +10,7 @@
 #include "Spire/Ui/ContextMenu.hpp"
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/Layouts.hpp"
+#include "Spire/Ui/LineInputForm.hpp"
 #include "Spire/Ui/MenuButton.hpp"
 
 using namespace Beam;
@@ -28,6 +28,25 @@ namespace {
       QStandardPaths::DocumentsLocation).toStdString());
     path /= account.m_name + "_settings.sps";
     return QString::fromStdString(path.string());
+  }
+
+  auto make_unique_blotter_name(
+      const QString& name, const ListModel<BlotterModel*>& blotters) {
+    auto unique_name = name;
+    auto count = 1;
+    auto is_existing_name = true;
+    while(is_existing_name) {
+      is_existing_name = false;
+      for(auto i = 0; i < blotters.get_size(); ++i) {
+        if(blotters.get(i)->GetName() == unique_name.toStdString()) {
+          ++count;
+          unique_name = QString("%1 %2").arg(name).arg(count);
+          is_existing_name = true;
+          break;
+        }
+      }
+    }
+    return unique_name;
   }
 }
 
@@ -57,7 +76,7 @@ ToolbarWindow::ToolbarWindow(DirectoryEntry account, AccountRoles roles,
   bottom_layout->setSpacing(scale_width(4));
   bottom_layout->addWidget(
     make_icon_tool_button(WindowType::CANVAS, ":/Icons/toolbar/canvas.svg",
-    QColor(0x00848A), QColor(0x00696E), QColor(0x00A88B)));
+      QColor(0x00848A), QColor(0x00696E), QColor(0x00A88B)));
   bottom_layout->addWidget(make_icon_tool_button(
     WindowType::BOOK_VIEW, ":/Icons/toolbar/book_view.svg",
     QColor(0x406ABF), QColor(0x404ABF), QColor(0x4392D6)));
@@ -66,7 +85,7 @@ ToolbarWindow::ToolbarWindow(DirectoryEntry account, AccountRoles roles,
     QColor(0x26BF4A), QColor(0x2CAC79), QColor(0x1FD364)));
   bottom_layout->addWidget(
     make_icon_tool_button(WindowType::CHART, ":/Icons/toolbar/chart.svg",
-    QColor(0x7F5EEC), QColor(0x684BC7), QColor(0x8D78EC)));
+      QColor(0x7F5EEC), QColor(0x684BC7), QColor(0x8D78EC)));
   bottom_layout->addWidget(make_icon_tool_button(
     WindowType::WATCHLIST, ":/Icons/toolbar/watchlist.svg",
     QColor(0xE67A44), QColor(0xCB6431), QColor(0xF28E38)));
@@ -214,8 +233,8 @@ MenuButton* ToolbarWindow::make_blotter_button() {
   update_style(*blotter_button, [&] (auto& style) {
     style.get(Any() > is_a<Icon>()).set(Fill(QColor(0x00BFA0)));
     style.get(Hover() > is_a<Icon>()).set(Fill(QColor(0x00A88B)));
-    style.get(Any() > (Press() || FocusIn()) > is_a<Icon>()).set(
-      Fill(QColor(0x00D6BB)));
+    style.get(Any() > (Press() || FocusIn()) > is_a<Icon>()).
+      set(Fill(QColor(0x00D6BB)));
   });
   blotter_button->setFixedSize(scale(32, 26));
   return blotter_button;
@@ -303,14 +322,16 @@ void ToolbarWindow::on_export() {
 }
 
 void ToolbarWindow::on_new_blotter_action() {
-  m_new_blotter_form = new NewBlotterForm(m_pinned_blotters, *this);
+  m_new_blotter_form = new LineInputForm(tr("New Blotter"), *this);
   m_new_blotter_form->connect_submit_signal(
     std::bind_front(&ToolbarWindow::on_new_blotter_submission, this));
   m_new_blotter_form->show();
 }
 
 void ToolbarWindow::on_new_blotter_submission(const QString& name) {
-  m_new_blotter_signal(name);
+  auto unique_name = make_unique_blotter_name(name, *m_pinned_blotters);
+  m_new_blotter_form->deleteLater();
+  m_new_blotter_signal(unique_name);
 }
 
 void ToolbarWindow::on_blotter_operation(

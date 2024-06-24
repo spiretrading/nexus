@@ -18,6 +18,7 @@
 #include "Spire/Canvas/Types/CanvasTypeRegistry.hpp"
 #include "Spire/Catalog/CatalogSettings.hpp"
 #include "Spire/Dashboard/SavedDashboards.hpp"
+#include "Spire/KeyBindings/AdditionalTagDatabase.hpp"
 #include "Spire/KeyBindings/KeyBindingsModel.hpp"
 #include "Spire/LegacyUI/LegacyUI.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorProperties.hpp"
@@ -53,6 +54,7 @@ namespace Spire {
        * @param destinationDatabase Stores the database of all destinations.
        * @param entitlementDatabase Stores the database of market data
        *        entitlements.
+       * @param additionalTagDatabase Stores the database of additional tags.
        * @param serviceClients The set of clients connected to Spire services.
        * @param telemetryClient The client used to submit telemetry data.
        */
@@ -64,7 +66,9 @@ namespace Spire {
         const Nexus::MarketDatabase& marketDatabase,
         const Nexus::DestinationDatabase& destinationDatabase,
         const Nexus::MarketDataService::EntitlementDatabase&
-          entitlementDatabase, Nexus::ServiceClientsBox serviceClients,
+          entitlementDatabase,
+        const AdditionalTagDatabase& additionalTagDatabase,
+        Nexus::ServiceClientsBox serviceClients,
         Nexus::TelemetryService::TelemetryClientBox telemetryClient);
 
       ~UserProfile();
@@ -134,6 +138,9 @@ namespace Spire {
 
       /** Returns the SavedDashboards. */
       const SavedDashboards& GetSavedDashboards() const;
+
+      /** Returns the database of additional tags. */
+      const AdditionalTagDatabase& GetAdditionalTagDatabase() const;
 
       /** Returns the key bindings. */
       const std::shared_ptr<KeyBindingsModel>& GetKeyBindings() const;
@@ -238,6 +245,7 @@ namespace Spire {
       TimeAndSalesProperties m_defaultTimeAndSalesProperties;
       PortfolioViewerProperties m_defaultPortfolioViewerProperties;
       CatalogSettings m_catalogSettings;
+      AdditionalTagDatabase m_additionalTagDatabase;
       std::shared_ptr<KeyBindingsModel> m_keyBindings;
       CanvasTypeRegistry m_typeRegistry;
       std::unique_ptr<BlotterSettings> m_blotterSettings;

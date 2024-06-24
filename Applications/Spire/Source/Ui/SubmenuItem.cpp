@@ -31,8 +31,7 @@ SubmenuItem::SubmenuItem(QString label, ContextMenu& menu, QWidget* parent)
   label_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
   auto layout = make_hbox_layout(this);
   layout->addWidget(label_box);
-  auto icon =
-    new Icon(imageFromSvg(":/Icons/menu-arrow.svg", scale(4, 6)), this);
+  auto icon = new Icon(imageFromSvg(":/Icons/menu-arrow.svg", scale(4, 6)));
   icon->setFixedSize(scale(4, 6));
   layout->addWidget(icon, 0, Qt::AlignVCenter);
   set_style(*this, DEFAULT_STYLE());

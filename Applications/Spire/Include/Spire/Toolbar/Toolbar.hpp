@@ -3,7 +3,6 @@
 #include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
-  class NewBlotterForm;
   class SettingsPanel;
   class ToolbarController;
   class ToolbarWindow;
