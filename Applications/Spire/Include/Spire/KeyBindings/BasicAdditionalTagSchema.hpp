@@ -30,6 +30,8 @@ namespace Spire {
       BasicAdditionalTagSchema(
         std::string name, int key, Nexus::Tag::Type default_value);
 
+      bool test(const AdditionalTag& tag) const override;
+
       std::unique_ptr<CanvasNode> make_canvas_node(
         const boost::optional<Nexus::Tag::Type>& value) const override;
 

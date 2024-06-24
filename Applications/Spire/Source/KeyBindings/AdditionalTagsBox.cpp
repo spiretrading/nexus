@@ -80,7 +80,7 @@ void AdditionalTagsBox::update_current(
     auto i = std::find_if(tags.begin(), tags.end(), [&] (const auto& tag) {
       return tag->get_key() == current.m_key;
     });
-    return i == tags.end();
+    return i == tags.end() || (*i)->test(current);
   });
   if(erasures != 0) {
     m_current->set(current);

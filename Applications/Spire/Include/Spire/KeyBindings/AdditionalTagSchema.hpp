@@ -30,6 +30,13 @@ namespace Spire {
       int get_key() const;
 
       /**
+       * Tests if an AdditionalTag satisfies the requirements of this schema.
+       * This typically involves ensuring that the tag has the correct type
+       * and a valid value, or no value.
+       */
+      virtual bool test(const AdditionalTag& tag) const = 0;
+
+      /**
        * Makes an input box suitable for representing a value for this type of
        * tag.
        * @param current The tag's current value.

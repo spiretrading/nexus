@@ -22,6 +22,8 @@ namespace Spire {
       /** Returns the list of cases that can be selected. */
       const std::vector<std::string>& get_cases() const;
 
+      bool test(const AdditionalTag& tag) const override;
+
       std::unique_ptr<CanvasNode> make_canvas_node(
         const boost::optional<Nexus::Tag::Type>& value) const override;
 

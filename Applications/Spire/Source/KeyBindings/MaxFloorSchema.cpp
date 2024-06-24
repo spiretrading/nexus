@@ -1,6 +1,7 @@
 #include "Spire/KeyBindings/MaxFloorSchema.hpp"
 #include "Spire/Canvas/Operations/CanvasTypeCompatibilityException.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/MaxFloorNode.hpp"
+#include "Spire/KeyBindings/AdditionalTag.hpp"
 #include "Spire/Spire/TransformValueModel.hpp"
 #include "Spire/Ui/QuantityBox.hpp"
 
@@ -13,6 +14,13 @@ const std::shared_ptr<MaxFloorSchema>& MaxFloorSchema::get_instance() {
   static const auto schema =
     std::shared_ptr<MaxFloorSchema>(new MaxFloorSchema());
   return schema;
+}
+
+bool MaxFloorSchema::test(const AdditionalTag& tag) const {
+  return tag.m_key == get_key() && (
+    tag.m_value == none || tag.m_value->which() == Nexus::Tag::INT_INDEX ||
+      tag.m_value->which() == Nexus::Tag::QUANTITY_INDEX ||
+      tag.m_value->which() == Nexus::Tag::DOUBLE_INDEX);
 }
 
 std::unique_ptr<CanvasNode> MaxFloorSchema::make_canvas_node(

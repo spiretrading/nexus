@@ -1,6 +1,7 @@
 #include "Spire/KeyBindings/EnumAdditionalTagSchema.hpp"
 #include "Spire/Canvas/Common/NoneNode.hpp"
 #include "Spire/Canvas/Types/TextType.hpp"
+#include "Spire/KeyBindings/AdditionalTag.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/TransformValueModel.hpp"
 #include "Spire/Ui/EnumBox.hpp"
@@ -15,6 +16,20 @@ EnumAdditionalTagSchema::EnumAdditionalTagSchema(
 
 const std::vector<std::string>& EnumAdditionalTagSchema::get_cases() const {
   return m_cases;
+}
+
+bool EnumAdditionalTagSchema::test(const AdditionalTag& tag) const {
+  if(tag.m_key != get_key()) {
+    return false;
+  }
+  if(tag.m_value == none) {
+    return true;
+  }
+  auto value = get<std::string>(&*tag.m_value);
+  if(!value) {
+    return false;
+  }
+  return std::find(m_cases.begin(), m_cases.end(), *value) != m_cases.end();
 }
 
 std::unique_ptr<CanvasNode> EnumAdditionalTagSchema::make_canvas_node(

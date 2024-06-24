@@ -12,6 +12,10 @@ const std::shared_ptr<NoneAdditionalTagSchema>&
   return schema;
 }
 
+bool NoneAdditionalTagSchema::test(const AdditionalTag& tag) const {
+  return false;
+}
+
 std::unique_ptr<CanvasNode> NoneAdditionalTagSchema::make_canvas_node(
     const boost::optional<Nexus::Tag::Type>& value) const {
   return std::make_unique<NoneNode>();

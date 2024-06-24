@@ -9,6 +9,7 @@
 #include "Spire/Canvas/ValueNodes/IntegerNode.hpp"
 #include "Spire/Canvas/ValueNodes/MoneyNode.hpp"
 #include "Spire/Canvas/ValueNodes/TextNode.hpp"
+#include "Spire/KeyBindings/AdditionalTag.hpp"
 #include "Spire/Spire/TransformValueModel.hpp"
 #include "Spire/Ui/MoneyBox.hpp"
 
@@ -147,6 +148,18 @@ BasicAdditionalTagSchema::BasicAdditionalTagSchema(
     m_type(static_cast<std::shared_ptr<CanvasType>>(
       apply_visitor(ToCanvasNodeVisitor(), default_value)->GetType())),
     m_default_value(std::move(default_value)) {}
+
+bool BasicAdditionalTagSchema::test(const AdditionalTag& tag) const {
+  if(tag.m_key != get_key()) {
+    return false;
+  }
+  if(tag.m_value == none) {
+    return true;
+  }
+  auto result = apply_visitor(ToCanvasNodeVisitor(), *tag.m_value);
+  return result->GetType().GetCompatibility(*m_type) ==
+    CanvasType::Compatibility::EQUAL;
+}
 
 std::unique_ptr<CanvasNode> BasicAdditionalTagSchema::make_canvas_node(
     const optional<Nexus::Tag::Type>& value) const {
