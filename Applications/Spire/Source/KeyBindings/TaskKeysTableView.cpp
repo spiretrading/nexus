@@ -172,8 +172,8 @@ namespace {
         });
       std::erase_if(destinations, [&] (const auto& destination) {
         for(auto& market : market_set) {
-          auto i = std::find(destination.m_markets.begin(),
-            destination.m_markets.end(), market);
+          auto i = std::find(
+            destination.m_markets.begin(), destination.m_markets.end(), market);
           if(i == destination.m_markets.end()) {
             return true;
           }
