@@ -368,7 +368,7 @@ namespace {
           } else if(column_id == OrderTaskColumns::REGION) {
             auto current = make_proxy.operator ()<Region>();
             auto region_box = new RegionBox(m_region_query_model, current);
-            region_box->setFixedHeight(scale_height(26));
+            region_box->setFixedHeight(scale_height(25));
             region_box->setSizePolicy(
               QSizePolicy::Preferred, QSizePolicy::Fixed);
             return {new AnyInputBox(*region_box),

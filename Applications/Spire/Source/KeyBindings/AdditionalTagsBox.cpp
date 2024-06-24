@@ -5,6 +5,7 @@
 
 using namespace boost;
 using namespace boost::signals2;
+using namespace Nexus;
 using namespace Spire;
 using namespace Spire::Styles;
 
@@ -16,7 +17,11 @@ AdditionalTagsBox::AdditionalTagsBox(
     : QWidget(parent),
       m_additional_tags(std::move(additional_tags)),
       m_destination(std::move(destination)),
+      m_destination_connection(m_destination->connect_update_signal(
+        std::bind_front(&AdditionalTagsBox::on_destination, this))),
       m_region(std::move(region)),
+      m_region_connection(m_region->connect_update_signal(
+        std::bind_front(&AdditionalTagsBox::on_region, this))),
       m_current(std::move(current)),
       m_is_read_only(false),
       m_click_observer(*this) {
@@ -65,6 +70,29 @@ void AdditionalTagsBox::set_read_only(bool is_read_only) {
 connection AdditionalTagsBox::connect_submit_signal(
     const SubmitSignal::slot_type& slot) const {
   return {};
+}
+
+void AdditionalTagsBox::update_current(
+    const Destination& destination, const Region& region) {
+  auto current = m_current->get();
+  auto tags = Spire::find(m_additional_tags, destination, region);
+  auto erasures = std::erase_if(current, [&] (const auto& current) {
+    auto i = std::find_if(tags.begin(), tags.end(), [&] (const auto& tag) {
+      return tag->get_key() == current.m_key;
+    });
+    return i == tags.end();
+  });
+  if(erasures != 0) {
+    m_current->set(current);
+  }
+}
+
+void AdditionalTagsBox::on_destination(const Destination& destination) {
+  update_current(destination, m_region->get());
+}
+
+void AdditionalTagsBox::on_region(const Region& region) {
+  update_current(m_destination->get(), region);
 }
 
 void AdditionalTagsBox::on_click() {
