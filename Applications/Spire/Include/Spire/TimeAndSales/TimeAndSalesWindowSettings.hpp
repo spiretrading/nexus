@@ -1,5 +1,5 @@
-#ifndef SPIRE_TIMEANDSALESWINDOWSETTINGS_HPP
-#define SPIRE_TIMEANDSALESWINDOWSETTINGS_HPP
+#ifndef SPIRE_TIME_AND_SALES_WINDOW_SETTINGS_HPP
+#define SPIRE_TIME_AND_SALES_WINDOW_SETTINGS_HPP
 #include <QByteArray>
 #include "Nexus/Definitions/Security.hpp"
 #include "Spire/LegacyUI/SecurityViewStack.hpp"
@@ -10,31 +10,27 @@
 
 namespace Spire {
 
-  /*! \class TimeAndSalesWindowSettings
-      \brief Stores the window settings for a TimeAndSalesWindow.
-   */
+  /** Stores the window settings for a TimeAndSalesWindow. */
   class TimeAndSalesWindowSettings : public LegacyUI::WindowSettings {
     public:
 
-      //! Constructs a TimeAndSalesWindowSettings with default values.
-      TimeAndSalesWindowSettings();
+      /** Constructs a TimeAndSalesWindowSettings with default values. */
+      TimeAndSalesWindowSettings() = default;
 
-      //! Constructs a TimeAndSalesWindowSettings.
-      /*!
-        \param window The TimeAndSalesWindow to represent.
-        \param userProfile The user's profile.
-      */
+      /**
+       * Constructs a TimeAndSalesWindowSettings.
+       * @param window The TimeAndSalesWindow to represent.
+       * @param userProfile The user's profile.
+       */
       TimeAndSalesWindowSettings(const TimeAndSalesWindow& window,
         Beam::Ref<UserProfile> userProfile);
 
-      virtual ~TimeAndSalesWindowSettings();
+      std::string GetName() const override;
 
-      virtual std::string GetName() const;
+      QWidget* Reopen(Beam::Ref<UserProfile> userProfile) const override;
 
-      virtual QWidget* Reopen(Beam::Ref<UserProfile> userProfile) const;
-
-      virtual void Apply(Beam::Ref<UserProfile> userProfile,
-        Beam::Out<QWidget> widget) const;
+      void Apply(Beam::Ref<UserProfile> userProfile,
+        Beam::Out<QWidget> widget) const override;
 
     private:
       friend struct Beam::Serialization::DataShuttle;

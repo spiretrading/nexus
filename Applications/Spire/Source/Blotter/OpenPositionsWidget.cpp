@@ -10,6 +10,7 @@
 #include "Spire/Canvas/OrderExecutionNodes/SingleOrderTaskNode.hpp"
 #include "Spire/LegacyUI/CustomQtVariants.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
+#include "Spire/LegacyUI/WindowSettings.hpp"
 #include "Spire/Utilities/ExportModel.hpp"
 #include "ui_OpenPositionsWidget.h"
 
@@ -63,8 +64,8 @@ OpenPositionsWidget::UIState OpenPositionsWidget::GetUIState() const {
 }
 
 void OpenPositionsWidget::SetUIState(const UIState& state) {
-  m_ui->m_openPositionsTable->horizontalHeader()->restoreGeometry(
-    state.m_tableGeometry);
+  restore_geometry(
+    *m_ui->m_openPositionsTable->horizontalHeader(), state.m_tableGeometry);
   m_ui->m_openPositionsTable->horizontalHeader()->restoreState(
     state.m_tableState);
 }

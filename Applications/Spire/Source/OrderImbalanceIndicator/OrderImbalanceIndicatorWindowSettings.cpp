@@ -8,6 +8,7 @@
 using namespace Beam;
 using namespace Nexus;
 using namespace Spire;
+using namespace Spire::LegacyUI;
 using namespace std;
 
 OrderImbalanceIndicatorWindowSettings::
@@ -50,9 +51,10 @@ void OrderImbalanceIndicatorWindowSettings::Apply(
     Ref<UserProfile> userProfile, Out<QWidget> widget) const {
   OrderImbalanceIndicatorWindow& window =
     dynamic_cast<OrderImbalanceIndicatorWindow&>(*widget);
-  window.restoreGeometry(m_geometry);
-  window.m_ui->m_orderImbalanceIndicatorTableView->horizontalHeader()->
-    restoreGeometry(m_tableHeaderGeometry);
+  restore_geometry(window, m_geometry);
+  restore_geometry(
+    *window.m_ui->m_orderImbalanceIndicatorTableView->horizontalHeader(),
+    m_tableHeaderGeometry);
   window.m_ui->m_orderImbalanceIndicatorTableView->horizontalHeader()->
     restoreState(m_tableHeaderState);
   m_timeRangeSettings->Apply(Ref(userProfile),

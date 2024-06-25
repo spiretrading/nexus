@@ -24,6 +24,6 @@ QWidget* ChartIntervalComboBoxWindowSettings::Reopen(
 void ChartIntervalComboBoxWindowSettings::Apply(
     Ref<UserProfile> userProfile, Out<QWidget> widget) const {
   auto& comboBox = dynamic_cast<ChartIntervalComboBox&>(*widget);
-  comboBox.restoreGeometry(m_geometry);
+  restore_geometry(comboBox, m_geometry);
   comboBox.SetInterval(m_type, m_value);
 }

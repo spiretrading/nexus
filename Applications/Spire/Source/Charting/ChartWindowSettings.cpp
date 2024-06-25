@@ -48,7 +48,7 @@ QWidget* ChartWindowSettings::Reopen(Ref<UserProfile> userProfile) const {
 void ChartWindowSettings::Apply(Ref<UserProfile> userProfile,
     Out<QWidget> widget) const {
   ChartWindow& window = dynamic_cast<ChartWindow&>(*widget);
-  window.restoreGeometry(m_geometry);
+  restore_geometry(window, m_geometry);
   if(window.m_ui->m_chart != nullptr) {
     m_chartPlotViewWindowSettings->Apply(Ref(userProfile),
       Store(*window.m_ui->m_chart));

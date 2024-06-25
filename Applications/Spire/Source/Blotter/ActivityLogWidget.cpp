@@ -5,6 +5,7 @@
 #include "Spire/Blotter/ActivityLogModel.hpp"
 #include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/LegacyUI/CustomQtVariants.hpp"
+#include "Spire/LegacyUI/WindowSettings.hpp"
 #include "Spire/Utilities/ExportModel.hpp"
 #include "ui_ActivityLogWidget.h"
 
@@ -36,8 +37,8 @@ ActivityLogWidget::UIState ActivityLogWidget::GetUIState() const {
 }
 
 void ActivityLogWidget::SetUIState(const UIState& state) {
-  m_ui->m_activityLogTable->horizontalHeader()->restoreGeometry(
-    state.m_tableGeometry);
+  restore_geometry(
+    *m_ui->m_activityLogTable->horizontalHeader(), state.m_tableGeometry);
   m_ui->m_activityLogTable->horizontalHeader()->restoreState(
     state.m_tableState);
 }

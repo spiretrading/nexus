@@ -48,7 +48,7 @@ QWidget* BookViewWindowSettings::Reopen(
 void BookViewWindowSettings::Apply(Ref<UserProfile> userProfile,
     Out<QWidget> widget) const {
   BookViewWindow& window = dynamic_cast<BookViewWindow&>(*widget);
-  window.restoreGeometry(m_geometry);
+  restore_geometry(window, m_geometry);
   window.m_ui->m_bidPanel->m_ui->m_bookView->horizontalHeader()->
     restoreState(m_bidPanelHeader);
   window.m_ui->m_askPanel->m_ui->m_bookView->horizontalHeader()->
