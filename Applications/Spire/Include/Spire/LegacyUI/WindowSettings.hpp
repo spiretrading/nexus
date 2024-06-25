@@ -5,6 +5,7 @@
 #include <vector>
 #include <Beam/Pointers/Out.hpp>
 #include <Beam/Pointers/Ref.hpp>
+#include <QByteArray>
 #include "Spire/LegacyUI/LegacyUI.hpp"
 #include "Spire/Spire/Spire.hpp"
 
