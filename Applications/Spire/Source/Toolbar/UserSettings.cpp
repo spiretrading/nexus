@@ -37,15 +37,9 @@ void Spire::export_settings(UserSettings::Categories categories,
     settings.m_order_imbalance_indicator_properties =
       user_profile.GetDefaultOrderImbalanceIndicatorProperties();
   }
-/** TODO
-  if(categories.Test(UserSettings::Category::INTERACTIONS)) {
-    settings.m_interactions_properties =
-      user_profile.GetInteractionProperties();
-  }
   if(categories.Test(UserSettings::Category::KEY_BINDINGS)) {
     settings.m_key_bindings = user_profile.GetKeyBindings();
   }
-*/
   if(categories.Test(UserSettings::Category::PORTFOLIO)) {
     settings.m_portfolio_properties =
       user_profile.GetDefaultPortfolioViewerProperties();
@@ -137,17 +131,10 @@ void Spire::import_settings(UserSettings::Categories categories,
     user_profile->SetDefaultOrderImbalanceIndicatorProperties(
       *settings.m_order_imbalance_indicator_properties);
   }
-/** TODO
-  if(categories.Test(UserSettings::Category::INTERACTIONS) &&
-      settings.m_interactions_properties) {
-    user_profile->GetInteractionProperties() =
-      *settings.m_interactions_properties;
-  }
   if(categories.Test(UserSettings::Category::KEY_BINDINGS) &&
       settings.m_key_bindings) {
     user_profile->SetKeyBindings(*settings.m_key_bindings);
   }
-*/
   if(categories.Test(UserSettings::Category::PORTFOLIO) &&
       settings.m_portfolio_properties) {
     user_profile->SetDefaultPortfolioViewerProperties(
