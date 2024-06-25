@@ -80,6 +80,8 @@ namespace Nexus::OasisOrderExecutionService {
       BboQuote LoadBboQuote(const Security& security);
       void RouteToChix(Nexus::OrderExecutionService::OrderInfo info,
         Beam::Out<FIX42::NewOrderSingle> newOrderSingle);
+      void RouteToCse(const Nexus::OrderExecutionService::OrderInfo& info,
+        Beam::Out<FIX42::NewOrderSingle> newOrderSingle);
       void RouteToMatn(const Nexus::OrderExecutionService::OrderInfo& info,
         Beam::Out<FIX42::NewOrderSingle> newOrderSingle);
       void RouteToNeo(const Nexus::OrderExecutionService::OrderInfo& info,

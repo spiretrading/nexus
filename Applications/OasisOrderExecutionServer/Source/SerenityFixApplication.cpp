@@ -23,6 +23,42 @@ namespace {
   const auto UNIFORM_LIQUDITY_TAG = 9730;
   const auto ORIGINAL_LIQUIDITY_TAG = 9731;
   const auto NEO_VISIBILITY_TYPE_TAG = 20000;
+
+  void populate_anonymous(
+      const Tag& tag, FIX42::NewOrderSingle& newOrderSingle) {
+    if(auto value = get<std::string>(&tag.GetValue())) {
+      if(*value == "Y" || *value == "N") {
+        newOrderSingle.setField(ANONYMOUS_TAG, *value);
+        return;
+      }
+    }
+    BOOST_THROW_EXCEPTION(
+      FixOrderRejectedException("Invalid value for tag 6761 (Anonymous)."));
+  }
+
+  void populate_long_life(
+      const Tag& tag, FIX42::NewOrderSingle& newOrderSingle) {
+    if(auto value = get<std::string>(&tag.GetValue())) {
+      if(*value == "Y" || *value == "N") {
+        newOrderSingle.setField(LONG_LIFE_TAG, *value);
+        return;
+      }
+    }
+    BOOST_THROW_EXCEPTION(
+      FixOrderRejectedException("Invalid value for tag 7735 (TsxLongLife)."));
+  }
+
+  void populate_exec_inst(const Tag& tag, FIX42::NewOrderSingle& newOrderSingle,
+      std::initializer_list<const char*> cases) {
+    if(auto value = get<std::string>(&tag.GetValue())) {
+      if(std::find(cases.begin(), cases.end(), *value) != cases.end()) {
+        newOrderSingle.setField(FIX::ExecInst(*value));
+        return;
+      }
+    }
+    BOOST_THROW_EXCEPTION(
+      FixOrderRejectedException("Invalid value for tag 18 (ExecInst)."));
+  }
 }
 
 SerenityFixApplication::SerenityFixApplication(
@@ -109,6 +145,11 @@ const Order& SerenityFixApplication::Submit(const OrderInfo& info) {
             DefaultDestinations::TSX()) {
         RouteToChix(*submissionInfo, Store(newOrderSingle));
       } else if(submissionInfo->m_fields.m_destination ==
+          DefaultDestinations::CSE() ||
+            submissionInfo->m_fields.m_destination ==
+            DefaultDestinations::PURE()) {
+        RouteToCse(*submissionInfo, Store(newOrderSingle));
+      } else if(submissionInfo->m_fields.m_destination ==
           DefaultDestinations::MATNLP() ||
           submissionInfo->m_fields.m_destination ==
             DefaultDestinations::MATNMF()) {
@@ -119,11 +160,6 @@ const Order& SerenityFixApplication::Submit(const OrderInfo& info) {
       } else {
         auto exDestination = [&] {
           if(submissionInfo->m_fields.m_destination ==
-              DefaultDestinations::CSE() ||
-                submissionInfo->m_fields.m_destination ==
-                  DefaultDestinations::PURE()) {
-            return FIX::ExDestination("XCNQ");
-          } else if(submissionInfo->m_fields.m_destination ==
               DefaultDestinations::CSE2()) {
             return FIX::ExDestination("CSE2");
           } else if(submissionInfo->m_fields.m_destination ==
@@ -284,6 +320,11 @@ void SerenityFixApplication::RouteToChix(
     OrderInfo info, Out<FIX42::NewOrderSingle> newOrderSingle) {
   auto hasDestination = false;
   if(info.m_fields.m_destination == DefaultDestinations::TSX()) {
+    for(auto& tag : info.m_fields.m_additionalFields) {
+      if(tag.GetKey() == LONG_LIFE_TAG) {
+        populate_long_life(tag, *newOrderSingle);
+      }
+    }
     static const auto openTime = hours(13) + minutes(30);
     if(m_timeClient->GetTime().time_of_day() < openTime) {
       auto destination = [&] {
@@ -308,13 +349,61 @@ void SerenityFixApplication::RouteToChix(
     hasDestination = true;
   } else {
     for(auto& tag : info.m_fields.m_additionalFields) {
-      if(tag.GetKey() == FIX::FIELD::ExDestination) {
+      if(tag.GetKey() == LONG_LIFE_TAG) {
+        populate_long_life(tag, *newOrderSingle);
+      } else if(tag.GetKey() == FIX::FIELD::ExDestination) {
         if(auto value = boost::get<std::string>(&tag.GetValue())) {
           auto destination = [&] {
-            if(*value == "SMRTFEE") {
-              return FIX::ExDestination("CX15");
+            if(*value == "SMRTCHIX") {
+              return FIX::ExDestination("CX01");
+            } else if(*value == "SMRTCHIXD") {
+              return FIX::ExDestination("CX02");
+            } else if(*value == "SMRTDARKNR") {
+              return FIX::ExDestination("CX03");
+            } else if(*value == "SMRTDARK") {
+              return FIX::ExDestination("CX04");
+            } else if(*value == "SMRTCX2") {
+              return FIX::ExDestination("CX05");
+            } else if(*value == "SMRTCX2D") {
+              return FIX::ExDestination("CX06");
+            } else if(*value == "SMRTCX2DARKNR") {
+              return FIX::ExDestination("CX07");
+            } else if(*value == "SMRTCX2DARK") {
+              return FIX::ExDestination("CX08");
+            } else if(*value == "SMRTX") {
+              return FIX::ExDestination("CX09");
+            } else if(*value == "SMRTXD") {
+              return FIX::ExDestination("CX10");
             } else if(*value == "SMRTXDARKNR") {
               return FIX::ExDestination("CX11");
+            } else if(*value == "SMRTXDARK") {
+              return FIX::ExDestination("CX12");
+            } else if(*value == "SWEEPANDCROSS") {
+              return FIX::ExDestination("CX13");
+            } else if(*value == "DEPTHFINDER") {
+              return FIX::ExDestination("CX14");
+            } else if(*value == "SMRTFEE") {
+              return FIX::ExDestination("CX15");
+            } else if(*value == "MULTI-CA") {
+              return FIX::ExDestination("CX16");
+            } else if(*value == "MULTI-CXA") {
+              return FIX::ExDestination("CX17");
+            } else if(*value == "MULTI-CX") {
+              return FIX::ExDestination("CX18");
+            } else if(*value == "MULTI-CXY") {
+              return FIX::ExDestination("CX19");
+            } else if(*value == "MULTIDARK-CM") {
+              return FIX::ExDestination("CX20");
+            } else if(*value == "MULTIDARK-YM") {
+              return FIX::ExDestination("CX21");
+            } else if(*value == "MULTIDARK-YCM") {
+              return FIX::ExDestination("CX22");
+            } else if(*value == "MULTIDARK-CYXM") {
+              return FIX::ExDestination("CX23");
+            } else if(*value == "MULTIDARK-DM") {
+              return FIX::ExDestination("CX24");
+            } else if(*value == "SMRTXOPG-X2") {
+              return FIX::ExDestination("CX25");
             } else if(*value == "CXD") {
               return FIX::ExDestination("XCXD");
             } else if(*value == "SMRTCXD") {
@@ -332,6 +421,8 @@ void SerenityFixApplication::RouteToChix(
           BOOST_THROW_EXCEPTION(FixOrderRejectedException(
             "Invalid value for tag 100 (ExDestination)."));
         }
+      } else if(tag.GetKey() == FIX::FIELD::ExecInst) {
+        populate_exec_inst(tag, *newOrderSingle, {"M", "R", "P", "x", "f"});
       }
     }
   }
@@ -366,28 +457,36 @@ void SerenityFixApplication::RouteToChix(
   }
 }
 
+void SerenityFixApplication::RouteToCse(
+    const OrderInfo& info, Out<FIX42::NewOrderSingle> newOrderSingle) {
+  newOrderSingle->setField(FIX::ExDestination("XCNQ"));
+  newOrderSingle->set(FIX::HandlInst('6'));
+  for(auto& tag : info.m_fields.m_additionalFields) {
+    if(tag.GetKey() == FIX::FIELD::ExecInst) {
+      populate_exec_inst(tag, *newOrderSingle, {"M", "P", "R", "9", "0"});
+    }
+  }
+}
+
 void SerenityFixApplication::RouteToMatn(
     const OrderInfo& info, Out<FIX42::NewOrderSingle> newOrderSingle) {
   newOrderSingle->setField(FIX::ExDestination("MATN"));
-  auto constraintsTagIterator = std::find_if(
-    info.m_fields.m_additionalFields.begin(),
-    info.m_fields.m_additionalFields.end(),
-    [] (const auto & tag) {
-      return tag.GetKey() == MATN_CONSTRAINTS_TAG;
-    });
-  if(constraintsTagIterator != info.m_fields.m_additionalFields.end()) {
-    auto& constraintsTag = *constraintsTagIterator;
-    auto value = get<std::string>(constraintsTag.GetValue());
-    if(value == "PAG") {
-      newOrderSingle->setField(FIX::ExecInst("R"));
-      newOrderSingle->setField(FIX::OrdType(FIX::OrdType_PEGGED));
-    } else if(value == "PMI") {
-      newOrderSingle->setField(FIX::ExecInst("x"));
-      newOrderSingle->setField(FIX::OrdType(FIX::OrdType_PEGGED));
+  for(auto& tag : info.m_fields.m_additionalFields) {
+    if(tag.GetKey() == FIX::FIELD::ExecInst) {
+      populate_exec_inst(tag, *newOrderSingle, {"M", "N", "R", "P", "p", "b"});
+    } else if(tag.GetKey() == ANONYMOUS_TAG) {
+      populate_anonymous(tag, *newOrderSingle);
+    } else if(tag.GetKey() == MATN_CONSTRAINTS_TAG) {
+      if(auto value = get<std::string>(&tag.GetValue())) {
+        if(*value == "PAG") {
+          newOrderSingle->setField(FIX::ExecInst("R"));
+          newOrderSingle->setField(FIX::OrdType(FIX::OrdType_PEGGED));
+        } else if(*value == "PMI") {
+          newOrderSingle->setField(FIX::ExecInst("x"));
+          newOrderSingle->setField(FIX::OrdType(FIX::OrdType_PEGGED));
+        }
+      }
     }
-  } else if(info.m_fields.m_destination == "MATNLP") {
-    newOrderSingle->setField(FIX::ExecInst("M"));
-    newOrderSingle->setField(FIX::OrdType(FIX::OrdType_PEGGED));
   }
 }
 
