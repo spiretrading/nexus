@@ -38,7 +38,7 @@ QWidget* PortfolioViewerWindowSettings::Reopen(
 void PortfolioViewerWindowSettings::Apply(Ref<UserProfile> userProfile,
     Out<QWidget> widget) const {
   PortfolioViewerWindow& window = dynamic_cast<PortfolioViewerWindow&>(*widget);
-  window.restoreGeometry(m_geometry);
+  restore_geometry(window, m_geometry);
   window.m_ui->m_portfolioTableView->horizontalHeader()->restoreState(
     m_portfolioTableHeaderState);
   window.m_ui->m_viewSplitter->restoreState(m_splitterState);

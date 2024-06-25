@@ -36,7 +36,7 @@ QWidget* DashboardWindowSettings::Reopen(
 void DashboardWindowSettings::Apply(Ref<UserProfile> userProfile,
     Out<QWidget> widget) const {
   auto& window = dynamic_cast<DashboardWindow&>(*widget);
-  window.restoreGeometry(m_geometry);
+  restore_geometry(window, m_geometry);
   m_dashboardWidgetSettings->Apply(Ref(userProfile),
     Store(*window.m_ui->m_dashboard));
 }

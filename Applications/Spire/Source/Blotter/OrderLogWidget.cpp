@@ -72,8 +72,8 @@ OrderLogWidget::UIState OrderLogWidget::GetUIState() const {
 }
 
 void OrderLogWidget::SetUIState(const UIState& state) {
-  m_ui->m_orderLogTable->horizontalHeader()->restoreGeometry(
-    state.m_tableGeometry);
+  restore_geometry(
+    *m_ui->m_orderLogTable->horizontalHeader(), state.m_tableGeometry);
   m_ui->m_orderLogTable->horizontalHeader()->restoreState(state.m_tableState);
 }
 

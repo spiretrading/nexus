@@ -117,8 +117,23 @@ namespace Spire {
   /** Registers the custom QVariant types. */
   void register_custom_qt_variants();
 
+  /** Returns the text representation of a bool. */
+  QString to_text(bool value, const QLocale& = QLocale());
+
+  /** Returns the text representation of an unsigned int. */
+  QString to_text(unsigned int value, const QLocale& = QLocale());
+
   /** Returns the text representation of an int. */
   QString to_text(int value, const QLocale& = QLocale());
+
+  /** Returns the text representation of a 64-bit unsigned int. */
+  QString to_text(std::uint64_t value, const QLocale& = QLocale());
+
+  /** Returns the text representation of a 64-bit int. */
+  QString to_text(std::int64_t value, const QLocale& = QLocale());
+
+  /** Returns the text representation of a double. */
+  QString to_text(double value, const QLocale& = QLocale());
 
   /** Returns the text representation of an std::string. */
   QString to_text(const std::string& value, const QLocale& locale = QLocale());

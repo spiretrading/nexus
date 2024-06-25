@@ -32,7 +32,7 @@ QWidget* CollapsibleWidgetWindowSettings::Reopen(
   QWidget* subWidget = m_subWindowSettings->Reopen(Ref(userProfile));
   CollapsibleWidget* widget = new CollapsibleWidget(
     QString::fromStdString(m_label), subWidget, m_isExpanded);
-  widget->restoreGeometry(m_geometry);
+  restore_geometry(*widget, m_geometry);
   return widget;
 }
 
@@ -42,7 +42,7 @@ void CollapsibleWidgetWindowSettings::Apply(Ref<UserProfile> userProfile,
     *widget);
   collapsibleWidget.m_header->setText(QString::fromStdString(m_label));
   collapsibleWidget.SetExpanded(m_isExpanded, false);
-  collapsibleWidget.restoreGeometry(m_geometry);
+  restore_geometry(collapsibleWidget, m_geometry);
   if(collapsibleWidget.m_widget != nullptr) {
     m_subWindowSettings->Apply(Ref(userProfile),
       Store(*collapsibleWidget.m_widget));
