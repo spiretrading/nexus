@@ -5,7 +5,7 @@
 namespace Spire {
 
   /** Represents the floating-point type. */
-  class FloatType : public DataType {
+  class FloatType final : public DataType {
     public:
 
       /** Constructs a FloatType. */

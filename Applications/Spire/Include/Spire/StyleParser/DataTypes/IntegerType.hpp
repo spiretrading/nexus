@@ -5,10 +5,10 @@
 namespace Spire {
 
   /** Represents the integer type. */
-  class IntegerType : public DataType {
+  class IntegerType final : public DataType {
     public:
 
-      /** Constructs a IntegerType. */
+      /** Constructs an IntegerType. */
       IntegerType();
 
     protected:

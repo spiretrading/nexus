@@ -6,5 +6,5 @@ StringType::StringType()
   : DataType("String") {}
 
 bool StringType::is_equal(const DataType& rhs) const {
-  return get_name() == rhs.get_name();
+  return dynamic_cast<const StringType*>(&rhs) != nullptr;
 }

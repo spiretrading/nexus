@@ -5,7 +5,7 @@
 namespace Spire {
 
   /** Represents the string type. */
-  class StringType : public DataType {
+  class StringType final : public DataType {
     public:
 
       /** Constructs a StringType. */

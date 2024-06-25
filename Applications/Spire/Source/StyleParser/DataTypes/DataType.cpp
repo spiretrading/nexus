@@ -7,11 +7,10 @@ const std::string& DataType::get_name() const {
 }
 
 bool DataType::operator ==(const DataType& rhs) const {
+  if(m_name != rhs.m_name) {
+    return false;
+  }
   return is_equal(rhs);
-}
-
-bool DataType::operator !=(const DataType& rhs) const {
-  return !(*this == rhs);
 }
 
 DataType::DataType(std::string name)

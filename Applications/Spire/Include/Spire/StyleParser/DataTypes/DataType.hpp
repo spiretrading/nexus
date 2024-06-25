@@ -14,8 +14,6 @@ namespace Spire {
 
       bool operator ==(const DataType& rhs) const;
 
-      bool operator !=(const DataType& rhs) const;
-
     protected:
       virtual bool is_equal(const DataType& rhs) const = 0;
       

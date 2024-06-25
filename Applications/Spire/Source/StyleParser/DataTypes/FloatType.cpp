@@ -6,5 +6,5 @@ FloatType::FloatType()
   : DataType("Float") {}
 
 bool FloatType::is_equal(const DataType& rhs) const {
-  return get_name() == rhs.get_name();
+  return dynamic_cast<const FloatType*>(&rhs) != nullptr;
 }

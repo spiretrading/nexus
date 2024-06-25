@@ -6,5 +6,5 @@ IntegerType::IntegerType()
   : DataType("Integer") {}
 
 bool IntegerType::is_equal(const DataType& rhs) const {
-  return get_name() == rhs.get_name();
+  return dynamic_cast<const IntegerType*>(&rhs) != nullptr;
 }
