@@ -85,6 +85,11 @@ namespace {
       return none;
     }
   }
+
+  auto& get_style_delegate() {
+    static auto delegate = QStyledItemDelegate();
+    return delegate;
+  }
 }
 
 MarketToken::MarketToken(MarketCode code)
@@ -182,8 +187,28 @@ QVariant Spire::to_qvariant(const std::any& value) {
 
 void Spire::register_custom_qt_variants() {}
 
+QString Spire::to_text(bool value, const QLocale& locale) {
+  return get_style_delegate().displayText(value, locale);
+}
+
+QString Spire::to_text(unsigned int value, const QLocale& locale) {
+  return get_style_delegate().displayText(value, locale);
+}
+
 QString Spire::to_text(int value, const QLocale& locale) {
-  return to_text(std::any(value), locale);
+  return get_style_delegate().displayText(value, locale);
+}
+
+QString Spire::to_text(std::uint64_t value, const QLocale& locale) {
+  return get_style_delegate().displayText(value, locale);
+}
+
+QString Spire::to_text(std::int64_t value, const QLocale& locale) {
+  return get_style_delegate().displayText(value, locale);
+}
+
+QString Spire::to_text(double value, const QLocale& locale) {
+  return get_style_delegate().displayText(value, locale);
 }
 
 QString Spire::to_text(const std::string& value, const QLocale& locale) {
@@ -443,21 +468,18 @@ QString Spire::to_text(const std::any& value, const QLocale& locale) {
     return std::any_cast<QString>(value);
   } else if(value.type() == typeid(const char*)) {
     return QString::fromUtf8(std::any_cast<const char*>(value));
-  } else {
-    static auto delegate = QStyledItemDelegate();
-    if(value.type() == typeid(bool)) {
-      return delegate.displayText(std::any_cast<bool>(value), locale);
-    } else if(value.type() == typeid(unsigned int)) {
-      return delegate.displayText(std::any_cast<unsigned int>(value), locale);
-    } else if(value.type() == typeid(int)) {
-      return delegate.displayText(std::any_cast<int>(value), locale);
-    } else if(value.type() == typeid(std::uint64_t)) {
-      return delegate.displayText(std::any_cast<std::uint64_t>(value), locale);
-    } else if(value.type() == typeid(std::int64_t)) {
-      return delegate.displayText(std::any_cast<std::int64_t>(value), locale);
-    } else if(value.type() == typeid(double)) {
-      return delegate.displayText(std::any_cast<double>(value), locale);
-    }
+  } else if(value.type() == typeid(bool)) {
+    return to_text(std::any_cast<bool>(value), locale);
+  } else if(value.type() == typeid(unsigned int)) {
+    return to_text(std::any_cast<unsigned int>(value), locale);
+  } else if(value.type() == typeid(int)) {
+    return to_text(std::any_cast<int>(value), locale);
+  } else if(value.type() == typeid(std::uint64_t)) {
+    return to_text(std::any_cast<std::uint64_t>(value), locale);
+  } else if(value.type() == typeid(std::int64_t)) {
+    return to_text(std::any_cast<std::int64_t>(value), locale);
+  } else if(value.type() == typeid(double)) {
+    return to_text(std::any_cast<double>(value), locale);
   }
   return QString();
 }
