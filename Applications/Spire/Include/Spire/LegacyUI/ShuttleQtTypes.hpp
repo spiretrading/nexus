@@ -1,5 +1,6 @@
 #ifndef SPIRE_SHUTTLEQTTYPES_HPP
 #define SPIRE_SHUTTLEQTTYPES_HPP
+#include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Serialization/Receiver.hpp>
 #include <Beam/Serialization/Sender.hpp>
 #include <QByteArray>
@@ -40,8 +41,9 @@ namespace Serialization {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle, const QByteArray& value,
         unsigned int version) const {
-      std::string buffer(value.data(), value.size());
-      shuttle.Shuttle("buffer", buffer);
+      auto buffer = std::string(value.data(), value.size());
+      shuttle.Shuttle("buffer",
+        Beam::IO::BufferFromString<Beam::IO::SharedBuffer>(buffer));
     }
   };
 
@@ -50,9 +52,9 @@ namespace Serialization {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle, QByteArray& value,
         unsigned int version) const {
-      std::string buffer;
+      auto buffer = Beam::IO::SharedBuffer();
       shuttle.Shuttle("buffer", buffer);
-      value = QByteArray(buffer.c_str(), buffer.size());
+      value = QByteArray(buffer.GetData(), buffer.GetSize());
     }
   };
 
