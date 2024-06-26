@@ -383,10 +383,9 @@ namespace Nexus::MarketDataService {
           Beam::Queries::Sequence::Last());
         QueryMarketDataClient(*queryEntry.m_marketDataClient, realTimeQuery,
           queryEntry.m_tasks.template GetSlot<MarketDataType>(
-            std::bind(&MarketDataRelayServlet::OnRealTimeUpdate<
-              typename Query::Index, MarketDataType, Subscriptions>, this,
-              query.GetIndex(), std::placeholders::_1,
-              std::ref(subscriptions))));
+            [=, &subscriptions] (const auto& value) {
+              OnRealTimeUpdate(query.GetIndex(), value, subscriptions);
+            }));
       });
       auto queue = std::make_shared<Beam::Queue<MarketDataType>>();
       auto client = m_marketDataClients.Acquire();
