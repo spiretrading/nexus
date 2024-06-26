@@ -383,7 +383,7 @@ namespace Nexus::MarketDataService {
           Beam::Queries::Sequence::Last());
         QueryMarketDataClient(*queryEntry.m_marketDataClient, realTimeQuery,
           queryEntry.m_tasks.template GetSlot<MarketDataType>(
-            [=, &subscriptions] (const auto& value) {
+            [=, this, &subscriptions] (const auto& value) {
               OnRealTimeUpdate(query.GetIndex(), value, subscriptions);
             }));
       });
