@@ -164,6 +164,19 @@ namespace Beam::Serialization {
 }
 
 namespace {
+  static const auto KEY_BINDINGS_VERSION = 1;
+
+  struct KeyBindingsProfile {
+    int m_version;
+    const KeyBindingsModel* m_key_bindings;
+
+    template<typename Shuttler>
+    void Shuttle(Shuttler& shuttle, unsigned int version) {
+      shuttle.Shuttle("version", m_version);
+      shuttle.Shuttle("key_bindings", *const_cast<KeyBindingsModel*>(m_key_bindings));
+    }
+  };
+
   void set_destination(CanvasNodeBuilder& builder, Destination destination) {
     builder.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
       std::make_unique<DestinationNode>(std::move(destination)));
@@ -763,7 +776,8 @@ std::shared_ptr<KeyBindingsModel> Spire::load_key_bindings_profile(
     RegisterSpireTypes(Store(registry));
     auto receiver = JsonReceiver<SharedBuffer>(Ref(registry));
     receiver.SetSource(Ref(buffer));
-    receiver.Shuttle(*key_bindings);
+    auto profile = KeyBindingsProfile(KEY_BINDINGS_VERSION, &*key_bindings);
+    receiver.Shuttle(profile);
   } catch(const std::exception&) {
     throw std::runtime_error("Unable to load key bindings.");
   }
@@ -779,7 +793,8 @@ void Spire::save_key_bindings_profile(
     auto sender = JsonSender<SharedBuffer>(Ref(registry));
     auto buffer = SharedBuffer();
     sender.SetSink(Ref(buffer));
-    sender.Shuttle(key_bindings);
+    auto profile = KeyBindingsProfile(KEY_BINDINGS_VERSION, &key_bindings);
+    sender.Shuttle(profile);
     auto writer = BasicOStreamWriter<std::ofstream>(Initialize(file_path));
     writer.Write(buffer);
   } catch(const std::exception&) {

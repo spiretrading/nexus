@@ -1,9 +1,9 @@
 #ifndef SPIRE_COLLAPSIBLEWIDGETWINDOWSETTINGS_HPP
 #define SPIRE_COLLAPSIBLEWIDGETWINDOWSETTINGS_HPP
 #include <QByteArray>
-#include "Spire/LegacyUI/ShuttleQtTypes.hpp"
 #include "Spire/LegacyUI/LegacyUI.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
+#include "Spire/Spire/ShuttleQtTypes.hpp"
 #include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
