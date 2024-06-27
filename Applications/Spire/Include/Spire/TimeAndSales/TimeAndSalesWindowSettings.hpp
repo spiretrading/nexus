@@ -3,8 +3,8 @@
 #include <QByteArray>
 #include "Nexus/Definitions/Security.hpp"
 #include "Spire/LegacyUI/SecurityViewStack.hpp"
-#include "Spire/LegacyUI/ShuttleQtTypes.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
+#include "Spire/Spire/ShuttleQtTypes.hpp"
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesProperties.hpp"
 

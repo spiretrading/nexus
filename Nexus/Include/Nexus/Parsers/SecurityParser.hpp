@@ -47,7 +47,7 @@ namespace Nexus {
     auto symbol = std::string();
     while(context.Read()) {
       if(std::isalnum(context.GetChar()) || context.GetChar() == '.') {
-        symbol += std::toupper(context.GetChar());
+        symbol += static_cast<char>(std::toupper(context.GetChar()));
       } else {
         context.Undo();
         break;

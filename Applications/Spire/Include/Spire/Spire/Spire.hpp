@@ -65,7 +65,6 @@ namespace Spire {
   template<typename T> class SortedListModel;
   class SortedTableModel;
   template<typename T> class SpinBoxModel;
-  class SpireController;
   template<typename T> struct SubscriptionResult;
   class TableModel;
   class TableRowIndexTracker;

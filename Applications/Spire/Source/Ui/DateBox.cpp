@@ -194,8 +194,9 @@ struct DateBox::DateComposerModel : ValueModel<optional<date>> {
     if(m_year->get() &&
         m_month->get() && m_day->get()) {
       try {
-        auto current = date(*m_year->get(), *m_month->get(),
-          *m_day->get());
+        auto current = date(static_cast<unsigned short>(*m_year->get()),
+          static_cast<unsigned short>(*m_month->get()),
+          static_cast<unsigned short>(*m_day->get()));
         m_current.set(current);
         m_state = m_source->set(current);
       } catch(const std::out_of_range&) {

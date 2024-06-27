@@ -5,7 +5,7 @@
 #include <Beam/Serialization/ShuttleArray.hpp>
 #include <QColor>
 #include <QFont>
-#include "Spire/LegacyUI/ShuttleQtTypes.hpp"
+#include "Spire/Spire/ShuttleQtTypes.hpp"
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/TimeAndSales/TimeAndSales.hpp"
 
