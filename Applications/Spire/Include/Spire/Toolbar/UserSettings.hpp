@@ -41,14 +41,7 @@ namespace Details {
     WATCHLIST,
 
     /** The layout. */
-    LAYOUT
-  );
-
-  template<typename T>
-  struct ForwardPtr {
-    using Type = T;
-    std::shared_ptr<Type> m_value;
-  };
+    LAYOUT);
 }
 
   /** Stores a variety of settings that can be exported by a user. */
@@ -111,27 +104,6 @@ namespace Details {
 }
 
 namespace Beam::Serialization {
-  template<typename T>
-  struct IsStructure<Spire::Details::ForwardPtr<T>> : std::false_type {};
-
-  template<typename T>
-  struct Send<Spire::Details::ForwardPtr<T>> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, const char* name,
-        const Spire::Details::ForwardPtr<T>& value) {
-      shuttle.Shuttle(name, *value.m_value);
-    }
-  };
-
-  template<typename T>
-  struct Receive<Spire::Details::ForwardPtr<T>> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, const char* name,
-        const Spire::Details::ForwardPtr<T>& value) {
-      shuttle.Shuttle(name, *value.m_value);
-    }
-  };
-
   template<>
   struct Shuttle<Spire::UserSettings> {
     template<typename Shuttler>
@@ -141,9 +113,7 @@ namespace Beam::Serialization {
       shuttle.Shuttle("dashboards", value.m_dashboards);
       shuttle.Shuttle("order_imbalance_indicator_properties",
         value.m_order_imbalance_indicator_properties);
-      auto key_bindings = Spire::Details::ForwardPtr<Spire::KeyBindingsModel>(
-        value.m_key_bindings);
-      shuttle.Shuttle("key_bindings", key_bindings);
+      shuttle.Shuttle("key_bindings", *value.m_key_bindings);
       shuttle.Shuttle("portfolio_viewer_properties",
         value.m_portfolio_properties);
       shuttle.Shuttle("time_and_sales_properties",
