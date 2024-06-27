@@ -19,8 +19,8 @@
 #include "Spire/KeyBindings/AdditionalTag.hpp"
 #include "Spire/KeyBindings/AdditionalTagDatabase.hpp"
 #include "Spire/KeyBindings/KeyBindings.hpp"
-#include "Spire/LegacyUI/ShuttleQtTypes.hpp"
 #include "Spire/Spire/ListModel.hpp"
+#include "Spire/Spire/ShuttleQtTypes.hpp"
 
 namespace Spire {
 

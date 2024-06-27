@@ -2,10 +2,10 @@
 #define SPIRE_PORTFOLIOVIEWERWINDOWSETTINGS_HPP
 #include "Spire/PortfolioViewer/PortfolioViewerProperties.hpp"
 #include "Spire/PortfolioViewer/PortfolioViewer.hpp"
-#include "Spire/Spire/Spire.hpp"
-#include "Spire/LegacyUI/ShuttleQtTypes.hpp"
 #include "Spire/LegacyUI/LegacyUI.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
+#include "Spire/Spire/ShuttleQtTypes.hpp"
+#include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
 

@@ -5,8 +5,8 @@
 #include <QByteArray>
 #include "Spire/Dashboard/Dashboard.hpp"
 #include "Spire/Dashboard/DashboardModelSchema.hpp"
-#include "Spire/LegacyUI/ShuttleQtTypes.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
+#include "Spire/Spire/ShuttleQtTypes.hpp"
 #include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
