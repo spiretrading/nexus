@@ -446,6 +446,11 @@ namespace {
         update_proxy.operator ()<Region>();
       } else if(column_id == OrderTaskColumns::DESTINATION) {
         auto& state = static_cast<DestinationState&>(*m_item_states[&widget]);
+        auto proxy =
+          std::static_pointer_cast<ProxyValueModel<Destination>>(state.m_proxy);
+        auto temporary_model =
+          std::make_shared<LocalDestinationModel>(proxy->get());
+        proxy->set_source(temporary_model);
         state.m_region->set_source(to_value_model<Region>(
           table, row, static_cast<int>(OrderTaskColumns::REGION)));
         update_proxy.operator ()<Destination>();
@@ -460,6 +465,12 @@ namespace {
       } else if(column_id == OrderTaskColumns::TAGS) {
         auto& state =
           static_cast<AdditionalTagsState&>(*m_item_states[&widget]);
+        auto proxy = std::static_pointer_cast<
+          ProxyValueModel<std::vector<AdditionalTag>>>(state.m_proxy);
+        auto temporary_model =
+          std::make_shared<LocalValueModel<std::vector<AdditionalTag>>>(
+            proxy->get());
+        proxy->set_source(temporary_model);
         state.m_destination->set_source(to_value_model<Destination>(
           table, row, static_cast<int>(OrderTaskColumns::DESTINATION)));
         state.m_region->set_source(to_value_model<Region>(
