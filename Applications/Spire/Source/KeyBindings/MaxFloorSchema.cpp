@@ -43,7 +43,7 @@ std::unique_ptr<CanvasNode> MaxFloorSchema::make_canvas_node(
 
 AnyInputBox* MaxFloorSchema::make_input_box(
     std::shared_ptr<AdditionalTagValueModel> current) const {
-  auto quantity_box = new QuantityBox(make_scalar_value_model_decorator(
+  auto quantity = make_scalar_value_model_decorator(
     make_transform_value_model(std::move(current),
       [] (const auto& value) -> optional<Quantity> {
         if(!value) {
@@ -56,7 +56,9 @@ AnyInputBox* MaxFloorSchema::make_input_box(
           return none;
         }
         return Nexus::Tag::Type(*value);
-      })));
+      }));
+  quantity->set_minimum(Quantity(-1));
+  auto quantity_box = new QuantityBox(std::move(quantity));
   update_style(*quantity_box, [] (auto& style) {
     style.get(Any()).set(border_size(0));
   });

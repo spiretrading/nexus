@@ -400,6 +400,12 @@ namespace {
       key_bindings->get_order_task_arguments()->push(
         to_order_task_arguments(*task, markets, destinations));
     }
+    key_bindings->get_cancel_key_bindings()->get_binding(
+      CancelKeyBindingsModel::Operation::OLDEST)->set(
+        QKeySequence(Qt::Key_Escape));
+    key_bindings->get_cancel_key_bindings()->get_binding(
+      CancelKeyBindingsModel::Operation::ALL)->set(
+        QKeySequence(Qt::SHIFT | Qt::Key_Escape));
     return key_bindings;
   }
 }
