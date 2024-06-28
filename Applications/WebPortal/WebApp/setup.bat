@@ -2,7 +2,7 @@
 SETLOCAL EnableDelayedExpansion
 SET ROOT=%cd%
 CALL "%~dp0..\..\..\WebApi\setup.bat"
-SET DALI_COMMIT="718735dc263961b2678fa5d63b0a00853d5e263c"
+SET DALI_COMMIT="45393c88450cf2a7c90f17c7e61872f83ef9c179"
 IF NOT EXIST dali (
   git clone https://www.github.com/spiretrading/dali
   IF !ERRORLEVEL! EQU 0 (
