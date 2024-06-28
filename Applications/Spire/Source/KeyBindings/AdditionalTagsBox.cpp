@@ -9,6 +9,24 @@ using namespace Nexus;
 using namespace Spire;
 using namespace Spire::Styles;
 
+namespace {
+  auto to_text(const std::vector<AdditionalTag>& tags,
+      const AdditionalTagDatabase& additional_tags,
+      const Destination& destination, const Region& region) {
+    auto label = QString();
+    for(auto& tag : tags) {
+      auto schema = find(additional_tags, destination, region, tag.m_key);
+      if(schema) {
+        if(!label.isEmpty()) {
+          label.append(", ");
+        }
+        label.append(QString::fromStdString(schema->get_name()));
+      }
+    }
+    return label;
+  }
+}
+
 AdditionalTagsBox::AdditionalTagsBox(
     std::shared_ptr<AdditionalTagsModel> current,
     AdditionalTagDatabase additional_tags,
@@ -27,18 +45,8 @@ AdditionalTagsBox::AdditionalTagsBox(
       m_click_observer(*this) {
   m_tags_text = make_transform_value_model(m_current,
     [=] (const auto& current) {
-      auto label = QString();
-      for(auto& tag : current) {
-        auto schema = Spire::find(
-          m_additional_tags, m_destination->get(), m_region->get(), tag.m_key);
-        if(schema) {
-          if(!label.isEmpty()) {
-            label.append(", ");
-          }
-          label.append(QString::fromStdString(schema->get_name()));
-        }
-      }
-      return label;
+      return to_text(
+        current, m_additional_tags, m_destination->get(), m_region->get());
     });
   m_label = make_label(m_tags_text);
   enclose(*this, *m_label);
@@ -80,7 +88,7 @@ void AdditionalTagsBox::update_current(
     auto i = std::find_if(tags.begin(), tags.end(), [&] (const auto& tag) {
       return tag->get_key() == current.m_key;
     });
-    return i == tags.end() || (*i)->test(current);
+    return i == tags.end() || !(*i)->test(current);
   });
   if(erasures != 0) {
     m_current->set(current);
