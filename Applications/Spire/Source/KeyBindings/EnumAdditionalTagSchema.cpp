@@ -1,6 +1,7 @@
 #include "Spire/KeyBindings/EnumAdditionalTagSchema.hpp"
 #include "Spire/Canvas/Common/NoneNode.hpp"
 #include "Spire/Canvas/Types/TextType.hpp"
+#include "Spire/Canvas/ValueNodes/TextNode.hpp"
 #include "Spire/KeyBindings/AdditionalTag.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/TransformValueModel.hpp"
@@ -34,7 +35,14 @@ bool EnumAdditionalTagSchema::test(const AdditionalTag& tag) const {
 
 std::unique_ptr<CanvasNode> EnumAdditionalTagSchema::make_canvas_node(
     const optional<Nexus::Tag::Type>& value) const {
-  return std::make_unique<NoneNode>(TextType::GetInstance());
+  if(!value) {
+    return std::make_unique<NoneNode>(TextType::GetInstance());
+  }
+  auto text = get<std::string>(&*value);
+  if(!text) {
+    return std::make_unique<NoneNode>(TextType::GetInstance());
+  }
+  return std::make_unique<TextNode>(*text)->SetVisible(false);
 }
 
 AnyInputBox* EnumAdditionalTagSchema::make_input_box(
