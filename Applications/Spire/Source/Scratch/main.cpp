@@ -17,40 +17,11 @@ namespace {
     auto style = StyleSheet();
     auto body_selector = Any() > is_a<TableBody>();
     auto item_selector = body_selector > Row() > is_a<TableItem>();
-    style.get((item_selector > !ReadOnly()) << Current()).
-      set(border_color(QColor(Qt::transparent)));
-    style.get(body_selector > Row() > Current()).
-      set(BackgroundColor(Qt::transparent));
-    style.get(body_selector > Row() > HoverItem()).
-      set(border_color(QColor(0xA0A0A0)));
-    style.get(body_selector > (Row() && Hover())).
-      set(BackgroundColor(0xF2F2FF));
     style.get(item_selector > DeleteButton()).
       set(Visibility(Visibility::INVISIBLE));
-    style.get(item_selector > DeleteButton() > is_a<Box>()).
-      set(BackgroundColor(QColor(Qt::transparent))).
-      set(horizontal_padding(scale_width(2))).
-      set(vertical_padding(scale_height(2)));
-    style.get(item_selector > DeleteButton() > is_a<Icon>()).
-      set(BackgroundColor(QColor(Qt::transparent)));
     style.get(body_selector > (CurrentRow() || (Row() && Hover())) >
         is_a<TableItem>() > DeleteButton()).
       set(Visibility(Visibility::VISIBLE));
-    style.get((body_selector > (CurrentRow() || (Row() && Hover()))) >
-        DeleteButton() > is_a<Icon>()).
-      set(Fill(QColor(0x535353)));
-    style.get(body_selector > (Row() && Hover()) > DeleteButton() >
-        (is_a<Icon>() && Hover())).
-      set(BackgroundColor(QColor(0xDFDFEB))).
-      set(Fill(QColor(0xB71C1C)));
-    style.get(body_selector > CurrentRow() > DeleteButton() >
-        (is_a<Icon>() && Hover())).
-      set(BackgroundColor(QColor(0xD0CEEB))).
-      set(Fill(QColor(0xB71C1C)));
-    style.get(body_selector > CurrentRow()).
-      set(BackgroundColor(QColor(0xE2E0FF)));
-    style.get(body_selector > CurrentColumn()).
-      set(BackgroundColor(Qt::transparent));
     return style;
   }
 
