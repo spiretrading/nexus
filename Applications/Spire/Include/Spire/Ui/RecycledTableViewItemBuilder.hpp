@@ -20,6 +20,12 @@ namespace Spire {
       using Builder = B;
 
       /**
+       * Constructs a RecycledTableViewItemBuilder using a default constructed
+       * builder.
+       */
+      RecycledTableViewItemBuilder() = default;
+
+      /**
        * Constructs a RecycledTableViewItemBuilder.
        * @param builder The ViewBuilder used to initialize and reset QWidgets.
        */

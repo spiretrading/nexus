@@ -11,30 +11,22 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  using DeleteButton = StateSelector<void, struct DeleteButtonSeletorTag>;
+  using Cell = StateSelector<void, struct CellSeletorTag>;
 
   auto TABLE_VIEW_STYLE() {
     auto style = StyleSheet();
-    auto body_selector = Any() > is_a<TableBody>();
-    auto item_selector = body_selector > Row() > is_a<TableItem>();
-    style.get(item_selector > DeleteButton()).
-      set(Visibility(Visibility::INVISIBLE));
-    style.get(body_selector > (CurrentRow() || (Row() && Hover())) >
-        is_a<TableItem>() > DeleteButton()).
-      set(Visibility(Visibility::VISIBLE));
+    style.get(Any() > is_a<TableBody>() >
+      Row() > is_a<TableItem>() > Cell()).set(BackgroundColor(0xFF0000));
     return style;
   }
 
   struct Builder {
     QWidget* mount(
         const std::shared_ptr<TableModel>& table, int row, int column) {
-      auto button = new Box();
-      update_style(*button, [] (auto& style) {
-        style.get(Any()).set(BackgroundColor(0xFF0000));
-      });
-      button->setFixedHeight(scale_height(26));
-      match(*button, DeleteButton());
-      return button;
+      auto box = new Box();
+      box->setFixedHeight(scale_height(26));
+      match(*box, Cell());
+      return box;
     }
 
     void reset(QWidget& widget,
@@ -57,7 +49,7 @@ int main(int argc, char** argv) {
   }
   auto builder = TableViewBuilder(table);
   builder.add_header_item("R1");
-  builder.set_item_builder(RecycledTableViewItemBuilder<Builder>(Builder()));
+  builder.set_item_builder(RecycledTableViewItemBuilder<Builder>());
   auto view = builder.make();
   set_style(*view, TABLE_VIEW_STYLE());
   view->setFixedHeight(100);
