@@ -28,8 +28,11 @@ namespace {
   struct Builder {
     QWidget* mount(
         const std::shared_ptr<TableModel>& table, int row, int column) {
-      auto button = make_delete_icon_button();
-      button->setMaximumHeight(scale_height(26));
+      auto button = new Box();
+      update_style(*button, [] (auto& style) {
+        style.get(Any()).set(BackgroundColor(0xFF0000));
+      });
+      button->setFixedHeight(scale_height(26));
       match(*button, DeleteButton());
       return button;
     }
