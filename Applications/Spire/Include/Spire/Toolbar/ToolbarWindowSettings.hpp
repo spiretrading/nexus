@@ -3,7 +3,7 @@
 #include <Beam/Serialization/Serialization.hpp>
 #include <QPoint>
 #include "Spire/LegacyUI/WindowSettings.hpp"
-#include "Spire/LegacyUI/ShuttleQtTypes.hpp"
+#include "Spire/Spire/ShuttleQtTypes.hpp"
 #include "Spire/Toolbar/Toolbar.hpp"
 
 namespace Spire {

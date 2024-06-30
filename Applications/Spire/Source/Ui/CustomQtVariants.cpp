@@ -125,7 +125,9 @@ QDateTime Spire::to_qdate_time(ptime time) {
 
 ptime Spire::to_ptime(const QDateTime& time) {
   return ptime(
-    gregorian::date(time.date().year(), time.date().month(), time.date().day()),
+    gregorian::date(static_cast<unsigned short>(time.date().year()),
+      static_cast<unsigned short>(time.date().month()),
+      static_cast<unsigned short>(time.date().day())),
       posix_time::time_duration(time.time().hour(), time.time().minute(),
         time.time().second(), time.time().msec()));
 }

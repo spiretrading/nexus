@@ -230,10 +230,8 @@ namespace Details {
         realTimeQuery.SetRange(Beam::Queries::Range::RealTime());
         MarketDataService::QueryMarketDataClient(*m_marketDataClient,
           realTimeQuery, m_tasks.GetSlot<MarketDataType>(
-            [=, &queryEntry] (auto&& value) {
-              OnQueryUpdate<typename Query::Index, MarketDataType>(
-                query.GetIndex(), std::forward<decltype(value)>(value),
-                queryEntry);
+            [=, this, &queryEntry] (const auto& value) {
+              OnQueryUpdate(query.GetIndex(), value, queryEntry);
             }));
       });
     }

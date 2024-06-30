@@ -26,7 +26,7 @@ namespace {
   auto make_settings_path(const DirectoryEntry& account) {
     auto path = std::filesystem::path(QStandardPaths::writableLocation(
       QStandardPaths::DocumentsLocation).toStdString());
-    path /= account.m_name + "_settings.sps";
+    path /= account.m_name + "_settings.json";
     return QString::fromStdString(path.string());
   }
 
@@ -294,7 +294,7 @@ void ToolbarWindow::on_recently_closed_window_operation(
 void ToolbarWindow::on_import() {
   auto path = QFileDialog::getOpenFileName(this,
     tr("Select the settings file."), make_settings_path(m_account),
-    tr("Settings (*.sps)"));
+    tr("Settings (*.json)"));
   if(path.isNull()) {
     return;
   }
@@ -313,7 +313,7 @@ void ToolbarWindow::on_export() {
     [=] (const auto& settings) {
       auto path = QFileDialog::getSaveFileName(this,
         tr("Select the settings file."), make_settings_path(m_account),
-        tr("Settings (*.sps)"));
+        tr("Settings (*.json)"));
       if(path.isNull()) {
         return;
       }

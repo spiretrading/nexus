@@ -105,8 +105,11 @@ QDateTime Spire::LegacyUI::ToQDateTime(const ptime& time) {
 }
 
 posix_time::ptime Spire::LegacyUI::ToPosixTime(const QDateTime& time) {
-  ptime posixTime(gregorian::date(time.date().year(), time.date().month(),
-    time.date().day()), posix_time::time_duration(time.time().hour(),
+  ptime posixTime(gregorian::date(
+    static_cast<unsigned short>(time.date().year()),
+    static_cast<unsigned short>(time.date().month()),
+    static_cast<unsigned short>(time.date().day())),
+    posix_time::time_duration(time.time().hour(),
     time.time().minute(), time.time().second(), time.time().msec()));
   return posixTime;
 }

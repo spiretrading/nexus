@@ -2,10 +2,10 @@
 #define SPIRE_ORDERIMBALANCEINDICATORWINDOWSETTINGS_HPP
 #include <Beam/Serialization/ShuttleSharedPtr.hpp>
 #include <QByteArray>
-#include "Spire/LegacyUI/ShuttleQtTypes.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicator.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorProperties.hpp"
+#include "Spire/Spire/ShuttleQtTypes.hpp"
 #include "Spire/Spire/Spire.hpp"
 
 namespace Spire {

@@ -2,8 +2,8 @@
 #include <Beam/IO/BasicIStreamReader.hpp>
 #include <Beam/IO/BasicOStreamWriter.hpp>
 #include <Beam/IO/SharedBuffer.hpp>
-#include <Beam/Serialization/BinaryReceiver.hpp>
-#include <Beam/Serialization/BinarySender.hpp>
+#include <Beam/Serialization/JsonReceiver.hpp>
+#include <Beam/Serialization/JsonSender.hpp>
 #include <Beam/Utilities/AssertionException.hpp>
 #include <QApplication>
 #include "Spire/BookView/BookViewWindow.hpp"
@@ -37,15 +37,9 @@ void Spire::export_settings(UserSettings::Categories categories,
     settings.m_order_imbalance_indicator_properties =
       user_profile.GetDefaultOrderImbalanceIndicatorProperties();
   }
-/** TODO
-  if(categories.Test(UserSettings::Category::INTERACTIONS)) {
-    settings.m_interactions_properties =
-      user_profile.GetInteractionProperties();
-  }
   if(categories.Test(UserSettings::Category::KEY_BINDINGS)) {
     settings.m_key_bindings = user_profile.GetKeyBindings();
   }
-*/
   if(categories.Test(UserSettings::Category::PORTFOLIO)) {
     settings.m_portfolio_properties =
       user_profile.GetDefaultPortfolioViewerProperties();
@@ -64,20 +58,14 @@ void Spire::export_settings(UserSettings::Categories categories,
     }
     settings.m_layouts = std::move(layouts);
   }
-  auto stream = std::ofstream();
-  stream.open(path, std::ios::binary);
-  if((stream.rdstate() & std::ifstream::failbit) != 0) {
-    throw std::runtime_error(
-      QObject::tr("Unable to write to the specified path.").toStdString());
-  }
   try {
-    auto registry = TypeRegistry<BinarySender<SharedBuffer>>();
+    auto registry = TypeRegistry<JsonSender<SharedBuffer>>();
     RegisterSpireTypes(Store(registry));
-    auto sender = BinarySender<SharedBuffer>(Ref(registry));
+    auto sender = JsonSender<SharedBuffer>(Ref(registry));
     auto buffer = SharedBuffer();
     sender.SetSink(Ref(buffer));
     sender.Shuttle(settings);
-    auto writer = BasicOStreamWriter(&stream);
+    auto writer = BasicOStreamWriter<std::ofstream>(Initialize(path));
     writer.Write(buffer);
   } catch(const std::exception&) {
     throw std::runtime_error(
@@ -87,20 +75,21 @@ void Spire::export_settings(UserSettings::Categories categories,
 
 void Spire::import_settings(UserSettings::Categories categories,
     const std::filesystem::path& path, Out<UserProfile> user_profile) {
-  auto stream = std::ifstream();
-  stream.open(path, std::ios::binary);
-  if((stream.rdstate() & std::ifstream::failbit) != 0) {
-    throw std::runtime_error(
-      QObject::tr("Unable to read from the specified path.").toStdString());
-  }
   auto settings = UserSettings();
+  if(categories.Test(UserSettings::Category::KEY_BINDINGS) &&
+      settings.m_key_bindings) {
+    settings.m_key_bindings = user_profile->GetKeyBindings();
+  } else {
+    settings.m_key_bindings =
+      std::make_shared<KeyBindingsModel>(user_profile->GetMarketDatabase());;
+  }
   try {
-    auto reader = BasicIStreamReader(&stream);
+    auto reader = BasicIStreamReader<std::ifstream>(Initialize(path));
     auto buffer = SharedBuffer();
     reader.Read(Store(buffer));
-    auto registry = TypeRegistry<BinarySender<SharedBuffer>>();
+    auto registry = TypeRegistry<JsonSender<SharedBuffer>>();
     RegisterSpireTypes(Store(registry));
-    auto receiver = BinaryReceiver<SharedBuffer>(Ref(registry));
+    auto receiver = JsonReceiver<SharedBuffer>(Ref(registry));
     receiver.SetSource(Ref(buffer));
     receiver.Shuttle(settings);
   } catch(const std::exception&) {
@@ -137,17 +126,6 @@ void Spire::import_settings(UserSettings::Categories categories,
     user_profile->SetDefaultOrderImbalanceIndicatorProperties(
       *settings.m_order_imbalance_indicator_properties);
   }
-/** TODO
-  if(categories.Test(UserSettings::Category::INTERACTIONS) &&
-      settings.m_interactions_properties) {
-    user_profile->GetInteractionProperties() =
-      *settings.m_interactions_properties;
-  }
-  if(categories.Test(UserSettings::Category::KEY_BINDINGS) &&
-      settings.m_key_bindings) {
-    user_profile->SetKeyBindings(*settings.m_key_bindings);
-  }
-*/
   if(categories.Test(UserSettings::Category::PORTFOLIO) &&
       settings.m_portfolio_properties) {
     user_profile->SetDefaultPortfolioViewerProperties(

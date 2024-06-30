@@ -10,7 +10,7 @@
 #include <QFont>
 #include "Nexus/Definitions/Market.hpp"
 #include "Spire/BookView/BookView.hpp"
-#include "Spire/LegacyUI/ShuttleQtTypes.hpp"
+#include "Spire/Spire/ShuttleQtTypes.hpp"
 #include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
