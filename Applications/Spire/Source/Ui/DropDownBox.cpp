@@ -310,15 +310,12 @@ void DropDownBox::keyPressEvent(QKeyEvent* event) {
     QWidget::keyPressEvent(event);
     return;
   }
-  switch(event->key()) {
-    case Qt::Key_Escape:
-      revert_current();
-      break;
-    default:
-      if(!is_read_only()) {
-        make_drop_down_list();
-        QCoreApplication::sendEvent(&m_drop_down_list->get_list_view(), event);
-      }
+  if(event->key() == Qt::Key_Escape) {
+    revert_current();
+  } else if(!is_read_only() &&
+      (event->key() != Qt::Key_Space || is_drop_down_list_visible())) {
+    make_drop_down_list();
+    QCoreApplication::sendEvent(&m_drop_down_list->get_list_view(), event);
   }
   QWidget::keyPressEvent(event);
 }
