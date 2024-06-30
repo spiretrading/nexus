@@ -41,12 +41,14 @@ struct HoverObserver::EventFilter : QObject {
     }
   };
   mutable StateSignal m_state_signal;
+  bool m_block_signal;
   QPointer<QWidget> m_widget;
   State m_state;
   std::unique_ptr<Observers> m_observers;
 
   EventFilter(QWidget& widget)
       : m_widget(&widget),
+        m_block_signal(false),
         m_state(State::NONE) {
     widget.connect(
       &widget, &QObject::destroyed, this, &EventFilter::destroy_observers);
@@ -90,7 +92,9 @@ struct HoverObserver::EventFilter : QObject {
       return;
     }
     m_state = state;
-    m_state_signal(state);
+    if(!m_block_signal) {
+      m_state_signal(state);
+    }
   }
 
   bool eventFilter(QObject* watched, QEvent* event) override {
@@ -99,8 +103,10 @@ struct HoverObserver::EventFilter : QObject {
     } else if(event->type() == QEvent::Enter ||
         event->type() == QEvent::EnabledChange ||
         event->type() == QEvent::MouseMove || event->type() == QEvent::Show) {
-      set_state(::get_state(
-        *m_widget, get_observers().m_position_observer.get_position()));
+      m_block_signal = true;
+      auto position = get_observers().m_position_observer.get_position();
+      m_block_signal = false;
+      set_state(::get_state(*m_widget, position));
     } else if(event->type() == QEvent::Leave) {
       set_state(State::NONE);
     } else if(event->type() == QEvent::ChildAdded) {
