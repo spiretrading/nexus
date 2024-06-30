@@ -2,7 +2,6 @@
 #include "Spire/Spire/ArrayTableModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/Resources.hpp"
-#include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/RecycledTableViewItemBuilder.hpp"
 #include "Spire/Ui/TableItem.hpp"
 #include "Spire/Ui/TableView.hpp"
@@ -11,12 +10,12 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  using Cell = StateSelector<void, struct CellSeletorTag>;
-
   auto TABLE_VIEW_STYLE() {
     auto style = StyleSheet();
-    style.get(Any() > is_a<TableBody>() >
-      Row() > is_a<TableItem>() > Cell()).set(BackgroundColor(0xFF0000));
+    style.get(Any() > is_a<TableBody>() > Row() > is_a<TableItem>() >
+      is_a<Box>()).set(BackgroundColor(0xFF0000));
+//    style.get(Any() > (is_a<TableBody>() > (Row() > (is_a<TableItem>() >
+//      is_a<Box>())))).set(BackgroundColor(0xFF0000));
     return style;
   }
 
@@ -24,8 +23,8 @@ namespace {
     QWidget* mount(
         const std::shared_ptr<TableModel>& table, int row, int column) {
       auto box = new Box();
+      box->setObjectName(QString::fromUtf8("Cell"));
       box->setFixedHeight(scale_height(26));
-      match(*box, Cell());
       return box;
     }
 
