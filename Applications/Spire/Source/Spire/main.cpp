@@ -87,8 +87,8 @@ int main(int argc, char* argv[]) {
   freopen("stderr.log", "w", stderr);
 #endif
   auto application = QApplication(argc, argv);
-  application.setOrganizationName(QObject::tr("Eidolon Systems"));
-  application.setApplicationName(QObject::tr("Spire"));
+  application.setOrganizationName(QObject::tr("Spire Beta"));
+  application.setApplicationName(QObject::tr("Spire Development"));
   application.setApplicationVersion(SPIRE_VERSION);
   initialize_resources();
   RegisterCustomQtVariants();
