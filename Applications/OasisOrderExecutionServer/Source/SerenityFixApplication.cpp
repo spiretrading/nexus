@@ -115,6 +115,16 @@ const Order& SerenityFixApplication::Submit(const OrderInfo& info) {
       if(submissionInfo->m_fields.m_currency != DefaultCurrencies::CAD()) {
         BOOST_THROW_EXCEPTION(FixOrderRejectedException("Invalid currency."));
       }
+      if(submissionInfo->m_fields.m_timeInForce.GetType() ==
+          TimeInForce::Type::GTC ||
+          submissionInfo->m_fields.m_timeInForce.GetType() ==
+          TimeInForce::Type::GTD) {
+        BOOST_THROW_EXCEPTION(
+          FixOrderRejectedException("Invalid time in force."));
+      }
+      if(submissionInfo->m_fields.m_type == OrderType::STOP) {
+        BOOST_THROW_EXCEPTION(FixOrderRejectedException("Invalid order type."));
+      }
       newOrderSingle->setField(UMIR_ACCOUNT_TYPE_TAG, "CL");
       newOrderSingle->setField(UMIR_USER_ID_TAG, GetUmirUserID());
       auto noTradeFeat = GetNoTradeFeat();
