@@ -284,11 +284,8 @@ bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
       auto& close_event = static_cast<QCloseEvent&>(*event);
       close_event.ignore();
       hide_drop_down_list();
-    } else if(event->type() == QEvent::Show) {
-      match(*this, PopUp());
     } else if(event->type() == QEvent::Hide) {
       leave_hovered_item();
-      unmatch(*this, PopUp());
     } else if(event->type() == QEvent::MouseButtonPress) {
       auto& mouse_event = *static_cast<QMouseEvent*>(event);
       if(rect().contains(mapFromGlobal(mouse_event.globalPos()))) {
@@ -419,11 +416,13 @@ void DropDownBox::make_drop_down_list() {
 void DropDownBox::show_drop_down_list() {
   make_drop_down_list();
   m_drop_down_list->window()->show();
+  match(*this, PopUp());
 }
 
 void DropDownBox::hide_drop_down_list() {
   m_drop_down_list->hide();
   delete_later(m_drop_down_list);
+  unmatch(*this, PopUp());
 }
 
 void DropDownBox::submit() {
