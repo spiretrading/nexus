@@ -376,7 +376,7 @@ void DropDownBox::leave_hovered_item() {
 }
 
 void DropDownBox::revert_current() {
-  if(m_submission != m_current->get()) {
+  if(m_submission && m_submission != m_current->get()) {
     m_current->set(m_submission);
   }
 }
