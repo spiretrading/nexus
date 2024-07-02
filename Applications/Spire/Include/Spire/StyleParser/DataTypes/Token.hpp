@@ -11,7 +11,7 @@ namespace Spire {
   class Bracket {
     public:
 
-      /** List of all brackets. */
+      /** Lists the bracket types. */
       enum class BracketType {
 
         /** The opening curly bracket. */
@@ -67,7 +67,7 @@ namespace Spire {
   class Keyword {
     public:
 
-      /** List of all predefine keywords. */
+      /** Lists the predefine keywords. */
       enum class KeywordType {
         TRANSPARENT,
         BLACK,
@@ -132,7 +132,7 @@ namespace Spire {
   class Operator {
     public:
 
-      /** List of all operator types. */
+      /** Lists the operator types. */
       enum class OperatorType {
 
         /** The addition operator. */
@@ -165,7 +165,7 @@ namespace Spire {
   class Punctuation {
     public:
 
-      /** List of all punctuation types. */
+      /** Lists the punctuation types. */
       enum class PunctuationType {
 
         /** The colon. */

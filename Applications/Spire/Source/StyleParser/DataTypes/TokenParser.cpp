@@ -129,16 +129,7 @@ TokenParser::TokenParser()
     m_column_number(0) {}
 
 void TokenParser::feed(const std::string& input) {
-  auto lines = std::vector<std::string>();
-  split(lines, input, is_any_of("\n") );
-  auto bracket_regex = std::regex(BRACKET_REGEX_TEXT);
   auto identifier_regex = std::regex(IDENTIFIER_REGEX_TEXT);
-  auto keyword_regex = std::regex(KEYWORD_REGEX_TEXT);
-  auto literal_regex = std::regex(LITERAL_REGEX_TEXT);
-  auto punctuation_regex = std::regex(PUNCTUATION_REGEX_TEXT);
-  auto math_expression_regex = std::regex(MATH_EXPRESSION_REGEX_TEXT);
-  auto integer_hexadecimal_regex = std::regex(INTEGER_HEXADECIMAL_TEXT);
-  auto token_regex = std::regex(TOKEN_REGEX_TEXT);
   auto parse_expression = [&] (const std::string& expression, int column) {
     auto round_bracket_regex = std::regex(ROUND_BRACKET_REGEX_TEXT);
     auto math_expression_element_regex =
@@ -176,6 +167,15 @@ void TokenParser::feed(const std::string& input) {
       m_column_number = column + std::distance(expression.cbegin(), start);
     }
   };
+  auto lines = std::vector<std::string>();
+  split(lines, input, is_any_of("\n") );
+  auto bracket_regex = std::regex(BRACKET_REGEX_TEXT);
+  auto keyword_regex = std::regex(KEYWORD_REGEX_TEXT);
+  auto literal_regex = std::regex(LITERAL_REGEX_TEXT);
+  auto punctuation_regex = std::regex(PUNCTUATION_REGEX_TEXT);
+  auto math_expression_regex = std::regex(MATH_EXPRESSION_REGEX_TEXT);
+  auto integer_hexadecimal_regex = std::regex(INTEGER_HEXADECIMAL_TEXT);
+  auto token_regex = std::regex(TOKEN_REGEX_TEXT);
   auto matches = std::smatch();
   for(auto& line : lines) {
     auto start = get_first_non_whitespace(line.cbegin(), line.cend());
