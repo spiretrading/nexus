@@ -91,10 +91,14 @@ namespace {
       const CountryDatabase& countries, const MarketDatabase& markets) {
     auto regions = std::make_shared<ArrayListModel<Region>>();
     for(auto& country : countries.GetEntries()) {
-      regions->push(country.m_code);
+      auto region = Region(country.m_code);
+      region.SetName(country.m_name);
+      regions->push(region);
     }
     for(auto& market : markets.GetEntries()) {
-      regions->push(market);
+      auto region = Region(market);
+      region.SetName(market.m_description);
+      regions->push(region);
     }
     for(auto& region : key_bindings.make_interactions_key_bindings_regions()) {
       auto i = std::find(regions->begin(), regions->end(), region);
@@ -244,16 +248,18 @@ void InteractionsPage::on_add_region(const Region& region) {
 }
 
 void InteractionsPage::on_delete_region(const Region& region) {
-  auto i = std::find(m_regions->begin() + 1, m_regions->end(), region);
-  if(i != m_regions->end() && m_regions->remove(i) == QValidator::Acceptable) {
-    if(auto current = m_list_view->get_current()->get()) {
-      m_list_view->get_selection()->push(*current);
+  QTimer::singleShot(0, this, [=] {
+    auto i = std::find(m_regions->begin() + 1, m_regions->end(), region);
+    if(i != m_regions->end() && m_regions->remove(i) == QValidator::Acceptable) {
+      if(auto current = m_list_view->get_current()->get()) {
+        m_list_view->get_selection()->push(*current);
+      }
+      m_key_bindings->get_interactions_key_bindings(region)->reset();
+      if(region.GetSecurities().empty()) {
+        auto i = std::lower_bound(m_available_regions->begin(),
+          m_available_regions->end(), region, &region_comparator);
+        m_available_regions->insert(region, i);
+      }
     }
-    m_key_bindings->get_interactions_key_bindings(region)->reset();
-    if(region.GetSecurities().empty()) {
-      auto i = std::lower_bound(m_available_regions->begin(),
-        m_available_regions->end(), region, &region_comparator);
-      m_available_regions->insert(region, i);
-    }
-  }
+  });
 }
