@@ -229,6 +229,11 @@ bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
         auto key = static_cast<QKeyEvent*>(event)->key();
         if(key == Qt::Key_Escape) {
           revert_current();
+        } else if(key == Qt::Key_Enter || key == Qt::Key_Return) {
+          m_is_modified = true;
+          hide_drop_down_list();
+          submit();
+          return true;
         }
       }
     } else if(event->type() == QEvent::MouseMove) {
