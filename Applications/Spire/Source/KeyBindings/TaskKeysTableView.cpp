@@ -58,9 +58,9 @@ namespace {
 
   auto make_header_model() {
     auto model = std::make_shared<ArrayListModel<TableHeaderItem::Model>>();
-    auto push = [&] (const QString& name, const QString& short_name) {
-      model->push({name, short_name, TableHeaderItem::Order::NONE,
-        TableFilter::Filter::UNFILTERED});
+    auto push = [&] (const QString& name, const QString& short_name,
+        TableHeaderItem::Order order = TableHeaderItem::Order::NONE) {
+      model->push({name, short_name, order, TableFilter::Filter::UNFILTERED});
     };
     push(QObject::tr("Name"), QObject::tr("Name"));
     push(QObject::tr("Region"), QObject::tr("Region"));
@@ -69,7 +69,8 @@ namespace {
     push(QObject::tr("Side"), QObject::tr("Side"));
     push(QObject::tr("Quantity"), QObject::tr("Qty"));
     push(QObject::tr("Time in Force"), QObject::tr("TIF"));
-    push(QObject::tr("Tags"), QObject::tr("Tags"));
+    push(QObject::tr("Tags"), QObject::tr("Tags"),
+      TableHeaderItem::Order::UNORDERED);
     push(QObject::tr("Key"), QObject::tr("Key"));
     return model;
   }

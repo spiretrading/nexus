@@ -280,7 +280,7 @@ Stylist::Stylist(QWidget& widget, optional<PseudoElement> pseudo_element)
     : m_widget(&widget),
       m_pseudo_element(std::move(pseudo_element)),
       m_style(load_styles(StyleSheet())),
-      m_visibility(Visibility::VISIBLE),
+      m_has_visibility(false),
       m_evaluated_block(in_place_init),
       m_evaluated_property(typeid(void)) {
   if(!m_pseudo_element) {
@@ -392,17 +392,19 @@ void Stylist::apply() {
     return;
   }
   if(auto visibility = Spire::Styles::find<Visibility>(block)) {
+    m_has_visibility = true;
     evaluate(*visibility, [=] (auto visibility) {
-      m_visibility = visibility;
-      if(m_visibility == Visibility::VISIBLE) {
+      if(visibility == Visibility::VISIBLE) {
         m_widget->show();
       } else {
         auto size = m_widget->sizePolicy();
-        size.setRetainSizeWhenHidden(m_visibility == Visibility::INVISIBLE);
+        size.setRetainSizeWhenHidden(visibility == Visibility::INVISIBLE);
         m_widget->setSizePolicy(size);
         m_widget->hide();
       }
     });
+  } else if(m_has_visibility && !m_widget->isVisible()) {
+    m_widget->show();
   }
 }
 

@@ -32,6 +32,9 @@ void ListCurrentController::add(std::unique_ptr<ItemView> view, int index) {
   auto update_current = is_initialized();
   m_views.insert(std::next(m_views.begin(), index), std::move(view));
   m_size = std::max<int>(m_size, std::ssize(m_views));
+  if(m_last_current && *m_last_current <= index) {
+    ++*m_last_current;
+  }
   if(update_current && m_current->get() && *m_current->get() >= index &&
       *m_current->get() < std::ssize(m_views) - 1) {
     auto current = *m_current->get() + 1;
