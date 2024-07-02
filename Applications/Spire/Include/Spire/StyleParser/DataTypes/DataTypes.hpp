@@ -5,6 +5,8 @@ namespace Spire {
   class DataType;
   class FloatType;
   class IntegerType;
+  class Token;
+  class TokenParser;
   class StringType;
 }
 
