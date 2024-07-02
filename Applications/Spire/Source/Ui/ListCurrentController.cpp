@@ -44,6 +44,13 @@ void ListCurrentController::add(std::unique_ptr<ItemView> view, int index) {
 void ListCurrentController::remove(int index) {
   m_views.erase(m_views.begin() + index);
   --m_size;
+  if(m_last_current) {
+    if(*m_last_current == index) {
+      m_last_current = none;
+    } else if(*m_last_current > index) {
+      --*m_last_current;
+    }
+  }
   if(m_current->get()) {
     if(m_current->get() == index) {
       auto size = static_cast<int>(m_views.size());

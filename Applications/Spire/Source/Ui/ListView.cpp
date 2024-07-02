@@ -740,7 +740,8 @@ void ListView::on_list_operation(const AnyListModel::Operation& operation) {
 
 void ListView::on_current(optional<int> previous, optional<int> current) {
   update_focus(current);
-  if(previous && previous != current) {
+  if(previous &&
+      previous != current && *previous < static_cast<int>(m_items.size())) {
     m_items[*previous]->m_item.set_current(false);
   }
   if(find_focus_state(*this) != FocusObserver::State::NONE) {

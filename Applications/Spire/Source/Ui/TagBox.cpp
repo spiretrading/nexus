@@ -1,6 +1,7 @@
 #include "Spire/Ui/TagBox.hpp"
 #include <QKeyEvent>
 #include <QStringBuilder>
+#include <QTimer>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ListModelTransactionLog.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
@@ -630,9 +631,11 @@ void TagBox::on_operation(const AnyListModel::Operation& operation) {
       update_tip();
       update_tooltip();
     });
-  if(m_list_view->get_current()->get() != m_model->get_size() - 1) {
-    m_list_view->get_current()->set(m_model->get_size() - 1);
-  }
+  QTimer::singleShot(0, this, [=] {
+    if(m_list_view->get_current()->get() != m_model->get_size() - 1) {
+      m_list_view->get_current()->set(m_model->get_size() - 1);
+    }
+  });
 }
 
 void TagBox::on_text_box_current(const QString& current) {
