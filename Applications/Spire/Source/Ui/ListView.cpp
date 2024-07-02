@@ -775,7 +775,9 @@ void ListView::on_selection(const ListModel<int>::Operation& operation) {
 }
 
 void ListView::on_item_submitted(ItemEntry& item) {
-  m_current_controller.get_current()->set(item.m_index);
+  if(m_current_controller.get_current()->get() != item.m_index) {
+    m_current_controller.get_current()->set(item.m_index);
+  }
   m_submit_signal(m_list->get(item.m_index));
 }
 

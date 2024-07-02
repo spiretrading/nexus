@@ -229,6 +229,11 @@ bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
         auto key = static_cast<QKeyEvent*>(event)->key();
         if(key == Qt::Key_Escape) {
           revert_current();
+        } else if(key == Qt::Key_Enter || key == Qt::Key_Return) {
+          m_is_modified = true;
+          hide_drop_down_list();
+          submit();
+          return true;
         }
       }
     } else if(event->type() == QEvent::MouseMove) {
@@ -284,11 +289,8 @@ bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
       auto& close_event = static_cast<QCloseEvent&>(*event);
       close_event.ignore();
       hide_drop_down_list();
-    } else if(event->type() == QEvent::Show) {
-      match(*this, PopUp());
     } else if(event->type() == QEvent::Hide) {
       leave_hovered_item();
-      unmatch(*this, PopUp());
     } else if(event->type() == QEvent::MouseButtonPress) {
       auto& mouse_event = *static_cast<QMouseEvent*>(event);
       if(rect().contains(mapFromGlobal(mouse_event.globalPos()))) {
@@ -313,15 +315,12 @@ void DropDownBox::keyPressEvent(QKeyEvent* event) {
     QWidget::keyPressEvent(event);
     return;
   }
-  switch(event->key()) {
-    case Qt::Key_Escape:
-      revert_current();
-      break;
-    default:
-      if(!is_read_only()) {
-        make_drop_down_list();
-        QCoreApplication::sendEvent(&m_drop_down_list->get_list_view(), event);
-      }
+  if(event->key() == Qt::Key_Escape) {
+    revert_current();
+  } else if(!is_read_only() &&
+      (event->key() != Qt::Key_Space || is_drop_down_list_visible())) {
+    make_drop_down_list();
+    QCoreApplication::sendEvent(&m_drop_down_list->get_list_view(), event);
   }
   QWidget::keyPressEvent(event);
 }
@@ -376,7 +375,7 @@ void DropDownBox::leave_hovered_item() {
 }
 
 void DropDownBox::revert_current() {
-  if(m_submission != m_current->get()) {
+  if(m_submission && m_submission != m_current->get()) {
     m_current->set(m_submission);
   }
 }
@@ -419,11 +418,13 @@ void DropDownBox::make_drop_down_list() {
 void DropDownBox::show_drop_down_list() {
   make_drop_down_list();
   m_drop_down_list->window()->show();
+  match(*this, PopUp());
 }
 
 void DropDownBox::hide_drop_down_list() {
   m_drop_down_list->hide();
   delete_later(m_drop_down_list);
+  unmatch(*this, PopUp());
 }
 
 void DropDownBox::submit() {

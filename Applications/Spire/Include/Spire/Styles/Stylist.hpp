@@ -227,7 +227,7 @@ namespace Spire::Styles {
       std::type_index m_evaluated_property;
       std::chrono::time_point<std::chrono::steady_clock> m_last_frame;
       QMetaObject::Connection m_animation_connection;
-      Visibility m_visibility;
+      bool m_has_visibility;
       std::unique_ptr<StyleEventFilter> m_style_event_filter;
 
       Stylist(QWidget& parent, boost::optional<PseudoElement> pseudo_element);
