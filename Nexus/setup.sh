@@ -21,7 +21,7 @@ if [ -f "cache_files/nexus.txt" ]; then
   fi
 fi
 cores="`grep -c "processor" < /proc/cpuinfo`"
-beam_commit="f4a358737245e32c2684e09c9bdc46f681f7f7a8"
+beam_commit="d442f04522bcb932b773d81b6311735d257d6d82"
 build_beam=0
 if [ ! -d "Beam" ]; then
   git clone https://www.github.com/spiretrading/beam.git Beam

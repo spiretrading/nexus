@@ -34,7 +34,7 @@ namespace {
     style.get(item_selector > Any() >
         (ReadOnly() && !(+Any() << is_a<ListItem>()) && !Prompt())).
       set(horizontal_padding(scale_width(8)));
-    style.get(item_selector >  Any() > ReadOnly() >
+    style.get(item_selector > Any() > ReadOnly() >
         (is_a<TextBox>() && !(+Any() << is_a<ListItem>()) && !Prompt())).
       set(horizontal_padding(scale_width(8)));
     style.get((item_selector > !ReadOnly()) << Current()).
@@ -382,11 +382,10 @@ struct EditableTableView::ItemBuilder {
   }
 
   void unmount(QWidget* widget) {
-    if(typeid(*widget) == typeid(Button) ||
-        typeid(*widget) == typeid(QWidget)) {
-      m_editable_builder.unmount(widget);
-    } else {
+    if(auto box = dynamic_cast<EditableBox*>(widget)) {
       m_builder.unmount(widget);
+    } else {
+      m_editable_builder.unmount(widget);
     }
   }
 };
@@ -414,87 +413,20 @@ void EditableTableView::keyPressEvent(QKeyEvent* event) {
     if(m_is_processing_key) {
       return TableView::keyPressEvent(event);
     }
-    m_is_processing_key = true;
-    auto target = find_focus_proxy(get_body().get_item(*current)->get_body());
-    QCoreApplication::sendEvent(target, event);
-    target->setFocus();
-    m_is_processing_key = false;
+    if(auto item = get_body().find_item(*current)) {
+      m_is_processing_key = true;
+      auto target = find_focus_proxy(item->get_body());
+      QCoreApplication::sendEvent(target, event);
+      target->setFocus();
+      m_is_processing_key = false;
+    }
   } else {
     TableView::keyPressEvent(event);
   }
 }
 
-bool EditableTableView::focusNextPrevChild(bool next) {
-  if(isEnabled()) {
-    if(next) {
-      if(navigate_next()) {
-        return true;
-      }
-    } else if(navigate_previous()) {
-      return true;
-    }
-  }
-  auto next_focus_widget = static_cast<QWidget*>(this);
-  auto next_widget = nextInFocusChain();
-  while(next_widget && next_widget != this) {
-    next_widget = next_widget->nextInFocusChain();
-    if(!isAncestorOf(next_widget) && next_widget->isEnabled() &&
-        next_widget->focusPolicy() & Qt::TabFocus) {
-      next_focus_widget = next_widget;
-      if(next) {
-        break;
-      }
-    }
-  }
-  next_focus_widget->setFocus(Qt::TabFocusReason);
-  return true;
-}
-
 void EditableTableView::delete_row(int row) {
   get_body().get_table()->remove(row);
-}
-
-bool EditableTableView::navigate_next() {
-  if(auto& current = get_current()->get()) {
-    auto column = current->m_column + 1;
-    if(column >= get_table()->get_column_size() - 1) {
-      auto row = current->m_row + 1;
-      if(row >= get_table()->get_row_size()) {
-        return false;
-      } else {
-        get_current()->set(Index(row, 0));
-      }
-    } else {
-      get_current()->set(Index(current->m_row, column));
-    }
-  } else if(get_body().get_item(Index(0, 0))) {
-    get_current()->set(Index(0, 0));
-  } else {
-    return false;
-  }
-  return true;
-}
-
-bool EditableTableView::navigate_previous() {
-  if(auto& current = get_current()->get()) {
-    auto column = current->m_column - 1;
-    if(column < 0) {
-      auto row = current->m_row - 1;
-      if(row < 0) {
-        return false;
-      } else {
-        get_current()->set(Index(row, get_table()->get_column_size() - 2));
-      }
-    } else {
-      get_current()->set(Index(current->m_row, column));
-    }
-  } else if(get_table()->get_row_size() > 0) {
-    get_current()->set(TableView::Index(
-      get_table()->get_row_size() - 1, get_table()->get_column_size() - 2));
-  } else {
-    return false;
-  }
-  return true;
 }
 
 EditableTableViewBuilder::EditableTableViewBuilder(

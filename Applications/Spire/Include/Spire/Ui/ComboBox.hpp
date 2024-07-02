@@ -159,6 +159,7 @@ namespace Spire {
       ListViewItemBuilder<> m_item_builder;
       std::unique_ptr<DeferredData> m_data;
 
+      void update_focus_proxy();
       void initialize_deferred_data() const;
       void update_completion();
       void revert_to(const QString& query, bool autocomplete);

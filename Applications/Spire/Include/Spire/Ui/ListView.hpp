@@ -42,6 +42,17 @@ namespace Styles {
   using EdgeNavigation = ListCurrentController::EdgeNavigation;
 }
 
+namespace Details {
+  template<typename T>
+  auto try_to_text(const T& value) {
+    if constexpr(
+        requires {{ to_text(value) } -> std::convertible_to<QString>;}) {
+      return to_text(value);
+    }
+    return QString();
+  }
+}
+
   /**
    * Displays a list of values represented by ListItems stacked horizontally
    * or vertically.
@@ -54,6 +65,9 @@ namespace Styles {
 
       /** The type of model representing the list of selected indicies. */
       using SelectionModel = ListSelectionController::SelectionModel;
+
+      /** The type of function used to query the value. */
+      using ToText = std::function<QString (const std::any&)>;
 
       /**
        * Signals that the current item was submitted.
@@ -89,6 +103,17 @@ namespace Styles {
       /**
        * Constructs a ListView using default local models.
        * @param list The model of values to display.
+       * @param item_builder The ListViewItemBuilder to use.
+       * @param to_text The function used to query items.
+       * @param parent The parent widget.
+       */
+      ListView(std::shared_ptr<AnyListModel> list,
+        ListViewItemBuilder<> item_builder, ToText to_text,
+        QWidget* parent = nullptr);
+
+      /**
+       * Constructs a ListView using default local models.
+       * @param list The model of values to display.
        * @param selection The selection model.
        * @param item_builder The ListViewItemBuilder to use.
        * @param parent The parent widget.
@@ -96,6 +121,19 @@ namespace Styles {
       ListView(std::shared_ptr<AnyListModel> list,
         std::shared_ptr<SelectionModel> selection,
         ListViewItemBuilder<> item_builder, QWidget* parent = nullptr);
+
+      /**
+       * Constructs a ListView using default local models.
+       * @param list The model of values to display.
+       * @param selection The selection model.
+       * @param item_builder The ListViewItemBuilder to use.
+       * @param to_text The function used to query items.
+       * @param parent The parent widget.
+       */
+      ListView(std::shared_ptr<AnyListModel> list,
+        std::shared_ptr<SelectionModel> selection,
+        ListViewItemBuilder<> item_builder, ToText to_text,
+        QWidget* parent = nullptr);
 
       /**
        * Constructs a ListView using default local models.
@@ -133,6 +171,21 @@ namespace Styles {
         std::shared_ptr<CurrentModel> current,
         std::shared_ptr<SelectionModel> selection,
         ListViewItemBuilder<> item_builder, QWidget* parent = nullptr);
+
+      /**
+       * Constructs a ListView.
+       * @param list The list model which holds a list of items.
+       * @param current The current value model.
+       * @param selection The selection model.
+       * @param item_builder The ListViewItemBuilder to use.
+       * @param to_text The function used to query items.
+       * @param parent The parent widget.
+       */
+      ListView(std::shared_ptr<AnyListModel> list,
+        std::shared_ptr<CurrentModel> current,
+        std::shared_ptr<SelectionModel> selection,
+        ListViewItemBuilder<> item_builder, ToText to_text,
+        QWidget* parent = nullptr);
 
       /**
        * Constructs a ListView.
@@ -213,6 +266,7 @@ namespace Styles {
       ListCurrentController m_current_controller;
       ListSelectionController m_selection_controller;
       ListViewItemBuilder<> m_item_builder;
+      ToText m_to_text;
       std::vector<std::unique_ptr<ItemEntry>> m_items;
       Box* m_box;
       int m_top_index;
@@ -257,7 +311,11 @@ namespace Styles {
     ListViewItemBuilder<ListModel<typename T::Type>> item_builder,
     QWidget* parent)
     : ListView(std::static_pointer_cast<AnyListModel>(list),
-        ListViewItemBuilder<>(std::move(item_builder))) {}
+        ListViewItemBuilder<>(std::move(item_builder)),
+        [] (const std::any& value) {
+          return Details::try_to_text(
+            std::any_cast<const typename T::Type&>(value));
+        }) {}
 
   template<std::derived_from<AnyListModel> T>
   ListView::ListView(std::shared_ptr<T> list,
@@ -265,7 +323,11 @@ namespace Styles {
     ListViewItemBuilder<ListModel<typename T::Type>> item_builder,
     QWidget* parent)
     : ListView(std::static_pointer_cast<AnyListModel>(list),
-        std::move(selection), ListViewItemBuilder<>(std::move(item_builder))) {}
+        std::move(selection), ListViewItemBuilder<>(std::move(item_builder)),
+        [] (const std::any& value) {
+          return Details::try_to_text(
+            std::any_cast<const typename T::Type&>(value));
+        }) {}
 
   template<std::derived_from<AnyListModel> T>
   ListView::ListView(std::shared_ptr<T> list,
@@ -274,7 +336,11 @@ namespace Styles {
     ListViewItemBuilder<ListModel<typename T::Type>> item_builder,
     QWidget* parent)
     : ListView(std::static_pointer_cast<AnyListModel>(list), std::move(current),
-        std::move(selection), ListViewItemBuilder<>(std::move(item_builder))) {}
+        std::move(selection), ListViewItemBuilder<>(std::move(item_builder)),
+        [] (const std::any& value) {
+          return Details::try_to_text(
+            std::any_cast<const typename T::Type&>(value));
+        }) {}
 }
 
 #endif

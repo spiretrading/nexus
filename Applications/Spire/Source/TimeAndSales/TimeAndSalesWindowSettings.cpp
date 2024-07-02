@@ -8,8 +8,6 @@ using namespace Nexus;
 using namespace Spire;
 using namespace std;
 
-TimeAndSalesWindowSettings::TimeAndSalesWindowSettings() {}
-
 TimeAndSalesWindowSettings::TimeAndSalesWindowSettings(
     const TimeAndSalesWindow& window, Ref<UserProfile> userProfile)
     : m_properties(window.GetProperties()),
@@ -31,8 +29,6 @@ TimeAndSalesWindowSettings::TimeAndSalesWindowSettings(
   }
 }
 
-TimeAndSalesWindowSettings::~TimeAndSalesWindowSettings() {}
-
 string TimeAndSalesWindowSettings::GetName() const {
   return m_name;
 }
@@ -49,7 +45,7 @@ QWidget* TimeAndSalesWindowSettings::Reopen(
 void TimeAndSalesWindowSettings::Apply(Ref<UserProfile> userProfile,
     Out<QWidget> widget) const {
   TimeAndSalesWindow& window = dynamic_cast<TimeAndSalesWindow&>(*widget);
-  window.restoreGeometry(m_geometry);
+  restore_geometry(window, m_geometry);
   window.m_ui->m_splitter->restoreState(m_splitterState);
   window.m_ui->m_timeAndSalesView->horizontalHeader()->restoreState(
     m_viewHeaderState);

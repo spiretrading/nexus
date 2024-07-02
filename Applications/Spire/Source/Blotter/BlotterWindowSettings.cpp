@@ -53,7 +53,7 @@ QWidget* BlotterWindowSettings::Reopen(Ref<UserProfile> userProfile) const {
 void BlotterWindowSettings::Apply(Ref<UserProfile> userProfile,
     Out<QWidget> widget) const {
   BlotterWindow& window = dynamic_cast<BlotterWindow&>(*widget);
-  window.restoreGeometry(m_geometry);
+  restore_geometry(window, m_geometry);
   window.m_ui->m_splitter->restoreState(m_splitterState);
   window.m_ui->m_openPositionsTab->SetUIState(m_openPositionsWidgetState);
   window.m_ui->m_orderLogTab->SetUIState(m_orderLogWidgetState);

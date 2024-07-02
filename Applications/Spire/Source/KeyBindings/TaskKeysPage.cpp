@@ -1,4 +1,5 @@
 #include "Spire/KeyBindings/TaskKeysPage.hpp"
+#include "Spire/KeyBindings/AdditionalTag.hpp"
 #include "Spire/KeyBindings/OrderTaskArgumentsMatch.hpp"
 #include "Spire/KeyBindings/TaskKeysTableView.hpp"
 #include "Spire/Spire/FilteredTableModel.hpp"
@@ -119,8 +120,8 @@ namespace {
     explicit OrderTaskTableModel(
       std::shared_ptr<OrderTaskArgumentsListModel> source)
       : m_source(std::move(source)),
-      m_source_connection(m_source->connect_operation_signal(
-        std::bind_front(&OrderTaskTableModel::on_operation, this))) {}
+        m_source_connection(m_source->connect_operation_signal(
+          std::bind_front(&OrderTaskTableModel::on_operation, this))) {}
 
     int get_row_size() const override {
       return m_source->get_size();
@@ -134,8 +135,8 @@ namespace {
       if(column < 0 || column >= get_column_size()) {
         throw std::out_of_range("The column is out of range.");
       }
-      return extract_field(m_source->get(row),
-        static_cast<OrderTaskColumns>(column));
+      return extract_field(
+        m_source->get(row), static_cast<OrderTaskColumns>(column));
     }
 
     QValidator::State set(int row, int column, const std::any& value) override {
@@ -151,16 +152,16 @@ namespace {
       } else if(column_index == OrderTaskColumns::DESTINATION) {
         arguments.m_destination = std::any_cast<const Destination&>(value);
       } else if(column_index == OrderTaskColumns::ORDER_TYPE) {
-        arguments.m_order_type = std::any_cast<const OrderType&>(value);
+        arguments.m_order_type = std::any_cast<OrderType>(value);
       } else if(column_index == OrderTaskColumns::SIDE) {
-        arguments.m_side = std::any_cast<const Side&>(value);
+        arguments.m_side = std::any_cast<Side>(value);
       } else if(column_index == OrderTaskColumns::QUANTITY) {
-        arguments.m_quantity = std::any_cast<const optional<Quantity>&>(value);
+        arguments.m_quantity = std::any_cast<QuantitySetting>(value);
       } else if(column_index == OrderTaskColumns::TIME_IN_FORCE) {
         arguments.m_time_in_force = std::any_cast<const TimeInForce&>(value);
       } else if(column_index == OrderTaskColumns::TAGS) {
         arguments.m_additional_tags =
-          std::any_cast<const std::vector<Nexus::Tag>&>(value);
+          std::any_cast<const std::vector<AdditionalTag>&>(value);
       } else if(column_index == OrderTaskColumns::KEY) {
         arguments.m_key = std::any_cast<const QKeySequence&>(value);
       }
@@ -311,7 +312,8 @@ struct TaskKeysPage::OrderTaskMatchCache {
 TaskKeysPage::TaskKeysPage(std::shared_ptr<KeyBindingsModel> key_bindings,
     std::shared_ptr<ComboBox::QueryModel> securities,
     CountryDatabase countries, MarketDatabase markets,
-    DestinationDatabase destinations, QWidget* parent)
+    DestinationDatabase destinations, AdditionalTagDatabase additional_tags,
+    QWidget* parent)
     : QWidget(parent),
       m_key_bindings(std::move(key_bindings)),
       m_match_cache(std::make_unique<OrderTaskMatchCache>(
@@ -368,7 +370,7 @@ TaskKeysPage::TaskKeysPage(std::shared_ptr<KeyBindingsModel> key_bindings,
     m_filtered_model, std::make_shared<RegionQueryModel>(std::move(securities),
       populate_region_query_model(m_match_cache->m_countries,
         m_match_cache->m_markets)),
-    m_match_cache->m_destinations, m_match_cache->m_markets);
+    m_match_cache->m_destinations, m_match_cache->m_markets, additional_tags);
   layout->addWidget(m_table_view);
   auto box = new Box(body);
   update_style(*box, [] (auto& style) {
@@ -379,9 +381,6 @@ TaskKeysPage::TaskKeysPage(std::shared_ptr<KeyBindingsModel> key_bindings,
   auto& row_selection = m_table_view->get_selection()->get_row_selection();
   m_selection_connection = row_selection->connect_operation_signal(
     std::bind_front(&TaskKeysPage::on_row_selection, this));
-  m_table_operation_connection =
-    m_table_view->get_body().get_table()->connect_operation_signal(
-      std::bind_front(&TaskKeysPage::on_table_operation, this));
 }
 
 const std::shared_ptr<KeyBindingsModel>&
@@ -491,19 +490,5 @@ void TaskKeysPage::on_row_selection(
     },
     [&] (const ListModel<int>::RemoveOperation& operation) {
       update_button_state();
-    });
-}
-
-void TaskKeysPage::on_table_operation(const TableModel::Operation& operation) {
-  visit(operation,
-    [&] (const TableModel::AddOperation& operation) {
-      if(m_is_row_added) {
-        QTimer::singleShot(0, this, [=] {
-          auto index = TableView::Index(operation.m_index, 2);
-          m_table_view->get_current()->set(index);
-          m_added_region_item = m_table_view->get_body().get_item(index);
-          m_added_region_item->installEventFilter(this);
-        });
-      }
     });
 }

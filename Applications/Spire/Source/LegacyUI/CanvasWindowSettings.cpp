@@ -34,7 +34,7 @@ QWidget* CanvasWindowSettings::Reopen(Ref<UserProfile> userProfile) const {
 void CanvasWindowSettings::Apply(Ref<UserProfile> userProfile,
     Out<QWidget> widget) const {
   auto& window = dynamic_cast<CanvasWindow&>(*widget);
-  window.restoreGeometry(m_geometry);
+  restore_geometry(window, m_geometry);
   for(const auto& node : m_nodes) {
     window.m_ui->m_canvasTable->Add(get<0>(node), *get<1>(node));
   }

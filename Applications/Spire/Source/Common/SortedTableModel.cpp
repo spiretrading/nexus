@@ -2,7 +2,6 @@
 #include <algorithm>
 #include <boost/iterator/counting_iterator.hpp>
 #include "Spire/Ui/CustomQtVariants.hpp"
-#include "Spire/Ui/DecimalBox.hpp"
 
 using namespace boost::iterators;
 using namespace boost::posix_time;

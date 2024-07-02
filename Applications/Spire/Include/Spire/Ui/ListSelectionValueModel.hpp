@@ -107,6 +107,8 @@ namespace Spire {
         },
         [&] (const typename ListModel<int>::PreRemoveOperation& operation) {
           m_transaction.push(PreRemoveOperation(operation.m_index));
+        },
+        [&] (const typename ListModel<int>::RemoveOperation& operation) {
           m_selection_values.erase(
             m_selection_values.begin() + operation.m_index);
           m_transaction.push(RemoveOperation(operation.m_index));

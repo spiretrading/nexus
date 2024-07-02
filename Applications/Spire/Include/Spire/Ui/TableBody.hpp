@@ -103,18 +103,19 @@ namespace Styles {
       /** Returns the selection. */
       const std::shared_ptr<SelectionModel>& get_selection() const;
 
-      /** Returns the index of a TableItem. */
-      TableIndex get_index(const TableItem& item) const;
+      /** Returns the TableItem at a given index. */
+      TableItem* find_item(const Index& index);
 
-      /** Returns the TableItem at a specified index. */
-      const TableItem* get_item(Index index) const;
-
-      /** Returns the TableItem at a specified index. */
-      TableItem* get_item(Index index);
+      /**
+       * Returns an estimate of how many pixels need to be scrolled for a single
+       * row.
+       */
+      int estimate_scroll_line_height() const;
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
       bool event(QEvent* event) override;
+      bool focusNextPrevChild(bool next) override;
       void keyPressEvent(QKeyEvent* event) override;
       void keyReleaseEvent(QKeyEvent* event) override;
       void moveEvent(QMoveEvent* event) override;
@@ -133,6 +134,7 @@ namespace Styles {
       struct Cover;
       struct RowCover;
       struct ColumnCover;
+      struct Painter;
       struct BoxStyles {
         QColor m_background_color;
       };
@@ -144,8 +146,9 @@ namespace Styles {
       TableViewItemBuilder m_item_builder;
       std::vector<ColumnCover*> m_column_covers;
       int m_top_index;
-      int m_visible_count;
-      int m_initialize_count;
+      QSpacerItem* m_top_spacer;
+      QSpacerItem* m_bottom_spacer;
+      RowCover* m_current_row;
       Styles m_styles;
       std::unordered_map<TableItem*, HoverObserver> m_hover_observers;
       boost::optional<Index> m_hover_index;
@@ -155,21 +158,40 @@ namespace Styles {
       boost::signals2::scoped_connection m_current_connection;
       boost::signals2::scoped_connection m_widths_connection;
 
-      int get_column_size() const;
-      TableItem* get_current_item();
       RowCover* find_row(int index);
       TableItem* find_item(const boost::optional<Index>& index);
+      RowCover* get_current_row();
+      TableItem* get_current_item();
+      int visible_count() const;
+      bool is_visible(int index) const;
+      Index get_index(const TableItem& item) const;
+      int get_column_size() const;
+      int estimate_row_height() const;
       int get_left_spacing(int index) const;
       int get_top_spacing(int index) const;
       void add_column_cover(int index, const QRect& geometry);
       void add_row(int index);
+      void pre_remove_row(int index);
       void remove_row(int index);
       void move_row(int source, int destination);
       void update_parent();
+      RowCover* mount_row(
+        int index, int layout_index, boost::optional<int> current_index,
+        std::vector<RowCover*>& unmounted_rows);
+      RowCover* mount_row(
+        int index, int layout_index, boost::optional<int> current_index);
+      void destroy(RowCover* row);
+      void remove(RowCover& row);
+      void update_spacer(QSpacerItem*& spacer, int hidden_row_count);
+      void update_spacers();
+      void mount_visible_rows(std::vector<RowCover*>& unmounted_rows);
+      std::vector<RowCover*> unmount_hidden_rows();
       void initialize_visible_region();
+      void reset_visible_region(
+        int total_height, std::vector<RowCover*>& unmounted_rows);
       void update_visible_region();
-      void draw_item_borders(const boost::optional<Index>& index,
-        QPainter& painter);
+      bool navigate_next();
+      bool navigate_previous();
       void on_item_activated(TableItem& item);
       void on_current(const boost::optional<Index>& previous,
         const boost::optional<Index>& current);

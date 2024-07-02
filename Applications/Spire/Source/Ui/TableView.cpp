@@ -1,4 +1,5 @@
 #include "Spire/Ui/TableView.hpp"
+#include <QEvent>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/FilteredTableModel.hpp"
@@ -58,6 +59,7 @@ TableView::TableView(
       m_table(std::move(table)),
       m_header(std::move(header)),
       m_filter(std::move(filter)),
+      m_current_item(nullptr),
       m_horizontal_spacing(0),
       m_vertical_spacing(0) {
   for(auto i = 0; i != m_header->get_size(); ++i) {
@@ -93,6 +95,7 @@ TableView::TableView(
   m_body = new TableBody(m_sorted_table, std::move(current),
     std::move(selection), m_header_view->get_widths(), std::move(item_builder));
   m_body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+  m_body->installEventFilter(this);
   link(*this, *m_body);
   m_scroll_box = new ScrollBox(m_body);
   m_scroll_box->set(ScrollBox::DisplayPolicy::ON_ENGAGE);
@@ -140,8 +143,24 @@ connection TableView::connect_sort_signal(
   return m_sort_signal.connect(slot);
 }
 
+bool TableView::eventFilter(QObject* watched, QEvent* event) {
+  if(watched == m_body) {
+    if(event->type() == QEvent::Resize || event->type() == QEvent::Show) {
+      auto result = QWidget::eventFilter(watched, event);
+      update_scroll_sizes();
+      return result;
+    }
+  }
+  return QWidget::eventFilter(watched, event);
+}
+
 bool TableView::is_filtered(const TableModel& model, int row) {
   return m_filter->is_filtered(model, row);
+}
+
+void TableView::update_scroll_sizes() {
+  m_scroll_box->get_vertical_scroll_bar().set_line_size(
+    m_body->estimate_scroll_line_height());
 }
 
 void TableView::on_order_update(int index, TableHeaderItem::Order order) {
@@ -183,9 +202,18 @@ void TableView::on_filter(int column, TableFilter::Filter filter) {
 
 void TableView::on_current(const optional<Index>& current) {
   if(!current) {
+    QObject::disconnect(m_current_item_connection);
+    m_current_item = nullptr;
     return;
   }
-  if(auto item = m_body->get_item(*current)) {
+  if(auto item = m_body->find_item(*current)) {
+    if(item == m_current_item) {
+      return;
+    }
+    QObject::disconnect(m_current_item_connection);
+    m_current_item = item;
+    m_current_item_connection = connect(m_current_item, &QObject::destroyed,
+      this, [&] (auto object) { m_current_item = nullptr; });
     auto& horizontal_scroll_bar = m_scroll_box->get_horizontal_scroll_bar();
     auto old_x = horizontal_scroll_bar.get_position();
     auto& vertical_scroll_bar = m_scroll_box->get_vertical_scroll_bar();
@@ -225,6 +253,7 @@ void TableView::on_body_style() {
         });
       });
   }
+  update_scroll_sizes();
   update();
 }
 

@@ -41,8 +41,7 @@ namespace Details {
     WATCHLIST,
 
     /** The layout. */
-    LAYOUT
-  );
+    LAYOUT);
 }
 
   /** Stores a variety of settings that can be exported by a user. */
@@ -69,7 +68,7 @@ namespace Details {
       m_order_imbalance_indicator_properties;
 
     /** The key bindings. */
-    boost::optional<KeyBindingsModel> m_key_bindings;
+    std::shared_ptr<KeyBindingsModel> m_key_bindings;
 
     /** The portfolio properties. */
     boost::optional<PortfolioViewerProperties> m_portfolio_properties;
@@ -114,9 +113,7 @@ namespace Beam::Serialization {
       shuttle.Shuttle("dashboards", value.m_dashboards);
       shuttle.Shuttle("order_imbalance_indicator_properties",
         value.m_order_imbalance_indicator_properties);
-/* TODO
-      shuttle.Shuttle("key_bindings", value.m_key_bindings);
-*/
+      shuttle.Shuttle("key_bindings", *value.m_key_bindings);
       shuttle.Shuttle("portfolio_viewer_properties",
         value.m_portfolio_properties);
       shuttle.Shuttle("time_and_sales_properties",

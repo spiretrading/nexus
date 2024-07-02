@@ -1,5 +1,6 @@
-#ifndef SPIRE_SHUTTLEQTTYPES_HPP
-#define SPIRE_SHUTTLEQTTYPES_HPP
+#ifndef SPIRE_SHUTTLE_QT_TYPES_HPP
+#define SPIRE_SHUTTLE_QT_TYPES_HPP
+#include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Serialization/Receiver.hpp>
 #include <Beam/Serialization/Sender.hpp>
 #include <QByteArray>
@@ -18,8 +19,8 @@ namespace Serialization {
   template<>
   struct Send<QString> {
     template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, const char* name,
-        const QString& value) const {
+    void operator ()(
+        Shuttler& shuttle, const char* name, const QString& value) const {
       shuttle.Shuttle(name, value.toStdString());
     }
   };
@@ -27,9 +28,9 @@ namespace Serialization {
   template<>
   struct Receive<QString> {
     template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, const char* name,
-        QString& value) const {
-      std::string s;
+    void operator ()(
+        Shuttler& shuttle, const char* name, QString& value) const {
+      auto s = std::string();
       shuttle.Shuttle(name, s);
       value = QString::fromStdString(s);
     }
@@ -40,27 +41,28 @@ namespace Serialization {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle, const QByteArray& value,
         unsigned int version) const {
-      std::string buffer(value.data(), value.size());
-      shuttle.Shuttle("buffer", buffer);
+      auto buffer = std::string(value.data(), value.size());
+      shuttle.Shuttle("buffer",
+        Beam::IO::BufferFromString<Beam::IO::SharedBuffer>(buffer));
     }
   };
 
   template<>
   struct Receive<QByteArray> {
     template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, QByteArray& value,
-        unsigned int version) const {
-      std::string buffer;
+    void operator ()(
+        Shuttler& shuttle, QByteArray& value, unsigned int version) const {
+      auto buffer = Beam::IO::SharedBuffer();
       shuttle.Shuttle("buffer", buffer);
-      value = QByteArray(buffer.c_str(), buffer.size());
+      value = QByteArray(buffer.GetData(), buffer.GetSize());
     }
   };
 
   template<>
   struct Send<QColor> {
     template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, const QColor& value,
-        unsigned int version) const {
+    void operator ()(
+        Shuttler& shuttle, const QColor& value, unsigned int version) const {
       shuttle.Shuttle("rgba", value.rgba());
     }
   };
@@ -68,9 +70,9 @@ namespace Serialization {
   template<>
   struct Receive<QColor> {
     template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, QColor& value,
-        unsigned int version) const {
-      QRgb rgba;
+    void operator ()(
+        Shuttler& shuttle, QColor& value, unsigned int version) const {
+      auto rgba = QRgb();
       shuttle.Shuttle("rgba", rgba);
       value.setRgba(rgba);
     }
@@ -79,8 +81,8 @@ namespace Serialization {
   template<>
   struct Send<QFont> {
     template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, const QFont& value,
-        unsigned int version) const {
+    void operator ()(
+        Shuttler& shuttle, const QFont& value, unsigned int version) const {
       shuttle.Shuttle("family", value.family());
       shuttle.Shuttle("point_size", value.pointSize());
       shuttle.Shuttle("weight", value.weight());
@@ -91,15 +93,15 @@ namespace Serialization {
   template<>
   struct Receive<QFont> {
     template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, QFont& value,
-        unsigned int version) const {
-      QString family;
+    void operator ()(
+        Shuttler& shuttle, QFont& value, unsigned int version) const {
+      auto family = QString();
       shuttle.Shuttle("family", family);
-      int pointSize;
+      auto pointSize = int();
       shuttle.Shuttle("point_size", pointSize);
-      int weight;
+      auto weight = int();
       shuttle.Shuttle("weight", weight);
-      bool italic;
+      auto italic = bool();
       shuttle.Shuttle("italic", italic);
       value = QFont(family, pointSize, weight, italic);
     }
@@ -117,9 +119,9 @@ namespace Serialization {
   template<>
   struct Receive<QKeySequence> {
     template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, QKeySequence& value,
-        unsigned int version) const {
-      std::string key;
+    void operator ()(
+        Shuttler& shuttle, QKeySequence& value, unsigned int version) const {
+      auto key = std::string();
       shuttle.Shuttle("key", key);
       value = QKeySequence(QString::fromStdString(key));
     }
@@ -128,8 +130,8 @@ namespace Serialization {
   template<>
   struct Send<QPoint> {
     template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, const QPoint& value,
-        unsigned int version) const {
+    void operator ()(
+        Shuttler& shuttle, const QPoint& value, unsigned int version) const {
       shuttle.Shuttle("x", value.x());
       shuttle.Shuttle("y", value.y());
     }
@@ -138,11 +140,11 @@ namespace Serialization {
   template<>
   struct Receive<QPoint> {
     template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, QPoint& value,
-        unsigned int version) const {
-      int x;
+    void operator ()(
+        Shuttler& shuttle, QPoint& value, unsigned int version) const {
+      auto x = int();
       shuttle.Shuttle("x", x);
-      int y;
+      auto y = int();
       shuttle.Shuttle("y", y);
       value = QPoint(x, y);
     }

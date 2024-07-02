@@ -113,21 +113,46 @@ ListView::ListView(std::shared_ptr<AnyListModel> list,
       parent) {}
 
 ListView::ListView(std::shared_ptr<AnyListModel> list,
+  ListViewItemBuilder<> item_builder, ToText to_text, QWidget* parent)
+  : ListView(
+      std::move(list), std::make_shared<LocalValueModel<optional<int>>>(),
+      std::make_shared<ListSingleSelectionModel>(), std::move(item_builder),
+      std::move(to_text), parent) {}
+
+ListView::ListView(std::shared_ptr<AnyListModel> list,
   std::shared_ptr<SelectionModel> selection, ListViewItemBuilder<> item_builder,
   QWidget* parent)
   : ListView(
       std::move(list), std::make_shared<LocalValueModel<optional<int>>>(),
       std::move(selection), std::move(item_builder), parent) {}
 
+ListView::ListView(std::shared_ptr<AnyListModel> list,
+  std::shared_ptr<SelectionModel> selection, ListViewItemBuilder<> item_builder,
+  ToText to_text, QWidget* parent)
+  : ListView(
+      std::move(list), std::make_shared<LocalValueModel<optional<int>>>(),
+      std::move(selection), std::move(item_builder), std::move(to_text),
+      parent) {}
+
+ListView::ListView(
+  std::shared_ptr<AnyListModel> list, std::shared_ptr<CurrentModel> current,
+  std::shared_ptr<SelectionModel> selection,
+  ListViewItemBuilder<> item_builder, QWidget* parent)
+  : ListView(std::move(list), std::move(current), std::move(selection),
+      std::move(item_builder), [] (const std::any& value) {
+        return to_text(value);
+      }, parent) {}
+
 ListView::ListView(
     std::shared_ptr<AnyListModel> list, std::shared_ptr<CurrentModel> current,
     std::shared_ptr<SelectionModel> selection,
-    ListViewItemBuilder<> item_builder, QWidget* parent)
+    ListViewItemBuilder<> item_builder, ToText to_text, QWidget* parent)
     : QWidget(parent),
       m_list(std::move(list)),
       m_current_controller(std::move(current), m_list->get_size()),
       m_selection_controller(std::move(selection), m_list->get_size()),
       m_item_builder(std::move(item_builder)),
+      m_to_text(std::move(to_text)),
       m_direction(Qt::Vertical),
       m_overflow(Overflow::NONE),
       m_visible_count(0),
@@ -349,7 +374,7 @@ void ListView::append_query(const QString& query) {
     auto short_match = optional<int>();
     while(i != start) {
       if(m_items[i]->m_item.isEnabled()) {
-        auto item_text = to_text(m_list->get(i)).toLower();
+        auto item_text = m_to_text(m_list->get(i)).toLower();
         if(item_text.startsWith(m_query.toLower())) {
           short_match = none;
           m_current_controller.get_current()->set(i);
@@ -426,6 +451,10 @@ void ListView::remove_item(int index) {
   for(auto& item : m_items | std::views::drop(index)) {
     --item->m_index;
   }
+  item->m_click_observer = none;
+  QTimer::singleShot(0, [item = std::move(item)] () mutable {
+    item = nullptr;
+  });
   if(m_focus_index) {
     if(*m_focus_index == index) {
       m_focus_index = none;
@@ -433,15 +462,11 @@ void ListView::remove_item(int index) {
       --*m_focus_index;
     }
   }
-  auto current_blocker = shared_connection_block(m_current_connection);
-  auto selection_blocker = shared_connection_block(m_selection_connection);
+  auto blocker = std::array{
+    shared_connection_block(m_current_connection),
+    shared_connection_block(m_selection_connection)};
   m_current_controller.remove(index);
   m_selection_controller.remove(index);
-  on_current(none, m_current_controller.get_current()->get());
-  item->m_click_observer = none;
-  QTimer::singleShot(0, [item = std::move(item)] () mutable {
-    item = nullptr;
-  });
 }
 
 void ListView::move_item(int source, int destination) {
@@ -715,7 +740,8 @@ void ListView::on_list_operation(const AnyListModel::Operation& operation) {
 
 void ListView::on_current(optional<int> previous, optional<int> current) {
   update_focus(current);
-  if(previous && previous != current) {
+  if(previous &&
+      previous != current && *previous < static_cast<int>(m_items.size())) {
     m_items[*previous]->m_item.set_current(false);
   }
   if(find_focus_state(*this) != FocusObserver::State::NONE) {
