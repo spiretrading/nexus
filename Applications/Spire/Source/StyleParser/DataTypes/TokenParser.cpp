@@ -1,7 +1,7 @@
 #include "Spire/StyleParser/DataTypes/TokenParser.hpp"
-#include <boost/algorithm/string.hpp>
 #include <regex>
 #include <unordered_map>
+#include <boost/algorithm/string.hpp>
 #include "Spire/StyleParser/DataTypes/FloatType.hpp"
 #include "Spire/StyleParser/DataTypes/IntegerType.hpp"
 #include "Spire/StyleParser/DataTypes/StringType.hpp"

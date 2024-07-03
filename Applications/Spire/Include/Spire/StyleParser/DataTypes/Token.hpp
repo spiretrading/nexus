@@ -1,8 +1,8 @@
 #ifndef SPIRE_TOKEN_HPP
 #define SPIRE_TOKEN_HPP
-#include <boost/variant/variant.hpp>
 #include <memory>
 #include <string>
+#include <boost/variant/variant.hpp>
 #include "Spire/StyleParser/DataTypes/DataType.hpp"
 
 namespace Spire {
