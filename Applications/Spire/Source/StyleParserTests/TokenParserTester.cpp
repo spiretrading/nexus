@@ -66,39 +66,31 @@ TEST_SUITE("TokenParser") {
     auto results = ParseResults();
     parse(parser, results);
     REQUIRE(results.m_brackets.size() == 6);
-    REQUIRE(results.m_brackets[0].m_value.get_type() ==
-      Bracket::BracketType::OPEN_CURLY);
+    REQUIRE(results.m_brackets[0].m_value == Bracket::OPEN_CURLY);
     REQUIRE(results.m_brackets[0].m_column_number == 6);
-    REQUIRE(results.m_brackets[1].m_value.get_type() ==
-      Bracket::BracketType::OPEN_ROUND);
+    REQUIRE(results.m_brackets[1].m_value == Bracket::OPEN_ROUND);
     REQUIRE(results.m_brackets[1].m_column_number == 36);
-    REQUIRE(results.m_brackets[2].m_value.get_type() ==
-      Bracket::BracketType::CLOSE_ROUND);
+    REQUIRE(results.m_brackets[2].m_value == Bracket::CLOSE_ROUND);
     REQUIRE(results.m_brackets[2].m_column_number == 49);
-    REQUIRE(results.m_brackets[3].m_value.get_type() ==
-      Bracket::BracketType::OPEN_SQUARE);
+    REQUIRE(results.m_brackets[3].m_value == Bracket::OPEN_SQUARE);
     REQUIRE(results.m_brackets[3].m_column_number == 51);
-    REQUIRE(results.m_brackets[4].m_value.get_type() ==
-      Bracket::BracketType::CLOSE_SQUARE);
+    REQUIRE(results.m_brackets[4].m_value == Bracket::CLOSE_SQUARE);
     REQUIRE(results.m_brackets[4].m_column_number == 68);
-    REQUIRE(results.m_brackets[5].m_value.get_type() ==
-      Bracket::BracketType::CLOSE_CURLY);
+    REQUIRE(results.m_brackets[5].m_value == Bracket::CLOSE_CURLY);
     REQUIRE(results.m_brackets[5].m_column_number == 69);
     REQUIRE(results.m_identifiers.size() == 4);
-    REQUIRE(results.m_identifiers[0].m_value.get_value() == "max_value");
+    REQUIRE(results.m_identifiers[0].m_value == "max_value");
     REQUIRE(results.m_identifiers[0].m_column_number == 8);
-    REQUIRE(results.m_identifiers[1].m_value.get_value() == "m");
+    REQUIRE(results.m_identifiers[1].m_value == "m");
     REQUIRE(results.m_identifiers[1].m_column_number == 24);
-    REQUIRE(results.m_identifiers[2].m_value.get_value() == "f");
+    REQUIRE(results.m_identifiers[2].m_value == "f");
     REQUIRE(results.m_identifiers[2].m_column_number == 28);
-    REQUIRE(results.m_identifiers[3].m_value.get_value() == "b");
+    REQUIRE(results.m_identifiers[3].m_value == "b");
     REQUIRE(results.m_identifiers[3].m_column_number == 60);
     REQUIRE(results.m_keywords.size() == 2);
-    REQUIRE(results.m_keywords[0].m_value.get_type() ==
-      Keyword::KeywordType::MEDIUM);
+    REQUIRE(results.m_keywords[0].m_value == Keyword::MEDIUM);
     REQUIRE(results.m_keywords[0].m_column_number == 37);
-    REQUIRE(results.m_keywords[1].m_value.get_type() ==
-      Keyword::KeywordType::BOLD);
+    REQUIRE(results.m_keywords[1].m_value == Keyword::BOLD);
     REQUIRE(results.m_keywords[1].m_column_number == 45);
     REQUIRE(results.m_literals.size() == 4);
     REQUIRE(*results.m_literals[0].m_value.get_type() == IntegerType());
@@ -110,27 +102,20 @@ TEST_SUITE("TokenParser") {
     REQUIRE(*results.m_literals[3].m_value.get_type() == FloatType());
     REQUIRE(results.m_literals[3].m_column_number == 64);
     REQUIRE(results.m_punctuations.size() == 4);
-    REQUIRE(results.m_punctuations[0].m_value.get_type() ==
-      Punctuation::PunctuationType::COLON);
+    REQUIRE(results.m_punctuations[0].m_value == Punctuation::COLON);
     REQUIRE(results.m_punctuations[0].m_column_number == 17);
-    REQUIRE(results.m_punctuations[1].m_value.get_type() ==
-      Punctuation::PunctuationType::SEMI_COLON);
+    REQUIRE(results.m_punctuations[1].m_value == Punctuation::SEMI_COLON);
     REQUIRE(results.m_punctuations[1].m_column_number == 29);
-    REQUIRE(results.m_punctuations[2].m_value.get_type() ==
-      Punctuation::PunctuationType::COMMA);
+    REQUIRE(results.m_punctuations[2].m_value == Punctuation::COMMA);
     REQUIRE(results.m_punctuations[2].m_column_number == 43);
-    REQUIRE(results.m_punctuations[3].m_value.get_type() ==
-      Punctuation::PunctuationType::COMMA);
+    REQUIRE(results.m_punctuations[3].m_value == Punctuation::COMMA);
     REQUIRE(results.m_punctuations[3].m_column_number == 58);
     REQUIRE(results.m_operators.size() == 3);
-    REQUIRE(results.m_operators[0].m_value.get_type() ==
-      Operator::OperatorType::MULTIPLICATION);
+    REQUIRE(results.m_operators[0].m_value == Operator::MULTIPLICATION);
     REQUIRE(results.m_operators[0].m_column_number == 22);
-    REQUIRE(results.m_operators[1].m_value.get_type() ==
-      Operator::OperatorType::SUBTRACTION);
+    REQUIRE(results.m_operators[1].m_value == Operator::SUBTRACTION);
     REQUIRE(results.m_operators[1].m_column_number == 26);
-    REQUIRE(results.m_operators[2].m_value.get_type() ==
-      Operator::OperatorType::DIVISION);
+    REQUIRE(results.m_operators[2].m_value == Operator::DIVISION);
     REQUIRE(results.m_operators[2].m_column_number == 62);
   }
 
@@ -141,24 +126,21 @@ TEST_SUITE("TokenParser") {
     auto results = ParseResults();
     parse(parser, results);
     REQUIRE(results.m_brackets.size() == 2);
-    REQUIRE(results.m_brackets[0].m_value.get_type() ==
-      Bracket::BracketType::OPEN_CURLY);
+    REQUIRE(results.m_brackets[0].m_value == Bracket::OPEN_CURLY);
     REQUIRE(results.m_brackets[0].m_line_number == 0);
     REQUIRE(results.m_brackets[0].m_column_number == 4);
-    REQUIRE(results.m_brackets[1].m_value.get_type() ==
-      Bracket::BracketType::CLOSE_CURLY);
+    REQUIRE(results.m_brackets[1].m_value == Bracket::CLOSE_CURLY);
     REQUIRE(results.m_brackets[1].m_line_number == 0);
     REQUIRE(results.m_brackets[1].m_column_number == 24);
     REQUIRE(results.m_identifiers.size() == 2);
-    REQUIRE(results.m_identifiers[0].m_value.get_value() == "Box");
+    REQUIRE(results.m_identifiers[0].m_value == "Box");
     REQUIRE(results.m_identifiers[0].m_line_number == 0);
     REQUIRE(results.m_identifiers[0].m_column_number == 0);
-    REQUIRE(results.m_identifiers[1].m_value.get_value() == "border_size");
+    REQUIRE(results.m_identifiers[1].m_value == "border_size");
     REQUIRE(results.m_identifiers[1].m_line_number == 0);
     REQUIRE(results.m_identifiers[1].m_column_number == 6);
     REQUIRE(results.m_keywords.size() == 1);
-    REQUIRE(results.m_keywords[0].m_value.get_type() ==
-      Keyword::KeywordType::PX);
+    REQUIRE(results.m_keywords[0].m_value == Keyword::PX);
     REQUIRE(results.m_keywords[0].m_line_number == 0);
     REQUIRE(results.m_keywords[0].m_column_number == 20);
     REQUIRE(results.m_literals.size() == 1);
@@ -166,12 +148,10 @@ TEST_SUITE("TokenParser") {
     REQUIRE(results.m_literals[0].m_line_number == 0);
     REQUIRE(results.m_literals[0].m_column_number == 19);
     REQUIRE(results.m_punctuations.size() == 2);
-    REQUIRE(results.m_punctuations[0].m_value.get_type() ==
-      Punctuation::PunctuationType::COLON);
+    REQUIRE(results.m_punctuations[0].m_value == Punctuation::COLON);
     REQUIRE(results.m_punctuations[0].m_line_number == 0);
     REQUIRE(results.m_punctuations[0].m_column_number == 17);
-    REQUIRE(results.m_punctuations[1].m_value.get_type() ==
-      Punctuation::PunctuationType::SEMI_COLON);
+    REQUIRE(results.m_punctuations[1].m_value == Punctuation::SEMI_COLON);
     REQUIRE(results.m_punctuations[1].m_line_number == 0);
     REQUIRE(results.m_punctuations[1].m_column_number == 22);
     REQUIRE(results.m_operators.size() == 0);
@@ -189,55 +169,45 @@ TEST_SUITE("TokenParser") {
     auto results = ParseResults();
     parse(parser, results);
     REQUIRE(results.m_brackets.size() == 6);
-    REQUIRE(results.m_brackets[0].m_value.get_type() ==
-      Bracket::BracketType::OPEN_CURLY);
+    REQUIRE(results.m_brackets[0].m_value == Bracket::OPEN_CURLY);
     REQUIRE(results.m_brackets[0].m_line_number == 1);
     REQUIRE(results.m_brackets[0].m_column_number == 14);
-    REQUIRE(results.m_brackets[1].m_value.get_type() ==
-      Bracket::BracketType::OPEN_ROUND);
+    REQUIRE(results.m_brackets[1].m_value == Bracket::OPEN_ROUND);
     REQUIRE(results.m_brackets[1].m_line_number == 3);
     REQUIRE(results.m_brackets[1].m_column_number == 27);
-    REQUIRE(results.m_brackets[2].m_value.get_type() ==
-      Bracket::BracketType::OPEN_ROUND);
+    REQUIRE(results.m_brackets[2].m_value == Bracket::OPEN_ROUND);
     REQUIRE(results.m_brackets[2].m_line_number == 3);
     REQUIRE(results.m_brackets[2].m_column_number == 35);
-    REQUIRE(results.m_brackets[3].m_value.get_type() ==
-      Bracket::BracketType::CLOSE_ROUND);
+    REQUIRE(results.m_brackets[3].m_value == Bracket::CLOSE_ROUND);
     REQUIRE(results.m_brackets[3].m_line_number == 3);
     REQUIRE(results.m_brackets[3].m_column_number == 52);
-    REQUIRE(results.m_brackets[4].m_value.get_type() ==
-      Bracket::BracketType::CLOSE_ROUND);
+    REQUIRE(results.m_brackets[4].m_value == Bracket::CLOSE_ROUND);
     REQUIRE(results.m_brackets[4].m_line_number == 3);
     REQUIRE(results.m_brackets[4].m_column_number == 61);
-    REQUIRE(results.m_brackets[5].m_value.get_type() ==
-      Bracket::BracketType::CLOSE_CURLY);
+    REQUIRE(results.m_brackets[5].m_value == Bracket::CLOSE_CURLY);
     REQUIRE(results.m_brackets[5].m_line_number == 4);
     REQUIRE(results.m_brackets[5].m_column_number == 6);
     REQUIRE(results.m_identifiers.size() == 3);
-    REQUIRE(results.m_identifiers[0].m_value.get_value() == "TextBox");
+    REQUIRE(results.m_identifiers[0].m_value == "TextBox");
     REQUIRE(results.m_identifiers[0].m_line_number == 1);
     REQUIRE(results.m_identifiers[0].m_column_number == 6);
-    REQUIRE(results.m_identifiers[1].m_value.get_value() == "text_style");
+    REQUIRE(results.m_identifiers[1].m_value == "text_style");
     REQUIRE(results.m_identifiers[1].m_line_number == 2);
     REQUIRE(results.m_identifiers[1].m_column_number == 8);
-    REQUIRE(results.m_identifiers[2].m_value.get_value() == "border_color");
+    REQUIRE(results.m_identifiers[2].m_value == "border_color");
     REQUIRE(results.m_identifiers[2].m_line_number == 3);
     REQUIRE(results.m_identifiers[2].m_column_number == 8);
     REQUIRE(results.m_keywords.size() == 7);
-    REQUIRE(results.m_keywords[0].m_value.get_type() ==
-      Keyword::KeywordType::REGULAR);
+    REQUIRE(results.m_keywords[0].m_value == Keyword::REGULAR);
     REQUIRE(results.m_keywords[0].m_line_number == 2);
     REQUIRE(results.m_keywords[0].m_column_number == 20);
-    REQUIRE(results.m_keywords[1].m_value.get_type() ==
-      Keyword::KeywordType::PX);
+    REQUIRE(results.m_keywords[1].m_value == Keyword::PX);
     REQUIRE(results.m_keywords[1].m_line_number == 2);
     REQUIRE(results.m_keywords[1].m_column_number == 30);
-    REQUIRE(results.m_keywords[2].m_value.get_type() ==
-      Keyword::KeywordType::BLACK);
+    REQUIRE(results.m_keywords[2].m_value == Keyword::BLACK);
     REQUIRE(results.m_keywords[2].m_line_number == 2);
     REQUIRE(results.m_keywords[2].m_column_number == 42);
-    REQUIRE(results.m_keywords[3].m_value.get_type() ==
-      Keyword::KeywordType::CHAIN);
+    REQUIRE(results.m_keywords[3].m_value == Keyword::CHAIN);
     REQUIRE(results.m_keywords[3].m_line_number == 3);
     REQUIRE(results.m_keywords[3].m_column_number == 22);
     REQUIRE(results.m_literals.size() == 4);
@@ -254,24 +224,19 @@ TEST_SUITE("TokenParser") {
     REQUIRE(results.m_literals[3].m_line_number == 3);
     REQUIRE(results.m_literals[3].m_column_number == 46);
     REQUIRE(results.m_punctuations.size() == 6);
-    REQUIRE(results.m_punctuations[0].m_value.get_type() ==
-      Punctuation::PunctuationType::COLON);
+    REQUIRE(results.m_punctuations[0].m_value == Punctuation::COLON);
     REQUIRE(results.m_punctuations[0].m_line_number == 2);
     REQUIRE(results.m_punctuations[0].m_column_number == 18);
-    REQUIRE(results.m_punctuations[1].m_value.get_type() ==
-      Punctuation::PunctuationType::SEMI_COLON);
+    REQUIRE(results.m_punctuations[1].m_value == Punctuation::SEMI_COLON);
     REQUIRE(results.m_punctuations[1].m_line_number == 2);
     REQUIRE(results.m_punctuations[1].m_column_number == 47);
-    REQUIRE(results.m_punctuations[2].m_value.get_type() ==
-      Punctuation::PunctuationType::COLON);
+    REQUIRE(results.m_punctuations[2].m_value == Punctuation::COLON);
     REQUIRE(results.m_punctuations[2].m_line_number == 3);
     REQUIRE(results.m_punctuations[2].m_column_number == 20);
-    REQUIRE(results.m_punctuations[3].m_value.get_type() ==
-      Punctuation::PunctuationType::COMMA);
+    REQUIRE(results.m_punctuations[3].m_value == Punctuation::COMMA);
     REQUIRE(results.m_punctuations[3].m_line_number == 3);
     REQUIRE(results.m_punctuations[3].m_column_number == 44);
-    REQUIRE(results.m_punctuations[4].m_value.get_type() ==
-      Punctuation::PunctuationType::COMMA);
+    REQUIRE(results.m_punctuations[4].m_value == Punctuation::COMMA);
     REQUIRE(results.m_punctuations[4].m_line_number == 3);
     REQUIRE(results.m_punctuations[4].m_column_number == 53);
     REQUIRE(results.m_operators.size() == 0);

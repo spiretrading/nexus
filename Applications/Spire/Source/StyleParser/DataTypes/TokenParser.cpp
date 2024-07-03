@@ -17,51 +17,51 @@ namespace {
     FLOAT
   };
 
-  const auto BRACKETS = std::unordered_map<std::string, Bracket::BracketType>{
-    {"{", Bracket::BracketType::OPEN_CURLY},
-    {"}", Bracket::BracketType::CLOSE_CURLY},
-    {"[", Bracket::BracketType::OPEN_SQUARE},
-    {"]", Bracket::BracketType::CLOSE_SQUARE},
-    {"(", Bracket::BracketType::OPEN_ROUND},
-    {")", Bracket::BracketType::CLOSE_ROUND}};
+  const auto BRACKETS = std::unordered_map<std::string, Bracket>{
+    {"{", Bracket::OPEN_CURLY},
+    {"}", Bracket::CLOSE_CURLY},
+    {"[", Bracket::OPEN_SQUARE},
+    {"]", Bracket::CLOSE_SQUARE},
+    {"(", Bracket::OPEN_ROUND},
+    {")", Bracket::CLOSE_ROUND}};
 
-  const auto KEYWORDS = std::unordered_map<std::string, Keyword::KeywordType>{
-    {"transparent", Keyword::KeywordType::TRANSPARENT},
-    {"black", Keyword::KeywordType::BLACK},
-    {"white", Keyword::KeywordType::WHITE},
-    {"regular", Keyword::KeywordType::REGULAR},
-    {"medium", Keyword::KeywordType::MEDIUM},
-    {"bold", Keyword::KeywordType::BOLD},
-    {"left", Keyword::KeywordType::LEFT},
-    {"right", Keyword::KeywordType::RIGHT},
-    {"top", Keyword::KeywordType::TOP},
-    {"bottom", Keyword::KeywordType::BOTTOM},
-    {"center", Keyword::KeywordType::CENTER},
-    {"none", Keyword::KeywordType::NONE},
-    {"horizontal", Keyword::KeywordType::HORIZONTAL},
-    {"vertical", Keyword::KeywordType::VERTICAL},
-    {"visible", Keyword::KeywordType::VISIBLE},
-    {"invisible", Keyword::KeywordType::INVISIBLE},
-    {"px", Keyword::KeywordType::PX},
-    {"pt", Keyword::KeywordType::PT},
-    {"ms", Keyword::KeywordType::MS},
-    {"chain", Keyword::KeywordType::CHAIN},
-    {"timeout", Keyword::KeywordType::TIMEOUT},
-    {"revert", Keyword::KeywordType::REVERT}};
+  const auto KEYWORDS = std::unordered_map<std::string, Keyword>{
+    {"transparent", Keyword::TRANSPARENT},
+    {"black", Keyword::BLACK},
+    {"white", Keyword::WHITE},
+    {"regular", Keyword::REGULAR},
+    {"medium", Keyword::MEDIUM},
+    {"bold", Keyword::BOLD},
+    {"left", Keyword::LEFT},
+    {"right", Keyword::RIGHT},
+    {"top", Keyword::TOP},
+    {"bottom", Keyword::BOTTOM},
+    {"center", Keyword::CENTER},
+    {"none", Keyword::NONE},
+    {"horizontal", Keyword::HORIZONTAL},
+    {"vertical", Keyword::VERTICAL},
+    {"visible", Keyword::VISIBLE},
+    {"invisible", Keyword::INVISIBLE},
+    {"px", Keyword::PX},
+    {"pt", Keyword::PT},
+    {"ms", Keyword::MS},
+    {"chain", Keyword::CHAIN},
+    {"timeout", Keyword::TIMEOUT},
+    {"revert", Keyword::REVERT}};
 
   const auto OPERATORS =
-    std::unordered_map<std::string, Operator::OperatorType>{
-      {"+", Operator::OperatorType::ADDITION},
-      {"-", Operator::OperatorType::SUBTRACTION},
-      {"*", Operator::OperatorType::MULTIPLICATION},
-      {"/", Operator::OperatorType::DIVISION}};
+    std::unordered_map<std::string, Operator>{
+      {"+", Operator::ADDITION},
+      {"-", Operator::SUBTRACTION},
+      {"*", Operator::MULTIPLICATION},
+      {"/", Operator::DIVISION}};
   
   const auto PUNCTUATIONS =
-    std::unordered_map<std::string, Punctuation::PunctuationType>{
-      {":", Punctuation::PunctuationType::COLON},
-      {",", Punctuation::PunctuationType::COMMA},
-      {".", Punctuation::PunctuationType::PERIOD},
-      {";", Punctuation::PunctuationType::SEMI_COLON}};
+    std::unordered_map<std::string, Punctuation>{
+      {":", Punctuation::COLON},
+      {",", Punctuation::COMMA},
+      {".", Punctuation::PERIOD},
+      {";", Punctuation::SEMI_COLON}};
 
   const auto LITERAL_REGEX_TEXT_LIST =
     std::unordered_map<LITERAL_TYPE, std::string>{
