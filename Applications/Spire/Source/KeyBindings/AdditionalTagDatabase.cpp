@@ -12,97 +12,245 @@ using namespace Spire;
 namespace {
   const auto NONE = std::shared_ptr<AdditionalTagSchema>();
 
+  void sort(std::vector<OrderFieldInfoTip::Model::Argument>& arguments) {
+    std::sort(arguments.begin(), arguments.end(),
+      [] (const auto& left, const auto& right) {
+        return left.m_value < right.m_value;
+      });
+  }
+
   auto make_asx_exec_inst_schema() {
-    auto cases = std::vector<std::string>{"A", "M", "R", "P"};
-    std::sort(cases.begin(), cases.end());
+    auto model = OrderFieldInfoTip::Model();
+    model.m_tag.m_name = "ExecInst";
+    model.m_tag.m_description =
+      "Instructions for order handling on exchange trading floor.";
+    model.m_tag.m_arguments.emplace_back("A", "No cross (cross is forbidden)");
+    model.m_tag.m_arguments.emplace_back(
+      "M", "Mid-price peg (midprice of inside quote)");
+    model.m_tag.m_arguments.emplace_back(
+      "R", "Primary peg (primary market - buy at bid/sell at offer)");
+    model.m_tag.m_arguments.emplace_back("P", "Market peg");
+    sort(model.m_tag.m_arguments);
     auto schema = std::make_shared<EnumAdditionalTagSchema>(
-      "ExecInst", 18, std::move(cases));
+      "ExecInst", 18, std::move(model));
     return schema;
   }
 
   auto make_chix_ex_destination_schema() {
-    auto cases = std::vector<std::string>{"CXD", "SMRTCHIX", "SMRTCHIXD",
-      "SMRTDARKNR", "SMRTDARK", "SMRTX", "SMRTXD", "SMRTXDARKNR", "SMRTXDARK",
-      "SWEEPANDCROSS", "SWEEPANDPOST", "DEPTHFINDER", "SMRTFEE", "MULTI-CA",
-      "MULTI-CXA", "MULTI-CX", "MULTI-CXY", "MULTIDARK-CM", "MULTIDARK-YM",
-      "MULTIDARK-YCM", "MULTIDARK-CYXM", "MULTIDARK-DM"};
-    std::sort(cases.begin(), cases.end());
+    auto model = OrderFieldInfoTip::Model();
+    model.m_tag.m_name = "ExecDestination";
+    model.m_tag.m_description = "Specifies the routing strategy to use.";
+    model.m_tag.m_arguments.emplace_back("CXD", "Post to CHI-X Dark.");
+    model.m_tag.m_arguments.emplace_back(
+      "SMRTCHIX", "Spray all protected markets. Post on CHIC. No re-spray.");
+    model.m_tag.m_arguments.emplace_back("SMRTCHIXD",
+      "Spray all protected markets. Post on CHIC. Dynamic re-spray.");
+    model.m_tag.m_arguments.emplace_back("SMRTDARKNR",
+      "Ping CHI-X Dark/CX2/CHIC & MATN mid-point. Spray all protected markets. "
+      "Post on CHIC. No re-spray.");
+    model.m_tag.m_arguments.emplace_back("SMRTDARK",
+      "Ping CHI-X Dark/CX2/CHIC & MATN mid-point. Spray all protected markets. "
+      "Post on CHIC. Dynamic re-spray.");
+    model.m_tag.m_arguments.emplace_back(
+      "SMRTX", "Spray all protected markets. Post on TSX. No re-spray.");
+    model.m_tag.m_arguments.emplace_back(
+      "SMRTXD", "Spray all protected markets. Post on TSX. Dynamic re-spray.");
+    model.m_tag.m_arguments.emplace_back("SMRTXDARKNR",
+      "Ping CHI-X Dark/CX2/CHIC & MATN mid-point. Spray all protected markets. "
+      "Post on TSX. No re-spray.");
+    model.m_tag.m_arguments.emplace_back("SMRTXDARK",
+      "Ping CHI-X Dark/CX2/CHIC & MATN mid-point. Spray all protected markets. "
+      "Post on TSX. Dynamic re-spray.");
+    model.m_tag.m_arguments.emplace_back("SWEEPANDCROSS",
+      "Allows participants to sweep all protected quotes and print a cross "
+      "order in one step by sending IOC bypass orders to all protected venues "
+      "before printing the cross on CHIC.");
+    model.m_tag.m_arguments.emplace_back("SWEEPANDPOST",
+      "Aggresivley takes liquidity with a depth of book spray in a single pass "
+      "and books any residual to CHIC.");
+    model.m_tag.m_arguments.emplace_back("DEPTHFINDER",
+      "Takes advantage of price improvement opportunities by taking liquidity "
+      "with an iterative depth of book spray, capturing hidden portion of "
+      "iceberg orders.  Any residual is posted to CHIC.");
+    model.m_tag.m_arguments.emplace_back("SMRTFEE",
+      "Spray all protected markets based on execution fees (CX2 & CHIC first). "
+      "Post on CHIC.");
+    model.m_tag.m_arguments.emplace_back("MULTI-CA",
+      "CHIC Smart Router will attempt to split the shares evenly between "
+      "CHIC & ALPHA");
+    model.m_tag.m_arguments.emplace_back("MULTI-CXA",
+      "CHIC Smart Router will attempt to split the shares evenly between CHIC, "
+      "TSX & ALPHA.");
+    model.m_tag.m_arguments.emplace_back("MULTI-CX",
+      "Spray all protected markets. Split residual between CHIC and TSX. "
+      "Dynamically rebalance.");
+    model.m_tag.m_arguments.emplace_back("MULTI-CXY",
+      "Spray all protected markets. Split residual between CHIC, CX2 and TSX. "
+      "Dynamically rebalance.");
+    model.m_tag.m_arguments.emplace_back("MULTIDARK-CM",
+      "Ping CHI-X Dark/CX2/CHIC & MATN mid-point. Split residual between CHIC "
+      "& MATN mid-point.");
+    model.m_tag.m_arguments.emplace_back("MULTIDARK-YM",
+      "Ping CHI-X Dark. Ping CX2 & MATN mid-point. Split residual between CX2 "
+      "& MatchNow Mid");
+    model.m_tag.m_arguments.emplace_back("MULTIDARK-YCM",
+      "Ping CHI-X Dark/CX2/CHIC & MATN mid-point. Split residual between CHIC, "
+      "CX2 & MATN mid-point.");
+    model.m_tag.m_arguments.emplace_back("MULTIDARK-CYXM",
+      "Ping CHI-X Dark/CX2/CHIC & MATN mid-point & TSX mid-point. Split "
+      "residual between CHIC, CX2, MATN & TSX mid-point.");
+    model.m_tag.m_arguments.emplace_back("MULTIDARK-DM",
+      "Ping CHI-X Dark/CX2/CHIC, MATN, TSX mid-point, split residual between "
+      "CHI-X Dark and MATN.");
+    sort(model.m_tag.m_arguments);
     auto schema = std::make_shared<EnumAdditionalTagSchema>(
-      "ExDestination", 100, std::move(cases));
+      "ExDestination", 100, std::move(model));
     return schema;
   }
 
   auto make_chix_exec_inst_schema() {
-    auto cases = std::vector<std::string>{"M", "R", "P", "x", "f"};
-    std::sort(cases.begin(), cases.end());
+    auto model = OrderFieldInfoTip::Model();
+    model.m_tag.m_name = "ExecInst";
+    model.m_tag.m_description =
+      "Instructions for order handling on exchange trading floor.";
+    model.m_tag.m_arguments.emplace_back(
+      "M", "Mid-price peg (midprice of inside quote)");
+    model.m_tag.m_arguments.emplace_back(
+      "R", "Primary peg (primary market - buy at bid/sell at offer)");
+    model.m_tag.m_arguments.emplace_back("P", "Market peg");
+    model.m_tag.m_arguments.emplace_back(
+      "x", "Minimum Price Improvement (CXD Only)");
+    model.m_tag.m_arguments.emplace_back("f", "CSO (Not supported on CXD)");
     auto schema = std::make_shared<EnumAdditionalTagSchema>(
-      "ExecInst", 18, std::move(cases));
+      "ExecInst", 18, std::move(model));
     return schema;
   }
 
   auto make_cx2_ex_destination_schema() {
-    auto cases = std::vector<std::string>{
-      "SMRTCX2", "SMRTCX2D", "SMRTCX2DARKNR", "SMRTCX2DARK"};
-    std::sort(cases.begin(), cases.end());
+    auto model = OrderFieldInfoTip::Model();
+    model.m_tag.m_name = "ExecDestination";
+    model.m_tag.m_description = "Specifies the routing strategy to use.";
+    model.m_tag.m_arguments.emplace_back("SMRTCX2",
+      "Spray all protected markets. Post on CX2. No re-spray.");
+    model.m_tag.m_arguments.emplace_back("SMRTCX2D",
+      "Spray all protected markets. Post on CX2. Dynamic re-spray.");
+    model.m_tag.m_arguments.emplace_back("SMRTCX2DARKNR",
+      "Ping CHI-X Dark/CX2/CHIC & MATN mid-point. Spray all protected markets. "
+      "Post on CX2. No re-spray.");
+    model.m_tag.m_arguments.emplace_back("SMRTCX2DARK",
+      "Ping CHI-X Dark/CX2/CHIC & MATN mid-point. Spray all protected markets. "
+      "Post on TSX. Dynamic re-spray.");
+    sort(model.m_tag.m_arguments);
     auto schema = std::make_shared<EnumAdditionalTagSchema>(
-      "ExDestination", 100, std::move(cases));
+      "ExDestination", 100, std::move(model));
     return schema;
   }
 
   auto make_cx2_exec_inst_schema() {
-    auto cases = std::vector<std::string>{"M", "R", "P", "x", "f"};
-    std::sort(cases.begin(), cases.end());
-    auto schema = std::make_shared<EnumAdditionalTagSchema>(
-      "ExecInst", 18, std::move(cases));
-    return schema;
+    return make_chix_exec_inst_schema();
   }
 
   auto make_tsx_long_life_schema() {
-    auto cases = std::vector<std::string>{"Y", "N"};
+    auto model = OrderFieldInfoTip::Model();
+    model.m_tag.m_name = "TSXLongLife";
+    model.m_tag.m_description = "Commits an order to a minimum resting time of "
+      "1 second in the order book, during which time the order cannot be "
+      "modified or cancelled. In exchange the order will receive allocation "
+      "priority of price/broker/long life/time.";
+    model.m_tag.m_arguments.emplace_back("Y", "Submit as a long life order.");
+    model.m_tag.m_arguments.emplace_back(
+      "N", "Do not submit as a long life order (Default).");
     auto schema = std::make_shared<EnumAdditionalTagSchema>(
-      "TSXLongLife", 7735, std::move(cases));
+      "TSXLongLife", 7735, std::move(model));
     return schema;
   }
 
   auto make_cse_exec_inst_schema() {
-    auto cases = std::vector<std::string>{"M", "P", "R", "9", "0"};
+    auto model = OrderFieldInfoTip::Model();
+    model.m_tag.m_name = "ExecInst";
+    model.m_tag.m_description =
+      "Instructions for order handling on exchange trading floor.";
+    model.m_tag.m_arguments.emplace_back(
+      "M", "Mid-price peg (midprice of inside quote)");
+    model.m_tag.m_arguments.emplace_back(
+      "R", "Primary peg (primary market - buy at bid/sell at offer)");
+    model.m_tag.m_arguments.emplace_back("P", "Market peg");
+    model.m_tag.m_arguments.emplace_back("9", "Post on bid");
+    model.m_tag.m_arguments.emplace_back("0", "Post on offer");
     auto schema = std::make_shared<EnumAdditionalTagSchema>(
-      "ExecInst", 18, std::move(cases));
+      "ExecInst", 18, std::move(model));
     return schema;
   }
 
   auto make_matn_exec_inst_schema() {
-    auto cases = std::vector<std::string>{"M", "N", "R", "P", "p", "b"};
+    auto model = OrderFieldInfoTip::Model();
+    model.m_tag.m_name = "ExecInst";
+    model.m_tag.m_description =
+      "Instructions for order handling on exchange trading floor.";
+    model.m_tag.m_arguments.emplace_back(
+      "M", "Trade at the PNBBO midpoint only.");
+    model.m_tag.m_arguments.emplace_back(
+      "N", "Trade at any eligible price (Default).");
+    model.m_tag.m_arguments.emplace_back(
+      "R", "Trade at the near-side PNBBO (Size and price restrictions apply).");
+    model.m_tag.m_arguments.emplace_back("P", "Trade at the far-side PNBBO "
+      "(Size and price restrictions apply)");
+    model.m_tag.m_arguments.emplace_back("p", "Trade at the less aggressive of "
+      "PNBBO midpoint or minimum improvement from the PNBBO.");
+    model.m_tag.m_arguments.emplace_back(
+      "B", "Trade at any eligible price within the PNBBO.");
     auto schema = std::make_shared<EnumAdditionalTagSchema>(
-      "ExecInst", 18, std::move(cases));
+      "ExecInst", 18, std::move(model));
     return schema;
   }
 
   auto make_matn_anonymous_schema() {
-    auto cases = std::vector<std::string>{"Y", "N"};
+    auto model = OrderFieldInfoTip::Model();
+    model.m_tag.m_name = "Anonymous";
+    model.m_tag.m_description = "Anonymize this order when trade reporting.";
+    model.m_tag.m_arguments.emplace_back("Y", "Submit as anonymous.");
+    model.m_tag.m_arguments.emplace_back(
+      "N", "Do not submit as anonymous (Default).");
     auto schema = std::make_shared<EnumAdditionalTagSchema>(
-      "Anonymous", 6761, std::move(cases));
+      "Anonymous", 6761, std::move(model));
     return schema;
   }
 
   auto make_neoe_ex_destination_schema() {
-    auto cases = std::vector<std::string>{"L", "N"};
+    auto model = OrderFieldInfoTip::Model();
+    model.m_tag.m_name = "ExDestination";
+    model.m_tag.m_description = "Specifies the NEO book to route to.";
+    model.m_tag.m_arguments.emplace_back("L", "Route to the lit book.");
+    model.m_tag.m_arguments.emplace_back("N", "Route to the NEOE book.");
     auto schema = std::make_shared<EnumAdditionalTagSchema>(
-      "ExDestination", 100, std::move(cases));
+      "ExDestination", 100, std::move(model));
     return schema;
   }
 
   auto make_neoe_exec_inst_schema() {
-    auto cases = std::vector<std::string>{"M", "i", "6", "100", "x"};
+    auto model = OrderFieldInfoTip::Model();
+    model.m_tag.m_name = "ExecInst";
+    model.m_tag.m_description =
+      "Instructions for order handling on exchange trading floor.";
+    model.m_tag.m_arguments.emplace_back("M", "Mid-point");
+    model.m_tag.m_arguments.emplace_back("i", "Imbalance only");
+    model.m_tag.m_arguments.emplace_back("6", "Resting only");
+    model.m_tag.m_arguments.emplace_back(
+      "100", "Re-price (resting orders only).");
+    model.m_tag.m_arguments.emplace_back("x", "Minimum price improvement");
     auto schema = std::make_shared<EnumAdditionalTagSchema>(
-      "ExecInst", 18, std::move(cases));
+      "ExecInst", 18, std::move(model));
     return schema;
   }
 
   auto make_neoe_handl_inst_schema() {
-    auto cases = std::vector<std::string>{"5", "6"};
+    auto model = OrderFieldInfoTip::Model();
+    model.m_tag.m_name = "HandlInst";
+    model.m_tag.m_description = "Handling instructions for the order.";
+    model.m_tag.m_arguments.emplace_back("5", "Protect and cancel");
+    model.m_tag.m_arguments.emplace_back("6", "Protect and reprice");
     auto schema = std::make_shared<EnumAdditionalTagSchema>(
-      "HandlInst", 21, std::move(cases));
+      "HandlInst", 21, std::move(model));
     return schema;
   }
 
@@ -225,7 +373,8 @@ const AdditionalTagDatabase& Spire::get_default_additional_tag_database() {
       GetDefaultMarketDatabase(), GetDefaultDestinationDatabase());
     database.add(Region::Global(), MaxFloorSchema::get_instance());
     database.add(Region::Global(), std::make_shared<BasicAdditionalTagSchema>(
-      "PegDifference", 211, MoneyType::GetInstance()));
+      "PegDifference", 211, OrderFieldInfoTip::Model(),
+      MoneyType::GetInstance()));
     database.add(ASX(), make_asx_exec_inst_schema());
     database.add(
       DefaultDestinations::CHIX(), make_chix_ex_destination_schema());

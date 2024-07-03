@@ -20,12 +20,15 @@ AdditionalTagKeyBox::AdditionalTagKeyBox(
       m_additional_tags(std::move(additional_tags)),
       m_destination(std::move(destination)),
       m_region(std::move(region)) {
+  m_connection = m_current->connect_update_signal(
+    std::bind_front(&AdditionalTagKeyBox::on_current, this));
   m_drop_down_box = new DropDownBox(m_available_tags,
     std::make_shared<ListIndexValueModel<int>>(m_available_tags, m_current),
     std::bind_front(&AdditionalTagKeyBox::make_key_item, this),
     std::bind_front(&AdditionalTagKeyBox::key_to_text, this));
   enclose(*this, *m_drop_down_box);
   proxy_style(*this, *m_drop_down_box);
+  update_info_tip();
 }
 
 const std::shared_ptr<AdditionalTagKeyModel>&
@@ -48,6 +51,17 @@ connection AdditionalTagKeyBox::connect_submit_signal(
   });
 }
 
+void AdditionalTagKeyBox::update_info_tip() {
+  m_info_tip = nullptr;
+  auto schema = Spire::find(m_additional_tags, m_destination->get(),
+    m_region->get(), m_current->get());
+  if(!schema) {
+    return;
+  }
+  m_info_tip =
+    std::make_unique<OrderFieldInfoTip>(schema->get_order_field_model(), this);
+}
+
 QWidget* AdditionalTagKeyBox::make_key_item(
     const std::shared_ptr<ListModel<int>>& available_tags, int index) const {
   auto schema = Spire::find(m_additional_tags, m_destination->get(),
@@ -65,4 +79,8 @@ QString AdditionalTagKeyBox::key_to_text(int key) const {
     throw std::runtime_error("Schema not found.");
   }
   return QString::fromStdString(schema->get_name());
+}
+
+void AdditionalTagKeyBox::on_current(int key) {
+  update_info_tip();
 }

@@ -6,6 +6,7 @@
 #include "Nexus/Definitions/Tag.hpp"
 #include "Spire/Canvas/Common/CanvasNode.hpp"
 #include "Spire/KeyBindings/KeyBindings.hpp"
+#include "Spire/KeyBindings/OrderFieldInfoTip.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Ui/AnyInputBox.hpp"
 
@@ -22,6 +23,9 @@ namespace Spire {
   class AdditionalTagSchema {
     public:
       virtual ~AdditionalTagSchema() = default;
+
+      /** Returns an OrderFieldInfoTip::Model that describes this tag. */
+      const OrderFieldInfoTip::Model& get_order_field_model() const;
 
       /** Returns the name of this additional tag. */
       const std::string& get_name() const;
@@ -59,13 +63,14 @@ namespace Spire {
 
       /**
        * Constructs an AdditionalTag.
-       * @param name The name of the tag.
+       * @param order_field_model The model describing this tag.
        * @param key The tag's key.
        */
-      AdditionalTagSchema(std::string name, int key);
+      AdditionalTagSchema(
+        OrderFieldInfoTip::Model order_field_model, int key);
 
     private:
-      std::string m_name;
+      OrderFieldInfoTip::Model m_order_field_model;
       int m_key;
 
       AdditionalTagSchema(const AdditionalTagSchema&) = delete;

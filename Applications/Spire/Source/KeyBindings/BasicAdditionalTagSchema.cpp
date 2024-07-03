@@ -138,13 +138,15 @@ namespace {
 }
 
 BasicAdditionalTagSchema::BasicAdditionalTagSchema(
-  std::string name, int key, const CanvasType& type)
-  : AdditionalTagSchema(std::move(name), key),
+  std::string name, int key, OrderFieldInfoTip::Model order_field_model,
+  const CanvasType& type)
+  : AdditionalTagSchema(std::move(name), key, std::move(order_field_model)),
     m_type(static_cast<std::shared_ptr<CanvasType>>(type)) {}
 
 BasicAdditionalTagSchema::BasicAdditionalTagSchema(
-  std::string name, int key, Nexus::Tag::Type default_value)
-  : AdditionalTagSchema(std::move(name), key),
+  std::string name, int key, OrderFieldInfoTip::Model order_field_model,
+  Nexus::Tag::Type default_value)
+  : AdditionalTagSchema(std::move(name), key, std::move(order_field_model)),
     m_type(static_cast<std::shared_ptr<CanvasType>>(
       apply_visitor(ToCanvasNodeVisitor(), default_value)->GetType())),
     m_default_value(std::move(default_value)) {}
