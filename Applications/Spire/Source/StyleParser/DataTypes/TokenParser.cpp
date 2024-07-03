@@ -11,7 +11,6 @@ using namespace Spire;
 
 namespace {
   enum LITERAL_TYPE {
-    STRING,
     HEXADECIMAL,
     INTEGER,
     FLOAT
@@ -65,7 +64,6 @@ namespace {
 
   const auto LITERAL_REGEX_TEXT_LIST =
     std::unordered_map<LITERAL_TYPE, std::string>{
-      {LITERAL_TYPE::STRING, R"(\".*\")"},
       {LITERAL_TYPE::FLOAT, R"([-+]?\d+(\.\d+)([eE][-+]?\d+)?)"},
       {LITERAL_TYPE::HEXADECIMAL,
         R"(0[xX][a-fA-F0-9]{6}\b|\b0[xX][a-fA-F0-9]{8})"},
@@ -126,7 +124,10 @@ namespace {
 
 TokenParser::TokenParser()
   : m_line_number(0),
-    m_column_number(0) {}
+    m_column_number(0),
+    m_is_in_string(false),
+    m_string_line_number(0),
+    m_string_column_number(0) {}
 
 void TokenParser::feed(const std::string& input) {
   auto identifier_regex = std::regex(IDENTIFIER_REGEX_TEXT);
@@ -167,6 +168,17 @@ void TokenParser::feed(const std::string& input) {
       m_column_number = column + std::distance(expression.cbegin(), start);
     }
   };
+  auto parse_string_literal = [&] (const std::string::const_iterator& begin,
+      const std::string& text) {
+    auto start = get_first_non_whitespace(begin, text.cend());
+    m_column_number = std::distance(text.cbegin(), start);
+    if(auto new_start = find_string_literal(start, text.cend());
+        new_start != start) {
+      start = get_first_non_whitespace(new_start, text.cend());
+      m_column_number = std::distance(text.cbegin(), start);
+    }
+    return start;
+  };
   auto lines = std::vector<std::string>();
   split(lines, input, is_any_of("\n") );
   auto bracket_regex = std::regex(BRACKET_REGEX_TEXT);
@@ -178,8 +190,7 @@ void TokenParser::feed(const std::string& input) {
   auto token_regex = std::regex(TOKEN_REGEX_TEXT);
   auto matches = std::smatch();
   for(auto& line : lines) {
-    auto start = get_first_non_whitespace(line.cbegin(), line.cend());
-    m_column_number = std::distance(line.cbegin(), start);
+    auto start = parse_string_literal(line.cbegin(), line);
     while(std::regex_search(start, line.cend(), matches, token_regex)) {
       auto matched_text = matches[0].str();
       if(std::regex_search(matched_text, math_expression_regex)) {
@@ -202,11 +213,6 @@ void TokenParser::feed(const std::string& input) {
           m_tokens.emplace_back(
             Literal(matched_text, std::make_shared<IntegerType>()),
             m_line_number, m_column_number);
-        } else if(std::regex_search(matched_text,
-            std::regex(LITERAL_REGEX_TEXT_LIST.at(LITERAL_TYPE::STRING)))) {
-          m_tokens.emplace_back(
-            Literal(matched_text, std::make_shared<StringType>()),
-            m_line_number, m_column_number);
         }
       } else if(std::regex_search(matched_text, punctuation_regex) &&
           PUNCTUATIONS.contains(matched_text)) {
@@ -216,8 +222,7 @@ void TokenParser::feed(const std::string& input) {
         m_tokens.emplace_back(Identifier(matched_text),
           m_line_number, m_column_number);
       }
-      start = get_first_non_whitespace(matches.suffix().first, line.cend());
-      m_column_number = std::distance(line.cbegin(), start);
+      start = parse_string_literal(matches.suffix().first, line);
     }
     ++m_line_number;
   }
@@ -231,4 +236,32 @@ Token TokenParser::pop() {
 
 int TokenParser::get_size() const {
   return static_cast<int>(m_tokens.size());
+}
+
+std::string::const_iterator TokenParser::find_string_literal(
+    const std::string::const_iterator& begin,
+    const std::string::const_iterator& end) {
+  if(!m_is_in_string && (begin == end || *begin != '"')) {
+    return begin;
+  }
+  auto i = begin;
+  for(; i != end; ++i) {
+    if(*i == '"' && (i == begin || *(i - 1) != '\\')) {
+      if(m_is_in_string) {
+        m_tokens.emplace_back(
+          Literal(m_string_literal + "\"", std::make_shared<StringType>()),
+          m_string_line_number, m_string_column_number);
+        m_string_literal.clear();
+        m_is_in_string = !m_is_in_string;
+        return i + 1;
+      }
+      m_string_literal = '"';
+      m_string_line_number = m_line_number;
+      m_string_column_number = m_column_number;
+      m_is_in_string = !m_is_in_string;
+    } else if(m_is_in_string) {
+      m_string_literal += *i;
+    }
+  }
+  return i;
 }

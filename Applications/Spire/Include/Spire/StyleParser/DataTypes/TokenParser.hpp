@@ -28,6 +28,14 @@ namespace Spire {
       std::deque<Token> m_tokens;
       int m_line_number;
       int m_column_number;
+      std::string m_string_literal;
+      bool m_is_in_string;
+      int m_string_line_number;
+      int m_string_column_number;
+
+      std::string::const_iterator find_string_literal(
+        const std::string::const_iterator& begin,
+        const std::string::const_iterator& end);
   };
 }
 

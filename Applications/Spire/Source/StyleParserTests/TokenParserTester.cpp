@@ -163,9 +163,12 @@ TEST_SUITE("TokenParser") {
       TextBox {
         text_style: regular 12px "Roboto" black;
         border_color: chain(timeout(0xB71C1C, 55.5ms), revert);
+        file_path: "This is a multi-line
+                   \"test\"
+                   string";
       }
     )");
-    REQUIRE(parser.get_size() == 26);
+    REQUIRE(parser.get_size() == 30);
     auto results = ParseResults();
     parse(parser, results);
     REQUIRE(results.m_brackets.size() == 6);
@@ -185,9 +188,9 @@ TEST_SUITE("TokenParser") {
     REQUIRE(results.m_brackets[4].m_line_number == 3);
     REQUIRE(results.m_brackets[4].m_column_number == 61);
     REQUIRE(results.m_brackets[5].m_value == Bracket::CLOSE_CURLY);
-    REQUIRE(results.m_brackets[5].m_line_number == 4);
+    REQUIRE(results.m_brackets[5].m_line_number == 7);
     REQUIRE(results.m_brackets[5].m_column_number == 6);
-    REQUIRE(results.m_identifiers.size() == 3);
+    REQUIRE(results.m_identifiers.size() == 4);
     REQUIRE(results.m_identifiers[0].m_value == "TextBox");
     REQUIRE(results.m_identifiers[0].m_line_number == 1);
     REQUIRE(results.m_identifiers[0].m_column_number == 6);
@@ -197,6 +200,8 @@ TEST_SUITE("TokenParser") {
     REQUIRE(results.m_identifiers[2].m_value == "border_color");
     REQUIRE(results.m_identifiers[2].m_line_number == 3);
     REQUIRE(results.m_identifiers[2].m_column_number == 8);
+    REQUIRE(results.m_identifiers[3].m_line_number == 4);
+    REQUIRE(results.m_identifiers[3].m_column_number == 8);
     REQUIRE(results.m_keywords.size() == 7);
     REQUIRE(results.m_keywords[0].m_value == Keyword::REGULAR);
     REQUIRE(results.m_keywords[0].m_line_number == 2);
@@ -210,7 +215,7 @@ TEST_SUITE("TokenParser") {
     REQUIRE(results.m_keywords[3].m_value == Keyword::CHAIN);
     REQUIRE(results.m_keywords[3].m_line_number == 3);
     REQUIRE(results.m_keywords[3].m_column_number == 22);
-    REQUIRE(results.m_literals.size() == 4);
+    REQUIRE(results.m_literals.size() == 5);
     REQUIRE(*results.m_literals[0].m_value.get_type() == IntegerType());
     REQUIRE(results.m_literals[0].m_line_number == 2);
     REQUIRE(results.m_literals[0].m_column_number == 28);
@@ -223,7 +228,10 @@ TEST_SUITE("TokenParser") {
     REQUIRE(*results.m_literals[3].m_value.get_type() == FloatType());
     REQUIRE(results.m_literals[3].m_line_number == 3);
     REQUIRE(results.m_literals[3].m_column_number == 46);
-    REQUIRE(results.m_punctuations.size() == 6);
+    REQUIRE(*results.m_literals[4].m_value.get_type() == StringType());
+    REQUIRE(results.m_literals[4].m_line_number == 4);
+    REQUIRE(results.m_literals[4].m_column_number == 19);
+    REQUIRE(results.m_punctuations.size() == 8);
     REQUIRE(results.m_punctuations[0].m_value == Punctuation::COLON);
     REQUIRE(results.m_punctuations[0].m_line_number == 2);
     REQUIRE(results.m_punctuations[0].m_column_number == 18);
