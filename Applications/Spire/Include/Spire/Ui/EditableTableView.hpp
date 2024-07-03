@@ -81,6 +81,22 @@ namespace Spire {
       /**
        * Adds a header item.
        * @param name The name of the column.
+       * @param order The column's sort order.
+       */
+      EditableTableViewBuilder&
+        add_header_item(QString name, TableHeaderItem::Order order);
+
+      /**
+       * Adds a header item.
+       * @param name The name of the column.
+       * @param filter How the column is filtered.
+       */
+      EditableTableViewBuilder& add_header_item(
+        QString name, TableFilter::Filter filter);
+
+      /**
+       * Adds a header item.
+       * @param name The name of the column.
        * @param short_name The short form name of the column.
        * @param filter How the column is filtered.
        */
@@ -90,10 +106,13 @@ namespace Spire {
       /**
        * Adds a header item.
        * @param name The name of the column.
+       * @param short_name The short form name of the column.
+       * @param order The column's sort order.
        * @param filter How the column is filtered.
        */
-      EditableTableViewBuilder& add_header_item(
-        QString name, TableFilter::Filter filter);
+      EditableTableViewBuilder& add_header_item(QString name,
+        QString short_name, TableHeaderItem::Order order,
+        TableFilter::Filter filter);
 
       /** Sets the filter to apply. */
       EditableTableViewBuilder& set_filter(
