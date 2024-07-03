@@ -222,6 +222,8 @@ class TextBox::LineEdit : public QLineEdit {
           setText(m_current->get());
         }
       }
+      m_submission = m_current->get();
+      m_has_update = false;
       QLineEdit::focusInEvent(event);
     }
 

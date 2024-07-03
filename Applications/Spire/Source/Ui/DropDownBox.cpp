@@ -213,6 +213,11 @@ bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
           key_event.key() == Qt::Key_Return) {
         return true;
       }
+    } else if(event->type() == QEvent::FocusIn) {
+      m_submission = m_current->get();
+      if(m_submission) {
+        m_is_modified = false;
+      }
     } else if(event->type() == QEvent::FocusOut) {
       if(!is_read_only() && is_drop_down_list_visible() && !has_focus(*this)) {
         submit();
