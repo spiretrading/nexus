@@ -82,8 +82,8 @@ namespace {
     widths.push_back(scale_width(110));
     widths.push_back(scale_width(90));
     widths.push_back(scale_width(70));
-    widths.push_back(scale_width(70));
-    widths.push_back(scale_width(70));
+    widths.push_back(scale_width(90));
+    widths.push_back(scale_width(56));
     widths.push_back(scale_width(80));
     widths.push_back(scale_width(128));
     return widths;
