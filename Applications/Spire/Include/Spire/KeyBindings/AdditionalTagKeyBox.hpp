@@ -1,5 +1,6 @@
 #ifndef SPIRE_ADDITIONAL_TAG_KEY_BOX_HPP
 #define SPIRE_ADDITIONAL_TAG_KEY_BOX_HPP
+#include <memory>
 #include <QWidget>
 #include "Spire/KeyBindings/AdditionalTagsBox.hpp"
 #include "Spire/KeyBindings/AdditionalTagDatabase.hpp"
@@ -60,15 +61,19 @@ namespace Spire {
 
     private:
       std::shared_ptr<AdditionalTagKeyModel> m_current;
+      boost::signals2::scoped_connection m_connection;
       std::shared_ptr<ListModel<int>> m_available_tags;
       AdditionalTagDatabase m_additional_tags;
       std::shared_ptr<DestinationModel> m_destination;
       std::shared_ptr<RegionModel> m_region;
       DropDownBox* m_drop_down_box;
+      std::unique_ptr<OrderFieldInfoTip> m_info_tip;
 
+      void update_info_tip();
       QWidget* make_key_item(
         const std::shared_ptr<ListModel<int>>& available_tags, int index) const;
       QString key_to_text(int key) const;
+      void on_current(int key);
   };
 }
 

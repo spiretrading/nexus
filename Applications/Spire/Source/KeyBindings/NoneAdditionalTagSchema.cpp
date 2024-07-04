@@ -28,4 +28,4 @@ AnyInputBox* NoneAdditionalTagSchema::make_input_box(
 }
 
 NoneAdditionalTagSchema::NoneAdditionalTagSchema()
-  : AdditionalTagSchema("None", -1) {}
+  : AdditionalTagSchema(OrderFieldInfoTip::Model(), -1) {}

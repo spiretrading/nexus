@@ -10,6 +10,19 @@ using namespace Nexus;
 using namespace Spire;
 using namespace Spire::Styles;
 
+namespace {
+  const auto MAX_FLOOR_KEY = 111;
+
+  auto make_order_field_info_model() {
+    auto model = OrderFieldInfoTip::Model();
+    model.m_tag.m_name = "MaxFloor";
+    model.m_tag.m_description =
+      "Maximum number of shares within an order to be shown on the exchange "
+      "floor at any given time.";
+    return model;
+  }
+}
+
 const std::shared_ptr<MaxFloorSchema>& MaxFloorSchema::get_instance() {
   static const auto schema =
     std::shared_ptr<MaxFloorSchema>(new MaxFloorSchema());
@@ -66,4 +79,4 @@ AnyInputBox* MaxFloorSchema::make_input_box(
 }
 
 MaxFloorSchema::MaxFloorSchema()
-  : AdditionalTagSchema("MaxFloor", 111) {}
+  : AdditionalTagSchema(make_order_field_info_model(), MAX_FLOOR_KEY) {}

@@ -87,6 +87,9 @@ void OptionalPriceSpinBox::AdjustIncrement(Qt::KeyboardModifier modifier) {
   auto priceIncrement =
     m_userProfile->GetKeyBindings()->get_interactions_key_bindings(
       *m_security)->get_price_increment(modifier)->get();
+  if(modifier == Qt::KeyboardModifier::ControlModifier) {
+    priceIncrement /= 10;
+  }
   auto increment = static_cast<double>(static_cast<Quantity>(priceIncrement));
   if(increment != singleStep()) {
     setSingleStep(increment);
