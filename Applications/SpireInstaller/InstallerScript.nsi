@@ -1,133 +1,96 @@
-!include "MUI.nsh"
-!include "nsDialogs.nsh"
-!include "winmessages.nsh"
-!include "LogicLib.nsh"
-!include "FileFunc.nsh"
+ManifestDPIAware true
+!define PRODUCT_NAME "Spire"
+!define PRODUCT_PUBLISHER "Eidolon Systems Ltd."
+!define PRODUCT_WEB_SITE "https://www.spiretrading.com"
+!define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
+!define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}_Uninstall"
+!define PRODUCT_UNINST_ROOT_KEY "HKLM"
 
-!define APPNAME "Spire"
-!define COMPANYNAME "Spire Trading Inc."
-!define VERSIONMAJOR 1
-!define VERSIONMINOR 0
-
-!define VERSION "${VERSIONMAJOR}.${VERSIONMINOR}.${BUILD}"
-!define DESCRIPTION "Spire Trading Client Application"
-!define ARP "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\${COMPANYNAME} ${APPNAME}"
-!define MY_USERPROFILE "$%USERPROFILE%"
-
-Name "${APPNAME} - Build ${BUILD}"
-!ifndef OUTPUT_FOLDER
-	!define OUTPUT_FOLDER ${DESKTOP}
+; Get the product version from the command line argument BUILD
+!ifndef BUILD
+!error "You must define BUILD on the command line. Example: makensis /DBUILD=1.0 script.nsi"
 !endif
-OutFile "${OUTPUT_FOLDER}\install.exe"
-InstallDir $PROGRAMFILES\Spire
-RequestExecutionLevel highest
-;Install
-!insertmacro MUI_LANGUAGE English 
+!define PRODUCT_VERSION "${BUILD}"
+
+Name "${PRODUCT_NAME} ${PRODUCT_VERSION}"
+Outfile "install.exe"
+InstallDir "$PROGRAMFILES\${PRODUCT_NAME}"
+
+!include "MUI2.nsh"
+
+; Use the product's icon
+!define MUI_ICON "spire.ico"
+!define MUI_UNICON "spire.ico"
+
+; Define the installation pages
 !insertmacro MUI_PAGE_COMPONENTS
-Page directory
-Page instfiles
-;Uninstaller
-UninstPage custom un.MyConfirmShow un.nsDialogsPageLeave
+!insertmacro MUI_PAGE_DIRECTORY
+!insertmacro MUI_PAGE_INSTFILES
+!insertmacro MUI_PAGE_FINISH
+
+; Define the uninstallation pages
 !insertmacro MUI_UNPAGE_CONFIRM
 !insertmacro MUI_UNPAGE_INSTFILES
+!insertmacro MUI_UNPAGE_FINISH
 
-!define MUI_FINISHPAGE_RUN
-;!insertmacro MUI_UNPAGE_FINISH
+!insertmacro MUI_LANGUAGE "English"
 
-function .onInit
-	setShellVarContext all
-functionEnd
+; Components
+Section "Spire" SEC01
+  SectionIn RO
+  SetOutPath "$INSTDIR"
+  File "Spire.exe"
 
+  ; Install Visual C++ Redistributable silently
+  SetOutPath "$INSTDIR"
+  File "VC_redist.x86.exe"
+  ExecWait '"$INSTDIR\VC_redist.x86.exe" /quiet /norestart'
 
-VIProductVersion "${VERSION}.0"
-VIAddVersionKey ProductName "${APPNAME}"
-VIAddVersionKey CompanyName '${COMPANYNAME}'
-VIAddVersionKey FileVersion 1.0.0.0
-VIAddVersionKey InternalName "${VERSION}"
-VIAddVersionKey OriginalFilename "${APPNAME}.exe"
-VIAddVersionKey FileDescription "Spire Installer"
+  ; Write uninstaller
+  WriteUninstaller "$INSTDIR\uninstall.exe"
 
-BrandingText "${COMPANYNAME} - ${APPNAME} Installer v${VERSION}"
+  ; Write registry keys for Add/Remove Programs
+  WriteRegStr HKLM "${PRODUCT_DIR_REGKEY}" "DisplayName" "${PRODUCT_NAME} ${PRODUCT_VERSION}"
+  WriteRegStr HKLM "${PRODUCT_DIR_REGKEY}" "UninstallString" "$INSTDIR\\uninstall.exe"
+  WriteRegStr HKLM "${PRODUCT_DIR_REGKEY}" "DisplayIcon" "$INSTDIR\\uninstall.exe"
+  WriteRegStr HKLM "${PRODUCT_DIR_REGKEY}" "Publisher" "${PRODUCT_PUBLISHER}"
+  WriteRegStr HKLM "${PRODUCT_DIR_REGKEY}" "URLInfoAbout" "${PRODUCT_WEB_SITE}"
+  WriteRegStr HKLM "${PRODUCT_DIR_REGKEY}" "DisplayVersion" "${PRODUCT_VERSION}"
+  WriteRegDWORD HKLM "${PRODUCT_DIR_REGKEY}" "NoModify" 1
+  WriteRegDWORD HKLM "${PRODUCT_DIR_REGKEY}" "NoRepair" 1
+SectionEnd
 
+Section "Start Menu Shortcuts" SEC02
+  CreateDirectory "$SMPROGRAMS\${PRODUCT_NAME}"
+  CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Uninstall.lnk" "$INSTDIR\uninstall.exe"
+  CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\${PRODUCT_NAME}.lnk" "$INSTDIR\Spire.exe" "" "$INSTDIR\Spire.exe" 0
+SectionEnd
 
-var unCheckbox 
-var Dialog
-var checked
-Function un.MyConfirmShow 
-	Push 0
-	Pop $9
-    nsDialogs::Create 1018 
-    Pop $Dialog 
-    ${If} $Dialog == error 
-        Abort 
-    ${EndIf}
-	
-	${NSD_CreateCheckbox} 0% 25% 100% 10u "&Remove profile" 
-    Pop $unCheckbox	
-	${NSD_CreateLabel} 0% 0% 100% 10u "Choosing to remove your profile will delete your existing account profile during the unintsall."
-	Pop $0  
-    nsDialogs::Show 
+Section "Desktop Shortcut" SEC03
+  CreateShortCut "$DESKTOP\Spire.lnk" "$INSTDIR\Spire.exe" "" "$INSTDIR\Spire.exe" 0
+SectionEnd
+
+; Uninstaller
+Section "Uninstall"
+  SetShellVarContext all
+
+  ; Remove desktop and start menu shortcuts
+  Delete "$DESKTOP\Spire.lnk"
+  Delete "$SMPROGRAMS\${PRODUCT_NAME}\Uninstall.lnk"
+  Delete "$SMPROGRAMS\${PRODUCT_NAME}\${PRODUCT_NAME}.lnk"
+  RmDir /r "$SMPROGRAMS\${PRODUCT_NAME}"
+
+  Delete "$INSTDIR\Spire.exe"
+  Delete "$INSTDIR\VC_redist.x86.exe"
+
+  RmDir /r "$INSTDIR"
+
+  SetShellVarContext current
+  RmDir /r "$LOCALAPPDATA\Eidolon Systems"
+  DeleteRegKey ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}"
+  DeleteRegKey ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_DIR_REGKEY}"
+SectionEnd
+
+Function .onInit
+  SetShellVarContext all
 FunctionEnd
-
-Function  un.nsDialogsPageLeave
-	${NSD_GetState} $unCheckbox $checked
-FunctionEnd
-
-Section "Spire"
-	SectionIn RO
-    SetOutPath $INSTDIR
-	File "${WORKINGDIR}\Spire.exe"
-	File "${WORKINGDIR}\VC_redist.x86.exe"
-    WriteUninstaller "$INSTDIR\uninstall.exe"
-	# Registry information for add/remove programs
-	WriteRegStr  HKLM "${ARP}" "DisplayName" ${APPNAME}
-	WriteRegStr  HKLM "${ARP}" "UninstallString" "$\"$INSTDIR\uninstall.exe$\""
-	WriteRegStr  HKLM "${ARP}" "QuietUninstallString" "$\"$INSTDIR\uninstall.exe$\" /S"
-	WriteRegStr  HKLM "${ARP}" "InstallLocation" "$\"$INSTDIR$\""
-	WriteRegStr HKLM "${ARP}" "Publisher" '${COMPANYNAME}'
-	WriteRegStr HKLM "${ARP}" "DisplayVersion" ${VERSION}
-	WriteRegDWORD HKLM "${ARP}" "VersionMajor" ${VERSIONMAJOR}
-	WriteRegDWORD HKLM "${ARP}" "VersionMinor" ${VERSIONMINOR}
-	${GetSize} "$INSTDIR" "/S=0K" $0 $1 $2
-	IntFmt $0 "0x%08X" $0
-	WriteRegDWORD HKLM "${ARP}" "EstimatedSize" "$0"
-	# Redistributable
-	ReadRegStr $1 HKLM "SOFTWARE\Wow6432Node\Microsoft\DevDiv\vc\Servicing\14.0\RuntimeMinimum" "Install"
-	StrCmp $1 1 installed
-	ReadRegStr $1 HKLM "SOFTWARE\Microsoft\DevDiv\vc\Servicing\14.0\RuntimeMinimum" "Install"
-	StrCmp $1 1 installed
-	SetOutPath "$INSTDIR"
-	File "VC_redist.x86.exe"
-	ExecWait '"$INSTDIR\VC_redist.x86.exe"  /passive /norestart /s'
-	Delete "$INSTDIR\VC_redist.x86.exe"
-	installed:
-SectionEnd
-
-Section "Start Menu Shortcuts"
-	# ShortCut links
-	CreateDirectory "$SMPROGRAMS\Spire"
-    CreateShortCut "$SMPROGRAMS\Spire\Spire.lnk" "$INSTDIR\Spire.exe"
-	CreateShortCut "$SMPROGRAMS\Spire\uninstall.lnk" "$INSTDIR\uninstall.exe"
-SectionEnd
-
-Section "Desktop Shortcut"
-	CreateShortCut "$DESKTOP\Spire.lnk" "$INSTDIR\Spire.exe"
-SectionEnd
-
-Function un.onInit
-	SetShellVarContext all
-	#Verify the uninstaller - last chance to back out
-	MessageBox MB_OKCANCEL "Do you want to remove ${APPNAME}?" IDOK next
-		Abort
-	next:
-FunctionEnd
-
-Section "uninstall"
-	${If} $checked == ${BST_CHECKED}
-		RMDir /r "${MY_USERPROFILE}\AppData\Local\Eidolon Systems\Spire"
-	${EndIf}
-	Delete "$DESKTOP\Spire.lnk"
-	RMDir /r $INSTDIR
-	RMDir /r "$SMPROGRAMS\Spire"
-	DeleteRegKey HKLM "${ARP}"
-SectionEnd
