@@ -134,6 +134,7 @@ namespace Nexus {
         entry.m_id = "CHIX";
         entry.m_description = "Chi-X";
         entry.m_markets.push_back("NEOE");
+        entry.m_markets.push_back("XCNQ");
         entry.m_markets.push_back("XTSE");
         entry.m_markets.push_back("XTSX");
         database.Add(entry);
@@ -159,6 +160,7 @@ namespace Nexus {
         entry.m_id = "CX2";
         entry.m_description = "Chi-X 2";
         entry.m_markets.push_back("NEOE");
+        entry.m_markets.push_back("XCNQ");
         entry.m_markets.push_back("XTSE");
         entry.m_markets.push_back("XTSX");
         database.Add(entry);
@@ -168,6 +170,7 @@ namespace Nexus {
         entry.m_id = "LYNX";
         entry.m_description = "LYNX ATS";
         entry.m_markets.push_back("NEOE");
+        entry.m_markets.push_back("XCNQ");
         entry.m_markets.push_back("XTSE");
         entry.m_markets.push_back("XTSX");
         database.Add(entry);
@@ -204,6 +207,7 @@ namespace Nexus {
         entry.m_id = "OMEGA";
         entry.m_description = "Omega ATS";
         entry.m_markets.push_back("NEOE");
+        entry.m_markets.push_back("XCNQ");
         entry.m_markets.push_back("XTSE");
         entry.m_markets.push_back("XTSX");
         database.Add(entry);

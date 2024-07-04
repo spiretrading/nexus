@@ -88,14 +88,14 @@ namespace {
   auto make_header_widths() {
     auto widths = std::vector<int>();
     widths.push_back(scale_width(160));
-    widths.push_back(scale_width(80));
-    widths.push_back(scale_width(110));
-    widths.push_back(scale_width(90));
-    widths.push_back(scale_width(70));
-    widths.push_back(scale_width(90));
+    widths.push_back(scale_width(154));
+    widths.push_back(scale_width(64));
+    widths.push_back(scale_width(78));
     widths.push_back(scale_width(56));
+    widths.push_back(scale_width(82));
+    widths.push_back(scale_width(55));
     widths.push_back(scale_width(80));
-    widths.push_back(scale_width(128));
+    widths.push_back(scale_width(130));
     return widths;
   }
 
