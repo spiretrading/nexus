@@ -460,15 +460,28 @@ EditableTableViewBuilder& EditableTableViewBuilder::add_header_item(
 }
 
 EditableTableViewBuilder& EditableTableViewBuilder::add_header_item(
-    QString name, QString short_name, TableFilter::Filter filter) {
-  m_header->push(TableHeaderItem::Model(std::move(name), std::move(short_name),
-    TableHeaderItem::Order::NONE, filter));
-  return *this;
+    QString name, TableHeaderItem::Order order) {
+  return add_header_item(
+    std::move(name), QString(), order, TableFilter::Filter::NONE);
 }
 
 EditableTableViewBuilder& EditableTableViewBuilder::add_header_item(
     QString name, TableFilter::Filter filter) {
   return add_header_item(std::move(name), QString(), filter);
+}
+
+EditableTableViewBuilder& EditableTableViewBuilder::add_header_item(
+    QString name, QString short_name, TableFilter::Filter filter) {
+  return add_header_item(std::move(name), std::move(short_name),
+    TableHeaderItem::Order::NONE, filter);
+}
+
+EditableTableViewBuilder& EditableTableViewBuilder::add_header_item(
+    QString name, QString short_name, TableHeaderItem::Order order,
+    TableFilter::Filter filter) {
+  m_header->push(TableHeaderItem::Model(std::move(name), std::move(short_name),
+    order, filter));
+  return *this;
 }
 
 EditableTableViewBuilder& EditableTableViewBuilder::set_filter(

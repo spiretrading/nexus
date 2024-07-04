@@ -490,6 +490,9 @@ bool Spire::compare(const AnyRef& left, const AnyRef& right) {
   if(left.get_type() != right.get_type()) {
     return false;
   }
+  if(left.get_type() == typeid(TimeInForce)) {
+    return compare_text<TimeInForce>(left, right);
+  }
   return compare_any<bool, int, optional<int>, std::int64_t,
     optional<std::int64_t>, std::uint64_t, optional<std::uint64_t>, Quantity,
     optional<Quantity>, double, optional<double>, gregorian::date, ptime,

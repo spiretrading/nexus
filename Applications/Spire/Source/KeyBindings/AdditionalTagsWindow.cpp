@@ -9,6 +9,7 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ListValueModel.hpp"
 #include "Spire/Ui/Box.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/EditableBox.hpp"
 #include "Spire/Ui/EditableTableView.hpp"
 #include "Spire/Ui/Icon.hpp"
@@ -278,10 +279,18 @@ namespace {
     static const auto DELETE_COLUMN = 0;
     static const auto NAME_COLUMN = 1;
     static const auto VALUE_COLUMN = 2;
-    auto table_builder = EditableTableViewBuilder(std::move(tags));
+    auto table_builder = EditableTableViewBuilder(tags);
     table_builder.set_item_builder(std::move(view_builder));
     table_builder.add_header_item(QObject::tr("Name"));
-    table_builder.add_header_item(QObject::tr("Value"));
+    table_builder.add_header_item(
+      QObject::tr("Value"), TableHeaderItem::Order::UNORDERED);
+    table_builder.set_comparator([=] (const AnyRef& left, int left_row,
+          const AnyRef& right, int right_row, int column) {
+        if(left_row == tags->get_row_size() - 1) {
+          return false;
+        }
+        return compare(left, right);
+      });
     auto table_view = table_builder.make();
     table_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     table_view->get_header().get_widths()->set(DELETE_COLUMN, scale_width(26));

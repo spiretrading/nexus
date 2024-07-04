@@ -11,13 +11,8 @@ using namespace boost;
 using namespace Spire;
 
 EnumAdditionalTagSchema::EnumAdditionalTagSchema(
-  std::string name, int key, std::vector<std::string> cases)
-  : AdditionalTagSchema(std::move(name), key),
-    m_cases(std::move(cases)) {}
-
-const std::vector<std::string>& EnumAdditionalTagSchema::get_cases() const {
-  return m_cases;
-}
+  OrderFieldInfoTip::Model order_field_model, int key)
+  : AdditionalTagSchema(std::move(order_field_model), key) {}
 
 bool EnumAdditionalTagSchema::test(const AdditionalTag& tag) const {
   if(tag.m_key != get_key()) {
@@ -30,7 +25,12 @@ bool EnumAdditionalTagSchema::test(const AdditionalTag& tag) const {
   if(!value) {
     return false;
   }
-  return std::find(m_cases.begin(), m_cases.end(), *value) != m_cases.end();
+  auto& arguments = get_order_field_model().m_tag.m_arguments;
+  auto i = std::find_if(arguments.begin(), arguments.end(),
+    [&] (const auto& argument) {
+      return argument.m_value == *value;
+    });
+  return i != arguments.end();
 }
 
 std::unique_ptr<CanvasNode> EnumAdditionalTagSchema::make_canvas_node(
@@ -49,8 +49,9 @@ AnyInputBox* EnumAdditionalTagSchema::make_input_box(
     std::shared_ptr<AdditionalTagValueModel> current) const {
   auto settings = EnumBox<QString>::Settings();
   auto cases = std::make_shared<ArrayListModel<QString>>();
-  for(auto& c : m_cases) {
-    cases->push(QString::fromStdString(c));
+  auto& arguments = get_order_field_model().m_tag.m_arguments;
+  for(auto& argument : arguments) {
+    cases->push(QString::fromStdString(argument.m_value));
   }
   settings.m_cases = std::move(cases);
   settings.m_current = make_transform_value_model(std::move(current),

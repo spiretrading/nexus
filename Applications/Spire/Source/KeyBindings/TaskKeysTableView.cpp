@@ -36,6 +36,16 @@ using namespace Spire::Styles;
 namespace {
   using PopUp = StateSelector<void, struct PopUpSelectorTag>;
 
+  bool comparator(const AnyRef& left, int left_row, const AnyRef& right,
+      int right_row, int column) {
+    if(left.get_type() == typeid(QuantitySetting) &&
+        right.get_type() == typeid(QuantitySetting)) {
+      return to_text(any_cast<QuantitySetting>(left)) <
+        to_text(any_cast<QuantitySetting>(right));
+    }
+    return compare(left, right);
+  }
+
   auto key_input_box_validator(const QKeySequence& sequence) {
     if(sequence.count() == 0) {
       return QValidator::Intermediate;
@@ -58,9 +68,9 @@ namespace {
 
   auto make_header_model() {
     auto model = std::make_shared<ArrayListModel<TableHeaderItem::Model>>();
-    auto push = [&] (const QString& name, const QString& short_name) {
-      model->push({name, short_name, TableHeaderItem::Order::NONE,
-        TableFilter::Filter::UNFILTERED});
+    auto push = [&] (const QString& name, const QString& short_name,
+        TableHeaderItem::Order order = TableHeaderItem::Order::NONE) {
+      model->push({name, short_name, order, TableFilter::Filter::UNFILTERED});
     };
     push(QObject::tr("Name"), QObject::tr("Name"));
     push(QObject::tr("Region"), QObject::tr("Region"));
@@ -69,7 +79,8 @@ namespace {
     push(QObject::tr("Side"), QObject::tr("Side"));
     push(QObject::tr("Quantity"), QObject::tr("Qty"));
     push(QObject::tr("Time in Force"), QObject::tr("TIF"));
-    push(QObject::tr("Tags"), QObject::tr("Tags"));
+    push(QObject::tr("Tags"), QObject::tr("Tags"),
+      TableHeaderItem::Order::UNORDERED);
     push(QObject::tr("Key"), QObject::tr("Key"));
     return model;
   }
@@ -81,8 +92,8 @@ namespace {
     widths.push_back(scale_width(110));
     widths.push_back(scale_width(90));
     widths.push_back(scale_width(70));
-    widths.push_back(scale_width(70));
-    widths.push_back(scale_width(70));
+    widths.push_back(scale_width(90));
+    widths.push_back(scale_width(56));
     widths.push_back(scale_width(80));
     widths.push_back(scale_width(128));
     return widths;
@@ -501,7 +512,8 @@ TableView* Spire::make_task_keys_table_view(
       std::make_shared<ListSingleSelectionModel>(),
       std::make_shared<ListEmptySelectionModel>()),
     RecycledTableViewItemBuilder(TaskKeysTableViewItemBuilder(
-      region_query_model, destinations, markets, additional_tags)), {});
+      region_query_model, destinations, markets, additional_tags)),
+    &comparator);
   auto widths = make_header_widths();
   for(auto i = 0; i < std::ssize(widths); ++i) {
     table_view->get_header().get_widths()->set(i + 1, widths[i]);

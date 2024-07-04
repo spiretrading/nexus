@@ -12,15 +12,11 @@ namespace Spire {
 
       /**
        * Constructs an EnumAdditionalTagSchema.
-       * @param name The name of the tag.
+       * @param order_field_model The model describing this tag.
        * @param key The tag's key.
-       * @param The list of cases that can be selected for this tag.
        */
       EnumAdditionalTagSchema(
-        std::string name, int key, std::vector<std::string> cases);
-
-      /** Returns the list of cases that can be selected. */
-      const std::vector<std::string>& get_cases() const;
+        OrderFieldInfoTip::Model order_field_model, int key);
 
       bool test(const AdditionalTag& tag) const override;
 
@@ -29,9 +25,6 @@ namespace Spire {
 
       AnyInputBox* make_input_box(
         std::shared_ptr<AdditionalTagValueModel> current) const override;
-
-    private:
-      std::vector<std::string> m_cases;
   };
 }
 

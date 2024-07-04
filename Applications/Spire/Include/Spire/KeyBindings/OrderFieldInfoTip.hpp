@@ -22,7 +22,7 @@ namespace Spire {
           std::string m_description;
         };
 
-        /** Stores meta data about single order field's tag. */
+        /** Stores meta data about a single order field's tag. */
         struct Tag {
 
           /** The name of the tag. */

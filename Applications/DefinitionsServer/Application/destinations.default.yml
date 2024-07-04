@@ -16,6 +16,7 @@ destinations:
   - id: CHIX
     description: Chi-X
     markets:
+      - NEOE
       - XTSE
       - XTSX
   - id: CSE
@@ -31,6 +32,7 @@ destinations:
   - id: CX2
     description: Chi-X 2
     markets:
+      - NEOE
       - XTSE
       - XTSX
   - id: HKEX
@@ -40,26 +42,31 @@ destinations:
   - id: LYNX
     description: LYNX ATS
     markets:
+      - NEOE
       - XTSE
       - XTSX
   - id: MATNLP
     description: MATCH Now Liquidity Provider
     markets:
+      - NEOE
       - XTSE
       - XTSX
   - id: MATNMF
     description: MATCH Now Market Flow
     markets:
+      - NEOE
       - XTSE
       - XTSX
   - id: NEOE
     description: Aequitas NEO Exchange
     markets:
+      - NEOE
       - XTSE
       - XTSX
   - id: OMEGA
     description: Omega ATS
     markets:
+      - NEOE
       - XTSE
       - XTSX
   - id: PURE

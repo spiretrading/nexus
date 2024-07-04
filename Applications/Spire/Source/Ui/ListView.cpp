@@ -740,7 +740,8 @@ void ListView::on_list_operation(const AnyListModel::Operation& operation) {
 
 void ListView::on_current(optional<int> previous, optional<int> current) {
   update_focus(current);
-  if(previous && previous != current) {
+  if(previous &&
+      previous != current && *previous < static_cast<int>(m_items.size())) {
     m_items[*previous]->m_item.set_current(false);
   }
   if(find_focus_state(*this) != FocusObserver::State::NONE) {
@@ -774,7 +775,9 @@ void ListView::on_selection(const ListModel<int>::Operation& operation) {
 }
 
 void ListView::on_item_submitted(ItemEntry& item) {
-  m_current_controller.get_current()->set(item.m_index);
+  if(m_current_controller.get_current()->get() != item.m_index) {
+    m_current_controller.get_current()->set(item.m_index);
+  }
   m_submit_signal(m_list->get(item.m_index));
 }
 
