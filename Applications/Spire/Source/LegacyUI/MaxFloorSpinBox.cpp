@@ -80,6 +80,9 @@ void MaxFloorSpinBox::AdjustIncrement(Qt::KeyboardModifier modifier) {
   auto quantityIncrement =
     m_userProfile->GetKeyBindings()->get_interactions_key_bindings(
       *m_security)->get_quantity_increment(modifier)->get();
+  if(modifier == Qt::KeyboardModifier::ControlModifier) {
+    quantityIncrement /= 10;
+  }
   if(quantityIncrement != singleStep()) {
     setSingleStep(static_cast<int>(quantityIncrement));
   }
