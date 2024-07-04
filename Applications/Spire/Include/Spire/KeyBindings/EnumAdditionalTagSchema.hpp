@@ -12,12 +12,11 @@ namespace Spire {
 
       /**
        * Constructs an EnumAdditionalTagSchema.
-       * @param name The name of the tag.
-       * @param key The tag's key.
        * @param order_field_model The model describing this tag.
+       * @param key The tag's key.
        */
       EnumAdditionalTagSchema(
-        std::string name, int key, OrderFieldInfoTip::Model order_field_model);
+        OrderFieldInfoTip::Model order_field_model, int key);
 
       bool test(const AdditionalTag& tag) const override;
 

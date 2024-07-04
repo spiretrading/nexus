@@ -11,6 +11,8 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  const auto MAX_FLOOR_KEY = 111;
+
   auto make_order_field_info_model() {
     auto model = OrderFieldInfoTip::Model();
     model.m_tag.m_name = "MaxFloor";
@@ -77,4 +79,4 @@ AnyInputBox* MaxFloorSchema::make_input_box(
 }
 
 MaxFloorSchema::MaxFloorSchema()
-  : AdditionalTagSchema("MaxFloor", 111, make_order_field_info_model()) {}
+  : AdditionalTagSchema(make_order_field_info_model(), MAX_FLOOR_KEY) {}

@@ -19,6 +19,16 @@ namespace {
       });
   }
 
+  auto make_peg_difference_schema() {
+    auto model = OrderFieldInfoTip::Model();
+    model.m_tag.m_name = "PegDifference";
+    model.m_tag.m_description =
+      "Amount (signed) added to the price of the peg for a pegged order.";
+    auto schema  = std::make_shared<BasicAdditionalTagSchema>(
+      std::move(model), 211, MoneyType::GetInstance());
+    return schema;
+  }
+
   auto make_asx_exec_inst_schema() {
     auto model = OrderFieldInfoTip::Model();
     model.m_tag.m_name = "ExecInst";
@@ -31,8 +41,8 @@ namespace {
       "R", "Primary peg (primary market - buy at bid/sell at offer)");
     model.m_tag.m_arguments.emplace_back("P", "Market peg");
     sort(model.m_tag.m_arguments);
-    auto schema = std::make_shared<EnumAdditionalTagSchema>(
-      "ExecInst", 18, std::move(model));
+    auto schema =
+      std::make_shared<EnumAdditionalTagSchema>(std::move(model), 18);
     return schema;
   }
 
@@ -103,8 +113,8 @@ namespace {
       "Ping CHI-X Dark/CX2/CHIC, MATN, TSX mid-point, split residual between "
       "CHI-X Dark and MATN.");
     sort(model.m_tag.m_arguments);
-    auto schema = std::make_shared<EnumAdditionalTagSchema>(
-      "ExDestination", 100, std::move(model));
+    auto schema =
+      std::make_shared<EnumAdditionalTagSchema>(std::move(model), 100);
     return schema;
   }
 
@@ -121,8 +131,8 @@ namespace {
     model.m_tag.m_arguments.emplace_back(
       "x", "Minimum Price Improvement (CXD Only)");
     model.m_tag.m_arguments.emplace_back("f", "CSO (Not supported on CXD)");
-    auto schema = std::make_shared<EnumAdditionalTagSchema>(
-      "ExecInst", 18, std::move(model));
+    auto schema =
+      std::make_shared<EnumAdditionalTagSchema>(std::move(model), 18);
     return schema;
   }
 
@@ -141,8 +151,8 @@ namespace {
       "Ping CHI-X Dark/CX2/CHIC & MATN mid-point. Spray all protected markets. "
       "Post on TSX. Dynamic re-spray.");
     sort(model.m_tag.m_arguments);
-    auto schema = std::make_shared<EnumAdditionalTagSchema>(
-      "ExDestination", 100, std::move(model));
+    auto schema =
+      std::make_shared<EnumAdditionalTagSchema>(std::move(model), 100);
     return schema;
   }
 
@@ -160,8 +170,8 @@ namespace {
     model.m_tag.m_arguments.emplace_back("Y", "Submit as a long life order.");
     model.m_tag.m_arguments.emplace_back(
       "N", "Do not submit as a long life order (Default).");
-    auto schema = std::make_shared<EnumAdditionalTagSchema>(
-      "TSXLongLife", 7735, std::move(model));
+    auto schema =
+      std::make_shared<EnumAdditionalTagSchema>(std::move(model), 7735);
     return schema;
   }
 
@@ -177,8 +187,8 @@ namespace {
     model.m_tag.m_arguments.emplace_back("P", "Market peg");
     model.m_tag.m_arguments.emplace_back("9", "Post on bid");
     model.m_tag.m_arguments.emplace_back("0", "Post on offer");
-    auto schema = std::make_shared<EnumAdditionalTagSchema>(
-      "ExecInst", 18, std::move(model));
+    auto schema =
+      std::make_shared<EnumAdditionalTagSchema>(std::move(model), 18);
     return schema;
   }
 
@@ -199,8 +209,8 @@ namespace {
       "PNBBO midpoint or minimum improvement from the PNBBO.");
     model.m_tag.m_arguments.emplace_back(
       "B", "Trade at any eligible price within the PNBBO.");
-    auto schema = std::make_shared<EnumAdditionalTagSchema>(
-      "ExecInst", 18, std::move(model));
+    auto schema =
+      std::make_shared<EnumAdditionalTagSchema>(std::move(model), 18);
     return schema;
   }
 
@@ -211,8 +221,8 @@ namespace {
     model.m_tag.m_arguments.emplace_back("Y", "Submit as anonymous.");
     model.m_tag.m_arguments.emplace_back(
       "N", "Do not submit as anonymous (Default).");
-    auto schema = std::make_shared<EnumAdditionalTagSchema>(
-      "Anonymous", 6761, std::move(model));
+    auto schema =
+      std::make_shared<EnumAdditionalTagSchema>(std::move(model), 6761);
     return schema;
   }
 
@@ -222,8 +232,8 @@ namespace {
     model.m_tag.m_description = "Specifies the NEO book to route to.";
     model.m_tag.m_arguments.emplace_back("L", "Route to the lit book.");
     model.m_tag.m_arguments.emplace_back("N", "Route to the NEOE book.");
-    auto schema = std::make_shared<EnumAdditionalTagSchema>(
-      "ExDestination", 100, std::move(model));
+    auto schema =
+      std::make_shared<EnumAdditionalTagSchema>(std::move(model), 100);
     return schema;
   }
 
@@ -238,8 +248,8 @@ namespace {
     model.m_tag.m_arguments.emplace_back(
       "100", "Re-price (resting orders only).");
     model.m_tag.m_arguments.emplace_back("x", "Minimum price improvement");
-    auto schema = std::make_shared<EnumAdditionalTagSchema>(
-      "ExecInst", 18, std::move(model));
+    auto schema =
+      std::make_shared<EnumAdditionalTagSchema>(std::move(model), 18);
     return schema;
   }
 
@@ -249,8 +259,8 @@ namespace {
     model.m_tag.m_description = "Handling instructions for the order.";
     model.m_tag.m_arguments.emplace_back("5", "Protect and cancel");
     model.m_tag.m_arguments.emplace_back("6", "Protect and reprice");
-    auto schema = std::make_shared<EnumAdditionalTagSchema>(
-      "HandlInst", 21, std::move(model));
+    auto schema =
+      std::make_shared<EnumAdditionalTagSchema>(std::move(model), 21);
     return schema;
   }
 
@@ -372,9 +382,7 @@ const AdditionalTagDatabase& Spire::get_default_additional_tag_database() {
     auto database = AdditionalTagDatabase(
       GetDefaultMarketDatabase(), GetDefaultDestinationDatabase());
     database.add(Region::Global(), MaxFloorSchema::get_instance());
-    database.add(Region::Global(), std::make_shared<BasicAdditionalTagSchema>(
-      "PegDifference", 211, OrderFieldInfoTip::Model(),
-      MoneyType::GetInstance()));
+    database.add(Region::Global(), make_peg_difference_schema());
     database.add(ASX(), make_asx_exec_inst_schema());
     database.add(
       DefaultDestinations::CHIX(), make_chix_ex_destination_schema());

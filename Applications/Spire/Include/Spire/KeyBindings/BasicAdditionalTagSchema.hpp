@@ -14,24 +14,21 @@ namespace Spire {
 
       /**
        * Constructs a BasicAdditionalTagSchema.
-       * @param name The name of the tag.
-       * @param key The tag's key.
        * @param order_field_model The model describing this tag.
+       * @param key The tag's key.
        * @param type The type of the tag.
        */
-      BasicAdditionalTagSchema(std::string name, int key,
-        OrderFieldInfoTip::Model order_field_model, const CanvasType& type);
+      BasicAdditionalTagSchema(OrderFieldInfoTip::Model order_field_model,
+        int key, const CanvasType& type);
 
       /**
        * Constructs a BasicAdditionalTagSchema.
-       * @param name The name of the tag.
-       * @param key The tag's key.
        * @param order_field_model The model describing this tag.
+       * @param key The tag's key.
        * @param default_value The tag's default value.
        */
-      BasicAdditionalTagSchema(std::string name, int key,
-        OrderFieldInfoTip::Model order_field_model,
-        Nexus::Tag::Type default_value);
+      BasicAdditionalTagSchema(OrderFieldInfoTip::Model order_field_model,
+        int key, Nexus::Tag::Type default_value);
 
       bool test(const AdditionalTag& tag) const override;
 

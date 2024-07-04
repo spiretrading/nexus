@@ -11,8 +11,8 @@ using namespace boost;
 using namespace Spire;
 
 EnumAdditionalTagSchema::EnumAdditionalTagSchema(
-  std::string name, int key, OrderFieldInfoTip::Model order_field_model)
-  : AdditionalTagSchema(std::move(name), key, std::move(order_field_model)) {}
+  OrderFieldInfoTip::Model order_field_model, int key)
+  : AdditionalTagSchema(std::move(order_field_model), key) {}
 
 bool EnumAdditionalTagSchema::test(const AdditionalTag& tag) const {
   if(tag.m_key != get_key()) {
