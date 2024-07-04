@@ -180,6 +180,7 @@ namespace Nexus {
         entry.m_id = "MATNLP";
         entry.m_description = "MATCH Now Liquidity Provider";
         entry.m_markets.push_back("NEOE");
+        entry.m_markets.push_back("XCNQ");
         entry.m_markets.push_back("XTSE");
         entry.m_markets.push_back("XTSX");
         database.Add(entry);
@@ -189,6 +190,7 @@ namespace Nexus {
         entry.m_id = "MATNMF";
         entry.m_description = "MATCH Now Market Flow";
         entry.m_markets.push_back("NEOE");
+        entry.m_markets.push_back("XCNQ");
         entry.m_markets.push_back("XTSE");
         entry.m_markets.push_back("XTSX");
         database.Add(entry);
@@ -198,6 +200,7 @@ namespace Nexus {
         entry.m_id = "NEOE";
         entry.m_description = "Aequitas NEO Exchange";
         entry.m_markets.push_back("NEOE");
+        entry.m_markets.push_back("XCNQ");
         entry.m_markets.push_back("XTSE");
         entry.m_markets.push_back("XTSX");
         database.Add(entry);
