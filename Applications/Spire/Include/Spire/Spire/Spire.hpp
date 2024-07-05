@@ -39,6 +39,7 @@ namespace Spire {
   template<typename T> class EnumSetTestModel;
   class Field;
   template<typename T> class FieldValueModel;
+  template<typename T> class FilteredListModel;
   class FilteredTableModel;
   class KeySequenceValidationModel;
   class ListIndexTracker;
