@@ -13,9 +13,18 @@ namespace Spire {
        * out any rows.
        * @param source The table to perform the keyword filtering on.
        * @param keywords The keywords used to filter out rows.
+       * @param countries The database of countries used to filter by country
+       *        name or short form.
+       * @param markets The database of markets used to filter by market name
+       *        or short form.
+       * @param destinations The database of destinations used to filter by
+       *        destination name or short form.
        */
       KeywordFilteredTableModel(std::shared_ptr<TableModel> source,
-        std::shared_ptr<TextModel> keywords);
+        std::shared_ptr<TextModel> keywords,
+        const Nexus::CountryDatabase& countries,
+        const Nexus::MarketDatabase& markets,
+        const Nexus::DestinationDatabase& destinations);
 
       int get_row_size() const override;
 
@@ -32,6 +41,9 @@ namespace Spire {
         const OperationSignal::slot_type& slot) const override;
 
     private:
+      Nexus::CountryDatabase m_countries;
+      Nexus::MarketDatabase m_markets;
+      Nexus::DestinationDatabase m_destinations;
       FilteredTableModel m_filtered_model;
       std::shared_ptr<TextModel> m_keywords;
       boost::signals2::scoped_connection m_connection;

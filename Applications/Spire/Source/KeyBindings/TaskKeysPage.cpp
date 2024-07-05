@@ -1,7 +1,6 @@
 #include "Spire/KeyBindings/TaskKeysPage.hpp"
 #include "Spire/KeyBindings/AdditionalTag.hpp"
 #include "Spire/KeyBindings/KeywordFilteredTableModel.hpp"
-#include "Spire/KeyBindings/OrderTaskArgumentsMatch.hpp"
 #include "Spire/KeyBindings/TaskKeysTableView.hpp"
 #include "Spire/Spire/Utility.hpp"
 #include "Spire/Ui/Button.hpp"
@@ -46,29 +45,6 @@ namespace {
     return button;
   }
 
-  AnyRef extract_field(const OrderTaskArguments& arguments,
-      OrderTaskColumns column) {
-    if(column == OrderTaskColumns::NAME) {
-      return arguments.m_name;
-    } else if(column == OrderTaskColumns::REGION) {
-      return arguments.m_region;
-    } else if(column == OrderTaskColumns::DESTINATION) {
-      return arguments.m_destination;
-    } else if(column == OrderTaskColumns::ORDER_TYPE) {
-      return arguments.m_order_type;
-    } else if(column == OrderTaskColumns::SIDE) {
-      return arguments.m_side;
-    } else if(column == OrderTaskColumns::QUANTITY) {
-      return arguments.m_quantity;
-    } else if(column == OrderTaskColumns::TIME_IN_FORCE) {
-      return arguments.m_time_in_force;
-    } else if(column == OrderTaskColumns::TAGS) {
-      return arguments.m_additional_tags;
-    } else {
-      return arguments.m_key;
-    }
-  }
-
   Region make_region(const SecurityInfo& security_info) {
     auto region = Region(security_info.m_security);
     region.SetName(security_info.m_name);
@@ -92,107 +68,6 @@ namespace {
     }
     return model;
   }
-
-  struct OrderTaskTableModel : TableModel {
-    static const auto COLUMN_SIZE = 9;
-    std::shared_ptr<OrderTaskArgumentsListModel> m_source;
-    TableModelTransactionLog m_transaction;
-    scoped_connection m_source_connection;
-
-    explicit OrderTaskTableModel(
-      std::shared_ptr<OrderTaskArgumentsListModel> source)
-      : m_source(std::move(source)),
-        m_source_connection(m_source->connect_operation_signal(
-          std::bind_front(&OrderTaskTableModel::on_operation, this))) {}
-
-    int get_row_size() const override {
-      return m_source->get_size();
-    }
-
-    int get_column_size() const override {
-      return COLUMN_SIZE;
-    }
-
-    AnyRef at(int row, int column) const override {
-      if(column < 0 || column >= get_column_size()) {
-        throw std::out_of_range("The column is out of range.");
-      }
-      return extract_field(
-        m_source->get(row), static_cast<OrderTaskColumns>(column));
-    }
-
-    QValidator::State set(int row, int column, const std::any& value) override {
-      if(column < 0 || column >= get_column_size()) {
-        throw std::out_of_range("The column is out of range.");
-      }
-      auto column_index = static_cast<OrderTaskColumns>(column);
-      auto arguments = m_source->get(row);
-      if(column_index == OrderTaskColumns::NAME) {
-        arguments.m_name = std::any_cast<const QString&>(value);
-      } else if(column_index == OrderTaskColumns::REGION) {
-        arguments.m_region = std::any_cast<const Region&>(value);
-      } else if(column_index == OrderTaskColumns::DESTINATION) {
-        arguments.m_destination = std::any_cast<const Destination&>(value);
-      } else if(column_index == OrderTaskColumns::ORDER_TYPE) {
-        arguments.m_order_type = std::any_cast<OrderType>(value);
-      } else if(column_index == OrderTaskColumns::SIDE) {
-        arguments.m_side = std::any_cast<Side>(value);
-      } else if(column_index == OrderTaskColumns::QUANTITY) {
-        arguments.m_quantity = std::any_cast<QuantitySetting>(value);
-      } else if(column_index == OrderTaskColumns::TIME_IN_FORCE) {
-        arguments.m_time_in_force = std::any_cast<const TimeInForce&>(value);
-      } else if(column_index == OrderTaskColumns::TAGS) {
-        arguments.m_additional_tags =
-          std::any_cast<const std::vector<AdditionalTag>&>(value);
-      } else if(column_index == OrderTaskColumns::KEY) {
-        arguments.m_key = std::any_cast<const QKeySequence&>(value);
-      }
-      return m_source->set(row, std::move(arguments));
-    }
-
-    QValidator::State remove(int row) override {
-      return m_source->remove(row);
-    }
-
-    connection connect_operation_signal(
-        const OperationSignal::slot_type& slot) const override {
-      return m_transaction.connect_operation_signal(slot);
-    }
-
-    void on_operation(const OrderTaskArgumentsListModel::Operation& operation) {
-      visit(operation,
-        [&] (const StartTransaction&) {
-          m_transaction.start();
-        },
-        [&] (const EndTransaction&) {
-          m_transaction.end();
-        },
-        [&] (const OrderTaskArgumentsListModel::AddOperation& operation) {
-          m_transaction.push(TableModel::AddOperation(operation.m_index));
-        },
-        [&] (const OrderTaskArgumentsListModel::MoveOperation& operation) {
-          m_transaction.push(TableModel::MoveOperation(
-            operation.m_source, operation.m_destination));
-        },
-        [&] (const OrderTaskArgumentsListModel::PreRemoveOperation& operation) {
-          m_transaction.push(TableModel::PreRemoveOperation(operation.m_index));
-        },
-        [&] (const OrderTaskArgumentsListModel::RemoveOperation& operation) {
-          m_transaction.push(TableModel::RemoveOperation(operation.m_index));
-        },
-        [&] (const OrderTaskArgumentsListModel::UpdateOperation& operation) {
-          m_transaction.transact([&] {
-            for(auto i = 0; i < COLUMN_SIZE; ++i) {
-              m_transaction.push(TableModel::UpdateOperation(operation.m_index,
-                i, to_any(extract_field(operation.get_previous(),
-                  static_cast<OrderTaskColumns>(i))),
-                to_any(extract_field(operation.get_value(),
-                  static_cast<OrderTaskColumns>(i)))));
-            }
-          });
-      });
-    }
-  };
 
   struct RegionQueryModel : ComboBox::QueryModel {
     std::shared_ptr<ComboBox::QueryModel> m_securities;
@@ -263,8 +138,9 @@ TaskKeysPage::TaskKeysPage(std::shared_ptr<KeyBindingsModel> key_bindings,
   search_box->setFixedWidth(scale_width(368));
   toolbar_layout->addWidget(search_box);
   m_tasks = std::make_shared<KeywordFilteredTableModel>(
-    std::make_shared<OrderTaskTableModel>(
-      m_key_bindings->get_order_task_arguments()), search_box->get_current());
+    std::make_shared<OrderTaskArgumentsListToTableModel>(
+      m_key_bindings->get_order_task_arguments()), search_box->get_current(),
+      countries, markets, destinations);
   toolbar_layout->addStretch();
   toolbar_layout->addSpacing(scale_width(18));
   auto add_task_button =
