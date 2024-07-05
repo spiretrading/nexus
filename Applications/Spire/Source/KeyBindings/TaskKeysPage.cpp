@@ -1,8 +1,8 @@
 #include "Spire/KeyBindings/TaskKeysPage.hpp"
 #include "Spire/KeyBindings/AdditionalTag.hpp"
+#include "Spire/KeyBindings/KeywordFilteredTableModel.hpp"
 #include "Spire/KeyBindings/OrderTaskArgumentsMatch.hpp"
 #include "Spire/KeyBindings/TaskKeysTableView.hpp"
-#include "Spire/Spire/FilteredTableModel.hpp"
 #include "Spire/Spire/Utility.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
@@ -93,24 +93,6 @@ namespace {
     return model;
   }
 
-  struct OrderTaskArgumentsMatchCache {
-    std::unordered_set<QString> m_caches;
-
-    bool matches(const OrderTaskArguments& order_task, const QString& query,
-        const CountryDatabase& countries, const MarketDatabase& markets,
-        const DestinationDatabase& destinations) {
-      if(m_caches.contains(query)) {
-        return true;
-      }
-      auto matched = ::matches(order_task, query, countries, markets,
-        destinations);
-      if(matched) {
-        m_caches.insert(query);
-      }
-      return matched;
-    }
-  };
-
   struct OrderTaskTableModel : TableModel {
     static const auto COLUMN_SIZE = 9;
     std::shared_ptr<OrderTaskArgumentsListModel> m_source;
@@ -173,7 +155,7 @@ namespace {
     }
 
     connection connect_operation_signal(
-      const OperationSignal::slot_type& slot) const override {
+        const OperationSignal::slot_type& slot) const override {
       return m_transaction.connect_operation_signal(slot);
     }
 
@@ -267,70 +249,22 @@ namespace {
   };
 }
 
-struct TaskKeysPage::OrderTaskMatchCache {
-  std::shared_ptr<OrderTaskArgumentsListModel> m_source;
-  MarketDatabase m_markets;
-  CountryDatabase m_countries;
-  DestinationDatabase m_destinations;
-  std::vector<OrderTaskArgumentsMatchCache> m_caches;
-  scoped_connection m_connection;
-
-  OrderTaskMatchCache(std::shared_ptr<OrderTaskArgumentsListModel> source,
-    CountryDatabase countries, MarketDatabase markets,
-    DestinationDatabase destinations)
-    : m_source(std::move(source)),
-      m_countries(std::move(countries)),
-      m_markets(std::move(markets)),
-      m_destinations(std::move(destinations)),
-      m_caches(m_source->get_size()),
-      m_connection(m_source->connect_operation_signal(
-        std::bind_front(&OrderTaskMatchCache::on_operation, this))) {}
-
-  bool matches(int row, const QString& query) {
-    if(query.isEmpty()) {
-      return true;
-    }
-    return m_caches[row].matches(m_source->get(row), query,
-      m_countries, m_markets, m_destinations);
-  }
-
-  void on_operation(const OrderTaskArgumentsListModel::Operation& operation) {
-    visit(operation,
-      [&] (const OrderTaskArgumentsListModel::AddOperation& operation) {
-        m_caches.insert(std::next(m_caches.begin(), operation.m_index),
-          OrderTaskArgumentsMatchCache());
-      },
-      [&] (const OrderTaskArgumentsListModel::RemoveOperation& operation) {
-        m_caches.erase(std::next(m_caches.begin(), operation.m_index));
-      },
-      [&] (const OrderTaskArgumentsListModel::UpdateOperation& operation) {
-        m_caches[operation.m_index] = OrderTaskArgumentsMatchCache();
-      });
-  }
-};
-
 TaskKeysPage::TaskKeysPage(std::shared_ptr<KeyBindingsModel> key_bindings,
     std::shared_ptr<ComboBox::QueryModel> securities,
     CountryDatabase countries, MarketDatabase markets,
     DestinationDatabase destinations, AdditionalTagDatabase additional_tags,
     QWidget* parent)
     : QWidget(parent),
-      m_key_bindings(std::move(key_bindings)),
-      m_match_cache(std::make_unique<OrderTaskMatchCache>(
-        m_key_bindings->get_order_task_arguments(),
-        std::move(countries), std::move(markets), std::move(destinations))),
-      m_filtered_model(std::make_shared<FilteredTableModel>(
-        std::make_shared<OrderTaskTableModel>(m_match_cache->m_source),
-        std::bind_front(&TaskKeysPage::filter, this, ""))),
-      m_is_row_added(false) {
+      m_key_bindings(std::move(key_bindings)) {
   auto toolbar_body = new QWidget();
   auto toolbar_layout = make_hbox_layout(toolbar_body);
   auto search_box = new SearchBox();
   search_box->set_placeholder(tr("Search tasks"));
   search_box->setFixedWidth(scale_width(368));
-  search_box->get_current()->connect_update_signal(
-    std::bind_front(&TaskKeysPage::on_search, this));
   toolbar_layout->addWidget(search_box);
+  m_tasks = std::make_shared<KeywordFilteredTableModel>(
+    std::make_shared<OrderTaskTableModel>(
+      m_key_bindings->get_order_task_arguments()), search_box->get_current());
   toolbar_layout->addStretch();
   toolbar_layout->addSpacing(scale_width(18));
   auto add_task_button =
@@ -367,10 +301,9 @@ TaskKeysPage::TaskKeysPage(std::shared_ptr<KeyBindingsModel> key_bindings,
   layout->addWidget(make_help_text_box());
   layout->addWidget(toolbar);
   m_table_view = make_task_keys_table_view(
-    m_filtered_model, std::make_shared<RegionQueryModel>(std::move(securities),
-      populate_region_query_model(m_match_cache->m_countries,
-        m_match_cache->m_markets)),
-    m_match_cache->m_destinations, m_match_cache->m_markets, additional_tags);
+    m_tasks, std::make_shared<RegionQueryModel>(
+      std::move(securities), populate_region_query_model(countries, markets)),
+    destinations, markets, additional_tags);
   layout->addWidget(m_table_view);
   auto box = new Box(body);
   update_style(*box, [] (auto& style) {
@@ -379,7 +312,7 @@ TaskKeysPage::TaskKeysPage(std::shared_ptr<KeyBindingsModel> key_bindings,
   enclose(*this, *box);
   update_button_state();
   auto& row_selection = m_table_view->get_selection()->get_row_selection();
-  m_selection_connection = row_selection->connect_operation_signal(
+  row_selection->connect_operation_signal(
     std::bind_front(&TaskKeysPage::on_row_selection, this));
 }
 
@@ -388,31 +321,16 @@ const std::shared_ptr<KeyBindingsModel>&
   return m_key_bindings;
 }
 
-bool TaskKeysPage::eventFilter(QObject* watched, QEvent* event) {
-  if(watched == m_added_region_item) {
-    if(event->type() == QEvent::Show) {
-      m_added_region_item->removeEventFilter(this);
-      static_cast<EditableBox*>(
-        &m_added_region_item->get_body())->set_read_only(false);
-    }
-  }
-  return QWidget::eventFilter(watched, event);
-}
-
 void TaskKeysPage::keyPressEvent(QKeyEvent* event) {
   if(event->modifiers() & Qt::ShiftModifier &&
       (event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter)) {
     on_new_task_action();
-  } else if(event->modifiers() & Qt::ControlModifier &&
-      event->key() == Qt::Key_D) {
+  } else if(
+      event->modifiers() & Qt::ControlModifier && event->key() == Qt::Key_D) {
     on_duplicate_task_action();
   } else {
     QWidget::keyPressEvent(event);
   }
-}
-
-bool TaskKeysPage::filter(const QString& query, const TableModel&, int row) {
-  return !m_match_cache->matches(row, query);
 }
 
 void TaskKeysPage::update_button_state() {
@@ -420,11 +338,6 @@ void TaskKeysPage::update_button_state() {
     m_table_view->get_selection()->get_row_selection()->get_size() > 0;
   m_duplicate_button->setEnabled(is_enabled);
   m_delete_button->setEnabled(is_enabled);
-}
-
-void TaskKeysPage::on_search(const QString& query) {
-  m_filtered_model->set_filter(
-    std::bind_front(&TaskKeysPage::filter, this, query));
 }
 
 void TaskKeysPage::on_new_task_action() {
@@ -472,14 +385,12 @@ void TaskKeysPage::on_delete_task_action() {
 void TaskKeysPage::on_new_task_submission(const QString& name) {
   auto order_task = OrderTaskArguments();
   order_task.m_name = name;
-  m_is_row_added = true;
   if(auto& current = m_table_view->get_current()->get()) {
-    m_key_bindings->get_order_task_arguments()->insert(order_task,
-      current->m_row);
+    m_key_bindings->get_order_task_arguments()->insert(
+      order_task, current->m_row);
   } else {
     m_key_bindings->get_order_task_arguments()->push(order_task);
   }
-  m_is_row_added = false;
 }
 
 void TaskKeysPage::on_row_selection(

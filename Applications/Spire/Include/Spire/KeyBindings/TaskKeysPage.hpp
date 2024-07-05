@@ -33,25 +33,16 @@ namespace Spire {
       const std::shared_ptr<KeyBindingsModel>& get_key_bindings() const;
 
     protected:
-      bool eventFilter(QObject* watched, QEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
 
     private:
-      struct OrderTaskMatchCache;
       std::shared_ptr<KeyBindingsModel> m_key_bindings;
-      std::unique_ptr<OrderTaskMatchCache> m_match_cache;
-      std::shared_ptr<FilteredTableModel> m_filtered_model;
+      std::shared_ptr<TableModel> m_tasks;
       TableView* m_table_view;
       Button* m_duplicate_button;
       Button* m_delete_button;
-      TableItem* m_added_region_item;
-      bool m_is_row_added;
-      boost::signals2::scoped_connection m_selection_connection;
-      boost::signals2::scoped_connection m_table_operation_connection;
 
-      bool filter(const QString& query, const TableModel& model, int row);
       void update_button_state();
-      void on_search(const QString& query);
       void on_new_task_action();
       void on_duplicate_task_action();
       void on_delete_task_action();
