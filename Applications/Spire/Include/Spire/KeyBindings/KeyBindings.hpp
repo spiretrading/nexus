@@ -20,12 +20,12 @@ namespace Spire {
   class InteractionsPage;
   class KeyBindingsModel;
   class KeyBindingsWindow;
-  class KeywordFilteredTableModel;
   class MaxFloorSchema;
   class NoneAdditionalTagSchema;
   class OrderFieldInfoTip;
   struct OrderTaskArguments;
   class OrderTaskArgumentsListToTableModel;
+  class SearchBarOrderTaskArgumentsListModel;
   class TaskKeysPage;
 }
 

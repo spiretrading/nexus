@@ -1,6 +1,7 @@
 #include "Spire/KeyBindings/TaskKeysPage.hpp"
 #include "Spire/KeyBindings/AdditionalTag.hpp"
-#include "Spire/KeyBindings/KeywordFilteredTableModel.hpp"
+#include "Spire/KeyBindings/OrderTaskArgumentsListToTableModel.hpp"
+#include "Spire/KeyBindings/SearchBarOrderTaskArgumentsListModel.hpp"
 #include "Spire/KeyBindings/TaskKeysTableView.hpp"
 #include "Spire/Spire/Utility.hpp"
 #include "Spire/Ui/Button.hpp"
@@ -137,10 +138,6 @@ TaskKeysPage::TaskKeysPage(std::shared_ptr<KeyBindingsModel> key_bindings,
   search_box->set_placeholder(tr("Search tasks"));
   search_box->setFixedWidth(scale_width(368));
   toolbar_layout->addWidget(search_box);
-  m_tasks = std::make_shared<KeywordFilteredTableModel>(
-    std::make_shared<OrderTaskArgumentsListToTableModel>(
-      m_key_bindings->get_order_task_arguments()), search_box->get_current(),
-      countries, markets, destinations);
   toolbar_layout->addStretch();
   toolbar_layout->addSpacing(scale_width(18));
   auto add_task_button =
@@ -176,8 +173,11 @@ TaskKeysPage::TaskKeysPage(std::shared_ptr<KeyBindingsModel> key_bindings,
   auto layout = make_vbox_layout(body);
   layout->addWidget(make_help_text_box());
   layout->addWidget(toolbar);
+  auto filtered_tasks = std::make_shared<SearchBarOrderTaskArgumentsListModel>(
+    m_key_bindings->get_order_task_arguments(), search_box->get_current(),
+      countries, markets, destinations);
   m_table_view = make_task_keys_table_view(
-    m_tasks, std::make_shared<RegionQueryModel>(
+    std::move(filtered_tasks), std::make_shared<RegionQueryModel>(
       std::move(securities), populate_region_query_model(countries, markets)),
     destinations, markets, additional_tags);
   layout->addWidget(m_table_view);

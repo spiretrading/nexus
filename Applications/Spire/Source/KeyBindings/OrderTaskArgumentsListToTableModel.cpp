@@ -6,7 +6,7 @@ using namespace Nexus;
 using namespace Spire;
 
 namespace {
-  static const auto COLUMN_SIZE = 8;
+  static const auto COLUMN_SIZE = 9;
 
   AnyRef extract(const OrderTaskArguments& arguments, OrderTaskColumns column) {
     if(column == OrderTaskColumns::NAME) {
@@ -50,7 +50,7 @@ AnyRef OrderTaskArgumentsListToTableModel::at(int row, int column) const {
   if(column < 0 || column >= get_column_size()) {
     throw std::out_of_range("The column is out of range.");
   }
-  return extract(
+ return extract(
     m_order_task_arguments->get(row), static_cast<OrderTaskColumns>(column));
 }
 

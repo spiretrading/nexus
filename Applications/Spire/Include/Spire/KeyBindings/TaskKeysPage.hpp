@@ -37,7 +37,6 @@ namespace Spire {
 
     private:
       std::shared_ptr<KeyBindingsModel> m_key_bindings;
-      std::shared_ptr<TableModel> m_tasks;
       TableView* m_table_view;
       Button* m_duplicate_button;
       Button* m_delete_button;
