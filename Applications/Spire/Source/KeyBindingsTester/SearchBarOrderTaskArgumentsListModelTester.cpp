@@ -12,9 +12,25 @@ using namespace Spire;
 TEST_SUITE("SearchBarOrderTaskArgumentsListModel") {
   TEST_CASE("single_word_filter") {
     auto source = std::make_shared<ArrayListModel<OrderTaskArguments>>();
+    auto task1 = OrderTaskArguments();
+    task1.m_name = "Foo";
+    source->push(task1);
+    auto task2 = OrderTaskArguments();
+    task2.m_name = "Bar";
+    source->push(task2);
+    auto task3 = OrderTaskArguments();
+    task3.m_name = "Baz";
+    source->push(task3);
     auto keywords = std::make_shared<LocalTextModel>();
-    auto table = SearchBarOrderTaskArgumentsListModel(source, keywords,
+    auto search_list = SearchBarOrderTaskArgumentsListModel(source, keywords,
       GetDefaultCountryDatabase(), GetDefaultMarketDatabase(),
       GetDefaultDestinationDatabase());
+    REQUIRE(search_list.get_size() == 3);
+    keywords->set("Q");
+    REQUIRE(search_list.get_size() == 0);
+    keywords->set("QQ");
+    REQUIRE(search_list.get_size() == 0);
+    keywords->set("");
+    REQUIRE(search_list.get_size() == 3);
   }
 }
