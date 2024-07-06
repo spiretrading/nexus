@@ -218,6 +218,17 @@ struct TableBody::Painter {
         paint_border(body.m_bottom_spacer->geometry().top(),
           body.m_styles.m_vertical_spacing);
       }
+      auto bottom_point = [&] {
+        auto index = body.layout()->count() - (body.m_bottom_spacer ? 2 : 1);
+        if(index < 0) {
+          return 0;
+        }
+        if(auto row = body.layout()->itemAt(index)->widget()) {
+          return row->geometry().bottom() + 1;
+        }
+        return 0;
+      }();
+      paint_border(bottom_point, body.m_styles.m_vertical_spacing);
     }
     if(body.m_styles.m_padding.bottom() != 0) {
       paint_border(body.height() - body.m_styles.m_padding.bottom(),
@@ -229,8 +240,18 @@ struct TableBody::Painter {
     if(body.m_styles.m_vertical_grid_color.alphaF() == 0) {
       return;
     }
+    auto bottom_point = [&] {
+      auto index = body.layout()->count() - (body.m_bottom_spacer ? 2 : 1);
+      if(index < 0) {
+        return 0;
+      }
+      if(auto row = body.layout()->itemAt(index)->widget()) {
+        return row->geometry().bottom() + 1;
+      }
+      return 0;
+    }();
     auto paint_border = [&] (int left, int width) {
-      painter.fillRect(QRect(left, 0, width, body.height()),
+      painter.fillRect(QRect(left, 0, width, bottom_point),
         body.m_styles.m_vertical_grid_color);
     };
     if(body.m_styles.m_padding.left() != 0) {
