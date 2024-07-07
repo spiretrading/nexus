@@ -38,7 +38,7 @@ namespace Spire {
     KEY
   };
 
-  /** Provides a TableModel view over a an OrderTaskArgumentsListModel. */
+  /** Provides a TableModel view over an OrderTaskArgumentsListModel. */
   class OrderTaskArgumentsListToTableModel : public TableModel {
     public:
 
