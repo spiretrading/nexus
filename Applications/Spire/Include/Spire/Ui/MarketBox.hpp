@@ -32,10 +32,12 @@ namespace Spire {
   /**
    * Returns a MarketBox.
    * @param current The current value.
+   * @param markets The available markets to select.
    * @param parent The parent widget.
    */
    MarketBox* make_market_box(
-    std::shared_ptr<MarketModel> current, QWidget* parent = nullptr);
+    std::shared_ptr<MarketModel> current, const Nexus::MarketDatabase& markets,
+    QWidget* parent = nullptr);
 }
 
 #endif

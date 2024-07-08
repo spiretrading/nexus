@@ -3061,17 +3061,10 @@ UiProfile Spire::make_market_box_profile() {
   properties.push_back(make_standard_property<QString>("current", "ARCX"));
   properties.push_back(make_standard_property("read_only", false));
   auto profile = UiProfile("MarketBox", properties, [] (auto& profile) {
-/* TODO
-    auto markets = GetDefaultMarketDatabase().GetEntries();
-    auto model = std::make_shared<LocalComboBoxQueryModel>();
-    for(auto market : markets) {
-      model->add(to_text(MarketToken(market.m_code)).toLower(), market);
-      model->add(QString(market.m_code.GetData()).toLower(), market);
-    }
     auto& current = get<QString>("current", profile.get_properties());
-    auto current_model = std::make_shared<LocalValueModel<MarketCode>>(
+    auto current_model = std::make_shared<LocalMarketModel>(
       current.get().toStdString());
-    auto box = new MarketBox(model, current_model);
+    auto box = make_market_box(current_model, GetDefaultMarketDatabase());
     box->setFixedWidth(scale_width(112));
     apply_widget_properties(box, profile.get_properties());
     current.connect_changed_signal([=] (const auto& current) {
@@ -3091,8 +3084,6 @@ UiProfile Spire::make_market_box_profile() {
       profile.make_event_slot<MarketToken>("Current"));
     box->connect_submit_signal(profile.make_event_slot<MarketToken>("Submit"));
     return box;
-*/
-    return nullptr;
   });
   return profile;
 }
