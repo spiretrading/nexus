@@ -39,6 +39,7 @@ namespace {
     {"none", Keyword::NONE},
     {"horizontal", Keyword::HORIZONTAL},
     {"vertical", Keyword::VERTICAL},
+    {"visibility", Keyword::VISIBILITY},
     {"visible", Keyword::VISIBLE},
     {"invisible", Keyword::INVISIBLE},
     {"px", Keyword::PX},
@@ -46,7 +47,16 @@ namespace {
     {"ms", Keyword::MS},
     {"chain", Keyword::CHAIN},
     {"timeout", Keyword::TIMEOUT},
-    {"revert", Keyword::REVERT}};
+    {"revert", Keyword::REVERT},
+    {"=", Keyword::EQUAL},
+    {"<", Keyword::LESS_THAN},
+    {">", Keyword::GREATER_THAN},
+    {"any", Keyword::ANY},
+    {"and", Keyword::AND},
+    {"or", Keyword::OR},
+    {"~", Keyword::TILDE},
+    {"!", Keyword::EXCLAMATION},
+    {"%", Keyword::PERCENTAGE}};
 
   const auto OPERATORS =
     std::unordered_map<std::string, Operator>{
@@ -201,6 +211,7 @@ void TokenParser::feed(const std::string& input) {
           m_line_number, m_column_number);
       } else if(std::regex_search(matched_text, keyword_regex) &&
           KEYWORDS.contains(matched_text)) {
+        to_lower(matched_text);
         m_tokens.emplace_back(Keyword(KEYWORDS.at(matched_text)),
           m_line_number, m_column_number);
       } else if(std::regex_search(matched_text, literal_regex)) {
@@ -228,10 +239,18 @@ void TokenParser::feed(const std::string& input) {
   }
 }
 
-Token TokenParser::pop() {
-  auto token = m_tokens.front();
+const Token& Spire::TokenParser::peek() const {
+  if(m_tokens.empty()) {
+    throw std::runtime_error("No tokens.");
+  }
+  return m_tokens.front();
+}
+
+void TokenParser::pop() {
+  if(m_tokens.empty()) {
+    throw std::runtime_error("No tokens.");
+  }
   m_tokens.pop_front();
-  return token;
 }
 
 int TokenParser::get_size() const {

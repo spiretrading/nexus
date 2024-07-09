@@ -18,8 +18,11 @@ namespace Spire {
        */
       void feed(const std::string& input);
 
-      /** Pops the token at the beginning of the list of tokens. */
-      Token pop();
+      /** Peeks the first token. */
+      const Token& peek() const;
+
+      /** removes the first token. */
+      void pop();
 
       /** Returns the number of tokens. */
       int get_size() const;

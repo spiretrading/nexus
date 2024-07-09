@@ -17,9 +17,12 @@ install(TARGETS StyleParser CONFIGURATIONS Debug
   DESTINATION ${SPIRE_LIBRARY_INSTALL_DIRECTORY}/Debug)
 install(TARGETS StyleParser CONFIGURATIONS Release
   DESTINATION ${SPIRE_LIBRARY_INSTALL_DIRECTORY}/Release)
+file(GLOB test_header_files ${SPIRE_INCLUDE_PATH}/Spire/StyleParserTests/*.hpp)
 file(GLOB test_source_files ${SPIRE_SOURCE_PATH}/StyleParserTests/*.cpp)
-add_executable(StyleParserTests ${test_source_files})
-target_link_libraries(StyleParserTests Styles StyleParser
+add_executable(StyleParserTests ${test_header_files} ${test_source_files})
+set_source_files_properties(
+  ${test_header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
+target_link_libraries(StyleParserTests Styles StyleParser Library
   debug ${CRYPTOPP_LIBRARY_DEBUG_PATH}
   optimized ${CRYPTOPP_LIBRARY_OPTIMIZED_PATH}
   debug ${LUA_LIBRARY_DEBUG_PATH}

@@ -26,7 +26,8 @@ namespace {
 
   void parse(TokenParser& parser, ParseResults& results) {
     while(parser.get_size() != 0) {
-      auto token = parser.pop();
+      auto token = parser.peek();
+      parser.pop();
       visit(token.get_value(),
         [&] (const Bracket& bracket) {
           results.m_brackets.push_back(

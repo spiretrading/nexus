@@ -48,6 +48,7 @@ namespace Spire {
     NONE,
     HORIZONTAL,
     VERTICAL,
+    VISIBILITY,
     VISIBLE,
     INVISIBLE,
     PX,
@@ -55,7 +56,16 @@ namespace Spire {
     MS,
     CHAIN,
     TIMEOUT,
-    REVERT
+    REVERT,
+    EQUAL,
+    LESS_THAN,
+    GREATER_THAN,
+    ANY,
+    AND,
+    OR,
+    TILDE,
+    EXCLAMATION,
+    PERCENTAGE
   };
 
   /** Specifies the operator types. */
