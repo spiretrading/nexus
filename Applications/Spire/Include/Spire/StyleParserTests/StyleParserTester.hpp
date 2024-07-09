@@ -3,6 +3,7 @@
 
 namespace Spire::StyleParser::Tests {
 
+  /** Registers all selections used in the test. */
   void register_selection_types();
 }
 
