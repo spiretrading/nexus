@@ -29,6 +29,29 @@ TEST_SUITE("SelectorParser") {
     REQUIRE(selector == Any());
   }
 
+  TEST_CASE("Nested logical1") {
+    auto styles = R"(
+      :hover and :focus or :press {}
+    )";
+    auto parser = TokenParser();
+    parser.feed(styles);
+    auto selector =
+      parse_selector(parser, std::make_shared<DefaultSelectorParseStrategy>());
+    REQUIRE(selector == OrSelector(AndSelector(Hover(), Focus()), Press()));
+  }
+
+  TEST_CASE("Nested logical2") {
+    auto styles = R"(
+      :hover or :focus and :press {}
+    )";
+    auto parser = TokenParser();
+    parser.feed(styles);
+    auto selector =
+      parse_selector(parser, std::make_shared<DefaultSelectorParseStrategy>());
+    REQUIRE(selector != AndSelector(OrSelector(Hover(), Focus()), Press()));
+    REQUIRE(selector == OrSelector(Hover(), AndSelector(Focus(), Press())));
+  }
+
   TEST_CASE("StateSelector") {
     auto styles = R"(
       :hover {}
