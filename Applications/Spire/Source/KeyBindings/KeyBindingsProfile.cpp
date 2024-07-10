@@ -21,7 +21,7 @@
 #include "Spire/Canvas/OrderExecutionNodes/OrderTaskNodes.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/SingleOrderTaskNode.hpp"
 #include "Spire/LegacyUI/UISerialization.hpp"
-#include "Spire/LegacyUI/ShuttleQtTypes.hpp"
+#include "Spire/Spire/ShuttleQtTypes.hpp"
 
 using namespace Beam;
 using namespace Beam::IO;
@@ -166,6 +166,19 @@ namespace Beam::Serialization {
 }
 
 namespace {
+  static const auto KEY_BINDINGS_VERSION = 1;
+
+  struct KeyBindingsProfile {
+    int m_version;
+    const KeyBindingsModel* m_key_bindings;
+
+    template<typename Shuttler>
+    void Shuttle(Shuttler& shuttle, unsigned int version) {
+      shuttle.Shuttle("version", m_version);
+      shuttle.Shuttle("key_bindings", *const_cast<KeyBindingsModel*>(m_key_bindings));
+    }
+  };
+
   void set_destination(CanvasNodeBuilder& builder, Destination destination) {
     builder.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
       std::make_unique<DestinationNode>(std::move(destination)));
@@ -389,6 +402,12 @@ namespace {
       key_bindings->get_order_task_arguments()->push(
         to_order_task_arguments(*task, markets, destinations));
     }
+    key_bindings->get_cancel_key_bindings()->get_binding(
+      CancelKeyBindingsModel::Operation::OLDEST)->set(
+        QKeySequence(Qt::Key_Escape));
+    key_bindings->get_cancel_key_bindings()->get_binding(
+      CancelKeyBindingsModel::Operation::ALL)->set(
+        QKeySequence(Qt::SHIFT | Qt::Key_Escape));
     return key_bindings;
   }
 }
@@ -608,15 +627,17 @@ std::vector<std::unique_ptr<CanvasNode>> Spire::make_matnlp_order_task_nodes() {
   auto order_types = std::vector<std::unique_ptr<CanvasNode>>();
   populate_basic_order_task_nodes(
     DefaultDestinations::MATNLP(), "MATCH Now LP", order_types);
-  auto at_the_touch = CanvasNodeBuilder(*GetLimitOrderTaskNode()->AddField(
-    "constraints", 6005, std::make_unique<TextNode>("PAG")));
-  at_the_touch.SetVisible("constraints", false);
-  at_the_touch.SetReadOnly("constraints", true);
-  auto mpi = CanvasNodeBuilder(*GetLimitOrderTaskNode()->AddField(
-    "constraints", 6005, std::make_unique<TextNode>("PMI")));
-  mpi.SetVisible("constraints", false);
-  mpi.SetReadOnly("constraints", true);
-  populate_bid_ask(at_the_touch, "MATCH Now LP MPI",
+  auto att = CanvasNodeBuilder(*GetPeggedOrderTaskNode(true)->AddField(
+    "exec_inst", 18, std::make_unique<TextNode>("R")));
+  att.SetVisible("exec_inst", false);
+  att.SetReadOnly("exec_inst", true);
+  populate_bid_ask(att, "MATCH Now LP At-The-Touch",
+    DefaultDestinations::MATNLP(), TimeInForce::Type::DAY, order_types);
+  auto mpi = CanvasNodeBuilder(*GetPeggedOrderTaskNode(true)->AddField(
+    "exec_inst", 18, std::make_unique<TextNode>("x")));
+  mpi.SetVisible("exec_inst", false);
+  mpi.SetReadOnly("exec_inst", true);
+  populate_bid_ask(mpi, "MATCH Now LP MPI",
     DefaultDestinations::MATNLP(), TimeInForce::Type::DAY, order_types);
   return order_types;
 }
@@ -625,6 +646,18 @@ std::vector<std::unique_ptr<CanvasNode>> Spire::make_matnmf_order_task_nodes() {
   auto order_types = std::vector<std::unique_ptr<CanvasNode>>();
   populate_basic_order_task_nodes(
     DefaultDestinations::MATNMF(), "MATCH Now MF", order_types);
+  auto att = CanvasNodeBuilder(*GetPeggedOrderTaskNode(true)->AddField(
+    "exec_inst", 18, std::make_unique<TextNode>("R")));
+  att.SetVisible("exec_inst", false);
+  att.SetReadOnly("exec_inst", true);
+  populate_bid_ask(att, "MATCH Now MF At-The-Touch",
+    DefaultDestinations::MATNMF(), TimeInForce::Type::DAY, order_types);
+  auto mpi = CanvasNodeBuilder(*GetPeggedOrderTaskNode(true)->AddField(
+    "exec_inst", 18, std::make_unique<TextNode>("x")));
+  mpi.SetVisible("exec_inst", false);
+  mpi.SetReadOnly("exec_inst", true);
+  populate_bid_ask(mpi, "MATCH Now MF MPI",
+    DefaultDestinations::MATNMF(), TimeInForce::Type::DAY, order_types);
   return order_types;
 }
 
@@ -751,7 +784,8 @@ std::shared_ptr<KeyBindingsModel> Spire::load_key_bindings_profile(
     RegisterSpireTypes(Store(registry));
     auto receiver = JsonReceiver<SharedBuffer>(Ref(registry));
     receiver.SetSource(Ref(buffer));
-    receiver.Shuttle(*key_bindings);
+    auto profile = KeyBindingsProfile(KEY_BINDINGS_VERSION, &*key_bindings);
+    receiver.Shuttle(profile);
   } catch(const std::exception&) {
     throw std::runtime_error("Unable to load key bindings.");
   }
@@ -767,7 +801,8 @@ void Spire::save_key_bindings_profile(
     auto sender = JsonSender<SharedBuffer>(Ref(registry));
     auto buffer = SharedBuffer();
     sender.SetSink(Ref(buffer));
-    sender.Shuttle(key_bindings);
+    auto profile = KeyBindingsProfile(KEY_BINDINGS_VERSION, &key_bindings);
+    sender.Shuttle(profile);
     auto writer = BasicOStreamWriter<std::ofstream>(Initialize(file_path));
     writer.Write(buffer);
   } catch(const std::exception&) {

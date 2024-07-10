@@ -5,7 +5,10 @@
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
 #include <QApplication>
+#include <QDesktopWidget>
 #include <QMessageBox>
+#include <QScreen>
+#include <QWindow>
 #include "Spire/LegacyUI/PersistentWindow.hpp"
 #include "Spire/LegacyUI/UISerialization.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
@@ -75,4 +78,79 @@ void WindowSettings::Save(const UserProfile& userProfile) {
 
 std::string WindowSettings::GetName() const {
   return "";
+}
+
+void Spire::LegacyUI::restore_geometry(
+    QWidget& widget, const QByteArray& geometry) {
+  if(geometry.size() < 4) {
+    return;
+  }
+  auto stream = QDataStream(geometry);
+  stream.setVersion(QDataStream::Qt_4_0);
+  static const auto MAGIC_NUMBER = quint32(0x1D9D0CB);
+  auto stored_magic_number = quint32();
+  stream >> stored_magic_number;
+  if(stored_magic_number != MAGIC_NUMBER) {
+    return;
+  }
+  static const auto CURRENT_MAJOR_VERSION = quint16(3);
+  auto major_version = quint16(0);
+  auto minor_version = quint16(0);
+  stream >> major_version >> minor_version;
+  if(major_version > CURRENT_MAJOR_VERSION) {
+    return;
+  }
+  auto restored_frame_geometry = QRect();
+  auto restored_geometry = QRect();
+  auto restored_normal_geometry = QRect();
+  auto restored_screen_number = qint32();
+  auto is_maximized = quint8();
+  auto is_full_screen = quint8();
+  auto restored_screen_width = qint32();
+  stream >> restored_frame_geometry >> restored_normal_geometry >>
+    restored_screen_number >> is_maximized >> is_full_screen;
+  if(major_version > 1) {
+    stream >> restored_screen_width;
+  }
+  if(major_version > 2) {
+    stream >> restored_geometry;
+  }
+  if(restored_screen_number >= QApplication::screens().count()) {
+    restored_screen_number =
+      QApplication::screens().indexOf(QApplication::primaryScreen());
+  }
+  auto restored_screen = QApplication::screens()[restored_screen_number];
+  auto screen_width = qreal(restored_screen->geometry().width());
+  auto width_factor = screen_width / qreal(restored_screen_width);
+  static const auto FRAME_HEIGHT = 20;
+  auto available_geometry = restored_screen->availableGeometry();
+  auto window_state =
+    widget.windowState() & ~(Qt::WindowMaximized | Qt::WindowFullScreen);
+  if(is_maximized) {
+    window_state |= Qt::WindowMaximized;
+  }
+  if(is_full_screen) {
+    window_state |= Qt::WindowFullScreen;
+  }
+  widget.setWindowState(window_state);
+  auto new_geometry = [&] {
+    if(major_version > 2) {
+      return restored_geometry;
+    } else {
+      return restored_normal_geometry;
+    }
+  }();
+  new_geometry = QRect(new_geometry.x() * width_factor,
+    new_geometry.y() * width_factor, new_geometry.width() * width_factor,
+    new_geometry.height() * width_factor);
+  widget.setGeometry(new_geometry);
+  if(widget.isWindow()) {
+    auto top_region = widget.frameGeometry();
+    top_region.setHeight(20);
+    auto desktop = QApplication::desktop();
+    auto screen_geometry = desktop->screenGeometry(&widget);
+    if(!screen_geometry.intersects(top_region)) {
+      widget.move(0, 0);
+    }
+  }
 }

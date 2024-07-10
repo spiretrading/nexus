@@ -12,10 +12,6 @@ namespace {
   struct QuantityToDecimalModel : ToDecimalModel<Quantity> {
     using ToDecimalModel<Quantity>::ToDecimalModel;
 
-    optional<Decimal> get_minimum() const override {
-      return Decimal(0);
-    }
-
     optional<Decimal> get_increment() const override {
       return Decimal("0.000001");
     }

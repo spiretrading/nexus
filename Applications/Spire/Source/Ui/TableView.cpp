@@ -1,4 +1,5 @@
 #include "Spire/Ui/TableView.hpp"
+#include <QEvent>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/FilteredTableModel.hpp"
@@ -44,20 +45,21 @@ namespace {
   }
 }
 
-QWidget* TableView::default_view_builder(
+QWidget* TableView::default_item_builder(
     const std::shared_ptr<TableModel>& table, int row, int column) {
-  return TableBody::default_view_builder(table, row, column);
+  return TableBody::default_item_builder(table, row, column);
 }
 
 TableView::TableView(
     std::shared_ptr<TableModel> table, std::shared_ptr<HeaderModel> header,
     std::shared_ptr<TableFilter> filter, std::shared_ptr<CurrentModel> current,
-    std::shared_ptr<SelectionModel> selection, ViewBuilder view_builder,
-    Comparator comparator, QWidget* parent)
+    std::shared_ptr<SelectionModel> selection,
+    TableViewItemBuilder item_builder, Comparator comparator, QWidget* parent)
     : QWidget(parent),
       m_table(std::move(table)),
       m_header(std::move(header)),
       m_filter(std::move(filter)),
+      m_current_item(nullptr),
       m_horizontal_spacing(0),
       m_vertical_spacing(0) {
   for(auto i = 0; i != m_header->get_size(); ++i) {
@@ -73,9 +75,7 @@ TableView::TableView(
   m_header_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   m_header_view->setContentsMargins({scale_width(1), 0, 0, 0});
   link(*this, *m_header_view);
-  auto box_body = new QWidget();
-  enclose(*box_body, *m_header_view);
-  auto box = new Box(box_body);
+  auto box = new Box(m_header_view);
   box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
   update_style(*box, [] (auto& style) {
     style.get(Any()).set(BackgroundColor(QColor(0xFFFFFF)));
@@ -91,17 +91,18 @@ TableView::TableView(
       m_filtered_table, make_column_order(*m_header));
   }
   m_body = new TableBody(m_sorted_table, std::move(current),
-    std::move(selection), m_header_view->get_widths(), std::move(view_builder));
-  m_body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    std::move(selection), m_header_view->get_widths(), std::move(item_builder));
+  m_body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::MinimumExpanding);
+  m_body->installEventFilter(this);
   link(*this, *m_body);
   auto scroll_box_body = new QWidget();
   enclose(*scroll_box_body, *m_body);
   m_scroll_box = new ScrollBox(scroll_box_body);
   m_scroll_box->set(ScrollBox::DisplayPolicy::ON_ENGAGE);
+  m_scroll_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto layout = make_vbox_layout(this);
   layout->addWidget(box);
   layout->addWidget(m_scroll_box);
-  layout->addStretch(1);
   m_header_view->connect_sort_signal(
     std::bind_front(&TableView::on_order_update, this));
   m_header_view->connect_filter_signal(
@@ -146,8 +147,24 @@ connection TableView::connect_sort_signal(
   return m_sort_signal.connect(slot);
 }
 
+bool TableView::eventFilter(QObject* watched, QEvent* event) {
+  if(watched == m_body) {
+    if(event->type() == QEvent::Resize || event->type() == QEvent::Show) {
+      auto result = QWidget::eventFilter(watched, event);
+      update_scroll_sizes();
+      return result;
+    }
+  }
+  return QWidget::eventFilter(watched, event);
+}
+
 bool TableView::is_filtered(const TableModel& model, int row) {
   return m_filter->is_filtered(model, row);
+}
+
+void TableView::update_scroll_sizes() {
+  m_scroll_box->get_vertical_scroll_bar().set_line_size(
+    m_body->estimate_scroll_line_height());
 }
 
 void TableView::on_order_update(int index, TableHeaderItem::Order order) {
@@ -189,9 +206,18 @@ void TableView::on_filter(int column, TableFilter::Filter filter) {
 
 void TableView::on_current(const optional<Index>& current) {
   if(!current) {
+    QObject::disconnect(m_current_item_connection);
+    m_current_item = nullptr;
     return;
   }
-  if(auto item = m_body->get_item(*current)) {
+  if(auto item = m_body->find_item(*current)) {
+    if(item == m_current_item) {
+      return;
+    }
+    QObject::disconnect(m_current_item_connection);
+    m_current_item = item;
+    m_current_item_connection = connect(m_current_item, &QObject::destroyed,
+      this, [&] (auto object) { m_current_item = nullptr; });
     auto& horizontal_scroll_bar = m_scroll_box->get_horizontal_scroll_bar();
     auto old_x = horizontal_scroll_bar.get_position();
     auto& vertical_scroll_bar = m_scroll_box->get_vertical_scroll_bar();
@@ -231,6 +257,7 @@ void TableView::on_body_style() {
         });
       });
   }
+  update_scroll_sizes();
   update();
 }
 
@@ -245,7 +272,7 @@ TableViewBuilder::TableViewBuilder(
       std::make_shared<TableEmptySelectionModel>(),
       std::make_shared<ListSingleSelectionModel>(),
       std::make_shared<ListEmptySelectionModel>())),
-    m_view_builder(&TableView::default_view_builder) {}
+    m_item_builder(&TableView::default_item_builder) {}
 
 TableViewBuilder& TableViewBuilder::set_header(
     const std::shared_ptr<TableView::HeaderModel>& header) {
@@ -264,15 +291,28 @@ TableViewBuilder& TableViewBuilder::add_header_item(
 }
 
 TableViewBuilder& TableViewBuilder::add_header_item(
-    QString name, QString short_name, TableFilter::Filter filter) {
-  m_header->push(TableHeaderItem::Model(std::move(name), std::move(short_name),
-    TableHeaderItem::Order::NONE, filter));
-  return *this;
+    QString name, TableHeaderItem::Order order) {
+  return add_header_item(
+    std::move(name), QString(), order, TableFilter::Filter::NONE);
 }
 
 TableViewBuilder& TableViewBuilder::add_header_item(
     QString name, TableFilter::Filter filter) {
   return add_header_item(std::move(name), QString(), filter);
+}
+
+TableViewBuilder& TableViewBuilder::add_header_item(
+    QString name, QString short_name, TableFilter::Filter filter) {
+  return add_header_item(std::move(name), std::move(short_name),
+    TableHeaderItem::Order::NONE, filter);
+}
+
+TableViewBuilder& TableViewBuilder::add_header_item(
+    QString name, QString short_name, TableHeaderItem::Order order,
+    TableFilter::Filter filter) {
+  m_header->push(TableHeaderItem::Model(std::move(name), std::move(short_name),
+    order, filter));
+  return *this;
 }
 
 TableViewBuilder& TableViewBuilder::set_filter(
@@ -304,9 +344,9 @@ TableViewBuilder& TableViewBuilder::set_selection(
   return *this;
 }
 
-TableViewBuilder& TableViewBuilder::set_view_builder(
-    const TableView::ViewBuilder& view_builder) {
-  m_view_builder = view_builder;
+TableViewBuilder& TableViewBuilder::set_item_builder(
+    const TableViewItemBuilder& item_builder) {
+  m_item_builder = item_builder;
   return *this;
 }
 
@@ -318,5 +358,5 @@ TableViewBuilder& TableViewBuilder::set_comparator(
 
 TableView* TableViewBuilder::make() const {
   return new TableView(m_table, m_header, m_filter, m_current, m_selection,
-    m_view_builder, m_comparator, m_parent);
+    m_item_builder, m_comparator, m_parent);
 }

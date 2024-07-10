@@ -62,7 +62,7 @@ namespace {
 CancelKeyBindingsModel::CancelKeyBindingsModel() {
   for(auto i = 0; i < OPERATION_COUNT; ++i) {
     auto operation = static_cast<Operation>(i);
-    m_bindings[i] = make_validated_value_model<QKeySequence>(
+    m_bindings[i] = make_validated_value_model(
       std::bind_front(&CancelKeyBindingsModel::on_validate, this, operation),
       std::make_shared<LocalKeySequenceValueModel>());
     m_bindings[i]->connect_update_signal(

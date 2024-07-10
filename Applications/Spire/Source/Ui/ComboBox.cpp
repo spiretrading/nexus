@@ -18,6 +18,45 @@ using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::Styles;
 
+namespace {
+  struct ComboBoxTextModel : TextModel {
+    std::shared_ptr<ComboBox::CurrentModel> m_current;
+    scoped_connection m_connection;
+    LocalTextModel m_value;
+
+    ComboBoxTextModel(std::shared_ptr<ComboBox::CurrentModel> current)
+        : m_current(current),
+          m_value(to_text(m_current->get())) {
+      m_connection = m_current->connect_update_signal(
+        std::bind_front(&ComboBoxTextModel::on_update, this));
+    }
+
+    const Type& get() const {
+      return m_value.get();
+    }
+
+    QValidator::State test(const Type& value) const {
+      return m_value.test(value);
+    }
+
+    QValidator::State set(const Type& value) {
+      return m_value.set(value);
+    }
+
+    connection connect_update_signal(
+        const typename UpdateSignal::slot_type& slot) const {
+      return m_value.connect_update_signal(slot);
+    }
+
+    void on_update(const std::any& current) {
+      auto text = to_text(current);
+      if(m_value.get() != text) {
+        m_value.set(text);
+      }
+    }
+  };
+}
+
 ComboBox::DeferredData::DeferredData(ComboBox& box)
   : m_submission(box.m_current->get()),
     m_submission_text(to_text(m_submission)),
@@ -26,35 +65,36 @@ ComboBox::DeferredData::DeferredData(ComboBox& box)
     m_focus_observer(box),
     m_key_observer(*box.m_input_box),
     m_matches(std::make_shared<ArrayListModel<std::any>>()),
+    m_drop_down_list(nullptr),
     m_completion_tag(0),
     m_has_autocomplete_selection(false),
     m_current_connection(box.m_current->connect_update_signal(
       std::bind_front(&ComboBox::on_current, &box))) {}
 
 ComboBox::ComboBox(std::shared_ptr<QueryModel> query_model, QWidget* parent)
-  : ComboBox(std::move(query_model), &ListView::default_view_builder, parent) {}
+  : ComboBox(std::move(query_model), &ListView::default_item_builder, parent) {}
 
 ComboBox::ComboBox(std::shared_ptr<QueryModel> query_model,
-  ListViewBuilder<> view_builder, QWidget* parent)
+  ListViewItemBuilder<> item_builder, QWidget* parent)
   : ComboBox(std::move(query_model),
-      std::make_shared<LocalValueModel<std::any>>(),
-      std::move(view_builder), parent) {}
+      std::make_shared<LocalValueModel<std::any>>(), std::move(item_builder),
+      parent) {}
 
 ComboBox::ComboBox(std::shared_ptr<QueryModel> query_model,
-  std::shared_ptr<CurrentModel> current, ListViewBuilder<> view_builder,
+  std::shared_ptr<CurrentModel> current, ListViewItemBuilder<> item_builder,
   QWidget* parent)
-  : ComboBox(std::move(query_model), std::move(current),
-      new AnyInputBox(*(new TextBox(to_text(current->get())))),
-      std::move(view_builder), parent) {}
+  : ComboBox(std::move(query_model), current, new AnyInputBox(
+      *(new TextBox(std::make_shared<ComboBoxTextModel>(current)))),
+      std::move(item_builder), parent) {}
 
 ComboBox::ComboBox(std::shared_ptr<QueryModel> query_model,
     std::shared_ptr<CurrentModel> current, AnyInputBox* input_box,
-    ListViewBuilder<> view_builder, QWidget* parent)
+    ListViewItemBuilder<> item_builder, QWidget* parent)
     : QWidget(parent),
       m_query_model(std::move(query_model)),
       m_current(std::move(current)),
       m_input_box(input_box),
-      m_view_builder(std::move(view_builder)) {
+      m_item_builder(std::move(item_builder)) {
   setFocusProxy(m_input_box);
   proxy_style(*this, *m_input_box);
   enclose(*this, *m_input_box);
@@ -103,10 +143,7 @@ bool ComboBox::eventFilter(QObject* watched, QEvent* event) {
     }
   } else if(watched == m_input_box) {
     if(event->type() == QEvent::Show) {
-      m_data->m_input_focus_proxy = find_focus_proxy(*m_input_box);
-      if(m_data->m_input_focus_proxy) {
-        m_data->m_input_focus_proxy->installEventFilter(this);
-      }
+      update_focus_proxy();
     }
   } else if(watched == m_data->m_input_focus_proxy) {
     if(event->type() == QEvent::FocusOut &&
@@ -181,6 +218,19 @@ void ComboBox::showEvent(QShowEvent* event) {
   QWidget::showEvent(event);
 }
 
+void ComboBox::update_focus_proxy() {
+  auto proxy = find_focus_proxy(*m_input_box);
+  if(proxy != m_data->m_input_focus_proxy) {
+    if(m_data->m_input_focus_proxy) {
+      m_data->m_input_focus_proxy->removeEventFilter(this);
+    }
+    m_data->m_input_focus_proxy = proxy;
+    if(proxy) {
+      proxy->installEventFilter(this);
+    }
+  }
+}
+
 void ComboBox::initialize_deferred_data() const {
   if(m_data) {
     return;
@@ -198,7 +248,7 @@ void ComboBox::initialize_deferred_data() const {
       std::bind_front(&ComboBox::on_highlight, self));
   m_data->m_list_view =
     new ListView(std::static_pointer_cast<AnyListModel>(m_data->m_matches),
-      std::move(m_view_builder));
+      std::move(m_item_builder));
   m_data->m_list_view->setFocusPolicy(Qt::NoFocus);
   m_data->m_drop_down_list = new DropDownList(*m_data->m_list_view, *self);
   m_data->m_drop_down_list->setFocusPolicy(Qt::NoFocus);
@@ -207,6 +257,7 @@ void ComboBox::initialize_deferred_data() const {
   panel->setWindowFlags(Qt::Popup | (panel->windowFlags() & ~Qt::Tool));
   panel->installEventFilter(self);
   m_data->m_drop_down_list->installEventFilter(self);
+  self->update_focus_proxy();
   m_data->m_drop_down_current_connection = m_data->m_drop_down_list->
     get_list_view().get_current()->connect_update_signal(
       std::bind_front(&ComboBox::on_drop_down_current, self));
@@ -308,9 +359,12 @@ void ComboBox::submit(const QString& query, bool is_passive) {
 }
 
 void ComboBox::on_current(const std::any& current) {
-  if(!is_equal(current, m_query_model->parse(
-      any_cast<QString>(m_input_box->get_current()->get())))) {
-    m_input_box->get_current()->set(to_text(current));
+  auto input = any_cast<QString>(m_input_box->get_current()->get());
+  if(!is_equal(current, m_query_model->parse(input))) {
+    auto text = to_text(current);
+    if(input != text) {
+      m_input_box->get_current()->set(text);
+    }
   }
 }
 
@@ -331,8 +385,9 @@ void ComboBox::on_input(const AnyRef& current) {
       &ComboBox::on_query, this, ++m_data->m_completion_tag, true));
     auto value = m_query_model->parse(query);
     if(value.has_value()) {
-      auto current_blocker =
-        shared_connection_block(m_data->m_current_connection);
+      auto blocker = std::array{
+        shared_connection_block(m_data->m_input_connection),
+        shared_connection_block(m_data->m_current_connection)};
       m_current->set(value);
     }
   }
@@ -477,7 +532,7 @@ void LocalComboBoxQueryModel::add(const std::any& value) {
 }
 
 void LocalComboBoxQueryModel::add(const QString& id, const std::any& value) {
-  m_values[id.data()] = value;
+  m_values[id.toLower().data()] = value;
 }
 
 std::any LocalComboBoxQueryModel::parse(const QString& query) {

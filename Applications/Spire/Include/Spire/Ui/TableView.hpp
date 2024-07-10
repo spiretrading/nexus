@@ -18,8 +18,6 @@ namespace Spire {
       /** The model representing the header. */
       using HeaderModel = ListModel<TableHeaderItem::Model>;
 
-      using ViewBuilder = TableBody::ViewBuilder;
-
       using Index = TableBody::Index;
 
       using CurrentModel = TableBody::CurrentModel;
@@ -31,10 +29,10 @@ namespace Spire {
       using Comparator = SortedTableModel::Comparator;
 
       /**
-       * The default view builder which uses a label styled TextBox to display
+       * The default item builder which uses a label styled TextBox to display
        * the text representation of its value.
        */
-      static QWidget* default_view_builder(
+      static QWidget* default_item_builder(
         const std::shared_ptr<TableModel>& table, int row, int column);
 
       /**
@@ -44,7 +42,7 @@ namespace Spire {
        * @param filter The filter to apply.
        * @param current The current value.
        * @param selection The selection.
-       * @param view_builder The ViewBuilder to use.
+       * @param item_builder The TableViewItemBuilder to use.
        * @param comparator A comparison function.
        * @param parent The parent widget.
        */
@@ -52,8 +50,9 @@ namespace Spire {
         std::shared_ptr<HeaderModel> header,
         std::shared_ptr<TableFilter> filter,
         std::shared_ptr<CurrentModel> current,
-        std::shared_ptr<SelectionModel> selection, ViewBuilder view_builder,
-        Comparator comparator, QWidget* parent = nullptr);
+        std::shared_ptr<SelectionModel> selection,
+        TableViewItemBuilder item_builder, Comparator comparator,
+        QWidget* parent = nullptr);
 
       /** Returns the table of values displayed. */
       const std::shared_ptr<TableModel>& get_table() const;
@@ -77,6 +76,9 @@ namespace Spire {
       boost::signals2::connection connect_sort_signal(
         const SortSignal::slot_type& slot) const;
 
+    protected:
+      bool eventFilter(QObject* watched, QEvent* event) override;
+
     private:
       mutable SortSignal m_sort_signal;
       std::shared_ptr<TableModel> m_table;
@@ -86,6 +88,8 @@ namespace Spire {
       std::shared_ptr<TableFilter> m_filter;
       TableHeader* m_header_view;
       TableBody* m_body;
+      TableItem* m_current_item;
+      QMetaObject::Connection m_current_item_connection;
       int m_horizontal_spacing;
       int m_vertical_spacing;
       ScrollBox* m_scroll_box;
@@ -94,6 +98,7 @@ namespace Spire {
       boost::signals2::scoped_connection m_body_style_connection;
 
       bool is_filtered(const TableModel& model, int row);
+      void update_scroll_sizes();
       void on_order_update(int index, TableHeaderItem::Order order);
       void on_filter_clicked(int index);
       void on_filter(int column, TableFilter::Filter filter);
@@ -139,6 +144,22 @@ namespace Spire {
       /**
        * Adds a header item.
        * @param name The name of the column.
+       * @param order The column's sort order.
+       */
+      TableViewBuilder&
+        add_header_item(QString name, TableHeaderItem::Order order);
+
+      /**
+       * Adds a header item.
+       * @param name The name of the column.
+       * @param filter How the column is filtered.
+       */
+      TableViewBuilder&
+        add_header_item(QString name, TableFilter::Filter filter);
+
+      /**
+       * Adds a header item.
+       * @param name The name of the column.
        * @param short_name The short form name of the column.
        * @param filter How the column is filtered.
        */
@@ -148,10 +169,12 @@ namespace Spire {
       /**
        * Adds a header item.
        * @param name The name of the column.
+       * @param short_name The short form name of the column.
+       * @param order The column's sort order.
        * @param filter How the column is filtered.
        */
-      TableViewBuilder& add_header_item(
-        QString name, TableFilter::Filter filter);
+      TableViewBuilder& add_header_item(QString name, QString short_name,
+        TableHeaderItem::Order order, TableFilter::Filter filter);
 
       /** Sets the filter to apply. */
       TableViewBuilder& set_filter(const std::shared_ptr<TableFilter>& filter);
@@ -167,9 +190,9 @@ namespace Spire {
       TableViewBuilder& set_selection(
         const std::shared_ptr<TableView::SelectionModel>& selection);
 
-      /** Sets the ViewBuilder to use. */
-      TableViewBuilder& set_view_builder(
-        const TableView::ViewBuilder& view_builder);
+      /** Sets the TableViewItemBuilder to use. */
+      TableViewBuilder& set_item_builder(
+        const TableViewItemBuilder& item_builder);
 
       /** Sets the Comparator to use. */
       TableViewBuilder& set_comparator(TableView::Comparator comparator);
@@ -184,7 +207,7 @@ namespace Spire {
       std::shared_ptr<TableFilter> m_filter;
       std::shared_ptr<TableView::CurrentModel> m_current;
       std::shared_ptr<TableView::SelectionModel> m_selection;
-      TableView::ViewBuilder m_view_builder;
+      TableViewItemBuilder m_item_builder;
       TableView::Comparator m_comparator;
   };
 }

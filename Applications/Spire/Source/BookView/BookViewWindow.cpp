@@ -388,7 +388,8 @@ void BookViewWindow::HandleSecurityInputEvent(QKeyEvent* event) {
 
 void BookViewWindow::HandleKeyBindingEvent(
     const OrderTaskArguments& arguments) {
-  auto taskNode = PrepareTaskNode(*make_canvas_node(arguments));
+  auto taskNode = PrepareTaskNode(
+    *make_canvas_node(arguments, m_userProfile->GetAdditionalTagDatabase()));
   m_taskEntryWidget = new CondensedCanvasWidget(
     arguments.m_name.toStdString(), Ref(*m_userProfile), this);
   auto coordinate = CanvasNodeModel::Coordinate(0, 0);

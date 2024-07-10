@@ -19,6 +19,25 @@ const std::shared_ptr<TableCurrentController::CurrentModel>&
   return m_current;
 }
 
+const optional<TableCurrentController::Index>&
+    TableCurrentController::get() const {
+  return m_last_current;
+}
+
+optional<int> TableCurrentController::get_row() const {
+  if(m_last_current) {
+    return m_last_current->m_row;
+  }
+  return none;
+}
+
+optional<int> TableCurrentController::get_column() const {
+  if(m_last_current) {
+    return m_last_current->m_column;
+  }
+  return none;
+}
+
 int TableCurrentController::get_row_size() const {
   return m_row_size;
 }
@@ -31,9 +50,9 @@ void TableCurrentController::add_row(int index) {
   ++m_row_size;
   if(m_current->get() && m_current->get()->m_row >= index &&
       m_current->get()->m_row < m_row_size - 1) {
-    auto blocker = shared_connection_block(m_connection);
     m_last_current =
       Index(m_current->get()->m_row + 1, m_current->get()->m_column);
+    auto blocker = shared_connection_block(m_connection);
     m_current->set(m_last_current);
   }
 }
@@ -55,9 +74,9 @@ void TableCurrentController::remove_row(int index) {
         m_current->set(Index(index, m_current->get()->m_column));
       }
     } else if(m_current->get()->m_row > index) {
-      auto blocker = shared_connection_block(m_connection);
       m_last_current =
         Index(m_current->get()->m_row - 1, m_current->get()->m_column);
+      auto blocker = shared_connection_block(m_connection);
       m_current->set(m_last_current);
     }
   }

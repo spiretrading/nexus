@@ -1,17 +1,17 @@
 #include <doctest/doctest.h>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/SpireTester/SpireTester.hpp"
-#include "Spire/Ui/RecycledListViewBuilder.hpp"
+#include "Spire/Ui/RecycledListViewItemBuilder.hpp"
 
 using namespace Spire;
 
 namespace {
-  struct TestViewBuilder {
-    QWidget* mount(const std::shared_ptr<ListModel<int>>& model, int index) {
+  struct TestItemBuilder {
+    QWidget* mount(const std::shared_ptr<ListModel<int>>& list, int index) {
       return new QWidget();
     }
 
-    void reset(QWidget& widget, const std::shared_ptr<ListModel<int>>& model,
+    void reset(QWidget& widget, const std::shared_ptr<ListModel<int>>& list,
       int index) {}
 
     void unmount(QWidget* widget) {
@@ -20,10 +20,10 @@ namespace {
   };
 }
 
-TEST_SUITE("RecycledListViewBuilder") {
+TEST_SUITE("RecycledListViewItemBuilder") {
   TEST_CASE("recycle") {
     run_test([] {
-      auto builder = RecycledListViewBuilder(TestViewBuilder());
+      auto builder = RecycledListViewItemBuilder(TestItemBuilder());
       auto model = std::make_shared<ArrayListModel<int>>();
       model->push(1);
       auto w1 = builder.mount(model, 0);

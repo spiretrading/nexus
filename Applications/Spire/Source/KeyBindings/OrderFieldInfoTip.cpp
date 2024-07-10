@@ -163,7 +163,7 @@ namespace {
 
 OrderFieldInfoTip::OrderFieldInfoTip(Model model, QWidget* parent)
     : QWidget(parent) {
-  setFixedWidth(scale_width(280));
+  setFixedWidth(scale_width(480));
   auto layout = make_vbox_layout(this);
   layout->addWidget(make_scroll_box(model));
   if(!model.m_prerequisites.empty()) {

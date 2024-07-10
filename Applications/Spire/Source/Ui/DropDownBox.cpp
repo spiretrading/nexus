@@ -63,31 +63,54 @@ namespace {
 }
 
 DropDownBox::DropDownBox(std::shared_ptr<AnyListModel> list, QWidget* parent)
-  : DropDownBox(std::move(list), ListView::default_view_builder, parent) {}
+  : DropDownBox(std::move(list), ListView::default_item_builder, parent) {}
 
 DropDownBox::DropDownBox(std::shared_ptr<AnyListModel> list,
-  ListViewBuilder<> view_builder, QWidget* parent)
+  ListViewItemBuilder<> item_builder, QWidget* parent)
   : DropDownBox(std::move(list),
       std::make_shared<LocalValueModel<optional<int>>>(),
       std::make_shared<ListSingleSelectionModel>(),
-      std::move(view_builder), parent) {}
+      std::move(item_builder), parent) {}
 
 DropDownBox::DropDownBox(std::shared_ptr<AnyListModel> list,
-  std::shared_ptr<CurrentModel> current, ListViewBuilder<> view_builder,
+  ListViewItemBuilder<> item_builder, ToText to_text, QWidget* parent)
+  : DropDownBox(std::move(list),
+      std::make_shared<LocalValueModel<optional<int>>>(),
+      std::make_shared<ListSingleSelectionModel>(),
+      std::move(item_builder), std::move(to_text), parent) {}
+
+DropDownBox::DropDownBox(std::shared_ptr<AnyListModel> list,
+  std::shared_ptr<CurrentModel> current, ListViewItemBuilder<> item_builder,
   QWidget* parent)
   : DropDownBox(std::move(list), std::move(current),
-      std::make_shared<ListSingleSelectionModel>(), std::move(view_builder),
+      std::make_shared<ListSingleSelectionModel>(), std::move(item_builder),
       parent) {}
 
 DropDownBox::DropDownBox(std::shared_ptr<AnyListModel> list,
+  std::shared_ptr<CurrentModel> current, ListViewItemBuilder<> item_builder,
+  ToText to_text, QWidget* parent)
+  : DropDownBox(std::move(list), std::move(current),
+      std::make_shared<ListSingleSelectionModel>(), std::move(item_builder),
+      std::move(to_text), parent) {}
+
+DropDownBox::DropDownBox(std::shared_ptr<AnyListModel> list,
+  std::shared_ptr<CurrentModel> current,
+  std::shared_ptr<SelectionModel> selection,
+  ListViewItemBuilder<> item_builder, QWidget* parent)
+  : DropDownBox(std::move(list), std::move(current), std::move(selection),
+      std::move(item_builder),
+      [] (const std::any& value) { return to_text(value); }, parent) {}
+
+DropDownBox::DropDownBox(std::shared_ptr<AnyListModel> list,
     std::shared_ptr<CurrentModel> current,
-    std::shared_ptr<SelectionModel> selection, ListViewBuilder<> view_builder,
-    QWidget* parent)
+    std::shared_ptr<SelectionModel> selection,
+    ListViewItemBuilder<> item_builder, ToText to_text, QWidget* parent)
     : QWidget(parent),
       m_list(std::move(list)),
       m_current(std::move(current)),
       m_selection(std::move(selection)),
-      m_view_builder(std::move(view_builder)),
+      m_item_builder(std::move(item_builder)),
+      m_to_text(std::move(to_text)),
       m_timer(this),
       m_is_read_only(false),
       m_is_modified(false),
@@ -190,6 +213,11 @@ bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
           key_event.key() == Qt::Key_Return) {
         return true;
       }
+    } else if(event->type() == QEvent::FocusIn) {
+      m_submission = m_current->get();
+      if(m_submission) {
+        m_is_modified = false;
+      }
     } else if(event->type() == QEvent::FocusOut) {
       if(!is_read_only() && is_drop_down_list_visible() && !has_focus(*this)) {
         submit();
@@ -206,6 +234,11 @@ bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
         auto key = static_cast<QKeyEvent*>(event)->key();
         if(key == Qt::Key_Escape) {
           revert_current();
+        } else if(key == Qt::Key_Enter || key == Qt::Key_Return) {
+          m_is_modified = true;
+          hide_drop_down_list();
+          submit();
+          return true;
         }
       }
     } else if(event->type() == QEvent::MouseMove) {
@@ -261,11 +294,8 @@ bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
       auto& close_event = static_cast<QCloseEvent&>(*event);
       close_event.ignore();
       hide_drop_down_list();
-    } else if(event->type() == QEvent::Show) {
-      match(*this, PopUp());
     } else if(event->type() == QEvent::Hide) {
       leave_hovered_item();
-      unmatch(*this, PopUp());
     } else if(event->type() == QEvent::MouseButtonPress) {
       auto& mouse_event = *static_cast<QMouseEvent*>(event);
       if(rect().contains(mapFromGlobal(mouse_event.globalPos()))) {
@@ -290,15 +320,12 @@ void DropDownBox::keyPressEvent(QKeyEvent* event) {
     QWidget::keyPressEvent(event);
     return;
   }
-  switch(event->key()) {
-    case Qt::Key_Escape:
-      revert_current();
-      break;
-    default:
-      if(!is_read_only()) {
-        make_drop_down_list();
-        QCoreApplication::sendEvent(&m_drop_down_list->get_list_view(), event);
-      }
+  if(event->key() == Qt::Key_Escape) {
+    revert_current();
+  } else if(!is_read_only() &&
+      (event->key() != Qt::Key_Space || is_drop_down_list_visible())) {
+    make_drop_down_list();
+    QCoreApplication::sendEvent(&m_drop_down_list->get_list_view(), event);
   }
   QWidget::keyPressEvent(event);
 }
@@ -353,7 +380,7 @@ void DropDownBox::leave_hovered_item() {
 }
 
 void DropDownBox::revert_current() {
-  if(m_submission != m_current->get()) {
+  if(m_submission && m_submission != m_current->get()) {
     m_current->set(m_submission);
   }
 }
@@ -366,7 +393,24 @@ void DropDownBox::make_drop_down_list() {
   if(m_drop_down_list) {
     return;
   }
-  auto list_view = new ListView(m_list, m_current, m_selection, m_view_builder);
+  if(m_selection->get_size() > 0) {
+    m_selection->transact([&] {
+      auto has_current = [&] {
+        if(!m_current->get()) {
+          return false;
+        }
+        auto i = std::find(
+          m_selection->begin(), m_selection->end(), *m_current->get());
+        return i != m_selection->end();
+      }();
+      clear(*m_selection);
+      if(has_current) {
+        m_selection->push(*m_current->get());
+      }
+    });
+  }
+  auto list_view =
+    new ListView(m_list, m_current, m_selection, m_item_builder, m_to_text);
   m_drop_down_list = new DropDownList(*list_view, *this);
   m_drop_down_list->installEventFilter(this);
   auto window = m_drop_down_list->window();
@@ -379,11 +423,13 @@ void DropDownBox::make_drop_down_list() {
 void DropDownBox::show_drop_down_list() {
   make_drop_down_list();
   m_drop_down_list->window()->show();
+  match(*this, PopUp());
 }
 
 void DropDownBox::hide_drop_down_list() {
   m_drop_down_list->hide();
   delete_later(m_drop_down_list);
+  unmatch(*this, PopUp());
 }
 
 void DropDownBox::submit() {
@@ -411,7 +457,7 @@ void DropDownBox::on_button_press_end(PressObserver::Reason reason) {
 void DropDownBox::on_current(const optional<int>& current) {
   auto text = [&] {
     if(current) {
-      return to_text(m_list->get(*current));
+      return m_to_text(m_list->get(*current));
     }
     return QString();
   }();

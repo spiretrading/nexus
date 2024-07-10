@@ -26,7 +26,7 @@ namespace Spire {
        * Pushes an operation to a model transaction.
        * @param operation The operation to push.
        */
-      void push(typename Type::Operation&& operation);
+      void push(const typename Type::Operation& operation);
 
       /**
        * Takes a callable function and invokes it. All operations performed on
@@ -75,7 +75,7 @@ namespace Spire {
   }
 
   template<typename T>
-  void ModelTransactionLog<T>::push(typename Type::Operation&& operation) {
+  void ModelTransactionLog<T>::push(const typename Type::Operation& operation) {
     if(operation.type() == typeid(typename Type::StartTransaction())) {
       start();
       return;

@@ -17,7 +17,7 @@ namespace Spire {
 
       /** 
        * Constructs a TranslatedTableModel from a TableModel.
-       * @param source The model to translate.
+       * @param source The table to translate.
        */
       explicit TranslatedTableModel(std::shared_ptr<TableModel> source);
 

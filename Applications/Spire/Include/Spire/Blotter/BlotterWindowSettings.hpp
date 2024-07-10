@@ -5,9 +5,9 @@
 #include "Spire/Blotter/Blotter.hpp"
 #include "Spire/Blotter/OpenPositionsWidget.hpp"
 #include "Spire/Blotter/OrderLogWidget.hpp"
-#include "Spire/Spire/Spire.hpp"
-#include "Spire/LegacyUI/ShuttleQtTypes.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
+#include "Spire/Spire/ShuttleQtTypes.hpp"
+#include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
 

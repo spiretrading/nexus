@@ -5,6 +5,7 @@
 #include <vector>
 #include <Beam/Pointers/Out.hpp>
 #include <Beam/Pointers/Ref.hpp>
+#include <QByteArray>
 #include "Spire/LegacyUI/LegacyUI.hpp"
 #include "Spire/Spire/Spire.hpp"
 
@@ -48,6 +49,15 @@ namespace Spire::LegacyUI {
       virtual void Apply(Beam::Ref<UserProfile> userProfile,
         Beam::Out<QWidget> widget) const = 0;
   };
+
+  /**
+   * Restores a QWidget's geometry stored in a QByteArray. This mostly
+   * reimplements Qt's QWidget::restoreGeometry() but also handles changes in
+   * DPI and resolution.
+   * @param widget The widget whose geometry is to be restored.
+   * @param geometry The byte array containing the geometry.
+   */
+  void restore_geometry(QWidget& widget, const QByteArray& geometry);
 }
 
 #endif

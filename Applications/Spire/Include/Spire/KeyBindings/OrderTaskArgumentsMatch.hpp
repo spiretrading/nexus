@@ -34,15 +34,14 @@ namespace Spire {
   /** Matches the query against the side. */
   bool matches(Nexus::Side side, const QString& query);
 
-  /** Matches the query against the quantity. */
-  bool matches(const boost::optional<Nexus::Quantity>& quantity,
-    const QString& query);
+  /** Matches the query against the quantity setting. */
+  bool matches(QuantitySetting setting, const QString& query);
 
   /** Matches the query against the time in force. */
   bool matches(Nexus::TimeInForce time_in_force, const QString& query);
 
   /** Matches the query against the tags. */
-  bool matches(const std::vector<Nexus::Tag>& tags, const QString& query);
+  bool matches(const std::vector<AdditionalTag>& tags, const QString& query);
 
   /** Matches the query against the key. */
   bool matches(const QKeySequence& key, const QString& query);

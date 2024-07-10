@@ -537,7 +537,6 @@ void DecimalBox::resizeEvent(QResizeEvent* event) {
 void DecimalBox::showEvent(QShowEvent* event) {
   if(!is_read_only()) {
     initialize_editable_data();
-    update_button_positions();
   }
   QWidget::showEvent(event);
 }
@@ -568,11 +567,14 @@ void DecimalBox::initialize_editable_data() const {
   self->m_data = std::make_unique<EditableData>();
   m_data->m_submission = m_current->get();
   m_data->m_up_button = make_up_button(*self);
+  m_data->m_up_button->show();
   m_data->m_up_button->connect_click_signal(
     std::bind_front(&DecimalBox::increment, self));
   m_data->m_down_button = make_down_button(*self);
+  m_data->m_down_button->show();
   m_data->m_down_button->connect_click_signal(
     std::bind_front(&DecimalBox::decrement, self));
+  self->update_button_positions();
   m_text_box.connect_submit_signal(
     std::bind_front(&DecimalBox::on_submit, self));
   m_text_box.connect_reject_signal(

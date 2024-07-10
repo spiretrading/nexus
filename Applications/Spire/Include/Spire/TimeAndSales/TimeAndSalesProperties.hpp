@@ -2,6 +2,8 @@
 #define SPIRE_TIME_AND_SALES_PROPERTIES_HPP
 #include <array>
 #include <QFont>
+#include "Spire/Spire/ShuttleQtTypes.hpp"
+#include "Spire/Spire/Spire.hpp"
 #include "Spire/TimeAndSales/BboIndicator.hpp"
 #include "Spire/TimeAndSales/TimeAndSales.hpp"
 #include "Spire/Ui/HighlightBox.hpp"
