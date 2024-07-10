@@ -1802,37 +1802,25 @@ UiProfile Spire::make_destination_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
   properties.push_back(make_standard_property<QString>("current", "TSX"));
-  properties.push_back(make_standard_property<QString>("placeholder"));
   properties.push_back(make_standard_property("read_only", false));
   auto profile = UiProfile("DestinationBox", properties, [] (auto& profile) {
-    auto destinations = GetDefaultDestinationDatabase().SelectEntries(
+    auto selection = GetDefaultDestinationDatabase().SelectEntries(
       [] (auto& value) { return true; });
-    auto model = std::make_shared<LocalComboBoxQueryModel>();
-    for(auto destination : destinations) {
-      model->add(to_text(destination.m_id).toLower(), destination);
+    auto destinations =
+      std::make_shared<ArrayListModel<DestinationDatabase::Entry>>();
+    for(auto& destination : selection) {
+      destinations->push(destination);
     }
     auto& current = get<QString>("current", profile.get_properties());
-    auto current_model = std::make_shared<LocalValueModel<Destination>>(
-      current.get().toStdString());
-    auto box = new DestinationBox(model, current_model);
+    auto current_model =
+      std::make_shared<LocalDestinationModel>(current.get().toStdString());
+    auto box = make_destination_box(current_model, destinations);
     box->setFixedWidth(scale_width(112));
     apply_widget_properties(box, profile.get_properties());
     auto current_connection = box->get_current()->connect_update_signal(
       profile.make_event_slot<Destination>("Current"));
     current.connect_changed_signal([=] (const auto& current) {
-      auto value = model->parse(current);
-      if(value.has_value()) {
-        auto destination =
-          std::any_cast<DestinationDatabase::Entry>(value).m_id;
-        box->get_current()->set(destination);
-      } else {
-        auto current_blocker = shared_connection_block(current_connection);
-        box->get_current()->set(current.toStdString());
-      }
-    });
-    auto& placeholder = get<QString>("placeholder", profile.get_properties());
-    placeholder.connect_changed_signal([=] (const auto& placeholder) {
-      box->set_placeholder(placeholder);
+      box->get_current()->set(current.toStdString());
     });
     auto& read_only = get<bool>("read_only", profile.get_properties());
     read_only.connect_changed_signal(
@@ -3071,19 +3059,12 @@ UiProfile Spire::make_market_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
   properties.push_back(make_standard_property<QString>("current", "ARCX"));
-  properties.push_back(make_standard_property<QString>("placeholder"));
   properties.push_back(make_standard_property("read_only", false));
   auto profile = UiProfile("MarketBox", properties, [] (auto& profile) {
-    auto markets = GetDefaultMarketDatabase().GetEntries();
-    auto model = std::make_shared<LocalComboBoxQueryModel>();
-    for(auto market : markets) {
-      model->add(to_text(MarketToken(market.m_code)).toLower(), market);
-      model->add(QString(market.m_code.GetData()).toLower(), market);
-    }
     auto& current = get<QString>("current", profile.get_properties());
-    auto current_model = std::make_shared<LocalValueModel<MarketCode>>(
+    auto current_model = std::make_shared<LocalMarketModel>(
       current.get().toStdString());
-    auto box = new MarketBox(model, current_model);
+    auto box = make_market_box(current_model, GetDefaultMarketDatabase());
     box->setFixedWidth(scale_width(112));
     apply_widget_properties(box, profile.get_properties());
     current.connect_changed_signal([=] (const auto& current) {
@@ -3096,9 +3077,6 @@ UiProfile Spire::make_market_box_profile() {
         box->get_current()->set(code);
       }
     });
-    auto& placeholder = get<QString>("placeholder", profile.get_properties());
-    placeholder.connect_changed_signal(
-      std::bind_front(&MarketBox::set_placeholder, box));
     auto& read_only = get<bool>("read_only", profile.get_properties());
     read_only.connect_changed_signal(
       std::bind_front(&MarketBox::set_read_only, box));
