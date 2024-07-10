@@ -3,6 +3,7 @@
 #include <QWidget>
 #include "Spire/Ui/AnyInputBox.hpp"
 #include "Spire/Ui/FocusObserver.hpp"
+#include "Spire/Ui/MouseObserver.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -66,7 +67,6 @@ namespace Spire {
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
-      void mouseDoubleClickEvent(QMouseEvent* event) override;
       void showEvent(QShowEvent* event) override;
       bool focusNextPrevChild(bool next) override;
 
@@ -75,11 +75,13 @@ namespace Spire {
       AnyInputBox* m_input_box;
       EditTrigger m_edit_trigger;
       FocusObserver m_focus_observer;
+      MouseObserver m_mouse_observer;
       QWidget* m_focus_proxy;
       bool m_is_submit_connected;
 
       void install_focus_proxy_event_filter();
       void select_all_text();
+      bool on_double_click(QWidget& target, QMouseEvent& event);
       void on_focus(FocusObserver::State state);
       void on_submit(const AnyRef& submission);
   };

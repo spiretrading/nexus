@@ -1,0 +1,74 @@
+#include "Spire/Ui/MouseObserver.hpp"
+#include "Spire/Spire/ExtensionCache.hpp"
+#include <QWidget>
+
+using namespace boost;
+using namespace boost::signals2;
+using namespace Spire;
+
+struct MouseObserver::EventFilter : QObject {
+  struct Child {
+    std::unique_ptr<MouseObserver> m_observer;
+    scoped_connection m_connection;
+  };
+  mutable FilteredMouseSignal m_mouse_signal;
+  std::unordered_map<QObject*, Child> m_children;
+
+  EventFilter(QWidget& widget) {
+    widget.installEventFilter(this);
+    for(auto child : widget.children()) {
+      if(child && child->isWidgetType()) {
+        add(static_cast<QWidget&>(*child));
+      }
+    }
+  }
+
+  bool eventFilter(QObject* watched, QEvent* event) override {
+    if(event->type() == QEvent::MouseButtonDblClick ||
+        event->type() == QEvent::MouseButtonPress ||
+        event->type() == QEvent::MouseButtonRelease) {
+      auto filter = m_mouse_signal(*static_cast<QWidget*>(watched),
+        *static_cast<QMouseEvent*>(event)).value_or(false);
+      return filter;
+    } else if(event->type() == QEvent::ChildAdded) {
+      auto& child = *static_cast<QChildEvent&>(*event).child();
+      if(child.isWidgetType()) {
+        add(static_cast<QWidget&>(child));
+      }
+    } else if(event->type() == QEvent::ChildRemoved) {
+      auto& child_event = static_cast<QChildEvent&>(*event);
+      m_children.erase(child_event.child());
+    }
+    return QObject::eventFilter(watched, event);
+  }
+
+  void add(QWidget& child) {
+    auto observer = std::make_unique<MouseObserver>(child);
+    auto connection = observer->connect_filtered_mouse_signal(
+      [=] (auto& target, auto& event) {
+        return m_mouse_signal(target, event).value_or(false);
+      });
+    auto child_entry = Child(std::move(observer), std::move(connection));
+    m_children.insert(std::pair(&child, std::move(child_entry)));
+  }
+};
+
+MouseObserver::MouseObserver(QWidget& widget) {
+  m_filter = find_extension<EventFilter>(widget);
+  m_filter_connection = m_filter->m_mouse_signal.connect(
+    [=] (auto& target, auto& event) {
+      return m_mouse_signal(target, event).value_or(false);
+    });
+}
+
+connection MouseObserver::connect_filtered_mouse_signal(
+    const FilteredMouseSignal::slot_type& slot) const {
+  return m_mouse_signal.connect(slot);
+}
+
+connection MouseObserver::connect_mouse_signal(const MouseSignal& slot) const {
+  return connect_filtered_mouse_signal([=] (auto& target, auto& event) {
+    slot(target, event);
+    return false;
+  });
+}

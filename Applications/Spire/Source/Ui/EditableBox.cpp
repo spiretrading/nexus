@@ -64,6 +64,7 @@ EditableBox::EditableBox(
       m_input_box(&input_box),
       m_edit_trigger(std::move(trigger)),
       m_focus_observer(*this),
+      m_mouse_observer(*m_input_box),
       m_focus_proxy(nullptr),
       m_is_submit_connected(false) {
   setFocusProxy(m_input_box);
@@ -72,6 +73,8 @@ EditableBox::EditableBox(
   setFocusPolicy(Qt::StrongFocus);
   m_focus_observer.connect_state_signal(
     std::bind_front(&EditableBox::on_focus, this));
+  m_mouse_observer.connect_filtered_mouse_signal(
+    std::bind_front(&EditableBox::on_double_click, this));
   m_input_box->set_read_only(true);
   match(*this, ReadOnly());
   install_focus_proxy_event_filter();
@@ -154,10 +157,6 @@ void EditableBox::keyPressEvent(QKeyEvent* event) {
   }
 }
 
-void EditableBox::mouseDoubleClickEvent(QMouseEvent* event) {
-  set_read_only(false);
-}
-
 void EditableBox::showEvent(QShowEvent* event) {
   install_focus_proxy_event_filter();
   QWidget::showEvent(event);
@@ -193,6 +192,16 @@ void EditableBox::on_focus(FocusObserver::State state) {
   if(state == FocusObserver::State::NONE) {
     set_read_only(true);
   }
+}
+
+bool EditableBox::on_double_click(QWidget& target, QMouseEvent& event) {
+  if(event.type() != QEvent::MouseButtonDblClick) {
+    return false;
+  }
+  if(is_read_only()) {
+    set_read_only(false);
+  }
+  return false;
 }
 
 void EditableBox::on_submit(const AnyRef& submission) {
