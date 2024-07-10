@@ -470,5 +470,6 @@ void DropDownBox::on_submit(const std::any& submission) {
     return;
   }
   hide_drop_down_list();
+  m_is_modified = true;
   submit();
 }
