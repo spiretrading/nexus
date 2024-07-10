@@ -132,11 +132,11 @@ bool EditableBox::eventFilter(QObject* watched, QEvent* event) {
 void EditableBox::keyPressEvent(QKeyEvent* event) {
   if(event->modifiers() & Qt::NoModifier &&
       (event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return)) {
-    if(!event->isAutoRepeat()) {
-      set_read_only(false);
-    }
+    return;
   } else if(event->key() == Qt::Key_Escape) {
     set_read_only(true);
+  } else if(event->key() == Qt::Key_Space) {
+    set_read_only(false);
   } else if(event->key() == Qt::Key_Backspace) {
     auto current = m_input_box->get_current()->get();
     m_input_box->get_current()->set(reset(current));
@@ -152,6 +152,10 @@ void EditableBox::keyPressEvent(QKeyEvent* event) {
       QWidget::keyPressEvent(event);
     }
   }
+}
+
+void EditableBox::mouseDoubleClickEvent(QMouseEvent* event) {
+  set_read_only(false);
 }
 
 void EditableBox::showEvent(QShowEvent* event) {
@@ -186,7 +190,9 @@ void EditableBox::on_focus(FocusObserver::State state) {
   if(isHidden() || m_input_box->isHidden()) {
     return;
   }
-  set_read_only(state == FocusObserver::State::NONE);
+  if(state == FocusObserver::State::NONE) {
+    set_read_only(true);
+  }
 }
 
 void EditableBox::on_submit(const AnyRef& submission) {

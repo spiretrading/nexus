@@ -66,6 +66,7 @@ namespace Spire {
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
+      void mouseDoubleClickEvent(QMouseEvent* event) override;
       void showEvent(QShowEvent* event) override;
       bool focusNextPrevChild(bool next) override;
 
