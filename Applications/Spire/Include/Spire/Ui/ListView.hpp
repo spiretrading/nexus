@@ -290,6 +290,7 @@ namespace Details {
       void update_focus(boost::optional<int> current);
       void make_item_entry(int index);
       void add_item(int index);
+      void pre_remove_item(int index);
       void remove_item(int index);
       void move_item(int source, int destination);
       void update_layout();

@@ -445,7 +445,7 @@ void ListView::add_item(int index) {
   }
 }
 
-void ListView::remove_item(int index) {
+void ListView::pre_remove_item(int index) {
   auto item = std::move(m_items[index]);
   m_items.erase(m_items.begin() + index);
   for(auto& item : m_items | std::views::drop(index)) {
@@ -462,6 +462,9 @@ void ListView::remove_item(int index) {
       --*m_focus_index;
     }
   }
+}
+
+void ListView::remove_item(int index) {
   auto blocker = std::array{
     shared_connection_block(m_current_connection),
     shared_connection_block(m_selection_connection)};
@@ -727,6 +730,9 @@ void ListView::on_list_operation(const AnyListModel::Operation& operation) {
       add_item(operation.m_index);
     },
     [&] (const AnyListModel::PreRemoveOperation& operation) {
+      pre_remove_item(operation.m_index);
+    },
+    [&] (const AnyListModel::RemoveOperation& operation) {
       remove_item(operation.m_index);
     },
     [&] (const AnyListModel::MoveOperation& operation) {
