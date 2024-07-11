@@ -3,6 +3,7 @@
 #include <functional>
 #include <tuple>
 #include <vector>
+#include <Beam/Threading/TaskRunner.hpp>
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Spire/TableModel.hpp"
 #include "Spire/Spire/TableModelTransactionLog.hpp"
@@ -55,6 +56,7 @@ namespace Spire {
       std::vector<int> m_filtered_data;
       TableModelTransactionLog m_transaction;
       boost::signals2::scoped_connection m_source_connection;
+      Beam::Threading::TaskRunner m_filter_updates;
 
       std::tuple<bool, std::vector<int>::iterator> find(int index);
       void on_operation(const Operation& operation);

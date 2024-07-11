@@ -19,40 +19,42 @@ FilteredTableModel::FilteredTableModel(
 }
 
 void FilteredTableModel::set_filter(const Filter& filter) {
-  m_filter = filter;
-  auto source_row = 0;
-  auto filtered_row = 0;
-  m_transaction.transact([&] {
-    while(source_row != m_source->get_row_size() &&
-        filtered_row != static_cast<int>(m_filtered_data.size())) {
-      if(!m_filter(*m_source, source_row)) {
-        if(m_filtered_data[filtered_row] != source_row) {
-          m_filtered_data.insert(
-            m_filtered_data.begin() + filtered_row, source_row);
-          m_transaction.push(AddOperation(filtered_row));
+  m_filter_updates.Add([=] {
+    m_filter = filter;
+    auto source_row = 0;
+    auto filtered_row = 0;
+    m_transaction.transact([&] {
+      while(source_row != m_source->get_row_size() &&
+          filtered_row != static_cast<int>(m_filtered_data.size())) {
+        if(!m_filter(*m_source, source_row)) {
+          if(m_filtered_data[filtered_row] != source_row) {
+            m_filtered_data.insert(
+              m_filtered_data.begin() + filtered_row, source_row);
+            m_transaction.push(AddOperation(filtered_row));
+          }
+          ++filtered_row;
+        } else {
+          if(m_filtered_data[filtered_row] == source_row) {
+            m_transaction.push(PreRemoveOperation(filtered_row));
+            m_filtered_data.erase(m_filtered_data.begin() + filtered_row);
+            m_transaction.push(RemoveOperation(filtered_row));
+          }
         }
-        ++filtered_row;
-      } else {
-        if(m_filtered_data[filtered_row] == source_row) {
-          m_transaction.push(PreRemoveOperation(filtered_row));
-          m_filtered_data.erase(m_filtered_data.begin() + filtered_row);
-          m_transaction.push(RemoveOperation(filtered_row));
+        ++source_row;
+      }
+      while(filtered_row != static_cast<int>(m_filtered_data.size())) {
+        m_transaction.push(PreRemoveOperation(filtered_row));
+        m_filtered_data.erase(m_filtered_data.begin() + filtered_row);
+        m_transaction.push(RemoveOperation(filtered_row));
+      }
+      while(source_row != m_source->get_row_size()) {
+        if(!m_filter(*m_source, source_row)) {
+          m_filtered_data.push_back(source_row);
+          m_transaction.push(AddOperation(m_filtered_data.size() - 1));
         }
+        ++source_row;
       }
-      ++source_row;
-    }
-    while(filtered_row != static_cast<int>(m_filtered_data.size())) {
-      m_transaction.push(PreRemoveOperation(filtered_row));
-      m_filtered_data.erase(m_filtered_data.begin() + filtered_row);
-      m_transaction.push(RemoveOperation(filtered_row));
-    }
-    while(source_row != m_source->get_row_size()) {
-      if(!m_filter(*m_source, source_row)) {
-        m_filtered_data.push_back(source_row);
-        m_transaction.push(AddOperation(m_filtered_data.size() - 1));
-      }
-      ++source_row;
-    }
+    });
   });
 }
 

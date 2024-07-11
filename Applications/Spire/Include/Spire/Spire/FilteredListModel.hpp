@@ -1,5 +1,6 @@
 #ifndef SPIRE_FILTERED_LIST_MODEL_HPP
 #define SPIRE_FILTERED_LIST_MODEL_HPP
+#include <Beam/Threading/TaskRunner.hpp>
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Spire/ListModelTransactionLog.hpp"
@@ -79,6 +80,7 @@ namespace Spire {
       std::vector<int> m_filtered_data;
       ListModelTransactionLog<Type> m_transaction;
       boost::signals2::scoped_connection m_source_connection;
+      Beam::Threading::TaskRunner m_filter_updates;
 
       std::tuple<bool, std::vector<int>::iterator> find(int index);
       void on_operation(const Operation& operation);
@@ -105,40 +107,42 @@ namespace Spire {
 
   template<typename T>
   void FilteredListModel<T>::set_filter(const Filter& filter) {
-    m_filter = filter;
-    auto source_index = 0;
-    auto filtered_index = 0;
-    m_transaction.transact([&] {
-      while(source_index != m_source->get_size() &&
-          filtered_index != static_cast<int>(m_filtered_data.size())) {
-        if(!m_filter(*m_source, source_index)) {
-          if(m_filtered_data[filtered_index] != source_index) {
-            m_filtered_data.insert(
-              m_filtered_data.begin() + filtered_index, source_index);
-            m_transaction.push(AddOperation(filtered_index));
+    m_filter_updates.Add([=] {
+      m_filter = filter;
+      auto source_index = 0;
+      auto filtered_index = 0;
+      m_transaction.transact([&] {
+        while(source_index != m_source->get_size() &&
+            filtered_index != static_cast<int>(m_filtered_data.size())) {
+          if(!m_filter(*m_source, source_index)) {
+            if(m_filtered_data[filtered_index] != source_index) {
+              m_filtered_data.insert(
+                m_filtered_data.begin() + filtered_index, source_index);
+              m_transaction.push(AddOperation(filtered_index));
+            }
+            ++filtered_index;
+          } else {
+            if(m_filtered_data[filtered_index] == source_index) {
+              m_transaction.push(PreRemoveOperation(filtered_index));
+              m_filtered_data.erase(m_filtered_data.begin() + filtered_index);
+              m_transaction.push(RemoveOperation(filtered_index));
+            }
           }
-          ++filtered_index;
-        } else {
-          if(m_filtered_data[filtered_index] == source_index) {
-            m_transaction.push(PreRemoveOperation(filtered_index));
-            m_filtered_data.erase(m_filtered_data.begin() + filtered_index);
-            m_transaction.push(RemoveOperation(filtered_index));
+          ++source_index;
+        }
+        while(filtered_index != static_cast<int>(m_filtered_data.size())) {
+          m_transaction.push(PreRemoveOperation(filtered_index));
+          m_filtered_data.erase(m_filtered_data.begin() + filtered_index);
+          m_transaction.push(RemoveOperation(filtered_index));
+        }
+        while(source_index != m_source->get_size()) {
+          if(!m_filter(*m_source, source_index)) {
+            m_filtered_data.push_back(source_index);
+            m_transaction.push(AddOperation(m_filtered_data.size() - 1));
           }
+          ++source_index;
         }
-        ++source_index;
-      }
-      while(filtered_index != static_cast<int>(m_filtered_data.size())) {
-        m_transaction.push(PreRemoveOperation(filtered_index));
-        m_filtered_data.erase(m_filtered_data.begin() + filtered_index);
-        m_transaction.push(RemoveOperation(filtered_index));
-      }
-      while(source_index != m_source->get_size()) {
-        if(!m_filter(*m_source, source_index)) {
-          m_filtered_data.push_back(source_index);
-          m_transaction.push(AddOperation(m_filtered_data.size() - 1));
-        }
-        ++source_index;
-      }
+      });
     });
   }
 
@@ -255,9 +259,9 @@ namespace Spire {
             static_cast<int>(source - m_filtered_data.begin()),
             static_cast<int>(destination - m_filtered_data.begin())));
         } else if(operation.m_source < operation.m_destination) {
-            auto destination = std::upper_bound(
-              source, m_filtered_data.end(), operation.m_destination);
-            std::for_each(source, destination, [] (int& value) { --value; });
+          auto destination = std::upper_bound(
+            source, m_filtered_data.end(), operation.m_destination);
+          std::for_each(source, destination, [] (int& value) { --value; });
         } else {
           auto destination = std::lower_bound(
             m_filtered_data.begin(), source, operation.m_destination);
