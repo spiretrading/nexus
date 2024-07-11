@@ -563,4 +563,31 @@ TEST_SUITE("FilteredListModel") {
         ListModel<int>::RemoveOperation(5)
       });
   }
+
+  TEST_CASE("reentrant") {
+    auto source = std::make_shared<ArrayListModel<int>>();;
+    source->push(0);
+    source->push(1);
+    source->push(2);
+    source->push(3);
+    auto filtered_list =
+      FilteredListModel(source, [] (const auto& list, auto index) {
+        return false;
+      });
+    REQUIRE(filtered_list.get_size() == 4);
+    filtered_list.connect_operation_signal([&] (const auto& operation) {
+      visit(operation,
+        [&] (const ListModel<int>::PreRemoveOperation& operation) {
+          filtered_list.set_filter([] (const auto& list, auto index) {
+            return list.get(index) % 2 != 0;
+          });
+        });
+    });
+    filtered_list.set_filter([] (const auto& list, auto index) {
+      return list.get(index) % 2 == 0;
+    });
+    REQUIRE(filtered_list.get_size() == 2);
+    REQUIRE(filtered_list.get(0) == 0);
+    REQUIRE(filtered_list.get(1) == 2);
+  }
 }
