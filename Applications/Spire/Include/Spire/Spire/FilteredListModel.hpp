@@ -1,6 +1,5 @@
 #ifndef SPIRE_FILTERED_LIST_MODEL_HPP
 #define SPIRE_FILTERED_LIST_MODEL_HPP
-#include <Beam/Threading/TaskRunner.hpp>
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Spire/ListModelTransactionLog.hpp"
@@ -77,10 +76,10 @@ namespace Spire {
     private:
       std::shared_ptr<ListModel<Type>> m_source;
       Filter m_filter;
+      int m_filter_count;
       std::vector<int> m_filtered_data;
       ListModelTransactionLog<Type> m_transaction;
       boost::signals2::scoped_connection m_source_connection;
-      Beam::Threading::TaskRunner m_filter_updates;
 
       std::tuple<bool, std::vector<int>::iterator> find(int index);
       void on_operation(const Operation& operation);
@@ -95,7 +94,8 @@ namespace Spire {
   FilteredListModel<T>::FilteredListModel(
       std::shared_ptr<ListModel<Type>> source, Filter filter)
       : m_source(std::move(source)),
-        m_filter(std::move(filter)) {
+        m_filter(std::move(filter)),
+        m_filter_count(0) {
     for(auto i = 0; i != m_source->get_size(); ++i) {
       if(!m_filter(*m_source, i)) {
         m_filtered_data.push_back(i);
@@ -107,42 +107,60 @@ namespace Spire {
 
   template<typename T>
   void FilteredListModel<T>::set_filter(const Filter& filter) {
-    m_filter_updates.Add([=] {
-      m_filter = filter;
-      auto source_index = 0;
-      auto filtered_index = 0;
-      m_transaction.transact([&] {
-        while(source_index != m_source->get_size() &&
-            filtered_index != static_cast<int>(m_filtered_data.size())) {
-          if(!m_filter(*m_source, source_index)) {
-            if(m_filtered_data[filtered_index] != source_index) {
-              m_filtered_data.insert(
-                m_filtered_data.begin() + filtered_index, source_index);
-              m_transaction.push(AddOperation(filtered_index));
-            }
-            ++filtered_index;
-          } else {
-            if(m_filtered_data[filtered_index] == source_index) {
-              m_transaction.push(PreRemoveOperation(filtered_index));
-              m_filtered_data.erase(m_filtered_data.begin() + filtered_index);
-              m_transaction.push(RemoveOperation(filtered_index));
+    ++m_filter_count;
+    auto count = m_filter_count;
+    m_filter = filter;
+    auto source_index = 0;
+    auto filtered_index = 0;
+    m_transaction.transact([&] {
+      while(source_index != m_source->get_size() &&
+          filtered_index != static_cast<int>(m_filtered_data.size())) {
+        if(!m_filter(*m_source, source_index)) {
+          if(m_filtered_data[filtered_index] != source_index) {
+            m_filtered_data.insert(
+              m_filtered_data.begin() + filtered_index, source_index);
+            m_transaction.push(AddOperation(filtered_index));
+            if(count != m_filter_count) {
+              return;
             }
           }
-          ++source_index;
-        }
-        while(filtered_index != static_cast<int>(m_filtered_data.size())) {
-          m_transaction.push(PreRemoveOperation(filtered_index));
-          m_filtered_data.erase(m_filtered_data.begin() + filtered_index);
-          m_transaction.push(RemoveOperation(filtered_index));
-        }
-        while(source_index != m_source->get_size()) {
-          if(!m_filter(*m_source, source_index)) {
-            m_filtered_data.push_back(source_index);
-            m_transaction.push(AddOperation(m_filtered_data.size() - 1));
+          ++filtered_index;
+        } else {
+          if(m_filtered_data[filtered_index] == source_index) {
+            m_transaction.push(PreRemoveOperation(filtered_index));
+            if(count != m_filter_count) {
+              return;
+            }
+            m_filtered_data.erase(m_filtered_data.begin() + filtered_index);
+            m_transaction.push(RemoveOperation(filtered_index));
+            if(count != m_filter_count) {
+              return;
+            }
           }
-          ++source_index;
         }
-      });
+        ++source_index;
+      }
+      while(filtered_index != static_cast<int>(m_filtered_data.size())) {
+        m_transaction.push(PreRemoveOperation(filtered_index));
+        if(count != m_filter_count) {
+          return;
+        }
+        m_filtered_data.erase(m_filtered_data.begin() + filtered_index);
+        m_transaction.push(RemoveOperation(filtered_index));
+        if(count != m_filter_count) {
+          return;
+        }
+      }
+      while(source_index != m_source->get_size()) {
+        if(!m_filter(*m_source, source_index)) {
+          m_filtered_data.push_back(source_index);
+          m_transaction.push(AddOperation(m_filtered_data.size() - 1));
+          if(count != m_filter_count) {
+            return;
+          }
+        }
+        ++source_index;
+      }
     });
   }
 
@@ -273,7 +291,12 @@ namespace Spire {
         auto index = 0;
         if(is_found) {
           index = static_cast<int>(i - m_filtered_data.begin());
+          ++m_filter_count;
+          auto count = m_filter_count;
           m_transaction.push(PreRemoveOperation(index));
+          if(count != m_filter_count) {
+            return;
+          }
         }
         std::for_each(i, m_filtered_data.end(), [] (int& value) { --value; });
         if(is_found) {
@@ -295,7 +318,12 @@ namespace Spire {
           }
         } else if(is_found) {
           auto index = static_cast<int>(i - m_filtered_data.begin());
+          ++m_filter_count;
+          auto count = m_filter_count;
           m_transaction.push(PreRemoveOperation(index));
+          if(count != m_filter_count) {
+            return;
+          }
           m_filtered_data.erase(i);
           m_transaction.push(RemoveOperation(index));
         }

@@ -575,9 +575,13 @@ TEST_SUITE("FilteredListModel") {
         return false;
       });
     REQUIRE(filtered_list.get_size() == 4);
+    auto is_filter_reset = false;
     filtered_list.connect_operation_signal([&] (const auto& operation) {
       visit(operation,
         [&] (const ListModel<int>::PreRemoveOperation& operation) {
+          if(std::exchange(is_filter_reset, true)) {
+            return;
+          }
           filtered_list.set_filter([] (const auto& list, auto index) {
             return list.get(index) % 2 != 0;
           });

@@ -3,6 +3,7 @@
 #include <concepts>
 #include <memory>
 #include <unordered_set>
+#include <Beam/Threading/TaskRunner.hpp>
 #include <boost/optional/optional.hpp>
 #include <QSpacerItem>
 #include <QTimer>
@@ -281,6 +282,7 @@ namespace Details {
       QTimer m_query_timer;
       int m_initialize_count;
       bool m_is_transaction;
+      Beam::Threading::TaskRunner m_operation_queue;
       boost::signals2::scoped_connection m_style_connection;
       boost::signals2::scoped_connection m_list_connection;
       boost::signals2::scoped_connection m_current_connection;
