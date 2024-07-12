@@ -209,7 +209,9 @@ void RegionBox::on_tags_operation(const AnyListModel::Operation& operation) {
         std::any_cast<const Region&>(m_tag_combo_box->get_current()->get(i));
     }
     auto blocker = shared_connection_block(m_current_connection);
-    m_current->set(region);
+    if(m_current->set(region) != QValidator::Invalid) {
+      m_last_region = std::move(region);
+    }
   };
   visit(operation,
     [&] (const AnyListModel::AddOperation& operation) {
