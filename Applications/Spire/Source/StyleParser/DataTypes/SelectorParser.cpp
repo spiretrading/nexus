@@ -1,6 +1,7 @@
 #include "Spire/StyleParser/DataTypes/SelectorParser.hpp"
 #include <boost/algorithm/string.hpp>
 #include "Spire/StyleParser/DataTypes/Token.hpp"
+#include "Spire/StyleParser/DataTypes/Utility.hpp"
 #include "Spire/Styles/Selectors.hpp"
 #include "Spire/Styles/Stylist.hpp"
 
@@ -10,50 +11,6 @@ using namespace Spire;
 using namespace Styles;
 
 namespace {
-  template<typename T>
-  optional<T> check_next_token(const TokenParser& token_parser) {
-    if(token_parser.get_size() > 0) {
-      auto& value = token_parser.peek().get_value();
-      if(value.type() == typeid(T)) {
-        return boost::get<T>(value);
-      }
-    }
-    return none;
-  }
-
-  template<typename T>
-  auto check_next_token(const TokenParser& token_parser, T token) {
-    if(auto next = check_next_token<T>(token_parser)) {
-      return *next == token;
-    }
-    return false;
-  }
-
-  template<typename T>
-  optional<T> check_next_consecutive_token(
-      const TokenParser& token_parser, const Token& previous_token) {
-    if(token_parser.get_size() > 0) {
-      auto& token = token_parser.peek();
-      auto& value = token.get_value();
-      if(token.get_column_number() == previous_token.get_column_number() + 1 &&
-          token.get_line_number() == previous_token.get_line_number() &&
-          value.type() == typeid(T)) {
-        return boost::get<T>(value);
-      }
-    }
-    return none;
-  }
-
-  template<typename T>
-  auto check_next_consecutive_token(const TokenParser& token_parser,
-      const Token& previous_token, T token) {
-    if(auto next = check_next_consecutive_token<T>(token_parser,
-        previous_token)) {
-      return *next == token;
-    }
-    return false;
-  }
-
   class SelectorTypeRegistry {
     public:
 
@@ -257,7 +214,7 @@ std::shared_ptr<SelectorParser> DefaultSelectorParseStrategy::parse_primary(
     auto& bracket = boost::get<Bracket>(value);
     if(bracket == Bracket::OPEN_ROUND) {
       auto expression = parse_expression(token_parser);
-      if(!check_next_token(token_parser, Bracket::CLOSE_ROUND)) {
+      if(!check_token(token_parser, Bracket::CLOSE_ROUND)) {
         throw std::runtime_error("Expected ')'.");
       }
       token_parser.pop();
@@ -288,7 +245,7 @@ std::shared_ptr<SelectorParser> DefaultSelectorParseStrategy::parse_primary(
     }
   } else if(value.type() == typeid(Identifier)) {
     auto& identifier = boost::get<Identifier>(value);
-    if(check_next_token(token_parser, Bracket::OPEN_SQUARE)) {
+    if(check_token(token_parser, Bracket::OPEN_SQUARE)) {
       token_parser.pop();
       return std::make_shared<AndSelectorParser>(
         std::make_shared<TypeSelectorParser>(identifier),
@@ -302,7 +259,7 @@ std::shared_ptr<SelectorParser> DefaultSelectorParseStrategy::parse_primary(
 std::shared_ptr<SelectorParser> DefaultSelectorParseStrategy::parse_or(
     TokenParser& token_parser) {
   auto left = parse_and(token_parser);
-  while(check_next_token(token_parser, Keyword::OR)) {
+  while(check_token(token_parser, Keyword::OR)) {
     token_parser.pop();
     left = std::make_shared<OrSelectorParser>(left, parse_and(token_parser));
   }
@@ -312,7 +269,7 @@ std::shared_ptr<SelectorParser> DefaultSelectorParseStrategy::parse_or(
 std::shared_ptr<SelectorParser> DefaultSelectorParseStrategy::parse_and(
     TokenParser& token_parser) {
   auto left = parse_hierarchy(token_parser);
-  while(check_next_token(token_parser, Keyword::AND)) {
+  while(check_token(token_parser, Keyword::AND)) {
     token_parser.pop();
     left = std::make_shared<AndSelectorParser>(left,
       parse_hierarchy(token_parser));
@@ -324,11 +281,10 @@ std::shared_ptr<SelectorParser> DefaultSelectorParseStrategy::parse_hierarchy(
     TokenParser& token_parser) {
   auto left = parse_primary(token_parser);
   while(token_parser.get_size() > 0) {
-    if(check_next_token(token_parser, Keyword::LESS_THAN)) {
+    if(check_token(token_parser, Keyword::LESS_THAN)) {
       auto token = token_parser.peek();
       token_parser.pop();
-      if(check_next_consecutive_token(token_parser, token,
-          Keyword::LESS_THAN)) {
+      if(check_adjacent_token(token_parser, token, Keyword::LESS_THAN)) {
         token_parser.pop();
         left = std::make_shared<AncestorSelectorParser>(left,
           parse_primary(token_parser));
@@ -336,11 +292,10 @@ std::shared_ptr<SelectorParser> DefaultSelectorParseStrategy::parse_hierarchy(
         left = std::make_shared<ParentSelectorParser>(left,
           parse_primary(token_parser));
       }
-    } else if(check_next_token(token_parser, Keyword::GREATER_THAN)) {
+    } else if(check_token(token_parser, Keyword::GREATER_THAN)) {
       auto token = token_parser.peek();
       token_parser.pop();
-      if(check_next_consecutive_token(token_parser, token,
-          Keyword::GREATER_THAN)) {
+      if(check_adjacent_token(token_parser, token, Keyword::GREATER_THAN)) {
         token_parser.pop();
         left = std::make_shared<DescendantSelectorParser>(left,
           parse_primary(token_parser));
@@ -348,7 +303,7 @@ std::shared_ptr<SelectorParser> DefaultSelectorParseStrategy::parse_hierarchy(
         left = std::make_shared<ChildSelectorParser>(left,
           parse_primary(token_parser));
       }
-    } else if(check_next_token(token_parser, Keyword::PERCENTAGE)) {
+    } else if(check_token(token_parser, Keyword::PERCENTAGE)) {
       token_parser.pop();
       left = std::make_shared<SiblingSelectorParser>(left,
         parse_primary(token_parser));
@@ -362,7 +317,7 @@ std::shared_ptr<SelectorParser> DefaultSelectorParseStrategy::parse_hierarchy(
 std::shared_ptr<SelectorParser> DefaultSelectorParseStrategy::parse_property(
     TokenParser& token_parser) {
   auto property_name = [&] {
-    if(auto next = check_next_token<Keyword>(token_parser)) {
+    if(auto next = get_token<Keyword>(token_parser)) {
       return *next;
     }
     throw std::runtime_error("Expected property name.");
@@ -370,28 +325,28 @@ std::shared_ptr<SelectorParser> DefaultSelectorParseStrategy::parse_property(
   token_parser.pop();
   auto is_not = false;
   auto token = token_parser.peek();
-  if(check_next_token<Keyword>(token_parser, Keyword::EXCLAMATION)) {
+  if(check_token<Keyword>(token_parser, Keyword::EXCLAMATION)) {
     is_not = true;
     token_parser.pop();
   }
   if(is_not) {
-    if(!check_next_consecutive_token(token_parser, token, Keyword::EQUAL)) {
+    if(!check_adjacent_token(token_parser, token, Keyword::EQUAL)) {
       throw std::runtime_error("Expected '='.");
     }
   } else {
-    if(!check_next_token(token_parser, Keyword::EQUAL)) {
+    if(!check_token(token_parser, Keyword::EQUAL)) {
       throw std::runtime_error("Expected '='.");
     }
   }
   token_parser.pop();
   auto property_value = [&] {
-    if(auto next = check_next_token<Keyword>(token_parser)) {
+    if(auto next = get_token<Keyword>(token_parser)) {
       return *next;
     }
     throw std::runtime_error("Expected property value.");
   }();
   token_parser.pop();
-  if(!check_next_token(token_parser, Bracket::CLOSE_SQUARE)) {
+  if(!check_token(token_parser, Bracket::CLOSE_SQUARE)) {
     throw std::runtime_error("Expected ']'.");
   }
   token_parser.pop();
@@ -409,16 +364,13 @@ std::shared_ptr<SelectorParser> DefaultSelectorParseStrategy::parse_colon_sign(
   if(token_parser.get_size() == 0) {
     throw std::runtime_error("Unexpected end of tokens.");
   }
-  if(auto next = check_next_consecutive_token<Identifier>(token_parser,
-      token)) {
+  if(auto next = get_adjacent_token<Identifier>(token_parser, token)) {
     token_parser.pop();
     return std::make_shared<StateSelectorParser>(*next);
-  } else if(check_next_consecutive_token(token_parser, token,
-      Punctuation::COLON)) {
+  } else if(check_adjacent_token(token_parser, token, Punctuation::COLON)) {
     auto colon_token = token_parser.peek();
     token_parser.pop();
-    if(auto next = check_next_consecutive_token<Identifier>(token_parser,
-        colon_token)) {
+    if(auto next = get_adjacent_token<Identifier>(token_parser, colon_token)) {
       return std::make_shared<PseudoElementParser>(*next);
     }
   }
