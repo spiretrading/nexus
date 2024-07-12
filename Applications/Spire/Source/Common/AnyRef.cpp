@@ -101,21 +101,6 @@ AnyRef& AnyRef::assign(const std::any& value) {
   return *this;
 }
 
-AnyRef& AnyRef::operator =(std::nullptr_t) noexcept {
-  *this = AnyRef();
-  return *this;
-}
-
-AnyRef& AnyRef::operator =(AnyRef&& any) noexcept {
-  if(m_qualifiers == Qualifiers::OWNED) {
-    m_type->drop(m_ptr);
-  }
-  m_ptr = std::exchange(any.m_ptr, nullptr);
-  m_type = std::exchange(any.m_type, &TypeInfo<void>::get());
-  m_qualifiers = std::exchange(any.m_qualifiers, Qualifiers::NONE);
-  return *this;
-}
-
 bool AnyRef::is_set(Qualifiers a, Qualifiers b) {
   return static_cast<Qualifiers>(std::underlying_type_t<Qualifiers>(a) &
     std::underlying_type_t<Qualifiers>(b)) != Qualifiers::NONE;

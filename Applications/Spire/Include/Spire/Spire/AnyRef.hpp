@@ -83,25 +83,25 @@ namespace Spire {
 
       AnyRef& assign(const std::any& value);
 
-      AnyRef& operator =(const AnyRef& any) noexcept = default;
+      AnyRef& operator =(const AnyRef& any) = delete;
 
-      AnyRef& operator =(AnyRef& any) noexcept = default;
+      AnyRef& operator =(AnyRef& any) = delete;
 
-      AnyRef& operator =(std::nullptr_t) noexcept;
-
-      template<typename T>
-      AnyRef& operator =(const T& ref) noexcept;
+      AnyRef& operator =(std::nullptr_t) = delete;
 
       template<typename T>
-      AnyRef& operator =(T& ref) noexcept;
+      AnyRef& operator =(const T& ref) = delete;
 
       template<typename T>
-      AnyRef& operator =(volatile T& ref) noexcept;
+      AnyRef& operator =(T& ref) = delete;
 
       template<typename T>
-      AnyRef& operator =(const volatile T& ref) noexcept;
+      AnyRef& operator =(volatile T& ref) = delete;
 
-      AnyRef& operator =(AnyRef&& any) noexcept;
+      template<typename T>
+      AnyRef& operator =(const volatile T& ref) = delete;
+
+      AnyRef& operator =(AnyRef&& any) = delete;
 
     private:
       enum class Qualifiers : std::uint8_t {
@@ -276,30 +276,6 @@ namespace Spire {
   AnyRef::AnyRef(const volatile T& ref) noexcept
     : AnyRef(
         const_cast<T*>(&ref), TypeInfo<T>::get(), Qualifiers::CONST_VOLATILE) {}
-
-  template<typename T>
-  AnyRef& AnyRef::operator =(const T& ref) noexcept {
-    *this = AnyRef(ref);
-    return *this;
-  }
-
-  template<typename T>
-  AnyRef& AnyRef::operator =(T& ref) noexcept {
-    *this = AnyRef(ref);
-    return *this;
-  }
-
-  template<typename T>
-  AnyRef& AnyRef::operator =(volatile T& ref) noexcept {
-    *this = AnyRef(ref);
-    return *this;
-  }
-
-  template<typename T>
-  AnyRef& AnyRef::operator =(const volatile T& ref) noexcept {
-    *this = AnyRef(ref);
-    return *this;
-  }
 }
 
 #endif
