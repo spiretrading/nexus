@@ -81,6 +81,8 @@ namespace Spire {
        */
       bool is_const_volatile() const noexcept;
 
+      AnyRef& assign(const std::any& value);
+
       AnyRef& operator =(const AnyRef& any) noexcept = default;
 
       AnyRef& operator =(AnyRef& any) noexcept = default;
@@ -112,6 +114,7 @@ namespace Spire {
       struct BaseTypeInfo {
         virtual const std::type_info& get_type(void* ptr) const noexcept = 0;
         virtual std::any to_any(void* ptr) const noexcept = 0;
+        virtual void assign(void* ptr, const std::any& value) const = 0;
         virtual void* copy(const void* ptr) const = 0;
         virtual void drop(const void* ptr) const noexcept = 0;
       };
@@ -131,6 +134,12 @@ namespace Spire {
             return {};
           } else {
             return *static_cast<T*>(ptr);
+          }
+        }
+
+        void assign(void* ptr, const std::any& value) const override {
+          if constexpr(!std::is_same_v<T, void>) {
+            *static_cast<T*>(ptr) = std::any_cast<const T&>(value);
           }
         }
 
@@ -154,6 +163,7 @@ namespace Spire {
         static const AnyTypeInfo& get();
         const std::type_info& get_type(void* ptr) const noexcept override;
         std::any to_any(void* ptr) const noexcept override;
+        void assign(void* ptr, const std::any& value) const override;
         void* copy(const void* ptr) const;
         void drop(const void* ptr) const noexcept;
       };

@@ -47,6 +47,7 @@ namespace Spire {
   template<typename T> class ListModel;
   template<typename T> class ListModelIterator;
   template<typename T> class ListModelReference;
+  template<typename T> class ListToTableModel;
   template<typename T> class ListValueModel;
   class LocalRangeInputModel;
   template<typename T> class LocalScalarValueModel;
