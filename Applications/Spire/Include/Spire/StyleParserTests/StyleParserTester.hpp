@@ -6,7 +6,7 @@ namespace Spire::StyleParser::Tests {
   /** Registers all selections used in the test. */
   void register_selection_types();
 
-  /** Registers all properties used in the test. */
+  /** Registers all property and function converters used in the test. */
   void register_property_converters();
 }
 

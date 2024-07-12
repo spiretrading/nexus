@@ -1,7 +1,6 @@
 #include "Spire/StyleParser/DataTypes/PropertyParser.hpp"
-#include "Spire/StyleParser/DataTypes/IntegerType.hpp"
+#include <boost/algorithm/string.hpp>
 #include "Spire/StyleParser/DataTypes/Utility.hpp"
-#include "Spire/Styles/Stylist.hpp"
 
 using namespace boost;
 using namespace Spire;
@@ -15,9 +14,9 @@ namespace {
         return instance;
       }
 
-      void register_converter(const std::string& name,
+      void register_property_converter(const std::string& name,
           PropertyConverter converter) {
-        m_converters[to_lower_copy(name)] = converter;
+        m_property_converters[to_lower_copy(name)] = converter;
       }
 
       void register_function_converter(const std::string& name,
@@ -26,7 +25,8 @@ namespace {
       }
 
       PropertyConverter get_converter(const std::string& name) const {
-        if(auto i = m_converters.find(name); i != m_converters.end()) {
+        if(auto i = m_property_converters.find(name);
+            i != m_property_converters.end()) {
           return i->second;
         }
         return {};
@@ -41,7 +41,7 @@ namespace {
       }
 
     private:
-      std::unordered_map<std::string, PropertyConverter> m_converters;
+      std::unordered_map<std::string, PropertyConverter> m_property_converters;
       std::unordered_map<std::string, FunctionConverter> m_function_converters;
   };
 
@@ -83,11 +83,30 @@ namespace {
   }
 
   optional<Property> parse_function(TokenParser& token_parser,
+    const Token& token);
+
+  void parse_value_list(TokenParser& token_parser,
+      std::vector<PropertyValue>& values) {
+    auto token = token_parser.peek();
+    token_parser.pop();
+    if(auto property = parse_function(token_parser, token)) {
+      values.push_back(*property);
+    } else if(check_length_property(token_parser, token) ||
+      check_time_property(token_parser, token)) {
+      values.push_back(token.get_value());
+      values.push_back(token_parser.peek().get_value());
+      token_parser.pop();
+    } else {
+      values.push_back(token.get_value());
+    }
+  }
+
+  optional<Property> parse_function(TokenParser& token_parser,
       const Token& token) {
-    auto& value = token.get_value();
+    auto value = token.get_value();
     if(value.type() == typeid(Identifier) && check_adjacent_token(
         token_parser, token, Bracket::OPEN_ROUND)) {
-      auto name = boost::get<Identifier>(value);
+      auto& name = boost::get<Identifier>(value);
       auto values = std::vector<PropertyValue>();
       token_parser.pop();
       while(!check_token(token_parser, Bracket::CLOSE_ROUND)) {
@@ -95,19 +114,7 @@ namespace {
           token_parser.pop();
           continue;
         }
-        auto next_token = token_parser.peek();
-        auto& next_value = next_token.get_value();
-        token_parser.pop();
-        if(auto property = parse_function(token_parser, next_token)) {
-          values.push_back(*property);
-        } else if(check_length_property(token_parser, next_token) ||
-            check_time_property(token_parser, next_token)) {
-          values.push_back(next_token.get_value());
-          values.push_back(token_parser.peek().get_value());
-          token_parser.pop();
-        } else {
-          values.push_back(next_value);
-        }
+        parse_value_list(token_parser, values);
       }
       if(!check_token(token_parser, Bracket::CLOSE_ROUND)) {
         throw std::runtime_error("Expected ')' at the end of the function");
@@ -124,14 +131,14 @@ namespace {
 
 void Spire::register_property_converter(const std::string& name,
     PropertyConverter converter) {
-  PropertyRegistry::get_instance()->register_converter(name,
-    std::move(converter));
+  PropertyRegistry::get_instance()->register_property_converter(name,
+    converter);
 }
 
 void Spire::register_function_converter(const std::string& name,
     FunctionConverter converter) {
   PropertyRegistry::get_instance()->register_function_converter(name,
-    std::move(converter));
+    converter);
 }
 
 void Spire::parse_block(TokenParser& token_parser, Rule& rule) {
@@ -154,18 +161,7 @@ void Spire::parse_block(TokenParser& token_parser, Rule& rule) {
       property_name = boost::get<Identifier>(value);
       while(!check_token(token_parser, Punctuation::SEMI_COLON) &&
           !check_token(token_parser, Bracket::CLOSE_CURLY)) {
-        auto next_token = token_parser.peek();
-        token_parser.pop();
-        if(auto property = parse_function(token_parser, next_token)) {
-          values.push_back(*property);
-        } else if(check_length_property(token_parser, next_token) ||
-            check_time_property(token_parser, next_token)) {
-          values.push_back(next_token.get_value());
-          values.push_back(token_parser.peek().get_value());
-          token_parser.pop();
-        } else {
-          values.push_back(next_token.get_value());
-        }
+        parse_value_list(token_parser, values);
       }
       if(check_token(token_parser, Punctuation::SEMI_COLON) ||
           check_token(token_parser, Bracket::CLOSE_CURLY)) {
