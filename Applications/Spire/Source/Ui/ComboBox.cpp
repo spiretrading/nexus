@@ -291,8 +291,7 @@ void ComboBox::update_completion() {
       auto selection_start = query.size();
       {
         auto blocker = shared_connection_block(m_data->m_input_connection);
-        auto value = query + completion;
-        m_input_box->get_current()->set(AnyRef(value));
+        m_input_box->get_current()->set(query + completion);
       }
       m_data->m_has_autocomplete_selection = false;
       highlight.set({selection_start + completion.size(), selection_start});
@@ -311,7 +310,7 @@ void ComboBox::update_completion() {
 
 void ComboBox::revert_to(const QString& query, bool autocomplete) {
   auto blocker = shared_connection_block(m_data->m_input_connection);
-  m_input_box->get_current()->set(AnyRef(query));
+  m_input_box->get_current()->set(query);
   m_data->m_has_autocomplete_selection = false;
   m_data->m_last_completion.clear();
   m_data->m_prefix = query;
@@ -340,7 +339,7 @@ void ComboBox::submit(const QString& query, bool is_passive) {
   }
   if(!m_data->m_completion.isEmpty()) {
     auto blocker = shared_connection_block(m_data->m_input_connection);
-    m_input_box->get_current()->set(AnyRef(query));
+    m_input_box->get_current()->set(query);
     m_data->m_has_autocomplete_selection = false;
     auto current_blocker =
       shared_connection_block(m_data->m_current_connection);
@@ -364,7 +363,7 @@ void ComboBox::on_current(const std::any& current) {
   if(!is_equal(current, m_query_model->parse(input))) {
     auto text = to_text(current);
     if(input != text) {
-      m_input_box->get_current()->set(AnyRef(text));
+      m_input_box->get_current()->set(text);
     }
   }
 }
@@ -466,7 +465,7 @@ void ComboBox::on_drop_down_current(optional<int> index) {
       auto input_blocker = shared_connection_block(m_data->m_input_connection);
       auto highlight_blocker =
         shared_connection_block(m_data->m_highlight_connection);
-      m_input_box->get_current()->set(AnyRef(text));
+      m_input_box->get_current()->set(text);
     }
     m_data->m_last_completion = text;
     m_data->m_completion.clear();
@@ -484,7 +483,7 @@ void ComboBox::on_drop_down_submit(const std::any& submission) {
     auto input_blocker = shared_connection_block(m_data->m_input_connection);
     auto highlight_blocker =
       shared_connection_block(m_data->m_highlight_connection);
-    m_input_box->get_current()->set(AnyRef(text));
+    m_input_box->get_current()->set(text);
     m_data->m_has_autocomplete_selection = false;
     m_input_box->get_highlight()->set(Highlight(text.size()));
   }

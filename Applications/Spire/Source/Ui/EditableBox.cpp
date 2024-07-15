@@ -12,28 +12,28 @@ namespace {
   AnyRef reset(const AnyRef& any) {
     if(any.get_type() == typeid(QString)) {
       static const auto value = QString("");
-      return AnyRef(value);
+      return value;
     } else if(any.get_type() == typeid(Region)) {
       static const auto value = Region();
-      return AnyRef(value);
+      return value;
     } else if(any.get_type() == typeid(Destination)) {
       static const auto value = Destination();
-      return AnyRef(value);
+      return value;
     } else if(any.get_type() == typeid(OrderType)) {
       static const auto value = OrderType(OrderType::NONE);
-      return AnyRef(value);
+      return value;
     } else if(any.get_type() == typeid(Side)) {
       static const auto value = Side(Side::NONE);
-      return AnyRef(value);
+      return value;
     } else if(any.get_type() == typeid(TimeInForce)) {
       static const auto value = TimeInForce(TimeInForce::Type::NONE);
-      return AnyRef(value);
+      return value;
     } else if(any.get_type() == typeid(optional<Quantity>)) {
       static const auto value = optional<Quantity>();
-      return AnyRef(value);
+      return value;
     } else if(any.get_type() == typeid(QKeySequence)) {
       static const auto value = QKeySequence();
-      return AnyRef(value);
+      return value;
     }
     throw std::runtime_error("Invalid value.");
   }

@@ -15,9 +15,9 @@ namespace {
 
   AnyRef extract(Person& person, int column) {
     if(column == 0) {
-      return AnyRef(person.m_name);
+      return person.m_name;
     }
-    return AnyRef(person.m_age);
+    return person.m_age;
   }
 }
 
@@ -49,8 +49,7 @@ TEST_SUITE("ListToTableModel") {
   TEST_CASE("operations") {
     auto source = std::make_shared<ArrayListModel<Person>>();
     source->push({"Skylar", 44});
-    auto table =
-      ListToTableModel(source, 2, &extract);
+    auto table = ListToTableModel(source, 2, &extract);
     auto operations = std::deque<TableModel::Operation>();
     table.connect_operation_signal([&] (const auto& operation) {
       operations.push_back(operation);

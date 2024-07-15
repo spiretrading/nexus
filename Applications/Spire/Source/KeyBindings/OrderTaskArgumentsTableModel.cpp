@@ -10,23 +10,23 @@ namespace {
   AnyRef extract(const OrderTaskArguments& arguments, int index) {
     auto column = static_cast<OrderTaskColumns>(index);
     if(column == OrderTaskColumns::NAME) {
-      return AnyRef(arguments.m_name);
+      return arguments.m_name;
     } else if(column == OrderTaskColumns::REGION) {
-      return AnyRef(arguments.m_region);
+      return arguments.m_region;
     } else if(column == OrderTaskColumns::DESTINATION) {
-      return AnyRef(arguments.m_destination);
+      return arguments.m_destination;
     } else if(column == OrderTaskColumns::ORDER_TYPE) {
-      return AnyRef(arguments.m_order_type);
+      return arguments.m_order_type;
     } else if(column == OrderTaskColumns::SIDE) {
-      return AnyRef(arguments.m_side);
+      return arguments.m_side;
     } else if(column == OrderTaskColumns::QUANTITY) {
-      return AnyRef(arguments.m_quantity);
+      return arguments.m_quantity;
     } else if(column == OrderTaskColumns::TIME_IN_FORCE) {
-      return AnyRef(arguments.m_time_in_force);
+      return arguments.m_time_in_force;
     } else if(column == OrderTaskColumns::TAGS) {
-      return AnyRef(arguments.m_additional_tags);
+      return arguments.m_additional_tags;
     } else {
-      return AnyRef(arguments.m_key);
+      return arguments.m_key;
     }
   }
 }
