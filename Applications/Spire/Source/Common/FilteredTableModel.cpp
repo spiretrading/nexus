@@ -8,7 +8,8 @@ using namespace Spire;
 FilteredTableModel::FilteredTableModel(
     std::shared_ptr<TableModel> source, Filter filter)
     : m_source(std::move(source)),
-      m_filter(std::move(filter)) {
+      m_filter(std::move(filter)),
+      m_filter_count(0) {
   for(auto i = 0; i != m_source->get_row_size(); ++i) {
     if(!m_filter(*m_source, i)) {
       m_filtered_data.push_back(i);
@@ -19,6 +20,8 @@ FilteredTableModel::FilteredTableModel(
 }
 
 void FilteredTableModel::set_filter(const Filter& filter) {
+  ++m_filter_count;
+  auto count = m_filter_count;
   m_filter = filter;
   auto source_row = 0;
   auto filtered_row = 0;
@@ -30,26 +33,44 @@ void FilteredTableModel::set_filter(const Filter& filter) {
           m_filtered_data.insert(
             m_filtered_data.begin() + filtered_row, source_row);
           m_transaction.push(AddOperation(filtered_row));
+          if(count != m_filter_count) {
+            return;
+          }
         }
         ++filtered_row;
       } else {
         if(m_filtered_data[filtered_row] == source_row) {
           m_transaction.push(PreRemoveOperation(filtered_row));
+          if(count != m_filter_count) {
+            return;
+          }
           m_filtered_data.erase(m_filtered_data.begin() + filtered_row);
           m_transaction.push(RemoveOperation(filtered_row));
+          if(count != m_filter_count) {
+            return;
+          }
         }
       }
       ++source_row;
     }
     while(filtered_row != static_cast<int>(m_filtered_data.size())) {
       m_transaction.push(PreRemoveOperation(filtered_row));
+      if(count != m_filter_count) {
+        return;
+      }
       m_filtered_data.erase(m_filtered_data.begin() + filtered_row);
       m_transaction.push(RemoveOperation(filtered_row));
+      if(count != m_filter_count) {
+        return;
+      }
     }
     while(source_row != m_source->get_row_size()) {
       if(!m_filter(*m_source, source_row)) {
         m_filtered_data.push_back(source_row);
         m_transaction.push(AddOperation(m_filtered_data.size() - 1));
+        if(count != m_filter_count) {
+          return;
+        }
       }
       ++source_row;
     }
@@ -159,7 +180,12 @@ void FilteredTableModel::on_operation(const Operation& operation) {
       auto index = 0;
       if(is_found) {
         index = static_cast<int>(i - m_filtered_data.begin());
+        ++m_filter_count;
+        auto count = m_filter_count;
         m_transaction.push(PreRemoveOperation(index));
+        if(count != m_filter_count) {
+          return;
+        }
       }
       std::for_each(i, m_filtered_data.end(), [] (int& value) { --value; });
       if(is_found) {
@@ -181,7 +207,12 @@ void FilteredTableModel::on_operation(const Operation& operation) {
         }
       } else if(is_found) {
         auto index = static_cast<int>(i - m_filtered_data.begin());
+        ++m_filter_count;
+        auto count = m_filter_count;
         m_transaction.push(PreRemoveOperation(index));
+        if(count != m_filter_count) {
+          return;
+        }
         m_filtered_data.erase(i);
         m_transaction.push(RemoveOperation(index));
       }

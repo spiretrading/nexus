@@ -5,9 +5,8 @@
 #include "Spire/KeyBindings/NoneAdditionalTagSchema.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ArrayTableModel.hpp"
-#include "Spire/Spire/ColumnViewListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Spire/ListValueModel.hpp"
+#include "Spire/Spire/TableValueModel.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/EditableBox.hpp"
@@ -400,8 +399,7 @@ void AdditionalTagsWindow::keyPressEvent(QKeyEvent* event) {
 
 EditableBox* AdditionalTagsWindow::make_key_item(
     const std::shared_ptr<TableModel>& table, int row, int column) const {
-  auto current = make_list_value_model(
-    std::make_shared<ColumnViewListModel<int>>(table, column), row);
+  auto current = make_table_value_model<int>(table, row, column);
   auto available_tags =
     static_cast<AppendableTableModel&>(*m_tags).m_available_tags[row];
   return new EditableBox(*new AnyInputBox(
@@ -412,11 +410,9 @@ EditableBox* AdditionalTagsWindow::make_key_item(
 EditableBox* AdditionalTagsWindow::make_value_item(
     const std::shared_ptr<TableModel>& table, int row, int column) const {
   const auto KEY_COLUMN = 0;
-  auto key = make_list_value_model(
-    std::make_shared<ColumnViewListModel<int>>(table, KEY_COLUMN), row);
-  auto value = make_list_value_model(
-    std::make_shared<ColumnViewListModel<optional<Nexus::Tag::Type>>>(
-      table, column), row);
+  auto key = make_table_value_model<int>(table, row, KEY_COLUMN);
+  auto value =
+    make_table_value_model<optional<Nexus::Tag::Type>>(table, row, column);
   auto schema = std::make_shared<KeyToSchemaModel>(
     std::move(key), m_additional_tags, m_destination, m_region);
   return new EditableBox(

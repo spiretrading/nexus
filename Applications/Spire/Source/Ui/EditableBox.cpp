@@ -8,36 +8,34 @@ using namespace Nexus;
 using namespace Spire;
 using namespace Spire::Styles;
 
-namespace{
-  auto reset(AnyRef& any) {
+namespace {
+  AnyRef reset(const AnyRef& any) {
     if(any.get_type() == typeid(QString)) {
-      static auto value = QString("");
-      any = AnyRef(value);
+      static const auto value = QString("");
+      return value;
     } else if(any.get_type() == typeid(Region)) {
-      static auto value = Region();
-      any = AnyRef(value);
+      static const auto value = Region();
+      return value;
     } else if(any.get_type() == typeid(Destination)) {
-      static auto value = Destination();
-      any = AnyRef(value);
+      static const auto value = Destination();
+      return value;
     } else if(any.get_type() == typeid(OrderType)) {
-      static auto value = OrderType(OrderType::NONE);
-      any = AnyRef(value);
+      static const auto value = OrderType(OrderType::NONE);
+      return value;
     } else if(any.get_type() == typeid(Side)) {
-      static auto value = Side(Side::NONE);
-      any = AnyRef(value);
+      static const auto value = Side(Side::NONE);
+      return value;
     } else if(any.get_type() == typeid(TimeInForce)) {
-      static auto value = TimeInForce(TimeInForce::Type::NONE);
-      any = AnyRef(value);
+      static const auto value = TimeInForce(TimeInForce::Type::NONE);
+      return value;
     } else if(any.get_type() == typeid(optional<Quantity>)) {
-      static auto value = optional<Quantity>();
-      any = AnyRef(value);
+      static const auto value = optional<Quantity>();
+      return value;
     } else if(any.get_type() == typeid(QKeySequence)) {
-      static auto value = QKeySequence();
-      any = AnyRef(value);
-    } else {
-      any = AnyRef();
+      static const auto value = QKeySequence();
+      return value;
     }
-    return any;
+    throw std::runtime_error("Invalid value.");
   }
 }
 

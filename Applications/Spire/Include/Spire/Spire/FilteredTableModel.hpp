@@ -52,6 +52,7 @@ namespace Spire {
     private:
       std::shared_ptr<TableModel> m_source;
       Filter m_filter;
+      int m_filter_count;
       std::vector<int> m_filtered_data;
       TableModelTransactionLog m_transaction;
       boost::signals2::scoped_connection m_source_connection;

@@ -76,6 +76,7 @@ namespace Spire {
     private:
       std::shared_ptr<ListModel<Type>> m_source;
       Filter m_filter;
+      int m_filter_count;
       std::vector<int> m_filtered_data;
       ListModelTransactionLog<Type> m_transaction;
       boost::signals2::scoped_connection m_source_connection;
@@ -93,7 +94,8 @@ namespace Spire {
   FilteredListModel<T>::FilteredListModel(
       std::shared_ptr<ListModel<Type>> source, Filter filter)
       : m_source(std::move(source)),
-        m_filter(std::move(filter)) {
+        m_filter(std::move(filter)),
+        m_filter_count(0) {
     for(auto i = 0; i != m_source->get_size(); ++i) {
       if(!m_filter(*m_source, i)) {
         m_filtered_data.push_back(i);
@@ -105,6 +107,8 @@ namespace Spire {
 
   template<typename T>
   void FilteredListModel<T>::set_filter(const Filter& filter) {
+    ++m_filter_count;
+    auto count = m_filter_count;
     m_filter = filter;
     auto source_index = 0;
     auto filtered_index = 0;
@@ -116,26 +120,44 @@ namespace Spire {
             m_filtered_data.insert(
               m_filtered_data.begin() + filtered_index, source_index);
             m_transaction.push(AddOperation(filtered_index));
+            if(count != m_filter_count) {
+              return;
+            }
           }
           ++filtered_index;
         } else {
           if(m_filtered_data[filtered_index] == source_index) {
             m_transaction.push(PreRemoveOperation(filtered_index));
+            if(count != m_filter_count) {
+              return;
+            }
             m_filtered_data.erase(m_filtered_data.begin() + filtered_index);
             m_transaction.push(RemoveOperation(filtered_index));
+            if(count != m_filter_count) {
+              return;
+            }
           }
         }
         ++source_index;
       }
       while(filtered_index != static_cast<int>(m_filtered_data.size())) {
         m_transaction.push(PreRemoveOperation(filtered_index));
+        if(count != m_filter_count) {
+          return;
+        }
         m_filtered_data.erase(m_filtered_data.begin() + filtered_index);
         m_transaction.push(RemoveOperation(filtered_index));
+        if(count != m_filter_count) {
+          return;
+        }
       }
       while(source_index != m_source->get_size()) {
         if(!m_filter(*m_source, source_index)) {
           m_filtered_data.push_back(source_index);
           m_transaction.push(AddOperation(m_filtered_data.size() - 1));
+          if(count != m_filter_count) {
+            return;
+          }
         }
         ++source_index;
       }
@@ -255,9 +277,9 @@ namespace Spire {
             static_cast<int>(source - m_filtered_data.begin()),
             static_cast<int>(destination - m_filtered_data.begin())));
         } else if(operation.m_source < operation.m_destination) {
-            auto destination = std::upper_bound(
-              source, m_filtered_data.end(), operation.m_destination);
-            std::for_each(source, destination, [] (int& value) { --value; });
+          auto destination = std::upper_bound(
+            source, m_filtered_data.end(), operation.m_destination);
+          std::for_each(source, destination, [] (int& value) { --value; });
         } else {
           auto destination = std::lower_bound(
             m_filtered_data.begin(), source, operation.m_destination);
@@ -269,7 +291,12 @@ namespace Spire {
         auto index = 0;
         if(is_found) {
           index = static_cast<int>(i - m_filtered_data.begin());
+          ++m_filter_count;
+          auto count = m_filter_count;
           m_transaction.push(PreRemoveOperation(index));
+          if(count != m_filter_count) {
+            return;
+          }
         }
         std::for_each(i, m_filtered_data.end(), [] (int& value) { --value; });
         if(is_found) {
@@ -291,7 +318,12 @@ namespace Spire {
           }
         } else if(is_found) {
           auto index = static_cast<int>(i - m_filtered_data.begin());
+          ++m_filter_count;
+          auto count = m_filter_count;
           m_transaction.push(PreRemoveOperation(index));
+          if(count != m_filter_count) {
+            return;
+          }
           m_filtered_data.erase(i);
           m_transaction.push(RemoveOperation(index));
         }

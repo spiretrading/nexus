@@ -445,7 +445,7 @@ void ListView::add_item(int index) {
   }
 }
 
-void ListView::remove_item(int index) {
+void ListView::pre_remove_item(int index) {
   auto item = std::move(m_items[index]);
   m_items.erase(m_items.begin() + index);
   for(auto& item : m_items | std::views::drop(index)) {
@@ -462,6 +462,9 @@ void ListView::remove_item(int index) {
       --*m_focus_index;
     }
   }
+}
+
+void ListView::remove_item(int index) {
   auto blocker = std::array{
     shared_connection_block(m_current_connection),
     shared_connection_block(m_selection_connection)};
@@ -716,26 +719,31 @@ void ListView::on_item_click(ItemEntry& item) {
 }
 
 void ListView::on_list_operation(const AnyListModel::Operation& operation) {
-  visit(operation,
-    [&] (AnyListModel::StartTransaction) {
-      m_is_transaction = true;
-    },
-    [&] (AnyListModel::EndTransaction) {
-      m_is_transaction = false;
-    },
-    [&] (const AnyListModel::AddOperation& operation) {
-      add_item(operation.m_index);
-    },
-    [&] (const AnyListModel::PreRemoveOperation& operation) {
-      remove_item(operation.m_index);
-    },
-    [&] (const AnyListModel::MoveOperation& operation) {
-      move_item(operation.m_source, operation.m_destination);
-    });
-  if(!m_is_transaction) {
-    m_top_index = -1;
-    update_layout();
-  }
+  m_operation_queue.Add([=] {
+    visit(operation,
+      [&] (AnyListModel::StartTransaction) {
+        m_is_transaction = true;
+      },
+      [&] (AnyListModel::EndTransaction) {
+        m_is_transaction = false;
+      },
+      [&] (const AnyListModel::AddOperation& operation) {
+        add_item(operation.m_index);
+      },
+      [&] (const AnyListModel::PreRemoveOperation& operation) {
+        pre_remove_item(operation.m_index);
+      },
+      [&] (const AnyListModel::RemoveOperation& operation) {
+        remove_item(operation.m_index);
+      },
+      [&] (const AnyListModel::MoveOperation& operation) {
+        move_item(operation.m_source, operation.m_destination);
+      });
+    if(!m_is_transaction) {
+      m_top_index = -1;
+      update_layout();
+    }
+  });
 }
 
 void ListView::on_current(optional<int> previous, optional<int> current) {
@@ -766,10 +774,15 @@ void ListView::on_selection(const ListModel<int>::Operation& operation) {
     },
     [&] (const ListModel<int>::PreRemoveOperation& operation) {
       auto& selection = m_selection_controller.get_selection();
-      m_items[selection->get(operation.m_index)]->m_item.set_selected(false);
+      auto index = selection->get(operation.m_index);
+      if(index < static_cast<int>(m_items.size())) {
+        m_items[index]->m_item.set_selected(false);
+      }
     },
     [&] (const ListModel<int>::UpdateOperation& operation) {
-      m_items[operation.get_previous()]->m_item.set_selected(false);
+      if(operation.get_previous() < static_cast<int>(m_items.size())) {
+        m_items[operation.get_previous()]->m_item.set_selected(false);
+      }
       m_items[operation.get_value()]->m_item.set_selected(true);
     });
 }

@@ -1,14 +1,13 @@
 #include "Spire/KeyBindings/TaskKeysTableView.hpp"
 #include <boost/signals2/shared_connection_block.hpp>
 #include "Spire/KeyBindings/AdditionalTagsBox.hpp"
-#include "Spire/KeyBindings/OrderTaskArgumentsListToTableModel.hpp"
+#include "Spire/KeyBindings/OrderTaskArgumentsTableModel.hpp"
 #include "Spire/KeyBindings/QuantitySettingBox.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
-#include "Spire/Spire/ColumnViewListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Spire/ListValueModel.hpp"
 #include "Spire/Spire/ProxyValueModel.hpp"
 #include "Spire/Spire/TableModelTransactionLog.hpp"
+#include "Spire/Spire/TableValueModel.hpp"
 #include "Spire/Spire/ValidatedValueModel.hpp"
 #include "Spire/Ui/AnyInputBox.hpp"
 #include "Spire/Ui/DecimalBox.hpp"
@@ -19,7 +18,6 @@
 #include "Spire/Ui/EmptyTableFilter.hpp"
 #include "Spire/Ui/KeyInputBox.hpp"
 #include "Spire/Ui/OrderTypeBox.hpp"
-#include "Spire/Ui/PopupBox.hpp"
 #include "Spire/Ui/RecycledTableViewItemBuilder.hpp"
 #include "Spire/Ui/RegionBox.hpp"
 #include "Spire/Ui/SideBox.hpp"
@@ -35,8 +33,6 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  using PopUp = StateSelector<void, struct PopUpSelectorTag>;
-
   bool comparator(const AnyRef& left, int left_row, const AnyRef& right,
       int right_row, int column) {
     if(left.get_type() == typeid(QuantitySetting) &&
@@ -100,30 +96,6 @@ namespace {
     return widths;
   }
 
-  QWidget* find_tip_window(const QWidget& parent) {
-    for(auto child : parent.children()) {
-      if(!child->isWidgetType()) {
-        continue;
-      }
-      auto& widget = *static_cast<QWidget*>(child);
-      if(widget.isWindow() &&
-          (widget.windowFlags() & Qt::WindowDoesNotAcceptFocus)) {
-        return &widget;
-      }
-      if(auto window = find_tip_window(widget)) {
-        return window;
-      }
-    }
-    return nullptr;
-  }
-
-  template<typename T>
-  auto to_value_model(const std::shared_ptr<TableModel>& table, int row,
-      int column) {
-    return make_list_value_model(
-      std::make_shared<ColumnViewListModel<T>>(table, column), row);
-  }
-
   struct RegionKeyHash {
     std::size_t operator()(
         const std::pair<Region, QKeySequence>& region_key) const {
@@ -131,115 +103,6 @@ namespace {
       hash_combine(seed, region_key.first);
       hash_combine(seed, qHash(region_key.second));
       return seed;
-    }
-  };
-
-  struct DestinationQueryModel : ComboBox::QueryModel {
-    std::shared_ptr<ValueModel<Region>> m_region_model;
-    DestinationDatabase m_destinations;
-    MarketDatabase m_markets;
-    optional<LocalComboBoxQueryModel> m_local_query_model;
-    scoped_connection m_region_connection;
-
-    DestinationQueryModel(std::shared_ptr<ValueModel<Region>> region_model,
-        DestinationDatabase destinations, MarketDatabase markets)
-        : m_region_model(std::move(region_model)),
-          m_destinations(std::move(destinations)),
-          m_markets(std::move(markets)),
-          m_region_connection(m_region_model->connect_update_signal(
-            std::bind_front(&DestinationQueryModel::on_update, this))) {
-      on_update(m_region_model->get());
-    }
-
-    std::any parse(const QString& query) override {
-      return m_local_query_model->parse(query);
-    }
-
-    QtPromise<std::vector<std::any>> submit(const QString& query) override {
-      return m_local_query_model->submit(query);
-    }
-
-    void on_update(const Region& region) {
-      auto market_set = std::unordered_set<MarketCode>();
-      for(auto& security : region.GetSecurities()) {
-        market_set.insert(security.GetMarket());
-      }
-      auto region_markets = region.GetMarkets();
-      market_set.insert(region_markets.begin(), region_markets.end());
-      for(auto& country : region.GetCountries()) {
-        auto markets = m_markets.FromCountry(country);
-        for(auto& market : markets) {
-          market_set.insert(market.m_code);
-        }
-      }
-      m_local_query_model.emplace();
-      auto destinations = m_destinations.SelectEntries(
-        [&] (const auto& destination) {
-          for(auto& market : destination.m_markets) {
-            if(market_set.contains(market)) {
-              return true;
-            }
-          }
-          return false;
-        });
-      std::erase_if(destinations, [&] (const auto& destination) {
-        for(auto& market : market_set) {
-          auto i = std::find(
-            destination.m_markets.begin(), destination.m_markets.end(), market);
-          if(i == destination.m_markets.end()) {
-            return true;
-          }
-        }
-        return false;
-      });
-      for(auto& destination : destinations) {
-        m_local_query_model->add(to_text(destination.m_id), destination);
-      }
-    }
-  };
-
-  struct DestinationValueModel : ValueModel<Destination> {
-    mutable UpdateSignal m_update_signal;
-    std::shared_ptr<ValueModel<Destination>> m_source;
-    std::shared_ptr<DestinationQueryModel> m_query_model;
-    scoped_connection m_source_connection;
-    scoped_connection m_connection;
-
-    DestinationValueModel(std::shared_ptr<ValueModel<Destination>> source,
-        std::shared_ptr<DestinationQueryModel> query_model)
-        : m_source(std::move(source)),
-          m_query_model(std::move(query_model)),
-          m_source_connection(m_source->connect_update_signal(m_update_signal)),
-          m_connection(m_query_model->m_region_model->connect_update_signal(
-            std::bind_front(&DestinationValueModel::on_update, this))) {
-      on_update(m_query_model->m_region_model->get());
-    }
-
-    QValidator::State get_state() const override {
-      return m_source->get_state();
-    }
-
-    const Destination& get() const override {
-      return m_source->get();
-    }
-
-    QValidator::State test(const Destination& value) const override {
-      return m_source->test(value);
-    }
-
-    QValidator::State set(const Destination& value) override {
-      return m_source->set(value);
-    }
-
-    connection connect_update_signal(
-        const UpdateSignal::slot_type& slot) const override {
-      return m_update_signal.connect(slot);
-    }
-
-    void on_update(const Region& region) {
-      if(!get().empty() && !m_query_model->parse(to_text(get())).has_value()) {
-        set(Destination());
-      }
     }
   };
 
@@ -368,7 +231,8 @@ namespace {
     EditableBox* mount(
         const std::shared_ptr<TableModel>& table, int row, int column) {
       auto make_proxy = [&] <typename T> () {
-        return make_proxy_value_model(to_value_model<T>(table, row, column));
+        return make_proxy_value_model(
+          make_table_value_model<T>(table, row, column));
       };
       auto column_id = static_cast<OrderTaskColumns>(column);
       auto [input_box, proxy] =
@@ -386,16 +250,15 @@ namespace {
             return {new AnyInputBox(*region_box),
               std::make_shared<ItemState>(current)};
           } else if(column_id == OrderTaskColumns::DESTINATION) {
-            auto region = make_proxy_value_model(to_value_model<Region>(
-              table, row, static_cast<int>(OrderTaskColumns::REGION)));
-            auto query_model = std::make_shared<DestinationQueryModel>(
-              region, m_destinations, m_markets);
-            auto proxy = make_proxy.operator ()<Destination>();
-            auto current =
-              std::make_shared<DestinationValueModel>(proxy, query_model);
+            auto region = make_proxy_value_model(
+              make_table_value_model<Region>(table, row,
+                static_cast<int>(OrderTaskColumns::REGION)));
+            auto destinations = make_region_filtered_destination_list(
+              m_destinations, m_markets, region);
+            auto current = make_proxy.operator ()<Destination>();
             return {new AnyInputBox(
-              *new DestinationBox(std::move(query_model), current)),
-              std::make_shared<DestinationState>(proxy, region)};
+              *make_destination_box(current, std::move(destinations))),
+              std::make_shared<DestinationState>(current, region)};
           } else if(column_id == OrderTaskColumns::ORDER_TYPE) {
             auto current = make_proxy.operator ()<OrderType>();
             return {new AnyInputBox(*make_order_type_box(current)),
@@ -414,9 +277,9 @@ namespace {
               std::make_shared<ItemState>(current)};
           } else if(column_id == OrderTaskColumns::TAGS) {
             auto destination = make_proxy_value_model(
-              to_value_model<Destination>(
+              make_table_value_model<Destination>(
                 table, row, static_cast<int>(OrderTaskColumns::DESTINATION)));
-            auto region = make_proxy_value_model(to_value_model<Region>(
+            auto region = make_proxy_value_model(make_table_value_model<Region>(
               table, row, static_cast<int>(OrderTaskColumns::REGION)));
             auto current = make_proxy.operator ()<std::vector<AdditionalTag>>();
             return {new AnyInputBox(*new AdditionalTagsBox(
@@ -449,7 +312,7 @@ namespace {
       auto update_proxy = [&] <typename T> () {
         auto& state = *m_item_states[&widget];
         std::static_pointer_cast<ProxyValueModel<T>>(state.m_proxy)->set_source(
-          to_value_model<T>(table, row, column));
+          make_table_value_model<T>(table, row, column));
       };
       auto column_id = static_cast<OrderTaskColumns>(column);
       if(column_id == OrderTaskColumns::NAME) {
@@ -463,7 +326,7 @@ namespace {
         auto temporary_model =
           std::make_shared<LocalDestinationModel>(proxy->get());
         proxy->set_source(temporary_model);
-        state.m_region->set_source(to_value_model<Region>(
+        state.m_region->set_source(make_table_value_model<Region>(
           table, row, static_cast<int>(OrderTaskColumns::REGION)));
         update_proxy.operator ()<Destination>();
       } else if(column_id == OrderTaskColumns::ORDER_TYPE) {
@@ -483,9 +346,9 @@ namespace {
           std::make_shared<LocalValueModel<std::vector<AdditionalTag>>>(
             proxy->get());
         proxy->set_source(temporary_model);
-        state.m_destination->set_source(to_value_model<Destination>(
+        state.m_destination->set_source(make_table_value_model<Destination>(
           table, row, static_cast<int>(OrderTaskColumns::DESTINATION)));
-        state.m_region->set_source(to_value_model<Region>(
+        state.m_region->set_source(make_table_value_model<Region>(
           table, row, static_cast<int>(OrderTaskColumns::REGION)));
         update_proxy.operator ()<std::vector<AdditionalTag>>();
       } else if(column_id == OrderTaskColumns::KEY) {
@@ -504,8 +367,8 @@ TableView* Spire::make_task_keys_table_view(
     std::shared_ptr<ComboBox::QueryModel> region_query_model,
     DestinationDatabase destinations, MarketDatabase markets,
     AdditionalTagDatabase additional_tags, QWidget* parent) {
-  auto table = std::make_shared<OrderTaskArgumentsListToTableModel>(
-    std::move(order_task_arguments));
+  auto table =
+    make_order_task_arguments_table_model(std::move(order_task_arguments));
   auto table_view = new EditableTableView(
     std::make_shared<UniqueTaskKeyTableModel>(std::move(table)),
     make_header_model(), std::make_shared<EmptyTableFilter>(),
@@ -522,9 +385,6 @@ TableView* Spire::make_task_keys_table_view(
     table_view->get_header().get_widths()->set(i + 1, widths[i]);
   }
   update_style(*table_view, [] (auto& style) {
-    style.get((Any() > is_a<TableBody>() >
-        Row() > is_a<TableItem>() > PopUp()) << Current()).
-      set(border_color(QColor(Qt::transparent)));
     style.get(Any() > is_a<TableBody>() >
         Row() > is_a<TableItem>() > is_a<EditableBox>() > is_a<DecimalBox>()).
       set(TextAlign(Qt::Alignment(Qt::AlignRight)));
