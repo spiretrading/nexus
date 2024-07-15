@@ -41,19 +41,19 @@ namespace Spire {
 
       /** Constructs an AnyRef referencing a non-const, non-volatile object. */
       template<typename T>
-      AnyRef(T& ref) noexcept;
+      explicit AnyRef(T& ref) noexcept;
 
       /** Constructs an AnyRef referencing a const object. */
       template<typename T>
-      AnyRef(const T& ref) noexcept;
+      explicit AnyRef(const T& ref) noexcept;
 
       /** Constructs an AnyRef referencing a volatile object. */
       template<typename T>
-      AnyRef(volatile T& ref) noexcept;
+      explicit AnyRef(volatile T& ref) noexcept;
 
       /** Constructs an AnyRef referencing a const and volatile object. */
       template<typename T>
-      AnyRef(const volatile T& ref) noexcept;
+      explicit AnyRef(const volatile T& ref) noexcept;
 
       AnyRef(const AnyRef& any);
 
@@ -83,25 +83,11 @@ namespace Spire {
 
       AnyRef& assign(const std::any& value);
 
-      AnyRef& operator =(const AnyRef& any) = delete;
+      AnyRef& operator =(const AnyRef& any) = default;
 
-      AnyRef& operator =(AnyRef& any) = delete;
+      AnyRef& operator =(AnyRef& any) = default;
 
-      AnyRef& operator =(std::nullptr_t) = delete;
-
-      template<typename T>
-      AnyRef& operator =(const T& ref) = delete;
-
-      template<typename T>
-      AnyRef& operator =(T& ref) = delete;
-
-      template<typename T>
-      AnyRef& operator =(volatile T& ref) = delete;
-
-      template<typename T>
-      AnyRef& operator =(const volatile T& ref) = delete;
-
-      AnyRef& operator =(AnyRef&& any) = delete;
+      AnyRef& operator =(AnyRef&& any) noexcept;
 
     private:
       enum class Qualifiers : std::uint8_t {

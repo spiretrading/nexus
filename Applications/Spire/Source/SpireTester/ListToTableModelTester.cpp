@@ -12,6 +12,13 @@ namespace {
     std::string m_name;
     int m_age;
   };
+
+  AnyRef extract(Person& person, int column) {
+    if(column == 0) {
+      return AnyRef(person.m_name);
+    }
+    return AnyRef(person.m_age);
+  }
 }
 
 TEST_SUITE("ListToTableModel") {
@@ -20,13 +27,7 @@ TEST_SUITE("ListToTableModel") {
     source->push({"Skylar", 44});
     source->push({"Kevin", 33});
     source->push({"Joel", 22});
-    auto table =
-      ListToTableModel(source, 2, [] (auto& value, int column) -> AnyRef {
-        if(column == 0) {
-          return value.m_name;
-        }
-        return value.m_age;
-      });
+    auto table = ListToTableModel(source, 2, &extract);
     REQUIRE(table.get_row_size() == 3);
     REQUIRE(table.get_column_size() == 2);
     SUBCASE("get") {
@@ -49,12 +50,7 @@ TEST_SUITE("ListToTableModel") {
     auto source = std::make_shared<ArrayListModel<Person>>();
     source->push({"Skylar", 44});
     auto table =
-      ListToTableModel(source, 2, [] (auto& value, int column) -> AnyRef {
-        if(column == 0) {
-          return value.m_name;
-        }
-        return value.m_age;
-      });
+      ListToTableModel(source, 2, &extract);
     auto operations = std::deque<TableModel::Operation>();
     table.connect_operation_signal([&] (const auto& operation) {
       operations.push_back(operation);

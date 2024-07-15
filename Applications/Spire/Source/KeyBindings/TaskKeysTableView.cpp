@@ -1,7 +1,7 @@
 #include "Spire/KeyBindings/TaskKeysTableView.hpp"
 #include <boost/signals2/shared_connection_block.hpp>
 #include "Spire/KeyBindings/AdditionalTagsBox.hpp"
-#include "Spire/KeyBindings/OrderTaskArgumentsListToTableModel.hpp"
+#include "Spire/KeyBindings/OrderTaskArgumentsTableModel.hpp"
 #include "Spire/KeyBindings/QuantitySettingBox.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ColumnViewListModel.hpp"
@@ -373,8 +373,8 @@ TableView* Spire::make_task_keys_table_view(
     std::shared_ptr<ComboBox::QueryModel> region_query_model,
     DestinationDatabase destinations, MarketDatabase markets,
     AdditionalTagDatabase additional_tags, QWidget* parent) {
-  auto table = std::make_shared<OrderTaskArgumentsListToTableModel>(
-    std::move(order_task_arguments));
+  auto table =
+    make_order_task_arguments_table_model(std::move(order_task_arguments));
   auto table_view = new EditableTableView(
     std::make_shared<UniqueTaskKeyTableModel>(std::move(table)),
     make_header_model(), std::make_shared<EmptyTableFilter>(),

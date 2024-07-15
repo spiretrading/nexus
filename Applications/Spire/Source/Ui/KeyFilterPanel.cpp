@@ -77,7 +77,7 @@ AnyInputBox* key_input_box_builder(
   input_box->connect_submit_signal([=] (const auto& submission) {
     auto& sequence = any_cast<QKeySequence>(submission);
     if(!sequence.isEmpty()) {
-      input_box->get_current()->set(QKeySequence());
+      input_box->get_current()->set(AnyRef(QKeySequence()));
       matches->push(sequence);
     }
   });

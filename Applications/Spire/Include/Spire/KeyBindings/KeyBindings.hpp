@@ -24,7 +24,6 @@ namespace Spire {
   class NoneAdditionalTagSchema;
   class OrderFieldInfoTip;
   struct OrderTaskArguments;
-  class OrderTaskArgumentsListToTableModel;
   class SearchBarOrderTaskArgumentsListModel;
   class TaskKeysPage;
 }
