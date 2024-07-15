@@ -224,18 +224,14 @@ namespace Details {
   template<typename T>
   boost::signals2::connection AnyInputBox::WrapperInputBox<T>::
       connect_submit_signal(const SubmitSignal::slot_type& slot) const {
-    return m_input_box->connect_submit_signal([=] (const auto& current) {
-      slot(AnyRef(current));
-    });
+    return m_input_box->connect_submit_signal(slot);
   }
 
   template<typename T>
   boost::signals2::connection AnyInputBox::WrapperInputBox<T>::
       connect_reject_signal(const RejectSignal::slot_type& slot) const {
     if constexpr(Details::has_reject_signal_v<T>) {
-      return m_input_box->connect_reject_signal([=] (const auto& rejected) {
-        slot(AnyRef(rejected));
-      });
+      return m_input_box->connect_reject_signal(slot);
     } else {
       return {};
     }

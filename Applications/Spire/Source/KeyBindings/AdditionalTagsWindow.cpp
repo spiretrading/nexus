@@ -69,10 +69,10 @@ namespace {
         return m_source->at(row, column);
       } else if(row == m_source->get_row_size()) {
         if(column == KEY_COLUMN) {
-          return AnyRef(NONE_KEY);
+          return NONE_KEY;
         } else if(column == VALUE_COLUMN) {
           static auto NONE = optional<Nexus::Tag::Type>();
-          return AnyRef(NONE);
+          return NONE;
         }
       }
       throw std::out_of_range("The row or column is out of range.");
