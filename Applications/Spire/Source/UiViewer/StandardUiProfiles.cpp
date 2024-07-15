@@ -14,12 +14,11 @@
 #include "Spire/KeyBindings/OrderFieldInfoTip.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ArrayTableModel.hpp"
-#include "Spire/Spire/ColumnViewListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/FieldValueModel.hpp"
-#include "Spire/Spire/ListValueModel.hpp"
 #include "Spire/Spire/LocalScalarValueModel.hpp"
-#include "Spire/Spire/RowViewListModel.hpp"
+#include "Spire/Spire/ScalarValueModelDecorator.hpp"
+#include "Spire/Spire/TableValueModel.hpp"
 #include "Spire/Spire/ToTextModel.hpp"
 #include "Spire/Spire/ValidatedValueModel.hpp"
 #include "Spire/Styles/ChainExpression.hpp"
@@ -870,26 +869,19 @@ namespace {
       int row, int column) {
     if(column == 0) {
       return new EditableBox(*new AnyInputBox(*new TextBox(
-        make_list_value_model(std::make_shared<ColumnViewListModel<QString>>(
-          table, column), row))));
+        make_table_value_model<QString>(table, row, column))));
     } else if(column == 1) {
       return new EditableBox(*new AnyInputBox(*make_order_type_box(
-        make_list_value_model(std::make_shared<ColumnViewListModel<OrderType>>(
-          table, column), row))));
+        make_table_value_model<OrderType>(table, row, column))));
     } else if(column == 2) {
-      auto model =
-        std::make_shared<ScalarValueModelDecorator<optional<Quantity>>>(
-          make_list_value_model(
-            std::make_shared<ColumnViewListModel<optional<Quantity>>>(
-              table, column), row));
-      return new EditableBox(*new AnyInputBox(
-        *new QuantityBox(std::move(model))));
+      auto model = make_scalar_value_model_decorator(
+        make_table_value_model<optional<Quantity>>(table, row, column));
+      return new EditableBox(
+        *new AnyInputBox(*new QuantityBox(std::move(model))));
     } else if(column == 3) {
-      return new EditableBox(*new AnyInputBox(*new KeyInputBox(
-        make_validated_value_model(
-          &key_input_box_validator, make_list_value_model(
-            std::make_shared<ColumnViewListModel<QKeySequence>>(table, column),
-            row)))),
+      return new EditableBox(*new AnyInputBox(
+        *new KeyInputBox(make_validated_value_model(&key_input_box_validator,
+          make_table_value_model<QKeySequence>(table, row, column)))),
         [] (const auto& key) {
           return key_input_box_validator(key) == QValidator::Acceptable;
         });
@@ -4713,9 +4705,8 @@ UiProfile Spire::make_table_view_profile() {
       set_standard_filter().
       set_item_builder(
         [] (const std::shared_ptr<TableModel>& table, int row, int column) {
-          return make_label(std::make_shared<ToTextModel<int>>(
-            make_list_value_model(std::make_shared<ColumnViewListModel<int>>(
-              table, column), row)));
+          return make_label(make_to_text_model(
+            make_table_value_model<int>(table, row, column)));
         }).
       make();
     apply_widget_properties(view, profile.get_properties());

@@ -15,6 +15,13 @@ std::any AnyRef::AnyTypeInfo::to_any(void* ptr) const noexcept {
   return *static_cast<std::any*>(ptr);
 }
 
+void AnyRef::AnyTypeInfo::assign(void* ptr, const std::any& value) const {
+  if(value.type() != get_type(ptr)) {
+    throw std::bad_any_cast();
+  }
+  *static_cast<std::any*>(ptr) = value;
+}
+
 void* AnyRef::AnyTypeInfo::copy(const void* ptr) const {
   return nullptr;
 }
@@ -86,8 +93,11 @@ bool AnyRef::is_const_volatile() const noexcept {
   return is_const() && is_volatile();
 }
 
-AnyRef& AnyRef::operator =(std::nullptr_t) noexcept {
-  *this = AnyRef();
+AnyRef& AnyRef::assign(const std::any& value) {
+  if(is_set(m_qualifiers, Qualifiers::CONSTANT)) {
+    throw std::bad_any_cast();
+  }
+  m_type->assign(m_ptr, value);
   return *this;
 }
 
