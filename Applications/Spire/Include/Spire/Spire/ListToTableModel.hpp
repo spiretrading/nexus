@@ -92,7 +92,9 @@ namespace Spire {
       throw std::out_of_range("The column is out of range.");
     }
     auto& element = m_list->get(row);
-    return m_accessor(const_cast<Type&>(element), column);
+    auto ref = m_accessor(const_cast<Type&>(element), column);
+    ref.set_const();
+    return ref;
   }
 
   template<typename T>

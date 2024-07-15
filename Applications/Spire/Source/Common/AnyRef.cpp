@@ -85,6 +85,12 @@ bool AnyRef::is_const() const noexcept {
   return is_set(m_qualifiers, Qualifiers::CONSTANT);
 }
 
+void AnyRef::set_const() noexcept {
+  m_qualifiers = static_cast<Qualifiers>(
+    static_cast<std::underlying_type_t<Qualifiers>>(m_qualifiers) |
+    static_cast<std::underlying_type_t<Qualifiers>>(Qualifiers::CONSTANT));
+}
+
 bool AnyRef::is_volatile() const noexcept {
   return is_set(m_qualifiers, Qualifiers::VOLATILE);
 }

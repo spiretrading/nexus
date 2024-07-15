@@ -280,7 +280,7 @@ namespace {
               make_table_value_model<Destination>(
                 table, row, static_cast<int>(OrderTaskColumns::DESTINATION)));
             auto region = make_proxy_value_model(make_table_value_model<Region>(
-                table, row, static_cast<int>(OrderTaskColumns::REGION)));
+              table, row, static_cast<int>(OrderTaskColumns::REGION)));
             auto current = make_proxy.operator ()<std::vector<AdditionalTag>>();
             return {new AnyInputBox(*new AdditionalTagsBox(
               current, m_additional_tags, destination, region)),

@@ -72,6 +72,9 @@ namespace Spire {
       /** Returns <code>true</code> iff the referenced object is const. */
       bool is_const() const noexcept;
 
+      /** Sets the reference to be const. */
+      void set_const() noexcept;
+
       /** Returns <code>true</code> iff the referenced object is volatile. */
       bool is_volatile() const noexcept;
 

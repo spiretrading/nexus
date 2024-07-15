@@ -7,7 +7,7 @@ using namespace Spire;
 namespace {
   static const auto COLUMN_SIZE = 9;
 
-  AnyRef extract(const OrderTaskArguments& arguments, int index) {
+  AnyRef extract(OrderTaskArguments& arguments, int index) {
     auto column = static_cast<OrderTaskColumns>(index);
     if(column == OrderTaskColumns::NAME) {
       return arguments.m_name;
