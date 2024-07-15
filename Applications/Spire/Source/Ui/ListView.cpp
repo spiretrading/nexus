@@ -774,7 +774,10 @@ void ListView::on_selection(const ListModel<int>::Operation& operation) {
     },
     [&] (const ListModel<int>::PreRemoveOperation& operation) {
       auto& selection = m_selection_controller.get_selection();
-      m_items[selection->get(operation.m_index)]->m_item.set_selected(false);
+      auto index = selection->get(operation.m_index);
+      if(index < static_cast<int>(m_items.size())) {
+        m_items[index]->m_item.set_selected(false);
+      }
     },
     [&] (const ListModel<int>::UpdateOperation& operation) {
       if(operation.get_previous() < static_cast<int>(m_items.size())) {
