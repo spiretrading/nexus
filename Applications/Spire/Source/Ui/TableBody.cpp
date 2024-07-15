@@ -4,9 +4,8 @@
 #include <QPainter>
 #include <QPointer>
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Spire/ListValueModel.hpp"
-#include "Spire/Spire/RowViewListModel.hpp"
 #include "Spire/Spire/TableModel.hpp"
+#include "Spire/Spire/TableValueModel.hpp"
 #include "Spire/Spire/ToTextModel.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/Layouts.hpp"
@@ -106,9 +105,8 @@ GridColor Spire::Styles::grid_color(QColor color) {
 
 QWidget* TableBody::default_item_builder(
     const std::shared_ptr<TableModel>& table, int row, int column) {
-  auto text = std::make_shared<ToTextModel<AnyRef>>(
-    std::make_shared<ListValueModel<AnyRef>>(
-      std::make_shared<RowViewListModel<AnyRef>>(table, row), column),
+  auto text = make_to_text_model(
+    make_table_value_model<AnyRef>(table, row, column),
     [] (const AnyRef& value) { return to_text(value); },
     [] (const QString&) { return none; });
   return make_label(text);

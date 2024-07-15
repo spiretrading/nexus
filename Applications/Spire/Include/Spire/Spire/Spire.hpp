@@ -31,7 +31,6 @@ namespace Spire {
   class AnyRef;
   template<typename T> class ArrayListModel;
   class ArrayTableModel;
-  class CancelKeySequenceValidationModel;
   template<typename T> class ColumnViewListModel;
   template<typename T> class CompositeModel;
   template<typename T> class ConstantValueModel;
@@ -41,23 +40,20 @@ namespace Spire {
   template<typename T> class FieldValueModel;
   template<typename T> class FilteredListModel;
   class FilteredTableModel;
-  class KeySequenceValidationModel;
   class ListIndexTracker;
   template<typename T> class ListIndexValueModel;
   template<typename T> class ListModel;
   template<typename T> class ListModelIterator;
   template<typename T> class ListModelReference;
+  template<typename T> class ListToTableModel;
   template<typename T> class ListValueModel;
-  class LocalRangeInputModel;
   template<typename T> class LocalScalarValueModel;
   class LocalTechnicalsModel;
   template<typename T> class LocalValueModel;
   template<typename T> class ModelTransactionLog;
   template<typename T> class OptionalScalarValueModelDecorator;
-  template<typename T> class ProxyValueModel;
   template<typename T> class ProxyScalarValueModel;
-  class RangeInputModel;
-  class RealSpinBoxModel;
+  template<typename T> class ProxyValueModel;
   template<typename T> class RowViewListModel;
   class Scalar;
   template<typename T> class ScalarValueModel;
@@ -65,13 +61,10 @@ namespace Spire {
   class ServiceSecurityQueryModel;
   template<typename T> class SortedListModel;
   class SortedTableModel;
-  template<typename T> class SpinBoxModel;
   template<typename T> struct SubscriptionResult;
   class TableModel;
   class TableRowIndexTracker;
-  class TaskKeySequenceValidationModel;
   class TechnicalsModel;
-  class TestKeySequenceValidationModel;
   template<typename T> class ToDecimalModel;
   template<typename T> class ToTextModel;
   template<typename T, typename U, typename F, typename G>
