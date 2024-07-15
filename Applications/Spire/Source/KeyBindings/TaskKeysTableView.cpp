@@ -4,11 +4,10 @@
 #include "Spire/KeyBindings/OrderTaskArgumentsTableModel.hpp"
 #include "Spire/KeyBindings/QuantitySettingBox.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
-#include "Spire/Spire/ColumnViewListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Spire/ListValueModel.hpp"
 #include "Spire/Spire/ProxyValueModel.hpp"
 #include "Spire/Spire/TableModelTransactionLog.hpp"
+#include "Spire/Spire/TableValueModel.hpp"
 #include "Spire/Spire/ValidatedValueModel.hpp"
 #include "Spire/Ui/AnyInputBox.hpp"
 #include "Spire/Ui/DecimalBox.hpp"
@@ -95,13 +94,6 @@ namespace {
     widths.push_back(scale_width(80));
     widths.push_back(scale_width(130));
     return widths;
-  }
-
-  template<typename T>
-  auto to_value_model(const std::shared_ptr<TableModel>& table, int row,
-      int column) {
-    return make_list_value_model(
-      std::make_shared<ColumnViewListModel<T>>(table, column), row);
   }
 
   struct RegionKeyHash {
@@ -239,7 +231,8 @@ namespace {
     EditableBox* mount(
         const std::shared_ptr<TableModel>& table, int row, int column) {
       auto make_proxy = [&] <typename T> () {
-        return make_proxy_value_model(to_value_model<T>(table, row, column));
+        return make_proxy_value_model(
+          make_table_value_model<T>(table, row, column));
       };
       auto column_id = static_cast<OrderTaskColumns>(column);
       auto [input_box, proxy] =
@@ -257,8 +250,9 @@ namespace {
             return {new AnyInputBox(*region_box),
               std::make_shared<ItemState>(current)};
           } else if(column_id == OrderTaskColumns::DESTINATION) {
-            auto region = make_proxy_value_model(to_value_model<Region>(
-              table, row, static_cast<int>(OrderTaskColumns::REGION)));
+            auto region = make_proxy_value_model(
+              make_table_value_model<Region>(table, row,
+                static_cast<int>(OrderTaskColumns::REGION)));
             auto destinations = make_region_filtered_destination_list(
               m_destinations, m_markets, region);
             auto current = make_proxy.operator ()<Destination>();
@@ -283,10 +277,10 @@ namespace {
               std::make_shared<ItemState>(current)};
           } else if(column_id == OrderTaskColumns::TAGS) {
             auto destination = make_proxy_value_model(
-              to_value_model<Destination>(
+              make_table_value_model<Destination>(
                 table, row, static_cast<int>(OrderTaskColumns::DESTINATION)));
-            auto region = make_proxy_value_model(to_value_model<Region>(
-              table, row, static_cast<int>(OrderTaskColumns::REGION)));
+            auto region = make_proxy_value_model(make_table_value_model<Region>(
+                table, row, static_cast<int>(OrderTaskColumns::REGION)));
             auto current = make_proxy.operator ()<std::vector<AdditionalTag>>();
             return {new AnyInputBox(*new AdditionalTagsBox(
               current, m_additional_tags, destination, region)),
@@ -318,7 +312,7 @@ namespace {
       auto update_proxy = [&] <typename T> () {
         auto& state = *m_item_states[&widget];
         std::static_pointer_cast<ProxyValueModel<T>>(state.m_proxy)->set_source(
-          to_value_model<T>(table, row, column));
+          make_table_value_model<T>(table, row, column));
       };
       auto column_id = static_cast<OrderTaskColumns>(column);
       if(column_id == OrderTaskColumns::NAME) {
@@ -332,7 +326,7 @@ namespace {
         auto temporary_model =
           std::make_shared<LocalDestinationModel>(proxy->get());
         proxy->set_source(temporary_model);
-        state.m_region->set_source(to_value_model<Region>(
+        state.m_region->set_source(make_table_value_model<Region>(
           table, row, static_cast<int>(OrderTaskColumns::REGION)));
         update_proxy.operator ()<Destination>();
       } else if(column_id == OrderTaskColumns::ORDER_TYPE) {
@@ -352,9 +346,9 @@ namespace {
           std::make_shared<LocalValueModel<std::vector<AdditionalTag>>>(
             proxy->get());
         proxy->set_source(temporary_model);
-        state.m_destination->set_source(to_value_model<Destination>(
+        state.m_destination->set_source(make_table_value_model<Destination>(
           table, row, static_cast<int>(OrderTaskColumns::DESTINATION)));
-        state.m_region->set_source(to_value_model<Region>(
+        state.m_region->set_source(make_table_value_model<Region>(
           table, row, static_cast<int>(OrderTaskColumns::REGION)));
         update_proxy.operator ()<std::vector<AdditionalTag>>();
       } else if(column_id == OrderTaskColumns::KEY) {
