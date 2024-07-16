@@ -1,5 +1,5 @@
 #include "Spire/Ui/EditableBox.hpp"
-#include <QCoreApplication>
+#include <QApplication>
 #include <QKeyEvent>
 
 using namespace boost;
@@ -72,7 +72,7 @@ EditableBox::EditableBox(
   m_focus_observer.connect_state_signal(
     std::bind_front(&EditableBox::on_focus, this));
   m_mouse_observer.connect_filtered_mouse_signal(
-    std::bind_front(&EditableBox::on_double_click, this));
+    std::bind_front(&EditableBox::on_click, this));
   m_input_box->set_read_only(true);
   match(*this, ReadOnly());
   install_focus_proxy_event_filter();
@@ -148,7 +148,7 @@ void EditableBox::keyPressEvent(QKeyEvent* event) {
     if(m_edit_trigger(QKeySequence(event->key() | event->modifiers()))) {
       set_read_only(false);
       select_all_text();
-      QCoreApplication::sendEvent(m_focus_proxy, event);
+      QApplication::sendEvent(m_focus_proxy, event);
     } else {
       QWidget::keyPressEvent(event);
     }
@@ -185,19 +185,31 @@ void EditableBox::select_all_text() {
 
 void EditableBox::on_focus(FocusObserver::State state) {
   if(isHidden() || m_input_box->isHidden()) {
+    m_focus_time = none;
     return;
   }
   if(state == FocusObserver::State::NONE) {
+    m_focus_time = none;
     set_read_only(true);
+  } else {
+    m_focus_time = std::chrono::steady_clock::now();
   }
 }
 
-bool EditableBox::on_double_click(QWidget& target, QMouseEvent& event) {
-  if(event.type() != QEvent::MouseButtonDblClick) {
-    return false;
-  }
-  if(is_read_only()) {
+bool EditableBox::on_click(QWidget& target, QMouseEvent& event) {
+  if(event.type() == QEvent::MouseButtonDblClick) {
     set_read_only(false);
+  } else if(event.type() == QEvent::MouseButtonPress) {
+    auto now = std::chrono::steady_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
+      now - m_focus_time.value_or(now)).count();
+    if(duration >= 50) {
+      m_focus_time = none;
+      auto focus_widget = QApplication::focusWidget();
+      if(!focus_widget || isAncestorOf(focus_widget)) {
+        set_read_only(false);
+      }
+    }
   }
   return false;
 }
