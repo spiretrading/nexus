@@ -62,7 +62,6 @@ EditableBox::EditableBox(
       m_input_box(&input_box),
       m_edit_trigger(std::move(trigger)),
       m_focus_observer(*this),
-      m_focus_proxy(nullptr),
       m_is_submit_connected(false) {
   setFocusProxy(m_input_box);
   enclose(*this, *m_input_box);
@@ -72,7 +71,6 @@ EditableBox::EditableBox(
     std::bind_front(&EditableBox::on_focus, this));
   m_input_box->set_read_only(true);
   match(*this, ReadOnly());
-  install_focus_proxy_event_filter();
 }
 
 const AnyInputBox& EditableBox::get_input_box() const {
@@ -102,10 +100,7 @@ void EditableBox::set_read_only(bool read_only) {
       m_input_box->connect_submit_signal(
         std::bind_front(&EditableBox::on_submit, this));
     }
-    install_focus_proxy_event_filter();
-    if(auto line_edit = dynamic_cast<QLineEdit*>(m_focus_proxy)) {
-      line_edit->setCursorPosition(line_edit->text().length());
-    }
+    m_input_box->get_highlight()->set(Highlight(-1));
     m_input_box->setFocus();
   }
   m_read_only_signal(read_only);
@@ -114,17 +109,6 @@ void EditableBox::set_read_only(bool read_only) {
 connection EditableBox::connect_read_only_signal(
     const ReadOnlySignal::slot_type& slot) const {
   return m_read_only_signal.connect(slot);
-}
-
-bool EditableBox::eventFilter(QObject* watched, QEvent* event) {
-  if(watched == m_focus_proxy &&
-      event->type() == QEvent::KeyPress && is_read_only()) {
-    if(static_cast<QKeyEvent*>(event)->key() == Qt::Key_Backspace) {
-      event->ignore();
-      return true;
-    }
-  }
-  return QWidget::eventFilter(watched, event);
 }
 
 void EditableBox::keyPressEvent(QKeyEvent* event) {
@@ -145,16 +129,13 @@ void EditableBox::keyPressEvent(QKeyEvent* event) {
     if(m_edit_trigger(QKeySequence(event->key() | event->modifiers()))) {
       set_read_only(false);
       select_all_text();
-      QCoreApplication::sendEvent(m_focus_proxy, event);
+      if(auto focus_proxy = find_focus_proxy(*m_input_box)) {
+        QCoreApplication::sendEvent(focus_proxy, event);
+      }
     } else {
       QWidget::keyPressEvent(event);
     }
   }
-}
-
-void EditableBox::showEvent(QShowEvent* event) {
-  install_focus_proxy_event_filter();
-  QWidget::showEvent(event);
 }
 
 bool EditableBox::focusNextPrevChild(bool next) {
@@ -164,20 +145,8 @@ bool EditableBox::focusNextPrevChild(bool next) {
   return QWidget::focusNextPrevChild(next);
 }
 
-void EditableBox::install_focus_proxy_event_filter() {
-  if(auto proxy = find_focus_proxy(*m_input_box); proxy != m_focus_proxy) {
-    if(m_focus_proxy) {
-      m_focus_proxy->removeEventFilter(this);
-    }
-    m_focus_proxy = proxy;
-    m_focus_proxy->installEventFilter(this);
-  }
-}
-
 void EditableBox::select_all_text() {
-  if(auto line_edit = dynamic_cast<QLineEdit*>(m_focus_proxy)) {
-    line_edit->selectAll();
-  }
+  m_input_box->get_highlight()->set(Highlight(0, -1));
 }
 
 void EditableBox::on_focus(FocusObserver::State state) {

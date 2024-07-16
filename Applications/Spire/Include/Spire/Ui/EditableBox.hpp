@@ -64,9 +64,7 @@ namespace Spire {
         const ReadOnlySignal::slot_type& slot) const;
 
     protected:
-      bool eventFilter(QObject* watched, QEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
-      void showEvent(QShowEvent* event) override;
       bool focusNextPrevChild(bool next) override;
 
     private:
@@ -74,10 +72,8 @@ namespace Spire {
       AnyInputBox* m_input_box;
       EditTrigger m_edit_trigger;
       FocusObserver m_focus_observer;
-      QWidget* m_focus_proxy;
       bool m_is_submit_connected;
 
-      void install_focus_proxy_event_filter();
       void select_all_text();
       void on_focus(FocusObserver::State state);
       void on_submit(const AnyRef& submission);
