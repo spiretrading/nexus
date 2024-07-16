@@ -6,11 +6,30 @@ using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
 
+namespace {
+  struct MouseCombiner {
+    using result_type = bool;
+
+    template<typename Iterator>
+    result_type operator()(Iterator first, Iterator last) const {
+      for(auto i = first; i != last; ++i) {
+        if(*i) {
+          return true;
+        }
+      }
+      return false;
+    }
+  };
+}
+
 struct MouseObserver::EventFilter : QObject {
   struct Child {
     std::unique_ptr<MouseObserver> m_observer;
     scoped_connection m_connection;
   };
+  using FilteredMouseSignal = signal<
+    bool (QWidget& target, QMouseEvent& event), MouseCombiner>;
+
   mutable FilteredMouseSignal m_mouse_signal;
   std::unordered_map<QObject*, Child> m_children;
 
@@ -28,7 +47,7 @@ struct MouseObserver::EventFilter : QObject {
         event->type() == QEvent::MouseButtonPress ||
         event->type() == QEvent::MouseButtonRelease) {
       auto filter = m_mouse_signal(*static_cast<QWidget*>(watched),
-        *static_cast<QMouseEvent*>(event)).value_or(false);
+        *static_cast<QMouseEvent*>(event));
       return filter;
     } else if(event->type() == QEvent::ChildAdded) {
       auto& child = *static_cast<QChildEvent&>(*event).child();
@@ -46,7 +65,7 @@ struct MouseObserver::EventFilter : QObject {
     auto observer = std::make_unique<MouseObserver>(child);
     auto connection = observer->connect_filtered_mouse_signal(
       [=] (auto& target, auto& event) {
-        return m_mouse_signal(target, event).value_or(false);
+        return m_mouse_signal(target, event);
       });
     auto child_entry = Child(std::move(observer), std::move(connection));
     m_children.insert(std::pair(&child, std::move(child_entry)));

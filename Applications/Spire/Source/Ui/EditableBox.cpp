@@ -197,6 +197,9 @@ void EditableBox::on_focus(FocusObserver::State state) {
 }
 
 bool EditableBox::on_click(QWidget& target, QMouseEvent& event) {
+  if(!is_read_only()) {
+    return false;
+  }
   if(event.type() == QEvent::MouseButtonDblClick &&
       event.button() == Qt::MouseButton::LeftButton) {
     set_read_only(false);
