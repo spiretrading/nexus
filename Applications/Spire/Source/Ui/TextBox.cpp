@@ -281,7 +281,12 @@ class TextBox::LineEdit : public QLineEdit {
 
     void keyPressEvent(QKeyEvent* event) override {
       if(isReadOnly()) {
-        return QLineEdit::keyPressEvent(event);
+        if(event == QKeySequence::SelectAll || event == QKeySequence::Copy) {
+          return QLineEdit::keyPressEvent(event);
+        } else {
+          event->ignore();
+          return;
+        }
       }
       if(event->key() == Qt::Key_Escape) {
         if(m_submission != m_current->get()) {

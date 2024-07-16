@@ -18,12 +18,15 @@ TableItem::TableItem(QWidget* parent)
       m_styles{Qt::transparent, Qt::transparent, Qt::transparent,
         Qt::transparent, Qt::transparent},
       m_click_observer(*this),
-      m_focus_observer(*this) {
+      m_focus_observer(*this),
+      m_mouse_observer(*this) {
   setFocusPolicy(Qt::StrongFocus);
   auto layout = make_hbox_layout(this);
   m_click_observer.connect_click_signal(m_active_signal);
   m_focus_observer.connect_state_signal(
     std::bind_front(&TableItem::on_focus, this));
+  m_mouse_observer.connect_mouse_signal(
+    std::bind_front(&TableItem::on_mouse, this));
   m_style_connection =
     connect_style_signal(*this, std::bind_front(&TableItem::on_style, this));
   update_style(*this, [] (auto& style) {
@@ -73,6 +76,7 @@ void TableItem::mount(QWidget& body) {
     previous_body->setParent(nullptr);
     delete item;
   }
+  setFocusProxy(&body);
   layout()->addWidget(&body);
   body.setAttribute(Qt::WA_DontShowOnScreen, false);
 }
@@ -85,6 +89,15 @@ QWidget* TableItem::unmount() {
 
 void TableItem::on_focus(FocusObserver::State state) {
   if(state == FocusObserver::State::FOCUS_IN) {
+    m_active_signal();
+  }
+}
+
+void TableItem::on_mouse(QWidget& target, const QMouseEvent& event) {
+  if(event.type() == QEvent::MouseButtonPress &&
+      event.button() == Qt::MouseButton::LeftButton &&
+      m_focus_observer.get_state() == FocusObserver::State::NONE) {
+    setFocus(Qt::FocusReason::MouseFocusReason);
     m_active_signal();
   }
 }
