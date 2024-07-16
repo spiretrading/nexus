@@ -144,7 +144,7 @@ namespace {
   }
 }
 
-void Spire::StyleParser::Tests::register_selection_types() {
+void Spire::StyleParser::Tests::register_selectors() {
   register_state_selector("disabled", Disabled());
   register_state_selector("hover", Hover());
   register_state_selector("focus", Focus());

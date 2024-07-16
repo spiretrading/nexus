@@ -6,6 +6,7 @@
 #include "Nexus/Definitions/Currency.hpp"
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/Quantity.hpp"
+#include "Spire/Styles/StyleSheet.hpp"
 #include "Spire/Ui/DateBox.hpp"
 #include "Spire/UiViewer/TypedUiProperty.hpp"
 #include "Spire/UiViewer/UiViewer.hpp"
@@ -274,6 +275,9 @@ namespace Spire {
   QWidget* StandardUiProperty<T>::make_setter_widget(QWidget* parent) {
     return m_setter_factory(parent, *this);
   }
+
+  std::shared_ptr<TypedUiProperty<Spire::Styles::StyleSheet>>
+    make_style_property(QString name, QString style_text);
 }
 
 #endif
