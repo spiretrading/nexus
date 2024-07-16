@@ -1191,8 +1191,11 @@ void TableBody::on_item_activated(TableItem& item) {
 
 void TableBody::on_current(
     const optional<Index>& previous, const optional<Index>& current) {
+  auto previous_had_focus = false;
   if(previous) {
     if(auto previous_item = find_item(previous)) {
+      previous_had_focus =
+        previous_item->isAncestorOf(QApplication::focusWidget());
       unmatch(*previous_item->parentWidget(), CurrentRow());
       unmatch(*previous_item, Current());
     }
@@ -1213,6 +1216,9 @@ void TableBody::on_current(
       match(*m_column_covers[current->m_column], CurrentColumn());
     }
     m_selection_controller.navigate(*current);
+    if(previous_had_focus || QApplication::focusWidget() == this) {
+      current_item->setFocus(Qt::FocusReason::OtherFocusReason);
+    }
   }
 }
 

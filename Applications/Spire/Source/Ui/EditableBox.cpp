@@ -197,9 +197,16 @@ void EditableBox::on_focus(FocusObserver::State state) {
 }
 
 bool EditableBox::on_click(QWidget& target, QMouseEvent& event) {
-  if(event.type() == QEvent::MouseButtonDblClick) {
+  if(event.type() == QEvent::MouseButtonDblClick &&
+      event.button() == Qt::MouseButton::LeftButton) {
     set_read_only(false);
-  } else if(event.type() == QEvent::MouseButtonPress) {
+    auto press = QMouseEvent(QEvent::MouseButtonPress,
+      target.mapFrom(target.window(), event.windowPos().toPoint()), event.pos(),
+      event.button(), event.buttons(), event.modifiers());
+    QApplication::sendEvent(&target, &press);
+    return true;
+  } else if(event.type() == QEvent::MouseButtonPress &&
+      event.button() == Qt::MouseButton::LeftButton) {
     auto now = std::chrono::steady_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
       now - m_focus_time.value_or(now)).count();
