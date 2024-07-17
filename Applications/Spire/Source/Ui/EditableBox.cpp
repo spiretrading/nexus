@@ -96,7 +96,8 @@ void EditableBox::keyPressEvent(QKeyEvent* event) {
     set_read_only(true);
   } else if(event->key() == Qt::Key_Space) {
     set_read_only(false);
-  } else if(event->key() == Qt::Key_Backspace) {
+  } else if(event->key() == Qt::Key_Backspace ||
+      event->key() == Qt::Key_Delete) {
     m_input_box->get_current()->set(m_make_default_value());
   } else {
     if(!is_read_only()) {
