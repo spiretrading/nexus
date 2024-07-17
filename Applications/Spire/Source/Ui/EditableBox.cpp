@@ -128,6 +128,7 @@ void EditableBox::keyPressEvent(QKeyEvent* event) {
     m_input_box->get_current()->set(reset(current));
   } else {
     if(!is_read_only()) {
+      QWidget::keyPressEvent(event);
       return;
     }
     if(m_edit_trigger(QKeySequence(event->key() | event->modifiers()))) {
@@ -135,6 +136,8 @@ void EditableBox::keyPressEvent(QKeyEvent* event) {
       select_all_text();
       if(auto focus_proxy = find_focus_proxy(*m_input_box)) {
         QCoreApplication::sendEvent(focus_proxy, event);
+      } else {
+        QWidget::keyPressEvent(event);
       }
     } else {
       QWidget::keyPressEvent(event);
