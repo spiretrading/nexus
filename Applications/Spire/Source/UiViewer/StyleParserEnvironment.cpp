@@ -20,6 +20,8 @@
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/TableBody.hpp"
+#include "Spire/Ui/TableHeaderItem.hpp"
+#include "Spire/Ui/TableItem.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace boost;
@@ -210,8 +212,14 @@ namespace {
         return QFont::Bold;
       } else if(identifier == "thin") {
         return QFont::Thin;
+      } else if(identifier == "extra_light") {
+        return QFont::ExtraLight;
       } else if(identifier == "light") {
         return QFont::Light;
+      } else if(identifier == "demi_bold") {
+        return QFont::DemiBold;
+      } else if(identifier == "extra_bold") {
+        return QFont::ExtraBold;
       } else if(identifier == "black") {
         return QFont::Black;
       }
@@ -226,7 +234,7 @@ namespace {
       font.setWeight(*font_weight);
     }
     if(auto length = convert_length(size, unit)) {
-      font.setPixelSize(*length);
+      font.setPixelSize(scale_width(*length));
     }
     if(auto font_family = convert_string(family)) {
       font.setFamily(QString::fromStdString(*font_family));
@@ -237,7 +245,7 @@ namespace {
   auto convert_font_property(const std::vector<PropertyValue>& values) {
     auto properties = std::vector<Property>();
     auto font = QFont();
-    if(values.size() == 3) {
+    if(values.size() == 4) {
       for(auto& value : values) {
         if(value.type() != typeid(Token::Type)) {
           return properties;
@@ -248,8 +256,8 @@ namespace {
         font.setWeight(*weight);
       }
       if(auto length = convert_length(boost::get<Token::Type>(values[1]),
-        boost::get<Token::Type>(values[2]))) {
-        font.setPixelSize(*length);
+          boost::get<Token::Type>(values[2]))) {
+        font.setPixelSize(scale_width(*length));
       }
       if(auto family = convert_string(boost::get<Token::Type>(values[3]))) {
         font.setFamily(QString::fromStdString(*family));
@@ -312,17 +320,27 @@ void Spire::register_selectors() {
   register_state_selector("pop_up", PopUp());
   register_state_selector("body", Body());
   register_state_selector("row", Row());
+  register_state_selector("current_row", CurrentRow());
+  register_state_selector("column", Column());
+  register_state_selector("current_column", CurrentColumn());
   register_state_selector("hover_item", HoverItem());
   register_state_selector("read_only", ReadOnly());
   register_state_selector("is_positive", IsPositive());
   register_state_selector("is_negative", IsNegative());
   register_state_selector("uptick", Uptick());
   register_state_selector("downtick", Downtick());
+  register_state_selector("label", TableHeaderItem::Label());
+  register_state_selector("sortable", TableHeaderItem::Sortable());
+  register_state_selector("filtered", TableHeaderItem::Filtered());
+  register_state_selector("filter_button", TableHeaderItem::FilterButton());
+  register_state_selector("hover_element", TableHeaderItem::HoverElement());
   register_type_selector("Box", is_a<Box>());
   register_type_selector("Button", is_a<Button>());
   register_type_selector("Icon", is_a<Icon>());
   register_type_selector("TextBox", is_a<TextBox>());
   register_type_selector("TableBody", is_a<TableBody>());
+  register_type_selector("TableItem", is_a<TableItem>());
+  register_type_selector("TableHeaderItem", is_a<TableHeaderItem>());
   register_type_selector("HighlightPicker", is_a<HighlightPicker>());
   register_pseudo_selector("placeholder", Placeholder());
 }

@@ -2,6 +2,7 @@
 #include <limits>
 #include <QCheckBox>
 #include <QLineEdit>
+#include <QPointer>
 #include <QPushButton>
 #include <QResizeEvent>
 #include <QSpinBox>
@@ -13,6 +14,7 @@
 #include "Spire/StyleParser/DataTypes/TokenParser.hpp"
 #include "Spire/Ui/Window.hpp"
 
+using namespace boost;
 using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
@@ -50,7 +52,10 @@ namespace {
       explicit StyleEditorWindow(std::shared_ptr<TextModel> current,
           QWidget* parent = nullptr)
           : Window(parent),
-            m_current(std::move(current)) {
+            m_current(std::move(current)),
+            m_submission(m_current->get()),
+            m_current_connection(m_current->connect_update_signal(
+              std::bind_front(&StyleEditorWindow::on_current, this))) {
         setWindowTitle(tr("Style Editor"));
         set_svg_icon(":/Icons/spire.svg");
         setWindowIcon(QIcon(":/Icons/taskbar_icons/spire.png"));
@@ -72,7 +77,7 @@ namespace {
         connect(m_editor, &QTextEdit::textChanged,
           this, &StyleEditorWindow::on_text_changed);
         connect(ok_button, &QPushButton::clicked,
-          this, &StyleEditorWindow::on_click);
+          this, &StyleEditorWindow::on_ok);
         connect(cancel_button, &QPushButton::clicked,
           this, &StyleEditorWindow::on_cancel);
       }
@@ -93,20 +98,28 @@ namespace {
     private:
       mutable SubmitTextSignal m_submit_text_signal;
       std::shared_ptr<TextModel> m_current;
+      QString m_submission;
       QLabel* m_error_label;
       QTextEdit* m_editor;
+      boost::signals2::scoped_connection m_current_connection;
+
+      void on_current(const QString& current) {
+        m_editor->setText(current);
+      }
 
       void on_text_changed() {
+        auto blocker = shared_connection_block(m_current_connection);
         m_current->set(m_editor->toPlainText());
       }
 
-      void on_click() {
-        m_submit_text_signal(m_editor->toPlainText());
+      void on_ok() {
+        m_submission = m_current->get();
+        m_submit_text_signal(m_submission);
         close();
       }
 
       void on_cancel() {
-        m_submit_text_signal(m_current->get());
+        m_current->set(m_submission);
         close();
       }
   };
@@ -379,26 +392,30 @@ std::shared_ptr<TypedUiProperty<DateFormat>>
   return make_standard_property(std::move(name), DateFormat::YYYYMMDD);
 }
 
-std::shared_ptr<TypedUiProperty<StyleSheet>>
+std::shared_ptr<TypedUiProperty<optional<StyleSheet>>>
     Spire::make_style_property(QString name, QString style_text) {
-  return std::make_shared<StandardUiProperty<StyleSheet>>(std::move(name),
-    [style_text = std::move(style_text)] (QWidget* parent,
-        StandardUiProperty<StyleSheet>& property) {
+  auto style_text_model = std::make_shared<LocalTextModel>(style_text);
+  return std::make_shared<StandardUiProperty<optional<StyleSheet>>>(
+    std::move(name), none,
+    [style_text_model, style_text = std::move(style_text)] (QWidget* parent,
+        StandardUiProperty<optional<StyleSheet>>& property) {
       auto widget = new QWidget(parent);
       auto layout = make_hbox_layout(widget);
-      auto line_editor = new QLineEdit(style_text);
+      auto line_editor = QPointer<QLineEdit>(
+        new QLineEdit(style_text_model->get()));
       layout->addWidget(line_editor);
       auto button = new QPushButton("...");
       button->setFixedSize(scale_width(20), line_editor->sizeHint().height());
       layout->addWidget(button);
-      QObject::connect(button, &QPushButton::clicked, [&, line_editor] () {
-        auto style_editor = new StyleEditorWindow(
-          std::make_shared<LocalTextModel>(
-            line_editor->text().replace("\\n", "\n")));
+      QObject::connect(button, &QPushButton::clicked, [=, &property] () {
+        auto style_editor = QPointer<StyleEditorWindow>(
+          new StyleEditorWindow(style_text_model, parent));
         style_editor->setAttribute(Qt::WA_DeleteOnClose);
-        style_editor->setWindowModality(Qt::ApplicationModal);
         style_editor->get_current()->connect_update_signal(
           [&, style_editor] (auto& current) {
+            if(!style_editor) {
+              return;
+            }
             try {
               property.set(parse_style(current));
               style_editor->set_error_info("");
@@ -406,17 +423,23 @@ std::shared_ptr<TypedUiProperty<StyleSheet>>
               style_editor->set_error_info(e.what());
             }
           });
-        style_editor->connect_submit_text_signal(
-          [&, line_editor] (const auto& text) {
-          auto display_text = text;
-          line_editor->setText(display_text.replace("\n", "\\n"));
+        style_editor->connect_submit_text_signal([=] (const auto& text) {
+          if(line_editor) {
+            line_editor->setText(text);
+          }
         });
         style_editor->show();
       });
-      if(!style_text.isEmpty()) {
-        try {
-          property.set(parse_style(style_text));
-        } catch(std::exception&) {
+      if(!property.get()) {
+        style_text_model->set(style_text);
+        if(line_editor) {
+          line_editor->setText(style_text);
+        }
+        if(!style_text.isEmpty()) {
+          try {
+            property.set(parse_style(style_text));
+          } catch(std::exception&) {
+          }
         }
       }
       return widget;

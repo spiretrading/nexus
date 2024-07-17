@@ -276,7 +276,7 @@ namespace Spire {
     return m_setter_factory(parent, *this);
   }
 
-  std::shared_ptr<TypedUiProperty<Spire::Styles::StyleSheet>>
+  std::shared_ptr<TypedUiProperty<boost::optional<Spire::Styles::StyleSheet>>>
     make_style_property(QString name, QString style_text);
 }
 

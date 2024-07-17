@@ -195,9 +195,13 @@ namespace {
       highlight.m_text_color.name();
   }
 
-  void update_widget_style(QWidget& widget, const StyleSheet& styles) {
+  void update_widget_style(QWidget& widget,
+      const optional<StyleSheet>& styles) {
+    if(!styles) {
+      return;
+    }
     update_style(widget, [&] (auto& style) {
-      for(auto& rule : styles.get_rules()) {
+      for(auto& rule : styles->get_rules()) {
         for(auto i = rule.get_block().begin(); i != rule.get_block().end();
             ++i) {
           style.get(rule.get_selector()).set(*i);
@@ -313,7 +317,7 @@ namespace {
         box->get_current())->set_increment(pow(Decimal(10), -value));
     });
     auto& style_sheet =
-      get<StyleSheet>("style_sheet", profile.get_properties());
+      get<optional<StyleSheet>>("style_sheet", profile.get_properties());
     style_sheet.connect_changed_signal([=] (const auto& styles) {
       update_widget_style(*box, styles);
     });
@@ -1047,9 +1051,11 @@ UiProfile Spire::make_box_profile() {
       box->setFixedSize(scale(100, 100));
       apply_widget_properties(box, profile.get_properties());
       auto& style_sheet =
-        get<StyleSheet>("style_sheet", profile.get_properties());
+        get<optional<StyleSheet>>("style_sheet", profile.get_properties());
       style_sheet.connect_changed_signal([=] (const auto& styles) {
-        set_style(*box, styles);
+        if(styles) {
+          set_style(*box, *styles);
+        }
       });
       return box;
   });
@@ -2553,7 +2559,7 @@ UiProfile Spire::make_info_tip_profile() {
       info_tip->set_interactive(is_interactive);
     });
     auto& style_sheet =
-      get<StyleSheet>("style_sheet", profile.get_properties());
+      get<optional<StyleSheet>>("style_sheet", profile.get_properties());
     style_sheet.connect_changed_signal([=] (const auto& styles) {
       update_widget_style(*info_tip, styles);
     });
@@ -2713,7 +2719,7 @@ UiProfile Spire::make_label_button_profile() {
     auto button = make_label_button(label.get());
     apply_widget_properties(button, profile.get_properties());
     auto& style_sheet =
-      get<StyleSheet>("style_sheet", profile.get_properties());
+      get<optional<StyleSheet>>("style_sheet", profile.get_properties());
     style_sheet.connect_changed_signal([=] (const auto& styles) {
       update_widget_style(*button, styles);
     });
@@ -3910,7 +3916,7 @@ UiProfile Spire::make_scroll_box_profile() {
       scroll_box->set_vertical(value);
     });
     auto& style_sheet =
-      get<StyleSheet>("style_sheet", profile.get_properties());
+      get<optional<StyleSheet>>("style_sheet", profile.get_properties());
     style_sheet.connect_changed_signal([=] (const auto& styles) {
       update_widget_style(*scroll_box, styles);
     });
@@ -4626,7 +4632,7 @@ UiProfile Spire::make_table_view_profile() {
     auto& height = get<int>("height", profile.get_properties());
     height.set(300);
     auto& style_sheet =
-      get<StyleSheet>("style_sheet", profile.get_properties());
+      get<optional<StyleSheet>>("style_sheet", profile.get_properties());
     style_sheet.connect_changed_signal([=] (const auto& styles) {
       update_widget_style(*view, styles);
     });
@@ -4881,7 +4887,7 @@ UiProfile Spire::make_text_box_profile() {
       text_box->set_placeholder(text);
     });
     auto& style_sheet =
-      get<StyleSheet>("style_sheet", profile.get_properties());
+      get<optional<StyleSheet>>("style_sheet", profile.get_properties());
     style_sheet.connect_changed_signal([=] (const auto& styles) {
       update_widget_style(*text_box, styles);
     });
