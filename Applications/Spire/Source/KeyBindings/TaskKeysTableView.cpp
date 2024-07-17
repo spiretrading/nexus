@@ -236,10 +236,10 @@ namespace {
       };
       auto column_id = static_cast<OrderTaskColumns>(column);
       auto [input_box, proxy] =
-        [&] () -> std::tuple<AnyInputBox*, std::shared_ptr<ItemState>> {
+        [&] () -> std::tuple<EditableBox*, std::shared_ptr<ItemState>> {
           if(column_id == OrderTaskColumns::NAME) {
             auto current = make_proxy.operator ()<QString>();
-            return {new AnyInputBox(
+            return {new EditableBox(
               *new TextBox(current)), std::make_shared<ItemState>(current)};
           } else if(column_id == OrderTaskColumns::REGION) {
             auto current = make_proxy.operator ()<Region>();
@@ -247,7 +247,7 @@ namespace {
             region_box->setFixedHeight(scale_height(25));
             region_box->setSizePolicy(
               QSizePolicy::Preferred, QSizePolicy::Fixed);
-            return {new AnyInputBox(*region_box),
+            return {new EditableBox(*region_box),
               std::make_shared<ItemState>(current)};
           } else if(column_id == OrderTaskColumns::DESTINATION) {
             auto region = make_proxy_value_model(
@@ -256,24 +256,24 @@ namespace {
             auto destinations = make_region_filtered_destination_list(
               m_destinations, m_markets, region);
             auto current = make_proxy.operator ()<Destination>();
-            return {new AnyInputBox(
+            return {new EditableBox(
               *make_destination_box(current, std::move(destinations))),
               std::make_shared<DestinationState>(current, region)};
           } else if(column_id == OrderTaskColumns::ORDER_TYPE) {
             auto current = make_proxy.operator ()<OrderType>();
-            return {new AnyInputBox(*make_order_type_box(current)),
+            return {new EditableBox(*make_order_type_box(current)),
               std::make_shared<ItemState>(current)};
           } else if(column_id == OrderTaskColumns::SIDE) {
             auto current = make_proxy.operator ()<Side>();
-            return {new AnyInputBox(*make_side_box(current)),
+            return {new EditableBox(*make_side_box(current)),
               std::make_shared<ItemState>(current)};
           } else if(column_id == OrderTaskColumns::QUANTITY) {
             auto current = make_proxy.operator ()<QuantitySetting>();
-            return {new AnyInputBox(*make_quantity_setting_box(current)),
+            return {new EditableBox(*make_quantity_setting_box(current)),
               std::make_shared<ItemState>(current)};
           } else if(column_id == OrderTaskColumns::TIME_IN_FORCE) {
             auto current = make_proxy.operator ()<TimeInForce>();
-            return {new AnyInputBox(*make_time_in_force_box(current)),
+            return {new EditableBox(*make_time_in_force_box(current)),
               std::make_shared<ItemState>(current)};
           } else if(column_id == OrderTaskColumns::TAGS) {
             auto destination = make_proxy_value_model(
@@ -282,7 +282,7 @@ namespace {
             auto region = make_proxy_value_model(make_table_value_model<Region>(
               table, row, static_cast<int>(OrderTaskColumns::REGION)));
             auto current = make_proxy.operator ()<std::vector<AdditionalTag>>();
-            return {new AnyInputBox(*new AdditionalTagsBox(
+            return {new EditableBox(*new AdditionalTagsBox(
               current, m_additional_tags, destination, region)),
               std::make_shared<AdditionalTagsState>(
                 current, destination, region)};
@@ -290,21 +290,14 @@ namespace {
             auto proxy = make_proxy.operator ()<QKeySequence>();
             auto current =
               make_validated_value_model(&key_input_box_validator, proxy);
-            return {new AnyInputBox(*new KeyInputBox(current)),
-              std::make_shared<ItemState>(proxy)};
+            return {new EditableBox(*new KeyInputBox(current),
+              [] (const auto& key) {
+                return key_input_box_validator(key) != QValidator::Invalid;
+              }), std::make_shared<ItemState>(proxy)};
           }
         }();
-      auto editable_box = [&] () -> EditableBox* {
-        if(column_id == OrderTaskColumns::KEY) {
-          return new EditableBox(*input_box,
-            [] (const auto& key) {
-              return key_input_box_validator(key) != QValidator::Invalid;
-            });
-        }
-        return new EditableBox(*input_box);
-      }();
-      m_item_states[editable_box] = std::move(proxy);
-      return editable_box;
+      m_item_states[input_box] = std::move(proxy);
+      return input_box;
     }
 
     void reset(QWidget& widget,

@@ -12,6 +12,10 @@ namespace {
   auto get_scroll_track(const ScrollBar& scroll_bar) {
     return scroll_bar.findChild<Box*>();
   }
+
+  auto has_range(const ScrollBar::Range& range) {
+    return range.m_end - range.m_start > 1;
+  }
 }
 
 ScrollableLayer::ScrollableLayer(QWidget* parent)
@@ -38,9 +42,9 @@ ScrollableLayer::ScrollableLayer(QWidget* parent)
   m_vertical_scroll_bar->installEventFilter(this);
   m_horizontal_scroll_bar->installEventFilter(this);
   m_corner_box->installEventFilter(this);
-  m_horizontal_scroll_bar_style_connection =
-    connect_style_signal(*get_scroll_track(*m_horizontal_scroll_bar),
-      std::bind_front(&ScrollableLayer::on_horizontal_scroll_track_style, this));
+  m_horizontal_scroll_bar_style_connection = connect_style_signal(
+    *get_scroll_track(*m_horizontal_scroll_bar), std::bind_front(
+      &ScrollableLayer::on_horizontal_scroll_track_style, this));
   m_vertical_scroll_bar_style_connection =
     connect_style_signal(*get_scroll_track(*m_vertical_scroll_bar),
       std::bind_front(&ScrollableLayer::on_vertical_scroll_track_style, this));
@@ -56,21 +60,53 @@ ScrollBar& ScrollableLayer::get_horizontal_scroll_bar() {
 
 void ScrollableLayer::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Up) {
-    scroll_line_up(*m_vertical_scroll_bar);
+    if(has_range(m_vertical_scroll_bar->get_range())) {
+      scroll_line_up(*m_vertical_scroll_bar);
+    } else {
+      event->ignore();
+    }
   } else if(event->key() == Qt::Key_Down) {
-    scroll_line_down(*m_vertical_scroll_bar);
+    if(has_range(m_vertical_scroll_bar->get_range())) {
+      scroll_line_down(*m_vertical_scroll_bar);
+    } else {
+      event->ignore();
+    }
   } else if(event->key() == Qt::Key_Right) {
-    scroll_line_down(*m_horizontal_scroll_bar);
+    if(has_range(m_horizontal_scroll_bar->get_range())) {
+      scroll_line_down(*m_horizontal_scroll_bar);
+    } else {
+      event->ignore();
+    }
   } else if(event->key() == Qt::Key_Left) {
-    scroll_line_up(*m_horizontal_scroll_bar);
+    if(has_range(m_horizontal_scroll_bar->get_range())) {
+      scroll_line_up(*m_horizontal_scroll_bar);
+    } else {
+      event->ignore();
+    }
   } else if(event->key() == Qt::Key_PageUp) {
-    scroll_page_up(*m_vertical_scroll_bar);
+    if(has_range(m_vertical_scroll_bar->get_range())) {
+      scroll_page_up(*m_vertical_scroll_bar);
+    } else {
+      event->ignore();
+    }
   } else if(event->key() == Qt::Key_PageDown) {
-    scroll_page_down(*m_vertical_scroll_bar);
+    if(has_range(m_vertical_scroll_bar->get_range())) {
+      scroll_page_down(*m_vertical_scroll_bar);
+    } else {
+      event->ignore();
+    }
   } else if(event->key() == Qt::Key_Home) {
-    scroll_to_start(*m_vertical_scroll_bar);
+    if(has_range(m_vertical_scroll_bar->get_range())) {
+      scroll_to_start(*m_vertical_scroll_bar);
+    } else {
+      event->ignore();
+    }
   } else if(event->key() == Qt::Key_End) {
-    scroll_to_end(*m_vertical_scroll_bar);
+    if(has_range(m_vertical_scroll_bar->get_range())) {
+      scroll_to_end(*m_vertical_scroll_bar);
+    } else {
+      event->ignore();
+    }
   } else {
     event->ignore();
   }

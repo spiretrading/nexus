@@ -402,9 +402,9 @@ EditableBox* AdditionalTagsWindow::make_key_item(
   auto current = make_table_value_model<int>(table, row, column);
   auto available_tags =
     static_cast<AppendableTableModel&>(*m_tags).m_available_tags[row];
-  return new EditableBox(*new AnyInputBox(
+  return new EditableBox(
     *new AdditionalTagKeyBox(std::move(current), std::move(available_tags),
-      m_additional_tags, m_destination, m_region)));
+      m_additional_tags, m_destination, m_region));
 }
 
 EditableBox* AdditionalTagsWindow::make_value_item(
@@ -415,8 +415,7 @@ EditableBox* AdditionalTagsWindow::make_value_item(
     make_table_value_model<optional<Nexus::Tag::Type>>(table, row, column);
   auto schema = std::make_shared<KeyToSchemaModel>(
     std::move(key), m_additional_tags, m_destination, m_region);
-  return new EditableBox(
-    *new AnyInputBox(*new AdditionalTagValueBox(value, schema)));
+  return new EditableBox(*new AdditionalTagValueBox(value, schema));
 }
 
 EditableBox* AdditionalTagsWindow::make_item(

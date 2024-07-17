@@ -8,37 +8,6 @@ using namespace Nexus;
 using namespace Spire;
 using namespace Spire::Styles;
 
-namespace {
-  AnyRef reset(const AnyRef& any) {
-    if(any.get_type() == typeid(QString)) {
-      static const auto value = QString("");
-      return value;
-    } else if(any.get_type() == typeid(Region)) {
-      static const auto value = Region();
-      return value;
-    } else if(any.get_type() == typeid(Destination)) {
-      static const auto value = Destination();
-      return value;
-    } else if(any.get_type() == typeid(OrderType)) {
-      static const auto value = OrderType(OrderType::NONE);
-      return value;
-    } else if(any.get_type() == typeid(Side)) {
-      static const auto value = Side(Side::NONE);
-      return value;
-    } else if(any.get_type() == typeid(TimeInForce)) {
-      static const auto value = TimeInForce(TimeInForce::Type::NONE);
-      return value;
-    } else if(any.get_type() == typeid(optional<Quantity>)) {
-      static const auto value = optional<Quantity>();
-      return value;
-    } else if(any.get_type() == typeid(QKeySequence)) {
-      static const auto value = QKeySequence();
-      return value;
-    }
-    throw std::runtime_error("Invalid value.");
-  }
-}
-
 bool EditableBox::default_edit_trigger(const QKeySequence& key) {
   if(key.count() != 1) {
     return false;
@@ -53,13 +22,17 @@ bool EditableBox::default_edit_trigger(const QKeySequence& key) {
       key_value == Qt::Key_Underscore);
 }
 
-EditableBox::EditableBox(AnyInputBox& input_box, QWidget* parent)
-  : EditableBox(input_box, default_edit_trigger, parent) {}
+EditableBox::EditableBox(
+  AnyInputBox& input_box, DefaultValue make_default_value, QWidget* parent)
+  : EditableBox(input_box, std::move(make_default_value), default_edit_trigger,
+      parent) {}
 
 EditableBox::EditableBox(
-    AnyInputBox& input_box, EditTrigger trigger, QWidget* parent)
+    AnyInputBox& input_box, DefaultValue make_default_value,
+    EditTrigger trigger, QWidget* parent)
     : QWidget(parent),
       m_input_box(&input_box),
+      m_make_default_value(std::move(make_default_value)),
       m_edit_trigger(std::move(trigger)),
       m_focus_observer(*this),
       m_mouse_observer(*m_input_box),
@@ -75,7 +48,6 @@ EditableBox::EditableBox(
     std::bind_front(&EditableBox::on_click, this));
   m_input_box->set_read_only(true);
   match(*this, ReadOnly());
-  install_focus_proxy_event_filter();
 }
 
 const AnyInputBox& EditableBox::get_input_box() const {
@@ -105,10 +77,7 @@ void EditableBox::set_read_only(bool read_only) {
       m_input_box->connect_submit_signal(
         std::bind_front(&EditableBox::on_submit, this));
     }
-    install_focus_proxy_event_filter();
-    if(auto line_edit = dynamic_cast<QLineEdit*>(m_focus_proxy)) {
-      line_edit->setCursorPosition(line_edit->text().length());
-    }
+    m_input_box->get_highlight()->set(Highlight(-1));
     m_input_box->setFocus();
   }
   m_read_only_signal(read_only);
@@ -119,17 +88,6 @@ connection EditableBox::connect_read_only_signal(
   return m_read_only_signal.connect(slot);
 }
 
-bool EditableBox::eventFilter(QObject* watched, QEvent* event) {
-  if(watched == m_focus_proxy &&
-      event->type() == QEvent::KeyPress && is_read_only()) {
-    if(static_cast<QKeyEvent*>(event)->key() == Qt::Key_Backspace) {
-      event->ignore();
-      return true;
-    }
-  }
-  return QWidget::eventFilter(watched, event);
-}
-
 void EditableBox::keyPressEvent(QKeyEvent* event) {
   if(event->modifiers() & Qt::NoModifier &&
       (event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return)) {
@@ -138,26 +96,26 @@ void EditableBox::keyPressEvent(QKeyEvent* event) {
     set_read_only(true);
   } else if(event->key() == Qt::Key_Space) {
     set_read_only(false);
-  } else if(event->key() == Qt::Key_Backspace) {
-    auto current = m_input_box->get_current()->get();
-    m_input_box->get_current()->set(reset(current));
+  } else if(event->key() == Qt::Key_Backspace ||
+      event->key() == Qt::Key_Delete) {
+    m_input_box->get_current()->set(m_make_default_value());
   } else {
     if(!is_read_only()) {
+      QWidget::keyPressEvent(event);
       return;
     }
     if(m_edit_trigger(QKeySequence(event->key() | event->modifiers()))) {
       set_read_only(false);
       select_all_text();
-      QApplication::sendEvent(m_focus_proxy, event);
+      if(auto focus_proxy = find_focus_proxy(*m_input_box)) {
+        QCoreApplication::sendEvent(focus_proxy, event);
+      } else {
+        QWidget::keyPressEvent(event);
+      }
     } else {
       QWidget::keyPressEvent(event);
     }
   }
-}
-
-void EditableBox::showEvent(QShowEvent* event) {
-  install_focus_proxy_event_filter();
-  QWidget::showEvent(event);
 }
 
 bool EditableBox::focusNextPrevChild(bool next) {
@@ -167,20 +125,8 @@ bool EditableBox::focusNextPrevChild(bool next) {
   return QWidget::focusNextPrevChild(next);
 }
 
-void EditableBox::install_focus_proxy_event_filter() {
-  if(auto proxy = find_focus_proxy(*m_input_box); proxy != m_focus_proxy) {
-    if(m_focus_proxy) {
-      m_focus_proxy->removeEventFilter(this);
-    }
-    m_focus_proxy = proxy;
-    m_focus_proxy->installEventFilter(this);
-  }
-}
-
 void EditableBox::select_all_text() {
-  if(auto line_edit = dynamic_cast<QLineEdit*>(m_focus_proxy)) {
-    line_edit->selectAll();
-  }
+  m_input_box->get_highlight()->set(Highlight(0, -1));
 }
 
 void EditableBox::on_focus(FocusObserver::State state) {
