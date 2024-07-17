@@ -868,20 +868,19 @@ namespace {
   EditableBox* make_row_cell(const std::shared_ptr<TableModel>& table,
       int row, int column) {
     if(column == 0) {
-      return new EditableBox(*new AnyInputBox(*new TextBox(
-        make_table_value_model<QString>(table, row, column))));
+      return new EditableBox(
+        *new TextBox(make_table_value_model<QString>(table, row, column)));
     } else if(column == 1) {
-      return new EditableBox(*new AnyInputBox(*make_order_type_box(
-        make_table_value_model<OrderType>(table, row, column))));
+      return new EditableBox(*make_order_type_box(
+        make_table_value_model<OrderType>(table, row, column)));
     } else if(column == 2) {
       auto model = make_scalar_value_model_decorator(
         make_table_value_model<optional<Quantity>>(table, row, column));
-      return new EditableBox(
-        *new AnyInputBox(*new QuantityBox(std::move(model))));
+      return new EditableBox(*new QuantityBox(std::move(model)));
     } else if(column == 3) {
-      return new EditableBox(*new AnyInputBox(
+      return new EditableBox(
         *new KeyInputBox(make_validated_value_model(&key_input_box_validator,
-          make_table_value_model<QKeySequence>(table, row, column)))),
+          make_table_value_model<QKeySequence>(table, row, column))),
         [] (const auto& key) {
           return key_input_box_validator(key) == QValidator::Acceptable;
         });
@@ -1992,39 +1991,34 @@ UiProfile Spire::make_editable_box_profile() {
     auto input_box = [&] {
       auto value = test_widget.get();
       if(value == 0) {
-        return new AnyInputBox(*(new TextBox("TextBox")));
+        return new EditableBox(*new TextBox("TextBox"));
       } else if(value == 1) {
         auto list_model = std::make_shared<ArrayListModel<QString>>();
         for(auto i = 0; i < 5; ++i) {
           list_model->push(QString("item%1").arg(i));
         }
-        return new AnyInputBox(*(new DropDownBox(list_model)));
+        return new EditableBox(*new DropDownBox(list_model));
       } else if(value == 2) {
-        return new AnyInputBox((*new DecimalBox(
-          std::make_shared<LocalOptionalDecimalModel>(Decimal(1)))));
+        return new EditableBox(*new DecimalBox(
+          std::make_shared<LocalOptionalDecimalModel>(Decimal(1))));
       } else if(value == 3) {
-        return new AnyInputBox((*new QuantityBox(
-          std::make_shared<LocalOptionalQuantityModel>(Quantity(1)))));
+        return new EditableBox(*new QuantityBox(
+          std::make_shared<LocalOptionalQuantityModel>(Quantity(1))));
       } else if(value == 4) {
-        return new AnyInputBox((*new KeyInputBox(populate_key_input_box_model(
-          QKeySequence("F1")))));
+        return new EditableBox(*new KeyInputBox(
+          populate_key_input_box_model(QKeySequence("F1"))),
+          [] (const auto& sequence) {
+            return key_input_box_validator(sequence) == QValidator::Acceptable;
+          });
       }
       auto query_model = populate_region_box_model();
       auto current = std::make_shared<LocalValueModel<Region>>();
       current->set(std::any_cast<Region>(query_model->parse("TSX")));
-      return new AnyInputBox((*new RegionBox(query_model, current)));
+      return new EditableBox(*new RegionBox(query_model, current));
     }();
-    auto editable_box = [&] {
-      if(test_widget.get() == 4) {
-        return new EditableBox(*input_box, [] (const auto& sequence) {
-          return key_input_box_validator(sequence) == QValidator::Acceptable;
-        });
-      }
-      return new EditableBox(*input_box);
-    }();
-    editable_box->setMinimumWidth(scale_width(112));
-    apply_widget_properties(editable_box, profile.get_properties());
-    return editable_box;
+    input_box->setMinimumWidth(scale_width(112));
+    apply_widget_properties(input_box, profile.get_properties());
+    return input_box;
   });
   return profile;
 }

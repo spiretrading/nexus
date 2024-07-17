@@ -8,37 +8,6 @@ using namespace Nexus;
 using namespace Spire;
 using namespace Spire::Styles;
 
-namespace {
-  AnyRef reset(const AnyRef& any) {
-    if(any.get_type() == typeid(QString)) {
-      static const auto value = QString("");
-      return value;
-    } else if(any.get_type() == typeid(Region)) {
-      static const auto value = Region();
-      return value;
-    } else if(any.get_type() == typeid(Destination)) {
-      static const auto value = Destination();
-      return value;
-    } else if(any.get_type() == typeid(OrderType)) {
-      static const auto value = OrderType(OrderType::NONE);
-      return value;
-    } else if(any.get_type() == typeid(Side)) {
-      static const auto value = Side(Side::NONE);
-      return value;
-    } else if(any.get_type() == typeid(TimeInForce)) {
-      static const auto value = TimeInForce(TimeInForce::Type::NONE);
-      return value;
-    } else if(any.get_type() == typeid(optional<Quantity>)) {
-      static const auto value = optional<Quantity>();
-      return value;
-    } else if(any.get_type() == typeid(QKeySequence)) {
-      static const auto value = QKeySequence();
-      return value;
-    }
-    throw std::runtime_error("Invalid value.");
-  }
-}
-
 bool EditableBox::default_edit_trigger(const QKeySequence& key) {
   if(key.count() != 1) {
     return false;
@@ -53,13 +22,17 @@ bool EditableBox::default_edit_trigger(const QKeySequence& key) {
       key_value == Qt::Key_Underscore);
 }
 
-EditableBox::EditableBox(AnyInputBox& input_box, QWidget* parent)
-  : EditableBox(input_box, default_edit_trigger, parent) {}
+EditableBox::EditableBox(
+  AnyInputBox& input_box, DefaultValue make_default_value, QWidget* parent)
+  : EditableBox(input_box, std::move(make_default_value), default_edit_trigger,
+      parent) {}
 
 EditableBox::EditableBox(
-    AnyInputBox& input_box, EditTrigger trigger, QWidget* parent)
+    AnyInputBox& input_box, DefaultValue make_default_value,
+    EditTrigger trigger, QWidget* parent)
     : QWidget(parent),
       m_input_box(&input_box),
+      m_make_default_value(std::move(make_default_value)),
       m_edit_trigger(std::move(trigger)),
       m_focus_observer(*this),
       m_mouse_observer(*m_input_box),
@@ -124,8 +97,7 @@ void EditableBox::keyPressEvent(QKeyEvent* event) {
   } else if(event->key() == Qt::Key_Space) {
     set_read_only(false);
   } else if(event->key() == Qt::Key_Backspace) {
-    auto current = m_input_box->get_current()->get();
-    m_input_box->get_current()->set(reset(current));
+    m_input_box->get_current()->set(m_make_default_value());
   } else {
     if(!is_read_only()) {
       QWidget::keyPressEvent(event);
