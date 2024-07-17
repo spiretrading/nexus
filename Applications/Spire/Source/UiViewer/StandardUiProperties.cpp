@@ -62,6 +62,8 @@ namespace {
         auto body = new QWidget();
         auto layout = new QVBoxLayout(body);
         m_editor = new QTextEdit();
+        auto metrics = QFontMetricsF(m_editor->font());
+        m_editor->setTabStopDistance(metrics.horizontalAdvance("  "));
         m_editor->setText(m_current->get());
         layout->addWidget(m_editor);
         auto buttons_layout = new QHBoxLayout();
@@ -135,6 +137,22 @@ namespace {
         parse_block(parser, rule);
       }
     return style_sheet;
+  }
+
+  QString trim_text(const QString& text) {
+    auto lines = text.split('\n', Qt::SkipEmptyParts);
+    if(lines.empty()) {
+      return "";
+    }
+    auto trimmed_lines = QStringList();
+    auto i = std::find_if_not(lines[0].begin(), lines[0].end(), [] (auto& ch) {
+      return ch.isSpace();
+    });
+    auto spaces = static_cast<int>(std::distance(lines[0].begin(), i));
+    for(auto& line : lines) {
+      trimmed_lines.append(line.remove(0, spaces));
+    }
+    return trimmed_lines.join('\n');
   }
 }
 
@@ -394,10 +412,11 @@ std::shared_ptr<TypedUiProperty<DateFormat>>
 
 std::shared_ptr<TypedUiProperty<optional<StyleSheet>>>
     Spire::make_style_property(QString name, QString style_text) {
-  auto style_text_model = std::make_shared<LocalTextModel>(style_text);
+  auto style_text_model =
+    std::make_shared<LocalTextModel>(trim_text(style_text));
   return std::make_shared<StandardUiProperty<optional<StyleSheet>>>(
     std::move(name), none,
-    [style_text_model, style_text = std::move(style_text)] (QWidget* parent,
+    [style_text_model, style_text = style_text_model->get()] (QWidget* parent,
         StandardUiProperty<optional<StyleSheet>>& property) {
       auto widget = new QWidget(parent);
       auto layout = make_hbox_layout(widget);
