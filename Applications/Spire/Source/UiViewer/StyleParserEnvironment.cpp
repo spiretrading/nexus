@@ -16,9 +16,13 @@
 #include "Spire/Ui/CheckBox.hpp"
 #include "Spire/Ui/DecimalBox.hpp"
 #include "Spire/Ui/DropDownBox.hpp"
+#include "Spire/Ui/DurationBox.hpp"
 #include "Spire/Ui/HighlightPicker.hpp"
 #include "Spire/Ui/Icon.hpp"
+#include "Spire/Ui/KeyInputBox.hpp"
 #include "Spire/Ui/ListItem.hpp"
+#include "Spire/Ui/Slider.hpp"
+#include "Spire/Ui/Slider2D.hpp"
 #include "Spire/Ui/TableBody.hpp"
 #include "Spire/Ui/TableHeaderItem.hpp"
 #include "Spire/Ui/TableItem.hpp"
@@ -310,10 +314,13 @@ namespace {
 }
 
 void Spire::register_selectors() {
+  register_state_selector("active", Active());
   register_state_selector("disabled", Disabled());
   register_state_selector("hover", Hover());
   register_state_selector("focus", Focus());
   register_state_selector("focus_in", FocusIn());
+  register_state_selector("focus_visible", FocusVisible());
+  register_state_selector("drag", Drag());
   register_state_selector("checked", Checked());
   register_state_selector("press", Press());
   register_state_selector("rejected", Rejected());
@@ -334,6 +341,13 @@ void Spire::register_selectors() {
   register_state_selector("filtered", TableHeaderItem::Filtered());
   register_state_selector("filter_button", TableHeaderItem::FilterButton());
   register_state_selector("hover_element", TableHeaderItem::HoverElement());
+  register_state_selector("prompt", Prompt());
+  register_state_selector("colon", Colon());
+  register_state_selector("track", Track());
+  register_state_selector("thumb", Thumb());
+  register_state_selector("track_rail", TrackRail());
+  register_state_selector("track_fill", TrackFill());
+  register_state_selector("track_pad", TrackPad());
   register_type_selector("Box", is_a<Box>());
   register_type_selector("Button", is_a<Button>());
   register_type_selector("Icon", is_a<Icon>());
@@ -497,6 +511,13 @@ void Spire::register_property_converters() {
     [] (const std::vector<PropertyValue>& values) {
       return convert_length_property<BorderBottomLeftRadius>(values,
         Qt::Horizontal);
+    });
+
+  register_property_converter("border_radius",
+    [] (const std::vector<PropertyValue>& values) {
+      return convert_composite_length_property(values, [] (int length) {
+        return border_radius(scale_width(length));
+      });
     });
 
   register_property_converter("padding_right",
