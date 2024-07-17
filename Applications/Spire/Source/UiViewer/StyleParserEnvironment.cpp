@@ -35,9 +35,11 @@ using namespace Spire::Styles;
 
 namespace {
   optional<int> convert_number(const Token::Type& value) {
-    auto& literal = boost::get<Literal>(value);
-    if(*literal.get_type() == IntegerType()) {
-      return std::stoi(literal.get_value());
+    if(value.type() == typeid(Literal)) {
+      auto& literal = boost::get<Literal>(value);
+      if(*literal.get_type() == IntegerType()) {
+        return std::stoi(literal.get_value());
+      }
     }
     return none;
   }
@@ -63,10 +65,7 @@ namespace {
   }
 
   optional<int> convert_length(const Token::Type& value) {
-    if(value.type() == typeid(Literal)) {
-      return convert_number(value);
-    }
-    return none;
+    return convert_number(value);
   }
 
   template<typename T>
@@ -205,7 +204,8 @@ namespace {
     return properties;
   }
 
-  optional<QFont::Weight> convert_font_weight(const Token::Type& value) {
+  optional<QFont::Weight> convert_predefined_font_weight(
+      const Token::Type& value) {
     if(value.type() == typeid(Identifier)) {
       auto& identifier = boost::get<Identifier>(value);
       if(identifier == "normal") {
@@ -231,10 +231,21 @@ namespace {
     return none;
   }
 
+  optional<int> convert_numerical_font_weight(const Token::Type& value) {
+    if(auto number = convert_number(value)) {
+      if(*number > 0 && *number < 1000) {
+        return *number / 10;
+      }
+    }
+    return none;
+  }
+
   QFont convert_font(const Token::Type& weight, const Token::Type& size,
       const Token::Type& unit, const Token::Type& family) {
     auto font = QFont();
-    if(auto font_weight = convert_font_weight(boost::get<Identifier>(weight))) {
+    if(auto font_weight = convert_predefined_font_weight(weight)) {
+      font.setWeight(*font_weight);
+    } else if(auto font_weight = convert_numerical_font_weight(weight)) {
       font.setWeight(*font_weight);
     }
     if(auto length = convert_length(size, unit)) {
@@ -248,23 +259,11 @@ namespace {
 
   auto convert_font_property(const std::vector<PropertyValue>& values) {
     auto properties = std::vector<Property>();
-    auto font = QFont();
     if(values.size() == 4) {
       for(auto& value : values) {
         if(value.type() != typeid(Token::Type)) {
           return properties;
         }
-      }
-      if(auto weight = convert_font_weight(boost::get<Identifier>(
-        boost::get<Token::Type>(values[0])))) {
-        font.setWeight(*weight);
-      }
-      if(auto length = convert_length(boost::get<Token::Type>(values[1]),
-          boost::get<Token::Type>(values[2]))) {
-        font.setPixelSize(scale_width(*length));
-      }
-      if(auto family = convert_string(boost::get<Token::Type>(values[3]))) {
-        font.setFamily(QString::fromStdString(*family));
       }
       properties.push_back(Font(convert_font(boost::get<Token::Type>(values[0]),
         boost::get<Token::Type>(values[1]), boost::get<Token::Type>(values[2]),
