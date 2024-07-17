@@ -1,5 +1,6 @@
 #include "Spire/Ui/TableHeader.hpp"
 #include <QMouseEvent>
+#include <QTimer>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ListValueModel.hpp"
@@ -13,6 +14,7 @@ TableHeader::TableHeader(
     std::shared_ptr<ListModel<TableHeaderItem::Model>> items, QWidget* parent)
     : QWidget(parent),
       m_items(items),
+      m_width_update_count(0),
       m_resize_index(-1) {
   m_widths = std::make_shared<ArrayListModel<int>>();
   auto layout = make_hbox_layout(this);
@@ -87,9 +89,17 @@ void TableHeader::mouseMoveEvent(QMouseEvent* event) {
   }
   auto& item = *m_item_views[m_resize_index];
   auto width =
-    std::max(scale_width(10), item.mapFromGlobal(event->globalPos()).x());
+    std::max(scale_width(10), item.mapFromGlobal(QCursor::pos()).x());
   if(width != m_widths->get(m_resize_index)) {
+    layout()->setEnabled(false);
     m_widths->set(m_resize_index, width);
+    ++m_width_update_count;
+    QTimer::singleShot(300, this, [=] {
+      --m_width_update_count;
+      if(m_width_update_count == 0) {
+        layout()->setEnabled(true);
+      }
+    });
   }
 }
 
@@ -102,7 +112,7 @@ void TableHeader::on_widths_operation(
   visit(operation,
     [&] (const ListModel<int>::UpdateOperation& operation) {
       m_item_views[operation.m_index]->setFixedWidth(
-        m_widths->get(operation.m_index));
+        operation.get_value());
     });
 }
 

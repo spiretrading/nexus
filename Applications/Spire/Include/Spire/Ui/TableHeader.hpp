@@ -71,6 +71,7 @@ namespace Spire {
       mutable FilterSignal m_filter_signal;
       std::shared_ptr<ListModel<TableHeaderItem::Model>> m_items;
       std::shared_ptr<ListModel<int>> m_widths;
+      int m_width_update_count;
       std::vector<TableHeaderItem*> m_item_views;
       int m_resize_index;
       boost::signals2::scoped_connection m_items_connection;
