@@ -74,11 +74,8 @@ namespace Spire {
       int m_width_update_count;
       std::vector<TableHeaderItem*> m_item_views;
       int m_resize_index;
-      boost::signals2::scoped_connection m_items_connection;
       boost::signals2::scoped_connection m_widths_connection;
 
-      void on_items_operation(
-        const ListModel<TableHeaderItem::Model>::Operation& operation);
       void on_widths_operation(const ListModel<int>::Operation& operation);
       void on_start_resize(int index);
       void on_end_resize(int index);
