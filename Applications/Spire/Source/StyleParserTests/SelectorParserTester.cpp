@@ -18,7 +18,7 @@ using namespace Spire::Styles;
 
 TEST_SUITE("SelectorParser") {
   TEST_CASE("Any") {
-    register_selection_types();
+    register_selectors();
     auto styles = R"(
       any {}
     )";

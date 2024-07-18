@@ -2,11 +2,20 @@
 #include <limits>
 #include <QCheckBox>
 #include <QLineEdit>
+#include <QPointer>
+#include <QPushButton>
 #include <QResizeEvent>
 #include <QSpinBox>
+#include <QTextEdit>
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/StyleParser/DataTypes/PropertyParser.hpp"
+#include "Spire/StyleParser/DataTypes/SelectorParser.hpp"
+#include "Spire/StyleParser/DataTypes/TokenParser.hpp"
+#include "Spire/Ui/Window.hpp"
 
+using namespace boost;
+using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 using namespace Spire::Styles;
@@ -35,6 +44,116 @@ namespace {
       return QObject::eventFilter(object, event);
     }
   };
+
+  class StyleEditorWindow : public Window {
+    public:
+      using SubmitTextSignal = Signal<void(const QString& style_text)>;
+
+      explicit StyleEditorWindow(std::shared_ptr<TextModel> current,
+          QWidget* parent = nullptr)
+          : Window(parent),
+            m_current(std::move(current)),
+            m_submission(m_current->get()),
+            m_current_connection(m_current->connect_update_signal(
+              std::bind_front(&StyleEditorWindow::on_current, this))) {
+        setWindowTitle(tr("Style Editor"));
+        set_svg_icon(":/Icons/spire.svg");
+        setWindowIcon(QIcon(":/Icons/taskbar_icons/spire.png"));
+        auto body = new QWidget();
+        auto layout = new QVBoxLayout(body);
+        m_editor = new QTextEdit();
+        auto metrics = QFontMetricsF(m_editor->font());
+        m_editor->setTabStopDistance(metrics.horizontalAdvance("  "));
+        m_editor->setText(m_current->get());
+        layout->addWidget(m_editor);
+        auto buttons_layout = new QHBoxLayout();
+        m_error_label = new QLabel();
+        buttons_layout->addWidget(m_error_label);
+        buttons_layout->addStretch(1);
+        auto ok_button = new QPushButton("OK");
+        buttons_layout->addWidget(ok_button);
+        auto cancel_button = new QPushButton("Cancel");
+        buttons_layout->addWidget(cancel_button);
+        layout->addLayout(buttons_layout);
+        set_body(body);
+        connect(m_editor, &QTextEdit::textChanged,
+          this, &StyleEditorWindow::on_text_changed);
+        connect(ok_button, &QPushButton::clicked,
+          this, &StyleEditorWindow::on_ok);
+        connect(cancel_button, &QPushButton::clicked,
+          this, &StyleEditorWindow::on_cancel);
+      }
+
+      const std::shared_ptr<TextModel>& get_current() const {
+        return m_current;
+      }
+
+      void set_error_info(const QString& error_info) {
+        m_error_label->setText(error_info);
+      }
+
+      connection connect_submit_text_signal(
+          const SubmitTextSignal::slot_type& slot) const {
+        return m_submit_text_signal.connect(slot);
+      }
+
+    private:
+      mutable SubmitTextSignal m_submit_text_signal;
+      std::shared_ptr<TextModel> m_current;
+      QString m_submission;
+      QLabel* m_error_label;
+      QTextEdit* m_editor;
+      scoped_connection m_current_connection;
+
+      void on_current(const QString& current) {
+        m_editor->setText(current);
+      }
+
+      void on_text_changed() {
+        auto blocker = shared_connection_block(m_current_connection);
+        m_current->set(m_editor->toPlainText());
+      }
+
+      void on_ok() {
+        m_submission = m_current->get();
+        m_submit_text_signal(m_submission);
+        close();
+      }
+
+      void on_cancel() {
+        m_current->set(m_submission);
+        close();
+      }
+  };
+
+  auto parse_style(const QString& input) {
+    auto style_sheet = StyleSheet();
+    auto parser = TokenParser();
+    parser.feed(input.toStdString());
+    while(parser.get_size() > 0) {
+      auto selector = parse_selector(parser,
+        std::make_shared<DefaultSelectorParseStrategy>());
+      auto& rule = style_sheet.get(selector);
+      parse_block(parser, rule);
+    }
+    return style_sheet;
+  }
+
+  QString trim_text(const QString& text) {
+    auto lines = text.split('\n', Qt::SkipEmptyParts);
+    if(lines.empty()) {
+      return "";
+    }
+    auto trimmed_lines = QStringList();
+    auto i = std::find_if_not(lines[0].begin(), lines[0].end(), [] (auto& ch) {
+      return ch.isSpace();
+    });
+    auto spaces = static_cast<int>(std::distance(lines[0].begin(), i));
+    for(auto& line : lines) {
+      trimmed_lines.append(line.remove(0, spaces));
+    }
+    return trimmed_lines.join('\n');
+  }
 }
 
 void Spire::populate_widget_size_properties(const QString& width_name,
@@ -289,4 +408,59 @@ template<>
 std::shared_ptr<TypedUiProperty<DateFormat>>
     Spire::make_standard_property<DateFormat>(QString name) {
   return make_standard_property(std::move(name), DateFormat::YYYYMMDD);
+}
+
+std::shared_ptr<TypedUiProperty<optional<StyleSheet>>>
+    Spire::make_style_property(QString name, QString style_text) {
+  auto style_text_model =
+    std::make_shared<LocalTextModel>(trim_text(style_text));
+  return std::make_shared<StandardUiProperty<optional<StyleSheet>>>(
+    std::move(name), none,
+    [style_text_model, style_text = style_text_model->get()] (QWidget* parent,
+        StandardUiProperty<optional<StyleSheet>>& property) {
+      auto widget = new QWidget(parent);
+      auto layout = make_hbox_layout(widget);
+      auto line_editor = QPointer<QLineEdit>(
+        new QLineEdit(style_text_model->get()));
+      layout->addWidget(line_editor);
+      auto button = new QPushButton("...");
+      button->setFixedSize(scale_width(20), line_editor->sizeHint().height());
+      layout->addWidget(button);
+      QObject::connect(button, &QPushButton::clicked, [=, &property] () {
+        auto style_editor = QPointer<StyleEditorWindow>(
+          new StyleEditorWindow(style_text_model, parent));
+        style_editor->setAttribute(Qt::WA_DeleteOnClose);
+        style_editor->get_current()->connect_update_signal(
+          [&, style_editor] (auto& current) {
+            if(!style_editor) {
+              return;
+            }
+            try {
+              property.set(parse_style(current));
+              style_editor->set_error_info("");
+            } catch(std::exception& e) {
+              style_editor->set_error_info(e.what());
+            }
+          });
+        style_editor->connect_submit_text_signal([=] (const auto& text) {
+          if(line_editor) {
+            line_editor->setText(text);
+          }
+        });
+        style_editor->show();
+      });
+      if(!property.get()) {
+        style_text_model->set(style_text);
+        if(line_editor) {
+          line_editor->setText(style_text);
+        }
+        if(!style_text.isEmpty()) {
+          try {
+            property.set(parse_style(style_text));
+          } catch(std::exception&) {
+          }
+        }
+      }
+      return widget;
+    });
 }

@@ -371,6 +371,7 @@ std::shared_ptr<SelectorParser> DefaultSelectorParseStrategy::parse_colon_sign(
     auto colon_token = token_parser.peek();
     token_parser.pop();
     if(auto next = get_adjacent_token<Identifier>(token_parser, colon_token)) {
+      token_parser.pop();
       return std::make_shared<PseudoElementParser>(*next);
     }
   }
