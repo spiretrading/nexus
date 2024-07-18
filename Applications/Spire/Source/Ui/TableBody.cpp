@@ -1313,8 +1313,18 @@ void TableBody::on_style() {
   }
   layout()->setSpacing(m_styles.m_vertical_spacing);
   layout()->setContentsMargins(m_styles.m_padding);
-  for(auto i = 0; i != layout()->count(); ++i) {
-    if(auto row = static_cast<RowCover*>(layout()->itemAt(i)->widget())) {
+  for(auto i = 0; i != layout()->count() + 1; ++i) {
+    auto row = [&] () -> RowCover* {
+      if(i == layout()->count()) {
+        return m_current_row;
+      }
+      auto row = static_cast<RowCover*>(layout()->itemAt(i)->widget());
+      if(row != m_current_row) {
+        return row;
+      }
+      return nullptr;
+    }();
+    if(row) {
       row->layout()->setSpacing(m_styles.m_horizontal_spacing);
       for(auto column = 0; column != m_widths->get_size(); ++column) {
         auto& item = *row->get_item(column);
@@ -1360,8 +1370,18 @@ void TableBody::on_widths_update(const ListModel<int>::Operation& operation) {
   visit(operation,
     [&] (const ListModel<int>::UpdateOperation& operation) {
       auto spacing = get_left_spacing(operation.m_index);
-      for(auto i = 0; i != layout()->count(); ++i) {
-        if(auto row = static_cast<RowCover*>(layout()->itemAt(i)->widget())) {
+      for(auto i = 0; i != layout()->count() + 1; ++i) {
+        auto row = [&] () -> RowCover* {
+          if(i == layout()->count()) {
+            return m_current_row;
+          }
+          auto row = static_cast<RowCover*>(layout()->itemAt(i)->widget());
+          if(row != m_current_row) {
+            return row;
+          }
+          return nullptr;
+        }();
+        if(row) {
           if(auto item = row->get_item(operation.m_index)) {
             item->setFixedWidth(m_widths->get(operation.m_index) - spacing);
           }
