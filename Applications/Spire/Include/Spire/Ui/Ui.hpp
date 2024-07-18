@@ -44,6 +44,7 @@ namespace Spire {
   class EyeDropper;
   class EyeDropperButton;
   class FilterPanel;
+  class FixedHorizontalLayout;
   class FocusObserver;
   class GlobalPositionObserver;
   class HexColorBox;
