@@ -1,6 +1,5 @@
 #include "Spire/Ui/TableHeader.hpp"
 #include <QMouseEvent>
-#include <QTimer>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ListValueModel.hpp"
