@@ -13,7 +13,6 @@ TableHeader::TableHeader(
     std::shared_ptr<ListModel<TableHeaderItem::Model>> items, QWidget* parent)
     : QWidget(parent),
       m_items(items),
-      m_width_update_count(0),
       m_resize_index(-1) {
   m_widths = std::make_shared<ArrayListModel<int>>();
   auto layout = new FixedHorizontalLayout(this);
