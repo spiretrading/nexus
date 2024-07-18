@@ -84,6 +84,7 @@ namespace Spire {
       std::shared_ptr<HeaderModel> m_header;
       std::shared_ptr<TableFilter> m_filter;
       TableHeader* m_header_view;
+      ScrollBox* m_header_scroll_box;
       TableBody* m_body;
       TableItem* m_current_item;
       QMetaObject::Connection m_current_item_connection;
@@ -101,6 +102,7 @@ namespace Spire {
       void on_filter(int column, TableFilter::Filter filter);
       void on_current(const boost::optional<Index>& current);
       void on_body_style();
+      void on_scroll_position(int position);
   };
 
   /**

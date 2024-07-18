@@ -8,6 +8,7 @@
 #include "Spire/Spire/TableValueModel.hpp"
 #include "Spire/Spire/ToTextModel.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
+#include "Spire/Ui/FixedHorizontalLayout.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TableItem.hpp"
 #include "Spire/Ui/TextBox.hpp"
@@ -127,9 +128,9 @@ struct TableBody::Cover : QWidget {
 struct TableBody::RowCover : Cover {
   RowCover(TableBody& body)
       : Cover(&body) {
-    make_hbox_layout(this);
+    auto layout = new FixedHorizontalLayout(this);
     match(*this, Row());
-    layout()->setSpacing(body.m_styles.m_horizontal_spacing);
+    layout->setSpacing(body.m_styles.m_horizontal_spacing);
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     for(auto column = 0; column != body.get_column_size(); ++column) {
       auto item = new TableItem();
@@ -144,7 +145,7 @@ struct TableBody::RowCover : Cover {
         item->setSizePolicy(
           QSizePolicy::Expanding, item->sizePolicy().verticalPolicy());
       }
-      layout()->addWidget(item);
+      layout->addWidget(item);
       item->connect_active_signal(std::bind_front(
         &TableBody::on_item_activated, &body, std::ref(*item)));
     }
