@@ -2044,6 +2044,22 @@ UiProfile Spire::make_editable_table_view_profile() {
       make_row_cell, {});
     apply_widget_properties(table_view, profile.get_properties());
     table_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    auto selection_slot =
+      profile.make_event_slot<QString>(QString::fromUtf8("Selection"));
+    table_view->get_selection()->get_row_selection()->connect_operation_signal(
+      [=] (const ListModel<int>::Operation& operation) {
+      visit(operation,
+        [&] (const TableSelectionModel::RowSelectionModel::AddOperation& operation) {
+          selection_slot(QString("Add [index:%1 selection size:%2").
+            arg(table_view->get_selection()->get_row_selection()->get(operation.m_index)).
+            arg(table_view->get_selection()->get_row_selection()->get_size()));
+        },
+        [&] (const TableSelectionModel::RowSelectionModel::PreRemoveOperation& operation) {
+          selection_slot(QString("Remove [index:%1 selection size:%2").
+            arg(table_view->get_selection()->get_row_selection()->get(operation.m_index)).
+            arg(table_view->get_selection()->get_row_selection()->get_size() - 1));
+        });
+    });
     return table_view;
   });
   return profile;
