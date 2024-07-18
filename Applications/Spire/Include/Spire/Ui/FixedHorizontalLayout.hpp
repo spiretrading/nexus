@@ -16,7 +16,7 @@ namespace Spire {
        * Constructs a FixedHorizontalLayout for a widget.
        * @param parent The widget to layout.
        */
-      FixedHorizontalLayout(QWidget* parent = nullptr);
+      explicit FixedHorizontalLayout(QWidget* parent = nullptr);
 
       void addItem(QLayoutItem* item) override;
 
