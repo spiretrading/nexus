@@ -103,7 +103,7 @@ namespace {
       QString m_submission;
       QLabel* m_error_label;
       QTextEdit* m_editor;
-      boost::signals2::scoped_connection m_current_connection;
+      scoped_connection m_current_connection;
 
       void on_current(const QString& current) {
         m_editor->setText(current);
@@ -128,14 +128,14 @@ namespace {
 
   auto parse_style(const QString& input) {
     auto style_sheet = StyleSheet();
-      auto parser = TokenParser();
-      parser.feed(input.toStdString());
-      while(parser.get_size() > 0) {
-        auto selector = parse_selector(parser,
-          std::make_shared<DefaultSelectorParseStrategy>());
-        auto& rule = style_sheet.get(selector);
-        parse_block(parser, rule);
-      }
+    auto parser = TokenParser();
+    parser.feed(input.toStdString());
+    while(parser.get_size() > 0) {
+      auto selector = parse_selector(parser,
+        std::make_shared<DefaultSelectorParseStrategy>());
+      auto& rule = style_sheet.get(selector);
+      parse_block(parser, rule);
+    }
     return style_sheet;
   }
 

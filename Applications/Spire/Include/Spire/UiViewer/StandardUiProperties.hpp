@@ -259,6 +259,15 @@ namespace Spire {
     make_standard_property<Styles::DateFormat>(
       QString name, Styles::DateFormat value);
 
+  /**
+   * Returns a standard
+   * TypedUiProperty<boost::optional<Spire::Styles::StyleSheet>>.
+   * @param name The name of the property.
+   * @param style_text The initial style text.
+   */
+  std::shared_ptr<TypedUiProperty<boost::optional<Spire::Styles::StyleSheet>>>
+    make_style_property(QString name, QString style_text);
+
   template<typename T>
   StandardUiProperty<T>::StandardUiProperty(QString name,
     std::function<QWidget* (QWidget*, StandardUiProperty&)> setter_factory)
@@ -275,9 +284,6 @@ namespace Spire {
   QWidget* StandardUiProperty<T>::make_setter_widget(QWidget* parent) {
     return m_setter_factory(parent, *this);
   }
-
-  std::shared_ptr<TypedUiProperty<boost::optional<Spire::Styles::StyleSheet>>>
-    make_style_property(QString name, QString style_text);
 }
 
 #endif
