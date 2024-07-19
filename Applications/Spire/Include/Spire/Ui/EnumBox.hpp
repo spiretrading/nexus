@@ -10,6 +10,12 @@
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+namespace Details {
+  template<typename T>
+  concept has_to_text = requires(T t) {
+    { to_text(t) } -> std::convertible_to<const QString&>;
+  };
+}
 
   /**
    * Displays a single value among a closed set of homogenous values within a
@@ -35,6 +41,14 @@ namespace Spire {
       using SubmitSignal = Signal<void (const Type& submission)>;
 
       /**
+       * The type of function used to display the text representation of the
+       * current value.
+       * @param value The value to display.
+       * @return The text representation of the <i>value</i>.
+       */
+      using ToText = std::function<QString (const Type& value)>;
+
+      /**
        * The type of function used to build a QWidget representing a selectable
        * value.
        * @param value The value to display.
@@ -57,11 +71,20 @@ namespace Spire {
         /** The current value's model. */
         std::shared_ptr<CurrentModel> m_current;
 
+        /** The function used to display the current value as text. */
+        ToText m_to_text;
+
         /** The ViewBuilder to use. */
         ViewBuilder m_view_builder;
 
         /** Constructs Settings using default values. */
-        Settings();
+        Settings() requires Details::has_to_text<T>;
+
+        /**
+         * Constructs Settings with an explicit conversion to text and a view
+         * builder.
+         */
+        Settings(ToText to_text, ViewBuilder view_builder);
       };
 
       /**
@@ -99,8 +122,14 @@ namespace Spire {
   }
 
   template<typename T>
-  EnumBox<T>::Settings::Settings()
-    : m_view_builder(&default_view_builder) {}
+  EnumBox<T>::Settings::Settings() requires Details::has_to_text<T>
+    : m_to_text([] (const Type& value) { return to_text(value); }),
+      m_view_builder(&default_view_builder) {}
+
+  template<typename T>
+  EnumBox<T>::Settings::Settings(ToText to_text, ViewBuilder view_builder)
+    : m_to_text(std::move(to_text)),
+      m_view_builder(std::move(view_builder)) {}
 
   template<typename T>
   EnumBox<T>::EnumBox(Settings settings, QWidget* parent)
@@ -118,7 +147,7 @@ namespace Spire {
       [view_builder = settings.m_view_builder] (
           const std::shared_ptr<ListModel<Type>>& model, auto index) {
         return view_builder(model->get(index));
-      });
+      }, std::move(settings.m_to_text));
     enclose(*this, *m_drop_down_box);
     Styles::proxy_style(*this, *m_drop_down_box);
     setFocusProxy(m_drop_down_box);

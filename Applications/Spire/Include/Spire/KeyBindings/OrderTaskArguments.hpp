@@ -11,16 +11,27 @@
 #include "Nexus/Definitions/Destination.hpp"
 #include "Nexus/Definitions/Market.hpp"
 #include "Nexus/Definitions/OrderType.hpp"
-#include "Nexus/Definitions/Quantity.hpp"
 #include "Nexus/Definitions/Region.hpp"
 #include "Nexus/Definitions/Side.hpp"
 #include "Nexus/Definitions/Tag.hpp"
 #include "Nexus/Definitions/TimeInForce.hpp"
 #include "Spire/Canvas/Canvas.hpp"
-#include "Spire/LegacyUI/ShuttleQtTypes.hpp"
+#include "Spire/KeyBindings/AdditionalTag.hpp"
+#include "Spire/KeyBindings/AdditionalTagDatabase.hpp"
+#include "Spire/KeyBindings/KeyBindings.hpp"
 #include "Spire/Spire/ListModel.hpp"
+#include "Spire/Spire/ShuttleQtTypes.hpp"
 
 namespace Spire {
+
+  enum class QuantitySetting {
+
+    /** The order quantity is fixed to the default. */
+    DEFAULT,
+
+    /** The order quantity is set at submission time. */
+    ADJUSTABLE
+  };
 
   /** Stores the arguments used to submit an order task. */
   struct OrderTaskArguments {
@@ -41,13 +52,13 @@ namespace Spire {
     Nexus::Side m_side;
 
     /** The order's quantity. */
-    boost::optional<Nexus::Quantity> m_quantity;
+    QuantitySetting m_quantity;
 
     /** The order's time in force. */
     Nexus::TimeInForce m_time_in_force;
 
     /** The list of additional tags to apply to the order. */
-    std::vector<Nexus::Tag> m_additional_tags;
+    std::vector<AdditionalTag> m_additional_tags;
 
     /** The order task's key binding. */
     QKeySequence m_key;
@@ -73,9 +84,11 @@ namespace Spire {
    * Constructs a <i>CanvasNode</i> representing an order task with a specified
    * set of arguments.
    * @param arguments The arguments used to build the <i>CanvasNode<i>.
+   * @param additional_tags The database of additional tags.
    */
   std::unique_ptr<CanvasNode>
-    make_canvas_node(const OrderTaskArguments& arguments);
+    make_canvas_node(const OrderTaskArguments& arguments,
+      const AdditionalTagDatabase& additional_tags);
 
   /**
    * Converts an OrderTaskNode into an OrderTaskArguments record.
@@ -88,6 +101,9 @@ namespace Spire {
   OrderTaskArguments to_order_task_arguments(const CanvasNode& node,
     const Nexus::MarketDatabase& markets,
     const Nexus::DestinationDatabase& destinations);
+
+  /** Returns the text representation of a QuantitySetting. */
+  const QString& to_text(QuantitySetting setting);
 }
 
 namespace Beam::Serialization {

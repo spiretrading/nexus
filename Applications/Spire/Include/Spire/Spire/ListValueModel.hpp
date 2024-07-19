@@ -126,7 +126,7 @@ namespace Spire {
           m_update_signal(operation.get_value());
         }
       },
-      [&] (const ListModel<Type>::RemoveOperation& operation) {
+      [&] (const ListModel<Type>::PreRemoveOperation& operation) {
         m_index.update(operation);
         if(m_index.get_index() == -1) {
           m_last = std::make_unique<Type>(m_source->get(operation.m_index));

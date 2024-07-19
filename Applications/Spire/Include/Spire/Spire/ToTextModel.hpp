@@ -107,6 +107,21 @@ namespace Spire {
       std::move(source), std::move(to_text));
   }
 
+  /**
+   * Constructs a ToTextModel with default conversion functions.
+   * @param source The model to convert to text.
+   * @param to_text The function used to convert a value to its text
+   *        representation.
+   * @param from_text The function used to convert text back into its values.
+   */
+  template<typename T>
+  auto make_to_text_model(std::shared_ptr<ValueModel<T>> source,
+      typename ToTextModel<T>::ToText to_text,
+      typename ToTextModel<T>::FromText from_text) {
+    return std::make_shared<ToTextModel<T>>(
+      std::move(source), std::move(to_text), std::move(from_text));
+  }
+
   template<typename T>
   ToTextModel<T>::ToTextModel(std::shared_ptr<ValueModel<Source>> source)
     : ToTextModel(std::move(source), [] (const Source& value) {

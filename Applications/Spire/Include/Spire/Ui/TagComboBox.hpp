@@ -29,22 +29,22 @@ namespace Spire {
       /**
        * Constructs a TagComboBox using a default local model.
        * @param query_model The model used to query matches.
-       * @param view_builder The ListViewBuilder to use.
+       * @param item_builder The ListViewItemBuilder to use.
        * @param parent The parent widget.
        */
       TagComboBox(std::shared_ptr<ComboBox::QueryModel> query_model,
-        ListViewBuilder<> view_builder, QWidget* parent = nullptr);
+        ListViewItemBuilder<> item_builder, QWidget* parent = nullptr);
 
       /**
        * Constructs a TagComboBox.
        * @param query_model The model used to query matches.
        * @param current The current model which holds a list of tags.
-       * @param view_builder The ListViewBuilder to use.
+       * @param item_builder The ListViewItemBuilder to use.
        * @param parent The parent widget.
        */
       TagComboBox(std::shared_ptr<ComboBox::QueryModel> query_model,
         std::shared_ptr<AnyListModel> current,
-        ListViewBuilder<> view_builder, QWidget* parent = nullptr);
+        ListViewItemBuilder<> item_builder, QWidget* parent = nullptr);
 
       /** Returns the model used to query matches. */
       const std::shared_ptr<ComboBox::QueryModel>& get_query_model() const;

@@ -3,6 +3,7 @@
 #include <array>
 #include <unordered_map>
 #include <Beam/Serialization/Receiver.hpp>
+#include <Beam/Serialization/ShuttleArray.hpp>
 #include <Beam/Serialization/Sender.hpp>
 #include <QKeySequence>
 #include <QValidator>
@@ -10,6 +11,7 @@
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/KeyBindings/KeyBindings.hpp"
 #include "Spire/Spire/HashQtTypes.hpp"
+#include "Spire/Spire/ShuttleQtTypes.hpp"
 #include "Spire/Ui/KeyInputBox.hpp"
 
 namespace Spire {

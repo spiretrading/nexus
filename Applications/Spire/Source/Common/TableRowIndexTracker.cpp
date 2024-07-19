@@ -18,8 +18,8 @@ void TableRowIndexTracker::update(const TableModel::Operation& operation) {
     [&] (const TableModel::AddOperation& operation) {
       m_tracker.update(AnyListModel::AddOperation(operation.m_index));
     },
-    [&] (const TableModel::RemoveOperation& operation) {
-      m_tracker.update(AnyListModel::RemoveOperation(operation.m_index));
+    [&] (const TableModel::PreRemoveOperation& operation) {
+      m_tracker.update(AnyListModel::PreRemoveOperation(operation.m_index));
     },
     [&] (const TableModel::MoveOperation& operation) {
       m_tracker.update(AnyListModel::MoveOperation(

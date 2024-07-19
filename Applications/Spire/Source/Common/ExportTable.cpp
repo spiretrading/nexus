@@ -36,9 +36,6 @@ void Spire::export_table_as_csv(const TableModel& table,
           value_type == typeid(double) || value_type == typeid(date) ||
           value_type == typeid(time_duration) || value_type == typeid(Money) ||
           value_type == typeid(Quantity)) {
-        if(value_type == typeid(Quantity)) {
-          value = static_cast<double>(std::any_cast<Quantity>(to_any(value)));
-        }
         out << to_text(value, locale).toStdString();
       } else {
         out << '\"' << to_text(value, locale).toStdString() << '\"';

@@ -23,15 +23,15 @@ TEST_SUITE("ListIndexTracker") {
   TEST_CASE("remove") {
     auto tracker = ListIndexTracker(5);
     SUBCASE("remove_at") {
-      tracker.update(AnyListModel::RemoveOperation(5));
+      tracker.update(AnyListModel::PreRemoveOperation(5));
       CHECK(tracker.get_index() == -1);
     }
     SUBCASE("remove_before") {
-      tracker.update(AnyListModel::RemoveOperation(3));
+      tracker.update(AnyListModel::PreRemoveOperation(3));
       CHECK(tracker.get_index() == 4);
     }
     SUBCASE("remove_after") {
-      tracker.update(AnyListModel::RemoveOperation(7));
+      tracker.update(AnyListModel::PreRemoveOperation(7));
       CHECK(tracker.get_index() == 5);
     }
   }

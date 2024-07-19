@@ -72,7 +72,7 @@ namespace {
   }
 
   double get_row_height(TableBody& table_body) {
-    if(auto item = table_body.get_item({0, 0})) {
+    if(auto item = table_body.find_item({0, 0})) {
       return item->height();
     }
     return 2 * scale_height(CELL_VERTICAL_PADDING);
@@ -164,7 +164,7 @@ TableView* Spire::make_time_and_sales_table_view(
     std::shared_ptr<TimeAndSalesTableModel> table, QWidget* parent) {
   auto table_view = TableViewBuilder(table).
     set_header(make_header_model()).
-    set_view_builder(std::bind_front(&table_view_builder, table)).make();
+    set_item_builder(std::bind_front(&table_view_builder, table)).make();
   update_style(*table_view, apply_table_view_style);
   auto& header = table_view->get_header();
   auto properties = make_header_item_properties();

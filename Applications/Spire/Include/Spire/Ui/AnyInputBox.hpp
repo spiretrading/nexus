@@ -192,7 +192,7 @@ namespace Details {
   template<typename T>
   const AnyRef& AnyInputBox::WrapperInputBox<T>::get_submission() {
     if constexpr(Details::has_get_submission_v<T>) {
-      m_submission = m_input_box->get_submission();
+      m_submission = AnyRef(m_input_box->get_submission());
     }
     return m_submission;
   }

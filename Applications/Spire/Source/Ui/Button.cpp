@@ -71,9 +71,11 @@ Button* Spire::make_icon_button(QImage icon, QString tooltip, QWidget* parent) {
   link(*button, *button_icon);
   add_tooltip(std::move(tooltip), *button);
   auto style = StyleSheet();
-  style.get(Any() > Body()).
+  style.get(Any() > is_a<Box>()).
     set(BackgroundColor(QColor(Qt::transparent))).
     set(border(scale_width(1), QColor(Qt::transparent)));
+  style.get(Any() > is_a<Icon>()).
+    set(BackgroundColor(QColor(Qt::transparent)));
   style.get((Hover() || Press()) > Body()).
     set(BackgroundColor(QColor(0xE0E0E0)));
   style.get(FocusVisible() > Body()).set(border_color(QColor(0x4B23A0)));

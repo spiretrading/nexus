@@ -344,8 +344,9 @@ connection TableSelectionController::connect_column_operation_signal(
 void TableSelectionController::on_item_operation(
     const ListModel<Index>::Operation& operation) {
   visit(operation,
-    [&] (const TableSelectionModel::ItemSelectionModel::RemoveOperation&
+    [&] (const TableSelectionModel::ItemSelectionModel::PreRemoveOperation&
         operation) {
+      m_item_operation_signal(operation);
       if(m_selection->get_item_selection()->get(operation.m_index) ==
           m_range_anchor) {
         m_range_anchor = none;
@@ -356,14 +357,17 @@ void TableSelectionController::on_item_operation(
       if(operation.get_previous() == m_range_anchor) {
         m_range_anchor = none;
       }
+      m_item_operation_signal(operation);
+    },
+    [&] (const auto& operation) {
+      m_item_operation_signal(operation);
     });
-  m_item_operation_signal(operation);
 }
 
 void TableSelectionController::on_row_operation(
     const ListModel<int>::Operation& operation) {
   visit(operation,
-    [&] (const TableSelectionModel::RowSelectionModel::RemoveOperation&
+    [&] (const TableSelectionModel::RowSelectionModel::PreRemoveOperation&
         operation) {
       m_row_operation_signal(operation);
       if(m_range_anchor &&
@@ -387,7 +391,7 @@ void TableSelectionController::on_row_operation(
 void TableSelectionController::on_column_operation(
     const ListModel<int>::Operation& operation) {
   visit(operation,
-    [&] (const TableSelectionModel::ColumnSelectionModel::RemoveOperation&
+    [&] (const TableSelectionModel::ColumnSelectionModel::PreRemoveOperation&
         operation) {
       m_column_operation_signal(operation);
       if(m_range_anchor &&

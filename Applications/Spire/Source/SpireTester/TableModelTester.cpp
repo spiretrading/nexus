@@ -5,6 +5,24 @@
 using namespace boost;
 using namespace Spire;
 
+namespace {
+  void require_equal(const std::any& actual, const std::any& expected) {
+    REQUIRE(actual.type() == expected.type());
+    if(actual.type() == typeid(float)) {
+      REQUIRE(std::any_cast<float>(actual) == std::any_cast<float>(expected));
+    } else if(actual.type() == typeid(double)) {
+      REQUIRE(std::any_cast<double>(actual) == std::any_cast<double>(expected));
+    } else if(actual.type() == typeid(int)) {
+      REQUIRE(std::any_cast<int>(actual) == std::any_cast<int>(expected));
+    } else if(actual.type() == typeid(std::string)) {
+      REQUIRE(std::any_cast<std::string>(actual) ==
+        std::any_cast<std::string>(expected));
+    } else {
+      REQUIRE(false);
+    }
+  }
+}
+
 void Spire::require_transaction(
     const std::deque<TableModel::Operation>& operations,
     const std::vector<TableModel::Operation>& expected) {
@@ -16,9 +34,13 @@ void Spire::require_transaction(
       offset = 1;
     }
   } else {
-    REQUIRE(operations.size() == expected.size() + 2);
-    REQUIRE(get<TableModel::StartTransaction>(&operations[0]) != nullptr);
-    offset = 1;
+    if(get<TableModel::StartTransaction>(&operations[0]) == nullptr) {
+      REQUIRE(operations.size() == 2);
+      REQUIRE(get<TableModel::PreRemoveOperation>(&operations[0]) != nullptr);
+    } else {
+      REQUIRE(operations.size() == expected.size() + 2);
+      offset = 1;
+    }
   }
   for(auto i = 0; i != std::ssize(expected); ++i) {
     visit(expected[i],
@@ -27,9 +49,9 @@ void Spire::require_transaction(
         REQUIRE(operation != nullptr);
         REQUIRE(operation->m_index == expected.m_index);
       },
-      [&] (const TableModel::RemoveOperation& expected) {
+      [&] (const TableModel::PreRemoveOperation& expected) {
         auto operation =
-          get<TableModel::RemoveOperation>(&operations[i + offset]);
+          get<TableModel::PreRemoveOperation>(&operations[i + offset]);
         REQUIRE(operation != nullptr);
         REQUIRE(operation->m_index == expected.m_index);
       },
@@ -46,6 +68,8 @@ void Spire::require_transaction(
         REQUIRE(operation != nullptr);
         REQUIRE(operation->m_row == expected.m_row);
         REQUIRE(operation->m_column == expected.m_column);
+        require_equal(operation->m_previous, expected.m_previous);
+        require_equal(operation->m_value, expected.m_value);
       });
   }
   if(offset != 0) {
@@ -78,7 +102,7 @@ TEST_SUITE("TableModel") {
           REQUIRE(move_operation.m_source == 0);
           REQUIRE(move_operation.m_destination == 1);
         },
-        [&] (const TableModel::RemoveOperation& remove_operation) {
+        [&] (const TableModel::PreRemoveOperation& remove_operation) {
           ++remove_count;
           REQUIRE(remove_operation.m_index == 1);
         },
@@ -109,7 +133,7 @@ TEST_SUITE("TableModel") {
     REQUIRE(move_count == 1);
     REQUIRE(remove_count == 0);
     REQUIRE(update_count == 0);
-    visitor(TableModel::RemoveOperation(1));
+    visitor(TableModel::PreRemoveOperation(1));
     REQUIRE(start_count == 1);
     REQUIRE(end_count == 0);
     REQUIRE(add_count == 1);
@@ -145,7 +169,7 @@ TEST_SUITE("TableModel") {
     REQUIRE(move_count == 0);
     visitor(TableModel::MoveOperation(0, 1));
     REQUIRE(move_count == 1);
-    visitor(TableModel::RemoveOperation(1));
+    visitor(TableModel::PreRemoveOperation(1));
     REQUIRE(move_count == 1);
     visitor(TableModel::UpdateOperation(0, 0, 0, 0));
     REQUIRE(move_count == 1);
@@ -170,7 +194,7 @@ TEST_SUITE("TableModel") {
     visitor(TableModel::MoveOperation(0, 1));
     REQUIRE(add_count == 1);
     REQUIRE(default_count == 1);
-    visitor(TableModel::RemoveOperation(1));
+    visitor(TableModel::PreRemoveOperation(1));
     REQUIRE(add_count == 1);
     REQUIRE(default_count == 2);
     visitor(TableModel::UpdateOperation(0, 0, 0, 0));

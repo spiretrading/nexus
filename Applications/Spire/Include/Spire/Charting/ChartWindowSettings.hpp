@@ -7,8 +7,8 @@
 #include "Spire/Charting/Charting.hpp"
 #include "Spire/Charting/ChartInteractions.hpp"
 #include "Spire/LegacyUI/SecurityViewStack.hpp"
-#include "Spire/LegacyUI/ShuttleQtTypes.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
+#include "Spire/Spire/ShuttleQtTypes.hpp"
 #include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
