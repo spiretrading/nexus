@@ -159,7 +159,7 @@ bool ContextMenu::event(QEvent* event) {
     m_window->show();
     setFocus(Qt::PopupFocusReason);
     if(m_list->get_size() == 0) {
-      QTimer::singleShot(10, [=] { hide(); });
+      QTimer::singleShot(10, [=] { m_window->hide(); });
     }
   } else if(event->type() == QEvent::HideToParent) {
     m_window->hide();
@@ -227,7 +227,7 @@ QWidget* ContextMenu::build_item(
   submenu_item->installEventFilter(this);
   submenu->connect_submit_signal(
     [=] (const ContextMenu& menu, const QString& label) {
-      hide();
+      m_window->hide();
       m_submit_signal(menu, label);
     });
   m_submenus[index] = submenu->window();
@@ -359,7 +359,7 @@ void ContextMenu::on_submit(const std::any& submission) {
   auto& menu_item = m_list->get(*m_list_view->get_current()->get());
   if(menu_item.m_type == MenuItemType::ACTION) {
     std::get<Action>(menu_item.m_data)();
-    hide();
+    m_window->hide();
     m_submit_signal(*this, menu_item.m_name);
   }
 }
