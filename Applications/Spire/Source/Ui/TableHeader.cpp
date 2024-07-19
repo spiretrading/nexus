@@ -3,7 +3,7 @@
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ListValueModel.hpp"
-#include "Spire/Ui/Layouts.hpp"
+#include "Spire/Ui/FixedHorizontalLayout.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -15,7 +15,7 @@ TableHeader::TableHeader(
       m_items(items),
       m_resize_index(-1) {
   m_widths = std::make_shared<ArrayListModel<int>>();
-  auto layout = make_hbox_layout(this);
+  auto layout = new FixedHorizontalLayout(this);
   for(auto i = 0; i != m_items->get_size(); ++i) {
     auto item = new TableHeaderItem(make_list_value_model(m_items, i));
     auto is_last = i == m_items->get_size() - 1;
@@ -45,8 +45,6 @@ TableHeader::TableHeader(
     layout->addWidget(item);
     m_item_views.push_back(item);
   }
-  m_items_connection = m_items->connect_operation_signal(
-    std::bind_front(&TableHeader::on_items_operation, this));
   m_widths_connection = m_widths->connect_operation_signal(
     std::bind_front(&TableHeader::on_widths_operation, this));
 }
@@ -85,47 +83,12 @@ void TableHeader::mouseMoveEvent(QMouseEvent* event) {
   if(m_resize_index == -1) {
     return QWidget::mouseMoveEvent(event);
   }
-  auto position = QCursor::pos();
-  auto delta = position.x() - m_resize_position.x();
-  if(delta < 0) {
-    auto width = m_widths->get(m_resize_index);
-    auto new_width = std::max(scale_width(10), width + delta);
-    delta = new_width - width;
-    position.rx() = delta + m_resize_position.x();
-    if(delta != 0) {
-      m_widths->set(m_resize_index, m_widths->get(m_resize_index) + delta);
-      if(m_resize_index != m_widths->get_size() - 1) {
-        m_widths->set(
-          m_resize_index + 1, m_widths->get(m_resize_index + 1) - delta);
-      }
-    }
-  } else if(delta > 0) {
-    auto sibling_width = [&] {
-      if(m_resize_index == m_widths->get_size() - 1) {
-        auto w = 0;
-        for(auto i = 0; i != m_widths->get_size(); ++i) {
-          w += m_widths->get(i);
-        }
-        return width() - w;
-      }
-      return m_widths->get(m_resize_index + 1);
-    }();
-    auto new_sibling_width = std::max(scale_width(10), sibling_width - delta);
-    delta = new_sibling_width - sibling_width;
-    position.rx() = -delta + m_resize_position.x();
-    if(delta != 0) {
-      if(m_resize_index != m_widths->get_size() - 1) {
-        m_widths->set(
-          m_resize_index + 1, m_widths->get(m_resize_index + 1) + delta);
-      }
-      m_widths->set(m_resize_index, m_widths->get(m_resize_index) - delta);
-    }
+  auto& item = *m_item_views[m_resize_index];
+  auto width =
+    std::max(scale_width(10), item.mapFromGlobal(QCursor::pos()).x());
+  if(width != m_widths->get(m_resize_index)) {
+    m_widths->set(m_resize_index, width);
   }
-  m_resize_position = position;
-}
-
-void TableHeader::on_items_operation(
-    const ListModel<TableHeaderItem::Model>::Operation& operation) {
 }
 
 void TableHeader::on_widths_operation(
@@ -133,13 +96,12 @@ void TableHeader::on_widths_operation(
   visit(operation,
     [&] (const ListModel<int>::UpdateOperation& operation) {
       m_item_views[operation.m_index]->setFixedWidth(
-        m_widths->get(operation.m_index));
+        operation.get_value());
     });
 }
 
 void TableHeader::on_start_resize(int index) {
   m_resize_index = index;
-  m_resize_position = QCursor::pos();
 }
 
 void TableHeader::on_end_resize(int index) {

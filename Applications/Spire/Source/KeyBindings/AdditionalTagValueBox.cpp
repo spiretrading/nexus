@@ -51,6 +51,7 @@ void AdditionalTagValueBox::update_schema(
   box->set_read_only(is_read_only);
   layout()->addWidget(box);
   proxy_style(*this, *box);
+  setFocusProxy(box);
 }
 
 void AdditionalTagValueBox::on_schema(

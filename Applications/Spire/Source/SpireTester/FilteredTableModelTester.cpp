@@ -565,4 +565,35 @@ TEST_SUITE("FilteredTableModel") {
         TableModel::RemoveOperation(5)
       });
   }
+
+  TEST_CASE("reentrant") {
+    auto source = std::make_shared<ArrayTableModel>();;
+    source->push({0});
+    source->push({1});
+    source->push({2});
+    source->push({3});
+    auto filtered_table =
+      FilteredTableModel(source, [] (const auto& table, auto row) {
+        return false;
+      });
+    REQUIRE(filtered_table.get_row_size() == 4);
+    auto is_filter_reset = false;
+    filtered_table.connect_operation_signal([&] (const auto& operation) {
+      visit(operation,
+        [&] (const TableModel::PreRemoveOperation& operation) {
+          if(std::exchange(is_filter_reset, true)) {
+            return;
+          }
+          filtered_table.set_filter([] (const auto& table, auto row) {
+            return table.get<int>(row, 0) % 2 != 0;
+          });
+        });
+    });
+    filtered_table.set_filter([] (const auto& table, auto row) {
+      return table.get<int>(row, 0) % 2 == 0;
+    });
+    REQUIRE(filtered_table.get_row_size() == 2);
+    REQUIRE(filtered_table.get<int>(0, 0) == 0);
+    REQUIRE(filtered_table.get<int>(1, 0) == 2);
+  }
 }

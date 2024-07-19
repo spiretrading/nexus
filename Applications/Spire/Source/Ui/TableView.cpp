@@ -72,17 +72,19 @@ TableView::TableView(
     }
   }
   m_header_view = new TableHeader(m_header);
-  m_header_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+  m_header_view->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
   m_header_view->setContentsMargins({scale_width(1), 0, 0, 0});
   link(*this, *m_header_view);
-  auto box_body = new QWidget();
-  enclose(*box_body, *m_header_view);
-  auto box = new Box(box_body);
-  box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+  auto box = new Box(m_header_view);
+  box->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
   update_style(*box, [] (auto& style) {
     style.get(Any()).set(BackgroundColor(QColor(0xFFFFFF)));
   });
   proxy_style(*this, *box);
+  m_header_scroll_box = new ScrollBox(box);
+  m_header_scroll_box->set(ScrollBox::DisplayPolicy::NEVER);
+  m_header_scroll_box->setSizePolicy(
+    QSizePolicy::Expanding, QSizePolicy::Fixed);
   m_filtered_table = std::make_shared<FilteredTableModel>(
     m_table, std::bind_front(&TableView::is_filtered, this));
   if(comparator) {
@@ -94,15 +96,17 @@ TableView::TableView(
   }
   m_body = new TableBody(m_sorted_table, std::move(current),
     std::move(selection), m_header_view->get_widths(), std::move(item_builder));
-  m_body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+  m_body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::MinimumExpanding);
   m_body->installEventFilter(this);
   link(*this, *m_body);
   m_scroll_box = new ScrollBox(m_body);
   m_scroll_box->set(ScrollBox::DisplayPolicy::ON_ENGAGE);
+  m_scroll_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  m_scroll_box->get_horizontal_scroll_bar().connect_position_signal(
+    std::bind_front(&TableView::on_scroll_position, this));
   auto layout = make_vbox_layout(this);
-  layout->addWidget(box);
+  layout->addWidget(m_header_scroll_box);
   layout->addWidget(m_scroll_box);
-  layout->addStretch(1);
   m_header_view->connect_sort_signal(
     std::bind_front(&TableView::on_order_update, this));
   m_header_view->connect_filter_signal(
@@ -255,6 +259,10 @@ void TableView::on_body_style() {
   }
   update_scroll_sizes();
   update();
+}
+
+void TableView::on_scroll_position(int position) {
+  m_header_scroll_box->get_horizontal_scroll_bar().set_position(position);
 }
 
 TableViewBuilder::TableViewBuilder(
