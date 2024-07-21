@@ -54,6 +54,7 @@ namespace Spire {
   template<typename T> class OptionalScalarValueModelDecorator;
   template<typename T> class ProxyScalarValueModel;
   template<typename T> class ProxyValueModel;
+  class RowView;
   template<typename T> class RowViewListModel;
   class Scalar;
   template<typename T> class ScalarValueModel;
@@ -64,6 +65,7 @@ namespace Spire {
   template<typename T> struct SubscriptionResult;
   class TableModel;
   class TableRowIndexTracker;
+  class TableToListModel;
   class TechnicalsModel;
   template<typename T> class ToDecimalModel;
   template<typename T> class ToTextModel;
