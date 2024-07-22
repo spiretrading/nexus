@@ -10,6 +10,7 @@
 #include "Spire/Ui/HoverObserver.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/UiViewer/StandardUiProfiles.hpp"
+#include "Spire/UiViewer/StyleParserEnvironment.hpp"
 #include "Spire/UiViewer/UiProfile.hpp"
 #include "Spire/UiViewer/UiPropertyTableView.hpp"
 
@@ -124,6 +125,8 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   connect(m_reset_button, &QPushButton::pressed, [this] { on_reset(); });
   m_rebuild_button = new QPushButton(QString::fromUtf8("Rebuild"));
   connect(m_rebuild_button, &QPushButton::pressed, [this] { on_rebuild(); });
+  register_selectors();
+  register_property_converters();
   add(make_adaptive_box_profile());
   add(make_box_profile());
   add(make_calendar_date_picker_profile());

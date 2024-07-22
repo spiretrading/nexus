@@ -6,6 +6,8 @@ namespace Spire {
   class FloatType;
   class IntegerType;
   class StringType;
+  class Token;
+  class TokenParser;
 }
 
 #endif

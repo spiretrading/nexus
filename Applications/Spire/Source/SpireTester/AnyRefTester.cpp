@@ -1,5 +1,5 @@
-#include <doctest/doctest.h>
 #include <string>
+#include <doctest/doctest.h>
 #include "Spire/Spire/AnyRef.hpp"
 
 using namespace Spire;

@@ -72,6 +72,9 @@ namespace Spire {
       /** Returns <code>true</code> iff the referenced object is const. */
       bool is_const() const noexcept;
 
+      /** Sets the reference to be const. */
+      void set_const() noexcept;
+
       /** Returns <code>true</code> iff the referenced object is volatile. */
       bool is_volatile() const noexcept;
 
@@ -81,25 +84,16 @@ namespace Spire {
        */
       bool is_const_volatile() const noexcept;
 
-      AnyRef& operator =(const AnyRef& any) noexcept = default;
+      AnyRef& assign(const std::any& value);
 
-      AnyRef& operator =(AnyRef& any) noexcept = default;
+      AnyRef& operator =(const AnyRef& any) = default;
 
-      AnyRef& operator =(std::nullptr_t) noexcept;
-
-      template<typename T>
-      AnyRef& operator =(const T& ref) noexcept;
-
-      template<typename T>
-      AnyRef& operator =(T& ref) noexcept;
-
-      template<typename T>
-      AnyRef& operator =(volatile T& ref) noexcept;
-
-      template<typename T>
-      AnyRef& operator =(const volatile T& ref) noexcept;
+      AnyRef& operator =(AnyRef& any) = default;
 
       AnyRef& operator =(AnyRef&& any) noexcept;
+
+      template<typename T>
+      AnyRef& operator =(const T& rhs) = delete;
 
     private:
       enum class Qualifiers : std::uint8_t {
@@ -112,6 +106,7 @@ namespace Spire {
       struct BaseTypeInfo {
         virtual const std::type_info& get_type(void* ptr) const noexcept = 0;
         virtual std::any to_any(void* ptr) const noexcept = 0;
+        virtual void assign(void* ptr, const std::any& value) const = 0;
         virtual void* copy(const void* ptr) const = 0;
         virtual void drop(const void* ptr) const noexcept = 0;
       };
@@ -131,6 +126,12 @@ namespace Spire {
             return {};
           } else {
             return *static_cast<T*>(ptr);
+          }
+        }
+
+        void assign(void* ptr, const std::any& value) const override {
+          if constexpr(!std::is_same_v<T, void>) {
+            *static_cast<T*>(ptr) = std::any_cast<const T&>(value);
           }
         }
 
@@ -154,6 +155,7 @@ namespace Spire {
         static const AnyTypeInfo& get();
         const std::type_info& get_type(void* ptr) const noexcept override;
         std::any to_any(void* ptr) const noexcept override;
+        void assign(void* ptr, const std::any& value) const override;
         void* copy(const void* ptr) const;
         void drop(const void* ptr) const noexcept;
       };
@@ -266,30 +268,6 @@ namespace Spire {
   AnyRef::AnyRef(const volatile T& ref) noexcept
     : AnyRef(
         const_cast<T*>(&ref), TypeInfo<T>::get(), Qualifiers::CONST_VOLATILE) {}
-
-  template<typename T>
-  AnyRef& AnyRef::operator =(const T& ref) noexcept {
-    *this = AnyRef(ref);
-    return *this;
-  }
-
-  template<typename T>
-  AnyRef& AnyRef::operator =(T& ref) noexcept {
-    *this = AnyRef(ref);
-    return *this;
-  }
-
-  template<typename T>
-  AnyRef& AnyRef::operator =(volatile T& ref) noexcept {
-    *this = AnyRef(ref);
-    return *this;
-  }
-
-  template<typename T>
-  AnyRef& AnyRef::operator =(const volatile T& ref) noexcept {
-    *this = AnyRef(ref);
-    return *this;
-  }
 }
 
 #endif

@@ -293,8 +293,7 @@ CalendarDatePicker::CalendarDatePicker(
   m_calendar_view = new ListView(m_calendar_model,
     [=] (const std::shared_ptr<ListModel<date>>& list, int index) {
       return new CalendarDayLabel(
-        std::make_shared<ListValueModel<date>>(list, index),
-        m_month_spinner->get());
+        make_list_value_model(list, index), m_month_spinner->get());
     }, this);
   m_month_spinner->get()->connect_update_signal([=] (auto current) {
     on_current_month(current);

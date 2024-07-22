@@ -115,7 +115,7 @@ namespace Spire {
 
   template<typename T>
   void AnyValueModel::WrapperValueModel<T>::on_update(const T& value) {
-    m_value = m_model->get();
+    m_value = AnyRef(m_model->get());
     m_update_signal(m_value);
   }
 }

@@ -45,7 +45,7 @@ AdditionalTagsBox::AdditionalTagsBox(
       m_click_observer(*this) {
   m_tags_text = make_transform_value_model(m_current,
     [=] (const auto& current) {
-      return to_text(
+      return ::to_text(
         current, m_additional_tags, m_destination->get(), m_region->get());
     });
   m_label = make_label(m_tags_text);

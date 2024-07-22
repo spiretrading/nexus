@@ -8,6 +8,7 @@
 #include "Spire/Spire/ListModelTransactionLog.hpp"
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Spire/TableModel.hpp"
+#include "Spire/Spire/TableToListModel.hpp"
 
 namespace Spire {
 
@@ -122,31 +123,15 @@ namespace Spire {
   void ColumnViewListModel<T>::on_operation(
       const TableModel::Operation& operation) {
     visit(operation,
-      [&] (const TableModel::StartTransaction) {
-        m_transaction.start();
-      },
-      [&] (const TableModel::EndTransaction) {
-        m_transaction.end();
-      },
-      [&] (const TableModel::AddOperation& operation) {
-        m_transaction.push(AddOperation(operation.m_index));
-      },
-      [&] (const TableModel::MoveOperation& operation) {
-        m_transaction.push(
-          MoveOperation(operation.m_source, operation.m_destination));
-      },
-      [&] (const TableModel::PreRemoveOperation& operation) {
-        m_transaction.push(PreRemoveOperation(operation.m_index));
-      },
-      [&] (const TableModel::RemoveOperation& operation) {
-        m_transaction.push(RemoveOperation(operation.m_index));
-      },
       [&] (const TableModel::UpdateOperation& operation) {
         if(m_column == operation.m_column) {
           m_transaction.push(UpdateOperation(operation.m_row,
             std::any_cast<const Type&>(operation.m_previous),
             std::any_cast<const Type&>(operation.m_value)));
         }
+      },
+      [&] (const auto& operation) {
+        m_transaction.push(to_list_operation<Type>(operation));
       });
   }
 }
