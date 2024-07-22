@@ -135,22 +135,17 @@ namespace Details {
   void RowViewListModel<T>::on_operation(
       const TableModel::Operation& operation) {
     visit(operation,
-      [&] (const TableModel::StartTransaction) {
+      [&] (const TableModel::StartTransaction&) {
         m_transaction.start();
       },
-      [&] (const TableModel::EndTransaction) {
+      [&] (const TableModel::EndTransaction&) {
         m_transaction.end();
       },
       [&] (const TableModel::UpdateOperation& operation) {
         if(m_row.get_index() == operation.m_row) {
-          if constexpr(std::is_same_v<Type, AnyRef>) {
-            m_transaction.push(UpdateOperation(operation.m_column,
-              AnyRef(operation.m_previous), AnyRef(operation.m_value)));
-          } else {
-            m_transaction.push(UpdateOperation(operation.m_column,
-              std::any_cast<const Type&>(operation.m_previous),
-              std::any_cast<const Type&>(operation.m_value)));
-          }
+          m_transaction.push(UpdateOperation(operation.m_column,
+            std::any_cast<const Type&>(operation.m_previous),
+            std::any_cast<const Type&>(operation.m_value)));
         }
       },
       [&] (const auto& operation) {

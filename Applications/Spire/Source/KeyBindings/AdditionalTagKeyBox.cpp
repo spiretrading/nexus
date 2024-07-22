@@ -28,6 +28,7 @@ AdditionalTagKeyBox::AdditionalTagKeyBox(
     std::bind_front(&AdditionalTagKeyBox::key_to_text, this));
   enclose(*this, *m_drop_down_box);
   proxy_style(*this, *m_drop_down_box);
+  setFocusProxy(m_drop_down_box);
   update_info_tip();
 }
 

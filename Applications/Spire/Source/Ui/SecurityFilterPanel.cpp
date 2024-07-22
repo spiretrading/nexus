@@ -80,7 +80,7 @@ AnyInputBox* input_box_builder(std::shared_ptr<ComboBox::QueryModel> model,
   box->set_placeholder(QObject::tr("Search securities"));
   auto input_box = new AnyInputBox(*box);
   input_box->connect_submit_signal([=] (const auto& submission) {
-    input_box->get_current()->set(Security());
+    input_box->get_current()->set(AnyRef(Security()));
     matches->push(any_cast<Security>(submission));
   });
   return input_box;

@@ -36,6 +36,7 @@ MenuButton::MenuButton(QWidget& body, QWidget* parent)
   m_menu = new ContextMenu(*this);
   m_menu->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_menu_window = static_cast<OverlayPanel*>(m_menu->window());
+  m_menu_window->set_closed_on_focus_out(false);
   m_menu_window->layout()->itemAt(0)->widget()->setSizePolicy(
     QSizePolicy::Expanding, QSizePolicy::Fixed);
   m_menu_window->set_positioning(OverlayPanel::Positioning::PARENT);
@@ -92,7 +93,7 @@ bool MenuButton::eventFilter(QObject* watched, QEvent* event) {
             forward_mouse_event(child, QEvent::MouseButtonPress);
             forward_mouse_event(child, QEvent::MouseButtonRelease);
           } else {
-            m_menu->hide();
+            m_menu_window->hide();
           }
         }
       }
@@ -103,7 +104,7 @@ bool MenuButton::eventFilter(QObject* watched, QEvent* event) {
     if(key_event.key() == Qt::Key_Space) {
       if(m_menu->focusProxy() == m_menu->focusWidget()) {
         match(*this, Press());
-        m_menu->hide();
+        m_menu_window->hide();
       }
     }
   }
@@ -146,7 +147,7 @@ void MenuButton::mouseReleaseEvent(QMouseEvent* event) {
 }
 
 void MenuButton::show_menu() {
-  m_menu->show();
+  m_menu_window->show();
   update_menu_width();
 }
 

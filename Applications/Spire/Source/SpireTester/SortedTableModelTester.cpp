@@ -418,7 +418,7 @@ TEST_SUITE("SortedTableModel") {
     source->set(4, 2, 10.0f);
     require_transaction(operations,
       {
-        TableModel::UpdateOperation(3, 2, std::any(), std::any())
+        TableModel::UpdateOperation(3, 2, 7.8f, 10.0f)
       });
     operations.clear();
     REQUIRE(column_span<int>(sorted_model, 0) == std::vector{2, 2, 4, 6, 9, 9});
@@ -430,7 +430,8 @@ TEST_SUITE("SortedTableModel") {
     require_transaction(operations,
       {
         TableModel::MoveOperation(1, 0),
-        TableModel::UpdateOperation(0, 1, std::any(), std::any())
+        TableModel::UpdateOperation(
+          0, 1, std::string("Bob"), std::string("Ava"))
       });
     operations.clear();
     REQUIRE(column_span<int>(sorted_model, 0) == std::vector{2, 2, 4, 6, 9, 9});
@@ -442,7 +443,7 @@ TEST_SUITE("SortedTableModel") {
     require_transaction(operations,
       {
         TableModel::MoveOperation(4, 0),
-        TableModel::UpdateOperation(0, 0, std::any(), std::any())
+        TableModel::UpdateOperation(0, 0, 9, 0)
       });
     operations.clear();
     REQUIRE(column_span<int>(sorted_model, 0) == std::vector{0, 2, 2, 4, 6, 9});
@@ -453,7 +454,8 @@ TEST_SUITE("SortedTableModel") {
     source->set(1, 1, std::string("Tom"));
     require_transaction(operations,
       {
-        TableModel::UpdateOperation(2, 1, std::any(), std::any())
+        TableModel::UpdateOperation(
+          2, 1, std::string("Bob"), std::string("Tom"))
       });
     REQUIRE(column_span<int>(sorted_model, 0) == std::vector{0, 2, 2, 4, 6, 9});
     REQUIRE(column_span<std::string>(sorted_model, 1) ==

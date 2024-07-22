@@ -67,6 +67,50 @@ namespace {
     style.get(Disabled() > Placeholder()).set(TextColor(QColor(0xC8C8C8)));
     return style;
   }
+
+  int get_last_position(const TextBox& text_box) {
+    auto& current = text_box.get_current()->get();
+    if(current.isEmpty()) {
+      return 0;
+    }
+    return current.size() + 1;
+  }
+
+  struct TextBoxHighlightModel : HighlightModel {
+    TextBox* m_text_box;
+    LocalValueModel<Highlight> m_model;
+
+    TextBoxHighlightModel(TextBox& text_box)
+      : m_text_box(&text_box) {}
+
+    QValidator::State get_state() const override {
+      return m_model.get_state();
+    }
+
+    const Type& get() const override {
+      return m_model.get();
+    }
+
+    QValidator::State test(const Type& value) const override {
+      return m_model.test(value);
+    }
+
+    QValidator::State set(const Type& value) override {
+      auto last = get_last_position(*m_text_box);
+      if(value.m_start == -1) {
+        return set(Highlight(last, value.m_end));
+      } else if(value.m_end == -1) {
+        return set(Highlight(value.m_start, last));
+      }
+      return m_model.set(Highlight(
+        std::clamp(value.m_start, 0, last), std::clamp(value.m_end, 0, last)));
+    }
+
+    connection connect_update_signal(
+        const typename UpdateSignal::slot_type& slot) const override {
+      return m_model.connect_update_signal(slot);
+    }
+  };
 }
 
 Highlight::Highlight()
@@ -114,7 +158,7 @@ class TextBox::LineEdit : public QLineEdit {
           m_text_box(text_box),
           m_current(std::move(current)),
           m_submission(m_current->get()),
-          m_highlight(std::make_shared<LocalValueModel<Highlight>>()),
+          m_highlight(std::make_shared<TextBoxHighlightModel>(*text_box)),
           m_text_validator(new TextValidator(m_current, this)),
           m_is_rejected(false),
           m_has_update(false) {
@@ -237,7 +281,12 @@ class TextBox::LineEdit : public QLineEdit {
 
     void keyPressEvent(QKeyEvent* event) override {
       if(isReadOnly()) {
-        return QLineEdit::keyPressEvent(event);
+        if(event == QKeySequence::SelectAll || event == QKeySequence::Copy) {
+          return QLineEdit::keyPressEvent(event);
+        } else {
+          event->ignore();
+          return;
+        }
       }
       if(event->key() == Qt::Key_Escape) {
         if(m_submission != m_current->get()) {

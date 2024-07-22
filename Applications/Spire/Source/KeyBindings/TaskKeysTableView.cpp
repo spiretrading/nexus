@@ -1,14 +1,13 @@
 #include "Spire/KeyBindings/TaskKeysTableView.hpp"
 #include <boost/signals2/shared_connection_block.hpp>
 #include "Spire/KeyBindings/AdditionalTagsBox.hpp"
-#include "Spire/KeyBindings/OrderTaskArgumentsListToTableModel.hpp"
+#include "Spire/KeyBindings/OrderTaskArgumentsTableModel.hpp"
 #include "Spire/KeyBindings/QuantitySettingBox.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
-#include "Spire/Spire/ColumnViewListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Spire/ListValueModel.hpp"
 #include "Spire/Spire/ProxyValueModel.hpp"
 #include "Spire/Spire/TableModelTransactionLog.hpp"
+#include "Spire/Spire/TableValueModel.hpp"
 #include "Spire/Spire/ValidatedValueModel.hpp"
 #include "Spire/Ui/AnyInputBox.hpp"
 #include "Spire/Ui/DecimalBox.hpp"
@@ -95,13 +94,6 @@ namespace {
     widths.push_back(scale_width(80));
     widths.push_back(scale_width(130));
     return widths;
-  }
-
-  template<typename T>
-  auto to_value_model(const std::shared_ptr<TableModel>& table, int row,
-      int column) {
-    return make_list_value_model(
-      std::make_shared<ColumnViewListModel<T>>(table, column), row);
   }
 
   struct RegionKeyHash {
@@ -239,14 +231,15 @@ namespace {
     EditableBox* mount(
         const std::shared_ptr<TableModel>& table, int row, int column) {
       auto make_proxy = [&] <typename T> () {
-        return make_proxy_value_model(to_value_model<T>(table, row, column));
+        return make_proxy_value_model(
+          make_table_value_model<T>(table, row, column));
       };
       auto column_id = static_cast<OrderTaskColumns>(column);
       auto [input_box, proxy] =
-        [&] () -> std::tuple<AnyInputBox*, std::shared_ptr<ItemState>> {
+        [&] () -> std::tuple<EditableBox*, std::shared_ptr<ItemState>> {
           if(column_id == OrderTaskColumns::NAME) {
             auto current = make_proxy.operator ()<QString>();
-            return {new AnyInputBox(
+            return {new EditableBox(
               *new TextBox(current)), std::make_shared<ItemState>(current)};
           } else if(column_id == OrderTaskColumns::REGION) {
             auto current = make_proxy.operator ()<Region>();
@@ -254,41 +247,42 @@ namespace {
             region_box->setFixedHeight(scale_height(25));
             region_box->setSizePolicy(
               QSizePolicy::Preferred, QSizePolicy::Fixed);
-            return {new AnyInputBox(*region_box),
+            return {new EditableBox(*region_box),
               std::make_shared<ItemState>(current)};
           } else if(column_id == OrderTaskColumns::DESTINATION) {
-            auto region = make_proxy_value_model(to_value_model<Region>(
-              table, row, static_cast<int>(OrderTaskColumns::REGION)));
+            auto region = make_proxy_value_model(
+              make_table_value_model<Region>(table, row,
+                static_cast<int>(OrderTaskColumns::REGION)));
             auto destinations = make_region_filtered_destination_list(
               m_destinations, m_markets, region);
             auto current = make_proxy.operator ()<Destination>();
-            return {new AnyInputBox(
+            return {new EditableBox(
               *make_destination_box(current, std::move(destinations))),
               std::make_shared<DestinationState>(current, region)};
           } else if(column_id == OrderTaskColumns::ORDER_TYPE) {
             auto current = make_proxy.operator ()<OrderType>();
-            return {new AnyInputBox(*make_order_type_box(current)),
+            return {new EditableBox(*make_order_type_box(current)),
               std::make_shared<ItemState>(current)};
           } else if(column_id == OrderTaskColumns::SIDE) {
             auto current = make_proxy.operator ()<Side>();
-            return {new AnyInputBox(*make_side_box(current)),
+            return {new EditableBox(*make_side_box(current)),
               std::make_shared<ItemState>(current)};
           } else if(column_id == OrderTaskColumns::QUANTITY) {
             auto current = make_proxy.operator ()<QuantitySetting>();
-            return {new AnyInputBox(*make_quantity_setting_box(current)),
+            return {new EditableBox(*make_quantity_setting_box(current)),
               std::make_shared<ItemState>(current)};
           } else if(column_id == OrderTaskColumns::TIME_IN_FORCE) {
             auto current = make_proxy.operator ()<TimeInForce>();
-            return {new AnyInputBox(*make_time_in_force_box(current)),
+            return {new EditableBox(*make_time_in_force_box(current)),
               std::make_shared<ItemState>(current)};
           } else if(column_id == OrderTaskColumns::TAGS) {
             auto destination = make_proxy_value_model(
-              to_value_model<Destination>(
+              make_table_value_model<Destination>(
                 table, row, static_cast<int>(OrderTaskColumns::DESTINATION)));
-            auto region = make_proxy_value_model(to_value_model<Region>(
+            auto region = make_proxy_value_model(make_table_value_model<Region>(
               table, row, static_cast<int>(OrderTaskColumns::REGION)));
             auto current = make_proxy.operator ()<std::vector<AdditionalTag>>();
-            return {new AnyInputBox(*new AdditionalTagsBox(
+            return {new EditableBox(*new AdditionalTagsBox(
               current, m_additional_tags, destination, region)),
               std::make_shared<AdditionalTagsState>(
                 current, destination, region)};
@@ -296,21 +290,14 @@ namespace {
             auto proxy = make_proxy.operator ()<QKeySequence>();
             auto current =
               make_validated_value_model(&key_input_box_validator, proxy);
-            return {new AnyInputBox(*new KeyInputBox(current)),
-              std::make_shared<ItemState>(proxy)};
+            return {new EditableBox(*new KeyInputBox(current),
+              [] (const auto& key) {
+                return key_input_box_validator(key) != QValidator::Invalid;
+              }), std::make_shared<ItemState>(proxy)};
           }
         }();
-      auto editable_box = [&] () -> EditableBox* {
-        if(column_id == OrderTaskColumns::KEY) {
-          return new EditableBox(*input_box,
-            [] (const auto& key) {
-              return key_input_box_validator(key) != QValidator::Invalid;
-            });
-        }
-        return new EditableBox(*input_box);
-      }();
-      m_item_states[editable_box] = std::move(proxy);
-      return editable_box;
+      m_item_states[input_box] = std::move(proxy);
+      return input_box;
     }
 
     void reset(QWidget& widget,
@@ -318,7 +305,7 @@ namespace {
       auto update_proxy = [&] <typename T> () {
         auto& state = *m_item_states[&widget];
         std::static_pointer_cast<ProxyValueModel<T>>(state.m_proxy)->set_source(
-          to_value_model<T>(table, row, column));
+          make_table_value_model<T>(table, row, column));
       };
       auto column_id = static_cast<OrderTaskColumns>(column);
       if(column_id == OrderTaskColumns::NAME) {
@@ -332,7 +319,7 @@ namespace {
         auto temporary_model =
           std::make_shared<LocalDestinationModel>(proxy->get());
         proxy->set_source(temporary_model);
-        state.m_region->set_source(to_value_model<Region>(
+        state.m_region->set_source(make_table_value_model<Region>(
           table, row, static_cast<int>(OrderTaskColumns::REGION)));
         update_proxy.operator ()<Destination>();
       } else if(column_id == OrderTaskColumns::ORDER_TYPE) {
@@ -352,9 +339,9 @@ namespace {
           std::make_shared<LocalValueModel<std::vector<AdditionalTag>>>(
             proxy->get());
         proxy->set_source(temporary_model);
-        state.m_destination->set_source(to_value_model<Destination>(
+        state.m_destination->set_source(make_table_value_model<Destination>(
           table, row, static_cast<int>(OrderTaskColumns::DESTINATION)));
-        state.m_region->set_source(to_value_model<Region>(
+        state.m_region->set_source(make_table_value_model<Region>(
           table, row, static_cast<int>(OrderTaskColumns::REGION)));
         update_proxy.operator ()<std::vector<AdditionalTag>>();
       } else if(column_id == OrderTaskColumns::KEY) {
@@ -373,8 +360,8 @@ TableView* Spire::make_task_keys_table_view(
     std::shared_ptr<ComboBox::QueryModel> region_query_model,
     DestinationDatabase destinations, MarketDatabase markets,
     AdditionalTagDatabase additional_tags, QWidget* parent) {
-  auto table = std::make_shared<OrderTaskArgumentsListToTableModel>(
-    std::move(order_task_arguments));
+  auto table =
+    make_order_task_arguments_table_model(std::move(order_task_arguments));
   auto table_view = new EditableTableView(
     std::make_shared<UniqueTaskKeyTableModel>(std::move(table)),
     make_header_model(), std::make_shared<EmptyTableFilter>(),

@@ -4,11 +4,11 @@
 #include <QPainter>
 #include <QPointer>
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Spire/ListValueModel.hpp"
-#include "Spire/Spire/RowViewListModel.hpp"
 #include "Spire/Spire/TableModel.hpp"
+#include "Spire/Spire/TableValueModel.hpp"
 #include "Spire/Spire/ToTextModel.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
+#include "Spire/Ui/FixedHorizontalLayout.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TableItem.hpp"
 #include "Spire/Ui/TextBox.hpp"
@@ -106,9 +106,8 @@ GridColor Spire::Styles::grid_color(QColor color) {
 
 QWidget* TableBody::default_item_builder(
     const std::shared_ptr<TableModel>& table, int row, int column) {
-  auto text = std::make_shared<ToTextModel<AnyRef>>(
-    std::make_shared<ListValueModel<AnyRef>>(
-      std::make_shared<RowViewListModel<AnyRef>>(table, row), column),
+  auto text = make_to_text_model(
+    make_table_value_model<AnyRef>(table, row, column),
     [] (const AnyRef& value) { return to_text(value); },
     [] (const QString&) { return none; });
   return make_label(text);
@@ -129,9 +128,9 @@ struct TableBody::Cover : QWidget {
 struct TableBody::RowCover : Cover {
   RowCover(TableBody& body)
       : Cover(&body) {
-    make_hbox_layout(this);
+    auto layout = new FixedHorizontalLayout(this);
     match(*this, Row());
-    layout()->setSpacing(body.m_styles.m_horizontal_spacing);
+    layout->setSpacing(body.m_styles.m_horizontal_spacing);
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     for(auto column = 0; column != body.get_column_size(); ++column) {
       auto item = new TableItem();
@@ -146,7 +145,7 @@ struct TableBody::RowCover : Cover {
         item->setSizePolicy(
           QSizePolicy::Expanding, item->sizePolicy().verticalPolicy());
       }
-      layout()->addWidget(item);
+      layout->addWidget(item);
       item->connect_active_signal(std::bind_front(
         &TableBody::on_item_activated, &body, std::ref(*item)));
     }
@@ -1193,8 +1192,11 @@ void TableBody::on_item_activated(TableItem& item) {
 
 void TableBody::on_current(
     const optional<Index>& previous, const optional<Index>& current) {
+  auto previous_had_focus = false;
   if(previous) {
     if(auto previous_item = find_item(previous)) {
+      previous_had_focus =
+        previous_item->isAncestorOf(QApplication::focusWidget());
       unmatch(*previous_item->parentWidget(), CurrentRow());
       unmatch(*previous_item, Current());
     }
@@ -1215,6 +1217,9 @@ void TableBody::on_current(
       match(*m_column_covers[current->m_column], CurrentColumn());
     }
     m_selection_controller.navigate(*current);
+    if(previous_had_focus || QApplication::focusWidget() == this) {
+      current_item->setFocus(Qt::FocusReason::OtherFocusReason);
+    }
   }
 }
 
@@ -1308,8 +1313,18 @@ void TableBody::on_style() {
   }
   layout()->setSpacing(m_styles.m_vertical_spacing);
   layout()->setContentsMargins(m_styles.m_padding);
-  for(auto i = 0; i != layout()->count(); ++i) {
-    if(auto row = static_cast<RowCover*>(layout()->itemAt(i)->widget())) {
+  for(auto i = 0; i != layout()->count() + 1; ++i) {
+    auto row = [&] () -> RowCover* {
+      if(i == layout()->count()) {
+        return m_current_row;
+      }
+      auto row = static_cast<RowCover*>(layout()->itemAt(i)->widget());
+      if(row != m_current_row) {
+        return row;
+      }
+      return nullptr;
+    }();
+    if(row) {
       row->layout()->setSpacing(m_styles.m_horizontal_spacing);
       for(auto column = 0; column != m_widths->get_size(); ++column) {
         auto& item = *row->get_item(column);
@@ -1355,8 +1370,18 @@ void TableBody::on_widths_update(const ListModel<int>::Operation& operation) {
   visit(operation,
     [&] (const ListModel<int>::UpdateOperation& operation) {
       auto spacing = get_left_spacing(operation.m_index);
-      for(auto i = 0; i != layout()->count(); ++i) {
-        if(auto row = static_cast<RowCover*>(layout()->itemAt(i)->widget())) {
+      for(auto i = 0; i != layout()->count() + 1; ++i) {
+        auto row = [&] () -> RowCover* {
+          if(i == layout()->count()) {
+            return m_current_row;
+          }
+          auto row = static_cast<RowCover*>(layout()->itemAt(i)->widget());
+          if(row != m_current_row) {
+            return row;
+          }
+          return nullptr;
+        }();
+        if(row) {
           if(auto item = row->get_item(operation.m_index)) {
             item->setFixedWidth(m_widths->get(operation.m_index) - spacing);
           }

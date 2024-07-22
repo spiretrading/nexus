@@ -50,8 +50,7 @@ ClosedFilterPanel::ClosedFilterPanel(std::shared_ptr<TableModel> table,
   m_list_view = new ListView(
     std::make_shared<ColumnViewListModel<bool>>(m_table, 1),
     [=] (const std::shared_ptr<ListModel<bool>>& list, int index) {
-      auto check_box =
-        new CheckBox(std::make_shared<ListValueModel<bool>>(list, index));
+      auto check_box = new CheckBox(make_list_value_model(list, index));
       check_box->set_label(to_text(m_table->at(index, 0)));
       check_box->setLayoutDirection(Qt::RightToLeft);
       check_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);

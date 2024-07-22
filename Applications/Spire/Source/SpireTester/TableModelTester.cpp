@@ -5,6 +5,24 @@
 using namespace boost;
 using namespace Spire;
 
+namespace {
+  void require_equal(const std::any& actual, const std::any& expected) {
+    REQUIRE(actual.type() == expected.type());
+    if(actual.type() == typeid(float)) {
+      REQUIRE(std::any_cast<float>(actual) == std::any_cast<float>(expected));
+    } else if(actual.type() == typeid(double)) {
+      REQUIRE(std::any_cast<double>(actual) == std::any_cast<double>(expected));
+    } else if(actual.type() == typeid(int)) {
+      REQUIRE(std::any_cast<int>(actual) == std::any_cast<int>(expected));
+    } else if(actual.type() == typeid(std::string)) {
+      REQUIRE(std::any_cast<std::string>(actual) ==
+        std::any_cast<std::string>(expected));
+    } else {
+      REQUIRE(false);
+    }
+  }
+}
+
 void Spire::require_transaction(
     const std::deque<TableModel::Operation>& operations,
     const std::vector<TableModel::Operation>& expected) {
@@ -50,6 +68,8 @@ void Spire::require_transaction(
         REQUIRE(operation != nullptr);
         REQUIRE(operation->m_row == expected.m_row);
         REQUIRE(operation->m_column == expected.m_column);
+        require_equal(operation->m_previous, expected.m_previous);
+        require_equal(operation->m_value, expected.m_value);
       });
   }
   if(offset != 0) {

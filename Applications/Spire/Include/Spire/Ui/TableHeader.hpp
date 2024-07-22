@@ -64,7 +64,6 @@ namespace Spire {
         const FilterSignal::slot_type& slot) const;
 
     protected:
-      bool eventFilter(QObject* watched, QEvent* event) override;
       void mouseMoveEvent(QMouseEvent* event) override;
 
     private:
@@ -74,13 +73,8 @@ namespace Spire {
       std::shared_ptr<ListModel<int>> m_widths;
       std::vector<TableHeaderItem*> m_item_views;
       int m_resize_index;
-      QPoint m_resize_position;
-      boost::signals2::scoped_connection m_items_connection;
       boost::signals2::scoped_connection m_widths_connection;
 
-      int get_next_visible_sibling_index(int index) const;
-      void on_items_operation(
-        const ListModel<TableHeaderItem::Model>::Operation& operation);
       void on_widths_operation(const ListModel<int>::Operation& operation);
       void on_start_resize(int index);
       void on_end_resize(int index);

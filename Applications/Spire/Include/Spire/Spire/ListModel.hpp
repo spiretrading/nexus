@@ -801,7 +801,11 @@ namespace Spire {
 
   template<typename T>
   std::any ListModel<T>::at(int index) const {
-    return get(index);
+    if constexpr(std::is_same_v<T, AnyRef>) {
+      return to_any(get(index));
+    } else {
+      return get(index);
+    }
   }
 
   template<typename T>

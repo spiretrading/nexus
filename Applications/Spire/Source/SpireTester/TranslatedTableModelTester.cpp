@@ -228,7 +228,7 @@ TEST_SUITE("TranslatedTableModel") {
     source->set(2, 0, std::string("D"));
     require_transaction(operations,
       {
-        TableModel::UpdateOperation(0, 0, nullptr, nullptr),
+        TableModel::UpdateOperation(0, 0, std::string("A"), std::string("D")),
       });
     REQUIRE(translation.get<std::string>(0, 0) == "D");
     REQUIRE(translation.get<std::string>(1, 0) == "B");
@@ -356,7 +356,7 @@ TEST_SUITE("TranslatedTableModel") {
     require_transaction(operations,
       {
         TableModel::AddOperation(2),
-        TableModel::UpdateOperation(1, 0, nullptr, nullptr),
+        TableModel::UpdateOperation(1, 0, 2, 10),
         TableModel::AddOperation(0),
         TableModel::PreRemoveOperation(1),
         TableModel::RemoveOperation(1),
