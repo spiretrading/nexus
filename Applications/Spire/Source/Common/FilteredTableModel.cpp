@@ -1,4 +1,5 @@
 #include "Spire/Spire/FilteredTableModel.hpp"
+#include "Spire/Spire/ListToTableModel.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;
@@ -53,28 +54,12 @@ connection FilteredTableModel::connect_operation_signal(
 void FilteredTableModel::on_operation(
     const ListModel<RowView>::Operation& operation) {
   visit(operation,
-    [&] (const ListModel<RowView>::StartTransaction&) {
-      m_transaction.start();
-    },
-    [&] (const ListModel<RowView>::EndTransaction&) {
-      m_transaction.end();
-    },
-    [&] (const ListModel<RowView>::AddOperation& operation) {
-      m_transaction.push(AddOperation(operation.m_index));
-    },
-    [&] (const ListModel<RowView>::PreRemoveOperation& operation) {
-      m_transaction.push(PreRemoveOperation(operation.m_index));
-    },
-    [&] (const ListModel<RowView>::RemoveOperation& operation) {
-      m_transaction.push(RemoveOperation(operation.m_index));
-    },
-    [&] (const ListModel<RowView>::MoveOperation& operation) {
-      m_transaction.push(
-        MoveOperation(operation.m_source, operation.m_destination));
-    },
     [&] (const ListModel<RowView>::UpdateOperation& operation) {
       m_transaction.push(UpdateOperation(operation.m_index,
         m_list->get_update().m_column, m_list->get_update().m_previous,
         m_list->get_update().m_value));
+    },
+    [&] (const auto& operation) {
+      m_transaction.push(to_table_operation(operation));
     });
 }

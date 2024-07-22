@@ -71,30 +71,14 @@ void TableToListModel::transact(const std::function<void ()>& transaction) {
 
 void TableToListModel::on_operation(const TableModel::Operation& operation) {
   visit(operation,
-    [&] (const TableModel::StartTransaction&) {
-      m_transaction.start();
-    },
-    [&] (const TableModel::EndTransaction&) {
-      m_transaction.end();
-    },
-    [&] (const TableModel::AddOperation& operation) {
-      m_transaction.push(AddOperation(operation.m_index));
-    },
-    [&] (const TableModel::PreRemoveOperation& operation) {
-      m_transaction.push(PreRemoveOperation(operation.m_index));
-    },
-    [&] (const TableModel::RemoveOperation& operation) {
-      m_transaction.push(RemoveOperation(operation.m_index));
-    },
-    [&] (const TableModel::MoveOperation& operation) {
-      m_transaction.push(
-        MoveOperation(operation.m_source, operation.m_destination));
-    },
     [&] (const TableModel::UpdateOperation& operation) {
       m_update = &operation;
       m_transaction.push(UpdateOperation(operation.m_row,
         RowView(*m_table, operation.m_row),
         RowView(*m_table, operation.m_row)));
       m_update = nullptr;
+    },
+    [&] (const auto& operation) {
+      m_transaction.push(to_list_operation<RowView>(operation));
     });
 }
