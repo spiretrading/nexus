@@ -483,9 +483,9 @@ void SerenityFixApplication::RouteToMatn(
   newOrderSingle->setField(FIX::ExDestination("MATN"));
   for(auto& tag : info.m_fields.m_additionalFields) {
     if(tag.GetKey() == FIX::FIELD::ExecInst) {
-      if(tag.GetValue() == Tag::Type(std::string("x"))) {
-        populate_exec_inst(Tag(FIX::FIELD::ExecInst, "p"),
-          *newOrderSingle, {"M", "N", "R", "P", "p", "b"});
+      if(tag.GetValue() == Tag::Type(std::string("p"))) {
+        populate_exec_inst(
+          Tag(FIX::FIELD::ExecInst, "x"), *newOrderSingle, {"x"});
       } else {
         populate_exec_inst(
           tag, *newOrderSingle, {"M", "N", "R", "P", "p", "b"});
