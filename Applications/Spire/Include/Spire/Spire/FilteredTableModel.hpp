@@ -1,11 +1,10 @@
 #ifndef SPIRE_FILTERED_TABLE_MODEL_HPP
 #define SPIRE_FILTERED_TABLE_MODEL_HPP
-#include <functional>
-#include <tuple>
-#include <vector>
+#include "Spire/Spire/FilteredListModel.hpp"
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Spire/TableModel.hpp"
 #include "Spire/Spire/TableModelTransactionLog.hpp"
+#include "Spire/Spire/TableToListModel.hpp"
 
 namespace Spire {
 
@@ -51,14 +50,12 @@ namespace Spire {
 
     private:
       std::shared_ptr<TableModel> m_source;
-      Filter m_filter;
-      int m_filter_count;
-      std::vector<int> m_filtered_data;
+      std::shared_ptr<TableToListModel> m_list;
+      FilteredListModel<RowView> m_filtered_list;
+      boost::signals2::scoped_connection m_connection;
       TableModelTransactionLog m_transaction;
-      boost::signals2::scoped_connection m_source_connection;
 
-      std::tuple<bool, std::vector<int>::iterator> find(int index);
-      void on_operation(const Operation& operation);
+      void on_operation(const ListModel<RowView>::Operation& operation);
   };
 }
 

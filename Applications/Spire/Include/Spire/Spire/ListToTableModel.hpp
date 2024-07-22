@@ -62,6 +62,143 @@ namespace Spire {
       void on_operation(const typename ListModel<Type>::Operation& operation);
   };
 
+  /**
+   * Converts a ListModel::StartTransaction into its equivalent
+   * TableModel::StartTransaction.
+   */
+  template<typename T>
+  TableModel::StartTransaction to_table_operation(
+      const typename ListModel<T>::StartTransaction& operation) {
+    return TableModel::StartTransaction();
+  }
+
+  /**
+   * Converts a ListModel::EndTransaction into its equivalent
+   * TableModel::EndTransaction.
+   */
+  template<typename T>
+  TableModel::EndTransaction to_table_operation(
+      const typename ListModel<T>::EndTransaction& operation) {
+    return TableModel::EndTransaction();
+  }
+
+  /**
+   * Converts a ListModel::AddOperation into its equivalent
+   * TableModel::AddOperation.
+   */
+  template<typename T>
+  TableModel::AddOperation to_table_operation(
+      const typename ListModel<T>::AddOperation& operation) {
+    return TableModel::AddOperation(operation.m_index);
+  }
+
+  /**
+   * Converts a ListModel::MoveOperation into its equivalent
+   * TableModel::MoveOperation.
+   */
+  template<typename T>
+  TableModel::MoveOperation to_table_operation(
+      const typename ListModel<T>::MoveOperation& operation) {
+    return TableModel::MoveOperation(
+      operation.m_source, operation.m_destination);
+  }
+
+  /**
+   * Converts a ListModel::PreRemoveOperation into its equivalent
+   * TableModel::PreRemoveOperation.
+   */
+  template<typename T>
+  TableModel::PreRemoveOperation to_table_operation(
+      const typename ListModel<T>::PreRemoveOperation& operation) {
+    return TableModel::PreRemoveOperation(operation.m_index);
+  }
+
+  /**
+   * Converts a ListModel::RemoveOperation into its equivalent
+   * TableModel::RemoveOperation.
+   */
+  template<typename T>
+  TableModel::RemoveOperation to_table_operation(
+      const typename ListModel<T>::RemoveOperation& operation) {
+    return TableModel::RemoveOperation(operation.m_index);
+  }
+
+  /**
+   * Converts a ListModel::Operation into its equivalent TableModel::Operation.
+   */
+  template<typename T>
+  TableModel::Operation to_table_operation(
+      const typename ListModel<T>::Operation& operation) {
+    if(auto start =
+        boost::get<typename ListModel<T>::StartTransaction>(&operation)) {
+      return to_table_operation(*start);
+    } else if(auto end =
+        boost::get<typename ListModel<T>::EndTransaction>(&operation)) {
+      return to_table_operation(*end);
+    } else if(auto add = boost::get<typename ListModel<T>::AddOperation>(&operation)) {
+      return to_table_operation(*add);
+    } else if(auto move =
+        boost::get<typename ListModel<T>::MoveOperation>(&operation)) {
+      return to_table_operation(*move);
+    } else if(auto pre_remove =
+        boost::get<typename ListModel<T>::PreRemoveOperation>(&operation)) {
+      return to_table_operation(*pre_remove);
+    } else if(auto remove =
+        boost::get<typename ListModel<T>::RemoveOperation>(&operation)) {
+      return to_table_operation(*remove);
+    }
+    return TableModel::Operation();
+  }
+
+  /**
+   * Converts an AnyListModel::StartTransaction into its equivalent
+   * TableModel::StartTransaction.
+   */
+  TableModel::StartTransaction to_table_operation(
+    const AnyListModel::StartTransaction& operation);
+
+  /**
+   * Converts an AnyListModel::EndTransaction into its equivalent
+   * TableModel::EndTransaction.
+   */
+  TableModel::EndTransaction to_table_operation(
+    const AnyListModel::EndTransaction& operation);
+
+  /**
+   * Converts an AnyListModel::AddOperation into its equivalent
+   * TableModel::AddOperation.
+   */
+  TableModel::AddOperation to_table_operation(
+    const AnyListModel::AddOperation& operation);
+
+  /**
+   * Converts an AnyListModel::MoveOperation into its equivalent
+   * TableModel::MoveOperation.
+   */
+  TableModel::MoveOperation to_table_operation(
+    const AnyListModel::MoveOperation& operation);
+
+  /**
+   * Converts an AnyListModel::PreRemoveOperation into its equivalent
+   * TableModel::PreRemoveOperation.
+   */
+  TableModel::PreRemoveOperation to_table_operation(
+    const AnyListModel::PreRemoveOperation& operation);
+
+  /**
+   * Converts an AnyListModel::RemoveOperation into its equivalent
+   * TableModel::RemoveOperation.
+   */
+  TableModel::RemoveOperation to_table_operation(
+    const AnyListModel::RemoveOperation& operation);
+
+  /**
+   * Converts an AnyListModel::Operation into its equivalent
+   * TableModel::Operation.
+   */
+  TableModel::Operation to_table_operation(
+    const AnyListModel::Operation& operation);
+
   template<typename T>
   ListToTableModel(T, int,
     typename ListToTableModel<typename T::element_type::Type>::Accessor) ->
@@ -123,25 +260,6 @@ namespace Spire {
   void ListToTableModel<T>::on_operation(
       const typename ListModel<Type>::Operation& operation) {
     visit(operation,
-      [&] (const typename ListModel<Type>::StartTransaction&) {
-        m_transaction.start();
-      },
-      [&] (const typename ListModel<Type>::EndTransaction&) {
-        m_transaction.end();
-      },
-      [&] (const typename ListModel<Type>::AddOperation& operation) {
-        m_transaction.push(TableModel::AddOperation(operation.m_index));
-      },
-      [&] (const typename ListModel<Type>::MoveOperation& operation) {
-        m_transaction.push(TableModel::MoveOperation(
-          operation.m_source, operation.m_destination));
-      },
-      [&] (const typename ListModel<Type>::PreRemoveOperation& operation) {
-        m_transaction.push(TableModel::PreRemoveOperation(operation.m_index));
-      },
-      [&] (const typename ListModel<Type>::RemoveOperation& operation) {
-        m_transaction.push(TableModel::RemoveOperation(operation.m_index));
-      },
       [&] (const typename ListModel<Type>::UpdateOperation& operation) {
         m_transaction.transact([&] {
           for(auto i = 0; i < get_column_size(); ++i) {
@@ -151,7 +269,10 @@ namespace Spire {
               to_any(m_accessor(const_cast<Type&>(operation.get_value()), i))));
           }
         });
-    });
+      },
+      [&] (const auto& operation) {
+        m_transaction.push(to_table_operation(operation));
+      });
   }
 }
 

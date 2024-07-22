@@ -135,10 +135,10 @@ namespace Details {
   void RowViewListModel<T>::on_operation(
       const TableModel::Operation& operation) {
     visit(operation,
-      [&] (const TableModel::StartTransaction) {
+      [&] (const TableModel::StartTransaction&) {
         m_transaction.start();
       },
-      [&] (const TableModel::EndTransaction) {
+      [&] (const TableModel::EndTransaction&) {
         m_transaction.end();
       },
       [&] (const TableModel::UpdateOperation& operation) {
