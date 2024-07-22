@@ -632,7 +632,7 @@ std::vector<std::unique_ptr<CanvasNode>> Spire::make_matnlp_order_task_nodes() {
   populate_bid_ask(att, "MATCH Now LP At-The-Touch",
     DefaultDestinations::MATNLP(), TimeInForce::Type::DAY, order_types);
   auto mpi = CanvasNodeBuilder(*GetPeggedOrderTaskNode(true)->AddField(
-    "exec_inst", 18, std::make_unique<TextNode>("x")));
+    "exec_inst", 18, std::make_unique<TextNode>("p")));
   mpi.SetVisible("exec_inst", false);
   mpi.SetReadOnly("exec_inst", true);
   populate_bid_ask(mpi, "MATCH Now LP MPI",
@@ -651,7 +651,7 @@ std::vector<std::unique_ptr<CanvasNode>> Spire::make_matnmf_order_task_nodes() {
   populate_bid_ask(att, "MATCH Now MF At-The-Touch",
     DefaultDestinations::MATNMF(), TimeInForce::Type::DAY, order_types);
   auto mpi = CanvasNodeBuilder(*GetPeggedOrderTaskNode(true)->AddField(
-    "exec_inst", 18, std::make_unique<TextNode>("x")));
+    "exec_inst", 18, std::make_unique<TextNode>("p")));
   mpi.SetVisible("exec_inst", false);
   mpi.SetReadOnly("exec_inst", true);
   populate_bid_ask(mpi, "MATCH Now MF MPI",
