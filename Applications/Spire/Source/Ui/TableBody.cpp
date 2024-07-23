@@ -39,8 +39,11 @@ namespace {
     }
     if(layout) {
       for(auto i = 0; i != layout->count(); ++i) {
-        total_height += layout->itemAt(i)->sizeHint().height();
-        ++total_rows;
+        if(layout->itemAt(i)->widget()) {
+          total_height +=
+            layout->itemAt(i)->sizeHint().height() + layout->spacing();
+          ++total_rows;
+        }
       }
     }
     if(bottom) {
@@ -50,6 +53,9 @@ namespace {
     if(total_height == 0) {
       return 0;
     }
+    if(total_height % 15 != 0) {
+      qDebug() << "Word";
+    }
     return total_height / total_rows;
   }
 
@@ -57,6 +63,9 @@ namespace {
     height = std::max(0, height);
     if(spacer.sizeHint().height() == height) {
       return;
+    }
+    if(height % 15 != 0) {
+      qDebug() << "Naaa";
     }
     spacer.changeSize(0, height, spacer.sizePolicy().horizontalPolicy(),
       spacer.sizePolicy().verticalPolicy());
@@ -575,7 +584,17 @@ void TableBody::keyReleaseEvent(QKeyEvent* event) {
 }
 
 void TableBody::moveEvent(QMoveEvent* event) {
+  qDebug() << "PreAvg: " << compute_average_row_height(m_top_spacer, m_bottom_spacer, layout(), m_top_index, visible_count(),
+    m_table->get_row_size());
   update_visible_region();
+  qDebug() << "PostAvg: " << compute_average_row_height(m_top_spacer, m_bottom_spacer, layout(), m_top_index, visible_count(), m_table->get_row_size());
+  qDebug() << "Move:";
+  qDebug() << m_top_index << " " << visible_count();
+  if(m_top_spacer) {
+    qDebug() << "Top: " << m_top_spacer->sizeHint().height();
+  } else {
+    qDebug() << "Top: 0";
+  }
 }
 
 void TableBody::showEvent(QShowEvent* event) {
@@ -749,7 +768,7 @@ void TableBody::add_row(int index) {
       layout(), m_top_index, visible_count(), m_table->get_row_size() - 1);
     if(index < m_top_index) {
       if(m_top_spacer) {
-        adjust_height(*m_top_spacer, *layout(),  row_height);
+        adjust_height(*m_top_spacer, *layout(), row_height);
       } else {
         m_top_spacer = new QSpacerItem(
           0, row_height, QSizePolicy::Expanding, QSizePolicy::Fixed);
@@ -758,7 +777,7 @@ void TableBody::add_row(int index) {
       ++m_top_index;
     } else {
       if(m_bottom_spacer) {
-        adjust_height(*m_bottom_spacer, *layout(),  row_height);
+        adjust_height(*m_bottom_spacer, *layout(), row_height);
       } else {
         m_bottom_spacer = new QSpacerItem(
           0, row_height, QSizePolicy::Expanding, QSizePolicy::Fixed);
@@ -959,13 +978,21 @@ void TableBody::update_spacer(QSpacerItem*& spacer, int hidden_row_count) {
   auto delete_spacer = false;
   if(visible_count() > 0 && hidden_row_count > 0) {
     auto total_height = 0;
+    auto count = 0;
     for(auto i = 0; i != layout()->count(); ++i) {
       if(auto row = layout()->itemAt(i)->widget()) {
-        total_height += row->sizeHint().height();
+        if(row->sizeHint().height() != 0) {
+          total_height += row->sizeHint().height();
+          ++count;
+        }
       }
     }
-    auto spacer_size = (hidden_row_count * total_height) / visible_count() +
+    auto spacer_size = (hidden_row_count * total_height) / count +
       hidden_row_count * layout()->spacing();
+    if(spacer_size % 15 != 0) {
+      qDebug() << "foooo";
+      qDebug() << visible_count();
+    }
     if(spacer_size > 0) {
       if(spacer) {
         set_height(*spacer, *layout(), spacer_size);
