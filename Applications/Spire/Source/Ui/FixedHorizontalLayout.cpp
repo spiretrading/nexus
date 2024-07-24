@@ -44,7 +44,7 @@ void FixedHorizontalLayout::setGeometry(const QRect& rect) {
 }
 
 QLayoutItem* FixedHorizontalLayout::itemAt(int index) const {
-  if(index < count()) {
+  if(index >= 0 && index < count()) {
     return m_items[index].get();
   }
   return nullptr;

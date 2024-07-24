@@ -28,54 +28,6 @@ namespace {
         widget_geometry.bottom());
   }
 
-  int compute_average_row_height(
-      QSpacerItem* top, QSpacerItem* bottom, QLayout* layout, int top_index,
-      int visible_count, int rows) {
-    auto total_height = 0;
-    auto total_rows = 0;
-    if(top) {
-      total_height += top->sizeHint().height();
-      total_rows += top_index;
-    }
-    if(layout) {
-      for(auto i = 0; i != layout->count(); ++i) {
-        if(layout->itemAt(i)->widget()) {
-          total_height +=
-            layout->itemAt(i)->sizeHint().height() + layout->spacing();
-          ++total_rows;
-        }
-      }
-    }
-    if(bottom) {
-      total_height += bottom->sizeHint().height();
-      total_rows += rows - top_index - visible_count;
-    }
-    if(total_height == 0) {
-      return 0;
-    }
-    if(total_height % 15 != 0) {
-      qDebug() << "Word";
-    }
-    return total_height / total_rows;
-  }
-
-  void set_height(QSpacerItem& spacer, QLayout& layout, int height) {
-    height = std::max(0, height);
-    if(spacer.sizeHint().height() == height) {
-      return;
-    }
-    if(height % 15 != 0) {
-      qDebug() << "Naaa";
-    }
-    spacer.changeSize(0, height, spacer.sizePolicy().horizontalPolicy(),
-      spacer.sizePolicy().verticalPolicy());
-    layout.invalidate();
-  }
-
-  void adjust_height(QSpacerItem& spacer, QLayout& layout, int height) {
-    set_height(spacer, layout, spacer.sizeHint().height() + height);
-  }
-
   void move_current_index(int source, int destination, optional<int>& index) {
     if(!index) {
       return;
@@ -198,6 +150,92 @@ struct TableBody::ColumnCover : Cover {
   }
 };
 
+
+struct TableBody::Layout : QLayout {
+  int m_top_space;
+  int m_bottom_space;
+  mutable optional<QSize> m_size_hint;
+  std::vector<std::unique_ptr<QLayoutItem>> m_items;
+
+  explicit Layout(QWidget* parent)
+    : QLayout(parent),
+      m_top_space(0),
+      m_bottom_space(0) {}
+
+  const RowCover& get_row(int index) const {
+    return *static_cast<const RowCover*>(itemAt(index)->widget());
+  }
+
+  RowCover& get_row(int index) {
+    return *static_cast<RowCover*>(itemAt(index)->widget());
+  }
+
+  void insert(RowCover& row, int index) {
+    m_items.insert(
+      m_items.begin() + index, std::make_unique<QWidgetItem>(&row));
+  }
+
+  void addItem(QLayoutItem* item) override {
+    m_items.emplace_back(item);
+  }
+
+  QSize sizeHint() const override {
+    if(m_size_hint) {
+      return *m_size_hint;
+    }
+    auto& styles = static_cast<TableBody*>(parent())->m_styles;
+    auto width = 0;
+    auto height = m_top_space + m_bottom_space +
+      std::max(0, (count() - 1) * styles.m_vertical_spacing);
+    for(auto& item : m_items) {
+      width = std::max(width, item->sizeHint().width());
+      height += item->sizeHint().height();
+    }
+    m_size_hint = QSize(width, height);
+    return *m_size_hint;
+  }
+
+  void setGeometry(const QRect& rect) override {
+    auto& styles = static_cast<TableBody*>(parent())->m_styles;
+    auto y = m_top_space + styles.m_padding.top();
+    for(auto& item : m_items) {
+      auto row_height = item->sizeHint().height();
+      item->setGeometry(
+        QRect(styles.m_padding.left(), y, rect.width() -
+          styles.m_padding.left() - styles.m_padding.right(), row_height));
+      y += row_height + styles.m_vertical_spacing;
+    }
+  }
+
+  QLayoutItem* itemAt(int index) const override {
+    if(index >= 0 && index < count()) {
+      return m_items[index].get();
+    }
+    return nullptr;
+  }
+
+  QLayoutItem* takeAt(int index) override {
+    if(index < count()) {
+      auto item = std::move(m_items[index]);
+      m_items.erase(m_items.begin() + index);
+      return item.release();
+    }
+    return nullptr;
+  }
+
+  int count() const override {
+    return static_cast<int>(m_items.size());
+  }
+
+  void invalidate() override {
+    QLayout::invalidate();
+    m_size_hint = none;
+    for(auto& item : m_items) {
+      item->invalidate();
+    }
+  }
+};
+
 struct TableBody::Painter {
   static void paint_horizontal_borders(TableBody& body, QPainter& painter) {
     if(body.m_styles.m_horizontal_grid_color.alphaF() == 0) {
@@ -211,28 +249,23 @@ struct TableBody::Painter {
       paint_border(0, body.m_styles.m_padding.top());
     }
     if(body.m_styles.m_vertical_spacing != 0) {
-      auto bottom_index =
-        body.layout()->count() - (body.m_bottom_spacer ? 1 : 0);
-      if(body.m_top_spacer) {
-        paint_border(body.m_top_spacer->geometry().bottom() + 1 -
-          body.m_styles.m_vertical_spacing, body.m_styles.m_vertical_spacing);
-      }
-      auto top_index = body.m_top_spacer ? 2 : 1;
-      for(auto row = top_index; row < bottom_index; ++row) {
-        paint_border(body.layout()->itemAt(row)->geometry().top() -
-          body.m_styles.m_vertical_spacing, body.m_styles.m_vertical_spacing);
-      }
-      if(body.m_bottom_spacer) {
-        paint_border(body.m_bottom_spacer->geometry().top(),
+      if(body.get_layout().m_top_space != 0) {
+        paint_border(
+          body.get_layout().m_top_space + 1 - body.m_styles.m_vertical_spacing,
           body.m_styles.m_vertical_spacing);
       }
+      for(auto i = 0; i != body.get_layout().count(); ++i) {
+        auto& row = body.get_layout().get_row(i);
+        paint_border(row.geometry().top() -
+          body.m_styles.m_vertical_spacing, body.m_styles.m_vertical_spacing);
+      }
+      if(body.get_layout().m_bottom_space != 0) {
+        paint_border(body.height() - body.get_layout().m_bottom_space -
+          body.m_styles.m_padding.bottom(), body.m_styles.m_vertical_spacing);
+      }
       auto bottom_point = [&] {
-        auto index = body.layout()->count() - (body.m_bottom_spacer ? 2 : 1);
-        if(index < 0) {
-          return 0;
-        }
-        if(auto row = body.layout()->itemAt(index)->widget()) {
-          return row->geometry().bottom() + 1;
+        if(auto row = body.get_layout().itemAt(body.get_layout().count() - 1)) {
+          return row->widget()->geometry().bottom() + 1;
         }
         return 0;
       }();
@@ -249,12 +282,8 @@ struct TableBody::Painter {
       return;
     }
     auto bottom_point = [&] {
-      auto index = body.layout()->count() - (body.m_bottom_spacer ? 2 : 1);
-      if(index < 0) {
-        return 0;
-      }
-      if(auto row = body.layout()->itemAt(index)->widget()) {
-        return row->geometry().bottom() + 1;
+      if(auto row = body.get_layout().itemAt(body.get_layout().count() - 1)) {
+        return row->widget()->geometry().bottom() + 1;
       }
       return 0;
     }();
@@ -318,7 +347,7 @@ struct TableBody::Painter {
       return body.m_styles.m_horizontal_spacing;
     }();
     auto bottom_spacing = [&] {
-      if(index->m_row == body.layout()->count() - 1) {
+      if(index->m_row == body.get_layout().count() - 1) {
         return body.m_styles.m_padding.bottom();
       }
       return body.m_styles.m_vertical_spacing;
@@ -370,12 +399,9 @@ TableBody::TableBody(
       m_widths(std::move(widths)),
       m_item_builder(std::move(item_builder)),
       m_top_index(-1),
-      m_top_spacer(nullptr),
-      m_bottom_spacer(nullptr),
       m_current_row(nullptr) {
+  setLayout(new Layout(this));
   setFocusPolicy(Qt::StrongFocus);
-  make_vbox_layout(this);
-  layout()->setAlignment(Qt::AlignTop);
   m_style_connection =
     connect_style_signal(*this, std::bind_front(&TableBody::on_style, this));
   update_style(*this, [] (auto& style) {
@@ -431,9 +457,9 @@ TableItem* TableBody::find_item(const Index& index) {
   if(auto row = find_row(index.m_row)) {
     if(row == get_current_row() &&
         !is_visible(*m_current_controller.get_row())) {
-      auto position = layout()->contentsMargins().top() +
+      auto position = m_styles.m_padding.top() +
         *m_current_controller.get_row() * estimate_row_height();
-      row->move(layout()->contentsMargins().left(), position);
+      row->move(m_styles.m_padding.left(), position);
     }
     return row->get_item(index.m_column);
   }
@@ -584,17 +610,7 @@ void TableBody::keyReleaseEvent(QKeyEvent* event) {
 }
 
 void TableBody::moveEvent(QMoveEvent* event) {
-  qDebug() << "PreAvg: " << compute_average_row_height(m_top_spacer, m_bottom_spacer, layout(), m_top_index, visible_count(),
-    m_table->get_row_size());
   update_visible_region();
-  qDebug() << "PostAvg: " << compute_average_row_height(m_top_spacer, m_bottom_spacer, layout(), m_top_index, visible_count(), m_table->get_row_size());
-  qDebug() << "Move:";
-  qDebug() << m_top_index << " " << visible_count();
-  if(m_top_spacer) {
-    qDebug() << "Top: " << m_top_spacer->sizeHint().height();
-  } else {
-    qDebug() << "Top: 0";
-  }
 }
 
 void TableBody::showEvent(QShowEvent* event) {
@@ -613,14 +629,12 @@ void TableBody::paintEvent(QPaintEvent* event) {
       painter.fillRect(cover->geometry(), cover->m_background_color);
     }
   }
-  auto offset = m_top_spacer ? 1 : 0;
-  for(auto i = 0; i != layout()->count(); ++i) {
-    if(auto cover = static_cast<Cover*>(layout()->itemAt(i)->widget())) {
-      auto index = m_top_index + offset + i;
-      if(cover->m_background_color.alphaF() != 0 &&
-          m_current_controller.get_row() != index) {
-        painter.fillRect(cover->geometry(), cover->m_background_color);
-      }
+  for(auto i = 0; i != get_layout().count(); ++i) {
+    auto& cover = get_layout().get_row(i);
+    auto index = m_top_index + i;
+    if(cover.m_background_color.alphaF() != 0 &&
+        m_current_controller.get_row() != index) {
+      painter.fillRect(cover.geometry(), cover.m_background_color);
     }
   }
   Painter::paint_current_item(*this, painter, m_current_controller.get());
@@ -631,13 +645,17 @@ void TableBody::paintEvent(QPaintEvent* event) {
   QWidget::paintEvent(event);
 }
 
+const TableBody::Layout& TableBody::get_layout() const {
+  return *static_cast<Layout*>(layout());
+}
+
+TableBody::Layout& TableBody::get_layout() {
+  return *static_cast<Layout*>(layout());
+}
+
 TableBody::RowCover* TableBody::find_row(int index) {
   if(is_visible(index)) {
-    if(m_top_spacer) {
-      ++index;
-    }
-    return static_cast<RowCover*>(
-      layout()->itemAt(index - m_top_index)->widget());
+    return &get_layout().get_row(index - m_top_index);
   } else if(index == m_current_controller.get_row()) {
     return get_current_row();
   }
@@ -682,19 +700,8 @@ TableItem* TableBody::get_current_item() {
   return nullptr;
 }
 
-int TableBody::visible_count() const {
-  auto count = layout()->count();
-  if(m_top_spacer) {
-    --count;
-  }
-  if(m_bottom_spacer) {
-    --count;
-  }
-  return count;
-}
-
 bool TableBody::is_visible(int index) const {
-  return index >= m_top_index && index < m_top_index + visible_count();
+  return index >= m_top_index && index < m_top_index + layout()->count();
 }
 
 TableBody::Index TableBody::get_index(const TableItem& item) const {
@@ -704,13 +711,11 @@ TableBody::Index TableBody::get_index(const TableItem& item) const {
       row->layout()->indexOf(&const_cast<TableItem&>(item)));
   }
   auto row_index = m_top_index;
-  for(auto i = 0; i != layout()->count(); ++i) {
-    if(auto item = layout()->itemAt(i)->widget()) {
-      if(row == item) {
-        break;
-      }
-      ++row_index;
+  for(auto i = 0; i != get_layout().count(); ++i) {
+    if(row == &get_layout().get_row(i)) {
+      break;
     }
+    ++row_index;
   }
   return Index(
     row_index, row->layout()->indexOf(&const_cast<TableItem&>(item)));
@@ -724,9 +729,28 @@ int TableBody::estimate_row_height() const {
   if(m_table->get_row_size() == 0) {
     return 0;
   }
-  auto layout_height = height() - layout()->contentsMargins().top() -
-    layout()->contentsMargins().bottom();
-  return (layout_height + layout()->spacing()) / m_table->get_row_size();
+  auto layout_height =
+    height() - m_styles.m_padding.top() - m_styles.m_padding.bottom();
+  return (layout_height + m_styles.m_vertical_spacing) /
+    m_table->get_row_size();
+}
+
+int TableBody::compute_average_row_height(int rows) const {
+  auto total_height = get_layout().m_top_space;
+  auto total_rows = m_top_index;
+  for(auto i = 0; i != get_layout().count(); ++i) {
+    auto& row = get_layout().get_row(i);
+    if(row.sizeHint().height() != 0) {
+      total_height += row.sizeHint().height() + m_styles.m_vertical_spacing;
+      ++total_rows;
+    }
+  }
+  total_height += get_layout().m_bottom_space;
+  total_rows += rows - m_top_index - get_layout().count();
+  if(total_height == 0 || total_rows == 0) {
+    return 0;
+  }
+  return total_height / total_rows;
 }
 
 int TableBody::get_left_spacing(int index) const {
@@ -757,32 +781,18 @@ void TableBody::add_column_cover(int index, const QRect& geometry) {
 
 void TableBody::add_row(int index) {
   if(is_visible(index)) {
-    auto layout_index = index - m_top_index + (m_top_spacer ? 1 : 0);
     auto current_index = m_current_controller.get_row();
     if(current_index && *current_index >= index) {
       ++*current_index;
     }
-    mount_row(index, layout_index, current_index);
+    mount_row(index, current_index);
   } else {
-    auto row_height = compute_average_row_height(m_top_spacer, m_bottom_spacer,
-      layout(), m_top_index, visible_count(), m_table->get_row_size() - 1);
+    auto row_height = compute_average_row_height(m_table->get_row_size() - 1);
     if(index < m_top_index) {
-      if(m_top_spacer) {
-        adjust_height(*m_top_spacer, *layout(), row_height);
-      } else {
-        m_top_spacer = new QSpacerItem(
-          0, row_height, QSizePolicy::Expanding, QSizePolicy::Fixed);
-        static_cast<QBoxLayout*>(layout())->insertItem(0, m_top_spacer);
-      }
+      get_layout().m_top_space += row_height;
       ++m_top_index;
     } else {
-      if(m_bottom_spacer) {
-        adjust_height(*m_bottom_spacer, *layout(), row_height);
-      } else {
-        m_bottom_spacer = new QSpacerItem(
-          0, row_height, QSizePolicy::Expanding, QSizePolicy::Fixed);
-        layout()->addItem(m_bottom_spacer);
-      }
+      get_layout().m_bottom_space += row_height;
     }
   }
   m_current_controller.add_row(index);
@@ -799,24 +809,14 @@ void TableBody::pre_remove_row(int index) {
       row_height = m_current_row->sizeHint().height();
       destroy(m_current_row);
       m_current_row = nullptr;
+    } else {
+      row_height = compute_average_row_height(m_table->get_row_size());
     }
     if(index < m_top_index) {
-      if(m_top_spacer) {
-        if(row_height == -1) {
-          row_height = compute_average_row_height(m_top_spacer, nullptr,
-            nullptr, m_top_index, visible_count(), m_table->get_row_size() - 1);
-        }
-        adjust_height(*m_top_spacer, *layout(), -row_height);
-      }
+      get_layout().m_top_space -= row_height;
       --m_top_index;
     } else {
-      if(m_bottom_spacer) {
-        if(row_height == -1) {
-          row_height = compute_average_row_height(nullptr, m_bottom_spacer,
-            nullptr, m_top_index, visible_count(), m_table->get_row_size() - 1);
-        }
-        adjust_height(*m_bottom_spacer, *layout(), -row_height);
-      }
+      get_layout().m_bottom_space -= row_height;
     }
   }
   if(m_hover_index && m_hover_index->m_row >= index) {
@@ -831,10 +831,11 @@ void TableBody::remove_row(int index) {
 }
 
 void TableBody::move_row(int source, int destination) {
+#if 0
   if(is_visible(source)) {
     if(is_visible(destination)) {
       if(auto row = find_row(source)) {
-        auto index = destination - m_top_index + (m_top_spacer ? 1 : 0);
+        auto index = destination - m_top_index;
         auto item = layout()->takeAt(layout()->indexOf(row));
         static_cast<QBoxLayout*>(layout())->insertItem(index, item);
         auto layout_event = QEvent(QEvent::LayoutRequest);
@@ -905,6 +906,7 @@ void TableBody::move_row(int source, int destination) {
   m_current_controller.move_row(source, destination);
   m_selection_controller.move_row(source, destination);
   update_visible_region();
+#endif
 }
 
 void TableBody::update_parent() {
@@ -914,7 +916,7 @@ void TableBody::update_parent() {
   initialize_visible_region();
 }
 
-TableBody::RowCover* TableBody::mount_row(int index, int layout_index,
+TableBody::RowCover* TableBody::mount_row(int index,
     optional<int> current_index, std::vector<RowCover*>& unmounted_rows) {
   auto row = [&] {
     if(!current_index) {
@@ -936,10 +938,8 @@ TableBody::RowCover* TableBody::mount_row(int index, int layout_index,
   }();
   if(row != m_current_row) {
     row->mount(index);
-  } else {
-    assert(layout()->indexOf(m_current_row) == -1);
   }
-  static_cast<QBoxLayout*>(layout())->insertWidget(layout_index, row);
+  get_layout().insert(*row, index - m_top_index);
   if(row != m_current_row) {
     on_cover_style(*row);
   }
@@ -950,9 +950,9 @@ TableBody::RowCover* TableBody::mount_row(int index, int layout_index,
 }
 
 TableBody::RowCover* TableBody::mount_row(
-    int index, int layout_index, optional<int> current_index) {
+    int index, optional<int> current_index) {
   auto unmounted_rows = std::vector<RowCover*>();
-  return mount_row(index, layout_index, current_index, unmounted_rows);
+  return mount_row(index, current_index, unmounted_rows);
 }
 
 void TableBody::destroy(RowCover* row) {
@@ -964,132 +964,97 @@ void TableBody::destroy(RowCover* row) {
 }
 
 void TableBody::remove(RowCover& row) {
-  auto item = layout()->takeAt(layout()->indexOf(&row));
-  layout()->removeItem(item);
+  auto item = get_layout().takeAt(get_layout().indexOf(&row));
   if(&row == m_current_row) {
     m_current_row = nullptr;
   }
   row.unmount();
-  delete item;
   destroy(&row);
+  delete item;
 }
 
-void TableBody::update_spacer(QSpacerItem*& spacer, int hidden_row_count) {
-  auto delete_spacer = false;
-  if(visible_count() > 0 && hidden_row_count > 0) {
-    auto total_height = 0;
-    auto count = 0;
-    for(auto i = 0; i != layout()->count(); ++i) {
-      if(auto row = layout()->itemAt(i)->widget()) {
-        if(row->sizeHint().height() != 0) {
-          total_height += row->sizeHint().height();
-          ++count;
-        }
-      }
+void TableBody::update_spacer(int& spacer, int hidden_row_count) {
+  auto total_height = 0;
+  auto count = 0;
+  for(auto i = 0; i != get_layout().count(); ++i) {
+    auto& row = get_layout().get_row(i);
+    if(row.sizeHint().height() != 0) {
+      total_height += row.sizeHint().height();
+      ++count;
     }
-    auto spacer_size = (hidden_row_count * total_height) / count +
-      hidden_row_count * layout()->spacing();
-    if(spacer_size % 15 != 0) {
-      qDebug() << "foooo";
-      qDebug() << visible_count();
-    }
-    if(spacer_size > 0) {
-      if(spacer) {
-        set_height(*spacer, *layout(), spacer_size);
-      } else {
-        spacer = new QSpacerItem(
-          0, spacer_size, QSizePolicy::Expanding, QSizePolicy::Fixed);
-        if(spacer == m_top_spacer) {
-          static_cast<QBoxLayout*>(layout())->insertItem(0, spacer);
-        } else {
-          layout()->addItem(spacer);
-        }
-      }
-    } else if(spacer) {
-      delete_spacer = true;
-    }
-  } else if(spacer) {
-    delete_spacer = true;
   }
-  if(delete_spacer) {
-    if(spacer == m_top_spacer) {
-      layout()->takeAt(0);
-    } else {
-      layout()->takeAt(layout()->count() - 1);
-    }
-    delete spacer;
-    spacer = nullptr;
+  if(count == 0) {
+    spacer = 0;
+  } else {
+    spacer = (hidden_row_count * total_height) / count +
+      hidden_row_count * m_styles.m_vertical_spacing;
   }
 }
 
 void TableBody::update_spacers() {
-  update_spacer(m_top_spacer, m_top_index);
-  update_spacer(
-    m_bottom_spacer, m_table->get_row_size() - m_top_index - visible_count());
+  update_spacer(get_layout().m_top_space, m_top_index);
+  update_spacer(get_layout().m_bottom_space,
+    m_table->get_row_size() - m_top_index - get_layout().count());
+  updateGeometry();
 }
 
 void TableBody::mount_visible_rows(std::vector<RowCover*>& unmounted_rows) {
-  auto top_index = m_top_spacer ? 1 : 0;
   auto position = [&] {
-    if(layout()->isEmpty()) {
-      return layout()->contentsMargins().top();
+    if(get_layout().isEmpty()) {
+      return m_styles.m_padding.top();
     }
-    return layout()->itemAt(top_index)->geometry().top() -
-      layout()->spacing() - 1;
+    return get_layout().get_row(0).geometry().top() -
+      m_styles.m_vertical_spacing - 1;
   }();
   auto top = mapFromParent(QPoint(0, 0)).y() - SCROLL_BUFFER;
   while(m_top_index > 0 && position > top) {
-    auto row = mount_row(m_top_index - 1, top_index, none, unmounted_rows);
     --m_top_index;
-    position -= row->height() + layout()->spacing();
+    auto row = mount_row(m_top_index, none, unmounted_rows);
+    position -= row->height() + m_styles.m_vertical_spacing;
   }
   position = [&] {
-    if(layout()->isEmpty()) {
-      return layout()->contentsMargins().top();
+    if(get_layout().isEmpty()) {
+      return m_styles.m_padding.top();
     }
-    auto bottom_index = layout()->count() - (m_bottom_spacer ? 2 : 1);
-    return layout()->itemAt(bottom_index)->geometry().bottom() +
-      layout()->spacing() + 1;
+    return get_layout().get_row(get_layout().count() - 1).geometry().bottom() +
+      m_styles.m_vertical_spacing + 1;
   }();
   auto bottom =
     mapFromParent(QPoint(0, parentWidget()->height())).y() + SCROLL_BUFFER;
-  while(m_top_index + visible_count() < m_table->get_row_size() &&
+  while(m_top_index + get_layout().count() < m_table->get_row_size() &&
       position < bottom) {
-    auto layout_index = layout()->count() - (m_bottom_spacer ? 1 : 0);
-    auto row = mount_row(
-      m_top_index + visible_count(), layout_index, none, unmounted_rows);
-    position += row->height() + layout()->spacing();
+    auto row =
+      mount_row(m_top_index + get_layout().count(), none, unmounted_rows);
+    position += row->height() + m_styles.m_vertical_spacing;
   }
   update_spacers();
 }
 
 std::vector<TableBody::RowCover*> TableBody::unmount_hidden_rows() {
-  auto unmounted_rows = std::vector<RowCover*>();
   auto removed_items = std::vector<QLayoutItem*>();
+  auto unmounted_rows = std::vector<RowCover*>();
   auto is_top = true;
-  for(auto i = 0; i != layout()->count(); ++i) {
-    auto& item = *layout()->itemAt(i);
-    if(auto row = static_cast<RowCover*>(item.widget())) {
-      if(test_visibility(*this, row->geometry())) {
-        is_top = false;
-      } else {
-        if(is_top) {
-          ++m_top_index;
-        }
-        removed_items.push_back(&item);
+  for(auto i = 0; i != get_layout().count(); ++i) {
+    auto item = get_layout().itemAt(i);
+    if(test_visibility(*this, item->geometry())) {
+      is_top = false;
+    } else {
+      if(is_top) {
+        ++m_top_index;
       }
+      removed_items.push_back(item);
     }
   }
   for(auto item : removed_items) {
+    get_layout().removeItem(item);
     auto row = static_cast<RowCover*>(item->widget());
-    layout()->removeItem(item);
-    delete item;
     if(row != m_current_row) {
       row->unmount();
       unmounted_rows.push_back(row);
     } else {
       row->move(-1000, -1000);
     }
+    delete item;
   }
   update_spacers();
   return unmounted_rows;
@@ -1101,39 +1066,30 @@ void TableBody::initialize_visible_region() {
     return;
   }
   m_top_index = 0;
+  get_layout().m_top_space = 0;
+  get_layout().m_bottom_space = 0;
   auto unmounted_rows = std::vector<RowCover*>();
   mount_visible_rows(unmounted_rows);
   if(m_current_controller.get_row()) {
     get_current_item();
   }
-  if(visible_count() == 0) {
+  if(get_layout().isEmpty()) {
     m_top_index = -1;
   }
 }
 
-void TableBody::reset_visible_region(
-    int total_height, std::vector<RowCover*>& unmounted_rows) {
+void TableBody::reset_visible_region(std::vector<RowCover*>& unmounted_rows) {
   if(m_table->get_row_size() == 0) {
     return;
   }
   auto row_height =
-    (total_height + layout()->spacing()) / m_table->get_row_size();
+    (height() + m_styles.m_vertical_spacing) / m_table->get_row_size();
   if(row_height == 0) {
     return;
   }
   m_top_index = mapFromParent(QPoint(0, 0)).y() / row_height;
-  auto top_position = row_height * m_top_index;
-  if(top_position != 0) {
-    if(!m_top_spacer) {
-      m_top_spacer = new QSpacerItem(
-        0, top_position, QSizePolicy::Expanding, QSizePolicy::Fixed);
-      static_cast<QBoxLayout*>(layout())->insertItem(0, m_top_spacer);
-    } else {
-      set_height(*m_top_spacer, *layout(), top_position);
-    }
-  }
-  auto layout_index = m_top_spacer ? 1 : 0;
-  mount_row(m_top_index, layout_index, none, unmounted_rows);
+  get_layout().m_top_space = row_height * m_top_index;
+  mount_row(m_top_index, none, unmounted_rows);
   mount_visible_rows(unmounted_rows);
 }
 
@@ -1147,15 +1103,13 @@ void TableBody::update_visible_region() {
   }
   auto layout_event = QEvent(QEvent::LayoutRequest);
   QApplication::sendEvent(this, &layout_event);
-  auto total_height = height() -
-    layout()->contentsMargins().top() - layout()->contentsMargins().bottom();
   auto unmounted_rows = unmount_hidden_rows();
-  if(visible_count() != 0) {
-    mount_visible_rows(unmounted_rows);
+  if(get_layout().isEmpty()) {
+    reset_visible_region(unmounted_rows);
   } else {
-    reset_visible_region(total_height, unmounted_rows);
+    mount_visible_rows(unmounted_rows);
   }
-  for(auto unmounted_row : unmounted_rows) {
+  for(auto& unmounted_row : unmounted_rows) {
     destroy(unmounted_row);
   }
 }
@@ -1230,7 +1184,7 @@ void TableBody::on_current(
     if(!current || current->m_column != previous->m_column) {
       unmatch(*m_column_covers[previous->m_column], CurrentColumn());
     }
-    if(m_current_row && layout()->indexOf(m_current_row) == -1) {
+    if(m_current_row && get_layout().indexOf(m_current_row) == -1) {
       m_current_row->unmount();
       destroy(m_current_row);
     }
@@ -1338,14 +1292,12 @@ void TableBody::on_style() {
         });
       });
   }
-  layout()->setSpacing(m_styles.m_vertical_spacing);
-  layout()->setContentsMargins(m_styles.m_padding);
-  for(auto i = 0; i != layout()->count() + 1; ++i) {
+  for(auto i = 0; i != get_layout().count() + 1; ++i) {
     auto row = [&] () -> RowCover* {
-      if(i == layout()->count()) {
+      if(i == get_layout().count()) {
         return m_current_row;
       }
-      auto row = static_cast<RowCover*>(layout()->itemAt(i)->widget());
+      auto row = &get_layout().get_row(i);
       if(row != m_current_row) {
         return row;
       }
@@ -1397,12 +1349,12 @@ void TableBody::on_widths_update(const ListModel<int>::Operation& operation) {
   visit(operation,
     [&] (const ListModel<int>::UpdateOperation& operation) {
       auto spacing = get_left_spacing(operation.m_index);
-      for(auto i = 0; i != layout()->count() + 1; ++i) {
+      for(auto i = 0; i != get_layout().count() + 1; ++i) {
         auto row = [&] () -> RowCover* {
-          if(i == layout()->count()) {
+          if(i == get_layout().count()) {
             return m_current_row;
           }
-          auto row = static_cast<RowCover*>(layout()->itemAt(i)->widget());
+          auto row = &get_layout().get_row(i);
           if(row != m_current_row) {
             return row;
           }
