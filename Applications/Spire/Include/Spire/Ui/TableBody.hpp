@@ -121,6 +121,7 @@ namespace Styles {
       void moveEvent(QMoveEvent* event) override;
       void paintEvent(QPaintEvent* event) override;
       void showEvent(QShowEvent* event) override;
+      void resizeEvent(QResizeEvent* event) override;
 
     private:
       struct Styles {
@@ -146,6 +147,7 @@ namespace Styles {
       int m_top_index;
       RowCover* m_current_row;
       Styles m_styles;
+      int m_resize_guard;
       std::unordered_map<TableItem*, HoverObserver> m_hover_observers;
       boost::optional<Index> m_hover_index;
       boost::signals2::scoped_connection m_style_connection;

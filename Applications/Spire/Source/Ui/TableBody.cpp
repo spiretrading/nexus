@@ -404,7 +404,8 @@ TableBody::TableBody(
       m_widths(std::move(widths)),
       m_item_builder(std::move(item_builder)),
       m_top_index(-1),
-      m_current_row(nullptr) {
+      m_current_row(nullptr),
+      m_resize_guard(0) {
   setLayout(new Layout(this));
   setFocusPolicy(Qt::StrongFocus);
   m_style_connection =
@@ -648,6 +649,14 @@ void TableBody::paintEvent(QPaintEvent* event) {
   Painter::paint_item_borders(*this, painter, m_hover_index);
   Painter::paint_item_borders(*this, painter, m_current_controller.get());
   QWidget::paintEvent(event);
+}
+
+void TableBody::resizeEvent(QResizeEvent* event) {
+  ++m_resize_guard;
+  if(m_resize_guard == 1) {
+    update_visible_region();
+  }
+  --m_resize_guard;
 }
 
 const TableBody::Layout& TableBody::get_layout() const {
@@ -1106,6 +1115,7 @@ void TableBody::update_visible_region() {
   if(!parentWidget() || !isVisible()) {
     return;
   }
+  ++m_resize_guard;
   auto unmounted_rows = unmount_hidden_rows();
   if(get_layout().isEmpty()) {
     reset_visible_region(unmounted_rows);
@@ -1115,6 +1125,7 @@ void TableBody::update_visible_region() {
   for(auto& unmounted_row : unmounted_rows) {
     destroy(unmounted_row);
   }
+  --m_resize_guard;
 }
 
 bool TableBody::navigate_next() {
