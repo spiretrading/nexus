@@ -170,6 +170,12 @@ struct TableBody::Layout : QLayout {
     return *static_cast<RowCover*>(itemAt(index)->widget());
   }
 
+  void insert(QLayoutItem& item, int index) {
+    m_items.insert(
+      m_items.begin() + index, std::unique_ptr<QLayoutItem>(&item));
+    invalidate();
+  }
+
   void insert(RowCover& row, int index) {
     m_items.insert(
       m_items.begin() + index, std::make_unique<QWidgetItem>(&row));
@@ -619,10 +625,6 @@ void TableBody::moveEvent(QMoveEvent* event) {
   update_visible_region();
 }
 
-void TableBody::showEvent(QShowEvent* event) {
-  update_parent();
-}
-
 void TableBody::paintEvent(QPaintEvent* event) {
   auto painter = QPainter(this);
   if(m_styles.m_background_color.alphaF() != 0) {
@@ -657,6 +659,10 @@ void TableBody::resizeEvent(QResizeEvent* event) {
     update_visible_region();
   }
   --m_resize_guard;
+}
+
+void TableBody::showEvent(QShowEvent* event) {
+  update_parent();
 }
 
 const TableBody::Layout& TableBody::get_layout() const {
@@ -845,74 +851,54 @@ void TableBody::remove_row(int index) {
 }
 
 void TableBody::move_row(int source, int destination) {
-#if 0
   if(is_visible(source)) {
     if(is_visible(destination)) {
       if(auto row = find_row(source)) {
         auto index = destination - m_top_index;
-        auto item = layout()->takeAt(layout()->indexOf(row));
-        static_cast<QBoxLayout*>(layout())->insertItem(index, item);
-        auto layout_event = QEvent(QEvent::LayoutRequest);
-        QApplication::sendEvent(this, &layout_event);
+        auto item = get_layout().takeAt(get_layout().indexOf(row));
+        get_layout().insert(*item, index);
       }
     } else if(auto row = find_row(source)) {
       auto row_height = row->sizeHint().height();
       if(row == m_current_row) {
-        auto item = layout()->takeAt(layout()->indexOf(row));
+        auto item = get_layout().takeAt(get_layout().indexOf(row));
         delete item;
       } else {
         remove(*row);
       }
-      if(auto spacer =
-          destination < m_top_index ? m_top_spacer : m_bottom_spacer) {
-        adjust_height(*spacer, *layout(), row_height);
-      }
       if(destination < m_top_index) {
+        get_layout().m_top_space += row_height;
         ++m_top_index;
+      } else {
+        get_layout().m_bottom_space += row_height;
       }
     }
   } else if(source < m_top_index) {
     if(is_visible(destination)) {
-      auto layout_index =
-        destination - m_top_index + (m_top_spacer ? 1 : 0) + 1;
       auto current_index = m_current_controller.get_row();
       move_current_index(source, destination, current_index);
-      auto row = mount_row(destination, layout_index, current_index);
-      if(m_top_spacer) {
-        adjust_height(*m_top_spacer, *layout(), -row->sizeHint().height());
-      }
+      auto row = mount_row(destination, current_index);
+      get_layout().m_top_space -= row->sizeHint().height();
       --m_top_index;
-    } else if(destination >= m_top_index + visible_count()) {
-      if(m_top_spacer) {
-        auto top_row_height = m_top_spacer->sizeHint().height() / m_top_index;
-        adjust_height(*m_top_spacer, *layout(), -top_row_height);
-        if(m_bottom_spacer) {
-          adjust_height(*m_bottom_spacer, *layout(), top_row_height);
-        }
-      }
+    } else if(destination >= m_top_index + get_layout().count()) {
+      auto top_row_height = get_layout().m_top_space / m_top_index;
+      get_layout().m_top_space -= top_row_height;
+      get_layout().m_bottom_space += top_row_height;
       --m_top_index;
     }
   } else {
     if(is_visible(destination)) {
-      auto layout_index = destination - m_top_index + (m_top_spacer ? 1 : 0);
       auto current_index = m_current_controller.get_row();
       move_current_index(source, destination, current_index);
-      auto row = mount_row(destination, layout_index, current_index);
-      if(m_bottom_spacer) {
-        adjust_height(*m_bottom_spacer, *layout(), -row->sizeHint().height());
-      }
+      auto row = mount_row(destination, current_index);
+      get_layout().m_bottom_space -= row->sizeHint().height();
     } else if(destination < m_top_index) {
-      if(m_bottom_spacer) {
-        auto hidden_rows =
-          m_table->get_row_size() - m_top_index - visible_count();
-        if(hidden_rows > 0) {
-          auto bottom_row_height =
-            m_bottom_spacer->sizeHint().height() / hidden_rows;
-          adjust_height(*m_bottom_spacer, *layout(), -bottom_row_height);
-          if(m_top_spacer) {
-            adjust_height(*m_top_spacer, *layout(), bottom_row_height);
-          }
-        }
+      auto hidden_rows =
+        m_table->get_row_size() - m_top_index - get_layout().count();
+      if(hidden_rows > 0) {
+        auto bottom_row_height = get_layout().m_bottom_space / hidden_rows;
+        get_layout().m_bottom_space -= bottom_row_height;
+        get_layout().m_top_space += bottom_row_height;
       }
       ++m_top_index;
     }
@@ -920,7 +906,6 @@ void TableBody::move_row(int source, int destination) {
   m_current_controller.move_row(source, destination);
   m_selection_controller.move_row(source, destination);
   update_visible_region();
-#endif
 }
 
 void TableBody::update_parent() {

@@ -120,8 +120,8 @@ namespace Styles {
       void keyReleaseEvent(QKeyEvent* event) override;
       void moveEvent(QMoveEvent* event) override;
       void paintEvent(QPaintEvent* event) override;
-      void showEvent(QShowEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
+      void showEvent(QShowEvent* event) override;
 
     private:
       struct Styles {
