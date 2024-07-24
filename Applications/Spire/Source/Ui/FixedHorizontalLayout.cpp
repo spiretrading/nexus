@@ -10,6 +10,7 @@ FixedHorizontalLayout::FixedHorizontalLayout(QWidget* parent)
 
 void FixedHorizontalLayout::addItem(QLayoutItem* item) {
   m_items.emplace_back(item);
+  invalidate();
 }
 
 QSize FixedHorizontalLayout::sizeHint() const {
@@ -54,6 +55,7 @@ QLayoutItem* FixedHorizontalLayout::takeAt(int index) {
   if(index < count()) {
     auto item = std::move(m_items[index]);
     m_items.erase(m_items.begin() + index);
+    invalidate();
     return item.release();
   }
   return nullptr;

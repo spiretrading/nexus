@@ -173,10 +173,12 @@ struct TableBody::Layout : QLayout {
   void insert(RowCover& row, int index) {
     m_items.insert(
       m_items.begin() + index, std::make_unique<QWidgetItem>(&row));
+    invalidate();
   }
 
   void addItem(QLayoutItem* item) override {
     m_items.emplace_back(item);
+    invalidate();
   }
 
   QSize sizeHint() const override {
@@ -200,9 +202,11 @@ struct TableBody::Layout : QLayout {
     auto y = m_top_space + styles.m_padding.top();
     for(auto& item : m_items) {
       auto row_height = item->sizeHint().height();
-      item->setGeometry(
-        QRect(styles.m_padding.left(), y, rect.width() -
-          styles.m_padding.left() - styles.m_padding.right(), row_height));
+      auto geometry = QRect(styles.m_padding.left(), y, rect.width() -
+        styles.m_padding.left() - styles.m_padding.right(), row_height);
+      if(geometry != item->geometry()) {
+        item->setGeometry(geometry);
+      }
       y += row_height + styles.m_vertical_spacing;
     }
   }
@@ -218,6 +222,7 @@ struct TableBody::Layout : QLayout {
     if(index < count()) {
       auto item = std::move(m_items[index]);
       m_items.erase(m_items.begin() + index);
+      invalidate();
       return item.release();
     }
     return nullptr;
@@ -1010,7 +1015,7 @@ void TableBody::mount_visible_rows(std::vector<RowCover*>& unmounted_rows) {
   while(m_top_index > 0 && position > top) {
     --m_top_index;
     auto row = mount_row(m_top_index, none, unmounted_rows);
-    position -= row->height() + m_styles.m_vertical_spacing;
+    position -= row->sizeHint().height() + m_styles.m_vertical_spacing;
   }
   position = [&] {
     if(get_layout().isEmpty()) {
@@ -1025,7 +1030,7 @@ void TableBody::mount_visible_rows(std::vector<RowCover*>& unmounted_rows) {
       position < bottom) {
     auto row =
       mount_row(m_top_index + get_layout().count(), none, unmounted_rows);
-    position += row->height() + m_styles.m_vertical_spacing;
+    position += row->sizeHint().height() + m_styles.m_vertical_spacing;
   }
   update_spacers();
 }
@@ -1101,8 +1106,6 @@ void TableBody::update_visible_region() {
   if(!parentWidget() || !isVisible()) {
     return;
   }
-  auto layout_event = QEvent(QEvent::LayoutRequest);
-  QApplication::sendEvent(this, &layout_event);
   auto unmounted_rows = unmount_hidden_rows();
   if(get_layout().isEmpty()) {
     reset_visible_region(unmounted_rows);
