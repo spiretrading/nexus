@@ -293,11 +293,13 @@ struct TableBody::Layout : QLayout {
     auto& styles = static_cast<TableBody*>(parent())->m_styles;
     auto width = 0;
     auto height = get_top_space() + get_bottom_space() +
-      std::max(0, (count() - 1) * styles.m_vertical_spacing);
+      std::max(0, (count() - 1) * styles.m_vertical_spacing) +
+      styles.m_padding.top() + styles.m_padding.bottom();
     for(auto& item : m_items) {
       width = std::max(width, item->sizeHint().width());
       height += item->sizeHint().height();
     }
+    width += styles.m_padding.left() + styles.m_padding.right();
     m_size_hint = QSize(width, height);
     return *m_size_hint;
   }
