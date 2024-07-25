@@ -152,7 +152,6 @@ struct TableBody::ColumnCover : Cover {
 
 
 struct TableBody::Layout : QLayout {
-  int m_top_index;
   std::vector<int> m_top;
   int m_top_height;
   std::vector<int> m_bottom;
@@ -162,12 +161,18 @@ struct TableBody::Layout : QLayout {
 
   explicit Layout(TableBody& parent)
     : QLayout(&parent),
-      m_top_index(-1),
       m_top_height(0),
       m_bottom_height(0) {}
 
+  int get_top_index() const {
+    if(m_top.empty() && m_bottom.empty() && isEmpty()) {
+      return -1;
+    }
+    return static_cast<int>(m_top.size());
+  }
+
   bool is_visible(int index) const {
-    return index >= m_top_index && index < m_top_index + count();
+    return index >= get_top_index() && index < get_top_index() + count();
   }
 
   int get_top_space() const {
@@ -190,12 +195,21 @@ struct TableBody::Layout : QLayout {
     return *static_cast<RowCover*>(itemAt(index)->widget());
   }
 
+  int get_row_height(int row) const {
+    if(row < static_cast<int>(m_top.size())) {
+      return m_top[row];
+    } else if(row < static_cast<int>(m_top.size()) + count()) {
+      return m_items[row - static_cast<int>(m_top.size())]->sizeHint().height();
+    } else {
+      return m_bottom[row - static_cast<int>(m_top.size()) - count()];
+    }
+  }
+
   void hide(QLayoutItem& item) {
     auto height = item.widget()->sizeHint().height();
     if(&item == m_items.front().get()) {
       m_top_height += height;
       m_top.push_back(height);
-      ++m_top_index;
       m_items.erase(m_items.begin());
     } else {
       m_bottom_height += height;
@@ -206,31 +220,39 @@ struct TableBody::Layout : QLayout {
     }
   }
 
-  void add_hidden_item(int index) {
-    if(m_top_index == -1) {
+  void add_hidden_row(int index, int height) {
+    if(get_top_index() == -1) {
       return;
     }
-    if(index < m_top_index) {
-      auto height = m_top_height / static_cast<int>(m_top.size());
-      m_top_height += height;
+    if(index < get_top_index()) {
       m_top.insert(m_top.begin() + index, height);
-      ++m_top_index;
+      m_top_height += height;
     } else {
-      auto height = m_bottom_height / static_cast<int>(m_bottom.size());
+      m_bottom.insert(
+        m_bottom.begin() + (index - count() - get_top_index()), height);
       m_bottom_height += height;
-      auto i = index - count() - static_cast<int>(m_top.size());
-      m_bottom.insert(m_bottom.begin() + i, height);
     }
   }
 
-  void remove_hidden_item(int index) {
-    if(index < m_top_index) {
+  void add_hidden_row(int index) {
+    if(get_top_index() == -1) {
+      return;
+    }
+    if(index < get_top_index()) {
+      add_hidden_row(index, m_top_height / get_top_index());
+    } else {
+      add_hidden_row(
+        index, m_bottom_height / static_cast<int>(m_bottom.size()));
+    }
+  }
+
+  void remove_hidden_row(int index) {
+    if(index < get_top_index()) {
       auto height = m_top[index];
       m_top.erase(m_top.begin() + index);
       m_top_height -= height;
-      --m_top_index;
     } else {
-      auto i = index - count() - static_cast<int>(m_top.size());
+      auto i = index - count() - get_top_index();
       auto height = m_bottom[i];
       m_bottom.erase(m_bottom.begin() + i);
       m_bottom_height -= height;
@@ -240,37 +262,57 @@ struct TableBody::Layout : QLayout {
   void insert(QLayoutItem& item, int index) {
     m_items.insert(
       m_items.begin() + index, std::unique_ptr<QLayoutItem>(&item));
-    invalidate();
+    item.widget()->show();
   }
 
   void insert(RowCover& row, int index) {
-    if(index == m_top_index - 1) {
+    if(index == get_top_index() - 1) {
       m_top_height -= m_top.back();
       m_top.pop_back();
-      --m_top_index;
-    } else if(!m_bottom.empty() && index == m_top_index + count()) {
+    } else if(!m_bottom.empty() && index == get_top_index() + count()) {
       m_bottom_height -= m_bottom.front();
       m_bottom.erase(m_bottom.begin());
     }
-    m_items.insert(m_items.begin() + (index - m_top_index),
+    m_items.insert(m_items.begin() + (index - m_top.size()),
       std::make_unique<QWidgetItem>(&row));
-    invalidate();
+    row.show();
+  }
+
+  void move_row(int source, int destination) {
+    m_items.insert(m_items.begin() + (destination - get_top_index()),
+      std::move(m_items[source - get_top_index()]));
+    m_items.erase(m_items.begin() + (source - m_top.size()));
   }
 
   void reset_top_index(int top_point) {
-    auto row_height = (m_top_height + m_bottom_height) /
-      static_cast<int>(m_top.size() + m_bottom.size());
+    auto size = static_cast<int>(m_top.size() + m_bottom.size());
+    auto row_height = (get_top_space() + get_bottom_space()) / size;
     if(row_height == 0) {
       return;
     }
     auto top_index = top_point / row_height;
+    auto& styles = static_cast<TableBody*>(parent())->m_styles;
+    auto height = row_height - styles.m_vertical_spacing;
+    while(get_top_index() < top_index) {
+      m_top.push_back(height);
+      m_top_height += height;
+      m_bottom_height -= m_bottom.front();
+      m_bottom.erase(m_bottom.begin());
+    }
+    while(get_top_index() > top_index) {
+      m_bottom.push_back(height);
+      m_bottom_height += height;
+      m_top_height -= m_top.back();
+      m_top.pop_back();
+    }
   }
 
   void set_row_size(int size) {
     if(isEmpty()) {
       return;
     }
-    auto additional_rows = size - m_top_index - count();
+    activate();
+    auto additional_rows = size - get_top_index() - count();
     auto& styles = static_cast<TableBody*>(parent())->m_styles;
     auto total_height = itemAt(count() - 1)->geometry().bottom() +
       styles.m_vertical_spacing - count() * styles.m_vertical_spacing;
@@ -283,7 +325,7 @@ struct TableBody::Layout : QLayout {
 
   void addItem(QLayoutItem* item) override {
     m_items.emplace_back(item);
-    invalidate();
+    item->widget()->show();
   }
 
   QSize sizeHint() const override {
@@ -329,7 +371,6 @@ struct TableBody::Layout : QLayout {
     if(index < count()) {
       auto item = std::move(m_items[index]);
       m_items.erase(m_items.begin() + index);
-      invalidate();
       return item.release();
     }
     return nullptr;
@@ -738,7 +779,7 @@ void TableBody::paintEvent(QPaintEvent* event) {
   }
   for(auto i = 0; i != get_layout().count(); ++i) {
     auto& cover = get_layout().get_row(i);
-    auto index = get_layout().m_top_index + i;
+    auto index = get_layout().get_top_index() + i;
     if(cover.m_background_color.alphaF() != 0 &&
         m_current_controller.get_row() != index) {
       painter.fillRect(cover.geometry(), cover.m_background_color);
@@ -774,7 +815,7 @@ TableBody::Layout& TableBody::get_layout() {
 
 TableBody::RowCover* TableBody::find_row(int index) {
   if(get_layout().is_visible(index)) {
-    return &get_layout().get_row(index - get_layout().m_top_index);
+    return &get_layout().get_row(index - get_layout().get_top_index());
   } else if(index == m_current_controller.get_row()) {
     return get_current_row();
   }
@@ -825,7 +866,7 @@ TableBody::Index TableBody::get_index(const TableItem& item) const {
     return Index(*m_current_controller.get_row(),
       row->layout()->indexOf(&const_cast<TableItem&>(item)));
   }
-  auto row_index = get_layout().m_top_index;
+  auto row_index = get_layout().get_top_index();
   for(auto i = 0; i != get_layout().count(); ++i) {
     if(row == &get_layout().get_row(i)) {
       break;
@@ -884,7 +925,7 @@ void TableBody::add_row(int index) {
     }
     mount_row(index, current_index);
   } else {
-    get_layout().add_hidden_item(index);
+    get_layout().add_hidden_row(index);
   }
   m_current_controller.add_row(index);
   m_selection_controller.add_row(index);
@@ -895,13 +936,11 @@ void TableBody::pre_remove_row(int index) {
   if(get_layout().is_visible(index)) {
     remove(*find_row(index));
   } else {
-    auto row_height = -1;
     if(index == m_current_controller.get_row() && m_current_row) {
-      row_height = m_current_row->sizeHint().height();
       destroy(m_current_row);
       m_current_row = nullptr;
     }
-    get_layout().remove_hidden_item(index);
+    get_layout().remove_hidden_row(index);
   }
   if(m_hover_index && m_hover_index->m_row >= index) {
     m_hover_index = none;
@@ -915,63 +954,39 @@ void TableBody::remove_row(int index) {
 }
 
 void TableBody::move_row(int source, int destination) {
-#if 0
-  if(get_layout().is_visible(source)) {
-    if(get_layout().is_visible(destination)) {
-      if(auto row = find_row(source)) {
-        auto index = destination - m_top_index;
-        auto item = get_layout().takeAt(get_layout().indexOf(row));
-        get_layout().insert(*item, index);
-      }
-    } else if(auto row = find_row(source)) {
-      auto row_height = row->sizeHint().height();
-      if(row == m_current_row) {
-        auto item = get_layout().takeAt(get_layout().indexOf(row));
+  auto& layout = get_layout();
+  if(layout.is_visible(source)) {
+    if(layout.is_visible(destination)) {
+      layout.move_row(source, destination);
+    } else {
+      auto item = layout.itemAt(source - layout.get_top_index());
+      layout.add_hidden_row(destination, item->sizeHint().height());
+      if(item->widget() == m_current_row) {
+        layout.removeItem(item);
         delete item;
       } else {
-        remove(*row);
-      }
-      if(destination < m_top_index) {
-        get_layout().m_top_space += row_height;
-        ++m_top_index;
-      } else {
-        get_layout().m_bottom_space += row_height;
+        remove(*static_cast<RowCover*>(item->widget()));
       }
     }
-  } else if(source < m_top_index) {
-    if(get_layout().is_visible(destination)) {
-      auto current_index = m_current_controller.get_row();
-      move_current_index(source, destination, current_index);
-      auto row = mount_row(destination, current_index);
-      get_layout().m_top_space -= row->sizeHint().height();
-      --m_top_index;
-    } else if(destination >= m_top_index + get_layout().count()) {
-      auto top_row_height = get_layout().m_top_space / m_top_index;
-      get_layout().m_top_space -= top_row_height;
-      get_layout().m_bottom_space += top_row_height;
-      --m_top_index;
+  } else if(layout.is_visible(destination)) {
+    auto current_index = m_current_controller.get_row();
+    move_current_index(source, destination, current_index);
+    mount_row(destination, current_index);
+    if(destination < source) {
+      --source;
     }
+    layout.remove_hidden_row(source);
   } else {
-    if(get_layout().is_visible(destination)) {
-      auto current_index = m_current_controller.get_row();
-      move_current_index(source, destination, current_index);
-      auto row = mount_row(destination, current_index);
-      get_layout().m_bottom_space -= row->sizeHint().height();
-    } else if(destination < m_top_index) {
-      auto hidden_rows =
-        m_table->get_row_size() - m_top_index - get_layout().count();
-      if(hidden_rows > 0) {
-        auto bottom_row_height = get_layout().m_bottom_space / hidden_rows;
-        get_layout().m_bottom_space -= bottom_row_height;
-        get_layout().m_top_space += bottom_row_height;
-      }
-      ++m_top_index;
+    auto height = layout.get_row_height(source);
+    layout.remove_hidden_row(source);
+    if(source < destination) {
+      --destination;
     }
+    layout.add_hidden_row(destination, height);
   }
   m_current_controller.move_row(source, destination);
   m_selection_controller.move_row(source, destination);
   update_visible_region();
-#endif
 }
 
 void TableBody::update_parent() {
@@ -1037,26 +1052,27 @@ void TableBody::remove(RowCover& row) {
 
 void TableBody::mount_visible_rows(std::vector<RowCover*>& unmounted_rows) {
   auto top = mapFromParent(QPoint(0, 0)).y() - SCROLL_BUFFER;
-  while(get_layout().m_top_index - 1 >= 0 &&
+  while(get_layout().get_top_index() - 1 >= 0 &&
       get_layout().get_top_space() > top) {
-    mount_row(get_layout().m_top_index - 1, none, unmounted_rows);
+    mount_row(get_layout().get_top_index() - 1, none, unmounted_rows);
   }
   auto position = [&] {
     if(get_layout().isEmpty()) {
       return get_layout().get_top_space() + m_styles.m_padding.top();
     }
-    return get_layout().get_row(get_layout().count() - 1).geometry().bottom() +
-      m_styles.m_vertical_spacing + 1;
+    auto position = get_layout().get_top_space();
+    for(auto i = 0; i != get_layout().count(); ++i) {
+      position += get_layout().get_row(i).sizeHint().height() +
+        m_styles.m_vertical_spacing;
+    }
+    return position + 1;
   }();
   auto bottom =
     mapFromParent(QPoint(0, parentWidget()->height())).y() + SCROLL_BUFFER;
-  while(get_layout().m_top_index + get_layout().count() <
+  while(get_layout().get_top_index() + get_layout().count() <
       m_table->get_row_size() && position < bottom) {
-    auto row = mount_row(
-      get_layout().m_top_index + get_layout().count(), none, unmounted_rows);
-    row->show();
-    auto layout_event = QEvent(QEvent::LayoutRequest);
-    QApplication::sendEvent(this, &layout_event);
+    auto row = mount_row(get_layout().get_top_index() + get_layout().count(),
+      none, unmounted_rows);
     position += row->sizeHint().height() + m_styles.m_vertical_spacing;
   }
 }
@@ -1084,20 +1100,18 @@ std::vector<TableBody::RowCover*> TableBody::unmount_hidden_rows() {
 }
 
 void TableBody::initialize_visible_region() {
-  if(!parentWidget() || get_layout().m_top_index != -1 || !isVisible() ||
+  if(!parentWidget() || get_layout().get_top_index() != -1 || !isVisible() ||
       m_table->get_row_size() == 0 || m_table->get_column_size() == 0) {
     return;
   }
-  get_layout().m_top_index = 0;
   auto unmounted_rows = std::vector<RowCover*>();
+  mount_row(0, none, unmounted_rows);
   mount_visible_rows(unmounted_rows);
   get_layout().set_row_size(m_table->get_row_size());
   if(m_current_controller.get_row()) {
     get_current_item();
   }
-  if(get_layout().isEmpty()) {
-    get_layout().m_top_index = -1;
-  }
+  get_layout().invalidate();
 }
 
 void TableBody::reset_visible_region(std::vector<RowCover*>& unmounted_rows) {
@@ -1105,11 +1119,11 @@ void TableBody::reset_visible_region(std::vector<RowCover*>& unmounted_rows) {
     return;
   }
   get_layout().reset_top_index(mapFromParent(QPoint(0, 0)).y());
-  mount_row(get_layout().m_top_index, none, unmounted_rows);
+  mount_row(get_layout().get_top_index(), none, unmounted_rows);
 }
 
 void TableBody::update_visible_region() {
-  if(get_layout().m_top_index == -1) {
+  if(get_layout().get_top_index() == -1) {
     initialize_visible_region();
     return;
   }
@@ -1125,6 +1139,7 @@ void TableBody::update_visible_region() {
   for(auto& unmounted_row : unmounted_rows) {
     destroy(unmounted_row);
   }
+  get_layout().invalidate();
   --m_resize_guard;
 }
 
