@@ -4248,8 +4248,6 @@ UiProfile Spire::make_slider_2d_profile() {
       std::move(x_modifiers), std::move(y_modifiers));
     apply_widget_properties(slider, profile.get_properties());
     slider->setFixedSize(size);
-    auto thumb_image =
-      imageFromSvg(":/Icons/color-thumb.svg", scale(14, 14));
     auto& type = get<int>("type", profile.get_properties());
     type.connect_changed_signal([=] (auto value) {
       if(value == 0) {
@@ -4261,14 +4259,13 @@ UiProfile Spire::make_slider_2d_profile() {
         update_style(*slider, [&] (auto& style) {
           style.get(Any() > Track()).set(IconImage(track_image));
           style.get(Any() > Thumb() > is_a<Icon>()).
-            set(Fill(boost::optional<QColor>())).
-            set(IconImage(thumb_image));
+            set(Fill(none)).
+            set(IconImage(imageFromSvg(":/Icons/color-thumb.svg",
+              scale(14, 14))));
           style.get(Focus() > Thumb() > is_a<Icon>()).
             set(Fill(QColor(0x808080)));
         });
       }
-      x_current_model->set(x_current_model->get());
-      y_current_model->set(y_current_model->get());
     });
     auto& x_minimum = get<Decimal>("x_minimum", profile.get_properties());
     x_minimum.connect_changed_signal([=] (auto value) {

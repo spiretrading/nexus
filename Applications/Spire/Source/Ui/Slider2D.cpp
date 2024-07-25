@@ -253,6 +253,24 @@ connection Slider2D::connect_submit_signal(
   return m_submit_signal.connect(slot);
 }
 
+bool Slider2D::event(QEvent* event) {
+  if(event->type() == QEvent::LayoutRequest) {
+    auto& track_stylist = find_stylist(*m_track);
+    if(!track_stylist.is_match(ImageTrack()) && !m_track_image.isNull()) {
+      match(*m_track, ImageTrack());
+    } else if(track_stylist.is_match(ImageTrack()) && m_track_image.isNull()) {
+      unmatch(*m_track, ImageTrack());
+    }
+    auto& thumb_stylist = find_stylist(*m_thumb);
+    if(!thumb_stylist.is_match(ImageThumb()) && !m_thumb_image.isNull()) {
+      match(*m_thumb, ImageThumb());
+    } else if(thumb_stylist.is_match(ImageThumb()) && m_thumb_image.isNull()) {
+      unmatch(*m_thumb, ImageThumb());
+    }
+  }
+  return QWidget::event(event);
+}
+
 void Slider2D::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Right) {
     set_x_current(m_x_current->get() + ceil_value(get_increment(
@@ -392,7 +410,6 @@ void Slider2D::on_y_current(const Decimal& y) {
 
 void Slider2D::on_track_style() {
   auto& stylist = find_stylist(*m_track);
-  auto has_update = std::make_shared<bool>(false);
   for(auto& property : stylist.get_computed_block()) {
     property.visit(
       [&] (const IconImage& image) {
@@ -400,44 +417,24 @@ void Slider2D::on_track_style() {
           if(m_track_image == image) {
             return;
           }
-          *has_update = true;
           m_track_image = std::move(image);
+          m_track_image_container->setPixmap(QPixmap::fromImage(m_track_image));
+          m_track_image_container->update();
         });
       });
-  }
-  if(*has_update) {
-    if(m_track_image.isNull()) {
-      unmatch(*m_track, ImageTrack());
-    } else {
-      match(*m_track, ImageTrack());
-    }
-    m_track_image_container->setPixmap(QPixmap::fromImage(m_track_image));
-    m_track_image_container->update();
   }
 }
 
 void Slider2D::on_thumb_icon_style() {
   auto& stylist = find_stylist(*m_thumb->get_body());
-  auto has_update = std::make_shared<bool>(false);
   for(auto& property : stylist.get_computed_block()) {
     property.visit(
       [&] (const IconImage& image) {
         stylist.evaluate(image, [=] (auto image) {
-          if(m_thumb_image == image) {
-            return;
+          if(m_thumb_image != image) {
+            m_thumb_image = std::move(image);
           }
-          *has_update = true;
-          m_thumb_image = std::move(image);
         });
       });
-  }
-  if(*has_update) {
-    if(m_thumb_image.isNull()) {
-      unmatch(*m_thumb, ImageThumb());
-      m_thumb->setFixedSize(DEFAULT_THUMB_SIZE());
-    } else {
-      match(*m_thumb, ImageThumb());
-      m_thumb->setFixedSize(m_thumb_image.size());
-    }
   }
 }
