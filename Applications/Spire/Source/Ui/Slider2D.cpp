@@ -431,9 +431,7 @@ void Slider2D::on_thumb_icon_style() {
     property.visit(
       [&] (const IconImage& image) {
         stylist.evaluate(image, [=] (auto image) {
-          if(m_thumb_image != image) {
-            m_thumb_image = std::move(image);
-          }
+          m_thumb_image = std::move(image);
         });
       });
   }
