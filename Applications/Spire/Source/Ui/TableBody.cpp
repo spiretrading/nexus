@@ -281,6 +281,9 @@ struct TableBody::Layout : QLayout {
   void move_row(int source, int destination) {
     m_items.insert(m_items.begin() + (destination - get_top_index()),
       std::move(m_items[source - get_top_index()]));
+    if(source > destination) {
+      ++source;
+    }
     m_items.erase(m_items.begin() + (source - m_top.size()));
   }
 
@@ -973,7 +976,7 @@ void TableBody::move_row(int source, int destination) {
     move_current_index(source, destination, current_index);
     mount_row(destination, current_index);
     if(destination < source) {
-      --source;
+      ++source;
     }
     layout.remove_hidden_row(source);
   } else {
