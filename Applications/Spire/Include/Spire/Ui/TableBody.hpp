@@ -144,7 +144,6 @@ namespace Styles {
       std::shared_ptr<ListModel<int>> m_widths;
       TableViewItemBuilder m_item_builder;
       std::vector<ColumnCover*> m_column_covers;
-      int m_top_index;
       RowCover* m_current_row;
       Styles m_styles;
       int m_resize_guard;
@@ -162,11 +161,9 @@ namespace Styles {
       TableItem* find_item(const boost::optional<Index>& index);
       RowCover* get_current_row();
       TableItem* get_current_item();
-      bool is_visible(int index) const;
       Index get_index(const TableItem& item) const;
       int get_column_size() const;
       int estimate_row_height() const;
-      int compute_average_row_height(int rows) const;
       int get_left_spacing(int index) const;
       int get_top_spacing(int index) const;
       void add_column_cover(int index, const QRect& geometry);
@@ -180,8 +177,6 @@ namespace Styles {
       RowCover* mount_row(int index, boost::optional<int> current_index);
       void destroy(RowCover* row);
       void remove(RowCover& row);
-      void update_spacer(int& spacer, int hidden_row_count);
-      void update_spacers();
       void mount_visible_rows(std::vector<RowCover*>& unmounted_rows);
       std::vector<RowCover*> unmount_hidden_rows();
       void initialize_visible_region();
