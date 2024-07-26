@@ -554,6 +554,7 @@ TableBody::TableBody(
       m_widths(std::move(widths)),
       m_item_builder(std::move(item_builder)),
       m_current_row(nullptr),
+      m_is_transaction(false),
       m_resize_guard(0) {
   setLayout(new Layout(*this));
   setFocusPolicy(Qt::StrongFocus);
@@ -932,7 +933,6 @@ void TableBody::add_row(int index) {
   }
   m_current_controller.add_row(index);
   m_selection_controller.add_row(index);
-  update_visible_region();
 }
 
 void TableBody::pre_remove_row(int index) {
@@ -953,7 +953,6 @@ void TableBody::pre_remove_row(int index) {
 void TableBody::remove_row(int index) {
   m_current_controller.remove_row(index);
   m_selection_controller.remove_row(index);
-  update_visible_region();
 }
 
 void TableBody::move_row(int source, int destination) {
@@ -989,7 +988,6 @@ void TableBody::move_row(int source, int destination) {
   }
   m_current_controller.move_row(source, destination);
   m_selection_controller.move_row(source, destination);
-  update_visible_region();
 }
 
 void TableBody::update_parent() {
@@ -1363,6 +1361,12 @@ void TableBody::on_cover_style(Cover& cover) {
 
 void TableBody::on_table_operation(const TableModel::Operation& operation) {
   visit(operation,
+    [&] (const TableModel::StartTransaction&) {
+      m_is_transaction = true;
+    },
+    [&] (const TableModel::EndTransaction&) {
+      m_is_transaction = false;
+    },
     [&] (const TableModel::AddOperation& operation) {
       add_row(operation.m_index);
     },
@@ -1375,6 +1379,9 @@ void TableBody::on_table_operation(const TableModel::Operation& operation) {
     [&] (const TableModel::MoveOperation& operation) {
       move_row(operation.m_source, operation.m_destination);
     });
+  if(!m_is_transaction) {
+    update_visible_region();
+  }
 }
 
 void TableBody::on_widths_update(const ListModel<int>::Operation& operation) {

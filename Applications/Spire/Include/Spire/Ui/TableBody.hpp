@@ -146,6 +146,7 @@ namespace Styles {
       std::vector<ColumnCover*> m_column_covers;
       RowCover* m_current_row;
       Styles m_styles;
+      bool m_is_transaction;
       int m_resize_guard;
       std::unordered_map<TableItem*, HoverObserver> m_hover_observers;
       boost::optional<Index> m_hover_index;
