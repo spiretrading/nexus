@@ -133,9 +133,11 @@ namespace Spire {
     if(index < 0 || index >= get_size()) {
       throw std::out_of_range("The index is out of range.");
     }
-    m_transaction.push(PreRemoveOperation(index));
-    m_data.erase(std::next(m_data.begin(), index));
-    m_transaction.push(RemoveOperation(index));
+    m_transaction.transact([&] {
+      m_transaction.push(PreRemoveOperation(index));
+      m_data.erase(std::next(m_data.begin(), index));
+      m_transaction.push(RemoveOperation(index));
+    });
     return QValidator::State::Acceptable;
   }
 
