@@ -150,9 +150,7 @@ const Order& SerenityFixApplication::Submit(const OrderInfo& info) {
       if(submissionInfo->m_fields.m_destination ==
           DefaultDestinations::CHIX() ||
           submissionInfo->m_fields.m_destination ==
-            DefaultDestinations::CX2() ||
-          submissionInfo->m_fields.m_destination ==
-            DefaultDestinations::TSX()) {
+            DefaultDestinations::CX2()) {
         RouteToChix(*submissionInfo, Store(newOrderSingle));
       } else if(submissionInfo->m_fields.m_destination ==
           DefaultDestinations::CSE() ||
@@ -167,6 +165,9 @@ const Order& SerenityFixApplication::Submit(const OrderInfo& info) {
       } else if(submissionInfo->m_fields.m_destination ==
           DefaultDestinations::NEOE()) {
         RouteToNeo(*submissionInfo, Store(newOrderSingle));
+      } else if(submissionInfo->m_fields.m_destination ==
+          DefaultDestinations::TSX()) {
+        RouteToTsx(*submissionInfo, Store(newOrderSingle));
       } else {
         auto exDestination = [&] {
           if(submissionInfo->m_fields.m_destination ==
@@ -327,113 +328,83 @@ BboQuote SerenityFixApplication::LoadBboQuote(const Security& security) {
 }
 
 void SerenityFixApplication::RouteToChix(
-    OrderInfo info, Out<FIX42::NewOrderSingle> newOrderSingle) {
+    const OrderInfo& info, Out<FIX42::NewOrderSingle> newOrderSingle) {
   auto hasDestination = false;
-  if(info.m_fields.m_destination == DefaultDestinations::TSX()) {
-    for(auto& tag : info.m_fields.m_additionalFields) {
-      if(tag.GetKey() == LONG_LIFE_TAG) {
-        populate_long_life(tag, *newOrderSingle);
-      }
-    }
-    static const auto openTime = hours(13) + minutes(30);
-    if(m_timeClient->GetTime().time_of_day() < openTime) {
-      auto destination = [&] {
-        if(info.m_fields.m_security.GetMarket() == DefaultMarkets::TSXV()) {
-          return FIX::ExDestination("TSXV");
-        }
-        return FIX::ExDestination("XTSX");
-      }();
-      newOrderSingle->set(FIX::HandlInst('6'));
-      newOrderSingle->getHeader().setField(destination);
-      if(info.m_fields.m_timeInForce.GetType() ==
-          TimeInForce::Type::DAY) {
-        info.m_fields.m_timeInForce = TimeInForce(TimeInForce::Type::OPG);
-      }
-    } else {
-      auto destination = FIX::ExDestination("CX25");
-      newOrderSingle->getHeader().setField(destination);
-      if(info.m_fields.m_type == OrderType::PEGGED) {
-        newOrderSingle->set(FIX::ExecInst("M"));
-      }
-    }
-    hasDestination = true;
-  } else {
-    for(auto& tag : info.m_fields.m_additionalFields) {
-      if(tag.GetKey() == LONG_LIFE_TAG) {
-        populate_long_life(tag, *newOrderSingle);
-      } else if(tag.GetKey() == FIX::FIELD::ExDestination) {
-        if(auto value = boost::get<std::string>(&tag.GetValue())) {
-          auto destination = [&] {
-            if(*value == "SMRTCHIX") {
-              return FIX::ExDestination("CX01");
-            } else if(*value == "SMRTCHIXD") {
-              return FIX::ExDestination("CX02");
-            } else if(*value == "SMRTDARKNR") {
-              return FIX::ExDestination("CX03");
-            } else if(*value == "SMRTDARK") {
-              return FIX::ExDestination("CX04");
-            } else if(*value == "SMRTCX2") {
-              return FIX::ExDestination("CX05");
-            } else if(*value == "SMRTCX2D") {
-              return FIX::ExDestination("CX06");
-            } else if(*value == "SMRTCX2DARKNR") {
-              return FIX::ExDestination("CX07");
-            } else if(*value == "SMRTCX2DARK") {
-              return FIX::ExDestination("CX08");
-            } else if(*value == "SMRTX") {
-              return FIX::ExDestination("CX09");
-            } else if(*value == "SMRTXD") {
-              return FIX::ExDestination("CX10");
-            } else if(*value == "SMRTXDARKNR") {
-              return FIX::ExDestination("CX11");
-            } else if(*value == "SMRTXDARK") {
-              return FIX::ExDestination("CX12");
-            } else if(*value == "SWEEPANDCROSS") {
-              return FIX::ExDestination("CX13");
-            } else if(*value == "DEPTHFINDER") {
-              return FIX::ExDestination("CX14");
-            } else if(*value == "SMRTFEE") {
-              return FIX::ExDestination("CX15");
-            } else if(*value == "MULTI-CA") {
-              return FIX::ExDestination("CX16");
-            } else if(*value == "MULTI-CXA") {
-              return FIX::ExDestination("CX17");
-            } else if(*value == "MULTI-CX") {
-              return FIX::ExDestination("CX18");
-            } else if(*value == "MULTI-CXY") {
-              return FIX::ExDestination("CX19");
-            } else if(*value == "MULTIDARK-CM") {
-              return FIX::ExDestination("CX20");
-            } else if(*value == "MULTIDARK-YM") {
-              return FIX::ExDestination("CX21");
-            } else if(*value == "MULTIDARK-YCM") {
-              return FIX::ExDestination("CX22");
-            } else if(*value == "MULTIDARK-CYXM") {
-              return FIX::ExDestination("CX23");
-            } else if(*value == "MULTIDARK-DM") {
-              return FIX::ExDestination("CX24");
-            } else if(*value == "SMRTXOPG-X2") {
-              return FIX::ExDestination("CX25");
-            } else if(*value == "CXD") {
-              return FIX::ExDestination("XCXD");
-            } else if(*value == "SMRTCXD") {
-              return FIX::ExDestination("XCXD");
-            }
-            BOOST_THROW_EXCEPTION(FixOrderRejectedException(
-              "Invalid value for tag 100 (ExDestination)."));
-          }();
-          newOrderSingle->getHeader().setField(destination);
-          if(*value == "SMRTXDARKNR") {
-            newOrderSingle->setField(ANONYMOUS_TAG, "Y");
+  for(auto& tag : info.m_fields.m_additionalFields) {
+    if(tag.GetKey() == LONG_LIFE_TAG) {
+      populate_long_life(tag, *newOrderSingle);
+    } else if(tag.GetKey() == FIX::FIELD::ExDestination) {
+      if(auto value = boost::get<std::string>(&tag.GetValue())) {
+        auto destination = [&] {
+          if(*value == "SMRTCHIX") {
+            return FIX::ExDestination("CX01");
+          } else if(*value == "SMRTCHIXD") {
+            return FIX::ExDestination("CX02");
+          } else if(*value == "SMRTDARKNR") {
+            return FIX::ExDestination("CX03");
+          } else if(*value == "SMRTDARK") {
+            return FIX::ExDestination("CX04");
+          } else if(*value == "SMRTCX2") {
+            return FIX::ExDestination("CX05");
+          } else if(*value == "SMRTCX2D") {
+            return FIX::ExDestination("CX06");
+          } else if(*value == "SMRTCX2DARKNR") {
+            return FIX::ExDestination("CX07");
+          } else if(*value == "SMRTCX2DARK") {
+            return FIX::ExDestination("CX08");
+          } else if(*value == "SMRTX") {
+            return FIX::ExDestination("CX09");
+          } else if(*value == "SMRTXD") {
+            return FIX::ExDestination("CX10");
+          } else if(*value == "SMRTXDARKNR") {
+            return FIX::ExDestination("CX11");
+          } else if(*value == "SMRTXDARK") {
+            return FIX::ExDestination("CX12");
+          } else if(*value == "SWEEPANDCROSS") {
+            return FIX::ExDestination("CX13");
+          } else if(*value == "DEPTHFINDER") {
+            return FIX::ExDestination("CX14");
+          } else if(*value == "SMRTFEE") {
+            return FIX::ExDestination("CX15");
+          } else if(*value == "MULTI-CA") {
+            return FIX::ExDestination("CX16");
+          } else if(*value == "MULTI-CXA") {
+            return FIX::ExDestination("CX17");
+          } else if(*value == "MULTI-CX") {
+            return FIX::ExDestination("CX18");
+          } else if(*value == "MULTI-CXY") {
+            return FIX::ExDestination("CX19");
+          } else if(*value == "MULTIDARK-CM") {
+            return FIX::ExDestination("CX20");
+          } else if(*value == "MULTIDARK-YM") {
+            return FIX::ExDestination("CX21");
+          } else if(*value == "MULTIDARK-YCM") {
+            return FIX::ExDestination("CX22");
+          } else if(*value == "MULTIDARK-CYXM") {
+            return FIX::ExDestination("CX23");
+          } else if(*value == "MULTIDARK-DM") {
+            return FIX::ExDestination("CX24");
+          } else if(*value == "SMRTXOPG-X2") {
+            return FIX::ExDestination("CX25");
+          } else if(*value == "CXD") {
+            return FIX::ExDestination("XCXD");
+          } else if(*value == "SMRTCXD") {
+            return FIX::ExDestination("XCXD");
           }
-          hasDestination = true;
-        } else {
           BOOST_THROW_EXCEPTION(FixOrderRejectedException(
             "Invalid value for tag 100 (ExDestination)."));
+        }();
+        newOrderSingle->getHeader().setField(destination);
+        if(*value == "SMRTXDARKNR") {
+          newOrderSingle->setField(ANONYMOUS_TAG, "Y");
         }
-      } else if(tag.GetKey() == FIX::FIELD::ExecInst) {
-        populate_exec_inst(tag, *newOrderSingle, {"M", "R", "P", "x", "f"});
+        hasDestination = true;
+      } else {
+        BOOST_THROW_EXCEPTION(FixOrderRejectedException(
+          "Invalid value for tag 100 (ExDestination)."));
       }
+    } else if(tag.GetKey() == FIX::FIELD::ExecInst) {
+      populate_exec_inst(tag, *newOrderSingle, {"M", "R", "P", "x", "f"});
     }
   }
   if(!hasDestination) {
@@ -552,6 +523,41 @@ void SerenityFixApplication::RouteToNeo(
     if(!isNeoBook) {
       newOrderSingle->setField(NEO_VISIBILITY_TYPE_TAG, "2");
     }
+  }
+}
+
+void SerenityFixApplication::RouteToTsx(
+    const OrderInfo& info, Out<FIX42::NewOrderSingle> newOrderSingle) {
+  auto has_destination = false;
+  for(auto& tag : info.m_fields.m_additionalFields) {
+    if(tag.GetKey() == LONG_LIFE_TAG) {
+      populate_long_life(tag, *newOrderSingle);
+    } else if(tag.GetKey() == FIX::FIELD::ExDestination) {
+      if(auto value = boost::get<std::string>(&tag.GetValue())) {
+        auto destination = [&] {
+          if(*value == "SMRTXOPG-X2") {
+            return FIX::ExDestination("CX25");
+          }
+          BOOST_THROW_EXCEPTION(FixOrderRejectedException(
+            "Invalid value for tag 100 (ExDestination)."));
+        }();
+        has_destination = true;
+        newOrderSingle->getHeader().setField(destination);
+      }
+    }
+  }
+  if(!has_destination) {
+    auto destination = [&] {
+      if(info.m_fields.m_security.GetMarket() == DefaultMarkets::TSXV()) {
+        return FIX::ExDestination("TSXV");
+      }
+      return FIX::ExDestination("XTSX");
+    }();
+    newOrderSingle->getHeader().setField(destination);
+  }
+  newOrderSingle->set(FIX::HandlInst('6'));
+  if(info.m_fields.m_type == OrderType::PEGGED) {
+    newOrderSingle->set(FIX::ExecInst("M"));
   }
 }
 
