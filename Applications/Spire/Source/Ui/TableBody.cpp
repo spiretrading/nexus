@@ -47,7 +47,7 @@ namespace {
       total_height += bottom->sizeHint().height();
       total_rows += rows - top_index - visible_count;
     }
-    if(total_height == 0) {
+    if(total_rows == 0) {
       return 0;
     }
     return total_height / total_rows;

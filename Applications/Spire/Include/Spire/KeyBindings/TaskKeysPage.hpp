@@ -37,14 +37,18 @@ namespace Spire {
 
     private:
       std::shared_ptr<KeyBindingsModel> m_key_bindings;
+      Nexus::MarketDatabase m_markets;
+      Nexus::DestinationDatabase m_destinations;
       TableView* m_table_view;
       Button* m_duplicate_button;
       Button* m_delete_button;
+      Button* m_reset_button;
 
       void update_button_state();
       void on_new_task_action();
       void on_duplicate_task_action();
       void on_delete_task_action();
+      void on_reset();
       void on_new_task_submission(const QString& name);
       void on_row_selection(const ListModel<int>::Operation& operation);
   };

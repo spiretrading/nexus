@@ -1,5 +1,6 @@
 #include "Spire/KeyBindings/TaskKeysPage.hpp"
 #include "Spire/KeyBindings/AdditionalTag.hpp"
+#include "Spire/KeyBindings/KeyBindingsProfile.hpp"
 #include "Spire/KeyBindings/SearchBarOrderTaskArgumentsListModel.hpp"
 #include "Spire/KeyBindings/TaskKeysTableView.hpp"
 #include "Spire/Spire/Utility.hpp"
@@ -130,7 +131,9 @@ TaskKeysPage::TaskKeysPage(std::shared_ptr<KeyBindingsModel> key_bindings,
     DestinationDatabase destinations, AdditionalTagDatabase additional_tags,
     QWidget* parent)
     : QWidget(parent),
-      m_key_bindings(std::move(key_bindings)) {
+      m_key_bindings(std::move(key_bindings)),
+      m_markets(std::move(markets)),
+      m_destinations(std::move(destinations)) {
   auto toolbar_body = new QWidget();
   auto toolbar_layout = make_hbox_layout(toolbar_body);
   auto search_box = new SearchBox();
@@ -158,6 +161,12 @@ TaskKeysPage::TaskKeysPage(std::shared_ptr<KeyBindingsModel> key_bindings,
     style.get((Hover() || Press()) > is_a<Icon>()).set(Fill(QColor(0xB71C1C)));
   });
   toolbar_layout->addWidget(m_delete_button);
+  m_reset_button = make_label_button(tr("Reset"));
+  m_reset_button->connect_click_signal(
+    std::bind_front(&TaskKeysPage::on_reset, this));
+  m_reset_button->setFixedWidth(scale_width(80));
+  toolbar_layout->addSpacing(scale_width(18));
+  toolbar_layout->addWidget(m_reset_button);
   auto toolbar = new Box(toolbar_body);
   update_style(*toolbar, [] (auto& style) {
     style.get(Any()).
@@ -174,11 +183,11 @@ TaskKeysPage::TaskKeysPage(std::shared_ptr<KeyBindingsModel> key_bindings,
   layout->addWidget(toolbar);
   auto filtered_tasks = std::make_shared<SearchBarOrderTaskArgumentsListModel>(
     m_key_bindings->get_order_task_arguments(), search_box->get_current(),
-      countries, markets, destinations);
+      countries, m_markets, m_destinations);
   m_table_view = make_task_keys_table_view(
     std::move(filtered_tasks), std::make_shared<RegionQueryModel>(
-      std::move(securities), populate_region_query_model(countries, markets)),
-    destinations, markets, additional_tags);
+      std::move(securities), populate_region_query_model(countries, m_markets)),
+    m_destinations, m_markets, additional_tags);
   layout->addWidget(m_table_view);
   auto box = new Box(body);
   update_style(*box, [] (auto& style) {
@@ -255,6 +264,11 @@ void TaskKeysPage::on_delete_task_action() {
         any_cast<int>(m_table_view->get_body().get_table()->at(i, 0)));
     }
   });
+}
+
+void TaskKeysPage::on_reset() {
+  reset_order_task_arguments(
+    *m_key_bindings->get_order_task_arguments(), m_markets, m_destinations);
 }
 
 void TaskKeysPage::on_new_task_submission(const QString& name) {
