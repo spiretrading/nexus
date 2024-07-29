@@ -718,15 +718,18 @@ std::vector<std::unique_ptr<CanvasNode>> Spire::make_tsx_order_task_nodes() {
   auto order_types = std::vector<std::unique_ptr<CanvasNode>>();
   auto limit = CanvasNodeBuilder(*GetLimitOrderTaskNode()->AddField("max_floor",
     111, LinkedNode::SetReferent(MaxFloorNode(), "security"))->AddField(
-      "long_life", 7735, std::make_unique<TextNode>("Y")));
+      "long_life", 7735, std::make_unique<TextNode>("Y"))->AddField(
+        "ex_destination", 100, std::make_unique<TextNode>("SMRTXOPG-X2")));
   limit.SetReadOnly("long_life", true);
   limit.SetVisible("long_life", false);
   populate_bid_ask(limit, "TSX Limit", DefaultDestinations::TSX(),
     TimeInForce::Type::DAY, order_types);
-  auto market = CanvasNodeBuilder(*GetMarketOrderTaskNode());
+  auto market = CanvasNodeBuilder(*GetMarketOrderTaskNode()->AddField(
+    "ex_destination", 100, std::make_unique<TextNode>("SMRTXOPG-X2")));
   populate_bid_ask(market, "TSX Market", DefaultDestinations::TSX(),
     TimeInForce::Type::DAY, order_types);
-  auto immediate = CanvasNodeBuilder(*GetMarketOrderTaskNode());
+  auto immediate = CanvasNodeBuilder(*GetMarketOrderTaskNode()->AddField(
+    "ex_destination", 100, std::make_unique<TextNode>("SMRTXOPG-X2")));
   immediate.SetVisible(SingleOrderTaskNode::QUANTITY_PROPERTY, false);
   populate_bid_ask(immediate, "TSX Buy", "TSX Sell", DefaultDestinations::TSX(),
     TimeInForce::Type::DAY, order_types);
