@@ -57,6 +57,17 @@ namespace Spire {
   std::vector<std::unique_ptr<CanvasNode>> make_default_order_task_nodes();
 
   /**
+   * Resets the order task arguments to their defaults.
+   * @param order_task_arguments The list of order task arguments to reset.
+   * @param markets The database of market definitions.
+   * @param destinations The database of destinations.
+   */
+  void reset_order_task_arguments(
+    OrderTaskArgumentsListModel& order_task_arguments,
+    const Nexus::MarketDatabase& markets,
+    const Nexus::DestinationDatabase& destinations);
+
+  /**
    * Loads the key bindings profile found at a given path.
    * @param path The path to the directory containing the key bindings profile.
    * @param markets The database of market definitions.

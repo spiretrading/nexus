@@ -395,11 +395,9 @@ namespace {
 
   auto load_default_key_bindings(
       const MarketDatabase& markets, const DestinationDatabase& destinations) {
-    auto key_bindings = std::make_shared<KeyBindingsModel>(std::move(markets));
-    for(auto& task : make_default_order_task_nodes()) {
-      key_bindings->get_order_task_arguments()->push(
-        to_order_task_arguments(*task, markets, destinations));
-    }
+    auto key_bindings = std::make_shared<KeyBindingsModel>(markets);
+    reset_order_task_arguments(
+      *key_bindings->get_order_task_arguments(), markets, destinations);
     key_bindings->get_cancel_key_bindings()->get_binding(
       CancelKeyBindingsModel::Operation::OLDEST)->set(
         QKeySequence(Qt::Key_Escape));
@@ -763,6 +761,18 @@ std::vector<std::unique_ptr<CanvasNode>>
   populate(tasks, make_pure_order_task_nodes());
   populate(tasks, make_tsx_order_task_nodes());
   return tasks;
+}
+
+void Spire::reset_order_task_arguments(
+    OrderTaskArgumentsListModel& order_task_arguments,
+    const MarketDatabase& markets, const DestinationDatabase& destinations) {
+  order_task_arguments.transact([&] {
+    clear(order_task_arguments);
+    for(auto& task : make_default_order_task_nodes()) {
+      order_task_arguments.push(
+        to_order_task_arguments(*task, markets, destinations));
+    }
+  });
 }
 
 std::shared_ptr<KeyBindingsModel> Spire::load_key_bindings_profile(
