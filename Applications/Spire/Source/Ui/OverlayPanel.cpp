@@ -142,6 +142,9 @@ void OverlayPanel::showEvent(QShowEvent* event) {
 
 void OverlayPanel::closeEvent(QCloseEvent* event) {
   m_was_activated = false;
+  if(auto focused_widget = focusWidget()) {
+    focused_widget->clearFocus();
+  }
   QWidget::closeEvent(event);
 }
 
@@ -155,6 +158,7 @@ void OverlayPanel::keyPressEvent(QKeyEvent* event) {
 
 void OverlayPanel::resizeEvent(QResizeEvent* event) {
   update_mask();
+  position();
   QWidget::resizeEvent(event);
 }
 

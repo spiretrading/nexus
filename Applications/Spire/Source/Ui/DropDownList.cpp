@@ -77,6 +77,11 @@ bool DropDownList::eventFilter(QObject* watched, QEvent* event) {
       event->type() == QEvent::LayoutRequest) {
     m_size_hint = none;
     updateGeometry();
+    auto size = sizeHint().grownBy(m_panel->layout()->contentsMargins()) +
+      m_panel_border_size;
+    if(size != m_panel->size()) {
+      m_panel->setFixedSize(size);
+    }
     if(width() != 0 && height() != 0 && !m_is_scrolled_to_current) {
       m_is_scrolled_to_current = true;
       if(auto current = m_list_view->get_current()->get()) {
@@ -93,8 +98,6 @@ bool DropDownList::event(QEvent* event) {
   if(event->type() == QEvent::ShowToParent) {
     if(m_list_view->get_list()->get_size() > 0) {
       m_panel->show();
-      auto margins = m_panel->layout()->contentsMargins();
-      m_panel->resize(sizeHint().grownBy(margins) + m_panel_border_size);
     }
   } else if(event->type() == QEvent::HideToParent) {
     m_panel->hide();

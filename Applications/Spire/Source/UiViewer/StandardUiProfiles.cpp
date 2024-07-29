@@ -2185,10 +2185,8 @@ UiProfile Spire::make_font_style_box_profile() {
     current.connect_changed_signal([=] (auto& value) {
       auto styles = QFontDatabase().styles(family_model->get());
       if(styles.contains(value, Qt::CaseInsensitive)) {
-        auto style = value.toLower();
-        style[0] = style[0].toUpper();
-        if(box->get_current()->get() != style) {
-          box->get_current()->set(style);
+        if(box->get_current()->get() != value) {
+          box->get_current()->set(value);
         }
       }
     });
