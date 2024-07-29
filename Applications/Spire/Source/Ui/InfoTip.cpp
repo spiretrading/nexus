@@ -76,6 +76,9 @@ InfoTip::InfoTip(QWidget* body, QWidget* parent)
   link(*this, *m_body);
   m_style_connection = connect_style_signal(*this, [=] { on_style(); });
   set_style(*this, DEFAULT_STYLE());
+  connect(m_body, &QObject::destroyed, this, [=] {
+    deleteLater();
+  });
 }
 
 bool InfoTip::eventFilter(QObject* watched, QEvent* event) {
