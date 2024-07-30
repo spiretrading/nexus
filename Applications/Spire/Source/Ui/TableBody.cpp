@@ -240,9 +240,11 @@ struct TableBody::Layout : QLayout {
     }
     if(index < get_top_index()) {
       add_hidden_row(index, m_top_height / get_top_index());
-    } else {
+    } else if(!m_bottom.empty()) {
       add_hidden_row(
         index, m_bottom_height / static_cast<int>(m_bottom.size()));
+    } else {
+      add_hidden_row(index, 0);
     }
   }
 
@@ -289,6 +291,9 @@ struct TableBody::Layout : QLayout {
 
   void reset_top_index(int top_point) {
     auto size = static_cast<int>(m_top.size() + m_bottom.size());
+    if(size == 0) {
+      return;
+    }
     auto row_height = (get_top_space() + get_bottom_space()) / size;
     if(row_height == 0) {
       return;
@@ -1207,7 +1212,7 @@ void TableBody::on_current(
   if(previous) {
     if(auto previous_item = find_item(previous)) {
       previous_had_focus =
-        previous_item->isAncestorOf(QApplication::focusWidget());
+        previous_item->isAncestorOf(static_cast<QWidget*>(QApplication::focusObject()));
       unmatch(*previous_item->parentWidget(), CurrentRow());
       unmatch(*previous_item, Current());
     }
@@ -1228,7 +1233,7 @@ void TableBody::on_current(
       match(*m_column_covers[current->m_column], CurrentColumn());
     }
     m_selection_controller.navigate(*current);
-    if(previous_had_focus || QApplication::focusWidget() == this) {
+    if(previous_had_focus || QApplication::focusObject() == this) {
       current_item->setFocus(Qt::FocusReason::OtherFocusReason);
     }
   }
