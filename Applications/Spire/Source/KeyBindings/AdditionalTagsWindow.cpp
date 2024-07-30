@@ -252,8 +252,13 @@ namespace {
       if(key == -1) {
         m_schema.set(NoneAdditionalTagSchema::get_instance());
       } else {
-        m_schema.set(
-          find(m_additional_tags, m_destination->get(), m_region->get(), key));
+        auto schema =
+          find(m_additional_tags, m_destination->get(), m_region->get(), key);
+        if(schema) {
+          m_schema.set(schema);
+        } else {
+          m_schema.set(NoneAdditionalTagSchema::get_instance());
+        }
       }
     }
   };
@@ -433,9 +438,12 @@ EditableBox* AdditionalTagsWindow::make_item(
 void AdditionalTagsWindow::commit() {
   auto updated_tags = std::vector<AdditionalTag>();
   for(auto i = 0; i < m_tags->get_row_size() - 1; ++i) {
-    auto tag = AdditionalTag(
-      m_tags->get<int>(i, 0), m_tags->get<optional<Nexus::Tag::Type>>(i, 1));
-    updated_tags.push_back(std::move(tag));
+    auto key = m_tags->get<int>(i, 0);
+    if(key != 0) {
+      auto tag =
+        AdditionalTag(key, m_tags->get<optional<Nexus::Tag::Type>>(i, 1));
+      updated_tags.push_back(std::move(tag));
+    }
   }
   m_current->set(updated_tags);
 }

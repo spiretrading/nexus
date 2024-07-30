@@ -48,7 +48,7 @@ namespace {
 
   auto make_chix_ex_destination_schema() {
     auto model = OrderFieldInfoTip::Model();
-    model.m_tag.m_name = "ExecDestination";
+    model.m_tag.m_name = "ExDestination";
     model.m_tag.m_description = "Specifies the routing strategy to use.";
     model.m_tag.m_arguments.emplace_back("CXD", "Post to CHI-X Dark.");
     model.m_tag.m_arguments.emplace_back(
@@ -138,7 +138,7 @@ namespace {
 
   auto make_cx2_ex_destination_schema() {
     auto model = OrderFieldInfoTip::Model();
-    model.m_tag.m_name = "ExecDestination";
+    model.m_tag.m_name = "ExDestination";
     model.m_tag.m_description = "Specifies the routing strategy to use.";
     model.m_tag.m_arguments.emplace_back("SMRTCX2",
       "Spray all protected markets. Post on CX2. No re-spray.");
@@ -261,6 +261,18 @@ namespace {
     model.m_tag.m_arguments.emplace_back("6", "Protect and reprice");
     auto schema =
       std::make_shared<EnumAdditionalTagSchema>(std::move(model), 21);
+    return schema;
+  }
+
+  auto make_tsx_ex_destination_schema() {
+    auto model = OrderFieldInfoTip::Model();
+    model.m_tag.m_name = "ExDestination";
+    model.m_tag.m_description = "Specifies the routing strategy to use.";
+    model.m_tag.m_arguments.emplace_back(
+      "SMRTXOPG-X2", "Ping CX2 and CHIC before posting to TSX.");
+    sort(model.m_tag.m_arguments);
+    auto schema =
+      std::make_shared<EnumAdditionalTagSchema>(std::move(model), 100);
     return schema;
   }
 
@@ -402,6 +414,8 @@ const AdditionalTagDatabase& Spire::get_default_additional_tag_database() {
     database.add(DefaultDestinations::NEOE(), make_neoe_exec_inst_schema());
     database.add(
       DefaultDestinations::NEOE(), make_neoe_handl_inst_schema());
+    database.add(
+      DefaultDestinations::TSX(), make_tsx_ex_destination_schema());
     database.add(DefaultDestinations::TSX(), make_tsx_long_life_schema());
     return database;
   }();
