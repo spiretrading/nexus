@@ -120,6 +120,7 @@ namespace Styles {
       void keyReleaseEvent(QKeyEvent* event) override;
       void moveEvent(QMoveEvent* event) override;
       void paintEvent(QPaintEvent* event) override;
+      void resizeEvent(QResizeEvent* event) override;
       void showEvent(QShowEvent* event) override;
 
     private:
@@ -134,10 +135,8 @@ namespace Styles {
       struct Cover;
       struct RowCover;
       struct ColumnCover;
+      struct Layout;
       struct Painter;
-      struct BoxStyles {
-        QColor m_background_color;
-      };
       std::shared_ptr<TableModel> m_table;
       std::unordered_set<Qt::Key> m_keys;
       TableCurrentController m_current_controller;
@@ -145,11 +144,10 @@ namespace Styles {
       std::shared_ptr<ListModel<int>> m_widths;
       TableViewItemBuilder m_item_builder;
       std::vector<ColumnCover*> m_column_covers;
-      int m_top_index;
-      QSpacerItem* m_top_spacer;
-      QSpacerItem* m_bottom_spacer;
       RowCover* m_current_row;
       Styles m_styles;
+      bool m_is_transaction;
+      int m_resize_guard;
       std::unordered_map<TableItem*, HoverObserver> m_hover_observers;
       boost::optional<Index> m_hover_index;
       boost::signals2::scoped_connection m_style_connection;
@@ -158,12 +156,12 @@ namespace Styles {
       boost::signals2::scoped_connection m_current_connection;
       boost::signals2::scoped_connection m_widths_connection;
 
+      const Layout& get_layout() const;
+      Layout& get_layout();
       RowCover* find_row(int index);
       TableItem* find_item(const boost::optional<Index>& index);
       RowCover* get_current_row();
       TableItem* get_current_item();
-      int visible_count() const;
-      bool is_visible(int index) const;
       Index get_index(const TableItem& item) const;
       int get_column_size() const;
       int estimate_row_height() const;
@@ -175,20 +173,15 @@ namespace Styles {
       void remove_row(int index);
       void move_row(int source, int destination);
       void update_parent();
-      RowCover* mount_row(
-        int index, int layout_index, boost::optional<int> current_index,
+      RowCover* mount_row(int index, boost::optional<int> current_index,
         std::vector<RowCover*>& unmounted_rows);
-      RowCover* mount_row(
-        int index, int layout_index, boost::optional<int> current_index);
+      RowCover* mount_row(int index, boost::optional<int> current_index);
       void destroy(RowCover* row);
       void remove(RowCover& row);
-      void update_spacer(QSpacerItem*& spacer, int hidden_row_count);
-      void update_spacers();
       void mount_visible_rows(std::vector<RowCover*>& unmounted_rows);
       std::vector<RowCover*> unmount_hidden_rows();
       void initialize_visible_region();
-      void reset_visible_region(
-        int total_height, std::vector<RowCover*>& unmounted_rows);
+      void reset_visible_region(std::vector<RowCover*>& unmounted_rows);
       void update_visible_region();
       bool navigate_next();
       bool navigate_previous();

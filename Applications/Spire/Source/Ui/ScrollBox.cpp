@@ -256,6 +256,7 @@ ScrollBox::ScrollBox(QWidget* body, QWidget* parent)
       m_padding_styles([=] { commit_padding_styles(); }) {
   setFocusPolicy(Qt::StrongFocus);
   setObjectName(QString("0x%1").arg(reinterpret_cast<std::intptr_t>(this)));
+  setFocusProxy(m_body);
   match(*m_body, Body());
   m_viewport = new Viewport(*m_body);
   m_body->installEventFilter(this);

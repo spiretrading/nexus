@@ -427,7 +427,7 @@ TEST_SUITE("TranslatedListModel") {
     REQUIRE(translation.get(0) == 0);
     REQUIRE(translation.get(1) == 4);
     source->remove(0);
-    REQUIRE(signal_count == 6);
+    REQUIRE(signal_count == 8);
     REQUIRE(pre_remove_count == 1);
     REQUIRE(remove_count == 1);
     REQUIRE(translation.get(0) == 0);
