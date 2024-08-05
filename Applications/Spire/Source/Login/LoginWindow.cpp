@@ -2,10 +2,14 @@
 #include <QKeyEvent>
 #include <QMovie>
 #include "Spire/Login/ChromaHashWidget.hpp"
+#include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
+#include "Spire/Ui/DropDownBox.hpp"
+#include "Spire/Ui/DropDownList.hpp"
 #include "Spire/Ui/DropShadow.hpp"
+#include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TextBox.hpp"
@@ -82,12 +86,13 @@ namespace {
   }
 }
 
-LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
+LoginWindow::LoginWindow(
+    std::string version, std::vector<std::string> servers, QWidget* parent)
     : QWidget(parent, Qt::FramelessWindowHint),
+      m_server_box(nullptr),
       m_is_dragging(false),
       m_last_focus(nullptr) {
   setWindowIcon(QIcon(":/Icons/taskbar_icons/spire.png"));
-  setFixedSize(scale(384, 346));
   m_shadow = new DropShadow(this);
   setObjectName("LoginWindow");
   setStyleSheet(R"(
@@ -154,6 +159,30 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
     {scale_width(2), scale_height(2), scale_width(2), scale_height(2)});
   password_layout->addWidget(m_chroma_hash_widget);
   layout->addLayout(password_layout);
+  if(servers.size() > 1) {
+    layout->addSpacing(scale_height(15));
+    auto server_list =
+      std::make_shared<ArrayListModel<std::string>>(std::move(servers));
+    m_server_box = new DropDownBox(server_list);
+    m_server_box->setFixedSize(scale(280, 30));
+    m_server_box->get_current()->set(0);
+    update_style(*m_server_box, [&] (auto& style) {
+      style.get((Hover() || FocusIn()) > is_a<TextBox>()).
+        set(border_color(QColor(0xFFA95E)));
+      style.get(Any() > is_a<DropDownList>() >
+          is_a<ListView>() > is_a<ListItem>() > Body()).set(
+        FontSize(scale_height(14)));
+      style.get(Any() > is_a<DropDownList>() >
+          is_a<ListView>() > is_a<ListItem>()).set(
+        vertical_padding(scale_height(7)));
+      style.get(Any() > is_a<TextBox>()).set(
+        FontSize(scale_height(14)));
+    });
+    layout->addWidget(m_server_box, 0, Qt::AlignCenter);
+    setFixedSize(scale(384, 391));
+  } else {
+    setFixedSize(scale(384, 346));
+  }
   layout->addSpacing(scale_height(30));
   auto button_layout = make_hbox_layout();
   button_layout->setContentsMargins(scale_width(52), 0, scale_width(52), 0);
@@ -174,7 +203,12 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
   layout->addLayout(button_layout);
   layout->addSpacing(scale_height(48));
   setTabOrder(m_username_text_box, m_password_text_box);
-  setTabOrder(m_password_text_box, m_sign_in_button);
+  if(m_server_box) {
+    setTabOrder(m_password_text_box, m_server_box);
+    setTabOrder(m_server_box, m_sign_in_button);
+  } else {
+    setTabOrder(m_password_text_box, m_sign_in_button);
+  }
   set_state(State::NONE);
 }
 
@@ -187,6 +221,9 @@ void LoginWindow::set_state(State state) {
     case State::LOGGING_IN: {
       m_username_text_box->setEnabled(false);
       m_password_text_box->setEnabled(false);
+      if(m_server_box) {
+        m_server_box->setEnabled(false);
+      }
       static_cast<TextBox&>(
         m_sign_in_button->get_body()).get_current()->set(tr("Cancel"));
       m_status_label->get_current()->set("");
@@ -226,11 +263,8 @@ connection LoginWindow::connect_cancel_signal(
 void LoginWindow::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Escape) {
     window()->close();
-  } else if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
-    if(m_username_text_box->hasFocus() || m_password_text_box->hasFocus()) {
-      try_login();
-    }
-  } else if(m_password_text_box->hasFocus()) {
+  } else if(m_password_text_box->hasFocus() || m_server_box &&
+      find_focus_state(*m_server_box) != FocusObserver::State::NONE) {
     return;
   } else if(!m_username_text_box->hasFocus() &&
       m_username_text_box->get_current()->get().isEmpty()) {
@@ -274,6 +308,9 @@ void LoginWindow::reset_all() {
 void LoginWindow::reset_visuals() {
   m_username_text_box->setEnabled(true);
   m_password_text_box->setEnabled(true);
+  if(m_server_box) {
+    m_server_box->setEnabled(true);
+  }
   if(m_last_focus) {
     m_last_focus->setFocus();
     m_last_focus = nullptr;
@@ -294,9 +331,18 @@ void LoginWindow::try_login() {
     if(m_username_text_box->get_current()->get().isEmpty()) {
       set_error(tr("Incorrect username or password."));
     } else {
-      m_login_signal(
-        m_username_text_box->get_current()->get().toStdString(),
-        m_password_text_box->get_current()->get().toStdString());
+      auto server = [&] {
+        if(m_server_box) {
+          if(auto current = m_server_box->get_current()->get()) {
+            auto& servers = static_cast<ListModel<std::string>&>(
+              *m_server_box->get_list().get());
+            return servers.get(*current);
+          }
+        }
+        return std::string();
+      }();
+      m_login_signal(m_username_text_box->get_current()->get().toStdString(),
+        m_password_text_box->get_current()->get().toStdString(), server);
       set_state(State::LOGGING_IN);
     }
   } else {

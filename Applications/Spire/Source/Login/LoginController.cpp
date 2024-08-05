@@ -22,7 +22,12 @@ LoginController::LoginController(
     m_login_window(nullptr) {}
 
 void LoginController::open() {
-  m_login_window = new LoginWindow(m_version);
+  auto servers = std::vector<std::string>();
+  std::transform(m_servers.begin(), m_servers.end(),
+    std::back_inserter(servers), [] (const auto& server) {
+      return server.m_name;
+    });
+  m_login_window = new LoginWindow(m_version, std::move(servers));
   m_login_window->connect_login_signal(
     std::bind_front(&LoginController::on_login, this));
   m_login_window->connect_cancel_signal(
@@ -35,11 +40,21 @@ connection LoginController::connect_logged_in_signal(
   return m_logged_in_signal.connect(slot);
 }
 
-void LoginController::on_login(
-    const std::string& username, const std::string& password) {
+void LoginController::on_login(const std::string& username,
+    const std::string& password, const std::string& server) {
   m_login_promise = QtPromise([=] {
-    return m_service_clients_factory(
-      username, password, m_servers.front().m_address);
+    auto address = [&] {
+      if(server.empty() && !m_servers.empty()) {
+        return m_servers.front().m_address;
+      }
+      for(auto& entry : m_servers) {
+        if(entry.m_name == server) {
+          return entry.m_address;
+        }
+      }
+      throw LoginException("Server not found.");
+    }();
+    return m_service_clients_factory(username, password, address);
   }, LaunchPolicy::ASYNC).then(
     std::bind_front(&LoginController::on_login_promise, this));
 }

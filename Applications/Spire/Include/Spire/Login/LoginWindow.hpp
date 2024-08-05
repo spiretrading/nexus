@@ -37,9 +37,11 @@ namespace Spire {
        * Signals an attempt to login.
        * @param username The username to login with.
        * @param password The password to login with.
+       * @param server The server to login to.
        */
       using LoginSignal =
-        Signal<void (const std::string& username, const std::string& password)>;
+        Signal<void (const std::string& username, const std::string& password,
+          const std::string& server)>;
 
       /** Signals to cancel a previous login operation. */
       using CancelSignal = Signal<void ()>;
@@ -47,9 +49,10 @@ namespace Spire {
       /**
        * Constructs a login window in the NONE state.
        * @param version The application build version.
+       * @param servers The list of servers available to login to.
        */
-      explicit LoginWindow(
-        const std::string& version, QWidget* parent = nullptr);
+      LoginWindow(std::string version, std::vector<std::string> servers,
+        QWidget* parent = nullptr);
 
       /** Sets the state to display to the user. */
       void set_state(State state);
@@ -82,6 +85,7 @@ namespace Spire {
       boost::optional<KeyObserver> m_username_key_observer;
       TextBox* m_password_text_box;
       boost::optional<KeyObserver> m_password_key_observer;
+      DropDownBox* m_server_box;
       Button* m_sign_in_button;
       QWidget* m_last_focus;
       bool m_is_dragging;

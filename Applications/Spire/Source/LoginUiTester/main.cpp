@@ -12,7 +12,7 @@ int main(int argc, char** argv) {
   application.setOrganizationName(QObject::tr("Spire Trading Inc"));
   application.setApplicationName(QObject::tr("Login UI Tester"));
   initialize_resources();
-  auto window = LoginWindow(SPIRE_VERSION);
+  auto window = LoginWindow(SPIRE_VERSION, {"Live Trading", "Development"});
   window.show();
   auto tester = LoginUiTester(&window);
   window.installEventFilter(&tester);
