@@ -4,6 +4,7 @@
 #include <QPoint>
 #include <QWidget>
 #include "Spire/Login/Login.hpp"
+#include "Spire/Login/Track.hpp"
 #include "Spire/Ui/KeyObserver.hpp"
 
 #ifdef ERROR
@@ -48,9 +49,13 @@ namespace Spire {
       /**
        * Constructs a login window in the NONE state.
        * @param version The application build version.
+       * @param tracks The list of tracks the user can run.
+       * @param track The currently selected track among the provided
+       *        <i>tracks</i>.
        * @param servers The list of servers available to login to.
        */
-      LoginWindow(std::string version, std::vector<std::string> servers,
+      LoginWindow(std::string version, std::vector<Track> tracks,
+        std::shared_ptr<TrackModel> track, std::vector<std::string> servers,
         QWidget* parent = nullptr);
 
       /** Sets the state to display to the user. */

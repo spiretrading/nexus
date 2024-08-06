@@ -27,7 +27,11 @@ void LoginController::open() {
     std::back_inserter(servers), [] (const auto& server) {
       return server.m_name;
     });
-  m_login_window = new LoginWindow(m_version, std::move(servers));
+  auto tracks = std::vector<Track>();
+  tracks.push_back(Track::CURRENT);
+  auto track = std::make_shared<LocalTrackModel>(Track::CURRENT);
+  m_login_window = new LoginWindow(
+      m_version, std::move(tracks), std::move(track), std::move(servers));
   m_login_window->connect_login_signal(
     std::bind_front(&LoginController::on_login, this));
   m_login_window->connect_cancel_signal(

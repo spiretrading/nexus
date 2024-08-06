@@ -1,7 +1,8 @@
 #ifndef SPIRE_TRACK_HPP
 #define SPIRE_TRACK_HPP
+#include <QString>
 #include "Spire/Login/Login.hpp"
-#include "Spire/Spire/ValueModel.hpp"
+#include "Spire/Spire/LocalValueModel.hpp"
 
 namespace Spire {
 
@@ -23,6 +24,12 @@ namespace Spire {
 
   /** Defines a local model over a Track. */
   using LocalTrackModel = LocalValueModel<Track>;
+
+  /** Returns the name of the track. */
+  const QString& to_text(Track track);
+
+  /** Returns a brief description of the track. */
+  const QString& get_description(Track track);
 }
 
 #endif

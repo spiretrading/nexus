@@ -12,7 +12,13 @@ int main(int argc, char** argv) {
   application.setOrganizationName(QObject::tr("Spire Trading Inc"));
   application.setApplicationName(QObject::tr("Login UI Tester"));
   initialize_resources();
-  auto window = LoginWindow(SPIRE_VERSION, {"Live Trading", "Development"});
+  auto tracks = std::vector<Track>();
+  tracks.push_back(Track::CLASSIC);
+  tracks.push_back(Track::CURRENT);
+  tracks.push_back(Track::PREVIEW);
+  auto track = std::make_shared<LocalTrackModel>(Track::CURRENT);
+  auto window =
+    LoginWindow(SPIRE_VERSION, tracks, track, {"Live Trading", "Development"});
   window.show();
   auto tester = LoginUiTester(&window);
   window.installEventFilter(&tester);

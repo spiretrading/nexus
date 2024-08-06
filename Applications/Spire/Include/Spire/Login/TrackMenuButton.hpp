@@ -46,8 +46,13 @@ namespace Spire {
     private:
       std::shared_ptr<TrackModel> m_current;
       State m_state;
+      Icon* m_wordmark;
       MenuButton* m_button;
       QLabel* m_spinner;
+      boost::signals2::scoped_connection m_connection;
+
+      void on_current(Track track);
+      void on_track(Track track);
   };
 }
 

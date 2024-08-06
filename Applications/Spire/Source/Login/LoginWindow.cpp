@@ -86,8 +86,9 @@ namespace {
   }
 }
 
-LoginWindow::LoginWindow(
-    std::string version, std::vector<std::string> servers, QWidget* parent)
+LoginWindow::LoginWindow(std::string version, std::vector<Track> tracks,
+    std::shared_ptr<TrackModel> track, std::vector<std::string> servers,
+    QWidget* parent)
     : QWidget(parent, Qt::FramelessWindowHint),
       m_server_box(nullptr),
       m_is_dragging(false),
@@ -109,9 +110,7 @@ LoginWindow::LoginWindow(
   auto layout = make_vbox_layout(this);
   layout->addWidget(close_button, 0, Qt::AlignRight);
   layout->addSpacing(scale_height(30));
-  auto tracks = std::vector<Track>();
-  auto track = std::make_shared<LocalTrackModel>();
-  m_track_button = new TrackMenuButton(tracks, track);
+  m_track_button = new TrackMenuButton(std::move(tracks), std::move(track));
   layout->addWidget(m_track_button);
   layout->addSpacing(scale_height(23));
   m_status_label = make_label("");
