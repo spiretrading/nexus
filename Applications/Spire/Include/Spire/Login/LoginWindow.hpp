@@ -1,7 +1,6 @@
 #ifndef SPIRE_LOGIN_WINDOW_HPP
 #define SPIRE_LOGIN_WINDOW_HPP
 #include <string>
-#include <QLabel>
 #include <QPoint>
 #include <QWidget>
 #include "Spire/Login/Login.hpp"
@@ -79,7 +78,7 @@ namespace Spire {
       mutable CancelSignal m_cancel_signal;
       State m_state;
       DropShadow* m_shadow;
-      QLabel* m_logo_widget;
+      TrackMenuButton* m_track_button;
       TextBox* m_status_label;
       TextBox* m_username_text_box;
       boost::optional<KeyObserver> m_username_key_observer;

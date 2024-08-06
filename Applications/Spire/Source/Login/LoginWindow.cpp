@@ -1,7 +1,7 @@
 #include "Spire/Login/LoginWindow.hpp"
 #include <QKeyEvent>
-#include <QMovie>
 #include "Spire/Login/ChromaHashWidget.hpp"
+#include "Spire/Login/TrackMenuButton.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
@@ -109,13 +109,10 @@ LoginWindow::LoginWindow(
   auto layout = make_vbox_layout(this);
   layout->addWidget(close_button, 0, Qt::AlignRight);
   layout->addSpacing(scale_height(30));
-  m_logo_widget = new QLabel(parent);
-  m_logo_widget->setFixedSize(scale(134, 50));
-  auto logo = new QMovie(":/Icons/logo.gif", QByteArray());
-  logo->setScaledSize(scale(134, 50));
-  m_logo_widget->setMovie(logo);
-  logo->start();
-  layout->addWidget(m_logo_widget, 0, Qt::AlignCenter);
+  auto tracks = std::vector<Track>();
+  auto track = std::make_shared<LocalTrackModel>();
+  m_track_button = new TrackMenuButton(tracks, track);
+  layout->addWidget(m_track_button);
   layout->addSpacing(scale_height(23));
   m_status_label = make_label("");
   update_style(*m_status_label, [&] (auto& style) {
@@ -227,7 +224,7 @@ void LoginWindow::set_state(State state) {
       static_cast<TextBox&>(
         m_sign_in_button->get_body()).get_current()->set(tr("Cancel"));
       m_status_label->get_current()->set("");
-      m_logo_widget->movie()->start();
+      m_track_button->set_state(TrackMenuButton::State::LOADING);
       break;
     }
     case State::CANCELLING: {
@@ -319,8 +316,7 @@ void LoginWindow::reset_visuals() {
   }
   static_cast<TextBox&>(
     m_sign_in_button->get_body()).get_current()->set(tr("Sign In"));
-  m_logo_widget->movie()->stop();
-  m_logo_widget->movie()->jumpToFrame(0);
+  m_track_button->set_state(TrackMenuButton::State::READY);
 }
 
 void LoginWindow::try_login() {
