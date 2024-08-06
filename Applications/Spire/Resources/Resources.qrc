@@ -142,5 +142,12 @@
     <file>Icons/add.svg</file>
     <file>Icons/delete3.svg</file>
     <file>Icons/duplicate.svg</file>
+    <file>Icons/sign_in/chevron_down.svg</file>
+    <file>Icons/sign_in/spinner_classic.gif</file>
+    <file>Icons/sign_in/spinner_current.gif</file>
+    <file>Icons/sign_in/spinner_preview.gif</file>
+    <file>Icons/sign_in/wordmark_classic.svg</file>
+    <file>Icons/sign_in/wordmark_current.svg</file>
+    <file>Icons/sign_in/wordmark_preview.svg</file>
   </qresource>
 </RCC>

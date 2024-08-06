@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="11" height="8" viewBox="0 0 11 8">
+  <g id="chevron_down" transform="translate(0 -12)">
+    <rect id="base" width="11" height="8" transform="translate(0 12)" fill="none"/>
+    <path id="chevron_down-2" data-name="chevron_down" d="M9.533,1,5.5,5.217,1.467,1,0,2.23l5.5,5.8L11,2.23Z" transform="translate(0 11.486)" fill="#fff"/>
+  </g>
+</svg>

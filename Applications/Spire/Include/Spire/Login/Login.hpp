@@ -7,6 +7,8 @@ namespace Spire {
   class LoginController;
   class LoginException;
   class LoginWindow;
+  enum class Track;
+  class TrackMenuButton;
 }
 
 #endif
