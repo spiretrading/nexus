@@ -111,7 +111,8 @@ LoginWindow::LoginWindow(std::string version, std::vector<Track> tracks,
   layout->addWidget(close_button, 0, Qt::AlignRight);
   layout->addSpacing(scale_height(30));
   m_track_button = new TrackMenuButton(std::move(tracks), std::move(track));
-  layout->addWidget(m_track_button);
+  m_track_button->setFixedWidth(scale_width(280));
+  layout->addWidget(m_track_button, 0, Qt::AlignCenter);
   layout->addSpacing(scale_height(23));
   m_status_label = make_label("");
   update_style(*m_status_label, [&] (auto& style) {
@@ -337,7 +338,8 @@ void LoginWindow::try_login() {
         return std::string();
       }();
       m_login_signal(m_username_text_box->get_current()->get().toStdString(),
-        m_password_text_box->get_current()->get().toStdString(), server);
+        m_password_text_box->get_current()->get().toStdString(),
+        m_track_button->get_current()->get(), server);
       set_state(State::LOGGING_IN);
     }
   } else {

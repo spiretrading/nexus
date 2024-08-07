@@ -45,7 +45,7 @@ connection LoginController::connect_logged_in_signal(
 }
 
 void LoginController::on_login(const std::string& username,
-    const std::string& password, const std::string& server) {
+    const std::string& password, Track track, const std::string& server) {
   m_login_promise = QtPromise([=] {
     auto address = [&] {
       if(server.empty() && !m_servers.empty()) {

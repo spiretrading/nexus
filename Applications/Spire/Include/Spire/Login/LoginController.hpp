@@ -72,7 +72,7 @@ namespace Spire {
       LoginController(const LoginController&) = delete;
       LoginController& operator =(const LoginController&) = delete;
       void on_login(const std::string& username, const std::string& password,
-        const std::string& server);
+        Track track, const std::string& server);
       void on_cancel();
       void on_login_promise(
         Beam::Expect<Nexus::ServiceClientsBox> service_clients);

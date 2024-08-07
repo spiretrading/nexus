@@ -79,7 +79,13 @@ TrackMenuButton::TrackMenuButton(std::vector<Track> tracks,
   contents_layout->addSpacing(scale_width(9));
   auto chevron =
     new Icon(imageFromSvg(":/Icons/sign_in/chevron_down.svg", scale(11, 8)));
-  set_style(*chevron, StyleSheet());
+  if(tracks.size() > 1) {
+    set_style(*chevron, StyleSheet());
+  } else {
+    update_style(*chevron, [&] (auto& style) {
+      style.get(Any()).set(Visibility::NONE);
+    });
+  }
   contents_layout->addWidget(chevron, 0, Qt::AlignCenter);
   inner_body_layout->addLayout(contents_layout);
   inner_body_layout->addStretch(1);
@@ -109,8 +115,10 @@ void TrackMenuButton::set_state(State state) {
   }
   m_state = state;
   if(m_state == State::LOADING) {
+    m_button->setDisabled(true);
     m_spinner->movie()->start();
   } else {
+    m_button->setDisabled(false);
     m_spinner->movie()->stop();
     m_spinner->movie()->jumpToFrame(0);
   }

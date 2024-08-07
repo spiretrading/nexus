@@ -37,11 +37,12 @@ namespace Spire {
        * Signals an attempt to login.
        * @param username The username to login with.
        * @param password The password to login with.
+       * @param track The track to run.
        * @param server The server to login to.
        */
       using LoginSignal =
         Signal<void (const std::string& username, const std::string& password,
-          const std::string& server)>;
+          Track track, const std::string& server)>;
 
       /** Signals to cancel a previous login operation. */
       using CancelSignal = Signal<void ()>;
