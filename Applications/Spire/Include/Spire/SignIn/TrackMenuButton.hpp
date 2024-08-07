@@ -6,6 +6,7 @@
 #include <QWidget>
 #include "Spire/SignIn/SignIn.hpp"
 #include "Spire/SignIn/Track.hpp"
+#include "Spire/Spire/AssociativeValueModel.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -47,6 +48,7 @@ namespace Spire {
       bool m_is_multitrack;
       std::shared_ptr<TrackModel> m_current;
       State m_state;
+      std::shared_ptr<AssociativeValueModel<Track>> m_selected;
       Icon* m_wordmark;
       MenuButton* m_button;
       QLabel* m_spinner;

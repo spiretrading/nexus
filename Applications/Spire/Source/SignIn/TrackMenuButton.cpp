@@ -3,7 +3,9 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/Layouts.hpp"
+#include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/MenuButton.hpp"
+#include "Spire/Ui/TextBox.hpp"
 
 using namespace Spire;
 using namespace Spire::Styles;
@@ -37,6 +39,23 @@ namespace {
     throw std::runtime_error("Unknown track.");
   }
 
+  const QImage& get_logo(Track track) {
+    if(track == Track::CLASSIC) {
+      static auto icon =
+        imageFromSvg(":/Icons/sign_in/logo_classic.svg", scale(32, 32));
+      return icon;
+    } else if(track == Track::CURRENT) {
+      static auto icon =
+        imageFromSvg(":/Icons/sign_in/logo_current.svg", scale(32, 32));
+      return icon;
+    } else if(track == Track::PREVIEW) {
+      static auto icon =
+        imageFromSvg(":/Icons/sign_in/logo_preview.svg", scale(32, 32));
+      return icon;
+    }
+    throw std::runtime_error("Unknown track.");
+  }
+
   auto make_spinner(Track track) {
     auto spinner = new QLabel();
     spinner->setFixedSize(scale(40, 48));
@@ -55,13 +74,62 @@ namespace {
     set_style(*wordmark, StyleSheet());
     return wordmark;
   }
+
+  auto make_track_menu_item(
+      Track track, std::shared_ptr<BooleanModel> is_checked) {
+    static auto checkmark =
+      imageFromSvg(":/Icons/sign_in/check.svg", scale(16, 16));
+    auto item = new QWidget();
+    auto layout = make_hbox_layout(item);
+    auto check_icon = new Icon(checkmark);
+    if(is_checked->get()) {
+      match(*check_icon, Checked());
+    }
+    update_style(*check_icon, [] (auto& style) {
+      style.get(!Checked()).set(Visibility::INVISIBLE);
+    });
+    is_checked->connect_update_signal([=] (bool is_checked) {
+      if(is_checked) {
+        match(*check_icon, Checked());
+      } else {
+        unmatch(*check_icon, Checked());
+      }
+    });
+    layout->addWidget(check_icon, 0, Qt::AlignVCenter);
+    layout->addSpacing(scale_width(6));
+    auto logo = new Icon(get_logo(track));
+    set_style(*logo, StyleSheet());
+    layout->addWidget(logo);
+    layout->addSpacing(scale_width(8));
+    auto text_layout = make_vbox_layout();
+    auto name = make_label(to_text(track));
+    name->setFixedHeight(scale_height(18));
+    update_style(*name, [] (auto& style) {
+      style.get(Any()).
+        set(FontSize(scale_height(14))).
+        set(PaddingBottom(scale_height(2)));
+    });
+    text_layout->addWidget(name);
+    auto description = make_label(get_description(track));
+    description->setFixedHeight(scale_height(14));
+    update_style(*description, [] (auto& style) {
+      style.get(Any()).
+        set(FontSize(scale_height(12))).
+        set(TextColor(QColor(0x808080)));
+    });
+    text_layout->addWidget(description);
+    layout->addLayout(text_layout);
+    return item;
+  }
 }
 
 TrackMenuButton::TrackMenuButton(std::vector<Track> tracks,
     std::shared_ptr<TrackModel> current, QWidget* parent)
     : m_is_multitrack(tracks.size() > 1),
       m_current(std::move(current)),
-      m_state(State::READY) {
+      m_state(State::READY),
+      m_selected(
+        std::make_shared<AssociativeValueModel<Track>>(m_current->get())) {
   auto body = new QWidget();
   auto body_layout = make_hbox_layout(body);
   body_layout->addStretch(1);
@@ -97,13 +165,18 @@ TrackMenuButton::TrackMenuButton(std::vector<Track> tracks,
   m_button = new MenuButton(*body);
   if(m_is_multitrack) {
     for(auto& track : tracks) {
-      m_button->get_menu().add_action(
-        to_text(track), std::bind_front(&TrackMenuButton::on_track, this, track));
+      m_button->get_menu().add_action(to_text(track),
+        std::bind_front(&TrackMenuButton::on_track, this, track),
+        make_track_menu_item(track, m_selected->get_association(track)));
     }
   } else {
     m_button->setDisabled(true);
   }
   enclose(*this, *m_button);
+  update_style(*m_button, [] (auto& style) {
+    style.get(Any() > is_a<ContextMenu>() > is_a<ListView>() >
+      is_a<ListItem>()).set(vertical_padding(scale_height(6)));
+  });
   m_connection = m_current->connect_update_signal(
     std::bind_front(&TrackMenuButton::on_current, this));
 }
@@ -134,6 +207,7 @@ void TrackMenuButton::set_state(State state) {
 }
 
 void TrackMenuButton::on_current(Track track) {
+  m_selected->set(track);
   auto& body_layout = *m_button->get_body().layout();
   auto spinner = make_spinner(track);
   auto item = body_layout.replaceWidget(m_spinner, spinner);

@@ -151,7 +151,11 @@
     <file>Icons/add.svg</file>
     <file>Icons/delete3.svg</file>
     <file>Icons/duplicate.svg</file>
+    <file>Icons/sign_in/check.svg</file>
     <file>Icons/sign_in/chevron_down.svg</file>
+    <file>Icons/sign_in/logo_classic.svg</file>
+    <file>Icons/sign_in/logo_current.svg</file>
+    <file>Icons/sign_in/logo_preview.svg</file>
     <file>Icons/sign_in/spinner_classic.gif</file>
     <file>Icons/sign_in/spinner_current.gif</file>
     <file>Icons/sign_in/spinner_preview.gif</file>

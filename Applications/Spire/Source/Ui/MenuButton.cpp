@@ -35,6 +35,7 @@ MenuButton::MenuButton(QWidget& body, QWidget* parent)
   enclose(*this, *m_body);
   m_menu = new ContextMenu(*this);
   m_menu->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  link(*this, *m_menu);
   m_menu_window = static_cast<OverlayPanel*>(m_menu->window());
   m_menu_window->set_closed_on_focus_out(false);
   m_menu_window->layout()->itemAt(0)->widget()->setSizePolicy(
