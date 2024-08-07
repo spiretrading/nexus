@@ -59,7 +59,8 @@ namespace {
 
 TrackMenuButton::TrackMenuButton(std::vector<Track> tracks,
     std::shared_ptr<TrackModel> current, QWidget* parent)
-    : m_current(std::move(current)),
+    : m_is_multitrack(tracks.size() > 1),
+      m_current(std::move(current)),
       m_state(State::READY) {
   auto body = new QWidget();
   auto body_layout = make_hbox_layout(body);
@@ -79,7 +80,7 @@ TrackMenuButton::TrackMenuButton(std::vector<Track> tracks,
   contents_layout->addSpacing(scale_width(9));
   auto chevron =
     new Icon(imageFromSvg(":/Icons/sign_in/chevron_down.svg", scale(11, 8)));
-  if(tracks.size() > 1) {
+  if(m_is_multitrack) {
     set_style(*chevron, StyleSheet());
   } else {
     update_style(*chevron, [&] (auto& style) {
@@ -92,9 +93,13 @@ TrackMenuButton::TrackMenuButton(std::vector<Track> tracks,
   body_layout->addLayout(inner_body_layout);
   body_layout->addStretch(1);
   m_button = new MenuButton(*body);
-  for(auto& track : tracks) {
-    m_button->get_menu().add_action(
-      to_text(track), std::bind_front(&TrackMenuButton::on_track, this, track));
+  if(m_is_multitrack) {
+    for(auto& track : tracks) {
+      m_button->get_menu().add_action(
+        to_text(track), std::bind_front(&TrackMenuButton::on_track, this, track));
+    }
+  } else {
+    m_button->setDisabled(true);
   }
   enclose(*this, *m_button);
   m_connection = m_current->connect_update_signal(
@@ -118,7 +123,9 @@ void TrackMenuButton::set_state(State state) {
     m_button->setDisabled(true);
     m_spinner->movie()->start();
   } else {
-    m_button->setDisabled(false);
+    if(m_is_multitrack) {
+      m_button->setDisabled(false);
+    }
     m_spinner->movie()->stop();
     m_spinner->movie()->jumpToFrame(0);
   }

@@ -44,6 +44,7 @@ namespace Spire {
       void set_state(State state);
 
     private:
+      bool m_is_multitrack;
       std::shared_ptr<TrackModel> m_current;
       State m_state;
       Icon* m_wordmark;
