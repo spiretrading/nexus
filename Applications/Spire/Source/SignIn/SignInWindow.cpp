@@ -151,7 +151,7 @@ SignInWindow::SignInWindow(std::string version, std::vector<Track> tracks,
     std::bind_front(&SignInWindow::on_key_press, this));
   password_layout->addWidget(m_password_text_box);
   m_chroma_hash_widget = new ChromaHashWidget();
-  m_chroma_hash_widget->setFixedSize(scale(34, 30));
+  m_chroma_hash_widget->setFixedWidth(scale_width(34));
   m_chroma_hash_widget->setContentsMargins(
     {scale_width(2), scale_height(2), scale_width(2), scale_height(2)});
   password_layout->addWidget(m_chroma_hash_widget);
