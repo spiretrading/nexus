@@ -60,7 +60,9 @@ SignInUiTester::SignInUiTester()
     m_rebuild_button, &QPushButton::pressed, this, &SignInUiTester::on_rebuild);
   layout->addWidget(m_rebuild_button);
   on_rebuild();
-  move(m_window->pos().x(), m_window->pos().y() + m_window->height() + 5);
+  move(
+    m_window->pos().x() + std::abs(m_window->width() - sizeHint().width()) / 2,
+    m_window->pos().y() + m_window->height() + 5);
 }
 
 bool SignInUiTester::eventFilter(QObject* watched, QEvent* event) {
