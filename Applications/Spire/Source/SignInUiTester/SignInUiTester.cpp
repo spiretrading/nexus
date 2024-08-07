@@ -131,7 +131,7 @@ void SignInUiTester::on_rebuild() {
 
 void SignInUiTester::on_sign_in(const std::string& username,
     const std::string& password, Track track, const std::string& server) {
-  m_signals_text->append(tr("SignIn(\"%1\", \"%2\", %3, \"%4\")\n").arg(
+  m_signals_text->append(tr("SignIn(\"%1\", \"%2\", %3, \"%4\")").arg(
     QString::fromStdString(username), QString::fromStdString(password),
     to_text(track), QString::fromStdString(server)));
   m_accept_button->setEnabled(true);
@@ -140,7 +140,7 @@ void SignInUiTester::on_sign_in(const std::string& username,
 }
 
 void SignInUiTester::on_cancel() {
-  m_signals_text->append(tr("Cancel\n"));
+  m_signals_text->append(tr("Cancel"));
   m_accept_button->setDisabled(true);
   m_reject_button->setDisabled(true);
   m_error_button->setDisabled(true);
