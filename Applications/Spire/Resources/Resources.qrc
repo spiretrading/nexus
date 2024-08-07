@@ -82,6 +82,16 @@
     <file>Icons/toolbar/profile.svg</file>
     <file>Icons/toolbar/time_and_sales.svg</file>
     <file>Icons/toolbar/watchlist.svg</file>
+    <file>Icons/toolbar/recently_closed/blotter.svg</file>
+    <file>Icons/toolbar/recently_closed/book_view.svg</file>
+    <file>Icons/toolbar/recently_closed/canvas.svg</file>
+    <file>Icons/toolbar/recently_closed/chart.svg</file>
+    <file>Icons/toolbar/recently_closed/key_bindings.svg</file>
+    <file>Icons/toolbar/recently_closed/order_imbalance_indicator.svg</file>
+    <file>Icons/toolbar/recently_closed/portfolio.svg</file>
+    <file>Icons/toolbar/recently_closed/profile.svg</file>
+    <file>Icons/toolbar/recently_closed/time_and_sales.svg</file>
+    <file>Icons/toolbar/recently_closed/watchlist.svg</file>
     <file>Icons/account.svg</file>
     <file>Icons/blotter.svg</file>
     <file>Icons/bookview.svg</file>

@@ -6,6 +6,7 @@
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/EmptySelectionModel.hpp"
+#include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/ListView.hpp"
@@ -37,16 +38,68 @@ namespace {
       set(EdgeNavigation::CONTAIN);
     return style;
   }
+
+  auto make_icon_item(const QString& name, QImage icon) {
+    auto item = new QWidget();
+    auto layout = make_hbox_layout(item);
+    layout->addWidget(new Icon(std::move(icon)), 0, Qt::AlignVCenter);
+    layout->addSpacing(scale_width(8));
+    layout->addWidget(make_label(name));
+    return item;
+  }
+
+  QWidget* default_item_view_builder(ContextMenu::MenuItemType type,
+      const QString& name, const ContextMenu::Data& data) {
+    if(type == ContextMenu::MenuItemType::ACTION) {
+      return make_label(name);
+    } else if(type == ContextMenu::MenuItemType::DISABLED_ACTION) {
+      auto label = make_label(name);
+      label->setSizePolicy(
+        QSizePolicy::Expanding, label->sizePolicy().verticalPolicy());
+      update_style(*label, [] (auto& style) {
+        auto font = QFont("Roboto");
+        font.setWeight(QFont::Normal);
+        font.setPixelSize(scale_width(12));
+        font.setItalic(true);
+        style.get(Any()).
+          set(Font(font)).
+          set(TextAlign(Qt::Alignment(Qt::AlignCenter))).
+          set(TextColor(QColor(Qt::black)));
+      });
+      return label;
+    } else if(type == ContextMenu::MenuItemType::CHECK) {
+      auto check_box =
+        new CheckBox(std::get<std::shared_ptr<BooleanModel>>(data));
+      check_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+      check_box->setLayoutDirection(Qt::RightToLeft);
+      check_box->set_label(name);
+      return check_box;
+    } else if(type == ContextMenu::MenuItemType::SEPARATOR) {
+      auto separator = new Box();
+      separator->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+      separator->setFixedHeight(scale_height(1));
+      update_style(*separator, [] (auto& style) {
+        style.get(Any()).set(BackgroundColor(QColor(0xC8C8C8)));
+      });
+      return separator;
+    }
+    return nullptr;
+  }
 }
 
 ContextMenu::ContextMenu(QWidget& parent)
+  : ContextMenu(parent, &default_item_view_builder) {}
+
+ContextMenu::ContextMenu(QWidget& parent, ItemViewBuilder item_view_builder)
     : QWidget(&parent),
+      m_item_view_builder(std::move(item_view_builder)),
+      m_next_id(0),
       m_active_menu_window(nullptr) {
   setAttribute(Qt::WA_Hover);
   setMinimumWidth(scale_width(MIN_WIDTH));
   m_list = std::make_shared<ArrayListModel<MenuItem>>();
-  m_list_view = new ListView(
-    m_list, std::make_shared<ListEmptySelectionModel>(),
+  m_list_view = new ListView(m_list,
+    std::make_shared<ListEmptySelectionModel>(),
     std::bind_front(&ContextMenu::build_item, this));
   m_list_view->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
   update_style(*m_list_view, [&] (auto& style) {
@@ -74,15 +127,22 @@ ContextMenu::ContextMenu(QWidget& parent)
 
 void ContextMenu::add_menu(const QString& name, ContextMenu& menu) {
   menu.window()->setParent(this);
-  m_list->push(MenuItem(MenuItemType::SUBMENU, name, &menu));
+  m_list->push(MenuItem(++m_next_id, MenuItemType::SUBMENU, name, &menu));
 }
 
 void ContextMenu::add_action(const QString& name, const Action& action) {
-  m_list->push(MenuItem(MenuItemType::ACTION, name, action));
+  m_list->push(MenuItem(++m_next_id, MenuItemType::ACTION, name, action));
+}
+
+void ContextMenu::add_action(
+    const QString& name, const Action& action, QWidget* view) {
+  auto id = ++m_next_id;
+  m_custom_views.insert(std::pair(id, view));
+  m_list->push(MenuItem(id, MenuItemType::ACTION, name, action));
 }
 
 void ContextMenu::add_disabled_action(const QString& name) {
-  m_list->push(MenuItem(MenuItemType::DISABLED_ACTION, name));
+  m_list->push(MenuItem(++m_next_id, MenuItemType::DISABLED_ACTION, name));
   auto item = m_list_view->get_list_item(m_list->get_size() - 1);
   item->setDisabled(true);
 }
@@ -95,19 +155,15 @@ std::shared_ptr<BooleanModel> ContextMenu::add_check_box(const QString& name) {
 
 void ContextMenu::add_check_box(const QString& name,
     const std::shared_ptr<BooleanModel>& checked) {
-  m_list->push(MenuItem(MenuItemType::CHECK, name, checked));
+  m_list->push(MenuItem(++m_next_id, MenuItemType::CHECK, name, checked));
 }
 
 void ContextMenu::add_separator() {
-  m_list->push(MenuItem(MenuItemType::SEPARATOR));
+  m_list->push(MenuItem(++m_next_id, MenuItemType::SEPARATOR));
 }
 
 void ContextMenu::reset() {
-  m_list->transact([&] {
-    for(auto i = m_list->get_size() - 1; i >= 0; --i) {
-      m_list->remove(i);
-    }
-  });
+  clear(*m_list);
 }
 
 connection ContextMenu::connect_submit_signal(
@@ -189,49 +245,23 @@ bool ContextMenu::event(QEvent* event) {
 QWidget* ContextMenu::build_item(
     const std::shared_ptr<AnyListModel>& list, int index) {
   auto item = std::any_cast<MenuItem&&>(list->get(index));
-  if(item.m_type == MenuItemType::ACTION) {
-    return make_label(item.m_name);
-  } else if(item.m_type == MenuItemType::DISABLED_ACTION) {
-    auto label = make_label(item.m_name);
-    label->setSizePolicy(
-      QSizePolicy::Expanding, label->sizePolicy().verticalPolicy());
-    update_style(*label, [] (auto& style) {
-      auto font = QFont("Roboto");
-      font.setWeight(QFont::Normal);
-      font.setPixelSize(scale_width(12));
-      font.setItalic(true);
-      style.get(Any()).
-        set(Font(font)).
-        set(TextAlign(Qt::Alignment(Qt::AlignCenter))).
-        set(TextColor(QColor(Qt::black)));
-    });
-    return label;
-  } else if(item.m_type == MenuItemType::CHECK) {
-    auto check_box =
-      new CheckBox(std::get<std::shared_ptr<BooleanModel>>(item.m_data));
-    check_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-    check_box->setLayoutDirection(Qt::RightToLeft);
-    check_box->set_label(item.m_name);
-    return check_box;
-  } else if(item.m_type == MenuItemType::SEPARATOR) {
-    auto separator = new Box();
-    separator->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-    separator->setFixedHeight(scale_height(1));
-    update_style(*separator, [] (auto& style) {
-      style.get(Any()).set(BackgroundColor(QColor(0xC8C8C8)));
-    });
-    return separator;
+  auto custom_view = m_custom_views.find(item.m_id);
+  if(custom_view != m_custom_views.end()) {
+    return custom_view->second;
   }
-  auto submenu = std::get<ContextMenu*>(item.m_data);
-  auto submenu_item = new SubmenuItem(item.m_name, *submenu);
-  submenu_item->installEventFilter(this);
-  submenu->connect_submit_signal(
-    [=] (const ContextMenu& menu, const QString& label) {
-      m_window->hide();
-      m_submit_signal(menu, label);
-    });
-  m_submenus[index] = submenu->window();
-  return submenu_item;
+  if(item.m_type == MenuItemType::SUBMENU) {
+    auto submenu = std::get<ContextMenu*>(item.m_data);
+    auto submenu_item = new SubmenuItem(item.m_name, *submenu);
+    submenu_item->installEventFilter(this);
+    submenu->connect_submit_signal(
+      [=] (const ContextMenu& menu, const QString& label) {
+        m_window->hide();
+        m_submit_signal(menu, label);
+      });
+    m_submenus[index] = submenu->window();
+    return submenu_item;
+  }
+  return m_item_view_builder(item.m_type, item.m_name, item.m_data);
 }
 
 ListItem* ContextMenu::get_current_item() const {
@@ -390,4 +420,9 @@ void ContextMenu::on_window_style() {
         });
       });
   }
+}
+
+void Spire::add_action(ContextMenu& menu, const QString& name,  QImage icon,
+    const ContextMenu::Action& action) {
+  menu.add_action(name, action, make_icon_item(name, std::move(icon)));
 }
