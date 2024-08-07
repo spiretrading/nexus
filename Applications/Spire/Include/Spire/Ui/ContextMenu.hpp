@@ -1,5 +1,6 @@
 #ifndef SPIRE_CONTEXT_MENU_HPP
 #define SPIRE_CONTEXT_MENU_HPP
+#include <unordered_map>
 #include <variant>
 #include <QWidget>
 #include "Spire/Spire/ListModel.hpp"
@@ -12,6 +13,32 @@ namespace Spire {
   class ContextMenu : public QWidget {
     public:
 
+      /** The type of function called to execute a menu item's action. */
+      using Action = std::function<void ()>;
+
+      /** Enumerates the types of menu items. */
+      enum class MenuItemType {
+
+        /** The menu item triggers an action. */
+        ACTION,
+
+        /** A disabled action. */
+        DISABLED_ACTION,
+
+        /** The menu item is a check box. */
+        CHECK,
+
+        /** The menu item separates two sections. */
+        SEPARATOR,
+
+        /** The menu item opens a sub-menu. */
+        SUBMENU
+      };
+
+      /** Stores the data associated with a menu item. */
+      using Data =
+        std::variant<ContextMenu*, Action, std::shared_ptr<BooleanModel>>;
+
       /**
        * Signals that a menu item was submitted.
        * @param menu The ContextMenu where the submission is triggered.
@@ -21,15 +48,27 @@ namespace Spire {
         void (const ContextMenu& menu, const QString& label)>;
 
       /**
-       * The type of function used to do an action.
+       * The type of function used to make the QWidget associated with a menu
+       * item.
+       * @param type The type of menu item to make the widget for.
+       * @param name The name of the item.
+       * @param data The data associated with the item.
        */
-      using Action = std::function<void ()>;
+      using ItemViewBuilder = std::function<QWidget* (
+        MenuItemType type, const QString& name, const Data& data)>;
 
       /**
        * Constructs a ContextMenu.
        * @param parent The parent widget.
        */
       explicit ContextMenu(QWidget& parent);
+
+      /**
+       * Constructs a ContextMenu with a custom view builder.
+       * @param parent The parent widget.
+       * @param item_view_builder Makes the QWidget used to display menu items.
+       */
+      explicit ContextMenu(QWidget& parent, ItemViewBuilder item_view_builder);
 
       /**
        * Adds a menu.
@@ -44,6 +83,14 @@ namespace Spire {
        * @param action The action called when the item is submitted.
        */
       void add_action(const QString& name, const Action& action);
+
+      /**
+       * Adds an action.
+       * @param name The name of the action.
+       * @param action The action called when the item is submitted.
+       * @param view The widget used to display the action.
+       */
+      void add_action(const QString& name, const Action& action, QWidget* view);
 
       /**
        * Adds an action that is disabled.
@@ -81,20 +128,16 @@ namespace Spire {
       bool event(QEvent* event) override;
 
     private:
-      enum class MenuItemType {
-        ACTION,
-        DISABLED_ACTION,
-        CHECK,
-        SEPARATOR,
-        SUBMENU
-      };
       struct MenuItem {
+        int m_id;
         MenuItemType m_type;
         QString m_name;
-        std::variant<ContextMenu*, Action, std::shared_ptr<BooleanModel>>
-          m_data;
+        Data m_data;
       };
       mutable SubmitSignal m_submit_signal;
+      ItemViewBuilder m_item_view_builder;
+      int m_next_id;
+      std::unordered_map<int, QWidget*> m_custom_views;
       std::shared_ptr<ArrayListModel<MenuItem>> m_list;
       ListView* m_list_view;
       OverlayPanel* m_window;
@@ -117,6 +160,16 @@ namespace Spire {
       void on_submit(const std::any& submission);
       void on_window_style();
   };
+
+  /**
+   * Adds an action to a ContextMenu displaying an icon along side it.
+   * @param menu The menu to add the action to.
+   * @param name The name of the action.
+   * @param icon The icon to display.
+   * @param action The action called when the item is submitted.
+   */
+  void add_action(ContextMenu& menu, const QString& name, QImage icon,
+    const ContextMenu::Action& action);
 }
 
 #endif
