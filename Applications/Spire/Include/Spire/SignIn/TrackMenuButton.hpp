@@ -4,8 +4,8 @@
 #include <vector>
 #include <QLabel>
 #include <QWidget>
-#include "Spire/Login/Login.hpp"
-#include "Spire/Login/Track.hpp"
+#include "Spire/SignIn/SignIn.hpp"
+#include "Spire/SignIn/Track.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {

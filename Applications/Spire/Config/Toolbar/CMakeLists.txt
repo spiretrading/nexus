@@ -4,11 +4,8 @@ file(GLOB source_files ${SPIRE_SOURCE_PATH}/Toolbar/*.cpp)
 find_cpp_qobject(qobject_source_files ${header_files})
 qt5_wrap_cpp(generated_source_files ${qobject_source_files}
   OPTIONS -DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED)
-source_group("Generated Files\\Header Files" FILES ${generated_header_files})
-source_group("Generated Files\\Source Files" FILES ${generated_source_files})
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
-add_library(Toolbar ${header_files} ${source_files}
-  ${generated_header_files} ${generated_source_files})
+add_library(Toolbar ${header_files} ${source_files})
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 set_target_properties(Toolbar PROPERTIES
   STATIC_LIBRARY_FLAGS_RELEASE "${CMAKE_LIBRARY_FLAGS}"
@@ -51,7 +48,7 @@ if(UNIX)
 endif()
 target_link_libraries(ToolbarUiTester Async Dashboard Charting PortfolioViewer
   Utilities RiskTimer AccountViewer KeyBindings Blotter Catalog BookView Library
-  Login Resources Styles TimeAndSales OrderImbalanceIndicator InputWidgets
+  Resources Styles TimeAndSales OrderImbalanceIndicator InputWidgets
   CanvasView Canvas LegacyResources LegacyUI Toolbar
   debug ${CRYPTOPP_LIBRARY_DEBUG_PATH}
   optimized ${CRYPTOPP_LIBRARY_OPTIMIZED_PATH}

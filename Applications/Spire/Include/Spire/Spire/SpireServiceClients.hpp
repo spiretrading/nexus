@@ -23,7 +23,7 @@ namespace Spire {
 
       /**
        * Constructs a SpireServiceClients instance.
-       * @param serviceLocatorClient The ServiceLocatorClient logged into the
+       * @param serviceLocatorClient The ServiceLocatorClient signed into the
        *        Spire services.
        */
       explicit SpireServiceClients(

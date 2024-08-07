@@ -13,7 +13,7 @@
 #include "Nexus/MarketDataService/ApplicationDefinitions.hpp"
 #include "Nexus/OrderExecutionService/ApplicationDefinitions.hpp"
 #include "Nexus/RiskService/ApplicationDefinitions.hpp"
-#include "Spire/Login/LoginException.hpp"
+#include "Spire/SignIn/SignInException.hpp"
 #include "Version.hpp"
 
 using namespace Beam;
@@ -39,7 +39,7 @@ namespace {
     try {
       return Box(std::in_place_type<Client>, service_locator_client->Get());
     } catch(const std::exception&) {
-      throw LoginException(reason);
+      throw SignInException(reason);
     }
   }
 }
@@ -57,7 +57,7 @@ BEAM_SUPPRESS_THIS_INITIALIZER()
       auto minimum_version = definitionsClient.LoadMinimumSpireClientVersion();
       if(std::stoi(minimum_version) > std::stoi(std::string(SPIRE_VERSION))) {
         BOOST_THROW_EXCEPTION(
-          LoginException("Unsupported version, update to " + minimum_version));
+          SignInException("Unsupported version, update to " + minimum_version));
       }
       return definitionsClient;
     }()),
@@ -87,7 +87,7 @@ BEAM_SUPPRESS_THIS_INITIALIZER()
       try {
         return MakeLiveNtpTimeClientFromServiceLocator(m_serviceLocatorClient);
       } catch(const std::exception&) {
-        throw LoginException("Time server is unavailable.");
+        throw SignInException("Time server is unavailable.");
       }
     }()) {}
 BEAM_UNSUPPRESS_THIS_INITIALIZER()

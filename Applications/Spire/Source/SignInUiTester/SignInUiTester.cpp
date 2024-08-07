@@ -1,6 +1,6 @@
-#include "Spire/LoginUiTester/LoginUiTester.hpp"
+#include "Spire/SignInUiTester/SignInUiTester.hpp"
 #include <QVBoxLayout>
-#include "Spire/Login/LoginWindow.hpp"
+#include "Spire/SignIn/SignInWindow.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Window.hpp"
 
@@ -8,9 +8,9 @@ using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
 
-LoginUiTester::LoginUiTester(Spire::LoginWindow* login, QWidget* parent)
+SignInUiTester::SignInUiTester(SignInWindow& window, QWidget* parent)
     : QWidget(parent),
-      m_login_window(login) {
+      m_window(&window) {
   setFixedSize(scale(480, 270));
   auto layout = new QVBoxLayout(this);
   m_accept_button = new QPushButton("Accept Account", this);
@@ -33,17 +33,17 @@ LoginUiTester::LoginUiTester(Spire::LoginWindow* login, QWidget* parent)
   layout->addWidget(m_server_unavailable_button);
 }
 
-bool LoginUiTester::eventFilter(QObject* receiver, QEvent* event) {
+bool SignInUiTester::eventFilter(QObject* receiver, QEvent* event) {
   if(event->type() == QEvent::MouseButtonRelease && event->type() != QEvent::Move) {
     if(receiver == m_accept_button) {
-      m_login_window->set_state(LoginWindow::State::NONE);
+      m_window->set_state(SignInWindow::State::NONE);
     } else if(receiver == m_reject_button) {
-      m_login_window->set_error(tr("Incorrect username or password."));
+      m_window->set_error(tr("Incorrect username or password."));
     } else if(receiver == m_server_unavailable_button) {
-      m_login_window->set_error(tr("Server unavailable."));
+      m_window->set_error(tr("Server unavailable."));
     }
   }
-  if(receiver == m_login_window && event->type() == QEvent::Close) {
+  if(receiver == m_window && event->type() == QEvent::Close) {
     close();
   }
   return QWidget::eventFilter(receiver, event);

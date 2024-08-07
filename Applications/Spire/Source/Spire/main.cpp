@@ -14,11 +14,11 @@
 #include "Spire/LegacyUI/CustomQtVariants.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
-#include "Spire/Login/LoginController.hpp"
-#include "Spire/Login/LoginException.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorProperties.hpp"
 #include "Spire/PortfolioViewer/PortfolioViewerProperties.hpp"
 #include "Spire/RiskTimer/RiskTimerMonitor.hpp"
+#include "Spire/SignIn/SignInController.hpp"
+#include "Spire/SignIn/SignInException.hpp"
 #include "Spire/Spire/Resources.hpp"
 #include "Spire/Spire/SpireServiceClients.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesProperties.hpp"
@@ -51,9 +51,9 @@ namespace {
     ServiceName<TelemetryService::SERVICE_NAME>,
     ZLibSessionBuilder<ServiceLocatorClientBox>>;
 
-  std::vector<LoginController::ServerEntry> ParseServers(
+  std::vector<SignInController::ServerEntry> ParseServers(
       const YAML::Node& config, const std::filesystem::path& configPath) {
-    auto servers = std::vector<LoginController::ServerEntry>();
+    auto servers = std::vector<SignInController::ServerEntry>();
     if(!config["servers"]) {
       {
         auto configFile = std::ofstream(configPath);
@@ -123,7 +123,7 @@ int main(int argc, char* argv[]) {
       QObject::tr("Invalid configuration file."));
     return -1;
   }
-  auto servers = std::vector<LoginController::ServerEntry>();
+  auto servers = std::vector<SignInController::ServerEntry>();
   try {
     servers = ParseServers(config, configPath);
   } catch(const std::exception&) {
@@ -134,7 +134,7 @@ int main(int argc, char* argv[]) {
   auto telemetry_client_mutex = Mutex();
   auto application_telemetry_client = std::unique_ptr<SpireTelemetryClient>();
   auto telemetry_client = std::unique_ptr<TelemetryClientBox>();
-  auto login_controller = LoginController(SPIRE_VERSION, std::move(servers),
+  auto sign_in_controller = SignInController(SPIRE_VERSION, std::move(servers),
     [&] (const auto& username, const auto& password, const auto& address)  {
       auto service_locator_client =
         std::unique_ptr<ApplicationServiceLocatorClient>();
@@ -164,15 +164,15 @@ int main(int argc, char* argv[]) {
         telemetry_client = std::make_unique<TelemetryClientBox>(
           application_telemetry_client->Get());
       } catch(const std::exception&) {
-        throw LoginException("Telemetry server not available.");
+        throw SignInException("Telemetry server not available.");
       }
       return ServiceClientsBox(std::move(service_clients));
     });
-  login_controller.open();
+  sign_in_controller.open();
   auto user_profile = optional<UserProfile>();
   auto risk_timer_monitor = optional<RiskTimerMonitor>();
   auto toolbar_controller = optional<ToolbarController>();
-  login_controller.connect_logged_in_signal([&] (auto service_clients) {
+  sign_in_controller.connect_signed_in_signal([&] (auto service_clients) {
     auto is_administrator =
       service_clients.GetAdministrationClient().CheckAdministrator(
         service_clients.GetServiceLocatorClient().GetAccount());
@@ -191,8 +191,8 @@ int main(int argc, char* argv[]) {
       service_clients.GetAdministrationClient().LoadEntitlements(),
       get_default_additional_tag_database(), std::move(service_clients),
       *telemetry_client);
-    auto login_data = JsonObject();
-    login_data["version"] = std::string(SPIRE_VERSION);
+    auto sign_in_data = JsonObject();
+    sign_in_data["version"] = std::string(SPIRE_VERSION);
     try {
       user_profile->CreateProfilePath();
     } catch(const std::exception&) {

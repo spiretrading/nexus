@@ -1,12 +1,12 @@
-#ifndef SPIRE_LOGIN_HPP
-#define SPIRE_LOGIN_HPP
+#ifndef SPIRE_SIGN_IN_HPP
+#define SPIRE_SIGN_IN_HPP
 #include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
   class ChromaHashWidget;
-  class LoginController;
-  class LoginException;
-  class LoginWindow;
+  class SignInController;
+  class SignInException;
+  class SignInWindow;
   enum class Track;
   class TrackMenuButton;
 }
