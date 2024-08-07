@@ -51,7 +51,7 @@ namespace {
 
   auto make_wordmark(Track track) {
     auto wordmark =
-      new Icon(imageFromSvg(get_wordmark_path(track), scale(80, 32)));
+      new Icon(imageFromSvg(get_wordmark_path(track), scale(80, 41)));
     set_style(*wordmark, StyleSheet());
     return wordmark;
   }
@@ -68,14 +68,16 @@ TrackMenuButton::TrackMenuButton(std::vector<Track> tracks,
   auto inner_body_layout = make_vbox_layout();
   inner_body_layout->addStretch(1);
   auto contents_layout = make_hbox_layout();
+  auto spinner_layout = make_vbox_layout();
   m_spinner = make_spinner(m_current->get());
-  contents_layout->addWidget(m_spinner);
+  spinner_layout->addWidget(m_spinner);
+  spinner_layout->addStretch(1);
+  contents_layout->addLayout(spinner_layout);
   contents_layout->addSpacing(scale_width(8));
   auto wordmark_layout = make_vbox_layout();
   wordmark_layout->addSpacing(scale_height(13));
   m_wordmark = make_wordmark(m_current->get());
   wordmark_layout->addWidget(m_wordmark);
-  wordmark_layout->addStretch(1);
   contents_layout->addLayout(wordmark_layout);
   contents_layout->addSpacing(scale_width(9));
   auto chevron =
