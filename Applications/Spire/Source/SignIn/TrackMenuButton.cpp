@@ -82,6 +82,9 @@ namespace {
     auto item = new QWidget();
     auto layout = make_hbox_layout(item);
     auto check_icon = new Icon(checkmark);
+    auto check_style = StyleSheet();
+    check_style.get(Any()).set(Fill(QColor(0x333333)));
+    set_style(*check_icon, std::move(check_style));
     if(is_checked->get()) {
       match(*check_icon, Checked());
     }
@@ -162,7 +165,14 @@ TrackMenuButton::TrackMenuButton(std::vector<Track> tracks,
   inner_body_layout->addStretch(1);
   body_layout->addLayout(inner_body_layout);
   body_layout->addStretch(1);
-  m_button = new MenuButton(*body);
+  auto button_box = new Box(body);
+  update_style(*button_box, [] (auto& style) {
+    style.get(Any()).
+      set(border_size(scale_width(1))).
+      set(border_color(QColor(Qt::transparent))).
+      set(padding(scale_width(8)));
+  });
+  m_button = new MenuButton(*button_box);
   if(m_is_multitrack) {
     for(auto& track : tracks) {
       m_button->get_menu().add_action(to_text(track),
@@ -208,7 +218,8 @@ void TrackMenuButton::set_state(State state) {
 
 void TrackMenuButton::on_current(Track track) {
   m_selected->set(track);
-  auto& body_layout = *m_button->get_body().layout();
+  auto& body_layout =
+    *static_cast<Box&>(m_button->get_body()).get_body()->layout();
   auto spinner = make_spinner(track);
   auto item = body_layout.replaceWidget(m_spinner, spinner);
   delete item;

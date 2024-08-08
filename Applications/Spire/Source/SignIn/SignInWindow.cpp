@@ -109,11 +109,11 @@ SignInWindow::SignInWindow(std::string version, std::vector<Track> tracks,
   close_button->connect_click_signal([=] { window()->close(); });
   auto layout = make_vbox_layout(this);
   layout->addWidget(close_button, 0, Qt::AlignRight);
-  layout->addSpacing(scale_height(30));
+  layout->addSpacing(scale_height(22));
   m_track_button = new TrackMenuButton(std::move(tracks), std::move(track));
   m_track_button->setFixedWidth(scale_width(280));
   layout->addWidget(m_track_button, 0, Qt::AlignCenter);
-  layout->addSpacing(scale_height(23));
+  layout->addSpacing(scale_height(10));
   m_status_label = make_label("");
   update_style(*m_status_label, [&] (auto& style) {
     style = STATUS_LABEL_STYLE(style);

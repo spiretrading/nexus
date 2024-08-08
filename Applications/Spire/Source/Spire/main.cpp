@@ -5,6 +5,7 @@
 #include <QApplication>
 #include <QMessageBox>
 #include <QStandardPaths>
+#include <tclap/CmdLine.h>
 #include "Nexus/TelemetryService/ApplicationDefinitions.hpp"
 #include "Spire/Blotter/BlotterSettings.hpp"
 #include "Spire/BookView/BookViewProperties.hpp"
@@ -86,6 +87,29 @@ int main(int argc, char* argv[]) {
   freopen("stdout.log", "w", stdout);
   freopen("stderr.log", "w", stderr);
 #endif
+  auto show_sign_in_window = true;
+  auto command_line = TCLAP::CmdLine("", ' ', "Spire " SPIRE_VERSION);
+  auto username_argument = TCLAP::ValueArg<std::string>(
+    "u", "username", "Username", false, "", "text");
+  command_line.add(username_argument);
+  auto password_argument = TCLAP::ValueArg<std::string>(
+    "p", "password", "Password", false, "", "text");
+  command_line.add(password_argument);
+  auto host_argument =
+    TCLAP::ValueArg<std::string>("a", "address", "Address", false, "", "text");
+  command_line.add(host_argument);
+  auto port_argument =
+    TCLAP::ValueArg<int>("s", "port", "Port", false, 0, "integer");
+  command_line.add(port_argument);
+  try {
+    command_line.parse(argc, argv);
+    show_sign_in_window = !username_argument.isSet() ||
+      !password_argument.isSet() || !host_argument.isSet() ||
+      !port_argument.isSet();
+  } catch(const TCLAP::ArgException& e) {
+    std::cout << "Error parsing command line: " + e.error() + " for argument " +
+      e.argId() << std::flush;
+  }
   auto application = QApplication(argc, argv);
   application.setOrganizationName(QObject::tr("Spire Trading"));
   application.setApplicationName(QObject::tr("Spire"));
@@ -131,10 +155,13 @@ int main(int argc, char* argv[]) {
       QObject::tr("Invalid configuration file."));
     return -1;
   }
+  auto user_profile = optional<UserProfile>();
+  auto risk_timer_monitor = optional<RiskTimerMonitor>();
+  auto toolbar_controller = optional<ToolbarController>();
   auto telemetry_client_mutex = Mutex();
   auto application_telemetry_client = std::unique_ptr<SpireTelemetryClient>();
   auto telemetry_client = std::unique_ptr<TelemetryClientBox>();
-  auto sign_in_controller = SignInController(SPIRE_VERSION, std::move(servers),
+  auto service_client_factory =
     [&] (const auto& username, const auto& password, const auto& address)  {
       auto service_locator_client =
         std::unique_ptr<ApplicationServiceLocatorClient>();
@@ -167,12 +194,8 @@ int main(int argc, char* argv[]) {
         throw SignInException("Telemetry server not available.");
       }
       return ServiceClientsBox(std::move(service_clients));
-    });
-  sign_in_controller.open();
-  auto user_profile = optional<UserProfile>();
-  auto risk_timer_monitor = optional<RiskTimerMonitor>();
-  auto toolbar_controller = optional<ToolbarController>();
-  sign_in_controller.connect_signed_in_signal([&] (auto service_clients) {
+    };
+  auto sign_in_handler = [&] (auto service_clients) {
     auto is_administrator =
       service_clients.GetAdministrationClient().CheckAdministrator(
         service_clients.GetServiceLocatorClient().GetAccount());
@@ -212,12 +235,29 @@ int main(int argc, char* argv[]) {
     toolbar_controller->open();
     risk_timer_monitor.emplace(Ref(*user_profile));
     risk_timer_monitor->Load();
-  });
-  auto hotkey_override = HotkeyOverride();
-  application.exec();
+  };
+  if(show_sign_in_window) {
+    auto sign_in_controller = SignInController(
+      SPIRE_VERSION, std::move(servers), service_client_factory);
+    sign_in_controller.open();
+    sign_in_controller.connect_signed_in_signal(sign_in_handler);
+  } else {
+    try {
+      auto service_clients = service_client_factory(
+        username_argument.getValue(), password_argument.getValue(),
+          IpAddress(host_argument.getValue(),
+            static_cast<unsigned short>(port_argument.getValue())));
+      sign_in_handler(std::move(service_clients));
+      std::cout << "1" << std::flush;
+    } catch(const std::exception& e) {
+      std::cout << e.what() << std::flush;
+    }
+  }
   if(!user_profile) {
     return -1;
   }
+  auto hotkey_override = HotkeyOverride();
+  application.exec();
   SavedDashboards::Save(*user_profile);
   OrderImbalanceIndicatorProperties::Save(*user_profile);
   save_key_bindings_profile(
