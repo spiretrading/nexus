@@ -195,6 +195,7 @@ int main(int argc, char* argv[]) {
       }
       return ServiceClientsBox(std::move(service_clients));
     };
+  auto sign_in_controller = std::unique_ptr<SignInController>();
   auto sign_in_handler = [&] (auto service_clients) {
     auto is_administrator =
       service_clients.GetAdministrationClient().CheckAdministrator(
@@ -235,12 +236,13 @@ int main(int argc, char* argv[]) {
     toolbar_controller->open();
     risk_timer_monitor.emplace(Ref(*user_profile));
     risk_timer_monitor->Load();
+    sign_in_controller = nullptr;
   };
   if(show_sign_in_window) {
-    auto sign_in_controller = SignInController(
+    sign_in_controller = std::make_unique<SignInController>(
       SPIRE_VERSION, std::move(servers), service_client_factory);
-    sign_in_controller.open();
-    sign_in_controller.connect_signed_in_signal(sign_in_handler);
+    sign_in_controller->open();
+    sign_in_controller->connect_signed_in_signal(sign_in_handler);
   } else {
     try {
       auto service_clients = service_client_factory(
@@ -253,11 +255,11 @@ int main(int argc, char* argv[]) {
       std::cout << e.what() << std::flush;
     }
   }
+  auto hotkey_override = HotkeyOverride();
+  application.exec();
   if(!user_profile) {
     return -1;
   }
-  auto hotkey_override = HotkeyOverride();
-  application.exec();
   SavedDashboards::Save(*user_profile);
   OrderImbalanceIndicatorProperties::Save(*user_profile);
   save_key_bindings_profile(

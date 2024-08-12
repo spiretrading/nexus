@@ -82,6 +82,7 @@ namespace Spire {
     private:
       mutable SignInSignal m_sign_in_signal;
       mutable CancelSignal m_cancel_signal;
+      std::vector<std::string> m_servers;
       State m_state;
       DropShadow* m_shadow;
       TrackMenuButton* m_track_button;

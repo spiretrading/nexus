@@ -90,6 +90,7 @@ SignInWindow::SignInWindow(std::string version, std::vector<Track> tracks,
     std::shared_ptr<TrackModel> track, std::vector<std::string> servers,
     QWidget* parent)
     : QWidget(parent, Qt::FramelessWindowHint),
+      m_servers(std::move(servers)),
       m_server_box(nullptr),
       m_is_dragging(false),
       m_last_focus(nullptr) {
@@ -156,10 +157,9 @@ SignInWindow::SignInWindow(std::string version, std::vector<Track> tracks,
     {scale_width(2), scale_height(2), scale_width(2), scale_height(2)});
   password_layout->addWidget(m_chroma_hash_widget);
   layout->addLayout(password_layout);
-  if(servers.size() > 1) {
+  if(m_servers.size() > 1) {
     layout->addSpacing(scale_height(15));
-    auto server_list =
-      std::make_shared<ArrayListModel<std::string>>(std::move(servers));
+    auto server_list = std::make_shared<ArrayListModel<std::string>>(m_servers);
     m_server_box = new DropDownBox(server_list);
     m_server_box->setFixedSize(scale(280, 30));
     m_server_box->get_current()->set(0);
@@ -334,6 +334,8 @@ void SignInWindow::try_sign_in() {
               *m_server_box->get_list().get());
             return servers.get(*current);
           }
+        } else if(!m_servers.empty()) {
+          return m_servers.front();
         }
         return std::string();
       }();
