@@ -3,7 +3,10 @@
 #include <Beam/ServiceLocator/AuthenticationException.hpp>
 #include <Beam/WebServices/HttpClient.hpp>
 #include <Beam/WebServices/TcpChannelFactory.hpp>
-#include <QFileInfo>
+#include <QProcess>
+#include <QSharedMemory>
+#include <QThread>
+#include <QUuid>
 #include "Nexus/ServiceClients/ServiceClientsBox.hpp"
 #include "Spire/Async/QtPromise.hpp"
 #include "Spire/SignIn/SignInException.hpp"
@@ -49,11 +52,16 @@ namespace {
     return directories;
   }
 
+  auto get_update_url(
+      const IpAddress& address, Track track, const std::string& path) {
+    return Uri("http://" + address.GetHost() + ":8080" +
+      "/distribution/spire/" + to_text(track).toLower().toStdString() +
+      "/x86/windows/" + path);
+  }
+
   auto load_latest_build(
       const IpAddress& address, Track track, const std::string& version) {
-    auto uri = "http://" + address.GetHost() + ":8080" + "/spire/" +
-      to_text(track).toLower().toStdString() + "/x86/windows/";
-    auto request = HttpRequest(Uri(uri));
+    auto request = HttpRequest(get_update_url(address, track, ""));
     auto directory_listing = std::string();
     try {
       auto client =
@@ -82,32 +90,67 @@ namespace {
     }
   }
 
-  auto update_build(
-      const IpAddress& address, Track track, const std::string& build) {
-    auto uri = "http://" + address.GetHost() + ":8080" + "/spire/" +
-      to_text(track).toLower().toStdString() + "/x86/windows/" + build +
-      "/Spire.exe";
-    auto request = HttpRequest(Uri(uri));
+  bool update_build(
+      const IpAddress& address, Track track, const std::string& username,
+      const std::string& password, const std::string& build) {
+    auto request =
+      HttpRequest(get_update_url(address, track, build + "/Spire.exe"));
     auto directory_listing = std::string();
     try {
       auto client =
         HttpClient<std::unique_ptr<ChannelBox>>(TcpSocketChannelFactory());
       auto response = client.Send(request);
       if(response.GetStatusCode() != HttpStatusCode::OK) {
-        return;
+        return false;
       }
       auto executable_path = std::filesystem::canonical(std::filesystem::path(
         QCoreApplication::applicationFilePath().toStdString()));
       std::filesystem::rename(
-        executable_path, executable_path.filename().string() + ".old");
-      auto out_file = std::ofstream(executable_path, std::ios::binary);
-      out_file.write(
-        response.GetBody().GetData(), response.GetBody().GetSize());
-      if(!out_file) {
-        qDebug() << QString::fromStdString(std::strerror(errno));
+        executable_path, executable_path.string() + ".old");
+      {
+        auto out_file = std::ofstream(executable_path, std::ios::binary);
+        out_file.write(
+          response.GetBody().GetData(), response.GetBody().GetSize());
       }
+      auto memory_key = QUuid::createUuid().toString();
+      auto memory = QSharedMemory(memory_key);
+      if(!memory.create(1024)) {
+        return false;
+      }
+      std::memset(memory.data(), 0, memory.size());
+      auto child_process = QProcess();
+      child_process.setProgram(
+        QString::fromStdString(executable_path.string()));
+      auto arguments = QStringList();
+      arguments << "-u" << QString::fromStdString(username) << "-p" <<
+        QString::fromStdString(password) << "-a" <<
+        QString::fromStdString(address.GetHost()) << "-s" <<
+        QString::number(address.GetPort()) << "-k" << memory_key;
+      child_process.setArguments(arguments);
+      if(!child_process.startDetached()) {
+        return false;
+      }
+      auto output = QString();
+      while(true) {
+        memory.lock();
+        if(static_cast<const char*>(memory.data())[0] != '\0') {
+          output += QString::fromUtf8(static_cast<const char*>(memory.data()));
+          qDebug() << output;
+          if(output.endsWith('\n')) {
+            if(output == "1\n") {
+              memory.unlock();
+              break;
+            }
+          }
+          memory.unlock();
+          return false;
+        }
+        memory.unlock();
+        QThread::msleep(100);
+      }
+      return true;
     } catch(const std::exception&) {
-      return;
+      return false;
     }
   }
 }
@@ -156,14 +199,26 @@ void SignInController::on_sign_in(const std::string& username,
     }
     throw SignInException("Server not found.");
   }();
-  m_sign_in_promise = QtPromise([=] {
+  m_sign_in_promise = QtPromise([=] () -> optional<ServiceClientsBox> {
     auto latest_build = load_latest_build(address, track, m_version);
     if(latest_build != m_version) {
-      update_build(address, track, latest_build);
+      if(update_build(address, track, username, password, latest_build)) {
+        return none;
+      }
     }
     return m_service_clients_factory(username, password, address);
   }, LaunchPolicy::ASYNC).then(
-    std::bind_front(&SignInController::on_sign_in_promise, this));
+    [=] (Expect<optional<ServiceClientsBox>> service_clients) {
+      if(service_clients.IsException()) {
+        on_sign_in_promise(
+          Expect<ServiceClientsBox>(service_clients.GetException()));
+      } else if(service_clients.Get()) {
+        on_sign_in_promise(std::move(*service_clients.Get()));
+      } else {
+        m_sign_in_window->close();
+        delete_later(m_sign_in_window);
+      }
+    });
 }
 
 void SignInController::on_cancel() {

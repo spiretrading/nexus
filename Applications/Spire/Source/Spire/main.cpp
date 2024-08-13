@@ -4,6 +4,7 @@
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <QApplication>
 #include <QMessageBox>
+#include <QSharedMemory>
 #include <QStandardPaths>
 #include <tclap/CmdLine.h>
 #include "Nexus/TelemetryService/ApplicationDefinitions.hpp"
@@ -89,6 +90,9 @@ int main(int argc, char* argv[]) {
 #endif
   auto show_sign_in_window = true;
   auto command_line = TCLAP::CmdLine("", ' ', "Spire " SPIRE_VERSION);
+  auto key_argument = TCLAP::ValueArg<std::string>(
+    "k", "key", "Shared key", false, "", "text");
+  command_line.add(key_argument);
   auto username_argument = TCLAP::ValueArg<std::string>(
     "u", "username", "Username", false, "", "text");
   command_line.add(username_argument);
@@ -244,15 +248,29 @@ int main(int argc, char* argv[]) {
     sign_in_controller->open();
     sign_in_controller->connect_signed_in_signal(sign_in_handler);
   } else {
+    auto memory = optional<QSharedMemory>();
+    if(key_argument.isSet()) {
+      memory.emplace(QString::fromStdString(key_argument.getValue()));
+    }
     try {
       auto service_clients = service_client_factory(
         username_argument.getValue(), password_argument.getValue(),
           IpAddress(host_argument.getValue(),
             static_cast<unsigned short>(port_argument.getValue())));
       sign_in_handler(std::move(service_clients));
-      std::cout << "1" << std::flush;
+      if(memory && memory->attach()) {
+        memory->lock();
+        std::strcpy(static_cast<char*>(memory->data()), "1\n");
+        memory->unlock();
+      }
     } catch(const std::exception& e) {
-      std::cout << e.what() << std::flush;
+      if(memory && memory->attach()) {
+        memory->lock();
+        auto message = std::string(e.what());
+        message += "\n";
+        std::strcpy(static_cast<char*>(memory->data()), message.c_str());
+        memory->unlock();
+      }
     }
   }
   auto hotkey_override = HotkeyOverride();
