@@ -271,6 +271,7 @@ int main(int argc, char* argv[]) {
         std::strcpy(static_cast<char*>(memory->data()), message.c_str());
         memory->unlock();
       }
+      return -1;
     }
   }
   auto hotkey_override = HotkeyOverride();

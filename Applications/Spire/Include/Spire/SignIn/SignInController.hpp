@@ -68,6 +68,7 @@ namespace Spire {
       ServiceClientsFactory m_service_clients_factory;
       SignInWindow* m_sign_in_window;
       QtPromise<void> m_sign_in_promise;
+      bool m_run_update;
 
       SignInController(const SignInController&) = delete;
       SignInController& operator =(const SignInController&) = delete;

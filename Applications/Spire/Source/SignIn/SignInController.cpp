@@ -90,6 +90,54 @@ namespace {
     }
   }
 
+  bool launch_update(const IpAddress& address, const std::string& username,
+      const std::string& password) {
+    auto memory_key = QUuid::createUuid().toString();
+    auto memory = QSharedMemory(memory_key);
+    if(!memory.create(1024)) {
+      return false;
+    }
+    std::memset(memory.data(), 0, memory.size());
+    auto executable_path = std::filesystem::canonical(std::filesystem::path(
+      QCoreApplication::applicationFilePath().toStdString()));
+    auto child_process = QProcess();
+    child_process.setProgram(
+      QString::fromStdString(executable_path.string()));
+    auto arguments = QStringList();
+    arguments << "-u" << QString::fromStdString(username) << "-p" <<
+      QString::fromStdString(password) << "-a" <<
+      QString::fromStdString(address.GetHost()) << "-s" <<
+      QString::number(address.GetPort()) << "-k" << memory_key;
+    child_process.setArguments(arguments);
+    if(!child_process.startDetached()) {
+      return false;
+    }
+    while(true) {
+      memory.lock();
+      if(static_cast<const char*>(memory.data())[0] != '\0') {
+        auto output =
+          QString::fromUtf8(static_cast<const char*>(memory.data()));
+        memory.unlock();
+        if(output.endsWith('\n')) {
+          output.chop(1);
+          if(output == "1") {
+            break;
+          } else if(output == "Unable to authenticate connection.") {
+            throw AuthenticationException();
+          } else if(output == "Server unavailable.") {
+            throw std::runtime_error(output.toStdString());
+          } else {
+            throw SignInException(output.toStdString());
+          }
+        }
+        return false;
+      }
+      memory.unlock();
+      QThread::msleep(100);
+    }
+    return true;
+  }
+
   bool update_build(
       const IpAddress& address, Track track, const std::string& username,
       const std::string& password, const std::string& build) {
@@ -107,48 +155,10 @@ namespace {
         QCoreApplication::applicationFilePath().toStdString()));
       std::filesystem::rename(
         executable_path, executable_path.string() + ".old");
-      {
-        auto out_file = std::ofstream(executable_path, std::ios::binary);
-        out_file.write(
-          response.GetBody().GetData(), response.GetBody().GetSize());
-      }
-      auto memory_key = QUuid::createUuid().toString();
-      auto memory = QSharedMemory(memory_key);
-      if(!memory.create(1024)) {
-        return false;
-      }
-      std::memset(memory.data(), 0, memory.size());
-      auto child_process = QProcess();
-      child_process.setProgram(
-        QString::fromStdString(executable_path.string()));
-      auto arguments = QStringList();
-      arguments << "-u" << QString::fromStdString(username) << "-p" <<
-        QString::fromStdString(password) << "-a" <<
-        QString::fromStdString(address.GetHost()) << "-s" <<
-        QString::number(address.GetPort()) << "-k" << memory_key;
-      child_process.setArguments(arguments);
-      if(!child_process.startDetached()) {
-        return false;
-      }
-      auto output = QString();
-      while(true) {
-        memory.lock();
-        if(static_cast<const char*>(memory.data())[0] != '\0') {
-          output += QString::fromUtf8(static_cast<const char*>(memory.data()));
-          qDebug() << output;
-          if(output.endsWith('\n')) {
-            if(output == "1\n") {
-              memory.unlock();
-              break;
-            }
-          }
-          memory.unlock();
-          return false;
-        }
-        memory.unlock();
-        QThread::msleep(100);
-      }
-      return true;
+      auto out_file = std::ofstream(executable_path, std::ios::binary);
+      out_file.write(
+        response.GetBody().GetData(), response.GetBody().GetSize());
+      return launch_update(address, username, password);
     } catch(const std::exception&) {
       return false;
     }
@@ -161,7 +171,8 @@ SignInController::SignInController(
   : m_version(std::move(version)),
     m_servers(std::move(servers)),
     m_service_clients_factory(std::move(service_clients_factory)),
-    m_sign_in_window(nullptr) {}
+    m_sign_in_window(nullptr),
+    m_run_update(false) {}
 
 void SignInController::open() {
   auto servers = std::vector<std::string>();
@@ -200,10 +211,17 @@ void SignInController::on_sign_in(const std::string& username,
     throw SignInException("Server not found.");
   }();
   m_sign_in_promise = QtPromise([=] () -> optional<ServiceClientsBox> {
-    auto latest_build = load_latest_build(address, track, m_version);
-    if(latest_build != m_version) {
-      if(update_build(address, track, username, password, latest_build)) {
+    if(m_run_update) {
+      if(launch_update(address, username, password)) {
         return none;
+      }
+    } else {
+      auto latest_build = load_latest_build(address, track, m_version);
+      if(latest_build != m_version) {
+        m_run_update = true;
+        if(update_build(address, track, username, password, latest_build)) {
+          return none;
+        }
       }
     }
     return m_service_clients_factory(username, password, address);
