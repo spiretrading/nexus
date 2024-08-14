@@ -90,8 +90,8 @@ namespace {
     }
   }
 
-  bool launch_update(const IpAddress& address, const std::string& username,
-      const std::string& password) {
+  bool launch_update(const IpAddress& address, Track track,
+      const std::string& username, const std::string& password) {
     auto memory_key = QUuid::createUuid().toString();
     auto memory = QSharedMemory(memory_key);
     if(!memory.create(1024)) {
@@ -153,8 +153,14 @@ namespace {
   bool update_build(
       const IpAddress& address, Track track, const std::string& username,
       const std::string& password, const std::string& build) {
-    auto request =
-      HttpRequest(get_update_url(address, track, build + "/Spire.exe"));
+    auto application_name = [&] () -> std::string {
+      if(track == Track::CURRENT) {
+        return "Spire.exe";
+      }
+      return "Spire." + to_text(track).toLower().toStdString() + ".exe";
+    }();
+    auto request = HttpRequest(
+      get_update_url(address, track, build + "/" + application_name));
     auto directory_listing = std::string();
     try {
       auto client =
@@ -172,7 +178,7 @@ namespace {
         out_file.write(
           response.GetBody().GetData(), response.GetBody().GetSize());
       }
-      return launch_update(address, username, password);
+      return launch_update(address, track, username, password);
     } catch(const std::exception&) {
       return false;
     }
@@ -226,7 +232,7 @@ void SignInController::on_sign_in(const std::string& username,
   }();
   m_sign_in_promise = QtPromise([=] () -> optional<ServiceClientsBox> {
     if(m_run_update) {
-      if(launch_update(address, username, password)) {
+      if(launch_update(address, track, username, password)) {
         return none;
       }
     } else {
@@ -234,6 +240,10 @@ void SignInController::on_sign_in(const std::string& username,
       if(latest_build != m_version) {
         m_run_update = true;
         if(update_build(address, track, username, password, latest_build)) {
+          return none;
+        }
+      } else if(track != Track::CURRENT) {
+        if(launch_update(address, track, username, password)) {
           return none;
         }
       }
