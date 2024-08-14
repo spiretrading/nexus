@@ -138,6 +138,18 @@ namespace {
     return true;
   }
 
+  std::filesystem::path load_temporary_directory() {
+    #ifdef _WIN32
+      auto length = GetTempPathA(0, nullptr);
+      if(length == 0) {
+        return QCoreApplication::applicationFilePath().toStdString();
+      }
+      auto path = std::make_unique<char[]>(length);
+      GetTempPathA(length, path.get());
+      return std::string(path.get());
+    #endif
+  }
+
   bool update_build(
       const IpAddress& address, Track track, const std::string& username,
       const std::string& password, const std::string& build) {
@@ -153,11 +165,13 @@ namespace {
       }
       auto executable_path = std::filesystem::canonical(std::filesystem::path(
         QCoreApplication::applicationFilePath().toStdString()));
-      std::filesystem::rename(
-        executable_path, executable_path.string() + ".old");
-      auto out_file = std::ofstream(executable_path, std::ios::binary);
-      out_file.write(
-        response.GetBody().GetData(), response.GetBody().GetSize());
+      std::filesystem::rename(executable_path,
+        load_temporary_directory() / executable_path.filename());
+      {
+        auto out_file = std::ofstream(executable_path, std::ios::binary);
+        out_file.write(
+          response.GetBody().GetData(), response.GetBody().GetSize());
+      }
       return launch_update(address, username, password);
     } catch(const std::exception&) {
       return false;
