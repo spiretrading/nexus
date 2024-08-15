@@ -24,6 +24,10 @@ using namespace Nexus;
 using namespace Spire;
 
 namespace {
+  std::size_t index(Track track) {
+    return static_cast<std::underlying_type_t<Track>>(track);
+  }
+
   auto parse_directories(const std::string& html) {
     auto directories = std::vector<std::string>();
     auto start = html.find("<pre>");
@@ -90,6 +94,19 @@ namespace {
     }
   }
 
+  std::filesystem::path get_application_filename(Track track) {
+    if(track == Track::CURRENT) {
+      return "Spire.exe";
+    }
+    return "Spire." + to_text(track).toLower().toStdString() + ".exe";
+  }
+
+  std::filesystem::path get_application_path(Track track) {
+    return std::filesystem::canonical(std::filesystem::path(
+      QCoreApplication::applicationFilePath().toStdString()).parent_path() /
+      get_application_filename(track));
+  }
+
   bool launch_update(const IpAddress& address, Track track,
       const std::string& username, const std::string& password) {
     auto memory_key = QUuid::createUuid().toString();
@@ -98,11 +115,9 @@ namespace {
       return false;
     }
     std::memset(memory.data(), 0, memory.size());
-    auto executable_path = std::filesystem::canonical(std::filesystem::path(
-      QCoreApplication::applicationFilePath().toStdString()));
     auto child_process = QProcess();
     child_process.setProgram(
-      QString::fromStdString(executable_path.string()));
+      QString::fromStdString(get_application_path(track).string()));
     auto arguments = QStringList();
     arguments << "-u" << QString::fromStdString(username) << "-p" <<
       QString::fromStdString(password) << "-a" <<
@@ -153,14 +168,8 @@ namespace {
   bool update_build(
       const IpAddress& address, Track track, const std::string& username,
       const std::string& password, const std::string& build) {
-    auto application_name = [&] () -> std::string {
-      if(track == Track::CURRENT) {
-        return "Spire.exe";
-      }
-      return "Spire." + to_text(track).toLower().toStdString() + ".exe";
-    }();
-    auto request = HttpRequest(
-      get_update_url(address, track, build + "/" + application_name));
+    auto request = HttpRequest(get_update_url(
+      address, track, build + "/" + get_application_filename(track).string()));
     auto directory_listing = std::string();
     try {
       auto client =
@@ -169,8 +178,7 @@ namespace {
       if(response.GetStatusCode() != HttpStatusCode::OK) {
         return false;
       }
-      auto executable_path = std::filesystem::canonical(std::filesystem::path(
-        QCoreApplication::applicationFilePath().toStdString()));
+      auto executable_path = get_application_path(track);
       std::filesystem::rename(executable_path,
         load_temporary_directory() / executable_path.filename());
       {
@@ -191,8 +199,7 @@ SignInController::SignInController(
   : m_version(std::move(version)),
     m_servers(std::move(servers)),
     m_service_clients_factory(std::move(service_clients_factory)),
-    m_sign_in_window(nullptr),
-    m_run_update(false) {}
+    m_sign_in_window(nullptr) {}
 
 void SignInController::open() {
   auto servers = std::vector<std::string>();
@@ -202,6 +209,7 @@ void SignInController::open() {
     });
   auto tracks = std::vector<Track>();
   tracks.push_back(Track::CURRENT);
+  tracks.push_back(Track::CLASSIC);
   auto track = std::make_shared<LocalTrackModel>(Track::CURRENT);
   m_sign_in_window = new SignInWindow(
     m_version, std::move(tracks), std::move(track), std::move(servers));
@@ -231,14 +239,14 @@ void SignInController::on_sign_in(const std::string& username,
     throw SignInException("Server not found.");
   }();
   m_sign_in_promise = QtPromise([=] () -> optional<ServiceClientsBox> {
-    if(m_run_update) {
+    if(m_run_update.test(index(track))) {
       if(launch_update(address, track, username, password)) {
         return none;
       }
     } else {
       auto latest_build = load_latest_build(address, track, m_version);
       if(latest_build != m_version) {
-        m_run_update = true;
+        m_run_update.set(index(track));
         if(update_build(address, track, username, password, latest_build)) {
           return none;
         }

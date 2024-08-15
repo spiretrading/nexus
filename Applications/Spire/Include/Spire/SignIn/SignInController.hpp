@@ -1,5 +1,6 @@
 #ifndef SPIRE_SIGN_IN_CONTROLLER_HPP
 #define SPIRE_SIGN_IN_CONTROLLER_HPP
+#include <bitset>
 #include <functional>
 #include <memory>
 #include <string>
@@ -68,7 +69,7 @@ namespace Spire {
       ServiceClientsFactory m_service_clients_factory;
       SignInWindow* m_sign_in_window;
       QtPromise<void> m_sign_in_promise;
-      bool m_run_update;
+      std::bitset<3> m_run_update;
 
       SignInController(const SignInController&) = delete;
       SignInController& operator =(const SignInController&) = delete;
