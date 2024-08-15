@@ -240,6 +240,7 @@ void SignInController::open() {
   auto tracks = std::vector<Track>();
   tracks.push_back(Track::CURRENT);
   tracks.push_back(Track::CLASSIC);
+  tracks.push_back(Track::PREVIEW);
   auto track = std::make_shared<LocalTrackModel>(Track::CURRENT);
   m_sign_in_window = new SignInWindow(
     m_version, std::move(tracks), std::move(track), std::move(servers));
