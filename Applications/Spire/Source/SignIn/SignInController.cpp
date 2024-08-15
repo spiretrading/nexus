@@ -102,30 +102,25 @@ namespace {
   }
 
   std::filesystem::path get_application_path(Track track) {
-    return std::filesystem::canonical(std::filesystem::path(
+    return std::filesystem::weakly_canonical(std::filesystem::path(
       QCoreApplication::applicationFilePath().toStdString()).parent_path() /
       get_application_filename(track));
   }
 
-  bool launch_update(const IpAddress& address, Track track,
-      const std::string& username, const std::string& password) {
+  std::string launch_and_read(Track track, QStringList arguments) {
     auto memory_key = QUuid::createUuid().toString();
+    arguments << "-k" << memory_key;
     auto memory = QSharedMemory(memory_key);
     if(!memory.create(1024)) {
-      return false;
+      throw std::runtime_error("Failed to load shared memory.");
     }
     std::memset(memory.data(), 0, memory.size());
     auto child_process = QProcess();
     child_process.setProgram(
       QString::fromStdString(get_application_path(track).string()));
-    auto arguments = QStringList();
-    arguments << "-u" << QString::fromStdString(username) << "-p" <<
-      QString::fromStdString(password) << "-a" <<
-      QString::fromStdString(address.GetHost()) << "-s" <<
-      QString::number(address.GetPort()) << "-k" << memory_key;
     child_process.setArguments(arguments);
     if(!child_process.startDetached()) {
-      return false;
+      throw std::runtime_error("Unable to start process.");
     }
     while(true) {
       memory.lock();
@@ -135,22 +130,38 @@ namespace {
         memory.unlock();
         if(output.endsWith('\n')) {
           output.chop(1);
-          if(output == "1") {
-            break;
-          } else if(output == "Unable to authenticate connection.") {
-            throw AuthenticationException();
-          } else if(output == "Server unavailable.") {
-            throw std::runtime_error(output.toStdString());
-          } else {
-            throw SignInException(output.toStdString());
-          }
+          return output.toStdString();
         }
-        return false;
+        throw std::runtime_error("Unable to read output.");
       }
       memory.unlock();
       QThread::msleep(100);
     }
-    return true;
+  }
+
+  bool launch_update(const IpAddress& address, Track track,
+      const std::string& username, const std::string& password) {
+    auto arguments = QStringList();
+    arguments << "-u" << QString::fromStdString(username) << "-p" <<
+      QString::fromStdString(password) << "-a" <<
+      QString::fromStdString(address.GetHost()) << "-s" <<
+      QString::number(address.GetPort());
+    auto output = std::string();
+    try {
+      output = launch_and_read(track, arguments);
+    } catch(const std::exception&) {
+      return false;
+    }
+    if(output == "1") {
+      return true;
+    }
+    if(output == "Unable to authenticate connection.") {
+      throw AuthenticationException();
+    } else if(output == "Server unavailable.") {
+      throw std::runtime_error(output);
+    } else {
+      throw SignInException(output);
+    }
   }
 
   std::filesystem::path load_temporary_directory() {
@@ -179,8 +190,14 @@ namespace {
         return false;
       }
       auto executable_path = get_application_path(track);
-      std::filesystem::rename(executable_path,
-        load_temporary_directory() / executable_path.filename());
+      try {
+        std::filesystem::rename(executable_path,
+          load_temporary_directory() / executable_path.filename());
+      } catch(const std::filesystem::filesystem_error& e) {
+        if(e.code() != std::errc::no_such_file_or_directory) {
+          return false;
+        }
+      }
       {
         auto out_file = std::ofstream(executable_path, std::ios::binary);
         out_file.write(
@@ -189,6 +206,19 @@ namespace {
       return launch_update(address, track, username, password);
     } catch(const std::exception&) {
       return false;
+    }
+  }
+
+  std::string load_version(Track track, const std::string& current_version) {
+    if(track == Track::CURRENT) {
+      return current_version;
+    }
+    try {
+      auto arguments = QStringList();
+      arguments << "-b";
+      return launch_and_read(track, arguments);
+    } catch(const std::exception&) {
+      return "0";
     }
   }
 }
@@ -245,7 +275,8 @@ void SignInController::on_sign_in(const std::string& username,
       }
     } else {
       auto latest_build = load_latest_build(address, track, m_version);
-      if(latest_build != m_version) {
+      auto version = load_version(track, m_version);
+      if(latest_build != version) {
         m_run_update.set(index(track));
         if(update_build(address, track, username, password, latest_build)) {
           return none;

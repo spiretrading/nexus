@@ -81,6 +81,17 @@ namespace {
     }
     return servers;
   }
+
+  void write_to_shared_memory(
+      const std::string& key, const std::string& message) {
+    auto memory = QSharedMemory(QString::fromStdString(key));
+    if(!memory.attach()) {
+      return;
+    }
+    memory.lock();
+    std::strcpy(static_cast<char*>(memory.data()), message.c_str());
+    memory.unlock();
+  }
 }
 
 int main(int argc, char* argv[]) {
@@ -105,8 +116,14 @@ int main(int argc, char* argv[]) {
   auto port_argument =
     TCLAP::ValueArg<int>("s", "port", "Port", false, 0, "integer");
   command_line.add(port_argument);
+  auto build_argument = TCLAP::SwitchArg("b", "build", "Build");
+  command_line.add(build_argument);
   try {
     command_line.parse(argc, argv);
+    if(build_argument.getValue() && key_argument.isSet()) {
+      write_to_shared_memory(key_argument.getValue(), SPIRE_VERSION "\n");
+      return 0;
+    }
     show_sign_in_window = !username_argument.isSet() ||
       !password_argument.isSet() || !host_argument.isSet() ||
       !port_argument.isSet();
@@ -248,28 +265,19 @@ int main(int argc, char* argv[]) {
     sign_in_controller->open();
     sign_in_controller->connect_signed_in_signal(sign_in_handler);
   } else {
-    auto memory = optional<QSharedMemory>();
-    if(key_argument.isSet()) {
-      memory.emplace(QString::fromStdString(key_argument.getValue()));
-    }
     try {
       auto service_clients = service_client_factory(
         username_argument.getValue(), password_argument.getValue(),
           IpAddress(host_argument.getValue(),
             static_cast<unsigned short>(port_argument.getValue())));
       sign_in_handler(std::move(service_clients));
-      if(memory && memory->attach()) {
-        memory->lock();
-        std::strcpy(static_cast<char*>(memory->data()), "1\n");
-        memory->unlock();
+      if(key_argument.isSet()) {
+        write_to_shared_memory(key_argument.getValue(), "1\n");
       }
     } catch(const std::exception& e) {
-      if(memory && memory->attach()) {
-        memory->lock();
-        auto message = std::string(e.what());
-        message += "\n";
-        std::strcpy(static_cast<char*>(memory->data()), message.c_str());
-        memory->unlock();
+      if(key_argument.isSet()) {
+        write_to_shared_memory(
+          key_argument.getValue(), std::string(e.what()) + "\n");
       }
       return -1;
     }
