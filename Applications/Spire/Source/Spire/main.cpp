@@ -4,7 +4,9 @@
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <QApplication>
 #include <QMessageBox>
+#include <QSharedMemory>
 #include <QStandardPaths>
+#include <tclap/CmdLine.h>
 #include "Nexus/TelemetryService/ApplicationDefinitions.hpp"
 #include "Spire/Blotter/BlotterSettings.hpp"
 #include "Spire/BookView/BookViewProperties.hpp"
@@ -14,11 +16,11 @@
 #include "Spire/LegacyUI/CustomQtVariants.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
-#include "Spire/Login/LoginController.hpp"
-#include "Spire/Login/LoginException.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorProperties.hpp"
 #include "Spire/PortfolioViewer/PortfolioViewerProperties.hpp"
 #include "Spire/RiskTimer/RiskTimerMonitor.hpp"
+#include "Spire/SignIn/SignInController.hpp"
+#include "Spire/SignIn/SignInException.hpp"
 #include "Spire/Spire/Resources.hpp"
 #include "Spire/Spire/SpireServiceClients.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesProperties.hpp"
@@ -51,9 +53,9 @@ namespace {
     ServiceName<TelemetryService::SERVICE_NAME>,
     ZLibSessionBuilder<ServiceLocatorClientBox>>;
 
-  std::vector<LoginController::ServerEntry> ParseServers(
+  std::vector<SignInController::ServerEntry> ParseServers(
       const YAML::Node& config, const std::filesystem::path& configPath) {
-    auto servers = std::vector<LoginController::ServerEntry>();
+    auto servers = std::vector<SignInController::ServerEntry>();
     if(!config["servers"]) {
       {
         auto configFile = std::ofstream(configPath);
@@ -79,6 +81,17 @@ namespace {
     }
     return servers;
   }
+
+  void write_to_shared_memory(
+      const std::string& key, const std::string& message) {
+    auto memory = QSharedMemory(QString::fromStdString(key));
+    if(!memory.attach()) {
+      return;
+    }
+    memory.lock();
+    std::strcpy(static_cast<char*>(memory.data()), message.c_str());
+    memory.unlock();
+  }
 }
 
 int main(int argc, char* argv[]) {
@@ -86,6 +99,38 @@ int main(int argc, char* argv[]) {
   freopen("stdout.log", "w", stdout);
   freopen("stderr.log", "w", stderr);
 #endif
+  auto show_sign_in_window = true;
+  auto command_line = TCLAP::CmdLine("", ' ', "Spire " SPIRE_VERSION);
+  auto key_argument = TCLAP::ValueArg<std::string>(
+    "k", "key", "Shared key", false, "", "text");
+  command_line.add(key_argument);
+  auto username_argument = TCLAP::ValueArg<std::string>(
+    "u", "username", "Username", false, "", "text");
+  command_line.add(username_argument);
+  auto password_argument = TCLAP::ValueArg<std::string>(
+    "p", "password", "Password", false, "", "text");
+  command_line.add(password_argument);
+  auto host_argument =
+    TCLAP::ValueArg<std::string>("a", "address", "Address", false, "", "text");
+  command_line.add(host_argument);
+  auto port_argument =
+    TCLAP::ValueArg<int>("s", "port", "Port", false, 0, "integer");
+  command_line.add(port_argument);
+  auto build_argument = TCLAP::SwitchArg("b", "build", "Build");
+  command_line.add(build_argument);
+  try {
+    command_line.parse(argc, argv);
+    if(build_argument.getValue() && key_argument.isSet()) {
+      write_to_shared_memory(key_argument.getValue(), SPIRE_VERSION "\n");
+      return 0;
+    }
+    show_sign_in_window = !username_argument.isSet() ||
+      !password_argument.isSet() || !host_argument.isSet() ||
+      !port_argument.isSet();
+  } catch(const TCLAP::ArgException& e) {
+    std::cout << "Error parsing command line: " + e.error() + " for argument " +
+      e.argId() << std::flush;
+  }
   auto application = QApplication(argc, argv);
   application.setOrganizationName(QObject::tr("Spire Trading"));
   application.setApplicationName(QObject::tr("Spire"));
@@ -123,7 +168,7 @@ int main(int argc, char* argv[]) {
       QObject::tr("Invalid configuration file."));
     return -1;
   }
-  auto servers = std::vector<LoginController::ServerEntry>();
+  auto servers = std::vector<SignInController::ServerEntry>();
   try {
     servers = ParseServers(config, configPath);
   } catch(const std::exception&) {
@@ -131,10 +176,13 @@ int main(int argc, char* argv[]) {
       QObject::tr("Invalid configuration file."));
     return -1;
   }
+  auto user_profile = optional<UserProfile>();
+  auto risk_timer_monitor = optional<RiskTimerMonitor>();
+  auto toolbar_controller = optional<ToolbarController>();
   auto telemetry_client_mutex = Mutex();
   auto application_telemetry_client = std::unique_ptr<SpireTelemetryClient>();
   auto telemetry_client = std::unique_ptr<TelemetryClientBox>();
-  auto login_controller = LoginController(SPIRE_VERSION, std::move(servers),
+  auto service_client_factory =
     [&] (const auto& username, const auto& password, const auto& address)  {
       auto service_locator_client =
         std::unique_ptr<ApplicationServiceLocatorClient>();
@@ -164,15 +212,12 @@ int main(int argc, char* argv[]) {
         telemetry_client = std::make_unique<TelemetryClientBox>(
           application_telemetry_client->Get());
       } catch(const std::exception&) {
-        throw LoginException("Telemetry server not available.");
+        throw SignInException("Telemetry server not available.");
       }
       return ServiceClientsBox(std::move(service_clients));
-    });
-  login_controller.open();
-  auto user_profile = optional<UserProfile>();
-  auto risk_timer_monitor = optional<RiskTimerMonitor>();
-  auto toolbar_controller = optional<ToolbarController>();
-  login_controller.connect_logged_in_signal([&] (auto service_clients) {
+    };
+  auto sign_in_controller = std::unique_ptr<SignInController>();
+  auto sign_in_handler = [&] (auto service_clients) {
     auto is_administrator =
       service_clients.GetAdministrationClient().CheckAdministrator(
         service_clients.GetServiceLocatorClient().GetAccount());
@@ -191,8 +236,8 @@ int main(int argc, char* argv[]) {
       service_clients.GetAdministrationClient().LoadEntitlements(),
       get_default_additional_tag_database(), std::move(service_clients),
       *telemetry_client);
-    auto login_data = JsonObject();
-    login_data["version"] = std::string(SPIRE_VERSION);
+    auto sign_in_data = JsonObject();
+    sign_in_data["version"] = std::string(SPIRE_VERSION);
     try {
       user_profile->CreateProfilePath();
     } catch(const std::exception&) {
@@ -212,7 +257,31 @@ int main(int argc, char* argv[]) {
     toolbar_controller->open();
     risk_timer_monitor.emplace(Ref(*user_profile));
     risk_timer_monitor->Load();
-  });
+    sign_in_controller = nullptr;
+  };
+  if(show_sign_in_window) {
+    sign_in_controller = std::make_unique<SignInController>(
+      SPIRE_VERSION, std::move(servers), service_client_factory);
+    sign_in_controller->open();
+    sign_in_controller->connect_signed_in_signal(sign_in_handler);
+  } else {
+    try {
+      auto service_clients = service_client_factory(
+        username_argument.getValue(), password_argument.getValue(),
+          IpAddress(host_argument.getValue(),
+            static_cast<unsigned short>(port_argument.getValue())));
+      sign_in_handler(std::move(service_clients));
+      if(key_argument.isSet()) {
+        write_to_shared_memory(key_argument.getValue(), "1\n");
+      }
+    } catch(const std::exception& e) {
+      if(key_argument.isSet()) {
+        write_to_shared_memory(
+          key_argument.getValue(), std::string(e.what()) + "\n");
+      }
+      return -1;
+    }
+  }
   auto hotkey_override = HotkeyOverride();
   application.exec();
   if(!user_profile) {

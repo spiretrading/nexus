@@ -1,11 +1,15 @@
-#include "Spire/Login/LoginWindow.hpp"
+#include "Spire/SignIn/SignInWindow.hpp"
 #include <QKeyEvent>
-#include <QMovie>
-#include "Spire/Login/ChromaHashWidget.hpp"
+#include "Spire/SignIn/ChromaHashWidget.hpp"
+#include "Spire/SignIn/TrackMenuButton.hpp"
+#include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
+#include "Spire/Ui/DropDownBox.hpp"
+#include "Spire/Ui/DropDownList.hpp"
 #include "Spire/Ui/DropShadow.hpp"
+#include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TextBox.hpp"
@@ -82,16 +86,19 @@ namespace {
   }
 }
 
-LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
+SignInWindow::SignInWindow(std::string version, std::vector<Track> tracks,
+    std::shared_ptr<TrackModel> track, std::vector<std::string> servers,
+    QWidget* parent)
     : QWidget(parent, Qt::FramelessWindowHint),
+      m_servers(std::move(servers)),
+      m_server_box(nullptr),
       m_is_dragging(false),
       m_last_focus(nullptr) {
   setWindowIcon(QIcon(":/Icons/taskbar_icons/spire.png"));
-  setFixedSize(scale(384, 346));
   m_shadow = new DropShadow(this);
-  setObjectName("LoginWindow");
+  setObjectName("SignInWindow");
   setStyleSheet(R"(
-    #LoginWindow {
+    #SignInWindow {
       background-color: #4B23A0;
       border: 1px solid #321471;
     })");
@@ -103,15 +110,11 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
   close_button->connect_click_signal([=] { window()->close(); });
   auto layout = make_vbox_layout(this);
   layout->addWidget(close_button, 0, Qt::AlignRight);
-  layout->addSpacing(scale_height(30));
-  m_logo_widget = new QLabel(parent);
-  m_logo_widget->setFixedSize(scale(134, 50));
-  auto logo = new QMovie(":/Icons/logo.gif", QByteArray());
-  logo->setScaledSize(scale(134, 50));
-  m_logo_widget->setMovie(logo);
-  logo->start();
-  layout->addWidget(m_logo_widget, 0, Qt::AlignCenter);
-  layout->addSpacing(scale_height(23));
+  layout->addSpacing(scale_height(22));
+  m_track_button = new TrackMenuButton(std::move(tracks), std::move(track));
+  m_track_button->setFixedWidth(scale_width(280));
+  layout->addWidget(m_track_button, 0, Qt::AlignCenter);
+  layout->addSpacing(scale_height(10));
   m_status_label = make_label("");
   update_style(*m_status_label, [&] (auto& style) {
     style = STATUS_LABEL_STYLE(style);
@@ -130,7 +133,7 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
   });
   m_username_key_observer.emplace(*m_username_text_box);
   m_username_key_observer->connect_key_press_signal(
-    std::bind_front(&LoginWindow::on_key_press, this));
+    std::bind_front(&SignInWindow::on_key_press, this));
   layout->addWidget(m_username_text_box, 0, Qt::AlignCenter);
   layout->addSpacing(scale_height(15));
   auto password_layout = make_hbox_layout();
@@ -146,14 +149,37 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
     });
   m_password_key_observer.emplace(*m_password_text_box);
   m_password_key_observer->connect_key_press_signal(
-    std::bind_front(&LoginWindow::on_key_press, this));
+    std::bind_front(&SignInWindow::on_key_press, this));
   password_layout->addWidget(m_password_text_box);
   m_chroma_hash_widget = new ChromaHashWidget();
-  m_chroma_hash_widget->setFixedSize(scale(34, 30));
+  m_chroma_hash_widget->setFixedWidth(scale_width(34));
   m_chroma_hash_widget->setContentsMargins(
     {scale_width(2), scale_height(2), scale_width(2), scale_height(2)});
   password_layout->addWidget(m_chroma_hash_widget);
   layout->addLayout(password_layout);
+  if(m_servers.size() > 1) {
+    layout->addSpacing(scale_height(15));
+    auto server_list = std::make_shared<ArrayListModel<std::string>>(m_servers);
+    m_server_box = new DropDownBox(server_list);
+    m_server_box->setFixedSize(scale(280, 30));
+    m_server_box->get_current()->set(0);
+    update_style(*m_server_box, [&] (auto& style) {
+      style.get((Hover() || FocusIn()) > is_a<TextBox>()).
+        set(border_color(QColor(0xFFA95E)));
+      style.get(Any() > is_a<DropDownList>() >
+          is_a<ListView>() > is_a<ListItem>() > Body()).set(
+        FontSize(scale_height(14)));
+      style.get(Any() > is_a<DropDownList>() >
+          is_a<ListView>() > is_a<ListItem>()).set(
+        vertical_padding(scale_height(7)));
+      style.get(Any() > is_a<TextBox>()).set(
+        FontSize(scale_height(14)));
+    });
+    layout->addWidget(m_server_box, 0, Qt::AlignCenter);
+    setFixedSize(scale(384, 391));
+  } else {
+    setFixedSize(scale(384, 346));
+  }
   layout->addSpacing(scale_height(30));
   auto button_layout = make_hbox_layout();
   button_layout->setContentsMargins(scale_width(52), 0, scale_width(52), 0);
@@ -168,29 +194,37 @@ LoginWindow::LoginWindow(const std::string& version, QWidget* parent)
   m_sign_in_button->setFixedSize(scale(120, 30));
   set_style(*m_sign_in_button, SIGN_IN_BUTTON_STYLE());
   m_sign_in_button->connect_click_signal(
-    std::bind_front(&LoginWindow::try_login, this));
+    std::bind_front(&SignInWindow::try_sign_in, this));
   m_sign_in_button->setDisabled(true);
   button_layout->addWidget(m_sign_in_button);
   layout->addLayout(button_layout);
   layout->addSpacing(scale_height(48));
   setTabOrder(m_username_text_box, m_password_text_box);
-  setTabOrder(m_password_text_box, m_sign_in_button);
+  if(m_server_box) {
+    setTabOrder(m_password_text_box, m_server_box);
+    setTabOrder(m_server_box, m_sign_in_button);
+  } else {
+    setTabOrder(m_password_text_box, m_sign_in_button);
+  }
   set_state(State::NONE);
 }
 
-void LoginWindow::set_state(State state) {
+void SignInWindow::set_state(State state) {
   switch(state) {
     case State::NONE: {
       reset_all();
       break;
     }
-    case State::LOGGING_IN: {
+    case State::SIGNING_IN: {
       m_username_text_box->setEnabled(false);
       m_password_text_box->setEnabled(false);
+      if(m_server_box) {
+        m_server_box->setEnabled(false);
+      }
       static_cast<TextBox&>(
         m_sign_in_button->get_body()).get_current()->set(tr("Cancel"));
       m_status_label->get_current()->set("");
-      m_logo_widget->movie()->start();
+      m_track_button->set_state(TrackMenuButton::State::LOADING);
       break;
     }
     case State::CANCELLING: {
@@ -199,7 +233,7 @@ void LoginWindow::set_state(State state) {
       break;
     }
     case State::ERROR: {
-      m_status_label->get_current()->set(tr("Login failed."));
+      m_status_label->get_current()->set(tr("Sign in failed."));
       reset_visuals();
       break;
     }
@@ -207,30 +241,27 @@ void LoginWindow::set_state(State state) {
   m_state = state;
 }
 
-void LoginWindow::set_error(const QString& message) {
+void SignInWindow::set_error(const QString& message) {
   m_status_label->get_current()->set(message);
   reset_visuals();
   m_state = State::ERROR;
 }
 
-connection LoginWindow::connect_login_signal(
-    const LoginSignal::slot_type& slot) const {
-  return m_login_signal.connect(slot);
+connection SignInWindow::connect_sign_in_signal(
+    const SignInSignal::slot_type& slot) const {
+  return m_sign_in_signal.connect(slot);
 }
 
-connection LoginWindow::connect_cancel_signal(
+connection SignInWindow::connect_cancel_signal(
     const CancelSignal::slot_type& slot) const {
   return m_cancel_signal.connect(slot);
 }
 
-void LoginWindow::keyPressEvent(QKeyEvent* event) {
+void SignInWindow::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Escape) {
     window()->close();
-  } else if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
-    if(m_username_text_box->hasFocus() || m_password_text_box->hasFocus()) {
-      try_login();
-    }
-  } else if(m_password_text_box->hasFocus()) {
+  } else if(m_password_text_box->hasFocus() || m_server_box &&
+      find_focus_state(*m_server_box) != FocusObserver::State::NONE) {
     return;
   } else if(!m_username_text_box->hasFocus() &&
       m_username_text_box->get_current()->get().isEmpty()) {
@@ -239,7 +270,7 @@ void LoginWindow::keyPressEvent(QKeyEvent* event) {
   }
 }
 
-void LoginWindow::mouseMoveEvent(QMouseEvent* event) {
+void SignInWindow::mouseMoveEvent(QMouseEvent* event) {
   if(!m_is_dragging) {
     return;
   }
@@ -251,7 +282,7 @@ void LoginWindow::mouseMoveEvent(QMouseEvent* event) {
   window()->move(window_pos);
 }
 
-void LoginWindow::mousePressEvent(QMouseEvent* event) {
+void SignInWindow::mousePressEvent(QMouseEvent* event) {
   if(m_is_dragging || event->button() != Qt::LeftButton) {
     return;
   }
@@ -259,21 +290,24 @@ void LoginWindow::mousePressEvent(QMouseEvent* event) {
   m_last_pos = event->globalPos();
 }
 
-void LoginWindow::mouseReleaseEvent(QMouseEvent* event) {
+void SignInWindow::mouseReleaseEvent(QMouseEvent* event) {
   if(event->button() != Qt::LeftButton) {
     return;
   }
   m_is_dragging = false;
 }
 
-void LoginWindow::reset_all() {
+void SignInWindow::reset_all() {
   m_status_label->get_current()->set("");
   reset_visuals();
 }
 
-void LoginWindow::reset_visuals() {
+void SignInWindow::reset_visuals() {
   m_username_text_box->setEnabled(true);
   m_password_text_box->setEnabled(true);
+  if(m_server_box) {
+    m_server_box->setEnabled(true);
+  }
   if(m_last_focus) {
     m_last_focus->setFocus();
     m_last_focus = nullptr;
@@ -282,22 +316,33 @@ void LoginWindow::reset_visuals() {
   }
   static_cast<TextBox&>(
     m_sign_in_button->get_body()).get_current()->set(tr("Sign In"));
-  m_logo_widget->movie()->stop();
-  m_logo_widget->movie()->jumpToFrame(0);
+  m_track_button->set_state(TrackMenuButton::State::READY);
 }
 
-void LoginWindow::try_login() {
+void SignInWindow::try_sign_in() {
   if(!m_sign_in_button->isEnabled()) {
     return;
   }
-  if(m_state != State::LOGGING_IN) {
+  if(m_state != State::SIGNING_IN) {
     if(m_username_text_box->get_current()->get().isEmpty()) {
       set_error(tr("Incorrect username or password."));
     } else {
-      m_login_signal(
-        m_username_text_box->get_current()->get().toStdString(),
-        m_password_text_box->get_current()->get().toStdString());
-      set_state(State::LOGGING_IN);
+      auto server = [&] {
+        if(m_server_box) {
+          if(auto current = m_server_box->get_current()->get()) {
+            auto& servers = static_cast<ListModel<std::string>&>(
+              *m_server_box->get_list().get());
+            return servers.get(*current);
+          }
+        } else if(!m_servers.empty()) {
+          return m_servers.front();
+        }
+        return std::string();
+      }();
+      m_sign_in_signal(m_username_text_box->get_current()->get().toStdString(),
+        m_password_text_box->get_current()->get().toStdString(),
+        m_track_button->get_current()->get(), server);
+      set_state(State::SIGNING_IN);
     }
   } else {
     m_cancel_signal();
@@ -305,11 +350,11 @@ void LoginWindow::try_login() {
   }
 }
 
-void LoginWindow::on_key_press(QWidget& target, const QKeyEvent& event) {
+void SignInWindow::on_key_press(QWidget& target, const QKeyEvent& event) {
   if(event.key() == Qt::Key_Enter || event.key() == Qt::Key_Return) {
     if(m_state == State::NONE || m_state == State::ERROR) {
       m_last_focus = &target;
-      try_login();
+      try_sign_in();
       m_sign_in_button->setFocus();
     }
   }

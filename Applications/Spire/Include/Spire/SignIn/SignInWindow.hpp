@@ -1,10 +1,10 @@
-#ifndef SPIRE_LOGIN_WINDOW_HPP
-#define SPIRE_LOGIN_WINDOW_HPP
+#ifndef SPIRE_SIGN_IN_WINDOW_HPP
+#define SPIRE_SIGN_IN_WINDOW_HPP
 #include <string>
-#include <QLabel>
 #include <QPoint>
 #include <QWidget>
-#include "Spire/Login/Login.hpp"
+#include "Spire/SignIn/SignIn.hpp"
+#include "Spire/SignIn/Track.hpp"
 #include "Spire/Ui/KeyObserver.hpp"
 
 #ifdef ERROR
@@ -13,18 +13,18 @@
 
 namespace Spire {
 
-  /** Displays the login window. */
-  class LoginWindow : public QWidget {
+  /** Displays the sign in window. */
+  class SignInWindow : public QWidget {
     public:
 
-      /** The login state to display to the user. */
+      /** The sign in state to display to the user. */
       enum class State {
 
         /** Nothing to report. */
         NONE,
 
-        /** The user is in the process of logging in. */
-        LOGGING_IN,
+        /** The user is in the process of signing in. */
+        SIGNING_IN,
 
         /** The user requested to cancel. */
         CANCELLING,
@@ -34,22 +34,30 @@ namespace Spire {
       };
 
       /**
-       * Signals an attempt to login.
-       * @param username The username to login with.
-       * @param password The password to login with.
+       * Signals an attempt to sign in.
+       * @param username The username to sign in with.
+       * @param password The password to sign in with.
+       * @param track The track to run.
+       * @param server The server to sign in to.
        */
-      using LoginSignal =
-        Signal<void (const std::string& username, const std::string& password)>;
+      using SignInSignal =
+        Signal<void (const std::string& username, const std::string& password,
+          Track track, const std::string& server)>;
 
-      /** Signals to cancel a previous login operation. */
+      /** Signals to cancel a previous sign in operation. */
       using CancelSignal = Signal<void ()>;
 
       /**
-       * Constructs a login window in the NONE state.
+       * Constructs a SignInWindow in the NONE state.
        * @param version The application build version.
+       * @param tracks The list of tracks the user can run.
+       * @param track The currently selected track among the provided
+       *        <i>tracks</i>.
+       * @param servers The list of servers available to sign in to.
        */
-      explicit LoginWindow(
-        const std::string& version, QWidget* parent = nullptr);
+      SignInWindow(std::string version, std::vector<Track> tracks,
+        std::shared_ptr<TrackModel> track, std::vector<std::string> servers,
+        QWidget* parent = nullptr);
 
       /** Sets the state to display to the user. */
       void set_state(State state);
@@ -57,9 +65,9 @@ namespace Spire {
       /** Sets an error state. */
       void set_error(const QString& message);
 
-      /** Connects a slot to the login signal. */
-      boost::signals2::connection connect_login_signal(
-        const LoginSignal::slot_type& slot) const;
+      /** Connects a slot to the SignInSignal. */
+      boost::signals2::connection connect_sign_in_signal(
+        const SignInSignal::slot_type& slot) const;
 
       /** Connects a slot to the cancel signal. */
       boost::signals2::connection connect_cancel_signal(
@@ -72,16 +80,18 @@ namespace Spire {
       void mouseReleaseEvent(QMouseEvent* event) override;
 
     private:
-      mutable LoginSignal m_login_signal;
+      mutable SignInSignal m_sign_in_signal;
       mutable CancelSignal m_cancel_signal;
+      std::vector<std::string> m_servers;
       State m_state;
       DropShadow* m_shadow;
-      QLabel* m_logo_widget;
+      TrackMenuButton* m_track_button;
       TextBox* m_status_label;
       TextBox* m_username_text_box;
       boost::optional<KeyObserver> m_username_key_observer;
       TextBox* m_password_text_box;
       boost::optional<KeyObserver> m_password_key_observer;
+      DropDownBox* m_server_box;
       Button* m_sign_in_button;
       QWidget* m_last_focus;
       bool m_is_dragging;
@@ -90,7 +100,7 @@ namespace Spire {
 
       void reset_all();
       void reset_visuals();
-      void try_login();
+      void try_sign_in();
       void on_key_press(QWidget& target, const QKeyEvent& event);
   };
 }

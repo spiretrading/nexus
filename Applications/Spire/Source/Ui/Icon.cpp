@@ -22,13 +22,13 @@ Icon::Icon(QImage icon, QWidget* parent)
       m_icon(std::move(icon)),
       m_fill(QColor(0x755EEC)) {
   setAttribute(Qt::WA_Hover);
+  m_style_connection =
+    connect_style_signal(*this, std::bind_front(&Icon::on_style, this));
   set_style(*this, DEFAULT_STYLE());
-  m_style_connection = connect_style_signal(*this, [=] { on_style(); });
 }
 
 QSize Icon::sizeHint() const {
-  static auto size = scale(26, 26);
-  return size;
+  return m_icon.size();
 }
 
 void Icon::paintEvent(QPaintEvent* event) {
@@ -39,8 +39,8 @@ void Icon::paintEvent(QPaintEvent* event) {
   m_painter.paint(painter);
   auto icon = QPixmap::fromImage(m_icon);
   auto image_painter = QPainter(&icon);
-  image_painter.setCompositionMode(QPainter::CompositionMode_SourceIn);
   if(m_fill) {
+    image_painter.setCompositionMode(QPainter::CompositionMode_SourceIn);
     image_painter.fillRect(icon.rect(), *m_fill);
   }
   painter.drawPixmap((width() - icon.width()) / 2,
@@ -49,13 +49,14 @@ void Icon::paintEvent(QPaintEvent* event) {
 
 void Icon::on_style() {
   auto& stylist = find_stylist(*this);
-  m_fill = QColor(0x755EEC);
+  m_fill = none;
   for(auto& property : stylist.get_computed_block()) {
     apply(property, m_painter, stylist);
     property.visit(
       [&] (const IconImage& image) {
         stylist.evaluate(image, [=] (auto image) {
           m_icon = std::move(image);
+          updateGeometry();
           update();
         });
       },

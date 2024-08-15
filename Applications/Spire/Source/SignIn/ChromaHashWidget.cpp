@@ -1,4 +1,4 @@
-#include "Spire/Login/ChromaHashWidget.hpp"
+#include "Spire/SignIn/ChromaHashWidget.hpp"
 #include <Beam/ServiceLocator/SessionEncryption.hpp>
 #include "Spire/Ui/Layouts.hpp"
 
