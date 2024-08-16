@@ -197,8 +197,8 @@ int main(int argc, char* argv[]) {
       e.argId() << std::flush;
   }
   auto application = QApplication(argc, argv);
-  application.setOrganizationName(QObject::tr("Spire Trading"));
-  application.setApplicationName(QObject::tr("Spire"));
+  application.setOrganizationName(QObject::tr("Spire Beta"));
+  application.setApplicationName(QObject::tr("Spire Development"));
   application.setApplicationVersion(SPIRE_VERSION);
   RegisterCustomQtVariants();
   InitializeResources();
