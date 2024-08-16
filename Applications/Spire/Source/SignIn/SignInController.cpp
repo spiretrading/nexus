@@ -5,6 +5,7 @@
 #include <Beam/WebServices/TcpChannelFactory.hpp>
 #include <QProcess>
 #include <QSharedMemory>
+#include <QStandardPaths>
 #include <QThread>
 #include <QUuid>
 #include "Nexus/ServiceClients/ServiceClientsBox.hpp"
@@ -221,6 +222,36 @@ namespace {
       return "0";
     }
   }
+
+  std::filesystem::path get_track_path() {
+    auto path = std::filesystem::path(QStandardPaths::writableLocation(
+      QStandardPaths::DataLocation).toStdString());
+    return path / "track";
+  }
+
+  Track load_track() {
+    auto file = std::ifstream(get_track_path());
+    if(!file.is_open()) {
+      return Track::CURRENT;
+    }
+    auto line = std::string();
+    if(std::getline(file, line)) {
+      if(line == "Classic") {
+        return Track::CLASSIC;
+      } else if(line == "Preview") {
+        return Track::PREVIEW;
+      }
+    }
+    return Track::CURRENT;
+  }
+
+  void store_track(Track track) {
+    auto file = std::ofstream(get_track_path());
+    if(!file.is_open()) {
+      return;
+    }
+    file << to_text(track).toStdString();
+  }
 }
 
 SignInController::SignInController(
@@ -241,7 +272,7 @@ void SignInController::open() {
   tracks.push_back(Track::CURRENT);
   tracks.push_back(Track::CLASSIC);
   tracks.push_back(Track::PREVIEW);
-  auto track = std::make_shared<LocalTrackModel>(Track::CURRENT);
+  auto track = std::make_shared<LocalTrackModel>(load_track());
   m_sign_in_window = new SignInWindow(
     m_version, std::move(tracks), std::move(track), std::move(servers));
   m_sign_in_window->connect_sign_in_signal(
@@ -295,6 +326,7 @@ void SignInController::on_sign_in(const std::string& username,
         on_sign_in_promise(
           Expect<ServiceClientsBox>(service_clients.GetException()));
       } else if(service_clients.Get()) {
+        store_track(track);
         on_sign_in_promise(std::move(*service_clients.Get()));
       } else {
         m_sign_in_window->close();
