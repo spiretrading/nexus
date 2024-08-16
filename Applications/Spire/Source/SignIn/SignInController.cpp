@@ -300,6 +300,7 @@ void SignInController::on_sign_in(const std::string& username,
     }
     throw SignInException("Server not found.");
   }();
+  store_track(track);
   m_sign_in_promise = QtPromise([=] () -> optional<ServiceClientsBox> {
     if(m_run_update.test(index(track))) {
       if(launch_update(address, track, username, password)) {
@@ -326,7 +327,6 @@ void SignInController::on_sign_in(const std::string& username,
         on_sign_in_promise(
           Expect<ServiceClientsBox>(service_clients.GetException()));
       } else if(service_clients.Get()) {
-        store_track(track);
         on_sign_in_promise(std::move(*service_clients.Get()));
       } else {
         m_sign_in_window->close();
