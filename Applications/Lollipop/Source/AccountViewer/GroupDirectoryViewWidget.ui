@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>GroupDirectoryViewWidget</class>
+ <widget class="QWidget" name="GroupDirectoryViewWidget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>400</width>
+    <height>300</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="spacing">
+    <number>0</number>
+   </property>
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
+   <property name="topMargin">
+    <number>0</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
+    <number>0</number>
+   </property>
+   <item>
+    <widget class="QTabWidget" name="m_tabs">
+     <property name="currentIndex">
+      <number>0</number>
+     </property>
+     <property name="documentMode">
+      <bool>false</bool>
+     </property>
+     <widget class="Spire::ComplianceWidget" name="m_complianceTab">
+      <attribute name="title">
+       <string>Compliance</string>
+      </attribute>
+     </widget>
+     <widget class="Spire::GroupProfitAndLossReportWidget" name="m_groupProfitAndLossReportTab">
+      <attribute name="title">
+       <string>Profit and Loss</string>
+      </attribute>
+     </widget>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>Spire::GroupProfitAndLossReportWidget</class>
+   <extends>QWidget</extends>
+   <header>Spire/AccountViewer/GroupProfitAndLossReportWidget.hpp</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>Spire::ComplianceWidget</class>
+   <extends>QWidget</extends>
+   <header>Spire/AccountViewer/ComplianceWidget.hpp</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources>
+  <include location="../../Resources/Resources.qrc"/>
+ </resources>
+ <connections/>
+</ui>

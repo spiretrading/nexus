@@ -15,6 +15,7 @@ CALL:configure Applications\AdministrationServer %*
 CALL:configure Applications\ChartingServer %*
 CALL:configure Applications\ComplianceServer %*
 CALL:configure Applications\DefinitionsServer %*
+CALL:configure Applications\Lollipop %*
 CALL:configure Applications\MarketDataRelayServer %*
 CALL:configure Applications\MarketDataServer %*
 CALL:configure Applications\ReplayMarketDataFeedClient %*

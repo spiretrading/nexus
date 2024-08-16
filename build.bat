@@ -15,6 +15,7 @@ CALL:build Applications\AdministrationServer %*
 CALL:build Applications\ChartingServer %*
 CALL:build Applications\ComplianceServer %*
 CALL:build Applications\DefinitionsServer %*
+CALL:build Applications\Lollipop %*
 CALL:build Applications\MarketDataRelayServer %*
 CALL:build Applications\MarketDataServer %*
 CALL:build Applications\ReplayMarketDataFeedClient %*
