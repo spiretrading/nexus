@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>TraderProfileViewWidget</class>
+ <widget class="QWidget" name="TraderProfileViewWidget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>400</width>
+    <height>300</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="spacing">
+    <number>0</number>
+   </property>
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
+   <property name="topMargin">
+    <number>0</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
+    <number>0</number>
+   </property>
+   <item>
+    <widget class="QTabWidget" name="m_tabs">
+     <property name="currentIndex">
+      <number>0</number>
+     </property>
+     <property name="documentMode">
+      <bool>false</bool>
+     </property>
+     <widget class="Spire::AccountInfoWidget" name="m_accountInfoTab">
+      <attribute name="title">
+       <string>Account Info</string>
+      </attribute>
+     </widget>
+     <widget class="Spire::AccountEntitlementWidget" name="m_entitlementsTab">
+      <attribute name="title">
+       <string>Entitlements</string>
+      </attribute>
+     </widget>
+     <widget class="Spire::RiskWidget" name="m_riskTab">
+      <attribute name="title">
+       <string>Risk Controls</string>
+      </attribute>
+     </widget>
+     <widget class="Spire::ComplianceWidget" name="m_complianceTab">
+      <attribute name="title">
+       <string>Compliance</string>
+      </attribute>
+     </widget>
+     <widget class="Spire::AccountActivityReportWidget" name="m_activityReportTab">
+      <attribute name="title">
+       <string>Activity</string>
+      </attribute>
+     </widget>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>Spire::AccountEntitlementWidget</class>
+   <extends>QWidget</extends>
+   <header>Spire/AccountViewer/AccountEntitlementWidget.hpp</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>Spire::AccountInfoWidget</class>
+   <extends>QWidget</extends>
+   <header>Spire/AccountViewer/AccountInfoWidget.hpp</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>Spire::RiskWidget</class>
+   <extends>QWidget</extends>
+   <header>Spire/AccountViewer/RiskWidget.hpp</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>Spire::AccountActivityReportWidget</class>
+   <extends>QWidget</extends>
+   <header>Spire/AccountViewer/AccountActivityReportWidget.hpp</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>Spire::ComplianceWidget</class>
+   <extends>QWidget</extends>
+   <header>Spire/AccountViewer/ComplianceWidget.hpp</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

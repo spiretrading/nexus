@@ -428,7 +428,7 @@ TEST_SUITE("TranslatedTableModel") {
     REQUIRE(translation.get<int>(0, 0) == 0);
     REQUIRE(translation.get<int>(1, 0) == 4);
     source->remove(0);
-    REQUIRE(signal_count == 6);
+    REQUIRE(signal_count == 8);
     REQUIRE(pre_remove_count == 1);
     REQUIRE(remove_count == 1);
     REQUIRE(translation.get<int>(0, 0) == 0);

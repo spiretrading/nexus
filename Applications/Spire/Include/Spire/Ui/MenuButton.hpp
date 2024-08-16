@@ -2,6 +2,7 @@
 #define SPIRE_MENU_BUTTON_HPP
 #include <QTimer>
 #include <QWidget>
+#include "Spire/Ui/ContextMenu.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {

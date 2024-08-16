@@ -48,6 +48,52 @@ namespace {
     }
     return unique_name;
   }
+
+  auto get_recently_closed_icon(ToolbarWindow::WindowType window) {
+    if(window == ToolbarWindow::WindowType::BLOTTER) {
+      static auto icon = imageFromSvg(
+        ":/Icons/toolbar/recently_closed/blotter.svg", scale(10, 10));
+      return icon;
+    } else if(window == ToolbarWindow::WindowType::BOOK_VIEW) {
+      static auto icon = imageFromSvg(
+        ":/Icons/toolbar/recently_closed/book_view.svg", scale(10, 10));
+      return icon;
+    } else if(window == ToolbarWindow::WindowType::CANVAS) {
+      static auto icon = imageFromSvg(
+        ":/Icons/toolbar/recently_closed/canvas.svg", scale(10, 10));
+      return icon;
+    } else if(window == ToolbarWindow::WindowType::CHART) {
+      static auto icon = imageFromSvg(
+        ":/Icons/toolbar/recently_closed/chart.svg", scale(10, 10));
+      return icon;
+    } else if(window == ToolbarWindow::WindowType::KEY_BINDINGS) {
+      static auto icon = imageFromSvg(
+        ":/Icons/toolbar/recently_closed/key_bindings.svg", scale(10, 10));
+      return icon;
+    } else if(window == ToolbarWindow::WindowType::ORDER_IMBALANCE_INDICATOR) {
+      static auto icon = imageFromSvg(
+        ":/Icons/toolbar/recently_closed/order_imbalance_indicator.svg",
+        scale(10, 10));
+      return icon;
+    } else if(window == ToolbarWindow::WindowType::PORTFOLIO) {
+      static auto icon = imageFromSvg(
+        ":/Icons/toolbar/recently_closed/portfolio.svg", scale(10, 10));
+      return icon;
+    } else if(window == ToolbarWindow::WindowType::PROFILE) {
+      static auto icon = imageFromSvg(
+        ":/Icons/toolbar/recently_closed/profile.svg", scale(10, 10));
+      return icon;
+    } else if(window == ToolbarWindow::WindowType::TIME_AND_SALES) {
+      static auto icon = imageFromSvg(
+        ":/Icons/toolbar/recently_closed/time_and_sales.svg", scale(10, 10));
+      return icon;
+    } else if(window == ToolbarWindow::WindowType::WATCHLIST) {
+      static auto icon = imageFromSvg(
+        ":/Icons/toolbar/recently_closed/watchlist.svg", scale(10, 10));
+      return icon;
+    }
+    throw std::runtime_error("Unknown window type.");
+  }
 }
 
 ToolbarWindow::ToolbarWindow(DirectoryEntry account, AccountRoles roles,

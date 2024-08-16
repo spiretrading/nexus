@@ -67,21 +67,14 @@ TEST_SUITE("ArrayListModel") {
     REQUIRE(model.get_size() == 3);
     operations.clear();
     REQUIRE_NOTHROW(model.remove(0));
-    REQUIRE(operations.size() == 2);
+    REQUIRE(operations.size() == 4);
     REQUIRE(model.get_size() == 2);
     REQUIRE(model.get(0) == 3);
     REQUIRE(model.get(1) == 5);
-    auto operation = operations.front();
-    operations.pop_front();
-    test_operation(operation,
-      [&] (const ListModel<int>::PreRemoveOperation& operation) {
-        REQUIRE(operation.m_index == 0);
-      });
-    operation = operations.front();
-    operations.pop_front();
-    test_operation(operation,
-      [&] (const ListModel<int>::RemoveOperation& operation) {
-        REQUIRE(operation.m_index == 0);
+    require_list_transaction<int>(operations,
+      {
+        ListModel<int>::PreRemoveOperation(0),
+        ListModel<int>::RemoveOperation(0)
       });
     connection = model.connect_operation_signal(
       [&] (const ListModel<int>::Operation& operation) {

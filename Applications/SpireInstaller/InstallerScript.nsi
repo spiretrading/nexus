@@ -16,7 +16,14 @@ Name "${PRODUCT_NAME} ${PRODUCT_VERSION}"
 Outfile "install.exe"
 InstallDir "$PROGRAMFILES\${PRODUCT_NAME}"
 
+RequestExecutionLevel admin
+
 !include "MUI2.nsh"
+!include "FileFunc.nsh"
+!include "LogicLib.nsh"
+
+!insertmacro GetParameters
+!insertmacro GetOptions
 
 ; Use the product's icon
 !define MUI_ICON "spire.ico"
@@ -58,6 +65,8 @@ Section "Spire" SEC01
   WriteRegStr HKLM "${PRODUCT_DIR_REGKEY}" "DisplayVersion" "${PRODUCT_VERSION}"
   WriteRegDWORD HKLM "${PRODUCT_DIR_REGKEY}" "NoModify" 1
   WriteRegDWORD HKLM "${PRODUCT_DIR_REGKEY}" "NoRepair" 1
+
+  nsExec::ExecToLog 'icacls "$INSTDIR" /grant Users:(OI)(CI)F /T'
 SectionEnd
 
 Section "Start Menu Shortcuts" SEC02

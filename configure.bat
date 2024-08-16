@@ -21,6 +21,7 @@ CALL:configure Applications\CtaMarketDataFeedClient %*
 CALL:configure Applications\DefinitionsServer %*
 CALL:configure Applications\HkexMarketDataFeedClient %*
 CALL:configure Applications\JpxFlexMarketDataFeedClient %*
+CALL:configure Applications\Lollipop %*
 CALL:configure Applications\MarketDataRelayServer %*
 CALL:configure Applications\MarketDataServer %*
 CALL:configure Applications\NeoeMarketDataFeedClient %*
