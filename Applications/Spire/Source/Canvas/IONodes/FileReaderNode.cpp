@@ -90,7 +90,7 @@ void FileReaderNode::Apply(CanvasNodeVisitor& visitor) const {
 }
 
 unique_ptr<CanvasNode> FileReaderNode::Clone() const {
-  return make_unique<FileReaderNode>(*this);
+  return std::make_unique<FileReaderNode>(*this);
 }
 
 FileReaderNode::FileReaderNode(ReceiveBuilder) {}

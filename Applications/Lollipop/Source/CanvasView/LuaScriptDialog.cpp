@@ -46,7 +46,8 @@ unique_ptr<LuaScriptNode> LuaScriptDialog::GetNode() {
   auto typeIndex = m_ui->m_typeComboBox->currentIndex();
   auto& type = static_cast<const NativeType&>(
     m_userProfile->GetCanvasTypeRegistry().GetTypes()[typeIndex]);
-  auto node = make_unique<LuaScriptNode>(name, type, scriptPath, m_parameters);
+  auto node =
+    std::make_unique<LuaScriptNode>(name, type, scriptPath, m_parameters);
   CanvasNodeBuilder builder(*node);
   for(std::size_t i = 0; i < m_nodes.size(); ++i) {
     builder.Replace(node->GetChildren()[i], CanvasNode::Clone(*m_nodes[i]));
@@ -150,7 +151,7 @@ void LuaScriptDialog::OnItemChanged(QTableWidgetItem* item) {
     LuaScriptNode::Parameter parameter(item->text().toStdString(),
       IntegerType::GetInstance());
     m_parameters.push_back(parameter);
-    m_nodes.emplace_back(make_unique<NoneNode>(*parameter.m_type));
+    m_nodes.emplace_back(std::make_unique<NoneNode>(*parameter.m_type));
     auto typeItem = m_ui->m_parametersTable->item(item->row(), TYPE_COLUMN);
     typeItem->setText(QString::fromStdString(parameter.m_type->GetName()));
     typeItem->setFlags(typeItem->flags() | Qt::ItemIsDragEnabled);

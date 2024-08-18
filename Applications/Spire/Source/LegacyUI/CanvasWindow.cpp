@@ -345,7 +345,7 @@ CanvasNodeModel& CanvasWindow::GetCanvasNodeModel() {
 
 unique_ptr<WindowSettings> CanvasWindow::GetWindowSettings() const {
   unique_ptr<WindowSettings> settings =
-    make_unique<CanvasWindowSettings>(*this);
+    std::make_unique<CanvasWindowSettings>(*this);
   return settings;
 }
 

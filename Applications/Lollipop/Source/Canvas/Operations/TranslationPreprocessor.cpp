@@ -53,12 +53,12 @@ void TranslationPreprocessor::Visit(const FoldNode& node) {
   }
   CanvasNodeBuilder builder(*translatedNode);
   unique_ptr<CanvasNode> leftOperand =
-    make_unique<FoldOperandNode>(FoldOperandNode::Side::LEFT);
+    std::make_unique<FoldOperandNode>(FoldOperandNode::Side::LEFT);
   leftOperand = leftOperand->Convert(
     translatedNode->FindLeftOperand()->GetType());
   builder.Replace(GetPath(*translatedNode, *translatedNode->FindLeftOperand()),
     std::move(leftOperand));
-  unique_ptr<CanvasNode> rightOperand = make_unique<FoldOperandNode>(
+  unique_ptr<CanvasNode> rightOperand = std::make_unique<FoldOperandNode>(
     FoldOperandNode::Side::RIGHT);
   rightOperand = rightOperand->Convert(
     translatedNode->FindRightOperand()->GetType());
