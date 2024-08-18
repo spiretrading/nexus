@@ -42,7 +42,7 @@ unique_ptr<CanvasNode> MoneyNode::SetReferent(const string& referent) const {
 }
 
 unique_ptr<CanvasNode> MoneyNode::Clone() const {
-  return make_unique<MoneyNode>(*this);
+  return std::make_unique<MoneyNode>(*this);
 }
 
 unique_ptr<CanvasNode> MoneyNode::Reset() const {

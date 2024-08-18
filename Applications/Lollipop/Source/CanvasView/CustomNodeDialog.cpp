@@ -47,7 +47,7 @@ unique_ptr<CustomNode> CustomNodeDialog::GetNode() {
   for(auto& child : m_children) {
     replace_all(child.m_name, ".", "\\.");
   }
-  auto customNode = make_unique<CustomNode>(
+  auto customNode = std::make_unique<CustomNode>(
     m_ui->m_nameInput->text().toStdString(), m_children);
   CanvasNodeBuilder builder(*customNode);
   for(std::size_t i = 0; i < m_nodes.size(); ++i) {
@@ -149,7 +149,7 @@ void CustomNodeDialog::OnItemChanged(QTableWidgetItem* item) {
     CustomNode::Child child(item->text().toStdString(),
       UnionType::GetAnyType());
     m_children.push_back(child);
-    m_nodes.emplace_back(make_unique<NoneNode>(*child.m_type));
+    m_nodes.emplace_back(std::make_unique<NoneNode>(*child.m_type));
     auto typeItem = m_ui->m_childrenTable->item(item->row(), TYPE_COLUMN);
     typeItem->setText(QString::fromStdString(child.m_type->GetName()));
     typeItem->setFlags(typeItem->flags() | Qt::ItemIsDragEnabled);

@@ -77,7 +77,7 @@ void InteractionsNode::Apply(CanvasNodeVisitor& visitor) const {
 }
 
 unique_ptr<CanvasNode> InteractionsNode::Clone() const {
-  return make_unique<InteractionsNode>(*this);
+  return std::make_unique<InteractionsNode>(*this);
 }
 
 void InteractionsNode::Setup(Security security,
@@ -86,7 +86,7 @@ void InteractionsNode::Setup(Security security,
   m_properties = properties;
   SetText("");
   SetType(IntegerType::GetInstance());
-  unique_ptr<CanvasNode> securityNode = make_unique<SecurityNode>(
+  unique_ptr<CanvasNode> securityNode = std::make_unique<SecurityNode>(
     std::move(security), marketDatabase);
   securityNode = securityNode->SetVisible(false);
   AddChild("security", std::move(securityNode));
@@ -94,7 +94,7 @@ void InteractionsNode::Setup(Security security,
     IntegerNode(m_properties.m_defaultQuantity), "security");
   AddChild("default_quantity", std::move(defaultQuantityNode));
   AddChild("quantity_increment",
-    make_unique<IntegerNode>(m_properties.m_quantityIncrements[0]));
+    std::make_unique<IntegerNode>(m_properties.m_quantityIncrements[0]));
   AddChild("price_increment",
-    make_unique<MoneyNode>(m_properties.m_priceIncrements[0]));
+    std::make_unique<MoneyNode>(m_properties.m_priceIncrements[0]));
 }

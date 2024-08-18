@@ -80,7 +80,7 @@ void TimeRangeParameterNode::Apply(CanvasNodeVisitor& visitor) const {
 }
 
 unique_ptr<CanvasNode> TimeRangeParameterNode::Clone() const {
-  return make_unique<TimeRangeParameterNode>(*this);
+  return std::make_unique<TimeRangeParameterNode>(*this);
 }
 
 unique_ptr<CanvasNode> TimeRangeParameterNode::Reset() const {

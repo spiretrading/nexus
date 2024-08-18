@@ -47,7 +47,7 @@ void FoldNode::Apply(CanvasNodeVisitor& visitor) const {
 }
 
 unique_ptr<CanvasNode> FoldNode::Clone() const {
-  return make_unique<FoldNode>(*this);
+  return std::make_unique<FoldNode>(*this);
 }
 
 FoldNode::FoldNode(ReceiveBuilder) {}

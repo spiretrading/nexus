@@ -103,7 +103,7 @@ connection ChartIntervalComboBox::ConnectIntervalChangedSignal(
 
 std::unique_ptr<WindowSettings> ChartIntervalComboBox::
     GetWindowSettings() const {
-  return make_unique<ChartIntervalComboBoxWindowSettings>(*this);
+  return std::make_unique<ChartIntervalComboBoxWindowSettings>(*this);
 }
 
 bool ChartIntervalComboBox::eventFilter(QObject* object, QEvent* event) {
