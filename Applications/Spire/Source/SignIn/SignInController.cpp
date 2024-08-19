@@ -29,6 +29,64 @@ namespace {
     return static_cast<std::underlying_type_t<Track>>(track);
   }
 
+  std::filesystem::path get_application_filename(Track track) {
+    if(track == Track::CURRENT) {
+      return "Spire.exe";
+    }
+    return "Spire." + to_text(track).toLower().toStdString() + ".exe";
+  }
+
+  std::filesystem::path get_application_path(Track track) {
+    return std::filesystem::weakly_canonical(std::filesystem::path(
+      QCoreApplication::applicationFilePath().toStdString()).parent_path() /
+      get_application_filename(track));
+  }
+
+  std::string launch_and_read(Track track, QStringList arguments) {
+    auto memory_key = QUuid::createUuid().toString();
+    arguments << "-k" << memory_key;
+    auto memory = QSharedMemory(memory_key);
+    if(!memory.create(1024)) {
+      throw std::runtime_error("Failed to load shared memory.");
+    }
+    std::memset(memory.data(), 0, memory.size());
+    auto child_process = QProcess();
+    child_process.setProgram(
+      QString::fromStdString(get_application_path(track).string()));
+    child_process.setArguments(arguments);
+    if(!child_process.startDetached()) {
+      throw std::runtime_error("Unable to start process.");
+    }
+    while(true) {
+      memory.lock();
+      if(static_cast<const char*>(memory.data())[0] != '\0') {
+        auto output =
+          QString::fromUtf8(static_cast<const char*>(memory.data()));
+        memory.unlock();
+        if(output.endsWith('\n')) {
+          output.chop(1);
+          return output.toStdString();
+        }
+        throw std::runtime_error("Unable to read output.");
+      }
+      memory.unlock();
+      QThread::msleep(100);
+    }
+  }
+
+  std::string load_version(Track track, const std::string& current_version) {
+    if(track == Track::CURRENT) {
+      return current_version;
+    }
+    try {
+      auto arguments = QStringList();
+      arguments << "-b";
+      return launch_and_read(track, arguments);
+    } catch(const std::exception&) {
+      return "0";
+    }
+  }
+
   auto parse_directories(const std::string& html) {
     auto directories = std::vector<std::string>();
     auto start = html.find("<pre>");
@@ -82,7 +140,7 @@ namespace {
     }
     auto directories = parse_directories(directory_listing);
     try {
-      auto latest_build = std::stoi(version);
+      auto latest_build = std::stoi(load_version(track, version));
       for(auto& directory : directories) {
         try {
           latest_build = std::max(latest_build, std::stoi(directory));
@@ -92,51 +150,6 @@ namespace {
       return std::to_string(latest_build);
     } catch(const std::exception&) {
       return version;
-    }
-  }
-
-  std::filesystem::path get_application_filename(Track track) {
-    if(track == Track::CURRENT) {
-      return "Spire.exe";
-    }
-    return "Spire." + to_text(track).toLower().toStdString() + ".exe";
-  }
-
-  std::filesystem::path get_application_path(Track track) {
-    return std::filesystem::weakly_canonical(std::filesystem::path(
-      QCoreApplication::applicationFilePath().toStdString()).parent_path() /
-      get_application_filename(track));
-  }
-
-  std::string launch_and_read(Track track, QStringList arguments) {
-    auto memory_key = QUuid::createUuid().toString();
-    arguments << "-k" << memory_key;
-    auto memory = QSharedMemory(memory_key);
-    if(!memory.create(1024)) {
-      throw std::runtime_error("Failed to load shared memory.");
-    }
-    std::memset(memory.data(), 0, memory.size());
-    auto child_process = QProcess();
-    child_process.setProgram(
-      QString::fromStdString(get_application_path(track).string()));
-    child_process.setArguments(arguments);
-    if(!child_process.startDetached()) {
-      throw std::runtime_error("Unable to start process.");
-    }
-    while(true) {
-      memory.lock();
-      if(static_cast<const char*>(memory.data())[0] != '\0') {
-        auto output =
-          QString::fromUtf8(static_cast<const char*>(memory.data()));
-        memory.unlock();
-        if(output.endsWith('\n')) {
-          output.chop(1);
-          return output.toStdString();
-        }
-        throw std::runtime_error("Unable to read output.");
-      }
-      memory.unlock();
-      QThread::msleep(100);
     }
   }
 
@@ -207,19 +220,6 @@ namespace {
       return launch_update(address, track, username, password);
     } catch(const std::exception&) {
       return false;
-    }
-  }
-
-  std::string load_version(Track track, const std::string& current_version) {
-    if(track == Track::CURRENT) {
-      return current_version;
-    }
-    try {
-      auto arguments = QStringList();
-      arguments << "-b";
-      return launch_and_read(track, arguments);
-    } catch(const std::exception&) {
-      return "0";
     }
   }
 
