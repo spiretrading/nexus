@@ -63,10 +63,18 @@ namespace Beam::Serialization {
       shuttle.Shuttle("order_task_arguments", *value.m_order_task_arguments);
       shuttle.Shuttle("cancel_key_bindings", *value.m_cancel_key_bindings);
       if constexpr(IsSender<Shuttler>::value) {
-        shuttle.StartSequence("interactions", 2 * value.m_interactions.size());
+        auto size = 0;
         for(auto& interactions : value.m_interactions) {
-          shuttle.Shuttle(interactions.first);
-          shuttle.Shuttle(*interactions.second);
+          if(interactions.second->is_detached()) {
+            ++size;
+          }
+        }
+        shuttle.StartSequence("interactions", 2 * size);
+        for(auto& interactions : value.m_interactions) {
+          if(interactions.second->is_detached()) {
+            shuttle.Shuttle(interactions.first);
+            shuttle.Shuttle(*interactions.second);
+          }
         }
       } else {
         auto size = int();
