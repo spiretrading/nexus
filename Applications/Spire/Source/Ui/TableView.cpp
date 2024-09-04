@@ -96,7 +96,8 @@ TableView::TableView(
   }
   m_body = new TableBody(m_sorted_table, std::move(current),
     std::move(selection), m_header_view->get_widths(), std::move(item_builder));
-  m_body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::MinimumExpanding);
+  m_body->setSizePolicy(QSizePolicy::MinimumExpanding,
+    QSizePolicy::MinimumExpanding);
   m_body->installEventFilter(this);
   link(*this, *m_body);
   m_scroll_box = new ScrollBox(m_body);
