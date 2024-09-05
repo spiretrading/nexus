@@ -1,4 +1,5 @@
 #include "Spire/Ui/TableHeader.hpp"
+#include <boost/signals2/shared_connection_block.hpp>
 #include <QMouseEvent>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
@@ -33,6 +34,7 @@ TableHeader::TableHeader(
         std::static_pointer_cast<ArrayListModel<int>>(m_widths)->push(
           item->sizeHint().width());
       }
+      item->installEventFilter(this);
     }
     item->set_is_resizeable(!is_last);
     item->connect_start_resize_signal(
@@ -77,6 +79,24 @@ connection TableHeader::connect_sort_signal(
 connection TableHeader::connect_filter_signal(
     const FilterSignal::slot_type& slot) const {
   return m_filter_signal.connect(slot);
+}
+
+bool TableHeader::eventFilter(QObject* watched, QEvent* event) {
+  if(event->type() == QEvent::HideToParent) {
+    auto i = std::find(m_item_views.begin(), m_item_views.end(), watched);
+    if(i != m_item_views.end()) {
+      auto current_blocker = shared_connection_block(m_widths_connection);
+      m_widths->set(std::distance(m_item_views.begin(), i), 0);
+    }
+  } else if(event->type() == QEvent::ShowToParent) {
+    auto i = std::find(m_item_views.begin(), m_item_views.end(), watched);
+    if(i != m_item_views.end()) {
+      auto index = std::distance(m_item_views.begin(), i);
+      auto current_blocker = shared_connection_block(m_widths_connection);
+      m_widths->set(index, m_item_views[index]->width());
+    }
+  }
+  return QWidget::eventFilter(watched, event);
 }
 
 void TableHeader::mouseMoveEvent(QMouseEvent* event) {

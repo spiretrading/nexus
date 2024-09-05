@@ -64,6 +64,7 @@ namespace Spire {
         const FilterSignal::slot_type& slot) const;
 
     protected:
+      bool eventFilter(QObject* watched, QEvent* event) override;
       void mouseMoveEvent(QMouseEvent* event) override;
 
     private:
