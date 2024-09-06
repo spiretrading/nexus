@@ -101,7 +101,7 @@ struct TableBody::RowCover : Cover {
         std::bind_front(&TableBody::on_hover, &body, std::ref(*item)));
       if(column != body.get_column_size() - 1) {
         item->setFixedWidth(
-          body.m_widths->get(column) - body.get_left_spacing(column));
+          body.m_effective_widths[column] - body.get_left_spacing(column));
       } else {
         item->setSizePolicy(
           QSizePolicy::Expanding, item->sizePolicy().verticalPolicy());
@@ -455,12 +455,12 @@ struct TableBody::Painter {
       paint_border(0, body.m_styles.m_padding.left());
     }
     if(body.m_styles.m_horizontal_spacing != 0 &&
-        body.m_widths->get_size() > 0) {
-      auto left = body.m_widths->get(0);
+        body.m_effective_widths.size() > 0) {
+      auto left = body.m_effective_widths[0];
       for(auto column = 1; column < body.get_column_size(); ++column) {
         paint_border(left, body.m_styles.m_horizontal_spacing);
-        if(column != body.m_widths->get_size()) {
-          left += body.m_widths->get(column);
+        if(column != body.m_effective_widths.size()) {
+          left += body.m_effective_widths[column];
         }
       }
     }
@@ -557,6 +557,7 @@ TableBody::TableBody(
       m_current_controller(std::move(current), 0, widths->get_size() + 1),
       m_selection_controller(std::move(selection), 0, widths->get_size() + 1),
       m_widths(std::move(widths)),
+      m_effective_widths(m_widths->begin(), m_widths->end()),
       m_item_builder(std::move(item_builder)),
       m_current_row(nullptr),
       m_is_transaction(false),
@@ -631,6 +632,18 @@ int TableBody::estimate_scroll_line_height() const {
   return std::max(1, estimate_row_height()) + m_styles.m_vertical_spacing;
 }
 
+void TableBody::set_column_visible(int column, bool visible) {
+  if(column < 0 || column >= m_widths->get_size()) {
+    return;
+  }
+  if(visible) {
+    m_effective_widths[column] = m_widths->get(column);
+  } else {
+    m_effective_widths[column] = 0;
+  }
+  update_column_width(column);
+}
+
 bool TableBody::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::Resize) {
     update_visible_region();
@@ -647,8 +660,8 @@ bool TableBody::event(QEvent* event) {
       auto cover = m_column_covers[column];
       cover->move(left, 0);
       auto width = [&] {
-        if(column != m_widths->get_size()) {
-          return m_widths->get(column);
+        if(column != m_effective_widths.size()) {
+          return m_effective_widths[column];
         }
         return this->width() - left;
       }();
@@ -1149,6 +1162,27 @@ void TableBody::update_visible_region() {
   --m_resize_guard;
 }
 
+void TableBody::update_column_width(int column) {
+  auto spacing = get_left_spacing(column);
+  for(auto i = 0; i != get_layout().count() + 1; ++i) {
+    auto row = [&] () -> RowCover* {
+      if(i == get_layout().count()) {
+        return m_current_row;
+      }
+      auto row = &get_layout().get_row(i);
+      if(row != m_current_row) {
+        return row;
+      }
+      return nullptr;
+    }();
+    if(row) {
+      if(auto item = row->get_item(column)) {
+        item->setFixedWidth(m_effective_widths[column] - spacing);
+      }
+    }
+  }
+}
+
 bool TableBody::navigate_next() {
   if(auto& current = get_current()->get()) {
     auto column = current->m_column + 1;
@@ -1340,9 +1374,10 @@ void TableBody::on_style() {
     }();
     if(row) {
       row->layout()->setSpacing(m_styles.m_horizontal_spacing);
-      for(auto column = 0; column != m_widths->get_size(); ++column) {
+      for(auto column = 0; column != m_effective_widths.size(); ++column) {
         auto& item = *row->get_item(column);
-        item.setFixedWidth(m_widths->get(column) - get_left_spacing(column));
+        item.setFixedWidth(
+          m_effective_widths[column] - get_left_spacing(column));
       }
     }
   }
@@ -1392,23 +1427,10 @@ void TableBody::on_table_operation(const TableModel::Operation& operation) {
 void TableBody::on_widths_update(const ListModel<int>::Operation& operation) {
   visit(operation,
     [&] (const ListModel<int>::UpdateOperation& operation) {
-      auto spacing = get_left_spacing(operation.m_index);
-      for(auto i = 0; i != get_layout().count() + 1; ++i) {
-        auto row = [&] () -> RowCover* {
-          if(i == get_layout().count()) {
-            return m_current_row;
-          }
-          auto row = &get_layout().get_row(i);
-          if(row != m_current_row) {
-            return row;
-          }
-          return nullptr;
-        }();
-        if(row) {
-          if(auto item = row->get_item(operation.m_index)) {
-            item->setFixedWidth(m_widths->get(operation.m_index) - spacing);
-          }
-        }
+      if(m_effective_widths[operation.m_index] == 0) {
+        return;
       }
+      m_effective_widths[operation.m_index] = m_widths->get(operation.m_index);
+      update_column_width(operation.m_index);
     });
 }

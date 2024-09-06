@@ -112,6 +112,9 @@ namespace Styles {
        */
       int estimate_scroll_line_height() const;
 
+      /** Set the visibility of the given column. */
+      void set_column_visible(int column, bool visible);
+
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
       bool event(QEvent* event) override;
@@ -142,6 +145,7 @@ namespace Styles {
       TableCurrentController m_current_controller;
       TableSelectionController m_selection_controller;
       std::shared_ptr<ListModel<int>> m_widths;
+      std::vector<int> m_effective_widths;
       TableViewItemBuilder m_item_builder;
       std::vector<ColumnCover*> m_column_covers;
       RowCover* m_current_row;
@@ -183,6 +187,7 @@ namespace Styles {
       void initialize_visible_region();
       void reset_visible_region(std::vector<RowCover*>& unmounted_rows);
       void update_visible_region();
+      void update_column_width(int column);
       bool navigate_next();
       bool navigate_previous();
       void on_item_activated(TableItem& item);

@@ -47,6 +47,9 @@ namespace Spire {
       /** Returns a column's header item. */
       TableHeaderItem* get_item(int column);
 
+      /** Returns the index of the given header item. */
+      boost::optional<int> get_index(TableHeaderItem* item) const;
+
       /**
        * Connects a slot to the SortSignal.
        * @param slot The slot to connect.
@@ -64,7 +67,6 @@ namespace Spire {
         const FilterSignal::slot_type& slot) const;
 
     protected:
-      bool eventFilter(QObject* watched, QEvent* event) override;
       void mouseMoveEvent(QMouseEvent* event) override;
 
     private:
@@ -76,7 +78,6 @@ namespace Spire {
       int m_resize_index;
       boost::signals2::scoped_connection m_widths_connection;
 
-      boost::optional<int> get_index(TableHeaderItem* item) const;
       void on_widths_operation(const ListModel<int>::Operation& operation);
       void on_start_resize(int index);
       void on_end_resize(int index);

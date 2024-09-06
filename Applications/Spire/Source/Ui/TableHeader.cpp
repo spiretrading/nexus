@@ -1,5 +1,4 @@
 #include "Spire/Ui/TableHeader.hpp"
-#include <boost/signals2/shared_connection_block.hpp>
 #include <QMouseEvent>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
@@ -34,7 +33,6 @@ TableHeader::TableHeader(
         std::static_pointer_cast<ArrayListModel<int>>(m_widths)->push(
           item->sizeHint().width());
       }
-      item->installEventFilter(this);
     }
     item->set_is_resizeable(!is_last);
     item->connect_start_resize_signal(
@@ -71,6 +69,14 @@ TableHeaderItem* TableHeader::get_item(int column) {
   return m_item_views[column];
 }
 
+optional<int> TableHeader::get_index(TableHeaderItem* item) const {
+  auto i = std::find(m_item_views.begin(), m_item_views.end(), item);
+  if(i != m_item_views.end()) {
+    return std::distance(m_item_views.begin(), i);
+  }
+  return {};
+}
+
 connection TableHeader::connect_sort_signal(
     const SortSignal::slot_type& slot) const {
   return m_sort_signal.connect(slot);
@@ -79,21 +85,6 @@ connection TableHeader::connect_sort_signal(
 connection TableHeader::connect_filter_signal(
     const FilterSignal::slot_type& slot) const {
   return m_filter_signal.connect(slot);
-}
-
-bool TableHeader::eventFilter(QObject* watched, QEvent* event) {
-  if(event->type() == QEvent::HideToParent) {
-    if(auto index = get_index(static_cast<TableHeaderItem*>(watched))) {
-      auto blocker = shared_connection_block(m_widths_connection);
-      m_widths->set(*index, 0);
-    }
-  } else if(event->type() == QEvent::ShowToParent) {
-    if(auto index = get_index(static_cast<TableHeaderItem*>(watched))) {
-      auto blocker = shared_connection_block(m_widths_connection);
-      m_widths->set(*index, m_item_views[*index]->width());
-    }
-  }
-  return QWidget::eventFilter(watched, event);
 }
 
 void TableHeader::mouseMoveEvent(QMouseEvent* event) {
@@ -106,14 +97,6 @@ void TableHeader::mouseMoveEvent(QMouseEvent* event) {
   if(width != m_widths->get(m_resize_index)) {
     m_widths->set(m_resize_index, width);
   }
-}
-
-optional<int> TableHeader::get_index(TableHeaderItem* item) const {
-  auto i = std::find(m_item_views.begin(), m_item_views.end(), item);
-  if(i != m_item_views.end()) {
-    return std::distance(m_item_views.begin(), i);
-  }
-  return {};
 }
 
 void TableHeader::on_widths_operation(
