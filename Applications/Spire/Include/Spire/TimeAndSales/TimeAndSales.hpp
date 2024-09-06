@@ -2,6 +2,8 @@
 #define SPIRE_TIMEANDSALES_HPP
 
 namespace Spire {
+  class NoneTimeAndSalesModel;
+  class TimeAndSalesModel;
 }
 
 #endif
