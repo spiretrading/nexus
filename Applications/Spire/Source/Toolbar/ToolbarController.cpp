@@ -22,7 +22,6 @@
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorWindow.hpp"
 #include "Spire/PortfolioViewer/PortfolioViewerWindow.hpp"
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
 
 using namespace Beam;
 using namespace boost;
@@ -55,24 +54,13 @@ namespace {
       auto width = 0;
       auto book_view_window = new BookViewWindow(
         Ref(user_profile), user_profile.GetDefaultBookViewProperties(), "");
-      auto time_and_sales_window = new TimeAndSalesWindow(
-        Ref(user_profile), user_profile.GetDefaultTimeAndSalesProperties(), "");
-      book_view_window->Link(*time_and_sales_window);
-      time_and_sales_window->Link(*book_view_window);
       book_view_window->move(next_position);
       book_view_window->show();
       next_position.rx() += book_view_window->frameSize().width();
       width += book_view_window->frameSize().width();
       next_height = book_view_window->frameSize().height();
-      time_and_sales_window->resize(
-        scale_width(150), book_view_window->height());
-      time_and_sales_window->move(next_position);
-      time_and_sales_window->show();
       book_view_window->DisplaySecurity(securities[index]);
-      next_position.rx() += time_and_sales_window->frameSize().width();
-      width += time_and_sales_window->frameSize().width();
       windows.push_back(book_view_window);
-      windows.push_back(time_and_sales_window);
       instantiate_security_windows = index < securities.size() &&
         (next_position.x() + width < resolution.width());
       ++index;
@@ -210,12 +198,7 @@ void ToolbarController::open_book_view_window() {
   window->show();
 }
 
-void ToolbarController::open_time_and_sales_window() {
-  auto window = new TimeAndSalesWindow(
-    Ref(*m_user_profile), m_user_profile->GetDefaultTimeAndSalesProperties());
-  window->setAttribute(Qt::WA_DeleteOnClose);
-  window->show();
-}
+void ToolbarController::open_time_and_sales_window() {}
 
 void ToolbarController::open_canvas_window() {
   auto window = new CanvasWindow(Ref(*m_user_profile));
