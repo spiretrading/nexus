@@ -76,6 +76,7 @@ namespace Spire {
       int m_resize_index;
       boost::signals2::scoped_connection m_widths_connection;
 
+      boost::optional<int> get_index(TableHeaderItem* item) const;
       void on_widths_operation(const ListModel<int>::Operation& operation);
       void on_start_resize(int index);
       void on_end_resize(int index);

@@ -83,17 +83,14 @@ connection TableHeader::connect_filter_signal(
 
 bool TableHeader::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::HideToParent) {
-    auto i = std::find(m_item_views.begin(), m_item_views.end(), watched);
-    if(i != m_item_views.end()) {
-      auto current_blocker = shared_connection_block(m_widths_connection);
-      m_widths->set(std::distance(m_item_views.begin(), i), 0);
+    if(auto index = get_index(static_cast<TableHeaderItem*>(watched))) {
+      auto blocker = shared_connection_block(m_widths_connection);
+      m_widths->set(*index, 0);
     }
   } else if(event->type() == QEvent::ShowToParent) {
-    auto i = std::find(m_item_views.begin(), m_item_views.end(), watched);
-    if(i != m_item_views.end()) {
-      auto index = std::distance(m_item_views.begin(), i);
-      auto current_blocker = shared_connection_block(m_widths_connection);
-      m_widths->set(index, m_item_views[index]->width());
+    if(auto index = get_index(static_cast<TableHeaderItem*>(watched))) {
+      auto blocker = shared_connection_block(m_widths_connection);
+      m_widths->set(*index, m_item_views[*index]->width());
     }
   }
   return QWidget::eventFilter(watched, event);
@@ -109,6 +106,14 @@ void TableHeader::mouseMoveEvent(QMouseEvent* event) {
   if(width != m_widths->get(m_resize_index)) {
     m_widths->set(m_resize_index, width);
   }
+}
+
+optional<int> TableHeader::get_index(TableHeaderItem* item) const {
+  auto i = std::find(m_item_views.begin(), m_item_views.end(), item);
+  if(i != m_item_views.end()) {
+    return std::distance(m_item_views.begin(), i);
+  }
+  return {};
 }
 
 void TableHeader::on_widths_operation(
