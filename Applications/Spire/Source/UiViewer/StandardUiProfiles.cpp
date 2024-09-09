@@ -3344,7 +3344,7 @@ UiProfile Spire::make_percent_box_profile() {
 }
 
 UiProfile Spire::make_popup_box_profile() {
-    auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
   auto size_policy_property = define_enum<int>(
     {{"Blue", 0}, {"Green", 1}, {"Yellow", 2}});
   properties.push_back(make_standard_enum_property("horizontal_size_policy",
@@ -4478,6 +4478,16 @@ UiProfile Spire::make_table_header_profile() {
 UiProfile Spire::make_table_header_item_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
+  auto default_style = R"(
+    any {
+      padding_bottom: 0;
+    }
+    any > :label {
+      text_align: left;
+    }
+  )";
+  properties.push_back(make_style_property("style_sheet",
+    std::move(default_style)));
   properties.push_back(
     make_standard_enum_property("order", get_order_property()));
   properties.push_back(
@@ -4491,6 +4501,11 @@ UiProfile Spire::make_table_header_item_profile() {
       std::make_shared<LocalValueModel<TableHeaderItem::Model>>(item_model);
     auto item = new TableHeaderItem(model);
     apply_widget_properties(item, profile.get_properties());
+    auto& style_sheet =
+      get<optional<StyleSheet>>("style_sheet", profile.get_properties());
+    style_sheet.connect_changed_signal([=] (const auto& styles) {
+      update_widget_style(*item, styles);
+    });
     link(make_field_value_model(model, &TableHeaderItem::Model::m_order),
       get<TableHeaderItem::Order>("order", profile.get_properties()));
     link(make_field_value_model(model, &TableHeaderItem::Model::m_filter),
@@ -4544,6 +4559,21 @@ UiProfile Spire::make_table_view_profile() {
         });
         return form;
       }));
+  properties.push_back(std::make_shared<StandardUiProperty<int>>("hide-column",
+    -2, [] (auto parent, auto& property) {
+      auto form = new QWidget();
+      auto layout = make_hbox_layout(form);
+      auto column = new QSpinBox();
+      column->setMinimum(-1);
+      column->setMaximum(2);
+      auto button = new QPushButton("Apply");
+      layout->addWidget(column);
+      layout->addWidget(button);
+      QObject::connect(button, &QPushButton::pressed, [=, &property] {
+        property.set(column->value());
+      });
+      return form;
+    }));
   auto profile = UiProfile("TableView", properties, [] (auto& profile) {
     auto model = std::make_shared<ArrayTableModel>();
     auto& row_count = get<int>("row_count", profile.get_properties());
@@ -4600,7 +4630,7 @@ UiProfile Spire::make_table_view_profile() {
     auto& update_operation = get<int>("update", profile.get_properties());
     update_operation.connect_changed_signal([&, view] (auto value) {
       if(auto current = view->get_current()->get()) {
-        model->set(current->m_row, current->m_column, value);
+        view->get_table()->set(current->m_row, current->m_column, value);
       }
     });
     auto& remove_operation =
@@ -4609,6 +4639,19 @@ UiProfile Spire::make_table_view_profile() {
       if(operation.m_index >= 0 &&
           operation.m_index < model->get_row_size()) {
         model->remove(operation.m_index);
+      }
+    });
+    auto& hide_column = get<int>("hide-column", profile.get_properties());
+    hide_column.connect_changed_signal([=] (int column) {
+      auto& widths = view->get_header().get_widths();
+      if(column >= 0 && column < widths->get_size()) {
+        view->get_header().get_item(column)->setVisible(false);
+      } else if(column == -1) {
+        for(auto i = 0; i < widths->get_size(); ++i) {
+          if(!view->get_header().get_item(i)->isVisible()) {
+            view->get_header().get_item(i)->setVisible(true);
+          }
+        }
       }
     });
     return view;

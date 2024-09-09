@@ -47,6 +47,9 @@ namespace Spire {
       /** Returns a column's header item. */
       TableHeaderItem* get_item(int column);
 
+      /** Returns the index of the given header item. */
+      boost::optional<int> get_index(TableHeaderItem* item) const;
+
       /**
        * Connects a slot to the SortSignal.
        * @param slot The slot to connect.
