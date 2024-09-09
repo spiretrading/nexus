@@ -139,7 +139,6 @@ struct TableBody::RowCover : Cover {
 };
 
 struct TableBody::ColumnCover : Cover {
-  QPointer<QWidget> m_hovered;
 
   ColumnCover(QWidget* parent)
       : Cover(parent) {
@@ -149,7 +148,6 @@ struct TableBody::ColumnCover : Cover {
     });
   }
 };
-
 
 struct TableBody::Layout : QLayout {
   std::vector<int> m_top;
@@ -454,13 +452,19 @@ struct TableBody::Painter {
     if(body.m_styles.m_padding.left() != 0) {
       paint_border(0, body.m_styles.m_padding.left());
     }
+    auto get_width = [&] (int column) {
+      if(body.m_column_covers[column]->isVisible()) {
+        return body.m_widths->get(column);
+      }
+      return 0;
+    };
     if(body.m_styles.m_horizontal_spacing != 0 &&
         body.m_widths->get_size() > 0) {
-      auto left = body.m_widths->get(0);
+      auto left = get_width(0);
       for(auto column = 1; column < body.get_column_size(); ++column) {
         paint_border(left, body.m_styles.m_horizontal_spacing);
         if(column != body.m_widths->get_size()) {
-          left += body.m_widths->get(column);
+          left += get_width(column);
         }
       }
     }
@@ -473,7 +477,7 @@ struct TableBody::Painter {
   static void paint_current_item(
       TableBody& body, QPainter& painter, const optional<TableIndex>& current) {
     auto current_item = body.get_current_item();
-    if(!current_item) {
+    if(!current_item || !current_item->isVisible()) {
       return;
     }
     auto column_cover = body.m_column_covers[current->m_column];
@@ -495,7 +499,7 @@ struct TableBody::Painter {
   static void paint_item_borders(
       TableBody& body, QPainter& painter, const optional<Index>& index) {
     auto item = body.find_item(index);
-    if(!item) {
+    if(!item || !item->isVisible()) {
       return;
     }
     auto top_spacing = body.get_top_spacing(index->m_row);
@@ -631,6 +635,32 @@ int TableBody::estimate_scroll_line_height() const {
   return std::max(1, estimate_row_height()) + m_styles.m_vertical_spacing;
 }
 
+void TableBody::show_column(int column) {
+  if(column < 0 || column >= static_cast<int>(m_column_covers.size())) {
+    return;
+  }
+  m_column_covers[column]->show();
+  for(auto i = 0; i != get_layout().count(); ++i) {
+    auto& row = get_layout().get_row(i);
+    if(auto item = row.get_item(column)) {
+      item->show();
+    }
+  }
+}
+
+void TableBody::hide_column(int column) {
+  if(column < 0 || column >= static_cast<int>(m_column_covers.size())) {
+    return;
+  }
+  m_column_covers[column]->hide();
+  for(auto i = 0; i != get_layout().count(); ++i) {
+    auto& row = get_layout().get_row(i);
+    if(auto item = row.get_item(column)) {
+      item->hide();
+    }
+  }
+}
+
 bool TableBody::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::Resize) {
     update_visible_region();
@@ -647,6 +677,9 @@ bool TableBody::event(QEvent* event) {
       auto cover = m_column_covers[column];
       cover->move(left, 0);
       auto width = [&] {
+        if(!cover->isVisible()) {
+          return 0;
+        }
         if(column != m_widths->get_size()) {
           return m_widths->get(column);
         }
@@ -1026,6 +1059,13 @@ TableBody::RowCover* TableBody::mount_row(int index,
     row->mount(index);
   }
   get_layout().insert(*row, index);
+  for(auto i = 0; i < get_column_size(); ++i) {
+    if(!m_column_covers[i]->isVisible()) {
+      if(auto item = row->get_item(i)) {
+        item->setVisible(false);
+      }
+    }
+  }
   if(row != m_current_row) {
     on_cover_style(*row);
   }

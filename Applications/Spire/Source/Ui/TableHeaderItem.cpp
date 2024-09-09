@@ -152,9 +152,9 @@ TableHeaderItem::TableHeaderItem(
     new ResponsiveLabel(std::make_shared<HeaderNameListModel>(m_model));
   match(*name_label, Label());
   link(*this, *name_label);
-  auto sort_indicator =
+  m_sort_indicator =
     new SortIndicator(make_field_value_model(m_model, &Model::m_order));
-  link(*this, *sort_indicator);
+  link(*this, *m_sort_indicator);
   m_filter_button = make_filter_button();
   match(*m_filter_button, FilterButton());
   link(*this, *m_filter_button);
@@ -165,28 +165,28 @@ TableHeaderItem::TableHeaderItem(
   match(*hover_element, HoverElement());
   auto contents = new QWidget();
   contents->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-  auto contents_layout = make_hbox_layout(contents);
-  contents_layout->setContentsMargins({scale_width(8), 0, 0, 0});
-  contents_layout->addWidget(name_label);
-  contents_layout->addSpacerItem(
+  m_contents_layout = make_hbox_layout(contents);
+  m_contents_layout->setContentsMargins({scale_width(8), 0, 0, 0});
+  m_contents_layout->addWidget(name_label);
+  m_contents_layout->addSpacerItem(
     new QSpacerItem(1, 0, QSizePolicy::Expanding, QSizePolicy::Expanding));
-  contents_layout->addWidget(sort_indicator);
-  contents_layout->addWidget(m_filter_button);
+  m_contents_layout->addWidget(m_sort_indicator);
+  m_contents_layout->addWidget(m_filter_button);
   auto top_layout = make_hbox_layout();
   top_layout->addWidget(contents);
   top_layout->addWidget(m_sash);
-  auto bottom_layout = make_hbox_layout();
-  bottom_layout->setContentsMargins({scale_width(8), 0, 0, 0});
-  bottom_layout->addWidget(hover_element);
-  bottom_layout->addSpacerItem(
+  m_bottom_layout = make_hbox_layout();
+  m_bottom_layout->setContentsMargins({scale_width(8), 0, 0, 0});
+  m_bottom_layout->addWidget(hover_element);
+  m_bottom_layout->addSpacerItem(
     new QSpacerItem(1, 0, QSizePolicy::Expanding, QSizePolicy::Expanding));
   auto layout = make_vbox_layout(this);
   layout->setContentsMargins({0, scale_height(8), 0, 0});
   layout->addLayout(top_layout);
-  layout->addLayout(bottom_layout);
+  layout->addLayout(m_bottom_layout);
   auto style = StyleSheet();
   style.get(Any() > Label()).set(TextColor(QColor(0x808080)));
-  style.get(Hover() > Label()).set(TextColor(QColor(0x4B23A0)));
+  style.get((Hover() && Sortable()) > Label()).set(TextColor(QColor(0x4B23A0)));
   style.get(Any() > HoverElement()).set(Visibility::INVISIBLE);
   style.get((Hover() && Sortable()) > HoverElement()).
     set(BackgroundColor(0x4B23A0)).
@@ -196,6 +196,8 @@ TableHeaderItem::TableHeaderItem(
   set_style(*this, std::move(style));
   m_connection = m_model->connect_update_signal(
     std::bind_front(&TableHeaderItem::on_update, this));
+  m_style_connection = connect_style_signal(*this,
+    std::bind_front(&TableHeaderItem::on_style, this));
   on_update(m_model->get());
 }
 
@@ -279,6 +281,18 @@ void TableHeaderItem::mouseReleaseEvent(QMouseEvent* event) {
 
 void TableHeaderItem::on_update(const Model& model) {
   m_filter_button->setVisible(model.m_filter != TableFilter::Filter::NONE);
+  m_sort_indicator->setVisible(model.m_order != Order::UNORDERED);
+  auto& spacer = *m_contents_layout->itemAt(1)->spacerItem();
+  if(model.m_filter == TableFilter::Filter::NONE &&
+      model.m_order == Order::UNORDERED) {
+    if(spacer.sizeHint().width() != 0) {
+      spacer.changeSize(0, 0);
+      m_contents_layout->invalidate();
+    }
+  } else if(spacer.sizeHint().width() != 1) {
+    spacer.changeSize(1, 0, QSizePolicy::Expanding, QSizePolicy::Expanding);
+    m_contents_layout->invalidate();
+  }
   auto& stylist = find_stylist(*this);
   if(model.m_order != Order::UNORDERED) {
     if(!stylist.is_match(Sortable())) {
@@ -293,5 +307,41 @@ void TableHeaderItem::on_update(const Model& model) {
     }
   } else if(stylist.is_match(Filtered())) {
     stylist.unmatch(Filtered());
+  }
+}
+
+void TableHeaderItem::on_style() {
+  auto paddings = std::make_shared<QMargins>();
+  auto left_padding = std::make_shared<int>(-1);
+  auto& stylist = find_stylist(*this);
+  for(auto& property : stylist.get_computed_block()) {
+    property.visit(
+      [&] (const PaddingTop& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          paddings->setTop(size);
+        });
+      },
+      [&] (const PaddingRight& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          paddings->setRight(size);
+        });
+      },
+      [&] (const PaddingBottom& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          paddings->setBottom(size);
+        });
+      },
+      [&] (const PaddingLeft& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          *left_padding = size;
+        });
+      });
+  }
+  if(!paddings->isNull()) {
+    layout()->setContentsMargins(*paddings);
+  }
+  if(*left_padding >= 0) {
+    m_contents_layout->setContentsMargins({*left_padding, 0, 0, 0});
+    m_bottom_layout->setContentsMargins({*left_padding, 0, 0, 0});
   }
 }

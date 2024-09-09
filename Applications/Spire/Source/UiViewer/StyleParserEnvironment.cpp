@@ -25,6 +25,7 @@
 #include "Spire/Ui/Slider.hpp"
 #include "Spire/Ui/Slider2D.hpp"
 #include "Spire/Ui/TableBody.hpp"
+#include "Spire/Ui/TableHeader.hpp"
 #include "Spire/Ui/TableHeaderItem.hpp"
 #include "Spire/Ui/TableItem.hpp"
 #include "Spire/Ui/TextBox.hpp"
@@ -391,6 +392,7 @@ void Spire::register_selectors() {
   register_type_selector("TextBox", is_a<TextBox>());
   register_type_selector("TableBody", is_a<TableBody>());
   register_type_selector("TableItem", is_a<TableItem>());
+  register_type_selector("TableHeader", is_a<TableHeader>());
   register_type_selector("TableHeaderItem", is_a<TableHeaderItem>());
   register_type_selector("HighlightPicker", is_a<HighlightPicker>());
   register_pseudo_selector("placeholder", Placeholder());

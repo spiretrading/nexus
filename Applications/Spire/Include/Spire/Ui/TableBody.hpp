@@ -112,6 +112,12 @@ namespace Styles {
        */
       int estimate_scroll_line_height() const;
 
+      /** Show the given column. */
+      void show_column(int column);
+
+      /** Hide the given column. */
+      void hide_column(int column);
+
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
       bool event(QEvent* event) override;
