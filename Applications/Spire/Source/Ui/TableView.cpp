@@ -162,12 +162,12 @@ bool TableView::eventFilter(QObject* watched, QEvent* event) {
     if(event->type() == QEvent::HideToParent) {
       if(auto index =
           m_header_view->get_index(static_cast<TableHeaderItem*>(watched))) {
-        m_body->set_column_visible(*index, false);
+        m_body->hide_column(*index);
       }
     } else if(event->type() == QEvent::ShowToParent) {
       if(auto index =
           m_header_view->get_index(static_cast<TableHeaderItem*>(watched))) {
-        m_body->set_column_visible(*index, true);
+        m_body->show_column(*index);
       }
     }
   }
