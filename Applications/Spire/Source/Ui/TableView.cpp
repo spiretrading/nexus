@@ -103,7 +103,9 @@ TableView::TableView(
     QSizePolicy::MinimumExpanding);
   m_body->installEventFilter(this);
   link(*this, *m_body);
-  m_scroll_box = new ScrollBox(m_body);
+  auto scroll_box_body = new QWidget();
+  enclose(*scroll_box_body, *m_body);
+  m_scroll_box = new ScrollBox(scroll_box_body);
   m_scroll_box->set(ScrollBox::DisplayPolicy::ON_ENGAGE);
   m_scroll_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_scroll_box->get_horizontal_scroll_bar().connect_position_signal(
@@ -144,6 +146,10 @@ TableHeader& TableView::get_header() {
 
 TableBody& TableView::get_body() {
   return *m_body;
+}
+
+ScrollBox& TableView::get_scroll_box() {
+  return *m_scroll_box;
 }
 
 connection TableView::connect_sort_signal(
