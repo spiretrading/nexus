@@ -640,12 +640,7 @@ void TableBody::show_column(int column) {
     return;
   }
   m_column_covers[column]->show();
-  for(auto i = 0; i != get_layout().count(); ++i) {
-    auto& row = get_layout().get_row(i);
-    if(auto item = row.get_item(column)) {
-      item->show();
-    }
-  }
+  update_column_width(column);
 }
 
 void TableBody::hide_column(int column) {
@@ -653,12 +648,7 @@ void TableBody::hide_column(int column) {
     return;
   }
   m_column_covers[column]->hide();
-  for(auto i = 0; i != get_layout().count(); ++i) {
-    auto& row = get_layout().get_row(i);
-    if(auto item = row.get_item(column)) {
-      item->hide();
-    }
-  }
+  update_column_width(column);
 }
 
 bool TableBody::eventFilter(QObject* watched, QEvent* event) {
@@ -1062,7 +1052,7 @@ TableBody::RowCover* TableBody::mount_row(int index,
   for(auto i = 0; i < get_column_size(); ++i) {
     if(!m_column_covers[i]->isVisible()) {
       if(auto item = row->get_item(i)) {
-        item->setVisible(false);
+        item->setFixedWidth(0);
       }
     }
   }
@@ -1187,6 +1177,31 @@ void TableBody::update_visible_region() {
   }
   get_layout().invalidate();
   --m_resize_guard;
+}
+
+void TableBody::update_column_width(int column) {
+  auto spacing = get_left_spacing(column);
+  for(auto i = 0; i != get_layout().count() + 1; ++i) {
+    auto row = [&] () -> RowCover* {
+      if(i == get_layout().count()) {
+        return m_current_row;
+      }
+      auto row = &get_layout().get_row(i);
+      if(row != m_current_row) {
+        return row;
+      }
+      return nullptr;
+    }();
+    if(row) {
+      if(auto item = row->get_item(column)) {
+        if(m_column_covers[column]->isVisible()) {
+          item->setFixedWidth(m_widths->get(column) - spacing);
+        } else {
+          item->setFixedWidth(0);
+        }
+      }
+    }
+  }
 }
 
 bool TableBody::navigate_next() {
@@ -1382,7 +1397,11 @@ void TableBody::on_style() {
       row->layout()->setSpacing(m_styles.m_horizontal_spacing);
       for(auto column = 0; column != m_widths->get_size(); ++column) {
         auto& item = *row->get_item(column);
-        item.setFixedWidth(m_widths->get(column) - get_left_spacing(column));
+        if(m_column_covers[column]->isVisible()) {
+          item.setFixedWidth(m_widths->get(column) - get_left_spacing(column));
+        } else {
+          item.setFixedWidth(0);
+        }
       }
     }
   }
@@ -1432,23 +1451,6 @@ void TableBody::on_table_operation(const TableModel::Operation& operation) {
 void TableBody::on_widths_update(const ListModel<int>::Operation& operation) {
   visit(operation,
     [&] (const ListModel<int>::UpdateOperation& operation) {
-      auto spacing = get_left_spacing(operation.m_index);
-      for(auto i = 0; i != get_layout().count() + 1; ++i) {
-        auto row = [&] () -> RowCover* {
-          if(i == get_layout().count()) {
-            return m_current_row;
-          }
-          auto row = &get_layout().get_row(i);
-          if(row != m_current_row) {
-            return row;
-          }
-          return nullptr;
-        }();
-        if(row) {
-          if(auto item = row->get_item(operation.m_index)) {
-            item->setFixedWidth(m_widths->get(operation.m_index) - spacing);
-          }
-        }
-      }
+      update_column_width(operation.m_index);
     });
 }

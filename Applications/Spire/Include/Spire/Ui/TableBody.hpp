@@ -189,6 +189,7 @@ namespace Styles {
       void initialize_visible_region();
       void reset_visible_region(std::vector<RowCover*>& unmounted_rows);
       void update_visible_region();
+      void update_column_width(int column);
       bool navigate_next();
       bool navigate_previous();
       void on_item_activated(TableItem& item);
