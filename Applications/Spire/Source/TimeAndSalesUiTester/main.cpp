@@ -1,6 +1,7 @@
 #include <QApplication>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/Resources.hpp"
+#include "Spire/TimeAndSales/TimeAndSalesPropertiesWindowFactory.hpp"
 #include "Version.hpp"
 
 using namespace Spire;
@@ -10,5 +11,9 @@ int main(int argc, char** argv) {
   application.setOrganizationName(QObject::tr("Spire Trading Inc"));
   application.setApplicationName(QObject::tr("Time and Sales UI Tester"));
   initialize_resources();
+
+  auto factory = TimeAndSalesPropertiesWindowFactory();
+  auto window = factory.make();
+  window->show();
   application.exec();
 }
