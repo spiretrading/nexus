@@ -172,53 +172,18 @@ struct TimeAndSalesTestWindow : QWidget {
   }
 };
 
-//struct TimeAndSalesWindowController {
-//  TimeAndSalesTestWindow m_time_and_sales_test_window;
-//
-//  explicit TimeAndSalesWindowController()
-//      : m_time_and_sales_test_window(
-//          std::make_shared<DemoTimeAndSalesModel>()) {
-//    m_time_and_sales_window.show();
-//    m_time_and_sales_window.installEventFilter(&m_time_and_sales_test_window);
-//    m_time_and_sales_test_window.setAttribute(Qt::WA_ShowWithoutActivating);
-//    m_time_and_sales_test_window.show();
-//    m_time_and_sales_test_window.move(m_time_and_sales_window.pos().x() +
-//      m_time_and_sales_window.frameGeometry().width() + scale_width(100),
-//      m_time_and_sales_window.pos().y());
-//  }
-//
-//  std::shared_ptr<TimeAndSalesModel> model_builder(const Security&) {
-//    auto time_and_sales = m_time_and_sales_test_window.m_time_and_sales;
-//    auto new_time_and_sales = std::make_shared<DemoTimeAndSalesModel>();
-//    new_time_and_sales->set_price(time_and_sales->get_price());
-//    new_time_and_sales->set_bbo_indicator(time_and_sales->get_bbo_indicator());
-//    new_time_and_sales->set_period(time_and_sales->get_period());
-//    new_time_and_sales->set_query_duration(
-//      time_and_sales->get_query_duration());
-//    new_time_and_sales->set_data_random(time_and_sales->is_data_random());
-//    m_time_and_sales_test_window.m_time_and_sales = new_time_and_sales;
-//    return new_time_and_sales;
-//  }
-//};
-
 int main(int argc, char** argv) {
   auto application = QApplication(argc, argv);
   application.setOrganizationName(QObject::tr("Spire Trading Inc"));
   application.setApplicationName(QObject::tr("Time and Sales UI Tester"));
   initialize_resources();
-  //auto controller = TimeAndSalesWindowController();
   auto widget = QWidget();
   auto time_and_sales_model = std::make_shared<DemoTimeAndSalesModel>();
   auto table_model = std::make_shared<TimeAndSalesTableModel>(time_and_sales_model);
   auto table_view = make_time_and_sales_table_view(table_model);
-  //table_model->connect_begin_loading_signal(
-  //  std::bind_front(&TimeAndSalesWindow::on_begin_loading, this));
-  //table_model->connect_end_loading_signal(
-  //  std::bind_front(&TimeAndSalesWindow::on_end_loading, this));
   enclose(widget, *table_view);
   widget.show();
   widget.resize(widget.sizeHint().width(), scale_height(361));
-  //table_model->load_history((widget.height() - widget.sizeHint().height()) / 16);
   auto time_and_sales_test_window = TimeAndSalesTestWindow(time_and_sales_model);
   time_and_sales_test_window.setAttribute(Qt::WA_ShowWithoutActivating);
   time_and_sales_test_window.show();
@@ -226,5 +191,6 @@ int main(int argc, char** argv) {
     widget.pos().x() + widget.frameGeometry().width() + scale_width(100),
     widget.pos().y());
   time_and_sales_model->set_period(time_and_sales_model->get_period());
+  widget.installEventFilter(&time_and_sales_test_window);
   application.exec();
 }

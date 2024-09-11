@@ -33,8 +33,18 @@ namespace {
     int m_last_scroll_y;
   };
 
+  void apply_indicator_style(StyleSheet& style, const Selector& item_selector,
+      const Selector& indicator_selector, const QColor& background_color,
+      const QColor& text_color) {
+    style.get(item_selector > indicator_selector).
+      set(TextColor(text_color));
+    style.get(item_selector > (indicator_selector < is_a<TableItem>() < Row())).
+      set(BackgroundColor(background_color));
+  };
+
   auto apply_table_view_style(StyleSheet& style) {
     auto body_selector = Any() > is_a<TableBody>();
+    auto body_item_selector = body_selector > Row() > is_a<TableItem>();
     auto header_selector = Any() > is_a<TableHeader>();
     auto font = QFont("Roboto");
     font.setWeight(QFont::Medium);
@@ -52,7 +62,7 @@ namespace {
       set(vertical_padding(0)).
       set(HorizontalSpacing(0)).
       set(VerticalSpacing(0));
-    style.get(body_selector > Row() > is_a<TableItem>() > is_a<TextBox>()).
+    style.get(body_item_selector > is_a<TextBox>()).
       set(border_size(0)).
       set(horizontal_padding(scale_width(2))).
       set(vertical_padding(scale_height(CELL_VERTICAL_PADDING))).
@@ -76,6 +86,16 @@ namespace {
       set(PaddingBottom(0));
     style.get(PullDelayed() > PullIndicator()).
       set(Visibility::VISIBLE);
+    apply_indicator_style(style, body_item_selector, AboveAskIndicator(),
+      QColor(0xEBFFF0), QColor(0x007735));
+    apply_indicator_style(style, body_item_selector, AtAskIndicator(),
+      QColor(0xEBFFF0), QColor(0x007735));
+    apply_indicator_style(style, body_item_selector, InsideIndicator(),
+      QColor(0xFFFFFF), QColor(Qt::black));
+    apply_indicator_style(style, body_item_selector, AtBidIndicator(),
+      QColor(0xFFF1F1), QColor(0xB71C1C));
+    apply_indicator_style(style, body_item_selector, BelowBidIndicator(),
+      QColor(0xFFF1F1), QColor(0xB71C1C));
   }
 
   auto apply_table_cell_right_align_style(StyleSheet& style) {
@@ -176,7 +196,11 @@ TableView* Spire::make_time_and_sales_table_view(
     set_header(make_header_model()).
     set_item_builder(std::bind_front(&item_builder, table)).make();
   update_style(*table_view, apply_table_view_style);
+  auto& header_scroll_box = table_view->get_header_scroll_box();
+  header_scroll_box.get_body().setSizePolicy(QSizePolicy::MinimumExpanding,
+    QSizePolicy::Fixed);
   auto& header = table_view->get_header();
+  header.setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   auto properties = make_header_item_properties();
   auto table_header_menu = new ContextMenu(header);
   for(auto i = 0; i < std::ssize(properties); ++i) {
@@ -199,22 +223,21 @@ TableView* Spire::make_time_and_sales_table_view(
     [=] (const auto& pos) {
       table_header_menu->window()->move(
         table_view->get_header().mapToGlobal(pos));
-      table_header_menu->show();
+      table_header_menu->window()->show();
     });
   auto pull_indicator = make_pull_indicator();
   link(*table_view, *pull_indicator);
-  auto& scroll_box = table_view->get_scroll_box();
-  scroll_box.get_body().layout()->addWidget(pull_indicator);
+  auto scroll_box = &table_view->get_body_scroll_box();
+  scroll_box->get_body().layout()->addWidget(pull_indicator);
   auto status = std::make_shared<Status>(false, 0);
-  scroll_box.get_vertical_scroll_bar().connect_position_signal(
+  scroll_box->get_vertical_scroll_bar().connect_position_signal(
     [=] (int position) {
-      auto& scroll_box = table_view->get_scroll_box();
-      auto& scroll_bar = scroll_box.get_vertical_scroll_bar();
+      auto& scroll_bar = scroll_box->get_vertical_scroll_bar();
       if(!status->m_is_loading && position > status->m_last_scroll_y &&
           scroll_bar.get_range().m_end - position <
             scroll_bar.get_page_size() / 2) {
         table->load_history(
-          scroll_box.height() / get_row_height(table_view->get_body()));
+          scroll_box->height() / get_row_height(table_view->get_body()));
       }
       status->m_last_scroll_y = position;
     });
@@ -228,9 +251,8 @@ TableView* Spire::make_time_and_sales_table_view(
         return;
       }
       match(*table_view, PullDelayed());
-      auto& scroll_box = table_view->get_scroll_box();
-      scroll_box.get_body().adjustSize();
-      scroll_to_end(scroll_box.get_vertical_scroll_bar());
+      scroll_box->get_body().adjustSize();
+      scroll_to_end(scroll_box->get_vertical_scroll_bar());
     });
   });
   table->connect_end_loading_signal([=] {
