@@ -23,6 +23,8 @@ namespace {
   bool test_visibility(const QWidget& container, const QRect& geometry) {
     auto widget_geometry =
       QRect(container.mapToParent(geometry.topLeft()), geometry.size());
+    auto p = container.parentWidget();
+    auto h = p->height();
     return std::max(-SCROLL_BUFFER, widget_geometry.top()) <=
       std::min(container.parentWidget()->height() + SCROLL_BUFFER,
         widget_geometry.bottom());
@@ -86,6 +88,16 @@ struct TableBody::Cover : QWidget {
   }
 };
 
+struct TableBody::ColumnCover : Cover {
+  ColumnCover(QWidget* parent)
+      : Cover(parent) {
+    setAttribute(Qt::WA_TransparentForMouseEvents);
+    update_style(*this, [] (auto& style) {
+      style.get(CurrentColumn()).set(BackgroundColor(QColor(0xE2E0FF)));
+    });
+  }
+};
+
 struct TableBody::RowCover : Cover {
   RowCover(TableBody& body)
       : Cover(&body) {
@@ -105,6 +117,9 @@ struct TableBody::RowCover : Cover {
       } else {
         item->setSizePolicy(
           QSizePolicy::Expanding, item->sizePolicy().verticalPolicy());
+      }
+      if(!body.m_column_covers[column]->isVisible()) {
+        item->setFixedWidth(0);
       }
       layout->addWidget(item);
       item->connect_active_signal(std::bind_front(
@@ -135,17 +150,6 @@ struct TableBody::RowCover : Cover {
     for(auto i = 0; i != layout()->count(); ++i) {
       body.m_item_builder.unmount(get_item(i)->unmount());
     }
-  }
-};
-
-struct TableBody::ColumnCover : Cover {
-
-  ColumnCover(QWidget* parent)
-      : Cover(parent) {
-    setAttribute(Qt::WA_TransparentForMouseEvents);
-    update_style(*this, [] (auto& style) {
-      style.get(CurrentColumn()).set(BackgroundColor(QColor(0xE2E0FF)));
-    });
   }
 };
 
@@ -1049,13 +1053,6 @@ TableBody::RowCover* TableBody::mount_row(int index,
     row->mount(index);
   }
   get_layout().insert(*row, index);
-  for(auto i = 0; i < get_column_size(); ++i) {
-    if(!m_column_covers[i]->isVisible()) {
-      if(auto item = row->get_item(i)) {
-        item->setFixedWidth(0);
-      }
-    }
-  }
   if(row != m_current_row) {
     on_cover_style(*row);
   }

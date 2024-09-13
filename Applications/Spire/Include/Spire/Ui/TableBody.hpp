@@ -139,8 +139,8 @@ namespace Styles {
         QColor m_vertical_grid_color;
       };
       struct Cover;
-      struct RowCover;
       struct ColumnCover;
+      struct RowCover;
       struct Layout;
       struct Painter;
       std::shared_ptr<TableModel> m_table;
