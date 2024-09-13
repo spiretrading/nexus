@@ -196,11 +196,7 @@ TableView* Spire::make_time_and_sales_table_view(
     set_header(make_header_model()).
     set_item_builder(std::bind_front(&item_builder, table)).make();
   update_style(*table_view, apply_table_view_style);
-  auto& header_scroll_box = table_view->get_header_scroll_box();
-  header_scroll_box.get_body().setSizePolicy(QSizePolicy::MinimumExpanding,
-    QSizePolicy::Fixed);
   auto& header = table_view->get_header();
-  header.setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   auto properties = make_header_item_properties();
   auto table_header_menu = new ContextMenu(header);
   for(auto i = 0; i < std::ssize(properties); ++i) {
@@ -227,7 +223,7 @@ TableView* Spire::make_time_and_sales_table_view(
     });
   auto pull_indicator = make_pull_indicator();
   link(*table_view, *pull_indicator);
-  auto scroll_box = &table_view->get_body_scroll_box();
+  auto scroll_box = &table_view->get_scroll_box();
   scroll_box->get_body().layout()->addWidget(pull_indicator);
   auto status = std::make_shared<Status>(false, 0);
   scroll_box->get_vertical_scroll_bar().connect_position_signal(

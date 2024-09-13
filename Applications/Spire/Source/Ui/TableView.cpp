@@ -72,14 +72,14 @@ TableView::TableView(
     }
   }
   m_header_view = new TableHeader(m_header);
-  m_header_view->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+  m_header_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   m_header_view->setContentsMargins({scale_width(1), 0, 0, 0});
   link(*this, *m_header_view);
   for(auto i = 0; i < m_header->get_size(); ++i) {
     m_header_view->get_item(i)->installEventFilter(this);
   }
   auto box = new Box(m_header_view);
-  box->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+  box->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed);
   update_style(*box, [] (auto& style) {
     style.get(Any()).set(BackgroundColor(QColor(0xFFFFFF)));
   });
@@ -149,11 +149,7 @@ TableBody& TableView::get_body() {
   return *m_body;
 }
 
-ScrollBox& TableView::get_header_scroll_box() {
-  return *m_header_scroll_box;
-}
-
-ScrollBox& TableView::get_body_scroll_box() {
+ScrollBox& TableView::get_scroll_box() {
   return *m_scroll_box;
 }
 
