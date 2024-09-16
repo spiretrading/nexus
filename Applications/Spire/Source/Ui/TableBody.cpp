@@ -23,8 +23,6 @@ namespace {
   bool test_visibility(const QWidget& container, const QRect& geometry) {
     auto widget_geometry =
       QRect(container.mapToParent(geometry.topLeft()), geometry.size());
-    auto p = container.parentWidget();
-    auto h = p->height();
     return std::max(-SCROLL_BUFFER, widget_geometry.top()) <=
       std::min(container.parentWidget()->height() + SCROLL_BUFFER,
         widget_geometry.bottom());

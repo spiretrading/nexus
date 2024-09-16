@@ -99,14 +99,11 @@ TableView::TableView(
   }
   m_body = new TableBody(m_sorted_table, std::move(current),
     std::move(selection), m_header_view->get_widths(), std::move(item_builder));
-  m_body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  m_body->setSizePolicy(QSizePolicy::MinimumExpanding,
+    QSizePolicy::MinimumExpanding);
   m_body->installEventFilter(this);
   link(*this, *m_body);
-  auto scroll_box_body = new QWidget();
-  scroll_box_body->setSizePolicy(QSizePolicy::MinimumExpanding,
-    QSizePolicy::MinimumExpanding);
-  enclose(*scroll_box_body, *m_body);
-  m_scroll_box = new ScrollBox(scroll_box_body);
+  m_scroll_box = new ScrollBox(m_body);
   m_scroll_box->set(ScrollBox::DisplayPolicy::ON_ENGAGE);
   m_scroll_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_scroll_box->get_horizontal_scroll_bar().connect_position_signal(

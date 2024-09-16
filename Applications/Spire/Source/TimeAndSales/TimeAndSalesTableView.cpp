@@ -17,8 +17,6 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  using PullIndicator = StateSelector<void, struct PullIndicatorSelectorTag>;
-  using PullDelayed = StateSelector<void, struct PullDelayedSelectorTag>;
   const auto CELL_VERTICAL_PADDING = 1.5;
   const auto PULL_DELAY_TIMEOUT_MS = 1000;
 
@@ -36,10 +34,10 @@ namespace {
   void apply_indicator_style(StyleSheet& style, const Selector& item_selector,
       const Selector& indicator_selector, const QColor& background_color,
       const QColor& text_color) {
-    style.get(item_selector > indicator_selector).
-      set(TextColor(text_color));
     style.get(item_selector > (indicator_selector < is_a<TableItem>() < Row())).
       set(BackgroundColor(background_color));
+    style.get(item_selector > indicator_selector).
+      set(TextColor(text_color));
   };
 
   auto apply_table_view_style(StyleSheet& style) {
@@ -62,11 +60,6 @@ namespace {
       set(vertical_padding(0)).
       set(HorizontalSpacing(0)).
       set(VerticalSpacing(0));
-    style.get(body_item_selector > is_a<TextBox>()).
-      set(border_size(0)).
-      set(horizontal_padding(scale_width(2))).
-      set(vertical_padding(scale_height(CELL_VERTICAL_PADDING))).
-      set(text_style(font, QColor(Qt::black)));
     style.get(body_selector > Row() > Current()).
       set(BackgroundColor(Qt::transparent)).
       set(border_color(QColor(Qt::transparent)));
@@ -74,18 +67,8 @@ namespace {
       set(BackgroundColor(Qt::transparent));
     style.get(body_selector > CurrentColumn()).
       set(BackgroundColor(Qt::transparent));
-    style.get(Any() > is_a<ScrollBox>() < is_a<TableBody>()).
+    style.get(Any() > is_a<TableBody>()).
       set(PaddingBottom(scale_height(44)));
-    style.get(Any() > PullIndicator()).
-      set(Visibility::NONE).
-      set(BodyAlign(Qt::AlignHCenter)).
-      set(horizontal_padding(scale_width(8))).
-      set(PaddingBottom(scale_height(20))).
-      set(PaddingTop(scale_height(8)));
-    style.get(PullDelayed() > is_a<ScrollBox>() < is_a<TableBody>()).
-      set(PaddingBottom(0));
-    style.get(PullDelayed() > PullIndicator()).
-      set(Visibility::VISIBLE);
     apply_indicator_style(style, body_item_selector, AboveAskIndicator(),
       QColor(0xEBFFF0), QColor(0x007735));
     apply_indicator_style(style, body_item_selector, AtAskIndicator(),
@@ -96,17 +79,15 @@ namespace {
       QColor(0xFFF1F1), QColor(0xB71C1C));
     apply_indicator_style(style, body_item_selector, BelowBidIndicator(),
       QColor(0xFFF1F1), QColor(0xB71C1C));
+    style.get(body_item_selector > is_a<TextBox>()).
+      set(border_size(0)).
+      set(horizontal_padding(scale_width(2))).
+      set(vertical_padding(scale_height(CELL_VERTICAL_PADDING))).
+      set(Font(font));
   }
 
   auto apply_table_cell_right_align_style(StyleSheet& style) {
     style.get(Any()).set(TextAlign(Qt::AlignRight | Qt::AlignVCenter));
-  }
-
-  double get_row_height(TableBody& table_body) {
-    if(auto item = table_body.find_item({0, 0})) {
-      return item->height();
-    }
-    return 2 * scale_height(CELL_VERTICAL_PADDING);
   }
 
   auto make_header_model() {
@@ -122,18 +103,6 @@ namespace {
     add_item(QObject::tr("Condition"), QObject::tr("Cond"));
     add_item("", "");
     return model;
-  }
-
-   auto make_pull_indicator() {
-    auto spinner = new QMovie(":/Icons/spinner.gif");
-    spinner->setScaledSize(scale(16, 16));
-    spinner->start();
-    auto spinner_widget = new QLabel();
-    spinner_widget->setMovie(spinner);
-    auto indicator_box = new Box(spinner_widget);
-    indicator_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-    match(*indicator_box, PullIndicator());
-    return indicator_box;
   }
 
   auto make_header_item_properties() {
@@ -221,10 +190,7 @@ TableView* Spire::make_time_and_sales_table_view(
         table_view->get_header().mapToGlobal(pos));
       table_header_menu->window()->show();
     });
-  auto pull_indicator = make_pull_indicator();
-  link(*table_view, *pull_indicator);
   auto scroll_box = &table_view->get_scroll_box();
-  scroll_box->get_body().layout()->addWidget(pull_indicator);
   auto status = std::make_shared<Status>(false, 0);
   scroll_box->get_vertical_scroll_bar().connect_position_signal(
     [=] (int position) {
@@ -232,8 +198,8 @@ TableView* Spire::make_time_and_sales_table_view(
       if(!status->m_is_loading && position > status->m_last_scroll_y &&
           scroll_bar.get_range().m_end - position <
             scroll_bar.get_page_size() / 2) {
-        table->load_history(
-          scroll_box->height() / get_row_height(table_view->get_body()));
+        table->load_history(scroll_box->height() /
+          table_view->get_body().estimate_scroll_line_height());
       }
       status->m_last_scroll_y = position;
     });
@@ -246,16 +212,11 @@ TableView* Spire::make_time_and_sales_table_view(
       if(!status->m_is_loading) {
         return;
       }
-      match(*table_view, PullDelayed());
-      scroll_box->get_body().adjustSize();
       scroll_to_end(scroll_box->get_vertical_scroll_bar());
     });
   });
   table->connect_end_loading_signal([=] {
     status->m_is_loading = false;
-    if(is_match(*table_view, PullDelayed())) {
-      unmatch(*table_view, PullDelayed());
-    }
   });
   return table_view;
 }
