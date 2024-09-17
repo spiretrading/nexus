@@ -302,14 +302,18 @@ struct TableBody::Layout : QLayout {
     while(get_top_index() < top_index) {
       m_top.push_back(height);
       m_top_height += height;
-      m_bottom_height -= m_bottom.front();
-      m_bottom.erase(m_bottom.begin());
+      if(!m_bottom.empty()) {
+        m_bottom_height -= m_bottom.front();
+        m_bottom.erase(m_bottom.begin());
+      }
     }
     while(get_top_index() > top_index) {
       m_bottom.push_back(height);
       m_bottom_height += height;
-      m_top_height -= m_top.back();
-      m_top.pop_back();
+      if(!m_top.empty()) {
+        m_top_height -= m_top.back();
+        m_top.pop_back();
+      }
     }
   }
 
