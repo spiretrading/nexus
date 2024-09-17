@@ -11,7 +11,6 @@ int main(int argc, char** argv) {
   application.setOrganizationName(QObject::tr("Spire Trading Inc"));
   application.setApplicationName(QObject::tr("Time and Sales UI Tester"));
   initialize_resources();
-
   auto factory = TimeAndSalesPropertiesWindowFactory();
   auto window = factory.make();
   window->show();

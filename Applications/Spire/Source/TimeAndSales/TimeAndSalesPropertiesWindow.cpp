@@ -142,9 +142,7 @@ TimeAndSalesPropertiesWindow::TimeAndSalesPropertiesWindow(
   setWindowFlags(windowFlags() & ~Qt::WindowMinimizeButtonHint);
   auto text_header = make_label(tr("Text"));
   text_header->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-  update_style(*text_header, [] (auto& style) {
-    apply_header_label_style(style);
-  });
+  update_style(*text_header, apply_header_label_style);
   auto font_box = new FontBox(m_model->m_font_model);
   font_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   font_box->get_current()->connect_update_signal(
