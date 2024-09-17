@@ -51,6 +51,9 @@ const Order& AsxFixApplication::Submit(const OrderInfo& info) {
       }
       newOrderSingle->set(FIX::Account(GetAccount()));
       newOrderSingle->setField(ACCOUNT_TAG, info.m_submissionAccount.m_name);
+      if(auto deliverToCompId = GetDeliverToCompId()) {
+        newOrderSingle->setField(FIX::DeliverToCompID(*deliverToCompId));
+      }
       if(info.m_fields.m_security.GetMarket() == DefaultMarkets::ASX()) {
         newOrderSingle->set(FIX::SecurityExchange{"ASX"});
       } else {
@@ -82,6 +85,9 @@ void AsxFixApplication::Cancel(const OrderExecutionSession& session,
         Out<FIX42::OrderCancelRequest> orderCancelRequest) {
       orderCancelRequest->set(FIX::Account(GetAccount()));
       orderCancelRequest->setField(ACCOUNT_TAG, session.GetAccount().m_name);
+      if(auto deliverToCompId = GetDeliverToCompId()) {
+        orderCancelRequest->setField(FIX::DeliverToCompID(*deliverToCompId));
+      }
       auto& fields = order.GetInfo().m_fields;
       if(fields.m_security.GetMarket() == DefaultMarkets::ASX()) {
         orderCancelRequest->set(FIX::SecurityExchange{"ASX"});
@@ -154,4 +160,12 @@ string AsxFixApplication::GetUsername() const {
 
 string AsxFixApplication::GetPassword() const {
   return GetSessionSettings().get(GetSessionId()).getString("Password");
+}
+
+boost::optional<string> AsxFixApplication::GetDeliverToCompId() const {
+  auto& settings = GetSessionSettings().get(GetSessionId());
+  if(settings.has("DeliverToCompID")) {
+    return settings.getString("DeliverToCompID");
+  }
+  return none;
 }

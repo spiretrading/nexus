@@ -2,6 +2,7 @@
 #define OASIS_ASX_FIX_APPLICATION_HPP
 #include <Beam/Network/Network.hpp>
 #include <Beam/TimeService/NtpTimeClient.hpp>
+#include <boost/optional/optional.hpp>
 #include <quickfix/MessageCracker.h>
 #include "Nexus/FixUtilities/FixApplication.hpp"
 #include "Nexus/FixUtilities/FixOrderLog.hpp"
@@ -66,6 +67,7 @@ namespace Nexus::OasisOrderExecutionService {
       std::string GetAccount() const;
       std::string GetUsername() const;
       std::string GetPassword() const;
+      boost::optional<std::string> GetDeliverToCompId() const;
   };
 }
 
