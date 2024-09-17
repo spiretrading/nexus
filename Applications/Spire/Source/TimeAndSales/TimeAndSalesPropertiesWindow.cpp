@@ -43,14 +43,14 @@ namespace {
   }
 
   auto make_bbo_indicator_row(const QString& name,
-      std::shared_ptr<HighlightColorModel> color_model, QWidget& parent) {
+      std::shared_ptr<HighlightColorModel> color, QWidget& parent) {
     auto layout = make_hbox_layout();
     auto label = make_label(name);
     update_style(*label, [] (auto& style) {
       style.get(Any()).set(PaddingRight(scale_width(8)));
     });
     layout->addWidget(label);
-    auto highlight_box = new HighlightBox(std::move(color_model));
+    auto highlight_box = new HighlightBox(std::move(color));
     highlight_box->setFixedSize(scale(120, 20));
     link(parent, *highlight_box);
     layout->addWidget(highlight_box);
@@ -59,76 +59,76 @@ namespace {
 }
 
 struct TimeAndSalesPropertiesWindow::PropertiesWindowModel {
-  std::shared_ptr<TimeAndSalesPropertiesModel> m_properties_model;
-  std::shared_ptr<ValueModel<QFont>> m_font_model;
-  std::shared_ptr<BooleanModel> m_show_grid_model;
+  std::shared_ptr<TimeAndSalesPropertiesModel> m_properties;
+  std::shared_ptr<ValueModel<QFont>> m_font;
+  std::shared_ptr<BooleanModel> m_show_grid;
   std::array<std::shared_ptr<HighlightColorModel>, BBO_INDICATOR_COUNT>
-    m_highlight_models;
+    m_highlights;
   scoped_connection m_properties_connection;
   scoped_connection m_font_connection;
   scoped_connection m_show_grid_connection;
   std::array<scoped_connection, BBO_INDICATOR_COUNT> m_highlight_connections;
 
   explicit PropertiesWindowModel(
-      std::shared_ptr<TimeAndSalesPropertiesModel> properties_model)
-      : m_properties_model(std::move(properties_model)),
-        m_font_model(std::make_shared<LocalValueModel<QFont>>(
-          m_properties_model->get().get_font())),
-        m_show_grid_model(std::make_shared<LocalBooleanModel>(
-          m_properties_model->get().is_grid_enabled())) {
-    m_properties_connection = m_properties_model->connect_update_signal(
+      std::shared_ptr<TimeAndSalesPropertiesModel> properties)
+      : m_properties(std::move(properties)),
+        m_font(std::make_shared<LocalValueModel<QFont>>(
+          m_properties->get().get_font())),
+        m_show_grid(std::make_shared<LocalBooleanModel>(
+          m_properties->get().is_grid_enabled())) {
+    m_properties_connection = m_properties->connect_update_signal(
       std::bind_front(&PropertiesWindowModel::on_properties, this));
-    m_font_connection = m_font_model->connect_update_signal(
+    m_font_connection = m_font->connect_update_signal(
       std::bind_front(&PropertiesWindowModel::on_font, this));
-    m_show_grid_connection = m_show_grid_model->connect_update_signal(
+    m_show_grid_connection = m_show_grid->connect_update_signal(
       std::bind_front(&PropertiesWindowModel::on_show_grid, this));
     for(auto i = 0; i < BBO_INDICATOR_COUNT; ++i) {
       auto indicator = static_cast<BboIndicator>(i);
-      m_highlight_models[i] = std::make_shared<LocalHighlightColorModel>(
-        m_properties_model->get().get_highlight_color(indicator));
-      m_highlight_connections[i] = m_highlight_models[i]->connect_update_signal(
+      m_highlights[i] = std::make_shared<LocalHighlightColorModel>(
+        m_properties->get().get_highlight_color(indicator));
+      m_highlight_connections[i] = m_highlights[i]->connect_update_signal(
         std::bind_front(&PropertiesWindowModel::on_highlight, this, indicator));
     }
   }
 
   void on_properties(const TimeAndSalesProperties& properties) {
-    if(properties.get_font() != m_font_model->get()) {
+    if(properties.get_font() != m_font->get()) {
       auto blocker = shared_connection_block(m_font_connection);
-      m_font_model->set(properties.get_font());
+      m_font->set(properties.get_font());
     }
-    if(properties.is_grid_enabled() != m_show_grid_model->get()) {
+    if(properties.is_grid_enabled() != m_show_grid->get()) {
       auto blocker = shared_connection_block(m_show_grid_connection);
-      m_show_grid_model->set(properties.is_grid_enabled());
+      m_show_grid->set(properties.is_grid_enabled());
     }
     for(auto i = 0; i < BBO_INDICATOR_COUNT; ++i) {
       auto indicator = static_cast<BboIndicator>(i);
       if(properties.get_highlight_color(indicator) !=
-          m_highlight_models[i]->get()) {
+          m_highlights[i]->get()) {
         auto blocker = shared_connection_block(m_highlight_connections[i]);
-        m_highlight_models[i]->set(properties.get_highlight_color(indicator));
+        m_highlights[i]->set(properties.get_highlight_color(indicator));
       }
     }
   }
 
   void on_font(const QFont& font) {
-    auto properties = m_properties_model->get();
+    auto properties = m_properties->get();
     properties.set_font(font);
     auto blocker = shared_connection_block(m_properties_connection);
-    m_properties_model->set(properties);
+    m_properties->set(properties);
   }
 
   void on_show_grid(bool checked) {
-    auto properties = m_properties_model->get();
+    auto properties = m_properties->get();
     properties.set_grid_enabled(checked);
     auto blocker = shared_connection_block(m_properties_connection);
-    m_properties_model->set(properties);
+    m_properties->set(properties);
   }
 
   void on_highlight(BboIndicator indicator, const HighlightColor& highlight) {
-    auto properties = m_properties_model->get();
+    auto properties = m_properties->get();
     properties.set_highlight_color(indicator, highlight);
     auto blocker = shared_connection_block(m_properties_connection);
-    m_properties_model->set(properties);
+    m_properties->set(properties);
   }
 };
 
@@ -136,18 +136,18 @@ TimeAndSalesPropertiesWindow::TimeAndSalesPropertiesWindow(
     std::shared_ptr<TimeAndSalesPropertiesModel> current, QWidget* parent)
     : Window(parent),
       m_model(std::make_unique<PropertiesWindowModel>(std::move(current))),
-      m_initial_properties(m_model->m_properties_model->get()) {
+      m_initial_properties(m_model->m_properties->get()) {
   set_svg_icon(":/Icons/time-sales.svg");
   setWindowTitle(tr("Time and Sales Properties"));
   setWindowFlags(windowFlags() & ~Qt::WindowMinimizeButtonHint);
   auto text_header = make_label(tr("Text"));
   text_header->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   update_style(*text_header, apply_header_label_style);
-  auto font_box = new FontBox(m_model->m_font_model);
+  auto font_box = new FontBox(m_model->m_font);
   font_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   font_box->get_current()->connect_update_signal(
     std::bind_front(&TimeAndSalesPropertiesWindow::on_font, this));
-  auto grid_check_box = new CheckBox(m_model->m_show_grid_model);
+  auto grid_check_box = new CheckBox(m_model->m_show_grid);
   grid_check_box->set_label(tr("Show Grid"));
   grid_check_box->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
   auto bbo_indicator_header = make_label(tr("BBO Indicators"));
@@ -159,7 +159,7 @@ TimeAndSalesPropertiesWindow::TimeAndSalesPropertiesWindow(
   for(auto i = 0; i < BBO_INDICATOR_COUNT; ++i) {
     indicators_layout->addLayout(
       make_bbo_indicator_row(get_bbo_indicator_name(i),
-        m_model->m_highlight_models[i], *this));
+        m_model->m_highlights[i], *this));
   }
   auto content_body = new QWidget();
   auto content_body_layout = make_vbox_layout(content_body);
@@ -195,16 +195,16 @@ TimeAndSalesPropertiesWindow::TimeAndSalesPropertiesWindow(
   body_layout->addWidget(content_box);
   body_layout->addWidget(actions_box);
   set_body(body);
-  on_font(m_model->m_font_model->get());
+  on_font(m_model->m_font->get());
 }
 
 const std::shared_ptr<TimeAndSalesPropertiesModel>&
     TimeAndSalesPropertiesWindow::get_current() const {
-  return m_model->m_properties_model;
+  return m_model->m_properties;
 }
 
 void TimeAndSalesPropertiesWindow::closeEvent(QCloseEvent*) {
-  m_initial_properties = m_model->m_properties_model->get();
+  m_initial_properties = m_model->m_properties->get();
 }
 
 void TimeAndSalesPropertiesWindow::on_font(const QFont& font) {
@@ -215,7 +215,7 @@ void TimeAndSalesPropertiesWindow::on_font(const QFont& font) {
 }
 
 void Spire::TimeAndSalesPropertiesWindow::on_cancel() {
-  m_model->m_properties_model->set(m_initial_properties);
+  m_model->m_properties->set(m_initial_properties);
   close();
 }
 
