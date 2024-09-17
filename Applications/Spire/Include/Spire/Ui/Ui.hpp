@@ -46,6 +46,7 @@ namespace Spire {
   class FilterPanel;
   class FixedHorizontalLayout;
   class FocusObserver;
+  class FontBox;
   class GlobalPositionObserver;
   class HexColorBox;
   struct Highlight;

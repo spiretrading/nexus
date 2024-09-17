@@ -155,9 +155,7 @@ TimeAndSalesPropertiesWindow::TimeAndSalesPropertiesWindow(
   auto bbo_indicator_header = make_label(tr("BBO Indicators"));
   bbo_indicator_header->setSizePolicy(QSizePolicy::Expanding,
     QSizePolicy::Fixed);
-  update_style(*bbo_indicator_header, [] (auto& style) {
-    apply_header_label_style(style);
-  });
+  update_style(*bbo_indicator_header, apply_header_label_style);
   auto indicators_layout = make_vbox_layout();
   indicators_layout->setSpacing(scale_height(8));
   for(auto i = 0; i < BBO_INDICATOR_COUNT; ++i) {
@@ -176,9 +174,7 @@ TimeAndSalesPropertiesWindow::TimeAndSalesPropertiesWindow(
   content_body_layout->addLayout(indicators_layout);
   auto content_box = new Box(content_body);
   content_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  update_style(*content_box, [] (auto& style) {
-    apply_content_style(style);
-  });
+  update_style(*content_box, apply_content_style);
   auto cancel_button = make_label_button("Cancel");
   cancel_button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   cancel_button->connect_click_signal(
@@ -194,9 +190,7 @@ TimeAndSalesPropertiesWindow::TimeAndSalesPropertiesWindow(
   actions_body_layout->addWidget(done_button);
   auto actions_box = new Box(actions_body);
   actions_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  update_style(*actions_box, [] (auto& style) {
-    apply_actions_style(style);
-  });
+  update_style(*actions_box, apply_actions_style);
   auto body = new QWidget();
   body->setFixedWidth(scale_width(256));
   auto body_layout = make_vbox_layout(body);

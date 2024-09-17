@@ -28,6 +28,9 @@ namespace Spire {
       /** Returns the current font. */
       const std::shared_ptr<ValueModel<QFont>>& get_current() const;
 
+    protected:
+      void showEvent(QShowEvent* event) override;
+
     private:
       std::shared_ptr<ValueModel<QFont>> m_current;
       FontFamilyBox* m_font_family_box;

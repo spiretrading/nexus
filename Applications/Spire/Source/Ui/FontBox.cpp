@@ -117,6 +117,10 @@ const std::shared_ptr<ValueModel<QFont>>& FontBox::get_current() const {
   return m_current;
 }
 
+void FontBox::showEvent(QShowEvent* event) {
+  m_font_family_box->setFocus();
+}
+
 void FontBox::on_current(const QFont& font) {
   if(font.family() != m_font_family_box->get_current()->get()) {
     auto blocker = shared_connection_block(m_style_connection);
