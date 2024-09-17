@@ -20,6 +20,11 @@ namespace {
   const auto CELL_VERTICAL_PADDING = 1.5;
   const auto PULL_DELAY_TIMEOUT_MS = 1000;
 
+  auto TABLE_BODY_PADDING_BOTTOM() {
+    static auto height = scale_height(44);
+    return height;
+  }
+
   struct HeaderItemProperties {
     bool m_is_visible;
     Qt::Alignment m_alignment;
@@ -29,6 +34,28 @@ namespace {
   struct Status {
     bool m_is_loading;
     int m_last_scroll_y;
+  };
+
+  void update_pull_indicator_position(QWidget& indicator,
+      const QSize& body_size) {
+    indicator.setGeometry(0, body_size.height() - TABLE_BODY_PADDING_BOTTOM(),
+      body_size.width(), TABLE_BODY_PADDING_BOTTOM());
+  }
+
+  struct TableBodyEventFilter : QObject {
+    QWidget* m_pull_indicator;
+
+    TableBodyEventFilter(QWidget& pull_indicator, QObject* parent = nullptr)
+      : QObject(parent),
+        m_pull_indicator(&pull_indicator) {}
+
+    bool eventFilter(QObject* watched, QEvent* event) override {
+      if(event->type() == QEvent::Resize && m_pull_indicator->isVisible()) {
+        auto& resize_event = *static_cast<QResizeEvent*>(event);
+        update_pull_indicator_position(*m_pull_indicator, resize_event.size());
+      }
+      return QObject::eventFilter(watched, event);
+    }
   };
 
   void apply_indicator_style(StyleSheet& style, const Selector& item_selector,
@@ -68,7 +95,7 @@ namespace {
     style.get(body_selector > CurrentColumn()).
       set(BackgroundColor(Qt::transparent));
     style.get(Any() > is_a<TableBody>()).
-      set(PaddingBottom(scale_height(44)));
+      set(PaddingBottom(TABLE_BODY_PADDING_BOTTOM()));
     apply_indicator_style(style, body_item_selector, AboveAskIndicator(),
       QColor(0xEBFFF0), QColor(0x007735));
     apply_indicator_style(style, body_item_selector, AtAskIndicator(),
@@ -113,6 +140,25 @@ namespace {
     properties.emplace_back(true, Qt::AlignLeft, scale_width(38));
     properties.emplace_back(false, Qt::AlignLeft, scale_width(34));
     return properties;
+  }
+
+  auto make_pull_indicator(QWidget* parent) {
+    auto spinner = new QMovie(":/Icons/spinner.gif");
+    spinner->setScaledSize(scale(16, 16));
+    spinner->start();
+    auto spinner_widget = new QLabel();
+    spinner_widget->setMovie(spinner);
+    auto indicator_box = new Box(spinner_widget, parent);
+    indicator_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    update_style(*indicator_box, [] (auto& style) {
+      style.get(Any()).
+        set(Visibility::NONE).
+        set(BodyAlign(Qt::AlignHCenter)).
+        set(horizontal_padding(scale_width(8))).
+        set(PaddingBottom(scale_height(20))).
+        set(PaddingTop(scale_height(8)));
+    });
+    return indicator_box;
   }
 
   QWidget* item_builder(
@@ -190,6 +236,9 @@ TableView* Spire::make_time_and_sales_table_view(
         table_view->get_header().mapToGlobal(pos));
       table_header_menu->window()->show();
     });
+  auto body = &table_view->get_body();
+  auto pull_indicator = make_pull_indicator(body);
+  body->installEventFilter(new TableBodyEventFilter(*pull_indicator, body));
   auto scroll_box = &table_view->get_scroll_box();
   auto status = std::make_shared<Status>(false, 0);
   scroll_box->get_vertical_scroll_bar().connect_position_signal(
@@ -198,8 +247,8 @@ TableView* Spire::make_time_and_sales_table_view(
       if(!status->m_is_loading && position > status->m_last_scroll_y &&
           scroll_bar.get_range().m_end - position <
             scroll_bar.get_page_size() / 2) {
-        table->load_history(scroll_box->height() /
-          table_view->get_body().estimate_scroll_line_height());
+        table->load_history(
+          scroll_box->height() / body->estimate_scroll_line_height());
       }
       status->m_last_scroll_y = position;
     });
@@ -213,10 +262,13 @@ TableView* Spire::make_time_and_sales_table_view(
         return;
       }
       scroll_to_end(scroll_box->get_vertical_scroll_bar());
+      update_pull_indicator_position(*pull_indicator, body->size());
+      pull_indicator->show();
     });
   });
   table->connect_end_loading_signal([=] {
     status->m_is_loading = false;
+    pull_indicator->hide();
   });
   return table_view;
 }
