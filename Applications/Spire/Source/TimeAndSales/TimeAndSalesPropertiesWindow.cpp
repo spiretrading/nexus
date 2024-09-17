@@ -61,12 +61,12 @@ namespace {
 struct TimeAndSalesPropertiesWindow::PropertiesWindowModel {
   std::shared_ptr<TimeAndSalesPropertiesModel> m_properties;
   std::shared_ptr<ValueModel<QFont>> m_font;
-  std::shared_ptr<BooleanModel> m_show_grid;
+  std::shared_ptr<BooleanModel> m_is_grid_enabled;
   std::array<std::shared_ptr<HighlightColorModel>, BBO_INDICATOR_COUNT>
     m_highlights;
   scoped_connection m_properties_connection;
   scoped_connection m_font_connection;
-  scoped_connection m_show_grid_connection;
+  scoped_connection m_grid_enabled_connection;
   std::array<scoped_connection, BBO_INDICATOR_COUNT> m_highlight_connections;
 
   explicit PropertiesWindowModel(
@@ -74,13 +74,13 @@ struct TimeAndSalesPropertiesWindow::PropertiesWindowModel {
       : m_properties(std::move(properties)),
         m_font(std::make_shared<LocalValueModel<QFont>>(
           m_properties->get().get_font())),
-        m_show_grid(std::make_shared<LocalBooleanModel>(
+        m_is_grid_enabled(std::make_shared<LocalBooleanModel>(
           m_properties->get().is_grid_enabled())) {
     m_properties_connection = m_properties->connect_update_signal(
       std::bind_front(&PropertiesWindowModel::on_properties, this));
     m_font_connection = m_font->connect_update_signal(
       std::bind_front(&PropertiesWindowModel::on_font, this));
-    m_show_grid_connection = m_show_grid->connect_update_signal(
+    m_grid_enabled_connection = m_is_grid_enabled->connect_update_signal(
       std::bind_front(&PropertiesWindowModel::on_show_grid, this));
     for(auto i = 0; i < BBO_INDICATOR_COUNT; ++i) {
       auto indicator = static_cast<BboIndicator>(i);
@@ -96,9 +96,9 @@ struct TimeAndSalesPropertiesWindow::PropertiesWindowModel {
       auto blocker = shared_connection_block(m_font_connection);
       m_font->set(properties.get_font());
     }
-    if(properties.is_grid_enabled() != m_show_grid->get()) {
-      auto blocker = shared_connection_block(m_show_grid_connection);
-      m_show_grid->set(properties.is_grid_enabled());
+    if(properties.is_grid_enabled() != m_is_grid_enabled->get()) {
+      auto blocker = shared_connection_block(m_grid_enabled_connection);
+      m_is_grid_enabled->set(properties.is_grid_enabled());
     }
     for(auto i = 0; i < BBO_INDICATOR_COUNT; ++i) {
       auto indicator = static_cast<BboIndicator>(i);
@@ -147,7 +147,7 @@ TimeAndSalesPropertiesWindow::TimeAndSalesPropertiesWindow(
   font_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   font_box->get_current()->connect_update_signal(
     std::bind_front(&TimeAndSalesPropertiesWindow::on_font, this));
-  auto grid_check_box = new CheckBox(m_model->m_show_grid);
+  auto grid_check_box = new CheckBox(m_model->m_is_grid_enabled);
   grid_check_box->set_label(tr("Show Grid"));
   grid_check_box->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
   auto bbo_indicator_header = make_label(tr("BBO Indicators"));
