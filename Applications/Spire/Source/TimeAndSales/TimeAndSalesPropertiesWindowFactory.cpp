@@ -1,11 +1,10 @@
 #include "Spire/TimeAndSales/TimeAndSalesPropertiesWindowFactory.hpp"
-#include "Spire/Spire/LocalValueModel.hpp"
 
 using namespace Spire;
 
 TimeAndSalesPropertiesWindowFactory::TimeAndSalesPropertiesWindowFactory()
   : TimeAndSalesPropertiesWindowFactory(
-      std::make_shared<LocalValueModel<TimeAndSalesProperties>>()) {}
+      std::make_shared<LocalTimeAndSalesPropertiesModel>()) {}
 
 TimeAndSalesPropertiesWindowFactory::TimeAndSalesPropertiesWindowFactory(
   std::shared_ptr<TimeAndSalesPropertiesModel> properties)
