@@ -47,6 +47,7 @@ HighlightBox::HighlightBox(std::shared_ptr<HighlightColorModel> current,
   auto label = make_label("123.45");
   label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   label->setFocusPolicy(Qt::NoFocus);
+  link(*this, *label);
   update_style(*label, [] (auto& style) {
     style.get(Any()).set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
   });
