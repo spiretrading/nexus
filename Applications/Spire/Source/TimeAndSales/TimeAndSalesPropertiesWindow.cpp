@@ -136,16 +136,17 @@ TimeAndSalesPropertiesWindow::TimeAndSalesPropertiesWindow(
     std::shared_ptr<TimeAndSalesPropertiesModel> current, QWidget* parent)
     : Window(parent),
       m_model(std::make_unique<PropertiesWindowModel>(std::move(current))),
-      m_initial_properties(m_model->m_properties->get()) {
+      m_initial_properties(m_model->m_properties->get()),
+      m_is_first_show(true) {
   set_svg_icon(":/Icons/time-sales.svg");
   setWindowTitle(tr("Time and Sales Properties"));
   setWindowFlags(windowFlags() & ~Qt::WindowMinimizeButtonHint);
   auto text_header = make_label(tr("Text"));
   text_header->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   update_style(*text_header, apply_header_label_style);
-  auto font_box = new FontBox(m_model->m_font);
-  font_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-  font_box->get_current()->connect_update_signal(
+  m_font_box = new FontBox(m_model->m_font);
+  m_font_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+  m_font_box->get_current()->connect_update_signal(
     std::bind_front(&TimeAndSalesPropertiesWindow::on_font, this));
   auto grid_check_box = new CheckBox(m_model->m_is_grid_enabled);
   grid_check_box->set_label(tr("Show Grid"));
@@ -164,7 +165,7 @@ TimeAndSalesPropertiesWindow::TimeAndSalesPropertiesWindow(
   auto content_body = new QWidget();
   auto content_body_layout = make_vbox_layout(content_body);
   content_body_layout->addWidget(text_header);
-  content_body_layout->addWidget(font_box);
+  content_body_layout->addWidget(m_font_box);
   content_body_layout->addSpacing(scale_height(24));
   content_body_layout->addWidget(grid_check_box, 0, Qt::AlignLeft);
   content_body_layout->addSpacing(scale_height(24));
@@ -201,6 +202,22 @@ TimeAndSalesPropertiesWindow::TimeAndSalesPropertiesWindow(
 const std::shared_ptr<TimeAndSalesPropertiesModel>&
     TimeAndSalesPropertiesWindow::get_current() const {
   return m_model->m_properties;
+}
+
+void TimeAndSalesPropertiesWindow::showEvent(QShowEvent* event) {
+  if(!m_is_first_show) {
+    return;
+  }
+  auto next_widget = m_font_box->nextInFocusChain();
+  while(next_widget && next_widget != m_font_box) {
+    if(m_font_box->isAncestorOf(next_widget) &&
+        next_widget->focusPolicy() & Qt::TabFocus) {
+      next_widget->setFocus();
+      break;
+    }
+    next_widget = next_widget->nextInFocusChain();
+  }
+  m_is_first_show = false;
 }
 
 void TimeAndSalesPropertiesWindow::closeEvent(QCloseEvent*) {

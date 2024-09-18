@@ -2,6 +2,7 @@
 #define SPIRE_TIME_AND_SALES_PROPERTIES_WINDOW_HPP
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesProperties.hpp"
+#include "Spire/Ui/Ui.hpp"
 #include "Spire/Ui/Window.hpp"
 
 namespace Spire {
@@ -31,12 +32,15 @@ namespace Spire {
         get_current() const;
 
     protected:
+      void showEvent(QShowEvent* event) override;
       void closeEvent(QCloseEvent* event) override;
 
     private:
       struct PropertiesWindowModel;
       std::unique_ptr<PropertiesWindowModel> m_model;
       TimeAndSalesProperties m_initial_properties;
+      FontBox* m_font_box;
+      bool m_is_first_show;
 
       void on_font(const QFont& font);
       void on_cancel();
