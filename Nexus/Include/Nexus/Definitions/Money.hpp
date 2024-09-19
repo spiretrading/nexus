@@ -129,8 +129,10 @@ namespace Details {
       using Details::MoneyDefinitions<Money>::CENT;
       using Details::MoneyDefinitions<Money>::BIP;
     private:
-      template<typename T> friend constexpr Money operator *(T lhs, Money rhs);
-      template<typename T> friend constexpr Money operator /(Money lhs, T rhs);
+      template<typename T> friend constexpr Money operator *(T lhs, Money rhs)
+        requires requires(T left, Quantity right) { left * right; };
+      template<typename T> friend constexpr Money operator /(Money lhs, T rhs)
+        requires requires(Quantity left, T right) { left / right; };
       friend std::ostream& operator <<(std::ostream& out, Money value);
       friend Money Abs(Money value);
       friend Money Floor(Money value, int decimalPlaces);
@@ -169,7 +171,8 @@ namespace Details {
    * @return <i>lhs</i> * <i>rhs</i>.
    */
   template<typename T>
-  constexpr Money operator *(T lhs, Money rhs) {
+  constexpr Money operator *(T lhs, Money rhs)
+      requires requires(T left, Quantity right) { left * right; } {
     return Money{lhs * rhs.m_value};
   }
 
@@ -180,7 +183,8 @@ namespace Details {
    * @return <i>lhs</i> / <i>rhs</i>.
    */
   template<typename T>
-  constexpr Money operator /(Money lhs, T rhs) {
+  constexpr Money operator /(Money lhs, T rhs)
+      requires requires(Quantity left, T right) { left / right; } {
     return Money{lhs.m_value / rhs};
   }
 

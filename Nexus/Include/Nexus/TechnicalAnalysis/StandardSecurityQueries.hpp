@@ -73,14 +73,12 @@ namespace Nexus::TechnicalAnalysis {
       0, Nexus::Queries::TimeAndSaleType());
     auto accessExpression = Beam::Queries::MemberAccessExpression(
       "market_center", Beam::Queries::StringType(), parameterExpression);
-    auto equalExpression = Beam::Queries::MakeEqualsExpression(
-      marketCodeExpression, accessExpression);
     auto openQuery = MarketDataService::SecurityMarketDataQuery();
     openQuery.SetIndex(std::move(security));
     openQuery.SetRange(marketStartOfDay,
       Beam::Queries::Decrement(Beam::Queries::Sequence::Last()));
     openQuery.SetSnapshotLimit(Beam::Queries::SnapshotLimit::Type::HEAD, 1);
-    openQuery.SetFilter(equalExpression);
+    openQuery.SetFilter(marketCodeExpression == accessExpression);
     return openQuery;
   }
 
@@ -232,15 +230,13 @@ namespace Nexus::TechnicalAnalysis {
       0, Nexus::Queries::TimeAndSaleType());
     auto accessExpression = Beam::Queries::MemberAccessExpression(
       "market_center", Beam::Queries::StringType(), parameterExpression);
-    auto equalExpression = Beam::Queries::MakeEqualsExpression(
-      marketCodeExpression, accessExpression);
     auto previousCloseQuery = MarketDataService::SecurityMarketDataQuery();
     previousCloseQuery.SetIndex(std::move(security));
     previousCloseQuery.SetRange(Beam::Queries::Sequence::First(),
       marketStartOfDay);
     previousCloseQuery.SetSnapshotLimit(
       Beam::Queries::SnapshotLimit::Type::TAIL, 1);
-    previousCloseQuery.SetFilter(equalExpression);
+    previousCloseQuery.SetFilter(marketCodeExpression == accessExpression);
     return previousCloseQuery;
   }
 

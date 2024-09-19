@@ -10,7 +10,6 @@
 #include <Beam/Utilities/Casts.hpp>
 #include <boost/throw_exception.hpp>
 #include "Nexus/Queries/ExpressionVisitor.hpp"
-#include "Nexus/Queries/FunctionEvaluators.hpp"
 #include "Nexus/Queries/Queries.hpp"
 #include "Nexus/Queries/StandardDataTypes.hpp"
 
@@ -37,7 +36,6 @@ namespace Nexus::Queries {
         NewTranslator() const override;
 
     protected:
-      void Visit(const Beam::Queries::FunctionExpression& expression) override;
       void Visit(
         const Beam::Queries::MemberAccessExpression& expression) override;
 
@@ -71,40 +69,6 @@ namespace Nexus::Queries {
       return std::make_unique<EvaluatorTranslator>(Beam::Ref(*m_liveOrders));
     } else {
       return std::make_unique<EvaluatorTranslator>();
-    }
-  }
-
-  inline void EvaluatorTranslator::Visit(
-      const Beam::Queries::FunctionExpression& expression) {
-    if(expression.GetName() == Beam::Queries::ADDITION_NAME) {
-      if(expression.GetParameters().size() != 2) {
-        BOOST_THROW_EXCEPTION(Beam::Queries::ExpressionTranslationException(
-          "Invalid parameters."));
-      }
-      auto& leftExpression = *expression.GetParameters()[0];
-      auto& rightExpression = *expression.GetParameters()[1];
-      auto translator = std::function<Beam::Queries::BaseEvaluatorNode* (
-        std::vector<std::unique_ptr<Beam::Queries::BaseEvaluatorNode>>)>();
-      try {
-        translator = Beam::Instantiate<
-          Beam::Queries::FunctionEvaluatorNodeTranslator<
-            AdditionExpressionTranslator>>(
-              leftExpression.GetType()->GetNativeType(),
-              rightExpression.GetType()->GetNativeType());
-      } catch(const std::exception&) {
-        Beam::Queries::EvaluatorTranslator<QueryTypes>::Visit(expression);
-        return;
-      }
-      leftExpression.Apply(*this);
-      auto parameters =
-        std::vector<std::unique_ptr<Beam::Queries::BaseEvaluatorNode>>();
-      parameters.push_back(std::move(GetEvaluator()));
-      rightExpression.Apply(*this);
-      parameters.push_back(std::move(GetEvaluator()));
-      SetEvaluator(std::unique_ptr<Beam::Queries::BaseEvaluatorNode>(
-        translator(std::move(parameters))));
-    } else {
-      Beam::Queries::EvaluatorTranslator<QueryTypes>::Visit(expression);
     }
   }
 
