@@ -294,24 +294,23 @@ struct TableBody::Layout : QLayout {
     if(size == 0) {
       return;
     }
-    auto row_height = (get_top_space() + get_bottom_space()) / size;
-    if(row_height == 0) {
-      return;
-    }
-    auto top_index = top_point / row_height;
-    auto& styles = static_cast<TableBody*>(parent())->m_styles;
-    auto height = row_height - styles.m_vertical_spacing;
-    while(get_top_index() < top_index) {
-      m_top.push_back(height);
-      m_top_height += height;
-      m_bottom_height -= m_bottom.front();
-      m_bottom.erase(m_bottom.begin());
-    }
-    while(get_top_index() > top_index) {
-      m_bottom.push_back(height);
-      m_bottom_height += height;
-      m_top_height -= m_top.back();
-      m_top.pop_back();
+    if(get_top_space() < top_point) {
+      while(!m_bottom.empty() && get_top_space() < top_point) {
+        auto height = m_bottom.front();
+        m_bottom_height -= height;
+        m_bottom.erase(m_bottom.begin());
+        m_top.push_back(height);
+        m_top_height += height;
+      }
+    } else {
+      while(!m_top.empty() && get_top_space() > top_point &&
+          get_top_space() - m_top.back() > top_point) {
+        auto height = m_top.back();
+        m_top_height -= height;
+        m_top.pop_back();
+        m_bottom.insert(m_bottom.begin(), height);
+        m_bottom_height += height;
+      }
     }
   }
 
@@ -1150,7 +1149,9 @@ void TableBody::reset_visible_region(std::vector<RowCover*>& unmounted_rows) {
     return;
   }
   get_layout().reset_top_index(mapFromParent(QPoint(0, 0)).y());
-  mount_row(get_layout().get_top_index(), none, unmounted_rows);
+  if(get_layout().get_top_index() < m_table->get_row_size()) {
+    mount_row(get_layout().get_top_index(), none, unmounted_rows);
+  }
 }
 
 void TableBody::update_visible_region() {
