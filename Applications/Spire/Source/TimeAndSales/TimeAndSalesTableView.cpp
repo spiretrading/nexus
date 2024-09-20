@@ -1,5 +1,4 @@
 #include "Spire/TimeAndSales/TimeAndSalesTableView.hpp"
-#include <QLayout>
 #include <QMovie>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
