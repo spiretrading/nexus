@@ -82,10 +82,8 @@ namespace {
       set(Font(font));
     style.get(body_selector).
       set(grid_color(Qt::transparent)).
-      set(horizontal_padding(0)).
-      set(vertical_padding(0)).
-      set(HorizontalSpacing(0)).
-      set(VerticalSpacing(0));
+      set(padding(0)).
+      set(spacing(0));
     style.get(body_selector > Row() > Current()).
       set(BackgroundColor(Qt::transparent)).
       set(border_color(QColor(Qt::transparent)));
