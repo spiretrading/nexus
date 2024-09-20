@@ -129,10 +129,12 @@ namespace Details {
       using Details::MoneyDefinitions<Money>::CENT;
       using Details::MoneyDefinitions<Money>::BIP;
     private:
-      template<typename T> friend constexpr Money operator *(T lhs, Money rhs)
-        requires requires(T left, Quantity right) { left * right; };
-      template<typename T> friend constexpr Money operator /(Money lhs, T rhs)
-        requires requires(Quantity left, T right) { left / right; };
+      template<typename T> friend constexpr std::enable_if_t<
+        std::is_same_v<decltype(std::declval<T>() * std::declval<Quantity>()),
+          Quantity>, Money> operator *(T lhs, Money rhs);
+      template<typename T> friend constexpr std::enable_if_t<
+        std::is_same_v<decltype(std::declval<Quantity>() / std::declval<T>()),
+          Quantity>, Money> operator /(Money lhs, T rhs);
       friend std::ostream& operator <<(std::ostream& out, Money value);
       friend Money Abs(Money value);
       friend Money Floor(Money value, int decimalPlaces);
@@ -171,8 +173,9 @@ namespace Details {
    * @return <i>lhs</i> * <i>rhs</i>.
    */
   template<typename T>
-  constexpr Money operator *(T lhs, Money rhs)
-      requires requires(T left, Quantity right) { left * right; } {
+  constexpr std::enable_if_t<
+    std::is_same_v<decltype(std::declval<T>() * std::declval<Quantity>()),
+      Quantity>, Money> operator *(T lhs, Money rhs) {
     return Money{lhs * rhs.m_value};
   }
 
@@ -183,8 +186,9 @@ namespace Details {
    * @return <i>lhs</i> / <i>rhs</i>.
    */
   template<typename T>
-  constexpr Money operator /(Money lhs, T rhs)
-      requires requires(Quantity left, T right) { left / right; } {
+  constexpr std::enable_if_t<
+    std::is_same_v<decltype(std::declval<Quantity>() / std::declval<T>()),
+      Quantity>, Money> operator /(Money lhs, T rhs) {
     return Money{lhs.m_value / rhs};
   }
 
