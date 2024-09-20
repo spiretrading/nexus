@@ -1,5 +1,6 @@
 #ifndef SPIRE_BBO_INDICATOR_HPP
 #define SPIRE_BBO_INDICATOR_HPP
+#include <QString>
 
 namespace Spire {
 
@@ -27,6 +28,9 @@ namespace Spire {
 
   /* The number of bbo indicators. */
   static const auto BBO_INDICATOR_COUNT = 6;
+
+  /** Returns the text representation of a BboIndicator. */
+  QString to_text(BboIndicator indicator);
 }
 
 #endif
