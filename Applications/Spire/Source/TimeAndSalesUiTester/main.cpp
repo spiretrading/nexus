@@ -1,5 +1,4 @@
 #include <QApplication>
-#include "Nexus/Definitions/SecurityInfo.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/Resources.hpp"
@@ -179,12 +178,14 @@ int main(int argc, char** argv) {
   initialize_resources();
   auto widget = QWidget();
   auto time_and_sales_model = std::make_shared<DemoTimeAndSalesModel>();
-  auto table_model = std::make_shared<TimeAndSalesTableModel>(time_and_sales_model);
+  auto table_model =
+    std::make_shared<TimeAndSalesTableModel>(time_and_sales_model);
   auto table_view = make_time_and_sales_table_view(table_model);
   enclose(widget, *table_view);
   widget.show();
   widget.resize(widget.sizeHint().width(), scale_height(361));
-  auto time_and_sales_test_window = TimeAndSalesTestWindow(time_and_sales_model);
+  auto time_and_sales_test_window =
+    TimeAndSalesTestWindow(time_and_sales_model);
   time_and_sales_test_window.setAttribute(Qt::WA_ShowWithoutActivating);
   time_and_sales_test_window.show();
   time_and_sales_test_window.move(
