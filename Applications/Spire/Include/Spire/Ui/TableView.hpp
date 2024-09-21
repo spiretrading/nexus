@@ -72,6 +72,12 @@ namespace Spire {
       /** Returns the ScrollBox. */
       ScrollBox& get_scroll_box();
 
+      /** Show the given column. */
+      void show_column(int column);
+
+      /** Hide the given column. */
+      void hide_column(int column);
+
       /** Connects a slot to the sort signal. */
       boost::signals2::connection connect_sort_signal(
         const SortSignal::slot_type& slot) const;
