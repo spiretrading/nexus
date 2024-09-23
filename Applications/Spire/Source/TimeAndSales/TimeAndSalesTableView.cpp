@@ -120,45 +120,25 @@ namespace {
 
   auto make_header_menu(TableView& table_view,
       const std::vector<HeaderItemProperties>& properties) {
-    auto header = &table_view.get_header();
-    header->setContextMenuPolicy(Qt::CustomContextMenu);
-    auto menu = new ContextMenu(*header);
+    auto& header = table_view.get_header();
+    header.setContextMenuPolicy(Qt::CustomContextMenu);
+    auto menu = new ContextMenu(header);
     for(auto i = 0; i < std::ssize(properties); ++i) {
-      auto model = menu->add_check_box(header->get_items()->get(i).m_name);
-      model->connect_update_signal(
-        [i, table_view_ptr = &table_view] (auto checked) {
-          if(checked) {
-            table_view_ptr->show_column(i);
-          } else {
-            table_view_ptr->hide_column(i);
-          }
-        });
-      model->set(properties[i].m_is_visible);
+      auto is_checked = menu->add_check_box(header.get_items()->get(i).m_name);
+      is_checked->connect_update_signal([i, &table_view] (auto checked) {
+        if(checked) {
+          table_view.show_column(i);
+        } else {
+          table_view.hide_column(i);
+        }
+      });
+      is_checked->set(properties[i].m_is_visible);
     }
-    QObject::connect(header, &QWidget::customContextMenuRequested,
-      [=] (const auto& pos) {
-        menu->window()->move(header->mapToGlobal(pos));
+    QObject::connect(&header, &QWidget::customContextMenuRequested,
+      [=, &header] (const auto& pos) {
+        menu->window()->move(header.mapToGlobal(pos));
         menu->window()->show();
       });
-  }
-
-  auto make_pull_indicator(QWidget* parent) {
-    auto spinner = new QMovie(":/Icons/spinner.gif");
-    spinner->setScaledSize(scale(16, 16));
-    spinner->start();
-    auto spinner_widget = new QLabel();
-    spinner_widget->setMovie(spinner);
-    auto indicator_box = new Box(spinner_widget, parent);
-    indicator_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-    update_style(*indicator_box, [] (auto& style) {
-      style.get(Any()).
-        set(Visibility::NONE).
-        set(BodyAlign(Qt::AlignHCenter)).
-        set(horizontal_padding(scale_width(8))).
-        set(PaddingBottom(scale_height(20))).
-        set(PaddingTop(scale_height(8)));
-    });
-    return indicator_box;
   }
 
   QWidget* item_builder(
@@ -257,18 +237,17 @@ TableView* Spire::make_time_and_sales_table_view(
         set(TextAlign(properties[i].m_alignment));
     });
   }
-  auto body = &table_view->get_body();
-  auto pull_indicator = new PullIndicator(body);
+  auto pull_indicator = new PullIndicator(&table_view->get_body());
   auto status = std::make_shared<Status>(false, 0);
-  auto scroll_box = &table_view->get_scroll_box();
-  scroll_box->get_vertical_scroll_bar().connect_position_signal(
-    [=] (int position) {
-      auto& scroll_bar = scroll_box->get_vertical_scroll_bar();
+  auto& scroll_box = table_view->get_scroll_box();
+  scroll_box.get_vertical_scroll_bar().connect_position_signal(
+    [=, &scroll_box] (int position) {
+      auto& scroll_bar = scroll_box.get_vertical_scroll_bar();
       if(!status->m_is_loading && position > status->m_last_scroll_y &&
           scroll_bar.get_range().m_end - position <
             scroll_bar.get_page_size() / 2) {
-        table->load_history(
-          scroll_box->height() / body->estimate_scroll_line_height());
+        table->load_history(scroll_box.height() /
+          table_view->get_body().estimate_scroll_line_height());
       }
       status->m_last_scroll_y = position;
     });
@@ -281,8 +260,8 @@ TableView* Spire::make_time_and_sales_table_view(
       if(!status->m_is_loading) {
         return;
       }
-      scroll_to_end(scroll_box->get_vertical_scroll_bar());
-      pull_indicator->update_position(body->size());
+      scroll_to_end(table_view->get_scroll_box().get_vertical_scroll_bar());
+      pull_indicator->update_position(table_view->get_body().size());
       pull_indicator->show();
     });
   });
