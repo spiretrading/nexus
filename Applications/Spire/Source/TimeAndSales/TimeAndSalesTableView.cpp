@@ -31,11 +31,6 @@ namespace {
     int m_width;
   };
 
-  struct Status {
-    bool m_is_loading;
-    int m_last_scroll_y;
-  };
-
   void apply_indicator_style(StyleSheet& style, const Selector& item_selector,
       const Selector& indicator_selector, const QColor& background_color,
       const QColor& text_color) {
@@ -185,8 +180,15 @@ namespace {
   }
 
   struct PullIndicator : QWidget {
-    PullIndicator(QWidget* parent = nullptr)
-        : QWidget(parent) {
+    TableView* m_table_view;
+    bool m_is_loading;
+    int m_last_position;
+
+    PullIndicator(TableView& table_view)
+        : QWidget(&table_view.get_body()),
+          m_table_view(&table_view),
+          m_is_loading(false),
+          m_last_position(0) {
       auto spinner = new QMovie(":/Icons/spinner.gif");
       spinner->setScaledSize(scale(16, 16));
       spinner->start();
@@ -202,8 +204,18 @@ namespace {
           set(PaddingBottom(scale_height(20))).
           set(PaddingTop(scale_height(8)));
       });
+      auto& scroll_box = m_table_view->get_scroll_box();
+      scroll_box.get_vertical_scroll_bar().connect_position_signal(
+        std::bind_front(&PullIndicator::on_position, this));
+      auto table =
+        std::static_pointer_cast<TimeAndSalesTableModel>(
+          m_table_view->get_table());
+      table->connect_begin_loading_signal(
+        std::bind_front(&PullIndicator::on_begin_loading, this));
+      table->connect_end_loading_signal(
+        std::bind_front(&PullIndicator::on_end_loading, this));
+      m_table_view->get_body().installEventFilter(this);
       hide();
-      parent->installEventFilter(this);
     }
 
     bool eventFilter(QObject* watched, QEvent* event) override {
@@ -217,6 +229,44 @@ namespace {
     void update_position(const QSize& size) {
       setGeometry(0, size.height() - TABLE_BODY_BOTTOM_PADDING(),
         size.width(), TABLE_BODY_BOTTOM_PADDING());
+    }
+
+    void on_position(int position) {
+      auto& scroll_box = m_table_view->get_scroll_box();
+      auto& scroll_bar = scroll_box.get_vertical_scroll_bar();
+      if(!m_is_loading && position > m_last_position &&
+          scroll_bar.get_range().m_end - position <
+            scroll_bar.get_page_size() / 2) {
+        auto table =
+          std::static_pointer_cast<TimeAndSalesTableModel>(
+            m_table_view->get_table());
+        table->load_history(scroll_box.height() /
+          m_table_view->get_body().estimate_scroll_line_height());
+      }
+      m_last_position = position;
+    }
+
+    void on_begin_loading() {
+      if(m_is_loading) {
+        return;
+      }
+      m_is_loading = true;
+      QTimer::singleShot(PULL_DELAY_TIMEOUT_MS, this,
+        std::bind_front(&PullIndicator::on_timeout, this));
+    }
+
+    void on_end_loading() {
+      m_is_loading = false;
+      hide();
+    }
+
+    void on_timeout() {
+      if(!m_is_loading) {
+        return;
+      }
+      scroll_to_end(m_table_view->get_scroll_box().get_vertical_scroll_bar());
+      update_position(m_table_view->get_body().size());
+      show();
     }
   };
 }
@@ -237,37 +287,6 @@ TableView* Spire::make_time_and_sales_table_view(
         set(TextAlign(properties[i].m_alignment));
     });
   }
-  auto pull_indicator = new PullIndicator(&table_view->get_body());
-  auto status = std::make_shared<Status>(false, 0);
-  auto& scroll_box = table_view->get_scroll_box();
-  scroll_box.get_vertical_scroll_bar().connect_position_signal(
-    [=, &scroll_box] (int position) {
-      auto& scroll_bar = scroll_box.get_vertical_scroll_bar();
-      if(!status->m_is_loading && position > status->m_last_scroll_y &&
-          scroll_bar.get_range().m_end - position <
-            scroll_bar.get_page_size() / 2) {
-        table->load_history(scroll_box.height() /
-          table_view->get_body().estimate_scroll_line_height());
-      }
-      status->m_last_scroll_y = position;
-    });
-  table->connect_begin_loading_signal([=] {
-    if(status->m_is_loading) {
-      return;
-    }
-    status->m_is_loading = true;
-    QTimer::singleShot(PULL_DELAY_TIMEOUT_MS, table_view, [=] {
-      if(!status->m_is_loading) {
-        return;
-      }
-      scroll_to_end(table_view->get_scroll_box().get_vertical_scroll_bar());
-      pull_indicator->update_position(table_view->get_body().size());
-      pull_indicator->show();
-    });
-  });
-  table->connect_end_loading_signal([=] {
-    status->m_is_loading = false;
-    pull_indicator->hide();
-  });
+  auto pull_indicator = new PullIndicator(*table_view);
   return table_view;
 }
