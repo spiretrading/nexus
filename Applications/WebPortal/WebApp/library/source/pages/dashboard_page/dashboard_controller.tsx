@@ -97,8 +97,8 @@ export class DashboardController extends React.Component<Properties, State> {
 
   private renderAccountPage = (props: Router.RouteComponentProps) => {
     const model = (() => {
-      const match =
-        DashboardController.ACCOUNT_PATTERN.exec(this.props.location.pathname);
+      const match = DashboardController.ACCOUNT_PATTERN.regexp.exec(
+        this.props.location.pathname);
       const account = (() => {
         if(match?.[1]) {
           return Beam.DirectoryEntry.makeAccount(parseInt(match[1]), '');
@@ -120,8 +120,8 @@ export class DashboardController extends React.Component<Properties, State> {
   }
 
   private renderGroupPage = (props: Router.RouteComponentProps) => {
-    const match =
-      DashboardController.GROUP_PATTERN.exec(this.props.location.pathname);
+    const match = DashboardController.GROUP_PATTERN.regexp.exec(
+      this.props.location.pathname);
     if(!match[1]) {
       return this.renderPageNotFound();
     }
@@ -142,7 +142,7 @@ export class DashboardController extends React.Component<Properties, State> {
   }
 
   private static readonly ACCOUNT_PATTERN = Path.pathToRegexp(
-    '/account/:id(\\d+)?', [], { end: false });
+    '/account/:id(\\d+)?', { end: false });
   private static readonly GROUP_PATTERN = Path.pathToRegexp(
-    '/group/:id(\\d+)?', [], { end: false });
+    '/group/:id(\\d+)?', { end: false });
 }
