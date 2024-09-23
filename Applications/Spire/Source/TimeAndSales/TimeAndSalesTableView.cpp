@@ -4,6 +4,7 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/ContextMenu.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
+#include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/TableHeaderItem.hpp"
@@ -19,7 +20,7 @@ namespace {
   const auto CELL_VERTICAL_PADDING = 1.5;
   const auto PULL_DELAY_TIMEOUT_MS = 1000;
 
-  auto TABLE_BODY_PADDING_BOTTOM() {
+  auto TABLE_BODY_BOTTOM_PADDING() {
     static auto height = scale_height(44);
     return height;
   }
@@ -33,28 +34,6 @@ namespace {
   struct Status {
     bool m_is_loading;
     int m_last_scroll_y;
-  };
-
-  void update_pull_indicator_position(QWidget& indicator,
-      const QSize& body_size) {
-    indicator.setGeometry(0, body_size.height() - TABLE_BODY_PADDING_BOTTOM(),
-      body_size.width(), TABLE_BODY_PADDING_BOTTOM());
-  }
-
-  struct TableBodyEventFilter : QObject {
-    QWidget* m_pull_indicator;
-
-    TableBodyEventFilter(QWidget& pull_indicator, QObject* parent = nullptr)
-      : QObject(parent),
-        m_pull_indicator(&pull_indicator) {}
-
-    bool eventFilter(QObject* watched, QEvent* event) override {
-      if(event->type() == QEvent::Resize && m_pull_indicator->isVisible()) {
-        auto& resize_event = *static_cast<QResizeEvent*>(event);
-        update_pull_indicator_position(*m_pull_indicator, resize_event.size());
-      }
-      return QObject::eventFilter(watched, event);
-    }
   };
 
   void apply_indicator_style(StyleSheet& style, const Selector& item_selector,
@@ -92,7 +71,7 @@ namespace {
     style.get(body_selector > CurrentColumn()).
       set(BackgroundColor(Qt::transparent));
     style.get(Any() > is_a<TableBody>()).
-      set(PaddingBottom(TABLE_BODY_PADDING_BOTTOM()));
+      set(PaddingBottom(TABLE_BODY_BOTTOM_PADDING()));
     apply_indicator_style(style, body_item_selector, AboveAskIndicator(),
       QColor(0xEBFFF0), QColor(0x007735));
     apply_indicator_style(style, body_item_selector, AtAskIndicator(),
@@ -137,6 +116,30 @@ namespace {
     properties.emplace_back(true, Qt::AlignLeft, scale_width(38));
     properties.emplace_back(false, Qt::AlignLeft, scale_width(34));
     return properties;
+  }
+
+  auto make_header_menu(TableView& table_view,
+      const std::vector<HeaderItemProperties>& properties) {
+    auto header = &table_view.get_header();
+    header->setContextMenuPolicy(Qt::CustomContextMenu);
+    auto menu = new ContextMenu(*header);
+    for(auto i = 0; i < std::ssize(properties); ++i) {
+      auto model = menu->add_check_box(header->get_items()->get(i).m_name);
+      model->connect_update_signal(
+        [i, table_view_ptr = &table_view] (auto checked) {
+          if(checked) {
+            table_view_ptr->show_column(i);
+          } else {
+            table_view_ptr->hide_column(i);
+          }
+        });
+      model->set(properties[i].m_is_visible);
+    }
+    QObject::connect(header, &QWidget::customContextMenuRequested,
+      [=] (const auto& pos) {
+        menu->window()->move(header->mapToGlobal(pos));
+        menu->window()->show();
+      });
   }
 
   auto make_pull_indicator(QWidget* parent) {
@@ -200,6 +203,42 @@ namespace {
     }
     return cell;
   }
+
+  struct PullIndicator : QWidget {
+    PullIndicator(QWidget* parent = nullptr)
+        : QWidget(parent) {
+      auto spinner = new QMovie(":/Icons/spinner.gif");
+      spinner->setScaledSize(scale(16, 16));
+      spinner->start();
+      auto spinner_widget = new QLabel();
+      spinner_widget->setMovie(spinner);
+      auto box = new Box(spinner_widget);
+      enclose(*this, *box);
+      proxy_style(*this, *box);
+      update_style(*this, [] (auto& style) {
+        style.get(Any()).
+          set(BodyAlign(Qt::AlignHCenter)).
+          set(horizontal_padding(scale_width(8))).
+          set(PaddingBottom(scale_height(20))).
+          set(PaddingTop(scale_height(8)));
+      });
+      hide();
+      parent->installEventFilter(this);
+    }
+
+    bool eventFilter(QObject* watched, QEvent* event) override {
+      if(event->type() == QEvent::Resize && isVisible()) {
+        auto& resize_event = *static_cast<QResizeEvent*>(event);
+        update_position(resize_event.size());
+      }
+      return QObject::eventFilter(watched, event);
+    }
+
+    void update_position(const QSize& size) {
+      setGeometry(0, size.height() - TABLE_BODY_BOTTOM_PADDING(),
+        size.width(), TABLE_BODY_BOTTOM_PADDING());
+    }
+  };
 }
 
 TableView* Spire::make_time_and_sales_table_view(
@@ -208,36 +247,20 @@ TableView* Spire::make_time_and_sales_table_view(
     set_header(make_header_model()).
     set_item_builder(std::bind_front(&item_builder, table)).make();
   update_style(*table_view, apply_table_view_style);
-  auto& header = table_view->get_header();
   auto properties = make_header_item_properties();
-  auto table_header_menu = new ContextMenu(header);
+  make_header_menu(*table_view, properties);
+  auto& header = table_view->get_header();
   for(auto i = 0; i < std::ssize(properties); ++i) {
     header.get_widths()->set(i, properties[i].m_width);
-    auto item = header.get_item(i);
-    item->setVisible(properties[i].m_is_visible);
-    update_style(*item, [&] (auto& style) {
+    update_style(*header.get_item(i), [&] (auto& style) {
       style.get(Any() > TableHeaderItem::Label()).
         set(TextAlign(properties[i].m_alignment));
     });
-    auto model =
-      table_header_menu->add_check_box(item->get_model()->get().m_name);
-    model->set(properties[i].m_is_visible);
-    model->connect_update_signal([=] (auto checked) {
-      table_view->get_header().get_item(i)->setVisible(checked);
-    });
   }
-  header.setContextMenuPolicy(Qt::CustomContextMenu);
-  QObject::connect(&header, &QWidget::customContextMenuRequested,
-    [=] (const auto& pos) {
-      table_header_menu->window()->move(
-        table_view->get_header().mapToGlobal(pos));
-      table_header_menu->window()->show();
-    });
   auto body = &table_view->get_body();
-  auto pull_indicator = make_pull_indicator(body);
-  body->installEventFilter(new TableBodyEventFilter(*pull_indicator, body));
-  auto scroll_box = &table_view->get_scroll_box();
+  auto pull_indicator = new PullIndicator(body);
   auto status = std::make_shared<Status>(false, 0);
+  auto scroll_box = &table_view->get_scroll_box();
   scroll_box->get_vertical_scroll_bar().connect_position_signal(
     [=] (int position) {
       auto& scroll_bar = scroll_box->get_vertical_scroll_bar();
@@ -259,7 +282,7 @@ TableView* Spire::make_time_and_sales_table_view(
         return;
       }
       scroll_to_end(scroll_box->get_vertical_scroll_bar());
-      update_pull_indicator_position(*pull_indicator, body->size());
+      pull_indicator->update_position(body->size());
       pull_indicator->show();
     });
   });
