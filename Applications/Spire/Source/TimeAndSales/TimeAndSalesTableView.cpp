@@ -113,27 +113,44 @@ namespace {
     return properties;
   }
 
-  auto make_header_menu(TableView& table_view,
-      const std::vector<HeaderItemProperties>& properties) {
+  void make_header_menu(TableView& table_view) {
     auto& header = table_view.get_header();
     header.setContextMenuPolicy(Qt::CustomContextMenu);
-    auto menu = new ContextMenu(header);
-    for(auto i = 0; i < std::ssize(properties); ++i) {
-      auto is_checked = menu->add_check_box(header.get_items()->get(i).m_name);
-      is_checked->connect_update_signal([i, &table_view] (auto checked) {
-        if(checked) {
-          table_view.show_column(i);
-        } else {
-          table_view.hide_column(i);
-        }
-      });
-      is_checked->set(properties[i].m_is_visible);
-    }
     QObject::connect(&header, &QWidget::customContextMenuRequested,
-      [=, &header] (const auto& pos) {
+      [&table_view] (const auto& pos) {
+        auto& header = table_view.get_header();
+        auto menu = new ContextMenu(header);
+        for(auto i = 0; i < header.get_items()->get_size() - 1; ++i) {
+          auto is_checked =
+            menu->add_check_box(header.get_items()->get(i).m_name);
+          is_checked->set(header.get_item(i)->isVisible());
+          is_checked->connect_update_signal([i, &table_view] (auto checked) {
+            if(checked) {
+              table_view.show_column(i);
+            } else {
+              table_view.hide_column(i);
+            }
+          });
+        }
+        menu->window()->setAttribute(Qt::WA_DeleteOnClose);
         menu->window()->move(header.mapToGlobal(pos));
         menu->window()->show();
       });
+  }
+
+  void initialize_table_header(TableView& table_view) {
+    auto properties = make_header_item_properties();
+    auto& header = table_view.get_header();
+    for(auto i = 0; i < std::ssize(properties); ++i) {
+      header.get_widths()->set(i, properties[i].m_width);
+      if(!properties[i].m_is_visible) {
+        table_view.hide_column(i);
+      }
+      update_style(*header.get_item(i), [&] (auto& style) {
+        style.get(Any() > TableHeaderItem::Label()).
+          set(TextAlign(properties[i].m_alignment));
+      });
+    }
   }
 
   QWidget* item_builder(
@@ -277,16 +294,8 @@ TableView* Spire::make_time_and_sales_table_view(
     set_header(make_header_model()).
     set_item_builder(std::bind_front(&item_builder, table)).make();
   update_style(*table_view, apply_table_view_style);
-  auto properties = make_header_item_properties();
-  make_header_menu(*table_view, properties);
-  auto& header = table_view->get_header();
-  for(auto i = 0; i < std::ssize(properties); ++i) {
-    header.get_widths()->set(i, properties[i].m_width);
-    update_style(*header.get_item(i), [&] (auto& style) {
-      style.get(Any() > TableHeaderItem::Label()).
-        set(TextAlign(properties[i].m_alignment));
-    });
-  }
+  initialize_table_header(*table_view);
+  make_header_menu(*table_view);
   auto pull_indicator = new PullIndicator(*table_view);
   return table_view;
 }
