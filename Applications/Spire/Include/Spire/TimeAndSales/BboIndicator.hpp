@@ -30,7 +30,7 @@ namespace Spire {
   static const auto BBO_INDICATOR_COUNT = 6;
 
   /** Returns the text representation of a BboIndicator. */
-  QString to_text(BboIndicator indicator);
+  const QString& to_text(BboIndicator indicator);
 }
 
 #endif

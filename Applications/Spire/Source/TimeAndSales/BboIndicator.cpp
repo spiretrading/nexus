@@ -3,7 +3,7 @@
 
 using namespace Spire;
 
-QString Spire::to_text(BboIndicator indicator) {
+const QString& Spire::to_text(BboIndicator indicator) {
   if(indicator == BboIndicator::ABOVE_ASK) {
     static const auto value = QObject::tr("Above Ask");
     return value;
