@@ -107,17 +107,18 @@ void TimeAndSalesTableModel::load_snapshot(Queries::Sequence last, int count) {
       if(!snapshot.empty()) {
         if(m_entries.empty() ||
             get_timestamp(snapshot.back()) < get_timestamp(m_entries.front())) {
+          auto size = get_row_size();
           m_entries.insert(m_entries.begin(),
             std::make_move_iterator(snapshot.begin()),
             std::make_move_iterator(snapshot.end()));
           m_transaction.transact([&] {
-            auto size = get_row_size();
             for(auto i = 0; i < std::ssize(snapshot); ++i) {
               m_transaction.push(TableModel::AddOperation(size + i));
             }
           });
         } else if(get_timestamp(snapshot.front()) <
             get_timestamp(m_entries.front())) {
+          auto size = get_row_size();
           auto iter = std::lower_bound(snapshot.begin(), snapshot.end(),
             get_timestamp(m_entries.front()),
             [] (const auto& entry, const auto timestamp) {
@@ -127,7 +128,6 @@ void TimeAndSalesTableModel::load_snapshot(Queries::Sequence last, int count) {
             std::make_move_iterator(snapshot.begin()),
             std::make_move_iterator(iter));
           m_transaction.transact([&] {
-            auto size = get_row_size();
             for(auto i = 0; i < std::distance(snapshot.begin(), iter); ++i) {
               m_transaction.push(TableModel::AddOperation(size + i));
             }
