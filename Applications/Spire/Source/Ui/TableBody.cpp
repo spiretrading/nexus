@@ -102,6 +102,8 @@ struct TableBody::RowCover : Cover {
     auto layout = new FixedHorizontalLayout(this);
     match(*this, Row());
     layout->setSpacing(body.m_styles.m_horizontal_spacing);
+    layout->setContentsMargins(body.m_styles.m_horizontal_spacing, 0,
+      body.m_styles.m_horizontal_spacing, 0);
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     for(auto column = 0; column != body.get_column_size(); ++column) {
       auto item = new TableItem();
@@ -177,13 +179,13 @@ struct TableBody::Layout : QLayout {
 
   int get_top_space() const {
     auto& styles = static_cast<TableBody*>(parent())->m_styles;
-    return m_top_height +
+    return styles.m_padding.top() + m_top_height +
       static_cast<int>(m_top.size()) * styles.m_vertical_spacing;
   }
 
   int get_bottom_space() const {
     auto& styles = static_cast<TableBody*>(parent())->m_styles;
-    return m_bottom_height +
+    return styles.m_padding.bottom() + m_bottom_height +
       static_cast<int>(m_bottom.size()) * styles.m_vertical_spacing;
   }
 
@@ -339,27 +341,30 @@ struct TableBody::Layout : QLayout {
     if(m_size_hint) {
       return *m_size_hint;
     }
+    auto margins = contentsMargins();
     auto& styles = static_cast<TableBody*>(parent())->m_styles;
-    auto width = 0;
+    auto column_size = static_cast<TableBody*>(parent())->get_column_size();
+    auto width = margins.left() + margins.right() + 
+      (column_size + 1) * styles.m_horizontal_spacing;
     auto height = get_top_space() + get_bottom_space() +
-      std::max(0, (count() - 1) * styles.m_vertical_spacing) +
-      styles.m_padding.top() + styles.m_padding.bottom();
+      (count() + 1) * styles.m_vertical_spacing;
     for(auto& item : m_items) {
       width = std::max(width, item->sizeHint().width());
       height += item->sizeHint().height();
     }
-    width += styles.m_padding.left() + styles.m_padding.right();
     m_size_hint = QSize(width, height);
     return *m_size_hint;
   }
 
   void setGeometry(const QRect& rect) override {
+    QLayout::setGeometry(rect);
+    auto contents_rect = contentsRect();
     auto& styles = static_cast<TableBody*>(parent())->m_styles;
-    auto y = get_top_space() + styles.m_padding.top();
+    auto y = get_top_space() + styles.m_vertical_spacing;
+    auto width = contents_rect.width();
     for(auto& item : m_items) {
       auto row_height = item->sizeHint().height();
-      auto geometry = QRect(styles.m_padding.left(), y, rect.width() -
-        styles.m_padding.left() - styles.m_padding.right(), row_height);
+      auto geometry = QRect(contents_rect.x(), y, width, row_height);
       if(geometry != item->geometry()) {
         item->setGeometry(geometry);
       }
@@ -401,38 +406,22 @@ struct TableBody::Painter {
     if(body.m_styles.m_horizontal_grid_color.alphaF() == 0) {
       return;
     }
-    auto paint_border = [&] (int top, int height) {
-      painter.fillRect(QRect(0, top, body.width(), height),
+    auto width = body.width() - body.m_styles.m_padding.left() -
+      body.m_styles.m_padding.right();
+    auto paint_border = [&] (int top) {
+      painter.fillRect(QRect(body.m_styles.m_padding.left(), top, width,
+        body.m_styles.m_vertical_spacing),
         body.m_styles.m_horizontal_grid_color);
     };
-    if(body.m_styles.m_padding.top() != 0) {
-      paint_border(0, body.m_styles.m_padding.top());
-    }
     if(body.m_styles.m_vertical_spacing != 0) {
-      if(body.get_layout().get_top_space() != 0) {
-        paint_border(body.get_layout().get_top_space() + 1 -
-          body.m_styles.m_vertical_spacing, body.m_styles.m_vertical_spacing);
-      }
       for(auto i = 0; i != body.get_layout().count(); ++i) {
         auto& row = body.get_layout().get_row(i);
-        paint_border(row.geometry().top() -
-          body.m_styles.m_vertical_spacing, body.m_styles.m_vertical_spacing);
+        paint_border(row.y() - body.m_styles.m_vertical_spacing);
       }
-      if(body.get_layout().get_bottom_space() != 0) {
-        paint_border(body.height() - body.get_layout().get_bottom_space() -
-          body.m_styles.m_padding.bottom(), body.m_styles.m_vertical_spacing);
+      if(body.get_layout().count() > 0) {
+        auto& row = body.get_layout().get_row(body.get_layout().count() - 1);
+        paint_border(row.y() + row.height());
       }
-      auto bottom_point = [&] {
-        if(auto row = body.get_layout().itemAt(body.get_layout().count() - 1)) {
-          return row->widget()->geometry().bottom() + 1;
-        }
-        return 0;
-      }();
-      paint_border(bottom_point, body.m_styles.m_vertical_spacing);
-    }
-    if(body.m_styles.m_padding.bottom() != 0) {
-      paint_border(body.height() - body.m_styles.m_padding.bottom(),
-        body.m_styles.m_padding.bottom());
     }
   }
 
@@ -442,36 +431,31 @@ struct TableBody::Painter {
     }
     auto bottom_point = [&] {
       if(auto row = body.get_layout().itemAt(body.get_layout().count() - 1)) {
-        return row->widget()->geometry().bottom() + 1;
+        return row->widget()->y() + row->widget()->height() -
+          body.m_styles.m_padding.top();
       }
       return 0;
     }();
-    auto paint_border = [&] (int left, int width) {
-      painter.fillRect(QRect(left, 0, width, bottom_point),
+    auto paint_border = [&] (int left) {
+      painter.fillRect(QRect(left, body.m_styles.m_padding.top(),
+        body.m_styles.m_horizontal_spacing, bottom_point),
         body.m_styles.m_vertical_grid_color);
     };
-    if(body.m_styles.m_padding.left() != 0) {
-      paint_border(0, body.m_styles.m_padding.left());
-    }
-    auto get_width = [&] (int column) {
-      if(body.m_column_covers[column]->isVisible()) {
-        return body.m_widths->get(column);
-      }
-      return 0;
-    };
-    if(body.m_styles.m_horizontal_spacing != 0 &&
-        body.m_widths->get_size() > 0) {
-      auto left = get_width(0);
-      for(auto column = 1; column < body.get_column_size(); ++column) {
-        paint_border(left, body.m_styles.m_horizontal_spacing);
-        if(column != body.m_widths->get_size()) {
-          left += get_width(column);
+    if(body.m_styles.m_horizontal_spacing != 0) {
+      auto margins = body.get_layout().contentsMargins();
+      auto left = margins.left();
+      auto width = 0;
+      for(auto column_cover : body.m_column_covers) {
+        if(column_cover->isVisible()) {
+          width += column_cover->width();
+          if(margins.left() < width) {
+            paint_border(left);
+            left = width;
+          }
         }
       }
-    }
-    if(body.m_styles.m_padding.right() != 0) {
-      paint_border(body.width() - body.m_styles.m_padding.right(),
-        body.m_styles.m_padding.right());
+      paint_border(body.width() - body.m_styles.m_padding.right() -
+        body.m_styles.m_horizontal_spacing);
     }
   }
 
@@ -483,8 +467,20 @@ struct TableBody::Painter {
     }
     auto column_cover = body.m_column_covers[current->m_column];
     if(column_cover->m_background_color.alphaF() != 0) {
-      painter.fillRect(
-        column_cover->geometry(), column_cover->m_background_color);
+      auto body_geometry = body.rect().adjusted(body.m_styles.m_padding.left(),
+        body.m_styles.m_padding.top(), -body.m_styles.m_padding.right(),
+        -body.m_styles.m_padding.bottom());
+      auto bottom_point = [&] {
+        if(auto row = body.get_layout().itemAt(body.get_layout().count() - 1)) {
+          return row->widget()->y() + row->widget()->height();
+        }
+        return 0;
+      }();
+      auto column_cover_geometry = column_cover->geometry().adjusted(
+        0, 0, body.m_styles.m_horizontal_spacing,
+        bottom_point - column_cover->height());
+      auto column_geometry = body_geometry.intersected(column_cover_geometry);
+      painter.fillRect(column_geometry, column_cover->m_background_color);
     }
     auto& row_cover = *static_cast<Cover*>(current_item->parentWidget());
     if(row_cover.m_background_color.alphaF() != 0) {
@@ -500,38 +496,34 @@ struct TableBody::Painter {
   static void paint_item_borders(
       TableBody& body, QPainter& painter, const optional<Index>& index) {
     auto item = body.find_item(index);
-    if(!item || !item->isVisible()) {
+    if(!item || item->width() == 0) {
       return;
     }
-    auto top_spacing = body.get_top_spacing(index->m_row);
-    auto left_spacing = body.get_left_spacing(index->m_column);
-    auto right_spacing = [&] {
-      if(index->m_column == body.get_column_size() - 1) {
-        return body.m_styles.m_padding.right();
-      }
-      return body.m_styles.m_horizontal_spacing;
-    }();
-    auto bottom_spacing = [&] {
-      if(index->m_row == body.get_layout().count() - 1) {
-        return body.m_styles.m_padding.bottom();
-      }
-      return body.m_styles.m_vertical_spacing;
-    }();
-    auto top_border_size = std::max(1, top_spacing);
-    auto left_border_size = std::max(1, left_spacing);
-    auto right_border_size = std::max(1, right_spacing);
-    auto bottom_border_size = std::max(1, bottom_spacing);
+    auto top_border_size = std::max(1, body.m_styles.m_vertical_spacing);
+    auto left_border_size = std::max(1, body.m_styles.m_horizontal_spacing);
+    auto right_border_size = std::max(1, body.m_styles.m_horizontal_spacing);
+    auto bottom_border_size = std::max(1, body.m_styles.m_vertical_spacing);
     auto position = item->parentWidget()->mapToParent(item->pos());
     auto& styles = item->get_styles();
-    auto left = position.x() - left_spacing;
-    auto top = position.y() - top_spacing;
-    auto width = item->width() + left_spacing + right_spacing;
-    auto height = item->height() + top_spacing + bottom_spacing;
+    auto left = [&] {
+      if(body.m_styles.m_horizontal_spacing == 0) {
+        return position.x();
+      }
+      return position.x() - left_border_size;
+    }();
+    auto top = [&] {
+      if(body.m_styles.m_vertical_spacing == 0) {
+        return position.y();
+      }
+      return position.y() - top_border_size;
+    }();
+    auto width = item->width() + 2 * body.m_styles.m_horizontal_spacing;
+    auto height = item->height() + 2 * body.m_styles.m_vertical_spacing;
     painter.fillRect(
       QRect(left, top, width, top_border_size), styles.m_border_top_color);
     auto right_border_x = [&] {
       auto right = position.x() + item->width();
-      if(right_spacing == 0) {
+      if(body.m_styles.m_horizontal_spacing == 0) {
         return right - 1;
       }
       return right;
@@ -540,7 +532,7 @@ struct TableBody::Painter {
       styles.m_border_right_color);
     auto bottom_border_y = [&] {
       auto bottom = position.y() + item->height();
-      if(bottom_spacing == 0) {
+      if(body.m_styles.m_vertical_spacing == 0) {
         return bottom - 1;
       }
       return bottom;
@@ -575,8 +567,6 @@ TableBody::TableBody(
       set(BackgroundColor(QColor(0xFFFFFF))).
       set(HorizontalSpacing(scale_width(1))).
       set(VerticalSpacing(scale_width(1))).
-      set(horizontal_padding(scale_width(1))).
-      set(vertical_padding(scale_height(1))).
       set(grid_color(QColor(0xE0E0E0)));
   });
   for(auto row = 0; row != m_table->get_row_size(); ++row) {
@@ -641,7 +631,8 @@ void TableBody::show_column(int column) {
     return;
   }
   m_column_covers[column]->show();
-  update_column_width(column);
+  update_column_covers();
+  update_column_width();
 }
 
 void TableBody::hide_column(int column) {
@@ -649,7 +640,8 @@ void TableBody::hide_column(int column) {
     return;
   }
   m_column_covers[column]->hide();
-  update_column_width(column);
+  update_column_covers();
+  update_column_width();
 }
 
 bool TableBody::eventFilter(QObject* watched, QEvent* event) {
@@ -662,25 +654,7 @@ bool TableBody::eventFilter(QObject* watched, QEvent* event) {
 bool TableBody::event(QEvent* event) {
   if(event->type() == QEvent::LayoutRequest) {
     auto result = QWidget::event(event);
-    auto left = 0;
-    for(auto column = 0; column != static_cast<int>(m_column_covers.size());
-        ++column) {
-      auto cover = m_column_covers[column];
-      cover->move(left, 0);
-      auto width = [&] {
-        if(!cover->isVisible()) {
-          return 0;
-        }
-        if(column != m_widths->get_size()) {
-          return m_widths->get(column);
-        }
-        return this->width() - left;
-      }();
-      width = std::max(0, width);
-      cover->setFixedSize(width, height());
-      left += width;
-      cover->raise();
-    }
+    update_column_covers();
     return result;
   } else if(event->type() == QEvent::ParentChange) {
     update_parent();
@@ -836,6 +810,8 @@ void TableBody::resizeEvent(QResizeEvent* event) {
 
 void TableBody::showEvent(QShowEvent* event) {
   update_parent();
+  update_column_covers();
+  update_column_width();
 }
 
 const TableBody::Layout& TableBody::get_layout() const {
@@ -925,15 +901,15 @@ int TableBody::estimate_row_height() const {
 }
 
 int TableBody::get_left_spacing(int index) const {
-  if(index == 0) {
-    return m_styles.m_padding.left();
+  if(m_column_covers[index]->x() == 0) {
+    return m_styles.m_padding.left() + m_styles.m_horizontal_spacing;
   }
   return m_styles.m_horizontal_spacing;
 }
 
 int TableBody::get_top_spacing(int index) const {
   if(index == 0) {
-    return m_styles.m_padding.top();
+    return m_styles.m_padding.top() + m_styles.m_vertical_spacing;
   }
   return m_styles.m_vertical_spacing;
 }
@@ -1175,8 +1151,29 @@ void TableBody::update_visible_region() {
   --m_resize_guard;
 }
 
-void TableBody::update_column_width(int column) {
-  auto spacing = get_left_spacing(column);
+void TableBody::update_column_covers() {
+  auto left = 0;
+  for(auto column = 0; column != static_cast<int>(m_column_covers.size());
+      ++column) {
+    auto cover = m_column_covers[column];
+    cover->move(left, 0);
+    auto width = [&] {
+      if(!cover->isVisible()) {
+        return 0;
+      }
+      if(column != m_widths->get_size()) {
+        return m_widths->get(column);
+      }
+      return this->width() - left;
+    }();
+    width = std::max(0, width);
+    cover->setFixedSize(width, height());
+    left += width;
+    cover->raise();
+  }
+}
+
+void TableBody::update_column_width() {
   for(auto i = 0; i != get_layout().count() + 1; ++i) {
     auto row = [&] () -> RowCover* {
       if(i == get_layout().count()) {
@@ -1189,11 +1186,20 @@ void TableBody::update_column_width(int column) {
       return nullptr;
     }();
     if(row) {
-      if(auto item = row->get_item(column)) {
+      if(row->layout()->spacing() != m_styles.m_horizontal_spacing) {
+        row->layout()->setSpacing(m_styles.m_horizontal_spacing);
+      }
+      auto margins = QMargins(m_styles.m_horizontal_spacing, 0,
+        m_styles.m_horizontal_spacing, 0);
+      if(row->layout()->contentsMargins() != margins) {
+        row->layout()->setContentsMargins(margins);
+      }
+      for(auto column = 0; column != m_widths->get_size(); ++column) {
+        auto& item = *row->get_item(column);
         if(m_column_covers[column]->isVisible()) {
-          item->setFixedWidth(m_widths->get(column) - spacing);
+          item.setFixedWidth(m_widths->get(column) - get_left_spacing(column));
         } else {
-          item->setFixedWidth(0);
+          item.setFixedWidth(0);
         }
       }
     }
@@ -1263,7 +1269,8 @@ void TableBody::on_current(
   if(previous) {
     if(auto previous_item = find_item(previous)) {
       previous_had_focus =
-        previous_item->isAncestorOf(static_cast<QWidget*>(QApplication::focusObject()));
+        previous_item->isAncestorOf(
+          static_cast<QWidget*>(QApplication::focusObject()));
       unmatch(*previous_item->parentWidget(), CurrentRow());
       unmatch(*previous_item, Current());
     }
@@ -1378,29 +1385,8 @@ void TableBody::on_style() {
         });
       });
   }
-  for(auto i = 0; i != get_layout().count() + 1; ++i) {
-    auto row = [&] () -> RowCover* {
-      if(i == get_layout().count()) {
-        return m_current_row;
-      }
-      auto row = &get_layout().get_row(i);
-      if(row != m_current_row) {
-        return row;
-      }
-      return nullptr;
-    }();
-    if(row) {
-      row->layout()->setSpacing(m_styles.m_horizontal_spacing);
-      for(auto column = 0; column != m_widths->get_size(); ++column) {
-        auto& item = *row->get_item(column);
-        if(m_column_covers[column]->isVisible()) {
-          item.setFixedWidth(m_widths->get(column) - get_left_spacing(column));
-        } else {
-          item.setFixedWidth(0);
-        }
-      }
-    }
-  }
+  get_layout().setContentsMargins(m_styles.m_padding);
+  update_column_width();
   update_visible_region();
   update();
 }
@@ -1447,6 +1433,27 @@ void TableBody::on_table_operation(const TableModel::Operation& operation) {
 void TableBody::on_widths_update(const ListModel<int>::Operation& operation) {
   visit(operation,
     [&] (const ListModel<int>::UpdateOperation& operation) {
-      update_column_width(operation.m_index);
+      auto spacing = get_left_spacing(operation.m_index);
+      for(auto i = 0; i != get_layout().count() + 1; ++i) {
+        auto row = [&] () -> RowCover* {
+          if(i == get_layout().count()) {
+            return m_current_row;
+          }
+          auto row = &get_layout().get_row(i);
+          if(row != m_current_row) {
+            return row;
+          }
+          return nullptr;
+        }();
+        if(row) {
+          if(auto item = row->get_item(operation.m_index)) {
+            if(m_column_covers[operation.m_index]->isVisible()) {
+              item->setFixedWidth(m_widths->get(operation.m_index) - spacing);
+            } else {
+              item->setFixedWidth(0);
+            }
+          }
+        }
+      }
     });
 }
