@@ -71,7 +71,7 @@ namespace {
 
   auto estimate_row_height(const QFont& font) {
     static auto padding = 2 * scale_height(CELL_VERTICAL_PADDING);
-    return std::max(QFontMetrics(font).height(), 0) + padding;
+    return std::max(0, QFontMetrics(font).height()) + padding;
   }
 }
 

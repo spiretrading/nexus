@@ -1,7 +1,6 @@
 #ifndef SPIRE_TIME_AND_SALES_WINDOW_HPP
 #define SPIRE_TIME_AND_SALES_WINDOW_HPP
 #include <QTimer>
-#include "Spire/TimeAndSales/TimeAndSalesModel.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesPropertiesWindowFactory.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesTableModel.hpp"
 #include "Spire/Ui/ComboBox.hpp"
