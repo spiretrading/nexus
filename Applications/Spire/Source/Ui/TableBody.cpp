@@ -632,7 +632,7 @@ void TableBody::show_column(int column) {
   }
   m_column_covers[column]->show();
   update_column_covers();
-  update_column_width();
+  update_column_widths();
 }
 
 void TableBody::hide_column(int column) {
@@ -641,7 +641,7 @@ void TableBody::hide_column(int column) {
   }
   m_column_covers[column]->hide();
   update_column_covers();
-  update_column_width();
+  update_column_widths();
 }
 
 bool TableBody::eventFilter(QObject* watched, QEvent* event) {
@@ -811,7 +811,7 @@ void TableBody::resizeEvent(QResizeEvent* event) {
 void TableBody::showEvent(QShowEvent* event) {
   update_parent();
   update_column_covers();
-  update_column_width();
+  update_column_widths();
 }
 
 const TableBody::Layout& TableBody::get_layout() const {
@@ -1173,7 +1173,7 @@ void TableBody::update_column_covers() {
   }
 }
 
-void TableBody::update_column_width() {
+void TableBody::update_column_widths() {
   for(auto i = 0; i != get_layout().count() + 1; ++i) {
     auto row = [&] () -> RowCover* {
       if(i == get_layout().count()) {
@@ -1385,8 +1385,10 @@ void TableBody::on_style() {
         });
       });
   }
-  get_layout().setContentsMargins(m_styles.m_padding);
-  update_column_width();
+  if(get_layout().contentsMargins() != m_styles.m_padding) {
+    get_layout().setContentsMargins(m_styles.m_padding);
+  }
+  update_column_widths();
   update_visible_region();
   update();
 }
