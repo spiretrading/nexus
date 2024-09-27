@@ -257,9 +257,11 @@ struct TableBody::Layout : QLayout {
       m_top_height -= height;
     } else {
       auto i = index - count() - get_top_index();
-      auto height = m_bottom[i];
-      m_bottom.erase(m_bottom.begin() + i);
-      m_bottom_height -= height;
+      if(i < std::ssize(m_bottom)) {
+        auto height = m_bottom[i];
+        m_bottom.erase(m_bottom.begin() + i);
+        m_bottom_height -= height;
+      }
     }
   }
 
