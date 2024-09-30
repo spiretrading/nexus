@@ -97,15 +97,14 @@ TimeAndSalesWindow::TimeAndSalesWindow(
     new SecurityView(std::move(securities), *m_transition_view);
   security_view->get_current()->connect_update_signal(
     std::bind_front(&TimeAndSalesWindow::on_current, this));
-  auto body = new Box(security_view);
-  body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  body->setContextMenuPolicy(Qt::CustomContextMenu);
-  update_style(*body, [] (auto& style) {
+  security_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  security_view->setContextMenuPolicy(Qt::CustomContextMenu);
+  set_body(security_view);
+  update_style(*this, [] (auto& style) {
     style.get(Any()).set(BackgroundColor(QColor(0xFFFFFF)));
   });
-  set_body(body);
-  connect(body, &QWidget::customContextMenuRequested,
-    std::bind_front(&TimeAndSalesWindow::on_context_menu, this, body));
+  connect(security_view, &QWidget::customContextMenuRequested,
+    std::bind_front(&TimeAndSalesWindow::on_context_menu, this, security_view));
   m_table_model->connect_begin_loading_signal(
     std::bind_front(&TimeAndSalesWindow::on_begin_loading, this));
   m_table_model->connect_end_loading_signal(
