@@ -1,6 +1,5 @@
 #include "Spire/TimeAndSalesUiTester/DemoTimeAndSalesModel.hpp"
 #include <QRandomGenerator>
-#include <Beam/Threading/LiveTimer.hpp>
 
 using namespace Beam;
 using namespace Beam::Queries;
@@ -104,9 +103,9 @@ DemoTimeAndSalesModel::query_until(Queries::Sequence sequence, int max_count) {
     } else {
       populate(from_time_t_milliseconds(sequence.GetOrdinal()) - m_period);
     }
-    auto timer = LiveTimer(m_query_duration);
-    timer.Start();
-    timer.Wait();
+    m_query_duration_timer = std::make_unique<LiveTimer>(m_query_duration);
+    m_query_duration_timer->Start();
+    m_query_duration_timer->Wait();
     return result;
   }, LaunchPolicy::ASYNC);
 }

@@ -16,6 +16,8 @@ TransitionView::TransitionView(QWidget* body, QWidget* parent)
       m_spinner(nullptr),
       m_timer(new QTimer(this)),
       m_status(Status::NONE) {
+  m_body->setParent(this);
+  m_body->hide();
   make_vbox_layout(this);
   m_timer->setSingleShot(true);
   connect(m_timer, &QTimer::timeout,
