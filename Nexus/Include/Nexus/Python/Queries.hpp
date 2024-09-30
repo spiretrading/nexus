@@ -17,6 +17,12 @@ namespace Nexus::Python {
   void ExportQueries(pybind11::module& module);
 
   /**
+   * Exports the TimeAndSaleAccessor class.
+   * @param module The module to export to.
+   */
+  void ExportTimeAndSaleAccessor(pybind11::module& module);
+
+  /**
    * Exports the Value classes.
    * @param module The module to export to.
    */

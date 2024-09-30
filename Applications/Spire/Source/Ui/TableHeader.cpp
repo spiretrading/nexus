@@ -69,6 +69,14 @@ TableHeaderItem* TableHeader::get_item(int column) {
   return m_item_views[column];
 }
 
+optional<int> TableHeader::get_index(TableHeaderItem* item) const {
+  auto i = std::find(m_item_views.begin(), m_item_views.end(), item);
+  if(i != m_item_views.end()) {
+    return std::distance(m_item_views.begin(), i);
+  }
+  return {};
+}
+
 connection TableHeader::connect_sort_signal(
     const SortSignal::slot_type& slot) const {
   return m_sort_signal.connect(slot);

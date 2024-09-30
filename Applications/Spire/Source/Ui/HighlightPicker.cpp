@@ -225,6 +225,8 @@ HighlightPicker::HighlightPicker(std::shared_ptr<ValueModel<Highlight>> current,
     std::bind_front(&HighlightPicker::on_palette_current, this));
   get_color_picker(*m_background_color_box)->installEventFilter(this);
   get_color_picker(*m_text_color_box)->installEventFilter(this);
+  m_palette->setFixedWidth(
+    m_palette->get_list_item(0)->sizeHint().width() * 8);
 }
 
 const std::shared_ptr<ValueModel<HighlightPicker::Highlight>>&
@@ -258,8 +260,6 @@ bool HighlightPicker::eventFilter(QObject* watched, QEvent* event) {
 bool HighlightPicker::event(QEvent* event) {
   if(event->type() == QEvent::ShowToParent) {
     m_panel->show();
-    m_palette->setFixedWidth(
-      m_palette->get_list_item(0)->sizeHint().width() * 8);
   } else if(event->type() == QEvent::HideToParent) {
     m_panel->hide();
   }

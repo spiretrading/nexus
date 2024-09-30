@@ -3,6 +3,7 @@
 #include <boost/mpl/list.hpp>
 #include <boost/mpl/insert_range.hpp>
 #include <boost/variant/variant.hpp>
+#include <Beam/Queries/MemberAccessExpression.hpp>
 #include <Beam/Queries/StandardDataTypes.hpp>
 #include "Nexus/Definitions/BboQuote.hpp"
 #include "Nexus/Definitions/BookQuote.hpp"
@@ -38,6 +39,23 @@ namespace Nexus::Queries {
     OrderExecutionService::OrderInfo>;
   using SequencedQueryVariant = Beam::Queries::SequencedValue<QueryVariant>;
 
+  /**
+   * Provides member accessors for an Expression evaluating to a TimeAndSale.
+   */
+  struct TimeAndSaleAccessor {
+
+    /**
+     * Constructs a TimeAndSaleAccessor.
+     * @param expression The expression whose members are to be accessed.
+     */
+    explicit TimeAndSaleAccessor(Beam::Queries::Expression expression);
+
+    Beam::Queries::MemberAccessExpression m_timestamp;
+    Beam::Queries::MemberAccessExpression m_price;
+    Beam::Queries::MemberAccessExpression m_size;
+    Beam::Queries::MemberAccessExpression m_marketCenter;
+  };
+
   struct QueryTypes {
     using ExtendedNativeTypes = boost::mpl::list<Quantity, Money, Security,
       SecurityInfo, OrderImbalance, BboQuote, BookQuote, MarketQuote,
@@ -58,6 +76,14 @@ namespace Nexus::Queries {
       boost::mpl::end<Beam::Queries::QueryTypes::ComparableTypes>::type,
       ExtendedComparableTypes>::type;
   };
+
+  inline TimeAndSaleAccessor::TimeAndSaleAccessor(
+    Beam::Queries::Expression expression)
+    : m_timestamp("timestamp", Beam::Queries::DateTimeType(), expression),
+      m_price("price", MoneyType(), expression),
+      m_size("size", QuantityType(), expression),
+      m_marketCenter(
+        "market_center", Beam::Queries::StringType(), expression) {}
 }
 
 #endif

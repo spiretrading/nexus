@@ -27,6 +27,7 @@ void Nexus::Python::ExportQueries(module& module) {
   auto submodule = module.def_submodule("queries");
   ExportDataType(submodule);
   ExportValue(submodule);
+  ExportTimeAndSaleAccessor(submodule);
   ExportIndexedQuery<Security>(submodule, "SecurityIndexedQuery");
   ExportBasicQuery<Security>(submodule, "SecurityQuery");
   ExportQueueSuite<Nexus::Queries::QueryVariant>(submodule, "QueryVariant");
@@ -34,6 +35,15 @@ void Nexus::Python::ExportQueries(module& module) {
   ExportQueueSuite<Money>(submodule, "Money");
   ExportQueueSuite<Security>(submodule, "Security");
   ExportQueueSuite<SecurityInfo>(submodule, "SecurityInfo");
+}
+
+void Nexus::Python::ExportTimeAndSaleAccessor(pybind11::module& module) {
+  class_<TimeAndSaleAccessor>(module, "TimeAndSaleAccessor").
+    def(init<Expression>()).
+    def_readonly("timestamp", &TimeAndSaleAccessor::m_timestamp).
+    def_readonly("price", &TimeAndSaleAccessor::m_price).
+    def_readonly("size", &TimeAndSaleAccessor::m_size).
+    def_readonly("market_center", &TimeAndSaleAccessor::m_marketCenter);
 }
 
 void Nexus::Python::ExportValue(module& module) {

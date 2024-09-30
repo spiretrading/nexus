@@ -156,6 +156,17 @@ void Stylist::set_style(StyleSheet style) {
   }
   m_style = load_styles(std::move(style));
   apply(*m_style);
+  for(auto& rule : rules) {
+    auto i = std::find_if(m_rules.begin(), m_rules.end(),
+      [&] (auto& item) {
+        return item.get() == rule.get();
+      });
+    if(i == m_rules.end()) {
+      for(auto selection : rule->m_selection) {
+        const_cast<Stylist&>(*selection).unapply(*rule);
+      }
+    }
+  }
 }
 
 bool Stylist::is_match(const Selector& selector) const {

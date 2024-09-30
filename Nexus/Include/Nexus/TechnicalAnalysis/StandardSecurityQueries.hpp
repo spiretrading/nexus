@@ -66,21 +66,16 @@ namespace Nexus::TechnicalAnalysis {
       std::string marketCenter) {
     auto marketStartOfDay = MarketDateToUtc(security.GetMarket(), date,
       marketDatabase, timeZoneDatabase);
-    auto queryMarketCode = Beam::Queries::StringValue(std::move(marketCenter));
-    auto marketCodeExpression = Beam::Queries::ConstantExpression(
-      queryMarketCode);
-    auto parameterExpression = Beam::Queries::ParameterExpression(
-      0, Nexus::Queries::TimeAndSaleType());
-    auto accessExpression = Beam::Queries::MemberAccessExpression(
-      "market_center", Beam::Queries::StringType(), parameterExpression);
-    auto equalExpression = Beam::Queries::MakeEqualsExpression(
-      marketCodeExpression, accessExpression);
     auto openQuery = MarketDataService::SecurityMarketDataQuery();
-    openQuery.SetIndex(std::move(security));
+    openQuery.SetIndex(security);
     openQuery.SetRange(marketStartOfDay,
       Beam::Queries::Decrement(Beam::Queries::Sequence::Last()));
-    openQuery.SetSnapshotLimit(Beam::Queries::SnapshotLimit::Type::HEAD, 1);
-    openQuery.SetFilter(equalExpression);
+    openQuery.SetSnapshotLimit(Beam::Queries::SnapshotLimit::FromHead(1));
+    auto parameter =
+      Beam::Queries::ParameterExpression(0, Nexus::Queries::TimeAndSaleType());
+    openQuery.SetFilter(
+      Beam::Queries::ConstantExpression(std::move(marketCenter)) ==
+        Queries::TimeAndSaleAccessor(parameter).m_marketCenter);
     return openQuery;
   }
 
@@ -225,22 +220,17 @@ namespace Nexus::TechnicalAnalysis {
       std::string marketCenter) {
     auto marketStartOfDay = MarketDateToUtc(security.GetMarket(), date,
       marketDatabase, timeZoneDatabase);
-    auto queryMarketCode = Beam::Queries::StringValue(std::move(marketCenter));
-    auto marketCodeExpression = Beam::Queries::ConstantExpression(
-      queryMarketCode);
-    auto parameterExpression = Beam::Queries::ParameterExpression(
-      0, Nexus::Queries::TimeAndSaleType());
-    auto accessExpression = Beam::Queries::MemberAccessExpression(
-      "market_center", Beam::Queries::StringType(), parameterExpression);
-    auto equalExpression = Beam::Queries::MakeEqualsExpression(
-      marketCodeExpression, accessExpression);
     auto previousCloseQuery = MarketDataService::SecurityMarketDataQuery();
-    previousCloseQuery.SetIndex(std::move(security));
-    previousCloseQuery.SetRange(Beam::Queries::Sequence::First(),
-      marketStartOfDay);
+    previousCloseQuery.SetIndex(security);
+    previousCloseQuery.SetRange(
+      Beam::Queries::Sequence::First(), marketStartOfDay);
     previousCloseQuery.SetSnapshotLimit(
-      Beam::Queries::SnapshotLimit::Type::TAIL, 1);
-    previousCloseQuery.SetFilter(equalExpression);
+      Beam::Queries::SnapshotLimit::FromTail(1));
+    auto parameter =
+      Beam::Queries::ParameterExpression(0, Nexus::Queries::TimeAndSaleType());
+    previousCloseQuery.SetFilter(
+      Beam::Queries::ConstantExpression(std::move(marketCenter)) ==
+        Queries::TimeAndSaleAccessor(parameter).m_marketCenter);
     return previousCloseQuery;
   }
 
@@ -339,24 +329,22 @@ namespace Nexus::TechnicalAnalysis {
           timeZoneDatabase) + boost::gregorian::days(1);
       }
     }();
-    auto initialValue = Queries::MoneyValue(Money::ZERO);
-    auto maxExpression = Beam::Queries::MakeMaxExpression(
-      Beam::Queries::ParameterExpression(0, Nexus::Queries::MoneyType()),
-      Beam::Queries::ParameterExpression(1, Nexus::Queries::MoneyType()));
-    auto highExpression = Beam::Queries::ReduceExpression(maxExpression,
-      Beam::Queries::MemberAccessExpression("price",
-      Nexus::Queries::MoneyType(),
-      Beam::Queries::ParameterExpression(0, Queries::TimeAndSaleType())),
-      initialValue);
     auto highQuery = ChartingService::SecurityChartingQuery();
-    highQuery.SetIndex(std::move(security));
+    highQuery.SetIndex(security);
     highQuery.SetMarketDataType(
       MarketDataService::MarketDataType::TIME_AND_SALE);
     highQuery.SetRange(marketStartOfDay, marketEndOfDay);
-    highQuery.SetSnapshotLimit(Beam::Queries::SnapshotLimit::Type::TAIL, 1);
+    highQuery.SetSnapshotLimit(Beam::Queries::SnapshotLimit::FromTail(1));
     highQuery.SetUpdatePolicy(
       Beam::Queries::ExpressionQuery::UpdatePolicy::CHANGE);
-    highQuery.SetExpression(highExpression);
+    auto max = Beam::Queries::MakeMaxExpression(
+      Beam::Queries::ParameterExpression(0, Nexus::Queries::MoneyType()),
+      Beam::Queries::ParameterExpression(1, Nexus::Queries::MoneyType()));
+    auto high = Beam::Queries::ReduceExpression(
+      max, Queries::TimeAndSaleAccessor(Beam::Queries::ParameterExpression(
+        0, Queries::TimeAndSaleType())).m_price,
+      Queries::MoneyValue(Money::ZERO));
+    highQuery.SetExpression(high);
     return highQuery;
   }
 
@@ -408,24 +396,22 @@ namespace Nexus::TechnicalAnalysis {
           timeZoneDatabase) + boost::gregorian::days(1);
       }
     }();
-    auto initialValue = Queries::MoneyValue(99999999 * Money::ONE);
-    auto minExpression = Beam::Queries::MakeMinExpression(
-      Beam::Queries::ParameterExpression(0, Nexus::Queries::MoneyType()),
-      Beam::Queries::ParameterExpression(1, Nexus::Queries::MoneyType()));
-    auto lowExpression = Beam::Queries::ReduceExpression(minExpression,
-      Beam::Queries::MemberAccessExpression("price",
-      Nexus::Queries::MoneyType(),
-      Beam::Queries::ParameterExpression(0, Queries::TimeAndSaleType())),
-      initialValue);
     auto lowQuery = ChartingService::SecurityChartingQuery();
-    lowQuery.SetIndex(std::move(security));
+    lowQuery.SetIndex(security);
     lowQuery.SetMarketDataType(
       MarketDataService::MarketDataType::TIME_AND_SALE);
     lowQuery.SetRange(marketStartOfDay, marketEndOfDay);
-    lowQuery.SetSnapshotLimit(Beam::Queries::SnapshotLimit::Type::TAIL, 1);
+    lowQuery.SetSnapshotLimit(Beam::Queries::SnapshotLimit::FromTail(1));
     lowQuery.SetUpdatePolicy(
       Beam::Queries::ExpressionQuery::UpdatePolicy::CHANGE);
-    lowQuery.SetExpression(lowExpression);
+    auto min = Beam::Queries::MakeMinExpression(
+      Beam::Queries::ParameterExpression(0, Nexus::Queries::MoneyType()),
+      Beam::Queries::ParameterExpression(1, Nexus::Queries::MoneyType()));
+    auto low = Beam::Queries::ReduceExpression(
+      min, Queries::TimeAndSaleAccessor(Beam::Queries::ParameterExpression(
+        0, Queries::TimeAndSaleType())).m_price,
+      Queries::MoneyValue(99999999 * Money::ONE));
+    lowQuery.SetExpression(low);
     return lowQuery;
   }
 
@@ -477,14 +463,6 @@ namespace Nexus::TechnicalAnalysis {
           timeZoneDatabase) + boost::gregorian::days(1);
       }
     }();
-    auto initialValue = Queries::QuantityValue(0);
-    auto sumExpression = Beam::Queries::MakeAdditionExpression(
-      Beam::Queries::ParameterExpression(0, Queries::QuantityType()),
-      Beam::Queries::ParameterExpression(1, Queries::QuantityType()));
-    auto volumeExpression = Beam::Queries::ReduceExpression(sumExpression,
-      Beam::Queries::MemberAccessExpression("size", Queries::QuantityType(),
-      Beam::Queries::ParameterExpression(0, Queries::TimeAndSaleType())),
-      initialValue);
     auto volumeQuery = ChartingService::SecurityChartingQuery();
     volumeQuery.SetIndex(std::move(security));
     volumeQuery.SetMarketDataType(
@@ -493,7 +471,12 @@ namespace Nexus::TechnicalAnalysis {
     volumeQuery.SetSnapshotLimit(Beam::Queries::SnapshotLimit::Type::TAIL, 1);
     volumeQuery.SetUpdatePolicy(
       Beam::Queries::ExpressionQuery::UpdatePolicy::CHANGE);
-    volumeQuery.SetExpression(volumeExpression);
+    auto sum = Beam::Queries::ParameterExpression(0, Queries::QuantityType()) +
+      Beam::Queries::ParameterExpression(1, Queries::QuantityType());
+    auto volume = Beam::Queries::ReduceExpression(
+      sum, Queries::TimeAndSaleAccessor(Beam::Queries::ParameterExpression(
+        0, Queries::TimeAndSaleType())).m_size, Queries::QuantityValue(0));
+    volumeQuery.SetExpression(volume);
     return volumeQuery;
   }
 
