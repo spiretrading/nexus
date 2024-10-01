@@ -42,10 +42,11 @@ void TimeAndSalesTableModel::set_model(
   auto size = get_row_size();
   m_transaction.transact([&] {
     for(auto i = size - 1; i >= 0; --i) {
+      m_transaction.push(TableModel::PreRemoveOperation(i));
+      m_entries.erase(std::next(m_entries.begin(), i));
       m_transaction.push(TableModel::RemoveOperation(i));
     }
   });
-  m_entries.clear();
   m_model = std::move(model);
   m_connection = m_model->connect_update_signal(
     std::bind_front(&TimeAndSalesTableModel::on_update, this));
