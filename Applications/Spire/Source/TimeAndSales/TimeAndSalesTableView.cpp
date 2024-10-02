@@ -198,19 +198,21 @@ namespace {
 
   struct PullIndicator : QWidget {
     TableView* m_table_view;
+    QMovie* m_spinner;
+    QTimer m_timer;
     bool m_is_loading;
     int m_last_position;
 
     PullIndicator(TableView& table_view)
         : QWidget(&table_view.get_body()),
           m_table_view(&table_view),
+          m_timer(this),
           m_is_loading(false),
           m_last_position(0) {
-      auto spinner = new QMovie(":/Icons/spinner.gif");
-      spinner->setScaledSize(scale(16, 16));
-      spinner->start();
+      m_spinner = new QMovie(":/Icons/spinner.gif");
+      m_spinner->setScaledSize(scale(16, 16));
       auto spinner_widget = new QLabel();
-      spinner_widget->setMovie(spinner);
+      spinner_widget->setMovie(m_spinner);
       auto box = new Box(spinner_widget);
       enclose(*this, *box);
       proxy_style(*this, *box);
@@ -233,6 +235,9 @@ namespace {
         std::bind_front(&PullIndicator::on_end_loading, this));
       m_table_view->get_body().installEventFilter(this);
       hide();
+      m_timer.setSingleShot(true);
+      connect(&m_timer, &QTimer::timeout,
+        std::bind_front(&PullIndicator::on_timeout, this));
     }
 
     bool eventFilter(QObject* watched, QEvent* event) override {
@@ -248,10 +253,25 @@ namespace {
         size.width(), TABLE_BODY_BOTTOM_PADDING());
     }
 
+    void display() {
+      auto& scroll_bar =
+        m_table_view->get_scroll_box().get_vertical_scroll_bar();
+      auto& body = m_table_view->get_body();
+      if(!isVisible() && scroll_bar.get_position() >=
+          body.sizeHint().height() - scroll_bar.get_page_size()) {
+        update_position(body.sizeHint());
+        show();
+      }
+    }
+
     void on_position(int position) {
       auto& scroll_box = m_table_view->get_scroll_box();
       auto& scroll_bar = scroll_box.get_vertical_scroll_bar();
-      if(!m_is_loading && position > m_last_position &&
+      if(m_is_loading) {
+        if(m_spinner->state() == QMovie::Running) {
+          display();
+        }
+      } else if(position > m_last_position &&
           scroll_bar.get_range().m_end - position <
             scroll_bar.get_page_size() / 2) {
         auto table =
@@ -268,12 +288,13 @@ namespace {
         return;
       }
       m_is_loading = true;
-      QTimer::singleShot(PULL_DELAY_TIMEOUT_MS, this,
-        std::bind_front(&PullIndicator::on_timeout, this));
+      m_timer.start(PULL_DELAY_TIMEOUT_MS);
     }
 
     void on_end_loading() {
       m_is_loading = false;
+      m_spinner->stop();
+      m_timer.stop();
       hide();
     }
 
@@ -281,9 +302,8 @@ namespace {
       if(!m_is_loading) {
         return;
       }
-      scroll_to_end(m_table_view->get_scroll_box().get_vertical_scroll_bar());
-      update_position(m_table_view->get_body().size());
-      show();
+      m_spinner->start();
+      display();
     }
   };
 }
