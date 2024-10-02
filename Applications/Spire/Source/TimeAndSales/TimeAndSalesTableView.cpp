@@ -222,6 +222,7 @@ namespace {
           set(PaddingTop(scale_height(8)));
       });
       auto& scroll_box = m_table_view->get_scroll_box();
+      scroll_box.installEventFilter(this);
       scroll_box.get_vertical_scroll_bar().connect_position_signal(
         std::bind_front(&PullIndicator::on_position, this));
       auto table =
@@ -236,7 +237,16 @@ namespace {
     }
 
     bool eventFilter(QObject* watched, QEvent* event) override {
-      if(event->type() == QEvent::Resize && isVisible()) {
+      if(watched == &m_table_view->get_scroll_box()) {
+        if(event->type() == QEvent::KeyPress) {
+          auto& key_event = *static_cast<QKeyEvent*>(event);
+          if(key_event.key() == Qt::Key_PageUp ||
+              key_event.key() == Qt::Key_PageDown) {
+            key_event.accept();
+            return QCoreApplication::sendEvent(m_table_view, &key_event);
+          }
+        }
+      } else if(event->type() == QEvent::Resize && isVisible()) {
         auto& resize_event = *static_cast<QResizeEvent*>(event);
         update_position(resize_event.size());
       }

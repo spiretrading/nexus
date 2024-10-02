@@ -68,8 +68,9 @@ void SecurityView::keyPressEvent(QKeyEvent* event) {
   } else if(event->key() == Qt::Key_PageDown && !m_securities.empty()) {
     m_current_index = (m_current_index + 1) % m_securities.size();
     m_current->set(m_securities[m_current_index]);
+  } else {
+    QWidget::keyPressEvent(event);
   }
-  QWidget::keyPressEvent(event);
 }
 
 void SecurityView::on_submit(const Security& security) {
