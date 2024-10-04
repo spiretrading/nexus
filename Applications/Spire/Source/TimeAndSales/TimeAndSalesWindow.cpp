@@ -2,7 +2,6 @@
 #include <QFileDialog>
 #include <QScreen>
 #include <QStandardPaths>
-#include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ExportTable.hpp"
 #include "Spire/TimeAndSales/NoneTimeAndSalesModel.hpp"
