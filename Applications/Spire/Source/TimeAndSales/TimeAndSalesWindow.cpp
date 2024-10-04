@@ -76,10 +76,19 @@ namespace {
 }
 
 TimeAndSalesWindow::TimeAndSalesWindow(
+  std::shared_ptr<ComboBox::QueryModel> securities,
+  std::shared_ptr<TimeAndSalesPropertiesWindowFactory> factory,
+  ModelBuilder model_builder, QWidget* parent)
+  : TimeAndSalesWindow(std::move(securities), std::move(factory),
+      std::move(model_builder), std::string(), parent) {}
+
+TimeAndSalesWindow::TimeAndSalesWindow(
     std::shared_ptr<ComboBox::QueryModel> securities,
     std::shared_ptr<TimeAndSalesPropertiesWindowFactory> factory,
-    ModelBuilder model_builder, QWidget* parent)
+    ModelBuilder model_builder, std::string identifier,
+    QWidget* parent)
     : Window(parent),
+      SecurityContext(std::move(identifier)),
       m_factory(std::move(factory)),
       m_model_builder(std::move(model_builder)),
       m_table_model(std::make_shared<TimeAndSalesTableModel>(
@@ -113,6 +122,23 @@ TimeAndSalesWindow::TimeAndSalesWindow(
   connect(&m_timer, &QTimer::timeout,
     std::bind_front(&TimeAndSalesWindow::on_timeout, this));
   resize(security_view->sizeHint().width(), scale_height(361));
+}
+
+std::unique_ptr<LegacyUI::WindowSettings>
+    TimeAndSalesWindow::GetWindowSettings() const {
+  return nullptr;
+}
+
+void TimeAndSalesWindow::HandleLink(SecurityContext& context) {
+  m_link_identifier = context.GetIdentifier();
+  m_link_connection = context.ConnectSecurityDisplaySignal(
+    std::bind_front(&TimeAndSalesWindow::on_current, this));
+  on_current(context.GetDisplayedSecurity());
+}
+
+void TimeAndSalesWindow::HandleUnlink() {
+  m_link_connection.disconnect();
+  m_link_identifier.clear();
 }
 
 void TimeAndSalesWindow::on_context_menu(QWidget* parent, const QPoint& pos) {

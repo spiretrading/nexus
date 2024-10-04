@@ -27,6 +27,7 @@
 #include "Spire/PortfolioViewer/PortfolioViewerWindowSettings.hpp"
 #include "Spire/RiskTimer/RiskTimerProperties.hpp"
 #include "Spire/Spire/Spire.hpp"
+#include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
 #include "Spire/Ui/ComboBox.hpp"
 
 namespace Spire {
@@ -54,6 +55,8 @@ namespace Spire {
        * @param entitlementDatabase Stores the database of market data
        *        entitlements.
        * @param additionalTagDatabase Stores the database of additional tags.
+       * @param time_and_sales_properties Initializes the time and sales
+       *        properties.
        * @param serviceClients The set of clients connected to Spire services.
        * @param telemetryClient The client used to submit telemetry data.
        */
@@ -67,6 +70,7 @@ namespace Spire {
         const Nexus::MarketDataService::EntitlementDatabase&
           entitlementDatabase,
         const AdditionalTagDatabase& additionalTagDatabase,
+        TimeAndSalesProperties time_and_sales_properties,
         Nexus::ServiceClientsBox serviceClients,
         Nexus::TelemetryService::TelemetryClientBox telemetryClient);
 
@@ -191,6 +195,14 @@ namespace Spire {
       /** Returns the RiskTimerProperties. */
       RiskTimerProperties& GetRiskTimerProperties();
 
+      /** Returns the TimeAndSalesPropertiesWindowFactory. */
+      const std::shared_ptr<TimeAndSalesPropertiesWindowFactory>&
+        GetTimeAndSalesPropertiesWindowFactory() const;
+
+      /** Returns the TimeAndSalesModelBuilder. */
+      const TimeAndSalesWindow::ModelBuilder&
+        GetTimeAndSalesModelBuilder() const;
+
       /** Returns the default PortfolioViewerProperties. */
       const PortfolioViewerProperties&
         GetDefaultPortfolioViewerProperties() const;
@@ -231,6 +243,9 @@ namespace Spire {
       OrderImbalanceIndicatorProperties
         m_defaultOrderImbalanceIndicatorProperties;
       RiskTimerProperties m_riskTimerProperties;
+      std::shared_ptr<TimeAndSalesPropertiesWindowFactory>
+        m_time_and_sales_properties_window_factory;
+      TimeAndSalesWindow::ModelBuilder m_time_and_sales_model_builder;
       PortfolioViewerProperties m_defaultPortfolioViewerProperties;
       CatalogSettings m_catalogSettings;
       AdditionalTagDatabase m_additionalTagDatabase;

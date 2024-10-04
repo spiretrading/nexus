@@ -22,6 +22,7 @@
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorWindow.hpp"
 #include "Spire/PortfolioViewer/PortfolioViewerWindow.hpp"
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
 
 using namespace Beam;
 using namespace boost;
@@ -61,6 +62,19 @@ namespace {
       next_height = book_view_window->frameSize().height();
       book_view_window->DisplaySecurity(securities[index]);
       windows.push_back(book_view_window);
+      auto time_and_sales_window = new TimeAndSalesWindow(
+        user_profile.GetSecurityQueryModel(),
+        user_profile.GetTimeAndSalesPropertiesWindowFactory(),
+        user_profile.GetTimeAndSalesModelBuilder());
+      book_view_window->Link(*time_and_sales_window);
+      time_and_sales_window->resize(time_and_sales_window->width(),
+        book_view_window->frameSize().height());
+      time_and_sales_window->move(next_position);
+      time_and_sales_window->show();
+      time_and_sales_window->Link(*book_view_window);
+      windows.push_back(time_and_sales_window);
+      next_position.rx() += time_and_sales_window->frameSize().width();
+      width += time_and_sales_window->frameSize().width();
       instantiate_security_windows = index < securities.size() &&
         (next_position.x() + width < resolution.width());
       ++index;
@@ -198,7 +212,13 @@ void ToolbarController::open_book_view_window() {
   window->show();
 }
 
-void ToolbarController::open_time_and_sales_window() {}
+void ToolbarController::open_time_and_sales_window() {
+  auto window = new TimeAndSalesWindow(m_user_profile->GetSecurityQueryModel(),
+    m_user_profile->GetTimeAndSalesPropertiesWindowFactory(),
+    m_user_profile->GetTimeAndSalesModelBuilder());
+  window->setAttribute(Qt::WA_DeleteOnClose);
+  window->show();
+}
 
 void ToolbarController::open_canvas_window() {
   auto window = new CanvasWindow(Ref(*m_user_profile));

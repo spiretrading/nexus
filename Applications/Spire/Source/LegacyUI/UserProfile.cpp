@@ -7,6 +7,7 @@
 #include "Spire/LegacyUI/WindowSettings.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ServiceSecurityQueryModel.hpp"
+#include "Spire/TimeAndSales/NoneTimeAndSalesModel.hpp"
 
 using namespace Beam;
 using namespace boost;
@@ -17,6 +18,13 @@ using namespace Nexus::TelemetryService;
 using namespace Spire;
 using namespace Spire::LegacyUI;
 
+namespace {
+  std::shared_ptr<TimeAndSalesModel> time_and_sales_model_builder(
+      const Security& security) {
+    return std::make_shared<NoneTimeAndSalesModel>();
+  }
+}
+
 UserProfile::UserProfile(const std::string& username, bool isAdministrator,
     bool isManager, const CountryDatabase& countryDatabase,
     const tz_database& timeZoneDatabase,
@@ -26,6 +34,7 @@ UserProfile::UserProfile(const std::string& username, bool isAdministrator,
     const DestinationDatabase& destinationDatabase,
     const EntitlementDatabase& entitlementDatabase,
     const AdditionalTagDatabase& additionalTagDatabase,
+    TimeAndSalesProperties time_and_sales_properties,
     ServiceClientsBox serviceClients, TelemetryClientBox telemetryClient)
     : m_username(username),
       m_isAdministrator(isAdministrator),
@@ -44,6 +53,11 @@ UserProfile::UserProfile(const std::string& username, bool isAdministrator,
         std::make_shared<ArrayListModel<std::shared_ptr<WindowSettings>>>()),
       m_security_query_model(std::make_shared<ServiceSecurityQueryModel>(
         m_marketDatabase, m_serviceClients.GetMarketDataClient())),
+      m_time_and_sales_properties_window_factory(
+        std::make_shared<TimeAndSalesPropertiesWindowFactory>(
+          std::make_shared<LocalTimeAndSalesPropertiesModel>(
+            std::move(time_and_sales_properties)))),
+      m_time_and_sales_model_builder(&time_and_sales_model_builder),
       m_catalogSettings(m_profilePath / "Catalog", isAdministrator),
       m_additionalTagDatabase(additionalTagDatabase) {
   m_keyBindings = load_key_bindings_profile(
@@ -203,6 +217,16 @@ const RiskTimerProperties& UserProfile::GetRiskTimerProperties() const {
 
 RiskTimerProperties& UserProfile::GetRiskTimerProperties() {
   return m_riskTimerProperties;
+}
+
+const std::shared_ptr<TimeAndSalesPropertiesWindowFactory>&
+    UserProfile::GetTimeAndSalesPropertiesWindowFactory() const {
+  return m_time_and_sales_properties_window_factory;
+}
+
+const TimeAndSalesWindow::ModelBuilder&
+    UserProfile::GetTimeAndSalesModelBuilder() const {
+  return m_time_and_sales_model_builder;
 }
 
 const PortfolioViewerProperties&
