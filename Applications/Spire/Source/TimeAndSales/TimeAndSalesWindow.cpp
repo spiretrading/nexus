@@ -2,6 +2,7 @@
 #include <QFileDialog>
 #include <QScreen>
 #include <QStandardPaths>
+#include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ExportTable.hpp"
 #include "Spire/TimeAndSales/NoneTimeAndSalesModel.hpp"
@@ -84,35 +85,37 @@ TimeAndSalesWindow::TimeAndSalesWindow(
       m_model_builder(std::move(model_builder)),
       m_table_model(std::make_shared<TimeAndSalesTableModel>(
         std::make_shared<NoneTimeAndSalesModel>())),
+      m_table_view(nullptr),
       m_timer(this) {
   set_svg_icon(":/Icons/time-sales.svg");
   setWindowIcon(QIcon(":/Icons/taskbar_icons/time-sales.png"));
   setWindowTitle(TITLE_NAME);
-  m_table_view = make_time_and_sales_table_view(m_table_model);
-  m_table_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  update_style(*m_table_view, std::bind_front(apply_table_view_style,
-    m_factory->make()->get_current()->get()));
-  m_transition_view = new TransitionView(m_table_view);
-  auto security_view =
-    new SecurityView(std::move(securities), *m_transition_view);
-  security_view->get_current()->connect_update_signal(
+  m_transition_view = new TransitionView(new QWidget());
+  m_security_view = new SecurityView(std::move(securities), *m_transition_view);
+  m_security_view->get_current()->connect_update_signal(
     std::bind_front(&TimeAndSalesWindow::on_current, this));
-  security_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  security_view->setContextMenuPolicy(Qt::CustomContextMenu);
-  set_body(security_view);
+  m_security_view->setSizePolicy(
+    QSizePolicy::Expanding, QSizePolicy::Expanding);
+  m_security_view->setContextMenuPolicy(Qt::CustomContextMenu);
+  set_body(m_security_view);
   update_style(*this, [] (auto& style) {
     style.get(Any()).set(BackgroundColor(QColor(0xFFFFFF)));
   });
-  connect(security_view, &QWidget::customContextMenuRequested,
-    std::bind_front(&TimeAndSalesWindow::on_context_menu, this, security_view));
-  m_table_model->connect_begin_loading_signal(
-    std::bind_front(&TimeAndSalesWindow::on_begin_loading, this));
-  m_table_model->connect_end_loading_signal(
-    std::bind_front(&TimeAndSalesWindow::on_end_loading, this));
+  connect(m_security_view, &QWidget::customContextMenuRequested,
+    std::bind_front(&TimeAndSalesWindow::on_context_menu, this,
+      m_security_view));
   m_timer.setSingleShot(true);
   connect(&m_timer, &QTimer::timeout,
     std::bind_front(&TimeAndSalesWindow::on_timeout, this));
-  resize(security_view->sizeHint().width(), scale_height(361));
+  resize(m_security_view->sizeHint().width(), scale_height(361));
+}
+
+void TimeAndSalesWindow::update_grid(const TimeAndSalesProperties& properties) {
+  if(properties.is_grid_enabled()) {
+    match(*m_table_view, ShowGrid());
+  } else {
+    unmatch(*m_table_view, ShowGrid());
+  }
 }
 
 void TimeAndSalesWindow::on_context_menu(QWidget* parent, const QPoint& pos) {
@@ -178,12 +181,40 @@ void TimeAndSalesWindow::on_end_loading() {
 
 void TimeAndSalesWindow::on_current(const Security& security) {
   setWindowTitle(to_text(security) + " " + QString(0x2013) + " " + TITLE_NAME);
+  auto header_item_properties = std::vector<std::tuple<bool, int>>();
+  if(m_table_view) {
+    auto& header = m_table_view->get_header();
+    for(auto i = 0; i < header.get_widths()->get_size(); ++i) {
+      header_item_properties.emplace_back(
+        header.get_item(i)->isVisible(), header.get_widths()->get(i));
+    }
+  }
   m_transition_view->set_status(TransitionView::Status::NONE);
-  m_table_model->set_model(m_model_builder(security));
-  auto& scroll_box = m_table_view->get_scroll_box();
+  m_table_model =
+    std::make_shared<TimeAndSalesTableModel>(m_model_builder(security));
+  m_table_model->connect_begin_loading_signal(
+    std::bind_front(&TimeAndSalesWindow::on_begin_loading, this));
+  m_table_model->connect_end_loading_signal(
+    std::bind_front(&TimeAndSalesWindow::on_end_loading, this));
+  m_table_view = make_time_and_sales_table_view(m_table_model);
+  m_table_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  update_style(*m_table_view, std::bind_front(apply_table_view_style,
+    m_factory->make()->get_current()->get()));
+  auto& header = m_table_view->get_header();
+  for(auto i = 0; i < std::ssize(header_item_properties); ++i) {
+    header.get_widths()->set(i, std::get<1>(header_item_properties[i]));
+    if(!std::get<0>(header_item_properties[i])) {
+      m_table_view->hide_column(i);
+    } else {
+      m_table_view->show_column(i);
+    }
+  }
+  auto old_table_view = m_transition_view->replace_body(*m_table_view);
+  delete old_table_view;
   auto& properties = m_factory->make()->get_current()->get();
+  update_grid(properties);
   m_table_model->load_history(
-    scroll_box.height() / estimate_row_height(properties.get_font()));
+    m_security_view->height() / estimate_row_height(properties.get_font()));
 }
 
 void TimeAndSalesWindow::on_properties(
@@ -193,23 +224,22 @@ void TimeAndSalesWindow::on_properties(
 
 void TimeAndSalesWindow::on_timeout() {
   auto& properties = m_factory->make()->get_current()->get();
-  if(properties.get_font() != m_properties.get_font()) {
-    update_style(*m_table_view, std::bind_front(apply_font_style, properties));
-  }
-  if(properties.is_grid_enabled() != m_properties.is_grid_enabled()) {
-    if(properties.is_grid_enabled()) {
-      match(*m_table_view, ShowGrid());
-    } else {
-      unmatch(*m_table_view, ShowGrid());
+  if(m_table_view) {
+    if(properties.get_font() != m_properties.get_font()) {
+      update_style(*m_table_view,
+        std::bind_front(apply_font_style, properties));
     }
-  }
-  for(auto i = 0; i < BBO_INDICATOR_COUNT; ++i) {
-    auto indicator = static_cast<BboIndicator>(i);
-    if(properties.get_highlight_color(indicator) !=
+    if(properties.is_grid_enabled() != m_properties.is_grid_enabled()) {
+      update_grid(properties);
+    }
+    for(auto i = 0; i < BBO_INDICATOR_COUNT; ++i) {
+      auto indicator = static_cast<BboIndicator>(i);
+      if(properties.get_highlight_color(indicator) !=
         m_properties.get_highlight_color(indicator)) {
-      update_style(*m_table_view, std::bind_front(apply_highlight_style,
-        get_bbo_indicator_selector(indicator),
-        properties.get_highlight_color(indicator)));
+        update_style(*m_table_view, std::bind_front(apply_highlight_style,
+          get_bbo_indicator_selector(indicator),
+          properties.get_highlight_color(indicator)));
+      }
     }
   }
   m_properties = properties;
