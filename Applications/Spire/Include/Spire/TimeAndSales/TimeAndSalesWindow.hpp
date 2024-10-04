@@ -40,10 +40,12 @@ namespace Spire {
       std::shared_ptr<TimeAndSalesTableModel> m_table_model;
       TableView* m_table_view;
       TransitionView* m_transition_view;
+      SecurityView* m_security_view;
       TimeAndSalesProperties m_properties;
       QTimer m_timer;
       boost::signals2::scoped_connection m_properties_connection;
 
+      void update_grid(const TimeAndSalesProperties& properties);
       void on_context_menu(QWidget* parent, const QPoint& pos);
       void on_export_menu();
       void on_properties_menu();

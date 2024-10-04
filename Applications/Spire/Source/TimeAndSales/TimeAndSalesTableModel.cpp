@@ -37,21 +37,6 @@ const std::shared_ptr<TimeAndSalesModel>&
   return m_model;
 }
 
-void TimeAndSalesTableModel::set_model(
-    std::shared_ptr<TimeAndSalesModel> model) {
-  auto size = get_row_size();
-  m_transaction.transact([&] {
-    for(auto i = size - 1; i >= 0; --i) {
-      m_transaction.push(TableModel::PreRemoveOperation(i));
-      m_entries.erase(std::next(m_entries.begin(), i));
-      m_transaction.push(TableModel::RemoveOperation(i));
-    }
-  });
-  m_model = std::move(model);
-  m_connection = m_model->connect_update_signal(
-    std::bind_front(&TimeAndSalesTableModel::on_update, this));
-}
-
 void TimeAndSalesTableModel::load_history(int max_count) {
   if(m_entries.empty()) {
     load_snapshot(Queries::Sequence::Present(), max_count);
