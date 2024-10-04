@@ -47,14 +47,14 @@ void TransitionView::set_status(Status status) {
   }
 }
 
-QWidget* TransitionView::replace_body(QWidget& body) {
+void TransitionView::set_body(QWidget& body) {
   auto old_body = m_body;
   m_body = &body;
   if(auto item =
       layout()->replaceWidget(old_body, m_body, Qt::FindDirectChildrenOnly)) {
     delete item;
   }
-  return old_body;
+  delete old_body;
 }
 
 void TransitionView::add_widget_to_layout(QWidget& widget) {

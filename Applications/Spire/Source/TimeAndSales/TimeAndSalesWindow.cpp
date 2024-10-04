@@ -208,8 +208,7 @@ void TimeAndSalesWindow::on_current(const Security& security) {
       m_table_view->show_column(i);
     }
   }
-  auto old_table_view = m_transition_view->replace_body(*m_table_view);
-  delete old_table_view;
+  m_transition_view->set_body(*m_table_view);
   auto& properties = m_factory->make()->get_current()->get();
   update_grid(properties);
   m_table_model->load_history(

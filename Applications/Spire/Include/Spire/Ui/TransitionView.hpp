@@ -37,11 +37,10 @@ namespace Spire {
        */
       void set_status(Status status);
 
-      /** Replaces the body widget.
-       *  @param body The new body widget to replace.
-       *  @return The old body widget to be replaced.
+      /** Sets the body widget.
+       *  @param body The new body widget.
        */
-      QWidget* replace_body(QWidget& body);
+      void set_body(QWidget& body);
 
     private:
       QWidget* m_body;
