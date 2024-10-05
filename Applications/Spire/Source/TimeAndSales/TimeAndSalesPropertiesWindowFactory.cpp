@@ -4,7 +4,8 @@ using namespace Spire;
 
 TimeAndSalesPropertiesWindowFactory::TimeAndSalesPropertiesWindowFactory()
   : TimeAndSalesPropertiesWindowFactory(
-      std::make_shared<LocalTimeAndSalesPropertiesModel>()) {}
+      std::make_shared<LocalTimeAndSalesPropertiesModel>(
+        TimeAndSalesProperties::get_default())) {}
 
 TimeAndSalesPropertiesWindowFactory::TimeAndSalesPropertiesWindowFactory(
   std::shared_ptr<TimeAndSalesPropertiesModel> properties)

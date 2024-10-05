@@ -12,8 +12,11 @@ namespace Spire {
   class TimeAndSalesProperties {
     public:
 
-      /* Constructs default properties. */
-      TimeAndSalesProperties();
+      /** Returns the default properties. */
+      static const TimeAndSalesProperties& get_default();
+
+      /* Constructs an empty set of properties. */
+      TimeAndSalesProperties() = default;
 
       /**
        * Returns the highlight color of a specific BBO indicator.

@@ -233,7 +233,8 @@ int main(int argc, char* argv[]) {
       service_clients.GetDefinitionsClient().LoadMarketDatabase(),
       service_clients.GetDefinitionsClient().LoadDestinationDatabase(),
       service_clients.GetAdministrationClient().LoadEntitlements(),
-      get_default_additional_tag_database(), std::move(service_clients),
+      get_default_additional_tag_database(),
+      TimeAndSalesProperties::get_default(), std::move(service_clients),
       *telemetry_client);
     auto sign_in_data = JsonObject();
     sign_in_data["version"] = std::string(SPIRE_VERSION);
