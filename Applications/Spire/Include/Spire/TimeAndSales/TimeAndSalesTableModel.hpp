@@ -50,9 +50,6 @@ namespace Spire {
       /* Returns the model. */
       const std::shared_ptr<TimeAndSalesModel>& get_model() const;
 
-      /* Sets the model. */
-      void set_model(std::shared_ptr<TimeAndSalesModel> model);
-
       /**
        * Load the historical time and sales.
        * @param max_count The maximum number of entries to load.
