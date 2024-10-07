@@ -36,5 +36,5 @@ QWidget* ToolbarWindowSettings::Reopen(Ref<UserProfile> profile) const {
 void ToolbarWindowSettings::Apply(
     Ref<UserProfile> userProfile, Out<QWidget> widget) const {
   auto& window = dynamic_cast<ToolbarWindow&>(*widget);
-  window.move(m_position + QPoint(scale_width(8), 0));
+  window.move(m_position);
 }

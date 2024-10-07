@@ -117,8 +117,12 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
             }
           }
         } else {
-          rect.right -= SYSTEM_BORDER_SIZE().width();
-          rect.left += SYSTEM_BORDER_SIZE().width();
+          auto width = SYSTEM_BORDER_SIZE().width();
+          if(!isVisible()) {
+            move(pos() + QPoint(width, 0));
+          }
+          rect.right -= width;
+          rect.left += width;
           rect.bottom -= SYSTEM_BORDER_SIZE().height();
         }
       }
