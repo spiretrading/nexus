@@ -6,6 +6,7 @@
 #include "Spire/Spire/ExportTable.hpp"
 #include "Spire/TimeAndSales/NoneTimeAndSalesModel.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesTableView.hpp"
+#include "Spire/TimeAndSales/TimeAndSalesWindowSettings.hpp"
 #include "Spire/Ui/ContextMenu.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
@@ -85,8 +86,7 @@ TimeAndSalesWindow::TimeAndSalesWindow(
 TimeAndSalesWindow::TimeAndSalesWindow(
     std::shared_ptr<ComboBox::QueryModel> securities,
     std::shared_ptr<TimeAndSalesPropertiesWindowFactory> factory,
-    ModelBuilder model_builder, std::string identifier,
-    QWidget* parent)
+    ModelBuilder model_builder, std::string identifier, QWidget* parent)
     : Window(parent),
       SecurityContext(std::move(identifier)),
       m_factory(std::move(factory)),
@@ -120,7 +120,7 @@ TimeAndSalesWindow::TimeAndSalesWindow(
 
 std::unique_ptr<LegacyUI::WindowSettings>
     TimeAndSalesWindow::GetWindowSettings() const {
-  return nullptr;
+  return std::make_unique<TimeAndSalesWindowSettings>(*this);
 }
 
 void TimeAndSalesWindow::HandleLink(SecurityContext& context) {

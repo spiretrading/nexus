@@ -7,7 +7,7 @@
 #include "Spire/LegacyUI/WindowSettings.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ServiceSecurityQueryModel.hpp"
-#include "Spire/TimeAndSales/NoneTimeAndSalesModel.hpp"
+#include "Spire/TimeAndSales/ServiceTimeAndSalesModel.hpp"
 
 using namespace Beam;
 using namespace boost;
@@ -20,8 +20,8 @@ using namespace Spire::LegacyUI;
 
 namespace {
   std::shared_ptr<TimeAndSalesModel> time_and_sales_model_builder(
-      const Security& security) {
-    return std::make_shared<NoneTimeAndSalesModel>();
+      const Security& security, MarketDataClientBox client) {
+    return std::make_shared<ServiceTimeAndSalesModel>(security, client);
   }
 }
 
@@ -57,7 +57,10 @@ UserProfile::UserProfile(const std::string& username, bool isAdministrator,
         std::make_shared<TimeAndSalesPropertiesWindowFactory>(
           std::make_shared<LocalTimeAndSalesPropertiesModel>(
             std::move(time_and_sales_properties)))),
-      m_time_and_sales_model_builder(&time_and_sales_model_builder),
+      m_time_and_sales_model_builder([=] (auto security) {
+        return time_and_sales_model_builder(
+          security, m_serviceClients.GetMarketDataClient());
+      }),
       m_catalogSettings(m_profilePath / "Catalog", isAdministrator),
       m_additionalTagDatabase(additionalTagDatabase) {
   m_keyBindings = load_key_bindings_profile(

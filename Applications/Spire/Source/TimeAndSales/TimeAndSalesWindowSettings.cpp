@@ -1,13 +1,14 @@
 #include "Spire/TimeAndSales/TimeAndSalesWindowSettings.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
 
 using namespace Beam;
 using namespace Nexus;
 using namespace Spire;
 
 TimeAndSalesWindowSettings::TimeAndSalesWindowSettings(
-    const TimeAndSalesWindow& window, Ref<UserProfile> user_profile)
+    const TimeAndSalesWindow& window)
     : m_security(window.GetDisplayedSecurity()),
       m_identifier(window.GetIdentifier()),
       m_link_identifier(window.m_link_identifier),
@@ -15,8 +16,7 @@ TimeAndSalesWindowSettings::TimeAndSalesWindowSettings(
   if(m_security == Security()) {
     m_name = "Time And Sales";
   } else {
-    m_name = "Time And Sales - " +
-      ToString(m_security, user_profile->GetMarketDatabase());
+    m_name = "Time And Sales - " + to_text(m_security).toStdString();
   }
 }
 

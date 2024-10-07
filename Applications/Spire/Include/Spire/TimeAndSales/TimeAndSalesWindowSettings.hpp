@@ -20,10 +20,8 @@ namespace Spire {
       /**
        * Constructs a TimeAndSalesWindowSettings.
        * @param window The TimeAndSalesWindow to represent.
-       * @param user_profile The user's profile.
        */
-      TimeAndSalesWindowSettings(
-        const TimeAndSalesWindow& window, Beam::Ref<UserProfile> user_profile);
+      explicit TimeAndSalesWindowSettings(const TimeAndSalesWindow& window);
 
       std::string GetName() const override;
 
