@@ -126,8 +126,10 @@ std::unique_ptr<LegacyUI::WindowSettings>
 void TimeAndSalesWindow::HandleLink(SecurityContext& context) {
   m_link_identifier = context.GetIdentifier();
   m_link_connection = context.ConnectSecurityDisplaySignal(
-    std::bind_front(&TimeAndSalesWindow::on_current, this));
-  on_current(context.GetDisplayedSecurity());
+    [=] (const auto& security) {
+      m_security_view->get_current()->set(security);
+    });
+  m_security_view->get_current()->set(context.GetDisplayedSecurity());
 }
 
 void TimeAndSalesWindow::HandleUnlink() {
@@ -205,6 +207,9 @@ void TimeAndSalesWindow::on_end_loading() {
 }
 
 void TimeAndSalesWindow::on_current(const Security& security) {
+  if(security == Security()) {
+    return;
+  }
   setWindowTitle(to_text(security) + " " + QString(0x2013) + " " + TITLE_NAME);
   auto header_item_properties = std::vector<std::tuple<bool, int>>();
   if(m_table_view) {

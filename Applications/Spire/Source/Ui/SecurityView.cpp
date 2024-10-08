@@ -20,8 +20,7 @@ SecurityView::SecurityView(std::shared_ptr<ComboBox::QueryModel> securities,
     : QWidget(parent),
       m_security_dialog(std::move(securities), this),
       m_current(std::move(current)),
-      m_body(&body),
-      m_current_index(-1) {
+      m_body(&body) {
   setFocusPolicy(Qt::StrongFocus);
   auto prompt = make_label(tr("Enter a ticker symbol."));
   update_style(*prompt, [] (auto& style) {
@@ -34,8 +33,13 @@ SecurityView::SecurityView(std::shared_ptr<ComboBox::QueryModel> securities,
   m_layers->addWidget(prompt);
   m_layers->addWidget(m_body);
   enclose(*this, *m_layers);
+  m_current->connect_update_signal(
+    std::bind_front(&SecurityView::on_current, this));
   m_security_dialog.connect_submit_signal(
     std::bind_front(&SecurityView::on_submit, this));
+  if(m_current->get() != Security()) {
+    on_current(m_current->get());
+  }
 }
 
 const std::shared_ptr<ComboBox::QueryModel>&
@@ -61,31 +65,30 @@ void SecurityView::keyPressEvent(QKeyEvent* event) {
       text.size() == 1 && (text[0].isLetterOrNumber() || text[0] == '_')) {
     m_security_dialog.show();
     QApplication::sendEvent(find_focus_proxy(m_security_dialog), event);
-  } else if(event->key() == Qt::Key_PageUp && !m_securities.empty()) {
-    m_current_index =
-      (m_securities.size() + m_current_index - 1) % m_securities.size();
-    m_current->set(m_securities[m_current_index]);
-  } else if(event->key() == Qt::Key_PageDown && !m_securities.empty()) {
-    m_current_index = (m_current_index + 1) % m_securities.size();
-    m_current->set(m_securities[m_current_index]);
+  } else if(event->key() == Qt::Key_PageUp) {
+    if(auto security = m_securities.rotate_top()) {
+      m_current->set(*security);
+    }
+  } else if(event->key() == Qt::Key_PageDown) {
+    if(auto security = m_securities.rotate_bottom()) {
+      m_current->set(*security);
+    }
   } else {
     QWidget::keyPressEvent(event);
   }
 }
 
-void SecurityView::on_submit(const Security& security) {
-  if(auto i = std::find(m_securities.begin(), m_securities.end(), security);
-      i != m_securities.end()) {
-    if(std::distance(m_securities.begin(), i) <= m_current_index) {
-      --m_current_index;
-    }
-    m_securities.erase(i);
+void SecurityView::on_current(const Security& security) {
+  if(security == Security()) {
+    return;
   }
-  ++m_current_index;
-  m_securities.insert(m_securities.begin() + m_current_index, security);
-  m_current->set(security);
   m_security_dialog.hide();
-  if(!m_securities.empty() && m_layers->currentWidget() != m_body) {
+  m_securities.add(security);
+  if(m_layers->currentWidget() != m_body) {
     m_layers->setCurrentWidget(m_body);
   }
+}
+
+void SecurityView::on_submit(const Security& security) {
+  m_current->set(security);
 }

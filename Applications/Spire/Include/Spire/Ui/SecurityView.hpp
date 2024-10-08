@@ -3,6 +3,7 @@
 #include <vector>
 #include <QStackedWidget>
 #include "Nexus/Definitions/Security.hpp"
+#include "Spire/Spire/SecurityDeck.hpp"
 #include "Spire/Ui/SecurityDialog.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -58,9 +59,9 @@ namespace Spire {
       std::shared_ptr<CurrentModel> m_current;
       QWidget* m_body;
       QStackedWidget* m_layers;
-      std::vector<Nexus::Security> m_securities;
-      int m_current_index;
+      SecurityDeck m_securities;
 
+      void on_current(const Nexus::Security& security);
       void on_submit(const Nexus::Security& security);
   };
 }

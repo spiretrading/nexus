@@ -60,7 +60,6 @@ namespace {
       next_position.rx() += book_view_window->frameSize().width();
       width += book_view_window->frameSize().width();
       next_height = book_view_window->frameSize().height();
-      book_view_window->DisplaySecurity(securities[index]);
       windows.push_back(book_view_window);
       auto time_and_sales_window = new TimeAndSalesWindow(
         user_profile.GetSecurityQueryModel(),
@@ -73,6 +72,7 @@ namespace {
       time_and_sales_window->show();
       time_and_sales_window->Link(*book_view_window);
       windows.push_back(time_and_sales_window);
+      book_view_window->DisplaySecurity(securities[index]);
       next_position.rx() += time_and_sales_window->frameSize().width();
       width += time_and_sales_window->frameSize().width();
       instantiate_security_windows = index < securities.size() &&
