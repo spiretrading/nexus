@@ -2,6 +2,7 @@
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
+#include "Spire/Ui/SecurityView.hpp"
 
 using namespace Beam;
 using namespace Nexus;
@@ -39,7 +40,7 @@ void TimeAndSalesWindowSettings::Apply(
   auto& window = dynamic_cast<TimeAndSalesWindow&>(*widget);
   restore_geometry(window, m_geometry);
   if(m_security != Security()) {
-    window.on_current(m_security);
+    window.m_security_view->get_current()->set(m_security);
   }
   window.m_link_identifier = m_link_identifier;
 }
