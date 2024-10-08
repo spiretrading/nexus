@@ -26,13 +26,15 @@ namespace Spire {
 
       /**
        * Takes the security on the bottom of the deck and moves it to the top.
-       * If the deck is empty, an empty optional is returned.
+       * Returns the top of the deck. If the deck is empty then <i>none</i> is
+       * returned.
        */
       boost::optional<Nexus::Security> rotate_bottom();
 
       /**
        * Takes the security on the top of the deck and moves it to the bottom.
-       * If the deck is empty, an empty optional is returned.
+       * Returns the top of the deck. If the deck is empty then <i>none</i> is
+       * returned.
        */
       boost::optional<Nexus::Security> rotate_top();
 

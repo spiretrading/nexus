@@ -127,7 +127,9 @@ void TimeAndSalesWindow::HandleLink(SecurityContext& context) {
   m_link_identifier = context.GetIdentifier();
   m_link_connection = context.ConnectSecurityDisplaySignal(
     [=] (const auto& security) {
-      m_security_view->get_current()->set(security);
+      if(m_security_view->get_current()->get() != security) {
+         m_security_view->get_current()->set(security);
+      }
     });
   m_security_view->get_current()->set(context.GetDisplayedSecurity());
 }
@@ -244,6 +246,7 @@ void TimeAndSalesWindow::on_current(const Security& security) {
   update_grid(properties);
   m_table_model->load_history(
     m_security_view->height() / estimate_row_height(properties.get_font()));
+  SetDisplayedSecurity(security);
 }
 
 void TimeAndSalesWindow::on_properties(
