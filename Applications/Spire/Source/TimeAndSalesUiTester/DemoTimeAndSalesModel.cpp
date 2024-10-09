@@ -38,6 +38,12 @@ DemoTimeAndSalesModel::DemoTimeAndSalesModel()
     std::bind_front(&DemoTimeAndSalesModel::on_timeout, this));
 }
 
+DemoTimeAndSalesModel::~DemoTimeAndSalesModel() {
+  for(auto& timer : m_query_duration_timers) {
+    timer->Cancel();
+  }
+}
+
 Money DemoTimeAndSalesModel::get_price() const {
   return m_price;
 }
@@ -84,9 +90,11 @@ void DemoTimeAndSalesModel::set_data_random(bool is_random) {
 
 QtPromise<std::vector<TimeAndSalesModel::Entry>>
 DemoTimeAndSalesModel::query_until(Queries::Sequence sequence, int max_count) {
-  return QtPromise([=] {
+  auto timer = std::make_shared<LiveTimer>(m_query_duration);
+  m_query_duration_timers.push_back(timer);
+  return QtPromise([=, query_duration = m_query_duration, period = m_period] {
     auto result = std::vector<TimeAndSalesModel::Entry>();
-    if(m_query_duration == pos_infin) {
+    if(query_duration == pos_infin) {
       return result;
     }
     auto populate = [&] (ptime timestamp) {
@@ -94,18 +102,17 @@ DemoTimeAndSalesModel::query_until(Queries::Sequence sequence, int max_count) {
       while(count > 0) {
         result.insert(std::begin(result), make_entry(timestamp));
         --count;
-        timestamp -= m_period;
+        timestamp -= period;
       }
     };
     auto now = microsec_clock::universal_time();
     if(sequence >= Queries::Sequence(to_time_t_milliseconds(now))) {
       populate(now);
     } else {
-      populate(from_time_t_milliseconds(sequence.GetOrdinal()) - m_period);
+      populate(from_time_t_milliseconds(sequence.GetOrdinal()) - period);
     }
-    m_query_duration_timer = std::make_unique<LiveTimer>(m_query_duration);
-    m_query_duration_timer->Start();
-    m_query_duration_timer->Wait();
+    timer->Start();
+    timer->Wait();
     return result;
   }, LaunchPolicy::ASYNC);
 }

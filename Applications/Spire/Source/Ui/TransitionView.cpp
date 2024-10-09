@@ -54,7 +54,7 @@ void TransitionView::set_body(QWidget& body) {
       layout()->replaceWidget(old_body, m_body, Qt::FindDirectChildrenOnly)) {
     delete item;
   }
-  delete old_body;
+  old_body->deleteLater();
 }
 
 void TransitionView::add_widget_to_layout(QWidget& widget) {

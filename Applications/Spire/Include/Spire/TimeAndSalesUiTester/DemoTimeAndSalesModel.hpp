@@ -1,5 +1,6 @@
 #ifndef SPIRE_DEMO_TIME_AND_SALES_MODEL_HPP
 #define SPIRE_DEMO_TIME_AND_SALES_MODEL_HPP
+#include <vector>
 #include <QTimer>
 #include <Beam/Threading/LiveTimer.hpp>
 #include "Nexus/Definitions/Money.hpp"
@@ -16,6 +17,8 @@ namespace Spire {
 
       /** Constructs a default DemoTimeAndSalesModel. */
       DemoTimeAndSalesModel();
+
+      ~DemoTimeAndSalesModel() override;
 
       /* Returns the price of new time and sales. */
       Nexus::Money get_price() const;
@@ -61,7 +64,8 @@ namespace Spire {
       boost::posix_time::time_duration m_query_duration;
       bool m_is_data_random;
       QTimer m_timer;
-      std::unique_ptr<Beam::Threading::LiveTimer> m_query_duration_timer;
+      std::vector<std::shared_ptr<Beam::Threading::LiveTimer>>
+        m_query_duration_timers;
 
       Entry make_entry(boost::posix_time::ptime timestamp) const;
       void on_timeout();
