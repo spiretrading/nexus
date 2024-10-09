@@ -59,6 +59,7 @@ namespace Spire {
   class Scalar;
   template<typename T> class ScalarValueModel;
   template<typename T> class ScalarValueModelDecorator;
+  class SecurityDeck;
   class ServiceSecurityQueryModel;
   template<typename T> class SortedListModel;
   class SortedTableModel;
