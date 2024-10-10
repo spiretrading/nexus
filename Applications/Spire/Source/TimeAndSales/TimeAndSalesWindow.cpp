@@ -112,6 +112,8 @@ TimeAndSalesWindow::TimeAndSalesWindow(
   connect(m_security_view, &QWidget::customContextMenuRequested,
     std::bind_front(&TimeAndSalesWindow::on_context_menu, this,
       m_security_view));
+  m_properties_connection = m_factory->get_properties()->connect_update_signal(
+    std::bind_front(&TimeAndSalesWindow::on_properties, this));
   m_timer.setSingleShot(true);
   connect(&m_timer, &QTimer::timeout,
     std::bind_front(&TimeAndSalesWindow::on_timeout, this));
@@ -182,9 +184,6 @@ void TimeAndSalesWindow::on_export_menu() {
 
 void TimeAndSalesWindow::on_properties_menu() {
   auto properties_window = m_factory->make();
-  m_properties_connection =
-    properties_window->get_current()->connect_update_signal(
-      std::bind_front(&TimeAndSalesWindow::on_properties, this));
   if(!properties_window->isVisible()) {
     properties_window->show();
     if(screen()->geometry().right() - frameGeometry().right() >=

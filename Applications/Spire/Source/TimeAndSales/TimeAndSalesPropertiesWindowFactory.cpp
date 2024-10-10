@@ -11,6 +11,11 @@ TimeAndSalesPropertiesWindowFactory::TimeAndSalesPropertiesWindowFactory(
   std::shared_ptr<TimeAndSalesPropertiesModel> properties)
   : m_properties(std::move(properties)) {}
 
+const std::shared_ptr<TimeAndSalesPropertiesModel>&
+    TimeAndSalesPropertiesWindowFactory::get_properties() const {
+  return m_properties;
+}
+
 TimeAndSalesPropertiesWindow* TimeAndSalesPropertiesWindowFactory::make() {
   if(m_properties_window) {
     return m_properties_window.get();
