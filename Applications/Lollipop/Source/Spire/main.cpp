@@ -68,7 +68,7 @@ namespace {
           "---\n"
           "servers:\n"
           "  - name: Live Trading\n"
-          "    address: 69.90.18.214:20000\n"
+          "    address: 38.132.52.17:20000\n"
           "...";
       }
       auto configStream = std::ifstream(configPath);
@@ -82,6 +82,9 @@ namespace {
     for(auto server : serverList) {
       auto name = Extract<std::string>(server, "name");
       auto address = Extract<IpAddress>(server, "address");
+      if(address.GetHost() == "69.90.18.214") {
+        address = IpAddress("38.132.52.17", address.GetPort());
+      }
       servers.push_back({name, address});
     }
     return servers;
@@ -215,7 +218,7 @@ int main(int argc, char* argv[]) {
       "---\n"
       "servers:\n"
       "  - name: Live Trading\n"
-      "    address: 69.90.18.214:20000\n"
+      "    address: 38.132.52.17:20000\n"
       "...\n";
   }
   auto config = YAML::Node();
