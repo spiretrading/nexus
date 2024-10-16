@@ -43,12 +43,11 @@ void Spire::export_settings(UserSettings::Categories categories,
     settings.m_portfolio_properties =
       user_profile.GetDefaultPortfolioViewerProperties();
   }
-/** TODO
   if(categories.Test(UserSettings::Category::TIME_AND_SALES)) {
     settings.m_time_and_sales_properties =
-      user_profile.GetDefaultTimeAndSalesProperties();
+      user_profile.GetTimeAndSalesPropertiesWindowFactory()->
+        get_properties()->get();
   }
-*/
   if(categories.Test(UserSettings::Category::LAYOUT)) {
     auto layouts = std::vector<std::shared_ptr<WindowSettings>>();
     for(auto& widget : QApplication::topLevelWidgets()) {
@@ -132,13 +131,11 @@ void Spire::import_settings(UserSettings::Categories categories,
     user_profile->SetDefaultPortfolioViewerProperties(
       *settings.m_portfolio_properties);
   }
-/** TODO
   if(categories.Test(UserSettings::Category::TIME_AND_SALES) &&
       settings.m_time_and_sales_properties) {
-    user_profile->SetDefaultTimeAndSalesProperties(
-      *settings.m_time_and_sales_properties);
+    user_profile->GetTimeAndSalesPropertiesWindowFactory()->
+      get_properties()->set(*settings.m_time_and_sales_properties);
   }
-*/
   for(auto widget : QApplication::topLevelWidgets()) {
     if(auto book_view = dynamic_cast<BookViewWindow*>(widget)) {
       if(settings.m_book_view_properties) {

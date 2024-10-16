@@ -1,7 +1,10 @@
 #ifndef SPIRE_TIME_AND_SALES_PROPERTIES_HPP
 #define SPIRE_TIME_AND_SALES_PROPERTIES_HPP
 #include <array>
+#include <filesystem>
+#include <Beam/Serialization/ShuttleArray.hpp>
 #include <QFont>
+#include "Spire/Spire/ShuttleQtTypes.hpp"
 #include "Spire/TimeAndSales/BboIndicator.hpp"
 #include "Spire/TimeAndSales/TimeAndSales.hpp"
 #include "Spire/Ui/HighlightBox.hpp"
@@ -15,7 +18,7 @@ namespace Spire {
       /** Returns the default properties. */
       static const TimeAndSalesProperties& get_default();
 
-      /* Constructs an empty set of properties. */
+       /* Constructs an empty set of properties. */
       TimeAndSalesProperties() = default;
 
       /**
@@ -51,10 +54,38 @@ namespace Spire {
       void set_grid_enabled(bool is_enabled);
 
     private:
+      friend struct Beam::Serialization::DataShuttle;
       std::array<HighlightColor, BBO_INDICATOR_COUNT> m_highlight_colors;
       QFont m_font;
       bool m_is_grid_enabled;
+
+      template<typename Shuttler>
+      void Shuttle(Shuttler& shuttle, unsigned int version);
   };
+
+  /**
+   * Loads TimeAndSalesProperties from a file.
+   * @param path The path to the file to load.
+   * @return The properties loaded from the given <i>path</i>.
+   */
+  TimeAndSalesProperties load_time_and_sales_properties(
+    const std::filesystem::path& path);
+
+  /**
+   * Saves TimeAndSalesProperties to a file.
+   * @param properties The properties to save.
+   * @param path The path to the save the properties to.
+   */
+  void save_time_and_sales_properties(const TimeAndSalesProperties& properties,
+    const std::filesystem::path& path);
+
+  template<typename Shuttler>
+  void TimeAndSalesProperties::Shuttle(
+      Shuttler& shuttle, unsigned int version) {
+    shuttle.Shuttle("highlight_colors", m_highlight_colors);
+    shuttle.Shuttle("font", m_font);
+    shuttle.Shuttle("is_grid_enabled", m_is_grid_enabled);
+  }
 }
 
 #endif
