@@ -217,15 +217,17 @@ int main(int argc, char* argv[]) {
     };
   auto sign_in_controller = std::unique_ptr<SignInController>();
   auto sign_in_handler = [&] (auto service_clients) {
+    auto username =
+      service_clients.GetServiceLocatorClient().GetAccount().m_name;
     auto is_administrator =
       service_clients.GetAdministrationClient().CheckAdministrator(
         service_clients.GetServiceLocatorClient().GetAccount());
     auto is_manager = is_administrator ||
       !service_clients.GetAdministrationClient().LoadManagedTradingGroups(
         service_clients.GetServiceLocatorClient().GetAccount()).empty();
-    user_profile.emplace(
-      service_clients.GetServiceLocatorClient().GetAccount().m_name,
-      is_administrator, is_manager,
+    auto time_and_sales_properties =
+      load_time_and_sales_properties(get_profile_path(username));
+    user_profile.emplace(username, is_administrator, is_manager,
       service_clients.GetDefinitionsClient().LoadCountryDatabase(),
       service_clients.GetDefinitionsClient().LoadTimeZoneDatabase(),
       service_clients.GetDefinitionsClient().LoadCurrencyDatabase(),
@@ -234,7 +236,7 @@ int main(int argc, char* argv[]) {
       service_clients.GetDefinitionsClient().LoadDestinationDatabase(),
       service_clients.GetAdministrationClient().LoadEntitlements(),
       get_default_additional_tag_database(),
-      TimeAndSalesProperties::get_default(), std::move(service_clients),
+      std::move(time_and_sales_properties), std::move(service_clients),
       *telemetry_client);
     auto sign_in_data = JsonObject();
     sign_in_data["version"] = std::string(SPIRE_VERSION);
@@ -292,6 +294,9 @@ int main(int argc, char* argv[]) {
     *user_profile->GetKeyBindings(), user_profile->GetProfilePath());
   PortfolioViewerProperties::Save(*user_profile);
   RiskTimerProperties::Save(*user_profile);
+  save_time_and_sales_properties(user_profile->
+    GetTimeAndSalesPropertiesWindowFactory()->get_properties()->get(),
+    user_profile->GetProfilePath());
   BookViewProperties::Save(*user_profile);
   CatalogSettings::Save(*user_profile);
   BlotterSettings::Save(*user_profile);

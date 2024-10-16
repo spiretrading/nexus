@@ -258,6 +258,15 @@ namespace Spire {
         m_initialPortfolioViewerWindowSettings;
   };
 
+  /** Returns the path to the folder containing all user profiles. */
+  std::filesystem::path get_profile_path();
+
+  /**
+   * Returns the path to the user's profile folder.
+   * @param username The username to get the profile path for.
+   */
+  std::filesystem::path get_profile_path(const std::string& username);
+
   /**
    * Returns the default order quantity to display to a user.
    * @param userProfile The profile of the user to display the default order

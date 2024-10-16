@@ -47,8 +47,7 @@ UserProfile::UserProfile(const std::string& username, bool isAdministrator,
       m_entitlementDatabase(entitlementDatabase),
       m_serviceClients(std::move(serviceClients)),
       m_telemetryClient(std::move(telemetryClient)),
-      m_profilePath(std::filesystem::path(QStandardPaths::writableLocation(
-        QStandardPaths::DataLocation).toStdString()) / "Profiles" / m_username),
+      m_profilePath(get_profile_path(m_username)),
       m_recentlyClosedWindows(
         std::make_shared<ArrayListModel<std::shared_ptr<WindowSettings>>>()),
       m_security_query_model(std::make_shared<ServiceSecurityQueryModel>(
@@ -250,6 +249,15 @@ const optional<PortfolioViewerWindowSettings>&
 void UserProfile::SetInitialPortfolioViewerWindowSettings(
     const PortfolioViewerWindowSettings& settings) {
   m_initialPortfolioViewerWindowSettings = settings;
+}
+
+std::filesystem::path Spire::get_profile_path() {
+  return std::filesystem::path(QStandardPaths::writableLocation(
+    QStandardPaths::DataLocation).toStdString()) / "Profiles";
+}
+
+std::filesystem::path Spire::get_profile_path(const std::string& username) {
+  return get_profile_path() / username;
 }
 
 Quantity Spire::get_default_order_quantity(const UserProfile& userProfile,
