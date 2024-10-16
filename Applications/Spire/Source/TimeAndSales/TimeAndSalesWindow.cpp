@@ -217,7 +217,8 @@ void TimeAndSalesWindow::on_current(const Security& security) {
     auto& header = m_table_view->get_header();
     for(auto i = 0; i < header.get_widths()->get_size(); ++i) {
       header_item_properties.emplace_back(
-        header.get_item(i)->isVisible(), header.get_widths()->get(i));
+        header.get_item(i)->isVisibleTo(header.parentWidget()),
+        header.get_widths()->get(i));
     }
   }
   m_transition_view->set_status(TransitionView::Status::NONE);
