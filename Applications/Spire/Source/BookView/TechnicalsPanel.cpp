@@ -114,9 +114,6 @@ TechnicalsPanel::TechnicalsPanel(
         std::bind_front(&TechnicalsPanel::on_ask_quantity_update, this))) {
   m_default_field = make_label("");
   m_default_field->setMinimumWidth(get_value_field_minimum_width());
-  update_style(*m_default_field, [] (auto& style) {
-    style.get(Any()).set(PaddingRight(scale_width(4)));
-  });
   on_ask_quantity_update(m_bid_quantity->get());
   auto name_indicators = std::vector<TextBox*>{
     make_indicator_label("High"), make_indicator_label("Low"),
