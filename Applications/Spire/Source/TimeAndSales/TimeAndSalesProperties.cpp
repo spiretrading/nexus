@@ -5,8 +5,11 @@
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
+#include <Beam/Serialization/JsonReceiver.hpp>
+#include <Beam/Serialization/JsonSender.hpp>
 #include "Spire/LegacyUI/UISerialization.hpp"
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/TimeAndSales/LegacyTimeAndSalesWindowSettings.hpp"
 
 using namespace Beam;
 using namespace Beam::IO;
@@ -14,44 +17,8 @@ using namespace Beam::Serialization;
 using namespace Spire;
 
 namespace {
-  struct LegacyTimeAndSalesProperties {
-    static const auto PRICE_RANGE_COUNT = 6;
-    static const auto COLUMN_COUNT = 5;
-
-    std::array<QColor, PRICE_RANGE_COUNT> m_price_range_foreground_color;
-    std::array<QColor, PRICE_RANGE_COUNT> m_price_range_background_color;
-    std::array<bool, COLUMN_COUNT> m_visible_columns;
-    bool m_show_grid_lines;
-    bool m_vertical_scroll_bar_visible;
-    bool m_horizontal_scroll_bar_visible;
-    QFont m_font;
-  };
-}
-
-namespace Beam::Serialization {
-  template<>
-  struct Shuttle<LegacyTimeAndSalesProperties> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, LegacyTimeAndSalesProperties& value,
-        unsigned int version) {
-      shuttle.Shuttle("price_range_foreground_color",
-        value.m_price_range_foreground_color);
-      shuttle.Shuttle("price_range_background_color",
-        value.m_price_range_background_color);
-      shuttle.Shuttle("visible_columns", value.m_visible_columns);
-      shuttle.Shuttle("show_grid_lines", value.m_show_grid_lines);
-      shuttle.Shuttle(
-        "vertical_scroll_bar_visible", value.m_vertical_scroll_bar_visible);
-      shuttle.Shuttle("horizontal_scroll_bar_visible",
-        value.m_horizontal_scroll_bar_visible);
-      shuttle.Shuttle("font", value.m_font);
-    }
-  };
-}
-
-namespace {
   auto load_legacy_properties(const std::filesystem::path& path) {
-    auto properties = LegacyTimeAndSalesProperties();
+    auto properties = LegacyTimeAndSalesWindowSettings::Properties();
     try {
       auto reader =
         BasicIStreamReader<std::ifstream>(Initialize(path, std::ios::binary));
@@ -151,13 +118,12 @@ TimeAndSalesProperties Spire::load_time_and_sales_properties(
   }
   auto properties = TimeAndSalesProperties();
   try {
-    auto reader = BasicIStreamReader<std::ifstream>(
-      Initialize(file_path, std::ios::binary));
+    auto reader = BasicIStreamReader<std::ifstream>(Initialize(file_path));
     auto buffer = SharedBuffer();
     reader.Read(Store(buffer));
-    auto type_registry = TypeRegistry<BinarySender<SharedBuffer>>();
-    RegisterSpireTypes(Store(type_registry));
-    auto receiver = BinaryReceiver<SharedBuffer>(Ref(type_registry));
+    auto registry = TypeRegistry<JsonSender<SharedBuffer>>();
+    RegisterSpireTypes(Store(registry));
+    auto receiver = JsonReceiver<SharedBuffer>(Ref(registry));
     receiver.SetSource(Ref(buffer));
     receiver.Shuttle(properties);
   } catch(const std::exception&) {
@@ -171,14 +137,13 @@ void Spire::save_time_and_sales_properties(
     const std::filesystem::path& path) {
   auto file_path = path / "time_and_sales.json";
   try {
-    auto type_registry = TypeRegistry<BinarySender<SharedBuffer>>();
-    RegisterSpireTypes(Store(type_registry));
-    auto sender = BinarySender<SharedBuffer>(Ref(type_registry));
+    auto registry = TypeRegistry<JsonSender<SharedBuffer>>();
+    RegisterSpireTypes(Store(registry));
+    auto sender = JsonSender<SharedBuffer>(Ref(registry));
     auto buffer = SharedBuffer();
     sender.SetSink(Ref(buffer));
     sender.Shuttle(properties);
-    auto writer =
-      BasicOStreamWriter<std::ofstream>(Initialize(path, std::ios::binary));
+    auto writer = BasicOStreamWriter<std::ofstream>(Initialize(file_path));
     writer.Write(buffer);
   } catch(const std::exception&) {
     throw std::runtime_error("Unable to save time and sales properties.");

@@ -3,7 +3,9 @@
 
 namespace Spire {
   enum class BboIndicator;
+  class LegacyTimeAndSalesWindowSettings;
   class NoneTimeAndSalesModel;
+  class ServiceTimeAndSalesModel;
   class TimeAndSalesModel;
   class TimeAndSalesProperties;
   class TimeAndSalesPropertiesWindow;

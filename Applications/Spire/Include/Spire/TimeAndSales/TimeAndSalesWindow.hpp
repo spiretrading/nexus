@@ -61,6 +61,7 @@ namespace Spire {
       void HandleUnlink() override;
 
     private:
+      friend class LegacyTimeAndSalesWindowSettings;
       friend class TimeAndSalesWindowSettings;
       std::shared_ptr<TimeAndSalesPropertiesWindowFactory> m_factory;
       ModelBuilder m_model_builder;

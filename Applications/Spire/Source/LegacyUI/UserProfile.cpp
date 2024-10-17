@@ -252,7 +252,7 @@ void UserProfile::SetInitialPortfolioViewerWindowSettings(
 }
 
 std::filesystem::path Spire::get_profile_path() {
-  return std::filesystem::path(QStandardPaths::writableLocation(
+  return std::filesystem::weakly_canonical(QStandardPaths::writableLocation(
     QStandardPaths::DataLocation).toStdString()) / "Profiles";
 }
 
