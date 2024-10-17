@@ -112,16 +112,6 @@ TechnicalsPanel::TechnicalsPanel(
         std::bind_front(&TechnicalsPanel::on_bid_quantity_update, this))),
       m_ask_quantity_connection(m_ask_quantity->connect_update_signal(
         std::bind_front(&TechnicalsPanel::on_ask_quantity_update, this))) {
-  auto high_field = make_technicals_value_field<Money>(m_technicals,
-    &SecurityTechnicals::m_high);
-  auto low_field = make_technicals_value_field<Money>(m_technicals,
-    &SecurityTechnicals::m_low);
-  auto open_field = make_technicals_value_field<Money>(m_technicals,
-    &SecurityTechnicals::m_open);
-  auto close_field = make_technicals_value_field<Money>(m_technicals,
-    &SecurityTechnicals::m_close);
-  auto volume_field = make_technicals_value_field<Quantity>(m_technicals,
-    &SecurityTechnicals::m_volume);
   m_default_field = make_label("");
   m_default_field->setMinimumWidth(get_value_field_minimum_width());
   update_style(*m_default_field, [] (auto& style) {
@@ -136,8 +126,18 @@ TechnicalsPanel::TechnicalsPanel(
     make_indicator_label("H"), make_indicator_label("L"),
     make_indicator_label("O"), make_indicator_label("C"),
     make_indicator_label("V"), make_indicator_label("D")};
-  auto fields = std::vector<TextBox*>{high_field, low_field, open_field,
-    close_field, volume_field, m_default_field};
+  auto fields = std::vector<TextBox*>{
+    make_technicals_value_field<Money>(m_technicals,
+      &SecurityTechnicals::m_high),
+    make_technicals_value_field<Money>(m_technicals,
+      &SecurityTechnicals::m_low),
+    make_technicals_value_field<Money>(m_technicals,
+      &SecurityTechnicals::m_open),
+    make_technicals_value_field<Money>(m_technicals,
+      &SecurityTechnicals::m_close),
+    make_technicals_value_field<Quantity>(m_technicals,
+      &SecurityTechnicals::m_volume),
+    m_default_field};
   for(auto i = 0; i < std::ssize(fields); ++i) {
     link(*this, *name_indicators[i]);
     link(*this, *short_name_indicators[i]);
