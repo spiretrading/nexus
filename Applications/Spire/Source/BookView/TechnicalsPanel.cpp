@@ -116,13 +116,13 @@ TechnicalsPanel::TechnicalsPanel(
   m_default_field->setMinimumWidth(get_value_field_minimum_width());
   on_ask_quantity_update(m_bid_quantity->get());
   auto name_indicators = std::vector<TextBox*>{
-    make_indicator_label("High"), make_indicator_label("Low"),
-    make_indicator_label("Open"), make_indicator_label("Close"),
-    make_indicator_label("Vol"), make_indicator_label("Def")};
+    make_indicator_label(tr("High")), make_indicator_label(tr("Low")),
+    make_indicator_label(tr("Open")), make_indicator_label(tr("Close")),
+    make_indicator_label(tr("Vol")), make_indicator_label(tr("Def"))};
   auto short_name_indicators = std::vector<TextBox*>{
-    make_indicator_label("H"), make_indicator_label("L"),
-    make_indicator_label("O"), make_indicator_label("C"),
-    make_indicator_label("V"), make_indicator_label("D")};
+    make_indicator_label(tr("H")), make_indicator_label(tr("L")),
+    make_indicator_label(tr("O")), make_indicator_label(tr("C")),
+    make_indicator_label(tr("V")), make_indicator_label(tr("D"))};
   auto fields = std::vector<TextBox*>{
     make_technicals_value_field<Money>(m_technicals,
       &SecurityTechnicals::m_high),

@@ -90,7 +90,6 @@ int main(int argc, char** argv) {
   auto default_ask_quantity = std::make_shared<LocalQuantityModel>(100);
   auto tester = TechnicalsTestWindow(technicals, default_bid_quantity,
     default_ask_quantity);
-  //tester.setAttribute(Qt::WA_ShowWithoutActivating);
   auto widget = QWidget();
   auto layout = make_vbox_layout(&widget);
   auto panel = new TechnicalsPanel(technicals, default_bid_quantity,
@@ -99,7 +98,6 @@ int main(int argc, char** argv) {
   layout->addStretch(1);
   widget.installEventFilter(&tester);
   widget.show();
-  //widget.resize(scale(206, 417));
   tester.show();
   tester.move(
     tester.pos().x() + widget.frameGeometry().width() + scale_width(100),
