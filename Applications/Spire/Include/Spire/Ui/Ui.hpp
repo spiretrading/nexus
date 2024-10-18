@@ -87,7 +87,6 @@ namespace Spire {
   class SecurityBox;
   class SecurityDialog;
   class SecurityListItem;
-  class SecurityStack;
   class SecurityView;
   template<typename T> class SingleSelectionModel;
   class Slider;

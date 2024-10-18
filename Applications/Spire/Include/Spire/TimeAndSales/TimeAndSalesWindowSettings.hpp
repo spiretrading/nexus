@@ -7,6 +7,7 @@
 #include "Spire/Spire/ShuttleQtTypes.hpp"
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/TimeAndSales/TimeAndSales.hpp"
+#include "Spire/Ui/SecurityView.hpp"
 
 namespace Spire {
 
@@ -32,9 +33,8 @@ namespace Spire {
 
     private:
       friend struct Beam::Serialization::DataShuttle;
-      Nexus::Security m_security;
       std::string m_name;
-      LegacyUI::SecurityViewStack m_security_view_stack;
+      SecurityView::State m_security_view;
       std::string m_identifier;
       std::string m_link_identifier;
       QByteArray m_geometry;
@@ -46,9 +46,8 @@ namespace Spire {
   template<typename Shuttler>
   void TimeAndSalesWindowSettings::Shuttle(
       Shuttler& shuttle, unsigned int version) {
-    shuttle.Shuttle("security", m_security);
     shuttle.Shuttle("name", m_name);
-    shuttle.Shuttle("security_view_stack", m_security_view_stack);
+    shuttle.Shuttle("security_view", m_security_view);
     shuttle.Shuttle("identifier", m_identifier);
     shuttle.Shuttle("link_identifier", m_link_identifier);
     shuttle.Shuttle("geometry", m_geometry);

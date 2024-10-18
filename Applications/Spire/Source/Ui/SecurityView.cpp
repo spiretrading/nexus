@@ -1,10 +1,14 @@
 #include "Spire/Ui/SecurityView.hpp"
+#include <boost/signals2/shared_connection_block.hpp>
 #include <QKeyEvent>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/SecurityDialog.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
+using namespace Beam;
+using namespace Beam::IO;
+using namespace Beam::Serialization;
 using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
@@ -33,7 +37,7 @@ SecurityView::SecurityView(std::shared_ptr<ComboBox::QueryModel> securities,
   m_layers->addWidget(prompt);
   m_layers->addWidget(m_body);
   enclose(*this, *m_layers);
-  m_current->connect_update_signal(
+  m_current_connection = m_current->connect_update_signal(
     std::bind_front(&SecurityView::on_current, this));
   m_security_dialog.connect_submit_signal(
     std::bind_front(&SecurityView::on_submit, this));
@@ -58,6 +62,23 @@ const QWidget& SecurityView::get_body() const {
 
 QWidget& SecurityView::get_body() {
   return *m_body;
+}
+
+SecurityView::State SecurityView::save_state() const {
+  return State(m_securities);
+}
+
+void SecurityView::restore(const State& state) {
+  m_securities = state.m_securities;
+  if(auto top = m_securities.get_top()) {
+    if(*top != m_current->get()) {
+      auto blocker = shared_connection_block(m_current_connection);
+      m_current->set(*top);
+      if(m_layers->currentWidget() != m_body) {
+        m_layers->setCurrentWidget(m_body);
+      }
+    }
+  }
 }
 
 void SecurityView::keyPressEvent(QKeyEvent* event) {

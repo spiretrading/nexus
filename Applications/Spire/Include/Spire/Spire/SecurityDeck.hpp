@@ -1,6 +1,8 @@
 #ifndef SPIRE_SECURITY_DECK_HPP
 #define SPIRE_SECURITY_DECK_HPP
 #include <deque>
+#include <Beam/Serialization/DataShuttle.hpp>
+#include <Beam/Serialization/ShuttleDeque.hpp>
 #include <boost/optional/optional.hpp>
 #include "Nexus/Definitions/Security.hpp"
 #include "Spire/Spire/Spire.hpp"
@@ -24,6 +26,9 @@ namespace Spire {
        */
       void add(const Nexus::Security& security);
 
+      /** Returns the top of the deck. */
+      boost::optional<Nexus::Security> get_top() const;
+
       /**
        * Takes the security on the bottom of the deck and moves it to the top.
        * Returns the top of the deck. If the deck is empty then <i>none</i> is
@@ -39,8 +44,17 @@ namespace Spire {
       boost::optional<Nexus::Security> rotate_top();
 
     private:
+      friend struct Beam::Serialization::DataShuttle;
       std::deque<Nexus::Security> m_deck;
+
+      template<typename Shuttler>
+      void Shuttle(Shuttler& shuttle, unsigned int version);
   };
+
+  template<typename Shuttler>
+  void SecurityDeck::Shuttle(Shuttler& shuttle, unsigned int version) {
+    shuttle.Shuttle("deck", m_deck);
+  }
 }
 
 #endif
