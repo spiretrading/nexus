@@ -168,15 +168,6 @@ CanvasTypeRegistry& UserProfile::GetCanvasTypeRegistry() {
   return m_typeRegistry;
 }
 
-const BookViewProperties& UserProfile::GetDefaultBookViewProperties() const {
-  return m_defaultBookViewProperties;
-}
-
-void UserProfile::SetDefaultBookViewProperties(
-    const BookViewProperties& properties) {
-  m_defaultBookViewProperties = properties;
-}
-
 const OrderImbalanceIndicatorProperties&
     UserProfile::GetDefaultOrderImbalanceIndicatorProperties() const {
   return m_defaultOrderImbalanceIndicatorProperties;

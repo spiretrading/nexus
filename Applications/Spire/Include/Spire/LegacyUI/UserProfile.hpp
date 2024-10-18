@@ -14,7 +14,6 @@
 #include "Nexus/ServiceClients/ServiceClientsBox.hpp"
 #include "Nexus/TelemetryService/TelemetryClientBox.hpp"
 #include "Spire/Blotter/Blotter.hpp"
-#include "Spire/BookView/BookViewProperties.hpp"
 #include "Spire/Canvas/Types/CanvasTypeRegistry.hpp"
 #include "Spire/Catalog/CatalogSettings.hpp"
 #include "Spire/Dashboard/SavedDashboards.hpp"
@@ -157,15 +156,6 @@ namespace Spire {
       /** Returns the CanvasTypeRegistry. */
       CanvasTypeRegistry& GetCanvasTypeRegistry();
 
-      /** Returns the default BookViewProperties. */
-      const BookViewProperties& GetDefaultBookViewProperties() const;
-
-      /**
-       * Sets the default BookViewProperties.
-       * @param properties The BookViewProperties to use as the defaults.
-       */
-      void SetDefaultBookViewProperties(const BookViewProperties& properties);
-
       /** Returns the default OrderImbalanceIndicatorProperties. */
       const OrderImbalanceIndicatorProperties&
         GetDefaultOrderImbalanceIndicatorProperties() const;
@@ -237,7 +227,6 @@ namespace Spire {
       std::filesystem::path m_profilePath;
       std::shared_ptr<RecentlyClosedWindowListModel> m_recentlyClosedWindows;
       std::shared_ptr<ComboBox::QueryModel> m_security_query_model;
-      BookViewProperties m_defaultBookViewProperties;
       SavedDashboards m_savedDashboards;
       OrderImbalanceIndicatorProperties
         m_defaultOrderImbalanceIndicatorProperties;

@@ -9,7 +9,6 @@
 #include <tclap/CmdLine.h>
 #include "Nexus/TelemetryService/ApplicationDefinitions.hpp"
 #include "Spire/Blotter/BlotterSettings.hpp"
-#include "Spire/BookView/BookViewProperties.hpp"
 #include "Spire/Dashboard/SavedDashboards.hpp"
 #include "Spire/KeyBindings/HotkeyOverride.hpp"
 #include "Spire/KeyBindings/KeyBindingsProfile.hpp"
@@ -247,7 +246,6 @@ int main(int argc, char* argv[]) {
     }
     BlotterSettings::Load(Store(*user_profile));
     CatalogSettings::Load(Store(*user_profile));
-    BookViewProperties::Load(Store(*user_profile));
     RiskTimerProperties::Load(Store(*user_profile));
     TimeAndSalesProperties::Load(Store(*user_profile));
     PortfolioViewerProperties::Load(Store(*user_profile));
@@ -294,7 +292,6 @@ int main(int argc, char* argv[]) {
   PortfolioViewerProperties::Save(*user_profile);
   TimeAndSalesProperties::Save(*user_profile);
   RiskTimerProperties::Save(*user_profile);
-  BookViewProperties::Save(*user_profile);
   CatalogSettings::Save(*user_profile);
   BlotterSettings::Save(*user_profile);
   toolbar_controller->close();
