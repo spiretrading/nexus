@@ -5,6 +5,13 @@ using namespace boost;
 using namespace Nexus;
 using namespace Spire;
 
+optional<Security> SecurityDeck::get_top() const {
+  if(m_deck.empty()) {
+    return none;
+  }
+  return m_deck.front();
+}
+
 void SecurityDeck::add(const Security& security) {
   if(security == Security()) {
     return;

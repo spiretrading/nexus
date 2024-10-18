@@ -19,15 +19,15 @@ namespace Spire {
       /** Constructs an empty SecurityDeck. */
       SecurityDeck() = default;
 
+      /** Returns the top of the deck. */
+      boost::optional<Nexus::Security> get_top() const;
+
       /**
        * Adds a Security to the top of the deck indicating that it's the
        * currently selected security. If the security is already in the deck,
        * then it's moved to the top.
        */
       void add(const Nexus::Security& security);
-
-      /** Returns the top of the deck. */
-      boost::optional<Nexus::Security> get_top() const;
 
       /**
        * Takes the security on the bottom of the deck and moves it to the top.
