@@ -10,6 +10,7 @@
 #include <QPoint>
 #include <QString>
 #include "Spire/LegacyUI/LegacyUI.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 
 namespace Beam {
 namespace Serialization {
@@ -87,6 +88,9 @@ namespace Serialization {
       shuttle.Shuttle("point_size", value.pointSize());
       shuttle.Shuttle("weight", value.weight());
       shuttle.Shuttle("italic", value.italic());
+      if(value.pointSize() == -1) {
+        shuttle.Shuttle("pixel_size", Spire::unscale_width(value.pixelSize()));
+      }
     }
   };
 
@@ -104,6 +108,11 @@ namespace Serialization {
       auto italic = bool();
       shuttle.Shuttle("italic", italic);
       value = QFont(family, pointSize, weight, italic);
+      if(pointSize == -1) {
+        auto pixelSize = int();
+        shuttle.Shuttle("pixel_size", pixelSize);
+        value.setPixelSize(Spire::scale_width(pixelSize));
+      }
     }
   };
 
