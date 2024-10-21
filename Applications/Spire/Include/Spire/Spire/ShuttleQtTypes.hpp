@@ -12,8 +12,7 @@
 #include "Spire/LegacyUI/LegacyUI.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 
-namespace Beam {
-namespace Serialization {
+namespace Beam::Serialization {
   template<>
   struct IsStructure<QString> : std::false_type {};
 
@@ -101,17 +100,17 @@ namespace Serialization {
         Shuttler& shuttle, QFont& value, unsigned int version) const {
       auto family = QString();
       shuttle.Shuttle("family", family);
-      auto pointSize = int();
-      shuttle.Shuttle("point_size", pointSize);
+      auto point_size = int();
+      shuttle.Shuttle("point_size", point_size);
       auto weight = int();
       shuttle.Shuttle("weight", weight);
       auto italic = bool();
       shuttle.Shuttle("italic", italic);
-      value = QFont(family, pointSize, weight, italic);
-      if(pointSize == -1) {
-        auto pixelSize = int();
-        shuttle.Shuttle("pixel_size", pixelSize);
-        value.setPixelSize(Spire::scale_width(pixelSize));
+      value = QFont(family, point_size, weight, italic);
+      if(point_size == -1) {
+        auto pixel_size = int();
+        shuttle.Shuttle("pixel_size", pixel_size);
+        value.setPixelSize(Spire::scale_width(pixel_size));
       }
     }
   };
