@@ -42,8 +42,7 @@ namespace Beam::Serialization {
     void operator ()(Shuttler& shuttle, const QByteArray& value,
         unsigned int version) const {
       auto buffer = std::string(value.data(), value.size());
-      shuttle.Shuttle("buffer",
-        Beam::IO::BufferFromString<Beam::IO::SharedBuffer>(buffer));
+      shuttle.Shuttle("buffer", IO::BufferFromString<IO::SharedBuffer>(buffer));
     }
   };
 
@@ -52,7 +51,7 @@ namespace Beam::Serialization {
     template<typename Shuttler>
     void operator ()(
         Shuttler& shuttle, QByteArray& value, unsigned int version) const {
-      auto buffer = Beam::IO::SharedBuffer();
+      auto buffer = IO::SharedBuffer();
       shuttle.Shuttle("buffer", buffer);
       value = QByteArray(buffer.GetData(), buffer.GetSize());
     }
@@ -157,7 +156,6 @@ namespace Beam::Serialization {
       value = QPoint(x, y);
     }
   };
-}
 }
 
 #endif
