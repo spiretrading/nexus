@@ -1,18 +1,10 @@
 #ifndef SPIRE_TIME_AND_SALES_PROPERTIES_WINDOW_HPP
 #define SPIRE_TIME_AND_SALES_PROPERTIES_WINDOW_HPP
-#include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesProperties.hpp"
 #include "Spire/Ui/Ui.hpp"
 #include "Spire/Ui/Window.hpp"
 
 namespace Spire {
-
-  /** A ValueModel over a TimeAndSalesProperties. */
-  using TimeAndSalesPropertiesModel = ValueModel<TimeAndSalesProperties>;
-
-  /** A LocalValueModel over a TimeAndSalesProperties. */
-  using LocalTimeAndSalesPropertiesModel =
-    LocalValueModel<TimeAndSalesProperties>;
 
   /** Displays the properties for the time and sales. */
   class TimeAndSalesPropertiesWindow : public Window {

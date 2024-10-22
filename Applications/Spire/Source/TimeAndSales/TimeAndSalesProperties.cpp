@@ -7,6 +7,7 @@
 #include <Beam/Serialization/BinarySender.hpp>
 #include <Beam/Serialization/JsonReceiver.hpp>
 #include <Beam/Serialization/JsonSender.hpp>
+#include <QMessageBox>
 #include "Spire/LegacyUI/UISerialization.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/TimeAndSales/LegacyTimeAndSalesWindowSettings.hpp"
@@ -37,6 +38,14 @@ namespace {
 
   auto convert_legacy_time_and_sales_properties(
       const std::filesystem::path& path) {
+    enum LegacyColumns {
+      TIME_COLUMN = 0,
+      PRICE_COLUMN,
+      SIZE_COLUMN,
+      MARKET_COLUMN,
+      CONDITION_COLUMN
+    };
+    static const auto LEGACY_COLUMN_COUNT = 5;
     auto properties_path = path / "time_and_sales.dat";
     if(!std::filesystem::exists(properties_path)) {
       throw std::runtime_error("time_and_sales.dat not found.");
@@ -50,6 +59,21 @@ namespace {
       properties.set_highlight_color(static_cast<BboIndicator>(i), color);
     }
     properties.set_font(legacy_properties.m_font);
+    if(legacy_properties.m_visible_columns[TIME_COLUMN]) {
+      properties.set_visible(TimeAndSalesTableModel::Column::TIME, true);
+    }
+    if(legacy_properties.m_visible_columns[PRICE_COLUMN]) {
+      properties.set_visible(TimeAndSalesTableModel::Column::PRICE, true);
+    }
+    if(legacy_properties.m_visible_columns[SIZE_COLUMN]) {
+      properties.set_visible(TimeAndSalesTableModel::Column::SIZE, true);
+    }
+    if(legacy_properties.m_visible_columns[MARKET_COLUMN]) {
+      properties.set_visible(TimeAndSalesTableModel::Column::MARKET, true);
+    }
+    if(legacy_properties.m_visible_columns[CONDITION_COLUMN]) {
+      properties.set_visible(TimeAndSalesTableModel::Column::CONDITION, true);
+    }
     properties.set_grid_enabled(legacy_properties.m_show_grid_lines);
     return properties;
   }
@@ -74,6 +98,10 @@ const TimeAndSalesProperties& TimeAndSalesProperties::get_default() {
     font.setWeight(QFont::Medium);
     font.setPixelSize(scale_width(10));
     properties.set_font(std::move(font));
+    properties.set_visible(TimeAndSalesTableModel::Column::PRICE, true);
+    properties.set_visible(TimeAndSalesTableModel::Column::SIZE, true);
+    properties.set_visible(TimeAndSalesTableModel::Column::MARKET, true);
+    properties.set_visible(TimeAndSalesTableModel::Column::CONDITION, true);
     properties.set_grid_enabled(false);
     return properties;
   }();
@@ -98,6 +126,20 @@ void TimeAndSalesProperties::set_font(const QFont& font) {
   m_font = font;
 }
 
+bool TimeAndSalesProperties::is_visible(
+    TimeAndSalesTableModel::Column column) const {
+  return m_visible_columns.test(static_cast<int>(column));
+}
+
+void TimeAndSalesProperties::set_visible(
+    TimeAndSalesTableModel::Column column, bool is_visible) {
+  if(is_visible) {
+    m_visible_columns.set(static_cast<int>(column));
+  } else {
+    m_visible_columns.reset(static_cast<int>(column));
+  }
+}
+
 bool TimeAndSalesProperties::is_grid_enabled() const {
   return m_is_grid_enabled;
 }
@@ -109,11 +151,18 @@ void TimeAndSalesProperties::set_grid_enabled(bool is_enabled) {
 TimeAndSalesProperties Spire::load_time_and_sales_properties(
     const std::filesystem::path& path) {
   auto file_path = path / "time_and_sales.json";
-  if(!std::filesystem::exists(file_path)) {
-    auto legacy_path = path / "time_and_sales.dat";
-    if(std::filesystem::exists(legacy_path)) {
-      return convert_legacy_time_and_sales_properties(path);
+  try {
+    if(!std::filesystem::exists(file_path)) {
+      auto legacy_path = path / "time_and_sales.dat";
+      if(std::filesystem::exists(legacy_path)) {
+        return convert_legacy_time_and_sales_properties(path);
+      }
+      return TimeAndSalesProperties::get_default();
     }
+  } catch(const std::exception& e) {
+    QMessageBox::warning(nullptr, QObject::tr("Warning"),
+      QObject::tr("Unable to load time and sales properties: %1.").arg(
+        e.what()));
     return TimeAndSalesProperties::get_default();
   }
   auto properties = TimeAndSalesProperties();
@@ -127,7 +176,9 @@ TimeAndSalesProperties Spire::load_time_and_sales_properties(
     receiver.SetSource(Ref(buffer));
     receiver.Shuttle(properties);
   } catch(const std::exception&) {
-    throw std::runtime_error("Unable to load time and sales properties.");
+    QMessageBox::warning(nullptr, QObject::tr("Warning"),
+      QObject::tr("Unable to load time and sales properties, using defaults."));
+    return TimeAndSalesProperties::get_default();
   }
   return properties;
 }
@@ -146,6 +197,7 @@ void Spire::save_time_and_sales_properties(
     auto writer = BasicOStreamWriter<std::ofstream>(Initialize(file_path));
     writer.Write(buffer);
   } catch(const std::exception&) {
-    throw std::runtime_error("Unable to save time and sales properties.");
+    QMessageBox::warning(nullptr, QObject::tr("Warning"),
+      QObject::tr("Unable to save time and sales properties."));
   }
 }

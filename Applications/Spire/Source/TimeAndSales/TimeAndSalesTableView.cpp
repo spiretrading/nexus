@@ -26,7 +26,6 @@ namespace {
   }
 
   struct HeaderItemProperties {
-    bool m_is_visible;
     Qt::Alignment m_alignment;
     int m_width;
   };
@@ -105,31 +104,32 @@ namespace {
 
   auto make_header_item_properties() {
     auto properties = std::vector<HeaderItemProperties>();
-    properties.emplace_back(false, Qt::AlignLeft, scale_width(48));
-    properties.emplace_back(true, Qt::AlignRight, scale_width(50));
-    properties.emplace_back(true, Qt::AlignRight, scale_width(40));
-    properties.emplace_back(true, Qt::AlignLeft, scale_width(38));
-    properties.emplace_back(false, Qt::AlignLeft, scale_width(34));
+    properties.emplace_back(Qt::AlignLeft, scale_width(48));
+    properties.emplace_back(Qt::AlignRight, scale_width(50));
+    properties.emplace_back(Qt::AlignRight, scale_width(40));
+    properties.emplace_back(Qt::AlignLeft, scale_width(38));
+    properties.emplace_back(Qt::AlignLeft, scale_width(34));
     return properties;
   }
 
-  void make_header_menu(TableView& table_view) {
+  void make_header_menu(TableView& table_view,
+      const std::shared_ptr<TimeAndSalesPropertiesModel>& properties) {
     auto& header = table_view.get_header();
     header.setContextMenuPolicy(Qt::CustomContextMenu);
     QObject::connect(&header, &QWidget::customContextMenuRequested,
-      [&table_view] (const auto& pos) {
+      [=, &table_view] (const auto& pos) {
         auto& header = table_view.get_header();
         auto menu = new ContextMenu(header);
-        for(auto i = 0; i < header.get_items()->get_size() - 1; ++i) {
+        for(auto i = 0; i != TimeAndSalesTableModel::COLUMN_SIZE; ++i) {
           auto is_checked =
             menu->add_check_box(header.get_items()->get(i).m_name);
-          is_checked->set(header.get_item(i)->isVisible());
-          is_checked->connect_update_signal([i, &table_view] (auto checked) {
-            if(checked) {
-              table_view.show_column(i);
-            } else {
-              table_view.hide_column(i);
-            }
+          is_checked->set(properties->get().is_visible(
+            static_cast<TimeAndSalesTableModel::Column>(i)));
+          is_checked->connect_update_signal([=, &table_view] (auto checked) {
+            auto current_properties = properties->get();
+            current_properties.set_visible(
+              static_cast<TimeAndSalesTableModel::Column>(i), checked);
+            properties->set(current_properties);
           });
         }
         menu->window()->setAttribute(Qt::WA_DeleteOnClose);
@@ -138,17 +138,23 @@ namespace {
       });
   }
 
-  void initialize_table_header(TableView& table_view) {
-    auto properties = make_header_item_properties();
+  void initialize_table_header(
+      TableView& table_view, const TimeAndSalesProperties& properties) {
+    auto header_properties = make_header_item_properties();
     auto& header = table_view.get_header();
-    for(auto i = 0; i < std::ssize(properties); ++i) {
-      header.get_widths()->set(i, properties[i].m_width);
-      if(!properties[i].m_is_visible) {
+    for(auto i = 0; i != TimeAndSalesTableModel::COLUMN_SIZE; ++i) {
+      if(properties.is_visible(
+          static_cast<TimeAndSalesTableModel::Column>(i))) {
+        table_view.show_column(i);
+      } else {
         table_view.hide_column(i);
       }
+    }
+    for(auto i = 0; i < std::ssize(header_properties); ++i) {
+      header.get_widths()->set(i, header_properties[i].m_width);
       update_style(*header.get_item(i), [&] (auto& style) {
         style.get(Any() > TableHeaderItem::Label()).
-          set(TextAlign(properties[i].m_alignment));
+          set(TextAlign(header_properties[i].m_alignment));
       });
     }
   }
@@ -319,13 +325,14 @@ namespace {
 }
 
 TableView* Spire::make_time_and_sales_table_view(
-    std::shared_ptr<TimeAndSalesTableModel> table, QWidget* parent) {
+    std::shared_ptr<TimeAndSalesTableModel> table,
+    std::shared_ptr<TimeAndSalesPropertiesModel> properties, QWidget* parent) {
   auto table_view = TableViewBuilder(table).
     set_header(make_header_model()).
     set_item_builder(std::bind_front(&item_builder, table)).make();
   update_style(*table_view, apply_table_view_style);
-  initialize_table_header(*table_view);
-  make_header_menu(*table_view);
+  initialize_table_header(*table_view, properties->get());
+  make_header_menu(*table_view, properties);
   auto pull_indicator = new PullIndicator(*table_view);
   return table_view;
 }

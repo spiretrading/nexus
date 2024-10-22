@@ -1,15 +1,26 @@
 #ifndef SPIRE_TIME_AND_SALES_PROPERTIES_HPP
 #define SPIRE_TIME_AND_SALES_PROPERTIES_HPP
 #include <array>
+#include <bitset>
 #include <filesystem>
 #include <Beam/Serialization/ShuttleArray.hpp>
+#include <Beam/Serialization/ShuttleBitset.hpp>
 #include <QFont>
+#include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Spire/ShuttleQtTypes.hpp"
 #include "Spire/TimeAndSales/BboIndicator.hpp"
 #include "Spire/TimeAndSales/TimeAndSales.hpp"
+#include "Spire/TimeAndSales/TimeAndSalesTableModel.hpp"
 #include "Spire/Ui/HighlightBox.hpp"
 
 namespace Spire {
+
+  /** A ValueModel over a TimeAndSalesProperties. */
+  using TimeAndSalesPropertiesModel = ValueModel<TimeAndSalesProperties>;
+
+  /** A LocalValueModel over a TimeAndSalesProperties. */
+  using LocalTimeAndSalesPropertiesModel =
+    LocalValueModel<TimeAndSalesProperties>;
 
   /** Represents the properties used in the time and sales window. */
   class TimeAndSalesProperties {
@@ -44,6 +55,12 @@ namespace Spire {
        */
       void set_font(const QFont& font);
 
+      /** Returns <code>true</code> iff a column is visible. */
+      bool is_visible(TimeAndSalesTableModel::Column column) const;
+
+      /** Sets whether a column is visible. */
+      void set_visible(TimeAndSalesTableModel::Column column, bool is_visible);
+
       /** Returns <code>true</code> iff the grid is shown. */
       bool is_grid_enabled() const;
 
@@ -54,9 +71,11 @@ namespace Spire {
       void set_grid_enabled(bool is_enabled);
 
     private:
+      static const auto COLUMN_COUNT = 8;
       friend struct Beam::Serialization::DataShuttle;
       std::array<HighlightColor, BBO_INDICATOR_COUNT> m_highlight_colors;
       QFont m_font;
+      std::bitset<COLUMN_COUNT> m_visible_columns;
       bool m_is_grid_enabled;
 
       template<typename Shuttler>
@@ -84,6 +103,7 @@ namespace Spire {
       Shuttler& shuttle, unsigned int version) {
     shuttle.Shuttle("highlight_colors", m_highlight_colors);
     shuttle.Shuttle("font", m_font);
+    shuttle.Shuttle("visible_columns", m_visible_columns);
     shuttle.Shuttle("is_grid_enabled", m_is_grid_enabled);
   }
 }

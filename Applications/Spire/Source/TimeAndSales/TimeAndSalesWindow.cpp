@@ -212,15 +212,12 @@ void TimeAndSalesWindow::on_current(const Security& security) {
     return;
   }
   setWindowTitle(to_text(security) + " " + QString(0x2013) + " " + TITLE_NAME);
-  auto header_item_properties = std::vector<std::tuple<bool, int>>();
-  if(m_table_view) {
-    auto& header = m_table_view->get_header();
-    for(auto i = 0; i < header.get_widths()->get_size(); ++i) {
-      header_item_properties.emplace_back(
-        header.get_item(i)->isVisibleTo(header.parentWidget()),
-        header.get_widths()->get(i));
+  auto column_widths = [&] () -> std::shared_ptr<ListModel<int>> {
+    if(m_table_view) {
+      m_table_view->get_header().get_widths();
     }
-  }
+    return nullptr;
+  }();
   m_transition_view->set_status(TransitionView::Status::NONE);
   m_table_model =
     std::make_shared<TimeAndSalesTableModel>(m_model_builder(security));
@@ -228,17 +225,15 @@ void TimeAndSalesWindow::on_current(const Security& security) {
     std::bind_front(&TimeAndSalesWindow::on_begin_loading, this));
   m_table_model->connect_end_loading_signal(
     std::bind_front(&TimeAndSalesWindow::on_end_loading, this));
-  m_table_view = make_time_and_sales_table_view(m_table_model);
+  m_table_view = make_time_and_sales_table_view(
+    m_table_model, m_factory->get_properties());
   m_table_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   update_style(*m_table_view, std::bind_front(apply_table_view_style,
     m_factory->make()->get_current()->get()));
-  auto& header = m_table_view->get_header();
-  for(auto i = 0; i < std::ssize(header_item_properties); ++i) {
-    header.get_widths()->set(i, std::get<1>(header_item_properties[i]));
-    if(!std::get<0>(header_item_properties[i])) {
-      m_table_view->hide_column(i);
-    } else {
-      m_table_view->show_column(i);
+  if(column_widths) {
+    auto& header = m_table_view->get_header();
+    for(auto i = 0; i != column_widths->get_size(); ++i) {
+      header.get_widths()->set(i, column_widths->get(i));
     }
   }
   m_transition_view->set_body(*m_table_view);
@@ -263,6 +258,15 @@ void TimeAndSalesWindow::on_timeout() {
     }
     if(properties.is_grid_enabled() != m_properties.is_grid_enabled()) {
       update_grid(properties);
+    }
+    auto& header = m_table_view->get_header();
+    for(auto i = 0; i != TimeAndSalesTableModel::COLUMN_SIZE; ++i) {
+      if(properties.is_visible(
+          static_cast<TimeAndSalesTableModel::Column>(i))) {
+        m_table_view->show_column(i);
+      } else {
+        m_table_view->hide_column(i);
+      }
     }
     for(auto i = 0; i < BBO_INDICATOR_COUNT; ++i) {
       auto indicator = static_cast<BboIndicator>(i);
