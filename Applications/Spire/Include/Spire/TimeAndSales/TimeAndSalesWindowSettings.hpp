@@ -1,5 +1,6 @@
 #ifndef SPIRE_TIME_AND_SALES_WINDOW_SETTINGS_HPP
 #define SPIRE_TIME_AND_SALES_WINDOW_SETTINGS_HPP
+#include <vector>
 #include <QByteArray>
 #include "Nexus/Definitions/Security.hpp"
 #include "Spire/LegacyUI/SecurityViewStack.hpp"
@@ -35,6 +36,7 @@ namespace Spire {
       friend struct Beam::Serialization::DataShuttle;
       std::string m_name;
       SecurityView::State m_security_view;
+      std::vector<int> m_column_widths;
       std::string m_identifier;
       std::string m_link_identifier;
       QByteArray m_geometry;
@@ -48,6 +50,7 @@ namespace Spire {
       Shuttler& shuttle, unsigned int version) {
     shuttle.Shuttle("name", m_name);
     shuttle.Shuttle("security_view", m_security_view);
+    shuttle.Shuttle("column_widths", m_column_widths);
     shuttle.Shuttle("identifier", m_identifier);
     shuttle.Shuttle("link_identifier", m_link_identifier);
     shuttle.Shuttle("geometry", m_geometry);
