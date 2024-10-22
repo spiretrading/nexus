@@ -11,7 +11,7 @@ ServiceSecurityQueryModel::ServiceSecurityQueryModel(MarketDatabase markets,
     m_market_data_client(std::move(market_data_client)) {}
 
 std::any ServiceSecurityQueryModel::parse(const QString& query) {
-  auto security = ParseSecurity(query.toStdString(), m_markets);
+  auto security = ParseSecurity(query.toUpper().toStdString(), m_markets);
   if(security == Security()) {
     return {};
   }
