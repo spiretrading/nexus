@@ -28,7 +28,6 @@
 #include "Spire/RiskTimer/RiskTimerProperties.hpp"
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
-#include "Spire/Ui/ComboBox.hpp"
 
 namespace Spire {
 
@@ -127,8 +126,7 @@ namespace Spire {
         GetRecentlyClosedWindows() const;
 
       /** Returns the model used to query securities. */
-      const std::shared_ptr<ComboBox::QueryModel>&
-        GetSecurityQueryModel() const;
+      const std::shared_ptr<SecurityQueryModel>& GetSecurityQueryModel() const;
 
       /** Returns the BlotterSettings. */
       const BlotterSettings& GetBlotterSettings() const;
@@ -237,7 +235,7 @@ namespace Spire {
       mutable Nexus::TelemetryService::TelemetryClientBox m_telemetryClient;
       std::filesystem::path m_profilePath;
       std::shared_ptr<RecentlyClosedWindowListModel> m_recentlyClosedWindows;
-      std::shared_ptr<ComboBox::QueryModel> m_security_query_model;
+      std::shared_ptr<SecurityQueryModel> m_security_query_model;
       BookViewProperties m_defaultBookViewProperties;
       SavedDashboards m_savedDashboards;
       OrderImbalanceIndicatorProperties

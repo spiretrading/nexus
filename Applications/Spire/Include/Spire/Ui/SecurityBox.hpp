@@ -2,7 +2,7 @@
 #define SPIRE_SECURITY_BOX_HPP
 #include "Nexus/Definitions/Security.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
-#include "Spire/Ui/ComboBox.hpp"
+#include "Spire/Spire/SecurityQueryModel.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -31,7 +31,7 @@ namespace Spire {
        * @param securities The set of securities that can be queried.
        * @param parent The parent widget.
        */
-      explicit SecurityBox(std::shared_ptr<ComboBox::QueryModel> securities,
+      explicit SecurityBox(std::shared_ptr<SecurityQueryModel> securities,
         QWidget* parent = nullptr);
 
       /**
@@ -40,11 +40,11 @@ namespace Spire {
        * @param current The current security displayed.
        * @param parent The parent widget.
        */
-      SecurityBox(std::shared_ptr<ComboBox::QueryModel> securities,
+      SecurityBox(std::shared_ptr<SecurityQueryModel> securities,
         std::shared_ptr<CurrentModel> current, QWidget* parent = nullptr);
 
       /** Returns the set of securities that can be queried. */
-      const std::shared_ptr<ComboBox::QueryModel>& get_securities() const;
+      const std::shared_ptr<SecurityQueryModel>& get_securities() const;
 
       /** Returns the current model. */
       const std::shared_ptr<CurrentModel>& get_current() const;
@@ -69,9 +69,9 @@ namespace Spire {
         const SubmitSignal::slot_type& slot) const;
 
     private:
-      struct SecurityQueryModel;
+      struct SecurityInfoToSecurityQueryModel;
       mutable SubmitSignal m_submit_signal;
-      std::shared_ptr<SecurityQueryModel> m_securities;
+      std::shared_ptr<SecurityInfoToSecurityQueryModel> m_securities;
       std::shared_ptr<CurrentModel> m_current;
       ComboBox* m_combo_box;
   };

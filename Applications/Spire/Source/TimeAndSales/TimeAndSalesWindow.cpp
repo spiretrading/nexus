@@ -78,14 +78,14 @@ namespace {
 }
 
 TimeAndSalesWindow::TimeAndSalesWindow(
-  std::shared_ptr<ComboBox::QueryModel> securities,
+  std::shared_ptr<SecurityQueryModel> securities,
   std::shared_ptr<TimeAndSalesPropertiesWindowFactory> factory,
   ModelBuilder model_builder, QWidget* parent)
   : TimeAndSalesWindow(std::move(securities), std::move(factory),
       std::move(model_builder), std::string(), parent) {}
 
 TimeAndSalesWindow::TimeAndSalesWindow(
-    std::shared_ptr<ComboBox::QueryModel> securities,
+    std::shared_ptr<SecurityQueryModel> securities,
     std::shared_ptr<TimeAndSalesPropertiesWindowFactory> factory,
     ModelBuilder model_builder, std::string identifier, QWidget* parent)
     : Window(parent),
@@ -154,7 +154,7 @@ void TimeAndSalesWindow::on_context_menu(QWidget* parent, const QPoint& pos) {
   auto menu = new ContextMenu(*parent);
   menu->add_action(tr("Properties"),
     std::bind_front(&TimeAndSalesWindow::on_properties_menu, this));
-  add_link_menu(*menu, *this, *m_market_database);
+  add_link_menu(*menu, *this, m_security_view->get_securities()->get_markets());
   menu->add_separator();
   menu->add_action(tr("Export..."),
     std::bind_front(&TimeAndSalesWindow::on_export_menu, this));

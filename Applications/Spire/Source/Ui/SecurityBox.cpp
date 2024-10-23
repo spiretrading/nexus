@@ -11,33 +11,34 @@ using namespace Nexus;
 using namespace Spire;
 using namespace Spire::Styles;
 
-struct SecurityBox::SecurityQueryModel : ComboBox::QueryModel {
-  std::shared_ptr<ComboBox::QueryModel> m_source;
+struct SecurityBox::SecurityInfoToSecurityQueryModel : ComboBox::QueryModel {
+  std::shared_ptr<SecurityQueryModel> m_source;
 
-  explicit SecurityQueryModel(std::shared_ptr<QueryModel> source)
+  explicit SecurityInfoToSecurityQueryModel(
+    std::shared_ptr<SecurityQueryModel> source)
     : m_source(std::move(source)) {}
 
   std::any parse(const QString& query) override {
-    auto value = m_source->parse(query);
-    if(value.has_value()) {
-      return std::any_cast<SecurityInfo&>(value).m_security;
+    auto value = m_source->parse_security(query);
+    if(value.m_security == Security()) {
+      return {};
     }
-    return value;
+    return value.m_security;
   }
 
   QtPromise<std::vector<std::any>> submit(const QString& query) override {
-    return m_source->submit(query).then([=] (auto&& source_result) {
+    return m_source->submit_security(query).then([=] (auto&& source_result) {
         auto matches = [&] {
           try {
             return source_result.Get();
           } catch(const std::exception&) {
-            return std::vector<std::any>();
+            return std::vector<SecurityInfo>();
           }
         }();
         auto result = std::vector<std::any>();
         auto securities = std::unordered_set<Security>();
         for(auto& value : matches) {
-          auto& security = std::any_cast<SecurityInfo&>(value).m_security;
+          auto& security = value.m_security;
           if(securities.insert(security).second) {
             result.push_back(security);
           }
@@ -47,16 +48,16 @@ struct SecurityBox::SecurityQueryModel : ComboBox::QueryModel {
   }
 };
 
-SecurityBox::SecurityBox(std::shared_ptr<ComboBox::QueryModel> securities,
+SecurityBox::SecurityBox(std::shared_ptr<SecurityQueryModel> securities,
   QWidget* parent)
   : SecurityBox(
       std::move(securities), std::make_shared<LocalSecurityModel>(), parent) {}
 
-SecurityBox::SecurityBox(std::shared_ptr<ComboBox::QueryModel> securities,
+SecurityBox::SecurityBox(std::shared_ptr<SecurityQueryModel> securities,
     std::shared_ptr<CurrentModel> current, QWidget* parent)
     : QWidget(parent),
-      m_securities(
-        std::make_shared<SecurityQueryModel>(std::move(securities))),
+      m_securities(std::make_shared<SecurityInfoToSecurityQueryModel>(
+        std::move(securities))),
       m_current(std::move(current)) {
   auto combo_box_current = make_transform_value_model(m_current,
     [] (const Security& current) {
@@ -67,8 +68,8 @@ SecurityBox::SecurityBox(std::shared_ptr<ComboBox::QueryModel> securities,
     });
   m_combo_box = new ComboBox(m_securities, combo_box_current,
     [=] (const auto& list, auto index) {
-      return new SecurityListItem(std::any_cast<SecurityInfo&&>(
-        m_securities->m_source->parse(to_text(list->get(index)))));
+      return new SecurityListItem(
+        m_securities->m_source->parse_security(to_text(list->get(index))));
     });
   m_combo_box->connect_submit_signal([=] (const auto& submission) {
     m_submit_signal(std::any_cast<const Security&>(submission));
@@ -78,8 +79,7 @@ SecurityBox::SecurityBox(std::shared_ptr<ComboBox::QueryModel> securities,
   setFocusProxy(m_combo_box);
 }
 
-const std::shared_ptr<ComboBox::QueryModel>&
-    SecurityBox::get_securities() const {
+const std::shared_ptr<SecurityQueryModel>& SecurityBox::get_securities() const {
   return m_securities->m_source;
 }
 

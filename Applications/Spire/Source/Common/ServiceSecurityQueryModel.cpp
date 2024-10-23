@@ -10,7 +10,11 @@ ServiceSecurityQueryModel::ServiceSecurityQueryModel(MarketDatabase markets,
   : m_markets(std::move(markets)),
     m_market_data_client(std::move(market_data_client)) {}
 
-std::any ServiceSecurityQueryModel::parse(const QString& query) {
+const MarketDatabase& ServiceSecurityQueryModel::get_markets() const {
+  return m_markets;
+}
+
+SecurityInfo ServiceSecurityQueryModel::parse_security(const QString& query) {
   auto security = ParseSecurity(query.toUpper().toStdString(), m_markets);
   if(security == Security()) {
     return {};
@@ -23,8 +27,8 @@ std::any ServiceSecurityQueryModel::parse(const QString& query) {
   return info;
 }
 
-QtPromise<std::vector<std::any>>
-    ServiceSecurityQueryModel::submit(const QString& query) {
+QtPromise<std::vector<SecurityInfo>>
+    ServiceSecurityQueryModel::submit_security(const QString& query) {
   if(query.isEmpty()) {
     return {};
   }
@@ -34,7 +38,6 @@ QtPromise<std::vector<std::any>>
     for(auto& security : securities) {
       m_info.Insert(security.m_security, security);
     }
-    return std::vector<std::any>(std::make_move_iterator(securities.begin()),
-      std::make_move_iterator(securities.end()));
+    return securities;
   }, LaunchPolicy::ASYNC);
 }

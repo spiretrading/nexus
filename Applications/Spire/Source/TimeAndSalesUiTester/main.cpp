@@ -1,6 +1,7 @@
 #include <QApplication>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/LocalSecurityQueryModel.hpp"
 #include "Spire/Spire/Resources.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
 #include "Spire/TimeAndSalesUiTester/DemoTimeAndSalesModel.hpp"
@@ -15,7 +16,7 @@ using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Spire;
 
-std::shared_ptr<ComboBox::QueryModel> populate_securities() {
+std::shared_ptr<SecurityQueryModel> populate_securities() {
   auto security_infos = std::vector<SecurityInfo>();
   security_infos.emplace_back(ParseSecurity("MRU.TSX"), "Metro Inc.", "", 0);
   security_infos.emplace_back(ParseSecurity("MG.TSX"),
@@ -29,11 +30,10 @@ std::shared_ptr<ComboBox::QueryModel> populate_securities() {
     "Manulife Financial Corporation", "", 0);
   security_infos.emplace_back(ParseSecurity("MX.TSX"),
     "Methanex Corporation", "", 0);
-  auto model = std::make_shared<LocalComboBoxQueryModel>();
-  for(auto security_info : security_infos) {
-    model->add(to_text(security_info.m_security).toLower(), security_info);
-    model->add(
-      QString::fromStdString(security_info.m_name).toLower(), security_info);
+  auto model =
+    std::make_shared<LocalSecurityQueryModel>(GetDefaultMarketDatabase());
+  for(auto& security_info : security_infos) {
+    model->add(security_info);
   }
   return model;
 }

@@ -30,7 +30,7 @@ namespace Spire {
        * @param body The component that represents the current security.
        * @param parent The parent widget.
        */
-      SecurityView(std::shared_ptr<ComboBox::QueryModel> securities,
+      SecurityView(std::shared_ptr<SecurityQueryModel> securities,
         QWidget& body, QWidget* parent = nullptr);
 
       /**
@@ -40,12 +40,12 @@ namespace Spire {
        * @param body The component that represents the current security.
        * @param parent The parent widget.
        */
-      SecurityView(std::shared_ptr<ComboBox::QueryModel> securities,
+      SecurityView(std::shared_ptr<SecurityQueryModel> securities,
         std::shared_ptr<CurrentModel> current, QWidget& body,
         QWidget* parent = nullptr);
 
       /** Returns the set of securities that can be queried. */
-      const std::shared_ptr<ComboBox::QueryModel>& get_securities() const;
+      const std::shared_ptr<SecurityQueryModel>& get_securities() const;
 
       /** Returns the current security displayed. */
       const std::shared_ptr<CurrentModel>& get_current() const;

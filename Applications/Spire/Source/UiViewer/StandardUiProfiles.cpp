@@ -17,6 +17,7 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/FieldValueModel.hpp"
 #include "Spire/Spire/LocalScalarValueModel.hpp"
+#include "Spire/Spire/LocalSecurityQueryModel.hpp"
 #include "Spire/Spire/ScalarValueModelDecorator.hpp"
 #include "Spire/Spire/TableValueModel.hpp"
 #include "Spire/Spire/ToTextModel.hpp"
@@ -95,7 +96,6 @@
 #include "Spire/Ui/ScrollableListBox.hpp"
 #include "Spire/Ui/SearchBox.hpp"
 #include "Spire/Ui/SecurityBox.hpp"
-#include "Spire/Ui/SecurityFilterPanel.hpp"
 #include "Spire/Ui/SecurityListItem.hpp"
 #include "Spire/Ui/SecurityView.hpp"
 #include "Spire/Ui/SideBox.hpp"
@@ -646,7 +646,7 @@ namespace {
     panel->show();
   }
 
-  std::shared_ptr<ComboBox::QueryModel> populate_security_query_model() {
+  std::shared_ptr<SecurityQueryModel> populate_security_query_model() {
     auto security_infos = std::vector<SecurityInfo>();
     security_infos.emplace_back(ParseSecurity("MRU.TSX"),
       "Metro Inc.", "", 0);
@@ -662,11 +662,10 @@ namespace {
       "Manulife Financial Corporation", "", 0);
     security_infos.emplace_back(ParseSecurity("MX.TSX"),
       "Methanex Corporation", "", 0);
-    auto model = std::make_shared<LocalComboBoxQueryModel>();
+    auto model =
+      std::make_shared<LocalSecurityQueryModel>(GetDefaultMarketDatabase());
     for(auto security_info : security_infos) {
-      model->add(to_text(security_info.m_security).toLower(), security_info);
-      model->add(
-        QString::fromStdString(security_info.m_name).toLower(), security_info);
+      model->add(security_info);
     }
     return model;
   }
@@ -3973,17 +3972,16 @@ UiProfile Spire::make_security_box_profile() {
     auto model = populate_security_query_model();
     auto& current = get<QString>("current", profile.get_properties());
     auto current_model = std::make_shared<LocalValueModel<Security>>(
-      std::any_cast<SecurityInfo>(model->parse(current.get())).m_security);
+      model->parse_security(current.get()).m_security);
     auto box = new SecurityBox(model, current_model);
     box->setFixedWidth(scale_width(112));
     apply_widget_properties(box, profile.get_properties());
     auto current_connection = box->get_current()->connect_update_signal(
       profile.make_event_slot<Security>("Current"));
     current.connect_changed_signal([=] (const auto& current) {
-      auto value = model->parse(current);
-      if(value.has_value()) {
-        auto security = std::any_cast<SecurityInfo>(value).m_security;
-        box->get_current()->set(security);
+      auto value = model->parse_security(current);
+      if(value.m_security != Security()) {
+        box->get_current()->set(value.m_security);
       } else {
         auto current_blocker = shared_connection_block(current_connection);
         box->get_current()->set(Security());
@@ -3999,35 +3997,6 @@ UiProfile Spire::make_security_box_profile() {
     box->connect_submit_signal(profile.make_event_slot<Security>("Submit"));
     return box;
   });
-  return profile;
-}
-
-UiProfile Spire::make_security_filter_panel_profile() {
-  auto properties = std::vector<std::shared_ptr<UiProperty>>();
-  auto profile = UiProfile(QString("SecurityFilterPanel"), properties,
-    [] (auto& profile) {
-      auto model = populate_security_query_model();
-      auto button = make_label_button(QString::fromUtf8("Click me"));
-      auto panel = make_security_filter_panel(model, *button);
-      auto submit_filter_slot =
-        profile.make_event_slot<QString>(QString::fromUtf8("SubmitSignal"));
-      panel->connect_submit_signal(
-        [=] (const std::shared_ptr<AnyListModel>& submission,
-            OpenFilterPanel::Mode mode) {
-          auto result = QString();
-          if(mode == OpenFilterPanel::Mode::INCLUDE) {
-            result += "Include: ";
-          } else {
-            result += "Exclude: ";
-          }
-          for(auto i = 0; i < submission->get_size(); ++i) {
-            result += to_text(submission->get(i)) + " ";
-          }
-          submit_filter_slot(result);
-        });
-      button->connect_click_signal([=] { panel->show(); });
-      return button;
-    });
   return profile;
 }
 

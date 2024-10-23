@@ -139,7 +139,7 @@ const std::shared_ptr<RecentlyClosedWindowListModel>&
   return m_recentlyClosedWindows;
 }
 
-const std::shared_ptr<ComboBox::QueryModel>&
+const std::shared_ptr<SecurityQueryModel>&
     UserProfile::GetSecurityQueryModel() const {
   return m_security_query_model;
 }

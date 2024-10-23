@@ -48,6 +48,7 @@ namespace Spire {
   template<typename T> class ListToTableModel;
   template<typename T> class ListValueModel;
   template<typename T> class LocalScalarValueModel;
+  class LocalSecurityQueryModel;
   class LocalTechnicalsModel;
   template<typename T> class LocalValueModel;
   template<typename T> class ModelTransactionLog;
@@ -60,6 +61,7 @@ namespace Spire {
   template<typename T> class ScalarValueModel;
   template<typename T> class ScalarValueModelDecorator;
   class SecurityDeck;
+  class SecurityQueryModel;
   class ServiceSecurityQueryModel;
   template<typename T> class SortedListModel;
   class SortedTableModel;
