@@ -1,7 +1,6 @@
 #include <QApplication>
 #include <QFormLayout>
 #include <QGroupBox>
-#include <QResizeEvent>
 #include "Spire/BookView/BboBox.hpp"
 #include "Spire/BookView/TechnicalsPanel.hpp"
 #include "Spire/Spire/Dimensions.hpp"

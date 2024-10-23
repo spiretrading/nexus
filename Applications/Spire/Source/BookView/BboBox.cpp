@@ -1,5 +1,4 @@
 #include "Spire/BookView/BboBox.hpp"
-#include "Spire/BookView/BookView.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/FieldValueModel.hpp"
 #include "Spire/Spire/ToTextModel.hpp"
