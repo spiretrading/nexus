@@ -14,6 +14,7 @@
 #include "Spire/Ui/TableItem.hpp"
 #include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/TransitionView.hpp"
+#include "Spire/Utilities/LinkMenu.hpp"
 
 using namespace boost::signals2;
 using namespace Nexus;
@@ -153,8 +154,7 @@ void TimeAndSalesWindow::on_context_menu(QWidget* parent, const QPoint& pos) {
   auto menu = new ContextMenu(*parent);
   menu->add_action(tr("Properties"),
     std::bind_front(&TimeAndSalesWindow::on_properties_menu, this));
-  auto link_menu = new ContextMenu(*static_cast<QWidget*>(menu));
-  menu->add_menu(tr("Link to"), *link_menu);
+  add_link_menu(*menu, *this, *m_market_database);
   menu->add_separator();
   menu->add_action(tr("Export..."),
     std::bind_front(&TimeAndSalesWindow::on_export_menu, this));
