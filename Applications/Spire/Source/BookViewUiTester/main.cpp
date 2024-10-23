@@ -1,6 +1,7 @@
 #include <QApplication>
 #include <QFormLayout>
 #include <QGroupBox>
+#include <QResizeEvent>
 #include "Spire/BookView/BboBox.hpp"
 #include "Spire/BookView/TechnicalsPanel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
@@ -98,17 +99,19 @@ struct MarketDepthContainer : QWidget {
     auto layout = make_hbox_layout(this);
     layout->setSpacing(scale_width(2));
     auto bid_panel = new QWidget();
+    bid_panel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     auto bid_layout = make_vbox_layout(bid_panel);
     bid_layout->addWidget(
       new BboBox(make_field_value_model(bbo_quote, &BboQuote::m_bid)));
     bid_layout->addStretch(1);
-    layout->addWidget(bid_panel);
+    layout->addWidget(bid_panel, 1);
     auto ask_panel = new QWidget();
+    ask_panel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     auto ask_layout = make_vbox_layout(ask_panel);
     ask_layout->addWidget(
       new BboBox(make_field_value_model(bbo_quote, &BboQuote::m_ask)));
     ask_layout->addStretch(1);
-    layout->addWidget(ask_panel);
+    layout->addWidget(ask_panel, 1);
     font_size->connect_update_signal([=] (const auto& size) {
       if(size) {
         update_style(*this, [&] (auto& style) {

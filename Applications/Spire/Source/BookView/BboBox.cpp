@@ -50,7 +50,8 @@ BboBox::BboBox(std::shared_ptr<QuoteModel> quote, QWidget* parent)
   auto gap_width = get_gap_width(m_font_size, width());
   m_gap1 = new QSpacerItem(gap_width, 0, QSizePolicy::Fixed);
   m_body_layout->addItem(m_gap1);
-  auto label = make_label("/");
+  auto label = make_label(tr("/"));
+  label->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
   link(*this, *label);
   m_body_layout->addWidget(label);
   m_gap2 = new QSpacerItem(gap_width, 0, QSizePolicy::Fixed);
