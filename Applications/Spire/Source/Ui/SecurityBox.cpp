@@ -11,11 +11,10 @@ using namespace Nexus;
 using namespace Spire;
 using namespace Spire::Styles;
 
-struct SecurityBox::SecurityInfoToSecurityQueryModel : ComboBox::QueryModel {
-  std::shared_ptr<SecurityQueryModel> m_source;
+struct SecurityBox::SecurityQueryModel : ComboBox::QueryModel {
+  std::shared_ptr<SecurityInfoQueryModel> m_source;
 
-  explicit SecurityInfoToSecurityQueryModel(
-    std::shared_ptr<SecurityQueryModel> source)
+  explicit SecurityQueryModel(std::shared_ptr<SecurityInfoQueryModel> source)
     : m_source(std::move(source)) {}
 
   std::any parse(const QString& query) override {
@@ -48,16 +47,15 @@ struct SecurityBox::SecurityInfoToSecurityQueryModel : ComboBox::QueryModel {
   }
 };
 
-SecurityBox::SecurityBox(std::shared_ptr<SecurityQueryModel> securities,
+SecurityBox::SecurityBox(std::shared_ptr<SecurityInfoQueryModel> securities,
   QWidget* parent)
   : SecurityBox(
       std::move(securities), std::make_shared<LocalSecurityModel>(), parent) {}
 
-SecurityBox::SecurityBox(std::shared_ptr<SecurityQueryModel> securities,
+SecurityBox::SecurityBox(std::shared_ptr<SecurityInfoQueryModel> securities,
     std::shared_ptr<CurrentModel> current, QWidget* parent)
     : QWidget(parent),
-      m_securities(std::make_shared<SecurityInfoToSecurityQueryModel>(
-        std::move(securities))),
+      m_securities(std::make_shared<SecurityQueryModel>(std::move(securities))),
       m_current(std::move(current)) {
   auto combo_box_current = make_transform_value_model(m_current,
     [] (const Security& current) {
@@ -79,7 +77,8 @@ SecurityBox::SecurityBox(std::shared_ptr<SecurityQueryModel> securities,
   setFocusProxy(m_combo_box);
 }
 
-const std::shared_ptr<SecurityQueryModel>& SecurityBox::get_securities() const {
+const std::shared_ptr<SecurityInfoQueryModel>&
+    SecurityBox::get_securities() const {
   return m_securities->m_source;
 }
 

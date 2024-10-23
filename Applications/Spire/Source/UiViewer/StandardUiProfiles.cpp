@@ -17,7 +17,7 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/FieldValueModel.hpp"
 #include "Spire/Spire/LocalScalarValueModel.hpp"
-#include "Spire/Spire/LocalSecurityQueryModel.hpp"
+#include "Spire/Spire/LocalSecurityInfoQueryModel.hpp"
 #include "Spire/Spire/ScalarValueModelDecorator.hpp"
 #include "Spire/Spire/TableValueModel.hpp"
 #include "Spire/Spire/ToTextModel.hpp"
@@ -646,7 +646,7 @@ namespace {
     panel->show();
   }
 
-  std::shared_ptr<SecurityQueryModel> populate_security_query_model() {
+  std::shared_ptr<SecurityInfoQueryModel> populate_security_query_model() {
     auto security_infos = std::vector<SecurityInfo>();
     security_infos.emplace_back(ParseSecurity("MRU.TSX"),
       "Metro Inc.", "", 0);
@@ -663,8 +663,8 @@ namespace {
     security_infos.emplace_back(ParseSecurity("MX.TSX"),
       "Methanex Corporation", "", 0);
     auto model =
-      std::make_shared<LocalSecurityQueryModel>(GetDefaultMarketDatabase());
-    for(auto security_info : security_infos) {
+      std::make_shared<LocalSecurityInfoQueryModel>(GetDefaultMarketDatabase());
+    for(auto& security_info : security_infos) {
       model->add(security_info);
     }
     return model;

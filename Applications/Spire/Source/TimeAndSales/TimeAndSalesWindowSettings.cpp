@@ -33,7 +33,8 @@ std::string TimeAndSalesWindowSettings::GetName() const {
 
 QWidget* TimeAndSalesWindowSettings::Reopen(
     Ref<UserProfile> user_profile) const {
-  auto window = new TimeAndSalesWindow(user_profile->GetSecurityQueryModel(),
+  auto window = new TimeAndSalesWindow(
+    user_profile->GetSecurityInfoQueryModel(),
     user_profile->GetTimeAndSalesPropertiesWindowFactory(),
     user_profile->GetTimeAndSalesModelBuilder(), m_identifier);
   window->setAttribute(Qt::WA_DeleteOnClose);

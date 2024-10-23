@@ -35,7 +35,7 @@ namespace Spire {
        * @param model_builder The ModelBuilder to use.
        * @param parent The parent widget.
        */
-      TimeAndSalesWindow(std::shared_ptr<SecurityQueryModel> securities,
+      TimeAndSalesWindow(std::shared_ptr<SecurityInfoQueryModel> securities,
         std::shared_ptr<TimeAndSalesPropertiesWindowFactory> factory,
         ModelBuilder model_builder, QWidget* parent = nullptr);
 
@@ -48,7 +48,7 @@ namespace Spire {
        * @param identifier The SecurityContext identifier.
        * @param parent The parent widget.
        */
-      TimeAndSalesWindow(std::shared_ptr<SecurityQueryModel> securities,
+      TimeAndSalesWindow(std::shared_ptr<SecurityInfoQueryModel> securities,
         std::shared_ptr<TimeAndSalesPropertiesWindowFactory> factory,
         ModelBuilder model_builder, std::string identifier,
         QWidget* parent = nullptr);

@@ -126,7 +126,8 @@ namespace Spire {
         GetRecentlyClosedWindows() const;
 
       /** Returns the model used to query securities. */
-      const std::shared_ptr<SecurityQueryModel>& GetSecurityQueryModel() const;
+      const std::shared_ptr<SecurityInfoQueryModel>&
+        GetSecurityInfoQueryModel() const;
 
       /** Returns the BlotterSettings. */
       const BlotterSettings& GetBlotterSettings() const;
@@ -235,7 +236,7 @@ namespace Spire {
       mutable Nexus::TelemetryService::TelemetryClientBox m_telemetryClient;
       std::filesystem::path m_profilePath;
       std::shared_ptr<RecentlyClosedWindowListModel> m_recentlyClosedWindows;
-      std::shared_ptr<SecurityQueryModel> m_security_query_model;
+      std::shared_ptr<SecurityInfoQueryModel> m_security_info_query_model;
       BookViewProperties m_defaultBookViewProperties;
       SavedDashboards m_savedDashboards;
       OrderImbalanceIndicatorProperties

@@ -1,5 +1,5 @@
-#ifndef SPIRE_SECURITY_QUERY_MODEL_HPP
-#define SPIRE_SECURITY_QUERY_MODEL_HPP
+#ifndef SPIRE_SECURITY_INFO_QUERY_MODEL_HPP
+#define SPIRE_SECURITY_INFO_QUERY_MODEL_HPP
 #include "Nexus/Definitions/Market.hpp"
 #include "Nexus/Definitions/Security.hpp"
 #include "Spire/Spire/Spire.hpp"
@@ -8,10 +8,10 @@
 namespace Spire {
 
   /**
-   * Extends the interface of a QueryModel specifically for querying Securities
-   * by name, description, or ticker symbol.
+   * Extends the interface of a QueryModel specifically for querying
+   * SecurityInfos by name, description, or ticker symbol.
    */
-  class SecurityQueryModel : public ComboBox::QueryModel {
+  class SecurityInfoQueryModel : public ComboBox::QueryModel {
     public:
 
       /** Returns the database of markets used to parse ticker symbols. */

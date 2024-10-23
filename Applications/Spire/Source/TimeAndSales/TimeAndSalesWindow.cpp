@@ -78,14 +78,14 @@ namespace {
 }
 
 TimeAndSalesWindow::TimeAndSalesWindow(
-  std::shared_ptr<SecurityQueryModel> securities,
+  std::shared_ptr<SecurityInfoQueryModel> securities,
   std::shared_ptr<TimeAndSalesPropertiesWindowFactory> factory,
   ModelBuilder model_builder, QWidget* parent)
   : TimeAndSalesWindow(std::move(securities), std::move(factory),
       std::move(model_builder), std::string(), parent) {}
 
 TimeAndSalesWindow::TimeAndSalesWindow(
-    std::shared_ptr<SecurityQueryModel> securities,
+    std::shared_ptr<SecurityInfoQueryModel> securities,
     std::shared_ptr<TimeAndSalesPropertiesWindowFactory> factory,
     ModelBuilder model_builder, std::string identifier, QWidget* parent)
     : Window(parent),

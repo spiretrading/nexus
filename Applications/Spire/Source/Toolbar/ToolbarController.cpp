@@ -62,7 +62,7 @@ namespace {
       next_height = book_view_window->frameSize().height();
       windows.push_back(book_view_window);
       auto time_and_sales_window = new TimeAndSalesWindow(
-        user_profile.GetSecurityQueryModel(),
+        user_profile.GetSecurityInfoQueryModel(),
         user_profile.GetTimeAndSalesPropertiesWindowFactory(),
         user_profile.GetTimeAndSalesModelBuilder());
       book_view_window->Link(*time_and_sales_window);
@@ -213,7 +213,8 @@ void ToolbarController::open_book_view_window() {
 }
 
 void ToolbarController::open_time_and_sales_window() {
-  auto window = new TimeAndSalesWindow(m_user_profile->GetSecurityQueryModel(),
+  auto window = new TimeAndSalesWindow(
+    m_user_profile->GetSecurityInfoQueryModel(),
     m_user_profile->GetTimeAndSalesPropertiesWindowFactory(),
     m_user_profile->GetTimeAndSalesModelBuilder());
   window->setAttribute(Qt::WA_DeleteOnClose);

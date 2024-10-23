@@ -14,12 +14,12 @@ using namespace Nexus;
 using namespace Spire;
 using namespace Spire::Styles;
 
-SecurityView::SecurityView(std::shared_ptr<SecurityQueryModel> securities,
+SecurityView::SecurityView(std::shared_ptr<SecurityInfoQueryModel> securities,
   QWidget& body, QWidget* parent)
   : SecurityView(std::move(securities), std::make_shared<LocalSecurityModel>(),
       body, parent) {}
 
-SecurityView::SecurityView(std::shared_ptr<SecurityQueryModel> securities,
+SecurityView::SecurityView(std::shared_ptr<SecurityInfoQueryModel> securities,
     std::shared_ptr<CurrentModel> current, QWidget& body, QWidget* parent)
     : QWidget(parent),
       m_security_dialog(std::move(securities), this),
@@ -46,7 +46,7 @@ SecurityView::SecurityView(std::shared_ptr<SecurityQueryModel> securities,
   }
 }
 
-const std::shared_ptr<SecurityQueryModel>&
+const std::shared_ptr<SecurityInfoQueryModel>&
     SecurityView::get_securities() const {
   return m_security_dialog.get_securities();
 }

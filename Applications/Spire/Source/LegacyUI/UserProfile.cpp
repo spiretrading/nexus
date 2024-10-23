@@ -6,7 +6,7 @@
 #include "Spire/KeyBindings/KeyBindingsProfile.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
-#include "Spire/Spire/ServiceSecurityQueryModel.hpp"
+#include "Spire/Spire/ServiceSecurityInfoQueryModel.hpp"
 #include "Spire/TimeAndSales/ServiceTimeAndSalesModel.hpp"
 
 using namespace Beam;
@@ -50,8 +50,9 @@ UserProfile::UserProfile(const std::string& username, bool isAdministrator,
       m_profilePath(get_profile_path(m_username)),
       m_recentlyClosedWindows(
         std::make_shared<ArrayListModel<std::shared_ptr<WindowSettings>>>()),
-      m_security_query_model(std::make_shared<ServiceSecurityQueryModel>(
-        m_marketDatabase, m_serviceClients.GetMarketDataClient())),
+      m_security_info_query_model(
+        std::make_shared<ServiceSecurityInfoQueryModel>(
+          m_marketDatabase, m_serviceClients.GetMarketDataClient())),
       m_time_and_sales_properties_window_factory(
         std::make_shared<TimeAndSalesPropertiesWindowFactory>(
           std::make_shared<LocalTimeAndSalesPropertiesModel>(
@@ -139,9 +140,9 @@ const std::shared_ptr<RecentlyClosedWindowListModel>&
   return m_recentlyClosedWindows;
 }
 
-const std::shared_ptr<SecurityQueryModel>&
-    UserProfile::GetSecurityQueryModel() const {
-  return m_security_query_model;
+const std::shared_ptr<SecurityInfoQueryModel>&
+    UserProfile::GetSecurityInfoQueryModel() const {
+  return m_security_info_query_model;
 }
 
 const BlotterSettings& UserProfile::GetBlotterSettings() const {
