@@ -34,7 +34,7 @@ namespace Spire {
 
     private:
       std::shared_ptr<QuoteModel> m_quote;
-      Nexus::Quote m_previous_quote;
+      Nexus::Money m_previous_price;
       TextBox* m_money_label;
       QHBoxLayout* m_body_layout;
       QSpacerItem* m_gap1;

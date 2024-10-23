@@ -37,7 +37,7 @@ namespace {
 BboBox::BboBox(std::shared_ptr<QuoteModel> quote, QWidget* parent)
     : QWidget(parent),
       m_quote(std::move(quote)),
-      m_previous_quote(m_quote->get()),
+      m_previous_price(m_quote->get().m_price),
       m_font_size(scale_width(10)),
       m_quote_connection(m_quote->connect_update_signal(
         std::bind_front(&BboBox::on_quote, this))) {
@@ -102,27 +102,20 @@ void BboBox::on_quote(const Quote& quote) {
       style.get(Any() > is_a<TextBox>()).set(Visibility::INVISIBLE);
     });
   } else {
-    if(m_previous_quote.m_price <= Money(0)) {
-      update_style(*this, [] (auto& style) {
-        style.get(Any() > is_a<TextBox>()).set(Visibility::VISIBLE);
+    if(m_previous_price < quote.m_price) {
+      update_style(*this, [&] (auto& style) {
+        style.get(Any()).set(BorderTopColor(UPTICK_BORDER_TOP_COLOR));
+        if(m_previous_price <= Money(0)) {
+          style.get(Any() > is_a<TextBox>()).set(Visibility::VISIBLE);
+        }
       });
-    } else if(m_previous_quote.m_price != quote.m_price) {
-      if(m_previous_quote.m_price < quote.m_price) {
-        update_style(*this, [] (auto& style) {
-          style.get(Any()).set(BorderTopColor(UPTICK_BORDER_TOP_COLOR));
-        });
-      } else if(m_previous_quote.m_price > quote.m_price) {
-        update_style(*this, [] (auto& style) {
-          style.get(Any()).set(BorderTopColor(DOWNTICK_BORDER_TOP_COLOR));
-        });
-      }
-    } else if(m_previous_quote.m_size != quote.m_size) {
+    } else if(m_previous_price > quote.m_price) {
       update_style(*this, [] (auto& style) {
-        style.get(Any()).set(BorderTopColor(BORDER_TOP_COLOR));
+        style.get(Any()).set(BorderTopColor(DOWNTICK_BORDER_TOP_COLOR));
       });
     }
   }
-  m_previous_quote = quote;
+  m_previous_price = quote.m_price;
 }
 
 void BboBox::on_style() {
