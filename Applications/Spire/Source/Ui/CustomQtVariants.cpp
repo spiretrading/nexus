@@ -258,7 +258,8 @@ QString Spire::to_text(Money value, const QLocale& locale) {
 }
 
 QString Spire::to_text(Quantity value, const QLocale& locale) {
-  return locale.toString(static_cast<double>(value));
+  auto text = locale.toString(static_cast<double>(value), 'f', 6);
+  return text.remove(QRegExp("\\.?0+$"));
 }
 
 QString Spire::to_text(
