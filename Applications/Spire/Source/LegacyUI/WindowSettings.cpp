@@ -13,6 +13,7 @@
 #include "Spire/LegacyUI/UISerialization.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/Toolbar/ToolbarWindow.hpp"
+#include "Spire/Ui/Window.hpp"
 
 using namespace Beam;
 using namespace Beam::IO;
@@ -122,7 +123,6 @@ void Spire::LegacyUI::restore_geometry(
   auto restored_screen = QApplication::screens()[restored_screen_number];
   auto screen_width = qreal(restored_screen->geometry().width());
   auto width_factor = screen_width / qreal(restored_screen_width);
-  static const auto FRAME_HEIGHT = 20;
   auto available_geometry = restored_screen->availableGeometry();
   auto window_state =
     widget.windowState() & ~(Qt::WindowMaximized | Qt::WindowFullScreen);
@@ -140,13 +140,17 @@ void Spire::LegacyUI::restore_geometry(
       return restored_normal_geometry;
     }
   }();
-  new_geometry = QRect(new_geometry.x() * width_factor,
+  new_geometry = QRect(std::floor(new_geometry.x() * width_factor),
     new_geometry.y() * width_factor, new_geometry.width() * width_factor,
     new_geometry.height() * width_factor);
   widget.setGeometry(new_geometry);
+  if(auto window = dynamic_cast<Window*>(&widget)) {
+    window->move(window->x() - 1, new_geometry.top());
+  }
   if(widget.isWindow()) {
+    static const auto FRAME_HEIGHT = 20;
     auto top_region = widget.frameGeometry();
-    top_region.setHeight(20);
+    top_region.setHeight(FRAME_HEIGHT);
     auto desktop = QApplication::desktop();
     auto screen_geometry = desktop->screenGeometry(&widget);
     if(!screen_geometry.intersects(top_region)) {
