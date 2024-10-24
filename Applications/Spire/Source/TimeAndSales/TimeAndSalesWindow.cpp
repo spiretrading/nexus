@@ -121,6 +121,15 @@ TimeAndSalesWindow::TimeAndSalesWindow(
   resize(m_security_view->sizeHint().width(), scale_height(361));
 }
 
+void TimeAndSalesWindow::showEvent(QShowEvent* event) {
+  if(auto context = SecurityContext::FindSecurityContext(m_link_identifier)) {
+    Link(*context);
+  } else {
+    HandleUnlink();
+  }
+  Window::showEvent(event);
+}
+
 std::unique_ptr<LegacyUI::WindowSettings>
     TimeAndSalesWindow::GetWindowSettings() const {
   return std::make_unique<TimeAndSalesWindowSettings>(*this);

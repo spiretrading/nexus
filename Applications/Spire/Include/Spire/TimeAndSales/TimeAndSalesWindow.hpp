@@ -57,6 +57,7 @@ namespace Spire {
         GetWindowSettings() const override;
 
     protected:
+      void showEvent(QShowEvent* event) override;
       void HandleLink(SecurityContext& context) override;
       void HandleUnlink() override;
 
