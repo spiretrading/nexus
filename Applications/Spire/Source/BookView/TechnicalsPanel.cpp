@@ -28,16 +28,6 @@ namespace {
     return QFontMetrics(LABEL_FONT()).averageCharWidth() * 8;
   }
 
-  auto to_text(Money value) {
-    return Spire::to_text(value, QLocale::system());
-  }
-
-  auto to_text(Quantity value) {
-    auto text = QLocale::system().toString(static_cast<double>(value), 'f', 6);
-    text = text.remove(QRegExp("\\.?0+$"));
-    return text;
-  }
-
   auto to_default_quantity(Quantity bid_quantity, Quantity ask_quantity) {
     return to_text(bid_quantity) + "x" + to_text(ask_quantity);
   }
