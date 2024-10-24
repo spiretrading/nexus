@@ -37,6 +37,11 @@ namespace Spire {
        */
       void set_status(Status status);
 
+      /** Sets the body widget.
+       *  @param body The new body widget.
+       */
+      void set_body(QWidget& body);
+
     private:
       QWidget* m_body;
       QWidget* m_pending_widget;

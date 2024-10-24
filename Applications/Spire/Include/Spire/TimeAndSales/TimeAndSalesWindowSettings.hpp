@@ -1,12 +1,14 @@
 #ifndef SPIRE_TIME_AND_SALES_WINDOW_SETTINGS_HPP
 #define SPIRE_TIME_AND_SALES_WINDOW_SETTINGS_HPP
+#include <vector>
 #include <QByteArray>
 #include "Nexus/Definitions/Security.hpp"
 #include "Spire/LegacyUI/SecurityViewStack.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
 #include "Spire/Spire/ShuttleQtTypes.hpp"
 #include "Spire/Spire/Spire.hpp"
-#include "Spire/TimeAndSales/TimeAndSalesProperties.hpp"
+#include "Spire/TimeAndSales/TimeAndSales.hpp"
+#include "Spire/Ui/SecurityView.hpp"
 
 namespace Spire {
 
@@ -20,48 +22,38 @@ namespace Spire {
       /**
        * Constructs a TimeAndSalesWindowSettings.
        * @param window The TimeAndSalesWindow to represent.
-       * @param userProfile The user's profile.
        */
-      TimeAndSalesWindowSettings(const TimeAndSalesWindow& window,
-        Beam::Ref<UserProfile> userProfile);
+      explicit TimeAndSalesWindowSettings(const TimeAndSalesWindow& window);
 
       std::string GetName() const override;
 
-      QWidget* Reopen(Beam::Ref<UserProfile> userProfile) const override;
+      QWidget* Reopen(Beam::Ref<UserProfile> user_profile) const override;
 
-      void Apply(Beam::Ref<UserProfile> userProfile,
+      void Apply(Beam::Ref<UserProfile> user_profile,
         Beam::Out<QWidget> widget) const override;
 
     private:
       friend struct Beam::Serialization::DataShuttle;
-      TimeAndSalesProperties m_properties;
-      Nexus::Security m_security;
       std::string m_name;
-      LegacyUI::SecurityViewStack m_securityViewStack;
+      SecurityView::State m_security_view;
+      std::vector<int> m_column_widths;
       std::string m_identifier;
-      std::string m_linkIdentifier;
+      std::string m_link_identifier;
       QByteArray m_geometry;
-      QByteArray m_splitterState;
-      QByteArray m_viewHeaderState;
-      QByteArray m_snapshotHeaderState;
 
       template<typename Shuttler>
       void Shuttle(Shuttler& shuttle, unsigned int version);
   };
 
   template<typename Shuttler>
-  void TimeAndSalesWindowSettings::Shuttle(Shuttler& shuttle,
-      unsigned int version) {
-    shuttle.Shuttle("properties", m_properties);
-    shuttle.Shuttle("security", m_security);
+  void TimeAndSalesWindowSettings::Shuttle(
+      Shuttler& shuttle, unsigned int version) {
     shuttle.Shuttle("name", m_name);
-    shuttle.Shuttle("security_view_stack", m_securityViewStack);
+    shuttle.Shuttle("security_view", m_security_view);
+    shuttle.Shuttle("column_widths", m_column_widths);
     shuttle.Shuttle("identifier", m_identifier);
-    shuttle.Shuttle("link_identifier", m_linkIdentifier);
+    shuttle.Shuttle("link_identifier", m_link_identifier);
     shuttle.Shuttle("geometry", m_geometry);
-    shuttle.Shuttle("splitter_state", m_splitterState);
-    shuttle.Shuttle("view_header_state", m_viewHeaderState);
-    shuttle.Shuttle("snapshot_header_state", m_snapshotHeaderState);
   }
 }
 

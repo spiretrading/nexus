@@ -46,6 +46,7 @@ namespace Spire {
   class FilterPanel;
   class FixedHorizontalLayout;
   class FocusObserver;
+  class FontBox;
   class GlobalPositionObserver;
   class HexColorBox;
   struct Highlight;
@@ -86,7 +87,6 @@ namespace Spire {
   class SecurityBox;
   class SecurityDialog;
   class SecurityListItem;
-  class SecurityStack;
   class SecurityView;
   template<typename T> class SingleSelectionModel;
   class Slider;

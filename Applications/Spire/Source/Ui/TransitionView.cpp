@@ -16,6 +16,8 @@ TransitionView::TransitionView(QWidget* body, QWidget* parent)
       m_spinner(nullptr),
       m_timer(new QTimer(this)),
       m_status(Status::NONE) {
+  m_body->setParent(this);
+  m_body->hide();
   make_vbox_layout(this);
   m_timer->setSingleShot(true);
   connect(m_timer, &QTimer::timeout,
@@ -45,6 +47,16 @@ void TransitionView::set_status(Status status) {
   }
 }
 
+void TransitionView::set_body(QWidget& body) {
+  auto old_body = m_body;
+  m_body = &body;
+  if(auto item =
+      layout()->replaceWidget(old_body, m_body, Qt::FindDirectChildrenOnly)) {
+    delete item;
+  }
+  old_body->deleteLater();
+}
+
 void TransitionView::add_widget_to_layout(QWidget& widget) {
   layout()->addWidget(&widget);
   widget.show();
@@ -53,6 +65,7 @@ void TransitionView::add_widget_to_layout(QWidget& widget) {
 void TransitionView::clear_layout() {
   if(auto item = layout()->takeAt(0)) {
     item->widget()->hide();
+    delete item;
   }
 }
 
