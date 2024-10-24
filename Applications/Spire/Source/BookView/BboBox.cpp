@@ -104,25 +104,12 @@ void BboBox::update_gap_width() {
 }
 
 void BboBox::on_quote(const Quote& quote) {
-  if(quote.m_price <= Money::ZERO) {
+  if(m_previous_price < quote.m_price) {
     unmatch(*this, Downtick());
+    match(*this, Uptick());
+  } else if(m_previous_price > quote.m_price) {
     unmatch(*this, Uptick());
-    update_style(*this, [] (auto& style) {
-      style.get(Any() > is_a<TextBox>()).set(Visibility::INVISIBLE);
-    });
-  } else {
-    if(m_previous_price < quote.m_price) {
-      unmatch(*this, Downtick());
-      match(*this, Uptick());
-      if(m_previous_price <= Money::ZERO) {
-        update_style(*this, [&] (auto& style) {
-          style.get(Any() > is_a<TextBox>()).set(Visibility::VISIBLE);
-        });
-      }
-    } else if(m_previous_price > quote.m_price) {
-      unmatch(*this, Uptick());
-      match(*this, Downtick());
-    }
+    match(*this, Downtick());
   }
   m_previous_price = quote.m_price;
 }
