@@ -3,6 +3,7 @@
 #include "Spire/Spire/FieldValueModel.hpp"
 #include "Spire/Spire/ToTextModel.hpp"
 #include "Spire/Ui/Box.hpp"
+#include "Spire/Ui/DecimalBox.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
@@ -76,6 +77,8 @@ BboBox::BboBox(std::shared_ptr<QuoteModel> quote, QWidget* parent)
       set(BorderTopSize(scale_height(2))).
       set(BorderTopColor(BORDER_TOP_COLOR)).
       set(padding(scale_width(4)));
+    style.get(Downtick()).set(BorderTopColor(DOWNTICK_BORDER_TOP_COLOR));
+    style.get(Uptick()).set(BorderTopColor(UPTICK_BORDER_TOP_COLOR));
     style.get(Any() > is_a<TextBox>()).
       set(Font(font));
   });
@@ -101,23 +104,24 @@ void BboBox::update_gap_width() {
 }
 
 void BboBox::on_quote(const Quote& quote) {
-  if(quote.m_price <= Money(0)) {
+  if(quote.m_price <= Money::ZERO) {
+    unmatch(*this, Downtick());
+    unmatch(*this, Uptick());
     update_style(*this, [] (auto& style) {
-      style.get(Any()).set(BorderTopColor(BORDER_TOP_COLOR));
       style.get(Any() > is_a<TextBox>()).set(Visibility::INVISIBLE);
     });
   } else {
     if(m_previous_price < quote.m_price) {
-      update_style(*this, [&] (auto& style) {
-        style.get(Any()).set(BorderTopColor(UPTICK_BORDER_TOP_COLOR));
-        if(m_previous_price <= Money(0)) {
+      unmatch(*this, Downtick());
+      match(*this, Uptick());
+      if(m_previous_price <= Money::ZERO) {
+        update_style(*this, [&] (auto& style) {
           style.get(Any() > is_a<TextBox>()).set(Visibility::VISIBLE);
-        }
-      });
+        });
+      }
     } else if(m_previous_price > quote.m_price) {
-      update_style(*this, [] (auto& style) {
-        style.get(Any()).set(BorderTopColor(DOWNTICK_BORDER_TOP_COLOR));
-      });
+      unmatch(*this, Uptick());
+      match(*this, Downtick());
     }
   }
   m_previous_price = quote.m_price;
