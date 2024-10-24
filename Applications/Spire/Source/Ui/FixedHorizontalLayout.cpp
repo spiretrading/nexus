@@ -6,6 +6,7 @@ using namespace Spire;
 FixedHorizontalLayout::FixedHorizontalLayout(QWidget* parent)
     : QLayout(parent) {
   setSpacing(0);
+  setContentsMargins({});
 }
 
 void FixedHorizontalLayout::addItem(QLayoutItem* item) {
@@ -17,8 +18,10 @@ QSize FixedHorizontalLayout::sizeHint() const {
   if(m_size_hint) {
     return *m_size_hint;
   }
-  auto width = std::max(0, (count() - 1) * spacing());
-  auto height = 0;
+  auto margins = contentsMargins();
+  auto width =
+    std::max(0, (count() - 1) * spacing() + margins.left() + margins.right());
+  auto height = std::max(0, margins.top() + margins.bottom());
   for(auto& item : m_items) {
     width += item->sizeHint().width();
     height = std::max(height, item->sizeHint().height());
@@ -29,18 +32,21 @@ QSize FixedHorizontalLayout::sizeHint() const {
 
 void FixedHorizontalLayout::setGeometry(const QRect& rect) {
   QLayout::setGeometry(rect);
+  auto geometry = contentsRect();
   auto size_hint = sizeHint();
-  auto x = rect.x();
+  auto x = geometry.left();
   for(auto i = 0; i < count() - 1; ++i) {
     auto& item = m_items[i];
     auto width = item->sizeHint().width();
-    item->setGeometry(QRect(x, rect.y(), width, size_hint.height()));
-    x += width + spacing();
+    item->setGeometry(QRect(x, geometry.y(), width, size_hint.height()));
+    if(width > 0) {
+      x += width + spacing();
+    }
   }
   if(!isEmpty()) {
     auto& item = m_items.back();
-    auto width = rect.right() - x;
-    item->setGeometry(QRect(x, rect.y(), width, size_hint.height()));
+    auto width = geometry.width() - x + geometry.left();
+    item->setGeometry(QRect(x, geometry.y(), width, size_hint.height()));
   }
 }
 

@@ -27,8 +27,7 @@
 #include "Spire/PortfolioViewer/PortfolioViewerWindowSettings.hpp"
 #include "Spire/RiskTimer/RiskTimerProperties.hpp"
 #include "Spire/Spire/Spire.hpp"
-#include "Spire/TimeAndSales/TimeAndSalesProperties.hpp"
-#include "Spire/Ui/ComboBox.hpp"
+#include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
 
 namespace Spire {
 
@@ -55,6 +54,8 @@ namespace Spire {
        * @param entitlementDatabase Stores the database of market data
        *        entitlements.
        * @param additionalTagDatabase Stores the database of additional tags.
+       * @param time_and_sales_properties Initializes the time and sales
+       *        properties.
        * @param serviceClients The set of clients connected to Spire services.
        * @param telemetryClient The client used to submit telemetry data.
        */
@@ -68,6 +69,7 @@ namespace Spire {
         const Nexus::MarketDataService::EntitlementDatabase&
           entitlementDatabase,
         const AdditionalTagDatabase& additionalTagDatabase,
+        TimeAndSalesProperties time_and_sales_properties,
         Nexus::ServiceClientsBox serviceClients,
         Nexus::TelemetryService::TelemetryClientBox telemetryClient);
 
@@ -124,8 +126,8 @@ namespace Spire {
         GetRecentlyClosedWindows() const;
 
       /** Returns the model used to query securities. */
-      const std::shared_ptr<ComboBox::QueryModel>&
-        GetSecurityQueryModel() const;
+      const std::shared_ptr<SecurityInfoQueryModel>&
+        GetSecurityInfoQueryModel() const;
 
       /** Returns the BlotterSettings. */
       const BlotterSettings& GetBlotterSettings() const;
@@ -192,15 +194,13 @@ namespace Spire {
       /** Returns the RiskTimerProperties. */
       RiskTimerProperties& GetRiskTimerProperties();
 
-      /** Returns the default TimeAndSalesProperties. */
-      const TimeAndSalesProperties& GetDefaultTimeAndSalesProperties() const;
+      /** Returns the TimeAndSalesPropertiesWindowFactory. */
+      const std::shared_ptr<TimeAndSalesPropertiesWindowFactory>&
+        GetTimeAndSalesPropertiesWindowFactory() const;
 
-      /**
-       * Sets the default TimeAndSalesProperties.
-       * @param properties The TimeAndSalesProperties to use as defaults.
-       */
-      void SetDefaultTimeAndSalesProperties(
-        const TimeAndSalesProperties& properties);
+      /** Returns the TimeAndSalesModelBuilder. */
+      const TimeAndSalesWindow::ModelBuilder&
+        GetTimeAndSalesModelBuilder() const;
 
       /** Returns the default PortfolioViewerProperties. */
       const PortfolioViewerProperties&
@@ -236,13 +236,15 @@ namespace Spire {
       mutable Nexus::TelemetryService::TelemetryClientBox m_telemetryClient;
       std::filesystem::path m_profilePath;
       std::shared_ptr<RecentlyClosedWindowListModel> m_recentlyClosedWindows;
-      std::shared_ptr<ComboBox::QueryModel> m_security_query_model;
+      std::shared_ptr<SecurityInfoQueryModel> m_security_info_query_model;
       BookViewProperties m_defaultBookViewProperties;
       SavedDashboards m_savedDashboards;
       OrderImbalanceIndicatorProperties
         m_defaultOrderImbalanceIndicatorProperties;
       RiskTimerProperties m_riskTimerProperties;
-      TimeAndSalesProperties m_defaultTimeAndSalesProperties;
+      std::shared_ptr<TimeAndSalesPropertiesWindowFactory>
+        m_time_and_sales_properties_window_factory;
+      TimeAndSalesWindow::ModelBuilder m_time_and_sales_model_builder;
       PortfolioViewerProperties m_defaultPortfolioViewerProperties;
       CatalogSettings m_catalogSettings;
       AdditionalTagDatabase m_additionalTagDatabase;
@@ -254,6 +256,15 @@ namespace Spire {
       boost::optional<PortfolioViewerWindowSettings>
         m_initialPortfolioViewerWindowSettings;
   };
+
+  /** Returns the path to the folder containing all user profiles. */
+  std::filesystem::path get_profile_path();
+
+  /**
+   * Returns the path to the user's profile folder.
+   * @param username The username to get the profile path for.
+   */
+  std::filesystem::path get_profile_path(const std::string& username);
 
   /**
    * Returns the default order quantity to display to a user.

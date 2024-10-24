@@ -1,17 +1,22 @@
-#include "Spire/Spire/ServiceSecurityQueryModel.hpp"
+#include "Spire/Spire/ServiceSecurityInfoQueryModel.hpp"
 
 using namespace Beam;
 using namespace Nexus;
 using namespace Nexus::MarketDataService;
 using namespace Spire;
 
-ServiceSecurityQueryModel::ServiceSecurityQueryModel(MarketDatabase markets,
-  MarketDataClientBox market_data_client)
+ServiceSecurityInfoQueryModel::ServiceSecurityInfoQueryModel(
+  MarketDatabase markets, MarketDataClientBox market_data_client)
   : m_markets(std::move(markets)),
     m_market_data_client(std::move(market_data_client)) {}
 
-std::any ServiceSecurityQueryModel::parse(const QString& query) {
-  auto security = ParseSecurity(query.toStdString(), m_markets);
+const MarketDatabase& ServiceSecurityInfoQueryModel::get_markets() const {
+  return m_markets;
+}
+
+SecurityInfo ServiceSecurityInfoQueryModel::parse_security(
+    const QString& query) {
+  auto security = ParseSecurity(query.toUpper().toStdString(), m_markets);
   if(security == Security()) {
     return {};
   }
@@ -23,8 +28,8 @@ std::any ServiceSecurityQueryModel::parse(const QString& query) {
   return info;
 }
 
-QtPromise<std::vector<std::any>>
-    ServiceSecurityQueryModel::submit(const QString& query) {
+QtPromise<std::vector<SecurityInfo>>
+    ServiceSecurityInfoQueryModel::submit_security(const QString& query) {
   if(query.isEmpty()) {
     return {};
   }
@@ -34,7 +39,6 @@ QtPromise<std::vector<std::any>>
     for(auto& security : securities) {
       m_info.Insert(security.m_security, security);
     }
-    return std::vector<std::any>(std::make_move_iterator(securities.begin()),
-      std::make_move_iterator(securities.end()));
+    return securities;
   }, LaunchPolicy::ASYNC);
 }

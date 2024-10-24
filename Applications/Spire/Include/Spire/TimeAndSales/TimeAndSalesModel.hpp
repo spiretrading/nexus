@@ -1,94 +1,56 @@
 #ifndef SPIRE_TIME_AND_SALES_MODEL_HPP
 #define SPIRE_TIME_AND_SALES_MODEL_HPP
-#include <QAbstractItemModel>
-#include "Nexus/Definitions/BboQuote.hpp"
-#include "Nexus/Definitions/Security.hpp"
-#include "Nexus/Definitions/TimeAndSale.hpp"
-#include "Spire/Async/EventHandler.hpp"
-#include "Spire/Spire/Spire.hpp"
-#include "Spire/TimeAndSales/TimeAndSalesProperties.hpp"
+#include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
+#include "Spire/Async/QtPromise.hpp"
+#include "Spire/TimeAndSales/BboIndicator.hpp"
 
 namespace Spire {
 
-  /** Models a Security's TimeAndSales. */
-  class TimeAndSalesModel : public QAbstractTableModel {
+  /** Used to retrieve time and sales. */
+  class TimeAndSalesModel {
     public:
 
-      /** The position of a TimeAndSale print to a BboQuote. */
-      enum PriceRange {
+      /** Represents a time and sale entry. */
+      struct Entry {
 
-        /** The BboQuote was/is not known. */
-        UNKNOWN,
+        /** The sequence of the time and sale. */
+        Nexus::SequencedTimeAndSale m_time_and_sale;
 
-        /** The TimeAndSale print was greater than the BBO ask. */
-        ABOVE_ASK,
-
-        /** The TimeAndSale print was equal to the BBO ask. */
-        AT_ASK,
-
-        /** The TimeAndSale print is inbetween the BBO. */
-        INSIDE,
-
-        /** The TimeAndSale print is equal to the BBO bid. */
-        AT_BID,
-
-        /** The TimeAndSale print is less than the BBO bid. */
-        BELOW_BID
+        /** The BBO indicator that the entry belongs to. */
+        BboIndicator m_indicator;
       };
-
-      /** The available columns to display. */
-      enum Columns {
-
-        /** The time column. */
-        TIME_COLUMN,
-
-        /** The price column. */
-        PRICE_COLUMN,
-
-        /** The size column. */
-        SIZE_COLUMN,
-
-        /** The market column. */
-        MARKET_COLUMN,
-
-        /** The sales condition column. */
-        CONDITION_COLUMN,
-      };
-
-      /** The number of columns in this model. */
-      static const auto COLUMN_COUNT = 5;
 
       /**
-       * Constructs a TimeAndSalesModel.
-       * @param userProfile The user's profile.
-       * @param properties The TimeAndSalesProperties used.
-       * @param security The Security whose TimeAndSales is to be modeled.
+       * Signals that a real-time time and sale is being updated.
+       * @param entry A new time and sale.
        */
-      TimeAndSalesModel(Beam::Ref<UserProfile> userProfile,
-        const TimeAndSalesProperties& properties,
-        const Nexus::Security& security);
+      using UpdateSignal = Signal<void (const Entry& entry)>;
 
-      /** Sets the TimeAndSalesProperties. */
-      void SetProperties(const TimeAndSalesProperties& properties);
+      virtual ~TimeAndSalesModel() = default;
 
-      int rowCount(const QModelIndex& parent) const override;
+      /*
+       * Query the limited number of entries before the specified sequence.
+       * @param sequence The end sequence that the query should stop.
+       * @param max_count The maximum number of entries to query.
+       * @return A list of time and sales not greater than <i>max_count</i>
+       *         items where the last item's sequence number is not greater than
+       *         <i>sequence</i>.
+       */
+      virtual QtPromise<std::vector<Entry>> query_until(
+        Beam::Queries::Sequence sequence, int max_count) = 0;
 
-      int columnCount(const QModelIndex& parent) const override;
+      /* Connects a slot to the update signal. */
+      virtual boost::signals2::connection connect_update_signal(
+        const UpdateSignal::slot_type& slot) const = 0;
 
-      QVariant data(const QModelIndex& index, int role) const override;
+    protected:
 
-      QVariant headerData(
-        int section, Qt::Orientation orientation, int role) const override;
+      /* Constructs a TimeAndSalesModel. */
+      TimeAndSalesModel() = default;
 
     private:
-      UserProfile* m_userProfile;
-      TimeAndSalesProperties m_properties;
-      Nexus::BboQuote m_bbo;
-      std::vector<std::pair<Nexus::TimeAndSale, PriceRange>> m_entries;
-      EventHandler m_eventHandler;
-
-      void OnBbo(const Nexus::BboQuote& bbo);
-      void OnTimeAndSale(const Nexus::TimeAndSale& timeAndSale);
+      TimeAndSalesModel(const TimeAndSalesModel&) = delete;
+      TimeAndSalesModel& operator =(const TimeAndSalesModel&) = delete;
   };
 }
 
