@@ -1,5 +1,6 @@
 #ifndef SPIRE_ANY_VALUE_MODEL_HPP
 #define SPIRE_ANY_VALUE_MODEL_HPP
+#include <concepts>
 #include <memory>
 #include "Spire/Spire/AnyRef.hpp"
 #include "Spire/Spire/Spire.hpp"
