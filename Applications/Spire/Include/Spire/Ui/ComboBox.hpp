@@ -2,9 +2,7 @@
 #define SPIRE_COMBO_BOX_HPP
 #include <any>
 #include <cstdint>
-#include <vector>
-#include <Beam/Collections/Trie.hpp>
-#include "Spire/Async/QtPromise.hpp"
+#include "Spire/Spire/QueryModel.hpp"
 #include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/KeyObserver.hpp"
 #include "Spire/Ui/ListView.hpp"
@@ -19,43 +17,14 @@ namespace Spire {
       /** The type of model representing the current value. */
       using CurrentModel = ValueModel<std::any>;
 
+      /** The type of model used to query for selectable values. */
+      using QueryModel = Spire::QueryModel<std::any>;
+
       /**
        * Signals that the value was submitted.
        * @param submission The submitted value.
        */
       using SubmitSignal = Signal<void (const std::any& submission)>;
-
-      /** Used to retreive potential matches to a query. */
-      class QueryModel {
-        public:
-          virtual ~QueryModel() = default;
-
-          /**
-           * Parses a value from a query string.
-           * @param query The query string to parse.
-           * @return The value represented by the <i>query</i> or an empty
-           *         object if the <i>query</i> does not represent a valid
-           *         value.
-           */
-          virtual std::any parse(const QString& query) = 0;
-
-          /**
-           * Submits a query to be asynchronously resolved.
-           * @param query The query to submit.
-           * @return An asynchronous list of matches to the given <i>query</i>.
-           */
-          virtual QtPromise<std::vector<std::any>> submit(
-            const QString& query) = 0;
-
-        protected:
-
-          /** Constructs a QueryModel. */
-          QueryModel() = default;
-
-        private:
-          QueryModel(const QueryModel&) = delete;
-          QueryModel& operator =(const QueryModel&) = delete;
-      };
 
       /**
        * Constructs a ComboBox using default local models, a TextBox and
@@ -175,38 +144,6 @@ namespace Spire {
       void on_drop_down_submit(const std::any& submission);
       void on_focus(FocusObserver::State state);
       bool on_input_key_press(QWidget& target, QKeyEvent& event);
-  };
-
-  /**
-   * Implements an in-memory QueryModel associating values with a string
-   * representation.
-   */
-  class LocalComboBoxQueryModel : public ComboBox::QueryModel {
-    public:
-
-      /** Constructs an empty model. */
-      LocalComboBoxQueryModel();
-
-      /**
-       * Adds a value to the model that can be queried through its string
-       * representation.
-       * @param value The value to add.
-       */
-      void add(const std::any& value);
-
-      /**
-       * Adds a value to the model that can be queried by a given string.
-       * @param id The string used to query the value.
-       * @param value The value to add.
-       */
-      void add(const QString& id, const std::any& value);
-
-      std::any parse(const QString& query) override;
-
-      QtPromise<std::vector<std::any>> submit(const QString& query) override;
-
-    private:
-      rtv::Trie<QChar, std::any> m_values;
   };
 }
 

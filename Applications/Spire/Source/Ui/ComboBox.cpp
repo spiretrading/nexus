@@ -331,10 +331,10 @@ void ComboBox::revert_current() {
 
 void ComboBox::submit(const QString& query, bool is_passive) {
   auto value = m_query_model->parse(query);
-  if(!value.has_value()) {
+  if(!value) {
     return;
   }
-  if(is_passive && to_text(value) == to_text(m_data->m_submission)) {
+  if(is_passive && to_text(*value) == to_text(m_data->m_submission)) {
     return;
   }
   if(!m_data->m_completion.isEmpty()) {
@@ -383,12 +383,11 @@ void ComboBox::on_input(const AnyRef& current) {
   } else {
     m_data->m_query_result = m_query_model->submit(query).then(std::bind_front(
       &ComboBox::on_query, this, ++m_data->m_completion_tag, true));
-    auto value = m_query_model->parse(query);
-    if(value.has_value()) {
+    if(auto value = m_query_model->parse(query)) {
       auto blocker = std::array{
         shared_connection_block(m_data->m_input_connection),
         shared_connection_block(m_data->m_current_connection)};
-      m_current->set(value);
+      m_current->set(*value);
     }
   }
 }
@@ -399,14 +398,13 @@ void ComboBox::on_highlight(const Highlight& highlight) {
   }
   m_data->m_has_autocomplete_selection = false;
   auto& query = any_cast<QString>(m_input_box->get_current()->get());
-  auto value = m_query_model->parse(query);
-  if(!value.has_value()) {
-    return;
+  if(auto value = m_query_model->parse(query)) {
+    m_data->m_prefix = query;
+    m_data->m_completion.clear();
+    auto current_blocker =
+      shared_connection_block(m_data->m_current_connection);
+    m_current->set(*value);
   }
-  m_data->m_prefix = query;
-  m_data->m_completion.clear();
-  auto current_blocker = shared_connection_block(m_data->m_current_connection);
-  m_current->set(value);
 }
 
 void ComboBox::on_submit(const AnyRef& query) {
@@ -514,7 +512,7 @@ bool ComboBox::on_input_key_press(QWidget& target, QKeyEvent& event) {
       revert_current();
     } else if(any_cast<QString>(m_input_box->get_current()->get()) !=
         m_data->m_submission_text &&
-        m_query_model->parse(m_data->m_submission_text).has_value()) {
+        m_query_model->parse(m_data->m_submission_text)) {
       revert_to(m_data->m_submission_text, false);
     } else {
       event.ignore();
@@ -522,33 +520,4 @@ bool ComboBox::on_input_key_press(QWidget& target, QKeyEvent& event) {
     return true;
   }
   return false;
-}
-
-LocalComboBoxQueryModel::LocalComboBoxQueryModel()
-  : m_values(QChar()) {}
-
-void LocalComboBoxQueryModel::add(const std::any& value) {
-  add(to_text(value).toLower(), value);
-}
-
-void LocalComboBoxQueryModel::add(const QString& id, const std::any& value) {
-  m_values[id.toLower().data()] = value;
-}
-
-std::any LocalComboBoxQueryModel::parse(const QString& query) {
-  auto i = m_values.find(query.toLower().data());
-  if(i == m_values.end()) {
-    return {};
-  }
-  return *i->second;
-}
-
-QtPromise<std::vector<std::any>> LocalComboBoxQueryModel::submit(
-    const QString& query) {
-  auto matches = std::vector<std::any>();
-  for(auto i = m_values.startsWith(query.toLower().data());
-      i != m_values.end(); ++i) {
-    matches.push_back(*i->second);
-  }
-  return QtPromise(std::move(matches));
 }
