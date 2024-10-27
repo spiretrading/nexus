@@ -73,7 +73,6 @@ namespace Spire {
 
     private:
       struct SecurityQueryModel;
-      mutable SubmitSignal m_submit_signal;
       std::shared_ptr<SecurityQueryModel> m_securities;
       std::shared_ptr<CurrentModel> m_current;
       ComboBox* m_combo_box;

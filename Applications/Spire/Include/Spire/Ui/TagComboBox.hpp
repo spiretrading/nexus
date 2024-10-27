@@ -1,7 +1,8 @@
 #ifndef SPIRE_TAG_COMBO_BOX_HPP
 #define SPIRE_TAG_COMBO_BOX_HPP
-#include "Spire/Ui/ComboBox.hpp"
+#include "Spire/Spire/QueryModel.hpp"
 #include "Spire/Ui/FocusObserver.hpp"
+#include "Spire/Ui/ListViewItemBuilder.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -9,6 +10,9 @@ namespace Spire {
   /** Displays a ComboBox using the TagBox as the input box. */
   class TagComboBox : public QWidget {
     public:
+
+      /** The type of QueryModel used to match tags. */
+      using QueryModel = Spire::QueryModel<std::any>;
 
       /**
        * Signals the submission of a list of tags.
@@ -23,7 +27,7 @@ namespace Spire {
        * @param query_model The model used to query matches.
        * @param parent The parent widget.
        */
-      explicit TagComboBox(std::shared_ptr<ComboBox::QueryModel> query_model,
+      explicit TagComboBox(std::shared_ptr<QueryModel> query_model,
         QWidget* parent = nullptr);
 
       /**
@@ -32,7 +36,7 @@ namespace Spire {
        * @param item_builder The ListViewItemBuilder to use.
        * @param parent The parent widget.
        */
-      TagComboBox(std::shared_ptr<ComboBox::QueryModel> query_model,
+      TagComboBox(std::shared_ptr<QueryModel> query_model,
         ListViewItemBuilder<> item_builder, QWidget* parent = nullptr);
 
       /**
@@ -42,12 +46,12 @@ namespace Spire {
        * @param item_builder The ListViewItemBuilder to use.
        * @param parent The parent widget.
        */
-      TagComboBox(std::shared_ptr<ComboBox::QueryModel> query_model,
+      TagComboBox(std::shared_ptr<QueryModel> query_model,
         std::shared_ptr<AnyListModel> current,
         ListViewItemBuilder<> item_builder, QWidget* parent = nullptr);
 
       /** Returns the model used to query matches. */
-      const std::shared_ptr<ComboBox::QueryModel>& get_query_model() const;
+      const std::shared_ptr<QueryModel>& get_query_model() const;
 
       /** Returns the current list of tags. */
       const std::shared_ptr<AnyListModel>& get_current() const;

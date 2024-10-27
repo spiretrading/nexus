@@ -62,9 +62,6 @@ SecurityBox::SecurityBox(std::shared_ptr<SecurityInfoQueryModel> securities,
       return new SecurityListItem(
         *m_securities->m_source->parse(to_text(list->get(index))));
     });
-  m_combo_box->connect_submit_signal([=] (const auto& submission) {
-    m_submit_signal(std::any_cast<const Security&>(submission));
-  });
   enclose(*this, *m_combo_box);
   proxy_style(*this, *m_combo_box);
   setFocusProxy(m_combo_box);
@@ -103,5 +100,7 @@ void SecurityBox::set_read_only(bool is_read_only) {
 
 connection SecurityBox::connect_submit_signal(
     const SubmitSignal::slot_type& slot) const {
-  return m_submit_signal.connect(slot);
+  return m_combo_box->connect_submit_signal([=] (const auto& submission) {
+    slot(std::any_cast<const Security&>(submission));
+  });
 }

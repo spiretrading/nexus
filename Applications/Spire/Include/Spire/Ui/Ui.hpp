@@ -69,8 +69,6 @@ namespace Spire {
   class MoneyBox;
   template<typename T> class MultiSelectionModel;
   class NavigationView;
-  class OpenFilterPanel;
-  template<typename T> class OpenFilterPanelTemplate;
   class OverlayPanel;
   class PercentBox;
   class PopupBox;

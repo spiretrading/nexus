@@ -19,7 +19,7 @@ using namespace Spire::Styles;
 
 KeyBindingsWindow::KeyBindingsWindow(
     std::shared_ptr<KeyBindingsModel> key_bindings,
-    std::shared_ptr<ComboBox::QueryModel> securities,
+    std::shared_ptr<SecurityInfoQueryModel> securities,
     const CountryDatabase& countries, const MarketDatabase& markets,
     const DestinationDatabase& destinations,
     const AdditionalTagDatabase& additional_tags, QWidget* parent)

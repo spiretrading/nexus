@@ -5,6 +5,7 @@
 #include "Spire/KeyBindings/HotkeyOverride.hpp"
 #include "Spire/KeyBindings/KeyBindingsProfile.hpp"
 #include "Spire/KeyBindings/KeyBindingsWindow.hpp"
+#include "Spire/Spire/LocalQueryModel.hpp"
 #include "Spire/Spire/Resources.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 
@@ -12,7 +13,7 @@ using namespace boost;
 using namespace Nexus;
 using namespace Spire;
 
-std::shared_ptr<ComboBox::QueryModel> populate_security_query_model() {
+std::shared_ptr<SecurityInfoQueryModel> populate_security_query_model() {
   auto security_infos = std::vector<SecurityInfo>();
   security_infos.emplace_back(ParseSecurity("MRU.TSX"), "Metro Inc.", "", 0);
   security_infos.emplace_back(
@@ -26,13 +27,13 @@ std::shared_ptr<ComboBox::QueryModel> populate_security_query_model() {
     ParseSecurity("MFC.TSX"), "Manulife Financial Corporation", "", 0);
   security_infos.emplace_back(
     ParseSecurity("MX.TSX"), "Methanex Corporation", "", 0);
-  auto model = std::make_shared<LocalComboBoxQueryModel>();
+  auto securities = std::make_shared<LocalQueryModel<SecurityInfo>>();
   for(auto& security_info : security_infos) {
-    model->add(to_text(security_info.m_security).toLower(), security_info);
-    model->add(
+    securities->add(to_text(security_info.m_security).toLower(), security_info);
+    securities->add(
       QString::fromStdString(security_info.m_name).toLower(), security_info);
   }
-  return model;
+  return securities;
 }
 
 int main(int argc, char** argv) {

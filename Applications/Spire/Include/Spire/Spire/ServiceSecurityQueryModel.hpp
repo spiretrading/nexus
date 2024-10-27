@@ -3,8 +3,8 @@
 #include <Beam/Collections/SynchronizedMap.hpp>
 #include "Nexus/Definitions/Market.hpp"
 #include "Nexus/MarketDataService/MarketDataClientBox.hpp"
+#include "Spire/Spire/QueryModel.hpp"
 #include "Spire/Spire/Spire.hpp"
-#include "Spire/Ui/ComboBox.hpp"
 
 namespace Spire {
 
@@ -12,7 +12,7 @@ namespace Spire {
    * Implements a QueryModel by submitting queries for securities to a market 
    * data client.
    */
-  class ServiceSecurityQueryModel : public ComboBox::QueryModel {
+  class ServiceSecurityQueryModel : public QueryModel<Nexus::SecurityInfo> {
     public:
 
       /**
@@ -23,9 +23,10 @@ namespace Spire {
       ServiceSecurityQueryModel(Nexus::MarketDatabase m_markets,
         Nexus::MarketDataService::MarketDataClientBox market_data_client);
 
-      std::any parse(const QString& query) override;
+      boost::optional<Nexus::SecurityInfo> parse(const QString& query) override;
 
-      QtPromise<std::vector<std::any>> submit(const QString& query) override;
+      QtPromise<std::vector<Nexus::SecurityInfo>>
+        submit(const QString& query) override;
 
     private:
       Nexus::MarketDatabase m_markets;

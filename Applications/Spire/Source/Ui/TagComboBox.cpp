@@ -2,10 +2,12 @@
 #include <QKeyEvent>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Ui/AnyInputBox.hpp"
+#include "Spire/Ui/ComboBox.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TagBox.hpp"
 
+using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::Styles;
@@ -28,7 +30,7 @@ namespace {
     to->transact([&] {
       auto find = [&] (int index) {
         for(auto j = index + 1; j != to->get_size(); ++j) {
-          if(is_equal(from->get(index), to->get(j))) {
+          if(Spire::is_equal(from->get(index), to->get(j))) {
             return j;
           }
         }
@@ -36,7 +38,7 @@ namespace {
       };
       for(auto i = 0; i != from->get_size(); ++i) {
         if(i < to->get_size()) {
-          if(!is_equal(from->get(i), to->get(i))) {
+          if(!Spire::is_equal(from->get(i), to->get(i))) {
             auto j = find(i);
             if(j >= 0) {
               to->move(j, i);
@@ -53,77 +55,76 @@ namespace {
       }
     });
   }
+
+  struct TagComboBoxQueryModel : TagComboBox::QueryModel {
+    std::shared_ptr<TagComboBox::QueryModel> m_source;
+    std::shared_ptr<AnyListModel> m_exclusions;
+    std::unordered_set<QString> m_exclusion_set;
+    scoped_connection m_connection;
+
+    TagComboBoxQueryModel(std::shared_ptr<TagComboBox::QueryModel> source,
+        std::shared_ptr<AnyListModel> exclusions)
+        : m_source(std::move(source)),
+          m_exclusions(std::move(exclusions)),
+          m_connection(m_exclusions->connect_operation_signal(
+            std::bind_front(&TagComboBoxQueryModel::on_operation, this))) {
+      for(auto i = 0; i < m_exclusions->get_size(); ++i) {
+        m_exclusion_set.insert(to_text(m_exclusions->get(i)));
+      }
+    }
+
+    optional<std::any> parse(const QString& query) override {
+      if(auto value = m_source->parse(query)) {
+        if(m_exclusion_set.contains(to_text(*value))) {
+          static auto empty_value = std::any();
+          return empty_value;
+        }
+        return *value;
+      }
+      return none;
+    }
+
+    QtPromise<std::vector<std::any>> submit(const QString& query) override {
+      return m_source->submit(query).then([=] (auto&& source_result) {
+        auto& matches = [&] () -> auto& {
+          try {
+            return source_result.Get();
+          } catch(const std::exception&) {
+            static auto empty_matches = std::vector<std::any>();
+            return empty_matches;
+          }
+        }();
+        std::erase_if(matches, [=] (auto& value) {
+          return m_exclusion_set.contains(to_text(value));
+        });
+        return matches;
+      });
+    }
+
+    void on_operation(const AnyListModel::Operation& operation) {
+      visit(operation,
+        [&] (const AnyListModel::AddOperation& operation) {
+          m_exclusion_set.insert(to_text(m_exclusions->get(operation.m_index)));
+        },
+        [&] (const AnyListModel::PreRemoveOperation& operation) {
+          m_exclusion_set.erase(to_text(m_exclusions->get(operation.m_index)));
+        });
+    }
+  };
 }
 
-struct TagComboBoxQueryModel : ComboBox::QueryModel {
-  std::shared_ptr<ComboBox::QueryModel> m_source;
-  std::shared_ptr<AnyListModel> m_exclusions;
-  std::unordered_set<QString> m_exclusion_set;
-  scoped_connection m_connection;
-
-  TagComboBoxQueryModel(std::shared_ptr<QueryModel> source,
-      std::shared_ptr<AnyListModel> exclusions)
-      : m_source(std::move(source)),
-        m_exclusions(std::move(exclusions)),
-        m_connection(m_exclusions->connect_operation_signal(
-          std::bind_front(&TagComboBoxQueryModel::on_operation, this))) {
-    for(auto i = 0; i < m_exclusions->get_size(); ++i) {
-      m_exclusion_set.insert(to_text(m_exclusions->get(i)));
-    }
-  }
-
-  std::any parse(const QString& query) override {
-    auto value = m_source->parse(query);
-    if(!value.has_value()) {
-      return value;
-    }
-    if(m_exclusion_set.contains(to_text(value))) {
-      static auto empty_value = std::any();
-      return empty_value;
-    }
-    return value;
-  }
-
-  QtPromise<std::vector<std::any>> submit(const QString& query) override {
-    return m_source->submit(query).then([=] (auto&& source_result) {
-      auto& matches = [&] () -> std::vector<std::any>& {
-        try {
-          return source_result.Get();
-        } catch(const std::exception&) {
-          static auto empty_matches = std::vector<std::any>();
-          return empty_matches;
-        }
-      }();
-      std::erase_if(matches, [=] (auto& value) {
-        return m_exclusion_set.contains(to_text(value));
-      });
-      return matches;
-    });
-  }
-
-  void on_operation(const AnyListModel::Operation& operation) {
-    visit(operation,
-      [&] (const AnyListModel::AddOperation& operation) {
-        m_exclusion_set.insert(to_text(m_exclusions->get(operation.m_index)));
-      },
-      [&] (const AnyListModel::PreRemoveOperation& operation) {
-        m_exclusion_set.erase(to_text(m_exclusions->get(operation.m_index)));
-      });
-  }
-};
-
-TagComboBox::TagComboBox(std::shared_ptr<ComboBox::QueryModel> query_model,
+TagComboBox::TagComboBox(std::shared_ptr<QueryModel> query_model,
   QWidget* parent)
   : TagComboBox(std::move(query_model), &ListView::default_item_builder,
       parent) {}
 
-TagComboBox::TagComboBox(std::shared_ptr<ComboBox::QueryModel> query_model,
+TagComboBox::TagComboBox(std::shared_ptr<QueryModel> query_model,
   ListViewItemBuilder<> item_builder, QWidget* parent)
   : TagComboBox(std::move(query_model),
       std::make_shared<ArrayListModel<std::any>>(),
       std::move(item_builder), parent) {}
 
-TagComboBox::TagComboBox(std::shared_ptr<ComboBox::QueryModel> query_model,
+TagComboBox::TagComboBox(std::shared_ptr<QueryModel> query_model,
     std::shared_ptr<AnyListModel> current, ListViewItemBuilder<> item_builder,
     QWidget* parent)
     : QWidget(parent),
@@ -195,7 +196,7 @@ bool TagComboBox::eventFilter(QObject* watched, QEvent* event) {
       return true;
     } else if(key_event.key() == Qt::Key_Space) {
       if(m_combo_box->get_query_model()->parse(
-          m_tag_box->get_current()->get()).has_value()) {
+          m_tag_box->get_current()->get())) {
         push_combo_box();
         return true;
       }
@@ -261,13 +262,12 @@ void TagComboBox::push_combo_box() {
   if(m_tag_box->get_current()->get().isEmpty()) {
     return;
   }
-  auto value =
-    m_combo_box->get_query_model()->parse(m_tag_box->get_current()->get());
-  if(value.has_value()) {
-    if(!is_equal(m_combo_box->get_current()->get(), value)) {
-      m_combo_box->get_current()->set(value);
+  if(auto value =
+      m_combo_box->get_query_model()->parse(m_tag_box->get_current()->get())) {
+    if(!is_equal(m_combo_box->get_current()->get(), *value)) {
+      m_combo_box->get_current()->set(*value);
     }
-    get_current()->push(value);
+    get_current()->push(*value);
     m_tag_box->get_current()->set("");
     submit();
   } else {

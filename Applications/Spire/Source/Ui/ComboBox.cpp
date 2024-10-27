@@ -343,19 +343,19 @@ void ComboBox::submit(const QString& query, bool is_passive) {
     m_data->m_has_autocomplete_selection = false;
     auto current_blocker =
       shared_connection_block(m_data->m_current_connection);
-    m_current->set(value);
+    m_current->set(*value);
   }
   m_data->m_last_completion = query;
   m_data->m_prefix = query;
   m_data->m_completion.clear();
-  m_data->m_submission = value;
+  m_data->m_submission = *value;
   m_data->m_submission_text = query;
   m_input_box->get_highlight()->set(Highlight(query.size()));
   m_data->m_drop_down_list->hide();
   m_data->m_query_result = m_query_model->submit(query).then(
     std::bind_front(
       &ComboBox::on_query, this, ++m_data->m_completion_tag, false));
-  m_data->m_submit_signal(value);
+  m_data->m_submit_signal(*value);
 }
 
 void ComboBox::on_current(const std::any& current) {
