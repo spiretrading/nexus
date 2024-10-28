@@ -1,8 +1,7 @@
 #ifndef SPIRE_ANY_INPUT_BOX_HPP
 #define SPIRE_ANY_INPUT_BOX_HPP
 #include <QWidget>
-#include "Spire/Spire/AnyRef.hpp"
-#include "Spire/Spire/AnyValueModel.hpp"
+#include "Spire/Spire/ValueModel.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/Ui.hpp"
@@ -167,7 +166,7 @@ namespace Details {
   template<typename T>
   AnyInputBox::WrapperInputBox<T>::WrapperInputBox(T& input_box)
       : m_input_box(&input_box),
-        m_current(std::make_shared<AnyValueModel>(m_input_box->get_current())) {
+        m_current(m_input_box->get_current()) {
     if constexpr(!Details::has_get_highlight_v<T>) {
       m_highlight = std::make_shared<LocalValueModel<Highlight>>();
     }

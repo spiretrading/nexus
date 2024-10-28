@@ -2,6 +2,7 @@
 #define SPIRE_COMBO_BOX_HPP
 #include <any>
 #include <cstdint>
+#include "Spire/Spire/ValueModel.hpp"
 #include "Spire/Spire/QueryModel.hpp"
 #include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/KeyObserver.hpp"
@@ -15,7 +16,7 @@ namespace Spire {
     public:
 
       /** The type of model representing the current value. */
-      using CurrentModel = ValueModel<std::any>;
+      using CurrentModel = AnyValueModel;
 
       /** The type of model used to query for selectable values. */
       using QueryModel = Spire::QueryModel<std::any>;
@@ -66,6 +67,28 @@ namespace Spire {
       ComboBox(std::shared_ptr<QueryModel> query_model,
         std::shared_ptr<CurrentModel> current, AnyInputBox* input_box,
         ListViewItemBuilder<> item_builder, QWidget* parent = nullptr);
+
+      /**
+       * Constructs a ListView using default local models.
+       * @param list The model of values to display.
+       * @param item_builder The ListViewItemBuilder to use.
+       * @param parent The parent widget.
+       */
+      template<typename T>
+      ComboBox(std::shared_ptr<T> query_model, QWidget* parent = nullptr);
+
+      /**
+       * Constructs a ListView using default local models.
+       * @param list The model of values to display.
+       * @param item_builder The ListViewItemBuilder to use.
+       * @param parent The parent widget.
+       */
+      template<std::derived_from<BaseQueryModel> QueryModel,
+        std::derived_from<ValueModel<typename QueryModel::Type>> ValueModel>
+      ComboBox(std::shared_ptr<QueryModel> query_model,
+        std::shared_ptr<ValueModel> current,
+        ListViewItemBuilder<ListModel<typename ValueModel::Type>> item_builder,
+        QWidget* parent = nullptr);
 
       /** Returns the model used to query matches. */
       const std::shared_ptr<QueryModel>& get_query_model() const;

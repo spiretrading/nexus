@@ -49,15 +49,7 @@ SecurityBox::SecurityBox(std::shared_ptr<SecurityInfoQueryModel> securities,
       m_securities(
         std::make_shared<SecurityQueryModel>(std::move(securities))),
       m_current(std::move(current)) {
-  auto combo_box_current = make_transform_value_model(m_current,
-    [] (const Security& current) {
-      return std::any(current);
-    },
-    [] (const std::any& current) {
-      return std::any_cast<Security>(current);
-    });
-  m_combo_box = new ComboBox(std::make_shared<AnyQueryModel>(m_securities),
-    combo_box_current,
+  m_combo_box = new ComboBox(m_securities, m_current,
     [=] (const auto& list, auto index) {
       return new SecurityListItem(
         *m_securities->m_source->parse(to_text(list->get(index))));

@@ -7,13 +7,14 @@
 #include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
+  class BaseQueryModel {};
 
   /**
    * Used to retreive potential matches to a query.
    * @param <T> The type of value being queried.
    */
   template<typename T>
-  class QueryModel {
+  class QueryModel : public BaseQueryModel {
     public:
 
       /** The type of value being queried. */

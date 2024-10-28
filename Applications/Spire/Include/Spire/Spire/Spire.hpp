@@ -29,6 +29,7 @@ namespace Spire {
 namespace Spire {
   class AnyListModel;
   class AnyQueryModel;
+  class AnyValueModel;
   class AnyRef;
   template<typename T> class ArrayListModel;
   class ArrayTableModel;
