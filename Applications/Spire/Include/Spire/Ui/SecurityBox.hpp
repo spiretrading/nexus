@@ -75,7 +75,7 @@ namespace Spire {
       struct SecurityQueryModel;
       std::shared_ptr<SecurityQueryModel> m_securities;
       std::shared_ptr<CurrentModel> m_current;
-      ComboBox* m_combo_box;
+      ComboBox<Nexus::Security>* m_combo_box;
   };
 }
 

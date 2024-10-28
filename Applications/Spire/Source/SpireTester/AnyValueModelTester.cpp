@@ -1,6 +1,5 @@
 #include <deque>
 #include <doctest/doctest.h>
-#include "Spire/Spire/AnyValueModel.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
 
 using namespace Spire;
@@ -9,7 +8,7 @@ TEST_SUITE("AnyValueModel") {
   TEST_CASE("wrapper") {
     auto source = std::make_shared<LocalValueModel<int>>(123);
     auto operations = std::deque<AnyRef>();
-    auto any_model = AnyValueModel(source);
+    auto& any_model = static_cast<AnyValueModel&>(*source);
     any_model.connect_update_signal([&] (const auto& value) {
       operations.push_back(value);
     });

@@ -1,7 +1,6 @@
 #include "Spire/Ui/RegionBox.hpp"
 #include <boost/iterator/counting_iterator.hpp>
 #include <boost/signals2/shared_connection_block.hpp>
-#include "Spire/Spire/AnyQueryModel.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Styles/Stylist.hpp"
@@ -97,13 +96,13 @@ RegionBox::RegionBox(std::shared_ptr<RegionQueryModel> regions,
       m_last_region(m_current->get()),
       m_current_connection(m_current->connect_update_signal(
         std::bind_front(&RegionBox::on_current, this))) {
-  auto current_model = std::make_shared<ArrayListModel<std::any>>();
+  auto current_model = std::make_shared<ArrayListModel<Region>>();
   current_model->transact([&] {
     to_tag_list(m_current->get(), *m_regions, *current_model);
     sort(*current_model);
   });
-  m_tag_combo_box = new TagComboBox(std::make_shared<AnyQueryModel>(m_regions),
-    current_model, [] (const auto& list, auto index) {
+  m_tag_combo_box = new TagComboBox(m_regions, std::move(current_model),
+    [] (const auto& list, auto index) {
       return new RegionListItem(std::any_cast<Region&&>(list->get(index)));
     });
   m_tag_combo_box->connect_submit_signal(
@@ -148,7 +147,7 @@ void RegionBox::on_current(const Region& region) {
   }
   m_last_region = region;
   auto blocker = shared_connection_block(m_tag_operation_connection);
-  auto& current = m_tag_combo_box->get_current();
+  auto current = m_tag_combo_box->get_current();
   current->transact([&] {
     while(current->get_size() != 0) {
       current->remove(current->get_size() - 1);
@@ -157,12 +156,13 @@ void RegionBox::on_current(const Region& region) {
   });
 }
 
-void RegionBox::on_submit(const std::shared_ptr<AnyListModel>& submission) {
+void RegionBox::on_submit(
+    const std::shared_ptr<ListModel<Region>>& submission) {
   sort(*m_tag_combo_box->get_current());
   sort(*submission);
   auto region = Nexus::Region();
-  for(auto i = 0; i < submission->get_size(); ++i) {
-    region = region + std::any_cast<const Region&>(submission->get(i));
+  for(auto r : *submission) {
+    region += r;
   }
   m_submit_signal(region);
 }
@@ -170,9 +170,8 @@ void RegionBox::on_submit(const std::shared_ptr<AnyListModel>& submission) {
 void RegionBox::on_tags_operation(const AnyListModel::Operation& operation) {
   auto update_current = [&] {
     auto region = Nexus::Region();
-    for(auto i = 0; i < m_tag_combo_box->get_current()->get_size(); ++i) {
-      region +=
-        std::any_cast<const Region&>(m_tag_combo_box->get_current()->get(i));
+    for(auto r : *m_tag_combo_box->get_current()) {
+      region += r;
     }
     auto blocker = shared_connection_block(m_current_connection);
     if(m_current->set(region) != QValidator::Invalid) {

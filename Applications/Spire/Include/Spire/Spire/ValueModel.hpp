@@ -142,7 +142,7 @@ namespace Spire {
     if(value.get_type() != typeid(T)) {
       return QValidator::State::Invalid;
     }
-    return test(any_cast<T>(value));
+    return test(any_cast<const T>(value));
   }
 
   template<typename T>
@@ -150,7 +150,7 @@ namespace Spire {
     if(value.get_type() != typeid(T)) {
       return QValidator::State::Invalid;
     }
-    return set(any_cast<T>(value));
+    return set(any_cast<const T>(value));
   }
 
   template<typename T>

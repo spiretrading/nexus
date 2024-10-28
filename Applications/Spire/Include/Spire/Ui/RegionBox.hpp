@@ -71,12 +71,13 @@ namespace Spire {
       std::shared_ptr<RegionQueryModel> m_regions;
       std::shared_ptr<RegionModel> m_current;
       Nexus::Region m_last_region;
-      TagComboBox* m_tag_combo_box;
+      TagComboBox<Nexus::Region>* m_tag_combo_box;
       boost::signals2::scoped_connection m_current_connection;
       boost::signals2::scoped_connection m_tag_operation_connection;
 
       void on_current(const Nexus::Region& region);
-      void on_submit(const std::shared_ptr<AnyListModel>& submission);
+      void on_submit(
+        const std::shared_ptr<ListModel<Nexus::Region>>& submission);
       void on_tags_operation(const AnyListModel::Operation& operation);
   };
 }

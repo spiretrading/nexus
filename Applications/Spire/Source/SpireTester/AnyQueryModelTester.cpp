@@ -1,6 +1,5 @@
 #include <deque>
 #include <doctest/doctest.h>
-#include "Spire/Spire/AnyQueryModel.hpp"
 #include "Spire/Spire/LocalQueryModel.hpp"
 #include "Spire/SpireTester/SpireTester.hpp"
 
@@ -12,13 +11,13 @@ TEST_SUITE("AnyQueryModel") {
       auto source = std::make_shared<LocalQueryModel<int>>();
       source->add("hello", 123);
       source->add("world", 456);
-      auto any_model = AnyQueryModel(source);
+      auto& any_model = static_cast<AnyQueryModel&>(*source);
       auto p1 = any_model.parse("hello");
       REQUIRE(p1.has_value());
-      REQUIRE(std::any_cast<int>(*p1) == 123);
+      REQUIRE(std::any_cast<int>(p1) == 123);
       auto p2 = any_model.parse("world");
       REQUIRE(p2.has_value());
-      REQUIRE(std::any_cast<int>(*p2) == 456);
+      REQUIRE(std::any_cast<int>(p2) == 456);
       auto p3 = any_model.parse("goodbye");
       REQUIRE(!p3.has_value());
       auto s1 = wait(any_model.submit("hell"));

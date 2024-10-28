@@ -11,7 +11,9 @@
 
 namespace Spire {
   class AdaptiveBox;
+  class AnyComboBox;
   class AnyInputBox;
+  class AnyTagComboBox;
   class Box;
   class BoxGeometry;
   class BoxPainter;
@@ -24,7 +26,7 @@ namespace Spire {
   class ColorCodePanel;
   class ColorPicker;
   class ColorSwatch;
-  class ComboBox;
+  template<typename T> class ComboBox;
   class ContextMenu;
   class DateBox;
   class DateFilterPanel;
@@ -105,7 +107,7 @@ namespace Spire {
   class TableView;
   class Tag;
   class TagBox;
-  class TagComboBox;
+  template<typename T> class TagComboBox;
   class TextAreaBox;
   class TextBox;
   class TimeBox;

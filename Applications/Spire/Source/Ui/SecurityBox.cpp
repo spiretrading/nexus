@@ -1,5 +1,4 @@
 #include "Spire/Ui/SecurityBox.hpp"
-#include "Spire/Spire/AnyQueryModel.hpp"
 #include "Spire/Spire/TransformValueModel.hpp"
 #include "Spire/Styles/Stylist.hpp"
 #include "Spire/Ui/ComboBox.hpp"
@@ -70,12 +69,7 @@ const std::shared_ptr<SecurityBox::CurrentModel>&
 }
 
 const Security& SecurityBox::get_submission() const {
-  auto& submission = m_combo_box->get_submission();
-  if(submission.has_value()) {
-    return std::any_cast<const Security&>(submission);
-  }
-  static auto security = Security();
-  return security;
+  return m_combo_box->get_submission();
 }
 
 void SecurityBox::set_placeholder(const QString& placeholder) {
@@ -92,7 +86,5 @@ void SecurityBox::set_read_only(bool is_read_only) {
 
 connection SecurityBox::connect_submit_signal(
     const SubmitSignal::slot_type& slot) const {
-  return m_combo_box->connect_submit_signal([=] (const auto& submission) {
-    slot(std::any_cast<const Security&>(submission));
-  });
+  return m_combo_box->connect_submit_signal(slot);
 }
