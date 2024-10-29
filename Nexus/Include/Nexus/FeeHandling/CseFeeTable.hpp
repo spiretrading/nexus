@@ -29,10 +29,10 @@ namespace Nexus {
     };
 
     /** The number of price classes enumerated. */
-    static constexpr auto PRICE_CLASS_COUNT = std::size_t(3);
+    static constexpr auto SECTION_COUNT = std::size_t(3);
 
     /** The fee table. */
-    std::array<std::array<Money, LIQUIDITY_FLAG_COUNT>, PRICE_CLASS_COUNT>
+    std::array<std::array<Money, LIQUIDITY_FLAG_COUNT>, SECTION_COUNT>
       m_feeTable;
   };
 

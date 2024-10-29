@@ -21,7 +21,7 @@ TEST_SUITE("CseFeeHandling") {
   TEST_CASE("fee_table_calculations") {
     auto feeTable = MakeFeeTable();
     TestFeeTableIndex(feeTable, feeTable.m_feeTable, LookupFee,
-      LIQUIDITY_FLAG_COUNT, CseFeeTable::PRICE_CLASS_COUNT);
+      LIQUIDITY_FLAG_COUNT, CseFeeTable::SECTION_COUNT);
   }
 
   TEST_CASE("zero_quantity") {

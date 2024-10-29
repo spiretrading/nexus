@@ -38,6 +38,9 @@ namespace Nexus {
     /** Enumerates the rows of each section. */
     enum class Row {
 
+      /** Invalid row. */
+      NONE = -1,
+
       /** The row of sub-dollar fees. */
       SUBDOLLAR,
 
