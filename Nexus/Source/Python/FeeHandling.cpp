@@ -544,8 +544,20 @@ void Nexus::Python::ExportOmgaFeeTable(module& module) {
 }
 
 void Nexus::Python::ExportPureFeeTable(module& module) {
-  class_<PureFeeTable>(module, "PureFeeTable")
+  auto outer = class_<PureFeeTable>(module, "PureFeeTable")
     .def(init<const PureFeeTable&>());
+  enum_<PureFeeTable::Section>(outer, "Section")
+    .value("NONE", PureFeeTable::Section::NONE)
+    .value("DEFAULT", PureFeeTable::Section::DEFAULT)
+    .value("INTERLISTED", PureFeeTable::Section::INTERLISTED)
+    .value("ETF", PureFeeTable::Section::ETF);
+  enum_<PureFeeTable::Row>(outer, "Section")
+    .value("NONE", PureFeeTable::Section::NONE)
+    .value("DEFAULT", PureFeeTable::Section::DEFAULT)
+    .value("INTERLISTED", PureFeeTable::Section::INTERLISTED)
+    .value("ETF", PureFeeTable::Section::ETF);
+
+
   module.def("parse_pure_fee_table", &ParsePureFeeTable);
   module.def("calculate_fee", static_cast<Money (*)(const PureFeeTable&,
     const Security&, const ExecutionReport&)>(&CalculateFee));
