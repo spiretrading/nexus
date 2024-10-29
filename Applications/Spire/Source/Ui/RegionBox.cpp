@@ -103,7 +103,7 @@ RegionBox::RegionBox(std::shared_ptr<RegionQueryModel> regions,
   });
   m_tag_combo_box = new TagComboBox(m_regions, std::move(current_model),
     [] (const auto& list, auto index) {
-      return new RegionListItem(std::any_cast<Region&&>(list->get(index)));
+      return new RegionListItem(list->get(index));
     });
   m_tag_combo_box->connect_submit_signal(
     std::bind_front(&RegionBox::on_submit, this));

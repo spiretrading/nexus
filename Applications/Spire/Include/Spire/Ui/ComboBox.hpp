@@ -2,6 +2,8 @@
 #define SPIRE_COMBO_BOX_HPP
 #include <any>
 #include <cstdint>
+#include <boost/functional/factory.hpp>
+#include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/QueryModel.hpp"
 #include "Spire/Spire/ValueModel.hpp"
 #include "Spire/Ui/AnyInputBox.hpp"
@@ -29,11 +31,15 @@ namespace Spire {
        * @param current The current value's model.
        * @param input_box The input box to use.
        * @param item_builder The ListViewItemBuilder to use.
+       * @param matches_builder Used to build the ListModel that keeps the list
+       *        matches.
        * @param parent The parent widget.
        */
       AnyComboBox(std::shared_ptr<AnyQueryModel> query_model,
         std::shared_ptr<AnyValueModel> current, AnyInputBox* input_box,
-        ListViewItemBuilder<> item_builder, QWidget* parent = nullptr);
+        ListViewItemBuilder<> item_builder,
+        std::function<std::shared_ptr<AnyListModel> ()> matches_builder,
+        QWidget* parent = nullptr);
 
       /** Returns the model used to query matches. */
       const std::shared_ptr<AnyQueryModel>& get_query_model() const;
@@ -75,7 +81,7 @@ namespace Spire {
         ListView* m_list_view;
         FocusObserver m_focus_observer;
         KeyObserver m_key_observer;
-        std::shared_ptr<ArrayListModel<std::any>> m_matches;
+        std::shared_ptr<AnyListModel> m_matches;
         DropDownList* m_drop_down_list;
         boost::optional<QString> m_user_query;
         std::uint32_t m_completion_tag;
@@ -95,6 +101,7 @@ namespace Spire {
       std::shared_ptr<AnyValueModel> m_current;
       AnyInputBox* m_input_box;
       ListViewItemBuilder<> m_item_builder;
+      std::function<std::shared_ptr<AnyListModel> ()> m_matches_builder;
       std::unique_ptr<DeferredData> m_data;
 
       static std::shared_ptr<TextModel>
@@ -230,7 +237,8 @@ namespace Spire {
     std::shared_ptr<CurrentModel> current, AnyInputBox* input_box,
     ListViewItemBuilder<ListModel<Type>> item_builder, QWidget* parent)
     : AnyComboBox(std::move(query_model), std::move(current), input_box,
-        std::move(item_builder), parent) {}
+        std::move(item_builder),
+        boost::factory<std::shared_ptr<ArrayListModel<Type>>>(), parent) {}
 
   template<typename T>
   std::shared_ptr<typename ComboBox<T>::QueryModel>

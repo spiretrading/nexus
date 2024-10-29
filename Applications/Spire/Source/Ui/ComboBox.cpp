@@ -2,8 +2,6 @@
 #include <boost/signals2/shared_connection_block.hpp>
 #include <QContextMenuEvent>
 #include <QKeyEvent>
-#include "Spire/Spire/ArrayListModel.hpp"
-#include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Ui/AnyInputBox.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DropDownBox.hpp"
@@ -63,7 +61,7 @@ AnyComboBox::DeferredData::DeferredData(AnyComboBox& box)
     m_list_view(nullptr),
     m_focus_observer(box),
     m_key_observer(*box.m_input_box),
-    m_matches(std::make_shared<ArrayListModel<std::any>>()),
+    m_matches(box.m_matches_builder()),
     m_drop_down_list(nullptr),
     m_completion_tag(0),
     m_has_autocomplete_selection(false),
@@ -72,12 +70,15 @@ AnyComboBox::DeferredData::DeferredData(AnyComboBox& box)
 
 AnyComboBox::AnyComboBox(std::shared_ptr<AnyQueryModel> query_model,
     std::shared_ptr<AnyValueModel> current, AnyInputBox* input_box,
-    ListViewItemBuilder<> item_builder, QWidget* parent)
+    ListViewItemBuilder<> item_builder,
+    std::function<std::shared_ptr<AnyListModel> ()> matches_builder,
+    QWidget* parent)
     : QWidget(parent),
       m_query_model(std::move(query_model)),
       m_current(std::move(current)),
       m_input_box(input_box),
-      m_item_builder(std::move(item_builder)) {
+      m_item_builder(std::move(item_builder)),
+      m_matches_builder(std::move(matches_builder)) {
   setFocusProxy(m_input_box);
   proxy_style(*this, *m_input_box);
   enclose(*this, *m_input_box);
@@ -235,8 +236,7 @@ void AnyComboBox::initialize_deferred_data() const {
     m_input_box->get_highlight()->connect_update_signal(
       std::bind_front(&AnyComboBox::on_highlight, self));
   m_data->m_list_view =
-    new ListView(std::static_pointer_cast<AnyListModel>(m_data->m_matches),
-      std::move(m_item_builder));
+    new ListView(m_data->m_matches, std::move(m_item_builder));
   m_data->m_list_view->setFocusPolicy(Qt::NoFocus);
   m_data->m_drop_down_list = new DropDownList(*m_data->m_list_view, *self);
   m_data->m_drop_down_list->setFocusPolicy(Qt::NoFocus);
@@ -319,10 +319,8 @@ void AnyComboBox::revert_current() {
 
 void AnyComboBox::submit(const QString& query, bool is_passive) {
   auto value = m_query_model->parse(query);
-  if(value.has_value()) {
-    return;
-  }
-  if(is_passive && to_text(value) == to_text(m_data->m_submission)) {
+  if(!value.has_value() ||
+      is_passive && to_text(value) == to_text(m_data->m_submission)) {
     return;
   }
   if(!m_data->m_completion.isEmpty()) {

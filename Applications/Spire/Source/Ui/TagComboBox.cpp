@@ -112,6 +112,7 @@ namespace {
 
 AnyTagComboBox::AnyTagComboBox(std::shared_ptr<AnyQueryModel> query_model,
     std::shared_ptr<AnyListModel> current, ListViewItemBuilder<> item_builder,
+    std::function<std::shared_ptr<AnyListModel> ()> matches_builder,
     QWidget* parent)
     : QWidget(parent),
       m_submission(std::make_shared<ArrayListModel<std::any>>()),
@@ -127,8 +128,8 @@ AnyTagComboBox::AnyTagComboBox(std::shared_ptr<AnyQueryModel> query_model,
   m_any_input_box = new AnyInputBox(*m_tag_box);
   m_combo_box = new AnyComboBox(std::make_shared<TagComboBoxQueryModel>(
     std::move(query_model), m_tag_box->get_tags()),
-    std::make_shared<LocalValueModel<std::any>>(), m_any_input_box,
-    std::move(item_builder));
+    std::make_shared<LocalValueModel<std::any>>(),
+    m_any_input_box, std::move(item_builder), std::move(matches_builder));
   m_combo_box->connect_submit_signal(
     std::bind_front(&AnyTagComboBox::on_combo_box_submit, this));
   enclose(*this, *m_combo_box);
