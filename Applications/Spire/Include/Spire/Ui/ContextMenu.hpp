@@ -119,6 +119,12 @@ namespace Spire {
       /** Resets the menu, removing all actions. */
       void reset();
 
+      /**
+       * Returns the menu item at a specified index, or <code>nullptr</code> iff
+       * the index is out of range.
+       */
+      QWidget* get_menu_item(int index);
+
       /** Connects a slot to the Submit signal. */
       boost::signals2::connection connect_submit_signal(
         const SubmitSignal::slot_type& slot) const;
