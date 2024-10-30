@@ -273,16 +273,31 @@ void Nexus::Python::ExportCse2FeeTable(module& module) {
     .value("CSE_LISTED_GOVERNMENT_BONDS",
       Cse2FeeTable::Section::CSE_LISTED_GOVERNMENT_BONDS)
     .value("ODDLOT", Cse2FeeTable::Section::ODDLOT);
+  enum_<Cse2FeeTable::PriceClass>(outer, "PriceClass")
+    .value("DEFAULT", Cse2FeeTable::PriceClass::DEFAULT)
+    .value("SUBDOLLAR", Cse2FeeTable::PriceClass::SUBDOLLAR);
+  enum_<Cse2FeeTable::ListingMarket>(outer, "ListingMarket")
+    .value("CSE", Cse2FeeTable::ListingMarket::CSE)
+    .value("TSX_TSXV", Cse2FeeTable::ListingMarket::TSX_TSXV);
   module.def("parse_cse2_fee_table", &ParseCse2FeeTable);
   module.def("lookup_cse2_fee_table_section", &LookupCse2FeeTableSection);
+  module.def("lookup_cse2_price_class", &LookupCse2PriceClass);
   module.def("lookup_cse2_liquidity_flag", &LookupCse2LiquidityFlag);
+  module.def("lookup_cse2_listing_market", &LookupCse2ListingMarket);
+  module.def("lookup_regular_fee", &LookupRegularFee);
   module.def("calculate_regular_fee", &CalculateRegularFee);
+  module.def("lookup_dark_fee", &LookupDarkFee);
   module.def("calculate_dark_fee", &CalculateDarkFee);
   module.def(
+    "lookup_debentures_or_notes_fee", &LookupDebenturesOrNotesFee);
+  module.def(
     "calculate_debentures_or_notes_fee", &CalculateDebenturesOrNotesFee);
+  module.def("lookup_cse_listed_government_bonds_fee",
+    &LookupCseListedGovernmentBondsFee);
   module.def("calculate_cse_listed_government_bonds_fee",
     &CalculateCseListedGovernmentBondsFee);
-  module.def("calculate_oddlot_fee", &CalculateOddLotFee);
+  module.def("lookup_oddlot_fee", &LookupOddlotFee);
+  module.def("calculate_oddlot_fee", &CalculateOddlotFee);
   module.def("calculate_fee", static_cast<Money (*)(const Cse2FeeTable&,
     const OrderFields&, const ExecutionReport&)>(&CalculateFee));
 }
