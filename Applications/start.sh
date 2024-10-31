@@ -16,8 +16,8 @@ services+=" SimulationMarketDataFeedClient"
 
 for directory in $services; do
   pushd $directory/Application > /dev/null
-  ./stop_server.sh
-  ./start_server.sh
+  ./stop.sh
+  ./start.sh
   popd > /dev/null
   sleep 3
 done
