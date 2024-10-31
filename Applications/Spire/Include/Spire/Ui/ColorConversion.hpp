@@ -73,6 +73,24 @@ namespace Spire {
   QColor to_rgb(const OklchColor& color);
 
   /**
+   * Interpolates the Oklch color from start to stop with ratio.
+   * @param start The start color.
+   * @param stop The stop color.
+   * @param ratio The interpolation ratio.
+   */
+  OklchColor interpolate(const OklchColor& start, const OklchColor& stop,
+    double ratio);
+
+  /**
+   * Scales colors from start to stop using oklch interpolation mode.
+   * @param start The start color.
+   * @param stop The stop color.
+   * @param steps The steps by which colors are scaled.
+   */
+  std::vector<QColor> scale_oklch(const QColor& start, const QColor& stop,
+    int steps);
+
+  /**
    * Calculates the APCA contrast.
    * @param text_luminance The luminance of the text.
    * @param background_luminance The luminance of the background.
