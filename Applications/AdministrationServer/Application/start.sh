@@ -17,7 +17,7 @@ for existing_log in srv_*.log; do
     mv "$existing_log" "$LOG_DIR"
   fi
 done
-if ./check.sh | grep -vq "$APPLICATION is not running."; then
+if ! (./check.sh | grep -q "$APPLICATION is not running."); then
   exit 0
 fi
 ./$APPLICATION > "$log_name" 2>&1 &
