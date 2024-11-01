@@ -21,6 +21,12 @@ using namespace Spire::Styles;
 namespace {
   using ColorBand = StateSelector<void, struct ColorBandTag>;
   using ScrollBoxOverflow = StateSelector<void, struct ScrollBoxOverflowTag>;
+  const auto COLOR_BAND_WIDTH = 138;
+  const auto COLOR_BAND_HEIGHT = 17;
+  const auto COLOR_BOX_HEIGHT = 15;
+  const auto COLOR_BOXES_SPACING = 2;
+  const auto COLOR_BOXES_VERTICAL_PADDING = 2;
+  const auto COLOR_LIST_SPACING = 8;
 
   enum class FillType {
     GRADIENT,
@@ -304,7 +310,9 @@ struct PriceLevelModel {
 struct BookViewLevelPropertiesPage::PriceLevelWidget : QWidget {
   std::shared_ptr<PriceLevelModel> m_model;
   std::shared_ptr<ValueModel<QFont>> m_font;
+  QWidget* m_color_boxes;
   ScrollBox* m_scroll_box;
+  QHBoxLayout* m_body_layout;
   QVBoxLayout* m_color_bands_layout;
   QVBoxLayout* m_color_boxes_layout;
   std::array<CheckBox*, 2> m_buttons;
@@ -317,18 +325,22 @@ struct BookViewLevelPropertiesPage::PriceLevelWidget : QWidget {
           std::make_shared<ArrayValueToListModel<QColor>>(std::move(source)))),
         m_font(std::move(font)) {
     auto body = new QWidget();
-    auto body_layout = make_hbox_layout(body);
+    m_body_layout = make_hbox_layout(body);
     auto color_bands = make_color_bands();
     color_bands->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    color_bands->setFixedWidth(scale_width(138));
-    body_layout->addWidget(color_bands, 0, Qt::AlignTop);
-    body_layout->addSpacing(scale_width(8));
-    auto color_boxes = make_color_boxes();
-    color_boxes->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    body_layout->addWidget(color_boxes, 0, Qt::AlignTop);
+    color_bands->setFixedWidth(scale_width(COLOR_BAND_WIDTH));
+    m_body_layout->addWidget(color_bands, 0, Qt::AlignTop | Qt::AlignLeft);
+    m_body_layout->addSpacing(scale_width(COLOR_LIST_SPACING));
+    m_color_boxes = make_color_boxes();
+    m_color_boxes->setSizePolicy(QSizePolicy::Expanding,
+      QSizePolicy::Expanding);
+    m_body_layout->addWidget(m_color_boxes, 0, Qt::AlignTop);
     m_scroll_box = new ScrollBox(body);
     m_scroll_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    m_scroll_box->get_body().installEventFilter(this);
     m_scroll_box->get_vertical_scroll_bar().installEventFilter(this);
+    m_scroll_box->get_vertical_scroll_bar().connect_position_signal(
+      std::bind_front(&PriceLevelWidget::on_position_update, this));
     update_style(*m_scroll_box, [] (auto& style) {
       style.get(ScrollBoxOverflow()).set(PaddingRight(scale_width(4)));
     });
@@ -351,6 +363,12 @@ struct BookViewLevelPropertiesPage::PriceLevelWidget : QWidget {
       } else if(event->type() == QEvent::Hide) {
         unmatch(*m_scroll_box, ScrollBoxOverflow());
       }
+    } else if(watched == &m_scroll_box->get_body() &&
+          event->type() == QEvent::Resize &&
+          m_model->m_fill_type->get() == FillType::GRADIENT) {
+      m_color_boxes->resize(
+        m_scroll_box->get_body().width() - m_color_boxes->x(),
+        m_color_boxes->height());
     }
     return QWidget::eventFilter(watched, event);
   }
@@ -392,7 +410,7 @@ struct BookViewLevelPropertiesPage::PriceLevelWidget : QWidget {
   TextBox* make_color_band(int index) {
     auto band = make_label(QString("%1").arg(index + 1));
     band->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-    band->setFixedHeight(scale_height(17));
+    band->setFixedHeight(scale_height(COLOR_BAND_HEIGHT));
     update_style(*band, [&] (auto& style) {
       style.get(Any()).
         set(BackgroundColor(m_model->m_color_scheme->get(index))).
@@ -409,7 +427,7 @@ struct BookViewLevelPropertiesPage::PriceLevelWidget : QWidget {
     auto color_box = new ColorBox(std::make_shared<ListValueModel<QColor>>(
       m_model->m_colors, index));
     color_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    color_box->setFixedHeight(scale_height(15));
+    color_box->setFixedHeight(scale_height(COLOR_BOX_HEIGHT));
     return color_box;
   }
 
@@ -429,19 +447,39 @@ struct BookViewLevelPropertiesPage::PriceLevelWidget : QWidget {
   QWidget* make_color_boxes() {
     auto body = new QWidget();
     m_color_boxes_layout = make_vbox_layout(body);
-    m_color_boxes_layout->setSpacing(scale_height(2));
+    m_color_boxes_layout->setSpacing(scale_height(COLOR_BOXES_SPACING));
     for(auto i = 0; i < m_model->m_colors->get_size(); ++i) {
       m_color_boxes_layout->addWidget(make_color_box(i));
     }
     auto box = new Box(body);
     update_style(*box, [] (auto& style) {
-      style.get(Any()).set(vertical_padding(scale_height(2)));
+      style.get(Any()).set(
+        vertical_padding(scale_height(COLOR_BOXES_VERTICAL_PADDING)));
     });
     return box;
   }
 
+  void on_position_update(int position) {
+    if(m_model->m_fill_type->get() == FillType::GRADIENT) {
+      m_color_boxes->move(m_color_boxes->x(), position);
+    }
+  }
+
   void on_type_update(FillType type, bool value) {
     m_buttons[static_cast<int>(type)]->get_current()->set(value);
+    if(value) {
+      if(type == FillType::SOLID) {
+        m_body_layout->addWidget(m_color_boxes, 0, Qt::AlignTop);
+      } else {
+        m_body_layout->removeWidget(m_color_boxes);
+        m_color_boxes->setGeometry(
+          scale_width(COLOR_BAND_WIDTH + COLOR_LIST_SPACING),
+          m_scroll_box->get_vertical_scroll_bar().get_position(),
+          m_color_boxes->width(),
+          scale_height((COLOR_BOX_HEIGHT + COLOR_BOXES_VERTICAL_PADDING) * 2 +
+            COLOR_BOXES_SPACING));
+      }
+    }
   }
 
   void on_scheme_operation(const ListModel<QColor>::Operation& operation) {
