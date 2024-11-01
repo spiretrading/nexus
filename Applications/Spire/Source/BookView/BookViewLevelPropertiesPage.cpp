@@ -27,6 +27,7 @@ namespace {
   const auto COLOR_BOXES_SPACING = 2;
   const auto COLOR_BOXES_VERTICAL_PADDING = 2;
   const auto COLOR_LIST_SPACING = 8;
+  const auto DEBOUNCE_TIME_MS = 100;
 
   enum class FillType {
     GRADIENT,
@@ -174,18 +175,21 @@ struct PriceLevelModel {
   std::shared_ptr<LocalOptionalIntegerModel> m_levels;
   std::shared_ptr<AssociativeValueModel<FillType>> m_fill_type;
   std::shared_ptr<ArrayListModel<QColor>> m_colors;
+  QTimer* m_timer;
   scoped_connection m_scheme_connection;
   scoped_connection m_levels_connection;
   scoped_connection m_type_connection;
   scoped_connection m_color_connection;
 
-  PriceLevelModel(std::shared_ptr<ListModel<QColor>> color_scheme)
+  PriceLevelModel(std::shared_ptr<ListModel<QColor>> color_scheme,
+      QTimer& timer)
       : m_color_scheme(std::move(color_scheme)),
         m_levels(std::make_shared<LocalOptionalIntegerModel>(
           m_color_scheme->get_size())),
         m_fill_type(std::make_shared<AssociativeValueModel<FillType>>(
           FillType::GRADIENT)),
-        m_colors(std::make_shared<ArrayListModel<QColor>>()) {
+        m_colors(std::make_shared<ArrayListModel<QColor>>()),
+        m_timer(&timer) {
     m_levels->set_minimum(1);
     m_levels->set_maximum(99);
     m_scheme_connection = m_color_scheme->connect_operation_signal(
@@ -197,6 +201,9 @@ struct PriceLevelModel {
     m_color_connection = m_colors->connect_operation_signal(
       std::bind_front(&PriceLevelModel::on_color_operation, this));
     on_type_update(m_fill_type->get());
+    m_timer->setSingleShot(true);
+    QObject::connect(m_timer, &QTimer::timeout,
+      std::bind_front(&PriceLevelModel::on_timeout, this));
   }
 
   void scale(int levels) {
@@ -273,6 +280,10 @@ struct PriceLevelModel {
     }
   }
 
+  void on_timeout() {
+    scale(*m_levels->get());
+  }
+
   void on_color_scheme_operation(
       const ListModel<QColor>::Operation& operation) {
     visit(operation,
@@ -299,7 +310,7 @@ struct PriceLevelModel {
             m_color_scheme->set(m_color_scheme->get_size() - 1,
               operation.get_value());
           }
-          scale(*m_levels->get());
+          m_timer->start(DEBOUNCE_TIME_MS);
         } else {
           m_color_scheme->set(operation.m_index, operation.get_value());
         }
@@ -308,6 +319,7 @@ struct PriceLevelModel {
 };
 
 struct BookViewLevelPropertiesPage::PriceLevelWidget : QWidget {
+  QTimer m_timer;
   std::shared_ptr<PriceLevelModel> m_model;
   std::shared_ptr<ValueModel<QFont>> m_font;
   QWidget* m_color_boxes;
@@ -321,8 +333,10 @@ struct BookViewLevelPropertiesPage::PriceLevelWidget : QWidget {
   PriceLevelWidget( std::shared_ptr<ValueModel<std::vector<QColor>>> source,
       std::shared_ptr<ValueModel<QFont>> font, QWidget* parent = nullptr)
       : QWidget(parent),
+        m_timer(this),
         m_model(std::make_shared<PriceLevelModel>(
-          std::make_shared<ArrayValueToListModel<QColor>>(std::move(source)))),
+          std::make_shared<ArrayValueToListModel<QColor>>(std::move(source)),
+          m_timer)),
         m_font(std::move(font)) {
     auto body = new QWidget();
     m_body_layout = make_hbox_layout(body);
