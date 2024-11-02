@@ -14,11 +14,11 @@ stop_application() {
   local elapsed_time=0
   local interval=2
   while (( elapsed_time < 300 )); do
-    kill -SIGINT "$pid"
-    sleep "$interval"
     if ! ps -p "$pid" > /dev/null 2>&1; then
       return 0
     fi
+    kill -SIGINT "$pid"
+    sleep "$interval"
     interval=10
     elapsed_time=$(( elapsed_time + interval ))
   done
