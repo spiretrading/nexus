@@ -12,7 +12,9 @@ if [[ -f "$PID_FILE" ]]; then
   existing_pid=$(<"$PID_FILE")
   if ! is_process_running "$existing_pid"; then
     echo "$APPLICATION is not running."
+    exit 1
   fi
 else
   echo "$APPLICATION is not running."
+  exit 1
 fi

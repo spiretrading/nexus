@@ -2,6 +2,12 @@
 APPLICATION="SimulationOrderExecutionServer"
 CONFIG_FILE="config.yml"
 LOG_DIR="./logs"
+
+is_application_running() {
+  ./check.sh > /dev/null
+  return $?
+}
+
 mkdir -p "$LOG_DIR"
 date_time=$(date '+%Y%m%d_%H_%M_%S')
 log_name="srv_$date_time.log"
@@ -10,7 +16,7 @@ for existing_log in srv_*.log; do
     mv "$existing_log" "$LOG_DIR"
   fi
 done
-if ! (./check.sh | grep -q "$APPLICATION is not running."); then
+if is_application_running; then
   exit 0
 fi
 ./$APPLICATION > "$log_name" 2>&1 &
@@ -41,7 +47,7 @@ is_any_address_listening() {
 }
 
 while true; do
-  if ./check.sh | grep -q "$APPLICATION is not running."; then
+  if ! is_application_running; then
     exit 1
   fi
   if is_any_address_listening; then
