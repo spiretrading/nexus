@@ -26,7 +26,7 @@ feeds+=" UtpMarketDataFeedClient"
 
 for directory in $services; do
   pushd $directory/Application > /dev/null
-  ./check_server.sh
+  ./check.sh
   popd > /dev/null
 done
 for directory in $feeds; do
