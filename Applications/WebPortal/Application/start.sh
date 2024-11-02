@@ -2,13 +2,6 @@
 APPLICATION="WebPortal"
 CONFIG_FILE="config.yml"
 LOG_DIR="./logs"
-
-is_process_running() {
-  local pid=$1
-  ps -p "$pid" > /dev/null 2>&1
-  return $?
-}
-
 mkdir -p "$LOG_DIR"
 date_time=$(date '+%Y%m%d_%H_%M_%S')
 log_name="srv_$date_time.log"

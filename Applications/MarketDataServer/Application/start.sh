@@ -2,13 +2,6 @@
 APPLICATION="MarketDataServer"
 CONFIG_FILE="config.yml"
 LOG_DIR="./logs"
-
-is_process_running() {
-  local pid=$1
-  ps -p "$pid" > /dev/null 2>&1
-  return $?
-}
-
 mkdir -p "$LOG_DIR"
 date_time=$(date '+%Y%m%d_%H_%M_%S')
 log_name="srv_$date_time.log"
@@ -23,8 +16,8 @@ fi
 ./$APPLICATION > "$log_name" 2>&1 &
 new_pid=$!
 echo "$new_pid" > "pid.lock"
-interface=$(yq '.server.interface // empty' "$CONFIG_FILE")
-addresses=($(yq '.server.addresses[] // empty' "$CONFIG_FILE"))
+interface=$(yq '.registry_server.interface // empty' "$CONFIG_FILE")
+addresses=($(yq '.registry_server.addresses[] // empty' "$CONFIG_FILE"))
 all_addresses=()
 if [[ -n "$interface" ]]; then
   all_addresses+=("$interface")
