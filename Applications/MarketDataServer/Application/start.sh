@@ -16,8 +16,8 @@ fi
 ./$APPLICATION > "$log_name" 2>&1 &
 new_pid=$!
 echo "$new_pid" > "pid.lock"
-interface=$(yq '.registry_server.interface // empty' "$CONFIG_FILE")
-addresses=($(yq '.registry_server.addresses[] // empty' "$CONFIG_FILE"))
+interface=$(yq '.registry_server.interface // ""' "$CONFIG_FILE")
+addresses=($(yq '.registry_server.addresses[] // ""' "$CONFIG_FILE"))
 all_addresses=()
 if [[ -n "$interface" ]]; then
   all_addresses+=("$interface")
@@ -34,10 +34,10 @@ is_any_address_listening() {
     host="${addr%%:*}"
     port="${addr##*:}"
     if ss -ltn | grep -qE "$host:$port"; then
-      return 1
+      return 0
     fi
   done
-  return 0
+  return 1
 }
 
 while true; do
