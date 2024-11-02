@@ -18,7 +18,6 @@ for directory in $services; do
   pushd $directory/Application > /dev/null
   ./start.sh
   popd > /dev/null
-  sleep 3
 done
 
 pushd AdministrationServer/Application > /dev/null
