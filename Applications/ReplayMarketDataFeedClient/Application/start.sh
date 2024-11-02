@@ -14,4 +14,4 @@ if ! (./check.sh | grep -q "$APPLICATION is not running."); then
 fi
 ./$APPLICATION > "$log_name" 2>&1 &
 new_pid=$!
-echo "$new_pid" > "$PID_FILE"
+echo "$new_pid" > "pid.lock"
