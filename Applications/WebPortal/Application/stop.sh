@@ -1,37 +1,19 @@
 #!/bin/bash
 APPLICATION="WebPortal"
-CHECK_SCRIPT="./check.sh"
 PID_FILE="pid.lock"
-log_file=$(ls -t srv_*.log 2>/dev/null | head -n 1)
-
-is_application_running() {
-  $CHECK_SCRIPT > /dev/null
-  return $?
-}
-
-stop_application() {
-  local pid=$1
-  local elapsed_time=0
-  local interval=2
-  while (( elapsed_time < 300 )); do
-    if ! ps -p "$pid" > /dev/null 2>&1; then
-      return 0
-    fi
-    kill -SIGINT "$pid"
-    sleep "$interval"
-    interval=10
-    elapsed_time=$(( elapsed_time + interval ))
-  done
-  kill -SIGKILL "$pid"
-  if [[ -n "$log_file" ]]; then
-    echo "Forcefully terminated $APPLICATION." >> "$log_file"
-  fi
-}
 
 if [[ -f "$PID_FILE" ]]; then
-  if is_application_running; then
-    pid=$(<"$PID_FILE")
-    stop_application "$pid"
+  pid=$(<"$PID_FILE")
+  if ./check.sh > /dev/null; then
+    kill -SIGINT "$pid" 2> /dev/null
+    timeout 300s wait "$pid" 2> /dev/null
+    if [[ $? -eq 124 ]]; then
+      kill -SIGKILL "$pid" > /dev/null
+      log_file=$(ls -t srv_*.log 2>/dev/null | head -n 1)
+      if [[ -n "$log_file" ]]; then
+       echo "Forcefully terminated $APPLICATION." >> "$log_file"
+      fi
+    fi
   fi
   rm -f "$PID_FILE"
 fi
