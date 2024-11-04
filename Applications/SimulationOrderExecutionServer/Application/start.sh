@@ -16,8 +16,8 @@ done
 ./$APPLICATION > "$log_name" 2>&1 &
 new_pid=$!
 echo "$new_pid" > "pid.lock"
-all_addresses=($(yq -r '.server.interface? | select(. != null), \
-  .server.addresses[]? | select(. != null) | @sh' "$CONFIG_FILE"))
+all_addresses=($(yq -r \
+  '.server.interface? | select(. != null), .server.addresses[]? | select(. != null) | @sh' "$CONFIG_FILE"))
 if [[ ${#all_addresses[@]} -eq 0 ]]; then
   exit 0
 fi
