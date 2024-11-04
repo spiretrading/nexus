@@ -87,7 +87,7 @@ if [ ! -d "quickfix-v.1.15.1" ]; then
 fi
 python3 -c "import git"
 if [ "$?" != "0" ]; then
-  pip3 install GitPython
+  pip3 install --user --break-system-packages GitPython
 fi
 echo timestamp > cache_files/nexus.txt
 exit $exit_status
