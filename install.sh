@@ -11,10 +11,11 @@ function print_usage() {
 
 function install_dependencies() {
   if [ $is_root -eq 1 ]; then
+    add-apt-repository ppa:rmescandon/yq -y
     apt-get update
     apt-get install -y automake cmake g++ gcc gdb git libncurses5-dev \
       libreadline6-dev libtool libxml2 libxml2-dev m4 make mysql-server nodejs \
-      npm parallel python3 python3-dev python3-pip ruby zip
+      npm parallel python3 python3-dev python3-pip ruby yq zip
   fi
 }
 
