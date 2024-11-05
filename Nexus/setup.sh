@@ -21,7 +21,7 @@ if [ -f "cache_files/nexus.txt" ]; then
   fi
 fi
 cores="`grep -c "processor" < /proc/cpuinfo`"
-beam_commit="90a197c625b2caec81f16b29a26667740559d225"
+beam_commit="2f655682600b1e0e0d780d0cd64c06b5e01a7152"
 build_beam=0
 if [ ! -d "Beam" ]; then
   git clone https://www.github.com/spiretrading/beam.git Beam
@@ -87,7 +87,7 @@ if [ ! -d "quickfix-v.1.15.1" ]; then
 fi
 python3 -c "import git"
 if [ "$?" != "0" ]; then
-  pip3 install GitPython
+  pip3 install --user --break-system-packages GitPython
 fi
 echo timestamp > cache_files/nexus.txt
 exit $exit_status
