@@ -67,6 +67,8 @@ ColorBox::ColorBox(std::shared_ptr<ColorModel> current, QWidget* parent)
     : QWidget(parent),
       m_current(std::move(current)),
       m_submission(m_current->get()),
+      m_color_picker(nullptr),
+      m_color_picker_panel(nullptr),
       m_is_read_only(false),
       m_is_modified(false),
       m_focus_observer(*this),
@@ -92,20 +94,12 @@ ColorBox::ColorBox(std::shared_ptr<ColorModel> current, QWidget* parent)
   update_style(*this, [] (auto& style) {
     style.get(Any()).set(padding(scale_width(1)));
   });
-  m_color_picker = new ColorPicker(m_current, *this);
-  m_color_picker_panel = m_color_picker->window();
   m_current_connection = m_current->connect_update_signal(
     std::bind_front(&ColorBox::on_current, this));
   m_focus_observer.connect_state_signal(
     std::bind_front(&ColorBox::on_focus, this));
   m_press_observer.connect_press_end_signal(
     std::bind_front(&ColorBox::on_press_end, this));
-  auto input_boxes = get_input_boxes(*m_color_picker);
-  for(auto input_box : input_boxes) {
-    find_focus_proxy(*input_box)->installEventFilter(this);
-  }
-  m_color_picker->installEventFilter(this);
-  m_color_picker_panel->installEventFilter(this);
 }
 
 const std::shared_ptr<ColorModel>& ColorBox::get_current() const {
@@ -190,6 +184,17 @@ void ColorBox::on_current(const QColor& current) {
 }
 
 void ColorBox::show_color_picker() {
+  if(!m_color_picker) {
+    m_color_picker = new ColorPicker(m_current, *this);
+    m_color_picker->installEventFilter(this);
+    link(*this, *m_color_picker);
+    m_color_picker_panel = m_color_picker->window();
+    m_color_picker_panel->installEventFilter(this);
+    auto input_boxes = get_input_boxes(*m_color_picker);
+    for(auto input_box : input_boxes) {
+      find_focus_proxy(*input_box)->installEventFilter(this);
+    }
+  }
   if(!m_color_picker->isVisible()) {
     m_color_picker->show();
     get_color_code_panel(*m_color_picker)->nextInFocusChain()->setFocus();

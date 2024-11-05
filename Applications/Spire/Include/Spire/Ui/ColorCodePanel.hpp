@@ -60,7 +60,6 @@ namespace Styles {
       QSize sizeHint() const override;
 
     protected:
-      bool eventFilter(QObject* watched, QEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
 
     private:
@@ -69,10 +68,13 @@ namespace Styles {
       DropDownBox* m_color_format_box;
       QStackedWidget* m_color_input;
       PercentBox* m_alpha_box;
+      bool m_is_alpha_visibile;
       mutable boost::optional<QSize> m_size_hint;
+      boost::signals2::scoped_connection m_style_connection;
 
       void update_layout();
       void on_mode_current(const boost::optional<int>& current);
+      void on_alpha_style();
   };
 }
 
