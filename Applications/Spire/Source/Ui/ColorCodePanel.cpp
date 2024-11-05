@@ -522,8 +522,7 @@ void ColorCodePanel::on_mode_current(const optional<int>& current) {
 void ColorCodePanel::on_alpha_style() {
   auto has_update = std::make_shared<bool>(false);
   auto& stylist = find_stylist(*m_alpha_box);
-  auto& block = stylist.get_computed_block();
-  if(auto visibility = Spire::Styles::find<Visibility>(block)) {
+  if(auto visibility = Styles::find<Visibility>(stylist.get_computed_block())) {
     stylist.evaluate(*visibility, [=] (auto visibility) {
       *has_update = true;
       if(visibility == Visibility::VISIBLE) {

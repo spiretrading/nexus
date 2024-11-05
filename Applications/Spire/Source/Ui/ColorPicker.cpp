@@ -19,6 +19,7 @@ using namespace Spire::Styles;
 namespace {
   const auto COLOR_SWATCH_WIDTH = 22;
   const auto COLOR_SELECTOR_WIDTH = 220;
+  const auto COLOR_SWATCH_COUNT = 12;
 
   const auto& CHEQUERED_BOARD_IMAGE() {
     static auto image = QPixmap(":/Icons/chequered-board.png");
@@ -298,7 +299,7 @@ bool ColorPicker::event(QEvent* event) {
     auto margins = m_panel->layout()->contentsMargins();
     auto width = [&] {
       if(m_alpha_slider->isVisible()) {
-        return 12 * scale_width(COLOR_SWATCH_WIDTH);
+        return COLOR_SWATCH_COUNT * scale_width(COLOR_SWATCH_WIDTH);
       } else {
         return scale_width(COLOR_SELECTOR_WIDTH);
       }
