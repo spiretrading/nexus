@@ -271,12 +271,15 @@ struct PriceLevelModel {
       });
     } else {
       auto current_blocker = shared_connection_block(m_color_connection);
-      for(auto i = 0; i < m_colors->get_size(); ++i) {
-        m_colors->set(i, m_color_scheme->get(i));
-      }
-      for(auto i = m_colors->get_size(); i < m_color_scheme->get_size(); ++i) {
-        m_colors->insert(m_color_scheme->get(i), i);
-      }
+      m_colors->transact([&] {
+        for(auto i = 0; i < m_colors->get_size(); ++i) {
+          m_colors->set(i, m_color_scheme->get(i));
+        }
+        for(auto i = m_colors->get_size(); i < m_color_scheme->get_size();
+            ++i) {
+          m_colors->insert(m_color_scheme->get(i), i);
+        }
+      });
     }
   }
 
