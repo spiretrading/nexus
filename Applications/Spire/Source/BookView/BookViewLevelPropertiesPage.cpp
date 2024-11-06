@@ -19,7 +19,6 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  using ColorBand = StateSelector<void, struct ColorBandTag>;
   using ScrollBoxOverflow = StateSelector<void, struct ScrollBoxOverflowTag>;
   const auto COLOR_BAND_WIDTH = 138;
   const auto COLOR_BAND_HEIGHT = 17;
@@ -42,22 +41,6 @@ namespace {
       static const auto value = QObject::tr("Solid");
       return value;
     }
-  }
-
-  auto scale_alpha(int start, int end, int levels) {
-    if(levels <= 0) {
-      return std::vector<int>();
-    }
-    auto alphas = std::vector<int>(levels, 255);
-    if(levels == 1) {
-      alphas[0] = start;
-      return alphas;
-    }
-    auto range = end - start;
-    for(auto i = 0; i < levels; ++i) {
-      alphas[i] = start + static_cast<double>(i) / (levels - 1) * range;
-    }
-    return alphas;
   }
 
   void scale(std::shared_ptr<ListModel<QColor>>& scheme, const QColor& start,
@@ -253,26 +236,6 @@ struct PriceLevelModel {
     QObject::connect(m_timer, &QTimer::timeout,
       std::bind_front(&PriceLevelModel::on_timeout, this));
   }
-
-  //void scale(const QColor& start, const QColor& end, int levels) {
-  //  auto colors = scale_oklch(start, end, levels);
-  //  m_color_scheme->transact([&] {
-  //    auto index = 0;
-  //    while(index < std::ssize(colors)) {
-  //      if(index < m_color_scheme->get_size()) {
-  //        if(m_color_scheme->get(index).name() != colors[index].name()) {
-  //          m_color_scheme->set(index, colors[index]);
-  //        }
-  //      } else {
-  //        m_color_scheme->insert(colors[index], index);
-  //      }
-  //      ++index;
-  //    }
-  //    while(m_color_scheme->get_size() > index) {
-  //      m_color_scheme->remove(m_color_scheme->get_size() - 1);
-  //    }
-  //  });
-  //}
 
   void update_gradient_color_scheme(int levels) {
     if(m_color_scheme->get_size() > 1) {
@@ -508,7 +471,6 @@ struct BookViewLevelPropertiesPage::PriceLevelWidget : QWidget {
         set(TextColor(get_text_color(m_model->m_color_scheme->get(index)))).
         set(TextAlign(Qt::AlignCenter));
     });
-    match(*band, ColorBand());
     link(*this, *band);
     return band;
   }
@@ -687,7 +649,7 @@ const std::shared_ptr<LevelPropertiesModel>&
 void BookViewLevelPropertiesPage::on_font(const QFont& font) {
   if(m_font != font) {
     update_style(*this, [&] (auto& style) {
-      style.get(Any() > is_a<PriceLevelWidget>() > ColorBand()).
+      style.get(Any() > is_a<PriceLevelWidget>() > is_a<TextBox>()).
         set(Font(font));
     });
     m_font = font;

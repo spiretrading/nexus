@@ -257,8 +257,7 @@ ColorPicker::ColorPicker(std::shared_ptr<ColorModel> current,
   layout->addWidget(make_hue_slider(m_model->m_hue_slider_model));
   layout->addWidget(m_alpha_slider);
   layout->addSpacing(scale_height(10));
-  m_code_panel = new ColorCodePanel(get_current());
-  layout->addWidget(m_code_panel);
+  layout->addWidget(new ColorCodePanel(get_current()));
   m_panel = new OverlayPanel(*this, parent);
   m_panel->setWindowFlags(Qt::Popup | (m_panel->windowFlags() & ~Qt::Tool));
   m_panel->installEventFilter(this);
@@ -294,7 +293,7 @@ bool ColorPicker::event(QEvent* event) {
   if(event->type() == QEvent::ShowToParent) {
     m_panel->show();
     auto margins = m_panel->layout()->contentsMargins();
-    m_panel->setFixedWidth(m_code_panel->sizeHint().width() + margins.left() +
+    m_panel->setFixedWidth(m_panel->get_body().width() + margins.left() +
       margins.right() + m_panel_horizontal_spacing);
   } else if(event->type() == QEvent::HideToParent) {
     m_panel->hide();

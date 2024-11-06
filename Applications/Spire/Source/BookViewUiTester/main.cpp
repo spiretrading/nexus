@@ -49,7 +49,7 @@ struct PropertiesTester {
         m_previous_properties(m_page.get_current()->get()),
         m_line_number(0) {
     m_page.show();
-    m_page.resize(scale(388, 503));
+    m_page.resize(scale(360, 503));
     m_logs.show();
     m_logs.resize(scale(300, 500));
     m_logs.move(
