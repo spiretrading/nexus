@@ -433,7 +433,7 @@ ColorCodePanel::ColorCodePanel(std::shared_ptr<ValueModel<QColor>> current,
     QWidget* parent)
     : QWidget(parent),
       m_current(std::make_shared<ColorCodeValueModel>(std::move(current))),
-      m_is_alpha_visibile(true) {
+      m_is_alpha_visible(true) {
   m_color_format_box = make_color_format_box(this);
   m_color_format_box->get_current()->connect_update_signal(
     std::bind_front(&ColorCodePanel::on_mode_current, this));
@@ -477,7 +477,7 @@ QSize ColorCodePanel::sizeHint() const {
   auto color_input_width = std::clamp(m_color_input->sizeHint().width(),
     m_color_input->minimumWidth(), m_color_input->maximumWidth());
   auto alpha_width = [&] {
-    if(m_is_alpha_visibile) {
+    if(m_is_alpha_visible) {
       return (color_input_width - scale_width(8)) / 3;
     }
     return 0;
@@ -497,7 +497,7 @@ void ColorCodePanel::update_layout() {
   auto height = m_color_format_box->height();
   m_color_format_box->move(0, y);
   auto color_input_width = [&] {
-    if(m_is_alpha_visibile) {
+    if(m_is_alpha_visible) {
       return (3 * (width() - m_color_format_box->width() - scale_width(12)) +
         scale_width(8)) / 4;
     }
@@ -505,7 +505,7 @@ void ColorCodePanel::update_layout() {
   }();
   m_color_input->setGeometry(m_color_format_box->width() + scale_width(8), y,
     color_input_width, height);
-  if(m_is_alpha_visibile) {
+  if(m_is_alpha_visible) {
     m_alpha_box->setGeometry(m_color_input->geometry().right() + scale_width(4),
       y, (m_color_input->width() - scale_width(8)) / 3, height);
   }
@@ -525,11 +525,7 @@ void ColorCodePanel::on_alpha_style() {
   if(auto visibility = Styles::find<Visibility>(stylist.get_computed_block())) {
     stylist.evaluate(*visibility, [=] (auto visibility) {
       *has_update = true;
-      if(visibility == Visibility::VISIBLE) {
-        m_is_alpha_visibile = true;
-      } else {
-        m_is_alpha_visibile = false;
-      }
+      m_is_alpha_visible = visibility == Visibility::VISIBLE;
     });
   }
   if(*has_update) {

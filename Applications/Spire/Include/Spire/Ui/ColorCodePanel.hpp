@@ -68,7 +68,7 @@ namespace Styles {
       DropDownBox* m_color_format_box;
       QStackedWidget* m_color_input;
       PercentBox* m_alpha_box;
-      bool m_is_alpha_visibile;
+      bool m_is_alpha_visible;
       mutable boost::optional<QSize> m_size_hint;
       boost::signals2::scoped_connection m_style_connection;
 

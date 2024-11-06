@@ -190,8 +190,7 @@ void ColorBox::show_color_picker() {
     link(*this, *m_color_picker);
     m_color_picker_panel = m_color_picker->window();
     m_color_picker_panel->installEventFilter(this);
-    auto input_boxes = get_input_boxes(*m_color_picker);
-    for(auto input_box : input_boxes) {
+    for(auto& input_box : get_input_boxes(*m_color_picker)) {
       find_focus_proxy(*input_box)->installEventFilter(this);
     }
   }
