@@ -12,16 +12,6 @@ function print_usage() {
   echo "      The default value is ($local_interface)."
 }
 
-function install_dependencies() {
-  if [ $is_root -eq 1 ]; then
-    apt-get update
-    apt-get install -y automake build-essential cmake curl g++ gcc gdb git \
-      libncurses5-dev libreadline6-dev libtool libxml2 libxml2-dev m4 make \
-      mysql-server parallel python3 python3-dev python3-pip ruby zip
-    snap install yq --channel=v3/stable
-  fi
-}
-
 function install_node() {
   if [ "$ARCH" == "x86_64" ]; then
     ARCH="x64"
@@ -46,6 +36,17 @@ function check_and_install_node() {
     fi
   fi
   install_node
+}
+
+function install_dependencies() {
+  if [ $is_root -eq 1 ]; then
+    apt-get update
+    apt-get install -y automake build-essential cmake curl g++ gcc gdb git \
+      libncurses5-dev libreadline6-dev libtool libxml2 libxml2-dev m4 make \
+      mysql-server parallel python3 python3-dev python3-pip ruby zip
+    snap install yq --channel=v3/stable
+    check_and_install_node
+  fi
 }
 
 if [ "$EUID" == "0" ]; then
