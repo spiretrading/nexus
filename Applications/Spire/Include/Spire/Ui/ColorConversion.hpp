@@ -91,7 +91,7 @@ namespace Spire {
     int steps);
 
   /**
-   * Scales alphas from start to stop.
+   * Scales alphas from start to end.
    * @param start The start alpha.
    * @param end The end alpha.
    * @param steps The steps by which alphas are scaled.

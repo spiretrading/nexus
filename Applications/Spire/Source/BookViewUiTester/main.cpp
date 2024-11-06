@@ -82,14 +82,6 @@ struct PropertiesTester {
   }
 };
 
-struct PropertiesOutput : QWidget {
-  PropertiesOutput(QWidget* parent = nullptr)
-      : QWidget(parent) {
-    auto text_edit = new QTextEdit();
-    enclose(*this, *text_edit);
-  }
-};
-
 struct BookViewTester : QWidget {
   BookViewTester(std::shared_ptr<SecurityTechnicalsModel> technicals,
       std::shared_ptr<ValueModel<BboQuote>> bbo_quote,

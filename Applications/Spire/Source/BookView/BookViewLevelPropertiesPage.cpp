@@ -122,22 +122,15 @@ namespace {
   class ArrayValueToListModel : public ListModel<T> {
     public:
       using Type = typename ListModel<T>::Type;
-
       using OperationSignal = ListModel<T>::OperationSignal;
-
       using AddOperation = typename ListModel<T>::AddOperation;
-
       using PreRemoveOperation = typename ListModel<T>::PreRemoveOperation;
-
       using RemoveOperation = typename ListModel<T>::RemoveOperation;
-
       using UpdateOperation = typename ListModel<T>::UpdateOperation;
-
       using StartTransaction = typename ListModel<T>::StartTransaction;
-
       using EndTransaction = typename ListModel<T>::EndTransaction;
 
-      ArrayValueToListModel(
+      explicit ArrayValueToListModel(
         std::shared_ptr<ValueModel<std::vector<Type>>> source)
         : m_source(std::move(source)) {}
 
@@ -424,8 +417,8 @@ struct BookViewLevelPropertiesPage::PriceLevelWidget : QWidget {
         unmatch(*m_scroll_box, ScrollBoxOverflow());
       }
     } else if(watched == &m_scroll_box->get_body() &&
-          event->type() == QEvent::Resize &&
-          m_model->m_fill_type->get() == FillType::GRADIENT) {
+        event->type() == QEvent::Resize &&
+        m_model->m_fill_type->get() == FillType::GRADIENT) {
       m_color_boxes->resize(
         m_scroll_box->get_body().width() - m_color_boxes->x(),
         m_color_boxes->height());
@@ -483,8 +476,8 @@ struct BookViewLevelPropertiesPage::PriceLevelWidget : QWidget {
   }
 
   ColorBox* make_color_box(int index) {
-    auto color_box = new ColorBox(std::make_shared<ListValueModel<QColor>>(
-      m_model->m_colors, index));
+    auto color_box = new ColorBox(
+      std::make_shared<ListValueModel<QColor>>(m_model->m_colors, index));
     color_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     color_box->setFixedHeight(scale_height(COLOR_BOX_HEIGHT));
     return color_box;
@@ -512,8 +505,8 @@ struct BookViewLevelPropertiesPage::PriceLevelWidget : QWidget {
     }
     auto box = new Box(body);
     update_style(*box, [] (auto& style) {
-      style.get(Any()).set(
-        vertical_padding(scale_height(COLOR_BOXES_VERTICAL_PADDING)));
+      style.get(Any()).
+        set(vertical_padding(scale_height(COLOR_BOXES_VERTICAL_PADDING)));
     });
     return box;
   }

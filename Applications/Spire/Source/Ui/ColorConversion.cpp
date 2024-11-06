@@ -226,7 +226,7 @@ std::vector<int> Spire::scale_alpha(int start, int end, int steps) {
   if(steps <= 0) {
     return {};
   }
-  auto alphas = std::vector<int>(steps, 255);
+  auto alphas = std::vector<int>(steps);
   if(steps == 1) {
     alphas[0] = start;
     return alphas;

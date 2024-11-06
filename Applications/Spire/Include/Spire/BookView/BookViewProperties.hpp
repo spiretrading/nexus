@@ -17,8 +17,8 @@ namespace Spire {
     /** A list of color values used to designate distinct price levels. */
     std::vector<QColor> m_color_scheme;
 
-     /** Returns the default properties. */
-     static const BookViewLevelProperties& get_default();
+    /** Returns the default properties. */
+    static const BookViewLevelProperties& get_default();
   };
 }
 
