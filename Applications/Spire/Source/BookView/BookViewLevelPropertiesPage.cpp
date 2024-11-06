@@ -616,10 +616,9 @@ BookViewLevelPropertiesPage::BookViewLevelPropertiesPage(
   grid_check_box->set_label(tr("Show Grid"));
   grid_check_box->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
   auto price_level_header = make_header_label(tr("Price Levels"));
-  auto price_level_widget = new PriceLevelWidget(
+  m_price_level_widget = new PriceLevelWidget(
     make_field_value_model(m_current, &BookViewLevelProperties::m_color_scheme),
     font_box->get_current());
-  link(*this, *price_level_widget);
   auto body = new QWidget();
   auto layout = make_vbox_layout(body);
   layout->addWidget(text_header);
@@ -628,7 +627,7 @@ BookViewLevelPropertiesPage::BookViewLevelPropertiesPage(
   layout->addWidget(grid_check_box, 0, Qt::AlignLeft);
   layout->addSpacing(scale_height(24));
   layout->addWidget(price_level_header);
-  layout->addWidget(price_level_widget);
+  layout->addWidget(m_price_level_widget);
   auto box = new Box(body);
   proxy_style(*this, *box);
   update_style(*this, [] (auto& style) {
@@ -648,9 +647,8 @@ const std::shared_ptr<LevelPropertiesModel>&
 
 void BookViewLevelPropertiesPage::on_font(const QFont& font) {
   if(m_font != font) {
-    update_style(*this, [&] (auto& style) {
-      style.get(Any() > is_a<PriceLevelWidget>() > is_a<TextBox>()).
-        set(Font(font));
+    update_style(*m_price_level_widget, [&] (auto& style) {
+      style.get(Any() > is_a<TextBox>()).set(Font(font));
     });
     m_font = font;
   }

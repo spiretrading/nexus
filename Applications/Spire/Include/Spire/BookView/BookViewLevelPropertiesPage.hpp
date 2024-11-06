@@ -15,7 +15,7 @@ namespace Spire {
   /** Implements a widget for the price level property settings. */
   class BookViewLevelPropertiesPage : public QWidget {
     public:
-      
+
       /**
        * Constructs a BookViewLevelPropertiesPage.
        * @param current The initial current properties.
@@ -31,6 +31,7 @@ namespace Spire {
     private:
       struct PriceLevelWidget;
       std::shared_ptr<LevelPropertiesModel> m_current;
+      PriceLevelWidget* m_price_level_widget;
       QFont m_font;
       boost::signals2::scoped_connection m_font_connection;
 
