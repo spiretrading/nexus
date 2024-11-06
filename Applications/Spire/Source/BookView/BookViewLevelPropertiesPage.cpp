@@ -12,6 +12,7 @@
 #include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/TextBox.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 using namespace boost;
 using namespace signals2;
@@ -32,6 +33,11 @@ namespace {
     GRADIENT,
     SOLID
   };
+
+  auto INTEGER_BOX_HORIZONTAL_PADDING() {
+    static auto padding = scale_width(32);
+    return padding;
+  }
 
   auto to_text(FillType type) {
     if(type == FillType::GRADIENT) {
@@ -91,7 +97,8 @@ namespace {
     });
     auto levels_box = new IntegerBox(std::move(model));
     levels_box->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
-    levels_box->setFixedWidth(6 * scale_width(12));
+    levels_box->setFixedWidth(
+      6 * get_default_character_width() + INTEGER_BOX_HORIZONTAL_PADDING());
     auto body = new QWidget();
     auto layout = make_hbox_layout(body);
     layout->addWidget(label);
@@ -105,7 +112,7 @@ namespace {
 
   auto get_text_color(const QColor& background_color) {
     if(std::abs(apca(QColor(Qt::black), background_color)) >
-      std::abs(apca(QColor(Qt::white), background_color))) {
+        std::abs(apca(QColor(Qt::white), background_color))) {
       return QColor(Qt::black);
     }
     return QColor(Qt::white);

@@ -25,7 +25,7 @@ namespace {
   }
 
   auto get_value_field_minimum_width() {
-    return QFontMetrics(LABEL_FONT()).averageCharWidth() * 8;
+    return get_character_width(LABEL_FONT()) * 8;
   }
 
   auto to_default_quantity(Quantity bid_quantity, Quantity ask_quantity) {

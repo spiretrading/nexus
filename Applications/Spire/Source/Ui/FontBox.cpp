@@ -21,18 +21,6 @@ namespace {
     return padding;
   }
 
-  auto get_character_width() {
-    static auto width = optional<int>();
-    if(width) {
-      return *width;
-    }
-    auto font = QFont("Roboto");
-    font.setWeight(QFont::Normal);
-    font.setPixelSize(scale_width(12));
-    width = QFontMetrics(font).averageCharWidth();
-    return *width;
-  }
-
   struct CustomFontFamilyBox : QWidget {
     explicit CustomFontFamilyBox(FontFamilyBox& family_box,
         QWidget* parent = nullptr)
@@ -41,8 +29,8 @@ namespace {
     }
 
     QSize sizeHint() const override {
-      return {14 * get_character_width() + DROP_DOWN_BOX_HORIZONTAL_PADDING(),
-        QWidget::sizeHint().height()};
+      return {14 * get_default_character_width() +
+        DROP_DOWN_BOX_HORIZONTAL_PADDING(), QWidget::sizeHint().height()};
     }
   };
 
@@ -54,8 +42,8 @@ namespace {
     }
 
     QSize sizeHint() const override {
-      return {12 * get_character_width() + DROP_DOWN_BOX_HORIZONTAL_PADDING(),
-        QWidget::sizeHint().height()};
+      return {12 * get_default_character_width() +
+        DROP_DOWN_BOX_HORIZONTAL_PADDING(), QWidget::sizeHint().height()};
     }
   };
 }
@@ -79,7 +67,7 @@ FontBox::FontBox(std::shared_ptr<ValueModel<QFont>> current, QWidget* parent)
   size_model->set(font_size);
   m_font_size_box = new IntegerBox(std::move(size_model));
   m_font_size_box->setFixedWidth(
-    6 * get_character_width() + INTEGER_BOX_HORIZONTAL_PADDING());
+    6 * get_default_character_width() + INTEGER_BOX_HORIZONTAL_PADDING());
   auto custom_family_box = new CustomFontFamilyBox(*m_font_family_box);
   custom_family_box->setSizePolicy(QSizePolicy::Expanding,
     QSizePolicy::Expanding);

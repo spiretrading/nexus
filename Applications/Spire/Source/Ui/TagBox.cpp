@@ -775,5 +775,5 @@ void TagBox::on_text_area_style() {
       });
   }
   m_text_area_box->setMaximumWidth(
-    50 * QFontMetrics(*text_font).averageCharWidth() + *horizontal_padding);
+    50 * get_character_width(*text_font) + *horizontal_padding);
 }
