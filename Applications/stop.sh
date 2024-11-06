@@ -16,6 +16,6 @@ services+=" ServiceLocator"
 
 for directory in $services; do
   pushd $directory/Application > /dev/null
-  ./stop_server.sh
+  ./stop.sh
   popd > /dev/null
 done

@@ -95,7 +95,6 @@
 #include "Spire/Ui/ScrollableListBox.hpp"
 #include "Spire/Ui/SearchBox.hpp"
 #include "Spire/Ui/SecurityBox.hpp"
-#include "Spire/Ui/SecurityFilterPanel.hpp"
 #include "Spire/Ui/SecurityListItem.hpp"
 #include "Spire/Ui/SecurityView.hpp"
 #include "Spire/Ui/SideBox.hpp"
@@ -1206,32 +1205,23 @@ UiProfile Spire::make_color_box_profile() {
         color_box->get_current()->set(color);
       }
     });
-    auto color_picker = [&] () -> OverlayPanel* {
-      auto children = color_box->children();
-      for(auto child : children) {
-        if(child->isWidgetType()) {
-          if(auto widget = static_cast<QWidget*>(child);
-              widget->windowFlags() & Qt::Popup) {
-            return static_cast<OverlayPanel*>(widget);
-          }
-        }
-      }
-      return nullptr;
-    }();
     auto& alpha_visible = get<bool>("alpha_visible", profile.get_properties());
     alpha_visible.connect_changed_signal([=] (auto value) {
       update_style(*color_box, [&] (auto& style) {
         if(value) {
-          style.get(Any() > Alpha()).set(Visibility::VISIBLE);
+          style.get(Any() > is_a<ColorPicker>() > Alpha()).
+            set(Visibility::VISIBLE);
+          style.get(
+            Any() > is_a<ColorPicker>() > is_a<ColorCodePanel>() > Alpha()).
+              set(Visibility::VISIBLE);
         } else {
-          style.get(Any() > Alpha()).set(Visibility::NONE);
+          style.get(Any() > is_a<ColorPicker>() > Alpha()).
+            set(Visibility::NONE);
+          style.get(
+            Any() > is_a<ColorPicker>() > is_a<ColorCodePanel>() > Alpha()).
+              set(Visibility::NONE);
         }
       });
-      if(value) {
-        color_picker->get_body().setFixedWidth(12 * scale_width(22));
-      } else {
-        color_picker->get_body().setFixedWidth(scale_width(220));
-      }
     });
     auto current_slot = profile.make_event_slot<QString>("Current");
     color_box->get_current()->connect_update_signal([=] (const auto& current) {
@@ -1317,9 +1307,13 @@ UiProfile Spire::make_color_picker_profile() {
     alpha_visible.connect_changed_signal([=] (auto value) {
       update_style(*picker, [&] (auto& style) {
         if(value) {
-          style.get(Any() >> Alpha()).set(Visibility::VISIBLE);
+          style.get(Any() > Alpha()).set(Visibility::VISIBLE);
+          style.get(Any() > is_a<ColorCodePanel>() > Alpha()).
+            set(Visibility::VISIBLE);
         } else {
-          style.get(Any() >> Alpha()).set(Visibility::NONE);
+          style.get(Any() > Alpha()).set(Visibility::NONE);
+          style.get(Any() > is_a<ColorCodePanel>() > Alpha()).
+            set(Visibility::NONE);
         }
       });
       if(value) {
@@ -3999,35 +3993,6 @@ UiProfile Spire::make_security_box_profile() {
     box->connect_submit_signal(profile.make_event_slot<Security>("Submit"));
     return box;
   });
-  return profile;
-}
-
-UiProfile Spire::make_security_filter_panel_profile() {
-  auto properties = std::vector<std::shared_ptr<UiProperty>>();
-  auto profile = UiProfile(QString("SecurityFilterPanel"), properties,
-    [] (auto& profile) {
-      auto model = populate_security_query_model();
-      auto button = make_label_button(QString::fromUtf8("Click me"));
-      auto panel = make_security_filter_panel(model, *button);
-      auto submit_filter_slot =
-        profile.make_event_slot<QString>(QString::fromUtf8("SubmitSignal"));
-      panel->connect_submit_signal(
-        [=] (const std::shared_ptr<AnyListModel>& submission,
-            OpenFilterPanel::Mode mode) {
-          auto result = QString();
-          if(mode == OpenFilterPanel::Mode::INCLUDE) {
-            result += "Include: ";
-          } else {
-            result += "Exclude: ";
-          }
-          for(auto i = 0; i < submission->get_size(); ++i) {
-            result += to_text(submission->get(i)) + " ";
-          }
-          submit_filter_slot(result);
-        });
-      button->connect_click_signal([=] { panel->show(); });
-      return button;
-    });
   return profile;
 }
 

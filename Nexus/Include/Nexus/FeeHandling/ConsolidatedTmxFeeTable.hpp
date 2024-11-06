@@ -375,8 +375,18 @@ namespace Nexus {
         return CalculateFee(feeTable.m_omgaFeeTable, isEtf,
           order.GetInfo().m_fields, executionReport);
       } else if(lastMarket == DefaultMarkets::PURE()) {
-        return CalculateFee(feeTable.m_pureFeeTable,
-          order.GetInfo().m_fields.m_security, executionReport);
+        auto section = [&] {
+          if(Beam::Contains(
+              feeTable.m_etfs, order.GetInfo().m_fields.m_security)) {
+            return PureFeeTable::Section::ETF;
+          } else if(Beam::Contains(
+              feeTable.m_interlisted, order.GetInfo().m_fields.m_security)) {
+            return PureFeeTable::Section::INTERLISTED;
+          } else {
+            return PureFeeTable::Section::DEFAULT;
+          }
+        }();
+        return CalculateFee(feeTable.m_pureFeeTable, section, executionReport);
       } else if(lastMarket == DefaultMarkets::TSX() ||
           lastMarket == DefaultMarkets::TSXV()) {
         if(lastMarket == DefaultMarkets::TSXV() && feeTable.m_nexListed.count(

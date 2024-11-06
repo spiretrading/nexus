@@ -16,44 +16,50 @@ namespace Nexus {
   /** Stores the table of fees used by Pure on TSX. */
   struct PureFeeTable {
 
-    /** Enumerates the types of price classes. */
-    enum class PriceClass {
+    /** Enumerates the sections of the fee tables. */
+    enum class Section {
 
-      /** Unknown. */
+      /** Invalid section. */
       NONE = -1,
 
-      /** Price >= $1.00. */
+      /** The default fee table. */
       DEFAULT,
 
-      /** Price >= $1.00 and designated. */
-      DESIGNATED,
+      /** Applies to interlisted securities. */
+      INTERLISTED,
 
-      /** Price >= $0.10 & < $1.00. */
+      /** Applies to ETFs. */
+      ETF
+    };
+
+    /** The number of sections enumerated. */
+    static const auto SECTION_COUNT = std::size_t(3);
+
+    /** Enumerates the rows of each section. */
+    enum class Row {
+
+      /** Invalid row. */
+      NONE = -1,
+
+      /** The row of sub-dollar fees. */
       SUBDOLLAR,
 
-      /** Price < $0.10. */
-      SUBDIME
+      /** The row of default fees. */
+      DEFAULT,
+
+      /** The row of dark sub-dollar fees. */
+      DARK_SUBDOLLAR,
+
+      /** The row of dark fees. */
+      DARK
     };
 
     /** The number of price classes enumerated. */
-    static constexpr auto PRICE_CLASS_COUNT = std::size_t(4);
+    static constexpr auto ROW_COUNT = std::size_t(4);
 
-    /** The TSX Venture listed fee table. */
-    std::array<std::array<Money, LIQUIDITY_FLAG_COUNT>, PRICE_CLASS_COUNT>
-      m_tsxVentureListedFeeTable;
-
-    /** The TSX listed fee table. */
-    std::array<std::array<Money, LIQUIDITY_FLAG_COUNT>, PRICE_CLASS_COUNT>
-      m_tsxListedFeeTable;
-
-    /** The fee used for odd-lots. */
-    Money m_oddLot;
-
-    /** The cap on TSX Venture listed subdime trades. */
-    Money m_tsxVentureListedSubdimeCap;
-
-    /** The set of Securities part of Pure's designated program. */
-    std::unordered_set<Security> m_designatedSecurities;
+    /** The fee table. */
+    std::array<std::array<std::array<Money, LIQUIDITY_FLAG_COUNT>, ROW_COUNT>,
+      SECTION_COUNT> m_feeTable;
   };
 
   /**
@@ -64,122 +70,83 @@ namespace Nexus {
   inline PureFeeTable ParsePureFeeTable(const YAML::Node& config,
       const MarketDatabase& marketDatabase) {
     auto feeTable = PureFeeTable();
-    ParseFeeTable(config, "tsx_venture_listed_fee_table",
-      Beam::Store(feeTable.m_tsxVentureListedFeeTable));
-    ParseFeeTable(config, "tsx_listed_fee_table",
-      Beam::Store(feeTable.m_tsxListedFeeTable));
-    feeTable.m_oddLot = Beam::Extract<Money>(config, "odd_lot");
-    feeTable.m_tsxVentureListedSubdimeCap = Beam::Extract<Money>(config,
-      "tsx_venture_subdime_cap");
-    auto designatedSecuritiesPath = Beam::Extract<std::string>(config,
-      "designated_securities_path");
-    auto designatedSecuritiesConfig = Beam::LoadFile(designatedSecuritiesPath);
-    auto symbols = designatedSecuritiesConfig["symbols"];
-    if(!symbols) {
-      BOOST_THROW_EXCEPTION(std::runtime_error(
-        "PURE designated symbols not found."));
-    }
-    for(auto symbol : symbols) {
-      auto security = ParseSecurity(Beam::Extract<std::string>(symbol),
-        marketDatabase);
-      feeTable.m_designatedSecurities.insert(security);
-    }
+    ParseFeeTable(config, "fee_table", Beam::Store(
+      feeTable.m_feeTable[static_cast<int>(PureFeeTable::Section::DEFAULT)]));
+    ParseFeeTable(config, "interlisted_table", Beam::Store(feeTable.m_feeTable[
+      static_cast<int>(PureFeeTable::Section::INTERLISTED)]));
+    ParseFeeTable(config, "etf_table", Beam::Store(feeTable.m_feeTable[
+      static_cast<int>(PureFeeTable::Section::ETF)]));
     return feeTable;
   }
 
   /**
-   * Looks up a fee on a TSX listed Security.
-   * @param feeTable The PureFeeTable used to lookup the fee.
-   * @param liquidityFlag The trade's LiquidityFlag.
-   * @param priceClass The trade's PriceClass.
-   * @return The fee corresponding to the specified <i>liquidityFlag</i> and
-   *         <i>priceClass</i>.
+   * Returns the row to use in a PureFeeTable based on an execution report.
+   * @param executionReport The execution report to get the row for.
    */
-  inline Money LookupTsxListedFee(const PureFeeTable& feeTable,
-      LiquidityFlag liquidityFlag, PureFeeTable::PriceClass priceClass) {
-    return feeTable.m_tsxListedFeeTable[static_cast<int>(priceClass)][
-      static_cast<int>(liquidityFlag)];
+  inline PureFeeTable::Row LookupPureRow(
+      const OrderExecutionService::ExecutionReport& executionReport) {
+    if(executionReport.m_liquidityFlag.size() >= 3 &&
+        executionReport.m_liquidityFlag[2] == 'D') {
+      if(executionReport.m_lastPrice < Money::ONE) {
+        return PureFeeTable::Row::DARK_SUBDOLLAR;
+      }
+      return PureFeeTable::Row::DARK;
+    } else if(executionReport.m_lastPrice < Money::ONE) {
+      return PureFeeTable::Row::SUBDOLLAR;
+    }
+    return PureFeeTable::Row::DEFAULT;
   }
 
   /**
-   * Looks up a fee on a TSX Venture listed Security.
-   * @param feeTable The PureFeeTable used to lookup the fee.
-   * @param liquidityFlag The trade's LiquidityFlag.
-   * @param priceClass The trade's PriceClass.
-   * @return The fee corresponding to the specified <i>liquidityFlag</i> and
-   *         <i>priceClass</i>.
+   * Returns the liquidity flag based on a Pure execution.
+   * @param executionReport The execution report to get the liquidity flag for.
    */
-  inline Money LookupTsxVentureListedFee(const PureFeeTable& feeTable,
-      LiquidityFlag liquidityFlag, PureFeeTable::PriceClass priceClass) {
-    return feeTable.m_tsxVentureListedFeeTable[static_cast<int>(priceClass)][
-      static_cast<int>(liquidityFlag)];
+  inline LiquidityFlag LookupPureLiquidityFlag(
+      const OrderExecutionService::ExecutionReport& executionReport) {
+    if(!executionReport.m_liquidityFlag.empty()) {
+      if(executionReport.m_liquidityFlag[0] == 'P') {
+        return LiquidityFlag::PASSIVE;
+      } else if(executionReport.m_liquidityFlag[0] == 'T') {
+        return LiquidityFlag::ACTIVE;
+      }
+    }
+    std::cout << "Unknown liquidity flag [PURE]: \"" <<
+      executionReport.m_liquidityFlag << "\"\n";
+    return LiquidityFlag::ACTIVE;
+  }
+
+  /**
+   * Looks up a fee in the PureFeeTable.
+   * @param feeTable The PureFeeTable used to lookup the fee.
+   * @param section The section of the fee table to lookup.
+   * @param row The row of the table to lookup.
+   * @param liquidityFlag The liquidity flag to lookup.
+   * @return The fee corresponding to the specified <i>section</i>, <i>row</i>,
+   *         and <i>liquidityFlag</i>.
+   */
+  inline Money LookupFee(const PureFeeTable& feeTable,
+      PureFeeTable::Section section, PureFeeTable::Row row,
+      LiquidityFlag liquidityFlag) {
+    return feeTable.m_feeTable[static_cast<int>(section)][
+      static_cast<int>(row)][static_cast<int>(liquidityFlag)];
   }
 
   /**
    * Calculates the fee on a trade executed on PURE.
    * @param feeTable The PureFeeTable used to calculate the fee.
-   * @param security The Security that was traded.
+   * @param section The section of the table to lookup.
    * @param executionReport The ExecutionReport to calculate the fee for.
    * @return The fee calculated for the specified trade.
    */
-  inline Money CalculateFee(const PureFeeTable& feeTable,
-      const Security& security,
+  inline Money CalculateFee(
+      const PureFeeTable& feeTable, PureFeeTable::Section section,
       const OrderExecutionService::ExecutionReport& executionReport) {
     if(executionReport.m_lastQuantity == 0) {
       return Money::ZERO;
-    } else if(executionReport.m_lastQuantity < 100) {
-      return executionReport.m_lastQuantity * feeTable.m_oddLot;
     }
-    auto priceClass = [&] {
-      if(feeTable.m_designatedSecurities.find(security) !=
-          feeTable.m_designatedSecurities.end()) {
-        return PureFeeTable::PriceClass::DESIGNATED;
-      } else if(executionReport.m_lastPrice < 10 * Money::CENT) {
-        return PureFeeTable::PriceClass::SUBDIME;
-      } else if(executionReport.m_lastPrice < Money::ONE) {
-        return PureFeeTable::PriceClass::SUBDOLLAR;
-      } else {
-        return PureFeeTable::PriceClass::DEFAULT;
-      }
-    }();
-    auto liquidityFlag = [&] {
-      if(executionReport.m_liquidityFlag.size() == 1) {
-        if(executionReport.m_liquidityFlag[0] == 'P') {
-          return LiquidityFlag::PASSIVE;
-        } else if(executionReport.m_liquidityFlag[0] == 'A') {
-          return LiquidityFlag::ACTIVE;
-        } else {
-          std::cout << "Unknown liquidity flag [PURE]: \"" <<
-            executionReport.m_liquidityFlag << "\"\n";
-          return LiquidityFlag::ACTIVE;
-        }
-      } else {
-        std::cout << "Unknown liquidity flag [PURE]: \"" <<
-          executionReport.m_liquidityFlag << "\"\n";
-        return LiquidityFlag::ACTIVE;
-      }
-    }();
-    auto fee = [&] {
-      if(security.GetMarket() == DefaultMarkets::TSX()) {
-        return LookupTsxListedFee(feeTable, liquidityFlag, priceClass);
-      } else if(security.GetMarket() == DefaultMarkets::TSXV()) {
-        return LookupTsxVentureListedFee(feeTable, liquidityFlag, priceClass);
-      } else {
-        std::cout << "Unknown market [PURE]: \"" << security.GetMarket() <<
-          "\"\n";
-        return LookupTsxVentureListedFee(feeTable, liquidityFlag, priceClass);
-      }
-    }();
-    if(priceClass == PureFeeTable::PriceClass::SUBDIME &&
-        security.GetMarket() == DefaultMarkets::TSXV()) {
-      if(fee >= Money::ZERO) {
-        return std::min(executionReport.m_lastQuantity * fee,
-          feeTable.m_tsxVentureListedSubdimeCap);
-      } else {
-        return std::max(executionReport.m_lastQuantity * fee,
-          -feeTable.m_tsxVentureListedSubdimeCap);
-      }
-    }
+    auto row = LookupPureRow(executionReport);
+    auto liquidityFlag = LookupPureLiquidityFlag(executionReport);
+    auto fee = LookupFee(feeTable, section, row, liquidityFlag);
     return executionReport.m_lastQuantity * fee;
   }
 }

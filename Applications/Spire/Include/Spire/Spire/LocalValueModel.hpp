@@ -24,7 +24,7 @@ namespace Spire {
        * Constructs a model with an initial value.
        * @param value The initial value.
        */
-      LocalValueModel(Type value);
+      explicit LocalValueModel(Type value);
 
       const Type& get() const override;
 

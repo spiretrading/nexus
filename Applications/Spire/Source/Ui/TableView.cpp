@@ -75,9 +75,6 @@ TableView::TableView(
   m_header_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   m_header_view->setContentsMargins({scale_width(1), 0, 0, 0});
   link(*this, *m_header_view);
-  for(auto i = 0; i < m_header->get_size(); ++i) {
-    m_header_view->get_item(i)->installEventFilter(this);
-  }
   auto box = new Box(m_header_view);
   box->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed);
   update_style(*box, [] (auto& style) {
@@ -146,6 +143,26 @@ TableBody& TableView::get_body() {
   return *m_body;
 }
 
+ScrollBox& TableView::get_scroll_box() {
+  return *m_scroll_box;
+}
+
+void TableView::show_column(int column) {
+  if(column < 0 || column >= m_header_view->get_widths()->get_size()) {
+    return;
+  }
+  m_header_view->get_item(column)->show();
+  m_body->show_column(column);
+}
+
+void TableView::hide_column(int column) {
+  if(column < 0 || column >= m_header_view->get_widths()->get_size()) {
+    return;
+  }
+  m_header_view->get_item(column)->hide();
+  m_body->hide_column(column);
+}
+
 connection TableView::connect_sort_signal(
     const SortSignal::slot_type& slot) const {
   return m_sort_signal.connect(slot);
@@ -157,18 +174,6 @@ bool TableView::eventFilter(QObject* watched, QEvent* event) {
       auto result = QWidget::eventFilter(watched, event);
       update_scroll_sizes();
       return result;
-    }
-  } else {
-    if(event->type() == QEvent::HideToParent) {
-      if(auto index =
-          m_header_view->get_index(static_cast<TableHeaderItem*>(watched))) {
-        m_body->hide_column(*index);
-      }
-    } else if(event->type() == QEvent::ShowToParent) {
-      if(auto index =
-          m_header_view->get_index(static_cast<TableHeaderItem*>(watched))) {
-        m_body->show_column(*index);
-      }
     }
   }
   return QWidget::eventFilter(watched, event);
