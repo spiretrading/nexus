@@ -1205,32 +1205,23 @@ UiProfile Spire::make_color_box_profile() {
         color_box->get_current()->set(color);
       }
     });
-    auto color_picker = [&] () -> OverlayPanel* {
-      auto children = color_box->children();
-      for(auto child : children) {
-        if(child->isWidgetType()) {
-          if(auto widget = static_cast<QWidget*>(child);
-              widget->windowFlags() & Qt::Popup) {
-            return static_cast<OverlayPanel*>(widget);
-          }
-        }
-      }
-      return nullptr;
-    }();
     auto& alpha_visible = get<bool>("alpha_visible", profile.get_properties());
     alpha_visible.connect_changed_signal([=] (auto value) {
       update_style(*color_box, [&] (auto& style) {
         if(value) {
-          style.get(Any() > Alpha()).set(Visibility::VISIBLE);
+          style.get(Any() > is_a<ColorPicker>() > Alpha()).
+            set(Visibility::VISIBLE);
+          style.get(
+            Any() > is_a<ColorPicker>() > is_a<ColorCodePanel>() > Alpha()).
+              set(Visibility::VISIBLE);
         } else {
-          style.get(Any() > Alpha()).set(Visibility::NONE);
+          style.get(Any() > is_a<ColorPicker>() > Alpha()).
+            set(Visibility::NONE);
+          style.get(
+            Any() > is_a<ColorPicker>() > is_a<ColorCodePanel>() > Alpha()).
+              set(Visibility::NONE);
         }
       });
-      if(value) {
-        color_picker->get_body().setFixedWidth(12 * scale_width(22));
-      } else {
-        color_picker->get_body().setFixedWidth(scale_width(220));
-      }
     });
     auto current_slot = profile.make_event_slot<QString>("Current");
     color_box->get_current()->connect_update_signal([=] (const auto& current) {
@@ -1316,9 +1307,13 @@ UiProfile Spire::make_color_picker_profile() {
     alpha_visible.connect_changed_signal([=] (auto value) {
       update_style(*picker, [&] (auto& style) {
         if(value) {
-          style.get(Any() >> Alpha()).set(Visibility::VISIBLE);
+          style.get(Any() > Alpha()).set(Visibility::VISIBLE);
+          style.get(Any() > is_a<ColorCodePanel>() > Alpha()).
+            set(Visibility::VISIBLE);
         } else {
-          style.get(Any() >> Alpha()).set(Visibility::NONE);
+          style.get(Any() > Alpha()).set(Visibility::NONE);
+          style.get(Any() > is_a<ColorCodePanel>() > Alpha()).
+            set(Visibility::NONE);
         }
       });
       if(value) {
