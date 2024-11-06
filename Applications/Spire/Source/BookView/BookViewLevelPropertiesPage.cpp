@@ -228,7 +228,8 @@ struct PriceLevelModel {
   }
 
   void on_levels_update(const optional<int> levels) {
-    if(!levels) {
+    if(!levels || *levels < m_levels->get_minimum() ||
+        *levels > m_levels->get_maximum()) {
       return;
     }
     if(m_fill_type->get() == FillType::GRADIENT) {
@@ -266,7 +267,7 @@ struct PriceLevelModel {
           while(m_colors->get_size() > 2) {
             m_colors->remove(1);
           }
-          scale(*m_levels->get());
+          scale(m_color_scheme->get_size());
         }
       });
     } else {
@@ -284,7 +285,7 @@ struct PriceLevelModel {
   }
 
   void on_timeout() {
-    scale(*m_levels->get());
+    scale(m_color_scheme->get_size());
   }
 
   void on_color_scheme_operation(
@@ -331,7 +332,10 @@ struct BookViewLevelPropertiesPage::PriceLevelWidget : QWidget {
   QVBoxLayout* m_color_bands_layout;
   QVBoxLayout* m_color_boxes_layout;
   std::array<CheckBox*, 2> m_buttons;
+  int m_gradient_color_levels;
+  scoped_connection m_levels_connection;
   scoped_connection m_scheme_connection;
+  scoped_connection m_color_connection;
 
   PriceLevelWidget( std::shared_ptr<ValueModel<std::vector<QColor>>> source,
       std::shared_ptr<ValueModel<QFont>> font, QWidget* parent = nullptr)
@@ -340,7 +344,8 @@ struct BookViewLevelPropertiesPage::PriceLevelWidget : QWidget {
         m_model(std::make_shared<PriceLevelModel>(
           std::make_shared<ArrayValueToListModel<QColor>>(std::move(source)),
           m_timer)),
-        m_font(std::move(font)) {
+        m_font(std::move(font)),
+        m_gradient_color_levels(0) {
     auto body = new QWidget();
     m_body_layout = make_hbox_layout(body);
     auto color_bands = make_color_bands();
@@ -366,9 +371,11 @@ struct BookViewLevelPropertiesPage::PriceLevelWidget : QWidget {
     layout->addWidget(make_levels_slot(m_model->m_levels));
     layout->addWidget(make_fill_type_slot());
     layout->addWidget(m_scroll_box);
+    m_levels_connection = m_model->m_levels->connect_update_signal(
+      std::bind_front(&PriceLevelWidget::on_levels_update, this));
     m_scheme_connection = m_model->m_color_scheme->connect_operation_signal(
       std::bind_front(&PriceLevelWidget::on_scheme_operation, this));
-    m_model->m_colors->connect_operation_signal(
+    m_color_connection = m_model->m_colors->connect_operation_signal(
       std::bind_front(&PriceLevelWidget::on_color_operation, this));
     on_type_update(m_model->m_fill_type->get(), true);
   }
@@ -476,6 +483,29 @@ struct BookViewLevelPropertiesPage::PriceLevelWidget : QWidget {
     return box;
   }
 
+  void update_color_boxes_geometry(int levels) {
+    if(m_model->m_fill_type->get() != FillType::GRADIENT) {
+      return;
+    }
+    auto color_levels = [&] {
+      if(levels >= 2) {
+        return 2;
+      }
+      return 1;
+    }();
+    m_gradient_color_levels = color_levels;
+    auto vertical_paddings = COLOR_BOXES_VERTICAL_PADDING * 2;
+    auto height = scale_height(vertical_paddings +
+      COLOR_BOX_HEIGHT * color_levels +
+      COLOR_BOXES_SPACING * (color_levels - 1));
+    if(height != m_color_boxes->height()) {
+      m_color_boxes->setGeometry(
+        scale_width(COLOR_BAND_WIDTH + COLOR_LIST_SPACING),
+        m_scroll_box->get_vertical_scroll_bar().get_position(),
+        m_color_boxes->width(), height);
+    }
+  }
+
   void on_position_update(int position) {
     if(m_model->m_fill_type->get() == FillType::GRADIENT) {
       m_color_boxes->move(m_color_boxes->x(), position);
@@ -489,14 +519,20 @@ struct BookViewLevelPropertiesPage::PriceLevelWidget : QWidget {
         m_body_layout->addWidget(m_color_boxes, 0, Qt::AlignTop);
       } else {
         m_body_layout->removeWidget(m_color_boxes);
-        m_color_boxes->setGeometry(
-          scale_width(COLOR_BAND_WIDTH + COLOR_LIST_SPACING),
-          m_scroll_box->get_vertical_scroll_bar().get_position(),
-          m_color_boxes->width(),
-          scale_height((COLOR_BOX_HEIGHT + COLOR_BOXES_VERTICAL_PADDING) * 2 +
-            COLOR_BOXES_SPACING));
+        if(auto levels = m_model->m_levels->get()) {
+          update_color_boxes_geometry(*levels);
+        } else {
+          update_color_boxes_geometry(m_gradient_color_levels);
+        }
       }
     }
+  }
+
+  void on_levels_update(const optional<int> levels) {
+    if(!levels) {
+      return;
+    }
+    update_color_boxes_geometry(*levels);
   }
 
   void on_scheme_operation(const ListModel<QColor>::Operation& operation) {
