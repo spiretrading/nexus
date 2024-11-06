@@ -175,6 +175,8 @@ struct PriceLevelModel {
   std::shared_ptr<LocalOptionalIntegerModel> m_levels;
   std::shared_ptr<AssociativeValueModel<FillType>> m_fill_type;
   std::shared_ptr<ArrayListModel<QColor>> m_colors;
+  QColor m_start_color;
+  QColor m_end_color;
   QTimer* m_timer;
   scoped_connection m_scheme_connection;
   scoped_connection m_levels_connection;
@@ -190,6 +192,10 @@ struct PriceLevelModel {
           FillType::GRADIENT)),
         m_colors(std::make_shared<ArrayListModel<QColor>>()),
         m_timer(&timer) {
+    if(m_color_scheme->get_size() > 0) {
+      m_start_color = m_color_scheme->get(0);
+      m_end_color = m_color_scheme->get(m_color_scheme->get_size() - 1);
+    }
     m_levels->set_minimum(1);
     m_levels->set_maximum(99);
     m_scheme_connection = m_color_scheme->connect_operation_signal(
@@ -206,9 +212,8 @@ struct PriceLevelModel {
       std::bind_front(&PriceLevelModel::on_timeout, this));
   }
 
-  void scale(int levels) {
-    auto colors = scale_oklch(m_color_scheme->get(0),
-      m_color_scheme->get(m_color_scheme->get_size() - 1), levels);
+  void scale(const QColor& start, const QColor& end, int levels) {
+    auto colors = scale_oklch(start, end, levels);
     m_color_scheme->transact([&] {
       auto index = 0;
       while(index < std::ssize(colors)) {
@@ -227,13 +232,21 @@ struct PriceLevelModel {
     });
   }
 
+  void update_gradient_color_scheme(int levels) {
+    if(m_color_scheme->get_size() > 1) {
+      m_start_color = m_color_scheme->get(0);
+      m_end_color = m_color_scheme->get(m_color_scheme->get_size() - 1);
+    }
+    scale(m_start_color, m_end_color, levels);
+  }
+
   void on_levels_update(const optional<int> levels) {
     if(!levels || *levels < m_levels->get_minimum() ||
         *levels > m_levels->get_maximum()) {
       return;
     }
     if(m_fill_type->get() == FillType::GRADIENT) {
-      scale(*levels);
+      update_gradient_color_scheme(*levels);
     } else {
       m_color_scheme->transact([&] {
         if(m_color_scheme->get_size() < *levels) {
@@ -267,9 +280,9 @@ struct PriceLevelModel {
           while(m_colors->get_size() > 2) {
             m_colors->remove(1);
           }
-          scale(m_color_scheme->get_size());
         }
       });
+      update_gradient_color_scheme(m_color_scheme->get_size());
     } else {
       auto current_blocker = shared_connection_block(m_color_connection);
       m_colors->transact([&] {
@@ -285,21 +298,32 @@ struct PriceLevelModel {
   }
 
   void on_timeout() {
-    scale(m_color_scheme->get_size());
+    scale(m_start_color, m_end_color, m_color_scheme->get_size());
   }
 
   void on_color_scheme_operation(
       const ListModel<QColor>::Operation& operation) {
     visit(operation,
       [&] (const ListModel<QColor>::AddOperation& operation) {
-        if(m_fill_type->get() == FillType::SOLID || m_colors->get_size() < 2) {
+        if(m_fill_type->get() == FillType::SOLID) {
           m_colors->insert(m_color_scheme->get(operation.m_index),
             operation.m_index);
+        } else if(operation.m_index == 0) {
+          m_colors->insert(m_start_color, operation.m_index);
+        } else if(operation.m_index == 1) {
+          m_colors->insert(m_end_color, operation.m_index);
         }
       },
       [&] (const ListModel<QColor>::RemoveOperation& operation) {
         if(operation.m_index < m_colors->get_size()) {
           m_colors->remove(operation.m_index);
+        }
+      },
+      [&] (const ListModel<QColor>::UpdateOperation& operation) {
+        if(operation.m_index == 0) {
+          m_start_color = operation.get_value();
+        } else if(operation.m_index == m_color_scheme->get_size() - 1) {
+          m_end_color = operation.get_value();
         }
       });
   }
@@ -484,7 +508,7 @@ struct BookViewLevelPropertiesPage::PriceLevelWidget : QWidget {
   }
 
   void update_color_boxes_geometry(int levels) {
-    if(m_model->m_fill_type->get() != FillType::GRADIENT) {
+    if(m_model->m_fill_type->get() != FillType::GRADIENT || levels == 0) {
       return;
     }
     auto color_levels = [&] {
