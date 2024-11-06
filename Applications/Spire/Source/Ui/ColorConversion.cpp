@@ -205,6 +205,9 @@ OklchColor Spire::interpolate(const OklchColor& start, const OklchColor& stop,
 
 std::vector<QColor> Spire::scale_oklch(const QColor& start, const QColor& stop,
     int steps) {
+  if(steps <= 0) {
+    return {};
+  }
   auto colors = std::vector<QColor>(steps);
   if(steps == 1) {
     colors[0] = start;

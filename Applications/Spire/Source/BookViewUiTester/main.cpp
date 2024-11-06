@@ -73,7 +73,7 @@ struct PropertiesTester {
       log += "color_scheme{ ";
       for(auto i = 0; i < std::ssize(properties.m_color_scheme); ++i) {
         log += QString("%1[%2]").arg(i + 1).
-          arg(properties.m_color_scheme[i].name(QColor::HexRgb)) += " ";
+          arg(properties.m_color_scheme[i].name(QColor::HexArgb)) += " ";
       }
       log += "}";
     }

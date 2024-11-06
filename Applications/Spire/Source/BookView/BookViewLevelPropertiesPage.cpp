@@ -44,6 +44,48 @@ namespace {
     }
   }
 
+  auto scale_alpha(int start, int end, int levels) {
+    if(levels <= 0) {
+      return std::vector<int>();
+    }
+    auto alphas = std::vector<int>(levels, 255);
+    if(levels == 1) {
+      alphas[0] = start;
+      return alphas;
+    }
+    auto range = end - start;
+    for(auto i = 0; i < levels; ++i) {
+      alphas[i] = start + static_cast<double>(i) / (levels - 1) * range;
+    }
+    return alphas;
+  }
+
+  void scale(std::shared_ptr<ListModel<QColor>>& scheme, const QColor& start,
+      const QColor& end, int levels) {
+    auto colors = scale_oklch(start, end, levels);
+    auto alphas = scale_alpha(start.alpha(), end.alpha(), levels);
+    scheme->transact([&] {
+      auto index = 0;
+      while(index < levels) {
+        if(index < scheme->get_size()) {
+          if(scheme->get(index).rgb() != colors[index].rgb() ||
+              scheme->get(index).alpha() != alphas[index]) {
+            scheme->set(index,
+              QColor(colors[index].red(), colors[index].green(),
+                colors[index].blue(), alphas[index]));
+          }
+        } else {
+          scheme->insert(QColor(colors[index].red(), colors[index].green(),
+            colors[index].blue(), alphas[index]), index);
+        }
+        ++index;
+      }
+      while(scheme->get_size() > index) {
+        scheme->remove(scheme->get_size() - 1);
+      }
+    });
+  }
+
   auto make_header_label(const QString& name) {
     auto label = make_label(name);
     label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
@@ -212,32 +254,32 @@ struct PriceLevelModel {
       std::bind_front(&PriceLevelModel::on_timeout, this));
   }
 
-  void scale(const QColor& start, const QColor& end, int levels) {
-    auto colors = scale_oklch(start, end, levels);
-    m_color_scheme->transact([&] {
-      auto index = 0;
-      while(index < std::ssize(colors)) {
-        if(index < m_color_scheme->get_size()) {
-          if(m_color_scheme->get(index).name() != colors[index].name()) {
-            m_color_scheme->set(index, colors[index]);
-          }
-        } else {
-          m_color_scheme->insert(colors[index], index);
-        }
-        ++index;
-      }
-      while(m_color_scheme->get_size() > index) {
-        m_color_scheme->remove(m_color_scheme->get_size() - 1);
-      }
-    });
-  }
+  //void scale(const QColor& start, const QColor& end, int levels) {
+  //  auto colors = scale_oklch(start, end, levels);
+  //  m_color_scheme->transact([&] {
+  //    auto index = 0;
+  //    while(index < std::ssize(colors)) {
+  //      if(index < m_color_scheme->get_size()) {
+  //        if(m_color_scheme->get(index).name() != colors[index].name()) {
+  //          m_color_scheme->set(index, colors[index]);
+  //        }
+  //      } else {
+  //        m_color_scheme->insert(colors[index], index);
+  //      }
+  //      ++index;
+  //    }
+  //    while(m_color_scheme->get_size() > index) {
+  //      m_color_scheme->remove(m_color_scheme->get_size() - 1);
+  //    }
+  //  });
+  //}
 
   void update_gradient_color_scheme(int levels) {
     if(m_color_scheme->get_size() > 1) {
       m_start_color = m_color_scheme->get(0);
       m_end_color = m_color_scheme->get(m_color_scheme->get_size() - 1);
     }
-    scale(m_start_color, m_end_color, levels);
+    scale(m_color_scheme, m_start_color, m_end_color, levels);
   }
 
   void on_levels_update(const optional<int> levels) {
@@ -298,7 +340,7 @@ struct PriceLevelModel {
   }
 
   void on_timeout() {
-    scale(m_start_color, m_end_color, m_color_scheme->get_size());
+    scale(m_color_scheme, m_start_color, m_end_color, m_color_scheme->get_size());
   }
 
   void on_color_scheme_operation(
