@@ -1,8 +1,8 @@
 #ifndef SPIRE_REGION_BOX_HPP
 #define SPIRE_REGION_BOX_HPP
 #include "Nexus/Definitions/Region.hpp"
-#include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Spire/ListModel.hpp"
+#include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Spire/QueryModel.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -20,7 +20,7 @@ namespace Spire {
   /** Displays a TagComboBox over an open set of region values. */
   class RegionBox : public QWidget {
     public:
-    
+
       /**
        * Signals the submission of the region.
        * @param submission The list of values to be submitted.
