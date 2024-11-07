@@ -1,5 +1,6 @@
 #ifndef SPIRE_BOOK_VIEW_PROPERTIES_HPP
 #define SPIRE_BOOK_VIEW_PROPERTIES_HPP
+#include <vector>
 #include <QColor>
 #include <QFont>
 

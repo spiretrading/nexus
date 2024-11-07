@@ -49,28 +49,28 @@ namespace {
     }
   }
 
-  void scale(std::shared_ptr<ListModel<QColor>>& scheme, const QColor& start,
+  void scale(ListModel<QColor>& scheme, const QColor& start,
       const QColor& end, int levels) {
     auto colors = scale_oklch(start, end, levels);
     auto alphas = scale_alpha(start.alpha(), end.alpha(), levels);
-    scheme->transact([&] {
+    scheme.transact([&] {
       auto index = 0;
       while(index < levels) {
-        if(index < scheme->get_size()) {
-          if(scheme->get(index).rgb() != colors[index].rgb() ||
-              scheme->get(index).alpha() != alphas[index]) {
-            scheme->set(index,
+        if(index < scheme.get_size()) {
+          if(scheme.get(index).rgb() != colors[index].rgb() ||
+              scheme.get(index).alpha() != alphas[index]) {
+            scheme.set(index,
               QColor(colors[index].red(), colors[index].green(),
                 colors[index].blue(), alphas[index]));
           }
         } else {
-          scheme->insert(QColor(colors[index].red(), colors[index].green(),
+          scheme.insert(QColor(colors[index].red(), colors[index].green(),
             colors[index].blue(), alphas[index]), index);
         }
         ++index;
       }
-      while(scheme->get_size() > index) {
-        scheme->remove(scheme->get_size() - 1);
+      while(scheme.get_size() > index) {
+        scheme.remove(scheme.get_size() - 1);
       }
     });
   }
@@ -89,13 +89,13 @@ namespace {
     return label;
   }
 
-  auto make_levels_slot(std::shared_ptr<OptionalIntegerModel> model) {
+  auto make_levels_slot(std::shared_ptr<OptionalIntegerModel> levels) {
     auto label = make_label(QObject::tr("Levels"));
     label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     update_style(*label, [] (auto& style) {
       style.get(Any()).set(PaddingRight(scale_height(8)));
     });
-    auto levels_box = new IntegerBox(std::move(model));
+    auto levels_box = new IntegerBox(std::move(levels));
     levels_box->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
     levels_box->setFixedWidth(
       6 * get_default_character_width() + INTEGER_BOX_HORIZONTAL_PADDING());
@@ -242,7 +242,7 @@ struct PriceLevelModel {
       m_start_color = m_color_scheme->get(0);
       m_end_color = m_color_scheme->get(m_color_scheme->get_size() - 1);
     }
-    scale(m_color_scheme, m_start_color, m_end_color, levels);
+    scale(*m_color_scheme, m_start_color, m_end_color, levels);
   }
 
   void on_levels_update(const optional<int> levels) {
@@ -303,7 +303,8 @@ struct PriceLevelModel {
   }
 
   void on_timeout() {
-    scale(m_color_scheme, m_start_color, m_end_color, m_color_scheme->get_size());
+    scale(*m_color_scheme, m_start_color, m_end_color,
+      m_color_scheme->get_size());
   }
 
   void on_color_scheme_operation(
@@ -366,7 +367,7 @@ struct BookViewLevelPropertiesPage::PriceLevelWidget : QWidget {
   scoped_connection m_scheme_connection;
   scoped_connection m_color_connection;
 
-  PriceLevelWidget( std::shared_ptr<ValueModel<std::vector<QColor>>> source,
+  PriceLevelWidget(std::shared_ptr<ValueModel<std::vector<QColor>>> source,
       std::shared_ptr<ValueModel<QFont>> font, QWidget* parent = nullptr)
       : QWidget(parent),
         m_timer(this),
