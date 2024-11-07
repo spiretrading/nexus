@@ -78,18 +78,19 @@ namespace {
 }
 
 TimeAndSalesWindow::TimeAndSalesWindow(
-  std::shared_ptr<SecurityInfoQueryModel> securities,
+  std::shared_ptr<SecurityInfoQueryModel> securities, MarketDatabase markets,
   std::shared_ptr<TimeAndSalesPropertiesWindowFactory> factory,
   ModelBuilder model_builder, QWidget* parent)
-  : TimeAndSalesWindow(std::move(securities), std::move(factory),
-      std::move(model_builder), std::string(), parent) {}
+  : TimeAndSalesWindow(std::move(securities), std::move(markets),
+      std::move(factory), std::move(model_builder), std::string(), parent) {}
 
 TimeAndSalesWindow::TimeAndSalesWindow(
-    std::shared_ptr<SecurityInfoQueryModel> securities,
+    std::shared_ptr<SecurityInfoQueryModel> securities, MarketDatabase markets,
     std::shared_ptr<TimeAndSalesPropertiesWindowFactory> factory,
     ModelBuilder model_builder, std::string identifier, QWidget* parent)
     : Window(parent),
       SecurityContext(std::move(identifier)),
+      m_markets(std::move(markets)),
       m_factory(std::move(factory)),
       m_model_builder(std::move(model_builder)),
       m_table_model(std::make_shared<TimeAndSalesTableModel>(
@@ -163,7 +164,7 @@ void TimeAndSalesWindow::on_context_menu(QWidget* parent, const QPoint& pos) {
   auto menu = new ContextMenu(*parent);
   menu->add_action(tr("Properties"),
     std::bind_front(&TimeAndSalesWindow::on_properties_menu, this));
-  add_link_menu(*menu, *this, m_security_view->get_securities()->get_markets());
+  add_link_menu(*menu, *this, m_markets);
   menu->add_separator();
   menu->add_action(tr("Export..."),
     std::bind_front(&TimeAndSalesWindow::on_export_menu, this));

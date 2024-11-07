@@ -1,8 +1,9 @@
 #ifndef SPIRE_REGION_BOX_HPP
 #define SPIRE_REGION_BOX_HPP
 #include "Nexus/Definitions/Region.hpp"
+#include "Spire/Spire/ListModel.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
-#include "Spire/Ui/ComboBox.hpp"
+#include "Spire/Spire/QueryModel.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -13,10 +14,13 @@ namespace Spire {
   /** Defines a local model for a Region. */
   using LocalRegionModel = LocalValueModel<Nexus::Region>;
 
+  /** The type used to query for Regions. */
+  using RegionQueryModel = QueryModel<Nexus::Region>;
+
   /** Displays a TagComboBox over an open set of region values. */
   class RegionBox : public QWidget {
     public:
-    
+
       /**
        * Signals the submission of the region.
        * @param submission The list of values to be submitted.
@@ -25,23 +29,23 @@ namespace Spire {
 
       /**
        * Constructs a RegionBox using a default current model.
-       * @param query_model The model used to query matches.
+       * @param regions The model used to region queries.
        * @param parent The parent widget.
        */
-      explicit RegionBox(std::shared_ptr<ComboBox::QueryModel> query_model,
-        QWidget* parent = nullptr);
+      explicit RegionBox(
+        std::shared_ptr<RegionQueryModel> regions, QWidget* parent = nullptr);
 
       /**
        * Constructs a RegionBox.
-       * @param query_model The model used to query matches.
+       * @param regions The model used to region queries.
        * @param current The current value's model.
        * @param parent The parent widget.
        */
-      RegionBox(std::shared_ptr<ComboBox::QueryModel> query_model,
+      RegionBox(std::shared_ptr<RegionQueryModel> regions,
         std::shared_ptr<RegionModel> current, QWidget* parent = nullptr);
 
-      /** Returns the model used to query matches. */
-      const std::shared_ptr<ComboBox::QueryModel>& get_query_model() const;
+      /** Returns the model used to query regions. */
+      const std::shared_ptr<RegionQueryModel>& get_regions() const;
 
       /** Returns the current model. */
       const std::shared_ptr<RegionModel>& get_current() const;
@@ -63,17 +67,17 @@ namespace Spire {
         const SubmitSignal::slot_type& slot) const;
 
     private:
-      struct RegionQueryModel;
       mutable SubmitSignal m_submit_signal;
-      std::shared_ptr<RegionQueryModel> m_query_model;
+      std::shared_ptr<RegionQueryModel> m_regions;
       std::shared_ptr<RegionModel> m_current;
       Nexus::Region m_last_region;
-      TagComboBox* m_tag_combo_box;
+      TagComboBox<Nexus::Region>* m_tag_combo_box;
       boost::signals2::scoped_connection m_current_connection;
       boost::signals2::scoped_connection m_tag_operation_connection;
 
       void on_current(const Nexus::Region& region);
-      void on_submit(const std::shared_ptr<AnyListModel>& submission);
+      void on_submit(
+        const std::shared_ptr<ListModel<Nexus::Region>>& submission);
       void on_tags_operation(const AnyListModel::Operation& operation);
   };
 }

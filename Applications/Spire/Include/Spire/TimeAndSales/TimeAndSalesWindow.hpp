@@ -2,12 +2,14 @@
 #define SPIRE_TIME_AND_SALES_WINDOW_HPP
 #include <boost/signals2/connection.hpp>
 #include <QTimer>
+#include "Nexus/Definitions/Market.hpp"
 #include "Spire/LegacyUI/PersistentWindow.hpp"
 #include "Spire/LegacyUI/SecurityContext.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesPropertiesWindowFactory.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesTableModel.hpp"
 #include "Spire/Ui/ComboBox.hpp"
+#include "Spire/Ui/SecurityBox.hpp"
 #include "Spire/Ui/Window.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -24,24 +26,27 @@ namespace Spire {
        * @param security The security that the window is representing.
        * @return A TimeAndSalesModel.
        */
-      using ModelBuilder = std::function<std::shared_ptr<TimeAndSalesModel>(
-        const Nexus::Security& security)>;
+      using ModelBuilder = std::function<
+        std::shared_ptr<TimeAndSalesModel>(const Nexus::Security& security)>;
 
       /**
        * Constructs a TimeAndSalesWindow.
        * @param securities The set of securities to use.
+       * @param markets The database of markets.
        * @param factory The factory used to create a
        *        TimeAndSalesPropertiesWindow.
        * @param model_builder The ModelBuilder to use.
        * @param parent The parent widget.
        */
       TimeAndSalesWindow(std::shared_ptr<SecurityInfoQueryModel> securities,
+        Nexus::MarketDatabase markets,
         std::shared_ptr<TimeAndSalesPropertiesWindowFactory> factory,
         ModelBuilder model_builder, QWidget* parent = nullptr);
 
       /**
        * Constructs a TimeAndSalesWindow.
        * @param securities The set of securities to use.
+       * @param markets The database of markets.
        * @param factory The factory used to create a
        *        TimeAndSalesPropertiesWindow.
        * @param model_builder The ModelBuilder to use.
@@ -49,6 +54,7 @@ namespace Spire {
        * @param parent The parent widget.
        */
       TimeAndSalesWindow(std::shared_ptr<SecurityInfoQueryModel> securities,
+        Nexus::MarketDatabase markets,
         std::shared_ptr<TimeAndSalesPropertiesWindowFactory> factory,
         ModelBuilder model_builder, std::string identifier,
         QWidget* parent = nullptr);
@@ -64,6 +70,7 @@ namespace Spire {
     private:
       friend class LegacyTimeAndSalesWindowSettings;
       friend class TimeAndSalesWindowSettings;
+      Nexus::MarketDatabase m_markets;
       std::shared_ptr<TimeAndSalesPropertiesWindowFactory> m_factory;
       ModelBuilder m_model_builder;
       std::shared_ptr<TimeAndSalesTableModel> m_table_model;

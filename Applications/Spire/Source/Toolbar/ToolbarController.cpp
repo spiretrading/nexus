@@ -63,6 +63,7 @@ namespace {
       windows.push_back(book_view_window);
       auto time_and_sales_window = new TimeAndSalesWindow(
         user_profile.GetSecurityInfoQueryModel(),
+        user_profile.GetMarketDatabase(),
         user_profile.GetTimeAndSalesPropertiesWindowFactory(),
         user_profile.GetTimeAndSalesModelBuilder());
       book_view_window->Link(*time_and_sales_window);
@@ -215,6 +216,7 @@ void ToolbarController::open_book_view_window() {
 void ToolbarController::open_time_and_sales_window() {
   auto window = new TimeAndSalesWindow(
     m_user_profile->GetSecurityInfoQueryModel(),
+    m_user_profile->GetMarketDatabase(),
     m_user_profile->GetTimeAndSalesPropertiesWindowFactory(),
     m_user_profile->GetTimeAndSalesModelBuilder());
   window->setAttribute(Qt::WA_DeleteOnClose);
@@ -276,7 +278,7 @@ void ToolbarController::open_key_bindings_window() {
   }
   m_key_bindings_window = std::make_unique<KeyBindingsWindow>(
     m_user_profile->GetKeyBindings(),
-    std::make_shared<LocalComboBoxQueryModel>(),
+    m_user_profile->GetSecurityInfoQueryModel(),
     m_user_profile->GetCountryDatabase(), m_user_profile->GetMarketDatabase(),
     m_user_profile->GetDestinationDatabase(),
     m_user_profile->GetAdditionalTagDatabase());

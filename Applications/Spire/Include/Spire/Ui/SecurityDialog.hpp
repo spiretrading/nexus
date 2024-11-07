@@ -1,7 +1,6 @@
 #ifndef SPIRE_SECURITY_DIALOG_HPP
 #define SPIRE_SECURITY_DIALOG_HPP
 #include <QWidget>
-#include "Spire/Ui/ComboBox.hpp"
 #include "Spire/Ui/SecurityBox.hpp"
 #include "Spire/Ui/Ui.hpp"
 

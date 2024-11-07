@@ -4,7 +4,7 @@
 #include "Spire/KeyBindings/KeyBindings.hpp"
 #include "Spire/KeyBindings/KeyBindingsModel.hpp"
 #include "Spire/Spire/TableModel.hpp"
-#include "Spire/Ui/ComboBox.hpp"
+#include "Spire/Ui/SecurityBox.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -24,7 +24,7 @@ namespace Spire {
        * @param parent The parent widget.
        */
       TaskKeysPage(std::shared_ptr<KeyBindingsModel> key_bindings,
-        std::shared_ptr<ComboBox::QueryModel> securities,
+        std::shared_ptr<SecurityInfoQueryModel> securities,
         Nexus::CountryDatabase countries, Nexus::MarketDatabase markets,
         Nexus::DestinationDatabase destinations,
         AdditionalTagDatabase additional_tags, QWidget* parent = nullptr);

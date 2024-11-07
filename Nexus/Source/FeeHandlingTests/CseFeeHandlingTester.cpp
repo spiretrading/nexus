@@ -21,61 +21,45 @@ TEST_SUITE("CseFeeHandling") {
   TEST_CASE("fee_table_calculations") {
     auto feeTable = MakeFeeTable();
     TestFeeTableIndex(feeTable, feeTable.m_feeTable, LookupFee,
-      LIQUIDITY_FLAG_COUNT, CseFeeTable::PRICE_CLASS_COUNT);
+      LIQUIDITY_FLAG_COUNT, CseFeeTable::SECTION_COUNT);
   }
 
   TEST_CASE("zero_quantity") {
     auto feeTable = MakeFeeTable();
-    TestPerShareFeeCalculation(feeTable, Money::ONE, 0, LiquidityFlag::NONE,
-      &CalculateFee, Money::ZERO);
+    TestPerShareFeeCalculation(
+      feeTable, Money::ONE, 0, LiquidityFlag::NONE, &CalculateFee, Money::ZERO);
   }
 
   TEST_CASE("default_active") {
     auto feeTable = MakeFeeTable();
-    auto expectedFee = LookupFee(feeTable, LiquidityFlag::ACTIVE,
-      CseFeeTable::PriceClass::DEFAULT);
-    TestPerShareFeeCalculation(feeTable, Money::ONE, 100, LiquidityFlag::ACTIVE,
-      &CalculateFee, expectedFee);
+    auto expectedFee =
+      LookupFee(feeTable, LiquidityFlag::ACTIVE, CseFeeTable::Section::DEFAULT);
+    TestPerShareFeeCalculation(
+      feeTable, Money::ONE, 100, "TC", &CalculateFee, expectedFee);
   }
 
   TEST_CASE("default_passive") {
     auto feeTable = MakeFeeTable();
-    auto expectedFee = LookupFee(feeTable, LiquidityFlag::PASSIVE,
-      CseFeeTable::PriceClass::DEFAULT);
-    TestPerShareFeeCalculation(feeTable, Money::ONE, 100,
-      LiquidityFlag::PASSIVE, &CalculateFee, expectedFee);
+    auto expectedFee = LookupFee(
+      feeTable, LiquidityFlag::PASSIVE, CseFeeTable::Section::DEFAULT);
+    TestPerShareFeeCalculation(
+      feeTable, Money::ONE, 100, "PC", &CalculateFee, expectedFee);
   }
 
-  TEST_CASE("subdollar_active") {
+  TEST_CASE("dark_active") {
     auto feeTable = MakeFeeTable();
-    auto expectedFee = LookupFee(feeTable, LiquidityFlag::ACTIVE,
-      CseFeeTable::PriceClass::SUBDOLLAR);
-    TestPerShareFeeCalculation(feeTable, 10 * Money::CENT, 100,
-      LiquidityFlag::ACTIVE, &CalculateFee, expectedFee);
+    auto expectedFee =
+      LookupFee(feeTable, LiquidityFlag::ACTIVE, CseFeeTable::Section::DARK);
+    TestPerShareFeeCalculation(
+      feeTable, Money::CENT, 100, "TCD", &CalculateFee, expectedFee);
   }
 
-  TEST_CASE("subdollar_passive") {
+  TEST_CASE("dark_passive") {
     auto feeTable = MakeFeeTable();
-    auto expectedFee = LookupFee(feeTable, LiquidityFlag::PASSIVE,
-      CseFeeTable::PriceClass::SUBDOLLAR);
-    TestPerShareFeeCalculation(feeTable, 10 * Money::CENT, 100,
-      LiquidityFlag::PASSIVE, &CalculateFee, expectedFee);
-  }
-
-  TEST_CASE("subdime_active") {
-    auto feeTable = MakeFeeTable();
-    auto expectedFee = LookupFee(feeTable, LiquidityFlag::ACTIVE,
-      CseFeeTable::PriceClass::SUBDIME);
-    TestPerShareFeeCalculation(feeTable, Money::CENT, 100,
-      LiquidityFlag::ACTIVE, &CalculateFee, expectedFee);
-  }
-
-  TEST_CASE("subdime_passive") {
-    auto feeTable = MakeFeeTable();
-    auto expectedFee = LookupFee(feeTable, LiquidityFlag::PASSIVE,
-      CseFeeTable::PriceClass::SUBDIME);
-    TestPerShareFeeCalculation(feeTable, Money::CENT, 100,
-      LiquidityFlag::PASSIVE, &CalculateFee, expectedFee);
+    auto expectedFee =
+      LookupFee(feeTable, LiquidityFlag::PASSIVE, CseFeeTable::Section::DARK);
+    TestPerShareFeeCalculation(
+      feeTable, Money::CENT, 100, "PCD", &CalculateFee, expectedFee);
   }
 
   TEST_CASE("unknown_liquidity_flag") {
@@ -85,10 +69,10 @@ TEST_SUITE("CseFeeHandling") {
         second_clock::universal_time());
       executionReport.m_lastPrice = Money::ONE;
       executionReport.m_lastQuantity = 100;
-      executionReport.m_liquidityFlag = "AP";
+      executionReport.m_liquidityFlag = "TC";
       auto calculatedFee = CalculateFee(feeTable, executionReport);
       auto expectedFee = executionReport.m_lastQuantity * LookupFee(
-        feeTable, LiquidityFlag::ACTIVE, CseFeeTable::PriceClass::DEFAULT);
+        feeTable, LiquidityFlag::ACTIVE, CseFeeTable::Section::DEFAULT);
       REQUIRE(calculatedFee == expectedFee);
     }
     {
@@ -96,11 +80,11 @@ TEST_SUITE("CseFeeHandling") {
         second_clock::universal_time());
       executionReport.m_lastPrice = Money::CENT;
       executionReport.m_lastQuantity = 100;
-      executionReport.m_liquidityFlag = "PA";
+      executionReport.m_liquidityFlag = "TCD";
       auto calculatedFee = CalculateFee(feeTable, executionReport);
       auto expectedFee = executionReport.m_lastQuantity *
         LookupFee(feeTable, LiquidityFlag::ACTIVE,
-        CseFeeTable::PriceClass::SUBDIME);
+          CseFeeTable::Section::DARK);
       REQUIRE(calculatedFee == expectedFee);
     }
     {
@@ -111,7 +95,7 @@ TEST_SUITE("CseFeeHandling") {
       executionReport.m_liquidityFlag = "?";
       auto calculatedFee = CalculateFee(feeTable, executionReport);
       auto expectedFee = executionReport.m_lastQuantity * LookupFee(
-        feeTable, LiquidityFlag::ACTIVE, CseFeeTable::PriceClass::DEFAULT);
+        feeTable, LiquidityFlag::ACTIVE, CseFeeTable::Section::DEFAULT);
       REQUIRE(calculatedFee == expectedFee);
     }
   }
@@ -119,7 +103,7 @@ TEST_SUITE("CseFeeHandling") {
   TEST_CASE("empty_liquidity_flag") {
     auto feeTable = MakeFeeTable();
     auto expectedFee = LookupFee(feeTable, LiquidityFlag::ACTIVE,
-      CseFeeTable::PriceClass::DEFAULT);
+      CseFeeTable::Section::DEFAULT);
     TestPerShareFeeCalculation(feeTable, Money::ONE, 100, LiquidityFlag::NONE,
       &CalculateFee, expectedFee);
   }

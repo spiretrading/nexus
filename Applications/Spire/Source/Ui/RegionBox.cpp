@@ -30,16 +30,16 @@ namespace {
     }
   };
 
-  void to_tag_list(const Region& region, ComboBox::QueryModel& query_model,
-      AnyListModel& list) {
+  void to_tag_list(
+      const Region& region, RegionQueryModel& regions, AnyListModel& list) {
     for(auto& country : region.GetCountries()) {
-      list.push(query_model.parse(to_text(country)));
+      list.push(*regions.parse(to_text(country)));
     }
     for(auto& market : region.GetMarkets()) {
-      list.push(query_model.parse(to_text(MarketToken(market))));
+      list.push(*regions.parse(to_text(MarketToken(market))));
     }
     for(auto& security : region.GetSecurities()) {
-      list.push(query_model.parse(to_text(security)));
+      list.push(*regions.parse(to_text(security)));
     }
   }
 
@@ -84,60 +84,26 @@ namespace {
   }
 }
 
-struct RegionBox::RegionQueryModel : ComboBox::QueryModel {
-  std::shared_ptr<ComboBox::QueryModel> m_source;
+RegionBox::RegionBox(std::shared_ptr<RegionQueryModel> regions, QWidget* parent)
+  : RegionBox(
+      std::move(regions), std::make_shared<LocalRegionModel>(), parent) {}
 
-  explicit RegionQueryModel(std::shared_ptr<QueryModel> source)
-    : m_source(std::move(source)) {}
-
-  std::any parse(const QString& query) override {
-    return m_source->parse(query);
-  }
-
-  QtPromise<std::vector<std::any>> submit(const QString& query) override {
-    return m_source->submit(query).then([] (auto&& source_result) {
-        auto& matches = [&] () -> std::vector<std::any>& {
-          try {
-            return source_result.Get();
-          } catch(const std::exception&) {
-            static auto empty_matches = std::vector<std::any>();
-            return empty_matches;
-          }
-        }();
-        auto result = std::vector<std::any>();
-        auto regions = std::unordered_set<Region, RegionHash>();
-        for(auto& value : matches) {
-          auto& region = std::any_cast<Region&>(value);
-          if(regions.insert(region).second) {
-            result.push_back(region);
-          }
-        }
-        return result;
-    });
-  }
-};
-
-RegionBox::RegionBox(std::shared_ptr<ComboBox::QueryModel> query_model,
-  QWidget* parent)
-  : RegionBox(query_model, std::make_shared<LocalRegionModel>(), parent) {}
-
-RegionBox::RegionBox(std::shared_ptr<ComboBox::QueryModel> query_model,
+RegionBox::RegionBox(std::shared_ptr<RegionQueryModel> regions,
     std::shared_ptr<RegionModel> current, QWidget* parent)
     : QWidget(parent),
-      m_query_model(
-        std::make_shared<RegionQueryModel>(std::move(query_model))),
+      m_regions(std::move(regions)),
       m_current(std::move(current)),
       m_last_region(m_current->get()),
       m_current_connection(m_current->connect_update_signal(
         std::bind_front(&RegionBox::on_current, this))) {
-  auto current_model = std::make_shared<ArrayListModel<std::any>>();
+  auto current_model = std::make_shared<ArrayListModel<Region>>();
   current_model->transact([&] {
-    to_tag_list(m_current->get(), *m_query_model, *current_model);
+    to_tag_list(m_current->get(), *m_regions, *current_model);
     sort(*current_model);
   });
-  m_tag_combo_box = new TagComboBox(m_query_model, current_model,
+  m_tag_combo_box = new TagComboBox(m_regions, std::move(current_model),
     [] (const auto& list, auto index) {
-      return new RegionListItem(std::any_cast<Region&&>(list->get(index)));
+      return new RegionListItem(list->get(index));
     });
   m_tag_combo_box->connect_submit_signal(
     std::bind_front(&RegionBox::on_submit, this));
@@ -150,9 +116,8 @@ RegionBox::RegionBox(std::shared_ptr<ComboBox::QueryModel> query_model,
   setFocusProxy(m_tag_combo_box);
 }
 
-const std::shared_ptr<ComboBox::QueryModel>&
-    RegionBox::get_query_model() const {
-  return m_query_model->m_source;
+const std::shared_ptr<RegionQueryModel>& RegionBox::get_regions() const {
+  return m_regions;
 }
 
 const std::shared_ptr<RegionModel>& RegionBox::get_current() const {
@@ -182,21 +147,22 @@ void RegionBox::on_current(const Region& region) {
   }
   m_last_region = region;
   auto blocker = shared_connection_block(m_tag_operation_connection);
-  auto& current = m_tag_combo_box->get_current();
+  auto current = m_tag_combo_box->get_current();
   current->transact([&] {
     while(current->get_size() != 0) {
       current->remove(current->get_size() - 1);
     }
-    to_tag_list(region, *m_query_model, *current);
+    to_tag_list(region, *m_regions, *current);
   });
 }
 
-void RegionBox::on_submit(const std::shared_ptr<AnyListModel>& submission) {
+void RegionBox::on_submit(
+    const std::shared_ptr<ListModel<Region>>& submission) {
   sort(*m_tag_combo_box->get_current());
   sort(*submission);
   auto region = Nexus::Region();
-  for(auto i = 0; i < submission->get_size(); ++i) {
-    region = region + std::any_cast<const Region&>(submission->get(i));
+  for(auto r : *submission) {
+    region += r;
   }
   m_submit_signal(region);
 }
@@ -204,9 +170,8 @@ void RegionBox::on_submit(const std::shared_ptr<AnyListModel>& submission) {
 void RegionBox::on_tags_operation(const AnyListModel::Operation& operation) {
   auto update_current = [&] {
     auto region = Nexus::Region();
-    for(auto i = 0; i < m_tag_combo_box->get_current()->get_size(); ++i) {
-      region = region +
-        std::any_cast<const Region&>(m_tag_combo_box->get_current()->get(i));
+    for(auto r : *m_tag_combo_box->get_current()) {
+      region += r;
     }
     auto blocker = shared_connection_block(m_current_connection);
     if(m_current->set(region) != QValidator::Invalid) {
