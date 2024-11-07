@@ -142,7 +142,7 @@ export class DashboardController extends React.Component<Properties, State> {
   }
 
   private static readonly ACCOUNT_PATTERN = Path.pathToRegexp(
-    '/account/:id(\\d+)?', { end: false });
+    '/account{/:id}', { end: false });
   private static readonly GROUP_PATTERN = Path.pathToRegexp(
-    '/group/:id(\\d+)?', { end: false });
+    '/group{/:id}', { end: false });
 }
