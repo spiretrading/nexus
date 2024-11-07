@@ -169,9 +169,6 @@ namespace Spire {
    * @param font The font used to calculate the character width.
    */
   int get_character_width(const QFont& font);
-
-  /** Gets the default width of a character in Spire. */
-  int get_default_character_width();
 }
 
 #endif

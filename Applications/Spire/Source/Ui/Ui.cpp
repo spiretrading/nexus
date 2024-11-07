@@ -64,13 +64,3 @@ void Spire::invalidate_descendant_layouts(QWidget& widget) {
 int Spire::get_character_width(const QFont& font) {
   return QFontMetrics(font).horizontalAdvance('0');
 }
-
-int Spire::get_default_character_width() {
-  static auto width = [] {
-    auto font = QFont("Roboto");
-    font.setWeight(QFont::Normal);
-    font.setPixelSize(scale_width(12));
-    return get_character_width(font);
-  }();
-  return width;
-}

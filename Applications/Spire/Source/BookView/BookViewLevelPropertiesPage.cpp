@@ -39,6 +39,16 @@ namespace {
     return padding;
   }
 
+  auto get_character_width() {
+    static auto width = [] {
+      auto font = QFont("Roboto");
+      font.setWeight(QFont::Normal);
+      font.setPixelSize(scale_width(12));
+      return Spire::get_character_width(font);
+    }();
+    return width;
+  }
+
   auto to_text(FillType type) {
     if(type == FillType::GRADIENT) {
       static const auto value = QObject::tr("Gradient");
@@ -98,7 +108,7 @@ namespace {
     auto levels_box = new IntegerBox(std::move(levels));
     levels_box->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
     levels_box->setFixedWidth(
-      6 * get_default_character_width() + INTEGER_BOX_HORIZONTAL_PADDING());
+      6 * ::get_character_width() + INTEGER_BOX_HORIZONTAL_PADDING());
     auto body = new QWidget();
     auto layout = make_hbox_layout(body);
     layout->addWidget(label);
