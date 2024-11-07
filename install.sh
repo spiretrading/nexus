@@ -44,7 +44,7 @@ function install_dependencies() {
     apt-get install -y automake build-essential cmake curl g++ gcc gdb git \
       libncurses5-dev libreadline6-dev libtool libxml2 libxml2-dev m4 make \
       mysql-server parallel python3 python3-dev python3-pip ruby zip
-    snap install yq --channel=v3/stable
+    snap install yq --channel=v4/stable
     check_and_install_node
   fi
 }
