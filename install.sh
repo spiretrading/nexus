@@ -1,4 +1,7 @@
 #!/bin/bash
+NODE_VERSION="22.11.0"
+ARCH="$(uname -m)"
+
 function print_usage() {
   echo "Usage: install.sh -p [-u] [-m] [-i] [-h]"
   echo "  -p: The password to create or use for Spire services."
@@ -9,12 +12,40 @@ function print_usage() {
   echo "      The default value is ($local_interface)."
 }
 
+function install_node() {
+  if [ "$ARCH" == "x86_64" ]; then
+    ARCH="x64"
+  elif [[ "$ARCH" == "aarch64" || "$ARCH" == "arm64" ]]; then
+    ARCH="arm64"
+  else
+    echo "Unsupported architecture: $ARCH"
+    exit 1
+  fi
+  NODE_URL="https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-$ARCH.tar.xz"
+  curl -O $NODE_URL
+  tar -xf node-v$NODE_VERSION-linux-$ARCH.tar.xz
+  sudo cp -r node-v$NODE_VERSION-linux-$ARCH/{bin,include,lib,share} /usr/local/
+  rm -rf node-v$NODE_VERSION-linux-$ARCH node-v$NODE_VERSION-linux-$ARCH.tar.xz
+}
+
+function check_and_install_node() {
+  if command -v node &> /dev/null; then
+    INSTALLED_VERSION=$(node -v | sed 's/v//')
+    if [ "$INSTALLED_VERSION" = "$NODE_VERSION" ]; then
+      return
+    fi
+  fi
+  install_node
+}
+
 function install_dependencies() {
   if [ $is_root -eq 1 ]; then
     apt-get update
-    apt-get install -y automake cmake g++ gcc gdb git libncurses5-dev \
-      libreadline6-dev libtool libxml2 libxml2-dev m4 make mysql-server nodejs \
-      npm parallel python3 python3-dev python3-pip ruby zip
+    apt-get install -y automake build-essential cmake curl g++ gcc gdb git \
+      libncurses5-dev libreadline6-dev libtool libxml2 libxml2-dev m4 make \
+      mysql-server parallel python3 python3-dev python3-pip ruby zip
+    snap install yq --channel=v3/stable
+    check_and_install_node
   fi
 }
 
@@ -28,7 +59,6 @@ local_interface=$(echo -n `ip addr | \
   egrep -o "inet ([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}).*global" | \
   egrep -o "([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})" | \
   head -1`)
-
 while getopts "u:m:p:i:h" opt; do
   case ${opt} in
     p)
@@ -72,7 +102,6 @@ if [ "$global_interface" == "" ]; then
 fi
 install_dependencies
 sudo -u $username ./build.sh
-
 mysql_input="
 CREATE USER '$mysql_username'@'localhost' IDENTIFIED WITH mysql_native_password BY '$mysql_password';
 GRANT ALL ON spire.* TO '$mysql_username'@'localhost';
@@ -99,7 +128,7 @@ sudo -u $username python3 setup.py -l "$local_interface" \
   -mu "$mysql_username" -mp "$mysql_password"
 sudo -u $username ./install_python.sh
 pushd ServiceLocator/Application
-sudo -u $username ./start_server.sh
+sudo -u $username ./start.sh
 sleep 10
 popd
 admin_input="
@@ -147,6 +176,6 @@ sudo -u $username python3 setup.py -a "$local_interface:20000" \
   -u "administration_service" -p "$spire_password"
 popd
 pushd ServiceLocator/Application
-sudo -u $username ./stop_server.sh
+sudo -u $username ./stop.sh
 popd
 popd
