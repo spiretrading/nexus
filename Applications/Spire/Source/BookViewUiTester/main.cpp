@@ -1,7 +1,10 @@
 #include <QApplication>
+#include <QFontDatabase>
 #include <QFormLayout>
 #include <QGroupBox>
+#include <QTextEdit>
 #include "Spire/BookView/BboBox.hpp"
+#include "Spire/BookView/BookViewLevelPropertiesPage.hpp"
 #include "Spire/BookView/TechnicalsPanel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/FieldValueModel.hpp"
@@ -32,9 +35,55 @@ QuantityBox* make_quantity_box(M model, U field) {
         make_field_value_model(model, field))));
 }
 
-struct TechnicalsTestWindow : QWidget {
-  TechnicalsTestWindow(
-      std::shared_ptr<SecurityTechnicalsModel> technicals,
+struct PropertiesTester {
+  BookViewLevelPropertiesPage m_page;
+  QTextEdit m_logs;
+  BookViewLevelProperties m_previous_properties;
+  int m_line_number;
+
+  PropertiesTester()
+      : m_page(BookViewLevelPropertiesPage(
+        std::make_shared<LocalLevelPropertiesModel>(
+          BookViewLevelProperties::get_default()))),
+        m_logs(QTextEdit()),
+        m_previous_properties(m_page.get_current()->get()),
+        m_line_number(0) {
+    m_page.show();
+    m_page.resize(scale(360, 503));
+    m_logs.show();
+    m_logs.resize(scale(300, 500));
+    m_logs.move(
+      m_page.pos().x() + m_logs.frameGeometry().width() + scale_width(100),
+      m_logs.pos().y());
+    m_page.get_current()->connect_update_signal(
+      std::bind_front(&PropertiesTester::on_properties_update, this));
+  }
+
+  void on_properties_update(const BookViewLevelProperties& properties) {
+    auto log = QString();
+    log += QString::number(++m_line_number) + ": ";
+    if(m_previous_properties.m_font != properties.m_font) {
+      log += QString("font{%1, %2, %3}").arg(properties.m_font.family()).
+        arg(QFontDatabase().styleString(properties.m_font)).
+        arg(unscale_width(properties.m_font.pixelSize()));
+    } else if(m_previous_properties.m_is_grid_enabled !=
+        properties.m_is_grid_enabled) {
+      log += QString("grid_enabled{%1}").arg(properties.m_is_grid_enabled);
+    } else {
+      log += "color_scheme{ ";
+      for(auto i = 0; i < std::ssize(properties.m_color_scheme); ++i) {
+        log += QString("%1[%2]").arg(i + 1).
+          arg(properties.m_color_scheme[i].name(QColor::HexArgb)) += " ";
+      }
+      log += "}";
+    }
+    m_logs.append(log);
+    m_previous_properties = properties;
+  }
+};
+
+struct BookViewTester : QWidget {
+  BookViewTester(std::shared_ptr<SecurityTechnicalsModel> technicals,
       std::shared_ptr<ValueModel<BboQuote>> bbo_quote,
       std::shared_ptr<QuantityModel> default_bid_quantity,
       std::shared_ptr<QuantityModel> default_ask_quantity,
@@ -137,7 +186,7 @@ int main(int argc, char** argv) {
   auto default_bid_quantity = std::make_shared<LocalQuantityModel>(100);
   auto default_ask_quantity = std::make_shared<LocalQuantityModel>(100);
   auto font_size = std::make_shared<LocalOptionalIntegerModel>(10);
-  auto tester = TechnicalsTestWindow(technicals, bbo_quote,
+  auto tester = BookViewTester(technicals, bbo_quote,
     default_bid_quantity, default_ask_quantity, font_size);
   auto widget = QWidget();
   auto layout = make_vbox_layout(&widget);
@@ -151,5 +200,7 @@ int main(int argc, char** argv) {
   tester.move(
     tester.pos().x() + widget.frameGeometry().width() + scale_width(100),
     widget.pos().y());
+  auto properties_tester = PropertiesTester();
+  properties_tester.m_page.installEventFilter(&tester);
   application.exec();
 }

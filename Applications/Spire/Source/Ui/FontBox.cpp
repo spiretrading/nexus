@@ -29,7 +29,7 @@ namespace {
     auto font = QFont("Roboto");
     font.setWeight(QFont::Normal);
     font.setPixelSize(scale_width(12));
-    width = QFontMetrics(font).averageCharWidth();
+    width = Spire::get_character_width(font);
     return *width;
   }
 
@@ -79,7 +79,7 @@ FontBox::FontBox(std::shared_ptr<ValueModel<QFont>> current, QWidget* parent)
   size_model->set(font_size);
   m_font_size_box = new IntegerBox(std::move(size_model));
   m_font_size_box->setFixedWidth(
-    6 * get_character_width() + INTEGER_BOX_HORIZONTAL_PADDING());
+    6 * ::get_character_width() + INTEGER_BOX_HORIZONTAL_PADDING());
   auto custom_family_box = new CustomFontFamilyBox(*m_font_family_box);
   custom_family_box->setSizePolicy(QSizePolicy::Expanding,
     QSizePolicy::Expanding);

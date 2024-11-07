@@ -71,7 +71,7 @@ namespace {
       auto font = QFont("Roboto");
       font.setWeight(QFont::Normal);
       font.setPixelSize(scale_width(12));
-      return QFontMetrics(font).averageCharWidth();
+      return Spire::get_character_width(font);
     }();
     return width;
   }

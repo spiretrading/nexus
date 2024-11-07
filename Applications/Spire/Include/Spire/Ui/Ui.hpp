@@ -163,6 +163,12 @@ namespace Spire {
    * @param widget The widget whose descendants' layout will be invalidated.
    */
   void invalidate_descendant_layouts(QWidget& widget);
+
+  /**
+   * Gets the width of a character.
+   * @param font The font used to calculate the character width.
+   */
+  int get_character_width(const QFont& font);
 }
 
 #endif
