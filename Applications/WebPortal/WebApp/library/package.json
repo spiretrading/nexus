@@ -27,7 +27,7 @@
     "beam": "file:Dependencies/Beam/WebApi",
     "dali": "file:Dependencies/dali",
     "nexus": "file:Dependencies/WebApi",
-    "path-to-regexp": "8.1.0",
+    "path-to-regexp": "6.3.0",
     "react-transition-group": "4.4.2"
   },
   "peerDependencies": {
