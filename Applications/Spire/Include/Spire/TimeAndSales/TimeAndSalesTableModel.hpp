@@ -29,11 +29,17 @@ namespace Spire {
         MARKET,
 
         /** The sales condition column. */
-        CONDITION
+        CONDITION,
+
+        /** The buyer's MPID column. */
+        BUYER,
+
+        /** The seller's MPID column. */
+        SELLER
       };
 
       /** The number of columns in this table. */
-      static const auto COLUMN_SIZE = 5;
+      static const auto COLUMN_SIZE = 7;
 
       /* Signals that time and sales are being loaded. */
       using BeginLoadingSignal = Signal<void()>;

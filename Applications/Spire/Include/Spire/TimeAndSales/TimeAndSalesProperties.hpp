@@ -71,7 +71,7 @@ namespace Spire {
       void set_grid_enabled(bool is_enabled);
 
     private:
-      static const auto COLUMN_COUNT = 8;
+      static const auto COLUMN_COUNT = 10;
       friend struct Beam::Serialization::DataShuttle;
       std::array<HighlightColor, BBO_INDICATOR_COUNT> m_highlight_colors;
       QFont m_font;

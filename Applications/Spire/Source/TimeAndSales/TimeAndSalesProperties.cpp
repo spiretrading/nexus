@@ -74,6 +74,8 @@ namespace {
     if(legacy_properties.m_visible_columns[CONDITION_COLUMN]) {
       properties.set_visible(TimeAndSalesTableModel::Column::CONDITION, true);
     }
+    properties.set_visible(TimeAndSalesTableModel::Column::BUYER, true);
+    properties.set_visible(TimeAndSalesTableModel::Column::SELLER, true);
     properties.set_grid_enabled(legacy_properties.m_show_grid_lines);
     return properties;
   }
@@ -102,6 +104,8 @@ const TimeAndSalesProperties& TimeAndSalesProperties::get_default() {
     properties.set_visible(TimeAndSalesTableModel::Column::SIZE, true);
     properties.set_visible(TimeAndSalesTableModel::Column::MARKET, true);
     properties.set_visible(TimeAndSalesTableModel::Column::CONDITION, true);
+    properties.set_visible(TimeAndSalesTableModel::Column::BUYER, true);
+    properties.set_visible(TimeAndSalesTableModel::Column::SELLER, true);
     properties.set_grid_enabled(false);
     return properties;
   }();
