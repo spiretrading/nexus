@@ -251,21 +251,21 @@ namespace {
     }
 
     bool is_read_only() const {
-      if(layout()->isEmpty()) {
+      if(layout()->count() == 0) {
         return false;
       }
       return get_input_box()->is_read_only();
     }
 
     void set_read_only(bool is_read_only) {
-      if(layout()->isEmpty()) {
+      if(layout()->count() == 0) {
         return;
       }
       get_input_box()->set_read_only(is_read_only);
     }
 
     connection connect_submit_signal(const SubmitSignal::slot_type& slot) const {
-      if(layout()->isEmpty()) {
+      if(layout()->count() == 0) {
         return connection();
       }
       return get_input_box()->connect_submit_signal(slot);
@@ -276,7 +276,7 @@ namespace {
     }
 
     void on_market_update(const MarketCode& market) {
-      if(!market.IsEmpty() && layout()->isEmpty()) {
+      if(!market.IsEmpty() && layout()->count() == 0) {
         auto input_box = new InputBox(m_model);
         input_box->set_read_only(true);
         layout()->addWidget(input_box);
