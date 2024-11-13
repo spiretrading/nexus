@@ -55,6 +55,12 @@ namespace Details {
     /** The market center. */
     std::string m_marketCenter;
 
+    /** The buyer MPID. */
+    std::string m_buyerMpid;
+
+    /** The seller MPID. */
+    std::string m_sellerMpid;
+
     bool operator ==(const TimeAndSale& timeAndSale) const = default;
   };
 
@@ -79,7 +85,7 @@ namespace Details {
       const TimeAndSale& value) {
     return out << "(" << value.m_timestamp << " " << value.m_price << " " <<
       value.m_size << " " << value.m_condition << " " << value.m_marketCenter <<
-      ")";
+      value.m_buyerMpid << " " << value.m_sellerMpid << ")";
   }
 }
 
@@ -104,6 +110,8 @@ namespace Beam::Serialization {
       shuttle.Shuttle("size", value.m_size);
       shuttle.Shuttle("condition", value.m_condition);
       shuttle.Shuttle("market_center", value.m_marketCenter);
+      shuttle.Shuttle("buyer_mpid", value.m_buyerMpid);
+      shuttle.Shuttle("seller_mpid", value.m_sellerMpid);
     }
   };
 }

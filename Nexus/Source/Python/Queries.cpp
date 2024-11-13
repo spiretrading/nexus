@@ -43,7 +43,9 @@ void Nexus::Python::ExportTimeAndSaleAccessor(pybind11::module& module) {
     def_readonly("timestamp", &TimeAndSaleAccessor::m_timestamp).
     def_readonly("price", &TimeAndSaleAccessor::m_price).
     def_readonly("size", &TimeAndSaleAccessor::m_size).
-    def_readonly("market_center", &TimeAndSaleAccessor::m_marketCenter);
+    def_readonly("market_center", &TimeAndSaleAccessor::m_marketCenter).
+    def_readonly("buyer_mpid", &TimeAndSaleAccessor::m_buyerMpid).
+    def_readonly("seller_mpid", &TimeAndSaleAccessor::m_sellerMpid);
 }
 
 void Nexus::Python::ExportValue(module& module) {

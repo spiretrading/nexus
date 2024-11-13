@@ -152,7 +152,9 @@ namespace Nexus::MarketDataService {
           &TimeAndSale::Condition::m_code).
         add_column("condition_type", &TimeAndSale::Condition::m_type),
           &TimeAndSale::m_condition).
-      add_column("market", Viper::varchar(16), &TimeAndSale::m_marketCenter);
+      add_column("market", Viper::varchar(16), &TimeAndSale::m_marketCenter).
+      add_column("buyer_mpid", Viper::varchar(16), &TimeAndSale::m_buyerMpid).
+      add_column("seller_mpid", Viper::varchar(16), &TimeAndSale::m_sellerMpid);
     return ROW;
   }
 }

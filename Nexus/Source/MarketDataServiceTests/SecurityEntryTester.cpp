@@ -186,7 +186,7 @@ TEST_SUITE("SecurityEntry") {
       auto timeAndSale = TimeAndSale(
         time_from_string("2020-12-03 4:31:00"), Money::ONE, 100,
         TimeAndSale::Condition(TimeAndSale::Condition::Type::REGULAR, "@"),
-        "XNAS");
+        "XNAS", "CITI", "GS");
       entry.PublishTimeAndSale(timeAndSale, TEST_SOURCE);
       auto technicals = entry.GetSecurityTechnicals();
       REQUIRE(technicals.m_open == Money::ONE);
@@ -199,7 +199,7 @@ TEST_SUITE("SecurityEntry") {
       auto timeAndSale = TimeAndSale(
         time_from_string("2020-12-03 4:32:00"), Money::ONE + Money::CENT, 200,
         TimeAndSale::Condition(TimeAndSale::Condition::Type::REGULAR, "@"),
-        "XNAS");
+        "XNAS", "CITI", "GS");
       entry.PublishTimeAndSale(timeAndSale, TEST_SOURCE);
       auto technicals = entry.GetSecurityTechnicals();
       REQUIRE(technicals.m_open == Money::ONE);
@@ -212,7 +212,7 @@ TEST_SUITE("SecurityEntry") {
       auto timeAndSale = TimeAndSale(
         time_from_string("2020-12-03 4:59:00"), 3 * Money::CENT, 600,
         TimeAndSale::Condition(TimeAndSale::Condition::Type::REGULAR, "@"),
-        "XNAS");
+        "XNAS", "CITI", "GS");
       entry.PublishTimeAndSale(timeAndSale, TEST_SOURCE);
       auto technicals = entry.GetSecurityTechnicals();
       REQUIRE(technicals.m_open == Money::ONE);
@@ -238,7 +238,7 @@ TEST_SUITE("SecurityEntry") {
       auto timeAndSale = TimeAndSale(
         time_from_string("2020-12-03 5:01:00"), 3 * Money::ONE, 300,
         TimeAndSale::Condition(TimeAndSale::Condition::Type::REGULAR, "@"),
-        "XNAS");
+        "XNAS", "CITI", "GS");
       entry.PublishTimeAndSale(timeAndSale, TEST_SOURCE);
       auto technicals = entry.GetSecurityTechnicals();
       REQUIRE(technicals.m_open == 3 * Money::ONE);
@@ -264,7 +264,7 @@ TEST_SUITE("SecurityEntry") {
       auto timeAndSale = TimeAndSale(
         time_from_string("2020-12-10 5:01:00"), 7 * Money::CENT, 900,
         TimeAndSale::Condition(TimeAndSale::Condition::Type::REGULAR, "@"),
-        "XNAS");
+        "XNAS", "CITI", "GS");
       entry.PublishTimeAndSale(timeAndSale, TEST_SOURCE);
       auto technicals = entry.GetSecurityTechnicals();
       REQUIRE(technicals.m_open == 7 * Money::CENT);
