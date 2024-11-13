@@ -2257,9 +2257,7 @@ UiProfile Spire::make_highlight_box_profile() {
     auto& font = get<QFont>("font", profile.get_properties());
     font.connect_changed_signal([=] (const auto& value) {
       update_style(*highlight_box, [&] (auto& style) {
-        style.get(Any() > (is_a<TextBox>() &&
-            !(+Any() << is_a<HighlightPicker>()))).
-          set(Font(value));
+        style.get(Any() > is_a<TextBox>()).set(Font(value));
       });
     });
     auto current_slot = profile.make_event_slot<QString>("Current");

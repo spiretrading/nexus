@@ -39,6 +39,7 @@ HighlightBox::HighlightBox(std::shared_ptr<HighlightColorModel> current,
     : QWidget(parent),
       m_current(std::move(current)),
       m_submission(m_current->get()),
+      m_highlight_picker(nullptr),
       m_is_read_only(false),
       m_is_modified(false),
       m_focus_observer(*this),
@@ -61,13 +62,6 @@ HighlightBox::HighlightBox(std::shared_ptr<HighlightColorModel> current,
       set(TextColor(QColor(0xC8C8C8)));
   });
   update_label_color(m_current->get());
-  m_highlight_picker = new HighlightPicker(m_current, *this);
-  m_highlight_picker_panel = m_highlight_picker->window();
-  m_highlight_picker_panel->installEventFilter(this);
-  get_highlight_palette(*m_highlight_picker)->connect_submit_signal(
-    std::bind_front(&HighlightBox::on_palette_submit, this));
-  get_background_color_box(*m_highlight_picker)->installEventFilter(this);
-  get_text_color_box(*m_highlight_picker)->installEventFilter(this);
   m_current_connection = m_current->connect_update_signal(
     std::bind_front(&HighlightBox::on_current, this));
   m_focus_observer.connect_state_signal(
@@ -91,7 +85,9 @@ void HighlightBox::set_read_only(bool is_read_only) {
   m_is_read_only = is_read_only;
   if(m_is_read_only) {
     match(*m_input_box, ReadOnly());
-    m_highlight_picker->hide();
+    if(m_highlight_picker) {
+      m_highlight_picker->hide();
+    }
   } else {
     unmatch(*m_input_box, ReadOnly());
   }
@@ -155,7 +151,9 @@ void HighlightBox::update_label_color(const HighlightColor& highlight) {
 }
 
 void HighlightBox::on_palette_submit(const std::any& submission) {
-  m_highlight_picker->hide();
+  if(m_highlight_picker) {
+    m_highlight_picker->hide();
+  }
   submit();
 }
 
@@ -165,6 +163,15 @@ void HighlightBox::on_current(const HighlightColor& current) {
 }
 
 void HighlightBox::show_highlight_picker() {
+  if(!m_highlight_picker) {
+    m_highlight_picker = new HighlightPicker(m_current, *this);
+    m_highlight_picker_panel = m_highlight_picker->window();
+    m_highlight_picker_panel->installEventFilter(this);
+    get_highlight_palette(*m_highlight_picker)->connect_submit_signal(
+      std::bind_front(&HighlightBox::on_palette_submit, this));
+    get_background_color_box(*m_highlight_picker)->installEventFilter(this);
+    get_text_color_box(*m_highlight_picker)->installEventFilter(this);
+  }
   if(!m_highlight_picker->isVisible()) {
     m_highlight_picker->show();
     get_highlight_palette(*m_highlight_picker)->setFocus();
