@@ -124,12 +124,12 @@ TEST_SUITE("MarketDataRelayServlet") {
     m_marketDataEnvironment.GetFeedClient().Publish(SecurityTimeAndSale(
       TimeAndSale(time_from_string("2021-01-01 17:57:22"), Money::ONE, 100,
         TimeAndSale::Condition(TimeAndSale::Condition::Type::REGULAR, "@"),
-          "TSE"), TST_A));
+          "TSE", "CANA", "ITG"), TST_A));
     FlushPendingRoutines();
     m_marketDataEnvironment.GetFeedClient().Publish(SecurityTimeAndSale(
       TimeAndSale(time_from_string("2021-01-01 17:57:22"), Money::ONE, 100,
         TimeAndSale::Condition(TimeAndSale::Condition::Type::REGULAR, "@"),
-          "TSE"), TST_B));
+          "TSE", "CANA", "ITG"), TST_B));
     {
       auto timeAndSaleMessage = std::dynamic_pointer_cast<
         RecordMessage<TimeAndSaleMessage, TestServiceProtocolClient>>(
@@ -151,7 +151,7 @@ TEST_SUITE("MarketDataRelayServlet") {
     m_marketDataEnvironment.GetFeedClient().Publish(SecurityTimeAndSale(
       TimeAndSale(time_from_string("2021-01-01 17:57:22"), Money::ONE, 100,
         TimeAndSale::Condition(TimeAndSale::Condition::Type::REGULAR, "@"),
-          "TSE"), TST_A));
+          "TSE", "CANA", "ITG"), TST_A));
     {
       auto timeAndSaleMessage = std::dynamic_pointer_cast<
         RecordMessage<TimeAndSaleMessage, TestServiceProtocolClient>>(
@@ -174,7 +174,7 @@ TEST_SUITE("MarketDataRelayServlet") {
     m_marketDataEnvironment.GetFeedClient().Publish(SecurityTimeAndSale(
       TimeAndSale(time_from_string("2021-01-01 17:57:22"), Money::ONE, 100,
         TimeAndSale::Condition(TimeAndSale::Condition::Type::REGULAR, "@"),
-          "TSE"), TST_A));
+          "TSE", "CANA", "ITG"), TST_A));
     relayClient->ReadMessage();
     alternativeClient->ReadMessage();
     auto updatedSecurity = Security("TST_A", DefaultMarkets::OMGA(),
@@ -194,7 +194,7 @@ TEST_SUITE("MarketDataRelayServlet") {
     m_marketDataEnvironment.GetFeedClient().Publish(SecurityTimeAndSale(
       TimeAndSale(time_from_string("2021-01-01 17:58:22"), Money::ONE, 100,
         TimeAndSale::Condition(TimeAndSale::Condition::Type::REGULAR, "@"),
-          "OMGA"), updatedSecurity));
+          "OMGA", "CANA", "ITG"), updatedSecurity));
     {
       auto timeAndSaleMessage = std::dynamic_pointer_cast<
         RecordMessage<TimeAndSaleMessage, TestServiceProtocolClient>>(

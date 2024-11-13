@@ -12,7 +12,7 @@ using namespace Spire;
 namespace {
   TimeAndSale test_sale(int price, int volume) {
     return TimeAndSale(boost::posix_time::ptime(), Money(price * Money::ONE),
-      volume, TimeAndSale::Condition(), "null");
+      volume, TimeAndSale::Condition(), "null", "M1", "M2");
   }
 }
 

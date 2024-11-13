@@ -9,25 +9,25 @@ namespace Nexus::MarketDataService {
   /* Lists the types market data available to subscribe to. */
   BEAM_ENUM(MarketDataType,
 
-    //! A TimeAndSale.
+    /** A TimeAndSale. */
     TIME_AND_SALE,
 
-    //! A BookQuote.
+    /** A BookQuote. */
     BOOK_QUOTE,
 
-    //! A MarketQuote.
+    /** A MarketQuote. */
     MARKET_QUOTE,
 
-    //! A BboQuote.
+    /** A BboQuote. */
     BBO_QUOTE,
 
-    //! An OrderImbalance.
+    /** An OrderImbalance. */
     ORDER_IMBALANCE);
 
-  //! Stores a set of MarketDataTypes.
+  /** Stores a set of MarketDataTypes. */
   using MarketDataTypeSet = Beam::EnumSet<MarketDataType>;
 
-  //! Returns a static type's MarketDataType.
+  /** Returns a static type's MarketDataType. */
   template<typename T>
   MarketDataType GetMarketDataType() {
     if(std::is_same<T, TimeAndSale>::value) {
