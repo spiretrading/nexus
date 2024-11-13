@@ -117,7 +117,9 @@ void ColorBox::set_read_only(bool is_read_only) {
   m_is_read_only = is_read_only;
   if(m_is_read_only) {
     match(*m_input_box, ReadOnly());
-    m_color_picker->hide();
+    if(m_color_picker) {
+      m_color_picker->hide();
+    }
   } else {
     unmatch(*m_input_box, ReadOnly());
   }
