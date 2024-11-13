@@ -97,7 +97,7 @@ namespace {
       static const auto value = QObject::tr("Top Level");
       return value;
     } else {
-      static const auto value = QObject::tr("ALL Level");
+      static const auto value = QObject::tr("All Levels");
       return value;
     }
   }
