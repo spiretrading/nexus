@@ -140,6 +140,14 @@ namespace Nexus::Queries {
       expression.GetExpression()->Apply(*this);
       auto term = GetTranslation();
       GetTranslation() = Viper::access(term, "market");
+    } else if(expression.GetName() == "buyer_mpid") {
+      expression.GetExpression()->Apply(*this);
+      auto term = GetTranslation();
+      GetTranslation() = Viper::access(term, "buyer_mpid");
+    } else if(expression.GetName() == "seller_mpid") {
+      expression.GetExpression()->Apply(*this);
+      auto term = GetTranslation();
+      GetTranslation() = Viper::access(term, "seller_mpid");
     } else {
       Beam::Queries::SqlTranslator::Visit(expression);
     }

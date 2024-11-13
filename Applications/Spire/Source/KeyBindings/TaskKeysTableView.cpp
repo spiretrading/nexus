@@ -222,7 +222,7 @@ namespace {
   };
 
   struct TaskKeysTableViewItemBuilder {
-    std::shared_ptr<ComboBox::QueryModel> m_region_query_model;
+    std::shared_ptr<RegionQueryModel> m_regions;
     DestinationDatabase m_destinations;
     MarketDatabase m_markets;
     AdditionalTagDatabase m_additional_tags;
@@ -243,7 +243,7 @@ namespace {
               *new TextBox(current)), std::make_shared<ItemState>(current)};
           } else if(column_id == OrderTaskColumns::REGION) {
             auto current = make_proxy.operator ()<Region>();
-            auto region_box = new RegionBox(m_region_query_model, current);
+            auto region_box = new RegionBox(m_regions, current);
             region_box->setFixedHeight(scale_height(25));
             region_box->setSizePolicy(
               QSizePolicy::Preferred, QSizePolicy::Fixed);
@@ -357,9 +357,9 @@ namespace {
 
 TableView* Spire::make_task_keys_table_view(
     std::shared_ptr<OrderTaskArgumentsListModel> order_task_arguments,
-    std::shared_ptr<ComboBox::QueryModel> region_query_model,
-    DestinationDatabase destinations, MarketDatabase markets,
-    AdditionalTagDatabase additional_tags, QWidget* parent) {
+    std::shared_ptr<RegionQueryModel> regions, DestinationDatabase destinations,
+    MarketDatabase markets, AdditionalTagDatabase additional_tags,
+    QWidget* parent) {
   auto table =
     make_order_task_arguments_table_model(std::move(order_task_arguments));
   auto table_view = new EditableTableView(
@@ -371,7 +371,7 @@ TableView* Spire::make_task_keys_table_view(
       std::make_shared<ListSingleSelectionModel>(),
       std::make_shared<ListEmptySelectionModel>()),
     RecycledTableViewItemBuilder(TaskKeysTableViewItemBuilder(
-      region_query_model, destinations, markets, additional_tags)),
+      regions, destinations, markets, additional_tags)),
     &comparator);
   auto widths = make_header_widths();
   for(auto i = 0; i < std::ssize(widths); ++i) {

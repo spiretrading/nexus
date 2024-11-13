@@ -54,6 +54,8 @@ namespace Nexus::Queries {
     Beam::Queries::MemberAccessExpression m_price;
     Beam::Queries::MemberAccessExpression m_size;
     Beam::Queries::MemberAccessExpression m_marketCenter;
+    Beam::Queries::MemberAccessExpression m_buyerMpid;
+    Beam::Queries::MemberAccessExpression m_sellerMpid;
   };
 
   struct QueryTypes {
@@ -82,8 +84,9 @@ namespace Nexus::Queries {
     : m_timestamp("timestamp", Beam::Queries::DateTimeType(), expression),
       m_price("price", MoneyType(), expression),
       m_size("size", QuantityType(), expression),
-      m_marketCenter(
-        "market_center", Beam::Queries::StringType(), expression) {}
+      m_marketCenter("market_center", Beam::Queries::StringType(), expression),
+      m_buyerMpid("buyer_mpid", Beam::Queries::StringType(), expression),
+      m_sellerMpid("seller_mpid", Beam::Queries::StringType(), expression) {}
 }
 
 #endif

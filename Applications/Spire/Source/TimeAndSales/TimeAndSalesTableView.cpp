@@ -98,6 +98,8 @@ namespace {
     add_item(QObject::tr("Size"), QObject::tr("Sz"));
     add_item(QObject::tr("Market"), QObject::tr("Mkt"));
     add_item(QObject::tr("Condition"), QObject::tr("Cond"));
+    add_item(QObject::tr("Buyer"), QObject::tr("Buy"));
+    add_item(QObject::tr("Seller"), QObject::tr("Sell"));
     add_item("", "");
     return model;
   }
@@ -109,6 +111,8 @@ namespace {
     properties.emplace_back(Qt::AlignRight, scale_width(40));
     properties.emplace_back(Qt::AlignLeft, scale_width(38));
     properties.emplace_back(Qt::AlignLeft, scale_width(34));
+    properties.emplace_back(Qt::AlignLeft, scale_width(38));
+    properties.emplace_back(Qt::AlignLeft, scale_width(38));
     return properties;
   }
 
@@ -182,6 +186,10 @@ namespace {
       } else if(column_id == TimeAndSalesTableModel::Column::CONDITION) {
         return make_label(
           to_text(table->get<TimeAndSale::Condition>(row, column)));
+      } else if(column_id == TimeAndSalesTableModel::Column::BUYER) {
+        return make_label(to_text(table->get<std::string>(row, column)));
+      } else if(column_id == TimeAndSalesTableModel::Column::SELLER) {
+        return make_label(to_text(table->get<std::string>(row, column)));
       }
       return new QWidget();
     }();

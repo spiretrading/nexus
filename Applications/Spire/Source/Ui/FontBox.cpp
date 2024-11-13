@@ -41,7 +41,7 @@ namespace {
     }
 
     QSize sizeHint() const override {
-      return {20 * get_character_width() + DROP_DOWN_BOX_HORIZONTAL_PADDING(),
+      return {14 * get_character_width() + DROP_DOWN_BOX_HORIZONTAL_PADDING(),
         QWidget::sizeHint().height()};
     }
   };
@@ -54,7 +54,7 @@ namespace {
     }
 
     QSize sizeHint() const override {
-      return {16 * get_character_width() + DROP_DOWN_BOX_HORIZONTAL_PADDING(),
+      return {12 * get_character_width() + DROP_DOWN_BOX_HORIZONTAL_PADDING(),
         QWidget::sizeHint().height()};
     }
   };

@@ -2,7 +2,7 @@
 #define SPIRE_SECURITY_BOX_HPP
 #include "Nexus/Definitions/Security.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
-#include "Spire/Spire/SecurityInfoQueryModel.hpp"
+#include "Spire/Spire/QueryModel.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -12,6 +12,9 @@ namespace Spire {
 
   /** Represents a LocalValueModel for a Security. */
   using LocalSecurityModel = LocalValueModel<Nexus::Security>;
+
+  /** Represents the QueryModel used for SecurityInfo objects. */
+  using SecurityInfoQueryModel = QueryModel<Nexus::SecurityInfo>;
 
   /** Displays a security over an open set of security values. */
   class SecurityBox : public QWidget {
@@ -70,10 +73,9 @@ namespace Spire {
 
     private:
       struct SecurityQueryModel;
-      mutable SubmitSignal m_submit_signal;
       std::shared_ptr<SecurityQueryModel> m_securities;
       std::shared_ptr<CurrentModel> m_current;
-      ComboBox* m_combo_box;
+      ComboBox<Nexus::Security>* m_combo_box;
   };
 }
 

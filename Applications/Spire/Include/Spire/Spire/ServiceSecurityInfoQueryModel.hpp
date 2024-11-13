@@ -1,9 +1,9 @@
-#ifndef SPIRE_SERVICE_SECURITY_QUERY_MODEL_HPP
-#define SPIRE_SERVICE_SECURITY_QUERY_MODEL_HPP
+#ifndef SPIRE_SERVICE_SECURITY_INFO_QUERY_MODEL_HPP
+#define SPIRE_SERVICE_SECURITY_INFO_QUERY_MODEL_HPP
 #include <Beam/Collections/SynchronizedMap.hpp>
 #include "Nexus/Definitions/Market.hpp"
 #include "Nexus/MarketDataService/MarketDataClientBox.hpp"
-#include "Spire/Spire/SecurityInfoQueryModel.hpp"
+#include "Spire/Spire/QueryModel.hpp"
 #include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
@@ -12,7 +12,7 @@ namespace Spire {
    * Implements a QueryModel by submitting queries for securities to a market 
    * data client.
    */
-  class ServiceSecurityInfoQueryModel : public SecurityInfoQueryModel {
+  class ServiceSecurityInfoQueryModel : public QueryModel<Nexus::SecurityInfo> {
     public:
 
       /**
@@ -23,12 +23,10 @@ namespace Spire {
       ServiceSecurityInfoQueryModel(Nexus::MarketDatabase m_markets,
         Nexus::MarketDataService::MarketDataClientBox market_data_client);
 
-      const Nexus::MarketDatabase& get_markets() const override;
-
-      Nexus::SecurityInfo parse_security(const QString& query) override;
+      boost::optional<Nexus::SecurityInfo> parse(const QString& query) override;
 
       QtPromise<std::vector<Nexus::SecurityInfo>>
-        submit_security(const QString& query) override;
+        submit(const QString& query) override;
 
     private:
       Nexus::MarketDatabase m_markets;

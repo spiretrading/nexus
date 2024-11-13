@@ -81,19 +81,6 @@ namespace {
     return highlights;
   }
 
-  OverlayPanel* get_color_picker(const ColorBox& color_box) {
-    auto children = color_box.children();
-    for(auto child : children) {
-      if(child->isWidgetType()) {
-        if(auto widget = static_cast<QWidget*>(child);
-            widget->windowFlags() & Qt::Popup) {
-          return static_cast<OverlayPanel*>(widget);
-        }
-      }
-    }
-    return nullptr;
-  }
-
   auto make_highlight_swatch(const std::shared_ptr<AnyListModel>& list,
       int index) {
     auto swatch = new HighlightSwatch(
@@ -106,7 +93,6 @@ namespace {
   auto make_color_box(std::shared_ptr<ColorModel> model) {
     auto color_box = new ColorBox(std::move(model));
     color_box->setFixedHeight(scale_height(26));
-    get_color_picker(*color_box)->get_body().setFixedWidth(scale_width(220));
     update_style(*color_box, [] (auto& style) {
       style.get(Any() >
         Any() > Any() > is_a<ColorPicker>() > Alpha()).set(Visibility::NONE);
@@ -195,7 +181,9 @@ HighlightPicker::HighlightPicker(QWidget& parent)
 HighlightPicker::HighlightPicker(std::shared_ptr<ValueModel<Highlight>> current,
     QWidget& parent)
     : QWidget(&parent),
-      m_model(std::make_shared<HighlightPickerModel>(std::move(current))) {
+      m_model(std::make_shared<HighlightPickerModel>(std::move(current))),
+      m_background_color_picker(nullptr),
+      m_text_color_picker(nullptr) {
   m_palette = new ListView(DEFUALT_HIGHLIGHT_LIST(), make_highlight_swatch);
   update_style(*m_palette, [] (auto& style) {
     style = PALETTE_STYLE(style);
@@ -205,9 +193,11 @@ HighlightPicker::HighlightPicker(std::shared_ptr<ValueModel<Highlight>> current,
   vbox_layout->addSpacing(scale_height(18));
   auto color_layout = make_hbox_layout();
   m_background_color_box = make_color_box(m_model->m_background_color_model);
+  m_background_color_box->installEventFilter(this);
   color_layout->addWidget(m_background_color_box);
   color_layout->addSpacing(scale_width(8));
   m_text_color_box = make_color_box(m_model->m_text_color_model);
+  m_text_color_box->installEventFilter(this);
   color_layout->addWidget(m_text_color_box);
   vbox_layout->addLayout(color_layout);
   auto layout = make_hbox_layout(this);
@@ -223,8 +213,6 @@ HighlightPicker::HighlightPicker(std::shared_ptr<ValueModel<Highlight>> current,
   });
   m_palette->get_current()->connect_update_signal(
     std::bind_front(&HighlightPicker::on_palette_current, this));
-  get_color_picker(*m_background_color_box)->installEventFilter(this);
-  get_color_picker(*m_text_color_box)->installEventFilter(this);
   m_palette->setFixedWidth(
     m_palette->get_list_item(0)->sizeHint().width() * 8);
 }
@@ -242,15 +230,30 @@ bool HighlightPicker::eventFilter(QObject* watched, QEvent* event) {
     }
   } else if(event->type() == QEvent::MouseButtonPress) {
     auto& mouse_event = *static_cast<QMouseEvent*>(event);
-    if(get_color_picker(*m_background_color_box) == watched) {
+    if(m_background_color_picker == watched) {
       if(on_mouse_press(*m_background_color_box, *m_text_color_box,
-          mouse_event)) {
+          *m_background_color_picker, mouse_event)) {
         return true;
       }
-    } else if(get_color_picker(*m_text_color_box) == watched) {
+    } else if(m_text_color_picker == watched) {
       if(on_mouse_press(*m_text_color_box, *m_background_color_box,
-          mouse_event)) {
+          *m_text_color_picker, mouse_event)) {
         return true;
+      }
+    }
+  } else if(event->type() == QEvent::ChildAdded &&
+      (watched == m_background_color_box || watched == m_text_color_box)) {
+    auto& child_event = *static_cast<QChildEvent*>(event);
+    if(child_event.child()->isWidgetType()) {
+      if(auto& widget = *static_cast<QWidget*>(child_event.child());
+          widget.windowFlags() & Qt::Popup) {
+        widget.installEventFilter(this);
+        watched->removeEventFilter(this);
+        if(watched == m_background_color_box) {
+          m_background_color_picker = &widget;
+        } else {
+          m_text_color_picker = &widget;
+        }
       }
     }
   }
@@ -267,7 +270,7 @@ bool HighlightPicker::event(QEvent* event) {
 }
 
 bool HighlightPicker::on_mouse_press(ColorBox& source, ColorBox& destination,
-    const QMouseEvent& mouse_event) {
+    QWidget& source_picker, const QMouseEvent& mouse_event) {
   auto post_mouse_event = [&] (QWidget& widget, const QPoint& position) {
     auto event = new QMouseEvent(mouse_event.type(), position,
       mouse_event.windowPos(), mouse_event.screenPos(), mouse_event.button(),
@@ -279,7 +282,7 @@ bool HighlightPicker::on_mouse_press(ColorBox& source, ColorBox& destination,
       style.get(Any()).set(border_color(QColor(0xC8C8C8)));
     });
   };
-  if(!get_color_picker(source)->rect().contains(mouse_event.pos())) {
+  if(!source_picker.rect().contains(mouse_event.pos())) {
     auto position_in_destination =
       destination.mapFromGlobal(mouse_event.globalPos());
     if(destination.rect().contains(position_in_destination)) {

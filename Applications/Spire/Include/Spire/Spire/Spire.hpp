@@ -28,6 +28,8 @@ namespace Spire {
 
 namespace Spire {
   class AnyListModel;
+  class AnyQueryModel;
+  class AnyValueModel;
   class AnyRef;
   template<typename T> class ArrayListModel;
   class ArrayTableModel;
@@ -47,21 +49,21 @@ namespace Spire {
   template<typename T> class ListModelReference;
   template<typename T> class ListToTableModel;
   template<typename T> class ListValueModel;
+  template<typename T> class LocalQueryModel;
   template<typename T> class LocalScalarValueModel;
-  class LocalSecurityInfoQueryModel;
   class LocalTechnicalsModel;
   template<typename T> class LocalValueModel;
   template<typename T> class ModelTransactionLog;
   template<typename T> class OptionalScalarValueModelDecorator;
   template<typename T> class ProxyScalarValueModel;
   template<typename T> class ProxyValueModel;
+  template<typename T> class QueryModel;
   class RowView;
   template<typename T> class RowViewListModel;
   class Scalar;
   template<typename T> class ScalarValueModel;
   template<typename T> class ScalarValueModelDecorator;
   class SecurityDeck;
-  class SecurityInfoQueryModel;
   class ServiceSecurityInfoQueryModel;
   template<typename T> class SortedListModel;
   class SortedTableModel;

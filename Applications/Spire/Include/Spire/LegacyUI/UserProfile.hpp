@@ -28,6 +28,7 @@
 #include "Spire/RiskTimer/RiskTimerProperties.hpp"
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
+#include "Spire/Ui/SecurityBox.hpp"
 
 namespace Spire {
 

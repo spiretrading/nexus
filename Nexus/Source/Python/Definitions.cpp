@@ -705,6 +705,8 @@ void Nexus::Python::ExportTimeAndSale(module& module) {
     def_readwrite("size", &TimeAndSale::m_size).
     def_readwrite("condition", &TimeAndSale::m_condition).
     def_readwrite("market_center", &TimeAndSale::m_marketCenter).
+    def_readwrite("buyer_mpid", &TimeAndSale::m_buyerMpid).
+    def_readwrite("seller_mpid", &TimeAndSale::m_sellerMpid).
     def("__str__", &lexical_cast<std::string, TimeAndSale>).
     def(self == self).
     def(self != self);

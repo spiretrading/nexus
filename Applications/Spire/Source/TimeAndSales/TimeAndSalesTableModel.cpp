@@ -16,9 +16,12 @@ namespace {
       return time_and_sale.m_size;
     } else if(column == TimeAndSalesTableModel::Column::MARKET) {
       return time_and_sale.m_marketCenter;
-    } else {
+    } else if(column == TimeAndSalesTableModel::Column::CONDITION) {
       return time_and_sale.m_condition;
+    } else if(column == TimeAndSalesTableModel::Column::BUYER) {
+      return time_and_sale.m_buyerMpid;
     }
+    return time_and_sale.m_sellerMpid;
   }
 
   auto get_timestamp(const TimeAndSalesModel::Entry& entry) {

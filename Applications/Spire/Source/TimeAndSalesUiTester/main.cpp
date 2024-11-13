@@ -1,7 +1,7 @@
 #include <QApplication>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Spire/LocalSecurityInfoQueryModel.hpp"
+#include "Spire/Spire/LocalQueryModel.hpp"
 #include "Spire/Spire/Resources.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
 #include "Spire/TimeAndSalesUiTester/DemoTimeAndSalesModel.hpp"
@@ -30,10 +30,11 @@ std::shared_ptr<SecurityInfoQueryModel> populate_securities() {
     "Manulife Financial Corporation", "", 0);
   security_infos.emplace_back(ParseSecurity("MX.TSX"),
     "Methanex Corporation", "", 0);
-  auto model =
-    std::make_shared<LocalSecurityInfoQueryModel>(GetDefaultMarketDatabase());
+  auto model = std::make_shared<LocalQueryModel<SecurityInfo>>();
   for(auto& security_info : security_infos) {
-    model->add(security_info);
+    model->add(to_text(security_info.m_security).toLower(), security_info);
+    model->add(
+      QString::fromStdString(security_info.m_name).toLower(), security_info);
   }
   return model;
 }
@@ -178,7 +179,8 @@ struct TimeAndSalesWindowController {
 
   explicit TimeAndSalesWindowController(
       std::shared_ptr<TimeAndSalesPropertiesWindowFactory> factory)
-      : m_time_and_sales_window(populate_securities(), std::move(factory),
+      : m_time_and_sales_window(populate_securities(),
+          GetDefaultMarketDatabase(), std::move(factory),
           std::bind_front(&TimeAndSalesWindowController::model_builder, this)),
         m_time_and_sales_test_window(
           std::make_shared<DemoTimeAndSalesModel>()) {
