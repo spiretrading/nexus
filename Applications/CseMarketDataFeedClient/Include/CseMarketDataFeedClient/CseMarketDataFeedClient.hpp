@@ -66,6 +66,7 @@ namespace Nexus::MarketDataService {
       static Quantity RoundToBoardLotPortion(Quantity quantity, Money price);
       boost::optional<boost::posix_time::ptime> GetTimestamp(
         const StampProtocol::StampMessage& message, int index);
+      const std::string& GetMpid(const std::string& brokerNumber) const;
       std::string GetOrderId(const boost::optional<std::string>& symbol,
         const boost::optional<std::string>& brokerNumber,
         const std::string& orderNumber);
@@ -147,6 +148,23 @@ namespace Nexus::MarketDataService {
       *timestamp += m_config.m_timeOffset;
     }
     return timestamp;
+  }
+
+  template<typename M, typename S, typename T>
+  const std::string& CseMarketDataFeedClient<M, S, T>::GetMpid(
+      const std::string& brokerNumber) const {
+    auto normalizedBrokerNumber = [&] () -> std::string {
+      auto i = brokerNumber.find_first_not_of('0');
+      if(i == std::string::npos) {
+        return "0";
+      }
+      return brokerNumber.substr(i);
+    }();
+    auto i = m_config.m_mpidMappings.find(normalizedBrokerNumber);
+    if(i != m_config.m_mpidMappings.end()) {
+      return i->second;
+    }
+    return brokerNumber;
   }
 
   template<typename M, typename S, typename T>
@@ -236,12 +254,17 @@ namespace Nexus::MarketDataService {
     if(!exchangeId) {
       return;
     }
+    auto buyerMpid =
+      GetMpid(message.GetBusinessField<std::string>(70, 0).value_or(""));
+    auto sellerMpid =
+      GetMpid(message.GetBusinessField<std::string>(70, 1).value_or(""));
     auto security =
       Security(std::move(*symbol), m_config.m_market, DefaultCountries::CA());
     auto condition = TimeAndSale::Condition();
     condition.m_code = "@";
     auto timeAndSale = TimeAndSale(*timestamp, *price, *volume,
-      std::move(condition), *exchangeId);
+      std::move(condition), *exchangeId, std::move(buyerMpid),
+      std::move(sellerMpid));
     m_marketDataFeedClient->Publish(SecurityTimeAndSale(
       timeAndSale, std::move(security)));
   }

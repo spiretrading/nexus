@@ -69,6 +69,7 @@ namespace Nexus::MarketDataService {
         const TmxIpMarketDataFeedClient&) = delete;
       boost::optional<boost::posix_time::ptime> GetTimestamp(
         const StampProtocol::StampMessage& message, int index);
+      const std::string& GetMpid(const std::string& brokerNumber) const;
       std::string GetOrderId(const boost::optional<std::string>& symbol,
         const boost::optional<std::string>& brokerNumber,
         const std::string& orderNumber);
@@ -158,6 +159,26 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       *timestamp += m_config.m_timeOffset;
     }
     return timestamp;
+  }
+
+  template<typename M, typename S, typename T>
+  const std::string& TmxIpMarketDataFeedClient<M, S, T>::GetMpid(
+      const std::string& brokerNumber) const {
+    if(brokerNumber.empty()) {
+      return m_config.m_defaultMpid;
+    }
+    auto normalizedBrokerNumber = [&] () -> std::string {
+      auto i = brokerNumber.find_first_not_of('0');
+      if(i == std::string::npos) {
+        return "0";
+      }
+      return brokerNumber.substr(i);
+    }();
+    auto i = m_config.m_mpidMappings.find(normalizedBrokerNumber);
+    if(i != m_config.m_mpidMappings.end()) {
+      return i->second;
+    }
+    return brokerNumber;
   }
 
   template<typename M, typename S, typename T>
@@ -251,12 +272,17 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     if(!exchangeId) {
       return;
     }
+    auto buyerMpid =
+      GetMpid(message.GetBusinessField<std::string>(70, 0).value_or(""));
+    auto sellerMpid =
+      GetMpid(message.GetBusinessField<std::string>(70, 1).value_or(""));
     auto security = Security(std::move(*symbol), m_config.m_market,
       m_config.m_country);
     auto condition = TimeAndSale::Condition();
     condition.m_code = "@";
     auto timeAndSale = TimeAndSale(*timestamp, *price, *volume,
-      std::move(condition), *exchangeId);
+      std::move(condition), *exchangeId, std::move(buyerMpid),
+      std::move(sellerMpid));
     m_marketDataFeedClient->Publish(
       SecurityTimeAndSale(timeAndSale, std::move(security)));
   }
