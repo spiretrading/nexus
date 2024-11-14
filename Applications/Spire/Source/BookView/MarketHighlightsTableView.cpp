@@ -3,7 +3,9 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ArrayTableModel.hpp"
 #include "Spire/Spire/ListToTableModel.hpp"
+#include "Spire/Spire/SortedListModel.hpp"
 #include "Spire/Spire/TableValueModel.hpp"
+#include "Spire/Ui/DestinationListItem.hpp"
 #include "Spire/Ui/EditableBox.hpp"
 #include "Spire/Ui/EditableTableView.hpp"
 #include "Spire/Ui/EnumBox.hpp"
@@ -127,6 +129,24 @@ namespace {
     return settings;
   }
 
+  MarketBox* make_market_box(std::shared_ptr<MarketModel> current,
+      std::shared_ptr<ListModel<MarketCode>> available_markets,
+      const MarketDatabase& markets, QWidget* parent = nullptr) {
+    auto settings = MarketBox::Settings([=] (const auto& market) {
+      return QString::fromStdString(markets.FromCode(market).m_displayName);
+    },
+    [=] (const auto& market) {
+      auto& entry = markets.FromCode(market);
+      auto destination_entry = DestinationDatabase::Entry();
+      destination_entry.m_id = entry.m_displayName;
+      destination_entry.m_description = entry.m_description;
+      return new DestinationListItem(std::move(destination_entry));
+    });
+    settings.m_cases = std::move(available_markets);
+    settings.m_current = std::move(current);
+    return new MarketBox(std::move(settings), parent);
+  }
+
   struct MarketHighlightListToTableModel : ListToTableModel<MarketHighlight> {
     std::shared_ptr<ListModel<MarketHighlight>> m_list;
 
@@ -143,12 +163,25 @@ namespace {
 
   struct ExpandableTableModel : TableModel {
     std::shared_ptr<MarketHighlightListToTableModel> m_source;
-    scoped_connection m_connection;
+    MarketDatabase m_markets;
+    std::shared_ptr<ArrayListModel<MarketCode>> m_market_list;
+    std::vector<std::shared_ptr<SortedListModel<MarketCode>>>
+      m_available_markets;
     TableModelTransactionLog m_transaction;
+    scoped_connection m_connection;
 
-    explicit ExpandableTableModel(
-        std::shared_ptr<MarketHighlightListToTableModel> source)
-        : m_source(std::move(source)) {
+    ExpandableTableModel(
+        std::shared_ptr<MarketHighlightListToTableModel> source,
+        MarketDatabase markets)
+        : m_source(std::move(source)),
+          m_markets(std::move(markets)),
+          m_market_list(std::make_shared<ArrayListModel<MarketCode>>()) {
+      for(auto& market : m_markets.GetEntries()) {
+        m_market_list->push(market.m_code);
+      }
+      for(auto i = 0; i < get_row_size(); ++i) {
+        add_available_markets(i);
+      }
       m_connection = m_source->connect_operation_signal(
         std::bind_front(&ExpandableTableModel::on_operation, this));
     }
@@ -184,11 +217,14 @@ namespace {
           return QValidator::Acceptable;
         }
         auto blocker = shared_connection_block(m_connection);
-        auto& highligts = DEFAULT_MARKET_HIGHLIGHTS();
+        auto& market = std::any_cast<const MarketCode&>(value);
+        add_available_markets(get_row_size());
+        auto& highlights = DEFAULT_MARKET_HIGHLIGHTS();
         auto& highlight =
-          highligts[m_source->get_row_size() % highligts.size()];
-        m_source->push({std::any_cast<const MarketCode&>(value), highlight,
+          highlights[m_source->get_row_size() % highlights.size()];
+        m_source->push({market, highlight,
           BookViewHighlightProperties::MarketHighlightLevel::TOP});
+        reduce_available_markets(row);
         m_transaction.transact([&] {
           m_transaction.push(
             UpdateOperation(row, column, NONE_MARKET(), value));
@@ -213,7 +249,100 @@ namespace {
       return m_transaction.connect_operation_signal(slot);
     }
 
+    void add_available_markets(int row) {
+      auto available_markets = std::make_shared<SortedListModel<MarketCode>>(
+        std::make_shared<ArrayListModel<MarketCode>>(),
+        [=] (auto left, auto right) {
+          return m_markets.FromCode(left).m_displayName <
+            m_markets.FromCode(right).m_displayName;
+        });
+      for(auto i = 0; i < m_market_list->get_size(); ++i) {
+        available_markets->push(m_market_list->get(i));
+      }
+      for(auto i = 0; i < get_row_size(); ++i) {
+        if(i == row) {
+          continue;
+        }
+        auto j = std::find(available_markets->begin(), available_markets->end(),
+          get<MarketCode>(i, MARKET_COLUMN));
+        if(j != available_markets->end()) {
+          available_markets->remove(j);
+        }
+      }
+      m_available_markets.insert(
+        m_available_markets.begin() + row, std::move(available_markets));
+    }
+
+    void reduce_available_markets(int row, MarketCode market) {
+      if(market.IsEmpty()) {
+        return;
+      }
+      for(auto i = 0; i < get_row_size(); ++i) {
+        if(i == row) {
+          continue;
+        }
+        auto& available_markets = *m_available_markets[i];
+        auto j = std::find(available_markets.begin(), available_markets.end(),
+          market);
+        if(j != available_markets.end()) {
+          available_markets.remove(j);
+        }
+      }
+    }
+
+    void reduce_available_markets(int row) {
+      reduce_available_markets(row, get<MarketCode>(row, MARKET_COLUMN));
+    }
+
+    void augment_available_markets(int row, MarketCode market) {
+      if(market.IsEmpty()) {
+        return;
+      }
+      for(auto i = 0; i < get_row_size(); ++i) {
+        if(i == row) {
+          continue;
+        }
+        auto& available_markets = *m_available_markets[i];
+        auto j = std::find(available_markets.begin(), available_markets.end(),
+          market);
+        if(j == available_markets.end()) {
+          available_markets.push(market);
+        }
+      }
+    }
+
+    void augment_available_markets(int row) {
+      augment_available_markets(row, get<MarketCode>(row, MARKET_COLUMN));
+    }
+
     void on_operation(const TableModel::Operation& operation) {
+      visit(operation,
+        [&] (const TableModel::AddOperation& operation) {
+          add_available_markets(operation.m_index);
+          reduce_available_markets(operation.m_index);
+        },
+        [&] (const TableModel::PreRemoveOperation& operation) {
+          augment_available_markets(operation.m_index);
+        },
+        [&] (const TableModel::RemoveOperation& operation) {
+          m_available_markets.erase(
+            m_available_markets.begin() + operation.m_index);
+        },
+        [&] (const TableModel::MoveOperation& operation) {
+          auto i = m_available_markets.begin() + operation.m_source;
+          auto source = std::move(*i);
+          m_available_markets.erase(i);
+          m_available_markets.insert(m_available_markets.begin() +
+            operation.m_destination, std::move(source));
+        },
+        [&] (const TableModel::UpdateOperation& operation) {
+          if(operation.m_column != MARKET_COLUMN) {
+            return;
+          }
+          reduce_available_markets(operation.m_row);
+          augment_available_markets(
+            operation.m_row, std::any_cast<MarketCode>(operation.m_previous));
+        });
       m_transaction.push(operation);
     }
   };
@@ -264,7 +393,8 @@ namespace {
       get_input_box()->set_read_only(is_read_only);
     }
 
-    connection connect_submit_signal(const SubmitSignal::slot_type& slot) const {
+    connection connect_submit_signal(
+        const SubmitSignal::slot_type& slot) const {
       if(layout()->count() == 0) {
         return connection();
       }
@@ -285,11 +415,13 @@ namespace {
     }
   };
 
-  auto make_item(const MarketDatabase& markets,
-    const std::shared_ptr<TableModel>& table, int row, int column) {
+  auto make_item(const std::shared_ptr<ExpandableTableModel>& expandable_table,
+      const MarketDatabase& markets,
+      const std::shared_ptr<TableModel>& table, int row, int column) {
     if(column == MARKET_COLUMN) {
       auto market_box = make_market_box(
-        make_table_value_model<MarketCode>(table, row, column), markets);
+        make_table_value_model<MarketCode>(table, row, column),
+        expandable_table->m_available_markets[row], markets);
       auto item = new EditableBox(*market_box);
       if(row == table->get_row_size() - 1) {
         match(*item, EmptyMarket());
@@ -321,17 +453,18 @@ namespace {
 TableView* Spire::make_market_highlights_table_view(
     std::shared_ptr<MarketHighlightListModel> market_highlights,
     MarketDatabase markets, QWidget* parent) {
-  auto table = std::make_shared<MarketHighlightListToTableModel>(
-    market_highlights, COLUMN_COUNT, &extract);
-  auto table_builder = EditableTableViewBuilder(
-    std::make_shared<ExpandableTableModel>(std::move(table)));
+  auto table = std::make_shared<ExpandableTableModel>(
+    std::make_shared<MarketHighlightListToTableModel>(
+      market_highlights, COLUMN_COUNT, &extract), markets);
+  auto table_builder = EditableTableViewBuilder(table);
   table_builder.add_header_item(QObject::tr("Market"), QObject::tr("Mkt"),
     TableHeaderItem::Order::NONE, TableFilter::Filter::NONE);
   table_builder.add_header_item(QObject::tr("Highlight"), QObject::tr("HL"),
     TableHeaderItem::Order::UNORDERED, TableFilter::Filter::NONE);
   table_builder.add_header_item(QObject::tr("Color"), QObject::tr("Clr"),
     TableHeaderItem::Order::UNORDERED, TableFilter::Filter::NONE);
-  table_builder.set_item_builder(std::bind_front(make_item, markets));
+  table_builder.set_item_builder(std::bind_front(make_item, std::move(table),
+    std::move(markets)));
   table_builder.set_comparator([=] (const AnyRef& left, int left_row,
       const AnyRef& right, int right_row, int column) {
     auto& left_market = any_cast<MarketCode>(left);
