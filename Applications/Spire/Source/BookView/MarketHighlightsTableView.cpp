@@ -217,12 +217,11 @@ namespace {
           return QValidator::Acceptable;
         }
         auto blocker = shared_connection_block(m_connection);
-        auto& market = std::any_cast<const MarketCode&>(value);
         add_available_markets(get_row_size());
         auto& highlights = DEFAULT_MARKET_HIGHLIGHTS();
         auto& highlight =
           highlights[m_source->get_row_size() % highlights.size()];
-        m_source->push({market, highlight,
+        m_source->push({std::any_cast<const MarketCode&>(value), highlight,
           BookViewHighlightProperties::MarketHighlightLevel::TOP});
         reduce_available_markets(row);
         m_transaction.transact([&] {
