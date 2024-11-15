@@ -452,9 +452,6 @@ void ListView::pre_remove_item(int index) {
     --item->m_index;
   }
   item->m_click_observer = none;
-  QTimer::singleShot(0, [item = std::move(item)] () mutable {
-    item = nullptr;
-  });
   if(m_focus_index) {
     if(*m_focus_index == index) {
       m_focus_index = none;
