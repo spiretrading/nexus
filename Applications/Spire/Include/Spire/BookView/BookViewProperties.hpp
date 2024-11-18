@@ -70,8 +70,8 @@ namespace Spire {
       REJECTED
     };
 
-    /** The number of the order state. */
-    static const auto ORDER_STATE_COUNT = 5;
+    /** The number of the order highlight state. */
+    static const auto ORDER_HIGHLIGHT_STATE_COUNT = 5;
 
     /** Specifies a market's highlight properties. */
     struct MarketHighlight {
@@ -93,7 +93,7 @@ namespace Spire {
     OrderVisibility m_order_visibility;
 
     /** A list of Highlights for the user's orders. */
-    std::array<HighlightColor, ORDER_STATE_COUNT> m_order_highlights;
+    std::array<HighlightColor, ORDER_HIGHLIGHT_STATE_COUNT> m_order_highlights;
 
     /** Returns the default properties. */
     static const BookViewHighlightProperties& get_default();
