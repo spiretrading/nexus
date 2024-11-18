@@ -326,6 +326,7 @@ void DropDownBox::keyPressEvent(QKeyEvent* event) {
       (event->key() != Qt::Key_Space || is_drop_down_list_visible())) {
     make_drop_down_list();
     QCoreApplication::sendEvent(&m_drop_down_list->get_list_view(), event);
+    return;
   }
   QWidget::keyPressEvent(event);
 }

@@ -5,7 +5,9 @@
 #include <QTextEdit>
 #include "Spire/BookView/BboBox.hpp"
 #include "Spire/BookView/BookViewLevelPropertiesPage.hpp"
+#include "Spire/BookView/MarketHighlightsTableView.hpp"
 #include "Spire/BookView/TechnicalsPanel.hpp"
+#include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/FieldValueModel.hpp"
 #include "Spire/Spire/OptionalScalarValueModelDecorator.hpp"
@@ -13,6 +15,8 @@
 #include "Spire/Spire/ScalarValueModelDecorator.hpp"
 #include "Spire/Ui/IntegerBox.hpp"
 #include "Spire/Ui/MoneyBox.hpp"
+#include "Spire/Ui/NavigationView.hpp"
+#include "Spire/Ui/TableView.hpp"
 
 using namespace boost::posix_time;
 using namespace Nexus;
@@ -35,28 +39,65 @@ QuantityBox* make_quantity_box(M model, U field) {
         make_field_value_model(model, field))));
 }
 
+struct HighlightPropertiesPageTester : QWidget {
+    explicit HighlightPropertiesPageTester(
+      std::shared_ptr<MarketHighlightListModel> market_highlights,
+      QWidget* parent = nullptr)
+      : QWidget(parent) {
+    auto header = make_label(tr("Markets"));
+    auto table_view = make_market_highlights_table_view(
+      std::make_shared<ArrayListModel<
+        BookViewHighlightProperties::MarketHighlight>>(),
+      GetDefaultMarketDatabase());
+    auto table_box = new Box(table_view);
+    table_box->setFixedHeight(scale_height(208));
+    update_style(*table_box, [] (auto& style) {
+      style.get(Any()).
+        set(BorderBottomSize(scale_height(1))).
+        set(BorderBottomColor(QColor(0xE0E0E0)));
+    });
+    auto body = new QWidget();
+    auto layout = make_vbox_layout(body);
+    layout->setSpacing(scale_height(8));
+    layout->addWidget(header);
+    layout->addWidget(table_box);
+    auto box = new Box(body);
+    enclose(*this, *box);
+    proxy_style(*this, *box);
+    update_style(*this, [] (auto& style) {
+      style.get(Any()).set(BackgroundColor(QColor(0xFFFFFF)));
+    });
+  }
+
+};
+
 struct PropertiesTester {
-  BookViewLevelPropertiesPage m_page;
+  NavigationView m_properties_view;
   QTextEdit m_logs;
   BookViewLevelProperties m_previous_properties;
   int m_line_number;
 
   PropertiesTester()
-      : m_page(BookViewLevelPropertiesPage(
-        std::make_shared<LocalLevelPropertiesModel>(
-          BookViewLevelProperties::get_default()))),
-        m_logs(QTextEdit()),
-        m_previous_properties(m_page.get_current()->get()),
-        m_line_number(0) {
-    m_page.show();
-    m_page.resize(scale(360, 503));
+      : m_line_number(0) {
+    auto levels_page = new BookViewLevelPropertiesPage(
+      std::make_shared<LocalLevelPropertiesModel>(
+        BookViewLevelProperties::get_default()));
+    m_previous_properties = levels_page->get_current()->get();
+    levels_page->get_current()->connect_update_signal(
+      std::bind_front(&PropertiesTester::on_properties_update, this));
+    levels_page->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    auto highlights_page = new HighlightPropertiesPageTester(
+      std::make_shared<ArrayListModel<BookViewHighlightProperties::MarketHighlight>>());
+    highlights_page->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    m_properties_view.add_tab(*levels_page, QObject::tr("Levels"));
+    m_properties_view.add_tab(*highlights_page, QObject::tr("Highlights"));
+    m_properties_view.show();
+    m_properties_view.resize(scale(360, 503));
     m_logs.show();
     m_logs.resize(scale(300, 500));
     m_logs.move(
-      m_page.pos().x() + m_logs.frameGeometry().width() + scale_width(100),
+      m_properties_view.pos().x() + m_logs.frameGeometry().width() + scale_width(100),
       m_logs.pos().y());
-    m_page.get_current()->connect_update_signal(
-      std::bind_front(&PropertiesTester::on_properties_update, this));
   }
 
   void on_properties_update(const BookViewLevelProperties& properties) {
@@ -201,6 +242,6 @@ int main(int argc, char** argv) {
     tester.pos().x() + widget.frameGeometry().width() + scale_width(100),
     widget.pos().y());
   auto properties_tester = PropertiesTester();
-  properties_tester.m_page.installEventFilter(&tester);
+  properties_tester.m_properties_view.installEventFilter(&tester);
   application.exec();
 }
