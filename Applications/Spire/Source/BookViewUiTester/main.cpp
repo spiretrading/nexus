@@ -46,7 +46,8 @@ struct HighlightPropertiesPageTester : QWidget {
       : QWidget(parent) {
     auto header = make_label(tr("Markets"));
     auto table_view = make_market_highlights_table_view(
-      std::make_shared<ArrayListModel<BookViewHighlightProperties::MarketHighlight>>(),
+      std::make_shared<ArrayListModel<
+        BookViewHighlightProperties::MarketHighlight>>(),
       GetDefaultMarketDatabase());
     auto table_box = new Box(table_view);
     table_box->setFixedHeight(scale_height(208));
@@ -72,7 +73,6 @@ struct HighlightPropertiesPageTester : QWidget {
 
 struct PropertiesTester {
   NavigationView m_properties_view;
-  //BookViewLevelPropertiesPage m_page;
   QTextEdit m_logs;
   BookViewLevelProperties m_previous_properties;
   int m_line_number;

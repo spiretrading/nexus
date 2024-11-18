@@ -1,7 +1,7 @@
 #include "Spire/BookView/MarketHighlightsTableView.hpp"
 #include <boost/signals2/shared_connection_block.hpp>
-#include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ArrayTableModel.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ListToTableModel.hpp"
 #include "Spire/Spire/SortedListModel.hpp"
 #include "Spire/Spire/TableValueModel.hpp"
@@ -32,16 +32,6 @@ namespace {
 
   const auto& NONE_MARKET() {
     static auto NONE = MarketCode();
-    return NONE;
-  }
-
-  const auto& NONE_LEVEL() {
-    static auto NONE = MarketHighlightLevel::TOP;
-    return NONE;
-  }
-
-  const auto& NONE_COLOR() {
-    static auto NONE = HighlightColor(Qt::transparent, Qt::transparent);
     return NONE;
   }
 
@@ -81,8 +71,7 @@ namespace {
     style.get(Any()).
       set(BorderTopSize(scale_height(1))).
       set(BorderTopColor(QColor(0xE0E0E0)));
-    style.get(input_box_selector > Any() > ReadOnly() >
-        (is_a<TextBox>() && !(+Any() << is_a<ListItem>()))).
+    style.get(input_box_selector > Any() > ReadOnly() > is_a<TextBox>()).
       set(horizontal_padding(scale_width(8)));
     style.get(input_box_selector > is_a<HighlightBox>()).
       set(vertical_padding(scale_height(5))).
@@ -201,9 +190,12 @@ namespace {
         if(column == MARKET_COLUMN) {
           return NONE_MARKET();
         } else if(column == LEVEL_COLUMN) {
-          return NONE_LEVEL();
+          static auto DEFAULT = MarketHighlightLevel::TOP;
+          return DEFAULT;
         } else if(column == COLOR_COLUMN) {
-          return NONE_COLOR();
+          static auto DEFAULT =
+            HighlightColor(Qt::transparent, Qt::transparent);
+          return DEFAULT;
         }
       }
       throw std::out_of_range("The row or column is out of range.");
@@ -358,8 +350,8 @@ namespace {
     InputBoxWrapper(Model model, std::shared_ptr<MarketModel> market,
         QWidget* parent = nullptr)
         : m_model(std::move(model)),
-        m_market(std::move(market)),
-        QWidget(parent) {
+          m_market(std::move(market)),
+          QWidget(parent) {
       make_vbox_layout(this);
       if(m_market->get().IsEmpty()) {
         m_connection = m_market->connect_update_signal(
@@ -415,8 +407,8 @@ namespace {
   };
 
   auto make_item(const std::shared_ptr<ExpandableTableModel>& expandable_table,
-      const MarketDatabase& markets,
-      const std::shared_ptr<TableModel>& table, int row, int column) {
+      const MarketDatabase& markets, const std::shared_ptr<TableModel>& table,
+      int row, int column) {
     if(column == MARKET_COLUMN) {
       auto market_box = make_market_box(
         make_table_value_model<MarketCode>(table, row, column),
@@ -463,7 +455,7 @@ TableView* Spire::make_market_highlights_table_view(
   table_builder.add_header_item(QObject::tr("Color"), QObject::tr("Clr"),
     TableHeaderItem::Order::UNORDERED, TableFilter::Filter::NONE);
   table_builder.set_item_builder(std::bind_front(make_item, std::move(table),
-    std::move(markets)));
+    markets));
   table_builder.set_comparator([=] (const AnyRef& left, int left_row,
       const AnyRef& right, int right_row, int column) {
     auto& left_market = any_cast<MarketCode>(left);
@@ -471,7 +463,8 @@ TableView* Spire::make_market_highlights_table_view(
     if(left_market.IsEmpty() || right_market.IsEmpty()) {
       return true;
     }
-    return left_market < right_market;
+    return markets.FromCode(left_market).m_displayName <
+      markets.FromCode(right_market).m_displayName;
   });
   auto table_view = table_builder.make();
   table_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
