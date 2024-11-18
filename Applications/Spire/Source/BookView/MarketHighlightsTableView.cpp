@@ -454,17 +454,14 @@ TableView* Spire::make_market_highlights_table_view(
     TableHeaderItem::Order::UNORDERED, TableFilter::Filter::NONE);
   table_builder.add_header_item(QObject::tr("Color"), QObject::tr("Clr"),
     TableHeaderItem::Order::UNORDERED, TableFilter::Filter::NONE);
-  table_builder.set_item_builder(std::bind_front(make_item, std::move(table),
-    markets));
+  table_builder.set_item_builder(std::bind_front(make_item, table, markets));
   table_builder.set_comparator([=] (const AnyRef& left, int left_row,
       const AnyRef& right, int right_row, int column) {
-    auto& left_market = any_cast<MarketCode>(left);
-    auto& right_market = any_cast<MarketCode>(right);
-    if(left_market.IsEmpty() || right_market.IsEmpty()) {
-      return true;
+    if(left_row == table->get_row_size() - 1) {
+      return false;
     }
-    return markets.FromCode(left_market).m_displayName <
-      markets.FromCode(right_market).m_displayName;
+    return markets.FromCode(any_cast<MarketCode>(left)).m_displayName <
+      markets.FromCode(any_cast<MarketCode>(right)).m_displayName;
   });
   auto table_view = table_builder.make();
   table_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);

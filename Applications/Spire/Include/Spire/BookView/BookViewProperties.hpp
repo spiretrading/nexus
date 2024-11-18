@@ -70,6 +70,9 @@ namespace Spire {
       REJECTED
     };
 
+    /** The number of the order state. */
+    static const auto ORDER_STATE_COUNT = 5;
+
     /** Specifies a market's highlight properties. */
     struct MarketHighlight {
 
@@ -82,9 +85,6 @@ namespace Spire {
       /** The highlight level. */
       MarketHighlightLevel m_level;
     };
-
-    /** The number of the order state. */
-    static const auto ORDER_STATE_COUNT = 5;
 
     /** A list of Highlights for each market. */
     std::vector<MarketHighlight> m_market_highlights;
