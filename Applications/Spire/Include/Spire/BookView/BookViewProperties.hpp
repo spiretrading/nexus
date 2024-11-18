@@ -1,10 +1,10 @@
 #ifndef SPIRE_BOOK_VIEW_PROPERTIES_HPP
 #define SPIRE_BOOK_VIEW_PROPERTIES_HPP
 #include <array>
-#include <unordered_map>
 #include <vector>
 #include <QColor>
 #include <QFont>
+#include "Nexus/Definitions/Market.hpp"
 #include "Spire/Ui/HighlightBox.hpp"
 
 namespace Spire {
