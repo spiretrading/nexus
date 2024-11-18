@@ -223,7 +223,7 @@ namespace Nexus {
         return snapshot.m_bboQuote->m_ask.m_price;
       }();
       auto timeAndSale = TimeAndSale(m_timeClient->GetTime(), price, 100,
-        condition, snapshot.m_security.GetMarket().GetData());
+        condition, snapshot.m_security.GetMarket().GetData(), "M1", "M2");
       m_feedClient->Publish(
         SecurityTimeAndSale(timeAndSale, snapshot.m_security));
     }

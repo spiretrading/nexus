@@ -255,7 +255,7 @@ void ToolbarController::open_key_bindings_window() {
   }
   m_key_bindings_window = std::make_unique<KeyBindingsWindow>(
     m_user_profile->GetKeyBindings(),
-    std::make_shared<LocalComboBoxQueryModel>(),
+    m_user_profile->GetSecurityInfoQueryModel(),
     m_user_profile->GetCountryDatabase(), m_user_profile->GetMarketDatabase(),
     m_user_profile->GetDestinationDatabase(),
     m_user_profile->GetAdditionalTagDatabase());

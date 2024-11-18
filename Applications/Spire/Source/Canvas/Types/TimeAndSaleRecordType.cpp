@@ -18,6 +18,8 @@ namespace {
     fields.emplace_back("size", IntegerType::GetInstance());
     fields.emplace_back("condition", TextType::GetInstance());
     fields.emplace_back("market_center", TextType::GetInstance());
+    fields.emplace_back("buyer_mpid", TextType::GetInstance());
+    fields.emplace_back("seller_mpid", TextType::GetInstance());
     return MakeRecordType("Time and Sale", std::move(fields));
   }
 }
@@ -30,5 +32,6 @@ const RecordType& Spire::GetTimeAndSaleRecordType() {
 Record TimeAndSaleToRecordConverter::operator ()(
     const SequencedTimeAndSale& value) const {
   return Record({ value->m_timestamp, value->m_price, value->m_size,
-    value->m_condition.m_code, value->m_marketCenter });
+    value->m_condition.m_code, value->m_marketCenter, value->m_buyerMpid,
+    value->m_sellerMpid });
 }

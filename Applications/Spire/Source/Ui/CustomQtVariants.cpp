@@ -514,38 +514,43 @@ bool Spire::is_equal(const std::any& left, const std::any& right) {
 }
 
 template<>
-optional<int> Spire::from_text(const QString& string) {
-  return from_string_lexical_cast<int>(string);
+optional<QString> Spire::from_text(const QString& text) {
+  return text;
 }
 
 template<>
-optional<double> Spire::from_text(const QString& string) {
-  return from_string_lexical_cast<double>(string);
+optional<int> Spire::from_text(const QString& text) {
+  return from_string_lexical_cast<int>(text);
 }
 
 template<>
-optional<gregorian::date> Spire::from_text(const QString& string) {
-  return from_string_lexical_cast<gregorian::date>(string);
+optional<double> Spire::from_text(const QString& text) {
+  return from_string_lexical_cast<double>(text);
 }
 
 template<>
-optional<ptime> Spire::from_text(const QString& string) {
-  return from_string_lexical_cast<ptime>(string);
+optional<gregorian::date> Spire::from_text(const QString& text) {
+  return from_string_lexical_cast<gregorian::date>(text);
 }
 
 template<>
-optional<posix_time::time_duration> Spire::from_text(const QString& string) {
-  return from_string_lexical_cast<posix_time::time_duration>(string);
+optional<ptime> Spire::from_text(const QString& text) {
+  return from_string_lexical_cast<ptime>(text);
 }
 
 template<>
-optional<std::string> Spire::from_text(const QString& string) {
-  return string.toStdString();
+optional<posix_time::time_duration> Spire::from_text(const QString& text) {
+  return from_string_lexical_cast<posix_time::time_duration>(text);
 }
 
 template<>
-optional<CurrencyId> Spire::from_text(const QString& string) {
-  if(auto id = ParseCurrency(string.toStdString());
+optional<std::string> Spire::from_text(const QString& text) {
+  return text.toStdString();
+}
+
+template<>
+optional<CurrencyId> Spire::from_text(const QString& text) {
+  if(auto id = ParseCurrency(text.toStdString());
       id != CurrencyId::NONE) {
     return id;
   }
@@ -553,71 +558,71 @@ optional<CurrencyId> Spire::from_text(const QString& string) {
 }
 
 template<>
-optional<Money> Spire::from_text(const QString& string) {
-  return Money::FromValue(string.toStdString());
+optional<Money> Spire::from_text(const QString& text) {
+  return Money::FromValue(text.toStdString());
 }
 
 template<>
-optional<Quantity> Spire::from_text(const QString& string) {
-  return Quantity::FromValue(string.toStdString());
+optional<Quantity> Spire::from_text(const QString& text) {
+  return Quantity::FromValue(text.toStdString());
 }
 
 template<>
-optional<Region> Spire::from_text(const QString& string) {
-  return Region(string.toStdString());
+optional<Region> Spire::from_text(const QString& text) {
+  return Region(text.toStdString());
 }
 
 template<>
-optional<OrderStatus> Spire::from_text(const QString& string) {
-  if(string == QObject::tr("Pending New")) {
+optional<OrderStatus> Spire::from_text(const QString& text) {
+  if(text == QObject::tr("Pending New")) {
     return optional<OrderStatus>(OrderStatus::PENDING_NEW);
-  } else if(string == QObject::tr("Rejected")) {
+  } else if(text == QObject::tr("Rejected")) {
     return optional<OrderStatus>(OrderStatus::REJECTED);
-  } else if(string == QObject::tr("New")) {
+  } else if(text == QObject::tr("New")) {
     return optional<OrderStatus>(OrderStatus::NEW);
-  } else if(string == QObject::tr("Partially Filled")) {
+  } else if(text == QObject::tr("Partially Filled")) {
     return optional<OrderStatus>(OrderStatus::PARTIALLY_FILLED);
-  } else if(string == QObject::tr("Expired")) {
+  } else if(text == QObject::tr("Expired")) {
     return optional<OrderStatus>(OrderStatus::EXPIRED);
-  } else if(string == QObject::tr("Canceled")) {
+  } else if(text == QObject::tr("Canceled")) {
     return optional<OrderStatus>(OrderStatus::CANCELED);
-  } else if(string == QObject::tr("Suspended")) {
+  } else if(text == QObject::tr("Suspended")) {
     return optional<OrderStatus>(OrderStatus::SUSPENDED);
-  } else if(string == QObject::tr("Stopped")) {
+  } else if(text == QObject::tr("Stopped")) {
     return optional<OrderStatus>(OrderStatus::STOPPED);
-  } else if(string == QObject::tr("Filled")) {
+  } else if(text == QObject::tr("Filled")) {
     return optional<OrderStatus>(OrderStatus::FILLED);
-  } else if(string == QObject::tr("Done For Day")) {
+  } else if(text == QObject::tr("Done For Day")) {
     return optional<OrderStatus>(OrderStatus::DONE_FOR_DAY);
-  } else if(string == QObject::tr("Pending Cancel")) {
+  } else if(text == QObject::tr("Pending Cancel")) {
     return optional<OrderStatus>(OrderStatus::PENDING_CANCEL);
-  } else if(string == QObject::tr("Cancel Reject")) {
+  } else if(text == QObject::tr("Cancel Reject")) {
     return optional<OrderStatus>(OrderStatus::CANCEL_REJECT);
-  } else if(string == QObject::tr("None")) {
+  } else if(text == QObject::tr("None")) {
     return optional<OrderStatus>(OrderStatus::NONE);
   }
   return none;
 }
 
 template<>
-optional<OrderType> Spire::from_text(const QString& string) {
-  if(string == QObject::tr("Market")) {
+optional<OrderType> Spire::from_text(const QString& text) {
+  if(text == QObject::tr("Market")) {
     return optional<OrderType>(OrderType::MARKET);
-  } else if(string == QObject::tr("Limit")) {
+  } else if(text == QObject::tr("Limit")) {
     return optional<OrderType>(OrderType::LIMIT);
-  } else if(string == QObject::tr("Pegged")) {
+  } else if(text == QObject::tr("Pegged")) {
     return optional<OrderType>(OrderType::PEGGED);
-  } else if(string == QObject::tr("Stop")) {
+  } else if(text == QObject::tr("Stop")) {
     return optional<OrderType>(OrderType::STOP);
-  } else if(string == QObject::tr("None")) {
+  } else if(text == QObject::tr("None")) {
     return optional<OrderType>(OrderType::NONE);
   }
   return none;
 }
 
 template<>
-optional<Security> Spire::from_text(const QString& string) {
-  if(auto security = ParseSecurity(string.toStdString());
+optional<Security> Spire::from_text(const QString& text) {
+  if(auto security = ParseSecurity(text.toStdString());
       security != Security()) {
     return security;
   }
@@ -625,52 +630,52 @@ optional<Security> Spire::from_text(const QString& string) {
 }
 
 template<>
-optional<Side> Spire::from_text(const QString& string) {
-  if(string == QObject::tr("Sell")) {
+optional<Side> Spire::from_text(const QString& text) {
+  if(text == QObject::tr("Sell")) {
     return optional<Side>(Side::ASK);
-  } else if(string == QObject::tr("Buy")) {
+  } else if(text == QObject::tr("Buy")) {
     return optional<Side>(Side::BID);
-  } else if(string == QObject::tr("None")) {
+  } else if(text == QObject::tr("None")) {
     return optional<Side>(Side::NONE);
   }
   return none;
 }
 
 template<>
-optional<TimeInForce> Spire::from_text(const QString& string) {
-  if(string == QObject::tr("DAY")) {
+optional<TimeInForce> Spire::from_text(const QString& text) {
+  if(text == QObject::tr("DAY")) {
     return optional<TimeInForce>(TimeInForce::Type::DAY);
-  } else if(string == QObject::tr("FOK")) {
+  } else if(text == QObject::tr("FOK")) {
     return optional<TimeInForce>(TimeInForce::Type::FOK);
-  } else if(string == QObject::tr("GTC")) {
+  } else if(text == QObject::tr("GTC")) {
     return optional<TimeInForce>(TimeInForce::Type::GTC);
-  } else if(string == QObject::tr("GTD")) {
+  } else if(text == QObject::tr("GTD")) {
     return optional<TimeInForce>(TimeInForce::Type::GTD);
-  } else if(string == QObject::tr("GTX")) {
+  } else if(text == QObject::tr("GTX")) {
     return optional<TimeInForce>(TimeInForce::Type::GTX);
-  } else if(string == QObject::tr("IOC")) {
+  } else if(text == QObject::tr("IOC")) {
     return optional<TimeInForce>(TimeInForce::Type::IOC);
-  } else if(string == QObject::tr("MOC")) {
+  } else if(text == QObject::tr("MOC")) {
     return optional<TimeInForce>(TimeInForce::Type::MOC);
-  } else if(string == QObject::tr("OPG")) {
+  } else if(text == QObject::tr("OPG")) {
     return optional<TimeInForce>(TimeInForce::Type::OPG);
-  } else if(string == QObject::tr("NONE")) {
+  } else if(text == QObject::tr("NONE")) {
     return optional<TimeInForce>(TimeInForce::Type::NONE);
   }
   return none;
 }
 
 template<>
-optional<QColor> Spire::from_text(const QString& string) {
-  if(auto color = QColor(string); color.isValid()) {
+optional<QColor> Spire::from_text(const QString& text) {
+  if(auto color = QColor(text); color.isValid()) {
     return color;
   }
   return none;
 }
 
 template<>
-optional<QKeySequence> Spire::from_text(const QString& string) {
-  if(auto sequence = QKeySequence(string); !sequence.isEmpty()) {
+optional<QKeySequence> Spire::from_text(const QString& text) {
+  if(auto sequence = QKeySequence(text); !sequence.isEmpty()) {
     return sequence;
   }
   return none;

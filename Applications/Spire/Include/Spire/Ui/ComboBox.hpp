@@ -2,89 +2,28 @@
 #define SPIRE_COMBO_BOX_HPP
 #include <any>
 #include <cstdint>
-#include <vector>
-#include <Beam/Collections/Trie.hpp>
-#include "Spire/Async/QtPromise.hpp"
+#include <boost/functional/factory.hpp>
+#include "Spire/Spire/ArrayListModel.hpp"
+#include "Spire/Spire/QueryModel.hpp"
+#include "Spire/Spire/ValueModel.hpp"
+#include "Spire/Ui/AnyInputBox.hpp"
 #include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/KeyObserver.hpp"
 #include "Spire/Ui/ListView.hpp"
+#include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 
   /** Displays a data field over an open set of selectable values. */
-  class ComboBox : public QWidget {
+  class AnyComboBox : public QWidget {
     public:
-
-      /** The type of model representing the current value. */
-      using CurrentModel = ValueModel<std::any>;
 
       /**
        * Signals that the value was submitted.
        * @param submission The submitted value.
        */
-      using SubmitSignal = Signal<void (const std::any& submission)>;
-
-      /** Used to retreive potential matches to a query. */
-      class QueryModel {
-        public:
-          virtual ~QueryModel() = default;
-
-          /**
-           * Parses a value from a query string.
-           * @param query The query string to parse.
-           * @return The value represented by the <i>query</i> or an empty
-           *         object if the <i>query</i> does not represent a valid
-           *         value.
-           */
-          virtual std::any parse(const QString& query) = 0;
-
-          /**
-           * Submits a query to be asynchronously resolved.
-           * @param query The query to submit.
-           * @return An asynchronous list of matches to the given <i>query</i>.
-           */
-          virtual QtPromise<std::vector<std::any>> submit(
-            const QString& query) = 0;
-
-        protected:
-
-          /** Constructs a QueryModel. */
-          QueryModel() = default;
-
-        private:
-          QueryModel(const QueryModel&) = delete;
-          QueryModel& operator =(const QueryModel&) = delete;
-      };
-
-      /**
-       * Constructs a ComboBox using default local models, a TextBox and
-       * a default view builder.
-       * @param query_model The model used to query matches.
-       * @param parent The parent widget.
-       */
-      explicit ComboBox(
-        std::shared_ptr<QueryModel> query_model, QWidget* parent = nullptr);
-
-      /**
-       * Constructs a ComboBox using default local models and a TextBox.
-       * @param query_model The model used to query matches.
-       * @param item_builder The ListViewItemBuilder to use.
-       * @param parent The parent widget.
-       */
-      ComboBox(std::shared_ptr<QueryModel> query_model,
-        ListViewItemBuilder<> item_builder, QWidget* parent = nullptr);
-
-      /**
-       * Constructs a ComboBox using a TextBox.
-       * @param query_model The model used to query matches.
-       * @param current The current value's model.
-       * @param item_builder The ListViewItemBuilder to use.
-       * @param parent The parent widget.
-       */
-      ComboBox(std::shared_ptr<QueryModel> query_model,
-        std::shared_ptr<CurrentModel> current,
-        ListViewItemBuilder<> item_builder, QWidget* parent = nullptr);
+      using SubmitSignal = Signal<void (AnyRef submission)>;
 
       /**
        * Constructs a ComboBox.
@@ -92,17 +31,21 @@ namespace Spire {
        * @param current The current value's model.
        * @param input_box The input box to use.
        * @param item_builder The ListViewItemBuilder to use.
+       * @param matches_builder Used to build the ListModel that keeps the list
+       *        matches.
        * @param parent The parent widget.
        */
-      ComboBox(std::shared_ptr<QueryModel> query_model,
-        std::shared_ptr<CurrentModel> current, AnyInputBox* input_box,
-        ListViewItemBuilder<> item_builder, QWidget* parent = nullptr);
+      AnyComboBox(std::shared_ptr<AnyQueryModel> query_model,
+        std::shared_ptr<AnyValueModel> current, AnyInputBox* input_box,
+        ListViewItemBuilder<> item_builder,
+        std::function<std::shared_ptr<AnyListModel> ()> matches_builder,
+        QWidget* parent = nullptr);
 
       /** Returns the model used to query matches. */
-      const std::shared_ptr<QueryModel>& get_query_model() const;
+      const std::shared_ptr<AnyQueryModel>& get_query_model() const;
 
       /** Returns the current model. */
-      const std::shared_ptr<CurrentModel>& get_current() const;
+      const std::shared_ptr<AnyValueModel>& get_current() const;
 
       /** Returns the last submission. */
       const std::any& get_submission() const;
@@ -129,6 +72,7 @@ namespace Spire {
       void showEvent(QShowEvent *event) override;
 
     private:
+      template<typename> friend class ComboBox;
       struct DeferredData {
         mutable SubmitSignal m_submit_signal;
         std::any m_submission;
@@ -137,7 +81,7 @@ namespace Spire {
         ListView* m_list_view;
         FocusObserver m_focus_observer;
         KeyObserver m_key_observer;
-        std::shared_ptr<ArrayListModel<std::any>> m_matches;
+        std::shared_ptr<AnyListModel> m_matches;
         DropDownList* m_drop_down_list;
         boost::optional<QString> m_user_query;
         std::uint32_t m_completion_tag;
@@ -151,14 +95,17 @@ namespace Spire {
         boost::signals2::scoped_connection m_highlight_connection;
         boost::signals2::scoped_connection m_drop_down_current_connection;
 
-        DeferredData(ComboBox& box);
+        DeferredData(AnyComboBox& box);
       };
-      std::shared_ptr<QueryModel> m_query_model;
-      std::shared_ptr<CurrentModel> m_current;
+      std::shared_ptr<AnyQueryModel> m_query_model;
+      std::shared_ptr<AnyValueModel> m_current;
       AnyInputBox* m_input_box;
       ListViewItemBuilder<> m_item_builder;
+      std::function<std::shared_ptr<AnyListModel> ()> m_matches_builder;
       std::unique_ptr<DeferredData> m_data;
 
+      static std::shared_ptr<TextModel>
+        make_text_wrapper_model(std::shared_ptr<AnyValueModel> current);
       void update_focus_proxy();
       void initialize_deferred_data() const;
       void update_completion();
@@ -178,36 +125,145 @@ namespace Spire {
   };
 
   /**
-   * Implements an in-memory QueryModel associating values with a string
-   * representation.
+   * Displays a data field over an open set of selectable values.
+   * @param <T> The type of selectable value.
    */
-  class LocalComboBoxQueryModel : public ComboBox::QueryModel {
+  template<typename T>
+  class ComboBox : public AnyComboBox {
     public:
 
-      /** Constructs an empty model. */
-      LocalComboBoxQueryModel();
+      /** The type of selectable value. */
+      using Type = T;
+
+      /** The type of QueryModel used to resolve options. */
+      using QueryModel = Spire::QueryModel<Type>;
+
+      /** The type of ValueModel used to track the current value. */
+      using CurrentModel = ValueModel<Type>;
 
       /**
-       * Adds a value to the model that can be queried through its string
-       * representation.
-       * @param value The value to add.
+       * Signals that the value was submitted.
+       * @param submission The submitted value.
        */
-      void add(const std::any& value);
+      using SubmitSignal = Signal<void (const Type& submission)>;
 
       /**
-       * Adds a value to the model that can be queried by a given string.
-       * @param id The string used to query the value.
-       * @param value The value to add.
+       * Constructs a ComboBox using default local models, a TextBox and
+       * a default view builder.
+       * @param query_model The model used to query matches.
+       * @param parent The parent widget.
        */
-      void add(const QString& id, const std::any& value);
+      explicit ComboBox(
+        std::shared_ptr<QueryModel> query_model, QWidget* parent = nullptr);
 
-      std::any parse(const QString& query) override;
+      /**
+       * Constructs a ComboBox using default local models and a TextBox.
+       * @param query_model The model used to query matches.
+       * @param item_builder The ListViewItemBuilder to use.
+       * @param parent The parent widget.
+       */
+      ComboBox(std::shared_ptr<QueryModel> query_model,
+        ListViewItemBuilder<ListModel<Type>> item_builder,
+        QWidget* parent = nullptr);
 
-      QtPromise<std::vector<std::any>> submit(const QString& query) override;
+      /**
+       * Constructs a ComboBox using a TextBox.
+       * @param query_model The model used to query matches.
+       * @param current The current value's model.
+       * @param item_builder The ListViewItemBuilder to use.
+       * @param parent The parent widget.
+       */
+      ComboBox(std::shared_ptr<QueryModel> query_model,
+        std::shared_ptr<CurrentModel> current,
+        ListViewItemBuilder<ListModel<Type>> item_builder,
+        QWidget* parent = nullptr);
 
-    private:
-      rtv::Trie<QChar, std::any> m_values;
+      /**
+       * Constructs a ComboBox.
+       * @param query_model The model used to query matches.
+       * @param current The current value's model.
+       * @param input_box The input box to use.
+       * @param item_builder The ListViewItemBuilder to use.
+       * @param parent The parent widget.
+       */
+      ComboBox(std::shared_ptr<QueryModel> query_model,
+        std::shared_ptr<CurrentModel> current, AnyInputBox* input_box,
+        ListViewItemBuilder<ListModel<Type>> item_builder,
+        QWidget* parent = nullptr);
+
+      /** Returns the model used to query matches. */
+      std::shared_ptr<QueryModel> get_query_model() const;
+
+      /** Returns the current model. */
+      std::shared_ptr<CurrentModel> get_current() const;
+
+      /** Returns the last submission. */
+      const Type& get_submission() const;
+
+      /** Connects a slot to the submit signal. */
+      boost::signals2::connection connect_submit_signal(
+        const SubmitSignal::slot_type& slot) const;
   };
+
+  template<std::derived_from<AnyQueryModel> QueryModel,
+    std::derived_from<AnyValueModel> ValueModel>
+  ComboBox(std::shared_ptr<QueryModel>, std::shared_ptr<ValueModel>,
+    ListViewItemBuilder<ListModel<typename QueryModel::Type>>) ->
+      ComboBox<typename QueryModel::Type>;
+
+  template<typename T>
+  ComboBox<T>::ComboBox(
+    std::shared_ptr<QueryModel> query_model, QWidget* parent)
+    : ComboBox(std::move(query_model), &ListView::default_item_builder,
+        parent) {}
+
+  template<typename T>
+  ComboBox<T>::ComboBox(std::shared_ptr<QueryModel> query_model,
+    ListViewItemBuilder<ListModel<Type>> item_builder, QWidget* parent)
+    : ComboBox(std::move(query_model),
+        std::make_shared<LocalValueModel<Type>>(), std::move(item_builder),
+        parent) {}
+
+  template<typename T>
+  ComboBox<T>::ComboBox(std::shared_ptr<QueryModel> query_model,
+    std::shared_ptr<CurrentModel> current,
+    ListViewItemBuilder<ListModel<Type>> item_builder, QWidget* parent)
+    : ComboBox(std::move(query_model), current, new AnyInputBox(
+        *(new TextBox(AnyComboBox::make_text_wrapper_model(current)))),
+        std::move(item_builder), parent) {}
+
+  template<typename T>
+  ComboBox<T>::ComboBox(std::shared_ptr<QueryModel> query_model,
+    std::shared_ptr<CurrentModel> current, AnyInputBox* input_box,
+    ListViewItemBuilder<ListModel<Type>> item_builder, QWidget* parent)
+    : AnyComboBox(std::move(query_model), std::move(current), input_box,
+        std::move(item_builder),
+        boost::factory<std::shared_ptr<ArrayListModel<Type>>>(), parent) {}
+
+  template<typename T>
+  std::shared_ptr<typename ComboBox<T>::QueryModel>
+      ComboBox<T>::get_query_model() const {
+    return std::static_pointer_cast<QueryModel>(AnyComboBox::get_query_model());
+  }
+
+  template<typename T>
+  std::shared_ptr<typename ComboBox<T>::CurrentModel>
+      ComboBox<T>::get_current() const {
+    return std::static_pointer_cast<CurrentModel>(AnyComboBox::get_current());
+  }
+
+  template<typename T>
+  const typename ComboBox<T>::Type& ComboBox<T>::get_submission() const {
+    return std::any_cast<const Type&>(AnyComboBox::get_submission());
+  }
+
+  template<typename T>
+  boost::signals2::connection ComboBox<T>::connect_submit_signal(
+      const SubmitSignal::slot_type& slot) const {
+    return AnyComboBox::connect_submit_signal([=] (const auto& current) {
+      slot(any_cast<Type>(current));
+    });
+  }
 }
 
 #endif

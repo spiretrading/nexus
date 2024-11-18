@@ -162,6 +162,14 @@ namespace Nexus::Queries {
       SetEvaluator(std::make_unique<
         Beam::Queries::MemberAccessEvaluatorNode<std::string, TimeAndSale>>(
         std::move(timeAndSaleExpression), &TimeAndSale::m_marketCenter));
+    } else if(expression.GetName() == "buyer_mpid") {
+      SetEvaluator(std::make_unique<
+        Beam::Queries::MemberAccessEvaluatorNode<std::string, TimeAndSale>>(
+        std::move(timeAndSaleExpression), &TimeAndSale::m_buyerMpid));
+    } else if(expression.GetName() == "seller_mpid") {
+      SetEvaluator(std::make_unique<
+        Beam::Queries::MemberAccessEvaluatorNode<std::string, TimeAndSale>>(
+        std::move(timeAndSaleExpression), &TimeAndSale::m_sellerMpid));
     } else {
       Beam::Queries::EvaluatorTranslator<QueryTypes>::Visit(expression);
     }

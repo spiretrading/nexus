@@ -1,7 +1,6 @@
 #ifndef SPIRE_SECURITY_DIALOG_HPP
 #define SPIRE_SECURITY_DIALOG_HPP
 #include <QWidget>
-#include "Spire/Ui/ComboBox.hpp"
 #include "Spire/Ui/SecurityBox.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -20,7 +19,8 @@ namespace Spire {
        * @param securities The set of securities that can be queried.
        * @param parent The parent widget.
        */
-      explicit SecurityDialog(std::shared_ptr<ComboBox::QueryModel> securities,
+      explicit SecurityDialog(
+        std::shared_ptr<SecurityInfoQueryModel> securities,
         QWidget* parent = nullptr);
 
       /**
@@ -29,11 +29,12 @@ namespace Spire {
        * @param current The current security to display.
        * @param parent The parent widget.
        */
-      explicit SecurityDialog(std::shared_ptr<ComboBox::QueryModel> securities,
+      explicit SecurityDialog(
+        std::shared_ptr<SecurityInfoQueryModel> securities,
         std::shared_ptr<SecurityModel> current, QWidget* parent = nullptr);
 
       /** Returns the set of securities that can be queried. */
-      const std::shared_ptr<ComboBox::QueryModel>& get_securities() const;
+      const std::shared_ptr<SecurityInfoQueryModel>& get_securities() const;
 
       /** Returns the current security. */
       const std::shared_ptr<SecurityModel>& get_current() const;

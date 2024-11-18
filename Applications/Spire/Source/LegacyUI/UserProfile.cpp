@@ -42,7 +42,7 @@ UserProfile::UserProfile(const std::string& username, bool isAdministrator,
         QStandardPaths::DataLocation).toStdString()) / "Profiles" / m_username),
       m_recentlyClosedWindows(
         std::make_shared<ArrayListModel<std::shared_ptr<WindowSettings>>>()),
-      m_security_query_model(std::make_shared<ServiceSecurityQueryModel>(
+      m_security_info_query_model(std::make_shared<ServiceSecurityQueryModel>(
         m_marketDatabase, m_serviceClients.GetMarketDataClient())),
       m_catalogSettings(m_profilePath / "Catalog", isAdministrator),
       m_additionalTagDatabase(additionalTagDatabase) {
@@ -123,9 +123,9 @@ const std::shared_ptr<RecentlyClosedWindowListModel>&
   return m_recentlyClosedWindows;
 }
 
-const std::shared_ptr<ComboBox::QueryModel>&
-    UserProfile::GetSecurityQueryModel() const {
-  return m_security_query_model;
+const std::shared_ptr<SecurityInfoQueryModel>&
+    UserProfile::GetSecurityInfoQueryModel() const {
+  return m_security_info_query_model;
 }
 
 const BlotterSettings& UserProfile::GetBlotterSettings() const {

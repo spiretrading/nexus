@@ -16,6 +16,7 @@
 #include "Spire/Spire/ArrayTableModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/FieldValueModel.hpp"
+#include "Spire/Spire/LocalQueryModel.hpp"
 #include "Spire/Spire/LocalScalarValueModel.hpp"
 #include "Spire/Spire/ScalarValueModelDecorator.hpp"
 #include "Spire/Spire/TableValueModel.hpp"
@@ -66,7 +67,6 @@
 #include "Spire/Ui/InfoPanel.hpp"
 #include "Spire/Ui/InfoTip.hpp"
 #include "Spire/Ui/IntegerBox.hpp"
-#include "Spire/Ui/KeyFilterPanel.hpp"
 #include "Spire/Ui/KeyInputBox.hpp"
 #include "Spire/Ui/KeyTag.hpp"
 #include "Spire/Ui/ListItem.hpp"
@@ -76,7 +76,6 @@
 #include "Spire/Ui/MenuButton.hpp"
 #include "Spire/Ui/MoneyBox.hpp"
 #include "Spire/Ui/NavigationView.hpp"
-#include "Spire/Ui/OpenFilterPanel.hpp"
 #include "Spire/Ui/OrderTypeBox.hpp"
 #include "Spire/Ui/OrderTypeFilterPanel.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
@@ -87,8 +86,6 @@
 #include "Spire/Ui/RegionDropDownBox.hpp"
 #include "Spire/Ui/RegionListItem.hpp"
 #include "Spire/Ui/ResponsiveLabel.hpp"
-#include "Spire/Ui/SaleConditionBox.hpp"
-#include "Spire/Ui/SaleConditionListItem.hpp"
 #include "Spire/Ui/ScalarFilterPanel.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
@@ -645,7 +642,7 @@ namespace {
     panel->show();
   }
 
-  std::shared_ptr<ComboBox::QueryModel> populate_security_query_model() {
+  std::shared_ptr<SecurityInfoQueryModel> populate_security_query_model() {
     auto security_infos = std::vector<SecurityInfo>();
     security_infos.emplace_back(ParseSecurity("MRU.TSX"),
       "Metro Inc.", "", 0);
@@ -661,8 +658,8 @@ namespace {
       "Manulife Financial Corporation", "", 0);
     security_infos.emplace_back(ParseSecurity("MX.TSX"),
       "Methanex Corporation", "", 0);
-    auto model = std::make_shared<LocalComboBoxQueryModel>();
-    for(auto security_info : security_infos) {
+    auto model = std::make_shared<LocalQueryModel<SecurityInfo>>();
+    for(auto& security_info : security_infos) {
       model->add(to_text(security_info.m_security).toLower(), security_info);
       model->add(
         QString::fromStdString(security_info.m_name).toLower(), security_info);
@@ -679,21 +676,21 @@ namespace {
   }
 
   auto populate_tag_combo_box_model() {
-    auto model = std::make_shared<LocalComboBoxQueryModel>();
-    model->add(QString("TSX"));
-    model->add(QString("TSXV"));
-    model->add(QString("TSO.ASX"));
-    model->add(QString("TSU.TSX"));
-    model->add(QString("TSN.TSXV"));
-    model->add(QString("TSL.NYSE"));
-    model->add(QString("MSFT.NSDQ"));
-    model->add(QString("XDRX"));
-    model->add(QString("XIU.TSX"));
-    model->add(QString("AUS"));
-    model->add(QString("CAN"));
-    model->add(QString("CHN"));
-    model->add(QString("JPN"));
-    model->add(QString("USA"));
+    auto model = std::make_shared<LocalQueryModel<QString>>();
+    model->add("TSX");
+    model->add("TSXV");
+    model->add("TSO.ASX");
+    model->add("TSU.TSX");
+    model->add("TSN.TSXV");
+    model->add("TSL.NYSE");
+    model->add("MSFT.NSDQ");
+    model->add("XDRX");
+    model->add("XIU.TSX");
+    model->add("AUS");
+    model->add("CAN");
+    model->add("CHN");
+    model->add("JPN");
+    model->add("USA");
     return model;
   }
 
@@ -711,7 +708,7 @@ namespace {
     auto countries = std::vector<CountryCode>{DefaultCountries::US(),
       DefaultCountries::CA(), DefaultCountries::AU(), DefaultCountries::JP(),
       DefaultCountries::CN()};
-    auto model = std::make_shared<LocalComboBoxQueryModel>();
+    auto model = std::make_shared<LocalQueryModel<Region>>();
     for(auto& security_info : securities) {
       auto security = ParseSecurity(security_info.first);
       auto region = Region(security);
@@ -1340,19 +1337,19 @@ UiProfile Spire::make_combo_box_profile() {
   properties.push_back(make_standard_property<QString>("placeholder"));
   properties.push_back(make_standard_property("read_only", false));
   auto profile = UiProfile("ComboBox", properties, [] (auto& profile) {
-    auto model = std::make_shared<LocalComboBoxQueryModel>();
-    model->add(QString("Almond"));
-    model->add(QString("Amber"));
-    model->add(QString("Amberose"));
-    model->add(QString("Apple"));
-    model->add(QString("Beige"));
-    model->add(QString("Bronze"));
-    model->add(QString("Brown"));
-    model->add(QString("Black"));
-    model->add(QString("Car"));
+    auto model = std::make_shared<LocalQueryModel<QString>>();
+    model->add("Almond");
+    model->add("Amber");
+    model->add("Amberose");
+    model->add("Apple");
+    model->add("Beige");
+    model->add("Bronze");
+    model->add("Brown");
+    model->add("Black");
+    model->add("Car");
     auto& current = get<QString>("current", profile.get_properties());
     auto current_model =
-      std::make_shared<LocalValueModel<std::any>>(current.get());
+      std::make_shared<LocalValueModel<QString>>(current.get());
     auto box =
       new ComboBox(model, current_model, &ListView::default_item_builder);
     box->setFixedWidth(scale_width(112));
@@ -1360,9 +1357,8 @@ UiProfile Spire::make_combo_box_profile() {
     auto current_connection = box->get_current()->connect_update_signal(
       profile.make_event_slot<std::any>("Current"));
     current.connect_changed_signal([=] (const auto& current) {
-      auto value = model->parse(current);
-      if(value.has_value()) {
-        box->get_current()->set(value);
+      if(auto value = model->parse(current)) {
+        box->get_current()->set(*value);
       } else {
         auto current_blocker = shared_connection_block(current_connection);
         box->get_current()->set(current);
@@ -1374,8 +1370,8 @@ UiProfile Spire::make_combo_box_profile() {
     });
     auto& read_only = get<bool>("read_only", profile.get_properties());
     read_only.connect_changed_signal(
-      std::bind_front(&ComboBox::set_read_only, box));
-    box->connect_submit_signal(profile.make_event_slot<std::any>("Submit"));
+      std::bind_front(&ComboBox<QString>::set_read_only, box));
+    box->connect_submit_signal(profile.make_event_slot<QString>("Submit"));
     return box;
   });
   return profile;
@@ -2261,9 +2257,7 @@ UiProfile Spire::make_highlight_box_profile() {
     auto& font = get<QFont>("font", profile.get_properties());
     font.connect_changed_signal([=] (const auto& value) {
       update_style(*highlight_box, [&] (auto& style) {
-        style.get(Any() > (is_a<TextBox>() &&
-            !(+Any() << is_a<HighlightPicker>()))).
-          set(Font(value));
+        style.get(Any() > is_a<TextBox>()).set(Font(value));
       });
     });
     auto current_slot = profile.make_event_slot<QString>("Current");
@@ -2571,34 +2565,6 @@ UiProfile Spire::make_integer_filter_panel_profile() {
     properties, QString("Filter Integer"));
   auto profile = UiProfile("IntegerFilterPanel", properties,
     setup_scalar_filter_panel_profile<IntegerBox>);
-  return profile;
-}
-
-UiProfile Spire::make_key_filter_panel_profile() {
-  auto properties = std::vector<std::shared_ptr<UiProperty>>();
-  auto profile = UiProfile(QString("KeyFilterPanel"), properties,
-    [] (auto& profile) {
-      auto button = make_label_button(QString::fromUtf8("Click me"));
-      auto panel = make_key_filter_panel(*button);
-      auto submit_filter_slot =
-        profile.make_event_slot<QString>(QString::fromUtf8("SubmitSignal"));
-      panel->connect_submit_signal(
-        [=] (const std::shared_ptr<AnyListModel>& submission,
-            OpenFilterPanel::Mode mode) {
-          auto result = QString();
-          if(mode == OpenFilterPanel::Mode::INCLUDE) {
-            result += "Include: ";
-          } else {
-            result += "Exclude: ";
-          }
-          for(auto i = 0; i < submission->get_size(); ++i) {
-            result += to_text(submission->get(i)) + " ";
-          }
-          submit_filter_slot(result);
-        });
-      button->connect_click_signal([=] { panel->show(); });
-      return button;
-    });
   return profile;
 }
 
@@ -3142,45 +3108,6 @@ UiProfile Spire::make_navigation_view_profile() {
   return profile;
 }
 
-UiProfile Spire::make_open_filter_panel_profile() {
-  auto properties = std::vector<std::shared_ptr<UiProperty>>();
-  auto profile = UiProfile(QString("OpenFilterPanel"), properties,
-    [] (auto& profile) {
-      auto model = std::make_shared<LocalComboBoxQueryModel>();
-      model->add(QString("Almond"));
-      model->add(QString("Amber"));
-      model->add(QString("Amberose"));
-      model->add(QString("Apple"));
-      model->add(QString("Beige"));
-      model->add(QString("Bronze"));
-      model->add(QString("Brown"));
-      model->add(QString("Black"));
-      model->add(QString("Car"));
-      auto button = make_label_button(QString::fromUtf8("Click me"));
-      auto panel = new OpenFilterPanel(model,
-        QString::fromUtf8("OpenFilterPanel"), *button);
-      auto submit_filter_slot =
-        profile.make_event_slot<QString>(QString::fromUtf8("SubmitSignal"));
-      panel->connect_submit_signal(
-        [=] (const std::shared_ptr<AnyListModel>& submission,
-            OpenFilterPanel::Mode mode) {
-          auto result = QString();
-          if(mode == OpenFilterPanel::Mode::INCLUDE) {
-            result += "Include: ";
-          } else {
-            result += "Exclude: ";
-          }
-          for(auto i = 0; i < submission->get_size(); ++i) {
-            result += to_text(submission->get(i)) + " ";
-          }
-          submit_filter_slot(result);
-        });
-      button->connect_click_signal([=] { panel->show(); });
-      return button;
-    });
-  return profile;
-}
-
 UiProfile Spire::make_order_field_info_tip_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
@@ -3461,9 +3388,8 @@ UiProfile Spire::make_region_box_profile() {
     auto to_region = [=] (const auto& text) {
       auto region = Region();
       for(auto& value : text.split(",")) {
-        auto parse_value = query_model->parse(value);
-        if(parse_value.has_value()) {
-          region = region + std::any_cast<Region&>(parse_value);
+        if(auto parse_value = query_model->parse(value)) {
+          region += *parse_value;
         }
       }
       return region;
@@ -3684,96 +3610,6 @@ UiProfile Spire::make_responsive_label_profile() {
   return profile;
 }
 
-UiProfile Spire::make_sale_condition_box_profile() {
-  auto properties = std::vector<std::shared_ptr<UiProperty>>();
-  populate_widget_properties(properties);
-  properties.push_back(make_standard_property<QString>("current", "@"));
-  properties.push_back(make_standard_property<QString>("placeholder"));
-  properties.push_back(make_standard_property("read_only", false));
-  auto profile = UiProfile("SaleConditionBox", properties, [] (auto& profile) {
-    auto condition_infos = std::vector<SaleConditionInfo>();
-    condition_infos.emplace_back(TimeAndSale::Condition(
-      TimeAndSale::Condition::Type::REGULAR, "@"), "Regular Settlement");
-    condition_infos.emplace_back(TimeAndSale::Condition(
-      TimeAndSale::Condition::Type::REGULAR, "C"), "Cash Settlement");
-    condition_infos.emplace_back(TimeAndSale::Condition(
-      TimeAndSale::Condition::Type::REGULAR, "N"), "Next Day Settlement");
-    condition_infos.emplace_back(TimeAndSale::Condition(
-      TimeAndSale::Condition::Type::REGULAR, "R"), "Seller Settlement");
-    condition_infos.emplace_back(TimeAndSale::Condition(
-      TimeAndSale::Condition::Type::REGULAR, "F"), "Intermarket Sweep");
-    condition_infos.emplace_back(TimeAndSale::Condition(
-      TimeAndSale::Condition::Type::REGULAR, "L"),
-      "Sold Last - Reported Late But In Sequence");
-    condition_infos.emplace_back(TimeAndSale::Condition(
-      TimeAndSale::Condition::Type::REGULAR, "Z"), "Sold - Out of Sequence");
-    auto model = std::make_shared<LocalComboBoxQueryModel>();
-    for(auto& info : condition_infos) {
-      auto name = (info.m_name % " " %
-        QString::fromStdString(info.m_condition.m_code)).toLower();
-      auto terms = name.splitRef(' ', Qt::SkipEmptyParts);
-      for(auto& term : terms) {
-        model->add(name.right(name.length() - term.position()), info);
-      }
-    }
-    auto& current_property = get<QString>("current", profile.get_properties());
-    auto current_model =
-      std::make_shared<LocalValueModel<TimeAndSale::Condition>>(
-        std::any_cast<SaleConditionInfo>(
-          model->parse(current_property.get())).m_condition);
-    auto box = new SaleConditionBox(model, current_model);
-    box->setFixedWidth(scale_width(112));
-    apply_widget_properties(box, profile.get_properties());
-    auto current_slot =
-      profile.make_event_slot<QString>(QString::fromUtf8("Current"));
-    auto current_connection = box->get_current()->connect_update_signal(
-      [=, &current_property] (const auto& current) {
-        auto code = QString::fromStdString(current.m_code);
-        current_slot(code);
-        if(code != current_property.get()) {
-          current_property.set(code);
-        }
-      });
-    current_property.connect_changed_signal([=] (const auto& current) {
-      if(auto value = model->parse(current); value.has_value()) {
-        auto& condition = std::any_cast<SaleConditionInfo&>(value).m_condition;
-        if(condition != box->get_current()->get()) {
-          box->get_current()->set(condition);
-        }
-      } else {
-        auto current_blocker = shared_connection_block(current_connection);
-        box->get_current()->set(TimeAndSale::Condition());
-      }
-    });
-    auto& placeholder = get<QString>("placeholder", profile.get_properties());
-    placeholder.connect_changed_signal([=] (const auto& placeholder) {
-      box->set_placeholder(placeholder);
-    });
-    auto& read_only = get<bool>("read_only", profile.get_properties());
-    read_only.connect_changed_signal(
-      std::bind_front(&SaleConditionBox::set_read_only, box));
-    box->connect_submit_signal(
-      profile.make_event_slot<TimeAndSale::Condition>("Submit"));
-    return box;
-  });
-  return profile;
-}
-
-UiProfile Spire::make_sale_condition_list_item_profile() {
-  auto properties = std::vector<std::shared_ptr<UiProperty>>();
-  populate_widget_properties(properties);
-  auto profile = UiProfile("SaleConditionListItem", properties,
-    [] (auto& profile) {
-      auto condition_info = SaleConditionInfo(
-        TimeAndSale::Condition(TimeAndSale::Condition::Type::REGULAR, "@"),
-        "Regular Settlement");
-      auto item = new SaleConditionListItem(condition_info);
-      apply_widget_properties(item, profile.get_properties());
-      return item;
-  });
-  return profile;
-}
-
 UiProfile Spire::make_scroll_bar_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
@@ -3967,17 +3803,15 @@ UiProfile Spire::make_security_box_profile() {
     auto model = populate_security_query_model();
     auto& current = get<QString>("current", profile.get_properties());
     auto current_model = std::make_shared<LocalValueModel<Security>>(
-      std::any_cast<SecurityInfo>(model->parse(current.get())).m_security);
+      model->parse(current.get())->m_security);
     auto box = new SecurityBox(model, current_model);
     box->setFixedWidth(scale_width(112));
     apply_widget_properties(box, profile.get_properties());
     auto current_connection = box->get_current()->connect_update_signal(
       profile.make_event_slot<Security>("Current"));
     current.connect_changed_signal([=] (const auto& current) {
-      auto value = model->parse(current);
-      if(value.has_value()) {
-        auto security = std::any_cast<SecurityInfo>(value).m_security;
-        box->get_current()->set(security);
+      if(auto value = model->parse(current)) {
+        box->get_current()->set(value->m_security);
       } else {
         auto current_blocker = shared_connection_block(current_connection);
         box->get_current()->set(Security());
@@ -4690,36 +4524,34 @@ UiProfile Spire::make_tag_combo_box_profile() {
     });
     auto& read_only = get<bool>("read_only", profile.get_properties());
     read_only.connect_changed_signal(
-      std::bind_front(&TagComboBox::set_read_only, box));
+      std::bind_front(&TagComboBox<QString>::set_read_only, box));
     auto current_filter_slot =
       profile.make_event_slot<QString>(QString::fromUtf8("Current"));
     auto print_current = [=] {
       auto result = QString();
       for(auto i = 0; i < box->get_current()->get_size(); ++i) {
-        result += to_text(box->get_current()->get(i)) + " ";
+        result += box->get_current()->get(i) + " ";
       }
       current_filter_slot(result);
     };
-    box->get_current()->connect_operation_signal(
-      [=] (const AnyListModel::Operation& operation) {
-        visit(operation,
-          [=] (const AnyListModel::AddOperation& operation) {
-            print_current();
-          },
-          [=] (const AnyListModel::RemoveOperation& operation) {
-            print_current();
-          });
-      });
+    box->get_current()->connect_operation_signal([=] (const auto& operation) {
+      visit(operation,
+        [=] (const ListModel<QString>::AddOperation& operation) {
+          print_current();
+        },
+        [=] (const ListModel<QString>::RemoveOperation& operation) {
+          print_current();
+        });
+    });
     auto submit_filter_slot =
       profile.make_event_slot<QString>(QString::fromUtf8("Submit"));
-    box->connect_submit_signal(
-      [=] (const std::shared_ptr<AnyListModel>& submission) {
-        auto result = QString();
-        for(auto i = 0; i < submission->get_size(); ++i) {
-          result += to_text(submission->get(i)) + " ";
-        }
-        submit_filter_slot(result);
-      });
+    box->connect_submit_signal([=] (const auto& submission) {
+      auto result = QString();
+      for(auto i = 0; i < submission->get_size(); ++i) {
+        result += submission->get(i) + " ";
+      }
+      submit_filter_slot(result);
+    });
     return box;
   });
   return profile;
