@@ -1,5 +1,6 @@
 #include "Spire/BookView/BookViewLevelPropertiesPage.hpp"
 #include <QEvent>
+#include "Spire/BookView/ArrayValueToListModel.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/AssociativeValueModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
@@ -127,82 +128,6 @@ namespace {
     }
     return QColor(Qt::white);
   }
-
-  template<typename T>
-  class ArrayValueToListModel : public ListModel<T> {
-    public:
-      using Type = typename ListModel<T>::Type;
-      using OperationSignal = ListModel<T>::OperationSignal;
-      using AddOperation = typename ListModel<T>::AddOperation;
-      using PreRemoveOperation = typename ListModel<T>::PreRemoveOperation;
-      using RemoveOperation = typename ListModel<T>::RemoveOperation;
-      using UpdateOperation = typename ListModel<T>::UpdateOperation;
-      using StartTransaction = typename ListModel<T>::StartTransaction;
-      using EndTransaction = typename ListModel<T>::EndTransaction;
-
-      explicit ArrayValueToListModel(
-        std::shared_ptr<ValueModel<std::vector<Type>>> source)
-        : m_source(std::move(source)) {}
-
-      int get_size() const override {
-        return static_cast<int>(m_source->get().size());
-      }
-
-      const Type& get(int index) const override {
-        if(index < 0 || index >= get_size()) {
-          throw std::out_of_range("The index is out of range.");
-        }
-        return m_source->get()[index];
-      }
-
-      QValidator::State set(int index, const Type& value) override {
-        if(index < 0 || index >= get_size()) {
-          throw std::out_of_range("The index is out of range.");
-        }
-        auto data = m_source->get();
-        auto previous = data[index];
-        data[index] = value;
-        auto state = m_source->set(data);
-        m_transaction.push(UpdateOperation(index, std::move(previous), value));
-        return state;
-      }
-
-      QValidator::State insert(const Type& value, int index) override {
-        if(index < 0 || index > get_size()) {
-          throw std::out_of_range("The index is out of range.");
-        }
-        auto data = m_source->get();
-        data.insert(std::next(data.begin(), index), value);
-        auto state = m_source->set(data);
-        m_transaction.push(AddOperation(index));
-        return state;
-      }
-
-      QValidator::State remove(int index) override {
-        if(index < 0 || index >= get_size()) {
-          throw std::out_of_range("The index is out of range.");
-        }
-        auto data = m_source->get();
-        m_transaction.push(PreRemoveOperation(index));
-        data.erase(std::next(data.begin(), index));
-        auto state = m_source->set(data);
-        m_transaction.push(RemoveOperation(index));
-        return state;
-      }
-
-      connection connect_operation_signal(
-          const typename OperationSignal::slot_type& slot) const override {
-        return m_transaction.connect_operation_signal(slot);
-      }
-
-      void transact(const std::function<void()>& transaction) override {
-        m_transaction.transact(transaction);
-      }
-
-    private:
-      std::shared_ptr<ValueModel<std::vector<Type>>> m_source;
-      ListModelTransactionLog<Type> m_transaction;
-  };
 }
 
 struct PriceLevelModel {

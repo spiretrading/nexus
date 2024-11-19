@@ -98,6 +98,18 @@ namespace Spire {
     /** Returns the default properties. */
     static const BookViewHighlightProperties& get_default();
   };
+
+  /** Returns the text representation of a OrderVisibility. */
+  const QString& to_text(
+    BookViewHighlightProperties::OrderVisibility visibility);
+
+  /** Returns the text representation of a MarketHighlightLevel. */
+  const QString& to_text(
+    BookViewHighlightProperties::MarketHighlightLevel level);
+
+  /** Returns the text representation of a OrderHighlightState. */
+  const QString& to_text(
+    BookViewHighlightProperties::OrderHighlightState state);
 }
 
 #endif
