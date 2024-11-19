@@ -1,5 +1,6 @@
 #ifndef ARRAY_VALUE_TO_LIST_MODEL_HPP
 #define ARRAY_VALUE_TO_LIST_MODEL_HPP
+#include <vector>
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Spire/ListModelTransactionLog.hpp"
 
@@ -82,21 +83,22 @@ namespace Spire {
     auto data = m_source->get();
     auto previous = data[index];
     data[index] = value;
-    auto state = m_source->set(data);
+    m_source->set(data);
     m_transaction.push(UpdateOperation(index, std::move(previous), value));
-    return state;
+    return QValidator::Acceptable;
   }
 
   template<typename T>
-  QValidator::State ArrayValueToListModel<T>::insert(const Type& value, int index) {
+  QValidator::State ArrayValueToListModel<T>::insert(const Type& value,
+      int index) {
     if(index < 0 || index > get_size()) {
       throw std::out_of_range("The index is out of range.");
     }
     auto data = m_source->get();
     data.insert(std::next(data.begin(), index), value);
-    auto state = m_source->set(data);
+    m_source->set(data);
     m_transaction.push(AddOperation(index));
-    return state;
+    return QValidator::Acceptable;
   }
 
   template<typename T>
@@ -115,13 +117,15 @@ namespace Spire {
   }
 
   template<typename T>
-  boost::signals2::connection ArrayValueToListModel<T>::connect_operation_signal(
-      const typename OperationSignal::slot_type& slot) const {
+  boost::signals2::connection
+      ArrayValueToListModel<T>::connect_operation_signal(
+        const typename OperationSignal::slot_type& slot) const {
     return m_transaction.connect_operation_signal(slot);
   }
 
   template<typename T>
-  void ArrayValueToListModel<T>::transact(const std::function<void()>& transaction) {
+  void ArrayValueToListModel<T>::transact(
+      const std::function<void()>& transaction) {
     m_transaction.transact(transaction);
   }
 }

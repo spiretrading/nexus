@@ -125,9 +125,8 @@ struct PropertiesTester {
     m_properties_view.resize(scale(360, 608));
     m_logs.show();
     m_logs.resize(scale(300, 500));
-    m_logs.move(
-      m_properties_view.pos().x() + m_logs.frameGeometry().width() + scale_width(100),
-      m_logs.pos().y());
+    m_logs.move(m_properties_view.pos().x() + m_logs.frameGeometry().width() +
+      scale_width(100), m_logs.pos().y());
   }
 
   void on_level_properties_update(const BookViewLevelProperties& properties) {

@@ -35,6 +35,7 @@ namespace Spire {
       std::array<HighlightBox*,
         BookViewHighlightProperties::ORDER_HIGHLIGHT_STATE_COUNT>
           m_order_highlight_boxes;
+      boost::signals2::scoped_connection m_connection;
 
       void on_visibility_update(
         BookViewHighlightProperties::OrderVisibility visibility);

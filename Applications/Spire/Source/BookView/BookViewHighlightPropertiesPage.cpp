@@ -5,9 +5,7 @@
 #include "Spire/Spire/ListValueModel.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/EnumBox.hpp"
-#include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TableView.hpp"
-#include "Spire/Ui/TextBox.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -156,9 +154,9 @@ namespace {
         auto data = m_source->get();
         auto previous = data[index];
         data[index] = value;
-        auto state = m_source->set(data);
+        m_source->set(data);
         m_transaction.push(UpdateOperation(index, std::move(previous), value));
-        return state;
+        return QValidator::Acceptable;
       }
 
       connection connect_operation_signal(
@@ -210,8 +208,6 @@ BookViewHighlightPropertiesPage::BookViewHighlightPropertiesPage(
   orders_layout->addWidget(orders_header);
   auto visibility = make_field_value_model(m_current,
     &BookViewHighlightProperties::m_order_visibility);
-  visibility->connect_update_signal(std::bind_front(
-    &BookViewHighlightPropertiesPage::on_visibility_update, this));
   orders_layout->addWidget(make_visibility_slot(visibility));
   auto order_highlights = std::make_shared<OrderHighlightStateListModel>(
     make_field_value_model(m_current,
@@ -240,6 +236,8 @@ BookViewHighlightPropertiesPage::BookViewHighlightPropertiesPage(
   });
   enclose(*this, *box);
   on_visibility_update(visibility->get());
+  m_connection = visibility->connect_update_signal(std::bind_front(
+    &BookViewHighlightPropertiesPage::on_visibility_update, this));
 }
 
 const std::shared_ptr<HighlightPropertiesModel>&
