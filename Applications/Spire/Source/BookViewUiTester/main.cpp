@@ -128,7 +128,6 @@ struct PropertiesTester {
     m_logs.move(
       m_properties_view.pos().x() + m_logs.frameGeometry().width() + scale_width(100),
       m_logs.pos().y());
-    update_highlight_box_font(levels_page->get_current()->get().m_font);
   }
 
   void on_level_properties_update(const BookViewLevelProperties& properties) {

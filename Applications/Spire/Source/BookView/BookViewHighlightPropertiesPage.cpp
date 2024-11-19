@@ -34,8 +34,14 @@ namespace {
     font.setPixelSize(scale_width(10));
     style.get(Any()).
       set(Font(font)).
-      set(TextColor(QColor(0x808080))).
-      set(PaddingBottom(scale_height(8)));
+      set(TextColor(QColor(0x808080)));
+  }
+
+  auto apply_highlight_box_style(StyleSheet& style) {
+    auto font = QFont("Roboto");
+    font.setWeight(QFont::Medium);
+    font.setPixelSize(scale_width(10));
+    style.get(Any() > is_a<TextBox>()).set(Font(font));
   }
 
   auto make_markets_title() {
@@ -112,6 +118,7 @@ namespace {
     });
     auto highlight_box = new HighlightBox(std::move(current));
     highlight_box->setFixedSize(scale(120, 19));
+    update_style(*highlight_box, apply_highlight_box_style);
     auto layout = make_hbox_layout();
     layout->addWidget(label);
     layout->addWidget(highlight_box);
