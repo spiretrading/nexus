@@ -83,16 +83,6 @@ namespace {
       set(Visibility(Visibility::INVISIBLE));
   }
 
-  const auto& to_text(MarketHighlightLevel level) {
-    if(level == MarketHighlightLevel::TOP) {
-      static const auto value = QObject::tr("Top Level");
-      return value;
-    } else {
-      static const auto value = QObject::tr("All Levels");
-      return value;
-    }
-  }
-
   AnyRef extract(MarketHighlight& highlight, int index) {
     if(index == MARKET_COLUMN) {
       return highlight.m_market;
@@ -105,7 +95,10 @@ namespace {
 
   auto setup_level_box() {
     static auto settings = [] {
-      auto settings = EnumBox<MarketHighlightLevel>::Settings(to_text,
+      auto settings = EnumBox<MarketHighlightLevel>::Settings(
+        [] (const auto& value) {
+          return to_text(value);
+        },
         [] (const auto& value) {
           return make_label(to_text(value));
         });
