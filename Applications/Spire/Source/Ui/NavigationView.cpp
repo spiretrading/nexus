@@ -124,6 +124,7 @@ NavigationView::NavigationView(
   navigation_menu_layout->addLayout(navigation_list_layout);
   auto separator = new Box();
   match(*separator, Separator());
+  link(*this, *separator);
   separator->setFixedHeight(scale_height(5));
   navigation_menu_layout->addWidget(separator);
   auto layout = make_vbox_layout(this);
