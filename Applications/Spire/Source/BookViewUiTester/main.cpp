@@ -49,7 +49,7 @@ struct HighlightPropertiesPageTester : QWidget {
     auto header = make_label(tr("Markets"));
     auto table_view = make_market_highlights_table_view(
       std::make_shared<ArrayListModel<
-      BookViewHighlightProperties::MarketHighlight>>(),
+        BookViewHighlightProperties::MarketHighlight>>(),
       GetDefaultMarketDatabase());
     auto table_box = new Box(table_view);
     table_box->setFixedHeight(scale_height(208));
