@@ -135,13 +135,6 @@ struct PropertiesTester {
       scale_width(100), m_logs.pos().y());
   }
 
-  void update_highlight_box_font(const QFont& font) {
-    update_style(*m_highlights_page, [&] (auto& style) {
-      style.get(Any() > is_a<HighlightBox>() > is_a<TextBox>()).
-        set(Font(font));
-    });
-  }
-
   void on_level_properties_update(const BookViewLevelProperties& properties) {
     auto log = QString();
     log += QString::number(++m_line_number) + ": ";
@@ -202,6 +195,13 @@ struct PropertiesTester {
     }
     m_logs.append(log);
     m_previous_highlight_properties = properties;
+  }
+
+  void update_highlight_box_font(const QFont& font) {
+    update_style(*m_highlights_page, [&] (auto& style) {
+      style.get(Any() > is_a<HighlightBox>() > is_a<TextBox>()).
+        set(Font(font));
+    });
   }
 };
 

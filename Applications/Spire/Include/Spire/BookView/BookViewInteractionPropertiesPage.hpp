@@ -7,7 +7,7 @@
 
 namespace Spire {
 
-  /** Implements a widget for the highlight property settings. */
+  /** Implements a widget for the interaction settings. */
   class BookViewInteractionPropertiesPage : public QWidget {
     public:
 
