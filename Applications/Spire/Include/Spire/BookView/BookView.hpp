@@ -5,6 +5,7 @@ namespace Spire {
   template<typename T> class ArrayValueToListModel;
   class BboBox;
   class BookViewHighlightPropertiesPage;
+  class BookViewInteractionPropertiesPage;
   class BookViewLevelPropertiesPage;
   class TechnicalsPanel;
 }
