@@ -3,27 +3,58 @@
 #include <QFormLayout>
 #include <QGroupBox>
 #include <QTextEdit>
+#include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 #include "Spire/BookView/BboBox.hpp"
 #include "Spire/BookView/BookViewHighlightPropertiesPage.hpp"
+#include "Spire/BookView/BookViewInteractionPropertiesPage.hpp"
 #include "Spire/BookView/BookViewLevelPropertiesPage.hpp"
 #include "Spire/BookView/MarketHighlightsTableView.hpp"
 #include "Spire/BookView/TechnicalsPanel.hpp"
+#include "Spire/KeyBindings/KeyBindingsWindow.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/FieldValueModel.hpp"
+#include "Spire/Spire/LocalQueryModel.hpp"
 #include "Spire/Spire/OptionalScalarValueModelDecorator.hpp"
 #include "Spire/Spire/Resources.hpp"
 #include "Spire/Spire/ScalarValueModelDecorator.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/IntegerBox.hpp"
 #include "Spire/Ui/MoneyBox.hpp"
 #include "Spire/Ui/NavigationView.hpp"
+#include "Spire/Ui/SecurityBox.hpp"
 #include "Spire/Ui/TableView.hpp"
 
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Spire;
 using namespace Spire::Styles;
+
+std::shared_ptr<SecurityInfoQueryModel> populate_security_query_model() {
+  auto security_infos = std::vector<SecurityInfo>();
+  security_infos.emplace_back(ParseSecurity("MRU.TSX"),
+    "Metro Inc.", "", 0);
+  security_infos.emplace_back(ParseSecurity("MG.TSX"),
+    "Magna International Inc.", "", 0);
+  security_infos.emplace_back(ParseSecurity("MGA.TSX"),
+    "Mega Uranium Ltd.", "", 0);
+  security_infos.emplace_back(ParseSecurity("MGAB.TSX"),
+    "Mackenzie Global Fixed Income Alloc ETF", "", 0);
+  security_infos.emplace_back(ParseSecurity("MON.NYSE"),
+    "Monsanto Co.", "", 0);
+  security_infos.emplace_back(ParseSecurity("MFC.TSX"),
+    "Manulife Financial Corporation", "", 0);
+  security_infos.emplace_back(ParseSecurity("MX.TSX"),
+    "Methanex Corporation", "", 0);
+  auto model = std::make_shared<LocalQueryModel<SecurityInfo>>();
+  for(auto& security_info : security_infos) {
+    model->add(to_text(security_info.m_security).toLower(), security_info);
+    model->add(
+      QString::fromStdString(security_info.m_name).toLower(), security_info);
+  }
+  return model;
+}
 
 template<typename M, typename U>
 MoneyBox* make_money_box(M model, U field) {
@@ -41,37 +72,6 @@ QuantityBox* make_quantity_box(M model, U field) {
         make_field_value_model(model, field))));
 }
 
-struct HighlightPropertiesPageTester : QWidget {
-  explicit HighlightPropertiesPageTester(
-      std::shared_ptr<MarketHighlightListModel> market_highlights,
-      QWidget* parent = nullptr)
-      : QWidget(parent) {
-    auto header = make_label(tr("Markets"));
-    auto table_view = make_market_highlights_table_view(
-      std::make_shared<ArrayListModel<
-        BookViewHighlightProperties::MarketHighlight>>(),
-      GetDefaultMarketDatabase());
-    auto table_box = new Box(table_view);
-    table_box->setFixedHeight(scale_height(208));
-    update_style(*table_box, [] (auto& style) {
-      style.get(Any()).
-        set(BorderBottomSize(scale_height(1))).
-        set(BorderBottomColor(QColor(0xE0E0E0)));
-    });
-    auto body = new QWidget();
-    auto layout = make_vbox_layout(body);
-    layout->setSpacing(scale_height(8));
-    layout->addWidget(header);
-    layout->addWidget(table_box);
-    auto box = new Box(body);
-    enclose(*this, *box);
-    proxy_style(*this, *box);
-    update_style(*this, [] (auto& style) {
-      style.get(Any()).set(BackgroundColor(QColor(0xFFFFFF)));
-    });
-  }
-};
-
 struct PropertiesTester {
   QWidget m_properties_view;
   BookViewHighlightPropertiesPage* m_highlights_page;
@@ -80,7 +80,8 @@ struct PropertiesTester {
   BookViewHighlightProperties m_previous_highlight_properties;
   int m_line_number;
 
-  PropertiesTester()
+  PropertiesTester(std::shared_ptr<KeyBindingsModel> key_bindings,
+      std::shared_ptr<SecurityModel> security)
       : m_line_number(0) {
     auto levels_page = new BookViewLevelPropertiesPage(
       std::make_shared<LocalLevelPropertiesModel>(
@@ -98,9 +99,14 @@ struct PropertiesTester {
     m_highlights_page->get_current()->connect_update_signal(
       std::bind_front(&PropertiesTester::on_highlight_properties_update, this));
     m_previous_highlight_properties = m_highlights_page->get_current()->get();
+    auto interactions_page = new BookViewInteractionPropertiesPage(
+      std::move(key_bindings), std::move(security));
+    interactions_page->setSizePolicy(QSizePolicy::Expanding,
+      QSizePolicy::Expanding);
     auto navigation_view = new NavigationView();
     navigation_view->add_tab(*levels_page, QObject::tr("Levels"));
     navigation_view->add_tab(*m_highlights_page, QObject::tr("Highlights"));
+    navigation_view->add_tab(*interactions_page, QObject::tr("Interactions"));
     auto layout = make_vbox_layout(&m_properties_view);
     layout->addWidget(navigation_view);
     auto actions_body = new QWidget();
@@ -122,11 +128,18 @@ struct PropertiesTester {
     });
     layout->addWidget(actions_box);
     m_properties_view.show();
-    m_properties_view.resize(scale(360, 608));
+    m_properties_view.resize(scale(360, 570));
     m_logs.show();
     m_logs.resize(scale(300, 500));
     m_logs.move(m_properties_view.pos().x() + m_logs.frameGeometry().width() +
       scale_width(100), m_logs.pos().y());
+  }
+
+  void update_highlight_box_font(const QFont& font) {
+    update_style(*m_highlights_page, [&] (auto& style) {
+      style.get(Any() > is_a<HighlightBox>() > is_a<TextBox>()).
+        set(Font(font));
+    });
   }
 
   void on_level_properties_update(const BookViewLevelProperties& properties) {
@@ -190,13 +203,6 @@ struct PropertiesTester {
     m_logs.append(log);
     m_previous_highlight_properties = properties;
   }
-
-  void update_highlight_box_font(const QFont& font) {
-    update_style(*m_highlights_page, [&] (auto& style) {
-      style.get(Any() > is_a<HighlightBox>() > is_a<TextBox>()).
-        set(Font(font));
-    });
-  }
 };
 
 struct BookViewTester : QWidget {
@@ -205,6 +211,7 @@ struct BookViewTester : QWidget {
       std::shared_ptr<QuantityModel> default_bid_quantity,
       std::shared_ptr<QuantityModel> default_ask_quantity,
       std::shared_ptr<OptionalIntegerModel> font_size,
+      std::shared_ptr<LocalSecurityModel> security,
       QWidget* parent = nullptr)
       : QWidget(parent) {
     auto layout = new QVBoxLayout(this);
@@ -244,6 +251,8 @@ struct BookViewTester : QWidget {
     auto properties_layout = new QFormLayout(properties_group_box);
     properties_layout->addRow(tr("Font Size:"),
       new IntegerBox(std::move(font_size)));
+    properties_layout->addRow(tr("Security:"),
+      new SecurityBox(populate_security_query_model(), std::move(security)));
     layout->addWidget(properties_group_box);
     setFixedWidth(scale_width(350));
   }
@@ -303,8 +312,17 @@ int main(int argc, char** argv) {
   auto default_bid_quantity = std::make_shared<LocalQuantityModel>(100);
   auto default_ask_quantity = std::make_shared<LocalQuantityModel>(100);
   auto font_size = std::make_shared<LocalOptionalIntegerModel>(10);
+  auto security =
+    std::make_shared<LocalSecurityModel>(ParseSecurity("MRU.TSX"));
+  auto key_bindings =
+    std::make_shared<KeyBindingsModel>(GetDefaultMarketDatabase());
+  auto key_bindings_window = KeyBindingsWindow(key_bindings,
+    populate_security_query_model(), GetDefaultCountryDatabase(),
+    GetDefaultMarketDatabase(), GetDefaultDestinationDatabase(),
+    get_default_additional_tag_database());
+  key_bindings_window.show();
   auto tester = BookViewTester(technicals, bbo_quote,
-    default_bid_quantity, default_ask_quantity, font_size);
+    default_bid_quantity, default_ask_quantity, font_size, security);
   auto widget = QWidget();
   auto layout = make_vbox_layout(&widget);
   auto panel = new TechnicalsPanel(technicals, default_bid_quantity,
@@ -317,7 +335,7 @@ int main(int argc, char** argv) {
   tester.move(
     tester.pos().x() + widget.frameGeometry().width() + scale_width(100),
     widget.pos().y());
-  auto properties_tester = PropertiesTester();
+  auto properties_tester = PropertiesTester(key_bindings, security);
   properties_tester.m_properties_view.installEventFilter(&tester);
   application.exec();
 }
