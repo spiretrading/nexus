@@ -40,24 +40,26 @@ BookViewPropertiesWindow::BookViewPropertiesWindow(
   setWindowTitle(tr("Book View Properties"));
   setWindowFlags(windowFlags() & ~Qt::WindowMinMaxButtonsHint);
   on_security_update(m_security->get());
+  auto navigation_view = new NavigationView();
+  navigation_view->setSizePolicy(
+    QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto levels_page = new BookViewLevelPropertiesPage(
     make_field_value_model(m_properties,
       &BookViewProperties::m_level_properties));
   levels_page->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_level_connection = levels_page->get_current()->connect_update_signal(
     std::bind_front(&BookViewPropertiesWindow::on_level_update, this));
+  navigation_view->add_tab(*levels_page, tr("Levels"));
   m_highlights_page = new BookViewHighlightPropertiesPage(
     make_field_value_model(m_properties,
       &BookViewProperties::m_highlight_properties), markets);
   m_highlights_page->setSizePolicy(QSizePolicy::Expanding,
     QSizePolicy::Expanding);
+  navigation_view->add_tab(*m_highlights_page, tr("Highlights"));
   auto interactions_page = new BookViewInteractionPropertiesPage(
     m_key_bindings, m_security);
   interactions_page->setSizePolicy(QSizePolicy::Expanding,
     QSizePolicy::Expanding);
-  auto navigation_view = new NavigationView();
-  navigation_view->add_tab(*levels_page, tr("Levels"));
-  navigation_view->add_tab(*m_highlights_page, tr("Highlights"));
   navigation_view->add_tab(*interactions_page, tr("Interactions"));
   auto actions_body = new QWidget();
   auto actions_body_layout = make_hbox_layout(actions_body);

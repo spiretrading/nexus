@@ -71,6 +71,7 @@ namespace {
   auto make_filter_button() {
     static auto icon = imageFromSvg(":/Icons/filter.svg", scale(6, 6));
     auto button = make_icon_button(icon);
+    button->setFocusPolicy(Qt::NoFocus);
     button->setFixedSize(scale(16, 16));
     update_style(*button, [] (auto& style) {
       style.get(Any() > Body()).set(BackgroundColor(Qt::transparent));
