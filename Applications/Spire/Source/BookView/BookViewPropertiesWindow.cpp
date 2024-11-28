@@ -94,8 +94,6 @@ BookViewPropertiesWindow::BookViewPropertiesWindow(
 
 void BookViewPropertiesWindow::on_cancel_button_click() {
   m_properties->set(m_initial_properties);
-  auto interactions = m_key_bindings->get_interactions_key_bindings(
-    m_security->get());
   copy_interactions(m_initial_interactions,
     *m_key_bindings->get_interactions_key_bindings(m_security->get()));
   close();
