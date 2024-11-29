@@ -11,6 +11,7 @@
 #include "Spire/Ui/EnumBox.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/MarketBox.hpp"
+#include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/TableItem.hpp"
 
 using namespace boost;
@@ -331,6 +332,37 @@ namespace {
     }
   };
 
+  struct ChildAddedObserver : QObject {
+    TableBody* m_table_body;
+    QWidget* m_added_widget;
+
+    ChildAddedObserver(TableBody& table_body, QObject* parent = nullptr)
+      : QObject(parent),
+        m_table_body(&table_body),
+        m_added_widget(nullptr) {}
+
+    bool eventFilter(QObject* watched, QEvent* event) override {
+      if(event->type() == QEvent::ChildAdded && watched == m_table_body) {
+        auto& child_event = *static_cast<QChildEvent*>(event);
+        if(child_event.added()) {
+          if(auto child = child_event.child(); child->isWidgetType()) {
+            m_added_widget = static_cast<QWidget*>(child);
+            m_added_widget->installEventFilter(this);
+          }
+        }
+      } else if(event->type() == QEvent::Show && watched == m_added_widget) {
+        if(auto layout = m_added_widget->layout()) {
+          if(layout->count() > 0) {
+            layout->itemAt(0)->widget()->setFocusPolicy(Qt::NoFocus);
+            m_added_widget->removeEventFilter(this);
+            m_added_widget = nullptr;
+          }
+        }
+      }
+      return QObject::eventFilter(watched, event);
+    }
+  };
+
   template<typename T, typename M>
   struct InputBoxWrapper : QWidget {
     using InputBox = T;
@@ -463,5 +495,9 @@ TableView* Spire::make_market_highlights_table_view(
   table_view->get_header().get_widths()->set(2, scale_width(92));
   table_view->get_header().get_widths()->set(3, scale_width(138));
   update_style(*table_view, apply_table_view_style);
+  table_view->get_body().setFocusPolicy(Qt::NoFocus);
+  table_view->get_scroll_box().setFocusPolicy(Qt::NoFocus);
+  auto filter = new ChildAddedObserver(table_view->get_body(), table_view);
+  table_view->get_body().installEventFilter(filter);
   return table_view;
 }

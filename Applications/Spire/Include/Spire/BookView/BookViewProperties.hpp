@@ -5,9 +5,17 @@
 #include <QColor>
 #include <QFont>
 #include "Nexus/Definitions/Market.hpp"
+#include "Spire/BookView/BookView.hpp"
+#include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Ui/HighlightBox.hpp"
 
 namespace Spire {
+
+  /** A ValueModel over a BookViewProperties. */
+  using BookViewPropertiesModel = ValueModel<BookViewProperties>;
+
+  /** A LocalValueModel over a BookViewProperties. */
+  using LocalBookViewPropertiesModel = LocalValueModel<BookViewProperties>;
 
   /** Represents the price level properties in the book view window. */
   struct BookViewLevelProperties {
@@ -97,6 +105,16 @@ namespace Spire {
 
     /** Returns the default properties. */
     static const BookViewHighlightProperties& get_default();
+  };
+
+  /** Represents the properties for the book view window. */
+  struct BookViewProperties {
+
+    /** The properties related to the price level. */
+    BookViewLevelProperties m_level_properties;
+
+    /** The properties related to the highlight. */
+    BookViewHighlightProperties m_highlight_properties;
   };
 
   /** Returns the text representation of a OrderVisibility. */

@@ -10,8 +10,8 @@ const BookViewLevelProperties& BookViewLevelProperties::get_default() {
     properties.m_font = QFontDatabase().font("Roboto", "Regular", -1);
     properties.m_font.setPixelSize(scale_width(10));
     properties.m_is_grid_enabled = false;
-    properties.m_color_scheme = {QColor(0xFFFFFF), QColor(0xE7E7FF),
-      QColor(0xCFCFFF), QColor(0xB7B7FF), QColor(0x9E9EFF), QColor(0x8686FF),
+    properties.m_color_scheme = {QColor(0xFFFFFF), QColor(0xE4E8FF),
+      QColor(0xCAD1FF), QColor(0xB1BAFF), QColor(0x99A2FF), QColor(0x8289FF),
       QColor(0x6E6EFF)};
     return properties;
   }();
