@@ -28,7 +28,7 @@ namespace {
   const auto COLOR_BOXES_SPACING = 2;
   const auto COLOR_BOXES_VERTICAL_PADDING = 2;
   const auto COLOR_LIST_SPACING = 8;
-  const auto COLOR_LSIT_RIGHT_PADDING = 4;
+  const auto COLOR_LIST_RIGHT_PADDING = 4;
   const auto DEBOUNCE_TIME_MS = 100;
 
   enum class FillType {
@@ -331,7 +331,7 @@ struct BookViewLevelPropertiesPage::PriceLevelWidget : QWidget {
       std::bind_front(&PriceLevelWidget::on_position_update, this));
     update_style(*m_scroll_box, [] (auto& style) {
       style.get(ScrollBoxOverflow()).
-        set(PaddingRight(scale_width(COLOR_LSIT_RIGHT_PADDING)));
+        set(PaddingRight(scale_width(COLOR_LIST_RIGHT_PADDING)));
     });
     auto layout = make_vbox_layout(this);
     layout->setSpacing(scale_height(8));
@@ -365,7 +365,7 @@ struct BookViewLevelPropertiesPage::PriceLevelWidget : QWidget {
       }();
       m_color_boxes->resize(
         m_scroll_box->width() - scroll_bar_width -
-          scale_width(COLOR_LSIT_RIGHT_PADDING) - m_color_boxes->x(),
+          scale_width(COLOR_LIST_RIGHT_PADDING) - m_color_boxes->x(),
         m_color_boxes->height());
     }
     return QWidget::eventFilter(watched, event);
