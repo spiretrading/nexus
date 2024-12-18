@@ -1,0 +1,29 @@
+#include "Spire/BookView/BookViewModel.hpp"
+#include "Spire/Spire/ArrayListModel.hpp"
+
+using namespace Nexus;
+using namespace Spire;
+
+BookViewModel::BookViewModel()
+ : m_bids(std::make_shared<ArrayListModel<BookQuote>>()),
+   m_asks(std::make_shared<ArrayListModel<BookQuote>>()),
+   m_bid_orders(std::make_shared<ArrayListModel<UserOrder>>()),
+   m_ask_orders(std::make_shared<ArrayListModel<UserOrder>>()) {}
+
+const std::shared_ptr<ListModel<BookQuote>>& BookViewModel::get_bids() const {
+  return m_bids;
+}
+
+const std::shared_ptr<ListModel<BookQuote>>& BookViewModel::get_asks() const {
+  return m_asks;
+}
+
+const std::shared_ptr<ListModel<BookViewModel::UserOrder>>&
+    BookViewModel::get_bid_orders() const {
+  return m_bid_orders;
+}
+
+const std::shared_ptr<ListModel<BookViewModel::UserOrder>>&
+    BookViewModel::get_ask_orders() const {
+  return m_ask_orders;
+}

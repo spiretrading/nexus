@@ -92,6 +92,8 @@ namespace Spire {
 
       /** The highlight level. */
       MarketHighlightLevel m_level;
+
+      auto operator <=>(const MarketHighlight&) const = default;
     };
 
     /** A list of Highlights for each market. */
