@@ -675,6 +675,9 @@ namespace {
           }
         },
         [&] (const ListModel<BookViewModel::UserOrder>::UpdateOperation& operation) {
+          if(m_visibility_property->get() != OrderVisibility::HIGHLIGHTED) {
+            return;
+          }
           auto& order = m_orders->get(operation.m_index);
           if(auto i = std::lower_bound(m_prices.begin(), m_prices.end(), order.m_price, std::greater<Money>());
               i != m_prices.end()) {
@@ -742,6 +745,9 @@ namespace {
     }
 
     void on_order_highlight_update(const std::array<HighlightColor, BookViewHighlightProperties::ORDER_HIGHLIGHT_STATE_COUNT>& highlights) {
+      if(m_visibility_property->get() != OrderVisibility::HIGHLIGHTED) {
+        return;
+      }
       auto active_index = static_cast<int>(BookViewHighlightProperties::OrderHighlightState::ACTIVE);
       if(m_order_highlights[active_index] != highlights[active_index]) {
         m_order_highlights[active_index] = highlights[active_index];
@@ -755,7 +761,7 @@ namespace {
         if(m_order_highlights[i] != highlights[i]) {
           m_order_highlights[i] = highlights[i];
           for(auto j = 0; j < m_quote_table->get_row_size(); ++j) {
-            if(is_order(get_mpid(*m_quote_table, i))) {
+            if(is_order(get_mpid(*m_quote_table, j))) {
               m_row_observer->update_terminal_order_style(j,
                 get_order_selector(static_cast<BookViewHighlightProperties::OrderHighlightState>(i)), highlights[i]);
             }
@@ -1023,7 +1029,7 @@ TableView* Spire::make_book_view_table_view(std::shared_ptr<BookViewModel> model
     return std::tuple(model->get_asks(), model->get_ask_orders());
   }();
   auto highlight_property_model = make_field_value_model(properties, &BookViewProperties::m_highlight_properties);
-  auto column_orders = std::vector<SortedTableModel::ColumnOrder>{{1, SortedTableModel::Ordering::DESCENDING}};
+  auto column_orders = std::vector<SortedTableModel::ColumnOrder>{{1, SortedTableModel::Ordering::DESCENDING}, {2, SortedTableModel::Ordering::DESCENDING}};
   auto table = std::make_shared<SortedTableModel>(make_book_view_table_model(std::make_shared<OrderFilteredListModel>(book_quotes,
     highlight_property_model)), column_orders);
   auto row_observer = std::make_shared<RowObserver>(table);
