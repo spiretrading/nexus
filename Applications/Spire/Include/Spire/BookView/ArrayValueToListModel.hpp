@@ -52,17 +52,21 @@ namespace Spire {
 
     private:
       std::shared_ptr<ValueModel<std::vector<Type>>> m_source;
+      std::vector<Type> m_data;
+      bool m_is_transaction;
       ListModelTransactionLog<Type> m_transaction;
   };
 
   template<typename T>
   ArrayValueToListModel<T>::ArrayValueToListModel(
     std::shared_ptr<ValueModel<std::vector<Type>>> source)
-    : m_source(std::move(source)) {}
+    : m_source(std::move(source)),
+      m_data(m_source->get()),
+      m_is_transaction(false) {}
 
   template<typename T>
   int ArrayValueToListModel<T>::get_size() const {
-    return static_cast<int>(m_source->get().size());
+    return static_cast<int>(m_data.size());
   }
 
   template<typename T>
@@ -71,7 +75,7 @@ namespace Spire {
     if(index < 0 || index >= get_size()) {
       throw std::out_of_range("The index is out of range.");
     }
-    return m_source->get()[index];
+    return m_data[index];
   }
 
   template<typename T>
@@ -80,10 +84,11 @@ namespace Spire {
     if(index < 0 || index >= get_size()) {
       throw std::out_of_range("The index is out of range.");
     }
-    auto data = m_source->get();
-    auto previous = data[index];
-    data[index] = value;
-    m_source->set(data);
+    auto previous = m_data[index];
+    m_data[index] = value;
+    if(!m_is_transaction) {
+      m_source->set(m_data);
+    }
     m_transaction.push(UpdateOperation(index, std::move(previous), value));
     return QValidator::Acceptable;
   }
@@ -94,9 +99,10 @@ namespace Spire {
     if(index < 0 || index > get_size()) {
       throw std::out_of_range("The index is out of range.");
     }
-    auto data = m_source->get();
-    data.insert(std::next(data.begin(), index), value);
-    m_source->set(data);
+    m_data.insert(std::next(m_data.begin(), index), value);
+    if(!m_is_transaction) {
+      m_source->set(m_data);
+    }
     m_transaction.push(AddOperation(index));
     return QValidator::Acceptable;
   }
@@ -106,11 +112,12 @@ namespace Spire {
     if(index < 0 || index >= get_size()) {
       throw std::out_of_range("The index is out of range.");
     }
-    auto data = m_source->get();
     m_transaction.transact([&] {
       m_transaction.push(PreRemoveOperation(index));
-      data.erase(std::next(data.begin(), index));
-      m_source->set(data);
+      m_data.erase(std::next(m_data.begin(), index));
+      if(!m_is_transaction) {
+        m_source->set(m_data);
+      }
       m_transaction.push(RemoveOperation(index));
     });
     return QValidator::Acceptable;
@@ -126,7 +133,10 @@ namespace Spire {
   template<typename T>
   void ArrayValueToListModel<T>::transact(
       const std::function<void()>& transaction) {
+    m_is_transaction = true;
     m_transaction.transact(transaction);
+    m_source->set(m_data);
+    m_is_transaction = false;
   }
 }
 
