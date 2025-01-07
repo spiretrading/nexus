@@ -204,10 +204,12 @@ namespace {
       }
       auto& selectors = m_row_selectors.get(index);
       if(selector_type == SelectorType::LEVEL_SELECTOR) {
-        if(!selectors.m_highlight_selector && selectors.m_level_selector) {
-          unmatch(*item, *selectors.m_level_selector);
+        if(!selectors.m_highlight_selector) {
+          if(selectors.m_level_selector) {
+            unmatch(*item, *selectors.m_level_selector);
+          }
+          match(*item, selector);
         }
-        match(*item, selector);
         m_row_selectors.set(index, {selector, selectors.m_highlight_selector});
       } else {
         if(selectors.m_highlight_selector) {
@@ -423,14 +425,17 @@ namespace {
     }
   };
 
- struct MarketHighlightModel {
+  struct MarketHighlightModel {
+    struct HighlightContext {
+      std::unique_ptr<MarketHighlightIndicator> m_indicator;
+      MarketHighlight m_highlight;
+    };
     std::shared_ptr<TableModel> m_quote_table;
     std::shared_ptr<RowTracker> m_row_tracker;
-    std::shared_ptr<ValueModel<std::vector<MarketHighlight>>> m_highlight_properties;
+    std::shared_ptr<ValueModel<std::vector<MarketHighlight>>>
+      m_highlight_properties;
     MarketDatabase m_markets;
-    std::unordered_map<std::string, std::unique_ptr<MarketHighlightIndicator>>
-      m_indicators;
-    std::unordered_map<std::string, MarketHighlight> m_highlight_map;
+    std::unordered_map<std::string, HighlightContext> m_highlight_contexts;
     std::unordered_map<std::string, Quote> m_highlight_tops;
     std::vector<MarketHighlight> m_market_highlights;
     connection m_operation_connection;
@@ -438,12 +443,12 @@ namespace {
 
     MarketHighlightModel(std::shared_ptr<TableModel> quote_table,
         std::shared_ptr<RowTracker> row_tracker,
-        std::shared_ptr<ValueModel<std::vector<MarketHighlight>>> highlight_properties,
+        std::shared_ptr<ValueModel<std::vector<MarketHighlight>>> properties,
         const MarketDatabase& markets)
-          : m_quote_table(std::move(quote_table)),
-            m_row_tracker(std::move(row_tracker)),
-            m_highlight_properties(std::move(highlight_properties)),
-            m_markets(markets) {
+        : m_quote_table(std::move(quote_table)),
+          m_row_tracker(std::move(row_tracker)),
+          m_highlight_properties(std::move(properties)),
+          m_markets(markets) {
       on_properties_update(m_highlight_properties->get());
       m_operation_connection = m_quote_table->connect_operation_signal(
         std::bind_front(&MarketHighlightModel::on_table_operation, this));
@@ -457,23 +462,26 @@ namespace {
 
     void match_market_highlight(int row) {
       auto& mpid = get_mpid(*m_quote_table, row);
-      if(!m_indicators.contains(mpid)) {
+      if(!m_highlight_contexts.contains(mpid)) {
         return;
       }
-      auto highlight_level = m_highlight_map[mpid].m_level;
-      if(highlight_level == BookViewHighlightProperties::MarketHighlightLevel::ALL) {
-        m_row_tracker->match_selector(row, SelectorType::MARKET_HIGHLIGHT_SELECTOR, *m_indicators[mpid]);
+      auto& context = m_highlight_contexts[mpid];
+      if(context.m_highlight.m_level == MarketHighlightLevel::ALL) {
+        m_row_tracker->match_selector(row,
+          SelectorType::MARKET_HIGHLIGHT_SELECTOR, *context.m_indicator);
+        m_row_tracker->update_market_style(row, *context.m_indicator,
+          context.m_highlight.m_color);
       } else {
         auto& price = get_price(*m_quote_table, row);
         auto& size = get_size(*m_quote_table, row);
         auto i = m_highlight_tops.find(mpid);
         if(i != m_highlight_tops.end() && i->second.m_price == price &&
-            i->second.m_size == size) {
-          m_row_tracker->match_selector(row, SelectorType::MARKET_HIGHLIGHT_SELECTOR, *m_indicators[mpid]);
+          i->second.m_size == size) {
+          m_row_tracker->match_selector(row,
+            SelectorType::MARKET_HIGHLIGHT_SELECTOR, *context.m_indicator);
+          m_row_tracker->update_market_style(row, *context.m_indicator,
+            context.m_highlight.m_color);
         }
-      }
-      if(m_indicators.contains(mpid)) {
-        m_row_tracker->update_market_style(row, *m_indicators[mpid], m_highlight_map[mpid].m_color);
       }
     }
 
@@ -483,13 +491,18 @@ namespace {
           auto& mpid = get_mpid(*m_quote_table, operation.m_index);
           auto& price = get_price(*m_quote_table, operation.m_index);
           auto& size = get_size(*m_quote_table, operation.m_index);
-          if(auto i = m_highlight_tops.find(mpid); i != m_highlight_tops.end()) {
+          if(auto i = m_highlight_tops.find(mpid);
+              i != m_highlight_tops.end()) {
             if(i->second.m_price < price ||
                 (i->second.m_price == price && i->second.m_size < size)) {
-              if(m_highlight_map[mpid].m_level == BookViewHighlightProperties::MarketHighlightLevel::TOP) {
+              if(m_highlight_contexts.contains(mpid) &&
+                  m_highlight_contexts[mpid].m_highlight.m_level ==
+                    MarketHighlightLevel::TOP) {
                 for(auto j = 0; j < m_quote_table->get_row_size(); ++j) {
-                  if(mpid == get_mpid(*m_quote_table, j) && i->second.m_price == get_price(*m_quote_table, j)) {
-                    m_row_tracker->unmatch_selector(j, SelectorType::MARKET_HIGHLIGHT_SELECTOR);
+                  if(mpid == get_mpid(*m_quote_table, j) &&
+                      i->second.m_price == get_price(*m_quote_table, j)) {
+                    m_row_tracker->unmatch_selector(j,
+                      SelectorType::MARKET_HIGHLIGHT_SELECTOR);
                     break;
                   }
                 }
@@ -507,12 +520,15 @@ namespace {
           auto& mpid = get_mpid(*m_quote_table, operation.m_index);
           auto& price = get_price(*m_quote_table, operation.m_index);
           auto& size = get_size(*m_quote_table, operation.m_index);
-          if(auto i = m_highlight_tops.find(mpid); i != m_highlight_tops.end()) {
+          if(auto i = m_highlight_tops.find(mpid);
+              i != m_highlight_tops.end()) {
             if(i->second.m_price == price && i->second.m_size == size) {
-              for(auto j = operation.m_index + 1; j < m_quote_table->get_row_size(); ++j) {
+              for(auto j = operation.m_index + 1;
+                  j < m_quote_table->get_row_size(); ++j) {
                 if(get_mpid(*m_quote_table, j) == mpid) {
                   i->second.m_price = get_price(*m_quote_table, j);
                   i->second.m_size = get_size(*m_quote_table, j);
+                  match_market_highlight(j);
                   break;
                 }
               }
@@ -521,31 +537,36 @@ namespace {
         },
         [&] (const TableModel::UpdateOperation& operation) {
           if(operation.m_column == static_cast<int>(BookViewColumns::SIZE)) {
-            if(auto i = m_highlight_tops.find(get_mpid(*m_quote_table, operation.m_row)); i != m_highlight_tops.end()) {
-              if(i->second.m_price == get_price(*m_quote_table, operation.m_row)) {
+            auto& mpid = get_mpid(*m_quote_table, operation.m_row);
+            if(auto i = m_highlight_tops.find(mpid);
+              i != m_highlight_tops.end()) {
+              if(i->second.m_price ==
+                get_price(*m_quote_table, operation.m_row)) {
                 i->second.m_size = get_size(*m_quote_table, operation.m_row);
               }
             }
           }
-      });
+        });
     }
 
-    void on_properties_update(const std::vector<MarketHighlight>& market_highlights) {
+    void on_properties_update(
+      const std::vector<MarketHighlight>& market_highlights) {
       if(m_market_highlights != market_highlights) {
-        m_indicators.clear();
-        m_highlight_map.clear();
-        for(auto& highlight : market_highlights) {
+        m_market_highlights = market_highlights;
+        m_highlight_contexts.clear();
+        for(auto& highlight : m_market_highlights) {
           auto& name = m_markets.FromCode(highlight.m_market).m_displayName;
-          m_indicators[name] = std::make_unique<MarketHighlightIndicator>(name);
-          m_highlight_map[name] = highlight;
+          m_highlight_contexts[name] =
+            HighlightContext{std::make_unique<MarketHighlightIndicator>(name),
+            highlight};
         }
         for(auto i = 0; i < m_quote_table->get_row_size(); ++i) {
           if(!is_order(get_mpid(*m_quote_table, i))) {
-            m_row_tracker->unmatch_selector(i, SelectorType::MARKET_HIGHLIGHT_SELECTOR);
+            m_row_tracker->unmatch_selector(i,
+              SelectorType::MARKET_HIGHLIGHT_SELECTOR);
             match_market_highlight(i);
           }
         }
-        m_market_highlights = market_highlights;
       }
     }
   };

@@ -280,3 +280,11 @@ double Spire::apca(const QColor& text_color, const QColor& background_color) {
   return apca(to_screen_luminance(text_color),
     to_screen_luminance(background_color));
 }
+
+QColor Spire::get_apca_text_color(const QColor& background_color) {
+  if(std::abs(apca(QColor(Qt::black), background_color)) >
+      std::abs(apca(QColor(Qt::white), background_color))) {
+    return QColor(Qt::black);
+  }
+  return QColor(Qt::white);
+}
