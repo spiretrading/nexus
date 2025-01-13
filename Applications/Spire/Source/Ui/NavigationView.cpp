@@ -83,7 +83,7 @@ NavigationView::NavigationView(
         std::bind_front(&NavigationView::on_current, this))) {
   auto navigation_menu = new QWidget();
   navigation_menu->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-  m_navigation_list = std::make_shared<ArrayListModel<std::any>>();
+  m_navigation_list = std::make_shared<ArrayListModel<QString>>();
   m_navigation_view = new ListView(m_navigation_list,
     [] (const auto& model, auto index) {
       return new NavigationTab(
@@ -137,8 +137,6 @@ NavigationView::NavigationView(
     set(BorderTopSize(scale_height(1))).
     set(BorderTopColor(QColor(0xD0D0D0)));
   set_style(*this, std::move(style));
-  m_navigation_view->connect_submit_signal(
-    std::bind_front(&NavigationView::on_list_submit, this));
   m_navigation_view->get_current()->connect_update_signal(
     std::bind_front(&NavigationView::on_list_current, this));
 }
@@ -251,16 +249,10 @@ void NavigationView::on_current(int index) {
     std::any_cast<const QString&>(m_navigation_list->get(index)))->set(true);
 }
 
-void NavigationView::on_list_submit(const std::any& submission) {
-  m_associative_model.get_association(
-    std::any_cast<const QString&>(submission))->set(true);
-}
-
 void NavigationView::on_list_current(const optional<int>& current) {
   if(current) {
-    m_stacked_widget->setFocusPolicy(Qt::TabFocus);
-    setTabOrder(m_stacked_widget, m_navigation_view->get_list_item(*current));
-    m_stacked_widget->setFocusPolicy(Qt::NoFocus);
+    m_associative_model.get_association(
+      m_navigation_list->get(*current))->set(true);
   }
 }
 
@@ -268,7 +260,9 @@ void NavigationView::on_associative_value_current(int index, bool value) {
   if(value) {
     match(*m_navigation_view->get_list_item(index), Checked());
     m_stacked_widget->setCurrentIndex(index);
-    m_navigation_view->get_current()->set(index);
+    if(index != m_navigation_view->get_current()->get()) {
+      m_navigation_view->get_current()->set(index);
+    }
     if(index != m_current->get()) {
       m_current->set(index);
     }
