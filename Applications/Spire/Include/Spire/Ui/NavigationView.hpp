@@ -1,7 +1,7 @@
 #ifndef SPIRE_NAVIGATION_VIEW_HPP
 #define SPIRE_NAVIGATION_VIEW_HPP
 #include <any>
-#include <QStackedWidget>
+#include <QStackedLayout>
 #include "Spire/Spire/AssociativeValueModel.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -93,7 +93,7 @@ namespace Spire {
       std::shared_ptr<CurrentModel> m_current;
       std::shared_ptr<ArrayListModel<QString>> m_navigation_list;
       ListView* m_navigation_view;
-      QStackedWidget* m_stacked_widget;
+      QStackedLayout* m_stacked_layout;
       AssociativeValueModel<QString> m_associative_model;
       boost::signals2::scoped_connection m_current_connection;
 
