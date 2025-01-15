@@ -52,6 +52,8 @@ namespace {
     StateSelector<void, struct FilledOrderIndicatorTag>;
   using RejectedOrderIndicator =
     StateSelector<void, struct RejectedOrderIndicatorTag>;
+  const auto ORDER_HIGHLIGHT_TRANSITION_MS = 100;
+  const auto ORDER_HIGHLIGHT_DELAY_MS = 300;
 
   enum class SelectorType {
     LEVEL_SELECTOR,
@@ -89,11 +91,12 @@ namespace {
     auto row_selector = selector < is_a<TableItem>() < Row();
     style.get(row_selector).
       set(BackgroundColor(
-        chain(timeout(highlight.m_background_color, milliseconds(100)),
-        linear(highlight.m_background_color, revert, milliseconds(300)))));
+        linear(RevertExpression<QColor>(), highlight.m_background_color,
+          milliseconds(ORDER_HIGHLIGHT_TRANSITION_MS))));
     style.get(row_selector > is_a<TableItem>() > is_a<TextBox>()).
       set(TextColor(
-        chain(timeout(highlight.m_text_color, milliseconds(400)), revert)));
+        linear(RevertExpression<QColor>(), highlight.m_text_color,
+          milliseconds(ORDER_HIGHLIGHT_TRANSITION_MS))));
    }
 
   auto to_string(const OrderKey& order_key) {
@@ -620,6 +623,7 @@ namespace {
     std::unordered_map<OrderKey, OrderStatus, OrderKeyHash> m_order_status;
     OrderVisibility m_visibility;
     OrderHighlightArray m_highlights;
+    QTimer m_timer;
     connection m_table_operation_connection;
     connection m_order_connection;
     connection m_visibility_connection;
@@ -636,10 +640,14 @@ namespace {
           m_visibility_property(std::move(visibility_property)),
           m_highlight_properties(std::move(highlight_properties)),
           m_prices(m_quote_table, static_cast<int>(BookViewColumns::PRICE)) {
+      for(auto i = 0; i < m_orders->get_size(); ++i) {
+        auto& order = m_orders->get(i);
+        m_order_status[OrderKey(order.m_destination, order.m_price)] =
+          order.m_status;
+      }
       on_visibility_update(m_visibility_property->get());
       on_highlight_update(m_highlight_properties->get());
-      m_table_operation_connection = m_quote_table->connect_operation_signal(
-        std::bind_front(&OrderHighlightModel::on_table_operation, this));
+      m_timer.setSingleShot(true);
       m_order_connection = m_orders->connect_operation_signal(
         std::bind_front(&OrderHighlightModel::on_order_operation, this));
       m_visibility_connection = m_visibility_property->connect_update_signal(
@@ -652,7 +660,7 @@ namespace {
       auto& mpid = get_mpid(*m_quote_table, row);
       if(is_order(mpid)) {
         if(m_visibility == OrderVisibility::HIGHLIGHTED) {
-          auto key = OrderKey(mpid, get_price(*m_quote_table, row));
+          auto key = OrderKey(mpid.substr(1), get_price(*m_quote_table, row));
           if(auto i = m_order_status.find(key); i != m_order_status.end()) {
             m_row_tracker->match_selector(row,
               SelectorType::ORDER_HIGHLIGHT_SELECTOR,
@@ -671,57 +679,71 @@ namespace {
       }
     }
 
-    void update_order_status(const UserOrder& order) {
+    int find_order_index(const UserOrder& order) {
       auto i = std::lower_bound(m_prices.begin(), m_prices.end(), order.m_price,
         std::greater<Money>());
       if(i != m_prices.end()) {
         auto mpid = '@' + order.m_destination;
         for(; i != m_prices.end(); ++i) {
           if(*i != order.m_price) {
-            break;
+            return -1;
           }
           auto index = std::distance(m_prices.begin(), i);
           if(mpid == get_mpid(*m_quote_table, index)) {
-            m_order_status[OrderKey(mpid, order.m_price)] = order.m_status;
-            m_row_tracker->match_selector(index,
-              SelectorType::ORDER_HIGHLIGHT_SELECTOR,
-              get_order_status_selector(order.m_status));
-            break;
+            return index;
           }
         }
+      }
+      return -1;
+    }
+
+    void update_order_status(const UserOrder& order) {
+      if(auto index = find_order_index(order); index >= 0) {
+        m_row_tracker->match_selector(index,
+          SelectorType::ORDER_HIGHLIGHT_SELECTOR,
+          get_order_status_selector(order.m_status));
       }
     }
 
     void on_order_operation(const ListModel<UserOrder>::Operation& operation) {
       visit(operation,
+        [&] (const ListModel<UserOrder>::AddOperation& operation) {
+          auto& order = m_orders->get(operation.m_index);
+          auto key = OrderKey(order.m_destination, order.m_price);
+          m_order_status[key] = order.m_status;
+          if(m_visibility == OrderVisibility::HIGHLIGHTED) {
+            update_order_status(order);
+          }
+        },
         [&] (const ListModel<UserOrder>::PreRemoveOperation& operation) {
           auto& order = m_orders->get(operation.m_index);
-          m_order_status.erase(OrderKey(order.m_destination, order.m_price));
+          m_timer.disconnect();
+          QObject::connect(&m_timer, &QTimer::timeout, [=] {
+            if(auto index = find_order_index(order); index >= 0) {
+              m_quote_table->remove(index);
+            }
+          });
+          m_timer.start(ORDER_HIGHLIGHT_DELAY_MS);
         },
         [&] (const ListModel<UserOrder>::UpdateOperation& operation) {
-          if(m_visibility_property->get() != OrderVisibility::HIGHLIGHTED) {
+          auto& order = m_orders->get(operation.m_index);
+          auto key = OrderKey(order.m_destination, order.m_price);
+          m_order_status[key] = order.m_status;
+          if(m_visibility_property->get() != OrderVisibility::HIGHLIGHTED ||
+              order.m_status == OrderStatus::NONE) {
             return;
           }
-          update_order_status(m_orders->get(operation.m_index));
-        });
-    }
-
-    void on_table_operation(const TableModel::Operation& operation) {
-      visit(operation,
-        [&] (const TableModel::AddOperation& operation) {
-          auto& mpid = get_mpid(*m_quote_table, operation.m_index);
-          if(!is_order(mpid)) {
-            return;
-          }
-          auto& price = get_price(*m_quote_table, operation.m_index);
-          auto key = OrderKey(mpid, price);
-          if(auto i = m_order_status.find(key); i == m_order_status.end()) {
-            m_order_status[key] = OrderStatus::NEW;
-            if(m_visibility == OrderVisibility::HIGHLIGHTED) {
-              m_row_tracker->match_selector(operation.m_index,
-                SelectorType::ORDER_HIGHLIGHT_SELECTOR, OrderIndicator());
+          update_order_status(order);
+          m_timer.disconnect();
+          QObject::connect(&m_timer, &QTimer::timeout, [=] {
+            if(auto i = m_order_status.find(key); i != m_order_status.end()) {
+              if(i->second == OrderStatus::NONE) {
+                update_order_status(UserOrder(i->first.m_destination,
+                  i->first.m_price, i->second));
+              }
             }
-          }
+          });
+          m_timer.start(ORDER_HIGHLIGHT_DELAY_MS);
         });
     }
 
