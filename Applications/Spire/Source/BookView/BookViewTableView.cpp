@@ -31,13 +31,15 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  constexpr auto ORDER_HIGHLIGHT_STATE_COUNT =
+    BookViewHighlightProperties::ORDER_HIGHLIGHT_STATE_COUNT;
   using OrderVisibility = BookViewHighlightProperties::OrderVisibility;
   using MarketHighlight = BookViewHighlightProperties::MarketHighlight;
   using MarketHighlightLevel =
     BookViewHighlightProperties::MarketHighlightLevel;
   using OrderHighlightState = BookViewHighlightProperties::OrderHighlightState;
-  using OrderHighlightArray = std::array<HighlightColor,
-    BookViewHighlightProperties::ORDER_HIGHLIGHT_STATE_COUNT>;
+  using OrderHighlightArray =
+    std::array<HighlightColor, ORDER_HIGHLIGHT_STATE_COUNT>;
   using UserOrder = BookViewModel::UserOrder;
   using ShowGrid = StateSelector<void, struct ShowGridSeletorTag>;
   using LevelIndicator = StateSelector<int, struct LevelIndicatorTag>;
@@ -53,7 +55,9 @@ namespace {
   using RejectedOrderIndicator =
     StateSelector<void, struct RejectedOrderIndicatorTag>;
   const auto ORDER_HIGHLIGHT_TRANSITION_MS = 100;
-  const auto ORDER_HIGHLIGHT_DELAY_MS = 300;
+  const auto ORDER_HIGHLIGHT_DELAY_MS = 900;
+  const auto SELECTED_BACKGROUND_COLOR = QColor(0x8D78EC);
+  const auto SELECTED_TEXT_COLOR = QColor(0xFFFFFF);
 
   enum class SelectorType {
     LEVEL_SELECTOR,
@@ -77,27 +81,30 @@ namespace {
     }
   };
 
-  void apply_row_style(StyleSheet& style, const Selector& selector,
-      const QColor& background_color, const QColor& text_color) {
-    auto row_selector = selector < is_a<TableItem>() < Row();
-    style.get(row_selector).
-      set(BackgroundColor(background_color));
-    style.get(row_selector > is_a<TableItem>() > is_a<TextBox>()).
-      set(TextColor(text_color));
+  void apply_row_style(StyleSheet& style,
+      const Selector& row_selector, const Selector& text_selector,
+      const HighlightColor& highlight) {
+    style.get(row_selector).set(BackgroundColor(highlight.m_background_color));
+    style.get(text_selector).set(TextColor(highlight.m_text_color));
   }
 
-  void apply_highlight_animation_style(StyleSheet& style,
-      const Selector& selector, const HighlightColor& highlight) {
+  void apply_row_style(StyleSheet& style, const Selector& selector,
+      const HighlightColor& highlight) {
     auto row_selector = selector < is_a<TableItem>() < Row();
-    style.get(row_selector).
-      set(BackgroundColor(
-        linear(RevertExpression<QColor>(), highlight.m_background_color,
-          milliseconds(ORDER_HIGHLIGHT_TRANSITION_MS))));
-    style.get(row_selector > is_a<TableItem>() > is_a<TextBox>()).
-      set(TextColor(
-        linear(RevertExpression<QColor>(), highlight.m_text_color,
-          milliseconds(ORDER_HIGHLIGHT_TRANSITION_MS))));
-   }
+    auto text_selector = row_selector > is_a<TableItem>() > is_a<TextBox>();
+    apply_row_style(style, row_selector, text_selector, highlight);
+  }
+
+  void apply_row_highlight_animation_style(StyleSheet& style,
+      const Selector& row_selector, const Selector& text_selector,
+      const HighlightColor& old_highlight, const HighlightColor& highlight) {
+    style.get(row_selector).set(BackgroundColor(
+      linear(old_highlight.m_background_color, highlight.m_background_color,
+        milliseconds(ORDER_HIGHLIGHT_TRANSITION_MS))));
+    style.get(text_selector).set(TextColor(
+      linear(old_highlight.m_text_color, highlight.m_text_color,
+        milliseconds(ORDER_HIGHLIGHT_TRANSITION_MS))));
+  }
 
   auto to_string(const OrderKey& order_key) {
     return order_key.m_destination +
@@ -135,6 +142,26 @@ namespace {
       return RejectedOrderIndicator();
     }
     return OrderIndicator();
+  }
+
+  QWidget* get_table_body(QWidget* cell) {
+    if(auto table_item = cell->parentWidget()) {
+      if(auto row = table_item->parentWidget()) {
+        return row->parentWidget();
+      }
+    }
+    return nullptr;
+  }
+
+  auto to_highlight_state(OrderStatus status) {
+    if(status == OrderStatus::CANCELED) {
+      return OrderHighlightState::CANCELED;
+    } else if(status == OrderStatus::FILLED) {
+      return OrderHighlightState::FILLED;
+    } else if(status == OrderStatus::REJECTED) {
+      return OrderHighlightState::REJECTED;
+    }
+    return OrderHighlightState::ACTIVE;
   }
 
   const auto& get_mpid(const TableModel& table, int row) {
@@ -201,7 +228,6 @@ namespace {
       } else if(selector_type == SelectorType::ORDER_HIGHLIGHT_SELECTOR) {
         if(selectors.m_highlight_selector) {
           unmatch(*item, *selectors.m_highlight_selector);
-          unmatch(*item, OrderIndicator());
           m_row_selectors.set(index, {selectors.m_level_selector, none});
         }
         if(selectors.m_level_selector) {
@@ -237,10 +263,6 @@ namespace {
         if(selectors.m_level_selector) {
           unmatch(*item, *selectors.m_level_selector);
         }
-        if(selector_type == SelectorType::ORDER_HIGHLIGHT_SELECTOR &&
-            !is_match(*item, OrderIndicator())) {
-          match(*item, OrderIndicator());
-        }
         match(*item, selector);
         m_row_selectors.set(index, {selectors.m_level_selector, selector});
       }
@@ -250,7 +272,8 @@ namespace {
         const QColor& color) {
       if(auto item = get_quantity_item(index)) {
         update_style(*item, [&] (auto& style) {
-          apply_row_style(style, indicator, color, get_apca_text_color(color));
+          apply_row_style(style, indicator,
+            HighlightColor(color, get_apca_text_color(color)));
         });
       }
     }
@@ -260,8 +283,7 @@ namespace {
         const HighlightColor& highlight) {
       if(auto item = get_quantity_item(index)) {
         update_style(*item, [&] (auto& style) {
-          apply_row_style(style, indicator, highlight.m_background_color,
-            highlight.m_text_color);
+          apply_row_style(style, indicator, highlight);
         });
       }
     }
@@ -269,17 +291,42 @@ namespace {
     void update_active_order_style(int index, const HighlightColor& highlight) {
       if(auto item = get_quantity_item(index)) {
         update_style(*item, [&] (auto& style) {
-          apply_row_style(style, OrderIndicator(), highlight.m_background_color,
-            highlight.m_text_color);
+          apply_row_style(style, OrderIndicator(), highlight);
         });
       }
     }
 
     void update_terminal_order_style(int index, const Selector& selector,
-        const HighlightColor& highlight) {
+        const HighlightColor& old_highlight, const HighlightColor& highlight) {
       if(auto item = get_quantity_item(index)) {
         update_style(*item, [&] (auto& style) {
-          apply_highlight_animation_style(style, selector, highlight);
+          auto row_selector = selector < is_a<TableItem>() < Row();
+          auto text_selector =
+            row_selector > is_a<TableItem>() > is_a<TextBox>();
+          apply_row_highlight_animation_style(style, row_selector,
+            text_selector, old_highlight, highlight);
+        });
+      }
+    }
+
+    void update_current_order_style(OrderHighlightState state,
+        const HighlightColor& old_highlight, const HighlightColor& highlight) {
+      auto i = std::find_if(m_items.begin(), m_items.end(), [] (QWidget* item) {
+        return item != nullptr;
+      });
+      if(i == m_items.end()) {
+        return;
+      }
+      if(auto table_body = get_table_body(*i)) {
+        update_style(*table_body, [&] (auto& style) {
+          auto item_selector = Any() > CurrentRow() > is_a<TableItem>();
+          auto order_selector = get_order_selector(state);
+          auto row_selector =
+            item_selector > order_selector < is_a<TableItem>() < CurrentRow();
+          auto text_selector = item_selector > order_selector <
+            is_a<TableItem>() < Row() > is_a<TableItem>() > is_a<TextBox>();
+          apply_row_highlight_animation_style(style, row_selector,
+            text_selector, old_highlight, highlight);
         });
       }
     }
@@ -670,11 +717,10 @@ namespace {
         auto active_index = static_cast<int>(OrderHighlightState::ACTIVE);
         m_row_tracker->update_active_order_style(row,
           m_highlights[active_index]);
-        for(auto i = active_index + 1;
-            i < BookViewHighlightProperties::ORDER_HIGHLIGHT_STATE_COUNT; ++i) {
+        for(auto i = active_index + 1; i < ORDER_HIGHLIGHT_STATE_COUNT; ++i) {
           m_row_tracker->update_terminal_order_style(row,
             get_order_selector(static_cast<OrderHighlightState>(i)),
-            m_highlights[i]);
+            m_highlights[active_index], m_highlights[i]);
         }
       }
     }
@@ -708,6 +754,13 @@ namespace {
     void on_order_operation(const ListModel<UserOrder>::Operation& operation) {
       visit(operation,
         [&] (const ListModel<UserOrder>::AddOperation& operation) {
+          auto active_index = static_cast<int>(OrderHighlightState::ACTIVE);
+          for(auto i = active_index + 1; i < ORDER_HIGHLIGHT_STATE_COUNT; ++i) {
+            m_row_tracker->update_current_order_style(
+              static_cast<OrderHighlightState>(i),
+              HighlightColor(SELECTED_BACKGROUND_COLOR, SELECTED_TEXT_COLOR),
+              m_highlights[i]);
+          }
           auto& order = m_orders->get(operation.m_index);
           auto key = OrderKey(order.m_destination, order.m_price);
           m_order_status[key] = order.m_status;
@@ -759,7 +812,7 @@ namespace {
           }
         } else if(visibility == OrderVisibility::HIGHLIGHTED) {
           for(auto i = 0; i < m_quote_table->get_row_size(); ++i) {
-            auto key = OrderKey(get_mpid(*m_quote_table, i),
+            auto key = OrderKey(get_mpid(*m_quote_table, i).substr(1),
               get_price(*m_quote_table, i));
             if(auto j = m_order_status.find(key); j != m_order_status.end()) {
               m_row_tracker->match_selector(i,
@@ -776,8 +829,10 @@ namespace {
       if(m_visibility_property->get() != OrderVisibility::HIGHLIGHTED) {
         return;
       }
+      auto active_highlight_updated = false;
       auto active_index = static_cast<int>(OrderHighlightState::ACTIVE);
       if(m_highlights[active_index] != highlights[active_index]) {
+        active_highlight_updated = true;
         m_highlights[active_index] = highlights[active_index];
         for(auto i = 0; i < m_quote_table->get_row_size(); ++i) {
           if(is_order(get_mpid(*m_quote_table, i))) {
@@ -786,15 +841,20 @@ namespace {
           }
         }
       }
-      for(auto i = active_index + 1;
-          i < BookViewHighlightProperties::ORDER_HIGHLIGHT_STATE_COUNT; ++i) {
-        if(m_highlights[i] != highlights[i]) {
-          m_highlights[i] = highlights[i];
+      for(auto i = active_index + 1; i < ORDER_HIGHLIGHT_STATE_COUNT; ++i) {
+        if(m_highlights[i] != highlights[i] || active_highlight_updated) {
+          if(m_highlights[i] != highlights[i]) {
+            m_highlights[i] = highlights[i];
+            m_row_tracker->update_current_order_style(
+              static_cast<OrderHighlightState>(i),
+              HighlightColor(SELECTED_BACKGROUND_COLOR, SELECTED_TEXT_COLOR),
+              highlights[i]);
+          }
           for(auto j = 0; j < m_quote_table->get_row_size(); ++j) {
             if(is_order(get_mpid(*m_quote_table, j))) {
               m_row_tracker->update_terminal_order_style(j,
                 get_order_selector(static_cast<OrderHighlightState>(i)),
-                highlights[i]);
+                highlights[active_index], highlights[i]);
             }
           }
         }
@@ -948,17 +1008,15 @@ namespace {
     void on_level_properties_update(const BookViewLevelProperties& properties) {
       if(m_is_grid_enabled != properties.m_is_grid_enabled) {
         if(properties.m_is_grid_enabled) {
-          match(*m_table_view, ShowGrid());
+          match(m_table_view->get_body(), ShowGrid());
         } else {
-          unmatch(*m_table_view, ShowGrid());
+          unmatch(m_table_view->get_body(), ShowGrid());
         }
         m_is_grid_enabled = properties.m_is_grid_enabled;
       }
       if(m_font != properties.m_font) {
-        update_style(*m_table_view, [&] (auto& style) {
-          auto item_selector =
-            Any() > is_a<TableBody>() > Row() > is_a<TableItem>();
-          style.get(item_selector > is_a<TextBox>()).
+        update_style(m_table_view->get_body(), [&] (auto& style) {
+          style.get(Any() > Row() > is_a<TableItem>() > is_a<TextBox>()).
             set(Font(properties.m_font));
         });
         m_font = properties.m_font;
@@ -1111,28 +1169,26 @@ TableView* Spire::make_book_view_table_view(
   auto observer = new BookViewTableViewObserver(*table_view,
     order_filtered_list, orders, properties, level_quote_model,
     market_highlight_model, order_highlight_model, table_view);
-  update_style(*table_view, [=] (auto& style) {
-    auto body_selector = Any() > is_a<TableBody>();
-    auto item_selector = body_selector > Row() > is_a<TableItem>();
+  update_style(table_view->get_body(), [=] (auto& style) {
+    auto item_selector = Any() > Row() > is_a<TableItem>();
     style.get(item_selector > is_a<TextBox>()).
       set(Font(properties->get().m_level_properties.m_font)).
       set(vertical_padding(scale_width(1.5)));
-    style.get(body_selector).
+    style.get(Any()).
       set(HorizontalSpacing(0)).
       set(VerticalSpacing(0)).
       set(grid_color(QColor(0xE0E0E0)));
-    style.get(body_selector > Row() > Current()).
+    style.get(Any() > Row() > Current()).
       set(BackgroundColor(Qt::transparent)).
       set(border_color(QColor(Qt::transparent)));
-    style.get(body_selector > CurrentRow()).
-      set(BackgroundColor(QColor(0x8D78EC))).
-      set(border_color(QColor(0x4B23A0)));
-    style.get(
-      body_selector > CurrentRow() > is_a<TableItem>() > is_a<TextBox>()).
-        set(TextColor(QColor(0xFFFFFF)));
-    style.get(body_selector > CurrentColumn()).
+    style.get(Any() > CurrentColumn()).
       set(BackgroundColor(Qt::transparent));
-    style.get(ShowGrid() > is_a<TableBody>()).
+    style.get(Any() > CurrentRow()).
+      set(BackgroundColor(SELECTED_BACKGROUND_COLOR)).
+      set(border_color(QColor(0x4B23A0)));
+    style.get(Any() > CurrentRow() > is_a<TableItem>() > is_a<TextBox>()).
+      set(TextColor(SELECTED_TEXT_COLOR));
+    style.get(ShowGrid()).
       set(HorizontalSpacing(scale_width(1))).
       set(VerticalSpacing(scale_height(1)));
   });
