@@ -10,6 +10,7 @@ namespace Spire {
   struct BookViewProperties;
   class BookViewPropertiesWindow;
   class BookViewTableModel;
+  class MarketDepth;
   class TechnicalsPanel;
 }
 
