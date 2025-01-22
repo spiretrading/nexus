@@ -4394,6 +4394,7 @@ UiProfile Spire::make_table_view_profile() {
   properties.push_back(make_style_property("style_sheet",
     std::move(default_style)));
   properties.push_back(make_standard_property("row_count", 50));
+  properties.push_back(make_standard_property("current_row", 0));
   properties.push_back(make_standard_property("update", 0));
   properties.push_back(std::make_shared<
     StandardUiProperty<TableModel::RemoveOperation>>(
@@ -4477,6 +4478,10 @@ UiProfile Spire::make_table_view_profile() {
       get<optional<StyleSheet>>("style_sheet", profile.get_properties());
     style_sheet.connect_changed_signal([=] (const auto& styles) {
       update_widget_style(*view, styles);
+    });
+    auto& current_row = get<int>("current_row", profile.get_properties());
+    current_row.connect_changed_signal([=] (auto value) {
+      view->get_current()->set(TableView::Index(value, 0));
     });
     auto& update_operation = get<int>("update", profile.get_properties());
     update_operation.connect_changed_signal([&, view] (auto value) {
