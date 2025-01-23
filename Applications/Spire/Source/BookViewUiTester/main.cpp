@@ -155,8 +155,6 @@ struct BookViewTester : QWidget {
     std::shared_ptr<ValueModel<BboQuote>> bbo_quote,
     std::shared_ptr<QuantityModel> default_bid_quantity,
     std::shared_ptr<QuantityModel> default_ask_quantity,
-    std::shared_ptr<OptionalIntegerModel> font_size,
-    std::shared_ptr<LocalSecurityModel> security,
     std::shared_ptr<BookViewModel> model,
     QWidget* parent = nullptr)
     : QWidget(parent),
@@ -197,13 +195,7 @@ struct BookViewTester : QWidget {
     bbo_quote_layout->addRow(tr("Ask Quantity:"),
       make_quantity_box(bbo_ask, &Quote::m_size));
     left_layout->addWidget(bbo_quote_group_box);
-    auto properties_group_box = new QGroupBox(tr("Properties"));
-    auto properties_layout = new QFormLayout(properties_group_box);
-    properties_layout->addRow(tr("Font Size:"),
-      new IntegerBox(std::move(font_size)));
-    properties_layout->addRow(tr("Security:"),
-      new SecurityBox(populate_security_query_model(), security));
-    left_layout->addWidget(properties_group_box);
+    left_layout->addStretch(1);
     auto right_layout = new QVBoxLayout();
     auto book_quote_group_box = new QGroupBox(tr("Market Quote"));
     auto book_quote_layout = new QVBoxLayout(book_quote_group_box);
@@ -460,46 +452,6 @@ struct BookViewTester : QWidget {
   }
 };
 
-//struct MarketDepthContainer : QWidget {
-//  MarketDepthContainer(std::shared_ptr<BookViewModel> model,
-//      std::shared_ptr<ValueModel<BboQuote>> bbo_quote,
-//      std::shared_ptr<BookViewPropertiesModel> properties,
-//      std::shared_ptr<OptionalIntegerModel> font_size,
-//      QWidget* parent = nullptr)
-//      : QWidget(parent) {
-//    auto layout = make_hbox_layout(this);
-//    layout->setSpacing(scale_width(2));
-//    auto bid_panel = new QWidget();
-//    bid_panel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-//    auto bid_layout = make_vbox_layout(bid_panel);
-//    auto bid_bbo =
-//      new BboBox(make_field_value_model(bbo_quote, &BboQuote::m_bid));
-//    bid_bbo->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-//    bid_layout->addWidget(bid_bbo);
-//    auto bid_table_view = make_book_view_table_view(model, properties,
-//      Side::BID, GetDefaultMarketDatabase());
-//    bid_table_view->setSizePolicy(QSizePolicy::Expanding,
-//      QSizePolicy::Expanding);
-//    bid_layout->addWidget(bid_table_view);
-//    layout->addWidget(bid_panel, 1);
-//    auto ask_panel = new QWidget();
-//    ask_panel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-//    auto ask_layout = make_vbox_layout(ask_panel);
-//    ask_layout->addWidget(
-//      new BboBox(make_field_value_model(bbo_quote, &BboQuote::m_ask)));
-//    ask_layout->addStretch(1);
-//    layout->addWidget(ask_panel, 1);
-//    font_size->connect_update_signal([=] (const auto& size) {
-//      if(size) {
-//        update_style(*this, [&] (auto& style) {
-//          style.get(Any() > is_a<QWidget>() > is_a<BboBox>() > is_a<TextBox>()).
-//            set(FontSize(scale_width(*size)));
-//        });
-//      }
-//    });
-//  }
-//};
-
 int main(int argc, char** argv) {
   auto application = QApplication(argc, argv);
   application.setOrganizationName(QObject::tr("Spire Trading Inc"));
@@ -514,9 +466,6 @@ int main(int argc, char** argv) {
       Quote(Money(143.54), 39, Side::ASK), second_clock::universal_time()));
   auto default_bid_quantity = std::make_shared<LocalQuantityModel>(100);
   auto default_ask_quantity = std::make_shared<LocalQuantityModel>(100);
-  auto font_size = std::make_shared<LocalOptionalIntegerModel>(10);
-  auto security =
-    std::make_shared<LocalSecurityModel>(ParseSecurity("MRU.TSX"));
   auto properties = std::make_shared<LocalBookViewPropertiesModel>(
     BookViewProperties(BookViewLevelProperties::get_default(),
       BookViewHighlightProperties::get_default()));
@@ -524,15 +473,13 @@ int main(int argc, char** argv) {
     std::make_shared<KeyBindingsModel>(GetDefaultMarketDatabase());
   auto book_views = std::make_shared<BookViewModel>();
   auto tester = BookViewTester(technicals, bbo_quote, default_bid_quantity,
-    default_ask_quantity, font_size, security, book_views);
+    default_ask_quantity, book_views);
   auto widget = QWidget();
   auto layout = make_vbox_layout(&widget);
   auto panel = new TechnicalsPanel(technicals, default_bid_quantity,
     default_ask_quantity);
   panel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   layout->addWidget(panel);
-  //layout->addWidget(
-  //  new MarketDepthContainer(book_views, bbo_quote, properties, font_size));
   auto market_depth = new MarketDepth(book_views, bbo_quote, properties,
     GetDefaultMarketDatabase());
   layout->addWidget(market_depth);
@@ -544,8 +491,10 @@ int main(int argc, char** argv) {
   tester.move(
     tester.pos().x() + widget.frameGeometry().width() + scale_width(100),
     widget.pos().y() - 200);
+  auto security =
+    std::make_shared<LocalSecurityModel>(ParseSecurity("MRU.TSX"));
   BookViewPropertiesWindow properties_window(properties,
-    key_bindings, security, GetDefaultMarketDatabase());
+    key_bindings, std::move(security), GetDefaultMarketDatabase());
   properties_window.show();
   properties_window.move(
     tester.pos().x() + widget.frameGeometry().width() + scale_width(300),

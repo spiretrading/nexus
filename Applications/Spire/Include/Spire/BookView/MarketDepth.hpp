@@ -39,16 +39,21 @@ namespace Spire {
     private:
       std::shared_ptr<BookViewModel> m_model;
       std::shared_ptr<BookQuoteModel> m_selected_quote;
+      std::shared_ptr<ValueModel<QFont>> m_font_property;
+      QFont m_font;
       TableView* m_bid_table_view;
       TableView* m_ask_table_view;
       boost::signals2::scoped_connection m_bid_current_connection;
       boost::signals2::scoped_connection m_ask_current_connection;
       boost::signals2::scoped_connection m_bid_position_connection;
       boost::signals2::scoped_connection m_ask_position_connection;
+      boost::signals2::scoped_connection m_font_property_connection;
 
+      void on_bid_position(int position);
+      void on_ask_position(int position);
       void on_bid_current(const boost::optional<TableView::Index>& current);
       void on_ask_current(const boost::optional<TableView::Index>& current);
-      void on_current_quote(const boost::optional<Nexus::BookQuote>& current);
+      void on_font_property_update(const QFont& font);
   };
 }
 
