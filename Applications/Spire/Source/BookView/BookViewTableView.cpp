@@ -165,8 +165,7 @@ namespace {
   }
 
   const auto& get_mpid(const TableModel& table, int row) {
-    return table.get<std::string>(row,
-      static_cast<int>(BookViewColumns::MPID));
+    return table.get<std::string>(row, static_cast<int>(BookViewColumns::MPID));
   }
 
   const auto& get_price(const TableModel& table, int row) {
@@ -922,13 +921,13 @@ namespace {
         if(event->type() == QEvent::KeyPress) {
           auto& key_event = *static_cast<QKeyEvent*>(event);
           if(key_event.key() == Qt::Key_Home &&
-              key_event.modifiers() & Qt::KeyboardModifier::ControlModifier) {
+              key_event.modifiers() & Qt::ControlModifier) {
             move_current(
               std::bind_front(&BookViewTableViewObserver::find_home_order,
                 this));
             return true;
           } else if(key_event.key() == Qt::Key_End &&
-              key_event.modifiers() & Qt::KeyboardModifier::ControlModifier) {
+              key_event.modifiers() & Qt::ControlModifier) {
             move_current(
               std::bind_front(&BookViewTableViewObserver::find_end_order,
                 this));
@@ -943,14 +942,6 @@ namespace {
               std::bind_front(&BookViewTableViewObserver::find_next_order,
                 this));
             return true;
-          }
-        } else if(event->type() == QEvent::FocusIn) {
-          if(!m_table_view->get_current()->get()) {
-            if(auto first =
-                find_home_order(m_table_view->get_table()->get_row_size())) {
-              auto blocker = shared_connection_block(m_current_connection);
-              m_table_view->get_current()->set(TableView::Index(*first, 0));
-            }
           }
         }
       }
@@ -1028,9 +1019,7 @@ namespace {
         return;
       }
       if(!is_order(get_mpid(*m_table_view->get_table(), current->m_row))) {
-        QTimer::singleShot(0, m_table_view, [=] {
-          m_table_view->get_current()->set(none);
-        });
+        m_table_view->get_current()->set(none);
       }
     }
 
