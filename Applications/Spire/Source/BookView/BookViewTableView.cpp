@@ -1121,19 +1121,20 @@ TableView* Spire::make_book_view_table_view(
     std::shared_ptr<BookViewModel> model,
     std::shared_ptr<BookViewPropertiesModel> properties, Side side,
     const MarketDatabase& markets, QWidget* parent) {
-  auto [book_quotes, orders] = [&] {
+  auto [book_quotes, orders, sort_order] = [&] {
     if(side == Side::BID) {
-      return std::tuple(model->get_bids(), model->get_bid_orders());
+      return std::tuple(model->get_bids(), model->get_bid_orders(),
+        SortedTableModel::Ordering::DESCENDING);
     }
-    return std::tuple(model->get_asks(), model->get_ask_orders());
+    return std::tuple(model->get_asks(), model->get_ask_orders(),
+      SortedTableModel::Ordering::ASCENDING);
   }();
   auto highlight_property = make_field_value_model(properties,
     &BookViewProperties::m_highlight_properties);
   auto order_visibility = make_field_value_model(highlight_property,
     &BookViewHighlightProperties::m_order_visibility);
   auto column_orders = std::vector<SortedTableModel::ColumnOrder>{
-    {1, SortedTableModel::Ordering::DESCENDING},
-    {2, SortedTableModel::Ordering::DESCENDING}};
+    {1, sort_order}, {2, sort_order}};
   auto order_filtered_list = std::make_shared<OrderFilteredListModel>(
     std::move(book_quotes), highlight_property);
   auto table = std::make_shared<SortedTableModel>(
