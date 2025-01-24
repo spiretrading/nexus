@@ -34,7 +34,7 @@ namespace {
 
   template<typename T, typename U>
   auto make_technicals_value_field(
-      std::shared_ptr<SecurityTechnicalsModel> technicals, U field) {
+      std::shared_ptr<TechnicalsValueModel> technicals, U field) {
     auto label = make_label(
       make_to_text_model<T>(make_field_value_model(technicals, field),
         [] (const auto& value) {
@@ -91,7 +91,7 @@ namespace {
 }
 
 TechnicalsPanel::TechnicalsPanel(
-    std::shared_ptr<SecurityTechnicalsModel> technicals,
+    std::shared_ptr<TechnicalsValueModel> technicals,
     std::shared_ptr<QuantityModel> default_bid_quantity,
     std::shared_ptr<QuantityModel> default_ask_quantity, QWidget* parent)
     : QWidget(parent),
@@ -155,7 +155,7 @@ TechnicalsPanel::TechnicalsPanel(
   });
 }
 
-const std::shared_ptr<SecurityTechnicalsModel>&
+const std::shared_ptr<TechnicalsValueModel>&
     TechnicalsPanel::get_technicals() const {
   return m_technicals;
 }
