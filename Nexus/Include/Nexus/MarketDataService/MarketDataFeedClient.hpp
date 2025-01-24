@@ -281,14 +281,14 @@ namespace Nexus::MarketDataService {
   template<typename O, typename S, typename P, typename H>
   void MarketDataFeedClient<O, S, P, H>::Publish(
       const MarketOrderImbalance& orderImbalance) {
-    auto lock = boost::lock_guard(m_mutex);
+    auto lock = std::lock_guard(m_mutex);
     m_orderImbalances.push_back(orderImbalance);
   }
 
   template<typename O, typename S, typename P, typename H>
   void MarketDataFeedClient<O, S, P, H>::Publish(
       const SecurityBboQuote& bboQuote) {
-    auto lock = boost::lock_guard(m_mutex);
+    auto lock = std::lock_guard(m_mutex);
     auto& updates = m_quoteUpdates[bboQuote.GetIndex()];
     updates.m_bboQuote = bboQuote;
   }
@@ -296,7 +296,7 @@ namespace Nexus::MarketDataService {
   template<typename O, typename S, typename P, typename H>
   void MarketDataFeedClient<O, S, P, H>::Publish(
       const SecurityMarketQuote& marketQuote) {
-    auto lock = boost::lock_guard(m_mutex);
+    auto lock = std::lock_guard(m_mutex);
     m_quoteUpdates[marketQuote.GetIndex()].m_marketQuotes[
       marketQuote->m_market] = marketQuote;
   }
@@ -309,7 +309,7 @@ namespace Nexus::MarketDataService {
       bookQuote->m_mpid + '-' +
       boost::lexical_cast<std::string>(bookQuote->m_quote.m_price) +
       ToChar(bookQuote->m_quote.m_side);
-    auto lock = boost::lock_guard(m_mutex);
+    auto lock = std::lock_guard(m_mutex);
     auto orderIterator = m_orders.find(id);
     if(orderIterator == m_orders.end()) {
       LockedAddOrder(bookQuote.GetIndex(), bookQuote->m_market,
@@ -330,7 +330,7 @@ namespace Nexus::MarketDataService {
   template<typename O, typename S, typename P, typename H>
   void MarketDataFeedClient<O, S, P, H>::Publish(
       const SecurityTimeAndSale& timeAndSale) {
-    auto lock = boost::lock_guard(m_mutex);
+    auto lock = std::lock_guard(m_mutex);
     auto& updates = m_quoteUpdates[timeAndSale.GetIndex()];
     updates.m_timeAndSales.push_back(timeAndSale);
   }
@@ -340,7 +340,7 @@ namespace Nexus::MarketDataService {
       MarketCode market, const std::string& mpid, bool isPrimaryMpid,
       const OrderId& id, Side side, Money price, Quantity size,
       boost::posix_time::ptime timestamp) {
-    auto lock = boost::lock_guard(m_mutex);
+    auto lock = std::lock_guard(m_mutex);
     LockedAddOrder(security, market, mpid, isPrimaryMpid, id, side, price,
       size, timestamp);
   }
@@ -348,7 +348,7 @@ namespace Nexus::MarketDataService {
   template<typename O, typename S, typename P, typename H>
   void MarketDataFeedClient<O, S, P, H>::ModifyOrderSize(const OrderId& id,
       Quantity size, boost::posix_time::ptime timestamp) {
-    auto lock = boost::lock_guard(m_mutex);
+    auto lock = std::lock_guard(m_mutex);
     auto orderIterator = m_orders.find(id);
     if(orderIterator == m_orders.end()) {
       return;
@@ -362,7 +362,7 @@ namespace Nexus::MarketDataService {
   template<typename O, typename S, typename P, typename H>
   void MarketDataFeedClient<O, S, P, H>::OffsetOrderSize(const OrderId& id,
       Quantity delta, boost::posix_time::ptime timestamp) {
-    auto lock = boost::lock_guard(m_mutex);
+    auto lock = std::lock_guard(m_mutex);
     auto orderIterator = m_orders.find(id);
     if(orderIterator == m_orders.end()) {
       return;
@@ -377,7 +377,7 @@ namespace Nexus::MarketDataService {
   template<typename O, typename S, typename P, typename H>
   void MarketDataFeedClient<O, S, P, H>::ModifyOrderPrice(const OrderId& id,
       Money price, boost::posix_time::ptime timestamp) {
-    auto lock = boost::lock_guard(m_mutex);
+    auto lock = std::lock_guard(m_mutex);
     auto orderIterator = m_orders.find(id);
     if(orderIterator == m_orders.end()) {
       return;
@@ -391,7 +391,7 @@ namespace Nexus::MarketDataService {
   template<typename O, typename S, typename P, typename H>
   void MarketDataFeedClient<O, S, P, H>::DeleteOrder(const OrderId& id,
       boost::posix_time::ptime timestamp) {
-    auto lock = boost::lock_guard(m_mutex);
+    auto lock = std::lock_guard(m_mutex);
     auto orderIterator = m_orders.find(id);
     if(orderIterator == m_orders.end()) {
       return;
@@ -475,7 +475,7 @@ namespace Nexus::MarketDataService {
     auto quoteUpdates = std::unordered_map<Security, QuoteUpdates>();
     auto orderImbalances = std::vector<MarketOrderImbalance>();
     {
-      auto lock = boost::lock_guard(m_mutex);
+      auto lock = std::lock_guard(m_mutex);
       quoteUpdates.swap(m_quoteUpdates);
       orderImbalances.swap(m_orderImbalances);
     }

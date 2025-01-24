@@ -1,6 +1,7 @@
 #ifndef NEXUS_MARKET_DATA_RELAY_SERVLET_HPP
 #define NEXUS_MARKET_DATA_RELAY_SERVLET_HPP
 #include <functional>
+#include <thread>
 #include <vector>
 #include <Beam/Collections/SynchronizedSet.hpp>
 #include <Beam/IO/OpenState.hpp>
@@ -90,9 +91,9 @@ namespace Nexus::MarketDataService {
       using SecuritySubscriptions =
         Beam::Queries::IndexedSubscriptions<T, Security, ServiceProtocolClient>;
       using RealTimeMarketSubscriptionSet =
-        Beam::SynchronizedUnorderedSet<MarketCode, Beam::Threading::Mutex>;
-      using RealTimeSecuritySubscriptionSet = Beam::SynchronizedSet<
-        PreciseSecurityUnorderedSet, Beam::Threading::Mutex>;
+        Beam::SynchronizedUnorderedSet<MarketCode>;
+      using RealTimeSecuritySubscriptionSet =
+        Beam::SynchronizedSet<PreciseSecurityUnorderedSet>;
       MarketSubscriptions<OrderImbalance> m_orderImbalanceSubscriptions;
       SecuritySubscriptions<BboQuote> m_bboQuoteSubscriptions;
       SecuritySubscriptions<BookQuote> m_bookQuoteSubscriptions;
@@ -171,8 +172,7 @@ namespace Nexus::MarketDataService {
           minMarketDataClients, maxMarketDataClients),
         m_administrationClient(std::forward<AF>(administrationClient)),
         m_entitlementDatabase(m_administrationClient->LoadEntitlements()) {
-    for(auto i = std::size_t(0); i < boost::thread::hardware_concurrency();
-        ++i) {
+    for(auto i = std::size_t(0); i < std::thread::hardware_concurrency(); ++i) {
       m_realTimeQueryEntries.emplace_back(
         std::make_unique<RealTimeQueryEntry>(marketDataClientBuilder()));
     }

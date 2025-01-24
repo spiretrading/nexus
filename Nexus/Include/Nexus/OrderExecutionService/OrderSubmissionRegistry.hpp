@@ -2,7 +2,6 @@
 #define NEXUS_ORDER_SUBMISSION_REGISTRY_HPP
 #include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/Collections/SynchronizedSet.hpp>
-#include <Beam/Threading/Mutex.hpp>
 #include <Beam/Threading/Sync.hpp>
 #include "Nexus/OrderExecutionService/AccountOrderSubmissionEntry.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
@@ -46,13 +45,11 @@ namespace Nexus::OrderExecutionService {
 
     private:
       using SyncAccountOrderSubmissionEntry =
-        Beam::Threading::Sync<AccountOrderSubmissionEntry,
-        Beam::Threading::Mutex>;
+        Beam::Threading::Sync<AccountOrderSubmissionEntry>;
       Beam::SynchronizedUnorderedSet<Beam::ServiceLocator::DirectoryEntry>
         m_accounts;
       Beam::SynchronizedUnorderedMap<Beam::ServiceLocator::DirectoryEntry,
-        std::shared_ptr<SyncAccountOrderSubmissionEntry>,
-        Beam::Threading::Mutex> m_submissionEntries;
+        std::shared_ptr<SyncAccountOrderSubmissionEntry>> m_submissionEntries;
 
       OrderSubmissionRegistry(const OrderSubmissionRegistry&) = delete;
       OrderSubmissionRegistry& operator =(

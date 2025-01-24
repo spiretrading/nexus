@@ -1,13 +1,13 @@
 #ifndef NEXUS_BACKTESTER_EVENT_HANDLER_HPP
 #define NEXUS_BACKTESTER_EVENT_HANDLER_HPP
 #include <algorithm>
+#include <condition_variable>
 #include <deque>
+#include <mutex>
 #include <vector>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Routines/RoutineHandler.hpp>
-#include <Beam/Threading/ConditionVariable.hpp>
 #include <Beam/Threading/LockRelease.hpp>
-#include <Beam/Threading/Mutex.hpp>
 #include <Beam/TimeServiceTests/TestTimeClient.hpp>
 #include <Beam/TimeServiceTests/TimeServiceTestEnvironment.hpp>
 #include <Beam/TimeServiceTests/TestTimer.hpp>
@@ -61,13 +61,13 @@ namespace Nexus {
       void Close();
 
     private:
-      mutable Beam::Threading::Mutex m_mutex;
+      mutable std::mutex m_mutex;
       boost::posix_time::ptime m_startTime;
       boost::posix_time::ptime m_endTime;
       Beam::TimeService::Tests::TimeServiceTestEnvironment m_timeEnvironment;
       std::deque<std::shared_ptr<BacktesterEvent>> m_events;
       std::size_t m_activeCount;
-      Beam::Threading::ConditionVariable m_eventAvailableCondition;
+      std::condition_variable m_eventAvailableCondition;
       Beam::Routines::RoutineHandler m_eventLoopRoutine;
       Beam::IO::OpenState m_openState;
 
@@ -93,7 +93,7 @@ namespace Nexus {
         std::bind_front(&BacktesterEventHandler::EventLoop, this));
     } catch(const std::exception&) {
       Close();
-      BOOST_RETHROW;
+      throw;
     }
   }
 
@@ -117,7 +117,7 @@ namespace Nexus {
       std::shared_ptr<BacktesterEvent> event) {
     auto isActive = !event->IsPassive();
     {
-      auto lock = boost::lock_guard(m_mutex);
+      auto lock = std::lock_guard(m_mutex);
       auto insertIterator = std::lower_bound(m_events.begin(), m_events.end(),
         event,
         [] (auto& lhs, auto& rhs) {
@@ -140,7 +140,7 @@ namespace Nexus {
     }
     auto isActive = false;
     {
-      auto lock = boost::lock_guard(m_mutex);
+      auto lock = std::lock_guard(m_mutex);
       for(auto& event : events) {
         isActive |= !event->IsPassive();
         auto insertIterator = std::lower_bound(m_events.begin(), m_events.end(),
@@ -174,7 +174,7 @@ namespace Nexus {
     while(true) {
       auto event = std::shared_ptr<BacktesterEvent>();
       {
-        auto lock = boost::unique_lock(m_mutex);
+        auto lock = std::unique_lock(m_mutex);
         while(m_openState.IsOpen() && m_activeCount == 0) {
           m_eventAvailableCondition.wait(lock);
         }

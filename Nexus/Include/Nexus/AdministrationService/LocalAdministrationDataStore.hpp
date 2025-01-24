@@ -1,9 +1,9 @@
 #ifndef NEXUS_LOCAL_ADMINISTRATION_DATA_STORE_HPP
 #define NEXUS_LOCAL_ADMINISTRATION_DATA_STORE_HPP
+#include <mutex>
 #include <unordered_map>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
-#include <Beam/Threading/Mutex.hpp>
 #include "Nexus/AdministrationService/AccountIdentity.hpp"
 #include "Nexus/AdministrationService/AdministrationDataStore.hpp"
 #include "Nexus/RiskService/RiskParameters.hpp"
@@ -94,7 +94,7 @@ namespace Nexus::AdministrationService {
       using AdministrationDataStore::WithTransaction;
 
     private:
-      mutable Beam::Threading::Mutex m_mutex;
+      mutable std::mutex m_mutex;
       std::unordered_map<Beam::ServiceLocator::DirectoryEntry, AccountIdentity>
         m_identities;
       std::unordered_map<Beam::ServiceLocator::DirectoryEntry,
@@ -327,7 +327,7 @@ namespace Nexus::AdministrationService {
 
   inline void LocalAdministrationDataStore::WithTransaction(
       const std::function<void ()>& transaction) {
-    auto lock = boost::lock_guard(m_mutex);
+    auto lock = std::lock_guard(m_mutex);
     transaction();
   }
 

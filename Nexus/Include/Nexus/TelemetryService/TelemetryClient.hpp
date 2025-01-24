@@ -1,12 +1,12 @@
 #ifndef NEXUS_TELEMETRY_CLIENT_HPP
 #define NEXUS_TELEMETRY_CLIENT_HPP
+#include <mutex>
 #include <Beam/Collections/SynchronizedList.hpp>
 #include <Beam/IO/ConnectException.hpp>
 #include <Beam/IO/Connection.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Queries/QueryClientPublisher.hpp>
 #include <Beam/Services/ServiceProtocolClientHandler.hpp>
-#include <Beam/Threading/Mutex.hpp>
 #include "Nexus/Queries/EvaluatorTranslator.hpp"
 #include "Nexus/Queries/ShuttleQueryTypes.hpp"
 #include "Nexus/TelemetryService/TelemetryService.hpp"
@@ -78,7 +78,7 @@ namespace Nexus::TelemetryService {
       QueryClientPublisher<TelemetryEvent, AccountQuery,
         QueryAccountTelemetryService, EndAccountTelemetryEventQueryMessage>
           m_accountTelemetryEventPublisher;
-      Beam::SynchronizedVector<RecordUpdate, Beam::Threading::Mutex> m_updates;
+      Beam::SynchronizedVector<RecordUpdate> m_updates;
       Beam::IO::OpenState m_openState;
 
       TelemetryClient(const TelemetryClient&) = delete;

@@ -11,7 +11,6 @@
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/Queues/ScopedQueueWriter.hpp>
 #include <Beam/Services/ServiceProtocolClientHandler.hpp>
-#include <Beam/Threading/Mutex.hpp>
 #include <Beam/Utilities/BeamWorkaround.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/range/adaptor/map.hpp>
@@ -135,8 +134,8 @@ namespace Nexus::OrderExecutionService {
           m_executionReportPublisher;
       Beam::SynchronizedUnorderedMap<OrderId, std::shared_ptr<PrimitiveOrder>>
         m_orders;
-      Beam::SynchronizedUnorderedSet<Beam::ServiceLocator::DirectoryEntry,
-        Beam::Threading::Mutex> m_realTimeSubscriptions;
+      Beam::SynchronizedUnorderedSet<Beam::ServiceLocator::DirectoryEntry>
+        m_realTimeSubscriptions;
       Beam::SynchronizedVector<ExecutionReport> m_executionReportLog;
       Beam::IO::OpenState m_openState;
 

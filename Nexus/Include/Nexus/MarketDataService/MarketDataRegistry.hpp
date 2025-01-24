@@ -165,16 +165,14 @@ namespace Details {
       void Clear(int sourceId);
 
     private:
-      using SyncMarketEntry = Beam::Threading::Sync<MarketEntry,
-        Beam::Threading::Mutex>;
-      using SyncSecurityEntry = Beam::Threading::Sync<SecurityEntry,
-        Beam::Threading::Mutex>;
+      using SyncMarketEntry = Beam::Threading::Sync<MarketEntry>;
+      using SyncSecurityEntry = Beam::Threading::Sync<SecurityEntry>;
       Beam::Threading::Sync<rtv::Trie<char, SecurityInfo>> m_securityDatabase;
       Beam::SynchronizedUnorderedSet<Security> m_verifiedSecurities;
-      Beam::SynchronizedUnorderedMap<MarketCode, std::shared_ptr<Beam::Remote<
-        SyncMarketEntry, Beam::Threading::Mutex>>> m_marketEntries;
-      Beam::SynchronizedUnorderedMap<Security, std::shared_ptr<Beam::Remote<
-        SyncSecurityEntry, Beam::Threading::Mutex>>> m_securityEntries;
+      Beam::SynchronizedUnorderedMap<MarketCode,
+        std::shared_ptr<Beam::Remote<SyncMarketEntry>>> m_marketEntries;
+      Beam::SynchronizedUnorderedMap<Security,
+        std::shared_ptr<Beam::Remote<SyncSecurityEntry>>> m_securityEntries;
 
       MarketDataRegistry(const MarketDataRegistry&) = delete;
       MarketDataRegistry& operator =(const MarketDataRegistry&) = delete;
@@ -387,8 +385,8 @@ namespace Details {
   }
 
   inline void MarketDataRegistry::Clear(int sourceId) {
-    auto entries = std::vector<std::shared_ptr<
-      Beam::Remote<SyncSecurityEntry, Beam::Threading::Mutex>>>();
+    auto entries =
+      std::vector<std::shared_ptr<Beam::Remote<SyncSecurityEntry>>>();
     m_securityEntries.With([&] (auto& securityEntries) {
       for(auto& entry : securityEntries | boost::adaptors::map_values) {
         entries.push_back(entry);
@@ -411,11 +409,10 @@ namespace Details {
       return boost::none;
     }
     auto entry = m_marketEntries.GetOrInsert(market, [&] {
-      return std::make_shared<
-        Beam::Remote<SyncMarketEntry, Beam::Threading::Mutex>>(
-          [&] (auto& entry) {
-            entry.emplace(market, LoadInitialSequences(dataStore, market));
-          });
+      return std::make_shared<Beam::Remote<SyncMarketEntry>>(
+        [&] (auto& entry) {
+          entry.emplace(market, LoadInitialSequences(dataStore, market));
+        });
     });
     return **entry;
   }
@@ -429,16 +426,15 @@ namespace Details {
       return boost::none;
     }
     auto entry = m_securityEntries.GetOrInsert(security, [&] {
-      return std::make_shared<
-        Beam::Remote<SyncSecurityEntry, Beam::Threading::Mutex>>(
-          [&] (auto& entry) {
-            auto sanitizedSecurity = GetPrimaryListing(security);
-            auto initialSequences = LoadInitialSequences(dataStore,
-              sanitizedSecurity);
-            auto closePrice = Details::LoadClosePrice(sanitizedSecurity,
-              dataStore);
-            entry.emplace(sanitizedSecurity, closePrice, initialSequences);
-          });
+      return std::make_shared<Beam::Remote<SyncSecurityEntry>>(
+        [&] (auto& entry) {
+          auto sanitizedSecurity = GetPrimaryListing(security);
+          auto initialSequences =
+            LoadInitialSequences(dataStore, sanitizedSecurity);
+          auto closePrice =
+            Details::LoadClosePrice(sanitizedSecurity, dataStore);
+          entry.emplace(sanitizedSecurity, closePrice, initialSequences);
+        });
     });
     return **entry;
   }

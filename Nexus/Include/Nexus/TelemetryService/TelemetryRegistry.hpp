@@ -1,7 +1,6 @@
 #ifndef NEXUS_TELEMETRY_SERVICE_TELEMETRY_REGISTRY_HPP
 #define NEXUS_TELEMETRY_SERVICE_TELEMETRY_REGISTRY_HPP
 #include <Beam/Collections/SynchronizedMap.hpp>
-#include <Beam/Threading/Mutex.hpp>
 #include <Beam/Threading/Sync.hpp>
 #include "Nexus/TelemetryService/AccountTelemetryEventEntry.hpp"
 #include "Nexus/TelemetryService/AccountQuery.hpp"
@@ -28,11 +27,11 @@ namespace Nexus::TelemetryService {
         const InitialSequenceLoader& initialSequenceLoader, F&& f);
 
     private:
-      using SyncAccountTelemetryEventEntry = Beam::Threading::Sync<
-        AccountTelemetryEventEntry, Beam::Threading::Mutex>;
+      using SyncAccountTelemetryEventEntry =
+        Beam::Threading::Sync<AccountTelemetryEventEntry>;
       Beam::SynchronizedUnorderedMap<Beam::ServiceLocator::DirectoryEntry,
-        std::shared_ptr<SyncAccountTelemetryEventEntry>, Beam::Threading::Mutex>
-        m_telemetryEventEntries;
+        std::shared_ptr<SyncAccountTelemetryEventEntry>>
+          m_telemetryEventEntries;
 
       TelemetryRegistry(const TelemetryRegistry&) = delete;
       TelemetryRegistry& operator =(const TelemetryRegistry&) = delete;

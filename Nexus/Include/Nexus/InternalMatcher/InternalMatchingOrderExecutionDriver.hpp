@@ -1,5 +1,6 @@
 #ifndef NEXUS_INTERNAL_MATCHING_ORDER_EXECUTION_DRIVER_HPP
 #define NEXUS_INTERNAL_MATCHING_ORDER_EXECUTION_DRIVER_HPP
+#include <condition_variable>
 #include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/Collections/SynchronizedSet.hpp>
 #include <Beam/IO/OpenState.hpp>
@@ -8,11 +9,12 @@
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/Queues/StateQueue.hpp>
-#include <Beam/Threading/TimedConditionVariable.hpp>
 #include <Beam/Threading/Sync.hpp>
+#include <Beam/Threading/TimeoutException.hpp>
 #include <Beam/Utilities/Algorithm.hpp>
 #include <boost/atomic/atomic.hpp>
 #include <boost/noncopyable.hpp>
+#include <boost/throw_exception.hpp>
 #include "Nexus/Definitions/BboQuote.hpp"
 #include "Nexus/Definitions/OrderStatus.hpp"
 #include "Nexus/InternalMatcher/InternalMatcher.hpp"
@@ -111,8 +113,8 @@ namespace Details {
         Quantity m_remainingQuantity;
         Beam::Threading::Sync<bool> m_isLive;
         Beam::Threading::Sync<bool> m_isTerminal;
-        Beam::Threading::TimedConditionVariable m_isLiveCondition;
-        Beam::Threading::TimedConditionVariable m_isTerminalCondition;
+        std::condition_variable_any m_isLiveCondition;
+        std::condition_variable_any m_isTerminalCondition;
 
         OrderEntry(const OrderExecutionService::OrderInfo& orderInfo);
       };
@@ -488,8 +490,10 @@ namespace Details {
       OrderEntry& orderEntry) {
     Beam::Threading::With(orderEntry.m_isLive, [&] (auto& isLive) {
       while(!isLive) {
-        orderEntry.m_isLiveCondition.timed_wait(boost::posix_time::seconds(1),
-          orderEntry.m_isLive.GetLock());
+        if(orderEntry.m_isLiveCondition.wait_for(orderEntry.m_isLive.GetLock(),
+            std::chrono::seconds(1)) == std::cv_status::timeout) {
+          BOOST_THROW_EXCEPTION(Beam::Threading::TimeoutException());
+        }
       }
     });
   }
@@ -499,8 +503,11 @@ namespace Details {
       WaitForTerminalOrder(OrderEntry& orderEntry) {
     Beam::Threading::With(orderEntry.m_isTerminal, [&] (auto& isTerminal) {
       while(!isTerminal) {
-        orderEntry.m_isTerminalCondition.timed_wait(
-          boost::posix_time::seconds(1), orderEntry.m_isTerminal.GetLock());
+        if(orderEntry.m_isTerminalCondition.wait_for(
+            orderEntry.m_isTerminal.GetLock(), std::chrono::seconds(1)) ==
+              std::cv_status::timeout) {
+          BOOST_THROW_EXCEPTION(Beam::Threading::TimeoutException());
+        }
       }
     });
   }

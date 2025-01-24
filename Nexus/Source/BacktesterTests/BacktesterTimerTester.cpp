@@ -1,7 +1,7 @@
-#include <Beam/Queues/RoutineTaskQueue.hpp>
-#include <Beam/Threading/ConditionVariable.hpp>
-#include <Beam/Threading/Mutex.hpp>
+#include <condition_variable>
+#include <mutex>
 #include <doctest/doctest.h>
+#include <Beam/Queues/RoutineTaskQueue.hpp>
 #include "Nexus/Backtester/ActiveBacktesterEvent.hpp"
 #include "Nexus/Backtester/BacktesterEventHandler.hpp"
 #include "Nexus/Backtester/BacktesterTimer.hpp"
@@ -20,12 +20,12 @@ TEST_SUITE("BacktesterTimer") {
     auto timer = BacktesterTimer(seconds(1), Ref(eventHandler));
     auto routines = RoutineTaskQueue();
     auto expectedTimestamp = startTime + seconds(1);
-    auto queryCompleteMutex = Mutex();
-    auto testCompleteCondition = ConditionVariable();
+    auto queryCompleteMutex = std::mutex();
+    auto testCompleteCondition = std::condition_variable();
     auto testSucceeded = optional<bool>();
     timer.GetPublisher().Monitor(routines.GetSlot<Timer::Result>(
       [&] (Timer::Result result) {
-        auto lock = lock_guard(queryCompleteMutex);
+        auto lock = std::lock_guard(queryCompleteMutex);
         auto timestamp = eventHandler.GetTime();
         if(timestamp == expectedTimestamp && result == Timer::Result::EXPIRED) {
           testSucceeded = true;
@@ -38,7 +38,7 @@ TEST_SUITE("BacktesterTimer") {
     timer.Start();
     eventHandler.Add(std::make_shared<ActiveBacktesterEvent>(
       time_from_string("2016-05-07 00:00:00")));
-    auto lock = unique_lock(queryCompleteMutex);
+    auto lock = std::unique_lock(queryCompleteMutex);
     while(!testSucceeded) {
       testCompleteCondition.wait(lock);
     }
@@ -52,8 +52,8 @@ TEST_SUITE("BacktesterTimer") {
     auto timerB = BacktesterTimer(seconds(2), Ref(eventHandler));
     auto routines = RoutineTaskQueue();
     auto expectedTimestamp = startTime + seconds(1);
-    auto queryCompleteMutex = Mutex();
-    auto testCompleteCondition = ConditionVariable();
+    auto queryCompleteMutex = std::mutex();
+    auto testCompleteCondition = std::condition_variable();
     auto testSucceeded = optional<bool>();
     timerA.GetPublisher().Monitor(routines.GetSlot<Timer::Result>(
       [&] (Timer::Result result) {
@@ -67,7 +67,7 @@ TEST_SUITE("BacktesterTimer") {
         auto timestamp = eventHandler.GetTime();
         REQUIRE(timestamp == expectedTimestamp);
         REQUIRE(result == Timer::Result::CANCELED);
-        auto lock = lock_guard(queryCompleteMutex);
+        auto lock = std::lock_guard(queryCompleteMutex);
         testSucceeded = true;
         testCompleteCondition.notify_one();
       }));
@@ -78,7 +78,7 @@ TEST_SUITE("BacktesterTimer") {
         eventHandler.Add(std::make_shared<ActiveBacktesterEvent>(
           time_from_string("2016-05-07 00:00:00")));
       });
-    auto lock = unique_lock(queryCompleteMutex);
+    auto lock = std::unique_lock(queryCompleteMutex);
     while(!testSucceeded) {
       testCompleteCondition.wait(lock);
     }

@@ -4,7 +4,6 @@
 #include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
-#include <Beam/Threading/Mutex.hpp>
 #include <Beam/TimeService/TimeClient.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
@@ -64,8 +63,7 @@ namespace Nexus::OrderExecutionService {
       Beam::GetOptionalLocalPtr<T> m_timeClient;
       Beam::SynchronizedMap<Orders> m_orders;
       OrderId m_nextOrderId;
-      Beam::SynchronizedMap<SecurityOrderSimulators, Beam::Threading::Mutex>
-        m_securityOrderSimulators;
+      Beam::SynchronizedMap<SecurityOrderSimulators> m_securityOrderSimulators;
       Beam::IO::OpenState m_openState;
 
       SimulationOrderExecutionDriver(

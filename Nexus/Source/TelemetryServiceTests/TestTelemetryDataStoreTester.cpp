@@ -1,4 +1,5 @@
 #include <Beam/Queues/Queue.hpp>
+#include <Beam/Routines/Routine.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/TelemetryServiceTests/TestTelemetryDataStore.hpp"
 

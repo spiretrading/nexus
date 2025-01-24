@@ -1,5 +1,5 @@
-#include <Beam/Threading/ConditionVariable.hpp>
-#include <Beam/Threading/Mutex.hpp>
+#include <condition_variable>
+#include <mutex>
 #include <doctest/doctest.h>
 #include "Nexus/Backtester/BacktesterServiceClients.hpp"
 #include "Nexus/MarketDataService/MarketDataService.hpp"
@@ -8,7 +8,6 @@
 
 using namespace Beam;
 using namespace Beam::Queries;
-using namespace Beam::Threading;
 using namespace boost;
 using namespace boost::gregorian;
 using namespace boost::posix_time;
@@ -41,8 +40,8 @@ TEST_SUITE("BacktesterMarketDataClient") {
     auto query = MakeRealTimeQuery(security);
     auto expectedTimestamp = startTime;
     auto finalTimestamp = startTime + seconds(COUNT - 4);
-    auto queryCompleteMutex = Mutex();
-    auto queryCompleteCondition = ConditionVariable();
+    auto queryCompleteMutex = std::mutex();
+    auto queryCompleteCondition = std::condition_variable();
     auto testSucceeded = boost::optional<bool>();
     marketDataClient.QueryBboQuotes(query, routines.GetSlot<SequencedBboQuote>(
       [&] (const auto& bboQuote) {
@@ -57,7 +56,7 @@ TEST_SUITE("BacktesterMarketDataClient") {
           expectedTimestamp = expectedTimestamp + seconds(1);
         }
       }));
-    auto lock = boost::unique_lock(queryCompleteMutex);
+    auto lock = std::unique_lock(queryCompleteMutex);
     while(!testSucceeded.is_initialized()) {
       queryCompleteCondition.wait(lock);
     }

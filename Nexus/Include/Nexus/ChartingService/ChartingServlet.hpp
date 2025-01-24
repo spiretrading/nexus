@@ -1,12 +1,12 @@
 #ifndef NEXUS_CHARTING_SERVLET_HPP
 #define NEXUS_CHARTING_SERVLET_HPP
+#include <mutex>
 #include <Beam/Collections/SynchronizedSet.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queries/ConversionEvaluatorNode.hpp>
 #include <Beam/Queries/IndexedExpressionSubscriptions.hpp>
 #include <Beam/Queries/ExpressionSubscriptions.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
-#include <Beam/Threading/Mutex.hpp>
 #include <Beam/Utilities/Casts.hpp>
 #include <Beam/Utilities/InstantiateTemplate.hpp>
 #include <boost/noncopyable.hpp>
@@ -71,8 +71,7 @@ namespace Details {
         Beam::Queries::IndexedExpressionSubscriptions<
           typename MarketDataType::Value, Queries::QueryVariant,
           typename Query::Index, ServiceProtocolClient> m_queries;
-        Beam::SynchronizedUnorderedSet<Security, Beam::Threading::Mutex>
-          m_realTimeSubscriptions;
+        Beam::SynchronizedUnorderedSet<Security> m_realTimeSubscriptions;
       };
       Beam::GetOptionalLocalPtr<M> m_marketDataClient;
       MarketDataService::CachedHistoricalDataStore<

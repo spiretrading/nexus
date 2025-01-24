@@ -1,5 +1,6 @@
 #ifndef NEXUS_COMPLIANCE_CLIENT_HPP
 #define NEXUS_COMPLIANCE_CLIENT_HPP
+#include <mutex>
 #include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/IO/ConnectException.hpp>
 #include <Beam/IO/Connection.hpp>
@@ -7,7 +8,6 @@
 #include <Beam/Queues/QueueWriterPublisher.hpp>
 #include <Beam/Services/ServiceProtocolClientHandler.hpp>
 #include <Beam/Threading/CallOnce.hpp>
-#include <Beam/Threading/Mutex.hpp>
 #include <boost/functional/factory.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/range/adaptor/map.hpp>
@@ -91,7 +91,7 @@ namespace Nexus::Compliance {
 
     private:
       struct PublisherEntry {
-        Beam::Threading::CallOnce<Beam::Threading::Mutex> m_initializer;
+        Beam::Threading::CallOnce<std::mutex> m_initializer;
         Beam::QueueWriterPublisher<ComplianceRuleEntry> m_publisher;
       };
       using ServiceProtocolClient =

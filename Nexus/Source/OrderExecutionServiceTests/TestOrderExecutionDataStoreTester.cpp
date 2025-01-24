@@ -1,4 +1,5 @@
 #include <Beam/Queues/Queue.hpp>
+#include <Beam/Routines/Routine.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/OrderExecutionService/LocalOrderExecutionDataStore.hpp"
 #include "Nexus/OrderExecutionServiceTests/TestOrderExecutionDataStore.hpp"

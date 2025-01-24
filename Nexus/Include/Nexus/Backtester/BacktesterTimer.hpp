@@ -1,7 +1,7 @@
 #ifndef NEXUS_BACKTESTER_TIMER_HPP
 #define NEXUS_BACKTESTER_TIMER_HPP
+#include <mutex>
 #include <Beam/Queues/QueueWriterPublisher.hpp>
-#include <Beam/Threading/Mutex.hpp>
 #include <Beam/Threading/Timer.hpp>
 #include "Nexus/Backtester/Backtester.hpp"
 #include "Nexus/Backtester/BacktesterEvent.hpp"
@@ -34,7 +34,7 @@ namespace Nexus {
 
     private:
       friend class TimerBacktesterEvent;
-      mutable Beam::Threading::Mutex m_mutex;
+      mutable std::mutex m_mutex;
       boost::posix_time::time_duration m_interval;
       BacktesterEventHandler* m_eventHandler;
       std::shared_ptr<TimerBacktesterEvent> m_expireEvent;
@@ -66,7 +66,7 @@ namespace Nexus {
       void Execute() override;
 
     private:
-      mutable Beam::Threading::Mutex m_mutex;
+      mutable std::mutex m_mutex;
       BacktesterTimer* m_timer;
       Beam::Threading::Timer::Result m_result;
   };
@@ -82,7 +82,7 @@ namespace Nexus {
   }
 
   inline void BacktesterTimer::Start() {
-    auto lock = boost::lock_guard(m_mutex);
+    auto lock = std::lock_guard(m_mutex);
     if(m_expireEvent) {
       return;
     }
@@ -94,7 +94,7 @@ namespace Nexus {
 
   inline void BacktesterTimer::Cancel() {
     auto cancelEvent = [&] {
-      auto lock = boost::lock_guard(m_mutex);
+      auto lock = std::lock_guard(m_mutex);
       if(m_expireEvent && !m_cancelEvent) {
         m_expireEvent->Cancel();
         m_expireEvent = nullptr;
@@ -112,7 +112,7 @@ namespace Nexus {
 
   inline void BacktesterTimer::Wait() {
     auto event = [&] {
-      auto lock = boost::lock_guard(m_mutex);
+      auto lock = std::lock_guard(m_mutex);
       if(m_cancelEvent &&
           m_cancelEvent->GetTimestamp() <= m_expireEvent->GetTimestamp()) {
         return m_cancelEvent;
@@ -137,7 +137,7 @@ namespace Nexus {
       m_result(result) {}
 
   inline void TimerBacktesterEvent::Cancel() {
-    auto lock = boost::lock_guard(m_mutex);
+    auto lock = std::lock_guard(m_mutex);
     m_result = Beam::Threading::Timer::Result::NONE;
   }
 
@@ -146,9 +146,9 @@ namespace Nexus {
   }
 
   inline void TimerBacktesterEvent::Execute() {
-    auto lock = boost::lock_guard(m_mutex);
+    auto lock = std::lock_guard(m_mutex);
     if(m_result != Beam::Threading::Timer::Result::NONE) {
-      auto lock = boost::lock_guard(m_timer->m_mutex);
+      auto lock = std::lock_guard(m_timer->m_mutex);
       m_timer->m_expireEvent = nullptr;
       m_timer->m_cancelEvent = nullptr;
       m_timer->m_publisher.Push(m_result);

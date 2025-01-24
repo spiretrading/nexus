@@ -105,10 +105,8 @@ namespace Nexus::RiskService {
       std::unordered_map<RiskPortfolioKey, Quantity> m_volumes;
       boost::optional<ConsolidatedRiskController> m_controller;
       Beam::SynchronizedUnorderedMap<Beam::ServiceLocator::DirectoryEntry,
-        Beam::ServiceLocator::DirectoryEntry, Beam::Threading::Mutex>
-        m_accountToGroup;
-      Beam::SynchronizedVector<ServiceProtocolClient*, Beam::Threading::Mutex>
-        m_portfolioSubscribers;
+        Beam::ServiceLocator::DirectoryEntry> m_accountToGroup;
+      Beam::SynchronizedVector<ServiceProtocolClient*> m_portfolioSubscribers;
       Beam::IO::OpenState m_openState;
       Beam::RoutineTaskQueue m_tasks;
 

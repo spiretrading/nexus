@@ -1,8 +1,8 @@
 #ifndef BACKTESTER_CUTOFF_HISTORICAL_DATA_STORE_HPP
 #define BACKTESTER_CUTOFF_HISTORICAL_DATA_STORE_HPP
+#include <mutex>
 #include <unordered_map>
 #include <Beam/Pointers/LocalPtr.hpp>
-#include <Beam/Threading/Mutex.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/thread/lock_types.hpp>
 #include "Nexus/Backtester/Backtester.hpp"
@@ -76,7 +76,7 @@ namespace Nexus {
       void Close();
 
     private:
-      mutable Beam::Threading::Mutex m_mutex;
+      mutable std::mutex m_mutex;
       Beam::GetOptionalLocalPtr<H> m_dataStore;
       boost::posix_time::ptime m_cutoff;
       std::unordered_map<MarketCode, Beam::Queries::Sequence>
@@ -248,7 +248,7 @@ namespace Nexus {
       }
     }
     auto cutoffSequence = [&] {
-      auto lock = boost::lock_guard(m_mutex);
+      auto lock = std::lock_guard(m_mutex);
       auto cutoff = cutoffSequences.find(query.GetIndex());
       auto rangeEnd = Beam::Queries::Range::Point(m_cutoff);
       while(cutoff == cutoffSequences.end()) {

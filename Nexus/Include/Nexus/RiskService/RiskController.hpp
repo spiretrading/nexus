@@ -1,5 +1,6 @@
 #ifndef NEXUS_RISK_CONTROLLER_HPP
 #define NEXUS_RISK_CONTROLLER_HPP
+#include <condition_variable>
 #include <iostream>
 #include <memory>
 #include <unordered_set>
@@ -9,7 +10,6 @@
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/Queues/StatePublisher.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
-#include <Beam/Threading/Mutex.hpp>
 #include <Beam/Threading/Timer.hpp>
 #include <Beam/TimeService/TimeClient.hpp>
 #include <boost/optional/optional.hpp>
@@ -95,7 +95,7 @@ namespace Nexus::RiskService {
         GetPortfolioPublisher() const;
 
     private:
-      mutable Beam::Threading::Mutex m_mutex;
+      mutable std::mutex m_mutex;
       Beam::ServiceLocator::DirectoryEntry m_account;
       Beam::GetOptionalLocalPtr<A> m_administrationClient;
       Beam::GetOptionalLocalPtr<O> m_orderExecutionClient;

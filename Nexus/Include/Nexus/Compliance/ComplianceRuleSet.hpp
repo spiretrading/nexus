@@ -1,6 +1,7 @@
 #ifndef NEXUS_COMPLIANCE_RULE_SET_HPP
 #define NEXUS_COMPLIANCE_RULE_SET_HPP
 #include <deque>
+#include <mutex>
 #include <unordered_set>
 #include <vector>
 #include <Beam/Collections/SynchronizedList.hpp>
@@ -10,7 +11,6 @@
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/ServiceLocator/ServiceLocatorClient.hpp>
 #include <Beam/Threading/CallOnce.hpp>
-#include <Beam/Threading/Mutex.hpp>
 #include <Beam/Utilities/Active.hpp>
 #include <Beam/Utilities/Rethrow.hpp>
 #include <boost/functional/factory.hpp>
@@ -89,11 +89,11 @@ namespace Nexus::Compliance {
         std::unique_ptr<ComplianceRule> m_rule;
       };
       struct Entry {
-        Beam::Threading::Mutex m_mutex;
+        std::mutex m_mutex;
         std::vector<Beam::ServiceLocator::DirectoryEntry> m_parents;
         std::vector<std::shared_ptr<Rule>> m_rules;
         std::vector<const OrderExecutionService::Order*> m_orders;
-        Beam::Threading::CallOnce<Beam::Threading::Mutex> m_initializer;
+        Beam::Threading::CallOnce<std::mutex> m_initializer;
       };
       Beam::GetOptionalLocalPtr<C> m_complianceClient;
       Beam::GetOptionalLocalPtr<S> m_serviceLocatorClient;
@@ -130,7 +130,7 @@ namespace Nexus::Compliance {
     auto exception = std::exception_ptr();
     auto entry = LoadEntry(order.GetInfo().m_fields.m_account);
     {
-      auto lock = boost::lock_guard(entry->m_mutex);
+      auto lock = std::lock_guard(entry->m_mutex);
       entry->m_orders.push_back(&order);
       for(auto& rule : entry->m_rules) {
         auto ruleEntry = rule->m_entry.Load();
@@ -152,7 +152,7 @@ namespace Nexus::Compliance {
     }
     for(auto& parent : entry->m_parents) {
       auto parentEntry = LoadEntry(parent);
-      auto lock = boost::lock_guard(parentEntry->m_mutex);
+      auto lock = std::lock_guard(parentEntry->m_mutex);
       parentEntry->m_orders.push_back(&order);
       if(exception != nullptr) {
         continue;
@@ -184,7 +184,7 @@ namespace Nexus::Compliance {
       const OrderExecutionService::Order& order) {
     auto entry = LoadEntry(order.GetInfo().m_fields.m_account);
     {
-      auto lock = boost::lock_guard(entry->m_mutex);
+      auto lock = std::lock_guard(entry->m_mutex);
       for(auto& rule : entry->m_rules) {
         auto ruleEntry = rule->m_entry.Load();
         if(ruleEntry->GetState() == ComplianceRuleEntry::State::DISABLED) {
@@ -203,7 +203,7 @@ namespace Nexus::Compliance {
     }
     for(auto& parent : entry->m_parents) {
       auto parentEntry = LoadEntry(parent);
-      auto lock = boost::lock_guard(parentEntry->m_mutex);
+      auto lock = std::lock_guard(parentEntry->m_mutex);
       for(auto& rule : parentEntry->m_rules) {
         auto ruleEntry = rule->m_entry.Load();
         if(ruleEntry->GetState() == ComplianceRuleEntry::State::DISABLED) {
@@ -227,7 +227,7 @@ namespace Nexus::Compliance {
       const OrderExecutionService::Order& order) {
     auto entry = LoadEntry(order.GetInfo().m_fields.m_account);
     {
-      auto lock = boost::lock_guard(entry->m_mutex);
+      auto lock = std::lock_guard(entry->m_mutex);
       entry->m_orders.push_back(&order);
       for(auto& rule : entry->m_rules) {
         rule->m_rule->Add(order);
@@ -235,7 +235,7 @@ namespace Nexus::Compliance {
     }
     for(auto& parent : entry->m_parents) {
       auto parentEntry = LoadEntry(parent);
-      auto lock = boost::lock_guard(parentEntry->m_mutex);
+      auto lock = std::lock_guard(parentEntry->m_mutex);
       parentEntry->m_orders.push_back(&order);
       for(auto& rule : parentEntry->m_rules) {
         rule->m_rule->Add(order);
@@ -286,7 +286,7 @@ namespace Nexus::Compliance {
   template<typename C, typename S>
   void ComplianceRuleSet<C, S>::UpdateComplianceEntry(
       const ComplianceRuleEntry& updatedEntry, Entry& entry) {
-    auto lock = boost::lock_guard(entry.m_mutex);
+    auto lock = std::lock_guard(entry.m_mutex);
     entry.m_rules.erase(std::remove_if(entry.m_rules.begin(),
       entry.m_rules.end(), [&] (const auto& rule) {
         return rule->m_entry.Load()->GetId() == updatedEntry.GetId();

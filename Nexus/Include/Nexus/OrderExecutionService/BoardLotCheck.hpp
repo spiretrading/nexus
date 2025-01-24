@@ -5,7 +5,6 @@
 #include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/Queues/StateQueue.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
-#include <Beam/Threading/Mutex.hpp>
 #include <Beam/Threading/Sync.hpp>
 #include <boost/optional/optional.hpp>
 #include "Nexus/Definitions/BboQuote.hpp"
@@ -53,8 +52,7 @@ namespace Nexus::OrderExecutionService {
       MarketDatabase m_marketDatabase;
       boost::local_time::tz_database m_timeZoneDatabase;
       Beam::SynchronizedUnorderedMap<Security,
-        Beam::Threading::Sync<ClosingEntry, Beam::Threading::Mutex>>
-          m_closingEntries;
+        Beam::Threading::Sync<ClosingEntry>> m_closingEntries;
       Beam::SynchronizedUnorderedMap<Security,
         std::shared_ptr<Beam::StateQueue<BboQuote>>> m_bboQuotes;
 
