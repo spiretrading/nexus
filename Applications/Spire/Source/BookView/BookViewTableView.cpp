@@ -523,6 +523,7 @@ namespace {
     std::shared_ptr<ValueModel<std::vector<MarketHighlight>>>
       m_highlight_properties;
     MarketDatabase m_markets;
+    bool m_is_ascending;
     std::unordered_map<std::string, HighlightContext> m_highlight_contexts;
     std::unordered_map<std::string, Quote> m_highlight_tops;
     std::vector<MarketHighlight> m_market_highlights;
@@ -532,11 +533,12 @@ namespace {
     MarketHighlightModel(std::shared_ptr<TableModel> quote_table,
         std::shared_ptr<RowTracker> row_tracker,
         std::shared_ptr<ValueModel<std::vector<MarketHighlight>>> properties,
-        const MarketDatabase& markets)
+        const MarketDatabase& markets, bool is_ascending)
         : m_quote_table(std::move(quote_table)),
           m_row_tracker(std::move(row_tracker)),
           m_highlight_properties(std::move(properties)),
-          m_markets(markets) {
+          m_markets(markets),
+          m_is_ascending(is_ascending) {
       on_properties_update(m_highlight_properties->get());
       m_operation_connection = m_quote_table->connect_operation_signal(
         std::bind_front(&MarketHighlightModel::on_table_operation, this));
@@ -581,11 +583,18 @@ namespace {
           auto& size = get_size(*m_quote_table, operation.m_index);
           if(auto i = m_highlight_tops.find(mpid);
               i != m_highlight_tops.end()) {
-            if(i->second.m_price < price ||
-                (i->second.m_price == price && i->second.m_size < size)) {
+            auto is_topmost = [&] {
+              if(m_is_ascending) {
+                return i->second.m_price > price ||
+                  i->second.m_price == price && i->second.m_size > size;
+              }
+              return i->second.m_price < price ||
+                i->second.m_price == price && i->second.m_size < size;
+            }();
+            if(is_topmost) {
               if(m_highlight_contexts.contains(mpid) &&
                   m_highlight_contexts[mpid].m_highlight.m_level ==
-                    MarketHighlightLevel::TOP) {
+                  MarketHighlightLevel::TOP) {
                 for(auto j = 0; j < m_quote_table->get_row_size(); ++j) {
                   if(mpid == get_mpid(*m_quote_table, j) &&
                       i->second.m_price == get_price(*m_quote_table, j)) {
@@ -627,9 +636,9 @@ namespace {
           if(operation.m_column == static_cast<int>(BookViewColumns::SIZE)) {
             auto& mpid = get_mpid(*m_quote_table, operation.m_row);
             if(auto i = m_highlight_tops.find(mpid);
-              i != m_highlight_tops.end()) {
+                i != m_highlight_tops.end()) {
               if(i->second.m_price ==
-                get_price(*m_quote_table, operation.m_row)) {
+                  get_price(*m_quote_table, operation.m_row)) {
                 i->second.m_size = get_size(*m_quote_table, operation.m_row);
               }
             }
@@ -665,6 +674,7 @@ namespace {
     std::shared_ptr<RowTracker> m_row_tracker;
     std::shared_ptr<ValueModel<OrderVisibility>> m_visibility_property;
     std::shared_ptr<ValueModel<OrderHighlightArray>> m_highlight_properties;
+    bool m_is_ascending;
     ColumnViewListModel<Money> m_prices;
     std::unordered_map<OrderKey, OrderStatus, OrderKeyHash> m_order_status;
     OrderVisibility m_visibility;
@@ -679,12 +689,14 @@ namespace {
         std::shared_ptr<ListModel<BookViewModel::UserOrder>> orders,
         std::shared_ptr<RowTracker> row_tracker,
         std::shared_ptr<ValueModel<OrderVisibility>> visibility_property,
-        std::shared_ptr<ValueModel<OrderHighlightArray>> highlight_properties)
+        std::shared_ptr<ValueModel<OrderHighlightArray>> highlight_properties,
+        bool is_ascending)
         : m_quote_table(std::move(quote_table)),
           m_orders(std::move(orders)),
           m_row_tracker(std::move(row_tracker)),
           m_visibility_property(std::move(visibility_property)),
           m_highlight_properties(std::move(highlight_properties)),
+          m_is_ascending(is_ascending),
           m_prices(m_quote_table, static_cast<int>(BookViewColumns::PRICE)) {
       for(auto i = 0; i < m_orders->get_size(); ++i) {
         auto& order = m_orders->get(i);
@@ -725,8 +737,14 @@ namespace {
     }
 
     int find_order_index(const UserOrder& order) {
+      auto compare = [&] () -> std::function<bool(const Money&, const Money&)> {
+        if(m_is_ascending) {
+          return std::less<Money>();
+        }
+        return std::greater<Money>();
+      }();
       auto i = std::lower_bound(m_prices.begin(), m_prices.end(), order.m_price,
-        std::greater<Money>());
+        compare);
       if(i != m_prices.end()) {
         auto mpid = '@' + order.m_destination;
         for(; i != m_prices.end(); ++i) {
@@ -1121,19 +1139,21 @@ TableView* Spire::make_book_view_table_view(
     std::shared_ptr<BookViewModel> model,
     std::shared_ptr<BookViewPropertiesModel> properties, Side side,
     const MarketDatabase& markets, QWidget* parent) {
-  auto [book_quotes, orders] = [&] {
+  auto [book_quotes, orders, ordering] = [&] {
     if(side == Side::BID) {
-      return std::tuple(model->get_bids(), model->get_bid_orders());
+      return std::tuple(model->get_bids(), model->get_bid_orders(),
+        SortedTableModel::Ordering::DESCENDING);
     }
-    return std::tuple(model->get_asks(), model->get_ask_orders());
+    return std::tuple(model->get_asks(), model->get_ask_orders(),
+      SortedTableModel::Ordering::ASCENDING);
   }();
+  auto is_ascending = ordering == SortedTableModel::Ordering::ASCENDING;
   auto highlight_property = make_field_value_model(properties,
     &BookViewProperties::m_highlight_properties);
   auto order_visibility = make_field_value_model(highlight_property,
     &BookViewHighlightProperties::m_order_visibility);
   auto column_orders = std::vector<SortedTableModel::ColumnOrder>{
-    {1, SortedTableModel::Ordering::DESCENDING},
-    {2, SortedTableModel::Ordering::DESCENDING}};
+    {1, ordering}, {2, ordering}};
   auto order_filtered_list = std::make_shared<OrderFilteredListModel>(
     std::move(book_quotes), highlight_property);
   auto table = std::make_shared<SortedTableModel>(
@@ -1144,11 +1164,12 @@ TableView* Spire::make_book_view_table_view(
     order_visibility);
   auto market_highlight_model = std::make_shared<MarketHighlightModel>(table,
     row_tracker, make_field_value_model(highlight_property,
-      &BookViewHighlightProperties::m_market_highlights), markets);
+      &BookViewHighlightProperties::m_market_highlights), markets,
+      is_ascending);
   auto order_highlight_model = std::make_shared<OrderHighlightModel>(table,
     orders, row_tracker, order_visibility,
     make_field_value_model(highlight_property,
-      &BookViewHighlightProperties::m_order_highlights));
+      &BookViewHighlightProperties::m_order_highlights), is_ascending);
   auto table_view = TableViewBuilder(table).
     set_header(make_header_model()).
     set_item_builder(std::bind_front(item_builder, row_tracker,
