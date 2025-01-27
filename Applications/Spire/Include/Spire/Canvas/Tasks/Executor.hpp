@@ -1,10 +1,10 @@
 #ifndef SPIRE_EXECUTOR_HPP
 #define SPIRE_EXECUTOR_HPP
+#include <condition_variable>
 #include <mutex>
 #include <Aspen/Aspen.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Routines/RoutineHandler.hpp>
-#include <Beam/Threading/ConditionVariable.hpp>
 #include "Spire/Canvas/Canvas.hpp"
 
 namespace Spire {
@@ -36,7 +36,7 @@ namespace Spire {
       Aspen::Shared<Aspen::Queue<Aspen::SharedBox<void>>> m_producer;
       Aspen::Concur<Aspen::Shared<Aspen::Queue<Aspen::SharedBox<void>>>>
         m_reactor;
-      Beam::Threading::ConditionVariable m_updateCondition;
+      std::condition_variable m_updateCondition;
       Beam::IO::OpenState m_openState;
 
       void RunLoop();

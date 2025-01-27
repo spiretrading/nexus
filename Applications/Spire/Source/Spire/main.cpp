@@ -1,5 +1,6 @@
 #include <filesystem>
 #include <fstream>
+#include <mutex>
 #include <Beam/ServiceLocator/AuthenticationException.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <QApplication>
@@ -179,7 +180,7 @@ int main(int argc, char* argv[]) {
   auto user_profile = optional<UserProfile>();
   auto risk_timer_monitor = optional<RiskTimerMonitor>();
   auto toolbar_controller = optional<ToolbarController>();
-  auto telemetry_client_mutex = Mutex();
+  auto telemetry_client_mutex = std::mutex();
   auto application_telemetry_client = std::unique_ptr<SpireTelemetryClient>();
   auto telemetry_client = std::unique_ptr<TelemetryClientBox>();
   auto service_client_factory =
