@@ -147,7 +147,7 @@ struct TableBody::RowCover : Cover {
 
   void unmount() {
     auto& body = *static_cast<TableBody*>(parentWidget());
-    for(auto i = 0; i < layout()->count(); ++i) {
+    for(auto i = 0; i != layout()->count(); ++i) {
       if(auto item = get_item(i)) {
         body.m_item_builder.unmount(item->unmount());
       }
@@ -1285,7 +1285,6 @@ void TableBody::on_current(
     if(m_current_row && get_layout().indexOf(m_current_row) == -1) {
       m_current_row->unmount();
       destroy(m_current_row);
-      setFocus();
     }
     m_current_row = nullptr;
   }

@@ -1,11 +1,7 @@
 #ifndef SPIRE_BOOK_VIEW_TABLE_MODEL_HPP
 #define SPIRE_BOOK_VIEW_TABLE_MODEL_HPP
-#include <unordered_map>
-#include "Nexus/Definitions/OrderStatus.hpp"
-#include "Spire/BookView/BookViewModel.hpp"
-#include "Spire/BookView/BookView.hpp"
+#include "Nexus/Definitions/BookQuote.hpp"
 #include "Spire/Spire/TableModel.hpp"
-#include "Spire/Spire/TableModelTransactionLog.hpp"
 
 namespace Spire {
 
