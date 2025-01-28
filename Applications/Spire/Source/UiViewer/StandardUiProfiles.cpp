@@ -3108,6 +3108,58 @@ UiProfile Spire::make_navigation_view_profile() {
   return profile;
 }
 
+UiProfile Spire::make_number_label_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  auto number_type_property = define_enum<QString>(
+    {{"Integer", "int"}, {"Unsigned Integer", "uint"},
+    {"Integer64", "int64"}, {"Unsigned Integer64", "uint64"},
+    {"double", "double"}, {"Quantity", "Quantity"}, {"Money", "Money"}});
+  populate_enum_properties(properties, "number_type", number_type_property);
+  properties.push_back(make_standard_property<Decimal>("number", 1000000));
+  properties.push_back(make_standard_property("omit_group_separator", false));
+  auto profile = UiProfile("NumberLabel", properties, [] (auto& profile) {
+    auto convert =
+      [&] (double value, const QString& type, bool is_omit_separator) {
+        auto locale = QLocale();
+        if(is_omit_separator) {
+          locale.setNumberOptions(QLocale::OmitGroupSeparator);
+        }
+        if(type == "int") {
+          return to_text(static_cast<int>(value), locale);
+        } else if(type == "uint") {
+          return to_text(static_cast<unsigned int>(value), locale);
+        } else if(type == "int64") {
+          return to_text(static_cast<std::int64_t>(value), locale);
+        } else if(type == "uint64") {
+          return to_text(static_cast<std::uint64_t>(value), locale);
+        } else if(type == "Quantity") {
+          return to_text(Quantity(value), locale);
+        } else if(type == "Money") {
+          return to_text(Money(Quantity(value)), locale);
+        }
+        return to_text(value, locale);
+      };
+    auto& type = get<QString>("number_type", profile.get_properties());
+    auto& number = get<Decimal>("number", profile.get_properties());
+    auto& separator =
+      get<bool>("omit_group_separator", profile.get_properties());
+    auto label = std::make_shared<LocalTextModel>();
+    type.connect_changed_signal([=, &number, &separator] (const auto& type) {
+      label->set(
+        convert(number.get().convert_to<double>(), type, separator.get()));
+    });
+    number.connect_changed_signal([=, &type, &separator] (const auto& value) {
+      label->set(
+        convert(value.convert_to<double>(), type.get(), separator.get()));
+    });
+    separator.connect_changed_signal([=, &type, &number] (auto value) {
+      label->set(convert(number.get().convert_to<double>(), type.get(), value));
+    });
+    return make_label(label);
+  });
+  return profile;
+}
+
 UiProfile Spire::make_order_field_info_tip_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);

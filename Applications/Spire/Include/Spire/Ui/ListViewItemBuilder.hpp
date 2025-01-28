@@ -46,7 +46,7 @@ namespace Spire {
       template<typename M>
       ListViewItemBuilder(
           std::invocable<const std::shared_ptr<Spire::ListModel<M>>&, int>
-            auto builder) requires std::is_same<ListModel, AnyListModel>
+            auto builder) requires std::is_same_v<ListModel, AnyListModel>
         : ListViewItemBuilder([builder = std::move(builder)] (
               const std::shared_ptr<ListModel>& list, int index) {
             return builder(

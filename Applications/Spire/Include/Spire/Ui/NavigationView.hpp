@@ -91,14 +91,14 @@ namespace Spire {
 
     private:
       std::shared_ptr<CurrentModel> m_current;
-      std::shared_ptr<ArrayListModel<std::any>> m_navigation_list;
+      std::shared_ptr<ArrayListModel<QString>> m_navigation_list;
       ListView* m_navigation_view;
       QStackedLayout* m_stacked_layout;
       AssociativeValueModel<QString> m_associative_model;
       boost::signals2::scoped_connection m_current_connection;
 
       void on_current(int index);
-      void on_list_submit(const std::any& submission);
+      void on_list_current(const boost::optional<int>& current);
       void on_associative_value_current(int index, bool value);
   };
 }

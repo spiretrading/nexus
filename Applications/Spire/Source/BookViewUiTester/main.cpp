@@ -411,7 +411,7 @@ struct BookViewTester : QWidget {
     }
   }
 
-  void on_book_quote_submit_click(MarketBox* market_box, 
+  void on_book_quote_submit_click(MarketBox* market_box,
       MoneyBox* price_box, QuantityBox* quantity_box, SideBox* side_box) {
     auto market_code = market_box->get_current()->get();
     auto quote = BookQuote(to_text(MarketToken(market_code)).toStdString(),

@@ -1,9 +1,6 @@
 #ifndef SPIRE_BOOK_VIEW_MODEL_HPP
 #define SPIRE_BOOK_VIEW_MODEL_HPP
-#include <vector>
 #include "Nexus/Definitions/BookQuote.hpp"
-#include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
-#include "Spire/BookView/BookView.hpp"
 #include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
@@ -17,7 +14,7 @@ namespace Spire {
 
         /** The order destination. */
         std::string m_destination;
-        
+
         /** The order price. */
         Nexus::Money m_price;
 

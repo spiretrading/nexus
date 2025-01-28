@@ -2,6 +2,7 @@
 #include <boost/signals2/shared_connection_block.hpp>
 #include <QKeyEvent>
 #include "Spire/BookView/BboBox.hpp"
+#include "Spire/BookView/BookViewTableModel.hpp"
 #include "Spire/Spire/FieldValueModel.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Ui/Layouts.hpp"
