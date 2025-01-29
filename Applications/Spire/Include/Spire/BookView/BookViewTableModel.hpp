@@ -15,7 +15,7 @@ namespace Spire {
     PRICE,
 
     /** The size column. */
-    SIZE,
+    SIZE
   };
 
   /** Makes a TableModel as a view over a ListModel<BookQuote>. */
