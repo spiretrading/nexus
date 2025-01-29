@@ -148,7 +148,9 @@ struct TableBody::RowCover : Cover {
   void unmount() {
     auto& body = *static_cast<TableBody*>(parentWidget());
     for(auto i = 0; i != layout()->count(); ++i) {
-      body.m_item_builder.unmount(get_item(i)->unmount());
+      if(auto item = get_item(i)) {
+        body.m_item_builder.unmount(item->unmount());
+      }
     }
   }
 };
@@ -612,8 +614,9 @@ const std::shared_ptr<TableBody::SelectionModel>&
 
 TableItem* TableBody::find_item(const Index& index) {
   if(auto row = find_row(index.m_row)) {
-    if(row == get_current_row() &&
-        !get_layout().is_visible(*m_current_controller.get_row())) {
+    auto current_row = m_current_controller.get_row();
+    if(row == get_current_row() && current_row &&
+        !get_layout().is_visible(*current_row)) {
       auto position = m_styles.m_padding.top() +
         *m_current_controller.get_row() * estimate_row_height();
       row->move(m_styles.m_padding.left(), position);
@@ -865,7 +868,9 @@ TableBody::RowCover* TableBody::get_current_row() {
 
 TableItem* TableBody::get_current_item() {
   if(auto row = get_current_row()) {
-    return row->get_item(*m_current_controller.get_column());
+    if(auto column = m_current_controller.get_column()) {
+      return row->get_item(*column);
+    }
   }
   return nullptr;
 }
