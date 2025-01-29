@@ -111,6 +111,13 @@ namespace Spire {
    * @param background_color The background color.
    */
   double apca(const QColor& text_color, const QColor& background_color);
+
+  /**
+   * Calculates text color based on background color using APCA contrast.
+   * @param background_color The background color.
+   * @return The text color.
+   */
+  QColor apca_text_color(const QColor& background_color);
 }
 
 #endif
