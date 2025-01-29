@@ -139,7 +139,7 @@ namespace {
   }
 
   auto is_order(const std::string& mpid) {
-    return mpid.front() == '@';
+    return !mpid.empty() && mpid.front() == '@';
   }
 
   struct RowTracker : QObject {
