@@ -614,8 +614,9 @@ const std::shared_ptr<TableBody::SelectionModel>&
 
 TableItem* TableBody::find_item(const Index& index) {
   if(auto row = find_row(index.m_row)) {
-    if(row == get_current_row() && m_current_controller.get_row() &&
-        !get_layout().is_visible(*m_current_controller.get_row())) {
+    auto current_row = m_current_controller.get_row();
+    if(row == get_current_row() && current_row &&
+        !get_layout().is_visible(*current_row)) {
       auto position = m_styles.m_padding.top() +
         *m_current_controller.get_row() * estimate_row_height();
       row->move(m_styles.m_padding.left(), position);

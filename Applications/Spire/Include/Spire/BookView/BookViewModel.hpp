@@ -13,7 +13,7 @@ namespace Spire {
       struct UserOrder {
 
         /** The order destination. */
-        std::string m_destination;
+        Nexus::Destination m_destination;
 
         /** The order price. */
         Nexus::Money m_price;
