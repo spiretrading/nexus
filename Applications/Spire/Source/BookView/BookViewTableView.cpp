@@ -219,7 +219,7 @@ namespace {
       if(auto item = get_quantity_item(index)) {
         update_style(*item, [&] (auto& style) {
           apply_row_style(style, selector,
-            HighlightColor(color, get_apca_text_color(color)));
+            HighlightColor(color, apca_text_color(color)));
         });
       }
     }

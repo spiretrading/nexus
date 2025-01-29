@@ -405,8 +405,7 @@ struct BookViewLevelPropertiesPage::PriceLevelWidget : QWidget {
       style.get(Any()).
         set(BackgroundColor(m_model->m_color_scheme->get(index))).
         set(Font(m_font->get())).
-        set(TextColor(get_apca_text_color(
-          m_model->m_color_scheme->get(index)))).
+        set(TextColor(apca_text_color(m_model->m_color_scheme->get(index)))).
         set(TextAlign(Qt::AlignCenter));
     });
     link(*this, *band);
@@ -518,7 +517,7 @@ struct BookViewLevelPropertiesPage::PriceLevelWidget : QWidget {
         update_style(*band, [&] (auto& style) {
           style.get(Any()).
             set(BackgroundColor(operation.get_value())).
-            set(TextColor(get_apca_text_color(operation.get_value())));
+            set(TextColor(apca_text_color(operation.get_value())));
         });
       });
   }
