@@ -285,12 +285,11 @@ struct TableBody::Layout : QLayout {
   }
 
   void move_row(int source, int destination) {
+    auto source_index = source - get_top_index();
+    auto item = std::move(m_items[source_index]);
+    m_items.erase(m_items.begin() + source_index);
     m_items.insert(m_items.begin() + (destination - get_top_index()),
-      std::move(m_items[source - get_top_index()]));
-    if(source > destination) {
-      ++source;
-    }
-    m_items.erase(m_items.begin() + (source - m_top.size()));
+      std::move(item));
   }
 
   void reset_top_index(int top_point) {
