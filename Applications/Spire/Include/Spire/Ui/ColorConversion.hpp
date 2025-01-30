@@ -117,7 +117,7 @@ namespace Spire {
    * @param background_color The background color.
    * @return The text color.
    */
-  QColor get_apca_text_color(const QColor& background_color);
+  QColor apca_text_color(const QColor& background_color);
 }
 
 #endif

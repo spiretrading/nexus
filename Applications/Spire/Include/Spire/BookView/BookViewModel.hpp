@@ -3,7 +3,6 @@
 #include "Nexus/Definitions/BookQuote.hpp"
 #include "Nexus/Definitions/SecurityTechnicals.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
-//#include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
 
@@ -27,8 +26,8 @@ namespace Spire {
       struct UserOrder {
 
         /** The order destination. */
-        std::string m_destination;
-        
+        Nexus::Destination m_destination;
+
         /** The order price. */
         Nexus::Money m_price;
 

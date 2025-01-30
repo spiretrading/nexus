@@ -2,6 +2,7 @@
 #include <boost/signals2/shared_connection_block.hpp>
 #include <QKeyEvent>
 #include "Spire/BookView/BboBox.hpp"
+#include "Spire/BookView/BookViewTableModel.hpp"
 #include "Spire/Spire/FieldValueModel.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Ui/Layouts.hpp"
@@ -16,32 +17,34 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  const auto& get_mpid(const TableModel& table, int row) {
-    return table.get<std::string>(row, static_cast<int>(BookViewColumns::MPID));
-  }
-
-  const auto& get_price(const TableModel& table, int row) {
-    return table.get<Money>(row, static_cast<int>(BookViewColumns::PRICE));
-  }
-
-  auto is_order(const TableModel& table, int row) {
-    return get_mpid(table, row).front() == '@';
-  }
-
   optional<int> find_nearest_order(int row, const TableModel& table) {
     auto top = row;
     auto bottom = row;
     while(top >= 0 || bottom < table.get_row_size()) {
-      if(top >= 0 && is_order(table, top)) {
+      if(top >= 0 && is_order(get_mpid(table, top))) {
         return top;
       }
-      if(bottom < table.get_row_size() && is_order(table, bottom)) {
+      if(bottom < table.get_row_size() && is_order(get_mpid(table, bottom))) {
         return bottom;
       }
       --top;
       ++bottom;
     }
     return none;
+  }
+
+  void navigate(int current_row, TableView& destination,
+      optional<int>& last_current_row) {
+    if(last_current_row) {
+      destination.get_current()->set(TableView::Index(*last_current_row, 0));
+      last_current_row = current_row;
+      destination.setFocus();
+    } else if(
+        auto next = find_nearest_order(current_row, *destination.get_table())) {
+      destination.get_current()->set(TableView::Index(*next, 0));
+      last_current_row = current_row;
+      destination.setFocus();
+    }
   }
 
   int find_book_quote(const ListModel<BookQuote>& quotes,
@@ -114,6 +117,12 @@ MarketDepth::MarketDepth(std::shared_ptr<BookViewModel> model,
     std::bind_front(&MarketDepth::on_bid_position, this));
   auto& ask_vertical_scroll_bar =
     m_ask_table_view->get_scroll_box().get_vertical_scroll_bar();
+  m_bid_operation_connection =
+    m_bid_table_view->get_table()->connect_operation_signal(
+      std::bind_front(&MarketDepth::on_bid_operation, this));
+  m_ask_operation_connection =
+    m_ask_table_view->get_table()->connect_operation_signal(
+      std::bind_front(&MarketDepth::on_ask_operation, this));
   m_ask_position_connection = ask_vertical_scroll_bar.connect_position_signal(
     std::bind_front(&MarketDepth::on_ask_position, this));
   m_font_property_connection = m_font_property->connect_update_signal(
@@ -131,22 +140,14 @@ bool MarketDepth::eventFilter(QObject* watched, QEvent* event) {
     if(watched == &m_bid_table_view->get_body()) {
       if(key_event.key() == Qt::Key_Right) {
         if(auto current = m_bid_table_view->get_current()->get()) {
-          if(auto next = find_nearest_order(current->m_row,
-              *m_ask_table_view->get_table())) {
-            m_ask_table_view->get_current()->set(TableView::Index(*next, 0));
-            m_ask_table_view->setFocus();
-          }
+          navigate(current->m_row, *m_ask_table_view, m_last_current_row);
           return true;
         }
       }
     } else if(watched == &m_ask_table_view->get_body()) {
       if(key_event.key() == Qt::Key_Left) {
         if(auto current = m_ask_table_view->get_current()->get()) {
-          if(auto next = find_nearest_order(current->m_row,
-              *m_bid_table_view->get_table())) {
-            m_bid_table_view->get_current()->set(TableView::Index(*next, 0));
-            m_bid_table_view->setFocus();
-          }
+          navigate(current->m_row, *m_bid_table_view, m_last_current_row);
           return true;
         }
       }
@@ -166,6 +167,76 @@ void MarketDepth::focusInEvent(QFocusEvent* event) {
   }
 }
 
+void MarketDepth::on_side_current(const optional<TableView::Index>& current,
+    Side side) {
+  auto [last_current_row, last_opposite_row, table_view, opposite_table_view,
+    opposite_connection, quotes] = [&] {
+    if(side == Side::BID) {
+      return std::tie(m_last_bid_current_row, m_last_ask_current_row,
+        m_bid_table_view, m_ask_table_view, m_ask_current_connection,
+        m_model->get_bids());
+    }
+    return std::tie(m_last_ask_current_row, m_last_bid_current_row,
+      m_ask_table_view, m_bid_table_view, m_bid_current_connection,
+      m_model->get_asks());
+  }();
+  if(current && last_current_row && current->m_row == last_current_row) {
+    return;
+  }
+  if(current) {
+    last_current_row = current->m_row;
+    m_last_current_row = none;
+    auto blocker = shared_connection_block(opposite_connection);
+    opposite_table_view->get_current()->set(none);
+    last_opposite_row = none;
+    auto& mpid = get_mpid(*table_view->get_table(), current->m_row);
+    if(is_order(mpid)) {
+      auto& price = get_price(*table_view->get_table(), current->m_row);
+      if(auto i = find_book_quote(*quotes, mpid, price); i >= 0) {
+        m_selected_quote->set(quotes->get(i));
+        return;
+      }
+    }
+  } else {
+    last_current_row = none;
+  }
+  m_selected_quote->set(none);
+  setFocus();
+}
+
+void MarketDepth::on_side_operation(const TableModel::Operation& operation,
+    Side side) {
+  auto table_view = [&] {
+    if(side == Side::BID) {
+      return m_bid_table_view;
+    }
+    return m_ask_table_view;
+  }();
+  if(table_view->get_current()->get()) {
+    return;
+  }
+  visit(operation,
+    [&] (const TableModel::AddOperation& operation) {
+      if(m_last_current_row && operation.m_index <= *m_last_current_row) {
+        m_last_current_row = none;
+      }
+    },
+    [&] (const TableModel::RemoveOperation& operation) {
+      if(m_last_current_row && operation.m_index <= *m_last_current_row) {
+        m_last_current_row = none;
+      }
+    },
+    [&] (const TableModel::MoveOperation& operation) {
+      if(m_last_current_row &&
+          *m_last_current_row >=
+            std::min(operation.m_source, operation.m_destination) &&
+          *m_last_current_row <=
+            std::max(operation.m_source, operation.m_destination)) {
+        m_last_current_row = none;
+      }
+    });
+}
+
 void MarketDepth::on_bid_position(int position) {
   auto blocker = shared_connection_block(m_ask_position_connection);
   m_ask_table_view->get_scroll_box().get_vertical_scroll_bar().set_position(
@@ -179,37 +250,19 @@ void MarketDepth::on_ask_position(int position) {
 }
 
 void MarketDepth::on_bid_current(const optional<TableView::Index>& current) {
-  if(current) {
-    auto blocker = shared_connection_block(m_ask_current_connection);
-    m_ask_table_view->get_current()->set(none);
-    if(is_order(*m_bid_table_view->get_table(), current->m_row)) {
-      auto& mpid = get_mpid(*m_bid_table_view->get_table(), current->m_row);
-      auto& price = get_price(*m_bid_table_view->get_table(), current->m_row);
-      if(auto i = find_book_quote(*m_model->get_bids(), mpid, price); i >= 0) {
-        m_selected_quote->set(m_model->get_bids()->get(i));
-        return;
-      }
-    }
-  }
-  m_selected_quote->set(none);
-  setFocus();
+  on_side_current(current, Side::BID);
 }
 
 void MarketDepth::on_ask_current(const optional<TableView::Index>& current) {
-  if(current) {
-    auto blocker = shared_connection_block(m_bid_current_connection);
-    m_bid_table_view->get_current()->set(none);
-    if(is_order(*m_ask_table_view->get_table(), current->m_row)) {
-      auto& mpid = get_mpid(*m_ask_table_view->get_table(), current->m_row);
-      auto& price = get_price(*m_ask_table_view->get_table(), current->m_row);
-      if(auto i = find_book_quote(*m_model->get_asks(), mpid, price); i >= 0) {
-        m_selected_quote->set(m_model->get_asks()->get(i));
-        return;
-      }
-    }
-  }
-  m_selected_quote->set(none);
-  setFocus();
+  on_side_current(current, Side::ASK);
+}
+
+void MarketDepth::on_bid_operation(const TableModel::Operation& operation) {
+  on_side_operation(operation, Side::BID);
+}
+
+void MarketDepth::on_ask_operation(const TableModel::Operation& operation) {
+  on_side_operation(operation, Side::ASK);
 }
 
 void MarketDepth::on_font_property_update(const QFont& font) {

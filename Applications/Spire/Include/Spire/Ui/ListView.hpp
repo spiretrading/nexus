@@ -12,6 +12,7 @@
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Styles/BasicProperty.hpp"
 #include "Spire/Ui/ClickObserver.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/ListCurrentController.hpp"
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/ListSelectionController.hpp"
