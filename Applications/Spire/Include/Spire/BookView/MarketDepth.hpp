@@ -43,16 +43,27 @@ namespace Spire {
       QFont m_font;
       TableView* m_bid_table_view;
       TableView* m_ask_table_view;
+      boost::optional<int> m_last_bid_current_row;
+      boost::optional<int> m_last_ask_current_row;
+      boost::optional<int> m_last_current_row;
       boost::signals2::scoped_connection m_bid_current_connection;
       boost::signals2::scoped_connection m_ask_current_connection;
+      boost::signals2::scoped_connection m_bid_operation_connection;
+      boost::signals2::scoped_connection m_ask_operation_connection;
       boost::signals2::scoped_connection m_bid_position_connection;
       boost::signals2::scoped_connection m_ask_position_connection;
       boost::signals2::scoped_connection m_font_property_connection;
 
+      void on_side_current(const boost::optional<TableView::Index>& current,
+        Nexus::Side side);
+      void on_side_operation(const TableModel::Operation& operation,
+        Nexus::Side side);
       void on_bid_position(int position);
       void on_ask_position(int position);
       void on_bid_current(const boost::optional<TableView::Index>& current);
       void on_ask_current(const boost::optional<TableView::Index>& current);
+      void on_bid_operation(const TableModel::Operation& operation);
+      void on_ask_operation(const TableModel::Operation& operation);
       void on_font_property_update(const QFont& font);
   };
 }
