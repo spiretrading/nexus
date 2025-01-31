@@ -98,7 +98,7 @@ std::shared_ptr<SecurityInfoQueryModel> populate_security_query_model() {
   return model;
 }
 
-BookQuote make_random_market_quote(Side sid) {
+BookQuote make_random_market_quote(Side side) {
   auto random_generator =
     QRandomGenerator(to_time_t_milliseconds(microsec_clock::universal_time()));
   auto& markets = GetDefaultMarketDatabase().GetEntries();
@@ -106,7 +106,7 @@ BookQuote make_random_market_quote(Side sid) {
   auto market_code = markets[market_index].m_code;
   return BookQuote(to_text(MarketToken(market_code)).toStdString(), false,
     market_code, Quote{Truncate(Money(random_generator.bounded(200.0)), 2),
-      random_generator.bounded(1000), sid}, second_clock::local_time());
+      random_generator.bounded(1000), side}, second_clock::local_time());
 }
 
 OrderStatus make_order_status(int index) {
@@ -152,16 +152,16 @@ struct BookViewTester : QWidget {
   int m_update_count;
 
   BookViewTester(std::shared_ptr<SecurityTechnicalsModel> technicals,
-    std::shared_ptr<ValueModel<BboQuote>> bbo_quote,
-    std::shared_ptr<QuantityModel> default_bid_quantity,
-    std::shared_ptr<QuantityModel> default_ask_quantity,
-    std::shared_ptr<BookViewModel> model,
-    QWidget* parent = nullptr)
-    : QWidget(parent),
-    m_model(std::move(model)),
-    m_quote_timer(this),
-    m_order_timer(this),
-    m_update_count(0) {
+      std::shared_ptr<ValueModel<BboQuote>> bbo_quote,
+      std::shared_ptr<QuantityModel> default_bid_quantity,
+      std::shared_ptr<QuantityModel> default_ask_quantity,
+      std::shared_ptr<BookViewModel> model,
+      QWidget* parent = nullptr)
+      : QWidget(parent),
+        m_model(std::move(model)),
+        m_quote_timer(this),
+        m_order_timer(this),
+        m_update_count(0) {
     auto left_layout = new QVBoxLayout();
     auto technicals_group_box = new QGroupBox(tr("Technicals"));
     auto technicals_layout = new QFormLayout(technicals_group_box);
@@ -288,12 +288,12 @@ struct BookViewTester : QWidget {
   }
 
   int find_book_quote(const ListModel<BookQuote>& quotes,
-    const BookQuote& quote) {
+      const BookQuote& quote) {
     auto i = std::find_if(quotes.begin(), quotes.end(),
       [&] (const BookQuote& value) {
-      return value.m_mpid == quote.m_mpid &&
-        value.m_quote.m_price == quote.m_quote.m_price;
-    });
+        return value.m_mpid == quote.m_mpid &&
+          value.m_quote.m_price == quote.m_quote.m_price;
+      });
     if(i == quotes.end()) {
       return -1;
     }
@@ -301,12 +301,12 @@ struct BookViewTester : QWidget {
   }
 
   int find_order(const ListModel<BookViewModel::UserOrder>& orders,
-    const BookViewModel::UserOrder& order) {
+      const BookViewModel::UserOrder& order) {
     auto i = std::find_if(orders.begin(), orders.end(),
       [&] (const BookViewModel::UserOrder& value) {
-      return value.m_destination == order.m_destination &&
-        value.m_price == order.m_price;
-    });
+        return value.m_destination == order.m_destination &&
+          value.m_price == order.m_price;
+      });
     if(i == orders.end()) {
       return -1;
     }
@@ -421,7 +421,7 @@ struct BookViewTester : QWidget {
     auto quotes = [&] {
       if(quote.m_quote.m_side == Side::BID) {
         return m_model->get_bids();
-      } 
+      }
       return m_model->get_asks();
     }();
     submit_book_quote(*quotes, quote);
@@ -442,7 +442,7 @@ struct BookViewTester : QWidget {
     auto [quotes, orders] = [&] {
       if(quote.m_quote.m_side == Side::BID) {
         return std::tuple(m_model->get_bids(), m_model->get_bid_orders());
-      } 
+      }
       return std::tuple(m_model->get_asks(), m_model->get_ask_orders());
     }();
     submit_order(quote, user_order, *quotes, *orders,

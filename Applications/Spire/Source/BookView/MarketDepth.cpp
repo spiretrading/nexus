@@ -33,17 +33,18 @@ namespace {
     return none;
   }
 
-  void navigate(int current_row, TableView& destination,
+  void navigate(int current_row, TableView& table_view,
       optional<int>& last_current_row) {
+    auto set_current = [&] (int row) {
+      table_view.get_current()->set(TableView::Index(row, 0));
+      last_current_row = current_row;
+      table_view.setFocus();
+    };
     if(last_current_row) {
-      destination.get_current()->set(TableView::Index(*last_current_row, 0));
-      last_current_row = current_row;
-      destination.setFocus();
+      set_current(*last_current_row);
     } else if(
-        auto next = find_nearest_order(current_row, *destination.get_table())) {
-      destination.get_current()->set(TableView::Index(*next, 0));
-      last_current_row = current_row;
-      destination.setFocus();
+        auto next = find_nearest_order(current_row, *table_view.get_table())) {
+      set_current(*next);
     }
   }
 
@@ -57,6 +58,24 @@ namespace {
       return -1;
     }
     return std::distance(quotes.begin(), i);
+  }
+
+  auto make_panel(std::shared_ptr<BookViewModel> model,
+      std::shared_ptr<QuoteModel> bbo,
+      std::shared_ptr<BookViewPropertiesModel> properties,
+      const MarketDatabase& markets, Side side) {
+    auto panel = new QWidget();
+    panel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    auto layout = make_vbox_layout(panel);
+    auto bbo_box = new BboBox(std::move(bbo));
+    bbo_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    layout->addWidget(bbo_box);
+    auto table_view = make_book_view_table_view(std::move(model),
+      std::move(properties), side, markets);
+    table_view->setSizePolicy(QSizePolicy::Expanding,
+     QSizePolicy::Expanding);
+    layout->addWidget(table_view);
+    return std::tuple(panel, bbo_box, table_view);
   }
 }
 
@@ -73,40 +92,24 @@ MarketDepth::MarketDepth(std::shared_ptr<BookViewModel> model,
           &BookViewLevelProperties::m_font)),
       m_font(m_font_property->get()) {
   setFocusPolicy(Qt::StrongFocus);
-  auto bid_panel = new QWidget();
-  bid_panel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-  auto bid_layout = make_vbox_layout(bid_panel);
-  auto bid_bbo =
-    new BboBox(make_field_value_model(bbo_quote, &BboQuote::m_bid));
-  bid_bbo->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-  bid_layout->addWidget(bid_bbo);
+  auto [bid_panel, bid_bbo, bid_table_view] = make_panel(m_model,
+    make_field_value_model(bbo_quote, &BboQuote::m_bid), properties, markets,
+    Side::BID);
   link(*this, *bid_bbo);
-  m_bid_table_view = make_book_view_table_view(m_model, properties,
-    Side::BID, markets);
-  m_bid_table_view->setSizePolicy(QSizePolicy::Expanding,
-    QSizePolicy::Expanding);
+  m_bid_table_view = bid_table_view;
   m_bid_table_view->get_body().installEventFilter(this);
   m_bid_current_connection =
     m_bid_table_view->get_current()->connect_update_signal(
       std::bind_front(&MarketDepth::on_bid_current, this));
-  bid_layout->addWidget(m_bid_table_view);
-  auto ask_panel = new QWidget();
-  ask_panel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-  auto ask_layout = make_vbox_layout(ask_panel);
-  auto ask_bbo =
-    new BboBox(make_field_value_model(bbo_quote, &BboQuote::m_ask));
-  ask_bbo->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-  ask_layout->addWidget(ask_bbo);
+  auto [ask_panel, ask_bbo, ask_table_view] = make_panel(m_model,
+    make_field_value_model(bbo_quote, &BboQuote::m_ask), properties, markets,
+    Side::ASK);
   link(*this, *ask_bbo);
-  m_ask_table_view = make_book_view_table_view(m_model, properties,
-    Side::ASK, markets);
-  m_ask_table_view->setSizePolicy(QSizePolicy::Expanding,
-    QSizePolicy::Expanding);
+  m_ask_table_view = ask_table_view;
   m_ask_table_view->get_body().installEventFilter(this);
   m_ask_current_connection =
     m_ask_table_view->get_current()->connect_update_signal(
       std::bind_front(&MarketDepth::on_ask_current, this));
-  ask_layout->addWidget(m_ask_table_view);
   auto layout = make_hbox_layout(this);
   layout->setSpacing(scale_width(2));
   layout->addWidget(bid_panel, 1);
@@ -117,14 +120,14 @@ MarketDepth::MarketDepth(std::shared_ptr<BookViewModel> model,
     std::bind_front(&MarketDepth::on_bid_position, this));
   auto& ask_vertical_scroll_bar =
     m_ask_table_view->get_scroll_box().get_vertical_scroll_bar();
+  m_ask_position_connection = ask_vertical_scroll_bar.connect_position_signal(
+    std::bind_front(&MarketDepth::on_ask_position, this));
   m_bid_operation_connection =
     m_bid_table_view->get_table()->connect_operation_signal(
       std::bind_front(&MarketDepth::on_bid_operation, this));
   m_ask_operation_connection =
     m_ask_table_view->get_table()->connect_operation_signal(
       std::bind_front(&MarketDepth::on_ask_operation, this));
-  m_ask_position_connection = ask_vertical_scroll_bar.connect_position_signal(
-    std::bind_front(&MarketDepth::on_ask_position, this));
   m_font_property_connection = m_font_property->connect_update_signal(
     std::bind_front(&MarketDepth::on_font_property_update, this));
 }
@@ -169,8 +172,8 @@ void MarketDepth::focusInEvent(QFocusEvent* event) {
 
 void MarketDepth::on_side_current(const optional<TableView::Index>& current,
     Side side) {
-  auto [last_current_row, last_opposite_row, table_view, opposite_table_view,
-    opposite_connection, quotes] = [&] {
+  auto [last_side_current_row, last_side_opposite_row, table_view,
+      opposite_table_view, opposite_connection, quotes] = [&] {
     if(side == Side::BID) {
       return std::tie(m_last_bid_current_row, m_last_ask_current_row,
         m_bid_table_view, m_ask_table_view, m_ask_current_connection,
@@ -180,15 +183,15 @@ void MarketDepth::on_side_current(const optional<TableView::Index>& current,
       m_ask_table_view, m_bid_table_view, m_bid_current_connection,
       m_model->get_asks());
   }();
-  if(current && last_current_row && current->m_row == last_current_row) {
+  if(current && last_side_current_row && current->m_row == last_side_current_row) {
     return;
   }
   if(current) {
-    last_current_row = current->m_row;
+    last_side_current_row = current->m_row;
     m_last_current_row = none;
     auto blocker = shared_connection_block(opposite_connection);
     opposite_table_view->get_current()->set(none);
-    last_opposite_row = none;
+    last_side_opposite_row = none;
     auto& mpid = get_mpid(*table_view->get_table(), current->m_row);
     if(is_order(mpid)) {
       auto& price = get_price(*table_view->get_table(), current->m_row);
@@ -198,7 +201,7 @@ void MarketDepth::on_side_current(const optional<TableView::Index>& current,
       }
     }
   } else {
-    last_current_row = none;
+    last_side_current_row = none;
   }
   m_selected_quote->set(none);
   setFocus();
@@ -268,8 +271,7 @@ void MarketDepth::on_ask_operation(const TableModel::Operation& operation) {
 void MarketDepth::on_font_property_update(const QFont& font) {
   if(m_font != font) {
     update_style(*this, [&] (auto& style) {
-      style.get(Any() > is_a<BboBox>() > is_a<TextBox>()).
-        set(Font(font));
+      style.get(Any() > is_a<BboBox>() > is_a<TextBox>()).set(Font(font));
     });
     m_font = font;
   }
