@@ -48,15 +48,22 @@ IF NOT EXIST CMakeFiles (
   IF NOT EXIST CMakeFiles\timestamp.txt (
     SET RUN_CMAKE=1
   ) ELSE (
-    FOR /F %%i IN (
-        'ls -l --time-style=full-iso !DIRECTORY!CMakeLists.txt !DIRECTORY!PreLoad.cmake ^| grep "PreLoad\.cmake\|CMakeLists\.txt\|dependencies.*.cmake" ^| awk "{print $6 $7}"') DO (
-      FOR /F %%j IN (
-          'ls -l --time-style=full-iso CMakeFiles\timestamp.txt ^| awk "{print $6 $7}"') DO (
-        IF "%%i" GEQ "%%j" (
-          SET RUN_CMAKE=1
-        )
-      )
-    )
+    SET TIMESTAMP_COMMAND=powershell -Command "& { " ^
+      "$timestampFileTime = " ^
+      "  (Get-Item 'CMakeFiles\\timestamp.txt').LastWriteTime;" ^
+      "$filesToCheck = @('.\\CMakeLists.txt');" ^
+      "foreach($file in $filesToCheck) {" ^
+      "  if(Test-Path $file) {" ^
+      "    $fileTime = (Get-Item $file).LastWriteTime;" ^
+      "    if($fileTime -ge $timestampFileTime) {" ^
+      "      Write-Output '1';" ^
+      "      Exit;" ^
+      "    }" ^
+      "  } " ^
+      "};" ^
+      "Exit;" ^
+    "}"
+    FOR /F "delims=" %%A IN ('CALL !TIMESTAMP_COMMAND!') DO SET RUN_CMAKE=%%A
   )
 )
 IF "!RUN_CMAKE!" == "1" (
@@ -67,51 +74,39 @@ IF "!RUN_CMAKE!" == "1" (
 )
 IF EXIST "!DIRECTORY!Include" (
   DIR /a-d /b /s "!DIRECTORY!Include\*" > hpp_hash.txt
-  SET C=0
-  FOR /F %%i IN ('certutil -hashfile hpp_hash.txt') DO (
-    IF !C!==1 (
-      IF EXIST CMakeFiles\hpp_hash.txt (
-        FOR /F %%j IN ('TYPE CMakeFiles\hpp_hash.txt') DO (
-          IF NOT "%%i" == "%%j" (
-            SET RUN_CMAKE=1
-          )
+  FOR /F %%i IN ('certutil -hashfile hpp_hash.txt SHA256 ^| ^
+      find /v "CertUtil" ^| find /v "SHA256 hash"') DO (
+    IF EXIST CMakeFiles\hpp_hash.txt (
+      FOR /F %%j IN (CMakeFiles\hpp_hash.txt) DO (
+        IF NOT "%%i" == "%%j" (
+          SET RUN_CMAKE=1
         )
-      ) ELSE (
-        SET RUN_CMAKE=1
       )
-      IF "!RUN_CMAKE!" == "1" (
-        IF NOT EXIST CMakeFiles (
-          MD CMakeFiles
-        )
-        ECHO %%i > CMakeFiles\hpp_hash.txt
-      )
+    ) ELSE (
+      SET RUN_CMAKE=1
     )
-    SET /A C=C+1
+    IF "!RUN_CMAKE!" == "1" (
+      ECHO %%i > CMakeFiles\hpp_hash.txt
+    )
   )
   DEL hpp_hash.txt
 )
 IF EXIST "!DIRECTORY!Source" (
   DIR /a-d /b /s "!DIRECTORY!Source\*" > cpp_hash.txt
-  SET C=0
-  FOR /F %%i IN ('certutil -hashfile cpp_hash.txt') DO (
-    IF !C!==1 (
-      IF EXIST CMakeFiles\cpp_hash.txt (
-        FOR /F %%j IN ('TYPE CMakeFiles\cpp_hash.txt') DO (
-          IF NOT "%%i" == "%%j" (
-            SET RUN_CMAKE=1
-          )
+  FOR /F %%i IN ('certutil -hashfile cpp_hash.txt SHA256 ^| ^
+      find /v "CertUtil" ^| find /v "SHA256 hash"') DO (
+    IF EXIST CMakeFiles\cpp_hash.txt (
+      FOR /F %%j IN (CMakeFiles\cpp_hash.txt) DO (
+        IF NOT "%%i" == "%%j" (
+          SET RUN_CMAKE=1
         )
-      ) ELSE (
-        SET RUN_CMAKE=1
       )
-      IF "!RUN_CMAKE!" == "1" (
-        IF NOT EXIST CMakeFiles (
-          MD CMakeFiles
-        )
-        ECHO %%i > CMakeFiles\cpp_hash.txt
-      )
+    ) ELSE (
+      SET RUN_CMAKE=1
     )
-    SET /A C=C+1
+    IF "!RUN_CMAKE!" == "1" (
+      ECHO %%i > CMakeFiles\cpp_hash.txt
+    )
   )
   DEL cpp_hash.txt
 )
