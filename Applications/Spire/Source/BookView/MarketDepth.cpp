@@ -52,8 +52,8 @@ namespace {
       const std::string& mpid, const Money& price) {
     auto i = std::find_if(quotes.begin(), quotes.end(),
       [&] (const BookQuote& quote) {
-      return mpid == quote.m_mpid && price == quote.m_quote.m_price;
-    });
+        return mpid == quote.m_mpid && price == quote.m_quote.m_price;
+      });
     if(i == quotes.end()) {
       return -1;
     }
@@ -183,7 +183,8 @@ void MarketDepth::on_side_current(const optional<TableView::Index>& current,
       m_ask_table_view, m_bid_table_view, m_bid_current_connection,
       m_model->get_asks());
   }();
-  if(current && last_side_current_row && current->m_row == last_side_current_row) {
+  if(current && last_side_current_row &&
+      current->m_row == last_side_current_row) {
     return;
   }
   if(current) {
