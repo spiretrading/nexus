@@ -13,10 +13,10 @@ namespace Spire {
   using LocalBboQuoteModel = LocalValueModel<Nexus::BboQuote>;
 
   /** A ValueModel over a SecurityTechnicals. */
-  using TechnicalsValueModel = ValueModel<Nexus::SecurityTechnicals>;
+  using SecurityTechnicalsValueModel = ValueModel<Nexus::SecurityTechnicals>;
 
   /** A LocalValueModel over a SecurityTechnicals. */
-  using LocalTechnicalsValueModel = LocalValueModel<Nexus::SecurityTechnicals>;
+  using LocalSecurityTechnicalsValueModel = LocalValueModel<Nexus::SecurityTechnicals>;
 
   /** The model for the book view. */
   class BookViewModel {
@@ -50,9 +50,11 @@ namespace Spire {
       /** Returns a list of orders with the ask side. */
       const std::shared_ptr<ListModel<UserOrder>>& get_ask_orders() const;
 
+      /** Returns the Bbo quote. */
       const std::shared_ptr<BboQuoteModel>& get_bbo_quote() const;
 
-      const std::shared_ptr<TechnicalsValueModel>& get_technicals() const;
+      /** Returns the technical details about a Security. */
+      const std::shared_ptr<SecurityTechnicalsValueModel>& get_technicals() const;
 
     private:
       std::shared_ptr<ListModel<Nexus::BookQuote>> m_bids;
@@ -60,7 +62,7 @@ namespace Spire {
       std::shared_ptr<ListModel<UserOrder>> m_bid_orders;
       std::shared_ptr<ListModel<UserOrder>> m_ask_orders;
       std::shared_ptr<BboQuoteModel> m_bbo;
-      std::shared_ptr<TechnicalsValueModel> m_technicals;
+      std::shared_ptr<SecurityTechnicalsValueModel> m_technicals;
   };
 }
 

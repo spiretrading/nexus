@@ -37,9 +37,10 @@ using namespace boost;
 using namespace boost::posix_time;
 using namespace boost::signals2;
 using namespace Nexus;
-using namespace Nexus::OrderExecutionService;
 using namespace Spire;
 using namespace Spire::Styles;
+
+using OrderSatusBox = EnumBox<OrderStatus>;
 
 std::time_t to_time_t_milliseconds(ptime pt) {
   return (pt - ptime(gregorian::date(1970, 1, 1))).total_milliseconds();
@@ -116,8 +117,6 @@ OrderStatus make_order_status(int index) {
   return statuses[index % statuses.size()];
 }
 
-using OrderSatusBox = EnumBox<OrderStatus>;
-
 OrderSatusBox* make_order_status_box(QWidget* parent = nullptr) {
   auto settings = OrderSatusBox::Settings();
   auto cases = std::make_shared<ArrayListModel<OrderStatus>>();
@@ -148,13 +147,14 @@ QuantityBox* make_quantity_box(M model, U field) {
 struct BookViewTester : QWidget {
   std::shared_ptr<BookViewModel> m_model;
   LocalTechnicalsModel m_technicals_model;
+  std::shared_ptr<OptionalIntegerModel> m_quote_update_period;
   Button* m_submit_order_button;
   QTimer m_quote_timer;
   QTimer m_order_timer;
   int m_update_count;
 
-  BookViewTester(std::shared_ptr<TechnicalsValueModel> technicals,
-    std::shared_ptr<ValueModel<BboQuote>> bbo_quote,
+  BookViewTester(std::shared_ptr<SecurityTechnicalsValueModel> technicals,
+    /*std::shared_ptr<ValueModel<BboQuote>> bbo_quote, */
     //std::shared_ptr<QuantityModel> default_bid_quantity,
     //std::shared_ptr<QuantityModel> default_ask_quantity,
     std::shared_ptr<BookViewModel> model,
@@ -162,43 +162,44 @@ struct BookViewTester : QWidget {
     : QWidget(parent),
       m_model(std::move(model)),
       m_technicals_model(Security()),
+      m_quote_update_period(std::make_shared<LocalOptionalIntegerModel>(1000)),
       m_quote_timer(this),
       m_order_timer(this),
       m_update_count(0) {
-    auto left_layout = new QVBoxLayout();
-    auto technicals_group_box = new QGroupBox(tr("Technicals"));
-    auto technicals_layout = new QFormLayout(technicals_group_box);
-    technicals_layout->addRow(tr("High:"),
-      make_money_box(technicals, &SecurityTechnicals::m_high));
-    technicals_layout->addRow(tr("Low:"),
-      make_money_box(technicals, &SecurityTechnicals::m_low));
-    technicals_layout->addRow(tr("Open:"),
-      make_money_box(technicals, &SecurityTechnicals::m_open));
-    technicals_layout->addRow(tr("Close:"),
-      make_money_box(technicals, &SecurityTechnicals::m_close));
-    technicals_layout->addRow(tr("Volume:"),
-      make_quantity_box(technicals, &SecurityTechnicals::m_volume));
-    //technicals_layout->addRow(tr("Default Bid Quantity:"), new QuantityBox(
-    //  std::make_shared<OptionalScalarValueModelDecorator<Quantity>>(
-    //    default_bid_quantity)));
-    //technicals_layout->addRow(tr("Default Ask Quantity:"), new QuantityBox(
-    //  std::make_shared<OptionalScalarValueModelDecorator<Quantity>>(
-    //    default_ask_quantity)));
-    left_layout->addWidget(technicals_group_box);
-    auto bbo_bid = make_field_value_model(bbo_quote, &BboQuote::m_bid);
-    auto bbo_ask = make_field_value_model(bbo_quote, &BboQuote::m_ask);
-    auto bbo_quote_group_box = new QGroupBox(tr("BBO Quote"));
-    auto bbo_quote_layout = new QFormLayout(bbo_quote_group_box);
-    bbo_quote_layout->addRow(tr("Bid Price:"),
-      make_money_box(bbo_bid, &Quote::m_price));
-    bbo_quote_layout->addRow(tr("Bid Quantity:"),
-      make_quantity_box(bbo_bid, &Quote::m_size));
-    bbo_quote_layout->addRow(tr("Ask Price:"),
-      make_money_box(bbo_ask, &Quote::m_price));
-    bbo_quote_layout->addRow(tr("Ask Quantity:"),
-      make_quantity_box(bbo_ask, &Quote::m_size));
-    left_layout->addWidget(bbo_quote_group_box);
-    left_layout->addStretch(1);
+    //auto left_layout = new QVBoxLayout();
+    //auto technicals_group_box = new QGroupBox(tr("Technicals"));
+    //auto technicals_layout = new QFormLayout(technicals_group_box);
+    //technicals_layout->addRow(tr("High:"),
+    //  make_money_box(technicals, &SecurityTechnicals::m_high));
+    //technicals_layout->addRow(tr("Low:"),
+    //  make_money_box(technicals, &SecurityTechnicals::m_low));
+    //technicals_layout->addRow(tr("Open:"),
+    //  make_money_box(technicals, &SecurityTechnicals::m_open));
+    //technicals_layout->addRow(tr("Close:"),
+    //  make_money_box(technicals, &SecurityTechnicals::m_close));
+    //technicals_layout->addRow(tr("Volume:"),
+    //  make_quantity_box(technicals, &SecurityTechnicals::m_volume));
+    ////technicals_layout->addRow(tr("Default Bid Quantity:"), new QuantityBox(
+    ////  std::make_shared<OptionalScalarValueModelDecorator<Quantity>>(
+    ////    default_bid_quantity)));
+    ////technicals_layout->addRow(tr("Default Ask Quantity:"), new QuantityBox(
+    ////  std::make_shared<OptionalScalarValueModelDecorator<Quantity>>(
+    ////    default_ask_quantity)));
+    //left_layout->addWidget(technicals_group_box);
+    //auto bbo_bid = make_field_value_model(bbo_quote, &BboQuote::m_bid);
+    //auto bbo_ask = make_field_value_model(bbo_quote, &BboQuote::m_ask);
+    //auto bbo_quote_group_box = new QGroupBox(tr("BBO Quote"));
+    //auto bbo_quote_layout = new QFormLayout(bbo_quote_group_box);
+    //bbo_quote_layout->addRow(tr("Bid Price:"),
+    //  make_money_box(bbo_bid, &Quote::m_price));
+    //bbo_quote_layout->addRow(tr("Bid Quantity:"),
+    //  make_quantity_box(bbo_bid, &Quote::m_size));
+    //bbo_quote_layout->addRow(tr("Ask Price:"),
+    //  make_money_box(bbo_ask, &Quote::m_price));
+    //bbo_quote_layout->addRow(tr("Ask Quantity:"),
+    //  make_quantity_box(bbo_ask, &Quote::m_size));
+    //left_layout->addWidget(bbo_quote_group_box);
+    //left_layout->addStretch(1);
     auto right_layout = new QVBoxLayout();
     auto book_quote_group_box = new QGroupBox(tr("Market Quote"));
     auto book_quote_layout = new QVBoxLayout(book_quote_group_box);
@@ -275,12 +276,11 @@ struct BookViewTester : QWidget {
     right_layout->addWidget(order_status_group_box);
     right_layout->addStretch(1);
     auto layout = new QHBoxLayout(this);
-    layout->addLayout(left_layout);
+    //layout->addLayout(left_layout);
     layout->addLayout(right_layout);
     setFixedWidth(scale_width(550));
     connect(&m_quote_timer, &QTimer::timeout,
       std::bind_front(&BookViewTester::on_quote_timeout, this));
-    m_quote_timer.start(*quote_update_period->get());
     m_technicals_model.connect_high_slot([=] (Nexus::Money value) {
       auto t = technicals->get();
       t.m_high = value;
@@ -313,6 +313,10 @@ struct BookViewTester : QWidget {
       QApplication::quit();
     }
     return QWidget::eventFilter(object, event);
+  }
+
+  void start_populate() {
+    m_quote_timer.start(*m_quote_update_period->get());
   }
 
   int find_book_quote(const ListModel<BookQuote>& quotes,
@@ -488,11 +492,12 @@ struct BookViewTester : QWidget {
   }
 };
 
-std::shared_ptr<BookViewModel> model_builder(std::shared_ptr<BookViewModel> model, const Security&) {
+std::shared_ptr<BookViewModel> model_builder(std::shared_ptr<BookViewModel> model, BookViewTester* tester, const Security&) {
   clear(*model->get_bids());
   clear(*model->get_asks());
   clear(*model->get_bid_orders());
   clear(*model->get_ask_orders());
+  tester->start_populate();
   return model;
 }
 
@@ -502,7 +507,7 @@ int main(int argc, char** argv) {
   application.setApplicationName(QObject::tr("BookView Ui Tester"));
   application.setQuitOnLastWindowClosed(true);
   initialize_resources();
-  auto technicals = std::make_shared<LocalTechnicalsValueModel>(
+  auto technicals = std::make_shared<LocalSecurityTechnicalsValueModel>(
     SecurityTechnicals(1100, Money(144.4), Money(142.11), Money(144.25),
       Money(144.99)));
   auto bbo_quote = std::make_shared<LocalValueModel<BboQuote>>(
@@ -529,12 +534,13 @@ int main(int argc, char** argv) {
   //widget.installEventFilter(&tester);
   //widget.show();
   //widget.resize(scale(206, 417));
-  auto window = BookViewWindow(populate_security_query_model(), key_bindings,
-    std::make_shared<BookViewPropertiesWindowFactory>(key_bindings, GetDefaultMarketDatabase()),
-    GetDefaultMarketDatabase(), std::bind_front(&model_builder, book_views));
-  window.show();
-  auto tester = BookViewTester(book_views->get_technicals(), book_views->get_bbo_quote(), /*default_bid_quantity,
+  auto tester = BookViewTester(book_views->get_technicals(), /*book_views->get_bbo_quote(), default_bid_quantity,
     default_ask_quantity, */book_views);
+  auto markets = GetDefaultMarketDatabase();
+  auto window = BookViewWindow(populate_security_query_model(), key_bindings,
+    markets, std::make_shared<BookViewPropertiesWindowFactory>(),
+    std::bind_front(&model_builder, book_views, &tester));
+  window.show();
   tester.show();
   tester.move(
     tester.pos().x() + window.frameGeometry().width() + scale_width(100),

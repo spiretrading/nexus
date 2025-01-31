@@ -17,13 +17,13 @@ namespace Spire {
        * @param default_bid_quantity The default ask quantity to display.
        * @param parent The parent widget.
        */
-      TechnicalsPanel(std::shared_ptr<TechnicalsValueModel> technicals,
+      TechnicalsPanel(std::shared_ptr<SecurityTechnicalsValueModel> technicals,
         std::shared_ptr<QuantityModel> default_bid_quantity,
         std::shared_ptr<QuantityModel> default_ask_quantity,
         QWidget* parent = nullptr);
 
       /** Returns the technicals value model. */
-      const std::shared_ptr<TechnicalsValueModel>& get_technicals() const;
+      const std::shared_ptr<SecurityTechnicalsValueModel>& get_technicals() const;
 
       /** Returns the default bid quantity value model. */
       const std::shared_ptr<QuantityModel>& get_default_bid_quantity() const;
@@ -34,7 +34,7 @@ namespace Spire {
       QSize minimumSizeHint() const override;
 
     private:
-      std::shared_ptr<TechnicalsValueModel> m_technicals;
+      std::shared_ptr<SecurityTechnicalsValueModel> m_technicals;
       std::shared_ptr<QuantityModel> m_bid_quantity;
       std::shared_ptr<QuantityModel> m_ask_quantity;
       AdaptiveBox* m_adaptive_box;

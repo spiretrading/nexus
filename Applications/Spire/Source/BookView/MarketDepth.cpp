@@ -61,7 +61,7 @@ namespace {
 }
 
 MarketDepth::MarketDepth(std::shared_ptr<BookViewModel> model,
-    std::shared_ptr<ValueModel<BboQuote>> bbo_quote,
+    std::shared_ptr<BboQuoteModel> bbo_quote,
     std::shared_ptr<BookViewPropertiesModel> properties,
     const MarketDatabase& markets, QWidget* parent)
     : QWidget(parent),

@@ -25,7 +25,7 @@ namespace Spire {
        * @param parent The parent widget.
        */
       MarketDepth(std::shared_ptr<BookViewModel> model,
-        std::shared_ptr<ValueModel<Nexus::BboQuote>> bbo_quote,
+        std::shared_ptr<BboQuoteModel> bbo_quote,
         std::shared_ptr<BookViewPropertiesModel> properties,
         const Nexus::MarketDatabase& markets, QWidget* parent = nullptr);
 
