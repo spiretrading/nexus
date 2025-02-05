@@ -9,7 +9,7 @@ target_compile_definitions(Python
   PRIVATE ASPEN_USE_DLL BEAM_USE_DLL NEXUS_BUILD_DLL BEAM_ENABLE_STACK_PRINT)
 if(MSVC)
   target_compile_definitions(Python PRIVATE HAVE_SNPRINTF)
-  set_target_properties(Python PROPERTIES SUFFIX ".pyd" LINK_FLAGS /SAFESEH:NO)
+  set_target_properties(Python PROPERTIES SUFFIX ".pyd")
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
   target_compile_options(Python PRIVATE -fvisibility=hidden)
 endif()

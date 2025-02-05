@@ -1,5 +1,5 @@
 find_package(Qt5Widgets REQUIRED)
-file(GLOB data_types_header_files
+file(GLOB_RECURSE data_types_header_files
   ${SPIRE_INCLUDE_PATH}/Spire/StyleParser/DataTypes/*.hpp)
 file(GLOB
   data_types_source_files ${SPIRE_SOURCE_PATH}/StyleParser/DataTypes/*.cpp)
@@ -17,8 +17,9 @@ install(TARGETS StyleParser CONFIGURATIONS Debug
   DESTINATION ${SPIRE_LIBRARY_INSTALL_DIRECTORY}/Debug)
 install(TARGETS StyleParser CONFIGURATIONS Release
   DESTINATION ${SPIRE_LIBRARY_INSTALL_DIRECTORY}/Release)
-file(GLOB test_header_files ${SPIRE_INCLUDE_PATH}/Spire/StyleParserTests/*.hpp)
-file(GLOB test_source_files ${SPIRE_SOURCE_PATH}/StyleParserTests/*.cpp)
+file(GLOB_RECURSE
+  test_header_files ${SPIRE_INCLUDE_PATH}/Spire/StyleParserTests/*.hpp)
+file(GLOB_RECURSE test_source_files ${SPIRE_SOURCE_PATH}/StyleParserTests/*.cpp)
 add_executable(StyleParserTests ${test_header_files} ${test_source_files})
 set_source_files_properties(
   ${test_header_files} PROPERTIES HEADER_FILE_ONLY TRUE)

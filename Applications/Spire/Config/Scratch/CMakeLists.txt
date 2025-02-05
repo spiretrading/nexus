@@ -1,6 +1,6 @@
 find_package(Qt5Widgets REQUIRED)
-file(GLOB header_files ../../Include/Spire/Scratch/*.hpp)
-file(GLOB source_files ../../Source/Scratch/*.cpp)
+file(GLOB_RECURSE header_files ../../Include/Spire/Scratch/*.hpp)
+file(GLOB_RECURSE source_files ../../Source/Scratch/*.cpp)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 if(WIN32)
   set(app_type WIN32)

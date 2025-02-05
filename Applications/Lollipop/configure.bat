@@ -51,15 +51,16 @@ IF NOT EXIST CMakeFiles (
     SET TIMESTAMP_COMMAND=powershell -Command "& { " ^
       "$timestampFileTime = " ^
       "  (Get-Item 'CMakeFiles\\timestamp.txt').LastWriteTime;" ^
-      "$filesToCheck = @('.\\CMakeLists.txt');" ^
+      "$filesToCheck = @((Get-Item '.\\CMakeLists.txt'));" ^
+      "$filesToCheck += Get-ChildItem -Path '.\\Config\\*.cmake';" ^
+      "$filesToCheck += Get-ChildItem -Path '.\\Config\\' -Filter " ^
+      "  'CMakeLists.txt' -Recurse;" ^
       "foreach($file in $filesToCheck) {" ^
-      "  if(Test-Path $file) {" ^
-      "    $fileTime = (Get-Item $file).LastWriteTime;" ^
-      "    if($fileTime -ge $timestampFileTime) {" ^
-      "      Write-Output '1';" ^
-      "      Exit;" ^
-      "    }" ^
-      "  } " ^
+      "  $fileTime = $file.LastWriteTime;" ^
+      "  if($fileTime -ge $timestampFileTime) {" ^
+      "    Write-Output '1';" ^
+      "    Exit;" ^
+      "  }" ^
       "};" ^
       "Exit;" ^
     "}"

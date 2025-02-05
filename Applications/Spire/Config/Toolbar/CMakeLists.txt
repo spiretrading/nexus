@@ -1,6 +1,6 @@
 find_package(Qt5Widgets REQUIRED)
-file(GLOB header_files ${SPIRE_INCLUDE_PATH}/Spire/Toolbar/*.hpp)
-file(GLOB source_files ${SPIRE_SOURCE_PATH}/Toolbar/*.cpp)
+file(GLOB_RECURSE header_files ${SPIRE_INCLUDE_PATH}/Spire/Toolbar/*.hpp)
+file(GLOB_RECURSE source_files ${SPIRE_SOURCE_PATH}/Toolbar/*.cpp)
 find_cpp_qobject(qobject_source_files ${header_files})
 qt5_wrap_cpp(generated_source_files ${qobject_source_files}
   OPTIONS -DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED)
@@ -14,8 +14,8 @@ install(TARGETS Toolbar CONFIGURATIONS Debug
   DESTINATION ${SPIRE_LIBRARY_INSTALL_DIRECTORY}/Debug)
 install(TARGETS Toolbar CONFIGURATIONS Release
   DESTINATION ${SPIRE_LIBRARY_INSTALL_DIRECTORY}/Release)
-file(GLOB header_files ../../Include/Spire/ToolbarUiTester/*.hpp)
-file(GLOB source_files ../../Source/ToolbarUiTester/*.cpp)
+file(GLOB_RECURSE header_files ../../Include/Spire/ToolbarUiTester/*.hpp)
+file(GLOB_RECURSE source_files ../../Source/ToolbarUiTester/*.cpp)
 if(WIN32)
   set(app_type WIN32)
 elseif(APPLE)

@@ -1,5 +1,5 @@
-file(GLOB header_files ../../Include/Spire/Styles/*.hpp)
-file(GLOB source_files ../../Source/Styles/*.cpp)
+file(GLOB_RECURSE header_files ../../Include/Spire/Styles/*.hpp)
+file(GLOB_RECURSE source_files ../../Source/Styles/*.cpp)
 source_group("Header Files" FILES ${header_files})
 source_group("Source Files" FILES ${source_files})
 add_library(Styles ${header_files} ${source_files})
@@ -10,8 +10,8 @@ install(TARGETS Library CONFIGURATIONS Debug
   DESTINATION ${SPIRE_LIBRARY_INSTALL_DIRECTORY}/Debug)
 install(TARGETS Library CONFIGURATIONS Release
   DESTINATION ${SPIRE_LIBRARY_INSTALL_DIRECTORY}/Release)
-file(GLOB test_header_files ../../Include/Spire/StylesTester/*.hpp)
-file(GLOB test_source_files ../../Source/StylesTester/*.cpp)
+file(GLOB_RECURSE test_header_files ../../Include/Spire/StylesTester/*.hpp)
+file(GLOB_RECURSE test_source_files ../../Source/StylesTester/*.cpp)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 add_executable(StylesTester ${test_header_files} ${test_source_files})
 set_source_files_properties(

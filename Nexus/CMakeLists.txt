@@ -52,7 +52,7 @@ if(MSVC)
     $<$<CONFIG:Release>:/GL> /MP /WX)
   add_compile_definitions(_CRT_SECURE_NO_DEPRECATE NOMINMAX
     _SCL_SECURE_NO_WARNINGS WIN32_LEAN_AND_MEAN _WIN32_WINNT=0x0501)
-  add_link_options($<$<CONFIG:Release>:/LTCG> /SAFESEH:NO)
+  add_link_options($<$<CONFIG:Release>:/LTCG>)
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
   add_compile_options(-g $<$<CONFIG:Release>:-DNDEBUG -O2>)
   if(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
