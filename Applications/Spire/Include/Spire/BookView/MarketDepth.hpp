@@ -32,7 +32,7 @@ namespace Spire {
       /** Returns the currently selected book quote. */
       const std::shared_ptr<BookQuoteModel>& get_selected_book_quote() const;
 
-    private:
+    protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
       void focusInEvent(QFocusEvent* event) override;
 
