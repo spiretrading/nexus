@@ -12,27 +12,27 @@ using namespace boost::date_time;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Spire;
-using namespace std;
 
 namespace {
-  string GetDisplayText(const Range& value) {
+  std::string GetDisplayText(const Range& value) {
     if(value == Range::RealTime()) {
       return "Real-Time";
     }
-    string startingPoint;
-    if(value.GetStart() == Queries::Sequence::Present()) {
-      startingPoint = "Present";
-    } else {
-      startingPoint = to_simple_string(ToLocalTime(boost::get<ptime>(
-        value.GetStart())));
-    }
-    string endingPoint;
-    if(value.GetStart() == Queries::Sequence::Present()) {
-      endingPoint = "Present";
-    } else {
-      endingPoint = to_simple_string(ToLocalTime(boost::get<ptime>(
-        value.GetEnd())));
-    }
+    auto startingPoint = [&] {
+      if(value.GetStart() == Queries::Sequence::Present()) {
+        return std::string("Present");
+      } else {
+        return to_simple_string(
+          ToLocalTime(boost::get<ptime>(value.GetStart())));
+      }
+    }();
+    auto endingPoint = [&] {
+      if(value.GetStart() == Queries::Sequence::Present()) {
+        return std::string("Present");
+      } else {
+        return to_simple_string(ToLocalTime(boost::get<ptime>(value.GetEnd())));
+      }
+    }();
     return startingPoint + " -> " + endingPoint;
   }
 }
@@ -46,7 +46,8 @@ TimeRangeNode::TimeRangeNode(const Range& value)
   SetText(GetDisplayText(GetValue()));
 }
 
-unique_ptr<TimeRangeNode> TimeRangeNode::SetValue(const Range& value) const {
+std::unique_ptr<TimeRangeNode>
+    TimeRangeNode::SetValue(const Range& value) const {
   auto clone = CanvasNode::Clone(*this);
   clone->SetInternalValue(value);
   clone->SetText(GetDisplayText(clone->GetValue()));
@@ -57,10 +58,10 @@ void TimeRangeNode::Apply(CanvasNodeVisitor& visitor) const {
   visitor.Visit(*this);
 }
 
-unique_ptr<CanvasNode> TimeRangeNode::Clone() const {
-  return make_unique<TimeRangeNode>(*this);
+std::unique_ptr<CanvasNode> TimeRangeNode::Clone() const {
+  return std::make_unique<TimeRangeNode>(*this);
 }
 
-unique_ptr<CanvasNode> TimeRangeNode::Reset() const {
-  return make_unique<TimeRangeNode>();
+std::unique_ptr<CanvasNode> TimeRangeNode::Reset() const {
+  return std::make_unique<TimeRangeNode>();
 }

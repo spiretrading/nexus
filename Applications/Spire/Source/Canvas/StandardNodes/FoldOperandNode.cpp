@@ -8,7 +8,6 @@ using namespace Beam;
 using namespace Beam::Serialization;
 using namespace boost;
 using namespace Spire;
-using namespace std;
 
 FoldOperandNode::FoldOperandNode(Side side)
     : m_side(side) {
@@ -16,22 +15,23 @@ FoldOperandNode::FoldOperandNode(Side side)
   SetText("Fold Operand");
 }
 
-unique_ptr<CanvasNode> FoldOperandNode::Convert(const CanvasType& type) const {
+std::unique_ptr<CanvasNode>
+    FoldOperandNode::Convert(const CanvasType& type) const {
   if(type.GetCompatibility(OrderReferenceType::GetInstance()) ==
       CanvasType::Compatibility::EQUAL) {
     BOOST_THROW_EXCEPTION(CanvasTypeCompatibilityException());
   }
   auto clone = CanvasNode::Clone(*this);
   clone->SetType(type);
-  return std::move(clone);
+  return clone;
 }
 
 void FoldOperandNode::Apply(CanvasNodeVisitor& visitor) const {
   visitor.Visit(*this);
 }
 
-unique_ptr<CanvasNode> FoldOperandNode::Clone() const {
-  return make_unique<FoldOperandNode>(*this);
+std::unique_ptr<CanvasNode> FoldOperandNode::Clone() const {
+  return std::make_unique<FoldOperandNode>(*this);
 }
 
 FoldOperandNode::FoldOperandNode(ReceiveBuilder) {}
