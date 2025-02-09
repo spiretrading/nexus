@@ -11,7 +11,7 @@ using namespace Spire;
 BlotterTaskMonitorNode::BlotterTaskMonitorNode() {
   SetText("Task Monitor");
   SetType(UnionType::GetAnyType());
-  AddChild("monitor", make_unique<NoneNode>());
+  AddChild("monitor", std::make_unique<NoneNode>());
 }
 
 std::unique_ptr<CanvasNode> BlotterTaskMonitorNode::Replace(
@@ -28,7 +28,7 @@ void BlotterTaskMonitorNode::Apply(CanvasNodeVisitor& visitor) const {
 }
 
 std::unique_ptr<CanvasNode> BlotterTaskMonitorNode::Clone() const {
-  return make_unique<BlotterTaskMonitorNode>(*this);
+  return std::make_unique<BlotterTaskMonitorNode>(*this);
 }
 
 BlotterTaskMonitorNode::BlotterTaskMonitorNode(ReceiveBuilder) {}
