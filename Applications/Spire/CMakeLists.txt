@@ -65,16 +65,7 @@ if(MSVC)
   set(PCH_CPP_FILE "${CMAKE_BINARY_DIR}/Pch.cpp")
   file(WRITE "${PCH_CPP_FILE}" "#include \"Pch.hpp\"\n")
   add_library(Pch OBJECT Pch.cpp)
-  target_compile_options(Pch PRIVATE "/YcPch.hpp"
-    "/Fp${SPIRE_LIBRARY_INSTALL_DIRECTORY}/$<CONFIG>/Pch.pch")
-  add_custom_command(
-    OUTPUT "${SPIRE_LIBRARY_INSTALL_DIRECTORY}/$<CONFIG>/Pch.pch"
-    COMMAND ${CMAKE_COMMAND} -E touch "${SPIRE_LIBRARY_INSTALL_DIRECTORY}/$<CONFIG>/Pch.pch"
-    DEPENDS $<TARGET_OBJECTS:Pch>
-    BYPRODUCTS "${SPIRE_LIBRARY_INSTALL_DIRECTORY}/$<CONFIG>/Pch.pch"
-  )
-  add_custom_target(MarkPch ALL DEPENDS "${SPIRE_LIBRARY_INSTALL_DIRECTORY}/$<CONFIG>/Pch.pch")
-
+  target_precompile_headers(Pch PUBLIC Pch.hpp)
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
   add_compile_options(-g $<$<CONFIG:Release>:-DNDEBUG>)
   if(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
@@ -131,10 +122,7 @@ add_subdirectory(Config/Utilities)
 
 if(MSVC)
   function(use_pch target)
-    target_sources(${target} PRIVATE $<TARGET_OBJECTS:Pch>)
-    target_compile_options(${target} PRIVATE "/FIPch.hpp" "/YuPch.hpp"
-      "/Fp${SPIRE_LIBRARY_INSTALL_DIRECTORY}/$<CONFIG>/Pch.pch")
-    add_dependencies(${target} MarkPch)
+    target_precompile_headers(${target} REUSE_FROM Pch)
   endfunction()
   file(GLOB configs RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}/Config" "Config/*")
   foreach(config ${configs})
