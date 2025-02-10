@@ -48,6 +48,7 @@ include_directories(SYSTEM ${QT_GUI_INCLUDE_PATH})
 include_directories(SYSTEM ${QT_SVG_INCLUDE_PATH})
 include_directories(SYSTEM ${QT_WIDGETS_INCLUDE_PATH})
 include_directories(SYSTEM ${TCLAP_INCLUDE_PATH})
+include_directories(SYSTEM ${VIPER_INCLUDE_PATH})
 include_directories(SYSTEM ${YAML_INCLUDE_PATH})
 include_directories(SYSTEM ${ZLIB_INCLUDE_PATH})
 include_directories(${PROJECT_BINARY_DIR})
@@ -61,6 +62,19 @@ if(MSVC)
   add_compile_definitions(_CRT_SECURE_NO_DEPRECATE NOMINMAX
     _SCL_SECURE_NO_WARNINGS WIN32_LEAN_AND_MEAN _WIN32_WINNT=0x0600)
   add_link_options($<$<CONFIG:Release>:/LTCG>)
+  set(PCH_CPP_FILE "${CMAKE_BINARY_DIR}/Pch.cpp")
+  file(WRITE "${PCH_CPP_FILE}" "#include \"Pch.hpp\"\n")
+  add_library(Pch OBJECT Pch.cpp)
+  target_compile_options(Pch PRIVATE "/YcPch.hpp"
+    "/Fp${SPIRE_LIBRARY_INSTALL_DIRECTORY}/$<CONFIG>/Pch.pch")
+  add_custom_command(
+    OUTPUT "${SPIRE_LIBRARY_INSTALL_DIRECTORY}/$<CONFIG>/Pch.pch"
+    COMMAND ${CMAKE_COMMAND} -E touch "${SPIRE_LIBRARY_INSTALL_DIRECTORY}/$<CONFIG>/Pch.pch"
+    DEPENDS $<TARGET_OBJECTS:Pch>
+    BYPRODUCTS "${SPIRE_LIBRARY_INSTALL_DIRECTORY}/$<CONFIG>/Pch.pch"
+  )
+  add_custom_target(MarkPch ALL DEPENDS "${SPIRE_LIBRARY_INSTALL_DIRECTORY}/$<CONFIG>/Pch.pch")
+
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
   add_compile_options(-g $<$<CONFIG:Release>:-DNDEBUG>)
   if(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
@@ -114,3 +128,19 @@ add_subdirectory(Config/TimeAndSales)
 add_subdirectory(Config/Toolbar)
 add_subdirectory(Config/UiViewer)
 add_subdirectory(Config/Utilities)
+
+if(MSVC)
+  function(use_pch target)
+    target_sources(${target} PRIVATE $<TARGET_OBJECTS:Pch>)
+    target_compile_options(${target} PRIVATE "/FIPch.hpp" "/YuPch.hpp"
+      "/Fp${SPIRE_LIBRARY_INSTALL_DIRECTORY}/$<CONFIG>/Pch.pch")
+    add_dependencies(${target} MarkPch)
+  endfunction()
+  file(GLOB configs RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}/Config" "Config/*")
+  foreach(config ${configs})
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Config/${config}/CMakeLists.txt" AND
+        TARGET ${config})
+      use_pch(${config})
+    endif()
+  endforeach()
+endif()
