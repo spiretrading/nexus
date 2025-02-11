@@ -128,6 +128,10 @@ target_link_libraries(CanvasTests Async Dashboard Charting PortfolioViewer
   optimized ${CRYPTOPP_LIBRARY_OPTIMIZED_PATH}
   debug ${LUA_LIBRARY_DEBUG_PATH}
   optimized ${LUA_LIBRARY_OPTIMIZED_PATH}
+  debug ${OPEN_SSL_LIBRARY_DEBUG_PATH}
+  optimized ${OPEN_SSL_LIBRARY_OPTIMIZED_PATH}
+  debug ${OPEN_SSL_BASE_LIBRARY_DEBUG_PATH}
+  optimized ${OPEN_SSL_BASE_LIBRARY_OPTIMIZED_PATH}
   debug ${YAML_LIBRARY_DEBUG_PATH}
   optimized ${YAML_LIBRARY_OPTIMIZED_PATH}
   debug ${QT_CORE_LIBRARY_DEBUG_PATH}
