@@ -97,8 +97,8 @@ if(WIN32)
     optimized ${QT_WINDOWS_ACCESSIBILITY_LIBRARY_OPTIMIZED_PATH}
     debug ${QT_WINDOWS_LIBRARY_DEBUG_PATH}
     optimized ${QT_WINDOWS_LIBRARY_OPTIMIZED_PATH}
-    dwmapi.lib imm32.lib netapi32.lib opengl32.lib Userenv.lib version.lib
-    winmm.lib ws2_32.lib Wtsapi32.lib)
+    Crypt32.lib dwmapi.lib imm32.lib netapi32.lib opengl32.lib Userenv.lib
+    version.lib winmm.lib ws2_32.lib Wtsapi32.lib)
 endif()
 if(UNIX)
   target_link_libraries(SignInUiTester

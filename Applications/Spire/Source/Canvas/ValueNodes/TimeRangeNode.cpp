@@ -19,7 +19,7 @@ namespace {
       return "Real-Time";
     }
     auto startingPoint = [&] {
-      if(value.GetStart() == Queries::Sequence::Present()) {
+      if(value.GetStart() == Beam::Queries::Sequence::Present()) {
         return std::string("Present");
       } else {
         return to_simple_string(
@@ -27,7 +27,7 @@ namespace {
       }
     }();
     auto endingPoint = [&] {
-      if(value.GetStart() == Queries::Sequence::Present()) {
+      if(value.GetStart() == Beam::Queries::Sequence::Present()) {
         return std::string("Present");
       } else {
         return to_simple_string(ToLocalTime(boost::get<ptime>(value.GetEnd())));
