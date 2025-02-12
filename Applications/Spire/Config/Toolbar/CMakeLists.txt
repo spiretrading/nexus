@@ -1,6 +1,6 @@
 find_package(Qt5Widgets REQUIRED)
-file(GLOB header_files ${SPIRE_INCLUDE_PATH}/Spire/Toolbar/*.hpp)
-file(GLOB source_files ${SPIRE_SOURCE_PATH}/Toolbar/*.cpp)
+file(GLOB_RECURSE header_files ${SPIRE_INCLUDE_PATH}/Spire/Toolbar/*.hpp)
+file(GLOB_RECURSE source_files ${SPIRE_SOURCE_PATH}/Toolbar/*.cpp)
 find_cpp_qobject(qobject_source_files ${header_files})
 qt5_wrap_cpp(generated_source_files ${qobject_source_files}
   OPTIONS -DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED)
@@ -14,8 +14,8 @@ install(TARGETS Toolbar CONFIGURATIONS Debug
   DESTINATION ${SPIRE_LIBRARY_INSTALL_DIRECTORY}/Debug)
 install(TARGETS Toolbar CONFIGURATIONS Release
   DESTINATION ${SPIRE_LIBRARY_INSTALL_DIRECTORY}/Release)
-file(GLOB header_files ../../Include/Spire/ToolbarUiTester/*.hpp)
-file(GLOB source_files ../../Source/ToolbarUiTester/*.cpp)
+file(GLOB_RECURSE header_files ../../Include/Spire/ToolbarUiTester/*.hpp)
+file(GLOB_RECURSE source_files ../../Source/ToolbarUiTester/*.cpp)
 if(WIN32)
   set(app_type WIN32)
 elseif(APPLE)
@@ -100,8 +100,8 @@ if(WIN32)
     optimized ${QT_WINDOWS_ACCESSIBILITY_LIBRARY_OPTIMIZED_PATH}
     debug ${QT_WINDOWS_LIBRARY_DEBUG_PATH}
     optimized ${QT_WINDOWS_LIBRARY_OPTIMIZED_PATH}
-    dwmapi.lib imm32.lib netapi32.lib opengl32.lib Userenv.lib version.lib
-    winmm.lib ws2_32.lib Wtsapi32.lib)
+    Crypt32.lib dwmapi.lib imm32.lib netapi32.lib opengl32.lib Userenv.lib
+    version.lib winmm.lib ws2_32.lib Wtsapi32.lib)
 endif()
 if(UNIX)
   target_link_libraries(ToolbarUiTester
