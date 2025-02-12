@@ -16,7 +16,8 @@ namespace Spire {
   using SecurityTechnicalsValueModel = ValueModel<Nexus::SecurityTechnicals>;
 
   /** A LocalValueModel over a SecurityTechnicals. */
-  using LocalSecurityTechnicalsValueModel = LocalValueModel<Nexus::SecurityTechnicals>;
+  using LocalSecurityTechnicalsValueModel =
+    LocalValueModel<Nexus::SecurityTechnicals>;
 
   /** The model for the book view. */
   class BookViewModel {
@@ -30,6 +31,9 @@ namespace Spire {
 
         /** The order price. */
         Nexus::Money m_price;
+
+        /** The order size. */
+        Nexus::Quantity m_size;
 
         /** The status of the user order. */
         Nexus::OrderStatus m_status;

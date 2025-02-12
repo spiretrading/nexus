@@ -22,10 +22,8 @@ const std::shared_ptr<BookViewPropertiesModel>&
 BookViewPropertiesWindow* BookViewPropertiesWindowFactory::make(
     std::shared_ptr<KeyBindingsModel> key_bindings,
     const Security& security, const MarketDatabase& markets) {
+  m_security->set(security);
   if(m_properties_window) {
-    if(m_security->get() != security) {
-      m_security->set(security);
-    }
     return m_properties_window.get();
   }
   m_properties_window = std::make_unique<BookViewPropertiesWindow>(
