@@ -115,40 +115,5 @@ CALL !DIRECTORY!version.bat
 IF "!RUN_CMAKE!" == "1" (
   cmake -S !DIRECTORY! -DD=!DEPENDENCIES!
 )
-SET "PCH_HEADER=!DIRECTORY!Pch.hpp"
-IF EXIST "!PCH_HEADER!" (
-  EXIT /B 0
-)
-ECHO #pragma once > "!PCH_HEADER!"
-PUSHD "!DIRECTORY!Dependencies/Beam/Beam/Include"
-SET "BEAM_DIRECTORY=%cd%"
-POPD
-SET "RELATIVE_PREFIX=Dependencies/Beam/Beam/Include"
-FOR /R "%RELATIVE_PREFIX%" %%F IN (*.hpp) DO (
-  SET "FILE=%%F"
-  SET "FILEF=!FILE:\=/!"
-  ECHO !FILEF! | findstr /i /c:"/Python/" /c:"DocTestMain" /c:"Tests/" >NUL
-  IF ERRORLEVEL 1 (
-    SET "RELATIVE_FILE=!FILE:%BEAM_DIRECTORY%=!"
-    IF "!RELATIVE_FILE:~0,1!"=="\" SET "RELATIVE_FILE=!RELATIVE_FILE:~1!"
-    SET "RELATIVE_FILE=!RELATIVE_FILE:\=/!"
-    ECHO #include "!RELATIVE_FILE!" >> "!PCH_HEADER!"
-  )
-)
-PUSHD "!DIRECTORY!../../Nexus/Include"
-SET "NEXUS_DIRECTORY=%cd%"
-POPD
-SET "RELATIVE_PREFIX=../../Nexus/Include"
-FOR /R "%RELATIVE_PREFIX%" %%F IN (*.hpp) DO (
-  SET "FILE=%%F"
-  SET "FILEF=!FILE:\=/!"
-  ECHO !FILEF! | findstr /i /c:"/Python/" /c:"FixUtilities" /c:"Tests/" >NUL
-  IF ERRORLEVEL 1 (
-    SET "RELATIVE_FILE=!FILE:%NEXUS_DIRECTORY%=!"
-    IF "!RELATIVE_FILE:~0,1!"=="\" SET "RELATIVE_FILE=!RELATIVE_FILE:~1!"
-    SET "RELATIVE_FILE=!RELATIVE_FILE:\=/!"
-    ECHO #include "!RELATIVE_FILE!" >> "!PCH_HEADER!"
-  )
-)
 EXIT /B 0
 ENDLOCAL
