@@ -286,7 +286,6 @@ void DemoBookViewModel::cancel_order(
       operation == CancelKeyBindingsModel::Operation::CLOSEST_BID ||
       operation == CancelKeyBindingsModel::Operation::FURTHEST_ASK ||
       operation == CancelKeyBindingsModel::Operation::FURTHEST_BID) {
-    auto direction = GetDirection(expected_side);
     auto cancel = [&] (auto begin, auto end, auto flip) {
       auto closest_iterator = end;
       auto closest_price = boost::optional<Money>();
@@ -297,8 +296,7 @@ void DemoBookViewModel::cancel_order(
             if(!closest_price) {
               closest_price = price;
               closest_iterator = i;
-            } else if(closest_price &&
-                (price < direction * *closest_price) == flip) {
+            } else if(closest_price && (price < *closest_price) == flip) {
               closest_price = price;
               closest_iterator = i;
             }
@@ -311,8 +309,8 @@ void DemoBookViewModel::cancel_order(
       }
     };
     if(operation == CancelKeyBindingsModel::Operation::CLOSEST_ASK ||
-        operation == CancelKeyBindingsModel::Operation::CLOSEST_BID) {
-      cancel(m_orders.rbegin(), m_orders.rend(), true);
+        operation == CancelKeyBindingsModel::Operation::FURTHEST_BID) {
+      cancel(m_orders.begin(), m_orders.end(), true);
     } else {
       cancel(m_orders.begin(), m_orders.end(), false);
     }
