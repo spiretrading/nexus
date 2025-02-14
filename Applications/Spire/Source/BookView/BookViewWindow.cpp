@@ -44,7 +44,7 @@ BookViewWindow::BookViewWindow(
   update_style(*this, [] (auto& style) {
     style.get(Any()).set(BackgroundColor(QColor(0xFFFFFF)));
   });
-  resize(scale(206, 361));
+  resize(scale(266, 361));
 }
 
 connection BookViewWindow::connect_cancel_order_signal(
