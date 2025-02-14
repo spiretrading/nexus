@@ -8,4 +8,5 @@ findstr "%VERSION%" Version.hpp > NUL
 IF NOT "%ERRORLEVEL%" == "0" (
   ECHO #define COMPLIANCE_SERVER_VERSION "%VERSION%"> Version.hpp
 )
+EXIT /B 0
 ENDLOCAL
