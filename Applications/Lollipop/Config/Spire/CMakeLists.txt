@@ -1,10 +1,10 @@
 find_package(Qt5Widgets REQUIRED)
-file(GLOB header_files ${SPIRE_INCLUDE_PATH}/Spire/Spire/*.hpp)
-file(GLOB source_files ${SPIRE_SOURCE_PATH}/Spire/*.cpp)
+file(GLOB_RECURSE header_files ${SPIRE_INCLUDE_PATH}/Spire/Spire/*.hpp)
+file(GLOB_RECURSE source_files ${SPIRE_SOURCE_PATH}/Spire/*.cpp)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 if(WIN32)
-  file(GLOB resource_files ${SPIRE_SOURCE_PATH}/Spire/*.rc)
-  file(GLOB manifest_files ${SPIRE_SOURCE_PATH}/Spire/*.manifest)
+  file(GLOB_RECURSE resource_files ${SPIRE_SOURCE_PATH}/Spire/*.rc)
+  file(GLOB_RECURSE manifest_files ${SPIRE_SOURCE_PATH}/Spire/*.manifest)
   set(app_type WIN32)
 elseif(APPLE)
   set(app_type MACOSX_BUNDLE)
@@ -59,7 +59,7 @@ target_link_libraries(Spire.classic Async Dashboard Charting PortfolioViewer
   debug ${ZLIB_LIBRARY_DEBUG_PATH}
   optimized ${ZLIB_LIBRARY_OPTIMIZED_PATH})
 if(UNIX)
-  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+  target_compile_options(Spire.classic PRIVATE -fPIC)
   target_link_libraries(Spire.classic
     debug ${BOOST_CHRONO_LIBRARY_DEBUG_PATH}
     optimized ${BOOST_CHRONO_LIBRARY_OPTIMIZED_PATH}

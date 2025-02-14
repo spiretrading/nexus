@@ -90,8 +90,8 @@ bool Spire::CheckClipboardForCanvasNode() {
 
 CanvasNodeNameSuffix Spire::SplitName(const std::string& name) {
   CanvasNodeNameSuffix splitName;
-  static const regex splitter("[^\\\\]\\.");
-  smatch matcher;
+  static const boost::regex splitter("[^\\\\]\\.");
+  boost::smatch matcher;
   if(!regex_search(name, matcher, splitter)) {
     splitName.m_identifier = name;
   } else {

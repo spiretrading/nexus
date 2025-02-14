@@ -9,7 +9,7 @@ namespace {
   auto find_index(int value, ListSelectionController::SelectionModel& list) {
     auto i = std::find(list.begin(), list.end(), value);
     if(i == list.end()) {
-      return -1;
+      return std::ptrdiff_t(-1);
     }
     return std::distance(list.begin(), i);
   }

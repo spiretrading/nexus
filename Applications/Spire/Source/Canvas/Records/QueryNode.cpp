@@ -11,7 +11,6 @@ using namespace Beam;
 using namespace Beam::Serialization;
 using namespace boost;
 using namespace Spire;
-using namespace std;
 
 namespace {
   enum {
@@ -23,17 +22,18 @@ QueryNode::QueryNode()
     : m_type(UnionType::GetAnyValueType()) {
   SetText("Query");
   SetType(*m_type);
-  AddChild("record", make_unique<NoneNode>(RecordType::GetEmptyRecordType()));
+  AddChild(
+    "record", std::make_unique<NoneNode>(RecordType::GetEmptyRecordType()));
 }
 
-const string& QueryNode::GetField() const {
+const std::string& QueryNode::GetField() const {
   return m_field;
 }
 
-unique_ptr<QueryNode> QueryNode::SetField(const string& field) const {
+std::unique_ptr<QueryNode> QueryNode::SetField(const std::string& field) const {
   auto& record = static_cast<const RecordType&>(
     GetChildren()[RECORD].GetType());
-  for(const auto& recordField : record.GetFields()) {
+  for(auto& recordField : record.GetFields()) {
     if(recordField.m_name == field) {
       if(!IsCompatible(*m_type, *recordField.m_type)) {
         BOOST_THROW_EXCEPTION(CanvasTypeCompatibilityException());
@@ -48,34 +48,33 @@ unique_ptr<QueryNode> QueryNode::SetField(const string& field) const {
   BOOST_THROW_EXCEPTION(CanvasOperationException("Field not found"));
 }
 
-unique_ptr<CanvasNode> QueryNode::Convert(const CanvasType& type) const {
+std::unique_ptr<CanvasNode> QueryNode::Convert(const CanvasType& type) const {
   auto clone = CanvasNode::Clone(*this);
   clone->m_type = type;
   auto& record = static_cast<const RecordType&>(
     GetChildren()[RECORD].GetType());
   auto currentField = FindField(record, m_field);
-  if(currentField.is_initialized() &&
-      IsCompatible(*clone->m_type, *currentField->m_type)) {
+  if(currentField && IsCompatible(*clone->m_type, *currentField->m_type)) {
     clone->SetType(*currentField->m_type);
-    return std::move(clone);
+    return clone;
   }
-  for(const auto& field : record.GetFields()) {
+  for(auto& field : record.GetFields()) {
     if(IsCompatible(*clone->m_type, *field.m_type)) {
       clone->m_field = field.m_name;
       clone->SetText("Query: " + field.m_name);
       clone->SetType(*field.m_type);
-      return std::move(clone);
+      return clone;
     }
   }
   clone->m_field.clear();
   clone->SetText("Query");
   clone->SetType(type);
-  return std::move(clone);
+  return clone;
 }
 
-unique_ptr<CanvasNode> QueryNode::Replace(const CanvasNode& child,
-    unique_ptr<CanvasNode> replacement) const {
-  std::shared_ptr<CanvasType> replacementType = replacement->GetType();
+std::unique_ptr<CanvasNode> QueryNode::Replace(const CanvasNode& child,
+    std::unique_ptr<CanvasNode> replacement) const {
+  auto replacementType = std::shared_ptr<CanvasType>(replacement->GetType());
   if(!IsCompatible(GetChildren().front().GetType(), *replacementType)) {
     try {
       auto conversion = Spire::Convert(CanvasNode::Clone(*replacement),
@@ -91,12 +90,11 @@ unique_ptr<CanvasNode> QueryNode::Replace(const CanvasNode& child,
   }
   auto& recordType = static_cast<const RecordType&>(*replacementType);
   auto currentField = FindField(recordType, m_field);
-  if(currentField.is_initialized() &&
-      IsCompatible(*m_type, *currentField->m_type)) {
+  if(currentField && IsCompatible(*m_type, *currentField->m_type)) {
     auto clone = CanvasNode::Clone(*this);
     clone->SetChild(child, std::move(replacement));
     clone->SetType(*currentField->m_type);
-    return std::move(clone);
+    return clone;
   }
   for(const auto& field : recordType.GetFields()) {
     if(IsCompatible(*m_type, *field.m_type)) {
@@ -105,22 +103,22 @@ unique_ptr<CanvasNode> QueryNode::Replace(const CanvasNode& child,
       clone->SetText("Query: " + field.m_name);
       clone->SetChild(child, std::move(replacement));
       clone->SetType(*field.m_type);
-      return std::move(clone);
+      return clone;
     }
   }
   auto clone = CanvasNode::Clone(*this);
   clone->m_field.clear();
   clone->SetText("Query");
   clone->SetChild(child, std::move(replacement));
-  return std::move(clone);
+  return clone;
 }
 
 void QueryNode::Apply(CanvasNodeVisitor& visitor) const {
   visitor.Visit(*this);
 }
 
-unique_ptr<CanvasNode> QueryNode::Clone() const {
-  return make_unique<QueryNode>(*this);
+std::unique_ptr<CanvasNode> QueryNode::Clone() const {
+  return std::make_unique<QueryNode>(*this);
 }
 
 QueryNode::QueryNode(ReceiveBuilder) {}

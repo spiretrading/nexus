@@ -1,7 +1,7 @@
 find_package(Qt5Widgets REQUIRED)
-file(GLOB header_files ${SPIRE_INCLUDE_PATH}/Spire/KeyBindings/*.hpp)
-file(GLOB source_files ${SPIRE_SOURCE_PATH}/KeyBindings/*.cpp)
-file(GLOB form_files ${SPIRE_SOURCE_PATH}/KeyBindings/*.ui)
+file(GLOB_RECURSE header_files ${SPIRE_INCLUDE_PATH}/Spire/KeyBindings/*.hpp)
+file(GLOB_RECURSE source_files ${SPIRE_SOURCE_PATH}/KeyBindings/*.cpp)
+file(GLOB_RECURSE form_files ${SPIRE_SOURCE_PATH}/KeyBindings/*.ui)
 qt5_wrap_ui(generated_header_files ${form_files})
 find_cpp_qobject(qobject_source_files ${header_files})
 qt5_wrap_cpp(generated_source_files ${qobject_source_files}
@@ -20,8 +20,8 @@ install(TARGETS KeyBindings CONFIGURATIONS Debug
   DESTINATION ${SPIRE_LIBRARY_INSTALL_DIRECTORY}/Debug)
 install(TARGETS KeyBindings CONFIGURATIONS Release
   DESTINATION ${SPIRE_LIBRARY_INSTALL_DIRECTORY}/Release)
-file(GLOB header_files ../../Include/Spire/KeyBindingsUiTester/*.hpp)
-file(GLOB source_files ../../Source/KeyBindingsUiTester/*.cpp)
+file(GLOB_RECURSE header_files ../../Include/Spire/KeyBindingsUiTester/*.hpp)
+file(GLOB_RECURSE source_files ../../Source/KeyBindingsUiTester/*.cpp)
 if(WIN32)
   set(app_type WIN32)
 elseif(APPLE)
@@ -106,8 +106,8 @@ if(WIN32)
     optimized ${QT_WINDOWS_ACCESSIBILITY_LIBRARY_OPTIMIZED_PATH}
     debug ${QT_WINDOWS_LIBRARY_DEBUG_PATH}
     optimized ${QT_WINDOWS_LIBRARY_OPTIMIZED_PATH}
-    dwmapi.lib imm32.lib netapi32.lib opengl32.lib Userenv.lib version.lib
-    winmm.lib ws2_32.lib Wtsapi32.lib)
+    Crypt32.lib dwmapi.lib imm32.lib netapi32.lib opengl32.lib Userenv.lib
+    version.lib winmm.lib ws2_32.lib Wtsapi32.lib)
 endif()
 if(UNIX)
   target_link_libraries(KeyBindingsUiTester
@@ -138,8 +138,8 @@ if(UNIX)
 endif()
 install(
   TARGETS KeyBindingsUiTester DESTINATION ${SPIRE_TESTS_INSTALL_DIRECTORY})
-file(GLOB header_files ../../Include/Spire/KeyBindingsTester/*.hpp)
-file(GLOB source_files ../../Source/KeyBindingsTester/*.cpp)
+file(GLOB_RECURSE header_files ../../Include/Spire/KeyBindingsTester/*.hpp)
+file(GLOB_RECURSE source_files ../../Source/KeyBindingsTester/*.cpp)
 add_executable(KeyBindingsTester ${header_files} ${source_files})
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 if(UNIX)
@@ -219,8 +219,8 @@ if(WIN32)
     optimized ${QT_WINDOWS_ACCESSIBILITY_LIBRARY_OPTIMIZED_PATH}
     debug ${QT_WINDOWS_LIBRARY_DEBUG_PATH}
     optimized ${QT_WINDOWS_LIBRARY_OPTIMIZED_PATH}
-    dwmapi.lib imm32.lib netapi32.lib opengl32.lib Userenv.lib version.lib
-    winmm.lib ws2_32.lib Wtsapi32.lib)
+    Crypt32.lib dwmapi.lib imm32.lib netapi32.lib opengl32.lib Userenv.lib
+    version.lib winmm.lib ws2_32.lib Wtsapi32.lib)
 endif()
 if(UNIX)
   target_link_libraries(KeyBindingsTester

@@ -9,18 +9,18 @@ using namespace Beam::Serialization;
 using namespace boost;
 using namespace Nexus;
 using namespace Spire;
-using namespace std;
 
 DestinationNode::DestinationNode() {
   SetText(GetValue());
 }
 
-DestinationNode::DestinationNode(string value)
+DestinationNode::DestinationNode(std::string value)
     : ValueNode<DestinationType>(std::move(value)) {
   SetText(GetValue());
 }
 
-unique_ptr<DestinationNode> DestinationNode::SetValue(string value) const {
+std::unique_ptr<DestinationNode>
+    DestinationNode::SetValue(std::string value) const {
   auto clone = CanvasNode::Clone(*this);
   clone->SetInternalValue(std::move(value));
   clone->SetText(clone->GetValue());
@@ -32,15 +32,15 @@ MarketCode DestinationNode::GetMarket() const {
     return MarketCode();
   }
   auto name = m_referent;
-  boost::optional<const CanvasNode&> node = *this;
-  while(node.is_initialized() && !name.empty() && name[0] == '<') {
+  auto node = optional<const CanvasNode&>(*this);
+  while(node && !name.empty() && name[0] == '<') {
     if(IsRoot(*node)) {
       return MarketCode();
     }
     node = node->GetParent();
     name = name.substr(1);
   }
-  if(!node.is_initialized()) {
+  if(!node) {
     return MarketCode();
   }
   if(name.empty()) {
@@ -57,7 +57,7 @@ MarketCode DestinationNode::GetMarket() const {
     return MarketCode();
   }
   node = node->GetParent()->FindNode(name);
-  if(!node.is_initialized()) {
+  if(!node) {
     return MarketCode();
   }
   if(auto securityNode = dynamic_cast<const ValueNode<SecurityType>*>(&*node)) {
@@ -73,23 +73,23 @@ void DestinationNode::Apply(CanvasNodeVisitor& visitor) const {
   visitor.Visit(*this);
 }
 
-const string& DestinationNode::GetReferent() const {
+const std::string& DestinationNode::GetReferent() const {
   return m_referent;
 }
 
-unique_ptr<CanvasNode> DestinationNode::SetReferent(
-    const string& referent) const {
+std::unique_ptr<CanvasNode>
+    DestinationNode::SetReferent(const std::string& referent) const {
   auto clone = CanvasNode::Clone(*this);
   clone->m_referent = referent;
-  return std::move(clone);
+  return clone;
 }
 
-unique_ptr<CanvasNode> DestinationNode::Clone() const {
-  return make_unique<DestinationNode>(*this);
+std::unique_ptr<CanvasNode> DestinationNode::Clone() const {
+  return std::make_unique<DestinationNode>(*this);
 }
 
-unique_ptr<CanvasNode> DestinationNode::Reset() const {
-  return make_unique<DestinationNode>();
+std::unique_ptr<CanvasNode> DestinationNode::Reset() const {
+  return std::make_unique<DestinationNode>();
 }
 
 DestinationNode::DestinationNode(ReceiveBuilder) {}

@@ -1,7 +1,4 @@
-file(GLOB source_files ${NEXUS_SOURCE_PATH}/FixUtilitiesTests/*.cpp)
-if(MSVC)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
-endif()
+file(GLOB_RECURSE source_files ${NEXUS_SOURCE_PATH}/FixUtilitiesTests/*.cpp)
 add_executable(FixUtilitiesTests ${source_files})
 target_link_libraries(FixUtilitiesTests
   debug ${QUICK_FIX_LIBRARY_DEBUG_PATH}

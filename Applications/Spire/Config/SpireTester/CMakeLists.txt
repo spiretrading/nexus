@@ -1,10 +1,7 @@
 find_package(Qt5Widgets REQUIRED)
-file(GLOB header_files ../../Include/Spire/SpireTester/*.hpp)
-file(GLOB source_files ../../Source/SpireTester/*.cpp)
+file(GLOB_RECURSE header_files ../../Include/Spire/SpireTester/*.hpp)
+file(GLOB_RECURSE source_files ../../Source/SpireTester/*.cpp)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
-if(MSVC)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
-endif()
 add_executable(SpireTester ${header_files} ${source_files})
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 if(UNIX)
@@ -80,8 +77,8 @@ if(WIN32)
     optimized ${QT_WINDOWS_ACCESSIBILITY_LIBRARY_OPTIMIZED_PATH}
     debug ${QT_WINDOWS_LIBRARY_DEBUG_PATH}
     optimized ${QT_WINDOWS_LIBRARY_OPTIMIZED_PATH}
-    dwmapi.lib imm32.lib netapi32.lib opengl32.lib Userenv.lib version.lib
-    winmm.lib ws2_32.lib Wtsapi32.lib)
+    Crypt32.lib dwmapi.lib imm32.lib netapi32.lib opengl32.lib Userenv.lib
+    version.lib winmm.lib ws2_32.lib Wtsapi32.lib)
 endif()
 if(UNIX)
   target_link_libraries(SpireTester

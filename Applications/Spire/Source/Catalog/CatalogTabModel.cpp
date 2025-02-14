@@ -8,15 +8,12 @@ using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::LegacyUI;
-using namespace std;
 
-CatalogTabModel::CatalogTabModel() {}
-
-const string& CatalogTabModel::GetName() const {
+const std::string& CatalogTabModel::GetName() const {
   return m_name;
 }
 
-void CatalogTabModel::SetName(const string& name) {
+void CatalogTabModel::SetName(const std::string& name) {
   if(name == m_name) {
     return;
   }
@@ -24,27 +21,29 @@ void CatalogTabModel::SetName(const string& name) {
   m_nameSignal();
 }
 
-const vector<CatalogEntry*>& CatalogTabModel::GetEntries() const {
+const std::vector<CatalogEntry*>& CatalogTabModel::GetEntries() const {
   return m_entries;
 }
 
 void CatalogTabModel::Add(Ref<CatalogEntry> entry) {
-  CatalogEntry* selfEntry = entry.Get();
-  if(find(m_entries.begin(), m_entries.end(), selfEntry) != m_entries.end()) {
+  auto selfEntry = entry.Get();
+  if(std::find(m_entries.begin(), m_entries.end(), selfEntry) !=
+      m_entries.end()) {
     return;
   }
-  int index = static_cast<int>(m_entries.size());
+  auto index = static_cast<int>(m_entries.size());
   beginInsertRows(QModelIndex(), index, index);
   m_entries.push_back(selfEntry);
   endInsertRows();
 }
 
 void CatalogTabModel::Remove(const CatalogEntry& entry) {
-  auto entryIterator = find(m_entries.begin(), m_entries.end(), &entry);
+  auto entryIterator = std::find(m_entries.begin(), m_entries.end(), &entry);
   if(entryIterator == m_entries.end()) {
     return;
   }
-  int index = static_cast<int>(distance(m_entries.begin(), entryIterator));
+  auto index =
+    static_cast<int>(std::distance(m_entries.begin(), entryIterator));
   beginRemoveRows(QModelIndex(), index, index);
   m_entries.erase(entryIterator);
   endRemoveRows();
@@ -60,7 +59,7 @@ Qt::DropActions CatalogTabModel::supportedDropActions() const {
 }
 
 Qt::ItemFlags CatalogTabModel::flags(const QModelIndex& index) const {
-  Qt::ItemFlags defaultFlags = QAbstractListModel::flags(index);
+  auto defaultFlags = QAbstractListModel::flags(index);
   if(index.isValid()) {
     return defaultFlags | Qt::ItemIsDragEnabled | Qt::ItemIsDropEnabled;
   } else {
@@ -76,7 +75,7 @@ QVariant CatalogTabModel::data(const QModelIndex& index, int role) const {
   if(!index.isValid()) {
     return QVariant();
   }
-  CatalogEntry* entry = m_entries[index.row()];
+  auto entry = m_entries[index.row()];
   if(role == Qt::TextAlignmentRole) {
     return static_cast<int>(Qt::AlignLeft | Qt::AlignVCenter);
   } else if(role == Qt::DecorationRole) {
@@ -87,22 +86,22 @@ QVariant CatalogTabModel::data(const QModelIndex& index, int role) const {
   return QVariant();
 }
 
-QVariant CatalogTabModel::headerData(int section, Qt::Orientation orientation,
-    int role) const {
+QVariant CatalogTabModel::headerData(
+    int section, Qt::Orientation orientation, int role) const {
   return QVariant();
 }
 
 QStringList CatalogTabModel::mimeTypes() const {
-  QStringList types;
+  auto types = QStringList();
   types << QString::fromStdString(CatalogEntry::MIME_TYPE);
   return types;
 }
 
 QMimeData* CatalogTabModel::mimeData(const QModelIndexList& indexes) const {
-  vector<CatalogEntry*> entries;
-  for(auto i = indexes.begin(); i != indexes.end(); ++i) {
-    if(i->isValid()) {
-      entries.push_back(m_entries[i->row()]);
+  auto entries = std::vector<CatalogEntry*>();
+  for(auto& index : indexes) {
+    if(index.isValid()) {
+      entries.push_back(m_entries[index.row()]);
     }
   }
   return CatalogEntry::EncodeAsMimeData(entries);

@@ -6,7 +6,6 @@ using namespace Beam;
 using namespace boost;
 using namespace Nexus;
 using namespace Spire;
-using namespace std;
 
 MaxFloorNode::MaxFloorNode()
     : ValueNode(-1) {
@@ -18,17 +17,17 @@ MaxFloorNode::MaxFloorNode(Quantity value)
   if(value < 0) {
     SetText("N/A");
   } else {
-    SetText(lexical_cast<string>(GetValue()));
+    SetText(lexical_cast<std::string>(GetValue()));
   }
 }
 
-unique_ptr<MaxFloorNode> MaxFloorNode::SetValue(Quantity value) const {
+std::unique_ptr<MaxFloorNode> MaxFloorNode::SetValue(Quantity value) const {
   auto clone = CanvasNode::Clone(*this);
   clone->SetInternalValue(std::max<Quantity>(-1, value));
   if(value < 0) {
     clone->SetText("N/A");
   } else {
-    clone->SetText(lexical_cast<string>(clone->GetValue()));
+    clone->SetText(lexical_cast<std::string>(clone->GetValue()));
   }
   return clone;
 }
@@ -37,20 +36,21 @@ void MaxFloorNode::Apply(CanvasNodeVisitor& visitor) const {
   visitor.Visit(*this);
 }
 
-const string& MaxFloorNode::GetReferent() const {
+const std::string& MaxFloorNode::GetReferent() const {
   return m_referent;
 }
 
-unique_ptr<CanvasNode> MaxFloorNode::SetReferent(const string& referent) const {
+std::unique_ptr<CanvasNode>
+    MaxFloorNode::SetReferent(const std::string& referent) const {
   auto clone = CanvasNode::Clone(*this);
   clone->m_referent = referent;
   return std::move(clone);
 }
 
-unique_ptr<CanvasNode> MaxFloorNode::Clone() const {
-  return make_unique<MaxFloorNode>(*this);
+std::unique_ptr<CanvasNode> MaxFloorNode::Clone() const {
+  return std::make_unique<MaxFloorNode>(*this);
 }
 
-unique_ptr<CanvasNode> MaxFloorNode::Reset() const {
-  return make_unique<MaxFloorNode>();
+std::unique_ptr<CanvasNode> MaxFloorNode::Reset() const {
+  return std::make_unique<MaxFloorNode>();
 }

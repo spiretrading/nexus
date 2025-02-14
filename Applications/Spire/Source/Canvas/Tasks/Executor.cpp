@@ -1,11 +1,14 @@
 #include "Spire/Canvas/Tasks/Executor.hpp"
+#include <Beam/Utilities/BeamWorkaround.hpp>
 
 using namespace Beam;
 using namespace Beam::Routines;
 using namespace Spire;
 
 Executor::Executor()
-  : m_trigger([=] { OnUpdate(); }),
+BEAM_SUPPRESS_THIS_INITIALIZER()
+  : m_trigger([this] { OnUpdate(); }),
+BEAM_UNSUPPRESS_THIS_INITIALIZER()
     m_reactor(m_producer) {}
 
 Executor::~Executor() {

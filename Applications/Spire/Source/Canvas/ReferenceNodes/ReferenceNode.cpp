@@ -9,10 +9,9 @@ using namespace Beam;
 using namespace Beam::Serialization;
 using namespace boost;
 using namespace Spire;
-using namespace std;
 
 namespace {
-  string GetReferentText(const string& referent) {
+  std::string GetReferentText(const std::string& referent) {
     if(referent.empty()) {
       return "Reference";
     }
@@ -25,38 +24,39 @@ ReferenceNode::ReferenceNode() {
   SetText(GetReferentText(m_referent));
 }
 
-ReferenceNode::ReferenceNode(const string& referent)
+ReferenceNode::ReferenceNode(const std::string& referent)
     : m_referent(referent) {
   SetType(UnionType::GetAnyType());
   SetText(GetReferentText(m_referent));
 }
 
-ReferenceNode::ReferenceNode(const string& referent, const CanvasType& type)
+ReferenceNode::ReferenceNode(
+    const std::string& referent, const CanvasType& type)
     : m_referent(referent) {
   SetType(type);
   SetText(GetReferentText(m_referent));
 }
 
-const string& ReferenceNode::GetReferent() const {
+const std::string& ReferenceNode::GetReferent() const {
   return m_referent;
 }
 
-unique_ptr<CanvasNode> ReferenceNode::SetReferent(
-    const string& referent) const {
+std::unique_ptr<CanvasNode> ReferenceNode::SetReferent(
+    const std::string& referent) const {
   auto clone = CanvasNode::Clone(*this);
   clone->m_referent = referent;
   clone->SetText(GetReferentText(referent));
-  return std::move(clone);
+  return clone;
 }
 
-unique_ptr<CanvasNode> ReferenceNode::Convert(const CanvasType& type) const {
+std::unique_ptr<CanvasNode>
+    ReferenceNode::Convert(const CanvasType& type) const {
   try {
-    auto conversion = CanvasNode::Convert(type);
-    return conversion;
-  } catch(CanvasOperationException&) {
+    return CanvasNode::Convert(type);
+  } catch(const CanvasOperationException&) {
     auto clone = CanvasNode::Clone(*this);
     clone->SetType(type);
-    return std::move(clone);
+    return clone;
   }
 }
 
@@ -64,25 +64,25 @@ void ReferenceNode::Apply(CanvasNodeVisitor& visitor) const {
   visitor.Visit(*this);
 }
 
-unique_ptr<CanvasNode> ReferenceNode::Clone() const {
-  return make_unique<ReferenceNode>(*this);
+std::unique_ptr<CanvasNode> ReferenceNode::Clone() const {
+  return std::make_unique<ReferenceNode>(*this);
 }
 
-unique_ptr<CanvasNode> ReferenceNode::Reset() const {
-  return unique_ptr<ReferenceNode>();
+std::unique_ptr<CanvasNode> ReferenceNode::Reset() const {
+  return std::unique_ptr<ReferenceNode>();
 }
 
 ReferenceNode::ReferenceNode(ReceiveBuilder) {}
 
-boost::optional<const CanvasNode&> Spire::FindAnchor(const CanvasNode& node) {
+optional<const CanvasNode&> Spire::FindAnchor(const CanvasNode& node) {
   auto i = &node;
-  unordered_set<const CanvasNode*> visitedNodes;
+  auto visitedNodes = std::unordered_set<const CanvasNode*>();
   while(dynamic_cast<const ReferenceNode*>(i)) {
     if(!visitedNodes.insert(i).second) {
       return none;
     }
     auto referent = dynamic_cast<const ReferenceNode*>(i)->FindReferent();
-    if(!referent.is_initialized()) {
+    if(!referent) {
       return none;
     }
     i = &*referent;

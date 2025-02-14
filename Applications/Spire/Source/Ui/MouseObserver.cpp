@@ -27,7 +27,7 @@ struct MouseObserver::EventFilter : QObject {
     std::unique_ptr<MouseObserver> m_observer;
     scoped_connection m_connection;
   };
-  using FilteredMouseSignal = signal<
+  using FilteredMouseSignal = boost::signals2::signal<
     bool (QWidget& target, QMouseEvent& event), MouseCombiner>;
 
   mutable FilteredMouseSignal m_mouse_signal;

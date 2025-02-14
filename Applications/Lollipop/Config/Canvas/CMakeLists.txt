@@ -1,49 +1,57 @@
 find_package(Qt5Widgets REQUIRED)
-file(GLOB common_header_files ${SPIRE_INCLUDE_PATH}/Spire/Canvas/*.hpp
+file(GLOB_RECURSE common_header_files ${SPIRE_INCLUDE_PATH}/Spire/Canvas/*.hpp
   ${SPIRE_INCLUDE_PATH}/Spire/Canvas/Common/*.hpp)
-file(GLOB common_source_files ${SPIRE_SOURCE_PATH}/Canvas/Common/*.cpp)
-file(GLOB control_nodes_header_files
+file(GLOB_RECURSE common_source_files ${SPIRE_SOURCE_PATH}/Canvas/Common/*.cpp)
+file(GLOB_RECURSE control_nodes_header_files
   ${SPIRE_INCLUDE_PATH}/Spire/Canvas/ControlNodes/*.hpp)
-file(GLOB control_nodes_source_files
+file(GLOB_RECURSE control_nodes_source_files
   ${SPIRE_SOURCE_PATH}/Canvas/ControlNodes/*.cpp)
-file(GLOB io_nodes_header_files
+file(GLOB_RECURSE io_nodes_header_files
   ${SPIRE_INCLUDE_PATH}/Spire/Canvas/IONodes/*.hpp)
-file(GLOB io_nodes_source_files ${SPIRE_SOURCE_PATH}/Canvas/IONodes/*.cpp)
-file(GLOB lua_nodes_header_files
+file(GLOB_RECURSE
+  io_nodes_source_files ${SPIRE_SOURCE_PATH}/Canvas/IONodes/*.cpp)
+file(GLOB_RECURSE lua_nodes_header_files
   ${SPIRE_INCLUDE_PATH}/Spire/Canvas/LuaNodes/*.hpp)
-file(GLOB lua_nodes_source_files ${SPIRE_SOURCE_PATH}/Canvas/LuaNodes/*.cpp)
-file(GLOB market_data_nodes_header_files
+file(GLOB_RECURSE
+  lua_nodes_source_files ${SPIRE_SOURCE_PATH}/Canvas/LuaNodes/*.cpp)
+file(GLOB_RECURSE market_data_nodes_header_files
   ${SPIRE_INCLUDE_PATH}/Spire/Canvas/MarketDataNodes/*.hpp)
-file(GLOB market_data_nodes_source_files
+file(GLOB_RECURSE market_data_nodes_source_files
   ${SPIRE_SOURCE_PATH}/Canvas/MarketDataNodes/*.cpp)
-file(GLOB operations_header_files
+file(GLOB_RECURSE operations_header_files
   ${SPIRE_INCLUDE_PATH}/Spire/Canvas/Operations/*.hpp)
-file(GLOB operations_source_files ${SPIRE_SOURCE_PATH}/Canvas/Operations/*.cpp)
-file(GLOB order_execution_nodes_header_files
+file(GLOB_RECURSE
+  operations_source_files ${SPIRE_SOURCE_PATH}/Canvas/Operations/*.cpp)
+file(GLOB_RECURSE order_execution_nodes_header_files
   ${SPIRE_INCLUDE_PATH}/Spire/Canvas/OrderExecutionNodes/*.hpp)
-file(GLOB order_execution_nodes_source_files
+file(GLOB_RECURSE order_execution_nodes_source_files
   ${SPIRE_SOURCE_PATH}/Canvas/OrderExecutionNodes/*.cpp)
-file(GLOB records_header_files ${SPIRE_INCLUDE_PATH}/Spire/Canvas/Records/*.hpp)
-file(GLOB records_source_files ${SPIRE_SOURCE_PATH}/Canvas/Records/*.cpp)
-file(GLOB reference_nodes_header_files
+file(GLOB_RECURSE
+  records_header_files ${SPIRE_INCLUDE_PATH}/Spire/Canvas/Records/*.hpp)
+file(GLOB_RECURSE
+  records_source_files ${SPIRE_SOURCE_PATH}/Canvas/Records/*.cpp)
+file(GLOB_RECURSE reference_nodes_header_files
   ${SPIRE_INCLUDE_PATH}/Spire/Canvas/ReferenceNodes/*.hpp)
-file(GLOB reference_nodes_source_files
+file(GLOB_RECURSE reference_nodes_source_files
   ${SPIRE_SOURCE_PATH}/Canvas/ReferenceNodes/*.cpp)
-file(GLOB standard_nodes_header_files
+file(GLOB_RECURSE standard_nodes_header_files
   ${SPIRE_INCLUDE_PATH}/Spire/Canvas/StandardNodes/*.hpp)
-file(GLOB standard_nodes_source_files
+file(GLOB_RECURSE standard_nodes_source_files
   ${SPIRE_SOURCE_PATH}/Canvas/StandardNodes/*.cpp)
-file(GLOB system_nodes_header_files
+file(GLOB_RECURSE system_nodes_header_files
   ${SPIRE_INCLUDE_PATH}/Spire/Canvas/SystemNodes/*.hpp)
-file(GLOB system_nodes_source_files
+file(GLOB_RECURSE system_nodes_source_files
   ${SPIRE_SOURCE_PATH}/Canvas/SystemNodes/*.cpp)
-file(GLOB tasks_header_files ${SPIRE_INCLUDE_PATH}/Spire/Canvas/Tasks/*.hpp)
-file(GLOB tasks_source_files ${SPIRE_SOURCE_PATH}/Canvas/Tasks/*.cpp)
-file(GLOB types_header_files ${SPIRE_INCLUDE_PATH}/Spire/Canvas/Types/*.hpp)
-file(GLOB types_source_files ${SPIRE_SOURCE_PATH}/Canvas/Types/*.cpp)
-file(GLOB value_nodes_header_files
+file(GLOB_RECURSE
+  tasks_header_files ${SPIRE_INCLUDE_PATH}/Spire/Canvas/Tasks/*.hpp)
+file(GLOB_RECURSE tasks_source_files ${SPIRE_SOURCE_PATH}/Canvas/Tasks/*.cpp)
+file(GLOB_RECURSE
+  types_header_files ${SPIRE_INCLUDE_PATH}/Spire/Canvas/Types/*.hpp)
+file(GLOB_RECURSE types_source_files ${SPIRE_SOURCE_PATH}/Canvas/Types/*.cpp)
+file(GLOB_RECURSE value_nodes_header_files
   ${SPIRE_INCLUDE_PATH}/Spire/Canvas/ValueNodes/*.hpp)
-file(GLOB value_nodes_source_files ${SPIRE_SOURCE_PATH}/Canvas/ValueNodes/*.cpp)
+file(GLOB_RECURSE
+  value_nodes_source_files ${SPIRE_SOURCE_PATH}/Canvas/ValueNodes/*.cpp)
 set(header_files ${common_header_files} ${control_nodes_header_files}
   ${io_nodes_header_files} ${lua_nodes_header_files}
   ${market_data_nodes_header_files} ${operations_header_files}
@@ -110,7 +118,7 @@ install(TARGETS Canvas CONFIGURATIONS Debug
   DESTINATION ${SPIRE_LIBRARY_INSTALL_DIRECTORY}/Debug)
 install(TARGETS Canvas CONFIGURATIONS Release
   DESTINATION ${SPIRE_LIBRARY_INSTALL_DIRECTORY}/Release)
-file(GLOB test_source_files ${SPIRE_SOURCE_PATH}/CanvasTests/*.cpp)
+file(GLOB_RECURSE test_source_files ${SPIRE_SOURCE_PATH}/CanvasTests/*.cpp)
 add_executable(CanvasTests ${test_source_files})
 target_link_libraries(CanvasTests Async Dashboard Charting PortfolioViewer
   Utilities RiskTimer AccountViewer KeyBindings Blotter Catalog BookView
@@ -148,9 +156,6 @@ target_link_libraries(CanvasTests Async Dashboard Charting PortfolioViewer
   optimized ${QT_ACCESS_LIBRARY_OPTIMIZED_PATH}
   debug ${ZLIB_LIBRARY_DEBUG_PATH}
   optimized ${ZLIB_LIBRARY_OPTIMIZED_PATH})
-if(MSVC)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
-endif()
 if(UNIX)
   target_link_libraries(CanvasTests
     debug ${BOOST_CHRONO_LIBRARY_DEBUG_PATH}

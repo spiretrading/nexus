@@ -20,8 +20,8 @@ namespace {
 }
 
 TimeRangeParameterNode::TimeRangeParameterNode() {
-  m_startTime.m_specialValue = Queries::Sequence::Present();
-  m_endTime.m_specialValue = Queries::Sequence::Last();
+  m_startTime.m_specialValue = Beam::Queries::Sequence::Present();
+  m_endTime.m_specialValue = Beam::Queries::Sequence::Last();
   SetText(GetDisplayText(*this));
   SetType(TimeRangeType::GetInstance());
 }
