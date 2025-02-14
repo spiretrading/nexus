@@ -7,7 +7,7 @@ using namespace Spire;
 const BookViewLevelProperties& BookViewLevelProperties::get_default() {
   static auto PROPERTIES = [] {
     auto properties = BookViewLevelProperties();
-    properties.m_font = QFontDatabase().font("Roboto", "Regular", -1);
+    properties.m_font = QFontDatabase().font("Roboto", "Medium", -1);
     properties.m_font.setPixelSize(scale_width(10));
     properties.m_is_grid_enabled = false;
     properties.m_color_scheme = {QColor(0xFFFFFF), QColor(0xE4E8FF),
