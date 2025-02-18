@@ -594,4 +594,52 @@ TEST_SUITE("FilteredListModel") {
     REQUIRE(filtered_list.get(0) == 0);
     REQUIRE(filtered_list.get(1) == 2);
   }
+
+  TEST_CASE("source_remove_consistency") {
+    auto source = std::make_shared<ArrayListModel<int>>();;
+    source->push(0);
+    source->push(1);
+    source->push(2);
+    auto base_filtered_list = std::make_shared<FilteredListModel<int>>(
+      source, [] (const auto& list, auto index) {
+        return list.get(index) % 2 == 0;
+      });
+    auto filtered_list = FilteredListModel(
+      base_filtered_list, [] (const auto& list, auto index) {
+        return false;
+      });
+    filtered_list.connect_operation_signal([&] (const auto& operation) {
+      visit(operation,
+        [&] (const ListModel<int>::PreRemoveOperation& operation) {
+          REQUIRE(filtered_list.get_size() == 1);
+        });
+    });
+    source->remove(1);
+  }
+
+  TEST_CASE("chained_filters") {
+    auto source = std::make_shared<ArrayListModel<int>>();
+    source->push(4);
+    source->push(2);
+    source->push(9);
+    source->push(1);
+    auto base_filtered_list = std::make_shared<FilteredListModel<int>>(source,
+      [] (const ListModel<int>& list, int index) {
+        return list.get(index) > 5;
+      });
+    auto filtered_list = FilteredListModel(base_filtered_list,
+      [] (const ListModel<int>& list, int index) {
+        return false;
+      });
+    filtered_list.connect_operation_signal(
+      [&] (const FilteredListModel<int>::Operation& operation) {
+        visit(operation,
+          [&] (const FilteredListModel<int>::RemoveOperation& operation) {
+            REQUIRE(filtered_list.get_size() == 2);
+            REQUIRE(filtered_list.get(0) == 2);
+            REQUIRE(filtered_list.get(1) == 1);
+          });
+      });
+    base_filtered_list->remove(0);
+  }
 }
