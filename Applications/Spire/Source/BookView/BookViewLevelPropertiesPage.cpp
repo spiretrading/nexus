@@ -144,6 +144,9 @@ struct PriceLevelModel {
           FillType::GRADIENT)),
         m_colors(std::make_shared<ArrayListModel<QColor>>()),
         m_timer(&timer) {
+    if(m_color_scheme->get_size() > 0) {
+      m_end_color = m_color_scheme->get(m_color_scheme->get_size() - 1);
+    }
     m_levels->set_minimum(1);
     m_levels->set_maximum(99);
     m_scheme_connection = m_color_scheme->connect_operation_signal(
@@ -160,22 +163,20 @@ struct PriceLevelModel {
       std::bind_front(&PriceLevelModel::on_timeout, this));
   }
 
+  void update_gradient_color_scheme(int levels) {
+    if(m_color_scheme->get_size() > 1) {
+      m_end_color = m_color_scheme->get(m_color_scheme->get_size() - 1);
+    }
+    scale(*m_color_scheme, m_color_scheme->get(0), m_end_color, levels);
+  }
+
   void on_levels_update(const optional<int> levels) {
     if(!levels || *levels < m_levels->get_minimum() ||
         *levels > m_levels->get_maximum()) {
       return;
     }
-    if(*levels == 1 && m_color_scheme->get_size() > 1) {
-      m_end_color = m_color_scheme->get(m_color_scheme->get_size() - 1);
-    }
     if(m_fill_type->get() == FillType::GRADIENT) {
-      auto end_color = [&] {
-        if(*levels == 2 && m_color_scheme->get_size() == 1) {
-          return m_end_color;
-        }
-        return m_color_scheme->get(m_color_scheme->get_size() - 1);
-      }();
-      scale(*m_color_scheme, m_color_scheme->get(0), end_color, *levels);
+      update_gradient_color_scheme(*levels);
     } else {
       m_color_scheme->transact([&] {
         if(m_color_scheme->get_size() < *levels) {
@@ -212,9 +213,7 @@ struct PriceLevelModel {
           }
         }
       });
-      scale(*m_color_scheme, m_color_scheme->get(0),
-        m_color_scheme->get(m_color_scheme->get_size() - 1),
-        m_color_scheme->get_size());
+      update_gradient_color_scheme(m_color_scheme->get_size());
     } else {
       m_colors->transact([&] {
         for(auto i = 0; i < m_colors->get_size(); ++i) {
@@ -229,9 +228,7 @@ struct PriceLevelModel {
   }
 
   void on_timeout() {
-    scale(*m_color_scheme, m_color_scheme->get(0),
-      m_color_scheme->get(m_color_scheme->get_size() - 1),
-      m_color_scheme->get_size());
+    update_gradient_color_scheme(m_color_scheme->get_size());
   }
 
   void on_color_scheme_operation(
@@ -264,6 +261,12 @@ struct PriceLevelModel {
         if(auto levels = m_levels->get();
             levels && *levels != m_color_scheme->get_size()) {
           m_levels->set(m_color_scheme->get_size());
+        }
+      },
+      [&] (const ListModel<QColor>::UpdateOperation& operation) {
+        if(operation.m_index == m_color_scheme->get_size() - 1 &&
+            operation.m_index != 0) {
+          m_end_color = operation.get_value();
         }
       });
   }
