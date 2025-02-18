@@ -145,6 +145,7 @@ QuantityBox* make_quantity_box(M model, U field) {
 
 struct BookViewTester : QWidget {
   std::shared_ptr<BookViewModel> m_model;
+  BookViewPropertiesWindow* m_properties_window;
   QTimer m_quote_timer;
   QTimer m_order_timer;
   int m_update_count;
@@ -156,9 +157,11 @@ struct BookViewTester : QWidget {
       std::shared_ptr<OptionalIntegerModel> font_size,
       std::shared_ptr<LocalSecurityModel> security,
       std::shared_ptr<BookViewModel> model,
+      BookViewPropertiesWindow& properties_window,
       QWidget* parent = nullptr)
       : QWidget(parent),
         m_model(std::move(model)),
+        m_properties_window(&properties_window),
         m_quote_timer(this),
         m_order_timer(this),
         m_update_count(0) {
@@ -276,6 +279,11 @@ struct BookViewTester : QWidget {
     order_status_layout->addWidget(submit_order_button, 0,
       Qt::AlignRight);
     right_layout->addWidget(order_status_group_box);
+    auto properties_window_button =
+      make_label_button(tr("Open PropertiesWindow"));
+    properties_window_button->connect_click_signal(
+      std::bind_front(&BookViewTester::on_properties_window_click, this));
+    right_layout->addWidget(properties_window_button);
     right_layout->addStretch(1);
     auto layout = new QHBoxLayout(this);
     layout->addLayout(left_layout);
@@ -428,6 +436,11 @@ struct BookViewTester : QWidget {
       }
     }
   }
+
+  void on_properties_window_click() {
+    m_properties_window->show();
+    m_properties_window->move(pos().x() + frameGeometry().width(), pos().y());
+  }
 };
 
 struct MarketDepthContainer : QWidget {
@@ -493,8 +506,10 @@ int main(int argc, char** argv) {
   auto key_bindings =
     std::make_shared<KeyBindingsModel>(GetDefaultMarketDatabase());
   auto book_views = std::make_shared<BookViewModel>();
+  BookViewPropertiesWindow properties_window(properties,
+    key_bindings, security, GetDefaultMarketDatabase());
   auto tester = BookViewTester(technicals, bbo_quote, default_bid_quantity,
-    default_ask_quantity, font_size, security, book_views);
+    default_ask_quantity, font_size, security, book_views, properties_window);
   auto widget = QWidget();
   auto layout = make_vbox_layout(&widget);
   auto panel = new TechnicalsPanel(technicals, default_bid_quantity,
@@ -510,11 +525,5 @@ int main(int argc, char** argv) {
   tester.move(
     tester.pos().x() + widget.frameGeometry().width() + scale_width(100),
     widget.pos().y() - 200);
-  BookViewPropertiesWindow properties_window(properties,
-    key_bindings, security, GetDefaultMarketDatabase());
-  properties_window.show();
-  properties_window.move(
-    tester.pos().x() + widget.frameGeometry().width() + scale_width(300),
-    widget.pos().y());
   application.exec();
 }
