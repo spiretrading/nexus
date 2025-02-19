@@ -1,7 +1,7 @@
 find_package(Qt5Widgets REQUIRED)
-file(GLOB header_files ${SPIRE_INCLUDE_PATH}/Spire/CanvasView/*.hpp)
-file(GLOB source_files ${SPIRE_SOURCE_PATH}/CanvasView/*.cpp)
-file(GLOB form_files ${SPIRE_SOURCE_PATH}/CanvasView/*.ui)
+file(GLOB_RECURSE header_files ${SPIRE_INCLUDE_PATH}/Spire/CanvasView/*.hpp)
+file(GLOB_RECURSE source_files ${SPIRE_SOURCE_PATH}/CanvasView/*.cpp)
+file(GLOB_RECURSE form_files ${SPIRE_SOURCE_PATH}/CanvasView/*.ui)
 qt5_wrap_ui(generated_header_files ${form_files})
 find_cpp_qobject(qobject_source_files ${header_files})
 qt5_wrap_cpp(generated_source_files ${qobject_source_files}
@@ -58,9 +58,6 @@ target_link_libraries(CanvasViewTests Async Dashboard Charting PortfolioViewer
   optimized ${QT_ACCESS_LIBRARY_OPTIMIZED_PATH}
   debug ${ZLIB_LIBRARY_DEBUG_PATH}
   optimized ${ZLIB_LIBRARY_OPTIMIZED_PATH})
-if(MSVC)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
-endif()
 if(UNIX)
   target_link_libraries(CanvasViewTests
     debug ${BOOST_CHRONO_LIBRARY_DEBUG_PATH}

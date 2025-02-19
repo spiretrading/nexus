@@ -8,14 +8,13 @@ using namespace Beam;
 using namespace Beam::Serialization;
 using namespace boost;
 using namespace Spire;
-using namespace std;
 
 LuaScriptNode::Parameter::Parameter()
-    : m_type(IntegerType::GetInstance()) {}
+  : m_type(IntegerType::GetInstance()) {}
 
-LuaScriptNode::Parameter::Parameter(string name, const NativeType& type)
-    : m_name(std::move(name)),
-      m_type(type) {}
+LuaScriptNode::Parameter::Parameter(std::string name, const NativeType& type)
+  : m_name(std::move(name)),
+    m_type(type) {}
 
 LuaScriptNode::LuaScriptNode()
     : m_name("Undefined") {
@@ -23,8 +22,8 @@ LuaScriptNode::LuaScriptNode()
   SetType(UnionType::GetEmptyType());
 }
 
-LuaScriptNode::LuaScriptNode(string name, const NativeType& type,
-    const std::filesystem::path& path, vector<Parameter> parameters)
+LuaScriptNode::LuaScriptNode(std::string name, const NativeType& type,
+    const std::filesystem::path& path, std::vector<Parameter> parameters)
     : m_name(std::move(name)),
       m_path(path),
       m_parameters(std::move(parameters)) {
@@ -35,7 +34,7 @@ LuaScriptNode::LuaScriptNode(string name, const NativeType& type,
   SetType(type);
 }
 
-const string& LuaScriptNode::GetName() const {
+const std::string& LuaScriptNode::GetName() const {
   return m_name;
 }
 
@@ -43,7 +42,8 @@ const std::filesystem::path& LuaScriptNode::GetPath() const {
   return m_path;
 }
 
-const vector<LuaScriptNode::Parameter>& LuaScriptNode::GetParameters() const {
+const std::vector<LuaScriptNode::Parameter>&
+    LuaScriptNode::GetParameters() const {
   return m_parameters;
 }
 
@@ -51,8 +51,8 @@ void LuaScriptNode::Apply(CanvasNodeVisitor& visitor) const {
   visitor.Visit(*this);
 }
 
-unique_ptr<CanvasNode> LuaScriptNode::Clone() const {
-  return make_unique<LuaScriptNode>(*this);
+std::unique_ptr<CanvasNode> LuaScriptNode::Clone() const {
+  return std::make_unique<LuaScriptNode>(*this);
 }
 
 LuaScriptNode::LuaScriptNode(ReceiveBuilder) {}
