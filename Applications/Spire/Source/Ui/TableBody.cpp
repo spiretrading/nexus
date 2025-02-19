@@ -112,14 +112,15 @@ struct TableBody::RowCover : Cover {
       body.m_hover_observers.at(item).connect_state_signal(
         std::bind_front(&TableBody::on_hover, &body, std::ref(*item)));
       if(column != body.get_column_size() - 1) {
-        item->setFixedWidth(
-          body.m_widths->get(column) - body.get_left_spacing(column));
+        if(!body.m_column_covers[column]->isVisible()) {
+          item->setFixedWidth(0);
+        } else {
+          item->setFixedWidth(
+            body.m_widths->get(column) - body.get_left_spacing(column));
+        }
       } else {
         item->setSizePolicy(
           QSizePolicy::Expanding, item->sizePolicy().verticalPolicy());
-      }
-      if(!body.m_column_covers[column]->isVisible()) {
-        item->setFixedWidth(0);
       }
       layout->addWidget(item);
       item->connect_active_signal(std::bind_front(
