@@ -248,6 +248,10 @@ struct TableBody::Layout : QLayout {
     } else if(!m_bottom.empty()) {
       add_hidden_row(
         index, m_bottom_height / static_cast<int>(m_bottom.size()));
+    } else if(m_top_height + m_bottom_height != 0) {
+      auto average_row_height = (m_top_height + m_bottom_height) /
+        static_cast<int>(get_top_index() + m_bottom.size());
+      add_hidden_row(index, average_row_height);
     } else {
       add_hidden_row(index, 0);
     }
