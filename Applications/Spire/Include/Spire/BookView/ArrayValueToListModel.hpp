@@ -42,8 +42,6 @@ namespace Spire {
 
       QValidator::State set(int index, const Type& value) override;
 
-      QValidator::State push(const Type& value) override;
-
       QValidator::State insert(const Type& value, int index) override;
 
       QValidator::State remove(int index) override;
@@ -103,11 +101,6 @@ namespace Spire {
   }
 
   template<typename T>
-  QValidator::State ArrayValueToListModel<T>::push(const Type& value) {
-    return insert(value, get_size());
-  }
-
-  template<typename T>
   QValidator::State ArrayValueToListModel<T>::insert(const Type& value,
       int index) {
     if(index < 0 || index > get_size()) {
@@ -158,7 +151,7 @@ namespace Spire {
 
   template<typename T>
   void ArrayValueToListModel<T>::on_update(const std::vector<Type>& data) {
-    if(m_is_transaction || m_data == data) {
+    if(m_data == data) {
       return;
     }
     m_transaction.transact([&] {

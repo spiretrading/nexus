@@ -255,6 +255,13 @@ struct PriceLevelModel {
 
   void on_color_scheme_operation(
       const ListModel<QColor>::Operation& operation) {
+    auto update_levels = [&] {
+      if(auto levels = m_levels->get();
+          levels && *levels != m_color_scheme->get_size()) {
+        auto blocker = shared_connection_block(m_levels_connection);
+        m_levels->set(m_color_scheme->get_size());
+      }
+    };
     visit(operation,
       [&] (const ListModel<QColor>::AddOperation& operation) {
         auto blocker = shared_connection_block(m_color_connection);
@@ -268,22 +275,14 @@ struct PriceLevelModel {
         } else {
           m_colors->set(1, m_color_scheme->get(operation.m_index));
         }
-        if(auto levels = m_levels->get();
-            levels && *levels != m_color_scheme->get_size()) {
-          auto blocker = shared_connection_block(m_levels_connection);
-          m_levels->set(m_color_scheme->get_size());
-        }
+        update_levels();
       },
       [&] (const ListModel<QColor>::RemoveOperation& operation) {
         if(operation.m_index < m_colors->get_size()) {
           auto blocker = shared_connection_block(m_color_connection);
           m_colors->remove(operation.m_index);
         }
-        auto blocker = shared_connection_block(m_levels_connection);
-        if(auto levels = m_levels->get();
-            levels && *levels != m_color_scheme->get_size()) {
-          m_levels->set(m_color_scheme->get_size());
-        }
+        update_levels();
       },
       [&] (const ListModel<QColor>::UpdateOperation& operation) {
         if(operation.m_index == m_color_scheme->get_size() - 1 &&
