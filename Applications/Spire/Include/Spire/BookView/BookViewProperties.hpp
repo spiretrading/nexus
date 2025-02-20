@@ -20,11 +20,24 @@ namespace Spire {
   /** Represents the price level properties in the book view window. */
   struct BookViewLevelProperties {
 
+    /** Specifies the type of fill used for price levels. */
+    enum class FillType {
+
+      /** The levels are filled with a linear gradient.*/
+      GRADIENT,
+
+      /** The levels are filled using a solid color. */
+      SOLID
+    };
+
     /** The font used in the text. */
     QFont m_font;
 
     /** Whether to show grid lines. */
     bool m_is_grid_enabled;
+
+    /** The fill type for price levels. */
+    FillType m_fill_type;
 
     /** A list of color values used to designate distinct price levels. */
     std::vector<QColor> m_color_scheme;
