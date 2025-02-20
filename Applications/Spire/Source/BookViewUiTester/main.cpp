@@ -10,6 +10,7 @@
 #include "Spire/BookView/BboBox.hpp"
 #include "Spire/BookView/BookViewPropertiesWindow.hpp"
 #include "Spire/BookView/BookViewTableView.hpp"
+#include "Spire/BookView/MarketDepth.hpp"
 #include "Spire/BookView/TechnicalsPanel.hpp"
 #include "Spire/KeyBindings/InteractionsKeyBindingsModel.hpp"
 #include "Spire/KeyBindings/KeyBindingsWindow.hpp"
@@ -97,15 +98,16 @@ std::shared_ptr<SecurityInfoQueryModel> populate_security_query_model() {
   return model;
 }
 
-BookQuote make_random_market_quote() {
+BookQuote make_random_market_quote(Side side) {
   auto random_generator =
     QRandomGenerator(to_time_t_milliseconds(microsec_clock::universal_time()));
   auto& markets = GetDefaultMarketDatabase().GetEntries();
-  auto market_index = random_generator.bounded(static_cast<int>(markets.size()));
+  auto market_index = random_generator.bounded(
+    static_cast<int>(markets.size()));
   auto market_code = markets[market_index].m_code;
   return BookQuote(to_text(MarketToken(market_code)).toStdString(), false,
     market_code, Quote{Truncate(Money(random_generator.bounded(200.0)), 2),
-      random_generator.bounded(1000), Side::BID}, second_clock::local_time());
+      random_generator.bounded(1000), side}, second_clock::local_time());
 }
 
 OrderStatus make_order_status(int index) {
@@ -145,7 +147,7 @@ QuantityBox* make_quantity_box(M model, U field) {
 
 struct BookViewTester : QWidget {
   std::shared_ptr<BookViewModel> m_model;
-  BookViewPropertiesWindow* m_properties_window;
+  Button* m_submit_order_button;
   QTimer m_quote_timer;
   QTimer m_order_timer;
   int m_update_count;
@@ -154,14 +156,10 @@ struct BookViewTester : QWidget {
       std::shared_ptr<ValueModel<BboQuote>> bbo_quote,
       std::shared_ptr<QuantityModel> default_bid_quantity,
       std::shared_ptr<QuantityModel> default_ask_quantity,
-      std::shared_ptr<OptionalIntegerModel> font_size,
-      std::shared_ptr<LocalSecurityModel> security,
       std::shared_ptr<BookViewModel> model,
-      BookViewPropertiesWindow& properties_window,
       QWidget* parent = nullptr)
       : QWidget(parent),
         m_model(std::move(model)),
-        m_properties_window(&properties_window),
         m_quote_timer(this),
         m_order_timer(this),
         m_update_count(0) {
@@ -198,13 +196,7 @@ struct BookViewTester : QWidget {
     bbo_quote_layout->addRow(tr("Ask Quantity:"),
       make_quantity_box(bbo_ask, &Quote::m_size));
     left_layout->addWidget(bbo_quote_group_box);
-    auto properties_group_box = new QGroupBox(tr("Properties"));
-    auto properties_layout = new QFormLayout(properties_group_box);
-    properties_layout->addRow(tr("Font Size:"),
-      new IntegerBox(std::move(font_size)));
-    properties_layout->addRow(tr("Security:"),
-      new SecurityBox(populate_security_query_model(), security));
-    left_layout->addWidget(properties_group_box);
+    left_layout->addStretch(1);
     auto right_layout = new QVBoxLayout();
     auto book_quote_group_box = new QGroupBox(tr("Market Quote"));
     auto book_quote_layout = new QVBoxLayout(book_quote_group_box);
@@ -269,21 +261,16 @@ struct BookViewTester : QWidget {
     order_status_fields_layout->addRow(tr("Update Period (ms):"),
       status_update_period_box);
     order_status_layout->addLayout(order_status_fields_layout);
-    auto submit_order_button = make_label_button(tr("Submit"));
-    submit_order_button->connect_click_signal(
+    m_submit_order_button = make_label_button(tr("Submit"));
+    m_submit_order_button->connect_click_signal(
       std::bind_front(&BookViewTester::on_order_submit_click, this,
         order_status_destination_box, order_status_price_box,
         order_quantity_box, order_status_box, order_status_side_box,
         continuous_update_box, status_update_count_box,
-        status_update_period_box, submit_order_button));
-    order_status_layout->addWidget(submit_order_button, 0,
+        status_update_period_box));
+    order_status_layout->addWidget(m_submit_order_button, 0,
       Qt::AlignRight);
     right_layout->addWidget(order_status_group_box);
-    auto properties_window_button =
-      make_label_button(tr("Open PropertiesWindow"));
-    properties_window_button->connect_click_signal(
-      std::bind_front(&BookViewTester::on_properties_window_click, this));
-    right_layout->addWidget(properties_window_button);
     right_layout->addStretch(1);
     auto layout = new QHBoxLayout(this);
     layout->addLayout(left_layout);
@@ -328,25 +315,101 @@ struct BookViewTester : QWidget {
   }
 
   void update_order(int quote_index, int order_index, Quantity remaining_size,
-      BookViewModel::UserOrder& order, OrderStatus status) {
+      OrderStatus status, ListModel<BookQuote>& quotes,
+      ListModel<BookViewModel::UserOrder>& orders) {
     if(quote_index < 0 || order_index < 0) {
       return;
     }
     remaining_size = std::max(Quantity(0), remaining_size);
-    auto book_quote = m_model->get_bids()->get(quote_index);
+    auto book_quote = quotes.get(quote_index);
     book_quote.m_quote.m_size = remaining_size;
-    m_model->get_bids()->set(quote_index, book_quote);
+    quotes.set(quote_index, book_quote);
+    auto order = orders.get(order_index);
     order.m_status = status;
-    m_model->get_bid_orders()->set(order_index, order);
+    orders.set(order_index, order);
     order.m_status = OrderStatus::NONE;
-    m_model->get_bid_orders()->set(order_index, order);
+    orders.set(order_index, order);
     if(remaining_size <= 0) {
-      m_model->get_bid_orders()->remove(order_index);
+      orders.remove(order_index);
     }
   }
 
+  void submit_order(const BookQuote& quote,
+      BookViewModel::UserOrder& user_order, ListModel<BookQuote>& quotes,
+      ListModel<BookViewModel::UserOrder>& orders, bool is_continuous,
+      int update_period, int update_count) {
+    auto order_index = find_order(orders, user_order);
+    if(order_index >= 0) {
+      auto quote_index = find_book_quote(quotes, quote);
+      if(quote_index < 0) {
+        return;
+      }
+      auto quantity = quotes.get(quote_index).m_quote.m_size;
+      if(!is_continuous) {
+        if(user_order.m_status == OrderStatus::NEW) {
+          auto book_quote = quotes.get(quote_index);
+          book_quote.m_quote.m_size = quantity + quote.m_quote.m_size;
+          quotes.set(quote_index, book_quote);
+        } else {
+          update_order(quote_index, order_index,
+            quantity - quote.m_quote.m_size, user_order.m_status, quotes,
+            orders);
+        }
+      } else {
+        m_submit_order_button->setEnabled(false);
+        m_order_timer.setInterval(update_period);
+        connect(&m_order_timer, &QTimer::timeout,
+          std::bind_front(&BookViewTester::on_order_timeout, this, quote,
+            user_order, std::ref(quotes), std::ref(orders), update_count));
+        m_update_count = 0;
+        m_order_timer.start();
+      }
+    } else if(user_order.m_status == OrderStatus::NEW && !is_continuous) {
+      quotes.push(quote);
+      orders.push(user_order);
+    }
+  }
+
+  void submit_book_quote(ListModel<BookQuote>& quotes, const BookQuote& quote) {
+    auto i = find_book_quote(quotes, quote);
+    if(i >= 0) {
+      if(quote.m_quote.m_size == 0) {
+        quotes.remove(i);
+      } else {
+        quotes.set(i, quote);
+      }
+    } else if(quote.m_quote.m_size != 0) {
+      quotes.push(quote);
+    }
+  }
+
+  void quit_order_timer() {
+    m_order_timer.stop();
+    m_order_timer.disconnect();
+    m_submit_order_button->setEnabled(true);
+  }
+
   void on_quote_timeout() {
-    m_model->get_bids()->push(make_random_market_quote());
+    m_model->get_bids()->push(make_random_market_quote(Side::BID));
+    m_model->get_asks()->push(make_random_market_quote(Side::ASK));
+  }
+
+  void on_order_timeout(const BookQuote& quote,
+      const BookViewModel::UserOrder& user_order, ListModel<BookQuote>& quotes,
+      ListModel<BookViewModel::UserOrder>& orders, int update_count) {
+    auto quote_index = find_book_quote(quotes, quote);
+    if(quote_index < 0) {
+      quit_order_timer();
+      return;
+    }
+    auto size = quotes.get(quote_index).m_quote.m_size;
+    update_order(quote_index, find_order(orders, user_order),
+      size - quote.m_quote.m_size, make_order_status(m_update_count),
+      quotes, orders);
+    ++m_update_count;
+    if(m_update_count >= update_count) {
+      quit_order_timer();
+    }
   }
 
   void on_book_quote_submit_click(MarketBox* market_box,
@@ -356,130 +419,37 @@ struct BookViewTester : QWidget {
         false, market_code, Quote{*price_box->get_current()->get(),
         *quantity_box->get_current()->get(), side_box->get_current()->get()},
         second_clock::local_time());
-    if(side_box->get_current()->get() == Side::BID) {
-      auto i = find_book_quote(*m_model->get_bids(), quote);
-      if(i >= 0) {
-        if(*quantity_box->get_current()->get() == 0) {
-          m_model->get_bids()->remove(i);
-        } else {
-          m_model->get_bids()->set(i, quote);
-        }
-      } else if(*quantity_box->get_current()->get() != 0) {
-        m_model->get_bids()->push(quote);
+    auto quotes = [&] {
+      if(quote.m_quote.m_side == Side::BID) {
+        return m_model->get_bids();
       }
-    }
+      return m_model->get_asks();
+    }();
+    submit_book_quote(*quotes, quote);
   }
 
   void on_order_submit_click(TextBox* destination_box, MoneyBox* price_box,
       QuantityBox* quantity_box, OrderSatusBox* status_box, SideBox* side_box,
       CheckBox* continuous_update_box, IntegerBox* update_count_box,
-      IntegerBox* update_period_box, Button* submit_order_button) {
+      IntegerBox* update_period_box) {
     auto user_order = BookViewModel::UserOrder{
       destination_box->get_current()->get().toStdString(),
       *price_box->get_current()->get(), status_box->get_current()->get()};
-    if(side_box->get_current()->get() == Side::BID) {
-      auto mpid = "@" + destination_box->get_current()->get();
-      auto quote = BookQuote(mpid.toStdString(), false, "",
-        Quote{*price_box->get_current()->get(),
-        *quantity_box->get_current()->get(), side_box->get_current()->get()},
-        second_clock::local_time());
-      auto order_index = find_order(*m_model->get_bid_orders(), user_order);
-      if(order_index >= 0) {
-        auto quote_index = find_book_quote(*m_model->get_bids(), quote);
-        if(quote_index < 0) {
-          return;
-        }
-        auto quantity = m_model->get_bids()->get(quote_index).m_quote.m_size;
-        if(!continuous_update_box->get_current()->get()) {
-          if(user_order.m_status == OrderStatus::NEW) {
-            auto remaining_quantity =
-              quantity + *quantity_box->get_current()->get();
-            auto book_quote = m_model->get_bids()->get(quote_index);
-            book_quote.m_quote.m_size = remaining_quantity;
-            m_model->get_bids()->set(quote_index, book_quote);
-          } else {
-            update_order(quote_index, order_index,
-              quantity - *quantity_box->get_current()->get(),
-              user_order, user_order.m_status);
-          }
-        } else {
-          auto quit_timer = [=] {
-            m_order_timer.stop();
-            m_order_timer.disconnect();
-            submit_order_button->setEnabled(true);
-          };
-          submit_order_button->setEnabled(false);
-          m_order_timer.setInterval(*update_period_box->get_current()->get());
-          connect(&m_order_timer, &QTimer::timeout, [=] () mutable {
-            auto quote_index = find_book_quote(*m_model->get_bids(), quote);
-            if(quote_index < 0) {
-              quit_timer();
-              return;
-            }
-            auto size = m_model->get_bids()->get(quote_index).m_quote.m_size;
-            update_order(quote_index,
-              find_order(*m_model->get_bid_orders(), user_order),
-              size - *quantity_box->get_current()->get(),
-              user_order, make_order_status(m_update_count));
-            ++m_update_count;
-            if(m_update_count >= update_count_box->get_current()->get()) {
-              quit_timer();
-            }
-          });
-          m_update_count = 0;
-          m_order_timer.start();
-        }
-      } else if(user_order.m_status == OrderStatus::NEW &&
-          !continuous_update_box->get_current()->get()) {
-        m_model->get_bids()->push(quote);
-        m_model->get_bid_orders()->push(user_order);
+    auto mpid = "@" + destination_box->get_current()->get();
+    auto quote = BookQuote(mpid.toStdString(), false, "",
+      Quote{*price_box->get_current()->get(),
+      *quantity_box->get_current()->get(), side_box->get_current()->get()},
+      second_clock::local_time());
+    auto [quotes, orders] = [&] {
+      if(quote.m_quote.m_side == Side::BID) {
+        return std::tuple(m_model->get_bids(), m_model->get_bid_orders());
       }
-    }
-  }
-
-  void on_properties_window_click() {
-    m_properties_window->show();
-    m_properties_window->move(pos().x() + frameGeometry().width(), pos().y());
-  }
-};
-
-struct MarketDepthContainer : QWidget {
-  MarketDepthContainer(std::shared_ptr<BookViewModel> model,
-      std::shared_ptr<ValueModel<BboQuote>> bbo_quote,
-      std::shared_ptr<BookViewPropertiesModel> properties,
-      std::shared_ptr<OptionalIntegerModel> font_size,
-      QWidget* parent = nullptr)
-      : QWidget(parent) {
-    auto layout = make_hbox_layout(this);
-    layout->setSpacing(scale_width(2));
-    auto bid_panel = new QWidget();
-    bid_panel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-    auto bid_layout = make_vbox_layout(bid_panel);
-    auto bid_bbo =
-      new BboBox(make_field_value_model(bbo_quote, &BboQuote::m_bid));
-    bid_bbo->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-    bid_layout->addWidget(bid_bbo);
-    auto bid_table_view = make_book_view_table_view(model, properties,
-      Side::BID, GetDefaultMarketDatabase());
-    bid_table_view->setSizePolicy(QSizePolicy::Expanding,
-      QSizePolicy::Expanding);
-    bid_layout->addWidget(bid_table_view);
-    layout->addWidget(bid_panel, 1);
-    auto ask_panel = new QWidget();
-    ask_panel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-    auto ask_layout = make_vbox_layout(ask_panel);
-    ask_layout->addWidget(
-      new BboBox(make_field_value_model(bbo_quote, &BboQuote::m_ask)));
-    ask_layout->addStretch(1);
-    layout->addWidget(ask_panel, 1);
-    font_size->connect_update_signal([=] (const auto& size) {
-      if(size) {
-        update_style(*this, [&] (auto& style) {
-          style.get(Any() > is_a<QWidget>() > is_a<BboBox>() > is_a<TextBox>()).
-            set(FontSize(scale_width(*size)));
-        });
-      }
-    });
+      return std::tuple(m_model->get_asks(), m_model->get_ask_orders());
+    }();
+    submit_order(quote, user_order, *quotes, *orders,
+      continuous_update_box->get_current()->get(),
+      *update_period_box->get_current()->get(),
+      *update_count_box->get_current()->get());
   }
 };
 
@@ -497,27 +467,24 @@ int main(int argc, char** argv) {
       Quote(Money(143.54), 39, Side::ASK), second_clock::universal_time()));
   auto default_bid_quantity = std::make_shared<LocalQuantityModel>(100);
   auto default_ask_quantity = std::make_shared<LocalQuantityModel>(100);
-  auto font_size = std::make_shared<LocalOptionalIntegerModel>(10);
-  auto security =
-    std::make_shared<LocalSecurityModel>(ParseSecurity("MRU.TSX"));
   auto properties = std::make_shared<LocalBookViewPropertiesModel>(
     BookViewProperties(BookViewLevelProperties::get_default(),
       BookViewHighlightProperties::get_default()));
   auto key_bindings =
     std::make_shared<KeyBindingsModel>(GetDefaultMarketDatabase());
   auto book_views = std::make_shared<BookViewModel>();
-  BookViewPropertiesWindow properties_window(properties,
-    key_bindings, security, GetDefaultMarketDatabase());
   auto tester = BookViewTester(technicals, bbo_quote, default_bid_quantity,
-    default_ask_quantity, font_size, security, book_views, properties_window);
+    default_ask_quantity, book_views);
   auto widget = QWidget();
   auto layout = make_vbox_layout(&widget);
   auto panel = new TechnicalsPanel(technicals, default_bid_quantity,
     default_ask_quantity);
   panel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   layout->addWidget(panel);
-  layout->addWidget(
-    new MarketDepthContainer(book_views, bbo_quote, properties, font_size));
+  auto market_depth = new MarketDepth(book_views, bbo_quote, properties,
+    GetDefaultMarketDatabase());
+  layout->addWidget(market_depth);
+  widget.setFocusProxy(market_depth);
   widget.installEventFilter(&tester);
   widget.show();
   widget.resize(scale(206, 417));
@@ -525,5 +492,13 @@ int main(int argc, char** argv) {
   tester.move(
     tester.pos().x() + widget.frameGeometry().width() + scale_width(100),
     widget.pos().y() - 200);
+  auto security =
+    std::make_shared<LocalSecurityModel>(ParseSecurity("MRU.TSX"));
+  BookViewPropertiesWindow properties_window(properties,
+    key_bindings, std::move(security), GetDefaultMarketDatabase());
+  properties_window.show();
+  properties_window.move(
+    tester.pos().x() + widget.frameGeometry().width() + scale_width(300),
+    widget.pos().y());
   application.exec();
 }

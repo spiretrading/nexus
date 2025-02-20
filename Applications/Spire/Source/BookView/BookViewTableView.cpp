@@ -126,22 +126,6 @@ namespace {
     return OrderQuote(to_highlight_state(status));
   }
 
-  const auto& get_mpid(const TableModel& table, int row) {
-    return table.get<std::string>(row, static_cast<int>(BookViewColumns::MPID));
-  }
-
-  const auto& get_price(const TableModel& table, int row) {
-    return table.get<Money>(row, static_cast<int>(BookViewColumns::PRICE));
-  }
-
-  const auto& get_size(const TableModel& table, int row) {
-    return table.get<Quantity>(row, static_cast<int>(BookViewColumns::SIZE));
-  }
-
-  auto is_order(const std::string& mpid) {
-    return !mpid.empty() && mpid.front() == '@';
-  }
-
   struct RowTracker : QObject {
     struct Selectors {
       optional<Selector> m_level_selector;
