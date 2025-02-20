@@ -58,7 +58,7 @@ QWidget& SecurityView::get_body() {
 
 void SecurityView::keyPressEvent(QKeyEvent* event) {
   if(event->modifiers() &
-      (Qt::ControlModifier | Qt::AltModifier  | Qt::MetaModifier)) {
+      (Qt::ControlModifier | Qt::AltModifier | Qt::MetaModifier)) {
     QWidget::keyPressEvent(event);
     return;
   }
