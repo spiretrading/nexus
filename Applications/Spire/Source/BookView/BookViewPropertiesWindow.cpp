@@ -100,6 +100,9 @@ void BookViewPropertiesWindow::on_cancel_button_click() {
 }
 
 void BookViewPropertiesWindow::on_done_button_click() {
+  m_initial_properties = m_properties->get();
+  copy_interactions(*m_key_bindings->get_interactions_key_bindings(
+    m_security->get()), m_initial_interactions);
   close();
 }
 
