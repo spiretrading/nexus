@@ -134,27 +134,31 @@ namespace {
 
       explicit FixedSizeArrayValueToListModel(
         std::shared_ptr<ValueModel<std::array<Type, N>>> source)
-        : m_source(std::move(source)) {}
+        : m_source(std::move(source)),
+          m_data(m_source->get()),
+          m_connection(m_source->connect_update_signal(
+            std::bind_front(&FixedSizeArrayValueToListModel::on_update,
+              this))) {}
 
       int get_size() const override {
-        return static_cast<int>(m_source->get().size());
+        return static_cast<int>(m_data.size());
       }
 
       const Type& get(int index) const override {
         if(index < 0 || index >= get_size()) {
           throw std::out_of_range("The index is out of range.");
         }
-        return m_source->get()[index];
+        return m_data[index];
       }
 
       QValidator::State set(int index, const Type& value) override {
         if(index < 0 || index >= get_size()) {
           throw std::out_of_range("The index is out of range.");
         }
-        auto data = m_source->get();
-        auto previous = data[index];
-        data[index] = value;
-        m_source->set(data);
+        auto previous = m_data[index];
+        m_data[index] = value;
+        auto blocker = shared_connection_block(m_connection);
+        m_source->set(m_data);
         m_transaction.push(UpdateOperation(index, std::move(previous), value));
         return QValidator::Acceptable;
       }
@@ -168,9 +172,24 @@ namespace {
         m_transaction.transact(transaction);
       }
 
+      void on_update(const std::array<Type, N>& data) {
+        m_transaction.transact([&] {
+          for(auto i = 0; i < data.size(); ++i) {
+            if(m_data[i] != data[i]) {
+              auto previous = m_data[i];
+              m_data[i] = data[i];
+              m_transaction.push(
+                UpdateOperation(i, std::move(previous), m_data[i]));
+            }
+          }
+        });
+      }
+
     private:
       std::shared_ptr<ValueModel<std::array<Type, N>>> m_source;
+      std::array<Type, N> m_data;
       ListModelTransactionLog<Type> m_transaction;
+      scoped_connection m_connection;
   };
 
   using OrderHighlightStateListModel =

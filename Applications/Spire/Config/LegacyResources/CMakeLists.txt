@@ -1,5 +1,4 @@
 find_package(Qt5Widgets REQUIRED)
-
 set(legacy_resource_files ${SPIRE_LEGACY_RESOURCES_PATH}/LegacyResources.qrc)
 qt5_add_resources(generated_legacy_resource_files ${legacy_resource_files})
 include_directories(${CMAKE_CURRENT_BINARY_DIR})

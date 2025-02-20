@@ -1,5 +1,6 @@
 #ifndef ARRAY_VALUE_TO_LIST_MODEL_HPP
 #define ARRAY_VALUE_TO_LIST_MODEL_HPP
+#include <boost/signals2/shared_connection_block.hpp>
 #include <vector>
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Spire/ListModelTransactionLog.hpp"
@@ -55,6 +56,9 @@ namespace Spire {
       std::vector<Type> m_data;
       bool m_is_transaction;
       ListModelTransactionLog<Type> m_transaction;
+      boost::signals2::scoped_connection m_connection;
+
+      void on_update(const std::vector<Type>& data);
   };
 
   template<typename T>
@@ -62,7 +66,9 @@ namespace Spire {
     std::shared_ptr<ValueModel<std::vector<Type>>> source)
     : m_source(std::move(source)),
       m_data(m_source->get()),
-      m_is_transaction(false) {}
+      m_is_transaction(false),
+      m_connection(m_source->connect_update_signal(
+        std::bind_front(&ArrayValueToListModel::on_update, this))) {}
 
   template<typename T>
   int ArrayValueToListModel<T>::get_size() const {
@@ -87,6 +93,7 @@ namespace Spire {
     auto previous = m_data[index];
     m_data[index] = value;
     if(!m_is_transaction) {
+      auto blocker = boost::signals2::shared_connection_block(m_connection);
       m_source->set(m_data);
     }
     m_transaction.push(UpdateOperation(index, std::move(previous), value));
@@ -101,6 +108,7 @@ namespace Spire {
     }
     m_data.insert(std::next(m_data.begin(), index), value);
     if(!m_is_transaction) {
+      auto blocker = boost::signals2::shared_connection_block(m_connection);
       m_source->set(m_data);
     }
     m_transaction.push(AddOperation(index));
@@ -116,6 +124,7 @@ namespace Spire {
       m_transaction.push(PreRemoveOperation(index));
       m_data.erase(std::next(m_data.begin(), index));
       if(!m_is_transaction) {
+        auto blocker = boost::signals2::shared_connection_block(m_connection);
         m_source->set(m_data);
       }
       m_transaction.push(RemoveOperation(index));
@@ -135,8 +144,29 @@ namespace Spire {
       const std::function<void()>& transaction) {
     m_is_transaction = true;
     m_transaction.transact(transaction);
+    auto blocker = boost::signals2::shared_connection_block(m_connection);
     m_source->set(m_data);
     m_is_transaction = false;
+  }
+
+  template<typename T>
+  void ArrayValueToListModel<T>::on_update(const std::vector<Type>& data) {
+    if(m_data == data) {
+      return;
+    }
+    m_transaction.transact([&] {
+      auto size = get_size();
+      for(auto i = size - 1; i >= 0; --i) {
+        m_transaction.push(PreRemoveOperation(i));
+        m_data.erase(std::next(m_data.begin(), i));
+        m_transaction.push(RemoveOperation(i));
+      }
+      for(const auto& value : data) {
+        auto index = get_size();
+        m_data.insert(std::next(m_data.begin(), index), value);
+        m_transaction.push(AddOperation(index));
+      }
+    });
   }
 }
 

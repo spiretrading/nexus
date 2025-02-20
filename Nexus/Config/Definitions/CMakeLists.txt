@@ -1,7 +1,4 @@
-file(GLOB source_files ${NEXUS_SOURCE_PATH}/DefinitionsTests/*.cpp)
-if(MSVC)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
-endif()
+file(GLOB_RECURSE source_files ${NEXUS_SOURCE_PATH}/DefinitionsTests/*.cpp)
 add_executable(DefinitionsTests ${source_files})
 target_link_libraries(DefinitionsTests
   debug ${YAML_LIBRARY_DEBUG_PATH}

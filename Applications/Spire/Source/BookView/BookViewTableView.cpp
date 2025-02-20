@@ -799,40 +799,22 @@ namespace {
 
   struct BookViewTableViewObserver : QObject {
     TableView* m_table_view;
-    std::shared_ptr<ListModel<BookQuote>> m_book_quotes;
     std::shared_ptr<ListModel<UserOrder>> m_orders;
     std::shared_ptr<BookViewPropertiesModel> m_properties;
-    std::shared_ptr<LevelQuoteModel> m_level_quote_model;
-    std::shared_ptr<MarketHighlightModel> m_market_highlight_model;
-    std::shared_ptr<OrderHighlightModel> m_order_highlight_model;
     std::shared_ptr<LevelPropertiesModel> m_level_properties;
-    std::shared_ptr<HighlightPropertiesModel> m_highlight_properties;
     bool m_is_grid_enabled;
     QFont m_font;
     connection m_level_properties_connection;
     connection m_current_connection;
-    connection m_operation_connection;
 
     BookViewTableViewObserver(TableView& table_view,
-       std::shared_ptr<ListModel<BookQuote>> book_quotes,
-       std::shared_ptr<ListModel<UserOrder>> orders,
-       std::shared_ptr<BookViewPropertiesModel> properties,
-       std::shared_ptr<LevelQuoteModel> level_quote_model,
-       std::shared_ptr<MarketHighlightModel> market_highlight_model,
-       std::shared_ptr<OrderHighlightModel> order_highlight_model,
-       QObject* parent = nullptr)
+      std::shared_ptr<BookViewPropertiesModel> properties,
+      QObject* parent = nullptr)
       : QObject(parent),
         m_table_view(&table_view),
-        m_book_quotes(std::move(book_quotes)),
-        m_orders(std::move(orders)),
         m_properties(std::move(properties)),
-        m_level_quote_model(std::move(level_quote_model)),
-        m_market_highlight_model(std::move(market_highlight_model)),
-        m_order_highlight_model(std::move(order_highlight_model)),
         m_level_properties(make_field_value_model(m_properties,
           &BookViewProperties::m_level_properties)),
-        m_highlight_properties(make_field_value_model(m_properties,
-          &BookViewProperties::m_highlight_properties)),
         m_is_grid_enabled(m_level_properties->get().m_is_grid_enabled),
         m_font(m_level_properties->get().m_font) {
       m_table_view->installEventFilter(this);
@@ -843,8 +825,6 @@ namespace {
           this));
       m_current_connection = m_table_view->get_current()->connect_update_signal(
         std::bind_front(&BookViewTableViewObserver::on_current, this));
-      m_operation_connection = m_book_quotes->connect_operation_signal(
-        std::bind_front(&BookViewTableViewObserver::on_operation, this));
     }
 
     bool eventFilter(QObject* watched, QEvent* event) override {
@@ -955,24 +935,15 @@ namespace {
         return;
       }
       if(!is_order(get_mpid(*m_table_view->get_table(), current->m_row))) {
+        auto blocker = shared_connection_block(m_current_connection);
         m_table_view->get_current()->set(none);
       }
-    }
-
-    void on_operation(const ListModel<BookQuote>::Operation& operation) {
-      visit(operation,
-        [&] (const auto& operation) {
-          if(auto current = m_table_view->get_current()->get()) {
-            if(!is_order(
-                get_mpid(*m_table_view->get_table(), current->m_row))) {
-              m_table_view->get_current()->set(none);
-            }
-          }
-        });
     }
   };
 
   struct OrderFilteredListModel : FilteredListModel<BookQuote> {
+    using FilterSignal = Signal<void ()>;
+    mutable FilterSignal m_filter_signal;
     std::shared_ptr<HighlightPropertiesModel> m_highlight_properties;
     BookViewHighlightProperties::OrderVisibility m_order_visibility;
     connection m_connection;
@@ -994,12 +965,18 @@ namespace {
       return false;
     }
 
+    connection connect_filter_signal(
+        const FilterSignal::slot_type& slot) const {
+      return m_filter_signal.connect(slot);
+    }
+
     void on_properties(const BookViewHighlightProperties& properties) {
       if(m_order_visibility != properties.m_order_visibility) {
         if(m_order_visibility == OrderVisibility::HIDDEN &&
             properties.m_order_visibility != OrderVisibility::HIDDEN ||
             m_order_visibility != OrderVisibility::HIDDEN &&
             properties.m_order_visibility == OrderVisibility::HIDDEN) {
+          m_filter_signal();
           set_filter(std::bind_front(&OrderFilteredListModel::filter, this));
         }
         m_order_visibility = properties.m_order_visibility;
@@ -1093,9 +1070,11 @@ TableView* Spire::make_book_view_table_view(
       level_quote_model, market_highlight_model, order_highlight_model)).make();
   table_view->get_header().setVisible(false);
   table_view->get_scroll_box().set(ScrollBox::DisplayPolicy::NEVER);
-  auto observer = new BookViewTableViewObserver(*table_view,
-    order_filtered_list, orders, properties, level_quote_model,
-    market_highlight_model, order_highlight_model, table_view);
+  auto observer =
+    new BookViewTableViewObserver(*table_view, properties, table_view);
+  order_filtered_list->connect_filter_signal([=] {
+    table_view->get_current()->set(none);
+  });
   update_style(table_view->get_body(), [=] (auto& style) {
     auto item_selector = Any() > Row() > is_a<TableItem>();
     style.get(item_selector > is_a<TextBox>()).
