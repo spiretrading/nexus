@@ -34,8 +34,8 @@ namespace Spire {
       BookViewProperties m_initial_properties;
       InteractionsKeyBindingsModel m_initial_interactions;
       QWidget* m_highlights_page;
-      boost::signals2::connection m_level_connection;
-      boost::signals2::connection m_security_connection;
+      boost::signals2::scoped_connection m_level_connection;
+      boost::signals2::scoped_connection m_security_connection;
 
       void on_cancel_button_click();
       void on_done_button_click();
