@@ -7,11 +7,11 @@ set(BEAM_PYTHON_LIBRARY_DEBUG_PATH
   "${PROJECT_BINARY_DIR}/Dependencies/Beam/Beam/Libraries/Debug/_beam.lib")
 set(BEAM_PYTHON_LIBRARY_OPTIMIZED_PATH
   "${PROJECT_BINARY_DIR}/Dependencies/Beam/Beam/Libraries/Release/_beam.lib")
-set(LUA_INCLUDE_PATH "${PROJECT_BINARY_DIR}/Dependencies/lua-5.4.4/src")
+set(LUA_INCLUDE_PATH "${PROJECT_BINARY_DIR}/Dependencies/lua-5.4.7/src")
 set(LUA_LIBRARY_DEBUG_PATH
-  "${PROJECT_BINARY_DIR}/Dependencies/lua-5.4.4/src/Debug/lua.lib")
+  "${PROJECT_BINARY_DIR}/Dependencies/lua-5.4.7/src/Debug/lua.lib")
 set(LUA_LIBRARY_OPTIMIZED_PATH
-  "${PROJECT_BINARY_DIR}/Dependencies/lua-5.4.4/src/Release/lua.lib")
+  "${PROJECT_BINARY_DIR}/Dependencies/lua-5.4.7/src/Release/lua.lib")
 set(QT_ROOT "${PROJECT_BINARY_DIR}/Dependencies/qt-5.15.13")
 set(QT_INCLUDE_PATH "${QT_ROOT}/qtbase/include")
 set(QT_CORE_INCLUDE_PATH "${QT_INCLUDE_PATH}/QtCore")
@@ -77,6 +77,6 @@ set(QT_WINDOWS_ACCESSIBILITY_LIBRARY_OPTIMIZED_PATH
 set(QUICK_FIX_INCLUDE_PATH
   "${PROJECT_BINARY_DIR}/Dependencies/quickfix-v.1.15.1/include")
 set(QUICK_FIX_LIBRARY_DEBUG_PATH
-  "${PROJECT_BINARY_DIR}/Dependencies/quickfix-v.1.15.1/lib/debug/quickfix.lib")
+  "${PROJECT_BINARY_DIR}/Dependencies/quickfix-v.1.15.1/src/C++/Release/quickfix.lib")
 set(QUICK_FIX_LIBRARY_OPTIMIZED_PATH
-  "${PROJECT_BINARY_DIR}/Dependencies/quickfix-v.1.15.1/lib/quickfix.lib")
+  "${PROJECT_BINARY_DIR}/Dependencies/quickfix-v.1.15.1/src/C++/Debug/quickfix.lib")

@@ -7,29 +7,28 @@ using namespace Beam;
 using namespace Beam::Serialization;
 using namespace boost;
 using namespace Spire;
-using namespace std;
 
 BlotterTaskMonitorNode::BlotterTaskMonitorNode() {
   SetText("Task Monitor");
   SetType(UnionType::GetAnyType());
-  AddChild("monitor", make_unique<NoneNode>());
+  AddChild("monitor", std::make_unique<NoneNode>());
 }
 
-unique_ptr<CanvasNode> BlotterTaskMonitorNode::Replace(const CanvasNode& child,
-    unique_ptr<CanvasNode> replacement) const {
+std::unique_ptr<CanvasNode> BlotterTaskMonitorNode::Replace(
+    const CanvasNode& child, std::unique_ptr<CanvasNode> replacement) const {
   auto clone = CanvasNode::Clone(*this);
-  std::shared_ptr<CanvasType> type = replacement->GetType();
+  auto type = std::shared_ptr<CanvasType>(replacement->GetType());
   clone->SetChild(clone->GetChildren().front(), std::move(replacement));
   clone->SetType(*type);
-  return std::move(clone);
+  return clone;
 }
 
 void BlotterTaskMonitorNode::Apply(CanvasNodeVisitor& visitor) const {
   visitor.Visit(*this);
 }
 
-unique_ptr<CanvasNode> BlotterTaskMonitorNode::Clone() const {
-  return make_unique<BlotterTaskMonitorNode>(*this);
+std::unique_ptr<CanvasNode> BlotterTaskMonitorNode::Clone() const {
+  return std::make_unique<BlotterTaskMonitorNode>(*this);
 }
 
 BlotterTaskMonitorNode::BlotterTaskMonitorNode(ReceiveBuilder) {}

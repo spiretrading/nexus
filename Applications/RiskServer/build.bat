@@ -44,6 +44,6 @@ IF "!CONFIG!" == "clean" (
     CALL "!DIRECTORY!configure.bat"
   )
   cmake --build "!ROOT!" --target INSTALL --config "!CONFIG!"
-  echo !CONFIG! > CMakeFiles\config.txt
+  ECHO !CONFIG! > CMakeFiles\config.txt
 )
 ENDLOCAL

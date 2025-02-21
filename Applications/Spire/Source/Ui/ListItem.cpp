@@ -103,10 +103,12 @@ void ListItem::mount(QWidget& body) {
   m_button->layout()->setSizeConstraint(QLayout::SetMinAndMaxSize);
   m_button->setFocusPolicy(Qt::ClickFocus);
   m_button->connect_click_signal(m_submit_signal);
+  m_box->setFocusProxy(nullptr);
   if(body.isEnabled()) {
+    setTabOrder(this, &body);
     setFocusProxy(&body);
   } else {
-    m_box->setFocusProxy(nullptr);
+    setTabOrder(this, &*m_button);
     setFocusProxy(&*m_button);
   }
   if(auto item = layout()->takeAt(0)) {
