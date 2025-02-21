@@ -34,6 +34,7 @@ const std::shared_ptr<BboQuoteModel>& BookViewModel::get_bbo_quote() const {
   return m_bbo;
 }
 
-const std::shared_ptr<SecurityTechnicalsValueModel>& BookViewModel::get_technicals() const {
+const std::shared_ptr<SecurityTechnicalsValueModel>&
+    BookViewModel::get_technicals() const {
   return m_technicals;
 }

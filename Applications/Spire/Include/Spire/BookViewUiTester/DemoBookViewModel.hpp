@@ -27,6 +27,7 @@ namespace Spire {
       /** Returns the book view model. */
       const std::shared_ptr<BookViewModel>& get_model() const;
 
+      /** Updates an order status. */
       void update_order_status(const OrderInfo& order);
 
       /** Submits an book quote. */
@@ -36,7 +37,7 @@ namespace Spire {
       void submit_order(const OrderInfo& order);
 
       /** Cancel orders. */
-      void cancel_order(CancelKeyBindingsModel::Operation operation,
+      void cancel_orders(CancelKeyBindingsModel::Operation operation,
         const boost::optional<std::tuple<Nexus::Destination, Nexus::Money>>&
           order_key);
 

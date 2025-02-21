@@ -4,8 +4,8 @@
 #include "Spire/BookView/BookViewPropertiesWindowFactory.hpp"
 #include "Spire/BookView/MarketDepth.hpp"
 #include "Spire/Ui/SecurityBox.hpp"
-#include "Spire/Ui/Window.hpp"
 #include "Spire/Ui/Ui.hpp"
+#include "Spire/Ui/Window.hpp"
 
 namespace Spire {
 
@@ -29,7 +29,7 @@ namespace Spire {
        * The type of function used to build a BookViewModel based on
        * the security.
        * @param security The security that the window is representing.
-       * @return the TimeAndSalesModel.
+       * @return the BookViewModel.
        */
       using ModelBuilder = std::function<
         std::shared_ptr<BookViewModel> (const Nexus::Security& security)>;
@@ -37,8 +37,7 @@ namespace Spire {
       /**
        * Constructs a TimeAndSalesWindow.
        * @param securities The set of securities to use.
-       * @param key_bindings The KeyBindingsModel storing all of the user's
-       *        interactions.
+       * @param key_bindings The user's key bindings.
        * @param markets The database of markets.
        * @param factory The factory used to create a BookViewPropertiesWindow.
        * @param model_builder The ModelBuilder to use.
@@ -63,10 +62,8 @@ namespace Spire {
       std::shared_ptr<BookViewPropertiesWindowFactory> m_factory;
       ModelBuilder m_model_builder;
       Nexus::MarketDatabase m_markets;
-      std::shared_ptr<QuantityModel> m_default_bid_quantity;
-      std::shared_ptr<QuantityModel> m_default_ask_quantity;
+      std::shared_ptr<InteractionsKeyBindingsModel> m_interactions;
       std::shared_ptr<BookViewModel> m_model;
-      std::shared_ptr<BooleanModel> m_is_cancel_on_fill;
       std::shared_ptr<BookQuoteModel> m_selected_quote;
       TransitionView* m_transition_view;
       SecurityView* m_security_view;

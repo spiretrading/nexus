@@ -16,7 +16,6 @@
 #include "Spire/Spire/OptionalScalarValueModelDecorator.hpp"
 #include "Spire/Spire/Resources.hpp"
 #include "Spire/Spire/ScalarValueModelDecorator.hpp"
-#include "Spire/Spire/TransformValueModel.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/IntegerBox.hpp"
@@ -156,7 +155,7 @@ QuantityBox* make_quantity_box(M model, U field) {
 struct BookViewTester : QWidget {
   DemoBookViewModel m_model;
   LocalTechnicalsModel m_technicals_model;
-  std::shared_ptr<OptionalIntegerModel> m_quote_update_period;
+  std::shared_ptr<OptionalIntegerModel> m_update_period;
   KeyBindingsWindow* m_key_bindings_window;
   Button* m_submit_order_button;
   QTextEdit* m_logs;
@@ -168,15 +167,15 @@ struct BookViewTester : QWidget {
   BookViewTester(std::shared_ptr<SecurityTechnicalsValueModel> technicals,
     std::shared_ptr<BookViewModel> model,
     KeyBindingsWindow& key_bindings_window, QWidget* parent = nullptr)
-    : QWidget(parent),
-      m_model(std::move(model)),
-      m_technicals_model(Security()),
-      m_key_bindings_window(&key_bindings_window),
-      m_quote_update_period(std::make_shared<LocalOptionalIntegerModel>(1000)),
-      m_quote_timer(this),
-      m_order_timer(this),
-      m_update_count(0),
-      m_line_number(0) {
+      : QWidget(parent),
+        m_model(std::move(model)),
+        m_technicals_model(Security()),
+        m_key_bindings_window(&key_bindings_window),
+        m_update_period(std::make_shared<LocalOptionalIntegerModel>(1000)),
+        m_quote_timer(this),
+        m_order_timer(this),
+        m_update_count(0),
+        m_line_number(0) {
     auto left_layout = new QVBoxLayout();
     auto book_quote_group_box = new QGroupBox(tr("Market Quote"));
     auto book_quote_layout = new QVBoxLayout(book_quote_group_box);
@@ -301,7 +300,7 @@ struct BookViewTester : QWidget {
   }
 
   void start_populate() {
-    m_quote_timer.start(*m_quote_update_period->get());
+    m_quote_timer.start(*m_update_period->get());
   }
 
   void quit_order_timer() {
@@ -375,7 +374,7 @@ struct BookViewTester : QWidget {
   void on_cancel_order(CancelKeyBindingsModel::Operation operation,
       const Security& security,
       const optional<std::tuple<Destination, Money>>& order_key) {
-    m_model.cancel_order(operation, order_key);
+    m_model.cancel_orders(operation, order_key);
     auto log = QString("%1: Operation:[%2] Security:[%3]").
       arg(++m_line_number).
       arg(to_text(operation)).
@@ -439,9 +438,5 @@ int main(int argc, char** argv) {
   tester.move(
     window.pos().x() + window.frameGeometry().width() + scale_width(100),
     window.pos().y() - 200);
-  //key_bindings_window.show();
-  //key_bindings_window.move(
-  //  window.pos().x() - key_bindings_window.frameGeometry().width() + scale_width(20),
-  //  window.pos().y() - 200);
   application.exec();
 }

@@ -14,8 +14,7 @@ namespace Spire {
       /**
        * Constructs a BookViewPropertiesWindow.
        * @param properties The initial properties.
-       * @param key_bindings The KeyBindingsModel storing all of the user's
-       *        interactions.
+       * @param key_bindings The user's key bindings.
        * @param security The security whose interactions are to be displayed.
        * @param markets The market database to use.
        * @param parent The parent widget.

@@ -217,7 +217,7 @@ void DemoBookViewModel::submit_order(const OrderInfo& order) {
   }
 }
 
-void DemoBookViewModel::cancel_order(
+void DemoBookViewModel::cancel_orders(
     CancelKeyBindingsModel::Operation operation,
     const optional<std::tuple<Destination, Money>>& order_key) {
   if(m_orders.empty()) {

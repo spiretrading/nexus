@@ -6,12 +6,10 @@
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/SecurityView.hpp"
 #include "Spire/Ui/TransitionView.hpp"
-#include "Spire/Utilities/LinkMenu.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
 using namespace Nexus;
-using namespace Nexus::OrderExecutionService;
 using namespace Spire;
 using namespace Spire::Styles;
 
@@ -28,9 +26,7 @@ BookViewWindow::BookViewWindow(
       m_key_bindings(std::move(key_bindings)),
       m_markets(std::move(markets)),
       m_factory(std::move(factory)),
-      m_model_builder(std::move(model_builder)),
-      m_default_bid_quantity(std::make_shared<LocalQuantityModel>()),
-      m_default_ask_quantity(std::make_shared<LocalQuantityModel>()) {
+      m_model_builder(std::move(model_builder)) {
   set_svg_icon(":/Icons/bookview.svg");
   setWindowIcon(QIcon(":/Icons/taskbar_icons/bookview.png"));
   setWindowTitle(TITLE_NAME);
@@ -129,17 +125,13 @@ void BookViewWindow::on_properties_menu() {
 void BookViewWindow::on_current(const Security& security) {
   setWindowTitle(to_text(security) + " " + QString(0x2013) + " " + TITLE_NAME);
   m_transition_view->set_status(TransitionView::Status::NONE);
-  auto interaction_key_bindings =
-    m_key_bindings->get_interactions_key_bindings(security);
-  m_is_cancel_on_fill = interaction_key_bindings->is_cancel_on_fill();
-  auto default_quantity = interaction_key_bindings->get_default_quantity();
-  m_default_bid_quantity->set(default_quantity->get());
-  m_default_ask_quantity->set(default_quantity->get());
+  m_interactions = m_key_bindings->get_interactions_key_bindings(security);
   m_model = m_model_builder(security);
   auto body = new QWidget();
   auto layout = make_vbox_layout(body);
   auto panel = new TechnicalsPanel(m_model->get_technicals(),
-    m_default_bid_quantity, m_default_ask_quantity);
+    m_interactions->get_default_quantity(),
+    m_interactions->get_default_quantity());
   panel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   layout->addWidget(panel);
   if(security == Security()) {
@@ -175,7 +167,7 @@ void BookViewWindow::on_order_operation(Side side,
         return CancelKeyBindingsModel::Operation::ALL_ASKS;
       }();
       if(operation.get_value().m_status == OrderStatus::FILLED &&
-          m_is_cancel_on_fill->get()) {
+          m_interactions->is_cancel_on_fill()->get()) {
         m_cancel_order_signal(cancel_operation,
           m_security_view->get_current()->get(), none);
       }
