@@ -112,11 +112,11 @@ struct TableBody::RowCover : Cover {
       body.m_hover_observers.at(item).connect_state_signal(
         std::bind_front(&TableBody::on_hover, &body, std::ref(*item)));
       if(column != body.get_column_size() - 1) {
-        if(!body.m_column_covers[column]->isVisible()) {
-          item->setFixedWidth(0);
-        } else {
+        if(body.m_column_covers[column]->isVisible()) {
           item->setFixedWidth(
             body.m_widths->get(column) - body.get_left_spacing(column));
+        } else {
+          item->setFixedWidth(0);
         }
       } else {
         item->setSizePolicy(
