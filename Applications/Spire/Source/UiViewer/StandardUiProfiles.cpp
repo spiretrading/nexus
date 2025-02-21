@@ -4394,7 +4394,22 @@ UiProfile Spire::make_table_view_profile() {
   properties.push_back(make_style_property("style_sheet",
     std::move(default_style)));
   properties.push_back(make_standard_property("row_count", 50));
+  properties.push_back(make_standard_property("current_row", 0));
   properties.push_back(make_standard_property("update", 0));
+  properties.push_back(std::make_shared<
+    StandardUiProperty<TableModel::AddOperation>>(
+      "insert", TableModel::AddOperation(-1), [] (auto parent, auto& property) {
+        auto form = new QWidget();
+        auto layout = make_hbox_layout(form);
+        auto row = new QSpinBox();
+        auto button = new QPushButton("Insert");
+        layout->addWidget(row);
+        layout->addWidget(button);
+        QObject::connect(button, &QPushButton::pressed, [=, &property] {
+          property.set(TableModel::AddOperation(row->value()));
+        });
+        return form;
+      }));
   properties.push_back(std::make_shared<
     StandardUiProperty<TableModel::RemoveOperation>>(
       "remove", TableModel::RemoveOperation(-1), [] (
@@ -4477,10 +4492,25 @@ UiProfile Spire::make_table_view_profile() {
     style_sheet.connect_changed_signal([=] (const auto& styles) {
       update_widget_style(*view, styles);
     });
+    auto& current_row = get<int>("current_row", profile.get_properties());
+    current_row.connect_changed_signal([=] (auto value) {
+      view->get_current()->set(TableView::Index(value, 0));
+    });
     auto& update_operation = get<int>("update", profile.get_properties());
     update_operation.connect_changed_signal([&, view] (auto value) {
       if(auto current = view->get_current()->get()) {
         view->get_table()->set(current->m_row, current->m_column, value);
+      }
+    });
+    auto& insert_operation =
+      get<TableModel::AddOperation>("insert", profile.get_properties());
+    insert_operation.connect_changed_signal([=] (const auto& operation) {
+      if(operation.m_index >= 0 &&
+          operation.m_index <= model->get_row_size()) {
+        auto value = model->get_row_size() * 4;
+        model->insert(
+          std::vector<std::any>{value, value + 1, value + 2, value + 3},
+          operation.m_index);
       }
     });
     auto& remove_operation =

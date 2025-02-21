@@ -1,5 +1,6 @@
 #ifndef SPIRE_FILTERED_LIST_MODEL_HPP
 #define SPIRE_FILTERED_LIST_MODEL_HPP
+#include <boost/optional/optional.hpp>
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Spire/ListModelTransactionLog.hpp"
@@ -74,9 +75,15 @@ namespace Spire {
       void transact(const std::function<void ()>& transaction) override;
 
     private:
+      struct RemoveEntry {
+        bool m_is_found;
+        std::vector<int>::iterator m_iterator;
+        int m_index;
+      };
       std::shared_ptr<ListModel<Type>> m_source;
       Filter m_filter;
       int m_filter_count;
+      boost::optional<RemoveEntry> m_remove_entry;
       std::vector<int> m_filtered_data;
       ListModelTransactionLog<Type> m_transaction;
       boost::signals2::scoped_connection m_source_connection;
@@ -288,21 +295,29 @@ namespace Spire {
       },
       [&] (const PreRemoveOperation& operation) {
         auto [is_found, i] = find(operation.m_index);
-        auto index = 0;
-        if(is_found) {
-          index = static_cast<int>(i - m_filtered_data.begin());
+        m_remove_entry.emplace(is_found, i, 0);
+        if(m_remove_entry->m_is_found) {
+          m_remove_entry->m_index = static_cast<int>(
+            m_remove_entry->m_iterator - m_filtered_data.begin());
           ++m_filter_count;
           auto count = m_filter_count;
-          m_transaction.push(PreRemoveOperation(index));
+          m_transaction.push(PreRemoveOperation(m_remove_entry->m_index));
           if(count != m_filter_count) {
-            return;
+            m_remove_entry = boost::none;
           }
         }
-        std::for_each(i, m_filtered_data.end(), [] (int& value) { --value; });
-        if(is_found) {
-          m_filtered_data.erase(i);
-          m_transaction.push(RemoveOperation(index));
+      },
+      [&] (const RemoveOperation& operation) {
+        if(!m_remove_entry) {
+          return;
         }
+        std::for_each(m_remove_entry->m_iterator, m_filtered_data.end(),
+          [] (int& value) { --value; });
+        if(m_remove_entry->m_is_found) {
+          m_filtered_data.erase(m_remove_entry->m_iterator);
+          m_transaction.push(RemoveOperation(m_remove_entry->m_index));
+        }
+        m_remove_entry = boost::none;
       },
       [&] (const UpdateOperation& operation) {
         auto [is_found, i] = find(operation.m_index);

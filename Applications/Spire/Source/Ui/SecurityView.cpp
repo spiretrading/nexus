@@ -82,6 +82,11 @@ void SecurityView::restore(const State& state) {
 }
 
 void SecurityView::keyPressEvent(QKeyEvent* event) {
+  if(event->modifiers() &
+      (Qt::ControlModifier | Qt::AltModifier | Qt::MetaModifier)) {
+    QWidget::keyPressEvent(event);
+    return;
+  }
   if(auto text = event->text();
       text.size() == 1 && (text[0].isLetterOrNumber() || text[0] == '_')) {
     m_security_dialog.show();

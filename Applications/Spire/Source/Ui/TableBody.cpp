@@ -112,14 +112,15 @@ struct TableBody::RowCover : Cover {
       body.m_hover_observers.at(item).connect_state_signal(
         std::bind_front(&TableBody::on_hover, &body, std::ref(*item)));
       if(column != body.get_column_size() - 1) {
-        item->setFixedWidth(
-          body.m_widths->get(column) - body.get_left_spacing(column));
+        if(body.m_column_covers[column]->isVisible()) {
+          item->setFixedWidth(
+            body.m_widths->get(column) - body.get_left_spacing(column));
+        } else {
+          item->setFixedWidth(0);
+        }
       } else {
         item->setSizePolicy(
           QSizePolicy::Expanding, item->sizePolicy().verticalPolicy());
-      }
-      if(!body.m_column_covers[column]->isVisible()) {
-        item->setFixedWidth(0);
       }
       layout->addWidget(item);
       item->connect_active_signal(std::bind_front(
@@ -247,6 +248,10 @@ struct TableBody::Layout : QLayout {
     } else if(!m_bottom.empty()) {
       add_hidden_row(
         index, m_bottom_height / static_cast<int>(m_bottom.size()));
+    } else if(m_top_height + m_bottom_height != 0) {
+      auto average_row_height = (m_top_height + m_bottom_height) /
+        static_cast<int>(get_top_index() + m_bottom.size());
+      add_hidden_row(index, average_row_height);
     } else {
       add_hidden_row(index, 0);
     }
@@ -1154,6 +1159,7 @@ void TableBody::update_visible_region() {
     destroy(unmounted_row);
   }
   get_layout().invalidate();
+  get_layout().setGeometry(get_layout().geometry());
   --m_resize_guard;
 }
 
