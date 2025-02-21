@@ -35,7 +35,7 @@ namespace Spire {
         std::shared_ptr<BookViewModel> (const Nexus::Security& security)>;
 
       /**
-       * Constructs a TimeAndSalesWindow.
+       * Constructs a BookViewWindow.
        * @param securities The set of securities to use.
        * @param key_bindings The user's key bindings.
        * @param markets The database of markets.

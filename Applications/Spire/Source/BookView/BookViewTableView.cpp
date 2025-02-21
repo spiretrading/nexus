@@ -794,7 +794,6 @@ namespace {
 
   struct BookViewTableViewObserver : QObject {
     TableView* m_table_view;
-    std::shared_ptr<ListModel<BookQuote>> m_book_quotes;
     std::shared_ptr<ListModel<UserOrder>> m_orders;
     std::shared_ptr<BookViewPropertiesModel> m_properties;
     std::shared_ptr<LevelPropertiesModel> m_level_properties;
@@ -802,15 +801,12 @@ namespace {
     QFont m_font;
     scoped_connection m_level_properties_connection;
     scoped_connection m_current_connection;
-    scoped_connection m_operation_connection;
 
     BookViewTableViewObserver(TableView& table_view,
-      std::shared_ptr<ListModel<BookQuote>> book_quotes,
       std::shared_ptr<BookViewPropertiesModel> properties,
       QObject* parent = nullptr)
       : QObject(parent),
         m_table_view(&table_view),
-        m_book_quotes(std::move(book_quotes)),
         m_properties(std::move(properties)),
         m_level_properties(make_field_value_model(m_properties,
           &BookViewProperties::m_level_properties)),
@@ -824,8 +820,6 @@ namespace {
           this));
       m_current_connection = m_table_view->get_current()->connect_update_signal(
         std::bind_front(&BookViewTableViewObserver::on_current, this));
-      m_operation_connection = m_book_quotes->connect_operation_signal(
-        std::bind_front(&BookViewTableViewObserver::on_operation, this));
     }
 
     bool eventFilter(QObject* watched, QEvent* event) override {
@@ -940,18 +934,6 @@ namespace {
         m_table_view->get_current()->set(none);
       }
     }
-
-    void on_operation(const ListModel<BookQuote>::Operation& operation) {
-      visit(operation,
-        [&] (const auto& operation) {
-          if(auto current = m_table_view->get_current()->get()) {
-            if(!is_order(
-                get_mpid(*m_table_view->get_table(), current->m_row))) {
-              m_table_view->get_current()->set(none);
-            }
-          }
-        });
-    }
   };
 
   struct OrderFilteredListModel : FilteredListModel<BookQuote> {
@@ -1062,7 +1044,7 @@ TableView* Spire::make_book_view_table_view(
   auto column_orders = std::vector<SortedTableModel::ColumnOrder>{
     {1, ordering}, {2, ordering}};
   auto order_filtered_list = std::make_shared<OrderFilteredListModel>(
-    book_quotes, highlight_property);
+    std::move(book_quotes), highlight_property);
   auto table = std::make_shared<SortedTableModel>(
     make_book_view_table_model(order_filtered_list), column_orders);
   auto row_tracker = std::make_shared<RowTracker>(table);
@@ -1086,8 +1068,8 @@ TableView* Spire::make_book_view_table_view(
   table_view->get_header().setVisible(false);
   table_view->get_scroll_box().set(ScrollBox::DisplayPolicy::NEVER);
   timer_owner->setParent(table_view);
-  auto observer = new BookViewTableViewObserver(*table_view, book_quotes,
-    properties, table_view);
+  auto observer =
+    new BookViewTableViewObserver(*table_view, properties, table_view);
   order_filtered_list->connect_filter_signal([=] {
     table_view->get_current()->set(none);
   });
