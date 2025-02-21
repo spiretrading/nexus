@@ -73,6 +73,7 @@ void TableItem::mount(QWidget& body) {
     }
     layout()->takeAt(0);
     auto previous_body = item->widget();
+    previous_body->setAttribute(Qt::WA_DontShowOnScreen);
     previous_body->setParent(nullptr);
     delete item;
   }
