@@ -112,7 +112,8 @@ BookQuote make_random_market_quote(Side side) {
   auto random_generator =
     QRandomGenerator(to_time_t_milliseconds(microsec_clock::universal_time()));
   auto& markets = GetDefaultMarketDatabase().GetEntries();
-  auto market_index = random_generator.bounded(static_cast<int>(markets.size()));
+  auto market_index = random_generator.bounded(
+    static_cast<int>(markets.size()));
   auto market_code = markets[market_index].m_code;
   return BookQuote(to_text(MarketToken(market_code)).toStdString(), false,
     market_code, Quote{Truncate(Money(random_generator.bounded(200.0)), 2),
