@@ -708,8 +708,8 @@ namespace {
         [&] (const ListModel<UserOrder>::PreRemoveOperation& operation) {
           auto& order = m_orders->get(operation.m_index);
           QTimer::singleShot(ORDER_HIGHLIGHT_DELAY_MS, m_timer_owner, [=] {
-            if(auto index = find_quote_index(order); index >= 0 &&
-              get_size(*m_quote_table, index) <= 0) {
+            if(auto index = find_quote_index(order);
+                index >= 0 && get_size(*m_quote_table, index) <= 0) {
               m_quote_table->remove(index);
             }
           });
