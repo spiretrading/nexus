@@ -1015,7 +1015,6 @@ void TableBody::update_parent() {
 
 TableBody::RowCover* TableBody::mount_row(int index,
     optional<int> current_index, std::vector<RowCover*>& unmounted_rows) {
-  qDebug() << "Mounting: " << index;
   auto row = [&] {
     if(!current_index) {
       current_index = m_current_controller.get_row();
@@ -1038,7 +1037,6 @@ TableBody::RowCover* TableBody::mount_row(int index,
     row->mount(index);
   }
   get_layout().insert(*row, index);
-  qDebug() << "\t" << mapToParent(row->geometry().topLeft()) << " " << row->geometry();
   if(row != m_current_row) {
     on_cover_style(*row);
   }
@@ -1101,10 +1099,6 @@ std::vector<TableBody::RowCover*> TableBody::unmount_hidden_rows() {
   for(auto i = 0; i != get_layout().count(); ++i) {
     auto item = get_layout().itemAt(i);
     if(!test_visibility(*this, item->geometry())) {
-      qDebug() << "Unmounting: " << (i + get_layout().get_top_index());
-      //if(i + get_layout().get_top_index() == 18) {
-        qDebug() << "\t" << mapToParent(item->geometry().topLeft()) << " " <<  item->geometry();
-      //}
       removed_items.push_back(item);
     }
   }
@@ -1165,6 +1159,7 @@ void TableBody::update_visible_region() {
     destroy(unmounted_row);
   }
   get_layout().invalidate();
+  get_layout().setGeometry(get_layout().geometry());
   --m_resize_guard;
 }
 
