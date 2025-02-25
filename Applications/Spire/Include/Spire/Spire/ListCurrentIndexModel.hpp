@@ -1,5 +1,5 @@
-#ifndef SPIRE_LIST_INDEX_MODEL_HPP
-#define SPIRE_LIST_INDEX_MODEL_HPP
+#ifndef SPIRE_LIST_CURRENT_INDEX_MODEL_HPP
+#define SPIRE_LIST_CURRENT_INDEX_MODEL_HPP
 #include <boost/optional/optional.hpp>
 #include "Spire/Spire/ListIndexTracker.hpp"
 #include "Spire/Spire/ListModel.hpp"
@@ -10,21 +10,21 @@
 namespace Spire {
 
   /** Implements a ValueModel that keeps track of an index into a ListModel. */
-  class ListIndexModel : public ValueModel<boost::optional<int>> {
+  class ListCurrentIndexModel : public ValueModel<boost::optional<int>> {
     public:
 
       /**
-       * Constructs a ListIndexModel with no initial index.
+       * Constructs a ListCurrentIndexModel with no initial index.
        * @param list The ListModel to index.
        */
-      explicit ListIndexModel(std::shared_ptr<AnyListModel> list);
+      explicit ListCurrentIndexModel(std::shared_ptr<AnyListModel> list);
 
       /**
-       * Constructs a ListIndexModel that indexes a specified ListModel.
+       * Constructs a ListCurrentIndexModel that indexes a specified ListModel.
        * @param list The ListModel to index.
        * @param index The current index. 
        */
-      ListIndexModel(
+      ListCurrentIndexModel(
         std::shared_ptr<AnyListModel> list, boost::optional<int> index);
 
       const Type& get() const override;

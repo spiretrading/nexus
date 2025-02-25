@@ -10,7 +10,6 @@ ListCurrentController::ListCurrentController(
   : m_current(std::move(current)),
     m_size(size),
     m_edge_navigation(EdgeNavigation::WRAP),
-    m_last_current(m_current->get()),
     m_connection(m_current->connect_update_signal(
       std::bind_front(&ListCurrentController::on_current, this))) {}
 
@@ -35,7 +34,8 @@ void ListCurrentController::add(std::unique_ptr<ItemView> view, int index) {
   if(!update_current) {
     return;
   }
-  if(m_current->get() && *m_current->get() == m_size - 1) {
+  if(m_current->get() && *m_current->get() == m_size - 1 ||
+      index <= m_current->get().value_or(-1)) {
     on_current(m_current->get());
   }
 }
@@ -43,6 +43,9 @@ void ListCurrentController::add(std::unique_ptr<ItemView> view, int index) {
 void ListCurrentController::remove(int index) {
   m_views.erase(m_views.begin() + index);
   --m_size;
+  if(index <= m_current->get().value_or(-1)) {
+    on_current(m_current->get());
+  }
 }
 
 void ListCurrentController::move(int source, int destination) {
@@ -182,8 +185,6 @@ bool ListCurrentController::is_initialized() const {
 
 void ListCurrentController::on_current(optional<int> current) {
   if(current && *current < m_size) {
-    auto previous = m_last_current;
-    m_last_current = current;
-    m_update_signal(previous, current);
+    m_update_signal(current);
   }
 }
