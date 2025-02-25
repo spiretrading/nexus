@@ -297,6 +297,7 @@ namespace Details {
       void pre_remove_item(int index);
       void remove_item(int index);
       void move_item(int source, int destination);
+      void select_current();
       void update_layout();
       void update_parent();
       void initialize_visible_region();

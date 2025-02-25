@@ -268,36 +268,46 @@ void ListView::keyPressEvent(QKeyEvent* event) {
   switch(event->key()) {
     case Qt::Key_Home:
       m_current_controller.navigate_home();
+      select_current();
       break;
     case Qt::Key_End:
       m_current_controller.navigate_end();
+      select_current();
       break;
     case Qt::Key_Up:
       if(m_direction == Qt::Orientation::Vertical) {
         m_current_controller.navigate_previous();
+        select_current();
       } else if(m_overflow == Overflow::WRAP) {
         m_current_controller.cross_previous(m_direction);
+        select_current();
       }
       break;
     case Qt::Key_Down:
       if(m_direction == Qt::Orientation::Vertical) {
         m_current_controller.navigate_next();
+        select_current();
       } else if(m_overflow == Overflow::WRAP) {
         m_current_controller.cross_next(m_direction);
+        select_current();
       }
       break;
     case Qt::Key_Left:
       if(m_direction == Qt::Orientation::Horizontal) {
         m_current_controller.navigate_previous();
+        select_current();
       } else if(m_overflow == Overflow::WRAP) {
         m_current_controller.cross_previous(m_direction);
+        select_current();
       }
       break;
     case Qt::Key_Right:
       if(m_direction == Qt::Orientation::Horizontal) {
         m_current_controller.navigate_next();
+        select_current();
       } else if(m_overflow == Overflow::WRAP) {
         m_current_controller.cross_next(m_direction);
+        select_current();
       }
       break;
     case Qt::Key_A:
@@ -379,6 +389,7 @@ void ListView::append_query(const QString& query) {
         if(item_text.startsWith(m_query.toLower())) {
           short_match = none;
           m_current_controller.get_current()->set(i);
+          select_current();
           break;
         } else if(is_repeated_query &&
             !short_match && item_text.startsWith(m_query[0])) {
@@ -395,6 +406,7 @@ void ListView::append_query(const QString& query) {
     }
     if(short_match) {
       m_current_controller.get_current()->set(*short_match);
+      select_current();
     }
   }
   m_query_timer.start();
@@ -467,9 +479,8 @@ void ListView::pre_remove_item(int index) {
 }
 
 void ListView::remove_item(int index) {
-  auto blocker = std::array{
-    shared_connection_block(m_selection_connection)};
   m_current_controller.remove(index);
+  auto blocker = shared_connection_block(m_selection_connection);
   m_selection_controller.remove(index);
 }
 
@@ -501,6 +512,12 @@ void ListView::move_item(int source, int destination) {
   m_items[destination]->m_index = destination;
   m_current_controller.move(source, destination);
   m_selection_controller.move(source, destination);
+}
+
+void ListView::select_current() {
+  if(auto current = m_current_controller.get_current()->get()) {
+    m_selection_controller.navigate(*current);
+  }
 }
 
 void ListView::update_layout() {
@@ -763,7 +780,6 @@ void ListView::on_current(optional<int> current) {
   if(current) {
     m_current_entry = m_items[*current].get();
     m_current_entry->m_item.set_current(true);
-    m_selection_controller.navigate(*current);
   }
 }
 
