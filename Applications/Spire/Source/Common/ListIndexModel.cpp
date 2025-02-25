@@ -41,6 +41,7 @@ connection ListIndexModel::connect_update_signal(
 }
 
 void ListIndexModel::on_operation(const AnyListModel::Operation& operation) {
+  // TODO: If operation is a remove, always signal an update.
   visit(operation, [&] (const auto& operation) {
     auto index = get();
     m_tracker.update(operation);
