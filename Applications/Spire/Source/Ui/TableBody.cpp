@@ -1,4 +1,5 @@
 #include "Spire/Ui/TableBody.hpp"
+#include <boost/signals2/shared_connection_block.hpp>
 #include <QApplication>
 #include <QKeyEvent>
 #include <QPainter>
@@ -14,6 +15,7 @@
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace boost;
+using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::Styles;
 
@@ -598,7 +600,7 @@ TableBody::TableBody(
     std::bind_front(&TableBody::on_table_operation, this));
   m_current_connection = m_current_controller.connect_update_signal(
      std::bind_front(&TableBody::on_current, this));
-  m_selection_controller.connect_row_operation_signal(
+  m_selection_connection = m_selection_controller.connect_row_operation_signal(
     std::bind_front(&TableBody::on_row_selection, this));
   m_widths_connection = m_widths->connect_operation_signal(
     std::bind_front(&TableBody::on_widths_update, this));
@@ -968,6 +970,7 @@ void TableBody::pre_remove_row(int index) {
 
 void TableBody::remove_row(int index) {
   m_current_controller.remove_row(index);
+  auto blocker = shared_connection_block(m_selection_connection);
   m_selection_controller.remove_row(index);
 }
 
@@ -1002,7 +1005,6 @@ void TableBody::move_row(int source, int destination) {
     }
     layout.add_hidden_row(destination, height);
   }
-  m_current_controller.move_row(source, destination);
   m_selection_controller.move_row(source, destination);
 }
 
@@ -1279,12 +1281,20 @@ void TableBody::on_current(
     const optional<Index>& previous, const optional<Index>& current) {
   auto previous_had_focus = false;
   if(previous) {
+    auto unmatched_current_row = false;
     if(auto previous_item = find_item(previous)) {
       previous_had_focus =
         previous_item->isAncestorOf(
           static_cast<QWidget*>(QApplication::focusObject()));
       unmatch(*previous_item->parentWidget(), CurrentRow());
       unmatch(*previous_item, Current());
+      unmatched_current_row = previous_item->parentWidget() == m_current_row;
+    }
+    if(m_current_row && !unmatched_current_row) {
+      unmatch(*m_current_row, CurrentRow());
+      if(auto item = m_current_row->get_item(previous->m_column)) {
+        unmatch(*item, Current());
+      }
     }
     if(!current || current->m_column != previous->m_column) {
       unmatch(*m_column_covers[previous->m_column], CurrentColumn());
@@ -1302,7 +1312,6 @@ void TableBody::on_current(
     if(!previous || previous->m_column != current->m_column) {
       match(*m_column_covers[current->m_column], CurrentColumn());
     }
-    m_selection_controller.navigate(*current);
     if(previous_had_focus || QApplication::focusObject() == this) {
       current_item->setFocus(Qt::FocusReason::OtherFocusReason);
     }

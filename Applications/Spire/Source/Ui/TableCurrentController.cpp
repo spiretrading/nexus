@@ -50,67 +50,14 @@ void TableCurrentController::add_row(int index) {
   ++m_row_size;
   if(m_current->get() && m_current->get()->m_row >= index &&
       m_current->get()->m_row < m_row_size - 1) {
-    m_last_current =
-      Index(m_current->get()->m_row + 1, m_current->get()->m_column);
-    auto blocker = shared_connection_block(m_connection);
-    m_current->set(m_last_current);
+    on_current(m_current->get());
   }
 }
 
 void TableCurrentController::remove_row(int index) {
   --m_row_size;
-  if(m_current->get()) {
-    if(m_current->get()->m_row == index) {
-      if(m_row_size == index) {
-        if(m_last_current && m_last_current->m_row == m_row_size) {
-          m_last_current = none;
-        }
-        if(m_row_size > 0) {
-          m_current->set(Index(index - 1, m_current->get()->m_column));
-        } else {
-          m_current->set(none);
-        }
-      } else {
-        m_current->set(Index(index, m_current->get()->m_column));
-      }
-    } else if(m_current->get()->m_row > index) {
-      m_last_current =
-        Index(m_current->get()->m_row - 1, m_current->get()->m_column);
-      auto blocker = shared_connection_block(m_connection);
-      m_current->set(m_last_current);
-    }
-  }
-}
-
-void TableCurrentController::move_row(int source, int destination) {
-  if(source == destination) {
-    return;
-  }
-  auto direction = [&] {
-    if(source < destination) {
-      return -1;
-    }
-    return 1;
-  }();
-  auto adjust = [&] (auto& value) {
-    if(value) {
-      if(value->m_row == source) {
-        value->m_row = destination;
-        return true;
-      } else if(direction == 1 && value->m_row >= destination &&
-          value->m_row < source || direction == -1 && value->m_row > source &&
-          value->m_row <= destination) {
-        value->m_row += direction;
-        return true;
-      }
-    }
-    return false;
-  };
-  adjust(m_last_current);
-  auto current = m_current->get();
-  if(adjust(current)) {
-    auto blocker = shared_connection_block(m_connection);
-    m_current->set(current);
+  if(index <= m_current->get().value_or(TableIndex(-1, -1)).m_row) {
+    on_current(m_current->get());
   }
 }
 
