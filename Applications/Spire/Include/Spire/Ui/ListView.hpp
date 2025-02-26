@@ -270,6 +270,7 @@ namespace Details {
       ListViewItemBuilder<> m_item_builder;
       ToText m_to_text;
       std::vector<std::unique_ptr<ItemEntry>> m_items;
+      ItemEntry* m_current_entry;
       Box* m_box;
       int m_top_index;
       int m_visible_count;
@@ -291,19 +292,19 @@ namespace Details {
 
       void append_query(const QString& query);
       void update_focus(boost::optional<int> current);
-      void make_item_entry(int index);
+      ItemEntry& make_item_entry(int index);
       void add_item(int index);
       void pre_remove_item(int index);
       void remove_item(int index);
       void move_item(int source, int destination);
+      void select_current();
       void update_layout();
       void update_parent();
       void initialize_visible_region();
       void update_visible_region();
       void on_item_click(ItemEntry& item);
       void on_list_operation(const AnyListModel::Operation& operation);
-      void on_current(
-        boost::optional<int> previous, boost::optional<int> current);
+      void on_current(boost::optional<int> current);
       void on_selection(const ListModel<int>::Operation& operation);
       void on_item_submitted(ItemEntry& item);
       void on_style();
