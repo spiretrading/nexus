@@ -9,7 +9,7 @@
 
 namespace Spire {
 
-  /** Implements a ValueModel that keeps track of an index into a ListModel. */
+  /** Implements a ValueModel that keeps track of ListModel's current index. */
   class ListCurrentIndexModel : public ValueModel<boost::optional<int>> {
     public:
 
@@ -40,7 +40,7 @@ namespace Spire {
       std::shared_ptr<AnyListModel> m_list;
       LocalValueModel<boost::optional<int>> m_index;
       ListIndexTracker m_tracker;
-      boost::signals2::scoped_connection m_list_connection;
+      boost::signals2::scoped_connection m_connection;
 
       void on_operation(const AnyListModel::Operation& operation);
   };

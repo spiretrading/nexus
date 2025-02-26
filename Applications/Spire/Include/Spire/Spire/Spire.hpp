@@ -42,6 +42,7 @@ namespace Spire {
   template<typename T> class FieldValueModel;
   template<typename T> class FilteredListModel;
   class FilteredTableModel;
+  class ListCurrentIndexModel;
   class ListIndexTracker;
   template<typename T> class ListIndexValueModel;
   template<typename T> class ListModel;
@@ -67,6 +68,7 @@ namespace Spire {
   template<typename T> class SortedListModel;
   class SortedTableModel;
   template<typename T> struct SubscriptionResult;
+  class TableCurrentIndexModel;
   class TableModel;
   class TableRowIndexTracker;
   class TableToListModel;
