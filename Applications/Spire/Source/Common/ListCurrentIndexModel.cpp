@@ -12,6 +12,11 @@ ListCurrentIndexModel::ListCurrentIndexModel(
     : m_list(std::move(list)),
       m_index(index),
       m_tracker(index.value_or(-1)) {
+  if(m_index.get() &&
+      (*m_index.get() < 0 || *m_index.get() > m_list->get_size())) {
+    m_index.set(none);
+    m_tracker.set(-1);
+  }
   m_connection = m_list->connect_operation_signal(
     std::bind_front(&ListCurrentIndexModel::on_operation, this));
 }
