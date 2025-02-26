@@ -1,7 +1,9 @@
 #include "Spire/BookView/BookViewModel.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 
+using namespace boost;
 using namespace Nexus;
+using namespace Nexus::OrderExecutionService;
 using namespace Spire;
 
 BookViewModel::BookViewModel()
@@ -9,6 +11,7 @@ BookViewModel::BookViewModel()
    m_asks(std::make_shared<ArrayListModel<BookQuote>>()),
    m_bid_orders(std::make_shared<ArrayListModel<UserOrder>>()),
    m_ask_orders(std::make_shared<ArrayListModel<UserOrder>>()),
+   m_preview_order(std::make_shared<LocalValueModel<optional<OrderFields>>>()),
    m_bbo(std::make_shared<LocalBboQuoteModel>()),
    m_technicals(std::make_shared<LocalSecurityTechnicalsValueModel>()) {}
 
@@ -28,6 +31,11 @@ const std::shared_ptr<ListModel<BookViewModel::UserOrder>>&
 const std::shared_ptr<ListModel<BookViewModel::UserOrder>>&
     BookViewModel::get_ask_orders() const {
   return m_ask_orders;
+}
+
+const std::shared_ptr<BookViewModel::PreviewOrderModel>&
+    BookViewModel::get_preview_order() const {
+  return m_preview_order;
 }
 
 const std::shared_ptr<BboQuoteModel>& BookViewModel::get_bbo_quote() const {

@@ -2,6 +2,7 @@
 #define SPIRE_BOOK_VIEW_MODEL_HPP
 #include "Nexus/Definitions/BookQuote.hpp"
 #include "Nexus/Definitions/SecurityTechnicals.hpp"
+#include "Nexus/OrderExecutionService/OrderFields.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
 
 namespace Spire {
@@ -22,6 +23,10 @@ namespace Spire {
   /** The model for the book view. */
   class BookViewModel {
     public:
+
+      /** A ValueModel over optional OrderFields. */
+      using PreviewOrderModel =
+        ValueModel<boost::optional<Nexus::OrderExecutionService::OrderFields>>;
 
       /** Represents the user order. */
       struct UserOrder {
@@ -54,17 +59,22 @@ namespace Spire {
       /** Returns a list of orders with the ask side. */
       const std::shared_ptr<ListModel<UserOrder>>& get_ask_orders() const;
 
+      /** Returns the preview order. */
+      const std::shared_ptr<PreviewOrderModel>& get_preview_order() const;
+
       /** Returns the Bbo quote. */
       const std::shared_ptr<BboQuoteModel>& get_bbo_quote() const;
 
       /** Returns the technical details about a Security. */
-      const std::shared_ptr<SecurityTechnicalsValueModel>& get_technicals() const;
+      const std::shared_ptr<SecurityTechnicalsValueModel>& get_technicals()
+        const;
 
     private:
       std::shared_ptr<ListModel<Nexus::BookQuote>> m_bids;
       std::shared_ptr<ListModel<Nexus::BookQuote>> m_asks;
       std::shared_ptr<ListModel<UserOrder>> m_bid_orders;
       std::shared_ptr<ListModel<UserOrder>> m_ask_orders;
+      std::shared_ptr<PreviewOrderModel> m_preview_order;
       std::shared_ptr<BboQuoteModel> m_bbo;
       std::shared_ptr<SecurityTechnicalsValueModel> m_technicals;
   };

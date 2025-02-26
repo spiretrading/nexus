@@ -20,7 +20,8 @@ namespace {
   optional<int> find_nearest_order(int row, const TableModel& table) {
     auto top = row;
     auto bottom = row;
-    while(top >= 0 || bottom < table.get_row_size()) {
+    auto size = table.get_row_size();
+    while(top >= 0 && top < size || bottom >= 0 && bottom < size) {
       if(top >= 0 && is_order(get_mpid(table, top))) {
         return top;
       }

@@ -250,6 +250,61 @@ struct BookViewTester : QWidget {
     order_status_layout->addWidget(m_submit_order_button, 0,
       Qt::AlignRight);
     left_layout->addWidget(order_status_group_box);
+    auto preview_order_group_box = new QGroupBox(tr("Preview Order"));
+    auto preview_order_layout = new QVBoxLayout(preview_order_group_box);
+    auto preview_order_fields_layout = new QFormLayout();
+    auto preview_order_destination_box = new TextBox();
+    preview_order_fields_layout->addRow(tr("Destination:"),
+      preview_order_destination_box);
+    auto preview_order = m_model.get_model()->get_preview_order();
+    auto preview_order_price = std::make_shared<LocalOptionalMoneyModel>(
+      Money(200));
+    preview_order_price->connect_update_signal([=] (auto& price) {
+      auto order = preview_order->get();
+      if(order && price) {
+        order->m_price = *price;
+        preview_order->set(order);
+      }
+    });
+    auto preview_order_price_box = new MoneyBox(preview_order_price);
+    preview_order_fields_layout->addRow(tr("Price:"), preview_order_price_box);
+    auto preview_order_quantity = std::make_shared<LocalOptionalQuantityModel>(
+      Quantity(10));
+    preview_order_quantity->connect_update_signal([=] (auto& quantity) {
+      auto order = preview_order->get();
+      if(order && quantity) {
+        order->m_quantity = *quantity;
+        preview_order->set(order);
+      }
+    });
+    auto preview_order_quantity_box = new QuantityBox(preview_order_quantity);
+    preview_order_fields_layout->addRow(tr("Quantity:"),
+      preview_order_quantity_box);
+    auto preview_order_side_box = make_side_box();
+    preview_order_fields_layout->addRow(tr("Side:"), preview_order_side_box);
+    preview_order_layout->addLayout(preview_order_fields_layout);
+    auto buttons_layout = new QHBoxLayout();
+    auto create_preview_order_button = make_label_button(tr("Create"));
+    auto submit_preview_order_button = make_label_button(tr("Submit"));
+    submit_preview_order_button->setEnabled(false);
+    create_preview_order_button->connect_click_signal([=] {
+      create_preview_order_button->setEnabled(false);
+      submit_preview_order_button->setEnabled(true);
+      m_model.get_model()->get_preview_order()->set(OrderFields::MakeLimitOrder(
+        Security(), preview_order_side_box->get_current()->get(),
+        preview_order_destination_box->get_current()->get().toStdString(),
+        *preview_order_quantity_box->get_current()->get(),
+        *preview_order_price_box->get_current()->get()));
+    });
+    submit_preview_order_button->connect_click_signal([=] {
+      create_preview_order_button->setEnabled(true);
+      submit_preview_order_button->setEnabled(false);
+      m_model.get_model()->get_preview_order()->set(none);
+    });
+    buttons_layout->addWidget(create_preview_order_button);
+    buttons_layout->addWidget(submit_preview_order_button);
+    preview_order_layout->addLayout(buttons_layout);
+    left_layout->addWidget(preview_order_group_box);
     auto key_bindings_button = make_label_button(tr("Key Bindings"));
     key_bindings_button->connect_click_signal([=] {
       m_key_bindings_window->show();
