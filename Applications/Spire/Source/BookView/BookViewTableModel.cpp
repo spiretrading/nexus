@@ -38,3 +38,7 @@ const Quantity& Spire::get_size(const TableModel& table, int row) {
 bool Spire::is_order(const std::string& mpid) {
   return !mpid.empty() && mpid.front() == '@';
 }
+
+bool Spire::is_preview_order(const std::string& mpid) {
+  return mpid.size() > 1 && std::string_view(mpid).substr(0, 2) == "@@";
+}

@@ -45,6 +45,9 @@ namespace Spire {
 
   /** Returns <code>true</code> when mpid is an order. */
   bool is_order(const std::string& mpid);
+
+  /** Returns <code>true</code> when mpid is a preview order. */
+  bool is_preview_order(const std::string& mpid);
 }
 
 #endif

@@ -9,9 +9,7 @@
 #include "Spire/Spire/ColumnViewListModel.hpp"
 #include "Spire/Spire/FieldValueModel.hpp"
 #include "Spire/Spire/FilteredListModel.hpp"
-#include "Spire/Spire/ListIndexTracker.hpp"
 #include "Spire/Spire/SortedListModel.hpp"
-#include "Spire/Spire/TableRowIndexTracker.hpp"
 #include "Spire/Spire/TableValueModel.hpp"
 #include "Spire/Spire/ToTextModel.hpp"
 #include "Spire/Styles/LinearExpression.hpp"
@@ -129,11 +127,6 @@ namespace {
 
   Selector make_order_status_selector(OrderStatus status) {
     return OrderQuote(to_highlight_state(status));
-  }
-
-  auto make_quote(const OrderFields& order) {
-    return BookQuote("@" + order.m_destination, false, {},
-      {order.m_price, order.m_quantity, order.m_side}, not_a_date_time);
   }
 
   struct RowTracker : QObject {
@@ -299,84 +292,6 @@ namespace {
           m_items.move(operation.m_source, operation.m_destination);
           m_row_selectors.move(operation.m_source, operation.m_destination);
         });
-    }
-  };
-
-  struct PreviewOrderTracker {
-    Side m_side;
-    std::shared_ptr<ListModel<BookQuote>> m_quotes;
-    std::shared_ptr<TableModel> m_quote_table;
-    ListIndexTracker m_list_index;
-    TableRowIndexTracker m_table_index;
-    bool m_is_adding;
-    scoped_connection m_list_operation_connection;
-    scoped_connection m_table_operation_connection;
-    scoped_connection m_update_connection;
-
-    PreviewOrderTracker(Side side, std::shared_ptr<ListModel<BookQuote>> quotes,
-      std::shared_ptr<TableModel> quote_table,
-      std::shared_ptr<BookViewModel::PreviewOrderModel> preview_order)
-      : m_side(side),
-        m_quotes(std::move(quotes)),
-        m_quote_table(std::move(quote_table)),
-        m_list_index(-1),
-        m_table_index(-1),
-        m_is_adding(false),
-        m_list_operation_connection(m_quotes->connect_operation_signal(
-          std::bind_front(&PreviewOrderTracker::on_list_operation, this))),
-        m_table_operation_connection(m_quote_table->connect_operation_signal(
-          std::bind_front(&PreviewOrderTracker::on_table_operation, this))),
-        m_update_connection(preview_order->connect_update_signal(
-          std::bind_front(&PreviewOrderTracker::on_preview_order_update,
-            this))) {}
-
-    bool is_preview_order_in_table(int index) const {
-      return m_table_index.get_index() == index;
-    }
-
-    void on_table_operation(const TableModel::Operation& operation) {
-      visit(operation,
-        [&] (const TableModel::AddOperation& operation) {
-          if(m_is_adding) {
-            m_table_index.set(operation.m_index);
-          } else {
-            m_table_index.update(operation);
-          }
-        },
-        [&] (const auto& operation) {
-          m_table_index.update(operation);
-        });
-    }
-
-    void on_list_operation(const ListModel<BookQuote>::Operation& operation) {
-      visit(operation,
-        [&] (const ListModel<BookQuote>::AddOperation& operation) {
-          if(m_is_adding) {
-            m_list_index.set(operation.m_index);
-          }
-        },
-        [&] (const auto& operation) {
-          m_list_index.update(operation);
-        });
-    }
-
-    void on_preview_order_update(const optional<OrderFields>& order) {
-      if(order) {
-        if(m_list_index.get_index() != -1) {
-          auto quote = m_quotes->get(m_list_index.get_index());
-          quote.m_quote.m_price = order->m_price;
-          quote.m_quote.m_size = order->m_quantity;
-          m_quotes->set(m_list_index.get_index(), quote);
-        } else if(order->m_side == m_side) {
-          m_is_adding = true;
-          m_quotes->push(make_quote(*order));
-          m_is_adding = false;
-        }
-      } else if(m_list_index.get_index() != -1) {
-        m_quotes->remove(m_list_index.get_index());
-        m_table_index.set(-1);
-        m_list_index.set(-1);
-      }
     }
   };
 
@@ -675,7 +590,6 @@ namespace {
     std::shared_ptr<TableModel> m_quote_table;
     std::shared_ptr<ListModel<BookViewModel::UserOrder>> m_orders;
     std::shared_ptr<RowTracker> m_row_tracker;
-    std::shared_ptr<PreviewOrderTracker> m_preview_order_tracker;
     std::shared_ptr<ValueModel<OrderVisibility>> m_visibility_property;
     std::shared_ptr<ValueModel<OrderHighlightArray>> m_highlight_properties;
     bool m_is_ascending;
@@ -691,14 +605,12 @@ namespace {
     OrderHighlightModel(std::shared_ptr<TableModel> quote_table,
         std::shared_ptr<ListModel<BookViewModel::UserOrder>> orders,
         std::shared_ptr<RowTracker> row_tracker,
-        std::shared_ptr<PreviewOrderTracker> preview_order_tracker,
         std::shared_ptr<ValueModel<OrderVisibility>> visibility_property,
         std::shared_ptr<ValueModel<OrderHighlightArray>> highlight_properties,
         bool is_ascending, QObject* timer_owner)
         : m_quote_table(std::move(quote_table)),
           m_orders(std::move(orders)),
           m_row_tracker(std::move(row_tracker)),
-          m_preview_order_tracker(std::move(preview_order_tracker)),
           m_visibility_property(std::move(visibility_property)),
           m_highlight_properties(std::move(highlight_properties)),
           m_is_ascending(is_ascending),
@@ -723,20 +635,24 @@ namespace {
       if(!is_order(mpid)) {
         return;
       }
-      if(m_preview_order_tracker->is_preview_order_in_table(row)) {
+      if(is_preview_order(mpid)) {
         auto preview_selector = OrderQuote(OrderHighlightState::PREVIEW);
-        m_row_tracker->match_selector(row, SelectorType::HIGHLIGHT_SELECTOR,
-          preview_selector);
+        if(m_visibility == OrderVisibility::HIGHLIGHTED) {
+          m_row_tracker->match_selector(row, SelectorType::HIGHLIGHT_SELECTOR,
+            preview_selector);
+        }
         m_row_tracker->update_order_style(row, preview_selector,
           m_highlights[static_cast<int>(OrderHighlightState::PREVIEW)]);
-      } else if(m_visibility == OrderVisibility::HIGHLIGHTED) {
-        auto key = OrderKey(mpid.substr(1), get_price(*m_quote_table, row));
-        if(auto i = m_order_status.find(key); i != m_order_status.end()) {
-          m_row_tracker->match_selector(row, SelectorType::HIGHLIGHT_SELECTOR,
-            make_order_status_selector(i->second.m_status));
-        } else {
-          m_row_tracker->match_selector(row, SelectorType::HIGHLIGHT_SELECTOR,
-            OrderQuote(OrderHighlightState::ACTIVE));
+      } else {
+        if(m_visibility == OrderVisibility::HIGHLIGHTED) {
+          auto key = OrderKey(mpid.substr(1), get_price(*m_quote_table, row));
+          if(auto i = m_order_status.find(key); i != m_order_status.end()) {
+            m_row_tracker->match_selector(row, SelectorType::HIGHLIGHT_SELECTOR,
+              make_order_status_selector(i->second.m_status));
+          } else {
+            m_row_tracker->match_selector(row, SelectorType::HIGHLIGHT_SELECTOR,
+              OrderQuote(OrderHighlightState::ACTIVE));
+          }
         }
         auto active_index = static_cast<int>(OrderHighlightState::ACTIVE);
         m_row_tracker->update_order_style(row,
@@ -766,7 +682,7 @@ namespace {
           }
           auto index = std::distance(m_prices.begin(), i);
           if(mpid == get_mpid(*m_quote_table, index) &&
-              !m_preview_order_tracker->is_preview_order_in_table(index)) {
+              !is_preview_order(mpid)) {
             return index;
           }
         }
@@ -831,8 +747,7 @@ namespace {
         if(visibility == OrderVisibility::VISIBLE) {
           for(auto i = 0; i < m_quote_table->get_row_size(); ++i) {
             auto& mpid = get_mpid(*m_quote_table, i);
-            if(is_order(mpid) &&
-                !m_preview_order_tracker->is_preview_order_in_table(i)) {
+            if(is_order(mpid)) {
               m_row_tracker->unmatch_highlight_selector(i);
             }
           }
@@ -842,7 +757,7 @@ namespace {
             if(!is_order(mpid)) {
               continue;
             }
-            if(m_preview_order_tracker->is_preview_order_in_table(i)) {
+            if(is_preview_order(mpid)) {
               m_row_tracker->match_selector(i, SelectorType::HIGHLIGHT_SELECTOR,
                 OrderQuote(OrderHighlightState::PREVIEW));
             } else {
@@ -879,8 +794,7 @@ namespace {
               if(!is_order(mpid)) {
                 continue;
               }
-              if(i == preview_index &&
-                  m_preview_order_tracker->is_preview_order_in_table(j)) {
+              if(i == preview_index && is_preview_order(mpid)) {
                 m_row_tracker->update_order_style(j,
                   OrderQuote(OrderHighlightState::PREVIEW),
                   highlights[preview_index]);
@@ -892,7 +806,8 @@ namespace {
               }
             }
           }
-        } else if(m_highlights[i] != highlights[i] || active_highlight_updated) {
+        } else if(m_highlights[i] != highlights[i] ||
+            active_highlight_updated) {
           if(m_highlights[i] != highlights[i]) {
             m_highlights[i] = highlights[i];
             m_row_tracker->update_current_order_style(
@@ -901,7 +816,8 @@ namespace {
               highlights[i]);
           }
           for(auto j = 0; j < m_quote_table->get_row_size(); ++j) {
-            if(m_preview_order_tracker->is_preview_order_in_table(j)) {
+            auto& mpid = get_mpid(*m_quote_table, j);
+            if(is_order(mpid) && !is_preview_order(mpid)) {
               m_row_tracker->update_order_animation_style(j,
                 OrderQuote(static_cast<OrderHighlightState>(i)),
                 highlights[active_index], highlights[i]);
@@ -914,7 +830,6 @@ namespace {
 
   struct BookViewTableViewObserver : QObject {
     TableView* m_table_view;
-    std::shared_ptr<PreviewOrderTracker> m_preview_order_tracker;
     std::shared_ptr<BookViewPropertiesModel> m_properties;
     std::shared_ptr<LevelPropertiesModel> m_level_properties;
     bool m_is_grid_enabled;
@@ -923,12 +838,10 @@ namespace {
     scoped_connection m_current_connection;
 
     BookViewTableViewObserver(TableView& table_view,
-      std::shared_ptr<PreviewOrderTracker> preview_order_tracker,
       std::shared_ptr<BookViewPropertiesModel> properties,
       QObject* parent = nullptr)
       : QObject(parent),
         m_table_view(&table_view),
-        m_preview_order_tracker(std::move(preview_order_tracker)),
         m_properties(std::move(properties)),
         m_level_properties(make_field_value_model(m_properties,
           &BookViewProperties::m_level_properties)),
@@ -983,8 +896,8 @@ namespace {
 
     optional<int> find_home_order(int row) {
       for(auto i = 0; i < row; ++i) {
-        if(is_order(get_mpid(*m_table_view->get_table(), i)) &&
-            !m_preview_order_tracker->is_preview_order_in_table(i)) {
+        auto& mpid = get_mpid(*m_table_view->get_table(), i);
+        if(is_order(mpid) && !is_preview_order(mpid)) {
           return i;
         }
       }
@@ -994,8 +907,8 @@ namespace {
     optional<int> find_end_order(int row) {
       for(auto i = m_table_view->get_table()->get_row_size() - 1; i > row;
           --i) {
-        if(is_order(get_mpid(*m_table_view->get_table(), i)) &&
-            !m_preview_order_tracker->is_preview_order_in_table(i)) {
+        auto& mpid = get_mpid(*m_table_view->get_table(), i);
+        if(is_order(mpid) && !is_preview_order(mpid)) {
           return i;
         }
       }
@@ -1004,8 +917,8 @@ namespace {
 
     optional<int> find_previous_order(int row) {
       for(auto i = row - 1; i >= 0; --i) {
-        if(is_order(get_mpid(*m_table_view->get_table(), i)) &&
-            !m_preview_order_tracker->is_preview_order_in_table(i)) {
+        auto& mpid = get_mpid(*m_table_view->get_table(), i);
+        if(is_order(mpid) && !is_preview_order(mpid)) {
           return i;
         }
       }
@@ -1015,8 +928,8 @@ namespace {
     optional<int> find_next_order(int row) {
       for(auto i = row + 1; i < m_table_view->get_table()->get_row_size();
           ++i) {
-        if(is_order(get_mpid(*m_table_view->get_table(), i)) &&
-            !m_preview_order_tracker->is_preview_order_in_table(i)) {
+        auto& mpid = get_mpid(*m_table_view->get_table(), i);
+        if(is_order(mpid) && !is_preview_order(mpid)) {
           return i;
         }
       }
@@ -1055,8 +968,8 @@ namespace {
       if(!current) {
         return;
       }
-      if(!is_order(get_mpid(*m_table_view->get_table(), current->m_row)) || 
-          m_preview_order_tracker->is_preview_order_in_table(current->m_row)) {
+      auto& mpid = get_mpid(*m_table_view->get_table(), current->m_row);
+      if(!is_order(mpid) || is_preview_order(mpid)) {
         m_table_view->get_current()->set(none);
       }
     }
@@ -1081,8 +994,7 @@ namespace {
     bool filter(const ListModel<BookQuote>& list, int index) {
       if(m_highlight_properties->get().m_order_visibility ==
           BookViewHighlightProperties::OrderVisibility::HIDDEN) {
-        return is_order(list.get(index).m_mpid) &&
-          !list.get(index).m_timestamp.is_not_a_date_time();
+        return is_order(list.get(index).m_mpid);
       }
       return false;
     }
@@ -1114,8 +1026,11 @@ namespace {
     auto item = [&] {
       auto column_id = static_cast<BookViewColumns>(column);
       if(column_id == BookViewColumns::MPID) {
-        auto mpid_item = make_label(
-          QString::fromStdString(table->get<std::string>(row, column)));
+        auto name = table->get<std::string>(row, column);
+        if(is_preview_order(name)) {
+          name = name.substr(1);
+        }
+        auto mpid_item = make_label(QString::fromStdString(name));
         update_style(*mpid_item, [] (auto& style) {
           style.get(Any()).
             set(PaddingLeft(scale_width(4))).
@@ -1176,8 +1091,6 @@ TableView* Spire::make_book_view_table_view(
   auto table = std::make_shared<SortedTableModel>(
     make_book_view_table_model(order_filtered_list), column_orders);
   auto row_tracker = std::make_shared<RowTracker>(table);
-  auto preview_order_tracker = std::make_shared<PreviewOrderTracker>(side,
-    std::move(book_quotes), table, model->get_preview_order());
   auto level_quote_model = std::make_shared<LevelQuoteModel>(table, row_tracker,
     make_field_value_model(properties, &BookViewProperties::m_level_properties),
     order_visibility);
@@ -1187,7 +1100,7 @@ TableView* Spire::make_book_view_table_view(
       is_ascending);
   auto timer_owner = new QObject();
   auto order_highlight_model = std::make_shared<OrderHighlightModel>(table,
-    orders, row_tracker, preview_order_tracker, order_visibility,
+    orders, row_tracker, order_visibility,
     make_field_value_model(highlight_property,
       &BookViewHighlightProperties::m_order_highlights),
     is_ascending, timer_owner);
@@ -1198,8 +1111,8 @@ TableView* Spire::make_book_view_table_view(
   table_view->get_header().setVisible(false);
   table_view->get_scroll_box().set(ScrollBox::DisplayPolicy::NEVER);
   timer_owner->setParent(table_view);
-  auto observer = new BookViewTableViewObserver(*table_view,
-    std::move(preview_order_tracker), properties, table_view);
+  auto observer = new BookViewTableViewObserver(*table_view, properties,
+    table_view);
   order_filtered_list->connect_filter_signal([=] {
     table_view->get_current()->set(none);
   });

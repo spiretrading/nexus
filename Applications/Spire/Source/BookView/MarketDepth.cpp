@@ -22,10 +22,12 @@ namespace {
     auto bottom = row;
     auto size = table.get_row_size();
     while(top >= 0 && top < size || bottom >= 0 && bottom < size) {
-      if(top >= 0 && is_order(get_mpid(table, top))) {
+      if(top >= 0 && is_order(get_mpid(table, top)) &&
+          !is_preview_order(get_mpid(table, top))) {
         return top;
       }
-      if(bottom < table.get_row_size() && is_order(get_mpid(table, bottom))) {
+      if(bottom < table.get_row_size() && is_order(get_mpid(table, bottom)) &&
+          !is_preview_order(get_mpid(table, bottom))) {
         return bottom;
       }
       --top;
@@ -195,7 +197,7 @@ void MarketDepth::on_side_current(const optional<TableView::Index>& current,
     opposite_table_view->get_current()->set(none);
     last_side_opposite_row = none;
     auto& mpid = get_mpid(*table_view->get_table(), current->m_row);
-    if(is_order(mpid)) {
+    if(is_order(mpid) && !is_preview_order(mpid)) {
       auto& price = get_price(*table_view->get_table(), current->m_row);
       if(auto i = find_book_quote(*quotes, mpid, price); i >= 0) {
         m_selected_quote->set(quotes->get(i));

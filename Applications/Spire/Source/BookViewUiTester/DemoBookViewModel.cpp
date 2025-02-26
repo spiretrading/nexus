@@ -49,9 +49,7 @@ namespace {
       const std::string& mpid, const Money& price) {
     auto i = std::find_if(quotes.begin(), quotes.end(),
       [&] (const BookQuote& quote) {
-      auto valid_time = quote.m_timestamp.is_not_a_date_time();
-        return quote.m_mpid == mpid && quote.m_quote.m_price == price &&
-          !quote.m_timestamp.is_not_a_date_time();
+        return quote.m_mpid == mpid && quote.m_quote.m_price == price;
       });
     if(i == quotes.end()) {
       return -1;
