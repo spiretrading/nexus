@@ -131,6 +131,22 @@ namespace Spire {
        */
       void set_column_order(const std::vector<ColumnOrder>& order);
 
+      /**
+       * Maps a row index from this table into the source table.
+       * @param index An index into a row of this table.
+       * @return The corresponding row index into the source table or
+       *         <code>-1</code> iff the row index is not valid.
+       */
+      int index_to_source(int index) const;
+
+      /**
+       * Maps a row index from the source table to this table.
+       * @param index An index into a row of the source table.
+       * @return The corresponding row index into this table, or <code>-1</code>
+       *         iff the row index is not valid.
+       */
+      int index_from_source(int index) const;
+
       int get_row_size() const override;
 
       int get_column_size() const override;
