@@ -37,7 +37,7 @@ namespace {
     style.get(item_selector > Any() > ReadOnly() >
         (is_a<TextBox>() && !(+Any() << is_a<ListItem>()) && !Prompt())).
       set(horizontal_padding(scale_width(8)));
-    style.get((item_selector > !ReadOnly()) << Current()).
+    style.get((item_selector > (!ReadOnly() && !DeleteButton())) << Current()).
       set(border_color(QColor(Qt::transparent)));
     style.get(body_selector > Row() > Current()).
       set(BackgroundColor(Qt::transparent));
@@ -95,6 +95,7 @@ namespace {
     mutable UpdateSignal m_update_signal;
     std::shared_ptr<EditableTableView::CurrentModel> m_current;
     int m_columns;
+    bool m_is_updating;
     optional<TableIndex> m_value;
     scoped_connection m_current_connection;
 
@@ -102,6 +103,7 @@ namespace {
         std::shared_ptr<EditableTableView::CurrentModel> current, int columns)
         : m_current(std::move(current)),
           m_columns(columns),
+          m_is_updating(false),
           m_current_connection(m_current->connect_update_signal(
             std::bind_front(&EditableTableCurrentModel::on_update, this))) {
       auto value = m_current->get();
@@ -138,12 +140,16 @@ namespace {
     }
 
     void on_update(const optional<TableIndex>& index) {
-      if(test(index) == QValidator::State::Invalid) {
-        m_value = none;
-        m_update_signal(none);
-      } else {
-        m_value = index;
-        m_update_signal(index);
+      if(!m_is_updating) {
+        m_is_updating = true;
+        if(test(index) == QValidator::State::Invalid) {
+          m_value = none;
+          m_update_signal(none);
+        } else {
+          m_value = index;
+          m_update_signal(index);
+        }
+        m_is_updating = false;
       }
     }
   };
