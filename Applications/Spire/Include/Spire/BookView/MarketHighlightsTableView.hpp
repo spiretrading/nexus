@@ -1,5 +1,6 @@
 #ifndef SPIRE_MARKET_HIGHLIGHTS_TABLE_VIEW_HPP
 #define SPIRE_MARKET_HIGHLIGHTS_TABLE_VIEW_HPP
+#include "Spire/BookView/BookView.hpp"
 #include "Spire/BookView/BookViewProperties.hpp"
 #include "Spire/Spire/ListModel.hpp"
 

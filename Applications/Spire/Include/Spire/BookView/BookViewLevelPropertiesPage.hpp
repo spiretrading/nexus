@@ -1,6 +1,7 @@
 #ifndef SPIRE_BOOK_VIEW_LEVEL_PROPERTIES_PAGE_HPP
 #define SPIRE_BOOK_VIEW_LEVEL_PROPERTIES_PAGE_HPP
 #include <QWidget>
+#include "Spire/BookView/BookView.hpp"
 #include "Spire/BookView/BookViewProperties.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
 

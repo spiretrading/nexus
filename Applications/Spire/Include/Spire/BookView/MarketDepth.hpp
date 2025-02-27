@@ -1,5 +1,6 @@
 #ifndef SPIRE_MARKET_DEPTH_HPP
 #define SPIRE_MARKET_DEPTH_HPP
+#include "Spire/BookView/BookView.hpp"
 #include "Spire/BookView/BookViewModel.hpp"
 #include "Spire/BookView/BookViewTableView.hpp"
 #include "Spire/Ui/Ui.hpp"
