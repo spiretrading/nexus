@@ -2,6 +2,7 @@
 #define SPIRE_BOOK_VIEW_MODEL_HPP
 #include "Nexus/Definitions/BookQuote.hpp"
 #include "Nexus/Definitions/SecurityTechnicals.hpp"
+#include "Spire/BookView/BookView.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
 
 namespace Spire {
@@ -58,7 +59,8 @@ namespace Spire {
       const std::shared_ptr<BboQuoteModel>& get_bbo_quote() const;
 
       /** Returns the technical details about a Security. */
-      const std::shared_ptr<SecurityTechnicalsValueModel>& get_technicals() const;
+      const std::shared_ptr<SecurityTechnicalsValueModel>& get_technicals()
+        const;
 
     private:
       std::shared_ptr<ListModel<Nexus::BookQuote>> m_bids;

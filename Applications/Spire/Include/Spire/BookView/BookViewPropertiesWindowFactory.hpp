@@ -1,5 +1,6 @@
 #ifndef SPIRE_BOOK_VIEW_PROPERTIES_WINDOW_FACTORY_HPP
 #define SPIRE_BOOK_VIEW_PROPERTIES_WINDOW_FACTORY_HPP
+#include "Spire/BookView/BookView.hpp"
 #include "Spire/BookView/BookViewPropertiesWindow.hpp"
 
 namespace Spire {
@@ -25,7 +26,7 @@ namespace Spire {
       const std::shared_ptr<BookViewPropertiesModel>& get_properties() const;
 
       /*
-       * Returns the newly created BookViewPropertiesWindow.
+       * Returns the singleton instance of the BookViewPropertiesWindow.
        * @param key_bindings The KeyBindingsModel storing all of the user's
        *        interactions.
        * @param security The security whose interactions are to be displayed.
