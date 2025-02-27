@@ -1,7 +1,7 @@
 #ifndef ARRAY_VALUE_TO_LIST_MODEL_HPP
 #define ARRAY_VALUE_TO_LIST_MODEL_HPP
-#include <boost/signals2/shared_connection_block.hpp>
 #include <vector>
+#include <boost/signals2/shared_connection_block.hpp>
 #include "Spire/BookView/BookView.hpp"
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Spire/ListModelTransactionLog.hpp"
