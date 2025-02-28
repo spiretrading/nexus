@@ -455,6 +455,7 @@ std::shared_ptr<BookViewModel> model_builder(
   clear(*model->get_bid_orders());
   clear(*model->get_ask_orders());
   model->get_bbo_quote()->set({});
+  model->get_preview_order()->set(none);
   tester->start_populate();
   return model;
 }
