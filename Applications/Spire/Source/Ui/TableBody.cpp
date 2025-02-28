@@ -1283,7 +1283,9 @@ void TableBody::on_current(
       previous_had_focus =
         previous_item->isAncestorOf(
           static_cast<QWidget*>(QApplication::focusObject()));
-      unmatch(*previous_item->parentWidget(), CurrentRow());
+      if(!current || previous->m_row != current->m_row) {
+        unmatch(*previous_item->parentWidget(), CurrentRow());
+      }
       unmatch(*previous_item, Current());
     }
     if(!current || current->m_column != previous->m_column) {
