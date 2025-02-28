@@ -248,7 +248,7 @@ void TaskKeysPage::on_duplicate_task_action() {
       any_cast<int>(m_table_view->get_body().get_table()->at(index, 0)));
     order_task.m_key = QKeySequence();
     m_key_bindings->get_order_task_arguments()->insert(order_task,
-      m_table_view->get_current()->get()->m_row);
+      m_table_view->get_body().get_current()->get()->m_row);
   }
   QTimer::singleShot(0, this, [=] {
     m_table_view->get_current()->set(TableView::Index(last_current_row, 1));
