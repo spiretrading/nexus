@@ -681,8 +681,7 @@ namespace {
             return -1;
           }
           auto index = std::distance(m_prices.begin(), i);
-          if(mpid == get_mpid(*m_quote_table, index) &&
-              !is_preview_order(mpid)) {
+          if(mpid == get_mpid(*m_quote_table, index)) {
             return index;
           }
         }

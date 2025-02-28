@@ -450,12 +450,12 @@ struct BookViewTester : QWidget {
 std::shared_ptr<BookViewModel> model_builder(
     std::shared_ptr<BookViewModel> model, BookViewTester* tester,
     const Security&) {
+  model->get_preview_order()->set(none);
   clear(*model->get_bids());
   clear(*model->get_asks());
   clear(*model->get_bid_orders());
   clear(*model->get_ask_orders());
   model->get_bbo_quote()->set({});
-  model->get_preview_order()->set(none);
   tester->start_populate();
   return model;
 }
