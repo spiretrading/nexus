@@ -88,6 +88,7 @@ namespace Spire {
     private:
       mutable SortSignal m_sort_signal;
       std::shared_ptr<TableModel> m_table;
+      std::shared_ptr<CurrentModel> m_current;
       std::shared_ptr<FilteredTableModel> m_filtered_table;
       std::shared_ptr<SortedTableModel> m_sorted_table;
       std::shared_ptr<HeaderModel> m_header;

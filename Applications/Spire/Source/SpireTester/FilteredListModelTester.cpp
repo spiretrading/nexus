@@ -26,6 +26,12 @@ TEST_SUITE("FilteredListModel") {
     REQUIRE(source->get(1) == 2);
     REQUIRE(source->get(2) == 9);
     REQUIRE(source->get(3) == 1);
+    REQUIRE(filtered_list.index_from_source(0) == -1);
+    REQUIRE(filtered_list.index_from_source(1) == 0);
+    REQUIRE(filtered_list.index_from_source(2) == -1);
+    REQUIRE(filtered_list.index_from_source(3) == 1);
+    REQUIRE(filtered_list.index_to_source(0) == 1);
+    REQUIRE(filtered_list.index_to_source(1) == 3);
   }
 
   TEST_CASE("push") {

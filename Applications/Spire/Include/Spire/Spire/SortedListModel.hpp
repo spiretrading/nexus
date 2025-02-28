@@ -82,6 +82,22 @@ namespace Spire {
       /** Returns the comparator used to rank elements. */
       const Comparator& get_comparator() const;
 
+      /**
+       * Maps an index from this list into the source list.
+       * @param index An index into this table.
+       * @return The corresponding index into the source list or <code>-1</code>
+       *         iff the index is not valid.
+       */
+      int index_to_source(int index) const;
+
+      /**
+       * Maps an index from the source list to this list.
+       * @param index An index into the source list.
+       * @return The corresponding index into this list, or <code>-1</code> iff
+       *         the index is not valid.
+       */
+      int index_from_source(int index) const;
+
       int get_size() const override;
 
       const Type& get(int index) const override;
@@ -160,6 +176,16 @@ namespace Spire {
   const typename SortedListModel<T>::Comparator&
       SortedListModel<T>::get_comparator() const {
     return m_comparator;
+  }
+
+  template<typename T>
+  int SortedListModel<T>::index_to_source(int index) const {
+    return m_translation.index_to_source(index);
+  }
+
+  template<typename T>
+  int SortedListModel<T>::index_from_source(int index) const {
+    return m_translation.index_from_source(index);
   }
 
   template<typename T>

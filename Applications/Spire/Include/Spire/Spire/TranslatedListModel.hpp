@@ -43,15 +43,20 @@ namespace Spire {
       explicit TranslatedListModel(std::shared_ptr<ListModel<Type>> source);
 
       /**
-       * Given an index into the source list, returns the index in this
-       * translated list.
+       * Maps an index from this list into the source list.
+       * @param index An index into this table.
+       * @return The corresponding index into the source list or <code>-1</code>
+       *         iff the index is not valid.
        */
-      int get_source_to_translation(int index) const;
+      int index_to_source(int index) const;
 
       /**
-       * Given an index into this list, returns the index in the source list.
+       * Maps an index from the source list to this list.
+       * @param index An index into the source list.
+       * @return The corresponding index into this list, or <code>-1</code> iff
+       *         the index is not valid.
        */
-      int get_translation_to_source(int index) const;
+      int index_from_source(int index) const;
 
       int get_size() const override;
 
@@ -105,13 +110,13 @@ namespace Spire {
   }
 
   template<typename T>
-  int TranslatedListModel<T>::get_source_to_translation(int index) const {
-    return m_reverse_translation[index];
+  int TranslatedListModel<T>::index_to_source(int index) const {
+    return m_translation[index];
   }
 
   template<typename T>
-  int TranslatedListModel<T>::get_translation_to_source(int index) const {
-    return m_translation[index];
+  int TranslatedListModel<T>::index_from_source(int index) const {
+    return m_reverse_translation[index];
   }
 
   template<typename T>

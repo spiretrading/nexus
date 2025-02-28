@@ -58,6 +58,14 @@ void SortedTableModel::set_column_order(const std::vector<ColumnOrder>& order) {
   sort();
 }
 
+int SortedTableModel::index_to_source(int index) const {
+  return m_translation.index_to_source(index);
+}
+
+int SortedTableModel::index_from_source(int index) const {
+  return m_translation.index_from_source(index);
+}
+
 int SortedTableModel::get_row_size() const {
   return m_translation.get_row_size();
 }
@@ -100,8 +108,8 @@ bool SortedTableModel::row_comparator(int lhs, int rhs) const {
       return order.m_order == Ordering::DESCENDING;
     }
   }
-  return m_translation.get_translation_to_source(lhs) <
-    m_translation.get_translation_to_source(rhs);
+  return m_translation.index_to_source(lhs) <
+    m_translation.index_to_source(rhs);
 }
 
 void SortedTableModel::sort() {
