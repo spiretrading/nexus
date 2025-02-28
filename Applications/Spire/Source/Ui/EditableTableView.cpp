@@ -47,6 +47,8 @@ namespace {
       set(BackgroundColor(0xF2F2FF));
     style.get(item_selector > DeleteButton()).
       set(Visibility(Visibility::INVISIBLE));
+    style.get(item_selector > DeleteButton() > Body()).
+      set(border_color(QColor(Qt::transparent)));
     style.get(item_selector > DeleteButton() > is_a<Box>()).
       set(BackgroundColor(QColor(Qt::transparent))).
       set(horizontal_padding(scale_width(2))).
