@@ -3,6 +3,7 @@
 #include "Nexus/Definitions/BookQuote.hpp"
 #include "Nexus/Definitions/SecurityTechnicals.hpp"
 #include "Nexus/OrderExecutionService/OrderFields.hpp"
+#include "Spire/BookView/BookView.hpp"
 #include "Spire/Spire/ListIndexTracker.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
 

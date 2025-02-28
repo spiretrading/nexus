@@ -2,6 +2,7 @@
 #define SPIRE_BBO_BOX_HPP
 #include <QHBoxLayout>
 #include <QSpacerItem>
+#include "Spire/BookView/BookView.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Ui/Ui.hpp"
 

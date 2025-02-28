@@ -1,6 +1,7 @@
 #ifndef SPIRE_BOOK_VIEW_TABLE_MODEL_HPP
 #define SPIRE_BOOK_VIEW_TABLE_MODEL_HPP
 #include "Nexus/Definitions/BookQuote.hpp"
+#include "Spire/BookView/BookView.hpp"
 #include "Spire/Spire/TableModel.hpp"
 
 namespace Spire {

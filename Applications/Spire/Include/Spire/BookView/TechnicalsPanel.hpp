@@ -1,5 +1,6 @@
 #ifndef SPIRE_TECHNICALS_PANEL_HPP
 #define SPIRE_TECHNICALS_PANEL_HPP
+#include "Spire/BookView/BookView.hpp"
 #include "Spire/BookView/BookViewModel.hpp"
 #include "Spire/Ui/QuantityBox.hpp"
 #include "Spire/Ui/Ui.hpp"
