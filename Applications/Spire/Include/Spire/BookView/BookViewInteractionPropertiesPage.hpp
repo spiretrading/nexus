@@ -1,6 +1,7 @@
 #ifndef SPIRE_BOOK_VIEW_INTERACTION_PROPERTIES_PAGE_HPP
 #define SPIRE_BOOK_VIEW_INTERACTION_PROPERTIES_PAGE_HPP
 #include <QWidget>
+#include "Spire/BookView/BookView.hpp"
 #include "Spire/KeyBindings/KeyBindingsModel.hpp"
 #include "Spire/Ui/RegionDropDownBox.hpp"
 #include "Spire/Ui/SecurityBox.hpp"

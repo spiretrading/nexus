@@ -1,5 +1,6 @@
 #ifndef SPIRE_MARKET_DEPTH_HPP
 #define SPIRE_MARKET_DEPTH_HPP
+#include "Spire/BookView/BookView.hpp"
 #include "Spire/BookView/BookViewModel.hpp"
 #include "Spire/BookView/BookViewTableView.hpp"
 #include "Spire/Ui/Ui.hpp"
@@ -25,7 +26,7 @@ namespace Spire {
        * @param parent The parent widget.
        */
       MarketDepth(std::shared_ptr<BookViewModel> model,
-        std::shared_ptr<ValueModel<Nexus::BboQuote>> bbo_quote,
+        std::shared_ptr<BboQuoteModel> bbo_quote,
         std::shared_ptr<BookViewPropertiesModel> properties,
         const Nexus::MarketDatabase& markets, QWidget* parent = nullptr);
 
