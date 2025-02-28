@@ -50,6 +50,22 @@ namespace Spire {
       /** Applies a new filter to this list. */
       void set_filter(const Filter& filter);
 
+      /**
+       * Maps an index from this list into the source list.
+       * @param index An index into this table.
+       * @return The corresponding index into the source list or <code>-1</code>
+       *         iff the index is not valid.
+       */
+      int index_to_source(int index) const;
+
+      /**
+       * Maps an index from the source list to this list.
+       * @param index An index into the source list.
+       * @return The corresponding index into this list, or <code>-1</code> iff
+       *         the index is not valid.
+       */
+      int index_from_source(int index) const;
+
       int get_size() const override;
 
       const Type& get(int index) const override;
@@ -169,6 +185,24 @@ namespace Spire {
         ++source_index;
       }
     });
+  }
+
+  template<typename T>
+  int FilteredListModel<T>::index_to_source(int index) const {
+    if(index < 0 || index >= get_size()) {
+      return -1;
+    }
+    return m_filtered_data[index];
+  }
+
+  template<typename T>
+  int FilteredListModel<T>::index_from_source(int index) const {
+    auto i = std::lower_bound(
+      m_filtered_data.begin(), m_filtered_data.end(), index);
+    if(i != m_filtered_data.end() && *i == index) {
+      return static_cast<int>(std::distance(m_filtered_data.begin(), i));
+    }
+    return -1;
   }
 
   template<typename T>

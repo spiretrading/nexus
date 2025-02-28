@@ -38,12 +38,12 @@ void TranslatedTableModel::move(int source, int destination) {
   m_transaction.push(MoveOperation(source, destination));
 }
 
-int TranslatedTableModel::get_source_to_translation(int row) const {
-  return m_reverse_translation[row];
+int TranslatedTableModel::index_to_source(int row) const {
+  return m_translation[row];
 }
 
-int TranslatedTableModel::get_translation_to_source(int row) const {
-  return m_translation[row];
+int TranslatedTableModel::index_from_source(int row) const {
+  return m_reverse_translation[row];
 }
 
 int TranslatedTableModel::get_row_size() const {
