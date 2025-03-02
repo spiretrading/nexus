@@ -69,7 +69,7 @@ QWidget* TableBody::default_item_builder(
     const std::shared_ptr<TableModel>& table, int row, int column) {
   auto text = make_to_text_model(
     make_table_value_model<AnyRef>(table, row, column),
-    [] (const AnyRef& value) { return to_text(value); },
+    [] (AnyRef value) { return to_text(value); },
     [] (const QString&) { return none; });
   return make_label(text);
 }
