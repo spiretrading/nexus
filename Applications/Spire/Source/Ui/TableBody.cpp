@@ -673,6 +673,11 @@ bool TableBody::event(QEvent* event) {
 
 bool TableBody::focusNextPrevChild(bool next) {
   if(isEnabled()) {
+    auto focus_widget = focusWidget();
+    if(focus_widget && !focus_widget->isVisible()) {
+      setFocus();
+      return true;
+    }
     if(next) {
       if(navigate_next()) {
         return true;
@@ -1283,7 +1288,9 @@ void TableBody::on_current(
       previous_had_focus =
         previous_item->isAncestorOf(
           static_cast<QWidget*>(QApplication::focusObject()));
-      unmatch(*previous_item->parentWidget(), CurrentRow());
+      if(!current || previous->m_row != current->m_row) {
+        unmatch(*previous_item->parentWidget(), CurrentRow());
+      }
       unmatch(*previous_item, Current());
     }
     if(!current || current->m_column != previous->m_column) {
