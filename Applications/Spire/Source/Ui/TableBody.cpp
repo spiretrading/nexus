@@ -673,6 +673,11 @@ bool TableBody::event(QEvent* event) {
 
 bool TableBody::focusNextPrevChild(bool next) {
   if(isEnabled()) {
+    auto focus_widget = focusWidget();
+    if(focus_widget && !focus_widget->isVisible()) {
+      setFocus();
+      return true;
+    }
     if(next) {
       if(navigate_next()) {
         return true;
