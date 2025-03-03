@@ -17,6 +17,9 @@
 
 #include "Spire/Spire/ArrayTableModel.hpp"
 #include "Spire/Spire/Resources.hpp"
+#include "Spire/Ui/Layouts.hpp"
+#include "Spire/Ui/ScrollBox.hpp"
+#include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/TableView.hpp"
 #include "Spire/Spire/ToTextModel.hpp"
@@ -146,7 +149,7 @@ public:
 };
 
 
-class VTableView : public QAbstractScrollArea {
+class VTableView : public QWidget {
 
 public:
     explicit VTableView(QWidget* parent = nullptr);
@@ -158,7 +161,6 @@ public:
 protected:
     void paintEvent(QPaintEvent* event) override;
     void resizeEvent(QResizeEvent* event) override;
-    void scrollContentsBy(int dx, int dy) override;
 
 private:
     // Key structures
@@ -196,8 +198,10 @@ private:
     
     void cleanupInvisibleWidgets();
     void layoutVisibleWidgets();
+    void onScroll(int position);
 
     // Core data
+    ScrollBox* m_scrollBox;
     TableViewModel* m_model = nullptr;
     TableViewDelegate* m_delegate = nullptr;
     
@@ -222,14 +226,16 @@ uint qHash(const VTableView::CellPosition& t) {
 
 // Implementation
 
-VTableView::VTableView(QWidget* parent) : QAbstractScrollArea(parent) {
-    // Set scroll policy and initialize viewport
-    setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-    setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-    
-    // Set viewport background
-    viewport()->setBackgroundRole(QPalette::Base);
-    setFrameStyle(QFrame::NoFrame);
+VTableView::VTableView(QWidget* parent) : QWidget(parent) {
+  auto body = new QWidget();
+  body->setBackgroundRole(QPalette::Base);
+  body->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+  m_scrollBox = new ScrollBox(body);
+  m_scrollBox->set_vertical(ScrollBox::DisplayPolicy::ON_OVERFLOW);
+  m_scrollBox->set_horizontal(ScrollBox::DisplayPolicy::ON_OVERFLOW);
+  m_scrollBox->get_vertical_scroll_bar().connect_position_signal(
+    std::bind_front(&VTableView::onScroll, this));
+  enclose(*this, *m_scrollBox);
 }
 
 VTableView::~VTableView() {
@@ -280,7 +286,7 @@ void VTableView::setModel(TableViewModel* model) {
     
     updateContentsSize();
     updateVisibleRange();
-    viewport()->update();
+    m_scrollBox->get_body().update();
 }
 
 void VTableView::setDelegate(TableViewDelegate* delegate) {
@@ -304,11 +310,11 @@ void VTableView::paintEvent(QPaintEvent* event) {
     if (!m_model || !m_delegate)
         return;
     
-    QPainter painter(viewport());
+    QPainter painter(&m_scrollBox->get_body());
     painter.setRenderHint(QPainter::Antialiasing);
     
     // Fill background
-    painter.fillRect(event->rect(), viewport()->palette().brush(QPalette::Base));
+    painter.fillRect(event->rect(), m_scrollBox->get_body().palette().brush(QPalette::Base));
     
     // Draw grid lines if needed
     if (m_borderWidth > 0) {
@@ -320,10 +326,10 @@ void VTableView::paintEvent(QPaintEvent* event) {
                 auto geometry = cellGeometryAt(row, col);
                 
                 // Draw horizontal line
-                painter.drawLine(0, geometry.y, viewport()->width(), geometry.y);
+                painter.drawLine(0, geometry.y, m_scrollBox->get_body().width(), geometry.y);
                 
                 // Draw vertical line
-                painter.drawLine(geometry.x, 0, geometry.x, viewport()->height());
+                painter.drawLine(geometry.x, 0, geometry.x, m_scrollBox->get_body().height());
             }
         }
     }
@@ -332,13 +338,12 @@ void VTableView::paintEvent(QPaintEvent* event) {
 }
 
 void VTableView::resizeEvent(QResizeEvent* event) {
-    QAbstractScrollArea::resizeEvent(event);
+    QWidget::resizeEvent(event);
     updateVisibleRange();
     updateScrollBarRanges();
 }
 
-void VTableView::scrollContentsBy(int dx, int dy) {
-    QAbstractScrollArea::scrollContentsBy(dx, dy);
+void VTableView::onScroll(int position) {
     updateVisibleRange();
 }
 
@@ -354,12 +359,8 @@ void VTableView::updateContentsSize() {
     int contentHeight = rows * (m_defaultCellSize.height() + m_cellSpacing) + m_cellSpacing;
     
     // Update scrollbars
-    horizontalScrollBar()->setRange(0, qMax(0, contentWidth - viewport()->width()));
-    verticalScrollBar()->setRange(0, qMax(0, contentHeight - viewport()->height()));
-    
-    // Update page steps
-    horizontalScrollBar()->setPageStep(viewport()->width());
-    verticalScrollBar()->setPageStep(viewport()->height());
+    m_scrollBox->get_body().setFixedWidth(qMax(0, contentWidth - m_scrollBox->get_body().width()));
+    m_scrollBox->get_body().setFixedHeight(qMax(0, contentHeight - m_scrollBox->get_body().height()));
 }
 
 void VTableView::updateScrollBarRanges() {
@@ -371,8 +372,8 @@ QPair<VTableView::CellPosition, VTableView::CellPosition> VTableView::visibleCel
         return {{0, 0}, {0, 0}};
     }
     
-    int xOffset = horizontalScrollBar()->value();
-    int yOffset = verticalScrollBar()->value();
+    int xOffset = 0;
+    int yOffset = m_scrollBox->get_vertical_scroll_bar().get_position();
     
     int cellWidth = m_defaultCellSize.width() + m_cellSpacing;
     int cellHeight = m_defaultCellSize.height() + m_cellSpacing;
@@ -381,9 +382,9 @@ QPair<VTableView::CellPosition, VTableView::CellPosition> VTableView::visibleCel
     int firstVisibleCol = qMax(0, xOffset / cellWidth);
     
     int lastVisibleRow = qMin(m_model->rowCount() - 1, 
-                          (yOffset + viewport()->height()) / cellHeight + 1);
+                          (yOffset + m_scrollBox->get_body().height()) / cellHeight + 1);
     int lastVisibleCol = qMin(m_model->columnCount() - 1, 
-                          (xOffset + viewport()->width()) / cellWidth + 1);
+                          (xOffset + m_scrollBox->get_body().width()) / cellWidth + 1);
     
     return {{firstVisibleRow, firstVisibleCol}, {lastVisibleRow, lastVisibleCol}};
 }
@@ -459,14 +460,14 @@ QWidget* VTableView::createOrUpdateWidgetAt(int row, int column) {
     
     // If no reusable widget, create a new one
     if (!widget) {
-        widget = m_delegate->createWidgetForCell(index, viewport());
+        widget = m_delegate->createWidgetForCell(index, &m_scrollBox->get_body());
     }
     
     // Update with current data
     m_delegate->updateWidget(widget, index);
     
     // Store and show the widget
-    widget->setParent(viewport());
+    widget->setParent(&m_scrollBox->get_body());
     m_visibleWidgets[pos] = widget;
     
     // Position will be set in layoutVisibleWidgets
@@ -483,8 +484,8 @@ void VTableView::recycleWidget(QWidget* widget) {
 }
 
 VTableView::CellGeometry VTableView::cellGeometryAt(int row, int column) const {
-    int xOffset = horizontalScrollBar()->value();
-    int yOffset = verticalScrollBar()->value();
+    int xOffset = 0;
+    int yOffset = m_scrollBox->get_vertical_scroll_bar().get_position();
     
     int x = column * (m_defaultCellSize.width() + m_cellSpacing) + m_cellSpacing - xOffset;
     int y = row * (m_defaultCellSize.height() + m_cellSpacing) + m_cellSpacing - yOffset;
