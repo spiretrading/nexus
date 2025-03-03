@@ -417,7 +417,7 @@ EditableTableView::EditableTableView(
 }
 
 void EditableTableView::keyPressEvent(QKeyEvent* event) {
-  if(auto& current = get_current()->get()) {
+  if(auto& current = get_body().get_current()->get()) {
     if(m_is_processing_key) {
       return TableView::keyPressEvent(event);
     }
