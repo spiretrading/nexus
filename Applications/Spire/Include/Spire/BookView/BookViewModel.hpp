@@ -4,7 +4,6 @@
 #include "Nexus/Definitions/SecurityTechnicals.hpp"
 #include "Nexus/OrderExecutionService/OrderFields.hpp"
 #include "Spire/BookView/BookView.hpp"
-#include "Spire/Spire/ListIndexTracker.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
 
 namespace Spire {
@@ -72,6 +71,7 @@ namespace Spire {
         const;
 
     private:
+      struct PreviewOrderTracker;
       std::shared_ptr<ListModel<Nexus::BookQuote>> m_bids;
       std::shared_ptr<ListModel<Nexus::BookQuote>> m_asks;
       std::shared_ptr<ListModel<UserOrder>> m_bid_orders;
@@ -79,14 +79,7 @@ namespace Spire {
       std::shared_ptr<PreviewOrderModel> m_preview_order;
       std::shared_ptr<BboQuoteModel> m_bbo;
       std::shared_ptr<SecurityTechnicalsValueModel> m_technicals;
-      ListIndexTracker m_preview_order_index;
-      Nexus::Side m_preview_order_side;
-      boost::signals2::scoped_connection m_operation_connection;
-      boost::signals2::scoped_connection m_update_connection;
-
-      void on_operation(const ListModel<Nexus::BookQuote>::Operation& operation);
-      void on_preview_order_update(
-        const boost::optional<Nexus::OrderExecutionService::OrderFields>& order);
+      std::shared_ptr<PreviewOrderTracker> m_preview_order_tracker;
   };
 }
 
