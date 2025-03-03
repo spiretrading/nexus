@@ -111,7 +111,7 @@ public:
     
     QWidget* createWidgetForCell(const QModelIndex& index, QWidget* parent) const override {
         auto label = make_label(std::make_shared<LocalTextModel>());
-        
+        label->setFixedHeight(40);
         // Set font
         QFont font = label->font();
         font.setPointSize(10);
@@ -309,7 +309,7 @@ void VTableView::setDelegate(TableViewDelegate* delegate) {
 void VTableView::paintEvent(QPaintEvent* event) {
     if (!m_model || !m_delegate)
         return;
-    
+/*    
     QPainter painter(&m_scrollBox->get_body());
     painter.setRenderHint(QPainter::Antialiasing);
     
@@ -333,7 +333,7 @@ void VTableView::paintEvent(QPaintEvent* event) {
             }
         }
     }
-    
+    */
     // The widgets are already in place, let them draw themselves
 }
 
@@ -357,10 +357,10 @@ void VTableView::updateContentsSize() {
     // Calculate total content size
     int contentWidth = cols * (m_defaultCellSize.width() + m_cellSpacing) + m_cellSpacing;
     int contentHeight = rows * (m_defaultCellSize.height() + m_cellSpacing) + m_cellSpacing;
-    
+
     // Update scrollbars
-    m_scrollBox->get_body().setFixedWidth(qMax(0, contentWidth - m_scrollBox->get_body().width()));
-    m_scrollBox->get_body().setFixedHeight(qMax(0, contentHeight - m_scrollBox->get_body().height()));
+    m_scrollBox->get_body().setFixedSize(qMax(0, contentWidth),
+      qMax(0, contentHeight));
 }
 
 void VTableView::updateScrollBarRanges() {
@@ -382,9 +382,9 @@ QPair<VTableView::CellPosition, VTableView::CellPosition> VTableView::visibleCel
     int firstVisibleCol = qMax(0, xOffset / cellWidth);
     
     int lastVisibleRow = qMin(m_model->rowCount() - 1, 
-                          (yOffset + m_scrollBox->get_body().height()) / cellHeight + 1);
+                          (yOffset + m_scrollBox->height()) / cellHeight + 1);
     int lastVisibleCol = qMin(m_model->columnCount() - 1, 
-                          (xOffset + m_scrollBox->get_body().width()) / cellWidth + 1);
+                          (xOffset + m_scrollBox->width()) / cellWidth + 1);
     
     return {{firstVisibleRow, firstVisibleCol}, {lastVisibleRow, lastVisibleCol}};
 }
@@ -488,7 +488,7 @@ VTableView::CellGeometry VTableView::cellGeometryAt(int row, int column) const {
     int yOffset = m_scrollBox->get_vertical_scroll_bar().get_position();
     
     int x = column * (m_defaultCellSize.width() + m_cellSpacing) + m_cellSpacing - xOffset;
-    int y = row * (m_defaultCellSize.height() + m_cellSpacing) + m_cellSpacing - yOffset;
+    int y = row * (m_defaultCellSize.height() + m_cellSpacing) + m_cellSpacing;
     
     return {x, y, m_defaultCellSize.width(), m_defaultCellSize.height()};
 }
@@ -624,8 +624,8 @@ int main(int argc, char** argv) {
     QVBoxLayout* layout = new QVBoxLayout(centralWidget);
 
 //    auto tableView = make_qtable_view(centralWidget);
-    auto tableView = make_vtable_view(centralWidget);
-//    auto tableView = make_stable_view(centralWidget);
+//    auto tableView = make_vtable_view(centralWidget);
+    auto tableView = make_stable_view(centralWidget);
     
     // Add TableView to layout
     layout->addWidget(tableView);
