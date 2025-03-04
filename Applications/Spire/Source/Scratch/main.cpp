@@ -193,7 +193,7 @@ void VTableView::onScroll(int position) {
 void VTableView::updateContentsSize() {
   int rows = m_table->get_row_size();
   int cols = m_table->get_column_size();
-    
+
   // Calculate total content size
   int contentWidth =
     cols * (m_defaultCellSize.width() + m_cellSpacing) + m_cellSpacing;
@@ -324,54 +324,6 @@ void VTableView::cleanupInvisibleWidgets() {
       ++it;
     }
   }
-}
-
-class SimpleQTableModel : public QAbstractTableModel {
-public:
-    explicit SimpleQTableModel(QObject* parent = nullptr) : QAbstractTableModel(parent) {}
-    
-    int rowCount(const QModelIndex& parent = QModelIndex()) const override {
-        if (parent.isValid())
-            return 0;
-        
-        return 10000; // 10,000 rows
-    }
-    
-    int columnCount(const QModelIndex& parent = QModelIndex()) const override {
-        if (parent.isValid())
-            return 0;
-        
-        return 5; // 5 columns
-    }
-    
-    QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override {
-        if (!index.isValid())
-            return QVariant();
-        
-        if (role == Qt::DisplayRole) {
-            int i = index.row();
-            int j = index.column();
-            
-            return QVariant(5 * j + i);
-        }
-        
-        return QVariant();
-    }
-};
-
-auto make_qtable_view(QWidget* parent) {
-    QTableView* tableView = new QTableView(parent);
-    
-    // Create and set the model
-    SimpleQTableModel* model = new SimpleQTableModel(tableView);
-    tableView->setModel(model);
-    
-    // Configure the QTableView
-    tableView->horizontalHeader()->setVisible(false);
-    tableView->verticalHeader()->setVisible(false);
-    tableView->setGridStyle(Qt::SolidLine);
-    tableView->setShowGrid(true);
-    return tableView;
 }
 
 struct ItemState {
@@ -654,16 +606,12 @@ int main(int argc, char** argv) {
     GetDefaultDestinationDatabase(), GetDefaultMarketDatabase(),
     get_default_additional_tag_database()));
 
-//    auto tableView = make_qtable_view(centralWidget);
-    auto tableView = make_vtable_view(tasks_table, item_builder, centralWidget);
+  auto tableView = make_vtable_view(tasks_table, item_builder, centralWidget);
 //    auto tableView = make_stable_view(tasks_table, item_builder, centralWidget);
-    
-    // Add TableView to layout
-    layout->addWidget(tableView);
-    
-    // Set central widget and show
-    mainWindow.setCentralWidget(centralWidget);
-    mainWindow.show();
-    
+
+  // Add TableView to layout
+  layout->addWidget(tableView);
+  mainWindow.setCentralWidget(centralWidget);
+  mainWindow.show();
   application.exec();
 }
