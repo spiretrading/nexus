@@ -178,6 +178,8 @@ struct BookViewTester : QWidget {
         m_line_number(0) {
     auto left_layout = new QVBoxLayout();
     auto book_quote_group_box = new QGroupBox(tr("Market Quote"));
+    book_quote_group_box->setSizePolicy(QSizePolicy::Preferred,
+      QSizePolicy::Fixed);
     auto book_quote_layout = new QVBoxLayout(book_quote_group_box);
     auto book_quote_fields_layout = new QFormLayout();
     auto book_quote_market_box =
@@ -200,19 +202,14 @@ struct BookViewTester : QWidget {
         book_quote_quantity_box, book_quote_side_box));
     book_quote_layout->addWidget(submit_quote_button, 0, Qt::AlignRight);
     auto book_quote_period_layout = new QFormLayout();
-    auto quote_update_period =
-      std::make_shared<LocalOptionalIntegerModel>(1000);
-    quote_update_period->connect_update_signal([=] (auto& period) {
-      if(period) {
-        m_quote_timer.setInterval(*period);
-      }
-    });
-    auto quote_update_period_box = new IntegerBox(quote_update_period);
+    auto quote_update_period_box = new IntegerBox(m_update_period);
     book_quote_period_layout->addRow(tr("Update Period (ms):"),
       quote_update_period_box);
     book_quote_layout->addLayout(book_quote_period_layout);
     left_layout->addWidget(book_quote_group_box);
     auto order_status_group_box = new QGroupBox(tr("Order"));
+    order_status_group_box->setSizePolicy(QSizePolicy::Preferred,
+      QSizePolicy::Fixed);
     auto order_status_layout = new QVBoxLayout(order_status_group_box);
     auto order_status_fields_layout = new QFormLayout();
     auto order_status_destination_box = new TextBox();
@@ -250,6 +247,63 @@ struct BookViewTester : QWidget {
     order_status_layout->addWidget(m_submit_order_button, 0,
       Qt::AlignRight);
     left_layout->addWidget(order_status_group_box);
+    auto preview_order_group_box = new QGroupBox(tr("Preview Order"));
+    preview_order_group_box->setSizePolicy(QSizePolicy::Preferred,
+      QSizePolicy::Fixed);
+    auto preview_order_layout = new QVBoxLayout(preview_order_group_box);
+    auto preview_order_fields_layout = new QFormLayout();
+    auto preview_order_destination_box = new TextBox();
+    preview_order_fields_layout->addRow(tr("Destination:"),
+      preview_order_destination_box);
+    auto preview_order = m_model.get_model()->get_preview_order();
+    auto preview_order_price = std::make_shared<LocalOptionalMoneyModel>(
+      Money(200));
+    preview_order_price->connect_update_signal([=] (auto& price) {
+      auto order = preview_order->get();
+      if(order && price) {
+        order->m_price = *price;
+        preview_order->set(order);
+      }
+    });
+    auto preview_order_price_box = new MoneyBox(preview_order_price);
+    preview_order_fields_layout->addRow(tr("Price:"), preview_order_price_box);
+    auto preview_order_quantity = std::make_shared<LocalOptionalQuantityModel>(
+      Quantity(10));
+    preview_order_quantity->connect_update_signal([=] (auto& quantity) {
+      auto order = preview_order->get();
+      if(order && quantity) {
+        order->m_quantity = *quantity;
+        preview_order->set(order);
+      }
+    });
+    auto preview_order_quantity_box = new QuantityBox(preview_order_quantity);
+    preview_order_fields_layout->addRow(tr("Quantity:"),
+      preview_order_quantity_box);
+    auto preview_order_side_box = make_side_box();
+    preview_order_fields_layout->addRow(tr("Side:"), preview_order_side_box);
+    preview_order_layout->addLayout(preview_order_fields_layout);
+    auto buttons_layout = new QHBoxLayout();
+    auto create_preview_order_button = make_label_button(tr("Create"));
+    auto submit_preview_order_button = make_label_button(tr("Submit"));
+    submit_preview_order_button->setEnabled(false);
+    create_preview_order_button->connect_click_signal([=] {
+      create_preview_order_button->setEnabled(false);
+      submit_preview_order_button->setEnabled(true);
+      m_model.get_model()->get_preview_order()->set(OrderFields::MakeLimitOrder(
+        Security(), preview_order_side_box->get_current()->get(),
+        preview_order_destination_box->get_current()->get().toStdString(),
+        *preview_order_quantity_box->get_current()->get(),
+        *preview_order_price_box->get_current()->get()));
+    });
+    submit_preview_order_button->connect_click_signal([=] {
+      create_preview_order_button->setEnabled(true);
+      submit_preview_order_button->setEnabled(false);
+      m_model.get_model()->get_preview_order()->set(none);
+    });
+    buttons_layout->addWidget(create_preview_order_button);
+    buttons_layout->addWidget(submit_preview_order_button);
+    preview_order_layout->addLayout(buttons_layout);
+    left_layout->addWidget(preview_order_group_box);
     auto key_bindings_button = make_label_button(tr("Key Bindings"));
     key_bindings_button->connect_click_signal([=] {
       m_key_bindings_window->show();
@@ -265,6 +319,11 @@ struct BookViewTester : QWidget {
     setFixedWidth(scale_width(550));
     connect(&m_quote_timer, &QTimer::timeout,
       std::bind_front(&BookViewTester::on_quote_timeout, this));
+    m_update_period->connect_update_signal([=] (auto& period) {
+      if(period) {
+        m_quote_timer.setInterval(*period);
+      }
+    });
     m_technicals_model.connect_high_slot([=] (Nexus::Money value) {
       auto t = technicals->get();
       t.m_high = value;
@@ -391,6 +450,7 @@ struct BookViewTester : QWidget {
 std::shared_ptr<BookViewModel> model_builder(
     std::shared_ptr<BookViewModel> model, BookViewTester* tester,
     const Security&) {
+  model->get_preview_order()->set(none);
   clear(*model->get_bids());
   clear(*model->get_asks());
   clear(*model->get_bid_orders());

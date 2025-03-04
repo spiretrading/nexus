@@ -45,6 +45,7 @@ namespace {
   }
 
   int find_book_quote(const ListModel<BookQuote>& quotes,
+      const optional<OrderFields>& preview_order,
       const std::string& mpid, const Money& price) {
     auto i = std::find_if(quotes.begin(), quotes.end(),
       [&] (const BookQuote& quote) {
@@ -88,16 +89,18 @@ namespace {
       order.m_status);
   }
 
-  void update_order(const OrderFields& order_fields, OrderStatus status,
+  void update_order(const OrderFields& order_fields,
+      const optional<OrderFields>& preview_order, OrderStatus status,
       ListModel<BookQuote>& quotes,
       ListModel<BookViewModel::UserOrder>& orders) {
     auto order_index = find_order(orders, order_fields.m_destination,
-      order_fields.m_price, order_fields.m_quantity);
+      order_fields.m_price);
     if(order_index < 0) {
       return;
     }
     auto mpid = "@" + order_fields.m_destination;
-    auto quote_index = find_book_quote(quotes, mpid, order_fields.m_price);
+    auto quote_index =
+      find_book_quote(quotes, preview_order, mpid, order_fields.m_price);
     if(quote_index < 0) {
       return;
     }
@@ -108,24 +111,29 @@ namespace {
     book_quote.m_quote.m_size = remaining_size;
     quotes.set(quote_index, book_quote);
     auto order = orders.get(order_index);
+    order.m_size -= order_fields.m_quantity;
     order.m_status = status;
     orders.set(order_index, order);
     order_index = find_order(orders, order_fields.m_destination,
-      order_fields.m_price, order_fields.m_quantity);
+      order_fields.m_price);
     if(order_index < 0) {
       return;
     }
     order.m_status = OrderStatus::NONE;
     orders.set(order_index, order);
-    orders.remove(order_index);
+    if(order.m_size <= 0) {
+      orders.remove(order_index);
+    }
   }
 
   void execute_cancel(const OrderFields& order_to_cancel,
+      const optional<OrderFields>& preview_order, 
       ListModel<BookQuote>& quotes, ListModel<BookViewModel::UserOrder>& orders) {
     auto random_generator =
       QRandomGenerator(to_time_t_milliseconds(microsec_clock::universal_time()));
     QTimer::singleShot(random_generator.bounded(5000), [=, &quotes, &orders] {
-      update_order(order_to_cancel, OrderStatus::CANCELED, quotes, orders);
+      update_order(order_to_cancel, preview_order, OrderStatus::CANCELED,
+        quotes, orders);
     });
   }
 
@@ -157,7 +165,8 @@ const std::shared_ptr<BookViewModel>& DemoBookViewModel::get_model() const {
 void DemoBookViewModel::update_order_status(const OrderInfo& order) {
   auto quotes = get_quotes(*m_model, order.m_order_fields.m_side);
   auto orders = get_orders(*m_model, order.m_order_fields.m_side);
-  update_order(order.m_order_fields, order.m_status, *quotes, *orders);
+  update_order(order.m_order_fields, m_model->get_preview_order()->get(),
+    order.m_status, *quotes, *orders);
   if(order.m_status == OrderStatus::FILLED ||
       order.m_status == OrderStatus::CANCELED ||
       order.m_status == OrderStatus::REJECTED) {
@@ -173,7 +182,8 @@ void DemoBookViewModel::update_order_status(const OrderInfo& order) {
 
 void DemoBookViewModel::submit_book_quote(const BookQuote& quote) {
   auto quotes = get_quotes(*m_model, quote.m_quote.m_side);
-  auto i = find_book_quote(*quotes, quote.m_mpid, quote.m_quote.m_price);
+  auto i = find_book_quote(*quotes, m_model->get_preview_order()->get(),
+    quote.m_mpid, quote.m_quote.m_price);
   if(i >= 0) {
     if(quote.m_quote.m_size == 0) {
       quotes->remove(i);
@@ -192,6 +202,7 @@ void DemoBookViewModel::submit_order(const OrderInfo& order) {
     order.m_order_fields.m_destination, order.m_order_fields.m_price);
   if(order_index >= 0) {
     auto quote_index = find_book_quote(*quotes,
+      m_model->get_preview_order()->get(),
       "@" + order.m_order_fields.m_destination, order.m_order_fields.m_price);
     if(quote_index < 0) {
       return;
@@ -205,7 +216,8 @@ void DemoBookViewModel::submit_order(const OrderInfo& order) {
       orders->push(make_user_order(order));
       m_orders.push_back(order);
     } else {
-      update_order(order.m_order_fields, order.m_status, *quotes, *orders);
+      update_order(order.m_order_fields, m_model->get_preview_order()->get(),
+        order.m_status, *quotes, *orders);
     }
   } else if(order.m_status == OrderStatus::NEW) {
     auto quote = BookQuote("@" + order.m_order_fields.m_destination, false, "",
@@ -320,11 +332,11 @@ void DemoBookViewModel::cancel_orders(
       operation == CancelKeyBindingsModel::Operation::OLDEST) {
     for(auto& order_to_cancel : orders_to_cancel) {
       if(order_to_cancel.m_side == Side::BID) {
-        execute_cancel(order_to_cancel, *m_model->get_bids(),
-          *m_model->get_bid_orders());
+        execute_cancel(order_to_cancel, m_model->get_preview_order()->get(),
+          *m_model->get_bids(), *m_model->get_bid_orders());
       } else {
-        execute_cancel(order_to_cancel, *m_model->get_asks(),
-          *m_model->get_ask_orders());
+        execute_cancel(order_to_cancel, m_model->get_preview_order()->get(),
+          *m_model->get_asks(), *m_model->get_ask_orders());
       }
     }
   } else {
@@ -341,7 +353,8 @@ void DemoBookViewModel::cancel_orders(
         m_model->get_asks());
     }();
     for(auto& order_to_cancel : orders_to_cancel) {
-      execute_cancel(order_to_cancel, *quotes, *orders);
+      execute_cancel(order_to_cancel, m_model->get_preview_order()->get(),
+        *quotes, *orders);
     }
   }
 }
