@@ -2,7 +2,6 @@
 #include "Spire/Spire/ArrayListModel.hpp"
 
 using namespace boost;
-using namespace boost::signals2;
 using namespace Nexus;
 using namespace Nexus::OrderExecutionService;
 using namespace Spire;

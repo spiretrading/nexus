@@ -1009,7 +1009,6 @@ namespace {
         m_update_connection(m_preview_order->connect_update_signal(
           std::bind_front(&BookViewQuoteListModel::on_update, this))) {}
 
-
     int get_size() const override {
       if(m_preview_quote) {
         return m_book_quotes->get_size() + 1;
