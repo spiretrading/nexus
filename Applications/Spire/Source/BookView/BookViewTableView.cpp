@@ -40,6 +40,7 @@ namespace {
   using OrderHighlightArray =
     std::array<HighlightColor, ORDER_HIGHLIGHT_STATE_COUNT>;
   using UserOrder = BookViewModel::UserOrder;
+  using PreviewOrderModel = BookViewModel::PreviewOrderModel;
   using ShowGrid = StateSelector<void, struct ShowGridSeletorTag>;
   using Level = StateSelector<int, struct LevelSelectorTag>;
   using MarketQuote = StateSelector<std::string, struct MarketQuoteTag>;
@@ -974,6 +975,108 @@ namespace {
     }
   };
 
+  struct BookViewQuoteListModel : ListModel<BookQuote> {
+    std::shared_ptr<ListModel<BookQuote>> m_book_quotes;
+    std::shared_ptr<PreviewOrderModel> m_preview_order;
+    Side m_side;
+    optional<BookQuote> m_preview_quote;
+    ListModelTransactionLog<BookQuote> m_transaction;
+    scoped_connection m_operation_connection;
+    scoped_connection m_update_connection;
+
+    BookViewQuoteListModel(std::shared_ptr<ListModel<BookQuote>> book_quotes,
+      std::shared_ptr<PreviewOrderModel> preview_order, Side side)
+      : m_book_quotes(std::move(book_quotes)),
+        m_preview_order(std::move(preview_order)),
+        m_side(side),
+        m_operation_connection(m_book_quotes->connect_operation_signal(
+          std::bind_front(&BookViewQuoteListModel::on_operation, this))),
+        m_update_connection(m_preview_order->connect_update_signal(
+          std::bind_front(&BookViewQuoteListModel::on_update, this))) {}
+
+
+    int get_size() const override {
+      if(m_preview_quote) {
+        return m_book_quotes->get_size() + 1;
+      }
+      return m_book_quotes->get_size();
+    }
+
+    const BookQuote& get(int index) const override {
+      if(m_preview_quote && index == m_book_quotes->get_size()) {
+        return *m_preview_quote;
+      }
+      return m_book_quotes->get(index);
+    }
+
+    QValidator::State set(int index, const BookQuote& value) override {
+      if(m_preview_quote && index == m_book_quotes->get_size()) {
+        return QValidator::Invalid;
+      }
+      return m_book_quotes->set(index, value);
+    }
+
+    QValidator::State insert(const BookQuote& value, int index) override {
+      return m_book_quotes->insert(value, index);
+    }
+
+    QValidator::State move(int source, int destination) override {
+      if(m_preview_quote && (source == m_book_quotes->get_size() ||
+          destination == m_book_quotes->get_size())) {
+        return QValidator::Invalid;
+      }
+      return m_book_quotes->move(source, destination);
+    }
+
+    QValidator::State remove(int index) override {
+      if(m_preview_quote && index == m_book_quotes->get_size()) {
+        return QValidator::Invalid;
+      }
+      return m_book_quotes->remove(index);
+    }
+
+    connection connect_operation_signal(
+        const OperationSignal::slot_type& slot) const override {
+      return m_transaction.connect_operation_signal(slot);
+    }
+
+    void transact(const std::function<void()>& transaction) override {
+      m_transaction.transact(transaction);
+    }
+
+    void on_operation(const ListModel<BookQuote>::Operation& operation) {
+      visit(operation,
+        [&] (const auto& operation) {
+          m_transaction.push(operation);
+        });
+    }
+
+    void on_update(const optional<OrderFields>& order) {
+      if(order) {
+        if(order->m_side != m_side) {
+          return;
+        }
+        auto last_preview_quote = m_preview_quote;
+        m_preview_quote = BookQuote("@@" + order->m_destination, false, {},
+          {order->m_price, order->m_quantity, order->m_side},
+          second_clock::local_time());
+        if(last_preview_quote) {
+          m_transaction.push(UpdateOperation(m_book_quotes->get_size(),
+            *last_preview_quote, *m_preview_quote));
+        } else {
+          m_transaction.push(AddOperation(m_book_quotes->get_size()));
+        }
+      } else if(m_preview_quote) {
+        m_transaction.transact([&] {
+          auto index = m_book_quotes->get_size();
+          m_transaction.push(PreRemoveOperation(index));
+          m_preview_quote = none;
+          m_transaction.push(RemoveOperation(index));
+        });
+      }
+    }
+  };
+
   struct OrderFilteredListModel : FilteredListModel<BookQuote> {
     using FilterSignal = Signal<void ()>;
     mutable FilterSignal m_filter_signal;
@@ -1086,7 +1189,9 @@ TableView* Spire::make_book_view_table_view(
   auto column_orders = std::vector<SortedTableModel::ColumnOrder>{
     {1, ordering}, {2, ordering}};
   auto order_filtered_list = std::make_shared<OrderFilteredListModel>(
-    book_quotes, highlight_property);
+    std::make_shared<BookViewQuoteListModel>(
+      std::move(book_quotes), model->get_preview_order(), side),
+    highlight_property);
   auto table = std::make_shared<SortedTableModel>(
     make_book_view_table_model(order_filtered_list), column_orders);
   auto row_tracker = std::make_shared<RowTracker>(table);

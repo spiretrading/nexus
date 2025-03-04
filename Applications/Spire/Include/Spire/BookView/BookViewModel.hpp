@@ -71,7 +71,6 @@ namespace Spire {
         const;
 
     private:
-      struct PreviewOrderTracker;
       std::shared_ptr<ListModel<Nexus::BookQuote>> m_bids;
       std::shared_ptr<ListModel<Nexus::BookQuote>> m_asks;
       std::shared_ptr<ListModel<UserOrder>> m_bid_orders;
@@ -79,7 +78,6 @@ namespace Spire {
       std::shared_ptr<PreviewOrderModel> m_preview_order;
       std::shared_ptr<BboQuoteModel> m_bbo;
       std::shared_ptr<SecurityTechnicalsValueModel> m_technicals;
-      std::shared_ptr<PreviewOrderTracker> m_preview_order_tracker;
   };
 }
 
