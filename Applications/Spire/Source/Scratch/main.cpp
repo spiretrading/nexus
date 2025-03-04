@@ -411,7 +411,7 @@ struct VTableViewItemBuilder {
   }
 };
 
-auto make_vtable_view(QWidget* parent) {
+auto make_table_model() {
   auto table = std::make_shared<ArrayTableModel>();
   for(auto i = 0; i != 10000; ++i) {
     auto row = std::vector<std::any>();
@@ -420,33 +420,24 @@ auto make_vtable_view(QWidget* parent) {
     }
     table->push(row);
   }
-  VTableView* tableView = new VTableView(table,
+  return table;
+}
+
+auto make_vtable_view(QWidget* parent) {
+  VTableView* tableView = new VTableView(make_table_model(),
     RecycledTableViewItemBuilder(VTableViewItemBuilder()), parent);
   return tableView;
 }
 
 auto make_stable_view(QWidget* parent) {
-  auto table = std::make_shared<ArrayTableModel>();
-  for(auto i = 0; i != 10000; ++i) {
-    auto row = std::vector<std::any>();
-    for(auto j = 0; j != 5; ++j) {
-      row.push_back(5 * i + j);
-    }
-    table->push(row);
-  }
-  auto builder = TableViewBuilder(table);
+  auto builder = TableViewBuilder(make_table_model());
   builder.add_header_item("1");
   builder.add_header_item("2");
   builder.add_header_item("3");
   builder.add_header_item("4");
   builder.add_header_item("5");
   builder.set_item_builder(
-    [] (const std::shared_ptr<TableModel>& table, int row, int column) {
-      auto label = make_label(make_to_text_model(
-        make_table_value_model<int>(table, row, column)));
-      label->setFixedHeight(40);
-      return label;
-    });
+    RecycledTableViewItemBuilder(VTableViewItemBuilder()));
   auto view = builder.make();
   view->setParent(parent);
   return view;
