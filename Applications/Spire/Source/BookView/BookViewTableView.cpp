@@ -380,6 +380,21 @@ namespace {
         [&] (const TableModel::RemoveOperation& operation) {
           m_levels.erase(m_levels.begin() + operation.m_index);
           update_levels(operation.m_index);
+        },
+        [&] (const TableModel::MoveOperation& operation) {
+          auto [start, end] =
+            std::minmax(operation.m_source, operation.m_destination);
+          for(auto i = start; i <= end; ++i) {
+            m_levels[i] = estimate_level(i);
+            highlight(i);
+          }
+          update_levels(end + 1);
+        },
+        [&] (const TableModel::UpdateOperation& operation) {
+          if(operation.m_column == static_cast<int>(BookViewColumns::PRICE) ||
+              operation.m_column == static_cast<int>(BookViewColumns::SIZE)) {
+            update_levels(operation.m_row);
+          }
         });
     }
 
