@@ -14,64 +14,45 @@
 #include <QResizeEvent>
 #include <QScrollBar>
 #include <QPair>
+#include "Nexus/Definitions/DefaultCountryDatabase.hpp"
+#include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
+#include "Nexus/Definitions/DefaultMarketDatabase.hpp"
+#include "Spire/KeyBindings/AdditionalTagsBox.hpp"
+#include "Spire/KeyBindings/HotkeyOverride.hpp"
+#include "Spire/KeyBindings/KeyBindingsProfile.hpp"
+#include "Spire/KeyBindings/KeyBindingsWindow.hpp"
+#include "Spire/KeyBindings/OrderTaskArgumentsTableModel.hpp"
+#include "Spire/KeyBindings/QuantitySettingBox.hpp"
 #include "Spire/Spire/ArrayTableModel.hpp"
+#include "Spire/Spire/LocalQueryModel.hpp"
+#include "Spire/Spire/ProxyValueModel.hpp"
 #include "Spire/Spire/Resources.hpp"
-#include "Spire/Ui/Layouts.hpp"
-#include "Spire/Ui/RecycledTableViewItemBuilder.hpp"
-#include "Spire/Ui/ScrollBox.hpp"
-#include "Spire/Ui/ScrollBar.hpp"
-#include "Spire/Ui/TextBox.hpp"
-#include "Spire/Ui/TableView.hpp"
-#include "Spire/Spire/ToTextModel.hpp"
 #include "Spire/Spire/TableValueModel.hpp"
+#include "Spire/Spire/ToTextModel.hpp"
+#include "Spire/Spire/ValidatedValueModel.hpp"
+#include "Spire/Ui/AnyInputBox.hpp"
+#include "Spire/Ui/DecimalBox.hpp"
+#include "Spire/Ui/DestinationBox.hpp"
+#include "Spire/Ui/EditableBox.hpp"
+#include "Spire/Ui/EditableTableView.hpp"
+#include "Spire/Ui/EmptySelectionModel.hpp"
+#include "Spire/Ui/EmptyTableFilter.hpp"
+#include "Spire/Ui/KeyInputBox.hpp"
+#include "Spire/Ui/Layouts.hpp"
+#include "Spire/Ui/OrderTypeBox.hpp"
+#include "Spire/Ui/RecycledTableViewItemBuilder.hpp"
+#include "Spire/Ui/RegionBox.hpp"
+#include "Spire/Ui/SideBox.hpp"
+#include "Spire/Ui/ScrollBar.hpp"
+#include "Spire/Ui/ScrollBox.hpp"
+#include "Spire/Ui/SingleSelectionModel.hpp"
+#include "Spire/Ui/TableItem.hpp"
+#include "Spire/Ui/TableView.hpp"
+#include "Spire/Ui/TextBox.hpp"
+#include "Spire/Ui/TimeInForceBox.hpp"
 
+using namespace Nexus;
 using namespace Spire;
-
-/*
-class LabelTableViewDelegate : public TableViewDelegate {
-    
-public:
-    explicit LabelTableViewDelegate(QObject* parent = nullptr) : TableViewDelegate(parent) {}
-    
-    QWidget* createWidgetForCell(const QModelIndex& index, QWidget* parent) const override {
-        auto label = make_label(std::make_shared<LocalTextModel>());
-        label->setFixedHeight(40);
-        // Set font
-        QFont font = label->font();
-        font.setPointSize(10);
-        label->setFont(font);
-        
-        // Update with data
-        updateWidget(label, index);
-        
-        return label;
-    }
-    
-    void updateWidget(QWidget* widget, const QModelIndex& index) const override {
-        auto label = static_cast<TextBox*>(widget);
-        if (!label || !index.isValid())
-            return;
-        
-        // Get the data from the model and set it to the label
-        QVariant data = index.data(Qt::DisplayRole);
-        label->get_current()->set(data.toString());
-    }
-    
-    bool canReuseWidget(QWidget* widget, const QModelIndex&) const override {
-        // We can reuse any QLabel
-        return static_cast<TextBox*>(widget) != nullptr;
-    }
-    
-    void prepareForReuse(QWidget* widget, const QModelIndex&) const override {
-        auto label = static_cast<TextBox*>(widget);
-        if (!label)
-            return;
-        
-        // Clear the text
-        label->get_current()->set("");
-    }
-};
-*/
 
 class VTableView : public QWidget {
   public:
@@ -393,11 +374,188 @@ auto make_qtable_view(QWidget* parent) {
     return tableView;
 }
 
+struct ItemState {
+  virtual ~ItemState() = default;
+  std::shared_ptr<void> m_proxy;
+
+  ItemState(std::shared_ptr<void> proxy)
+    : m_proxy(std::move(proxy)) {}
+};
+
+struct DestinationState : ItemState {
+  std::shared_ptr<ProxyValueModel<Region>> m_region;
+
+  DestinationState(std::shared_ptr<void> proxy,
+    std::shared_ptr<ProxyValueModel<Region>> region)
+    : ItemState(std::move(proxy)),
+      m_region(std::move(region)) {}
+};
+
+struct AdditionalTagsState : ItemState {
+  std::shared_ptr<ProxyValueModel<Destination>> m_destination;
+  std::shared_ptr<ProxyValueModel<Region>> m_region;
+
+  AdditionalTagsState(std::shared_ptr<void> proxy,
+    std::shared_ptr<ProxyValueModel<Destination>> destination,
+    std::shared_ptr<ProxyValueModel<Region>> region)
+    : ItemState(std::move(proxy)),
+      m_destination(std::move(destination)),
+      m_region(std::move(region)) {}
+};
+
+auto key_input_box_validator(const QKeySequence& sequence) {
+  if(sequence.count() == 0) {
+    return QValidator::Intermediate;
+  } else if(sequence.count() > 1) {
+    return QValidator::Invalid;
+  }
+  auto key = sequence[0];
+  auto modifier = key & Qt::KeyboardModifierMask;
+  auto new_key = key - modifier;
+  if(((modifier == Qt::NoModifier || modifier & Qt::ControlModifier ||
+        modifier & Qt::ShiftModifier || modifier & Qt::AltModifier) &&
+        new_key >= Qt::Key_F1 && new_key <= Qt::Key_F12) ||
+      ((modifier & Qt::ControlModifier || modifier & Qt::ShiftModifier ||
+        modifier & Qt::AltModifier) && new_key >= Qt::Key_0 &&
+        new_key <= Qt::Key_9)) {
+    return QValidator::Acceptable;
+  }
+  return QValidator::Invalid;
+}
+
+struct TaskKeysTableViewItemBuilder {
+  std::shared_ptr<RegionQueryModel> m_regions;
+  DestinationDatabase m_destinations;
+  MarketDatabase m_markets;
+  AdditionalTagDatabase m_additional_tags;
+  std::map<QWidget*, std::shared_ptr<ItemState>> m_item_states;
+
+  QWidget* mount(
+      const std::shared_ptr<TableModel>& table, int row, int column) {
+    auto make_proxy = [&] <typename T> () {
+      return make_proxy_value_model(
+        make_table_value_model<T>(table, row, column));
+    };
+    auto column_id = static_cast<OrderTaskColumns>(column);
+    auto [input_box, proxy] =
+      [&] () -> std::tuple<QWidget*, std::shared_ptr<ItemState>> {
+        if(column_id == OrderTaskColumns::NAME) {
+          auto current = make_proxy.operator ()<QString>();
+          return {new TextBox(current), std::make_shared<ItemState>(current)};
+        } else if(column_id == OrderTaskColumns::REGION) {
+          auto current = make_proxy.operator ()<Region>();
+          auto region_box = new RegionBox(m_regions, current);
+          region_box->setFixedHeight(scale_height(25));
+          region_box->setSizePolicy(
+            QSizePolicy::Preferred, QSizePolicy::Fixed);
+          return {region_box,
+            std::make_shared<ItemState>(current)};
+        } else if(column_id == OrderTaskColumns::DESTINATION) {
+          auto region = make_proxy_value_model(
+            make_table_value_model<Region>(table, row,
+              static_cast<int>(OrderTaskColumns::REGION)));
+          auto destinations = make_region_filtered_destination_list(
+            m_destinations, m_markets, region);
+          auto current = make_proxy.operator ()<Destination>();
+          return {make_destination_box(current, std::move(destinations)),
+            std::make_shared<DestinationState>(current, region)};
+        } else if(column_id == OrderTaskColumns::ORDER_TYPE) {
+          auto current = make_proxy.operator ()<OrderType>();
+          return {make_order_type_box(current),
+            std::make_shared<ItemState>(current)};
+        } else if(column_id == OrderTaskColumns::SIDE) {
+          auto current = make_proxy.operator ()<Side>();
+          return {make_side_box(current), std::make_shared<ItemState>(current)};
+        } else if(column_id == OrderTaskColumns::QUANTITY) {
+          auto current = make_proxy.operator ()<QuantitySetting>();
+          return {make_quantity_setting_box(current),
+            std::make_shared<ItemState>(current)};
+        } else if(column_id == OrderTaskColumns::TIME_IN_FORCE) {
+          auto current = make_proxy.operator ()<TimeInForce>();
+          return {make_time_in_force_box(current),
+            std::make_shared<ItemState>(current)};
+        } else if(column_id == OrderTaskColumns::TAGS) {
+          auto destination = make_proxy_value_model(
+            make_table_value_model<Destination>(
+              table, row, static_cast<int>(OrderTaskColumns::DESTINATION)));
+          auto region = make_proxy_value_model(make_table_value_model<Region>(
+            table, row, static_cast<int>(OrderTaskColumns::REGION)));
+          auto current = make_proxy.operator ()<std::vector<AdditionalTag>>();
+          return {new AdditionalTagsBox(
+              current, m_additional_tags, destination, region),
+            std::make_shared<AdditionalTagsState>(
+              current, destination, region)};
+        } else {
+          auto proxy = make_proxy.operator ()<QKeySequence>();
+          auto current =
+            make_validated_value_model(&key_input_box_validator, proxy);
+          return {new KeyInputBox(current), std::make_shared<ItemState>(proxy)};
+        }
+      }();
+    m_item_states[input_box] = std::move(proxy);
+    return input_box;
+  }
+
+  void reset(QWidget& widget,
+      const std::shared_ptr<TableModel>& table, int row, int column) {
+    auto update_proxy = [&] <typename T> () {
+      auto& state = *m_item_states[&widget];
+      std::static_pointer_cast<ProxyValueModel<T>>(state.m_proxy)->set_source(
+        make_table_value_model<T>(table, row, column));
+    };
+    auto column_id = static_cast<OrderTaskColumns>(column);
+    if(column_id == OrderTaskColumns::NAME) {
+      update_proxy.operator ()<QString>();
+    } else if(column_id == OrderTaskColumns::REGION) {
+      update_proxy.operator ()<Region>();
+    } else if(column_id == OrderTaskColumns::DESTINATION) {
+      auto& state = static_cast<DestinationState&>(*m_item_states[&widget]);
+      auto proxy =
+        std::static_pointer_cast<ProxyValueModel<Destination>>(state.m_proxy);
+      auto temporary_model =
+        std::make_shared<LocalDestinationModel>(proxy->get());
+      proxy->set_source(temporary_model);
+      state.m_region->set_source(make_table_value_model<Region>(
+        table, row, static_cast<int>(OrderTaskColumns::REGION)));
+      update_proxy.operator ()<Destination>();
+    } else if(column_id == OrderTaskColumns::ORDER_TYPE) {
+      update_proxy.operator ()<OrderType>();
+    } else if(column_id == OrderTaskColumns::SIDE) {
+      update_proxy.operator ()<Side>();
+    } else if(column_id == OrderTaskColumns::QUANTITY) {
+      update_proxy.operator ()<QuantitySetting>();
+    } else if(column_id == OrderTaskColumns::TIME_IN_FORCE) {
+      update_proxy.operator ()<TimeInForce>();
+    } else if(column_id == OrderTaskColumns::TAGS) {
+      auto& state =
+        static_cast<AdditionalTagsState&>(*m_item_states[&widget]);
+      auto proxy = std::static_pointer_cast<
+        ProxyValueModel<std::vector<AdditionalTag>>>(state.m_proxy);
+      auto temporary_model =
+        std::make_shared<LocalValueModel<std::vector<AdditionalTag>>>(
+          proxy->get());
+      proxy->set_source(temporary_model);
+      state.m_destination->set_source(make_table_value_model<Destination>(
+        table, row, static_cast<int>(OrderTaskColumns::DESTINATION)));
+      state.m_region->set_source(make_table_value_model<Region>(
+        table, row, static_cast<int>(OrderTaskColumns::REGION)));
+      update_proxy.operator ()<std::vector<AdditionalTag>>();
+    } else if(column_id == OrderTaskColumns::KEY) {
+      update_proxy.operator ()<QKeySequence>();
+    }
+  }
+
+  void unmount(QWidget* widget) {
+    delete widget;
+  }
+};
+
 struct VTableViewItemBuilder {
   QWidget* mount(
       const std::shared_ptr<TableModel>& table, int row, int column) {
-    auto label = make_label(make_to_text_model(
-      make_table_value_model<int>(table, row, column)));
+    auto text = make_proxy_value_model(
+      make_to_text_model(make_table_value_model<int>(table, row, column)));
+    auto label = make_label(text);
     label->setFixedHeight(40);
     return label;
   }
@@ -408,6 +566,11 @@ struct VTableViewItemBuilder {
 
   void reset(QWidget& widget, const std::shared_ptr<TableModel>& table, int row,
       int column) {
+    auto& label = static_cast<TextBox&>(widget);
+    auto proxy =
+      std::static_pointer_cast<ProxyValueModel<QString>>(label.get_current());
+    proxy->set_source(
+      make_to_text_model(make_table_value_model<int>(table, row, column)));
   }
 };
 
@@ -423,24 +586,46 @@ auto make_table_model() {
   return table;
 }
 
-auto make_vtable_view(QWidget* parent) {
-  VTableView* tableView = new VTableView(make_table_model(),
-    RecycledTableViewItemBuilder(VTableViewItemBuilder()), parent);
-  return tableView;
+template<typename T>
+auto make_vtable_view(
+    std::shared_ptr<TableModel> table, T&& item_builder, QWidget* parent) {
+  return new VTableView(
+    std::move(table), std::forward<T>(item_builder), parent);
 }
 
-auto make_stable_view(QWidget* parent) {
-  auto builder = TableViewBuilder(make_table_model());
-  builder.add_header_item("1");
-  builder.add_header_item("2");
-  builder.add_header_item("3");
-  builder.add_header_item("4");
-  builder.add_header_item("5");
-  builder.set_item_builder(
-    RecycledTableViewItemBuilder(VTableViewItemBuilder()));
-  auto view = builder.make();
-  view->setParent(parent);
-  return view;
+template<typename T>
+auto make_stable_view(
+    std::shared_ptr<TableModel> table, T&& item_builder, QWidget* parent) {
+  auto builder = TableViewBuilder(std::move(table), parent);
+  builder.add_header_item("Name");
+  builder.add_header_item("Region");
+  builder.add_header_item("Destination");
+  builder.add_header_item("Order Type");
+  builder.add_header_item("Side");
+  builder.add_header_item("Quantity");
+  builder.add_header_item("Time in Force");
+  builder.add_header_item("Tags");
+  builder.add_header_item("Key");
+  builder.set_item_builder(std::forward<T>(item_builder));
+  return builder.make();
+}
+
+auto populate_region_query_model(const CountryDatabase& countries,
+    const MarketDatabase& markets) {
+  auto regions = std::make_shared<LocalQueryModel<Region>>();
+  for(auto& country : countries.GetEntries()) {
+    auto region = Region(country.m_code);
+    region.SetName(country.m_name);
+    regions->add(to_text(country.m_code).toLower(), region);
+    regions->add(QString::fromStdString(region.GetName()).toLower(), region);
+  }
+  for(auto& market : markets.GetEntries()) {
+    auto region = Region(market);
+    region.SetName(market.m_description);
+    regions->add(to_text(MarketToken(market.m_code)).toLower(), region);
+    regions->add(QString::fromStdString(region.GetName()).toLower(), region);
+  }
+  return regions;
 }
 
 int main(int argc, char** argv) {
@@ -448,18 +633,30 @@ int main(int argc, char** argv) {
   application.setOrganizationName(QObject::tr("Spire Trading Inc"));
   application.setApplicationName(QObject::tr("Scratch"));
   initialize_resources();
-
-    QMainWindow mainWindow;
-    mainWindow.setWindowTitle("QTableView Demo");
-    mainWindow.resize(800, 600);
-    
-    // Create central widget with layout
-    QWidget* centralWidget = new QWidget(&mainWindow);
-    QVBoxLayout* layout = new QVBoxLayout(centralWidget);
+  QMainWindow mainWindow;
+  mainWindow.setWindowTitle("QTableView Demo");
+  mainWindow.resize(800, 600);
+  QWidget* centralWidget = new QWidget(&mainWindow);
+  QVBoxLayout* layout = new QVBoxLayout(centralWidget);
+  auto key_bindings =
+    std::make_shared<KeyBindingsModel>(GetDefaultMarketDatabase());
+  auto task_nodes = make_default_order_task_nodes();
+  auto task_arguments = std::make_shared<ArrayListModel<OrderTaskArguments>>();
+  for(auto& node : task_nodes) {
+    task_arguments->push(to_order_task_arguments(
+      *node, GetDefaultMarketDatabase(), GetDefaultDestinationDatabase()));
+  }
+  auto tasks_table =
+    make_order_task_arguments_table_model(std::move(task_arguments));
+  auto item_builder = RecycledTableViewItemBuilder(TaskKeysTableViewItemBuilder(
+    populate_region_query_model(
+      GetDefaultCountryDatabase(), GetDefaultMarketDatabase()),
+    GetDefaultDestinationDatabase(), GetDefaultMarketDatabase(),
+    get_default_additional_tag_database()));
 
 //    auto tableView = make_qtable_view(centralWidget);
-    auto tableView = make_vtable_view(centralWidget);
-//    auto tableView = make_stable_view(centralWidget);
+    auto tableView = make_vtable_view(tasks_table, item_builder, centralWidget);
+//    auto tableView = make_stable_view(tasks_table, item_builder, centralWidget);
     
     // Add TableView to layout
     layout->addWidget(tableView);
