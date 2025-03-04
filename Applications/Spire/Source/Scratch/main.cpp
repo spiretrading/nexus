@@ -14,10 +14,10 @@
 #include <QResizeEvent>
 #include <QScrollBar>
 #include <QPair>
-
 #include "Spire/Spire/ArrayTableModel.hpp"
 #include "Spire/Spire/Resources.hpp"
 #include "Spire/Ui/Layouts.hpp"
+#include "Spire/Ui/RecycledTableViewItemBuilder.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/TextBox.hpp"
@@ -27,83 +27,7 @@
 
 using namespace Spire;
 
-class TableViewModel : public QAbstractItemModel {
-    
-public:
-    using QAbstractItemModel::QAbstractItemModel;
-
-    // Standard model API from QAbstractItemModel
-    virtual int rowCount(const QModelIndex& parent = QModelIndex()) const override = 0;
-    virtual int columnCount(const QModelIndex& parent = QModelIndex()) const override = 0;
-    virtual QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override = 0;
-    virtual QModelIndex index(int row, int column, const QModelIndex& parent = QModelIndex()) const override = 0;
-    virtual QModelIndex parent(const QModelIndex& index) const override = 0;
-};
-
-class SimpleTableViewModel : public TableViewModel {
-    
-public:
-    explicit SimpleTableViewModel(QObject* parent = nullptr) : TableViewModel(parent) {}
-    
-    int rowCount(const QModelIndex& parent = QModelIndex()) const override {
-        if (parent.isValid())
-            return 0;
-        
-        return 10000; // 10,000 rows
-    }
-    
-    int columnCount(const QModelIndex& parent = QModelIndex()) const override {
-        if (parent.isValid())
-            return 0;
-        
-        return 5; // 5 columns
-    }
-    
-    QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override {
-        if (!index.isValid())
-            return QVariant();
-        
-        if (role == Qt::DisplayRole) {
-            int j = index.row();
-            int i = index.column();
-            
-            return QVariant(5 * j + i);
-        }
-        
-        return QVariant();
-    }
-    
-    QModelIndex index(int row, int column, const QModelIndex& parent = QModelIndex()) const override {
-        if (parent.isValid())
-            return QModelIndex();
-        
-        if (row < 0 || row >= rowCount() || column < 0 || column >= columnCount())
-            return QModelIndex();
-        
-        return createIndex(row, column);
-    }
-    
-    QModelIndex parent(const QModelIndex&) const override {
-        return QModelIndex();
-    }
-};
-
-class TableViewDelegate : public QObject {
-    
-public:
-    explicit TableViewDelegate(QObject* parent = nullptr) : QObject(parent) {}
-    
-    // Widget factory and update methods
-    virtual QWidget* createWidgetForCell(const QModelIndex& index, QWidget* parent) const = 0;
-    virtual void updateWidget(QWidget* widget, const QModelIndex& index) const = 0;
-    
-    // Widget recycling
-    virtual bool canReuseWidget(QWidget* widget, const QModelIndex& index) const = 0;
-    virtual void prepareForReuse(QWidget* widget, const QModelIndex& index) const {
-        // Default implementation does nothing, derived classes can override
-    }
-};
-
+/*
 class LabelTableViewDelegate : public TableViewDelegate {
     
 public:
@@ -147,49 +71,46 @@ public:
         label->get_current()->set("");
     }
 };
-
+*/
 
 class VTableView : public QWidget {
-
-public:
-    explicit VTableView(QWidget* parent = nullptr);
+  public:
+    VTableView(std::shared_ptr<TableModel> table,
+      TableViewItemBuilder item_builder, QWidget* parent = nullptr);
     ~VTableView() override;
 
-    void setModel(TableViewModel* model);
-    void setDelegate(TableViewDelegate* delegate);
-
-protected:
+  protected:
     void paintEvent(QPaintEvent* event) override;
     void resizeEvent(QResizeEvent* event) override;
 
-private:
-    // Key structures
+  private:
     struct CellPosition {
-        int row;
-        int column;
+      int row;
+      int column;
         
-        bool operator<(const CellPosition& other) const {
-            return row < other.row || (row == other.row && column < other.column);
-        }
+      bool operator<(const CellPosition& other) const {
+        return row < other.row || (row == other.row && column < other.column);
+      }
         
-        bool operator==(const CellPosition& other) const {
-            return row == other.row && column == other.column;
-        }
+      bool operator==(const CellPosition& other) const {
+        return row == other.row && column == other.column;
+      }
     };
     
     friend uint qHash(const CellPosition&);
 
     struct CellGeometry {
-        int x;
-        int y;
-        int width;
-        int height;
+      int x;
+      int y;
+      int width;
+      int height;
     };
 
     // Private methods
     void updateVisibleRange();
     void updateScrollBarRanges();
     void updateContentsSize();
+    void on_operation(const TableModel::Operation& operation);
     
     QWidget* createOrUpdateWidgetAt(int row, int column);
     void recycleWidget(QWidget* widget);
@@ -202,9 +123,9 @@ private:
 
     // Core data
     ScrollBox* m_scrollBox;
-    TableViewModel* m_model = nullptr;
-    TableViewDelegate* m_delegate = nullptr;
-    
+    std::shared_ptr<TableModel> m_table;
+    TableViewItemBuilder m_item_builder;
+
     // Widget management
     QMap<CellPosition, QWidget*> m_visibleWidgets;
     QList<QWidget*> m_recycledWidgets;
@@ -224,9 +145,11 @@ uint qHash(const VTableView::CellPosition& t) {
   return 0;
 }
 
-// Implementation
-
-VTableView::VTableView(QWidget* parent) : QWidget(parent) {
+VTableView::VTableView(std::shared_ptr<TableModel> table,
+    TableViewItemBuilder item_builder, QWidget* parent)
+    : QWidget(parent),
+      m_table(std::move(table)),
+      m_item_builder(std::move(item_builder)) {
   auto body = new QWidget();
   body->setBackgroundRole(QPalette::Base);
   body->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
@@ -236,79 +159,18 @@ VTableView::VTableView(QWidget* parent) : QWidget(parent) {
   m_scrollBox->get_vertical_scroll_bar().connect_position_signal(
     std::bind_front(&VTableView::onScroll, this));
   enclose(*this, *m_scrollBox);
+  m_table->connect_operation_signal(
+    std::bind_front(&VTableView::on_operation, this));
+  updateContentsSize();
+  updateVisibleRange();
 }
 
 VTableView::~VTableView() {
-    // Clean up all widgets
-    qDeleteAll(m_visibleWidgets);
-    qDeleteAll(m_recycledWidgets);
-}
-
-void VTableView::setModel(TableViewModel* model) {
-    if (m_model == model)
-        return;
-        
-    // Clean up existing widgets
-    qDeleteAll(m_visibleWidgets);
-    m_visibleWidgets.clear();
-    qDeleteAll(m_recycledWidgets);
-    m_recycledWidgets.clear();
-    
-    m_model = model;
-    
-    if (m_model) {
-        // Connect model signals for updates
-        connect(m_model, &QAbstractItemModel::dataChanged, 
-                this, [this](const QModelIndex& topLeft, const QModelIndex& bottomRight) {
-            // Update affected widgets
-            for (int row = topLeft.row(); row <= bottomRight.row(); ++row) {
-                for (int col = topLeft.column(); col <= bottomRight.column(); ++col) {
-                    CellPosition pos{row, col};
-                    if (m_visibleWidgets.contains(pos)) {
-                        QModelIndex index = m_model->index(row, col);
-                        m_delegate->updateWidget(m_visibleWidgets[pos], index);
-                    }
-                }
-            }
-        });
-        
-        connect(m_model, &QAbstractItemModel::rowsInserted, 
-                this, [this]() { updateContentsSize(); updateVisibleRange(); });
-        connect(m_model, &QAbstractItemModel::rowsRemoved, 
-                this, [this]() { updateContentsSize(); updateVisibleRange(); });
-        connect(m_model, &QAbstractItemModel::columnsInserted, 
-                this, [this]() { updateContentsSize(); updateVisibleRange(); });
-        connect(m_model, &QAbstractItemModel::columnsRemoved, 
-                this, [this]() { updateContentsSize(); updateVisibleRange(); });
-        connect(m_model, &QAbstractItemModel::modelReset, 
-                this, [this]() { updateContentsSize(); updateVisibleRange(); });
-    }
-    
-    updateContentsSize();
-    updateVisibleRange();
-    m_scrollBox->get_body().update();
-}
-
-void VTableView::setDelegate(TableViewDelegate* delegate) {
-    if (m_delegate == delegate)
-        return;
-        
-    m_delegate = delegate;
-    
-    // Update all visible widgets with the new delegate
-    if (m_delegate && m_model) {
-        for (auto it = m_visibleWidgets.begin(); it != m_visibleWidgets.end(); ++it) {
-            int row = it.key().row;
-            int col = it.key().column;
-            QModelIndex index = m_model->index(row, col);
-            m_delegate->updateWidget(it.value(), index);
-        }
-    }
+  qDeleteAll(m_visibleWidgets);
+  qDeleteAll(m_recycledWidgets);
 }
 
 void VTableView::paintEvent(QPaintEvent* event) {
-    if (!m_model || !m_delegate)
-        return;
 /*    
     QPainter painter(&m_scrollBox->get_body());
     painter.setRenderHint(QPainter::Antialiasing);
@@ -338,187 +200,150 @@ void VTableView::paintEvent(QPaintEvent* event) {
 }
 
 void VTableView::resizeEvent(QResizeEvent* event) {
-    QWidget::resizeEvent(event);
-    updateVisibleRange();
-    updateScrollBarRanges();
+  QWidget::resizeEvent(event);
+  updateVisibleRange();
+  updateScrollBarRanges();
 }
 
 void VTableView::onScroll(int position) {
-    updateVisibleRange();
+  updateVisibleRange();
 }
 
 void VTableView::updateContentsSize() {
-    if (!m_model)
-        return;
-        
-    int rows = m_model->rowCount();
-    int cols = m_model->columnCount();
+  int rows = m_table->get_row_size();
+  int cols = m_table->get_column_size();
     
-    // Calculate total content size
-    int contentWidth = cols * (m_defaultCellSize.width() + m_cellSpacing) + m_cellSpacing;
-    int contentHeight = rows * (m_defaultCellSize.height() + m_cellSpacing) + m_cellSpacing;
+  // Calculate total content size
+  int contentWidth =
+    cols * (m_defaultCellSize.width() + m_cellSpacing) + m_cellSpacing;
+  int contentHeight =
+    rows * (m_defaultCellSize.height() + m_cellSpacing) + m_cellSpacing;
 
-    // Update scrollbars
-    m_scrollBox->get_body().setFixedSize(qMax(0, contentWidth),
-      qMax(0, contentHeight));
+  // Update scrollbars
+  m_scrollBox->get_body().setFixedSize(
+    qMax(0, contentWidth), qMax(0, contentHeight));
+}
+
+void VTableView::on_operation(const TableModel::Operation& operation) {
+  updateContentsSize();
+  updateVisibleRange();
 }
 
 void VTableView::updateScrollBarRanges() {
-    updateContentsSize();
+  updateContentsSize();
 }
 
-QPair<VTableView::CellPosition, VTableView::CellPosition> VTableView::visibleCellRange() const {
-    if (!m_model) {
-        return {{0, 0}, {0, 0}};
-    }
-    
-    int xOffset = 0;
-    int yOffset = m_scrollBox->get_vertical_scroll_bar().get_position();
-    
-    int cellWidth = m_defaultCellSize.width() + m_cellSpacing;
-    int cellHeight = m_defaultCellSize.height() + m_cellSpacing;
-    
-    int firstVisibleRow = qMax(0, yOffset / cellHeight);
-    int firstVisibleCol = qMax(0, xOffset / cellWidth);
-    
-    int lastVisibleRow = qMin(m_model->rowCount() - 1, 
-                          (yOffset + m_scrollBox->height()) / cellHeight + 1);
-    int lastVisibleCol = qMin(m_model->columnCount() - 1, 
-                          (xOffset + m_scrollBox->width()) / cellWidth + 1);
-    
-    return {{firstVisibleRow, firstVisibleCol}, {lastVisibleRow, lastVisibleCol}};
+QPair<VTableView::CellPosition, VTableView::CellPosition>
+    VTableView::visibleCellRange() const {
+  int xOffset = 0;
+  int yOffset = m_scrollBox->get_vertical_scroll_bar().get_position();
+  int cellWidth = m_defaultCellSize.width() + m_cellSpacing;
+  int cellHeight = m_defaultCellSize.height() + m_cellSpacing;
+  int firstVisibleRow = qMax(0, yOffset / cellHeight);
+  int firstVisibleCol = qMax(0, xOffset / cellWidth);
+  int lastVisibleRow = qMin(m_table->get_row_size() - 1,
+    (yOffset + m_scrollBox->height()) / cellHeight + 1);
+  int lastVisibleCol = qMin(m_table->get_column_size() - 1,
+    (xOffset + m_scrollBox->width()) / cellWidth + 1);
+  return {{firstVisibleRow, firstVisibleCol}, {lastVisibleRow, lastVisibleCol}};
 }
 
 void VTableView::updateVisibleRange() {
-    if (!m_model || !m_delegate)
-        return;
-    
-    auto visibleRange = visibleCellRange();
-    
-    // Create set of currently visible positions
-    QSet<CellPosition> newVisiblePositions;
-    for (int row = visibleRange.first.row; row <= visibleRange.second.row; ++row) {
-        for (int col = visibleRange.first.column; col <= visibleRange.second.column; ++col) {
-            newVisiblePositions.insert({row, col});
-        }
+  auto visibleRange = visibleCellRange();
+
+  // Create set of currently visible positions
+  QSet<CellPosition> newVisiblePositions;
+  for(int row = visibleRange.first.row; row <= visibleRange.second.row; ++row) {
+    for(int col = visibleRange.first.column;
+        col <= visibleRange.second.column; ++col) {
+      newVisiblePositions.insert({row, col});
     }
-    
-    // Find positions that are no longer visible
-    QList<CellPosition> positionsToRemove;
-    for (auto it = m_visibleWidgets.begin(); it != m_visibleWidgets.end(); ++it) {
-        if (!newVisiblePositions.contains(it.key())) {
-            positionsToRemove.append(it.key());
-        }
+  }
+
+  // Find positions that are no longer visible
+  QList<CellPosition> positionsToRemove;
+  for(auto it = m_visibleWidgets.begin(); it != m_visibleWidgets.end(); ++it) {
+    if(!newVisiblePositions.contains(it.key())) {
+      positionsToRemove.append(it.key());
     }
-    
-    // Recycle widgets for positions no longer visible
-    for (const auto& pos : positionsToRemove) {
-        recycleWidget(m_visibleWidgets.take(pos));
+  }
+
+  // Recycle widgets for positions no longer visible
+  for(const auto& pos : positionsToRemove) {
+    recycleWidget(m_visibleWidgets.take(pos));
+  }
+
+  // Create widgets for newly visible positions
+  for(int row = visibleRange.first.row; row <= visibleRange.second.row; ++row) {
+    for(int col = visibleRange.first.column;
+        col <= visibleRange.second.column; ++col) {
+      CellPosition pos{row, col};
+      if(!m_visibleWidgets.contains(pos)) {
+        createOrUpdateWidgetAt(row, col);
+      }
     }
-    
-    // Create widgets for newly visible positions
-    for (int row = visibleRange.first.row; row <= visibleRange.second.row; ++row) {
-        for (int col = visibleRange.first.column; col <= visibleRange.second.column; ++col) {
-            CellPosition pos{row, col};
-            if (!m_visibleWidgets.contains(pos)) {
-                createOrUpdateWidgetAt(row, col);
-            }
-        }
-    }
-    
-    // Update positions of all visible widgets
-    layoutVisibleWidgets();
+  }
+
+  // Update positions of all visible widgets
+  layoutVisibleWidgets();
 }
 
 QWidget* VTableView::createOrUpdateWidgetAt(int row, int column) {
-    if (!m_model || !m_delegate)
-        return nullptr;
-    
-    QModelIndex index = m_model->index(row, column);
-    if (!index.isValid())
-        return nullptr;
-    
-    CellPosition pos{row, column};
-    
-    // Check if we already have a widget for this position
-    if (m_visibleWidgets.contains(pos)) {
-        m_delegate->updateWidget(m_visibleWidgets[pos], index);
-        return m_visibleWidgets[pos];
-    }
-    
-    // Try to reuse a recycled widget
-    QWidget* widget = nullptr;
-    
-    // Find a widget we can reuse
-    for (int i = 0; i < m_recycledWidgets.size(); ++i) {
-        if (m_delegate->canReuseWidget(m_recycledWidgets[i], index)) {
-            widget = m_recycledWidgets.takeAt(i);
-            m_delegate->prepareForReuse(widget, index);
-            break;
-        }
-    }
-    
-    // If no reusable widget, create a new one
-    if (!widget) {
-        widget = m_delegate->createWidgetForCell(index, &m_scrollBox->get_body());
-    }
-    
-    // Update with current data
-    m_delegate->updateWidget(widget, index);
-    
-    // Store and show the widget
-    widget->setParent(&m_scrollBox->get_body());
-    m_visibleWidgets[pos] = widget;
-    
-    // Position will be set in layoutVisibleWidgets
-    
-    return widget;
+  CellPosition pos{row, column};
+
+  // Check if we already have a widget for this position
+  if(m_visibleWidgets.contains(pos)) {
+// TODO    m_delegate->updateWidget(m_visibleWidgets[pos], index);
+    return m_visibleWidgets[pos];
+  }
+
+  // Try to reuse a recycled widget
+  QWidget* widget = m_item_builder.mount(m_table, row, column);
+
+  // Store and show the widget
+  widget->setParent(&m_scrollBox->get_body());
+  m_visibleWidgets[pos] = widget;
+  return widget;
 }
 
 void VTableView::recycleWidget(QWidget* widget) {
-    if (!widget)
-        return;
-    
-    widget->hide();
-    m_recycledWidgets.append(widget);
+  m_item_builder.unmount(widget);
 }
 
 VTableView::CellGeometry VTableView::cellGeometryAt(int row, int column) const {
-    int xOffset = 0;
-    int yOffset = m_scrollBox->get_vertical_scroll_bar().get_position();
-    
-    int x = column * (m_defaultCellSize.width() + m_cellSpacing) + m_cellSpacing - xOffset;
-    int y = row * (m_defaultCellSize.height() + m_cellSpacing) + m_cellSpacing;
-    
-    return {x, y, m_defaultCellSize.width(), m_defaultCellSize.height()};
+  int xOffset = 0;
+  int yOffset = m_scrollBox->get_vertical_scroll_bar().get_position();
+  int x = column * (m_defaultCellSize.width() + m_cellSpacing) +
+    m_cellSpacing - xOffset;
+  int y = row * (m_defaultCellSize.height() + m_cellSpacing) + m_cellSpacing;
+  return {x, y, m_defaultCellSize.width(), m_defaultCellSize.height()};
 }
 
 void VTableView::layoutVisibleWidgets() {
-    for (auto it = m_visibleWidgets.begin(); it != m_visibleWidgets.end(); ++it) {
-        CellPosition pos = it.key();
-        QWidget* widget = it.value();
-        
-        auto geometry = cellGeometryAt(pos.row, pos.column);
-        widget->setGeometry(geometry.x, geometry.y, geometry.width, geometry.height);
-        widget->show();
-    }
+  for(auto it = m_visibleWidgets.begin(); it != m_visibleWidgets.end(); ++it) {
+    CellPosition pos = it.key();
+    QWidget* widget = it.value();
+    auto geometry = cellGeometryAt(pos.row, pos.column);
+    widget->setGeometry(
+      geometry.x, geometry.y, geometry.width, geometry.height);
+    widget->show();
+  }
 }
 
 void VTableView::cleanupInvisibleWidgets() {
-    auto visibleRange = visibleCellRange();
-    
-    for (auto it = m_visibleWidgets.begin(); it != m_visibleWidgets.end();) {
-        CellPosition pos = it.key();
-        if (pos.row < visibleRange.first.row || pos.row > visibleRange.second.row ||
-            pos.column < visibleRange.first.column || pos.column > visibleRange.second.column) {
-            recycleWidget(it.value());
-            it = m_visibleWidgets.erase(it);
-        } else {
-            ++it;
-        }
+  auto visibleRange = visibleCellRange();
+  for(auto it = m_visibleWidgets.begin(); it != m_visibleWidgets.end();) {
+    CellPosition pos = it.key();
+    if(pos.row < visibleRange.first.row || pos.row > visibleRange.second.row ||
+        pos.column < visibleRange.first.column ||
+        pos.column > visibleRange.second.column) {
+      recycleWidget(it.value());
+      it = m_visibleWidgets.erase(it);
+    } else {
+      ++it;
     }
+  }
 }
-
 
 class SimpleQTableModel : public QAbstractTableModel {
 public:
@@ -568,18 +393,36 @@ auto make_qtable_view(QWidget* parent) {
     return tableView;
 }
 
+struct VTableViewItemBuilder {
+  QWidget* mount(
+      const std::shared_ptr<TableModel>& table, int row, int column) {
+    auto label = make_label(make_to_text_model(
+      make_table_value_model<int>(table, row, column)));
+    label->setFixedHeight(40);
+    return label;
+  }
+
+  void unmount(QWidget* widget) {
+    delete widget;
+  }
+
+  void reset(QWidget& widget, const std::shared_ptr<TableModel>& table, int row,
+      int column) {
+  }
+};
+
 auto make_vtable_view(QWidget* parent) {
-    // Create our TableView
-    VTableView* tableView = new VTableView(parent);
-    
-    // Create and set the model
-    SimpleTableViewModel* model = new SimpleTableViewModel(tableView);
-    tableView->setModel(model);
-    
-    // Create and set the delegate
-    LabelTableViewDelegate* delegate = new LabelTableViewDelegate(tableView);
-    tableView->setDelegate(delegate);
-    return tableView;
+  auto table = std::make_shared<ArrayTableModel>();
+  for(auto i = 0; i != 10000; ++i) {
+    auto row = std::vector<std::any>();
+    for(auto j = 0; j != 5; ++j) {
+      row.push_back(5 * i + j);
+    }
+    table->push(row);
+  }
+  VTableView* tableView = new VTableView(table,
+    RecycledTableViewItemBuilder(VTableViewItemBuilder()), parent);
+  return tableView;
 }
 
 auto make_stable_view(QWidget* parent) {
@@ -624,8 +467,8 @@ int main(int argc, char** argv) {
     QVBoxLayout* layout = new QVBoxLayout(centralWidget);
 
 //    auto tableView = make_qtable_view(centralWidget);
-//    auto tableView = make_vtable_view(centralWidget);
-    auto tableView = make_stable_view(centralWidget);
+    auto tableView = make_vtable_view(centralWidget);
+//    auto tableView = make_stable_view(centralWidget);
     
     // Add TableView to layout
     layout->addWidget(tableView);
