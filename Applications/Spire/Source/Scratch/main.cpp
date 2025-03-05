@@ -64,7 +64,6 @@ class VTableView : public QWidget {
 
   protected:
     void moveEvent(QMoveEvent* event) override;
-    void paintEvent(QPaintEvent* event) override;
     void resizeEvent(QResizeEvent* event) override;
 
   private:
@@ -74,7 +73,7 @@ class VTableView : public QWidget {
 
       auto operator <=>(const CellPosition& other) const = default;
     };
-    
+
     friend uint qHash(const CellPosition&);
 
     struct CellGeometry {
@@ -138,35 +137,6 @@ VTableView::~VTableView() {
 
 QSize VTableView::sizeHint() const {
   return m_size_hint;
-}
-
-void VTableView::paintEvent(QPaintEvent* event) {
-/*    
-    QPainter painter(&m_scrollBox->get_body());
-    painter.setRenderHint(QPainter::Antialiasing);
-    
-    // Fill background
-    painter.fillRect(event->rect(), m_scrollBox->get_body().palette().brush(QPalette::Base));
-    
-    // Draw grid lines if needed
-    if (m_borderWidth > 0) {
-        painter.setPen(QPen(m_borderColor, m_borderWidth));
-        
-        auto range = visibleCellRange();
-        for (int row = range.first.row; row <= range.second.row + 1; ++row) {
-            for (int col = range.first.column; col <= range.second.column + 1; ++col) {
-                auto geometry = cellGeometryAt(row, col);
-                
-                // Draw horizontal line
-                painter.drawLine(0, geometry.y, m_scrollBox->get_body().width(), geometry.y);
-                
-                // Draw vertical line
-                painter.drawLine(geometry.x, 0, geometry.x, m_scrollBox->get_body().height());
-            }
-        }
-    }
-    */
-    // The widgets are already in place, let them draw themselves
 }
 
 void VTableView::moveEvent(QMoveEvent* event) {
@@ -593,8 +563,8 @@ int main(int argc, char** argv) {
     GetDefaultDestinationDatabase(), GetDefaultMarketDatabase(),
     get_default_additional_tag_database()));
 
-  auto tableView = make_vtable_view(tasks_table, item_builder, centralWidget);
-//    auto tableView = make_stable_view(tasks_table, item_builder, centralWidget);
+//  auto tableView = make_vtable_view(tasks_table, item_builder, centralWidget);
+  auto tableView = make_stable_view(tasks_table, item_builder, centralWidget);
 
   // Add TableView to layout
   layout->addWidget(tableView);
