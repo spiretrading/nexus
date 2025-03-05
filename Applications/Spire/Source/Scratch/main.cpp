@@ -60,7 +60,10 @@ class VTableView : public QWidget {
       TableViewItemBuilder item_builder, QWidget* parent = nullptr);
     ~VTableView() override;
 
+    QSize sizeHint() const override;
+
   protected:
+    void moveEvent(QMoveEvent* event) override;
     void paintEvent(QPaintEvent* event) override;
     void resizeEvent(QResizeEvent* event) override;
 
@@ -68,14 +71,8 @@ class VTableView : public QWidget {
     struct CellPosition {
       int row;
       int column;
-        
-      bool operator<(const CellPosition& other) const {
-        return row < other.row || (row == other.row && column < other.column);
-      }
-        
-      bool operator==(const CellPosition& other) const {
-        return row == other.row && column == other.column;
-      }
+
+      auto operator <=>(const CellPosition& other) const = default;
     };
     
     friend uint qHash(const CellPosition&);
@@ -100,17 +97,15 @@ class VTableView : public QWidget {
     
     void cleanupInvisibleWidgets();
     void layoutVisibleWidgets();
-    void onScroll(int position);
 
     // Core data
-    ScrollBox* m_scrollBox;
+    QSize m_size_hint;
     std::shared_ptr<TableModel> m_table;
     TableViewItemBuilder m_item_builder;
 
     // Widget management
     QMap<CellPosition, QWidget*> m_visibleWidgets;
-    QList<QWidget*> m_recycledWidgets;
-    
+
     // Cache for viewport calculations
     CellPosition m_topLeftVisible;
     CellPosition m_bottomRightVisible;
@@ -131,15 +126,6 @@ VTableView::VTableView(std::shared_ptr<TableModel> table,
     : QWidget(parent),
       m_table(std::move(table)),
       m_item_builder(std::move(item_builder)) {
-  auto body = new QWidget();
-  body->setBackgroundRole(QPalette::Base);
-  body->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-  m_scrollBox = new ScrollBox(body);
-  m_scrollBox->set_vertical(ScrollBox::DisplayPolicy::ON_OVERFLOW);
-  m_scrollBox->set_horizontal(ScrollBox::DisplayPolicy::ON_OVERFLOW);
-  m_scrollBox->get_vertical_scroll_bar().connect_position_signal(
-    std::bind_front(&VTableView::onScroll, this));
-  enclose(*this, *m_scrollBox);
   m_table->connect_operation_signal(
     std::bind_front(&VTableView::on_operation, this));
   updateContentsSize();
@@ -148,7 +134,10 @@ VTableView::VTableView(std::shared_ptr<TableModel> table,
 
 VTableView::~VTableView() {
   qDeleteAll(m_visibleWidgets);
-  qDeleteAll(m_recycledWidgets);
+}
+
+QSize VTableView::sizeHint() const {
+  return m_size_hint;
 }
 
 void VTableView::paintEvent(QPaintEvent* event) {
@@ -180,14 +169,14 @@ void VTableView::paintEvent(QPaintEvent* event) {
     // The widgets are already in place, let them draw themselves
 }
 
+void VTableView::moveEvent(QMoveEvent* event) {
+  updateVisibleRange();
+}
+
 void VTableView::resizeEvent(QResizeEvent* event) {
   QWidget::resizeEvent(event);
   updateVisibleRange();
   updateScrollBarRanges();
-}
-
-void VTableView::onScroll(int position) {
-  updateVisibleRange();
 }
 
 void VTableView::updateContentsSize() {
@@ -199,10 +188,8 @@ void VTableView::updateContentsSize() {
     cols * (m_defaultCellSize.width() + m_cellSpacing) + m_cellSpacing;
   int contentHeight =
     rows * (m_defaultCellSize.height() + m_cellSpacing) + m_cellSpacing;
-
-  // Update scrollbars
-  m_scrollBox->get_body().setFixedSize(
-    qMax(0, contentWidth), qMax(0, contentHeight));
+  m_size_hint = QSize(qMax(0, contentWidth), qMax(0, contentHeight));
+  updateGeometry();
 }
 
 void VTableView::on_operation(const TableModel::Operation& operation) {
@@ -216,16 +203,22 @@ void VTableView::updateScrollBarRanges() {
 
 QPair<VTableView::CellPosition, VTableView::CellPosition>
     VTableView::visibleCellRange() const {
+  auto parent_size = [&] {
+    if(auto parent = parentWidget()) {
+      return parent->size();
+    }
+    return QSize(0, 0);
+  }();
   int xOffset = 0;
-  int yOffset = m_scrollBox->get_vertical_scroll_bar().get_position();
+  int yOffset = -pos().y();
   int cellWidth = m_defaultCellSize.width() + m_cellSpacing;
   int cellHeight = m_defaultCellSize.height() + m_cellSpacing;
   int firstVisibleRow = qMax(0, yOffset / cellHeight);
   int firstVisibleCol = qMax(0, xOffset / cellWidth);
   int lastVisibleRow = qMin(m_table->get_row_size() - 1,
-    (yOffset + m_scrollBox->height()) / cellHeight + 1);
+    (yOffset + parent_size.height()) / cellHeight + 1);
   int lastVisibleCol = qMin(m_table->get_column_size() - 1,
-    (xOffset + m_scrollBox->width()) / cellWidth + 1);
+    (xOffset + parent_size.width()) / cellWidth + 1);
   return {{firstVisibleRow, firstVisibleCol}, {lastVisibleRow, lastVisibleCol}};
 }
 
@@ -274,7 +267,6 @@ QWidget* VTableView::createOrUpdateWidgetAt(int row, int column) {
 
   // Check if we already have a widget for this position
   if(m_visibleWidgets.contains(pos)) {
-// TODO    m_delegate->updateWidget(m_visibleWidgets[pos], index);
     return m_visibleWidgets[pos];
   }
 
@@ -282,7 +274,7 @@ QWidget* VTableView::createOrUpdateWidgetAt(int row, int column) {
   QWidget* widget = m_item_builder.mount(m_table, row, column);
 
   // Store and show the widget
-  widget->setParent(&m_scrollBox->get_body());
+  widget->setParent(this);
   m_visibleWidgets[pos] = widget;
   return widget;
 }
@@ -293,7 +285,7 @@ void VTableView::recycleWidget(QWidget* widget) {
 
 VTableView::CellGeometry VTableView::cellGeometryAt(int row, int column) const {
   int xOffset = 0;
-  int yOffset = m_scrollBox->get_vertical_scroll_bar().get_position();
+  int yOffset = -pos().y();
   int x = column * (m_defaultCellSize.width() + m_cellSpacing) +
     m_cellSpacing - xOffset;
   int y = row * (m_defaultCellSize.height() + m_cellSpacing) + m_cellSpacing;
@@ -526,23 +518,18 @@ struct VTableViewItemBuilder {
   }
 };
 
-auto make_table_model() {
-  auto table = std::make_shared<ArrayTableModel>();
-  for(auto i = 0; i != 10000; ++i) {
-    auto row = std::vector<std::any>();
-    for(auto j = 0; j != 5; ++j) {
-      row.push_back(5 * i + j);
-    }
-    table->push(row);
-  }
-  return table;
-}
-
 template<typename T>
 auto make_vtable_view(
     std::shared_ptr<TableModel> table, T&& item_builder, QWidget* parent) {
-  return new VTableView(
-    std::move(table), std::forward<T>(item_builder), parent);
+  auto table_view = new VTableView(
+    std::move(table), std::forward<T>(item_builder));
+  table_view->setSizePolicy(QSizePolicy::MinimumExpanding,
+    QSizePolicy::MinimumExpanding);
+  auto scroll_box = new ScrollBox(table_view, parent);
+  scroll_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  scroll_box->set_vertical(ScrollBox::DisplayPolicy::ON_OVERFLOW);
+  scroll_box->set_horizontal(ScrollBox::DisplayPolicy::ON_OVERFLOW);
+  return scroll_box;
 }
 
 template<typename T>
