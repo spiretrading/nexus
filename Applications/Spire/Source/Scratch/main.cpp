@@ -65,6 +65,7 @@ class VTableView : public QWidget {
   protected:
     void moveEvent(QMoveEvent* event) override;
     void resizeEvent(QResizeEvent* event) override;
+    void paintEvent(QPaintEvent* event) override;
 
   private:
     struct CellPosition {
@@ -74,13 +75,18 @@ class VTableView : public QWidget {
       auto operator <=>(const CellPosition& other) const = default;
     };
 
-    friend uint qHash(const CellPosition&);
+    friend uint qHash(const VTableView::CellPosition&);
 
     struct CellGeometry {
       int x;
       int y;
       int width;
       int height;
+    };
+
+    struct RowMetrics {
+      int height;        // Current height of the row
+      bool is_measured;  // Whether we've measured this row with actual widgets
     };
 
     // Private methods
@@ -90,13 +96,19 @@ class VTableView : public QWidget {
     void on_operation(const TableModel::Operation& operation);
     
     QWidget* createOrUpdateWidgetAt(int row, int column);
-    void recycleWidget(QWidget* widget);
+    void recycleWidget(QWidget* widget, int row);
     CellGeometry cellGeometryAt(int row, int column) const;
     QPair<CellPosition, CellPosition> visibleCellRange() const;
     
     void cleanupInvisibleWidgets();
     void layoutVisibleWidgets();
 
+    // Row height management
+    int getRowHeight(int row) const;
+    void setRowHeight(int row, int height);
+    int calculateRowPosition(int row) const;
+    int estimateTotalHeight() const;
+    
     // Core data
     QSize m_size_hint;
     std::shared_ptr<TableModel> m_table;
@@ -104,11 +116,13 @@ class VTableView : public QWidget {
 
     // Widget management
     QMap<CellPosition, QWidget*> m_visibleWidgets;
+    QMap<int, RowMetrics> m_rowMetrics;  // Tracks row heights
 
     // Cache for viewport calculations
     CellPosition m_topLeftVisible;
     CellPosition m_bottomRightVisible;
-    QSize m_defaultCellSize{120, 40};
+    int m_defaultRowHeight = 40;
+    int m_defaultCellWidth = 120;
     
     // Settings
     int m_cellSpacing = 1;
@@ -117,7 +131,7 @@ class VTableView : public QWidget {
 };
 
 uint qHash(const VTableView::CellPosition& t) {
-  return 0;
+  return qHash(t.row) ^ qHash(t.column);
 }
 
 VTableView::VTableView(std::shared_ptr<TableModel> table,
@@ -149,20 +163,144 @@ void VTableView::resizeEvent(QResizeEvent* event) {
   updateScrollBarRanges();
 }
 
+void VTableView::paintEvent(QPaintEvent* event) {
+  QPainter painter(this);
+  painter.setRenderHint(QPainter::Antialiasing);
+  
+  // Fill background
+  painter.fillRect(event->rect(), palette().brush(QPalette::Base));
+  
+  // Draw grid lines if needed
+  if (m_borderWidth > 0) {
+    painter.setPen(QPen(m_borderColor, m_borderWidth));
+    
+    auto range = visibleCellRange();
+    for (int row = range.first.row; row <= range.second.row + 1; ++row) {
+      int y = calculateRowPosition(row);
+      
+      // Draw horizontal line
+      painter.drawLine(0, y, width(), y);
+      
+      for (int col = range.first.column; col <= range.second.column + 1; ++col) {
+        // Calculate x position
+        int x = col * (m_defaultCellWidth + m_cellSpacing) + m_cellSpacing;
+        
+        // Draw vertical line
+        painter.drawLine(x, 0, x, height());
+      }
+    }
+  }
+}
+
+int VTableView::getRowHeight(int row) const {
+  auto it = m_rowMetrics.find(row);
+  if (it != m_rowMetrics.end()) {
+    return it->height;
+  }
+  return m_defaultRowHeight;
+}
+
+void VTableView::setRowHeight(int row, int height) {
+  RowMetrics metrics;
+  metrics.height = height;
+  metrics.is_measured = true;
+  m_rowMetrics[row] = metrics;
+}
+
+int VTableView::calculateRowPosition(int row) const {
+  int position = m_cellSpacing;
+  
+  // Sum up heights of all previous rows
+  for (int i = 0; i < row; ++i) {
+    position += getRowHeight(i) + m_cellSpacing;
+  }
+  
+  return position;
+}
+
+int VTableView::estimateTotalHeight() const {
+  int rows = m_table->get_row_size();
+  int totalHeight = m_cellSpacing; // Initial spacing
+  
+  // Add up heights of all measured rows
+  for (int i = 0; i < rows; ++i) {
+    totalHeight += getRowHeight(i) + m_cellSpacing;
+  }
+  
+  return totalHeight;
+}
+
 void VTableView::updateContentsSize() {
   int rows = m_table->get_row_size();
   int cols = m_table->get_column_size();
 
   // Calculate total content size
   int contentWidth =
-    cols * (m_defaultCellSize.width() + m_cellSpacing) + m_cellSpacing;
-  int contentHeight =
-    rows * (m_defaultCellSize.height() + m_cellSpacing) + m_cellSpacing;
+    cols * (m_defaultCellWidth + m_cellSpacing) + m_cellSpacing;
+  int contentHeight = estimateTotalHeight();
+  
   m_size_hint = QSize(qMax(0, contentWidth), qMax(0, contentHeight));
   updateGeometry();
 }
 
 void VTableView::on_operation(const TableModel::Operation& operation) {
+  visit(operation,
+    [&] (const TableModel::AddOperation& operation) {
+      QMap<int, RowMetrics> newMetrics;
+      for (auto it = m_rowMetrics.begin(); it != m_rowMetrics.end(); ++it) {
+        int row = it.key();
+        if (row >= operation.m_index) {
+          newMetrics[row + 1] = it.value();
+        } else {
+          newMetrics[row] = it.value();
+        }
+      }
+      m_rowMetrics = newMetrics;
+    },
+    [&] (const TableModel::RemoveOperation& operation) {
+      // When a row is removed, shift all row metrics after the removal point
+      QMap<int, RowMetrics> newMetrics;
+      for (auto it = m_rowMetrics.begin(); it != m_rowMetrics.end(); ++it) {
+        int row = it.key();
+        if (row > operation.m_index) {
+          newMetrics[row - 1] = it.value();
+        } else if (row < operation.m_index) {
+          newMetrics[row] = it.value();
+        }
+      }
+      m_rowMetrics = newMetrics;
+    },
+    [&] (const TableModel::MoveOperation& operation) {
+      // Handle row movement by adjusting row metrics
+      if (m_rowMetrics.contains(operation.m_source)) {
+        auto metrics = m_rowMetrics.take(operation.m_source);
+        
+        // Shift rows in between source and destination
+        QMap<int, RowMetrics> newMetrics;
+        for (auto it = m_rowMetrics.begin(); it != m_rowMetrics.end(); ++it) {
+          int row = it.key();
+          if (operation.m_source < operation.m_destination) {
+            // Moving down
+            if (row > operation.m_source && row <= operation.m_destination) {
+              newMetrics[row - 1] = it.value();
+            } else {
+              newMetrics[row] = it.value();
+            }
+          } else {
+            // Moving up
+            if (row >= operation.m_destination && row < operation.m_source) {
+              newMetrics[row + 1] = it.value();
+            } else {
+              newMetrics[row] = it.value();
+            }
+          }
+        }
+        m_rowMetrics = newMetrics;
+        
+        // Place the moved row at its new position
+        m_rowMetrics[operation.m_destination] = metrics;
+      }
+    });
   updateContentsSize();
   updateVisibleRange();
 }
@@ -179,16 +317,52 @@ QPair<VTableView::CellPosition, VTableView::CellPosition>
     }
     return QSize(0, 0);
   }();
+  
   int xOffset = 0;
   int yOffset = -pos().y();
-  int cellWidth = m_defaultCellSize.width() + m_cellSpacing;
-  int cellHeight = m_defaultCellSize.height() + m_cellSpacing;
-  int firstVisibleRow = qMax(0, yOffset / cellHeight);
+  int rowCount = m_table->get_row_size();
+  
+  if (rowCount == 0) {
+    return {{0, 0}, {0, 0}}; // Handle empty table case
+  }
+  
+  // Find first visible row
+  int firstVisibleRow = 0;
+  int cumulativeHeight = m_cellSpacing;
+  
+  while (firstVisibleRow < rowCount) {
+    int rowHeight = getRowHeight(firstVisibleRow);
+    if (cumulativeHeight + rowHeight > yOffset) {
+      break;
+    }
+    cumulativeHeight += rowHeight + m_cellSpacing;
+    firstVisibleRow++;
+  }
+  
+  // Cap firstVisibleRow to valid range
+  firstVisibleRow = qMin(firstVisibleRow, rowCount - 1);
+  
+  // Find last visible row
+  int lastVisibleRow = firstVisibleRow;
+  
+  while (lastVisibleRow < rowCount - 1) { // Stop at the last valid row index
+    int rowHeight = getRowHeight(lastVisibleRow);
+    cumulativeHeight += rowHeight + m_cellSpacing;
+    
+    if (cumulativeHeight > yOffset + parent_size.height()) {
+      break;
+    }
+    
+    lastVisibleRow++;
+  }
+  
+  // Calculate visible columns
+  int cellWidth = m_defaultCellWidth + m_cellSpacing;
+  int colCount = m_table->get_column_size();
   int firstVisibleCol = qMax(0, xOffset / cellWidth);
-  int lastVisibleRow = qMin(m_table->get_row_size() - 1,
-    (yOffset + parent_size.height()) / cellHeight + 1);
-  int lastVisibleCol = qMin(m_table->get_column_size() - 1,
+  int lastVisibleCol = qMin(colCount > 0 ? colCount - 1 : 0,
     (xOffset + parent_size.width()) / cellWidth + 1);
+  
   return {{firstVisibleRow, firstVisibleCol}, {lastVisibleRow, lastVisibleCol}};
 }
 
@@ -214,7 +388,7 @@ void VTableView::updateVisibleRange() {
 
   // Recycle widgets for positions no longer visible
   for(const auto& pos : positionsToRemove) {
-    recycleWidget(m_visibleWidgets.take(pos));
+    recycleWidget(m_visibleWidgets.take(pos), pos.row);
   }
 
   // Create widgets for newly visible positions
@@ -240,37 +414,80 @@ QWidget* VTableView::createOrUpdateWidgetAt(int row, int column) {
     return m_visibleWidgets[pos];
   }
 
-  // Try to reuse a recycled widget
+  // Create a new widget
   QWidget* widget = m_item_builder.mount(m_table, row, column);
 
   // Store and show the widget
   widget->setParent(this);
   m_visibleWidgets[pos] = widget;
+  
   return widget;
 }
 
-void VTableView::recycleWidget(QWidget* widget) {
+void VTableView::recycleWidget(QWidget* widget, int row) {
+  if (!widget) return;
+  
+  // Before recycling, measure and store the widget's height if it's in the first column
+  bool isFirstColumnWidget = false;
+  for (auto it = m_visibleWidgets.begin(); it != m_visibleWidgets.end(); ++it) {
+    if (it.value() == widget && it.key().column == 0 && it.key().row == row) {
+      isFirstColumnWidget = true;
+      break;
+    }
+  }
+  
+  if (isFirstColumnWidget) {
+    // Update the row's height based on this widget
+    setRowHeight(row, widget->height());
+  }
+  
   m_item_builder.unmount(widget);
 }
 
 VTableView::CellGeometry VTableView::cellGeometryAt(int row, int column) const {
   int xOffset = 0;
   int yOffset = -pos().y();
-  int x = column * (m_defaultCellSize.width() + m_cellSpacing) +
-    m_cellSpacing - xOffset;
-  int y = row * (m_defaultCellSize.height() + m_cellSpacing) + m_cellSpacing;
-  return {x, y, m_defaultCellSize.width(), m_defaultCellSize.height()};
+  
+  int x = column * (m_defaultCellWidth + m_cellSpacing) + m_cellSpacing - xOffset;
+  int y = calculateRowPosition(row);
+  
+  return {x, y, m_defaultCellWidth, getRowHeight(row)};
 }
 
 void VTableView::layoutVisibleWidgets() {
+  // First, determine the maximum height for each visible row
+  QMap<int, int> rowMaxHeights;
+  
   for(auto it = m_visibleWidgets.begin(); it != m_visibleWidgets.end(); ++it) {
     CellPosition pos = it.key();
     QWidget* widget = it.value();
+    
+    // Get widget's preferred height (sizeHint)
+    int preferredHeight = widget->sizeHint().height();
+    
+    // Update maximum height for this row
+    if (!rowMaxHeights.contains(pos.row) || rowMaxHeights[pos.row] < preferredHeight) {
+      rowMaxHeights[pos.row] = preferredHeight;
+    }
+  }
+  
+  // Update row heights with the maximum values
+  for (auto it = rowMaxHeights.begin(); it != rowMaxHeights.end(); ++it) {
+    setRowHeight(it.key(), it.value());
+  }
+  
+  // Now layout all visible widgets
+  for(auto it = m_visibleWidgets.begin(); it != m_visibleWidgets.end(); ++it) {
+    CellPosition pos = it.key();
+    QWidget* widget = it.value();
+    
     auto geometry = cellGeometryAt(pos.row, pos.column);
-    widget->setGeometry(
-      geometry.x, geometry.y, geometry.width, geometry.height);
+    widget->setGeometry(geometry.x, geometry.y, geometry.width, geometry.height);
     widget->show();
   }
+  
+  // Update the content size since row heights may have changed
+  updateContentsSize();
 }
 
 void VTableView::cleanupInvisibleWidgets() {
@@ -280,7 +497,7 @@ void VTableView::cleanupInvisibleWidgets() {
     if(pos.row < visibleRange.first.row || pos.row > visibleRange.second.row ||
         pos.column < visibleRange.first.column ||
         pos.column > visibleRange.second.column) {
-      recycleWidget(it.value());
+      recycleWidget(it.value(), pos.row);
       it = m_visibleWidgets.erase(it);
     } else {
       ++it;
@@ -464,30 +681,6 @@ struct TaskKeysTableViewItemBuilder {
   }
 };
 
-struct VTableViewItemBuilder {
-  QWidget* mount(
-      const std::shared_ptr<TableModel>& table, int row, int column) {
-    auto text = make_proxy_value_model(
-      make_to_text_model(make_table_value_model<int>(table, row, column)));
-    auto label = make_label(text);
-    label->setFixedHeight(40);
-    return label;
-  }
-
-  void unmount(QWidget* widget) {
-    delete widget;
-  }
-
-  void reset(QWidget& widget, const std::shared_ptr<TableModel>& table, int row,
-      int column) {
-    auto& label = static_cast<TextBox&>(widget);
-    auto proxy =
-      std::static_pointer_cast<ProxyValueModel<QString>>(label.get_current());
-    proxy->set_source(
-      make_to_text_model(make_table_value_model<int>(table, row, column)));
-  }
-};
-
 template<typename T>
 auto make_vtable_view(
     std::shared_ptr<TableModel> table, T&& item_builder, QWidget* parent) {
@@ -563,8 +756,8 @@ int main(int argc, char** argv) {
     GetDefaultDestinationDatabase(), GetDefaultMarketDatabase(),
     get_default_additional_tag_database()));
 
-//  auto tableView = make_vtable_view(tasks_table, item_builder, centralWidget);
-  auto tableView = make_stable_view(tasks_table, item_builder, centralWidget);
+  auto tableView = make_vtable_view(tasks_table, item_builder, centralWidget);
+//  auto tableView = make_stable_view(tasks_table, item_builder, centralWidget);
 
   // Add TableView to layout
   layout->addWidget(tableView);
