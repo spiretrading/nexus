@@ -1,5 +1,6 @@
 #ifndef SPIRE_TABLE_BODY_HPP
 #define SPIRE_TABLE_BODY_HPP
+#include <deque>
 #include <functional>
 #include <memory>
 #include <unordered_map>
@@ -118,6 +119,8 @@ namespace Styles {
       /** Hide the given column. */
       void hide_column(int column);
 
+      QSize sizeHint() const override;
+
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
       bool event(QEvent* event) override;
@@ -138,10 +141,18 @@ namespace Styles {
         QColor m_horizontal_grid_color;
         QColor m_vertical_grid_color;
       };
+      struct CellPosition {
+        int m_row;
+        int m_column;
+        auto operator <=>(const CellPosition& other) const = default;
+      };
+      struct RowMetrics {
+        int m_height;
+        bool m_is_measured;
+      };
       struct Cover;
       struct ColumnCover;
       struct RowCover;
-      struct Layout;
       struct Painter;
       std::shared_ptr<TableModel> m_table;
       std::unordered_set<Qt::Key> m_keys;
@@ -149,21 +160,22 @@ namespace Styles {
       TableSelectionController m_selection_controller;
       std::shared_ptr<ListModel<int>> m_widths;
       TableViewItemBuilder m_item_builder;
+      std::deque<RowCover*> m_row_pool;
+      std::unordered_map<int, RowMetrics> m_row_metrics;
+      std::unordered_map<int, RowCover*> m_visible_rows;
       std::vector<ColumnCover*> m_column_covers;
       RowCover* m_current_row;
       Styles m_styles;
       bool m_is_transaction;
-      int m_resize_guard;
       std::unordered_map<TableItem*, HoverObserver> m_hover_observers;
       boost::optional<Index> m_hover_index;
+      QSize m_size_hint;
       boost::signals2::scoped_connection m_style_connection;
       boost::signals2::scoped_connection m_row_style_connection;
       boost::signals2::scoped_connection m_table_connection;
       boost::signals2::scoped_connection m_current_connection;
       boost::signals2::scoped_connection m_widths_connection;
 
-      const Layout& get_layout() const;
-      Layout& get_layout();
       RowCover* find_row(int index);
       TableItem* find_item(const boost::optional<Index>& index);
       RowCover* get_current_row();
@@ -179,15 +191,17 @@ namespace Styles {
       void remove_row(int index);
       void move_row(int source, int destination);
       void update_parent();
-      RowCover* mount_row(int index, boost::optional<int> current_index,
-        std::vector<RowCover*>& unmounted_rows);
-      RowCover* mount_row(int index, boost::optional<int> current_index);
       void destroy(RowCover* row);
-      void remove(RowCover& row);
-      void mount_visible_rows(std::vector<RowCover*>& unmounted_rows);
-      std::vector<RowCover*> unmount_hidden_rows();
-      void initialize_visible_region();
-      void reset_visible_region(std::vector<RowCover*>& unmounted_rows);
+      int get_row_height(int row) const;
+      void set_row_height(int row, int height);
+      int estimate_total_height() const;
+      void update_contents_size();
+      void mount(int index);
+      void unmount(int index);
+      std::pair<int, int> compute_visible_range() const;
+      int compute_row_position(int row) const;
+      QRect compute_row_geometry(int row) const;
+      void layout_rows();
       void update_visible_region();
       void update_column_covers();
       void update_column_widths();

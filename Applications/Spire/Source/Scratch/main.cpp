@@ -91,7 +91,6 @@ class VTableView : public QWidget {
 
     // Private methods
     void updateVisibleRange();
-    void updateScrollBarRanges();
     void updateContentsSize();
     void on_operation(const TableModel::Operation& operation);
     
@@ -100,7 +99,6 @@ class VTableView : public QWidget {
     CellGeometry cellGeometryAt(int row, int column) const;
     QPair<CellPosition, CellPosition> visibleCellRange() const;
     
-    void cleanupInvisibleWidgets();
     void layoutVisibleWidgets();
 
     // Row height management
@@ -160,7 +158,7 @@ void VTableView::moveEvent(QMoveEvent* event) {
 void VTableView::resizeEvent(QResizeEvent* event) {
   QWidget::resizeEvent(event);
   updateVisibleRange();
-  updateScrollBarRanges();
+  updateContentsSize();
 }
 
 void VTableView::paintEvent(QPaintEvent* event) {
@@ -303,10 +301,6 @@ void VTableView::on_operation(const TableModel::Operation& operation) {
     });
   updateContentsSize();
   updateVisibleRange();
-}
-
-void VTableView::updateScrollBarRanges() {
-  updateContentsSize();
 }
 
 QPair<VTableView::CellPosition, VTableView::CellPosition>
@@ -488,21 +482,6 @@ void VTableView::layoutVisibleWidgets() {
   
   // Update the content size since row heights may have changed
   updateContentsSize();
-}
-
-void VTableView::cleanupInvisibleWidgets() {
-  auto visibleRange = visibleCellRange();
-  for(auto it = m_visibleWidgets.begin(); it != m_visibleWidgets.end();) {
-    CellPosition pos = it.key();
-    if(pos.row < visibleRange.first.row || pos.row > visibleRange.second.row ||
-        pos.column < visibleRange.first.column ||
-        pos.column > visibleRange.second.column) {
-      recycleWidget(it.value(), pos.row);
-      it = m_visibleWidgets.erase(it);
-    } else {
-      ++it;
-    }
-  }
 }
 
 struct ItemState {
@@ -756,8 +735,8 @@ int main(int argc, char** argv) {
     GetDefaultDestinationDatabase(), GetDefaultMarketDatabase(),
     get_default_additional_tag_database()));
 
-  auto tableView = make_vtable_view(tasks_table, item_builder, centralWidget);
-//  auto tableView = make_stable_view(tasks_table, item_builder, centralWidget);
+//  auto tableView = make_vtable_view(tasks_table, item_builder, centralWidget);
+  auto tableView = make_stable_view(tasks_table, item_builder, centralWidget);
 
   // Add TableView to layout
   layout->addWidget(tableView);
