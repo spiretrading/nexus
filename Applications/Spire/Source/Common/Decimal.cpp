@@ -19,7 +19,7 @@ int Spire::from_decimal(const Decimal& value) {
 
 template<>
 Decimal Spire::to_decimal(const Money& value) {
-  return Decimal(lexical_cast<std::string>(value));
+  return Decimal(static_cast<float64_t>(static_cast<Quantity>(value)));
 }
 
 template<>

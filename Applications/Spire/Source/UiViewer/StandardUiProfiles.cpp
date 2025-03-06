@@ -240,6 +240,16 @@ namespace {
     maximum.connect_changed_signal([=] (auto value) {
       model->set_maximum(value);
     });
+    auto& min_max_enabled = get<bool>("min_max_enabled", profile.get_properties());
+    min_max_enabled.connect_changed_signal([=, &minimum, &maximum] (auto value) {
+      if(value) {
+        model->set_minimum(minimum.get());
+        model->set_maximum(maximum.get());
+      } else {
+        model->set_minimum(none);
+        model->set_maximum(none);
+      }
+    });
     auto& default_increment =
       get<Type>("default_increment", profile.get_properties());
     auto& alt_increment = get<Type>("alt_increment", profile.get_properties());
@@ -416,6 +426,7 @@ namespace {
     properties.push_back(make_standard_property<QString>("placeholder"));
     properties.push_back(make_standard_property("read_only", false));
     properties.push_back(make_standard_property("buttons_visible", true));
+    properties.push_back(make_standard_property("min_max_enabled", true));
   }
 
   void populate_decimal_box_with_decimal_properties(
