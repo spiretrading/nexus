@@ -1045,12 +1045,16 @@ TableBody::RowCover* TableBody::make_row_cover() {
   }
   auto row = m_recycled_rows.front();
   m_recycled_rows.pop_front();
+  row->setAttribute(Qt::WA_DontShowOnScreen, false);
+  row->setParent(this);
   return row;
 }
 
 void TableBody::destroy(RowCover* row) {
-  row->hide();
+//  row->hide();
   row->unmount();
+  row->setAttribute(Qt::WA_DontShowOnScreen);
+//  row->setParent(nullptr);
   unmatch(*row, CurrentRow());
   unmatch(*row, Selected());
   m_recycled_rows.push_back(row);
