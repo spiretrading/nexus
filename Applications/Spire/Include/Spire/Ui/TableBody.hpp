@@ -181,8 +181,6 @@ namespace Styles {
       void remove_row(int index);
       void move_row(int source, int destination);
       void update_parent();
-      RowCover* mount_row(int index, boost::optional<int> current_index,
-        std::vector<RowCover*>& unmounted_rows);
       RowCover* mount_row(int index, boost::optional<int> current_index);
       RowCover* make_row_cover();
       void destroy(RowCover* row);
