@@ -9,8 +9,33 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  const auto MAX_DECIMAL = boost::multiprecision::pow(Decimal(10),
+    std::numeric_limits<Quantity>::digits10) - 1;
+  const auto MIN_DECIMAL = Decimal(-MAX_DECIMAL);
+  const auto QUANTITY_EPSILON = 1.0 / Quantity::MULTIPLIER;
+
   struct QuantityToDecimalModel : ToDecimalModel<Quantity> {
     using ToDecimalModel<Quantity>::ToDecimalModel;
+
+    optional<Decimal> get_minimum() const override {
+      if(auto min = ToDecimalModel<Quantity>::get_minimum()) {
+        if(*min < MIN_DECIMAL) {
+          return MIN_DECIMAL;
+        }
+        return min;
+      }
+      return MIN_DECIMAL;
+    }
+
+    optional<Decimal> get_maximum() const override {
+      if(auto max = ToDecimalModel<Quantity>::get_maximum()) {
+        if(*max > MAX_DECIMAL) {
+          return MAX_DECIMAL;
+        }
+        return max;
+      }
+      return MAX_DECIMAL;
+    }
 
     optional<Decimal> get_increment() const override {
       return Decimal("0.000001");
@@ -77,6 +102,9 @@ bool QuantityBox::eventFilter(QObject* watched, QEvent* event) {
         value = from_decimal<Quantity>(*decimal_min);
       } else if(decimal_max && decimal_value >= *decimal_max) {
         value = from_decimal<Quantity>(*decimal_max);
+      }
+      if(std::abs(static_cast<float64_t>(value)) < QUANTITY_EPSILON) {
+        value = 0;
       }
       if(value != *current) {
         get_current()->set(value);
