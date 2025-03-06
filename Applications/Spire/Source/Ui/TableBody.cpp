@@ -1050,6 +1050,8 @@ TableBody::RowCover* TableBody::make_row_cover() {
 
 void TableBody::destroy(RowCover* row) {
   row->unmount();
+  unmatch(*row, CurrentRow());
+  unmatch(*row, Selected());
   m_recycled_rows.push_back(row);
 }
 
@@ -1090,19 +1092,20 @@ void TableBody::mount_visible_rows() {
 }
 
 void TableBody::unmount_hidden_rows() {
-  auto i = 0;
-  while(i != get_layout().count()) {
+  auto removed_items = std::vector<QLayoutItem*>();
+  for(auto i = 0; i != get_layout().count(); ++i) {
     auto item = get_layout().itemAt(i);
     if(!test_visibility(*this, item->geometry())) {
-      auto row = static_cast<RowCover*>(item->widget());
-      get_layout().hide(*item);
-      if(row != m_current_row) {
-        destroy(row);
-      } else {
-        row->move(-1000, -1000);
-      }
+      removed_items.push_back(item);
+    }
+  }
+  for(auto& item : removed_items) {
+    auto row = static_cast<RowCover*>(item->widget());
+    get_layout().hide(*item);
+    if(row != m_current_row) {
+      destroy(row);
     } else {
-      ++i;
+      row->move(-1000, -1000);
     }
   }
 }
