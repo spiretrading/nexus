@@ -4,36 +4,37 @@
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace boost;
+using namespace boost::multiprecision;
 using namespace Nexus;
 using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  const auto MAX_DECIMAL = boost::multiprecision::pow(Decimal(10),
+  const auto MAX_MONEY = pow(Decimal(10),
     std::numeric_limits<Money>::digits10) - 1;
-  const auto MIN_DECIMAL = Decimal(-MAX_DECIMAL);
+  const auto MIN_MONEY = Decimal(-MAX_MONEY);
 
   struct MoneyToDecimalModel : ToDecimalModel<Money> {
     using ToDecimalModel<Money>::ToDecimalModel;
 
     optional<Decimal> get_minimum() const override {
       if(auto min = ToDecimalModel<Money>::get_minimum()) {
-        if(*min < MIN_DECIMAL) {
-          return MIN_DECIMAL;
+        if(*min < MIN_MONEY) {
+          return MIN_MONEY;
         }
         return min;
       }
-      return MIN_DECIMAL;
+      return MIN_MONEY;
     }
 
     optional<Decimal> get_maximum() const override {
       if(auto max = ToDecimalModel<Money>::get_maximum()) {
-        if(*max > MAX_DECIMAL) {
-          return MAX_DECIMAL;
+        if(*max > MAX_MONEY) {
+          return MAX_MONEY;
         }
         return max;
       }
-      return MAX_DECIMAL;
+      return MAX_MONEY;
     }
 
     optional<Decimal> get_increment() const override {

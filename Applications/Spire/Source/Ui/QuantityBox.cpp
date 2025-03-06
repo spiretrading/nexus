@@ -4,14 +4,15 @@
 #include "Spire/Styles/Selectors.hpp"
 
 using namespace boost;
+using namespace boost::multiprecision;
 using namespace Nexus;
 using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  const auto MAX_DECIMAL = boost::multiprecision::pow(Decimal(10),
+  const auto MAX_QUANTITY = pow(Decimal(10),
     std::numeric_limits<Quantity>::digits10) - 1;
-  const auto MIN_DECIMAL = Decimal(-MAX_DECIMAL);
+  const auto MIN_QUANTITY = Decimal(-MAX_QUANTITY);
   const auto QUANTITY_EPSILON = 1.0 / Quantity::MULTIPLIER;
 
   struct QuantityToDecimalModel : ToDecimalModel<Quantity> {
@@ -19,22 +20,22 @@ namespace {
 
     optional<Decimal> get_minimum() const override {
       if(auto min = ToDecimalModel<Quantity>::get_minimum()) {
-        if(*min < MIN_DECIMAL) {
-          return MIN_DECIMAL;
+        if(*min < MIN_QUANTITY) {
+          return MIN_QUANTITY;
         }
         return min;
       }
-      return MIN_DECIMAL;
+      return MIN_QUANTITY;
     }
 
     optional<Decimal> get_maximum() const override {
       if(auto max = ToDecimalModel<Quantity>::get_maximum()) {
-        if(*max > MAX_DECIMAL) {
-          return MAX_DECIMAL;
+        if(*max > MAX_QUANTITY) {
+          return MAX_QUANTITY;
         }
         return max;
       }
-      return MAX_DECIMAL;
+      return MAX_QUANTITY;
     }
 
     optional<Decimal> get_increment() const override {
