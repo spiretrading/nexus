@@ -1049,6 +1049,7 @@ TableBody::RowCover* TableBody::make_row_cover() {
 }
 
 void TableBody::destroy(RowCover* row) {
+  row->hide();
   row->unmount();
   unmatch(*row, CurrentRow());
   unmatch(*row, Selected());
