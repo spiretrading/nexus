@@ -705,6 +705,10 @@ void TableBody::update_parent() {
 }
 
 void TableBody::destroy(RowCover* row) {
+//  row->hide();
+  row->unmount();
+  unmatch(*row, CurrentRow());
+  unmatch(*row, Selected());
   m_row_pool.push_back(row);
 }
 
@@ -764,7 +768,6 @@ void TableBody::unmount(int index) {
   auto row = i->second;
   m_visible_rows.erase(i);
   set_row_height(index, row->height());
-  row->unmount();
   destroy(row);
 }
 
@@ -978,7 +981,6 @@ void TableBody::on_current(
     }
 /*
     if(m_current_row && get_layout().indexOf(m_current_row) == -1) {
-      m_current_row->unmount();
       destroy(m_current_row);
     }
 */
