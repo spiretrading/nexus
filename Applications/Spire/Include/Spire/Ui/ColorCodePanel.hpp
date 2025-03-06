@@ -57,10 +57,17 @@ namespace Styles {
       /** Sets the display mode. */
       void set_mode(Mode mode);
 
+      /** Returns <code>true</code> if the alpha channel input is visible. */
+      bool is_alpha_visible() const;
+
+      /** Sets whether the alpha channel input is visible. */
+      void set_alpha_visible(bool visible);
+
       QSize sizeHint() const override;
 
     protected:
       void resizeEvent(QResizeEvent* event) override;
+      bool focusNextPrevChild(bool next) override;
 
     private:
       struct ColorCodeValueModel;
@@ -68,13 +75,11 @@ namespace Styles {
       DropDownBox* m_color_format_box;
       QStackedWidget* m_color_input;
       PercentBox* m_alpha_box;
-      bool m_is_alpha_visible;
       mutable boost::optional<QSize> m_size_hint;
       boost::signals2::scoped_connection m_style_connection;
 
       void update_layout();
       void on_mode_current(const boost::optional<int>& current);
-      void on_alpha_style();
   };
 }
 

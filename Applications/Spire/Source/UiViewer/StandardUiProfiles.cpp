@@ -1258,15 +1258,8 @@ UiProfile Spire::make_color_code_panel_profile() {
       panel->set_mode(value);
     });
     auto& alpha_visible = get<bool>("alpha_visible", profile.get_properties());
-    alpha_visible.connect_changed_signal([=] (auto value) {
-      update_style(*panel, [&] (auto& style) {
-        if(value) {
-          style.get(Any() > Alpha()).set(Visibility::VISIBLE);
-        } else {
-          style.get(Any() > Alpha()).set(Visibility::NONE);
-        }
-      });
-    });
+    alpha_visible.connect_changed_signal(
+      std::bind_front(&ColorCodePanel::set_alpha_visible, panel));
     auto current_slot = profile.make_event_slot<QString>("Current");
     panel->get_current()->connect_update_signal([=] (const auto& current) {
       auto hue = [&] {
