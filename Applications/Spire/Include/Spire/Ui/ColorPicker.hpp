@@ -35,6 +35,7 @@ namespace Spire {
       /**
        * Constructs a ColorPicker with a default local model and
        * a predefined set of colors.
+       * @param preset The visibility and feature preset.
        * @param parent The parent widget.
        */
       ColorPicker(Preset preset, QWidget& parent);
