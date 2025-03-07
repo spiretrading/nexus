@@ -93,12 +93,6 @@ namespace {
   auto make_color_box(std::shared_ptr<ColorModel> model) {
     auto color_box = new ColorBox(std::move(model));
     color_box->setFixedHeight(scale_height(26));
-    update_style(*color_box, [] (auto& style) {
-      style.get(Any() >
-        Any() > Any() > is_a<ColorPicker>() > Alpha()).set(Visibility::NONE);
-      style.get(Any() > Any() > Any() > is_a<ColorPicker>() >
-        is_a<ColorCodePanel>() > Alpha()).set(Visibility::NONE);
-    });
     return color_box;
   }
 }

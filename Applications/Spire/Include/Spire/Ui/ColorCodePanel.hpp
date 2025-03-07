@@ -8,11 +8,6 @@
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
-namespace Styles {
-
-  /** Selects the alpha component. */
-  using Alpha = StateSelector<void, struct AlphaSelectorTag>;
-}
 
   /**
    * Displays a panel where the user can enter a color code using different
