@@ -2,6 +2,7 @@
 #include <QApplication>
 #include <QKeyEvent>
 #include <QPainter>
+#include <QTimer>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/TableModel.hpp"
 #include "Spire/Spire/TableValueModel.hpp"
@@ -1045,19 +1046,21 @@ TableBody::RowCover* TableBody::make_row_cover() {
   }
   auto row = m_recycled_rows.front();
   m_recycled_rows.pop_front();
-  row->setAttribute(Qt::WA_DontShowOnScreen, false);
-  row->setParent(this);
   return row;
 }
 
 void TableBody::destroy(RowCover* row) {
-//  row->hide();
+  row->move(-10000, -10000);
   row->unmount();
-  row->setAttribute(Qt::WA_DontShowOnScreen);
-//  row->setParent(nullptr);
   unmatch(*row, CurrentRow());
   unmatch(*row, Selected());
   m_recycled_rows.push_back(row);
+  QTimer::singleShot(0, this, [=] {
+    if(std::find(m_recycled_rows.begin(), m_recycled_rows.end(), row) !=
+        m_recycled_rows.end()) {
+      row->hide();
+    }
+  });
 }
 
 void TableBody::remove(RowCover& row) {
@@ -1097,20 +1100,19 @@ void TableBody::mount_visible_rows() {
 }
 
 void TableBody::unmount_hidden_rows() {
-  auto removed_items = std::vector<QLayoutItem*>();
-  for(auto i = 0; i != get_layout().count(); ++i) {
+  auto i = 0;
+  while(i != get_layout().count()) {
     auto item = get_layout().itemAt(i);
     if(!test_visibility(*this, item->geometry())) {
-      removed_items.push_back(item);
-    }
-  }
-  for(auto& item : removed_items) {
-    auto row = static_cast<RowCover*>(item->widget());
-    get_layout().hide(*item);
-    if(row != m_current_row) {
-      destroy(row);
+      auto row = static_cast<RowCover*>(item->widget());
+      get_layout().hide(*item);
+      if(row != m_current_row) {
+        destroy(row);
+      } else {
+        row->move(-1000, -1000);
+      }
     } else {
-      row->move(-1000, -1000);
+      ++i;
     }
   }
 }
