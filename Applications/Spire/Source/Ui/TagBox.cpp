@@ -2,8 +2,10 @@
 #include <QKeyEvent>
 #include <QStringBuilder>
 #include <QTimer>
+#include "Spire/Spire/AnyListValueModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ListModelTransactionLog.hpp"
+#include "Spire/Spire/ToTextModel.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/GlobalPositionObserver.hpp"
@@ -163,7 +165,7 @@ struct TagBox::PartialListModel : public AnyListModel {
   }
 
   void on_operation(const Operation& operation) {
-    m_transaction.push(Operation(operation));
+    m_transaction.push(operation);
   }
 };
 
@@ -379,13 +381,13 @@ QWidget* TagBox::make_tag(
   if(index == model->get_size() - 1) {
     auto box = new QWidget();
     enclose(*box, *m_text_box);
-    connect(box, &QObject::destroyed, this,
-      [=] {
-        m_text_box->setParent(nullptr);
-      });
+    connect(box, &QObject::destroyed, this, [=] {
+      m_text_box->setParent(nullptr);
+    });
     return box;
   }
-  auto label = to_text(model->get(index));
+  auto label = make_read_only_to_text_model(
+    std::make_shared<AnyListValueModel>(model, index));
   auto tag = new Tag(label, this);
   if(m_list_view_overflow == Overflow::WRAP) {
     tag->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -396,7 +398,7 @@ QWidget* TagBox::make_tag(
   tag->connect_delete_signal([=] {
     auto tag_index = [&] {
       for(auto i = 0; i < get_tags()->get_size(); ++i) {
-        if(label == to_text(m_model->get(i))) {
+        if(label->get() == to_text(m_model->get(i))) {
           return i;
         }
       }
@@ -621,15 +623,18 @@ void TagBox::on_operation(const AnyListModel::Operation& operation) {
     update_tooltip();
   };
   visit(operation,
-    [&] (const AnyListModel::AddOperation& operation) {
+    [&] (const AnyListModel::AddOperation&) {
       update_all();
     },
-    [&] (const AnyListModel::RemoveOperation& operation) {
+    [&] (const AnyListModel::RemoveOperation&) {
       update_all();
     },
-    [&] (const AnyListModel::MoveOperation& operation) {
+    [&] (const AnyListModel::MoveOperation&) {
       update_tip();
       update_tooltip();
+    },
+    [&] (const AnyListModel::UpdateOperation&) {
+      update_all();
     });
   QTimer::singleShot(0, this, [=] {
     if(m_list_view->get_current()->get() != m_model->get_size() - 1) {
