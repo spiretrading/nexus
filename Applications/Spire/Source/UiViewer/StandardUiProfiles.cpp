@@ -4523,6 +4523,16 @@ UiProfile Spire::make_tag_profile() {
   auto profile = UiProfile("Tag", properties, [] (auto& profile) {
     auto& label = get<QString>("label", profile.get_properties());
     auto tag = new Tag(label.get());
+    label.connect_changed_signal([=] (const auto& value) {
+      if(tag->get_label()->get() != value) {
+        tag->get_label()->set(value);
+      }
+    });
+    tag->get_label()->connect_update_signal([&] (const auto& value) {
+      if(label.get() != value) {
+        label.set(value);
+      }
+    });
     apply_widget_properties(tag, profile.get_properties());
     auto& read_only = get<bool>("read_only", profile.get_properties());
     read_only.connect_changed_signal([=] (auto is_read_only) {
