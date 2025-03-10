@@ -28,6 +28,7 @@ namespace Spire {
 
 namespace Spire {
   class AnyListModel;
+  class AnyListValueModel;
   class AnyQueryModel;
   class AnyValueModel;
   class AnyRef;

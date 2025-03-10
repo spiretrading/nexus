@@ -462,6 +462,9 @@ void ListView::add_item(int index) {
 void ListView::pre_remove_item(int index) {
   auto item = std::move(m_items[index]);
   m_items.erase(m_items.begin() + index);
+  if(item.get() == m_current_entry) {
+    m_current_entry = nullptr;
+  }
   for(auto& item : m_items | std::views::drop(index)) {
     --item->m_index;
   }
@@ -770,12 +773,9 @@ void ListView::on_current(optional<int> current) {
     m_current_entry->m_item.set_current(false);
     m_current_entry = nullptr;
   }
-  if(find_focus_state(*this) != FocusObserver::State::NONE) {
-    if(current) {
-      m_items[*current]->m_item.setFocus();
-    } else {
-      setFocus();
-    }
+  if(focusPolicy() != Qt::NoFocus &&
+      find_focus_state(*this) != FocusObserver::State::NONE) {
+    setFocus();
   }
   if(current) {
     m_current_entry = m_items[*current].get();
