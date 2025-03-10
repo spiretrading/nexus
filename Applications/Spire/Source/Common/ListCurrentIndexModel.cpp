@@ -51,12 +51,12 @@ void ListCurrentIndexModel::on_operation(
     [&] (const AnyListModel::PreRemoveOperation& operation) {
       if(auto index = get()) {
         m_tracker.update(operation);
-        if(m_list->get_size() == 0) {
+        if(m_list->get_size() == 1) {
           m_tracker.set(-1);
           m_index.set(none);
-        } else if(index >= m_list->get_size()) {
-          m_tracker.set(m_list->get_size() - 1);
-          m_index.set(m_list->get_size() - 1);
+        } else if(index >= m_list->get_size() - 1) {
+          m_tracker.set(m_list->get_size() - 2);
+          m_index.set(m_list->get_size() - 2);
         } else if(operation.m_index == *index) {
           m_tracker.set(*index);
           m_index.set(*index);
