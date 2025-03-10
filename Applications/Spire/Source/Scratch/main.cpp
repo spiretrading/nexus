@@ -25,7 +25,6 @@ struct TagTester : public QWidget {
   }
 
   void onButtonClicked() {
-    qDebug() << "Clicked";
     auto value = m_tags->get(0);
     m_tags->set(0, value + 1);
   }
