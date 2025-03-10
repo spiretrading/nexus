@@ -115,11 +115,13 @@ namespace {
 }
 
 AnyTagComboBox::AnyTagComboBox(std::shared_ptr<AnyQueryModel> query_model,
-    std::shared_ptr<AnyListModel> current, ListViewItemBuilder<> item_builder,
+    std::shared_ptr<AnyListModel> current,
+    std::function<std::shared_ptr<AnyListModel> ()> submission_builder,
+    ListViewItemBuilder<> item_builder,
     std::function<std::shared_ptr<AnyListModel> ()> matches_builder,
     QWidget* parent)
     : QWidget(parent),
-      m_submission(std::make_shared<ArrayListModel<std::any>>()),
+      m_submission(submission_builder()),
       m_focus_observer(*this),
       m_input_box(nullptr),
       m_drop_down_window(nullptr),
