@@ -46,7 +46,7 @@ TEST_SUITE("ListCurrentIndexModel") {
     }
     SUBCASE("remove_current") {
       list->remove(2);
-      REQUIRE((model.get() == 2));
+      REQUIRE((model.get() == none));
     }
     SUBCASE("remove_after_current") {
       list->remove(3);
