@@ -773,12 +773,9 @@ void ListView::on_current(optional<int> current) {
     m_current_entry->m_item.set_current(false);
     m_current_entry = nullptr;
   }
-  if(find_focus_state(*this) != FocusObserver::State::NONE) {
-    if(current) {
-      m_items[*current]->m_item.setFocus();
-    } else {
-      setFocus();
-    }
+  if(focusPolicy() != Qt::NoFocus &&
+      find_focus_state(*this) != FocusObserver::State::NONE) {
+    setFocus();
   }
   if(current) {
     m_current_entry = m_items[*current].get();
