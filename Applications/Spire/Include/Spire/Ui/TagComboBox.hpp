@@ -5,6 +5,7 @@
 #include "Spire/Spire/AnyRef.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/QueryModel.hpp"
+#include "Spire/Spire/TransformListModel.hpp"
 #include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/ListViewItemBuilder.hpp"
@@ -201,7 +202,12 @@ namespace Spire {
   boost::signals2::connection TagComboBox<T>::connect_submit_signal(
       const SubmitSignal::slot_type& slot) const {
     return AnyTagComboBox::connect_submit_signal([=] (const auto& submission) {
-      slot(std::static_pointer_cast<ListModel<Type>>(submission));
+      auto t = make_transform_list_model(
+        std::static_pointer_cast<ListModel<std::any>>(submission),
+        [] (const std::any& source) -> Type {
+          return std::any_cast<Type>(source);
+        });
+      slot(t);
     });
   }
 }

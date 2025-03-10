@@ -165,7 +165,8 @@ struct TagBox::PartialListModel : public AnyListModel {
   }
 
   void on_operation(const Operation& operation) {
-    m_transaction.push(operation);
+    m_transaction.push(
+      reinterpret_cast<const ListModel<std::any>::Operation&>(operation));
   }
 };
 
