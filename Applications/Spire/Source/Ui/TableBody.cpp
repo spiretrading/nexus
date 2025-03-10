@@ -1046,6 +1046,16 @@ TableBody::RowCover* TableBody::make_row_cover() {
   }
   auto row = m_recycled_rows.front();
   m_recycled_rows.pop_front();
+  for(auto i = 0; i != m_widths->get_size(); ++i) {
+    auto spacing = get_left_spacing(i);
+    if(auto item = row->get_item(i)) {
+      if(m_column_covers[i]->isVisible()) {
+        item->setFixedWidth(m_widths->get(i) - spacing);
+      } else {
+        item->setFixedWidth(0);
+      }
+    }
+  }
   return row;
 }
 
@@ -1150,13 +1160,14 @@ void TableBody::update_visible_region() {
     return;
   }
   ++m_resize_guard;
+  auto are_updates_enabled = updatesEnabled();
+  setUpdatesEnabled(false);
   unmount_hidden_rows();
   if(get_layout().isEmpty()) {
     reset_visible_region();
   }
   mount_visible_rows();
-  get_layout().invalidate();
-  get_layout().setGeometry(get_layout().geometry());
+  setUpdatesEnabled(are_updates_enabled);
   --m_resize_guard;
 }
 
