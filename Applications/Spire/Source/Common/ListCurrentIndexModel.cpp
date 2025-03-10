@@ -49,32 +49,27 @@ void ListCurrentIndexModel::on_operation(
     const AnyListModel::Operation& operation) {
   visit(operation,
     [&] (const AnyListModel::PreRemoveOperation& operation) {
+    },
+    [&] (const AnyListModel::RemoveOperation& operation) {
       if(auto index = get()) {
-        m_tracker.update(operation);
-        if(m_list->get_size() == 0) {
+        if(operation.m_index < *index) {
+          m_tracker.set(*index - 1);
+          m_index.set(*index - 1);
+        } else if(operation.m_index == *index) {
           m_tracker.set(-1);
           m_index.set(none);
-        } else if(index >= m_list->get_size()) {
-          m_tracker.set(m_list->get_size() - 1);
-          m_index.set(m_list->get_size() - 1);
-        } else if(operation.m_index == *index) {
-          m_tracker.set(*index);
-          m_index.set(*index);
-        } else if(m_tracker.get_index() == -1) {
-          m_index.set(none);
-        } else {
-          m_index.set(m_tracker.get_index());
         }
       }
     },
     [&] (const auto& operation) {
-      auto index = get();
-      m_tracker.update(operation);
-      if(m_tracker.get_index() != index.value_or(-1)) {
-        if(m_tracker.get_index() == -1) {
-          m_index.set(none);
-        } else {
-          m_index.set(m_tracker.get_index());
+      if(auto index = get()) {
+        m_tracker.update(operation);
+        if(m_tracker.get_index() != index.value_or(-1)) {
+          if(m_tracker.get_index() == -1) {
+            m_index.set(none);
+          } else {
+            m_index.set(m_tracker.get_index());
+          }
         }
       }
     });
