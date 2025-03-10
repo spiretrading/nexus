@@ -75,7 +75,7 @@ namespace {
 
     optional<std::any> parse(const QString& query) override {
       auto value = m_source->parse(query);
-      if(value.has_value() && m_exclusion_set.contains(to_text(value))) {
+      if(value.has_value() && !m_exclusion_set.contains(to_text(value))) {
         return value;
       }
       return none;
@@ -105,6 +105,10 @@ namespace {
         },
         [&] (const AnyListModel::PreRemoveOperation& operation) {
           m_exclusion_set.erase(to_text(m_exclusions->get(operation.m_index)));
+        },
+        [&] (const AnyListModel::UpdateOperation& operation) {
+          m_exclusion_set.erase(to_text(operation.m_previous));
+          m_exclusion_set.insert(to_text(operation.m_value));
         });
     }
   };
