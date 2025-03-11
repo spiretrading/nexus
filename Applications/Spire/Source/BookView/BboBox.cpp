@@ -24,10 +24,7 @@ namespace {
   template<typename T, typename U>
   auto make_bbo_label(std::shared_ptr<QuoteModel> quote, U field) {
     auto label = make_label(
-      make_to_text_model<T>(make_field_value_model(quote, field),
-        [] (const auto& value) {
-          return to_text(value);
-        }));
+      make_to_text_model(make_field_value_model(quote, field)));
     label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     return label;
   }
