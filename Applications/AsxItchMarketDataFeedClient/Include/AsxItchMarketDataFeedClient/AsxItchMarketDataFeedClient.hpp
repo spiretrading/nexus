@@ -132,18 +132,23 @@ namespace Nexus::MarketDataService {
       AsxItchMarketDataFeedClient(const AsxItchMarketDataFeedClient&) = delete;
       AsxItchMarketDataFeedClient& operator =(
         const AsxItchMarketDataFeedClient&) = delete;
-      boost::posix_time::ptime ParseTimestamp(Beam::Out<const char*> cursor);
-      std::uint8_t ParseChar(Beam::Out<const char*> cursor);
-      std::uint8_t ParseInt8(Beam::Out<const char*> cursor);
-      std::uint16_t ParseInt16(Beam::Out<const char*> cursor);
-      std::uint32_t ParseInt32(Beam::Out<const char*> cursor);
-      std::uint64_t ParseInt64(Beam::Out<const char*> cursor);
-      std::string ParseAlpha(std::size_t size, Beam::Out<const char*> cursor);
+      boost::posix_time::ptime
+        ParseTimestamp(Beam::Out<const char*> cursor) const;
+      std::uint8_t ParseChar(Beam::Out<const char*> cursor) const;
+      std::uint8_t ParseInt8(Beam::Out<const char*> cursor) const;
+      std::uint16_t ParseInt16(Beam::Out<const char*> cursor) const;
+      std::uint32_t ParseInt32(Beam::Out<const char*> cursor) const;
+      std::uint64_t ParseInt64(Beam::Out<const char*> cursor) const;
+      std::string
+        ParseAlpha(std::size_t size, Beam::Out<const char*> cursor) const;
+      Side ParseSide(Beam::Out<const char*> cursor) const;
       Money ParsePrice(const OrderBookDirectory& directory,
-        Beam::Out<const char*> cursor);
-      Side ParseSide(Beam::Out<const char*> cursor);
+        Beam::Out<const char*> cursor) const;
+      std::string ParseMpid(Beam::Out<const char*> cursor) const;
+      std::tuple<std::string, std::string> ParseBuyerSellerMpids(
+        Side side, Beam::Out<const char*> cursor) const;
       std::string BuildOrderKey(const Security& security, Side side,
-        std::uint64_t orderId);
+        std::uint64_t orderId) const;
       void UpdateBbo(const Security& security, Side side, Money price,
         Quantity delta, boost::posix_time::ptime timestamp);
       void HandleSecondsMessage(const MoldUdp64::MoldUdp64Message& message);
@@ -202,7 +207,7 @@ namespace Nexus::MarketDataService {
 
   template<typename M, typename I, typename G>
   boost::posix_time::ptime AsxItchMarketDataFeedClient<M, I, G>::ParseTimestamp(
-      Beam::Out<const char*> cursor) {
+      Beam::Out<const char*> cursor) const {
     auto nanoseconds = Beam::FromBigEndian(
       *reinterpret_cast<const std::uint32_t*>(*cursor));
     *cursor += sizeof(std::uint32_t);
@@ -215,7 +220,7 @@ namespace Nexus::MarketDataService {
 
   template<typename M, typename I, typename G>
   std::uint8_t AsxItchMarketDataFeedClient<M, I, G>::ParseChar(
-      Beam::Out<const char*> cursor) {
+      Beam::Out<const char*> cursor) const {
     auto result = Beam::FromBigEndian(
       *reinterpret_cast<const std::uint8_t*>(*cursor));
     *cursor += sizeof(std::uint8_t);
@@ -224,7 +229,7 @@ namespace Nexus::MarketDataService {
 
   template<typename M, typename I, typename G>
   std::uint8_t AsxItchMarketDataFeedClient<M, I, G>::ParseInt8(
-      Beam::Out<const char*> cursor) {
+      Beam::Out<const char*> cursor) const {
     auto result = Beam::FromBigEndian(
       *reinterpret_cast<const std::uint8_t*>(*cursor));
     *cursor += sizeof(std::uint8_t);
@@ -233,7 +238,7 @@ namespace Nexus::MarketDataService {
 
   template<typename M, typename I, typename G>
   std::uint16_t AsxItchMarketDataFeedClient<M, I, G>::ParseInt16(
-      Beam::Out<const char*> cursor) {
+      Beam::Out<const char*> cursor) const {
     auto result = Beam::FromBigEndian(
       *reinterpret_cast<const std::uint16_t*>(*cursor));
     *cursor += sizeof(std::uint16_t);
@@ -242,7 +247,7 @@ namespace Nexus::MarketDataService {
 
   template<typename M, typename I, typename G>
   std::uint32_t AsxItchMarketDataFeedClient<M, I, G>::ParseInt32(
-      Beam::Out<const char*> cursor) {
+      Beam::Out<const char*> cursor) const {
     auto result = Beam::FromBigEndian(
       *reinterpret_cast<const std::uint32_t*>(*cursor));
     *cursor += sizeof(std::uint32_t);
@@ -251,7 +256,7 @@ namespace Nexus::MarketDataService {
 
   template<typename M, typename I, typename G>
   std::uint64_t AsxItchMarketDataFeedClient<M, I, G>::ParseInt64(
-      Beam::Out<const char*> cursor) {
+      Beam::Out<const char*> cursor) const {
     auto result = Beam::FromBigEndian(
       *reinterpret_cast<const std::uint64_t*>(*cursor));
     *cursor += sizeof(std::uint64_t);
@@ -260,7 +265,7 @@ namespace Nexus::MarketDataService {
 
   template<typename M, typename I, typename G>
   std::string AsxItchMarketDataFeedClient<M, I, G>::ParseAlpha(std::size_t size,
-      Beam::Out<const char*> cursor) {
+      Beam::Out<const char*> cursor) const {
     if(size == 0) {
       return std::string{};
     }
@@ -284,7 +289,7 @@ namespace Nexus::MarketDataService {
 
   template<typename M, typename I, typename G>
   Side AsxItchMarketDataFeedClient<M, I, G>::ParseSide(
-      Beam::Out<const char*> cursor) {
+      Beam::Out<const char*> cursor) const {
     auto s = ParseChar(Beam::Store(cursor));
     if(s == 'S') {
       return Side::ASK;
@@ -296,7 +301,8 @@ namespace Nexus::MarketDataService {
 
   template<typename M, typename I, typename G>
   Money AsxItchMarketDataFeedClient<M, I, G>::ParsePrice(
-      const OrderBookDirectory& directory, Beam::Out<const char*> cursor) {
+      const OrderBookDirectory& directory,
+      Beam::Out<const char*> cursor) const {
     auto PowerOfTen = [] (std::uint16_t exponent) {
       auto result = Quantity(1);
       for(auto i = std::uint16_t(0); i < exponent; ++i) {
@@ -310,8 +316,30 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename M, typename I, typename G>
+  std::string AsxItchMarketDataFeedClient<M, I, G>::ParseMpid(
+      Beam::Out<const char*> cursor) const {
+    auto mpid = ParseAlpha(7, Beam::Store(cursor));
+    if(mpid.empty()) {
+      return "AU000";
+    }
+    return mpid;
+  }
+
+  template<typename M, typename I, typename G>
+  std::tuple<std::string, std::string>
+    AsxItchMarketDataFeedClient<M, I, G>::ParseBuyerSellerMpids(
+      Side side, Beam::Out<const char*> cursor) const {
+    auto ownerMpid = ParseMpid(Beam::Store(cursor));
+    auto counterMpid = ParseMpid(Beam::Store(cursor));
+    if(side == Side::BID) {
+      return std::tuple(std::move(ownerMpid), std::move(counterMpid));
+    }
+    return std::tuple(std::move(counterMpid), std::move(ownerMpid));
+  }
+
+  template<typename M, typename I, typename G>
   std::string AsxItchMarketDataFeedClient<M, I, G>::BuildOrderKey(
-      const Security& security, Side side, std::uint64_t orderId) {
+      const Security& security, Side side, std::uint64_t orderId) const {
     auto result = security.GetSymbol();
     result += '-';
     if(side == Side::ASK) {
@@ -413,7 +441,7 @@ namespace Nexus::MarketDataService {
       if(isAnonymous) {
         return std::string("AU000");
       } else {
-        return ParseAlpha(7, Beam::Store(cursor));
+        return ParseMpid(Beam::Store(cursor));
       }
     }();
     auto orderKey = BuildOrderKey(directory->m_security.m_security, side,
@@ -446,6 +474,9 @@ namespace Nexus::MarketDataService {
       ParseInt64(Beam::Store(cursor)));
     auto orderKey = BuildOrderKey(directory->m_security.m_security, side,
       orderId);
+    auto matchId = ParseAlpha(12, Beam::Store(cursor));
+    auto [buyerMpid, sellerMpid] =
+      ParseBuyerSellerMpids(side, Beam::Store(cursor));
     m_marketDataFeedClient->OffsetOrderSize(orderKey, -executedQuantity,
       timestamp);
     if(auto orderEntry = Beam::Retrieve(m_orderEntries, orderKey)) {
@@ -455,7 +486,8 @@ namespace Nexus::MarketDataService {
         condition.m_code = "@";
         auto timeAndSale = TimeAndSale(timestamp, orderEntry->m_price,
           executedQuantity, std::move(condition),
-          m_config.m_market.m_displayName);
+          m_config.m_market.m_displayName, std::move(buyerMpid),
+          std::move(sellerMpid));
         m_marketDataFeedClient->Publish(SecurityTimeAndSale(
           std::move(timeAndSale), directory->m_security.m_security));
       }
@@ -479,8 +511,8 @@ namespace Nexus::MarketDataService {
     auto executedQuantity = static_cast<std::int64_t>(
       ParseInt64(Beam::Store(cursor)));
     auto matchId = ParseAlpha(12, Beam::Store(cursor));
-    auto ownerMpid = ParseAlpha(7, Beam::Store(cursor));
-    auto counterMpid = ParseAlpha(7, Beam::Store(cursor));
+    auto [buyerMpid, sellerMpid] =
+      ParseBuyerSellerMpids(side, Beam::Store(cursor));
     auto price = ParsePrice(*directory, Beam::Store(cursor));
     auto atCross = ParseChar(Beam::Store(cursor));
     auto printable = ParseChar(Beam::Store(cursor));
@@ -494,7 +526,8 @@ namespace Nexus::MarketDataService {
         auto condition = TimeAndSale::Condition();
         condition.m_code = "@";
         auto timeAndSale = TimeAndSale(timestamp, price, executedQuantity,
-          std::move(condition), m_config.m_market.m_displayName);
+          std::move(condition), m_config.m_market.m_displayName,
+          std::move(buyerMpid), std::move(sellerMpid));
         m_marketDataFeedClient->Publish(SecurityTimeAndSale(
           std::move(timeAndSale), directory->m_security.m_security));
       }
@@ -577,15 +610,16 @@ namespace Nexus::MarketDataService {
       return;
     }
     auto price = ParsePrice(*directory, Beam::Store(cursor));
-    auto ownerMpid = ParseAlpha(7, Beam::Store(cursor));
-    auto counterMpid = ParseAlpha(7, Beam::Store(cursor));
+    auto [buyerMpid, sellerMpid] =
+      ParseBuyerSellerMpids(side, Beam::Store(cursor));
     auto printable = ParseChar(Beam::Store(cursor));
     auto atCross = ParseChar(Beam::Store(cursor));
     if(printable == 'Y' && m_config.m_isTimeAndSaleFeed) {
       auto condition = TimeAndSale::Condition();
       condition.m_code = "@";
       auto timeAndSale = TimeAndSale(timestamp, price, quantity,
-        std::move(condition), m_config.m_market.m_displayName);
+        std::move(condition), m_config.m_market.m_displayName,
+        std::move(buyerMpid), std::move(sellerMpid));
       m_marketDataFeedClient->Publish(SecurityTimeAndSale(
         std::move(timeAndSale), directory->m_security.m_security));
     }

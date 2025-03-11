@@ -53,7 +53,8 @@ TEST_SUITE("ChartingServlet") {
       auto timestamp = startTime + minutes(i);
       auto price = (i + 1) * Money::ONE;
       auto timeAndSale = TimeAndSale(timestamp, price, i * 100,
-        TimeAndSale::Condition(TimeAndSale::Condition::Type::NONE, "?"), "N");
+        TimeAndSale::Condition(TimeAndSale::Condition::Type::NONE, "?"), "N",
+        "A", "B");
       m_environment.GetMarketDataEnvironment().GetFeedClient().Publish(
         SecurityTimeAndSale(timeAndSale, security));
       expectedSeries.emplace_back(timestamp, timestamp + interval, price, price,

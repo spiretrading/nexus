@@ -13,11 +13,12 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 SecurityDialog::SecurityDialog(
-  std::shared_ptr<ComboBox::QueryModel> securities, QWidget* parent)
+  std::shared_ptr<SecurityInfoQueryModel> securities, QWidget* parent)
   : SecurityDialog(
       std::move(securities), std::make_shared<LocalSecurityModel>(), parent) {}
 
-SecurityDialog::SecurityDialog(std::shared_ptr<ComboBox::QueryModel> securities,
+SecurityDialog::SecurityDialog(
+    std::shared_ptr<SecurityInfoQueryModel> securities,
     std::shared_ptr<SecurityModel> current, QWidget* parent)
     : QWidget(parent) {
   auto header = make_label(tr("Security"));
@@ -51,7 +52,7 @@ SecurityDialog::SecurityDialog(std::shared_ptr<ComboBox::QueryModel> securities,
   m_input_box->installEventFilter(this);
 }
 
-const std::shared_ptr<ComboBox::QueryModel>&
+const std::shared_ptr<SecurityInfoQueryModel>&
     SecurityDialog::get_securities() const {
   return m_security_box->get_securities();
 }

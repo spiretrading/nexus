@@ -17,10 +17,7 @@ CALL:configure Applications\ChartingServer %*
 CALL:configure Applications\ChiaMarketDataFeedClient %*
 CALL:configure Applications\ComplianceServer %*
 CALL:configure Applications\CseMarketDataFeedClient %*
-CALL:configure Applications\CtaMarketDataFeedClient %*
 CALL:configure Applications\DefinitionsServer %*
-CALL:configure Applications\HkexMarketDataFeedClient %*
-CALL:configure Applications\JpxFlexMarketDataFeedClient %*
 CALL:configure Applications\Lollipop %*
 CALL:configure Applications\MarketDataRelayServer %*
 CALL:configure Applications\MarketDataServer %*
@@ -35,7 +32,6 @@ CALL:configure Applications\Spire %*
 CALL:configure Applications\TelemetryServer %*
 CALL:configure Applications\TmxIpMarketDataFeedClient %*
 CALL:configure Applications\TmxTl1MarketDataFeedClient %*
-CALL:configure Applications\UtpMarketDataFeedClient %*
 CALL:configure Applications\WebPortal\WebApp %*
 CALL:configure Applications\WebPortal %*
 ENDLOCAL

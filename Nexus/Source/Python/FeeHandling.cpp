@@ -241,14 +241,16 @@ void Nexus::Python::ExportCseFeeTable(module& module) {
     .def(init())
     .def(init<const CseFeeTable&>())
     .def_readwrite("fee_table", &CseFeeTable::m_feeTable);
-  enum_<CseFeeTable::PriceClass>(outer, "PriceClass")
-    .value("NONE", CseFeeTable::PriceClass::NONE)
-    .value("DEFAULT", CseFeeTable::PriceClass::DEFAULT)
-    .value("SUBDOLLAR", CseFeeTable::PriceClass::SUBDOLLAR)
-    .value("SUBDIME", CseFeeTable::PriceClass::SUBDIME);
+  enum_<CseFeeTable::Section>(outer, "Section")
+    .value("NONE", CseFeeTable::Section::NONE)
+    .value("DEFAULT", CseFeeTable::Section::DEFAULT)
+    .value("SUBDOLLAR", CseFeeTable::Section::SUBDOLLAR)
+    .value("DARK", CseFeeTable::Section::DARK);
   module.def("parse_cse_fee_table", &ParseCseFeeTable);
+  module.def("lookup_cse_fee_table_section", &LookupCseFeeTableSection);
+  module.def("lookup_cse_liquidity_flag", &LookupCseLiquidityFlag);
   module.def("lookup_fee", static_cast<Money (*)(const CseFeeTable&,
-    LiquidityFlag, CseFeeTable::PriceClass)>(&LookupFee));
+    LiquidityFlag, CseFeeTable::Section)>(&LookupFee));
   module.def("calculate_fee", static_cast<Money (*)(const CseFeeTable&,
     const ExecutionReport&)>(&CalculateFee));
 }
@@ -271,16 +273,31 @@ void Nexus::Python::ExportCse2FeeTable(module& module) {
     .value("CSE_LISTED_GOVERNMENT_BONDS",
       Cse2FeeTable::Section::CSE_LISTED_GOVERNMENT_BONDS)
     .value("ODDLOT", Cse2FeeTable::Section::ODDLOT);
+  enum_<Cse2FeeTable::PriceClass>(outer, "PriceClass")
+    .value("DEFAULT", Cse2FeeTable::PriceClass::DEFAULT)
+    .value("SUBDOLLAR", Cse2FeeTable::PriceClass::SUBDOLLAR);
+  enum_<Cse2FeeTable::ListingMarket>(outer, "ListingMarket")
+    .value("CSE", Cse2FeeTable::ListingMarket::CSE)
+    .value("TSX_TSXV", Cse2FeeTable::ListingMarket::TSX_TSXV);
   module.def("parse_cse2_fee_table", &ParseCse2FeeTable);
   module.def("lookup_cse2_fee_table_section", &LookupCse2FeeTableSection);
+  module.def("lookup_cse2_price_class", &LookupCse2PriceClass);
   module.def("lookup_cse2_liquidity_flag", &LookupCse2LiquidityFlag);
+  module.def("lookup_cse2_listing_market", &LookupCse2ListingMarket);
+  module.def("lookup_regular_fee", &LookupRegularFee);
   module.def("calculate_regular_fee", &CalculateRegularFee);
+  module.def("lookup_dark_fee", &LookupDarkFee);
   module.def("calculate_dark_fee", &CalculateDarkFee);
   module.def(
+    "lookup_debentures_or_notes_fee", &LookupDebenturesOrNotesFee);
+  module.def(
     "calculate_debentures_or_notes_fee", &CalculateDebenturesOrNotesFee);
+  module.def("lookup_cse_listed_government_bonds_fee",
+    &LookupCseListedGovernmentBondsFee);
   module.def("calculate_cse_listed_government_bonds_fee",
     &CalculateCseListedGovernmentBondsFee);
-  module.def("calculate_oddlot_fee", &CalculateOddLotFee);
+  module.def("lookup_oddlot_fee", &LookupOddlotFee);
+  module.def("calculate_oddlot_fee", &CalculateOddlotFee);
   module.def("calculate_fee", static_cast<Money (*)(const Cse2FeeTable&,
     const OrderFields&, const ExecutionReport&)>(&CalculateFee));
 }
@@ -544,11 +561,27 @@ void Nexus::Python::ExportOmgaFeeTable(module& module) {
 }
 
 void Nexus::Python::ExportPureFeeTable(module& module) {
-  class_<PureFeeTable>(module, "PureFeeTable")
-    .def(init<const PureFeeTable&>());
+  auto outer = class_<PureFeeTable>(module, "PureFeeTable")
+    .def(init<const PureFeeTable&>())
+    .def_readwrite("fee_table", &PureFeeTable::m_feeTable);
+  enum_<PureFeeTable::Section>(outer, "Section")
+    .value("NONE", PureFeeTable::Section::NONE)
+    .value("DEFAULT", PureFeeTable::Section::DEFAULT)
+    .value("INTERLISTED", PureFeeTable::Section::INTERLISTED)
+    .value("ETF", PureFeeTable::Section::ETF);
+  enum_<PureFeeTable::Row>(outer, "Row")
+    .value("NONE", PureFeeTable::Row::NONE)
+    .value("SUBDOLLAR", PureFeeTable::Row::SUBDOLLAR)
+    .value("DEFAULT", PureFeeTable::Row::DEFAULT)
+    .value("DARK_SUBDOLLAR", PureFeeTable::Row::DARK_SUBDOLLAR)
+    .value("DARK", PureFeeTable::Row::DARK);
   module.def("parse_pure_fee_table", &ParsePureFeeTable);
+  module.def("lookup_pure_row", &LookupPureRow);
+  module.def("lookup_pure_liquidity_flag", &LookupPureLiquidityFlag);
+  module.def("lookup_fee", static_cast<Money (*)(const PureFeeTable&,
+    PureFeeTable::Section, PureFeeTable::Row, LiquidityFlag)>(&LookupFee));
   module.def("calculate_fee", static_cast<Money (*)(const PureFeeTable&,
-    const Security&, const ExecutionReport&)>(&CalculateFee));
+    PureFeeTable::Section, const ExecutionReport&)>(&CalculateFee));
 }
 
 void Nexus::Python::ExportTsxFeeTable(module& module) {

@@ -225,66 +225,69 @@ namespace Spire {
   bool is_equal(const std::any& left, const std::any& right);
 
   /**
-   * Constructs an instance of the given type from its string representation.
+   * Constructs an instance of the given type from its text representation.
    * @param T The type to construct.
-   * @param string The string used to instantiate the object.
+   * @param text The text used to instantiate the object.
    * @returns An initialized optional iff construction was successful and the
    *          object is valid.
    */
   template<typename T>
-  boost::optional<T> from_text(const QString& string) = delete;
+  boost::optional<T> from_text(const QString& text) = delete;
 
   template<>
-  boost::optional<int> from_text(const QString& string);
+  boost::optional<QString> from_text(const QString& text);
 
   template<>
-  boost::optional<double> from_text(const QString& string);
+  boost::optional<int> from_text(const QString& text);
 
   template<>
-  boost::optional<boost::gregorian::date> from_text(const QString& string);
+  boost::optional<double> from_text(const QString& text);
 
   template<>
-  boost::optional<boost::posix_time::ptime> from_text(const QString& string);
+  boost::optional<boost::gregorian::date> from_text(const QString& text);
+
+  template<>
+  boost::optional<boost::posix_time::ptime> from_text(const QString& text);
 
   template<>
   boost::optional<boost::posix_time::time_duration>
-    from_text(const QString& string);
+    from_text(const QString& text);
 
   template<>
-  boost::optional<std::string> from_text(const QString& string);
+  boost::optional<std::string> from_text(const QString& text);
 
   template<>
-  boost::optional<Nexus::CurrencyId> from_text(const QString& string);
+  boost::optional<Nexus::CurrencyId> from_text(const QString& text);
 
   template<>
-  boost::optional<Nexus::Money> from_text(const QString& string);
+  boost::optional<Nexus::Money> from_text(const QString& text);
 
   template<>
-  boost::optional<Nexus::Quantity> from_text(const QString& string);
+  boost::optional<Nexus::Quantity> from_text(const QString& text);
 
   template<>
-  boost::optional<Nexus::Region> from_text(const QString& string);
+  boost::optional<Nexus::Region> from_text(const QString& text);
 
   template<>
-  boost::optional<Nexus::OrderStatus> from_text(const QString& string);
+  boost::optional<Nexus::OrderStatus> from_text(const QString& text);
 
   template<>
-  boost::optional<Nexus::OrderType> from_text(const QString& string);
+  boost::optional<Nexus::OrderType> from_text(const QString& text);
 
   template<>
-  boost::optional<Nexus::Security> from_text(const QString& string);
+  boost::optional<Nexus::Security> from_text(const QString& text);
 
   template<>
-  boost::optional<Nexus::Side> from_text(const QString& string);
+  boost::optional<Nexus::Side> from_text(const QString& text);
 
   template<>
-  boost::optional<Nexus::TimeInForce> from_text(const QString& string);
+  boost::optional<Nexus::TimeInForce> from_text(const QString& text);
 
   template<>
-  boost::optional<QColor> from_text(const QString& string);
+  boost::optional<QColor> from_text(const QString& text);
 
   template<>
-  boost::optional<QKeySequence> from_text(const QString& string);
+  boost::optional<QKeySequence> from_text(const QString& text);
 }
 
 #endif

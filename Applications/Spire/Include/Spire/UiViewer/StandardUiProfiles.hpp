@@ -131,9 +131,6 @@ namespace Spire {
   /** Returns a UiProfile for the IntegerFilterPanel. */
   UiProfile make_integer_filter_panel_profile();
 
-  /** Returns a UiProfile for the KeyFilterPanel. */
-  UiProfile make_key_filter_panel_profile();
-
   /** Returns a UiProfile for the KeyInputBox. */
   UiProfile make_key_input_box_profile();
 
@@ -172,9 +169,6 @@ namespace Spire {
 
   /** Returns a UiProfile for the NavigationView. */
   UiProfile make_navigation_view_profile();
-
-  /** Returns a UiProfile for the OpenFilterPanel. */
-  UiProfile make_open_filter_panel_profile();
 
   /** Returns a UiProfile for the OrderFieldInfoTip. */
   UiProfile make_order_field_info_tip_profile();
@@ -215,12 +209,6 @@ namespace Spire {
   /** Returns a UiProfile for the ResponsiveLabel. */
   UiProfile make_responsive_label_profile();
 
-  /** Returns a UiProfile for the SaleConditionBox. */
-  UiProfile make_sale_condition_box_profile();
-
-  /** Returns a UiProfile for the SaleConditionListItem. */
-  UiProfile make_sale_condition_list_item_profile();
-
   /** Returns a UiProfile for the ScrollBar. */
   UiProfile make_scroll_bar_profile();
 
@@ -235,9 +223,6 @@ namespace Spire {
 
   /** Returns a UiProfile for the SecurityBox. */
   UiProfile make_security_box_profile();
-
-  /** Returns a UiProfile for the SecurityFilterPanel. */
-  UiProfile make_security_filter_panel_profile();
 
   /** Returns a UiProfile for the SecurityListItem. */
   UiProfile make_security_list_item_profile();

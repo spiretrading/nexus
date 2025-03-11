@@ -11,7 +11,9 @@
 
 namespace Spire {
   class AdaptiveBox;
+  class AnyComboBox;
   class AnyInputBox;
+  class AnyTagComboBox;
   class Box;
   class BoxGeometry;
   class BoxPainter;
@@ -24,7 +26,7 @@ namespace Spire {
   class ColorCodePanel;
   class ColorPicker;
   class ColorSwatch;
-  class ComboBox;
+  template<typename T> class ComboBox;
   class ContextMenu;
   class DateBox;
   class DateFilterPanel;
@@ -46,6 +48,7 @@ namespace Spire {
   class FilterPanel;
   class FixedHorizontalLayout;
   class FocusObserver;
+  class FontBox;
   class GlobalPositionObserver;
   class HexColorBox;
   struct Highlight;
@@ -68,8 +71,6 @@ namespace Spire {
   class MoneyBox;
   template<typename T> class MultiSelectionModel;
   class NavigationView;
-  class OpenFilterPanel;
-  template<typename T> class OpenFilterPanelTemplate;
   class OverlayPanel;
   class PercentBox;
   class PopupBox;
@@ -86,7 +87,6 @@ namespace Spire {
   class SecurityBox;
   class SecurityDialog;
   class SecurityListItem;
-  class SecurityStack;
   class SecurityView;
   template<typename T> class SingleSelectionModel;
   class Slider;
@@ -107,7 +107,7 @@ namespace Spire {
   class TableView;
   class Tag;
   class TagBox;
-  class TagComboBox;
+  template<typename T> class TagComboBox;
   class TextAreaBox;
   class TextBox;
   class TimeBox;

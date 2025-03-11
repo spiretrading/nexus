@@ -52,7 +52,8 @@ const Order& AsxFixApplication::Submit(const OrderInfo& info) {
       newOrderSingle->set(FIX::Account(GetAccount()));
       newOrderSingle->setField(ACCOUNT_TAG, info.m_submissionAccount.m_name);
       if(auto deliverToCompId = GetDeliverToCompId()) {
-        newOrderSingle->setField(FIX::DeliverToCompID(*deliverToCompId));
+        newOrderSingle->getHeader().setField(
+          FIX::DeliverToCompID(*deliverToCompId));
       }
       if(info.m_fields.m_security.GetMarket() == DefaultMarkets::ASX()) {
         newOrderSingle->set(FIX::SecurityExchange{"ASX"});
@@ -86,7 +87,8 @@ void AsxFixApplication::Cancel(const OrderExecutionSession& session,
       orderCancelRequest->set(FIX::Account(GetAccount()));
       orderCancelRequest->setField(ACCOUNT_TAG, session.GetAccount().m_name);
       if(auto deliverToCompId = GetDeliverToCompId()) {
-        orderCancelRequest->setField(FIX::DeliverToCompID(*deliverToCompId));
+        orderCancelRequest->getHeader().setField(
+          FIX::DeliverToCompID(*deliverToCompId));
       }
       auto& fields = order.GetInfo().m_fields;
       if(fields.m_security.GetMarket() == DefaultMarkets::ASX()) {

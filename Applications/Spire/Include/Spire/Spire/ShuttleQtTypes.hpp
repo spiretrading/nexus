@@ -10,9 +10,9 @@
 #include <QPoint>
 #include <QString>
 #include "Spire/LegacyUI/LegacyUI.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 
-namespace Beam {
-namespace Serialization {
+namespace Beam::Serialization {
   template<>
   struct IsStructure<QString> : std::false_type {};
 
@@ -42,8 +42,7 @@ namespace Serialization {
     void operator ()(Shuttler& shuttle, const QByteArray& value,
         unsigned int version) const {
       auto buffer = std::string(value.data(), value.size());
-      shuttle.Shuttle("buffer",
-        Beam::IO::BufferFromString<Beam::IO::SharedBuffer>(buffer));
+      shuttle.Shuttle("buffer", IO::BufferFromString<IO::SharedBuffer>(buffer));
     }
   };
 
@@ -52,7 +51,7 @@ namespace Serialization {
     template<typename Shuttler>
     void operator ()(
         Shuttler& shuttle, QByteArray& value, unsigned int version) const {
-      auto buffer = Beam::IO::SharedBuffer();
+      auto buffer = IO::SharedBuffer();
       shuttle.Shuttle("buffer", buffer);
       value = QByteArray(buffer.GetData(), buffer.GetSize());
     }
@@ -87,6 +86,9 @@ namespace Serialization {
       shuttle.Shuttle("point_size", value.pointSize());
       shuttle.Shuttle("weight", value.weight());
       shuttle.Shuttle("italic", value.italic());
+      if(value.pointSize() == -1) {
+        shuttle.Shuttle("pixel_size", Spire::unscale_width(value.pixelSize()));
+      }
     }
   };
 
@@ -97,13 +99,18 @@ namespace Serialization {
         Shuttler& shuttle, QFont& value, unsigned int version) const {
       auto family = QString();
       shuttle.Shuttle("family", family);
-      auto pointSize = int();
-      shuttle.Shuttle("point_size", pointSize);
+      auto point_size = int();
+      shuttle.Shuttle("point_size", point_size);
       auto weight = int();
       shuttle.Shuttle("weight", weight);
       auto italic = bool();
       shuttle.Shuttle("italic", italic);
-      value = QFont(family, pointSize, weight, italic);
+      value = QFont(family, point_size, weight, italic);
+      if(point_size == -1) {
+        auto pixel_size = int();
+        shuttle.Shuttle("pixel_size", pixel_size);
+        value.setPixelSize(Spire::scale_width(pixel_size));
+      }
     }
   };
 
@@ -149,7 +156,6 @@ namespace Serialization {
       value = QPoint(x, y);
     }
   };
-}
 }
 
 #endif
