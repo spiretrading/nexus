@@ -90,8 +90,8 @@ namespace Spire {
    * @param source The model to convert to text.
    */
   template<typename T>
-  auto make_to_text_model(std::shared_ptr<ValueModel<T>> source) {
-    return std::make_shared<ToTextModel<T>>(std::move(source));
+  auto make_to_text_model(std::shared_ptr<T> source) {
+    return std::make_shared<ToTextModel<typename T::Type>>(std::move(source));
   }
 
   /**
@@ -101,9 +101,9 @@ namespace Spire {
    *        representation.
    */
   template<typename T>
-  auto make_to_text_model(std::shared_ptr<ValueModel<T>> source,
-      typename ToTextModel<T>::ToText to_text) {
-    return std::make_shared<ToTextModel<T>>(
+  auto make_to_text_model(std::shared_ptr<T> source,
+      typename ToTextModel<typename T::Type>::ToText to_text) {
+    return std::make_shared<ToTextModel<typename T::Type>>(
       std::move(source), std::move(to_text));
   }
 
@@ -115,11 +115,26 @@ namespace Spire {
    * @param from_text The function used to convert text back into its values.
    */
   template<typename T>
-  auto make_to_text_model(std::shared_ptr<ValueModel<T>> source,
-      typename ToTextModel<T>::ToText to_text,
-      typename ToTextModel<T>::FromText from_text) {
-    return std::make_shared<ToTextModel<T>>(
+  auto make_to_text_model(std::shared_ptr<T> source,
+      typename ToTextModel<typename T::Type>::ToText to_text,
+      typename ToTextModel<typename T::Type>::FromText from_text) {
+    return std::make_shared<ToTextModel<typename T::Type>>(
       std::move(source), std::move(to_text), std::move(from_text));
+  }
+
+  /**
+   * Constructs a read-only ToTextModel with a default conversion function.
+   * @param source The model to convert to text.
+   */
+  template<typename T>
+  auto make_read_only_to_text_model(std::shared_ptr<T> source) {
+    return make_to_text_model(std::move(source),
+      [] (const auto& value) {
+        return to_text(value);
+      },
+      [] (const auto& value) -> boost::optional<typename T::Type> {
+        return boost::none;
+      });
   }
 
   template<typename T>

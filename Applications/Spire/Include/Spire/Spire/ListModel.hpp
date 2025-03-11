@@ -460,38 +460,6 @@ namespace Spire {
         const AnyListModel::OperationSignal::slot_type& slot) const override;
 
     private:
-      template<typename U>
-      struct downcast {};
-      template<>
-      struct downcast<AnyListModel::AddOperation> {
-        using type = AddOperation;
-      };
-      template<>
-      struct downcast<AnyListModel::PreRemoveOperation> {
-        using type = PreRemoveOperation;
-      };
-      template<>
-      struct downcast<AnyListModel::RemoveOperation> {
-        using type = RemoveOperation;
-      };
-      template<>
-      struct downcast<AnyListModel::MoveOperation> {
-        using type = MoveOperation;
-      };
-      template<>
-      struct downcast<AnyListModel::UpdateOperation> {
-        using type = UpdateOperation;
-      };
-      template<>
-      struct downcast<AnyListModel::StartTransaction> {
-        using type = StartTransaction;
-      };
-      template<>
-      struct downcast<AnyListModel::EndTransaction> {
-        using type = EndTransaction;
-      };
-      template<typename U>
-      using downcast_t = typename downcast<U>::type;
       ListModel(const ListModel&) = delete;
       ListModel& operator =(const ListModel&) = delete;
   };
@@ -500,6 +468,20 @@ namespace Spire {
   class ListModel<std::any> : public AnyListModel {
     public:
       using Type = std::any;
+
+      struct UpdateOperation : AnyListModel::UpdateOperation {
+        UpdateOperation(int index, Type previous, Type value);
+
+        const Type& get_previous() const;
+
+        const Type& get_value() const;
+      };
+
+      using Operation = boost::variant<AddOperation, PreRemoveOperation,
+        RemoveOperation, MoveOperation, UpdateOperation, StartTransaction,
+        EndTransaction>;
+
+      using OperationSignal = Signal<void (const Operation&)>;
 
       using iterator = ListModelIterator<Type>;
 
@@ -549,8 +531,17 @@ namespace Spire {
 
       const_reverse_iterator crend() const;
 
+      template<typename F>
+      boost::signals2::connection connect_operation_signal(const F& slot) const;
+
     protected:
       ListModel() = default;
+
+      boost::signals2::connection connect_operation_signal(
+        const AnyListModel::OperationSignal::slot_type& slot) const override;
+
+      virtual boost::signals2::connection connect_operation_signal(
+        const OperationSignal::slot_type& slot) const = 0;
 
     private:
       ListModel(const ListModel&) = delete;
@@ -921,6 +912,17 @@ namespace Spire {
     return connect_operation_signal([=] (const Operation& operation) {
       slot(static_cast<const AnyListModel::Operation&>(operation));
     });
+  }
+
+  template<typename F>
+  boost::signals2::connection
+      ListModel<std::any>::connect_operation_signal(const F& slot) const {
+    if constexpr(std::is_invocable_v<F, const Operation&>) {
+      return connect_operation_signal(
+        static_cast<typename OperationSignal::slot_type>(slot));
+    } else {
+      return AnyListModel::connect_operation_signal(slot);
+    }
   }
 }
 

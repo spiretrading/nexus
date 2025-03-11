@@ -242,7 +242,6 @@ namespace Styles {
       bool m_is_read_only;
       boost::optional<int> m_submission;
       boost::optional<PressObserver> m_button_press_observer;
-      bool m_is_modified;
       bool m_is_mouse_press_on_list;
       QPoint m_mouse_press_position;
       QPointer<QWidget> m_hovered_item;

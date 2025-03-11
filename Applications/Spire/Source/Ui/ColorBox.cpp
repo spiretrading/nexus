@@ -64,8 +64,16 @@ ColorBox::ColorBox(QWidget* parent)
   : ColorBox(std::make_shared<LocalColorModel>(), parent) {}
 
 ColorBox::ColorBox(std::shared_ptr<ColorModel> current, QWidget* parent)
+  : ColorBox(std::move(current), ColorPicker::Preset::BASIC, parent) {}
+
+ColorBox::ColorBox(ColorPicker::Preset preset, QWidget* parent)
+  : ColorBox(std::make_shared<LocalColorModel>(), preset, parent) {}
+
+ColorBox::ColorBox(std::shared_ptr<ColorModel> current,
+    ColorPicker::Preset preset, QWidget* parent)
     : QWidget(parent),
       m_current(std::move(current)),
+      m_color_picker_preset(preset),
       m_submission(m_current->get()),
       m_color_picker(nullptr),
       m_color_picker_panel(nullptr),
@@ -187,7 +195,7 @@ void ColorBox::on_current(const QColor& current) {
 
 void ColorBox::show_color_picker() {
   if(!m_color_picker) {
-    m_color_picker = new ColorPicker(m_current, *this);
+    m_color_picker = new ColorPicker(m_current, m_color_picker_preset, *this);
     m_color_picker->installEventFilter(this);
     link(*this, *m_color_picker);
     m_color_picker_panel = m_color_picker->window();

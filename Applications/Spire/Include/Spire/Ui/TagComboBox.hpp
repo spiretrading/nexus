@@ -27,6 +27,8 @@ namespace Spire {
        * Constructs an AnyTagComboBox.
        * @param query_model The model used to query matches.
        * @param current The current model which holds a list of tags.
+       * @param submission_builder The model used to build the list of submitted
+       *        tags.
        * @param item_builder The ListViewItemBuilder to use.
        * @param matches_builder Used to build the ListModel that keeps the list
        *        matches.
@@ -34,6 +36,7 @@ namespace Spire {
        */
       AnyTagComboBox(std::shared_ptr<AnyQueryModel> query_model,
         std::shared_ptr<AnyListModel> current,
+        std::function<std::shared_ptr<AnyListModel> ()> submission_builder,
         ListViewItemBuilder<> item_builder,
         std::function<std::shared_ptr<AnyListModel> ()> matches_builder,
         QWidget* parent = nullptr);
@@ -180,6 +183,7 @@ namespace Spire {
     std::shared_ptr<ListModel<Type>> current,
     ListViewItemBuilder<ListModel<Type>> item_builder, QWidget* parent)
     : AnyTagComboBox(std::move(query_model), std::move(current),
+        boost::factory<std::shared_ptr<ArrayListModel<Type>>>(),
         std::move(item_builder),
         boost::factory<std::shared_ptr<ArrayListModel<Type>>>(), parent) {}
 

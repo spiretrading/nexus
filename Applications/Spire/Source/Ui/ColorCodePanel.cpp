@@ -1,5 +1,6 @@
 #include "Spire/Ui/ColorCodePanel.hpp"
 #include <QKeyEvent>
+#include <QLayout>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
@@ -239,7 +240,6 @@ namespace {
       }
     });
     update_component_style(*alpha_box);
-    match(*alpha_box, Alpha());
     return alpha_box;
   }
 }
@@ -433,7 +433,7 @@ ColorCodePanel::ColorCodePanel(std::shared_ptr<ValueModel<QColor>> current,
     QWidget* parent)
     : QWidget(parent),
       m_current(std::make_shared<ColorCodeValueModel>(std::move(current))),
-      m_is_alpha_visible(true) {
+      m_alpha_box(nullptr) {
   m_color_format_box = make_color_format_box(this);
   m_color_format_box->get_current()->connect_update_signal(
     std::bind_front(&ColorCodePanel::on_mode_current, this));
@@ -450,10 +450,6 @@ ColorCodePanel::ColorCodePanel(std::shared_ptr<ValueModel<QColor>> current,
   m_color_input->addWidget(make_hsb_color_box(m_current->m_source,
     m_current->m_hue_model, m_current->m_saturation_model,
     m_current->m_brightness_model));
-  m_alpha_box =
-    make_alpha_box(m_current->m_source, m_current->m_alpha_model, this);
-  m_style_connection = connect_style_signal(*m_alpha_box,
-    std::bind_front(&ColorCodePanel::on_alpha_style, this));
 }
 
 const std::shared_ptr<ValueModel<QColor>>& ColorCodePanel::get_current() const {
@@ -468,6 +464,28 @@ void ColorCodePanel::set_mode(Mode mode) {
   m_color_format_box->get_current()->set(static_cast<int>(mode));
 }
 
+bool ColorCodePanel::is_alpha_visible() const {
+  return m_alpha_box != nullptr;
+}
+
+void Spire::ColorCodePanel::set_alpha_visible(bool visible) {
+  if(visible == is_alpha_visible()) {
+    return;
+  }
+  if(visible) {
+    m_alpha_box =
+      make_alpha_box(m_current->m_source, m_current->m_alpha_model, this);
+    m_alpha_box->show();
+  } else {
+    m_alpha_box->setParent(nullptr);
+    delete m_alpha_box;
+    m_alpha_box = nullptr;
+  }
+  m_size_hint = none;
+  updateGeometry();
+  update_layout();
+}
+
 QSize ColorCodePanel::sizeHint() const {
   if(m_size_hint) {
     return *m_size_hint;
@@ -476,19 +494,37 @@ QSize ColorCodePanel::sizeHint() const {
     m_color_format_box->minimumWidth());
   auto color_input_width = std::clamp(m_color_input->sizeHint().width(),
     m_color_input->minimumWidth(), m_color_input->maximumWidth());
-  auto alpha_width = [&] {
-    if(m_is_alpha_visible) {
-      return (color_input_width - scale_width(8)) / 3;
+  auto alpha_field_width = [&] {
+    if(m_alpha_box) {
+      return scale_width(4) + (color_input_width - scale_width(8)) / 3;
     }
     return 0;
   }();
   m_size_hint.emplace(color_format_width + scale_width(8) + color_input_width +
-    scale_width(4) + alpha_width, m_color_format_box->sizeHint().height());
+    alpha_field_width, m_color_format_box->sizeHint().height());
   return *m_size_hint;
 }
 
 void ColorCodePanel::resizeEvent(QResizeEvent* event) {
   update_layout();
+}
+
+bool ColorCodePanel::focusNextPrevChild(bool next) {
+  if(!m_alpha_box) {
+    return QWidget::focusNextPrevChild(next);
+  }
+  auto color_input_layout = m_color_input->currentWidget()->layout();
+  auto last_color_input =
+    color_input_layout->itemAt(color_input_layout->count() - 1)->widget();
+  auto current = focusWidget();
+  if(next && last_color_input->isAncestorOf(current)) {
+    m_alpha_box->setFocus(Qt::TabFocusReason);
+    return true;
+  } else if(!next && m_alpha_box->isAncestorOf(current)) {
+    last_color_input->setFocus(Qt::BacktabFocusReason);
+    return true;
+  }
+  return QWidget::focusNextPrevChild(next);
 }
 
 void ColorCodePanel::update_layout() {
@@ -497,7 +533,7 @@ void ColorCodePanel::update_layout() {
   auto height = m_color_format_box->height();
   m_color_format_box->move(0, y);
   auto color_input_width = [&] {
-    if(m_is_alpha_visible) {
+    if(m_alpha_box) {
       return (3 * (width() - m_color_format_box->width() - scale_width(12)) +
         scale_width(8)) / 4;
     }
@@ -505,7 +541,7 @@ void ColorCodePanel::update_layout() {
   }();
   m_color_input->setGeometry(m_color_format_box->width() + scale_width(8), y,
     color_input_width, height);
-  if(m_is_alpha_visible) {
+  if(m_alpha_box) {
     m_alpha_box->setGeometry(m_color_input->geometry().right() + scale_width(4),
       y, (m_color_input->width() - scale_width(8)) / 3, height);
   }
@@ -516,21 +552,5 @@ void ColorCodePanel::on_mode_current(const optional<int>& current) {
     m_color_input->setCurrentIndex(*current);
   } else {
     m_color_format_box->get_current()->set(0);
-  }
-}
-
-void ColorCodePanel::on_alpha_style() {
-  auto has_update = std::make_shared<bool>(false);
-  auto& stylist = find_stylist(*m_alpha_box);
-  if(auto visibility = Styles::find<Visibility>(stylist.get_computed_block())) {
-    stylist.evaluate(*visibility, [=] (auto visibility) {
-      *has_update = true;
-      m_is_alpha_visible = visibility == Visibility::VISIBLE;
-    });
-  }
-  if(*has_update) {
-    m_size_hint = none;
-    updateGeometry();
-    update_layout();
   }
 }
