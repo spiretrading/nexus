@@ -5,6 +5,7 @@
 #include "Spire/Ui/ContextMenu.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/Layouts.hpp"
+#include "Spire/Ui/RecycledTableViewItemBuilder.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/TableHeaderItem.hpp"
@@ -163,52 +164,75 @@ namespace {
     }
   }
 
-  QWidget* item_builder(
-      const std::shared_ptr<TimeAndSalesTableModel>& time_and_sales,
-      const std::shared_ptr<TableModel>& table, int row, int column) {
-    auto column_id = static_cast<TimeAndSalesTableModel::Column>(column);
-    auto cell = [&] () -> QWidget* {
+  struct TimeAndSalesItemBuilder {
+    std::shared_ptr<TimeAndSalesTableModel> m_table;
+
+    QWidget* mount(
+        const std::shared_ptr<TableModel>& table, int row, int column) {
+      if(column >= TimeAndSalesTableModel::COLUMN_SIZE) {
+        return new QWidget();
+      }
+      auto column_id = static_cast<TimeAndSalesTableModel::Column>(column);
+      auto cell = make_label(QString());
+      if(column_id == TimeAndSalesTableModel::Column::PRICE ||
+          column_id == TimeAndSalesTableModel::Column::SIZE) {
+        update_style(*cell, apply_table_cell_right_align_style);
+      }
+      reset(*cell, table, row, column);
+      return cell;
+    }
+
+    void reset(QWidget& widget, const std::shared_ptr<TableModel>& table,
+        int row, int column) {
+      if(column >= TimeAndSalesTableModel::COLUMN_SIZE) {
+        return;
+      }
+      auto column_id = static_cast<TimeAndSalesTableModel::Column>(column);
+      auto& cell = static_cast<TextBox&>(widget);
+      auto& current = *cell.get_current();
       if(column_id == TimeAndSalesTableModel::Column::TIME) {
         auto time = to_text(table->get<ptime>(row, column));
-        return make_label(time.left(time.lastIndexOf('.')));
+        current.set(time.left(time.lastIndexOf('.')));
       } else if(column_id == TimeAndSalesTableModel::Column::PRICE) {
-        auto money_cell = make_label(to_text(table->get<Money>(row, column)));
-        update_style(*money_cell, apply_table_cell_right_align_style);
-        return money_cell;
+        current.set(to_text(table->get<Money>(row, column)));
       } else if(column_id == TimeAndSalesTableModel::Column::SIZE) {
-        auto quantity_cell = make_label(
+        current.set(
           to_text(table->get<Quantity>(row, column)).remove(QChar(',')));
-        update_style(*quantity_cell, apply_table_cell_right_align_style);
-        return quantity_cell;
       } else if(column_id == TimeAndSalesTableModel::Column::MARKET) {
-        return make_label(
+        current.set(
           QString::fromStdString(table->get<std::string>(row, column)));
       } else if(column_id == TimeAndSalesTableModel::Column::CONDITION) {
-        return make_label(
+        current.set(
           to_text(table->get<TimeAndSale::Condition>(row, column)));
-      } else if(column_id == TimeAndSalesTableModel::Column::BUYER) {
-        return make_label(to_text(table->get<std::string>(row, column)));
-      } else if(column_id == TimeAndSalesTableModel::Column::SELLER) {
-        return make_label(to_text(table->get<std::string>(row, column)));
+      } else {
+        current.set(to_text(table->get<std::string>(row, column)));
       }
-      return new QWidget();
-    }();
-    auto indicator = time_and_sales->get_bbo_indicator(row);
-    if(indicator == BboIndicator::UNKNOWN) {
-      match(*cell, UnknownIndicator());
-    } else if(indicator == BboIndicator::ABOVE_ASK) {
-      match(*cell, AboveAskIndicator());
-    } else if(indicator == BboIndicator::AT_ASK) {
-      match(*cell, AtAskIndicator());
-    } else if(indicator == BboIndicator::INSIDE) {
-      match(*cell, InsideIndicator());
-    } else if(indicator == BboIndicator::AT_BID) {
-      match(*cell, AtBidIndicator());
-    } else if(indicator == BboIndicator::BELOW_BID) {
-      match(*cell, BelowBidIndicator());
+      unmatch(cell, UnknownIndicator());
+      unmatch(cell, AboveAskIndicator());
+      unmatch(cell, AtAskIndicator());
+      unmatch(cell, InsideIndicator());
+      unmatch(cell, AtBidIndicator());
+      unmatch(cell, BelowBidIndicator());
+      auto indicator = m_table->get_bbo_indicator(row);
+      if(indicator == BboIndicator::UNKNOWN) {
+        match(cell, UnknownIndicator());
+      } else if(indicator == BboIndicator::ABOVE_ASK) {
+        match(cell, AboveAskIndicator());
+      } else if(indicator == BboIndicator::AT_ASK) {
+        match(cell, AtAskIndicator());
+      } else if(indicator == BboIndicator::INSIDE) {
+        match(cell, InsideIndicator());
+      } else if(indicator == BboIndicator::AT_BID) {
+        match(cell, AtBidIndicator());
+      } else if(indicator == BboIndicator::BELOW_BID) {
+        match(cell, BelowBidIndicator());
+      }
     }
-    return cell;
-  }
+
+    void unmount(QWidget* widget) {
+      delete widget;
+    }
+  };
 
   struct PullIndicator : QWidget {
     TableView* m_table_view;
@@ -337,7 +361,9 @@ TableView* Spire::make_time_and_sales_table_view(
     std::shared_ptr<TimeAndSalesPropertiesModel> properties, QWidget* parent) {
   auto table_view = TableViewBuilder(table).
     set_header(make_header_model()).
-    set_item_builder(std::bind_front(&item_builder, table)).make();
+    set_item_builder(
+      RecycledTableViewItemBuilder(TimeAndSalesItemBuilder(table))).
+    make();
   update_style(*table_view, apply_table_view_style);
   initialize_table_header(*table_view, properties->get());
   make_header_menu(*table_view, properties);
