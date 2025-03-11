@@ -1708,9 +1708,7 @@ UiProfile Spire::make_drop_down_box_profile() {
     for(auto i = 0; i < item_count.get(); ++i) {
       list_model->push(item_text.get() + QString("%1").arg(i));
     }
-    auto drop_down_box = new DropDownBox(list_model,
-      std::make_shared<LocalValueModel<optional<int>>>(item_count.get() - 1),
-        ListView::default_item_builder);
+    auto drop_down_box = new DropDownBox(list_model);
     drop_down_box->setFixedWidth(scale_width(112));
     apply_widget_properties(drop_down_box, profile.get_properties());
     auto& read_only = get<bool>("read_only", profile.get_properties());
@@ -1718,6 +1716,7 @@ UiProfile Spire::make_drop_down_box_profile() {
       drop_down_box->set_read_only(is_read_only);
     });
     auto current_slot = profile.make_event_slot<optional<std::any>>("Current");
+    drop_down_box->get_current()->set(list_model->get_size() - 1);
     drop_down_box->get_current()->connect_update_signal(
       [=] (auto current) {
         if(current) {
