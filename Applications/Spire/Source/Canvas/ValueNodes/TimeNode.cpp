@@ -8,11 +8,10 @@ using namespace Beam::TimeService;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Spire;
-using namespace std;
 
 namespace {
-  string GetDisplayText(const time_duration& value) {
-    QTime timeDisplay(0, 0, 0, 0);
+  std::string GetDisplayText(const time_duration& value) {
+    auto timeDisplay = QTime(0, 0, 0, 0);
     auto localTime = ToLocalTime(value);
     timeDisplay = timeDisplay.addMSecs(
       static_cast<int>(localTime.total_milliseconds()));
@@ -30,7 +29,7 @@ TimeNode::TimeNode(time_duration value)
   SetText(GetDisplayText(GetValue()));
 }
 
-unique_ptr<TimeNode> TimeNode::SetValue(time_duration value) const {
+std::unique_ptr<TimeNode> TimeNode::SetValue(time_duration value) const {
   auto clone = CanvasNode::Clone(*this);
   clone->SetInternalValue(value);
   clone->SetText(GetDisplayText(clone->GetValue()));
@@ -41,10 +40,10 @@ void TimeNode::Apply(CanvasNodeVisitor& visitor) const {
   visitor.Visit(*this);
 }
 
-unique_ptr<CanvasNode> TimeNode::Clone() const {
-  return make_unique<TimeNode>(*this);
+std::unique_ptr<CanvasNode> TimeNode::Clone() const {
+  return std::make_unique<TimeNode>(*this);
 }
 
-unique_ptr<CanvasNode> TimeNode::Reset() const {
-  return make_unique<TimeNode>();
+std::unique_ptr<CanvasNode> TimeNode::Reset() const {
+  return std::make_unique<TimeNode>();
 }

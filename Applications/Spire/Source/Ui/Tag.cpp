@@ -5,7 +5,6 @@
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/Layouts.hpp"
-#include "Spire/Ui/TextBox.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;
@@ -35,6 +34,9 @@ namespace {
 }
 
 Tag::Tag(QString label, QWidget* parent)
+  : Tag(std::make_shared<LocalTextModel>(std::move(label)), parent) {}
+
+Tag::Tag(std::shared_ptr<TextModel> label, QWidget* parent)
     : QWidget(parent),
       m_is_read_only(false) {
   auto container = new QWidget();
@@ -55,6 +57,13 @@ Tag::Tag(QString label, QWidget* parent)
   link(*this, *m_delete_button);
   proxy_style(*this, *box);
   set_style(*this, DEFAULT_STYLE());
+}
+
+const std::shared_ptr<TextModel>& Tag::get_label() const {
+  auto box = static_cast<Box*>(layout()->itemAt(0)->widget());
+  auto label_box =
+    static_cast<TextBox*>(box->get_body()->layout()->itemAt(0)->widget());
+  return label_box->get_current();
 }
 
 bool Tag::is_read_only() const {

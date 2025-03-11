@@ -30,17 +30,19 @@ namespace {
     }
   };
 
-  void to_tag_list(
-      const Region& region, RegionQueryModel& regions, AnyListModel& list) {
+  std::vector<Region> to_tag_list(
+      const Region& region, RegionQueryModel& regions) {
+    auto tags = std::vector<Region>();
     for(auto& country : region.GetCountries()) {
-      list.push(*regions.parse(to_text(country)));
+      tags.push_back(*regions.parse(to_text(country)));
     }
     for(auto& market : region.GetMarkets()) {
-      list.push(*regions.parse(to_text(MarketToken(market))));
+      tags.push_back(*regions.parse(to_text(MarketToken(market))));
     }
     for(auto& security : region.GetSecurities()) {
-      list.push(*regions.parse(to_text(security)));
+      tags.push_back(*regions.parse(to_text(security)));
     }
+    return tags;
   }
 
   void sort(AnyListModel& list) {
@@ -97,8 +99,11 @@ RegionBox::RegionBox(std::shared_ptr<RegionQueryModel> regions,
       m_current_connection(m_current->connect_update_signal(
         std::bind_front(&RegionBox::on_current, this))) {
   auto current_model = std::make_shared<ArrayListModel<Region>>();
+  auto tags = to_tag_list(m_current->get(), *m_regions);
   current_model->transact([&] {
-    to_tag_list(m_current->get(), *m_regions, *current_model);
+    for(auto& tag : tags) {
+      current_model->push(tag);
+    }
     sort(*current_model);
   });
   m_tag_combo_box = new TagComboBox(m_regions, std::move(current_model),
@@ -146,13 +151,24 @@ void RegionBox::on_current(const Region& region) {
     return;
   }
   m_last_region = region;
+  auto regions = to_tag_list(region, *m_regions);
   auto blocker = shared_connection_block(m_tag_operation_connection);
   auto current = m_tag_combo_box->get_current();
   current->transact([&] {
-    while(current->get_size() != 0) {
+    while(current->get_size() > regions.size()) {
       current->remove(current->get_size() - 1);
     }
-    to_tag_list(region, *m_regions, *current);
+    auto i = std::size_t(0);
+    while(i < current->get_size() && i < regions.size()) {
+      if(current->get(i) != regions[i]) {
+        current->set(i, regions[i]);
+      }
+      ++i;
+    }
+    while(i < regions.size()) {
+      current->push(regions[i]);
+      ++i;
+    }
   });
 }
 

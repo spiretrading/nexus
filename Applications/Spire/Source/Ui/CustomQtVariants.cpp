@@ -90,6 +90,13 @@ namespace {
     static auto delegate = QStyledItemDelegate();
     return delegate;
   }
+
+  auto to_text_helper(double value, const QLocale& locale) {
+    auto text = locale.toString(value, 'f');
+    text = text.remove(QRegExp("0+$"));
+    text = text.remove(QRegExp("\\.$"));
+    return text;
+  }
 }
 
 MarketToken::MarketToken(MarketCode code)
@@ -210,7 +217,7 @@ QString Spire::to_text(std::int64_t value, const QLocale& locale) {
 }
 
 QString Spire::to_text(double value, const QLocale& locale) {
-  return get_style_delegate().displayText(value, locale);
+  return to_text_helper(value, locale);
 }
 
 QString Spire::to_text(const std::string& value, const QLocale& locale) {
@@ -258,7 +265,7 @@ QString Spire::to_text(Money value, const QLocale& locale) {
 }
 
 QString Spire::to_text(Quantity value, const QLocale& locale) {
-  return locale.toString(static_cast<double>(value));
+  return to_text_helper(static_cast<double>(value), locale);
 }
 
 QString Spire::to_text(

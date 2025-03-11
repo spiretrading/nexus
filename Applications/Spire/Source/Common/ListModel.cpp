@@ -1,5 +1,7 @@
 #include "Spire/Spire/ListModel.hpp"
 
+using namespace boost;
+using namespace boost::signals2;
 using namespace Spire;
 
 std::any AnyListModel::get(int index) const {
@@ -91,6 +93,28 @@ ListModel<std::any>::const_reverse_iterator
 
 ListModel<std::any>::const_reverse_iterator ListModel<std::any>::crend() const {
   return const_reverse_iterator(begin());
+}
+
+connection ListModel<std::any>::connect_operation_signal(
+    const AnyListModel::OperationSignal::slot_type& slot) const {
+  return connect_operation_signal([=] (const Operation& operation) {
+    slot(static_cast<const AnyListModel::Operation&>(operation));
+  });
+}
+
+ListModel<std::any>::UpdateOperation::UpdateOperation(
+  int index, Type previous, Type value)
+  : AnyListModel::UpdateOperation(
+      index, std::move(previous), std::move(value)) {}
+
+const ListModel<std::any>::Type&
+    ListModel<std::any>::UpdateOperation::get_previous() const {
+  return m_previous;
+}
+
+const ListModel<std::any>::Type&
+    ListModel<std::any>::UpdateOperation::get_value() const {
+  return m_value;
 }
 
 void Spire::clear(AnyListModel& model) {

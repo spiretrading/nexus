@@ -1,8 +1,6 @@
-file(GLOB header_files ${NEXUS_INCLUDE_PATH}/Nexus/RiskServiceTests/*.hpp)
-file(GLOB source_files ${NEXUS_SOURCE_PATH}/RiskServiceTests/*.cpp)
-if(MSVC)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
-endif()
+file(GLOB_RECURSE
+  header_files ${NEXUS_INCLUDE_PATH}/Nexus/RiskServiceTests/*.hpp)
+file(GLOB_RECURSE source_files ${NEXUS_SOURCE_PATH}/RiskServiceTests/*.cpp)
 add_executable(RiskServiceTests ${header_files} ${source_files})
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 target_link_libraries(RiskServiceTests

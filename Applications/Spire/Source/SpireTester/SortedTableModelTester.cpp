@@ -83,6 +83,24 @@ TEST_SUITE("SortedTableModel") {
     REQUIRE(column_span<int>(sorted_model, 0) == std::vector{4, 2, 9, 1});
   }
 
+  TEST_CASE("index_mapping") {
+    auto source = std::make_shared<ArrayTableModel>();
+    source->push({4});
+    source->push({2});
+    source->push({9});
+    source->push({1});
+    auto sorted_model = SortedTableModel(
+      source, {{0, SortedTableModel::Ordering::ASCENDING}}, test_comparator);
+    REQUIRE(sorted_model.index_to_source(0) == 3);
+    REQUIRE(sorted_model.index_to_source(1) == 1);
+    REQUIRE(sorted_model.index_to_source(2) == 0);
+    REQUIRE(sorted_model.index_to_source(3) == 2);
+    REQUIRE(sorted_model.index_from_source(0) == 2);
+    REQUIRE(sorted_model.index_from_source(1) == 1);
+    REQUIRE(sorted_model.index_from_source(2) == 3);
+    REQUIRE(sorted_model.index_from_source(3) == 0);
+  }
+
   TEST_CASE("sort_multiple_columns") {
     auto source = std::make_shared<ArrayTableModel>();
     source->push({4, std::string("John"), 3.7f});

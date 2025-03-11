@@ -44,6 +44,23 @@ TEST_SUITE("SortedListModel") {
     REQUIRE(span(sorted_model) == std::vector{9, 4, 2, 1});
   }
 
+  TEST_CASE("index_mapping") {
+    auto source = std::make_shared<ArrayListModel<int>>();
+    source->push(4);
+    source->push(2);
+    source->push(9);
+    source->push(1);
+    auto sorted_model = SortedListModel(source);
+    REQUIRE(sorted_model.index_to_source(0) == 3);
+    REQUIRE(sorted_model.index_to_source(1) == 1);
+    REQUIRE(sorted_model.index_to_source(2) == 0);
+    REQUIRE(sorted_model.index_to_source(3) == 2);
+    REQUIRE(sorted_model.index_from_source(0) == 2);
+    REQUIRE(sorted_model.index_from_source(1) == 1);
+    REQUIRE(sorted_model.index_from_source(2) == 3);
+    REQUIRE(sorted_model.index_from_source(3) == 0);
+  }
+
   TEST_CASE("push") {
     auto source = std::make_shared<ArrayListModel<int>>();
     source->push(4);

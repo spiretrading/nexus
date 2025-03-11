@@ -4,6 +4,7 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/FilteredTableModel.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
+#include "Spire/Spire/TransformValueModel.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/EmptySelectionModel.hpp"
@@ -43,6 +44,29 @@ namespace {
     }
     return order;
   }
+
+  auto make_transformed_current_model(
+      std::shared_ptr<SortedTableModel> sorted_table,
+      std::shared_ptr<FilteredTableModel> filtered_table,
+      std::shared_ptr<TableView::CurrentModel> current) {
+    return make_transform_value_model(std::move(current),
+      [=] (const optional<TableIndex>& index) -> optional<TableIndex> {
+        if(!index) {
+          return none;
+        }
+        auto row = sorted_table->index_to_source(
+          filtered_table->index_to_source(index->m_row));
+        return TableIndex(row, index->m_column);
+      },
+      [=] (const optional<TableIndex>& index) -> optional<TableIndex> {
+        if(!index) {
+          return none;
+        }
+        auto row = sorted_table->index_from_source(
+          filtered_table->index_from_source(index->m_row));
+        return TableIndex(row, index->m_column);
+      });
+  }
 }
 
 QWidget* TableView::default_item_builder(
@@ -57,6 +81,7 @@ TableView::TableView(
     TableViewItemBuilder item_builder, Comparator comparator, QWidget* parent)
     : QWidget(parent),
       m_table(std::move(table)),
+      m_current(std::move(current)),
       m_header(std::move(header)),
       m_filter(std::move(filter)),
       m_current_item(nullptr),
@@ -94,7 +119,8 @@ TableView::TableView(
     m_sorted_table = std::make_shared<SortedTableModel>(
       m_filtered_table, make_column_order(*m_header));
   }
-  m_body = new TableBody(m_sorted_table, std::move(current),
+  m_body = new TableBody(m_sorted_table, make_transformed_current_model(
+      m_sorted_table, m_filtered_table, m_current),
     std::move(selection), m_header_view->get_widths(), std::move(item_builder));
   m_body->setSizePolicy(QSizePolicy::MinimumExpanding,
     QSizePolicy::MinimumExpanding);
@@ -127,7 +153,7 @@ const std::shared_ptr<TableModel>& TableView::get_table() const {
 }
 
 const std::shared_ptr<TableView::CurrentModel>& TableView::get_current() const {
-  return m_body->get_current();
+  return m_current;
 }
 
 const std::shared_ptr<TableView::SelectionModel>&

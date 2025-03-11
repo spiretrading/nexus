@@ -1,5 +1,6 @@
 #ifndef SPIRE_FILTERED_LIST_MODEL_HPP
 #define SPIRE_FILTERED_LIST_MODEL_HPP
+#include <boost/optional/optional.hpp>
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Spire/ListModelTransactionLog.hpp"
@@ -49,6 +50,22 @@ namespace Spire {
       /** Applies a new filter to this list. */
       void set_filter(const Filter& filter);
 
+      /**
+       * Maps an index from this list into the source list.
+       * @param index An index into this table.
+       * @return The corresponding index into the source list or <code>-1</code>
+       *         iff the index is not valid.
+       */
+      int index_to_source(int index) const;
+
+      /**
+       * Maps an index from the source list to this list.
+       * @param index An index into the source list.
+       * @return The corresponding index into this list, or <code>-1</code> iff
+       *         the index is not valid.
+       */
+      int index_from_source(int index) const;
+
       int get_size() const override;
 
       const Type& get(int index) const override;
@@ -74,9 +91,15 @@ namespace Spire {
       void transact(const std::function<void ()>& transaction) override;
 
     private:
+      struct RemoveEntry {
+        bool m_is_found;
+        std::vector<int>::iterator m_iterator;
+        int m_index;
+      };
       std::shared_ptr<ListModel<Type>> m_source;
       Filter m_filter;
       int m_filter_count;
+      boost::optional<RemoveEntry> m_remove_entry;
       std::vector<int> m_filtered_data;
       ListModelTransactionLog<Type> m_transaction;
       boost::signals2::scoped_connection m_source_connection;
@@ -162,6 +185,24 @@ namespace Spire {
         ++source_index;
       }
     });
+  }
+
+  template<typename T>
+  int FilteredListModel<T>::index_to_source(int index) const {
+    if(index < 0 || index >= get_size()) {
+      return -1;
+    }
+    return m_filtered_data[index];
+  }
+
+  template<typename T>
+  int FilteredListModel<T>::index_from_source(int index) const {
+    auto i = std::lower_bound(
+      m_filtered_data.begin(), m_filtered_data.end(), index);
+    if(i != m_filtered_data.end() && *i == index) {
+      return static_cast<int>(std::distance(m_filtered_data.begin(), i));
+    }
+    return -1;
   }
 
   template<typename T>
@@ -288,21 +329,29 @@ namespace Spire {
       },
       [&] (const PreRemoveOperation& operation) {
         auto [is_found, i] = find(operation.m_index);
-        auto index = 0;
-        if(is_found) {
-          index = static_cast<int>(i - m_filtered_data.begin());
+        m_remove_entry.emplace(is_found, i, 0);
+        if(m_remove_entry->m_is_found) {
+          m_remove_entry->m_index = static_cast<int>(
+            m_remove_entry->m_iterator - m_filtered_data.begin());
           ++m_filter_count;
           auto count = m_filter_count;
-          m_transaction.push(PreRemoveOperation(index));
+          m_transaction.push(PreRemoveOperation(m_remove_entry->m_index));
           if(count != m_filter_count) {
-            return;
+            m_remove_entry = boost::none;
           }
         }
-        std::for_each(i, m_filtered_data.end(), [] (int& value) { --value; });
-        if(is_found) {
-          m_filtered_data.erase(i);
-          m_transaction.push(RemoveOperation(index));
+      },
+      [&] (const RemoveOperation& operation) {
+        if(!m_remove_entry) {
+          return;
         }
+        std::for_each(m_remove_entry->m_iterator, m_filtered_data.end(),
+          [] (int& value) { --value; });
+        if(m_remove_entry->m_is_found) {
+          m_filtered_data.erase(m_remove_entry->m_iterator);
+          m_transaction.push(RemoveOperation(m_remove_entry->m_index));
+        }
+        m_remove_entry = boost::none;
       },
       [&] (const UpdateOperation& operation) {
         auto [is_found, i] = find(operation.m_index);

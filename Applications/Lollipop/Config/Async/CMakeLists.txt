@@ -1,6 +1,6 @@
 find_package(Qt5Widgets REQUIRED)
-file(GLOB header_files ${SPIRE_INCLUDE_PATH}/Spire/Async/*.hpp)
-file(GLOB source_files ${SPIRE_SOURCE_PATH}/Async/*.cpp)
+file(GLOB_RECURSE header_files ${SPIRE_INCLUDE_PATH}/Spire/Async/*.hpp)
+file(GLOB_RECURSE source_files ${SPIRE_SOURCE_PATH}/Async/*.cpp)
 find_cpp_qobject(qobject_source_files ${header_files})
 qt5_wrap_cpp(generated_source_files ${qobject_source_files}
   OPTIONS -DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED)

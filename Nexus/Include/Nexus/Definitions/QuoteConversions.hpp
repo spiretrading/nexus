@@ -13,16 +13,6 @@ namespace Nexus {
 
     /** The BookQuote on the BID Side. */
     BookQuote m_bid;
-
-    /** Constructs an uninitialized BookQuotePair. */
-    BookQuotePair() = default;
-
-    /**
-     * Constructs a BookQuotePair.
-     * @param ask The ASK Side BookQuote.
-     * @param bid The BID Side BookQuote.
-     */
-    BookQuotePair(BookQuote ask, BookQuote bid);
   };
 
   /**
@@ -36,10 +26,6 @@ namespace Nexus {
       BookQuote(quote.m_market.GetData(), true, quote.m_market, quote.m_bid,
       quote.m_timestamp));
   }
-
-  BookQuotePair::BookQuotePair(BookQuote ask, BookQuote bid)
-    : m_ask(std::move(ask)),
-      m_bid(std::move(bid)) {}
 }
 
 #endif
