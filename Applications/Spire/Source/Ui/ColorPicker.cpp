@@ -146,7 +146,6 @@ namespace {
     auto alpha_slider = new Slider(std::move(model), make_modifiers());
     alpha_slider->setFixedHeight(scale_height(16));
     alpha_slider->findChild<QLabel*>()->setScaledContents(false);
-    match(*alpha_slider, Alpha());
     update_style(*alpha_slider, [&] (auto& style) {
       style.get(Any()).set(border(scale_width(1), QColor(0xC8C8C8)));
       style.get(Any() > Thumb() > is_a<Icon>()).
@@ -239,29 +238,46 @@ struct ColorPicker::ColorPickerModel {
 };
 
 ColorPicker::ColorPicker(QWidget& parent)
-  : ColorPicker(std::make_shared<LocalColorModel>(), parent) {}
+  : ColorPicker(Preset::BASIC, parent) {}
 
-ColorPicker::ColorPicker(std::shared_ptr<ColorModel> current,
+ColorPicker::ColorPicker(Preset preset, QWidget& parent)
+  : ColorPicker(std::make_shared<LocalColorModel>(), preset, parent) {}
+
+ColorPicker::ColorPicker(std::shared_ptr<ColorModel> current, QWidget& parent)
+  : ColorPicker(std::move(current), Preset::BASIC, parent) {}
+
+ColorPicker::ColorPicker(std::shared_ptr<ColorModel> current, Preset preset,
   QWidget& parent)
   : ColorPicker(std::move(current), std::make_shared<ArrayListModel<QColor>>(),
+      preset, parent) {}
+
+ColorPicker::ColorPicker(std::shared_ptr<ColorModel> current,
+  std::shared_ptr<ListModel<QColor>> palette, QWidget& parent)
+  : ColorPicker(std::move(current), std::move(palette), Preset::BASIC,
       parent) {}
 
 ColorPicker::ColorPicker(std::shared_ptr<ColorModel> current,
-    std::shared_ptr<ListModel<QColor>> palette, QWidget& parent)
+    std::shared_ptr<ListModel<QColor>> palette, Preset preset, QWidget& parent)
     : QWidget(&parent),
       m_model(std::make_shared<ColorPickerModel>(std::move(current))),
       m_palette(std::move(palette)),
+      m_preset(preset),
+      m_alpha_slider(nullptr),
       m_panel_horizontal_spacing(0) {
   m_color_spectrum = make_color_spectrum(
     m_model->m_spectrum_x_model, m_model->m_spectrum_y_model);
-  m_alpha_slider = make_alpha_slider(m_model->m_alpha_slider_model);
   auto layout = make_vbox_layout(this);
   layout->setSpacing(scale_height(8));
   layout->addWidget(m_color_spectrum);
   layout->addWidget(make_hue_slider(m_model->m_hue_slider_model));
-  layout->addWidget(m_alpha_slider);
+  if(m_preset != Preset::BASIC) {
+    m_alpha_slider = make_alpha_slider(m_model->m_alpha_slider_model);
+    layout->addWidget(m_alpha_slider);
+  }
   layout->addSpacing(scale_height(10));
-  layout->addWidget(new ColorCodePanel(get_current()));
+  auto color_code_panel = new ColorCodePanel(get_current());
+  color_code_panel->set_alpha_visible(m_preset != Preset::BASIC);
+  layout->addWidget(color_code_panel);
   m_panel = new OverlayPanel(*this, parent);
   m_panel->setWindowFlags(Qt::Popup | (m_panel->windowFlags() & ~Qt::Tool));
   m_panel->installEventFilter(this);
@@ -285,6 +301,10 @@ const std::shared_ptr<ListModel<QColor>>& ColorPicker::get_palette() const {
   return m_palette;
 }
 
+ColorPicker::Preset ColorPicker::get_preset() const {
+  return m_preset;
+}
+
 bool ColorPicker::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::Close) {
     m_panel->hide();
@@ -298,11 +318,10 @@ bool ColorPicker::event(QEvent* event) {
     m_panel->show();
     auto margins = m_panel->layout()->contentsMargins();
     auto width = [&] {
-      if(m_alpha_slider->isVisible()) {
-        return COLOR_SWATCH_COUNT * scale_width(COLOR_SWATCH_WIDTH);
-      } else {
+      if(!m_alpha_slider) {
         return scale_width(COLOR_SELECTOR_WIDTH);
       }
+      return COLOR_SWATCH_COUNT * scale_width(COLOR_SWATCH_WIDTH);
     }();
     m_panel->setFixedWidth(
       width + margins.left() + margins.right() + m_panel_horizontal_spacing);
@@ -315,7 +334,9 @@ bool ColorPicker::event(QEvent* event) {
 void ColorPicker::resizeEvent(QResizeEvent* event) {
   auto& color = get_current()->get();
   update_color_spectrum_track(*m_color_spectrum, get_pure_color(color));
-  update_alpha_slider_track(*m_alpha_slider, color);
+  if(m_alpha_slider) {
+    update_alpha_slider_track(*m_alpha_slider, color);
+  }
   return QWidget::resizeEvent(event);
 }
 
@@ -324,7 +345,7 @@ void ColorPicker::on_current(const QColor& current) {
       get_pure_color(m_last_color) != pure_color) {
     update_color_spectrum_track(*m_color_spectrum, pure_color);
   }
-  if(m_alpha_slider->isVisible() && m_last_color.rgb() != current.rgb()) {
+  if(m_alpha_slider && m_last_color.rgb() != current.rgb()) {
     update_alpha_slider_track(*m_alpha_slider, current);
   }
   m_last_color = current;

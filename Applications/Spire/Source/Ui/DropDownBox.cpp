@@ -4,6 +4,7 @@
 #include <QEnterEvent>
 #include <QKeyEvent>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/ListCurrentIndexModel.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Spire/Utility.hpp"
 #include "Spire/Ui/Button.hpp"
@@ -67,15 +68,13 @@ DropDownBox::DropDownBox(std::shared_ptr<AnyListModel> list, QWidget* parent)
 
 DropDownBox::DropDownBox(std::shared_ptr<AnyListModel> list,
   ListViewItemBuilder<> item_builder, QWidget* parent)
-  : DropDownBox(std::move(list),
-      std::make_shared<LocalValueModel<optional<int>>>(),
+  : DropDownBox(list, std::make_shared<ListCurrentIndexModel>(list),
       std::make_shared<ListSingleSelectionModel>(),
       std::move(item_builder), parent) {}
 
 DropDownBox::DropDownBox(std::shared_ptr<AnyListModel> list,
   ListViewItemBuilder<> item_builder, ToText to_text, QWidget* parent)
-  : DropDownBox(std::move(list),
-      std::make_shared<LocalValueModel<optional<int>>>(),
+  : DropDownBox(list, std::make_shared<ListCurrentIndexModel>(list),
       std::make_shared<ListSingleSelectionModel>(),
       std::move(item_builder), std::move(to_text), parent) {}
 
@@ -113,7 +112,6 @@ DropDownBox::DropDownBox(std::shared_ptr<AnyListModel> list,
       m_to_text(std::move(to_text)),
       m_timer(this),
       m_is_read_only(false),
-      m_is_modified(false),
       m_is_mouse_press_on_list(false),
       m_drop_down_list(nullptr) {
   m_text_box = new TextBox();
@@ -202,7 +200,6 @@ bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
         if(is_read_only()) {
           event->ignore();
         } else {
-          m_is_modified = true;
           submit();
         }
         return true;
@@ -215,9 +212,6 @@ bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
       }
     } else if(event->type() == QEvent::FocusIn) {
       m_submission = m_current->get();
-      if(m_submission) {
-        m_is_modified = false;
-      }
     } else if(event->type() == QEvent::FocusOut) {
       if(!is_read_only() && is_drop_down_list_visible() && !has_focus(*this)) {
         submit();
@@ -235,7 +229,6 @@ bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
         if(key == Qt::Key_Escape) {
           revert_current();
         } else if(key == Qt::Key_Enter || key == Qt::Key_Return) {
-          m_is_modified = true;
           hide_drop_down_list();
           submit();
           return true;
@@ -435,12 +428,8 @@ void DropDownBox::hide_drop_down_list() {
 }
 
 void DropDownBox::submit() {
-  if(!m_is_modified) {
-    return;
-  }
   m_submission = m_current->get();
   if(m_submission) {
-    m_is_modified = false;
     m_submit_signal(m_list->get(*m_submission));
   }
 }
@@ -463,7 +452,6 @@ void DropDownBox::on_current(const optional<int>& current) {
     }
     return QString();
   }();
-  m_is_modified = true;
   m_text_box->get_current()->set(text);
 }
 
@@ -472,6 +460,5 @@ void DropDownBox::on_submit(const std::any& submission) {
     return;
   }
   hide_drop_down_list();
-  m_is_modified = true;
   submit();
 }

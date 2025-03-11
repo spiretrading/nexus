@@ -39,15 +39,20 @@ namespace Spire {
       void move(int source, int destination);
 
       /**
-       * Given an index into the source table, returns the index in this
-       * translated table.
+       * Maps a row index from this table into the source table.
+       * @param index An index into a row of this table.
+       * @return The corresponding row index into the source table or
+       *         <code>-1</code> iff the row index is not valid.
        */
-      int get_source_to_translation(int row) const;
+      int index_to_source(int index) const;
 
       /**
-       * Given an index into this table, returns the index in the source table.
+       * Maps a row index from the source table to this table.
+       * @param index An index into a row of the source table.
+       * @return The corresponding row index into this table, or <code>-1</code>
+       *         iff the row index is not valid.
        */
-      int get_translation_to_source(int row) const;
+      int index_from_source(int index) const;
 
       int get_row_size() const override;
 
