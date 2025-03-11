@@ -1,10 +1,16 @@
 #ifndef SPIRE_COLOR_PICKER_HPP
 #define SPIRE_COLOR_PICKER_HPP
 #include "Spire/Spire/ListModel.hpp"
-#include "Spire/Ui/ColorBox.hpp"
+#include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+
+  /** A ValueModel over a QColor. */
+  using ColorModel = ValueModel<QColor>;
+
+  /** A LocalValueModel over a QColor. */
+  using LocalColorModel = LocalValueModel<QColor>;
 
   /**
    * Displays a panel where the user can browse and select a color.
