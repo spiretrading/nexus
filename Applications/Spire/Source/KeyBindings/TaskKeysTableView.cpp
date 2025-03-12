@@ -20,11 +20,9 @@
 #include "Spire/Ui/OrderTypeBox.hpp"
 #include "Spire/Ui/RecycledTableViewItemBuilder.hpp"
 #include "Spire/Ui/RegionBox.hpp"
-#include "Spire/Ui/ScrollableListBox.hpp"
 #include "Spire/Ui/SideBox.hpp"
 #include "Spire/Ui/SingleSelectionModel.hpp"
 #include "Spire/Ui/TableItem.hpp"
-#include "Spire/Ui/TagBox.hpp"
 #include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/TimeInForceBox.hpp"
 
@@ -223,44 +221,11 @@ namespace {
         m_region(std::move(region)) {}
   };
 
-  struct RegionBoxEventFilter : QObject {
-
-    explicit RegionBoxEventFilter(QObject* parent = nullptr)
-      : QObject(parent) {}
-
-    void install_event_filter(RegionBox& region_box) {
-      auto proxy = static_cast<QWidget*>(&region_box);
-      while(proxy->focusProxy()) {
-        proxy = proxy->focusProxy();
-        if(typeid(*proxy) == typeid(TagBox)) {
-          static_cast<TagBox*>(proxy)->get_scrollable_list_box().
-            get_scroll_box().installEventFilter(this);
-          break;
-        }
-      }
-    }
-
-    bool eventFilter(QObject* watched, QEvent* event) override {
-      if(event->type() == QEvent::KeyPress) {
-        auto& key_event = *static_cast<QKeyEvent*>(event);
-        auto key = key_event.key();
-        if(key == Qt::Key_Left || key == Qt::Key_Right || key == Qt::Key_Up ||
-            key == Qt::Key_Down || key == Qt::Key_Home || key == Qt::Key_End ||
-            key == Qt::Key_PageUp || key == Qt::Key_PageDown) {
-          event->ignore();
-          return true;
-        }
-      }
-      return QObject::eventFilter(watched, event);
-    }
-  };
-
   struct TaskKeysTableViewItemBuilder {
     std::shared_ptr<RegionQueryModel> m_regions;
     DestinationDatabase m_destinations;
     MarketDatabase m_markets;
     AdditionalTagDatabase m_additional_tags;
-    RegionBoxEventFilter* m_region_box_event_filter;
     std::map<QWidget*, std::shared_ptr<ItemState>> m_item_states;
 
     EditableBox* mount(
@@ -282,7 +247,6 @@ namespace {
             region_box->setFixedHeight(scale_height(25));
             region_box->setSizePolicy(
               QSizePolicy::Preferred, QSizePolicy::Fixed);
-            m_region_box_event_filter->install_event_filter(*region_box);
             return {new EditableBox(*region_box),
               std::make_shared<ItemState>(current)};
           } else if(column_id == OrderTaskColumns::DESTINATION) {
@@ -407,8 +371,8 @@ TableView* Spire::make_task_keys_table_view(
       std::make_shared<ListSingleSelectionModel>(),
       std::make_shared<ListEmptySelectionModel>()),
     RecycledTableViewItemBuilder(TaskKeysTableViewItemBuilder(
-      regions, destinations, markets, additional_tags,
-      new RegionBoxEventFilter(parent))), &comparator);
+      regions, destinations, markets, additional_tags)),
+    &comparator);
   auto widths = make_header_widths();
   for(auto i = 0; i < std::ssize(widths); ++i) {
     table_view->get_header().get_widths()->set(i + 1, widths[i]);

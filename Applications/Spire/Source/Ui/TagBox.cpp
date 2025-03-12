@@ -288,10 +288,6 @@ void TagBox::set_read_only(bool is_read_only) {
   }
 }
 
-ScrollableListBox& TagBox::get_scrollable_list_box() {
-  return *m_scrollable_list_box;
-}
-
 connection TagBox::connect_submit_signal(
     const SubmitSignal::slot_type& slot) const {
   return m_text_box->connect_submit_signal(slot);

@@ -46,9 +46,6 @@ namespace Spire {
        */
       void set_read_only(bool is_read_only);
 
-      /** Returns the scrollable list box. */
-      ScrollableListBox& get_scrollable_list_box();
-
       /** Connects a slot to the SubmitSignal. */
       boost::signals2::connection connect_submit_signal(
         const SubmitSignal::slot_type& slot) const;
