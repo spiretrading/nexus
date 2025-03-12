@@ -14,7 +14,7 @@ ManifestDPIAware true
 
 Name "${PRODUCT_NAME} ${PRODUCT_VERSION}"
 Outfile "install.exe"
-InstallDir "$PROGRAMFILES\${PRODUCT_NAME}"
+InstallDir "$PROGRAMFILES64\${PRODUCT_NAME}"
 
 RequestExecutionLevel admin
 
@@ -50,8 +50,8 @@ Section "Spire" SEC01
 
   ; Install Visual C++ Redistributable silently
   SetOutPath "$INSTDIR"
-  File "VC_redist.x86.exe"
-  ExecWait '"$INSTDIR\VC_redist.x86.exe" /quiet /norestart'
+  File "VC_redist.x64.exe"
+  ExecWait '"$INSTDIR\VC_redist.x64.exe" /quiet /norestart'
 
   ; Write uninstaller
   WriteUninstaller "$INSTDIR\uninstall.exe"
@@ -90,7 +90,7 @@ Section "Uninstall"
   RmDir /r "$SMPROGRAMS\${PRODUCT_NAME}"
 
   Delete "$INSTDIR\Spire.exe"
-  Delete "$INSTDIR\VC_redist.x86.exe"
+  Delete "$INSTDIR\VC_redist.x64.exe"
 
   RmDir /r "$INSTDIR"
 
