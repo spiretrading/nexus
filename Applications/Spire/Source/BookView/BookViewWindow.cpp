@@ -2,11 +2,21 @@
 #include <QKeyEvent>
 #include <QScreen>
 #include "Spire/BookView/TechnicalsPanel.hpp"
+#include "Spire/Canvas/Operations/CanvasNodeBuilder.hpp"
+#include "Spire/Canvas/OrderExecutionNodes/OptionalPriceNode.hpp"
+#include "Spire/Canvas/OrderExecutionNodes/SingleOrderTaskNode.hpp"
+#include "Spire/Canvas/ValueNodes/IntegerNode.hpp"
+#include "Spire/Canvas/ValueNodes/MoneyNode.hpp"
+#include "Spire/Canvas/ValueNodes/SecurityNode.hpp"
+#include "Spire/Canvas/ValueNodes/SideNode.hpp"
+#include "Spire/CanvasView/CanvasNodeNotVisibleException.hpp"
+#include "Spire/CanvasView/CondensedCanvasWidget.hpp"
 #include "Spire/Ui/ContextMenu.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/SecurityView.hpp"
 #include "Spire/Ui/TransitionView.hpp"
 
+using namespace Beam;
 using namespace boost;
 using namespace boost::signals2;
 using namespace Nexus;
@@ -17,12 +27,13 @@ namespace {
   const auto TITLE_NAME = QObject::tr("Book View");
 }
 
-BookViewWindow::BookViewWindow(
+BookViewWindow::BookViewWindow(Ref<UserProfile> user_profile,
     std::shared_ptr<SecurityInfoQueryModel> securities,
     std::shared_ptr<KeyBindingsModel> key_bindings, MarketDatabase markets,
     std::shared_ptr<BookViewPropertiesWindowFactory> factory,
     ModelBuilder model_builder, QWidget* parent)
     : Window(parent),
+      m_user_profile(user_profile.Get()),
       m_key_bindings(std::move(key_bindings)),
       m_markets(std::move(markets)),
       m_factory(std::move(factory)),
@@ -63,6 +74,102 @@ void BookViewWindow::keyPressEvent(QKeyEvent* event) {
       m_key_bindings->get_cancel_key_bindings()->find_operation(sequence)) {
     m_cancel_order_signal(*operation, m_security_view->get_current()->get(),
       none);
+  } else if(auto arguments = find_order_task_arguments(
+      *m_key_bindings->get_order_task_arguments(),
+      m_security_view->get_current()->get(), sequence)) {
+    display_task_entry_panel(*arguments);
+  }
+}
+
+std::unique_ptr<CanvasNode>
+    BookViewWindow::make_task_node(const CanvasNode& node) {
+  auto task_node = CanvasNode::Clone(node);
+  auto security_node =
+    task_node->FindNode(SingleOrderTaskNode::SECURITY_PROPERTY);
+  if(security_node && !security_node->IsReadOnly()) {
+    auto security = m_security_view->get_current()->get();
+    if(auto security_value_node =
+        dynamic_cast<const SecurityNode*>(&*security_node)) {
+      auto builder = CanvasNodeBuilder(*task_node);
+      builder.Replace(*security_node, security_value_node->SetValue(
+        security, m_user_profile->GetMarketDatabase()));
+      builder.SetReadOnly(*security_node, true);
+      auto price_node =
+        task_node->FindNode(SingleOrderTaskNode::PRICE_PROPERTY);
+      if(price_node && !price_node->IsReadOnly()) {
+        auto price = [&] {
+          if(auto side_node =
+              task_node->FindNode(SingleOrderTaskNode::SIDE_PROPERTY)) {
+            if(auto side_value_node =
+                dynamic_cast<const SideNode*>(&*side_node)) {
+              if(side_value_node->GetValue() == Side::ASK) {
+                return m_model->get_bbo_quote()->get().m_ask.m_price;
+              }
+            }
+          }
+          return m_model->get_bbo_quote()->get().m_bid.m_price;
+        }();
+        if(auto money_node = dynamic_cast<const MoneyNode*>(&*price_node)) {
+          builder.Replace(*price_node, money_node->SetValue(price));
+        } else if(auto money_node =
+            dynamic_cast<const OptionalPriceNode*>(&*price_node)) {
+          builder.Replace(*price_node, money_node->SetReferencePrice(price));
+        }
+      }
+      auto quantity_node =
+        task_node->FindNode(SingleOrderTaskNode::QUANTITY_PROPERTY);
+      if(quantity_node && !quantity_node->IsReadOnly()) {
+        if(auto quantity_value_node =
+            dynamic_cast<const IntegerNode*>(&*quantity_node)) {
+          auto quantity = [&] {
+            auto side_node =
+              task_node->FindNode(SingleOrderTaskNode::SIDE_PROPERTY);
+            auto& interactions =
+              *m_user_profile->GetKeyBindings()->get_interactions_key_bindings(
+                security);
+            if(side_node) {
+              if(auto side_value_node =
+                  dynamic_cast<const SideNode*>(&*side_node)) {
+                return get_default_order_quantity(
+                  *m_user_profile, security, side_value_node->GetValue());
+              }
+            }
+            return interactions.get_default_quantity()->get();
+          }();
+          builder.Replace(*quantity_node,
+            quantity_value_node->SetValue(static_cast<int>(quantity)));
+        }
+      }
+      task_node = builder.Make();
+    }
+  }
+  return task_node;
+}
+
+void BookViewWindow::display_task_entry_panel(
+    const OrderTaskArguments& arguments) {
+  auto task_node = make_task_node(*make_canvas_node(
+    arguments, m_user_profile->GetAdditionalTagDatabase()));
+  m_task_entry_panel = new CondensedCanvasWidget(
+    arguments.m_name.toStdString(), Ref(*m_user_profile), this);
+  auto coordinate = CanvasNodeModel::Coordinate(0, 0);
+  auto isVisible = [&] {
+    try {
+      m_task_entry_panel->Add(coordinate, *task_node);
+      return true;
+    } catch(const CanvasNodeNotVisibleException&) {
+      return false;
+    }
+  }();
+  if(isVisible) {
+    m_task_entry_panel->setSizePolicy(
+      QSizePolicy::Preferred, QSizePolicy::Fixed);
+// TODO   m_ui->verticalLayout->insertWidget(2, m_taskEntryWidget);
+    m_task_entry_panel->Focus();
+  } else {
+    m_task_entry_panel->deleteLater();
+    m_task_entry_panel = nullptr;
+// TODO    ExecuteTask(*taskNode);
   }
 }
 
