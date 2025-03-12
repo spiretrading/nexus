@@ -1,4 +1,5 @@
 #include "Spire/BookView/BookViewLevelPropertiesPage.hpp"
+#include <Beam/Utilities/BeamWorkaround.hpp>
 #include <QEvent>
 #include "Spire/BookView/ArrayValueToListModel.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
@@ -126,8 +127,10 @@ struct FillTypeAssociativeValueModel : AssociativeValueModel<FillType> {
   FillTypeAssociativeValueModel(std::shared_ptr<ValueModel<FillType>> fill_type)
     : AssociativeValueModel<FillType>(fill_type->get()),
       m_fill_type(std::move(fill_type)),
+BEAM_SUPPRESS_THIS_INITIALIZER()
       m_connection(m_fill_type->connect_update_signal(
         std::bind_front(&FillTypeAssociativeValueModel::on_update, this))) {}
+BEAM_UNSUPPRESS_THIS_INITIALIZER()
 
   QValidator::State set(const Type& value) override {
     auto state = AssociativeValueModel<FillType>::set(value);
@@ -329,7 +332,9 @@ struct BookViewLevelPropertiesPage::PriceLevelWidget : QWidget {
       std::shared_ptr<ValueModel<std::vector<QColor>>> color_scheme,
       std::shared_ptr<ValueModel<QFont>> font, QWidget* parent = nullptr)
       : QWidget(parent),
+BEAM_SUPPRESS_THIS_INITIALIZER()
         m_timer(this),
+BEAM_UNSUPPRESS_THIS_INITIALIZER()
         m_model(std::make_shared<PriceLevelModel>(std::move(fill_type),
           std::make_shared<ArrayValueToListModel<QColor>>(
             std::move(color_scheme)), m_timer)),

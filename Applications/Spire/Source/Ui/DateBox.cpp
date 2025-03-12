@@ -1,4 +1,5 @@
 #include "Spire/Ui/DateBox.hpp"
+#include <Beam/Utilities/BeamWorkaround.hpp>
 #include <QMouseEvent>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ScalarValueModelDecorator.hpp"
@@ -126,6 +127,7 @@ struct DateBox::DateComposerModel : ValueModel<optional<date>> {
         m_day(std::make_shared<LocalOptionalIntegerModel>()),
         m_state(m_source->get_state()),
         m_current(m_source->get()),
+BEAM_SUPPRESS_THIS_INITIALIZER()
         m_source_connection(m_source->connect_update_signal(
           std::bind_front(&DateComposerModel::on_current, this))),
         m_year_connection(m_year->connect_update_signal(
@@ -134,6 +136,7 @@ struct DateBox::DateComposerModel : ValueModel<optional<date>> {
           std::bind_front(&DateComposerModel::on_update, this))),
         m_day_connection(m_day->connect_update_signal(
           std::bind_front(&DateComposerModel::on_update, this))) {
+BEAM_UNSUPPRESS_THIS_INITIALIZER()
     if(m_source->get_minimum()) {
       m_year->set_minimum(static_cast<int>(m_source->get_minimum()->year()));
     } else {
@@ -257,7 +260,9 @@ DateBox::DateBox(std::shared_ptr<OptionalDateModel> current, QWidget* parent)
       m_submission(m_model->get()),
       m_is_read_only(false),
       m_is_rejected(false),
+BEAM_SUPPRESS_THIS_INITIALIZER()
       m_focus_observer(*this),
+BEAM_UNSUPPRESS_THIS_INITIALIZER()
       m_format(DateFormat::YYYYMMDD) {
   setCursor(Qt::IBeamCursor);
   m_model->connect_update_signal(std::bind_front(&DateBox::on_current, this));

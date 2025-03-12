@@ -1,10 +1,15 @@
 #include <QApplication>
 #include <array>
+#include <Beam/Utilities/BeamWorkaround.hpp>
 #include <QTextEdit>
 #include <QFormLayout>
 #include <QGroupBox>
 #include <QRandomGenerator>
 #include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
+#include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
+#include "Nexus/ServiceClients/TestEnvironment.hpp"
+#include "Nexus/ServiceClients/TestServiceClients.hpp"
+#include "Nexus/TelemetryServiceTests/TelemetryServiceTestEnvironment.hpp"
 #include "Spire/BookView/BookViewWindow.hpp"
 #include "Spire/BookViewUiTester/DemoBookViewModel.hpp"
 #include "Spire/KeyBindings/KeyBindingsWindow.hpp"
@@ -23,15 +28,21 @@
 #include "Spire/Ui/MoneyBox.hpp"
 #include "Spire/Ui/SideBox.hpp"
 
+using namespace Beam;
+using namespace Beam::ServiceLocator;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace boost::signals2;
 using namespace Nexus;
+using namespace Nexus::MarketDataService;
 using namespace Nexus::OrderExecutionService;
+using namespace Nexus::TelemetryService;
+using namespace Nexus::TelemetryService::Tests;
 using namespace Spire;
+using namespace Spire::LegacyUI;
 using namespace Spire::Styles;
 
-using OrderSatusBox = EnumBox<OrderStatus>;
+using OrderStatusBox = EnumBox<OrderStatus>;
 
 std::time_t to_time_t_milliseconds(ptime pt) {
   return (pt - ptime(gregorian::date(1970, 1, 1))).total_milliseconds();
@@ -125,15 +136,15 @@ OrderStatus make_order_status(int index) {
   return statuses[index % statuses.size()];
 }
 
-OrderSatusBox* make_order_status_box(QWidget* parent = nullptr) {
-  auto settings = OrderSatusBox::Settings();
+OrderStatusBox* make_order_status_box(QWidget* parent = nullptr) {
+  auto settings = OrderStatusBox::Settings();
   auto cases = std::make_shared<ArrayListModel<OrderStatus>>();
   cases->push(OrderStatus::NEW);
   cases->push(OrderStatus::FILLED);
   cases->push(OrderStatus::CANCELED);
   cases->push(OrderStatus::REJECTED);
   settings.m_cases = std::move(cases);
-  return new OrderSatusBox(std::move(settings), parent);
+  return new OrderStatusBox(std::move(settings), parent);
 }
 
 template<typename M, typename U>
@@ -153,6 +164,11 @@ QuantityBox* make_quantity_box(M model, U field) {
 }
 
 struct BookViewTester : QWidget {
+  TestEnvironment m_environment;
+  ServiceClientsBox m_service_clients;
+  TelemetryServiceTestEnvironment m_telemetry_environment;
+  TelemetryClientBox m_telemetry_client;
+  UserProfile m_user_profile;
   DemoBookViewModel m_model;
   LocalTechnicalsModel m_technicals_model;
   std::shared_ptr<OptionalIntegerModel> m_update_period;
@@ -168,12 +184,26 @@ struct BookViewTester : QWidget {
     std::shared_ptr<BookViewModel> model,
     KeyBindingsWindow& key_bindings_window, QWidget* parent = nullptr)
       : QWidget(parent),
+        m_service_clients(std::in_place_type<TestServiceClients>,
+          Ref(m_environment)),
+        m_telemetry_environment(m_service_clients.GetServiceLocatorClient(),
+          m_service_clients.GetTimeClient(),
+          m_service_clients.GetAdministrationClient()),
+        m_telemetry_client(m_telemetry_environment.MakeClient(
+          m_service_clients.GetServiceLocatorClient())),
+        m_user_profile("", false, false, GetDefaultCountryDatabase(),
+          GetDefaultTimeZoneDatabase(), GetDefaultCurrencyDatabase(), {},
+          GetDefaultMarketDatabase(), GetDefaultDestinationDatabase(),
+          EntitlementDatabase(), get_default_additional_tag_database(),
+          m_service_clients, m_telemetry_client),
         m_model(std::move(model)),
         m_technicals_model(Security()),
         m_key_bindings_window(&key_bindings_window),
         m_update_period(std::make_shared<LocalOptionalIntegerModel>(1000)),
+BEAM_SUPPRESS_THIS_INITIALIZER()
         m_quote_timer(this),
         m_order_timer(this),
+BEAM_UNSUPPRESS_THIS_INITIALIZER()
         m_update_count(0),
         m_line_number(0) {
     auto left_layout = new QVBoxLayout();
@@ -405,7 +435,7 @@ struct BookViewTester : QWidget {
   }
 
   void on_order_submit_click(TextBox* destination_box, MoneyBox* price_box,
-      QuantityBox* quantity_box, OrderSatusBox* status_box, SideBox* side_box,
+      QuantityBox* quantity_box, OrderStatusBox* status_box, SideBox* side_box,
       CheckBox* continuous_update_box, IntegerBox* update_count_box,
       IntegerBox* update_period_box) {
     auto order = DemoBookViewModel::OrderInfo{
@@ -487,8 +517,9 @@ int main(int argc, char** argv) {
   auto tester = BookViewTester(book_views->get_technicals(), book_views,
     key_bindings_window);
   auto markets = GetDefaultMarketDatabase();
-  auto window = BookViewWindow(populate_security_query_model(), key_bindings,
-    markets, std::make_shared<BookViewPropertiesWindowFactory>(),
+  auto window = BookViewWindow(Ref(tester.m_user_profile),
+    populate_security_query_model(), key_bindings, markets,
+    std::make_shared<BookViewPropertiesWindowFactory>(),
     std::bind_front(&model_builder, book_views, &tester));
   window.connect_cancel_order_signal(
     std::bind_front(&BookViewTester::on_cancel_order, &tester));

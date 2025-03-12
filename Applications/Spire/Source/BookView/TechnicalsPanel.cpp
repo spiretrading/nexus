@@ -1,4 +1,5 @@
 #include "Spire/BookView/TechnicalsPanel.hpp"
+#include <Beam/Utilities/BeamWorkaround.hpp>
 #include <QEvent>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/FieldValueModel.hpp"
@@ -98,10 +99,12 @@ TechnicalsPanel::TechnicalsPanel(
       m_technicals(std::move(technicals)),
       m_bid_quantity(std::move(default_bid_quantity)),
       m_ask_quantity(std::move(default_ask_quantity)),
+BEAM_SUPPRESS_THIS_INITIALIZER()
       m_bid_quantity_connection(m_bid_quantity->connect_update_signal(
         std::bind_front(&TechnicalsPanel::on_bid_quantity_update, this))),
       m_ask_quantity_connection(m_ask_quantity->connect_update_signal(
         std::bind_front(&TechnicalsPanel::on_ask_quantity_update, this))) {
+BEAM_UNSUPPRESS_THIS_INITIALIZER()
   m_default_field = make_label("");
   m_default_field->setMinimumWidth(get_value_field_minimum_width());
   on_ask_quantity_update(m_ask_quantity->get());
