@@ -119,6 +119,9 @@ namespace Spire {
       SortedTableModel(std::shared_ptr<TableModel> source,
         std::vector<ColumnOrder> order, Comparator comparator);
 
+      /** Returns the table being sorted. */
+      const std::shared_ptr<TableModel>& get_source() const;
+
       /** Returns the comparator used to rank rows. */
       const Comparator& get_comparator() const;
 
