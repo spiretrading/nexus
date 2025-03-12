@@ -2,7 +2,7 @@
 #include <QApplication>
 #include <QKeyEvent>
 #include <QPainter>
-#include <QPointer>
+#include <QTimer>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/TableModel.hpp"
 #include "Spire/Spire/TableValueModel.hpp"
@@ -69,7 +69,7 @@ QWidget* TableBody::default_item_builder(
     const std::shared_ptr<TableModel>& table, int row, int column) {
   auto text = make_to_text_model(
     make_table_value_model<AnyRef>(table, row, column),
-    [] (const AnyRef& value) { return to_text(value); },
+    [] (AnyRef value) { return to_text(value); },
     [] (const QString&) { return none; });
   return make_label(text);
 }
@@ -112,14 +112,15 @@ struct TableBody::RowCover : Cover {
       body.m_hover_observers.at(item).connect_state_signal(
         std::bind_front(&TableBody::on_hover, &body, std::ref(*item)));
       if(column != body.get_column_size() - 1) {
-        item->setFixedWidth(
-          body.m_widths->get(column) - body.get_left_spacing(column));
+        if(body.m_column_covers[column]->isVisible()) {
+          item->setFixedWidth(
+            body.m_widths->get(column) - body.get_left_spacing(column));
+        } else {
+          item->setFixedWidth(0);
+        }
       } else {
         item->setSizePolicy(
           QSizePolicy::Expanding, item->sizePolicy().verticalPolicy());
-      }
-      if(!body.m_column_covers[column]->isVisible()) {
-        item->setFixedWidth(0);
       }
       layout->addWidget(item);
       item->connect_active_signal(std::bind_front(
@@ -148,7 +149,9 @@ struct TableBody::RowCover : Cover {
   void unmount() {
     auto& body = *static_cast<TableBody*>(parentWidget());
     for(auto i = 0; i != layout()->count(); ++i) {
-      body.m_item_builder.unmount(get_item(i)->unmount());
+      if(auto item = get_item(i)) {
+        body.m_item_builder.unmount(item->unmount());
+      }
     }
   }
 };
@@ -245,6 +248,10 @@ struct TableBody::Layout : QLayout {
     } else if(!m_bottom.empty()) {
       add_hidden_row(
         index, m_bottom_height / static_cast<int>(m_bottom.size()));
+    } else if(m_top_height + m_bottom_height != 0) {
+      auto average_row_height = (m_top_height + m_bottom_height) /
+        static_cast<int>(get_top_index() + m_bottom.size());
+      add_hidden_row(index, average_row_height);
     } else {
       add_hidden_row(index, 0);
     }
@@ -285,12 +292,11 @@ struct TableBody::Layout : QLayout {
   }
 
   void move_row(int source, int destination) {
+    auto source_index = source - get_top_index();
+    auto item = std::move(m_items[source_index]);
+    m_items.erase(m_items.begin() + source_index);
     m_items.insert(m_items.begin() + (destination - get_top_index()),
-      std::move(m_items[source - get_top_index()]));
-    if(source > destination) {
-      ++source;
-    }
-    m_items.erase(m_items.begin() + (source - m_top.size()));
+      std::move(item));
   }
 
   void reset_top_index(int top_point) {
@@ -613,8 +619,9 @@ const std::shared_ptr<TableBody::SelectionModel>&
 
 TableItem* TableBody::find_item(const Index& index) {
   if(auto row = find_row(index.m_row)) {
-    if(row == get_current_row() &&
-        !get_layout().is_visible(*m_current_controller.get_row())) {
+    auto current_row = m_current_controller.get_row();
+    if(row == get_current_row() && current_row &&
+        !get_layout().is_visible(*current_row)) {
       auto position = m_styles.m_padding.top() +
         *m_current_controller.get_row() * estimate_row_height();
       row->move(m_styles.m_padding.left(), position);
@@ -666,6 +673,11 @@ bool TableBody::event(QEvent* event) {
 
 bool TableBody::focusNextPrevChild(bool next) {
   if(isEnabled()) {
+    auto focus_widget = focusWidget();
+    if(focus_widget && !focus_widget->isVisible()) {
+      setFocus();
+      return true;
+    }
     if(next) {
       if(navigate_next()) {
         return true;
@@ -847,9 +859,7 @@ TableBody::RowCover* TableBody::get_current_row() {
     if(get_layout().is_visible(*m_current_controller.get_row())) {
       m_current_row = find_row(*m_current_controller.get_row());
     } else {
-      m_current_row = new RowCover(*this);
-      connect_style_signal(*m_current_row, std::bind_front(
-        &TableBody::on_cover_style, this, std::ref(*m_current_row)));
+      m_current_row = make_row_cover();
       m_current_row->mount(*m_current_controller.get_row());
       on_cover_style(*m_current_row);
       m_current_row->move(-1000, -1000);
@@ -866,7 +876,9 @@ TableBody::RowCover* TableBody::get_current_row() {
 
 TableItem* TableBody::get_current_item() {
   if(auto row = get_current_row()) {
-    return row->get_item(*m_current_controller.get_column());
+    if(auto column = m_current_controller.get_column()) {
+      return row->get_item(*column);
+    }
   }
   return nullptr;
 }
@@ -1004,8 +1016,8 @@ void TableBody::update_parent() {
   initialize_visible_region();
 }
 
-TableBody::RowCover* TableBody::mount_row(int index,
-    optional<int> current_index, std::vector<RowCover*>& unmounted_rows) {
+TableBody::RowCover* TableBody::mount_row(
+    int index, optional<int> current_index) {
   auto row = [&] {
     if(!current_index) {
       current_index = m_current_controller.get_row();
@@ -1013,16 +1025,7 @@ TableBody::RowCover* TableBody::mount_row(int index,
     if(index == current_index) {
       return get_current_row();
     }
-    if(unmounted_rows.empty()) {
-      auto row = new RowCover(*this);
-      connect_style_signal(*row,
-        std::bind_front(&TableBody::on_cover_style, this, std::ref(*row)));
-      return row;
-    }
-    auto row = unmounted_rows.back();
-    unmounted_rows.pop_back();
-    row->setParent(this);
-    return row;
+    return make_row_cover();
   }();
   if(row != m_current_row) {
     row->mount(index);
@@ -1034,18 +1037,40 @@ TableBody::RowCover* TableBody::mount_row(int index,
   return row;
 }
 
-TableBody::RowCover* TableBody::mount_row(
-    int index, optional<int> current_index) {
-  auto unmounted_rows = std::vector<RowCover*>();
-  return mount_row(index, current_index, unmounted_rows);
+TableBody::RowCover* TableBody::make_row_cover() {
+  if(m_recycled_rows.empty()) {
+    auto row = new RowCover(*this);
+    connect_style_signal(
+      *row, std::bind_front(&TableBody::on_cover_style, this, std::ref(*row)));
+    return row;
+  }
+  auto row = m_recycled_rows.front();
+  m_recycled_rows.pop_front();
+  for(auto i = 0; i != m_widths->get_size(); ++i) {
+    auto spacing = get_left_spacing(i);
+    if(auto item = row->get_item(i)) {
+      if(m_column_covers[i]->isVisible()) {
+        item->setFixedWidth(m_widths->get(i) - spacing);
+      } else {
+        item->setFixedWidth(0);
+      }
+    }
+  }
+  return row;
 }
 
 void TableBody::destroy(RowCover* row) {
-  for(auto i = 0; i != get_column_size(); ++i) {
-    auto item = row->get_item(i);
-    m_hover_observers.erase(item);
-  }
-  row->deleteLater();
+  row->move(-10000, -10000);
+  row->unmount();
+  unmatch(*row, CurrentRow());
+  unmatch(*row, Selected());
+  m_recycled_rows.push_back(row);
+  QTimer::singleShot(0, this, [=] {
+    if(std::find(m_recycled_rows.begin(), m_recycled_rows.end(), row) !=
+        m_recycled_rows.end()) {
+      row->hide();
+    }
+  });
 }
 
 void TableBody::remove(RowCover& row) {
@@ -1053,16 +1078,15 @@ void TableBody::remove(RowCover& row) {
   if(&row == m_current_row) {
     m_current_row = nullptr;
   }
-  row.unmount();
   destroy(&row);
   delete item;
 }
 
-void TableBody::mount_visible_rows(std::vector<RowCover*>& unmounted_rows) {
+void TableBody::mount_visible_rows() {
   auto top = mapFromParent(QPoint(0, 0)).y() - SCROLL_BUFFER;
   while(get_layout().get_top_index() - 1 >= 0 &&
       get_layout().get_top_space() > top) {
-    mount_row(get_layout().get_top_index() - 1, none, unmounted_rows);
+    mount_row(get_layout().get_top_index() - 1, none);
   }
   auto position = [&] {
     if(get_layout().isEmpty()) {
@@ -1079,32 +1103,28 @@ void TableBody::mount_visible_rows(std::vector<RowCover*>& unmounted_rows) {
     mapFromParent(QPoint(0, parentWidget()->height())).y() + SCROLL_BUFFER;
   while(get_layout().get_top_index() + get_layout().count() <
       m_table->get_row_size() && position < bottom) {
-    auto row = mount_row(get_layout().get_top_index() + get_layout().count(),
-      none, unmounted_rows);
+    auto row =
+      mount_row(get_layout().get_top_index() + get_layout().count(), none);
     position += row->sizeHint().height() + m_styles.m_vertical_spacing;
   }
 }
 
-std::vector<TableBody::RowCover*> TableBody::unmount_hidden_rows() {
-  auto removed_items = std::vector<QLayoutItem*>();
-  for(auto i = 0; i != get_layout().count(); ++i) {
+void TableBody::unmount_hidden_rows() {
+  auto i = 0;
+  while(i != get_layout().count()) {
     auto item = get_layout().itemAt(i);
     if(!test_visibility(*this, item->geometry())) {
-      removed_items.push_back(item);
-    }
-  }
-  auto unmounted_rows = std::vector<RowCover*>();
-  for(auto& item : removed_items) {
-    auto row = static_cast<RowCover*>(item->widget());
-    get_layout().hide(*item);
-    if(row != m_current_row) {
-      row->unmount();
-      unmounted_rows.push_back(row);
+      auto row = static_cast<RowCover*>(item->widget());
+      get_layout().hide(*item);
+      if(row != m_current_row) {
+        destroy(row);
+      } else {
+        row->move(-1000, -1000);
+      }
     } else {
-      row->move(-1000, -1000);
+      ++i;
     }
   }
-  return unmounted_rows;
 }
 
 void TableBody::initialize_visible_region() {
@@ -1112,9 +1132,8 @@ void TableBody::initialize_visible_region() {
       m_table->get_row_size() == 0 || m_table->get_column_size() == 0) {
     return;
   }
-  auto unmounted_rows = std::vector<RowCover*>();
-  mount_row(0, none, unmounted_rows);
-  mount_visible_rows(unmounted_rows);
+  mount_row(0, none);
+  mount_visible_rows();
   get_layout().set_row_size(m_table->get_row_size());
   if(m_current_controller.get_row()) {
     get_current_item();
@@ -1122,13 +1141,13 @@ void TableBody::initialize_visible_region() {
   get_layout().invalidate();
 }
 
-void TableBody::reset_visible_region(std::vector<RowCover*>& unmounted_rows) {
+void TableBody::reset_visible_region() {
   if(m_table->get_row_size() == 0) {
     return;
   }
   get_layout().reset_top_index(mapFromParent(QPoint(0, 0)).y());
   if(get_layout().get_top_index() < m_table->get_row_size()) {
-    mount_row(get_layout().get_top_index(), none, unmounted_rows);
+    mount_row(get_layout().get_top_index(), none);
   }
 }
 
@@ -1141,15 +1160,14 @@ void TableBody::update_visible_region() {
     return;
   }
   ++m_resize_guard;
-  auto unmounted_rows = unmount_hidden_rows();
+  auto are_updates_enabled = updatesEnabled();
+  setUpdatesEnabled(false);
+  unmount_hidden_rows();
   if(get_layout().isEmpty()) {
-    reset_visible_region(unmounted_rows);
+    reset_visible_region();
   }
-  mount_visible_rows(unmounted_rows);
-  for(auto& unmounted_row : unmounted_rows) {
-    destroy(unmounted_row);
-  }
-  get_layout().invalidate();
+  mount_visible_rows();
+  setUpdatesEnabled(are_updates_enabled);
   --m_resize_guard;
 }
 
@@ -1273,14 +1291,15 @@ void TableBody::on_current(
       previous_had_focus =
         previous_item->isAncestorOf(
           static_cast<QWidget*>(QApplication::focusObject()));
-      unmatch(*previous_item->parentWidget(), CurrentRow());
+      if(!current || previous->m_row != current->m_row) {
+        unmatch(*previous_item->parentWidget(), CurrentRow());
+      }
       unmatch(*previous_item, Current());
     }
     if(!current || current->m_column != previous->m_column) {
       unmatch(*m_column_covers[previous->m_column], CurrentColumn());
     }
     if(m_current_row && get_layout().indexOf(m_current_row) == -1) {
-      m_current_row->unmount();
       destroy(m_current_row);
     }
     m_current_row = nullptr;

@@ -9,10 +9,9 @@ using namespace boost;
 using namespace boost::date_time;
 using namespace boost::posix_time;
 using namespace Spire;
-using namespace std;
 
 namespace {
-  string GetDisplayText(ptime value) {
+  std::string GetDisplayText(ptime value) {
     if(value.is_special() || value.is_not_a_date_time()) {
       return to_simple_string(value);
     } else {
@@ -30,7 +29,7 @@ DateTimeNode::DateTimeNode(const ptime& value)
   SetText(GetDisplayText(GetValue()));
 }
 
-unique_ptr<DateTimeNode> DateTimeNode::SetValue(const ptime& value) const {
+std::unique_ptr<DateTimeNode> DateTimeNode::SetValue(const ptime& value) const {
   auto clone = CanvasNode::Clone(*this);
   clone->SetInternalValue(value);
   clone->SetText(GetDisplayText(clone->GetValue()));
@@ -41,10 +40,10 @@ void DateTimeNode::Apply(CanvasNodeVisitor& visitor) const {
   visitor.Visit(*this);
 }
 
-unique_ptr<CanvasNode> DateTimeNode::Clone() const {
-  return make_unique<DateTimeNode>(*this);
+std::unique_ptr<CanvasNode> DateTimeNode::Clone() const {
+  return std::make_unique<DateTimeNode>(*this);
 }
 
-unique_ptr<CanvasNode> DateTimeNode::Reset() const {
-  return make_unique<DateTimeNode>();
+std::unique_ptr<CanvasNode> DateTimeNode::Reset() const {
+  return std::make_unique<DateTimeNode>();
 }

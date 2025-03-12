@@ -456,6 +456,7 @@ void Stylist::on_animation() {
     if(evaluator.m_next_frame <= seconds(0)) {
       evaluator.animate();
       evaluator.m_elapsed += std::max(delta, evaluator.m_next_frame);
+      m_widget->update();
     }
   }
   m_last_frame = std::chrono::steady_clock::now();

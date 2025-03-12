@@ -10,7 +10,6 @@ ListCurrentController::ListCurrentController(
   : m_current(std::move(current)),
     m_size(size),
     m_edge_navigation(EdgeNavigation::WRAP),
-    m_last_current(m_current->get()),
     m_connection(m_current->connect_update_signal(
       std::bind_front(&ListCurrentController::on_current, this))) {}
 
@@ -35,45 +34,17 @@ void ListCurrentController::add(std::unique_ptr<ItemView> view, int index) {
   if(!update_current) {
     return;
   }
-  if(m_current->get() && *m_current->get() == m_size - 1) {
+  if(m_current->get() && *m_current->get() == m_size - 1 ||
+      index <= m_current->get().value_or(-1)) {
     on_current(m_current->get());
-  } else if(m_current->get() && *m_current->get() >= index &&
-      *m_current->get() < std::ssize(m_views) - 1) {
-    auto current = *m_current->get() + 1;
-    m_last_current = current;
-    auto blocker = shared_connection_block(m_connection);
-    m_current->set(current);
-  } else if(m_last_current && *m_last_current >= index) {
-    ++*m_last_current;
   }
 }
 
 void ListCurrentController::remove(int index) {
   m_views.erase(m_views.begin() + index);
   --m_size;
-  if(m_last_current) {
-    if(*m_last_current == index) {
-      m_last_current = none;
-    } else if(*m_last_current > index) {
-      --*m_last_current;
-    }
-  }
-  if(m_current->get()) {
-    if(m_current->get() == index) {
-      auto size = static_cast<int>(m_views.size());
-      if(size == 0) {
-        m_current->set(none);
-      } else if(index >= size) {
-        m_current->set(size - 1);
-      } else {
-        m_current->set(index);
-      }
-    } else if(m_current->get() > index) {
-      auto current = *m_current->get() - 1;
-      m_last_current = current;
-      auto blocker = shared_connection_block(m_connection);
-      m_current->set(current);
-    }
+  if(index <= m_current->get().value_or(-1)) {
+    on_current(m_current->get());
   }
 }
 
@@ -95,20 +66,6 @@ void ListCurrentController::move(int source, int destination) {
     std::rotate(std::next(m_views.begin(), source),
       std::next(m_views.begin(), source + 1),
       std::next(m_views.begin(), destination + 1));
-  }
-  auto adjust = [&] (auto& value) {
-    if(value && (*value >= source || *value <= destination)) {
-      *value += direction;
-      return true;
-    }
-    return false;
-  };
-  adjust(m_last_current);
-  auto current = m_current->get();
-  if(adjust(current)) {
-    m_last_current = current;
-    auto blocker = shared_connection_block(m_connection);
-    m_current->set(current);
   }
 }
 
@@ -228,8 +185,6 @@ bool ListCurrentController::is_initialized() const {
 
 void ListCurrentController::on_current(optional<int> current) {
   if(current && *current < m_size) {
-    auto previous = m_last_current;
-    m_last_current = current;
-    m_update_signal(previous, current);
+    m_update_signal(current);
   }
 }

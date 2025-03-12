@@ -1,5 +1,6 @@
 #include "Spire/Ui/MarketBox.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
+#include "Spire/Spire/SortedListModel.hpp"
 #include "Spire/Ui/DestinationListItem.hpp"
 
 using namespace Nexus;
@@ -17,7 +18,12 @@ MarketBox* Spire::make_market_box(std::shared_ptr<MarketModel> current,
     destination_entry.m_description = entry.m_description;
     return new DestinationListItem(std::move(destination_entry));
   });
-  auto market_list = std::make_shared<ArrayListModel<MarketCode>>();
+  auto market_list = std::make_shared<SortedListModel<MarketCode>>(
+    std::make_shared<ArrayListModel<MarketCode>>(),
+    [=] (const auto& left, const auto& right) {
+      return markets.FromCode(left).m_displayName <
+        markets.FromCode(right).m_displayName;
+    });
   for(auto& market : markets.GetEntries()) {
     market_list->push(market.m_code);
   }

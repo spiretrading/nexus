@@ -26,6 +26,12 @@ TEST_SUITE("FilteredTableModel") {
     REQUIRE(source->get<int>(1, 0) == 2);
     REQUIRE(source->get<int>(2, 0) == 9);
     REQUIRE(source->get<int>(3, 0) == 1);
+    REQUIRE(filtered_model.index_from_source(0) == -1);
+    REQUIRE(filtered_model.index_from_source(1) == 0);
+    REQUIRE(filtered_model.index_from_source(2) == -1);
+    REQUIRE(filtered_model.index_from_source(3) == 1);
+    REQUIRE(filtered_model.index_to_source(0) == 1);
+    REQUIRE(filtered_model.index_to_source(1) == 3);
   }
 
   TEST_CASE("push") {

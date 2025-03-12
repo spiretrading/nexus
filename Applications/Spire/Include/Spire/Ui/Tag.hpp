@@ -1,6 +1,7 @@
 #ifndef SPIRE_TAG_HPP
 #define SPIRE_TAG_HPP
 #include <QWidget>
+#include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -20,6 +21,16 @@ namespace Spire {
        * @param parent The parent widget.
        */
       explicit Tag(QString label, QWidget* parent = nullptr);
+
+      /**
+       * Constructs a Tag.
+       * @param label The text label to display inside of the Tag.
+       * @param parent The parent widget.
+       */
+      explicit Tag(std::shared_ptr<TextModel> label, QWidget* parent = nullptr);
+
+      /** Returns the text label. */
+      const std::shared_ptr<TextModel>& get_label() const;
 
       /** Returns <code>true</code> iff the Tag is not deletable. */
       bool is_read_only() const;

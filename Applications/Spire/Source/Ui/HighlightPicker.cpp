@@ -93,12 +93,6 @@ namespace {
   auto make_color_box(std::shared_ptr<ColorModel> model) {
     auto color_box = new ColorBox(std::move(model));
     color_box->setFixedHeight(scale_height(26));
-    update_style(*color_box, [] (auto& style) {
-      style.get(Any() >
-        Any() > Any() > is_a<ColorPicker>() > Alpha()).set(Visibility::NONE);
-      style.get(Any() > Any() > Any() > is_a<ColorPicker>() >
-        is_a<ColorCodePanel>() > Alpha()).set(Visibility::NONE);
-    });
     return color_box;
   }
 }
@@ -156,11 +150,7 @@ struct HighlightPicker::HighlightPickerModel {
       if(std::abs(candidate_contrast) > 75 && background_lch_color.m_c > 0.01) {
         return to_rgb(text_color_candidate);
       }
-      if(std::abs(apca(Qt::black, background_color)) >
-          std::abs(apca(Qt::white, background_color))) {
-        return QColor(Qt::black);
-      }
-      return QColor(Qt::white);
+      return apca_text_color(background_color);
     }();
     auto highlight_blocker = shared_connection_block(m_highlight_connection);
     m_highlight_model->set({background_color, text_color});

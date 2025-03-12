@@ -19,7 +19,7 @@ namespace Spire {
       typedef boost::signals2::signal<void ()> NameSignal;
 
       //! Constructs a CatalogTabModel.
-      CatalogTabModel();
+      CatalogTabModel() = default;
 
       //! Returns the name of this tab.
       const std::string& GetName() const;

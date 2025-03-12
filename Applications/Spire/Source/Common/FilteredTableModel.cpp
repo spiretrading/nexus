@@ -25,6 +25,14 @@ void FilteredTableModel::set_filter(const Filter& filter) {
   m_filtered_list.set_filter(make_filter(*m_source, filter));
 }
 
+int FilteredTableModel::index_to_source(int index) const {
+  return m_filtered_list.index_to_source(index);
+}
+
+int FilteredTableModel::index_from_source(int index) const {
+  return m_filtered_list.index_from_source(index);
+}
+
 int FilteredTableModel::get_row_size() const {
   return m_filtered_list.get_size();
 }

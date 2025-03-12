@@ -46,7 +46,7 @@ namespace {
   auto make_technicals_value_field(
       std::shared_ptr<SecurityTechnicalsModel> technicals, U field) {
     auto label = make_label(
-      make_to_text_model<T>(make_field_value_model(technicals, field),
+      make_to_text_model(make_field_value_model(technicals, field),
         [] (const auto& value) {
           return to_text(value);
         }));

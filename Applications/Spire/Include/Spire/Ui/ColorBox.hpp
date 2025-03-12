@@ -3,18 +3,12 @@
 #include <memory>
 #include <QColor>
 #include <QWidget>
-#include "Spire/Spire/LocalValueModel.hpp"
+#include "Spire/Ui/ColorPicker.hpp"
 #include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/PressObserver.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
-
-  /** A ValueModel over a QColor. */
-  using ColorModel = ValueModel<QColor>;
-
-  /** A LocalValueModel over a QColor. */
-  using LocalColorModel = LocalValueModel<QColor>;
 
   /**
    * Presents a color.
@@ -29,18 +23,35 @@ namespace Spire {
       using SubmitSignal = Signal<void (const QColor& submission)>;
 
       /**
-       * Constructs a ColorBox with a default local model.
+       * Constructs a ColorBox with a default local model and the basic preset
+       * of ColorPicker.
        * @param parent The parent widget.
        */
       explicit ColorBox(QWidget* parent = nullptr);
 
       /**
-       * Constructs a ColorBox.
+       * Constructs a ColorBox with the basic preset of the ColorPicker.
        * @param current The model used for the current color.
        * @param parent The parent widget.
        */
       explicit ColorBox(std::shared_ptr<ColorModel> current,
         QWidget* parent = nullptr);
+
+      /**
+       * Constructs a ColorBox with a default local model.
+       * @param preset The visibility and feature preset of the ColorPicker.
+       * @param parent The parent widget.
+       */
+      explicit ColorBox(ColorPicker::Preset preset, QWidget* parent = nullptr);
+
+      /**
+       * Constructs a ColorBox.
+       * @param current The model used for the current color.
+       * @param preset The visibility and feature preset of the ColorPicker.
+       * @param parent The parent widget.
+       */
+      ColorBox(std::shared_ptr<ColorModel> current,
+        ColorPicker::Preset preset, QWidget* parent = nullptr);
 
       /** Returns the current color model. */
       const std::shared_ptr<ColorModel>& get_current() const;
@@ -65,6 +76,7 @@ namespace Spire {
     private:
       mutable SubmitSignal m_submit_signal;
       std::shared_ptr<ColorModel> m_current;
+      ColorPicker::Preset m_color_picker_preset;
       Box* m_color_display;
       Box* m_input_box;
       ColorPicker* m_color_picker;

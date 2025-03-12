@@ -19,7 +19,7 @@ IF "!IS_DEPENDENCY!" == "1" (
   GOTO begin_args
 )
 IF "!CONFIG!" == "clean" (
-  git clean -ffxd -e *Dependencies* -e *WebApp*
+  git clean -ffxd -e *Dependencies*
   IF EXIST Dependencies\cache_files\nexus.txt (
     DEL Dependencies\cache_files\nexus.txt
   )
@@ -44,6 +44,6 @@ IF "!CONFIG!" == "clean" (
     CALL "!DIRECTORY!configure.bat"
   )
   cmake --build "!ROOT!" --target INSTALL --config "!CONFIG!"
-  echo !CONFIG! > CMakeFiles\config.txt
+  ECHO !CONFIG! > CMakeFiles\config.txt
 )
 ENDLOCAL

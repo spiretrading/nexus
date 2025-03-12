@@ -47,11 +47,9 @@ namespace Spire {
 
       /**
        * Signals a change to the current navigation index.
-       * @param previous The index of the previous navigation index.
        * @param current The index of the current navigation index.
        */
-      using UpdateSignal = Signal<void (const boost::optional<int>& previous,
-        const boost::optional<int>& current)>;
+      using UpdateSignal = Signal<void (const boost::optional<int>& current)>;
 
       /**
        * Constructs a ListCurrentController over a given current index model
@@ -148,7 +146,6 @@ namespace Spire {
       std::shared_ptr<CurrentModel> m_current;
       int m_size;
       EdgeNavigation m_edge_navigation;
-      boost::optional<int> m_last_current;
       boost::signals2::scoped_connection m_connection;
 
       bool is_initialized() const;

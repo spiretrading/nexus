@@ -1,5 +1,4 @@
 find_package(Qt5Widgets REQUIRED)
-
 set(resource_files ${SPIRE_RESOURCES_PATH}/Resources.qrc)
 qt5_add_resources(generated_resource_files ${resource_files})
 include_directories(${CMAKE_CURRENT_BINARY_DIR})

@@ -1,5 +1,6 @@
 #ifndef SPIRE_TABLE_BODY_HPP
 #define SPIRE_TABLE_BODY_HPP
+#include <deque>
 #include <functional>
 #include <memory>
 #include <unordered_map>
@@ -149,6 +150,7 @@ namespace Styles {
       TableSelectionController m_selection_controller;
       std::shared_ptr<ListModel<int>> m_widths;
       TableViewItemBuilder m_item_builder;
+      std::deque<RowCover*> m_recycled_rows;
       std::vector<ColumnCover*> m_column_covers;
       RowCover* m_current_row;
       Styles m_styles;
@@ -179,15 +181,14 @@ namespace Styles {
       void remove_row(int index);
       void move_row(int source, int destination);
       void update_parent();
-      RowCover* mount_row(int index, boost::optional<int> current_index,
-        std::vector<RowCover*>& unmounted_rows);
       RowCover* mount_row(int index, boost::optional<int> current_index);
+      RowCover* make_row_cover();
       void destroy(RowCover* row);
       void remove(RowCover& row);
-      void mount_visible_rows(std::vector<RowCover*>& unmounted_rows);
-      std::vector<RowCover*> unmount_hidden_rows();
+      void mount_visible_rows();
+      void unmount_hidden_rows();
       void initialize_visible_region();
-      void reset_visible_region(std::vector<RowCover*>& unmounted_rows);
+      void reset_visible_region();
       void update_visible_region();
       void update_column_covers();
       void update_column_widths();

@@ -50,6 +50,8 @@ namespace Nexus::MarketDataService {
       struct OrderEntry {
         Security m_security;
         Money m_price;
+        Side m_side;
+        std::string m_mpid;
       };
       ChiaConfiguration m_config;
       Beam::GetOptionalLocalPtr<M> m_marketDataFeedClient;
@@ -58,6 +60,7 @@ namespace Nexus::MarketDataService {
       Beam::Routines::RoutineHandler m_readLoopRoutine;
       Beam::IO::OpenState m_openState;
 
+      static std::string ParseMpid(Beam::Out<const char*> cursor);
       ChiaMarketDataFeedClient(const ChiaMarketDataFeedClient&) = delete;
       ChiaMarketDataFeedClient& operator =(
         const ChiaMarketDataFeedClient&) = delete;
@@ -102,6 +105,16 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename M, typename P>
+  std::string ChiaMarketDataFeedClient<M, P>::ParseMpid(
+      Beam::Out<const char*> cursor) {
+    auto mpid = PitchMessage::ParseAlphanumeric(4, Beam::Store(cursor));
+    if(mpid.empty()) {
+      return "AU000";
+    }
+    return mpid;
+  }
+
+  template<typename M, typename P>
   void ChiaMarketDataFeedClient<M, P>::HandleAddOrderMessage(
       const PitchMessage& message) {
     auto cursor = message.m_payload;
@@ -115,17 +128,18 @@ namespace Nexus::MarketDataService {
     }
     auto symbol = PitchMessage::ParseAlphanumeric(6, Beam::Store(cursor));
     auto price = PitchMessage::ParsePrice(Beam::Store(cursor));
+    auto mpid = ParseMpid(Beam::Store(cursor));
     auto security =
       Security(symbol, m_config.m_primaryMarket, m_config.m_country);
     if(m_config.m_isTimeAndSaleFeed) {
-      m_orderEntries[orderId] = OrderEntry(security, price);
+      m_orderEntries[orderId] = OrderEntry(security, price, side, mpid);
     }
     m_marketDataFeedClient->AddOrder(security, m_config.m_disseminatingMarket,
       m_config.m_mpid, false, orderId, side, price, quantity, timestamp);
     if(m_config.m_isLoggingMessages) {
       std::cout << timestamp << ',' << message.m_type << ',' << orderId <<
         ',' << side << ',' << quantity << ',' << symbol << ',' << price <<
-        std::endl;
+        ',' << mpid << std::endl;
     }
   }
 
@@ -140,14 +154,24 @@ namespace Nexus::MarketDataService {
     if(executedQuantity == 0) {
       return;
     }
+    auto executionId = PitchMessage::ParseUint64(Beam::Store(cursor));
+    auto contraOrderId = PitchMessage::ParseUint64(Beam::Store(cursor));
+    auto contraMpid = ParseMpid(Beam::Store(cursor));
     m_marketDataFeedClient->OffsetOrderSize(
       orderId, -static_cast<std::int32_t>(executedQuantity), timestamp);
     if(m_config.m_isTimeAndSaleFeed) {
       if(auto orderEntry = Beam::Lookup(m_orderEntries, orderId)) {
         auto condition = TimeAndSale::Condition();
         condition.m_code = "@";
+        auto [buyerMpid, sellerMpid] = [&] {
+          if(orderEntry->m_side == Side::BID) {
+            return std::tuple(&orderEntry->m_mpid, &contraMpid);
+          }
+          return std::tuple(&contraMpid, &orderEntry->m_mpid);
+        }();
         auto timeAndSale = TimeAndSale(timestamp, orderEntry->m_price,
-          executedQuantity, std::move(condition), m_config.m_mpid);
+          executedQuantity, std::move(condition), m_config.m_mpid, *buyerMpid,
+          *sellerMpid);
         m_marketDataFeedClient->Publish(SecurityTimeAndSale(
           std::move(timeAndSale), orderEntry->m_security));
       }
@@ -224,12 +248,18 @@ namespace Nexus::MarketDataService {
       return;
     }
     auto price = PitchMessage::ParsePrice(Beam::Store(cursor));
+    auto executionId = PitchMessage::ParseUint64(Beam::Store(cursor));
+    auto orderId = PitchMessage::ParseUint64(Beam::Store(cursor));
+    auto contraOrderId = PitchMessage::ParseUint64(Beam::Store(cursor));
+    auto buyerMpid = ParseMpid(Beam::Store(cursor));
+    auto sellerMpid = ParseMpid(Beam::Store(cursor));
     auto security =
       Security(symbol, m_config.m_primaryMarket, m_config.m_country);
     auto condition = TimeAndSale::Condition();
     condition.m_code = "@";
     auto timeAndSale = TimeAndSale(
-      timestamp, price, quantity, std::move(condition), m_config.m_mpid);
+      timestamp, price, quantity, std::move(condition), m_config.m_mpid,
+      std::move(buyerMpid), std::move(sellerMpid));
     m_marketDataFeedClient->Publish(
       SecurityTimeAndSale(std::move(timeAndSale), security));
     if(m_config.m_isLoggingMessages) {

@@ -240,6 +240,16 @@ namespace {
     maximum.connect_changed_signal([=] (auto value) {
       model->set_maximum(value);
     });
+    auto& min_max_enabled = get<bool>("min_max_enabled", profile.get_properties());
+    min_max_enabled.connect_changed_signal([=, &minimum, &maximum] (auto value) {
+      if(value) {
+        model->set_minimum(minimum.get());
+        model->set_maximum(maximum.get());
+      } else {
+        model->set_minimum(none);
+        model->set_maximum(none);
+      }
+    });
     auto& default_increment =
       get<Type>("default_increment", profile.get_properties());
     auto& alt_increment = get<Type>("alt_increment", profile.get_properties());
@@ -416,6 +426,7 @@ namespace {
     properties.push_back(make_standard_property<QString>("placeholder"));
     properties.push_back(make_standard_property("read_only", false));
     properties.push_back(make_standard_property("buttons_visible", true));
+    properties.push_back(make_standard_property("min_max_enabled", true));
   }
 
   void populate_decimal_box_with_decimal_properties(
@@ -816,6 +827,14 @@ namespace {
     return property;
   }
 
+  const auto& get_preset_property() {
+    static auto property = define_enum<ColorPicker::Preset>(
+      {{"BASIC", ColorPicker::Preset::BASIC},
+        {"WITH_TRANSPARENCY", ColorPicker::Preset::WITH_TRANSPARENCY},
+        {"ADVANCED", ColorPicker::Preset::ADVANCED}});
+    return property;
+  }
+
   auto make_header_model() {
     auto model = std::make_shared<ArrayListModel<TableHeaderItem::Model>>();
     model->push({"Name", "Name",
@@ -1187,11 +1206,13 @@ UiProfile Spire::make_color_box_profile() {
   populate_widget_properties(properties);
   properties.push_back(make_standard_property("read_only", false));
   properties.push_back(make_standard_property("current", QColor(0xF0D109)));
-  properties.push_back(make_standard_property("alpha_visible", true));
+  properties.push_back(make_standard_enum_property("preset",
+    get_preset_property()));
   auto profile = UiProfile("ColorBox", properties, [] (auto& profile) {
+    auto& preset = get<ColorPicker::Preset>("preset", profile.get_properties());
     auto& current = get<QColor>("current", profile.get_properties());
     auto color_box = new ColorBox(
-      std::make_shared<LocalColorModel>(current.get()));
+      std::make_shared<LocalColorModel>(current.get()), preset.get());
     color_box->setFixedSize(scale(100, 26));
     apply_widget_properties(color_box, profile.get_properties());
     auto& read_only = get<bool>("read_only", profile.get_properties());
@@ -1201,24 +1222,6 @@ UiProfile Spire::make_color_box_profile() {
       if(color.isValid()) {
         color_box->get_current()->set(color);
       }
-    });
-    auto& alpha_visible = get<bool>("alpha_visible", profile.get_properties());
-    alpha_visible.connect_changed_signal([=] (auto value) {
-      update_style(*color_box, [&] (auto& style) {
-        if(value) {
-          style.get(Any() > is_a<ColorPicker>() > Alpha()).
-            set(Visibility::VISIBLE);
-          style.get(
-            Any() > is_a<ColorPicker>() > is_a<ColorCodePanel>() > Alpha()).
-              set(Visibility::VISIBLE);
-        } else {
-          style.get(Any() > is_a<ColorPicker>() > Alpha()).
-            set(Visibility::NONE);
-          style.get(
-            Any() > is_a<ColorPicker>() > is_a<ColorCodePanel>() > Alpha()).
-              set(Visibility::NONE);
-        }
-      });
     });
     auto current_slot = profile.make_event_slot<QString>("Current");
     color_box->get_current()->connect_update_signal([=] (const auto& current) {
@@ -1258,15 +1261,8 @@ UiProfile Spire::make_color_code_panel_profile() {
       panel->set_mode(value);
     });
     auto& alpha_visible = get<bool>("alpha_visible", profile.get_properties());
-    alpha_visible.connect_changed_signal([=] (auto value) {
-      update_style(*panel, [&] (auto& style) {
-        if(value) {
-          style.get(Any() > Alpha()).set(Visibility::VISIBLE);
-        } else {
-          style.get(Any() > Alpha()).set(Visibility::NONE);
-        }
-      });
-    });
+    alpha_visible.connect_changed_signal(
+      std::bind_front(&ColorCodePanel::set_alpha_visible, panel));
     auto current_slot = profile.make_event_slot<QString>("Current");
     panel->get_current()->connect_update_signal([=] (const auto& current) {
       auto hue = [&] {
@@ -1290,33 +1286,16 @@ UiProfile Spire::make_color_code_panel_profile() {
 UiProfile Spire::make_color_picker_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   properties.push_back(make_standard_property("current", QColor()));
-  properties.push_back(make_standard_property("alpha_visible", true));
+  properties.push_back(make_standard_enum_property("preset",
+    get_preset_property()));
   auto profile = UiProfile("ColorPicker", properties, [] (auto& profile) {
+    auto& preset = get<ColorPicker::Preset>("preset", profile.get_properties());
     auto button = make_label_button("ColorPicker");
-    auto picker = new ColorPicker(*button);
+    auto picker = new ColorPicker(preset.get(), *button);
     auto& current = get<QColor>("current", profile.get_properties());
     current.connect_changed_signal([=] (const auto& color) {
       if(color.isValid()) {
         picker->get_current()->set(color);
-      }
-    });
-    auto& alpha_visible = get<bool>("alpha_visible", profile.get_properties());
-    alpha_visible.connect_changed_signal([=] (auto value) {
-      update_style(*picker, [&] (auto& style) {
-        if(value) {
-          style.get(Any() > Alpha()).set(Visibility::VISIBLE);
-          style.get(Any() > is_a<ColorCodePanel>() > Alpha()).
-            set(Visibility::VISIBLE);
-        } else {
-          style.get(Any() > Alpha()).set(Visibility::NONE);
-          style.get(Any() > is_a<ColorCodePanel>() > Alpha()).
-            set(Visibility::NONE);
-        }
-      });
-      if(value) {
-        picker->setFixedWidth(12 * scale_width(22));
-      } else {
-        picker->setFixedWidth(scale_width(220));
       }
     });
     auto current_slot = profile.make_event_slot<QString>("Current");
@@ -1729,9 +1708,7 @@ UiProfile Spire::make_drop_down_box_profile() {
     for(auto i = 0; i < item_count.get(); ++i) {
       list_model->push(item_text.get() + QString("%1").arg(i));
     }
-    auto drop_down_box = new DropDownBox(list_model,
-      std::make_shared<LocalValueModel<optional<int>>>(item_count.get() - 1),
-        ListView::default_item_builder);
+    auto drop_down_box = new DropDownBox(list_model);
     drop_down_box->setFixedWidth(scale_width(112));
     apply_widget_properties(drop_down_box, profile.get_properties());
     auto& read_only = get<bool>("read_only", profile.get_properties());
@@ -1739,6 +1716,7 @@ UiProfile Spire::make_drop_down_box_profile() {
       drop_down_box->set_read_only(is_read_only);
     });
     auto current_slot = profile.make_event_slot<optional<std::any>>("Current");
+    drop_down_box->get_current()->set(list_model->get_size() - 1);
     drop_down_box->get_current()->connect_update_signal(
       [=] (auto current) {
         if(current) {
@@ -3108,6 +3086,58 @@ UiProfile Spire::make_navigation_view_profile() {
   return profile;
 }
 
+UiProfile Spire::make_number_label_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  auto number_type_property = define_enum<QString>(
+    {{"Integer", "int"}, {"Unsigned Integer", "uint"},
+    {"Integer64", "int64"}, {"Unsigned Integer64", "uint64"},
+    {"double", "double"}, {"Quantity", "Quantity"}, {"Money", "Money"}});
+  populate_enum_properties(properties, "number_type", number_type_property);
+  properties.push_back(make_standard_property<Decimal>("number", 1000000));
+  properties.push_back(make_standard_property("omit_group_separator", false));
+  auto profile = UiProfile("NumberLabel", properties, [] (auto& profile) {
+    auto convert =
+      [&] (double value, const QString& type, bool is_omit_separator) {
+        auto locale = QLocale();
+        if(is_omit_separator) {
+          locale.setNumberOptions(QLocale::OmitGroupSeparator);
+        }
+        if(type == "int") {
+          return to_text(static_cast<int>(value), locale);
+        } else if(type == "uint") {
+          return to_text(static_cast<unsigned int>(value), locale);
+        } else if(type == "int64") {
+          return to_text(static_cast<std::int64_t>(value), locale);
+        } else if(type == "uint64") {
+          return to_text(static_cast<std::uint64_t>(value), locale);
+        } else if(type == "Quantity") {
+          return to_text(Quantity(value), locale);
+        } else if(type == "Money") {
+          return to_text(Money(Quantity(value)), locale);
+        }
+        return to_text(value, locale);
+      };
+    auto& type = get<QString>("number_type", profile.get_properties());
+    auto& number = get<Decimal>("number", profile.get_properties());
+    auto& separator =
+      get<bool>("omit_group_separator", profile.get_properties());
+    auto label = std::make_shared<LocalTextModel>();
+    type.connect_changed_signal([=, &number, &separator] (const auto& type) {
+      label->set(
+        convert(number.get().convert_to<double>(), type, separator.get()));
+    });
+    number.connect_changed_signal([=, &type, &separator] (const auto& value) {
+      label->set(
+        convert(value.convert_to<double>(), type.get(), separator.get()));
+    });
+    separator.connect_changed_signal([=, &type, &number] (auto value) {
+      label->set(convert(number.get().convert_to<double>(), type.get(), value));
+    });
+    return make_label(label);
+  });
+  return profile;
+}
+
 UiProfile Spire::make_order_field_info_tip_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
@@ -4342,7 +4372,22 @@ UiProfile Spire::make_table_view_profile() {
   properties.push_back(make_style_property("style_sheet",
     std::move(default_style)));
   properties.push_back(make_standard_property("row_count", 50));
+  properties.push_back(make_standard_property("current_row", 0));
   properties.push_back(make_standard_property("update", 0));
+  properties.push_back(std::make_shared<
+    StandardUiProperty<TableModel::AddOperation>>(
+      "insert", TableModel::AddOperation(-1), [] (auto parent, auto& property) {
+        auto form = new QWidget();
+        auto layout = make_hbox_layout(form);
+        auto row = new QSpinBox();
+        auto button = new QPushButton("Insert");
+        layout->addWidget(row);
+        layout->addWidget(button);
+        QObject::connect(button, &QPushButton::pressed, [=, &property] {
+          property.set(TableModel::AddOperation(row->value()));
+        });
+        return form;
+      }));
   properties.push_back(std::make_shared<
     StandardUiProperty<TableModel::RemoveOperation>>(
       "remove", TableModel::RemoveOperation(-1), [] (
@@ -4425,10 +4470,25 @@ UiProfile Spire::make_table_view_profile() {
     style_sheet.connect_changed_signal([=] (const auto& styles) {
       update_widget_style(*view, styles);
     });
+    auto& current_row = get<int>("current_row", profile.get_properties());
+    current_row.connect_changed_signal([=] (auto value) {
+      view->get_current()->set(TableView::Index(value, 0));
+    });
     auto& update_operation = get<int>("update", profile.get_properties());
     update_operation.connect_changed_signal([&, view] (auto value) {
       if(auto current = view->get_current()->get()) {
         view->get_table()->set(current->m_row, current->m_column, value);
+      }
+    });
+    auto& insert_operation =
+      get<TableModel::AddOperation>("insert", profile.get_properties());
+    insert_operation.connect_changed_signal([=] (const auto& operation) {
+      if(operation.m_index >= 0 &&
+          operation.m_index <= model->get_row_size()) {
+        auto value = model->get_row_size() * 4;
+        model->insert(
+          std::vector<std::any>{value, value + 1, value + 2, value + 3},
+          operation.m_index);
       }
     });
     auto& remove_operation =
@@ -4463,6 +4523,16 @@ UiProfile Spire::make_tag_profile() {
   auto profile = UiProfile("Tag", properties, [] (auto& profile) {
     auto& label = get<QString>("label", profile.get_properties());
     auto tag = new Tag(label.get());
+    label.connect_changed_signal([=] (const auto& value) {
+      if(tag->get_label()->get() != value) {
+        tag->get_label()->set(value);
+      }
+    });
+    tag->get_label()->connect_update_signal([&] (const auto& value) {
+      if(label.get() != value) {
+        label.set(value);
+      }
+    });
     apply_widget_properties(tag, profile.get_properties());
     auto& read_only = get<bool>("read_only", profile.get_properties());
     read_only.connect_changed_signal([=] (auto is_read_only) {
