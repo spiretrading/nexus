@@ -44,6 +44,10 @@ SortedTableModel::SortedTableModel(std::shared_ptr<TableModel> source,
     std::bind_front(&SortedTableModel::on_operation, this));
 }
 
+const std::shared_ptr<TableModel>& SortedTableModel::get_source() const {
+  return m_source;
+}
+
 const SortedTableModel::Comparator& SortedTableModel::get_comparator() const {
   return m_comparator;
 }
