@@ -71,7 +71,14 @@ namespace Spire {
     auto matches = std::vector<Type>();
     for(auto i = m_values.startsWith(query.toLower().data());
         i != m_values.end(); ++i) {
-      matches.push_back(*i->second);
+      if constexpr(requires(const Type& a, const Type& b) { a == b; }) {
+        auto j = std::find(matches.begin(), matches.end(), *i->second);
+        if(j == matches.end()) {
+          matches.push_back(*i->second);
+        }
+      } else {
+        matches.push_back(*i->second);
+      }
     }
     return QtPromise(std::move(matches));
   }
