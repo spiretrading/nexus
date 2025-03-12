@@ -129,8 +129,8 @@ DemoTimeAndSalesModel::Entry DemoTimeAndSalesModel::make_entry(
     return {SequencedValue(
       make_time_and_sale(timestamp,
         Truncate(Money(random_generator.bounded(2000.0)), 2),
-          random_generator.bounded(1, 10000),
-            markets[random_generator.bounded(markets.size())]),
+        random_generator.bounded(1, 10000),
+        markets[random_generator.bounded(static_cast<int>(markets.size()))]),
       Queries::Sequence(to_time_t_milliseconds(timestamp))),
       static_cast<BboIndicator>(random_generator.bounded(6))};
   }

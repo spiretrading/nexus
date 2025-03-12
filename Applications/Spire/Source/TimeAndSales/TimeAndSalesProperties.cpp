@@ -85,17 +85,17 @@ const TimeAndSalesProperties& TimeAndSalesProperties::get_default() {
   static auto PROPERTIES = [] {
     auto properties = TimeAndSalesProperties();
     properties.set_highlight_color(BboIndicator::UNKNOWN,
-      {QColor(0xFFFFFF), QColor(Qt::black)});
+      {QColor(0xEBEBEB), QColor(0x333333)});
     properties.set_highlight_color(BboIndicator::ABOVE_ASK,
-      {QColor(0xEBFFF0), QColor(0x007735)});
+      {QColor(0xCAFFDE), QColor(0x007E00)});
     properties.set_highlight_color(BboIndicator::AT_ASK,
-      {QColor(0xEBFFF0), QColor(0x007735)});
+      {QColor(0xCAFFDE), QColor(0x007E00)});
     properties.set_highlight_color(BboIndicator::INSIDE,
       {QColor(0xFFFFFF), QColor(Qt::black)});
     properties.set_highlight_color(BboIndicator::AT_BID,
-      {QColor(0xFFF1F1), QColor(0xB71C1C)});
+      {QColor(0xFAE8EA), QColor(0xCB1329)});
     properties.set_highlight_color(BboIndicator::BELOW_BID,
-      {QColor(0xFFF1F1), QColor(0xB71C1C)});
+      {QColor(0xFAE8EA), QColor(0xCB1329)});
     auto font = QFont("Roboto");
     font.setWeight(QFont::Medium);
     font.setPixelSize(scale_width(10));

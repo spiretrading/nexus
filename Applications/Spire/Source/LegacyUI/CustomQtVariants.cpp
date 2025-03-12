@@ -30,8 +30,8 @@ namespace {
         QString::fromStdString(any_cast<std::string>(value)));
     } else if(value.type() == typeid(CurrencyId)) {
       return QVariant::fromValue(any_cast<CurrencyId>(value));
-    } else if(value.type() == typeid(MarketToken)) {
-      return QVariant::fromValue(any_cast<MarketToken>(value));
+    } else if(value.type() == typeid(LegacyUI::MarketToken)) {
+      return QVariant::fromValue(any_cast<LegacyUI::MarketToken>(value));
     } else if(value.type() == typeid(Money)) {
       return QVariant::fromValue(any_cast<Money>(value));
     } else if(value.type() == typeid(Quantity)) {
@@ -42,8 +42,8 @@ namespace {
       return QVariant::fromValue(any_cast<Task::State>(value));
     } else if(value.type() == typeid(OrderType)) {
       return QVariant::fromValue(any_cast<OrderType>(value));
-    } else if(value.type() == typeid(PositionSideToken)) {
-      return QVariant::fromValue(any_cast<PositionSideToken>(value));
+    } else if(value.type() == typeid(LegacyUI::PositionSideToken)) {
+      return QVariant::fromValue(any_cast<LegacyUI::PositionSideToken>(value));
     } else if(value.type() == typeid(Security)) {
       return QVariant::fromValue(any_cast<Security>(value));
     } else if(value.type() == typeid(Side)) {
@@ -65,17 +65,17 @@ namespace {
   }
 }
 
-MarketToken::MarketToken() {}
+LegacyUI::MarketToken::MarketToken() {}
 
-MarketToken::MarketToken(MarketCode code)
+LegacyUI::MarketToken::MarketToken(MarketCode code)
   : m_code(code) {}
 
-PositionSideToken::PositionSideToken() {}
+LegacyUI::PositionSideToken::PositionSideToken() {}
 
-PositionSideToken::PositionSideToken(Side side)
+LegacyUI::PositionSideToken::PositionSideToken(Side side)
   : m_side(side) {}
 
-QString PositionSideToken::ToString() const {
+QString LegacyUI::PositionSideToken::ToString() const {
   if(m_side == Side::BID) {
     return QObject::tr("Long");
   } else if(m_side == Side::ASK) {
