@@ -10,7 +10,7 @@
 #include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/Blotter/BlotterSettings.hpp"
 #include "Spire/Blotter/BlotterWindow.hpp"
-#include "Spire/BookView/BookViewWindow.hpp"
+#include "Spire/BookView/BookViewController.hpp"
 #include "Spire/Charting/ChartWindow.hpp"
 #include "Spire/Dashboard/DashboardWindow.hpp"
 #include "Spire/Dashboard/DashboardModelSchema.hpp"
@@ -173,6 +173,10 @@ void ToolbarController::close() {
     return;
   }
   WindowSettings::Save(*m_user_profile);
+  auto book_view_controllers = std::move(m_book_view_controllers);
+  for(auto& controller : book_view_controllers) {
+    controller->close();
+  }
   for(auto& window : QApplication::topLevelWidgets()) {
     if(window != &*m_toolbar_window) {
       window->close();
@@ -191,6 +195,11 @@ void ToolbarController::open_chart_window() {
 }
 
 void ToolbarController::open_book_view_window() {
+  auto controller = std::make_unique<BookViewController>(Ref(*m_user_profile));
+  controller->connect_closed_signal(std::bind_front(
+    &ToolbarController::on_book_view_closed, this, std::ref(*controller)));
+  controller->open();
+  m_book_view_controllers.push_back(std::move(controller));
 }
 
 void ToolbarController::open_time_and_sales_window() {
@@ -360,6 +369,12 @@ void ToolbarController::on_blotter_removed(BlotterModel& blotter) {
       break;
     }
   }
+}
+
+void ToolbarController::on_book_view_closed(BookViewController& controller) {
+  std::erase_if(m_book_view_controllers, [&] (const auto& entry) {
+    return &controller == entry.get();
+  });
 }
 
 void ToolbarController::on_key_bindings_window_closed() {

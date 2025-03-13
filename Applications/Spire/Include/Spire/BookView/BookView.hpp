@@ -1,9 +1,10 @@
-#ifndef SPIRE_BOOKVIEW_HPP
-#define SPIRE_BOOKVIEW_HPP
+#ifndef SPIRE_BOOK_VIEW_HPP
+#define SPIRE_BOOK_VIEW_HPP
 
 namespace Spire {
   template<typename T> class ArrayValueToListModel;
   class BboBox;
+  class BookViewController;
   class BookViewHighlightPropertiesPage;
   class BookViewInteractionPropertiesPage;
   class BookViewLevelPropertiesPage;
