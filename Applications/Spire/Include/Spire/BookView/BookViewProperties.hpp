@@ -131,6 +131,9 @@ namespace Spire {
 
     /** The properties related to the highlight. */
     BookViewHighlightProperties m_highlight_properties;
+
+    /** Returns the default properties. */
+    static const BookViewProperties& get_default();
   };
 
   /** Returns the text representation of a OrderVisibility. */

@@ -32,6 +32,13 @@ const BookViewHighlightProperties& BookViewHighlightProperties::get_default() {
   return PROPERTIES;
 }
 
+const BookViewProperties& BookViewProperties::get_default() {
+  static auto PROPERTIES =
+    BookViewProperties(BookViewLevelProperties::get_default(),
+      BookViewHighlightProperties::get_default());
+  return PROPERTIES;
+}
+
 const QString& Spire::to_text(
     BookViewHighlightProperties::OrderVisibility visibility) {
   if(visibility == BookViewHighlightProperties::OrderVisibility::HIDDEN) {
@@ -82,7 +89,7 @@ const QString& Spire::to_text(
 
 BookViewProperties Spire::load_book_view_properties(
     const std::filesystem::path& path) {
-  return BookViewProperties();
+  return BookViewProperties::get_default();
 }
 
 void Spire::save_book_view_properties(

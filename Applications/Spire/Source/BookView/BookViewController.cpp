@@ -1,6 +1,6 @@
 #include "Spire/BookView/BookViewController.hpp"
-#include "Spire/BookView/AggregateBookViewModel.hpp"
 #include "Spire/BookView/BookViewWindow.hpp"
+#include "Spire/BookView/ServiceBookViewModel.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 
 using namespace Beam;
@@ -24,7 +24,11 @@ void BookViewController::open() {
     m_user_profile->GetSecurityInfoQueryModel(),
     m_user_profile->GetKeyBindings(), m_user_profile->GetMarketDatabase(),
     m_user_profile->GetBookViewPropertiesWindowFactory(),
-    [] (const auto&) { return make_local_aggregate_book_view_model(); });
+    [=] (const auto& security) {
+      return std::make_shared<ServiceBookViewModel>(security,
+        m_user_profile->GetMarketDatabase(),
+        m_user_profile->GetServiceClients().GetMarketDataClient());
+    });
   m_window->show();
 }
 
