@@ -6,8 +6,7 @@ using namespace Spire;
 BookViewPropertiesWindowFactory::BookViewPropertiesWindowFactory()
   : BookViewPropertiesWindowFactory(
       std::make_shared<LocalBookViewPropertiesModel>(
-        BookViewProperties(BookViewLevelProperties::get_default(),
-          BookViewHighlightProperties::get_default()))) {}
+        BookViewProperties::get_default())) {}
 
 BookViewPropertiesWindowFactory::BookViewPropertiesWindowFactory(
   std::shared_ptr<BookViewPropertiesModel> properties)
