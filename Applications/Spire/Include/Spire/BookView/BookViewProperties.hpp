@@ -1,5 +1,6 @@
 #ifndef SPIRE_BOOK_VIEW_PROPERTIES_HPP
 #define SPIRE_BOOK_VIEW_PROPERTIES_HPP
+#include <filesystem>
 #include <array>
 #include <vector>
 #include <QColor>
@@ -143,6 +144,22 @@ namespace Spire {
   /** Returns the text representation of a OrderHighlightState. */
   const QString& to_text(
     BookViewHighlightProperties::OrderHighlightState state);
+
+  /**
+   * Loads BookViewProperties from a file.
+   * @param path The path to the file to load.
+   * @return The properties loaded from the given <i>path</i>.
+   */
+  BookViewProperties load_book_view_properties(
+    const std::filesystem::path& path);
+
+  /**
+   * Saves BookViewProperties to a file.
+   * @param properties The properties to save.
+   * @param path The path to the save the properties to.
+   */
+  void save_book_view_properties(
+    const BookViewProperties& properties, const std::filesystem::path& path);
 }
 
 #endif

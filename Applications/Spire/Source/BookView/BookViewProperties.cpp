@@ -79,3 +79,12 @@ const QString& Spire::to_text(
     return value;
   }
 }
+
+BookViewProperties Spire::load_book_view_properties(
+    const std::filesystem::path& path) {
+  return BookViewProperties();
+}
+
+void Spire::save_book_view_properties(
+    const BookViewProperties& properties, const std::filesystem::path& path) {
+}

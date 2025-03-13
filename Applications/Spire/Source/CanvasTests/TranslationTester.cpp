@@ -48,7 +48,8 @@ namespace {
           GetDefaultTimeZoneDatabase(), GetDefaultCurrencyDatabase(), {},
           GetDefaultMarketDatabase(), GetDefaultDestinationDatabase(),
           EntitlementDatabase(), get_default_additional_tag_database(),
-          TimeAndSalesProperties(), m_serviceClients, m_telemetryClient) {}
+          BookViewProperties(), TimeAndSalesProperties(), m_serviceClients,
+          m_telemetryClient) {}
   };
 
   const auto TEST_SECURITY = ParseSecurity("TST.TSX");
