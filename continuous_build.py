@@ -1,6 +1,4 @@
 import argparse
-import distutils
-from distutils import dir_util
 import errno
 import git
 import os

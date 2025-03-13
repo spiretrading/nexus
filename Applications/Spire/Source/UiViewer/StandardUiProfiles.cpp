@@ -827,6 +827,14 @@ namespace {
     return property;
   }
 
+  const auto& get_preset_property() {
+    static auto property = define_enum<ColorPicker::Preset>(
+      {{"BASIC", ColorPicker::Preset::BASIC},
+        {"WITH_TRANSPARENCY", ColorPicker::Preset::WITH_TRANSPARENCY},
+        {"ADVANCED", ColorPicker::Preset::ADVANCED}});
+    return property;
+  }
+
   auto make_header_model() {
     auto model = std::make_shared<ArrayListModel<TableHeaderItem::Model>>();
     model->push({"Name", "Name",
@@ -1198,11 +1206,13 @@ UiProfile Spire::make_color_box_profile() {
   populate_widget_properties(properties);
   properties.push_back(make_standard_property("read_only", false));
   properties.push_back(make_standard_property("current", QColor(0xF0D109)));
-  properties.push_back(make_standard_property("alpha_visible", true));
+  properties.push_back(make_standard_enum_property("preset",
+    get_preset_property()));
   auto profile = UiProfile("ColorBox", properties, [] (auto& profile) {
+    auto& preset = get<ColorPicker::Preset>("preset", profile.get_properties());
     auto& current = get<QColor>("current", profile.get_properties());
     auto color_box = new ColorBox(
-      std::make_shared<LocalColorModel>(current.get()));
+      std::make_shared<LocalColorModel>(current.get()), preset.get());
     color_box->setFixedSize(scale(100, 26));
     apply_widget_properties(color_box, profile.get_properties());
     auto& read_only = get<bool>("read_only", profile.get_properties());
@@ -1212,9 +1222,6 @@ UiProfile Spire::make_color_box_profile() {
       if(color.isValid()) {
         color_box->get_current()->set(color);
       }
-    });
-    auto& alpha_visible = get<bool>("alpha_visible", profile.get_properties());
-    alpha_visible.connect_changed_signal([=] (auto value) {
     });
     auto current_slot = profile.make_event_slot<QString>("Current");
     color_box->get_current()->connect_update_signal([=] (const auto& current) {
@@ -1279,11 +1286,8 @@ UiProfile Spire::make_color_code_panel_profile() {
 UiProfile Spire::make_color_picker_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   properties.push_back(make_standard_property("current", QColor()));
-  auto preset_property = define_enum<ColorPicker::Preset>(
-    {{"BASIC", ColorPicker::Preset::BASIC},
-    {"WITH_TRANSPARENCY", ColorPicker::Preset::WITH_TRANSPARENCY},
-    {"ADVANCED", ColorPicker::Preset::ADVANCED}});
-  properties.push_back(make_standard_enum_property("preset", preset_property));
+  properties.push_back(make_standard_enum_property("preset",
+    get_preset_property()));
   auto profile = UiProfile("ColorPicker", properties, [] (auto& profile) {
     auto& preset = get<ColorPicker::Preset>("preset", profile.get_properties());
     auto button = make_label_button("ColorPicker");
@@ -1704,9 +1708,7 @@ UiProfile Spire::make_drop_down_box_profile() {
     for(auto i = 0; i < item_count.get(); ++i) {
       list_model->push(item_text.get() + QString("%1").arg(i));
     }
-    auto drop_down_box = new DropDownBox(list_model,
-      std::make_shared<LocalValueModel<optional<int>>>(item_count.get() - 1),
-        ListView::default_item_builder);
+    auto drop_down_box = new DropDownBox(list_model);
     drop_down_box->setFixedWidth(scale_width(112));
     apply_widget_properties(drop_down_box, profile.get_properties());
     auto& read_only = get<bool>("read_only", profile.get_properties());
@@ -1714,6 +1716,7 @@ UiProfile Spire::make_drop_down_box_profile() {
       drop_down_box->set_read_only(is_read_only);
     });
     auto current_slot = profile.make_event_slot<optional<std::any>>("Current");
+    drop_down_box->get_current()->set(list_model->get_size() - 1);
     drop_down_box->get_current()->connect_update_signal(
       [=] (auto current) {
         if(current) {

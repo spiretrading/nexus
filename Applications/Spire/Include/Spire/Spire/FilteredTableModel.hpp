@@ -31,6 +31,9 @@ namespace Spire {
        */
       FilteredTableModel(std::shared_ptr<TableModel> source, Filter filter);
 
+      /** Returns the table being filtered. */
+      const std::shared_ptr<TableModel>& get_source() const;
+
       /** Applies a new filter to this model. */
       void set_filter(const Filter& filter);
 
