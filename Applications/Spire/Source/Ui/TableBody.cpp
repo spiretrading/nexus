@@ -693,6 +693,7 @@ bool TableBody::focusNextPrevChild(bool next) {
     if(!isAncestorOf(next_widget) && next_widget->isEnabled() &&
         next_widget->focusPolicy() & Qt::TabFocus) {
       next_focus_widget = next_widget;
+      get_current()->set(none);
       if(next) {
         break;
       }
@@ -1216,20 +1217,35 @@ void TableBody::update_column_widths() {
 }
 
 bool TableBody::navigate_next() {
+  auto get_next_column =
+    [=] (const CurrentModel& current, int row, int column) {
+      ++column;
+      while(column < get_table()->get_column_size()) {
+        if(!current.test(Index(row, column))) {
+          ++column;
+        } else {
+          break;
+        }
+      }
+      return column;
+    };
   if(auto& current = get_current()->get()) {
-    auto column = current->m_column + 1;
-    if(column >= get_table()->get_column_size() - 1) {
+    auto column =
+      get_next_column(*get_current(), current->m_row, current->m_column);
+    if(column >= get_table()->get_column_size()) {
       auto row = current->m_row + 1;
       if(row >= get_table()->get_row_size()) {
         return false;
       } else {
-        get_current()->set(Index(row, 0));
+        get_current()->set(
+          Index(row, get_next_column(*get_current(), row, -1)));
       }
     } else {
       get_current()->set(Index(current->m_row, column));
     }
   } else if(get_table()->get_row_size() > 0) {
-    get_current()->set(Index(0, 0));
+    auto next_column = get_next_column(*get_current(), 0, -1);
+    get_current()->set(Index(0, next_column));
   } else {
     return false;
   }
@@ -1237,21 +1253,37 @@ bool TableBody::navigate_next() {
 }
 
 bool TableBody::navigate_previous() {
+  auto get_previous_column =
+    [] (const CurrentModel& current, int row, int column) {
+      --column;
+      while(column >= 0) {
+        if(!current.test(Index(row, column))) {
+          --column;
+        } else {
+          break;
+        }
+      }
+      return column;
+    };
   if(auto& current = get_current()->get()) {
-    auto column = current->m_column - 1;
+    auto column =
+      get_previous_column(*get_current(), current->m_row, current->m_column);
     if(column < 0) {
       auto row = current->m_row - 1;
       if(row < 0) {
         return false;
       } else {
-        get_current()->set(Index(row, get_table()->get_column_size() - 2));
+        get_current()->set(Index(row, get_previous_column(*get_current(),
+          row, get_table()->get_column_size())));
       }
     } else {
       get_current()->set(Index(current->m_row, column));
     }
   } else if(get_table()->get_row_size() > 0) {
-    get_current()->set(Index(
-      get_table()->get_row_size() - 1, get_table()->get_column_size() - 2));
+    auto row = get_table()->get_row_size() - 1;
+    auto column =
+      get_previous_column(*get_current(), row, get_table()->get_column_size());
+    get_current()->set(Index(row, column));
   } else {
     return false;
   }
