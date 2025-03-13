@@ -1,4 +1,5 @@
 #include "Spire/BookView/BookViewController.hpp"
+#include "Spire/BookView/AggregateBookViewModel.hpp"
 #include "Spire/BookView/BookViewWindow.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 
@@ -8,7 +9,8 @@ using namespace boost::signals2;
 using namespace Spire;
 
 BookViewController::BookViewController(Ref<UserProfile> user_profile)
-  : m_window(nullptr) {}
+  : m_user_profile(user_profile.Get()),
+    m_window(nullptr) {}
 
 BookViewController::~BookViewController() {
   close();
@@ -22,13 +24,18 @@ void BookViewController::open() {
     m_user_profile->GetSecurityInfoQueryModel(),
     m_user_profile->GetKeyBindings(), m_user_profile->GetMarketDatabase(),
     m_user_profile->GetBookViewPropertiesWindowFactory(),
-    [] (const auto&) { return std::shared_ptr<BookViewModel>(); });
+    [] (const auto&) { return make_local_aggregate_book_view_model(); });
+  m_window->show();
 }
 
 void BookViewController::close() {
   if(!m_window) {
     return;
   }
+  m_window->close();
+  m_window->deleteLater();
+  m_window = nullptr;
+  m_closed_signal();
 }
 
 connection BookViewController::connect_closed_signal(
