@@ -4,6 +4,7 @@
 #include "Nexus/Definitions/Market.hpp"
 #include "Nexus/MarketDataService/MarketDataClientBox.hpp"
 #include "Spire/Async/EventHandler.hpp"
+#include "Spire/Async/QtPromise.hpp"
 #include "Spire/BookView/BookView.hpp"
 #include "Spire/BookView/BookViewModel.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
@@ -50,13 +51,16 @@ namespace Spire {
       Nexus::MarketDataService::MarketDataClientBox m_client;
       std::shared_ptr<BookViewModel> m_model;
       std::unordered_map<Nexus::MarketCode, Nexus::MarketQuote> m_market_quotes;
+      std::shared_ptr<QtPromise<void>> m_load_promise;
       EventHandler m_event_handler;
 
+      void clear(const BookQuoteListModel& quotes);
       void on_bbo(const Nexus::BboQuote& quote);
       void on_book_quote(const Nexus::BookQuote& quote);
       void on_book_quote_interruption(const std::exception_ptr& e);
       void on_market_quote(const Nexus::MarketQuote& quote);
       void on_market_quote_interruption(const std::exception_ptr& e);
+      void on_time_and_sales(const Nexus::TimeAndSale& time_and_sale);
   };
 }
 

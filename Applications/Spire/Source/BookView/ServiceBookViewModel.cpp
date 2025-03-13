@@ -33,6 +33,16 @@ ServiceBookViewModel::ServiceBookViewModel(
       std::bind_front(
         &ServiceBookViewModel::on_market_quote_interruption, this)),
     InterruptionPolicy::BREAK_QUERY);
+  auto time_and_sale_query = MakeRealTimeQuery(m_security);
+  time_and_sale_query.SetInterruptionPolicy(InterruptionPolicy::RECOVER_DATA);
+  m_client.QueryTimeAndSales(
+    time_and_sale_query, m_event_handler.get_slot<TimeAndSale>(
+      std::bind_front(&ServiceBookViewModel::on_time_and_sales, this)));
+  m_load_promise = std::make_shared<QtPromise<void>>(QtPromise([=] {
+    return m_client.LoadSecurityTechnicals(m_security);
+  }, LaunchPolicy::ASYNC).then([model = m_model] (const auto& technicals) {
+    model->get_technicals()->set(technicals);
+  }));
 }
 
 const std::shared_ptr<BookQuoteListModel>&
@@ -148,8 +158,32 @@ void ServiceBookViewModel::on_market_quote(const MarketQuote& quote) {
   on_book_quote(book_quotes.m_bid);
 }
 
+void ServiceBookViewModel::clear(const BookQuoteListModel& quotes) {
+  auto cleared_quotes = std::vector<BookQuote>(quotes.begin(), quotes.end());
+  auto market_quote_mpids = std::unordered_set<std::string>();
+  for(auto& code : m_market_quotes | std::views::keys) {
+    auto mpid = m_markets.FromCode(code).m_displayName;
+    market_quote_mpids.insert(mpid);
+  }
+  for(auto& quote : cleared_quotes) {
+    if(!quote.m_mpid.empty() &&
+        market_quote_mpids.find(quote.m_mpid) == market_quote_mpids.end()) {
+      auto cleared_quote = quote;
+      quote.m_quote.m_size = 0;
+      on_book_quote(cleared_quote);
+    }
+  }
+}
+
 void ServiceBookViewModel::on_book_quote_interruption(
     const std::exception_ptr&) {
+  clear(*m_model->get_asks());
+  clear(*m_model->get_bids());
+  QueryRealTimeBookQuotesWithSnapshot(m_client, m_security,
+    m_event_handler.get_slot<BookQuote>(
+      std::bind_front(&ServiceBookViewModel::on_book_quote, this),
+      std::bind_front(&ServiceBookViewModel::on_book_quote_interruption, this)),
+    InterruptionPolicy::BREAK_QUERY);
 }
 
 void ServiceBookViewModel::on_market_quote_interruption(
@@ -167,4 +201,20 @@ void ServiceBookViewModel::on_market_quote_interruption(
       std::bind_front(
         &ServiceBookViewModel::on_market_quote_interruption, this)),
     InterruptionPolicy::BREAK_QUERY);
+}
+
+void ServiceBookViewModel::on_time_and_sales(const TimeAndSale& time_and_sale) {
+  auto technicals = m_model->get_technicals()->get();
+  technicals.m_volume += time_and_sale.m_size;
+  if(technicals.m_open == Money::ZERO) {
+    technicals.m_open = time_and_sale.m_price;
+  }
+  if(time_and_sale.m_price > technicals.m_high) {
+    technicals.m_high = time_and_sale.m_price;
+  }
+  if(time_and_sale.m_price < technicals.m_low ||
+      technicals.m_low == Money::ZERO) {
+    technicals.m_low = time_and_sale.m_price;
+  }
+  m_model->get_technicals()->set(technicals);
 }
