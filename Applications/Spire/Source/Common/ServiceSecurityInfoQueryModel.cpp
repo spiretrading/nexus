@@ -1,4 +1,4 @@
-#include "Spire/Spire/ServiceSecurityQueryModel.hpp"
+#include "Spire/Spire/ServiceSecurityInfoQueryModel.hpp"
 
 using namespace Beam;
 using namespace boost;
@@ -6,12 +6,13 @@ using namespace Nexus;
 using namespace Nexus::MarketDataService;
 using namespace Spire;
 
-ServiceSecurityQueryModel::ServiceSecurityQueryModel(MarketDatabase markets,
-  MarketDataClientBox market_data_client)
+ServiceSecurityInfoQueryModel::ServiceSecurityInfoQueryModel(
+  MarketDatabase markets, MarketDataClientBox market_data_client)
   : m_markets(std::move(markets)),
     m_market_data_client(std::move(market_data_client)) {}
 
-optional<SecurityInfo> ServiceSecurityQueryModel::parse(const QString& query) {
+optional<SecurityInfo>
+    ServiceSecurityInfoQueryModel::parse(const QString& query) {
   auto security = ParseSecurity(query.toStdString(), m_markets);
   if(security == Security()) {
     return none;
@@ -25,7 +26,7 @@ optional<SecurityInfo> ServiceSecurityQueryModel::parse(const QString& query) {
 }
 
 QtPromise<std::vector<SecurityInfo>>
-    ServiceSecurityQueryModel::submit(const QString& query) {
+    ServiceSecurityInfoQueryModel::submit(const QString& query) {
   if(query.isEmpty()) {
     return {};
   }

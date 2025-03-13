@@ -119,6 +119,7 @@
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorMarketSelectionWidgetWindowSettings.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorWindowSettings.hpp"
 #include "Spire/PortfolioViewer/PortfolioViewerWindowSettings.hpp"
+#include "Spire/TimeAndSales/LegacyTimeAndSalesWindowSettings.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesWindowSettings.hpp"
 #include "Spire/Toolbar/ToolbarWindowSettings.hpp"
 
@@ -270,7 +271,8 @@ namespace Spire {
     (OrderImbalanceIndicatorMarketSelectionWidgetWindowSettings,
       "Spire.OrderImbalanceIndicatorMarketSelectionWidgetWindowSettings"),
     (PortfolioViewerWindowSettings, "Spire.PortfolioViewerWindowSettings"),
-    (TimeAndSalesWindowSettings, "Spire.TimeAndSalesWindowSettings"),
+    (TimeAndSalesWindowSettings, "Spire.Current.TimeAndSalesWindowSettings"),
+    (LegacyTimeAndSalesWindowSettings, "Spire.TimeAndSalesWindowSettings"),
     (TimeRangeInputWidgetWindowSettings,
       "Spire.TimeRangeInputWidgetWindowSettings"),
     (ToolbarWindowSettings, "Spire.UI.ToolbarWindowSettings"));

@@ -27,7 +27,7 @@
 #include "Spire/PortfolioViewer/PortfolioViewerWindowSettings.hpp"
 #include "Spire/RiskTimer/RiskTimerProperties.hpp"
 #include "Spire/Spire/Spire.hpp"
-#include "Spire/TimeAndSales/TimeAndSalesProperties.hpp"
+#include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
 #include "Spire/Ui/SecurityBox.hpp"
 
 namespace Spire {
@@ -57,6 +57,8 @@ namespace Spire {
        * @param additionalTagDatabase Stores the database of additional tags.
        * @param book_view_properties Initializes the display properties of the
        *        BookViewWindow.
+       * @param time_and_sales_properties Initializes the time and sales
+       *        properties.
        * @param serviceClients The set of clients connected to Spire services.
        * @param telemetryClient The client used to submit telemetry data.
        */
@@ -71,6 +73,7 @@ namespace Spire {
           entitlementDatabase,
         const AdditionalTagDatabase& additionalTagDatabase,
         BookViewProperties book_view_properties,
+        TimeAndSalesProperties time_and_sales_properties,
         Nexus::ServiceClientsBox serviceClients,
         Nexus::TelemetryService::TelemetryClientBox telemetryClient);
 
@@ -190,15 +193,13 @@ namespace Spire {
       /** Returns the RiskTimerProperties. */
       RiskTimerProperties& GetRiskTimerProperties();
 
-      /** Returns the default TimeAndSalesProperties. */
-      const TimeAndSalesProperties& GetDefaultTimeAndSalesProperties() const;
+      /** Returns the TimeAndSalesPropertiesWindowFactory. */
+      const std::shared_ptr<TimeAndSalesPropertiesWindowFactory>&
+        GetTimeAndSalesPropertiesWindowFactory() const;
 
-      /**
-       * Sets the default TimeAndSalesProperties.
-       * @param properties The TimeAndSalesProperties to use as defaults.
-       */
-      void SetDefaultTimeAndSalesProperties(
-        const TimeAndSalesProperties& properties);
+      /** Returns the TimeAndSalesModelBuilder. */
+      const TimeAndSalesWindow::ModelBuilder&
+        GetTimeAndSalesModelBuilder() const;
 
       /** Returns the default PortfolioViewerProperties. */
       const PortfolioViewerProperties&
@@ -241,7 +242,9 @@ namespace Spire {
       std::shared_ptr<BookViewPropertiesWindowFactory>
         m_book_view_properties_window_factory;
       RiskTimerProperties m_riskTimerProperties;
-      TimeAndSalesProperties m_defaultTimeAndSalesProperties;
+      std::shared_ptr<TimeAndSalesPropertiesWindowFactory>
+        m_time_and_sales_properties_window_factory;
+      TimeAndSalesWindow::ModelBuilder m_time_and_sales_model_builder;
       PortfolioViewerProperties m_defaultPortfolioViewerProperties;
       CatalogSettings m_catalogSettings;
       AdditionalTagDatabase m_additionalTagDatabase;
@@ -253,6 +256,15 @@ namespace Spire {
       boost::optional<PortfolioViewerWindowSettings>
         m_initialPortfolioViewerWindowSettings;
   };
+
+  /** Returns the path to the folder containing all user profiles. */
+  std::filesystem::path get_profile_path();
+
+  /**
+   * Returns the path to the user's profile folder.
+   * @param username The username to get the profile path for.
+   */
+  std::filesystem::path get_profile_path(const std::string& username);
 
   /**
    * Returns the default order quantity to display to a user.
