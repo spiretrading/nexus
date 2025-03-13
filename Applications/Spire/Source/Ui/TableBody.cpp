@@ -1475,7 +1475,7 @@ void TableBody::on_widths_update(const ListModel<int>::Operation& operation) {
 }
 
 bool TableBody::on_key_press(QWidget& target, QKeyEvent& event) {
-  if(typeid(target) == typeid(ScrollBox)) {
+  if(auto scroll_box = dynamic_cast<ScrollBox*>(&target)) {
     auto key = event.key();
     if(key == Qt::Key_Left || key == Qt::Key_Right || key == Qt::Key_Up ||
         key == Qt::Key_Down || key == Qt::Key_Home || key == Qt::Key_End ||
