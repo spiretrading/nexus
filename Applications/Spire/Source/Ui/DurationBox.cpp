@@ -112,7 +112,7 @@ namespace {
 BEAM_SUPPRESS_THIS_INITIALIZER()
           m_source_connection(m_source->connect_update_signal(
             [=] (const auto& current) { on_current(current); })) {
-BEAM_UNSUPRESS_THIS_INITIALIZER()
+BEAM_UNSUPPRESS_THIS_INITIALIZER()
       on_current(m_source->get());
     }
 
@@ -237,8 +237,10 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     SecondModel(std::shared_ptr<OptionalDurationModel> source)
         : m_source(std::move(source)),
           m_state(m_source->get_state()),
+BEAM_SUPPRESS_THIS_INITIALIZER()
           m_source_connection(m_source->connect_update_signal(
             [=] (const auto& current) { on_current(current); })) {
+BEAM_UNSUPPRESS_THIS_INITIALIZER()
       on_current(m_source->get());
     }
 

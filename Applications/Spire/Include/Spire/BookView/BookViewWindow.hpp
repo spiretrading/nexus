@@ -18,6 +18,13 @@ namespace Spire {
     public:
 
       /**
+       * Signals that a task has been submitted to be run.
+       * @param task The CanvasNode representing the task to run.
+       */
+      using SubmitTaskSignal =
+        Signal<void (const std::shared_ptr<CanvasNode>& task)>;
+
+      /**
        * Signals that a cancellation operation is emitted.
        * @param operation The cancellation operation.
        * @param security The security for which orders will be canceled.
@@ -55,6 +62,10 @@ namespace Spire {
         std::shared_ptr<BookViewPropertiesWindowFactory> factory,
         ModelBuilder model_builder, QWidget* parent = nullptr);
 
+      /** Connects a slot to the SubmitTaskSignal. */
+      boost::signals2::connection connect_submit_task_signal(
+        const SubmitTaskSignal::slot_type& slot) const;
+
       /** Connects a slot to the CancelOrderSignal. */
       boost::signals2::connection connect_cancel_order_signal(
         const CancelOrderSignal::slot_type& slot) const;
@@ -63,6 +74,7 @@ namespace Spire {
       void keyPressEvent(QKeyEvent* event) override;
 
     private:
+      mutable SubmitTaskSignal m_submit_task_signal;
       mutable CancelOrderSignal m_cancel_order_signal;
       UserProfile* m_user_profile;
       std::shared_ptr<KeyBindingsModel> m_key_bindings;
@@ -75,12 +87,16 @@ namespace Spire {
       TransitionView* m_transition_view;
       SecurityView* m_security_view;
       CondensedCanvasWidget* m_task_entry_panel;
+      bool m_is_task_entry_panel_for_interactions;
       boost::signals2::scoped_connection m_bid_order_connection;
       boost::signals2::scoped_connection m_ask_order_connection;
 
       std::unique_ptr<CanvasNode> make_task_node(const CanvasNode& node);
+      void display_interactions_panel();
       void display_task_entry_panel(const OrderTaskArguments& arguments);
+      void remove_task_entry_panel();
       void on_context_menu(MarketDepth* market_depth, const QPoint& pos);
+      void on_task_entry_key_press(const QKeyEvent& event);
       void on_cancel_most_recent(const Nexus::BookQuote& book_quote);
       void on_cancel_all(const Nexus::BookQuote& book_quote);
       void on_properties_menu();
