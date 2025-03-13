@@ -3,6 +3,7 @@
 #include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/Blotter/BlotterSettings.hpp"
 #include "Spire/Blotter/OpenPositionsModel.hpp"
+#include "Spire/BookView/BookViewPropertiesWindowFactory.hpp"
 #include "Spire/KeyBindings/KeyBindingsProfile.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
@@ -26,7 +27,8 @@ UserProfile::UserProfile(const std::string& username, bool isAdministrator,
     const DestinationDatabase& destinationDatabase,
     const EntitlementDatabase& entitlementDatabase,
     const AdditionalTagDatabase& additionalTagDatabase,
-    ServiceClientsBox serviceClients, TelemetryClientBox telemetryClient)
+    BookViewProperties book_view_properties, ServiceClientsBox serviceClients,
+    TelemetryClientBox telemetryClient)
     : m_username(username),
       m_isAdministrator(isAdministrator),
       m_isManager(isManager),
@@ -44,6 +46,10 @@ UserProfile::UserProfile(const std::string& username, bool isAdministrator,
         std::make_shared<ArrayListModel<std::shared_ptr<WindowSettings>>>()),
       m_security_info_query_model(std::make_shared<ServiceSecurityQueryModel>(
         m_marketDatabase, m_serviceClients.GetMarketDataClient())),
+      m_book_view_properties_window_factory(
+        std::make_shared<BookViewPropertiesWindowFactory>(
+          std::make_shared<LocalBookViewPropertiesModel>(
+            std::move(book_view_properties)))),
       m_catalogSettings(m_profilePath / "Catalog", isAdministrator),
       m_additionalTagDatabase(additionalTagDatabase) {
   m_keyBindings = load_key_bindings_profile(
@@ -186,6 +192,11 @@ const optional<OrderImbalanceIndicatorWindowSettings>&
 void UserProfile::SetInitialOrderImbalanceIndicatorWindowSettings(
     const OrderImbalanceIndicatorWindowSettings& settings) {
   m_initialOrderImbalanceIndicatorWindowSettings = settings;
+}
+
+const std::shared_ptr<BookViewPropertiesWindowFactory>&
+    UserProfile::GetBookViewPropertiesWindowFactory() const {
+  return m_book_view_properties_window_factory;
 }
 
 const RiskTimerProperties& UserProfile::GetRiskTimerProperties() const {

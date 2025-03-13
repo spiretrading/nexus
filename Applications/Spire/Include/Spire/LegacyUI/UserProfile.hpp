@@ -14,6 +14,7 @@
 #include "Nexus/ServiceClients/ServiceClientsBox.hpp"
 #include "Nexus/TelemetryService/TelemetryClientBox.hpp"
 #include "Spire/Blotter/Blotter.hpp"
+#include "Spire/BookView/BookViewProperties.hpp"
 #include "Spire/Canvas/Types/CanvasTypeRegistry.hpp"
 #include "Spire/Catalog/CatalogSettings.hpp"
 #include "Spire/Dashboard/SavedDashboards.hpp"
@@ -54,6 +55,8 @@ namespace Spire {
        * @param entitlementDatabase Stores the database of market data
        *        entitlements.
        * @param additionalTagDatabase Stores the database of additional tags.
+       * @param book_view_properties Initializes the display properties of the
+       *        BookViewWindow.
        * @param serviceClients The set of clients connected to Spire services.
        * @param telemetryClient The client used to submit telemetry data.
        */
@@ -67,6 +70,7 @@ namespace Spire {
         const Nexus::MarketDataService::EntitlementDatabase&
           entitlementDatabase,
         const AdditionalTagDatabase& additionalTagDatabase,
+        BookViewProperties book_view_properties,
         Nexus::ServiceClientsBox serviceClients,
         Nexus::TelemetryService::TelemetryClientBox telemetryClient);
 
@@ -176,6 +180,10 @@ namespace Spire {
       void SetInitialOrderImbalanceIndicatorWindowSettings(
         const OrderImbalanceIndicatorWindowSettings& settings);
 
+      /** Returns the BookViewPropertiesWindowFactory. */
+      const std::shared_ptr<BookViewPropertiesWindowFactory>&
+        GetBookViewPropertiesWindowFactory() const;
+
       /** Returns the RiskTimerProperties. */
       const RiskTimerProperties& GetRiskTimerProperties() const;
 
@@ -230,6 +238,8 @@ namespace Spire {
       SavedDashboards m_savedDashboards;
       OrderImbalanceIndicatorProperties
         m_defaultOrderImbalanceIndicatorProperties;
+      std::shared_ptr<BookViewPropertiesWindowFactory>
+        m_book_view_properties_window_factory;
       RiskTimerProperties m_riskTimerProperties;
       TimeAndSalesProperties m_defaultTimeAndSalesProperties;
       PortfolioViewerProperties m_defaultPortfolioViewerProperties;

@@ -34,6 +34,7 @@ namespace Spire {
 
     private:
       mutable ClosedSignal m_closed_signal;
+      UserProfile* m_user_profile;
       BookViewWindow* m_window;
 
       BookViewController(const BookViewController&) = delete;
