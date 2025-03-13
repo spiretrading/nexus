@@ -10,6 +10,7 @@
 #include "Nexus/ServiceClients/TestEnvironment.hpp"
 #include "Nexus/ServiceClients/TestServiceClients.hpp"
 #include "Nexus/TelemetryServiceTests/TelemetryServiceTestEnvironment.hpp"
+#include "Spire/BookView/AggregateBookViewModel.hpp"
 #include "Spire/BookView/BookViewWindow.hpp"
 #include "Spire/BookViewUiTester/DemoBookViewModel.hpp"
 #include "Spire/KeyBindings/KeyBindingsWindow.hpp"
@@ -514,9 +515,9 @@ int main(int argc, char** argv) {
     populate_security_query_model(), GetDefaultCountryDatabase(),
     GetDefaultMarketDatabase(), GetDefaultDestinationDatabase(),
     get_default_additional_tag_database());
-  auto book_views = std::make_shared<BookViewModel>();
-  auto tester = BookViewTester(book_views->get_technicals(), book_views,
-    key_bindings_window);
+  auto book_views = make_local_aggregate_book_view_model();
+  auto tester = BookViewTester(
+    book_views->get_technicals(), book_views, key_bindings_window);
   auto markets = GetDefaultMarketDatabase();
   auto window = BookViewWindow(Ref(tester.m_user_profile),
     populate_security_query_model(), key_bindings, markets,

@@ -4,6 +4,7 @@
 #include "Nexus/Definitions/SecurityTechnicals.hpp"
 #include "Nexus/OrderExecutionService/OrderFields.hpp"
 #include "Spire/BookView/BookView.hpp"
+#include "Spire/Spire/ListModel.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
 
 namespace Spire {
@@ -13,6 +14,9 @@ namespace Spire {
 
   /** A LocalValueModel over a BboQuote. */
   using LocalBboQuoteModel = LocalValueModel<Nexus::BboQuote>;
+
+  /** Models a list of BookQuotes. */
+  using BookQuoteListModel = ListModel<Nexus::BookQuote>;
 
   /** A ValueModel over a SecurityTechnicals. */
   using SecurityTechnicalsValueModel = ValueModel<Nexus::SecurityTechnicals>;
@@ -45,39 +49,44 @@ namespace Spire {
         Nexus::OrderStatus m_status;
       };
 
-      /* Constructs a BookViewModel. */
-      BookViewModel();
+      /** Models a list of UserOrders. */
+      using UserOrderListModel = ListModel<UserOrder>;
+
+      virtual ~BookViewModel() = default;
 
       /** Returns a list of BookQuotes with the bid side. */
-      const std::shared_ptr<ListModel<Nexus::BookQuote>>& get_bids() const;
+      virtual const std::shared_ptr<BookQuoteListModel>& get_bids() const = 0;
 
       /** Returns a list of BookQuotes with the ask side. */
-      const std::shared_ptr<ListModel<Nexus::BookQuote>>& get_asks() const;
+      virtual const std::shared_ptr<BookQuoteListModel>& get_asks() const = 0;
 
       /** Returns a list of orders with the bid side. */
-      const std::shared_ptr<ListModel<UserOrder>>& get_bid_orders() const;
+      virtual const std::shared_ptr<UserOrderListModel>&
+        get_bid_orders() const = 0;
 
       /** Returns a list of orders with the ask side. */
-      const std::shared_ptr<ListModel<UserOrder>>& get_ask_orders() const;
+      virtual const std::shared_ptr<UserOrderListModel>&
+        get_ask_orders() const = 0;
 
       /** Returns the preview order. */
-      const std::shared_ptr<PreviewOrderModel>& get_preview_order() const;
+      virtual const std::shared_ptr<PreviewOrderModel>&
+        get_preview_order() const = 0;
 
       /** Returns the Bbo quote. */
-      const std::shared_ptr<BboQuoteModel>& get_bbo_quote() const;
+      virtual const std::shared_ptr<BboQuoteModel>& get_bbo_quote() const = 0;
 
       /** Returns the technical details about a Security. */
-      const std::shared_ptr<SecurityTechnicalsValueModel>& get_technicals()
-        const;
+      virtual const std::shared_ptr<SecurityTechnicalsValueModel>&
+        get_technicals() const = 0;
+
+    protected:
+
+      /** Constructs an empty model. */
+      BookViewModel() = default;
 
     private:
-      std::shared_ptr<ListModel<Nexus::BookQuote>> m_bids;
-      std::shared_ptr<ListModel<Nexus::BookQuote>> m_asks;
-      std::shared_ptr<ListModel<UserOrder>> m_bid_orders;
-      std::shared_ptr<ListModel<UserOrder>> m_ask_orders;
-      std::shared_ptr<PreviewOrderModel> m_preview_order;
-      std::shared_ptr<BboQuoteModel> m_bbo;
-      std::shared_ptr<SecurityTechnicalsValueModel> m_technicals;
+      BookViewModel(const BookViewModel&) = delete;
+      BookViewModel& operator =(const BookViewModel&) = delete;
   };
 }
 

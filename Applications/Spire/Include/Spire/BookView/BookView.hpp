@@ -2,6 +2,7 @@
 #define SPIRE_BOOK_VIEW_HPP
 
 namespace Spire {
+  class AggregateBookViewModel;
   template<typename T> class ArrayValueToListModel;
   class BboBox;
   class BookViewController;
