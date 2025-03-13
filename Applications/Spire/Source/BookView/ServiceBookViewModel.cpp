@@ -79,40 +79,40 @@ void ServiceBookViewModel::on_book_quote(const BookQuote& quote) {
   auto quotes =
     Pick(quote.m_quote.m_side, m_model->get_asks(), m_model->get_bids());
   auto lower_bound = [&] {
-    for(auto i = quotes->rbegin(); i != quotes->rend(); ++i) {
+    for(auto i = quotes->begin(); i != quotes->end(); ++i) {
       auto& book_quote = i->m_quote;
       if(direction * book_quote.m_price <= direction * quote.m_quote.m_price) {
         return i;
       }
     }
-    return quotes->rend();
+    return quotes->end();
   }();
   auto existing_iterator = lower_bound;
-  while(existing_iterator != quotes->rend() &&
+  while(existing_iterator != quotes->end() &&
       existing_iterator->m_quote.m_price == quote.m_quote.m_price &&
       existing_iterator->m_mpid != quote.m_mpid) {
     ++existing_iterator;
   }
-  if(existing_iterator == quotes->rend() ||
+  if(existing_iterator == quotes->end() ||
       existing_iterator->m_quote.m_price != quote.m_quote.m_price) {
     if(quote.m_quote.m_size != 0) {
       auto insert_iterator = lower_bound;
-      while(insert_iterator != quotes->rend() &&
+      while(insert_iterator != quotes->end() &&
           insert_iterator->m_quote.m_price == quote.m_quote.m_price &&
           std::tie(quote.m_quote.m_size, quote.m_timestamp, quote.m_mpid) <
           std::tie(insert_iterator->m_quote.m_size,
             insert_iterator->m_timestamp, insert_iterator->m_mpid)) {
         ++insert_iterator;
       }
-      quotes->insert(quote, insert_iterator.base());
+      quotes->insert(quote, insert_iterator);
     }
     return;
   }
   if(quote.m_quote.m_size == 0) {
-    quotes->remove(existing_iterator.base());
+    quotes->remove(existing_iterator);
   } else {
     auto insert_iterator = lower_bound;
-    while(insert_iterator != quotes->rend() &&
+    while(insert_iterator != quotes->end() &&
         insert_iterator->m_quote.m_price == quote.m_quote.m_price &&
         std::tie(quote.m_quote.m_size, quote.m_timestamp, quote.m_mpid) <
         std::tie(insert_iterator->m_quote.m_size,
@@ -122,8 +122,8 @@ void ServiceBookViewModel::on_book_quote(const BookQuote& quote) {
     if(insert_iterator == existing_iterator) {
       *insert_iterator = quote;
     } else {
-      quotes->remove(existing_iterator.base());
-      quotes->insert(quote, insert_iterator.base());
+      quotes->remove(existing_iterator);
+      quotes->insert(quote, insert_iterator);
     }
   }
 }
