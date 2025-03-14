@@ -62,9 +62,9 @@ connection BookViewWindow::connect_submit_task_signal(
   return m_submit_task_signal.connect(slot);
 }
 
-connection BookViewWindow::connect_cancel_order_signal(
-    const CancelOrderSignal::slot_type& slot) const {
-  return m_cancel_order_signal.connect(slot);
+connection BookViewWindow::connect_cancel_operation_signal(
+    const CancelOperationSignal::slot_type& slot) const {
+  return m_cancel_operation_signal.connect(slot);
 }
 
 void BookViewWindow::keyPressEvent(QKeyEvent* event) {
@@ -85,7 +85,7 @@ void BookViewWindow::keyPressEvent(QKeyEvent* event) {
     display_interactions_panel();
   } else if(auto operation =
       m_key_bindings->get_cancel_key_bindings()->find_operation(sequence)) {
-    m_cancel_order_signal(
+    m_cancel_operation_signal(
       *operation, m_security_view->get_current()->get(), none);
   } else if(auto arguments = find_order_task_arguments(
       *m_key_bindings->get_order_task_arguments(),
@@ -259,25 +259,19 @@ void BookViewWindow::on_task_entry_key_press(const QKeyEvent& event) {
 }
 
 void BookViewWindow::on_cancel_most_recent(const BookQuote& book_quote) {
-  auto operation = [&] {
-    if(book_quote.m_quote.m_side == Side::BID) {
-      return CancelKeyBindingsModel::Operation::MOST_RECENT_BID;
-    }
-    return CancelKeyBindingsModel::Operation::MOST_RECENT_ASK;
-  }();
-  m_cancel_order_signal(operation, m_security_view->get_current()->get(),
-    std::tuple(book_quote.m_mpid.substr(1), book_quote.m_quote.m_price));
+  auto operation = Pick(book_quote.m_quote.m_side,
+    CancelKeyBindingsModel::Operation::MOST_RECENT_ASK,
+    CancelKeyBindingsModel::Operation::MOST_RECENT_BID);
+  m_cancel_operation_signal(operation, m_security_view->get_current()->get(),
+    CancelCriteria(book_quote.m_mpid.substr(1), book_quote.m_quote.m_price));
 }
 
 void BookViewWindow::on_cancel_all(const BookQuote& book_quote) {
-  auto operation = [&] {
-    if(book_quote.m_quote.m_side == Side::BID) {
-      return CancelKeyBindingsModel::Operation::ALL_BIDS;
-    }
-    return CancelKeyBindingsModel::Operation::ALL_ASKS;
-  }();
-  m_cancel_order_signal(operation, m_security_view->get_current()->get(),
-    std::tuple(book_quote.m_mpid.substr(1), book_quote.m_quote.m_price));
+  auto operation = Pick(book_quote.m_quote.m_side,
+    CancelKeyBindingsModel::Operation::ALL_ASKS,
+    CancelKeyBindingsModel::Operation::ALL_BIDS);
+  m_cancel_operation_signal(operation, m_security_view->get_current()->get(),
+    CancelCriteria(book_quote.m_mpid.substr(1), book_quote.m_quote.m_price));
 }
 
 void BookViewWindow::on_properties_menu() {
@@ -334,15 +328,12 @@ void BookViewWindow::on_order_operation(Side side,
   visit(operation,
     [&] (const ListModel<BookViewModel::UserOrder>::UpdateOperation&
         operation) {
-      auto cancel_operation = [&] {
-        if(side == Side::BID) {
-          return CancelKeyBindingsModel::Operation::ALL_BIDS;
-        }
-        return CancelKeyBindingsModel::Operation::ALL_ASKS;
-      }();
+      auto cancel_operation = Pick(side,
+        CancelKeyBindingsModel::Operation::ALL_ASKS,
+        CancelKeyBindingsModel::Operation::ALL_BIDS);
       if(operation.get_value().m_status == OrderStatus::FILLED &&
           m_interactions->is_cancel_on_fill()->get()) {
-        m_cancel_order_signal(
+        m_cancel_operation_signal(
           cancel_operation, m_security_view->get_current()->get(), none);
       }
     });

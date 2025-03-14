@@ -1,6 +1,7 @@
 #ifndef SPIRE_BOOK_VIEW_CONTROLLER_HPP
 #define SPIRE_BOOK_VIEW_CONTROLLER_HPP
 #include <Beam/Pointers/Ref.hpp>
+#include <boost/signals2/connection.hpp>
 #include "Spire/BookView/BookView.hpp"
 #include "Spire/BookView/BookViewWindow.hpp"
 #include "Spire/Spire/Spire.hpp"
@@ -36,9 +37,15 @@ namespace Spire {
       mutable ClosedSignal m_closed_signal;
       UserProfile* m_user_profile;
       BookViewWindow* m_window;
+      boost::signals2::scoped_connection m_submit_task_connection;
+      boost::signals2::scoped_connection m_cancel_operation_connection;
 
       BookViewController(const BookViewController&) = delete;
       BookViewController& operator =(const BookViewController&) = delete;
+      void on_submit_task(const std::shared_ptr<CanvasNode>& task);
+      void on_cancel_operation(CancelKeyBindingsModel::Operation operation,
+        const Nexus::Security& security,
+        const boost::optional<BookViewWindow::CancelCriteria>& criteria);
   };
 }
 

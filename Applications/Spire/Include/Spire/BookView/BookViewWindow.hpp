@@ -24,17 +24,26 @@ namespace Spire {
       using SubmitTaskSignal =
         Signal<void (const std::shared_ptr<CanvasNode>& task)>;
 
+      /** Specifies the criteria to match when canceling tasks. */
+      struct CancelCriteria {
+
+        /** The destination to match. */
+        Nexus::Destination m_destination;
+
+        /** The price to match. */
+        Nexus::Money m_price;
+      };
+
       /**
        * Signals that a cancellation operation is emitted.
        * @param operation The cancellation operation.
        * @param security The security for which orders will be canceled.
-       * @param order_key The orders matching order_key will be canceled.
+       * @param criteria The criteria of the tasks to cancel.
        */
-      using CancelOrderSignal = Signal<void (
+      using CancelOperationSignal = Signal<void (
         CancelKeyBindingsModel::Operation operation,
         const Nexus::Security& security,
-        const boost::optional<std::tuple<Nexus::Destination, Nexus::Money>>&
-          order_key)>;
+        const boost::optional<CancelCriteria>& criteria)>;
 
       /**
        * The type of function used to build a BookViewModel based on
@@ -66,16 +75,16 @@ namespace Spire {
       boost::signals2::connection connect_submit_task_signal(
         const SubmitTaskSignal::slot_type& slot) const;
 
-      /** Connects a slot to the CancelOrderSignal. */
-      boost::signals2::connection connect_cancel_order_signal(
-        const CancelOrderSignal::slot_type& slot) const;
+      /** Connects a slot to the CancelOperationSignal. */
+      boost::signals2::connection connect_cancel_operation_signal(
+        const CancelOperationSignal::slot_type& slot) const;
 
     protected:
       void keyPressEvent(QKeyEvent* event) override;
 
     private:
       mutable SubmitTaskSignal m_submit_task_signal;
-      mutable CancelOrderSignal m_cancel_order_signal;
+      mutable CancelOperationSignal m_cancel_operation_signal;
       UserProfile* m_user_profile;
       std::shared_ptr<KeyBindingsModel> m_key_bindings;
       std::shared_ptr<BookViewPropertiesWindowFactory> m_factory;
