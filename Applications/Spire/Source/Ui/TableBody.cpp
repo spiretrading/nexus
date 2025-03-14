@@ -1247,7 +1247,7 @@ void TableBody::update_column_widths() {
 
 bool TableBody::navigate_next() {
   auto get_next_column =
-    [=] (const CurrentModel& current, int row, int column) {
+    [&] (const CurrentModel& current, int row, int column) {
       ++column;
       while(column < get_table()->get_column_size()) {
         if(!current.test(Index(row, column))) {
@@ -1273,8 +1273,7 @@ bool TableBody::navigate_next() {
       get_current()->set(Index(current->m_row, column));
     }
   } else if(get_table()->get_row_size() > 0) {
-    auto next_column = get_next_column(*get_current(), 0, -1);
-    get_current()->set(Index(0, next_column));
+    get_current()->set(Index(0, get_next_column(*get_current(), 0, -1)));
   } else {
     return false;
   }
