@@ -142,7 +142,9 @@ struct TableBody::RowCover : Cover {
   void mount(int index) {
     auto& body = *static_cast<TableBody*>(parentWidget());
     for(auto i = 0; i != layout()->count(); ++i) {
-      get_item(i)->mount(*body.m_item_builder.mount(body.m_table, index, i));
+      auto item = body.m_item_builder.mount(body.m_table, index, i);
+      item->setFocusPolicy(Qt::NoFocus);
+      get_item(i)->mount(*item);
     }
   }
 
@@ -691,15 +693,21 @@ bool TableBody::focusNextPrevChild(bool next) {
   while(next_widget && next_widget != this) {
     next_widget = next_widget->nextInFocusChain();
     if(!isAncestorOf(next_widget) && next_widget->isEnabled() &&
-        next_widget->focusPolicy() & Qt::TabFocus) {
+        next_widget->isVisible() && next_widget->focusPolicy() & Qt::TabFocus) {
       next_focus_widget = next_widget;
-      get_current()->set(none);
       if(next) {
         break;
       }
     }
   }
-  next_focus_widget->setFocus(Qt::TabFocusReason);
+  get_current()->set(none);
+  auto focus_reason = [&] {
+    if(next) {
+      return Qt::TabFocusReason;
+    }
+    return Qt::BacktabFocusReason;
+  }();
+  next_focus_widget->setFocus(focus_reason);
   return true;
 }
 
@@ -827,6 +835,16 @@ void TableBody::showEvent(QShowEvent* event) {
   update_parent();
   update_column_covers();
   update_column_widths();
+}
+
+void TableBody::focusInEvent(QFocusEvent* event) {
+  if(event->reason() == Qt::TabFocusReason) {
+    focusNextPrevChild(true);
+  } else if(event->reason() == Qt::BacktabFocusReason) {
+    focusNextPrevChild(false);
+  } else {
+    QWidget::focusInEvent(event);
+  }
 }
 
 const TableBody::Layout& TableBody::get_layout() const {
@@ -1347,6 +1365,8 @@ void TableBody::on_current(
     if(previous_had_focus || QApplication::focusObject() == this) {
       current_item->setFocus(Qt::FocusReason::OtherFocusReason);
     }
+  } else if(previous) {
+    m_selection_controller.remove_row(previous->m_row);
   }
 }
 
