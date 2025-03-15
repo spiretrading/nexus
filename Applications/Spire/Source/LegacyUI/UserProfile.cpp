@@ -3,7 +3,7 @@
 #include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/Blotter/BlotterSettings.hpp"
 #include "Spire/Blotter/OpenPositionsModel.hpp"
-#include "Spire/BookView/BookViewPropertiesWindowFactory.hpp"
+#include "Spire/BookView/ServiceBookViewModel.hpp"
 #include "Spire/KeyBindings/KeyBindingsProfile.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
@@ -24,6 +24,12 @@ namespace {
       const Security& security, MarketDataClientBox client) {
     return std::make_shared<ServiceTimeAndSalesModel>(security, client);
   }
+
+  std::shared_ptr<BookViewModel> book_view_model_builder(
+      const Security& security, const MarketDatabase& markets,
+      MarketDataClientBox client) {
+    return std::make_shared<ServiceBookViewModel>(security, markets, client);
+  }
 }
 
 UserProfile::UserProfile(const std::string& username, bool isAdministrator,
@@ -38,6 +44,7 @@ UserProfile::UserProfile(const std::string& username, bool isAdministrator,
     BookViewProperties book_view_properties,
     TimeAndSalesProperties time_and_sales_properties,
     ServiceClientsBox serviceClients, TelemetryClientBox telemetryClient)
+BEAM_SUPPRESS_THIS_INITIALIZER()
     : m_username(username),
       m_isAdministrator(isAdministrator),
       m_isManager(isManager),
@@ -59,12 +66,15 @@ UserProfile::UserProfile(const std::string& username, bool isAdministrator,
         std::make_shared<BookViewPropertiesWindowFactory>(
           std::make_shared<LocalBookViewPropertiesModel>(
             std::move(book_view_properties)))),
+      m_book_view_model_builder([=] (const auto& security) {
+        return book_view_model_builder(security,
+          m_marketDatabase, m_serviceClients.GetMarketDataClient());
+      }),
       m_time_and_sales_properties_window_factory(
         std::make_shared<TimeAndSalesPropertiesWindowFactory>(
           std::make_shared<LocalTimeAndSalesPropertiesModel>(
             std::move(time_and_sales_properties)))),
-BEAM_SUPPRESS_THIS_INITIALIZER()
-      m_time_and_sales_model_builder([=] (auto security) {
+      m_time_and_sales_model_builder([=] (const auto& security) {
         return time_and_sales_model_builder(
           security, m_serviceClients.GetMarketDataClient());
       }),
@@ -216,6 +226,11 @@ void UserProfile::SetInitialOrderImbalanceIndicatorWindowSettings(
 const std::shared_ptr<BookViewPropertiesWindowFactory>&
     UserProfile::GetBookViewPropertiesWindowFactory() const {
   return m_book_view_properties_window_factory;
+}
+
+const BookViewWindow::ModelBuilder&
+    UserProfile::GetBookViewModelBuilder() const {
+  return m_book_view_model_builder;
 }
 
 const RiskTimerProperties& UserProfile::GetRiskTimerProperties() const {

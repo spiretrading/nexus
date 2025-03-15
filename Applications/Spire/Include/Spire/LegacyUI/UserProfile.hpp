@@ -14,7 +14,7 @@
 #include "Nexus/ServiceClients/ServiceClientsBox.hpp"
 #include "Nexus/TelemetryService/TelemetryClientBox.hpp"
 #include "Spire/Blotter/Blotter.hpp"
-#include "Spire/BookView/BookViewProperties.hpp"
+#include "Spire/BookView/BookViewWindow.hpp"
 #include "Spire/Canvas/Types/CanvasTypeRegistry.hpp"
 #include "Spire/Catalog/CatalogSettings.hpp"
 #include "Spire/Dashboard/SavedDashboards.hpp"
@@ -187,6 +187,9 @@ namespace Spire {
       const std::shared_ptr<BookViewPropertiesWindowFactory>&
         GetBookViewPropertiesWindowFactory() const;
 
+      /** Returns the BookViewModelBuilder. */
+      const BookViewWindow::ModelBuilder& GetBookViewModelBuilder() const;
+
       /** Returns the RiskTimerProperties. */
       const RiskTimerProperties& GetRiskTimerProperties() const;
 
@@ -241,6 +244,7 @@ namespace Spire {
         m_defaultOrderImbalanceIndicatorProperties;
       std::shared_ptr<BookViewPropertiesWindowFactory>
         m_book_view_properties_window_factory;
+      BookViewWindow::ModelBuilder m_book_view_model_builder;
       RiskTimerProperties m_riskTimerProperties;
       std::shared_ptr<TimeAndSalesPropertiesWindowFactory>
         m_time_and_sales_properties_window_factory;

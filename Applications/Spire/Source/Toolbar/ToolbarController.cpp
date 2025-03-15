@@ -11,6 +11,7 @@
 #include "Spire/Blotter/BlotterSettings.hpp"
 #include "Spire/Blotter/BlotterWindow.hpp"
 #include "Spire/BookView/BookViewController.hpp"
+#include "Spire/BookView/BookViewWindow.hpp"
 #include "Spire/Charting/ChartWindow.hpp"
 #include "Spire/Dashboard/DashboardWindow.hpp"
 #include "Spire/Dashboard/DashboardModelSchema.hpp"
@@ -53,29 +54,31 @@ namespace {
     auto windows = std::vector<QWidget*>();
     while(instantiate_security_windows && index < securities.size()) {
       auto width = 0;
-/* TODO
-      auto book_view_window = new BookViewWindow(
-        Ref(user_profile), user_profile.GetDefaultBookViewProperties(), "");
+      auto book_view_window = new BookViewWindow(Ref(user_profile),
+        user_profile.GetSecurityInfoQueryModel(),
+        user_profile.GetKeyBindings(),
+        user_profile.GetMarketDatabase(),
+        user_profile.GetBookViewPropertiesWindowFactory(),
+        user_profile.GetBookViewModelBuilder());
       book_view_window->move(next_position);
       book_view_window->show();
       next_position.rx() += book_view_window->frameSize().width();
       width += book_view_window->frameSize().width();
       next_height = book_view_window->frameSize().height();
       windows.push_back(book_view_window);
-*/
       auto time_and_sales_window = new TimeAndSalesWindow(
         user_profile.GetSecurityInfoQueryModel(),
         user_profile.GetMarketDatabase(),
         user_profile.GetTimeAndSalesPropertiesWindowFactory(),
         user_profile.GetTimeAndSalesModelBuilder());
-// TODO      book_view_window->Link(*time_and_sales_window);
-//      time_and_sales_window->resize(time_and_sales_window->width(),
-//        book_view_window->frameSize().height());
+      book_view_window->Link(*time_and_sales_window);
+      time_and_sales_window->resize(time_and_sales_window->width(),
+        book_view_window->frameSize().height());
       time_and_sales_window->move(next_position);
       time_and_sales_window->show();
-// TODO      time_and_sales_window->Link(*book_view_window);
+      time_and_sales_window->Link(*book_view_window);
       windows.push_back(time_and_sales_window);
-// TODO      book_view_window->DisplaySecurity(securities[index]);
+      book_view_window->get_current()->set(securities[index]);
       next_position.rx() += time_and_sales_window->frameSize().width();
       width += time_and_sales_window->frameSize().width();
       instantiate_security_windows = index < securities.size() &&

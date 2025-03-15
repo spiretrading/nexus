@@ -2,6 +2,7 @@
 #define SPIRE_DEMO_BOOK_VIEW_MODEL_HPP
 #include "Nexus/OrderExecutionService/OrderFields.hpp"
 #include "Spire/BookView/BookViewModel.hpp"
+#include "Spire/BookView/BookViewWindow.hpp"
 #include "Spire/KeyBindings/CancelKeyBindingsModel.hpp"
 #include "Spire/Spire/ListModel.hpp"
 
@@ -38,8 +39,7 @@ namespace Spire {
 
       /** Cancel orders. */
       void cancel_orders(CancelKeyBindingsModel::Operation operation,
-        const boost::optional<std::tuple<Nexus::Destination, Nexus::Money>>&
-          order_key);
+        const boost::optional<BookViewWindow::CancelCriteria>& criteria);
 
     private:
       std::shared_ptr<BookViewModel> m_model;

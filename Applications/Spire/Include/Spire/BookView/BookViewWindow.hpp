@@ -6,7 +6,9 @@
 #include "Spire/BookView/MarketDepth.hpp"
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/CanvasView/CanvasView.hpp"
-#include "Spire/LegacyUI/UserProfile.hpp"
+#include "Spire/LegacyUI/PersistentWindow.hpp"
+#include "Spire/LegacyUI/SecurityContext.hpp"
+#include "Spire/LegacyUI/WindowSettings.hpp"
 #include "Spire/Ui/SecurityBox.hpp"
 #include "Spire/Ui/Ui.hpp"
 #include "Spire/Ui/Window.hpp"
@@ -14,7 +16,8 @@
 namespace Spire {
 
   /** Display the book view window for a security. */
-  class BookViewWindow : public Window {
+  class BookViewWindow : public Window, public LegacyUI::PersistentWindow,
+      public LegacyUI::SecurityContext {
     public:
 
       /**
@@ -71,6 +74,28 @@ namespace Spire {
         std::shared_ptr<BookViewPropertiesWindowFactory> factory,
         ModelBuilder model_builder, QWidget* parent = nullptr);
 
+      /**
+       * Constructs a BookViewWindow.
+       * @param user_profile The user's profile.
+       * @param securities The set of securities to use.
+       * @param key_bindings The user's key bindings.
+       * @param markets The database of markets.
+       * @param factory The factory used to create a BookViewPropertiesWindow.
+       * @param model_builder The ModelBuilder to use.
+       * @param identifier The SecurityContext identifier.
+       * @param parent The parent widget.
+       */
+      BookViewWindow(Beam::Ref<UserProfile> user_profile,
+        std::shared_ptr<SecurityInfoQueryModel> securities,
+        std::shared_ptr<KeyBindingsModel> key_bindings,
+        Nexus::MarketDatabase markets,
+        std::shared_ptr<BookViewPropertiesWindowFactory> factory,
+        ModelBuilder model_builder, std::string identifier,
+        QWidget* parent = nullptr);
+
+      /** Returns the currently displayed security. */
+      const std::shared_ptr<SecurityModel>& get_current() const;
+
       /** Connects a slot to the SubmitTaskSignal. */
       boost::signals2::connection connect_submit_task_signal(
         const SubmitTaskSignal::slot_type& slot) const;
@@ -79,10 +104,18 @@ namespace Spire {
       boost::signals2::connection connect_cancel_operation_signal(
         const CancelOperationSignal::slot_type& slot) const;
 
+      std::unique_ptr<LegacyUI::WindowSettings>
+        GetWindowSettings() const override;
+
     protected:
       void keyPressEvent(QKeyEvent* event) override;
+      void showEvent(QShowEvent* event) override;
+      void HandleLink(SecurityContext& context) override;
+      void HandleUnlink() override;
 
     private:
+      friend class BookViewWindowSettings;
+      friend class LegacyBookViewWindowSettings;
       mutable SubmitTaskSignal m_submit_task_signal;
       mutable CancelOperationSignal m_cancel_operation_signal;
       UserProfile* m_user_profile;
@@ -94,6 +127,8 @@ namespace Spire {
       std::shared_ptr<BookViewModel> m_model;
       std::shared_ptr<BookQuoteModel> m_selected_quote;
       TransitionView* m_transition_view;
+      std::string m_link_identifier;
+      boost::signals2::scoped_connection m_link_connection;
       SecurityView* m_security_view;
       CondensedCanvasWidget* m_task_entry_panel;
       bool m_is_task_entry_panel_for_interactions;

@@ -1,5 +1,5 @@
-#include "Spire/TimeAndSales/LegacyTimeAndSalesWindowSettings.hpp"
-#include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
+#include "Spire/BookView/LegacyBookViewWindowSettings.hpp"
+#include "Spire/BookView/BookViewWindow.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/Ui/SecurityView.hpp"
 
@@ -14,25 +14,25 @@ namespace {
   }
 }
 
-std::string LegacyTimeAndSalesWindowSettings::GetName() const {
+std::string LegacyBookViewWindowSettings::GetName() const {
   return m_name;
 }
 
-QWidget* LegacyTimeAndSalesWindowSettings::Reopen(
+QWidget* LegacyBookViewWindowSettings::Reopen(
     Ref<UserProfile> user_profile) const {
-  auto window = new TimeAndSalesWindow(
+  auto window = new BookViewWindow(Ref(user_profile),
     user_profile->GetSecurityInfoQueryModel(),
+    user_profile->GetKeyBindings(),
     user_profile->GetMarketDatabase(),
-    user_profile->GetTimeAndSalesPropertiesWindowFactory(),
-    user_profile->GetTimeAndSalesModelBuilder(), m_identifier);
-  window->setAttribute(Qt::WA_DeleteOnClose);
+    user_profile->GetBookViewPropertiesWindowFactory(),
+    user_profile->GetBookViewModelBuilder(), m_identifier);
   Apply(Ref(user_profile), Store(*window));
   return window;
 }
 
-void LegacyTimeAndSalesWindowSettings::Apply(
+void LegacyBookViewWindowSettings::Apply(
     Ref<UserProfile> userProfile, Out<QWidget> widget) const {
-  auto& window = dynamic_cast<TimeAndSalesWindow&>(*widget);
+  auto& window = dynamic_cast<BookViewWindow&>(*widget);
   restore_geometry(window, m_geometry);
   auto frame_height = get_frame_height();
   window.move(window.x(), window.y() - frame_height);

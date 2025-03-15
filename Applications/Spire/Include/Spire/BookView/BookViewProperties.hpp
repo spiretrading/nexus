@@ -1,13 +1,16 @@
 #ifndef SPIRE_BOOK_VIEW_PROPERTIES_HPP
 #define SPIRE_BOOK_VIEW_PROPERTIES_HPP
-#include <filesystem>
 #include <array>
+#include <filesystem>
 #include <vector>
+#include <Beam/Serialization/ShuttleArray.hpp>
+#include <Beam/Serialization/ShuttleVector.hpp>
 #include <QColor>
 #include <QFont>
 #include "Nexus/Definitions/Market.hpp"
 #include "Spire/BookView/BookView.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
+#include "Spire/Spire/ShuttleQtTypes.hpp"
 #include "Spire/Ui/HighlightBox.hpp"
 
 namespace Spire {
@@ -45,6 +48,9 @@ namespace Spire {
 
     /** Returns the default properties. */
     static const BookViewLevelProperties& get_default();
+
+    template<typename Shuttler>
+    void Shuttle(Shuttler& shuttle, unsigned int version);
   };
 
   /** Represents the highlight properties in the book view window. */
@@ -108,6 +114,9 @@ namespace Spire {
       MarketHighlightLevel m_level;
 
       auto operator <=>(const MarketHighlight&) const = default;
+
+      template<typename Shuttler>
+      void Shuttle(Shuttler& shuttle, unsigned int version);
     };
 
     /** A list of Highlights for each market. */
@@ -121,6 +130,9 @@ namespace Spire {
 
     /** Returns the default properties. */
     static const BookViewHighlightProperties& get_default();
+
+    template<typename Shuttler>
+    void Shuttle(Shuttler& shuttle, unsigned int version);
   };
 
   /** Represents the properties for the book view window. */
@@ -134,6 +146,9 @@ namespace Spire {
 
     /** Returns the default properties. */
     static const BookViewProperties& get_default();
+
+    template<typename Shuttler>
+    void Shuttle(Shuttler& shuttle, unsigned int version);
   };
 
   /** Returns the text representation of a OrderVisibility. */
@@ -163,6 +178,37 @@ namespace Spire {
    */
   void save_book_view_properties(
     const BookViewProperties& properties, const std::filesystem::path& path);
+
+  template<typename Shuttler>
+  void BookViewLevelProperties::Shuttle(
+      Shuttler& shuttle, unsigned int version) {
+    shuttle.Shuttle("font", m_font);
+    shuttle.Shuttle("is_grid_enabled", m_is_grid_enabled);
+    shuttle.Shuttle("fill_type", m_fill_type);
+    shuttle.Shuttle("color_scheme", m_color_scheme);
+  }
+
+  template<typename Shuttler>
+  void BookViewHighlightProperties::MarketHighlight::Shuttle(
+      Shuttler& shuttle, unsigned int version) {
+    shuttle.Shuttle("market", m_market);
+    shuttle.Shuttle("color", m_color);
+    shuttle.Shuttle("level", m_level);
+  }
+
+  template<typename Shuttler>
+  void BookViewHighlightProperties::Shuttle(
+      Shuttler& shuttle, unsigned int version) {
+    shuttle.Shuttle("market_highlights", m_market_highlights);
+    shuttle.Shuttle("order_visibility", m_order_visibility);
+    shuttle.Shuttle("order_highlights", m_order_highlights);
+  }
+
+  template<typename Shuttler>
+  void BookViewProperties::Shuttle(Shuttler& shuttle, unsigned int version) {
+    shuttle.Shuttle("level_properties", m_level_properties);
+    shuttle.Shuttle("highlight_properties", m_highlight_properties);
+  }
 }
 
 #endif

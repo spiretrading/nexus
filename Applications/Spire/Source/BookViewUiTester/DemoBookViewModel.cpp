@@ -153,10 +153,12 @@ DemoBookViewModel::DemoBookViewModel(std::shared_ptr<BookViewModel> model)
     m_bbo(BboQuote{Quote(Money(0), 0, Side::BID),
       Quote{Money(std::numeric_limits<Quantity>::max()), 0, Side::ASK},
       second_clock::universal_time()}),
+BEAM_SUPPRESS_THIS_INITIALIZER()
     m_bid_operation_connection(m_model->get_bids()->connect_operation_signal(
       std::bind_front(&DemoBookViewModel::on_bid_operation, this))),
     m_ask_operation_connection(m_model->get_asks()->connect_operation_signal(
       std::bind_front(&DemoBookViewModel::on_ask_operation, this))) {}
+BEAM_UNSUPPRESS_THIS_INITIALIZER()
 
 const std::shared_ptr<BookViewModel>& DemoBookViewModel::get_model() const {
   return m_model;
@@ -231,7 +233,7 @@ void DemoBookViewModel::submit_order(const OrderInfo& order) {
 
 void DemoBookViewModel::cancel_orders(
     CancelKeyBindingsModel::Operation operation,
-    const optional<std::tuple<Destination, Money>>& order_key) {
+    const optional<BookViewWindow::CancelCriteria>& criteria) {
   if(m_orders.empty()) {
     return;
   }
@@ -250,9 +252,9 @@ void DemoBookViewModel::cancel_orders(
     auto cancel = [&] (auto begin, auto end) {
       for(auto i = begin; i != end; ++i) {
         if(i->m_order_fields.m_side == expected_side) {
-          if(order_key) {
-            if(get<0>(*order_key) == i->m_order_fields.m_destination &&
-                get<1>(*order_key) == i->m_order_fields.m_price) {
+          if(criteria) {
+            if(criteria->m_destination == i->m_order_fields.m_destination &&
+                criteria->m_price == i->m_order_fields.m_price) {
               orders_to_cancel.push_back(i->m_order_fields);
               m_orders.erase(to_base(i));
               break;
@@ -282,9 +284,9 @@ void DemoBookViewModel::cancel_orders(
       if(order.m_order_fields.m_side != expected_side) {
         return false;
       }
-      if(order_key) {
-        if(get<0>(*order_key) == order.m_order_fields.m_destination &&
-            get<1>(*order_key) == order.m_order_fields.m_price) {
+      if(criteria) {
+        if(criteria->m_destination == order.m_order_fields.m_destination &&
+            criteria->m_price == order.m_order_fields.m_price) {
           orders_to_cancel.push_back(order.m_order_fields);
           return true;
         }

@@ -60,11 +60,7 @@ void BookViewController::open() {
     m_user_profile->GetSecurityInfoQueryModel(),
     m_user_profile->GetKeyBindings(), m_user_profile->GetMarketDatabase(),
     m_user_profile->GetBookViewPropertiesWindowFactory(),
-    [=] (const auto& security) {
-      return std::make_shared<ServiceBookViewModel>(security,
-        m_user_profile->GetMarketDatabase(),
-        m_user_profile->GetServiceClients().GetMarketDataClient());
-    });
+    m_user_profile->GetBookViewModelBuilder());
   m_submit_task_connection = m_window->connect_submit_task_signal(
     std::bind_front(&BookViewController::on_submit_task, this));
   m_cancel_operation_connection = m_window->connect_cancel_operation_signal(

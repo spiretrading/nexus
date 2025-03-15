@@ -7,6 +7,7 @@
 #include <QRandomGenerator>
 #include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 #include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
+#include "Nexus/ServiceClients/ServiceClientsBox.hpp"
 #include "Nexus/ServiceClients/TestEnvironment.hpp"
 #include "Nexus/ServiceClients/TestServiceClients.hpp"
 #include "Nexus/TelemetryServiceTests/TelemetryServiceTestEnvironment.hpp"
@@ -14,6 +15,7 @@
 #include "Spire/BookView/BookViewWindow.hpp"
 #include "Spire/BookViewUiTester/DemoBookViewModel.hpp"
 #include "Spire/KeyBindings/KeyBindingsWindow.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/FieldValueModel.hpp"
@@ -464,16 +466,16 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
 
   void on_cancel_order(CancelKeyBindingsModel::Operation operation,
       const Security& security,
-      const optional<std::tuple<Destination, Money>>& order_key) {
-    m_model.cancel_orders(operation, order_key);
+      const optional<BookViewWindow::CancelCriteria>& criteria) {
+    m_model.cancel_orders(operation, criteria);
     auto log = QString("%1: Operation:[%2] Security:[%3]").
       arg(++m_line_number).
       arg(to_text(operation)).
       arg(to_text(security));
-    if(order_key) {
+    if(criteria) {
       log += QString(" Order Destination:[%1] Order Price:[%2]").
-        arg(QString::fromStdString(std::get<0>(*order_key))).
-        arg(to_text(std::get<1>(*order_key)));
+        arg(QString::fromStdString(criteria->m_destination)).
+        arg(to_text(criteria->m_price));
     }
     m_logs->append(log);
   }
@@ -523,7 +525,7 @@ int main(int argc, char** argv) {
     populate_security_query_model(), key_bindings, markets,
     std::make_shared<BookViewPropertiesWindowFactory>(),
     std::bind_front(&model_builder, book_views, &tester));
-  window.connect_cancel_order_signal(
+  window.connect_cancel_operation_signal(
     std::bind_front(&BookViewTester::on_cancel_order, &tester));
   window.installEventFilter(&tester);
   window.show();

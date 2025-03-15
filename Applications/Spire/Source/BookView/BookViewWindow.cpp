@@ -1,6 +1,7 @@
 #include "Spire/BookView/BookViewWindow.hpp"
 #include <QKeyEvent>
 #include <QScreen>
+#include "Spire/BookView/BookViewWindowSettings.hpp"
 #include "Spire/BookView/TechnicalsPanel.hpp"
 #include "Spire/Canvas/Operations/CanvasNodeBuilder.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/OptionalPriceNode.hpp"
@@ -12,6 +13,7 @@
 #include "Spire/Canvas/ValueNodes/SideNode.hpp"
 #include "Spire/CanvasView/CanvasNodeNotVisibleException.hpp"
 #include "Spire/CanvasView/CondensedCanvasWidget.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/Ui/ContextMenu.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/SecurityView.hpp"
@@ -29,11 +31,21 @@ namespace {
 }
 
 BookViewWindow::BookViewWindow(Ref<UserProfile> user_profile,
+  std::shared_ptr<SecurityInfoQueryModel> securities,
+  std::shared_ptr<KeyBindingsModel> key_bindings, MarketDatabase markets,
+  std::shared_ptr<BookViewPropertiesWindowFactory> factory,
+  ModelBuilder model_builder, QWidget* parent)
+  : BookViewWindow(Ref(user_profile), std::move(securities),
+      std::move(key_bindings), std::move(markets), std::move(factory),
+      std::move(model_builder), "", parent)  {}
+
+BookViewWindow::BookViewWindow(Ref<UserProfile> user_profile,
     std::shared_ptr<SecurityInfoQueryModel> securities,
     std::shared_ptr<KeyBindingsModel> key_bindings, MarketDatabase markets,
     std::shared_ptr<BookViewPropertiesWindowFactory> factory,
-    ModelBuilder model_builder, QWidget* parent)
+    ModelBuilder model_builder, std::string identifier, QWidget* parent)
     : Window(parent),
+      SecurityContext(std::move(identifier)),
       m_user_profile(user_profile.Get()),
       m_key_bindings(std::move(key_bindings)),
       m_markets(std::move(markets)),
@@ -57,6 +69,10 @@ BookViewWindow::BookViewWindow(Ref<UserProfile> user_profile,
   resize(scale(266, 361));
 }
 
+const std::shared_ptr<SecurityModel>& BookViewWindow::get_current() const {
+  return m_security_view->get_current();
+}
+
 connection BookViewWindow::connect_submit_task_signal(
     const SubmitTaskSignal::slot_type& slot) const {
   return m_submit_task_signal.connect(slot);
@@ -65,6 +81,11 @@ connection BookViewWindow::connect_submit_task_signal(
 connection BookViewWindow::connect_cancel_operation_signal(
     const CancelOperationSignal::slot_type& slot) const {
   return m_cancel_operation_signal.connect(slot);
+}
+
+std::unique_ptr<LegacyUI::WindowSettings>
+    BookViewWindow::GetWindowSettings() const {
+  return std::make_unique<BookViewWindowSettings>(*this);
 }
 
 void BookViewWindow::keyPressEvent(QKeyEvent* event) {
@@ -92,6 +113,31 @@ void BookViewWindow::keyPressEvent(QKeyEvent* event) {
       m_security_view->get_current()->get(), sequence)) {
     display_task_entry_panel(*arguments);
   }
+}
+
+void BookViewWindow::showEvent(QShowEvent* event) {
+  if(auto context = SecurityContext::FindSecurityContext(m_link_identifier)) {
+    Link(*context);
+  } else {
+    HandleUnlink();
+  }
+  Window::showEvent(event);
+}
+
+void BookViewWindow::HandleLink(SecurityContext& context) {
+  m_link_identifier = context.GetIdentifier();
+  m_link_connection = context.ConnectSecurityDisplaySignal(
+    [=] (const auto& security) {
+      if(m_security_view->get_current()->get() != security) {
+         m_security_view->get_current()->set(security);
+      }
+    });
+  m_security_view->get_current()->set(context.GetDisplayedSecurity());
+}
+
+void BookViewWindow::HandleUnlink() {
+  m_link_connection.disconnect();
+  m_link_identifier.clear();
 }
 
 std::unique_ptr<CanvasNode>
@@ -291,6 +337,9 @@ void BookViewWindow::on_properties_menu() {
 }
 
 void BookViewWindow::on_current(const Security& security) {
+  if(security == Security()) {
+    return;
+  }
   setWindowTitle(to_text(security) + " " + QString(0x2013) + " " + TITLE_NAME);
   m_transition_view->set_status(TransitionView::Status::NONE);
   m_interactions = m_key_bindings->get_interactions_key_bindings(security);
@@ -302,25 +351,21 @@ void BookViewWindow::on_current(const Security& security) {
     m_interactions->get_default_quantity());
   panel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   layout->addWidget(panel);
-  if(security == Security()) {
-    layout->addStretch(1);
-    m_selected_quote.reset();
-  } else {
-    auto market_depth = new MarketDepth(m_model, m_model->get_bbo_quote(),
-      m_factory->get_properties(), m_markets);
-    market_depth->setContextMenuPolicy(Qt::CustomContextMenu);
-    m_selected_quote = market_depth->get_selected_book_quote();
-    layout->addWidget(market_depth);
-    body->setFocusProxy(market_depth);
-    connect(market_depth, &QWidget::customContextMenuRequested,
-      std::bind_front(&BookViewWindow::on_context_menu, this, market_depth));
-  }
+  auto market_depth = new MarketDepth(m_model, m_model->get_bbo_quote(),
+    m_factory->get_properties(), m_markets);
+  market_depth->setContextMenuPolicy(Qt::CustomContextMenu);
+  m_selected_quote = market_depth->get_selected_book_quote();
+  layout->addWidget(market_depth);
+  body->setFocusProxy(market_depth);
+  connect(market_depth, &QWidget::customContextMenuRequested,
+    std::bind_front(&BookViewWindow::on_context_menu, this, market_depth));
   m_transition_view->set_body(*body);
   m_transition_view->set_status(TransitionView::Status::READY);
   m_bid_order_connection = m_model->get_bid_orders()->connect_operation_signal(
     std::bind_front(&BookViewWindow::on_order_operation, this, Side::BID));
   m_ask_order_connection = m_model->get_ask_orders()->connect_operation_signal(
     std::bind_front(&BookViewWindow::on_order_operation, this, Side::ASK));
+  SetDisplayedSecurity(security);
 }
 
 void BookViewWindow::on_order_operation(Side side,
